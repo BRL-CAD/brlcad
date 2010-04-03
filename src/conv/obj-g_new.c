@@ -70,17 +70,6 @@ struct ga_t {                                    /* assigned by ... */
     const size_t        *attindex_arr_tnv_faces; /* obj_polygonal_tnv_faces */
 };
 
-/* NMG2s */
-/* structure for storing coordinates and associated vertex pointer */
-struct my_verts
-{
-    point_t coord;
-    vect_t norm;
-    struct vertex *vp;
-    short has_norm;
-};
-/* NMG2e */
-
     /* global definition */
     size_t *tmp_ptr = NULL ;
     size_t (*triangle_indexes)[3][2] = NULL ;
@@ -197,7 +186,12 @@ int process_nv_faces(struct ga_t *ga,
                      struct rt_wdb *outfp, 
                      int grp_mode, 
                      size_t grp_indx,
-                     fastf_t conversion_factor) {
+                     fastf_t conversion_factor, 
+                     struct model **m2,
+                     struct nmgregion **r2,
+                     struct shell **s2,
+                     struct bn_tol *tol2) {
+
     size_t size = 0 ;
     size_t setsize = 0 ;
     size_t vert = 0;
@@ -209,29 +203,16 @@ int process_nv_faces(struct ga_t *ga,
     /* NMG2s */
     const size_t (**index_arr_nv_faces_history)[2]; /* used by nv_faces */
     const size_t (**index_arr_nv_faces_history_tmp)[2]; /* used by nv_faces */
-#if 0
-    const size_t ***index_arr_nv_faces_history = NULL ; 
-    const size_t ***index_arr_nv_faces_history_tmp = NULL ;
-#endif
     size_t *size_history = NULL ; 
     size_t *size_history_tmp = NULL ;
     size_t history_arrays_size = 0; 
     size_t numNorPolygons_in_current_nmg = 0;
     size_t numNorPolygonVertices_in_current_nmg = 0 ;
-    struct my_verts *nmg_verts;       /* array of structures holding coordinates and normals */
-    struct my_verts *nmg_verts_tmp;
-    struct bu_ptbl vertices2;         /* table of vertices for one face */
     struct bu_ptbl faces2;            /* table of faces for one element */
     struct bu_ptbl names2;            /* table of element names */
-    struct model *m2;
-    struct nmgregion *r2;
-    struct shell *s2;
     struct faceuse *fu2;
-    struct wmember reg_head2;
-    struct bn_tol tol2;
     size_t idx2 = 0;
     long   tmp_long = 0 ;
-    size_t nmg_verts_size = 0 ;
     /* NMG2e */
     int found = 0;
     size_t i = 0;
@@ -262,18 +243,6 @@ int process_nv_faces(struct ga_t *ga,
     size_t (*triangle_indexes_tmp)[3][2] = NULL ;
 
     /* NMG2s */
-    tol2.magic = BN_TOL_MAGIC;
-    tol2.dist = 0.0005;
-    tol2.dist_sq = tol2.dist * tol2.dist;
-    tol2.perp = 1e-6;
-    tol2.para = 1 - tol2.perp;
-
-    /* initial number of structures to create, one structure is
-       required for each vertex in the nmg */
-    nmg_verts_size = 128 ;
-
-    /* allocate memory for initial nmg_verts array of structures */
-    nmg_verts = (struct my_verts *)bu_calloc(nmg_verts_size, sizeof(struct my_verts), "nmg_verts");
 
     /* initial number of history elements to create, one is required
        for each polygon in the current nmg */
@@ -293,10 +262,6 @@ int process_nv_faces(struct ga_t *ga,
 
     /* allocate memory for initial triangle_indexes array */
     triangle_indexes = bu_calloc(triangle_indexes_size, sizeof(*triangle_indexes), "triangle_indexes");
-#if 0
-    triangle_indexes = (size_t *)bu_calloc((size_t)triangle_indexes_size, 
-                                                     sizeof(size_t), "triangle_indexes");
-#endif
 
     bu_vls_init(&outputObjectName);
 
@@ -358,7 +323,6 @@ int process_nv_faces(struct ga_t *ga,
             size = obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
         }
 
-
         /* test for and force the skip of degenerate faces */
         /* in this case degenerate faces are those with duplicate vertices */
         if ( found && skip_degenerate_faces ) {
@@ -390,9 +354,10 @@ int process_nv_faces(struct ga_t *ga,
         /* NMG2s */
         if ( found ) {
 
-
             index_arr_nv_faces_history[numNorPolygons_in_current_nmg] = index_arr_nv_faces;
             size_history[numNorPolygons_in_current_nmg] = size;
+
+            numNorPolygonVertices_in_current_nmg = numNorPolygonVertices_in_current_nmg + size ;
 
                 /* if needed, increase size of index_arr_nv_faces_history and size_history */
                 if ( numNorPolygons_in_current_nmg >= history_arrays_size ) {
@@ -409,34 +374,6 @@ int process_nv_faces(struct ga_t *ga,
 
                     size_history = size_history_tmp;
                 }
-
-#if 0
-            /* add coordinates for each of the current polygon vertices into
-               the nmg_verts array of structures */
-            for ( idx2 = 0 ; idx2 < size ; idx2++ ) {
-                nmg_verts[numNorPolygons_in_current_nmg].coord[0] =
-                    (ga->vert_list[index_arr_nv_faces[idx2][0]][0]) * conversion_factor ;
-
-                nmg_verts[numNorPolygons_in_current_nmg].coord[1] = 
-                    (ga->vert_list[index_arr_nv_faces[idx2][0]][1]) * conversion_factor ;
-
-                nmg_verts[numNorPolygons_in_current_nmg].coord[2] = 
-                    (ga->vert_list[index_arr_nv_faces[idx2][0]][2]) * conversion_factor ;
-
-                /* set current vertex pointer to NULL */
-                nmg_verts[numNorPolygons_in_current_nmg].vp = (struct vertex *)NULL;
-                bu_ptbl_ins(&vertices2, (long *)(&nmg_verts[numNorPolygons_in_current_nmg].vp));
-
-                numNorPolygonVertices_in_current_nmg++;
-
-                /* if needed, increase size of nmg_verts array of structures */
-                if ( numNorPolygons_in_current_nmg >= nmg_verts_size ) {
-                    nmg_verts_size = nmg_verts_size + 128 ;
-                    nmg_verts_tmp = bu_realloc(nmg_verts, sizeof(struct my_verts) * nmg_verts_size, "nmg_verts_tmp");
-                    nmg_verts = nmg_verts_tmp;
-                }
-            }
-#endif
 
             /* increment number of polygons in current grouping (i.e. current nmg) */
             numNorPolygons_in_current_nmg++;
@@ -498,58 +435,8 @@ int process_nv_faces(struct ga_t *ga,
                                                       "triangle_indexes_tmp");
                     triangle_indexes = triangle_indexes_tmp;
                 }
-
-
             } /* this loop exits when all the triangles from the current polygon 
                  are written to the triangle_indexes array */
-
-
-#if 0
-            /* load the bot structure with vertices */
-            for (vert = 0 ; vert < size ; vert++) {
-                bu_log("(%lu)(%lu)(%f)(%f)(%f)(%f)(%f)(%f)(%f)\n", 
-                   vert,
-                   index_arr_nv_faces[vert][0],
-                   (ga->vert_list[index_arr_nv_faces[vert][0]][0]) * conversion_factor,
-                   (ga->vert_list[index_arr_nv_faces[vert][0]][1]) * conversion_factor,
-                   (ga->vert_list[index_arr_nv_faces[vert][0]][2]) * conversion_factor,
-                   ga->vert_list[index_arr_nv_faces[vert][0]][3],
-                   ga->norm_list[index_arr_nv_faces[vert][1]][0],
-                   ga->norm_list[index_arr_nv_faces[vert][1]][1],
-                   ga->norm_list[index_arr_nv_faces[vert][1]][2]);
-
-
-                   /* place vertix indexes into face_tmp array structure */
-                   /* a single face is 3 size_t */
-
-                   /* places xyz vertices into bot structure */
-                   vertices[((numNorTriangles_in_current_bot-1)*9)+(vert*3)+0] =
-                       (ga->vert_list[index_arr_nv_faces[vert][0]][0]) * conversion_factor;
-                   vertices[((numNorTriangles_in_current_bot-1)*9)+(vert*3)+1] =
-                       (ga->vert_list[index_arr_nv_faces[vert][0]][1]) * conversion_factor;
-                   vertices[((numNorTriangles_in_current_bot-1)*9)+(vert*3)+2] =
-                       (ga->vert_list[index_arr_nv_faces[vert][0]][2]) * conversion_factor;
-
-                   /* test if need a larger array */
-                   if (numNorTriangles_in_current_bot >= (bot_vertex_array_size / coordinates_per_triangle)) {
-                       /* compute how large to make next alloc */
-                       bot_vertex_array_size = bot_vertex_array_size +
-                                               (num_triangles_per_alloc * coordinates_per_triangle) ;
-
-                       numRealloc++;
-                       bu_log("about to perform realloc number (%lu) with size (%lu)\n",
-                          numRealloc, bot_vertex_array_size);
-
-                       vertices_tmp = (fastf_t *)bu_realloc(vertices, 
-                                                 sizeof(fastf_t) * bot_vertex_array_size,
-                                                 "vertices_tmp");
-                       vertices = vertices_tmp;
-                   }
-
-            } /* old: loop exits when all vertices for current face are written to the bot vertex array */
-              /* new: loop exits when all vertices for current face are written to face_tmp, and
-                      will need to be wriiten to the bot vertex array later */
-#endif
         }
 
     }  /* numNorFaces loop, when loop exits, all nv_faces have been reviewed */
@@ -590,8 +477,6 @@ int process_nv_faces(struct ga_t *ga,
     vertex_sort_index = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "vertex_sort_index");
 
     vertex_normal_sort_index = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "vertex_normal_sort_index");
-
-
 
     /* populate index arrays */
     for (k = 0 ; k < num_indexes ; k++) {
@@ -789,30 +674,45 @@ int process_nv_faces(struct ga_t *ga,
            triangle_indexes[k][2][0], faces[(k*3)+2] );
     }
 
-
-
     /* write bot to ".g" file */
+#if 0
     ret_val = mk_bot(outfp, bu_vls_addr(&outputObjectName), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
                      numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, vertices,
                      faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+#endif
 
     /* NMG2s */
     /* initialize tables */
-    bu_ptbl_init(&vertices2, 64, " &vertices2 ");
     bu_ptbl_init(&faces2, 64, " &faces2 ");
     bu_ptbl_init(&names2, 64, " &names2 ");
 
-    /* make basic nmg structures if this is the first polygon */
-    m2 = nmg_mm();
-    r2 = nmg_mrsv(m2);
-    s2 = BU_LIST_FIRST(shell, &r2->s_hd);
+    struct vertex  **nmg2_verts = NULL;
+    nmg2_verts = (struct vertex **)bu_calloc(numNorPolygonVertices_in_current_nmg,
+                                              sizeof(struct vertex *), "nmg2_verts");
+    memset((void *)nmg2_verts, 0, sizeof(struct vertex *) * numNorPolygonVertices_in_current_nmg);
 
-    NMG_CK_MODEL(m2);
-    NMG_CK_REGION(r2);
-    NMG_CK_SHELL(s2);
+    size_t idx4 = 0;
+    size_t idx5 = 0;
+    size_t counter2 = 0;
+
+    /* loop thru all the polygons (i.e. faces) to be placed in the current nmg */
+    for ( idx4 = 0 ; idx4 < numNorPolygons_in_current_nmg ; idx4++ ) {
+        bu_log("about to run chk shell just before assign fu2\n");
+        NMG_CK_SHELL(*s2);
+
+        /* call this once for each face */
+        bu_log("about to assign fu2\n");
+        fu2 = nmg_cface(*s2, (struct vertex **)&(nmg2_verts[counter2]), (int)size_history[idx4] );
+        counter2 = counter2 + size_history[idx4] ; 
+
+        bu_ptbl_ins(&faces2, (long *)fu2);
+    }
 
     size_t polygon3 = 0;
     size_t vertex4 = 0;
+    struct vertexuse *vu2 = NULL;
+    fastf_t tmp5[3] = { 0, 0, 0 };
+    counter2 = 0;
     bu_log("history: numNorPolygons_in_current_nmg = (%lu)\n", numNorPolygons_in_current_nmg);
     for ( polygon3 = 0 ; polygon3 < numNorPolygons_in_current_nmg ; polygon3++ ) {
         bu_log("history: num vertices in current polygon = (%lu)\n", size_history[polygon3]);
@@ -828,62 +728,98 @@ int process_nv_faces(struct ga_t *ga,
                ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][0],
                ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][1],
                ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][2]);
+
+            VSCALE(tmp5, ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]] , conversion_factor);
+            bu_log("about to run nmg_vertex_gv\n");
+            NMG_CK_VERTEX(nmg2_verts[counter2]);
+            nmg_vertex_gv(nmg2_verts[counter2], tmp5);   
+
+            /* assign this normal to all uses of this vertex */
+            for (BU_LIST_FOR(vu2, vertexuse, &nmg2_verts[counter2]->vu_hd)) {
+                NMG_CK_VERTEXUSE(vu2);
+                nmg_vertexuse_nv(vu2, (fastf_t *)ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][1]]);
+            }
+            counter2++;
         }
-    }
-
-    struct vertex **nmg2_verts = NULL;
-
-    size_t idx4 = 0;
-    size_t idx5 = 0;
-    /* insert pointers to each vertex structure into vertices2 list */
-    /* the vertices2 list should only contain the vertex structures
-       for the current face to be inserted into the nmg */
-
-    struct vertex ***nmg2_verts_ptr = NULL ;
-
-    /* loop thru all the polygons (i.e. faces) */
-    for ( idx4 = 0 ; idx4 < numNorPolygons_in_current_nmg ; idx4++ ) {
-        /* loop thru all vertices of the current polygon */
-
-        nmg2_verts = (struct vertex **)bu_calloc(size_history[idx4], sizeof(struct vertex *), "nmg2_verts");
-        nmg2_verts_ptr = (struct vertex ***)bu_calloc(size_history[idx4], sizeof(struct vertex ***), "nmg2_verts_ptr");
 #if 0
-        memset((void *)nmg2_verts, 0, sizeof(struct vertex) * size_history[idx4]);
-#endif
-
-        for ( idx5 = 0 ; idx5 < size_history[idx4] ; idx5++ ) {
-
-            bu_log("pointer put into buffer = (%lx)\n", &(nmg2_verts[idx5]));  
-         /* nmg2_verts_ptr[idx5] = &(nmg2_verts[idx5]); */
-            bu_ptbl_ins(&vertices2, (long *)(nmg2_verts[idx5]));
+        bu_log("about to run nmg_calc_face_g\n");
+        if (nmg_calc_face_g(fu2)) {
+            nmg_kfu(fu2);
         }
-        bu_log("about to assign fu2\n");
-        fu2 = nmg_cface(s2, (struct vertex **)BU_PTBL_BASEADDR(&vertices2), BU_PTBL_END(&vertices2));
-
-        NMG_CK_FACE(&fu2);
-
-        bu_ptbl_ins(&faces2, (long *)fu2);
-        bu_ptbl_reset(&vertices2);
-    }
-    bu_free(nmg2_verts,"nmg2_verts");
-    bu_free(nmg2_verts_ptr,"nmg2_verts_ptr");
-
-    for ( idx5 = 0 ; idx5 < 6 ; idx5 ++ ) {
-        bu_log("addresses of vertex structures (%lu)(%lx)\n", idx5, &(nmg2_verts[idx5]));
-    }
-    size_t idx3 = 0;
-    fastf_t tmp5[3] = { 0, 0, 0 };
-    /* insert fastf_t coordinates into vertex/vertex_g structures */
-    for ( idx3 = 0 ; idx3 < num_unique_vertex_indexes ; idx3++ ) {
-        VSCALE(tmp5, (ga->vert_list[unique_vertex_indexes[idx3]]), conversion_factor);
-        bu_log("1\n");
-    /*  NMG_CK_VERTEX(&(nmg2_verts[idx3])); */
-        bu_log("2\n");
-    /*  nmg_vertex_gv(&(nmg2_verts[idx3]), tmp5); */
+        bu_log("about to run nmg_fu_planeeqn\n");
+        if (nmg_fu_planeeqn(fu2, tol2)) {
+            bu_log("nmg_fu_planeeqn failed\n");
+        }
+#endif
     }
 
+    (void)nmg_model_vertex_fuse(*m2, tol2);
+
+    /* calculate plane equations for faces */
+    NMG_CK_SHELL(*s2);
+    fu2 = BU_LIST_FIRST(faceuse, &(*s2)->fu_hd);
+    while (BU_LIST_NOT_HEAD(fu2, &(*s2)->fu_hd)) {
+        struct faceuse *kill_fu=(struct faceuse *)NULL;
+        struct faceuse *next_fu;
+
+        NMG_CK_FACEUSE(fu2);
+
+        next_fu = BU_LIST_NEXT(faceuse, &fu2->l);
+        if (fu2->orientation == OT_SAME) {
+            struct loopuse *lu;
+            struct edgeuse *eu;
+            fastf_t area;
+            plane_t pl;
+
+            lu = BU_LIST_FIRST(loopuse, &fu2->lu_hd);
+            NMG_CK_LOOPUSE(lu);
+            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+                NMG_CK_EDGEUSE(eu);
+                if (eu->vu_p->v_p == eu->eumate_p->vu_p->v_p)
+                    kill_fu = fu2;
+            }
+            if (!kill_fu) {
+                area = nmg_loop_plane_area(lu, pl);
+                if (area <= 0.0) {
+                    bu_log("ERROR: Can't get plane for face\n");
+                    kill_fu = fu2;
+                }
+            }
+            if (kill_fu) {
+                if (next_fu == kill_fu->fumate_p)
+                    next_fu = BU_LIST_NEXT(faceuse, &next_fu->l);
+                bu_ptbl_rm(&faces2, (long *)kill_fu);
+                nmg_kfu(kill_fu);
+            } else
+                nmg_face_g(fu2, pl);
+        }
+        fu2 = next_fu;
+    }
+
+    if (BU_PTBL_END(&faces2)) {
+        bu_log("about to run nmg_gluefaces\n");
+        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces2), BU_PTBL_END(&faces2), tol2);
+
+        bu_log("about to run nmg_rebound 1\n");
+        nmg_rebound(*m2, tol2);
+
+        bu_log("about to run nmg_fix_normals\n");
+        nmg_fix_normals(*s2, tol2);
+
+        bu_log("about to run nmg_shell_coplanar_face_merge\n");
+        nmg_shell_coplanar_face_merge(*s2, tol2, 1);
+
+        bu_log("about to run nmg_rebound 2\n");
+        nmg_rebound(*m2, tol2);
+
+        bu_log("about to mk_bot_from_nmg\n");
+        mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), *s2);
+    } else {
+        bu_log("Object %s has no faces\n", bu_vls_addr(&outputObjectName));
+    } 
     /* NMG2e */
 
+    bu_free(nmg2_verts,"nmg2_verts");
     bu_free(index_arr_nv_faces_history,"index_arr_nv_faces_history");
     bu_free(size_history,"size_history");
     bu_free(vertex_sort_index,"vertex_sort_index");
@@ -894,44 +830,12 @@ int process_nv_faces(struct ga_t *ga,
     bu_free(thickness,"thickness");
     bu_free(normals,"normals");
     bu_free(face_normals,"face_normals");
+    bu_free(triangle_indexes, "triangle_indexes");
 
-#if 0
-    if ( numNorTriangles_in_current_bot > 0 ) {
-        bu_log("Found %ld numNorFaces in current bot\n", numNorTriangles_in_current_bot);
-        mk_id(outfp, "RAW BOT");
+    bu_vls_free(&outputObjectName);
 
-        /* allocate memory for faces and thickness arrays */
-        faces = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "faces");
-        thickness = (fastf_t *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(fastf_t), "thickness");
+    bu_ptbl_reset(&faces2);
 
-        /* populate faces and thickness arrays */
-        for ( j = 0 ; j < numNorTriangles_in_current_bot ; j++ ) {
-            faces[(j*3)] = (j*3);
-            faces[(j*3)+1] = (j*3) + 1;
-            faces[(j*3)+2] = (j*3) + 2;
-            thickness[(j*3)] = thickness[(j*3)+1] = thickness[(j*3)+2] = 1.0;
-        }
-
-        /* write bot to ".g" file */
-        ret_val = mk_bot(outfp, bu_vls_addr(&outputObjectName), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
-                         numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, vertices,
-                         faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
-
-#if 0
-        bu_free(outputObjectName, "outputObjectName");
-#endif
-
-        bu_vls_free(&outputObjectName);
-
-        bu_free(vertices, "vertices");
-        bu_free(faces, "faces");
-        bu_free(thickness, "thickness");
-
-    }
-#endif
-        /* duplicate code to allow above to be commented */
-        bu_vls_free(&outputObjectName);
-        bu_free(triangle_indexes, "triangle_indexes");
     }
 
     return ret_val;
@@ -965,6 +869,27 @@ main(int argc, char **argv)
 
     const char *parse_messages = (char *)0;
     int parse_err = 0;
+
+    /* NMG2s */
+    struct model *m2 ;
+    struct nmgregion *r2 ;
+    struct shell *s2 ;
+    struct bn_tol tol2 ;
+
+    m2 = nmg_mm();
+    r2 = nmg_mrsv(m2);
+    s2 = BU_LIST_FIRST(shell, &r2->s_hd);
+
+    NMG_CK_MODEL(m2);
+    NMG_CK_REGION(r2);
+    NMG_CK_SHELL(s2);
+
+    tol2.magic = BN_TOL_MAGIC;
+    tol2.dist = 0.0005;
+    tol2.dist_sq = tol2.dist * tol2.dist;
+    tol2.perp = 1e-6;
+    tol2.para = 1 - tol2.perp;
+    /* NMG2e */
 
     bu_log("running fopen\n");
     if ((my_stream = fopen("/home/rweiss/diamond.obj","r")) == NULL) {
@@ -1026,47 +951,19 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-#if 0
-    bu_log("obj_parse_error command conpleted\n");
-    if ( ret_val != 0 ) {
-        if (ret_val == ENOMEM) {
-            if ( parse_messages ) {
-                bu_log("%s\n", *parse_messages);
-            }
-            bu_log("obj_fparse, Out of Memory.\n");
-            perror(prog);
-            return EXIT_FAILURE;
-        } else {
-            if ( parse_messages ) {
-                bu_log("%s\n", *parse_messages);
-            }
-            bu_log("obj_fparse, Other Error.\n");
-            perror(prog);
-            return EXIT_FAILURE;
-        }
-    }
-
-    if ( parse_messages ) {
-        bu_log("%s\n", *parse_messages);
-    }
-#endif
-
     if ((fd_out = wdb_fopen("diamond.g")) == NULL) {
         bu_log("Cannot create new BRL-CAD file (%s)\n", "diamond.g");
         perror(prog);
         bu_exit(1, NULL);
     }
 
+    collect_global_obj_file_attributes(&ga);
 
-collect_global_obj_file_attributes(&ga);
-
-
-
+#if 0
 /**********************/
 /* processing v_faces */
 /**********************/
 
-#if 0
     bu_log("running obj_polygonal_v_faces\n");
     numFaces = obj_polygonal_v_faces(contents, &attindex_arr_v_faces);
     bu_log("number of polygonal faces only identifed by vertices; numFaces = (%lu)\n", numFaces);
@@ -1096,18 +993,13 @@ collect_global_obj_file_attributes(&ga);
     }
 #endif
 
-/***********************/
-/* processing nv_faces */
-/***********************/
-
-
         switch (grouping_option) {
             case 'g':
                 bu_log("ENTERED 'g' PROCESSING\n");
                 for (i = 0 ; i < ga.numGroups ; i++) {
                     bu_log("(%lu) current group name is (%s)\n", i, ga.str_arr_obj_groups[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, &m2, &r2, &s2, &tol2);
                 }
                 bu_log("EXITED 'g' PROCESSING\n");
                 break;
@@ -1122,7 +1014,7 @@ collect_global_obj_file_attributes(&ga);
                 for (i = 0 ; i < ga.numObjects ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_objects[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, &m2, &r2, &s2, &tol2);
 
                 } /* numObjects loop */
                 bu_log("EXITED 'o' PROCESSING\n");
@@ -1132,14 +1024,14 @@ collect_global_obj_file_attributes(&ga);
                 for (i = 0 ; i < ga.numMaterials ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_materials[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00, &m2, &r2, &s2, &tol2);
 
                 } /* numMaterials loop */
                 bu_log("EXITED 'm' PROCESSING\n");
                 break;
             case 't':
                 bu_log("ENTERED 't' PROCESSING\n");
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00, &m2, &r2, &s2, &tol2);
                 bu_log("EXITED 't' PROCESSING\n");
                 break;
             default:
