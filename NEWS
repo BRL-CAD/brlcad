@@ -18,6 +18,7 @@ changes made.  See document footer for additional details.
 * remap_mater mged command to change material codes - Paul Tanenbaum
 * MGED help menu lists all commands with documentation - Cliff Yapp
 * Improved put_comb command usage and added documentation - Cliff Yapp
+# mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
 * Improve behavior of editor invocation in classic mode - Cliff Yapp
 * reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker
