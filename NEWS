@@ -18,6 +18,7 @@ changes made.  See document footer for additional details.
 * added NURBS support for transformation matrices - Keith Bowman
 * remap_mater mged command to change material codes - Paul Tanenbaum
 * MGED help menu lists all commands with documentation - Cliff Yapp
+* fixed mged units bug supporting decameter (Dm) units - Bob Parker
 * improved robustness of NURBS trimming during raytrace - Keith Bowman
 * Improved put_comb command usage and added documentation - Cliff Yapp
 # mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
