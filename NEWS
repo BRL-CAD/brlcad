@@ -25,6 +25,7 @@ changes made.  See document footer for additional details.
 * continued work on MGED Docbook man page conversions - Janine Gettier
 * integration of mged authorship dedication into archer - Bob Parker
 * improved behavior of mged initialization options - Bob Parker
+* 3dm-g importer improvements for hierarchical layering - Keith Bowman
 * fixed namspace initialization failure in rtwizard - Bob Parker
 * removed the pcd-pix image conversion tool - Sean Morrison
 * fixed coil tool -S option, now takes 6 parameters - Cliff Yapp
