@@ -3783,6 +3783,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
+AM_CONDITIONAL(BUILD_GOBLIN, [test "x$build_brlcad_goblin" = "xyes"])
 AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limit" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
@@ -4237,6 +4238,9 @@ AC_CONFIG_FILES([
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
 	src/other/libz/Makefile
+	src/other/goblin/Makefile
+	src/other/goblin/goblin/Makefile
+	src/other/goblin/glpk/Makefile
 	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
