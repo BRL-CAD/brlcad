@@ -98,7 +98,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
     {"cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL},
-    {"color", f_edcolor, GED_FUNC_PTR_NULL},
+    {"color", cmd_ged_plain_wrapper, ged_color},
     {"comb", cmd_ged_plain_wrapper, ged_comb},
     {"comb_color", cmd_ged_plain_wrapper, ged_comb_color},
     {"copyeval", cmd_ged_plain_wrapper, ged_copyeval},
@@ -131,7 +131,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"echo", cmd_ged_plain_wrapper, ged_echo},
     {"edcodes", f_edcodes, GED_FUNC_PTR_NULL},
     {"color", cmd_ged_plain_wrapper, ged_color},
-    {"edcolor", cmd_ged_plain_wrapper, ged_edcolor},
+    {"edcolor", f_edcolor, GED_FUNC_PTR_NULL},
     {"edcomb", cmd_ged_plain_wrapper, ged_edcomb},
     {"edgedir", f_edgedir, GED_FUNC_PTR_NULL},
     {"edmater", f_edmater, GED_FUNC_PTR_NULL},
@@ -552,6 +552,7 @@ mged_setup(void)
 	tclcad_auto_path(interp);
     }
 
+    /*XXX FIXME: Should not be importing Itcl into the global namespace */
     /* Import [incr Tcl] commands into the global namespace. */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
 	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));

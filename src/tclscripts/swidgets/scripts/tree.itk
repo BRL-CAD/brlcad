@@ -184,6 +184,11 @@ itcl::class swidgets::Tree {
 	method alternode {node option value}
 	method children {node}
 	method opennodes {node}
+	method selectpath {_path}
+	method selectpaths {_paths}
+	method selectitem {_item}
+	method finditem {_node _item}
+	method findheritagepath {_node}
 
 	method xview {args}
 	method yview {args}
@@ -214,6 +219,7 @@ itcl::class swidgets::Tree {
 	method _bind_image {event script}
 	method _bind_cross {event script}
 
+	method _call_querycmd {_node}
 	method _call_selectcmd {tag}
 	method _call_multiselectcmd {type tag}
 	method _call_dblselectcmd {tag}
@@ -395,6 +401,13 @@ proc ::swidgets::tree {args} {
 	append script " n:\[eval [::itcl::code $this _get_node_name current 1]]"
     }
     $itk_component(canvas) bind "cross" $event $script
+}
+
+::itcl::body swidgets::Tree::_call_querycmd {_node} {
+    set cmd $itk_option(-querycmd)
+    regsub -all {%n} $cmd $_node cmd
+
+    uplevel \#0 $cmd
 }
 
 ::itcl::body swidgets::Tree::_call_selectcmd {tag} {
@@ -1019,11 +1032,7 @@ proc ::swidgets::tree {args} {
 	"0" {
 	    $node open 1
 	    if {[$node get -children] == "" && $itk_option(-querycmd) != {}} {
-		set cmd $itk_option(-querycmd)
-		regsub -all {%n} $cmd $node cmd
-
-		uplevel \#0 $cmd
-		#eval $itk_option(-querycmd)
+		_call_querycmd $node
 	    }
 	}
 	"1" {$node open 0}
@@ -1089,6 +1098,108 @@ proc ::swidgets::tree {args} {
     }
 
     return $open
+}
+
+::itcl::body swidgets::Tree::selectpath {_path} {
+    set node $root
+
+    set items [split $_path /]
+    set lastitem [lindex $items end]
+    foreach item $items {
+	set found 0
+	foreach child [$node get -children] {
+	    if {$item == [$child get -text]} {
+		set node $child
+		set found 1
+
+		if {$item != $lastitem && [$node get -type] == "branch" && ![$node get -open]} {
+		    toggle $node
+		}
+
+		break
+	    }
+	}
+
+	if {!$found} {
+	    return "$item not found"
+	}
+    }
+
+    _call_selectcmd $node
+
+    return $node
+}
+
+::itcl::body swidgets::Tree::selectpaths {_paths} {
+    set first 1
+    foreach path $_paths {
+	set path [regsub {^/} $path ""]
+
+	if {$first} {
+	    set first 0
+	}
+
+	selectpath $path
+	lappend save_selnodes $selnode
+    }
+
+    set first 1
+    foreach snode $save_selnodes {
+	set snode [regsub {^n:} $snode {}]
+
+	if {$first} {
+	    set first 0
+	    _call_selectcmd $snode
+	} else {
+	    _call_multiselectcmd control $snode
+	}
+    }
+}
+
+::itcl::body swidgets::Tree::selectitem {_item} {
+    set node $root
+    if {[$node get -children] == "" && $itk_option(-querycmd) != {}} {
+	_call_querycmd $child
+    }
+
+    set node [finditem $node $_item]
+    if {$node != ""} {
+	set path [findheritagepath $node]
+	selectpath $path
+    }
+
+    return $node
+}
+
+::itcl::body swidgets::Tree::finditem {_node _item} {
+    foreach child [$_node get -children] {
+	if {$_item == [$child get -text]} {
+	    return $child
+	} else {
+	    if {[$child get -children] == "" && $itk_option(-querycmd) != {}} {
+		_call_querycmd $child
+	    }
+
+	    set node [finditem $child $_item]
+	    if {$node != ""} {
+		return $node
+	    }
+	}
+    }
+
+    return ""
+}
+
+::itcl::body swidgets::Tree::findheritagepath {_node} {
+    set path [$_node get -text]
+    set parent [$_node get -parent]
+    while {$parent != $root} {
+	set pname [$parent get -text]
+	set path "$pname/$path"
+	set parent [$parent get -parent]
+    }
+
+    return $path
 }
 
 ::itcl::body swidgets::Tree::xview {args} {

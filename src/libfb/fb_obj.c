@@ -30,6 +30,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <strings.h>
 
 #include "bio.h"
 #include "tcl.h"
@@ -135,7 +136,7 @@ fbo_deleteProc(ClientData clientData)
  *	  procname close
  */
 HIDDEN int
-fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv __attribute__((unused)))
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
@@ -161,7 +162,7 @@ fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *	  fb_open [name device [args]]
  */
 HIDDEN int
-fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fbo_open_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
 {
     struct fb_obj *fbop;
     FBIO *ifp;
@@ -354,7 +355,9 @@ fbo_getcursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     int x, y;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getcursor") != 0)
+    {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getcursor");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -564,9 +567,9 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
     int xmin, ymin;
-    int width;
-    int height;
-    int i;
+    long width;
+    long height;
+    size_t i;
     RGBpixel pixel;
     unsigned char *pp;
 
@@ -599,13 +602,13 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[4], "%d", &width) != 1) {
+    if (sscanf(argv[4], "%ld", &width) != 1) {
 	Tcl_AppendResult(interp, "fb_cell: bad width - ",
 			 argv[4], (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[5], "%d", &height) != 1) {
+    if (sscanf(argv[5], "%ld", &height) != 1) {
 	Tcl_AppendResult(interp, "fb_cell: bad height - ",
 			 argv[5], (char *)NULL);
 	return TCL_ERROR;
@@ -651,7 +654,9 @@ fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct fb_obj *fbop = (struct fb_obj *)clientData;
 
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "flush") != 0)
+    {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -677,7 +682,9 @@ fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getheight") != 0)
+    {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getheight");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -704,7 +711,9 @@ fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getwidth") != 0)
+    {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getwidth");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -731,7 +740,10 @@ fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getsize") != 0)
+    {
+
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getsize");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -886,6 +898,7 @@ fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
     return TCL_OK;
 }
+
 #if 0
 /*
  *

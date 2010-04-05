@@ -819,7 +819,9 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		    pp->pt_inflip = 0;
 		    pp->pt_inseg->seg_stp = kut_soltab;
 		    break;
-		}
+		} else if (pp->pt_inhit->hit_dist > dist) {
+                    break;
+                }
 	    }
 	    if (pp == PartHeadp) {
 		/* we ignored everything, this is now a miss */

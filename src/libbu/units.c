@@ -69,7 +69,7 @@ struct cvt_tab bu_units_length_tab[] = {
     {100.0,		"decimeter"},
     {1000.0,		"m"},
     {1000.0,		"meter"},
-    {10000.0,		"dm"},
+    {10000.0,		"Dm"},
     {10000.0,		"decameter"},
     {100000.0,		"hm"},
     {100000.0,		"hectometer"},
@@ -239,6 +239,29 @@ bu_units_string(register const double mm)
 	    return tp->name;
     }
     return (char *)NULL;
+}
+
+struct bu_vls *
+bu_units_strings_vls()
+{
+    register const struct cvt_tab *tp;
+    struct bu_vls *vlsp;
+    double prev_val = 0.0;
+
+    BU_GETSTRUCT(vlsp, bu_vls);
+    bu_vls_init(vlsp);
+    for (tp=bu_units_length_tab; tp->name[0]; tp++) {
+	if (NEAR_ZERO(prev_val - tp->val, SMALL_FASTF))
+	    continue;
+
+	bu_vls_printf(vlsp, "%s, ", tp->name);
+	prev_val = tp->val;
+    }
+
+    /* Remove the last ", " */
+    bu_vls_trunc(vlsp, -2);
+
+    return vlsp;
 }
 
 

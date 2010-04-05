@@ -30,10 +30,22 @@
 #ifdef OBJ_BREP
 
 #include <string>
+#include <vector>
+#include <map>
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 
+/* typedefs and global containers for building layer hierarchy */
+typedef std::map< std::string, std::string> STR_STR_MAP;
+typedef std::map< std::string, int> REGION_CNT_MAP;
+typedef std::vector<std::string> MEMBER_VEC;
+typedef std::map< std::string, MEMBER_VEC *> MEMBER_MAP;
+
+STR_STR_MAP layer_uuid_name_map;
+STR_STR_MAP layer_name_uuid_map;
+REGION_CNT_MAP region_cnt_map;
+MEMBER_MAP member_map;
 
 char * itoa(int num) {
     static char	line[10];
@@ -52,6 +64,125 @@ void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
 	}
     } else {
 	dump->Print("brep was NULL!\n");
+    }
+}
+
+int RegionCnt( std::string &name ) {
+    REGION_CNT_MAP::iterator iter = region_cnt_map.find(name);
+
+    if (iter == region_cnt_map.end()) {
+	region_cnt_map.insert(std::pair<std::string,int>(name,1));
+	return 1;
+    } else {
+	int cnt = iter->second + 1;
+	region_cnt_map.erase(iter);
+	region_cnt_map.insert(std::pair<std::string,int>(name,cnt));
+	return cnt;
+    }
+}
+
+void MapRegion(ONX_Model &model, std::string &region_name, int layer_index, ON_TextLog* dump) {
+    char uuidstr[50];
+    std::string parent_uuid;
+
+    const ON_Layer& layer = model.m_layer_table[layer_index];
+
+    ON_UUID current_uuid = layer.m_layer_id;
+    parent_uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
+
+    MEMBER_MAP::iterator miter = member_map.find(parent_uuid);
+    if (miter != member_map.end()) {
+	MEMBER_VEC *vec = (MEMBER_VEC *)miter->second;
+	vec->push_back(region_name);
+    }
+}
+
+void MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid, ON_TextLog* dump) {
+    layer_uuid_name_map.insert(std::pair<std::string,std::string>(uuid,layer_name));
+    layer_name_uuid_map.insert(std::pair<std::string,std::string>(layer_name,uuid));
+    MEMBER_MAP::iterator iter = member_map.find(uuid);
+    if (iter == member_map.end()) {
+	MEMBER_VEC *vec = new MEMBER_VEC;
+	member_map.insert(std::pair<std::string,MEMBER_VEC *>(uuid,vec));
+    }
+
+    iter = member_map.find(parent_uuid);
+    if (iter == member_map.end()) {
+	MEMBER_VEC *vec = new MEMBER_VEC;
+	vec->push_back(layer_name);
+	member_map.insert(std::pair<std::string,MEMBER_VEC *>(parent_uuid,vec));
+    } else {
+	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
+	vec->push_back(layer_name);
+    }
+}
+
+void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
+    static int groupcnt = 1;
+    struct wmember members;
+    BU_LIST_INIT(&members.l);
+
+    STR_STR_MAP::iterator siter;
+    std::string groupname = "";
+
+    if (uuid.compare("00000000-0000-0000-0000-000000000000") == 0) {
+	groupname = "all";
+    } else {
+	siter = layer_uuid_name_map.find(uuid);
+	if (siter != layer_uuid_name_map.end()) {
+	    groupname = siter->second;
+	}
+    }
+    if (groupname.empty()) {
+	groupname = "g" + groupcnt;
+    }
+
+
+    MEMBER_MAP::iterator iter = member_map.find(uuid);
+    if (iter != member_map.end()) {
+	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
+	MEMBER_VEC::iterator viter = vec->begin();
+	while (viter != vec->end()) {
+	    std::string membername = *viter;
+	    (void)mk_addmember(membername.c_str(), &members.l, NULL, WMOP_UNION);
+
+	    siter = layer_name_uuid_map.find(membername);
+	    if (siter != layer_name_uuid_map.end()) {
+		std::string uuid = siter->second;
+		BuildHierarchy(outfp, uuid, dump);
+	    }
+	    viter++;
+	}
+	iter++;
+    }
+    mk_lcomb(outfp, groupname.c_str(), &members, 0, NULL, NULL, NULL, 0);
+}
+
+void BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump) {
+    std::string root_uuid = "00000000-0000-0000-0000-000000000000";
+    MEMBER_MAP::iterator iter = member_map.find(root_uuid);
+    if (iter != member_map.end()) {
+	std::string uuid = iter->first;
+	BuildHierarchy(outfp, uuid, dump);
+    }
+}
+
+void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
+    char name[256];
+    char uuidstr[50];
+    std::string layer_name,uuid,parent_uuid;
+    ON_UuidIndex uuidIndex;
+    int i, count = model.m_layer_table.Count();
+    dump->Print("Number of LAYERS - %d\n.", count);
+    for ( i=0; i < count; i++) {
+	char name[256];
+	const ON_Layer& layer = model.m_layer_table[i];
+	ON_wString lname = layer.LayerName();
+	strncpy(name, ON_String( lname ),255);
+	layer_name = name;
+	uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
+	parent_uuid = ON_UuidToString( layer.m_parent_layer_id, uuidstr );
+	MapLayer(layer_name, uuid, parent_uuid, dump);
     }
 }
 
@@ -139,6 +270,9 @@ int main(int argc, char** argv) {
 
     dump->Print("Number of NURBS objects read was %d\n.", model.m_object_table.Count());
 
+    /* process layer table before building regions */
+    ProcessLayers(model,dump);
+
     struct wmember all_regions;
     BU_LIST_INIT(&all_regions.l);
 
@@ -163,10 +297,33 @@ int main(int argc, char** argv) {
 	} else {
     	    ON_String constr(myAttributes.m_name);
 	    if (constr == NULL) {
-    		std::string genName("rhino");
-    		genName+=itoa(mcount++);
-    		geom_base = genName.c_str();
-    		dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+		std::string genName = "";
+		char name[256];
+		/* Use layer name to help name un-named regions/objects */
+		if (myAttributes.m_layer_index > 0) {
+		    const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
+		    ON_wString layer_name = layer.LayerName();
+		    strncpy(name, ON_String( layer_name ),255);
+		    genName = name;
+		    if (genName.length() <= 0) {
+			genName = "rhino";
+		    }
+		    dump->Print("\n\nlayername:\"%s\"\n\n", name);
+		} else {
+		    genName = "rhino";
+		}
+		/* For layer named regions use layer region count
+		 * instead of global region count
+		 */
+		if (genName.compare("rhino") == 0) {
+		genName+=itoa(mcount++);
+		geom_base = genName.c_str();
+		} else {
+		    int region_cnt = RegionCnt(genName);
+		    genName+=itoa(region_cnt);
+		    geom_base = genName.c_str();
+		}
+		dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
     	    } else {
 		const char* cstr = constr;
 		geom_base = cstr;
@@ -175,6 +332,9 @@ int main(int argc, char** argv) {
 
 	std::string geom_name(geom_base+".s");
 	std::string region_name(geom_base+".r");
+
+        /* add region to hierarchical containers */
+	MapRegion(model,region_name,myAttributes.m_layer_index, dump);
 
 	dump->Print("primitive is %s.\n", geom_name.c_str());
 	dump->Print("region created is %s.\n", region_name.c_str());
@@ -283,6 +443,9 @@ int main(int argc, char** argv) {
 	    }
 	}
     }
+
+    /* use accumulated layer information to build mged hierarchy */
+    BuildHierarchy(outfp, dump);
     mk_lcomb(outfp, outFileName, &all_regions, 0, NULL, NULL, NULL, 0);
     wdb_close(outfp);
 

@@ -39,8 +39,6 @@
 # clean package installation.  The package should be compatible with
 # old and new versions of Installer.
 #
-# Author: Christopher Sean Morrison
-#
 ######################################################################
 
 NAME="$1"

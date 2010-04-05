@@ -4688,6 +4688,17 @@ RT_EXPORT BU_EXTERN(void nmg_triangulate_fu,
 RT_EXPORT BU_EXTERN(void nmg_triangulate_model_mc,
 		    (struct model *m,
 		     const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(int nmg_mc_realize_cube,
+		    (struct shell *s,
+		     int pv,
+		     point_t *edges,
+		     const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(int nmg_mc_evaluate,
+		    (struct shell *s,
+		     struct rt_i *rtip,
+		     const struct db_full_path *pathp,
+		     const struct rt_tess_tol *ttol,
+		     const struct bn_tol *tol));
 
 /* nmg_manif.c */
 RT_EXPORT BU_EXTERN(int nmg_dangling_face,
@@ -4844,7 +4855,7 @@ RT_EXPORT BU_EXTERN(void nmg_lu_to_vlist,
 		    (struct bu_list *vhead,
 		     const struct loopuse	*lu,
 		     int			poly_markers,
-		     const vectp_t		normal));
+		     const vectp_t		norm));
 RT_EXPORT BU_EXTERN(void nmg_snurb_fu_to_vlist,
 		    (struct bu_list		*vhead,
 		     const struct faceuse	*fu,

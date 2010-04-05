@@ -1864,7 +1864,6 @@ AC_CHECK_TYPE([uintptr_t],
 	test -z "$ac_type" && break
     done])
 
-
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
@@ -2008,7 +2007,7 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-g3 -gstabs+], [debug_flag])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
@@ -2292,6 +2291,22 @@ else
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 5
 fi
+#if test "x$build_parsers" = "xyes" ; then
+     # test for modern features in lex
+     #echo "%option reentrant bison-bridge" >> lex.l
+     #echo "%%" >> lex.l
+     #$LEX lex.l > /dev/null 2>&1
+     #ret=$?
+     #rm -f lex.l
+     #if test "x${ret}" != "x0" ; then
+	#build_parsers=no
+	#AC_MSG_WARN([The LEX-style scanner found does not support features required by])
+	#AC_MSG_WARN([BRL-CAD's LEX code.  Various MGED commands and geometry conversion])
+	#AC_MSG_WARN([routines will be disabled.])
+	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
+     #fi
+#fi
+	
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
     AC_MSG_RESULT(yes)
@@ -2306,7 +2321,6 @@ else
     fi
     bc_build_step="no"
 fi
-
 
 dnl *** libpng ***
 png_works=no
@@ -4171,6 +4185,7 @@ AC_CONFIG_FILES([
 	src/libfb/Makefile
 	src/libfft/Makefile
 	src/libgcv/Makefile
+	src/libgcv/obj/Makefile
 	src/libged/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile

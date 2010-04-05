@@ -447,7 +447,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 	close(rtcop->fd);
 
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify();
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
 	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
 	return;
@@ -531,7 +531,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 	Tcl_Close(rtcop->interp, rtcop->chan);
 
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify();
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
 	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
 

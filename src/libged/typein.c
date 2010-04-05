@@ -1194,19 +1194,19 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
 	switch ((vals_present-2) % 3) {
 	    case 0:
-		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : ",
+		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : %d, %d",
 			      prompt[5],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
 	    case 1:
-		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : ",
+		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : %d, %d",
 			      prompt[6],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
 	    case 2:
-		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : ",
+		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : %d, %d",
 			      prompt[7],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );

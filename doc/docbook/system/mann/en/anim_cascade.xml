@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../../resources/standard/dtd/docbookx.dtd">
+
+<!-- Copyright (c) 2005-2010 United States Government as represented by -->
+<!-- the U.S. Army Research Laboratory.                                 -->
+<!--                                                                    -->
+<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
+<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
+<!-- modification, are permitted provided that the following conditions -->
+<!-- are met:                                                           -->
+<!--                                                                    -->
+<!-- 1. Redistributions of source code (Docbook format) must retain the -->
+<!-- above copyright notice, this list of conditions and the following  -->
+<!-- disclaimer.                                                        -->
+<!--                                                                    -->
+<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
+<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
+<!-- reproduce the above copyright notice, this list of conditions and  -->
+<!-- the following disclaimer in the documentation and/or other         -->
+<!-- materials provided with the distribution.                          -->
+<!--                                                                    -->
+<!-- 3. The name of the author may not be used to endorse or promote    -->
+<!-- products derived from this documentation without specific prior    -->
+<!-- written permission.                                                -->
+<!--                                                                    -->
+<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
+<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
+<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
+<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
+<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
+<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
+<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
+<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
+<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
+<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
+<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
+<!-- SUCH DAMAGE.                                                       -->
+
+<refentry id='anim_cascade1'>
+  <refmeta>
+    <refentrytitle>ANIM_CASCADE</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>anim_cascade</refname>
+    <refpurpose>evaluates movement of an object relative to a moving frame of reference</refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>anim_cascade</command>
+      <arg choice='opt'>-s</arg>
+      <arg choice='opt'>-o(<replaceable>f</replaceable>|<replaceable>r</replaceable>|<replaceable>a</replaceable>)</arg>
+      <arg choice='opt'>-(<replaceable>f</replaceable>|<replaceable>r</replaceable>|<replaceable>a</replaceable>)(<replaceable>c</replaceable>|<replaceable>y</replaceable>) # # #</arg>
+      <arg choice='plain'><replaceable>input.table</replaceable></arg>
+      <arg choice='plain'><replaceable>output.table</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      <emphasis remap='I'>Anim_cascade</emphasis> is designed to enable the user 
+      to control the movement of objects relative to other objects. In the normal 
+      mode of operation, the user supplies the position and orientation of a 
+      (possibly moving) frame of reference and the position
+      and orientation of an object relative to the frame of reference,
+      and <command>anim_cascade</command> produces the absolute position and orientation 
+      of the object at each point in time. All orientations are specified as yaw, 
+      pitch, and roll. The columns of the input table are:
+    </para>
+    
+    <para>time fx fy fz fyaw fpitch froll rx ry rz ryaw rpitch rroll</para>
+    
+    <para>and the columns of the output table are:</para>
+    
+    <para>time ax ay az ayaw apitch aroll</para>
+    
+    <para>
+      Here "f" refers to the frame of reference, "r" refers to the position
+      and orientation of the object relative to the frame, and "a"
+      refers to the absolute position and orientation of the object.
+    </para>
+  </refsect1>
+
+  <refsect1 id='options'>
+    <title>OPTIONS</title>
+    <variablelist remap='TP'>
+      <varlistentry>
+	<term><option>-or</option></term>
+	<listitem>
+	  <para>
+	    Output the relative position and orientation. If this option is specified,
+	    <command>anim_cascade</command> will expect the absolute position and 
+	    orientation of the frame of reference and the object as input,
+	    and will produce the position and orientation or the object relative to
+	    the frame as output. The input columns should be:
+	  </para>
+	  
+	  <para>time fx fy fz fyaw fpitch froll ax ay az ayaw apitch aroll</para>
+	  
+	  <para>and the output columns will be:</para>
+	  
+	  <para>time rx ry rz ryaw rpitch rroll</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-of</option></term>
+	<listitem>
+	  <para>
+	    Output the frame of reference. If this option is specified,
+	    <command>anim_cascade</command> will expect the absolute and relative 
+	    positions and orientations of the object as input,
+	    and will produce the corresponding frame of reference as output.
+	    The input columns should be:
+	  </para>
+	  
+	  <para>time ax ay az ayaw apitch aroll rx ry rz ryaw rpitch rroll</para>
+	  
+	  <para>and the output columns will be:</para>
+	  
+	  <para>time fx fy fz fyaw fpitch froll</para>
+	  
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-fc # # #</option></term>
+	<listitem>
+	  <para>
+	    Specify a constant position for the frame of reference. The
+	    columns fx, fy, and fz should be omitted from the input table, and the
+	    command-line arguments will be used instead. This has no effect if used
+	    in conjunction with <option>-of</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-fy # # #</option></term>
+	<listitem>
+	  <para>
+	    Specify a constant orientation for the frame of reference. The
+	    columns fyaw, fpitch, and froll should be omitted from the input table,
+	    and the command-line arguments will be used instead.
+	    This has no effect if used in conjunction with <option>-of</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-rc # # #</option></term>
+	<listitem>
+	  <para>
+	    Specify a constant position of the object relative to the frame
+	    of reference. The columns rx, ry, and rz should be omitted from the input 
+	    table, and the command-line arguments will be used instead.
+	    This has no effect if used in conjunction with <option>-or</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-ry # # #</option></term>
+	<listitem>
+	  <para>
+	    Specify a constant orientation of the object relative to the
+	    frame of reference. The columns ryaw,  rpitch, and rroll should be 
+	    omitted from the input table, and the command-line arguments will be 
+	    used instead. This has no effect if used in conjunction with
+	    <option>-or</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-ac # # #</option></term>
+	<listitem>
+	  <para>
+	    Specify a constant absolute position for the object. The
+	    columns ax, ay, and az should be omitted from the input table, and the
+	    command-line arguments will be used instead. This has no effect unless used
+	    in conjunction with <option>-or</option> or <option>-of</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-ay # # #</option></term>
+	<listitem>
+	  <para>
+	    Specify a constant absolute orientation for the object. The
+	    columns ayaw, apitch, and aroll should be omitted from the input table,
+	    and the command-line arguments will be used instead.
+	    This has no effect unless used in conjunction with
+	    <option>-or</option> or <option>-of</option>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-s</option></term>
+	<listitem>
+	  <para>
+	    Suppress time column. No time column is read or written.
+	  </para>
+	  <para>
+	    Note: When all of the input columns are specified with command-line arguments,
+	    then standard input is not read and
+	    only one line of output is produced. The time value will be set to zero,
+	    unless it is suppressed.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  
+  <refsect1 id='examples'>
+    <title>EXAMPLES</title>
+    <example>
+      <title>Circular pan around a moving vehicle</title>
+      <para>
+	Suppose that you want the virtual camera to pan in a circle around a
+	moving vehicle, always staying a fixed distance from the vehicle.
+	There should already exist an animation table with the time, position,
+	and orientation of the vehicle in each frame. This will be the moving
+	frame of reference. Next, you should create an animation table which
+	describes how the camera would need to move if the vehicle stood still
+	at the origin. The columns of the second animation table should be
+	appended to the columns of the first table (using
+	<emphasis remap='I'>paste</emphasis>, for example), to create the
+	input table. <emphasis remap='I'>Anim_cascade</emphasis>
+	will produce an absolute animation table for the camera, suitable to 
+	use as input to <emphasis remap='I'>anim_script</emphasis>:
+      </para>
+      <para>
+      <userinput>anim_cascade &lt; input.table | anim_script -v500 &gt; view.script</userinput>
+      </para>
+    </example>
+    <example>
+      <title>Determine time of place crossing</title>
+      <para>
+	Suppose that you have an animation path for an object and you want to
+	know when it crosses a given oblique plane. You can use the
+	<option>-or</option> option to find out what the position of the object 
+	is relative to the frame of reference of the plane. Suppose that the plane 
+	is defined by the equation:
+      </para>
+      
+      <para>x + z = 0</para>
+
+      <para>
+	In a frame of reference located at the origin with a pitch of 45
+	degrees, the x-axis is perpendicular to the given plane.
+	To convert the absolute animation path into this frame of reference, the command
+	would be:
+      </para>
+      <para>
+      <userinput>anim_cascade -or -fc 0 0 0 -fy 0 45 0 &lt; absolute.table &gt;; \ relative.table</userinput>
+      </para>
+      <para>
+	Wherever the x coordinate in the output table is positive, the object
+	lies above the plane.
+      </para>
+    </example>
+    <example>
+      <title>Camera positioning relative to objects</title>
+      <para>
+	Suppose that one object is situated at the point (1,2,3) with a yaw,
+	pitch, and roll of (45, 25, 10). Suppose further that you want to
+	position a camera so that to the camera, the first object seems to be 10
+	units straight ahead, facing to the right. You could find the required
+	position and orientation of the camera with the following command:
+      </para>
+      <para>
+	<userinput>anim_cascade -s -of -ac 1 2 3 -ay 45 25 10 -rc 10 0 0 -ry -90 0 0</userinput>
+      </para>
+    </example>
+  </refsect1>
+  
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>Carl J. Nuzman</para>
+  </refsect1>
+  
+  <refsect1 id='copyright'>
+    <title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 1993-2010 by the United States Government
+      as represented by the U.S. Army Research Laboratory.  All rights reserved.
+    </para> 
+  </refsect1>
+  
+  <refsect1 id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;.
+    </para>
+</refsect1>
+</refentry>
+

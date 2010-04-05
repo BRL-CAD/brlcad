@@ -1497,7 +1497,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		   pa.pa_pindex[2][i], pa.pa_pindex[3][i]);
 	}
 	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
-	    bu_log("rt_arb_tess(%s): nmg_cmface() fail on face %d\n", i);
+	    bu_log("rt_arb_tess(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}
     }
@@ -1613,7 +1613,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	/* The edges created will be linear, in parameter space...,
 	 * but need to have edge_g_cnurb geometry. */
 	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
-	    bu_log("rt_arb_tnurb(%s): nmg_cmface() fail on face %d\n", i);
+	    bu_log("rt_arb_tnurb(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}
 	/* March around the fu's loop assigning uv parameter values */

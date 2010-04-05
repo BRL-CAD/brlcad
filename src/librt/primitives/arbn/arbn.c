@@ -270,7 +270,7 @@ rt_arbn_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     h = hitp->hit_surfno;
     if (h < 0 || h > aip->neqn) {
-	bu_log("rt_arbn_norm(%s): hit_surfno=%d?\n", h);
+	bu_log("rt_arbn_norm(): hit_surfno=%d?\n", h);
 	VSETALL(hitp->hit_normal, 0);
 	return;
     }

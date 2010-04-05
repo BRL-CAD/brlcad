@@ -17,12 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file labels.c
- *
- * Functions -
- *	dm_draw_labels	Draw primitive labels.
- *
- */
 
 #include "common.h"
 #include "bio.h"
@@ -42,35 +36,36 @@
 #include "dm.h"
 
 /*
- *  Put labels on the vertices of the currently edited solid.
- *  XXX This really should use import/export interface!!!  Or be part of it.
+ * Put labels on the vertices of the currently edited solid.
+ * XXX This really should use import/export interface!!! Or be part of it.
  *
- *  This code was lifted from mged/edsol.c.
- *  XXX This should probably live in librt.
+ * This code was lifted from mged/edsol.c.
+ * XXX This should probably live in librt.
  */
 void
-dm_label_primitive(struct rt_wdb		*wdbp,
-		   int				*num_lines,
-		   point_t			*lines,
-		   struct rt_point_labels	pl[],
-		   int				max_pl,
-		   const mat_t			xform,
-		   struct rt_db_internal	*ip)
+dm_label_primitive(struct rt_wdb *wdbp,
+		   struct rt_point_labels pl[],
+		   int max_pl,
+		   const mat_t xform,
+		   struct rt_db_internal *ip)
 {
-    int	i;
-    point_t		work;
-    point_t		pos_view;
-    int		npl = 0;
+    int i;
+    point_t work;
+    point_t pos_view;
+    int npl = 0;
 
 
-#define	POINT_LABEL( _pt, _char )	{ \
-	VMOVE( pl[npl].pt, _pt ); \
-	pl[npl].str[0] = _char; \
-	pl[npl++].str[1] = '\0'; }
+#define POINT_LABEL(_pt, _char) {		\
+	if (npl+1 < max_pl) {			\
+	    VMOVE(pl[npl].pt, _pt);		\
+	    pl[npl].str[0] = _char;		\
+	    pl[npl++].str[1] = '\0';		\
+	}					\
+    }
 
-#define	POINT_LABEL_STR( _pt, _str )	{ \
-	VMOVE( pl[npl].pt, _pt ); \
-	bu_strlcpy( pl[npl++].str, _str, sizeof(pl[0].str) ); }
+#define POINT_LABEL_STR(_pt, _str) {				\
+	VMOVE(pl[npl].pt, _pt);					\
+	bu_strlcpy(pl[npl++].str, _str, sizeof(pl[0].str)); }
 
 
     RT_CK_DB_INTERNAL(ip);
@@ -81,10 +76,10 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 
     switch (ip->idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_TOR: {
-	    struct rt_tor_internal	*tor =
+	    struct rt_tor_internal *tor =
 		(struct rt_tor_internal *)ip->idb_ptr;
-	    fastf_t	r3, r4;
-	    vect_t	adir;
+	    fastf_t r3, r4;
+	    vect_t adir;
 
 	    RT_TOR_CK_MAGIC(tor);
 
@@ -111,7 +106,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_TGC: {
-	    struct rt_tgc_internal	*tgc =
+	    struct rt_tgc_internal *tgc =
 		(struct rt_tgc_internal *)ip->idb_ptr;
 
 	    RT_TGC_CK_MAGIC(tgc);
@@ -138,9 +133,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_SPH:
 	case DB5_MINORTYPE_BRLCAD_ELL: {
-	    point_t	work;
-	    point_t	pos_view;
-	    struct rt_ell_internal	*ell =
+	    struct rt_ell_internal *ell =
 		(struct rt_ell_internal *)ip->idb_ptr;
 
 	    RT_ELL_CK_MAGIC(ell);
@@ -152,9 +145,9 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    MAT4X3PNT(pos_view, xform, work);
 	    POINT_LABEL(pos_view, 'A');
 
-	    VADD2( work, ell->v, ell->b );
+	    VADD2(work, ell->v, ell->b);
 	    MAT4X3PNT(pos_view, xform, work);
-	    POINT_LABEL( pos_view, 'B' );
+	    POINT_LABEL(pos_view, 'B');
 
 	    VADD2(work, ell->v, ell->c);
 	    MAT4X3PNT(pos_view, xform, work);
@@ -187,27 +180,27 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 		    break;
 		case ARB6:
 		    for (i=0; i<5; i++) {
-			MAT4X3PNT( pos_view, xform, arb->pt[i] );
-			POINT_LABEL( pos_view, i+'1' );
+			MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			POINT_LABEL(pos_view, i+'1');
 		    }
-		    MAT4X3PNT( pos_view, xform, arb->pt[6] );
-		    POINT_LABEL( pos_view, '6' );
+		    MAT4X3PNT(pos_view, xform, arb->pt[6]);
+		    POINT_LABEL(pos_view, '6');
 
 		    break;
 		case ARB5:
 		    for (i=0; i<5; i++) {
-			MAT4X3PNT( pos_view, xform, arb->pt[i] );
-			POINT_LABEL( pos_view, i+'1' );
+			MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			POINT_LABEL(pos_view, i+'1');
 		    }
 
 		    break;
 		case ARB4:
 		    for (i=0; i<3; i++) {
-			MAT4X3PNT( pos_view, xform, arb->pt[i] );
-			POINT_LABEL( pos_view, i+'1' );
+			MAT4X3PNT(pos_view, xform, arb->pt[i]);
+			POINT_LABEL(pos_view, i+'1');
 		    }
-		    MAT4X3PNT( pos_view, xform, arb->pt[4] );
-		    POINT_LABEL( pos_view, '4' );
+		    MAT4X3PNT(pos_view, xform, arb->pt[4]);
+		    POINT_LABEL(pos_view, '4');
 
 		    break;
 	    }
@@ -226,7 +219,6 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    MAT4X3PNT(pos_view, xform, ars->curves[0])
 
 		if (ars_crv >= 0 && ars_col >= 0) {
-		    point_t work;
 		    point_t ars_pt;
 
 		    VMOVE(work, &ars->curves[ars_crv][ars_col*3]);
@@ -247,8 +239,8 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    /*XXX Needs work */
 	    struct rt_nurb_internal *sip =
 		(struct rt_nurb_internal *) ip->idb_ptr;
-	    struct face_g_snurb	*surf;
-	    fastf_t	*fp;
+	    struct face_g_snurb *surf;
+	    fastf_t *fp;
 	    int spl_surfno = 0;
 	    int spl_ui = 0;
 	    int spl_vi = 0;
@@ -256,22 +248,22 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    RT_NURB_CK_MAGIC(sip);
 	    surf = sip->srfs[spl_surfno];
 	    NMG_CK_SNURB(surf);
-	    fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
+	    fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
 	    MAT4X3PNT(pos_view, xform, fp);
-	    POINT_LABEL( pos_view, 'V' );
+	    POINT_LABEL(pos_view, 'V');
 
-	    fp = &RT_NURB_GET_CONTROL_POINT( surf, 0, 0 );
+	    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, 0);
 	    MAT4X3PNT(pos_view, xform, fp);
-	    POINT_LABEL_STR( pos_view, " 0, 0" );
-	    fp = &RT_NURB_GET_CONTROL_POINT( surf, 0, surf->s_size[1]-1 );
+	    POINT_LABEL_STR(pos_view, " 0, 0");
+	    fp = &RT_NURB_GET_CONTROL_POINT(surf, 0, surf->s_size[1]-1);
 	    MAT4X3PNT(pos_view, xform, fp);
-	    POINT_LABEL_STR( pos_view, " 0, u" );
-	    fp = &RT_NURB_GET_CONTROL_POINT( surf, surf->s_size[0]-1, 0 );
+	    POINT_LABEL_STR(pos_view, " 0, u");
+	    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, 0);
 	    MAT4X3PNT(pos_view, xform, fp);
-	    POINT_LABEL_STR( pos_view, " v, 0" );
-	    fp = &RT_NURB_GET_CONTROL_POINT( surf, surf->s_size[0]-1, surf->s_size[1]-1 );
+	    POINT_LABEL_STR(pos_view, " v, 0");
+	    fp = &RT_NURB_GET_CONTROL_POINT(surf, surf->s_size[0]-1, surf->s_size[1]-1);
 	    MAT4X3PNT(pos_view, xform, fp);
-	    POINT_LABEL_STR( pos_view, " u, v" );
+	    POINT_LABEL_STR(pos_view, " u, v");
 	}
 
 	    break;
@@ -279,27 +271,27 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    /*XXX Needs work */
 #if 0
 	    /* New way only */
-	{
+	    {
 #ifndef NO_MAGIC_CHECKING
-	    struct model *m =
-		(struct model *) ip->idb_ptr;
-	    NMG_CK_MODEL(m);
+		struct model *m =
+		    (struct model *) ip->idb_ptr;
+		NMG_CK_MODEL(m);
 #endif
 
-	    if (es_eu)  {
-		point_t	cent;
-		NMG_CK_EDGEUSE(es_eu);
-		VADD2SCALE(cent,
-			   es_eu->vu_p->v_p->vg_p->coord,
-			   es_eu->eumate_p->vu_p->v_p->vg_p->coord,
-			   0.5);
-		MAT4X3PNT(pos_view, xform, cent);
-		POINT_LABEL_STR(pos_view, " eu");
+		if (es_eu) {
+		    point_t cent;
+		    NMG_CK_EDGEUSE(es_eu);
+		    VADD2SCALE(cent,
+			       es_eu->vu_p->v_p->vg_p->coord,
+			       es_eu->eumate_p->vu_p->v_p->vg_p->coord,
+			       0.5);
+		    MAT4X3PNT(pos_view, xform, cent);
+		    POINT_LABEL_STR(pos_view, " eu");
+		}
 	    }
-	}
 #endif
 
-	break;
+	    break;
 	case DB5_MINORTYPE_BRLCAD_EBM:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_VOL:
@@ -309,28 +301,28 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	case DB5_MINORTYPE_BRLCAD_PIPE:
 	    /*XXX Needs work */
 #if 0
-	{
+	    {
 #ifndef NO_MAGIC_CHECKING
-	    struct rt_pipe_internal *pipe =
-		(struct rt_pipe_internal *)ip->idb_ptr;
+		struct rt_pipe_internal *pipe =
+		    (struct rt_pipe_internal *)ip->idb_ptr;
 
-	    RT_PIPE_CK_MAGIC(pipe);
+		RT_PIPE_CK_MAGIC(pipe);
 #endif
 
-	    if (es_pipept) {
-		BU_CKMAG(es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept");
+		if (es_pipept) {
+		    BU_CKMAG(es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept");
 
-		MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
-		POINT_LABEL_STR(pos_view, "pt");
+		    MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
+		    POINT_LABEL_STR(pos_view, "pt");
+		}
 	    }
-	}
 #endif
 
-	break;
+	    break;
 	case DB5_MINORTYPE_BRLCAD_PARTICLE: {
-	    struct rt_part_internal	*part =
+	    struct rt_part_internal *part =
 		(struct rt_part_internal *)ip->idb_ptr;
-	    vect_t	Ru, ortho;
+	    vect_t Ru, ortho;
 
 	    RT_PART_CK_MAGIC(part);
 
@@ -357,9 +349,9 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_RPC: {
-	    struct rt_rpc_internal	*rpc =
+	    struct rt_rpc_internal *rpc =
 		(struct rt_rpc_internal *)ip->idb_ptr;
-	    vect_t	Ru;
+	    vect_t Ru;
 
 	    RT_RPC_CK_MAGIC(rpc);
 
@@ -384,14 +376,14 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_RHC: {
-	    struct rt_rhc_internal	*rhc =
+	    struct rt_rhc_internal *rhc =
 		(struct rt_rhc_internal *)ip->idb_ptr;
-	    vect_t	Ru;
+	    vect_t Ru;
 
 	    RT_RHC_CK_MAGIC(rhc);
 
 	    MAT4X3PNT(pos_view, xform, rhc->rhc_V);
-	    POINT_LABEL(pos_view, 'V' );
+	    POINT_LABEL(pos_view, 'V');
 
 	    VADD2(work, rhc->rhc_V, rhc->rhc_B);
 	    MAT4X3PNT(pos_view, xform, work);
@@ -419,9 +411,9 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EPA: {
-	    struct rt_epa_internal	*epa =
+	    struct rt_epa_internal *epa =
 		(struct rt_epa_internal *)ip->idb_ptr;
-	    vect_t	A, B;
+	    vect_t A, B;
 
 	    RT_EPA_CK_MAGIC(epa);
 
@@ -447,9 +439,9 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_EHY: {
-	    struct rt_ehy_internal	*ehy =
+	    struct rt_ehy_internal *ehy =
 		(struct rt_ehy_internal *)ip->idb_ptr;
-	    vect_t	A, B;
+	    vect_t A, B;
 
 	    RT_EHY_CK_MAGIC(ehy);
 
@@ -483,10 +475,10 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ETO: {
-	    struct rt_eto_internal	*eto =
+	    struct rt_eto_internal *eto =
 		(struct rt_eto_internal *)ip->idb_ptr;
-	    fastf_t	ch, cv, dh, dv, cmag, phi;
-	    vect_t	Au, Nu;
+	    fastf_t ch, cv, dh, dv, cmag, phi;
+	    vect_t Au, Nu;
 
 	    RT_ETO_CK_MAGIC(eto);
 
@@ -553,54 +545,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_BOT:
 	    /*XXX Needs work */
-#if 0
-	{
-	    struct rt_bot_internal *bot =
-		(struct rt_bot_internal *)ip->idb_ptr;
-
-	    RT_BOT_CK_MAGIC( bot );
-
-	    if (bot_verts[2] > -1 &&
-		bot_verts[1] > -1 &&
-		bot_verts[0] > -1) {
-		/* editing a face */
-		point_t mid_pt;
-		point_t p1, p2, p3;
-		fastf_t one_third=1.0/3.0;
-
-		MAT4X3PNT(p1, xform, &bot->vertices[bot_verts[0]*3]);
-		MAT4X3PNT(p2, xform, &bot->vertices[bot_verts[1]*3]);
-		MAT4X3PNT(p3, xform, &bot->vertices[bot_verts[2]*3]);
-		VADD3(mid_pt, p1, p2, p3);
-
-		VSCALE(mid_pt, mid_pt, one_third);
-
-		*num_lines = 3;
-		VMOVE(lines[0], mid_pt);
-		VMOVE(lines[1], p1);
-		VMOVE(lines[2], mid_pt);
-		VMOVE(lines[3], p2);
-		VMOVE(lines[4], mid_pt);
-		VMOVE(lines[5], p3);
-	    } else if (bot_verts[1] > -1 && bot_verts[0] > -1) {
-		/* editing an edge */
-		point_t mid_pt;
-
-		VBLEND2(mid_pt, 0.5, &bot->vertices[bot_verts[0]*3],
-			0.5, &bot->vertices[bot_verts[1]*3]);
-
-		MAT4X3PNT(pos_view, xform, mid_pt);
-		POINT_LABEL_STR(pos_view, "edge");
-	    }
-
-	    if (bot_verts[0] > -1) {
-		/* editing something, always label the vertex (this is the keypoint) */
-		MAT4X3PNT(pos_view, xform, &bot->vertices[bot_verts[0]*3]);
-		POINT_LABEL_STR(pos_view, "pt");
-	    }
-	}
-#endif
-	break;
+	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    break;
 	default:
@@ -610,18 +555,18 @@ dm_label_primitive(struct rt_wdb		*wdbp,
     pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
+
 int
-dm_draw_labels(struct dm	*dmp,
-	       struct rt_wdb	*wdbp,
-	       char      	*name,
-	       mat_t 		viewmat,
-	       int       	*labelsColor,
-	       int       	(*labelsHook)(),
-	       ClientData 	labelsHookClientdata)
+dm_draw_labels(struct dm *dmp,
+	       struct rt_wdb *wdbp,
+	       char *name,
+	       mat_t viewmat,
+	       int *labelsColor,
+	       int (*labelsHook)(),
+	       ClientData labelsHookClientdata)
 {
-    struct rt_point_labels pl[8+1];
-    point_t lines[2*4];	/* up to 4 lines to draw */
-    int num_lines=0;
+#define MAX_PL 8+1
+    struct rt_point_labels pl[MAX_PL];
     struct rt_db_internal intern;
     struct directory *dp;
     int i;
@@ -638,7 +583,7 @@ dm_draw_labels(struct dm	*dmp,
 	name == (char *)NULL)
 	return BRLCAD_ERROR;
 
-    db_full_path_init( &path );
+    db_full_path_init(&path);
     ts = wdbp->wdb_initial_tree_state;     /* struct copy */
     ts.ts_dbip = wdbp->dbip;
     ts.ts_resp = &rt_uniresource;
@@ -650,28 +595,16 @@ dm_draw_labels(struct dm	*dmp,
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
     id = rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource);
-#if 0
-    if (id < 0) {
-	Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-			 ") failure", (char *)NULL );
-    }
-#endif
 
-    dm_label_primitive(wdbp, &num_lines, lines, pl, 8+1, viewmat, &intern);
+    dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 
     DM_SET_FGCOLOR(dmp,
 		   (unsigned char)labelsColor[0],
 		   (unsigned char)labelsColor[1],
 		   (unsigned char)labelsColor[2],
 		   1, 1.0);
-    for (i=0; i<num_lines; i++)
-	DM_DRAW_LINE_2D(dmp,
-			((int)(lines[i*2][X]*GED_MAX))*INV_GED,
-			((int)(lines[i*2][Y]*GED_MAX))*dmp->dm_aspect*INV_GED,
-			((int)(lines[i*2+1][X]*GED_MAX))*INV_GED,
-			((int)(lines[i*2+1][Y]*GED_MAX))*dmp->dm_aspect*INV_GED);
 
-    for (i=0; i<8+1; i++) {
+    for (i=0; i<MAX_PL; i++) {
 	if (pl[i].str[0] == '\0')
 	    break;
 

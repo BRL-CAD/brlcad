@@ -93,10 +93,11 @@ if test "x$BRLCAD_ROOT" = "x/usr" ; then
 	AC_MSG_WARN([and are at the very core of our geometry services and project heritage,])
 	AC_MSG_WARN([we have no plans to change the names of our libraries at this time.])
 	AC_MSG_WARN([])
-	AC_MSG_WARN([If you choose to continue installing into /usr, you do so entirely at])
-	AC_MSG_WARN([your own risk.  You have been warned.])
+	AC_MSG_WARN([INSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you])
+	AC_MSG_WARN([choose to continue installing into /usr, you do so entirely at your])
+	AC_MSG_WARN([own risk.  You have been warned.])
 	AC_MSG_NOTICE([])
-	AC_MSG_NOTICE([Consider using a different --prefix value.])
+	AC_MSG_NOTICE([Consider using a different --prefix or separate --libdir value.])
 	# emphasize just how bad of an idea this is
 	emphasis=15
 	AC_MSG_NOTICE([Pausing $emphasis seconds...])
@@ -130,6 +131,9 @@ if test "x$BRLCAD_ROOT" = "x/usr" ; then
 	done
 	if test "x$bc_answer" = "xno" ; then
 	    AC_MSG_ERROR([*** Aborting due to --prefix=/usr ***])
+	else
+	    AC_MSG_NOTICE([Package maintainers can quell the root warning and confirmation prompt])
+	    AC_MSG_NOTICE([by setting the BRLCAD_ROOT_OVERRIDE environment variable.])
 	fi
     fi
 fi

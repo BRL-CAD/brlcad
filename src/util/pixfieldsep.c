@@ -31,16 +31,16 @@
 #include "bu.h"
 
 
-FILE	*out1;
-FILE	*out2;
+FILE *out1;
+FILE *out2;
 
-char	*buf;
-int	file_width = 720;
-int	bytes_per_sample = 3;
-int	doubleit = 0;
+char *buf;
+int file_width = 720;
+int bytes_per_sample = 3;
+int doubleit = 0;
 
-char	*even_file = "even.pix";
-char	*odd_file = "odd.pix";
+char *even_file = "even.pix";
+char *odd_file = "odd.pix";
 
 static char usage[] = "\
 Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\
@@ -51,8 +51,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "ds:w:#:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "ds:w:#:")) != EOF) {
+	switch (c) {
 	    case 'd':
 		doubleit = 1;
 		break;
@@ -72,55 +72,56 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind < argc )  {
+    if (bu_optind < argc) {
 	even_file = argv[bu_optind++];
     }
-    if ( bu_optind < argc )  {
+    if (bu_optind < argc) {
 	odd_file = argv[bu_optind++];
     }
 
-    if ( ++bu_optind <= argc )
-	(void)fprintf( stderr, "pixfieldsep: excess argument(s) ignored\n" );
+    if (++bu_optind <= argc)
+	(void)fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
 
     return(1);		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	i;
+    int i;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
-    if ( (out1 = fopen(even_file, "w")) == NULL )  {
+    if ((out1 = fopen(even_file, "w")) == NULL) {
 	perror(even_file);
 	bu_exit (1, NULL);
     }
-    if ( (out2 = fopen(odd_file, "w")) == NULL )  {
+    if ((out2 = fopen(odd_file, "w")) == NULL) {
 	perror(odd_file);
 	bu_exit (2, NULL);
     }
 
-    buf = (char *)malloc( (file_width+1)*bytes_per_sample );
+    buf = (char *)malloc((file_width+1)*bytes_per_sample);
 
-    for (;;)  {
+    for (;;) {
 	/* Even line */
-	if ( fread( buf, bytes_per_sample, file_width, stdin ) != file_width )
+	if (fread(buf, bytes_per_sample, file_width, stdin) != file_width)
 	    break;
-	for ( i=0; i <= doubleit; i++ )  {
-	    if ( fwrite( buf, bytes_per_sample, file_width, out1 ) != file_width )  {
+	for (i=0; i <= doubleit; i++) {
+	    if (fwrite(buf, bytes_per_sample, file_width, out1) != file_width) {
 		perror("fwrite even");
 		bu_exit (1, NULL);
 	    }
 	}
 	/* Odd line */
-	if ( fread( buf, bytes_per_sample, file_width, stdin ) != file_width )
+	if (fread(buf, bytes_per_sample, file_width, stdin) != file_width)
 	    break;
-	for ( i=0; i <= doubleit; i++ )  {
-	    if ( fwrite( buf, bytes_per_sample, file_width, out2 ) != file_width )  {
+	for (i=0; i <= doubleit; i++) {
+	    if (fwrite(buf, bytes_per_sample, file_width, out2) != file_width) {
 		perror("fwrite odd");
 		bu_exit (1, NULL);
 	    }
@@ -128,6 +129,7 @@ main(int argc, char **argv)
     }
     bu_exit (0, NULL);
 }
+
 
 /*
  * Local Variables:

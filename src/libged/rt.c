@@ -449,7 +449,7 @@ _ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 	    bu_log("Raytrace complete.\n");
 
 	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify();
+	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);

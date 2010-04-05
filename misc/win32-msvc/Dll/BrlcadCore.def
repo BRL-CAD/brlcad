@@ -118,6 +118,7 @@ db_update_nref
 db_walk_tree
 
 gcv_region_end
+gcv_region_end_mc
 
 htonf
 

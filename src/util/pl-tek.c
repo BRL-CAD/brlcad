@@ -38,37 +38,38 @@
 #include "bn.h"
 
 struct uplot {
-    int	targ;	/* type of args */
-    int	narg;	/* number or args */
-    char	*desc;	/* description */
-    int	t3d;	/* non-zero if 3D */
+    int targ;	/* type of args */
+    int narg;	/* number or args */
+    char *desc;	/* description */
+    int t3d;	/* non-zero if 3D */
 };
 
-void	getstring(void);
-void	getargs(struct uplot *up);
-double	getieee(void);
-void	doscale(void);
 
-static void	tekmove(int xi, int yi);
-static void	tekcont(int x, int y);
-static void	tekerase(void);
-static void	teklabel(char *s);
-static void	teklinemod(char *s);
-static void	tekpoint(int xi, int yi);
+void getstring(void);
+void getargs(struct uplot *up);
+double getieee(void);
+void doscale(void);
 
-#define BELL	007
-#define	FF	014
-#define SUB	032		/* Turn on graphics cursor */
-#define GS	035		/* Enter Graphics Mode (1st vec dark) */
-#define ESC	033
-#define US	037		/* Enter Alpha Mode */
+static void tekmove(int xi, int yi);
+static void tekcont(int x, int y);
+static void tekerase(void);
+static void teklabel(char *s);
+static void teklinemod(char *s);
+static void tekpoint(int xi, int yi);
 
-#define	TBAD	0	/* no such command */
-#define TNONE	1	/* no arguments */
-#define TSHORT	2	/* Vax 16-bit short */
-#define	TIEEE	3	/* IEEE 64-bit floating */
-#define	TCHAR	4	/* unsigned chars */
-#define	TSTRING	5	/* linefeed terminated string */
+#define BELL 007
+#define FF 014
+#define SUB 032		/* Turn on graphics cursor */
+#define GS 035		/* Enter Graphics Mode (1st vec dark) */
+#define ESC 033
+#define US 037		/* Enter Alpha Mode */
+
+#define TBAD 0 /* no such command */
+#define TNONE 1 /* no arguments */
+#define TSHORT 2 /* Vax 16-bit short */
+#define TIEEE 3 /* IEEE 64-bit floating */
+#define TCHAR 4 /* unsigned chars */
+#define TSTRING 5 /* linefeed terminated string */
 
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
@@ -132,13 +133,14 @@ struct uplot letters[] = {
     /*z*/	{ 0, 0, 0, 0 }
 };
 
-int	verbose;
-double	arg[6];			/* parsed plot command arguments */
-double	sp[6];			/* space command */
-double	scale;			/* rescale factor */
-char	strarg[512];		/* string buffer */
-int	seenscale = 0;
-int	expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek screen */
+
+int verbose;
+double arg[6];			/* parsed plot command arguments */
+double sp[6];			/* space command */
+double scale;			/* rescale factor */
+char strarg[512];		/* string buffer */
+int seenscale = 0;
+int expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek screen */
 
 static const char usage[] = "\
 Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
@@ -146,13 +148,13 @@ Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
 int
 main(int argc, char **argv)
 {
-    int	c;
-    struct	uplot *up;
+    int c;
+    struct uplot *up;
 
-    while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-v") == 0 ) {
+    while (argc > 1) {
+	if (strcmp(argv[1], "-v") == 0) {
 	    verbose++;
-	} else if ( strcmp( argv[1], "-e" ) == 0 )  {
+	} else if (strcmp(argv[1], "-e") == 0) {
 	    expand_it = 1;
 	} else {
 	    fprintf(stderr, "pl-tek: argument '%s' ignored\n", argv[1]);
@@ -163,8 +165,8 @@ main(int argc, char **argv)
 	argv++;
     }
     /* Stdout may be a genuine Tektronix! */
-    if ( isatty(fileno(stdin)) ) {
-	bu_exit(1, "%s", usage );
+    if (isatty(fileno(stdin))) {
+	bu_exit(1, "%s", usage);
     }
 
     /* Assume default space, in case one is not provided */
@@ -177,41 +179,41 @@ main(int argc, char **argv)
     (void)putc(';', stdout);		/* Miniature typeface */
     (void)putc(US, stdout);
 
-    while ( (c = getchar()) != EOF ) {
+    while ((c = getchar()) != EOF) {
 	/* look it up */
-	if ( c < 'A' || c > 'z' ) {
+	if (c < 'A' || c > 'z') {
 	    up = &uerror;
 	} else {
 	    up = &letters[ c - 'A' ];
 	}
 
-	if ( up->targ == TBAD ) {
-	    fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
+	if (up->targ == TBAD) {
+	    fprintf(stderr, "Bad command '%c' (0x%02x)\n", c, c);
 	    continue;
 	}
 
-	if ( up->narg > 0 )
-	    getargs( up );
+	if (up->narg > 0)
+	    getargs(up);
 
-	if ( verbose )  {
-	    int	i;
-	    fprintf( stderr, "%s", up->desc );
-	    switch ( up->targ )  {
+	if (verbose) {
+	    int i;
+	    fprintf(stderr, "%s", up->desc);
+	    switch (up->targ) {
 		case TCHAR:
 		case TSHORT:
 		case TIEEE:
-		    for ( i=0; i < up->narg; i++ )
-			fprintf( stderr, " %g", arg[i] );
+		    for (i=0; i < up->narg; i++)
+			fprintf(stderr, " %g", arg[i]);
 		    break;
 		case TSTRING:
-		    fprintf( stderr, " '%s'", strarg );
+		    fprintf(stderr, " '%s'", strarg);
 		    break;
 	    }
-	    fprintf( stderr, "\n");
+	    fprintf(stderr, "\n");
 	}
 
 	/* check for space command */
-	switch ( c ) {
+	switch (c) {
 	    case 's':		/* space */
 	    case 'w':		/* d_space */
 		sp[0] = arg[0];
@@ -237,45 +239,45 @@ main(int argc, char **argv)
 	}
 
 	/* do it */
-	switch ( c ) {
+	switch (c) {
 	    case 'm':	/* 2-d move */
 	    case 'M':	/* 3move */
 	    case 'o':	/* d_move */
 	    case 'O':	/* d_3move */
-		tekmove( (int)((arg[0] - sp[0]) * scale),
-			 (int)((arg[1] - sp[1]) * scale) );
+		tekmove((int)((arg[0] - sp[0]) * scale),
+			(int)((arg[1] - sp[1]) * scale));
 		break;
 
 	    case 'n':	/* 2-d continue */
 	    case 'N':	/* 3cont */
 	    case 'q':	/* d_cont */
 	    case 'Q':	/* d_3cont */
-		tekcont( (int)((arg[0] - sp[0]) * scale),
-			 (int)((arg[1] - sp[1]) * scale) );
+		tekcont((int)((arg[0] - sp[0]) * scale),
+			(int)((arg[1] - sp[1]) * scale));
 		break;
 
 	    case 'p':	/* 2-d point */
 	    case 'P':	/* 3point */
 	    case 'x':	/* d_point */
 	    case 'X':	/* d_3point */
-		tekpoint( (int)((arg[0] - sp[0]) * scale),
-			  (int)((arg[1] - sp[1]) * scale) );
+		tekpoint((int)((arg[0] - sp[0]) * scale),
+			 (int)((arg[1] - sp[1]) * scale));
 		break;
 
 	    case 'l':	/* 2-d line */
 	    case 'v':	/* d_line */
-		tekmove( (int)((arg[0] - sp[0]) * scale),
-			 (int)((arg[1] - sp[1]) * scale) );
-		tekcont( (int)((arg[2] - sp[0]) * scale),
-			 (int)((arg[3] - sp[1]) * scale) );
+		tekmove((int)((arg[0] - sp[0]) * scale),
+			(int)((arg[1] - sp[1]) * scale));
+		tekcont((int)((arg[2] - sp[0]) * scale),
+			(int)((arg[3] - sp[1]) * scale));
 		break;
 
 	    case 'L':	/* 3line */
 	    case 'V':	/* d_3line */
-		tekmove( (int)((arg[0] - sp[0]) * scale),
-			 (int)((arg[1] - sp[1]) * scale) );
-		tekcont( (int)((arg[3] - sp[0]) * scale),
-			 (int)((arg[4] - sp[1]) * scale) );
+		tekmove((int)((arg[0] - sp[0]) * scale),
+			(int)((arg[1] - sp[1]) * scale));
+		tekcont((int)((arg[3] - sp[0]) * scale),
+			(int)((arg[4] - sp[1]) * scale));
 		break;
 
 	    case 'c':	/* circle */
@@ -289,7 +291,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 'f':	/* linmod */
-		teklinemod( strarg );
+		teklinemod(strarg);
 		break;
 
 	    case 'e':	/* erase */
@@ -297,7 +299,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 't': 	/* text label */
-		teklabel( strarg );
+		teklabel(strarg);
 		break;
 
 	    case 'C':	/* set color */
@@ -307,41 +309,43 @@ main(int argc, char **argv)
 		break;
 
 	    default:
-		fprintf(stderr, "pl-tek: unknown command byte x%x\n", c );
+		fprintf(stderr, "pl-tek: unknown command byte x%x\n", c);
 	}
     }
 
-    if ( !seenscale ) {
-	fprintf( stderr, "pl-tek: WARNING no space command in file, defaulting to +/-32k\n" );
+    if (!seenscale) {
+	fprintf(stderr, "pl-tek: WARNING no space command in file, defaulting to +/-32k\n");
     }
 
     return(0);
 }
+
 
 /*** Input args ***/
 
 int
 getshort(void)
 {
-    long	v, w;
+    long v, w;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if ( v <= 0x7FFF )  return(v);
+    if (v <= 0x7FFF) return(v);
     w = -1;
     w &= ~0x7FFF;
-    return( w | v );
+    return(w | v);
 }
+
 
 void
 getargs(struct uplot *up)
 {
-    int	i;
+    int i;
 
-    for ( i = 0; i < up->narg; i++ ) {
-	switch ( up->targ ) {
+    for (i = 0; i < up->narg; i++) {
+	switch (up->targ) {
 	    case TSHORT:
 		arg[i] = getshort();
 		break;
@@ -362,14 +366,15 @@ getargs(struct uplot *up)
     }
 }
 
+
 void
 getstring(void)
 {
-    int	c;
-    char	*cp;
+    int c;
+    char *cp;
 
     cp = strarg;
-    while ( (c = getchar()) != '\n' && c != EOF )
+    while ((c = getchar()) != '\n' && c != EOF)
 	*cp++ = c;
     *cp = 0;
 }
@@ -378,47 +383,49 @@ getstring(void)
 double
 getieee(void)
 {
-    unsigned char	in[8];
-    double	d;
+    unsigned char in[8];
+    double d;
 
-    fread( in, 8, 1, stdin );
-    ntohd( (unsigned char *)&d, in, 1 );
-    return	d;
+    fread(in, 8, 1, stdin);
+    ntohd((unsigned char *)&d, in, 1);
+    return d;
 }
+
 
 /*
  * Establish display coordinate conversion:
- *  Input ranges from min=(sp[0], sp[1]) to max=(sp[3], sp[4]).
- *  Tektronix is using 0..4096, but not all is visible.
- *  So, use a little less.
- *  To convert, subtract the min val, and multiply by 'scale'.
- *  Out of range detection is converters problem.
+ * Input ranges from min=(sp[0], sp[1]) to max=(sp[3], sp[4]).
+ * Tektronix is using 0..4096, but not all is visible.
+ * So, use a little less.
+ * To convert, subtract the min val, and multiply by 'scale'.
+ * Out of range detection is converters problem.
  */
 void
 doscale(void)
 {
-    double	dx, dy, dz;
-    double	max;
+    double dx, dy, dz;
+    double max;
 
     dx = (sp[3] - sp[0]);
     dy = (sp[4] - sp[1]);
     dz = (sp[5] - sp[2]);
 
     max = dx;
-    if ( dy > max ) max = dy;
-    if ( dz > max ) max = dz;
+    if (dy > max) max = dy;
+    if (dz > max) max = dz;
 
-    if ( expand_it )
+    if (expand_it)
 	scale = 4096 / max;
     else
 	scale = (4096-1000) / max;
-    if ( verbose )  {
-	fprintf( stderr, "doscale: min=(%g, %g), max=(%g, %g), scale=%g\n",
-		 sp[0], sp[1],
-		 sp[3], sp[4],
-		 scale );
+    if (verbose) {
+	fprintf(stderr, "doscale: min=(%g, %g), max=(%g, %g), scale=%g\n",
+		sp[0], sp[1],
+		sp[3], sp[4],
+		scale);
     }
 }
+
 
 /*
  * Perform the interface functions
@@ -441,7 +448,7 @@ tekcont(int x, int y)
     int hix, hiy, lox, loy, extra;
     int n;
 
-    if ( verbose ) fprintf(stderr, " tekcont(%d,%d)\n", x, y );
+    if (verbose) fprintf(stderr, " tekcont(%d, %d)\n", x, y);
     hix=(x>>7) & 037;
     hiy=(y>>7) & 037;
     lox = (x>>2)&037;
@@ -477,12 +484,14 @@ tekcont(int x, int y)
 	(void)putc(0, stdout);
 }
 
+
 static void
 tekmove(int xi, int yi)
 {
     (void)putc(GS, stdout);			/* Next vector blank */
     tekcont(xi, yi);
 }
+
 
 static void
 tekerase(void)
@@ -497,14 +506,16 @@ tekerase(void)
     (void)sleep(3);
 }
 
+
 static void
 teklabel(char *s)
 {
     (void)putc(US, stdout);
-    for (; *s; s++ )
+    for (; *s; s++)
 	(void)putc(*s, stdout);
     ohix = ohiy = oloy = oextra = -1;
 }
+
 
 static void
 teklinemod(char *s)
@@ -531,11 +542,13 @@ teklinemod(char *s)
     (void)putc(c, stdout);
 }
 
+
 static void
 tekpoint(int xi, int yi) {
     tekmove(xi, yi);
     tekcont(xi, yi);
 }
+
 
 /*
  * Local Variables:

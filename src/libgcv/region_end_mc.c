@@ -29,11 +29,11 @@
 
 #include "gcv.h"
 
-
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 };
+
 
 /* in region_end.c */
 union tree * _gcv_cleanup(int state, union tree *tp);
@@ -42,7 +42,7 @@ union tree *
 gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *tp = NULL;
-    union tree *ret_tree = NULL;
+    struct model *m = NULL;
     struct nmgregion *r = NULL;
     struct shell *s = NULL;
     struct bu_list vhead;
@@ -50,10 +50,11 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int empty_region = 0;
     int empty_model = 0;
     int NMG_debug_state = 0;
+    int count = 0, removed = 0;
 
     void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
-    if (!tsp || !curtree || !pathp || !client_data) {
+    if (!tsp || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end_mc missing parameters\n");
 	return TREE_NULL;
     }
@@ -72,8 +73,11 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     BU_LIST_INIT(&vhead);
 
+    /*
     if (curtree->tr_op == OP_NOP)
-	return curtree;
+	return 0;
+    */
+
 
     /* get a copy to play with as the parameters might get clobbered
      * by a longjmp.  FIXME: db_dup_subtree() doesn't create real copies
@@ -91,17 +95,25 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     NMG_debug_state = rt_g.NMG_debug;
 
-    ret_tree = NULL;	/* some fancy stuff here */
+    m = nmg_mmr();
+    r = nmg_mrsv(m);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
 
-    r = (struct nmgregion *)NULL;
-    if (ret_tree)
-	r = ret_tree->tr_d.td_r;
+    if(tsp->ts_rtip == NULL)
+	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
 
-    if (r == (struct nmgregion *)NULL)
-	return _gcv_cleanup(NMG_debug_state, tp);
+    count += nmg_mc_evaluate (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
+
+    /* empty region? */
+    if(count == 0) {
+	bu_log("Region %s appears to be empty.\n", db_path_to_string(pathp));
+	return TREE_NULL;
+    }
+
+    nmg_mark_edges_real(&s->l.magic);
+    nmg_region_a(r, tsp->ts_tol);
 
     /* Kill cracks */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
     while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
 	struct shell *next_s;
 
@@ -156,8 +168,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     nmg_kr(r);
 
+    bu_log("Fusing vertices: %d eliminated\n", nmg_model_vertex_fuse(m, tsp->ts_tol));
+    removed = nmg_edge_collapse(m, tsp->ts_tol, tsp->ts_ttol->abs, tsp->ts_ttol->norm);
+    bu_log("decimate reduced %d faces to %d in %s\n", count, count - removed, db_path_to_string(pathp));
+
     return _gcv_cleanup(NMG_debug_state, tp);
 }
+
 
 /*
  * Local Variables:

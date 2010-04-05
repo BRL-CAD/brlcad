@@ -38,10 +38,11 @@
 # Regardless of file type, convert it to PNG format.
 # -r means to reverse black and white in output image.  (.pix only)
 #
-#  $Header$
 
-PATH=$PATH:/vld/mike/.bin.4d:
-export PATH
+echo "************************************************************"
+echo "DEPRECATION WARNING: This script is deprecated and may be"
+echo "                     removed in a future release of BRL-CAD."
+echo "************************************************************"
 
 if test "$1" = "" ; then
     echo "Usage: any-png.sh [-r] image_file [flags]"

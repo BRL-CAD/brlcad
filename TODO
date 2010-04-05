@@ -17,8 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix EDITOR invocation in "mged -c"
-
 * 64-bit port of BRL-CAD on Windows
 
 * Mac OS X 10.5+ X11 input bug
@@ -26,6 +24,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix archer/libdm labels/axes to not use pointer printing
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -716,7 +716,21 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
 * support for features either as primitives or operations or both
-  e.g. chamfer, fillet, round, etc
+  e.g. chamfer, fillet, round, cut, etc
+
+* a cut feature edit.  implementation could be represented as the cube
+  that bounds a geometry object.  eight points somewhere on the edges
+  of the cube define an intersection volume on the object.  by
+  default, the eight points could be positioned at the corners of the
+  cube and would remain constrained to reside on one of the three
+  adjoining edges for their respective corner.  this would provide a
+  simple user interface where a face could be selected to move a cut
+  plane through an object (moving four points along four edges), or an
+  edge could be moved to move two points simultaneously, or each
+  individual point could be moved along their edges to define the
+  intersection object.  allowing the points to be deconstrained so
+  they can move into the interior of the bounding volume or into the
+  interior of a face could be an advanced option.
 
 * fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
@@ -831,6 +845,8 @@ DOCUMENTATION
 * Geometry Conversion with BRL-CAD
         Overview of the various geometry conversion facilities in BRL-CAD and how they related to solid geometry representations.
 
+* A Developer's Introduction to BRL-CAD
+        An overview of BRL-CAD from a developer perspective intended for new developers.  Provides overview of structure, important sections, operating procedures, and answers to FAQ development questions.
 
 ---
 See the feature request and bug trackers for more tasks and future

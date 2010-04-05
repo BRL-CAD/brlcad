@@ -38,8 +38,6 @@
 # Script for generating an uncompressed tape archive binary
 # distribution.
 #
-# Author: Christopher Sean Morrison
-#
 ######################################################################
 
 NAME="$1"

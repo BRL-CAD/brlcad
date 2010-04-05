@@ -5119,6 +5119,8 @@ BU_EXPORT BU_EXTERN(double bu_units_conversion,
  */
 BU_EXPORT BU_EXTERN(const char *bu_units_string,
 		    (const double mm));
+BU_EXPORT BU_EXTERN(struct bu_vls *bu_units_strings_vls,
+		    ());
 
 /**
  * B U _ N E A R E S T _ U N I T S _ S T R I N G

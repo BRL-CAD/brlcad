@@ -175,6 +175,9 @@ int classic_mged=0;
 int classic_mged=1;
 #endif
 
+/* The old mged gui is temporarily the default. */
+int old_mged_gui=1;
+
 static int mged_init_flag = 1;	/* >0 means in initialization stage */
 
 struct bu_vls input_str, scratchline, input_str_prefix;
@@ -344,7 +347,7 @@ main(int argc, char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbicnrx:X:v?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbicnorx:X:v?")) != EOF) {
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -355,7 +358,7 @@ main(int argc, char *argv[])
 	    case 'r':
 		read_only_flag = 1;
 		break;
-	    case 'n':		/* "not new" == "classic" */
+	    case 'n':           /* "not new" == "classic" */
 		bu_log("WARNING: -n is deprecated.  used -c instead.\n");
 		/* fall through */
 	    case 'c':
@@ -380,6 +383,14 @@ main(int argc, char *argv[])
 		       bu_version());
 		return EXIT_SUCCESS;
 		break;
+	    case 'o':
+		/* Eventually this will be used for the old mged gui.
+		 * I'm temporarily hijacking it for the new gui until
+		 * it becomes the default.
+		 */
+		bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
+		old_mged_gui = 0;
+		break;
 	    default:
 		bu_log("Unrecognized option (%c)\n", c);
 		/* Fall through to help */
@@ -400,6 +411,10 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
+	    interactive = 0;
+#else
 	/* check if there is data on stdin (better than checking if isatty()) */
 	FD_ZERO(&read_set);
 	FD_SET(fileno(stdin), &read_set);
@@ -443,6 +458,7 @@ main(int argc, char *argv[])
 		interactive = 1;
 	    }
 	} /* read_set */
+#endif
 
 	if (bu_debug && out != stdout) {
 	    fflush(out);
@@ -677,25 +693,27 @@ main(int argc, char *argv[])
 	}
     }
 
-    /* Open the database */
-    if (argc >= 1) {
-	char *av[3];
+    if (!interactive || classic_mged || old_mged_gui) {
+	/* Open the database */
+	if (argc >= 1) {
+	    char *av[3];
 
-	av[0] = "opendb";
-	av[1] = argv[0];
-	av[2] = NULL;
+	    av[0] = "opendb";
+	    av[1] = argv[0];
+	    av[2] = NULL;
 
-	/* Command line may have more than 2 args, opendb only wants 2
-	 * expecting second to be the file name.
-	 */
-	if (f_opendb((ClientData)NULL, interp, 2, av) == TCL_ERROR) {
-	    if (!run_in_foreground && use_pipe) {
-		notify_parent_done(parent_pipe[1]);
+	    /* Command line may have more than 2 args, opendb only wants 2
+	     * expecting second to be the file name.
+	     */
+	    if (f_opendb((ClientData)NULL, interp, 2, av) == TCL_ERROR) {
+		if (!run_in_foreground && use_pipe) {
+		    notify_parent_done(parent_pipe[1]);
+		}
+		mged_finish(1);
 	    }
-	    mged_finish(1);
+	} else {
+	    (void)Tcl_Eval(interp, "opendb_callback nul");
 	}
-    } else {
-	(void)Tcl_Eval(interp, "opendb_callback nul");
     }
 
     if (dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only)) {
@@ -735,7 +753,14 @@ main(int argc, char *argv[])
 #endif
 
 	    bu_vls_init(&vls);
-	    bu_vls_strcpy(&vls, "gui");
+	    if (old_mged_gui) {
+		bu_vls_strcpy(&vls, "gui");
+	    } else {
+		if (argv >= 1)
+		    bu_vls_printf(&vls, "set argv %s; source archer", argv[0]);
+		else
+		    bu_vls_printf(&vls, "source archer");
+	    }
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
@@ -784,10 +809,11 @@ main(int argc, char *argv[])
     } /* interactive */
 
     /* initialize a display manager */
-    if (!attach && interactive && classic_mged) {
-	get_attached();
-    } else {
-	attach_display_manager(interp, attach, dpy_string);
+    if (interactive && classic_mged) {
+	if (!attach)
+	    get_attached();
+	else
+	    attach_display_manager(interp, attach, dpy_string);
     }
 
     /* --- Now safe to process geometry. --- */

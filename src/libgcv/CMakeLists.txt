@@ -5,6 +5,7 @@ set(LIBGCV_SOURCES
 
 include_directories(
     ../../include
+    ../other
     ../other/tcl/generic
 )
 

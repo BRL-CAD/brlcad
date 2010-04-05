@@ -62,11 +62,6 @@
 
 #include "metaball.h"
 
-extern int mc_edges[256];
-
-/* TODO: make a real header entry once the signature is good... */
-int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol);
-
 /**
  * R T _ M E T A B A L L _ T E S S
  *
@@ -165,7 +160,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		    MEH(11,3,7);
 #undef MEH
 
-		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges, tol);
+		    rval = nmg_mc_realize_cube(s, pv, (point_t *)edges, tol);
 		    numtri += rval;
 		    if(rval < 0) {
 			bu_log("Error attempting to realize a cube O.o\n");

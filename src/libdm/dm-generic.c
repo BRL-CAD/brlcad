@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "dm.h"
 
-extern struct dm *Nu_open(Tcl_Interp *interp, int argc, char **argv);
+
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, char **argv);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, char **argv);
 
@@ -63,6 +63,16 @@ extern struct dm *wgl_open();
 extern void wgl_fogHint();
 extern int wgl_share_dlist();
 #endif /* DM_WGL */
+
+
+HIDDEN struct dm *
+Nu_open(Tcl_Interp *interp, int argc, char *argv[])
+{
+    if (interp || argc < 0 || !argv)
+	return DM_NULL;
+
+    return DM_NULL;
+}
 
 
 struct dm *
@@ -174,6 +184,11 @@ dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {
+    if (!dmp) {
+	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
+	return;
+    }
+
     switch (dmp->dm_type) {
 #ifdef DM_OGL
 	case DM_TYPE_OGL:

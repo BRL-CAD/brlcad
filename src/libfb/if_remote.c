@@ -195,7 +195,7 @@ parse_file(char *file, char *host, int *portp, char *device, int length)
 HIDDEN void
 rem_log(char *msg)
 {
-    fb_log(msg);
+    fb_log("%s",msg);
 }
 
 
@@ -208,7 +208,7 @@ rem_log(char *msg)
 HIDDEN int
 rem_open(register FBIO *ifp, register char *file, int width, int height)
 {
-    register size_t i;
+    size_t i;
     struct pkg_conn *pc;
     char buf[128] = {0};
     char hostname[MAX_HOSTNAME] = {0};
@@ -265,7 +265,7 @@ rem_open(register FBIO *ifp, register char *file, int width, int height)
     bu_strlcpy(&buf[2*NET_LONG_LEN], device, 128-2*NET_LONG_LEN);
 
     i = strlen(device)+2*NET_LONG_LEN;
-    if (pkg_send(MSG_FBOPEN, buf, i, pc ) != i )
+    if ((size_t)pkg_send(MSG_FBOPEN, buf, i, pc ) != i)
 	return -5;
     
     /* return code, max_width, max_height, width, height as longs */
@@ -748,7 +748,7 @@ rem_help(FBIO *ifp)
  * messages, so we don't touch them ourselves.
  */
 HIDDEN void
-pkgerror(struct pkg_conn *pcpp, char *buf)
+pkgerror(struct pkg_conn *pcpp __attribute__((unused)), char *buf)
 {
     fb_log("%s", buf );
     free(buf);
@@ -794,7 +794,13 @@ FBIO remote_interface = {
     0,
     0L,
     0L,
-    0
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 /*

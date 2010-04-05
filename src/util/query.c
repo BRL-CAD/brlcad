@@ -22,16 +22,16 @@
  * By default, query reads a line from standard input and echoes it
  * to standard output.
  *
- *  entry:
- *	-t	seconds to wait for user response.
- *	-r	default response
- *	-v	toggle verbose option (Default "r" in "t" seconds)
- *	-l	loop rather than respond.
+ * entry:
+ * -t seconds to wait for user response.
+ * -r default response
+ * -v toggle verbose option (Default "r" in "t" seconds)
+ * -l loop rather than respond.
  *
- *  Exit:
- *	<stdout>	The line read
- *		or	y
- *		or	response
+ * Exit:
+ * <stdout> The line read
+ * or y
+ * or response
  *
  */
 
@@ -46,12 +46,12 @@
 #include "bu.h"
 
 
-char	Yes_Response[] = "y";
-int	Verbose=0;
-char	*Response= Yes_Response;
-int	Timeout=0;
-int	Loop=0;
-int	Done = 0;
+char Yes_Response[] = "y";
+int Verbose=0;
+char *Response= Yes_Response;
+int Timeout=0;
+int Loop=0;
+int Done = 0;
 
 static const char usage[] = "\
 Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
@@ -61,8 +61,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "t:r:vl" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "t:r:vl")) != EOF) {
+	switch (c) {
 	    case 't':
 		Timeout = atoi(bu_optarg);
 		break;
@@ -80,12 +80,13 @@ get_args(int argc, char **argv)
 	}
     }
     if (Timeout < 0) Timeout = 0;
-    if ( (Loop & Timeout) <= 0) Timeout=5;
+    if ((Loop & Timeout) <= 0) Timeout=5;
 
     if (Loop) Verbose = 0;
 
     return(1);
 }
+
 
 void handler(int);
 
@@ -96,7 +97,7 @@ main(int argc, char **argv)
     char *eol;
     char *flag;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	bu_exit(1, usage, argv[0]);
     }
 
@@ -158,6 +159,7 @@ handler(int sig)
 {
     Done = 1;
 }
+
 
 /*
  * Local Variables:

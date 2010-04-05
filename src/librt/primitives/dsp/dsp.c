@@ -2223,10 +2223,10 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	/* intersect with the current cell */
 	if (RT_G_DEBUG & DEBUG_HF) {
 	    if (loop)
-		bu_log("\nisect sub-cell %d %d  in dist:%g ",
+		bu_log("\nisect sub-cell %d %d  curr_dist:%g out_dist: %g",
 		       cX, cY, curr_dist, out_dist);
 	    else {
-		bu_log("isect sub-cell %d %d  in dist:%g ",
+		bu_log("isect sub-cell %d %d  curr_dist:%g out_dist %g",
 		       cX, cY, curr_dist, out_dist);
 		loop = 1;
 	    }

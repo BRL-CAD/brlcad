@@ -95,6 +95,9 @@
 #define HAVE_TK 1
 #define HAVE_X11_TYPES 1
 
+#define YY_NO_UNISTD_H		1
+#define YYTOKENTYPE		1
+
 /*
  * functions declared in io.h
  */
@@ -153,6 +156,8 @@
 #define fmax __max
 #define ioctl ioctlsocket
 
+#define SHARED_PTR_BOOST	1
+
 /* we need the function pointer of this */
 static int isblank(int c) {
     return ((c == ' ') || (c == '\t')) ? 1 : 0;
@@ -175,29 +180,6 @@ typedef int socklen_t;
 typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 
-typedef unsigned __int8 uint8_t;
-typedef unsigned __int16  uint16_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int64 uint64_t;
-
-typedef __int8 int8_t;
-typedef __int16 int16_t;
-typedef __int32 int32_t;
-typedef __int64 int64_t;
-typedef __int64 intmax_t;
-
-#define HAVE_UINT8_T		1
-#define HAVE_UINT16_T		1
-#define HAVE_UINT32_T		1
-#define HAVE_UINT64_T		1
-
-#define HAVE_INT8_T		1
-#define HAVE_INT16_T		1
-#define HAVE_INT32_T		1
-#define HAVE_INT64_T		1
-
-#define HAVE_INTMAX_T		1
-#define HAVE_UINTPR_T		1
 
 /*
  * for chmod()

@@ -229,6 +229,10 @@
 				RelativePath="..\..\..\src\libgcv\region_end.c"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\src\libgcv\region_end_mc.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

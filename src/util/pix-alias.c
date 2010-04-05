@@ -18,31 +18,22 @@
  * information.
  */
 /** @file pix-alias.c
- * 	Convert BRL PIX format image files to ALIAS(tm) PIX fomat files.
  *
- *	Author
- *	Lee A. Butler	butler@stsci.edu
+ * Convert BRL PIX format image files to ALIAS(tm) PIX fomat files.
  *
- *	Options
- *	x	set x dimension
- *	y	set y dimension
- *	s	set size of image (square)
- *	h	help
+ * Format of a BRL PIX file:
+ * RGB RGB RGB RGB .... RGB
+ * --------------------------------------------------
+ * Format of an ALIAS(tm) PIX file:
+ * 16bit-x-dimension
+ * 16bit-y-dimension
+ * 16bit-x-offset (usually 0)
+ * 16bit-y-offset (usually y-1)
+ * 16bit-depth-count (a 16 bit int containing the number of bits per pixel)
+ * run-length encoded pixel data.  Each entry of the form:
+ * 1byte run length, B, G, R
  *
- *
- *	Format of a BRL PIX file:
- *	RGB RGB RGB RGB .... RGB
- *	--------------------------------------------------
- *	Format of an ALIAS(tm) PIX file:
- *	16bit-x-dimension
- *	16bit-y-dimension
- *	16bit-x-offset (usually 0)
- *	16bit-y-offset (usually y-1)
- *	16bit-depth-count (a 16 bit int containing the number of bits per pixel)
- *	run-length encoded pixel data.  Each entry of the form:
- *	1byte run length, B, G, R
- *
- *	Run length of 0 seems to be meaningless.
+ * Run length of 0 seems to be meaningless.
  */
 
 #include "common.h"
@@ -63,13 +54,14 @@ int x=512;
 int y=512;
 
 struct aliashead {
-    short	x, y;		/* dimensions of this image in X and Y */
-    short	xoff, yoff;	/* offsets of pixels */
-    short	bitplanes;	/* the number of bits per pixel */
+    short x, y;		/* dimensions of this image in X and Y */
+    short xoff, yoff;	/* offsets of pixels */
+    short bitplanes;	/* the number of bits per pixel */
 };
 
+
 /*
- *	D O I T --- Main function of program
+ * D O I T --- Main function of program
  */
 void doit(void)
 {
@@ -103,23 +95,23 @@ void doit(void)
      * machine architectures
      */
 
-    (void) putchar( (x & 0x0ff00) >> 8);
-    (void) putchar( (x & 0x0ff));
-    (void) putchar( (y & 0x0ff00) >> 8);
-    (void) putchar( (y & 0x0ff));
+    (void) putchar((x & 0x0ff00) >> 8);
+    (void) putchar((x & 0x0ff));
+    (void) putchar((y & 0x0ff00) >> 8);
+    (void) putchar((y & 0x0ff));
     (void) putchar(0);
     (void) putchar(0);
-    (void) putchar( (ah.yoff & 0x0ff00) >> 8);
-    (void) putchar( (ah.yoff & 0x0ff));
+    (void) putchar((ah.yoff & 0x0ff00) >> 8);
+    (void) putchar((ah.yoff & 0x0ff));
     (void) putchar(0);
     (void) putchar(24);
 
-    for (idx=0; idx < bufsize; ) {
+    for (idx=0; idx < bufsize;) {
 	cpix = idx; cnt=0;
 	while (cnt < 0x0ff && idx < bufsize-2 &&
 	       image[idx] == image[cpix] &&
 	       image[idx+1] == image[cpix+1] &&
-	       image[idx+2] == image[cpix+2] ) {
+	       image[idx+2] == image[cpix+2]) {
 
 	    idx += 3; ++cnt;
 	}
@@ -130,6 +122,7 @@ void doit(void)
 	(void) putchar(image[cpix]);
     }
 }
+
 
 void usage(void)
 {
@@ -142,7 +135,7 @@ void usage(void)
 int
 main(int ac, char **av)
 {
-    int  c, optlen;
+    int c, optlen;
 
     progname = *av;
     if (isatty(fileno(stdin))) usage();
@@ -171,6 +164,7 @@ main(int ac, char **av)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

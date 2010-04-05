@@ -45,7 +45,9 @@ Matrix Selection                    |    Some work needed to do this correctly -
                                     |    Ensure working command line level functionality for direct matrix
                                     |    manipulation if needed.  For items without a matrix show the tab with
                                     |    either no values specified or the identity matrix as the starting
-                                    |    template.
+                                    |    template.  Full functionality here will require "limited xpush"
+				    |    abilities - xpushing only to a specified depth, and possibly some
+				    |    awareness of full path targets vs. toplevel targets.
 Primitive Editor                    |    Functionality covered elsewhere, can be dangerous in that it accepts
                                     |    invalid inputs - remove
 Combination Editor                  |    Functionality covered in General tab for objects in right panel, 
@@ -75,56 +77,59 @@ Settings -> Mouse Behavior          |    Per item breakdown:
          Pick Edit Matrix           |    Replaced by matrix tab discussed under "Matrix Selection" item
          Pick Edit Combination      |    Replaced by combination of "component pick" button and tree widget
          Sweep Raytrace-Rect.       |    INCOMPLETE (will be handled differently in the UI as well, not under Settings)
-         Pick Raytrace Objects      |    UNKNOWN
+         Pick Raytrace Objects      |    			REMOVE
          Query Ray                  |    INCOMPLETE (nirt functionality exists, need mouse mode)
-         Sweep Paint Rectangle      |    UNKNOWN
-         Sweep Zoom Rectangle       |    UNKNOWN
-Settings -> Transform               |    Angle/Distance Cursor not implemented yet
-Settings -> Constraint Coords.      |                            UNKNOWN
-Settings -> Rotate About            |                           INCOMPLETE?
+         Sweep Paint Rectangle      |    Incorporate into Sweep Raytrace-Rect. functionality
+         Sweep Zoom Rectangle       |    Need to see if this can be integrated as an option to the scale mode -
+	 			    |    possibly as a left mouse button option to drag a rectangle to "zoom" to
+Settings -> Transform               |    Angle/Distance Cursor not implemented yet - needs documentation as well
+Settings -> Constraint Coords.      |    This is worth preserving, but needs some though on how to integrate it.
+Settings -> Rotate About            |    Save ability to rotate around view and maybe a specified keypoint to allow
+				    |    for flexibility
 Settings -> Active Pane             |                             DONE
-Settings -> Apply To                |                            UNKNOWN
-Settings -> Query Ray Effects       |                           INCOMPLETE
+Settings -> Apply To                |    Not worth including unless specifically asked for - relates to multipane settings
+Settings -> Query Ray Effects       |    Will be handled elsewhere - nirt/query ray settings panel
 Settings -> Grid                    |                           INCOMPLETE
 Settings -> Grid Spacing            |                           INCOMPLETE
-Settings -> Framebuffer             |                           INCOMPLETE
+Settings -> Framebuffer             |    Will be handled by raytrace control panel/other raytrace controls
 Settings -> View Axes Position      |                             DONE (handled in preferences panel)
-Modes -> Draw Grid                  |                           INCOMPLETE
+Modes -> Draw Grid                  |                           INCOMPLETE (see Settings -> Grid)
 Modes -> Snap to Grid               |                           INCOMPLETE
-Modes -> FrameBuffer Active         |    Available, not as conveniently as in MGED
-Modes -> Listen for Clients         |                            UNKNOWN
-Modes -> Persistend Sweep Rect.     |                            UNKNOWN
+Modes -> FrameBuffer Active         |    Available, not as conveniently as in MGED - Need to be in Raytrace Ctrl. Panel
+Modes -> Listen for Clients         |             REMOVE - no useful user level functionality exposed
+Modes -> Persistend Sweep Rect.     |             Roll this functionality into the Sweep Raytrace rectangle functionality
 Modes -> Angle/Dist. Cursor         |   INCOMPLETE (duplicated in MGED Settings->Transform?)
-Modes -> Faceplate                  |                            UNKNOWN
-Modes -> Axes                       |   View and Model DONE, does Edit apply in Archer?
-Modes -> Display Manager            |   Archer is ogl only at the moment
+Modes -> Faceplate                  |                             DONE
+Modes -> Axes                       |   Archer has more advanced axes abilities - done
+Modes -> Display Manager            |   Archer is ogl only at the moment need to support other display managers and
+				    |   conditionalize the features that rely on OpenGL to only be active when ogl is.
 Modes -> Multipane                  |                             DONE
-Modes -> Edit Info                  |                            UNKNOWN
+Modes -> Edit Info                  |                             DONE (part of edit panel)
 Modes -> Status Bar                 |             DONE (in geometry display area, bottom)
-Modes -> Collaborate                |                            UNKNOWN
-Modes -> Rate Knobs                 |                            UNKNOWN
-Modes -> Display Lists              |                            UNKNOWN
-Misc -> Z Clipping                  |                            UNKNOWN
-Misc -> Perspective                 |                            UNKNOWN
-Misc -> Faceplate                   |                            UNKNOWN
-Misc -> Faceplate GUI               |                            UNKNOWN
-Misc -> Keystroke Forwarding        |                            UNKNOWN
-Tools -> ADC Control Panel          |                          INCOMPLETE
-Tools -> AniMate                    |                          INCOMPLETE                           
-Tools -> Grid Control Panel         |                          INCOMPLETE
-Tools -> Query Ray                  |                          INCOMPLETE
-Tools -> Raytrace Control Panel     |                          INCOMPLETE
-Tools -> Build Pattern Tool         |                          INCOMPLETE
-Tools -> Color Selector             |                          INCOMPLETE
-Tools -> Geometry Browser           |                          INCOMPLETE
-Tools -> Overlap Tool               |                          INCOMPLETE
-Tools -> Upgrade Database...        |                          INCOMPLETE
-Tools -> Command Window             |                            UNKNOWN 
-Tools -> Graphics Window            |                            UNKNOWN
+Modes -> Collaborate                |                            REMOVE
+Modes -> Rate Knobs                 |                            Low priority
+Modes -> Display Lists              |             Remove - no need to expose this to the users
+Misc -> Z Clipping                  |             DONE - Wrapped up in Lighting setting
+Misc -> Perspective                 |                           INCOMPLETE
+Misc -> Faceplate                   |                            DONE
+Misc -> Faceplate GUI               |             Maintin for classic mode, don't expose in Archer GUI
+Misc -> Keystroke Forwarding        |                           REMOVE
+Tools -> ADC Control Panel          |             INCOMPLETE - convert to preferences tab
+Tools -> AniMate                    |     Low priority - better approach might be to export to Blender for animation
+Tools -> Grid Control Panel         |             INCOMPLETE - convert to preferences tab
+Tools -> Query Ray                  |             INCOMPLETE - convert to preferences tab or tool
+Tools -> Raytrace Control Panel     |             INCOMPLETE - needs updates applied to MGED panel
+Tools -> Build Pattern Tool         |             INCOMPLETE - convert to Archer wizard
+Tools -> Color Selector             |             Not needed as a separate tool - launch for appropriate preferences
+Tools -> Geometry Browser           |             Not needed, make sure tree widget covers functionality
+Tools -> Overlap Tool               |             INCOMPLETE - expose in Archer as a tool
+Tools -> Upgrade Database...        |             Check that Archer prompts to upgrade when loading old .g
+Tools -> Command Window             |             Investigate tabbed command windows?
+Tools -> Graphics Window            |             Investigate tabbed graphics windows/views?
 Help -> Dedication                  |                          INCOMPLETE
 Help -> About MGED                  |   Dialog available, contents need to be merged in
 Help -> Command Manual Pages        |                          INCOMPLETE
-Help -> Shift Grips                 |   Not needed in Archer?
+Help -> Shift Grips                 |   BRL-CAD compatibility mode exists, verify that all useful bindings available
 Help -> Apropos                     |   INCOMPLETE, not working well in MGED either?
 Help -> Manual                      |   INCOMPLETE, even in MGED needs web browser, should use docbook/tkhtml3
 
@@ -133,10 +138,6 @@ Help -> Manual                      |   INCOMPLETE, even in MGED needs web brows
 
 Other Issues
 ------------
-
-* documentation (even for windows) should not be a .chm file in our
-  repository.  the documentation should be generated from docbook
-  source formatting.
 
 * archer html documentation refers to an 'ae' command, yet only 'aet'
   exists.  either the docs need updating or ae added.

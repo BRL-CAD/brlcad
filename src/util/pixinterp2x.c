@@ -19,8 +19,8 @@
  */
 /** @file pixinterp2x.c
  *
- *  Read a .pix file of a given resolution, and produce one with
- *  twice as many pixels by interpolating between the pixels.
+ * Read a .pix file of a given resolution, and produce one with
+ * twice as many pixels by interpolating between the pixels.
  *
  */
 
@@ -32,33 +32,33 @@
 #include "bu.h"
 
 
-FILE	*infp;
+FILE *infp;
 
-int	file_width = 512;
-int	file_height = 512;
+int file_width = 512;
+int file_height = 512;
 
-int	inbytes;			/* # bytes of one input scanline */
-int	outbytes;			/* # bytes of one output scanline */
-int	outsize;			/* size of output buffer */
-unsigned char	*outbuf;		/* ptr to output image buffer */
-void	widen_line(unsigned char *cp, int y);
+int inbytes;			/* # bytes of one input scanline */
+int outbytes;			/* # bytes of one output scanline */
+int outsize;			/* size of output buffer */
+unsigned char *outbuf;		/* ptr to output image buffer */
+void widen_line(unsigned char *cp, int y);
 
-void	interp_lines(int out, int i1, int i2);
+void interp_lines(int out, int i1, int i2);
 
 char usage[] = "\
 Usage: pixinterp2x [-h] [-s squarefilesize]\n\
 	[-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
 
 /*
- *			G E T _ A R G S
+ * G E T _ A R G S
  */
 static int
 get_args(int argc, char **argv)
 {
-    int	c;
+    int c;
 
-    while ( (c = bu_getopt( argc, argv, "hs:w:n:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "hs:w:n:")) != EOF) {
+	switch (c) {
 	    case 'h':
 		/* high-res */
 		file_height = file_width = 1024;
@@ -74,26 +74,27 @@ get_args(int argc, char **argv)
 		file_height = atoi(bu_optarg);
 		break;
 	    case '?':
-		return	0;
+		return 0;
 	}
     }
-    if ( argv[bu_optind] != NULL )  {
-	if ( (infp = fopen( argv[bu_optind], "r" )) == NULL )  {
+    if (argv[bu_optind] != NULL) {
+	if ((infp = fopen(argv[bu_optind], "r")) == NULL) {
 	    perror(argv[bu_optind]);
-	    return	0;
+	    return 0;
 	}
 	bu_optind++;
     }
-    if ( argc > ++bu_optind )
-	(void) fprintf( stderr, "Excess arguments ignored\n" );
+    if (argc > ++bu_optind)
+	(void) fprintf(stderr, "Excess arguments ignored\n");
 
-    if ( isatty(fileno(infp)) || isatty(fileno(stdout)) )
+    if (isatty(fileno(infp)) || isatty(fileno(stdout)))
 	return 0;
-    return	1;
+    return 1;
 }
 
+
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
@@ -102,42 +103,43 @@ main(int argc, char **argv)
     unsigned char *inbuf;
 
     infp = stdin;
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     inbytes = file_width * 3;	/* bytes/ input line */
-    inbuf = (unsigned char *)malloc( inbytes );
+    inbuf = (unsigned char *)malloc(inbytes);
 
     outbytes = inbytes * 2;		/* bytes/ output line */
     outsize = file_width * file_height * 4 * 3;
-    if ( (outbuf = (unsigned char *)malloc( outsize )) == (unsigned char *)0 )  {
+    if ((outbuf = (unsigned char *)malloc(outsize)) == (unsigned char *)0) {
 	fprintf(stderr, "pixinterp2x:  unable to malloc buffer\n");
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     outy = -2;
-    for ( iny = 0; iny < file_height; iny++ )  {
-	if ( fread( (char *)inbuf, 1, inbytes, infp ) != inbytes )  {
+    for (iny = 0; iny < file_height; iny++) {
+	if (fread((char *)inbuf, 1, inbytes, infp) != inbytes) {
 	    fprintf(stderr, "pixinterp2x fread error\n");
 	    break;
 	}
 
 	outy += 2;
 	/* outy is line we will write on */
-	widen_line( inbuf, outy );
-	if ( outy == 0 )
-	    widen_line( inbuf, ++outy );
+	widen_line(inbuf, outy);
+	if (outy == 0)
+	    widen_line(inbuf, ++outy);
 	else
-	    interp_lines( outy-1, outy, outy-2 );
+	    interp_lines(outy-1, outy, outy-2);
     }
-    if ( write( 1, (char *)outbuf, outsize ) != outsize )  {
+    if (write(1, (char *)outbuf, outsize) != outsize) {
 	perror("pixinterp2x write");
 	bu_exit (1, NULL);
     }
     bu_exit (0, NULL);
 }
+
 
 void
 widen_line(unsigned char *cp, int y)
@@ -154,7 +156,7 @@ widen_line(unsigned char *cp, int y)
     *op++ = *cp++;
     *op++ = *cp++;
     *op++ = *cp++;
-    for ( i=0; i<inbytes; i+=3)  {
+    for (i=0; i<inbytes; i+=3) {
 	/* Average previous pixel with current pixel */
 	*op++ = ((int)cp[-3+0] + (int)cp[0])>>1;
 	*op++ = ((int)cp[-3+1] + (int)cp[1])>>1;
@@ -165,6 +167,7 @@ widen_line(unsigned char *cp, int y)
 	*op++ = *cp++;
     }
 }
+
 
 void
 interp_lines(int out, int i1, int i2)
@@ -177,12 +180,13 @@ interp_lines(int out, int i1, int i2)
     b = (unsigned char *)outbuf + (i2 * outbytes);
     op = (unsigned char *)outbuf + (out * outbytes);
 
-    for ( i=0; i<outbytes; i+=3 )  {
+    for (i=0; i<outbytes; i+=3) {
 	*op++ = ((int)*a++ + (int)*b++)>>1;
 	*op++ = ((int)*a++ + (int)*b++)>>1;
 	*op++ = ((int)*a++ + (int)*b++)>>1;
     }
 }
+
 
 /*
  * Local Variables:

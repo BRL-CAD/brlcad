@@ -336,7 +336,9 @@ brep_build_bvh(struct brep_specific* bs)
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
 	ON_BrepFace& face = faces[i];
-	bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+	/*
+	 * bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+	 */
 	SurfaceTree* st = new SurfaceTree(&face);
 	face.m_face_user.p = st;
 	bs->bvh->addChild(st->getRootNode());
@@ -1679,7 +1681,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
     ///////////// near hit end
     if (false) { //((hits.size() % 2) != 0) {
-	bu_log("**** After Pass3 Hits: %d\n", hits.size());
+	bu_log("**** After Pass3 Hits: %zu\n", hits.size());
 
 	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 	    point_t prev;
@@ -1699,7 +1701,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    VMOVE(prev, out.point);
 	    bu_log(")");
 	}
-	bu_log("\n**** Orig Hits: %d\n", orig.size());
+	bu_log("\n**** Orig Hits: %zu\n", orig.size());
 
 	for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
 	    point_t prev;
@@ -2074,10 +2076,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    hit = true;
 	} else {
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
-	    bu_log("**** ERROR odd number of hits: %d\n", hits.size());
+	    bu_log("**** ERROR odd number of hits: %zu\n", hits.size());
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    bu_log("**** Current Hits: %d\n", hits.size());
+	    bu_log("**** Current Hits: %zu\n", hits.size());
 				
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 		point_t prev;
@@ -2097,7 +2099,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		VMOVE(prev, out.point);
 		bu_log(")");
 	    }
-	    bu_log("\n**** Orig Hits: %d\n", orig.size());
+	    bu_log("\n**** Orig Hits: %zu\n", orig.size());
 				
 	    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
 		point_t prev;
@@ -2746,10 +2748,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ON::Begin();
     TRACE1("rt_brep_import5");
 
-    if (mat) {
-	bu_log("Importing with a matrix, but don't know what to do with it.. fix me in %s:%d\n", __FILE__, __LINE__);
-    }
-
     struct rt_brep_internal* bi;
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -2773,6 +2771,21 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	// XXX does openNURBS force us to copy? it seems the answer is
 	// YES due to the const-ness
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
+    if (mat) {
+    	ON_Xform xform(mat);
+
+   	if (!xform.IsIdentity()) {
+			bu_log("Applying transformation matrix....\n");
+	    	for(int row=0;row<4;row++) {
+				bu_log("%d - ", row);
+	    		for(int col=0;col<4;col++) {
+	    			bu_log(" %5f", xform.m_xform[row][col]);
+	    		}
+				bu_log("\n");
+	    	}
+    		bi->brep->Transform(xform);
+    	}
+    }
 	return 0;
     } else {
 	return -1;

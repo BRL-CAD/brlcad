@@ -34,7 +34,7 @@
 #include "dm.h"
 
 void
-dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp, struct ged_view *gvp)
+dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp)
 {
     if (NEAR_ZERO(grsp->grs_width, (fastf_t)SMALL_FASTF) &&
 	NEAR_ZERO(grsp->grs_height, (fastf_t)SMALL_FASTF))

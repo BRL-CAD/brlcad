@@ -37,6 +37,9 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
 
 #include <tcl.h>
 #include <tk.h>
@@ -73,11 +76,6 @@ Tk_PhotoImageBlock block = {
 
 
 char *tkwrite_buffer;
-
-int tk_close_existing()
-{
-    return 0;
-}
 
 
 HIDDEN int fb_tk_open(FBIO *ifp, char *file, int width, int height),

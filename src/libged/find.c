@@ -33,21 +33,39 @@
 #include "./ged_private.h"
 
 
-static void
-ged_find_ref(struct db_i		*dbip,
-	     struct rt_comb_internal	*comb,
-	     union tree			*comb_leaf,
-	     genptr_t			object,
-	     genptr_t			comb_name_ptr,
-	     genptr_t			user_ptr3);
+HIDDEN void
+find_ref(struct db_i *dbip,
+	 struct rt_comb_internal *comb,
+	 union tree *comb_leaf,
+	 genptr_t object,
+	 genptr_t comb_name_ptr,
+	 genptr_t user_ptr3)
+{
+    char *obj_name;
+    char *comb_name;
+    struct ged *gedp = (struct ged *)user_ptr3;
+
+    if (dbip) RT_CK_DBI(dbip);
+    if (comb) RT_CK_COMB(comb);
+    RT_CK_TREE(comb_leaf);
+
+    obj_name = (char *)object;
+    if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
+	return;
+
+    comb_name = (char *)comb_name_ptr;
+
+    bu_vls_printf(&gedp->ged_result_str, "%s ", comb_name);
+}
+
 
 int
 ged_find(struct ged *gedp, int argc, const char *argv[])
 {
-    int				i, k;
-    struct directory		*dp;
-    struct rt_db_internal			intern;
-    struct rt_comb_internal	*comb=(struct rt_comb_internal *)NULL;
+    int i, k;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
     int c;
     int aflag = 0;		/* look at all objects */
     static const char *usage = "<objects>";
@@ -104,7 +122,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 		db_tree_funcleaf(gedp->ged_wdbp->dbip,
 				 comb,
 				 comb->tree,
-				 ged_find_ref,
+				 find_ref,
 				 (genptr_t)argv[k],
 				 (genptr_t)dp->d_namep,
 				 (genptr_t)gedp);
@@ -114,29 +132,6 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-static void
-ged_find_ref(struct db_i		*dbip,
-	     struct rt_comb_internal	*comb,
-	     union tree			*comb_leaf,
-	     genptr_t			object,
-	     genptr_t			comb_name_ptr,
-	     genptr_t			user_ptr3)
-{
-    char *obj_name;
-    char *comb_name;
-    struct ged *gedp = (struct ged *)user_ptr3;
-
-    RT_CK_TREE(comb_leaf);
-
-    obj_name = (char *)object;
-    if (strcmp(comb_leaf->tr_l.tl_name, obj_name))
-	return;
-
-    comb_name = (char *)comb_name_ptr;
-
-    bu_vls_printf(&gedp->ged_result_str, "%s ", comb_name);
 }
 
 

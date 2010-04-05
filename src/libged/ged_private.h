@@ -197,11 +197,6 @@ BU_EXTERN (void _ged_eraseAllPathsFromDisplay,
 	   (struct ged			*gedp,
 	    const char			*path,
 	    const int			skip_first));
-BU_EXTERN (void _ged_eraseAllSubpathsFromSolidList,
-	   (struct ged			*gedp,
-	    struct ged_display_list	*gdlp,
-	    struct db_full_path		*subpath,
-	    const int			skip_first));
 BU_EXTERN (void _ged_freeDisplayListItem,
 	   (struct ged			*gedp,
 	    struct ged_display_list *gdlp));
@@ -284,10 +279,11 @@ BU_EXTERN (void _ged_setup_rt,
 	    int printcmd));
 
 /* defined in red.c */
+
 extern char _ged_tmpfil[MAXPATHLEN];
-extern char _ged_tmpcomb[17];
-extern char *_ged_tmpcomb_init;
+extern const char _ged_tmpcomb[16];
 extern char _delims[];
+
 BU_EXTERN(int _ged_make_tree,
 	  (struct ged *gedp,
 	   struct rt_comb_internal *comb,
@@ -297,12 +293,13 @@ BU_EXTERN(int _ged_make_tree,
 	   const char *new_name,
 	   struct rt_tree_array *rt_tree_array,
 	   int tree_index));
-BU_EXTERN(int _ged_save_comb,
+BU_EXTERN(const char *_ged_save_comb,
 	  (struct ged *gedp,
 	   struct directory *dpold));
 BU_EXTERN(void _ged_restore_comb,
 	  (struct ged *gedp,
-	   struct directory *dp));
+	   struct directory *dp,
+	   const char *name));
 BU_EXTERN(void _ged_print_matrix,
 	  (FILE *fp, matp_t matrix));
 

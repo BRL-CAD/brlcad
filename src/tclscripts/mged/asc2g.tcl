@@ -29,6 +29,7 @@
 proc init_asc2g { id } {
     global mged_gui
     global ::tk::Priv
+    global tcl_platform
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." "No database has been opened!" info 0 OK
@@ -55,29 +56,33 @@ prefix.  The prefix is prepended to each
 object before being inserted into the
 current database." } {} } OK Cancel]
 
-		if { $ret == 0 } {
-			if {$prefix == ""} {
-				set prefix /
-			}
+	if { $ret == 0 } {
+	    if {$prefix == ""} {
+		set prefix /
+	    }
 
-			# XXX horrible hack to open a temp file for conversion.
-			# imitating other code in anim.tcl for temp file generation
-			set db_name "./_asc_2_g_temp_"
-			if [ file exists $db_name ] {
-				error "Temporary file ($db_name) is in the way (rename, delete, or move it)"
-				return
-			}
+	    # XXX horrible hack to open a temp file for conversion.
+	    # imitating other code in anim.tcl for temp file generation
+	    set db_name "./_asc_2_g_temp_"
+	    if [ file exists $db_name ] {
+		error "Temporary file ($db_name) is in the way (rename, delete, or move it)"
+		return
+	    }
 
-			# convert ascii database to binary
-			set asc2g [bu_brlcad_root "bin/asc2g"]
-			catch {exec $asc2g $filename $db_name} msg
+	    # convert ascii database to binary
+	    if {$tcl_platform(platform) == "windows"} {
+		set asc2g [bu_brlcad_root "bin/asc2g.exe"]
+	    } else {
+		set asc2g [bu_brlcad_root "bin/asc2g"]
+	    }
+	    catch {exec $asc2g $filename $db_name} msg
 
-			# concat the binary
-			dbconcat $db_name $prefix
-		}
-
-		file delete $db_name
+	    # concat the binary
+	    dbconcat $db_name $prefix
 	}
+
+	file delete $db_name
+    }
 }
 
 # Local Variables:

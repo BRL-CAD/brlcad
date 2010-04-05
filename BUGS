@@ -22,8 +22,6 @@ Recent Bugs
 * mged rrt command is not respecting the view size, just does
   something similar to autoview but even gets az/el wrong too.
 
-* reported that fbclear is not working on Windows build in mged.
-
 * Windows mged build is not generating tclIndex files with all
   entries.  notably the pattern_gui.tcl file is not getting included
   as well as a variety of others.  see missing entries in
@@ -52,6 +50,17 @@ Recent Bugs
   mged -c moss.g "tops ; title"
   mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
 
+  Note that this is consistent with doing the same thing on the MGED
+  Command Window's command prompt - if the above is a bug it is 
+  apparently not restricted to command/classic mode.
+
+  Further investigation suggests that this is a consequence of
+  Tcl treating multiple commands in a single " " block as one command,
+  insofar as capturing the output is concerned.  It probably relates
+  to situations where Tcl_SetResult is called where (in this case)
+  Tcl_AppendResult would have been better, but it is not clear whether
+  changing this result setting approach would cause other breakage.
+
 * kill command in archer deletes object but then reports a failure and
   mouse is stuck in a busy state.
 
@@ -75,9 +84,6 @@ Recent Bugs
   depending on whether you shoot from the front or back can result in
   bogus lists visiable with nirt in mged, entirely missing the bot, or
   mismatched entry/exit/overlap segments.
-
-* coil -S ... generates bad pipes with values previously known to
-  work (see man page for one example).
 
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
@@ -293,8 +299,6 @@ Recent Bugs
 * constrained axis translation bindings on OS X don't work
     object/matrix edit
     shift-alt mouse (left/mid/right for x/y/z respectively) should work
-
-* mged documentation doesn't open on OS X
 
 * the findfont directive in gv postscript is reporting font not found
 

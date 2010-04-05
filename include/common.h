@@ -108,20 +108,16 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* C99 says uintptr_t is an optional type, so make sure something is
- * provided.
+/* make sure most of the C99 stdint types are provided including the
+ * optional uintptr_t type.
  */
-#if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
+#if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
 #  ifdef HAVE_STDINT_H
+#    define __STDC_LIMIT_MACROS 1
+#    define __STDC_CONSTANT_MACROS 1
 #    include <stdint.h>
-#  endif
-#  if !defined(UINTPTR_MAX) && !defined(_UINTPTR_T_DEFINED)
-#    ifdef HAVE_UINT64_T
-typedef uint64_t uintptr_t;
-#    else
-typedef unsigned long long uintptr_t;
-#    endif
-#    define HAVE_UINT64_T 1
+#  else
+#    include "pstdint.h"
 #  endif
 #endif
 

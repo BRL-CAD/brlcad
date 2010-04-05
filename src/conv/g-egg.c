@@ -46,7 +46,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-static char usage[] = "Usage: %s [-bvi] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
@@ -205,7 +205,7 @@ int
 main(int argc, char *argv[])
 {
     double percent;
-    int i;
+    int i, use_mc=0;
 
     bu_setlinebuf(stderr);
 
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((i = bu_getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i")) != EOF) {
+    while ((i = bu_getopt(argc, argv, "a:bMn:o:r:vx:D:P:X:i")) != EOF) {
 	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -278,7 +278,13 @@ main(int argc, char *argv[])
 	    case 'i':
 		inches = 1;
 		break;
+	    case 'M':
+		use_mc = 1;
+		break;
+	    case '?':
+		bu_log("Unknown argument: \"%c\"\n", i);
 	    default:
+		bu_log("Booga. %c\n", i);
 		bu_exit(1, usage, argv[0]);
 		break;
 	}
@@ -300,6 +306,7 @@ main(int argc, char *argv[])
     /* Open brl-cad database */
     argc -= bu_optind;
     argv += bu_optind;
+
     if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Unable to open geometry file (%s)\n", argv[0]);
@@ -333,13 +340,13 @@ main(int argc, char *argv[])
     while (--argc) {
 	fprintf(fp, "<Group> %s {\n", *(argv+1));
 	(void) db_walk_tree(dbip,		/* db_i */
-			    1,			/* argc */
-			    (const char **)(++argv),	/* argv */
-			    1,			/* ncpu */
+			    1,		/* argc */
+			    (const char **)(++argv), /* argv */
+			    1,		/* ncpu */
 			    &tree_state,	/* state */
-			    0,			/* start func */
-			    gcv_region_end,	/* end func */
-			    nmg_booltree_leaf_tess, /* leaf func */
+			    NULL,		/* start func */
+			    use_mc?gcv_region_end_mc:gcv_region_end,	/* end func */
+			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
 			    (genptr_t)&gcvwriter);  /* client_data */
 	fprintf(fp, "}\n");
     }

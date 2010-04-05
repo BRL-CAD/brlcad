@@ -341,7 +341,13 @@ FBIO debug_interface = {
     0,			/* page_ref */
     0L,			/* page_curpos */
     0L,			/* page_pixels */
-    0			/* debug */
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 
