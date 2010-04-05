@@ -47,6 +47,16 @@
 
 #include "pkg.h"
 
+#ifdef TCL_THREADS
+
+TCL_DECLARE_MUTEX(threadMutex)
+
+static Tcl_ThreadCreateType threadprocprint(ClientData data) {
+    printf("In thread\n");
+    Tcl_ExitThread(TCL_OK);
+    TCL_THREAD_CREATE_RETURN;
+}
+
 
 int skipbytes(int fd, off_t num);
 
@@ -232,7 +242,8 @@ main(int argc, char **argv)
 	}
     };
 
-
+    Tcl_ThreadId threadID;
+    ClientData data;
 
     int y;
     int	xout, yout, n, m, xstart, xskip;
@@ -414,6 +425,9 @@ main(int argc, char **argv)
     }
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
+    Tcl_CreateThread(&threadID, threadprocprint, (ClientData) data, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_NOFLAGS);
+    printf("ran Tcl_CreateThread\n");
+
     Tcl_Eval(binterp, "vwait CloseWindow");
     if (!strcmp(Tcl_GetVar(binterp, "CloseWindow", 0), "close")) {
 	Tcl_Eval(binterp, "destroy .");
@@ -445,6 +459,8 @@ skipbytes(int fd, off_t num)
     }
     return	0;
 }
+
+#endif /*(TCL_THREADS)*/
 
 /*
  * Local Variables:
