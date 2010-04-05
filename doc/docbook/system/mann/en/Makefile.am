@@ -87,6 +87,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/g.xml \
 	system/mann/en/garbage_collect.xml \
 	system/mann/en/gastank.xml \
+	system/mann/en/gqa.xml \
 	system/mann/en/gui.xml \
 	system/mann/en/handle.xml \
 	system/mann/en/help.xml \
