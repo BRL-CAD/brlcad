@@ -460,6 +460,13 @@ skipbytes(int fd, off_t num)
     return	0;
 }
 
+#else
+int
+main(int argc, char **argv)
+{
+    fprintf(stderr, "TCL_THREADS is not defined. Exiting\n");
+    return 0;
+}
 #endif /*(TCL_THREADS)*/
 
 /*
