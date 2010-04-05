@@ -377,7 +377,7 @@ rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
 }
 
 int
-rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
+nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
     int *vi, fo, valids=0;
     struct faceuse *fu;
@@ -648,7 +648,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
 	/* stuff it into an nmg shell */
 	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
-	    count += rt_nmg_mc_realize_cube(s, pv, edges, tol);
+	    count += nmg_mc_realize_cube(s, pv, edges, tol);
 
 	last_b = b;
     }
@@ -657,7 +657,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
 /* rtip needs to be valid, s is where the results are stashed */
 int
-rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct application a;
     fastf_t x,y, endx, endy;
