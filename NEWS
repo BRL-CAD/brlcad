@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2010-04-XX  Release 7.16.8                                     ---
 ----------------------------------------------------------------------
 
+* g-stl and g-egg have -M for marching cubes - Erik Greenwald
+* marching cubes algorithm available in librt - Erik Greenwald
 * fixed mged bug reading from redirected input on Windows - Bob Parker
 * fixed partition selection bug in rt -k cut plane - John Anderson
 * added NURBS support for transformation matrices - Keith Bowman
