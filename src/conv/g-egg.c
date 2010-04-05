@@ -46,7 +46,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-static char usage[] = "Usage: %s [-bvi] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((i = bu_getopt(argc, argv, "a:bmn:o:r:vx:D:P:X:i")) != EOF) {
+    while ((i = bu_getopt(argc, argv, "a:bMn:o:r:vx:D:P:X:i")) != EOF) {
 	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -278,7 +278,7 @@ main(int argc, char *argv[])
 	    case 'i':
 		inches = 1;
 		break;
-	    case 'm':
+	    case 'M':
 		use_mc = 1;
 		break;
 	    case '?':
