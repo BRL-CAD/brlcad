@@ -127,7 +127,7 @@ reg_compare(const void *p1, const void *p2)
 int
 editit(const char *command, const char *tmpfile) {
     int argc = 5;
-    const char **av;
+    char **av;
     struct bu_vls editstring;
 
     CHECK_DBI_NULL;
@@ -136,11 +136,11 @@ editit(const char *command, const char *tmpfile) {
     get_editor_string(&editstring);
 
     av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "editit: av");
-    av[0] = command;
+    av[0] = (char *)command;
     av[1] = "-e"; 
     av[2] = bu_vls_addr(&editstring);
     av[3] = "-f";
-    av[4] = tmpfile;
+    av[4] = (char *)tmpfile;
     av[5] = NULL;
 
     ged_editit(gedp, argc, (const char **)av);
@@ -243,10 +243,13 @@ int
 f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     char **av;
+    char **argv_orig;
     struct bu_vls editstring;
     int i;
 
     CHECK_DBI_NULL;
+
+    argv_orig = (char **)argv;
 
     if (argc < 2) {
 	struct bu_vls vls;
@@ -262,12 +265,12 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     get_editor_string(&editstring);
 
     av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
-    av[0] = argv[0];
+    av[0] = argv_orig[0];
     av[1] = "-E";
-    av[2] = bu_vls_addr(&editstring);
+    av[2] = (char *)bu_vls_addr(&editstring);
     argc += 2;
     for (i = 3; i < argc; ++i) {
-	av[i] = argv[i-2];
+	av[i] = argv_orig[i-2];
     }
     av[argc] = NULL;
 
