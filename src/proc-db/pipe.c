@@ -99,7 +99,7 @@ Make_name(char *ptr, const char *form, const char *base, int number)
 {
 
     char scrat[NAMESIZE];
-    int len;
+    size_t len;
 
     bu_strlcpy(ptr, base, NAMESIZE);
     snprintf(scrat, NAMESIZE, form, number);

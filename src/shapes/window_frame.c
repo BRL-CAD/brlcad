@@ -42,7 +42,7 @@
 int
 main(int argc, char **argv)
 {
-    /* START # 1  */
+    /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
     char filemged[26];		/* Mged file create. */
     double hgt, wid, dpt;	/* Height, width, & depth of outside window */
@@ -91,9 +91,8 @@ main(int argc, char **argv)
     grpnam[4] = '\0';
 
     /* If there are no arguments ask questions. */
-    if (argc == 1)
-    {
-	/* START # 3  */
+    if (argc == 1) {
+	/* START # 3 */
 
 	/* Print info about the window. */
 	(void)printf("\nThe window frames are composed of 4 arb8s and 8\n");
@@ -122,71 +121,69 @@ main(int argc, char **argv)
 	(void)fflush(stdout);
 	(void)scanf("%lf", &isw);
 
-    }							/* END # 3  */
+    }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */
-    else
-    {
-	/* START # 4  */
+    else {
+	/* START # 4 */
 	/* List options. */
-	/*	-fname - name = mged file name. */
-	/*	-n# - # = number of window frames. */
-	/*	-h# - # = height of window frame in mm. */
-	/*	-w# - # = width of window frame in mm. */
-	/*	-d# - # = depth of window frame in mm. */
-	/*	-r# - # = radius of window frame corner in mm. */
-	/*	-i# - # = width of frame itself in mm. */
+	/* -fname - name = mged file name. */
+	/* -n# - # = number of window frames. */
+	/* -h# - # = height of window frame in mm. */
+	/* -w# - # = width of window frame in mm. */
+	/* -d# - # = depth of window frame in mm. */
+	/* -r# - # = radius of window frame corner in mm. */
+	/* -i# - # = width of frame itself in mm. */
 
-	for (i=1; i<argc; i++)
-	{
-	    /* START # 5  */
+	for (i=1; i<argc; i++) {
+	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
 
-	    /*  -f - mged file. */
-	    if (temp[1] == 'f')
-	    {
-		/* START # 6  */
+	    /* -f - mged file. */
+	    if (temp[1] == 'f') {
+		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 25) )
-		{
-		    /* START # 7  */
+		while ((temp[j] != '\0') && (k < 25)) {
+		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
 		    k++;
-		}					/* END # 7  */
+		}					/* END # 7 */
 		filemged[k] = '\0';
-	    }						/* END # 6  */
+	    }						/* END # 6 */
 
 	    /* All other options. */
-	    else
-	    {
-		/* START # 8  */
+	    else {
+		/* START # 8 */
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ( (temp[j] != '\0') && (k < 15) )
-		{
-		    /* START # 9  */
+		while ((temp[j] != '\0') && (k < 15)) {
+		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;
 		    k++;
-		}					/* END # 9  */
+		}					/* END # 9 */
 		temp1[k] = '\0';
-		if (temp[1] == 'n')
-		{
+		if (temp[1] == 'n') {
 		    (void)sscanf(temp1, "%d", &numwin);
 		    if (numwin > 26) numwin = 26;
+		} else if (temp[1] == 'h') {
+		    (void)sscanf(temp1, "%lf", &hgt);
+		} else if (temp[1] == 'w') {
+		    (void)sscanf(temp1, "%lf", &wid);
+		} else if (temp[1] == 'd') {
+		    (void)sscanf(temp1, "%lf", &dpt);
+		} else if (temp[1] == 'r') {
+		    (void)sscanf(temp1, "%lf", &rds);
+		} else if (temp[1] == 'i') {
+		    (void)sscanf(temp1, "%lf", &isw);
 		}
-		else if (temp[1] == 'h') (void)sscanf(temp1, "%lf", &hgt);
-		else if (temp[1] == 'w') (void)sscanf(temp1, "%lf", &wid);
-		else if (temp[1] == 'd') (void)sscanf(temp1, "%lf", &dpt);
-		else if (temp[1] == 'r') (void)sscanf(temp1, "%lf", &rds);
-		else if (temp[1] == 'i') (void)sscanf(temp1, "%lf", &isw);
-	    }						/* END # 8  */
-	}						/* END # 5  */
-    }							/* END # 4  */
+	    }						/* END # 8 */
+	}						/* END # 5 */
+    }							/* END # 4 */
 
     /* Print out all info. */
     (void)printf("\nmged file:  %s\n", filemged);
@@ -204,9 +201,8 @@ main(int argc, char **argv)
     /* Write ident record. */
     mk_id(fpw, "window frames");
 
-    for (i=0; i<numwin; i++)
-    {
-	/* START # 2  */
+    for (i=0; i<numwin; i++) {
+	/* START # 2 */
 	/* Create first arb8. */
 	pts[0][0] = (fastf_t)0.;
 	pts[0][1] = (fastf_t) (wid / 2. - rds);
@@ -451,12 +447,12 @@ main(int argc, char **argv)
 
 	grpnam[3] = 97 + i;
 	mk_lfcomb(fpw, grpnam, &comb1, 0);
-    }							/* START # 2  */
+    }							/* START # 2 */
 
     /* Close file. */
     wdb_close(fpw);
     return 0;
-}							/* END # 1  */
+}							/* END # 1 */
 
 /*
  * Local Variables:

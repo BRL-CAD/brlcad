@@ -36,7 +36,7 @@
 #include "./mged_dm.h"
 
 
-static char	adc_syntax[] = "\
+static char adc_syntax[] = "\
  adc			toggle display of angle/distance cursor\n\
  adc vars		print a list of all variables (i.e. var = val)\n\
  adc draw [0|1]		set or get the draw parameter\n\
@@ -76,6 +76,7 @@ adc_set_dirty_flag(void)
 	    dmlp->dml_dirty = 1;
 }
 
+
 void
 adc_set_scroll(void)
 {
@@ -94,6 +95,7 @@ adc_set_scroll(void)
     curr_dm_list = save_dmlp;
 }
 
+
 static void
 adc_model_To_adc_view(void)
 {
@@ -101,6 +103,7 @@ adc_model_To_adc_view(void)
     adc_state->adc_dv_x = adc_state->adc_pos_view[X] * GED_MAX;
     adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
 }
+
 
 static void
 adc_grid_To_adc_view(void)
@@ -115,6 +118,7 @@ adc_grid_To_adc_view(void)
     adc_state->adc_dv_y = adc_state->adc_pos_view[Y] * GED_MAX;
 }
 
+
 static void
 adc_view_To_adc_grid(void)
 {
@@ -125,6 +129,7 @@ adc_view_To_adc_grid(void)
     MAT4X3PNT(view_pt, view_state->vs_gvp->gv_model2view, model_pt);
     VSUB2(adc_state->adc_pos_grid, adc_state->adc_pos_view, view_pt);
 }
+
 
 static void
 calc_adc_pos(void)
@@ -140,6 +145,7 @@ calc_adc_pos(void)
 	MAT4X3PNT(adc_state->adc_pos_model, view_state->vs_gvp->gv_view2model, adc_state->adc_pos_view);
     }
 }
+
 
 static void
 calc_adc_a1(void)
@@ -159,6 +165,7 @@ calc_adc_a1(void)
     }
 }
 
+
 static void
 calc_adc_a2(void)
 {
@@ -176,6 +183,7 @@ calc_adc_a2(void)
 	}
     }
 }
+
 
 static void
 calc_adc_dst(void)
@@ -195,6 +203,7 @@ calc_adc_dst(void)
     } else
 	adc_state->adc_dst = (adc_state->adc_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
 }
+
 
 static void
 draw_ticks(fastf_t angle)
@@ -352,6 +361,7 @@ adcursor(void)
     draw_ticks(angle2);
 }
 
+
 static void
 adc_reset(void)
 {
@@ -424,8 +434,8 @@ int
 f_adc (
     ClientData clientData,
     Tcl_Interp *interp,
-    int	argc,
-    char	**argv)
+    int argc,
+    char **argv)
 {
     struct bu_vls vls;
     char *parameter;

@@ -35,15 +35,16 @@
 #include "bu.h"
 
 
-#define		BUF_LEN		512
-#define		FP_IN		0
-#define		FP_OUT		1
+#define BUF_LEN 512
+#define FP_IN 0
+#define FP_OUT 1
 
 
 static void printusage (void)
 {
     bu_log("asc-pl [file.in [file.pl]]\n");
 }
+
 
 static int check_syntax (char cmd, int needed, int got, int line)
 {
@@ -53,19 +54,20 @@ static int check_syntax (char cmd, int needed, int got, int line)
     return (1);
 }
 
+
 int
 main (int argc, char **argv)
 {
-    char	*bp;
-    char	buf[BUF_LEN];
-    char	sarg[BUF_LEN];
-    static char	*fm[] = { "r", "w" };
-    double	darg[6];
-    static FILE	*fp[2];
-    int		i;
-    int		iarg[6];
-    int		line_nm;
-    int		nm_args = 0;
+    char *bp;
+    char buf[BUF_LEN];
+    char sarg[BUF_LEN];
+    static char *fm[] = { "r", "w" };
+    double darg[6];
+    static FILE *fp[2];
+    int i;
+    int iarg[6];
+    int line_nm;
+    int nm_args = 0;
 
     /* Handle command-line syntax */
     if (argc > 3) {
@@ -236,6 +238,7 @@ main (int argc, char **argv)
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

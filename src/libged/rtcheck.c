@@ -99,9 +99,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     int	o_pipe[2];	/* object writes view parameters */
     int	e_pipe[2];	/* object reads textual results */
 #else
-    HANDLE	i_pipe[2], pipe_iDup;	/* MGED reads results for building vectors */
-    HANDLE	o_pipe[2], pipe_oDup;	/* MGED writes view parameters */
-    HANDLE	e_pipe[2], pipe_eDup;	/* MGED reads textual results */
+    HANDLE	i_pipe[2], pipe_iDup;	/* READS results for building vectors */
+    HANDLE	o_pipe[2], pipe_oDup;	/* WRITES view parameters */
+    HANDLE	e_pipe[2], pipe_eDup;	/* READS textual results */
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
@@ -335,7 +335,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     (void)CloseHandle(e_pipe[1]);
 
     /* As parent, send view information down pipe */
-    fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup, _O_TEXT), "wb");
+    fp = _fdopen(_open_osfhandle((intptr_t)pipe_oDup, _O_TEXT), "wb");
     setmode(_fileno(fp), O_BINARY);
 
     _ged_rt_set_eye_model(gedp, eye_model);
@@ -346,7 +346,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
-    rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb" );
+    rtcp->fp = _fdopen( _open_osfhandle((intptr_t)pipe_iDup, _O_TEXT), "rb" );
     setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;
@@ -447,7 +447,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 	close(rtcop->fd);
 
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify();
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
 	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
 	return;
@@ -531,7 +531,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 	Tcl_Close(rtcop->interp, rtcop->chan);
 
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify();
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
 	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
 

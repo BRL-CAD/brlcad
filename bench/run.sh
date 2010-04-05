@@ -322,11 +322,8 @@ Plese send your BRL-CAD Benchmark results to the developers along with
 detailed system information to <devs@brlcad.org>.  Include at least:
 
   0) Compiler name and version (e.g. gcc --version)
-  1) CPU configuration (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-  2) Cache (data and/or instruction) details for L1/L2/L3 and system
-     (e.g. cat /proc/cpuinfo or hinv or sysctl -a)
-  3) All generated log files (i.e. *.log* after benchmark completes)
-  4) Anything else you think might be relevant to performance
+  1) All generated log files (i.e. *.log* after benchmark completes)
+  2) Anything else you think might be relevant to performance
 
 The manual page has even more information and specific usage examples.
 Run 'brlman benchmark'.
@@ -608,7 +605,7 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO "ERROR:  CMP does not seem to work as expected"
     exit 2
 fi
-$ELP 0
+$ELP 0 > /dev/null 2>&1
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
@@ -1436,6 +1433,19 @@ else
 	QUIET=1
 	$ECHO "==============================================================================="
 	$ECHO "`$PRTCONF_CMD 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # SGI
+    look_for executable "an hinv command" HINV_CMD `echo $PATH | sed 's/:/\/hinv /g'`
+    if test ! "x$HINV_CMD" = "x" ; then
+	$ECHO "Collecting system configuration information (via $HINV_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$HINV_CMD 2>&1`"
 	$ECHO
 	QUIET="$preQUIET"
 	blankit=yes

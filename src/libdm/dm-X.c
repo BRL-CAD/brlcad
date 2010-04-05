@@ -78,7 +78,7 @@ extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, lo
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 struct dm *X_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
-HIDDEN_DM_FUNCTION_PROTOTYPES(X);
+HIDDEN_DM_FUNCTION_PROTOTYPES(X)
 
 struct dm dm_X = {
     X_close,
@@ -464,7 +464,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1)  goto Done;
+	list == (XDeviceInfoPtr)1) goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
@@ -506,11 +506,11 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
     }
- Done:
+Done:
     XFreeDeviceList(olist);
 #endif
 
- Skip_dials:
+Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
@@ -911,7 +911,7 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
     if (!callback_function) {
 	if (data) {
 	    vp = (struct bn_vlist *)data;
-	    X_drawVList(dmp,vp);
+	    X_drawVList(dmp, vp);
 	}
     } else {
 	if (!data) {
@@ -1009,14 +1009,14 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 HIDDEN int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-   if (!dmp)
-      return TCL_ERROR;
+    if (!dmp)
+	return TCL_ERROR;
 
-   if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
-      /* nothing to do for a singular point */
-      return TCL_OK;
-   }
-   return TCL_OK;
+    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+	/* nothing to do for a singular point */
+	return TCL_OK;
+    }
+    return TCL_OK;
 }
 
 
@@ -1024,7 +1024,7 @@ HIDDEN int
 X_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 {
     if (!dmp || npoints < 0 || !points)
-       return TCL_ERROR;
+	return TCL_ERROR;
 
     return TCL_OK;
 }
@@ -1426,6 +1426,7 @@ X_choose_visual(struct dm *dmp)
     bu_free(good, "dealloc good visuals");
     return (XVisualInfo *)NULL; /* failure */
 }
+
 
 #endif /* DM_X */
 

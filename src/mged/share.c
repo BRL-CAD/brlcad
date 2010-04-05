@@ -20,7 +20,7 @@
 /** @file share.c
  *
  * Description -
- *	Routines for sharing resources among display managers.
+ * Routines for sharing resources among display managers.
  *
  */
 
@@ -70,6 +70,7 @@
       } \
     } \
 }
+
 
 extern void mged_vls_struct_parse(struct bu_vls *vls, char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, char **argv); /* defined in vparse.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
@@ -173,38 +174,38 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		break;
 	case 'd':
 	case 'D':
-	{
-	    struct dm *dmp1;
-	    struct dm *dmp2 = (struct dm *)NULL;
+	    {
+		struct dm *dmp1;
+		struct dm *dmp2 = (struct dm *)NULL;
 
-	    dmp1 = dlp1->dml_dmp;
-	    if (dlp2 != (struct dm_list *)NULL)
-		dmp2 = dlp2->dml_dmp;
+		dmp1 = dlp1->dml_dmp;
+		if (dlp2 != (struct dm_list *)NULL)
+		    dmp2 = dlp2->dml_dmp;
 
-	    if (dm_share_dlist(dmp1, dmp2) == TCL_OK) {
-		SHARE_RESOURCE(uflag, _dlist_state, dml_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
-		if (uflag) {
-		    dlp1->dml_dlist_state->dl_active = dlp1->dml_mged_variables->mv_dlist;
+		if (dm_share_dlist(dmp1, dmp2) == TCL_OK) {
+		    SHARE_RESOURCE(uflag, _dlist_state, dml_dlist_state, dl_rc, dlp1, dlp2, vls, "share: dlist_state");
+		    if (uflag) {
+			dlp1->dml_dlist_state->dl_active = dlp1->dml_mged_variables->mv_dlist;
 
-		    if (dlp1->dml_mged_variables->mv_dlist) {
-			struct dm_list *save_dlp;
+			if (dlp1->dml_mged_variables->mv_dlist) {
+			    struct dm_list *save_dlp;
 
-			save_dlp = curr_dm_list;
+			    save_dlp = curr_dm_list;
 
-			curr_dm_list = dlp1;
-			createDLists(&gedp->ged_gdp->gd_headDisplay);
+			    curr_dm_list = dlp1;
+			    createDLists(&gedp->ged_gdp->gd_headDisplay);
 
-			/* restore */
-			curr_dm_list = save_dlp;
+			    /* restore */
+			    curr_dm_list = save_dlp;
+			}
+
+			dlp1->dml_dirty = 1;
+		    } else {
+			dlp1->dml_dirty = dlp2->dml_dirty = 1;
 		    }
-
-		    dlp1->dml_dirty = 1;
-		} else {
-		    dlp1->dml_dirty = dlp2->dml_dirty = 1;
 		}
 	    }
-	}
-	break;
+	    break;
 	case 'g':
 	case 'G':
 	    SHARE_RESOURCE(uflag, _grid_state, dml_grid_state, gr_rc, dlp1, dlp2, vls, "share: grid_state")
@@ -262,6 +263,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&vls);
     return TCL_OK;
 }
+
 
 /*
  * SYNOPSIS
@@ -365,6 +367,7 @@ f_rset (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * dlp1 takes control of dlp2's resources. dlp2 is
  * probably on its way out (i.e. being destroyed).
@@ -396,6 +399,7 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
     if (!--dlp2->dml_dlist_state->dl_rc)
 	bu_free((genptr_t)curr_dm_list->dml_dlist_state, "usurp_all_resources: _dlist_state");
 }
+
 
 /*
  * - decrement the reference count of all resources
@@ -431,6 +435,7 @@ free_all_resources(struct dm_list *dlp)
 	bu_free((genptr_t)dlp->dml_axes_state, "free_all_resources: axes_state");
 }
 
+
 void
 share_dlist(struct dm_list *dlp2)
 {
@@ -456,6 +461,7 @@ share_dlist(struct dm_list *dlp2)
 	}
     }
 }
+
 
 /*
  * Local Variables:

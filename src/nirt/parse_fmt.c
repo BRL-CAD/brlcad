@@ -529,7 +529,7 @@ fopenrc(void)
     char *rc_file_name;
     char *home;
     FILE *fPtr;
-    int len;
+    size_t len;
 
     if ((fPtr = fopen(DEF_RCF_NAME, "rb")) == NULL) {
 	if ((home = getenv("HOME")) != NULL) {
@@ -638,8 +638,8 @@ check_conv_spec(outitem *oip)
 void
 direct_output(const char *buffer, com_table *ctp)
 {
-    int i = 0;      /* current position on the *buffer */
-    int j = 0;      /* position of last non-whitespace char in the *buffer */
+    size_t i = 0;      /* current position on the *buffer */
+    size_t j = 0;      /* position of last non-whitespace char in the *buffer */
     FILE *newf;
     static char *new_dest;
     static FILE *(*openfunc)() = 0;

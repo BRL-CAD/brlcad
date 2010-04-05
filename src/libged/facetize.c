@@ -35,7 +35,40 @@
 #include "./ged_private.h"
 
 
-static union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static union tree *
+facetize_region_end(struct db_tree_state *tsp,
+		    const struct db_full_path *pathp,
+		    union tree *curtree,
+		    genptr_t client_data)
+{
+    struct bu_list vhead;
+    union tree **facetize_tree;
+
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+
+    facetize_tree = (union tree **)client_data;
+    BU_LIST_INIT( &vhead );
+
+    if ( curtree->tr_op == OP_NOP )  return  curtree;
+
+    if ( *facetize_tree )  {
+	union tree	*tr;
+	tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
+	tr->magic = RT_TREE_MAGIC;
+	tr->tr_op = OP_UNION;
+	tr->tr_b.tb_regionp = REGION_NULL;
+	tr->tr_b.tb_left = *facetize_tree;
+	tr->tr_b.tb_right = curtree;
+	*facetize_tree = tr;
+    } else {
+	*facetize_tree = curtree;
+    }
+
+    /* Tree has been saved, and will be freed later */
+    return( TREE_NULL );
+}
+
 
 int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
@@ -271,38 +304,6 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
-static union tree *
-facetize_region_end(struct db_tree_state	*tsp,
-		    struct db_full_path			*pathp,
-		    union tree				*curtree,
-		    genptr_t				client_data)
-{
-    struct bu_list	vhead;
-    union tree		**facetize_tree;
-
-    facetize_tree = (union tree **)client_data;
-    BU_LIST_INIT( &vhead );
-
-    if ( curtree->tr_op == OP_NOP )  return  curtree;
-
-    if ( *facetize_tree )  {
-	union tree	*tr;
-	tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
-	tr->magic = RT_TREE_MAGIC;
-	tr->tr_op = OP_UNION;
-	tr->tr_b.tb_regionp = REGION_NULL;
-	tr->tr_b.tb_left = *facetize_tree;
-	tr->tr_b.tb_right = curtree;
-	*facetize_tree = tr;
-    } else {
-	*facetize_tree = curtree;
-    }
-
-    /* Tree has been saved, and will be freed later */
-    return( TREE_NULL );
-}
-
 
 
 /*

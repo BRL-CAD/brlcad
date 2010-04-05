@@ -1194,19 +1194,19 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
 	switch ((vals_present-2) % 3) {
 	    case 0:
-		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : ",
+		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : %d, %d",
 			      prompt[5],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
 	    case 1:
-		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : ",
+		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : %d, %d",
 			      prompt[6],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
 		break;
 	    case 2:
-		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : ",
+		bu_vls_printf(&gedp->ged_result_str, "%s for pt of last Waterline : %d, %d",
 			      prompt[7],
 			      1+(argc-8)/3/num_pts,
 			      ((argc-8)/3)%num_pts );
@@ -2389,7 +2389,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 /*   P N T S _ I N */
 static int
 pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
-    int i, j;
+    int i;
     unsigned long numPoints;
     struct rt_pnts_internal *pnts;
     void *headPoint;
@@ -2751,7 +2751,6 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     char **menu;
     int nvals, (*fn_in)();
-    void (*cur_sigint)();
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

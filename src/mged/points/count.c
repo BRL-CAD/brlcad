@@ -70,7 +70,7 @@ static void incr_token(int id)
 }
 
 
-void count(long int id, const char *text)
+void tabulate(long int id, const char *text)
 {
     int i;
     static char previous = 0;
@@ -103,7 +103,7 @@ void count(long int id, const char *text)
 }
 
 
-void freecount()
+void free_tabulation()
 {
     token_t *t = (token_t*)NULL;
     token_t *next = (token_t*)NULL;
@@ -116,11 +116,11 @@ void freecount()
 
     while (t != (token_t*)NULL) {
 	next = t->next;
-	bu_free(t, "freecount()");
+	bu_free(t, "free_tabulation()");
 	t = next;
     }
 
-    bu_free(counter, "freecount()");
+    bu_free(counter, "free_tabulation()");
 }
 
 

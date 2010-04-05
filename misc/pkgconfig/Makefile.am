@@ -1,6 +1,7 @@
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = \
+	libanalyze.pc \
 	libbn.pc \
 	libbrlcad.pc \
 	libbu.pc \
@@ -17,6 +18,7 @@ pkgconfig_DATA = \
 	libwdb.pc
 
 EXTRA_DIST = \
+	libanalyze.pc.in \
 	libbn.pc.in \
 	libbrlcad.pc.in \
 	libbu.pc.in \

@@ -90,11 +90,11 @@
 #ifdef DEBUG
 #  ifndef _WIN32
 #    ifndef LOGFILE
-#      define LOGFILE	"mged.log"	/* usage log */
+#      define LOGFILE "mged.log"	/* usage log */
 #    endif
 #  else
 #    ifndef LOGFILE
-#      define LOGFILE	"C:\\mged.log"		/* usage log */
+#      define LOGFILE "C:\\mged.log"		/* usage log */
 #    endif
 #  endif
 #else
@@ -174,6 +174,9 @@ int classic_mged=0;
 #else
 int classic_mged=1;
 #endif
+
+/* The old mged gui is temporarily the default. */
+int old_mged_gui=1;
 
 static int mged_init_flag = 1;	/* >0 means in initialization stage */
 
@@ -294,6 +297,13 @@ attach_display_manager(Tcl_Interp *interp, const char *manager, const char *disp
 }
 
 
+HIDDEN void
+mged_notify()
+{
+    pr_prompt(interactive);
+}
+
+
 /*
  * M A I N
  */
@@ -303,8 +313,6 @@ main(int argc, char *argv[])
     int rateflag = 0;
     int c;
     int read_only_flag=0;
-
-    pid_t pid;
 
     int parent_pipe[2];
     int use_pipe = 0;
@@ -339,7 +347,7 @@ main(int argc, char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbicnrx:X:v?")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbicnorx:X:v?")) != EOF) {
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -350,7 +358,7 @@ main(int argc, char *argv[])
 	    case 'r':
 		read_only_flag = 1;
 		break;
-	    case 'n':		/* "not new" == "classic" */
+	    case 'n':           /* "not new" == "classic" */
 		bu_log("WARNING: -n is deprecated.  used -c instead.\n");
 		/* fall through */
 	    case 'c':
@@ -375,6 +383,14 @@ main(int argc, char *argv[])
 		       bu_version());
 		return EXIT_SUCCESS;
 		break;
+	    case 'o':
+		/* Eventually this will be used for the old mged gui.
+		 * I'm temporarily hijacking it for the new gui until
+		 * it becomes the default.
+		 */
+		bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
+		old_mged_gui = 0;
+		break;
 	    default:
 		bu_log("Unrecognized option (%c)\n", c);
 		/* Fall through to help */
@@ -395,6 +411,10 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
+	    interactive = 0;
+#else
 	/* check if there is data on stdin (better than checking if isatty()) */
 	FD_ZERO(&read_set);
 	FD_SET(fileno(stdin), &read_set);
@@ -438,6 +458,7 @@ main(int argc, char *argv[])
 		interactive = 1;
 	    }
 	} /* read_set */
+#endif
 
 	if (bu_debug && out != stdout) {
 	    fflush(out);
@@ -464,6 +485,8 @@ main(int argc, char *argv[])
 
 #ifdef HAVE_PIPE
     if (!classic_mged && !run_in_foreground) {
+	pid_t pid;
+
 	fprintf(stdout, "Initializing and backgrounding, please wait...");
 	fflush(stdout);
 
@@ -670,25 +693,27 @@ main(int argc, char *argv[])
 	}
     }
 
-    /* Open the database */
-    if (argc >= 1) {
-	char *av[3];
+    if (!interactive || classic_mged || old_mged_gui) {
+	/* Open the database */
+	if (argc >= 1) {
+	    char *av[3];
 
-	av[0] = "opendb";
-	av[1] = argv[0];
-	av[2] = NULL;
+	    av[0] = "opendb";
+	    av[1] = argv[0];
+	    av[2] = NULL;
 
-	/* Command line may have more than 2 args, opendb only wants 2
-	 * expecting second to be the file name.
-	 */
-	if (f_opendb((ClientData)NULL, interp, 2, av) == TCL_ERROR) {
-	    if (!run_in_foreground && use_pipe) {
-		notify_parent_done(parent_pipe[1]);
+	    /* Command line may have more than 2 args, opendb only wants 2
+	     * expecting second to be the file name.
+	     */
+	    if (f_opendb((ClientData)NULL, interp, 2, av) == TCL_ERROR) {
+		if (!run_in_foreground && use_pipe) {
+		    notify_parent_done(parent_pipe[1]);
+		}
+		mged_finish(1);
 	    }
-	    mged_finish(1);
+	} else {
+	    (void)Tcl_Eval(interp, "opendb_callback nul");
 	}
-    } else {
-	(void)Tcl_Eval(interp, "opendb_callback nul");
     }
 
     if (dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only)) {
@@ -698,7 +723,7 @@ main(int argc, char *argv[])
 
     if (dbip != DBI_NULL) {
 	setview(0.0, 0.0, 0.0);
-	gedp->ged_gdp->gd_rtCmdNotify = mged_rtCmdNotify;
+	gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */
@@ -728,7 +753,14 @@ main(int argc, char *argv[])
 #endif
 
 	    bu_vls_init(&vls);
-	    bu_vls_strcpy(&vls, "gui");
+	    if (old_mged_gui) {
+		bu_vls_strcpy(&vls, "gui");
+	    } else {
+		if (argv >= 1)
+		    bu_vls_printf(&vls, "set argv %s; source archer", argv[0]);
+		else
+		    bu_vls_printf(&vls, "source archer");
+	    }
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
@@ -777,10 +809,11 @@ main(int argc, char *argv[])
     } /* interactive */
 
     /* initialize a display manager */
-    if (!attach && interactive && classic_mged) {
-	get_attached();
-    } else {
-	attach_display_manager(interp, attach, dpy_string);
+    if (interactive && classic_mged) {
+	if (!attach)
+	    get_attached();
+	else
+	    attach_display_manager(interp, attach, dpy_string);
     }
 
     /* --- Now safe to process geometry. --- */
@@ -831,7 +864,6 @@ main(int argc, char *argv[])
 	}
 #endif
     } else {
-	ClientData out, err;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -840,22 +872,26 @@ main(int argc, char *argv[])
 	bu_vls_free(&vls);
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-	/* Redirect stdout */
-	(void)close(1);
-	(void)dup(pipe_out[1]);
-	(void)close(pipe_out[1]);
+	{
+	    ClientData out, err;
 
-	/* Redirect stderr */
-	(void)close(2);
-	(void)dup(pipe_err[1]);
-	(void)close(pipe_err[1]);
+	    /* Redirect stdout */
+	    (void)close(1);
+	    (void)dup(pipe_out[1]);
+	    (void)close(pipe_out[1]);
 
-	out = (ClientData)(size_t)pipe_out[0];
-	chan = Tcl_MakeFileChannel(out, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
-	err = (ClientData)(size_t)pipe_err[0];
-	chan = Tcl_MakeFileChannel(err, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, err);
+	    /* Redirect stderr */
+	    (void)close(2);
+	    (void)dup(pipe_err[1]);
+	    (void)close(pipe_err[1]);
+
+	    out = (ClientData)(size_t)pipe_out[0];
+	    chan = Tcl_MakeFileChannel(out, TCL_READABLE);
+	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
+	    err = (ClientData)(size_t)pipe_err[0];
+	    chan = Tcl_MakeFileChannel(err, TCL_READABLE);
+	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, err);
+	}
 #else
 	{
 	    HANDLE handle[2];
@@ -897,7 +933,7 @@ main(int argc, char *argv[])
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
-	if ((rateflag = event_check(rateflag)) < 0)  break;
+	if ((rateflag = event_check(rateflag)) < 0) break;
 
 	/*
 	 * Cause the control portion of the displaylist to be updated
@@ -1062,6 +1098,7 @@ stdin_input(ClientData clientData, int mask)
 #endif
 }
 
+
 static void
 do_tab_expansion()
 {
@@ -1106,6 +1143,7 @@ do_tab_expansion()
 
     bu_vls_free(&tab_expansion);
 }
+
 
 /* Process character */
 static void
@@ -1569,6 +1607,7 @@ mged_process_char(char ch)
     }
 }
 
+
 static void
 mged_insert_char(char ch)
 {
@@ -1623,6 +1662,7 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 void
 std_out_or_err(ClientData clientData, int mask)
@@ -2178,6 +2218,7 @@ refresh(void)
     bu_vls_free(&tmp_vls);
 }
 
+
 /*
  * L O G _ E V E N T
  *
@@ -2403,6 +2444,7 @@ new_edit_mats(void)
 
     curr_dm_list = save_dm_list;
 }
+
 
 void
 mged_view_callback(struct ged_view *gvp,
@@ -2891,6 +2933,7 @@ mged_bomb_hook(genptr_t clientData, genptr_t data)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

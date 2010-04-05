@@ -17,21 +17,27 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* oof.
+* 64-bit port of BRL-CAD on Windows
+
+* Mac OS X 10.5+ X11 input bug
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
-  and src/libged/editit.c where the latter had the libdm dependency
-  removed.  that refactoring subsequently killed all of the logic used
-  to know when to invoke the editor from within an xterm, which hangs
-  mged since the user can't actually see/access the detached editor.
+* fix archer/libdm labels/axes to not use pointer printing
 
-* vls name wrapping (reversible argv-to-vls, vls-to-argv)
+* vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
+  src/libged/glob.c code, very similar.
 
-* 64-bit port of BRL-CAD on Windows
+* refactor rt_functab accessors to go through an api call or calls so
+  that the array is not accessed directly.  either an rt_eval() style
+  interface with data-driven keys to tell it with function(s) to call,
+  or simply have an rt_*() for each function (e.g., rt_mirror(),
+  rt_shot(), rt_describe(), etc).
+
+* investigate tessellation failures (Stryker, et al), possibily due to
+  recent tolerance checks.
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -44,15 +50,89 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-* deprecate dbfind - ensure functionality is fully captured by the
-  search command, make it report a deprecation statement on use and
-  utilize search under the hood.
 
-* refactor rt_functab accessors to go through an api call or calls so
-  that the array is not accessed directly.  either an rt_eval() style
-  interface with data-driven keys to tell it with function(s) to call,
-  or simply have an rt_*() for each function (e.g., rt_mirror(),
-  rt_shot(), rt_describe(), etc).
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* the 'l' and 'analyze' commands now require an object be specified
+  and won't use the currently highlighted solid.  undoubtedly related
+  to libged refactoring.  this is related to sf request 2954409.
+
+* alias objects.  this is an object handle in a geometry database that
+  refers to another geometry database object.  in effect, it
+  encapsulates the idea of a symbolic reference for database objects.
+
+  alias objects should be very lightweight, corresponding to basically
+  a simple named reference to another object.  this allows for
+  geometry objects to have multiple names, all referencing a given
+  primary name.  whenever an alias is referenced, it returns the
+  object pointed to instead of the alias object itself (this includes
+  the rt_db_internal()).  this prevents the creation of cyclic
+  references.
+
+  this directly supports geometry importers that contain object name
+  mappings (e.g., part numbers to engineering names) as well as
+  simply supporting multiple names per object that one might want to
+  persist.  there is an issue of whether aliases show as top-level
+  objects or even display by default without a listing option.
+
+* a "batch" command for libged to apply a given command template to
+  all lines in a given input text file.  could be very similar to exec
+  but instead of inspecting the current .g, it walks lines in file(s).
+  this would let you do things like:
+
+  # same as mvall -f file.txt
+  batch file.txt -exec "mvall \$*"
+  
+  # create an alternate hierarchy based on some mapping file
+  batch file.txt -exec "g \$*"
+
+  # for all lines in 3 files, kill first symbol, rename second to it
+  batch A.txt B.txt C.txt -exec "kill \$1" -exec "mv \$2 \$1"
+
+  # keep all objects in an edcodes file with region ID > 1000
+  batch A.txt -field 2 -ne 1000 -exec "keep subset.g \$5"
+
+  # for all regions, if they are listed in file.txt, add them to a
+  # parent assembly and set a specified material ID
+  search . -name "*.r" -exec batch file.txt -field 1 -eq {} -exec "g \$1 {}" -exec "mater {} \$3" \;
+
+  # run awk, get 4th column, run sed to change name, 
+  batch file.txt -awk '{print $4}' -sed 's/^r\.(.*)/\1\.r/g' -exec "mv \$1 \$$"
+
+  # outside of MGED, the above would have been similar to:
+  cat file.txt | awk '{print $4}' | sed 's/^r\.(.*)/r\.\1 \1\.r/g' | xargs mged test.g mv
+
+  The command becomes more of a stream processor on the input file, as
+  if piped on the shell line.  To embed awk, sed, cut, see qse:
+          http://code.google.com/p/qse/
+
+  The search and batch commands probably can't nor shouldn't use the
+  same replacement markers, with batch using $*, $1, $2, etc, to
+  represent file columns (in a poor man's awk fashion) and search
+  simply using "{}" as the the object name replacement marker.
+
+* fix !!! in src/libged/tables.c where a temporary file is getting
+  used.  needs to call bu_temp_file().
+
+* make the 'tree' command accept a full path, not just a combination
+
+* clean up new rt -l8 heat graph lighting model so that it works in
+  parallel and with no "splotches"
+
+* make rt_prep_timer() take or return a context that gets subsequently
+  passed to rt_get_timer() calls for returning the elapsed time.  this
+  will allow multiple overlapping timers instead of just one global
+  timers.  move the timing facilities to libbu as part of the process
+  so API can be obsoleted cleanly.
+
+* separation of stderr from stdout within libbu, particularly for
+  MGED, so that there is a clean separation of result output from
+  diagnostic output.  this is a fairly separate idea from having log
+  levels (ala syslog) but is somewhat related to the concept of having
+  definable output streams.  idea in mind is to have a bu facility to
+  obtain a bu_log()-style callback function returned from a
+  logger registration function.
 
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
@@ -60,12 +140,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * fix metaball "shelling" but that causes the primitive to invert and
   just give paper thin surface (something wrong in the intersection).
 
-* fix src/librt/roots.c exact floating point comparison issue and
-  tight tolerance problems.  See !!! comments.
-
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* deprecate dbfind - ensure functionality is fully captured by the
+  search command, make it report a deprecation statement on use and
+  utilize search under the hood.
 
 * investigate impact of using lookup tables for root solving.
   implement lookup tables for a range of linear, quadratic, cubic, and
@@ -86,6 +163,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   normals.. this certainly saves memory if the triangles don't have
   normals but at a rather expensive malloc cost (which is being seen
   on large BoT models) during prep.
+
+* need a simplified means to programmatically create and edit BoT
+  meshes via the command line without resorting to get/put.
 
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.
@@ -114,12 +194,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * expose all manual page documentation from within mged through
   searchable viewer interface (GUI)
 
-* add support to 'mv' (and possibly friends like mvall) for renaming
-  objects based on a mapping file.  Primarily of benefit to imported
-  geometries, this would introduce a renaming capability similar to
-  rcodes, idents, and other similar commands that provide file-based
-  collective name editing.
-
 * add an option to bot_dump for outputting surface normals.  Make sure
   all supported dump formats (obj, dxf, etc) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
@@ -133,8 +207,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   command may have a bug in its calculations.  This needs to be
   investigated along with a review of the taxonomy used by rtarea for
   describing presented/projected areas.
-
-* make sca command accept three arguments for x/y/z.
 
 * obliterate verbose compilation warnings
 
@@ -186,16 +258,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * implement a new tool/command that reports summary information about
   a geometry file including number of objects, types of objects,
   classes of geometry representation types used, and potentially more.
-
-* add an option to mv/mvall to take input from a mapping file.
-  relates to sf feature request 2827957 from butler.  should be
-  something along the lines of simple file parsing such as the
-  following:
-
-  # this line is a comment
-  foo bar
-  "big foo" "big bar"
-  foobar "foo bar"  # another comment, replacing foobar with 'foo bar'
 
 * consider adding an option to reid/remat and edcodes (and others?) to
   ignore negative regions (regions subtracted from regions or
@@ -450,9 +512,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (e.g., as an rt option) for things like adding an image title, the
   az/el, and objects displayed.
 
-* implement a lighting model for rt that visualizes how expensive each
-  individual pixel is to compute with an intensity (heat graph)
-
 * bezier extrusions need to be optimized, really should not be
   performing dynamic memory allocation in the root solver
 
@@ -598,7 +657,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
-	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv rtwizard script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
 
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their
@@ -614,6 +673,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   for airfoil/wing shapes.  Interesting possibilities with boolean combinations
   of these primitives, provided their continuity at the ends ensures
   continuity all along "seams" - something to consider.
+
+* implement a g-gcode exporter.  ideally this converts geometry to
+  NURBS format, trims surfaces, evaluates boolean expressions, and
+  then generates tool paths on resulting surfaces and interior paths.
+
 
 LIBPC
 -----
@@ -652,7 +716,21 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
 * support for features either as primitives or operations or both
-  e.g. chamfer, fillet, round, etc
+  e.g. chamfer, fillet, round, cut, etc
+
+* a cut feature edit.  implementation could be represented as the cube
+  that bounds a geometry object.  eight points somewhere on the edges
+  of the cube define an intersection volume on the object.  by
+  default, the eight points could be positioned at the corners of the
+  cube and would remain constrained to reside on one of the three
+  adjoining edges for their respective corner.  this would provide a
+  simple user interface where a face could be selected to move a cut
+  plane through an object (moving four points along four edges), or an
+  edge could be moved to move two points simultaneously, or each
+  individual point could be moved along their edges to define the
+  intersection object.  allowing the points to be deconstrained so
+  they can move into the interior of the bounding volume or into the
+  interior of a face could be an advanced option.
 
 * fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
@@ -767,6 +845,8 @@ DOCUMENTATION
 * Geometry Conversion with BRL-CAD
         Overview of the various geometry conversion facilities in BRL-CAD and how they related to solid geometry representations.
 
+* A Developer's Introduction to BRL-CAD
+        An overview of BRL-CAD from a developer perspective intended for new developers.  Provides overview of structure, important sections, operating procedures, and answers to FAQ development questions.
 
 ---
 See the feature request and bug trackers for more tasks and future

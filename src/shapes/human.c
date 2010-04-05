@@ -55,12 +55,13 @@ int main(int ac, char *av[])
     bu_log("Finished Building\n");
     wdb_close(db_fp);
    
-    if(ret) {
+    if (ret) {
 	bu_exit(1, "%s", bu_vls_addr(&ged.ged_result_str));
     }
     return 0;
 
 }
+
 
 /*
  * Local Variables:

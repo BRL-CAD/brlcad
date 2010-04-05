@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ged.h
+/** @file gcv.h
  *
  * Functions provided by the LIBGCV geometry conversion library.
  *
@@ -42,7 +42,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-
 /**
  * G C V _ R E G I O N _ E N D
  *
@@ -53,17 +52,24 @@ __BEGIN_DECLS
  * a routine that will write out the region in a given file format:
  *
 @code
-void (*write_region)(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]);
+void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
 @endcode
  *
  * This routine must be prepared to run in parallel.
  */
-GCV_EXPORT BU_EXTERN(union tree *gcv_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+GCV_EXPORT BU_EXTERN(union tree *gcv_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+
+/**
+ * G C V _ R E G I O N _ E N D _ M C
+ *
+ * Exact same as gcv_region_end, except using the marching cubes algorithm.
+ */
+GCV_EXPORT BU_EXTERN(union tree *gcv_region_end_mc, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 
 __END_DECLS
 
-#endif /* __GED_H__ */
+#endif /* __GCV_H__ */
 
 /*
  * Local Variables:

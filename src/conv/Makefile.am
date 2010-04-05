@@ -16,6 +16,7 @@ EXTRA_DIST = \
 	g-xxx_facets.c \
 	g4-g5.c \
 	g5-g4.c \
+	obj-g_new.c \
 	patch/pull_comp.sh \
 	patch/pull_solidsub.sh \
 	patch/rpatch.f \

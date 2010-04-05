@@ -34,6 +34,9 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_WINSOCK_H
 #  include <process.h>
 #  include <winsock.h>
@@ -363,7 +366,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp)
  * Accept any new client connections.
  */
 HIDDEN void
-new_client_handler(ClientData clientData, int mask)
+new_client_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
     struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
@@ -441,7 +444,7 @@ drop_client(struct fbserv_obj *fbsp, int sub)
  * Process arrivals from existing clients.
  */
 HIDDEN void
-existing_client_handler(ClientData clientData, int mask)
+existing_client_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     register int i;
     struct fbserv_client *fbscp = (struct fbserv_client *)clientData;
@@ -517,7 +520,7 @@ setup_socket(int fd)
 HIDDEN void
 comm_error(char *str)
 {
-    bu_log(str);
+    bu_log("%s",str);
 }
 
 /*
@@ -608,14 +611,15 @@ fbs_rfbclear(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbread(struct pkg_conn *pcp, char *buf)
 {
-    int	x, y, num;
+    int	x, y;
+    size_t num;
     int	ret;
     static unsigned char	*scanbuf = NULL;
-    static int	buflen = 0;
+    static size_t	buflen = 0;
 
     x = pkg_glong( &buf[0*NET_LONG_LEN] );
     y = pkg_glong( &buf[1*NET_LONG_LEN] );
-    num = pkg_glong( &buf[2*NET_LONG_LEN] );
+    num = (size_t)pkg_glong( &buf[2*NET_LONG_LEN] );
 
     if ( num*sizeof(RGBpixel) > buflen ) {
 	if ( scanbuf != NULL )
@@ -667,10 +671,10 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
     int	xmin, ymin;
     int	width, height;
-    int	num;
+    size_t num;
     int	ret;
     static unsigned char	*scanbuf = NULL;
-    static int	buflen = 0;
+    static size_t buflen = 0;
 
     xmin = pkg_glong( &buf[0*NET_LONG_LEN] );
     ymin = pkg_glong( &buf[1*NET_LONG_LEN] );
@@ -998,6 +1002,9 @@ fbs_rfbflush(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbpoll(struct pkg_conn *pcp, char *buf)
 {
+    if (pcp == PKC_ERROR)
+	return;
+
     (void)fb_poll( curr_fbp );
     if ( buf ) (void)free(buf);
 }

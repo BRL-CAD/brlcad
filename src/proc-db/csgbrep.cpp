@@ -83,8 +83,8 @@ main(int argc, char** argv)
     ttmptol.rel = 0.01;
     ttmptol.norm = 0;
     const struct rt_tess_tol *ttol = &ttmptol;
-    point_t center, v1, v2;
-    vect_t a, b, c, d, h, N;
+    point_t center;
+    vect_t a, b, c, h, N;
     ON_TextLog error_log;
 
     ON::Begin();

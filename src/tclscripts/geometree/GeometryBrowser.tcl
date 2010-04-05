@@ -1520,15 +1520,6 @@ body GeometryBrowser::extractNodeName { { node "" } } {
 # end private methods
 ##########
 
-
-#GeometryBrowser .gm
-
-# !!! remove glob hack once included into menu properly
-# restore previous globbing mode
-#if { [ catch { set glob_compat_mode [ set prevGlobCompatMode ] } error ] } {
-#	puts "unable to restore glob_compat_mode?"
-#}
-
 # Local Variables:
 # mode: Tcl
 # tab-width: 8

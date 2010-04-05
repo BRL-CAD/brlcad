@@ -59,19 +59,18 @@ namespace eval ArcherCore {
 	common splash ""
 	common showWindow 0
 
-	common ROTATE_MODE 0
-	common TRANSLATE_MODE 1
-	common SCALE_MODE 2
-	common CENTER_MODE 3
-	common CENTER_VIEW_OBJECT_MODE 4
-	common COMP_PICK_MODE 5
-	common COMP_ERASE_MODE 6
-	common MEASURE_MODE 7
-	common OBJECT_ROTATE_MODE 8
-	common OBJECT_TRANSLATE_MODE 9
-	common OBJECT_SCALE_MODE 10
-	common OBJECT_CENTER_MODE 11
-	common FIRST_FREE_BINDING_MODE 12
+	common VIEW_ROTATE_MODE 0
+	common VIEW_TRANSLATE_MODE 1
+	common VIEW_SCALE_MODE 2
+	common VIEW_CENTER_MODE 3
+	common COMP_PICK_MODE 4
+	common COMP_ERASE_MODE 5
+	common MEASURE_MODE 6
+	common OBJECT_ROTATE_MODE 7
+	common OBJECT_TRANSLATE_MODE 8
+	common OBJECT_SCALE_MODE 9
+	common OBJECT_CENTER_MODE 10
+	common FIRST_FREE_BINDING_MODE 11
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -225,6 +224,7 @@ namespace eval ArcherCore {
 	method rmater              {args}
 	method rotate_arb_face     {args}
 	method search		   {args}
+	method sed		   {_prim}
 	method shader              {args}
 	method shells              {args}
 	method tire                {args}
@@ -316,17 +316,19 @@ namespace eval ArcherCore {
 	variable mShowPrimitiveLabels 0
 	variable mShowViewingParams 1
 	variable mShowScale 0
+	variable mShowGrid 0
+	variable mSnapGrid 0
+	variable mShowADC 0
 
 	# variables for preference state
 	variable mZClipMode 0
 	variable mZClipModePref ""
 
-	variable mBindingMode 0
+	variable mBindingMode Default
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
-	variable mBackgroundRedPref
-	variable mBackgroundGreenPref
-	variable mBackgroundBluePref
+	variable mBackgroundColor Black
+	variable mBackgroundColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -342,6 +344,21 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColorVDraw ffff00
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
+
+	variable mGridAnchor "0 0 0"
+	variable mGridAnchorXPref ""
+	variable mGridAnchorYPref ""
+	variable mGridAnchorZPref ""
+	variable mGridColor White
+	variable mGridColorPref ""
+	variable mGridMrh 10
+	variable mGridMrhPref ""
+	variable mGridMrv 10
+	variable mGridMrvPref ""
+	variable mGridRh 1
+	variable mGridRhPref ""
+	variable mGridRv 1
+	variable mGridRvPref ""
 
 	variable mGroundPlaneSize 20000
 	variable mGroundPlaneSizePref ""
@@ -410,7 +427,7 @@ namespace eval ArcherCore {
 					   mv mvall nmg_collapse nmg_simplify \
 					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face search shader shells tire title track \
+					   rotate_arb_face search sed shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
@@ -529,6 +546,9 @@ Popup Menu    Right or Ctrl-Left
 	method showViewAxes     {}
 	method showModelAxes    {}
 	method showModelAxesTicks {}
+	method showGrid     {}
+	method snapGrid     {}
+	method showADC     {}
 
 	# private mged commands
 	method alterObj          {_operation _obj}
@@ -546,11 +566,11 @@ Popup Menu    Right or Ctrl-Left
 	method beginViewTranslate {}
 	method endViewTranslate {_pane}
 
-	method initCenterMode {}
-	method initCenterViewObjectMode {}
+	method initViewCenterMode {}
 
 	method initCompErase {}
 	method initCompPick {}
+
 	method mrayCallback_cvo {_start _target _partitions}
 	method mrayCallback_erase {_start _target _partitions}
 	method mrayCallback_pick {_start _target _partitions}
@@ -1189,12 +1209,12 @@ Popup Menu    Right or Ctrl-Left
 
     # RT Control Panel
     itk_component add rtcntrl {
-	RtControl $itk_interior.rtcp -mged $itk_component(ged) -tearoff 0
+	RtControl $itk_interior.rtcp -mged $itk_component(ged)
     } {
 	usual
     }
     $itk_component(ged) fb_active 0
-    $itk_component(rtcntrl) update_fb_mode
+    $itk_component(rtcntrl) updateControlPanel
     bind $itk_component(rtcntrl) <Visibility> "raise $itk_component(rtcntrl)"
     bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
     wm protocol $itk_component(rtcntrl) WM_DELETE_WINDOW "$itk_component(rtcntrl) deactivate"
@@ -1551,35 +1571,28 @@ Popup Menu    Right or Ctrl-Left
 	-balloonstr "Rotate view" \
 	-helpstr "Rotate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $ROTATE_MODE \
+	-value $VIEW_ROTATE_MODE \
 	-command [::itcl::code $this beginViewRotate]
     $itk_component(primaryToolbar) add radiobutton translate \
 	-balloonstr "Translate view" \
 	-helpstr "Translate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $TRANSLATE_MODE \
+	-value $VIEW_TRANSLATE_MODE \
 	-command [::itcl::code $this beginViewTranslate] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton scale \
 	-balloonstr "Scale view" \
 	-helpstr "Scale view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $SCALE_MODE \
+	-value $VIEW_SCALE_MODE \
 	-command [::itcl::code $this beginViewScale] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton center \
 	-balloonstr "Center view" \
 	-helpstr "Center view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $CENTER_MODE \
-	-command [::itcl::code $this initCenterMode] \
-	-state disabled
-    $itk_component(primaryToolbar) add radiobutton centervo \
-	-balloonstr "Center View on Object" \
-	-helpstr "Center View on Object" \
-	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $CENTER_VIEW_OBJECT_MODE \
-	-command [::itcl::code $this initCenterViewObjectMode] \
+	-value $VIEW_CENTER_MODE \
+	-command [::itcl::code $this initViewCenterMode] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton cpick \
 	-balloonstr "Component Pick" \
@@ -1607,7 +1620,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
-    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
@@ -1634,7 +1646,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_rotate
+    $itk_component(ged) init_view_rotate 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewRotate {_pane} {
@@ -1653,7 +1666,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_scale
+    $itk_component(ged) init_view_scale 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewScale {_pane} {
@@ -1672,7 +1686,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_translate
+    $itk_component(ged) init_view_translate 1
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
@@ -1686,22 +1700,16 @@ Popup Menu    Right or Ctrl-Left
     addHistory "center $center"
 }
 
-::itcl::body ArcherCore::initCenterMode {} {
+::itcl::body ArcherCore::initViewCenterMode {} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(ged) init_view_center
-}
-
-::itcl::body ArcherCore::initCenterViewObjectMode {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
+    $itk_component(ged) init_view_center 1
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 2
 }
 
 ::itcl::body ArcherCore::initCompErase {} {
@@ -1711,7 +1719,8 @@ Popup Menu    Right or Ctrl-Left
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
@@ -1721,7 +1730,8 @@ Popup Menu    Right or Ctrl-Left
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
@@ -1779,9 +1789,16 @@ Popup Menu    Right or Ctrl-Left
 	putString "Missed!"
 	set mStatusStr "Missed!"
     } else {
-	set region [bu_get_value_by_keyword "region" $partition]
-	putString "$region"
-	set mStatusStr "$region"
+	set in [bu_get_value_by_keyword "in" $partition]
+	set path [bu_get_value_by_keyword "path" $in]
+#	$itk_component(tree) selectpath [regsub {^/} $path {}]
+	set leaf [file tail $path]
+	set paths [gedCmd search -name $leaf]
+	$itk_component(tree) selectpaths $paths
+
+#	set region [bu_get_value_by_keyword "region" $partition]
+#	putString "$region"
+#	set mStatusStr "$region"
     }
 }
 
@@ -1809,7 +1826,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state normal
     $itk_component(primaryToolbar) itemconfigure scale -state normal
     $itk_component(primaryToolbar) itemconfigure center -state normal
-    $itk_component(primaryToolbar) itemconfigure centervo -state normal
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
     $itk_component(primaryToolbar) itemconfigure cerase -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
@@ -1817,7 +1833,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) init_view_bindings
 
     # Initialize rotate mode
-    set mDefaultBindingMode $ROTATE_MODE
+    set mDefaultBindingMode $VIEW_ROTATE_MODE
     beginViewRotate
 }
 
@@ -1830,7 +1846,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
-    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
@@ -2028,11 +2043,11 @@ Popup Menu    Right or Ctrl-Left
 	    function {
 		if {[llength $args] == 3} {
 		    set subcmd [lindex $args 2]
-		    if {[lsearch $subcmd $mArcherCoreCommands] == -1 &&
-			[lsearch $subcmd $mUnwrappedDbCommands] == -1} {
+		    if {[lsearch $mArcherCoreCommands $subcmd] == -1 &&
+			[lsearch $mUnwrappedDbCommands $subcmd] == -1} {
 			error "ArcherCore::cmd: unrecognized command - $subcmd"
 		    } else {
-			return
+			return $subcmd
 		    }
 		} else {
 		    return [eval list $mArcherCoreCommands $mUnwrappedDbCommands]
@@ -2268,6 +2283,8 @@ Popup Menu    Right or Ctrl-Left
 	set mLastSelectedDir [file dirname $finename]
 
 	#XXX Hack! Hack! Hack!
+	#XXX The png command below needs to be modified to draw
+	#XXX into an off screen buffer to avoid occlusion
 	raise .
 
 	update
@@ -2303,6 +2320,9 @@ Popup Menu    Right or Ctrl-Left
     set mShowModelAxes [gedCmd cget -modelAxesEnable]
     set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnabled]
     set mShowViewAxes [gedCmd cget -viewAxesEnable]
+    set mShowGrid [gedCmd cget -gridEnable]
+    set mSnapGrid [gedCmd cget -gridSnap]
+    set mShowADC [gedCmd cget -adcEnable]
 }
 
 ::itcl::body ArcherCore::doMultiPane {} {
@@ -2395,6 +2415,18 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::showModelAxesTicks {} {
     catch {gedCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
+}
+
+::itcl::body ArcherCore::showGrid {} {
+    catch {gedCmd configure -gridEnable $mShowGrid}
+}
+
+::itcl::body ArcherCore::snapGrid {} {
+    catch {gedCmd configure -gridSnap $mSnapGrid}
+}
+
+::itcl::body ArcherCore::showADC {} {
+    catch {gedCmd configure -adcEnable $mShowADC}
 }
 
 
@@ -3183,16 +3215,13 @@ Popup Menu    Right or Ctrl-Left
 		    -file [file join $dir view_scale.png]]
     $itk_component(primaryToolbar) itemconfigure center \
 	-image [image create photo \
-		    -file [file join $dir view_select.png]]
-    $itk_component(primaryToolbar) itemconfigure centervo \
-	-image [image create photo \
-		    -file [file join $dir view_obj_select.png]]
+		    -file [file join $dir view_center.png]]
     $itk_component(primaryToolbar) itemconfigure cpick \
 	-image [image create photo \
-		    -file [file join $dir compSelect.png]]
+		    -file [file join $dir component_pick.png]]
     $itk_component(primaryToolbar) itemconfigure cerase \
 	-image [image create photo \
-		    -file [file join $dir compErase.png]]
+		    -file [file join $dir component_erase.png]]
     $itk_component(primaryToolbar) itemconfigure measure \
 	-image [image create photo \
 		    -file [file join $dir measure.png]]
@@ -3487,24 +3516,20 @@ Popup Menu    Right or Ctrl-Left
 
     set ret 0
     switch -- $mDefaultBindingMode \
-	$ROTATE_MODE { \
+	$VIEW_ROTATE_MODE { \
 		beginViewRotate \
 		set ret 1
 	} \
-	$TRANSLATE_MODE { \
+	$VIEW_TRANSLATE_MODE { \
 		beginViewTranslate \
 		set ret 1
 	} \
-	$SCALE_MODE { \
+	$VIEW_SCALE_MODE { \
 		beginViewScale \
 		set ret 1
 	} \
-	$CENTER_MODE { \
-		initCenterMode \
-		set ret 1
-	} \
-	$CENTER_VIEW_OBJECT_MODE { \
-		initCenterViewObjectMode \
+	$VIEW_CENTER_MODE { \
+		initViewCenterMode \
 		set ret 1
 	} \
 	$COMP_ERASE_MODE { \
@@ -4152,13 +4177,23 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::search {args} {
-     if {$args == {}} {
+    if {$args == {}} {
 	return [gedCmd search]
     } else {
 	return [eval gedCmd search $args]
     }
 }
 
+::itcl::body ArcherCore::sed {_prim} {
+    if {$_prim == ""} {
+	return "Usage: sed prim"
+    }
+
+    set paths [gedCmd search -name $_prim]
+    $itk_component(tree) selectpaths $paths
+
+#    $itk_component(tree) selectitem $_prim
+}
 
 ::itcl::body ArcherCore::shader {args} {
     eval gedWrapper shader 0 0 1 0 $args
@@ -4193,8 +4228,9 @@ Popup Menu    Right or Ctrl-Left
 	return [gedCmd units]
     }
 
-    if {[llength $args] == 1 && [lindex $args 0] == "-s"} {
-	return [gedCmd units -s]
+    set arg0 [lindex $args 0]
+    if {[llength $args] == 1 && ($arg0 == "-s" || $arg0 == "-t")} {
+	return [gedCmd units $arg0]
     }
 
     eval gedWrapper units 0 0 1 0 $args

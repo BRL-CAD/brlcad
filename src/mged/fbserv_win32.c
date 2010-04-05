@@ -38,7 +38,7 @@
 #include "../libfb/pkgtypes.h"
 #include "./fbserv.h"
 
-#define NET_LONG_LEN	4	/* # bytes to network long */
+#define NET_LONG_LEN 4 /* # bytes to network long */
 
 void set_port();
 
@@ -56,17 +56,18 @@ LOCAL_STATIC void setup_socket();
 
 
 /*
- *			N E W _ C L I E N T
+ * N E W _ C L I E N T
  */
 LOCAL_STATIC void
 new_client(pcp)
-    struct pkg_conn	*pcp;
+    struct pkg_conn *pcp;
 {
     return;
 }
 
+
 /*
- *			D R O P _ C L I E N T
+ * D R O P _ C L I E N T
  */
 LOCAL_STATIC void
 drop_client(sub)
@@ -75,14 +76,16 @@ drop_client(sub)
     return;
 }
 
+
 /*
- *			S E T _ P O R T
+ * S E T _ P O R T
  */
 void
 set_port()
 {
     return;
 }
+
 
 /*
  * Accept any new client connections.
@@ -95,6 +98,7 @@ new_client_handler(clientData, mask)
     return;
 }
 
+
 /*
  * Process arrivals from existing clients.
  */
@@ -106,17 +110,19 @@ existing_client_handler(clientData, mask)
     return;
 }
 
+
 LOCAL_STATIC void
 setup_socket(fd)
-    int	fd;
+    int fd;
 {
     return;
 }
 
+
 /*
- *			C O M M _ E R R O R
+ * C O M M _ E R R O R
  *
- *  Communication error.  An error occured on the PKG link.
+ * Communication error.  An error occured on the PKG link.
  */
 LOCAL_STATIC void
 comm_error(str)
@@ -124,6 +130,7 @@ comm_error(str)
 {
     return;
 }
+
 
 /*
  * This is where we go for message types we don't understand.
@@ -136,6 +143,7 @@ pkgfoo(pcp, buf)
     return;
 }
 
+
 /******** Here's where the hooks lead *********/
 
 void
@@ -146,6 +154,7 @@ rfbopen(pcp, buf)
     return;
 }
 
+
 void
 rfbclose(pcp, buf)
     struct pkg_conn *pcp;
@@ -153,6 +162,7 @@ rfbclose(pcp, buf)
 {
     return;
 }
+
 
 void
 rfbfree(pcp, buf)
@@ -162,6 +172,7 @@ rfbfree(pcp, buf)
     return;
 }
 
+
 void
 rfbclear(pcp, buf)
     struct pkg_conn *pcp;
@@ -169,6 +180,7 @@ rfbclear(pcp, buf)
 {
     return;
 }
+
 
 void
 rfbread(pcp, buf)
@@ -178,6 +190,7 @@ rfbread(pcp, buf)
     return;
 }
 
+
 void
 rfbwrite(pcp, buf)
     struct pkg_conn *pcp;
@@ -186,8 +199,9 @@ rfbwrite(pcp, buf)
     return;
 }
 
+
 /*
- *			R F B R E A D R E C T
+ * R F B R E A D R E C T
  */
 void
 rfbreadrect(pcp, buf)
@@ -197,8 +211,9 @@ rfbreadrect(pcp, buf)
     return;
 }
 
+
 /*
- *			R F B W R I T E R E C T
+ * R F B W R I T E R E C T
  */
 void
 rfbwriterect(pcp, buf)
@@ -208,8 +223,9 @@ rfbwriterect(pcp, buf)
     return;
 }
 
+
 /*
- *			R F B B W R E A D R E C T
+ * R F B B W R E A D R E C T
  */
 void
 rfbbwreadrect(pcp, buf)
@@ -219,8 +235,9 @@ rfbbwreadrect(pcp, buf)
     return;
 }
 
+
 /*
- *			R F B B W W R I T E R E C T
+ * R F B B W W R I T E R E C T
  */
 void
 rfbbwwriterect(pcp, buf)
@@ -230,6 +247,7 @@ rfbbwwriterect(pcp, buf)
     return;
 }
 
+
 void
 rfbcursor(pcp, buf)
     struct pkg_conn *pcp;
@@ -237,6 +255,7 @@ rfbcursor(pcp, buf)
 {
     return;
 }
+
 
 void
 rfbgetcursor(pcp, buf)
@@ -246,13 +265,15 @@ rfbgetcursor(pcp, buf)
     return;
 }
 
+
 void
 rfbsetcursor(pcp, buf)
     struct pkg_conn *pcp;
-    char		*buf;
+    char *buf;
 {
     return;
 }
+
 
 /*OLD*/
 void
@@ -263,6 +284,7 @@ rfbscursor(pcp, buf)
     return;
 }
 
+
 /*OLD*/
 void
 rfbwindow(pcp, buf)
@@ -271,6 +293,7 @@ rfbwindow(pcp, buf)
 {
     return;
 }
+
 
 /*OLD*/
 void
@@ -281,6 +304,7 @@ rfbzoom(pcp, buf)
     return;
 }
 
+
 void
 rfbview(pcp, buf)
     struct pkg_conn *pcp;
@@ -288,6 +312,7 @@ rfbview(pcp, buf)
 {
     return;
 }
+
 
 void
 rfbgetview(pcp, buf)
@@ -297,6 +322,7 @@ rfbgetview(pcp, buf)
     return;
 }
 
+
 void
 rfbrmap(pcp, buf)
     struct pkg_conn *pcp;
@@ -305,13 +331,14 @@ rfbrmap(pcp, buf)
     return;
 }
 
+
 /*
- *			R F B W M A P
+ * R F B W M A P
  *
- *  Accept a color map sent by the client, and write it to the framebuffer.
- *  Network format is to send each entry as a network (IBM) order 2-byte
- *  short, 256 red shorts, followed by 256 green and 256 blue, for a total
- *  of 3*256*2 bytes.
+ * Accept a color map sent by the client, and write it to the framebuffer.
+ * Network format is to send each entry as a network (IBM) order 2-byte
+ * short, 256 red shorts, followed by 256 green and 256 blue, for a total
+ * of 3*256*2 bytes.
  */
 void
 rfbwmap(pcp, buf)
@@ -321,6 +348,7 @@ rfbwmap(pcp, buf)
     return;
 }
 
+
 void
 rfbflush(pcp, buf)
     struct pkg_conn *pcp;
@@ -328,6 +356,7 @@ rfbflush(pcp, buf)
 {
     return;
 }
+
 
 void
 rfbpoll(pcp, buf)
@@ -337,9 +366,10 @@ rfbpoll(pcp, buf)
     return;
 }
 
+
 /*
- *  At one time at least we couldn't send a zero length PKG
- *  message back and forth, so we receive a dummy long here.
+ * At one time at least we couldn't send a zero length PKG
+ * message back and forth, so we receive a dummy long here.
  */
 void
 rfbhelp(pcp, buf)
@@ -348,6 +378,7 @@ rfbhelp(pcp, buf)
 {
     return;
 }
+
 
 /*
  * Local Variables:

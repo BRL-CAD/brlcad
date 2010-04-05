@@ -43,8 +43,6 @@ extern int	npsw;			/* number of worker PSWs to run */
 
 extern int 	 rpt_overlap;
 
-extern fastf_t  rt_cline_radius;        /* from g_cline.c */
-
 extern double units; /* from opt.c */
 
 static long hit_count=0;
@@ -265,7 +263,7 @@ view_pixel()
 static void
 increment_assembly_counter(register struct area *cell, const char *path, area_type_t type, point_t *hit_point)
 {
-    int l = 0;
+    size_t l = 0;
     char *buffer = (char *) NULL;
     int depth = 0;
     int parent_found = 0;
@@ -282,7 +280,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
     }
 
     l = strlen(path);
-    buffer = bu_calloc(l+1, sizeof(char), "increment_assembly_counter buffer allocation");
+    buffer = bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
     bu_strlcpy(buffer, path, l+1);
 
     /* trim off the region name */
@@ -364,7 +362,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
              */
 	    if (!parent_found) {
 		char *name;
-		int len;
+		size_t len;
 
                 /* create new area record */
                 BU_GETSTRUCT(area_record_ptr, area);
@@ -454,7 +452,6 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     struct rt_i *rtip = ap->a_rt_i;
     register struct partition *pp = PartHeadp->pt_forw;
     register struct area *cell;
-    register int l;
     struct area *cellp;
 
 /* exposed hit sums */
@@ -606,7 +603,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
              * then assign the name within the area record.
              */
 	    if (!cell->name) {
-		int l = strlen(reg->reg_name);
+		size_t l = strlen(reg->reg_name);
 		while (l > 0) {
 		    if (reg->reg_name[l-1] == '/') {
 			break;
@@ -677,7 +674,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 
 	    if (!cell->name) {
 	        /* get the region name */
-	        int l = strlen(reg->reg_name);
+	        size_t l = strlen(reg->reg_name);
 	        while (l > 0) {
 		    if (reg->reg_name[l-1] == '/') {
 		        break;
@@ -839,7 +836,6 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 {
     struct region *rp;
     struct area *cellp;
-    int depth;
     register struct area *cell = (struct area *)NULL;
     long int count = 0;
 

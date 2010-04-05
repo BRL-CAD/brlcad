@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../../resources/standard/dtd/docbookx.dtd">
+
+<!-- Copyright (c) 2005-2008 United States Government as represented by -->
+<!-- the U.S. Army Research Laboratory.                                 -->
+<!--                                                                    -->
+<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
+<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
+<!-- modification, are permitted provided that the following conditions -->
+<!-- are met:                                                           -->
+<!--                                                                    -->
+<!-- 1. Redistributions of source code (Docbook format) must retain the -->
+<!-- above copyright notice, this list of conditions and the following  -->
+<!-- disclaimer.                                                        -->
+<!--                                                                    -->
+<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
+<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
+<!-- reproduce the above copyright notice, this list of conditions and  -->
+<!-- the following disclaimer in the documentation and/or other         -->
+<!-- materials provided with the distribution.                          -->
+<!--                                                                    -->
+<!-- 3. The name of the author may not be used to endorse or promote    -->
+<!-- products derived from this documentation without specific prior    -->
+<!-- written permission.                                                -->
+<!--                                                                    -->
+<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
+<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
+<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
+<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
+<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
+<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
+<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
+<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
+<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
+<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
+<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
+<!-- SUCH DAMAGE.                                                       -->
+
+<refentry id='tol'>
+
+<refmeta>
+  <refentrytitle>TOL</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv id='name'>
+  <refname>tol</refname>
+  <refpurpose>Used with no arguments, <command>tol</command> lists the current tolerance settings.
+   </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+  <cmdsynopsis>
+    <command>tol</command>    
+    
+    <arg>abs<replaceable>#</replaceable></arg>
+    <arg>rel<replaceable>#</replaceable></arg>
+    <arg>norm<replaceable>#</replaceable></arg>
+    <arg>dist<replaceable>#</replaceable></arg>
+    <arg>perp<replaceable>#</replaceable></arg>
+   <arg></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'>
+  <title>DESCRIPTION</title>
+  <para>The <command>tol</command> command, with no arguments, lists the current tolerance settings. If the command line includes any of the 	keywords followed by a number, then that tolerance setting will be modified. The keywords are as follows:
+   </para>
+   <para><emphasis remap='B' role='B'>Tessellation tolerances:</emphasis>
+	The tessellation tolerances are used to control the facetization of primitive shapes.
+	If more than one tolerance value is specified, the tessellation is performed to meet
+	the most stringent.
+  </para>
+<itemizedlist mark='bullet'>
+<listitem>
+<para>abs -- This <emphasis>absolute</emphasis> tolerance is specified in model units and represents
+	the maximum allowable error in the distance from the actual shape surface
+	to the tessellated surface.  An <emphasis>absolute</emphasis> tolerance of 0 means that the
+	<emphasis>absolute</emphasis> tolerance should be ignored.
+</para>
+</listitem>
+<listitem>
+<para>rel -- This <emphasis>relative</emphasis> tolerance is specified in terms of a fraction of the shape
+	size. The value is multiplied by the size of the shape to determine another
+	bound on the maximum allowable error in the distance from the actual
+	shape surface to the tessellated surface. A <emphasis>relative</emphasis> tolerance of 0 means
+	that the <emphasis>relative</emphasis> tolerance should be ignored.
+</para>
+</listitem>
+<listitem>
+<para>norm -- This <emphasis>normal</emphasis> tolerance is specified in degrees and represents the
+	maximum angle between the actual shape surface normal and the
+	tessellated surface normal. A <emphasis>normal</emphasis> tolerance of 0 means that the <emphasis>normal</emphasis>
+	tolerance should be ignored.
+</para>
+</listitem>
+</itemizedlist>
+
+<para><emphasis remap='B' role='B'>Calculational tolerances:</emphasis>
+	The calculational tolerances are used in evaluating the Boolean operations
+	specified in a combination. This is used, for example, in the <command>ev, facetize,</command> and <command>bev</command>
+	commands.
+</para>
+
+<itemizedlist mark='bullet'>
+<listitem>
+<para>
+	dist -- The <emphasis>distance</emphasis> tolerance is specified in model units and represents the
+	minimum distance required between two vertices to consider them distinct.
+</para>
+</listitem>
+<listitem>
+<para>perp -- The <emphasis>perpendicularity</emphasis> tolerance is specified as the cosine of an
+	angle. Two objects will be considered perpendicular if the cosine of the
+	angle between them is less than the <emphasis>perpendicularity</emphasis> tolerance. Similarly,
+	two objects will be considered parallel if the cosine of the angle between
+	them is greater than 1.0, the <emphasis>perpendicularity</emphasis> tolerance.
+</para>
+</listitem>
+</itemizedlist>
+
+</refsect1>
+
+<refsect1 id='examples'>
+  <title>EXAMPLES</title>
+  <para>The example shows the use of the <command>tol</command> command to set the relative and perpendicularity tolerances.
+    
+  </para>
+  <example>
+    <title>Set the relative and perpendicularity tolerances.</title>
+    <para>
+	<prompt>mged></prompt> <userinput>tol rel .05 perp 1e-6</userinput></para>
+	<para>Sets the <emphasis>relative</emphasis> tolerance to 5% and the <emphasis>perpendicularity</emphasis> tolerance to 1e-06 			(cosine of 89.9999°).
+      </para>
+	</example>
+  
+</refsect1>
+
+<refsect1 id='author'>
+  <title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 id='bug_reports'>
+  <title>BUG REPORTS</title>
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsect1>
+</refentry>
+

@@ -40,6 +40,11 @@
 # frames on a single tape (typ. 192 frames at 512x512) concatenated
 # all together, with no separating tape marks.
 
+echo "************************************************************"
+echo "DEPRECATION WARNING: This script is deprecated and may be"
+echo "                     removed in a future release of BRL-CAD."
+echo "************************************************************"
+
 DEV=/dev/rmt1
 
 if test x$2 = x ; then

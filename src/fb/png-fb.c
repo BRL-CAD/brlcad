@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bio.h"
 #include "png.h"
 #include "bu.h"
 #include "fb.h"
@@ -189,7 +190,7 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE,  "ERROR: Failed while reading file header!!!\n" );
     }
 
-    if (!png_check_sig((png_bytep)header, 8)) {
+    if (png_sig_cmp((png_bytep)header, 0, 8)) {
 	bu_exit(EXIT_FAILURE,  "This is not a PNG file!!!\n" );
     }
 

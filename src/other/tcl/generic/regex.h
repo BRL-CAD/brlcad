@@ -78,6 +78,7 @@ extern "C" {
  */
 
 /* --- begin --- */
+#define __REG_NOCHAR 1 /* don't define the char versions so we can avoid conflicting type compilation errors */
 /* --- end --- */
 
 /*

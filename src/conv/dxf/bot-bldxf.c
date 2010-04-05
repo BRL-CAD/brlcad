@@ -388,11 +388,8 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fclose(FH);
 }
 
-int r_start (
-    struct db_tree_state * tsp,
-    struct db_full_path * pathp,
-    const struct rt_comb_internal * combp,
-    genptr_t client_data )
+int
+r_start(struct db_tree_state * tsp, const struct db_full_path * pathp, const struct rt_comb_internal * combp, genptr_t client_data )
 {
     int i;
     if (debug&DEBUG_NAMES) {
@@ -408,11 +405,8 @@ int r_start (
     return 0;
 }
 
-union tree *r_end (
-    struct db_tree_state * tsp,
-    struct db_full_path * pathp,
-    union tree * curtree,
-    genptr_t client_data )
+union tree *
+r_end(struct db_tree_state * tsp, const struct db_full_path * pathp, union tree * curtree, genptr_t client_data)
 {
     int i;
     if (debug&DEBUG_NAMES) {
@@ -472,11 +466,8 @@ void add_bots(struct rt_bot_internal *bot_dest,
 	       bot_dest->num_vertices, bot_dest->num_faces);
 }
 
-union tree * l_func (
-    struct db_tree_state * tsp,
-    struct db_full_path * pathp,
-    struct rt_db_internal * ip,
-    genptr_t client_data )
+union tree *
+l_func(struct db_tree_state * tsp, const struct db_full_path * pathp, struct rt_db_internal * ip, genptr_t client_data)
 {
     int i;
     struct rt_bot_internal *bot;

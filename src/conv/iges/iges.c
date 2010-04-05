@@ -391,14 +391,14 @@ write_freeform(FILE *fp,	/* output file */
 				 * 'P' for parameter section
 				 * 'S' for start section */
 {
-    int paramlen;
+    size_t paramlen;
     int start_seq;
-    int str_len;
-    int line_start=0;
-    int line_end=0;
+    size_t str_len;
+    size_t line_start=0;
+    size_t line_end=0;
     int *seq_no;
-    int remaining_chars=0;
-    int i;
+    size_t remaining_chars=0;
+    size_t i;
 
     if ( c == 'P' )
     {
@@ -447,8 +447,8 @@ write_freeform(FILE *fp,	/* output file */
     }
     else /* break string into lines */
     {
-	int curr_loc=0;
-	int field_start=0;
+	size_t curr_loc=0;
+	size_t field_start=0;
 
 	while ( 1 )
 	{
@@ -2081,7 +2081,7 @@ write_name_entity( name, fp_dir, fp_param )
     struct bu_vls		str;
     int			dir_entry[21];
     int			i;
-    int			name_len;
+    size_t			name_len;
 
     name_len = strlen( name );
     if ( !name_len )
@@ -2897,7 +2897,7 @@ write_att_entity( props, fp_dir, fp_param )
 {
     struct bu_vls		str;
     int			dir_entry[21];
-    int			str_len;
+    size_t		str_len;
     int			i;
 
     bu_vls_init( &str );

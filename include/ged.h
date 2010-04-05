@@ -399,7 +399,7 @@ struct ged_drawable {
     int				gd_rt_cmd_len;
     struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
 
-    void			(*gd_rtCmdNotify)();	/**< @brief  function called when rt command completes */
+    void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
 
     int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
 
@@ -585,6 +585,10 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 		      int existing_only));
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
+
+/* defined in grid.c */
+GED_EXPORT BU_EXTERN(void ged_snap_to_grid,
+		     (struct ged *gedp, fastf_t *vx, fastf_t *vy));
 
 /* defined in inside.c */
 GED_EXPORT BU_EXTERN(int ged_inside_internal,
@@ -1179,18 +1183,6 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		     char *argv[]));
 
 
-/**
- * Launch an editor on file.
- *
- * Runs $EDITOR on temp file, defaulting to various system-specific
- * editors otherwise if unset.
- *
- * Usage:
- *     editit file
- */
-GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
-
-
 /* Defined in vutil.c */
 GED_EXPORT BU_EXTERN(void ged_persp_mat,
 		     (fastf_t *m,
@@ -1392,6 +1384,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const ch
  *     bot_dump [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
  */
 GED_EXPORT BU_EXTERN(int ged_bot_dump, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Dump displayed bots to the specified format.
+ *
+ * Usage:
+ *     dbot_dump [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units]";
+ */
+GED_EXPORT BU_EXTERN(int ged_dbot_dump, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Create new_bot by fusing faces in old_bot
@@ -1718,6 +1718,12 @@ GED_EXPORT BU_EXTERN(int ged_edcodes, (struct ged *gedp, int argc, const char *a
  *     edcomb combname Regionflag regionid air los GIFTmater
  */
 GED_EXPORT BU_EXTERN(int ged_edcomb, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Edit file.
+ *
+ */
+GED_EXPORT BU_EXTERN(int ged_editit, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Edit combination materials.

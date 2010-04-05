@@ -219,7 +219,7 @@ mlib_setup(struct mfuncs **headp,
     int		ret;
     struct bu_vls	param;
     const char	*material;
-    int		mlen;
+    size_t		mlen;
 
     RT_CK_REGION(rp);
     RT_CK_RTI(rtip);

@@ -47,7 +47,7 @@
     (a)[Z] = (b)[Z]/25.4; \
 }
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -98,9 +98,9 @@ main(argc, argv)
     ttol.norm = 0.0;
 
     /* Set up calculation tolerance defaults */
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
@@ -216,11 +216,7 @@ main(argc, argv)
 
 /* routine to output the facetted NMG representation of a BRL-CAD region */
 static void
-output_nmg( r, pathp, region_id, material_id )
-    struct nmgregion *r;
-    struct db_full_path *pathp;
-    int region_id;
-    int material_id;
+output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id)
 {
     struct model *m;
     struct shell *s;
@@ -303,11 +299,7 @@ output_nmg( r, pathp, region_id, material_id )
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(tsp, pathp, curtree, client_data)
-    struct db_tree_state	*tsp;
-    struct db_full_path	*pathp;
-    union tree		*curtree;
-    genptr_t		client_data;
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct bu_list		vhead;
@@ -355,7 +347,9 @@ union tree *do_region_end(tsp, pathp, curtree, client_data)
 	    nmg_isect2d_final_cleanup();
 
 	    /* Release the tree memory & input regions */
-/*XXX*/			/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
+
+	    /* FIXME: memory leak? */
+	    /* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
 	    /* Get rid of (m)any other intermediate structures */
 	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {

@@ -3322,6 +3322,28 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     P1 = pC1->PointAt( trim1_domain[0] ); // start of next 2d trim
     if ( !(P0-P1).IsTiny() )
     {
+	// **** Let Trims Cross a Seam ****
+	// First lets see if this is a closed surface, if so check to see if trim endpoints
+	// lie on seam, if so check the closeness of the endpoints in 3D.
+	if (surf->IsClosed(0) || surf->IsClosed(1)) {
+	    if (surf->IsAtSeam(P0.x,P0.y) && surf->IsAtSeam(P1.x,P1.y)) {
+		ON_3dPoint p0 = surf->PointAt(P0.x,P0.y);
+		ON_3dPoint p1 = surf->PointAt(P1.x,P1.y);
+		if ((p0-p1).IsTiny()) {
+#if 0
+		    if ( text_log )
+		    {
+		      text_log->Print("Face[%d]-Loop[%d] Crosses Seam:\n",loop.m_fi,loop.m_loop_index);
+		      text_log->PushIndent();
+		      text_log->Print("Trim[%d] ends at at 2d[%f %f], 3D[%f %f %f]\n",loop.m_ti[lti],P0.x,P0.y,p0.x,p0.y,p0.z);
+		      text_log->Print("Trim[%d] starts at at 2d[%f %f], 3D[%f %f %f]\n",loop.m_ti[lti],P1.x,P1.y,p1.x,p1.y,p1.z);
+		      text_log->PopIndent();
+		    }
+#endif
+		    break;
+		}
+	    }
+	}
       // 16 September 2003 Dale Lear - RR 11319
       //    Added relative tol check so cases with huge
       //    coordinate values that agreed to 10 places

@@ -358,7 +358,7 @@ revolve( entityno )
 	}
 	else
 	{
-	    /* XXX fract == 0.5, a dangerous comparison (roundoff) */
+	    /* FIXME: fract == 0.5, a dangerous comparison (roundoff) */
 	    theta = PI;
 	    cutop = Intersect;
 	    /* Construct vertices for cutting solid */

@@ -270,7 +270,7 @@ rt_arbn_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     h = hitp->hit_surfno;
     if (h < 0 || h > aip->neqn) {
-	bu_log("rt_arbn_norm(%s): hit_surfno=%d?\n", h);
+	bu_log("rt_arbn_norm(): hit_surfno=%d?\n", h);
 	VSETALL(hitp->hit_normal, 0);
 	return;
     }
@@ -354,6 +354,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     int j;
     int k;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     RT_ARBN_CK_MAGIC(aip);
@@ -902,7 +903,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int i;
     unsigned long neqn;
     int double_count;
-    int byte_count;
+    size_t byte_count;
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);

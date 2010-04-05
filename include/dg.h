@@ -245,8 +245,6 @@ GED_EXPORT BU_EXTERN(int dgo_tree_cmd,
 
 GED_EXPORT BU_EXTERN(void dgo_color_soltab,
 		    ());
-GED_EXPORT BU_EXTERN(void dgo_drawH_part2,
-		    ());
 GED_EXPORT BU_EXTERN(void dgo_eraseobjall_callback,
 		    (struct db_i	*dbip,
 		     Tcl_Interp		*interp,

@@ -160,7 +160,7 @@
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 				CompileAs="0"
 			/>
@@ -275,10 +275,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\mged\columns.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\mged\concat.c"
 				>
 			</File>
 			<File
@@ -435,14 +431,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\mged\utility1.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\mged\utility2.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\mged\vdraw.c"
 				>
 			</File>
 			<File

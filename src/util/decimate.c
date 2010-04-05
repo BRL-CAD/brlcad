@@ -19,19 +19,16 @@
  */
 /** @file decimate.c
  *
- *  Program to take M by N array of tuples, and reduce it down to
- *  being an I by J array of tuples, by discarding unnecessary stuff.
- *  The borders are padded with zeros.
+ * Program to take M by N array of tuples, and reduce it down to
+ * being an I by J array of tuples, by discarding unnecessary stuff.
+ * The borders are padded with zeros.
  *
- *  Especially useful for looking at image files which are larger than
- *  your biggest framebuffer, quickly.
+ * Especially useful for looking at image files which are larger than
+ * your biggest framebuffer, quickly.
  *
- *  Specify nbytes/pixel as:
- *	1	.bw files
- *	3	.pix files
- *
- *  Author -
- *	Michael John Muuss
+ * Specify nbytes/pixel as:
+ * 1 .bw files
+ * 3 .pix files
  *
  */
 
@@ -47,29 +44,29 @@ static char usage[] = "\
 Usage: decimate nbytes/pixel width height [outwidth outheight]\n\
 ";
 
-int	nbytes;
-int	iwidth;
-int	iheight;
-int	owidth = 512;
-int	oheight = 512;
+int nbytes;
+int iwidth;
+int iheight;
+int owidth = 512;
+int oheight = 512;
 
-unsigned char	*iline;
-unsigned char	*oline;
+unsigned char *iline;
+unsigned char *oline;
 
-int	discard;
-int	wpad;
+int discard;
+int wpad;
 
 int
 main(int argc, char **argv)
 {
-    int	i;
-    int	j;
-    int	nh, nw;
-    int	dh, dw;
-    int	todo;
+    int i;
+    int j;
+    int nh, nw;
+    int dh, dw;
+    int todo;
 
-    if ( argc < 4 )  {
-	fputs( usage, stderr );
+    if (argc < 4) {
+	fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
 
@@ -77,7 +74,7 @@ main(int argc, char **argv)
     iwidth = atoi(argv[2]);
     iheight = atoi(argv[3]);
 
-    if ( argc >= 6 )  {
+    if (argc >= 6) {
 	owidth = atoi(argv[4]);
 	oheight = atoi(argv[5]);
     }
@@ -91,43 +88,43 @@ main(int argc, char **argv)
     dh = nh - 1;
     dw = nw - 1;
     discard = dh;
-    if ( dw > discard ) discard = dw;
+    if (dw > discard) discard = dw;
 
 
-    wpad = owidth - ( iwidth / (discard+1) );
+    wpad = owidth - (iwidth / (discard+1));
 
-    iline = (unsigned char *)bu_calloc( (iwidth+1), nbytes, "iline" );
-    oline = (unsigned char *)bu_calloc( (owidth+1),  nbytes, "oline" );
+    iline = (unsigned char *)bu_calloc((iwidth+1), nbytes, "iline");
+    oline = (unsigned char *)bu_calloc((owidth+1),  nbytes, "oline");
 
     todo = iwidth / (discard+1) * (discard+1);
-    if ( owidth < todo )  todo = owidth;
-    if ( todo > iwidth/(discard+1) )  todo = iwidth/(discard+1);
+    if (owidth < todo) todo = owidth;
+    if (todo > iwidth/(discard+1)) todo = iwidth/(discard+1);
 #if 0
     fprintf(stderr, "dh=%d dw=%d, discard=%d\n", dh, dw, discard);
     fprintf(stderr, "todo=%d\n", todo);
 #endif
 
-    while ( !feof(stdin) )  {
-	unsigned char	*ip, *op;
+    while (!feof(stdin)) {
+	unsigned char *ip, *op;
 
 	/* Scrunch down first scanline of input data */
-	if ( fread( iline, nbytes, iwidth, stdin ) != iwidth ) break;
+	if (fread(iline, nbytes, iwidth, stdin) != iwidth) break;
 	ip = iline;
 	op = oline;
-	for ( i=0; i < todo; i++ )  {
-	    for ( j=0; j < nbytes; j++ )  {
+	for (i=0; i < todo; i++) {
+	    for (j=0; j < nbytes; j++) {
 		*op++ = *ip++;
 	    }
 	    ip += discard * nbytes;
 	}
-	if ( fwrite( oline, nbytes, owidth, stdout ) != owidth )  {
+	if (fwrite(oline, nbytes, owidth, stdout) != owidth) {
 	    perror("fwrite");
 	    goto out;
 	}
 
 	/* Discard extra scanlines of input data */
-	for ( i=0; i < discard; i++ )  {
-	    if ( fread( iline, nbytes, iwidth, stdin ) != iwidth )  {
+	for (i=0; i < discard; i++) {
+	    if (fread(iline, nbytes, iwidth, stdin) != iwidth) {
 		goto out;
 	    }
 	}
@@ -139,6 +136,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

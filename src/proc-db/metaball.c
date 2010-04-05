@@ -197,6 +197,11 @@ make_spaghetti(const char *filename, const char *name, long count)
     make_meatballs(fp, balls[1], more);
     make_meatballs(fp, balls[2], many);
 
+    mk_comb1(fp, "someballs.r", balls[0], 1);
+    mk_comb1(fp, "moreballs.r", balls[1], 1);
+    mk_comb1(fp, "manyballs.r", balls[2], 1);
+    mk_comb1(fp, "meatballs.r", "meatballs.s", 1);
+
     wdb_close(fp);
 
     /* done with the write-only, now begins read/write */

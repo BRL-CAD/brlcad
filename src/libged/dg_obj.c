@@ -22,8 +22,7 @@
 /** @file dg_obj.c
  *
  * A drawable geometry object contains methods and attributes for
- * preparing geometry that is ready (i.e. vlists) for display. Much of
- * this code was extracted from MGED and modified to work herein.
+ * preparing geometry that is ready (i.e. vlists) for display.
  *
  */
 
@@ -90,12 +89,12 @@ struct dg_rt_client_data {
 #define DGO_BOOL_EVAL 3
 static union tree *
 dgo_bot_check_region_end(struct db_tree_state *tsp,
-			 struct db_full_path	*pathp,
+			 const struct db_full_path *pathp,
 			 union tree		*curtree,
 			 genptr_t		client_data);
 static union tree *
 dgo_bot_check_leaf(struct db_tree_state		*tsp,
-		   struct db_full_path		*pathp,
+		   const struct db_full_path *pathp,
 		   struct rt_db_internal	*ip,
 		   genptr_t			client_data);
 
@@ -149,12 +148,12 @@ static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int dgo_vdraw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 
-static union tree *dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
+static union tree *dgo_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 static int dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], int kind, struct dg_client_data *_dgcdp);
 int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
 static void dgo_bound_solid(Tcl_Interp *interp, struct solid *sp);
-void dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
+void dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
 void dgo_eraseobjpath(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], int noisy, int all);
 static void dgo_eraseobjall(struct dg_obj *dgop, Tcl_Interp *interp, struct directory **dpp);
 static void dgo_eraseobj(struct dg_obj *dgop, Tcl_Interp *interp, struct directory **dpp);
@@ -314,7 +313,7 @@ dgo_open_cmd(char		*oname,
  *	  dgo_open [name rt_wdb]
  */
 static int
-dgo_open_tcl(ClientData	clientData,
+dgo_open_tcl(ClientData	clientData __attribute__((unused)),
 	     Tcl_Interp	*interp,
 	     int	argc,
 	     char	*argv[])
@@ -392,7 +391,7 @@ dgo_headSolid_tcl(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%lu", (unsigned long)&dgop->dgo_headSolid);
+    bu_vls_printf(&vls, "%llu", (size_t)(&dgop->dgo_headSolid));
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -480,12 +479,17 @@ dgo_illum_tcl(ClientData	clientData,
 }
 
 int
-dgo_label_cmd(struct dg_obj	*dgop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[])
+dgo_label_cmd(struct dg_obj *dgop,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
     /* not yet implemented */
+    if (!dgop || !interp)
+	return TCL_ERROR;
+
+    while (argc-- > 1)
+	bu_log("Unexpected argument: %s", argv[argc]);
 
     return TCL_OK;
 }
@@ -1159,8 +1163,6 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
     int	c;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_get_autoview %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1176,8 +1178,6 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 		pflag = 1;
 		break;
 	    default: {
-		struct bu_vls vls;
-
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib_alias dgo_get_autoview %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1265,8 +1265,6 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
     vect_t		eye_model;
 
     if (argc != 2) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_get_eyemodel %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1302,7 +1300,9 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
     bu_vls_printf(&vls, "eye_pt %.15e %.15e %.15e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
+
     bu_vls_free(&vls);
+
     return TCL_OK;
 }
 
@@ -1606,7 +1606,7 @@ dgo_wait_status(Tcl_Interp *interp, int status)
 
 #ifndef _WIN32
 static void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask)
+dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int value;
     struct solid *sp;
@@ -1648,7 +1648,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 }
 
 static void
-dgo_rtcheck_output_handler(ClientData clientData, int mask)
+dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int count;
     char line[RT_MAXLINE] = {0};
@@ -1685,7 +1685,7 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask)
 #else
 
 void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask)
+dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int value;
     struct solid *sp;
@@ -1726,7 +1726,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 }
 
 void
-dgo_rtcheck_output_handler(ClientData clientData, int mask)
+dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int count;
     char line[RT_MAXLINE];
@@ -1778,9 +1778,9 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     int	o_pipe[2];	/* object writes view parameters */
     int	e_pipe[2];	/* object reads textual results */
 #else
-    HANDLE	i_pipe[2], pipe_iDup;	/* MGED reads results for building vectors */
-    HANDLE	o_pipe[2], pipe_oDup;	/* MGED writes view parameters */
-    HANDLE	e_pipe[2], pipe_eDup;	/* MGED reads textual results */
+    HANDLE	i_pipe[2], pipe_iDup;	/* READS results for building vectors */
+    HANDLE	o_pipe[2], pipe_oDup;	/* WRITES view parameters */
+    HANDLE	e_pipe[2], pipe_eDup;	/* READS textual results */
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
@@ -2001,7 +2001,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     (void)CloseHandle(e_pipe[1]);
 
     /* As parent, send view information down pipe */
-    fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup, _O_TEXT), "wb");
+    fp = _fdopen(_open_osfhandle((intptr_t)pipe_oDup, _O_TEXT), "wb");
     setmode(_fileno(fp), O_BINARY);
 
 #if 1
@@ -2017,7 +2017,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
-    rtcp->fp = _fdopen(_open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb");
+    rtcp->fp = _fdopen(_open_osfhandle((intptr_t)pipe_iDup, _O_TEXT), "rb");
     setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;
@@ -2217,12 +2217,20 @@ dgo_report_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
 
 
 int
-dgo_rtabort_cmd(struct dg_obj	*dgop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		*argv[])
+dgo_rtabort_cmd(struct dg_obj *dgop,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
-    struct run_rt	*rrp;
+    struct run_rt *rrp;
+
+    while (argc-- > 1) {
+	if (interp) {
+	    Tcl_AppendResult(interp, "Unexpected argument: ", argv[argc]);
+	} else {
+	    bu_log("Unexpected argument: %s", argv[argc]);
+	}
+    }
 
     for (BU_LIST_FOR (rrp, run_rt, &dgop->dgo_headRunRt.l)) {
 	bu_terminate(rrp->pid);
@@ -2239,7 +2247,7 @@ dgo_rtabort_tcl(ClientData clientData,
 		int argc,
 		char *argv[])
 {
-    struct dg_obj	*dgop = (struct dg_obj *)clientData;
+    struct dg_obj *dgop = (struct dg_obj *)clientData;
 
     return dgo_rtabort_cmd(dgop, interp, argc-1, argv+1);
 }
@@ -2334,9 +2342,9 @@ dgo_set_outputHandler_cmd(struct dg_obj	*dgop,
 			  int		argc,
 			  char 		*argv[])
 {
-    if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+    struct bu_vls vls;
 
+    if (argc < 1 || 2 < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_set_outputHandler %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2347,12 +2355,11 @@ dgo_set_outputHandler_cmd(struct dg_obj	*dgop,
 
     /* Get the output handler script */
     if (argc == 1) {
-	Tcl_DString ds;
-
-	Tcl_DStringInit(&ds);
+	bu_vls_init(&vls);
 	if (dgop->dgo_outputHandler != NULL)
-	    Tcl_DStringAppend(&ds, dgop->dgo_outputHandler, -1);
-	Tcl_DStringResult(interp, &ds);
+	    bu_vls_strcat(&vls, dgop->dgo_outputHandler);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
 
 	return TCL_OK;
     }
@@ -2393,9 +2400,9 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
 			    int			argc,
 			    char 		*argv[])
 {
-    if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+    struct bu_vls vls;
 
+    if (argc < 1 || 2 < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_set_plOutputMode %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2406,14 +2413,14 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
 
     /* Get the plot output mode */
     if (argc == 1) {
-	Tcl_DString ds;
+	bu_vls_init(&vls);
 
-	Tcl_DStringInit(&ds);
 	if (dgop->dgo_uplotOutputMode == PL_OUTPUT_MODE_BINARY)
-	    Tcl_DStringAppend(&ds, "binary", -1);
+	    bu_vls_strcat(&vls, "binary");
 	else
-	    Tcl_DStringAppend(&ds, "text", -1);
-	Tcl_DStringResult(interp, &ds);
+	    bu_vls_strcat(&vls, "text");
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
 
 	return TCL_OK;
     }
@@ -2425,8 +2432,6 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
 	     !strcmp("text", argv[1]))
 	dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_set_plOutputMode %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2614,7 +2619,7 @@ dgo__tcl(ClientData	clientData,
 /****************** Utility Routines ********************/
 
 static union tree *
-dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_wireframe_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp __attribute__((unused)), union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
     return (curtree);
 }
@@ -2625,7 +2630,7 @@ dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, 
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     union tree	*curtree;
     int		dashflag;		/* draw with dashed lines */
@@ -2706,7 +2711,7 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
 static int
-dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+dgo_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     union tree		*tp;
     struct directory	*dp;
@@ -2793,10 +2798,18 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     return 0;
 
  out:
-    /* Successful fastpath drawing of this solid */
-    db_add_node_to_full_path(pathp, dp);
-    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-    DB_FULL_PATH_POP(pathp);
+    {
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+
+	/* Successful fastpath drawing of this solid */
+	db_add_node_to_full_path(&pp, dp);
+	dgo_drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL, dgcdp);
+
+	db_free_full_path(&pp);
+    }
+
     rt_db_free_internal(&intern);
     dgcdp->fastpath_count++;
     return -1;	/* SKIP THIS REGION */
@@ -2808,7 +2821,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -3391,7 +3404,7 @@ dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
  *  This routine must be prepared to run in parallel.
  */
 void
-dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp)
+dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp)
 {
     struct solid *sp;
 
@@ -3826,7 +3839,7 @@ dgo_build_tops(Tcl_Interp	*interp,
 	if (vp < end)
 	    *vp++ = dp->d_namep;
 	else  {
-	    Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
+	    Tcl_AppendResult(interp, "INTERNAL ERROR: ran out of command vector space at ",
 			     dp->d_namep, "\n", (char *)NULL);
 	    break;
 	}
@@ -3893,8 +3906,7 @@ dgo_rt_write(struct dg_obj	*dgop,
 
 #ifndef _WIN32
 static void
-dgo_rt_output_handler(ClientData	clientData,
-		      int		mask)
+dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
@@ -3982,8 +3994,7 @@ dgo_rt_output_handler(ClientData	clientData,
 
 #else
 static void
-dgo_rt_output_handler(ClientData	clientData,
-		      int		mask)
+dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
@@ -4270,7 +4281,7 @@ dgo_run_rt(struct dg_obj *dgop,
     CloseHandle(pipe_err[1]);
 
     /* As parent, send view information down pipe */
-    fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb");
+    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
 
     dgo_rt_set_eye_model(dgop, vop, eye_model);
     dgo_rt_write(dgop, vop, fp_in, eye_model);
@@ -4519,17 +4530,17 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 }
 
 static union tree *
-dgo_bot_check_region_end(struct db_tree_state	*tsp,
-			 struct db_full_path		*pathp,
-			 union tree			*curtree,
-			 genptr_t			client_data)
+dgo_bot_check_region_end(struct db_tree_state *tsp __attribute__((unused)),
+			 const struct db_full_path *pathp __attribute__((unused)),
+			 union tree *curtree,
+			 genptr_t client_data __attribute__((unused)))
 {
     return curtree;
 }
 
 static union tree *
 dgo_bot_check_leaf(struct db_tree_state		*tsp,
-		   struct db_full_path		*pathp,
+		   const struct db_full_path *pathp,
 		   struct rt_db_internal	*ip,
 		   genptr_t			client_data)
 {
@@ -4711,7 +4722,6 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 	char *whocmd[2] = {"who", NULL};
 	if (dgo_who_cmd(dgop, interp, 1, whocmd) == TCL_OK) {
 	    const char *result = Tcl_GetStringResult(interp);
-	    const char *space = NULL;
 	    buffer = bu_strdup(result);
 	    Tcl_ResetResult(interp);
 

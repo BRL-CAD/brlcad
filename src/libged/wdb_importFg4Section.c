@@ -131,7 +131,7 @@ rt_mk_bot_w_normals(
 
     if ( (num_normals > 0) && (fp->dbip->dbi_version < 5 ) ) {
 	bu_log( "You are using an old database format which does not support surface normals for BOT primitives\n" );
-	bu_log( "You are attempting to create a BOT primitive named \"%s\" with surface normals\n" );
+	bu_log( "You are attempting to create a BOT primitive named \"%s\" with surface normals\n" ,name );
 	bu_log( "The surface normals will not be saved\n" );
 	bu_log( "Please upgrade to the current database format by using \"dbupgrade\"\n" );
     }
@@ -290,7 +290,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
     }
     else
     {
-	thickness[face_count] = 0, 0;
+	thickness[face_count] = 0;
 	facemode[face_count] = 0;
     }
 

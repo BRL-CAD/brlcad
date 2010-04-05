@@ -38,8 +38,6 @@
 int
 _ged_rotate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attribute, matp_t rmat)
 {
-    fastf_t newrad;
-
     RT_TGC_CK_MAGIC(tgc);
 
     switch (attribute[0]) {

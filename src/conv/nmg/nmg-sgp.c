@@ -120,14 +120,8 @@ main(argc, argv)
     int	argc;
     char	*argv[];
 {
-    int		i;
     int	c;
     struct db_i	*dbip;
-    char		idbuf[132];
-    vect_t		h_delta, v_delta;
-    point_t		start_pt;
-    int		dir;
-    fastf_t		cell_width=100.0, cell_height=100.0;
 
     bu_setlinebuf( stderr );
 
@@ -136,9 +130,9 @@ main(argc, argv)
 #endif
     BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.1;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

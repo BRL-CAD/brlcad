@@ -58,11 +58,13 @@ f_qray(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 void
 init_qray(void)
 {
     ged_init_qray(gedp->ged_gdp);
 }
+
 
 /*
  * Local Variables:

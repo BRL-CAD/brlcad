@@ -119,7 +119,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
     int n;
     register int i;		/* iteration counter */
 
-    for (i=0; i < 20; i++) {
+    for (i=0; i < 100; i++) {
 	cZ = *nxZ;
 	rt_poly_eval_w_2derivatives(&cZ, eqn, &p0, &p1, &p2);
 
@@ -162,14 +162,20 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 */
 	b = bn_cx_amplsq(nxZ);
 	diff = bn_cx_amplsq(&p0);
+
 	if (b < diff)
 	    continue;
-	/* !!! this is super-sensitive for eto (causing off-by-many changes) */
-	if ((b-diff) == b /* NEAR_ZERO(diff, SMALL_FASTF) */)
-	    return(i);		/* OK -- can't do better */
-	/* !!! this is super-sensitive for eto (causing off-by-one changes and convergence failures) */
-	if (diff > (b - diff) * 1.0e-5 /* SQRT_SMALL_FASTF */)
+
+	if (NEAR_ZERO(diff, SMALL_FASTF))
+	    return(i); /* OK -- can't do better */
+
+	/* FIXME: figure out why SMALL_FASTF is too sensitive, why
+	 * anything smaller than 1.0e-5 is too sensitive and causes
+	 * eto off-by-many differences.
+	 */
+	if (diff > (b - diff) * 1.0e-5)
 	    continue;
+
 	return(i);			/* OK */
     }
 
@@ -247,7 +253,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 void
 rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 {
-    bn_poly_t div = bn_Zero_poly;
+    bn_poly_t divisor = bn_Zero_poly;
     bn_poly_t rem = bn_Zero_poly;
 
     /* Make a polynomial out of the given root:  Linear for a real
@@ -256,22 +262,22 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
      */
     if (NEAR_ZERO(root->im, SMALL)) {
 	/* root is real */
-	div.dgr = 1;
-	div.cf[0] = 1;
-	div.cf[1] = - root->re;
+	divisor.dgr = 1;
+	divisor.cf[0] = 1;
+	divisor.cf[1] = - root->re;
     } else {
 	/* root is complex */
-	div.dgr = 2;
-	div.cf[0] = 1;
-	div.cf[1] = -2 * root->re;
-	div.cf[2] = bn_cx_amplsq(root);
+	divisor.dgr = 2;
+	divisor.cf[0] = 1;
+	divisor.cf[1] = -2 * root->re;
+	divisor.cf[2] = bn_cx_amplsq(root);
     }
 
     /* Use synthetic division to find the quotient (new polynomial)
      * and the remainder (should be zero if the root was really a
      * root).
      */
-    bn_poly_synthetic_division(oldP, &rem, oldP, &div);
+    bn_poly_synthetic_division(oldP, &rem, oldP, &divisor);
 }
 
 

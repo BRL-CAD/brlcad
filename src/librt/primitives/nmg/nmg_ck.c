@@ -598,7 +598,7 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 	    hpt = s->sa_p->max_pt;
 	    if (lpt[0] > hpt[0] || lpt[1] > hpt[1] ||
 		lpt[2] > hpt[2]) {
-		bu_log("Bnmg_vshell() ad min_pt/max_pt for shell(%8x)'s extent\n");
+		bu_log("Bnmg_vshell() ad min_pt/max_pt for shell(%8x)'s extent\n", s);
 		bu_log("Min_pt %g %g %g\n", lpt[0], lpt[1],
 		       lpt[2]);
 		bu_log("Max_pt %g %g %g\n", hpt[0], hpt[1],
@@ -683,10 +683,10 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
 {
     char *errstr;
     struct edgeuse *eparent;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_e error str");
-    snprintf(errstr, len, "%sedge %8lx\n", str, (unsigned long)e);
+    snprintf(errstr, len, "%sedge %p\n", str, (void *)e);
 
     NMG_CK_EDGE(e);
     NMG_CK_EDGEUSE(eu);
@@ -717,10 +717,10 @@ void
 nmg_ck_vu(const unsigned long *parent, const struct vertexuse *vu, const char *str)
 {
     char *errstr;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_vu error str");
-    snprintf(errstr, len, "%svertexuse %8lx\n", str, (unsigned long)vu);
+    snprintf(errstr, len, "%svertexuse %p\n", str, (void *)vu);
 
     if (vu->up.magic_p != parent) {
 	bu_strlcat(errstr, "nmg_ck_vu() Vertexuse denies parentage\n", len);
@@ -739,10 +739,10 @@ nmg_ck_eu(const unsigned long *parent, const struct edgeuse *eu, const char *str
 {
     char *errstr;
     struct edgeuse *eur, *eu_next, *eu_last;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_eu error str");
-    snprintf(errstr, len, "%sedgeuse %8lx\n", str, (unsigned long)eu);
+    snprintf(errstr, len, "%sedgeuse %p\n", str, (void *)eu);
 
     NMG_CK_EDGEUSE(eu);
 
@@ -819,10 +819,10 @@ void
 nmg_ck_lg(const struct loop *l, const struct loop_g *lg, const char *str)
 {
     char *errstr;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_lg error str");
-    snprintf(errstr, len, "%sloop_g %8lx\n", str, (unsigned long)lg);
+    snprintf(errstr, len, "%sloop_g %p\n", str, (void *)lg);
 
     NMG_CK_LOOP_G(lg);
     NMG_CK_LOOP(l);
@@ -838,10 +838,10 @@ void
 nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
 {
     char *errstr;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_l error str");
-    snprintf(errstr, len, "%sloop %8lx\n", str, (unsigned long)l);
+    snprintf(errstr, len, "%sloop %p\n", str, (void *)l);
 
     NMG_CK_LOOP(l);
     NMG_CK_LOOPUSE(lu);
@@ -869,10 +869,10 @@ nmg_ck_lu(const unsigned long *parent, const struct loopuse *lu, const char *str
     int l;
     int edgeuse_num=0;
     unsigned long magic1;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_lu error str");
-    snprintf(errstr, len, "%sloopuse %8lx\n", str, (unsigned long)lu);
+    snprintf(errstr, len, "%sloopuse %p\n", str, (void *)lu);
 
     NMG_CK_LOOPUSE(lu);
 
@@ -913,11 +913,11 @@ nmg_ck_lu(const unsigned long *parent, const struct loopuse *lu, const char *str
 	NMG_CK_VERTEXUSE(vu);
 	nmg_ck_vu(&lu->l.magic, vu, errstr);
     } else if (magic1 == NMG_EDGEUSE_MAGIC) {
-	l = strlen(errstr);
+	l = (int)strlen(errstr);
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	    NMG_CK_EDGEUSE(eu);
-	    snprintf(&errstr[l], len-l, "%sedgeuse #%d (%8lx)\n",
-		     errstr, edgeuse_num++, (unsigned long)eu);
+	    snprintf(&errstr[l], len-l, "%sedgeuse #%d (%p)\n",
+		     errstr, edgeuse_num++, (void *)eu);
 	    nmg_ck_eu(&lu->l.magic, eu, errstr);
 	}
     } else {
@@ -935,10 +935,10 @@ void
 nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
 {
     char *errstr;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_fg error str");
-    snprintf(errstr, len, "%sFace_g %8lx\n", str, (unsigned long)f);
+    snprintf(errstr, len, "%sFace_g %p\n", str, (void *)f);
 
     NMG_CK_FACE_G_PLANE(fg);
     if (VNEAR_ZERO(fg->N, SMALL_FASTF) && !NEAR_ZERO(fg->N[H], SMALL_FASTF)) {
@@ -959,10 +959,10 @@ void
 nmg_ck_f(const struct faceuse *fu, const struct face *f, const char *str)
 {
     char *errstr;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_f error str");
-    snprintf(errstr, len, "%sFace %8lx\n", str, (unsigned long)f);
+    snprintf(errstr, len, "%sFace %p\n", str, (void *)f);
 
     NMG_CK_FACE(f);
     NMG_CK_FACEUSE(fu);
@@ -988,13 +988,13 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
     int l;
     int loop_number = 0;
     struct loopuse *lu;
-    int len = strlen(str)+128;
+    int len = (int)strlen(str)+128;
 
     NMG_CK_FACEUSE(fu);
     NMG_CK_SHELL(s);
 
     errstr = bu_calloc(len, 1, "nmg_ck_fu error str");
-    snprintf(errstr, len, "%sFaceuse %8lx\n", str, (unsigned long)fu);
+    snprintf(errstr, len, "%sFaceuse %p\n", str, (void *)fu);
 
     if (fu->s_p != s) {
 	bu_strlcat(errstr, "nmg_ck_fu() faceuse child denies shell parentage\n", len);
@@ -1024,11 +1024,11 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 
     nmg_ck_f(fu, fu->f_p, errstr);
 
-    l = strlen(errstr);
+    l = (int)strlen(errstr);
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
-	snprintf(&errstr[l], len-l, "%sloopuse #%d (%8lx)\n",
-		 errstr, loop_number++, (unsigned long)lu);
+	snprintf(&errstr[l], len-l, "%sloopuse #%d (%p)\n",
+		 errstr, loop_number++, (void *)lu);
 	nmg_ck_lu(&fu->l.magic, lu, errstr);
     }
     bu_free(errstr, "nmg_ck_fu error str");
@@ -1617,11 +1617,11 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 
     if (!found1 || !found2) {
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex x%lx not used in", (unsigned long)vp);
+	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex %p not used in", (void *)vp);
 	if (!found1)
-	    bu_vls_printf(&str, " faceuse x%lx", (unsigned long)fu1);
+	    bu_vls_printf(&str, " faceuse %p", (void *)fu1);
 	if (!found2)
-	    bu_vls_printf(&str, " faceuse x%lx", (unsigned long)fu2);
+	    bu_vls_printf(&str, " faceuse %p", (void *)fu2);
 	bu_bomb(bu_vls_addr(&str));
     }
 
@@ -1633,12 +1633,12 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
 
     if (!NEAR_ZERO(dist1, tol->dist) || !NEAR_ZERO(dist2, tol->dist)) {
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex x%lx (%g %g %g) not in plane of" ,
-		      (unsigned long)vp, V3ARGS(vp->vg_p->coord));
+	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex %p (%g %g %g) not in plane of" ,
+		      (void *)vp, V3ARGS(vp->vg_p->coord));
 	if (!NEAR_ZERO(dist1, tol->dist))
-	    bu_vls_printf(&str, " faceuse x%lx (off by %g)", (unsigned long)fu1, dist1);
+	    bu_vls_printf(&str, " faceuse %p (off by %g)", (void *)fu1, dist1);
 	if (!NEAR_ZERO(dist2, tol->dist))
-	    bu_vls_printf(&str, " faceuse x%lx (off by %g)", (unsigned long)fu2, dist2);
+	    bu_vls_printf(&str, " faceuse %p (off by %g)", (void *)fu2, dist2);
 	bu_bomb(bu_vls_addr(&str));
     }
 

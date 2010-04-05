@@ -108,7 +108,7 @@ fr_string_f2c(char *str, int maxlen)
     bu_strlcpy( buf, str, len );
 
     /* Remove any trailing blanks */
-    for ( i=strlen(buf)-1; i >= 0; i-- )  {
+    for ( i=(int)strlen(buf)-1; i >= 0; i-- )  {
 	if ( buf[i] != ' ' && buf[i] != '\n' )  break;
 	buf[i] = '\0';
     }
@@ -352,7 +352,7 @@ BU_FORTRAN(frname, FRNAME)(char		*fbuf,
     }
     for ( BU_LIST_FOR( rp, region, &((*rtip)->HeadRegion) ) )  {
 	if ( rp->reg_bit != rnum )  continue;
-	len = strlen( rp->reg_name );
+	len = (int)strlen( rp->reg_name );
 	offset = 0;
 	if ( len >= fbuflen )  {
 	    offset = len-(fbuflen+1);

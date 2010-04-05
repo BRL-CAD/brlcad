@@ -142,12 +142,12 @@ nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, co
 	    /* Display only OT_SAME, and OT_UNSPEC et.al.  */
 	    if (lu->orientation == OT_OPPOSITE) continue;
 
-	    snprintf(buf, 128, "%s=x%lx", str, (unsigned long)lu);
+	    snprintf(buf, 128, "%s=%p", str, (void *)lu);
 	    nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
 	}
     }
     for (BU_LIST_FOR(lu, loopuse, &s->lu_hd)) {
-	snprintf(buf, 128, "%s=x%lx (wire)", str, (unsigned long)lu);
+	snprintf(buf, 128, "%s=%p (wire)", str, (void *)lu);
 	nmg_show_broken_classifier_stuff(&lu->l.magic, classlist, new, fancy, buf);
     }
     rt_g.NMG_debug = save;		/* restore it */
@@ -175,7 +175,7 @@ stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *
     }
 
     nmg_rebound(m, tol);
-    snprintf(counted_name, 258, "%s%d.g", file_name, debug_file_count);
+    snprintf(counted_name, 256, "%s%d.g", file_name, debug_file_count);
     nmg_stash_model_to_file(counted_name, m, title);
     nmg_km(m);
 }
@@ -1000,7 +1000,7 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     struct model *m;
     struct nmgregion *r1;
@@ -1062,7 +1062,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, st
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     struct nmgregion *r1;
     union tree *curtree;
@@ -1139,7 +1139,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     int op;
     const char *op_str;
     char *name;
-    int rem;
+    size_t rem;
 
     RT_CK_TREE(tp);
     BN_CK_TOL(tol);

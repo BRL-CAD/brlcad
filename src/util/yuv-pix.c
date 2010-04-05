@@ -19,15 +19,15 @@
  */
 /** @file yuv-pix.c
  *
- *  Convert a .yuv file to a .pix file, i.e. in CCIR-601 format.
- *  Only the active pixels are recorded in the file, as in
- *  the .YUV files used with an Abekas A60 D-1 video disk recorder.
+ * Convert a .yuv file to a .pix file, i.e. in CCIR-601 format.
+ * Only the active pixels are recorded in the file, as in
+ * the .YUV files used with an Abekas A60 D-1 video disk recorder.
  *
- *  Because .pix is first quadrant and .yuv is fourth quadrant,
- *  the entire image is processed in memory.
+ * Because .pix is first quadrant and .yuv is fourth quadrant,
+ * the entire image is processed in memory.
  *
- *  It is not clear that this tool is useful on image sizes other
- *  than the default of 720 x 485.
+ * It is not clear that this tool is useful on image sizes other
+ * than the default of 720 x 485.
  *
  */
 
@@ -45,14 +45,14 @@
 #include "fb.h"
 
 
-static char	*file_name;
-static int	infd;
+static char *file_name;
+static int infd;
 
-static int	fileinput = 0;		/* file or pipe on input? */
-static int	autosize = 0;		/* !0 to autosize input */
+static int fileinput = 0;		/* file or pipe on input? */
+static int autosize = 0;		/* !0 to autosize input */
 
-static long int	file_width = 720L;	/* default input width */
-static long int	file_height = 485L;	/* default input height */
+static long int file_width = 720L;	/* default input width */
+static long int file_height = 485L;	/* default input height */
 
 void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
 void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
@@ -118,15 +118,16 @@ get_args(int argc, char **argv)
     return(1);		/* OK */
 }
 
+
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
 {
-    unsigned char	*inbuf;
-    unsigned char	*outbuf;
-    long int	y;
+    unsigned char *inbuf;
+    unsigned char *outbuf;
+    long int y;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -135,7 +136,7 @@ main(int argc, char **argv)
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int	w, h;
+	unsigned long int w, h;
 	if (fb_common_file_size(&w, &h, file_name, 2)) {
 	    file_width = (long)w;
 	    file_height = (long)h;
@@ -176,51 +177,51 @@ main(int argc, char **argv)
 
 /*************************************************************************
  *************************************************************************
- *  Herein lies the conversion between YUV and RGB
+ * Herein lies the conversion between YUV and RGB
  *************************************************************************
  *************************************************************************
  */
-/*  A 4:2:2 framestore uses 2 bytes per pixel.  The even pixels (from 0)
- *  hold Cb and Y, the odd pixels Cr and Y.  Thus a scan line has:
- *      Cb Y Cr Y Cb Y Cr Y ...
- *  If we are at an even pixel, we use the Cr value following it.  If
- *  we are at an odd pixel, we use the Cb value following it.
+/* A 4:2:2 framestore uses 2 bytes per pixel.  The even pixels (from 0)
+ * hold Cb and Y, the odd pixels Cr and Y.  Thus a scan line has:
+ * Cb Y Cr Y Cb Y Cr Y ...
+ * If we are at an even pixel, we use the Cr value following it.  If
+ * we are at an odd pixel, we use the Cb value following it.
  *
- *  Y:       0 .. 219 range, offset by 16   [16 .. 235]
- *  U, V: -112 .. +112 range, offset by 128 [16 .. 240]
+ * Y:       0 .. 219 range, offset by 16   [16 .. 235]
+ * U, V: -112 .. +112 range, offset by 128 [16 .. 240]
  */
 
-#define	V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
-#define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
-#define	CLIP(out, in) { int t; \
+#define V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
+#define floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
+#define CLIP(out, in) { int t; \
 		if ((t = (in)) < 0)  (out) = 0; \
 		else if (t >= 255)  (out) = 255; \
 		else (out) = t; }
 
-#define	LINE_LENGTH	720
-#define	FRAME_LENGTH	486
+#define LINE_LENGTH 720
+#define FRAME_LENGTH 486
 
-static double	y_weights[] = {  0.299,   0.587,   0.114 };
-static double	u_weights[] = { -0.1686, -0.3311,  0.4997 };
-static double	v_weights[] = {  0.4998, -0.4185, -0.0813 };
+static double y_weights[] = {  0.299,   0.587,   0.114 };
+static double u_weights[] = { -0.1686, -0.3311,  0.4997 };
+static double v_weights[] = {  0.4998, -0.4185, -0.0813 };
 
-static double	y_filter[] = { -0.05674, 0.01883, 1.07582, 0.01883, -0.05674 };
-static double	u_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
-static double	v_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
+static double y_filter[] = { -0.05674, 0.01883, 1.07582, 0.01883, -0.05674 };
+static double u_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
+static double v_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
 
 /* XXX should be dynamically allocated.  Make 4X default size */
-static double	ybuf[724*4];
-static double	ubuf[724*4];
-static double	vbuf[724*4];
+static double ybuf[724*4];
+static double ubuf[724*4];
+static double vbuf[724*4];
 
 /* RGB to YUV */
 void
 ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 {
     unsigned char *cp;
-    double	*yp, *up, *vp;
-    long int	i;
-    static int	first=1;
+    double *yp, *up, *vp;
+    long int i;
+    static int first=1;
 
     if (first) {
 	/* SETUP */
@@ -261,19 +262,20 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
     }
 }
 
+
 /* YUV to RGB */
 void
 ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len)
 {
     unsigned char *rgbp;
     unsigned char *yuvp;
-    double	y;
-    double	u = 0.0;
-    double	v;
-    long int	pixel;
-    long int		last;
+    double y;
+    double u = 0.0;
+    double v;
+    long int pixel;
+    long int last;
 
-    /* Input stream looks like:  uy  vy  uy  vy  */
+    /* Input stream looks like:  uy vy uy vy */
 
     rgbp = rgb_buf;
     yuvp = yuv_buf;

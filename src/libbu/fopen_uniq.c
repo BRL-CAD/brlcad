@@ -33,11 +33,14 @@
 #  include <sys/param.h>
 #endif
 
+#include "bio.h"
 #include "bu.h"
 
 
 /* c99 doesn't declare these */
+#if !defined(_WIN32) || defined(__CYGWIN__)
 extern FILE *fdopen(int, const char *);
+#endif
 
 
 FILE *

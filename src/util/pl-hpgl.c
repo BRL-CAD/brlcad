@@ -20,10 +20,10 @@
 /** @file pl-hpgl.c
  *
  * Description -
- *	Convert a unix-plot file to hpgl codes.
+ * Convert a unix-plot file to hpgl codes.
  *
  * Author -
- *	Mark Huston Bowden
+ * Mark Huston Bowden
  *
  */
 
@@ -36,8 +36,8 @@
 #include "bu.h"
 
 
-#define ASPECT	(9.8/7.1)
-#define	geti(x)	{ (x) = getchar(); (x) |= (short)(getchar()<<8); }
+#define ASPECT (9.8/7.1)
+#define geti(x) { (x) = getchar(); (x) |= (short)(getchar()<<8); }
 #define getb(x)	((x) = getchar())
 
 
@@ -45,8 +45,8 @@ int
 main(int argc, char **argv)
 {
     char colors[8][3];
-    int	numcolors = 0;
-    int	c, i, x, y, x1, x2, y1, y2, r, g, b;
+    int numcolors = 0;
+    int c, i, x, y, x1, x2, y1, y2, r, g, b;
 
     if (argc != 1) {
 	bu_exit(1, "Usage: %s < infile > outfile\n", argv[0]);
@@ -73,7 +73,7 @@ main(int argc, char **argv)
 		printf("PA %d %d;\n", x2, y2);
 		break;
 	    case 'f':		/* line style */
-		while ( getchar() != '\n');
+		while (getchar() != '\n');
 		/* set line style ignored */
 		break;
 	    case 'm':		/* move */
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 		printf("PA %d %d;\n", x, y);
 		break;
 	    case 't':		/* text */
-		while ( getchar() != '\n' );
+		while (getchar() != '\n');
 		/* draw text ignored */
 		break;
 	    case 's':		/* space */
@@ -127,8 +127,7 @@ main(int argc, char **argv)
 			colors[numcolors][2] = b;
 			numcolors++;
 			i++;
-		    }
-		    else
+		    } else
 			i = 8;
 		printf("SP %d;\n", i);
 		break;
@@ -141,6 +140,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

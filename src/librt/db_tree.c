@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <ctype.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -49,7 +50,7 @@
 void
 db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *itsp)
 {
-    int shader_len=0;
+    size_t shader_len=0;
     size_t i;
 
     RT_CK_DBTS(itsp);
@@ -1365,6 +1366,9 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 {
     union tree *new;
 
+    if (!tp)
+	return TREE_NULL;
+
     RT_CK_TREE(tp);
     if (!resp) {
 	resp = &rt_uniresource;
@@ -1407,6 +1411,45 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 	    new->tr_b.tb_right = db_dup_subtree(tp->tr_b.tb_right, resp);
 	    return(new);
 
+	case OP_NMG_TESS: {
+#if 0
+	    /* FIXME: something is wrong in here where we attempt to
+	     * get a full-fledged copy of a given nmgregion tree.
+	     */
+	    long **trans_tbl;
+	    struct model *m = nmg_mmr();
+	    struct shell *s;
+	    struct shell *dup_s;
+	    struct bn_tol tol;
+
+	    tol.magic = BN_TOL_MAGIC;
+	    tol.dist = 0.0005;
+	    tol.dist_sq = 0.05;
+	    tol.perp = 0.0;
+	    tol.para = 1.0;
+
+	    new->tr_d.td_r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	    for (BU_LIST_FOR(s, shell, &tp->tr_d.td_r->s_hd)) {
+		dup_s = nmg_dup_shell(s, &trans_tbl, &tol);
+		nmg_shell_a(dup_s, &tol);
+		nmg_fix_normals(dup_s, &tol);
+
+		/* it belongs to the new tree */
+		BU_LIST_DEQUEUE(&dup_s->l);
+		BU_LIST_APPEND(&new->tr_d.td_r->s_hd, &dup_s->l);
+		dup_s->r_p = new->tr_d.td_r;
+	    }
+	    nmg_region_a(new->tr_d.td_r, &tol);
+
+	    /* bu_free((char *)trans_tbl, "translate table"); */
+	    /* nmg_pr_r(new->tr_d.td_r, "ORIGINAL REGION"); */
+#endif
+	    /* !!! fake "copy" .. lie */
+ 	    new->tr_d.td_r = tp->tr_d.td_r;
+	    new->tr_d.td_name = bu_strdup(tp->tr_d.td_name);
+	    return(new);
+	}
+
 	default:
 	    bu_log("db_dup_subtree: bad op %d\n", tp->tr_op);
 	    bu_bomb("db_dup_subtree\n");
@@ -1421,7 +1464,6 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 void
 db_ck_tree(const union tree *tp)
 {
-
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
@@ -1469,6 +1511,9 @@ db_ck_tree(const union tree *tp)
 void
 db_free_tree(union tree *tp, struct resource *resp)
 {
+    if (!tp)
+	return;
+
     RT_CK_TREE(tp);
     if (!resp) {
 	resp = &rt_uniresource;
@@ -2001,7 +2046,7 @@ db_tally_subtree_regions(
 /* ============================== */
 
 HIDDEN union tree *
-_db_gettree_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
+_db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
 
     RT_CK_DBTS(tsp);
@@ -2019,7 +2064,7 @@ _db_gettree_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, un
 
 
 HIDDEN union tree *
-_db_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+_db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     union tree *curtree;
 
@@ -2059,7 +2104,7 @@ HIDDEN void
 _db_walk_subtree(
     union tree *tp,
     struct combined_tree_state **region_start_statepp,
-    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, void *)),
+    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *)),
     genptr_t client_data,
     struct resource *resp)
 {
@@ -2291,9 +2336,9 @@ db_walk_tree(struct db_i *dbip,
 	     const char **argv,
 	     int ncpu,
 	     const struct db_tree_state *init_state,
-	     int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t),
-	     union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t),
-	     union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t),
+	     int (*reg_start_func) (struct db_tree_state *, const struct db_full_path *, const struct rt_comb_internal *, genptr_t),
+	     union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t),
+	     union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t),
 	     genptr_t client_data)
 {
     union tree *whole_tree = TREE_NULL;
@@ -2705,7 +2750,6 @@ db_shader_mat(
     MAT_DELTAS_VEC(m_xlate, v_tmp);
     bn_mat_mul(m_tmp, m_xlate, model_to_region);
 
-
     /*
      * Scale the bounding box to unit cube
      */
@@ -2715,6 +2759,385 @@ db_shader_mat(
     MAT_SCALE_VEC(m_scale, v_tmp);
     bn_mat_mul(model_to_shader, m_scale, m_tmp);
     return 0;
+}
+
+
+HIDDEN int
+tree_list_needspace(struct bu_vls *vls)
+{
+    int len = 0;
+    const char *str = NULL;
+    const char *end = NULL;
+
+    if (!vls) return 0;
+
+    /* don't need a space if the string is empty */
+    len = bu_vls_strlen(vls);
+    if (len == 0)
+	return 0;
+
+    /* don't need a space at the start of a (potentially nested) new
+     * list.  backtrack until we're out.
+     */
+    str = bu_vls_addr(vls);
+    end = str + len - 1;
+    while (end && *end == '{') {
+	if (end == str) {
+	    return 0;
+	}
+	end--;
+    }
+
+    /* sanity, shouldn't happen */
+    if (!end) {
+	return 0;
+    }
+
+    /* don't need a space if there is already whitespace separation,
+     * unless it has been escaped.
+     */
+    if (isspace(*end) && ((end == str) || (*(end-1) != '\\'))) {
+	return 0;
+    }
+
+    /* yep, we need space */
+    return 1;
+}
+
+
+HIDDEN void
+tree_list_sublist_begin(struct bu_vls *vls)
+{
+    if (!vls) return;
+
+    if (tree_list_needspace(vls)) {
+        bu_vls_strcat(vls, " {");
+    } else {
+        bu_vls_putc(vls, '{');
+    }
+}
+
+
+HIDDEN void
+tree_list_sublist_end(struct bu_vls *vls)
+{
+    if (!vls) return;
+    bu_vls_putc(vls, '}');
+}
+
+
+/* implements a large portion of what Tcl does when appending elements
+ * to DStrings.
+ */
+HIDDEN void
+tree_list_append(struct bu_vls *vls, const char *str)
+{
+    const char *p;
+    int quoteit = 0;
+
+    if (!vls) return;
+
+    if (!str || strlen(str) == 0) {
+	str = "{}";
+    }
+
+    if (tree_list_needspace(vls)) {
+	bu_vls_putc(vls, ' ');
+    }
+
+    /* see if we need to quote the string */
+    for (p = str; *p != '\0'; p++) {
+	switch (*p) {
+	    case '[':
+	    case '$':
+	    case ';':
+	    case ' ':
+	    case '\f':
+	    case '\n':
+	    case '\r':
+	    case '\t':
+	    case '\v':
+		quoteit = 1;
+		break;
+	}
+	if (quoteit)
+	    break;
+    }
+
+    /* already quoted? assumes cleanly balanced braces */
+    p = str;
+    if (*p == '{' || *p == '"') {
+	quoteit = 0;
+    }
+	
+    if (quoteit) {
+	tree_list_sublist_begin(vls);
+	bu_vls_strcat(vls, str);
+	tree_list_sublist_end(vls);
+    } else {
+	bu_vls_strcat(vls, str);
+    }
+}
+
+
+/**
+ * D B _ T R E E _ L I S T
+ *
+ * Fills a bu_vls with a representation of the given tree appropriate
+ * for processing by Tcl scripts.
+ *
+ * A tree 't' is represented in the following manner:
+ *
+ * t := { l dbobjname { mat } }
+ *	   | { l dbobjname }
+ *	   | { u t1 t2 }
+ * 	   | { n t1 t2 }
+ *	   | { - t1 t2 }
+ *	   | { ^ t1 t2 }
+ *         | { ! t1 }
+ *	   | { G t1 }
+ *	   | { X t1 }
+ *	   | { N }
+ *	   | {}
+ *
+ * where 'dbobjname' is a string containing the name of a database object,
+ *       'mat'       is the matrix preceeding a leaf,
+ *       't1', 't2'  are trees (recursively defined).
+ *
+ * Notice that in most cases, this tree will be grossly unbalanced.
+ */
+int
+db_tree_list(struct bu_vls *vls, const union tree *tp)
+{
+    int count = 0;
+
+    if (!tp || !vls)
+	return 0;
+
+    RT_CK_TREE(tp);
+    switch (tp->tr_op) {
+	case OP_DB_LEAF:
+	    tree_list_append(vls, "l");
+	    tree_list_append(vls, tp->tr_l.tl_name);
+	    if (tp->tr_l.tl_mat) {
+		tree_list_sublist_begin(vls);
+		bn_encode_mat(vls, tp->tr_l.tl_mat);
+		tree_list_sublist_end(vls);
+	    }
+	    count++;
+	    break;
+
+	    /* This node is known to be a binary op */
+	case OP_UNION:
+	    tree_list_append(vls, "u");
+	    goto bin;
+	case OP_INTERSECT:
+	    tree_list_append(vls, "n");
+	    goto bin;
+	case OP_SUBTRACT:
+	    tree_list_append(vls, "-");
+	    goto bin;
+	case OP_XOR:
+	    tree_list_append(vls, "^");
+	bin:
+	    tree_list_sublist_begin(vls);
+	    count += db_tree_list(vls, tp->tr_b.tb_left);
+	    tree_list_sublist_end(vls);
+
+	    tree_list_sublist_begin(vls);
+	    count += db_tree_list(vls, tp->tr_b.tb_right);
+	    tree_list_sublist_end(vls);
+	    break;
+
+	    /* This node is known to be a unary op */
+	case OP_NOT:
+	    tree_list_append(vls, "!");
+	    goto unary;
+	case OP_GUARD:
+	    tree_list_append(vls, "G");
+	    goto unary;
+	case OP_XNOP:
+	    tree_list_append(vls, "X");
+	unary:
+	    tree_list_sublist_begin(vls);
+	    count += db_tree_list(vls, tp->tr_b.tb_left);
+	    tree_list_sublist_end(vls);
+	    break;
+
+	case OP_NOP:
+	    tree_list_append(vls, "N");
+	    break;
+
+	default:
+	    bu_log("db_tree_list: bad op %d\n", tp->tr_op);
+	    bu_bomb("db_tree_list\n");
+    }
+
+    return count;
+}
+
+
+/**
+ * D B _ T R E E _ P A R S E
+ *
+ * Take a TCL-style string description of a binary tree, as produced
+ * by db_tree_list(), and reconstruct the in-memory form of
+ * that tree.
+ */
+union tree *
+db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
+{
+    int argc;
+    char **argv;
+    union tree *tp = TREE_NULL;
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
+
+    /* Skip over leading spaces in input */
+    while (*str && isspace(*str)) str++;
+
+    /*XXX Temporarily use brlcad_interp until a replacement for Tcl_SplitList is created */
+    if (Tcl_SplitList(brlcad_interp, str, &argc, (const char ***)&argv) != TCL_OK)
+	return TREE_NULL;
+
+    if (argc <= 0 || argc > 3) {
+	bu_vls_printf(vls,
+		      "db_tree_parse: tree node does not have 1, 2 or 2 elements: %s\n",
+		      str);
+	goto out;
+    }
+
+    if (argv[0][1] != '\0') {
+	bu_vls_printf(vls, "db_tree_parse() operator is not single character: %s", argv[0]);
+	goto out;
+    }
+
+    switch (argv[0][0]) {
+	case 'l':
+	    /* Leaf node: {l name {mat}} */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_l.magic = RT_TREE_MAGIC;
+	    tp->tr_op = OP_DB_LEAF;
+	    tp->tr_l.tl_name = bu_strdup(argv[1]);
+	    /* If matrix not specified, NULL pointer ==> identity matrix */
+	    tp->tr_l.tl_mat = NULL;
+	    if (argc == 3) {
+		mat_t m;
+		/* decode also recognizes "I" notation for identity */
+		if (bn_decode_mat(m, argv[2]) != 16) {
+		    bu_vls_printf(vls,
+				  "db_tree_parse: unable to parse matrix '%s' using identity",
+				  argv[2]);
+		    break;
+		}
+		if (bn_mat_is_identity(m))
+		    break;
+		if (bn_mat_ck("db_tree_parse", m)) {
+		    bu_vls_printf(vls,
+				  "db_tree_parse: matrix '%s', does not preserve axis perpendicularity, using identity", argv[2]);
+		    break;
+		}
+		/* Finally, a good non-identity matrix, dup & save it */
+		tp->tr_l.tl_mat = bn_mat_dup(m);
+	    }
+	    break;
+
+	case 'u':
+	    /* Binary: Union: {u {lhs} {rhs}} */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_UNION;
+	    goto binary;
+	case 'n':
+	    /* Binary: Intersection */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_INTERSECT;
+	    goto binary;
+	case '-':
+	    /* Binary: Union */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_SUBTRACT;
+	    goto binary;
+	case '^':
+	    /* Binary: Xor */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_XOR;
+	    goto binary;
+	binary:
+	    tp->tr_b.magic = RT_TREE_MAGIC;
+	    if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
+		bu_vls_printf(vls,
+			      "db_tree_parse: binary operator %s has insufficient operands in %s",
+			      argv[0], str);
+		RT_FREE_TREE(tp, resp);
+		tp = TREE_NULL;
+		goto out;
+	    }
+	    tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
+	    if (tp->tr_b.tb_left == TREE_NULL) {
+		RT_FREE_TREE(tp, resp);
+		tp = TREE_NULL;
+		goto out;
+	    }
+	    tp->tr_b.tb_right = db_tree_parse(vls, argv[2], resp);
+	    if (tp->tr_b.tb_left == TREE_NULL) {
+		db_free_tree(tp->tr_b.tb_left, resp);
+		RT_FREE_TREE(tp, resp);
+		tp = TREE_NULL;
+		goto out;
+	    }
+	    break;
+
+	case '!':
+	    /* Unary: not {! {lhs}} */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_NOT;
+	    goto unary;
+	case 'G':
+	    /* Unary: GUARD {G {lhs}} */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_GUARD;
+	    goto unary;
+	case 'X':
+	    /* Unary: XNOP {X {lhs}} */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_XNOP;
+	    goto unary;
+	unary:
+	    tp->tr_b.magic = RT_TREE_MAGIC;
+	    if (argv[1] == (char *)NULL) {
+		bu_vls_printf(vls,
+			      "db_tree_parse: unary operator %s has insufficient operands in %s\n",
+			      argv[0], str);
+		bu_free((char *)tp, "union tree");
+		tp = TREE_NULL;
+		goto out;
+	    }
+	    tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
+	    if (tp->tr_b.tb_left == TREE_NULL) {
+		bu_free((char *)tp, "union tree");
+		tp = TREE_NULL;
+		goto out;
+	    }
+	    break;
+
+	case 'N':
+	    /* NOP: no args.  {N} */
+	    RT_GET_TREE(tp, resp);
+	    tp->tr_b.tb_op = OP_XNOP;
+	    tp->tr_b.magic = RT_TREE_MAGIC;
+	    break;
+
+	default:
+	    bu_vls_printf(vls, "db_tree_parse: unable to interpret operator '%s'\n", argv[1]);
+    }
+
+out:
+    /*XXX Temporarily using tcl for its Tcl_SplitList */
+    Tcl_Free((char *)argv);		/* not bu_free(), not free() */
+    return tp;
 }
 
 

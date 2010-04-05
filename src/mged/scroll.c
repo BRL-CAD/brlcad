@@ -65,6 +65,7 @@ struct scroll_item sl_menu[] = {
     { "",		(void (*)())NULL, 0,	"" }
 };
 
+
 struct scroll_item sl_abs_menu[] = {
     { "Xslew",	sl_atol,	0,	"aX" },
     { "Yslew",	sl_atol,	1,	"aY" },
@@ -76,6 +77,7 @@ struct scroll_item sl_abs_menu[] = {
     { "",		(void (*)())NULL, 0,	"" }
 };
 
+
 struct scroll_item sl_adc_menu[] = {
     { "xadc",	sl_itol,	0,	"xadc" },
     { "yadc",	sl_itol,	1,	"yadc" },
@@ -85,6 +87,7 @@ struct scroll_item sl_adc_menu[] = {
     { "",		(void (*)())NULL, 0, "" }
 };
 
+
 /************************************************************************
  *									*
  *	Second part: Event Handlers called from menu items by buttons.c *
@@ -93,7 +96,7 @@ struct scroll_item sl_adc_menu[] = {
 
 
 /*
- *			S E T _ S C R O L L
+ * S E T _ S C R O L L
  *
  * Set scroll_array.
  */
@@ -117,10 +120,11 @@ set_scroll(void)
     }
 }
 
+
 /*
- *			S L _ H A L T _ S C R O L L
+ * S L _ H A L T _ S C R O L L
  *
- *  Reset all scroll bars to the zero position.
+ * Reset all scroll bars to the zero position.
  */
 void
 sl_halt_scroll(void)
@@ -133,8 +137,9 @@ sl_halt_scroll(void)
     bu_vls_free(&vls);
 }
 
+
 /*
- *			S L _ T O G G L E _ S C R O L L
+ * S L _ T O G G L E _ S C R O L L
  */
 void
 sl_toggle_scroll(void)
@@ -144,13 +149,14 @@ sl_toggle_scroll(void)
     set_scroll_private();
 }
 
+
 /************************************************************************
  *									*
  *	Third part:  event handlers called from tables, above		*
  *									*
- *  Where the floating point value pointed to by scroll_val		*
- *  in the range -1.0 to +1.0 is the only desired result,		*
- *  everything can be handled by sl_tol().				*
+ * Where the floating point value pointed to by scroll_val		*
+ * in the range -1.0 to +1.0 is the only desired result,		*
+ * everything can be handled by sl_tol().				*
  *									*
  ************************************************************************/
 
@@ -159,9 +165,9 @@ sl_tol(struct scroll_item *mptr, double val)
 {
     struct bu_vls vls;
 
-    if ( val < -SL_TOL )   {
+    if (val < -SL_TOL) {
 	val += SL_TOL;
-    } else if ( val > SL_TOL )   {
+    } else if (val > SL_TOL) {
 	val -= SL_TOL;
     } else {
 	val = 0.0;
@@ -173,6 +179,7 @@ sl_tol(struct scroll_item *mptr, double val)
     bu_vls_free(&vls);
 }
 
+
 static void
 sl_atol(struct scroll_item *mptr, double val)
 {
@@ -181,9 +188,9 @@ sl_atol(struct scroll_item *mptr, double val)
     if (dbip == DBI_NULL)
 	return;
 
-    if ( val < -SL_TOL )   {
+    if (val < -SL_TOL) {
 	val += SL_TOL;
-    } else if ( val > SL_TOL )   {
+    } else if (val > SL_TOL) {
 	val -= SL_TOL;
     } else {
 	val = 0.0;
@@ -195,14 +202,15 @@ sl_atol(struct scroll_item *mptr, double val)
     bu_vls_free(&vls);
 }
 
+
 static void
 sl_rrtol(struct scroll_item *mptr, double val)
 {
     struct bu_vls vls;
 
-    if ( val < -SL_TOL )   {
+    if (val < -SL_TOL) {
 	val += SL_TOL;
-    } else if ( val > SL_TOL )   {
+    } else if (val > SL_TOL) {
 	val -= SL_TOL;
     } else {
 	val = 0.0;
@@ -220,9 +228,9 @@ sl_artol(struct scroll_item *mptr, double val)
 {
     struct bu_vls vls;
 
-    if ( val < -SL_TOL )   {
+    if (val < -SL_TOL) {
 	val += SL_TOL;
-    } else if ( val > SL_TOL )   {
+    } else if (val > SL_TOL) {
 	val -= SL_TOL;
     } else {
 	val = 0.0;
@@ -240,9 +248,9 @@ sl_adctol(struct scroll_item *mptr, double val)
 {
     struct bu_vls vls;
 
-    if ( val < -SL_TOL )   {
+    if (val < -SL_TOL) {
 	val += SL_TOL;
-    } else if ( val > SL_TOL )   {
+    } else if (val > SL_TOL) {
 	val -= SL_TOL;
     } else {
 	val = 0.0;
@@ -260,9 +268,9 @@ sl_itol(struct scroll_item *mptr, double val)
 {
     struct bu_vls vls;
 
-    if ( val < -SL_TOL )   {
+    if (val < -SL_TOL) {
 	val += SL_TOL;
-    } else if ( val > SL_TOL )   {
+    } else if (val > SL_TOL) {
 	val -= SL_TOL;
     } else {
 	val = 0.0;
@@ -282,19 +290,19 @@ sl_itol(struct scroll_item *mptr, double val)
  ************************************************************************/
 
 /*
- *			S C R O L L _ D I S P L A Y
+ * S C R O L L _ D I S P L A Y
  *
- *  The parameter is the Y pixel address of the starting
- *  screen Y to be used, and the return value is the last screen Y
- *  position used.
+ * The parameter is the Y pixel address of the starting
+ * screen Y to be used, and the return value is the last screen Y
+ * position used.
  */
 int
-scroll_display( int y_top )
+scroll_display(int y_top)
 {
-    int		y;
-    struct scroll_item	*mptr;
-    struct scroll_item	**m;
-    int		xpos;
+    int y;
+    struct scroll_item *mptr;
+    struct scroll_item **m;
+    int xpos;
     int second_menu = -1;
     fastf_t f = 0;
 
@@ -307,9 +315,9 @@ scroll_display( int y_top )
     DM_SET_LINE_ATTR(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
 
-    for ( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
+    for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
 	++second_menu;
-	for ( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
+	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
 	    y += SCROLL_DY;		/* y is now bottom line pos */
 
 	    switch (mptr->scroll_val) {
@@ -672,8 +680,8 @@ scroll_display( int y_top )
 	    else
 		xpos = 0;
 
-	    DM_DRAW_STRING_2D( dmp, mptr->scroll_string,
-			       GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0 );
+	    DM_DRAW_STRING_2D(dmp, mptr->scroll_string,
+			      GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0);
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_line[0],
 			   color_scheme->cs_slider_line[1],
@@ -684,7 +692,7 @@ scroll_display( int y_top )
 	}
     }
 
-    if ( y != y_top )  {
+    if (y != y_top) {
 	/* Sliders were drawn, so make left vert edge */
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_slider_line[0],
@@ -694,28 +702,30 @@ scroll_display( int y_top )
 			GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
 			GED2PM1(MENUXLIM), GED2PM1(y));
     }
-    return( y );
+    return(y);
 }
 
+
 /*
- *			S C R O L L _ S E L E C T
+ * S C R O L L _ S E L E C T
  *
- *  Called with Y coordinate of pen in menu area.
+ * Called with Y coordinate of pen in menu area.
  *
- * Returns:	1 if menu claims these pen co-ordinates,
- *		0 if pen is BELOW scroll
- *		-1 if pen is ABOVE scroll	(error)
+ * Returns:
+ * 1 if menu claims these pen co-ordinates,
+ * 0 if pen is BELOW scroll
+ * -1 if pen is ABOVE scroll (error)
  */
 int
-scroll_select( int pen_x, int pen_y, int do_func )
+scroll_select(int pen_x, int pen_y, int do_func)
 {
-    int		yy;
-    struct scroll_item	**m;
-    struct scroll_item     *mptr;
+    int yy;
+    struct scroll_item **m;
+    struct scroll_item *mptr;
 
-    if ( !mged_variables->mv_sliders )  return(0);	/* not enabled */
+    if (!mged_variables->mv_sliders) return(0);	/* not enabled */
 
-    if ( pen_y > scroll_top )
+    if (pen_y > scroll_top)
 	return(-1);	/* pen above menu area */
 
     /*
@@ -723,36 +733,37 @@ scroll_select( int pen_x, int pen_y, int do_func )
      * above here.
      */
     yy = scroll_top;
-    for ( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
-	for ( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
-	    fastf_t	val;
+    for (m = &scroll_array[0]; *m != SCROLL_NULL; m++) {
+	for (mptr = *m; mptr->scroll_string[0] != '\0'; mptr++) {
+	    fastf_t val;
 	    yy += SCROLL_DY;	/* bottom line pos */
-	    if ( pen_y < yy )
+	    if (pen_y < yy)
 		continue;	/* pen below this item */
 
 	    /*
-	     *  Record the location of scroll marker.
-	     *  Note that the left side has less width than
-	     *  the right side, due to the presence of the
-	     *  menu text area on the left.
+	     * Record the location of scroll marker.
+	     * Note that the left side has less width than
+	     * the right side, due to the presence of the
+	     * menu text area on the left.
 	     */
-	    if ( pen_x >= 0 )  {
+	    if (pen_x >= 0) {
 		val = pen_x * INV_GED;
 	    } else {
 		val = pen_x/(double)(-MENUXLIM);
 	    }
 
 	    /* See if hooked function has been specified */
-	    if ( mptr->scroll_func == ((void (*)())0) )  continue;
+	    if (mptr->scroll_func == ((void (*)())0)) continue;
 
 	    if (do_func)
 		(*(mptr->scroll_func))(mptr, val);
 
-	    return( 1 );		/* scroll claims pen value */
+	    return(1);		/* scroll claims pen value */
 	}
     }
-    return( 0 );		/* pen below scroll area */
+    return(0);		/* pen below scroll area */
 }
+
 
 /*
  * Local Variables:

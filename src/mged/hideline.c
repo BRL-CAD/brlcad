@@ -48,14 +48,14 @@
 #include "./mged_dm.h"
 
 
-#define MAXOBJECTS	3000
+#define MAXOBJECTS 3000
 
-#define MOVE(v)	  VMOVE(last_move, (v))
+#define MOVE(v) VMOVE(last_move, (v))
 
-#define DRAW(v)	{ vect_t a, b;\
+#define DRAW(v) { vect_t a, b;\
 		  MAT4X3PNT(a, view_state->vs_gvp->gv_model2view, last_move);\
 		  MAT4X3PNT(b, view_state->vs_gvp->gv_model2view, (v));\
-		  pdv_3line(plotfp, a, b ); }
+		  pdv_3line(plotfp, a, b); }
 
 extern struct db_i *dbip;	/* current database instance */
 
@@ -70,7 +70,7 @@ static int
 hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
     char diff_solid;
-    vect_t	diff;
+    vect_t diff;
     fastf_t len;
     struct solid *sp;
 
@@ -95,11 +95,11 @@ hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp
 /**
  * hit_tangent - routine called by rt_shootray if ray misses model
  *
- *     We know we are shooting at the model since we are aiming at the
- *     vector list MGED created. However, shooting at an edge or shooting
- *     tangent to a curve produces only one intersection point at which
- *     time rt_shootray reports a miss. Therefore, this routine is really
- *     a "hit" routine.
+ * We know we are shooting at the model since we are aiming at the
+ * vector list MGED created. However, shooting at an edge or shooting
+ * tangent to a curve produces only one intersection point at which
+ * time rt_shootray reports a miss. Therefore, this routine is really
+ * a "hit" routine.
  */
 static int
 hit_tangent(struct application *ap)
@@ -119,26 +119,26 @@ hit_overlap(struct application *ap, struct partition *ph, struct region *r1, str
 
 
 /**
- *			F _ H I D E L I N E
+ * F _ H I D E L I N E
  */
 int
 f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    FILE 	*plotfp;
-    char 	visible;
-    int 	i, numobjs;
-    char 	*objname[MAXOBJECTS], title[1];
-    fastf_t 	len, u, step;
-    float 	ratio;
-    vect_t	last_move;
-    struct rt_i	*rtip;
+    FILE *plotfp;
+    char visible;
+    int i, numobjs;
+    char *objname[MAXOBJECTS], title[1];
+    fastf_t len, u, step;
+    float ratio;
+    vect_t last_move;
+    struct rt_i *rtip;
     struct resource resource;
     struct application a;
     vect_t temp;
     vect_t last, dir;
-    struct bn_vlist	*vp;
+    struct bn_vlist *vp;
     struct solid *sp;
 
     CHECK_DBI_NULL;
@@ -160,7 +160,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
     pl_space(plotfp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX);
 
-    /*  Build list of objects being viewed */
+    /* Build list of objects being viewed */
     numobjs = 0;
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
@@ -232,58 +232,58 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		int	i;
-		int	nused = vp->nused;
-		int	*cmd = vp->cmd;
+		int i;
+		int nused = vp->nused;
+		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;
 		for (i = 0; i < nused; i++, cmd++, pt++) {
 		    Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
 		    switch (*cmd) {
-		    case BN_VLIST_POLY_START:
-		    case BN_VLIST_POLY_VERTNORM:
-			break;
-		    case BN_VLIST_POLY_MOVE:
-		    case BN_VLIST_LINE_MOVE:
-			/* move */
-			VMOVE(last, *pt);
-			MOVE(last);
-			break;
-		    case BN_VLIST_POLY_DRAW:
-		    case BN_VLIST_POLY_END:
-		    case BN_VLIST_LINE_DRAW:
-			/* setup direction && length */
-			VSUB2(dir, *pt, last);
-			len = MAGNITUDE(dir);
-			VUNITIZE(dir);
-			visible = FALSE;
-			{
-			    struct bu_vls tmp_vls;
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
+			    break;
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_LINE_MOVE:
+			    /* move */
+			    VMOVE(last, *pt);
+			    MOVE(last);
+			    break;
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			case BN_VLIST_LINE_DRAW:
+			    /* setup direction && length */
+			    VSUB2(dir, *pt, last);
+			    len = MAGNITUDE(dir);
+			    VUNITIZE(dir);
+			    visible = FALSE;
+			    {
+				struct bu_vls tmp_vls;
 
-			    bu_vls_init(&tmp_vls);
-			    bu_vls_printf(&tmp_vls, "\t\tDraw 0 -> %g, step %g\n", len, step);
-			    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-			    bu_vls_free(&tmp_vls);
-			}
-			for (u = 0; u <= len; u += step) {
-			    VJOIN1(aim_point, last, u, dir);
-			    MAT4X3PNT(temp, view_state->vs_gvp->gv_model2view, aim_point);
-			    temp[Z] = 100;			/* parallel project */
-			    MAT4X3PNT(a.a_ray.r_pt, view_state->vs_gvp->gv_view2model, temp);
-			    if (rt_shootray(&a)) {
-				if (!visible) {
-				    visible = 1;
-				    MOVE(aim_point);
-				}
-			    } else {
-				if (visible) {
-				    visible = 0;
-				    DRAW(aim_point);
+				bu_vls_init(&tmp_vls);
+				bu_vls_printf(&tmp_vls, "\t\tDraw 0 -> %g, step %g\n", len, step);
+				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+				bu_vls_free(&tmp_vls);
+			    }
+			    for (u = 0; u <= len; u += step) {
+				VJOIN1(aim_point, last, u, dir);
+				MAT4X3PNT(temp, view_state->vs_gvp->gv_model2view, aim_point);
+				temp[Z] = 100;			/* parallel project */
+				MAT4X3PNT(a.a_ray.r_pt, view_state->vs_gvp->gv_view2model, temp);
+				if (rt_shootray(&a)) {
+				    if (!visible) {
+					visible = 1;
+					MOVE(aim_point);
+				    }
+				} else {
+				    if (visible) {
+					visible = 0;
+					DRAW(aim_point);
+				    }
 				}
 			    }
-			}
-			if (visible)
-			    DRAW(aim_point);
-			VMOVE(last, *pt); /* new last vertex */
+			    if (visible)
+				DRAW(aim_point);
+			    VMOVE(last, *pt); /* new last vertex */
 		    }
 		}
 	    }
@@ -295,6 +295,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     fclose(plotfp);
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

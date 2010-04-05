@@ -629,7 +629,7 @@ read_ply_header()
     }
     while ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) ) {
 	struct element *elem_ptr;
-	int len;
+	size_t len;
 
 	len = strlen( line );
 	len--;

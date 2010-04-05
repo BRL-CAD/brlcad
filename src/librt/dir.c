@@ -295,12 +295,12 @@ rt_db_lookup_internal (
     {
 	if (noisy == LOOKUP_NOISY)
 	    bu_log("rt_db_lookup_internal() Failed to get internal form of object '%s'\n",
-		   dp -> d_namep);
+		   dp->d_namep);
 	return ID_NULL;
     }
 
     *dpp = dp;
-    return (ip -> idb_type);
+    return (ip->idb_type);
 }
 
 /** @} */

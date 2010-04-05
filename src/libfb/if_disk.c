@@ -127,7 +127,8 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
     static unsigned char	pix_buf[DISK_DMA_BYTES] = {0};
     register unsigned char *pix_to;
     register long	i;
-    int	fd, pixelstodo;
+    int fd;
+    size_t pixelstodo;
 
     /* Fill buffer with background color. */
     for ( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
@@ -173,15 +174,14 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
     register long bytes = count * (long) sizeof(RGBpixel);
     register long todo;
     long		got;
-    long		dest;
+    size_t		dest;
     long		bytes_read = 0;
     int		fd = ifp->if_fd;
 
     /* Reads on stdout make no sense.  Take reads from stdin. */
     if ( fd == 1 )  fd = 0;
 
-    dest = (((long) y * (long) ifp->if_width) + (long) x)
-	* (long) sizeof(RGBpixel);
+    dest = ((y * ifp->if_width) + x) * sizeof(RGBpixel);
     if ( ifp->if_seekpos != dest && lseek(fd, (off_t)dest, 0) == -1L ) {
 	fb_log( "disk_buffer_read : seek to %ld failed.\n", dest );
 	return	-1;
@@ -220,10 +220,9 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     register long	bytes = count * (long) sizeof(RGBpixel);
     register long	todo;
-    long		dest;
+    size_t		dest;
 
-    dest = ((long) y * (long) ifp->if_width + (long) x)
-	* (long) sizeof(RGBpixel);
+    dest = (y * ifp->if_width + x) * sizeof(RGBpixel);
     if ( dest != ifp->if_seekpos )  {
 	if ( lseek(ifp->if_fd, (off_t)dest, 0) == -1L ) {
 	    fb_log( "disk_buffer_write : seek to %ld failed.\n", dest );
@@ -351,7 +350,13 @@ FBIO disk_interface = {
     0,
     0L,
     0L,
-    0
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 /*

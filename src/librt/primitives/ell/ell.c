@@ -633,6 +633,7 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     fastf_t middle[16*3];
     fastf_t bottom[16*3];
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
@@ -1474,7 +1475,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     vertp[3] = &verts[1];
 
     if ((fu = nmg_cmface(s, vertp, 4)) == 0) {
-	bu_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
+	bu_log("rt_ell_tnurb(): nmg_cmface() fail on face\n");
 	return -1;
     }
 

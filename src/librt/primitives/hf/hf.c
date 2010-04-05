@@ -1596,6 +1596,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     int half_step;
     int goal;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
@@ -1865,8 +1866,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     int in_cookie;	/* format cookie */
     int in_len;
     int out_cookie;
-    int count;
-    int got;
+    size_t count;
+    size_t got;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1943,7 +1944,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	goto err1;
     }
     if (xip->w < 2 || xip->n < 2) {
-	bu_log("rt_hf_import4() w=%d, n=%d too small\n");
+	bu_log("rt_hf_import4() w=%d, n=%d too small\n", xip->w, xip->n);
 	goto err1;
     }
     if (xip->xlen <= 0 || xip->ylen <= 0) {
@@ -2005,8 +2006,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
-	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%d, got=%d\n",
-	       xip->dfile, count, got);
+	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%llu, got=%llu\n",
+	       xip->dfile, (unsigned long long)count, (unsigned long long)got);
     }
 
     return(0);			/* OK */

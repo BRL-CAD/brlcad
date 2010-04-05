@@ -45,6 +45,42 @@
  * still allow edge processing (e.g., basic canny edge detection) on
  * the resultant set so you can control the level of edges visible.
  *
+ * There are a variety of accepted mechanisms for generating an edge
+ * diagram.  Some are found more acceptable than others, though, for
+ * general purpose use.
+ *
+ * THOSE GENERALLY ALL AGREE ON ARE:
+ *
+ * ** Exterior silhouettes: an outer edge contour, changing from one
+ * object to the next or to background. [rtedge implements both]
+ *
+ * ** Occluding contours: depth discontinuities, surface normal is
+ * nearly perpendicular to view direction [rtedge implements both]
+ *
+ * OTHERS THAT COULD BE USEFUL BUT RTEDGE DOES NOT IMPLEMENT ARE:
+ *
+ * ** Suggestive contours
+ *
+ * ** "Almost contours"
+ *
+ * ** A point that becomes a contour in nearby views
+ *
+ * ** DOT(normal, viewdir) is at a local minimum (it's a form of
+ * curvature where radial curvature == 0)
+ *
+ * OTHERS THAT COULD ALSO BE USEFUL INCLUDE:
+ *
+ * ** Image valleys, indicated by intensity
+ *
+ * ** Principal highlights, showing maxima of (n.v) to indicate
+ * view-independent ridges and valleys
+ *
+ * ** Different family of lines in shadowed regions, not just inverted
+ * (e.g., cross-hatching)
+ *
+ * ** Apparent ridges and valleys (view-dependent) where you look for
+ * rapid screen-space normal variation
+ *
  */
 
 #include "common.h"
@@ -252,6 +288,9 @@ Options:\n\
  -c                 Auxillary commands (see man page)\n\
 ";
 
+
+int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);
+int diffpixel(RGBpixel a, RGBpixel b);
 
 static int occlusion_hit(struct application *ap, struct partition *pt,
 			 struct seg *segp)

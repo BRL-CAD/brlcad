@@ -80,7 +80,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	    ret = stat(name, &sb);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    if (ret < 0)  goto do_reuse;	/* File vanished from disk, mapped copy still OK */
-	    if (sb.st_size != mp->buflen) {
+	    if ((size_t)sb.st_size != mp->buflen) {
 		bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n",
 		       name, (long)mp->buflen, (long)sb.st_size);
 		goto dont_reuse;
@@ -142,7 +142,8 @@ bu_open_mapped_file(const char *name, const char *appl)
     if (appl) mp->appl = bu_strdup(appl);
 
 #ifdef HAVE_SYS_STAT_H
-    mp->buflen = (size_t)sb.st_size;
+    /* The buflen member of "struct bu_mapped_file" should be a size_t. */
+    mp->buflen = (long)sb.st_size;
     mp->modtime = (long)sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
 
@@ -280,8 +281,8 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 {
     BU_CK_MAPPED_FILE(mp);
 
-    bu_log("%8lx mapped_file %s %lx len=%ld mapped=%d, uses=%d %s\n",
-	   (long)mp, mp->name, (long)mp->buf, mp->buflen,
+    bu_log("%p mapped_file %s %p len=%ld mapped=%d, uses=%d %s\n",
+	   (void *)mp, mp->name, mp->buf, mp->buflen,
 	   mp->is_mapped, mp->uses,
 	   title);
 }

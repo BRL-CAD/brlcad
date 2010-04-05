@@ -39,15 +39,11 @@
 
 void
 dm_draw_data_axes(struct dm *dmp,
-		  fastf_t viewSize, /* in mm */
+		  fastf_t viewSize __attribute__((unused)), /* in mm */
 		  struct ged_data_axes_state *gdasp)
 {
     int i, j;
     fastf_t halfAxesSize;		/* half the length of an axis */
-    point_t v2;
-    point_t rxv1, rxv2;
-    point_t ryv1, ryv2;
-    point_t rzv1, rzv2;
     point_t ptA, ptB;
     int npoints = gdasp->gdas_num_points * 6;
     point_t *points;
@@ -59,6 +55,8 @@ dm_draw_data_axes(struct dm *dmp,
 	return;
 
     points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
+
+    /* FIXME: should be using viewSize */
     halfAxesSize = gdasp->gdas_size * 0.5;
 
     /* set color */
@@ -242,6 +240,13 @@ dm_draw_axes(struct dm			*dmp,
 	vect_t maj_xend1, maj_xend2;
 	vect_t maj_yend1, maj_yend2;
 	vect_t maj_zend1, maj_zend2;
+
+	VSETALL(xend1, 0.0);
+	VSETALL(xend2, 0.0);
+	VSETALL(yend1, 0.0);
+	VSETALL(yend2, 0.0);
+	VSETALL(zend1, 0.0);
+	VSETALL(zend2, 0.0);
 
 	if (dmp->dm_width <= numTicks / halfAxesSize * gasp->gas_tick_threshold * 2) {
 	    int numMajorTicks = numTicks / gasp->gas_ticks_per_major;

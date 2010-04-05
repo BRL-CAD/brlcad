@@ -65,6 +65,7 @@ ckbytes(unsigned char *a, unsigned char *b, unsigned int n)
 int
 main(int argc, char **argv)
 {
+    int ret;
     unsigned int i;
     unsigned int nbytes;
     int len = sizeof(double);
@@ -94,7 +95,7 @@ main(int argc, char **argv)
     if (argv[1][1] == 'o') {
 	/* Write out */
 	htond((unsigned char *)buf, (unsigned char *)orig, NUM);
-	fwrite(buf, 8, NUM, stdout);
+	ret = fwrite(buf, 8, NUM, stdout);
 	exit(0);
     }
 
@@ -111,7 +112,8 @@ main(int argc, char **argv)
 	    bu_bomb("unknown and untested double size\n");
 	    break;
     }
-    fread(buf, 8, NUM, stdin);
+    ret = fread(buf, 8, NUM, stdin);
+
 /* ntohd((char *)after, buf, NUM);	*//* bulk conversion */
     for (i=0; i<NUM; i++) {
 	ntohd((unsigned char *)&after[i], (unsigned char *)&buf[i*8], 1);	/* incremental */

@@ -92,7 +92,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     /* read the three points */
     prompts = &p_arb3pt[0];
     if (argc < 11) {
-	bu_vls_printf(&gedp->ged_result_str, prompts[argc-2]);
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompts[argc-2]);
 	return GED_MORE;
     }
 

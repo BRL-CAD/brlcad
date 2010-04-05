@@ -142,10 +142,10 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	    bu_semaphore_release(RT_SEM_MODEL);
 
 	    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
-		bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=x%lx\n",
+		bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=%p\n",
 		       stp->st_dp->d_namep,
 		       sub_dbip->dbi_filename,
-		       (long)sub_rtip);
+		       (void *)sub_rtip);
 	    }
 	    goto done;
 	}
@@ -654,7 +654,7 @@ struct goodies {
  * This routine should be generally exported for other uses.
  */
 HIDDEN union tree *
-rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     union tree *curtree;
     struct goodies *gp;
@@ -718,6 +718,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     char *argv[2];
     struct goodies good;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);

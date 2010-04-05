@@ -140,7 +140,7 @@ stxt_read(register struct stxt_specific *stp)
 	linebuf = bu_malloc(stp->stx_fw*3, "texture file line");
 
 	for ( i = 0; i < stp->stx_n; i++ )  {
-	    if ((rd = fread(linebuf, 1, stp->stx_fw*3, fp)) != stp->stx_fw*3 ) {
+	    if ((rd = (int)fread(linebuf, 1, stp->stx_fw*3, fp)) != stp->stx_fw*3 ) {
 		bu_log("stxt_read: read error on %s\n", name);
 		stp->stx_file[0] = '\0';
 		(void)fclose(fp);

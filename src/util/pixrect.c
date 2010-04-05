@@ -32,19 +32,19 @@
 #include "bu.h"
 
 
-#define	INTERACTIVE	0
-#define	COMMAND_LINE	1
+#define INTERACTIVE 0
+#define COMMAND_LINE 1
 
-FILE		*ifp, *ofp;		/* input and output file pointers */
+FILE *ifp, *ofp;		/* input and output file pointers */
 
-static char	*file_name;
+static char *file_name;
 
-static int 	linelen;		/* input width input file */
-static int 	xorig = 0;     		/* Bottom left corner to extract from */
-static int 	yorig = 0;		/* Default at (0, 0) pixels     */
-static int 	xnum  = 0;
-static int 	ynum  = 0;
-static int 	bytes_per_pixel = 3;	/* Default for RGB */
+static int linelen;		/* input width input file */
+static int xorig = 0;     		/* Bottom left corner to extract from */
+static int yorig = 0;		/* Default at (0, 0) pixels */
+static int xnum  = 0;
+static int ynum  = 0;
+static int bytes_per_pixel = 3;	/* Default for RGB */
 
 static const char usage[] = "\
 Usage: pixrect -w in_width -n in_height -W out_width -N out_height\n\
@@ -107,8 +107,8 @@ get_args(int argc, char **argv)
     }
 
     /* If parameters (i.e. xnum, etc.) are not entered on */
-    /*    command line, obtain input in the same style as */
-    /*    the original version of pixrect.c               */
+    /* command line, obtain input in the same style as */
+    /* the original version of pixrect.c */
 
     if (inputmode == INTERACTIVE) {
 	if (argc != 4 && argc != 3)
@@ -125,12 +125,12 @@ get_args(int argc, char **argv)
 	}
 
 	/* Get info */
-	printf( "Area to extract (x, y) in pixels " );
-	scanf( "%d%d", &xnum, &ynum );
-	printf( "Origin to extract from (0, 0 is lower left) " );
-	scanf( "%d%d", &xorig, &yorig );
-	printf( "Scan line length of input file " );
-	scanf( "%d", &linelen );
+	printf("Area to extract (x, y) in pixels ");
+	scanf("%d%d", &xnum, &ynum);
+	printf("Origin to extract from (0, 0 is lower left) ");
+	scanf("%d%d", &xorig, &yorig);
+	printf("Scan line length of input file ");
+	scanf("%d", &linelen);
     }
 
     /* Make sure nessecary variables set */
@@ -173,16 +173,17 @@ get_args(int argc, char **argv)
     return(1);		/* OK */
 }
 
+
 /* ======================================================================= */
 
-char	*buf;			/* output scanline buffer, malloc'd */
-int	outbytes;
+char *buf;			/* output scanline buffer, malloc'd */
+int outbytes;
 
 int
 main(int argc, char **argv)
 {
-    int	row;
-    long	offset;
+    int row;
+    long offset;
 
     if (!get_args(argc, argv)) {
 	bu_exit(1, "%s", usage);
@@ -205,6 +206,7 @@ main(int argc, char **argv)
 
     bu_exit (0, NULL);
 }
+
 
 /*
  * Local Variables:

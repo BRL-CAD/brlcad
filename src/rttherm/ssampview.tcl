@@ -37,16 +37,13 @@
 # GUI for "ssampview" program.
 # Sourced from the C code.
 #
-#  -Mike Muuss, 7-Mar-96
-#
-#  $Header$
 
 puts "ssampview.tcl: start"
 
 set wavel 0
 global wavel
 
-set line_num	32
+set line_num 32
 global line_num
 
 set pixel_num 32
@@ -68,8 +65,8 @@ frame .scale
 frame .entry_line1
 frame .entry_line2
 frame .plot
-frame .plot.spatial 	-borderwidth 2 -relief ridge
-frame .plot.spectral 	-borderwidth 2 -relief groove
+frame .plot.spatial -borderwidth 2 -relief ridge
+frame .plot.spectral -borderwidth 2 -relief groove
 frame .plot.spatial.spatial_v
 
 #pack .buttons -side top
@@ -122,6 +119,7 @@ proc update { {foo 0} } {
     puts [fb_readpixel -42 $pixel_num $line_num]
 }
 
+
 proc scalechange {var value} {
     global $var
     global initial_maxval
@@ -131,6 +129,7 @@ proc scalechange {var value} {
     set $var [expr $initial_maxval * $value / 1000]
     update
 }
+
 
 label .plot.spatial.spatial_v.scanline4 -text "Scanline Plot"
 checkbutton .plot.spatial.spatial_v.scanline5 -text "Rescale" \
@@ -188,7 +187,7 @@ proc scanline { {foo 0} } {
     }
     for {set x1 0} {$x1 < $width} {incr x1} {
 	set y1 [expr $ymax - 1 - \
-		    ( [getspectval $x1 $y $wavel] - $minval ) * $scale]
+		    ([getspectval $x1 $y $wavel] - $minval) * $scale]
 	if {$y1 < 0} {
 	    set y1 0
 	} elseif {$y1 > 255} {
@@ -197,9 +196,10 @@ proc scanline { {foo 0} } {
 	.plot.spatial.spatial_v.canvas_scanline create line $x0 $y0 $x1 $y1 -tags T
 	set x0 $x1
 	set y0 $y1
-	##		puts "$x0 $y0 $x1 $y1"
+	## puts "$x0 $y0 $x1 $y1"
     }
 }
+
 
 puts "ssampview.tcl: about to define proc pixelplot"
 
@@ -236,7 +236,7 @@ proc pixelplot { {foo 0} } {
     }
     for {set x1 0} {$x1 < $nwave} {incr x1} {
 	set y1 [expr $ymax - 1 - \
-		    ( [getspectval $x $y $x1] - $minval ) * $scale]
+		    ([getspectval $x $y $x1] - $minval) * $scale]
 	if {$y1 < 0} {
 	    set y1 0
 	} elseif {$y1 > 255} {
@@ -245,17 +245,17 @@ proc pixelplot { {foo 0} } {
 	.plot.spectral.canvas_pixel create line $x0 $y0 $x1 $y1 -tags T
 	set x0 $x1
 	set y0 $y1
-	##		puts "$x0 $y0 $x1 $y1"
+	## puts "$x0 $y0 $x1 $y1"
     }
 }
 
 
 puts "ssampview.tcl: about to define proc plot_tabdata"
 
-#			P L O T _ T A B D A T A
+# P L O T _ T A B D A T A
 #
 # Draw spectral curve from one Tcl-ified rt_tabdata structure.  Form is:
-#	x {...} y {...} nx # ymin # ymax #
+# x {...} y {...} nx # ymin # ymax #
 #
 # Remember: 4th quadrant addressing!
 #
@@ -298,9 +298,9 @@ proc plot_tabdata { canvas data {y_minval -1} {y_maxval -1} {screen_xmax 255} {s
     $canvas create line $x0 0 $x0 $screen_ymax -tags T -fill grey
 
     for {set j 0} {$j < $key_nx} {incr j} {
-	set x1 [expr int(([lindex $key_x $j] - $x_minval ) * $x_scale)]
+	set x1 [expr int(([lindex $key_x $j] - $x_minval) * $x_scale)]
 	set y1 [expr int($screen_ymax - \
-			     ( [lindex $key_y $j] - $y_minval ) * $y_scale)]
+			     ([lindex $key_y $j] - $y_minval) * $y_scale)]
 	if {$y1 < 0} {
 	    set y1 0
 	} elseif {$y1 > $screen_ymax} {
@@ -317,17 +317,18 @@ proc plot_tabdata { canvas data {y_minval -1} {y_maxval -1} {screen_xmax 255} {s
     #puts "plot_tabdata $canvas ending"
 }
 
+
 puts "ssampview.tcl: about to define proc popup_plot_tabdata"
 
-#			P O P U P _ P L O T _ T A B D A T A
+# P O P U P _ P L O T _ T A B D A T A
 #
-#  Create a one-time throwaway pop-up window with a tabdata plot in it.
+# Create a one-time throwaway pop-up window with a tabdata plot in it.
 #
-#  This can be called from TCL or invoked from C code.
+# This can be called from TCL or invoked from C code.
 #
 set popup_counter 0
 proc popup_plot_tabdata { title data {minval -1} {maxval -1} {screen_xmax 255} {screen_ymax 255} }  {
-    global	popup_counter
+    global popup_counter
 
     incr popup_counter
     set popup .popup$popup_counter
@@ -343,9 +344,10 @@ proc popup_plot_tabdata { title data {minval -1} {maxval -1} {screen_xmax 255} {
     return $popup
 }
 
+
 puts "ssampview.tcl: about to define proc do_testing"
 
-#			D O _ T E S T I N G
+# D O _ T E S T I N G
 #
 proc do_testing {} {
     puts "do_testing: start"
@@ -360,6 +362,7 @@ proc do_testing {} {
     }
     puts "do_testing: end"
 }
+
 
 # This variable is set by C startoff.
 puts "ssampview.tcl: About to run first_command= $first_command"

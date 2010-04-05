@@ -57,7 +57,7 @@ pr_shadework(const char *str, const struct shadework *swp)
     int i;
 
     if (!swp)
-	return
+	return;
 
     bu_log("Shadework%s: 0x%x\n", str ? str : "", swp);
     bu_printb(" sw_inputs", swp->sw_inputs, MFI_FORMAT);

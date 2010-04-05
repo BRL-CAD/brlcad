@@ -155,6 +155,8 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
     list<BBNode*> leaves;
     surf->getLeaves(leaves);
 
+    VSETALL(min, 0.0);
+
     ON_TextLog tl(stderr);
     vhead = rt_vlblock_find(vbp, RED);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
@@ -191,6 +193,8 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
     double min[3], max[3];
     list<BRNode*> leaves;
     st->ctree->getLeaves(leaves);
+
+    VSETALL(min, 0.0);
 
     ON_TextLog tl(stderr);
     vhead = rt_vlblock_find(vbp, RED);
@@ -1092,13 +1096,13 @@ plot_usage(struct bu_vls *vls)
 int
 brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
 {
-    char *command;
+    const char *command;
     int ret = 0;
 
     if (argc == 2)
 	command = "info";
     else
-	command = (char *) argv[2];
+	command = (const char *) argv[2];
 
     snprintf(commtag, 64, "_BC_"); //default name pre/postfix tag for fake bn_vlblock solid
 

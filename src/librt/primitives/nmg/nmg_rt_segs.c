@@ -71,14 +71,14 @@ print_seg_list(struct seg *seghead, int seg_count, char *s)
 
     bu_log("Segment List (%d segnemts) (%s):\n", seg_count, s);
     /* print debugging data before returning */
-    bu_log("Seghead:\n0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n\n",
+    bu_log("Seghead:\n0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n\n",
 	   seghead,
 	   seghead->l.magic,
 	   seghead->l.forw,
 	   seghead->l.back);
 
     for (BU_LIST_FOR(seg_p, seg, &seghead->l)) {
-	bu_log("0x%08x magic: 0x%0x(%d) forw:0x%08x back:0x%08x\n",
+	bu_log("0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n",
 	       seg_p,
 	       seg_p->l.magic,
 	       seg_p->l.forw,
@@ -1053,15 +1053,14 @@ build_topo_list(unsigned long *l_p, struct bu_ptbl *tbl)
 		    case NMG_SHELL_MAGIC:
 			break;
 		    default:
-			bu_log("%s[%d]: Bogus vertexuse parent magic:%s.",
+			bu_log("Bogus vertexuse parent magic:%s.",
 			       bu_identify_magic(*vu->up.magic_p));
 			nmg_rt_segs_exit("goodbye");
 		}
 	    }
 	    break;
 	default:
-	    bu_log("%s[%d]: Bogus magic number pointer:%s",
-		   bu_identify_magic(*l_p));
+	    bu_log("Bogus magic number pointer:%s", bu_identify_magic(*l_p));
 	    nmg_rt_segs_exit("goodbye");
     }
 }

@@ -180,7 +180,7 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_DISK:
 	    if (wdbp->dbip->dbi_read_only) {
-		bu_log("wdb_export_external(%s): read-only database, write aborted\n");
+		bu_log("wdb_export_external(%s): read-only database, write aborted\n", name);
 		return -5;
 	    }
 	    /* If name already exists, that object will be updated. */
@@ -207,7 +207,7 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
 	    if (wdbp->dbip->dbi_read_only) {
-		bu_log("wdb_export_external(%s): read-only database, write aborted\n");
+		bu_log("wdb_export_external(%s): read-only database, write aborted\n", name);
 		return -5;
 	    }
 	    /* If name already exists, new non-conflicting name will be generated */
@@ -534,105 +534,6 @@ wdb_import_from_path(struct bu_vls *logstr, struct rt_db_internal *ip, const cha
     return wdb_import_from_path2(logstr, ip, path, wdb, mat);
 }
 
-
-#if 0
-/*XXX Needs to be modified to NOT use Tcl */
-/**
- * W D B _ T R E E _ D E S C R I B E
- *
- * Fills a Tcl_DString with a representation of the given tree
- * appropriate for processing by Tcl scripts.  The reason we use
- * Tcl_DStrings instead of bu_vlses is that Tcl_DStrings provide
- * "start/end sublist" commands and automatic escaping of Tcl-special
- * characters.
- *
- * A tree 't' is represented in the following manner:
- *
- * t := { l dbobjname { mat } }
- *    | { l dbobjname }
- *    | { u t1 t2 }
- *    | { n t1 t2 }
- *    | { - t1 t2 }
- *    | { ^ t1 t2 }
- *    | { ! t1 }
- *    | { G t1 }
- *    | { X t1 }
- *    | { N }
- *    | {}
- *
- * where 'dbobjname' is a string containing the name of a database object,
- *       'mat'       is the matrix preceeding a leaf,
- *       't1', 't2'  are trees (recursively defined).
- *
- * Notice that in most cases, this tree will be grossly unbalanced.
- */
-void
-wdb_tree_describe(struct bu_vls *logstr, const union tree *tp)
-{
-    if (!tp) return;
-
-    RT_CK_TREE(tp);
-    switch (tp->tr_op) {
-	case OP_DB_LEAF:
-	    Tcl_DStringAppendElement(dsp, "l");
-	    Tcl_DStringAppendElement(dsp, tp->tr_l.tl_name);
-	    if (tp->tr_l.tl_mat) {
-		struct bu_vls vls;
-		bu_vls_init(&vls);
-		bn_encode_mat(&vls, tp->tr_l.tl_mat);
-		Tcl_DStringAppendElement(dsp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-	    }
-	    break;
-
-	    /* This node is known to be a binary op */
-	case OP_UNION:
-	    Tcl_DStringAppendElement(dsp, "u");
-	    goto bin;
-	case OP_INTERSECT:
-	    Tcl_DStringAppendElement(dsp, "n");
-	    goto bin;
-	case OP_SUBTRACT:
-	    Tcl_DStringAppendElement(dsp, "-");
-	    goto bin;
-	case OP_XOR:
-	    Tcl_DStringAppendElement(dsp, "^");
-	bin:
-	    Tcl_DStringStartSublist(dsp);
-	    db_tcl_tree_describe(dsp, tp->tr_b.tb_left);
-	    Tcl_DStringEndSublist(dsp);
-
-	    Tcl_DStringStartSublist(dsp);
-	    db_tcl_tree_describe(dsp, tp->tr_b.tb_right);
-	    Tcl_DStringEndSublist(dsp);
-
-	    break;
-
-	    /* This node is known to be a unary op */
-	case OP_NOT:
-	    Tcl_DStringAppendElement(dsp, "!");
-	    goto unary;
-	case OP_GUARD:
-	    Tcl_DStringAppendElement(dsp, "G");
-	    goto unary;
-	case OP_XNOP:
-	    Tcl_DStringAppendElement(dsp, "X");
-	unary:
-	    Tcl_DStringStartSublist(dsp);
-	    db_tcl_tree_describe(dsp, tp->tr_b.tb_left);
-	    Tcl_DStringEndSublist(dsp);
-	    break;
-
-	case OP_NOP:
-	    Tcl_DStringAppendElement(dsp, "N");
-	    break;
-
-	default:
-	    bu_log("db_tcl_tree_describe: bad op %d\n", tp->tr_op);
-	    bu_bomb("db_tcl_tree_describe\n");
-    }
-}
-#endif
 
 /*
  * Local Variables:

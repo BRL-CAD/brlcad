@@ -33,13 +33,41 @@
 #include "./ged_private.h"
 
 
+static int pathListNoLeaf = 0;
+
+
+/*
+ *			P A T H L I S T _ L E A F _ F U N C
+ */
 static union tree *
 ged_pathlist_leaf_func(struct db_tree_state	*tsp,
-		       struct db_full_path	*pathp,
+		       const struct db_full_path *pathp,
 		       struct rt_db_internal	*ip,
-		       genptr_t			client_data);
+		       genptr_t			client_data)
+{
+    struct ged *gedp = (struct ged *)client_data;
+    char *str;
 
-static int pathListNoLeaf = 0;
+    RT_CK_FULL_PATH(pathp);
+    RT_CK_DB_INTERNAL(ip);
+
+    if (pathListNoLeaf) {
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+	--pp.fp_len;
+	str = db_path_to_string(&pp);
+	bu_vls_printf(&gedp->ged_result_str, " %s", str);
+	db_free_full_path(&pp);
+    } else {
+	str = db_path_to_string(pathp);
+	bu_vls_printf(&gedp->ged_result_str, " %s", str);
+    }
+
+    bu_free((genptr_t)str, "path string");
+    return TREE_NULL;
+}
+
 
 int
 ged_pathlist(struct ged *gedp, int argc, const char *argv[])
@@ -81,34 +109,6 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-/*
- *			P A T H L I S T _ L E A F _ F U N C
- */
-static union tree *
-ged_pathlist_leaf_func(struct db_tree_state	*tsp,
-		       struct db_full_path	*pathp,
-		       struct rt_db_internal	*ip,
-		       genptr_t			client_data)
-{
-    struct ged *gedp = (struct ged *)client_data;
-    char *str;
-
-    RT_CK_FULL_PATH(pathp);
-    RT_CK_DB_INTERNAL(ip);
-
-    if (pathListNoLeaf) {
-	--pathp->fp_len;
-	str = db_path_to_string(pathp);
-	++pathp->fp_len;
-    } else
-	str = db_path_to_string(pathp);
-
-    bu_vls_printf(&gedp->ged_result_str, " %s", str);
-
-    bu_free((genptr_t)str, "path string");
-    return TREE_NULL;
 }
 
 

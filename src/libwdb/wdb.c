@@ -344,9 +344,6 @@ int
 mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t height_vector, const vect_t vectA, fastf_t magB, fastf_t base_neck_ratio)
 {
     struct rt_hyp_internal	*hyp;
-    vect_t inH, inAu;
-    vect_t unit_H;
-        
     
     BU_GETSTRUCT( hyp, rt_hyp_internal );
     hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;

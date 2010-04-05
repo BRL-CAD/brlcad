@@ -330,7 +330,7 @@ void
 rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoints)
 {
     register int j;
-    fastf_t div;
+    fastf_t divisor;
     point_t sum;
 
     RT_ARB_CK_MAGIC(arb);
@@ -340,8 +340,8 @@ rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoint
     for (j=0; j < npoints; j++) {
 	VADD2(sum, sum, arb->pt[j]);
     }
-    div = 1.0 / npoints;
-    VSCALE(center_pt, sum, div);
+    divisor = 1.0 / npoints;
+    VSCALE(center_pt, sum, divisor);
 }
 
 
@@ -1111,6 +1111,7 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 {
     struct rt_arb_internal *aip;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
@@ -1496,7 +1497,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		   pa.pa_pindex[2][i], pa.pa_pindex[3][i]);
 	}
 	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
-	    bu_log("rt_arb_tess(%s): nmg_cmface() fail on face %d\n", i);
+	    bu_log("rt_arb_tess(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}
     }
@@ -1612,7 +1613,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	/* The edges created will be linear, in parameter space...,
 	 * but need to have edge_g_cnurb geometry. */
 	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
-	    bu_log("rt_arb_tnurb(%s): nmg_cmface() fail on face %d\n", i);
+	    bu_log("rt_arb_tnurb(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}
 	/* March around the fu's loop assigning uv parameter values */

@@ -22,8 +22,7 @@
 /** @file view_obj.c
  *
  * A view object contains the attributes and methods for controlling
- * viewing transformations. Much of this code was extracted from MGED
- * and modified to work herein.
+ * viewing transformations.
  *
  */
 /** @} */
@@ -2892,13 +2891,15 @@ vo_mat_aet(struct view_obj *vop)
     bn_mat_mul2(tmat, vop->vo_rotation);
 }
 
-/*
- *			P E R S P _ M A T
+
+/**
+ * P E R S P _ M A T
  *
- *  This code came from mged/dozoom.c.
- *  Compute a perspective matrix for a right-handed coordinate system.
- *  Reference: SGI Graphics Reference Appendix C
- *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ * Compute a perspective matrix for a right-handed coordinate system.
+ * Reference: SGI Graphics Reference Appendix f
+ *
+ * (Note: SGI is left-handed, but the fix is done in the Display
+ * Manager).
  */
 static void
 vo_persp_mat(mat_t	m,
@@ -2927,17 +2928,17 @@ vo_persp_mat(mat_t	m,
     bn_mat_mul(m, m2, tran);
 }
 
-/*
- *  This code came from mged/dozoom.c.
- *  Create a perspective matrix that transforms the +/1 viewing cube,
- *  with the acutal eye position (not at Z=+1) specified in viewing coords,
- *  into a related space where the eye has been sheared onto the Z axis
- *  and repositioned at Z=(0, 0, 1), with the same perspective field of view
- *  as before.
+
+/**
+ * Create a perspective matrix that transforms the +/1 viewing cube,
+ * with the acutal eye position (not at Z=+1) specified in viewing
+ * coords, into a related space where the eye has been sheared onto
+ * the Z axis and repositioned at Z=(0, 0, 1), with the same
+ * perspective field of view as before.
  *
- *  The Zbuffer clips off stuff with negative Z values.
+ * The Zbuffer clips off stuff with negative Z values.
  *
- *  pmat = persp * xlate * shear
+ * pmat = persp * xlate * shear
  */
 static void
 vo_mike_persp_mat(mat_t		pmat,

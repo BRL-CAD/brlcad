@@ -177,7 +177,7 @@ static double ylim_view = 1.0;
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 
 static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
-static float light0_position[] = {100.0, 200.0, 100.0, 0.0};
+static float light0_position[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
 static float wireColor[4];
 static float ambientColor[4];
@@ -372,10 +372,32 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
-    } else {
+    } else if (dmp->dm_width < 1455) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						FONT9)) != NULL) {
+		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	    }
+	}
+    } else if (dmp->dm_width < 2037) {
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 10) {
+	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						FONT10)) != NULL) {
+		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	    }
+	}
+    } else {
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 11) {
+	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						FONT11)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
@@ -1214,7 +1236,7 @@ ogl_drawEnd(struct dm *dmp)
     if (dmp->dm_light) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
     }
 
     if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
@@ -1819,7 +1841,7 @@ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint2D():\n");
-	bu_log("\tdmp: %lu\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
+	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
     glBegin(GL_POINTS);

@@ -724,6 +724,118 @@ rt_eto_class(void)
 
 
 /**
+ * M A K E _ E L L I P S E 4
+ *
+ * Approximate one fourth (1st quadrant) of an ellipse with line
+ * segments.  The initial single segment is broken at the point
+ * farthest from the ellipse if that point is not aleady within the
+ * distance and normal error tolerances.  The two resulting segments
+ * are passed recursively to this routine until each segment is within
+ * tolerance.
+ */
+HIDDEN int
+make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+{
+    fastf_t dist, intr, m, theta0, theta1;
+    int n;
+    point_t mpt, p0, p1;
+    vect_t norm_line, norm_ell;
+    struct rt_pt_node *new, *rt_ptalloc(void);
+
+    /* endpoints of segment approximating ellipse */
+    VMOVE(p0, pts->p);
+    VMOVE(p1, pts->next->p);
+    /* slope and intercept of segment */
+    m = (p1[X] - p0[X]) / (p1[Y] - p0[Y]);
+    intr = p0[X] - m * p0[Y];
+    /* point on ellipse with max dist between ellipse and line */
+    mpt[Y] = a / sqrt(b*b / (m*m*a*a) + 1);
+    mpt[X] = b * sqrt(1 - mpt[Y] * mpt[Y] / (a*a));
+    mpt[Z] = 0;
+    /* max distance between that point and line */
+    dist = fabs(m * mpt[Y] - mpt[X] + intr) / sqrt(m * m + 1);
+    /* angles between normal of line and of ellipse at line endpoints */
+    VSET(norm_line, m, -1., 0.);
+    VSET(norm_ell, b * b * p0[Y], a * a * p0[X], 0.);
+    VUNITIZE(norm_line);
+    VUNITIZE(norm_ell);
+    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
+    VSET(norm_ell, b * b * p1[Y], a * a * p1[X], 0.);
+    VUNITIZE(norm_ell);
+    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
+    /* split segment at widest point if not within error tolerances */
+    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
+	/* split segment */
+	new = rt_ptalloc();
+	VMOVE(new->p, mpt);
+	new->next = pts->next;
+	pts->next = new;
+	/* keep track of number of pts added */
+	n = 1;
+	/* recurse on first new segment */
+	n += make_ellipse4(pts, a, b, dtol, ntol);
+	/* recurse on second new segment */
+	n += make_ellipse4(new, a, b, dtol, ntol);
+    } else
+	n  = 0;
+    return(n);
+}
+
+
+/**
+ * M A K E _ E L L I P S E
+ *
+ * Return pointer an array of points approximating an ellipse with
+ * semi-major and semi-minor axes a and b.  The line segments fall
+ * within the normal and distance tolerances of ntol and dtol.
+ */
+HIDDEN point_t *
+make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+{
+    int i;
+    point_t *ell;
+    struct rt_pt_node *ell_quad, *oldpos, *pos, *rt_ptalloc(void);
+
+    ell_quad = rt_ptalloc();
+    VSET(ell_quad->p, b, 0., 0.);
+    ell_quad->next = rt_ptalloc();
+    VSET(ell_quad->next->p, 0., a, 0.);
+    ell_quad->next->next = NULL;
+
+    *n = make_ellipse4(ell_quad, a, b, dtol, ntol);
+    ell = (point_t *)bu_malloc(4*(*n+1)*sizeof(point_t), "make_ellipse pts");
+
+    /* put 1st quad of ellipse into an array */
+    pos = ell_quad;
+    for (i = 0; i < *n+2; i++) {
+	VMOVE(ell[i], pos->p);
+	oldpos = pos;
+	pos = pos->next;
+	bu_free((char *)oldpos, "rt_pt_node");
+    }
+    /* mirror 1st quad to make 2nd */
+    for (i = (*n+1)+1; i < 2*(*n+1); i++) {
+	VMOVE(ell[i], ell[(*n*2+2)-i]);
+	ell[i][X] = -ell[i][X];
+    }
+    /* mirror 2nd quad to make 3rd */
+    for (i = 2*(*n+1); i < 3*(*n+1); i++) {
+	VMOVE(ell[i], ell[i-(*n*2+2)]);
+	ell[i][X] = -ell[i][X];
+	ell[i][Y] = -ell[i][Y];
+    }
+    /* mirror 3rd quad to make 4th */
+    for (i = 3*(*n+1); i < 4*(*n+1); i++) {
+	VMOVE(ell[i], ell[i-(*n*2+2)]);
+	ell[i][X] = -ell[i][X];
+	ell[i][Y] = -ell[i][Y];
+    }
+    *n = 4*(*n + 1);
+    return(ell);
+}
+
+
+/**
  * R T _ E T O _ P L O T
  *
  * The ETO has the following input fields:
@@ -743,10 +855,10 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     int i, j, npts, nells;
     point_t *ell;	/* array of ellipse points */
     point_t Ell_V;	/* vertex of an ellipse */
-    point_t *rt_mk_ell();
     struct rt_eto_internal *tip;
     vect_t Au, Bu, Nu, Cp, Dp, Xu;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
@@ -796,7 +908,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	ntol = bn_pi;
 
     /* (x, y) coords for an ellipse */
-    ell = rt_mk_ell(&npts, a, b, dtol, ntol);
+    ell = make_ellipse(&npts, a, b, dtol, ntol);
     /* generate coordinate axes */
     VMOVE(Nu, tip->eto_N);
     VUNITIZE(Nu);			/* z axis of coord sys */
@@ -869,120 +981,6 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ E L L 4
- *
- * Approximate one fourth (1st quadrant) of an ellipse with line
- * segments.  The initial single segment is broken at the point
- * farthest from the ellipse if that point is not aleady within the
- * distance and normal error tolerances.  The two resulting segments
- * are passed recursively to this routine until each segment is within
- * tolerance.
- */
-int
-rt_ell4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
-{
-    fastf_t dist, intr, m, theta0, theta1;
-    int n;
-    point_t mpt, p0, p1;
-    vect_t norm_line, norm_ell;
-    struct rt_pt_node *new, *rt_ptalloc(void);
-
-    /* endpoints of segment approximating ellipse */
-    VMOVE(p0, pts->p);
-    VMOVE(p1, pts->next->p);
-    /* slope and intercept of segment */
-    m = (p1[X] - p0[X]) / (p1[Y] - p0[Y]);
-    intr = p0[X] - m * p0[Y];
-    /* point on ellipse with max dist between ellipse and line */
-    mpt[Y] = a / sqrt(b*b / (m*m*a*a) + 1);
-    mpt[X] = b * sqrt(1 - mpt[Y] * mpt[Y] / (a*a));
-    mpt[Z] = 0;
-    /* max distance between that point and line */
-    dist = fabs(m * mpt[Y] - mpt[X] + intr) / sqrt(m * m + 1);
-    /* angles between normal of line and of ellipse at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_ell, b * b * p0[Y], a * a * p0[X], 0.);
-    VUNITIZE(norm_line);
-    VUNITIZE(norm_ell);
-    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
-    VSET(norm_ell, b * b * p1[Y], a * a * p1[X], 0.);
-    VUNITIZE(norm_ell);
-    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
-    /* split segment at widest point if not within error tolerances */
-    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
-	/* split segment */
-	new = rt_ptalloc();
-	VMOVE(new->p, mpt);
-	new->next = pts->next;
-	pts->next = new;
-	/* keep track of number of pts added */
-	n = 1;
-	/* recurse on first new segment */
-	n += rt_ell4(pts, a, b, dtol, ntol);
-	/* recurse on second new segment */
-	n += rt_ell4(new, a, b, dtol, ntol);
-    } else
-	n  = 0;
-    return(n);
-}
-
-
-/**
- * R T _ M K _ E L L
- *
- * Return pointer an array of points approximating an ellipse with
- * semi-major and semi-minor axes a and b.  The line segments fall
- * within the normal and distance tolerances of ntol and dtol.
- */
-point_t *
-rt_mk_ell(n, a, b, dtol, ntol)
-    int *n;
-    fastf_t a, b, dtol, ntol;
-{
-    int i;
-    point_t *ell;
-    struct rt_pt_node *ell_quad, *oldpos, *pos, *rt_ptalloc(void);
-
-    ell_quad = rt_ptalloc();
-    VSET(ell_quad->p, b, 0., 0.);
-    ell_quad->next = rt_ptalloc();
-    VSET(ell_quad->next->p, 0., a, 0.);
-    ell_quad->next->next = NULL;
-
-    *n = rt_ell4(ell_quad, a, b, dtol, ntol);
-    ell = (point_t *)bu_malloc(4*(*n+1)*sizeof(point_t), "rt_mk_ell pts");
-
-    /* put 1st quad of ellipse into an array */
-    pos = ell_quad;
-    for (i = 0; i < *n+2; i++) {
-	VMOVE(ell[i], pos->p);
-	oldpos = pos;
-	pos = pos->next;
-	bu_free((char *)oldpos, "rt_pt_node");
-    }
-    /* mirror 1st quad to make 2nd */
-    for (i = (*n+1)+1; i < 2*(*n+1); i++) {
-	VMOVE(ell[i], ell[(*n*2+2)-i]);
-	ell[i][X] = -ell[i][X];
-    }
-    /* mirror 2nd quad to make 3rd */
-    for (i = 2*(*n+1); i < 3*(*n+1); i++) {
-	VMOVE(ell[i], ell[i-(*n*2+2)]);
-	ell[i][X] = -ell[i][X];
-	ell[i][Y] = -ell[i][Y];
-    }
-    /* mirror 3rd quad to make 4th */
-    for (i = 3*(*n+1); i < 4*(*n+1); i++) {
-	VMOVE(ell[i], ell[i-(*n*2+2)]);
-	ell[i][X] = -ell[i][X];
-	ell[i][Y] = -ell[i][Y];
-    }
-    *n = 4*(*n + 1);
-    return(ell);
-}
-
-
-/**
  * R T _ E T O _ T E S S
  */
 int
@@ -994,7 +992,6 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int i, j, nfaces, npts, nells;
     point_t *ell = NULL;	/* array of ellipse points */
     point_t Ell_V;	/* vertex of an ellipse */
-    point_t *rt_mk_ell();
     struct rt_eto_internal *tip;
     struct shell *s;
     struct vertex **verts = NULL;
@@ -1054,7 +1051,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = bn_pi;
 
     /* (x, y) coords for an ellipse */
-    ell = rt_mk_ell(&npts, a, b, dtol, ntol);
+    ell = make_ellipse(&npts, a, b, dtol, ntol);
     /* generate coordinate axes */
     VMOVE(Nu, tip->eto_N);
     VUNITIZE(Nu);			/* z axis of coord sys */
@@ -1175,7 +1172,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(*r, tol);
 
  failure:
-    bu_free((char *)ell, "rt_mk_ell pts");
+    bu_free((char *)ell, "make_ellipse pts");
     bu_free((char *)eto_ells, "ells[]");
     bu_free((char *)verts, "rt_eto_tess *verts[]");
     bu_free((char *)faces, "rt_eto_tess *faces[]");

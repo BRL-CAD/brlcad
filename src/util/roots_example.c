@@ -19,13 +19,10 @@
  */
 /** @file roots_example.c
  *
- *  Simple example of how to use libbn for solving the roots to an
- *  arbitrary polynomial.
+ * Simple example of how to use libbn for solving the roots to an
+ * arbitrary polynomial.
  *
- *  Author -
- *	Christopher Sean Morrison
- *
- *  cc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o roots_example roots_example.c -lrt -lbn -lbu
+ * cc -I/usr/brlcad/include/brlcad -L/usr/brlcad/lib -o roots_example roots_example.c -lrt -lbn -lbu
  */
 
 #include "common.h"

@@ -60,8 +60,9 @@ struct _axes_state default_axes_state = {
     /* ax_edit_linewidth2 */	1
 };
 
-#define AX_O(_m)	bu_offsetof(struct _axes_state, _m)
-#define AX_OA(_m)	bu_offsetofarray(struct _axes_state, _m)
+
+#define AX_O(_m) bu_offsetof(struct _axes_state, _m)
+#define AX_OA(_m) bu_offsetofarray(struct _axes_state, _m)
 struct bu_structparse axes_vparse[] = {
     {"%d",  1, "model_draw",	AX_O(ax_model_draw),		ax_set_dirty_flag },
     {"%d",  1, "model_size",	AX_O(ax_model_size),		ax_set_dirty_flag },
@@ -79,6 +80,7 @@ struct bu_structparse axes_vparse[] = {
     {"",	0, (char *)0,		0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
 static void
 ax_set_dirty_flag()
 {
@@ -88,6 +90,7 @@ ax_set_dirty_flag()
 	if (dmlp->dml_axes_state == axes_state)
 	    dmlp->dml_dirty = 1;
 }
+
 
 void
 draw_e_axes()
@@ -129,6 +132,7 @@ draw_e_axes()
     dm_draw_axes(dmp, view_state->vs_gvp->gv_size, rot_mat, &gas);
 }
 
+
 void
 draw_m_axes()
 {
@@ -148,6 +152,7 @@ draw_m_axes()
 
     dm_draw_axes(dmp, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 }
+
 
 void
 draw_v_axes()
@@ -169,6 +174,7 @@ draw_v_axes()
 
     dm_draw_axes(dmp, view_state->vs_gvp->gv_size, view_state->vs_gvp->gv_rotation, &gas);
 }
+
 
 /*
  * Local Variables:

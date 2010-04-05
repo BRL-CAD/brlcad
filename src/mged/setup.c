@@ -19,7 +19,7 @@
  */
 /** @file setup.c
  *
- *  routines to initialize mged
+ * routines to initialize mged
  *
  */
 
@@ -129,12 +129,12 @@ static struct cmdtab mged_cmdtab[] = {
     {"e", cmd_draw, GED_FUNC_PTR_NULL},
     {"eac", cmd_ged_view_wrapper, ged_eac},
     {"echo", cmd_ged_plain_wrapper, ged_echo},
-    {"edcodes", cmd_ged_plain_wrapper, ged_edcodes},
+    {"edcodes", f_edcodes, GED_FUNC_PTR_NULL},
     {"color", cmd_ged_plain_wrapper, ged_color},
-    {"edcolor", cmd_ged_plain_wrapper, ged_edcolor},
+    {"edcolor", f_edcolor, GED_FUNC_PTR_NULL},
     {"edcomb", cmd_ged_plain_wrapper, ged_edcomb},
     {"edgedir", f_edgedir, GED_FUNC_PTR_NULL},
-    {"edmater", cmd_ged_plain_wrapper, ged_edmater},
+    {"edmater", f_edmater, GED_FUNC_PTR_NULL},
     {"em", cmd_emuves, GED_FUNC_PTR_NULL},
     {"erase", cmd_ged_erase_wrapper, ged_erase},
     {"erase_all", cmd_ged_erase_wrapper, ged_erase_all},
@@ -271,7 +271,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"rcodes", cmd_ged_plain_wrapper, ged_rcodes},
     {"read_muves", f_read_muves, GED_FUNC_PTR_NULL},
     {"rear",	bv_rear, GED_FUNC_PTR_NULL},
-    {"red", cmd_ged_plain_wrapper, ged_red},
+    {"red", f_red, GED_FUNC_PTR_NULL},
     {"redraw_vlist", cmd_redraw_vlist, GED_FUNC_PTR_NULL},
     {"refresh", f_refresh, GED_FUNC_PTR_NULL},
     {"regdebug", f_regdebug, GED_FUNC_PTR_NULL},
@@ -385,12 +385,6 @@ static struct cmdtab mged_cmdtab[] = {
 };
 
 
-void
-mged_rtCmdNotify()
-{
-    pr_prompt(interactive);
-}
-
 /**
  * C M D _ S E T U P
  *
@@ -401,7 +395,7 @@ cmd_setup(void)
 {
     struct cmdtab *ctp;
     struct bu_vls temp;
-    struct bu_vls	vls;
+    struct bu_vls vls;
     const char *pathname;
     char buffer[1024];
 
@@ -461,9 +455,10 @@ cmd_setup(void)
 
 
 static void
-mged_output_handler(struct ged *gedp, char *line)
+mged_output_handler(struct ged *gedp __attribute__((unused)), char *line)
 {
-    bu_log(line);
+    if (line)
+	bu_log("%s", line);
 }
 
 
@@ -557,6 +552,7 @@ mged_setup(void)
 	tclcad_auto_path(interp);
     }
 
+    /*XXX FIXME: Should not be importing Itcl into the global namespace */
     /* Import [incr Tcl] commands into the global namespace. */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
 	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
@@ -611,13 +607,8 @@ mged_setup(void)
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_init(&str);
-    bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
+    bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
-
-#if 0
-    /* initialize "Query Ray" variables */
-    init_qray();
-#endif
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);

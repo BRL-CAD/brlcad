@@ -40,41 +40,42 @@ static const char usage[] = "Usage: plline2 x1 y1 x2 y2 [r g b]\n";
 int
 main(int argc, char **argv)
 {
-    int	c;
-    double	x1, y1, x2, y2;
-    int	r = 0;
-    int 	g = 0;
-    int	b = 0;
+    int c;
+    double x1, y1, x2, y2;
+    int r = 0;
+    int g = 0;
+    int b = 0;
 
-    if ( argc < 5 || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", usage );
+    if (argc < 5 || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
-    if ( !isatty(fileno(stdin)) ) {
+    if (!isatty(fileno(stdin))) {
 	/* Permit use in a pipeline -- copy input to output first */
-	while ( (c = getchar()) != EOF )
-	    putchar( c );
+	while ((c = getchar()) != EOF)
+	    putchar(c);
     }
 
-    x1 = atof( argv[1] );
-    y1 = atof( argv[2] );
-    x2 = atof( argv[3] );
-    y2 = atof( argv[4] );
+    x1 = atof(argv[1]);
+    y1 = atof(argv[2]);
+    x2 = atof(argv[3]);
+    y2 = atof(argv[4]);
 
-    if ( argc > 5 )
-	r = atoi( argv[5] );
-    if ( argc > 6 )
-	g = atoi( argv[6] );
-    if ( argc > 7 )
-	b = atoi( argv[7] );
+    if (argc > 5)
+	r = atoi(argv[5]);
+    if (argc > 6)
+	g = atoi(argv[6]);
+    if (argc > 7)
+	b = atoi(argv[7]);
 
-    if ( argc > 5 )
-	pl_color( stdout, r, g, b );
+    if (argc > 5)
+	pl_color(stdout, r, g, b);
 
-    pd_line( stdout, x1, y1, x2, y2 );
+    pd_line(stdout, x1, y1, x2, y2);
 
     return 0;
 }
+
 
 /*
  * Local Variables:

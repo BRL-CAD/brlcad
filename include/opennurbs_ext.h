@@ -97,10 +97,10 @@ bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
  * size to key off of.
  */
 /* #define BREP_EDGE_MISS_TOLERANCE 5e-2 */
-#define BREP_EDGE_MISS_TOLERANCE 1e-3
-#define BREP_SAME_POINT_TOLERANCE 1e-3
+#define BREP_EDGE_MISS_TOLERANCE 5e-3
+#define BREP_SAME_POINT_TOLERANCE 1e-6
 
-// XXX debugging crapola (clean up later)
+// FIXME: debugging crapola (clean up later)
 #define ON_PRINT4(p) "[" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ", " << (p)[3] << "]"
 #define ON_PRINT3(p) "(" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ")"
 #define ON_PRINT2(p) "(" << (p)[0] << ", " << (p)[1] << ")"
@@ -284,14 +284,14 @@ BANode<BA>::addChild(BANode<BA>* child) {
 template<class BA>
 inline void
 BANode<BA>::removeChild(const BA& child) {
-    // XXX implement
+    // FIXME: implement
 }
 
 
 template<class BA>
 inline void
 BANode<BA>::removeChild(BANode<BA>* child) {
-    // XXX implement
+    // FIXME: implement
 }
 
 
@@ -301,7 +301,6 @@ BANode<BA>::isLeaf() {
     if (m_children.size() == 0) return true;
     return false;
 }
-
 
 template<class BA>
 inline void
@@ -313,7 +312,6 @@ BANode<BA>::GetBBox(double* min, double* max) const {
     max[1] = m_node.m_max[1];
     max[2] = m_node.m_max[2];
 }
-
 
 template<class BA>
 int
@@ -414,24 +412,25 @@ BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	u = m_u;
 	v = m_v;
     			
-	// XXX - pass these in from SurfaceTree::curveBBox() to avoid this recalculation?
+	// ??? should we pass these in from SurfaceTree::curveBBox() to avoid this recalculation?
 	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
 	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
 	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
 	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
-	    throw new exception(); // XXX - fix this
+	    throw new exception(); // FIXME
 	}
 	corners[4] = BANode<BA>::m_estimate;
     			
 	// find the point on the curve closest to pt
-	int mini = 0;
+	size_t mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
 	double tmpdist;
 	for (size_t i = 1; i < 5; i++) {
 	    tmpdist = pt.DistanceTo(corners[i]);
 	    TRACE("\t" << mindist << " < " << tmpdist);
 	    if (tmpdist < mindist) {
-		mini = i;	    		    mindist = tmpdist;
+		mini = i;	    
+		mindist = tmpdist;
 	    }
 	}
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
@@ -464,7 +463,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
     ON_3dVector tangent;
     point_t A, B;
     double Ta, Tb;
-		
+
     if (m_start[X] < u) {
 	VMOVE(A, m_start);
 	VMOVE(B, m_end);
@@ -477,13 +476,39 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
 	Tb = m_t[0];
     }
 
-    fastf_t dU = B[X] - A[X];
+    ON_3dVector Tan_start = m_trim->TangentAt(Ta);
+    ON_3dVector Tan_end = m_trim->TangentAt(Tb);
+
+
+    fastf_t du = fabs(Tan_end.x - Tan_start.x);
     fastf_t dT = Tb - Ta;
-    fastf_t guess = Ta + (u - A[X]) * dT/dU;
-    ON_3dPoint p = m_trim->PointAt(guess);
+    fastf_t guess;
+    ON_3dPoint p;
+
+    /* Use quick binary subdivision until derivatives at end points in 'u' are within 5 percent */
+    while (du > 0.05) {
+    	guess = Ta + dT/2;
+    	p = m_trim->PointAt(guess);
+    	if (p[X] < u) {
+    	    Ta = guess;
+    	    VMOVE(A, p);
+    	    Tan_start = m_trim->TangentAt(Ta);
+    	} else {
+    	    Tb = guess;
+    	    VMOVE(B, p);
+    	    Tan_end = m_trim->TangentAt(Tb);
+    	}
+    	dT = Tb - Ta;
+    	du = fabs(Tan_end.x - Tan_start.x);
+    }
+
+    fastf_t dU = B[X] - A[X];
+
+    guess = Ta + (u - A[X]) * dT/dU;
+    p = m_trim->PointAt(guess);
 
     int cnt=0;
-    while ((cnt < 50) && (!NEAR_ZERO(p[X]-u, tol))) {
+    while ((cnt < 1000) && (!NEAR_ZERO(p[X]-u, tol))) {
 	if (p[X] < u) {
 	    Ta = guess;
 	    VMOVE(A, p);
@@ -496,6 +521,10 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
 	guess = Ta + (u - A[X]) * dT/dU;
 	p = m_trim->PointAt(guess);
 	cnt++;
+    }
+    if (cnt > 999) {
+	    bu_log("getCurveEstimateOfV(): estimate of 'v' given a trim curve and 'u' did not converge within iteration bound(%d).\n",
+	    		cnt);
     }
     return p[Y];
 }
@@ -741,14 +770,14 @@ BVNode<BV>::addChild(BVNode<BV>* child) {
 template<class BV>
 inline void
 BVNode<BV>::removeChild(const BV& child) {
-    // XXX implement
+    // FIXME: implement
 }
 
 
 template<class BV>
 inline void
 BVNode<BV>::removeChild(BVNode<BV>* child) {
-    // XXX implement
+    // FIXME: implement
 }
 
 
@@ -812,10 +841,6 @@ BVNode<BV>::intersectsHierarchy(ON_Ray& ray, list<BBNode*>& results_opt) {
     if (intersects && isLeaf()) {
 	results_opt.push_back(this);
     } else if (intersects) {
-	// XXX: bug in g++? had to typedef the below to get it to work!
-	//       for (std::list<BVNode<BV>*>::iterator j = m_children.begin(); j != m_children.end(); j++) {
-	// 	(*j)->intersectsHierarchy(ray, results_opt);
-	//       }
 	for (size_t i = 0; i < m_children.size(); i++) {
 	    m_children[i]->intersectsHierarchy(ray, results_opt);
 	}
@@ -890,17 +915,17 @@ BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	u = m_u;
 	v = m_v;
 		
-	// XXX - pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
+	// ??? pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
 	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
 	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
 	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
 	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
-	    throw new exception(); // XXX - fix this
+	    throw new exception(); // FIXME
 	}
 	corners[4] = BVNode<BV>::m_estimate;
 		
 	// find the point on the surface closest to pt
-	int mini = 0;
+	size_t mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
 	double tmpdist;
 	for (size_t i = 1; i < 5; i++) {
@@ -977,6 +1002,11 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 
 	    for (i=trims.begin();i!=trims.end();i++) {
 		br = dynamic_cast<BRNode*>(*i);
+
+		/* skip if trim below */
+	    if (br->m_node.m_max[1] < uv[Y])
+	    	continue;
+
 		if (br->m_Vertical) {
 		    if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
 			double dist = fabs(uv[X] - br->m_v[0]);
@@ -1109,14 +1139,13 @@ BVNode<BV>::prepTrims() {
     double dist = 0.000001;
     bool trim_already_assigned = false;
 
-    //	BVNode<BV>::GetBBox(surfmin, surfmax);
-
     m_trims_above.clear();
-    //m_trims_right.clear();
-    ct->getLeavesAbove(m_trims_above, m_u, m_v);
-//		ct->getLeavesRight(m_trims_right, m_u, m_v);
+
+    if (ct != NULL)
+    	ct->getLeavesAbove(m_trims_above, m_u, m_v);
+
     m_trims_above.sort(sortY);
-    //m_trims_right.sort(sortX);
+
 
     if (!m_trims_above.empty()) {
 	i = m_trims_above.begin();
@@ -1127,9 +1156,12 @@ BVNode<BV>::prepTrims() {
 		if (curvemin[Y]-dist <= m_v[1]) { //possibly contains trim can't rule out check closer
 		    m_checkTrim = true;
 		    trim_already_assigned = true;
+		    i++;
+		} else {
+		    i = m_trims_above.erase(i);
 		}
 		//i = m_trims_above.erase(i);
-		i++;
+		//i++;
 	    } else {
 		i++;
 	    }

@@ -39,6 +39,7 @@
 #  include <sys/stat.h>
 #endif
 
+#include "bio.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -577,7 +578,7 @@ do_frame(int framenumber)
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock;			/* # seconds of wall clock time */
-    int npix, i;			/* # of pixel values to be done */
+    int npix;				/* # of pixel values to be done */
     int lim;
     vect_t work, temp;
     quat_t quat;

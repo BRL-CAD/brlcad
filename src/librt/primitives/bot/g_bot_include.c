@@ -462,7 +462,6 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
     }
     /* Every hit turns into two, and makes a seg.  No leftovers */
     return(nhits*2);
-
 }
 
 
@@ -472,8 +471,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 					 struct soltab *stp,
 					 struct xray *rp,
 					 struct application *ap,
-					 struct seg *seghead,
-					 struct bot_specific *bot)
+					 struct seg *seghead)
 {
     register struct seg *segp;
     register int i, j;
@@ -485,8 +483,6 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     int removed=0;
     static const int IN = 0;
     static const int OUT = 1;
-
-    if (bot) RT_BOT_CK_MAGIC(bot);
 
     if (nhits == 1) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[0].hit_private;
@@ -615,8 +611,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
 
     if (bot->bot_orientation == RT_BOT_UNORIENTED) {
-	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap,
-				      seghead, bot);
+	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead, bot);
     }
 
     /*
@@ -805,6 +800,93 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 		}
 	    }
 	}
+
+	/*
+	 * Handle cases where there are multiple adjacent entrances or
+	 * exits along the shotline.  Using the FILO approach where we
+	 * keep the "First In" from multiple entrances and the "Last
+	 * Out" for multiple exits.
+	 *
+	 * Many of these cases were being generated when the shot ray
+	 * grazed a surface.  Grazing shots should USUALLY be treated
+	 * as non-hits (and is the case for other primitives).  With
+	 * BoTs, however, these can cause multiple entrances and exits
+	 * when adjacent surfaces are hit.
+	 *
+	 * Example #1: CROSS-SECTION OF CONVEX SOLID
+	 *
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  ------------            ------------
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * For this grazing hit, LOS(X) was being shown as:
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  XXXXXXXXXXXX            XXXXXXXXXXXXX
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * Using a FILO approach, now LOS(X) shows as:
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 */
+	for (i=0; i<nhits-1; i++) {
+	    if (hits[i].hit_vpriv[X] < 0.0) { /* entering */
+		k = i + 1;
+		while ((k < nhits) && (hits[k].hit_vpriv[X] < 0.0)) {
+		    for (j=i; j<nhits-1; j++)
+			hits[j] = hits[j+1];
+		    nhits--;
+		}
+	    } else if (hits[i].hit_vpriv[X] > 0.0) { /* exiting */
+		k = i + 1;
+		while ((k < nhits) && (hits[k].hit_vpriv[X] > 0.0)) {
+		    for (j=i+1; j<nhits-1; j++)
+			hits[j] = hits[j+1];
+		    nhits--;
+		}
+	    }
+	}
+
+	/*
+	 * Note that we could try to use a LIFO approach so that we
+	 * more consistently count all grazing hits as a miss, but
+	 * there's an increased chance of slipping through a crack
+	 * with BoTs without a change to check mesh neighbors:
+	 *
+	 * Using a LIFO approach, the above LOS(X) would have been:
+	 *
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  -----------XXXXXXXXXXXXXX------------
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * Example #2: CROSS-SECTION OF CONCAVE SOLID
+	 *
+	 *   ray-->  ------------            ------------
+	 *           |entrance  |exit        |entrance  |exit
+	 *           |          |            |          |
+	 *                      --------------
+	 *
+	 * Using LIFO, we would report a miss for the concave case,
+	 * but with FILO this will return two hit segments.
+	 *
+	 *   ray-->  XXXXXXXXXXXX            XXXXXXXXXXXX
+	 *           |entrance  |exit        |entrance  |exit
+	 *           |          |            |          |
+	 *                      --------------
+	 */
     }
 
     /* if first hit is an exit, it is likely due to the "piece" for

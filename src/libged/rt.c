@@ -44,6 +44,12 @@
 #include "./ged_private.h"
 
 
+struct _ged_rt_client_data {
+    struct ged_run_rt 	*rrtp;
+    struct ged	       	*gedp;
+};
+
+
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
@@ -260,7 +266,7 @@ _ged_run_rt(struct ged *gedp)
     CloseHandle(pipe_err[1]);
 
     /* As parent, send view information down pipe */
-    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb" );
+    fp_in = _fdopen( _open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb" );
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model);
@@ -358,14 +364,13 @@ _ged_rt_write(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData	clientData,
-		      int		mask)
+_ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
     int count;
     int read_failed = 0;
-    char line[RT_MAXLINE+1];
+    char line[RT_MAXLINE+1] = {0};
 
     if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
@@ -383,22 +388,27 @@ _ged_rt_output_handler(ClientData	clientData,
     }
 #else
     if (Tcl_Eof(run_rtp->chan) ||
-	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
+	(!ReadFile(run_rtp->fd, line, RT_MAXLINE, &count, 0))) {
 	read_failed = 1;
     }
 #endif
 
+    /* sanity clamping */
+    if (count < 0) {
+	perror("READ ERROR");
+	count = 0;
+    } else if (count > RT_MAXLINE) {
+	count = RT_MAXLINE;
+    }
+
     if (read_failed) {
 	int retcode = 0;
-	int rpid;
 	int aborted;
-
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
 
 	/* was it aborted? */
 #ifndef _WIN32
+	int rpid;
+
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
 
@@ -439,7 +449,7 @@ _ged_rt_output_handler(ClientData	clientData,
 	    bu_log("Raytrace complete.\n");
 
 	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify();
+	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
@@ -450,9 +460,10 @@ _ged_rt_output_handler(ClientData	clientData,
 	return;
     }
 
+    /* for feelgoodedness */
     line[count] = '\0';
 
-    /*XXX For now just blather to stderr */
+    /* handle (i.e., probably log to stderr) the resulting line */
     if (drcdp->gedp->ged_output_handler != (void (*)())0)
 	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
     else

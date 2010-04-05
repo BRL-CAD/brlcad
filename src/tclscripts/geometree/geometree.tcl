@@ -1,3 +1,4 @@
+#!/bin/sh
 #                   G E O M E T R E E . T C L
 # BRL-CAD
 #
@@ -19,13 +20,12 @@
 #
 ###
 #
-# This is the GeometryBrowser main script.  It manages the loading and
-# unloading of a GeometryBrowser object into mged automatically.
+# This is the Geometry Browser main script.  It manages the loading
+# and unloading of a GeometryBrowser object into mged automatically.
 #
-# The development version codename is "geometree"
-# The final version will be "geometree" :-)
-#
-#
+# The trailing backslash forces tcl to skip the next line \
+exec bwish "$0" "$@"
+
 
 package require GeometryBrowser
 

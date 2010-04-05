@@ -305,9 +305,11 @@ brep_build_bvh(struct brep_specific* bs)
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
-    if (brep == NULL || !brep->IsValid(&tl)) {
-	bu_log("brep is NOT valid");
+    if (brep == NULL) {
+	bu_log("NULL Brep");
 	return -1;
+    } else {
+	if (!brep->IsValid(&tl)) bu_log("brep is NOT valid\n");
     }
 
     /* May want to do something about setting orientation?  not used,
@@ -334,7 +336,9 @@ brep_build_bvh(struct brep_specific* bs)
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
 	ON_BrepFace& face = faces[i];
-	bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+	/*
+	 * bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+	 */
 	SurfaceTree* st = new SurfaceTree(&face);
 	face.m_face_user.p = st;
 	bs->bvh->addChild(st->getRootNode());
@@ -1677,7 +1681,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
     ///////////// near hit end
     if (false) { //((hits.size() % 2) != 0) {
-	bu_log("**** After Pass3 Hits: %d\n", hits.size());
+	bu_log("**** After Pass3 Hits: %zu\n", hits.size());
 
 	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 	    point_t prev;
@@ -1697,7 +1701,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    VMOVE(prev, out.point);
 	    bu_log(")");
 	}
-	bu_log("\n**** Orig Hits: %d\n", orig.size());
+	bu_log("\n**** Orig Hits: %zu\n", orig.size());
 
 	for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
 	    point_t prev;
@@ -2072,10 +2076,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    hit = true;
 	} else {
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
-	    bu_log("**** ERROR odd number of hits: %d\n", hits.size());
+	    bu_log("**** ERROR odd number of hits: %zu\n", hits.size());
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    bu_log("**** Current Hits: %d\n", hits.size());
+	    bu_log("**** Current Hits: %zu\n", hits.size());
 				
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 		point_t prev;
@@ -2095,7 +2099,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		VMOVE(prev, out.point);
 		bu_log(")");
 	    }
-	    bu_log("\n**** Orig Hits: %d\n", orig.size());
+	    bu_log("\n**** Orig Hits: %zu\n", orig.size());
 				
 	    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
 		point_t prev;
@@ -2121,7 +2125,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
     }
 		
-    return (hit) ? hits.size() : 0; // MISS
+    return (hit) ? (int)hits.size() : 0; // MISS
 }
 
 
@@ -2240,6 +2244,8 @@ rt_brep_free(register struct soltab *stp)
 void
 plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit)
 {
+    BU_CK_LIST_HEAD(vhead);
+
     ON_3dPoint min = node->m_node.m_min;
     ON_3dPoint max = node->m_node.m_max;
     point_t verts[] = {{min[0], min[1], min[2]},
@@ -2337,6 +2343,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     struct rt_brep_internal* bi;
     int i;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
@@ -2638,8 +2645,8 @@ genptr_t
 RT_MemoryArchive::CreateCopy() const
 {
     genptr_t memory = (genptr_t)bu_malloc(m_buffer.size()*sizeof(char), "rt_memoryarchive createcopy");
-    const int size = m_buffer.size();
-    for (int i = 0; i < size; i++) {
+    const size_t size = m_buffer.size();
+    for (size_t i = 0; i < size; i++) {
 	((char*)memory)[i] = m_buffer[i];
     }
     return memory;
@@ -2649,7 +2656,7 @@ RT_MemoryArchive::CreateCopy() const
 size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
-    const int read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-pos : amount;
+    const size_t read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-pos : amount;
     const size_t start = pos;
     for (; pos < (start+read_amount); pos++) {
 	((char*)buf)[pos-start] = m_buffer[pos];
@@ -2662,7 +2669,7 @@ size_t
 RT_MemoryArchive::Write(const size_t amount, const void* buf)
 {
     // the write can come in at any position!
-    const int start = pos;
+    const size_t start = pos;
     // resize if needed to support new data
     if (m_buffer.size() < (start+amount)) {
 	m_buffer.resize(start+amount);
@@ -2723,7 +2730,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     ON_TextLog err(stderr);
     bool ok = model.Write(archive, 4, "export5", &err);
     if (ok) {
-	ep->ext_nbytes = archive.Size();
+	ep->ext_nbytes = (long)archive.Size();
 	ep->ext_buf = archive.CreateCopy();
 	return 0;
     } else {
@@ -2740,10 +2747,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 {
     ON::Begin();
     TRACE1("rt_brep_import5");
-
-    if (mat) {
-	bu_log("Importing with a matrix, but don't know what to do with it.. fix me in %s:%d\n", __FILE__, __LINE__);
-    }
 
     struct rt_brep_internal* bi;
     if (dbip) RT_CK_DBI(dbip);
@@ -2768,6 +2771,21 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	// XXX does openNURBS force us to copy? it seems the answer is
 	// YES due to the const-ness
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
+    if (mat) {
+    	ON_Xform xform(mat);
+
+   	if (!xform.IsIdentity()) {
+			bu_log("Applying transformation matrix....\n");
+	    	for(int row=0;row<4;row++) {
+				bu_log("%d - ", row);
+	    		for(int col=0;col<4;col++) {
+	    			bu_log(" %5f", xform.m_xform[row][col]);
+	    		}
+				bu_log("\n");
+	    	}
+    		bi->brep->Transform(xform);
+    	}
+    }
 	return 0;
     } else {
 	return -1;

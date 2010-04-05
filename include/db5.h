@@ -199,7 +199,7 @@ struct db5_raw_internal {
     unsigned char	b_zzz;
     unsigned char	major_type;
     unsigned char	minor_type;
-    long		object_length;		/* in bytes, on disk */
+    size_t		object_length;		/* in bytes, on disk */
     /* These three MUST NOT be passed to bu_free_external()! */
     struct bu_external name;
     struct bu_external body;
@@ -212,7 +212,7 @@ DB5_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */
 
 DB5_EXPORT BU_EXTERN(unsigned char *db5_encode_length,
 		     (unsigned char	*cp,
-		      long		val,
+		      size_t		val,
 		      int		format));
 DB5_EXPORT BU_EXTERN(const unsigned char *db5_get_raw_internal_ptr,
 		     (struct db5_raw_internal *rip,

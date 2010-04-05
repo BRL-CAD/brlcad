@@ -15,16 +15,18 @@ on-going issues.
 Recent Bugs
 -----------
 
-* reported that fbclear is not working on Windows build in mged.
+* mged raytrace fails with simple "raytrace failed" message when using
+  rt, nirt, etc on Windows after modifying a region.  See sf bug
+  report 2954404.
+
+* mged rrt command is not respecting the view size, just does
+  something similar to autoview but even gets az/el wrong too.
 
 * Windows mged build is not generating tclIndex files with all
   entries.  notably the pattern_gui.tcl file is not getting included
   as well as a variety of others.  see missing entries in
   tclscripts/mged/tclIndex for examples:
   https://sourceforge.net/tracker/?func=detail&atid=640802&aid=2923199&group_id=105292
-
-* mged-invoked EDITOR locks up mged without a controlling terminal due
-  to lacking knowledge of needing to invoke xterm.
 
 * vdeck truncates the region names in the 'regions' file, probably
   wrong bu_strlcpy() length.
@@ -48,6 +50,17 @@ Recent Bugs
   mged -c moss.g "tops ; title"
   mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
 
+  Note that this is consistent with doing the same thing on the MGED
+  Command Window's command prompt - if the above is a bug it is 
+  apparently not restricted to command/classic mode.
+
+  Further investigation suggests that this is a consequence of
+  Tcl treating multiple commands in a single " " block as one command,
+  insofar as capturing the output is concerned.  It probably relates
+  to situations where Tcl_SetResult is called where (in this case)
+  Tcl_AppendResult would have been better, but it is not clear whether
+  changing this result setting approach would cause other breakage.
+
 * kill command in archer deletes object but then reports a failure and
   mouse is stuck in a busy state.
 
@@ -58,18 +71,6 @@ Recent Bugs
   model that is in perspective mode. Effects really bad on small sized
   renders, and gets better the larger the render size. Does not happen
   in non-perspective ray-traces.
-
-* shaders.sh regression test is failing because mged's view
-  initialization has changed.  this causes the first shaders.txt
-  projection shader to have bad/changed eye_pt and orientation values:
-
-  eye_pt=1484.81,1039.67,1094.24
-  orientation=0.248097349046,0.476590573266,0.748097349046,0.389434830518
-
-  instead of the correct:
-
-  eye_pt=0.0,0.0,2249.0
-  orientation=0,0,0,1
 
 * infinite light sources close to objects result in unexpected/bad
   light behavior.  example is a 1m sph light about 5m from a box about
@@ -83,9 +84,6 @@ Recent Bugs
   depending on whether you shoot from the front or back can result in
   bogus lists visiable with nirt in mged, entirely missing the bot, or
   mismatched entry/exit/overlap segments.
-
-* coil -S ... generates bad pipes with values previously known to
-  work (see man page for one example).
 
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
@@ -166,10 +164,6 @@ Recent Bugs
 
 * bump shader seems to be busted.  only renders as flat by itself and
   stacked with phong it seems to ignore the uv settings.
-
-* rtweight prints incorrect units when units are set to ft.  Appears
-  to trace back to unit handling in view_end in viewweight.c.  This
-  logic should be replaced using the proper libbu functions.
 
 * the graphics window does not acquire keybinding focus in mged on
   ubuntu linux.  key events go to the command window even with the
@@ -306,8 +300,6 @@ Recent Bugs
     object/matrix edit
     shift-alt mouse (left/mid/right for x/y/z respectively) should work
 
-* mged documentation doesn't open on OS X
-
 * the findfont directive in gv postscript is reporting font not found
 
 * concave arbs give correct wireframe but do not raytrace correctly.
@@ -366,8 +358,6 @@ Recent Bugs
   handler is set.
 
 * bot-bldxf fails in db_walk_tree(), interface may have changed
-
-* you can't run a make benchmark unless you're compiling in place
 
 
 Older Bugs

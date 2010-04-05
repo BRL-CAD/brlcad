@@ -385,7 +385,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	int done=0;
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU)
-	    bu_log("nmg_class_pt_euvu: prev_eu (x%x) is a crack\n");
+	    bu_log("nmg_class_pt_euvu: prev_eu (x%x) is a crack\n", prev_eu);
 
 	/* find previous eu ending at this vertex that is not a crack */
 	eu_test = BU_LIST_PPREV_CIRC(edgeuse, &prev_eu->l);
@@ -1369,7 +1369,7 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
     double dist;
 
     if (rt_g.NMG_debug & DEBUG_PT_FU) {
-	bu_log("nmg_class_pt_lu_except((%g %g %g) ", V3ARGS(pt), e_p);
+	bu_log("nmg_class_pt_lu_except((%g %g %g) %g ", V3ARGS(pt), e_p);
 	if (e_p)
 	    bu_log(" e_p=(%g %g %g) <-> (%g %g %g))\n",
 		   V3ARGS(e_p->eu_p->vu_p->v_p->vg_p->coord),

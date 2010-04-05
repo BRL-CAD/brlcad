@@ -43,7 +43,6 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    struct solid *sp;
     int i;
     FILE *fp;
     char *base;

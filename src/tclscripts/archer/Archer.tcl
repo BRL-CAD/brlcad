@@ -264,6 +264,7 @@ package provide Archer 1.0
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
+	method setActivePane {_pane}
 	method updateCheckpointMode {}
 	method updateSaveMode {}
 	method updateUndoMode {{_oflag 1}}
@@ -271,9 +272,9 @@ package provide Archer 1.0
 
 	# Miscellaneous Section
 	method buildAboutDialog {}
-	method buildBackgroundColor {_parent}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
+	method buildGridPreferences {}
 	method buildGroundPlanePreferences {}
 	method buildInfoDialogs {}
 	method buildModelAxesPosition {_parent}
@@ -287,6 +288,13 @@ package provide Archer 1.0
 	method doArcherHelp {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
+	method fbActivePaneCallback {_pane}
+	method fbEnabledCallback {_on}
+	method fbModeCallback {_mode}
+	method fbModeToggle {}
+	method fbToggle {}
+	method rtEndCallback {_aborted}
+	method raytracePlus {}
 
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
@@ -297,6 +305,7 @@ package provide Archer 1.0
 
 	method updateCreationButtons {_on}
 	method updatePrimaryToolbar {}
+	method updateRaytraceButtons {_on}
 
 	method buildEmbeddedMenubar {}
 	method buildEmbeddedFileMenu {}
@@ -318,11 +327,11 @@ package provide Archer 1.0
 	method beginObjScale {}
 	method beginObjTranslate {}
 	method beginObjCenter {}
-	method endObjCenter {_dm _obj}
+	method endObjCenter {_obj}
 	method endObjRotate {_dm _obj}
 	method endObjScale {_dm _obj}
-	method endObjTranslate {_dm _obj}
-	method handleObjCenter {_obj _x _y}
+	method endObjTranslate {_dm _obj _mx _my}
+	method handleObjCenter {_dm _obj _mx _my}
 
 
 	# Object Views Section
@@ -403,6 +412,8 @@ package provide Archer 1.0
 	method applyDisplayPreferencesIfDiff {}
 	method applyGeneralPreferences {}
 	method applyGeneralPreferencesIfDiff {}
+	method applyGridPreferences {}
+	method applyGridPreferencesIfDiff {}
 	method applyGroundPlanePreferencesIfDiff {}
 	method applyModelAxesPreferences {}
 	method applyModelAxesPreferencesIfDiff {}
@@ -491,13 +502,12 @@ package provide Archer 1.0
 
 	readPreferences
 	updateCreationButtons 0
+	updateRaytraceButtons 0
 	updateCheckpointMode
 	updateSaveMode
 	updateUndoMode
     } else {
-	backgroundColor [lindex $mBackground 0] \
-	    [lindex $mBackground 1] \
-	    [lindex $mBackground 2]
+	eval backgroundColor $mBackground
     }
 
     set mInstanceInit 0
@@ -1472,7 +1482,7 @@ package provide Archer 1.0
 
     $itk_component(ged) refresh_off
     set mDbTitle [$itk_component(ged) title]
-    set mDbUnits [$itk_component(ged) units]
+    set mDbUnits [$itk_component(ged) units -s]
 
     if {!$mViewOnly} {
 	initDbAttrView $mTarget
@@ -1484,6 +1494,7 @@ package provide Archer 1.0
 #	createTargetLedger
 
 	updateCreationButtons 1
+	updateRaytraceButtons 1
 
 	buildGroundPlane
 	showGroundPlane
@@ -1492,11 +1503,20 @@ package provide Archer 1.0
 	doLighting
     }
 
+    # update the units combobox in the General tab of the preferences panel
+    set utypes {}
+    foreach utype [split [$itk_component(ged) units -t] ,] {
+	lappend utypes [string trim $utype]
+    }
+    $itk_component(unitsCB) configure \
+	-values $utypes \
+	-state readonly
+
     # refresh tree contents
     refreshTree 0
 
-    if {$mBindingMode == 0} {
-	set mDefaultBindingMode $ROTATE_MODE
+    if {$mBindingMode == "Default"} {
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
     }
     $itk_component(ged) refresh_on
@@ -1562,7 +1582,27 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::units {args} {
-    return [eval globalWrapper units $args]
+    set b2l_1 [gedCmd base2local]
+    set ret [eval globalWrapper units $args]
+    set mDbUnits [gedCmd units -s]
+    set b2l_2 [gedCmd base2local]
+
+    if {$b2l_1 != $b2l_2} {
+	# Update grid parameters
+	set sf [expr {$b2l_2 / $b2l_1}]
+
+	set X [lindex $mGridAnchor 0]
+	set Y [lindex $mGridAnchor 1]
+	set Z [lindex $mGridAnchor 2]
+	set X [expr {$sf * $X}]
+	set Y [expr {$sf * $Y}]
+	set Z [expr {$sf * $Z}]
+	set mGridAnchor "$X $Y $Z"
+	set mGridRh [expr {$sf * $mGridRh}]
+	set mGridRv [expr {$sf * $mGridRv}]
+    }
+
+    return $ret
 }
 
 ::itcl::body Archer::vmake {args} {
@@ -1717,6 +1757,19 @@ package provide Archer 1.0
 	    -image [image create photo \
 			-file [file join $dir option_tree.png]]
     }
+
+    $itk_component(primaryToolbar) itemconfigure toggle_fb \
+	-image [image create photo \
+		    -file [file join $dir framebuffer.png]]
+    $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
+	-image [image create photo \
+		    -file [file join $dir framebuffer_underlay.png]]
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image [image create photo \
+		    -file [file join $dir raytrace.png]]
+    $itk_component(primaryToolbar) itemconfigure clear_fb \
+	-image [image create photo \
+		    -file [file join $dir framebuffer_clear.png]]
 }
 
 ::itcl::body Archer::setDefaultBindingMode {_mode} {
@@ -2066,8 +2119,11 @@ package provide Archer 1.0
 	return [gedCmd $_cmd]
     }
 
-    if {$_cmd == "units" && [llength $args] == 1 && [lindex $args 0] == "-s"} {
-	return [gedCmd units -s]
+    if {$_cmd == "units" && [llength $args] == 1} {
+	set arg0 [lindex $args 0]
+	if {$arg0 == "-s" || $arg0 == "-t"} {
+	    return [gedCmd units $arg0]
+	}
     }
 
     set old_units [gedCmd units -s]
@@ -2207,7 +2263,10 @@ package provide Archer 1.0
 	return [gedCmd $_cmd]
     }
 
-    if {$alen == 3} {
+    set fi [lsearch $args "-f"]
+    set ni [lsearch $args "-n"]
+
+    if {$fi != -1 || $ni != -1} {
 	# Must be using the -n option. If not, an error message
 	# containing the usage string will be returned.
 	return [eval gedCmd $_cmd $args]
@@ -2215,7 +2274,7 @@ package provide Archer 1.0
 
     # Get the list of potentially modified objects.
     if {$_cmd == "mvall"} {
-	set mlist [eval gedCmd $_cmd -n $args]
+	set mlist [lsort -dictionary -unique [eval gedCmd $_cmd -n $args]]
     } else {
 	set mlist {}
     }
@@ -2338,6 +2397,9 @@ package provide Archer 1.0
 	    $itk_component(modesmenu) entryconfigure "Viewing Parameters" -state normal
 	    $itk_component(modesmenu) entryconfigure "Scale" -state normal
 	    $itk_component(modesmenu) entryconfigure "Lighting" -state normal
+	    $itk_component(modesmenu) entryconfigure "Grid" -state normal
+	    $itk_component(modesmenu) entryconfigure "Snap Grid" -state normal
+	    $itk_component(modesmenu) entryconfigure "Angle/Distance Cursor" -state normal
 
 	    $itk_component(raytracemenu) entryconfigure "rt" -state normal
 	    $itk_component(raytracemenu) entryconfigure "rtcheck" -state normal
@@ -2362,6 +2424,9 @@ package provide Archer 1.0
 	    $itk_component(menubar) menuconfigure .modes.vparams -state normal
 	    $itk_component(menubar) menuconfigure .modes.scale -state normal
 	    $itk_component(menubar) menuconfigure .modes.light -state normal
+	    $itk_component(menubar) menuconfigure .modes.grid -state normal
+	    $itk_component(menubar) menuconfigure .modes.sgrid -state normal
+	    $itk_component(menubar) menuconfigure .modes.adc -state normal
 
 	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
@@ -2461,6 +2526,10 @@ package provide Archer 1.0
     $itk_component(tree) selection set $element
 }
 
+
+::itcl::body Archer::setActivePane {_pane} {
+    $itk_component(rtcntrl) setActivePane $_pane
+}
 
 ::itcl::body Archer::updateCheckpointMode {} {
     if {$mViewOnly} {
@@ -2626,9 +2695,6 @@ package provide Archer 1.0
     } {}
 
     # BRL-CAD License Info
-    set fd [open [file join $brlcadDataPath COPYING] r]
-    set mBrlcadLicenseInfo [read $fd]
-    close $fd
     itk_component add brlcadLicenseInfo {
 	::iwidgets::scrolledtext $itk_component(aboutDialogTabs).brlcadLicenseInfo \
 	    -wrap word \
@@ -2638,14 +2704,16 @@ package provide Archer 1.0
 	    -background $SystemButtonFace \
 	    -textbackground $SystemButtonFace
     } {}
-    $itk_component(brlcadLicenseInfo) insert 0.0 $mBrlcadLicenseInfo
+
+    set brlcadLicenseFile [file join $brlcadDataPath COPYING]
+    if {![catch {open $brlcadLicenseFile "r"} fd]} {
+	set brlcadLicenseInfo [read $fd]
+	close $fd
+	$itk_component(brlcadLicenseInfo) insert 0.0 $brlcadLicenseInfo
+    }
     $itk_component(brlcadLicenseInfo) configure -state disabled
 
     # Acknowledgement Info
-    #    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath doc archer_ack.txt] r]
-    set fd [open [file join $brlcadDataPath doc archer_ack.txt] r]
-    set mAckInfo [read $fd]
-    close $fd
     itk_component add ackInfo {
 	::iwidgets::scrolledtext $itk_component(aboutDialogTabs).info \
 	    -wrap word \
@@ -2655,92 +2723,70 @@ package provide Archer 1.0
 	    -background $SystemButtonFace \
 	    -textbackground $SystemButtonFace
     } {}
-    $itk_component(ackInfo) insert 0.0 $mAckInfo
+
+    set ackFile [file join $brlcadDataPath doc archer_ack.txt]
+    if {![catch {open $ackFile "r"} fd]} {
+	set ackInfo [read $fd]
+	close $fd
+	$itk_component(ackInfo) insert 0.0 $ackInfo
+    }
     $itk_component(ackInfo) configure -state disabled
+
+    itk_component add mikeF {
+	::frame $itk_component(aboutDialogTabs).mikeInfo
+    } {}
+
+    set mikeImg [image create photo -file [file join $brlcadDataPath tclscripts mged mike-tux.png]]
+    itk_component add mikePic {
+	::label $itk_component(mikeF).pic \
+	    -image $mikeImg
+    } {}
+
+    set row 0
+    grid $itk_component(mikePic) -row $row -sticky ew
+
+    itk_component add mikeDates {
+	label $itk_component(mikeF).dates \
+	    -text "Michael John Muuss\nOctober 16, 1958 - November 20, 2000"
+    } {}
+
+    incr row
+    grid $itk_component(mikeDates) -row $row -sticky ew
+
+    itk_component add mikeInfo {
+	::iwidgets::scrolledtext $itk_component(mikeF).info \
+	    -wrap word \
+	    -hscrollmode dynamic \
+	    -vscrollmode dynamic \
+	    -textfont $mFontText \
+	    -background $SystemButtonFace \
+	    -textbackground $SystemButtonFace
+    } {}
+
+    set mikeInfoFile [file join $brlcadDataPath tclscripts mged mike-dedication.txt]
+    if {![catch {open $mikeInfoFile "r"} fd]} {
+	set mikeInfo [read -nonewline $fd]
+	close $fd
+	$itk_component(mikeInfo) insert 0.0 $mikeInfo
+    }
+
+    incr row
+    grid $itk_component(mikeInfo) -row $row -sticky nsew
+
+    grid columnconfigure $itk_component(mikeF) 0 -weight 1
+    grid rowconfigure $itk_component(mikeF) $row -weight 1
 
     $itk_component(aboutDialogTabs) add $itk_component(aboutInfo) -text "About" -stick ns
     $itk_component(aboutDialogTabs) add $itk_component(brlcadLicenseInfo) -text "License"
     $itk_component(aboutDialogTabs) add $itk_component(ackInfo) -text "Acknowledgements"
-
-    # Version Info
-    itk_component add versionInfo {
-	::ttk::label $parent.versionInfo \
-	    -text "Version: $mArcherVersion" \
-	    -padding 0 \
-	    -font $mFontText \
-	    -anchor se
-    } {}
+    $itk_component(aboutDialogTabs) add $itk_component(mikeF) -text "Dedication"
 
     $itk_component(aboutDialog) configure -background $LABEL_BACKGROUND_COLOR
 
-    pack $itk_component(versionInfo) \
-	-expand yes \
-	-fill x \
-	-side bottom \
-	-pady 0 \
-	-ipady 0 \
-	-anchor se
-
     pack $itk_component(aboutDialogTabs) -expand yes -fill both
 
-    wm geometry $itk_component(aboutDialog) "600x540"
+    wm geometry $itk_component(aboutDialog) "600x600"
 }
-
-::itcl::body Archer::buildBackgroundColor {parent} {
-    itk_component add backgroundRedL {
-	::ttk::label $parent.redl \
-	    -anchor e \
-	    -text "Red:"
-    } {}
-
-    itk_component add backgroundRedE {
-	::ttk::entry $parent.rede \
-	    -width 3 \
-	    -background $SystemWindow \
-	    -textvariable [::itcl::scope mBackgroundRedPref] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateColorComp %P]
-    } {}
-    itk_component add backgroundGreenL {
-	::ttk::label $parent.greenl \
-	    -anchor e \
-	    -text "Green:"
-    } {}
-    itk_component add backgroundGreenE {
-	::ttk::entry $parent.greene \
-	    -width 3 \
-	    -background $SystemWindow \
-	    -textvariable [::itcl::scope mBackgroundGreenPref] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateColorComp %P]
-    } {}
-    itk_component add backgroundBlueL {
-	::ttk::label $parent.bluel \
-	    -anchor e \
-	    -text "Blue:"
-    } {}
-    itk_component add backgroundBlueE {
-	::ttk::entry $parent.bluee \
-	    -width 3 \
-	    -background $SystemWindow \
-	    -textvariable [::itcl::scope mBackgroundBluePref] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateColorComp %P]
-    } {}
-
-    set row 0
-    grid $itk_component(backgroundRedL) -row $row -column 0 -sticky ew
-    grid $itk_component(backgroundRedE) -row $row -column 1 -sticky ew
-    incr row
-    grid $itk_component(backgroundGreenL) -row $row -column 0 -sticky ew
-    grid $itk_component(backgroundGreenE) -row $row -column 1 -sticky ew
-    incr row
-    grid $itk_component(backgroundBlueL) -row $row -column 0 -sticky ew
-    grid $itk_component(backgroundBlueE) -row $row -column 1 -sticky ew
-
-    grid columnconfigure $parent 1 -weight 1
-}
-
 
 ::itcl::body Archer::buildDisplayPreferences {} {
     set oglParent $itk_component(preferenceTabs)
@@ -2805,9 +2851,6 @@ package provide Archer 1.0
     set i 0
     grid $parent -column 0 -row $i -sticky nsew
 
-    grid rowconfigure $oglParent 0 -weight 1
-    grid columnconfigure $oglParent 0 -weight 1
-
     $itk_component(preferenceTabs) add $itk_component(displayF) -text "Display"
 }
 
@@ -2818,62 +2861,23 @@ package provide Archer 1.0
 	::ttk::frame $parent.generalF
     } {}
 
-    itk_component add bindingL {
-	::ttk::label $itk_component(generalF).bindingL \
-	    -text "Display Bindings:"
-    } {}
+    buildComboBox $itk_component(generalF) \
+	backgroundColor \
+	bcolor \
+	mBackgroundColorPref \
+	"Background Color:" \
+	$mColorListNoTriple
 
-    set i 0
-    set mBindingMode $i
-    itk_component add defaultBindingRB {
-	::ttk::radiobutton $itk_component(generalF).defaultBindingRB \
-	    -text "Default" \
-	    -value $i \
-	    -variable [::itcl::scope mBindingModePref]
-    } {}
-
-    incr i
-    itk_component add brlcadBindingRB {
-	::ttk::radiobutton $itk_component(generalF).brlcadBindingRB \
-	    -text "BRL-CAD" \
-	    -value $i \
-	    -variable [::itcl::scope mBindingModePref]
-    } {}
-
-    itk_component add measuringL {
-	::ttk::label $itk_component(generalF).measuringL \
-	    -text "Measuring Stick Mode:"
-    } {}
-
-    set i 0
-    set mMeasuringStickMode $i
-    itk_component add topMeasuringStickRB {
-	::ttk::radiobutton $itk_component(generalF).topMeasuringStickRB \
-	    -text "Default (Top)" \
-	    -value $i \
-	    -variable [::itcl::scope mMeasuringStickModePref]
-    } {}
-
-    incr i
-    itk_component add embeddedMeasuringStickRB {
-	::ttk::radiobutton $itk_component(generalF).embeddedMeasuringStickRB \
-	    -text "Embedded" \
-	    -value $i \
-	    -variable [::itcl::scope mMeasuringStickModePref]
-    } {}
-
-    itk_component add backgroundColorL {
-	::ttk::label $itk_component(generalF).backgroundColorL \
-	    -text "Background Color:"
-    } {}
-    itk_component add backgroundColorF {
-	::ttk::frame $itk_component(generalF).backgroundColorF
-    } {}
-    buildBackgroundColor $itk_component(backgroundColorF)
+    buildComboBox $itk_component(generalF) \
+	binding \
+	binding \
+	mBindingModePref \
+	"Display Window Bindings:" \
+	{Default BRL-CAD}
 
     buildComboBox $itk_component(generalF) \
 	primitiveLabelColor \
-	color \
+	plcolor \
 	mPrimitiveLabelColorPref \
 	"Primitive Label Color:" \
 	$mColorListNoTriple
@@ -2899,23 +2903,18 @@ package provide Archer 1.0
 	"Viewing Parameters Color:" \
 	$mColorListNoTriple
 
-    set tmp_themes [glob [file join $mImgDir Themes *]]
-    set themes {}
-    foreach theme $tmp_themes {
-	set theme [file tail $theme]
-
-	# This is not needed for the released code.
-	# However, it won't hurt anything to leave it.
-	if {$theme != "CVS" && $theme != ".svn"} {
-	    lappend themes $theme
-	}
-    }
     buildComboBox $itk_component(generalF) \
-	themes \
-	themes \
-	mThemePref \
-	"Themes:" \
-	$themes
+	units \
+	units \
+	mDbUnits \
+	"Units:" \
+	{}
+    $itk_component(unitsCB) configure -state disabled
+
+    itk_component add generalF2 {
+	::ttk::frame $itk_component(generalF).generalF2 \
+	    -height 10
+    } {}
 
     itk_component add bigEMenuItemCB {
 	::ttk::checkbutton $itk_component(generalF).bigECB \
@@ -2925,17 +2924,18 @@ package provide Archer 1.0
 
     set i 0
     grid $itk_component(bindingL) -column 0 -row $i -sticky e
-    grid $itk_component(defaultBindingRB) -column 1 -row $i -sticky w
+    grid $itk_component(bindingF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(brlcadBindingRB) -column 1 -row $i -sticky w
+    grid $itk_component(unitsL) -column 0 -row $i -sticky e
+    grid $itk_component(unitsF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(measuringL) -column 0 -row $i -sticky e
-    grid $itk_component(topMeasuringStickRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(embeddedMeasuringStickRB) -column 1 -row $i -sticky w
+    grid $itk_component(generalF2) -column 0 -row $i -columnspan 2 -sticky nsew
     incr i
     grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
     grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
+    incr i
+    grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
+    grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(primitiveLabelColorL) -column 0 -row $i -sticky e
     grid $itk_component(primitiveLabelColorF) -column 1 -row $i -sticky ew
@@ -2943,14 +2943,8 @@ package provide Archer 1.0
     grid $itk_component(scaleColorL) -column 0 -row $i -sticky e
     grid $itk_component(scaleColorF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
-    grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
-    incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(themesL) -column 0 -row $i -sticky ne
-    grid $itk_component(themesF) -column 1 -row $i -sticky w
     incr i
     grid $itk_component(bigEMenuItemCB) \
 	-columnspan 2 \
@@ -2962,10 +2956,173 @@ package provide Archer 1.0
     set i 0
     grid $itk_component(generalF) -column 0 -row $i -sticky nsew
 
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
-
     $itk_component(preferenceTabs) add $itk_component(generalF) -text "General"
+}
+
+
+::itcl::body Archer::buildGridPreferences {} {
+    set parent $itk_component(preferenceTabs)
+    itk_component add gridF {
+	::ttk::frame $parent.gridF
+    } {}
+
+    itk_component add gridAnchorXL {
+	::ttk::label $itk_component(gridF).anchorXL \
+	    -anchor e \
+	    -text "Anchor X:"
+    } {}
+    itk_component add gridAnchorXE {
+	::ttk::entry $itk_component(gridF).anchorXE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridAnchorXPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridAnchorXUnitsL {
+	::ttk::label $itk_component(gridF).anchorXUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    itk_component add gridAnchorYL {
+	::ttk::label $itk_component(gridF).anchorYL \
+	    -anchor e \
+	    -text "Anchor Y:"
+    } {}
+    itk_component add gridAnchorYE {
+	::ttk::entry $itk_component(gridF).anchorYE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridAnchorYPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridAnchorYUnitsL {
+	::ttk::label $itk_component(gridF).anchorYUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    itk_component add gridAnchorZL {
+	::ttk::label $itk_component(gridF).anchorZL \
+	    -anchor e \
+	    -text "Anchor Z:"
+    } {}
+    itk_component add gridAnchorZE {
+	::ttk::entry $itk_component(gridF).anchorZE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridAnchorZPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridAnchorZUnitsL {
+	::ttk::label $itk_component(gridF).anchorZUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    buildComboBox $itk_component(gridF) \
+	gridColor \
+	color \
+	mGridColorPref \
+	"Color:" \
+	$mColorListNoTriple
+
+    itk_component add gridMrhL {
+	::ttk::label $itk_component(gridF).mrhL \
+	    -anchor e \
+	    -text "Major Resolution (Horizontal):"
+    } {}
+    itk_component add gridMrhE {
+	::ttk::entry $itk_component(gridF).mrhE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridMrhPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+
+    itk_component add gridMrvL {
+	::ttk::label $itk_component(gridF).mrvL \
+	    -anchor e \
+	    -text "Major Resolution (Vertical):"
+    } {}
+    itk_component add gridMrvE {
+	::ttk::entry $itk_component(gridF).mrvE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridMrvPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+
+    itk_component add gridRhL {
+	::ttk::label $itk_component(gridF).rhL \
+	    -anchor e \
+	    -text "Minor Resolution (Horizontal):"
+    } {}
+    itk_component add gridRhE {
+	::ttk::entry $itk_component(gridF).rhE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridRhPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridRhUnitsL {
+	::ttk::label $itk_component(gridF).rhUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    itk_component add gridRvL {
+	::ttk::label $itk_component(gridF).rvL \
+	    -anchor e \
+	    -text "Minor Resolution (Vertical):"
+    } {}
+    itk_component add gridRvE {
+	::ttk::entry $itk_component(gridF).rvE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridRvPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridRvUnitsL {
+	::ttk::label $itk_component(gridF).rvUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    set i 0
+    grid $itk_component(gridAnchorXL) -column 0 -row $i -sticky e
+    grid $itk_component(gridAnchorXE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridAnchorXUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridAnchorYL) -column 0 -row $i -sticky e
+    grid $itk_component(gridAnchorYE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridAnchorYUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridAnchorZL) -column 0 -row $i -sticky e
+    grid $itk_component(gridAnchorZE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridAnchorZUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridColorL) -column 0 -row $i -sticky e
+    grid $itk_component(gridColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridMrhL) -column 0 -row $i -sticky e
+    grid $itk_component(gridMrhE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridMrvL) -column 0 -row $i -sticky e
+    grid $itk_component(gridMrvE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridRhL) -column 0 -row $i -sticky e
+    grid $itk_component(gridRhE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridRhUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridRvL) -column 0 -row $i -sticky e
+    grid $itk_component(gridRvE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridRvUnitsL) -column 2 -row $i -sticky ew
+
+    set i 0
+    grid $itk_component(gridF) -column 0 -row $i -sticky nw
+
+    $itk_component(preferenceTabs) add $itk_component(gridF) -text "Grid"
 }
 
 
@@ -3042,9 +3199,6 @@ package provide Archer 1.0
 
     set i 0
     grid $itk_component(groundPlaneF) -column 0 -row $i -sticky nw
-
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
 
     $itk_component(preferenceTabs) add $itk_component(groundPlaneF) -text "Ground Plane"
 }
@@ -3276,9 +3430,6 @@ package provide Archer 1.0
     set i 0
     grid $itk_component(modelAxesF) -column 0 -row $i -sticky nw
 
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
-
     $itk_component(preferenceTabs) add $itk_component(modelAxesF) -text "Model Axes"
 }
 
@@ -3434,11 +3585,15 @@ package provide Archer 1.0
 	::ttk::notebook $parent.tabs
     } {}
 
+    grid rowconfigure $itk_component(preferenceTabs) 0 -weight 1
+    grid columnconfigure $itk_component(preferenceTabs) 0 -weight 1
+
     buildGeneralPreferences
     buildModelAxesPreferences
     buildViewAxesPreferences
     buildGroundPlanePreferences
     buildDisplayPreferences
+    buildGridPreferences
 
     $itk_component(preferencesDialog) configure -background $LABEL_BACKGROUND_COLOR
 
@@ -3800,9 +3955,6 @@ package provide Archer 1.0
     set i 0
     grid $itk_component(viewAxesF) -column 0 -row $i -sticky nw
 
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
-
     $itk_component(preferenceTabs) add $itk_component(viewAxesF) -text "View Axes"
 }
 
@@ -3837,6 +3989,72 @@ package provide Archer 1.0
 
 ::itcl::body Archer::launchDisplayMenuEnd {} {
 #    set mCurrentPaneName ""
+}
+
+::itcl::body Archer::fbActivePaneCallback {_pane} {
+    ArcherCore::setActivePane $_pane
+}
+
+::itcl::body Archer::fbEnabledCallback {_on} {
+    set dir [file join $mImgDir Themes $mTheme]
+
+    if {$_on} {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb \
+	    -image [image create photo \
+			-file [file join $dir framebuffer_off.png]]
+    } else {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb \
+	    -image [image create photo \
+			-file [file join $dir framebuffer.png]]
+    }
+}
+
+::itcl::body Archer::fbModeCallback {_mode} {
+    set dir [file join $mImgDir Themes $mTheme]
+    switch -- $_mode {
+	1 {
+	    set file framebuffer_underlay.png
+	}
+	2 {
+	    set file framebuffer_interlay.png
+	}
+	3 {
+	    set file framebuffer_overlay.png
+	}
+	default {
+	    return
+	}
+    }
+
+    $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
+	-image [image create photo -file [file join $dir $file]]
+}
+
+::itcl::body Archer::fbModeToggle {} {
+    $itk_component(rtcntrl) toggleFbMode
+}
+
+::itcl::body Archer::fbToggle {} {
+    $itk_component(rtcntrl) toggleFB
+    set on [$itk_component(rtcntrl) cget -fb_enabled]
+#    fbEnabledCallback $on
+}
+
+::itcl::body Archer::rtEndCallback {_aborted} {
+    set dir [file join $mImgDir Themes $mTheme]
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image [image create photo \
+		    -file [file join $dir raytrace.png]] \
+	-command [::itcl::code $this raytracePlus]
+}
+
+::itcl::body Archer::raytracePlus {} {
+    set dir [file join $mImgDir Themes $mTheme]
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image [image create photo \
+		    -file [file join $dir raytrace_abort.png]] \
+	-command "$itk_component(rtcntrl) abort"
+    $itk_component(rtcntrl) raytracePlus
 }
 
 ::itcl::body Archer::menuStatusCB {_w} {
@@ -4119,6 +4337,34 @@ package provide Archer 1.0
 	#	$itk_component(primaryToolbar) itemconfigure pipe -state disabled
 	$itk_component(primaryToolbar) itemconfigure other -state disabled
 	$itk_component(primaryToolbar) itemconfigure comb -state disabled
+    }
+}
+
+::itcl::body Archer::updateRaytraceButtons {_on} {
+    if {$_on} {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb \
+	    -state normal \
+	    -command [::itcl::code $this fbToggle]
+	$itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
+	    -state normal \
+	    -command [::itcl::code $this fbModeToggle]
+	$itk_component(primaryToolbar) itemconfigure raytrace \
+	    -state normal \
+	    -command [::itcl::code $this raytracePlus]
+	$itk_component(primaryToolbar) itemconfigure clear_fb \
+	    -state normal \
+	    -command "$itk_component(rtcntrl) clear"
+
+	$itk_component(rtcntrl) configure \
+	    -fb_active_pane_callback [::itcl::code $this fbActivePaneCallback] \
+	    -fb_enabled_callback [::itcl::code $this fbEnabledCallback] \
+	    -fb_mode_callback [::itcl::code $this fbModeCallback]
+
+	gedCmd rt_end_callback [::itcl::code $this rtEndCallback]
+    } else {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb -state disabled
+	$itk_component(primaryToolbar) itemconfigure raytrace -state disabled
+	$itk_component(primaryToolbar) itemconfigure clear_fb -state disabled
     }
 }
 
@@ -4501,6 +4747,42 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure edit_translate -state disabled
     $itk_component(primaryToolbar) itemconfigure edit_scale -state disabled
     $itk_component(primaryToolbar) itemconfigure edit_center -state disabled
+
+    # add spacer
+    $itk_component(primaryToolbar) add frame fill12 \
+	-relief flat \
+	-width 3
+    $itk_component(primaryToolbar) add frame sep6 \
+	-relief sunken \
+	-width 2
+    $itk_component(primaryToolbar) add frame fill13 \
+	-relief flat \
+	-width 3
+
+    $itk_component(primaryToolbar) add button raytrace \
+	-state disabled \
+	-balloonstr "Raytrace current view" \
+	-helpstr "Raytrace current view" \
+	-relief flat \
+	-overrelief raised
+    $itk_component(primaryToolbar) add button toggle_fb_mode \
+	-state disabled \
+	-balloonstr "Change framebuffer mode" \
+	-helpstr "Change framebuffer mode" \
+	-relief flat \
+	-overrelief raised
+    $itk_component(primaryToolbar) add button clear_fb \
+	-state disabled \
+	-balloonstr "Clear framebuffer" \
+	-helpstr "Clear framebuffer" \
+	-relief flat \
+	-overrelief raised
+    $itk_component(primaryToolbar) add button toggle_fb \
+	-state disabled \
+	-balloonstr "Toggle framebuffer" \
+	-helpstr "Toggle framebuffer" \
+	-relief flat \
+	-overrelief raised
 }
 
 
@@ -4724,6 +5006,12 @@ package provide Archer 1.0
 		-helpstr "Toggle display of the view scale."
 	    checkbutton light -label "Lighting" \
 		-helpstr "Toggle lighting on/off."
+	    checkbutton grid -label "Grid" \
+		-helpstr "Toggle display of the grid."
+	    checkbutton sgrid -label "Snap Grid" \
+		-helpstr "Toggle grid snapping."
+	    checkbutton adc -label "Angle/Distance Cursor" \
+		-helpstr "Toggle display of the angle distance cursor."
 	}
     $itk_component(menubar) menuconfigure .modes.activepane \
 	-state disabled
@@ -4794,6 +5082,24 @@ package provide Archer 1.0
 	-onvalue 2 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.grid \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGrid] \
+	-command [::itcl::code $this showGrid] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.sgrid \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mSnapGrid] \
+	-command [::itcl::code $this snapGrid] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.adc \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowADC] \
+	-command [::itcl::code $this showADC] \
 	-state disabled
 }
 
@@ -4970,6 +5276,27 @@ package provide Archer 1.0
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
 	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Grid" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGrid] \
+	-command [::itcl::code $this showGrid] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Snap Grid" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mSnapGrid] \
+	-command [::itcl::code $this snapGrid] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Angle/Distance Cursor" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowADC] \
+	-command [::itcl::code $this showADC] \
+	-state disabled
 }
 
 
@@ -4993,7 +5320,7 @@ package provide Archer 1.0
     updateWizardMenu
 
     if {$mTarget != "" &&
-	$mBindingMode == 0} {
+	$mBindingMode == "Default"} {
 	$itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
 	$itk_component(primaryToolbar) itemconfigure edit_translate -state normal
 	$itk_component(primaryToolbar) itemconfigure edit_scale -state normal
@@ -5200,7 +5527,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5208,6 +5535,8 @@ package provide Archer 1.0
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
 	initEdit
     }
+
+    $itk_component(ged) init_button_no_op 2
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -5234,7 +5563,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5242,6 +5571,8 @@ package provide Archer 1.0
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
 	initEdit
     }
+
+    $itk_component(ged) init_button_no_op 2
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -5264,7 +5595,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5273,6 +5604,7 @@ package provide Archer 1.0
 	initEdit
     }
 
+    $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
 
     foreach dname {ul ur ll lr} {
@@ -5284,7 +5616,7 @@ package provide Archer 1.0
 	    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 	}
 
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj %x %y]; break"
     }
 }
 
@@ -5296,7 +5628,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5305,16 +5637,17 @@ package provide Archer 1.0
 	initEdit
     }
 
+    $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_CENTER_MODE
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dname $obj]; break"
+	bind $win <1> "[::itcl::code $this handleObjCenter $dname $obj %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $obj]; break"
     }
 }
 
-::itcl::body Archer::endObjCenter {dname obj} {
+::itcl::body Archer::endObjCenter {_obj} {
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -5322,8 +5655,8 @@ package provide Archer 1.0
     updateObjSave
     initEdit 0
 
-    set center [$itk_component(ged) ocenter $obj]
-    addHistory "ocenter $center"
+    set center [$itk_component(ged) ocenter $_obj]
+    addHistory "ocenter $_obj $center"
 }
 
 ::itcl::body Archer::endObjRotate {dname obj} {
@@ -5356,37 +5689,47 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::endObjTranslate {dname obj} {
+::itcl::body Archer::endObjTranslate {_dm _obj _mx _my} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(ged) pane_idle_mode $dname
-    updateObjSave
-    initEdit 0
+    $itk_component(ged) pane_idle_mode $_dm
+    handleObjCenter $_dm $_obj $_mx $_my 
+    endObjCenter $_obj
 
-    #XXX Need code to track overall transformation
-    #addHistory "otranslate obj dx dy dz"
+#    $itk_component(ged) pane_idle_mode $_dm
+#    updateObjSave
+#    initEdit 0
+
 }
 
-::itcl::body Archer::handleObjCenter {obj x y} {
-    set ocenter [gedCmd ocenter $obj]
+::itcl::body Archer::handleObjCenter {_dm _obj _mx _my} {
+    set ocenter [gedCmd ocenter $_obj]
     set ocenter [vscale $ocenter [gedCmd local2base]]
-    set ovcenter [eval gedCmd m2v_point $ocenter]
+    set ovcenter [eval gedCmd pane_m2v_point $_dm $ocenter]
 
     # This is the updated view center (i.e. we keep the original view Z)
-    set vcenter [gedCmd screen2view $x $y]
-    set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
+    set vcenter [gedCmd pane_screen2view $_dm $_mx $_my]
 
-    set ocenter [vscale [eval gedCmd v2m_point $vcenter] [gedCmd base2local]]
+    set vx [lindex $vcenter 0]
+    set vy [lindex $vcenter 1]
+
+    set vl [gedCmd pane_snap_view $_dm $vx $vy]
+    set vx [lindex $vl 0]
+    set vy [lindex $vl 1]
+    set vcenter [list $vx $vy [lindex $ovcenter 2]]
+#   set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
+
+    set ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
     if {$GeometryEditFrame::mEditCommand != ""} {
-	gedCmd $GeometryEditFrame::mEditCommand $obj $GeometryEditFrame::mEditParam1 $ocenter
+	gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $ocenter
     } else {
-	eval gedCmd ocenter $obj $ocenter
+	eval gedCmd ocenter $_obj $ocenter
     }
 
-    redrawObj $obj 0
+    redrawObj $_obj 0
     initEdit 0
 }
 
@@ -6756,17 +7099,15 @@ package provide Archer 1.0
 
 ::itcl::body Archer::applyGeneralPreferences {} {
     switch -- $mBindingMode {
-	0 {
+	"Default" {
 	    initDefaultBindings
 	}
-	1 {
+	"BRL-CAD" {
 	    initBrlcadBindings
 	}
     }
 
-    backgroundColor [lindex $mBackground 0] \
-	[lindex $mBackground 1] \
-	[lindex $mBackground 2]
+    eval backgroundColor $mBackground
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
@@ -6779,10 +7120,10 @@ package provide Archer 1.0
     if {$mBindingModePref != $mBindingMode} {
 	set mBindingMode $mBindingModePref
 	switch -- $mBindingMode {
-	    0 {
+	    "Default" {
 		initDefaultBindings
 	    }
-	    1 {
+	    "BRL-CAD" {
 		initBrlcadBindings
 	    }
 	}
@@ -6792,24 +7133,10 @@ package provide Archer 1.0
 	set mMeasuringStickMode $mMeasuringStickModePref
     }
 
-    set r [lindex $mBackground 0]
-    set g [lindex $mBackground 1]
-    set b [lindex $mBackground 2]
-    if {$mBackgroundRedPref == ""} {
-	set mBackgroundRedPref 0
-    }
-    if {$mBackgroundGreenPref == ""} {
-	set mBackgroundGreenPref 0
-    }
-    if {$mBackgroundBluePref == ""} {
-	set mBackgroundBluePref 0
-    }
-
-    if {$mBackgroundRedPref != $r ||
-	$mBackgroundGreenPref != $g ||
-	$mBackgroundBluePref != $b} {
-
-	backgroundColor $mBackgroundRedPref $mBackgroundGreenPref $mBackgroundBluePref
+    if {$mBackgroundColor != $mBackgroundColorPref} {
+	set mBackgroundColor $mBackgroundColorPref
+	set mBackground [getRgbColor $mBackgroundColor]
+	eval backgroundColor $mBackground
     }
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
@@ -6828,16 +7155,62 @@ package provide Archer 1.0
 	set mMeasuringStickColor $mMeasuringStickColorPref
     }
 
-    if {$mTheme != $mThemePref} {
-	set mTheme $mThemePref
-	updateTheme
-    }
-
     if {$mEnableBigEPref != $mEnableBigE} {
 	set mEnableBigE $mEnableBigEPref
     }
+
+    set units [gedCmd units -s]
+    if {$units != $mDbUnits} {
+	units $mDbUnits
+    }
 }
 
+
+::itcl::body Archer::applyGridPreferences {} {
+    eval gedCmd grid anchor $mGridAnchor
+    eval gedCmd grid color [getRgbColor $mGridColor]
+    gedCmd grid mrh $mGridMrh
+    gedCmd grid mrv $mGridMrv
+    gedCmd grid rh $mGridRh
+    gedCmd grid rv $mGridRv
+}
+
+::itcl::body Archer::applyGridPreferencesIfDiff {} {
+    set X [lindex $mGridAnchor 0]
+    set Y [lindex $mGridAnchor 1]
+    set Z [lindex $mGridAnchor 2]
+    if {$mGridAnchorXPref != $X ||
+	$mGridAnchorYPref != $Y ||
+	$mGridAnchorZPref != $Z} {
+	set mGridAnchor "$mGridAnchorXPref $mGridAnchorYPref $mGridAnchorZPref"
+	eval gedCmd grid anchor $mGridAnchor
+    }
+
+    if {$mGridColor != $mGridColorPref} {
+	set mGridColor $mGridColorPref
+	eval gedCmd grid color [getRgbColor $mGridColor]
+    }
+
+    if {$mGridMrh != $mGridMrhPref} {
+	set mGridMrh $mGridMrhPref
+	gedCmd grid mrh $mGridMrh
+    }
+
+    if {$mGridMrv != $mGridMrvPref} {
+	set mGridMrv $mGridMrvPref
+	gedCmd grid mrv $mGridMrv
+    }
+
+    if {$mGridRh != $mGridRhPref} {
+	set mGridRh $mGridRhPref
+	gedCmd grid rh $mGridRh
+    }
+
+    if {$mGridRv != $mGridRvPref} {
+	set mGridRv $mGridRvPref
+	gedCmd grid rv $mGridRv
+    }
+}
 
 ::itcl::body Archer::applyGroundPlanePreferencesIfDiff {} {
     if {$mGroundPlaneSize != $mGroundPlaneSizePref ||
@@ -6934,8 +7307,8 @@ package provide Archer 1.0
     }
 
     set X [lindex $mModelAxesPosition 0]
-    set Y [lindex $mModelAxesPosition 0]
-    set Z [lindex $mModelAxesPosition 0]
+    set Y [lindex $mModelAxesPosition 1]
+    set Z [lindex $mModelAxesPosition 2]
     if {$mModelAxesPositionXPref != $X ||
 	$mModelAxesPositionYPref != $Y ||
 	$mModelAxesPositionZPref != $Z} {
@@ -7014,26 +7387,34 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::applyPreferences {} {
+    $itk_component(ged) refresh_off
+
     # Apply preferences to the cad widget.
-    applyGeneralPreferences
-    applyViewAxesPreferences
-    applyModelAxesPreferences
     applyDisplayPreferences
+    applyGeneralPreferences
+    applyGridPreferences
+    applyModelAxesPreferences
+    applyViewAxesPreferences
+
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh
 }
 
 
 ::itcl::body Archer::applyPreferencesIfDiff {} {
-    $itk_component(ged) refresh_off
+    gedCmd refresh_off
 
-    applyGeneralPreferencesIfDiff
-    applyViewAxesPreferencesIfDiff
-    applyModelAxesPreferencesIfDiff
-    applyGroundPlanePreferencesIfDiff
     applyDisplayPreferencesIfDiff
+    applyGeneralPreferencesIfDiff
+    applyGridPreferencesIfDiff
+    applyGroundPlanePreferencesIfDiff
+    applyModelAxesPreferencesIfDiff
+    applyViewAxesPreferencesIfDiff
 
     ::update
-    $itk_component(ged) refresh_on
-    $itk_component(ged) refresh
+
+    gedCmd refresh_on
+    gedCmd refresh
 }
 
 
@@ -7208,9 +7589,7 @@ package provide Archer 1.0
     # update preference variables
     set mZClipModePref $mZClipMode
 
-    set mBackgroundRedPref [lindex $mBackground 0]
-    set mBackgroundGreenPref [lindex $mBackground 1]
-    set mBackgroundBluePref [lindex $mBackground 2]
+    set mBackgroundColorPref $mBackgroundColor
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
     set mMeasuringStickColorPref $mMeasuringStickColor
@@ -7219,6 +7598,16 @@ package provide Archer 1.0
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
+    set mDbUnits [gedCmd units -s]
+
+    set mGridAnchorXPref [lindex $mGridAnchor 0]
+    set mGridAnchorYPref [lindex $mGridAnchor 1]
+    set mGridAnchorZPref [lindex $mGridAnchor 2]
+    set mGridColorPref $mGridColor
+    set mGridMrhPref $mGridMrh
+    set mGridMrvPref $mGridMrv
+    set mGridRhPref $mGridRh
+    set mGridRvPref $mGridRv
 
     set mGroundPlaneSizePref $mGroundPlaneSize
     set mGroundPlaneIntervalPref $mGroundPlaneInterval
@@ -7285,9 +7674,7 @@ package provide Archer 1.0
 	}
     }
 
-    backgroundColor [lindex $mBackground 0] \
-	[lindex $mBackground 1] \
-	[lindex $mBackground 2]
+    eval backgroundColor $mBackground
 
     update
     initMode
@@ -7336,7 +7723,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::writePreferencesBody {_pfile} {
-    puts $_pfile "set mBackground \"$mBackground\""
+    puts $_pfile "set mBackgroundColor \"$mBackgroundColor\""
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
     puts $_pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
@@ -7345,6 +7732,13 @@ package provide Archer 1.0
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
     puts $_pfile "set mTheme \"$mTheme\""
+
+    puts $_pfile "set mGridAnchor \"$mGridAnchor\""
+    puts $_pfile "set mGridColor \"$mGridColor\""
+    puts $_pfile "set mGridMrh \"$mGridMrh\""
+    puts $_pfile "set mGridMrv \"$mGridMrv\""
+    puts $_pfile "set mGridRh \"$mGridRh\""
+    puts $_pfile "set mGridRv \"$mGridRv\""
 
     puts $_pfile "set mGroundPlaneMajorColor \"$mGroundPlaneMajorColor\""
     puts $_pfile "set mGroundPlaneMinorColor \"$mGroundPlaneMinorColor\""

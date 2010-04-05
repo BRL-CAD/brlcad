@@ -440,6 +440,9 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 	    bu_vls_printf(&gedp->ged_result_str, "db_functree_subtree: unrecognized operator %d\n", tp->tr_op );
 	    bu_bomb( "db_functree_subtree: unrecognized operator\n" );
     }
+
+    /* Silence compiler warnings */
+    return 0;
 }
 
 /*
@@ -728,7 +731,6 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
     int checkval = 0;
     int strcomparison = 0;
     int i;
-    long attr_val;
     bu_vls_init(&attribname);
     bu_vls_init(&value);
 

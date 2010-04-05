@@ -146,8 +146,7 @@ _ged_combadd(struct ged			*gedp,
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
 
-	/* Update the in-core directory (DIR_NULL happens to work since it's a zero-value) */
-	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, (int)DIR_NULL);
+	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
 	intern.idb_ptr = (genptr_t)comb;
@@ -178,23 +177,21 @@ _ged_combadd(struct ged			*gedp,
 	tp->tr_l.tl_mat = (matp_t)NULL;
 	comb->tree = tp;
 
-	/* DIR_NULL happens to work as the macro flag because it's a zero value */
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, (int)DIR_NULL);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 	return dp;
     } else if (!(dp->d_flags & DIR_COMB)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s exists, but is not a combination\n");
+	bu_vls_printf(&gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
 	return DIR_NULL;
     }
 
     /* combination exists, add a new member */
-    /* DIR_NULL happens to work as the macro flag because it's a zero value */
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, (int)DIR_NULL);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, 0);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
     if (region_flag && !comb->region_flag) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: not a region\n");
+	bu_vls_printf(&gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
 	return DIR_NULL;
     }
 
@@ -248,8 +245,7 @@ _ged_combadd(struct ged			*gedp,
     comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
 
     /* and finally, write it out */
-    /* DIR_NULL happens to work as the macro flag because it's a zero value */
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, (int)DIR_NULL);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 
     bu_free((char *)tree_list, "combadd: tree_list");
 

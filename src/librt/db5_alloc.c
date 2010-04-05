@@ -53,7 +53,7 @@
  *  @return	-1	Fail.  This is a horrible error.
  */
 int
-db5_write_free( struct db_i *dbip, struct directory *dp, long length )
+db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 {
     struct bu_external	ext;
 
@@ -133,8 +133,8 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 int
 db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 {
-    long	baseaddr;
-    long	baselen;
+    size_t	baseaddr;
+    size_t	baselen;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -168,6 +168,14 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	}
 	dp->d_len = ep->ext_nbytes;
 	return 0;
+    }
+
+    /* make sure the database directory is initialized */
+    if (dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+	int ret = db_dirbuild(dbip);
+	if (ret) {
+	    return -1;
+	}
     }
 
     if ( dbip->dbi_read_only )  {
@@ -214,7 +222,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
      */
     {
 	struct mem_map	*mmp;
-	long		newaddr;
+	size_t		newaddr;
 
 	if ( (mmp = rt_memalloc_nosplit( &(dbip->dbi_freep), ep->ext_nbytes )) != MAP_NULL )  {
 	    if (RT_G_DEBUG&DEBUG_DB)

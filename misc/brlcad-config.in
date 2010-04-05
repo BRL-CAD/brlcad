@@ -63,6 +63,7 @@ Options:
     [ --includedir[=DIR] ]
 
 Libraries:
+    analyze
     bn
     brlcad (default)
     bu
@@ -136,6 +137,9 @@ while test $# -gt 0; do
 	    ;;
 	--help)
 	    usage 1>&2
+	    ;;
+	analyze)
+	    libs="$libs -lanalyze"
 	    ;;
 	bn)
 	    libs="$libs -lbn"
@@ -257,6 +261,7 @@ check ( ) {
 
 
 # stash the info
+ANALYZE="@ANALYZE@ @ANALYZE_LIBS@"
 BN="@BN@ @BN_LIBS@"
 BRLCAD="@BRLCAD@ @BRLCAD_LIBS@"
 BU="@BU@ @BU_LIBS@"
@@ -275,6 +280,13 @@ WDB="@WDB@ @WDB_LIBS@"
 cadlibs=""
 for lib in $libs ; do
     case $lib in
+	-lanalyze)
+	    if test "x$analyzeadded" = "x" ; then
+		cadlibs="$cadlibs $ANALYZE"
+		cadlibs="`check \"$cadlibs\"`"
+		analyzeadded=yes
+	    fi
+	    ;;
 	-lbn)
 	    if test "x$bnadded" = "x" ; then
 		cadlibs="$cadlibs $BN"

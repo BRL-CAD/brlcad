@@ -37,8 +37,6 @@
 #
 # Script for compressing a tape archive binary distribution via gzip
 #
-# Author: Christopher Sean Morrison
-#
 ######################################################################
 
 PKG_NAME="$1"

@@ -48,13 +48,12 @@
 #    include "brlcad_config.h"
 #  endif  /* _WIN32 */
 
-/**
- *  Simulates drand48() functionality using rand() which
- *  is assumed to exist everywhere. The range is [0, 1).
+/* Simulates drand48() functionality using rand() which is assumed to
+ * exist everywhere. The range is [0, 1).
  */
 #  ifndef HAVE_DRAND48
-#    define HAVE_DRAND48 1
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
+#    define HAVE_DRAND48 1
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
@@ -91,6 +90,35 @@
 #endif
 #ifndef FMIN
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
+#endif
+
+/* C99 does not provide a ssize_t even though it is provided by SUS97.
+ * regardless, we use it so make sure it's declared by using the
+ * similar POSIX ptrdiff_t type.
+ */
+#ifndef HAVE_SSIZE_T
+#  ifdef HAVE_SYS_TYPES_H
+#    include <sys/types.h>
+#  endif
+#  include <limits.h>
+#  include <stddef.h>
+#  ifndef SSIZE_MAX
+typedef ptrdiff_t ssize_t;
+#    define HAVE_SSIZE_T 1
+#  endif
+#endif
+
+/* make sure most of the C99 stdint types are provided including the
+ * optional uintptr_t type.
+ */
+#if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
+#  ifdef HAVE_STDINT_H
+#    define __STDC_LIMIT_MACROS 1
+#    define __STDC_CONSTANT_MACROS 1
+#    include <stdint.h>
+#  else
+#    include "pstdint.h"
+#  endif
 #endif
 
 #endif  /* __COMMON_H__ */

@@ -19,10 +19,8 @@
  */
 /** @file rect.c
  *
- *  Routines to implement MGED's rubber band rectangle capability.
+ * Routines to implement MGED's rubber band rectangle capability.
  *
- *  Author -
- *	Robert G. Parker
  */
 
 #include "common.h"
@@ -57,8 +55,9 @@ struct _rubber_band default_rubber_band = {
     /* rb_height */		0.0
 };
 
-#define RB_O(_m)        bu_offsetof(struct _rubber_band, _m)
-#define RB_OA(_m)	bu_offsetofarray(struct _rubber_band, _m)
+
+#define RB_O(_m) bu_offsetof(struct _rubber_band, _m)
+#define RB_OA(_m) bu_offsetofarray(struct _rubber_band, _m)
 struct bu_structparse rubber_band_vparse[] = {
     {"%d",	1, "draw",	RB_O(rb_draw),		rb_set_dirty_flag },
     {"%d",	1, "linewidth",	RB_O(rb_linewidth),	rb_set_dirty_flag },
@@ -67,6 +66,7 @@ struct bu_structparse rubber_band_vparse[] = {
     {"%d",	2, "dim",	RB_OA(rb_dim),		set_rect },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 void
 rb_set_dirty_flag(void)
@@ -77,6 +77,7 @@ rb_set_dirty_flag(void)
 	if (dmlp->dml_rubber_band == rubber_band)
 	    dmlp->dml_dirty = 1;
 }
+
 
 /*
  * Given position and dimensions in normalized view coordinates, calculate
@@ -91,6 +92,7 @@ rect_view2image(void)
     rubber_band->rb_dim[Y] = rubber_band->rb_height * dmp->dm_width * 0.5;
 }
 
+
 /*
  * Given position and dimensions in image coordinates, calculate
  * position and dimensions in normalized view coordinates.
@@ -104,12 +106,14 @@ rect_image2view(void)
     rubber_band->rb_height = rubber_band->rb_dim[Y] * 2.0 / (fastf_t)dmp->dm_width;
 }
 
+
 void
 set_rect(void)
 {
     rect_image2view();
     rb_set_dirty_flag();
 }
+
 
 /*
  * Adjust the rubber band to have the same aspect ratio as the window.
@@ -141,6 +145,7 @@ adjust_rect_for_zoom(void)
 	    rubber_band->rb_width = -height * dmp->dm_aspect;
     }
 }
+
 
 void
 draw_rect(void)
@@ -188,6 +193,7 @@ draw_rect(void)
 		    rubber_band->rb_y * dmp->dm_aspect);
 }
 
+
 void
 paint_rect_area(void)
 {
@@ -197,6 +203,7 @@ paint_rect_area(void)
     (void)fb_refresh(fbp, rubber_band->rb_pos[X], rubber_band->rb_pos[Y],
 		     rubber_band->rb_dim[X], rubber_band->rb_dim[Y]);
 }
+
 
 void
 rt_rect_area(void)
@@ -246,6 +253,7 @@ rt_rect_area(void)
     (void)Tcl_ResetResult(interp);
     bu_vls_free(&vls);
 }
+
 
 void
 zoom_rect_area(void)
@@ -303,6 +311,7 @@ zoom_rect_area(void)
     rect_view2image();
     rb_set_dirty_flag();
 }
+
 
 /*
  * Local Variables:

@@ -191,7 +191,7 @@ db_path_to_string( const struct db_full_path *pp )
     len = 3; /* leading slash, trailing null, spare */
     for ( i=pp->fp_len-1; i >= 0; i-- )  {
 	if ( pp->fp_names[i] )
-	    len += strlen( pp->fp_names[i]->d_namep ) + 1;
+	    len += (int)strlen( pp->fp_names[i]->d_namep ) + 1;
 	else
 	    len += 16;
     }
@@ -205,7 +205,7 @@ db_path_to_string( const struct db_full_path *pp )
 	rem--;
 	if ( pp->fp_names[i] ) {
 	    bu_strlcpy( cp, pp->fp_names[i]->d_namep, rem );
-	    rem -= strlen(pp->fp_names[i]->d_namep);
+	    rem -= (int)strlen(pp->fp_names[i]->d_namep);
 	} else {
 	    bu_strlcpy( cp, "**NULL**", rem );
 	    rem -= 8;
@@ -275,7 +275,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     char		*copy;
     int			nslash = 0;
     int			ret = 0;
-    int			len;
+    size_t		len;
 
     RT_CK_DBI(dbip);
 

@@ -77,6 +77,7 @@ nmg_vu_to_vlist(struct bu_list *vhead, const struct vertexuse *vu)
     struct vertex *v;
     register struct vertex_g *vg;
 
+    BU_CK_LIST_HEAD(vhead);
     NMG_CK_VERTEXUSE(vu);
     v = vu->v_p;
     NMG_CK_VERTEX(v);
@@ -104,6 +105,8 @@ nmg_eu_to_vlist(struct bu_list *vhead, const struct bu_list *eu_hd)
     struct vertexuse *vumate;
     register struct vertex_g *vg;
     register struct vertex_g *vgmate;
+
+    BU_CK_LIST_HEAD(vhead);
 
     /* Consider all the edges in the wire edge list */
     for (BU_LIST_FOR(eu, edgeuse, eu_hd)) {
@@ -359,6 +362,7 @@ nmg_s_to_vlist(struct bu_list *vhead, const struct shell *s, int poly_markers)
     register struct loopuse *lu;
     vect_t normal;
 
+    BU_CK_LIST_HEAD(vhead);
     NMG_CK_SHELL(s);
 
     /* faces */
@@ -415,6 +419,7 @@ nmg_r_to_vlist(struct bu_list *vhead, const struct nmgregion *r, int poly_marker
 {
     register struct shell *s;
 
+    BU_CK_LIST_HEAD(vhead);
     NMG_CK_REGION(r);
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	nmg_s_to_vlist(vhead, s, poly_markers);
@@ -430,6 +435,7 @@ nmg_m_to_vlist(struct bu_list *vhead, struct model *m, int poly_markers)
 {
     register struct nmgregion *r;
 
+    BU_CK_LIST_HEAD(vhead);
     NMG_CK_MODEL(m);
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
@@ -1871,7 +1877,7 @@ nmg_show_broken_classifier_stuff(unsigned long *p, long int **classlist, int all
 	    show_broken_vu(vbp, (struct vertexuse *)p);
 	    break;
 	default:
-	    bu_log("Unknown magic number %ld %0lx %lu %0lx\n", *p, *p, (unsigned long)p, (unsigned long)p);
+	    bu_log("Unknown magic number %ld %0lx %llu %p\n", *p, *p, (unsigned long long)((size_t)p), (void *)p);
 	    break;
     }
 

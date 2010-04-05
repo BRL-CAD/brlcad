@@ -49,17 +49,17 @@ bu_crashreport(const char *filename)
     /* vat time ist? */
     (void)time(&now);
 
-    path = bu_which(bu_argv0());
+    path = bu_argv0_full_path();
 
     /* do our own expansion to avoid heap allocation */
     snprintf(buffer, CR_BUFSIZE, "******************************************\n\n"
 	     "%s\n"		/* version info */
-	     "Command: %s\n"	/* argv0 */
+	     "Command: %s\n"	/* program name */
 	     "Process: %d\n"	/* pid */
 	     "Path: %s\n"	/* which binary */
 	     "Date: %s\n",	/* date/time */
 	     brlcad_ident("Crash Report"),
-	     bu_argv0(),
+	     bu_getprogname(),
 	     bu_process_id(),
 	     path ? path : "Unknown",
 	     ctime(&now));
@@ -107,7 +107,8 @@ bu_crashreport(const char *filename)
 	    fprintf(fp, "\nSystem characteristics:\n");
 	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
-		fwrite(buffer, 1, strlen(buffer), fp);
+		int ret;
+		ret = fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
@@ -133,10 +134,11 @@ bu_crashreport(const char *filename)
 	    fprintf(fp, "\nSystem information:\n");
 	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
+		int ret;
 		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] == '\n'))) {
 		    continue;
 		}
-		fwrite(buffer, 1, strlen(buffer), fp);
+		ret = fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)

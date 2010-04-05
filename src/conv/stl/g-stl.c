@@ -52,7 +52,7 @@
 }
 
 
-static char usage[] = "Usage: %s [-bvi] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
@@ -89,7 +89,7 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3])
+nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3])
 {
     struct model *m;
     struct shell *s;
@@ -285,7 +285,7 @@ nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
-    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 };
 static struct gcv_data gcvwriter = {nmg_to_stl};
 
@@ -299,6 +299,7 @@ main(int argc, char *argv[])
     int c;
     double percent;
     int i;
+    int use_mc = 0;
 
     bu_setlinebuf(stderr);
 
@@ -318,9 +319,9 @@ main(int argc, char *argv[])
     ttol.norm = 0.0;
 
     /* Set up calculation tolerance defaults */
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
@@ -333,7 +334,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:bMm:n:o:r:vx:D:P:X:i")) != EOF) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -345,6 +346,9 @@ main(int argc, char *argv[])
 	    case 'n':		/* Surface normal tolerance. */
 		ttol.norm = atof(bu_optarg);
 		ttol.rel = 0.0;
+		break;
+	    case 'M':
+		use_mc = 1;
 		break;
 	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
@@ -361,7 +365,7 @@ main(int argc, char *argv[])
 		break;
 	    case 'P':
 		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
@@ -463,8 +467,8 @@ main(int argc, char *argv[])
 			1,			/* ncpu */
 			&tree_state,
 			0,			/* take all regions */
-			gcv_region_end,
-			nmg_booltree_leaf_tess,
+			use_mc?gcv_region_end_mc:gcv_region_end,
+			use_mc?NULL:nmg_booltree_leaf_tess,
 			(genptr_t)&gcvwriter);
 
     percent = 0;

@@ -145,7 +145,7 @@ typedef struct FBIO_ {
     /* State variables for individual interface modules */
     union	{
 	char	*p;
-	long	l;
+	size_t	l;
     } u1, u2, u3, u4, u5, u6;
 } FBIO;
 

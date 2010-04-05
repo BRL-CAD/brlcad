@@ -1123,10 +1123,13 @@ nmg_ml(struct shell *s)
  * 1 If parent is empty, and is thus "illegal"
  */
 int
-nmg_kvu(register struct vertexuse *vu)
+nmg_kvu(struct vertexuse *vu)
 {
     struct vertex *v;
     int ret = 0;
+
+    if (!vu)
+	return 1;
 
     NMG_CK_VERTEXUSE(vu);
 
@@ -1143,13 +1146,15 @@ nmg_kvu(register struct vertexuse *vu)
     }
 
     v = vu->v_p;
-    NMG_CK_VERTEX(v);
+    if (v) {
+	NMG_CK_VERTEX(v);
 
-    BU_LIST_DEQUEUE(&vu->l);
-    if (BU_LIST_IS_EMPTY(&v->vu_hd)) {
-	/* last vertexuse on vertex */
-	if (v->vg_p) FREE_VERTEX_G(v->vg_p);
-	FREE_VERTEX(v);
+	BU_LIST_DEQUEUE(&vu->l);
+	if (BU_LIST_IS_EMPTY(&v->vu_hd)) {
+	    /* last vertexuse on vertex */
+	    if (v->vg_p) FREE_VERTEX_G(v->vg_p);
+	    FREE_VERTEX(v);
+	}
     }
 
     /* erase existence of this vertexuse from parent */
@@ -1240,6 +1245,9 @@ nmg_kfu(struct faceuse *fu1)
     struct shell *s;
     int ret;
 
+    if (!fu1)
+	return 1;
+
     NMG_CK_FACEUSE(fu1);
     fu2 = fu1->fumate_p;
     NMG_CK_FACEUSE(fu2);
@@ -1303,6 +1311,9 @@ nmg_klu(struct loopuse *lu1)
     struct loopuse *lu2;
     unsigned long magic1;
     int ret = 0;
+
+    if (!lu1)
+	return 1;
 
     NMG_CK_LOOPUSE(lu1);
     lu2 = lu1->lumate_p;
@@ -1385,9 +1396,13 @@ nmg_klu(struct loopuse *lu1)
 /* static */ int
 nmg_keg(struct edgeuse *eu)
 {
+    if (!eu)
+	return 1;
+
     NMG_CK_EDGEUSE(eu);
 
-    if (!eu->g.magic_p) return 0;	/* ??? what to return here */
+    if (!eu->g.magic_p)
+	return 1; /* no geometry to kill */
 
     switch (*eu->g.magic_p) {
 	case NMG_EDGE_G_LSEG_MAGIC: {
@@ -1396,8 +1411,9 @@ nmg_keg(struct edgeuse *eu)
 	    eu->g.magic_p = (unsigned long *)NULL;
 	    if (BU_LIST_NON_EMPTY(&lp->eu_hd2)) return 0;
 	    FREE_EDGE_G_LSEG(lp);
-	}
 	    break;
+	}
+
 	case NMG_EDGE_G_CNURB_MAGIC: {
 	    struct edge_g_cnurb *eg;
 	    eg = eu->g.cnurb_p;
@@ -1408,9 +1424,10 @@ nmg_keg(struct edgeuse *eu)
 		bu_free((char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
 	    }
 	    FREE_EDGE_G_CNURB(eg);
-	}
 	    break;
+	}
     }
+
     return 1;		/* edge geometry has been destroyed */
 }
 
@@ -1422,9 +1439,9 @@ nmg_keg(struct edgeuse *eu)
  *
  * Returns -
  * 0 If all is well
- * 1 If the parent now has no edgeuses, and is thus "illegal"
- * and in need of being deleted.  (The lu / shell deletion
- * can't be handled at this level, but must be done by the caller).
+ * 1 If the parent now has no edgeuses, and is thus "illegal" and in
+ * need of being deleted.  (The lu / shell deletion can't be handled
+ * at this level, and must be done by the caller).
  */
 int
 nmg_keu(register struct edgeuse *eu1)
@@ -1432,6 +1449,9 @@ nmg_keu(register struct edgeuse *eu1)
     register struct edgeuse *eu2;
     struct edge *e;
     int ret = 0;
+
+    if (!eu1)
+	return 0;
 
     NMG_CK_EDGEUSE(eu1);
     e = eu1->e_p;
@@ -1562,9 +1582,13 @@ nmg_ks(struct shell *s)
 {
     struct nmgregion *r;
 
+    if (!s)
+	return 0;
+
     NMG_CK_SHELL(s);
     r = s->r_p;
-    NMG_CK_REGION(r);
+    if (r)
+	NMG_CK_REGION(r);
 
     while (BU_LIST_NON_EMPTY(&s->fu_hd))
 	(void)nmg_kfu(BU_LIST_FIRST(faceuse, &s->fu_hd));
@@ -1585,7 +1609,10 @@ nmg_ks(struct shell *s)
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_ks(s=0x%p)\n", s);
     }
-    if (BU_LIST_IS_EMPTY(&r->s_hd)) return 1;
+
+    if (r && BU_LIST_IS_EMPTY(&r->s_hd))
+	return 1;
+
     return 0;
 }
 
@@ -1605,9 +1632,13 @@ nmg_kr(struct nmgregion *r)
 {
     struct model *m;
 
+    if (!r)
+	return 0;
+
     NMG_CK_REGION(r);
     m = r->m_p;
-    NMG_CK_MODEL(m);
+    if (m)
+	NMG_CK_MODEL(m);
 
     while (BU_LIST_NON_EMPTY(&r->s_hd))
 	(void)nmg_ks(BU_LIST_FIRST(shell, &r->s_hd));
@@ -1622,7 +1653,7 @@ nmg_kr(struct nmgregion *r)
 	bu_log("nmg_kr(r=0x%p)\n", r);
     }
 
-    if (BU_LIST_IS_EMPTY(&m->r_hd)) {
+    if (m && BU_LIST_IS_EMPTY(&m->r_hd)) {
 	m->maxindex = 1;	/* Reset when last region is killed */
 	return 1;
     }
@@ -1638,6 +1669,9 @@ nmg_kr(struct nmgregion *r)
 void
 nmg_km(struct model *m)
 {
+    if (!m)
+	return;
+
     NMG_CK_MODEL(m);
 
     while (BU_LIST_NON_EMPTY(&m->r_hd))

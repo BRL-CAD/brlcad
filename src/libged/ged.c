@@ -69,11 +69,15 @@ ged_close(struct ged *gedp)
     ged_free(gedp);
 }
 
+/* FIXME: this function should not exist.  passing pointers as strings
+ * indicates a failure in design and lazy coding.
+ */
 int
 ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
 {
-
-    *dbipp = (struct db_i *)atol(dbip_string);
+    if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
+	return GED_ERROR;
+    }
 
     /* Could core dump */
     RT_CK_DBI(*dbipp);
@@ -219,7 +223,12 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
+    /* FIXME: this causes the shaders.sh regression to fail */
+#if 0
     _ged_mat_aet(gvp);
+#else
+    /* _ged_mat_aet(gvp); */
+#endif
     ged_view_update(gvp);
 }
 
@@ -251,7 +260,10 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else {
 	struct db_i	*dbip;
 
-	if (sscanf(filename, "%llu", (unsigned long long *)&dbip) != 1) {
+	/* FIXME: this call should not exist.  passing pointers as
+	 * strings indicates a failure in design and lazy coding.
+	 */
+	if (sscanf(filename, "%p", (void **)&dbip) != 1) {
 	    /* Restore RT's material head */
 	    rt_new_material_head(save_materp);
 
@@ -422,7 +434,7 @@ _ged_print_node(struct ged		*gedp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource ) - rt_tree_array;
-	    BU_ASSERT_PTR( actual_count, ==, node_count );
+	    BU_ASSERT_LONG( actual_count, ==, node_count );
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;

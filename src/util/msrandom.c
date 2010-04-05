@@ -47,14 +47,14 @@ main(int argc, char **argv)
 
     int seed = bu_process_id();
     int high, low;
-    double  center = 0;
+    double center = 0;
     int verbose = 0;
     int gauss = 0;
     int uniform = 0;
     int cdone = 0;
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vugs:c:")) != EOF ) {
+    while ((c = bu_getopt(argc, argv, "vugs:c:")) != EOF) {
 	switch (c) {
 	    case 's':
 		seed = atoi(bu_optarg);

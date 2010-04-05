@@ -1550,6 +1550,8 @@ draw_pipe_arc(struct bu_list *vhead, fastf_t radius, fastf_t *center, const fast
     point_t pt;
     int i;
     
+    BU_CK_LIST_HEAD(vhead);
+
     if (!full_circle) {
         VSUB2(to_end, end, center);
         arc_angle = atan2(VDOT(to_end, v2), VDOT(to_end, v1));
@@ -1581,6 +1583,8 @@ draw_linear_seg(struct bu_list *vhead, const fastf_t *p1, const fastf_t or1, con
 {
     point_t pt;
     
+    BU_CK_LIST_HEAD(vhead);
+
     VJOIN1(pt, p1, or1, v1);
     RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
     VJOIN1(pt, p2, or2, v1);
@@ -1631,6 +1635,8 @@ draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end,
     mat_t mat;
     vect_t tmp_norm;
     
+    BU_CK_LIST_HEAD(vhead);
+
     VREVERSE(tmp_norm, norm);
     bn_mat_arb_rot(mat, center, tmp_norm, angle);
     MAT4X3VEC(tmp_vec, mat, f1);
@@ -1716,6 +1722,7 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     point_t current_point;
     vect_t f1, f2, f3;
     
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
@@ -3334,7 +3341,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     struct wdb_pipept *ptp;
     struct rt_pipe_internal *pip;
     fastf_t *vec;
-    int total_count;
+    size_t total_count;
     int double_count;
     int byte_count;
     unsigned long pipe_count;

@@ -701,7 +701,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 static int alive = 1;
 
 HIDDEN
-x_linger(FBIO *ifp)
+int x_linger(FBIO *ifp)
 {
 #if 0
     if ( fork() != 0 )
@@ -826,8 +826,7 @@ int *error1, *error2;
 
 int dither_bw(unsigned int pixel, register int count, register int line)
 {
-    if ( pixel > dm[((line%ditherPeriod)*ditherPeriod) +
-		    (count%ditherPeriod)])
+    if ( pixel > (unsigned)dm[((line%ditherPeriod)*ditherPeriod) + (count%ditherPeriod)])
 	return(1);
     else
 	return(0);
@@ -837,7 +836,7 @@ int dither_bw(unsigned int pixel, register int count, register int line)
  * Floyd Steinberg error distribution algorithm
  */
 int
-fs_bw(unsigned int pixel, register int count, register int line)
+fs_bw(unsigned int pixel, register int count)
 {
     int  onoff;
     int  intensity, error;
@@ -869,7 +868,7 @@ fs_bw(unsigned int pixel, register int count, register int line)
  * Modified Floyd Steinberg algorithm
  */
 int
-mfs_bw(unsigned int pixel, register int count, register int line)
+mfs_bw(unsigned int pixel, register int count)
 {
     int  onoff;
     int  intensity, error;
@@ -1352,8 +1351,12 @@ X_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 HIDDEN int
-X_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+X_setcursor(FBIO *ifp, const unsigned char *bits __attribute__((unused)), int xbits __attribute__((unused)), int ybits __attribute__((unused)), int xorig __attribute__((unused)), int yorig __attribute__((unused)))
 {
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
+
     return	0;
 }
 
@@ -1361,6 +1364,10 @@ HIDDEN int
 x_make_cursor(FBIO *ifp)
 {
     XSetWindowAttributes	xswa;
+
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
 
     xswa.save_under = True;
     XI(ifp)->curswin = XCreateWindow( XI(ifp)->dpy, XI(ifp)->win,
@@ -1535,11 +1542,11 @@ Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height,
 			mvalue |= bits[bit];
 		    }
 		} else if ( method == 1 ) {
-		    if ( fs_bw(*mpbuffer, col, row) ) {
+		    if ( fs_bw(*mpbuffer, col) ) {
 			mvalue |= bits[bit];
 		    }
 		} else if ( method == 2 ) {
-		    if ( mfs_bw(*mpbuffer, col, row) ) {
+		    if ( mfs_bw(*mpbuffer, col) ) {
 			mvalue |= bits[bit];
 		    }
 		} else if ( method == 3 ) {
@@ -1719,7 +1726,13 @@ FBIO X_interface = {
     0,			/* page_dirty		*/
     0L,			/* page_curpos		*/
     0L,			/* page_pixels		*/
-    0			/* debug		*/
+    0,			/* debug		*/
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 

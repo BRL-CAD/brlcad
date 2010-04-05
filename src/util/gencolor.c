@@ -19,9 +19,9 @@
  */
 /** @file gencolor.c
  *
- *  Output a pattern of bytes either forever or the requested
- *  number of times.  It gets the byte values either from the
- *  command line, or stdin.  Defaults to black.
+ * Output a pattern of bytes either forever or the requested
+ * number of times.  It gets the byte values either from the
+ * command line, or stdin.  Defaults to black.
  *
  */
 
@@ -35,47 +35,47 @@
 #include "bu.h"
 
 
-#define	MAX_BYTES	(128*1024)
+#define MAX_BYTES (128*1024)
 
 static const char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\n";
 
-int	bytes_in_buf, copies_per_buf;
+int bytes_in_buf, copies_per_buf;
 
-unsigned char	buf[MAX_BYTES];
+unsigned char buf[MAX_BYTES];
 
 
 int
 main(int argc, char **argv)
 {
-    int	i, len, times;
-    long	count;
+    int i, len, times;
+    long count;
     unsigned char *bp;
 
-    if ( argc < 1 || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", Usage );
+    if (argc < 1 || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", Usage);
     }
 
     count = -1;
-    if ( argc > 1 && strncmp( argv[1], "-r", 2 ) == 0 ) {
-	count = atoi( &argv[1][2] );
+    if (argc > 1 && strncmp(argv[1], "-r", 2) == 0) {
+	count = atoi(&argv[1][2]);
 	argv++;
 	argc--;
     }
 
-    if ( argc > 1 ) {
+    if (argc > 1) {
 	/* get values from the command line */
 	i = 0;
-	while ( argc > 1 && i < MAX_BYTES ) {
-	    buf[i] = atoi( argv[i+1] );
+	while (argc > 1 && i < MAX_BYTES) {
+	    buf[i] = atoi(argv[i+1]);
 	    argc--;
 	    i++;
 	}
 	len = i;
-    } else if ( !isatty(fileno(stdin)) ) {
+    } else if (!isatty(fileno(stdin))) {
 	/* get values from stdin */
-	len = fread( (char *)buf, 1, MAX_BYTES, stdin );
-	if ( len <= 0 ) {
-	    bu_exit(2, "%s", Usage );
+	len = fread((char *)buf, 1, MAX_BYTES, stdin);
+	if (len <= 0) {
+	    bu_exit(2, "%s", Usage);
 	}
     } else {
 	/* assume black */
@@ -90,17 +90,17 @@ main(int argc, char **argv)
     copies_per_buf = 1;
     bytes_in_buf = len;
     bp = &buf[len];
-    while ( (MAX_BYTES - bytes_in_buf) >= len ) {
-	for ( i = 0; i < len; i++ )
+    while ((MAX_BYTES - bytes_in_buf) >= len) {
+	for (i = 0; i < len; i++)
 	    *bp++ = buf[i];
 	copies_per_buf++;
 	bytes_in_buf += len;
     }
 
-    if ( count < 0 ) {
+    if (count < 0) {
 	/* output forever */
-	while ( 1 )  {
-	    if ( write( 1, (char *)buf, bytes_in_buf ) != bytes_in_buf )  {
+	while (1) {
+	    if (write(1, (char *)buf, bytes_in_buf) != bytes_in_buf) {
 		perror("write");
 		break;
 	    }
@@ -108,9 +108,9 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    while ( count > 0 ) {
+    while (count > 0) {
 	times = copies_per_buf > count ? count : copies_per_buf;
-	if ( write( 1, (char *)buf, len * times ) != len * times )  {
+	if (write(1, (char *)buf, len * times) != len * times) {
 	    perror("write");
 	    return 1;
 	}
@@ -119,6 +119,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

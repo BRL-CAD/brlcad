@@ -19,7 +19,7 @@
  */
 /** @file grid.c
  *
- * Routines to implement MGED's snap to grid capability.
+ * Routines that provide the basics for a snap to grid capability.
  *
  */
 
@@ -36,7 +36,9 @@
 
 
 static void ged_grid_vls_print(struct ged *gedp);
+#if 0
 static void ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my);
+#endif
 static void ged_grid_vsnap(struct ged *gedp);
 
 static char ged_grid_syntax[] = "\
@@ -218,7 +220,7 @@ ged_grid(struct ged	*gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
+	bu_vls_printf(&gedp->ged_result_str, "The '%s anchor' command requires 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
@@ -275,8 +277,8 @@ ged_grid_vls_print(struct ged *gedp)
     bu_vls_printf(&gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_grid.ggs_snap);
 }
 
-static void
-ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my)
+void
+ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
 {
     int nh, nv;		/* whole grid units */
     point_t view_pt;
@@ -287,6 +289,9 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my)
     fastf_t inv_sf;
     fastf_t local2base = 1.0 / gedp->ged_wdbp->dbip->dbi_base2local;
 
+    if (gedp->ged_gvp == GED_VIEW_NULL)
+	return;
+
     if (NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_h, (fastf_t)SMALL_FASTF) ||
 	NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_v, (fastf_t)SMALL_FASTF))
 	return;
@@ -294,7 +299,7 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my)
     sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
     inv_sf = 1 / sf;
 
-    VSET(view_pt, *mx, *my, 0.0);
+    VSET(view_pt, *vx, *vy, 0.0);
     VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
 
     MAT4X3PNT(view_grid_anchor, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_grid.ggs_anchor);
@@ -309,21 +314,21 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my)
     grid_units_v -= nv;		/* now contains only the fraction part */
 
     if (grid_units_h <= -0.5)
-	*mx = view_grid_anchor[X] - ((nh - 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+	*vx = view_grid_anchor[X] - ((nh - 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
     else if (0.5 <= grid_units_h)
-	*mx = view_grid_anchor[X] - ((nh + 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+	*vx = view_grid_anchor[X] - ((nh + 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
     else
-	*mx = view_grid_anchor[X] - (nh * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+	*vx = view_grid_anchor[X] - (nh * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
 
     if (grid_units_v <= -0.5)
-	*my = view_grid_anchor[Y] - ((nv - 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+	*vy = view_grid_anchor[Y] - ((nv - 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
     else if (0.5 <= grid_units_v)
-	*my = view_grid_anchor[Y] - ((nv + 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+	*vy = view_grid_anchor[Y] - ((nv + 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
     else
-	*my = view_grid_anchor[Y] - (nv  * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+	*vy = view_grid_anchor[Y] - (nv  * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
 
-    *mx *= inv_sf;
-    *my *= inv_sf;
+    *vx *= inv_sf;
+    *vy *= inv_sf;
 }
 
 static void

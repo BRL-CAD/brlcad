@@ -83,7 +83,6 @@ bin_PROGRAMS = \
 	msrandom \
 	mst \
 	orle-pix \
-	pcd-pix \
 	pix-alias \
 	pix-bw \
 	pix-bw3 \
@@ -164,9 +163,7 @@ noinst_PROGRAMS = \
 	${PC_TEST} \
 	roots_example
 
-
 dist_bin_SCRIPTS = \
-	rtwizard \
 	morphedit.tcl
 
 
@@ -318,9 +315,6 @@ mst_LDADD = ${BU}
 
 orle_pix_SOURCES = orle-pix.c
 orle_pix_LDADD = ${FB} ${BU} ${ORLE}
-
-pcd_pix_SOURCES = pcd-pix.c
-pcd_pix_LDADD = ${BU}
 
 pix3filter_SOURCES = pix3filter.c
 pix3filter_LDADD = ${BU}
@@ -572,11 +566,6 @@ xyz_pl_LDADD = ${BN} ${BU}
 yuv_pix_SOURCES = yuv-pix.c
 yuv_pix_LDADD = ${FB} ${BN} ${BU}
 
-rtwizard: rtwizard.tcl
-	cp $(top_srcdir)/src/util/rtwizard.tcl rtwizard
-
-CLEANFILES = rtwizard
-
 man_MANS = \
 	ap-pix.1 \
 	asc-pl.1 \
@@ -614,7 +603,6 @@ man_MANS = \
 	mac-pix.1 \
 	morphedit.1 \
 	orle-pix.1 \
-	pcd-pix.1 \
 	pix-alias.1 \
 	pix-bw.1 \
 	pix-bw3.1 \
@@ -687,9 +675,7 @@ EXTRA_DIST = \
 	${BOMBARDIER_EXTRA} \
 	${PC_TEST_EXTRA} \
 	${PL_DM_EXTRA} \
-	${PL_X_EXTRA} \
-	rtwizard.bat \
-	rtwizard.tcl
+	${PL_X_EXTRA}
 
 DEPENDS = src/liborle src/libdm src/libfb src/libpc
 
@@ -740,7 +726,6 @@ FAST_OBJECTS = \
 	$(mst_OBJECTS) \
 	$(op_bw_OBJECTS) \
 	$(orle_pix_OBJECTS) \
-	$(pcd_pix_OBJECTS) \
 	$(pix_alias_OBJECTS) \
 	$(pix_bw_OBJECTS) \
 	$(pix_bw3_OBJECTS) \

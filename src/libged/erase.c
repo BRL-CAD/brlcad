@@ -74,7 +74,6 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     for ( i=0; i<argc; i++ ) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
-	char *c;
 
 	if ( *argv[i] != '-' ) break;
 	if ( (ptr_A=strchr(argv[i], 'A' )) ) flag_A_attr = 1;
@@ -93,7 +92,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 #endif
 	}
 
-	if (strlen( argv[i] ) == (1 + (ptr_A != NULL) + (ptr_o != NULL))) {
+	if (strlen( argv[i] ) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
 	    /* argv[i] is just a "-A" or "-o" */
 	    continue;
 	}
@@ -334,6 +333,25 @@ ged_erasePathFromDisplay(struct ged *gedp,
 	db_free_full_path(&subpath);
 }
 
+HIDDEN void
+eraseAllSubpathsFromSolidList(struct ged_display_list *gdlp,
+				  struct db_full_path *subpath,
+				  const int skip_first)
+{
+    struct solid *sp;
+    struct solid *nsp;
+
+    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
+	nsp = BU_LIST_PNEXT(solid, sp);
+	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_SOLID(sp, &_FreeSolid.l);
+	}
+	sp = nsp;
+    }
+}
+
 /*
  * Erase/remove display list item from headDisplay if name is found anywhere along item's path with
  * the exception that the first path element is skipped if skip_first is true.
@@ -351,15 +369,15 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	char *dup;
+	char *dup_path;
 	char *tok;
 	int first = 1;
 	int found = 0;
 
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
-	dup = strdup(bu_vls_addr(&gdlp->gdl_path));
-	tok = strtok(dup, "/");
+	dup_path = strdup(bu_vls_addr(&gdlp->gdl_path));
+	tok = strtok(dup_path, "/");
 	while (tok) {
 	    if (first) {
 		first = 0;
@@ -385,12 +403,12 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 	    struct db_full_path subpath;
 
 	    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, name) == 0) {
-		_ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
+		eraseAllSubpathsFromSolidList(gdlp, &subpath, skip_first);
 		db_free_full_path(&subpath);
 	    }
 	}
 
-	free((void *)dup);
+	free((void *)dup_path);
 	gdlp = next_gdlp;
     }
 }
@@ -416,7 +434,7 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
 		    _ged_freeDisplayListItem(gedp, gdlp);
 		} else {
-		    _ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
+		    eraseAllSubpathsFromSolidList(gdlp, &subpath, skip_first);
 		}
 
 		db_free_full_path(&fullpath);
@@ -426,26 +444,6 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 	}
 
 	db_free_full_path(&subpath);
-    }
-}
-
-void
-_ged_eraseAllSubpathsFromSolidList(struct ged *gedp,
-				  struct ged_display_list *gdlp,
-				  struct db_full_path *subpath,
-				  const int skip_first)
-{
-    struct solid *sp;
-    struct solid *nsp;
-
-    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
-    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
-	nsp = BU_LIST_PNEXT(solid, sp);
-	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
-	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &_FreeSolid.l);
-	}
-	sp = nsp;
     }
 }
 

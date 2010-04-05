@@ -37,7 +37,9 @@
 
 
 /* c99 doesn't declare these */
+#if !defined(_WIN32) || defined(__CYGWIN__)
 extern FILE *fdopen(int, const char *);
+#endif
 
 
 struct _bu_tf_list {
@@ -51,7 +53,7 @@ static struct _bu_tf_list *_bu_tf = NULL;
 
 
 HIDDEN void
-_bu_close_files()
+_bu_close_files(void)
 {
     struct _bu_tf_list *popped;
     if (!_bu_tf) {
@@ -127,8 +129,8 @@ mkstemp(char *file_template)
     int fd = -1;
     int counter = 0;
     char *filepath = NULL;
-    int i;
-    int start, end;
+    size_t i;
+    size_t start, end;
 
     static const char replace[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     static int replacelen = sizeof(replace) - 1;

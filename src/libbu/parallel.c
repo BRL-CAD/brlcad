@@ -186,7 +186,7 @@ bu_nice_set(int newnice)
 #else /* !HAVE_SETPRIORITY */
     /* no known means to change the nice value */
     if (bu_debug) {
-	bu_log("bu_nice_set() Priority NOT changed\n");
+	bu_log("bu_nice_set(%d) Priority NOT changed\n", newnice);
     }
 #endif  /* _WIN32 */
 }
@@ -471,10 +471,13 @@ bu_get_public_cpus(void)
     int public_cpus = 1;
     FILE *fp;
 
-    if ((fp = fopen(PUBLIC_CPUS1, "rb")) != NULL ||
-	(fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
-	) {
-	(void)fscanf(fp, "%d", &public_cpus);
+    if ((fp = fopen(PUBLIC_CPUS1, "rb")) != NULL
+	|| (fp = fopen(PUBLIC_CPUS2, "rb")) != NULL)
+    {
+	int ret;
+	ret = fscanf(fp, "%d", &public_cpus);
+	if (ret != 1)
+	    public_cpus = 1;
 	fclose(fp);
 	if (public_cpus < 0)  public_cpus = avail_cpus + public_cpus;
 	if (public_cpus > avail_cpus)  public_cpus = avail_cpus;

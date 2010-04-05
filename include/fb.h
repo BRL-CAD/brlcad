@@ -36,7 +36,7 @@
  * Needed for fd_set, avoid including sys/select.h outright since it
  * conflicts on some systems (e.g. freebsd4).
  *
- * XXX would be nice to decouple this interface from fd_set as it's
+ * FIXME: would be nice to decouple this interface from fd_set as it's
  * only used in one place right now.
  */
 #if defined(HAVE_SYS_TYPES_H)
@@ -167,10 +167,10 @@ FB_EXPORT extern int wgl_close_existing();
 		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
 			_str, __FILE__, __LINE__ ); \
 		abort(); \
-	} else if ( *((long *)(_ptr)) != (_magic) )  { \
-		fb_log("ERROR: bad %s ptr x%x, s/b x%x, was x%x, file %s, line %d\n", \
-			_str, _ptr, _magic, \
-			*((long *)(_ptr)), __FILE__, __LINE__ ); \
+	} else if ( (uint32_t)(*((uintptr_t *)(_ptr))) != (uint32_t)(_magic) )  { \
+		fb_log("ERROR: bad %s ptr %p, s/b 0x%x, was 0x%x, file %s, line %d\n", \
+			_str, _ptr, (uint32_t)_magic, \
+			(uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__ ); \
 		abort(); \
 	}
 

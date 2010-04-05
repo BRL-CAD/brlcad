@@ -112,8 +112,8 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 {
     struct bu_vls str;
     char *temp_string = (char *)NULL;
-    int index = 0;
-    int format_string_length = 0;
+    size_t index = 0;
+    size_t format_string_length = 0;
     int ret = GED_OK;
 
     bu_vls_init(&str);

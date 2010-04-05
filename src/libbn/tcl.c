@@ -22,7 +22,7 @@
 /** @file bn_tcl.c
  *
  * @brief
- *  Tcl interfaces to all the LIBBN math routines.
+ * Tcl interfaces to all the LIBBN math routines.
  *
  */
 
@@ -49,11 +49,11 @@
 int
 bn_decode_mat(fastf_t *m, const char *str)
 {
-    if ( strcmp( str, "I" ) == 0 )  {
-	MAT_IDN( m );
+    if (strcmp(str, "I") == 0) {
+	MAT_IDN(m);
 	return 16;
     }
-    if ( *str == '{' )  str++;
+    if (*str == '{') str++;
 
     return sscanf(str,
 		  "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
@@ -61,31 +61,35 @@ bn_decode_mat(fastf_t *m, const char *str)
 		  &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
 }
 
+
 int
 bn_decode_quat(fastf_t *q, const char *str)
 {
-    if ( *str == '{' )  str++;
+    if (*str == '{') str++;
     return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
 }
+
 
 int
 bn_decode_vect(fastf_t *v, const char *str)
 {
-    if ( *str == '{' )  str++;
+    if (*str == '{') str++;
     return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
 }
+
 
 int
 bn_decode_hvect(fastf_t *v, const char *str)
 {
-    if ( *str == '{' )  str++;
+    if (*str == '{') str++;
     return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
 }
+
 
 void
 bn_encode_mat(struct bu_vls *vp, const mat_t m)
 {
-    if ( m == NULL )  {
+    if (m == NULL) {
 	bu_vls_putc(vp, 'I');
 	return;
     }
@@ -97,11 +101,13 @@ bn_encode_mat(struct bu_vls *vp, const mat_t m)
 		  INTCLAMP(m[12]), INTCLAMP(m[13]), INTCLAMP(m[14]), INTCLAMP(m[15]));
 }
 
+
 void
 bn_encode_quat(struct bu_vls *vp, const mat_t q)
 {
     bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(q));
 }
+
 
 void
 bn_encode_vect(struct bu_vls *vp, const mat_t v)
@@ -109,11 +115,13 @@ bn_encode_vect(struct bu_vls *vp, const mat_t v)
     bu_vls_printf(vp, "%g %g %g", V3INTCLAMPARGS(v));
 }
 
+
 void
 bn_encode_hvect(struct bu_vls *vp, const mat_t v)
 {
     bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(v));
 }
+
 
 void
 bn_quat_distance_wrapper(double *dp, mat_t q1, mat_t q2)
@@ -121,11 +129,13 @@ bn_quat_distance_wrapper(double *dp, mat_t q1, mat_t q2)
     *dp = quat_distance(q1, q2);
 }
 
+
 void
 bn_mat_scale_about_pt_wrapper(int *statusp, mat_t mat, const point_t pt, const double scale)
 {
     *statusp = bn_mat_scale_about_pt(mat, pt, scale);
 }
+
 
 static void
 bn_mat4x3pnt(fastf_t *o, mat_t m, point_t i)
@@ -133,11 +143,13 @@ bn_mat4x3pnt(fastf_t *o, mat_t m, point_t i)
     MAT4X3PNT(o, m, i);
 }
 
+
 static void
 bn_mat4x3vec(fastf_t *o, mat_t m, vect_t i)
 {
     MAT4X3VEC(o, m, i);
 }
+
 
 static void
 bn_hdivide(fastf_t *o, const mat_t i)
@@ -145,16 +157,17 @@ bn_hdivide(fastf_t *o, const mat_t i)
     HDIVIDE(o, i);
 }
 
+
 static void
 bn_vjoin1(fastf_t *o, const point_t pnt, double scale, const vect_t dir)
 {
-    VJOIN1( o, pnt, scale, dir );
+    VJOIN1(o, pnt, scale, dir);
 }
 
 
 static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
 {
-    VBLEND2( a, b, c, d, e );
+    VBLEND2(a, b, c, d, e);
 }
 
 
@@ -202,9 +215,8 @@ static struct math_func_link {
 };
 
 
-
 /**
- *			B N _ M A T H _ C M D
+ * B N _ M A T H _ C M D
  *@brief
  * Tcl wrappers for the math functions.
  *
@@ -288,29 +300,29 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    bu_vls_printf(&result, "usage: %s pnt scale dir", argv[0]);
 	    goto error;
 	}
-	if ( bn_decode_vect(b, argv[1]) < 3) goto error;
+	if (bn_decode_vect(b, argv[1]) < 3) goto error;
 	if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
-	if ( bn_decode_vect(d, argv[3]) < 3) goto error;
+	if (bn_decode_vect(d, argv[3]) < 3) goto error;
 
-	VJOIN1( o, b, c, d );	/* bn_vjoin1( o, b, c, d ) */
+	VJOIN1(o, b, c, d);	/* bn_vjoin1(o, b, c, d) */
 	bn_encode_vect(&result, o);
 
-    } else if ( math_func == bn_vblend) {
+    } else if (math_func == bn_vblend) {
 	point_t a, c, e;
 	fastf_t b, d;
 
-	if ( argc < 5 ) {
+	if (argc < 5) {
 	    bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
 	    goto error;
 	}
 
-	if ( Tcl_GetDouble(interp, argv[1], &b) != TCL_OK) goto error;
-	if ( bn_decode_vect( c, argv[2] ) < 3) goto error;
-	if ( Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
-	if ( bn_decode_vect( e, argv[4] ) < 3) goto error;
+	if (Tcl_GetDouble(interp, argv[1], &b) != TCL_OK) goto error;
+	if (bn_decode_vect(c, argv[2]) < 3) goto error;
+	if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
+	if (bn_decode_vect(e, argv[4]) < 3) goto error;
 
-	VBLEND2( a, b, c, d, e )
-	    bn_encode_vect( &result, a );
+	VBLEND2(a, b, c, d, e)
+	    bn_encode_vect(&result, a);
 
     } else if (math_func == bn_mat_ae) {
 	mat_t o;
@@ -358,8 +370,8 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    bu_vls_printf(&result, "usage: %s alpha beta gamma", argv[0]);
 	    goto error;
 	}
-	if (Tcl_GetDouble(interp, argv[1], &alpha) != TCL_OK)  goto error;
-	if (Tcl_GetDouble(interp, argv[2], &beta) != TCL_OK)   goto error;
+	if (Tcl_GetDouble(interp, argv[1], &alpha) != TCL_OK) goto error;
+	if (Tcl_GetDouble(interp, argv[2], &beta) != TCL_OK) goto error;
 	if (Tcl_GetDouble(interp, argv[3], &ggamma) != TCL_OK) goto error;
 
 	bn_mat_angles(o, alpha, beta, ggamma);
@@ -668,7 +680,7 @@ bn_cmd_noise_perlin(ClientData clientData,
 		    char **argv)
 {
     point_t pt;
-    double	v;
+    double v;
 
     clientData = clientData; /* quell warning */
 
@@ -683,14 +695,15 @@ bn_cmd_noise_perlin(ClientData clientData,
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
 
-    v = bn_noise_perlin( pt );
-    Tcl_SetObjResult( interp, Tcl_NewDoubleObj(v) );
+    v = bn_noise_perlin(pt);
+    Tcl_SetObjResult(interp, Tcl_NewDoubleObj(v));
 
     return TCL_OK;
 }
 
+
 /*
- *  usage: bn_noise_fbm X Y Z h_val lacunarity octaves
+ * usage: bn_noise_fbm X Y Z h_val lacunarity octaves
  *
  */
 int
@@ -726,10 +739,10 @@ bn_cmd_noise(ClientData clientData,
     if (!strcmp("bn_noise_turb", argv[0])) {
 	val = bn_noise_turb(pt, h_val, lacunarity, octaves);
 
-	Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
-    } else 	if (!strcmp("bn_noise_fbm", argv[0])) {
+	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
+    } else if (!strcmp("bn_noise_fbm", argv[0])) {
 	val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
-	Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
+	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
     } else {
 	Tcl_AppendResult(interp, "Unknown noise type \"",
 			 argv[0], "\"",	 NULL);
@@ -741,10 +754,10 @@ bn_cmd_noise(ClientData clientData,
 
 /**
  * @brief
- *	usage: noise_slice xdim ydim inv h_val lac octaves dX dY dZ sX [sY sZ]
+ * usage: noise_slice xdim ydim inv h_val lac octaves dX dY dZ sX [sY sZ]
  *
- *	The idea here is to get a whole slice of noise at once, thereby
- *	avoiding the overhead of doing this in Tcl.
+ * The idea here is to get a whole slice of noise at once, thereby
+ * avoiding the overhead of doing this in Tcl.
  */
 int
 bn_cmd_noise_slice(ClientData clientData,
@@ -827,10 +840,10 @@ bn_cmd_noise_slice(ClientData clientData,
 
     if (!strcmp("bn_noise_turb", argv[0])) {
 	val = bn_noise_turb(pt, h_val, lacunarity, octaves);
-	Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
-    } else 	if (!strcmp("bn_noise_fbm", argv[0])) {
+	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
+    } else if (!strcmp("bn_noise_fbm", argv[0])) {
 	val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
-	Tcl_SetObjResult( interp, Tcl_NewDoubleObj(val) );
+	Tcl_SetObjResult(interp, Tcl_NewDoubleObj(val));
     } else {
 	Tcl_AppendResult(interp, "Unknown noise type \"",
 			 argv[0], "\"",	 NULL);
@@ -883,15 +896,16 @@ bn_cmd_random(ClientData clientData,
     return TCL_OK;
 }
 
+
 /**
- *			B N _ M A T _ P R I N T
+ * B N _ M A T _ P R I N T
  */
 void
-bn_tcl_mat_print(Tcl_Interp		*interp,
-		 const char		*title,
-		 const mat_t		m)
+bn_tcl_mat_print(Tcl_Interp *interp,
+		 const char *title,
+		 const mat_t m)
 {
-    char		obuf[1024];	/* sprintf may be non-PARALLEL */
+    char obuf[1024];	/* sprintf may be non-PARALLEL */
 
     bn_mat_print_guts(title, m, obuf, 1024);
     Tcl_AppendResult(interp, obuf, "\n", (char *)NULL);
@@ -899,10 +913,10 @@ bn_tcl_mat_print(Tcl_Interp		*interp,
 
 
 /**
- *			B N _ T C L _ S E T U P
+ * B N _ T C L _ S E T U P
  *@brief
- *  Add all the supported Tcl interfaces to LIBBN routines to
- *  the list of commands known by the given interpreter.
+ * Add all the supported Tcl interfaces to LIBBN routines to
+ * the list of commands known by the given interpreter.
  */
 void
 bn_tcl_setup(Tcl_Interp *interp)
@@ -939,12 +953,12 @@ bn_tcl_setup(Tcl_Interp *interp)
 
 
 /**
- *			B N _ I N I T
+ * B N _ I N I T
  *@brief
- *  Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
- *  "load /usr/brlcad/lib/libbn.so"
+ * Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
+ * "load /usr/brlcad/lib/libbn.so"
  *
- *  The name of this function is specified by TCL.
+ * The name of this function is specified by TCL.
  */
 int
 Bn_Init(Tcl_Interp *interp)
@@ -954,8 +968,6 @@ Bn_Init(Tcl_Interp *interp)
 }
 
 
-double bn_noise_fbm(point_t point, double h_val, double lacunarity, double octaves);
-double bn_noise_turb(point_t point, double h_val, double lacunarity, double octaves);
 /** @} */
 /*
  * Local Variables:

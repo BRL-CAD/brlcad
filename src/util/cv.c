@@ -39,37 +39,37 @@ Where a pattern is: [h|n][s|u] c|s|i|l|d|8|16|32|64\n\
 e.g., hui is host unsigned int, nl is network (signed) long\n\
 ";
 
-int	in_cookie;
-int	out_cookie;
+int in_cookie;
+int out_cookie;
 
-int	iitem;
-int	oitem;
+int iitem;
+int oitem;
 
-int	inbytes;
-int	outbytes;
+int inbytes;
+int outbytes;
 
-FILE	*infp;
-FILE	*outfp;
+FILE *infp;
+FILE *outfp;
 
-genptr_t	ibuf;
-genptr_t	obuf;
+genptr_t ibuf;
+genptr_t obuf;
 
 int
 main(int argc, char **argv)
 {
-    int	m;
-    int	n;
+    int m;
+    int n;
 
-    if ( argc < 3 || argc > 5 )  {
-	fputs( usage, stderr );
+    if (argc < 3 || argc > 5) {
+	fputs(usage, stderr);
 	return 1;
     }
 
-    in_cookie = bu_cv_cookie( argv[1] );
-    out_cookie = bu_cv_cookie( argv[2] );
+    in_cookie = bu_cv_cookie(argv[1]);
+    out_cookie = bu_cv_cookie(argv[2]);
 
-    if ( argc >= 5 )  {
-	if ( (outfp = fopen( argv[4], "w" )) == NULL )  {
+    if (argc >= 5) {
+	if ((outfp = fopen(argv[4], "w")) == NULL) {
 	    perror(argv[4]);
 	    return 2;
 	}
@@ -77,8 +77,8 @@ main(int argc, char **argv)
 	outfp = stdout;
     }
 
-    if ( argc >= 4 )  {
-	if ( (infp = fopen( argv[3], "r" )) == NULL )  {
+    if (argc >= 4) {
+	if ((infp = fopen(argv[3], "r")) == NULL) {
 	    perror(argv[3]);
 	    return 3;
 	}
@@ -86,32 +86,32 @@ main(int argc, char **argv)
 	infp = stdin;
     }
 
-    if ( isatty(fileno(outfp)) )  {
+    if (isatty(fileno(outfp))) {
 	fprintf(stderr, "cv: trying to send binary output to terminal\n");
 	return 5;
     }
 
-    iitem = bu_cv_itemlen( in_cookie );
-    oitem = bu_cv_itemlen( out_cookie );
-#define NITEMS	(64*1024)
+    iitem = bu_cv_itemlen(in_cookie);
+    oitem = bu_cv_itemlen(out_cookie);
+#define NITEMS (64*1024)
     inbytes = NITEMS*iitem;
     outbytes = NITEMS*oitem;
 
-    ibuf = (genptr_t)bu_malloc( inbytes, "cv input buffer" );
-    obuf = (genptr_t)bu_malloc( outbytes, "cv output buffer" );
+    ibuf = (genptr_t)bu_malloc(inbytes, "cv input buffer");
+    obuf = (genptr_t)bu_malloc(outbytes, "cv output buffer");
 
-    while ( !feof( infp ) )  {
-	if ( (n = fread( ibuf, iitem, NITEMS, infp )) <= 0 )
+    while (!feof(infp)) {
+	if ((n = fread(ibuf, iitem, NITEMS, infp)) <= 0)
 	    break;
-	m = bu_cv_w_cookie( obuf, out_cookie, outbytes, ibuf, in_cookie, n );
-	if ( m != n )  {
-	    fprintf(stderr, "cv: bu_cv_w_cookie() ret=%d, count=%d\n", m, n );
+	m = bu_cv_w_cookie(obuf, out_cookie, outbytes, ibuf, in_cookie, n);
+	if (m != n) {
+	    fprintf(stderr, "cv: bu_cv_w_cookie() ret=%d, count=%d\n", m, n);
 	    return 4;
 	}
-	m = fwrite( obuf, oitem, n, outfp );
-	if ( m != n )  {
+	m = fwrite(obuf, oitem, n, outfp);
+	if (m != n) {
 	    perror("fwrite");
-	    fprintf(stderr, "cv: fwrite() ret=%d, count=%d\n", m, n );
+	    fprintf(stderr, "cv: fwrite() ret=%d, count=%d\n", m, n);
 	    return 5;
 	}
     }
@@ -120,6 +120,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

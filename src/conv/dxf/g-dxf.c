@@ -129,7 +129,7 @@ find_closest_color( float color[3] )
 
 
 static void
-nmg_to_dxf( struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3] )
+nmg_to_dxf( struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3] )
 {
     struct model *m;
     struct shell *s;
@@ -344,11 +344,7 @@ nmg_to_dxf( struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 }
 
 
-union tree *get_layer(tsp, pathp, curtree, client_data)
-    struct db_tree_state	*tsp;
-    struct db_full_path	*pathp;
-    union tree		*curtree;
-    genptr_t		client_data;
+union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     char *layer_name;
     int color_num;
@@ -366,7 +362,7 @@ union tree *get_layer(tsp, pathp, curtree, client_data)
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
-    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 };
 static struct gcv_data gcvwriter = {nmg_to_dxf};
 
@@ -386,9 +382,7 @@ static struct gcv_data gcvwriter = {nmg_to_dxf};
  * 8. Cleanup
  */
 int
-main(argc, argv)
-    int	argc;
-    char	*argv[];
+main(int argc, char *argv[])
 {
     int	c;
     double		percent;
@@ -412,9 +406,9 @@ main(argc, argv)
     ttol.norm = 0.0;
 
     /* Set up calculation tolerance defaults */
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
@@ -449,7 +443,7 @@ main(argc, argv)
 		break;
 	    case 'P':
 		ncpu = atoi( bu_optarg );
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );

@@ -280,10 +280,10 @@ struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, struct dire
 void wdb_identitize(struct directory *dp, struct db_i *dbip, Tcl_Interp *interp);
 static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, int num_entries);
-static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
-HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-int wdb_dir_check(struct db_i *input_dbip, const char *name, long laddr, int len, int flags, genptr_t ptr);
-void wdb_dir_check5(struct db_i *input_dbip, const struct db5_raw_internal *rip, long addr, genptr_t ptr);
+static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
+HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+int wdb_dir_check(struct db_i *input_dbip, const char *name, size_t laddr, size_t len, int flags, genptr_t ptr);
+void wdb_dir_check5(struct db_i *input_dbip, const struct db5_raw_internal *rip, size_t addr, genptr_t ptr);
 
 static int pathListNoLeaf = 0;
 
@@ -548,7 +548,7 @@ wdb_init_obj(Tcl_Interp *interp,
  *@n db close
  */
 static int
-wdb_open_tcl(ClientData clientData,
+wdb_open_tcl(ClientData clientData __attribute__((unused)),
 	     Tcl_Interp *interp,
 	     int argc,
 	     const char *argv[])
@@ -639,8 +639,9 @@ Usage: wdb_open\n\
 int
 wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp)
 {
-
-    *dbipp = (struct db_i *)atol(dbip_string);
+    if (sscanf(dbip_string, "%p", dbipp) != 1) {
+	return GED_ERROR;
+    }
 
     /* Could core dump */
     RT_CK_DBI_TCL(interp, *dbipp);
@@ -762,7 +763,7 @@ wdb_reopen_tcl(ClientData clientData,
 int
 wdb_match_cmd(struct rt_wdb *wdbp,
 	      Tcl_Interp *interp,
-	      int argc,
+	      int argc __attribute__((unused)),
 	      char *argv[])
 {
     struct bu_vls matches;
@@ -1279,7 +1280,7 @@ wdb_adjust_tcl(ClientData clientData,
  *
  */
 int
-wdb_form_cmd(struct rt_wdb *wdbp,
+wdb_form_cmd(struct rt_wdb *wdbp __attribute__((unused)),
 	     Tcl_Interp *interp,
 	     int argc,
 	     char *argv[])
@@ -1597,11 +1598,11 @@ struct showmats_data {
  */
 static void
 Do_showmats(struct db_i *dbip,
-	    struct rt_comb_internal *comb,
+	    struct rt_comb_internal *comb __attribute__((unused)),
 	    union tree *comb_leaf,
 	    genptr_t user_ptr1,
-	    genptr_t user_ptr2,
-	    genptr_t user_ptr3)
+	    genptr_t user_ptr2 __attribute__((unused)),
+	    genptr_t user_ptr3 __attribute__((unused)))
 {
     struct showmats_data *smdp;
 
@@ -1906,7 +1907,7 @@ wdb_dump_tcl(ClientData clientData,
  *
  */
 int
-wdb_stub_cmd(struct rt_wdb *wdbp,
+wdb_stub_cmd(struct rt_wdb *wdbp __attribute__((unused)),
 	     Tcl_Interp *interp,
 	     int argc,
 	     char *argv[])
@@ -1962,7 +1963,7 @@ wdb_dbip_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%lu", (unsigned long)wdbp->dbip);
+    bu_vls_printf(&vls, "%p", wdbp->dbip);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -3735,7 +3736,7 @@ struct dir_check_stuff {
 void
 wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
-	       long addr,
+	       size_t addr __attribute__((unused)),
 	       genptr_t ptr)
 {
     char *name;
@@ -3798,7 +3799,7 @@ wdb_dir_check5(struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(struct db_i *input_dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, size_t laddr __attribute__((unused)), size_t len __attribute__((unused)), int flags __attribute__((unused)), genptr_t ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;
@@ -3854,8 +3855,6 @@ wdb_dup_cmd(struct rt_wdb *wdbp,
     struct dir_check_stuff dcs;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias wdb_dup %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -4295,8 +4294,8 @@ wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
  *
  */
 static void
-wdb_find_ref(struct db_i *dbip,
-	     struct rt_comb_internal *comb,
+wdb_find_ref(struct db_i *dbip __attribute__((unused)),
+	     struct rt_comb_internal *comb __attribute__((unused)),
 	     union tree *comb_leaf,
 	     genptr_t object,
 	     genptr_t comb_name_ptr,
@@ -4322,11 +4321,7 @@ wdb_find_ref(struct db_i *dbip,
  *
  */
 HIDDEN union tree *
-facetize_region_end(tsp, pathp, curtree, client_data)
-    struct db_tree_state *tsp;
-    struct db_full_path *pathp;
-    union tree *curtree;
-    genptr_t client_data;
+facetize_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp __attribute__((unused)), union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     union tree **facetize_tree;
@@ -4728,12 +4723,9 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
     struct wdb_id_to_names headIdName;
     struct wdb_id_to_names *itnp;
     struct wdb_id_names *inp;
-    Tcl_DString ds;
-
+    struct bu_vls vls;
 
     if (argc != 1) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias wdb_rmap %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -4741,12 +4733,11 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    Tcl_DStringInit(&ds);
-
     if (wdbp->dbip->dbi_version < 5) {
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, " is not available prior to version 5 of the .g file format\n", -1);
-	Tcl_DStringResult(interp, &ds);
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
@@ -4761,13 +4752,11 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		(dp->d_flags & DIR_HIDDEN))
 		continue;
 
-	    if (rt_db_get_internal(&intern,
-				   dp,
-				   wdbp->dbip,
-				   (fastf_t *)NULL,
-				   &rt_uniresource) < 0) {
-		Tcl_DStringAppend(&ds, "Database read error, aborting", -1);
-		Tcl_DStringResult(interp, &ds);
+	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_vls_init(&vls);
+		bu_vls_strcat(&vls, "Database read error, aborting");
+		Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	    }
 
@@ -4807,31 +4796,37 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	}
     }
 
+    bu_vls_init(&vls);
+
     /* place data in a dynamic tcl string */
     while (BU_LIST_WHILE (itnp, wdb_id_to_names, &headIdName.l)) {
-	char buf[32];
-
 	/* add this id to the list */
-	sprintf(buf, "%d", itnp->id);
-	Tcl_DStringAppendElement(&ds, buf);
+	bu_vls_printf(&vls, "%d {", itnp->id);
 
 	/* start sublist of names associated with this id */
-	Tcl_DStringStartSublist(&ds);
 	while (BU_LIST_WHILE (inp, wdb_id_names, &itnp->headName.l)) {
 	    /* add the this name to this sublist */
-	    Tcl_DStringAppendElement(&ds, bu_vls_addr(&inp->name));
+	    if (strchr(bu_vls_addr(&inp->name), ' ')) {
+		bu_vls_printf(&vls, "\"%V\" ", &inp->name);
+	    } else {
+		bu_vls_printf(&vls, "%V ", &inp->name);
+	    }
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);
 	    bu_free((genptr_t)inp, "rmap: inp");
 	}
-	Tcl_DStringEndSublist(&ds);
+	bu_vls_strcat(&vls, "} ");
 
 	BU_LIST_DEQUEUE(&itnp->l);
 	bu_free((genptr_t)itnp, "rmap: itnp");
-    }
 
-    Tcl_DStringResult(interp, &ds);
+    }
+    bu_vls_trimspace(&vls);
+
+    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+    bu_vls_free(&vls);
+
     return TCL_OK;
 }
 
@@ -5134,7 +5129,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_PTR(actual_count, ==, node_count);
+	    BU_ASSERT_LONG(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -5347,7 +5342,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_PTR(actual_count, ==, node_count);
+	    BU_ASSERT_LONG(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -5442,7 +5437,7 @@ wdb_pr_mater(const struct mater *mp,
  *
  */
 int
-wdb_prcolor_cmd(struct rt_wdb *wdbp,
+wdb_prcolor_cmd(struct rt_wdb *wdbp __attribute__((unused)),
 		Tcl_Interp *interp,
 		int argc,
 		char *argv[])
@@ -5742,7 +5737,7 @@ struct wdb_push_data {
  */
 static union tree *
 wdb_push_leaf(struct db_tree_state *tsp,
-	      struct db_full_path *pathp,
+	      const struct db_full_path *pathp,
 	      struct rt_db_internal *ip,
 	      genptr_t client_data)
 {
@@ -5817,10 +5812,10 @@ wdb_push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-wdb_push_region_end(struct db_tree_state *tsp,
-		    struct db_full_path *pathp,
+wdb_push_region_end(struct db_tree_state *tsp __attribute__((unused)),
+		    const struct db_full_path *pathp __attribute__((unused)),
 		    union tree *curtree,
-		    genptr_t client_data)
+		    genptr_t client_data __attribute__((unused)))
 {
     return curtree;
 }
@@ -6007,9 +6002,9 @@ wdb_push_tcl(ClientData clientData,
  *
  */
 static void
-increment_uses(struct db_i *db_ip,
+increment_uses(struct db_i *db_ip __attribute__((unused)),
 	       struct directory *dp,
-	       genptr_t ptr)
+	       genptr_t ptr __attribute__((unused)))
 {
     RT_CK_DIR(dp);
 
@@ -6021,9 +6016,9 @@ increment_uses(struct db_i *db_ip,
  *
  */
 static void
-increment_nrefs(struct db_i *db_ip,
+increment_nrefs(struct db_i *db_ip __attribute__((unused)),
 		struct directory *dp,
-		genptr_t ptr)
+		genptr_t ptr __attribute__((unused)))
 {
     RT_CK_DIR(dp);
 
@@ -6084,7 +6079,7 @@ Free_uses(struct db_i *dbip)
 static void
 Make_new_name(struct db_i *dbip,
 	      struct directory *dp,
-	      genptr_t ptr)
+	      genptr_t ptr __attribute__((unused)))
 {
     struct object_use *use;
     int use_no;
@@ -6109,7 +6104,7 @@ Make_new_name(struct db_i *dbip,
     snprintf(format_v5, 25, "%%s_%%0%dd", digits);
     snprintf(format_v4, 25, "_%%0%dd", digits);
 
-    name_length = strlen(dp->d_namep);
+    name_length = (int)strlen(dp->d_namep);
     if (name_length + digits + 1 > NAMESIZE - 1)
 	suffix_start = NAMESIZE - digits - 2;
     else
@@ -6263,7 +6258,7 @@ static struct directory *Copy_object(struct db_i *dbip, struct directory *dp, fa
  */
 HIDDEN void
 Do_copy_membs(struct db_i *dbip,
-	      struct rt_comb_internal *comb,
+	      struct rt_comb_internal *comb __attribute__((unused)),
 	      union tree *comb_leaf,
 	      genptr_t user_ptr1,
 	      genptr_t user_ptr2,
@@ -6407,11 +6402,11 @@ Copy_object(struct db_i *dbip,
  */
 HIDDEN void
 Do_ref_incr(struct db_i *dbip,
-	    struct rt_comb_internal *comb,
+	    struct rt_comb_internal *comb __attribute__((unused)),
 	    union tree *comb_leaf,
-	    genptr_t user_ptr1,
-	    genptr_t user_ptr2,
-	    genptr_t user_ptr3)
+	    genptr_t user_ptr1 __attribute__((unused)),
+	    genptr_t user_ptr2 __attribute__((unused)),
+	    genptr_t user_ptr3 __attribute__((unused)))
 {
     struct directory *dp;
 
@@ -6483,9 +6478,6 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
 	struct directory *dp;
 
 	for (dp=wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    struct rt_db_internal intern;
-	    struct rt_comb_internal *comb;
-
 	    if (dp->d_flags & DIR_SOLID)
 		continue;
 
@@ -7237,56 +7229,6 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 	if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 	    int no_hide=0;
 
-	    /* warn the user that this might be a bad idea */
-	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-#if 0
-		char line[80];
-
-/*XXX Ditto on the message below. Besides, it screws with the cadwidgets. */
-		/* classic interactive MGED */
-		while (1) {
-		    bu_log("Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep);
-		    bu_log("This may cause unexpected problems with other commands.\n");
-		    bu_log("Are you sure you want to do this?? (y/n)\n");
-		    (void)bu_fgets(line, sizeof(line), stdin);
-		    if (line[0] == 'y' || line[0] == 'Y') break;
-		    if (line[0] == 'n' || line[0] == 'N') {
-			no_hide = 1;
-			break;
-		    }
-		}
-#endif
-	    } else if (Tcl_GetVar2Ex(interp, "tk_version", NULL, TCL_GLOBAL_ONLY)) {
-#if 0
-		struct bu_vls vls;
-
-/*
- * We should give the user some credit here
- * and not annoy them with a message dialog.
- */
-		/* Tk is active, we can pop-up a window */
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep);
-		bu_vls_strcat(&vls, "This may cause unexpected problems with other commands.\n");
-		bu_vls_strcat(&vls, "Are you sure you want to do this?");
-		(void)Tcl_ResetResult(interp);
-		if (Tcl_VarEval(interp, "tk_messageBox -type yesno ",
-				"-title Warning -icon question -message {",
-				bu_vls_addr(&vls), "}",
-				(char *)NULL) != TCL_OK) {
-		    bu_log("Unable to post question!!!\n");
-		} else {
-		    const char *result;
-
-		    result = Tcl_GetStringResult(interp);
-		    if (!strcmp(result, "no")) {
-			no_hide = 1;
-		    }
-		    (void)Tcl_ResetResult(interp);
-		}
-		bu_vls_free(&vls);
-#endif
-	    }
 	    if (no_hide)
 		continue;
 	}
@@ -7527,7 +7469,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	if (argc == 3) {
 	    /* just list all the attributes */
 	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i=0; i < (int)avs.count; i++, avpp++) {
 		Tcl_AppendResult(interp, avpp->name, " {",
 				 avpp->value, "} ", (char *)NULL);
 	    }
@@ -7682,24 +7624,24 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	if (argc == 3) {
 	    /* just display all attributes */
 	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i=0; i < (int)avs.count; i++, avpp++) {
 		int len;
 
-		len = strlen(avpp->name);
+		len = (int)strlen(avpp->name);
 		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
 	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i=0; i < (int)avs.count; i++, avpp++) {
 		const char *c;
 		int tabs2;
 		int k;
 		int len;
 
 		bu_vls_printf(&vls, "\t%s", avpp->name);
-		len = strlen(avpp->name);
+		len = (int)strlen(avpp->name);
 		tabs2 = tabs1 - 1 - len/8;
 		for (k=0; k<tabs2; k++) {
 		    bu_vls_putc(&vls, '\t');
@@ -7722,7 +7664,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 
 	    /* show just the specified attributes */
 	    for (i=0; i<argc; i++) {
-		len = strlen(argv[i]);
+		len = (int)strlen(argv[i]);
 		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
@@ -7744,7 +7686,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		    return TCL_ERROR;
 		}
 		bu_vls_printf(&vls, "\t%s", argv[i]);
-		len = strlen(val);
+		len = (int)strlen(val);
 		tabs2 = tabs1 - 1 - len/8;
 		for (k=0; k<tabs2; k++) {
 		    bu_vls_putc(&vls, '\t');
@@ -8862,11 +8804,10 @@ wdb__tcl(ClientData clientData,
 /****************** utility routines ********************/
 
 /**
- *			W D B _ C M P D I R N A M E
+ * W D B _ C M P D I R N A M E
  *
  * Given two pointers to pointers to directory entries, do a string compare
  * on the respective names and return that value.
- *  This routine was lifted from mged/columns.c.
  */
 int
 wdb_cmpdirname(const genptr_t a,
@@ -8928,11 +8869,11 @@ wdb_vls_col_eol(struct bu_vls *str,
 }
 
 /**
- *			W D B _ V L S _ C O L _ P R 4 V
+ * W D B _ V L S _ C O L _ P R 4 V
  *
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list in column order over four columns.
- *  This routine was lifted from mged/columns.c.
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list in column order over
+ * four columns.
  */
 void
 wdb_vls_col_pr4v(struct bu_vls *vls,
@@ -9011,7 +8952,7 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
      */
     maxnamelen = 0;
     for (k=0; k < num_in_list; k++) {
-	namelen = strlen(list_of_names[k]->d_namep);
+	namelen = (int)strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
     }
@@ -9033,7 +8974,7 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
 	for (j=0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
+	    namelen = (int)strlen(list_of_names[this_one]->d_namep);
 
 	    /*
 	     * Region and ident checks here....  Since the code
@@ -9102,7 +9043,7 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	int len;
 
 	dp = list_of_names[i];
-	len = strlen(dp->d_namep);
+	len = (int)strlen(dp->d_namep);
 	if (len > max_nam_len)
 	    max_nam_len = len;
 
@@ -9111,17 +9052,17 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	else if (dp->d_flags & DIR_COMB)
 	    len = 4;
 	else if (dp->d_flags & DIR_SOLID)
-	    len = strlen(rt_functab[dp->d_minor_type].ft_label);
+	    len = (int)strlen(rt_functab[dp->d_minor_type].ft_label);
 	else {
 	    switch (list_of_names[i]->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    len = 6;
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
-		    len = strlen("binary(mime)");
+		    len = (int)strlen("binary(mime)");
 		    break;
 		case DB5_MAJORTYPE_BINARY_UNIF:
-		    len = strlen(binu_types[list_of_names[i]->d_minor_type]);
+		    len = (int)strlen(binu_types[list_of_names[i]->d_minor_type]);
 		    break;
 	    }
 	}
@@ -9175,9 +9116,9 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
 	    bu_vls_printf(vls, "%s", dp->d_namep);
-	    bu_vls_spaces(vls, max_nam_len - strlen(dp->d_namep));
+	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)));
 	    bu_vls_printf(vls, " %s", type);
-	    bu_vls_spaces(vls, max_type_len - strlen(type));
+	    bu_vls_spaces(vls, (int)(max_type_len - strlen(type)));
 	    bu_vls_printf(vls,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
@@ -9185,11 +9126,10 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 }
 
 /**
- *			W D B _ V L S _ L I N E _ D P P
+ * W D B _ V L S _ L I N E _ D P P
  *@brief
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list on the same line.
- *  This routine was lifted from mged/columns.c.
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list on the same line.
  */
 void
 wdb_vls_line_dpp(struct bu_vls *vls,
@@ -9236,14 +9176,15 @@ wdb_vls_line_dpp(struct bu_vls *vls,
     }
 }
 
+
 /**
- *			W D B _ G E T S P A C E
+ * W D B _ G E T S P A C E
  *
- * This routine walks through the directory entry list and mallocs enough
- * space for pointers to hold:
- *  a) all of the entries if called with an argument of 0, or
- *  b) the number of entries specified by the argument if > 0.
- *  This routine was lifted from mged/dir.c.
+ * This routine walks through the directory entry list and mallocs
+ * enough space for pointers to hold:
+ *
+ * a) all of the entries if called with an argument of 0, or
+ * b) the number of entries specified by the argument if > 0.
  */
 struct directory **
 wdb_getspace(struct db_i *dbip,
@@ -9509,11 +9450,11 @@ wdb_combadd(Tcl_Interp *interp,
 
 static void
 wdb_do_identitize(struct db_i *dbip,
-		  struct rt_comb_internal *comb,
+		  struct rt_comb_internal *comb __attribute__((unused)),
 		  union tree *comb_leaf,
 		  genptr_t user_ptr1,
-		  genptr_t user_ptr2,
-		  genptr_t user_ptr3)
+		  genptr_t user_ptr2 __attribute__((unused)),
+		  genptr_t user_ptr3 __attribute__((unused)))
 {
     struct directory *dp;
     Tcl_Interp *interp = (Tcl_Interp *)user_ptr1;
@@ -9667,8 +9608,8 @@ wdb_dir_getspace(struct db_i *dbip,
  *			P A T H L I S T _ L E A F _ F U N C
  */
 static union tree *
-wdb_pathlist_leaf_func(struct db_tree_state *tsp,
-		       struct db_full_path *pathp,
+wdb_pathlist_leaf_func(struct db_tree_state *tsp __attribute__((unused)),
+		       const struct db_full_path *pathp,
 		       struct rt_db_internal *ip,
 		       genptr_t client_data)
 {
@@ -9679,13 +9620,17 @@ wdb_pathlist_leaf_func(struct db_tree_state *tsp,
     RT_CK_DB_INTERNAL(ip);
 
     if (pathListNoLeaf) {
-	--pathp->fp_len;
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+	--pp.fp_len;
+	str = db_path_to_string(&pp);
+	Tcl_AppendElement(interp, str);
+	db_free_full_path(&pp);
+    } else {
 	str = db_path_to_string(pathp);
-	++pathp->fp_len;
-    } else
-	str = db_path_to_string(pathp);
-
-    Tcl_AppendElement(interp, str);
+	Tcl_AppendElement(interp, str);
+    }
 
     bu_free((genptr_t)str, "path string");
     return TREE_NULL;
@@ -10322,7 +10267,6 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
 
     {
-	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -10361,6 +10305,7 @@ wdb_rotate_arb_face_tcl(ClientData clientData,
     return wdb_rotate_arb_face_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+static int
 wdb_newcmds_tcl(ClientData clientData,
 		Tcl_Interp *interp,
 		int argc,
@@ -10369,9 +10314,8 @@ wdb_newcmds_tcl(ClientData clientData,
     struct bu_cmdtab *ctp;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
-    Tcl_DString ds;
+    struct bu_vls vls;
     int ret;
-    char flags[128];
 
     /*XXX Eventually the clientData will be a "struct ged".
      *    In the meantime ...
@@ -10393,15 +10337,20 @@ wdb_newcmds_tcl(ClientData clientData,
 	ret = GED_ERROR;
     }
 
-    Tcl_DStringInit(&ds);
+    bu_vls_init(&vls);
 
     if (ret == GED_HELP)
-	Tcl_DStringAppendElement(&ds, "1");
+	bu_vls_strcat(&vls, "1 ");
     else
-	Tcl_DStringAppendElement(&ds, "0");
+	bu_vls_strcat(&vls, "0 ");
 
-    Tcl_DStringAppendElement(&ds, bu_vls_addr(&ged.ged_result_str));
-    Tcl_DStringResult(interp, &ds);
+    if (strchr(bu_vls_addr(&ged.ged_result_str), ' '))
+	bu_vls_printf(&vls, "\"%V\"", &ged.ged_result_str);
+    else
+	bu_vls_vlscat(&vls, &ged.ged_result_str);
+
+    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+    bu_vls_free(&vls);
 
     if (ret == GED_ERROR)
 	return TCL_ERROR;

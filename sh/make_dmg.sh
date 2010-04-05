@@ -40,8 +40,6 @@
 # 10.2+ but may require a recent version of Mac OS X to successfully
 # generate the disk mounting image.
 #
-# Author: Christopher Sean Morrison
-#
 ######################################################################
 
 NAME="$1"

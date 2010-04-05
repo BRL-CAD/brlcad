@@ -60,6 +60,15 @@ static tie_t *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
+static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
+
+struct gcv_data {
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    struct adrt_mesh_s **meshes;
+};
+static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
+
+
 /* load the region into the tie image */
 static void
 nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
@@ -119,7 +128,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 		}
 		if (vert_count > 3)
 		{
-		    bu_log("lu x%x has %d vertices!\n", (unsigned int)lu, vert_count);
+		    bu_log("lu x%p has %d vertices!\n", lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)
@@ -135,54 +144,52 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 }
 
 int
-nmg_to_adrt_regstart(struct db_tree_state *ts, struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t client_data)
+nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t client_data)
 {
-    /* 
+    /*
      * if it's a simple single bot region, just eat the bots and return -1.
-     * Omnomnom. Return 0 to do nmg eval. 
+     * Omnomnom. Return 0 to do nmg eval.
      */
     struct directory *dir;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct adrt_mesh_s *mesh;
-
-    return 0;
+    unsigned char rgb[3] = { 0xc0, 0xc0, 0xc0 };
 
     RT_CHECK_COMB(rci);
+
+    /* abort cases, no fast loading. */
     if(rci->tree == NULL)
 	return 0;
     RT_CK_TREE(rci->tree);
-    if( rci->tree->tr_op != OP_DB_LEAF ) 
+    if( rci->tree->tr_op != OP_DB_LEAF )
 	return 0;
     dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1);
     if(dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
-
     if(rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }
+    
+    if(dir->d_minor_type == ID_NMG)
+	return 0;
 
-    mesh = BU_GETSTRUCT(mesh, adrt_mesh_s);
+    BU_GETSTRUCT(mesh, adrt_mesh_s);
 
-    /* TODO: yeah, uh, yeah. this is busted.
-    BU_LIST_PUSH(&(isst.meshes->l), &(mesh->l));
-    */
+    BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
     mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
-    VSET(mesh->attributes->color.v, 0, 1, 1);
 
-    /*
-    VMOVE(mesh->attributes->color.v, color);
-    */
+    rt_comb_get_color(rgb, rci);
+    VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
+
     strncpy(mesh->name, db_path_to_string(path), 255);
 
-    printf("Fastloading %s\n", mesh->name);
-
     if(intern.idb_minor_type == ID_NMG) {
-        nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
+	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
 	struct rt_bot_internal *bot = intern.idb_ptr;
@@ -192,16 +199,10 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, struct db_full_path *path, const 
 
 	for(i=0;i<bot->num_faces;i++)
 	{
-	    VSCALE((*tribuf[0]).v, &bot->vertices[bot->faces[3*i+0]], 1.0/1000.0);
-	    VSCALE((*tribuf[1]).v, &bot->vertices[bot->faces[3*i+1]], 1.0/1000.0);
-	    VSCALE((*tribuf[2]).v, &bot->vertices[bot->faces[3*i+2]], 1.0/1000.0);
-	    /*
-	    printf("%d %d %d\n", bot->faces[3*i+0], bot->faces[3*i+1], bot->faces[3*i+2]);
-	    printf("%d	%f %f %f - %f %f %f - %f %f %f\n", i, 
-		    V3ARGS((*tribuf[0]).v), 
-		    V3ARGS((*tribuf[1]).v), 
-		    V3ARGS((*tribuf[2]).v));
-	    */
+	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
+	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);
+	    VSCALE((*tribuf[2]).v, (bot->vertices+3*bot->faces[3*i+2]), 1.0/1000.0);
+
 	    tie_push(cur_tie, tribuf, 1, mesh, 0);
 	}
 	return -1;
@@ -213,7 +214,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, struct db_full_path *path, const 
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3])
+nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3])
 {
     struct model *m;
     struct shell *s;
@@ -228,11 +229,9 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region
     /* triangulate model */
     nmg_triangulate_model(m, &tol);
 
-    mesh = BU_GETSTRUCT(mesh, adrt_mesh_s);
+    BU_GETSTRUCT(mesh, adrt_mesh_s);
 
-    /* more busted.
-    BU_LIST_PUSH(&(isst.meshes->l), &(mesh->l));
-    */
+    BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
@@ -244,14 +243,9 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region
     nmg_to_adrt_internal(mesh, r);
 }
 
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
-};
-static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
 
 int
-load_g (tie_t *tie, const char *db, int argc, const char **argv)
+load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
     int c;
     double percent;
@@ -275,9 +269,9 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv)
     ttol.norm = 0.0;
 
     /* Set up calculation tolerance defaults */
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
@@ -290,7 +284,7 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv)
     the_model = nmg_mm();
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
-    /* 
+    /*
      * these should probably encode so the result can be passed back to client
      */
     if ((dbip = db_open(db, "r")) == DBI_NULL) {
@@ -308,17 +302,17 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv)
 
     tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
 
-    /* very busted 
-    BU_GETSTRUCT(isst.meshes, adrt_mesh_s);
-    BU_LIST_INIT(&(isst.meshes->l));
-    */
+    BU_GETSTRUCT(*meshes, adrt_mesh_s);
+    BU_LIST_INIT(&((*meshes)->l));
+
+    gcvwriter.meshes = meshes;
 
     tribuf = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 3, "triangle tribuffer tribuffer");
     tribuf[0] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
     tribuf[1] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
     tribuf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
 
-    (void) db_walk_tree(dbip, 
+    (void) db_walk_tree(dbip,
 			argc,			/* number of toplevel regions */			
 			argv,			/* region names */
 			1,			/* ncpu */

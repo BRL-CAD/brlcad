@@ -76,6 +76,7 @@ adrt_slave_SOURCES = \
 	slave/tienet_slave.c
 
 adrt_slave_LDADD = \
+	${LIBNETWORK} \
 	${LIBTHREAD} \
 	librender.la \
 	libtie.la

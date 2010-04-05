@@ -100,7 +100,6 @@ static const struct db5_type type_table[] = {
     { DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT, 1, "i", "array of 32-bit ints" },
     { DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT, 1, "64", "array of 64-bit ints" },
     { DB5_MAJORTYPE_BINARY_UNIF, 0, 0, "binunif", "uniform-array binary" },
-    { DB5_MAJORTYPE_BINARY_MIME, 0, 0, "binmime", "MIME-typed binary" },
     /* Following entry must be at end of table */
     { DB5_MAJORTYPE_RESERVED, 0, 0, 0, 0 },
 };
@@ -110,10 +109,10 @@ db5_type_tag_from_major(char **tag, const int major) {
     register struct db5_type *tp;
 
     for (tp = (struct db5_type *) type_table;
-	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((tp -> major_code == major) && !(tp -> heed_minor)) {
-	    *tag = tp -> tag;
+	if ((tp->major_code == major) && !(tp->heed_minor)) {
+	    *tag = tp->tag;
 	    return 0;
 	}
     }
@@ -125,10 +124,10 @@ db5_type_descrip_from_major(char **descrip, const int major) {
     register struct db5_type *tp;
 
     for (tp = (struct db5_type *) type_table;
-	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((tp -> major_code == major) && !(tp -> heed_minor)) {
-	    *descrip = tp -> description;
+	if ((tp->major_code == major) && !(tp->heed_minor)) {
+	    *descrip = tp->description;
 	    return 0;
 	}
     }
@@ -141,13 +140,13 @@ db5_type_tag_from_codes(char **tag, const int major, const int minor) {
     register int found_minors = 0;
 
     for (tp = (struct db5_type *) type_table;
-	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if (tp -> major_code == major) {
-	    if (tp -> heed_minor)
+	if (tp->major_code == major) {
+	    if (tp->heed_minor)
 		found_minors = 1;
-	    if ((tp -> minor_code == minor) || !found_minors) {
-		*tag = tp -> tag;
+	    if ((tp->minor_code == minor) || !found_minors) {
+		*tag = tp->tag;
 		return 0;
 	    }
 	}
@@ -162,13 +161,13 @@ db5_type_descrip_from_codes(char **descrip, const int major,
     register int found_minors = 0;
 
     for (tp = (struct db5_type *) type_table;
-	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if (tp -> major_code == major) {
-	    if (tp -> heed_minor)
+	if (tp->major_code == major) {
+	    if (tp->heed_minor)
 		found_minors = 1;
-	    if ((tp -> minor_code == minor) || !found_minors) {
-		*descrip = tp -> description;
+	    if ((tp->minor_code == minor) || !found_minors) {
+		*descrip = tp->description;
 		return 0;
 	    }
 	}
@@ -182,11 +181,11 @@ db5_type_codes_from_tag(int *major, int *minor, const char *tag) {
 
 
     for (tp = (struct db5_type *) type_table;
-	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp -> tag) == *tag) && (strcmp(tp -> tag, tag) == 0)) {
-	    *major = tp -> major_code;
-	    *minor = tp -> minor_code;
+	if ((*(tp->tag) == *tag) && (strcmp(tp->tag, tag) == 0)) {
+	    *major = tp->major_code;
+	    *minor = tp->minor_code;
 	    return 0;
 	}
     }
@@ -199,12 +198,12 @@ db5_type_codes_from_descrip(int *major, int *minor, const char *descrip) {
 
 
     for (tp = (struct db5_type *) type_table;
-	 tp -> major_code != DB5_MAJORTYPE_RESERVED;
+	 tp->major_code != DB5_MAJORTYPE_RESERVED;
 	 ++tp) {
-	if ((*(tp -> description) == *descrip)
-	    && (strcmp(tp -> description, descrip) == 0)) {
-	    *major = tp -> major_code;
-	    *minor = tp -> minor_code;
+	if ((*(tp->description) == *descrip)
+	    && (strcmp(tp->description, descrip) == 0)) {
+	    *major = tp->major_code;
+	    *minor = tp->minor_code;
 	    return 0;
 	}
     }
