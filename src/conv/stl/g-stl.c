@@ -52,7 +52,7 @@
 }
 
 
-static char usage[] = "Usage: %s [-bvi] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
