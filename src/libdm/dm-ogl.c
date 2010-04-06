@@ -176,7 +176,6 @@ static double ylim_view = 1.0;
 /* lighting parameters */
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 
-static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_position[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
 static float wireColor[4];
@@ -1381,7 +1380,6 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
     int				first;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
@@ -1681,7 +1679,7 @@ ogl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size __attribute__((unused)), int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawString2D()\n");
