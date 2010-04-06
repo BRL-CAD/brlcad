@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* report of rt aborting randomly on 64-bit with camo shader.
+
 * mged raytrace fails with simple "raytrace failed" message when using
   rt, nirt, etc on Windows after modifying a region.  See sf bug
   report 2954404.
