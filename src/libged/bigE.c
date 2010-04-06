@@ -37,6 +37,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
+#include "rtfunc.h"
 #include "solid.h"
 #include "dg.h"
 
@@ -195,13 +196,13 @@ add_solid(const struct directory *dp,
 		s = BU_LIST_FIRST(shell, &r->s_hd);
 	    }
 
-	    if (solid_is_plate_mode_bot ||
-		!eptr->l.m ||
-		(bot=nmg_bot(s, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
+	    if (solid_is_plate_mode_bot
+		|| !eptr->l.m
+		|| (bot=nmg_bot(s, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &rt_functab[id];
-		if (!rt_functab[id].ft_prep || rt_functab[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0) {
+		if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0) {
 		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 	    } else {
@@ -212,7 +213,7 @@ add_solid(const struct directory *dp,
 		intern2.idb_ptr = (genptr_t)bot;
 		eptr->l.stp->st_id = ID_BOT;
 		eptr->l.stp->st_meth = &rt_functab[ID_BOT];
-		if (!rt_functab[ID_BOT].ft_prep || rt_functab[ID_BOT].ft_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
+		if (rt_obj_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
 		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 
@@ -223,7 +224,7 @@ add_solid(const struct directory *dp,
 
 	    eptr->l.stp->st_id = id;
 	    eptr->l.stp->st_meth = &rt_functab[id];
-	    if (!rt_functab[id].ft_prep || rt_functab[id].ft_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
+	    if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
 		bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 	}
     }
@@ -2058,7 +2059,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    tp->l.stp->st_id = ID_POLY;
 	    VSETALL(tp->l.stp->st_max, -INFINITY);
 	    VSETALL(tp->l.stp->st_min,  INFINITY);
-	    if (!rt_functab[ID_POLY].ft_prep || rt_functab[ID_POLY].ft_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
+	    if (rt_obj_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
 		bu_vls_printf(&dgcdp->gedp->ged_result_str,
 			      "Prep failure for polysolid version of solid '%s'",
 			      tp->l.stp->st_dp->d_namep);
