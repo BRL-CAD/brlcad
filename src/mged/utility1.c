@@ -125,9 +125,9 @@ reg_compare(const void *p1, const void *p2)
  *
  */
 int
-editit(const char *command, const char *tmpfile) {
+editit(const char *command, const char *tempfile) {
     int argc = 5;
-    char **av;
+    const char *av[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
     struct bu_vls editstring;
 
     CHECK_DBI_NULL;
@@ -135,18 +135,16 @@ editit(const char *command, const char *tmpfile) {
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "editit: av");
-    av[0] = (char *)command;
+    av[0] = command;
     av[1] = "-e"; 
     av[2] = bu_vls_addr(&editstring);
     av[3] = "-f";
-    av[4] = (char *)tmpfile;
+    av[4] = tempfile;
     av[5] = NULL;
 
     ged_editit(gedp, argc, (const char **)av);
 
     bu_vls_free(&editstring);
-    bu_free((genptr_t)av, "editit: av");
     return TCL_OK;
 }
 
