@@ -187,10 +187,11 @@ int process_nv_faces(struct ga_t *ga,
                      int grp_mode, 
                      size_t grp_indx,
                      fastf_t conversion_factor, 
-                     struct model **m2,
-                     struct nmgregion **r2,
-                     struct shell **s2,
-                     struct bn_tol *tol2) {
+                     struct model *m,
+                     struct nmgregion *r,
+                     struct shell *s,
+                     struct bn_tol *tol,
+                     int *empty) {
 
     size_t size = 0 ;
     size_t setsize = 0 ;
@@ -206,11 +207,11 @@ int process_nv_faces(struct ga_t *ga,
     size_t *size_history = NULL ; 
     size_t *size_history_tmp = NULL ;
     size_t history_arrays_size = 0; 
-    size_t numNorPolygons_in_current_nmg = 0;
+    size_t numNorPolygons_in_current_shell = 0;
     size_t numNorPolygonVertices_in_current_nmg = 0 ;
     struct bu_ptbl faces2;            /* table of faces for one element */
     struct bu_ptbl names2;            /* table of element names */
-    struct faceuse *fu2;
+    struct faceuse *fu;
     size_t idx2 = 0;
     long   tmp_long = 0 ;
     /* NMG2e */
@@ -354,13 +355,13 @@ int process_nv_faces(struct ga_t *ga,
         /* NMG2s */
         if ( found ) {
 
-            index_arr_nv_faces_history[numNorPolygons_in_current_nmg] = index_arr_nv_faces;
-            size_history[numNorPolygons_in_current_nmg] = size;
+            index_arr_nv_faces_history[numNorPolygons_in_current_shell] = index_arr_nv_faces;
+            size_history[numNorPolygons_in_current_shell] = size;
 
             numNorPolygonVertices_in_current_nmg = numNorPolygonVertices_in_current_nmg + size ;
 
                 /* if needed, increase size of index_arr_nv_faces_history and size_history */
-                if ( numNorPolygons_in_current_nmg >= history_arrays_size ) {
+                if ( numNorPolygons_in_current_shell >= history_arrays_size ) {
                     history_arrays_size = history_arrays_size + 128 ;
 
                     index_arr_nv_faces_history_tmp = bu_realloc(index_arr_nv_faces_history,
@@ -376,7 +377,7 @@ int process_nv_faces(struct ga_t *ga,
                 }
 
             /* increment number of polygons in current grouping (i.e. current nmg) */
-            numNorPolygons_in_current_nmg++;
+            numNorPolygons_in_current_shell++;
         }
         /* NMG2e */
 
@@ -696,16 +697,16 @@ int process_nv_faces(struct ga_t *ga,
     size_t counter2 = 0;
 
     /* loop thru all the polygons (i.e. faces) to be placed in the current nmg */
-    for ( idx4 = 0 ; idx4 < numNorPolygons_in_current_nmg ; idx4++ ) {
-        bu_log("about to run chk shell just before assign fu2\n");
-        NMG_CK_SHELL(*s2);
+    for ( idx4 = 0 ; idx4 < numNorPolygons_in_current_shell ; idx4++ ) {
+        bu_log("about to run chk shell just before assign fu\n");
+        NMG_CK_SHELL(s);
 
         /* call this once for each face */
-        bu_log("about to assign fu2\n");
-        fu2 = nmg_cface(*s2, (struct vertex **)&(nmg2_verts[counter2]), (int)size_history[idx4] );
+        bu_log("about to assign fu\n");
+        fu = nmg_cface(s, (struct vertex **)&(nmg2_verts[counter2]), (int)size_history[idx4] );
         counter2 = counter2 + size_history[idx4] ; 
 
-        bu_ptbl_ins(&faces2, (long *)fu2);
+        bu_ptbl_ins(&faces2, (long *)fu);
     }
 
     size_t polygon3 = 0;
@@ -713,9 +714,10 @@ int process_nv_faces(struct ga_t *ga,
     struct vertexuse *vu2 = NULL;
     fastf_t tmp5[3] = { 0, 0, 0 };
     counter2 = 0;
-    bu_log("history: numNorPolygons_in_current_nmg = (%lu)\n", numNorPolygons_in_current_nmg);
-    for ( polygon3 = 0 ; polygon3 < numNorPolygons_in_current_nmg ; polygon3++ ) {
+    bu_log("history: numNorPolygons_in_current_shell = (%lu)\n", numNorPolygons_in_current_shell);
+    for ( polygon3 = 0 ; polygon3 < numNorPolygons_in_current_shell ; polygon3++ ) {
         bu_log("history: num vertices in current polygon = (%lu)\n", size_history[polygon3]);
+        fu = (struct faceuse *)BU_PTBL_GET(&faces2, polygon3) ;
         for ( vertex4 = 0 ; vertex4 < size_history[polygon3] ; vertex4++ ) {
             bu_log("history: (%lu)(%lu)(%lu)(%f)(%f)(%f)(%f)(%f)(%f)(%f)\n", 
                polygon3,
@@ -741,48 +743,57 @@ int process_nv_faces(struct ga_t *ga,
             }
             counter2++;
         }
-#if 0
+#if 1
         bu_log("about to run nmg_calc_face_g\n");
-        if (nmg_calc_face_g(fu2)) {
-            nmg_kfu(fu2);
-        }
-        bu_log("about to run nmg_fu_planeeqn\n");
-        if (nmg_fu_planeeqn(fu2, tol2)) {
-            bu_log("nmg_fu_planeeqn failed\n");
+        if (nmg_calc_face_g(fu)) {
+            bu_log("nmg_calc_face_g failed\n");
+            nmg_kfu(fu);
+            bu_ptbl_rm(&faces2, (const long *)fu);
+            numNorPolygons_in_current_shell--;
+        } else {
+            bu_log("about to run nmg_fu_planeeqn\n");
+            if (nmg_fu_planeeqn(fu, tol)) {
+                bu_log("nmg_fu_planeeqn failed\n");
+                nmg_kfu(fu);
+                bu_ptbl_rm(&faces2, (const long *)fu);
+                numNorPolygons_in_current_shell--;
+            }
         }
 #endif
+
     }
 
-    (void)nmg_model_vertex_fuse(*m2, tol2);
+    (void)nmg_model_vertex_fuse(m, tol);
 
+#if 0
     /* calculate plane equations for faces */
-    NMG_CK_SHELL(*s2);
-    fu2 = BU_LIST_FIRST(faceuse, &(*s2)->fu_hd);
-    while (BU_LIST_NOT_HEAD(fu2, &(*s2)->fu_hd)) {
+    NMG_CK_SHELL(s);
+    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
         struct faceuse *kill_fu=(struct faceuse *)NULL;
         struct faceuse *next_fu;
 
-        NMG_CK_FACEUSE(fu2);
+        NMG_CK_FACEUSE(fu);
 
-        next_fu = BU_LIST_NEXT(faceuse, &fu2->l);
-        if (fu2->orientation == OT_SAME) {
+        next_fu = BU_LIST_NEXT(faceuse, &fu->l);
+        if (fu->orientation == OT_SAME) {
             struct loopuse *lu;
             struct edgeuse *eu;
             fastf_t area;
             plane_t pl;
 
-            lu = BU_LIST_FIRST(loopuse, &fu2->lu_hd);
+            lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
             NMG_CK_LOOPUSE(lu);
             for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
                 NMG_CK_EDGEUSE(eu);
                 if (eu->vu_p->v_p == eu->eumate_p->vu_p->v_p)
-                    kill_fu = fu2;
+                    kill_fu = fu;
             }
             if (!kill_fu) {
                 area = nmg_loop_plane_area(lu, pl);
                 if (area <= 0.0) {
                     bu_log("ERROR: Can't get plane for face\n");
-                    kill_fu = fu2;
+                    kill_fu = fu;
                 }
             }
             if (kill_fu) {
@@ -791,29 +802,32 @@ int process_nv_faces(struct ga_t *ga,
                 bu_ptbl_rm(&faces2, (long *)kill_fu);
                 nmg_kfu(kill_fu);
             } else
-                nmg_face_g(fu2, pl);
+                nmg_face_g(fu, pl);
         }
-        fu2 = next_fu;
+        fu = next_fu;
     }
+#endif
 
     if (BU_PTBL_END(&faces2)) {
         bu_log("about to run nmg_gluefaces\n");
-        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces2), BU_PTBL_END(&faces2), tol2);
+        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces2), BU_PTBL_END(&faces2), tol);
 
+#if 1
         bu_log("about to run nmg_rebound 1\n");
-        nmg_rebound(*m2, tol2);
+        nmg_rebound(m, tol);
 
         bu_log("about to run nmg_fix_normals\n");
-        nmg_fix_normals(*s2, tol2);
+        nmg_fix_normals(s, tol);
 
         bu_log("about to run nmg_shell_coplanar_face_merge\n");
-        nmg_shell_coplanar_face_merge(*s2, tol2, 1);
+        nmg_shell_coplanar_face_merge(s, tol, 1);
 
         bu_log("about to run nmg_rebound 2\n");
-        nmg_rebound(*m2, tol2);
+        nmg_rebound(m, tol);
+#endif
 
         bu_log("about to mk_bot_from_nmg\n");
-        mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), *s2);
+        mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), s);
     } else {
         bu_log("Object %s has no faces\n", bu_vls_addr(&outputObjectName));
     } 
@@ -837,6 +851,10 @@ int process_nv_faces(struct ga_t *ga,
     bu_ptbl_reset(&faces2);
 
     }
+
+    /* set empty to true if no faces were added
+       to the current shell */
+    *empty = !numNorPolygons_in_current_shell ;
 
     return ret_val;
 }
@@ -871,24 +889,29 @@ main(int argc, char **argv)
     int parse_err = 0;
 
     /* NMG2s */
-    struct model *m2 ;
-    struct nmgregion *r2 ;
-    struct shell *s2 ;
-    struct bn_tol tol2 ;
+    struct model *m ;
+    struct nmgregion *r ;
+    struct shell *s ;
+    struct bn_tol tol_struct ;
+    struct bn_tol *tol ;
 
-    m2 = nmg_mm();
-    r2 = nmg_mrsv(m2);
-    s2 = BU_LIST_FIRST(shell, &r2->s_hd);
+    int empty = 0 ; /* boolean */
 
-    NMG_CK_MODEL(m2);
-    NMG_CK_REGION(r2);
-    NMG_CK_SHELL(s2);
+    tol = &tol_struct;
 
-    tol2.magic = BN_TOL_MAGIC;
-    tol2.dist = 0.0005;
-    tol2.dist_sq = tol2.dist * tol2.dist;
-    tol2.perp = 1e-6;
-    tol2.para = 1 - tol2.perp;
+    m = nmg_mm();
+    r = nmg_mrsv(m);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+
+    NMG_CK_MODEL(m);
+    NMG_CK_REGION(r);
+    NMG_CK_SHELL(s);
+
+    tol->magic = BN_TOL_MAGIC;
+    tol->dist = 0.00005;
+    tol->dist_sq = tol->dist * tol->dist;
+    tol->perp = 1e-6;
+    tol->para = 1 - tol->perp;
     /* NMG2e */
 
     bu_log("running fopen\n");
@@ -957,6 +980,13 @@ main(int argc, char **argv)
         bu_exit(1, NULL);
     }
 
+#if 1
+    fd_out->wdb_tol.dist    = tol->dist ;
+    fd_out->wdb_tol.dist_sq = fd_out->wdb_tol.dist * fd_out->wdb_tol.dist ;
+    fd_out->wdb_tol.perp    = tol->perp ;
+    fd_out->wdb_tol.para    = 1 - fd_out->wdb_tol.perp ;
+#endif
+
     collect_global_obj_file_attributes(&ga);
 
 #if 0
@@ -993,13 +1023,15 @@ main(int argc, char **argv)
     }
 #endif
 
+        empty = 0 ; /* set to false to force first region and
+                       shell of model to be created */
         switch (grouping_option) {
             case 'g':
                 bu_log("ENTERED 'g' PROCESSING\n");
                 for (i = 0 ; i < ga.numGroups ; i++) {
                     bu_log("(%lu) current group name is (%s)\n", i, ga.str_arr_obj_groups[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, &m2, &r2, &s2, &tol2);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, m, r, s, tol, &empty);
                 }
                 bu_log("EXITED 'g' PROCESSING\n");
                 break;
@@ -1014,9 +1046,21 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numObjects ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_objects[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, &m2, &r2, &s2, &tol2);
+                    /* if when process_nv_faces finished and the shell was not empty
+                       then create a new region and shell for the next run of 
+                       process_nv_faces */
+                    if ( !empty ) {
+                        r = nmg_mrsv(m);
+                        s = BU_LIST_FIRST(shell, &r->s_hd);
+
+                    }
+
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, m, r, s, tol, &empty);
 
                 } /* numObjects loop */
+
+                /* if the last shell is empty, need to delete it */
+
                 bu_log("EXITED 'o' PROCESSING\n");
                 break;
             case 'm':
@@ -1024,14 +1068,14 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numMaterials ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_materials[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00, &m2, &r2, &s2, &tol2);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00, m, r, s, tol, &empty);
 
                 } /* numMaterials loop */
                 bu_log("EXITED 'm' PROCESSING\n");
                 break;
             case 't':
                 bu_log("ENTERED 't' PROCESSING\n");
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00, &m2, &r2, &s2, &tol2);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00, m, r, s, tol, &empty);
                 bu_log("EXITED 't' PROCESSING\n");
                 break;
             default:
