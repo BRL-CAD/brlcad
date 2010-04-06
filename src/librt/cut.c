@@ -1033,7 +1033,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
     cutp->bn.bn_list[cutp->bn.bn_len++] = stp;
 }
 
-
+#if 0
 /**
  * R T _ C T _ P L A N
  *
@@ -1176,6 +1176,7 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
     *offcenter_p = offcenter;
     return(1);		/* OK */
 }
+#endif
 
 #define PIECE_BLOCK 512
 

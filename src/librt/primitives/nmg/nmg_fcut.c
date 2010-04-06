@@ -2014,6 +2014,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 }
 
 
+#if 0
 /**
  * N M G _ F A C E _ N E X T _ V U _ I N T E R V A L
  *
@@ -2093,6 +2094,7 @@ nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int o
 	bu_log("nmg_face_next_vu_interval() vu[%d] set to x%x\n", j-1, rs->vu[j-1]);
     return j;
 }
+#endif
 
 
 #define VAVERAGE(a, b, c) { \
@@ -3033,6 +3035,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 }
 
 
+#if 0
 /**
  * N M G _ F A C E _ C O M B I N E
  *
@@ -3155,6 +3158,7 @@ nmg_face_combineX(struct nmg_ray_state *rs1, fastf_t *mag1, struct nmg_ray_state
 	bu_bomb("nmg_face_combine() bad ending state\n");
     }
 }
+#endif
 
 
 /**
