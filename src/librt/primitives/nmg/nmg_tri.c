@@ -1406,7 +1406,7 @@ void
 nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu, struct vertexuse **last_vu, fastf_t *dir, struct faceuse *fu, const struct bn_tol *tol __attribute__((unused)))
 {
     struct vertexuse *vu_first, *vu_last;
-    int max_dir, min_dir;	/* 1: forward -1 reverse */
+    int max_dir=0, min_dir=0;	/* 1: forward -1 reverse */
     struct edgeuse *eu_first, *eu_last, *eu_p=NULL;
 
     NMG_CK_VERTEX(v);
