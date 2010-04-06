@@ -33,8 +33,8 @@
 
 
 /* Note: struct parsing requires no space after the commas.  take care
- * when formatting this file if compile breaks here that spaces are
- * not getting inserted.
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
  */
 #define COMMA ','
 
