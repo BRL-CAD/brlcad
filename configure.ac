@@ -3262,6 +3262,7 @@ TERMLIB_CPPFLAGS=""
 if test "x$build_brlcad_termlib" = "xyes" ; then
     TERMLIB='${top_builddir}/src/other/libtermlib/libtermlib.la'
     TERMLIB_CPPFLAGS='-I${top_srcdir}/src/other/libtermlib'
+    AC_DEFINE(HAVE_TERMCAP_H, 1, [Define to 1 if you have the <termcap.h> header file.])
     AC_MSG_RESULT(yes)
 else
     TERMLIB="$LIBTERMLIB"
