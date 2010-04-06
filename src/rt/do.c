@@ -577,9 +577,9 @@ do_frame(int framenumber)
     struct rt_i *rtip = ap.a_rt_i;
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
-    double wallclock;			/* # seconds of wall clock time */
-    int npix;				/* # of pixel values to be done */
-    int lim;
+    double wallclock = 0.0;		/* # seconds of wall clock time */
+    int npix = 0;			/* # of pixel values to be done */
+    int lim = 0;
     vect_t work, temp;
     quat_t quat;
 
