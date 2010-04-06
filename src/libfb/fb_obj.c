@@ -30,7 +30,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include "bio.h"
 #include "tcl.h"
