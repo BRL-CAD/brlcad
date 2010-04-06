@@ -80,6 +80,12 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
 #  endif
 #endif
 
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
+ */
+#define COMMA ','
+
 static int analysis_flags;
 static int multiple_analyses;
 
@@ -586,7 +592,7 @@ parse_args(int ac, char *av[])
 		    /* find out if we have two or one args user can
 		     * separate them with, or - delimiter
 		     */
-		    if ((p = strchr(bu_optarg, ',')))
+		    if ((p = strchr(bu_optarg, COMMA)))
 			*p++ = '\0';
 		    else if ((p = strchr(bu_optarg, '-')))
 			*p++ = '\0';

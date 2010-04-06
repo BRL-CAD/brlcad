@@ -39,6 +39,13 @@
 #include "rtprivate.h"
 
 
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
+ */
+#define COMMA ','
+
+
 int		rpt_dist = 0;		/* report distance to each pixel */
 int		width = 0;		/* # of pixels in X */
 int		height = 0;		/* # of lines in Y */
@@ -240,7 +247,7 @@ int get_args( int argc, register char **argv )
 	    case '.':
 		nu_gfactor = (double)atof( bu_optarg );
 		break;
-	    case ',':
+	    case COMMA:
 		space_partition = atoi(bu_optarg);
 		break;
 	    case '@':
@@ -299,7 +306,7 @@ int get_args( int argc, register char **argv )
 		}
 		f = 0;
 		if ( (cp = strchr(bu_optarg, '/')) ||
-		     (cp = strchr(bu_optarg, ',')) )  {
+		     (cp = strchr(bu_optarg, COMMA)) )  {
 		    if ( sscanf( cp+1, "%lf", &f ) == 1 )  {
 			if ( f > 0 && f < 1 )
 			    rt_perp_tol = f;

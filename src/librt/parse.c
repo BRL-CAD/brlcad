@@ -43,6 +43,13 @@
 #include "raytrace.h"
 
 
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
+ */
+#define COMMA ','
+
+
 /*
  *			B U _ M A T P R I N T
  *
@@ -632,7 +639,7 @@ bu_vls_item_print(struct bu_vls *vp, const struct bu_structparse *sdp, const cha
     /* item description */
     /* base address of users structure */
 {
-    bu_vls_item_print_core( vp, sdp, base, ',' );
+    bu_vls_item_print_core( vp, sdp, base, COMMA );
 }
 
 /*
