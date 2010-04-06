@@ -13,9 +13,9 @@ static const char RCSid[] = "@(#)$Header$";
    Gets the termcap information and complains if there are not enough
    of the basic features on the particular terminal. */
 
-#include "./jove.h"
 #include "common.h"
 
+#include "./jove.h"
 
 #ifdef HAVE_TERMIOS_H
 #  if !defined(_XOPEN_SOURCE)

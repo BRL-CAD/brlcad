@@ -5,10 +5,6 @@
  *
  */
 
-#ifdef _GNU_SOURCE
-#  undef _GNU_SOURCE
-#endif
-
 #include "common.h"
 
 
