@@ -187,9 +187,6 @@ int process_nv_faces(struct ga_t *ga,
                      int grp_mode, 
                      size_t grp_indx,
                      fastf_t conversion_factor, 
-                     struct model *m,
-                     struct nmgregion *r,
-                     struct shell *s,
                      struct bn_tol *tol,
                      int *empty) {
 
@@ -202,6 +199,9 @@ int process_nv_faces(struct ga_t *ga,
     size_t groupid = 0;
     size_t numNorTriangles_in_current_bot = 0;
     /* NMG2s */
+    struct model *m = (struct model *)NULL;
+    struct nmgregion *r = (struct nmgregion *)NULL;
+    struct shell *s = (struct shell *)NULL;
     const size_t (**index_arr_nv_faces_history)[2]; /* used by nv_faces */
     const size_t (**index_arr_nv_faces_history_tmp)[2]; /* used by nv_faces */
     size_t *size_history = NULL ; 
@@ -324,6 +324,15 @@ int process_nv_faces(struct ga_t *ga,
             size = obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
         }
 
+	if ( found && !numNorPolygons_in_current_shell) {
+            m = nmg_mm();
+            r = nmg_mrsv(m);
+            s = BU_LIST_FIRST(shell, &r->s_hd);
+            NMG_CK_MODEL(m);
+            NMG_CK_REGION(r);
+            NMG_CK_SHELL(s);
+        }
+
         /* test for and force the skip of degenerate faces */
         /* in this case degenerate faces are those with duplicate vertices */
         if ( found && skip_degenerate_faces ) {
@@ -345,6 +354,17 @@ int process_nv_faces(struct ga_t *ga,
                            i+1, 
                            (index_arr_nv_faces[vert][0])+1, 
                            (index_arr_nv_faces[vert2][0])+1); 
+                    } else {
+                        /* test distance between vertices, any vertices closer
+                           than 0.5mm is too close */
+                        fastf_t distance_between_vertices = 0.0 ;
+                        distance_between_vertices = \
+                           DIST_PT_PT(ga->vert_list[index_arr_nv_faces[vert][0]], \
+                                      ga->vert_list[index_arr_nv_faces[vert2][0]]) ;
+                        if ( (distance_between_vertices * conversion_factor) < 0.5  ) {
+                            found = 0; /* i.e. unfind this face */
+                            degenerate_face = 1;
+                        }
                     }
                     vert2++;
                 }
@@ -826,8 +846,16 @@ int process_nv_faces(struct ga_t *ga,
         nmg_rebound(m, tol);
 #endif
 
+
+#if 0
         bu_log("about to mk_bot_from_nmg\n");
         mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), s);
+#endif
+        bu_log("about to mk_nmg\n");
+        if (mk_nmg(outfp, bu_vls_addr(&outputObjectName), m)) {
+            bu_log("mk_nmg failed\n");
+        }
+        nmg_km(m);   
     } else {
         bu_log("Object %s has no faces\n", bu_vls_addr(&outputObjectName));
     } 
@@ -889,9 +917,8 @@ main(int argc, char **argv)
     int parse_err = 0;
 
     /* NMG2s */
-    struct model *m ;
-    struct nmgregion *r ;
-    struct shell *s ;
+    rt_g.NMG_debug = rt_g.NMG_debug & DEBUG_TRI ;
+
     struct bn_tol tol_struct ;
     struct bn_tol *tol ;
 
@@ -899,16 +926,8 @@ main(int argc, char **argv)
 
     tol = &tol_struct;
 
-    m = nmg_mm();
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-
-    NMG_CK_MODEL(m);
-    NMG_CK_REGION(r);
-    NMG_CK_SHELL(s);
-
     tol->magic = BN_TOL_MAGIC;
-    tol->dist = 0.00005;
+    tol->dist = 0.0005;
     tol->dist_sq = tol->dist * tol->dist;
     tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
@@ -1023,15 +1042,15 @@ main(int argc, char **argv)
     }
 #endif
 
-        empty = 0 ; /* set to false to force first region and
-                       shell of model to be created */
+        empty = 0 ; /* set to false to force the model/region/shell
+                       to be created for the next grouping */
         switch (grouping_option) {
             case 'g':
                 bu_log("ENTERED 'g' PROCESSING\n");
                 for (i = 0 ; i < ga.numGroups ; i++) {
                     bu_log("(%lu) current group name is (%s)\n", i, ga.str_arr_obj_groups[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, m, r, s, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, tol, &empty);
                 }
                 bu_log("EXITED 'g' PROCESSING\n");
                 break;
@@ -1046,16 +1065,7 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numObjects ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_objects[i]);
 
-                    /* if when process_nv_faces finished and the shell was not empty
-                       then create a new region and shell for the next run of 
-                       process_nv_faces */
-                    if ( !empty ) {
-                        r = nmg_mrsv(m);
-                        s = BU_LIST_FIRST(shell, &r->s_hd);
-
-                    }
-
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, m, r, s, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, tol, &empty);
 
                 } /* numObjects loop */
 
@@ -1068,14 +1078,14 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numMaterials ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_materials[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00, m, r, s, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00, tol, &empty);
 
                 } /* numMaterials loop */
                 bu_log("EXITED 'm' PROCESSING\n");
                 break;
             case 't':
                 bu_log("ENTERED 't' PROCESSING\n");
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00, m, r, s, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00, tol, &empty);
                 bu_log("EXITED 't' PROCESSING\n");
                 break;
             default:
