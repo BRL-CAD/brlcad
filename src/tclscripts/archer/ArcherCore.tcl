@@ -114,7 +114,6 @@ namespace eval ArcherCore {
 	method cmd                 {args}
 
 	# general
-	method UpdateTheme         {_theme} {set mTheme $_theme; updateTheme}
 	method Load                {_filename}
 	method GetUserCmds         {}
 	method WhatsOpen           {}
@@ -333,8 +332,6 @@ namespace eval ArcherCore {
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
 	variable mViewingParamsColorPref
-	variable mTheme "Crystal_Large"
-	variable mThemePref ""
 	variable mScaleColor Yellow
 	variable mScaleColorPref ""
 	variable mMeasuringStickMode 0
@@ -469,7 +466,6 @@ Popup Menu    Right or Ctrl-Left
 	method menuStatusCB_junk {_w}
 	method transparencyMenuStatusCB {_w}
 
-	method updateTheme {}
 	method updateSaveMode {}
 	method createTargetCopy {}
 	method deleteTargetOldCopy {}
@@ -491,14 +487,12 @@ Popup Menu    Right or Ctrl-Left
 
 	method updateDisplaySettings {}
 
-
-	#XXX Everything that follows use to be private
 	variable mImgDir ""
 	variable mCenterX ""
 	variable mCenterY ""
 	variable mCenterZ ""
 
-	# variables for the new tree
+	# variables for images
 	variable mImage_air ""
 	variable mImage_airInter ""
 	variable mImage_airSub ""
@@ -588,12 +582,22 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_torSub ""
 	variable mImage_torUnion ""
 
+	variable mImage_fbOff ""
+	variable mImage_fbOn ""
+	variable mImage_fbInterlay ""
+	variable mImage_fbOverlay ""
+	variable mImage_fbUnderlay ""
+	variable mImage_rt ""
+	variable mImage_rtAbort ""
+
+	# variables for the new tree
 	variable mCNode2PList
 	variable mPNode2CList
 	variable mNode2Text
 	variable mText2Node
 
 	# init functions
+	method initImages {}
 	method initNewTree       {}
 	method initTree          {}
 	method initNewTreeImages    {}
@@ -984,7 +988,7 @@ Popup Menu    Right or Ctrl-Left
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
 
-    updateTheme
+    initImages
     initNewTreeImages
 
     $itk_component(primaryToolbar) itemconfigure open -state normal
@@ -1258,6 +1262,51 @@ Popup Menu    Right or Ctrl-Left
 	set dlist $new_dlist
     }
 }
+
+::itcl::body ArcherCore::initImages {} {
+    set dir $mImgDir
+
+    if {!$mViewOnly} {
+	# Tree Control
+	$itk_component(tree) configure \
+	    -openimage [image create photo -file [file join $dir folder_open_small.png]] \
+	    -closeimage [image create photo -file [file join $dir folder_closed_small.png]] \
+	    -nodeimage [image create photo -file [file join $dir file_text_small.png]]
+	$itk_component(tree) redraw
+
+	# Primary Toolbar
+	$itk_component(primaryToolbar) itemconfigure open \
+	    -image [image create photo \
+			-file [file join $dir open.png]]
+	$itk_component(primaryToolbar) itemconfigure save \
+	    -image [image create photo \
+			-file [file join $dir save.png]]
+    }
+
+    # View Toolbar
+    $itk_component(primaryToolbar) itemconfigure rotate \
+	-image [image create photo \
+		    -file [file join $dir view_rotate.png]]
+    $itk_component(primaryToolbar) itemconfigure translate \
+	-image [image create photo \
+		    -file [file join $dir view_translate.png]]
+    $itk_component(primaryToolbar) itemconfigure scale \
+	-image [image create photo \
+		    -file [file join $dir view_scale.png]]
+    $itk_component(primaryToolbar) itemconfigure center \
+	-image [image create photo \
+		    -file [file join $dir view_center.png]]
+    $itk_component(primaryToolbar) itemconfigure cpick \
+	-image [image create photo \
+		    -file [file join $dir component_pick.png]]
+    $itk_component(primaryToolbar) itemconfigure cerase \
+	-image [image create photo \
+		    -file [file join $dir component_erase.png]]
+    $itk_component(primaryToolbar) itemconfigure measure \
+	-image [image create photo \
+		    -file [file join $dir measure.png]]
+}
+
 
 ::itcl::body ArcherCore::initNewTree {} {
     set mNode2Text() ""
@@ -3077,10 +3126,7 @@ Popup Menu    Right or Ctrl-Left
 	$_menu add radiobutton -label "Shaded" \
 	    -indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $_node 1 1 1]
-#	$_menu add radiobutton -label "Shaded (Mode 2)" \
-#	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-#	    -command [::itcl::code $this render $_node 2 1 1]
-	$_menu add radiobutton -label "Hidden Line)" \
+	$_menu add radiobutton -label "Hidden Line" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $_node 4 1 1]
 
@@ -3102,8 +3148,6 @@ Popup Menu    Right or Ctrl-Left
 
 	$_menu add command -label "Shaded" \
 	    -command [::itcl::code $this render $_node 1 1 1]
-#	$_menu add command -label "Shaded (Mode 2)" \
-#	    -command [::itcl::code $this render $_node 2 1 1]
 	$_menu add command -label "Hidden Line" \
 	    -command [::itcl::code $this render $_node 4 1 1]
 
@@ -3688,51 +3732,6 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 }
-
-::itcl::body ArcherCore::updateTheme {} {
-    set dir [file join $mImgDir Themes $mTheme]
-
-    if {!$mViewOnly} {
-	# Tree Control
-	$itk_component(tree) configure \
-	    -openimage [image create photo -file [file join $dir folder_open_small.png]] \
-	    -closeimage [image create photo -file [file join $dir folder_closed_small.png]] \
-	    -nodeimage [image create photo -file [file join $dir file_text_small.png]]
-	$itk_component(tree) redraw
-
-	# Primary Toolbar
-	$itk_component(primaryToolbar) itemconfigure open \
-	    -image [image create photo \
-			-file [file join $dir open.png]]
-	$itk_component(primaryToolbar) itemconfigure save \
-	    -image [image create photo \
-			-file [file join $dir save.png]]
-    }
-
-    # View Toolbar
-    $itk_component(primaryToolbar) itemconfigure rotate \
-	-image [image create photo \
-		    -file [file join $dir view_rotate.png]]
-    $itk_component(primaryToolbar) itemconfigure translate \
-	-image [image create photo \
-		    -file [file join $dir view_translate.png]]
-    $itk_component(primaryToolbar) itemconfigure scale \
-	-image [image create photo \
-		    -file [file join $dir view_scale.png]]
-    $itk_component(primaryToolbar) itemconfigure center \
-	-image [image create photo \
-		    -file [file join $dir view_center.png]]
-    $itk_component(primaryToolbar) itemconfigure cpick \
-	-image [image create photo \
-		    -file [file join $dir component_pick.png]]
-    $itk_component(primaryToolbar) itemconfigure cerase \
-	-image [image create photo \
-		    -file [file join $dir component_erase.png]]
-    $itk_component(primaryToolbar) itemconfigure measure \
-	-image [image create photo \
-		    -file [file join $dir measure.png]]
-}
-
 
 ::itcl::body ArcherCore::updateSaveMode {} {
     if {$mViewOnly} {

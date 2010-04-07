@@ -216,7 +216,7 @@ package provide Archer 1.0
 	method track               {args}
 	method units               {args}
 	method vmake               {args}
-	method updateTheme         {}
+	method initImages         {}
 
 	# Object Edit Management
 	method checkpoint {_obj _type}
@@ -511,7 +511,7 @@ package provide Archer 1.0
     }
 
     set mInstanceInit 0
-    updateTheme
+    initImages
 
     if {!$mViewOnly} {
 	# Change the command window's prompt
@@ -1609,167 +1609,170 @@ package provide Archer 1.0
     eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
 }
 
-::itcl::body Archer::updateTheme {} {
+::itcl::body Archer::initImages {} {
     if {$mInstanceInit} {
 	return
     }
 
-    ArcherCore::updateTheme
-
-    set dir [file join $mImgDir Themes $mTheme]
+    ArcherCore::initImages
 
     if {!$mViewOnly} {
 	# Primary 
 	$itk_component(primaryToolbar) itemconfigure checkpoint \
 	    -image [image create photo \
-			-file [file join $dir checkpoint.png]]
+			-file [file join $mImgDir checkpoint.png]]
 	$itk_component(primaryToolbar) itemconfigure object_undo \
 	    -image [image create photo \
-			-file [file join $dir object_undo.png]]
+			-file [file join $mImgDir object_undo.png]]
 	$itk_component(primaryToolbar) itemconfigure new \
 	    -image [image create photo \
-			-file [file join $dir file_new.png]]
+			-file [file join $mImgDir file_new.png]]
 	$itk_component(primaryToolbar) itemconfigure global_undo \
 	    -image [image create photo \
-			-file [file join $dir global_undo.png]]
+			-file [file join $mImgDir global_undo.png]]
 	$itk_component(primaryToolbar) itemconfigure revert \
 	    -image [image create photo \
-			-file [file join $dir revert.png]]
+			-file [file join $mImgDir revert.png]]
 	$itk_component(primaryToolbar) itemconfigure preferences \
 	    -image [image create photo \
-			-file [file join $dir configure.png]]
+			-file [file join $mImgDir configure.png]]
 	$itk_component(primaryToolbar) itemconfigure comb \
 	    -image [image create photo \
-			-file [file join $dir combination.png]]
+			-file [file join $mImgDir combination.png]]
 	$itk_component(primaryToolbar) itemconfigure arb6 \
 	    -image [image create photo \
-			-file [file join $dir primitive_arb6.png]]
+			-file [file join $mImgDir primitive_arb6.png]]
 	$itk_component(primaryToolbar) itemconfigure arb8 \
 	    -image [image create photo \
-			-file [file join $dir primitive_arb8.png]]
+			-file [file join $mImgDir primitive_arb8.png]]
 	$itk_component(primaryToolbar) itemconfigure cone \
 	    -image [image create photo \
-			-file [file join $dir primitive_cone.png]]
+			-file [file join $mImgDir primitive_cone.png]]
 	#$itk_component(primaryToolbar) itemconfigure pipe \
 	    -image [image create photo \
-			-file [file join $dir primitive_pipe.png]]
+			-file [file join $mImgDir primitive_pipe.png]]
 	$itk_component(primaryToolbar) itemconfigure sphere \
 	    -image [image create photo \
-			-file [file join $dir primitive_sph.png]]
+			-file [file join $mImgDir primitive_sph.png]]
 	$itk_component(primaryToolbar) itemconfigure torus \
 	    -image [image create photo \
-			-file [file join $dir primitive_tor.png]]
+			-file [file join $mImgDir primitive_tor.png]]
 	$itk_component(primaryToolbar) itemconfigure other \
 	    -image [image create photo \
-			-file [file join $dir primitive_list.png]]
+			-file [file join $mImgDir primitive_list.png]]
 
 	# View Toolbar
 #	$itk_component(primaryToolbar) itemconfigure rotate \
 #	    -image [image create photo \
-#			-file [file join $dir view_rotate.png]]
+#			-file [file join $mImgDir view_rotate.png]]
 #	$itk_component(primaryToolbar) itemconfigure translate \
 #	    -image [image create photo \
-#			-file [file join $dir view_translate.png]]
+#			-file [file join $mImgDir view_translate.png]]
 #	$itk_component(primaryToolbar) itemconfigure scale \
 #	    -image [image create photo \
-#			-file [file join $dir view_scale.png]]
+#			-file [file join $mImgDir view_scale.png]]
 #	$itk_component(primaryToolbar) itemconfigure center \
 #	    -image [image create photo \
-#			-file [file join $dir view_select.png]]
+#			-file [file join $mImgDir view_select.png]]
 #	$itk_component(primaryToolbar) itemconfigure cpick \
 #	    -image [image create photo \
-#			-file [file join $dir compSelect.png]]
+#			-file [file join $mImgDir compSelect.png]]
 #	$itk_component(primaryToolbar) itemconfigure measure \
 #	    -image [image create photo \
-#			-file [file join $dir measure.png]]
+#			-file [file join $mImgDir measure.png]]
 
 	# We catch this because the item may not exist
 	catch {$itk_component(primaryToolbar) itemconfigure wizards \
 		   -image [image create photo \
-			       -file [file join $dir wizard.png]]}
+			       -file [file join $mImgDir wizard.png]]}
 
 	#$itk_component(primaryToolbar) itemconfigure ehy \
 	    -image [image create photo \
-			-file [file join $dir primitive_ehy.png]]
+			-file [file join $mImgDir primitive_ehy.png]]
 	#$itk_component(primaryToolbar) itemconfigure epa \
 	    -image [image create photo \
-			-file [file join $dir primitive_epa.png]]
+			-file [file join $mImgDir primitive_epa.png]]
 	#$itk_component(primaryToolbar) itemconfigure rpc \
 	    -image [image create photo \
-			-file [file join $dir primitive_rpc.png]]
+			-file [file join $mImgDir primitive_rpc.png]]
 	#$itk_component(primaryToolbar) itemconfigure rhc \
 	    -image [image create photo \
-			-file [file join $dir primitive_rhc.png]]
+			-file [file join $mImgDir primitive_rhc.png]]
 	#$itk_component(primaryToolbar) itemconfigure ell \
 	    -image [image create photo \
-			-file [file join $dir primitive_ell.png]]
+			-file [file join $mImgDir primitive_ell.png]]
 	#$itk_component(primaryToolbar) itemconfigure eto \
 	    -image [image create photo \
-			-file [file join $dir primitive_eto.png]]
+			-file [file join $mImgDir primitive_eto.png]]
 	#$itk_component(primaryToolbar) itemconfigure half \
 	    -image [image create photo \
-			-file [file join $dir primitive_half.png]]
+			-file [file join $mImgDir primitive_half.png]]
 	#$itk_component(primaryToolbar) itemconfigure part \
 	    -image [image create photo \
-			-file [file join $dir primitive_part.png]]
+			-file [file join $mImgDir primitive_part.png]]
 	#$itk_component(primaryToolbar) itemconfigure grip \
 	    -image [image create photo \
-			-file [file join $dir primitive_grip.png]]
+			-file [file join $mImgDir primitive_grip.png]]
 	#$itk_component(primaryToolbar) itemconfigure extrude \
 	    -image [image create photo \
-			-file [file join $dir primitive_extrude.png]]
+			-file [file join $mImgDir primitive_extrude.png]]
 	#$itk_component(primaryToolbar) itemconfigure sketch \
 	    -image [image create photo \
-			-file [file join $dir primitive_sketch.png]]
+			-file [file join $mImgDir primitive_sketch.png]]
 	#$itk_component(primaryToolbar) itemconfigure bot \
 	    -image [image create photo \
-			-file [file join $dir primitive_bot.png]]
+			-file [file join $mImgDir primitive_bot.png]]
 	#$itk_component(primaryToolbar) itemconfigure tgc \
 	    -image [image create photo \
-			-file [file join $dir primitive_tgc.png]]
+			-file [file join $mImgDir primitive_tgc.png]]
 	#$itk_component(primaryToolbar) itemconfigure superell \
 	    -image [image create photo \
-			-file [file join $dir primitive_superell.png]]
+			-file [file join $mImgDir primitive_superell.png]]
 	#$itk_component(primaryToolbar) itemconfigure hyp \
 	    -image [image create photo \
-			-file [file join $dir primitive_hyp.png]]
+			-file [file join $mImgDir primitive_hyp.png]]
 
 	catch {
 	    $itk_component(primaryToolbar) itemconfigure edit_rotate \
 		-image [image create photo \
-			    -file [file join $dir edit_rotate.png]]
+			    -file [file join $mImgDir edit_rotate.png]]
 	    $itk_component(primaryToolbar) itemconfigure edit_translate \
 		-image [image create photo \
-			    -file [file join $dir edit_translate.png]]
+			    -file [file join $mImgDir edit_translate.png]]
 	    $itk_component(primaryToolbar) itemconfigure edit_scale \
 		-image [image create photo \
-			    -file [file join $dir edit_scale.png]]
+			    -file [file join $mImgDir edit_scale.png]]
 	    $itk_component(primaryToolbar) itemconfigure edit_center \
 		-image [image create photo \
-			    -file [file join $dir edit_select.png]]
+			    -file [file join $mImgDir edit_select.png]]
 	}
 
 	# Attribute View Toolbar
 	$itk_component(objViewToolbar) itemconfigure objAttrView \
 	    -image [image create photo \
-			-file [file join $dir option_text.png]]
+			-file [file join $mImgDir option_text.png]]
 	$itk_component(objViewToolbar) itemconfigure objEditView \
 	    -image [image create photo \
-			-file [file join $dir option_tree.png]]
+			-file [file join $mImgDir option_tree.png]]
     }
 
+    set mImage_fbOff [image create photo -file [file join $mImgDir framebuffer_off.png]]
+    set mImage_fbOn [image create photo -file [file join $mImgDir framebuffer.png]]
+    set mImage_fbInterlay [image create photo -file [file join $mImgDir framebuffer_interlay.png]]
+    set mImage_fbOverlay [image create photo -file [file join $mImgDir framebuffer_overlay.png]]
+    set mImage_fbUnderlay [image create photo -file [file join $mImgDir framebuffer_underlay.png]]
+    set mImage_rt [image create photo -file [file join $mImgDir raytrace.png]]
+    set mImage_rtAbort [image create photo -file [file join $mImgDir raytrace_abort.png]]
+
     $itk_component(primaryToolbar) itemconfigure toggle_fb \
-	-image [image create photo \
-		    -file [file join $dir framebuffer.png]]
+	-image $mImage_fbOn
     $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
-	-image [image create photo \
-		    -file [file join $dir framebuffer_underlay.png]]
+	-image $mImage_fbUnderlay
     $itk_component(primaryToolbar) itemconfigure raytrace \
-	-image [image create photo \
-		    -file [file join $dir raytrace.png]]
+	-image $mImage_rt
     $itk_component(primaryToolbar) itemconfigure clear_fb \
 	-image [image create photo \
-		    -file [file join $dir framebuffer_clear.png]]
+		    -file [file join $mImgDir framebuffer_clear.png]]
 }
 
 ::itcl::body Archer::setDefaultBindingMode {_mode} {
@@ -3996,30 +3999,25 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::fbEnabledCallback {_on} {
-    set dir [file join $mImgDir Themes $mTheme]
-
     if {$_on} {
 	$itk_component(primaryToolbar) itemconfigure toggle_fb \
-	    -image [image create photo \
-			-file [file join $dir framebuffer_off.png]]
+	    -image $mImage_fbOff
     } else {
 	$itk_component(primaryToolbar) itemconfigure toggle_fb \
-	    -image [image create photo \
-			-file [file join $dir framebuffer.png]]
+	    -image $mImage_fbOn
     }
 }
 
 ::itcl::body Archer::fbModeCallback {_mode} {
-    set dir [file join $mImgDir Themes $mTheme]
     switch -- $_mode {
 	1 {
-	    set file framebuffer_underlay.png
+	    set img $mImage_fbUnderlay
 	}
 	2 {
-	    set file framebuffer_interlay.png
+	    set img $mImage_fbInterlay
 	}
 	3 {
-	    set file framebuffer_overlay.png
+	    set img $mImage_fbOverlay
 	}
 	default {
 	    return
@@ -4027,7 +4025,7 @@ package provide Archer 1.0
     }
 
     $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
-	-image [image create photo -file [file join $dir $file]]
+	-image $img
 }
 
 ::itcl::body Archer::fbModeToggle {} {
@@ -4041,18 +4039,14 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::rtEndCallback {_aborted} {
-    set dir [file join $mImgDir Themes $mTheme]
     $itk_component(primaryToolbar) itemconfigure raytrace \
-	-image [image create photo \
-		    -file [file join $dir raytrace.png]] \
+	-image $mImage_rt \
 	-command [::itcl::code $this raytracePlus]
 }
 
 ::itcl::body Archer::raytracePlus {} {
-    set dir [file join $mImgDir Themes $mTheme]
     $itk_component(primaryToolbar) itemconfigure raytrace \
-	-image [image create photo \
-		    -file [file join $dir raytrace_abort.png]] \
+	-image $mImage_rtAbort \
 	-command "$itk_component(rtcntrl) abort"
     $itk_component(rtcntrl) raytracePlus
 }
@@ -4717,7 +4711,7 @@ package provide Archer 1.0
 	-value $OBJECT_ROTATE_MODE \
 	-command [::itcl::code $this beginObjRotate] \
 	-image [image create photo \
-		    -file [file join $mImgDir Themes $mTheme edit_rotate.png]]
+		    -file [file join $mImgDir edit_rotate.png]]
     $itk_component(primaryToolbar) add radiobutton edit_translate \
 	-balloonstr "Translate selected object" \
 	-helpstr "Translate selected object" \
@@ -4725,7 +4719,7 @@ package provide Archer 1.0
 	-value $OBJECT_TRANSLATE_MODE \
 	-command [::itcl::code $this beginObjTranslate] \
 	-image [image create photo \
-		    -file [file join $mImgDir Themes $mTheme edit_translate.png]]
+		    -file [file join $mImgDir edit_translate.png]]
     $itk_component(primaryToolbar) add radiobutton edit_scale \
 	-balloonstr "Scale selected object" \
 	-helpstr "Scale selected object" \
@@ -4733,7 +4727,7 @@ package provide Archer 1.0
 	-value $OBJECT_SCALE_MODE \
 	-command [::itcl::code $this beginObjScale] \
 	-image [image create photo \
-		    -file [file join $mImgDir Themes $mTheme edit_scale.png]]
+		    -file [file join $mImgDir edit_scale.png]]
     $itk_component(primaryToolbar) add radiobutton edit_center \
 	-balloonstr "Center selected object" \
 	-helpstr "Center selected object" \
@@ -4741,7 +4735,7 @@ package provide Archer 1.0
 	-value $OBJECT_CENTER_MODE \
 	-command [::itcl::code $this beginObjCenter] \
 	-image [image create photo \
-		    -file [file join $mImgDir Themes $mTheme edit_select.png]]
+		    -file [file join $mImgDir edit_select.png]]
 
     $itk_component(primaryToolbar) itemconfigure edit_rotate -state disabled
     $itk_component(primaryToolbar) itemconfigure edit_translate -state disabled
@@ -7597,7 +7591,6 @@ package provide Archer 1.0
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
-    set mThemePref $mTheme
     set mDbUnits [gedCmd units -s]
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
@@ -7667,18 +7660,12 @@ package provide Archer 1.0
 	foreach line $lines {
 	    catch {eval $line}
 	}
-
-	# Make sure we're backwards compatible
-	if {$mTheme == "Crystal (Large)"} {
-	    set mTheme "Crystal_Large"
-	}
     }
 
     eval backgroundColor $mBackground
 
     update
     initMode
-    updateTheme
     updateToggleMode
 }
 
@@ -7731,7 +7718,6 @@ package provide Archer 1.0
     puts $_pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
-    puts $_pfile "set mTheme \"$mTheme\""
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
     puts $_pfile "set mGridColor \"$mGridColor\""
