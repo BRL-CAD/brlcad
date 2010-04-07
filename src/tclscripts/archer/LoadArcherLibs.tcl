@@ -29,25 +29,25 @@
 proc LoadArcherCoreLibs {} {
     global tcl_platform
 
-    # load tkimg
+    # load tkpng
     if {$tcl_platform(platform) == "windows"} {
 	set ext "dll"
-	set tkimgdir [bu_brlcad_root "bin"]
+	set tkpngdir [bu_brlcad_root "bin"]
     } else {
 	set ext "so"
-	set tkimgdir [bu_brlcad_root "lib"]
-	if {![file exists $tkimgdir]} {
-	    set tkimgdir [file join [bu_brlcad_data "src"] other tkimg .libs]
+	set tkpngdir [bu_brlcad_root "lib"]
+	if {![file exists $tkpngdir]} {
+	    set tkpngdir [file join [bu_brlcad_data "src"] other tkpng .libs]
 	}
     }
 
-    # can't use sharedlibextension without changing tkimg build
-    if {![file exists [file join $tkimgdir tkimg.$ext]]} {
+    # can't use sharedlibextension without changing tkpng build
+    if {![file exists [file join $tkpngdir tkpng.$ext]]} {
 	puts "ERROR: Unable to initialize ArcherCore imagery"
 	exit 1
     }
 
-    load [file join $tkimgdir tkimg.$ext]
+    load [file join $tkpngdir tkpng.$ext]
 
     if { [catch {package require Swidgets} _initialized] } {
 	puts "$_initialized"

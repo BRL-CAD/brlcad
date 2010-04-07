@@ -1,5 +1,0 @@
-# Tcl package index file - handcrafted
-#
-# $Id$
-
-package ifneeded "@DPACKAGE@" @VERSION@ [list load [file join $dir @tkimgpng_LIB_FILE@]]
