@@ -14,9 +14,9 @@ Open Existing Database              |                             DONE (command 
 Import Database	                    |    dbconcat available on command line, no menu options as in MGED
 Export Database                     |    keep available on command line, no GUI menu options
 Load Script                         |    no GUI dialog available, presumably command line works?
-Raytrace Control Panel              |    older version in Archer, needs updating to current MGED
+Raytrace Control Panel              |       DONE - reworked panel in Archer, improved on MGED version
 Render View options                 |    Will become Export View - INCOMPLETE
-Preferences->Units                  |    Add to Preferences panel under the General tab
+Preferences->Units                  |   			  DONE 
 Preferences->Command Line Edit      |    Add to Preferences panel under the General tab
 Preferences->Special Characters     |    Refers to globbing - per Bob this is currently being handled per
                                     |    command in Archer, so a global setting may not make sense.  A
@@ -24,8 +24,7 @@ Preferences->Special Characters     |    Refers to globbing - per Bob this is cu
                                     |    and non-globbing - and the ability to select and move them from
                                     |    one list to the other (kind of like traditional ftp clients) in
                                     |    a Preferences tab
-Preferences->Colors                 |    INCOMPLETE - need to incorprate relevant settings in appropriate
-                                    |    configuration panels, some of which aren't implemented in Archer
+Preferences->Colors                 |    	    Handled in local per-topic preferences
 Preferences->Fonts                  |                    INCOMPLETE, lower priority
 Create/Update .mgedrc               |    .archerrc exists, needs to be expanded as more preferences are
                                     |    implemented in Archer - ONGOING
@@ -89,13 +88,13 @@ Settings -> Rotate About            |    Save ability to rotate around view and 
 Settings -> Active Pane             |                             DONE
 Settings -> Apply To                |    Not worth including unless specifically asked for - relates to multipane settings
 Settings -> Query Ray Effects       |    Will be handled elsewhere - nirt/query ray settings panel
-Settings -> Grid                    |                           INCOMPLETE
-Settings -> Grid Spacing            |                           INCOMPLETE
-Settings -> Framebuffer             |    Will be handled by raytrace control panel/other raytrace controls
+Settings -> Grid                    |                             DONE
+Settings -> Grid Spacing            |                             DONE
+Settings -> Framebuffer             |    Will be handled by raytrace control panel/other raytrace controls - DONE
 Settings -> View Axes Position      |                             DONE (handled in preferences panel)
-Modes -> Draw Grid                  |                           INCOMPLETE (see Settings -> Grid)
-Modes -> Snap to Grid               |                           INCOMPLETE
-Modes -> FrameBuffer Active         |    Available, not as conveniently as in MGED - Need to be in Raytrace Ctrl. Panel
+Modes -> Draw Grid                  |                           DONE (see Settings -> Grid)
+Modes -> Snap to Grid               |                             DONE
+Modes -> FrameBuffer Active         |              DONE - Archer toolbar button and raytrace control panel
 Modes -> Listen for Clients         |             REMOVE - no useful user level functionality exposed
 Modes -> Persistend Sweep Rect.     |             Roll this functionality into the Sweep Raytrace rectangle functionality
 Modes -> Angle/Dist. Cursor         |   INCOMPLETE (duplicated in MGED Settings->Transform?)
@@ -114,11 +113,13 @@ Misc -> Perspective                 |                           INCOMPLETE
 Misc -> Faceplate                   |                            DONE
 Misc -> Faceplate GUI               |             Maintin for classic mode, don't expose in Archer GUI
 Misc -> Keystroke Forwarding        |                           REMOVE
-Tools -> ADC Control Panel          |             INCOMPLETE - convert to preferences tab
+Tools -> ADC Control Panel          |             INCOMPLETE - Include, but only using the controls in the Tool panel
+                                    |                          don't integrate in-display-manager mouse bindings
+                                    |                          new measurement tool more usable in most cases
 Tools -> AniMate                    |     Low priority - better approach might be to export to Blender for animation
-Tools -> Grid Control Panel         |             INCOMPLETE - convert to preferences tab
+Tools -> Grid Control Panel         |                            DONE
 Tools -> Query Ray                  |             INCOMPLETE - convert to preferences tab or tool
-Tools -> Raytrace Control Panel     |             INCOMPLETE - needs updates applied to MGED panel
+Tools -> Raytrace Control Panel     |                            DONE
 Tools -> Build Pattern Tool         |             INCOMPLETE - convert to Archer wizard
 Tools -> Color Selector             |             Not needed as a separate tool - launch for appropriate preferences
 Tools -> Geometry Browser           |             Not needed, make sure tree widget covers functionality
@@ -126,10 +127,10 @@ Tools -> Overlap Tool               |             INCOMPLETE - expose in Archer 
 Tools -> Upgrade Database...        |             Check that Archer prompts to upgrade when loading old .g
 Tools -> Command Window             |             Investigate tabbed command windows?
 Tools -> Graphics Window            |             Investigate tabbed graphics windows/views?
-Help -> Dedication                  |                          INCOMPLETE
+Help -> Dedication                  |                           DONE
 Help -> About MGED                  |   Dialog available, contents need to be merged in
 Help -> Command Manual Pages        |                          INCOMPLETE
-Help -> Shift Grips                 |   BRL-CAD compatibility mode exists, verify that all useful bindings available
+Help -> Shift Grips                 |                           DONE
 Help -> Apropos                     |   INCOMPLETE, not working well in MGED either?
 Help -> Manual                      |   INCOMPLETE, even in MGED needs web browser, should use docbook/tkhtml3
 
@@ -142,16 +143,14 @@ Other Issues
 * archer html documentation refers to an 'ae' command, yet only 'aet'
   exists.  either the docs need updating or ae added.
 
-* archer help menu incorrectly calls archer commands "BRL-CAD Commands"
-
 * opendb command doesn't seem to be available.
 
 * archer reports "invalid command" on 'aet' and other commands until a
   database is opened.  it shouldn't.
 
-* archer doesn't have the -c option to run command-line or sans Tk
-
-* need to "port" archer to the C code startup that MGED uses
+* archer doesn't have the -c option to run command-line or sans Tk -  need to "port" 
+  archer to the C code startup that MGED uses - some preliminary work has been done, 
+  but needs to be made more robust and tested.
 
 * add ability to undo transaction sets
 
