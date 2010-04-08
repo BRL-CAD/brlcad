@@ -61,174 +61,6 @@ static int numreg;
 static int numsol;
 static FILE *tabptr;
 
-static int ged_check(char *a, char *b);
-static int ged_sol_number(matp_t matrix, char *name, int *old);
-static void ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag);
-
-int
-ged_tables(struct ged *gedp, int argc, const char *argv[])
-{
-    static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
-    static const char sortcmd_long[] = "sort --numeric --key=2, 2 --output /tmp/ord_id ";
-    static const char catcmd[] = "cat /tmp/ord_id >> ";
-    struct bu_vls tmp_vls;
-    struct bu_vls cmd;
-    struct bu_ptbl cur_path;
-    int flag;
-    int status;
-    char *timep;
-    time_t now;
-    int i;
-    static const char *usage = "file object(s)";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-
-    bu_vls_init(&tmp_vls);
-    bu_vls_init(&cmd);
-    bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
-    numreg = 0;
-    numsol = 0;
-
-    status = GED_OK;
-
-    /* find out which ascii table is desired */
-    if (strcmp(argv[0], "solids") == 0) {
-	/* complete summary - down to solids/paremeters */
-	flag = SOL_TABLE;
-    } else if (strcmp(argv[0], "regions") == 0) {
-	/* summary down to solids as members of regions */
-	flag = REG_TABLE;
-    } else if (strcmp(argv[0], "idents") == 0) {
-	/* summary down to regions */
-	flag = ID_TABLE;
-    } else {
-	/* should never reach here */
-	bu_vls_printf(&gedp->ged_result_str, "%s:  input error\n", argv[0]);
-	status = GED_ERROR;
-	goto end;
-    }
-
-    /* open the file */
-    if ((tabptr=fopen(argv[1], "w+")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
-	status = GED_ERROR;
-	goto end;
-    }
-
-    if (flag == SOL_TABLE || flag == REG_TABLE) {
-	/* temp file for discrimination of solids */
-	/* !!! this needs to be a bu_temp_file() */
-	if ((idfd = creat("/tmp/mged_discr", 0600)) < 0) {
-	    perror("/tmp/mged_discr");
-	    status = GED_ERROR;
-	    goto end;
-	}
-	rd_idfd = open("/tmp/mged_discr", 2);
-    }
-
-    (void)time(&now);
-    timep = ctime(&now);
-    timep[24] = '\0';
-    (void)fprintf(tabptr, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
-    (void)fprintf(tabptr, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
-    (void)fprintf(tabptr, "3 -6         \n");
-    (void)fprintf(tabptr, "4 -5         \n");
-#ifndef _WIN32
-    (void)fprintf(tabptr, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
-#else
-    {
-	char uname[256];
-	DWORD dwNumBytes = 256;
-	if (GetUserName(uname, &dwNumBytes))
-	    (void)fprintf(tabptr, "5 -4         user         : %s\n", uname);
-	else
-	    (void)fprintf(tabptr, "5 -4         user         : UNKNOWN\n");
-    }
-#endif
-    (void)fprintf(tabptr, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
-    (void)fprintf(tabptr, "7 -2         target units : %s\n",
-		  bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
-    (void)fprintf(tabptr, "8 -1         objects      :");
-    for (i=2; i<argc; i++) {
-	if ((i%8) == 0)
-	    (void)fprintf(tabptr, "\n                           ");
-	(void)fprintf(tabptr, " %s", argv[i]);
-    }
-    (void)fprintf(tabptr, "\n\n");
-
-    /* make the tables */
-    for (i=2; i<argc; i++) {
-	struct directory *dp;
-
-	bu_ptbl_reset(&cur_path);
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL)
-	    ged_new_tables(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag);
-	else
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
-    }
-
-    bu_vls_printf(&gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
-
-    if (flag == SOL_TABLE || flag == REG_TABLE) {
-	(void)unlink("/tmp/mged_discr\0");
-	(void)fprintf(tabptr, "\n\nNumber Primitives = %d  Number Regions = %d\n",
-		      numsol, numreg);
-
-	bu_vls_printf(&gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
-		      numsol, numreg);
-
-	(void)fclose(tabptr);
-    } else {
-	(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
-	(void)fclose(tabptr);
-
-	bu_vls_printf(&gedp->ged_result_str, "Processed %d Regions\n", numreg);
-
-	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
-	bu_vls_strcpy(&cmd, sortcmd_orig);
-	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_strcat(&cmd, " 2> /dev/null");
-	if (system(bu_vls_addr(&cmd)) != 0) {
-	    bu_vls_trunc(&cmd, 0);
-	    bu_vls_strcpy(&cmd, sortcmd_long);
-	    bu_vls_strcat(&cmd, argv[1]);
-	    (void)system(bu_vls_addr(&cmd));
-	}
-	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
-
-	bu_vls_trunc(&cmd, 0);
-	bu_vls_strcpy(&cmd, catcmd);
-	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
-	(void)system(bu_vls_addr(&cmd));
-
-	(void)unlink("/tmp/ord_id\0");
-    }
-
- end:
-    bu_vls_free(&cmd);
-    bu_vls_free(&tmp_vls);
-    bu_ptbl_free(&cur_path);
-
-    return status;
-}
-
 
 static int
 ged_check(char *a, char *b)
@@ -451,6 +283,171 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
     bu_free((char *)tree_list, "new_tables: tree_list");
     intern.idb_meth->ft_ifree(&intern);
     return;
+}
+
+
+int
+ged_tables(struct ged *gedp, int argc, const char *argv[])
+{
+    static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
+    static const char sortcmd_long[] = "sort --numeric --key=2, 2 --output /tmp/ord_id ";
+    static const char catcmd[] = "cat /tmp/ord_id >> ";
+    struct bu_vls tmp_vls;
+    struct bu_vls cmd;
+    struct bu_ptbl cur_path;
+    int flag;
+    int status;
+    char *timep;
+    time_t now;
+    int i;
+    static const char *usage = "file object(s)";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+
+    bu_vls_init(&tmp_vls);
+    bu_vls_init(&cmd);
+    bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
+    numreg = 0;
+    numsol = 0;
+
+    status = GED_OK;
+
+    /* find out which ascii table is desired */
+    if (strcmp(argv[0], "solids") == 0) {
+	/* complete summary - down to solids/paremeters */
+	flag = SOL_TABLE;
+    } else if (strcmp(argv[0], "regions") == 0) {
+	/* summary down to solids as members of regions */
+	flag = REG_TABLE;
+    } else if (strcmp(argv[0], "idents") == 0) {
+	/* summary down to regions */
+	flag = ID_TABLE;
+    } else {
+	/* should never reach here */
+	bu_vls_printf(&gedp->ged_result_str, "%s:  input error\n", argv[0]);
+	status = GED_ERROR;
+	goto end;
+    }
+
+    /* open the file */
+    if ((tabptr=fopen(argv[1], "w+")) == NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	status = GED_ERROR;
+	goto end;
+    }
+
+    if (flag == SOL_TABLE || flag == REG_TABLE) {
+	/* temp file for discrimination of solids */
+	/* !!! this needs to be a bu_temp_file() */
+	if ((idfd = creat("/tmp/mged_discr", 0600)) < 0) {
+	    perror("/tmp/mged_discr");
+	    status = GED_ERROR;
+	    goto end;
+	}
+	rd_idfd = open("/tmp/mged_discr", 2);
+    }
+
+    (void)time(&now);
+    timep = ctime(&now);
+    timep[24] = '\0';
+    (void)fprintf(tabptr, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
+    (void)fprintf(tabptr, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+    (void)fprintf(tabptr, "3 -6         \n");
+    (void)fprintf(tabptr, "4 -5         \n");
+#ifndef _WIN32
+    (void)fprintf(tabptr, "5 -4         user         : %s\n", getpwuid(getuid())->pw_gecos);
+#else
+    {
+	char uname[256];
+	DWORD dwNumBytes = 256;
+	if (GetUserName(uname, &dwNumBytes))
+	    (void)fprintf(tabptr, "5 -4         user         : %s\n", uname);
+	else
+	    (void)fprintf(tabptr, "5 -4         user         : UNKNOWN\n");
+    }
+#endif
+    (void)fprintf(tabptr, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
+    (void)fprintf(tabptr, "7 -2         target units : %s\n",
+		  bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
+    (void)fprintf(tabptr, "8 -1         objects      :");
+    for (i=2; i<argc; i++) {
+	if ((i%8) == 0)
+	    (void)fprintf(tabptr, "\n                           ");
+	(void)fprintf(tabptr, " %s", argv[i]);
+    }
+    (void)fprintf(tabptr, "\n\n");
+
+    /* make the tables */
+    for (i=2; i<argc; i++) {
+	struct directory *dp;
+
+	bu_ptbl_reset(&cur_path);
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL)
+	    ged_new_tables(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag);
+	else
+	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
+    }
+
+    bu_vls_printf(&gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
+
+    if (flag == SOL_TABLE || flag == REG_TABLE) {
+	(void)unlink("/tmp/mged_discr\0");
+	(void)fprintf(tabptr, "\n\nNumber Primitives = %d  Number Regions = %d\n",
+		      numsol, numreg);
+
+	bu_vls_printf(&gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
+		      numsol, numreg);
+
+	(void)fclose(tabptr);
+    } else {
+	(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
+	(void)fclose(tabptr);
+
+	bu_vls_printf(&gedp->ged_result_str, "Processed %d Regions\n", numreg);
+
+	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
+	bu_vls_strcpy(&cmd, sortcmd_orig);
+	bu_vls_strcat(&cmd, argv[1]);
+	bu_vls_strcat(&cmd, " 2> /dev/null");
+	if (system(bu_vls_addr(&cmd)) != 0) {
+	    bu_vls_trunc(&cmd, 0);
+	    bu_vls_strcpy(&cmd, sortcmd_long);
+	    bu_vls_strcat(&cmd, argv[1]);
+	    (void)system(bu_vls_addr(&cmd));
+	}
+	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
+
+	bu_vls_trunc(&cmd, 0);
+	bu_vls_strcpy(&cmd, catcmd);
+	bu_vls_strcat(&cmd, argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
+	(void)system(bu_vls_addr(&cmd));
+
+	(void)unlink("/tmp/ord_id\0");
+    }
+
+ end:
+    bu_vls_free(&cmd);
+    bu_vls_free(&tmp_vls);
+    bu_ptbl_free(&cur_path);
+
+    return status;
 }
 
 
