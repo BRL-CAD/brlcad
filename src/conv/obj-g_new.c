@@ -187,8 +187,7 @@ int process_nv_faces(struct ga_t *ga,
                      int grp_mode, 
                      size_t grp_indx,
                      fastf_t conversion_factor, 
-                     struct bn_tol *tol,
-                     int *empty) {
+                     struct bn_tol *tol) {
 
     size_t size = 0 ;
     size_t setsize = 0 ;
@@ -349,21 +348,29 @@ int process_nv_faces(struct ga_t *ga,
                         /* add 1 to internal index value so warning message index value */
                         /* matches obj file index number. this is because obj file indexes */
                         /* start at 1, internally indexes start at 0. */
-                        bu_log("WARNING: removed degenerate face; grp_indx (%lu) face (%lu) vert index (%lu) = (%lu)\n",
+                        bu_log("WARNING: removed degenerate face (reason dup index); grp_indx (%lu) face (%lu) vert index (%lu) = (%lu)\n",
                            grp_indx,
                            i+1, 
                            (index_arr_nv_faces[vert][0])+1, 
                            (index_arr_nv_faces[vert2][0])+1); 
                     } else {
-                        /* test distance between vertices, any vertices closer
-                           than 0.5mm is too close */
+                        /* test distance between vertices. faces with
+                           vertices <= tol.dist adjusted to mm, will be
+                           dropped */
                         fastf_t distance_between_vertices = 0.0 ;
                         distance_between_vertices = \
                            DIST_PT_PT(ga->vert_list[index_arr_nv_faces[vert][0]], \
                                       ga->vert_list[index_arr_nv_faces[vert2][0]]) ;
-                        if ( (distance_between_vertices * conversion_factor) < 0.5  ) {
+                        if ( 0 && (distance_between_vertices * conversion_factor) <= (tol->dist * outfp->dbip->dbi_local2base)) {
                             found = 0; /* i.e. unfind this face */
                             degenerate_face = 1;
+                            bu_log("WARNING: removed degenerate face (reason vertices too close); grp_indx (%lu) face (%lu) vert index (%lu) = (%lu) tol.dist = (%lfmm) dist = (%fmm)\n",
+                               grp_indx,
+                               i+1, 
+                               (index_arr_nv_faces[vert][0])+1, 
+                               (index_arr_nv_faces[vert2][0])+1, 
+                               tol->dist * outfp->dbip->dbi_local2base,
+                               distance_between_vertices * conversion_factor);
                         }
                     }
                     vert2++;
@@ -712,32 +719,25 @@ int process_nv_faces(struct ga_t *ga,
                                               sizeof(struct vertex *), "nmg2_verts");
     memset((void *)nmg2_verts, 0, sizeof(struct vertex *) * numNorPolygonVertices_in_current_nmg);
 
-    size_t idx4 = 0;
-    size_t idx5 = 0;
-    size_t counter2 = 0;
-
-    /* loop thru all the polygons (i.e. faces) to be placed in the current nmg */
-    for ( idx4 = 0 ; idx4 < numNorPolygons_in_current_shell ; idx4++ ) {
-        bu_log("about to run chk shell just before assign fu\n");
-        NMG_CK_SHELL(s);
-
-        /* call this once for each face */
-        bu_log("about to assign fu\n");
-        fu = nmg_cface(s, (struct vertex **)&(nmg2_verts[counter2]), (int)size_history[idx4] );
-        counter2 = counter2 + size_history[idx4] ; 
-
-        bu_ptbl_ins(&faces2, (long *)fu);
-    }
-
     size_t polygon3 = 0;
     size_t vertex4 = 0;
+    size_t counter2 = 0;
+    size_t end_count = numNorPolygons_in_current_shell ;
     struct vertexuse *vu2 = NULL;
+    struct loopuse *lu = NULL;
+    struct edgeuse *eu = NULL;
+    plane_t pl2; /* plane equation for face */
     fastf_t tmp5[3] = { 0, 0, 0 };
     counter2 = 0;
+    bu_log("about to run chk shell just before assign fu for-loops\n");
+    NMG_CK_SHELL(s);
     bu_log("history: numNorPolygons_in_current_shell = (%lu)\n", numNorPolygons_in_current_shell);
-    for ( polygon3 = 0 ; polygon3 < numNorPolygons_in_current_shell ; polygon3++ ) {
+    /* loop thru all the polygons (i.e. faces) to be placed in the current shell/region/model */
+    for ( polygon3 = 0 ; polygon3 < end_count ; polygon3++ ) {
         bu_log("history: num vertices in current polygon = (%lu)\n", size_history[polygon3]);
-        fu = (struct faceuse *)BU_PTBL_GET(&faces2, polygon3) ;
+        fu = nmg_cface(s, (struct vertex **)&(nmg2_verts[counter2]), (int)size_history[polygon3] );
+        lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+        eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
         for ( vertex4 = 0 ; vertex4 < size_history[polygon3] ; vertex4++ ) {
             bu_log("history: (%lu)(%lu)(%lu)(%f)(%f)(%f)(%f)(%f)(%f)(%f)\n", 
                polygon3,
@@ -753,35 +753,60 @@ int process_nv_faces(struct ga_t *ga,
 
             VSCALE(tmp5, ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]] , conversion_factor);
             bu_log("about to run nmg_vertex_gv\n");
-            NMG_CK_VERTEX(nmg2_verts[counter2]);
-            nmg_vertex_gv(nmg2_verts[counter2], tmp5);   
+            NMG_CK_VERTEX(eu->vu_p->v_p);
+            nmg_vertex_gv(eu->vu_p->v_p, tmp5);
+            eu = BU_LIST_NEXT(edgeuse, &eu->l);
 
             /* assign this normal to all uses of this vertex */
+#if 0
             for (BU_LIST_FOR(vu2, vertexuse, &nmg2_verts[counter2]->vu_hd)) {
                 NMG_CK_VERTEXUSE(vu2);
                 nmg_vertexuse_nv(vu2, (fastf_t *)ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][1]]);
             }
+#endif
             counter2++;
         }
 #if 1
+        bu_log("about to run nmg_loop_plane_area\n");
+        if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl2) < 0.0) {
+            bu_log("Failed planeeq\n");
+            bu_log("about to run nmg_kfu just after neg area from nmg_loop_plane_area\n");
+            nmg_kfu(fu);
+            numNorPolygons_in_current_shell--;
+        } else {
+            bu_log("about to run nmg_face_g\n");
+            nmg_face_g(fu, pl2); /* return is void */
+            bu_log("about to run nmg_face_bb\n");
+            nmg_face_bb(fu->f_p, tol); /* return is void */
+            bu_ptbl_ins(&faces2, (long *)fu);
+        }
+#endif
+
+#if 0
         bu_log("about to run nmg_calc_face_g\n");
         if (nmg_calc_face_g(fu)) {
             bu_log("nmg_calc_face_g failed\n");
-            nmg_kfu(fu);
-            bu_ptbl_rm(&faces2, (const long *)fu);
+            if (nmg_kfu(fu)) {
+                bu_log("WARNING: after kill fu, shell is empty\n");
+            }
             numNorPolygons_in_current_shell--;
         } else {
+            bu_log("about to run nmg_ck_faceuse just before running nmg_fu_planeeqn\n");
+            NMG_CK_FACEUSE(fu);
             bu_log("about to run nmg_fu_planeeqn\n");
             if (nmg_fu_planeeqn(fu, tol)) {
                 bu_log("nmg_fu_planeeqn failed\n");
-                nmg_kfu(fu);
-                bu_ptbl_rm(&faces2, (const long *)fu);
+                if (nmg_kfu(fu)) {
+                    bu_log("WARNING: after kill fu, shell is empty\n");
+                }
                 numNorPolygons_in_current_shell--;
+            } else {
+                bu_ptbl_ins(&faces2, (long *)fu);
             }
         }
 #endif
 
-    }
+    } /* loop exits when all faces in shell/region/model have been created */
 
     (void)nmg_model_vertex_fuse(m, tol);
 
@@ -829,9 +854,9 @@ int process_nv_faces(struct ga_t *ga,
 #endif
 
     if (BU_PTBL_END(&faces2)) {
+
         bu_log("about to run nmg_gluefaces\n");
         nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces2), BU_PTBL_END(&faces2), tol);
-
 #if 1
         bu_log("about to run nmg_rebound 1\n");
         nmg_rebound(m, tol);
@@ -840,22 +865,33 @@ int process_nv_faces(struct ga_t *ga,
         nmg_fix_normals(s, tol);
 
         bu_log("about to run nmg_shell_coplanar_face_merge\n");
-        nmg_shell_coplanar_face_merge(s, tol, 1);
+    /*    nmg_shell_coplanar_face_merge(s, tol, 1);  */
 
         bu_log("about to run nmg_rebound 2\n");
         nmg_rebound(m, tol);
 #endif
 
-
 #if 0
+        bu_log("about to kill model just before running mk_nmg\n");
+        nmg_km(m);   
+#endif
+
+#if 1
         bu_log("about to mk_bot_from_nmg\n");
         mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), s);
 #endif
-        bu_log("about to mk_nmg\n");
+#if 0
+        bu_log("about to run nmg_ck_model just before run mk_nmg\n");
+        NMG_CK_MODEL(m);
+        bu_log("about to run mk_nmg m=(%lx)\n",m);
         if (mk_nmg(outfp, bu_vls_addr(&outputObjectName), m)) {
             bu_log("mk_nmg failed\n");
         }
+        bu_log("about to run nmg_ck_model just before run nmg_km\n");
+        NMG_CK_MODEL(m);
+        bu_log("about to run nmg_km m=(%lx)\n",m);
         nmg_km(m);   
+#endif
     } else {
         bu_log("Object %s has no faces\n", bu_vls_addr(&outputObjectName));
     } 
@@ -879,10 +915,6 @@ int process_nv_faces(struct ga_t *ga,
     bu_ptbl_reset(&faces2);
 
     }
-
-    /* set empty to true if no faces were added
-       to the current shell */
-    *empty = !numNorPolygons_in_current_shell ;
 
     return ret_val;
 }
@@ -922,12 +954,10 @@ main(int argc, char **argv)
     struct bn_tol tol_struct ;
     struct bn_tol *tol ;
 
-    int empty = 0 ; /* boolean */
-
     tol = &tol_struct;
 
     tol->magic = BN_TOL_MAGIC;
-    tol->dist = 0.0005;
+    tol->dist = 0.0005 ;
     tol->dist_sq = tol->dist * tol->dist;
     tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
@@ -999,6 +1029,8 @@ main(int argc, char **argv)
         bu_exit(1, NULL);
     }
 
+    bu_log("local2base=(%lf) base2local=(%lf)\n", fd_out->dbip->dbi_local2base, fd_out->dbip->dbi_base2local);
+
 #if 1
     fd_out->wdb_tol.dist    = tol->dist ;
     fd_out->wdb_tol.dist_sq = fd_out->wdb_tol.dist * fd_out->wdb_tol.dist ;
@@ -1042,15 +1074,13 @@ main(int argc, char **argv)
     }
 #endif
 
-        empty = 0 ; /* set to false to force the model/region/shell
-                       to be created for the next grouping */
         switch (grouping_option) {
             case 'g':
                 bu_log("ENTERED 'g' PROCESSING\n");
                 for (i = 0 ; i < ga.numGroups ; i++) {
                     bu_log("(%lu) current group name is (%s)\n", i, ga.str_arr_obj_groups[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, tol );
                 }
                 bu_log("EXITED 'g' PROCESSING\n");
                 break;
@@ -1065,7 +1095,7 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numObjects ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_objects[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, tol );
 
                 } /* numObjects loop */
 
@@ -1078,14 +1108,14 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numMaterials ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_materials[i]);
 
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_MATERIAL, i, 1000.00, tol );
 
                 } /* numMaterials loop */
                 bu_log("EXITED 'm' PROCESSING\n");
                 break;
             case 't':
                 bu_log("ENTERED 't' PROCESSING\n");
-                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00, tol, &empty);
+                    weiss_result = process_nv_faces(&ga, fd_out, GRP_TEXTURE, i, 1000.00, tol );
                 bu_log("EXITED 't' PROCESSING\n");
                 break;
             default:
