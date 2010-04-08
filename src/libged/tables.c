@@ -54,12 +54,14 @@ struct identt {
 #define REG_TABLE	2
 #define ID_TABLE	3
 
-static struct identt identt;
-static int idfd;
-static int rd_idfd;
-static long int numreg;
-static long int numsol;
-static FILE *tabptr;
+static struct identt identt = {0, {0}, {0.0, 0.0, 0.0, 0.0,
+					0.0, 0.0, 0.0, 0.0,
+					0.0, 0.0, 0.0, 0.0,
+					0.0, 0.0, 0.0, 0.0}};
+
+static int idfd = 0;
+static int rd_idfd = 0;
+static FILE *tabptr = NULL;
 
 
 HIDDEN int
@@ -75,7 +77,7 @@ tables_check(char *a, char *b)
 
 
 HIDDEN int
-tables_sol_number(matp_t matrix, char *name, int *old)
+tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
 {
     int i;
     struct identt idbuf1, idbuf2;
@@ -85,7 +87,7 @@ tables_sol_number(matp_t matrix, char *name, int *old)
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
     MAT_COPY(idbuf1.i_mat, matrix);
 
-    for (i=0; i<numsol; i++) {
+    for (i=0; i<*numsol; i++) {
 	(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
@@ -100,8 +102,8 @@ tables_sol_number(matp_t matrix, char *name, int *old)
 	    return(idbuf2.i_index);
 	}
     }
-    numsol++;
-    idbuf1.i_index = numsol;
+    *numsol++;
+    idbuf1.i_index = *numsol;
 
     (void)lseek(idfd, (off_t)0L, 2);
     (void)write(idfd, &idbuf1, sizeof identt);
@@ -112,7 +114,7 @@ tables_sol_number(matp_t matrix, char *name, int *old)
 
 
 HIDDEN void
-tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag)
+tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag, long *numreg, long *numsol)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -160,9 +162,9 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
     BU_ASSERT_LONG(actual_count, ==, node_count);
 
     if (dp->d_flags & DIR_REGION) {
-	numreg++;
+	*numreg++;
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
-		      numreg, comb->region_id, comb->aircode, comb->GIFTmater,
+		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);
 	for (k=0; k<BU_PTBL_END(cur_path); k++) {
 	    struct directory *path_dp;
@@ -221,11 +223,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 			nsoltemp = 0;
 		    }
-		    nsoltemp = tables_sol_number(temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old);
+		    nsoltemp = tables_sol_number(temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		    (void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
-		nsoltemp = tables_sol_number(old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old);
+		nsoltemp = tables_sol_number(old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
@@ -271,7 +273,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 	    } else {
 		MAT_COPY(new_mat, old_mat);
 	    }
-	    tables_new(gedp, nextdp, cur_path, new_mat, flag);
+	    tables_new(gedp, nextdp, cur_path, new_mat, flag, numreg, numsol);
 	    bu_ptbl_trunc(cur_path, cur_length);
 	}
     } else {
@@ -300,7 +302,10 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     char *timep;
     time_t now;
     int i;
-    static const char *usage = "file object(s)";
+    const char *usage = "file object(s)";
+
+    long int numreg = 0;
+    long int numsol = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -323,8 +328,6 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&tmp_vls);
     bu_vls_init(&cmd);
     bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
-    numreg = 0;
-    numsol = 0;
 
     status = GED_OK;
 
@@ -399,7 +402,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
 	bu_ptbl_reset(&cur_path);
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL)
-	    tables_new(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag);
+	    tables_new(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
 	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
