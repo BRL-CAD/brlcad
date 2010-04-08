@@ -353,7 +353,7 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 
     /* should probably make a or b necessarily inside, to eliminate one point
      * computation? */
-    return rt_metaball_find_intersection(intersect, mb, (const point_t *)&mid, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside(midp, mb)) ?b:a , step/2.0, finalstep);
+    return rt_metaball_find_intersection(intersect, mb, midp, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside(midp, mb)) ?b:a , step/2.0, finalstep);
 }
 
 
