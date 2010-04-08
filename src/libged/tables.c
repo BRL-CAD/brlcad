@@ -54,11 +54,11 @@ struct identt {
 #define REG_TABLE	2
 #define ID_TABLE	3
 
-static struct identt identt, idbuf;
+static struct identt identt;
 static int idfd;
 static int rd_idfd;
-static int numreg;
-static int numsol;
+static long int numreg;
+static long int numsol;
 static FILE *tabptr;
 
 
@@ -161,7 +161,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 
     if (dp->d_flags & DIR_REGION) {
 	numreg++;
-	(void)fprintf(tabptr, " %-4d %4d %4d %4d %4d  ",
+	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);
 	for (k=0; k<BU_PTBL_END(cur_path); k++) {
@@ -408,7 +408,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
 	(void)unlink("/tmp/mged_discr\0");
-	(void)fprintf(tabptr, "\n\nNumber Primitives = %d  Number Regions = %d\n",
+	(void)fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
 		      numsol, numreg);
 
 	bu_vls_printf(&gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
