@@ -121,6 +121,26 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
+/* provide a means to conveniently test the version of GCC */
+#if defined __GNUC__
+#  define GNUC_PREREQ(major, minor) __GNUC__ < major || (__GNUC__ == major && __GNUC_MINOR__ < minor)
+#else
+#  define GNUC_PREREQ(major, minor) 0
+#endif
+
+/* provide a common mechanism for declaring unused parameters */
+#ifndef UNUSED
+#  if GNUC_PREREQ(2, 5)
+     /* GCC-style */
+#    define UNUSED(var) var __attribute__((unused))
+#  else
+     /* MSVC/C++ */
+#    define UNUSED(var) /* var */
+#  endif
+#else
+#  warning "UNUSED is already defined.  Parameter declaration behavior is unknown, see common.h"
+#endif
+
 #endif  /* __COMMON_H__ */
 /** @} */
 /*
