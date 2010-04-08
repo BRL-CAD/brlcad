@@ -1319,12 +1319,15 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
-    char buf[256];
-    int i;
-    int arb_type;
+    struct rt_arb_internal *aip = NULL;
+    char buf[256] = {0};
+    int i = 0;
+    int arb_type = -1;
     struct bn_tol tmp_tol;	/* temporay tolerance */
 
+    if (!str || !ip) return 0;
+    RT_CK_DB_INTERNAL(ip);
+    aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
     tmp_tol.magic = BN_TOL_MAGIC;
