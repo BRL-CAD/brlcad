@@ -184,7 +184,6 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 	    struct rt_db_internal sol_intern;
 	    struct directory *sol_dp;
 	    mat_t temp_mat;
-	    struct bu_vls tmp_vls;
 	    int old;
 
 	    switch (tree_list[i].tl_op) {
@@ -240,7 +239,9 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
 
 	    if (!old && (sol_dp->d_flags & DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
-		bu_vls_init_if_uninit(&tmp_vls);
+		struct bu_vls tmp_vls;
+		bu_vls_init(&tmp_vls);
+
 		if (!rt_functab[sol_intern.idb_type].ft_describe ||
 		    rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
