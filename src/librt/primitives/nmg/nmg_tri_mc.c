@@ -529,20 +529,11 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 }
 
 static int
-rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fastf_t step, const struct bn_tol *tol)
+rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t step, const struct bn_tol *tol)
 {
-    struct whack prim[4][MAX_INTERSECTS];
-    struct whack *primp[4];
-    int i, j, in[4] = { 0, 0, 0, 0}, count=0;
+    int i, in[4] = { 0, 0, 0, 0}, count=0;
     fastf_t last_b = -VOODOO;
     fastf_t b;
-
-    for(j=0;j<4;j++)
-	primp[j] = prim[j];
-
-    for(i=0;i<MAX_INTERSECTS;i++)
-	for(j=0;j<4;j++)
-	    prim[j][i].in = 0; VSETALL(prim[j][i].hit, VOODOO);
 
     b = bin(a->a_rt_i->mdl_min[Z] - tol->dist - step, step);
     VSET(a->a_ray.r_dir, 0, 0, 1);
@@ -661,6 +652,8 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
     fastf_t step = 0.0;
     int ncpu;
     int count = 0;
+    struct whack prim[4][MAX_INTERSECTS];
+    struct whack *primp[4];
 
     RT_APPLICATION_INIT(&a);
     a.a_rt_i = rtip;
@@ -686,8 +679,18 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
     /* TODO: throw "ncpu" threads here? */
     for(; x<endx; x+=step) {
 	y=bin(a.a_rt_i->mdl_min[Y], step) - step;
-	for(; y<endy; y+=step)
-	    count += rt_nmg_mc_pew(s,&a,x,y,step, tol);
+	for(; y<endy; y+=step) {
+	    int i, j;
+
+	    for(i=0;i<4;i++)
+		primp[i] = prim[i];
+
+	    for(i=0;i<MAX_INTERSECTS;i++)
+		for(j=0;j<4;j++)
+		    prim[j][i].in = 0; VSETALL(prim[j][i].hit, VOODOO);
+
+	    count += rt_nmg_mc_pew(s, primp, &a, x, y, step, tol);
+	}
     }
     /* free the rt stuff we don't need anymore */
 
