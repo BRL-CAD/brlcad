@@ -142,13 +142,14 @@ __BEGIN_DECLS
  */
 #ifndef __attribute__
 /* This feature is only available in gcc versions 2.5 and later. */
-#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#  if GNUC_PREREQ(2, 5)
 #    define __attribute__(ignore) /* empty */
 #  endif
+
 /* The __-protected variants of `format' and `printf' attributes
  * are accepted by gcc versions 2.6.4 (effectively 2.7) and later.
  */
-#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
+#  if GNUC_PREREQ(2, 7)
 #    define __format__ format
 #    define __printf__ printf
 #    define __noreturn__ noreturn
