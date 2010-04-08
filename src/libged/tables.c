@@ -62,8 +62,8 @@ static int numsol;
 static FILE *tabptr;
 
 
-static int
-ged_check(char *a, char *b)
+HIDDEN int
+tables_check(char *a, char *b)
 {
 
     int c= sizeof(struct identt);
@@ -74,8 +74,8 @@ ged_check(char *a, char *b)
 }
 
 
-static int
-ged_sol_number(matp_t matrix, char *name, int *old)
+HIDDEN int
+tables_sol_number(matp_t matrix, char *name, int *old)
 {
     int i;
     struct identt idbuf1, idbuf2;
@@ -95,7 +95,7 @@ ged_sol_number(matp_t matrix, char *name, int *old)
 
 	idbuf1.i_index = i + 1;
 
-	if (ged_check((char *)&idbuf1, (char *)&idbuf2) == 1) {
+	if (tables_check((char *)&idbuf1, (char *)&idbuf2) == 1) {
 	    *old = 1;
 	    return(idbuf2.i_index);
 	}
@@ -111,8 +111,8 @@ ged_sol_number(matp_t matrix, char *name, int *old)
 }
 
 
-static void
-ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag)
+HIDDEN void
+tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -221,11 +221,11 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 			nsoltemp = 0;
 		    }
-		    nsoltemp = ged_sol_number(temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old);
+		    nsoltemp = tables_sol_number(temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old);
 		    (void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
-		nsoltemp = ged_sol_number(old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old);
+		nsoltemp = tables_sol_number(old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old);
 		(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
@@ -271,7 +271,7 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 	    } else {
 		MAT_COPY(new_mat, old_mat);
 	    }
-	    ged_new_tables(gedp, nextdp, cur_path, new_mat, flag);
+	    tables_new(gedp, nextdp, cur_path, new_mat, flag);
 	    bu_ptbl_trunc(cur_path, cur_length);
 	}
     } else {
@@ -399,7 +399,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
 	bu_ptbl_reset(&cur_path);
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL)
-	    ged_new_tables(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag);
+	    tables_new(gedp, dp, &cur_path, (fastf_t *)bn_mat_identity, flag);
 	else
 	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
