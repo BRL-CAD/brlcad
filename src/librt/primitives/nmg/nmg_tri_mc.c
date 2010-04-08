@@ -533,21 +533,16 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 {
     struct whack prim[4][MAX_INTERSECTS];
     struct whack *primp[4];
-    int i, in[4] = { 0, 0, 0, 0}, count=0;
+    int i, j, in[4] = { 0, 0, 0, 0}, count=0;
     fastf_t last_b = -VOODOO;
     fastf_t b;
 
-    primp[0] = prim[0];
-    primp[1] = prim[1];
-    primp[2] = prim[2];
-    primp[3] = prim[3];
+    for(j=0;j<4;j++)
+	primp[j] = prim[j];
 
-    for(i=0;i<MAX_INTERSECTS;i++) {
-	prim[0][i].in = 0; VSETALL(prim[0][i].hit, VOODOO);
-	prim[1][i].in = 0; VSETALL(prim[1][i].hit, VOODOO);
-	prim[2][i].in = 0; VSETALL(prim[2][i].hit, VOODOO);
-	prim[3][i].in = 0; VSETALL(prim[3][i].hit, VOODOO);
-    }
+    for(i=0;i<MAX_INTERSECTS;i++)
+	for(j=0;j<4;j++)
+	    prim[j][i].in = 0; VSETALL(prim[j][i].hit, VOODOO);
 
     b = bin(a->a_rt_i->mdl_min[Z] - tol->dist - step, step);
     VSET(a->a_ray.r_dir, 0, 0, 1);
@@ -567,15 +562,12 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	if((in[0]|in[1]|in[2]|in[3]) == 0) {
 	    b = +INFINITY;
 	    /* figure out the first hit distance and bin it */
-	    if(primp[0]->in>0 && primp[0]->hit[Z] < b) b = primp[0]->hit[Z];
-	    if(primp[1]->in>0 && primp[1]->hit[Z] < b) b = primp[1]->hit[Z];
-	    if(primp[2]->in>0 && primp[2]->hit[Z] < b) b = primp[2]->hit[Z];
-	    if(primp[3]->in>0 && primp[3]->hit[Z] < b) b = primp[3]->hit[Z];
+	    for(i=0;i<4;i++)
+		if(primp[i]->in>0 && primp[i]->hit[Z] < b) b = primp[i]->hit[Z];
 	    b = bin(b, step);
 	} else { /* iff we know we're intersecting the surface, walk slow. */
-	    if(NEAR_ZERO(last_b+VOODOO, tol->dist)) {
+	    if(NEAR_ZERO(last_b+VOODOO, tol->dist))
 		bu_log("teh fux? lastb = %g\n", last_b);
-	    }
 	    b = last_b + step;
 	}
 
