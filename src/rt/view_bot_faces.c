@@ -45,16 +45,16 @@
 #include "rtprivate.h"
 
 
-extern char	*outputfile;		/* output file name */
+extern char *outputfile;		/* output file name */
 
-extern point_t	viewbase_model;
+extern point_t viewbase_model;
 
-extern int	npsw;			/* number of worker PSWs to run */
+extern int npsw;			/* number of worker PSWs to run */
 
-extern int 	 rpt_overlap;
+extern int rpt_overlap;
 
-extern struct bu_vls    ray_data_file;  /* file name for ray data output (declared in do.c) */
-extern FILE		*outfp;
+extern struct bu_vls ray_data_file;  /* file name for ray data output (declared in do.c) */
+extern FILE *outfp;
 
 static Tcl_HashTable bots;		/* hash table with a bot_face_list entry for each BOT primitive hit */
 
@@ -62,6 +62,7 @@ static Tcl_HashTable bots;		/* hash table with a bot_face_list entry for each BO
 struct bu_structparse view_parse[] = {
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 const char title[] = "RT BoT Faces";
 const char usage[] = "\
@@ -83,54 +84,54 @@ Options:\n\
 
 
 /*
- *			R A Y H I T
+ * R A Y H I T
  *
- *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
+ * Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  */
 int
-rayhit( struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp) )
+rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp = PartHeadp->pt_forw;
     Tcl_HashEntry *entry;
     int newPtr;
     struct bu_ptbl *faces;
 
-    if ( pp == PartHeadp )
+    if (pp == PartHeadp)
 	return(0);		/* nothing was actually hit?? */
 
-    if ( ap->a_rt_i->rti_save_overlaps )
-	rt_rebuild_overlaps( PartHeadp, ap, 1 );
+    if (ap->a_rt_i->rti_save_overlaps)
+	rt_rebuild_overlaps(PartHeadp, ap, 1);
 
     /* did we hit a BOT?? */
-    if ( pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
-	 pp->pt_inseg->seg_stp->st_dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
+    if (pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	pp->pt_inseg->seg_stp->st_dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	return 0;
     }
 
     /* this is a BOT, get the hash tabel entry for it */
-    bu_semaphore_acquire( BU_SEM_LISTS );
-    entry = Tcl_CreateHashEntry( &bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr );
-    if ( newPtr ) {
-	faces = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "faces" );
-	bu_ptbl_init( faces, 128, "faces" );
-	Tcl_SetHashValue( entry, (char *)faces );
+    bu_semaphore_acquire(BU_SEM_LISTS);
+    entry = Tcl_CreateHashEntry(&bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr);
+    if (newPtr) {
+	faces = (struct bu_ptbl *)bu_malloc(sizeof(struct bu_ptbl), "faces");
+	bu_ptbl_init(faces, 128, "faces");
+	Tcl_SetHashValue(entry, (char *)faces);
     } else {
-	faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
+	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
     }
 
-    bu_ptbl_ins_unique( faces, (long *)(size_t)pp->pt_inhit->hit_surfno );
-    bu_semaphore_release( BU_SEM_LISTS );
+    bu_ptbl_ins_unique(faces, (long *)(size_t)pp->pt_inhit->hit_surfno);
+    bu_semaphore_release(BU_SEM_LISTS);
 
     return(0);
 }
 
 
 /*
- *			R A Y M I S S
+ * R A Y M I S S
  *
- *  Null function -- handle a miss
- *  This function is called by rt_shootray(), which is called by
- *  do_frame().
+ * Null function -- handle a miss
+ * This function is called by rt_shootray(), which is called by
+ * do_frame().
  */
 int
 raymiss(struct application *UNUSED(ap))
@@ -140,18 +141,18 @@ raymiss(struct application *UNUSED(ap))
 
 
 /*
- *  			V I E W _ I N I T
+ * V I E W _ I N I T
  *
- *  This routine is called by main().
+ * This routine is called by main().
  */
 
 int
-view_init( struct application *ap, char *file, char *obj, int minus_o )
+view_init(struct application *ap, char *file, char *obj, int minus_o)
 {
     /* report air regions */
     use_air = 1;
 
-    if ( !minus_o )
+    if (!minus_o)
 	outfp = stdout;
 
     ap->a_hit = rayhit;
@@ -160,36 +161,37 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
 
     output_is_binary = 0;
 
-    if ( !rpt_overlap )
+    if (!rpt_overlap)
 	ap->a_logoverlap = rt_silent_logoverlap;
 
     /* initialize hash table */
-    Tcl_InitHashTable( &bots, TCL_STRING_KEYS );
+    Tcl_InitHashTable(&bots, TCL_STRING_KEYS);
 
     return(0);		/* No framebuffer needed */
 }
 
+
 /*
- *			V I E W _ 2 I N I T
+ * V I E W _ 2 I N I T
  *
- *  View_2init is called by do_frame(), which in turn is called by
- *  main() in rt.c.
+ * View_2init is called by do_frame(), which in turn is called by
+ * main() in rt.c.
  *
  */
 void
-view_2init( struct application *ap, char *framename )
+view_2init(struct application *ap, char *framename)
 {
 #ifdef HAVE_SYS_STAT_H
     struct stat sb;
     char line[RT_MAXLINE];
 #endif
 
-    if ( outfp == NULL )
+    if (outfp == NULL)
 	bu_exit(EXIT_FAILURE, "outfp is NULL\n");
 
 #ifdef HAVE_SYS_STAT_H
     /* read in any existing data */
-    if ( outfp != NULL && stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
+    if (outfp != NULL && stat(framename, &sb) >= 0 && sb.st_size > 0) {
 	Tcl_HashEntry *entry;
 	char *bot_name;
 	struct bu_ptbl *faces=NULL;
@@ -197,44 +199,44 @@ view_2init( struct application *ap, char *framename )
 	int i, j;
 
 	/* File exists, with partial results */
-	while ( bu_fgets( line, RT_MAXLINE, outfp ) ) {
-	    if ( !strncmp( line, "BOT:", 4 ) ) {
+	while (bu_fgets(line, RT_MAXLINE, outfp)) {
+	    if (!strncmp(line, "BOT:", 4)) {
 		struct directory *dp;
 
 		/* found a BOT entry, addit to the hash table */
 		i = 4;
-		while ( line[i] != '\0' && isspace( line[i] ) ) i++;
-		if ( line[i] == '\0' ) {
-		    bu_log( "Unexpected EOF found in partial results (%s)\n", outputfile );
+		while (line[i] != '\0' && isspace(line[i])) i++;
+		if (line[i] == '\0') {
+		    bu_log("Unexpected EOF found in partial results (%s)\n", outputfile);
 		    bu_exit(EXIT_FAILURE, "Unexpected EOF");
 		}
 		j = i;
-		while ( line[j] != '\0' && !isspace( line[j] ) ) j++;
+		while (line[j] != '\0' && !isspace(line[j])) j++;
 		line[j] = '\0';
-		if ( (dp=db_lookup( ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL ) {
-		    bot_name = bu_strdup( &line[i] );
+		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == DIR_NULL) {
+		    bot_name = bu_strdup(&line[i]);
 		} else {
 		    bot_name = dp->d_namep;
 		}
-		entry = Tcl_CreateHashEntry( &bots, bot_name, &newPtr );
-		if ( newPtr ) {
-		    faces = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ),
-							 "bot_faces" );
-		    bu_ptbl_init( faces, 128, "bot faces" );
-		    Tcl_SetHashValue( entry, (char *)faces );
+		entry = Tcl_CreateHashEntry(&bots, bot_name, &newPtr);
+		if (newPtr) {
+		    faces = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl),
+							"bot_faces");
+		    bu_ptbl_init(faces, 128, "bot faces");
+		    Tcl_SetHashValue(entry, (char *)faces);
 		} else {
-		    faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
+		    faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
 		}
 	    } else {
 		long int face_num;
 		long *fnp;
 
-		if ( !faces ) {
-		    bu_exit( EXIT_FAILURE, "No faces structure while reading partial data!!!\n" );
+		if (!faces) {
+		    bu_exit(EXIT_FAILURE, "No faces structure while reading partial data!!!\n");
 		}
-		face_num = atoi( line );
+		face_num = atoi(line);
 		fnp = (long *)face_num;
-		bu_ptbl_ins_unique( faces, fnp );
+		bu_ptbl_ins_unique(faces, fnp0);
 	    }
 	}
     }
@@ -244,9 +246,9 @@ view_2init( struct application *ap, char *framename )
 
 
 /*
- *			V I E W _ P I X E L
+ * V I E W _ P I X E L
  *
- *  This routine is called from do_run(), and in this case does nothing.
+ * This routine is called from do_run(), and in this case does nothing.
  */
 void
 view_pixel()
@@ -254,20 +256,22 @@ view_pixel()
     return;
 }
 
+
 /*
- *			V I E W _ E O L
+ * V I E W _ E O L
  *
- *  View_eol() is called by rt_shootray() in do_run().  In this case,
- *  it does nothing.
+ * View_eol() is called by rt_shootray() in do_run().  In this case,
+ * it does nothing.
  */
-void	view_eol()
+void view_eol()
 {
 }
 
+
 /*
- *			V I E W _ E N D
+ * V I E W _ E N D
  *
- *  View_end() is called by rt_shootray in do_run().
+ * View_end() is called by rt_shootray in do_run().
  *
  */
 void
@@ -278,23 +282,24 @@ view_end()
     struct bu_ptbl *faces;
 
     /* rewrite entire output file */
-    rewind( outfp );
+    rewind(outfp);
 
-    entry = Tcl_FirstHashEntry( &bots, &search );
+    entry = Tcl_FirstHashEntry(&bots, &search);
 
-    while ( entry ) {
+    while (entry) {
 	int i;
 
-	fprintf( outfp, "BOT: %s\n", Tcl_GetHashKey( &bots, entry ) );
-	faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
-	for ( i=0; i<BU_PTBL_LEN( faces ); i++ ) {
-	    fprintf( outfp, "\t%llu\n", (unsigned long long)BU_PTBL_GET( faces, i ) );
+	fprintf(outfp, "BOT: %s\n", Tcl_GetHashKey(&bots, entry));
+	faces = (struct bu_ptbl *)Tcl_GetHashValue(entry);
+	for (i=0; i<BU_PTBL_LEN(faces); i++) {
+	    fprintf(outfp, "\t%llu\n", (unsigned long long)BU_PTBL_GET(faces, i));
 	}
-	entry = Tcl_NextHashEntry( &search );
+	entry = Tcl_NextHashEntry(&search);
     }
 
     fflush(outfp);
 }
+
 
 void view_setup() {}
 void view_cleanup() {}
