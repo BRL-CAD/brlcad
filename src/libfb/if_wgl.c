@@ -69,88 +69,21 @@
 #define YMAXSCREEN 16383
 
 /* Internal callbacks etc.*/
-HIDDEN void		wgl_do_event();
-HIDDEN void		expose_callback();
-void wgl_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
+HIDDEN void wgl_do_event(FBIO *ifp);
+HIDDEN void expose_callback(FBIO *ifp, int eventPtr);
+void wgl_configureWindow(FBIO *ifp, int width, int height);
 
 /* Other Internal routines */
-HIDDEN void		wgl_clipper();
-HIDDEN int		wgl_getmem();
-HIDDEN void		backbuffer_to_screen();
-HIDDEN void		wgl_cminit();
-HIDDEN PIXELFORMATDESCRIPTOR *	wgl_choose_visual();
-HIDDEN int		is_linear_cmap();
+HIDDEN void wgl_clipper(FBIO *ifp);
+HIDDEN int wgl_getmem(FBIO *ifp);
+HIDDEN void backbuffer_to_screen(register FBIO *ifp, int one_y);
+HIDDEN void wgl_cminit(FBIO *ifp);
+HIDDEN PIXELFORMATDESCRIPTOR * wgl_choose_visual(FBIO *ifp);
+HIDDEN int is_linear_cmap(FBIO *ifp);
 
 HIDDEN int	wgl_nwindows = 0; 	/* number of open windows */
 /*HIDDEN	XColor	color_cell[256];*/		/* used to set colormap */
 
-int wgl_refresh();
-int wgl_open_existing();
-int wgl_close_existing();
-int _wgl_open_existing();
-
-HIDDEN int	wgl_open(),
-    wgl_close(),
-    wgl_clear(),
-    wgl_read(),
-    wgl_write(),
-    wgl_rmap(),
-    wgl_wmap(),
-    wgl_view(),
-    wgl_getview(),
-    wgl_setcursor(),
-    wgl_cursor(),
-    wgl_writerect(),
-    wgl_bwwriterect(),
-    wgl_poll(),
-    wgl_flush(),
-    wgl_free(),
-    wgl_help();
-
-/* This is the ONLY thing that we normally "export" */
-FBIO wgl_interface =
-{
-    0,			/* magic number slot	*/
-    wgl_open,		/* open device		*/
-    wgl_close,		/* close device		*/
-    wgl_clear,		/* clear device		*/
-    wgl_read,		/* read	pixels		*/
-    wgl_write,		/* write pixels		*/
-    wgl_rmap,		/* read colormap	*/
-    wgl_wmap,		/* write colormap	*/
-    wgl_view,		/* set view		*/
-    wgl_getview,		/* get view		*/
-    wgl_setcursor,		/* define cursor	*/
-    wgl_cursor,		/* set cursor		*/
-    fb_sim_getcursor,	/* get cursor		*/
-    fb_sim_readrect,	/* read rectangle	*/
-    wgl_writerect,		/* write rectangle	*/
-    fb_sim_bwreadrect,
-    wgl_bwwriterect,	/* write rectangle	*/
-    wgl_poll,		/* process events	*/
-    wgl_flush,		/* flush output		*/
-    wgl_free,		/* free resources	*/
-    wgl_help,		/* help message		*/
-    "Microsoft Windows OpenGL",	/* device description	*/
-    XMAXSCREEN+1,			/* max width		*/
-    YMAXSCREEN+1,			/* max height		*/
-    "/dev/wgl",		/* short device name	*/
-    512,			/* default/current width  */
-    512,			/* default/current height */
-    -1,			/* select file desc	*/
-    -1,			/* file descriptor	*/
-    1, 1,			/* zoom			*/
-    256, 256,		/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
-    0			/* debug		*/
-};
 
 FBIO	*saveifp;
 int titleBarHeight = 0;
@@ -369,8 +302,7 @@ HIDDEN struct modeflags {
  *  might need to be increased.
  */
 HIDDEN int
-wgl_getmem( ifp )
-    FBIO	*ifp;
+wgl_getmem(FBIO *ifp)
 {
     int	pixsize;
     int	size;
@@ -838,61 +770,6 @@ wgl_open( ifp, file, width, height )
 
 
 int
-wgl_open_existing(ifp, argc, argv)
-    FBIO *ifp;
-    int argc;
-    char **argv;
-{
-    Display *dpy;
-    Window win;
-    Colormap cmap;
-    PIXELFORMATDESCRIPTOR *vip;
-    HDC hdc;
-    int width;
-    int height;
-    HGLRC glxc;
-    int double_buffer;
-    int soft_cmap;
-
-    if (argc != 11)
-	return -1;
-
-    if (sscanf(argv[1], "%llu", (unsigned __int64 *)&dpy) != 1)
-	return -1;
-
-    if (sscanf(argv[2], "%llu", (unsigned __int64 *)&win) != 1)
-	return -1;
-
-    if (sscanf(argv[3], "%llu", (unsigned __int64 *)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%llu", (unsigned __int64 *)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%llu", (unsigned __int64 *)&hdc) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%llu", (unsigned __int64 *)&glxc) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[9], "%d", &double_buffer) != 1)
-	return -1;
-
-    if (sscanf(argv[10], "%d", &soft_cmap) != 1)
-	return -1;
-
-    return _wgl_open_existing(ifp, dpy, win, cmap, vip, hdc, width, height,
-			      glxc, double_buffer, soft_cmap);
-}
-
-
-int
 _wgl_open_existing(FBIO *ifp,
 		   Display *dpy,
 		   Window win,
@@ -968,6 +845,62 @@ _wgl_open_existing(FBIO *ifp,
     return 0;
 }
 
+
+int
+wgl_open_existing(ifp, argc, argv)
+    FBIO *ifp;
+    int argc;
+    char **argv;
+{
+    Display *dpy;
+    Window win;
+    Colormap cmap;
+    PIXELFORMATDESCRIPTOR *vip;
+    HDC hdc;
+    int width;
+    int height;
+    HGLRC glxc;
+    int double_buffer;
+    int soft_cmap;
+
+    if (argc != 11)
+	return -1;
+
+    if (sscanf(argv[1], "%llu", (unsigned __int64 *)&dpy) != 1)
+	return -1;
+
+    if (sscanf(argv[2], "%llu", (unsigned __int64 *)&win) != 1)
+	return -1;
+
+    if (sscanf(argv[3], "%llu", (unsigned __int64 *)&cmap) != 1)
+	return -1;
+
+    if (sscanf(argv[4], "%llu", (unsigned __int64 *)&vip) != 1)
+	return -1;
+
+    if (sscanf(argv[5], "%llu", (unsigned __int64 *)&hdc) != 1)
+	return -1;
+
+    if (sscanf(argv[8], "%llu", (unsigned __int64 *)&glxc) != 1)
+	return -1;
+
+    if (sscanf(argv[6], "%d", &width) != 1)
+	return -1;
+
+    if (sscanf(argv[7], "%d", &height) != 1)
+	return -1;
+
+    if (sscanf(argv[9], "%d", &double_buffer) != 1)
+	return -1;
+
+    if (sscanf(argv[10], "%d", &soft_cmap) != 1)
+	return -1;
+
+    return _wgl_open_existing(ifp, dpy, win, cmap, vip, hdc, width, height,
+			      glxc, double_buffer, soft_cmap);
+}
+
+
 HIDDEN int
 wgl_final_close( ifp )
     FBIO	*ifp;
@@ -1001,6 +934,34 @@ wgl_final_close( ifp )
     }
 
     wgl_nwindows--;
+    return(0);
+}
+
+
+HIDDEN int
+wgl_flush(FBIO *ifp)
+{
+    if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
+
+	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+	    fb_log("Warning, wgl_flush: wglMakeCurrent unsuccessful.\n");
+	}
+
+	/* Send entire in-memory buffer to the screen, all at once */
+	wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+	if ( SGI(ifp)->mi_doublebuffer) {
+	    SwapBuffers( WGL(ifp)->hdc);
+	} else {
+	    if (WGL(ifp)->copy_flag) {
+		backbuffer_to_screen(ifp, -1);
+	    }
+	}
+
+	/* unattach context for other threads to use, also flushes */
+	wglMakeCurrent(NULL, NULL);
+    }
+    /* XFlush(WGL(ifp)->dispp); */
+    glFlush();
     return(0);
 }
 
@@ -1646,7 +1607,7 @@ wgl_rmap(register FBIO *ifp,
  *  (ie, non-identity map).
  */
 HIDDEN int
-is_linear_cmap(register FBIO *ifp)
+is_linear_cmap(FBIO *ifp)
 {
     register int i;
 
@@ -1662,7 +1623,7 @@ is_linear_cmap(register FBIO *ifp)
  *			W G L _ C M I N I T
  */
 HIDDEN void
-wgl_cminit(register FBIO *ifp)
+wgl_cminit(FBIO *ifp)
 {
     register int	i;
 
@@ -1823,34 +1784,6 @@ wgl_cursor(FBIO *ifp, int mode, int x, int y)
 }
 
 
-HIDDEN int
-wgl_flush(FBIO *ifp)
-{
-    if ( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
-
-	if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-	    fb_log("Warning, wgl_flush: wglMakeCurrent unsuccessful.\n");
-	}
-
-	/* Send entire in-memory buffer to the screen, all at once */
-	wgl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-	if ( SGI(ifp)->mi_doublebuffer) {
-	    SwapBuffers( WGL(ifp)->hdc);
-	} else {
-	    if (WGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
-	}
-
-	/* unattach context for other threads to use, also flushes */
-	wglMakeCurrent(NULL, NULL);
-    }
-    /* XFlush(WGL(ifp)->dispp); */
-    glFlush();
-    return(0);
-}
-
-
 /*
  * W G L _ C L I P P E R ( )
  *
@@ -1864,8 +1797,8 @@ wgl_flush(FBIO *ifp)
  *	 - the portion of the image which is visible in the viewport
  *		(xpixmin, xpixmax, ypixmin, ypixmax)
  */
-void
-wgl_clipper(register FBIO *ifp)
+HIDDEN void
+wgl_clipper(FBIO *ifp)
 {
     register struct wgl_clip *clp;
     register int	i;
@@ -2298,6 +2231,51 @@ wgl_refresh(FBIO *ifp,
     glFlush();
     return 0;
 }
+
+/* This is the ONLY thing that we normally "export" */
+FBIO wgl_interface =
+{
+    0,			/* magic number slot	*/
+    wgl_open,		/* open device		*/
+    wgl_close,		/* close device		*/
+    wgl_clear,		/* clear device		*/
+    wgl_read,		/* read	pixels		*/
+    wgl_write,		/* write pixels		*/
+    wgl_rmap,		/* read colormap	*/
+    wgl_wmap,		/* write colormap	*/
+    wgl_view,		/* set view		*/
+    wgl_getview,		/* get view		*/
+    wgl_setcursor,		/* define cursor	*/
+    wgl_cursor,		/* set cursor		*/
+    fb_sim_getcursor,	/* get cursor		*/
+    fb_sim_readrect,	/* read rectangle	*/
+    wgl_writerect,		/* write rectangle	*/
+    fb_sim_bwreadrect,
+    wgl_bwwriterect,	/* write rectangle	*/
+    wgl_poll,		/* process events	*/
+    wgl_flush,		/* flush output		*/
+    wgl_free,		/* free resources	*/
+    wgl_help,		/* help message		*/
+    "Microsoft Windows OpenGL",	/* device description	*/
+    XMAXSCREEN+1,			/* max width		*/
+    YMAXSCREEN+1,			/* max height		*/
+    "/dev/wgl",		/* short device name	*/
+    512,			/* default/current width  */
+    512,			/* default/current height */
+    -1,			/* select file desc	*/
+    -1,			/* file descriptor	*/
+    1, 1,			/* zoom			*/
+    256, 256,		/* window center	*/
+    0, 0, 0,		/* cursor		*/
+    PIXEL_NULL,		/* page_base		*/
+    PIXEL_NULL,		/* page_curp		*/
+    PIXEL_NULL,		/* page_endp		*/
+    -1,			/* page_no		*/
+    0,			/* page_dirty		*/
+    0L,			/* page_curpos		*/
+    0L,			/* page_pixels		*/
+    0			/* debug		*/
+};
 
 #else
 
