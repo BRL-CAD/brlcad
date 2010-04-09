@@ -65,10 +65,8 @@ void
 create_text_overlay(struct bu_vls *vp)
 {
     struct directory *dp;
-    struct bu_vls vls;
 
     BU_CK_VLS(vp);
-    bu_vls_init(&vls);
 
     /*
      * Set up for character output.  For the best generality, we
