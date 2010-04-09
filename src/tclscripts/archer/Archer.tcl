@@ -261,6 +261,7 @@ package provide Archer 1.0
 	method globalWrapper {_cmd args}
 	method killWrapper {_cmd args}
 	method moveWrapper {_cmd args}
+	method handleNewTreeSelect {}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
@@ -1828,6 +1829,8 @@ package provide Archer 1.0
 ################################### ArcherCore Override Section ###################################
 
 ::itcl::body Archer::dblClick {tags} {
+    return
+
     set element [split $tags ":"]
     if {[llength $element] > 1} {
 	set element [lindex $element 1]
@@ -2337,6 +2340,34 @@ package provide Archer 1.0
     SetNormalCursor $this
 }
 
+::itcl::body Archer::handleNewTreeSelect {} {
+    ::ArcherCore::handleNewTreeSelect
+
+    if {!$mViewOnly} {
+	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
+	    initObjAttrView
+	} else {
+	    if {!$mRestoringTree} {
+		selection_checkpoint $mSelectedObj
+		initObjEditView
+		switch -- $mDefaultBindingMode \
+		    $OBJECT_ROTATE_MODE { \
+			beginObjRotate
+		    } \
+		    $OBJECT_SCALE_MODE { \
+			beginObjScale
+		    } \
+		    $OBJECT_TRANSLATE_MODE { \
+			beginObjTranslate
+		    } \
+		    $OBJECT_CENTER_MODE { \
+			beginObjCenter
+		    }
+	    }
+	}
+    }
+}
+
 ::itcl::body Archer::initDefaultBindings {{_comp ""}} {
     if {$_comp == ""} {
 	if {[info exists itk_component(ged)]} {
@@ -2441,6 +2472,8 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::selectNode {tags {rflag 1}} {
+    return
+
     set mLastTags $tags
     set tags [split $tags ":"]
     if {[llength $tags] > 1} {
@@ -4149,8 +4182,6 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::fbToggle {} {
     $itk_component(rtcntrl) toggleFB
-    set on [$itk_component(rtcntrl) cget -fb_enabled]
-#    fbEnabledCallback $on
 }
 
 ::itcl::body Archer::rtEndCallback {_aborted} {
@@ -7044,7 +7075,7 @@ proc title_node_handler {node} {
     }
 
     refreshTree
-    selectNode [$itk_component(tree) find $obj]
+#    selectNode [$itk_component(tree) find $obj]
 }
 
 ::itcl::body Archer::pluginGetMinAllowableRid {} {
@@ -7868,6 +7899,7 @@ proc title_node_handler {node} {
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
     puts $_pfile "set mZClipMode $mZClipMode"
+    puts $_pfile "set mAffectedTreeNodesMode $mAffectedTreeNodesMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"
@@ -7885,6 +7917,8 @@ proc title_node_handler {node} {
 ################################### Primitive Creation Section ###################################
 
 ::itcl::body Archer::createObj {type} {
+    return
+
     gedCmd make_name -s 1
 
     switch -- $type {
