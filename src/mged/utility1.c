@@ -17,16 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file utility1.c
- *
- * Functions -
- * f_tables() control routine for building ascii tables
- * tables() builds ascii summary tables
- * f_edcodes() control routine for editing region ident codes
- * edcodes() allows for easy editing of region ident codes
- * f_which_id() lists all regions with given ident number
- *
- */
 
 #include "common.h"
 
@@ -55,9 +45,12 @@
 #include "./cmd.h"
 
 
-int readcodes(), writecodes();
-int loadcodes(), printcodes(FILE *fp, struct directory *dp, int pathpos);
-void tables(), edcodes(), changes(), prfield();
+#define ABORTED -99
+#define OLDSOLID 0
+#define NEWSOLID 1
+#define SOL_TABLE 1
+#define REG_TABLE 2
+#define ID_TABLE 3
 
 #define LINELEN 256
 #define MAX_LEVELS 12
@@ -71,18 +64,6 @@ struct identt {
 };
 struct identt identt, idbuf;
 
-#define ABORTED -99
-#define OLDSOLID 0
-#define NEWSOLID 1
-#define SOL_TABLE 1
-#define REG_TABLE 2
-#define ID_TABLE 3
-
-/*
- *
- * F _ T A B L E S :	control routine to build ascii tables
- */
-
 char operate;
 int regflag, numreg, lastmemb, numsol, old_or_new, oper_ok;
 int idfd, rd_idfd;
@@ -93,7 +74,8 @@ char ctemp[7];
 
 static char tmpfil[MAXPATHLEN] = {0};
 
-static int
+
+HIDDEN int
 id_compare(const void *p1, const void *p2)
 {
     int id1, id2;
@@ -105,7 +87,7 @@ id_compare(const void *p1, const void *p2)
 }
 
 
-static int
+HIDDEN int
 reg_compare(const void *p1, const void *p2)
 {
     char *reg1, *reg2;
@@ -115,6 +97,7 @@ reg_compare(const void *p1, const void *p2)
 
     return(strcmp(reg1, reg2));
 }
+
 
 /*
  *
@@ -186,9 +169,6 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 /*
- *
- * F _ E D C O D E S ()
- *
  * control routine for editing region ident codes
  */
 int
@@ -319,6 +299,82 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
    
     bu_vls_free(&editstring); 
     bu_free((genptr_t)av, "f_red: av");
+    return TCL_OK;
+}
+
+
+HIDDEN void
+Do_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+{
+    FILE *fp;
+    int *pathpos;
+    struct directory *nextdp;
+
+    RT_CK_DBI(dbip);
+    RT_CK_TREE(comb_leaf);
+
+    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+	return;
+
+    fp = (FILE *)user_ptr1;
+    pathpos = (int *)user_ptr2;
+
+    /* recurse on combinations */
+    if (nextdp->d_flags & DIR_COMB)
+	(void)printcodes(fp, nextdp, (*pathpos)+1);
+}
+
+
+HIDDEN int
+printcodes(FILE *fp, struct directory *dp, int pathpos)
+{
+    int i;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    int id;
+
+    CHECK_DBI_NULL;
+
+    if (pathpos >= MAX_LEVELS) {
+	regflag = ABORTED;
+	return TCL_ERROR;
+    }
+
+    if (!(dp->d_flags & DIR_COMB))
+	return(0);
+
+    if ((id=rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
+	Tcl_AppendResult(interp, "printcodes: Cannot get records for ",
+			 dp->d_namep, "\n", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    if (id != ID_COMBINATION)
+	return TCL_OK;
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    if (comb->region_flag) {
+	fprintf(fp, "%-6d %-3d %-3d %-4d  ",
+		comb->region_id,
+		comb->aircode,
+		comb->GIFTmater,
+		comb->los);
+	for (i=0; i < pathpos; i++)
+	    fprintf(fp, "/%s", path[i]->d_namep);
+	fprintf(fp, "/%s\n", dp->d_namep);
+	intern.idb_meth->ft_ifree(&intern);
+	return TCL_OK;
+    }
+
+    if (comb->tree) {
+	path[pathpos] = dp;
+	db_tree_funcleaf(dbip, comb, comb->tree, Do_printnode,
+			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)NULL);
+    }
+
+    intern.idb_meth->ft_ifree(&intern);
     return TCL_OK;
 }
 
@@ -466,86 +522,9 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static void
-Do_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
-{
-    FILE *fp;
-    int *pathpos;
-    struct directory *nextdp;
-
-    RT_CK_DBI(dbip);
-    RT_CK_TREE(comb_leaf);
-
-    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
-	return;
-
-    fp = (FILE *)user_ptr1;
-    pathpos = (int *)user_ptr2;
-
-    /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB)
-	(void)printcodes(fp, nextdp, (*pathpos)+1);
-}
-
-
-int
-printcodes(FILE *fp, struct directory *dp, int pathpos)
-{
-    int i;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    int id;
-
-    CHECK_DBI_NULL;
-
-    if (pathpos >= MAX_LEVELS) {
-	regflag = ABORTED;
-	return TCL_ERROR;
-    }
-
-    if (!(dp->d_flags & DIR_COMB))
-	return(0);
-
-    if ((id=rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
-	Tcl_AppendResult(interp, "printcodes: Cannot get records for ",
-			 dp->d_namep, "\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    if (id != ID_COMBINATION)
-	return TCL_OK;
-
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-
-    if (comb->region_flag) {
-	fprintf(fp, "%-6d %-3d %-3d %-4d  ",
-		comb->region_id,
-		comb->aircode,
-		comb->GIFTmater,
-		comb->los);
-	for (i=0; i < pathpos; i++)
-	    fprintf(fp, "/%s", path[i]->d_namep);
-	fprintf(fp, "/%s\n", dp->d_namep);
-	intern.idb_meth->ft_ifree(&intern);
-	return TCL_OK;
-    }
-
-    if (comb->tree) {
-	path[pathpos] = dp;
-	db_tree_funcleaf(dbip, comb, comb->tree, Do_printnode,
-			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)NULL);
-    }
-
-    intern.idb_meth->ft_ifree(&intern);
-    return TCL_OK;
-}
-
-
-/* C H E C K -     compares solids returns 1 if they match
-      0 otherwise
-*/
-
+/*
+ * compares solids returns 1 if they match or  0 otherwise
+ */
 int
 check(char *a, char *b)
 {
@@ -648,7 +627,7 @@ f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-static int
+HIDDEN int
 sol_number(const matp_t matrix, char *name, int *old)
 {
     int i;
@@ -685,7 +664,7 @@ sol_number(const matp_t matrix, char *name, int *old)
 }
 
 
-static void
+HIDDEN void
 new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat, int flag)
 {
     struct rt_db_internal intern;
@@ -862,6 +841,9 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 }
 
 
+/*
+ * control routine for building ascii tables
+ */
 int
 f_tables(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
