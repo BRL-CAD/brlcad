@@ -129,7 +129,7 @@ Tools -> Command Window             |             Investigate tabbed command win
 Tools -> Graphics Window            |             Investigate tabbed graphics windows/views?
 Help -> Dedication                  |                           DONE
 Help -> About MGED                  |   Dialog available, contents need to be merged in
-Help -> Command Manual Pages        |                          INCOMPLETE
+Help -> Command Manual Pages        |                           DONE
 Help -> Shift Grips                 |                           DONE
 Help -> Apropos                     |   INCOMPLETE, not working well in MGED either?
 Help -> Manual                      |   INCOMPLETE, even in MGED needs web browser, should use docbook/tkhtml3
