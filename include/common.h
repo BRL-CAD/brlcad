@@ -241,7 +241,7 @@ typedef ptrdiff_t ssize_t;
  *
  */
 #ifndef UNLIKELY
-#  if GNUC_PREREQ(3, 0) || ICC_PREREQ(800)
+#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
 #    define UNLIKELY(expression) __builtin_expect((expression), 0)
 #  else
 #    define UNLIKELY(expression) (expression)
@@ -251,6 +251,30 @@ typedef ptrdiff_t ssize_t;
 #  define UNLIKELY(expression) (expression)
 #  warning "UNLIKELY was previously defined.  Unable to provide branch hinting."
 #endif
+
+/**
+ * DEPRECATED provides a common mechanism for denoting public API
+ * (e.g., functions, typedefs, variables) that is considered
+ * deprecated.  Use it like this:
+ *
+ * DEPRECATED int my_function(void);
+ *
+ * typedef struct karma some_type DEPRECATED;
+ */
+#ifndef DEPRECATED
+#  if GCC_PREREQ(3, 1) || ICC_PREREQ(800)
+#    define DEPRECATED __attribute__((deprecated))
+#  elif defined(_WIN32)
+#    define DEPRECATED __declspec(deprecated("This function is DEPRECATED.  Please update code to new API."))
+#  else
+#    define DEPRECATED /* deprecated */
+#  endif
+#else
+#  undef DEPRECATED
+#  define DEPRECATED /* deprecated */
+#  warning "DEPRECATED was previously defined.  Disabling the declaration."
+#endif
+
 
 #endif  /* __COMMON_H__ */
 /** @} */
