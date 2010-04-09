@@ -274,6 +274,7 @@ package provide Archer 1.0
 	# Miscellaneous Section
 	method buildAboutDialog {}
 	method buildarcherHelp {}
+	method buildarcherMan {}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
 	method buildGridPreferences {}
@@ -288,6 +289,7 @@ package provide Archer 1.0
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
 	method doarcherHelp {}
+	method doarcherMan {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
 	method fbActivePaneCallback {_pane}
@@ -2833,11 +2835,20 @@ proc Archer::get_html_data {helpfile} {
     close $help_fd
 }
 
-proc Archer::html_re_display {w} {
-    global archer_help_data
+proc Archer::get_html_man_data {cmdname} {
+    global archer_man_data
+    set help_fd [open [bu_brlcad_data "html/mann/en/$cmdname.html"]]
+    set archer_help_data [read $help_fd]
+    close $help_fd
+}
+
+proc Archer::html_man_display {w} {
+    global archer_man_data
+    puts "redisplaying $htmlviewer"
+    puts "$archer_man_data"
     $w reset;
     $w configure -parsemode html
-    $w parse $archer_help_data
+    $w parse $archer_man_data
 }
 
 proc Archer::mkHelpTkImage {file} {
@@ -2851,13 +2862,13 @@ proc title_node_handler {node} {
     foreach child [$node children] {
 	append titletext [$child text]
     }
-    puts $titletext
 }
  
 
 ::itcl::body Archer::buildarcherHelp {} {
     global env
     global archer_help_data
+    global htmlviewer
 
     itk_component add archerHelp {
 	::iwidgets::dialog $itk_interior.archerHelp \
@@ -2937,6 +2948,107 @@ proc title_node_handler {node} {
     pack $itk_component(archerHelpF) -side left -expand yes -fill both
 
     wm geometry $itk_component(archerHelp) "800x600"
+}
+
+::itcl::body Archer::buildarcherMan {} {
+    global env
+    global archer_help_data
+
+    itk_component add archerMan {
+	::iwidgets::dialog $itk_interior.archerMan \
+	    -modality application \
+	    -title "MGED Manual Page Browser" \
+	    -background $SystemButtonFace
+    } {}
+    $itk_component(archerMan) hide 1
+    $itk_component(archerMan) hide 2
+    $itk_component(archerMan) hide 3
+    $itk_component(archerMan) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component(archerMan) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component(archerMan) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set tlparent [$itk_component(archerMan) childsite]
+
+    # Table of Contents
+    itk_component add archerManToC {
+	::tk::frame $tlparent.archerManToC
+    } {}
+    
+    set sfcstoc $itk_component(archerManToC)
+
+    itk_component add archerManS {
+	::ttk::scrollbar $itk_component(archerManToC).archerManS \
+    } {}
+
+    itk_component add mantree {
+        ::tk::listbox $itk_component(archerManToC).mantree -bd 2 -width 16 -exportselection false -yscroll "$itk_component(archerManS) set"
+    } {}
+
+    $itk_component(archerManS) configure -command "$itk_component(mantree) yview"
+
+    grid $itk_component(mantree) $itk_component(archerManS) -sticky nsew -in $sfcstoc
+
+    grid columnconfigure $sfcstoc 0 -weight 1
+    grid rowconfigure $sfcstoc 0 -weight 1
+
+   # List of available help documents
+    set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en/"] *.html ]
+    set cmds [list ]
+    foreach cmdfile $cmdfiles {
+           regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
+           if {[string compare $cmdrootname "Introduction"]} {
+              set cmds [concat $cmds [list $cmdrootname]]
+           }
+    }
+    set cmds [lsort $cmds]
+    foreach cmd $cmds {
+	$itk_component(mantree) insert end $cmd
+    }
+
+    pack $itk_component(archerManToC) -side left -expand no -fill y
+
+
+    # Main HTML window
+
+    itk_component add archerManF {
+	::tk::frame $tlparent.archerManF
+    } {}
+    set sfcsman $itk_component(archerManF)
+    pack $sfcsman -expand yes -fill both 
+    
+    # HTML widget
+    set manhtmlviewer [html $sfcsman.htmlview]
+    $sfcsman.htmlview configure -parsemode html 
+    set help_fd [lindex [list [file join [bu_brlcad_data "html/mann/en"] Introduction.html]] 0]
+    get_html_data $help_fd
+    $sfcsman.htmlview parse $archer_help_data
+
+    itk_component add archerManSF {
+	::ttk::scrollbar $tlparent.archerManSF \
+		-command "$sfcsman.htmlview yview"
+    } {}
+
+    $sfcsman.htmlview configure -yscrollcommand "$itk_component(archerManSF) set"
+
+    grid $manhtmlviewer $itk_component(archerManSF) -sticky nsew -in $sfcsman
+
+    grid columnconfigure $sfcsman 0 -weight 1
+    grid rowconfigure $sfcsman 0 -weight 1
+
+    pack $itk_component(archerManF) -side left -expand yes -fill both
+    
+    bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_re_display $manhtmlviewer}
+
+    wm geometry $itk_component(archerMan) "800x600"
 }
 
 ::itcl::body Archer::buildDisplayPreferences {} {
@@ -3360,6 +3472,7 @@ proc title_node_handler {node} {
 
     buildAboutDialog
     buildarcherHelp
+    buildarcherMan
     buildMouseOverridesDialog
     #    buildInfoDialog mouseOverridesDialog \
 	"Mouse Overrides" $mMouseOverrideInfo \
@@ -3997,6 +4110,9 @@ proc title_node_handler {node} {
 	keep -background
     }
     $itk_component(helpmenu) add command \
+	-label "Archer Man Pages..." \
+	-command [::itcl::code $this doarcherMan]
+    $itk_component(helpmenu) add command \
 	-label "Archer Help..." \
 	-command [::itcl::code $this doarcherHelp]
     $itk_component(helpmenu) add separator
@@ -4119,6 +4235,15 @@ proc title_node_handler {node} {
     $itk_component(aboutDialog) center [namespace tail $this]
     ::update
     $itk_component(aboutDialog) activate
+}
+
+::itcl::body Archer::doarcherMan {} {
+    global tcl_platform
+
+    $itk_component(archerMan) center [namespace tail $this]
+    ::update
+    $itk_component(archerMan) activate
+
 }
 
 
