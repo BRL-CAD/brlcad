@@ -227,12 +227,14 @@ view_2init( struct application *ap, char *framename )
 		}
 	    } else {
 		long int face_num;
+		long *fnp;
 
 		if ( !faces ) {
 		    bu_exit( EXIT_FAILURE, "No faces structure while reading partial data!!!\n" );
 		}
 		face_num = atoi( line );
-		bu_ptbl_ins_unique( faces, (long *)face_num );
+		fnp = (long *)face_num;
+		bu_ptbl_ins_unique( faces, fnp );
 	    }
 	}
     }
