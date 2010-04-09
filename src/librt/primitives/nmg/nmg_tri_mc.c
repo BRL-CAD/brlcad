@@ -529,19 +529,10 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 }
 
 static int
-rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t step, const struct bn_tol *tol)
+rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t b, fastf_t step, const struct bn_tol *tol)
 {
     int i, in[4] = { 0, 0, 0, 0}, count=0;
     fastf_t last_b = -VOODOO;
-    fastf_t b;
-
-    b = bin(a->a_rt_i->mdl_min[Z] - tol->dist - step, step);
-    VSET(a->a_ray.r_dir, 0, 0, 1);
-    a->a_uptr = primp[0]; VSET(a->a_ray.r_pt, x, y, b); rt_shootray(a);
-    a->a_uptr = primp[1]; VSET(a->a_ray.r_pt, x+step, y, b); rt_shootray(a);
-    a->a_uptr = primp[2]; VSET(a->a_ray.r_pt, x, y+step, b); rt_shootray(a);
-    a->a_uptr = primp[3]; VSET(a->a_ray.r_pt, x+step, y+step, b); rt_shootray(a);
-    b = +INFINITY;
 
     while(primp[0]->in>0 || primp[1]->in>0 || primp[2]->in>0 || primp[3]->in>0) {
 	unsigned char pv;
@@ -648,7 +639,7 @@ int
 nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct application a;
-    fastf_t x,y, endx, endy;
+    fastf_t x, y, z, endx, endy;
     fastf_t step = 0.0;
     int ncpu;
     int count = 0;
@@ -685,11 +676,34 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
 	    for(i=0;i<4;i++)
 		primp[i] = prim[i];
 
-	    for(i=0;i<MAX_INTERSECTS;i++)
-		for(j=0;j<4;j++)
-		    prim[j][i].in = 0; VSETALL(prim[j][i].hit, VOODOO);
+	    for(i=0;i<4;i++)
+		for(j=0;j<MAX_INTERSECTS-1;j++) {
+		    prim[i][j].in = 0; 
+		    VSETALL(prim[i][j].hit, VOODOO);
+		}
 
-	    count += rt_nmg_mc_pew(s, primp, &a, x, y, step, tol);
+	    z = bin(a.a_rt_i->mdl_min[Z] - tol->dist - step, step);
+
+	    VSET(a.a_ray.r_dir, 0, 0, 1);
+	    a.a_uptr = primp[0]; 
+	    VSET(a.a_ray.r_pt, x, y, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[1]; 
+	    VSET(a.a_ray.r_pt, x+step, y, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[2]; 
+	    VSET(a.a_ray.r_pt, x, y+step, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[3]; 
+	    VSET(a.a_ray.r_pt, x+step, y+step, z); 
+	    rt_shootray(&a);
+
+	    z = +INFINITY;
+
+	    count += rt_nmg_mc_pew(s, primp, &a, x, y, z, step, tol);
 	}
     }
     /* free the rt stuff we don't need anymore */
