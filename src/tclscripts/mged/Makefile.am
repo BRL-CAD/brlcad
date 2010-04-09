@@ -145,7 +145,8 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
-	$(tcl_SCRIPTS)
+	$(tcl_SCRIPTS) \
+	helpbrowse.tcl
 
 # CLEANFILES = $(BUILT_SOURCES)
 
