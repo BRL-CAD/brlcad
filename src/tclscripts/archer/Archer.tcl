@@ -2836,19 +2836,17 @@ proc Archer::get_html_data {helpfile} {
 }
 
 proc Archer::get_html_man_data {cmdname} {
-    global archer_man_data
+    global archer_help_data
     set help_fd [open [bu_brlcad_data "html/mann/en/$cmdname.html"]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
 
 proc Archer::html_man_display {w} {
-    global archer_man_data
-    puts "redisplaying $htmlviewer"
-    puts "$archer_man_data"
+    global archer_help_data
     $w reset;
     $w configure -parsemode html
-    $w parse $archer_man_data
+    $w parse $archer_help_data
 }
 
 proc Archer::mkHelpTkImage {file} {
@@ -2953,6 +2951,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::buildarcherMan {} {
     global env
     global archer_help_data
+    global manhtmlviewer
 
     itk_component add archerMan {
 	::iwidgets::dialog $itk_interior.archerMan \
@@ -3046,7 +3045,7 @@ proc title_node_handler {node} {
 
     pack $itk_component(archerManF) -side left -expand yes -fill both
     
-    bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_re_display $manhtmlviewer}
+    bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_man_display $manhtmlviewer}
 
     wm geometry $itk_component(archerMan) "800x600"
 }
