@@ -252,8 +252,6 @@ typedef ptrdiff_t ssize_t;
 #  warning "UNLIKELY was previously defined.  Unable to provide branch hinting."
 #endif
 
-/**
- * DEPRECATED 
 #endif  /* __COMMON_H__ */
 /** @} */
 /*
