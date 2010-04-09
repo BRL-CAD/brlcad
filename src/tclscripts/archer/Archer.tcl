@@ -1,4 +1,4 @@
-#                      A R C H E R . T C L
+#                     A R C H E R . T C L
 # BRL-CAD
 #
 # Copyright (c) 2002-2010 United States Government as represented by
@@ -272,6 +272,7 @@ package provide Archer 1.0
 
 	# Miscellaneous Section
 	method buildAboutDialog {}
+	method buildarcherHelp {}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
 	method buildGridPreferences {}
@@ -285,7 +286,7 @@ package provide Archer 1.0
 	method buildToplevelMenubar {}
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
-	method doArcherHelp {}
+	method doarcherHelp {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
 	method fbActivePaneCallback {_pane}
@@ -2791,6 +2792,76 @@ package provide Archer 1.0
     wm geometry $itk_component(aboutDialog) "600x600"
 }
 
+proc Archer::get_html_data {helpfile, help_data} {
+    # get file data
+    set help_fd [open $helpfile]
+    set help_data [read $help_fd]
+    close $help_fd
+}
+
+proc Archer::html_re_display {w, help_data} {
+    $w reset;
+    $w configure -parsemode html
+    $w parse $help_data
+}
+
+proc Archer::mkHelpTkImage {file} {
+     set name [image create photo -file $file]
+     return [list $name [list image delete $name]]
+}
+
+
+::itcl::body Archer::buildarcherHelp {} {
+    global env
+
+    itk_component add archerHelp {
+	::iwidgets::dialog $itk_interior.archerHelp \
+	    -modality application \
+	    -title "Archer Help Browser" \
+	    -background $SystemButtonFace
+    } {}
+    $itk_component(archerHelp) hide 1
+    $itk_component(archerHelp) hide 2
+    $itk_component(archerHelp) hide 3
+    $itk_component(archerHelp) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component(archerHelp) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component(archerHelp) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set tlparent [$itk_component(archerHelp) childsite]
+
+    itk_component add archerHelpF {
+	::iwidgets::scrolledframe $tlparent.archerHelpF
+    } {}
+
+    itk_component add archerHelpL {
+	::ttk::frame $tlparent.archerHelpL
+    } {}
+
+    # List of available help documents
+    set helplist [list [file join $brlcadDataPath html articles en tire.html]]
+
+    # HTML widget
+    html $itk_component(archerHelpF).htmlview
+    $itk_component(archerHelpF).htmlview configure -parsemode html 
+    $itk_component(archerHelpF).htmlview configure -imagecmd Archer::mkHelpTkImage
+    
+
+    grid $itk_component(archerHelpF).htmlview -sticky nsew -in  $itk_component(archerHelpF)
+
+    pack $itk_component(archerHelpF) -expand yes -fill both
+
+    wm geometry $itk_component(archerHelp) "600x600"
+}
+
 ::itcl::body Archer::buildDisplayPreferences {} {
     set oglParent $itk_component(preferenceTabs)
     itk_component add displayF {
@@ -3211,6 +3282,7 @@ package provide Archer 1.0
     global tcl_platform
 
     buildAboutDialog
+    buildarcherHelp
     buildMouseOverridesDialog
     #    buildInfoDialog mouseOverridesDialog \
 	"Mouse Overrides" $mMouseOverrideInfo \
@@ -3849,7 +3921,7 @@ package provide Archer 1.0
     }
     $itk_component(helpmenu) add command \
 	-label "Archer Help..." \
-	-command [::itcl::code $this doArcherHelp]
+	-command [::itcl::code $this doarcherHelp]
     $itk_component(helpmenu) add separator
     $itk_component(helpmenu) add command \
 	-label "About Plug-ins..." \
@@ -3973,14 +4045,13 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::doArcherHelp {} {
+::itcl::body Archer::doarcherHelp {} {
     global tcl_platform
 
-    if {$tcl_platform(platform) == "windows"} {
-	exec hh [file join $brlcadDataPath html manuals archer Archer_Documentation.chm] &
-    } else {
-	tk_messageBox -title "" -message "Not yet implemented!"
-    }
+    $itk_component(archerHelp) center [namespace tail $this]
+    ::update
+    $itk_component(archerHelp) activate
+
 }
 
 
@@ -4959,7 +5030,7 @@ package provide Archer 1.0
 		-helpstr "Mouse mode override definitions"
 	}
     $itk_component(menubar) menuconfigure .help.archerHelp \
-	-command [::itcl::code $this doArcherHelp]
+	-command [::itcl::code $this doarcherHelp]
     $itk_component(menubar) menuconfigure .help.aboutPlugins \
 	-command "::Archer::pluginDialog [namespace tail $this]"
     $itk_component(menubar) menuconfigure .help.aboutArcher \
