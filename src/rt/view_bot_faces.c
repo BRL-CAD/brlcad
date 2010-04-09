@@ -236,7 +236,7 @@ view_2init(struct application *ap, char *framename)
 		}
 		face_num = atoi(line);
 		fnp = (long *)face_num;
-		bu_ptbl_ins_unique(faces, fnp0);
+		bu_ptbl_ins_unique(faces, fnp);
 	    }
 	}
     }
