@@ -121,18 +121,41 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* Provide a means to conveniently test the version of GCC.
- * Use it like this:
+/* Provide a means to conveniently test the version of the GNU
+ * compiler.  Use it like this:
  *
- * #if __GCC_PREREQ(2,8)
+ * #if GCC_PREREQ(2,8)
  * ... code requiring gcc 2.8 or later ...
  * #endif
  *
  */
-#if defined __GNUC__
-#  define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
+#ifndef GCC_PREREQ
+#  if defined __GNUC__
+#    define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
+#  else
+#    define GCC_PREREQ(major, minor) 0
+#  endif
 #else
-#  define GCC_PREREQ(major, minor) 0
+#  warning "GCC_PREREQ is already defined.  See the common.h header."
+#endif
+
+/* Provide a means to conveniently test the version of the Intel
+ * compiler.  Use it like this:
+ *
+ * #if ICC_PREREQ(800)
+ * ... code requiring icc 8.0 or later ...
+ * #endif
+ *
+ */
+/* provide a means to conveniently test the version of ICC */
+#ifndef ICC_PREREQ
+#  if defined __INTEL_COMPILER
+#    define ICC_PREREQ(version) (__INTEL_COMPILER >= (version))
+#  else
+#    define ICC_PREREQ(version) 0
+#  endif
+#else
+#  warning "ICC_PREREQ is already defined.  See the common.h header."
 #endif
 
 /**
