@@ -2840,10 +2840,10 @@ proc Archer::mkHelpTkImage {file} {
     set tlparent [$itk_component(archerHelp) childsite]
 
     itk_component add archerHelpF {
-	::iwidgets::scrolledframe $tlparent.archerHelpF
+	::tk::frame $tlparent.archerHelpF
     } {}
 
-    set sfcs [$itk_component(archerHelpF) childsite]
+    set sfcs $itk_component(archerHelpF)
     pack $sfcs -expand yes -fill both
 
 #    itk_component add archerHelpL {
@@ -2862,9 +2862,19 @@ proc Archer::mkHelpTkImage {file} {
     close $help_fd
     $sfcs.htmlview parse $help_data
 
-    pack $htmlviewer -expand yes -fill both
+    itk_component add archerHelpS {
+	::ttk::scrollbar $tlparent.archerHelpS \
+		-command "$sfcs.htmlview yview"
+    } {}
 
-    pack $itk_component(archerHelpF) -expand yes -fill both
+    $sfcs.htmlview configure -yscrollcommand "$itk_component(archerHelpS) set"
+
+    grid $htmlviewer $itk_component(archerHelpS) -sticky nsew -in $sfcs
+
+    grid columnconfigure $sfcs 0 -weight 1
+    grid rowconfigure $sfcs 0 -weight 1
+
+    pack $itk_component(archerHelpF) -side right -expand yes -fill both
 
     wm geometry $itk_component(archerHelp) "800x600"
 }
