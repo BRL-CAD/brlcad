@@ -30,6 +30,32 @@
 #include "spm.h"
 
 
+void
+spm_free(spm_map_t *mp)
+{
+    RT_CK_SPM(mp);
+    if (mp == SPM_NULL)
+	return;
+
+    if (mp->_data != NULL) {
+	(void) bu_free((char *)mp->_data, "sph _data");
+	mp->_data = NULL;
+    }
+
+    if (mp->nx != NULL) {
+	(void) bu_free((char *)mp->nx, "sph nx");
+	mp->nx = NULL;
+    }
+
+    if (mp->xbin != NULL) {
+	(void) bu_free((char *)mp->xbin, "sph xbin");
+	mp->xbin = NULL;
+    }
+
+    (void) bu_free((char *)mp, "spm_map_t");
+}
+
+
 spm_map_t *
 spm_init(int N, int elsize)
 {
@@ -77,32 +103,6 @@ spm_init(int N, int elsize)
     }
     mapp->magic = SPM_MAGIC;
     return(mapp);
-}
-
-
-void
-spm_free(spm_map_t *mp)
-{
-    RT_CK_SPM(mp);
-    if (mp == SPM_NULL)
-	return;
-
-    if (mp->_data != NULL) {
-	(void) bu_free((char *)mp->_data, "sph _data");
-	mp->_data = NULL;
-    }
-
-    if (mp->nx != NULL) {
-	(void) bu_free((char *)mp->nx, "sph nx");
-	mp->nx = NULL;
-    }
-
-    if (mp->xbin != NULL) {
-	(void) bu_free((char *)mp->xbin, "sph xbin");
-	mp->xbin = NULL;
-    }
-
-    (void) bu_free((char *)mp, "spm_map_t");
 }
 
 
