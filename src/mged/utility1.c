@@ -240,7 +240,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    const char **av;
+    char **av;
     struct bu_vls editstring;
     int i;
 
@@ -259,10 +259,10 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
     av[0] = argv[0];
     av[1] = "-E";
-    av[2] = (const char *)bu_vls_addr(&editstring);
+    av[2] = bu_vls_addr(&editstring);
     argc += 2;
     for (i = 3; i < argc; ++i) {
 	av[i] = argv[i-2];
