@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 TODO: include write-up about marching cubes w.r.t. tessellation.
 
+* archer tree view colorization for selected objects - Bob Parker
 * replacement of tkimg external dependency with tkpng 0.9 - Cliff Yapp
 * libpng upgraded to 1.4.1 - Erik Greenwald
 * g-stl and g-egg have -M for marching cubes - Erik Greenwald
