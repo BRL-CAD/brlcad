@@ -23,14 +23,12 @@
  *
  * Frame Buffer Library interface for Windows OpenGL.
  *
- * There are several different Frame Buffer modes supported.
- * Set your environment FB_FILE to the appropriate type.
- * Note that some of the /dev/sgi modes are not supported, and there are
- * some new modes.
- * (see the modeflag definitions below).
- *	/dev/wgl[options]
+ * There are several different Frame Buffer modes supported.  Set your
+ * environment FB_FILE to the appropriate type.  Note that some of the
+ * /dev/sgi modes are not supported, and there are some new
+ * modes. (see the modeflag definitions below).
  *
- * This code is basically a port of if_ogl.c from OpenGL to Windows GL
+ * /dev/wgl[options]
  *
  */
 /** @} */
@@ -76,7 +74,7 @@ void wgl_configureWindow(FBIO *ifp, int width, int height);
 /* Other Internal routines */
 HIDDEN void wgl_clipper(FBIO *ifp);
 HIDDEN int wgl_getmem(FBIO *ifp);
-HIDDEN void backbuffer_to_screen(register FBIO *ifp, int one_y);
+HIDDEN void backbuffer_to_screen(FBIO *ifp, int one_y);
 HIDDEN void wgl_cminit(FBIO *ifp);
 HIDDEN PIXELFORMATDESCRIPTOR * wgl_choose_visual(FBIO *ifp);
 HIDDEN int is_linear_cmap(FBIO *ifp);
@@ -346,7 +344,7 @@ wgl_getmem(FBIO *ifp)
  * W G L _ Z A P M E M
  */
 void
-wgl_zapmem()
+wgl_zapmem(void)
 {
 }
 
@@ -355,7 +353,7 @@ wgl_zapmem()
  * S I G K I D
  */
 HIDDEN void
-sigkid(pid)
+sigkid(int UNUSED(pid))
 {
     exit(0);
 }
@@ -367,15 +365,10 @@ sigkid(pid)
  * rectangle of the frame buffer
  */
 HIDDEN void
-wgl_xmit_scanlines(ifp, ybase, nlines, xbase, npix)
-    register FBIO *ifp;
-    int ybase;
-    int nlines;
-    int xbase;
-    int npix;
+wgl_xmit_scanlines(FBIO *ifp, int ybase, int nlines, int xbase, int npix)
 {
-    register int y;
-    register int n;
+    int y;
+    int n;
     int sw_cmap;	/* !0 => needs software color map */
     struct wgl_clip *clp;
 
@@ -457,9 +450,9 @@ wgl_xmit_scanlines(ifp, ybase, nlines, xbase, npix)
 
     if (sw_cmap) {
 	/* Software colormap each line as it's transmitted */
-	register int x;
-	register struct wgl_pixel *wglp;
-	register struct wgl_pixel *op;
+	int x;
+	struct wgl_pixel *wglp;
+	struct wgl_pixel *op;
 
 	y = ybase;
 	if (CJDEBUG) printf("Doing sw colormap xmit\n");
@@ -496,11 +489,8 @@ wgl_xmit_scanlines(ifp, ybase, nlines, xbase, npix)
 }
 
 
-LONG WINAPI MainWndProc (
-    HWND hWnd,
-    UINT uMsg,
-    WPARAM wParam,
-    LPARAM lParam)
+LONG WINAPI
+MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
 	case WM_PAINT:
@@ -525,7 +515,7 @@ LONG WINAPI MainWndProc (
 	case WM_MBUTTONUP:
 	    {
 		int x, y;
-		register struct wgl_pixel *wglp;
+		struct wgl_pixel *wglp;
 
 		x = GET_X_LPARAM(lParam);
 		y = saveifp->if_height - GET_Y_LPARAM(lParam) - 1;
@@ -564,6 +554,8 @@ LONG WINAPI MainWndProc (
 
     return 1;
 }
+
+
 HIDDEN int
 wgl_open(ifp, file, width, height)
     FBIO *ifp;
@@ -591,7 +583,7 @@ wgl_open(ifp, file, width, height)
     mode = MODE_2LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;
@@ -778,7 +770,7 @@ _wgl_open_existing(FBIO *ifp,
 		   int soft_cmap)
 {
 
-    /*XXX for now use private memory */
+    /* XXX for now use private memory */
     ifp->if_mode = MODE_1MALLOC;
 
     /*
@@ -842,10 +834,7 @@ _wgl_open_existing(FBIO *ifp,
 
 
 int
-wgl_open_existing(ifp, argc, argv)
-    FBIO *ifp;
-    int argc;
-    char **argv;
+wgl_open_existing(FBIO *ifp, int argc, char **argv)
 {
     Display *dpy;
     Window win;
@@ -897,8 +886,7 @@ wgl_open_existing(ifp, argc, argv)
 
 
 HIDDEN int
-wgl_final_close(ifp)
-    FBIO *ifp;
+wgl_final_close(FBIO *ifp)
 {
 
     if (CJDEBUG) {
@@ -962,8 +950,7 @@ wgl_flush(FBIO *ifp)
 
 
 HIDDEN int
-wgl_close(ifp)
-    FBIO *ifp;
+wgl_close(FBIO *ifp)
 {
 
     wgl_flush(ifp);
@@ -1041,8 +1028,7 @@ wgl_close_existing(FBIO *ifp)
  * Handle any pending input events
  */
 HIDDEN int
-wgl_poll(ifp)
-    FBIO *ifp;
+wgl_poll(FBIO *ifp)
 {
     wgl_do_event(ifp);
 
@@ -1059,8 +1045,7 @@ wgl_poll(ifp)
  * Free shared memory resources, and close.
  */
 HIDDEN int
-wgl_free(ifp)
-    FBIO *ifp;
+wgl_free(FBIO *ifp)
 {
     int ret;
 
@@ -1083,9 +1068,9 @@ HIDDEN int
 wgl_clear(FBIO *ifp, unsigned char *pp)
 {
     struct wgl_pixel bg;
-    register struct wgl_pixel *wglp;
-    register int cnt;
-    register int y;
+    struct wgl_pixel *wglp;
+    int cnt;
+    int y;
 
     if (CJDEBUG) printf("entering wgl_clear\n");
 
@@ -1248,11 +1233,11 @@ wgl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 HIDDEN int
 wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
-    register short scan_count;	/* # pix on this scanline */
-    register unsigned char *cp;
+    short scan_count;	/* # pix on this scanline */
+    unsigned char *cp;
     int ret;
-    register unsigned int n;
-    register struct wgl_pixel *wglp;
+    unsigned int n;
+    struct wgl_pixel *wglp;
 
     if (CJDEBUG) printf("entering wgl_read\n");
 
@@ -1301,13 +1286,13 @@ wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 HIDDEN int
 wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count)
 {
-    register short scan_count;	/* # pix on this scanline */
-    register unsigned char *cp;
+    short scan_count;	/* # pix on this scanline */
+    unsigned char *cp;
     int ret;
     int ybase;
-    register int pix_count;	/* # pixels to send */
-    register int x;
-    register int y;
+    int pix_count;	/* # pixels to send */
+    int x;
+    int y;
 
     if (CJDEBUG) printf("entering wgl_write\n");
 
@@ -1328,8 +1313,8 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
     cp = (unsigned char *)(pixelp);
 
     while (pix_count) {
-	register unsigned int n;
-	register struct wgl_pixel *wglp;
+	unsigned int n;
+	struct wgl_pixel *wglp;
 
 	if (y >= ifp->if_height)
 	    break;
@@ -1439,10 +1424,10 @@ wgl_writerect(FBIO *ifp,
 	      int height,
 	      const unsigned char *pp)
 {
-    register int x;
-    register int y;
-    register unsigned char *cp;
-    register struct wgl_pixel *wglp;
+    int x;
+    int y;
+    unsigned char *cp;
+    struct wgl_pixel *wglp;
 
     if (CJDEBUG) printf("entering wgl_writerect\n");
 
@@ -1510,10 +1495,10 @@ wgl_bwwriterect(FBIO *ifp,
 		int height,
 		const unsigned char *pp)
 {
-    register int x;
-    register int y;
-    register unsigned char *cp;
-    register struct wgl_pixel *wglp;
+    int x;
+    int y;
+    unsigned char *cp;
+    struct wgl_pixel *wglp;
 
     if (CJDEBUG) printf("entering wgl_bwwriterect\n");
 
@@ -1529,7 +1514,7 @@ wgl_bwwriterect(FBIO *ifp,
 	wglp = (struct wgl_pixel *)&ifp->if_mem[
 	    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct wgl_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
-	    register int val;
+	    int val;
 	    /* alpha channel is always zero */
 	    wglp->red   = (val = *cp++);
 	    wglp->green = val;
@@ -1567,10 +1552,9 @@ wgl_bwwriterect(FBIO *ifp,
 
 
 HIDDEN int
-wgl_rmap(register FBIO *ifp,
-	 register ColorMap *cmp)
+wgl_rmap(FBIO *ifp, ColorMap *cmp)
 {
-    register int i;
+    int i;
 
     if (CJDEBUG) printf("entering wgl_rmap\n");
 
@@ -1593,7 +1577,7 @@ wgl_rmap(register FBIO *ifp,
 HIDDEN int
 is_linear_cmap(FBIO *ifp)
 {
-    register int i;
+    int i;
 
     for (i=0; i<256; i++) {
 	if (CMR(ifp)[i] != i) return(0);
@@ -1610,7 +1594,7 @@ is_linear_cmap(FBIO *ifp)
 HIDDEN void
 wgl_cminit(FBIO *ifp)
 {
-    register int i;
+    int i;
 
     for (i = 0; i < 256; i++) {
 	CMR(ifp)[i] = i;
@@ -1624,10 +1608,9 @@ wgl_cminit(FBIO *ifp)
  * W G L _ W M A P
  */
 HIDDEN int
-wgl_wmap(register FBIO *ifp,
-	 register const ColorMap *cmp)
+wgl_wmap(FBIO *ifp, const ColorMap *cmp)
 {
-    register int i;
+    int i;
     int prev;	/* !0 = previous cmap was non-linear */
 
     if (CJDEBUG) printf("entering wgl_wmap\n");
@@ -1744,8 +1727,8 @@ wgl_cursor(FBIO *ifp, int mode, int x, int y)
 HIDDEN void
 wgl_clipper(FBIO *ifp)
 {
-    register struct wgl_clip *clp;
-    register int i;
+    struct wgl_clip *clp;
+    int i;
     double pixels;
 
     clp = &(WGL(ifp)->clip);
@@ -1949,9 +1932,7 @@ expose_callback(FBIO *ifp, int eventPtr)
 
 
 void
-wgl_configureWindow(FBIO *ifp,
-		    int width,
-		    int height)
+wgl_configureWindow(FBIO *ifp, int width, int height)
 {
     if (width == WGL(ifp)->win_width &&
 	height == WGL(ifp)->win_height)
@@ -1979,8 +1960,7 @@ wgl_configureWindow(FBIO *ifp,
  * screen if one_y equals -1.
  */
 HIDDEN void
-backbuffer_to_screen(register FBIO *ifp,
-		     int one_y)
+backbuffer_to_screen(FBIO *ifp, int one_y)
 {
     struct wgl_clip *clp;
 
@@ -2186,12 +2166,12 @@ FBIO wgl_interface =
     wgl_rmap,		/* read colormap	*/
     wgl_wmap,		/* write colormap	*/
     wgl_view,		/* set view		*/
-    wgl_getview,		/* get view		*/
-    wgl_setcursor,		/* define cursor	*/
+    wgl_getview,	/* get view		*/
+    wgl_setcursor,	/* define cursor	*/
     wgl_cursor,		/* set cursor		*/
     fb_sim_getcursor,	/* get cursor		*/
     fb_sim_readrect,	/* read rectangle	*/
-    wgl_writerect,		/* write rectangle	*/
+    wgl_writerect,	/* write rectangle	*/
     fb_sim_bwreadrect,
     wgl_bwwriterect,	/* write rectangle	*/
     wgl_poll,		/* process events	*/
@@ -2199,14 +2179,14 @@ FBIO wgl_interface =
     wgl_free,		/* free resources	*/
     wgl_help,		/* help message		*/
     "Microsoft Windows OpenGL",	/* device description	*/
-    XMAXSCREEN+1,			/* max width		*/
-    YMAXSCREEN+1,			/* max height		*/
+    XMAXSCREEN+1,	/* max width		*/
+    YMAXSCREEN+1,	/* max height		*/
     "/dev/wgl",		/* short device name	*/
-    512,			/* default/current width  */
-    512,			/* default/current height */
+    512,		/* default/current width  */
+    512,		/* default/current height */
     -1,			/* select file desc	*/
     -1,			/* file descriptor	*/
-    1, 1,			/* zoom			*/
+    1, 1,		/* zoom			*/
     256, 256,		/* window center	*/
     0, 0, 0,		/* cursor		*/
     PIXEL_NULL,		/* page_base		*/
