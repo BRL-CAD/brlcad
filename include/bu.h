@@ -148,11 +148,6 @@ __BEGIN_DECLS
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
 /**
- * shorthand declaration of a function that is deprecated
- */
-#define __BU_ATTR_DEPRECATED __attribute__ ((deprecated))
-
-/**
  *  If we're compiling strict, turn off "format string vs arguments"
  *  checks - BRL-CAD customizes the arguments to some of these
  *  function types (adding bu_vls support) and that is a problem with
@@ -162,11 +157,9 @@ __BEGIN_DECLS
 #  undef __BU_ATTR_FORMAT12
 #  undef __BU_ATTR_FORMAT23
 #  undef __BU_ATTR_NORETURN
-#  undef __BU_ATTR_DEPRECATED
 #  define __BU_ATTR_FORMAT12
 #  define __BU_ATTR_FORMAT23
 #  define __BU_ATTR_NORETURN
-#  define __BU_ATTR_DEPRECATED
 #endif
 
 
@@ -2568,7 +2561,7 @@ BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearr
  * DEPRECATED: This routine is replaced by bu_argv0_full_path().
  *             Do not use.
  */
-BU_EXPORT BU_EXTERN(const char *bu_argv0, (void)) __BU_ATTR_DEPRECATED;
+DEPRECATED BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
 
 /**
  * b u _ a r g v 0 _ f u l l _ p a t h
@@ -2707,7 +2700,7 @@ BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
  *
  * DEPRECATED
  */
-BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)) __BU_ATTR_DEPRECATED;
+DEPRECATED BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n));
 
 /** @file temp.c
  *
@@ -3543,7 +3536,7 @@ BU_EXPORT BU_EXTERN(fastf_t bu_get_load_average, ());
  * and should not be relied upon.  a future implementation will
  * utilize environment variables instead of temporary files.
  */
-BU_EXPORT BU_EXTERN(int bu_get_public_cpus, ());
+DEPRECATED BU_EXPORT BU_EXTERN(int bu_get_public_cpus, ());
 
 /**
  * B U _ S E T _ R E A L T I M E
