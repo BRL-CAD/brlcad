@@ -107,6 +107,7 @@ new_client(struct pkg_conn *pcp,
 	return;
 
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	Clientdata fd;
 	if (clients[i].c_fd != 0)
 	    continue;
 
@@ -117,9 +118,8 @@ new_client(struct pkg_conn *pcp,
 
 	clients[i].c_chan = chan;
 	clients[i].c_handler = existing_client_handler;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE,
-				 clients[i].c_handler,
-				 (ClientData)clients[i].c_fd);
+	fd = (ClientData)clients[i].c_fd;
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, fd);
 
 	return;
     }
@@ -142,13 +142,14 @@ set_port(void)
 
     /* Check to see if previously active --- if so then deactivate */
     if (netchan != NULL) {
+	Clientdata fd;
+
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
 	    drop_client(i);
 
-	Tcl_DeleteChannelHandler(netchan,
-				 new_client_handler,
-				 (ClientData)netfd);
+	fd = (ClientData)netfd;
+	Tcl_DeleteChannelHandler(netchan, new_client_handler, fd);
 
 	Tcl_Close(dmp->dm_interp, netchan);
 	netchan = NULL;
