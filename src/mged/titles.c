@@ -215,16 +215,28 @@ screen_vls(
 void
 dotitles(struct bu_vls *overlay_vls)
 {
-    int i;
-    int x, y;			/* for menu computations */
-    static vect_t temp;
-    int yloc, xloc;
-    int scroll_ybot;
+    int i = 0;
+
+    /* for menu computations */
+    int x = 0;
+    int y = 0;
+
+    int yloc = 0;
+    int xloc = 0;
+    int scroll_ybot = 0;
     struct bu_vls vls;
-    typedef char c_buf[80];
-    auto c_buf cent_x, cent_y, cent_z, size, ang_x, ang_y, ang_z;
+
+    char cent_x[80] = {0};
+    char cent_y[80] = {0};
+    char cent_z[80] = {0};
+    char size[80] = {0};
+    char ang_x[80] = {0};
+    char ang_y[80] = {0};
+    char ang_z[80] = {0};
+
     int ss_line_not_drawn=1; /* true if the second status line has not been drawn */
-    fastf_t tmp_val;
+    vect_t temp = {0.0, 0.0, 0.0};
+    fastf_t tmp_val = 0.0;
 
     if (dbip == DBI_NULL)
 	return;
@@ -236,17 +248,24 @@ dotitles(struct bu_vls *overlay_vls)
     if (illump != SOLID_NULL) {
 	struct bu_vls path_lhs, path_rhs;
 	struct directory *dp;
+	struct db_full_path *dbfp = &illump->s_fullpath;
+
+	if (!dbfp) {
+	    bu_vls_free(&vls);
+	    return;
+	}
+	RT_CK_FULL_PATH(dbfp);
 
 	bu_vls_init(&path_lhs);
 	bu_vls_init(&path_rhs);
 	for (i = 0; i < ipathpos; i++) {
-	    dp = DB_FULL_PATH_GET(&illump->s_fullpath, i);
+	    dp = DB_FULL_PATH_GET(dbfp, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
 	    }
 	}
-	for (; i < illump->s_fullpath.fp_len; i++) {
-	    dp = DB_FULL_PATH_GET(&illump->s_fullpath, i);
+	for (; i < dbfp->fp_len; i++) {
+	    dp = DB_FULL_PATH_GET(dbfp, i);
 	    if (dp && dp->d_namep) {
 		bu_vls_printf(&path_rhs, "/%s", dp->d_namep);
 	    }
