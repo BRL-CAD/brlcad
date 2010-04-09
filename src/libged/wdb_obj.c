@@ -548,7 +548,7 @@ wdb_init_obj(Tcl_Interp *interp,
  *@n db close
  */
 static int
-wdb_open_tcl(ClientData clientData __attribute__((unused)),
+wdb_open_tcl(ClientData UNUSED(clientData),
 	     Tcl_Interp *interp,
 	     int argc,
 	     const char *argv[])
@@ -763,7 +763,7 @@ wdb_reopen_tcl(ClientData clientData,
 int
 wdb_match_cmd(struct rt_wdb *wdbp,
 	      Tcl_Interp *interp,
-	      int argc __attribute__((unused)),
+	      int UNUSED(argc),
 	      char *argv[])
 {
     struct bu_vls matches;
@@ -1280,7 +1280,7 @@ wdb_adjust_tcl(ClientData clientData,
  *
  */
 int
-wdb_form_cmd(struct rt_wdb *wdbp __attribute__((unused)),
+wdb_form_cmd(struct rt_wdb *UNUSED(wdbp),
 	     Tcl_Interp *interp,
 	     int argc,
 	     char *argv[])
@@ -1598,11 +1598,11 @@ struct showmats_data {
  */
 static void
 Do_showmats(struct db_i *dbip,
-	    struct rt_comb_internal *comb __attribute__((unused)),
+	    struct rt_comb_internal *UNUSED(comb),
 	    union tree *comb_leaf,
 	    genptr_t user_ptr1,
-	    genptr_t user_ptr2 __attribute__((unused)),
-	    genptr_t user_ptr3 __attribute__((unused)))
+	    genptr_t UNUSED(user_ptr2),
+	    genptr_t UNUSED(user_ptr3))
 {
     struct showmats_data *smdp;
 
@@ -1907,7 +1907,7 @@ wdb_dump_tcl(ClientData clientData,
  *
  */
 int
-wdb_stub_cmd(struct rt_wdb *wdbp __attribute__((unused)),
+wdb_stub_cmd(struct rt_wdb *UNUSED(wdbp),
 	     Tcl_Interp *interp,
 	     int argc,
 	     char *argv[])
@@ -3736,7 +3736,7 @@ struct dir_check_stuff {
 void
 wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
-	       size_t addr __attribute__((unused)),
+	       size_t UNUSED(addr),
 	       genptr_t ptr)
 {
     char *name;
@@ -3799,7 +3799,7 @@ wdb_dir_check5(struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(struct db_i *input_dbip, const char *name, size_t laddr __attribute__((unused)), size_t len __attribute__((unused)), int flags __attribute__((unused)), genptr_t ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, size_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), genptr_t ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;
@@ -4294,8 +4294,8 @@ wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
  *
  */
 static void
-wdb_find_ref(struct db_i *dbip __attribute__((unused)),
-	     struct rt_comb_internal *comb __attribute__((unused)),
+wdb_find_ref(struct db_i *UNUSED(dbip),
+	     struct rt_comb_internal *UNUSED(comb),
 	     union tree *comb_leaf,
 	     genptr_t object,
 	     genptr_t comb_name_ptr,
@@ -4321,7 +4321,7 @@ wdb_find_ref(struct db_i *dbip __attribute__((unused)),
  *
  */
 HIDDEN union tree *
-facetize_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp __attribute__((unused)), union tree *curtree, genptr_t client_data)
+facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     union tree **facetize_tree;
@@ -5437,7 +5437,7 @@ wdb_pr_mater(const struct mater *mp,
  *
  */
 int
-wdb_prcolor_cmd(struct rt_wdb *wdbp __attribute__((unused)),
+wdb_prcolor_cmd(struct rt_wdb *UNUSED(wdbp),
 		Tcl_Interp *interp,
 		int argc,
 		char *argv[])
@@ -5812,10 +5812,10 @@ wdb_push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-wdb_push_region_end(struct db_tree_state *tsp __attribute__((unused)),
-		    const struct db_full_path *pathp __attribute__((unused)),
+wdb_push_region_end(struct db_tree_state *UNUSED(tsp),
+		    const struct db_full_path *UNUSED(pathp),
 		    union tree *curtree,
-		    genptr_t client_data __attribute__((unused)))
+		    genptr_t UNUSED(client_data))
 {
     return curtree;
 }
@@ -6002,9 +6002,9 @@ wdb_push_tcl(ClientData clientData,
  *
  */
 static void
-increment_uses(struct db_i *db_ip __attribute__((unused)),
+increment_uses(struct db_i *UNUSED(db_ip),
 	       struct directory *dp,
-	       genptr_t ptr __attribute__((unused)))
+	       genptr_t UNUSED(ptr))
 {
     RT_CK_DIR(dp);
 
@@ -6016,9 +6016,9 @@ increment_uses(struct db_i *db_ip __attribute__((unused)),
  *
  */
 static void
-increment_nrefs(struct db_i *db_ip __attribute__((unused)),
+increment_nrefs(struct db_i *UNUSED(db_ip),
 		struct directory *dp,
-		genptr_t ptr __attribute__((unused)))
+		genptr_t UNUSED(ptr))
 {
     RT_CK_DIR(dp);
 
@@ -6079,7 +6079,7 @@ Free_uses(struct db_i *dbip)
 static void
 Make_new_name(struct db_i *dbip,
 	      struct directory *dp,
-	      genptr_t ptr __attribute__((unused)))
+	      genptr_t UNUSED(ptr))
 {
     struct object_use *use;
     int use_no;
@@ -6258,7 +6258,7 @@ static struct directory *Copy_object(struct db_i *dbip, struct directory *dp, fa
  */
 HIDDEN void
 Do_copy_membs(struct db_i *dbip,
-	      struct rt_comb_internal *comb __attribute__((unused)),
+	      struct rt_comb_internal *UNUSED(comb),
 	      union tree *comb_leaf,
 	      genptr_t user_ptr1,
 	      genptr_t user_ptr2,
@@ -6402,11 +6402,11 @@ Copy_object(struct db_i *dbip,
  */
 HIDDEN void
 Do_ref_incr(struct db_i *dbip,
-	    struct rt_comb_internal *comb __attribute__((unused)),
+	    struct rt_comb_internal *UNUSED(comb),
 	    union tree *comb_leaf,
-	    genptr_t user_ptr1 __attribute__((unused)),
-	    genptr_t user_ptr2 __attribute__((unused)),
-	    genptr_t user_ptr3 __attribute__((unused)))
+	    genptr_t UNUSED(user_ptr1),
+	    genptr_t UNUSED(user_ptr2),
+	    genptr_t UNUSED(user_ptr3))
 {
     struct directory *dp;
 
@@ -9450,11 +9450,11 @@ wdb_combadd(Tcl_Interp *interp,
 
 static void
 wdb_do_identitize(struct db_i *dbip,
-		  struct rt_comb_internal *comb __attribute__((unused)),
+		  struct rt_comb_internal *UNUSED(comb),
 		  union tree *comb_leaf,
 		  genptr_t user_ptr1,
-		  genptr_t user_ptr2 __attribute__((unused)),
-		  genptr_t user_ptr3 __attribute__((unused)))
+		  genptr_t UNUSED(user_ptr2),
+		  genptr_t UNUSED(user_ptr3))
 {
     struct directory *dp;
     Tcl_Interp *interp = (Tcl_Interp *)user_ptr1;
@@ -9608,7 +9608,7 @@ wdb_dir_getspace(struct db_i *dbip,
  *			P A T H L I S T _ L E A F _ F U N C
  */
 static union tree *
-wdb_pathlist_leaf_func(struct db_tree_state *tsp __attribute__((unused)),
+wdb_pathlist_leaf_func(struct db_tree_state *UNUSED(tsp),
 		       const struct db_full_path *pathp,
 		       struct rt_db_internal *ip,
 		       genptr_t client_data)

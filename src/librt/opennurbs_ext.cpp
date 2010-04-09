@@ -956,7 +956,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 #define SE 4
 
 bool
-SurfaceTree::isFlat(const ON_Surface* surf __attribute__((unused)), ON_3dVector *m_normals, const ON_Interval& u __attribute__((unused)), const ON_Interval& v __attribute__((unused)))
+SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_3dVector *m_normals, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
     ON_3dVector normals[8];
     for (int i = 0; i < 4; i++) {

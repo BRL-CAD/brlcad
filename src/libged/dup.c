@@ -217,7 +217,7 @@ ged_dir_check5(struct db_i		*input_dbip,
  * Check a name against the global directory.
  */
 static int
-ged_dir_check(struct db_i *input_dbip, const char *name, size_t laddr __attribute__((unused)), size_t len __attribute__((unused)), int flags __attribute__((unused)), genptr_t ptr)
+ged_dir_check(struct db_i *input_dbip, const char *name, size_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), genptr_t ptr)
 {
     struct directory	*dupdp;
     struct bu_vls		local;

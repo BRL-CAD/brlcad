@@ -157,7 +157,7 @@ ged_free_obj_materials() {
 }
 
 static void
-write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name __attribute__((unused)))
+write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 {
     int i, j;
     fastf_t *vertices;
@@ -510,7 +510,7 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 }
 
 static void
-write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name __attribute__((unused)))
+write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 {
     unsigned long num_vertices;
     fastf_t *vertices;

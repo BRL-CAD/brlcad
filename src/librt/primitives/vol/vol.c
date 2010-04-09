@@ -938,7 +938,7 @@ rt_vol_class(void)
  * R T _ V O L _ P L O T
  */
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     register struct rt_vol_internal *vip;
     register short x, y, z;

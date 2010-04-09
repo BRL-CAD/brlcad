@@ -430,7 +430,7 @@ rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_
  * the plane, with the outward normal drawn shorter.
  */
 int
-rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
@@ -783,7 +783,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
  * R T _ H L F _ T E S S
  */
 int
-rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_half_internal *vip;
 

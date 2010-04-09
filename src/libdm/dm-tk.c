@@ -836,7 +836,7 @@ tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 
 
 HIDDEN int
-tk_drawLine3D(struct dm *dmp, point_t pt1 __attribute__((unused)), point_t pt2 __attribute__((unused)))
+tk_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
 	return TCL_ERROR;

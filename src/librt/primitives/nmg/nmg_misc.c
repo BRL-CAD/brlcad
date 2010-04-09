@@ -3960,7 +3960,7 @@ struct nmg_split_loops_state
 
 
 void
-nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int unused __attribute__((unused)))
+nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int UNUSED(unused))
 {
     struct faceuse *fu;
     struct nmg_split_loops_state *state;
@@ -4679,7 +4679,7 @@ struct nmg_unbreak_state
  * first edgeuse mate to the vu of the killed edgeuse mate.
  */
 void
-nmg_unbreak_handler(long int *eup, genptr_t state, int unused __attribute__((unused)))
+nmg_unbreak_handler(long int *eup, genptr_t state, int UNUSED(unused))
 {
     struct edgeuse *eu1, *eu2;
     struct edge *e;

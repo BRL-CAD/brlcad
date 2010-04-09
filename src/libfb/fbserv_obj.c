@@ -366,7 +366,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp)
  * Accept any new client connections.
  */
 HIDDEN void
-new_client_handler(ClientData clientData, int mask __attribute__((unused)))
+new_client_handler(ClientData clientData, int UNUSED(mask))
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
     struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
@@ -444,7 +444,7 @@ drop_client(struct fbserv_obj *fbsp, int sub)
  * Process arrivals from existing clients.
  */
 HIDDEN void
-existing_client_handler(ClientData clientData, int mask __attribute__((unused)))
+existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     register int i;
     struct fbserv_client *fbscp = (struct fbserv_client *)clientData;

@@ -364,7 +364,7 @@ _ged_rt_write(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
+_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;

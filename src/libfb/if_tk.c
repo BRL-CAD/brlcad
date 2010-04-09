@@ -390,7 +390,7 @@ tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
 
 HIDDEN int
-tk_write(FBIO *ifp, int x __attribute__((unused)), int y, const unsigned char *pixelp, int count)
+tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, int count)
 {
     uint32_t line[3];
 

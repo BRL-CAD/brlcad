@@ -136,7 +136,7 @@ fbo_deleteProc(ClientData clientData)
  *	  procname close
  */
 HIDDEN int
-fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv __attribute__((unused)))
+fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **UNUSED(argv))
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
@@ -162,7 +162,7 @@ fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv _
  *	  fb_open [name device [args]]
  */
 HIDDEN int
-fbo_open_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+fbo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct fb_obj *fbop;
     FBIO *ifp;

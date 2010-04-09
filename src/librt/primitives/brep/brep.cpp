@@ -2337,7 +2337,7 @@ find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startd
  * 
  */
 int
-rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     TRACE1("rt_brep_plot");
     struct rt_brep_internal* bi;
@@ -2692,7 +2692,7 @@ RT_MemoryArchive::Flush()
  * R T _ B R E P _ E X P O R T 5
  */
 int
-rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     TRACE1("rt_brep_export5");
     struct rt_brep_internal* bi;
@@ -2817,7 +2817,7 @@ rt_brep_ifree(struct rt_db_internal *ip)
  * R T _ B R E P _ D E S C R I B E
  */
 int
-rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
+rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     BU_CK_VLS(str);
     RT_CK_DB_INTERNAL(ip);

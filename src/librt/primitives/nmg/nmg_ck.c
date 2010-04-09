@@ -1659,7 +1659,7 @@ struct v_ck_state {
 
 
 HIDDEN void
-nmg_ck_v_in_fus(long *vp, genptr_t state, int unused __attribute__((unused)))
+nmg_ck_v_in_fus(long *vp, genptr_t state, int UNUSED(unused))
 {
     register struct v_ck_state *sp = (struct v_ck_state *)state;
     register struct vertex *v = (struct vertex *)vp;

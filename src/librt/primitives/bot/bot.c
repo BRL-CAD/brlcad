@@ -447,7 +447,7 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  * R T _ B O T _ P L O T
  */
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_bot_internal *bot_ip;
     int i;
@@ -478,7 +478,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * R T _ B O T _ P L O T _ P O L Y
  */
 int
-rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_bot_internal *bot_ip;
     int i;
@@ -544,7 +544,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_bot_internal *bot_ip;
     struct shell *s;
@@ -3666,7 +3666,7 @@ bot_smooth_miss(struct application *ap)
 
 
 HIDDEN int
-bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg __attribute__((unused)))
+bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(seg))
 {
     struct partition *pp;
     struct soltab *stp;

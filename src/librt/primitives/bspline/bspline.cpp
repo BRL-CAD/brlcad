@@ -899,7 +899,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
  * R T _ N U R B _ E X P O R T
  */
 int
-rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     register int rec_ptr;
     struct rt_nurb_internal *sip;
@@ -1004,7 +1004,7 @@ rt_nurb_bytes(struct face_g_snurb *srf)
  * R T _ N U R B _ E X P O R T 5
  */
 int
-rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_nurb_internal *sip;
     int s;

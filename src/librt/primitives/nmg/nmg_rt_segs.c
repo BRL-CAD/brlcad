@@ -295,7 +295,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 
 
 HIDDEN int
-state0(struct seg *seghead __attribute__((unused)), struct seg **seg_p, int *seg_count __attribute__((unused)), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol __attribute__((unused)))
+state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
     /* intersection w/ ray */
     /* The segment we're building */
     /* The number of valid segments built */
@@ -349,7 +349,7 @@ state0(struct seg *seghead __attribute__((unused)), struct seg **seg_p, int *seg
 
 
 HIDDEN int
-state1(struct seg *seghead __attribute__((unused)), struct seg **seg_p, int *seg_count __attribute__((unused)), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol __attribute__((unused)))
+state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
     /* intersection w/ ray */
     /* The segment we're building */
     /* The number of valid segments built */
@@ -972,7 +972,7 @@ common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
 
 
 HIDDEN void
-visitor(long int *l_p, genptr_t tbl, int unused __attribute__((unused)))
+visitor(long int *l_p, genptr_t tbl, int UNUSED(unused))
 {
     (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, l_p);
 }

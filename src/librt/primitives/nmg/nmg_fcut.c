@@ -3424,7 +3424,7 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 
 
 void
-nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *mag __attribute__((unused)), struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
+nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *UNUSED(mag), struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
 {
     struct nmg_ray_state rs;
     point_t pt;

@@ -615,7 +615,7 @@ rt_epa_class(void)
  * R T _ E P A _ P L O T
  */
 int
-rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;

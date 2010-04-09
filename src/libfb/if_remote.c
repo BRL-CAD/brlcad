@@ -748,7 +748,7 @@ rem_help(FBIO *ifp)
  * messages, so we don't touch them ourselves.
  */
 HIDDEN void
-pkgerror(struct pkg_conn *pcpp __attribute__((unused)), char *buf)
+pkgerror(struct pkg_conn *UNUSED(pcpp), char *buf)
 {
     fb_log("%s", buf );
     free(buf);

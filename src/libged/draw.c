@@ -192,7 +192,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 
 
 static union tree *
-ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
+ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     if (tsp) RT_CK_DBTS(tsp);
     if (pathp) RT_CK_FULL_PATH(pathp);
@@ -844,7 +844,7 @@ static union tree *
 ged_bot_check_region_end(struct db_tree_state *tsp,
 			 const struct db_full_path *pathp,
 			 union tree *curtree,
-			 genptr_t client_data __attribute__((unused)))
+			 genptr_t UNUSED(client_data))
 {
     if (tsp) RT_CK_DBTS(tsp);
     if (pathp) RT_CK_FULL_PATH(pathp);

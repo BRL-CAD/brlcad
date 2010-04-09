@@ -1683,7 +1683,7 @@ eu_touch_func(struct edgeuse *eu, fastf_t *pt, char *priv)
 
 
 HIDDEN void
-vu_touch_func(struct vertexuse *vu, fastf_t *pt __attribute__((unused)), char *priv)
+vu_touch_func(struct vertexuse *vu, fastf_t *UNUSED(pt), char *priv)
 {
     struct ray_data *rd;
 

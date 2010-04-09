@@ -121,7 +121,7 @@ fb_reset(FBIO *ifp)
 }
 
 int
-fb_viewport(FBIO *ifp, int left __attribute__((unused)), int top __attribute__((unused)), int right __attribute__((unused)), int bottom __attribute__((unused)))
+fb_viewport(FBIO *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int UNUSED(bottom))
 {
     if (ifp) {
 	FB_CK_FBIO(ifp);
@@ -163,7 +163,7 @@ fb_zoom(FBIO *ifp, int x, int y)
 }
 
 int
-fb_scursor(FBIO *ifp, int mode __attribute__((unused)), int x __attribute__((unused)), int y __attribute__((unused)))
+fb_scursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     if (ifp) {
 	FB_CK_FBIO(ifp);

@@ -1460,7 +1460,7 @@ HIDDEN int
 unprep_reg_start(struct db_tree_state *tsp,
 		 const struct db_full_path *pathp,
 		 const struct rt_comb_internal *comb,
-		 genptr_t client_data __attribute__((unused)))
+		 genptr_t UNUSED(client_data))
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -1482,7 +1482,7 @@ HIDDEN union tree *
 unprep_reg_end(struct db_tree_state *tsp,
 	       const struct db_full_path *pathp,
 	       union tree *tree,
-	       genptr_t client_data __attribute__((unused)))
+	       genptr_t UNUSED(client_data))
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -1499,7 +1499,7 @@ HIDDEN union tree *
 unprep_leaf(struct db_tree_state *tsp,
 	    const struct db_full_path *pathp,
 	    struct rt_db_internal *ip,
-	    genptr_t client_data __attribute__((unused)))
+	    genptr_t UNUSED(client_data))
 {
     register struct soltab *stp;
     struct directory *dp;

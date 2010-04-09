@@ -88,7 +88,7 @@ Options:\n\
  *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
  */
 int
-rayhit( struct application *ap, struct partition *PartHeadp, struct seg *segp __attribute__((unused)) )
+rayhit( struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp) )
 {
     register struct partition *pp = PartHeadp->pt_forw;
     Tcl_HashEntry *entry;
@@ -133,7 +133,7 @@ rayhit( struct application *ap, struct partition *PartHeadp, struct seg *segp __
  *  do_frame().
  */
 int
-raymiss(struct application *ap __attribute__((unused)))
+raymiss(struct application *UNUSED(ap))
 {
     return(0);
 }

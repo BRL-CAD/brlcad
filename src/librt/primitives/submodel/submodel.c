@@ -295,7 +295,7 @@ struct submodel_gobetween {
  * R T _ S U B M O D E L _ A _ H I T
  */
 int
-rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp __attribute__((unused)))
+rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     struct partition *pp;
     struct application *up_ap;
@@ -654,7 +654,7 @@ struct goodies {
  * This routine should be generally exported for other uses.
  */
 HIDDEN union tree *
-rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     union tree *curtree;
     struct goodies *gp;
@@ -780,7 +780,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_submodel_internal *sip;
 
@@ -1011,7 +1011,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
+rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     struct rt_submodel_internal *sip = (struct rt_submodel_internal *)ip->idb_ptr;
 

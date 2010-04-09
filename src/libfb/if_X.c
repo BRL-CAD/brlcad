@@ -1351,7 +1351,7 @@ X_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 HIDDEN int
-X_setcursor(FBIO *ifp, const unsigned char *bits __attribute__((unused)), int xbits __attribute__((unused)), int ybits __attribute__((unused)), int xorig __attribute__((unused)), int yorig __attribute__((unused)))
+X_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     if (ifp) {
 	FB_CK_FBIO(ifp);

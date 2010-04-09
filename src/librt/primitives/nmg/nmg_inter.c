@@ -4866,7 +4866,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
  * N M G _ I S _ E U _ O N _ L I N E 3
  */
 int
-nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *pt __attribute__((unused)), const fastf_t *dir, const struct bn_tol *tol)
+nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fastf_t *dir, const struct bn_tol *tol)
 {
     struct edge_g_lseg *eg;
 

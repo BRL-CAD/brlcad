@@ -84,14 +84,14 @@ static char *usage="Usage:\n\
  * overlaps are irrelevant to this application
  */
 HIDDEN int
-a_overlap(struct application *ap __attribute__((unused)), struct partition *pp __attribute__((unused)), struct region *reg1 __attribute__((unused)), struct region *reg2 __attribute__((unused)), struct partition *pheadp __attribute__((unused)))
+a_overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(pheadp))
 {
     return( 1 );
 }
 
 
 HIDDEN int
-miss( struct application *ap __attribute__((unused)))
+miss( struct application *UNUSED(ap))
 {
     return(0);
 }

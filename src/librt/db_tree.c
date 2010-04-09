@@ -2046,7 +2046,7 @@ db_tally_subtree_regions(
 /* ============================== */
 
 HIDDEN union tree *
-_db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
+_db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
 
     RT_CK_DBTS(tsp);
@@ -2064,7 +2064,7 @@ _db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 HIDDEN union tree *
-_db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+_db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     union tree *curtree;
 

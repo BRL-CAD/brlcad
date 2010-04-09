@@ -1795,7 +1795,7 @@ show_broken_m(struct bn_vlblock *vbp, const struct model *m, int fancy)
 static int stepalong = 0;
 
 void
-nmg_plot_sigstepalong(int i __attribute__((unused)))
+nmg_plot_sigstepalong(int UNUSED(i))
 {
     stepalong=1;
 }

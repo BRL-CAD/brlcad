@@ -36,7 +36,7 @@
 
 
 HIDDEN int
-null_open(FBIO *ifp, char *file __attribute__((unused)), int width, int height)
+null_open(FBIO *ifp, char *UNUSED(file), int width, int height)
 {
     FB_CK_FBIO(ifp);
     if ( width > 0 )
@@ -56,7 +56,7 @@ null_close(FBIO *ifp)
 }
 
 HIDDEN int
-null_clear(FBIO *ifp, unsigned char *pp __attribute__((unused)))
+null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
 {
     FB_CK_FBIO(ifp);
 
@@ -64,7 +64,7 @@ null_clear(FBIO *ifp, unsigned char *pp __attribute__((unused)))
 }
 
 HIDDEN int
-null_read(FBIO *ifp, int x __attribute__((unused)), int y __attribute__((unused)), unsigned char *pixelp __attribute__((unused)), int count)
+null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), int count)
 {
     FB_CK_FBIO(ifp);
 
@@ -72,7 +72,7 @@ null_read(FBIO *ifp, int x __attribute__((unused)), int y __attribute__((unused)
 }
 
 HIDDEN int
-null_write(FBIO *ifp, int x __attribute__((unused)), int y __attribute__((unused)), const unsigned char *pixelp __attribute__((unused)), int count)
+null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), int count)
 {
     FB_CK_FBIO(ifp);
 
@@ -80,7 +80,7 @@ null_write(FBIO *ifp, int x __attribute__((unused)), int y __attribute__((unused
 }
 
 HIDDEN int
-null_rmap(FBIO *ifp, ColorMap *cmp __attribute__((unused)))
+null_rmap(FBIO *ifp, ColorMap *UNUSED(cmp))
 {
     FB_CK_FBIO(ifp);
 
@@ -88,7 +88,7 @@ null_rmap(FBIO *ifp, ColorMap *cmp __attribute__((unused)))
 }
 
 HIDDEN int
-null_wmap(FBIO *ifp, const ColorMap *cmp __attribute__((unused)))
+null_wmap(FBIO *ifp, const ColorMap *UNUSED(cmp))
 {
     FB_CK_FBIO(ifp);
 
@@ -96,7 +96,7 @@ null_wmap(FBIO *ifp, const ColorMap *cmp __attribute__((unused)))
 }
 
 HIDDEN int
-null_view(FBIO *ifp, int xcenter __attribute__((unused)), int ycenter __attribute__((unused)), int xzoom __attribute__((unused)), int yzoom __attribute__((unused)))
+null_view(FBIO *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
     FB_CK_FBIO(ifp);
 
@@ -105,7 +105,7 @@ null_view(FBIO *ifp, int xcenter __attribute__((unused)), int ycenter __attribut
 }
 
 HIDDEN int
-null_getview(FBIO *ifp, int *xcenter __attribute__((unused)), int *ycenter __attribute__((unused)), int *xzoom __attribute__((unused)), int *yzoom __attribute__((unused)))
+null_getview(FBIO *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
     FB_CK_FBIO(ifp);
 
@@ -114,7 +114,7 @@ null_getview(FBIO *ifp, int *xcenter __attribute__((unused)), int *ycenter __att
 }
 
 HIDDEN int
-null_setcursor(FBIO *ifp, const unsigned char *bits __attribute__((unused)), int xbits __attribute__((unused)), int ybits __attribute__((unused)), int xorig __attribute__((unused)), int yorig __attribute__((unused)))
+null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FBIO(ifp);
 
@@ -122,7 +122,7 @@ null_setcursor(FBIO *ifp, const unsigned char *bits __attribute__((unused)), int
 }
 
 HIDDEN int
-null_cursor(FBIO *ifp, int mode __attribute__((unused)), int x __attribute__((unused)), int y __attribute__((unused)))
+null_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     FB_CK_FBIO(ifp);
 
@@ -131,7 +131,7 @@ null_cursor(FBIO *ifp, int mode __attribute__((unused)), int x __attribute__((un
 }
 
 HIDDEN int
-null_getcursor(FBIO *ifp, int *mode __attribute__((unused)), int *x __attribute__((unused)), int *y __attribute__((unused)))
+null_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
     FB_CK_FBIO(ifp);
 
@@ -140,7 +140,7 @@ null_getcursor(FBIO *ifp, int *mode __attribute__((unused)), int *x __attribute_
 }
 
 HIDDEN int
-null_readrect(FBIO *ifp, int xmin __attribute__((unused)), int ymin __attribute__((unused)), int width, int height, unsigned char *pp __attribute__((unused)))
+null_readrect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
     FB_CK_FBIO(ifp);
 
@@ -148,7 +148,7 @@ null_readrect(FBIO *ifp, int xmin __attribute__((unused)), int ymin __attribute_
 }
 
 HIDDEN int
-null_writerect(FBIO *ifp, int xmin __attribute__((unused)), int ymin __attribute__((unused)), int width, int height, const unsigned char *pp __attribute__((unused)))
+null_writerect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
     FB_CK_FBIO(ifp);
 

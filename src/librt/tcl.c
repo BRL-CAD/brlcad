@@ -303,7 +303,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
 int
 rt_tcl_a_hit(struct application *ap,
 	     struct partition *PartHeadp,
-	     struct seg *segHeadp __attribute__((unused)))
+	     struct seg *UNUSED(segHeadp))
 {
     Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
     register struct partition *pp;

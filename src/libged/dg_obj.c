@@ -313,7 +313,7 @@ dgo_open_cmd(char		*oname,
  *	  dgo_open [name rt_wdb]
  */
 static int
-dgo_open_tcl(ClientData	clientData __attribute__((unused)),
+dgo_open_tcl(ClientData	UNUSED(clientData),
 	     Tcl_Interp	*interp,
 	     int	argc,
 	     char	*argv[])
@@ -1606,7 +1606,7 @@ dgo_wait_status(Tcl_Interp *interp, int status)
 
 #ifndef _WIN32
 static void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
     int value;
     struct solid *sp;
@@ -1648,7 +1648,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused
 }
 
 static void
-dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char line[RT_MAXLINE] = {0};
@@ -1685,7 +1685,7 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused
 #else
 
 void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
     int value;
     struct solid *sp;
@@ -1726,7 +1726,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused
 }
 
 void
-dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char line[RT_MAXLINE];
@@ -2619,7 +2619,7 @@ dgo__tcl(ClientData	clientData,
 /****************** Utility Routines ********************/
 
 static union tree *
-dgo_wireframe_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp __attribute__((unused)), union tree *curtree, genptr_t client_data __attribute__((unused)))
+dgo_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
 {
     return (curtree);
 }
@@ -3906,7 +3906,7 @@ dgo_rt_write(struct dg_obj	*dgop,
 
 #ifndef _WIN32
 static void
-dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
@@ -3994,7 +3994,7 @@ dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 
 #else
 static void
-dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
@@ -4530,10 +4530,10 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 }
 
 static union tree *
-dgo_bot_check_region_end(struct db_tree_state *tsp __attribute__((unused)),
-			 const struct db_full_path *pathp __attribute__((unused)),
+dgo_bot_check_region_end(struct db_tree_state *UNUSED(tsp),
+			 const struct db_full_path *UNUSED(pathp),
 			 union tree *curtree,
-			 genptr_t client_data __attribute__((unused)))
+			 genptr_t UNUSED(client_data))
 {
     return curtree;
 }

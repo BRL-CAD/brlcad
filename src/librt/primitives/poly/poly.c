@@ -479,7 +479,7 @@ rt_pg_class(void)
  * R T _ P G _ P L O T
  */
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i;
     size_t p;	/* current polygon number */
@@ -511,7 +511,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * Convert to vlist, draw as polygons.
  */
 int
-rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i;
     size_t p;	/* current polygon number */
@@ -565,7 +565,7 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * R T _ P G _ T E S S
  */
 int
-rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     int i;
     struct shell *s;
@@ -781,7 +781,7 @@ rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (!ep)
 	return -1;

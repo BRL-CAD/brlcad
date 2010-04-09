@@ -57,7 +57,7 @@ struct dangling_faceuse_state {
 int debug_file_count=0;
 
 static void
-nmg_dangling_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
+nmg_dangling_handler(long int *longp, genptr_t state, int UNUSED(unused))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
     register struct dangling_faceuse_state *sp =
@@ -1000,7 +1000,7 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     struct model *m;
     struct nmgregion *r1;
@@ -1062,7 +1062,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     struct nmgregion *r1;
     union tree *curtree;

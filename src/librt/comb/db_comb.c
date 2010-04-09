@@ -413,7 +413,7 @@ int
 rt_comb_export4(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
-    double local2mm __attribute__((unused)),
+    double UNUSED(local2mm),
     const struct db_i *dbip,
     struct resource *resp)
 {

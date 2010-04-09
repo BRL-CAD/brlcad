@@ -241,7 +241,7 @@ dmo_deleteProc(ClientData clientData)
  * dm_open [name type [args]]
  */
 HIDDEN int
-dmo_open_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct dm_obj *dmop;
     struct dm *dmp;
@@ -1053,7 +1053,7 @@ dmo_drawModelAxes_tcl(ClientData clientData,
  *
  */
 HIDDEN int
-dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int argc __attribute__((unused)), char **argv __attribute__((unused)))
+dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -1065,7 +1065,7 @@ dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int argc __attribut
 
 
 HIDDEN int
-dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc __attribute__((unused)), char **argv __attribute__((unused)))
+dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -1084,7 +1084,7 @@ dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc __attribute_
  *
  */
 HIDDEN int
-dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc __attribute__((unused)), char **argv __attribute__((unused)))
+dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     int status;
@@ -1107,7 +1107,7 @@ dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc __attribute__(
  *
  */
 HIDDEN int
-dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int argc __attribute__((unused)), char **argv __attribute__((unused)))
+dmo_normal_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -3146,7 +3146,7 @@ dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
  *
  */
 HIDDEN int
-dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp __attribute__((unused)), int argc __attribute__((unused)), char **argv __attribute__((unused)))
+dmo_flush_tcl(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
 {
 #ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -3169,7 +3169,7 @@ dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp __attribute__((unused)),
  *
  */
 HIDDEN int
-dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp __attribute__((unused)), int argc __attribute__((unused)), char **argv __attribute__((unused)))
+dmo_sync_tcl(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
 {
 #ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;

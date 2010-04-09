@@ -59,7 +59,7 @@ Nu_unsign(void)
 
 
 HIDDEN int
-Nu_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data __attribute__((unused)))
+Nu_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *UNUSED(data))
 {
     if (!dmp || !callback_function) {
 	bu_log("WARNING: dmp or callback_function is NULL\n");

@@ -123,7 +123,7 @@ static struct bu_cmdtab cmdtab[] = {
 
 
 int
-fb_cmd_open_existing(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     register FBIO *ifp;
     struct bu_vls vls;
@@ -265,7 +265,7 @@ fb_cmd_open_existing(ClientData clientData __attribute__((unused)), Tcl_Interp *
 
 
 int
-fb_cmd_close_existing(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_close_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     FBIO *ifp;
 
@@ -373,7 +373,7 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
  * Hook function wrapper to the fb_common_file_size Tcl command
  */
 int
-fb_cmd_common_file_size(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     unsigned long int width, height;
     int pixel_size = 3;

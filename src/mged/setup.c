@@ -455,7 +455,7 @@ cmd_setup(void)
 
 
 static void
-mged_output_handler(struct ged *gedp __attribute__((unused)), char *line)
+mged_output_handler(struct ged *UNUSED(gedp), char *line)
 {
     if (line)
 	bu_log("%s", line);
