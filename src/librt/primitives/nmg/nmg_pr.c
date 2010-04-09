@@ -803,8 +803,8 @@ nmg_pr_vua(const unsigned long *magic_p, char *h)
 
     switch (*magic_p) {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-	    bu_log("%s N=(%g, %g, %g, %g)\n", h,
-		   V4ARGS(((struct vertexuse_a_plane *)magic_p)->N));
+	    bu_log("%s N=(%g, %g, %g)\n", h,
+		   V3ARGS(((struct vertexuse_a_plane *)magic_p)->N));
 	    break;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
 	    bu_log("%s param=(%g, %g, %g)\n", h,
