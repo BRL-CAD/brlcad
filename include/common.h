@@ -162,8 +162,7 @@ typedef ptrdiff_t ssize_t;
 #  warning "ICC_PREREQ is already defined.  See the common.h header."
 #endif
 
-/**
- * This is so we can use gcc's "format string vs arguments"-check for
+/* This is so we can use gcc's "format string vs arguments"-check for
  * various printf-like functions, and still maintain compatability.
  */
 #ifndef __attribute__
@@ -181,7 +180,8 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* UNUSED provides a common mechanism for declaring unused parameters.
+/**
+ * UNUSED provides a common mechanism for declaring unused parameters.
  * Use it like this:
  *
  * int
@@ -203,9 +203,11 @@ typedef ptrdiff_t ssize_t;
 #  warning "UNUSED is already defined.  Parameter declaration behavior is unknown, see common.h"
 #endif
 
-/* LIKELY provides a common mechanism for providing branch prediction
- * hints to the compiler so that it can better optimize.  Use it like
- * this:
+/**
+ * LIKELY provides a common mechanism for providing branch prediction
+ * hints to the compiler so that it can better optimize.  It should be
+ * used when it's exceptionally likely that an expected code path will
+ * almost always be executed.  Use it like this:
  *
  *  if (LIKELY(x == 1)) {
  *    ... expected code path ...
@@ -224,9 +226,11 @@ typedef ptrdiff_t ssize_t;
 #  warning "LIKELY is already defined.  Unable to provide branch hinting."
 #endif
 
-/* UNLIKELY provides a common mechanism for providing branch
+/**
+ * UNLIKELY provides a common mechanism for providing branch
  * prediction hints to the compiler so that it can better optimize.
- * Use it like this:
+ * It should be used when it's exceptionaly unlikely that a given code
+ * path will ever be executed.  Use it like this:
  *
  *  if (UNLIKELY(x == 0)) {
  *    ... unexpected code path ...
