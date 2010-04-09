@@ -30,7 +30,7 @@
  *
  *
  *              4
- *        4-----------5   
+ *        4-----------5
  *      7/|         5/|
  *      / |   6     / |
  *     7-----------6  |9
@@ -39,7 +39,7 @@
  *   11|  0--------|--1
  *     | /         | /
  *     |/3         |/1
- *     3-----------2 
+ *     3-----------2
  *          2
  */
 /** @} */
@@ -171,6 +171,8 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     nmg_mark_edges_real(&s->l.magic);
     nmg_region_a(*r, tol);
+
+    nmg_model_fuse(m, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
