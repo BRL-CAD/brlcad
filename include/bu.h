@@ -137,26 +137,6 @@ __BEGIN_DECLS
 #define BU_ARGS(args) args
 
 /**
- * This is so we can use gcc's "format string vs arguments"-check for
- * various printf-like functions, and still maintain compatability.
- */
-#ifndef __attribute__
-/* This feature is only available in gcc versions 2.5 and later. */
-#  if GNUC_PREREQ(2, 5)
-#    define __attribute__(ignore) /* empty */
-#  endif
-
-/* The __-protected variants of `format' and `printf' attributes
- * are accepted by gcc versions 2.6.4 (effectively 2.7) and later.
- */
-#  if GNUC_PREREQ(2, 7)
-#    define __format__ format
-#    define __printf__ printf
-#    define __noreturn__ noreturn
-#  endif
-#endif
-
-/**
  * shorthand declaration of a printf-style functions
  */
 #define __BU_ATTR_FORMAT12 __attribute__ ((__format__ (__printf__, 1, 2)))

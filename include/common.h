@@ -121,16 +121,42 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* provide a means to conveniently test the version of GCC */
+/* Provide a means to conveniently test the version of GCC.
+ * Use it like this:
+ *
+ * #if __GCC_PREREQ(2,8)
+ * ... code requiring gcc 2.8 or later ...
+ * #endif
+ *
+ */
 #if defined __GNUC__
-#  define GNUC_PREREQ(major, minor) __GNUC__ < major || (__GNUC__ == major && __GNUC_MINOR__ < minor)
+#  define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
 #else
-#  define GNUC_PREREQ(major, minor) 0
+#  define GCC_PREREQ(major, minor) 0
+#endif
+
+/**
+ * This is so we can use gcc's "format string vs arguments"-check for
+ * various printf-like functions, and still maintain compatability.
+ */
+#ifndef __attribute__
+/* This feature is only available in gcc versions 2.5 and later. */
+#  if !GCC_PREREQ(2, 5)
+#    define __attribute__(ignore) /* empty */
+#  endif
+/* The __-protected variants of `format' and `printf' attributes
+ * are accepted by gcc versions 2.6.4 (effectively 2.7) and later.
+ */
+#  if !GCC_PREREQ(2, 7)
+#    define __format__ format
+#    define __printf__ printf
+#    define __noreturn__ noreturn
+#  endif
 #endif
 
 /* provide a common mechanism for declaring unused parameters */
 #ifndef UNUSED
-#  if GNUC_PREREQ(2, 5)
+#  if GCC_PREREQ(2, 5)
      /* GCC-style */
 #    define UNUSED(var) var __attribute__((unused))
 #  else
