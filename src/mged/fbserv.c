@@ -99,10 +99,33 @@ setup_socket(int fd)
 
 
 /*
+ * D R O P _ C L I E N T
+ */
+HIDDEN void
+drop_client(int sub)
+{
+    if (clients[sub].c_pkg != PKC_NULL) {
+	pkg_close(clients[sub].c_pkg);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	Tcl_DeleteChannelHandler(clients[sub].c_chan,
+				 clients[sub].c_handler,
+				 (ClientData)clients[sub].c_fd);
+	Tcl_Close(dmp->dm_interp, clients[sub].c_chan);
+	clients[sub].c_chan = NULL;
+#else
+	Tcl_DeleteFileHandler(clients[sub].c_fd);
+#endif
+	clients[sub].c_pkg = PKC_NULL;
+	clients[sub].c_fd = 0;
+    }
+}
+
+
+/*
  * Process arrivals from existing clients.
  */
 HIDDEN void
-existing_client_handler(ClientData clientData, int mask)
+existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     int i;
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
@@ -152,29 +175,6 @@ existing_client_handler(ClientData clientData, int mask)
 
     /* restore */
     curr_dm_list = scdlp;
-}
-
-
-/*
- * D R O P _ C L I E N T
- */
-HIDDEN void
-drop_client(int sub)
-{
-    if (clients[sub].c_pkg != PKC_NULL) {
-	pkg_close(clients[sub].c_pkg);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	Tcl_DeleteChannelHandler(clients[sub].c_chan,
-				 clients[sub].c_handler,
-				 (ClientData)clients[sub].c_fd);
-	Tcl_Close(dmp->dm_interp, clients[sub].c_chan);
-	clients[sub].c_chan = NULL;
-#else
-	Tcl_DeleteFileHandler(clients[sub].c_fd);
-#endif
-	clients[sub].c_pkg = PKC_NULL;
-	clients[sub].c_fd = 0;
-    }
 }
 
 
@@ -390,7 +390,7 @@ new_client(struct pkg_conn *pcp)
  * Accept any new client connections.
  */
 HIDDEN void
-new_client_handler(ClientData clientData, int mask)
+new_client_handler(ClientData clientData, int UNUSED(mask))
 {
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
     struct dm_list *dlp;
@@ -570,14 +570,15 @@ rfbclear(struct pkg_conn *pcp, char *buf)
 void
 rfbread(struct pkg_conn *pcp, char *buf)
 {
-    int x, y, num;
+    int x, y;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
-    num = pkg_glong(&buf[2*NET_LONG_LEN]);
+    num = (size_t)pkg_glong(&buf[2*NET_LONG_LEN]);
 
     if (num*sizeof(RGBpixel) > buflen) {
 	if (scanbuf != NULL)
@@ -631,10 +632,10 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
     int xmin, ymin;
     int width, height;
-    int num;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -977,6 +978,7 @@ rfbflush(struct pkg_conn *pcp, char *buf)
 void
 rfbpoll(struct pkg_conn *pcp, char *buf)
 {
+    if (!pcp) return;
     (void)fb_poll(fbp);
     if (buf) (void)free(buf);
 }
