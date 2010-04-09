@@ -2808,7 +2808,7 @@ proc Archer::html_re_display {w} {
 }
 
 proc Archer::mkHelpTkImage {file} {
-     set fullpath [file join $brlcadDataPath html articles en $file]
+     set fullpath [file join $brlcadDataPath html manuals mged $file]
      set name [image create photo -file $fullpath]
      return [list $name [list image delete $name]]
 }
@@ -2857,19 +2857,13 @@ proc title_node_handler {node} {
 
     set sfcstoc $itk_component(archerHelpToC)
     pack $sfcstoc -side left -expand yes -fill y
-    
-    set toc_fd [list [file join [bu_brlcad_data "html/manuals/mged"] contents.html]]
 
-    # HTML widget
-    set htmltoc [html $sfcstoc.htmlviewtoc -width 200]
-    $sfcstoc.htmlviewtoc configure -parsemode html 
-    $sfcstoc.htmlviewtoc configure -imagecmd Archer::mkHelpTkImage
-    $sfcstoc.htmlviewtoc handler node title title_node_handler
-    set help_fd [lindex $toc_fd 0]
-    puts $help_fd
-    get_html_data $help_fd
-    $sfcstoc.htmlviewtoc parse $archer_help_data
-    pack $htmltoc
+    itk_component add toctree {
+        ::ttk::treeview $itk_component(archerHelpToC).toctree
+    } {}
+
+    pack $itk_component(archerHelpToC).toctree
+
     pack $itk_component(archerHelpToC) -side left -expand no -fill y
 
 
@@ -2883,7 +2877,7 @@ proc title_node_handler {node} {
     pack $sfcs -expand yes -fill both 
 
     # List of available help documents
-    set helplist [list [file join $brlcadDataPath html articles en tire.html]]
+    set helplist [list [file join [bu_brlcad_data "html/manuals/mged"] mged.html]]
 
     #set articleslist [glob -directory [bu_brlcad_data "html/articles/en"] *.html]
     # HTML widget
