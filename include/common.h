@@ -194,13 +194,15 @@ typedef ptrdiff_t ssize_t;
 #ifndef UNUSED
 #  if GCC_PREREQ(2, 5)
      /* GCC-style */
-#    define UNUSED(var) var __attribute__((unused))
+#    define UNUSED(parameter) (parameter) __attribute__((unused))
 #  else
      /* MSVC/C++ */
-#    define UNUSED(var) /* var */
+#    define UNUSED(parameter) /* parameter */
 #  endif
 #else
-#  warning "UNUSED is already defined.  Parameter declaration behavior is unknown, see common.h"
+#  undef UNUSED
+#  define UNUSED(parameter) (parameter)
+#  warning "UNUSED was previously defined.  Parameter declaration behavior is unknown, see common.h"
 #endif
 
 /**
@@ -222,8 +224,9 @@ typedef ptrdiff_t ssize_t;
 #    define LIKELY(expression) (expression)
 #  endif
 #else
+#  undef LIKELY
 #  define LIKELY(expression) (expression)
-#  warning "LIKELY is already defined.  Unable to provide branch hinting."
+#  warning "LIKELY was previously defined.  Unable to provide branch hinting."
 #endif
 
 /**
@@ -244,10 +247,13 @@ typedef ptrdiff_t ssize_t;
 #    define UNLIKELY(expression) (expression)
 #  endif
 #else
+#  undef UNLIKELY
 #  define UNLIKELY(expression) (expression)
-#  warning "UNLIKELY is already defined.  Unable to provide branch hinting."
+#  warning "UNLIKELY was previously defined.  Unable to provide branch hinting."
 #endif
 
+/**
+ * DEPRECATED 
 #endif  /* __COMMON_H__ */
 /** @} */
 /*
