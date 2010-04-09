@@ -2792,17 +2792,19 @@ package provide Archer 1.0
     wm geometry $itk_component(aboutDialog) "600x600"
 }
 
-proc Archer::get_html_data {helpfile, help_data} {
-    # get file data
+proc Archer::get_html_data {helpfile} {
+    global archer_help_data
+
     set help_fd [open $helpfile]
-    set help_data [read $help_fd]
+    set archer_help_data [read $help_fd]
     close $help_fd
 }
 
-proc Archer::html_re_display {w, help_data} {
+proc Archer::html_re_display {w} {
+    global archer_help_data
     $w reset;
     $w configure -parsemode html
-    $w parse $help_data
+    $w parse $archer_help_data
 }
 
 proc Archer::mkHelpTkImage {file} {
@@ -2811,9 +2813,18 @@ proc Archer::mkHelpTkImage {file} {
      return [list $name [list image delete $name]]
 }
 
+proc title_node_handler {node} {
+    set titletext ""
+    foreach child [$node children] {
+	append titletext [$child text]
+    }
+    puts $titletext
+}
+ 
 
 ::itcl::body Archer::buildarcherHelp {} {
     global env
+    global archer_help_data
 
     itk_component add archerHelp {
 	::iwidgets::dialog $itk_interior.archerHelp \
@@ -2853,14 +2864,15 @@ proc Archer::mkHelpTkImage {file} {
     # List of available help documents
     set helplist [list [file join $brlcadDataPath html articles en tire.html]]
 
+    #set articleslist [glob -directory [bu_brlcad_data "html/articles/en"] *.html]
     # HTML widget
     set htmlviewer [html $sfcs.htmlview]
     $sfcs.htmlview configure -parsemode html 
     $sfcs.htmlview configure -imagecmd Archer::mkHelpTkImage
-    set help_fd [open [lindex $helplist 0]]
-    set help_data [read $help_fd]
-    close $help_fd
-    $sfcs.htmlview parse $help_data
+    $sfcs.htmlview handler node title title_node_handler
+    set help_fd [lindex $helplist 0]
+    get_html_data $help_fd
+    $sfcs.htmlview parse $archer_help_data
 
     itk_component add archerHelpS {
 	::ttk::scrollbar $tlparent.archerHelpS \
