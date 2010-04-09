@@ -208,7 +208,7 @@ int process_nv_faces(struct ga_t *ga,
     size_t history_arrays_size = 0; 
     size_t numNorPolygons_in_current_shell = 0;
     size_t numNorPolygonVertices_in_current_nmg = 0 ;
-    struct bu_ptbl faces2;            /* table of faces for one element */
+    struct bu_ptbl faces;            /* table of faces for one element */
     struct bu_ptbl names2;            /* table of element names */
     struct faceuse *fu;
     size_t idx2 = 0;
@@ -218,10 +218,8 @@ int process_nv_faces(struct ga_t *ga,
     size_t i = 0;
     int ret_val = 0;  /* 0=success !0=fail */
 
-    fastf_t *vertices = NULL;
-    fastf_t *vertices_tmp = NULL;
-    size_t vertices_next_size = 0;
-    int *faces = NULL;
+    fastf_t *bot_vertices = NULL;
+    int *bot_faces_array = NULL; /* bot face vertex index array, passed to mk_bot function */
     fastf_t *thickness = NULL;
     fastf_t *normals = NULL;
     int *face_normals = NULL;
@@ -620,7 +618,7 @@ int process_nv_faces(struct ga_t *ga,
     bot_normals_array_size = num_unique_vertex_normal_indexes * 3 ; /* i.e. 3 fastf_t per normal */
 
     /* allocate memory for bot vertices array */
-    vertices = (fastf_t *)bu_calloc((size_t)bot_vertex_array_size, sizeof(fastf_t), "vertices");
+    bot_vertices = (fastf_t *)bu_calloc((size_t)bot_vertex_array_size, sizeof(fastf_t), "bot_vertices");
 
     /* allocate memory for bot normals array */
     normals = (fastf_t *)bu_calloc((size_t)bot_normals_array_size, sizeof(fastf_t), "normals");
@@ -629,9 +627,9 @@ int process_nv_faces(struct ga_t *ga,
     /* places xyz vertices into bot structure */
     j = 0;
     for (k = 0 ; k < bot_vertex_array_size ; k=k+3 ) {
-        vertices[k] =    (ga->vert_list[unique_vertex_indexes[j]][0]) * conversion_factor;
-        vertices[k+1] =  (ga->vert_list[unique_vertex_indexes[j]][1]) * conversion_factor;
-        vertices[k+2] =  (ga->vert_list[unique_vertex_indexes[j]][2]) * conversion_factor;
+        bot_vertices[k] =    (ga->vert_list[unique_vertex_indexes[j]][0]) * conversion_factor;
+        bot_vertices[k+1] =  (ga->vert_list[unique_vertex_indexes[j]][1]) * conversion_factor;
+        bot_vertices[k+2] =  (ga->vert_list[unique_vertex_indexes[j]][2]) * conversion_factor;
         j++;
     }
 
@@ -647,7 +645,7 @@ int process_nv_faces(struct ga_t *ga,
 
     bu_log("raw populated bot vertices contents\n");
     for (k = 0 ; k < bot_vertex_array_size ; k=k+3 ) {
-        bu_log("(%lu) (%f) (%f) (%f)\n", k, vertices[k], vertices[k+1], vertices[k+2]);
+        bu_log("(%lu) (%f) (%f) (%f)\n", k, bot_vertices[k], bot_vertices[k+1], bot_vertices[k+2]);
     }
 
     bu_log("raw populated bot normals contents\n");
@@ -655,8 +653,10 @@ int process_nv_faces(struct ga_t *ga,
         bu_log("(%lu) (%f) (%f) (%f)\n", k, normals[k], normals[k+1], normals[k+2]);
     }
 
-    /* allocate memory for faces and thickness arrays */
-    faces = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "faces");
+    /* allocate memory for bot face vertex index array (bot_faces_array) */
+    bot_faces_array = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "bot_faces_array");
+
+    /* allocate memory for bot face thickness array */
     thickness = (fastf_t *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(fastf_t), "thickness");
 
     /* allocate memory for bot face_normals, i.e. indices into normals array */
@@ -690,44 +690,46 @@ int process_nv_faces(struct ga_t *ga,
         /* bsearch returns pointer to matching element, but need the index of
            the element, pointer subtraction computes the correct index value
            of the element */
-        faces[k*3] = (int) (res0 - unique_vertex_indexes);
-        faces[(k*3)+1] = (int) (res1 - unique_vertex_indexes);
-        faces[(k*3)+2] = (int) (res2 - unique_vertex_indexes);
+        bot_faces_array[k*3] = (int) (res0 - unique_vertex_indexes);
+        bot_faces_array[(k*3)+1] = (int) (res1 - unique_vertex_indexes);
+        bot_faces_array[(k*3)+2] = (int) (res2 - unique_vertex_indexes);
         thickness[(k*3)] = thickness[(k*3)+1] = thickness[(k*3)+2] = 1.0;
 
         bu_log("libobj to bot vert idx mapping (%lu), (%lu) --> (%d), (%lu) --> (%d), (%lu) --> (%d)\n",
            k,
-           triangle_indexes[k][0][0], faces[k*3],
-           triangle_indexes[k][1][0], faces[(k*3)+1],
-           triangle_indexes[k][2][0], faces[(k*3)+2] );
+           triangle_indexes[k][0][0], bot_faces_array[k*3],
+           triangle_indexes[k][1][0], bot_faces_array[(k*3)+1],
+           triangle_indexes[k][2][0], bot_faces_array[(k*3)+2] );
     }
 
     /* write bot to ".g" file */
 #if 0
     ret_val = mk_bot(outfp, bu_vls_addr(&outputObjectName), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
-                     numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, vertices,
-                     faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+                     numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, bot_vertices,
+                     bot_faces_array, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 #endif
 
     /* NMG2s */
     /* initialize tables */
-    bu_ptbl_init(&faces2, 64, " &faces2 ");
+    bu_ptbl_init(&faces, 64, " &faces ");
     bu_ptbl_init(&names2, 64, " &names2 ");
 
-    struct vertex  **nmg2_verts = NULL;
-    nmg2_verts = (struct vertex **)bu_calloc(numNorPolygonVertices_in_current_nmg,
-                                              sizeof(struct vertex *), "nmg2_verts");
-    memset((void *)nmg2_verts, 0, sizeof(struct vertex *) * numNorPolygonVertices_in_current_nmg);
+    struct vertex  **nmg_verts = NULL;
+    nmg_verts = (struct vertex **)bu_calloc(numNorPolygonVertices_in_current_nmg,
+                                              sizeof(struct vertex *), "nmg_verts");
+    memset((void *)nmg_verts, 0, sizeof(struct vertex *) * numNorPolygonVertices_in_current_nmg);
 
     size_t polygon3 = 0;
     size_t vertex4 = 0;
     size_t counter2 = 0;
     size_t end_count = numNorPolygons_in_current_shell ;
-    struct vertexuse *vu2 = NULL;
+    struct vertexuse *vu = NULL;
     struct loopuse *lu = NULL;
     struct edgeuse *eu = NULL;
-    plane_t pl2; /* plane equation for face */
-    fastf_t tmp5[3] = { 0, 0, 0 };
+    int total_fused_vertex = 0 ;
+    plane_t pl; /* plane equation for face */
+    fastf_t tmp_v[3] = { 0.0, 0.0, 0.0 };
+    fastf_t tmp_n[3] = { 0.0, 0.0, 0.0 };
     counter2 = 0;
     bu_log("about to run chk shell just before assign fu for-loops\n");
     NMG_CK_SHELL(s);
@@ -735,7 +737,7 @@ int process_nv_faces(struct ga_t *ga,
     /* loop thru all the polygons (i.e. faces) to be placed in the current shell/region/model */
     for ( polygon3 = 0 ; polygon3 < end_count ; polygon3++ ) {
         bu_log("history: num vertices in current polygon = (%lu)\n", size_history[polygon3]);
-        fu = nmg_cface(s, (struct vertex **)&(nmg2_verts[counter2]), (int)size_history[polygon3] );
+        fu = nmg_cface(s, (struct vertex **)&(nmg_verts[counter2]), (int)size_history[polygon3] );
         lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
         eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
         for ( vertex4 = 0 ; vertex4 < size_history[polygon3] ; vertex4++ ) {
@@ -751,160 +753,97 @@ int process_nv_faces(struct ga_t *ga,
                ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][1],
                ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][2]);
 
-            VSCALE(tmp5, ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]] , conversion_factor);
+            /* convert to mm and copy current vertex into tmp_v */
+            VSCALE(tmp_v, (fastf_t *)ga->vert_list[ \
+                                     index_arr_nv_faces_history[polygon3][vertex4][0]], \
+                                     conversion_factor);
+
             bu_log("about to run nmg_vertex_gv\n");
             NMG_CK_VERTEX(eu->vu_p->v_p);
-            nmg_vertex_gv(eu->vu_p->v_p, tmp5);
-            eu = BU_LIST_NEXT(edgeuse, &eu->l);
+            nmg_vertex_gv(eu->vu_p->v_p, tmp_v);
+
+            /* copy current normal into tmp_n */
+            VMOVE(tmp_n, (fastf_t *)ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][1]]);
 
             /* assign this normal to all uses of this vertex */
-#if 0
-            for (BU_LIST_FOR(vu2, vertexuse, &nmg2_verts[counter2]->vu_hd)) {
-                NMG_CK_VERTEXUSE(vu2);
-                nmg_vertexuse_nv(vu2, (fastf_t *)ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][1]]);
+            for (BU_LIST_FOR(vu, vertexuse, &eu->vu_p->v_p->vu_hd)) {
+                NMG_CK_VERTEXUSE(vu);
+                bu_log("about to run nmg_vertex_nv\n");
+                nmg_vertexuse_nv(vu, tmp_n);
             }
-#endif
+
+            eu = BU_LIST_NEXT(edgeuse, &eu->l);
             counter2++;
-        }
-#if 1
+        } /* this loop exits when all the vertices and their normals
+             for the current polygon/faceuse has been inserted into
+             their appropriate structures */
+
         bu_log("about to run nmg_loop_plane_area\n");
-        if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl2) < 0.0) {
+        /* verify the current polygon is valid */
+        if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0) {
             bu_log("Failed planeeq\n");
             bu_log("about to run nmg_kfu just after neg area from nmg_loop_plane_area\n");
             nmg_kfu(fu);
             numNorPolygons_in_current_shell--;
         } else {
             bu_log("about to run nmg_face_g\n");
-            nmg_face_g(fu, pl2); /* return is void */
+            nmg_face_g(fu, pl); /* return is void */
             bu_log("about to run nmg_face_bb\n");
             nmg_face_bb(fu->f_p, tol); /* return is void */
-            bu_ptbl_ins(&faces2, (long *)fu);
+            bu_ptbl_ins(&faces, (long *)fu);
         }
-#endif
 
-#if 0
-        bu_log("about to run nmg_calc_face_g\n");
-        if (nmg_calc_face_g(fu)) {
-            bu_log("nmg_calc_face_g failed\n");
-            if (nmg_kfu(fu)) {
-                bu_log("WARNING: after kill fu, shell is empty\n");
-            }
-            numNorPolygons_in_current_shell--;
-        } else {
-            bu_log("about to run nmg_ck_faceuse just before running nmg_fu_planeeqn\n");
-            NMG_CK_FACEUSE(fu);
-            bu_log("about to run nmg_fu_planeeqn\n");
-            if (nmg_fu_planeeqn(fu, tol)) {
-                bu_log("nmg_fu_planeeqn failed\n");
-                if (nmg_kfu(fu)) {
-                    bu_log("WARNING: after kill fu, shell is empty\n");
-                }
-                numNorPolygons_in_current_shell--;
-            } else {
-                bu_ptbl_ins(&faces2, (long *)fu);
-            }
-        }
-#endif
+    } /* loop exits when all polygons within the current grouping
+         has been placed within one nmg shell, inside one nmg region
+         and inside one nmg model */
 
-    } /* loop exits when all faces in shell/region/model have been created */
+    if (BU_PTBL_END(&faces)) {
 
-    (void)nmg_model_vertex_fuse(m, tol);
-
-#if 0
-    /* calculate plane equations for faces */
-    NMG_CK_SHELL(s);
-    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
-        struct faceuse *kill_fu=(struct faceuse *)NULL;
-        struct faceuse *next_fu;
-
-        NMG_CK_FACEUSE(fu);
-
-        next_fu = BU_LIST_NEXT(faceuse, &fu->l);
-        if (fu->orientation == OT_SAME) {
-            struct loopuse *lu;
-            struct edgeuse *eu;
-            fastf_t area;
-            plane_t pl;
-
-            lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-            NMG_CK_LOOPUSE(lu);
-            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                NMG_CK_EDGEUSE(eu);
-                if (eu->vu_p->v_p == eu->eumate_p->vu_p->v_p)
-                    kill_fu = fu;
-            }
-            if (!kill_fu) {
-                area = nmg_loop_plane_area(lu, pl);
-                if (area <= 0.0) {
-                    bu_log("ERROR: Can't get plane for face\n");
-                    kill_fu = fu;
-                }
-            }
-            if (kill_fu) {
-                if (next_fu == kill_fu->fumate_p)
-                    next_fu = BU_LIST_NEXT(faceuse, &next_fu->l);
-                bu_ptbl_rm(&faces2, (long *)kill_fu);
-                nmg_kfu(kill_fu);
-            } else
-                nmg_face_g(fu, pl);
-        }
-        fu = next_fu;
-    }
-#endif
-
-    if (BU_PTBL_END(&faces2)) {
+        bu_log("about to run nmg_model_vertex_fuse\n");
+        total_fused_vertex = nmg_model_vertex_fuse(m, tol);
+        bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
 
         bu_log("about to run nmg_gluefaces\n");
-        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces2), BU_PTBL_END(&faces2), tol);
-#if 1
+        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
+
         bu_log("about to run nmg_rebound 1\n");
         nmg_rebound(m, tol);
 
         bu_log("about to run nmg_fix_normals\n");
         nmg_fix_normals(s, tol);
 
-        bu_log("about to run nmg_shell_coplanar_face_merge\n");
-    /*    nmg_shell_coplanar_face_merge(s, tol, 1);  */
+        bu_log("about to run nmg_shell_coplanar_face_merge\n");   
+        nmg_shell_coplanar_face_merge(s, tol, 1);    
 
         bu_log("about to run nmg_rebound 2\n");
         nmg_rebound(m, tol);
-#endif
 
 #if 0
-        bu_log("about to kill model just before running mk_nmg\n");
-        nmg_km(m);   
+        bu_log("about to mk_bot_from_nmg\n");
+        mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), s);
+        nmg_km(m);
 #endif
 
 #if 1
-        bu_log("about to mk_bot_from_nmg\n");
-        mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), s);
-#endif
-#if 0
-        bu_log("about to run nmg_ck_model just before run mk_nmg\n");
-        NMG_CK_MODEL(m);
-        bu_log("about to run mk_nmg m=(%lx)\n",m);
+        bu_log("about to run mk_nmg\n");
+        /* the model (m) is freed when mk_nmg completes */
         if (mk_nmg(outfp, bu_vls_addr(&outputObjectName), m)) {
             bu_log("mk_nmg failed\n");
         }
-        bu_log("about to run nmg_ck_model just before run nmg_km\n");
-        NMG_CK_MODEL(m);
-        bu_log("about to run nmg_km m=(%lx)\n",m);
-        nmg_km(m);   
 #endif
     } else {
         bu_log("Object %s has no faces\n", bu_vls_addr(&outputObjectName));
     } 
     /* NMG2e */
 
-    bu_free(nmg2_verts,"nmg2_verts");
+    bu_free(nmg_verts,"nmg_verts");
     bu_free(index_arr_nv_faces_history,"index_arr_nv_faces_history");
     bu_free(size_history,"size_history");
     bu_free(vertex_sort_index,"vertex_sort_index");
     bu_free(vertex_normal_sort_index,"vertex_normal_sort_index");
     bu_free(unique_vertex_indexes,"unique_vertex_indexes");
-    bu_free(vertices,"vertices");
-    bu_free(faces,"faces");
+    bu_free(bot_vertices,"bot_vertices");
+    bu_free(bot_faces_array,"bot_faces_array");
     bu_free(thickness,"thickness");
     bu_free(normals,"normals");
     bu_free(face_normals,"face_normals");
@@ -912,7 +851,7 @@ int process_nv_faces(struct ga_t *ga,
 
     bu_vls_free(&outputObjectName);
 
-    bu_ptbl_reset(&faces2);
+    bu_ptbl_reset(&faces);
 
     }
 
