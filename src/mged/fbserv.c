@@ -52,30 +52,113 @@
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 
-void set_port(void);
+/*
+ * C O M M _ E R R O R
+ *
+ * Communication error.  An error occured on the PKG link.
+ */
+HIDDEN void
+comm_error(char *str)
+{
+    bu_log(str);
+}
 
-#ifdef LOCAL_STATIC
-#  undef LOCAL_STATIC
-#endif
-#define LOCAL_STATIC static
 
-LOCAL_STATIC void drop_client(int sub);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-LOCAL_STATIC void new_client(struct pkg_conn *pcp, Tcl_Channel chan);
-LOCAL_STATIC void new_client_handler(ClientData clientData, Tcl_Channel chan, char *host, int port);
-#else
-LOCAL_STATIC void new_client(struct pkg_conn *pcp);
-LOCAL_STATIC void new_client_handler(ClientData clientData, int mask);
+HIDDEN void
+setup_socket(int fd)
+{
+    int on = 1;
+
+#if defined(SO_KEEPALIVE)
+    if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
+	bu_log("setsockopt (SO_KEEPALIVE): %m\n");
+    }
 #endif
-LOCAL_STATIC void existing_client_handler(ClientData clientData, int mask);
-LOCAL_STATIC void comm_error(char *str);
-LOCAL_STATIC void setup_socket(int fd);
+#if defined(SO_RCVBUF)
+    /* try to set our buffers up larger */
+    {
+	int m = -1, n = -1;
+	int val;
+	int size;
+
+	for (size = 256; size > 16; size /= 2) {
+	    val = size * 1024;
+	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
+			   (char *)&val, sizeof(val));
+	    val = size * 1024;
+	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
+			   (char *)&val, sizeof(val));
+	    if (m >= 0 && n >= 0) break;
+	}
+
+	if (m < 0 || n < 0)
+	    bu_log("setup_socket: setsockopt() SO_RCVBUF/SO_SNDBUF failed: %m\n");
+    }
+#endif
+}
+
+
+/*
+ * Process arrivals from existing clients.
+ */
+HIDDEN void
+existing_client_handler(ClientData clientData, int mask)
+{
+    int i;
+    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
+    int npp;			/* number of processed packages */
+    struct dm_list *dlp;
+    struct dm_list *scdlp;  /* save current dm_list pointer */
+
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+	for (i = MAX_CLIENTS-1; i >= 0; i--)
+	    if (fd == dlp->dml_clients[i].c_fd)
+		goto found;
+    }
+
+    return;
+
+ found:
+    /* save */
+    scdlp = curr_dm_list;
+
+    curr_dm_list = dlp;
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	if (clients[i].c_fd == 0)
+	    continue;
+
+	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
+	    bu_log("pkg_process error encountered (1)\n");
+
+	if (npp > 0)
+	    dirty = 1;
+
+	if (clients[i].c_fd != fd)
+	    continue;
+
+	if (pkg_suckin(clients[i].c_pkg) <= 0) {
+	    /* Probably EOF */
+	    drop_client(i);
+
+	    continue;
+	}
+
+	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
+	    bu_log("pkg_process error encountered (2)\n");
+
+	if (npp > 0)
+	    dirty = 1;
+    }
+
+    /* restore */
+    curr_dm_list = scdlp;
+}
 
 
 /*
  * D R O P _ C L I E N T
  */
-LOCAL_STATIC void
+HIDDEN void
 drop_client(int sub)
 {
     if (clients[sub].c_pkg != PKC_NULL) {
@@ -96,7 +179,7 @@ drop_client(int sub)
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-LOCAL_STATIC void
+HIDDEN void
 new_client(struct pkg_conn *pcp,
 	   Tcl_Channel chan)
 	   
@@ -126,6 +209,32 @@ new_client(struct pkg_conn *pcp,
 
     bu_log("new_client: too many clients\n");
     pkg_close(pcp);
+}
+
+
+HIDDEN void
+new_client_handler(ClientData clientData,
+		   Tcl_Channel chan,
+		   char *host,
+		   int port)
+{
+    struct dm_list *dlp = (struct dm_list *)clientData;
+    struct dm_list *scdlp;  /* save current dm_list pointer */
+    int fd;
+
+    if (dlp == NULL)
+	return;
+
+    /* save */
+    scdlp = curr_dm_list;
+
+    curr_dm_list = dlp;
+
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
+	new_client(fbserv_makeconn(fd, pkg_switch), chan);
+
+    /* restore */
+    curr_dm_list = scdlp;
 }
 
 
@@ -243,39 +352,13 @@ fbserv_makeconn(int fd,
 }
 
 
-LOCAL_STATIC void
-new_client_handler(ClientData clientData,
-		   Tcl_Channel chan,
-		   char *host,
-		   int port)
-{
-    struct dm_list *dlp = (struct dm_list *)clientData;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
-    int fd;
-
-    if (dlp == NULL)
-	return;
-
-    /* save */
-    scdlp = curr_dm_list;
-
-    curr_dm_list = dlp;
-
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
-	new_client(fbserv_makeconn(fd, pkg_switch), chan);
-
-    /* restore */
-    curr_dm_list = scdlp;
-}
-
-
 #else /* defined(_WIN32) && !defined(__CYGWIN__) */
 
 
 /*
  * N E W _ C L I E N T
  */
-LOCAL_STATIC void
+HIDDEN void
 new_client(struct pkg_conn *pcp)
 {
     int i;
@@ -300,6 +383,34 @@ new_client(struct pkg_conn *pcp)
 
     bu_log("new_client: too many clients\n");
     pkg_close(pcp);
+}
+
+
+/*
+ * Accept any new client connections.
+ */
+HIDDEN void
+new_client_handler(ClientData clientData, int mask)
+{
+    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
+    struct dm_list *dlp;
+    struct dm_list *scdlp;  /* save current dm_list pointer */
+
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+	if (fd == dlp->dml_netfd)
+	    goto found;
+
+    return;
+
+ found:
+    /* save */
+    scdlp = curr_dm_list;
+
+    curr_dm_list = dlp;
+    new_client(pkg_getclient(fd, pkg_switch, comm_error, 0));
+
+    /* restore */
+    curr_dm_list = scdlp;
 }
 
 
@@ -363,137 +474,7 @@ set_port(void)
 	Tcl_CreateFileHandler(netfd, TCL_READABLE,
 			      new_client_handler, (ClientData)(size_t)netfd);
 }
-
-
-/*
- * Accept any new client connections.
- */
-LOCAL_STATIC void
-new_client_handler(ClientData clientData, int mask)
-{
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-    struct dm_list *dlp;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
-
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (fd == dlp->dml_netfd)
-	    goto found;
-
-    return;
-
- found:
-    /* save */
-    scdlp = curr_dm_list;
-
-    curr_dm_list = dlp;
-    new_client(pkg_getclient(fd, pkg_switch, comm_error, 0));
-
-    /* restore */
-    curr_dm_list = scdlp;
-}
 #endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
-/*
- * Process arrivals from existing clients.
- */
-LOCAL_STATIC void
-existing_client_handler(ClientData clientData, int mask)
-{
-    int i;
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-    int npp;			/* number of processed packages */
-    struct dm_list *dlp;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
-
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	for (i = MAX_CLIENTS-1; i >= 0; i--)
-	    if (fd == dlp->dml_clients[i].c_fd)
-		goto found;
-    }
-
-    return;
-
- found:
-    /* save */
-    scdlp = curr_dm_list;
-
-    curr_dm_list = dlp;
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	if (clients[i].c_fd == 0)
-	    continue;
-
-	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
-	    bu_log("pkg_process error encountered (1)\n");
-
-	if (npp > 0)
-	    dirty = 1;
-
-	if (clients[i].c_fd != fd)
-	    continue;
-
-	if (pkg_suckin(clients[i].c_pkg) <= 0) {
-	    /* Probably EOF */
-	    drop_client(i);
-
-	    continue;
-	}
-
-	if ((npp = pkg_process(clients[i].c_pkg)) < 0)
-	    bu_log("pkg_process error encountered (2)\n");
-
-	if (npp > 0)
-	    dirty = 1;
-    }
-
-    /* restore */
-    curr_dm_list = scdlp;
-}
-
-
-LOCAL_STATIC void
-setup_socket(int fd)
-{
-    int on = 1;
-
-#if defined(SO_KEEPALIVE)
-    if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
-	bu_log("setsockopt (SO_KEEPALIVE): %m\n");
-    }
-#endif
-#if defined(SO_RCVBUF)
-    /* try to set our buffers up larger */
-    {
-	int m = -1, n = -1;
-	int val;
-	int size;
-
-	for (size = 256; size > 16; size /= 2) {
-	    val = size * 1024;
-	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
-			   (char *)&val, sizeof(val));
-	    val = size * 1024;
-	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
-			   (char *)&val, sizeof(val));
-	    if (m >= 0 && n >= 0) break;
-	}
-
-	if (m < 0 || n < 0)
-	    bu_log("setup_socket: setsockopt() SO_RCVBUF/SO_SNDBUF failed: %m\n");
-    }
-#endif
-}
-
-
-/*
- * C O M M _ E R R O R
- *
- * Communication error.  An error occured on the PKG link.
- */
-LOCAL_STATIC void
-comm_error(char *str)
-{
-    bu_log(str);
-}
 
 
 /*
