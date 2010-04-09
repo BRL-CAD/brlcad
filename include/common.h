@@ -128,6 +128,8 @@ typedef ptrdiff_t ssize_t;
  * ... code requiring gcc 2.8 or later ...
  * #endif
  *
+ * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
+ * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
  */
 #ifndef GCC_PREREQ
 #  if defined __GNUC__
@@ -146,6 +148,8 @@ typedef ptrdiff_t ssize_t;
  * ... code requiring icc 8.0 or later ...
  * #endif
  *
+ * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
+ * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
  */
 /* provide a means to conveniently test the version of ICC */
 #ifndef ICC_PREREQ
@@ -177,7 +181,16 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* provide a common mechanism for declaring unused parameters */
+/* UNUSED provides a common mechanism for declaring unused parameters.
+ * Use it like this:
+ *
+ * int
+ * my_function(int argc, char **UNUSED(argv))
+ * {
+ *   ...
+ * }
+ *
+ */
 #ifndef UNUSED
 #  if GCC_PREREQ(2, 5)
      /* GCC-style */
@@ -188,6 +201,47 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #else
 #  warning "UNUSED is already defined.  Parameter declaration behavior is unknown, see common.h"
+#endif
+
+/* LIKELY provides a common mechanism for providing branch prediction
+ * hints to the compiler so that it can better optimize.  Use it like
+ * this:
+ *
+ *  if (LIKELY(x == 1)) {
+ *    ... expected code path ...
+ *  }
+ *
+ */
+#ifndef LIKELY
+#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+
+#    define LIKELY(expression) __builtin_expect((expression), 1)
+#  else
+#    define LIKELY(expression) (expression)
+#  endif
+#else
+#  define LIKELY(expression) (expression)
+#  warning "LIKELY is already defined.  Unable to provide branch hinting."
+#endif
+
+/* UNLIKELY provides a common mechanism for providing branch
+ * prediction hints to the compiler so that it can better optimize.
+ * Use it like this:
+ *
+ *  if (UNLIKELY(x == 0)) {
+ *    ... unexpected code path ...
+ *  }
+ *
+ */
+#ifndef UNLIKELY
+#  if GNUC_PREREQ(3, 0) || ICC_PREREQ(800)
+#    define UNLIKELY(expression) __builtin_expect((expression), 0)
+#  else
+#    define UNLIKELY(expression) (expression)
+#  endif
+#else
+#  define UNLIKELY(expression) (expression)
+#  warning "UNLIKELY is already defined.  Unable to provide branch hinting."
 #endif
 
 #endif  /* __COMMON_H__ */
