@@ -72,9 +72,9 @@ bu_register_cmds(Tcl_Interp *interp,
 		 struct bu_cmdtab *cmds)
 {
     struct bu_cmdtab *ctp;
-    Tcl_CmdProc *func = (Tcl_CmdProc *)ctp->ct_func;
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	Tcl_CmdProc *func = (Tcl_CmdProc *)ctp->ct_func;
 	(void)Tcl_CreateCommand(interp, ctp->ct_name, func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
