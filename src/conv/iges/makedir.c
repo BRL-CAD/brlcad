@@ -59,10 +59,8 @@ Makedir()
 
 	entcount++;	/* increment count of entities */
 
-	if ( entcount%100 == 0 )
-	{
-	    sprintf( str, "\t%d%c", entcount, CR );
-	    write( 1, str, strlen( str ) );
+	if ( entcount%100 == 0 ) {
+	    printf("\t%d%c", entcount, CR);
 	}
 
 	/* save the directory record number for this entity */
