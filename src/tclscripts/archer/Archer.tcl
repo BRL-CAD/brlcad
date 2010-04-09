@@ -2806,7 +2806,8 @@ proc Archer::html_re_display {w, help_data} {
 }
 
 proc Archer::mkHelpTkImage {file} {
-     set name [image create photo -file $file]
+     set fullpath [file join $brlcadDataPath html articles en $file]
+     set name [image create photo -file $fullpath]
      return [list $name [list image delete $name]]
 }
 
@@ -2842,24 +2843,30 @@ proc Archer::mkHelpTkImage {file} {
 	::iwidgets::scrolledframe $tlparent.archerHelpF
     } {}
 
-    itk_component add archerHelpL {
-	::ttk::frame $tlparent.archerHelpL
-    } {}
+    set sfcs [$itk_component(archerHelpF) childsite]
+    pack $sfcs -expand yes -fill both
+
+#    itk_component add archerHelpL {
+#	::ttk::frame $tlparent.archerHelpL
+#    } {}
 
     # List of available help documents
     set helplist [list [file join $brlcadDataPath html articles en tire.html]]
 
     # HTML widget
-    html $itk_component(archerHelpF).htmlview
-    $itk_component(archerHelpF).htmlview configure -parsemode html 
-    $itk_component(archerHelpF).htmlview configure -imagecmd Archer::mkHelpTkImage
-    
+    set htmlviewer [html $sfcs.htmlview]
+    $sfcs.htmlview configure -parsemode html 
+    $sfcs.htmlview configure -imagecmd Archer::mkHelpTkImage
+    set help_fd [open [lindex $helplist 0]]
+    set help_data [read $help_fd]
+    close $help_fd
+    $sfcs.htmlview parse $help_data
 
-    grid $itk_component(archerHelpF).htmlview -sticky nsew -in  $itk_component(archerHelpF)
+    pack $htmlviewer -expand yes -fill both
 
     pack $itk_component(archerHelpF) -expand yes -fill both
 
-    wm geometry $itk_component(archerHelp) "600x600"
+    wm geometry $itk_component(archerHelp) "800x600"
 }
 
 ::itcl::body Archer::buildDisplayPreferences {} {
