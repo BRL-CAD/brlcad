@@ -2850,16 +2850,37 @@ proc title_node_handler {node} {
 
     set tlparent [$itk_component(archerHelp) childsite]
 
+    # Table of Contents
+    itk_component add archerHelpToC {
+	::tk::frame $tlparent.archerHelpToC -width 200
+    } {}
+
+    set sfcstoc $itk_component(archerHelpToC)
+    pack $sfcstoc -side left -expand yes -fill y
+    
+    set toc_fd [list [file join [bu_brlcad_data "html/manuals/mged"] contents.html]]
+
+    # HTML widget
+    set htmltoc [html $sfcstoc.htmlviewtoc -width 200]
+    $sfcstoc.htmlviewtoc configure -parsemode html 
+    $sfcstoc.htmlviewtoc configure -imagecmd Archer::mkHelpTkImage
+    $sfcstoc.htmlviewtoc handler node title title_node_handler
+    set help_fd [lindex $toc_fd 0]
+    puts $help_fd
+    get_html_data $help_fd
+    $sfcstoc.htmlviewtoc parse $archer_help_data
+    pack $htmltoc
+    pack $itk_component(archerHelpToC) -side left -expand no -fill y
+
+
+    # Main HTML window
+
     itk_component add archerHelpF {
 	::tk::frame $tlparent.archerHelpF
     } {}
 
     set sfcs $itk_component(archerHelpF)
-    pack $sfcs -expand yes -fill both
-
-#    itk_component add archerHelpL {
-#	::ttk::frame $tlparent.archerHelpL
-#    } {}
+    pack $sfcs -expand yes -fill both 
 
     # List of available help documents
     set helplist [list [file join $brlcadDataPath html articles en tire.html]]
@@ -2886,7 +2907,7 @@ proc title_node_handler {node} {
     grid columnconfigure $sfcs 0 -weight 1
     grid rowconfigure $sfcs 0 -weight 1
 
-    pack $itk_component(archerHelpF) -side right -expand yes -fill both
+    pack $itk_component(archerHelpF) -side left -expand yes -fill both
 
     wm geometry $itk_component(archerHelp) "800x600"
 }
