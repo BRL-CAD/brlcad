@@ -491,7 +491,7 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
 	    occlusion_apps[i]->a_hit = occlusion_hit;
 	    occlusion_apps[i]->a_miss = occlusion_miss;
 	    if (rpt_overlap)
-		occlusion_apps[i]->a_logoverlap = ((void (*)())0);
+		occlusion_apps[i]->a_logoverlap = (void (*)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *))NULL;
 	    else
 		occlusion_apps[i]->a_logoverlap = rt_silent_logoverlap;
 
