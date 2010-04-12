@@ -64,8 +64,6 @@ static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
 static int	scanpix;		/* # of pixels of scanline */
 
-static int	multiple_lines = 0;	/* Streamlined operation */
-
 static char	*framebuffer = NULL;
 static char	*file_name;
 static int	infd;
@@ -77,12 +75,6 @@ static unsigned long int	file_width = 512;	/* default input width */
 static unsigned long int	file_height = 512;	/* default input height */
 static int	scr_width = 0;		/* screen tracks file if not given */
 static int	scr_height = 0;
-static int	file_xoff, file_yoff;
-static int	scr_xoff, scr_yoff;
-static int	clear = 0;
-static int	zoom = 0;
-static int	inverse = 0;		/* Draw upside-down */
-static int	one_line_only = 0;	/* insist on 1-line writes */
 static int	pause_sec = 10; /* Pause that many seconds before closing the FB
 				   and exiting */
 
@@ -161,17 +153,6 @@ main(int argc, char **argv)
 
     if ( !get_args( argc, argv ) )  {
 	bu_exit( 1, NULL );
-    }
-
-    /* autosize input? */
-    if ( fileinput && autosize ) {
-	unsigned long int	w, h;
-	if ( fb_common_file_size(&w, &h, file_name, 3) ) {
-	    file_width = w;
-	    file_height = h;
-	} else {
-	    fprintf(stderr, "pix-fb: unable to autosize\n");
-	}
     }
 
     FBIO *ifp;
