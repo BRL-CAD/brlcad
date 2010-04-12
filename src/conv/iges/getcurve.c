@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file getcurve.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
 
 #include "./iges_struct.h"
 #include "./iges_extern.h"
@@ -636,7 +629,7 @@ int Getcurve( curve, curv_pts )
 		{
 		    double A1, C1, F1, alpha, beta;
 		    mat_t rot2;
-		    point_t v3, tmp2;
+		    point_t v3;
 
 		    /* calculate center of ellipse or hyperbola */
 		    xc = (B*E/4.0 - D*C/2.0)/a;
@@ -741,6 +734,8 @@ int Getcurve( curve, curv_pts )
 		    /* middle points */
 		    for ( i=1; i<num_points; i++ )
 		    {
+			point_t tmp2 = {0.0, 0.0, 0.0};
+
 			theta = alpha + (double)i/(double)num_points*beta;
 			if ( type == 2 )
 			{
