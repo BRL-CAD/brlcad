@@ -314,7 +314,7 @@ main(int argc, char *argv[])
     int c;
     int read_only_flag=0;
 
-    int parent_pipe[2];
+    int parent_pipe[2] = {0, 0};
     int use_pipe = 0;
     int run_in_foreground=1;
 
@@ -772,6 +772,7 @@ main(int argc, char *argv[])
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
+#ifdef HAVE_PIPE
 	    /* if we are going to run in the background, let the
 	     * parent process know that we are done initializing so
 	     * that it may exit.
@@ -779,6 +780,7 @@ main(int argc, char *argv[])
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
+#endif HAVE_PIPE
 
 	    if (status != TCL_OK) {
 		if (use_pipe) {
