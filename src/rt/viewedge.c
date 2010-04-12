@@ -127,8 +127,9 @@ struct cell {
     vect_t c_rdir;	/* ray direction, permits perspective */
 };
 
+
 #define MISS_DIST MAX_FASTF
-#define MISS_ID		-1
+#define MISS_ID -1
 
 static unsigned char *writeable[MAX_PSW];
 static unsigned char *scanline[MAX_PSW];
@@ -560,6 +561,7 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
     return minus_F || (!minus_o && !minus_F); /* we need a framebuffer */
 }
 
+
 /**
  * beginning of a frame
  */
@@ -633,6 +635,7 @@ view_2init(struct application *ap)
     }
     return;
 }
+
 
 /**
  * end of each pixel
@@ -1395,6 +1398,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     return edge;
 }
 
+
 void application_init(void) {
     bu_vls_init(&occlusion_objects);
 }
@@ -1407,6 +1411,7 @@ int diffpixel(RGBpixel a, RGBpixel b)
     if (a[BLU] != b[BLU]) return 1;
     return 0;
 }
+
 
 /*
  * Local Variables:
