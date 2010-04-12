@@ -239,12 +239,12 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     get_editor_string(&editstring);
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
-    av[0] = argv[0];
+    av[0] = (const char *)argv[0];
     av[1] = "-E";
     av[2] = bu_vls_addr(&editstring);
     argc += 2;
     for (i = 3; i < argc; ++i) {
-	av[i] = argv[i-2];
+	av[i] = (const char *)argv[i-2];
     }
     av[argc] = NULL;
 
