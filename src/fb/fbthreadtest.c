@@ -86,85 +86,16 @@ static int	one_line_only = 0;	/* insist on 1-line writes */
 static int	pause_sec = 10; /* Pause that many seconds before closing the FB
 				   and exiting */
 
-static char usage[] = "\
-Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
-	[-s squarefilesize] [-w file_width] [-n file_height]\n\
-	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [-p seconds]\n\
-	[file.pix]\n";
-
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "1m:ahiczF:p:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+    while ( (c = bu_getopt( argc, argv, "F:" )) != EOF )  {
 	switch ( c )  {
-	    case '1':
-		one_line_only = 1;
-		break;
-	    case 'm':
-		multiple_lines = atoi(bu_optarg);
-		break;
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024;
-		scr_height = scr_width = 1024;
-		autosize = 0;
-		break;
-	    case 'i':
-		inverse = 1;
-		break;
-	    case 'c':
-		clear = 1;
-		break;
-	    case 'z':
-		zoom = 1;
-		break;
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
-	    case 's':
-		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
-		autosize = 0;
-		break;
-	    case 'w':
-		file_width = atoi(bu_optarg);
-		autosize = 0;
-		break;
-	    case 'n':
-		file_height = atoi(bu_optarg);
-		autosize = 0;
-		break;
-	    case 'x':
-		file_xoff = atoi(bu_optarg);
-		break;
-	    case 'y':
-		file_yoff = atoi(bu_optarg);
-		break;
-	    case 'X':
-		scr_xoff = atoi(bu_optarg);
-		break;
-	    case 'Y':
-		scr_yoff = atoi(bu_optarg);
-		break;
-	    case 'S':
-		scr_height = scr_width = atoi(bu_optarg);
-		break;
-	    case 'W':
-		scr_width = atoi(bu_optarg);
-		break;
-	    case 'N':
-		scr_height = atoi(bu_optarg);
-		break;
-	    case 'p':
-		pause_sec=atoi(bu_optarg);
-		break;
-
 	    default:		/* '?' */
 		return(0);
 	}
@@ -184,9 +115,6 @@ get_args(int argc, char **argv)
 			   file_name );
 	    bu_exit(1, NULL);
 	}
-#ifdef _WIN32
-	setmode(infd, O_BINARY);
-#endif
 	fileinput++;
     }
 
@@ -194,23 +122,6 @@ get_args(int argc, char **argv)
 	(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
 
     return(1);		/* OK */
-}
-
-bb_tk_open(FBIO *ifp, char *file, int width, int height)
-{
-    FB_CK_FBIO(ifp);
-    return	0;
-}
-
-int
-fb_tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
-{
-    int	i;
-
-    FB_CK_FBIO(ifp);
-
-    /* Set local values of Tk_PhotoImageBlock */
-    return count;
 }
 
 int
@@ -249,7 +160,6 @@ main(int argc, char **argv)
     int	xout, yout, n, m, xstart, xskip;
 
     if ( !get_args( argc, argv ) )  {
-	(void)fputs(usage, stderr);
 	bu_exit( 1, NULL );
     }
 
@@ -263,12 +173,6 @@ main(int argc, char **argv)
 	    fprintf(stderr, "pix-fb: unable to autosize\n");
 	}
     }
-
-    /* If screen size was not set, track the file size */
-    if ( scr_width == 0 )
-	scr_width = file_width;
-    if ( scr_height == 0 )
-	scr_height = file_height;
 
     FBIO *ifp;
     ifp = (FBIO *) calloc(sizeof(FBIO), 1);
@@ -352,44 +256,7 @@ main(int argc, char **argv)
 	 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
-
-    /* compute number of pixels to be output to screen */
-    if ( scr_xoff < 0 )
-    {
-	xout = scr_width + scr_xoff;
-	xskip = (-scr_xoff);
-	xstart = 0;
-    }
-    else
-    {
-	xout = scr_width - scr_xoff;
-	xskip = 0;
-	xstart = scr_xoff;
-    }
-
-    if ( xout < 0 )
-	bu_exit(0, NULL);			/* off screen */
-    if ( xout > (file_width-file_xoff) )
-	xout = (file_width-file_xoff);
-    scanpix = xout;				/* # pixels on scanline */
-
-    if ( inverse )
-	scr_yoff = (-scr_yoff);
-
-    yout = scr_height - scr_yoff;
-    if ( yout < 0 )
-	bu_exit(0, NULL);			/* off screen */
-    if ( yout > (file_height-file_yoff) )
-	yout = (file_height-file_yoff);
-
-    /* Only in the simplest case use multi-line writes */
-    if ( !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
-	 xout == file_width &&
-	 file_width <= scr_width )  {
-	scanpix *= multiple_lines;
-    }
-
-    scanbytes = scanpix * sizeof(RGBpixel);
+    scanbytes = scr_width * sizeof(RGBpixel);
     if ( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
 	fprintf(stderr,
 		"pix-fb:  malloc(%d) failure for scanline buffer\n",
@@ -397,17 +264,10 @@ main(int argc, char **argv)
 	bu_exit(2, NULL);
     }
 
-    if ( file_yoff != 0 ) skipbytes( infd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel) );
-
     /* Normal way -- bottom to top */
-    for ( y = scr_yoff; y < scr_yoff + yout; y++ )  {
-        if ( y < 0 || y > scr_height )
-        {
-	    skipbytes( infd, (off_t)file_width*sizeof(RGBpixel) );
-	    continue;
-        }
-        if ( file_xoff+xskip != 0 )
-	    skipbytes( infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel) );
+    for ( y = 0; y < scr_height; y++ )  {
+	sleep(1);
+	printf("y: %d\n", y);
         n = bu_mread( infd, (char *)scanline, scanbytes );
         if ( n <= 0 ) break;
         bblock.pixelPtr = (unsigned char *)scanline;
@@ -420,8 +280,6 @@ main(int argc, char **argv)
 #endif
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
         /* slop at the end of the line? */
-        if ( file_xoff+xskip+scanpix < file_width )
-	    skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
     }
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
@@ -434,30 +292,6 @@ main(int argc, char **argv)
     }
 
     bu_exit(0, NULL);
-}
-
-/*
- * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
- */
-int
-skipbytes(int fd, off_t num)
-{
-    int	n, try;
-
-    if ( fileinput ) {
-	(void)lseek( fd, (off_t)num, 1 );
-	return 0;
-    }
-
-    while ( num > 0 ) {
-	try = num > scanbytes ? scanbytes : num;
-	n = read( fd, scanline, try );
-	if ( n <= 0 ) {
-	    return -1;
-	}
-	num -= n;
-    }
-    return	0;
 }
 
 #else
