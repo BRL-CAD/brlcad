@@ -197,7 +197,11 @@ typedef ptrdiff_t ssize_t;
 #    define UNUSED(parameter) (parameter) __attribute__((unused))
 #  else
      /* MSVC/C++ */
-#    define UNUSED(parameter) /* parameter */
+#    ifdef __cplusplus
+#      define UNUSED(parameter) /* parameter */
+#    else
+#      define UNUSED(parameter) (parameter)
+#    endif
 #  endif
 #else
 #  undef UNUSED
