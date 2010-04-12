@@ -33,9 +33,6 @@
 #  undef Cursor
 #endif /* HAVE_CARBON_CARBON_H */
 
-#include "dm.h"
-
-
 static void
 dm_x11_applicationfocus() {
 #ifdef HAVE_CARBON_CARBON_H
