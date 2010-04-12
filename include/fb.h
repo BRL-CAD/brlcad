@@ -143,6 +143,9 @@ FB_EXPORT extern int X24_close_existing(FBIO *ifp);
 #    include <X11/Xlib.h>
 #    include <X11/Xutil.h>
 #  endif
+#  ifdef HAVE_GL_GLX_H
+#    include <GL/glx.h>
+#  endif
 #  ifdef HAVE_GL_GL_H
 #    include <GL/gl.h>
 #  endif
