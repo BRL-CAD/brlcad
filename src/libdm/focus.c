@@ -31,7 +31,15 @@
 #  define Cursor MyCursor
 #  include <Carbon/Carbon.h>
 #  undef Cursor
+/* undef __QUICKDRAW__ is needed to prevent gl.h from declaring an
+ * unrecognized pragma export warning on Mac OS X (10.5).
+ */
+#  ifdef __QUICKDRAW__
+#    undef __QUICKDRAW__
+#  endif
 #endif /* HAVE_CARBON_CARBON_H */
+
+#include "dm.h"
 
 static void
 dm_x11_applicationfocus() {
