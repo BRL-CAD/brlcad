@@ -319,10 +319,14 @@ main(int argc, char *argv[])
     int run_in_foreground=1;
 
     Tcl_Channel chan;
-    fd_set read_set, exception_set;
     struct timeval timeout;
-    int result;
     FILE *out;
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+    fd_set read_set;
+    fd_set exception_set;
+    int result;
+#endif
 
     char *attach = (char *)NULL;
 
@@ -756,7 +760,11 @@ main(int argc, char *argv[])
 	    if (old_mged_gui) {
 		bu_vls_strcpy(&vls, "gui");
 	    } else {
-		if (argv >= 1)
+		/* any remaining parameter should be the name of our
+		 * .g -- archer looks at the 'argv' global for a
+		 * database file name.
+		 */
+		if (argc >= 1)
 		    bu_vls_printf(&vls, "set argv %s; source archer", argv[0]);
 		else
 		    bu_vls_printf(&vls, "source archer");
