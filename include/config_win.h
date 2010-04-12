@@ -259,9 +259,6 @@ typedef unsigned int uid_t;
 #define X_OK 1
 #define F_OK 0
 
-#undef DELETE
-#undef complex
-
 /*
  * faking it
  */
