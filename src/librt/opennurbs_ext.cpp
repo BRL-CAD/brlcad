@@ -100,7 +100,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		    bu_log("ON_BrepTrim::unknown on Face:%d\n", face->m_face_index);
 		    break;
 		case ON_BrepTrim::boundary:
-		    bu_log("ON_BrepTrim::boundary on Face:%d\n", face->m_face_index);
+		    //bu_log("ON_BrepTrim::boundary on Face:%d\n", face->m_face_index);
 		    break;
 		case ON_BrepTrim::mated:
 		    if (edge.m_ti.Count() == 2) {
@@ -493,6 +493,12 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
 bool
 CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 {
+    ON_3dVector tangent_start = curve->TangentAt(min);
+    ON_3dVector tangent_end = curve->TangentAt(max);
+    double vdot = tangent_start * tangent_end;
+    if (vdot <  BREP_CURVE_FLATNESS)
+    	return false;
+
     ON_3dPoint pmin = curve->PointAt(min);
     ON_3dPoint pmax = curve->PointAt(max);
 		
@@ -517,7 +523,7 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 
     ON_3dVector A;
     ON_3dVector B;
-    double vdot = 1.0;
+    vdot = 1.0;
     A = points[BREP_BB_CRV_PNT_CNT-1] - points[0];
     A.Unitize();
     for (int i=1;i<BREP_BB_CRV_PNT_CNT-1;i++) {
