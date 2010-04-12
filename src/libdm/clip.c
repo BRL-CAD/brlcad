@@ -19,10 +19,6 @@
  */
 /** @file clip.c
  *
- *  Functions -
- *	clip	clip a 2-D integer line seg against the size of the display
- *	vclip	clip a 3-D floating line segment against a bounding RPP.
- *
  * Authors - clip() was started on 14 October 81, Based on the
  * clipping routine in "Principles of Computer Graphics" by Newman and
  * Sproull, 1973, McGraw/Hill.
@@ -37,16 +33,44 @@
 #include "vmath.h"
 #include "dm.h"
 
+/* XXX need to test more thoroughly
+   #define ANGLE_EPSILON 0.0001
+   #define CLIP_DISTANCE 1000000000.0
+*/
+#define EPSILON 0.0001
+#define CLIP_DISTANCE 100000000.0
 
-static int	code();
 
+HIDDEN int
+code(fastf_t x, fastf_t y)
+{
+    int cval;
+
+    cval = 0;
+    if (x < GED_MIN)
+	cval |= 01;
+    else if (x > GED_MAX)
+	cval |= 02;
+
+    if (y < GED_MIN)
+	cval |= 04;
+    else if (y > GED_MAX)
+	cval |= 010;
+
+    return (cval);
+}
+
+
+/**
+ * clip a 2-D integer line seg against the size of the display
+ */
 int
-clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
+clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 {
     char code1, code2;
 
-    code1 = code (*xp1, *yp1);
-    code2 = code (*xp2, *yp2);
+    code1 = code(*xp1, *yp1);
+    code2 = code(*xp2, *yp2);
 
     while (code1 || code2) {
 	if (code1 & code2)
@@ -91,37 +115,12 @@ clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 	    *yp1 = GED_MAX;
 	}
 
-	code1 = code (*xp1, *yp1);
+	code1 = code(*xp1, *yp1);
     }
 
     return (0);
 }
 
-static int
-code (fastf_t x, fastf_t y)
-{
-    int cval;
-
-    cval = 0;
-    if (x < GED_MIN)
-	cval |= 01;
-    else if (x > GED_MAX)
-	cval |= 02;
-
-    if (y < GED_MIN)
-	cval |= 04;
-    else if (y > GED_MAX)
-	cval |= 010;
-
-    return (cval);
-}
-
-/* XXX need to test more thoroughly
-   #define ANGLE_EPSILON 0.0001
-   #define CLIP_DISTANCE 1000000000.0
-*/
-#define EPSILON 0.0001
-#define CLIP_DISTANCE 100000000.0
 
 /*
  *			V C L I P
@@ -137,7 +136,8 @@ code (fastf_t x, fastf_t y)
  *  Implicit Return -
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-int vclip( vect_t a, vect_t b, fastf_t *min, fastf_t *max )
+int
+vclip( vect_t a, vect_t b, fastf_t *min, fastf_t *max )
 {
     static vect_t diff;
     static double sv;
