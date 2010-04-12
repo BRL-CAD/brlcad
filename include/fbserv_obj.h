@@ -63,8 +63,8 @@ struct fbserv_obj {
     int				fbs_mode;			/**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
 };
 
-FB_EXPORT extern int fbs_open();
-FB_EXPORT extern int fbs_close();
+FB_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
+FB_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
 #endif  /* __FBSERV_OBJ_H__ */
 /** @} */

@@ -462,9 +462,9 @@ fbo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	if (port >= 0)
-	    fbs_open(interp, &fbop->fbo_fbs, port);
+	    fbs_open(&fbop->fbo_fbs, port);
 	else {
-	    fbs_close(interp, &fbop->fbo_fbs);
+	    fbs_close(&fbop->fbo_fbs);
 	}
 	bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
