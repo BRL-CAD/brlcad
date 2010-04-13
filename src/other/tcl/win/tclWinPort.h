@@ -48,8 +48,12 @@
  * These string functions are not defined with the same names on Windows.
  */
 
-#define strcasecmp stricmp
-#define strncasecmp strnicmp
+#ifndef strcasecmp
+#   define strcasecmp stricmp
+#endif
+#ifndef strncasecmp
+#   define strncasecmp strnicmp
+#endif
 
 /*
  * Need to block out these includes for building extensions with MetroWerks
@@ -301,7 +305,7 @@
  */
 
 #ifndef S_IFLNK
-#define S_IFLNK        0120000  /* Symbolic Link */
+#   define S_IFLNK        0120000  /* Symbolic Link */
 #endif
 
 #ifndef S_ISREG
@@ -353,11 +357,11 @@
  */
 
 #ifndef MAXPATH
-#define MAXPATH MAX_PATH
+#   define MAXPATH MAX_PATH
 #endif /* MAXPATH */
 
 #ifndef MAXPATHLEN
-#define MAXPATHLEN MAXPATH
+#   define MAXPATHLEN MAXPATH
 #endif /* MAXPATHLEN */
 
 /*
@@ -378,13 +382,13 @@
  */
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
-#    define environ _environ
-#    define hypot _hypot
-#    define exception _exception
-#    undef EDEADLOCK
-#    if defined(__MINGW32__) && !defined(__MSVCRT__)
-#	define timezone _timezone
-#    endif
+#   define environ _environ
+#   define hypot _hypot
+#   define exception _exception
+#   undef EDEADLOCK
+#   if defined(__MINGW32__) && !defined(__MSVCRT__)
+#       define timezone _timezone
+#   endif
 #endif /* _MSC_VER || __MINGW32__ */
 
 /*
