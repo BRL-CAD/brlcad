@@ -38,8 +38,10 @@
 /*  4244 conversion from type 1 to type 2
  *  4305 truncation
  *  4018 signed/unsigned mismatch
+ *  4996 deprecation warning on non-secure functions
  */
-#pragma warning( disable : 4244 4305 4018)
+#pragma warning( disable : 4996 )
+/* #pragma warning( disable : 4244 4305 4018) */
 
 /*
  * Ensure that Project Settings / Project Options includes
