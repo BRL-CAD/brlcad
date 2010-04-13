@@ -52,13 +52,14 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
     /* array of points */
 
 {
-    if ( npoints <= 0 )
+    if (npoints <= 0)
 	return;
 
-    pl_move( fp, *x++, *y++ );
-    while ( --npoints > 0 )
-	pl_cont( fp, *x++, *y++ );
+    pl_move(fp, *x++, *y++);
+    while (--npoints > 0)
+	pl_cont(fp, *x++, *y++);
 }
+
 
 /**
  *			T P _ 2 L I S T
@@ -75,31 +76,29 @@ tp_2list(register FILE *fp, register double *x, register double *y, register int
     /* array of points */
 
 {
-    if ( npoints <= 0 )
+    if (npoints <= 0)
 	return;
 
-    pd_move( fp, *x++, *y++ );
-    while ( --npoints > 0 )
-	pd_cont( fp, *x++, *y++ );
+    pd_move(fp, *x++, *y++);
+    while (--npoints > 0)
+	pd_cont(fp, *x++, *y++);
 }
 
+
 void
-PL_FORTRAN(f2list, F2LIST)( fpp, x, y, n )
-    FILE		**fpp;
-    register float	*x;
-    register float	*y;
-    int		*n;
+PL_FORTRAN(f2list, F2LIST)(FILE **fpp, float *x, float *y, int *n)
 {
     register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
     register FILE	*fp = *fpp;
 
-    if ( npoints <= 0 )
+    if (npoints <= 0)
 	return;
 
-    pd_move( fp, *x++, *y++ );
-    while ( --npoints > 0 )
-	pd_cont( fp, *x++, *y++ );
+    pd_move(fp, *x++, *y++);
+    while (--npoints > 0)
+	pd_cont(fp, *x++, *y++);
 }
+
 
 /*
  *			T P _ 3 L I S T
@@ -107,32 +106,29 @@ PL_FORTRAN(f2list, F2LIST)( fpp, x, y, n )
 void
 tp_3list(FILE *fp, register double *x, register double *y, register double *z, register int npoints)
 {
-    if ( npoints <= 0 )
+    if (npoints <= 0)
 	return;
 
-    pd_3move( fp, *x++, *y++, *z++ );
-    while ( --npoints > 0 )
-	pd_3cont( fp, *x++, *y++, *z++ );
+    pd_3move(fp, *x++, *y++, *z++);
+    while (--npoints > 0)
+	pd_3cont(fp, *x++, *y++, *z++);
 }
 
+
 void
-PL_FORTRAN(f3list, F3LIST)( fpp, x, y, z, n )
-    FILE		**fpp;
-    register float	*x;
-    register float	*y;
-    register float	*z;
-    int		*n;
+PL_FORTRAN(f3list, F3LIST)(FILE **fpp, float *x, float *y, float *z, int *n)
 {
     register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
     register FILE	*fp = *fpp;
 
-    if ( npoints <= 0 )
+    if (npoints <= 0)
 	return;
 
-    pd_3move( fp, *x++, *y++, *z++ );
-    while ( --npoints > 0 )
-	pd_3cont( fp, *x++, *y++, *z++ );
+    pd_3move(fp, *x++, *y++, *z++);
+    while (--npoints > 0)
+	pd_3cont(fp, *x++, *y++, *z++);
 }
+
 
 /**
  *			T P _ 2 M L I S T
@@ -170,17 +166,17 @@ tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int fla
     register int i;			/* index variable */
     register int counter;		/* interval counter */
 
-    if ( npoints <= 0 )
+    if (npoints <= 0)
 	return;
 
-    if ( flag & TP_LINE )
-	tp_2list( fp, x, y, npoints );
-    if ( flag & TP_MARK )  {
-	tp_2marker( fp, mark, *x++, *y++, size );
+    if (flag & TP_LINE)
+	tp_2list(fp, x, y, npoints);
+    if (flag & TP_MARK) {
+	tp_2marker(fp, mark, *x++, *y++, size);
 	counter = 1;		/* Already plotted one */
-	for ( i=1; i<npoints; i++ )  {
-	    if ( counter >= interval )  {
-		tp_2marker( fp, mark, *x, *y, size );
+	for (i=1; i<npoints; i++) {
+	    if (counter >= interval) {
+		tp_2marker(fp, mark, *x, *y, size);
 		counter = 0;	/* We made a mark */
 	    }
 	    x++; y++;
@@ -189,35 +185,28 @@ tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int fla
     }
 }
 
+
 /**
  *  This FORTRAN interface expects arrays of REALs (single precision).
  */
 void
-PL_FORTRAN(f2mlst, F2MLST)( fp, x, y, np, flag, mark, interval, size )
-    FILE	**fp;
-    float	*x;
-    float	*y;
-    int	*np;
-    int	*flag;		/* indicates user's mode request */
-    int	*mark;
-    int	*interval;
-    float	*size;
+PL_FORTRAN(f2mlst, F2MLST)(FILE **fp, float *x, float *y, int *np, int *flag /* indicates user's mode request */, int *mark, int *interval, float size)
 {
     register int i;			/* index variable */
     register int counter;		/* interval counter */
     register int npoints = *np-1;
 
-    if ( npoints <= 0 )
+    if (npoints <= 0)
 	return;
 
-    if ( *flag & TP_LINE )
-	PL_FORTRAN(f2list, F2LIST)( fp, x, y, np );
-    if ( *flag & TP_MARK )  {
-	tp_2marker( *fp, *mark, *x++, *y++, *size );
+    if (*flag & TP_LINE)
+	PL_FORTRAN(f2list, F2LIST)(fp, x, y, np);
+    if (*flag & TP_MARK) {
+	tp_2marker(*fp, *mark, *x++, *y++, *size);
 	counter = 1;			/* We already plotted one */
-	for ( i=1; i<npoints; i++ )  {
-	    if ( counter >= *interval )  {
-		tp_2marker( *fp, *mark, *x, *y, *size );
+	for (i=1; i<npoints; i++) {
+	    if (counter >= *interval) {
+		tp_2marker(*fp, *mark, *x, *y, *size);
 		counter = 0;	/* Made a mark */
 	    }
 	    x++; y++;
@@ -225,6 +214,8 @@ PL_FORTRAN(f2mlst, F2MLST)( fp, x, y, np, flag, mark, interval, size )
 	}
     }
 }
+
+
 /** @} */
 /*
  * Local Variables:

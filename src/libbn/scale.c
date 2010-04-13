@@ -195,14 +195,7 @@ tp_scale(int *idata,
  *	FORTRAN Interface
  */
 void
-PL_FORTRAN(fscale, FSCALE)( idata, elements, mode, length, odata, min, dx )
-    int	idata[];
-    int	*elements;
-    char	*mode;
-    int	*length;
-    int	odata[];
-    double	*min;
-    double	*dx;
+PL_FORTRAN(fscale, FSCALE)(int idata[], int *elements, char *mode, int *length, int odata[], double *min, double *dx)
 {
     tp_scale( idata, *elements, *mode, *length, odata, min, dx );
 }

@@ -148,13 +148,7 @@ tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double thet
  *  This FORTRAN interface expects REAL args (single precision).
  */
 void
-PL_FORTRAN(f2symb, F2SYMB)( fp, string, x, y, scale, theta )
-    FILE	**fp;
-    char	*string;
-    float	*x;
-    float	*y;
-    float	*scale;
-    float	*theta;
+PL_FORTRAN(f2symb, F2SYMB)(FILE **fp, char *string, float *x, float *y, float *scale, float *theta)
 {
     char buf[128] = {0};
 
