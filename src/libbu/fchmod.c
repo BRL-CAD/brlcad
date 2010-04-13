@@ -44,7 +44,7 @@ int
 bu_fchmod(FILE *fp,
 	  unsigned long pmode)
 {
-    if (!fp) {
+    if (!fp || pmode < 0) {
 	return 0;
     }
 
