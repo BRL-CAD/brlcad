@@ -894,7 +894,7 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
 	fprintf(_pkg_debug,
 		"_pkg_checkin: select on fd %d returned %ld\n",
 		pc->pkc_fd,
-		i);
+		(long int)i);
 	fflush(_pkg_debug);
     }
     if (i > 0) {
@@ -908,7 +908,7 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
 	    /* Odd condition, bits! */
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		     "_pkg_checkin: select returned %ld, bits=0\n",
-		     i);
+		     (long int)i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	}
     } else if (i < 0) {
@@ -1100,7 +1100,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    return(-1);
 	}
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote %ld\n",
-		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, i);
+		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, (long int)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
     }
