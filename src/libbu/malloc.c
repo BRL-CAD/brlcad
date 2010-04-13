@@ -174,6 +174,8 @@ _bu_memdebug_check(register genptr_t ptr, const char *str)
 }
 
 
+extern int bu_bomb_failsafe_init();
+
 /**
  * _ B U _ A L L O C
  *
@@ -193,7 +195,6 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
     register genptr_t ptr = 0;
     register size_t size = cnt * sz;
 
-    extern int bu_bomb_failsafe_init();
     static int failsafe_init = 0;
 
     /* bu_bomb hook to recover from memory problems */
