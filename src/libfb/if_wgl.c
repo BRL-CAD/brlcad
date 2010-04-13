@@ -557,10 +557,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 HIDDEN int
-wgl_open(ifp, file, width, height)
-    FBIO *ifp;
-    char *file;
-    int width, height;
+wgl_open(FBIO *ifp, char *file, int width, int height)
 {
     static char title[128];
     int mode,  ret;
@@ -1664,7 +1661,6 @@ HIDDEN int
 wgl_help(FBIO *ifp)
 {
     struct modeflags *mfp;
-    PIXELFORMATDESCRIPTOR *visual = WGL(ifp)->vip;
 
     fb_log("Description: %s\n", ifp->if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -1683,8 +1679,6 @@ wgl_help(FBIO *ifp)
     fb_log("	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer);
     fb_log("	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag);
     fb_log("	wgl_nwindows=%d\n", wgl_nwindows);
-
-    fb_log("X11 Visual:\n");
 
     return 0;
 }
