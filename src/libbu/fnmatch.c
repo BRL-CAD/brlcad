@@ -81,7 +81,7 @@
 #define BU_FNM_RANGE_ERROR   (-1)
 
 /* isblank appears to be obsolete in newer ctype.h files so use
- * ccblank instead when looking for the "blank" character class.
+ * fnblank instead when looking for the "blank" character class.
  */
 HIDDEN inline int
 fnblank(int c)
@@ -217,9 +217,12 @@ charclassmatch(const char *pattern, char test, int *s)
     struct bu_vls classname;
     CHARCLASS *ctclass;
     bu_vls_init(&classname);
-    while ((c = *pattern++) && (c != ':') && (resultholder != -1)) {
+    c = *pattern++;
+    while (c && (c != ':') && (resultholder != -1)) {
 	if (c == BU_FNM_EOS) resultholder = -1;
 	counter++;
+
+        c = *pattern++; /* next */
     }
     c = *pattern++;
     if (c != ']') resultholder = -1;
