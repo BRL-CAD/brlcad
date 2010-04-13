@@ -1559,7 +1559,7 @@ struct application  {
     int			a_flag;		/**< @brief  application-specific flag */
     int			a_zero2;	/**< @brief  must be zero (sanity check) */
 };
-#define RT_AFN_NULL	((int (*)())0)
+#define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_AP_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
