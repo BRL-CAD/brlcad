@@ -627,7 +627,7 @@ rt_init_resource(struct resource *resp,
 	BU_ASSERT_LONG(cpu_num, >=, 0);
 	if (rtip != NULL && rtip->rti_treetop) {
 	    /* this is a submodel */
-	    BU_ASSERT_LONG(cpu_num, <, (int)rtip->rti_resources.blen);
+	    BU_ASSERT_LONG(cpu_num, <, (long)rtip->rti_resources.blen);
 	} else {
 	    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
 	}
