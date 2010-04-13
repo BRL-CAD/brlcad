@@ -181,7 +181,7 @@ fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 #if defined(_WIN32) && !defined(__CYGWIN__)
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp,
-	   Tcl_Channel chan)
+		  Tcl_Channel chan)
 	   
 {
     int i;
@@ -214,9 +214,9 @@ fbserv_new_client(struct pkg_conn *pcp,
 
 HIDDEN void
 fbserv_new_client_handler(ClientData clientData,
-		   Tcl_Channel chan,
-		   char *host,
-		   int port)
+			  Tcl_Channel chan,
+			  char *host,
+			  int port)
 {
     struct dm_list *dlp = (struct dm_list *)clientData;
     struct dm_list *scdlp;  /* save current dm_list pointer */
@@ -242,7 +242,7 @@ fbserv_new_client_handler(ClientData clientData,
  * S E T _ P O R T
  */
 void
-set_port(void)
+fbserv_set_port(void)
 {
     int i;
     int save_port;
@@ -305,7 +305,7 @@ set_port(void)
     if (netchan == NULL) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
-	bu_log("set_port: failed to hang a listen on ports %d - %d\n",
+	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
 	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
     } else {
 	mged_variables->mv_port = port;
@@ -419,7 +419,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
  * S E T _ P O R T
  */
 void
-set_port(void)
+fbserv_set_port(void)
 {
     int i;
     int save_port;
@@ -469,7 +469,7 @@ set_port(void)
     if (netfd < 0) {
 	mged_variables->mv_port = save_port;
 	mged_variables->mv_listen = 0;
-	bu_log("set_port: failed to hang a listen on ports %d - %d\n",
+	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
 	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
     } else
 	Tcl_CreateFileHandler(netfd, TCL_READABLE,
