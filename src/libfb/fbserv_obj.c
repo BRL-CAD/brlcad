@@ -84,7 +84,7 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 
     if (fbsp->fbs_clients[sub].fbsc_fd != 0) {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan, fbsp->fbs_clients[sub].fbsc_handler, (Clientdata)fbsp->fbs_clients[sub].fbsc_fd);
+	Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan, fbsp->fbs_clients[sub].fbsc_handler, (ClientData)fbsp->fbs_clients[sub].fbsc_fd);
 
 	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_clients[sub].fbsc_chan);
 	fbsp->fbs_clients[sub].fbsc_chan = NULL;
@@ -830,7 +830,7 @@ new_client_handler(ClientData clientData,
 	return;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (Clientdata *)&fd) == TCL_OK)
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
 	new_client(fbsp, fbs_makeconn(fd, pswitch), chan);
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
     new_client(fbsp, pkg_getclient(fd, pswitch, comm_error, 0), 0);
@@ -843,8 +843,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 {
     int i;
     struct bu_vls vls;
-    char hostname[32];
-    char portname[32];
+    char hostname[32] = {0};
     Tcl_DString ds;
     int failed = 0;
     int available_port = port;
@@ -886,6 +885,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	    break;
 	}
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+        char portname[32] = {0};
 	sprintf(portname, "%d", available_port);
 	fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error);
 	if (fbsp->fbs_listener.fbsl_fd >= 0)
@@ -919,7 +919,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
     fbsp->fbs_listener.fbsl_port = port;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (Clientdata *)&fbsp->fbs_listener.fbsl_fd);
+    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (ClientData *)&fbsp->fbs_listener.fbsl_fd);
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
     Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
 #endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
@@ -940,7 +940,7 @@ fbs_close(struct fbserv_obj *fbsp)
 #if defined(_WIN32) && !defined(__CYGWIN__)
     if (fbsp->fbs_listener.fbsl_chan != NULL) {
 	Tcl_ChannelProc *callback = (Tcl_ChannelProc *)new_client_handler;
-	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan, callback, (Clientdata)fbsp->fbs_listener.fbsl_fd);
+	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan, callback, (ClientData)fbsp->fbs_listener.fbsl_fd);
 	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_listener.fbsl_chan);
 	fbsp->fbs_listener.fbsl_chan = NULL;
     }
