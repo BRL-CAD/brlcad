@@ -213,6 +213,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 }
 
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
 HIDDEN struct pkg_conn *
 fbs_makeconn(int fd, const struct pkg_switch *switchp)
 {
@@ -250,6 +251,7 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
 
     return pc;
 }
+#endif
 
 
 /*
@@ -791,7 +793,7 @@ new_client_handler(ClientData clientData,
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
     struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
-    int fd;
+    int fd = 0;
 
     static struct pkg_switch pswitch[] = {
 	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer" },
