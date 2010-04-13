@@ -38,10 +38,11 @@
 /* 4127 conditional expression is constant
  * 4244 conversion from type 1 to type 2
  * 4305 truncation
+ * 4312 type cast: conversion from type1 to type2 of greater size
  * 4018 signed/unsigned mismatch
  * 4996 deprecation warning on non-secure functions
  */
-#pragma warning( disable : 4127 4244 4996 )
+#pragma warning( disable : 4127 4244 4312 4996 )
 /* #pragma warning( disable : 4244 4305 4018) */
 
 /*
