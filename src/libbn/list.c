@@ -190,7 +190,7 @@ tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int fla
  *  This FORTRAN interface expects arrays of REALs (single precision).
  */
 void
-PL_FORTRAN(f2mlst, F2MLST)(FILE **fp, float *x, float *y, int *np, int *flag /* indicates user's mode request */, int *mark, int *interval, float size)
+PL_FORTRAN(f2mlst, F2MLST)(FILE **fp, float *x, float *y, int *np, int *flag /* indicates user's mode request */, int *mark, int *interval, float *size)
 {
     register int i;			/* index variable */
     register int counter;		/* interval counter */
