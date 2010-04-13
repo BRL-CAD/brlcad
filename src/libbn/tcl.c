@@ -872,7 +872,8 @@ bn_cmd_random(ClientData clientData,
 	return TCL_ERROR;
     }
 
-    if (! (str=Tcl_GetVar(interp, argv[1], 0))) {
+    str=Tcl_GetVar(interp, argv[1], 0);
+    if (!str) {
 	Tcl_AppendResult(interp, "Error getting variable ",
 			 argv[1], NULL);
 	return TCL_ERROR;
