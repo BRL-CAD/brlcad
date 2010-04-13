@@ -28,40 +28,43 @@
 #include "fb.h"
 #include "pkg.h"
 
-#define NET_LONG_LEN	4	/**< @brief #  bytes to network long */
+#define NET_LONG_LEN 4 /**< @brief # bytes to network long */
 #define MAX_CLIENTS 32
 #define MAX_PORT_TRIES 100
-#define FBS_CALLBACK_NULL	(void (*)())NULL
+#define FBS_CALLBACK_NULL (void (*)())NULL
 
 struct fbserv_listener {
-    int			fbsl_fd;			/**< @brief socket to listen for connections */
+    int fbsl_fd;			/**< @brief socket to listen for connections */
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_Channel		fbsl_chan;
+    Tcl_Channel fbsl_chan;
 #endif
-    int			fbsl_port;			/**< @brief port number to listen on */
-    int			fbsl_listen;			/**< @brief !0 means listen for connections */
-    struct fbserv_obj	*fbsl_fbsp;			/**< @brief points to its fbserv object */
+    int fbsl_port;			/**< @brief port number to listen on */
+    int fbsl_listen;			/**< @brief !0 means listen for connections */
+    struct fbserv_obj *fbsl_fbsp;	/**< @brief points to its fbserv object */
 };
+
 
 struct fbserv_client {
-    int			fbsc_fd;
+    int fbsc_fd;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_Channel         fbsc_chan;
-    Tcl_FileProc        *fbsc_handler;
+    Tcl_Channel fbsc_chan;
+    Tcl_FileProc *fbsc_handler;
 #endif
-    struct pkg_conn	*fbsc_pkg;
-    struct fbserv_obj	*fbsc_fbsp;			/**< @brief points to its fbserv object */
+    struct pkg_conn *fbsc_pkg;
+    struct fbserv_obj *fbsc_fbsp;	/**< @brief points to its fbserv object */
 };
 
+
 struct fbserv_obj {
-    FBIO			*fbs_fbp;			/**< @brief framebuffer pointer */
-    Tcl_Interp			*fbs_interp;			/**< @brief tcl interpreter */
-    struct fbserv_listener	fbs_listener;			/**< @brief data for listening */
-    struct fbserv_client	fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
-    void			(*fbs_callback)();		/**< @brief callback function */
-    genptr_t			fbs_clientData;
-    int				fbs_mode;			/**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
+    FBIO *fbs_fbp;			/**< @brief framebuffer pointer */
+    Tcl_Interp *fbs_interp;		/**< @brief tcl interpreter */
+    struct fbserv_listener fbs_listener;		/**< @brief data for listening */
+    struct fbserv_client fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
+    void (*fbs_callback)();		/**< @brief callback function */
+    genptr_t fbs_clientData;
+    int fbs_mode;			/**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
 };
+
 
 FB_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
 FB_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
