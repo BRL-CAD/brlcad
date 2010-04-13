@@ -128,7 +128,6 @@ mkstemp(char *file_template)
 {
     int fd = -1;
     int counter = 0;
-    char *filepath = NULL;
     size_t i;
     size_t start, end;
 
