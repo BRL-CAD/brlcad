@@ -170,6 +170,10 @@ FB_EXPORT extern int ogl_close_existing(FBIO *ifp);
 #endif
 
 #ifdef IF_WGL
+#  include <windowsx.h>
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
 FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
 FB_EXPORT extern int wgl_close_existing(FBIO *ifp);
 #endif
