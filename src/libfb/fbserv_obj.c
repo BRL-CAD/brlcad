@@ -56,71 +56,6 @@
 #include "fbserv_obj.h"
 
 
-/*
- * Package Handlers.
- */
-void fbs_rfbunknown(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
-void fbs_rfbopen(struct pkg_conn *pcp, char *buf);
-void fbs_rfbclose(struct pkg_conn *pcp, char *buf);
-void fbs_rfbclear(struct pkg_conn *pcp, char *buf);
-void fbs_rfbread(struct pkg_conn *pcp, char *buf);
-void fbs_rfbwrite(struct pkg_conn *pcp, char *buf);
-void fbs_rfbcursor(struct pkg_conn *pcp, char *buf);
-void fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf);
-void fbs_rfbrmap(struct pkg_conn *pcp, char *buf);
-void fbs_rfbwmap(struct pkg_conn *pcp, char *buf);
-void fbs_rfbhelp(struct pkg_conn *pcp, char *buf);
-void fbs_rfbreadrect(struct pkg_conn *pcp, char *buf);
-void fbs_rfbwriterect(struct pkg_conn *pcp, char *buf);
-void fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf);
-void fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf);
-void fbs_rfbpoll(struct pkg_conn *pcp, char *buf);
-void fbs_rfbflush(struct pkg_conn *pcp, char *buf);
-void fbs_rfbfree(struct pkg_conn *pcp, char *buf);
-void fbs_rfbview(struct pkg_conn *pcp, char *buf);
-void fbs_rfbgetview(struct pkg_conn *pcp, char *buf);
-void fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf);
-/* Old Routines */
-void fbs_rfbscursor(struct pkg_conn *pcp, char *buf);
-void fbs_rfbwindow(struct pkg_conn *pcp, char *buf);
-void fbs_rfbzoom(struct pkg_conn *pcp, char *buf);
-
-
-static struct pkg_switch pkg_switch[] = {
-    { MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer" },
-    { MSG_FBCLOSE, fbs_rfbclose, "Close Framebuffer" },
-    { MSG_FBCLEAR, fbs_rfbclear, "Clear Framebuffer" },
-    { MSG_FBREAD, fbs_rfbread, "Read Pixels" },
-    { MSG_FBWRITE, fbs_rfbwrite, "Write Pixels" },
-    { MSG_FBWRITE + MSG_NORETURN, fbs_rfbwrite, "Asynch write" },
-    { MSG_FBCURSOR, fbs_rfbcursor, "Cursor" },
-    { MSG_FBGETCURSOR, fbs_rfbgetcursor, "Get Cursor" },  /*NEW*/
-    { MSG_FBSCURSOR, fbs_rfbscursor, "Screen Cursor" }, /*OLD*/
-    { MSG_FBWINDOW, fbs_rfbwindow, "Window" },  /*OLD*/
-    { MSG_FBZOOM, fbs_rfbzoom, "Zoom" },  /*OLD*/
-    { MSG_FBVIEW, fbs_rfbview, "View" },  /*NEW*/
-    { MSG_FBGETVIEW, fbs_rfbgetview, "Get View" },  /*NEW*/
-    { MSG_FBRMAP, fbs_rfbrmap, "R Map" },
-    { MSG_FBWMAP, fbs_rfbwmap, "W Map" },
-    { MSG_FBHELP, fbs_rfbhelp, "Help Request" },
-    { MSG_ERROR, fbs_rfbunknown, "Error Message" },
-    { MSG_CLOSE, fbs_rfbunknown, "Close Connection" },
-    { MSG_FBREADRECT, fbs_rfbreadrect, "Read Rectangle" },
-    { MSG_FBWRITERECT, fbs_rfbwriterect, "Write Rectangle" },
-    { MSG_FBWRITERECT + MSG_NORETURN, fbs_rfbwriterect, "Write Rectangle" },
-    { MSG_FBBWREADRECT, fbs_rfbbwreadrect, "Read BW Rectangle" },
-    { MSG_FBBWWRITERECT, fbs_rfbbwwriterect, "Write BW Rectangle" },
-    { MSG_FBBWWRITERECT+MSG_NORETURN, fbs_rfbbwwriterect, "Write BW Rectangle" },
-    { MSG_FBFLUSH, fbs_rfbflush, "Flush Output" },
-    { MSG_FBFLUSH + MSG_NORETURN, fbs_rfbflush, "Flush Output" },
-    { MSG_FBFREE, fbs_rfbfree, "Free Resources" },
-    { MSG_FBPOLL, fbs_rfbpoll, "Handle Events" },
-    { MSG_FBSETCURSOR, fbs_rfbsetcursor, "Set Cursor Shape" },
-    { MSG_FBSETCURSOR + MSG_NORETURN, fbs_rfbsetcursor, "Set Cursor Shape" },
-    { 0, NULL, NULL }
-};
-
-
 static FBIO *curr_fbp;		/* current framebuffer pointer */
 
 
@@ -313,150 +248,6 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
     pc->pkc_incur = pc->pkc_inend = 0;
 
     return pc;
-}
-
-
-/*
- * Accept any new client connections.
- */
-HIDDEN void
-new_client_handler(ClientData clientData,
-		   Tcl_Channel chan,
-		   char *UNUSED(host),
-		   int UNUSED(port))
-{
-    struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
-    struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
-    int fd;
-
-    if ((int)chan < 0)
-	return;
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (Clientdata *)&fd) == TCL_OK)
-	new_client(fbsp, fbs_makeconn(fd, pkg_switch), chan);
-#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-    new_client(fbsp, pkg_getclient(fd, pkg_switch, comm_error, 0), 0);
-#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
-}
-
-
-int
-fbs_open(struct fbserv_obj *fbsp, int port)
-{
-    int i;
-    struct bu_vls vls;
-    char hostname[32];
-    char portname[32];
-    Tcl_DString ds;
-    int failed = 0;
-    int available_port = port;
-
-    /* Already listening; nothing more to do. */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    if (fbsp->fbs_listener.fbsl_chan != NULL) {
-	return TCL_OK;
-    }
-#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-    if (fbsp->fbs_listener.fbsl_fd >= 0) {
-	return TCL_OK;
-    }
-#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
-    /* XXX hardwired for now */
-    sprintf(hostname, "localhost");
-
-    if (available_port < 0)
-	available_port = 5559;
-    else if (available_port < 1024)
-	available_port += 5559;
-
-    Tcl_DStringInit(&ds);
-
-    /* Try a reasonable number of times to hang a listen */
-    for (i = 0; i < MAX_PORT_TRIES; ++i) {
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer(fbsp->fbs_interp, available_port, hostname, new_client_handler, (ClientData)&fbsp->fbs_listener);
-	if (fbsp->fbs_listener.fbsl_chan == NULL) {
-	    /* This clobbers the result string which probably has junk
-	     * related to the failed open.
-	     */
-	    Tcl_DStringResult(fbsp->fbs_interp, &ds);
-	} else {
-	    break;
-	}
-#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-	sprintf(portname, "%d", available_port);
-	fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error);
-	if (fbsp->fbs_listener.fbsl_fd >= 0)
-	    break;
-#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
-	++available_port;
-    }
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    if (fbsp->fbs_listener.fbsl_chan == NULL) {
-	failed = 1;
-    }
-#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-    if (fbsp->fbs_listener.fbsl_fd < 0) {
-	failed = 1;
-    }
-#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
-    if (failed) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n", port, available_port);
-	Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	fbsp->fbs_listener.fbsl_port = -1;
-
-	return TCL_ERROR;
-    }
-
-    fbsp->fbs_listener.fbsl_port = port;
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (Clientdata *)&fbsp->fbs_listener.fbsl_fd);
-#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-    Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
-#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
-    return TCL_OK;
-}
-
-
-int
-fbs_close(struct fbserv_obj *fbsp)
-{
-    int i;
-
-    /* first drop all clients */
-    for (i = 0; i < MAX_CLIENTS; ++i)
-	drop_client(fbsp, i);
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    if (fbsp->fbs_listener.fbsl_chan != NULL) {
-	Tcl_ChannelProc *callback = (Tcl_ChannelProc *)new_client_handler;
-	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan, callback, (Clientdata)fbsp->fbs_listener.fbsl_fd);
-	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_listener.fbsl_chan);
-	fbsp->fbs_listener.fbsl_chan = NULL;
-    }
-#else
-    Tcl_DeleteFileHandler(fbsp->fbs_listener.fbsl_fd);
-#endif
-
-    if (0 <= fbsp->fbs_listener.fbsl_fd)
-	close(fbsp->fbs_listener.fbsl_fd);
-    fbsp->fbs_listener.fbsl_fd = -1;
-    fbsp->fbs_listener.fbsl_port = -1;
-
-    return TCL_OK;
 }
 
 
@@ -985,6 +776,184 @@ fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
     (void)pkg_plong(&rbuf[0], ret);
     pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     if (buf) (void)free(buf);
+}
+
+
+/*
+ * Accept any new client connections.
+ */
+HIDDEN void
+new_client_handler(ClientData clientData,
+		   Tcl_Channel chan,
+		   char *UNUSED(host),
+		   int UNUSED(port))
+{
+    struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
+    struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
+    int fd;
+
+    static struct pkg_switch pswitch[] = {
+	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer" },
+	{ MSG_FBCLOSE, fbs_rfbclose, "Close Framebuffer" },
+	{ MSG_FBCLEAR, fbs_rfbclear, "Clear Framebuffer" },
+	{ MSG_FBREAD, fbs_rfbread, "Read Pixels" },
+	{ MSG_FBWRITE, fbs_rfbwrite, "Write Pixels" },
+	{ MSG_FBWRITE + MSG_NORETURN, fbs_rfbwrite, "Asynch write" },
+	{ MSG_FBCURSOR, fbs_rfbcursor, "Cursor" },
+	{ MSG_FBGETCURSOR, fbs_rfbgetcursor, "Get Cursor" },  /*NEW*/
+	{ MSG_FBSCURSOR, fbs_rfbscursor, "Screen Cursor" }, /*OLD*/
+	{ MSG_FBWINDOW, fbs_rfbwindow, "Window" },  /*OLD*/
+	{ MSG_FBZOOM, fbs_rfbzoom, "Zoom" },  /*OLD*/
+	{ MSG_FBVIEW, fbs_rfbview, "View" },  /*NEW*/
+	{ MSG_FBGETVIEW, fbs_rfbgetview, "Get View" },  /*NEW*/
+	{ MSG_FBRMAP, fbs_rfbrmap, "R Map" },
+	{ MSG_FBWMAP, fbs_rfbwmap, "W Map" },
+	{ MSG_FBHELP, fbs_rfbhelp, "Help Request" },
+	{ MSG_ERROR, fbs_rfbunknown, "Error Message" },
+	{ MSG_CLOSE, fbs_rfbunknown, "Close Connection" },
+	{ MSG_FBREADRECT, fbs_rfbreadrect, "Read Rectangle" },
+	{ MSG_FBWRITERECT, fbs_rfbwriterect, "Write Rectangle" },
+	{ MSG_FBWRITERECT + MSG_NORETURN, fbs_rfbwriterect, "Write Rectangle" },
+	{ MSG_FBBWREADRECT, fbs_rfbbwreadrect, "Read BW Rectangle" },
+	{ MSG_FBBWWRITERECT, fbs_rfbbwwriterect, "Write BW Rectangle" },
+	{ MSG_FBBWWRITERECT+MSG_NORETURN, fbs_rfbbwwriterect, "Write BW Rectangle" },
+	{ MSG_FBFLUSH, fbs_rfbflush, "Flush Output" },
+	{ MSG_FBFLUSH + MSG_NORETURN, fbs_rfbflush, "Flush Output" },
+	{ MSG_FBFREE, fbs_rfbfree, "Free Resources" },
+	{ MSG_FBPOLL, fbs_rfbpoll, "Handle Events" },
+	{ MSG_FBSETCURSOR, fbs_rfbsetcursor, "Set Cursor Shape" },
+	{ MSG_FBSETCURSOR + MSG_NORETURN, fbs_rfbsetcursor, "Set Cursor Shape" },
+	{ 0, NULL, NULL }
+    };
+
+    if ((int)chan < 0)
+	return;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (Clientdata *)&fd) == TCL_OK)
+	new_client(fbsp, fbs_makeconn(fd, pswitch), chan);
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+    new_client(fbsp, pkg_getclient(fd, pswitch, comm_error, 0), 0);
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
+}
+
+
+int
+fbs_open(struct fbserv_obj *fbsp, int port)
+{
+    int i;
+    struct bu_vls vls;
+    char hostname[32];
+    char portname[32];
+    Tcl_DString ds;
+    int failed = 0;
+    int available_port = port;
+
+    /* Already listening; nothing more to do. */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (fbsp->fbs_listener.fbsl_chan != NULL) {
+	return TCL_OK;
+    }
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+    if (fbsp->fbs_listener.fbsl_fd >= 0) {
+	return TCL_OK;
+    }
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+    /* XXX hardwired for now */
+    sprintf(hostname, "localhost");
+
+    if (available_port < 0)
+	available_port = 5559;
+    else if (available_port < 1024)
+	available_port += 5559;
+
+    Tcl_DStringInit(&ds);
+
+    /* Try a reasonable number of times to hang a listen */
+    for (i = 0; i < MAX_PORT_TRIES; ++i) {
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer(fbsp->fbs_interp, available_port, hostname, new_client_handler, (ClientData)&fbsp->fbs_listener);
+	if (fbsp->fbs_listener.fbsl_chan == NULL) {
+	    /* This clobbers the result string which probably has junk
+	     * related to the failed open.
+	     */
+	    Tcl_DStringResult(fbsp->fbs_interp, &ds);
+	} else {
+	    break;
+	}
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+	sprintf(portname, "%d", available_port);
+	fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error);
+	if (fbsp->fbs_listener.fbsl_fd >= 0)
+	    break;
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+	++available_port;
+    }
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (fbsp->fbs_listener.fbsl_chan == NULL) {
+	failed = 1;
+    }
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+    if (fbsp->fbs_listener.fbsl_fd < 0) {
+	failed = 1;
+    }
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+    if (failed) {
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n", port, available_port);
+	Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	fbsp->fbs_listener.fbsl_port = -1;
+
+	return TCL_ERROR;
+    }
+
+    fbsp->fbs_listener.fbsl_port = port;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (Clientdata *)&fbsp->fbs_listener.fbsl_fd);
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+    Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+    return TCL_OK;
+}
+
+
+int
+fbs_close(struct fbserv_obj *fbsp)
+{
+    int i;
+
+    /* first drop all clients */
+    for (i = 0; i < MAX_CLIENTS; ++i)
+	drop_client(fbsp, i);
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (fbsp->fbs_listener.fbsl_chan != NULL) {
+	Tcl_ChannelProc *callback = (Tcl_ChannelProc *)new_client_handler;
+	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan, callback, (Clientdata)fbsp->fbs_listener.fbsl_fd);
+	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_listener.fbsl_chan);
+	fbsp->fbs_listener.fbsl_chan = NULL;
+    }
+#else
+    Tcl_DeleteFileHandler(fbsp->fbs_listener.fbsl_fd);
+#endif
+
+    if (0 <= fbsp->fbs_listener.fbsl_fd)
+	close(fbsp->fbs_listener.fbsl_fd);
+    fbsp->fbs_listener.fbsl_fd = -1;
+    fbsp->fbs_listener.fbsl_port = -1;
+
+    return TCL_OK;
 }
 
 
