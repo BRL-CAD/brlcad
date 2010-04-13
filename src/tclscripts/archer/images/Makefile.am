@@ -108,6 +108,10 @@ dist_tcl_DATA = \
 	openf.gif \
 	option_text.png \
 	option_tree.png \
+	other.png \
+	other_intersect.png \
+	other_subtract.png \
+	other_union.png \
 	pane_blank.png \
 	pane_collapse.png \
 	pane_expand.png \
