@@ -1386,9 +1386,9 @@ struct bu_hist  {
  * Support for generalized "pointer tables".
  */
 struct bu_ptbl {
-    struct bu_list l;	/**< @brief linked list for caller's use */
-    int end;	/**< @brief index into buffer of first available location */
-    int blen;	/**< @brief # of (long *)'s worth of storage at *buffer */
+    struct bu_list l; /**< @brief linked list for caller's use */
+    off_t end; /**< @brief index into buffer of first available location */
+    size_t blen; /**< @brief # of (long *)'s worth of storage at *buffer */
     long **buffer; /**< @brief data storage area */
 };
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
@@ -3913,7 +3913,7 @@ BU_EXPORT BU_EXTERN(void bu_printb,
  */
 BU_EXPORT BU_EXTERN(void bu_ptbl_init,
 		    (struct bu_ptbl *b,
-		     int len,
+		     size_t len,
 		     const char *str));
 
 /**

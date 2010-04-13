@@ -27,13 +27,13 @@
 
 
 void
-bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
+bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 {
     if (bu_debug & BU_DEBUG_PTBL)
-	bu_log("bu_ptbl_init(%p, len=%d, %s)\n", (void *)b, len, str);
+	bu_log("bu_ptbl_init(%p, len=%z, %s)\n", (void *)b, len, str);
     BU_LIST_INIT(&b->l);
     b->l.magic = BU_PTBL_MAGIC;
-    if (len <= 0)  len = 64;
+    if (len <= (size_t)0)  len = 64;
     b->blen = len;
     b->buffer = (long **)bu_calloc(b->blen, sizeof(long *), str);
     b->end = 0;
@@ -62,7 +62,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 	bu_log("bu_ptbl_ins(%p, %p)\n", (void *)b, (void *)p);
 
     if (b->blen == 0) bu_ptbl_init(b, 64, "bu_ptbl_ins() buffer");
-    if (b->end >= b->blen) {
+    if ((size_t)b->end >= b->blen) {
 	b->buffer = (long **)bu_realloc((char *)b->buffer,
 					sizeof(p)*(b->blen *= 4),
 					"bu_ptbl.buffer[] (ins)");
