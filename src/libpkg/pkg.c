@@ -711,11 +711,12 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 {
     struct sockaddr_in from;
     int s2;
-    unsigned int fromlen = sizeof (from);
     auto int onoff;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
+#else
+    unsigned int fromlen = sizeof (from);
 #endif
 
     if (_pkg_debug) {
@@ -925,7 +926,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     static struct iovec cmdvec[2];
 #endif
     static struct pkg_header hdr;
-    int i;
+    size_t i;
 
     PKG_CK(pc);
 
@@ -996,7 +997,9 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	memcpy(tbuf, (char *)&hdr, sizeof(hdr));
 	if (len > 0)
 	    memcpy(tbuf+sizeof(hdr), buf, len);
-	if ((i = PKG_SEND(pc->pkc_fd, tbuf, len+sizeof(hdr))) != len+sizeof(hdr)) {
+
+	i = PKG_SEND(pc->pkc_fd, tbuf, len+sizeof(hdr));
+	if ((size_t)i != len+sizeof(hdr)) {
 	    if (i < 0) {
 		if (errno == EBADF)  return(-1);
 		_pkg_perror(pc->pkc_errlog, "pkg_send: tbuf write");
@@ -1022,7 +1025,8 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	return(-1);		/* amount of user data sent */
     }
     if (len <= 0)  return(0);
-    if ((i = PKG_SEND(pc->pkc_fd, buf, len)) != len) {
+    i = PKG_SEND(pc->pkc_fd, buf, len);
+    if ((size_t)i != len) {
 	if (i < 0) {
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: write");
@@ -1113,7 +1117,8 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    memcpy(tbuf+sizeof(hdr), buf1, len1);
 	if (len2 > 0)
 	    memcpy(tbuf+sizeof(hdr)+len1, buf2, len2);
-	if ((i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr))) != len1+len2+sizeof(hdr)) {
+	i = PKG_SEND(pc->pkc_fd, tbuf, len1+len2+sizeof(hdr));
+	if ((size_t)i != len1+len2+sizeof(hdr)) {
 	    if (i < 0) {
 		if (errno == EBADF)  return(-1);
 		_pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
@@ -1141,7 +1146,9 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(-1);		/* amount of user data sent */
     }
-    if ((i = PKG_SEND(pc->pkc_fd, buf1, len1)) != len1) {
+
+    i = PKG_SEND(pc->pkc_fd, buf1, len1);
+    if ((size_t)i != len1) {
 	if (i < 0) {
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
@@ -1155,8 +1162,10 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i);		/* amount of user data sent */
     }
-    if (len2 <= 0)  return(i);
-    if ((i = PKG_SEND(pc->pkc_fd, buf2, len2)) != len2) {
+    if (len2 <= (size_t)0)  return(i);
+
+    i = PKG_SEND(pc->pkc_fd, buf2, len2);
+    if (i != len2) {
 	if (i < 0) {
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
@@ -1226,7 +1235,8 @@ pkg_flush(struct pkg_conn *pc)
 	return(0);
     }
 
-    if ((i = write(pc->pkc_fd, pc->pkc_stream, (size_t)pc->pkc_strpos)) != pc->pkc_strpos) {
+    i = write(pc->pkc_fd, pc->pkc_stream, (size_t)pc->pkc_strpos);
+    if (i != pc->pkc_strpos) {
 	if (i < 0) {
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_flush: write");
@@ -1732,11 +1742,8 @@ pkg_suckin(struct pkg_conn *pc)
     }
 
     /* Take as much as the system will give us, up to buffer size */
-    if ((got = PKG_READ(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail)) <= 0) {
-#ifdef HAVE_WINSOCK_H
-	int ecode = WSAGetLastError();
-
-#endif
+    got = PKG_READ(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail);
+    if (got <= 0) {
 	if (got == 0) {
 	    if (_pkg_debug) {
 		_pkg_timestamp();
