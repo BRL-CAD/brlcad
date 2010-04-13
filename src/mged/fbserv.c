@@ -482,7 +482,7 @@ set_port(void)
  * This is where we go for message types we don't understand.
  */
 void
-rfbexit(struct pkg_conn *pcp, char *buf)
+rfbunknown(struct pkg_conn *pcp, char *buf)
 {
     bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
     (void)free(buf);
