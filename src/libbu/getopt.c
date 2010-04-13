@@ -58,8 +58,11 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	    ++bu_optind;
 	    return (EOF);
 	}
-    }				/* option letter okay? */
-    if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, bu_optopt))) {
+    } /* option letter okay? */
+
+    bu_optopt = (int)*place++;
+    oli = strchr(ostr, bu_optopt);
+    if (bu_optopt == (int)':' || !oli) {
 	++bu_optind;
 	place = EMSG;
 	tell(": illegal option -- ");

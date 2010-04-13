@@ -811,7 +811,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    int stringlen = (int)strlen(str);
 			    int left_justify;
 
-			    if ((left_justify = (fieldlen < 0)))
+			    left_justify = (fieldlen < 0);
+			    if (left_justify)
 				fieldlen *= -1; /* make positive */
 
 			    if (stringlen >= fieldlen)
@@ -854,7 +855,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    int stringlen = bu_vls_strlen(vp);
 			    int left_justify;
 
-			    if ((left_justify = (fieldlen < 0)))
+			    left_justify = (fieldlen < 0);
+			    if (left_justify)
 				fieldlen *= -1;
 
 			    if (stringlen >= fieldlen)

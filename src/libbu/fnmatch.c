@@ -224,7 +224,9 @@ charclassmatch(const char *pattern, char test, int *s)
     c = *pattern++;
     if (c != ']') resultholder = -1;
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
-    if ((ctclass = findclass(bu_vls_addr(&classname))) == NULL) {
+
+    ctclass = findclass(bu_vls_addr(&classname));
+    if (ctclass == NULL) {
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
 	resultholder = -1;
     } else {
@@ -253,7 +255,8 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
      * consistency with the regular expression syntax.  J.T. Conklin
      * (conklin@ngai.kaleida.com)
      */
-    if ((negate = (*pattern == '!' || *pattern == '^')))
+    negate = (*pattern == '!' || *pattern == '^');
+    if (negate)
 	++pattern;
 
 
