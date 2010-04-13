@@ -167,9 +167,9 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	if (cur->magic == BU_LIST_HEAD_MAGIC) {
 	    head_count++;
 	} else if (cur->magic != magic) {
-	    void *curmagic = (void *)cur->magic;
-	    void *formagic = (void *)cur->forw->magic;
-	    void *hdmagic = (void *)hd->magic;
+	    void *curmagic = (void *)(ptrdiff_t)cur->magic;
+	    void *formagic = (void *)(ptrdiff_t)cur->forw->magic;
+	    void *hdmagic = (void *)(ptrdiff_t)hd->magic;
 	    bu_log("bu_ck_list(%s) cur magic=(%s)%p, cur->forw magic=(%s)%p, hd magic=(%s)%p, item=%d\n",
 		   str, 
 		   bu_identify_magic(cur->magic), curmagic,
