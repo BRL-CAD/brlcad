@@ -926,7 +926,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     static struct iovec cmdvec[2];
 #endif
     static struct pkg_header hdr;
-    size_t i;
+    ssize_t i;
 
     PKG_CK(pc);
 
@@ -980,7 +980,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    return(-1);
 	}
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %llu+%llu, wrote %d\n",
-		 (unsigned long long)sizeof(hdr), (unsigned long long)len, i);
+		 (unsigned long long)sizeof(hdr), (unsigned long long)len, (int)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
     }
