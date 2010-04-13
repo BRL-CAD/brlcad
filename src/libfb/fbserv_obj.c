@@ -69,7 +69,7 @@ HIDDEN void setup_socket(int fd);
 /*
  * Package Handlers.
  */
-void fbs_pkgfoo(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
+void fbs_rfbunknown(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
 void fbs_rfbopen(struct pkg_conn *pcp, char *buf);
 void fbs_rfbclose(struct pkg_conn *pcp, char *buf);
 void fbs_rfbclear(struct pkg_conn *pcp, char *buf);
@@ -112,8 +112,8 @@ static struct pkg_switch pkg_switch[] = {
     { MSG_FBRMAP,		fbs_rfbrmap,	"R Map" },
     { MSG_FBWMAP,		fbs_rfbwmap,	"W Map" },
     { MSG_FBHELP,		fbs_rfbhelp,	"Help Request" },
-    { MSG_ERROR,		fbs_pkgfoo,		"Error Message" },
-    { MSG_CLOSE,		fbs_pkgfoo,		"Close Connection" },
+    { MSG_ERROR,		fbs_rfbunknown,	"Error Message" },
+    { MSG_CLOSE,		fbs_rfbunknown,	"Close Connection" },
     { MSG_FBREADRECT, 	fbs_rfbreadrect,	"Read Rectangle" },
     { MSG_FBWRITERECT,	fbs_rfbwriterect,	"Write Rectangle" },
     { MSG_FBWRITERECT + MSG_NORETURN, fbs_rfbwriterect, "Write Rectangle" },
@@ -522,8 +522,8 @@ comm_error(char *str)
 /*
  * This is where we go for message types we don't understand.
  */
-void
-fbs_pkgfoo(struct pkg_conn *pcp, char *buf)
+HIDDEN void
+fbs_rfbunknown(struct pkg_conn *pcp, char *buf)
 {
     bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
     (void)free(buf);
@@ -531,7 +531,7 @@ fbs_pkgfoo(struct pkg_conn *pcp, char *buf)
 
 /******** Here's where the hooks lead *********/
 
-void
+HIDDEN void
 fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 {
     char	rbuf[5*NET_LONG_LEN+1];
