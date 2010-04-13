@@ -338,27 +338,35 @@ new_client_handler(ClientData	 clientData,
 }
 
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
 int
 fbs_open(struct fbserv_obj *fbsp, int port)
 {
+    int i;
     struct bu_vls vls;
     char hostname[32];
-    register int i;
+    char portname[32];
     Tcl_DString ds;
+    int failed = 0;
+    int available_port = port;
 
     /* Already listening; nothing more to do. */
+#if defined(_WIN32) && !defined(__CYGWIN__)
     if (fbsp->fbs_listener.fbsl_chan != NULL) {
 	return TCL_OK;
     }
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+    if (fbsp->fbs_listener.fbsl_fd >= 0) {
+	return TCL_OK;
+    }
+#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
     /*XXX hardwired for now */
     sprintf(hostname, "localhost");
 
-    if (port < 0)
-	port = 5559;
-    else if (port < 1024)
-	port += 5559;
+    if (available_port < 0)
+	available_port = 5559;
+    else if (available_port < 1024)
+	available_port += 5559;
 
     Tcl_DStringInit(&ds);
 
@@ -367,75 +375,37 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	/*
 	 * Hang an unending listen for PKG connections
 	 */
-	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer(fbsp->fbs_interp,
-							 port,
-							 hostname,
-							 new_client_handler,
-							 (ClientData)&fbsp->fbs_listener);
-
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer(fbsp->fbs_interp, available_port, hostname, new_client_handler, (ClientData)&fbsp->fbs_listener);
 	if (fbsp->fbs_listener.fbsl_chan == NULL) {
 	    /* This clobbers the result string which probably has junk related to the failed open */
 	    Tcl_DStringResult(fbsp->fbs_interp, &ds);
-	    ++port;
-	} else
+	} else {
 	    break;
-    }
-
-    if (fbsp->fbs_listener.fbsl_chan == NULL) {
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n",
-		      fbsp->fbs_listener.fbsl_port, fbsp->fbs_listener.fbsl_port + MAX_PORT_TRIES - 1);
-	Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	fbsp->fbs_listener.fbsl_port = -1;
-
-	return TCL_ERROR;
-    }
-
-    fbsp->fbs_listener.fbsl_port = port;
-    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (Clientdata *)&fbsp->fbs_listener.fbsl_fd);
-
-    return TCL_OK;
-}
-
-
+	}
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
-int
-fbs_open(struct fbserv_obj *fbsp, int port)
-{
-    struct bu_vls vls;
-    char portname[32];
-    register int i;
-
-    /* Already listening; nothing more to do. */
-    if (fbsp->fbs_listener.fbsl_fd >= 0) {
-	return TCL_OK;
-    }
-
-    fbsp->fbs_listener.fbsl_port = port;
-
-    /* Try a reasonable number of times to hang a listen */
-    for (i = 0; i < MAX_PORT_TRIES; ++i) {
-	if (fbsp->fbs_listener.fbsl_port < 1024)
-	    sprintf(portname, "%d", fbsp->fbs_listener.fbsl_port + 5559);
-	else
-	    sprintf(portname, "%d", fbsp->fbs_listener.fbsl_port);
-
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-	if ((fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error)) < 0)
-	    ++fbsp->fbs_listener.fbsl_port;
-	else
+	sprintf(portname, "%d", available_port);
+	fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error);
+	if (fbsp->fbs_listener.fbsl_fd >= 0)
 	    break;
+#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+	++available_port;
     }
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (fbsp->fbs_listener.fbsl_chan == NULL) {
+	failed = 1;
+    }
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
     if (fbsp->fbs_listener.fbsl_fd < 0) {
+	failed = 1;
+    }
+#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+
+    if (failed) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n",
-		      fbsp->fbs_listener.fbsl_port, fbsp->fbs_listener.fbsl_port + MAX_PORT_TRIES - 1);
+	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n", port, available_port);
 	Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -444,12 +414,16 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	return TCL_ERROR;
     }
 
-    Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE,
-			  (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
+    fbsp->fbs_listener.fbsl_port = port;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (Clientdata *)&fbsp->fbs_listener.fbsl_fd);
+#else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+    Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
+#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
     return TCL_OK;
 }
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 
 int
