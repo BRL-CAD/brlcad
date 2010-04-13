@@ -120,13 +120,14 @@ static struct pkg_switch pkg_switch[] = {
     { 0, NULL, NULL }
 };
 
+
 static FBIO *curr_fbp;		/* current framebuffer pointer */
 
 
 /*
- *			C O M M _ E R R O R
+ * C O M M _ E R R O R
  *
- *  Communication error.  An error occured on the PKG link.
+ * Communication error.  An error occured on the PKG link.
  */
 HIDDEN void
 comm_error(char *str)
@@ -136,7 +137,7 @@ comm_error(char *str)
 
 
 /*
- *			D R O P _ C L I E N T
+ * D R O P _ C L I E N T
  */
 HIDDEN void
 drop_client(struct fbserv_obj *fbsp, int sub)
@@ -213,10 +214,10 @@ setup_socket(int fd)
 #if defined(SO_RCVBUF)
     /* try to set our buffers up larger */
     {
-	int	m = -1;
+	int m = -1;
 	int n = -1;
-	int	val;
-	int	size;
+	int val;
+	int size;
 
 	for (size = 256; size > 16; size /= 2) {
 	    val = size * 1024;
@@ -236,12 +237,12 @@ setup_socket(int fd)
 
 
 /*
- *			N E W _ C L I E N T
+ * N E W _ C L I E N T
  */
 HIDDEN void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 {
-    register int	i;
+    register int i;
 
     if (pcp == PKC_ERROR || (int)chan < 0)
 	return;
@@ -266,7 +267,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
 	Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
 			      existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 	return;
     }
@@ -281,8 +282,10 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
 {
     register struct pkg_conn *pc;
 #ifdef HAVE_WINSOCK_H
-    WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
+    WORD wVersionRequested; /* initialize Windows socket networking,
+			     * increment reference count.
+			     */
 #endif
 
     if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
@@ -317,10 +320,10 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
  * Accept any new client connections.
  */
 HIDDEN void
-new_client_handler(ClientData	 clientData,
-		   Tcl_Channel	 chan,
-		   char		 *UNUSED(host),
-		   int		 UNUSED(port))
+new_client_handler(ClientData clientData,
+		   Tcl_Channel chan,
+		   char *UNUSED(host),
+		   int UNUSED(port))
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
     struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
@@ -334,7 +337,7 @@ new_client_handler(ClientData	 clientData,
 	new_client(fbsp, fbs_makeconn(fd, pkg_switch), chan);
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
     new_client(fbsp, pkg_getclient(fd, pkg_switch, comm_error, 0), 0);
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 }
 
 
@@ -358,9 +361,9 @@ fbs_open(struct fbserv_obj *fbsp, int port)
     if (fbsp->fbs_listener.fbsl_fd >= 0) {
 	return TCL_OK;
     }
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
-    /*XXX hardwired for now */
+    /* XXX hardwired for now */
     sprintf(hostname, "localhost");
 
     if (available_port < 0)
@@ -378,7 +381,9 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer(fbsp->fbs_interp, available_port, hostname, new_client_handler, (ClientData)&fbsp->fbs_listener);
 	if (fbsp->fbs_listener.fbsl_chan == NULL) {
-	    /* This clobbers the result string which probably has junk related to the failed open */
+	    /* This clobbers the result string which probably has junk
+	     * related to the failed open.
+	     */
 	    Tcl_DStringResult(fbsp->fbs_interp, &ds);
 	} else {
 	    break;
@@ -388,7 +393,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error);
 	if (fbsp->fbs_listener.fbsl_fd >= 0)
 	    break;
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 	++available_port;
     }
@@ -401,7 +406,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
     if (fbsp->fbs_listener.fbsl_fd < 0) {
 	failed = 1;
     }
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
     if (failed) {
 	bu_vls_init(&vls);
@@ -420,7 +425,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
     Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (Clientdata *)&fbsp->fbs_listener.fbsl_fd);
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
     Tcl_CreateFileHandler(fbsp->fbs_listener.fbsl_fd, TCL_READABLE, (Tcl_FileProc *)new_client_handler, (ClientData)&fbsp->fbs_listener);
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
+#endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
     return TCL_OK;
 }
@@ -471,8 +476,8 @@ fbs_rfbunknown(struct pkg_conn *pcp, char *buf)
 HIDDEN void
 fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 {
-    char	rbuf[5*NET_LONG_LEN+1];
-    int	want;
+    char rbuf[5*NET_LONG_LEN+1];
+    int want;
 
     /* Don't really open a new framebuffer --- use existing one */
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], 0);	/* ret */
@@ -493,18 +498,18 @@ fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbclose(struct pkg_conn *pcp, char *buf)
 {
-    char	rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1];
 
     /*
-     * We are playing FB server so we don't really close the
-     * frame buffer.  We should flush output however.
+     * We are playing FB server so we don't really close the frame
+     * buffer.  We should flush output however.
      */
     (void)fb_flush(curr_fbp);
     (void)pkg_plong(&rbuf[0], 0);		/* return success */
 
-    /* Don't check for errors, SGI linger mode or other events
-     * may have already closed down all the file descriptors.
-     * If communication has broken, other end will know we are gone.
+    /* Don't check for errors, SGI linger mode or other events may
+     * have already closed down all the file descriptors.  If
+     * communication has broken, other end will know we are gone.
      */
     (void)pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
 
@@ -516,7 +521,7 @@ fbs_rfbclose(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbfree(struct pkg_conn *pcp, char *buf)
 {
-    char	rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1];
 
     /* Don't really free framebuffer */
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
@@ -531,7 +536,7 @@ void
 fbs_rfbclear(struct pkg_conn *pcp, char *buf)
 {
     RGBpixel bg;
-    char	rbuf[NET_LONG_LEN+1];
+    char rbuf[NET_LONG_LEN+1];
 
     bg[RED] = buf[0];
     bg[GRN] = buf[1];
@@ -548,11 +553,11 @@ fbs_rfbclear(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbread(struct pkg_conn *pcp, char *buf)
 {
-    int	x, y;
+    int x, y;
     size_t num;
-    int	ret;
-    static unsigned char	*scanbuf = NULL;
-    static size_t	buflen = 0;
+    int ret;
+    static unsigned char *scanbuf = NULL;
+    static size_t buflen = 0;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -583,10 +588,10 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
 {
-    int	x, y, num;
-    char	rbuf[NET_LONG_LEN+1];
-    int	ret;
-    int	type;
+    int x, y, num;
+    char rbuf[NET_LONG_LEN+1];
+    int ret;
+    int type;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -603,16 +608,16 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
 
 
 /*
- *			R F B R E A D R E C T
+ * R F B R E A D R E C T
  */
 void
 fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
-    int	xmin, ymin;
-    int	width, height;
+    int xmin, ymin;
+    int width, height;
     size_t num;
-    int	ret;
-    static unsigned char	*scanbuf = NULL;
+    int ret;
+    static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -644,16 +649,16 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
 
 
 /*
- *			R F B W R I T E R E C T
+ * R F B W R I T E R E C T
  */
 void
 fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
-    int	x, y;
-    int	width, height;
-    char	rbuf[NET_LONG_LEN+1];
-    int	ret;
-    int	type;
+    int x, y;
+    int width, height;
+    char rbuf[NET_LONG_LEN+1];
+    int ret;
+    int type;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -673,17 +678,17 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
 
 
 /*
- *			R F B B W R E A D R E C T
+ * R F B B W R E A D R E C T
  */
 void
 fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 {
-    int	xmin, ymin;
-    int	width, height;
-    int	num;
-    int	ret;
-    static unsigned char	*scanbuf = NULL;
-    static int	buflen = 0;
+    int xmin, ymin;
+    int width, height;
+    int num;
+    int ret;
+    static unsigned char *scanbuf = NULL;
+    static int buflen = 0;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -714,16 +719,16 @@ fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 
 
 /*
- *			R F B B W W R I T E R E C T
+ * R F B B W W R I T E R E C T
  */
 void
 fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
-    int	x, y;
-    int	width, height;
-    char	rbuf[NET_LONG_LEN+1];
-    int	ret;
-    int	type;
+    int x, y;
+    int width, height;
+    char rbuf[NET_LONG_LEN+1];
+    int ret;
+    int type;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -745,8 +750,8 @@ fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbcursor(struct pkg_conn *pcp, char *buf)
 {
-    int	mode, x, y;
-    char	rbuf[NET_LONG_LEN+1];
+    int mode, x, y;
+    char rbuf[NET_LONG_LEN+1];
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -761,9 +766,9 @@ fbs_rfbcursor(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf)
 {
-    int	ret;
-    int	mode, x, y;
-    char	rbuf[4*NET_LONG_LEN+1];
+    int ret;
+    int mode, x, y;
+    char rbuf[4*NET_LONG_LEN+1];
 
     ret = fb_getcursor(curr_fbp, &mode, &x, &y);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -778,10 +783,10 @@ fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
 {
-    char	rbuf[NET_LONG_LEN+1];
-    int	ret;
-    int	xbits, ybits;
-    int	xorig, yorig;
+    char rbuf[NET_LONG_LEN+1];
+    int ret;
+    int xbits, ybits;
+    int xorig, yorig;
 
     xbits = pkg_glong(&buf[0*NET_LONG_LEN]);
     ybits = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -803,8 +808,8 @@ fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbscursor(struct pkg_conn *pcp, char *buf)
 {
-    int	mode, x, y;
-    char	rbuf[NET_LONG_LEN+1];
+    int mode, x, y;
+    char rbuf[NET_LONG_LEN+1];
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
     x = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -820,8 +825,8 @@ fbs_rfbscursor(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbwindow(struct pkg_conn *pcp, char *buf)
 {
-    int	x, y;
-    char	rbuf[NET_LONG_LEN+1];
+    int x, y;
+    char rbuf[NET_LONG_LEN+1];
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -836,8 +841,8 @@ fbs_rfbwindow(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
 {
-    int	x, y;
-    char	rbuf[NET_LONG_LEN+1];
+    int x, y;
+    char rbuf[NET_LONG_LEN+1];
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -851,9 +856,9 @@ fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbview(struct pkg_conn *pcp, char *buf)
 {
-    int	ret;
-    int	xcenter, ycenter, xzoom, yzoom;
-    char	rbuf[NET_LONG_LEN+1];
+    int ret;
+    int xcenter, ycenter, xzoom, yzoom;
+    char rbuf[NET_LONG_LEN+1];
 
     xcenter = pkg_glong(&buf[0*NET_LONG_LEN]);
     ycenter = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -870,9 +875,9 @@ fbs_rfbview(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbgetview(struct pkg_conn *pcp, char *buf)
 {
-    int	ret;
-    int	xcenter, ycenter, xzoom, yzoom;
-    char	rbuf[5*NET_LONG_LEN+1];
+    int ret;
+    int xcenter, ycenter, xzoom, yzoom;
+    char rbuf[5*NET_LONG_LEN+1];
 
     ret = fb_getview(curr_fbp, &xcenter, &ycenter, &xzoom, &yzoom);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -888,10 +893,10 @@ fbs_rfbgetview(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbrmap(struct pkg_conn *pcp, char *buf)
 {
-    register int	i;
-    char	rbuf[NET_LONG_LEN+1];
+    register int i;
+    char rbuf[NET_LONG_LEN+1];
     ColorMap map;
-    unsigned char	cm[256*2*3];
+    unsigned char cm[256*2*3];
 
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], fb_rmap(curr_fbp, &map));
     for (i = 0; i < 256; i++) {
@@ -906,19 +911,19 @@ fbs_rfbrmap(struct pkg_conn *pcp, char *buf)
 
 
 /*
- *			R F B W M A P
+ * R F B W M A P
  *
- *  Accept a color map sent by the client, and write it to the framebuffer.
- *  Network format is to send each entry as a network (IBM) order 2-byte
- *  short, 256 red shorts, followed by 256 green and 256 blue, for a total
- *  of 3*256*2 bytes.
+ * Accept a color map sent by the client, and write it to the
+ * framebuffer.  Network format is to send each entry as a network
+ * (IBM) order 2-byte short, 256 red shorts, followed by 256 green and
+ * 256 blue, for a total of 3*256*2 bytes.
  */
 void
 fbs_rfbwmap(struct pkg_conn *pcp, char *buf)
 {
-    int	i;
-    char	rbuf[NET_LONG_LEN+1];
-    long	ret;
+    int i;
+    char rbuf[NET_LONG_LEN+1];
+    long ret;
     ColorMap map;
 
     if (pcp->pkc_len == 0)
@@ -940,8 +945,8 @@ fbs_rfbwmap(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbflush(struct pkg_conn *pcp, char *buf)
 {
-    int	ret;
-    char	rbuf[NET_LONG_LEN+1];
+    int ret;
+    char rbuf[NET_LONG_LEN+1];
 
     ret = fb_flush(curr_fbp);
 
@@ -965,14 +970,14 @@ fbs_rfbpoll(struct pkg_conn *pcp, char *buf)
 
 
 /*
- *  At one time at least we couldn't send a zero length PKG
- *  message back and forth, so we receive a dummy long here.
+ * At one time at least we couldn't send a zero length PKG message
+ * back and forth, so we receive a dummy long here.
  */
 void
 fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
 {
-    long	ret;
-    char	rbuf[NET_LONG_LEN+1];
+    long ret;
+    char rbuf[NET_LONG_LEN+1];
 
     (void)pkg_glong(&buf[0*NET_LONG_LEN]);
 
