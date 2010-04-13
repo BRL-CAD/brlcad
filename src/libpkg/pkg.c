@@ -876,7 +876,7 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
 {
     struct timeval tv;
     fd_set bits;
-    int i;
+    ssize_t i;
     unsigned int j;
 
     /* Check socket for unexpected input */
@@ -892,7 +892,7 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"_pkg_checkin: select on fd %d returned %d\n",
+		"_pkg_checkin: select on fd %d returned %ld\n",
 		pc->pkc_fd,
 		i);
 	fflush(_pkg_debug);
@@ -907,7 +907,7 @@ _pkg_checkin(struct pkg_conn *pc, int nodelay)
 	} else {
 	    /* Odd condition, bits! */
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		     "_pkg_checkin: select returned %d, bits=0\n",
+		     "_pkg_checkin: select returned %ld, bits=0\n",
 		     i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	}
@@ -974,7 +974,8 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    if ((i = writev(pc->pkc_fd, cmdvec, (len>0)?2:1)) != (int)(len+sizeof(hdr))) {
+    i = writev(pc->pkc_fd, cmdvec, (len>0)?2:1);
+    if (i != (ssize_t)(len+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: writev");
 	    return(-1);
@@ -1048,7 +1049,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     static struct iovec cmdvec[3];
 #endif
     static struct pkg_header hdr;
-    int i;
+    ssize_t i;
 
     PKG_CK(pc);
 
@@ -1087,7 +1088,8 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
      * in select() waiting for capacity to go out, and reading input
      * as well.  Prevents deadlocking.
      */
-    if ((i = writev(pc->pkc_fd, cmdvec, 3)) != (int)(len1+len2+sizeof(hdr))) {
+    i = writev(pc->pkc_fd, cmdvec, 3);
+    if (i != (ssize_t)(len1+len2+sizeof(hdr))) {
 	if (i < 0) {
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
@@ -1097,7 +1099,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote %d\n",
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote %ld\n",
 		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
