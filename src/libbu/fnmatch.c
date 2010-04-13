@@ -93,6 +93,7 @@ ccblank(int c)
 #endif
 }
 
+
 typedef struct _charclass {
     char *idstring;		/* identifying string */
     int (*checkfun)(int);	/* testing function */
@@ -113,11 +114,13 @@ static CHARCLASS charclasses[] = {
     { "xdigit", isxdigit },
 };
 
+
 static int
 classcompare(const void *a, const void *b)
 {
     return (strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring));
 }
+
 
 static CHARCLASS *
 findclass(char *charclass)
@@ -326,6 +329,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
     /* NOTREACHED (unless inf looping) */
     return 0;
 }
+
 
 /*
  * Local Variables:
