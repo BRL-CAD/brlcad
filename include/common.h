@@ -200,6 +200,8 @@ typedef ptrdiff_t ssize_t;
 #    ifdef __cplusplus
 #      define UNUSED(parameter) /* parameter */
 #    else
+       /* disable reporting an "unreferenced formal parameter" */
+#      pragma warning( disable : 4100 )
 #      define UNUSED(parameter) (parameter)
 #    endif
 #  endif
