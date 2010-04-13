@@ -177,9 +177,9 @@ setup_socket(int fd)
 HIDDEN void
 new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 {
-    register int i;
+    int i;
 
-    if (pcp == PKC_ERROR || (int)chan < 0)
+    if (pcp == PKC_ERROR)
 	return;
 
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
@@ -200,6 +200,7 @@ new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, Tcl_Channel chan)
 				 fbsp->fbs_clients[i].fbsc_handler,
 				 (ClientData)&fbsp->fbs_clients[i]);
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+	chan = chan; /* quellage */
 	Tcl_CreateFileHandler(fbsp->fbs_clients[i].fbsc_fd, TCL_READABLE,
 			      existing_client_handler, (ClientData)&fbsp->fbs_clients[i]);
 #endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
@@ -826,13 +827,11 @@ new_client_handler(ClientData clientData,
 	{ 0, NULL, NULL }
     };
 
-    if ((int)chan < 0)
-	return;
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
 	new_client(fbsp, fbs_makeconn(fd, pswitch), chan);
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
+    chan = chan; /* quellage */
     new_client(fbsp, pkg_getclient(fd, pswitch, comm_error, 0), 0);
 #endif /* if defined(_WIN32) && !defined(__CYGWIN__) */
 }

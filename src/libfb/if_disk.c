@@ -126,7 +126,7 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 {
     static unsigned char	pix_buf[DISK_DMA_BYTES] = {0};
     register unsigned char *pix_to;
-    register long	i;
+    size_t i;
     int fd;
     size_t pixelstodo;
 
