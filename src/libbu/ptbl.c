@@ -117,7 +117,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
     if (bu_debug & BU_DEBUG_PTBL)
 	bu_log("bu_ptbl_ins_unique(%p, %p)\n", (void *)b, (void *)p);
 
-    if (b->blen <= 0 || b->end >= b->blen) {
+    if (b->blen <= 0 || (size_t)b->end >= b->blen) {
 	/* Table needs to grow */
 	bu_ptbl_ins(b, p);
 	return -1;	/* To signal that it was added */
@@ -165,7 +165,7 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
     if (bu_debug & BU_DEBUG_PTBL)
 	bu_log("bu_ptbl_cat(%p, %p)\n", (void *)dest, (void *)src);
 
-    if ((dest->blen - dest->end) < src->end) {
+    if ((dest->blen - dest->end) < (size_t)src->end) {
 	dest->blen = (dest->blen + src->end) * 2 + 8;
 	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
 					   dest->blen * sizeof(long *),
@@ -187,7 +187,7 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 	bu_log("bu_ptbl_cat_uniq(%p, %p)\n", (void *)dest, (void *)src);
 
     /* Assume the worst, ensure sufficient space to add all 'src' items */
-    if ((dest->blen - dest->end) < src->end) {
+    if ((dest->blen - dest->end) < (size_t)src->end) {
 	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
 					   sizeof(long *)*(dest->blen += src->blen + 8),
 					   "bu_ptbl.buffer[] (cat_uniq)");
