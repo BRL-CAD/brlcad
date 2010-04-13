@@ -83,8 +83,8 @@
 /* isblank appears to be obsolete in newer ctype.h files so use
  * ccblank instead when looking for the "blank" character class.
  */
-static int
-ccblank(int c)
+HIDDEN inline int
+fnblank(int c)
 {
 #ifdef isblank
     return isblank(c);
@@ -94,24 +94,101 @@ ccblank(int c)
 }
 
 
+HIDDEN inline int
+fnalnum(int c)
+{
+    return isalnum(c);
+}
+
+
+HIDDEN inline int
+fnalpha(int c)
+{
+    return isalpha(c);
+}
+
+
+HIDDEN inline int
+fncntrl(int c)
+{
+    return iscntrl(c);
+}
+
+
+HIDDEN inline int
+fndigit(int c)
+{
+    return isdigit(c);
+}
+
+
+HIDDEN inline int
+fngraph(int c)
+{
+    return isgraph(c);
+}
+
+
+HIDDEN inline int
+fnlower(int c)
+{
+    return islower(c);
+}
+
+
+HIDDEN inline int
+fnprint(int c)
+{
+    return isprint(c);
+}
+
+
+HIDDEN inline int
+fnpunct(int c)
+{
+    return ispunct(c);
+}
+
+
+HIDDEN inline int
+fnspace(int c)
+{
+    return isspace(c);
+}
+
+
+HIDDEN inline int
+fnupper(int c)
+{
+    return isupper(c);
+}
+
+
+HIDDEN inline int
+fnxdigit(int c)
+{
+    return isxdigit(c);
+}
+
+
 typedef struct _charclass {
     char *idstring;		/* identifying string */
     int (*checkfun)(int);	/* testing function */
 } CHARCLASS;
 
 static CHARCLASS charclasses[] = {
-    { "alnum", isalnum },
-    { "alpha", isalpha },
-    { "blank", ccblank },
-    { "cntrl", iscntrl },
-    { "digit", isdigit },
-    { "graph", isgraph },
-    { "lower", islower },
-    { "print", isprint },
-    { "punct", ispunct },
-    { "space", isspace },
-    { "upper", isupper },
-    { "xdigit", isxdigit },
+    { "alnum", fnalnum },
+    { "alpha", fnalpha },
+    { "blank", fnblank },
+    { "cntrl", fncntrl },
+    { "digit", fndigit },
+    { "graph", fngraph },
+    { "lower", fnlower },
+    { "print", fnprint },
+    { "punct", fnpunct },
+    { "space", fnspace },
+    { "upper", fnupper },
+    { "xdigit", fnxdigit },
 };
 
 
