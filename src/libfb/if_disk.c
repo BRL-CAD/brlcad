@@ -41,7 +41,7 @@
 			*sizeof(RGBpixel))
 
 /* Ensure integer number of pixels per DMA */
-#define	DISK_DMA_BYTES	(16*1024/sizeof(RGBpixel)*sizeof(RGBpixel))
+#define	DISK_DMA_BYTES	((size_t)16*(size_t)1024/sizeof(RGBpixel)*sizeof(RGBpixel))
 #define	DISK_DMA_PIXELS	(DISK_DMA_BYTES/sizeof(RGBpixel))
 
 #define if_seekpos	u5.l	/* stored seek position */
