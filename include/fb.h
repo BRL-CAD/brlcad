@@ -170,7 +170,8 @@ FB_EXPORT extern int ogl_close_existing(FBIO *ifp);
 #endif
 
 #ifdef IF_WGL
-#  include <windowsx.h>
+#  include <windows.h>
+#  include <tk.h>
 #  ifdef HAVE_GL_GL_H
 #    include <GL/gl.h>
 #  endif
