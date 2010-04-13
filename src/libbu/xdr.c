@@ -56,8 +56,8 @@ unsigned char *
 bu_pshort(register unsigned char *msgp, register uint16_t s)
 {
 
-    msgp[1] = s;
-    msgp[0] = s >> 8;
+    msgp[1] = (unsigned char)s;
+    msgp[0] = (unsigned char)(s >> 8);
     return (msgp+2);
 }
 
