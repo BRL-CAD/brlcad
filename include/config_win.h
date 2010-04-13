@@ -158,10 +158,8 @@
 
 #define SHARED_PTR_BOOST	1
 
-/* we need the function pointer of this */
-static int isblank(int c) {
-    return ((c == ' ') || (c == '\t')) ? 1 : 0;
-}
+/* provide isblank since msvc doesn't */
+#define isblank(c) ((c == ' ') || (c == '\t')) ? 1 : 0
 
 /*
  * Signal handling
