@@ -97,6 +97,10 @@ dist_tcl_DATA = \
 	hyp_intersect.png \
 	hyp_subtract.png \
 	hyp_union.png \
+	invalid.png \
+	invalid_intersect.png \
+	invalid_subtract.png \
+	invalid_union.png \
 	measure.png \
 	nmg.png \
 	nmg_intersect.png \
