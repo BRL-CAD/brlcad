@@ -156,10 +156,6 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 	Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].fbsc_fd);
 #endif
 
-#if 0
-	/* This has already been closed in call to pkg_close above */
-	close(fbsp->fbs_clients[sub].fbsc_fd);
-#endif
 	fbsp->fbs_clients[sub].fbsc_fd = 0;
     }
 }
