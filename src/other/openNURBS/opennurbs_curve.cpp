@@ -559,12 +559,24 @@ bool ON_Curve::GetNextDiscontinuity(
                   *t = t1;
                   rc = true;
                 }
-                else if ( bTestK && (Ka-Kb).Length() > curvature_tolerance )
+                else if ( bTestK )
                 {
-                  if ( dtype )
-                    *dtype = 2;
-                  *t = t1;
-                  rc = true;
+                  // NOTE: 
+                  //  This test must exactly match the one
+                  //  used in ON_NurbsCurve::GetNextDiscontinuity()
+                  if ( ON_IsCurvatureDiscontinuity( Ka, Kb,
+                                                    cos_angle_tolerance,
+                                                    curvature_tolerance,
+                                                    ON_UNSET_VALUE,
+                                                    ON_UNSET_VALUE
+                                                    )
+                     )
+                  {
+                    if ( dtype )
+                      *dtype = 2;
+                    *t = t1;
+                    rc = true;
+                  }
                 }
               }
             }
@@ -2732,10 +2744,11 @@ bool ON_CurveArray::Read( ON_BinaryArchive& file )
 {
   int major_version = 0;
   int minor_version = 0;
-  unsigned int tcode;
-  int i, flag;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int flag;
   Destroy();
-  bool rc = file.BeginRead3dmChunk( &tcode, &i );
+  bool rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
   if (rc) 
   {
     rc = ( tcode == TCODE_ANONYMOUS_CHUNK );

@@ -30,50 +30,50 @@
 #define STKSIZ (8*sizeof(void*) - 2)
 
 
-static void heapsort_dbl(double* e, size_t nel)
-{
-  size_t i_end,i,j,k;
-  double e_tmp;
-
-  if (nel < 2) 
-    return;
-  k = nel >> 1;
-  i_end = nel-1;
-  for (;;) 
-  {
-    if (k) 
-    {
-      --k;
-      e_tmp = e[k];
-    } 
-    else 
-    {
-      e_tmp = e[i_end];
-      e[i_end] = e[0];
-      if (!(--i_end)) 
-      {
-        e[0] = e_tmp;
-        break;
-      }
-    }
-    i = k;
-    j = (k<<1) + 1;
-    while (j <= i_end) 
-    {
-      if (j < i_end && e[j] < e[j + 1])
-        j++;
-      if (e_tmp < e[j]) 
-      {
-        e[i] = e[j];
-        i = j;
-        j = (j<<1) + 1;
-      } 
-      else
-        j = i_end + 1;
-    }
-    e[i] = e_tmp;
-  }
-}
+//static void heapsort_dbl(double* e, size_t nel)
+//{
+//  size_t i_end,i,j,k;
+//  double e_tmp;
+//
+//  if (nel < 2) 
+//    return;
+//  k = nel >> 1;
+//  i_end = nel-1;
+//  for (;;) 
+//  {
+//    if (k) 
+//    {
+//      --k;
+//      e_tmp = e[k];
+//    } 
+//    else 
+//    {
+//      e_tmp = e[i_end];
+//      e[i_end] = e[0];
+//      if (!(--i_end)) 
+//      {
+//        e[0] = e_tmp;
+//        break;
+//      }
+//    }
+//    i = k;
+//    j = (k<<1) + 1;
+//    while (j <= i_end) 
+//    {
+//      if (j < i_end && e[j] < e[j + 1])
+//        j++;
+//      if (e_tmp < e[j]) 
+//      {
+//        e[i] = e[j];
+//        i = j;
+//        j = (j<<1) + 1;
+//      } 
+//      else
+//        j = i_end + 1;
+//    }
+//    e[i] = e_tmp;
+//  }
+//}
 
 static void bubblesort_dbl (double *lo,double *hi)
 {

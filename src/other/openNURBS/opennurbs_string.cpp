@@ -12,12 +12,20 @@
 //
 ////////////////////////////////////////////////////////////////
 */
-
 // ASCII (single byte "char*" style) string
 #include "opennurbs.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // Empty strings point at empty_astring
+
+
+struct ON_aStringHeader
+{
+	int   ref_count;       // reference count (>=0 or -1 for empty string)
+	int   string_length;   // does not include NULL terminator
+	int   string_capacity; // does not include NULL terminator
+  char* string_array() {return (char*)(this+1);}
+};
 
 static struct {
   ON_aStringHeader header;
@@ -76,6 +84,17 @@ void ON_String::EmergencyDestroy()
 {
 	Create();
 }
+
+void ON_String::EnableReferenceCounting( bool bEnable )
+{
+  // TODO fill this in;
+}
+
+bool ON_String::IsReferenceCounted() const
+{
+  return true;
+}
+
 
 ON_aStringHeader* ON_String::Header() const
 {
@@ -374,6 +393,7 @@ int ON_String::Length() const
 
 char& ON_String::operator[](int i)
 {
+  CopyArray();
   return m_s[i];
 }
 
@@ -555,6 +575,7 @@ void ON_String::SetLength(size_t string_length)
 
 char* ON_String::Array()
 {
+  CopyArray();
   return ( Header()->string_capacity > 0 ) ? m_s : 0;
 }
 
@@ -779,7 +800,7 @@ int ON_String::Replace( const char* token1, const char* token2 )
       {
         // in-place
         ON_SimpleArray<int> n(32);
-        char* s = m_s;
+        const char* s = m_s;
         int i;
         for ( i = 0; i <= len-len1; /*empty*/ )
         {
@@ -806,6 +827,8 @@ int ON_String::Replace( const char* token1, const char* token2 )
           Destroy();
           return count;
         }
+
+        CopyArray();
 
         // 24 August 2006 Dale Lear
         //    This used to say
@@ -880,6 +903,8 @@ int ON_String::Replace( char token1, char token2 )
   {
     if ( token1 == m_s[i] )
     {
+      if ( 0 == count )
+        CopyArray();
       m_s[i] = token2;
       count++;
     }

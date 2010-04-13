@@ -29,26 +29,22 @@ void ON_ErrorMessage(
   // to do whatever you want to with the message.
   if ( sErrorMessage && sErrorMessage[0] ) 
   {
-#if defined(ON_DEBUG)
+
+#if defined(ON_PURIFY_BUILD) && defined(ON_32BIT_POINTER)
+    // 10 December 2003 Dale Lear
+    //     Make ON_ERROR/ON_WARNING messages show up in Purify
+    PurifyPrintf("%s",sErrorMessage);
+#endif
+
 #if defined(ON_OS_WINDOWS)
     ::OutputDebugStringA( "\n" );
     ::OutputDebugStringA( sErrorMessage );
-    ::OutputDebugStringA( "\n\n" );
-#if defined(ON_ERROR_USE_MESSAGE_BOX) && defined(MessageBox)
-    if ( message_type >= 2 ) {
-      // in your face message box while debugging
-      strcat( sMessage, "\n\nOK = continue  CANCEL = exit" );
-      if ( IDCANCEL == MessageBoxA( NULL, sMessage, "openNURBS ON_Assert FAILED", 
-                                    MB_OKCANCEL | MB_ICONEXCLAMATION | MB_TASKMODAL | MB_DEFBUTTON1) ) {
-        exit(1);
-      }
-    }
-#endif
+    ::OutputDebugStringA( "\n" );
 #else
+#if defined(ON__DEBUG)
     // not using OutputDebugStringA
     printf("\n%s\n",sErrorMessage);
 #endif
-
 #endif
   }
 }

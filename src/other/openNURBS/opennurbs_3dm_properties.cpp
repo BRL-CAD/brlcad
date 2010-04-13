@@ -342,9 +342,14 @@ ON_3dmProperties& ON_3dmProperties::operator=(const ON_3dmProperties& src)
 void ON_SetBinaryArchiveOpenNURBSVersion(ON_BinaryArchive& file, int value)
 {
   if ( value >= 200012210 )
+  {
     file.m_3dm_opennurbs_version = value;
+  }
   else
+  {
+    ON_ERROR("ON_SetBinaryArchiveOpenNURBSVersion - invalid opennurbs version");
     file.m_3dm_opennurbs_version = 0;
+  }
 }
 
 ON_BOOL32 ON_3dmProperties::Read(ON_BinaryArchive& file )
@@ -354,18 +359,30 @@ ON_BOOL32 ON_3dmProperties::Read(ON_BinaryArchive& file )
   ON_BOOL32 rc = true;
 
   unsigned int tcode;
-  int value;
+  ON__INT64 value;
 
   for(;;) {
 
-    rc = file.BeginRead3dmChunk( &tcode, &value );
+    rc = file.BeginRead3dmBigChunk( &tcode, &value );
     if ( !rc )
       break;
 
     switch(tcode) {
 
     case TCODE_PROPERTIES_OPENNURBS_VERSION:
-      ON_SetBinaryArchiveOpenNURBSVersion(file,value);
+      { 
+        int on_version = 0;
+        if ( value > 299912319 || (value != 0 && value < 200101010) )
+        {
+          ON_ERROR("ON_3dmProperties::Read - TCODE_PROPERTIES_OPENNURBS_VERSION corrupt value");
+          rc = false;
+        }
+        else
+        {
+          on_version = (int)value;
+        }
+        ON_SetBinaryArchiveOpenNURBSVersion(file,on_version);
+      }
       break;
       
     case TCODE_PROPERTIES_REVISIONHISTORY: // file creation/revision information

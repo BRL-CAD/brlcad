@@ -1,5 +1,197 @@
 #include "opennurbs.h"
 
+bool ON_Extrusion::IsValidPolyCurveProfile( const ON_PolyCurve& polycurve, ON_TextLog* text_log )
+{
+  const bool bAllowGaps = true;
+  bool rc = polycurve.IsValid(bAllowGaps,text_log) ? true : false;
+  if (!rc)
+    return false;
+
+  const int profile_count = polycurve.Count();
+
+  if ( profile_count < 1 )
+  {
+    if ( text_log )
+    {
+      text_log->Print("polycurve has < 1 segments.\n");
+    }
+    return false;
+  }
+
+  if ( 2 != polycurve.Dimension() )
+  {
+    if ( 3 != polycurve.Dimension() )
+    {
+      if ( text_log )
+      {
+        text_log->Print("polycurve dimension = %d (should be 2).\n",polycurve.Dimension());
+      }
+      return false;
+    }
+    ON_BoundingBox bbox = polycurve.BoundingBox();
+    if ( !bbox.IsValid() )
+    {
+      if ( text_log )
+      {
+        text_log->Print("polycurve.BoundingBox() is not valid.\n");
+      }
+      return false;
+    }
+    if ( !( 0.0 == bbox.m_min.z) || !(0.0 == bbox.m_max.z) )
+    {
+      if ( text_log )
+      {
+        text_log->Print("polycurve.BoundingBox() z values are not both 0.0.\n");
+      }
+      return false;
+    }
+  }
+
+  if ( 1 == profile_count )
+    return true;
+
+  if ( profile_count > 1 )
+  {
+    for ( int i = 0; i < profile_count; i++ )
+    {
+      const ON_Curve* segment = polycurve.SegmentCurve(i);
+      if ( 0 == segment )
+      {
+        if ( text_log )
+        {
+          text_log->Print("polycurve.SegmentCurve(%d) is null.\n",i);
+        }
+        return false;
+      }
+      if ( !segment->IsClosed() )
+      {
+        if ( text_log )
+        {
+          text_log->Print("polycurve.SegmentCurve(%d) is not closed.\n",i);
+        }
+        return false;
+      }
+      if ( segment->Domain() != polycurve.SegmentDomain(i) )
+      {
+        if ( text_log )
+        {
+          text_log->Print("polycurve.Segment(%d).Domain() does not match polycurve.SegmentDomain(%d).\n",i,i);
+        }
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool ON_Extrusion::CleanupPolyCurveProfile( ON_PolyCurve& polycurve )
+{
+  if ( !ON_Extrusion::IsValidPolyCurveProfile(polycurve) )
+  {
+    // see if we can fix it
+    int i;
+    const int old_count = polycurve.Count();
+    if ( old_count <= 1 )
+      return false;
+
+    // make segments 2d 
+    for ( i = 0; i < old_count; i++ )
+    {
+      ON_Curve* old_segment = polycurve.SegmentCurve(i);
+      if ( 0 == old_segment )
+        return false;
+      if ( 2 != old_segment->Dimension() && !old_segment->ChangeDimension(2) )
+        return false;
+    }
+
+    // make segment domains match the polycurve's m_t[] array
+    polycurve.SynchronizeSegmentDomains();
+
+    // make each segment a closed curve
+    ON_SimpleArray<ON_PolyCurve*> new_polycurves(old_count);
+    ON_SimpleArray<ON_Curve*> new_segments(old_count);
+    ON_PolyCurve* new_segment = 0;
+    bool rc = true;
+    for ( i = 0; i < old_count && rc; i++ )
+    {
+      ON_Curve* old_segment = polycurve.SegmentCurve(i);
+      if ( old_segment->IsClosed() )
+      {
+        if ( 0 != new_segment )
+        {
+          rc = false;
+          break;
+        }
+        new_segments.Append(old_segment);
+      }
+      else if ( 0 == new_segment )
+      {
+        new_segment = new ON_PolyCurve();
+        new_polycurves.Append(new_segment);
+        new_segment->Append(old_segment);
+      }
+      else
+      {
+        new_segment->Append(old_segment);
+        if ( new_segment->HasGap() )
+        {
+          rc = false;
+          break;
+        }
+        if ( new_segment->IsClosed() )
+        {
+          new_segments.Append(new_segment);
+          new_segment = 0;
+        }
+      }
+    }
+
+    if ( 0 != new_segment )
+    {
+      rc = false;
+    }
+
+    if ( !rc )
+    {
+      // unable to fix polycurve. Delete the new stuff we allocated.
+      for ( i = 0; i < new_polycurves.Count(); i++ )
+      {
+        new_segment = new_polycurves[i];
+        if ( new_segment )
+        {
+          for ( int j =  new_segment->Count()-1; j >= 0; j-- )
+          {
+            new_segment->HarvestSegment(j); // do not delete parts of input polycurve
+          }
+          delete new_segment;
+        }
+      }
+      return false;
+    }
+
+    for ( i = 0; i < new_polycurves.Count(); i++ )
+    {
+      new_polycurves[i]->RemoveNesting();
+    }
+
+    for ( i = old_count-1; i >= 0; i-- )
+    {
+      polycurve.HarvestSegment(i);
+      polycurve.Remove(i);
+    }
+    for ( i = 0; i < new_segments.Count(); i++ )
+    {
+      polycurve.Append(new_segments[i]);
+    }
+  }
+  else
+  {
+    polycurve.ChangeDimension(2);
+  }
+  return true;
+}
+
+
 bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U, 
                                 const ON_3dVector* Normal, 
                                 ON_Xform& xform,
@@ -34,7 +226,7 @@ bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U,
   xform.Rotation(ON_xy_plane,p0);
   if ( rot3d )
     *rot3d = xform;
-  if ( N.z > ON_Beam::m_Nz_min && N.IsUnitVector() )
+  if ( N.z > ON_Extrusion::m_Nz_min && N.IsUnitVector() )
   {
     //double cosa = T.x*N.x + T.y*N.y + T.z*N.z; // N is relative to T
     double cosa = N.z; // N is relative to xy plane.
@@ -87,24 +279,27 @@ bool ON_GetEndCapTransformation(ON_3dPoint P, ON_3dVector T, ON_3dVector U,
   return true;
 }
 
-static void ON_BeamInitializeHelper(ON_Beam& beam)
+static void ON_ExtrusionInitializeHelper(ON_Extrusion& extrusion)
 {
-  beam.m_path.from.Zero();
-  beam.m_path.to.Zero();
-  beam.m_t.m_t[0] = 0.0;
-  beam.m_t.m_t[1] = 1.0;
-  beam.m_up.Zero();
-  beam.m_profile = 0;
-  beam.m_bHaveN[0] = false;
-  beam.m_bHaveN[1] = false;
-  beam.m_N[0].Zero();
-  beam.m_N[1].Zero();
-  beam.m_path_domain.m_t[0] = 0.0;
-  beam.m_path_domain.m_t[1] = 1.0;
-  beam.m_bTransposed = false;
+  extrusion.m_path.from.Zero();
+  extrusion.m_path.to.Zero();
+  extrusion.m_t.m_t[0] = 0.0;
+  extrusion.m_t.m_t[1] = 1.0;
+  extrusion.m_up.Zero();
+  extrusion.m_profile_count = 0;
+  extrusion.m_profile = 0;
+  extrusion.m_bCap[0] = false;
+  extrusion.m_bCap[1] = false;
+  extrusion.m_bHaveN[0] = false;
+  extrusion.m_bHaveN[1] = false;
+  extrusion.m_N[0].Zero();
+  extrusion.m_N[1].Zero();
+  extrusion.m_path_domain.m_t[0] = 0.0;
+  extrusion.m_path_domain.m_t[1] = 1.0;
+  extrusion.m_bTransposed = false;
 }
 
-static void ON_BeamCopyHelper(const ON_Beam& src,ON_Beam& dst)
+static void ON_ExtrusionCopyHelper(const ON_Extrusion& src,ON_Extrusion& dst)
 {
   if ( &src != &dst )
   {
@@ -116,9 +311,12 @@ static void ON_BeamCopyHelper(const ON_Beam& src,ON_Beam& dst)
     dst.m_path = src.m_path;
     dst.m_t = src.m_t;
     dst.m_up = src.m_up;
+    dst.m_profile_count = src.m_profile_count;
     dst.m_profile = src.m_profile 
                   ? src.m_profile->DuplicateCurve() 
                   : 0;
+    dst.m_bCap[0] = src.m_bCap[0];
+    dst.m_bCap[1] = src.m_bCap[1];
     dst.m_bHaveN[0] = src.m_bHaveN[0];
     dst.m_bHaveN[1] = src.m_bHaveN[1];
     dst.m_N[0] = src.m_N[0];
@@ -128,7 +326,7 @@ static void ON_BeamCopyHelper(const ON_Beam& src,ON_Beam& dst)
   }
 }
 
-bool ON_Beam::SetPath(ON_3dPoint A, ON_3dPoint B)
+bool ON_Extrusion::SetPath(ON_3dPoint A, ON_3dPoint B)
 {
   double distAB = 0.0;
   bool rc =    A.IsValid() && B.IsValid() 
@@ -143,12 +341,57 @@ bool ON_Beam::SetPath(ON_3dPoint A, ON_3dPoint B)
   return rc;
 }
 
-int ON_Beam::PathParameter() const
+bool ON_Extrusion::SetPathAndUp( ON_3dPoint A, ON_3dPoint B, ON_3dVector up )
+{
+  double distAB = 0.0;
+
+  bool rc =    up.IsValid() 
+            && up.Length() > ON_ZERO_TOLERANCE
+            && A.IsValid() 
+            && B.IsValid() 
+            && (distAB = A.DistanceTo(B)) > ON_ZERO_TOLERANCE;
+
+  if (rc)
+  {
+    ON_3dVector D = A-B;
+    D.Unitize();
+    double d = up*D;
+    if ( !up.IsUnitVector() || fabs(d) > distAB*ON_SQRT_EPSILON*0.015625 )
+    {
+      // need to make up perpindicular to the line segment
+      // and unitize.
+      D.Unitize();
+      up = up - d*D;
+      up.Unitize();
+      // validate up
+      d = up*D;
+      rc = ( up.IsUnitVector() && fabs(d) <= ON_SQRT_EPSILON );
+    }
+
+    if (rc)
+    {
+      m_path.from = A;
+      m_path.to = B;
+      m_t.Set(0.0,1.0);
+      m_path_domain.Set(0.0,distAB);
+      m_up = up;
+    }
+  }
+
+  return rc;
+}
+
+int ON_Extrusion::PathParameter() const
 {
   return m_bTransposed ? 0 : 1;
 }
 
-ON_3dPoint ON_Beam::PathStart() const
+int ON_Extrusion::ProfileParameter() const
+{
+  return m_bTransposed ? 1 : 0;
+}
+
+ON_3dPoint ON_Extrusion::PathStart() const
 {
   ON_3dPoint P(ON_UNSET_POINT);
   const double t = m_t.m_t[0];
@@ -157,7 +400,7 @@ ON_3dPoint ON_Beam::PathStart() const
   return P;
 }
 
-ON_3dPoint ON_Beam::PathEnd() const
+ON_3dPoint ON_Extrusion::PathEnd() const
 {
   ON_3dPoint P(ON_UNSET_POINT);
   const double t = m_t.m_t[1];
@@ -166,7 +409,7 @@ ON_3dPoint ON_Beam::PathEnd() const
   return P;
 }
 
-ON_3dVector ON_Beam::PathTangent() const
+ON_3dVector ON_Extrusion::PathTangent() const
 {
   ON_3dVector T(ON_UNSET_VECTOR);
   if ( m_path.IsValid() )
@@ -174,25 +417,25 @@ ON_3dVector ON_Beam::PathTangent() const
   return T;
 }
 
-void ON_Beam::Destroy()
+void ON_Extrusion::Destroy()
 {
   if ( m_profile)
   {
     delete m_profile;
     m_profile = 0;
   }
-  ON_BeamInitializeHelper(*this);
+  ON_ExtrusionInitializeHelper(*this);
   DestroyRuntimeCache();
   PurgeUserData();
 }
 
-bool ON_Beam::SetMiterPlaneNormal(ON_3dVector N, int end)
+bool ON_Extrusion::SetMiterPlaneNormal(ON_3dVector N, int end)
 {
   bool rc = false;
   if ( end >= 0 && end <= 1 )
   {
     if (    N.IsValid() 
-         && N.z > ON_Beam::m_Nz_min
+         && N.z > ON_Extrusion::m_Nz_min
          && (N.IsUnitVector() || N.Unitize())
        )
     {
@@ -211,7 +454,7 @@ bool ON_Beam::SetMiterPlaneNormal(ON_3dVector N, int end)
   return rc;
 }
 
-void ON_Beam::GetMiterPlaneNormal(int end, ON_3dVector& N) const
+void ON_Extrusion::GetMiterPlaneNormal(int end, ON_3dVector& N) const
 {
   if ( end >= 0 && end <= 1 && m_bHaveN[end] )
     N = m_N[end];
@@ -219,7 +462,7 @@ void ON_Beam::GetMiterPlaneNormal(int end, ON_3dVector& N) const
     N.Set(0.0,0.0,1.0);
 }
 
-int ON_Beam::IsMitered() const
+int ON_Extrusion::IsMitered() const
 {
   int rc = 0;
   if ( m_bHaveN[0] && m_N[0].IsUnitVector() && m_N[0].z > m_Nz_min && (m_N[0].x != 0.0 || m_N[0].y != 0.0) )
@@ -229,8 +472,110 @@ int ON_Beam::IsMitered() const
   return rc;
 }
 
+int ON_Extrusion::IsCapped() const
+{
+  // 0 = no caps, 1 = bottom cap, 2 = top cap, 3 = both caps
 
-bool ON_Beam::GetProfileTransformation( double s, ON_Xform& xform ) const
+  if ( !m_bCap[0] && !m_bCap[1] )
+    return 0;
+
+  if ( m_profile_count < 1 || 0 == m_profile )
+    return 0;
+
+  if ( 1 == m_profile_count )
+  {
+    if ( !m_profile->IsClosed() )
+      return 0;
+  }
+  else if ( m_profile_count > 1 )
+  {
+    const ON_PolyCurve* p = ON_PolyCurve::Cast(m_profile);
+    if ( 0 == p )
+      return 0;
+    const ON_Curve* outer_profile = p->SegmentCurve(0);
+    if ( 0 == outer_profile )
+      return 0;
+    if ( !outer_profile->IsClosed() )
+      return 0;
+  }
+
+  return (m_bCap[0] ? (m_bCap[1] ? 3 : 1) : 2);
+}
+
+
+bool ON_Extrusion::IsSolid() const
+{
+  if ( !m_bCap[0] || !m_bCap[1] )
+    return false;
+  return 3 == IsCapped();
+}
+
+bool ON_Extrusion::GetPathPlane( double s, ON_Plane& plane ) const
+{
+  ON_Plane p;
+  p.origin = ON_3dPoint::Origin;
+  p.zaxis = PathTangent();
+  p.yaxis = m_up;
+  p.xaxis = ON_CrossProduct(p.yaxis,p.zaxis);
+  if ( !p.xaxis.Unitize() )
+    return false;
+  if ( !p.yaxis.Unitize() )
+    return false;
+  p.UpdateEquation();
+  if ( !p.IsValid() )
+  {
+    p.yaxis = ON_CrossProduct(p.zaxis,p.xaxis);
+    p.yaxis.Unitize();
+    if ( !p.IsValid() )
+      return false;
+  }
+  p.origin = m_path.PointAt(m_t.ParameterAt(s));
+  p.UpdateEquation();
+  plane = p;
+  return plane.IsValid();
+}
+
+bool ON_Extrusion::GetProfilePlane( double s, ON_Plane& plane ) const
+{
+  ON_Plane p;
+  p.origin = ON_3dPoint::Origin;
+  p.zaxis = PathTangent();
+  p.yaxis = m_up;
+  p.xaxis = ON_CrossProduct(p.yaxis,p.zaxis);
+  if ( !p.xaxis.Unitize() )
+    return false;
+  if ( !p.yaxis.Unitize() )
+    return false;
+  p.UpdateEquation();
+  if ( !p.IsValid() )
+  {
+    p.yaxis = ON_CrossProduct(p.zaxis,p.xaxis);
+    p.yaxis.Unitize();
+    if ( !p.IsValid() )
+      return false;
+  }
+  if (    (!m_bHaveN[0] || (0.0 == m_N[0].x && 0.0 == m_N[0].y)) 
+       && (!m_bHaveN[1] || (0.0 == m_N[1].x && 0.0 == m_N[1].y)) 
+     )
+  {
+    p.origin = m_path.PointAt(m_t.ParameterAt(s));
+    p.UpdateEquation();
+    plane = p;
+  }
+  else
+  {
+    ON_Xform xform;
+    if ( !GetProfileTransformation(s,xform) )
+      return false;
+    if (!p.Transform(xform))
+      return false;
+    plane = p;
+  }
+  return plane.IsValid();
+}
+
+
+bool ON_Extrusion::GetProfileTransformation( double s, ON_Xform& xform ) const
 {
   //const ON_3dVector* N = (end?(m_bHaveN[1]?&m_N[1]:0):(m_bHaveN[0]?&m_N[0]:0));
   const ON_3dVector T = m_path.Tangent();
@@ -269,23 +614,338 @@ bool ON_Beam::GetProfileTransformation( double s, ON_Xform& xform ) const
   return true;
 }
 
-const double ON_Beam::m_Nz_min = 1.0/64.0;
-
-const double ON_Beam::m_path_length_min = ON_ZERO_TOLERANCE;
-
-ON_OBJECT_IMPLEMENT(ON_Beam,ON_Surface,"36F53175-72B8-4d47-BF1F-B4E6FC24F4B9");
-
-ON_Beam::ON_Beam()
+static bool ProfileHelper( int desired_orientation, ON_Curve* profile )
 {
-  ON_BeamInitializeHelper(*this);
+  // desired_orientation  0: outer profile that can be open or closed.
+  // desired_orientation  1: outer profile that must be closed
+  // desired_orientation -1: inner profile
+
+  if ( 0 == profile )
+  {
+    ON_ERROR("ON_Extrusion::Set/Add Profile - null input curve pointer.");
+    return false;
+  }
+  ON_BoundingBox bbox = profile->BoundingBox();
+  if ( !bbox.IsValid() )
+  {
+    ON_ERROR("ON_Extrusion::Set/Add Profile - profile->BoundingBox() failed.");
+    return false;
+  }
+  if ( fabs(bbox.m_min.z) > ON_ZERO_TOLERANCE || fabs(bbox.m_max.z) > ON_ZERO_TOLERANCE )
+  {
+    ON_ERROR("ON_Extrusion::Set/Add Profile - profile->BoundingBox() is not in the world xy plane.");
+    return false;
+  }
+  if ( !profile->ChangeDimension(2) )
+  {
+    ON_ERROR("ON_Extrusion::Set/Add Profile - profile->ChangeDimension(2) failed.");
+    return false;
+  }
+
+  if ( profile->IsClosed() )
+  {
+    int profile_orientation = ON_ClosedCurveOrientation(*profile,0);
+    switch(desired_orientation)
+    {
+    case 1:
+    case 0:
+      if ( -1 == profile_orientation )
+      {
+        if ( !profile->Reverse() )
+        {
+          ON_ERROR("ON_Extrusion::SetOuterProfile() - profile->Reverse() failed.");
+          return false;
+        }
+        profile_orientation = 1;
+      }
+      if ( 1 == desired_orientation && 1 != profile_orientation )
+      {
+        ON_ERROR("ON_Extrusion::SetOuterProfile() - profile has wrong orientation.");
+        return false;
+      }
+      break;
+    case -1:
+      if ( 1 == profile_orientation )
+      {
+        if ( !profile->Reverse() )
+        {
+          ON_ERROR("ON_Extrusion::AddInnerProfile() - profile->Reverse() failed.");
+          return false;
+        }
+        profile_orientation = -1;
+      }
+      if ( -1 != profile_orientation )
+      {
+        ON_ERROR("ON_Extrusion::AddInnerProfile() - profile has wrong orientation.");
+        return false;
+      }
+      break;
+    default:
+      {
+        ON_ERROR("ON_Extrusion::Set/Add Profile - invalid desired_orientation parameter.");
+        return false;
+      }
+      break;
+    }
+  }
+  else if ( 0 != desired_orientation )
+  {
+    ON_ERROR("ON_Extrusion::Set/Add Profile - profile is an open curve.");
+    return false;
+  }
+
+  ON_PolyCurve* polycurve = ON_PolyCurve::Cast(profile);
+  if ( 0 != polycurve )
+  {
+    polycurve->RemoveNesting();
+    for ( int i = 0; i < polycurve->Count(); i++ )
+    {
+      ON_Curve* segment = polycurve->SegmentCurve(i);
+      if ( 0 == segment )
+      {
+        ON_ERROR("ON_Extrusion::Set/Add Profile - ON_PolyCurve has null segment.");
+        return false;
+      }
+      if ( !segment->SetDomain( polycurve->SegmentDomain(i) ) )
+      {
+        ON_ERROR("ON_Extrusion::Set/Add Profile - segment->SetDomain() failed.");
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
-ON_Beam::ON_Beam(const ON_Beam& src) : ON_Surface(src), m_profile(0)
+bool ON_Extrusion::SetOuterProfile( ON_Curve* outer_profile, bool bCap )
 {
-  ON_BeamCopyHelper(src,*this);
+  if ( 0 != m_profile )
+  {
+    ON_ERROR("ON_Extrusion::SetOuterProfile() called when m_profile is already not null.");
+    return false;
+  }
+
+  if ( !ProfileHelper( 0, outer_profile ) )
+    return false;
+
+  m_profile_count = 1;
+  m_profile = outer_profile;
+
+  if ( outer_profile->IsClosed() )
+  {
+    m_bCap[0] = m_bCap[1] = (bCap ? true : false);
+  }
+  else
+  {
+    m_bCap[0] = m_bCap[1] = false;
+  }
+
+  return true;
 }
 
-ON_Beam::~ON_Beam()
+bool ON_Extrusion::AddInnerProfile( ON_Curve* inner_profile )
+{
+  if ( m_profile_count < 1 )
+  {
+    ON_ERROR("ON_Extrusion::AddInnerProfile() called when m_profile_count < 1.");
+    return false;
+  }
+  if ( 0 == m_profile )
+  {
+    ON_ERROR("ON_Extrusion::AddInnerProfile() called when m_profile is null.");
+    return false;
+  }
+
+  if ( 1 == m_profile_count && !m_profile->IsClosed() )
+  {
+    ON_ERROR("ON_Extrusion::AddInnerProfile() called when outer profile is not closed.");
+    return false;
+  }
+
+  ON_PolyCurve* polycurve = ON_PolyCurve::Cast(m_profile);
+  if (  m_profile_count > 1 && 0 == polycurve )
+  {
+    ON_ERROR("ON_Extrusion::AddInnerProfile() called when  m_profile_count > 1 but m_profile is not an ON_PolyCurve.");
+    return false;
+  }
+  if ( m_profile_count > 1 && m_profile_count != polycurve->Count() )
+  {
+    ON_ERROR("ON_Extrusion::AddInnerProfile() called when  m_profile_count > 1 but m_profile_count != m_profile->Count().");
+    return false;
+  }
+
+  if ( !ProfileHelper( -1, inner_profile ) )
+    return false;
+
+  if ( 1 == m_profile_count )
+  {
+    if ( 0 != polycurve )
+    {
+      polycurve->RemoveNesting();
+    }
+
+    if ( 0 == polycurve || 1 != polycurve->Count() )
+    {
+      polycurve = new ON_PolyCurve();
+      polycurve->Append(m_profile);
+      m_profile = polycurve;
+    }
+  }
+
+  polycurve->Append(inner_profile);
+  if ( polycurve->SegmentDomain(m_profile_count) != inner_profile->Domain() )
+  {
+    inner_profile->SetDomain( polycurve->SegmentDomain(m_profile_count) );
+
+    // If inner_profile is itself a polycurve, clean up segment domains
+    // so we don't get bugs caused by fuzz as we adjust parameters when evaluating.
+    polycurve = ON_PolyCurve::Cast(inner_profile);
+    if ( 0 != polycurve )
+    {
+      polycurve->SynchronizeSegmentDomains();
+    }
+  }
+  m_profile_count++;
+
+ 
+  return true;
+}
+
+const ON_PolyCurve* ON_Extrusion::PolyProfile() const
+{
+  if ( m_profile_count <= 1 )
+    return 0;
+  const ON_PolyCurve* poly_profile = ON_PolyCurve::Cast(m_profile);
+  return (0 != poly_profile && m_profile_count == poly_profile->Count() ) ? poly_profile : 0;
+}
+
+const ON_Curve* ON_Extrusion::Profile(int profile_index) const
+{
+  if ( 0 == profile_index && 1 == m_profile_count )
+    return m_profile;
+  if ( profile_index < 0 || profile_index > m_profile_count )
+    return 0;
+  const ON_PolyCurve* poly_profile = PolyProfile();
+  return ( 0 != poly_profile ? poly_profile->SegmentCurve(profile_index) : 0 );
+}
+
+ON_Curve* ON_Extrusion::Profile3d( ON_COMPONENT_INDEX ci ) const
+{
+  double s = ON_UNSET_VALUE;
+  if ( ON_COMPONENT_INDEX::extrusion_bottom_profile == ci.m_type )
+    s = 0.0;
+  else if ( ON_COMPONENT_INDEX::extrusion_top_profile == ci.m_type )
+    s = 1.0;
+  else
+    return 0;
+  return Profile3d(ci.m_index,s);
+}
+
+ON_Curve* ON_Extrusion::Profile3d( int profile_index, double s ) const
+{
+  if ( profile_index < 0 || !(0.0 <= s && s <= 1.0) || 0 == m_profile )
+    return 0;
+
+  ON_Xform xform;
+  if ( !GetProfileTransformation(s,xform) )
+    return 0;
+
+  const ON_Curve* profile2d = Profile(profile_index);
+  if ( 0 == profile2d )
+    return 0;
+
+  ON_Curve* profile3d = profile2d->DuplicateCurve();
+  if ( 0 == profile3d )
+    return 0;
+
+  if (    !profile3d->ChangeDimension(3) 
+       || !profile3d->Transform(xform)
+     )
+  {
+    delete profile3d;
+    return 0;
+  }
+
+  return profile3d;
+}
+
+
+int ON_Extrusion::ProfileCount() const
+{
+  if ( !m_profile )
+    return 0;
+
+  if ( m_profile_count < 1 )
+    return 0;
+
+  if ( m_profile_count > 1 )
+  {
+    const ON_PolyCurve* polycurve = ON_PolyCurve::Cast(m_profile);
+    if ( 0 == polycurve )
+      return 0;
+    if ( polycurve->Count() != m_profile_count )
+      return 0;
+  }
+
+  return m_profile_count;
+}
+
+
+int ON_Extrusion::GetProfileCurves( ON_SimpleArray< const ON_Curve* >& profile_curves ) const
+{
+  if ( !m_profile )
+    return 0;
+
+  if ( m_profile_count < 1 )
+    return 0;
+
+  if ( 1 == m_profile_count )
+  {
+    profile_curves.Reserve(profile_curves.Count()+1);
+    profile_curves.Append(m_profile);
+  }
+  else
+  {
+    const ON_PolyCurve* polycurve = ON_PolyCurve::Cast(m_profile);
+    if ( 0 == polycurve )
+      return 0;
+    if ( polycurve->Count() != m_profile_count )
+      return 0;
+    const int count0 = profile_curves.Count();
+    profile_curves.Reserve(count0+m_profile_count);
+    for ( int i = 0; i < m_profile_count; i++ )
+    {
+      const ON_Curve* segment = polycurve->SegmentCurve(i);
+      if ( 0 == segment )
+      {
+        profile_curves.SetCount(count0);
+        return 0;
+      }
+      profile_curves.Append(segment);
+    }
+  }
+
+  return m_profile_count;
+}
+
+
+const double ON_Extrusion::m_Nz_min = 1.0/64.0;
+
+const double ON_Extrusion::m_path_length_min = ON_ZERO_TOLERANCE;
+
+ON_OBJECT_IMPLEMENT(ON_Extrusion,ON_Surface,"36F53175-72B8-4d47-BF1F-B4E6FC24F4B9");
+
+ON_Extrusion::ON_Extrusion()
+{
+  ON_ExtrusionInitializeHelper(*this);
+}
+
+ON_Extrusion::ON_Extrusion(const ON_Extrusion& src) : ON_Surface(src), m_profile(0)
+{
+  ON_ExtrusionCopyHelper(src,*this);
+}
+
+ON_Extrusion::~ON_Extrusion()
 {
   if ( m_profile)
   {
@@ -293,81 +953,120 @@ ON_Beam::~ON_Beam()
   }
 }
 
-ON_Beam& ON_Beam::operator=(const ON_Beam& src)
+ON_Extrusion& ON_Extrusion::operator=(const ON_Extrusion& src)
 {
   if ( this != &src )
   {
     Destroy();
     ON_Surface::operator=(src);
-    ON_BeamCopyHelper(src,*this);
+    ON_ExtrusionCopyHelper(src,*this);
   }
   return *this;
 }
 
-ON_BOOL32 ON_Beam::IsValid( ON_TextLog* text_log ) const
+static
+void ON_Extrusion_IsNotValidMessage( ON_TextLog* text_log, const char* msg )
+{
+  // this is a good place for a breakpoint
+  if ( text_log && msg && msg[0] )
+    text_log->Print("%s\n",msg);
+}
+
+ON_BOOL32 ON_Extrusion::IsValid( ON_TextLog* text_log ) const
 {
   // check m_profile
-  if ( !m_profile )
+  if ( m_profile_count < 1 )
   {
-    if ( text_log )
-      text_log->Print("m_profile is NULL.\n");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_profile_count < 1.");
     return false;
   }
-  if ( !m_profile->IsValid(text_log) )
+  if ( !m_profile )
   {
-    if ( text_log )
-      text_log->Print("m_profile is not valid.\n");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_profile is NULL.");
+    return false;
+  }
+  if ( m_profile_count > 1 )
+  {
+    const ON_PolyCurve* c = ON_PolyCurve::Cast(m_profile);
+    if ( 0 == c )
+    {
+      ON_Extrusion_IsNotValidMessage(text_log,"m_profile_count > 1 but m_profile is not an ON_PolyCurve.");
+      return false;
+    }
+    if ( m_profile_count != c->Count() )
+    {
+      ON_Extrusion_IsNotValidMessage(text_log,"m_profile_count > 1 but m_profile_count != m_profile->SegmentCount().");
+      return false;
+    }
+
+    if ( !ON_Extrusion::IsValidPolyCurveProfile(*c,text_log) )
+    {
+      ON_Extrusion_IsNotValidMessage(text_log,"m_profile is not a valid ON_PolyCurve.");
+      return false;
+    }
+    for ( int i = 0; i < m_profile_count; i++ )
+    {
+      const ON_Curve* segment = c->SegmentCurve(i);
+      if ( 0 == segment )
+      {
+        ON_Extrusion_IsNotValidMessage(text_log,"m_profile_count > 1 but a m_profile_count->SegmentCurve() is null.");
+        return false;
+      }
+      if ( !segment->IsClosed() )
+      {
+        ON_Extrusion_IsNotValidMessage(text_log,"m_profile_count > 1 but a m_profile_count->SegmentCurve() is not closed.");
+        return false;
+      }
+    }
+  }
+  else if ( !m_profile->IsValid(text_log) )
+  {
+    ON_Extrusion_IsNotValidMessage(text_log,"m_profile is not valid.");
     return false;
   }
 
   // check m_path
   if ( !m_path.IsValid() )
   {
-    if ( text_log )
-      text_log->Print("m_path is not valid.\n");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_path is not valid.");
     return false;
   }
   ON_3dVector D = m_path.to - m_path.from;
   double len = D.Length();
   if ( !ON_IsValid(len) || len <= 0.0 )
   {
-    if ( text_log )
-      text_log->Print("m_path has zero length.");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_path has zero length.");
     return false;
   }
-  if ( !ON_IsValid(len) || len <= ON_Beam::m_path_length_min )
+  if ( !ON_IsValid(len) || len <= ON_Extrusion::m_path_length_min )
   {
     if ( text_log )
-      text_log->Print("m_path has zero length <= ON_Beam::m_path_length_min.\n");
+      text_log->Print("m_path has zero length <= ON_Extrusion::m_path_length_min.");
     return false;
   }
   if ( !D.Unitize() || !D.IsUnitVector() )
   {
-    if ( text_log )
-      text_log->Print("m_path has zero direction.\n");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_path has zero direction.");
     return false;
   }
   
   // check m_t
   if ( !(0.0 <= m_t.m_t[0] && m_t.m_t[0] < m_t.m_t[1] && m_t.m_t[1] <= 1.0) )
   {
-    if ( text_log )
-      text_log->Print("m_t does not satisfy 0<=m_t[0]<m_t[1]<=1\n");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_t does not satisfy 0<=m_t[0]<m_t[1]<=1");
     return false;
   }
 
   // check m_up
   if ( !m_up.IsUnitVector() )
   {
-    if ( text_log )
-      text_log->Print("m_up is not a unit vector.\n");
+   ON_Extrusion_IsNotValidMessage(text_log,"m_up is not a unit vector.");
     return false;
   }
   len = m_up*D;
   if ( fabs(len) > ON_SQRT_EPSILON )
   {
-    if ( text_log )
-      text_log->Print("m_up is not perpindicular to m_path.\n");
+    ON_Extrusion_IsNotValidMessage(text_log,"m_up is not perpindicular to m_path.");
     return false;
   }
 
@@ -376,14 +1075,12 @@ ON_BOOL32 ON_Beam::IsValid( ON_TextLog* text_log ) const
   {
     if ( !m_N[0].IsUnitVector() )
     {
-      if ( text_log )
-        text_log->Print("m_N[0] is not a unit vector.\n");
+      ON_Extrusion_IsNotValidMessage(text_log,"m_N[0] is not a unit vector.");
       return false;
     }
-    if ( !(m_N[0].z > ON_Beam::m_Nz_min) )
+    if ( !(m_N[0].z > ON_Extrusion::m_Nz_min) )
     {
-      if ( text_log )
-        text_log->Print("m_N[0].z is too small (<=ON_Beam::m_Nz_min) or negative\n");
+      ON_Extrusion_IsNotValidMessage(text_log,"m_N[0].z is too small (<=ON_Extrusion::m_Nz_min) or negative");
       return false;
     }
   }
@@ -391,14 +1088,12 @@ ON_BOOL32 ON_Beam::IsValid( ON_TextLog* text_log ) const
   {
     if ( !m_N[1].IsUnitVector() )
     {
-      if ( text_log )
-        text_log->Print("m_N[1] is not a unit vector.\n");
+      ON_Extrusion_IsNotValidMessage(text_log,"m_N[1] is not a unit vector.");
       return false;
     }
-    if ( !(m_N[1].z > ON_Beam::m_Nz_min) )
+    if ( !(m_N[1].z > ON_Extrusion::m_Nz_min) )
     {
-      if ( text_log )
-        text_log->Print("m_N[1].z is too small (<=ON_Beam::m_Nz_min) or negative\n");
+      ON_Extrusion_IsNotValidMessage(text_log,"m_N[1].z is too small (<=ON_Extrusion::m_Nz_min) or negative");
       return false;
     }
   }
@@ -406,7 +1101,7 @@ ON_BOOL32 ON_Beam::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
-void ON_Beam::Dump( ON_TextLog& text_log ) const
+void ON_Extrusion::Dump( ON_TextLog& text_log ) const
 {
   text_log.Print("Path: ");
   text_log.Print(m_path.PointAt(m_t[0]));
@@ -426,7 +1121,7 @@ void ON_Beam::Dump( ON_TextLog& text_log ) const
   return;
 }
 
-unsigned int ON_Beam::SizeOf() const
+unsigned int ON_Extrusion::SizeOf() const
 {
   unsigned int sz = sizeof(*this) - sizeof(ON_Surface);
   if ( m_profile )
@@ -434,7 +1129,7 @@ unsigned int ON_Beam::SizeOf() const
   return sz;
 }
 
-ON__UINT32 ON_Beam::DataCRC(ON__UINT32 current_remainder) const
+ON__UINT32 ON_Extrusion::DataCRC(ON__UINT32 current_remainder) const
 {
   if ( m_profile )
     current_remainder = m_profile->DataCRC(current_remainder);
@@ -447,17 +1142,19 @@ ON__UINT32 ON_Beam::DataCRC(ON__UINT32 current_remainder) const
   current_remainder = ON_CRC32(current_remainder,sizeof(m_N[1]), &m_N[1]);
   current_remainder = ON_CRC32(current_remainder,sizeof(m_path_domain), &m_path_domain);
   current_remainder = ON_CRC32(current_remainder,sizeof(m_bTransposed), &m_bTransposed);
+  current_remainder = ON_CRC32(current_remainder,sizeof(m_profile_count), &m_profile_count);
+  current_remainder = ON_CRC32(current_remainder,sizeof(m_bCap[0]), &m_bCap[0]);
+  current_remainder = ON_CRC32(current_remainder,sizeof(m_bCap[1]), &m_bCap[1]);
   if ( m_profile )
     current_remainder = m_profile->DataCRC(current_remainder);
   return current_remainder;
 }
 
-
-ON_BOOL32 ON_Beam::Write(
+ON_BOOL32 ON_Extrusion::Write(
        ON_BinaryArchive& binary_archive
      ) const
 {
-  bool rc = binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+  bool rc = binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,2);
   if (!rc)
     return false;
   for (;;)
@@ -482,6 +1179,15 @@ ON_BOOL32 ON_Beam::Write(
     if (!rc) break;
     rc = binary_archive.WriteBool(m_bTransposed);
     if (!rc) break;
+    // 1.1 
+    rc = binary_archive.WriteInt(m_profile_count);
+    if (!rc) break;
+    // 1.2
+    rc = binary_archive.WriteBool(m_bCap[0]);
+    if (!rc) break;
+    rc = binary_archive.WriteBool(m_bCap[1]);
+    if (!rc) break;
+
     break;
   }
   if ( !binary_archive.EndWrite3dmChunk() )
@@ -490,7 +1196,7 @@ ON_BOOL32 ON_Beam::Write(
 }
 
 
-ON_BOOL32 ON_Beam::Read(
+ON_BOOL32 ON_Extrusion::Read(
        ON_BinaryArchive& binary_archive
      )
 {
@@ -535,6 +1241,35 @@ ON_BOOL32 ON_Beam::Read(
     if (!rc) break;
     rc = binary_archive.ReadBool(&m_bTransposed);
     if (!rc) break;
+
+    // set profile count if extrusion was read from an old file.
+    m_profile_count = (0 != m_profile) ? 1 : 0;
+
+    if ( minor_version >= 1 )
+    {
+      // 1.1 
+      rc = binary_archive.ReadInt(&m_profile_count);
+      if (!rc) break;
+
+      if ( minor_version >= 2 )
+      {
+        // 1.2
+        rc = binary_archive.ReadBool(&m_bCap[0]);
+        if (!rc) break;
+        rc = binary_archive.ReadBool(&m_bCap[1]);
+        if (!rc) break;
+      }
+    }
+
+    if ( minor_version < 2 )
+    {
+      const ON_Curve* outer_profile = Profile(0);
+      if ( 0 != outer_profile && outer_profile->IsClosed() )
+      {
+        m_bCap[0] = m_bCap[1] = true;
+      }
+    }
+
     break;
   }
   if ( !binary_archive.EndRead3dmChunk() )
@@ -542,20 +1277,20 @@ ON_BOOL32 ON_Beam::Read(
   return rc;
 }
 
-ON::object_type ON_Beam::ObjectType() const
+ON::object_type ON_Extrusion::ObjectType() const
 {
-  return ON::beam_object;
+  return ON::extrusion_object;
 }
 
 
 
-int ON_Beam::Dimension() const
+int ON_Extrusion::Dimension() const
 {
   return 3;
 }
 
 static 
-bool GetBoundingBoxHelper(const ON_Beam& beam, 
+bool GetBoundingBoxHelper(const ON_Extrusion& extrusion, 
                           ON_BoundingBox& bbox,
                           const ON_Xform* xform
                           )
@@ -573,12 +1308,12 @@ bool GetBoundingBoxHelper(const ON_Beam& beam,
   corners[6] = corners[2];
   corners[7] = corners[3];
 
-  const ON_3dVector T = beam.m_path.Tangent();
+  const ON_3dVector T = extrusion.m_path.Tangent();
   ON_Xform xform0;
-  if ( !beam.GetProfileTransformation(0,xform0) )
+  if ( !extrusion.GetProfileTransformation(0,xform0) )
     return false;
   ON_Xform xform1;
-  if ( !beam.GetProfileTransformation(1,xform1) )
+  if ( !extrusion.GetProfileTransformation(1,xform1) )
     return false;
   if ( xform && !xform->IsIdentity() )
   {
@@ -597,7 +1332,7 @@ bool GetBoundingBoxHelper(const ON_Beam& beam,
   return true;
 }
 
-ON_BOOL32 ON_Beam::GetBBox(double* boxmin,double* boxmax,int bGrowBox) const
+ON_BOOL32 ON_Extrusion::GetBBox(double* boxmin,double* boxmax,int bGrowBox) const
 {
   bool rc = false;
   if ( m_path.IsValid() && m_profile )
@@ -639,7 +1374,7 @@ ON_BOOL32 ON_Beam::GetBBox(double* boxmin,double* boxmax,int bGrowBox) const
 }
 
 
-bool ON_Beam::GetTightBoundingBox(ON_BoundingBox& tight_bbox, int bGrowBox, const ON_Xform* xform ) const
+bool ON_Extrusion::GetTightBoundingBox(ON_BoundingBox& tight_bbox, int bGrowBox, const ON_Xform* xform ) const
 {
   bool rc = false;
   if ( m_path.IsValid() && m_profile )
@@ -657,7 +1392,7 @@ bool ON_Beam::GetTightBoundingBox(ON_BoundingBox& tight_bbox, int bGrowBox, cons
   return rc;
 }
 
-ON_BOOL32 ON_Beam::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_Extrusion::Transform( const ON_Xform& xform )
 {
   bool rc = false;
   if ( !m_path.IsValid() )
@@ -756,137 +1491,479 @@ public:
   void SetIsSolid(int i) {m_is_solid = i;}
 };
 
-ON_Brep* ON_Beam::BrepForm( ON_Brep* brep ) const
+struct ON_Extrusion_BrepForm_FaceInfo
 {
-  brep = ON_Surface::BrepForm(brep);
-  while (    brep 
-       && 1 == brep->m_F.Count() 
-       && 4 == brep->m_T.Count() 
-       && m_profile->IsClosed() 
-       )
+  void Init();
+  const ON_Extrusion* m_extrusion_srf;
+  int m_face_index;
+  int m_vid[4];
+  int m_eid[4];
+  ON_BOOL32 m_bRev3d[4];
+  bool m_bClosedProfile;
+  int m_profile_orientation;
+  int m_cap_trim_index_count;
+  int m_cap_trim_index[2]; 
+};
+
+void ON_Extrusion_BrepForm_FaceInfo::Init()
+{
+  m_extrusion_srf = 0;
+  m_face_index = -1;
+  m_vid[0] = m_vid[1] = m_vid[2] = m_vid[3] = -1;
+  m_eid[0] = m_eid[1] = m_eid[2] = m_eid[3] = -1;
+  m_bRev3d[0] = m_bRev3d[1] = m_bRev3d[2] = m_bRev3d[3] = 0;
+  m_bClosedProfile = false;
+  m_profile_orientation = 0;
+  m_cap_trim_index_count = 0;
+  m_cap_trim_index[0] = m_cap_trim_index[1] = -1;
+}
+
+ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep ) const
+{
+  return BrepForm(brep,true);
+}
+
+ON_Brep* ON_Extrusion::BrepForm( ON_Brep* brep, bool bSplitKinkyFaces ) const
+{
+  if ( brep )
+    brep->Destroy();
+
+  ON_SimpleArray<const ON_Curve*> profile_curves;
+  const int profile_count = GetProfileCurves(profile_curves );
+  if ( profile_count < 1 || profile_count != profile_curves.Count() )
+    return 0;
+
+  // get end cap transformation information
+
+  const ON_3dVector T = m_path.Tangent();
+  if ( !T.IsUnitVector() )
+    return 0;
+
+  ON_Xform xform0(1.0), xform1(1.0), scale0(1.0), scale1(1.0), rot0(1.0), rot1(1.0);
+  if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[0]),T,m_up,m_bHaveN[0]?&m_N[0]:0,xform0,&scale0,&rot0) )
+    return 0;
+
+  if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[1]),T,m_up,m_bHaveN[1]?&m_N[1]:0,xform1,&scale1,&rot1) )
+    return 0;
+
+  ON_Brep* newbrep = brep ? brep : ON_Brep::New();
+
+  if ( 0 == newbrep )
+    return 0;
+
+  int is_capped = IsCapped();
+  if ( is_capped < 0 || is_capped > 3 )
+    is_capped = 0; // don't let future changes or bugs in IsCapped() crash this code.
+
+  int cap_count = (3==is_capped) ? 2 : (0 != is_capped ? 1 : 0);
+
+  newbrep->m_S.Reserve(profile_count + cap_count);
+  newbrep->m_F.Reserve(profile_count + cap_count);
+  newbrep->m_L.Reserve((1 + cap_count)*profile_count);
+  newbrep->m_C2.Reserve((4 + cap_count)*profile_count);
+  newbrep->m_T.Reserve((4 + cap_count)*profile_count);
+  newbrep->m_C3.Reserve(4*profile_count);
+  newbrep->m_E.Reserve(4*profile_count);
+
+  bool bHaveKinkyProfile = false;
+  // Do NOT change ON_DEFAULT_ANGLE_TOLERANCE to another value.
+  // See comments in CRhinoDoc::AddObject() for details.
+  const double kink_angle_tol = ON_DEFAULT_ANGLE_TOLERANCE;
+  const double cos_kink_angle_tol = cos(kink_angle_tol);
+
+  ON_SimpleArray< struct ON_Extrusion_BrepForm_FaceInfo > finfo(profile_count);
+  for ( int profile_index = 0; profile_index < profile_count; profile_index++ )
   {
-    // cap ends
+    const ON_Curve* profile_segment = profile_curves[profile_index];
+    if ( 0 == profile_segment )
+    {
+      if (newbrep != brep )
+        delete newbrep;
+      return 0;
+    }
+
+    ON_Curve* newprofile = profile_segment->DuplicateCurve();
+    if ( 0 == newprofile )
+    {
+      if (newbrep != brep )
+        delete newbrep;
+      return 0;
+    }
+
+    if ( bSplitKinkyFaces && !bHaveKinkyProfile )
+    {
+      double t0 = ON_UNSET_VALUE;
+      double t1 = ON_UNSET_VALUE;
+      if ( !newprofile->GetDomain(&t0,&t1) 
+           || !ON_IsValid(t0)
+           || !ON_IsValid(t1) 
+           || !(t0 < t1)
+         )
+      {
+        delete newprofile;
+        if (newbrep != brep )
+          delete newbrep;
+        return 0;
+      }
+      if (  newprofile->GetNextDiscontinuity(
+                            ON::G1_continuous,
+                            t0,t1,&t0,
+                            0,0,
+                            cos_kink_angle_tol,
+                            ON_SQRT_EPSILON
+                            ) )
+      {
+        bHaveKinkyProfile = true;
+      }
+    }
+
+    // create an extrusion that represents a single surface
+    // to store in the brep.
+    ON_Extrusion* extrusion = new ON_Extrusion();
+    if ( 0 == extrusion )
+    {
+      delete newprofile;
+      if (newbrep != brep )
+        delete newbrep;
+      return 0;
+    }
+    extrusion->m_path = m_path;
+    extrusion->m_t = m_t;
+    extrusion->m_up = m_up;
+    extrusion->m_profile_count = 1;
+    extrusion->m_profile = newprofile;
+    extrusion->m_bCap[0] = false;
+    extrusion->m_bCap[1] = false;
+    extrusion->m_bHaveN[0] = m_bHaveN[0];
+    extrusion->m_bHaveN[1] = m_bHaveN[1];
+    extrusion->m_N[0] = m_N[0];
+    extrusion->m_N[1] = m_N[1];
+    extrusion->m_path_domain = m_path_domain;
+    extrusion->m_bTransposed = m_bTransposed;
+
+    ON_Extrusion_BrepForm_FaceInfo& fi = finfo.AppendNew();
+    fi.Init();
+    fi.m_extrusion_srf = extrusion;
+    fi.m_bClosedProfile = extrusion->m_profile->IsClosed() ? true : false;
+    fi.m_profile_orientation = ( fi.m_bClosedProfile )
+                             ? ON_ClosedCurveOrientation(*extrusion->m_profile,0)
+                             : 0;
+    if ( 0 != is_capped 
+         && fi.m_profile_orientation != (0 == profile_index ? 1 : -1)
+       )
+    {
+      is_capped = 0;
+      cap_count = 0;
+    }
+
+    const ON_BrepFace* face = newbrep->NewFace(extrusion,fi.m_vid,fi.m_eid,fi.m_bRev3d);
+    if ( 0 == face )
+    {
+      delete newprofile;
+      if (newbrep != brep )
+        delete newbrep;
+      return 0;
+    }
+    fi.m_face_index = face->m_face_index;
+
+    extrusion = 0;
+
+    if ( 0 == is_capped )
+      continue;
+
+    const ON_BrepLoop* loop = (1 == face->LoopCount()) ? face->OuterLoop() : 0;
+    if ( 0 == loop || 4 != loop->TrimCount() )
+    {
+      is_capped = 0;
+      cap_count = 0;
+      continue;
+    }
+    
     int capti[2] = {-1,-1};
     int seam_count = 0;
-    int cap_count = 0;
+    int capti_count = 0;
     int other_count = 0;
-    for ( int ti = 0; ti < brep->m_T.Count(); ti++ )
+    for ( int lti = 0; lti < 4; lti++ )
     {
-      switch ( brep->m_T[ti].m_type )
+      const ON_BrepTrim* trim = loop->Trim(lti);
+      if ( 0 == trim )
+      {
+        is_capped = 0;
+        cap_count = 0;
+        break;
+      }
+      switch ( trim->m_type )
       {
       case ON_BrepTrim::seam:
         seam_count++;
         break;
       case ON_BrepTrim::boundary:
-        if ( cap_count < 2 )
-          capti[cap_count] = ti;
-        cap_count++;
+        if ( capti_count < 2 )
+          capti[capti_count] = trim->m_trim_index;
+        capti_count++;
         break;
       default:
         other_count++;
         break;
       }
     }
-    if ( 0 != other_count )
-      break;
-    if ( 2 != seam_count )
-      break;
-    if ( 2 != cap_count )
-      break;
-    if ( ON_Surface::S_iso != brep->m_T[capti[0]].m_iso )
-      break;
-    if ( ON_Surface::N_iso != brep->m_T[capti[1]].m_iso )
-      break;
-    ON_BrepEdge* edge0 = brep->Edge(brep->m_T[capti[0]].m_ei);
-    if ( !edge0 )
-      break;
-    ON_BrepEdge* edge1 = brep->Edge(brep->m_T[capti[1]].m_ei);
-    if ( !edge1 )
-      break;
+    if (   0 != other_count
+        || 2 != seam_count
+        || 2 != capti_count 
+        || ON_Surface::S_iso != newbrep->m_T[capti[0]].m_iso 
+        || ON_Surface::N_iso != newbrep->m_T[capti[1]].m_iso 
+        )
+    {
+      is_capped = 0;
+      cap_count = 0;
+    }
+    else
+    {
+      fi.m_cap_trim_index_count = 2;
+      fi.m_cap_trim_index[0] = capti[0];
+      fi.m_cap_trim_index[1] = capti[1];
+    }
+  }
 
+  if ( profile_count != finfo.Count() )
+  {
+    is_capped = 0;
+    cap_count = 0;
+  }
+
+  while ( is_capped > 0 && cap_count == ((3 == is_capped) ? 2 : 1) )
+  {
     // Add end caps.
-    ON_Xform xform0, xform1, scale0, scale1, rot0, rot1;
+    const ON_Extrusion_BrepForm_FaceInfo& fi0 = finfo[0];
 
-    const ON_3dVector T = m_path.Tangent();
-    if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[0]),T,m_up,m_bHaveN[0]?&m_N[0]:0,xform0,&scale0,&rot0) )
+    if ( 2 != fi0.m_cap_trim_index_count )
+    {
+      is_capped = 0;
+      cap_count = 0;
       break;
-    if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[1]),T,m_up,m_bHaveN[1]?&m_N[1]:0,xform1,&scale1,&rot1) )
+    }
+    ON_BrepEdge* outer_edge0 = newbrep->m_T[fi0.m_cap_trim_index[0]].Edge();
+    ON_BrepEdge* outer_edge1 = newbrep->m_T[fi0.m_cap_trim_index[1]].Edge();
+    if ( 0 == outer_edge0 || 0 == outer_edge1 )
+    {
+      is_capped = 0;
+      cap_count = 0;
       break;
+    }
 
-    int bReverseProfile = (-1 == ON_ClosedCurveOrientation(*m_profile,0));
+    int bReverseProfile = (-1 == fi0.m_profile_orientation);
     if ( bReverseProfile )
-      brep->Flip();
+      newbrep->FlipFace(newbrep->m_F[fi0.m_face_index]);
 
-    brep->m_C2.Reserve(brep->m_C2.Count()+2);
-    int c2i[2];
-    ON_NurbsCurve* c20 = m_profile->NurbsCurve();
+    int cap_fi[2] = {-1,-1};
+    ON_NurbsCurve* c20 = 0;
+    ON_NurbsCurve* c21 = 0;
+
+    c20 = fi0.m_extrusion_srf->m_profile->NurbsCurve();
     if ( !c20 )
+    {
       break;
+    }
     if ( bReverseProfile )
       c20->Reverse();
     c20->ChangeDimension(2);
-    ON_NurbsCurve* c21 = c20->Duplicate();
-    if ( !c21 )
+
+    if ( 2 == is_capped )
     {
-      delete c20;
-      break;
+      c21 = c20;
+      c20 = 0;
     }
-    if ( !scale0.IsIdentity() )
-      c20->Transform(scale0);
-    if ( !scale1.IsIdentity() )
-      c21->Transform(scale1);
-    c2i[0] = brep->AddTrimCurve(c20);
-    c2i[1] = brep->AddTrimCurve(c21);
+    else if ( 3 == is_capped )
+    {
+      c21 = c20->Duplicate();
+      if ( !c21 )
+      {
+        delete c20;
+        c20 = 0;
+        break;
+      }
+    }
 
-    ON_BoundingBox bbox;
-    if ( !c20->GetTightBoundingBox(bbox) )
-      bbox = c20->BoundingBox();
-    ON_Interval u0(bbox.m_min.x,bbox.m_max.x);
-    ON_Interval v0(bbox.m_min.y,bbox.m_max.y);
-    double d = u0.Length()*0.125; u0.m_t[0] -= d; u0.m_t[1] += d;
-    d = v0.Length()*0.125; v0.m_t[0] -= d; v0.m_t[1] += d;
+    newbrep->m_S.Reserve(newbrep->m_S.Count()+cap_count);
+    newbrep->m_F.Reserve(newbrep->m_F.Count()+cap_count);
+    newbrep->m_C2.Reserve(newbrep->m_C2.Count()+cap_count*profile_count);
+    newbrep->m_L.Reserve(newbrep->m_L.Count()+cap_count*profile_count);
+    newbrep->m_T.Reserve(newbrep->m_T.Count()+cap_count*profile_count);
 
-    ON_PlaneSurface* plane0 = new ON_PlaneSurface(ON_xy_plane);
-    plane0->SetExtents(0,u0,true);
-    plane0->SetExtents(1,v0,true);
-    if ( !rot0.IsIdentity() )
-      plane0->Transform(rot0);
+    if ( 0 != c20 )
+    {
+      if ( !scale0.IsIdentity() )
+        c20->Transform(scale0);
+      ON_BoundingBox bbox;
+      if ( !c20->GetTightBoundingBox(bbox) )
+        bbox = c20->BoundingBox();
+      ON_Interval u0(bbox.m_min.x,bbox.m_max.x);
+      ON_Interval v0(bbox.m_min.y,bbox.m_max.y);
+      double d = u0.Length()*0.125; u0.m_t[0] -= d; u0.m_t[1] += d;
+      d = v0.Length()*0.125; v0.m_t[0] -= d; v0.m_t[1] += d;
 
-    if ( !c21->GetTightBoundingBox(bbox) )
-      bbox = c21->BoundingBox();
-    ON_Interval u1(bbox.m_min.x,bbox.m_max.x);
-    ON_Interval v1(bbox.m_min.y,bbox.m_max.y);
-    d = u1.Length()*0.125; u1.m_t[0] -= d; u1.m_t[1] += d;
-    d = v1.Length()*0.125; v1.m_t[0] -= d; v1.m_t[1] += d;
+      ON_PlaneSurface* plane0 = new ON_PlaneSurface(ON_xy_plane);
+      plane0->SetExtents(0,u0,true);
+      plane0->SetExtents(1,v0,true);
+      if ( !rot0.IsIdentity() )
+        plane0->Transform(rot0);
 
-    ON_PlaneSurface* plane1 = new ON_PlaneSurface(ON_xy_plane);
-    plane1->SetExtents(0,u1,true);
-    plane1->SetExtents(1,v1,true);
-    if ( !rot1.IsIdentity() )
-      plane1->Transform(rot1);
+      const int c2i = newbrep->AddTrimCurve(c20);
+      c20 = 0;
+      const int si = newbrep->AddSurface(plane0);
+      plane0 = 0;
+      ON_BrepFace& face0 = newbrep->NewFace(si);
+      face0.m_bRev = true;
+      ON_BrepLoop& loop0 = newbrep->NewLoop(ON_BrepLoop::outer,face0);
+      ON_BrepTrim& trim0 = newbrep->NewTrim(*outer_edge0, bReverseProfile,loop0,c2i);
+      trim0.m_tolerance[0] = trim0.m_tolerance[1] = 0.0;
+      cap_fi[0] = face0.m_face_index;
+    }
 
-    int si[2];
-    si[0] = brep->AddSurface(plane0);
-    si[1] = brep->AddSurface(plane1);
+    if ( 0 != c21 )
+    {
+      if ( !scale1.IsIdentity() )
+        c21->Transform(scale1);
+      ON_BoundingBox bbox;
+      if ( !c21->GetTightBoundingBox(bbox) )
+        bbox = c21->BoundingBox();
+      ON_Interval u1(bbox.m_min.x,bbox.m_max.x);
+      ON_Interval v1(bbox.m_min.y,bbox.m_max.y);
+      double d = u1.Length()*0.125; u1.m_t[0] -= d; u1.m_t[1] += d;
+      d = v1.Length()*0.125; v1.m_t[0] -= d; v1.m_t[1] += d;
 
-    brep->m_F.Reserve(brep->m_F.Count()+2);
-    brep->m_T.Reserve(brep->m_F.Count()+2);
-    brep->m_L.Reserve(brep->m_F.Count()+2);
+      ON_PlaneSurface* plane1 = new ON_PlaneSurface(ON_xy_plane);
+      plane1->SetExtents(0,u1,true);
+      plane1->SetExtents(1,v1,true);
+      if ( !rot1.IsIdentity() )
+        plane1->Transform(rot1);
 
-    ON_BrepFace& face0 = brep->NewFace(si[0]);
-    face0.m_bRev = true;
-    ON_BrepFace& face1 = brep->NewFace(si[1]);
-    ON_BrepLoop& loop0 = brep->NewLoop(ON_BrepLoop::outer,face0);
-    ON_BrepLoop& loop1 = brep->NewLoop(ON_BrepLoop::outer,face1);
-    ON_BrepTrim& trim0 = brep->NewTrim(*edge0, bReverseProfile,loop0,c2i[0]);
-    ON_BrepTrim& trim1 = brep->NewTrim(*edge1,!bReverseProfile,loop1,c2i[1]);
-    trim0.m_tolerance[0] = trim0.m_tolerance[1] = 0.0;
-    trim1.m_tolerance[0] = trim1.m_tolerance[1] = 0.0;
-    ((CMyBrepIsSolidSetter*)brep)->SetIsSolid(1);
+      const int c2i = newbrep->AddTrimCurve(c21);
+      c21 = 0;
+      const int si = newbrep->AddSurface(plane1);
+      plane1 = 0;
+      ON_BrepFace& face1 = newbrep->NewFace(si);
+      ON_BrepLoop& loop1 = newbrep->NewLoop(ON_BrepLoop::outer,face1);
+      ON_BrepTrim& trim1 = newbrep->NewTrim(*outer_edge1,!bReverseProfile,loop1,c2i);
+      trim1.m_tolerance[0] = trim1.m_tolerance[1] = 0.0;
+      cap_fi[1] = face1.m_face_index;
+    }
+
+    for ( int profile_index = 1; profile_index < profile_count; profile_index++ )
+    {
+      c20 = 0;
+      c21 = 0;
+
+      // add interior holes
+      const ON_Extrusion_BrepForm_FaceInfo& fi = finfo[profile_index];
+
+      if ( 2 != fi.m_cap_trim_index_count )
+      {
+        is_capped = 0;
+        cap_count = 0;
+        break;
+      }
+      ON_BrepEdge* inner_edge0 = newbrep->m_T[fi.m_cap_trim_index[0]].Edge();
+      ON_BrepEdge* inner_edge1 = newbrep->m_T[fi.m_cap_trim_index[1]].Edge();
+      if ( 0 == inner_edge0 || 0 == inner_edge1 )
+      {
+        is_capped = 0;
+        cap_count = 0;
+        break;
+      }
+
+      int bReverseProfile = (1 == fi.m_profile_orientation);
+      if ( bReverseProfile )
+        newbrep->FlipFace(newbrep->m_F[fi.m_face_index]);
+
+      c20 = fi.m_extrusion_srf->m_profile->NurbsCurve();
+      if ( !c20 )
+      {
+        break;
+      }
+      if ( bReverseProfile )
+        c20->Reverse();
+      c20->ChangeDimension(2);
+      c21 = 0;
+      if ( 2 == is_capped )
+      {
+        c21 = c20;
+        c20 = 0;
+      }
+      else if ( 3 == is_capped )
+      {
+        c21 = c20->Duplicate();
+        if ( !c21 )
+        {
+          delete c20;
+          c20 = 0;
+          break;
+        }
+      }
+
+      if ( 0 != c20 )
+      {
+        if ( !scale0.IsIdentity() )
+          c20->Transform(scale0);
+        const int c2i = newbrep->AddTrimCurve(c20);
+        c20 = 0;
+        ON_BrepLoop& inner_loop0 = newbrep->NewLoop(ON_BrepLoop::inner,newbrep->m_F[cap_fi[0]]);
+        ON_BrepTrim& inner_trim0 = newbrep->NewTrim(*inner_edge0, bReverseProfile,inner_loop0,c2i);
+        inner_trim0.m_tolerance[0] = inner_trim0.m_tolerance[1] = 0.0;
+      }
+
+      if ( 0 != c21 )
+      {
+        if ( !scale1.IsIdentity() )
+          c21->Transform(scale1);
+        const int c2i = newbrep->AddTrimCurve(c21);
+        c21 = 0;
+        ON_BrepLoop& inner_loop1 = newbrep->NewLoop(ON_BrepLoop::inner,newbrep->m_F[cap_fi[1]]);
+        ON_BrepTrim& inner_trim1 = newbrep->NewTrim(*inner_edge1,!bReverseProfile,inner_loop1,c2i);
+        inner_trim1.m_tolerance[0] = inner_trim1.m_tolerance[1] = 0.0;
+      }
+    }
+
+    if ( 2 == cap_count && 3 == is_capped )
+      ((CMyBrepIsSolidSetter*)newbrep)->SetIsSolid(1);
 
     break;
   }
-  return brep;
+
+  if ( 0 == is_capped || 0 == cap_count )
+  {
+    // remove any partially constructed caps
+    for ( int face_index = newbrep->m_F.Count()-1; face_index >= profile_count; face_index-- )
+      newbrep->DeleteFace(newbrep->m_F[face_index],true);
+  }
+
+#if defined(ON_DEBUG)
+  if ( !newbrep->IsValid() )
+  {
+    newbrep->IsValid(); // breakpoint here
+  }
+#endif
+
+  if ( newbrep && bSplitKinkyFaces && bHaveKinkyProfile)
+  {
+    newbrep->SplitKinkyFaces(kink_angle_tol,true);
+#if defined(ON_DEBUG)
+    if ( !newbrep->IsValid() )
+    {
+      newbrep->IsValid(); // breakpoint here
+    }
+#endif
+  }
+
+  if ( newbrep )
+  {
+    ON_BoundingBox brep_bbox = newbrep->BoundingBox();
+    ON_BoundingBox extr_bbox = BoundingBox();
+    ON_BoundingBox bbox;
+    bbox.Intersection(brep_bbox,extr_bbox);
+  }
+
+  return newbrep;
 }
 
 static void KinkEvalHelper( const ON_Curve* profile,
@@ -934,7 +2011,7 @@ static bool FindNextKinkHelper( const ON_Curve* profile,
 
 class CVertexInfo
 {
-  // Helper class used in ON_Beam::CreateMesh()
+  // Helper class used in ON_Extrusion::CreateMesh()
   // It is declared out here to keep gcc happy.
 public:
   ON_3dPoint P;  // profile 2d point
@@ -943,20 +2020,140 @@ public:
   int vi[2];     // mesh->m_V[] indices
 };
 
-ON_Mesh* ON_Beam::CreateMesh( 
+static void AddCapTrianglesHelper(
+  int cap_index, // 0 = bottom, 1 = top
+  int captri_count,
+  const ON_3dex* captri_list,
+  const ON_2dex* capV_list,
+  const ON_3dVector FN,
+  ON_Mesh* mesh
+  )
+{
+  int i;
+
+  i = mesh->m_F.Count() + captri_count;
+  mesh->m_F.Reserve(i);
+  mesh->m_FN.Reserve(i);
+
+  /*
+  if ( 2 == captri_count )
+  {
+    // see if a single quad will work
+    const ON_3dex& tri0 = captri_list[0];
+    const ON_3dex& tri1 = captri_list[1];
+    ON_MeshFace f0,f1,f;
+    f0.vi[0] = capV_list[2*tri0.i];
+    f0.vi[1] = capV_list[2*tri0.k];
+    f0.vi[2] = capV_list[2*tri0.j];
+    f0.vi[3] = f0.vi[2];
+    f1.vi[0] = capV_list[2*tri1.i];
+    f1.vi[1] = capV_list[2*tri1.k];
+    f1.vi[2] = capV_list[2*tri1.j];
+    f1.vi[3] = f1.vi[2];
+
+    for ( i = 0; i < 3; i++ ) for ( j = 0; j < 3; j++ )
+    {
+      if (    f0.vi[i] == f1.vi[(j+1)%3] 
+           && f0.vi[(i+1)%3] == f1.vi[j] 
+         )
+      {
+        // set f = quad candidate
+        f.vi[0] = f0.vi[(i+2)%3];
+        f.vi[1] = f0.vi[i];
+        f.vi[2] = f1.vi[(j+2)%3];
+        f.vi[3] = f0.vi[(i+1)%3];
+
+        // force exit nested for loop
+        i = 86;
+        j = 86;
+
+        // verify f is a valid convext quad
+        if ( !f.IsValid(mesh->m_V.Count()) )
+          break;
+        ON_3dVector A,B,C;
+        ON_3dPoint P[4] = {mesh->m_V[f.vi[0]],mesh->m_V[f.vi[1]],mesh->m_V[f.vi[2]],mesh->m_V[f.vi[3]]};
+        A = P[2]-P[1];
+        B = P[0]-P[1];
+        C = ON_CrossProduct(A,B);
+        C.Unitize();
+        if ( !(C*FN > 0.99) )
+          break;
+        A = P[0]-P[3];
+        B = P[2]-P[3];
+        C = ON_CrossProduct(A,B);
+        C.Unitize();
+        if ( !(C*FN > 0.99) )
+          break;
+
+        // a single quad will work
+        mesh->m_F.Append(f);
+        mesh->m_FN.Append(FN);
+        return;
+      }
+    }
+  }
+  */
+
+  // add triangles
+  if ( 0 == cap_index )
+  {
+    // add triangles for the bottom cap
+    for ( i = 0; i < captri_count; i++ )
+    {
+      const ON_3dex& tri = captri_list[i];
+      ON_MeshFace& f = mesh->m_F.AppendNew();
+      f.vi[0] = capV_list[tri.i].i;
+      f.vi[1] = capV_list[tri.k].i;
+      f.vi[2] = capV_list[tri.j].i;
+      f.vi[3] = f.vi[2];
+      mesh->m_FN.Append(FN);
+    }
+  }
+  else if ( 1 == cap_index )
+  {
+    // add triangles for the top cap
+    for ( i = 0; i < captri_count; i++ )
+    {
+      const ON_3dex& tri = captri_list[i];
+      ON_MeshFace& f = mesh->m_F.AppendNew();
+      f.vi[0] = capV_list[tri.i].j;
+      f.vi[1] = capV_list[tri.j].j;
+      f.vi[2] = capV_list[tri.k].j;
+      f.vi[3] = f.vi[2];
+      mesh->m_FN.Append(FN);
+    }
+  }
+}
+
+ON_Mesh* ON_Extrusion::CreateMesh( 
            const ON_MeshParameters& mp,
            ON_Mesh* mesh
            ) const
 {
   ON_Workspace ws;
 
-  bool bCapMesh = true;//true;
+  int is_capped = IsCapped();
+  if ( is_capped < 0 || is_capped > 3 )
+    is_capped = 0; // don't let future changes or bug in IsCapped() crash this code
 
-  // Make sure beam is well defined
-  if ( !m_profile )
+  // Make sure extrusion is well defined
+  ON_SimpleArray<const ON_Curve*> profile_curves(m_profile_count);
+  const int profile_count = GetProfileCurves(profile_curves);
+  if ( profile_count < 1 || profile_count != profile_curves.Count() )
     return 0;
+
+  // set curve meshing paramters
+  ON_MeshCurveParameters mcp;
+  mcp.m_max_ang_radians = mp.m_refine_angle;
+  mcp.m_max_chr = mp.m_relative_tolerance;
+  mcp.m_max_aspect = mp.m_grid_aspect_ratio;
+  mcp.m_tolerance = mp.m_tolerance;
+  mcp.m_min_edge_length = mp.m_min_edge_length;
+  mcp.m_max_edge_length = mp.m_max_edge_length;
+
   const ON_3dVector pathT = m_path.Tangent();
-  ON_Xform xform0, xform1, rot0, rot1, xformT;
+  ON_Xform xform0(1.0), xform1(1.0), rot0(1.0), rot1(1.0), xformT(1.0);
+
   if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[0]),pathT,m_up,m_bHaveN[0]?&m_N[0]:0,xform0,0,&rot0) )
     return 0;
   if ( !ON_GetEndCapTransformation(m_path.PointAt(m_t.m_t[1]),pathT,m_up,m_bHaveN[1]?&m_N[1]:0,xform1,0,&rot1) )
@@ -965,163 +2162,242 @@ ON_Mesh* ON_Beam::CreateMesh(
     return 0;
 
   // Get a polyline that approximates the profile;
-  ON_PolylineCurve polyline0;
-  if ( !m_profile->IsPolyline(&polyline0.m_pline,&polyline0.m_t) )
-  {
-    ON_MeshCurveParameters mcp;
-    mcp.m_max_ang_radians = mp.m_refine_angle;
-    mcp.m_max_chr = mp.m_relative_tolerance;
-    mcp.m_max_aspect = mp.m_grid_aspect_ratio;
-    mcp.m_tolerance = mp.m_tolerance;
-    mcp.m_min_edge_length = mp.m_min_edge_length;
-    mcp.m_max_edge_length = mp.m_max_edge_length;
-    if ( 0 == m_profile->MeshCurve(mcp,&polyline0,false,0) )
-      return 0;
-  }
-  int count = polyline0.m_pline.Count();
-  if ( count < 2 )
-    return 0;
-
   bool bFlipMesh = false;
-  const bool bIsClosed = count >= 4 && (polyline0.IsClosed() || m_profile->IsClosed());
-  if ( bIsClosed )
-  {
-    *polyline0.m_pline.Last() = polyline0.m_pline[0];
-
-    // see if polyline is going clockwise
-    int tcount = polyline0.m_t.Count();
-    const double* t = polyline0.m_t.Array();
-    ON_3dPoint p0,p1;
-    double a = 0.0;
-    p1 = m_profile->PointAt(t[tcount-1]);
-    for ( int i = 1; i < tcount; i++ )
-    {
-      p0 = p1;
-      p1 = m_profile->PointAt(t[i]);
-      a += (p0.x-p1.x)*(p0.y+p1.y);
-    }
-    if ( a < 0.0 )
-    {
-      bFlipMesh = true;
-    }
-  }
-
-  // Convert polyline information into information
-  // needed to create mesh vertex, texture, and normal
-  // arrays.
-  ON_3dVector T1;
-
-  // See if there are kinks in the profile
-  double kink_param, kminus, kplus;
-  const double kink_max = *polyline0.m_t.Last();
-  bool bKinkyProfile = FindNextKinkHelper( m_profile,polyline0.m_t[0],kink_max,&kminus,&kink_param,&kplus);
-
-  ON_SimpleArray<CVertexInfo> Vinfo_list(count+m_profile->SpanCount());
+  ON_PolylineCurve polyline;
+  ON_SimpleArray<bool> polyline_bIsClosed(profile_count);
+  ON_SimpleArray<int> polyline_point_count(profile_count);
+  ON_SimpleArray<int> VInfo_point_count(profile_count);
+  int profile_index, i;
+  ON_SimpleArray<CVertexInfo> Vinfo_list;
   CVertexInfo Vinfo;
   memset(&Vinfo,0,sizeof(Vinfo));
   int hint = 0;
-  int i;
-  for ( i = 0; i < count; i++ )
+  double profile_length = 0.0;
+  for ( profile_index = 0; profile_index < profile_count; profile_index++ )
   {
-    Vinfo.t = polyline0.m_t[i];
-    polyline0.m_pline[i].z = 0.0;
-    if (    bKinkyProfile
-         && Vinfo_list.Count() > 0 
-         && Vinfo_list.Last()->t < kminus 
-         && kplus < Vinfo.t 
-       )
+    const ON_Curve* profile = profile_curves[profile_index];
+    if ( 0 == profile )
+      return 0;
+    polyline.m_t.SetCount(0);
+    polyline.m_pline.SetCount(0);
+    polyline.m_dim = 2;
+    if ( !profile->IsPolyline(&polyline.m_pline,&polyline.m_t) )
     {
-      while ( bKinkyProfile && kplus < Vinfo.t )
+      mcp.m_tolerance = mp.m_tolerance;
+      if ( mp.m_relative_tolerance > 0.0 )
       {
-        // add kinks between previous and current polyline0 point
-        KinkEvalHelper( m_profile,kminus,kink_param,kplus,Vinfo.P,Vinfo.T,T1,&hint);
+        ON_BoundingBox bbox = profile->BoundingBox();
+        if ( bbox.IsValid() )
+        {
+          bbox.m_min.z = bbox.m_max.z = 0.0;
+          double d = bbox.Diagonal().Length();
+          double tol = ON_MeshParameters::Tolerance(mp.m_relative_tolerance,d);
+          if ( tol > 0.0 )
+          {
+            if ( tol < 1.0e-4 )
+              tol = 1.0e-4;
+            if ( tol < mp.m_min_tolerance )
+              tol = mp.m_min_tolerance;
+            if ( tol > 0.0 && (tol < mcp.m_tolerance || mcp.m_tolerance <= 0.0 || !ON_IsValid(mcp.m_tolerance) ) )
+              mcp.m_tolerance = tol;
+          }
+        }
+      }
+      if ( 0 == profile->MeshCurve(mcp,&polyline,false,0) )
+        return 0;
+    }
+    int count = polyline.m_pline.Count();
+    if ( count < 2 )
+      return 0;
+    bool bIsClosed = false;
+    if ( count >= 4 && (polyline.IsClosed() || profile->IsClosed()) )
+    {
+      bIsClosed = true;
+      *polyline.m_pline.Last() = polyline.m_pline[0];
+      if ( 0 == profile_index )
+      {
+        // see if outer polyline is going clockwise
+        int tcount = polyline.m_t.Count();
+        ON_3dPoint p0,p1;
+        double a = 0.0;
+        p1 = polyline.m_pline[0];
+        for ( i = 1; i < tcount; i++ )
+        {
+          p0 = p1;
+          p1 = polyline.m_pline[i];
+          a += (p0.x-p1.x)*(p0.y+p1.y);
+        }
+        if ( a < 0.0 )
+        {
+          bFlipMesh = true;
+        }
+      }
+    }
+    else 
+    {
+      bIsClosed = false;
+      is_capped = 0;
+    }
+
+    polyline_bIsClosed.Append(bIsClosed);
+    polyline_point_count.Append(count);
+
+
+    // Convert polyline information into information needed
+    // to create mesh vertex, texture, and normal arrays.
+    Vinfo_list.Reserve( Vinfo_list.Count() + count + profile->SpanCount() );
+
+    ON_3dVector T1;
+
+    // See if there are kinks in the profile
+    double kink_param, kminus, kplus;
+    const double kink_max = *polyline.m_t.Last();
+    bool bKinkyProfile = FindNextKinkHelper( profile,polyline.m_t[0],kink_max,&kminus,&kink_param,&kplus);
+
+    const int Vinfo_list_count0 = Vinfo_list.Count();
+    for ( i = 0; i < count; i++ )
+    {
+      Vinfo.t = polyline.m_t[i];
+      polyline.m_pline[i].z = 0.0;
+      if (    bKinkyProfile
+           && Vinfo_list.Count() > Vinfo_list_count0 
+           && Vinfo_list.Last()->t < kminus 
+           && kplus < Vinfo.t 
+         )
+      {
+        while ( bKinkyProfile && kplus < Vinfo.t )
+        {
+          // add kinks between previous and current polyline0 point
+          KinkEvalHelper( profile,kminus,kink_param,kplus,Vinfo.P,Vinfo.T,T1,&hint);
+          Vinfo.t = kink_param;
+          Vinfo_list.Append(Vinfo);
+          Vinfo.T = T1;
+          Vinfo_list.Append(Vinfo);
+          bKinkyProfile = FindNextKinkHelper( profile,kplus,kink_max,&kminus,&kink_param,&kplus);
+        }
+        Vinfo.t = polyline.m_t[i];
+      }
+
+      if (    bKinkyProfile
+           && kminus <= Vinfo.t && Vinfo.t <= kplus 
+           && i < count-1 && polyline.m_t[i+1] > kink_param )
+      {
+        // polyline0.m_t[i] is at a kink
+        KinkEvalHelper( profile,kminus,kink_param,kplus,Vinfo.P,Vinfo.T,T1,&hint);
         Vinfo.t = kink_param;
         Vinfo_list.Append(Vinfo);
         Vinfo.T = T1;
         Vinfo_list.Append(Vinfo);
-        bKinkyProfile = FindNextKinkHelper( m_profile,kplus,kink_max,&kminus,&kink_param,&kplus);
+        bKinkyProfile = FindNextKinkHelper( profile,kplus,kink_max,&kminus,&kink_param,&kplus);
       }
-      Vinfo.t = polyline0.m_t[i];
+      else
+      {
+        // no kink at polyline0.m_t[i]
+        Vinfo.t = polyline.m_t[i];
+        m_profile->EvTangent(Vinfo.t,Vinfo.P,Vinfo.T,(count-1 == i) ? -1 : 1,&hint);
+        Vinfo.P.z = 0;
+        Vinfo.T.z = 0;
+        Vinfo_list.Append(Vinfo);
+      }
     }
 
-    if (    bKinkyProfile
-         && kminus <= Vinfo.t && Vinfo.t <= kplus 
-         && i < count-1 && polyline0.m_t[i+1] > kink_param )
-    {
-      // polyline0.m_t[i] is at a kink
-      KinkEvalHelper( m_profile,kminus,kink_param,kplus,Vinfo.P,Vinfo.T,T1,&hint);
-      Vinfo.t = kink_param;
-      Vinfo_list.Append(Vinfo);
-      Vinfo.T = T1;
-      Vinfo_list.Append(Vinfo);
-      bKinkyProfile = FindNextKinkHelper( m_profile,kplus,kink_max,&kminus,&kink_param,&kplus);
-    }
-    else
-    {
-      // no kink at polyline0.m_t[i]
-      Vinfo.t = polyline0.m_t[i];
-      m_profile->EvTangent(Vinfo.t,Vinfo.P,Vinfo.T,(count-1 == i) ? -1 : 1,&hint);
-      Vinfo.P.z = 0;
-      Vinfo.T.z = 0;
-      Vinfo_list.Append(Vinfo);
-    }
+    count = Vinfo_list.Count();
+    if ( count < Vinfo_list_count0 + 2 )
+      return 0;
+
+    if ( bIsClosed )
+      Vinfo_list.Last()->P = Vinfo_list[Vinfo_list_count0].P;
+
+    VInfo_point_count.Append(Vinfo_list.Count());
+
+    double len = 0.0;
+    if ( polyline.GetLength(&len) )
+      profile_length += len;
   }
 
-  count = Vinfo_list.Count();
-  if ( count < 2 )
-    return 0;
-
-  if ( bIsClosed )
-    Vinfo_list.Last()->P = Vinfo_list[0].P;
-  else
-    bCapMesh = false;
-
-  const ON_3dex* captri_list = 0;
-  ON_2dex* capV_list = 0;
-  int captri_count = 0;
-  int capV_count = 0;
   ON_3dPoint P;
-  if ( bCapMesh )
+
+  ON_SimpleArray<ON_3dex> cap_triangles;
+  polyline.m_pline.SetCount(0);
+  polyline.m_t.SetCount(0);
+  int capV_count = 0;
+  int captri_count = 0;
+  ON_2dex* capV_list = 0;
+  const ON_3dex* captri_list = 0;
+
+  if ( 0 != is_capped )
   {
-    polyline0.m_pline.SetCount(0);
-    polyline0.m_t.SetCount(0);
-    polyline0.m_pline.Reserve(count);
-    polyline0.m_t.Reserve(count);
-    Vinfo = Vinfo_list[0];
-    polyline0.m_pline.Append(Vinfo.P);
-    polyline0.m_t.Append(Vinfo.t);
-    for (i = 1; i < count; i++)
+    ON_SimpleArray<ON_2dex> edge_list(Vinfo_list.Count()+1);
+    ON_2dex edge;
+
+    polyline.m_pline.Reserve(Vinfo_list.Count());
+    polyline.m_t.Reserve(Vinfo_list.Count());
+    for ( profile_index = 0; profile_index < profile_count; profile_index++ )
     {
-      const CVertexInfo& VI = Vinfo_list[i];
-      if ( VI.t > Vinfo.t )
+      const int i0 =  profile_index > 0 ? VInfo_point_count[profile_index-1] : 0;
+      const int polyline_count0 =  polyline.PointCount();
+      Vinfo = Vinfo_list[i0];
+      P = Vinfo.P;
+      P.z = i0;
+      polyline.m_pline.Append(P);
+      polyline.m_t.Append(Vinfo.t);
+      edge.j = polyline_count0;
+      const bool bIsClosed = polyline_bIsClosed[profile_index];
+      const int i1 = VInfo_point_count[profile_index] - (bIsClosed?1:0);
+      for (i = i0+1 ; i < i1; i++)
       {
-        Vinfo = VI;
-        P = Vinfo.P;
-        P.z = i;
-        polyline0.m_pline.Append(P);
-        polyline0.m_t.Append(Vinfo.t);
+        const CVertexInfo& VI = Vinfo_list[i];
+        if ( VI.t > Vinfo.t )
+        {
+          Vinfo = VI;
+          P = Vinfo.P;
+          P.z = i;
+          edge.i = edge.j;
+          edge.j = polyline.PointCount();
+          edge_list.Append(edge);
+          polyline.m_pline.Append(P);
+          polyline.m_t.Append(Vinfo.t);
+        }
+      }
+      if ( bIsClosed )
+      {
+        edge.i = edge.j;
+        edge.j = polyline_count0;
+        edge_list.Append(edge);
       }
     }
-    capV_count = polyline0.PointCount()-1;
-    captri_count = capV_count-2;
-    int* tris = (captri_count > 0) ? ws.GetIntMemory(3*captri_count) : 0;
-    if (    captri_count < 1 
-         || !ON_Mesh2dPolygon(capV_count,3,&polyline0.m_pline[0].x,3,tris))
+
+    // calculate triangles that fill in the end cap
+    ON_Mesh2dRegion( polyline.PointCount(), 
+                     3,
+                     &polyline.m_pline.Array()->x,
+                     edge_list.Count(),
+                     2,
+                     &edge_list.Array()->i,
+                     0,
+                     cap_triangles);
+
+    if ( cap_triangles.Count() > 0 )
     {
-      captri_count = 0;
-      capV_count = 0;
-    }
-    else
-    {
-      ON_2dex* vv = (ON_2dex*)ws.GetIntMemory(2*capV_count);
-      for ( i = 0; i < capV_count; i++ )
+      capV_count = polyline.PointCount();
+      captri_count = cap_triangles.Count();
+      if ( captri_count > 0 )
       {
-        // set vv[i].j = Vinfo[] index for point polyline0.m_pline[i]
-        vv[i].i = -1;
-        vv[i].j = (int)(polyline0.m_pline[i].z); // vv[i].j = Vinfo_list[] index
+        ON_2dex* vv = (ON_2dex*)ws.GetIntMemory(2*capV_count);
+        for ( i = 0; i < capV_count; i++ )
+        {
+          // set vv[i].j = Vinfo[] index for point polyline0.m_pline[i]
+          vv[i].i = -1;
+          vv[i].j = (int)(polyline.m_pline[i].z); // vv[i].j = Vinfo_list[] index
+        }
+        capV_list = vv;
+        captri_list = cap_triangles.Array();
       }
-      capV_list = vv;
-      captri_list = (ON_3dex*)tris;
+    }
+
+    for ( i = 0; i < polyline.m_pline.Count(); i++ )
+    {
+      polyline.m_pline[i].z = 0.0;
     }
   }
 
@@ -1130,26 +2406,44 @@ ON_Mesh* ON_Beam::CreateMesh(
   else
     mesh->Destroy();
 
+  const int count = Vinfo_list.Count();
+
   int path_dir = PathParameter();
-  mesh->m_V.Reserve(2*(count+capV_count));
-  mesh->m_N.Reserve(2*(count+capV_count));
-  mesh->m_S.Reserve(2*(count+capV_count));
-  mesh->m_T.Reserve(2*(count+capV_count));
+  int vcount_reserve = 2*count;
+  switch( is_capped )
+  {
+  case 1:
+  case 2:
+    vcount_reserve += capV_count;
+    break;
+  case 3:
+    vcount_reserve += 2*capV_count;
+    break;
+  }
+  mesh->m_V.Reserve(vcount_reserve);
+  mesh->m_N.Reserve(vcount_reserve);
+  mesh->m_S.Reserve(vcount_reserve);
+  mesh->m_T.Reserve(vcount_reserve);
   mesh->m_srf_domain[0] = Domain(0);
   mesh->m_srf_domain[1] = Domain(1);
   mesh->m_srf_scale[path_dir]   = m_path.Length();
-  double polyline_length=0.0;
-  polyline0.GetLength(&polyline_length);
-  mesh->m_srf_scale[1-path_dir] = polyline_length;
+  mesh->m_srf_scale[1-path_dir] = profile_length;
   mesh->m_packed_tex_domain[0].Set(0.0,1.0);
   mesh->m_packed_tex_domain[1].Set(0.0,1.0);
   mesh->m_packed_tex_rotate = false;
   ON_2dPoint S;
   ON_3dVector N, T;
   ON_2fPoint tex;
+  int quad_count = 0;
+  double t0 = Vinfo_list[0].t;
   for ( i = 0; i < count; i++ )
   {
     CVertexInfo& VI = Vinfo_list[i];
+    if ( t0 < VI.t )
+    {
+      quad_count++;
+      t0 = VI.t;
+    }
     VI.P.z = 0.0;
     VI.T.z = 0.0;
     P = xform0*VI.P;
@@ -1157,7 +2451,7 @@ ON_Mesh* ON_Beam::CreateMesh(
     N = ON_CrossProduct(T,pathT);
     if ( m_bTransposed )
       N.Reverse();
-    if ( !N.IsUnitVector() || !N.Unitize() )
+    if ( !N.IsUnitVector() && !N.Unitize() )
       N.Zero();
     S[1-path_dir] = VI.t;
     S[path_dir] = m_path_domain[0];
@@ -1180,7 +2474,6 @@ ON_Mesh* ON_Beam::CreateMesh(
   }
 
   // add quads
-  Vinfo = Vinfo_list[0];
   int fvi1, fvi3;
   if ( m_bTransposed )
   {
@@ -1192,24 +2485,24 @@ ON_Mesh* ON_Beam::CreateMesh(
     fvi1 = 1;
     fvi3 = 3;
   }
-  mesh->m_F.Reserve(polyline0.PointCount()-1 + 2*captri_count);
-  mesh->m_FN.Reserve(polyline0.PointCount()-1 + 2*captri_count);
+  mesh->m_F.Reserve(quad_count + 2*captri_count);
   for ( i = 1; i < count; i++ )
   {
+    const CVertexInfo& Vinfo0 = Vinfo_list[i-1];
     const CVertexInfo& Vinfo1 = Vinfo_list[i];
-    if ( Vinfo.t < Vinfo1.t )
+    if ( Vinfo0.t < Vinfo1.t )
     {
       ON_MeshFace& f = mesh->m_F.AppendNew();
-      f.vi[0] = Vinfo.vi[0];
+      f.vi[0] = Vinfo0.vi[0];
       f.vi[fvi1] = Vinfo1.vi[0];
       f.vi[2] = Vinfo1.vi[1];
-      f.vi[fvi3] = Vinfo.vi[1];      
+      f.vi[fvi3] = Vinfo0.vi[1];      
     }
-    Vinfo = Vinfo1;
   }
+  mesh->m_FN.Reserve(mesh->m_F.Count() + 2*captri_count);
   mesh->ComputeFaceNormals();
 
-  if ( captri_count > 0 && capV_count == captri_count+2 )
+  if ( captri_count > 0 && capV_count > 0 )
   {
     // add end caps
     ON_3dVector N0, N1;
@@ -1242,67 +2535,94 @@ ON_Mesh* ON_Beam::CreateMesh(
       N1.Reverse();
     }
 
-    mesh->m_V.Reserve(mesh->m_V.Count()+2*capV_count);
-    mesh->m_S.Reserve(mesh->m_S.Count()+2*capV_count);
-    mesh->m_N.Reserve(mesh->m_N.Count()+2*capV_count);
-    mesh->m_T.Reserve(mesh->m_T.Count()+2*capV_count);
-    // add vertices for the bottom cap
-    for ( i = 0; i < capV_count; i++ )
+    vcount_reserve = mesh->m_V.Count()+(3==is_capped?2:1)*capV_count;
+    mesh->m_V.Reserve(vcount_reserve);
+    mesh->m_S.Reserve(vcount_reserve);
+    mesh->m_N.Reserve(vcount_reserve);
+    mesh->m_T.Reserve(vcount_reserve);
+
+    if ( 1 == is_capped || 3 == is_capped )
     {
-      // capV_list[i].j = Vinfo_list[] index
-      const CVertexInfo& VI = Vinfo_list[capV_list[i].j];
-      // set capV_list[i].i = mesh->m_V[] index
-      capV_list[i].i = mesh->m_V.Count();
-      mesh->m_V.Append(mesh->m_V[VI.vi[0]]);
-      mesh->m_S.Append(mesh->m_S[VI.vi[0]]);
-      mesh->m_T.Append(mesh->m_T[VI.vi[0]]);
-      mesh->m_N.AppendNew() = N0;
+      // add vertices for the bottom cap
+      for ( i = 0; i < capV_count; i++ )
+      {
+        // capV_list[i].j = Vinfo_list[] index
+        const CVertexInfo& VI = Vinfo_list[capV_list[i].j];
+        // set capV_list[i].i = mesh->m_V[] index
+        capV_list[i].i = mesh->m_V.Count();
+        mesh->m_V.Append(mesh->m_V[VI.vi[0]]);
+        mesh->m_S.Append(mesh->m_S[VI.vi[0]]);
+        mesh->m_T.Append(mesh->m_T[VI.vi[0]]);
+        mesh->m_N.AppendNew() = N0;
+      }
     }
-    // add vertices for the top cap
-    for ( i = 0; i < capV_count; i++ )
+
+    if ( 2 == is_capped || 3 == is_capped )
     {
-      // capV_list[i].j = Vinfo_list[] index
-      const CVertexInfo& VI = Vinfo_list[capV_list[i].j];
-      // set capV_list[i].j = mesh->m_V[] index
-      capV_list[i].j = mesh->m_V.Count();
-      mesh->m_V.Append(mesh->m_V[VI.vi[1]]);
-      mesh->m_S.Append(mesh->m_S[VI.vi[1]]);
-      mesh->m_T.Append(mesh->m_T[VI.vi[1]]);
-      mesh->m_N.AppendNew() = N1;
+      // add vertices for the top cap
+      for ( i = 0; i < capV_count; i++ )
+      {
+        // capV_list[i].j = Vinfo_list[] index
+        const CVertexInfo& VI = Vinfo_list[capV_list[i].j];
+        // set capV_list[i].j = mesh->m_V[] index
+        capV_list[i].j = mesh->m_V.Count();
+        mesh->m_V.Append(mesh->m_V[VI.vi[1]]);
+        mesh->m_S.Append(mesh->m_S[VI.vi[1]]);
+        mesh->m_T.Append(mesh->m_T[VI.vi[1]]);
+        mesh->m_N.AppendNew() = N1;
+      }
     }
-    mesh->m_F.Reserve(mesh->m_F.Count()+2*captri_count);
-    mesh->m_FN.Reserve(mesh->m_F.Count()+2*captri_count);
-    // add triangles for the bottom cap
-    for ( i = 0; i < captri_count; i++ )
+
+    int fcount_reserve = mesh->m_F.Count() + (3==is_capped ? 2 : 1)*captri_count;
+
+    mesh->m_F.Reserve(fcount_reserve);
+    mesh->m_FN.Reserve(fcount_reserve);
+
+    if ( 1 == is_capped || 3 == is_capped )
     {
-      const ON_3dex& tri = captri_list[i];
-      ON_MeshFace& f = mesh->m_F.AppendNew();
-      f.vi[0] = capV_list[tri.i].i;
-      f.vi[1] = capV_list[tri.k].i;
-      f.vi[2] = capV_list[tri.j].i;
-      f.vi[3] = f.vi[2];
-      mesh->m_FN.AppendNew() = N0;
+      // add triangles for the bottom cap
+      AddCapTrianglesHelper(0,captri_count,captri_list,capV_list,N0,mesh);
+
+      //for ( i = 0; i < captri_count; i++ )
+      //{
+      //  const ON_3dex& tri = captri_list[i];
+      //  ON_MeshFace& f = mesh->m_F.AppendNew();
+      //  f.vi[0] = capV_list[tri.i].i;
+      //  f.vi[1] = capV_list[tri.k].i;
+      //  f.vi[2] = capV_list[tri.j].i;
+      //  f.vi[3] = f.vi[2];
+      //  mesh->m_FN.AppendNew() = N0;
+      //}
     }
-    // add triangles for the top cap
-    for ( i = 0; i < captri_count; i++ )
+
+    if ( 2 == is_capped || 3 == is_capped )
     {
-      const ON_3dex& tri = captri_list[i];
-      ON_MeshFace& f = mesh->m_F.AppendNew();
-      f.vi[0] = capV_list[tri.i].j;
-      f.vi[1] = capV_list[tri.j].j;
-      f.vi[2] = capV_list[tri.k].j;
-      f.vi[3] = f.vi[2];
-      mesh->m_FN.AppendNew() = N1;
+      // add triangles for the top cap
+      AddCapTrianglesHelper(1,captri_count,captri_list,capV_list,N1,mesh);
+
+      //for ( i = 0; i < captri_count; i++ )
+      //{
+      //  const ON_3dex& tri = captri_list[i];
+      //  ON_MeshFace& f = mesh->m_F.AppendNew();
+      //  f.vi[0] = capV_list[tri.i].j;
+      //  f.vi[1] = capV_list[tri.j].j;
+      //  f.vi[2] = capV_list[tri.k].j;
+      //  f.vi[3] = f.vi[2];
+      //  mesh->m_FN.AppendNew() = N1;
+      //}
     }
   }
 
   if ( 0 != mesh && bFlipMesh )
     mesh->Flip();
 
+  if ( mesh )
+    mesh->SetMeshParameters(mp);
+
   return mesh;
 }
 
-ON_BOOL32 ON_Beam::SetDomain( 
+ON_BOOL32 ON_Extrusion::SetDomain( 
   int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
   double t0, 
   double t1
@@ -1325,7 +2645,7 @@ ON_BOOL32 ON_Beam::SetDomain(
   return rc;
 }
 
-ON_Interval ON_Beam::Domain(
+ON_Interval ON_Extrusion::Domain(
   int dir // 0 gets first parameter's domain, 1 gets second parameter's domain
   ) const 
 {
@@ -1335,7 +2655,7 @@ ON_Interval ON_Beam::Domain(
          : ((1-path_dir == dir && m_profile) ? m_profile->Domain() : ON_Interval());
 }
 
-ON_BOOL32 ON_Beam::GetSurfaceSize( 
+ON_BOOL32 ON_Extrusion::GetSurfaceSize( 
     double* width, 
     double* height 
     ) const
@@ -1373,7 +2693,7 @@ ON_BOOL32 ON_Beam::GetSurfaceSize(
   return rc;
 }
 
-int ON_Beam::SpanCount(
+int ON_Extrusion::SpanCount(
   int dir // 0 gets first parameter's domain, 1 gets second parameter's domain
   ) const // number of smooth nonempty spans in the parameter direction
 {
@@ -1385,7 +2705,7 @@ int ON_Beam::SpanCount(
   return 0;
 }
 
-ON_BOOL32 ON_Beam::GetSpanVector( // span "knots" 
+ON_BOOL32 ON_Extrusion::GetSpanVector( // span "knots" 
       int dir, // 0 gets first parameter's domain, 1 gets second parameter's domain
       double* span_vector // array of length SpanCount() + 1 
       ) const  // 
@@ -1407,7 +2727,7 @@ ON_BOOL32 ON_Beam::GetSpanVector( // span "knots"
   return false;
 }
 
-ON_BOOL32 ON_Beam::GetSpanVectorIndex(
+ON_BOOL32 ON_Extrusion::GetSpanVectorIndex(
       int dir , // 0 gets first parameter's domain, 1 gets second parameter's domain
       double t,      // [IN] t = evaluation parameter
       int side,         // [IN] side 0 = default, -1 = from below, +1 = from above
@@ -1431,7 +2751,7 @@ ON_BOOL32 ON_Beam::GetSpanVectorIndex(
   return false;
 }
 
-int ON_Beam::Degree( // returns maximum algebraic degree of any span 
+int ON_Extrusion::Degree( // returns maximum algebraic degree of any span 
                 // ( or a good estimate if curve spans are not algebraic )
   int dir // 0 gets first parameter's domain, 1 gets second parameter's domain
   ) const  
@@ -1444,7 +2764,7 @@ int ON_Beam::Degree( // returns maximum algebraic degree of any span
   return 0;
 }
 
-ON_BOOL32 ON_Beam::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+ON_BOOL32 ON_Extrusion::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
        int dir,        // 0 gets first parameter, 1 gets second parameter
        double t,       // t = parameter in domain
        double* tminus, // tminus
@@ -1459,7 +2779,7 @@ ON_BOOL32 ON_Beam::GetParameterTolerance( // returns tminus < tplus: parameters 
   return false;
 }
 
-ON_Surface::ISO ON_Beam::IsIsoparametric(
+ON_Surface::ISO ON_Extrusion::IsIsoparametric(
       const ON_Curve& curve,
       const ON_Interval* curve_domain
       ) const
@@ -1467,7 +2787,7 @@ ON_Surface::ISO ON_Beam::IsIsoparametric(
   return ON_Surface::IsIsoparametric(curve,curve_domain);
 }
 
-ON_BOOL32 ON_Beam::IsPlanar(
+ON_BOOL32 ON_Extrusion::IsPlanar(
       ON_Plane* plane,
       double tolerance
       ) const
@@ -1509,7 +2829,7 @@ ON_BOOL32 ON_Beam::IsPlanar(
   return false;
 }
 
-ON_BOOL32 ON_Beam::IsClosed(int dir) const
+ON_BOOL32 ON_Extrusion::IsClosed(int dir) const
 {
   const int path_dir = PathParameter();
   if ( 1-path_dir == dir && m_profile )
@@ -1517,7 +2837,7 @@ ON_BOOL32 ON_Beam::IsClosed(int dir) const
   return false;
 }
 
-ON_BOOL32 ON_Beam::IsPeriodic( int dir ) const
+ON_BOOL32 ON_Extrusion::IsPeriodic( int dir ) const
 {
   const int path_dir = PathParameter();
   if ( 1-path_dir == dir && m_profile )
@@ -1525,11 +2845,11 @@ ON_BOOL32 ON_Beam::IsPeriodic( int dir ) const
   return false;
 }
 
-//ON_BOOL32 ON_Beam::IsSingular( // true if surface side is collapsed to a point
+//ON_BOOL32 ON_Extrusion::IsSingular( // true if surface side is collapsed to a point
 //      int        // side of parameter space to test
 //                 // 0 = south, 1 = east, 2 = north, 3 = west
 //      ) const
-bool ON_Beam::GetNextDiscontinuity( 
+bool ON_Extrusion::GetNextDiscontinuity( 
                 int dir,
                 ON::continuity c,
                 double t0,
@@ -1553,7 +2873,7 @@ bool ON_Beam::GetNextDiscontinuity(
   return false;
 }
 
-bool ON_Beam::IsContinuous(
+bool ON_Extrusion::IsContinuous(
   ON::continuity c,
   double s, 
   double t, 
@@ -1582,14 +2902,14 @@ bool ON_Beam::IsContinuous(
   return m_profile->IsContinuous(c,curvet,crv_hint,point_tolerance,d1_tolerance,d2_tolerance,cos_angle_tolerance,curvature_tolerance);
 }
 
-ON_Surface::ISO ON_Beam::IsIsoparametric(
+ON_Surface::ISO ON_Extrusion::IsIsoparametric(
       const ON_BoundingBox& bbox
       ) const
 {
   return ON_Surface::IsIsoparametric(bbox);
 }
 
-ON_BOOL32 ON_Beam::Reverse( int dir )
+ON_BOOL32 ON_Extrusion::Reverse( int dir )
 {
   const int path_dir = PathParameter();
   if ( path_dir == dir )
@@ -1604,13 +2924,13 @@ ON_BOOL32 ON_Beam::Reverse( int dir )
   return false;
 }
 
-ON_BOOL32 ON_Beam::Transpose() // transpose surface parameterization (swap "s" and "t")
+ON_BOOL32 ON_Extrusion::Transpose() // transpose surface parameterization (swap "s" and "t")
 {
   m_bTransposed = m_bTransposed?false:true;
   return true;
 }
 
-ON_BOOL32 ON_Beam::Evaluate( // returns false if unable to evaluate
+ON_BOOL32 ON_Extrusion::Evaluate( // returns false if unable to evaluate
        double u, double v,   // evaluation parameters
        int num_der,          // number of derivatives (>=0)
        int array_stride,     // array stride (>=Dimension())
@@ -1755,7 +3075,7 @@ ON_BOOL32 ON_Beam::Evaluate( // returns false if unable to evaluate
   return true;
 }
 
-ON_Curve* ON_Beam::IsoCurve(
+ON_Curve* ON_Extrusion::IsoCurve(
        int dir,
        double c
        ) const
@@ -1834,17 +3154,17 @@ ON_Curve* ON_Beam::IsoCurve(
 }
 
 
-//ON_Curve* ON_Beam::Pushup( const ON_Curve& curve_2d,
+//ON_Curve* ON_Extrusion::Pushup( const ON_Curve& curve_2d,
 //                  double tolerance,
 //                  const ON_Interval* curve_2d_subdomain = NULL
 //                  ) const
-//ON_Curve* ON_Beam::Pullback( const ON_Curve& curve_3d,
+//ON_Curve* ON_Extrusion::Pullback( const ON_Curve& curve_3d,
 //                  double tolerance,
 //                  const ON_Interval* curve_3d_subdomain = NULL,
 //                  ON_3dPoint start_uv = ON_UNSET_POINT,
 //                  ON_3dPoint end_uv = ON_UNSET_POINT
 //                  ) const
-ON_BOOL32 ON_Beam::Trim(
+ON_BOOL32 ON_Extrusion::Trim(
        int dir,
        const ON_Interval& domain
        )
@@ -1904,7 +3224,7 @@ ON_BOOL32 ON_Beam::Trim(
   return rc;
 }
 
-bool ON_Beam::Extend(
+bool ON_Extrusion::Extend(
   int dir,
   const ON_Interval& domain
   )
@@ -1970,7 +3290,7 @@ bool ON_Beam::Extend(
   return rc;
 }
 
-ON_BOOL32 ON_Beam::Split(
+ON_BOOL32 ON_Extrusion::Split(
        int dir,
        double c,
        ON_Surface*& west_or_south_side,
@@ -1989,17 +3309,17 @@ ON_BOOL32 ON_Beam::Split(
   if (c <= domain[0] || c >= domain[1] )
     return false;
 
-  ON_Beam* left = 0;
-  ON_Beam* right = 0;
+  ON_Extrusion* left = 0;
+  ON_Extrusion* right = 0;
   if ( west_or_south_side )
   {
-    left = ON_Beam::Cast(west_or_south_side);
+    left = ON_Extrusion::Cast(west_or_south_side);
     if ( !left )
       return false;
   }
   if ( east_or_north_side )
   {
-    right = ON_Beam::Cast(east_or_north_side);
+    right = ON_Extrusion::Cast(east_or_north_side);
     if ( !right )
       return false;
   }
@@ -2035,13 +3355,13 @@ ON_BOOL32 ON_Beam::Split(
 
     // return result
     if ( !left )
-      left = new ON_Beam(*this);
+      left = new ON_Extrusion(*this);
     else if ( left != this )
       left->operator =(*this);
     else
       left->DestroyRuntimeCache();
     if ( !right )
-      right = new ON_Beam(*this);
+      right = new ON_Extrusion(*this);
     else if ( right != this )
       right->operator =(*this);
     else
@@ -2111,20 +3431,20 @@ ON_BOOL32 ON_Beam::Split(
     }
 
     // Prevent this m_profile from being copied
-    const_cast<ON_Beam*>(this)->m_profile = 0;
+    const_cast<ON_Extrusion*>(this)->m_profile = 0;
 
     // Create new left and right sides with NULL profiles
     if ( !left )
-      left = new ON_Beam(*this);
+      left = new ON_Extrusion(*this);
     else if ( left != this )
       left->operator =(*this);
     if ( !right )
-      right = new ON_Beam(*this);
+      right = new ON_Extrusion(*this);
     else if ( right != this )
       right->operator =(*this);
 
     // Restore this m_profile
-    const_cast<ON_Beam*>(this)->m_profile = this_profile;
+    const_cast<ON_Extrusion*>(this)->m_profile = this_profile;
 
     // Set left and right profiles
     left->m_profile = left_profile;
@@ -2138,7 +3458,7 @@ ON_BOOL32 ON_Beam::Split(
   return rc;
 }
 
-bool ON_Beam::GetClosestPoint( 
+bool ON_Extrusion::GetClosestPoint( 
         const ON_3dPoint& P,
         double* s,
         double* t,
@@ -2153,91 +3473,143 @@ bool ON_Beam::GetClosestPoint(
   if ( !P.IsValid() )
     return false;
 
-  const ON_Line path(PathStart(),PathEnd());
-  if ( !path.IsValid() )
-    return false;
-
-  double path_parameter=ON_UNSET_VALUE;
-  if ( !path.ClosestPointTo(P,&path_parameter) || !ON_IsValid(path_parameter) )
-    return false;
-
-  const ON_3dPoint path_P = path.PointAt(path_parameter);
-  const ON_3dVector zaxis = m_path.Tangent();
-  const ON_3dVector yaxis = m_up;
-  ON_3dVector xaxis = ON_CrossProduct(yaxis,zaxis);
-  if ( !xaxis.IsUnitVector() )
-    xaxis.Unitize();
-
-  const ON_3dPoint profile_2dP(xaxis*(P - path_P),yaxis*(P - path_P),0.0);
-  if ( !profile_2dP.IsValid() )
-    return false;
-  
   if ( m_bTransposed ) 
   {
     double* p1 = s; s=t; t = p1;
     const ON_Interval* p2=sdomain;sdomain=tdomain;tdomain=p2;
   }
 
+
+  ON_Interval profile_domain = m_profile->Domain();
+  if ( 0 != sdomain )
+  {
+    if ( !sdomain->IsValid() || sdomain->IsDecreasing() )
+      return false;
+    if (    sdomain->m_t[0] <= profile_domain.m_t[0] 
+         && sdomain->m_t[1] >= profile_domain.m_t[1] )
+    {
+      sdomain = 0;
+    }
+    else
+    {
+      if ( sdomain->m_t[0] > profile_domain.m_t[0] )
+        profile_domain.m_t[0] = sdomain->m_t[0];
+      if ( sdomain->m_t[1] < profile_domain.m_t[1] )
+        profile_domain.m_t[1] = sdomain->m_t[1];
+      if ( !profile_domain.IsValid() || profile_domain.IsDecreasing() )
+        return false;
+      sdomain = &profile_domain;
+    }
+  }
+
+  ON_Interval path_domain = m_path_domain;
   if ( 0 != tdomain )
   {
     if ( !tdomain->IsValid() || tdomain->IsDecreasing() )
       return false;
-    if ( tdomain->m_t[0] > m_path_domain.m_t[1] )
-      return false;
-    if ( tdomain->m_t[1] < m_path_domain.m_t[0] )
-      return false;
+    if (    tdomain->m_t[0] <= path_domain.m_t[0] 
+         && tdomain->m_t[1] >= path_domain.m_t[1] )
+    {
+      tdomain = 0;
+    }
+    else
+    {
+      if ( tdomain->m_t[0] > path_domain.m_t[0] )
+        path_domain.m_t[0] = tdomain->m_t[0];
+      if ( tdomain->m_t[1] < path_domain.m_t[1] )
+        path_domain.m_t[1] = tdomain->m_t[1];
+      if ( !path_domain.IsValid() || path_domain.IsDecreasing() )
+        return false;
+      tdomain = &path_domain;
+    }
   }
 
-  double profile_parameter=ON_UNSET_VALUE;
-  if (    !m_profile->GetClosestPoint(profile_2dP,&profile_parameter,maximum_distance,tdomain) 
-       || !ON_IsValid(profile_parameter)
-     )
+  // Use the ON_Line "m_path" to get a "profile_2dP", a 2d point, to used 
+  // to calculate the profile parameter.
+  double elevation_t = ON_UNSET_VALUE;
+  if ( !m_path.ClosestPointTo(P,&elevation_t) || !ON_IsValid(elevation_t) )
+    return false;
+  const ON_3dPoint elevation_P = m_path.PointAt(elevation_t);
+  const ON_3dVector zaxis = m_path.Tangent();
+  const ON_3dVector yaxis = m_up;
+  ON_3dVector xaxis = ON_CrossProduct(yaxis,zaxis);
+  if ( !xaxis.IsUnitVector() )
+    xaxis.Unitize();
+  const ON_3dPoint profile_2dP(xaxis*(P - elevation_P),yaxis*(P - elevation_P),0.0);
+  if ( !profile_2dP.IsValid() )
+    return false;
+  double profile_parameter = ON_UNSET_VALUE;
+  if ( 0 != sdomain && sdomain->IsSingleton() )
+  {
+    profile_parameter = sdomain->m_t[0];
+  }
+  else if ( !m_profile->GetClosestPoint(profile_2dP,&profile_parameter,maximum_distance,sdomain) 
+            || !ON_IsValid(profile_parameter)
+           )
   {
     return false;
   }
   const ON_3dPoint Q2d = m_profile->PointAt(profile_parameter);
+  if ( !Q2d.IsValid() )
+    return false;
 
+  // now calsulate "L", the extrusion line for the profile point.
   ON_Line L;
+  const ON_3dPoint path_start = PathStart();
+  if ( !path_start.IsValid() )
+    return false;
+  const ON_3dPoint path_end = PathEnd();
+  if ( !path_end.IsValid() )
+    return false;
   if ( IsMitered() )
   {
     ON_Xform xform0, xform1;
-    if ( !ON_GetEndCapTransformation(path.from,zaxis,m_up,m_bHaveN[0]?&m_N[0]:0,xform0,0,0) )
+    if ( !ON_GetEndCapTransformation(path_start, zaxis, m_up, m_bHaveN[0]?&m_N[0]:0, xform0, 0,0) )
       return false;
-    if ( !ON_GetEndCapTransformation(path.to,zaxis,m_up,m_bHaveN[1]?&m_N[1]:0,xform1,0,0) )
+    if ( !ON_GetEndCapTransformation(path_end,   zaxis, m_up, m_bHaveN[1]?&m_N[1]:0, xform1, 0,0) )
       return false;
     L.from = xform0*Q2d;
-    L.to = xform1*Q2d;
-    if ( !L.ClosestPointTo(P,&path_parameter) || !ON_IsValid(path_parameter) )
-      return false;
+    L.to   = xform1*Q2d;
   }
   else
   {
     const ON_3dVector D = Q2d.x*xaxis + Q2d.y*yaxis;
-    L.from = path.from + D;
-    L.to   = path.to + D;
+    L.from = path_start + D;
+    L.to   = path_end   + D;
   }
-  if ( path_parameter < 0.0 )
-    path_parameter = 0.0;
-  else if (path_parameter > 1.0)
-    path_parameter = 1.0;
   
-  double line_parameter = m_path_domain.ParameterAt(path_parameter);
+  // ... and find the point on "L" closest to P.
+  double L_parameter = ON_UNSET_VALUE;
+  if ( !L.ClosestPointTo(P,&L_parameter) || !ON_IsValid(L_parameter) )
+    return false;
+  if ( L_parameter < 0.0 )
+    L_parameter = 0.0;
+  else if ( L_parameter > 1.0 )
+    L_parameter = 1.0;
+
+  // convert L_paramter into a path_paramter and make sure
+  // path_parameter satisfies any domain restrictions.
+  double path_parameter = m_path_domain.ParameterAt(L_parameter);
   if ( 0 != tdomain )
   {
-    if ( line_parameter < tdomain->m_t[0] )
+    // "path_domain" is a sub-domain of "m_path_domain".
+    if ( path_parameter < path_domain[0] )
     {
-      line_parameter = tdomain->m_t[0];
-      path_parameter = m_path_domain.NormalizedParameterAt(line_parameter);
+      path_parameter = path_domain[0];
+      // use m_path_domain to restrict L_paramter
+      L_parameter = m_path_domain.NormalizedParameterAt(path_parameter);
     }
-    else if ( line_parameter > tdomain->m_t[1] )
+    else if ( path_parameter > path_domain[1] )
     {
-      line_parameter = tdomain->m_t[1];
-      path_parameter = m_path_domain.NormalizedParameterAt(line_parameter);
+      path_parameter = path_domain[1];
+      // use m_path_domain to restrict L_paramter
+      L_parameter = m_path_domain.NormalizedParameterAt(path_parameter);
     }
   }
+
   if ( maximum_distance > 0.0 )
   {
-    ON_3dPoint Q = L.PointAt(path_parameter);
+    ON_3dPoint Q = L.PointAt(L_parameter);
     double d = Q.DistanceTo(P);
     if ( d > maximum_distance )
       return false;
@@ -2245,24 +3617,117 @@ bool ON_Beam::GetClosestPoint(
   if ( s )
     *s = profile_parameter;
   if ( t )
-    *t = line_parameter;
+    *t = path_parameter;
+
+  return true;
+}
+
+ON_BOOL32 ON_Extrusion::GetLocalClosestPoint( 
+    const ON_3dPoint& test_point,
+    double s0, double t0,     // seed_parameters
+    double* s, double* t,   // parameters of local closest point returned here
+    const ON_Interval* sdomain, // first parameter sub_domain
+    const ON_Interval* tdomain  // second parameter sub_domain
+    ) const
+{
+  if ( s )
+    *s = s0;
+  if ( t )
+    *t = t0;
+
+  if ( 0 == m_profile || !ON_IsValid(s0) || !ON_IsValid(t0) )
+    return false;
+
+  ON_NurbsSurface NS;
+  const int rc = GetNurbForm(NS);
+  if ( rc <= 0 ) 
+    return false;
+
+  double a = s0;
+  double b = t0;
+
+	// Domain restrictions must be transformed to nurbs parameter space
+	const ON_Interval* pNdom[2]={sdomain,tdomain};
+	ON_Interval NSdom;
+	ON_Interval NTdom;
+
+  const int profile_index = PathParameter();
+
+  double profile_input_parameter = ON_UNSET_VALUE;
+  double* profile_local_parameter = 0;
+  double* profile_output_parameter = 0;
+  const ON_Interval* profile_input_domain = 0;
+  ON_Interval* profile_local_domain = 0;
+
+  if ( 2 == rc )
+  {
+    if ( 0 == profile_index )
+    {
+      profile_input_parameter = s0;
+      profile_output_parameter = s;
+      profile_local_parameter = &a;
+      profile_input_domain = sdomain;
+      profile_input_domain = &NSdom;
+    }
+    else if (1 == profile_index )
+    {
+      profile_input_parameter = t0;
+      profile_output_parameter = t;
+      profile_local_parameter = &b;
+      profile_input_domain = tdomain;
+      profile_local_domain = &NTdom;
+    }
+    else
+    {
+      return false;
+    }
+    *profile_local_parameter = profile_input_parameter;
+    if (!m_profile->GetNurbFormParameterFromCurveParameter(profile_input_parameter, profile_local_parameter))
+      return false;
+		if ( 0 != profile_input_domain && 0 != profile_local_domain )
+		{
+      *profile_local_domain = *profile_input_domain;
+			if(!m_profile->GetNurbFormParameterFromCurveParameter(profile_input_domain->m_t[0], &profile_local_domain->m_t[0]))
+				return false;
+			if(!m_profile->GetNurbFormParameterFromCurveParameter(profile_input_domain->m_t[1], &profile_local_domain->m_t[1]))
+				return false;
+      pNdom[profile_index] = profile_local_domain;
+		}
+  }
+
+  if (!NS.GetLocalClosestPoint(test_point, a, b, &a, &b, pNdom[0], pNdom[1]))
+    return false;
+
+  if ( s ) 
+    *s = a;
+  if ( t ) 
+    *t = b;
+
+  if ( 2 == rc 
+       && 0 != profile_local_parameter 
+       && 0 != profile_output_parameter 
+     )
+  {
+    if (!m_profile->GetCurveParameterFromNurbFormParameter(*profile_local_parameter, profile_output_parameter))
+      return false;
+  }
 
   return true;
 }
 
 
-//ON_BOOL32 ON_Beam::GetLocalClosestPoint( const ON_3dPoint&, // test_point
+//ON_BOOL32 ON_Extrusion::GetLocalClosestPoint( const ON_3dPoint&, // test_point
 //        double,double,     // seed_parameters
 //        double*,double*,   // parameters of local closest point returned here
 //        const ON_Interval* = NULL, // first parameter sub_domain
 //        const ON_Interval* = NULL  // second parameter sub_domain
 //        ) const
-//ON_Surface* ON_Beam::Offset(
+//ON_Surface* ON_Extrusion::Offset(
 //      double offset_distance, 
 //      double tolerance, 
 //      double* max_deviation = NULL
 //      ) const
-int ON_Beam::GetNurbForm(
+int ON_Extrusion::GetNurbForm(
       ON_NurbsSurface& nurbs_surface,
       double tolerance
       ) const
@@ -2300,12 +3765,12 @@ int ON_Beam::GetNurbForm(
   return rc;
 }
 
-int ON_Beam::HasNurbForm() const
+int ON_Extrusion::HasNurbForm() const
 {
   return m_profile ? m_profile->HasNurbForm() : 0;
 }
 
-bool ON_Beam::GetSurfaceParameterFromNurbFormParameter(
+bool ON_Extrusion::GetSurfaceParameterFromNurbFormParameter(
       double nurbs_s, double nurbs_t,
       double* surface_s, double* surface_t
       ) const
@@ -2331,7 +3796,7 @@ bool ON_Beam::GetSurfaceParameterFromNurbFormParameter(
   return rc;
 }
 
-bool ON_Beam::GetNurbFormParameterFromSurfaceParameter(
+bool ON_Extrusion::GetNurbFormParameterFromSurfaceParameter(
       double surface_s, double surface_t,
       double* nurbs_s,  double* nurbs_t
       ) const
@@ -2355,5 +3820,151 @@ bool ON_Beam::GetNurbFormParameterFromSurfaceParameter(
   if ( nurbs_t )
     *nurbs_t = surface_t;
   return rc;
+}
+
+
+
+ON_Extrusion* ON_Extrusion::Cylinder( 
+  const ON_Cylinder& cylinder, 
+  bool bCapBottom,
+  bool bCapTop,
+  ON_Extrusion* extrusion
+  )
+{
+  if ( !cylinder.IsValid() || !cylinder.IsFinite() )
+    return 0;
+
+  ON_Line path;
+  path.from = cylinder.circle.plane.PointAt(0.0,0.0,cylinder.height[0]);
+  path.to   = cylinder.circle.plane.PointAt(0.0,0.0,cylinder.height[1]);
+  if ( !path.IsValid() || !(path.Length() > ON_ZERO_TOLERANCE) )
+    return 0;
+
+  ON_3dVector up = cylinder.circle.plane.yaxis;
+  if (    !up.IsValid()
+       || !up.IsUnitVector()
+       || fabs(up*path.Tangent()) > ON_SQRT_EPSILON 
+       )
+    return 0;
+
+  ON_ArcCurve* circle_curve = new ON_ArcCurve(cylinder.circle);
+  circle_curve->m_arc.plane = ON_Plane::World_xy;
+  circle_curve->m_dim = 2;
+  if ( !circle_curve->IsValid() )
+  {
+    delete circle_curve;
+    return 0;
+  }
+
+  ON_Extrusion* extrusion_cylinder = 0;
+  if ( extrusion )
+  {
+    extrusion->Destroy();
+    extrusion_cylinder = extrusion;
+  }
+  else
+  {
+    extrusion_cylinder = new ON_Extrusion();
+  }
+
+  if (    !extrusion_cylinder->SetPathAndUp(path.from,path.to,up)
+       || !extrusion_cylinder->SetOuterProfile(circle_curve,false)
+       || !extrusion_cylinder->IsValid()
+       || !extrusion_cylinder->SetDomain(extrusion_cylinder->PathParameter(),cylinder.height[0],cylinder.height[1])
+     )
+  {
+    if ( 0 == extrusion )
+      delete extrusion_cylinder;
+    return 0;
+  }
+
+  extrusion_cylinder->m_bCap[0] = bCapBottom ? true : false;
+  extrusion_cylinder->m_bCap[1] = bCapTop    ? true : false;
+
+  if ( !extrusion_cylinder->IsValid() )
+  {
+    if ( 0 == extrusion )
+      delete extrusion_cylinder;
+    return 0;
+  }
+
+  return extrusion_cylinder;
+}
+
+
+
+ON_Extrusion* ON_Extrusion::Pipe( 
+  const ON_Cylinder& cylinder, 
+  double other_radius,
+  bool bCapBottom,
+  bool bCapTop,
+  ON_Extrusion* extrusion
+  )
+{
+  if (    !cylinder.IsValid() 
+       || !ON_IsValid(other_radius)
+       || !(fabs(other_radius - cylinder.circle.Radius()) > ON_ZERO_TOLERANCE)
+       )
+  {
+    return 0;
+  }
+
+  double inner_radius = (other_radius < cylinder.circle.radius)
+                      ? other_radius
+                      : cylinder.circle.radius;
+  double outer_radius = (other_radius < cylinder.circle.radius)
+                      ? cylinder.circle.radius
+                      : other_radius;
+  if (    !ON_IsValid(inner_radius) 
+       || !ON_IsValid(outer_radius)
+       || !(outer_radius - inner_radius > ON_ZERO_TOLERANCE)
+     )
+  {
+    return 0;
+  }
+
+  ON_Cylinder outer_cylinder = cylinder;
+  outer_cylinder.circle.radius = outer_radius;
+
+  ON_Circle inner_circle(ON_Plane::World_xy,inner_radius);
+  ON_ArcCurve* inner_profile = new ON_ArcCurve(inner_circle);
+  inner_profile->m_dim = 2;
+  if ( !inner_profile->IsValid() )
+  {
+    delete inner_profile;
+    return 0;
+  }
+
+  ON_Extrusion* extrusion_pipe = ON_Extrusion::Cylinder(outer_cylinder,bCapBottom,bCapTop,extrusion);
+  if ( 0 == extrusion_pipe )
+  {
+    delete inner_profile;
+    return 0;
+  }
+
+  if ( !extrusion_pipe->IsValid() )
+  {
+    if ( 0 == extrusion )
+      delete extrusion_pipe;
+    delete inner_profile;
+    return 0;
+  }
+
+  if ( !extrusion_pipe->AddInnerProfile(inner_profile) )
+  {
+    if ( 0 == extrusion )
+      delete extrusion_pipe;
+    delete inner_profile;
+    return 0;
+  }
+
+  if ( !extrusion_pipe->IsValid() )
+  {
+    if ( 0 == extrusion )
+      delete extrusion_pipe;
+    return 0;
+  }
+
+  return extrusion_pipe;
 }
 

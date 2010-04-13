@@ -22,15 +22,21 @@ public:
   // quaternion = a + bi + cj + dk
   double a,b,c,d;
 
-  static const ON_Quaternion Zero;     // 0
-  static const ON_Quaternion Identity; // 1
-  static const ON_Quaternion I;        // "i"
-  static const ON_Quaternion J;        // "j"
-  static const ON_Quaternion K;        // "k"
+  static const ON_Quaternion Zero;     // 0   = (0,0,0,0
+  static const ON_Quaternion Identity; // 1   = (1,0,0,0)
+  static const ON_Quaternion I;        // "i" = (0,1,0,0)
+  static const ON_Quaternion J;        // "j" = (0,0,1,0)
+  static const ON_Quaternion K;        // "k" = (0,0,0,1)
 
   ON_Quaternion() {}
 
   ON_Quaternion(double qa, double qb, double qc, double qd);
+
+  // (a,b,c,d) = (0,v.x,v.y,v.z)
+  ON_Quaternion(const ON_3dVector& v);
+
+  // (a,b,c,d) = (0,v.x,v.y,v.z)
+  ON_Quaternion& operator=(const ON_3dVector& v);
 
   void Set(double qa, double qb, double qc, double qd);
 
@@ -212,6 +218,24 @@ public:
   bool GetRotation(double& angle, ON_3dVector& axis) const;
 
   /*
+  Description:
+    The transformation returned by this function has the property
+    that xform*V = q.Rotate(V).
+  Parameters:
+    xform - [out]
+  Returns:
+    A transformation matrix that performs the rotation defined 
+    by the quaternion.
+  Remarks:
+    If the quaternion is not unitized, the rotation of its
+    unitized form is returned.  Do not confuse the result of this
+    function the matrix returned by ON_Quaternion::MatrixForm().
+    The transformation returned by this function has the property
+    that xform*V = q.Rotate(V).
+  */
+  bool GetRotation(ON_Xform& xform) const;
+
+  /*
   Parameters:
     plane - [out]
   Returns:
@@ -236,9 +260,9 @@ public:
     and
       (q.Conjugate()*(0,x,y,x)*q/q.LengthSquared()).Vector()
   Remarks:
-    If you need to rotate more than a dozen or so vectors,
-    it will be more efficient to calculate the rotation
-    matrix once and use it repeatedly.
+    If you need to rotate more than a dozen or so vectors, it will
+    be more efficient to call GetRotation(ON_Xform& xform)
+    and multiply the vectors by xform.
   */
   ON_3dVector Rotate(ON_3dVector v) const;
 
@@ -271,6 +295,29 @@ public:
     True if a = 0 and at least one of b, c, or d is not zero.
   */
   bool IsVector() const; 
+
+
+  /*
+    Returns:
+      exp(q) = e^a*( cos(|V|) + V/|V|*sin(|V|) ), where V = b*i + c*j + d*k.
+  */
+  static ON_Quaternion Exp(ON_Quaternion q);
+
+  /*
+    Returns:
+      log(q) = log(|q|) + V/|V|*acos(a/|q|), where V = b*i + c*j + d*k.
+  */
+  static ON_Quaternion Log(ON_Quaternion q);
+
+  /*
+    Returns:
+      q^t = Exp(t*Log(q))
+  */
+  static ON_Quaternion Pow(ON_Quaternion q, double t);
+
+
+  static ON_Quaternion Slerp(ON_Quaternion q0, ON_Quaternion q1, double t);
+
 };
 
 /*

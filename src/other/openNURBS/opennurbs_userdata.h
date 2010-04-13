@@ -243,7 +243,21 @@ public:
   ON_UUID m_unknownclass_uuid;
   int m_sizeof_buffer;
   void* m_buffer;
-  int m_3dm_version; // version of 3dm archive data was read from
+
+  // These version numbers are set when unknown user data is read
+  // from a file record the version of the 3dm archive and the 
+  // version of opennurbs that were used when the plug-in wrote
+  // the user data.
+  //   This information was added in to V5 opennurbs 200910190.
+  // For files written with earlier versions of opennurbs, these
+  // values are set from the archive containing the user data. 
+  // The purpose of this version information is to have it accompany
+  // unknown user data so that if is is eventually read by the plug-in
+  // an ON_BinaryArchive with correct version information can be
+  // passed to the plug-in's reading code.  In archives, these values
+  // are stored in the TCODE_USER_TABLE_RECORD_HEADER chunk.
+  int m_3dm_version; // 3dm archive version (0,1,2,3,4,5,50,...)
+  int m_3dm_opennurbs_version; // 0 or YYYYMMDDN
 };
 
 class ON_CLASS ON_UserStringList : public ON_UserData

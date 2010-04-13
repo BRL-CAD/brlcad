@@ -1013,10 +1013,13 @@ bool ON_BrepExtrude(
         {
           const ON_BrepTrim& trim0 = brep.m_T[bottome.m_ti[0]];
           const ON_BrepTrim& trim1 = brep.m_T[bottome.m_ti[1]];
-          if ( trim0.m_bRev3d == trim1.m_bRev3d )
-          {
-            face->m_bRev = true;
-          }          
+          const ON_BrepLoop& loop0 = brep.m_L[trim0.m_li];
+          const ON_BrepLoop& loop1 = brep.m_L[trim1.m_li];
+          bool bBottomFaceRev = brep.m_F[(loop0.m_fi != face->m_face_index) ? loop0.m_fi : loop1.m_fi].m_bRev;
+          bool bSideFaceRev = ( trim0.m_bRev3d != trim1.m_bRev3d ) 
+                            ? bBottomFaceRev 
+                            : !bBottomFaceRev;
+          face->m_bRev = bSideFaceRev;
         }
       }
     }

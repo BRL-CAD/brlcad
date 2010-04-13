@@ -917,7 +917,13 @@ bool ON_Arc::GetNurbFormParameterFromRadian(double RadianParameter, double* Nurb
 		if( ang>RadianParameter)
 			break;
 	} 
-	
+
+	// Crash Protection trr#55679
+	if( ki+2>= crv.KnotCount())
+	{
+		 *NurbParameter=ADomain[1];
+		 return true;		
+	}
 	ON_Interval BezDomain(crv.Knot(ki), crv.Knot(ki+2));
 
 	ON_BezierCurve bez;
@@ -1173,7 +1179,10 @@ ON_BOOL32 ON_ArcCurve::GetNurbFormParameterFromCurveParameter(
   double radians = m_arc.DomainRadians().ParameterAt(m_t.NormalizedParameterAt(curve_t));
   double arcnurb_t;
   ON_BOOL32 rc = m_arc.GetNurbFormParameterFromRadian(radians,&arcnurb_t);
-  *nurbs_t = m_t.ParameterAt(m_arc.DomainRadians().NormalizedParameterAt(arcnurb_t));
+  if (rc)        // Oct 29, 2009 - Dale Lear added condition to set *nurbs_t = curve_t
+    *nurbs_t = m_t.ParameterAt(m_arc.DomainRadians().NormalizedParameterAt(arcnurb_t));
+  else
+    *nurbs_t = curve_t;
   return rc;
 }
 

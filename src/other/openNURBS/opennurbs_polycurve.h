@@ -86,6 +86,31 @@ public:
   */
   ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
+  /*
+  Description:
+    Tests an object to see if its data members are correctly
+    initialized.
+  Parameters:
+    bAllowGaps - [in]
+      If true, gaps are allowed between polycurve segments.
+      If false, gaps are not allowed between polycurve segments.
+    text_log - [in] if the object is not valid and text_log
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
+  Returns:
+    @untitled table
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
+  Remarks:
+    Overrides virtual ON_Object::IsValid
+  */
+  bool IsValid( bool bAllowGaps, ON_TextLog* text_log ) const;
+
+
   void Dump( ON_TextLog& ) const; // for debugging
 
   ON_BOOL32 Write(
@@ -762,6 +787,10 @@ public:
   // information remains unchanged.
   ON_Curve* HarvestSegment( int );
 
+	/*
+  Returns:
+    True if a curve in the m_segment[] array is an ON_PolyCurve.
+  */
   bool IsNested() const;
 
 	/*
@@ -782,6 +811,29 @@ public:
     if no nested polycurves were found.
   */
 	bool RemoveNestingEx();
+
+  /* 
+  Returns:
+    True if the domains of the curves in the m_segment[] array exactly
+    match the domains of the segments specified in the m_t[] array.
+    Put another way, returns true if SegmentDomain(i) = SegmentCurve(i).Domain()
+    for every segment index.
+  */
+	bool HasSynchronizedSegmentDomains() const;
+
+  /* 
+  Description:
+    Sets the domain of the curve int the m_segment[] array to exactly
+    match the domain defined in the m_t[] array.  This is not required,
+    but can simplify some coding situations.
+  Returns:
+    True if at least one segment was reparameterized. False if no
+    changes were made.
+  */
+	bool SynchronizeSegmentDomains();
+
+
+
 
 	//////////
 	// Expert user function  

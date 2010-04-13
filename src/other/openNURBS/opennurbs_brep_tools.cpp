@@ -2333,7 +2333,9 @@ bool ON_Brep::RemoveNesting(
   return rc;
 }
 
-
+// This function was redefined in the 4/9/2010 update
+// of opennurbs to return false - check why - is the
+// code below not functional?
 bool ON_Brep::SplitClosedFaces( int min_degree )
 {
   if ( 0 == ON_Brep::m__SplitFaces )
@@ -2420,6 +2422,9 @@ bool ON_Brep::SplitClosedFaces( int min_degree )
   return rc;
 }
 
+// This function was redefined in the 4/9/2010 update
+// of opennurbs to return false - check why - is the
+// code below not functional?
 bool ON_Brep::SplitBipolarFaces()
 {
   if ( 0 == ON_Brep::m__SplitFaces )

@@ -608,7 +608,7 @@ public:
     ON::curve_object             derived from ON_Curve
     ON::surface_object           derived from ON_Surface
     ON::brep_object              derived from ON_Brep
-    ON::beam_object              derived from ON_Beam
+    ON::extrusion_object         derived from ON_Extrusion
     ON::mesh_object              derived from ON_Mesh
     ON::layer_object             derived from ON_Layer
     ON::material_object          derived from ON_Material

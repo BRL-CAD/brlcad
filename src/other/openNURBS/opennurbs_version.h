@@ -190,7 +190,7 @@
 //    Changes to ON_Annotation2::GetTExtXform()
 //
 
-// version 200909255
+// version 200909245
 //    opennurbs V5 first release
 //
 
@@ -200,12 +200,12 @@
 // The last digit of a V4 release build version number is 4.
 // The last digit of a V5 release build version number is 5.
 #if defined(_DEBUG)
-#define OPENNURBS_VERSION 200909299
+#define OPENNURBS_VERSION 201004099
 #else
-#define OPENNURBS_VERSION 200909295
+#define OPENNURBS_VERSION 201004095
 #endif
 
 // Subversion revision used to build opennurbs
-#define OPENNURBS_SVN_REVISION "45506"
+#define OPENNURBS_SVN_REVISION "52489"
 
 

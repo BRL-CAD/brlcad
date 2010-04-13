@@ -142,7 +142,7 @@ public:
     of dialations, translations, rotations, and reflections.
   Returns:
     +1: This transformation is an orientation preserving similarity.
-    -1: This transformation is an orientation preserving similarity.
+    -1: This transformation is an orientation reversing similarity.
      0: This transformation is not a similarity.
   */
   int IsSimilarity() const;
