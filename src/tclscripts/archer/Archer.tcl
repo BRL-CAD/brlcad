@@ -2999,6 +2999,8 @@ proc title_node_handler {node} {
     grid columnconfigure $sfcstoc 0 -weight 1
     grid rowconfigure $sfcstoc 0 -weight 1
 
+    if {[file exists [file join [bu_brlcad_data "html/mann/en"] Introduction.html]]} {
+
    # List of available help documents
     set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en/"] *.html ]
     set cmds [list ]
@@ -3044,7 +3046,7 @@ proc title_node_handler {node} {
     grid rowconfigure $sfcsman 0 -weight 1
 
     pack $itk_component(archerManF) -side left -expand yes -fill both
-    
+    }
     bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_man_display $manhtmlviewer}
 
     wm geometry $itk_component(archerMan) "800x600"
