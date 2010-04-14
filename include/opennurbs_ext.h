@@ -76,7 +76,7 @@ bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 #define BREP_MAX_LN_DEPTH 20
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
 /* Surface flatness parameter, Abert says between 0.8-0.9 */
-#define BREP_SURFACE_FLATNESS 0.9
+#define BREP_SURFACE_FLATNESS 0.95
 /* Max newton iterations when finding closest point */
 #define BREP_MAX_FCP_ITERATIONS 50
 /* Root finding epsilon */
