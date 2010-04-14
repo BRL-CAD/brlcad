@@ -135,7 +135,6 @@ FB_EXPORT extern int	fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y);
 #    include <X11/Xutil.h>
 #  endif
 FB_EXPORT extern int _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);
-FB_EXPORT extern int X24_close_existing(FBIO *ifp);
 #endif
 
 #ifdef IF_OGL
@@ -166,7 +165,6 @@ FB_EXPORT extern int X24_close_existing(FBIO *ifp);
 #    include <GL/gl.h>
 #  endif
 FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
-FB_EXPORT extern int ogl_close_existing(FBIO *ifp);
 #endif
 
 #ifdef IF_WGL
@@ -176,7 +174,6 @@ FB_EXPORT extern int ogl_close_existing(FBIO *ifp);
 #    include <GL/gl.h>
 #  endif
 FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
-FB_EXPORT extern int wgl_close_existing(FBIO *ifp);
 #endif
 
 /*
