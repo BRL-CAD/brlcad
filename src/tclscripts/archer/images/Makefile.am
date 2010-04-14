@@ -102,6 +102,10 @@ dist_tcl_DATA = \
 	invalid_subtract.png \
 	invalid_union.png \
 	measure.png \
+	metaball.png \
+	metaball_intersect.png \
+	metaball_subtract.png \
+	metaball_union.png \
 	nmg.png \
 	nmg_intersect.png \
 	nmg_subtract.png \
