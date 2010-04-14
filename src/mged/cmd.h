@@ -236,6 +236,7 @@ BU_EXTERN(int f_keypoint, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_knob, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_l_muves, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_labelvert, (ClientData, Tcl_Interp *, int, char **));
+BU_EXTERN(int f_list, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_loadview, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_make, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_mater, (ClientData, Tcl_Interp *, int, char **));

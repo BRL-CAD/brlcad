@@ -185,7 +185,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"killrefs", cmd_ged_erase_wrapper, ged_killrefs},
     {"killtree", cmd_ged_erase_wrapper, ged_killtree},
     {"knob", f_knob, GED_FUNC_PTR_NULL},
-    {"l", cmd_ged_plain_wrapper, ged_list},
+    {"l", f_list, GED_FUNC_PTR_NULL},
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
     {"left",		bv_left, GED_FUNC_PTR_NULL},
