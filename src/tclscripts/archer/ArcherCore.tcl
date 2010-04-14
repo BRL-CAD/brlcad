@@ -567,6 +567,10 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_invalidInter ""
 	variable mImage_invalidSub ""
 	variable mImage_invalidUnion ""
+	variable mImage_metaball ""
+	variable mImage_metaballInter ""
+	variable mImage_metaballSub ""
+	variable mImage_metaballUnion ""
 	variable mImage_nmg ""
 	variable mImage_nmgInter ""
 	variable mImage_nmgSub ""
@@ -1509,6 +1513,11 @@ Popup Menu    Right or Ctrl-Left
     set mImage_invalidInter [image create photo -file [file join $mImgDir invalid_intersect.png]]
     set mImage_invalidSub [image create photo -file [file join $mImgDir invalid_subtract.png]]
     set mImage_invalidUnion [image create photo -file [file join $mImgDir invalid_union.png]]
+
+    set mImage_metaball [image create photo -file [file join $mImgDir metaball.png]]
+    set mImage_metaballInter [image create photo -file [file join $mImgDir metaball_intersect.png]]
+    set mImage_metaballSub [image create photo -file [file join $mImgDir metaball_subtract.png]]
+    set mImage_metaballUnion [image create photo -file [file join $mImgDir metaball_union.png]]
 
     set mImage_nmg [image create photo -file [file join $mImgDir nmg.png]]
     set mImage_nmgInter [image create photo -file [file join $mImgDir nmg_intersect.png]]
@@ -3399,6 +3408,7 @@ Popup Menu    Right or Ctrl-Left
 	half -
 	hyp -
 	invalid -
+	metaball -
 	nmg -
 	pipe -
 	rhc -
