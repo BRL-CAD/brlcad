@@ -320,8 +320,12 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    block.pixelPtr = (unsigned char *)linebuffer;
 	    block.width = count;
 	    block.pitch = 3 * ifp->if_width;
-		    
+
+#if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION >= 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION >= 5
 	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+#else
+	    Tk_PhotoPutBlock(fbinterp, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+#endif
 		    
 	    do {
 		i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
