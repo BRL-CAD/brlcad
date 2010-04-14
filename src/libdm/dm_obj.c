@@ -76,9 +76,6 @@
 #endif
 
 HIDDEN int dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-#if 0
-HIDDEN int dmo_close_tcl();
-#endif
 HIDDEN int dmo_drawBegin_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int dmo_drawEnd_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int dmo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -135,9 +132,6 @@ HIDDEN struct bu_cmdtab dmo_cmds[] = {
     {"bg",			dmo_bg_tcl},
     {"bounds",		dmo_bounds_tcl},
     {"clear",		dmo_clear_tcl},
-#if 0
-    {"close",		dmo_close_tcl},
-#endif
     {"configure",		dmo_configure_tcl},
     {"debug",		dmo_debug_tcl},
     {"depthMask",		dmo_depthMask_tcl},
@@ -1684,7 +1678,7 @@ dmo_fg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&vls);
     return TCL_ERROR;
 
-bad_color:
+ bad_color:
     bu_vls_printf(&vls, "bad rgb color - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -1754,7 +1748,7 @@ dmo_bg_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&vls);
     return TCL_ERROR;
 
-bad_color:
+ bad_color:
     bu_vls_printf(&vls, "bad rgb color - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -1816,7 +1810,7 @@ dmo_lineWidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     bu_vls_free(&vls);
     return TCL_ERROR;
 
-bad_lineWidth:
+ bad_lineWidth:
     bu_vls_printf(&vls, "bad linewidth - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -1878,7 +1872,7 @@ dmo_lineStyle_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     bu_vls_free(&vls);
     return TCL_ERROR;
 
-bad_linestyle:
+ bad_linestyle:
     bu_vls_printf(&vls, "bad linestyle - %s\n", argv[2]);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -2463,16 +2457,6 @@ dmo_png_cmd(struct dm_obj *dmop,
 	 */
 	if (((bu_byteorder() == BU_BIG_ENDIAN) && (ximage_p->byte_order == LSBFirst)) ||
 	    ((bu_byteorder() == BU_LITTLE_ENDIAN) && (ximage_p->byte_order == MSBFirst))) {
-#if 0
-	    bu_log("red mask - %ld\n", ximage_p->red_mask);
-	    bu_log("green mask - %ld\n", ximage_p->green_mask);
-	    bu_log("blue mask - %ld\n", ximage_p->blue_mask);
-
-	    bu_log("red_shift - %ld\n", red_shift);
-	    bu_log("green_shift - %ld\n", green_shift);
-	    bu_log("blue_shift - %ld\n", blue_shift);
-	    bu_log("Reversing the byte order!!!\n");
-#endif
 	    DM_REVERSE_COLOR_BYTE_ORDER(red_shift, ximage_p->red_mask);
 	    DM_REVERSE_COLOR_BYTE_ORDER(green_shift, ximage_p->green_mask);
 	    DM_REVERSE_COLOR_BYTE_ORDER(blue_shift, ximage_p->blue_mask);
@@ -2504,17 +2488,10 @@ dmo_png_cmd(struct dm_obj *dmop,
 	}
 
 	red_bits = red_bits - red_shift;
-#if 0
-	bu_log("red shift - %d\n", red_shift);
-#endif
 	if (red_shift == 0)
 	    red_shift = red_bits - bpb;
 	else
 	    red_shift = red_shift - (bpb - red_bits);
-#if 0
-	bu_log("red shift - %d\n", red_shift);
-	bu_log("red bits - %d\n", red_bits);
-#endif
 
 	mask = ximage_p->green_mask;
 	tmask = 1;
@@ -2530,14 +2507,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 	}
 
 	green_bits = green_bits - green_shift;
-#if 0
-	bu_log("green shift- %d\n", green_shift);
-#endif
 	green_shift = green_shift - (bpb - green_bits);
-#if 0
-	bu_log("green shift - %d\n", green_shift);
-	bu_log("green bits - %d\n", green_bits);
-#endif
 
 	mask = ximage_p->blue_mask;
 	tmask = 1;
@@ -2553,17 +2523,10 @@ dmo_png_cmd(struct dm_obj *dmop,
 	}
 	blue_bits = blue_bits - blue_shift;
 
-#if 0
-	bu_log("blue shift - %d\n", blue_shift);
-#endif
 	if (blue_shift == 0)
 	    blue_shift = blue_bits - bpb;
 	else
 	    blue_shift = blue_shift - (bpb - blue_bits);
-#if 0
-	bu_log("blue shift - %d\n", blue_shift);
-	bu_log("blue bits - %d\n", blue_bits);
-#endif
     } else {
 	struct bu_vls vls;
 
@@ -2575,22 +2538,6 @@ dmo_png_cmd(struct dm_obj *dmop,
 
 	return TCL_ERROR;
     }
-
-#if 0
-    bu_log("bytes_per_pixel - %ld\n", bytes_per_pixel);
-    bu_log("byte_order - %d\n", ximage_p->byte_order);
-    bu_log("size of unsigned short - %d\n", sizeof(unsigned short));
-    bu_log("size of unsigned int - %d\n", sizeof(unsigned int));
-    bu_log("size of unsigned long - %d\n", sizeof(unsigned long));
-
-    bu_log("red mask - %ld\n", ximage_p->red_mask);
-    bu_log("green mask - %ld\n", ximage_p->green_mask);
-    bu_log("blue mask - %ld\n", ximage_p->blue_mask);
-
-    bu_log("red_shift - %ld\n", red_shift);
-    bu_log("green_shift - %ld\n", green_shift);
-    bu_log("blue_shift - %ld\n", blue_shift);
-#endif
 
     rows = (unsigned char **)bu_calloc(ximage_p->height, sizeof(unsigned char *), "rows");
     idata = (unsigned char *)bu_calloc(ximage_p->height * ximage_p->width, 4, "png data");
@@ -2721,7 +2668,8 @@ HIDDEN int
 dmo_clearBufferAfter_tcl(ClientData clientData,
 			 Tcl_Interp *interp,
 			 int argc,
-			 char **argv) {
+			 char **argv)
+{
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
     int clearBufferAfter;
@@ -2824,9 +2772,7 @@ dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Open/activate the display managers framebuffer.
  */
 HIDDEN int
-dmo_openFb(dmop, interp)
-    struct dm_obj *dmop;
-    Tcl_Interp *interp;
+dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
 {
     if (!dmop || !interp)
 	return TCL_ERROR;
@@ -2871,30 +2817,6 @@ dmo_openFb(dmop, interp)
 			       dmop->dmo_dmp->dm_height,
 			       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
 	    break;
-#endif
-#ifdef DM_TK
-#if 0
-/* XXX TJM implement _tk_open_existing */
-	case DM_TYPE_TK:
-	    *dmop->dmo_fbs.fbs_fbp = tk_interface; /* struct copy */
-
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/tk")+1, "if_name");
-	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/tk", strlen("/dev/tk")+1);
-
-	    /* Mark OK by filling in magic number */
-	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
-
-	    _tk_open_existing(dmop->dmo_fbs.fbs_fbp,
-			      ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			      ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
-			      ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			      ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			      ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
-			      dmop->dmo_dmp->dm_width,
-			      dmop->dmo_dmp->dm_height,
-			      ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
-	    break;
-#endif
 #endif
 
 #ifdef DM_OGL
@@ -2975,27 +2897,6 @@ dmo_closeFb(struct dm_obj *dmop)
 }
 
 
-#if 0
-/*
- * Close/de-activate the display managers framebuffer.
- *
- * Usage:
- * objname closefb
- *
- */
-HIDDEN int
-dmo_closeFb_tcl(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
-{
-    struct dm_obj *dmop = (struct dm_obj *)clientData;
-
-    return dmo_closeFb(dmop);
-}
-#endif
-
 /*
  * Set/get the port used to listen for framebuffer clients.
  *
@@ -3006,11 +2907,7 @@ dmo_closeFb_tcl(clientData, interp, argc, argv)
  *
  */
 HIDDEN int
-dmo_listen_tcl(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
+dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls;
