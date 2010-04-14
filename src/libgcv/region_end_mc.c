@@ -50,7 +50,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int empty_region = 0;
     int empty_model = 0;
     int NMG_debug_state = 0;
-    int count = 0, removed_verts = 0, removed_faces = 0, removed_edges = 0;
+    int count = 0;
 
     void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
@@ -111,30 +111,10 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     }
 
     bu_log("Target is shot, %d triangles seen.\n", count);
-    removed_faces = 0;
-    removed_verts = 0;
-    removed_edges = 0;
-    removed_verts = nmg_model_vertex_fuse(m, tsp->ts_tol);
-    bu_log("Fusing vertices: %d eliminated\n", removed_verts);
-    nmg_mark_edges_real(&s->l.magic);
-    nmg_kill_zero_length_edgeuses( m );
-    nmg_region_a(r, tsp->ts_tol);
-    nmg_kill_zero_length_edgeuses( m );
-    removed_edges = nmg_model_edge_fuse( m, tsp->ts_tol );
-    bu_log("Fusing edges: %d eliminated\n", removed_edges);
-#if 0
-    bu_log("Fusing faces: "); fflush(stdout);
-    rt_g.NMG_debug = DEBUG_BASIC;
-    removed_faces = nmg_model_face_fuse(m, tsp->ts_tol);
-    rt_g.NMG_debug = 0;
-    bu_log("%d eliminated (%d/%d left)\n", removed_faces, count-removed_faces, count);
-    count = count - removed_faces;
-#endif
-    /*
+
     bu_log("Fusing\n"); fflush(stdout);
     nmg_model_fuse(m, tsp->ts_tol);
     bu_log("Done\n"); fflush(stdout);
-    */
 
     /* Kill cracks */
     while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
@@ -147,6 +127,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		break;
 	    }
 	}
+	nmg_shell_coplanar_face_merge(s, tsp->ts_tol, 42);
 	s = next_s;
     }
     if (empty_region)
