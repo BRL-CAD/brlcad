@@ -38,6 +38,11 @@
 #include "fb.h"
 
 
+extern int X24_close_existing(FBIO *ifp);
+extern int ogl_close_existing(FBIO *ifp);
+extern int wgl_close_existing(FBIO *ifp);
+
+
 #define Malloc_Bomb(_bytes_ ) \
 		fb_log("\"%s\"(%d) : allocation of %d bytes failed.\n", \
 				__FILE__, __LINE__, _bytes_ )
