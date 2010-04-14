@@ -703,6 +703,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     return NULL;
 }
 
+
 /** @} */
 
 /*
