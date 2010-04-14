@@ -59,6 +59,13 @@ namespace eval ArcherCore {
 	common splash ""
 	common showWindow 0
 
+	common TREE_AFFECTED_TAG "affected"
+	common TREE_FULLY_DISPLAYED_TAG "displayed"
+	common TREE_PARTIALLY_DISPLAYED_TAG "pdisplayed"
+	common TREE_POPUP_TAG "popup"
+	common TREE_OPENED_TAG "opened"
+	common TREE_PLACEHOLDER_TAG "placeholder"
+
 	common VIEW_ROTATE_MODE 0
 	common VIEW_TRANSLATE_MODE 1
 	common VIEW_SCALE_MODE 2
@@ -556,10 +563,18 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_hypInter ""
 	variable mImage_hypSub ""
 	variable mImage_hypUnion ""
+	variable mImage_invalid ""
+	variable mImage_invalidInter ""
+	variable mImage_invalidSub ""
+	variable mImage_invalidUnion ""
 	variable mImage_nmg ""
 	variable mImage_nmgInter ""
 	variable mImage_nmgSub ""
 	variable mImage_nmgUnion ""
+	variable mImage_other ""
+	variable mImage_otherInter ""
+	variable mImage_otherSub ""
+	variable mImage_otherUnion ""
 	variable mImage_pipe ""
 	variable mImage_pipeInter ""
 	variable mImage_pipeSub ""
@@ -634,7 +649,7 @@ Popup Menu    Right or Ctrl-Left
 	method findNewTreeChildNodes {_pnode}
 	method findNewTreeParentNodes {_cnode}
 	method getCNodeFromCText {_pnode _text}
-	method getNewTreeImage {_obj {_op ""}}
+	method getNewTreeImage {_obj _type {_op ""} {_isregion 0}}
 	method getNewTreeNode {_path}
 	method getNewTreeNodes {_path}
 	method getNewTreePath {_node {_path ""}}
@@ -643,9 +658,14 @@ Popup Menu    Right or Ctrl-Left
 	method handleNewTreePopup {_x _y _X _Y}
 	method handleNewTreeSelect {}
 	method refreshNewTree {}
+	method addNewTreeNodeTag {_node _tag}
+	method removeNewTreeNodeTag {_node _tag}
+	method addNewTreePlaceholder {_pnode}
 
 	# db/display commands
 	method getNodeChildren  {_node}
+	method getTreeFromGData  {_gdata}
+	method getTreeMembers  {_tlist}
 	method getTreeOp {_parent _child}
 	method renderComp        {_node}
 	method render             {_node _state _trans _updateTree {_wflag 1}}
@@ -1336,17 +1356,17 @@ Popup Menu    Right or Ctrl-Left
     bind $itk_component(newtree) <<TreeviewSelect>> [::itcl::code $this handleNewTreeSelect]
     bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleNewTreeOpen]
     bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleNewTreeClose]
-    $itk_component(newtree) tag bind popup <Button-3> [::itcl::code $this handleNewTreePopup %x %y %X %Y]
-#    $itk_component(newtree) tag configure displayed -foreground cornflowerblue
-#    $itk_component(newtree) tag configure displayed -foreground 
-#    $itk_component(newtree) tag configure displayed -foreground darkorange
-    $itk_component(newtree) tag configure displayed \
+    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleNewTreePopup %x %y %X %Y]
+#    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground cornflowerblue
+#    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground 
+#    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground darkorange
+    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG \
 	-foreground red \
 	-font TkHeadingFont
-    $itk_component(newtree) tag configure pdisplayed \
+    $itk_component(newtree) tag configure $TREE_PARTIALLY_DISPLAYED_TAG \
 	-foreground \#9999ff \
 	-font TkHeadingFont
-    $itk_component(newtree) tag configure affected \
+    $itk_component(newtree) tag configure $TREE_AFFECTED_TAG \
 	-background yellow2
 
     itk_component add newtreepopup {
@@ -1485,10 +1505,20 @@ Popup Menu    Right or Ctrl-Left
     set mImage_hypSub [image create photo -file [file join $mImgDir hyp_subtract.png]]
     set mImage_hypUnion [image create photo -file [file join $mImgDir hyp_union.png]]
 
+    set mImage_invalid [image create photo -file [file join $mImgDir invalid.png]]
+    set mImage_invalidInter [image create photo -file [file join $mImgDir invalid_intersect.png]]
+    set mImage_invalidSub [image create photo -file [file join $mImgDir invalid_subtract.png]]
+    set mImage_invalidUnion [image create photo -file [file join $mImgDir invalid_union.png]]
+
     set mImage_nmg [image create photo -file [file join $mImgDir nmg.png]]
     set mImage_nmgInter [image create photo -file [file join $mImgDir nmg_intersect.png]]
     set mImage_nmgSub [image create photo -file [file join $mImgDir nmg_subtract.png]]
     set mImage_nmgUnion [image create photo -file [file join $mImgDir nmg_union.png]]
+
+    set mImage_other [image create photo -file [file join $mImgDir other.png]]
+    set mImage_otherInter [image create photo -file [file join $mImgDir other_intersect.png]]
+    set mImage_otherSub [image create photo -file [file join $mImgDir other_subtract.png]]
+    set mImage_otherUnion [image create photo -file [file join $mImgDir other_union.png]]
 
     set mImage_pipe [image create photo -file [file join $mImgDir pipe.png]]
     set mImage_pipeInter [image create photo -file [file join $mImgDir pipe_intersect.png]]
@@ -2435,15 +2465,29 @@ Popup Menu    Right or Ctrl-Left
 	return {}
     }
 
+    return [getTreeMembers $tlist]
+}
+
+::itcl::body ArcherCore::getTreeFromGData {_gdata} {
+    set ti [lsearch $_gdata tree]
+    if {$ti != -1} {
+	incr ti
+	return [lindex $_gdata $ti]
+    }
+
+    return {}
+}
+
+::itcl::body ArcherCore::getTreeMembers {_tlist} {
     # first remove any matrices
-    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $tlist "" tlist
+    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $_tlist "" _tlist
 
     # remove all other unwanted stuff
-    regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $tlist "" tlist
+    regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $_tlist "" _tlist
 
     # finally, remove any duplicates
     set ntlist {}
-    foreach item $tlist {
+    foreach item $_tlist {
 	if {[lsearch $ntlist $item] == -1} {
 	    lappend ntlist $item
 	}
@@ -2893,10 +2937,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::updateNewTree {} {
     foreach node $mNodePDrawList {
-	$itk_component(newtree) item $node -tags popup
+	$itk_component(newtree) item $node -tags $TREE_POPUP_TAG
     }
     foreach node $mNodeDrawList {
-	$itk_component(newtree) item $node -tags popup
+	$itk_component(newtree) item $node -tags $TREE_POPUP_TAG
     }
 
     set mNodePDrawList ""
@@ -2913,10 +2957,10 @@ Popup Menu    Right or Ctrl-Left
     set mNodeDrawList [lsort -unique $mNodeDrawList]
 
     foreach node $mNodePDrawList {
-	$itk_component(newtree) item $node -tags {popup pdisplayed}
+	$itk_component(newtree) item $node -tags [list $TREE_POPUP_TAG $TREE_PARTIALLY_DISPLAYED_TAG]
     }
     foreach node $mNodeDrawList {
-	$itk_component(newtree) item $node -tags {popup displayed}
+	$itk_component(newtree) item $node -tags [list $TREE_POPUP_TAG $TREE_FULLY_DISPLAYED_TAG]
     }
 }
 
@@ -3000,55 +3044,48 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::fillNewTree {_pnode _ctext} {
-    if {[catch {$itk_component(ged) get $_ctext} cdata]} {
-	return
-    }
-    set ctype [lindex $cdata 0]
     set cnode [getCNodeFromCText $_pnode $_ctext]
 
-    if {$cnode == ""} {
-	set ptext $mNode2Text($_pnode)
-
-	if {$ctype == "comb"} {
-	    set op [getTreeOp $ptext $_ctext]
-	    set img [getNewTreeImage $_ctext $op]
-	    set cnode [$itk_component(newtree) insert $_pnode end \
-			   -tags popup \
-			   -text $_ctext \
-			   -image $img]
-
-	    foreach gctext [getNodeChildren $_ctext] {
-		if {[catch {$itk_component(ged) get $gctext} gcdata]} {
-		    continue
-		}
-		set gctype [lindex $gcdata 0]
-
-		set op [getTreeOp $_ctext $gctext]
-		set img [getNewTreeImage $gctext $op]
-		set gcnode [$itk_component(newtree) insert $cnode end \
-				-tags popup \
-				-text $gctext \
-				-image $img]
-
-		lappend mText2Node($gctext) [list $gcnode $cnode]
-		set mNode2Text($gcnode) $gctext
-		lappend mPNode2CList($cnode) [list $gctext $gcnode]
-		set mCNode2PList($gcnode) [list $_ctext $cnode]
-	    }
-	} else {
-	    set op [getTreeOp $ptext $_ctext]
-	    set img [getNewTreeImage $_ctext $op]
-	    set cnode [$itk_component(newtree) insert $_pnode end \
-			   -tags popup \
-			   -text $_ctext \
-			   -image $img]
-	}
-
-	lappend mText2Node($_ctext) [list $cnode $_pnode]
-	set mNode2Text($cnode) $_ctext
-	lappend mPNode2CList($_pnode) [list $_ctext $cnode]
-	set mCNode2PList($cnode) [list $ptext $_pnode]
+    # A node for _pnode/_ctext already exists
+    if {$cnode != ""} {
+	return
     }
+
+    if {[catch {$itk_component(ged) get $_ctext} cgdata]} {
+	return
+    }
+
+    set ctype [lindex $cgdata 0]
+    set ptext $mNode2Text($_pnode)
+
+    if {$ctype == "comb"} {
+	set ri [lsearch $cgdata region]
+	incr ri
+	set isregion [lindex $cgdata $ri]
+
+	set op [getTreeOp $ptext $_ctext]
+	set img [getNewTreeImage $_ctext $ctype $op $isregion]
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext \
+		       -image $img]
+
+	if {$_pnode == {}} {
+	    addNewTreePlaceholder $cnode
+	}
+    } else {
+	set op [getTreeOp $ptext $_ctext]
+	set img [getNewTreeImage $_ctext $ctype $op]
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext \
+		       -image $img]
+    }
+
+    lappend mText2Node($_ctext) [list $cnode $_pnode]
+    set mNode2Text($cnode) $_ctext
+    lappend mPNode2CList($_pnode) [list $_ctext $cnode]
+    set mCNode2PList($cnode) [list $ptext $_pnode]
 }
 
 ::itcl::body ArcherCore::selectNode {tags {rflag 1}} {
@@ -3340,12 +3377,15 @@ Popup Menu    Right or Ctrl-Left
     return ""
 }
 
-::itcl::body ArcherCore::getNewTreeImage {_obj {_op ""}} {
-    set data [$itk_component(ged) get $_obj]
-    set type [lindex $data 0]
+::itcl::body ArcherCore::getNewTreeImage {_obj _type {_op ""} {_isregion 0}} {
+    switch -- $_type {
+	comb {
+	    if {$_isregion} {
+		return [subst $[subst mImage_region$_op]]
+	    }
 
-    switch -- $type {
-	comb -
+	    return [subst $[subst mImage_comb$_op]]
+	}
 	arb8 -
 	arbn -
 	ars -
@@ -3358,6 +3398,7 @@ Popup Menu    Right or Ctrl-Left
 	extrude -
 	half -
 	hyp -
+	invalid -
 	nmg -
 	pipe -
 	rhc -
@@ -3365,11 +3406,10 @@ Popup Menu    Right or Ctrl-Left
 	sketch -
 	tgc -
 	tor {
-	    return [subst $[subst mImage_$type$_op]]
+	    return [subst $[subst mImage_$_type$_op]]
 	}
 	default {
-	    # If all else fails, use mImage_arb8 (for now)
-	    return [subst $[subst mImage_arb8$_op]]
+	    return [subst $[subst mImage_other$_op]]
 	}
     }
 }
@@ -3381,6 +3421,11 @@ Popup Menu    Right or Ctrl-Left
 
     set cnodes {}
     foreach clist $mPNode2CList($_pnode) {
+	set ctext [lindex $clist 0]
+	if {$ctext == $TREE_PLACEHOLDER_TAG} {
+	    continue
+	}
+
 	set cnode [lindex $clist 1]
 	lappend cnodes $cnode
 	eval lappend cnodes [findNewTreeChildNodes $cnode]
@@ -3516,27 +3561,60 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::handleNewTreeOpen {} {
+    SetWaitCursor $this
+
     set cnode [$itk_component(newtree) focus]
     set ctext [$itk_component(newtree) item $cnode -text]
-    set cdata [$itk_component(ged) get $ctext]
-    set ctype [lindex $cdata 0]
+    set cgdata [$itk_component(ged) get $ctext]
+    set ctype [lindex $cgdata 0]
 
     if {$ctype == "comb"} {
-	foreach gctext [getNodeChildren $ctext] {
-	    set gcdata [$itk_component(ged) get $gctext]
-	    set gctype [lindex $gcdata 0]
+	# If this node has never been opened ...
+	if {[addNewTreeNodeTag $cnode $TREE_OPENED_TAG]} {
+	    # Remove placeholder
+	    set placeholder [lindex [lindex $mPNode2CList($cnode) 0] 1]
+	    $itk_component(newtree) delete $placeholder
+	    unset mPNode2CList($cnode)
 
-	    if {$gctype == "comb"} {
-		set gcnode [getCNodeFromCText $cnode $gctext]
+	    set tree [getTreeFromGData $cgdata]
+	    foreach gctext [getTreeMembers $tree] {
+		if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
+		    set gcnode [getCNodeFromCText $cnode $gctext]
+		    if {$gcnode == ""} {
+			set op [getTreeOp $ctext $gctext]
+			set img [getNewTreeImage $gctext "invalid" $op]
 
-		foreach ggctext [getNodeChildren $gctext] {
-		    fillNewTree $gcnode $ggctext
+			set gcnode [$itk_component(newtree) insert $cnode end \
+					-tags $TREE_POPUP_TAG \
+					-text $gctext \
+					-image $img]
+
+			lappend mText2Node($gctext) [list $gcnode $cnode]
+			set mNode2Text($gcnode) $gctext
+			lappend mPNode2CList($cnode) [list $gctext $gcnode]
+			set mCNode2PList($gcnode) [list $ctext $cnode]
+		    }
+
+		    continue
+		}
+
+		# Add gchild members
+		fillNewTree $cnode $gctext
+
+		set gctype [lindex $gcgdata 0]
+
+		if {$gctype == "comb"} {
+		    set gcnode [getCNodeFromCText $cnode $gctext]
+
+		    # Add a placeholder for gcnode's possible members
+		    addNewTreePlaceholder $gcnode
 		}
 	    }
 	}
     }
 
     updateNewTree
+    SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::handleNewTreePopup {_x _y _X _Y} {
@@ -3559,12 +3637,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::handleNewTreeSelect {} {
     foreach anode $mAffectedNodeList {
-	set tags [$itk_component(newtree) item $anode -tags]
-	set ai [lsearch $tags affected]
-	if {$ai != -1} {
-	    set tags [lreplace $tags $ai $ai]
-	}
-	$itk_component(newtree) item $anode -tags $tags
+	removeNewTreeNodeTag $anode $TREE_AFFECTED_TAG
     }
 
     set mAffectedNodeList ""
@@ -3605,10 +3678,7 @@ Popup Menu    Right or Ctrl-Left
 	    if {![$itk_component(newtree) item $pnode -open]} {
 		lappend mAffectedNodeList $pnode
 		set found 1
-		set tags [$itk_component(newtree) item $pnode -tags]
-		lappend tags affected
-		set tags [lsort -unique $tags]
-		$itk_component(newtree) item $pnode -tags $tags
+		addNewTreeNodeTag $pnode $TREE_AFFECTED_TAG
 		break
 	    }
 	}
@@ -3617,10 +3687,7 @@ Popup Menu    Right or Ctrl-Left
 	    set cnode [lindex $cnodes 0]
 	    if {$cnode != $snode} {
 		lappend mAffectedNodeList $cnode
-		set tags [$itk_component(newtree) item $cnode -tags]
-		lappend tags affected
-		set tags [lsort -unique $tags]
-		$itk_component(newtree) item $cnode -tags $tags
+		addNewTreeNodeTag $cnode $TREE_AFFECTED_TAG
 	    }
 	}
     }
@@ -3648,6 +3715,36 @@ Popup Menu    Right or Ctrl-Left
 	set item [regsub {/.*} $item {}]
 	fillNewTree {} $item
     }
+}
+
+::itcl::body ArcherCore::addNewTreeNodeTag {_node _tag} {
+    set tags [$itk_component(newtree) item $_node -tags]
+    set ai [lsearch $tags $_tag]
+    if {$ai == -1} {
+	lappend tags $_tag
+	$itk_component(newtree) item $_node -tags $tags
+
+	return 1
+    }
+
+    return 0
+}
+
+::itcl::body ArcherCore::removeNewTreeNodeTag {_node _tag} {
+    set tags [$itk_component(newtree) item $_node -tags]
+    set ai [lsearch $tags $_tag]
+    if {$ai != -1} {
+	set tags [lreplace $tags $ai $ai]
+	$itk_component(newtree) item $_node -tags $tags
+    }
+}
+
+::itcl::body ArcherCore::addNewTreePlaceholder {_pnode} {
+    set cnode [$itk_component(newtree) insert $_pnode end \
+		   -text $TREE_PLACEHOLDER_TAG \
+		   -tags $TREE_PLACEHOLDER_TAG]
+
+    set mPNode2CList($_pnode) [list [list $TREE_PLACEHOLDER_TAG $cnode]]
 }
 
 # ------------------------------------------------------------
