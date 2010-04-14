@@ -838,8 +838,10 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
     	    }
 	}
 
-	uv.x -= invdetJ * (j22 * f - j12 * g);
-	uv.y -= invdetJ * (j11 * g - j21 * f);
+	du = invdetJ * (j22 * f - j12 * g);
+	dv = invdetJ * (j11 * g - j21 * f);
+	uv.x -= du;
+	uv.y -= dv;
 	
 	utah_pushBack(surf, uv);
 	
@@ -847,6 +849,19 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 	utah_F(S, p1, p1d, p2, p2d, f, g);
 	oldrootdist = rootdist;
 	rootdist = fabs(f) + fabs(g);
+	if (oldrootdist < rootdist) {
+	    du *= 0.5;
+	    dv *= 0.5;
+	    uv.x += du;
+	    uv.y += dv;
+		
+	    utah_pushBack(surf, uv);
+		
+	    surf->Ev1Der(uv.x, uv.y, S, Su, Sv);
+	    utah_F(S, p1, p1d, p2, p2d, f, g);
+	    oldrootdist = rootdist;
+	    rootdist = fabs(f) + fabs(g);
+	}
 	
 	if (oldrootdist < rootdist) {
 	    if (errantcount > 3) {
