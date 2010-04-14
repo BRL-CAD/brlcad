@@ -22,6 +22,7 @@ TODO: include write-up about marching cubes w.r.t. tessellation.
 * archer tree view colorization for selected objects - Bob Parker
 * replacement of tkimg external dependency with tkpng 0.9 - Cliff Yapp
 * libpng upgraded to 1.4.1 - Erik Greenwald
+* fixed crash with solids/regions/idents mged commands - Sean Morrison
 * g-stl and g-egg have new -8 marching cubes option - Erik Greenwald
 * fixed mged bug reading from redirected input on Windows - Bob Parker
 * fixed partition selection bug in rt -k cut plane - John Anderson
