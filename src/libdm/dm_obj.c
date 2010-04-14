@@ -2956,38 +2956,13 @@ dmo_openFb(dmop, interp)
  *
  */
 HIDDEN int
-dmo_closeFb(dmop)
-    struct dm_obj *dmop;
+dmo_closeFb(struct dm_obj *dmop)
 {
     if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
 	return TCL_OK;
 
     fb_flush(dmop->dmo_fbs.fbs_fbp);
-
-    switch (dmop->dmo_dmp->dm_type) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    X24_close_existing(dmop->dmo_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_TK
-/* XXX TJM: not ready yet
-   case DM_TYPE_TK:
-   tk_close_existing(dmop->dmo_fbs.fbs_fbp);
-   break;
-*/
-#endif
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    ogl_close_existing(dmop->dmo_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_close_existing(dmop->dmo_fbs.fbs_fbp);
-	    break;
-#endif
-    }
+    fb_close_existing(dmop->dmo_fbs.fbs_fbp);
 
     /* free framebuffer memory */
     if (dmop->dmo_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
