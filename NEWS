@@ -16,6 +16,7 @@ changes made.  See document footer for additional details.
 TODO: include write-up about marching cubes w.r.t. tessellation.
 
 * improvements and bug fixes to NURBS ray tracing - Keith Bowman
+* new button images and tree-view icons within archer - Cliff Yapp
 * html man page viewing in archer - Cliff Yapp
 * archer tree view colorization for selected objects - Bob Parker
 * replacement of tkimg external dependency with tkpng 0.9 - Cliff Yapp
