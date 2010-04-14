@@ -73,7 +73,6 @@ extern int Fbo_Init(Tcl_Interp *interp);
 /* XXX -- At some point these routines should be moved to FBIO */
 #ifdef IF_WGL
 extern int wgl_open_existing();
-extern int wgl_close_existing();
 extern FBIO wgl_interface;
 extern void wgl_configureWindow();
 extern int wgl_refresh();
@@ -82,7 +81,6 @@ static const char *wgl_device_name = "/dev/wgl";
 
 #ifdef IF_OGL
 extern int ogl_open_existing();
-extern int ogl_close_existing();
 extern FBIO ogl_interface;
 extern void ogl_configureWindow();
 extern int ogl_refresh();
@@ -93,7 +91,6 @@ static const char *ogl_device_name = "/dev/ogl";
 extern void X24_configureWindow();
 extern int X24_refresh();
 extern int X24_open_existing();
-extern int X24_close_existing();
 extern FBIO X24_interface;
 static const char *X_device_name = "/dev/X";
 #endif
@@ -104,7 +101,6 @@ static const char *X_device_name = "/dev/X";
 extern void tk_configureWindow();
 extern int tk_refresh();
 extern int tk_open_existing();
-extern int tk_close_existing();
 extern FBIO tk_interface;
 #endif
 static const char *tk_device_name = "/dev/tk";
