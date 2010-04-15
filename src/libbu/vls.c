@@ -703,11 +703,13 @@ bu_vls_trimspace(struct bu_vls *vp)
     BU_CK_VLS(vp);
 
     /* Remove trailing white space */
-    while (isspace(bu_vls_addr(vp)[bu_vls_strlen(vp)-1]))
+    while ((vp->vls_len > 0) && 
+	   isspace(bu_vls_addr(vp)[bu_vls_strlen(vp)-1]))
 	bu_vls_trunc(vp, -1);
 
     /* Remove leading white space */
-    while (isspace(*bu_vls_addr(vp)))
+    while ((vp->vls_len > 0) &&
+	   isspace(*bu_vls_addr(vp)))
 	bu_vls_nibble(vp, 1);
 }
 
