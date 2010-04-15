@@ -56,9 +56,18 @@ struct gfi_t {
     void   *index_arr_faces;           /* face indices into vertex, normal ,texture vertex lists */
     size_t *num_vertices_arr;          /* number of vertices for each face within index_arr_faces */
     struct  bu_vls *raw_grouping_name; /* raw name of grouping from obj file; group/object/material/texture */
-    size_t  num_elements;              /* number of faces represented by index_arr_faces num_vertices_arr */
-    size_t  max_elements;              /* maximum number of faces based on current memory allocation */
-    int     face_type;                 /* type of face represented by index_arr_faces (v,tv,nv,tnv) */
+    size_t  num_faces;                 /* number of faces represented by index_arr_faces and num_vertices_arr */
+    size_t  max_faces;                 /* maximum number of faces based on current memory allocation */
+    size_t  tot_vertices;              /* sum of contents of num_vertices_arr. note: if the face_type
+                                          includes normals and/or texture vertices, each vertex must have
+                                          an associated normal and/or texture vertice. therefore this
+                                          total is also the total of the associated normals and/or texture
+                                          vertices. */
+    int     face_type;                 /* i.e. FACE_V, FACE_TV, FACE_NV or FACE_TNV */
+    int     grouping_type;             /* i.e. GRP_GROUP, GRP_OBJECT, GRP_MATERIAL or GRP_TEXTURE */
+    size_t  grouping_index;            /* corresponds to the index of the grouping name within the obj file.  
+                                          this value is useful to append to the raw_grouping_name to
+                                          ensure the resulting name is unique. */
 };
 
 /* obj file global attributes type */
@@ -272,6 +281,18 @@ int triangulate_face(const size_t *index_arr_faces, /* n-dimensional array of ve
 =================================
 #endif
 
+void free_gfi(struct gfi_t **gfi) {
+    if (*gfi != NULL ) {
+        bu_vls_free((*gfi)->raw_grouping_name);
+        bu_free((*gfi)->raw_grouping_name, "(*gfi)->raw_grouping_name");
+        bu_free((*gfi)->index_arr_faces, "(*gfi)->index_arr_faces");
+        bu_free((*gfi)->num_vertices_arr, "(*gfi)->num_vertices_arr");
+        bu_free(*gfi, "*gfi");
+        *gfi = NULL;
+    }
+    return;
+}
+
 /* this function allocates all memory needed for the
    gfi structure and its contents. gfi is expected to
    be a null pointer when passed to this function. the
@@ -282,12 +303,7 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
                                     struct gfi_t **gfi,
                                     int face_type,
                                     int grouping_type,
-                                    int grouping_index) {
-
-    if ( *gfi != NULL ) {
-        bu_log("ERROR: function collect_grouping_faces_indexes passed non-null for gfi\n");
-        return;
-    }
+                                    size_t grouping_index) {
 
     size_t numFaces = 0; /* number of faces of the current face_type in the entire obj file */
     size_t i = 0;
@@ -297,7 +313,11 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
     size_t setsize = 0 ;
     const size_t *indexset_arr;
     size_t groupid = 0;
-    size_t size = 0 ;
+    size_t *num_vertices_arr_tmp = NULL ;
+    const size_t (*index_arr_v_faces) = NULL ;      /* used by v_faces */
+    const size_t (*index_arr_tv_faces)[2] = NULL ;  /* used by tv_faces */
+    const size_t (*index_arr_nv_faces)[2] = NULL ;  /* used by nv_faces */
+    const size_t (*index_arr_tnv_faces)[3] = NULL ; /* used by tnv_faces */
 
     arr_1D_t index_arr_faces_1D = NULL; 
     arr_2D_t index_arr_faces_2D = NULL; 
@@ -309,7 +329,12 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
 
     /* number of additional elements to allocate memory
        for when the currently allocated memory is exhausted */ 
-    const size_t max_elements_increment = 128;
+    const size_t max_faces_increment = 128;
+
+    if ( *gfi != NULL ) {
+        bu_log("ERROR: function collect_grouping_faces_indexes passed non-null for gfi\n");
+        return;
+    }
 
     switch (face_type) {
         case FACE_V :
@@ -331,7 +356,6 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
         default:
             bu_log("ERROR: logic error, invalid face_type in function 'collect_grouping_faces_indexes'\n");
             return;
-            break;
     }
 
     /* traverse list of all faces in OBJ file of current face_type */
@@ -382,12 +406,13 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
             default:
                 bu_log("ERROR: logic error, invalid grouping_type in function 'collect_grouping_faces_indexes'\n");
                 return;
-                break;
         }
 
         /* if found the first face allocate the output structure and initial allocation
            of the index_arr_faces and num_vertices_arr arrays */
         if ( found && (numFacesFound == 0)) {
+
+             bu_log("allocating memory for gfi structure and initial size of internal arrays\n");
 
             /* allocate memory for gfi structure */
             *gfi = (struct gfi_t *)bu_calloc(1, sizeof(struct gfi_t), "gfi");
@@ -397,14 +422,19 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
             (*gfi)->index_arr_faces = (void *)NULL;
             (*gfi)->num_vertices_arr = (size_t *)NULL;
             (*gfi)->raw_grouping_name = (struct  bu_vls *)NULL;
-            (*gfi)->num_elements = 0;
-            (*gfi)->max_elements = 0;
+            (*gfi)->num_faces = 0;
+            (*gfi)->max_faces = 0;
+            (*gfi)->tot_vertices = 0;
             (*gfi)->face_type = 0;
+            (*gfi)->grouping_type = 0;
+            (*gfi)->grouping_index = 0;
 
-            /* set face_type inside gfi structure, the purpose of this is
-               so functions called later do not need to pass this in 
-               seperately */
+            /* set face_type, grouping_type, grouping_index inside gfi structure,
+               the purpose of this is so functions called later do not need to pass
+               this in seperately */
             (*gfi)->face_type = face_type;
+            (*gfi)->grouping_type = grouping_type;
+            (*gfi)->grouping_index = grouping_index;
 
             /* allocate and initialize variable length string (vls) for raw_grouping_name */
             (*gfi)->raw_grouping_name = (struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls), "raw_grouping_name");
@@ -415,76 +445,111 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
             bu_vls_strcpy((*gfi)->raw_grouping_name, name_str);
 
             /* sets initial number of elements to allocate memory for */
-            (*gfi)->max_elements = max_elements_increment;
+            (*gfi)->max_faces = max_faces_increment;
 
-            (*gfi)->num_vertices_arr = (size_t *)bu_calloc((*gfi)->max_elements, 
+            (*gfi)->num_vertices_arr = (size_t *)bu_calloc((*gfi)->max_faces, 
                                                            sizeof(size_t), "num_vertices_arr");
 
             /* allocate initial memory for (*gfi)->index_arr_faces based on face_type */
             switch (face_type) {
                 case FACE_V :
-                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_elements, 
+                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_faces, 
                                                                 sizeof(arr_1D_t), "index_arr_faces");
                     index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
                     break;
                 case FACE_TV :
                 case FACE_NV :
-                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_elements, 
+                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_faces, 
                                                                 sizeof(arr_2D_t), "index_arr_faces");
                     index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
                     break;
                 case FACE_TNV :
-                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_elements, 
+                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_faces, 
                                                                 sizeof(arr_3D_t), "index_arr_faces");
                     index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
                     break;
                 default:
                     bu_log("ERROR: logic error, invalid face_type in function 'collect_grouping_faces_indexes'\n");
                     return;
-                    break;
             }
-
         }
 
         if ( found ) {
 
+            switch (face_type) {
+                case FACE_V :
+                    (*gfi)->num_vertices_arr[numFacesFound] = \
+                            obj_polygonal_v_face_vertices(ga->contents,i,&index_arr_v_faces);
+                    index_arr_faces_1D[numFacesFound] = index_arr_v_faces;
+                    break;
+                case FACE_TV :
+                    (*gfi)->num_vertices_arr[numFacesFound] = \
+                            obj_polygonal_tv_face_vertices(ga->contents,i,&index_arr_tv_faces);
+                    index_arr_faces_2D[numFacesFound] = index_arr_tv_faces;
+                    break;
+                case FACE_NV :
+                    (*gfi)->num_vertices_arr[numFacesFound] = \
+                            obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
+                    index_arr_faces_2D[numFacesFound] = index_arr_nv_faces;
+                    break;
+                case FACE_TNV :
+                    (*gfi)->num_vertices_arr[numFacesFound] = \
+                            obj_polygonal_tnv_face_vertices(ga->contents,i,&index_arr_tnv_faces);
+                    index_arr_faces_3D[numFacesFound] = index_arr_tnv_faces;
+                    break;
+                default:
+                    bu_log("ERROR: logic error, invalid face_type in function 'collect_grouping_faces_indexes'\n");
+                    return;
+            }
 
-            size = obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
+            (*gfi)->tot_vertices += (*gfi)->num_vertices_arr[numFacesFound];
 
-            index_arr_nv_faces_history[numNorPolygons_in_current_shell] = index_arr_nv_faces;
-            size_history[numNorPolygons_in_current_shell] = size;
+            /* if needed, increase size of (*gfi)->num_vertices_arr and (*gfi)->index_arr_faces */
+            if ( numFacesFound >= (*gfi)->max_faces ) {
+                (*gfi)->max_faces += max_faces_increment;
 
-            numNorPolygonVertices_in_current_nmg = numNorPolygonVertices_in_current_nmg + size ;
+                bu_log("realloc\n");
 
-                /* if needed, increase size of index_arr_nv_faces_history and size_history */
-                if ( numNorPolygons_in_current_shell >= history_arrays_size ) {
-                    history_arrays_size = history_arrays_size + 128 ;
+                num_vertices_arr_tmp = (size_t *)bu_realloc((*gfi)->num_vertices_arr,
+                                       sizeof(size_t) * (*gfi)->max_faces, "num_vertices_arr_tmp");
+                (*gfi)->num_vertices_arr = num_vertices_arr_tmp;
 
-                    index_arr_nv_faces_history_tmp = bu_realloc(index_arr_nv_faces_history,
-                                                     sizeof(index_arr_nv_faces_history) * history_arrays_size,
-                                                     "index_arr_nv_faces_history_tmp");
-
-                    index_arr_nv_faces_history = index_arr_nv_faces_history_tmp;
-
-                    size_history_tmp = bu_realloc(size_history, sizeof(size_t) * history_arrays_size,
-                                       "size_history_tmp");
-
-                    size_history = size_history_tmp;
+                switch (face_type) {
+                    case FACE_V :
+                        (*gfi)->index_arr_faces = (void *)bu_realloc(index_arr_faces_1D,
+                                                  sizeof(arr_1D_t) * (*gfi)->max_faces, "index_arr_faces");
+                        index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
+                        break;
+                    case FACE_TV :
+                    case FACE_NV :
+                        (*gfi)->index_arr_faces = (void *)bu_realloc(index_arr_faces_2D,
+                                                  sizeof(arr_2D_t) * (*gfi)->max_faces, "index_arr_faces");
+                        index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
+                        break;
+                    case FACE_TNV :
+                        (*gfi)->index_arr_faces = (void *)bu_realloc(index_arr_faces_3D,
+                                                  sizeof(arr_3D_t) * (*gfi)->max_faces, "index_arr_faces");
+                        index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
+                        break;
+                    default:
+                        bu_log("ERROR: logic error, invalid face_type in function 'collect_grouping_faces_indexes'\n");
+                        return;
                 }
-
-            /* increment number of polygons in current grouping (i.e. current nmg) */
-            numNorPolygons_in_current_shell++;
+            }
 
             numFacesFound++; /* increment this at the end since arrays start at zero */
         }
 
-    }  /* numNorFaces loop, when loop exits, all nv_faces have been reviewed */
+    }  /* numFaces loop, when loop exits, all faces have been reviewed */
 
-    if ( numFacesFound ) 
-        (*gfi)->num_elements = numFacesFound ;
+    if ( numFacesFound ) { 
+        (*gfi)->num_faces = numFacesFound ;
+    } else {
+        *gfi = NULL ; /* this should already be null if no faces were found */
+    }
 
+    return;
 }
-
 
 int process_nv_faces(struct ga_t *ga, 
                      struct rt_wdb *outfp, 
@@ -1174,14 +1239,14 @@ main(int argc, char **argv)
     struct ga_t ga = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 #endif
     struct ga_t ga;
-    struct gfi_t gfi; /* grouping face indices */
+    struct gfi_t *gfi = (struct gfi_t *)NULL; /* grouping face indices */
 
     const size_t *index_arr_v_faces; /* used by v_faces */
     const size_t (*index_arr_tv_faces)[2]; /* used by tv_faces */
 
     size_t i = 0;
 
-    char grouping_option = 'o'; /* to be selected by user from command line */
+    char grouping_option = 'g'; /* to be selected by user from command line */
 
     int weiss_result;
 
@@ -1320,7 +1385,34 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numGroups ; i++) {
                     bu_log("(%lu) current group name is (%s)\n", i, ga.str_arr_obj_groups[i]);
 
+                    bu_log("about to run collect_grouping_faces_indexes\n");
+
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_V, GRP_GROUP, i);
+                    if (gfi != NULL) {
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                        free_gfi(&gfi);
+                    }
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_TV, GRP_GROUP, i);
+                    if (gfi != NULL) {
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                        free_gfi(&gfi);
+                    }
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_NV, GRP_GROUP, i);
+                    if (gfi != NULL) {
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                        free_gfi(&gfi);
+                    }
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_TNV, GRP_GROUP, i);
+                    if (gfi != NULL) {
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                        free_gfi(&gfi);
+                    }
+
+                    bu_log("exited collect_grouping_faces_indexes\n");
+
+#if 0
                     weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, tol );
+#endif
                 }
                 bu_log("EXITED 'g' PROCESSING\n");
                 break;
@@ -1335,7 +1427,30 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numObjects ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_objects[i]);
 
+                    bu_log("about to run collect_grouping_faces_indexes\n");
+
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_V, GRP_OBJECT, i);
+                    if (gfi != NULL) 
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                    free_gfi(&gfi);
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_TV, GRP_OBJECT, i);
+                    if (gfi != NULL) 
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                    free_gfi(&gfi);
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_NV, GRP_OBJECT, i);
+                    if (gfi != NULL) 
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                    free_gfi(&gfi);
+                    collect_grouping_faces_indexes(&ga, &gfi, FACE_TNV, GRP_OBJECT, i);
+                    if (gfi != NULL) 
+                        bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
+                    free_gfi(&gfi);
+
+                    bu_log("exited collect_grouping_faces_indexes\n");
+ 
+#if 0
                     weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, tol );
+#endif
 
                 } /* numObjects loop */
 
