@@ -3952,6 +3952,9 @@ dnl configure Tcl
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
     ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
+    if test "x$bc_build_64bit" = "xyes" ; then
+	ac_configure_args="$ac_configure_args --enable-64bit"
+    fi
     AC_CONFIG_SUBDIRS([src/other/tcl/unix])
     TCL_PATH="`echo ${TCL_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
