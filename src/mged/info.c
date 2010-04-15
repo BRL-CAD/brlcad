@@ -76,7 +76,37 @@ f_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
 }
 
+int
+f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+	Tcl_DString ds;
+	int ret;
+	char **av;
+	int i;
+	CHECK_DBI_NULL;
 
+	if (argc >= 2) {
+	    ret = ged_analyze(gedp, argc, (const char **)argv);
+        } else {
+ 	   if ((argc == 1) && (state == ST_S_EDIT)) {
+	      /*bu_log("%s\n",LAST_SOLID(illump)->d_namep);*/
+	      argc = 2;
+	      av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
+	      av[0] = argv[0];
+              av[1] = LAST_SOLID(illump)->d_namep;
+              av[argc] = NULL;
+	      ret = ged_analyze(gedp, argc, (const char **)av);
+	      bu_free((genptr_t)av, "f_list: av");
+	   } else 
+	      ret = ged_analyze(gedp, argc, (const char **)argv);
+        }
+
+        Tcl_DStringInit(&ds);
+        Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+        Tcl_DStringResult(interp, &ds);
+
+	return TCL_OK;
+}
 /*
  * Local Variables:
  * mode: C
