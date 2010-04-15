@@ -24,6 +24,21 @@
  * Triangulate the faces of a polygonal NMG using the marching cubes
  * algorithm.
  *
+ *
+ * Vertex and edge indices (note that it seems rotated 90 degrees from the stuff
+ * you see on the sources. They used OpenGL coordinates, we use BRL-CAD.)
+ *              4
+ *        4-----------5
+ *      8/|         9/|
+ *      / |   0     / |
+ *     0-----------1  |5
+ *     |  |7       |  |
+ *     |  |   6   1|  |
+ *    3|  7--------|--6
+ *     | /         | /
+ *     |/11        |/10
+ *     3-----------2
+ *          2
  */
 /** @} */
 
