@@ -1908,6 +1908,14 @@ dnl     AC_SUBST(SSE)
 		AC_MSG_RESULT(yes)
 	fi
 
+	dnl -arch x86_64 must come before -64 or osX.5+ gets ... confused.
+	if test "x$found_64bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch x86_64], [64_flag])
+		if test "x$bc_64_flag_works" = "xyes" ; then
+			found_64bit_flag=yes
+		fi
+	fi
+
 	if test "x$found_64bit_flag" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-64], [64_flag])
 		if test "x$bc_64_flag_works" = "xyes" ; then
