@@ -427,7 +427,7 @@ namespace eval ArcherCore {
 					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 					   c cd clear clone color comb comb_color copy copyeval copymat \
 					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
-					   edmater erase_all ev exit facetize fracture \
+					   edmater erase erase_all ev exit facetize fracture \
 					   g group hide human i importFg4Section \
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
@@ -507,6 +507,10 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_airInter ""
 	variable mImage_airSub ""
 	variable mImage_airUnion ""
+	variable mImage_airregion ""
+	variable mImage_airregionInter ""
+	variable mImage_airregionSub ""
+	variable mImage_airregionUnion ""
 	variable mImage_comb ""
 	variable mImage_combInter ""
 	variable mImage_combSub ""
@@ -623,9 +627,8 @@ Popup Menu    Right or Ctrl-Left
 
 	# init functions
 	method initImages {}
-	method initNewTree       {}
 	method initTree          {}
-	method initNewTreeImages    {}
+	method initTreeImages    {}
 	method initGed           {}
 	method closeMged         {}
 	method updateRtControl   {}
@@ -639,32 +642,23 @@ Popup Menu    Right or Ctrl-Left
 	method primaryToolbarRemove     {_index}
 
 	# tree commands
-	method alterTreeNodeChildren {node option value}
-	method toggleTreePath   {_path}
 	method updateTree        {}
-	method updateNewTree        {}
-	method fillTree          {{_node ""}}
-	method fillNewTree          {_pnode _ctext}
-	method selectNode        {_tags {_rflag 1}}
-	method dblClick          {_tags}
-	method loadMenu          {_menu _snode}
-	method loadMenuPartI          {_menu}
-	method loadMenuPartII          {_menu _node _nodeType}
-	method findNewTreeChildNodes {_pnode}
-	method findNewTreeParentNodes {_cnode}
+	method fillTree          {_pnode _ctext}
+	method loadMenu          {_menu _node _nodeType}
+	method findTreeChildNodes {_pnode}
+	method findTreeParentNodes {_cnode}
 	method getCNodeFromCText {_pnode _text}
-	method getNewTreeImage {_obj _type {_op ""} {_isregion 0}}
-	method getNewTreeNode {_path}
-	method getNewTreeNodes {_path}
-	method getNewTreePath {_node {_path ""}}
-	method handleNewTreeClose {}
-	method handleNewTreeOpen {}
-	method handleNewTreePopup {_x _y _X _Y}
-	method handleNewTreeSelect {}
-	method refreshNewTree {}
-	method addNewTreeNodeTag {_node _tag}
-	method removeNewTreeNodeTag {_node _tag}
-	method addNewTreePlaceholder {_pnode}
+	method getTreeImage {_obj _type {_op ""} {_isregion 0}}
+	method getTreeNode {_path}
+	method getTreeNodes {_path}
+	method getTreePath {_node {_path ""}}
+	method handleTreeClose {}
+	method handleTreeOpen {}
+	method handleTreePopup {_x _y _X _Y}
+	method handleTreeSelect {}
+	method addTreeNodeTag {_node _tag}
+	method removeTreeNodeTag {_node _tag}
+	method addTreePlaceholder {_pnode}
 
 	# db/display commands
 	method getNodeChildren  {_node}
@@ -1023,7 +1017,7 @@ Popup Menu    Right or Ctrl-Left
 	[lindex $mBackground 2]
 
     initImages
-    initNewTreeImages
+    initTreeImages
 
     $itk_component(primaryToolbar) itemconfigure open -state normal
 
@@ -1083,8 +1077,16 @@ Popup Menu    Right or Ctrl-Left
     }
 
     gedCmd configure -primitiveLabels {}
-    if {$tflag} {
-	catch {refreshTree}
+    switch -- $tflag {
+	0 {
+	    # Do nothing
+	}
+	1 {
+	    catch {updateTree}
+	}
+	default {
+	    catch {refreshTree}
+	}
     }
     SetNormalCursor $this
 
@@ -1342,7 +1344,13 @@ Popup Menu    Right or Ctrl-Left
 }
 
 
-::itcl::body ArcherCore::initNewTree {} {
+::itcl::body ArcherCore::initTree {} {
+    set parent [$itk_component(vpane) childsite hierarchyView]
+
+    itk_component add hierarchyTabs {
+	::ttk::notebook $parent.htabs
+    } {}
+
     set mNode2Text() ""
     set mText2Node() ""
     set mCNode2PList() ""
@@ -1357,10 +1365,10 @@ Popup Menu    Right or Ctrl-Left
 	    -selectmode browse
     } {}
 
-    bind $itk_component(newtree) <<TreeviewSelect>> [::itcl::code $this handleNewTreeSelect]
-    bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleNewTreeOpen]
-    bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleNewTreeClose]
-    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleNewTreePopup %x %y %X %Y]
+    bind $itk_component(newtree) <<TreeviewSelect>> [::itcl::code $this handleTreeSelect]
+    bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleTreeOpen]
+    bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleTreeClose]
+    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup %x %y %X %Y]
 #    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground cornflowerblue
 #    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground 
 #    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground darkorange
@@ -1399,45 +1407,20 @@ Popup Menu    Right or Ctrl-Left
 #    grid $itk_component(newtreehscroll) - -sticky nsew
     grid columnconfigure $itk_component(newtreeF) 0 -weight 1
     grid rowconfigure $itk_component(newtreeF) 0 -weight 1
-}
 
-::itcl::body ArcherCore::initTree {} {
-    set parent [$itk_component(vpane) childsite hierarchyView]
-
-    itk_component add hierarchyTabs {
-	::ttk::notebook $parent.htabs
-    } {}
-
-    if {0} {
-    itk_component add tree {
-	::swidgets::tree $itk_component(hierarchyTabs).tree \
-	    -background white \
-	    -selectfill 1 \
-	    -selectbackground black \
-	    -selectforeground $SystemWindow \
-	    -querycmd [::itcl::code $this fillTree %n] \
-	    -selectcmd [::itcl::code $this selectNode %n] \
-	    -dblselectcmd [::itcl::code $this dblClick %n] \
-	    -textmenuloadcommand [::itcl::code $this loadMenu]
-    } {}
-
-    [$itk_component(tree) component popupmenu] configure \
-	-background $SystemButtonFace \
-	-activebackground $SystemHighlight \
-	-activeforeground $SystemHighlightText
-    }
-
-    initNewTree
-
-#    $itk_component(hierarchyTabs) add $itk_component(tree) -text "Old Tree"
     $itk_component(hierarchyTabs) add $itk_component(newtreeF) -text "New Tree"
 }
 
-::itcl::body ArcherCore::initNewTreeImages {} {
+::itcl::body ArcherCore::initTreeImages {} {
     set mImage_air [image create photo -file [file join $mImgDir air.png]]
     set mImage_airInter [image create photo -file [file join $mImgDir air_intersect.png]]
     set mImage_airSub [image create photo -file [file join $mImgDir air_subtract.png]]
     set mImage_airUnion [image create photo -file [file join $mImgDir air_union.png]]
+
+#    set mImage_airregion [image create photo -file [file join $mImgDir airregion.png]]
+#    set mImage_airregionInter [image create photo -file [file join $mImgDir airregion_intersect.png]]
+#    set mImage_airregionSub [image create photo -file [file join $mImgDir airregion_subtract.png]]
+#    set mImage_airregionUnion [image create photo -file [file join $mImgDir airregion_union.png]]
 
     set mImage_comb [image create photo -file [file join $mImgDir comb.png]]
     set mImage_combInter [image create photo -file [file join $mImgDir comb_intersect.png]]
@@ -1835,6 +1818,114 @@ Popup Menu    Right or Ctrl-Left
     #    0 and 100 inclusive.
     $itk_component(vpane) show hierarchyView
     $itk_component(vpane) fraction $fraction [expr {100 - $fraction}]
+}
+
+::itcl::body ArcherCore::refreshTree {{_restore 1}} {
+    foreach node [array names mNode2Text] {
+	catch {$itk_component(newtree) delete $node}
+    }
+
+    # clobber the associative arrays
+    unset mNode2Text
+    unset mText2Node
+    unset mCNode2PList
+    unset mPNode2CList
+    set mNode2Text() ""
+    set mText2Node() ""
+    set mCNode2PList() ""
+    set mPNode2CList() ""
+    set mNodePDrawList ""
+    set mNodeDrawList ""
+    set mAffectedNodeList ""
+
+    foreach item [lsort -dictionary [$itk_component(ged) tops]] {
+	set item [regsub {/.*} $item {}]
+	fillTree {} $item
+    }
+
+    updateTree
+}
+
+::itcl::body ArcherCore::mouseRay {_dm _x _y} {
+    set target [$_dm screen2model $_x $_y]
+    set view [$_dm screen2view $_x $_y]
+
+    set bounds [$_dm bounds]
+    set vZ [expr {[lindex $bounds 4] / -2048.0}]
+    set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
+
+    set partitions [shootRay $start "at" $target 1 1 0]
+    set partition [lindex $partitions 0]
+
+    if {[llength $mMouseRayCallbacks] == 0} {
+	if {$partition == {}} {
+	    tk_messageBox -message "Nothing hit"
+	} else {
+	    set region [bu_get_value_by_keyword "region" $partition]
+	    tk_messageBox -message [gedCmd l $region]
+	}
+    } else {
+	foreach callback $mMouseRayCallbacks {
+	    catch {$callback $start $target $partitions}
+	}
+    }
+}
+
+::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit} {
+    eval $itk_component(ged) rt_gettrees ray -i -u [gedCmd who]
+    ray prep $_prep
+    ray no_bool $_no_bool
+    ray onehit $_onehit
+
+    return [ray shootray $_start $_op $_target]
+}
+
+::itcl::body ArcherCore::addMouseRayCallback {_callback} {
+    lappend mMouseRayCallbacks $_callback
+}
+
+::itcl::body ArcherCore::deleteMouseRayCallback {_callback} {
+    set i [lsearch $mMouseRayCallbacks $_callback]
+    if {$i != -1} {
+	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
+    }
+}
+
+::itcl::body ArcherCore::setDefaultBindingMode {_mode} {
+    set mDefaultBindingMode $_mode
+
+    set ret 0
+    switch -- $mDefaultBindingMode \
+	$VIEW_ROTATE_MODE { \
+		beginViewRotate \
+		set ret 1
+	} \
+	$VIEW_TRANSLATE_MODE { \
+		beginViewTranslate \
+		set ret 1
+	} \
+	$VIEW_SCALE_MODE { \
+		beginViewScale \
+		set ret 1
+	} \
+	$VIEW_CENTER_MODE { \
+		initViewCenterMode \
+		set ret 1
+	} \
+	$COMP_ERASE_MODE { \
+		initCompErase \
+		set ret 1
+	} \
+	$COMP_PICK_MODE { \
+		initCompPick \
+		set ret 1
+	} \
+	$MEASURE_MODE { \
+		initViewMeasure \
+		set ret 1
+	}
+
+    return $ret
 }
 
 # ------------------------------------------------------------
@@ -2865,98 +2956,20 @@ Popup Menu    Right or Ctrl-Left
 # ------------------------------------------------------------
 #                     TREE COMMANDS
 # ------------------------------------------------------------
-::itcl::body ArcherCore::alterTreeNodeChildren {node option value} {
-    return
-    foreach child [$itk_component(tree) query -children $node] {
-	$itk_component(tree) alternode $child $option $value
-	alterTreeNodeChildren $child "-color" \
-	    [$itk_component(tree) query -color $child]
-    }
-}
 
-::itcl::body ArcherCore::refreshTree {{restore 1}} {
-    refreshNewTree
-    return
-
-    if {$restore == 1} {
-	# get selected node
-	set selNode [$itk_component(tree) query -selected]
-	if {$selNode != ""} {
-	    set selNodePath [$itk_component(tree) query -path $selNode]
-	} else {
-	    set selNodePath ""
-	}
-
-	# get current open state
-	set opennodes [$itk_component(tree) opennodes "root"]
-
-	set paths ""
-	foreach node $opennodes {
-	    lappend paths [$itk_component(tree) query -path $node]
-	}
-    }
-
-    # remove all elements
-    $itk_component(tree) removeall
-
-    # re-fill tree
-    fillTree
-
-    if {$restore == 1} {
-	set mRestoringTree 1
-
-	catch {
-	    # set the open state of nodes
-	    foreach path $paths {
-		toggleTreePath $path
-	    }
-
-	    if {$selNodePath != ""} {
-		toggleTreePath $selNodePath
-	    }
-	}
-
-	set mRestoringTree 0
-    }
-
-    # force redraw of tree
-    $itk_component(tree) redraw
-}
-
-::itcl::body ArcherCore::toggleTreePath {_path} {
-    return
-
-    set _path [file split $_path]
-    if {[llength $_path] < 2} {
-	#set prev ""
-	set parent "root"
-	set nname $_path
-    } else {
-	set parent [lindex $_path [expr [llength $_path] -2]]
-	set nname  [lindex $_path [expr [llength $_path] -1]]
-    }
-
-    set pnode [$itk_component(tree) find $parent]
-
-    set node [$itk_component(tree) find $nname $pnode]
-    $itk_component(tree) toggle $node
-
-    #set prev $nname
-}
-
-::itcl::body ArcherCore::updateNewTree {} {
+::itcl::body ArcherCore::updateTree {} {
     foreach node $mNodePDrawList {
-	$itk_component(newtree) item $node -tags $TREE_POPUP_TAG
+	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
     }
     foreach node $mNodeDrawList {
-	$itk_component(newtree) item $node -tags $TREE_POPUP_TAG
+	removeTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
     }
 
     set mNodePDrawList ""
     set mNodeDrawList ""
 
     foreach ditem [gedCmd who] {
-	set nodesList [getNewTreeNodes $ditem]
+	set nodesList [getTreeNodes $ditem]
 
 	eval lappend mNodePDrawList [lindex $nodesList 0]
 	eval lappend mNodeDrawList [lindex $nodesList 1]
@@ -2966,93 +2979,14 @@ Popup Menu    Right or Ctrl-Left
     set mNodeDrawList [lsort -unique $mNodeDrawList]
 
     foreach node $mNodePDrawList {
-	$itk_component(newtree) item $node -tags [list $TREE_POPUP_TAG $TREE_PARTIALLY_DISPLAYED_TAG]
+	addTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
     }
     foreach node $mNodeDrawList {
-	$itk_component(newtree) item $node -tags [list $TREE_POPUP_TAG $TREE_FULLY_DISPLAYED_TAG]
+	addTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
     }
 }
 
-::itcl::body ArcherCore::updateTree {} {
-    # Breaks when using the new tree so, return (for now)
-    updateNewTree
-    return
-
-    # grab selection
-    set select [$itk_component(tree) selection get]
-    #set element [lindex [split $select ":"] 1]
-    set element [split $select ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
-    set path [$itk_component(tree) query -path $element]
-
-    # alter color of parentage
-    set parent "root"
-    foreach name [file split $path] {
-	set node [$itk_component(tree) find $name $parent]
-	set nname [$itk_component(tree) query -path $node]
-	if {0 <= [gedCmd how $nname]} {
-	    $itk_component(tree) alternode $node -color blue
-	} else {
-	    $itk_component(tree) alternode $node -color black
-	}
-    }
-
-    # alter color of subnodes
-    alterTreeNodeChildren $element "-color" \
-	[$itk_component(tree) query -color $element]
-}
-
-::itcl::body ArcherCore::fillTree {{node ""}} {
-    return
-
-    if {$node == ""} {
-	# set node to root
-	set node "root"
-
-	# get toplevel objects
-	set tops [gedCmd tops]
-    } else {
-	set nname [$itk_component(tree) query -text $node]
-
-	# get all its children
-	set tops [getNodeChildren $nname]
-    }
-
-    set stem "leaf"
-
-    foreach cname $tops {
-	set cname [string trim $cname " /\\"]
-
-	# need to get rid of any "/R" left
-	set cname [string trimright $cname "/R"]
-	if {$cname == "_GLOBAL"} {
-	    continue
-	}
-
-	# need to add whether its a "leaf" or "branch" ... this seems to work,
-	# as long as they don't change BRL-CAD
-	set l [lindex [split [gedCmd l $cname] "\n"] 0]
-	if {[lindex $l [expr [llength $l] -1]] == "--"} {set stem "branch"}
-
-	# add to tree
-	set cnode [$itk_component(tree) insert end $node $cname $stem]
-	set cpath [$itk_component(tree) query -path $cnode]
-
-	if {0 <= [gedCmd how $cpath]} {
-	    $itk_component(tree) alternode $cnode -color blue
-	} else {
-	    $itk_component(tree) alternode $cnode -color black
-	}
-
-	set stem "leaf"
-    }
-
-    ::update idletasks
-}
-
-::itcl::body ArcherCore::fillNewTree {_pnode _ctext} {
+::itcl::body ArcherCore::fillTree {_pnode _ctext} {
     set cnode [getCNodeFromCText $_pnode $_ctext]
 
     # A node for _pnode/_ctext already exists
@@ -3072,19 +3006,49 @@ Popup Menu    Right or Ctrl-Left
 	incr ri
 	set isregion [lindex $cgdata $ri]
 
+	if {$isregion} {
+	    # Check for rid
+	    set ii [lsearch $cgdata id]
+	    if {$ii != -1} {
+		incr ii
+		set hasId [lindex $cgdata $ii]
+	    } else {
+		set hasId 0
+	    }
+
+	    # Check for air
+	    set ai [lsearch $cgdata air]
+
+	    if {$ai != -1} {
+		set hasAir 1
+	    } else {
+		set hasAir 0
+	    }
+
+	    if {($hasId && $hasAir) || (!$hasId && !$hasAir)} {
+		set isregion 3
+	    } else {
+		if {$hasId} {
+		    set isregion 1
+		} else {
+		    set isregion 2
+		}
+	    }
+	}
+
 	set op [getTreeOp $ptext $_ctext]
-	set img [getNewTreeImage $_ctext $ctype $op $isregion]
+	set img [getTreeImage $_ctext $ctype $op $isregion]
 	set cnode [$itk_component(newtree) insert $_pnode end \
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
 		       -image $img]
 
 	if {$_pnode == {}} {
-	    addNewTreePlaceholder $cnode
+	    addTreePlaceholder $cnode
 	}
     } else {
 	set op [getTreeOp $ptext $_ctext]
-	set img [getNewTreeImage $_ctext $ctype $op]
+	set img [getTreeImage $_ctext $ctype $op]
 	set cnode [$itk_component(newtree) insert $_pnode end \
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
@@ -3097,106 +3061,7 @@ Popup Menu    Right or Ctrl-Left
     set mCNode2PList($cnode) [list $ptext $_pnode]
 }
 
-::itcl::body ArcherCore::selectNode {tags {rflag 1}} {
-    return
-
-    set mLastTags $tags
-    set tags [split $tags ":"]
-    if {[llength $tags] > 1} {
-	set element [lindex $tags 1]
-    } else {
-	set element $tags
-    }
-    if {$element == ""} {
-	return
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set type [$itk_component(tree) query -nodetype $element]
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    #XXX Hack to get around the fact that somehow this
-    #    routine gets randomly called by the
-    #    hierarchy widget after a Load. When called its
-    #    tag refers to a node in the previous database.
-    set savePwd ""
-
-    if {[catch {gedCmd get_type $node} ret]} {
-	if {$savePwd != ""} {
-	    cd $savePwd
-	}
-
-	return
-    }
-
-    # label the object if it's being drawn
-    set mRenderMode [gedCmd how $node]
-
-    if {$mShowPrimitiveLabels} {
-	if {0 <= $mRenderMode} {
-	    gedCmd configure -primitiveLabels $node
-	} else {
-	    gedCmd configure -primitiveLabels {}
-	}
-    }
-
-#    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
-#	gedCmd configure -primitiveLabels $node
-#    } else {
-#	gedCmd configure -primitiveLabels {}
-#    }
-#
-#    if {$rflag} {
-#	gedCmd refresh
-#    }
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-
-    if {$savePwd != ""} {
-	cd $savePwd
-    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $element
-}
-
-::itcl::body ArcherCore::dblClick {tags} {
-    return
-
-    set mLastTags $tags
-    set element [split $tags ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set type [$itk_component(tree) query -nodetype $element]
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    if {$mPrevSelectedObj != $mSelectedObj} {
-	set mPrevSelectedObjPath $mSelectedObjPath
-	set mPrevSelectedObj $mSelectedObj
-    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $tags
-
-    switch -- $type {
-	"leaf"   -
-	"branch" {renderComp $node}
-    }
-}
-
-::itcl::body ArcherCore::loadMenuPartI {_menu} {
+::itcl::body ArcherCore::loadMenu {_menu _node _nodeType} {
     # destroy old menu
     if [winfo exists $_menu.color] {
 	$_menu.color delete 0 end
@@ -3207,26 +3072,7 @@ Popup Menu    Right or Ctrl-Left
 	destroy $_menu.trans
     }
     $_menu delete 0 end
-}
 
-::itcl::body ArcherCore::loadMenu {_menu _snode} {
-    loadMenuPartI $_menu
-
-    if {0} {
-    #set element [lindex [split $_snode ":"] 1]
-    set element [split $_snode ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set nodeType [$itk_component(tree) query -nodetype $element]
-    }
-
-    loadMenuPartII $_menu $node $nodeType
-}
-
-::itcl::body ArcherCore::loadMenuPartII {_menu _node _nodeType} {
     set mRenderMode [gedCmd how $_node]
     # do this in case "ev" was used from the command line
     if {2 < $mRenderMode} {
@@ -3372,6 +3218,39 @@ Popup Menu    Right or Ctrl-Left
 	[::itcl::code $this colorMenuStatusCB %W]
 }
 
+::itcl::body ArcherCore::findTreeChildNodes {_pnode} {
+    if {![info exists mPNode2CList($_pnode)]} {
+	 return
+    }
+
+    set cnodes {}
+    foreach clist $mPNode2CList($_pnode) {
+	set ctext [lindex $clist 0]
+	if {$ctext == $TREE_PLACEHOLDER_TAG} {
+	    continue
+	}
+
+	set cnode [lindex $clist 1]
+	lappend cnodes $cnode
+	eval lappend cnodes [findTreeChildNodes $cnode]
+    }
+
+    return $cnodes
+}
+
+::itcl::body ArcherCore::findTreeParentNodes {_cnode} {
+    set plist $mCNode2PList($_cnode)
+    set pnode [lindex $plist 1]
+
+    if {$pnode != {}} {
+	lappend pnodes $pnode
+	eval lappend pnodes [findTreeParentNodes $pnode]
+	return $pnodes
+    }
+
+    return $pnode
+}
+
 ::itcl::body ArcherCore::getCNodeFromCText {_pnode _text} {
     if {[catch {set clists $mPNode2CList($_pnode)}]} {
 	return ""
@@ -3386,14 +3265,25 @@ Popup Menu    Right or Ctrl-Left
     return ""
 }
 
-::itcl::body ArcherCore::getNewTreeImage {_obj _type {_op ""} {_isregion 0}} {
+::itcl::body ArcherCore::getTreeImage {_obj _type {_op ""} {_isregion 0}} {
     switch -- $_type {
 	comb {
-	    if {$_isregion} {
-		return [subst $[subst mImage_region$_op]]
+	    switch -- $_isregion {
+		1 {
+		    return [subst $[subst mImage_region$_op]]
+		}
+		2 {
+		    return [subst $[subst mImage_air$_op]]
+		}
+		3 {
+		    return [subst $[subst mImage_other$_op]]
+#		    return [subst $[subst mImage_airregion$_op]]
+		}
+		0 -
+		default {
+		    return [subst $[subst mImage_comb$_op]]
+		}
 	    }
-
-	    return [subst $[subst mImage_comb$_op]]
 	}
 	arb8 -
 	arbn -
@@ -3424,40 +3314,7 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::findNewTreeChildNodes {_pnode} {
-    if {![info exists mPNode2CList($_pnode)]} {
-	 return
-    }
-
-    set cnodes {}
-    foreach clist $mPNode2CList($_pnode) {
-	set ctext [lindex $clist 0]
-	if {$ctext == $TREE_PLACEHOLDER_TAG} {
-	    continue
-	}
-
-	set cnode [lindex $clist 1]
-	lappend cnodes $cnode
-	eval lappend cnodes [findNewTreeChildNodes $cnode]
-    }
-
-    return $cnodes
-}
-
-::itcl::body ArcherCore::findNewTreeParentNodes {_cnode} {
-    set plist $mCNode2PList($_cnode)
-    set pnode [lindex $plist 1]
-
-    if {$pnode != {}} {
-	lappend pnodes $pnode
-	eval lappend pnodes [findNewTreeParentNodes $pnode]
-	return $pnodes
-    }
-
-    return $pnode
-}
-
-::itcl::body ArcherCore::getNewTreeNode {_path} {
+::itcl::body ArcherCore::getTreeNode {_path} {
     set items [split $_path /]
     set len [llength $items]
 
@@ -3506,7 +3363,7 @@ Popup Menu    Right or Ctrl-Left
     return $pnode
 }
 
-::itcl::body ArcherCore::getNewTreeNodes {_path} {
+::itcl::body ArcherCore::getTreeNodes {_path} {
     if {0} {
     set nlist_partial {}
     set nlist_full {}
@@ -3533,7 +3390,7 @@ Popup Menu    Right or Ctrl-Left
     }
     }
 
-    set cnode [getNewTreeNode $_path]
+    set cnode [getTreeNode $_path]
 
     if {$cnode == {}} {
 	return [list $nlist_partial $nlist_full]
@@ -3541,13 +3398,13 @@ Popup Menu    Right or Ctrl-Left
 
     lappend nlist_full $cnode
 
-    set nlist_partial [findNewTreeParentNodes $cnode]
-    eval lappend nlist_full [findNewTreeChildNodes $cnode]
+    set nlist_partial [findTreeParentNodes $cnode]
+    eval lappend nlist_full [findTreeChildNodes $cnode]
 
     return [list $nlist_partial $nlist_full]
 }
 
-::itcl::body ArcherCore::getNewTreePath {_node {_path ""}} {
+::itcl::body ArcherCore::getTreePath {_node {_path ""}} {
     if {$_node == ""} {
 	return ""
     }
@@ -3564,13 +3421,13 @@ Popup Menu    Right or Ctrl-Left
     set text $mNode2Text($parent)
     set _path "$text/$_path"
 
-    return [getNewTreePath $parent $_path]
+    return [getTreePath $parent $_path]
 }
 
-::itcl::body ArcherCore::handleNewTreeClose {} {
+::itcl::body ArcherCore::handleTreeClose {} {
 }
 
-::itcl::body ArcherCore::handleNewTreeOpen {} {
+::itcl::body ArcherCore::handleTreeOpen {} {
     SetWaitCursor $this
 
     set cnode [$itk_component(newtree) focus]
@@ -3580,7 +3437,7 @@ Popup Menu    Right or Ctrl-Left
 
     if {$ctype == "comb"} {
 	# If this node has never been opened ...
-	if {[addNewTreeNodeTag $cnode $TREE_OPENED_TAG]} {
+	if {[addTreeNodeTag $cnode $TREE_OPENED_TAG]} {
 	    # Remove placeholder
 	    set placeholder [lindex [lindex $mPNode2CList($cnode) 0] 1]
 	    $itk_component(newtree) delete $placeholder
@@ -3592,7 +3449,7 @@ Popup Menu    Right or Ctrl-Left
 		    set gcnode [getCNodeFromCText $cnode $gctext]
 		    if {$gcnode == ""} {
 			set op [getTreeOp $ctext $gctext]
-			set img [getNewTreeImage $gctext "invalid" $op]
+			set img [getTreeImage $gctext "invalid" $op]
 
 			set gcnode [$itk_component(newtree) insert $cnode end \
 					-tags $TREE_POPUP_TAG \
@@ -3609,7 +3466,7 @@ Popup Menu    Right or Ctrl-Left
 		}
 
 		# Add gchild members
-		fillNewTree $cnode $gctext
+		fillTree $cnode $gctext
 
 		set gctype [lindex $gcgdata 0]
 
@@ -3617,17 +3474,17 @@ Popup Menu    Right or Ctrl-Left
 		    set gcnode [getCNodeFromCText $cnode $gctext]
 
 		    # Add a placeholder for gcnode's possible members
-		    addNewTreePlaceholder $gcnode
+		    addTreePlaceholder $gcnode
 		}
 	    }
 	}
     }
 
-    updateNewTree
+    updateTree
     SetNormalCursor $this
 }
 
-::itcl::body ArcherCore::handleNewTreePopup {_x _y _X _Y} {
+::itcl::body ArcherCore::handleTreePopup {_x _y _X _Y} {
     set item [$itk_component(newtree) identify row $_x $_y]
     set text [$itk_component(newtree) item $item -text]
     set img [$itk_component(newtree) item $item -image]
@@ -3638,16 +3495,15 @@ Popup Menu    Right or Ctrl-Left
 	set nodeType "leaf"
     }
 
-    set path [getNewTreePath $item $text]
+    set path [getTreePath $item $text]
 
-    loadMenuPartI $itk_component(newtreepopup)
-    loadMenuPartII $itk_component(newtreepopup) $path $nodeType
+    loadMenu $itk_component(newtreepopup) $path $nodeType
     tk_popup $itk_component(newtreepopup) $_X $_Y
 }
 
-::itcl::body ArcherCore::handleNewTreeSelect {} {
+::itcl::body ArcherCore::handleTreeSelect {} {
     foreach anode $mAffectedNodeList {
-	removeNewTreeNodeTag $anode $TREE_AFFECTED_TAG
+	removeTreeNodeTag $anode $TREE_AFFECTED_TAG
     }
 
     set mAffectedNodeList ""
@@ -3659,7 +3515,7 @@ Popup Menu    Right or Ctrl-Left
 
     set mPrevSelectedObjPath $mSelectedObjPath
     set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath [getNewTreePath $snode]
+    set mSelectedObjPath [getTreePath $snode]
     set mSelectedObj $mNode2Text($snode)
 
     # label the object if it's being drawn
@@ -3680,7 +3536,7 @@ Popup Menu    Right or Ctrl-Left
     set paths [string trim [gedCmd search -name $mSelectedObj]]
     foreach path $paths {
 	set path [regsub {^/} $path {}]
-	set pathNodes [getNewTreeNodes $path]
+	set pathNodes [getTreeNodes $path]
 	set pnodes [lreverse [lindex $pathNodes 0]]
 	set cnodes [lindex $pathNodes 1]
 	set found 0
@@ -3688,7 +3544,7 @@ Popup Menu    Right or Ctrl-Left
 	    if {![$itk_component(newtree) item $pnode -open]} {
 		lappend mAffectedNodeList $pnode
 		set found 1
-		addNewTreeNodeTag $pnode $TREE_AFFECTED_TAG
+		addTreeNodeTag $pnode $TREE_AFFECTED_TAG
 		break
 	    }
 	}
@@ -3697,37 +3553,13 @@ Popup Menu    Right or Ctrl-Left
 	    set cnode [lindex $cnodes 0]
 	    if {$cnode != $snode} {
 		lappend mAffectedNodeList $cnode
-		addNewTreeNodeTag $cnode $TREE_AFFECTED_TAG
+		addTreeNodeTag $cnode $TREE_AFFECTED_TAG
 	    }
 	}
     }
 }
 
-::itcl::body ArcherCore::refreshNewTree {} {
-    foreach node [array names mNode2Text] {
-	catch {$itk_component(newtree) delete $node}
-    }
-
-    # clobber the associative arrays
-    unset mNode2Text
-    unset mText2Node
-    unset mCNode2PList
-    unset mPNode2CList
-    set mNode2Text() ""
-    set mText2Node() ""
-    set mCNode2PList() ""
-    set mPNode2CList() ""
-    set mNodePDrawList ""
-    set mNodeDrawList ""
-    set mAffectedNodeList ""
-
-    foreach item [lsort -dictionary [$itk_component(ged) tops]] {
-	set item [regsub {/.*} $item {}]
-	fillNewTree {} $item
-    }
-}
-
-::itcl::body ArcherCore::addNewTreeNodeTag {_node _tag} {
+::itcl::body ArcherCore::addTreeNodeTag {_node _tag} {
     set tags [$itk_component(newtree) item $_node -tags]
     set ai [lsearch $tags $_tag]
     if {$ai == -1} {
@@ -3740,7 +3572,7 @@ Popup Menu    Right or Ctrl-Left
     return 0
 }
 
-::itcl::body ArcherCore::removeNewTreeNodeTag {_node _tag} {
+::itcl::body ArcherCore::removeTreeNodeTag {_node _tag} {
     set tags [$itk_component(newtree) item $_node -tags]
     set ai [lsearch $tags $_tag]
     if {$ai != -1} {
@@ -3749,7 +3581,7 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::addNewTreePlaceholder {_pnode} {
+::itcl::body ArcherCore::addTreePlaceholder {_pnode} {
     set cnode [$itk_component(newtree) insert $_pnode end \
 		   -text $TREE_PLACEHOLDER_TAG \
 		   -tags $TREE_PLACEHOLDER_TAG]
@@ -4255,8 +4087,7 @@ Popup Menu    Right or Ctrl-Left
 	gedCmd configure -primitiveLabels {}
     }
 
-#    selectNode $mLastTags
-    handleNewTreeSelect
+    handleTreeSelect
 }
 
 ::itcl::body ArcherCore::showViewParams {} {
@@ -4331,88 +4162,6 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::setStatusString {_str} {
     set mStatusStr $_str
-}
-
-::itcl::body ArcherCore::mouseRay {_dm _x _y} {
-    set target [$_dm screen2model $_x $_y]
-    set view [$_dm screen2view $_x $_y]
-
-    set bounds [$_dm bounds]
-    set vZ [expr {[lindex $bounds 4] / -2048.0}]
-    set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
-
-    set partitions [shootRay $start "at" $target 1 1 0]
-    set partition [lindex $partitions 0]
-
-    if {[llength $mMouseRayCallbacks] == 0} {
-	if {$partition == {}} {
-	    tk_messageBox -message "Nothing hit"
-	} else {
-	    set region [bu_get_value_by_keyword "region" $partition]
-	    tk_messageBox -message [gedCmd l $region]
-	}
-    } else {
-	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $start $target $partitions}
-	}
-    }
-}
-
-::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit} {
-    eval $itk_component(ged) rt_gettrees ray -i -u [gedCmd who]
-    ray prep $_prep
-    ray no_bool $_no_bool
-    ray onehit $_onehit
-
-    return [ray shootray $_start $_op $_target]
-}
-
-::itcl::body ArcherCore::addMouseRayCallback {_callback} {
-    lappend mMouseRayCallbacks $_callback
-}
-
-::itcl::body ArcherCore::deleteMouseRayCallback {_callback} {
-    set i [lsearch $mMouseRayCallbacks $_callback]
-    if {$i != -1} {
-	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
-    }
-}
-
-::itcl::body ArcherCore::setDefaultBindingMode {_mode} {
-    set mDefaultBindingMode $_mode
-
-    set ret 0
-    switch -- $mDefaultBindingMode \
-	$VIEW_ROTATE_MODE { \
-		beginViewRotate \
-		set ret 1
-	} \
-	$VIEW_TRANSLATE_MODE { \
-		beginViewTranslate \
-		set ret 1
-	} \
-	$VIEW_SCALE_MODE { \
-		beginViewScale \
-		set ret 1
-	} \
-	$VIEW_CENTER_MODE { \
-		initViewCenterMode \
-		set ret 1
-	} \
-	$COMP_ERASE_MODE { \
-		initCompErase \
-		set ret 1
-	} \
-	$COMP_PICK_MODE { \
-		initCompPick \
-		set ret 1
-	} \
-	$MEASURE_MODE { \
-		initViewMeasure \
-		set ret 1
-	}
-
-    return $ret
 }
 
 ::itcl::body ArcherCore::getTkColor {r g b} {
@@ -4676,14 +4425,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd draw $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	refreshTree
+	updateTree
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    refreshTree
+    updateTree
     if {$wflag} {
 	SetNormalCursor $this
     }
@@ -4729,14 +4478,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	refreshTree
+	updateTree
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    refreshTree
+    updateTree
     SetNormalCursor $this
 }
 

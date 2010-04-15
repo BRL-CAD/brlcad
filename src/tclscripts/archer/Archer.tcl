@@ -261,7 +261,7 @@ package provide Archer 1.0
 	method globalWrapper {_cmd args}
 	method killWrapper {_cmd args}
 	method moveWrapper {_cmd args}
-	method handleNewTreeSelect {}
+	method handleTreeSelect {}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
@@ -2049,6 +2049,18 @@ package provide Archer 1.0
 	catch {eval gedCmd $cmd $options $expandedArgs} ret
 	SetNormalCursor $this
 
+	switch -- $tflag {
+	    0 {
+		# Do nothing
+	    }
+	    1 {
+		catch {updateTree}
+	    }
+	    default {
+		catch {refreshTree}
+	    }
+	}
+
 	return $ret
     }
 
@@ -2114,8 +2126,16 @@ package provide Archer 1.0
     }
 
     gedCmd configure -primitiveLabels {}
-    if {$tflag} {
-	catch {refreshTree}
+    switch -- $tflag {
+	0 {
+	    # Do nothing
+	}
+	1 {
+	    catch {updateTree}
+	}
+	default {
+	    catch {refreshTree}
+	}
     }
     SetNormalCursor $this
 
@@ -2342,8 +2362,8 @@ package provide Archer 1.0
     SetNormalCursor $this
 }
 
-::itcl::body Archer::handleNewTreeSelect {} {
-    ::ArcherCore::handleNewTreeSelect
+::itcl::body Archer::handleTreeSelect {} {
+    ::ArcherCore::handleTreeSelect
 
     if {!$mViewOnly} {
 	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
