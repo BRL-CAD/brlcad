@@ -10,6 +10,10 @@ dist_tcl_DATA = \
 	air_intersect.png \
 	air_subtract.png \
 	air_union.png \
+	airregion.png \
+	airregion_intersect.png \
+	airregion_subtract.png \
+	airregion_union.png \
 	arb8.png \
 	arb8_intersect.png \
 	arb8_subtract.png \
@@ -25,6 +29,10 @@ dist_tcl_DATA = \
 	ars_intersect.png \
 	ars_subtract.png \
 	ars_union.png \
+	assembly.png \
+	assembly_intersect.png \
+	assembly_subtract.png \
+	assembly_union.png \
 	blank.png \
 	bot.png \
 	bot_intersect.png \
