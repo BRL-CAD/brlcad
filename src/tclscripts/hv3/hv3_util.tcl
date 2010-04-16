@@ -8,9 +8,7 @@ namespace eval hv3 {
   }
 
   proc scrollbar {args} {
-    set w [eval [linsert $args 0 ::scrollbar]]
-    $w configure -highlightthickness 0
-    $w configure -borderwidth 1
+    set w [eval [linsert $args 0 ttk::scrollbar]]
     return $w
   }
 
