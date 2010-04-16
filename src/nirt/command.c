@@ -359,6 +359,11 @@ shoot(char *buffer, com_table *ctp)
     if (do_backout) {
 	point_t ray_point;
 	vect_t ray_dir;
+	vect_t center_bsphere;
+	fastf_t dist_to_target;
+	vect_t dvec;
+	fastf_t delta;
+
 	for (i = 0; i < 3; ++i) {
 	    ray_point[i] = target(i);
 	    ray_dir[i] = direct(i);
@@ -371,16 +376,13 @@ shoot(char *buffer, com_table *ctp)
 	 * calculate the distance from a plane normal to the ray direction through the center of 
 	 * the bounding sphere and a plane normal to the ray direction through the aim point.
 	 */
-    	vect_t center_bsphere;
 	VADD2SCALE(center_bsphere, rtip->mdl_max, rtip->mdl_min, 0.5);
 
-	fastf_t dist_to_target;
 	dist_to_target = DIST_PT_PT(center_bsphere, ray_point); 
 
-	vect_t dvec;
 	VSUB2(dvec, ray_point, center_bsphere);
 	VUNITIZE(dvec);
-	fastf_t delta = dist_to_target*VDOT(ray_dir, dvec);
+	delta = dist_to_target*VDOT(ray_dir, dvec);
 
 	/*
 	 * this should put us about a bounding sphere radius in front of the bounding sphere
