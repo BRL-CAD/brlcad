@@ -1,35 +1,15 @@
 
-SUBDIRS = \
-	archer \
-	geometree \
-	hv3 \
-	lib \
-	mged \
-	nirt \
-	pl-dm \
-	rtwizard \
-	sdialogs \
-	swidgets \
-	util
-
-this_dir = tclscripts
+this_dir = tclscripts/hv3
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
-scripties = \
-	ami.tcl \
-	ampi.tcl \
-	cad_clrpick.tcl \
-	cad_dialog.tcl \
-	chkexterns.tcl \
-	fs_dialog.tk \
-	helpcomm.tcl \
-	helplib.tcl \
-	hoc.tcl \
-	html_library.tcl \
-	libdm.tcl \
-	menu_override.tcl \
-	mouse.tcl \
-	vmath.tcl
+scripts = \
+	combobox.tcl \
+	hv3.tcl \
+	hv3_encodings.tcl \
+	hv3_form.tcl \
+	hv3_request.tcl \
+	hv3_util.tcl \
+	snit.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
@@ -37,9 +17,15 @@ BUILT_SOURCES = \
 
 tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
-	$(scripties)
+	$(scripts)
 
-EXTRA_DIST = $(tcl_SCRIPTS)
+EXTRA_DIST = 
+	$(tcl_SCRIPTS) \
+	license.txt \
+	license_snit.txt \
+	demo/index.html \
+	demo/small-eagleCAD.gif \
+	demo/viewpage.tcl
 
 # CLEANFILES = $(BUILT_SOURCES)
 
