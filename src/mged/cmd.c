@@ -1756,6 +1756,11 @@ cmd_units(ClientData clientData,
     if (gedp == GED_NULL)
 	return TCL_OK;
 
+    if(!dbip) {
+	    bu_log("cannot run units with no database open.\n");
+	    return TCL_ERROR;
+    }
+
     sf = dbip->dbi_base2local;
     ret = ged_units(gedp, argc, (const char **)argv);
     Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
