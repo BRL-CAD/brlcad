@@ -55,7 +55,7 @@ proc LoadArcherCoreLibs {} {
 	puts "ERROR: Unable to load ArcherCore Scripting"
 	exit 1
     }
-    package require Tkhtml 3.0
+    package require hv3 0.1
 }
 
 proc LoadArcherLibs {} {

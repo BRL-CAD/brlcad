@@ -2972,10 +2972,11 @@ proc title_node_handler {node} {
     global env
     global archer_help_data
     global manhtmlviewer
+    global manhtml
 
     itk_component add archerMan {
 	::iwidgets::dialog $itk_interior.archerMan \
-	    -modality application \
+	    -modality none \
 	    -title "MGED Manual Page Browser" \
 	    -background $SystemButtonFace
     } {}
@@ -3047,27 +3048,21 @@ proc title_node_handler {node} {
     pack $sfcsman -expand yes -fill both 
     
     # HTML widget
-    set manhtmlviewer [html $sfcsman.htmlview]
-    $sfcsman.htmlview configure -parsemode html 
+    set manhtmlviewer [::hv3::hv3 $sfcsman.htmlview]
+    set manhtml [$manhtmlviewer html]
+    $manhtml configure -parsemode html 
     set help_fd [lindex [list [file join [bu_brlcad_data "html/mann/en"] Introduction.html]] 0]
     get_html_data $help_fd
-    $sfcsman.htmlview parse $archer_help_data
+    $manhtml parse $archer_help_data
 
-    itk_component add archerManSF {
-	::ttk::scrollbar $tlparent.archerManSF \
-		-command "$sfcsman.htmlview yview"
-    } {}
-
-    $sfcsman.htmlview configure -yscrollcommand "$itk_component(archerManSF) set"
-
-    grid $manhtmlviewer $itk_component(archerManSF) -sticky nsew -in $sfcsman
+    grid $manhtmlviewer -sticky nsew -in $sfcsman
 
     grid columnconfigure $sfcsman 0 -weight 1
     grid rowconfigure $sfcsman 0 -weight 1
 
     pack $itk_component(archerManF) -side left -expand yes -fill both
     }
-    bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_man_display $manhtmlviewer}
+    bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_man_display $manhtml}
 
     wm geometry $itk_component(archerMan) "800x600"
 }
