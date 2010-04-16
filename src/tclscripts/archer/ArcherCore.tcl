@@ -329,6 +329,8 @@ namespace eval ArcherCore {
 	# variables for preference state
 	variable mAffectedTreeNodesMode 0
 	variable mAffectedTreeNodesModePref ""
+	variable mTreeAttrColumns ""
+	variable mTreeAttrColumnsPref ""
 
 	variable mZClipMode 0
 	variable mZClipModePref ""
@@ -644,6 +646,7 @@ Popup Menu    Right or Ctrl-Left
 	# tree commands
 	method updateTree        {}
 	method fillTree          {_pnode _ctext}
+	method fillTreeColumns   {_cnode _ctext}
 	method loadMenu          {_menu _node _nodeType}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
@@ -1417,10 +1420,10 @@ Popup Menu    Right or Ctrl-Left
     set mImage_airSub [image create photo -file [file join $mImgDir air_subtract.png]]
     set mImage_airUnion [image create photo -file [file join $mImgDir air_union.png]]
 
-#    set mImage_airregion [image create photo -file [file join $mImgDir airregion.png]]
-#    set mImage_airregionInter [image create photo -file [file join $mImgDir airregion_intersect.png]]
-#    set mImage_airregionSub [image create photo -file [file join $mImgDir airregion_subtract.png]]
-#    set mImage_airregionUnion [image create photo -file [file join $mImgDir airregion_union.png]]
+    set mImage_airregion [image create photo -file [file join $mImgDir airregion.png]]
+    set mImage_airregionInter [image create photo -file [file join $mImgDir airregion_intersect.png]]
+    set mImage_airregionSub [image create photo -file [file join $mImgDir airregion_subtract.png]]
+    set mImage_airregionUnion [image create photo -file [file join $mImgDir airregion_union.png]]
 
     set mImage_comb [image create photo -file [file join $mImgDir comb.png]]
     set mImage_combInter [image create photo -file [file join $mImgDir comb_intersect.png]]
@@ -1823,6 +1826,13 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::refreshTree {{_restore 1}} {
     foreach node [array names mNode2Text] {
 	catch {$itk_component(newtree) delete $node}
+    }
+
+    $itk_component(newtree) configure -columns $mTreeAttrColumns
+    set i 0
+    foreach column $mTreeAttrColumns {
+	$itk_component(newtree) heading $i -text $column
+	incr i
     }
 
     # clobber the associative arrays
@@ -3043,6 +3053,8 @@ Popup Menu    Right or Ctrl-Left
 		       -text $_ctext \
 		       -image $img]
 
+	fillTreeColumns $cnode $_ctext
+
 	if {$_pnode == {}} {
 	    addTreePlaceholder $cnode
 	}
@@ -3053,12 +3065,36 @@ Popup Menu    Right or Ctrl-Left
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
 		       -image $img]
+
+	fillTreeColumns $cnode $_ctext
     }
 
     lappend mText2Node($_ctext) [list $cnode $_pnode]
     set mNode2Text($cnode) $_ctext
     lappend mPNode2CList($_pnode) [list $_ctext $cnode]
     set mCNode2PList($cnode) [list $ptext $_pnode]
+}
+
+::itcl::body ArcherCore::fillTreeColumns {_cnode _ctext} {
+    if {$mTreeAttrColumns != {}} {
+	set vals {}
+	set anames {}
+	set avals {}
+	foreach {aname aval} [gedCmd attr get $_ctext] {
+	    lappend anames $aname
+	    lappend avals $aval
+	}
+	foreach attr $mTreeAttrColumns {
+	    set ai [lsearch $anames $attr]
+	    if {$ai != -1} {
+		lappend vals [lindex $avals $ai]
+	    } else {
+		lappend vals {}
+	    }
+	}
+
+	$itk_component(newtree) item $_cnode -values $vals
+    }
 }
 
 ::itcl::body ArcherCore::loadMenu {_menu _node _nodeType} {
@@ -3276,8 +3312,7 @@ Popup Menu    Right or Ctrl-Left
 		    return [subst $[subst mImage_air$_op]]
 		}
 		3 {
-		    return [subst $[subst mImage_other$_op]]
-#		    return [subst $[subst mImage_airregion$_op]]
+		    return [subst $[subst mImage_airregion$_op]]
 		}
 		0 -
 		default {
@@ -3455,6 +3490,8 @@ Popup Menu    Right or Ctrl-Left
 					-tags $TREE_POPUP_TAG \
 					-text $gctext \
 					-image $img]
+
+			fillTreeColumns $gcnode $gctext
 
 			lappend mText2Node($gctext) [list $gcnode $cnode]
 			set mNode2Text($gcnode) $gctext
