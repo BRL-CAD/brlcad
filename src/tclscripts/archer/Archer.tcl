@@ -2924,6 +2924,8 @@ proc title_node_handler {node} {
         ::ttk::treeview $itk_component(archerHelpToC).toctree
     } {}
 
+    set toctree $itk_component(archerHelpToC).toctree
+
     pack $itk_component(archerHelpToC).toctree
 
     pack $itk_component(archerHelpToC) -side left -expand no -fill y
@@ -2964,6 +2966,13 @@ proc title_node_handler {node} {
     grid rowconfigure $sfcs 0 -weight 1
 
     pack $itk_component(archerHelpF) -side left -expand yes -fill both
+
+    # Populate table of contents
+    set articles [$toctree insert {} end -text "Articles"]
+    $toctree insert $articles end -text "Vehicle Tire and Wheel Creation in BRL-CAD"
+
+
+
 
     wm geometry $itk_component(archerHelp) "800x600"
 }
