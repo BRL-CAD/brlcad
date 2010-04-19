@@ -97,7 +97,6 @@ mged_SOURCES = \
 	grid.c \
 	hideline.c \
 	history.c \
-	info.c \
 	mater.c \
 	menu.c \
 	mged.c \

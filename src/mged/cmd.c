@@ -196,6 +196,38 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
     return TCL_OK;
 }
 
+int
+cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
+{
+    int ret;
+    char **av;
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+    if (argc >= 2) {
+        ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+        Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
+    } else {
+        if ((argc == 1) && (state == ST_S_EDIT)) {
+	   argc = 2;
+	   av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
+	   av[0] = argv[0];
+           av[1] = LAST_SOLID(illump)->d_namep;
+           av[argc] = NULL;
+	   ret = (*ctp->ged_func)(gedp, argc, (const char **)av);
+	   Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
+	   bu_free((genptr_t)av, "cmd_ged_info_wrapper: av");
+        } else {
+	   ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);    
+           Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
+        }
+    }
+
+    return TCL_OK;
+}
+
 
 int
 cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
