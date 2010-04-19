@@ -44,6 +44,7 @@ extern int	npsw;			/* number of worker PSWs to run */
 extern int 	 rpt_overlap;
 
 extern double units; /* from opt.c */
+extern int default_units; /* from opt.c */
 
 static long hit_count=0;
 static fastf_t cell_area=0.0;
@@ -81,8 +82,11 @@ Options:\n\
  -x #		Set librt debug flags\n\
  -c             Auxillary commands (see man page)\n\
 \n\
-WARNING: Rtarea may not correctly report area or center when instancing is\n\
+WARNING: rtarea may not correctly report area or center when instancing is\n\
 done at the group level. Using 'xpush' can be a workaround for this problem.\n\
+\n\
+WARNING: rtarea presently outputs in storage units (mm) by default but will\n\
+be changed to output in local units in the near future.\n\
 \n\
 ";
 
@@ -1001,6 +1005,16 @@ view_end(struct application *ap)
 	   "         and subject to change in a future release of BRL-CAD.\n"
 	   "********************************************************************\n"
 	   "\n");
+    if (default_units) {
+	bu_log("\n"
+	       "WARNING: Default units of measurement is presently storage units (%s).\n"
+	       "         Future output default will be local units (%s)\n"
+	       "\n",
+	       bu_units_string(units),
+	       bu_units_string(ap->a_rt_i->rti_dbip->dbi_local2base)
+	    );
+	    
+    }
 
     cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
     (void) print_region_area_list(&exposed_region_count, rtip, EXPOSED_AREA);
