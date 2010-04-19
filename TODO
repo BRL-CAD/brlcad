@@ -19,8 +19,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * 64-bit port of BRL-CAD on Windows
 
-* Mac OS X 10.5+ X11 input bug
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -53,6 +51,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* add a force option to the tracers to support overwriting the current
+  output file (so long as we're going to make it read-only by default).
 
 * improve min/max bounding box routines for BREP/NURBS
 
