@@ -142,6 +142,7 @@ int             do_kut_plane = 0;
 plane_t         kut_plane;
 
 double units = 1.0;
+int default_units = 1;
 
 /***** end variables shared with view.c *****/
 
@@ -467,7 +468,10 @@ int get_args( int argc, register char **argv )
 		units = bu_units_conversion(bu_optarg);
 		if (units <= 0.0) {
 		    units = 1.0;
+		    default_units = 1;
 		    bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
+		} else {
+		    default_units = 0;
 		}
 		break;
 	    case 'v': /* Set level of "non-debug" debugging output */
