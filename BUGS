@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtedge help shows redirection to a file working, but it does not
+  seem to work (zero-file results).
+
 * report of rt aborting randomly on 64-bit with camo shader.
 
 * mged raytrace fails with simple "raytrace failed" message when using
