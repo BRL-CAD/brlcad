@@ -52,6 +52,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* document the saveview/loadview options.  migrate them to libged if
+  they're not already.
+
+* improve rtedge documentation, explain how it computes its "centroid"
+  (as it's not exactly the center of bounding box of all objects -- it
+  depends on the booleans).
+
 * add a force option to the tracers to support overwriting the current
   output file (so long as we're going to make it read-only by default).
 
