@@ -926,6 +926,10 @@ BN_EXPORT BU_EXTERN(int bn_3pts_distinct,
 		     const point_t b,
 		     const point_t c,
 		     const struct bn_tol *tol));
+BN_EXPORT BU_EXTERN(int bn_npts_distinct,
+		    (const int npts,
+		     const point_t *pts,
+		     const struct bn_tol *tol));
 BN_EXPORT BU_EXTERN(int bn_mk_plane_3pts,
 		    (plane_t plane,
 		     const point_t a,

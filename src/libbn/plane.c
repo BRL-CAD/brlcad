@@ -180,6 +180,34 @@ bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const str
 }
 
 /**
+ * B N _ N P T S _ D I S T I N C T
+ *
+ * Check to see if the points are all distinct, i.e., ensure that
+ * there is at least sqrt(dist_tol_sq) distance between every pair of
+ * points.
+ *
+ * @return 1 If all the points are distinct
+ * @return 0 If two or more points are closer together than dist_tol_sq
+ */
+int
+bn_npts_distinct(const int npt, const point_t *pts, const struct bn_tol *tol)
+{
+    int i, j;
+    point_t r;
+
+    BN_CK_TOL(tol);
+
+    for(i=0;i<npt;i++)
+	for(j=i+1;j<npt;j++) {
+	    VSUB2(r, pts[i], pts[j]);
+	    if (MAGSQ(r) <= tol->dist_sq)
+		return(0);
+	}
+    return(1);
+}
+
+
+/**
  * B N _ M K _ P L A N E _ 3 P T S
  *
  * Find the equation of a plane that contains three points.  Note that
@@ -2630,7 +2658,7 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
  * This produces a set of three equations in three unknowns (x, y, z).
 
  * This routine sets up the three equations as [matrix][pt] = [hpq]
- * and solves by inverting "matrix" into "inverse" and 
+ * and solves by inverting "matrix" into "inverse" and
  * [pt] = [inverse][hpq].
  *
  * There is likely a more economical solution rather than matrix
