@@ -213,6 +213,109 @@ static int comp(const void *p1, const void *p2) {
 }
 
 #if 0
+test_face( ) {
+
+            switch (gfi->face_type) {
+                case FACE_V :
+                    /* scale to mm and copy current vertex into tmp_v */
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]], conv_factor);
+                    /* copy current vertex weight into tmp_w */
+                    tmp_w = ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][3] ;
+                    bu_log("fi=(%lu)vi=(%lu)vofi=(%lu)v=(%f)(%f)(%f)w=(%f)\n", 
+                       face_idx, vert_idx, index_arr_faces_1D[face_idx][vert_idx],
+                       tmp_v[0], tmp_v[1], tmp_v[2], tmp_w);
+                    break;
+                case FACE_TV :
+                    /* scale to mm and copy current vertex into tmp_v */
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]], conv_factor);
+                    /* copy current vertex weight into tmp_w */
+                    tmp_w = ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]][3] ;
+                    /* copy current normal into tmp_t */
+                    VMOVE(tmp_t, ga->texture_coord_list[index_arr_faces_2D[face_idx][vert_idx][1]]);
+                    bu_log("fi=(%lu)vi=(%lu)vofi=(%lu)tofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)\n", 
+                       face_idx, vert_idx, index_arr_faces_2D[face_idx][vert_idx][0],
+                       index_arr_faces_2D[face_idx][vert_idx][1],
+                       tmp_v[0], tmp_v[1], tmp_v[2], tmp_w,
+                       tmp_t[0], tmp_t[1], tmp_t[2]);
+                    break;
+                case FACE_NV :
+                    /* scale to mm and copy current vertex into tmp_v */
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]], conv_factor);
+                    /* copy current vertex weight into tmp_w */
+                    tmp_w = ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]][3] ;
+                    /* copy current normal into tmp_n */
+                    VMOVE(tmp_n, ga->norm_list[index_arr_faces_2D[face_idx][vert_idx][1]]);
+                    bu_log("fu=(%lx)fi=(%lu)vi=(%lu)vofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)n=(%f)(%f)(%f)\n", 
+                       fu, face_idx, vert_idx, index_arr_faces_2D[face_idx][vert_idx][0],
+                       index_arr_faces_2D[face_idx][vert_idx][1],
+                       tmp_v[0], tmp_v[1], tmp_v[2], tmp_w,
+                       tmp_n[0], tmp_n[1], tmp_n[2]);
+                    break;
+                case FACE_TNV :
+                    /* scale to mm and copy current vertex into tmp_v */
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_3D[face_idx][vert_idx][0]], conv_factor);
+                    /* copy current vertex weight into tmp_w */
+                    tmp_w = ga->vert_list[index_arr_faces_3D[face_idx][vert_idx][0]][3] ;
+                    /* copy current normal into tmp_t */
+                    VMOVE(tmp_t, ga->texture_coord_list[index_arr_faces_3D[face_idx][vert_idx][1]]);
+                    /* copy current normal into tmp_n */
+                    VMOVE(tmp_n, ga->norm_list[index_arr_faces_3D[face_idx][vert_idx][2]]);
+                    bu_log("fi=(%lu)vi=(%lu)vofi=(%lu)tofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)n=(%f)(%f)(%f)\n", 
+                       face_idx, vert_idx, index_arr_faces_3D[face_idx][vert_idx][0],
+                       index_arr_faces_3D[face_idx][vert_idx][1], index_arr_faces_3D[face_idx][vert_idx][2],
+                       tmp_v[0], tmp_v[1], tmp_v[2], tmp_w,
+                       tmp_t[0], tmp_t[1], tmp_t[2],
+                       tmp_n[0], tmp_n[1], tmp_n[2]);
+                    break;
+                default:
+                    bu_log("ERROR: logic error, invalid face_type in function 'output_to_nmg'\n");
+                    return;
+            }
+
+            degenerate_face = 0;
+            vert = 0;
+            while ( (vert < size) && !degenerate_face ) {
+                vert2 = vert+1;
+                while ( (vert2 < size) && !degenerate_face ) {
+                    if ( index_arr_nv_faces[vert][0] == index_arr_nv_faces[vert2][0] ) {
+                        found = 0; /* i.e. unfind this face */
+                        degenerate_face = 1;
+                        /* add 1 to internal index value so warning message index value */
+                        /* matches obj file index number. this is because obj file indexes */
+                        /* start at 1, internally indexes start at 0. */
+                        bu_log("WARNING: removed degenerate face (reason dup index); grp_indx (%lu) face (%lu) vert index (%lu) = (%lu)\n",
+                           grp_indx,
+                           i+1, 
+                           (index_arr_nv_faces[vert][0])+1, 
+                           (index_arr_nv_faces[vert2][0])+1); 
+                    } else {
+                        /* test distance between vertices. faces with
+                           vertices <= tol.dist adjusted to mm, will be
+                           dropped */
+                        fastf_t distance_between_vertices = 0.0 ;
+                        distance_between_vertices = \
+                           DIST_PT_PT(ga->vert_list[index_arr_nv_faces[vert][0]], \
+                                      ga->vert_list[index_arr_nv_faces[vert2][0]]) ;
+                        if ( 0 && (distance_between_vertices * conversion_factor) <= (tol->dist * outfp->dbip->dbi_local2base)) {
+                            found = 0; /* i.e. unfind this face */
+                            degenerate_face = 1;
+                            bu_log("WARNING: removed degenerate face (reason vertices too close); grp_indx (%lu) face (%lu) vert index (%lu) = (%lu) tol.dist = (%lfmm) dist = (%fmm)\n",
+                               grp_indx,
+                               i+1, 
+                               (index_arr_nv_faces[vert][0])+1, 
+                               (index_arr_nv_faces[vert2][0])+1, 
+                               tol->dist * outfp->dbip->dbi_local2base,
+                               distance_between_vertices * conversion_factor);
+                        }
+                    }
+                    vert2++;
+                }
+                vert++;
+            }
+}
+#endif
+
+#if 0
 =================================
 int triangulate_face(const size_t *index_arr_faces, /* n-dimensional array of vertex indexes */
                      int index_arr_faces_dim,       /* dimension of index_arr_faces array */
@@ -570,6 +673,7 @@ void output_to_nmg(struct ga_t *ga,
     struct nmgregion *r = (struct nmgregion *)NULL;
     struct shell *s = (struct shell *)NULL;
     struct bu_ptbl faces;  /* table of faces for one element */
+    struct bu_ptbl raw_faces;  /* table of faces for one element */
     struct faceuse *fu;
     struct vertexuse *vu = NULL;
     struct loopuse *lu = NULL;
@@ -586,6 +690,9 @@ void output_to_nmg(struct ga_t *ga,
     struct vertex  **verts = NULL;
 
     size_t num_faces_killed = 0 ; /* number of degenerate faces killed in the current shell */
+
+    size_t raw_faces_count = 0;
+    size_t raw_faces_count_idx = 0;
 
     m = nmg_mm();
     r = nmg_mrsv(m);
@@ -612,6 +719,7 @@ void output_to_nmg(struct ga_t *ga,
 
     /* initialize tables */
     bu_ptbl_init(&faces, 64, " &faces ");
+    bu_ptbl_init(&raw_faces, 64, " &faces ");
 
     verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
     memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
@@ -630,31 +738,20 @@ void output_to_nmg(struct ga_t *ga,
             switch (gfi->face_type) {
                 case FACE_V :
                     /* scale to mm and copy current vertex into tmp_v */
-#if 0
-                    VSCALE(tmp_v, (fastf_t *)&((ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]])[0]), conv_factor);
-#endif
-                    tmp_v[0] = ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][0] * conv_factor;
-                    tmp_v[1] = ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][1] * conv_factor;
-                    tmp_v[2] = ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][2] * conv_factor;
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]], conv_factor);
                     /* copy current vertex weight into tmp_w */
                     tmp_w = ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][3] ;
                     bu_log("fi=(%lu)vi=(%lu)vofi=(%lu)v=(%f)(%f)(%f)w=(%f)\n", 
                        face_idx, vert_idx, index_arr_faces_1D[face_idx][vert_idx],
                        tmp_v[0], tmp_v[1], tmp_v[2], tmp_w);
-                    bu_log("dir fi=(%lu)vi=(%lu)vofi=(%lu)v=(%f)(%f)(%f)w=(%f)\n", 
-                       face_idx, vert_idx, index_arr_faces_1D[face_idx][vert_idx],
-                       ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][0],
-                       ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][1],
-                       ga->vert_list[index_arr_faces_1D[face_idx][vert_idx]][2],
-                       tmp_w);
                     break;
                 case FACE_TV :
                     /* scale to mm and copy current vertex into tmp_v */
-                    VSCALE(tmp_v, (fastf_t *)ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]], conv_factor);
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]], conv_factor);
                     /* copy current vertex weight into tmp_w */
                     tmp_w = ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]][3] ;
                     /* copy current normal into tmp_t */
-                    VMOVE(tmp_t, (fastf_t *)ga->texture_coord_list[index_arr_faces_2D[face_idx][vert_idx][1]]);
+                    VMOVE(tmp_t, ga->texture_coord_list[index_arr_faces_2D[face_idx][vert_idx][1]]);
                     bu_log("fi=(%lu)vi=(%lu)vofi=(%lu)tofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)\n", 
                        face_idx, vert_idx, index_arr_faces_2D[face_idx][vert_idx][0],
                        index_arr_faces_2D[face_idx][vert_idx][1],
@@ -663,26 +760,26 @@ void output_to_nmg(struct ga_t *ga,
                     break;
                 case FACE_NV :
                     /* scale to mm and copy current vertex into tmp_v */
-                    VSCALE(tmp_v, (fastf_t *)ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]], conv_factor);
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]], conv_factor);
                     /* copy current vertex weight into tmp_w */
                     tmp_w = ga->vert_list[index_arr_faces_2D[face_idx][vert_idx][0]][3] ;
                     /* copy current normal into tmp_n */
-                    VMOVE(tmp_n, (fastf_t *)ga->norm_list[index_arr_faces_2D[face_idx][vert_idx][1]]);
-                    bu_log("fi=(%lu)vi=(%lu)vofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)n=(%f)(%f)(%f)\n", 
-                       face_idx, vert_idx, index_arr_faces_2D[face_idx][vert_idx][0],
+                    VMOVE(tmp_n, ga->norm_list[index_arr_faces_2D[face_idx][vert_idx][1]]);
+                    bu_log("fu=(%lx)fi=(%lu)vi=(%lu)vofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)n=(%f)(%f)(%f)\n", 
+                       fu, face_idx, vert_idx, index_arr_faces_2D[face_idx][vert_idx][0],
                        index_arr_faces_2D[face_idx][vert_idx][1],
                        tmp_v[0], tmp_v[1], tmp_v[2], tmp_w,
                        tmp_n[0], tmp_n[1], tmp_n[2]);
                     break;
                 case FACE_TNV :
                     /* scale to mm and copy current vertex into tmp_v */
-                    VSCALE(tmp_v, (fastf_t *)ga->vert_list[index_arr_faces_3D[face_idx][vert_idx][0]], conv_factor);
+                    VSCALE(tmp_v, ga->vert_list[index_arr_faces_3D[face_idx][vert_idx][0]], conv_factor);
                     /* copy current vertex weight into tmp_w */
                     tmp_w = ga->vert_list[index_arr_faces_3D[face_idx][vert_idx][0]][3] ;
                     /* copy current normal into tmp_t */
-                    VMOVE(tmp_t, (fastf_t *)ga->texture_coord_list[index_arr_faces_3D[face_idx][vert_idx][1]]);
+                    VMOVE(tmp_t, ga->texture_coord_list[index_arr_faces_3D[face_idx][vert_idx][1]]);
                     /* copy current normal into tmp_n */
-                    VMOVE(tmp_n, (fastf_t *)ga->norm_list[index_arr_faces_3D[face_idx][vert_idx][2]]);
+                    VMOVE(tmp_n, ga->norm_list[index_arr_faces_3D[face_idx][vert_idx][2]]);
                     bu_log("fi=(%lu)vi=(%lu)vofi=(%lu)tofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)n=(%f)(%f)(%f)\n", 
                        face_idx, vert_idx, index_arr_faces_3D[face_idx][vert_idx][0],
                        index_arr_faces_3D[face_idx][vert_idx][1], index_arr_faces_3D[face_idx][vert_idx][2],
@@ -719,32 +816,77 @@ void output_to_nmg(struct ga_t *ga,
              for the current polygon/faceuse has been inserted into
              their appropriate structures */
 
-        bu_log("about to run nmg_loop_plane_area\n");
-        /* verify the current polygon is valid */
-        if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0) {
-            bu_log("Failed planeeq\n");
-            bu_log("about to run nmg_kfu just after neg area from nmg_loop_plane_area\n");
-            nmg_kfu(fu);
-            num_faces_killed++;
-        } else {
-            bu_log("about to run nmg_face_g\n");
-            nmg_face_g(fu, pl); /* return is void */
-            bu_log("about to run nmg_face_bb\n");
-            nmg_face_bb(fu->f_p, tol); /* return is void */
-            bu_ptbl_ins(&faces, (long *)fu);
-        }
+#if 0
+        nmg_triangulate_fu(fu,tol);
+#endif
 
     } /* loop exits when all polygons within the current grouping
          has been placed within one nmg shell, inside one nmg region
          and inside one nmg model */
 
+    bu_log("about to run nmg_model_vertex_fuse\n");
+    total_fused_vertex = nmg_model_vertex_fuse(m, tol);
+    bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
+
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+        NMG_CK_FACEUSE(fu);
+        bu_ptbl_ins(&raw_faces, (long *)fu);
+        raw_faces_count++;
+    }
+
+    raw_faces_count_idx = 0;
+    while ( raw_faces_count_idx < BU_PTBL_LEN(&raw_faces) ) {
+
+        bu_log("raw_faces_count_idx=(%lu) raw_faces_count=(%lu) BU_PTBL_LEN=(%d)\n", raw_faces_count_idx, raw_faces_count, BU_PTBL_LEN(&raw_faces));
+        fu = (struct faceuse *)BU_PTBL_GET(&raw_faces, raw_faces_count_idx);
+        NMG_CK_FACEUSE(fu);
+        bu_log("about to run nmg_loop_plane_area\n");
+        /* verify the current polygon is valid */
+        if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0) {
+            bu_log("Failed nmg_loop_plane_area\n");
+            bu_log("about to run nmg_kfu just after neg area from nmg_loop_plane_area\n");
+            bu_ptbl_rm(&raw_faces, (long *)fu);
+            nmg_kfu(fu);
+            num_faces_killed++;
+        } else {
+            bu_log("about to run nmg_face_g\n");
+            nmg_face_g(fu, pl); /* return is void */
+            bu_log("about to run nmg_fu_planeeqn\n");
+            if (nmg_fu_planeeqn(fu, tol) < 0) {
+                bu_log("Failed nmg_fu_planeeqn\n");
+                bu_ptbl_rm(&raw_faces, (long *)fu);
+                nmg_kfu(fu);
+                num_faces_killed++;
+            } else {
+                bu_log("about to run nmg_face_bb\n");
+                nmg_face_bb(fu->f_p, tol); /* return is void */
+                bu_ptbl_ins(&faces, (long *)fu);
+            }
+        }
+        raw_faces_count_idx++ ;
+    }
+
     bu_log("history: num_faces_killed = (%lu)\n", num_faces_killed);
 
-    if (BU_PTBL_END(&faces)) {
+    if (BU_PTBL_END(&faces) && (num_faces_killed >= 0)){
 
+        /* Mark edges as real */
+        bu_log("about to run nmg_mark_edges_real\n");
+        (void)nmg_mark_edges_real(&s->l.magic);
+
+        /* Compute "geometry" for region and shell */
+        bu_log("about to run nmg_region_a\n");
+        nmg_region_a(r, tol);
+
+        /* Some arbs may not be within tolerance, so triangulate faces where needed */
+        bu_log("about to run nmg_make_faces_within_tol\n");
+        nmg_make_faces_within_tol(s, tol);
+
+#if 0
         bu_log("about to run nmg_model_vertex_fuse\n");
         total_fused_vertex = nmg_model_vertex_fuse(m, tol);
         bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
+#endif
 
         bu_log("about to run nmg_gluefaces\n");
         nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
@@ -761,17 +903,22 @@ void output_to_nmg(struct ga_t *ga,
         bu_log("about to run nmg_rebound 2\n");
         nmg_rebound(m, tol);
 
+#if 0
+        bu_log("about to run nmg_close_shell\n");
+        nmg_close_shell(s, tol);
+#endif
+
         bu_vls_printf(gfi->raw_grouping_name, ".%lu.s", gfi->grouping_index);
 
         cleanup_name(gfi->raw_grouping_name);
 
-#if 1
+#if 0
         bu_log("about to mk_bot_from_nmg\n");
         mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
         nmg_km(m);
 #endif
 
-#if 0
+#if 1
         bu_log("about to run mk_nmg\n");
         /* the model (m) is freed when mk_nmg completes */
         if (mk_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), m)) {
@@ -784,6 +931,7 @@ void output_to_nmg(struct ga_t *ga,
 
     bu_free(verts,"verts");
     bu_ptbl_reset(&faces);
+    bu_ptbl_reset(&raw_faces);
 }
 
 int process_nv_faces(struct ga_t *ga, 
@@ -1481,7 +1629,7 @@ main(int argc, char **argv)
 
     size_t i = 0;
 
-    char grouping_option = 'g'; /* to be selected by user from command line */
+    char grouping_option = 'o'; /* to be selected by user from command line */
 
     int weiss_result;
 
@@ -1491,16 +1639,19 @@ main(int argc, char **argv)
     /* NMG2s */
     rt_g.NMG_debug = rt_g.NMG_debug & DEBUG_TRI ;
 
+    fastf_t conv_factor = 1.0;
+
     struct bn_tol tol_struct ;
     struct bn_tol *tol ;
 
     tol = &tol_struct;
 
     tol->magic = BN_TOL_MAGIC;
-    tol->dist = 0.0005 ;
+    tol->dist = 0.005 ;
     tol->dist_sq = tol->dist * tol->dist;
     tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
+
     /* NMG2e */
 
     bu_log("running fopen\n");
@@ -1571,7 +1722,7 @@ main(int argc, char **argv)
 
     bu_log("local2base=(%lf) base2local=(%lf)\n", fd_out->dbip->dbi_local2base, fd_out->dbip->dbi_base2local);
 
-#if 1
+#if 0
     fd_out->wdb_tol.dist    = tol->dist ;
     fd_out->wdb_tol.dist_sq = fd_out->wdb_tol.dist * fd_out->wdb_tol.dist ;
     fd_out->wdb_tol.perp    = tol->perp ;
@@ -1620,34 +1771,30 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numGroups ; i++) {
                     bu_log("(%lu) current group name is (%s)\n", i, ga.str_arr_obj_groups[i]);
 
-                    bu_log("about to run collect_grouping_faces_indexes\n");
-
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_V, GRP_GROUP, i);
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                        output_to_nmg(&ga, gfi, fd_out, 1000.0, tol);
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
                         free_gfi(&gfi);
                     }
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_TV, GRP_GROUP, i);
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                        output_to_nmg(&ga, gfi, fd_out, 1000.0, tol);
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
                         free_gfi(&gfi);
                     }
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_NV, GRP_GROUP, i);
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                        output_to_nmg(&ga, gfi, fd_out, 1000.0, tol);
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
                         free_gfi(&gfi);
                     }
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_TNV, GRP_GROUP, i);
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                        output_to_nmg(&ga, gfi, fd_out, 1000.0, tol);
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
                         free_gfi(&gfi);
                     }
-
-                    bu_log("exited collect_grouping_faces_indexes\n");
 
 #if 0
                     weiss_result = process_nv_faces(&ga, fd_out, GRP_GROUP, i, 1000.00, tol );
@@ -1666,26 +1813,30 @@ main(int argc, char **argv)
                 for (i = 0 ; i < ga.numObjects ; i++) {
                     bu_log("(%lu) current object group name is (%s)\n", i, ga.str_arr_obj_objects[i]);
 
-                    bu_log("about to run collect_grouping_faces_indexes\n");
-
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_V, GRP_OBJECT, i);
-                    if (gfi != NULL) 
+                    if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                    free_gfi(&gfi);
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                        free_gfi(&gfi);
+                    }
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_TV, GRP_OBJECT, i);
-                    if (gfi != NULL) 
+                    if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                    free_gfi(&gfi);
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                        free_gfi(&gfi);
+                    }
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_NV, GRP_OBJECT, i);
-                    if (gfi != NULL) 
+                    if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                    free_gfi(&gfi);
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                        free_gfi(&gfi);
+                    }
                     collect_grouping_faces_indexes(&ga, &gfi, FACE_TNV, GRP_OBJECT, i);
-                    if (gfi != NULL) 
+                    if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->num_faces);
-                    free_gfi(&gfi);
-
-                    bu_log("exited collect_grouping_faces_indexes\n");
+                        output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                        free_gfi(&gfi);
+                    }
  
 #if 0
                     weiss_result = process_nv_faces(&ga, fd_out, GRP_OBJECT, i, 1000.00, tol );
