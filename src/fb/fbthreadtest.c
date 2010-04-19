@@ -51,6 +51,42 @@
 
 TCL_DECLARE_MUTEX(threadMutex)
 
+typedef struct TestEvent {
+	Tcl_Event header;
+	int *testnum;
+} TestEvent;
+
+static int
+TestEventProc(
+	Tcl_Event *evPtr,
+	int flags)
+{
+
+    TestEvent *testevent = (TestEvent *) evPtr;
+    (*(testevent->testnum))++;
+    printf("test count: %d\n", *(testevent->testnum));
+    return 1;
+}
+
+int
+TclThreadIncrement(
+	Tcl_Interp *interp,
+	Tcl_ThreadId id,
+	int *increment)
+{
+    Tcl_ThreadId threadId = (Tcl_ThreadId) id;
+    TestEvent *testevt;
+
+    testevt = (TestEvent *) bu_malloc(sizeof(TestEvent), "test event");
+    testevt->header.proc = TestEventProc;
+    testevt->testnum = increment;   
+    Tcl_ThreadQueueEvent(threadId, (Tcl_Event *)testevt, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(threadId);
+    printf("increment val: %d\n", *increment);
+}
+
+	
+
 static Tcl_ThreadCreateType threadprocprint(ClientData data) {
     printf("In thread\n");
     Tcl_ExitThread(TCL_OK);
@@ -247,7 +283,7 @@ main(int argc, char **argv)
 
     /* Normal way -- bottom to top */
     for ( y = 0; y < scr_height; y++ )  {
-	sleep(1);
+	/*sleep(1);*/
 	printf("y: %d\n", y);
         n = bu_mread( infd, (char *)scanline, scanbytes );
         if ( n <= 0 ) break;
