@@ -683,9 +683,12 @@ cmd_nop(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    char buf[128];
+    char buf[128] = {0};
 
-/*    sprintf(buf, "%llu", (unsigned long long)((uintptr_t)dbip)); */
+    if (dbip == DBI_NULL) {
+	return TCL_ERROR;
+    }
+
     sprintf(buf, "%llu", (unsigned long long)dbip);
     Tcl_AppendResult(interp, buf, (char *)NULL);
     return TCL_OK;
@@ -1788,9 +1791,9 @@ cmd_units(ClientData clientData,
     if (gedp == GED_NULL)
 	return TCL_OK;
 
-    if(!dbip) {
-	    bu_log("cannot run units with no database open.\n");
-	    return TCL_ERROR;
+    if (dbip == DBI_NULL) {
+	bu_log("Cannot run 'units' without a database open.\n");
+	return TCL_ERROR;
     }
 
     sf = dbip->dbi_base2local;
