@@ -4665,6 +4665,11 @@ RT_EXPORT BU_EXTERN(int rt_bot_flip,
 		    (struct rt_bot_internal *bot));
 RT_EXPORT BU_EXTERN(int rt_bot_sync,
 		    (struct rt_bot_internal *bot));
+RT_EXPORT BU_EXTERN(struct rt_bot_list * rt_bot_split,
+		    (struct rt_bot_internal *bot));
+RT_EXPORT BU_EXTERN(void rt_bot_list_free,
+		    (struct rt_bot_list *headRblp,
+		     int fbflag));
 
 #endif
 RT_EXPORT BU_EXTERN(int rt_bot_same_orientation,

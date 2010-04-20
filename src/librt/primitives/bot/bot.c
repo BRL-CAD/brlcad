@@ -1255,20 +1255,9 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 }
 
 
-/**
- * R T _ B O T _ I F R E E
- *
- * Free the storage associated with the rt_db_internal version of this
- * solid.
- */
 void
-rt_bot_ifree(struct rt_db_internal *ip)
+rt_bot_ifree2(struct rt_bot_internal *bot_ip)
 {
-    register struct rt_bot_internal *bot_ip;
-
-    RT_CK_DB_INTERNAL(ip);
-
-    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
 
@@ -1295,9 +1284,26 @@ rt_bot_ifree(struct rt_db_internal *ip)
     }
 
     bu_free(bot_ip, "bot ifree");
-    ip->idb_ptr = NULL; /* sanity */
 }
 
+
+/**
+ * R T _ B O T _ I F R E E
+ *
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
+ */
+void
+rt_bot_ifree(struct rt_db_internal *ip)
+{
+    register struct rt_bot_internal *bot_ip;
+
+    RT_CK_DB_INTERNAL(ip);
+
+    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+    rt_bot_ifree2(bot_ip);
+    ip->idb_ptr = NULL; /* sanity */
+}
 
 int
 rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int release, struct db_i *dbip)
@@ -3913,6 +3919,14 @@ struct tri_edges {
     int tri;
 };
 
+struct tri_pts {
+    struct bu_list l;
+    int a;
+    int b;
+    int c;
+    int tri;
+};
+
 
 void
 rt_bot_sync_func(struct rt_bot_internal *bot,
@@ -4020,7 +4034,7 @@ rt_bot_sync(struct rt_bot_internal *bot)
 
     /* Initialize tep list */
     for (i = 0; i < bot->num_faces; ++i) {
-	tep = (struct tri_edges *)bu_calloc(1, sizeof(struct tri_edges), "rt_bot_sync_orient: tep");
+	tep = (struct tri_edges *)bu_calloc(1, sizeof(struct tri_edges), "rt_bot_sync: tep");
 	BU_LIST_APPEND(&headTep.l, &tep->l);
 
 	pt_A = bot->faces[i*3+0];
@@ -4045,11 +4059,190 @@ rt_bot_sync(struct rt_bot_internal *bot)
 
     while (BU_LIST_WHILE(tep, tri_edges, &usedTep.l)) {
 	BU_LIST_DEQUEUE(&tep->l);
-	bu_free(tep, "rt_bot_sync_orient: tep");
+	bu_free(tep, "rt_bot_sync: tep");
 	tep = NULL; /* sanity */
     }
 
     return 0;
+}
+
+void
+rt_bot_split_func(struct tri_pts *tpp,
+		  struct tri_pts *headTpp,
+		  struct tri_pts *usedTpp)
+{
+    struct tri_pts *neighbor_tpp;
+
+    for (BU_LIST_FOR(neighbor_tpp, tri_pts, &headTpp->l)) {
+	if (tpp->a == neighbor_tpp->a ||
+	    tpp->a == neighbor_tpp->b ||
+	    tpp->a == neighbor_tpp->c ||
+	    tpp->b == neighbor_tpp->a ||
+	    tpp->b == neighbor_tpp->b ||
+	    tpp->b == neighbor_tpp->c ||
+	    tpp->c == neighbor_tpp->a ||
+	    tpp->c == neighbor_tpp->b ||
+	    tpp->c == neighbor_tpp->c) {
+	    /* Found a shared pt of a neighboring triangle */
+
+	    BU_LIST_DEQUEUE(&neighbor_tpp->l);
+	    BU_LIST_APPEND(&usedTpp->l, &neighbor_tpp->l);
+
+	    rt_bot_split_func(neighbor_tpp, headTpp, usedTpp);
+	    neighbor_tpp = headTpp;
+	}
+    }
+}
+
+#define REMAP_BOT_VERTS(_oldbot,_newbot,_vmap,_vcount,_ovi,_i) { \
+int vmi; \
+\
+for (vmi=0; vmi<_vcount; vmi++) { \
+    if (_ovi == _vmap[vmi]) { \
+	_newbot->faces[_i] = vmi; \
+	break; \
+    } \
+} \
+\
+if (vmi == _vcount) { \
+    _vmap[_vcount] = _ovi; \
+    _newbot->faces[_i] = _vcount; \
+    VMOVE(&_newbot->vertices[_vcount*3],&_oldbot->vertices[_ovi*3]); \
+    ++_vcount; \
+} \
+}
+
+
+struct rt_bot_internal *
+rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
+{
+    register int i;
+    struct tri_pts *tpp;
+    struct rt_bot_internal *newbot;
+
+    BU_GETSTRUCT(newbot, rt_bot_internal);
+
+    newbot->num_faces = 0;
+    for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l)) {
+	++newbot->num_faces;
+    }
+
+    newbot->magic = bot->magic;
+    newbot->mode = bot->mode;
+    newbot->orientation = bot->orientation;
+    newbot->bot_flags = bot->bot_flags;
+
+    {
+	register int vcount;
+	int *vmap = (int *)bu_calloc(bot->num_vertices * 3,
+					 sizeof(int), "Bot vertices");
+
+	newbot->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3,
+						sizeof(fastf_t), "Bot vertices");
+	newbot->faces = (int *)bu_calloc(newbot->num_faces * 3,
+					 sizeof(int), "Bot faces");
+
+	i = 0;
+	vcount = 0;
+	for (BU_LIST_FOR(tpp, tri_pts, &newTpp->l)) {
+
+	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->a,i*3);
+	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->b,i*3+1);
+	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->c,i*3+2);
+
+	    ++i;
+	}
+
+	newbot->num_vertices = vcount;
+	bu_free(vmap, "rt_bot_create: vmap");
+    }
+
+    return newbot;
+}
+
+struct rt_bot_list *
+rt_bot_split(struct rt_bot_internal *bot)
+{
+    register int i;
+    register int first;
+    struct tri_pts headTp;
+    struct tri_pts usedTp;
+    struct tri_pts *tpp;
+    struct rt_bot_list *headRblp = (struct rt_bot_list *)0;
+    struct rt_bot_list *rblp;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    BU_GETSTRUCT(headRblp, rt_bot_list);
+    BU_LIST_INIT(&headRblp->l);
+
+    /* Nothing to do */
+    if (bot->num_faces < 2)
+	return headRblp;
+
+    BU_LIST_INIT(&headTp.l);
+    BU_LIST_INIT(&usedTp.l);
+
+    /* Initialize tpp list */
+    for (i = 0; i < bot->num_faces; ++i) {
+	tpp = (struct tri_pts *)bu_calloc(1, sizeof(struct tri_pts), "rt_bot_split: tpp");
+	BU_LIST_APPEND(&headTp.l, &tpp->l);
+
+	tpp->tri = i;
+	tpp->a = bot->faces[i*3+0];
+	tpp->b = bot->faces[i*3+1];
+	tpp->c = bot->faces[i*3+2];
+    }
+
+    first = 1;
+    while (BU_LIST_WHILE(tpp, tri_pts, &headTp.l)) {
+	BU_LIST_DEQUEUE(&tpp->l);
+	BU_LIST_APPEND(&usedTp.l, &tpp->l);
+
+	rt_bot_split_func(tpp, &headTp, &usedTp);
+
+	if (first) {
+	    first = 0;
+
+	    if (BU_LIST_NON_EMPTY(&headTp.l)) {
+		/* Create a new bot */
+		BU_GETSTRUCT(rblp, rt_bot_list);
+		rblp->bot = rt_bot_create(bot, &usedTp);
+		BU_LIST_APPEND(&headRblp->l, &rblp->l);
+	    }
+	} else {
+	    /* Create a new bot */
+	    BU_GETSTRUCT(rblp, rt_bot_list);
+	    rblp->bot = rt_bot_create(bot, &usedTp);
+	    BU_LIST_APPEND(&headRblp->l, &rblp->l);
+	}
+
+	while (BU_LIST_WHILE(tpp, tri_pts, &usedTp.l)) {
+	    BU_LIST_DEQUEUE(&tpp->l);
+	    bu_free(tpp, "rt_bot_split: tpp");
+	    tpp = NULL; /* sanity */
+	}
+    }
+
+    return headRblp;
+}
+
+void
+rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
+{
+    struct rt_bot_list *rblp;
+
+    while (BU_LIST_WHILE(rblp, rt_bot_list, &headRblp->l)) {
+	/* Remove from list and free */
+	BU_LIST_DEQUEUE(&rblp->l);
+
+	if (fbflag)
+	    rt_bot_ifree2(rblp->bot);
+
+	bu_free(rblp, "rt_bot_list_free: rblp");
+    }
+
+    bu_free(headRblp, "rt_bot_list_free: headRblp");
 }
 
 
