@@ -50,14 +50,14 @@ db5_scan(
     struct db_i *dbip,
     void (*handler)(struct db_i *,
 		    const struct db5_raw_internal *,
-		    size_t addr, genptr_t client_data),
+		    off_t addr, genptr_t client_data),
     genptr_t client_data)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
     int got;
     size_t nrec;
-    size_t addr;
+    off_t addr;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(x%x, x%x)\n", dbip, handler);
@@ -68,17 +68,17 @@ db5_scan(
     /* Fast-path when file is already memory-mapped */
     if (dbip->dbi_mf) {
 	const unsigned char *cp = (const unsigned char *)dbip->dbi_inmem;
-	size_t eof;
+	off_t eof;
 
 	BU_CK_MAPPED_FILE(dbip->dbi_mf);
-	eof = dbip->dbi_mf->buflen;
+	eof = (off_t)dbip->dbi_mf->buflen;
 
 	if (db5_header_is_valid(cp) == 0) {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
 	cp += sizeof(header);
-	addr = sizeof(header);
+	addr = (off_t)sizeof(header);
 	while (addr < eof) {
 	    if ((cp = db5_get_raw_internal_ptr(&raw, cp)) == NULL) {
 		goto fatal;
@@ -288,7 +288,7 @@ HIDDEN void
 db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
-    size_t laddr,
+    off_t laddr,
     genptr_t client_data)	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);
@@ -427,7 +427,7 @@ db_dirbuild(struct db_i *dbip)
     /* Make a very simple check for a v4 database */
     if (header[0] == 'I') {
 	dbip->dbi_version = 4;
-	if (db_scan(dbip, (int (*)(struct db_i *, const char *, size_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
+	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
 	    dbip->dbi_version = 0;
 	    return -1;
 	}

@@ -272,12 +272,12 @@ rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
  *	or changing addresses.  Other wrap-around conditions are flagged.
  */
 void
-rt_memfree(struct mem_map **pp, size_t size, size_t addr)
+rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 {
     register int type = 0;
     register struct mem_map *prevp = MAP_NULL;
     register struct mem_map *curp;
-    size_t il;
+    off_t il;
     struct mem_map *tmap;
 
     if ( size == 0 )
@@ -291,15 +291,17 @@ rt_memfree(struct mem_map **pp, size_t size, size_t addr)
     /* Make up the `type' variable */
 
     if ( prevp )  {
-	if ( (size_t)(il=prevp->m_addr+prevp->m_size) > (size_t)addr )
+	il = prevp->m_addr + prevp->m_size;
+	if ( il > addr )
 	    type |= M_BOVFL;
-	if ( il == (size_t)addr )
+	if ( il == addr )
 	    type |= M_BMTCH;
     }
     if ( curp )  {
-	if ( (size_t)(il=addr+size) > (size_t)curp->m_addr )
+	il = addr + size;
+	if ( il > curp->m_addr )
 	    type |= M_TOVFL;
-	if ( (size_t)il == (size_t)curp->m_addr )
+	if ( il == curp->m_addr )
 	    type |= M_TMTCH;
     }
 

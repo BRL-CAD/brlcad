@@ -738,7 +738,7 @@ union cutter  {
 struct mem_map {
     struct mem_map *m_nxtp;	/**< @brief Linking pointer to next element */
     size_t m_size;		/**< @brief Size of this free element */
-    size_t m_addr;	/**< @brief Address of start of this element */
+    off_t m_addr;		/**< @brief Address of start of this element */
 };
 #define MAP_NULL	((struct mem_map *) 0)
 
@@ -778,7 +778,7 @@ struct db_i  {
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
     struct directory *		dbi_Head[RT_DBNHASH];
     FILE *			dbi_fp;		/**< @brief standard file pointer */
-    size_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
+    off_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
     size_t			dbi_nrec;	/**< @brief # records after db_scan() */
     int				dbi_uses;	/**< @brief # of uses of this struct */
     struct mem_map *		dbi_freep;	/**< @brief map of free granules */
@@ -2930,7 +2930,7 @@ RT_EXPORT BU_EXTERN(int db_scan,
 		    (struct db_i *,
 		     int (*handler)BU_ARGS((struct db_i *,
 					    const char *name,
-					    size_t addr,
+					    off_t addr,
 					    size_t nrec,
 					    int flags,
 					    genptr_t client_data)),
@@ -2966,7 +2966,7 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 		    (struct db_i *dbip,
 		     void (*handler)(struct db_i *,
 				     const struct db5_raw_internal *,
-				     size_t addr,
+				     off_t addr,
 				     genptr_t client_data),
 		     genptr_t client_data));
 
@@ -3430,7 +3430,7 @@ RT_EXPORT BU_EXTERN(size_t rt_memget,
 RT_EXPORT BU_EXTERN(void rt_memfree,
 		    (struct mem_map **pp,
 		     size_t size,
-		     size_t addr));
+		     off_t addr));
 RT_EXPORT BU_EXTERN(void rt_mempurge,
 		    (struct mem_map **pp));
 RT_EXPORT BU_EXTERN(void rt_memprint,
