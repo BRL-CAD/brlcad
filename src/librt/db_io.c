@@ -84,11 +84,8 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (got != count) {
-	if (got == (size_t)RT_DIR_PHONY_ADDR) {
-	    perror(dbip->dbi_filename);
-	}
-	bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
-	       dbip->dbi_filename, count, got);
+	perror(dbip->dbi_filename);
+	bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n", dbip->dbi_filename, count, got);
 	return(-1);
     }
     return(0);			/* OK */
