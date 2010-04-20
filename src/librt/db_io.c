@@ -64,7 +64,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     if (count == 0) {
 	return(-1);
     }
-    if (offset+count > dbip->dbi_eof) {
+    if (offset+count > (size_t)dbip->dbi_eof) {
 	/* Attempt to read off the end of the file */
 	bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
 	       dbip->dbi_filename,
@@ -84,7 +84,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (got != count) {
-	if (got == RT_DIR_PHONY_ADDR) {
+	if (got == (size_t)RT_DIR_PHONY_ADDR) {
 	    perror(dbip->dbi_filename);
 	}
 	bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",

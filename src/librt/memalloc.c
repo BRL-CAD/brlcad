@@ -191,7 +191,7 @@ rt_memget(struct mem_map **pp, register size_t size, size_t place)
 	 * could begin earlier but be long enough to satisfy this
 	 * request.
 	 */
-	if ( curp->m_addr == place && curp->m_size >= size )
+	if ( curp->m_addr == (off_t)place && curp->m_size >= size )
 	    break;
 	curp = (prevp=curp)->m_nxtp;
     }
@@ -243,7 +243,7 @@ rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
 	 * could begin earlier but be long enough to satisfy this
 	 * request.
 	 */
-	if ( curp->m_addr == place && curp->m_size >= size )  {
+	if ( curp->m_addr == (off_t)place && curp->m_size >= size )  {
 	    size = curp->m_size;
 	    /* put this element on the freelist */
 	    if ( prevp )
