@@ -375,7 +375,7 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 	return db5_update_ident( dbip, new_title, local2mm );
 
     RT_DIR_SET_NAMEP(&dir, ident);
-    dir.d_addr = 0L;
+    dir.d_addr = (off_t)0L;
     dir.d_len = 1;
     dir.d_magic = RT_DIR_MAGIC;
     dir.d_flags = 0;
