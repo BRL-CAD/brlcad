@@ -56,7 +56,7 @@ lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged05_subtractionspheres.png \
 	lessons/en/images/mged05_twoprimitivespheres.png \
 	lessons/en/images/mged05_unionspheres.png \
-	lessons/en/images/mged06_base_substracted_vol.png \
+	lessons/en/images/mged06_base_subtracted_vol.png \
 	lessons/en/images/mged06_goblet1stsphere.png \
 	lessons/en/images/mged06_gobletbase.png \
 	lessons/en/images/mged06_gobletbasestembasin.png \
