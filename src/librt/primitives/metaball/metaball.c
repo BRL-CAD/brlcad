@@ -389,7 +389,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
      * And do performance testing. or something.
      * */
     {
-	int stat, segsleft = abs(ap->a_onehit);
+	int stat = 0, segsleft = abs(ap->a_onehit);
 	point_t delta;
 	fastf_t distleft = (rp->r_max-rp->r_min);
 
