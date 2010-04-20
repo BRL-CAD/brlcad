@@ -157,7 +157,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
  * -1 FAILURE
  */
 int
-db_get(const struct db_i *dbip, const struct directory *dp, union record *where, int offset, int len)
+db_get(const struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
 {
 
     RT_CK_DBI(dbip);
@@ -169,7 +169,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	where->u_id = '\0';	/* undefined id */
 	return(-1);
     }
-    if (offset < 0 || (size_t)(offset+len) > dp->d_len) {
+    if (offset < 0 || len+(size_t)offset > dp->d_len) {
 	bu_log("db_get(%s):  xfer %d..%x exceeds 0..%d\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	where->u_id = '\0';	/* undefined id */
@@ -206,7 +206,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
  */
 /* should be HIDDEN */
 int
-db_write(struct db_i *dbip, const genptr_t addr, size_t count, size_t offset)
+db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 {
     register size_t got;
 
@@ -258,7 +258,7 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, size_t offset)
  * -1 FAILURE
  */
 size_t
-db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_t offset, size_t len)
+db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
 {
 
     RT_CK_DBI(dbip);
@@ -266,7 +266,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%llu\n",
 				    dp->d_namep, dbip, dp, where, offset, (unsigned long long)len);
 
-    if ((offset+len) > dp->d_len) {
+    if ((len+(size_t)offset) > dp->d_len) {
 	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	return (size_t)-1;

@@ -2887,7 +2887,7 @@ RT_EXPORT BU_EXTERN(int db_write,
 		    (struct db_i	*dbip,
 		     const genptr_t	addr,
 		     size_t		count,
-		     size_t		offset));
+		     off_t		offset));
 RT_EXPORT BU_EXTERN(int db_fwrite_external,
 		    (FILE			*fp,
 		     const char		*name,
@@ -2902,14 +2902,14 @@ RT_EXPORT BU_EXTERN(int db_get,
 		    (const struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
-		     int offset,
-		     int len));
+		     off_t offset,
+		     size_t len));
 /* put several records into db */
 RT_EXPORT BU_EXTERN(size_t db_put,
 		    (struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
-		     size_t offset, size_t len));
+		     off_t offset, size_t len));
 
 RT_EXPORT BU_EXTERN(int db_get_external,
 		    (struct bu_external *ep,
