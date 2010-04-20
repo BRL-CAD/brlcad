@@ -56,6 +56,10 @@ new names should be listed for reference.
 
 7.16
 ----
+*-pl
+	*-pl -> *-plot3 [deprecated 7.16]
+pl*
+	pl* -> plot3* [deprecated 7.16]
 any-png.sh
         use pix tools [deprecated 7.16]
 cadbug.sh
