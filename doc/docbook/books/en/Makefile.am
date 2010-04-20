@@ -31,7 +31,9 @@ booksDOCBOOK_EN_IMAGES = \
 	books/en/images/tutorial_series_volIII_fig26.png \
 	books/en/images/tutorial_series_volIII_fig27.png \
 	books/en/images/tutorial_series_volIII_fig28.png \
-	books/en/images/tutorial_series_volIII_fig29.png
+	books/en/images/tutorial_series_volIII_fig29.png \
+	books/en/images/tutorial_series_volIII_fig30.png \
+	books/en/images/tutorial_series_volIII_table_image_1.png
 
 booksDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/books/en
 booksDOCBOOK_ENhtml_DATA = \
