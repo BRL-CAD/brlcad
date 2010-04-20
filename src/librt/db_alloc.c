@@ -131,7 +131,7 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 size_t
 db_delete(struct db_i *dbip, struct directory *dp)
 {
-    register size_t i = -1;
+    size_t i = (size_t)-1;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
