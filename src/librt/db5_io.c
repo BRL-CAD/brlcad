@@ -131,7 +131,7 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 		*lenp = BU_GLONGLONG(cp);
 		return 8;
 	    }
-	    bu_bomb("db5_decode_length(): encountered 64-bit length on 32-bit machine\n");
+	    bu_bomb("db5_decode_length(): encountered 64-bit length on non-64-bit machine\n");
     }
     bu_bomb("db5_decode_length(): unknown width code\n");
     return 0;
