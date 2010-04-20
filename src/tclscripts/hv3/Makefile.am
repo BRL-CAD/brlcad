@@ -19,7 +19,7 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripts)
 
-EXTRA_DIST = 
+EXTRA_DIST = \
 	$(tcl_SCRIPTS) \
 	license.txt \
 	license_snit.txt \
