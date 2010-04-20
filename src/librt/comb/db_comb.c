@@ -313,7 +313,7 @@ rt_comb_import4(
 	}
     }
     if (node_count)
-	tree = db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
+	tree = db_mkgift_tree(rt_tree_array, (long)node_count, &rt_uniresource);
     else
 	tree = (union tree *)NULL;
 
