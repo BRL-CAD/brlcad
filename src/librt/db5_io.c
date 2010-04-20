@@ -127,7 +127,7 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 	    *lenp = BU_GLONG(cp);
 	    return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
-	    if (sizeof(size_t) >= 8)  {
+	    if (sizeof(size_t) >= 8) {
 		*lenp = BU_GLONGLONG(cp);
 		return 8;
 	    }
@@ -164,7 +164,7 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 		*lenp |= (-1L ^ 0xFFFFFFFF);
 	    return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
-	    if (sizeof(size_t) >= 8)  {
+	    if (sizeof(size_t) >= 8) {
 		*lenp = BU_GLONGLONG(cp);
 		return 8;
 	    }
@@ -199,7 +199,7 @@ db5_encode_length(
 	case DB5HDR_WIDTHCODE_32BIT:
 	    return bu_plong(cp, (uint32_t)val);
 	case DB5HDR_WIDTHCODE_64BIT:
-	    return bu_plonglong( cp, (uint64_t)val );
+	    return bu_plonglong(cp, (uint64_t)val);
 	    bu_bomb("db5_encode_length(): encountered 64-bit length\n");
     }
     bu_bomb("db5_encode_length(): unknown width code\n");
@@ -930,12 +930,12 @@ rt_db_put_internal5(
     if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
-ok:
+ ok:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return 0;			/* OK */
 
-fail:
+ fail:
     bu_free_external(&ext);
     rt_db_free_internal(ip);
     return -2;		/* FAIL */
