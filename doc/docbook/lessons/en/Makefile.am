@@ -123,7 +123,11 @@ lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged16_radio_new_design.png \
 	lessons/en/images/mged16_radio_transparent.png \
 	lessons/en/images/mged16_radio_wireframe_circ_board.png \
-	lessons/en/images/mged16_radio_with_mater_props.png
+	lessons/en/images/mged16_radio_with_mater_props.png \
+	lessons/en/images/mged16_radio_structure_1.png \
+	lessons/en/images/mged16_radio_structure_2.png \
+	lessons/en/images/mged16_radio_structure_3.png \
+	lessons/en/images/mged16_radio_cutaways.png
 
 
 lessonsDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/lessons/en
