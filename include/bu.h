@@ -325,6 +325,8 @@ BU_EXPORT BU_EXTERN(const char *bu_version, (void));
  * and K&R C environments.  On some machines, pointers to functions
  * can be wider than pointers to data bytes, so a declaration of
  * "char*" isn't generic enough.
+ *
+ * DEPRECATED: use void* instead
  */
 #if !defined(GENPTR_NULL)
 typedef void *genptr_t;

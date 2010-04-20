@@ -56,6 +56,8 @@ new names should be listed for reference.
 
 7.16
 ----
+genptr_t/GENPTR_NULL
+        genptr_t -> void* [deprecated 7.16]
 .pl file suffix
 	.pl -> .plot3 [deprecated 7.16]
 *-pl
