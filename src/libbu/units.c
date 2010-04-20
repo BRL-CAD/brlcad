@@ -164,8 +164,8 @@ struct cvt_tab bu_units_mass_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
-static const struct conv_table unit_lists[3] = {
-    {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}
+static const struct conv_table unit_lists[4] = {
+    {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}, {NULL}
 };
 
 
