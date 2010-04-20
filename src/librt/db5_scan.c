@@ -42,15 +42,15 @@
  * D B 5 _ S C A N
  *
  * Returns -
- *	 0 Success
- *	-1 Fatal Error
+ * 0 Success
+ * -1 Fatal Error
  */
 int
 db5_scan(
     struct db_i *dbip,
-    void		(*handler)(struct db_i *,
-				   const struct db5_raw_internal *,
-				   size_t addr, genptr_t client_data),
+    void (*handler)(struct db_i *,
+		    const struct db5_raw_internal *,
+		    size_t addr, genptr_t client_data),
     genptr_t client_data)
 {
     unsigned char header[8];
@@ -89,7 +89,7 @@ db5_scan(
 	}
 	dbip->dbi_eof = addr;
 	BU_ASSERT_LONG(dbip->dbi_eof, ==, (size_t)dbip->dbi_mf->buflen);
-    }  else  {
+    } else {
 	/* In a totally portable way, read the database with stdio */
 	rewind(dbip->dbi_fp);
 	if (fread(header, sizeof header, 1, dbip->dbi_fp) != 1  ||
@@ -100,7 +100,7 @@ db5_scan(
 	for (;;) {
 	    addr = ftell(dbip->dbi_fp);
 	    if ((got = db5_get_raw_internal_fp(&raw, dbip->dbi_fp)) < 0) {
-		if (got == -1)  break;		/* EOF */
+		if (got == -1) break;		/* EOF */
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
@@ -165,7 +165,7 @@ db_diradd5(
 	    if (minor_type == ID_COMBINATION) {
 
 		dp->d_flags = DIR_COMB;
-		if (!avs || avs->count == 0)  break;
+		if (!avs || avs->count == 0) break;
 		/*
 		 *  check for the "region=" attribute.
 		 */
@@ -240,7 +240,7 @@ db5_diradd(struct db_i *dbip,
 		bu_avs_init_empty(&avs);
 
 		dp->d_flags = DIR_COMB;
-		if (rip->attributes.ext_nbytes == 0)  break;
+		if (rip->attributes.ext_nbytes == 0) break;
 		/*
 		 *  Crack open the attributes to
 		 *  check for the "region=" attribute.
@@ -293,7 +293,7 @@ db5_diradd_handler(
 {
     RT_CK_DBI(dbip);
 
-    if (rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT)  return;
+    if (rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT) return;
     if (rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE) {
 	/* Record available free storage */
 	rt_memfree(&(dbip->dbi_freep), rip->object_length, laddr);
@@ -301,7 +301,7 @@ db5_diradd_handler(
     }
 
     /* If somehow it doesn't have a name, ignore it */
-    if (rip->name.ext_buf == NULL)  return;
+    if (rip->name.ext_buf == NULL) return;
 
     if (RT_G_DEBUG&DEBUG_DB) {
 	bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
@@ -327,8 +327,8 @@ db5_diradd_handler(
  * Called from rt_dirbuild(), and g_submodel.c
  *
  * Returns -
- *	 0 OK
- *	-1 failure
+ * 0 OK
+ * -1 failure
  */
 int
 db_dirbuild(struct db_i *dbip)
@@ -469,6 +469,7 @@ db_get_version(struct db_i *dbip)
 
     return(-1);
 }
+
 
 /** @} */
 /*
