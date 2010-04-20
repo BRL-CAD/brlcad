@@ -143,6 +143,7 @@ plane_t         kut_plane;
 
 double units = 1.0;
 int default_units = 1;
+int model_units = 0;
 
 /***** end variables shared with view.c *****/
 
@@ -465,14 +466,19 @@ int get_args( int argc, register char **argv )
 		}
 		break;
 	    case 'u':
-		units = bu_units_conversion(bu_optarg);
-		if (units <= 0.0) {
-		    units = 1.0;
-		    default_units = 1;
-		    bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
-		} else {
-		    default_units = 0;
-		}
+	    	if (strcmp(bu_optarg,"model") == 0) {
+	    		model_units = 1;
+	    		default_units = 0;
+	    	} else {
+	    		units = bu_units_conversion(bu_optarg);
+	    		if (units <= 0.0) {
+	    			units = 1.0;
+	    			default_units = 1;
+	    			bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
+	    		} else {
+	    			default_units = 0;
+	    		}
+			}
 		break;
 	    case 'v': /* Set level of "non-debug" debugging output */
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_verbosity );
