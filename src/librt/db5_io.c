@@ -942,6 +942,9 @@ rt_db_put_internal5(
 }
 
 
+/* FIXME: should have gone away with v6.  needed now to pass the minor_type down during read */
+extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
+
 /**
  * R T _ D B _ E X T E R N A L 5 _ T O _ I N T E R N A L 5
  *
@@ -964,9 +967,6 @@ rt_db_external5_to_internal5(
     register int id;
     struct db5_raw_internal raw;
     int ret;
-
-    /* FIXME: goes away with v6.  needed now to pass the minor_type down during read */
-    extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct bu_external *, const mat_t, const struct db_i *, struct resource *, int);
 
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
