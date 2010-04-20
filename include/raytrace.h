@@ -802,7 +802,7 @@ struct db_i  {
  * One of these structures is allocated in memory to represent each
  * named object in the database.
  *
- * Note that a d_addr of RT_DIR_PHONY_ADDR ((size_t)-1) means that database
+ * Note that a d_addr of RT_DIR_PHONY_ADDR ((off_t)-1) means that database
  * storage has not been allocated yet.
  *
  * Note that there is special handling for RT_DIR_INMEM "in memory"
@@ -827,7 +827,7 @@ struct directory  {
     unsigned long	d_magic;		/**< @brief Magic number */
     char *		d_namep;		/**< @brief pointer to name string */
     union {
-	size_t		file_offset;		/**< @brief disk address in obj file */
+	off_t		file_offset;		/**< @brief disk address in obj file */
 	genptr_t	ptr;			/**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory *	d_forw;			/**< @brief link to next dir entry */
@@ -845,7 +845,7 @@ struct directory  {
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
-#define RT_DIR_PHONY_ADDR	((size_t)-1)	/**< @brief Special marker for d_addr field */
+#define RT_DIR_PHONY_ADDR	((off_t)-1)	/**< @brief Special marker for d_addr field */
 
 /* flags for db_diradd() and friends */
 #define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
