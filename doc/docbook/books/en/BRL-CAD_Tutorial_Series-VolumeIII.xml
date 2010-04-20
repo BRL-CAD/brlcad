@@ -472,131 +472,22 @@
 		  shape's edge instead of its center, hastily written numbers can be
 		  mistaken for other numbers (e.g., "1" vs. "7"), unidentified inner
 		  diameters can be confused with outer diameters, unidentified units can be
-		  assumed to be other units, etc. Table 2 lists some standard symbols and
+		  assumed to be other units, etc. The table below lists some standard symbols and
 		  abbreviations that are commonly used when recording measurements.
 		</para>
-		<table>
+		<figure>
 		  <title>Commonly used measurement symbols and abbreviations.</title>
-		  <tgroup cols='2' align='center'>
-		    <tbody>
-		      <row>
-			<entry>
-			  Symbol
-			</entry>
-			<entry>
-			  Meaning
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Radius
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Diameter
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Inner diameter
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Outer diameter
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Center
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Centerline
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Angle
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Arc
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Distance between two edges
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Distance between two points
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Distance between two centers
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Parallel
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Perpendicular
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Intersection<footnote><para>Intersection and union symbols presented here
+		    <mediaobject>
+	               <imageobject>
+			   <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_table_image_1.png" format="PNG"></imagedata>
+		       </imageobject>
+		       <caption align = "left">
+			  <para>[a] Intersection and union symbols presented here
 			  should not be confused with the intersection (+) and union (u) symbols used
-			  to represent and execute Boolean operations in BRL-CAD.</para></footnote>
-			</entry>
-		      </row>
-		      <row>
-			<entry>
-			</entry>
-			<entry>
-			  Union
-			</entry>
-		      </row>
-		    </tbody>
-		  </tgroup>
-		</table>		
+			  to represent and execute Boolean operations in BRL-CAD.</para>
+		       </caption>
+		    </mediaobject>
+		  </figure>
 	      </listitem>
 	    </itemizedlist>
 	  </para>
