@@ -59,7 +59,7 @@ db_open_inmem(void)
     register int i;
 
     BU_GETSTRUCT(dbip, db_i);
-    dbip->dbi_eof = (size_t)-1L;
+    dbip->dbi_eof = (off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
 

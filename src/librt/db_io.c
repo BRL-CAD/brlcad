@@ -50,7 +50,7 @@
  * -1 FAILURE
  */
 HIDDEN int
-db_read(const struct db_i *dbip, genptr_t addr, size_t count, size_t offset)
+db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 /* byte count */
 /* byte offset from start of file */
 {
@@ -77,7 +77,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, size_t offset)
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    if (fseek(dbip->dbi_fp, offset, 0))
+    if (fseek(dbip->dbi_fp, (long)offset, 0))
 	bu_bomb("db_read: fseek error\n");
     got = fread(addr, 1, count, dbip->dbi_fp);
 
