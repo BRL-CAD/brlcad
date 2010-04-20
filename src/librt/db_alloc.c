@@ -57,7 +57,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 				    dp->d_namep, dbip, dp, count);
     if (count <= 0) {
 	bu_log("db_alloc(0)\n");
-	return(-1);
+	return (size_t)-1;
     }
 
     if (dp->d_flags & RT_DIR_INMEM) {
@@ -73,14 +73,14 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
     if (dbip->dbi_read_only) {
 	bu_log("db_alloc on READ-ONLY file\n");
-	return(-1);
+	return (size_t)-1;
     }
     while (1) {
 	if ((addr = rt_memalloc(&(dbip->dbi_freep), (unsigned)count)) == 0L) {
 	    /* No contiguous free block, append to file */
 	    if ((dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR) {
 		bu_log("db_alloc: bad EOF\n");
-		return(-1);
+		return (size_t)-1;
 	    }
 	    dp->d_len = count;
 	    dbip->dbi_eof += count * sizeof(union record);
@@ -90,7 +90,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 	dp->d_addr = addr * sizeof(union record);
 	dp->d_len = count;
 	if (db_get(dbip, dp, &rec, 0, 1) < 0)
-	    return(-1);
+	    return (size_t)-1;
 	if (rec.u_id != ID_FREE) {
 	    bu_log("db_alloc():  addr %ld non-FREE (id %d), skipping\n",
 		   addr, rec.u_id);
@@ -179,8 +179,8 @@ db_delete(struct db_i *dbip, struct directory *dp)
 size_t
 db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 {
-    register union record *rp;
-    register size_t i;
+    union record *rp;
+    size_t i;
     size_t todo;
 
     RT_CK_DBI(dbip);
@@ -191,15 +191,15 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     if (dp->d_flags & RT_DIR_INMEM) bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
 
     if (dbip->dbi_read_only)
-	return(-1);
+	return (size_t)-1;
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 4);
 
     if (dp->d_len < start)
-	return(-1);
+	return (size_t)-1;
 
     if ((todo = dp->d_len - start) == 0)
-	return(0);		/* OK -- trivial */
+	return 0;		/* OK -- trivial */
 
     rp = (union record *)bu_malloc(todo * sizeof(union record), "db_zapper buf");
     memset((char *)rp, 0, todo * sizeof(union record));
