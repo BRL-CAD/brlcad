@@ -55,6 +55,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
+    int units_supplied = 0;
     char pstring[32];
     static const char *usage = "options";
 
@@ -93,13 +94,23 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i=1; i < argc; i++) {
-	if (argv[i][0] == '-' && argv[i][1] == '-' &&
+	    if (argv[i][0] == '-' && argv[i][1] == 'u' &&
+	    		strcmp(argv[1], "-u") == 0) {
+	    	units_supplied=1;
+	    } else if (argv[i][0] == '-' && argv[i][1] == '-' &&
 	    argv[i][2] == '\0') {
 	    ++i;
 	    break;
 	}
 	*vp++ = (char *)argv[i];
     }
+
+    /* default to local units when not specified on command line */
+    if (!units_supplied) {
+    	*vp++ = "-u";
+    	*vp++ = "model";
+    }
+
     /* XXX why is this different for win32 only? */
 #ifdef _WIN32
     {
