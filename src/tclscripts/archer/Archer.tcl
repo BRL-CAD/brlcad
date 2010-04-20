@@ -2905,7 +2905,7 @@ proc title_node_handler {node} {
 
     itk_component add archerHelp {
 	::iwidgets::dialog $itk_interior.archerHelp \
-	    -modality application \
+	    -modality none \
 	    -title "Archer Help Browser" \
 	    -background $SystemButtonFace
     } {}
