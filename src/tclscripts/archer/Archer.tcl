@@ -2927,6 +2927,9 @@ proc title_node_handler {node} {
 
     set tlparent [$itk_component(archerHelp) childsite]
 
+
+    if {[file exists [file join [bu_brlcad_data "html/books/en"] BRL-CAD_Tutorial_Series-VolumeI.html]]} {
+
     # Table of Contents
     itk_component add archerHelpToC {
 	::tk::frame $tlparent.archerManToc
@@ -2961,32 +2964,23 @@ proc title_node_handler {node} {
     set sfcs $itk_component(archerHelpF)
     pack $sfcs -expand yes -fill both 
 
-    # List of available help documents
-    set helplist [list [file join [bu_brlcad_data "html/manuals/mged"] mged.html]]
-
-    #set articleslist [glob -directory [bu_brlcad_data "html/articles/en"] *.html]
     # HTML widget
-    set htmlviewer [html $sfcs.htmlview]
-    $sfcs.htmlview configure -parsemode html 
-    $sfcs.htmlview configure -imagecmd Archer::mkHelpTkImage
-    $sfcs.htmlview handler node title title_node_handler
-    set help_fd [lindex $helplist 0]
+    set hv3htmlviewer [::hv3::hv3 $sfcs.htmlview]
+    set htmlviewer [$hv3htmlviewer html]
+    $htmlviewer configure -parsemode html
+    $htmlviewer configure -imagecmd Archer::mkHelpTkImage
+    set help_fd [lindex [list [file join [bu_brlcad_data "html/books/en"] BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
     get_html_data $help_fd
-    $sfcs.htmlview parse $archer_help_data
+    $htmlviewer parse $archer_help_data
 
-    itk_component add archerHelpS {
-	::ttk::scrollbar $tlparent.archerHelpS \
-		-command "$sfcs.htmlview yview"
-    } {}
-
-    $sfcs.htmlview configure -yscrollcommand "$itk_component(archerHelpS) set"
-
-    grid $htmlviewer $itk_component(archerHelpS) -sticky nsew -in $sfcs
+    grid $hv3htmlviewer -sticky nsew -in $sfcs
 
     grid columnconfigure $sfcs 0 -weight 1
     grid rowconfigure $sfcs 0 -weight 1
 
     pack $itk_component(archerHelpF) -side left -expand yes -fill both
+
+    } 
 
     wm geometry $itk_component(archerHelp) "1100x800"
 }
