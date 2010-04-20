@@ -269,7 +269,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_
     if ((offset+len) > dp->d_len) {
 	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
-	return(-1);
+	return (size_t)-1;
     }
 
     if (dp->d_flags & RT_DIR_INMEM) {
@@ -282,12 +282,12 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_
     if (dbip->dbi_read_only) {
 	bu_log("db_put(%s):  READ-ONLY file\n",
 	       dbip->dbi_filename);
-	return(-1);
+	return (size_t)-1;
     }
 
     if (db_write(dbip, (char *)where, len * sizeof(union record),
 		 dp->d_addr + offset * sizeof(union record)) < 0) {
-	return(-1);
+	return (sizet)-1;
     }
     return(0);
 }
