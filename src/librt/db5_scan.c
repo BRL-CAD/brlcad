@@ -427,7 +427,7 @@ db_dirbuild(struct db_i *dbip)
     /* Make a very simple check for a v4 database */
     if (header[0] == 'I') {
 	dbip->dbi_version = 4;
-	if (db_scan(dbip, (int (*)())db_diradd, 1, NULL) < 0) {
+	if (db_scan(dbip, (int (*)(struct db_i *, const char *, size_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
 	    dbip->dbi_version = 0;
 	    return -1;
 	}
