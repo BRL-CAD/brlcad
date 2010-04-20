@@ -173,7 +173,7 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
  *	Free space can be split
  */
 size_t
-rt_memget(struct mem_map **pp, register size_t size, size_t place)
+rt_memget(struct mem_map **pp, register size_t size, off_t place)
 {
     register struct mem_map *prevp, *curp;
     size_t addr;
@@ -191,7 +191,7 @@ rt_memget(struct mem_map **pp, register size_t size, size_t place)
 	 * could begin earlier but be long enough to satisfy this
 	 * request.
 	 */
-	if ( curp->m_addr == (off_t)place && curp->m_size >= size )
+	if ( curp->m_addr == place && curp->m_size >= size )
 	    break;
 	curp = (prevp=curp)->m_nxtp;
     }

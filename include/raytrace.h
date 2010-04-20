@@ -3426,7 +3426,7 @@ RT_EXPORT BU_EXTERN(struct mem_map * rt_memalloc_nosplit,
 RT_EXPORT BU_EXTERN(size_t rt_memget,
 		    (struct mem_map **pp,
 		     size_t size,
-		     size_t place));
+		     off_t place));
 RT_EXPORT BU_EXTERN(void rt_memfree,
 		    (struct mem_map **pp,
 		     size_t size,
