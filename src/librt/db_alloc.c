@@ -48,7 +48,7 @@
 size_t
 db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count)
 {
-    size_t addr;
+    size_t len;
     union record rec;
 
     RT_CK_DBI(dbip);
@@ -76,7 +76,8 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 	return (size_t)-1;
     }
     while (1) {
-	if ((addr = rt_memalloc(&(dbip->dbi_freep), (unsigned)count)) == 0L) {
+	len = rt_memalloc(&(dbip->dbi_freep), (unsigned)count);
+	if (len == 0L) {
 	    /* No contiguous free block, append to file */
 	    if ((dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR) {
 		bu_log("db_alloc: bad EOF\n");
@@ -87,13 +88,13 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 	    dbip->dbi_nrec += count;
 	    break;
 	}
-	dp->d_addr = addr * sizeof(union record);
+	dp->d_addr = (off_t)(len * sizeof(union record));
 	dp->d_len = count;
 	if (db_get(dbip, dp, &rec, 0, 1) < 0)
 	    return (size_t)-1;
 	if (rec.u_id != ID_FREE) {
-	    bu_log("db_alloc():  addr %ld non-FREE (id %d), skipping\n",
-		   addr, rec.u_id);
+	    bu_log("db_alloc():  len %ld non-FREE (id %d), skipping\n",
+		   len, rec.u_id);
 	    continue;
 	}
     }
@@ -149,12 +150,10 @@ db_delete(struct db_i *dbip, struct directory *dp)
 
     if (dbip->dbi_version == 4) {
 	i = db_zapper(dbip, dp, 0);
-	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len,
-		   dp->d_addr/(sizeof(union record)));
+	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
     } else if (dbip->dbi_version == 5) {
 	i = db5_write_free(dbip, dp, dp->d_len);
-	rt_memfree(&(dbip->dbi_freep), dp->d_len,
-		   dp->d_addr);
+	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
     } else {
 	bu_bomb("db_delete() unsupported database version\n");
     }

@@ -133,7 +133,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 int
 db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 {
-    size_t	baseaddr;
+    off_t	baseaddr;
     size_t	baselen;
 
     RT_CK_DBI(dbip);
@@ -221,8 +221,8 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
      *  Keep in mind that free blocks may be very large (e.g. 50 MBytes).
      */
     {
-	struct mem_map	*mmp;
-	size_t		newaddr;
+	struct mem_map *mmp;
+	off_t newaddr;
 
 	if ( (mmp = rt_memalloc_nosplit( &(dbip->dbi_freep), ep->ext_nbytes )) != MAP_NULL )  {
 	    if (RT_G_DEBUG&DEBUG_DB)
