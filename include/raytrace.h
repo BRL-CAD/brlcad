@@ -2853,11 +2853,11 @@ RT_EXPORT BU_EXTERN(int db_ck_v4gift_tree,
 		    (const union tree *tp));
 RT_EXPORT BU_EXTERN(union tree *db_mkbool_tree,
 		    (struct rt_tree_array *rt_tree_array,
-		     int		howfar,
+		     size_t		howfar,
 		     struct resource	*resp));
 RT_EXPORT BU_EXTERN(union tree *db_mkgift_tree,
 		    (struct rt_tree_array	*trees,
-		     int			subtreecount,
+		     long			subtreecount,
 		     struct resource		*resp));
 RT_EXPORT BU_EXTERN(int rt_comb_get_color,
 		    (unsigned char rgb[3], const struct rt_comb_internal *comb));

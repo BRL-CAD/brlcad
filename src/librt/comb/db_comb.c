@@ -1038,7 +1038,7 @@ db_ck_v4gift_tree(const union tree *tp)
 union tree *
 db_mkbool_tree(
     struct rt_tree_array *rt_tree_array,
-    int howfar,
+    size_t howfar,
     struct resource *resp)
 {
     register struct rt_tree_array *tlp;
@@ -1050,7 +1050,7 @@ db_mkbool_tree(
 
     RT_CK_RESOURCE(resp);
 
-    if (howfar <= 0)
+    if (howfar == 0)
 	return(TREE_NULL);
 
     /* Count number of non-null sub-trees to do */
@@ -1102,16 +1102,13 @@ db_mkbool_tree(
  * D B _ M K G I F T _ T R E E
  */
 union tree *
-db_mkgift_tree(
-    struct rt_tree_array *trees,
-    int subtreecount,
-    struct resource *resp)
+db_mkgift_tree(struct rt_tree_array *trees, long subtreecount, struct resource *resp)
 {
-    register struct rt_tree_array *tstart;
-    register struct rt_tree_array *tnext;
+    struct rt_tree_array *tstart;
+    struct rt_tree_array *tnext;
     union tree *curtree;
-    int i;
-    int j;
+    long i;
+    long j;
 
     RT_CK_RESOURCE(resp);
 
@@ -1132,7 +1129,7 @@ db_mkgift_tree(
 	    continue;
 	if ((j = tnext-tstart) <= 0)
 	    continue;
-	curtree = db_mkbool_tree(tstart, j, resp);
+	curtree = db_mkbool_tree(tstart, (size_t)j, resp);
 	/* db_mkbool_tree() has side effect of zapping tree array,
 	 * so build new first node in array.
 	 */
@@ -1148,7 +1145,7 @@ db_mkgift_tree(
 	tstart = tnext;
     }
 
-    curtree = db_mkbool_tree(trees, subtreecount, resp);
+    curtree = db_mkbool_tree(trees, (size_t)subtreecount, resp);
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	bu_log("db_mkgift_tree() returns:\n");
 	rt_pr_tree(curtree, 0);
