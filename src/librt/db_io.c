@@ -287,7 +287,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_
 
     if (db_write(dbip, (char *)where, len * sizeof(union record),
 		 dp->d_addr + offset * sizeof(union record)) < 0) {
-	return (sizet)-1;
+	return (size_t)-1;
     }
     return(0);
 }
