@@ -55,7 +55,8 @@ proc LoadArcherCoreLibs {} {
 	puts "ERROR: Unable to load ArcherCore Scripting"
 	exit 1
     }
-    package require hv3 0.1
+#    package require treectrl
+    package require hv3
 }
 
 proc LoadArcherLibs {} {

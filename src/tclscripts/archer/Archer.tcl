@@ -2881,7 +2881,17 @@ proc title_node_handler {node} {
 	append titletext [$child text]
     }
 }
- 
+
+# http://wiki.tcl.tk/950
+proc sbset {sb first last} {
+    if {$first <= 0 && $last >= 1} {
+        grid remove $sb
+    } else {
+        grid $sb
+    }
+    $sb set $first $last
+    return
+}
 
 ::itcl::body Archer::buildarcherHelp {} {
     global env
@@ -2922,11 +2932,33 @@ proc title_node_handler {node} {
 
     itk_component add toctree {
         ::ttk::treeview $itk_component(archerHelpToC).toctree
+#        treectrl $itk_component(archerHelpToC).toctree -highlightthickness 0 -borderwidth 0
     } {}
 
     set toctree $itk_component(archerHelpToC).toctree
+#    set toctree $itk_component(toctree)
 
     pack $itk_component(archerHelpToC).toctree
+
+#    itk_component add archerHelpToCS {
+#	::ttk::scrollbar $tlparent.archerHelpToCS \
+#		 -command "$toctree yview"
+#    } {}
+
+#    set tocyscrollbar $itk_component(archerHelpToCS)
+
+#    $toctree notify bind $tocyscrollbar <Scroll-y> { sbset %W %l %u }
+#    bind $tocyscrollbar <ButtonPress-1> "focus $toctree"
+
+#    $toctree configure  -showroot no -showrootbutton yes -showbuttons yes -itemheight 0 -selectmode browse
+#    $toctree column create -text "BRL-CAD Documentation" -itemjustify left -justify center -tags C0
+#    $toctree configure -treecolumn C0
+
+#    $toctree column configure all -background {gray90 active gray70 normal gray50 pressed}
+
+#    grid $toctree $tocyscrollbar -sticky nsew -in $itk_component(archerHelpToC)
+#    grid columnconfigure $itk_component(archerHelpToC) 0 -weight 1
+#    grid rowconfigure $itk_component(archerHelpToC) 0 -weight 1
 
     pack $itk_component(archerHelpToC) -side left -expand no -fill y
 
@@ -2968,12 +3000,33 @@ proc title_node_handler {node} {
     pack $itk_component(archerHelpF) -side left -expand yes -fill both
 
     # Populate table of contents
+
     set articles [$toctree insert {} end -text "Articles"]
     $toctree insert $articles end -text "Vehicle Tire and Wheel Creation in BRL-CAD"
 
+ #   $toctree element create eb rect -fill [list #316ac5 {selected focus} gray {selected !focus}] -showfocus yes
+ #   $toctree element create et text
 
+ #   set S [$toctree style create s4]
+ #   $toctree style elements $S {eb et}
+ #   $toctree style layout $S eb -union et -ipadx 2 -ipady 2
+ #   $toctree style layout $S et -squeeze x
 
+ #   set text "Articles"
+    
+ #   set I [$toctree item create]
+ #   $toctree item style set $I C0 $S
+ #   $toctree item text $I C0 $text
+ #   $toctree item lastchild root $I
+ #   set parent $I
 
+ #   set text "Vehicle Tire and Wheel\nCreation in BRL-CAD"
+
+ #   set I [$toctree item create]
+ #   $toctree item style set $I C0 $S
+ #   $toctree item text $I C0 $text
+ #   $toctree item lastchild $parent $I
+    
     wm geometry $itk_component(archerHelp) "800x600"
 }
 
