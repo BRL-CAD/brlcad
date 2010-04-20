@@ -329,8 +329,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	return 0;
     }
 
-    if (db_read(dbip, (char *)ep->ext_buf,
-		ep->ext_nbytes, dp->d_addr) < 0) {
+    if (db_read(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	bu_free(ep->ext_buf, "db_get_ext ext_buf");
 	ep->ext_buf = (genptr_t)NULL;
 	ep->ext_nbytes = 0;
@@ -357,7 +356,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
  * copy them.
  *
  * Returns -
- * -1 error
+ * <0 error
  * 0 success
  */
 int
