@@ -25,6 +25,7 @@ AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
 	${BREP_TEST} \
+	namegen \
 	nurb_example \
 	prcomb
 
@@ -257,6 +258,11 @@ prcomb_LDADD = \
 
 nurb_example_SOURCES = nurb_example.c
 nurb_example_LDADD = \
+	librt.la \
+	${RT_LIBS}
+
+namegen_SOURCES = namegen.c
+namegen_LDADD = \
 	librt.la \
 	${RT_LIBS}
 
