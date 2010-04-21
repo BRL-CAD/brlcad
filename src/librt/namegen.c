@@ -177,7 +177,7 @@ test_regex(char *name, int style)
 
     regex_t compiled_regex;
     regmatch_t *result_locations;
-    int i, ret, components;
+    int i, ret, components = 0;
     struct bu_vls testresult;
 
     int *iterators;
