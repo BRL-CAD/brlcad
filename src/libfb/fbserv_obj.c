@@ -793,7 +793,7 @@ new_client_handler(ClientData clientData,
 {
     struct fbserv_listener *fbslp = (struct fbserv_listener *)clientData;
     struct fbserv_obj *fbsp = fbslp->fbsl_fbsp;
-    int fd = 0;
+    int fd = fbslp->fbsl_fd;
 
     static struct pkg_switch pswitch[] = {
 	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer" },
