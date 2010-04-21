@@ -127,7 +127,7 @@ struct directory *
 db_diradd5(
     struct db_i *dbip,
     const char *name,
-    size_t laddr,
+    off_t laddr,
     unsigned char major_type,
     unsigned char minor_type,
     unsigned char name_hidden,
@@ -157,7 +157,7 @@ db_diradd5(
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     bu_vls_free(&local);
     dp->d_un.ptr = NULL;
-    dp->d_un.file_offset = laddr;
+    dp->d_addr = laddr;
     dp->d_major_type = major_type;
     dp->d_minor_type = minor_type;
     switch (major_type) {
@@ -200,7 +200,7 @@ db_diradd5(
 struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
-	   size_t laddr,
+	   off_t laddr,
 	   genptr_t client_data)
 {
     struct directory **headp;
@@ -229,7 +229,7 @@ db5_diradd(struct db_i *dbip,
     BU_LIST_INIT(&dp->d_use_hd);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     bu_vls_free(&local);
-    dp->d_un.file_offset = laddr;
+    dp->d_addr = laddr;
     dp->d_major_type = rip->major_type;
     dp->d_minor_type = rip->minor_type;
     switch (rip->major_type) {

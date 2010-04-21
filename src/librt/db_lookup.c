@@ -274,7 +274,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
  * been allocated yet.
  */
 struct directory *
-db_diradd(struct db_i *dbip, const char *name, size_t laddr, size_t len, int flags, genptr_t ptr)
+db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flags, genptr_t ptr)
 {
     struct directory **headp;
     struct directory *dp;
@@ -319,7 +319,7 @@ db_diradd(struct db_i *dbip, const char *name, size_t laddr, size_t len, int fla
     RT_GET_DIRECTORY(dp, &rt_uniresource);
     RT_CK_DIR(dp);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
-    dp->d_un.file_offset = laddr;
+    dp->d_addr = laddr;
     dp->d_flags = flags & ~(RT_DIR_INMEM);
     dp->d_len = len;
     dp->d_forw = *headp;
