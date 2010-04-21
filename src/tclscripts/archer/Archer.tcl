@@ -970,7 +970,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::bot_split {args} {
-    eval ArcherCore::gedWrapper bot_split 0 0 1 1 $args
+    eval ArcherCore::gedWrapper bot_split 0 0 1 2 $args
 }
 
 ::itcl::body Archer::bot_vertex_fuse {args} {

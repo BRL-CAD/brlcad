@@ -3399,32 +3399,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::getTreeNodes {_path} {
-    if {0} {
     set nlist_partial {}
     set nlist_full {}
-    set items [split $_path /]
-    set len [llength $items]
-
-    if {$len < 1} {
-	return [list $nlist_partial $nlist_full]
-    }
-
-    set cnode {}
-    set pnode {}
-    set ctext [lindex $items end]
-    set ptext [lindex $items end-1]
-
-    foreach sublist $mText2Node($ctext) {
-	set pnode [lindex $sublist 1]
-
-	if {$mNode2Text($pnode) == $ptext} {
-	    set cnode [lindex $sublist 0]
-	    lappend nlist_full $cnode
-	    break
-	}
-    }
-    }
-
     set cnode [getTreeNode $_path]
 
     if {$cnode == {}} {
@@ -4288,7 +4264,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::bot_split {args} {
-    eval gedWrapper bot_split 0 0 1 1 $args
+    eval gedWrapper bot_split 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bot_sync {args} {
