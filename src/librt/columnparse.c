@@ -19,40 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file namegen.c
- *
- * Implements parser and next-name routines for BRL-CAD object names
- *
- * There are several tools in BRL-CAD which require automatic naming
- * of auto-generated objects, such as clone and mirror.  The routines
- * defined here provide a general and universal method for taking a
- * supplied object name and using it as a basis for generating new
- * names, based on a printf-like syntax specific to BRL-CAD names:
- *
- * n - naming component of the primitive, defined as either the part
- * of the primitive name from the first character up to the first
- * separator, a non-incremental, non-extension string between
- * separators in the name, or a non-incremental non-extension string
- * between a separator and the end of the primitive name.
- *
- * s - a separator between naming elements, one of "-", "_" or ".".
- * Note that if one or more of these characters is present but no
- * separator has been specified, the presence of these characters is
- * not regarded as indicating a separator.
- *
- * i - an incremental section, changed when a new name is to be
- * generated.
- *
- * e - an extension - like %n, but can optionally be assigned based on
- * the type of object being created.
- *
- * A formatting string for a primitive name MUST have at least one
- * incremental section. If no separators are specified between a %n
- * and a %i, it is assumed that the first digit character encountered
- * is part of the %i and the previous non-digit character is the final
- * character in that %n or %e region. To have digits present in a %n
- * which is to be followed by a %i it is required to have a separator
- * between the %n region and the %i region.
+/** @file columnparse.c
  */
 
 #include "common.h"
