@@ -2228,11 +2228,9 @@ package provide Archer 1.0
     foreach item $klist {
 	set l [lsearch -all $mlist $item]
 	set l [lsort -decreasing $l]
-	if {$l != -1} {
-	    foreach i $l {
-		# Delete the item (i.e. it no longer exists)
-		set mlist [lreplace $mlist $i $i]
-	    }
+	foreach i $l {
+	    # Delete the item (i.e. it no longer exists)
+	    set mlist [lreplace $mlist $i $i]
 	}
     }
 
