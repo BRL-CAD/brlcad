@@ -851,6 +851,20 @@ void output_to_nmg(struct ga_t *ga,
 
     if (BU_PTBL_END(&faces)){
 
+        bu_log("about to run nmg_break_long_edges\n");
+        nmg_break_long_edges(s, tol);
+
+        /* run nmg_model_vertex_fuse before nmg_calc_face_g ?? */
+        /* run nmg_rebound before nmg_model_vertex_fuse */
+        bu_log("about to run nmg_model_vertex_fuse\n");
+        total_fused_vertex = nmg_model_vertex_fuse(m, tol);
+        bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
+
+        /* run nmg_gluefaces before nmg_make_faces_within_tol */
+        /* run nmg_model_vertex_fuse before nmg_gluefaces */
+        bu_log("about to run nmg_gluefaces\n");
+        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
+
         /* Mark edges as real */
         bu_log("about to run nmg_mark_edges_real\n");
         (void)nmg_mark_edges_real(&s->l.magic);
@@ -859,23 +873,21 @@ void output_to_nmg(struct ga_t *ga,
         bu_log("about to run nmg_region_a\n");
         nmg_region_a(r, tol);
 
+        bu_log("about to run nmg_kill_cracks\n");
+        nmg_kill_cracks(s);
+
         /* Some arbs may not be within tolerance, so triangulate faces where needed */
+        /* run nmg_gluefaces before nmg_make_faces_within_tol */
         bu_log("about to run nmg_make_faces_within_tol\n");
         nmg_make_faces_within_tol(s, tol);
-
-#if 0
-        bu_log("about to run nmg_model_vertex_fuse\n");
-        total_fused_vertex = nmg_model_vertex_fuse(m, tol);
-        bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
-#endif
-
-        bu_log("about to run nmg_gluefaces\n");
-        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
 
         bu_log("about to run nmg_rebound 1\n");
         nmg_rebound(m, tol);
 
 #if 0
+        /* run nmg_rebound before nmg_fix_normals */
+        /* run nmg_model_edge_fuse before nmg_fix_normals */
+        /* run nmg_gluefaces before nmg_fix_normals */
         bu_log("about to run nmg_fix_normals\n");
         nmg_fix_normals(s, tol);
 #endif
@@ -893,11 +905,30 @@ void output_to_nmg(struct ga_t *ga,
         nmg_close_shell(s, tol);
 #endif
 
-        bu_vls_printf(gfi->raw_grouping_name, ".%lu.s", gfi->grouping_index);
+        /* run nmg_model_vertex_fuse before nmg_check_closed_shell */
+        if ( nmg_check_closed_shell(s, tol) ) {
+            /* make bot for a open shell */
+            bu_vls_printf(gfi->raw_grouping_name, ".%lu.bot.s", gfi->grouping_index);
+            cleanup_name(gfi->raw_grouping_name);
+            bu_log("about to mk_bot_from_nmg\n");
+            mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
+            nmg_km(m);
+        } else {
+            /* make nmg for a closed shell */
+            bu_vls_printf(gfi->raw_grouping_name, ".%lu.nmg.s", gfi->grouping_index);
+            cleanup_name(gfi->raw_grouping_name);
 
-        cleanup_name(gfi->raw_grouping_name);
+            bu_log("about to run nmg_fix_normals\n");
+            nmg_fix_normals(s, tol);
 
-#if 1
+            bu_log("about to run mk_nmg\n");
+            /* the model (m) is freed when mk_nmg completes */
+            if (mk_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), m)) {
+                bu_log("mk_nmg failed\n");
+            }
+        }
+
+#if 0
         bu_log("about to mk_bot_from_nmg\n");
         mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
         nmg_km(m);
