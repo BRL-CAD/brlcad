@@ -27,6 +27,7 @@ noinst_PROGRAMS = \
 	${BREP_TEST} \
 	namegen \
 	nurb_example \
+	parsetest \
 	prcomb
 
 # make sure the example compiles, but don't include it in librt
@@ -266,6 +267,12 @@ namegen_LDADD = \
 	librt.la \
 	${RT_LIBS}
 
+parsetest_SOURCES = columnparse.c
+parsetest_LDADD = \
+	librt.la \
+	${RT_LIBS}
+
+
 noinst_HEADERS = \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
@@ -286,6 +293,7 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
         CMakeLists.txt \
 	brep_test.cpp \
+        columnparse.c \
 	namegen.c \
 	parse.c \
 	pmalloc.c \
