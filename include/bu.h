@@ -826,8 +826,8 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_INSERT_LIST(dest_hp, src_hp) \
 	if (BU_LIST_NON_EMPTY(src_hp)) { \
-		register struct bu_list *_first = (src_hp)->forw; \
-		register struct bu_list *_last = (src_hp)->back; \
+		struct bu_list *_first = (src_hp)->forw; \
+		struct bu_list *_last = (src_hp)->back; \
 		(dest_hp)->forw->back = _last; \
 		_last->forw = (dest_hp)->forw; \
 		(dest_hp)->forw = _first; \
@@ -837,8 +837,8 @@ typedef struct bu_list bu_list_t;
 
 #define BU_LIST_APPEND_LIST(dest_hp, src_hp) \
 	if (BU_LIST_NON_EMPTY(src_hp)) {\
-		register struct bu_list *_first = (src_hp)->forw; \
-		register struct bu_list *_last = (src_hp)->back; \
+		struct bu_list *_first = (src_hp)->forw; \
+		struct bu_list *_last = (src_hp)->back; \
 		_first->back = (dest_hp)->back; \
 		(dest_hp)->back->forw = _first; \
 		(dest_hp)->back = _last; \
@@ -1286,11 +1286,11 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 #define BU_BITV_LOOP_START(_bv)	\
 { \
-	register int _wd;	/* Current word number */  \
+	int _wd;	/* Current word number */  \
 	BU_CK_BITV(_bv); \
 	for (_wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd--) {  \
-		register int _b;	/* Current bit-in-word number */  \
-		register bitv_t _val;	/* Current word value */  \
+		int _b;	/* Current bit-in-word number */  \
+		bitv_t _val;	/* Current word value */  \
 		if ((_val = (_bv)->bits[_wd])==0) continue;  \
 		for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1) { \
 			if (!(_val & 1))  continue;
@@ -1352,7 +1352,7 @@ struct bu_hist  {
 	(_hp)->hg_nsamples++;  }
 
 #define BU_HIST_TALLY_MULTIPLE(_hp, _val, _count) { \
-	register int __count = (_count); \
+	int __count = (_count); \
 	if ((_val) <= (_hp)->hg_min) { \
 		(_hp)->hg_bins[0] += __count; \
 	} else if ((_val) >= (_hp)->hg_max) { \
