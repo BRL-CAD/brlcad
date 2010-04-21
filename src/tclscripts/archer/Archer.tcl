@@ -2220,6 +2220,10 @@ package provide Archer 1.0
     set klist [lindex $alist 0]
     set mlist [lindex $alist 1]
 
+    # Remove duplicates from both klist and mlist
+    set klist [lsort -unique $klist]
+    set mlist [lsort -unique $mlist]
+
     # If an item is in both sublists, remove it from mlist.
     foreach item $klist {
 	set l [lsearch -all $mlist $item]
@@ -2243,20 +2247,19 @@ package provide Archer 1.0
 	return
     }
 
-    # Remove duplicates from both klist and mlist
-    set klist [lsort -unique $klist]
-    set mlist [lsort -unique $mlist]
-
     # Need to checkpoint before they're gone
     checkpoint_olist $klist $LEDGER_DESTROY
 
-    # Decrement the GID so that the modified
-    # objects below have the same GID.
-    incr mLedgerGID -1
+    set mlen [llength $mlist]
+    if {$mlen} {
+	# Decrement the GID so that the modified
+	# objects below have the same GID.
+	incr mLedgerGID -1
 
-    # Also need to checkpoint the objects that used to reference
-    # the soon-to-be killed objects.
-    set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
+	# Also need to checkpoint the objects that used to reference
+	# the soon-to-be killed objects.
+	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
+    }
 
     if {[catch {eval gedCmd $_cmd $options $expandedArgs} ret]} {
 	ledger_cleanup
@@ -2264,8 +2267,10 @@ package provide Archer 1.0
 	return $ret
     }
 
-    foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
+    if {$mlen} {
+	foreach lname $lnames {
+	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
+	}
     }
 
     refreshTree 1
