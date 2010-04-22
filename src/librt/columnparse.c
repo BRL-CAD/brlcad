@@ -36,12 +36,48 @@
 #include "raytrace.h"
 #include "bu.h"
 
+struct attr_obj {
+    struct bu_vls modelname;
+    int attr_cnt;
+    char **attr_names;
+    char **attr_vals;
+};
+
+struct col_properties {
+    int col_cnt;
+    int *col_sizes;
+};
+
 static void
-test_regex(char *name)
+trim_whitespace(struct bu_vls *attr)
 {
     regex_t compiled_regex;
     regmatch_t *result_locations;
-    int ret, components, count;
+    int ret, components;
+    struct bu_vls whitespaceregex;
+    struct bu_vls workingstring;
+    bu_vls_init(&workingstring);
+    bu_vls_init(&whitespaceregex);
+  
+    bu_vls_sprintf(&whitespaceregex, "(^[ ]*)?([^[:space:]]+[ ]?[^[:space:]]+)([ ]*$)?"); 
+ 
+    ret=regcomp(&compiled_regex, bu_vls_addr(&whitespaceregex), REG_EXTENDED);
+    components = 3;
+    result_locations = (regmatch_t *)bu_calloc(components + 1, sizeof(regmatch_t), "array to hold answers from regex");
+
+    ret=regexec(&compiled_regex, bu_vls_addr(attr), components+1, result_locations, 0);
+
+    bu_vls_trunc(&workingstring,0);
+    bu_vls_strncpy(&workingstring, bu_vls_addr(attr)+result_locations[2].rm_so, result_locations[2].rm_eo - result_locations[2].rm_so);
+    bu_log("\n%s\n",bu_vls_addr(&workingstring));
+}
+
+static void
+test_regex(char *name, struct col_properties *cp)
+{
+    regex_t compiled_regex;
+    regmatch_t *result_locations;
+    int ret, components;
     struct bu_vls modelregex;
     struct bu_vls attrregex;
     struct bu_vls workingstring1;
@@ -82,9 +118,10 @@ test_regex(char *name)
     
         bu_vls_trunc(&workingstring2,0);
         bu_vls_strncpy(&workingstring2, bu_vls_addr(&workingstring1)+result_locations[2].rm_so, result_locations[2].rm_eo - result_locations[2].rm_so); 
-        count++;
+        cp->col_cnt = cp->col_cnt + 1;
     }
 
+    bu_log("columns found: %d\n", cp->col_cnt);
 
     bu_log("\n");
 
@@ -94,8 +131,31 @@ test_regex(char *name)
 int
 main()
 {
+    FILE *fp;
+    struct col_properties *cp;
+    struct bu_vls currentline;
+    bu_vls_init(&currentline);
+    BU_GETSTRUCT(cp, col_properties);
+    cp->col_sizes = (int *)bu_malloc(sizeof(int) * 10, "initial array of column sizes");
+    cp->col_cnt = 1;
+    
+    fp = fopen("./test.txt","r");
+    bu_vls_gets(&currentline, fp);
+    test_regex(bu_vls_addr(&currentline), cp);
 
-    test_regex("       Model Name         ATTR1                                     ATTR2        ATTR3  ATTR4");
+    /* header separator is a throwaway */
+    bu_vls_gets(&currentline, fp);
+    bu_vls_trunc(&currentline, 0);
+   /* 
+    while (!(bu_vls_gets(&currentline, fp) < 0)) {
+       printf("line:  %s\n\n", bu_vls_addr(&currentline));
+       bu_vls_trunc(&currentline, 0);
+    }
+   */
+/*    test_regex("       Model Name         ATTR1                                     ATTR2        ATTR3  ATTR4");*/
+    bu_vls_sprintf(&currentline, "  part 1.test        ");
+    trim_whitespace(&currentline);
+    fclose(fp);
     return 1;
 }
 
