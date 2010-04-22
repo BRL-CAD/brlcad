@@ -90,7 +90,7 @@ ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
 
 
 HIDDEN void
-ged_grid_vsnap(struct ged *gedp)
+grid_vsnap(struct ged *gedp)
 {
     point_t view_pt;
     point_t model_pt;
@@ -105,7 +105,7 @@ ged_grid_vsnap(struct ged *gedp)
 
 
 HIDDEN void
-ged_grid_vls_print(struct ged *gedp)
+grid_vls_print(struct ged *gedp)
 {
     bu_vls_printf(&gedp->ged_result_str, "anchor = %g %g %g\n",
 		  gedp->ged_gvp->gv_grid.ggs_anchor[0] * gedp->ged_wdbp->dbip->dbi_base2local,
@@ -203,7 +203,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 
     if (strcmp(parameter, "vsnap") == 0) {
 	if (argc == 0) {
-	    ged_grid_vsnap(gedp);
+	    grid_vsnap(gedp);
 	    return GED_OK;
 	}
 
@@ -327,7 +327,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (strcmp(parameter, "vars") == 0) {
-	ged_grid_vls_print(gedp);
+	grid_vls_print(gedp);
 	return GED_OK;
     }
 
