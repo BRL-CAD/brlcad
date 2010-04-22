@@ -75,6 +75,25 @@ trim_whitespace(struct bu_vls *attr)
 }
 
 static void
+parse_line(struct bu_vls *line, struct col_properties *cp) 
+{
+    int currentposstart = 0;
+    int currentposend = 0;
+    int currentcol = -1;
+    struct bu_vls workingstring;
+    bu_vls_init(&workingstring);
+
+    while (currentcol <= cp->col_cnt) {
+        currentcol++;
+	currentposstart = currentposend;
+        currentposend += cp->col_sizes[currentcol];
+        bu_vls_trunc(&workingstring, 0);
+        bu_vls_strncpy(&workingstring, bu_vls_addr(line)+currentposstart, currentposend - currentposstart);
+        bu_log("column %d contents:  %s\n", currentcol, bu_vls_addr(&workingstring));
+    }
+}
+
+static void
 find_columns(char *name, struct col_properties *cp)
 {
     regex_t compiled_regex;
@@ -157,12 +176,11 @@ main()
     /* header separator is a throwaway */
     bu_vls_gets(&currentline, fp);
     bu_vls_trunc(&currentline, 0);
-   /* 
     while (!(bu_vls_gets(&currentline, fp) < 0)) {
-       printf("line:  %s\n\n", bu_vls_addr(&currentline));
+       /*printf("line:  %s\n\n", bu_vls_addr(&currentline));*/
+       parse_line(&currentline, cp);
        bu_vls_trunc(&currentline, 0);
     }
-   */
 /*    test_regex("       Model Name         ATTR1                                     ATTR2        ATTR3  ATTR4");*/
     bu_vls_sprintf(&currentline, "          ");
     trim_whitespace(&currentline);
