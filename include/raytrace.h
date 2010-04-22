@@ -3320,7 +3320,6 @@ RT_EXPORT BU_EXTERN(int rt_arb_3face_intersect,
 		     const plane_t		planes[6],
 		     int			type,		/* 4..8 */
 		     int			loc));
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_arb_calc_planes,
 		    (struct bu_vls		*error_msg_ret,
 		     struct rt_arb_internal	*arb,
@@ -3346,7 +3345,6 @@ RT_EXPORT BU_EXTERN(int rt_arb_edit,
 		     vect_t			pos_model,
 		     plane_t			planes[6],
 		     const struct bn_tol	*tol));
-#endif
 
 RT_EXPORT extern const int rt_arb_faces[5][24];
 RT_EXPORT extern short earb8[12][18];
@@ -3686,7 +3684,6 @@ RT_EXPORT BU_EXTERN(void rt_label_vlist_verts,
 		     double sz,
 		     double mm2local));
 
-#ifdef __RTGEOM_H__
 /* sketch.c */
 RT_EXPORT BU_EXTERN(int curve_to_vlist,
 		    (struct bu_list		*vhead,
@@ -3721,7 +3718,6 @@ RT_EXPORT BU_EXTERN(struct rt_sketch_internal *rt_copy_sketch,
 RT_EXPORT BU_EXTERN(int curve_to_tcl_list,
 		    (struct bu_vls *vls,
 		     struct curve *crv));
-#endif
 
 /* htbl.c */
 RT_EXPORT BU_EXTERN(void rt_htbl_init,
@@ -4598,7 +4594,6 @@ RT_EXPORT BU_EXTERN(int nmg_break_edges,
 RT_EXPORT BU_EXTERN(int nmg_lu_is_convex,
 		    (struct loopuse *lu,
 		     const struct bn_tol *tol));
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int nmg_to_arb,
 		    (const struct model *m,
 		     struct rt_arb_internal *arb_int));
@@ -4613,7 +4608,6 @@ RT_EXPORT BU_EXTERN(int nmg_to_poly,
 RT_EXPORT BU_EXTERN(struct rt_bot_internal *nmg_bot,
 		    (struct shell *s,
 		     const struct bn_tol *tol));
-#endif /* __NMG_H__ */
 
 RT_EXPORT BU_EXTERN(int nmg_simplify_shell_edges,
 		    (struct shell *s,
@@ -4640,7 +4634,6 @@ RT_EXPORT BU_EXTERN(int rt_bot_plot_poly,
 		     struct rt_db_internal	*ip,
 		     const struct rt_tess_tol *ttol,
 		     const struct bn_tol	*tol));
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		    (const struct rt_bot_internal *bot,
 		     const point_t	pt2,
@@ -4672,7 +4665,6 @@ RT_EXPORT BU_EXTERN(void rt_bot_list_free,
 		    (struct rt_bot_list *headRblp,
 		     int fbflag));
 
-#endif
 RT_EXPORT BU_EXTERN(int rt_bot_same_orientation,
 		    (const int *a,
 		     const int *b));
@@ -5835,7 +5827,6 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 /* defined in bot.c */
 RT_EXPORT extern int rt_bot_minpieces;
 RT_EXPORT extern int rt_bot_tri_per_piece;
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
 		    (struct rt_bot_internal *bot,
 		     int tris_per_piece));
@@ -5844,8 +5835,6 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t max_chord_error,
 		     fastf_t max_normal_error,
 		     fastf_t min_edge_length));
-#endif
-
 
 /*
  *  Constants provided and used by the RT library.
