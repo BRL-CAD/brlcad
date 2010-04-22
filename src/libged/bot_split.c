@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "rtgeom.h"	/* for rt_bot_split (in raytrace.h) */
 #include "./ged_private.h"
 
 
