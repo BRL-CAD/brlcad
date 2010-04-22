@@ -2049,6 +2049,13 @@ if test "x$bc_use_optimized" != "xno" ; then
 fi
 
 dnl verbose warning flags (if yes or auto)
+BC_COMPILER_AND_LINKER_RECOGNIZES([-w], [nowarn], [nokeep])
+if test "x$bc_nowarn_works" = "xyes" ; then
+	NOWARN="-w"
+else
+	NOWARN=""
+fi
+AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
 	# XXX also of interest
@@ -2059,6 +2066,8 @@ if test "x$bc_build_warnings" != "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
 		sleep 1
 	fi
+else
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-w], [nowarn])
 fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
