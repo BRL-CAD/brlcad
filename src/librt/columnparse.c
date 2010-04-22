@@ -52,26 +52,20 @@ struct col_properties {
 static void
 trim_whitespace(struct bu_vls *attr)
 {
-    regex_t compiled_regex;
-    regmatch_t *result_locations;
-    int ret, components;
-    struct bu_vls whitespaceregex;
-    struct bu_vls workingstring;
-    bu_vls_init(&workingstring);
-    bu_vls_init(&whitespaceregex);
-  
-    bu_vls_sprintf(&whitespaceregex, "(^[ ]*)?([^[:space:]]+[ ]?[^[:space:]]+)([ ]*$)?"); 
- 
-    ret=regcomp(&compiled_regex, bu_vls_addr(&whitespaceregex), REG_EXTENDED);
-    components = 3;
-    result_locations = (regmatch_t *)bu_calloc(components + 1, sizeof(regmatch_t), "array to hold answers from regex");
+    int frontspace = 0;
+    int endspace = 0;
+    int vlslen = bu_vls_strlen(attr) - 1;
 
-    ret=regexec(&compiled_regex, bu_vls_addr(attr), components+1, result_locations, 0);
+    while (bu_vls_addr(attr)[frontspace] == ' ') {
+	frontspace++;
+    }
 
-    bu_vls_trunc(&workingstring,0);
-    bu_vls_strncpy(&workingstring, bu_vls_addr(attr)+result_locations[2].rm_so, result_locations[2].rm_eo - result_locations[2].rm_so);
-    bu_vls_sprintf(attr, "%s", bu_vls_addr(&workingstring));
-    bu_free(result_locations, "free regex results");
+    while (bu_vls_addr(attr)[vlslen + endspace] == ' '){
+	endspace--;
+    }
+
+    bu_vls_trunc(attr, endspace);   
+    bu_vls_nibble(attr, frontspace);
 }
 
 static void
@@ -89,6 +83,7 @@ parse_line(struct bu_vls *line, struct col_properties *cp)
         currentposend += cp->col_sizes[currentcol];
         bu_vls_trunc(&workingstring, 0);
         bu_vls_strncpy(&workingstring, bu_vls_addr(line)+currentposstart, currentposend - currentposstart);
+        trim_whitespace(&workingstring);
         bu_log("column %d contents:  %s\n", currentcol, bu_vls_addr(&workingstring));
     }
 }
