@@ -30,6 +30,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "raytrace.h"
+
 #include "./ged_private.h"
 
 
@@ -77,6 +79,7 @@ ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:
