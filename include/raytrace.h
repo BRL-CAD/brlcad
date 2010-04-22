@@ -44,6 +44,7 @@
 #include "db5.h"
 #include "nmg.h"
 #include "pc.h"
+#include "rtgeom.h"
 
 __BEGIN_DECLS
 
