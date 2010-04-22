@@ -152,15 +152,13 @@ main()
     /* header separator is a throwaway */
     bu_vls_gets(&currentline, fp);
     bu_vls_trunc(&currentline, 0);
+
     while (!(bu_vls_gets(&currentline, fp) < 0)) {
        /*printf("line:  %s\n\n", bu_vls_addr(&currentline));*/
        parse_line(&currentline, cp);
        bu_vls_trunc(&currentline, 0);
     }
-/*    test_regex("       Model Name         ATTR1                                     ATTR2        ATTR3  ATTR4");*/
-    bu_vls_sprintf(&currentline, "          ");
-    bu_vls_trimspace(&currentline);
-    bu_log("all whitespace trim: %s  length: %d\n", bu_vls_addr(&currentline), bu_vls_strlen(&currentline));
+    
     fclose(fp);
     return 1;
 }
