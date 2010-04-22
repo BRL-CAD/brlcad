@@ -77,7 +77,7 @@ parse_line(struct bu_vls *line, struct col_properties *cp)
     struct bu_vls workingstring;
     bu_vls_init(&workingstring);
 
-    while (currentcol <= cp->col_cnt) {
+    while (currentcol < cp->col_cnt) {
         currentcol++;
 	currentposstart = currentposend;
         currentposend += cp->col_sizes[currentcol];
