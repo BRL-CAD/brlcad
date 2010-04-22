@@ -159,7 +159,7 @@ tk_dm(int argc,
 	    /* Bare set command, print out current settings */
 	    bu_vls_struct_print2(&vls, "dm_Tk internal variables", tk_vparse, (const char *)dmp);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, ', ');
+	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, ',');
 	} else {
 	    struct bu_vls tmp_vls;
 
