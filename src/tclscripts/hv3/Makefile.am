@@ -19,8 +19,17 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripts)
 
+documentationdir = $(BRLCAD_DATA)/doc
+
+documentation_DATA = \
+        hv3.man
+
+man_MANS = \
+        tkhtml.n
+
 EXTRA_DIST = \
 	$(tcl_SCRIPTS) \
+        $(documentation_DATA) \
 	license.txt \
 	license_snit.txt \
 	demo/index.html \
