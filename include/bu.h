@@ -289,7 +289,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%llu, rhs=%llu, file %s, line %d\n", \
 			(size_t)(_lhs), (size_t)(_rhs), \
 			__FILE__, __LINE__); \
-		bu_bomb("BU_ASSERT_LONG failure\n"); \
+		bu_bomb("BU_ASSERT_SIZE_T failure\n"); \
 	}
 #endif
 
