@@ -652,7 +652,7 @@ Popup Menu    Right or Ctrl-Left
 	method findTreeParentNodes {_cnode}
 	method getCNodeFromCText {_pnode _text}
 	method getTreeImage {_obj _type {_op ""} {_isregion 0}}
-	method getTreeNode {_path}
+	method getTreeNode {_path {_cflag 0}}
 	method getTreeNodes {_path}
 	method getTreePath {_node {_path ""}}
 	method handleTreeClose {}
@@ -662,6 +662,7 @@ Popup Menu    Right or Ctrl-Left
 	method addTreeNodeTag {_node _tag}
 	method removeTreeNodeTag {_node _tag}
 	method addTreePlaceholder {_pnode}
+	method selectTreePath {_path}
 
 	# db/display commands
 	method getNodeChildren  {_node}
@@ -2279,9 +2280,8 @@ Popup Menu    Right or Ctrl-Left
     } else {
 	set in [bu_get_value_by_keyword "in" $partition]
 	set path [bu_get_value_by_keyword "path" $in]
-	set leaf [file tail $path]
-	set paths [gedCmd search -name $leaf]
-#	$itk_component(tree) selectpaths $paths
+	set path [regsub {^/} $path {}]
+	selectTreePath $path
     }
 }
 
@@ -3346,7 +3346,7 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::getTreeNode {_path} {
+::itcl::body ArcherCore::getTreeNode {_path {_cflag 0}} {
     set items [split $_path /]
     set len [llength $items]
 
@@ -3358,6 +3358,12 @@ Popup Menu    Right or Ctrl-Left
     set ptext [lindex $items 0]
 
     if {![info exists mText2Node($ptext)]} {
+#	if {$_cflag} {
+#	    fillTree {} $ptext
+#	} else {
+#	    return $pnode
+#	}
+
 	return $pnode
     }
 
@@ -3374,7 +3380,17 @@ Popup Menu    Right or Ctrl-Left
 	set found 0
 
 	if {![info exists mText2Node($item)]} {
-	    return $pnode
+	    if {$_cflag} {
+		if {![$itk_component(newtree) item $pnode -open]} {
+		    $itk_component(newtree) item $pnode -open true
+		    $itk_component(newtree) focus $pnode
+		    handleTreeOpen
+		} else {
+		    $itk_component(newtree) focus $pnode
+		}
+	    } else {
+		return $pnode
+	    }
 	}
 
 	foreach sublist $mText2Node($item) {
@@ -3383,6 +3399,17 @@ Popup Menu    Right or Ctrl-Left
 	    if {$pnode == [lindex $sublist 1]} {
 		set pnode $cnode
 		set found 1
+
+		if {$_cflag} {
+		    if {![$itk_component(newtree) item $cnode -open]} {
+			$itk_component(newtree) item $cnode -open true
+			$itk_component(newtree) focus $cnode
+			handleTreeOpen
+		    } else {
+			$itk_component(newtree) focus $cnode
+		    }
+		}
+
 		continue
 	    }
 	}
@@ -3597,6 +3624,21 @@ Popup Menu    Right or Ctrl-Left
 		   -tags $TREE_PLACEHOLDER_TAG]
 
     set mPNode2CList($_pnode) [list [list $TREE_PLACEHOLDER_TAG $cnode]]
+}
+
+::itcl::body ArcherCore::selectTreePath {_path} {
+    if {$_path == {}} {
+	return
+    }
+
+    getTreeNode $_path 1
+    set snode [$itk_component(newtree) focus]
+
+    if {$snode == {}} {
+	putString $_path
+    } else {
+	$itk_component(newtree) selection set $snode
+    }
 }
 
 # ------------------------------------------------------------
