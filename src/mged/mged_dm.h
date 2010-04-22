@@ -37,6 +37,11 @@
 #  include <tk.h>
 #endif
 
+
+#ifndef COMMA
+#  define COMMA ','
+#endif
+
 #define MGED_DISPLAY_VAR "mged_display"
 
 /* +-2048 to +-1 */
