@@ -4,7 +4,10 @@ lib_LTLIBRARIES = \
 noinst_LTLIBRARIES = \
 	libexppp_nil.la
 
-AM_CFLAGS = -I$(top_srcdir)/include/express -I$(top_srcdir)/include/exppp 
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include/express \
+	-I$(top_srcdir)/include/exppp \
+	${NOWARN}
 
 bin_PROGRAMS = exppp
 

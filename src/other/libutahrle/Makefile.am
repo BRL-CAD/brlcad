@@ -32,7 +32,7 @@ libutahrle_la_SOURCES = \
 	vaxshort.c
 
 libutahrle_la_LDFLAGS = -version-info 19:1
-libutahrle_la_CFLAGS = ${RLE_CPPFLAGS}
+libutahrle_la_CFLAGS = ${RLE_CPPFLAGS} ${NOWARN}
 libutahrle_la_LIBADD = ${LIBM}
 
 man_MANS = \

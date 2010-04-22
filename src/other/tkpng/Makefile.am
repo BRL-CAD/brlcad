@@ -2,7 +2,8 @@ tkpng_la_CFLAGS = \
 	${LIBZ_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${TK_CPPFLAGS} \
-	-DDM_TK -DIF_TK
+	-DDM_TK -DIF_TK \
+	${NOWARN}
 
 tkpng_la_LDFLAGS = -module
 lib_LTLIBRARIES = tkpng.la
