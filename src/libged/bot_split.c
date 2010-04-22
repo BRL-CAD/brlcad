@@ -80,7 +80,6 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    const char *av[3];
 	    struct rt_db_internal bot_intern;
 	    struct rt_bot_list *rblp;
-	    struct directory *dp;
 
 	    av[0] = "make_name";
 	    av[2] = (char *)0;
