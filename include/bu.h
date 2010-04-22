@@ -286,7 +286,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
 	if (!((_lhs) _relation (_rhs))) { \
-		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%llu, rhs=%llu, file %s, line %d\n", \
+		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
 			(size_t)(_lhs), (size_t)(_rhs), \
 			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT_SIZE_T failure\n"); \
