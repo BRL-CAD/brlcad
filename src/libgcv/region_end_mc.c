@@ -110,11 +110,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	return TREE_NULL;
     }
 
+    /*
     bu_log("Target is shot, %d triangles seen.\n", count);
 
     bu_log("Fusing\n"); fflush(stdout);
     nmg_model_fuse(m, tsp->ts_tol);
     bu_log("Done\n"); fflush(stdout);
+    */
 
     /* Kill cracks */
     while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
@@ -127,7 +129,9 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		break;
 	    }
 	}
+	/*
 	nmg_shell_coplanar_face_merge(s, tsp->ts_tol, 42);
+	*/
 	s = next_s;
     }
     if (empty_region)
