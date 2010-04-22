@@ -780,7 +780,7 @@ main(int argc, char *argv[])
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
-#endif HAVE_PIPE
+#endif /* HAVE_PIPE */
 
 	    if (status != TCL_OK) {
 		if (use_pipe) {
