@@ -392,7 +392,7 @@ fbserv_new_client(struct pkg_conn *pcp)
 HIDDEN void
 fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 {
-    uint32_t datafd = (uint32_t)clientData;
+    size_t datafd = (size_t)clientData;
     int fd = (int)(datafd & 0xFFFF);	/* fd's will be small */
     struct dm_list *dlp;
     struct dm_list *scdlp;  /* save current dm_list pointer */
