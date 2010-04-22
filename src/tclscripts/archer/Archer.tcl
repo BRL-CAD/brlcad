@@ -928,11 +928,29 @@ package provide Archer 1.0
 		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
 	    }
 
+	    foreach kv [lrange $args 2 end] {
+		set k [lindex $kv 0]
+		set ki [lsearch $mTreeAttrColumns $k]
+		if {$ki != -1} {
+		    # We're affecting an attribute that's being displayed
+		    return [eval gedWrapper2 attr 1 0 0 0 1 2 $args]
+		}
+	    }
+
 	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
 	}
 	"rm" {
 	    if {$len < 3} {
 		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
+	    }
+
+	    foreach kv [lrange $args 2 end] {
+		set k [lindex $kv 0]
+		set ki [lsearch $mTreeAttrColumns $k]
+		if {$ki != -1} {
+		    # We're affecting an attribute that's being displayed
+		    return [eval gedWrapper2 attr 1 0 0 0 1 2 $args]
+		}
 	    }
 
 	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]

@@ -4255,7 +4255,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::attr {args} {
-    eval gedWrapper attr 0 0 1 0 $args
+    eval gedWrapper attr 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bb {args} {
