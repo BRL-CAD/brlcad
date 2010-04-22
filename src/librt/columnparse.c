@@ -50,25 +50,6 @@ struct col_properties {
 };
 
 static void
-trim_whitespace(struct bu_vls *attr)
-{
-    int frontspace = 0;
-    int endspace = 0;
-    int vlslen = bu_vls_strlen(attr) - 1;
-
-    while (bu_vls_addr(attr)[frontspace] == ' ') {
-	frontspace++;
-    }
-
-    while (bu_vls_addr(attr)[vlslen + endspace] == ' '){
-	endspace--;
-    }
-
-    bu_vls_trunc(attr, endspace);   
-    bu_vls_nibble(attr, frontspace);
-}
-
-static void
 parse_line(struct bu_vls *line, struct col_properties *cp) 
 {
     int currentposstart = 0;
@@ -83,7 +64,7 @@ parse_line(struct bu_vls *line, struct col_properties *cp)
         currentposend += cp->col_sizes[currentcol];
         bu_vls_trunc(&workingstring, 0);
         bu_vls_strncpy(&workingstring, bu_vls_addr(line)+currentposstart, currentposend - currentposstart);
-        trim_whitespace(&workingstring);
+        bu_vls_trimspace(&workingstring);
         bu_log("column %d contents:  %s\n", currentcol, bu_vls_addr(&workingstring));
     }
 }
@@ -119,7 +100,7 @@ find_columns(char *name, struct col_properties *cp)
     bu_vls_strncpy(&testresult, bu_vls_addr(&workingstring1)+result_locations[1].rm_so, result_locations[1].rm_eo - result_locations[1].rm_so);
     cp->col_sizes[0] = bu_vls_strlen(&testresult);
     bu_log("stringlength:%d\n",cp->col_sizes[0]);
-    trim_whitespace(&testresult);
+    bu_vls_trimspace(&testresult);
     cp->col_attrnames[0] = bu_vls_addr(&testresult);
     bu_log("trimmed name:%s\n",cp->col_attrnames[0]);
     
@@ -139,7 +120,7 @@ find_columns(char *name, struct col_properties *cp)
    
         cp->col_cnt = cp->col_cnt + 1;
         cp->col_sizes[cp->col_cnt] = bu_vls_strlen(&testresult);
-        trim_whitespace(&testresult);
+        bu_vls_trimspace(&testresult);
         cp->col_attrnames[cp->col_cnt] = bu_vls_addr(&testresult);
         bu_log("stringlength:%d\n",cp->col_sizes[cp->col_cnt]);
         bu_log("trimmed name:%s\n",cp->col_attrnames[cp->col_cnt]);
@@ -178,7 +159,7 @@ main()
     }
 /*    test_regex("       Model Name         ATTR1                                     ATTR2        ATTR3  ATTR4");*/
     bu_vls_sprintf(&currentline, "          ");
-    trim_whitespace(&currentline);
+    bu_vls_trimspace(&currentline);
     bu_log("all whitespace trim: %s  length: %d\n", bu_vls_addr(&currentline), bu_vls_strlen(&currentline));
     fclose(fp);
     return 1;
