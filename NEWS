@@ -15,6 +15,7 @@ changes made.  See document footer for additional details.
 
 TODO: include write-up about marching cubes w.r.t. tessellation.
 
+* re-enabled archer's embedded image framebuffer - Bob Parker
 * fixed mged and nirt crashes handling whitespace lines - Keith Bowman
 * newly enhanced archer tree view hierarchy visualization - Bob Parker
 * fixed mged bug calling 'units' without a database - Erik Greenwald
