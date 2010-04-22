@@ -239,7 +239,6 @@ CurveTree::getLeaves(list<BRNode*>& out_leaves)
     m_root->getLeaves(out_leaves);
 }
 
-
 void
 CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
 {
@@ -260,6 +259,65 @@ CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const
     }
 }
 
+void
+CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt)
+{
+    point_t bmin, bmax;
+    double dist;
+    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+		BRNode* br = dynamic_cast<BRNode*>(*i);
+		br->GetBBox(bmin, bmax);
+
+		dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+		if (bmax[X]+dist < pt.x)
+			continue;
+		if (bmin[X]-dist < pt.x) {
+			if (bmax[Y]+dist > pt.y) {
+			out_leaves.push_back(br);
+			}
+		}
+    }
+}
+
+void
+CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
+{
+    point_t bmin, bmax;
+    double dist;
+    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+	BRNode* br = dynamic_cast<BRNode*>(*i);
+	br->GetBBox(bmin, bmax);
+
+	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	if (bmax[Y]+dist < v[0])
+	    continue;
+	if (bmin[Y]-dist < v[1]) {
+	    if (bmax[X]+dist > u[0]) {
+		out_leaves.push_back(br);
+	    }
+	}
+    }
+}
+
+void
+CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_2dPoint& pt)
+{
+    point_t bmin, bmax;
+    double dist;
+    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+	BRNode* br = dynamic_cast<BRNode*>(*i);
+	br->GetBBox(bmin, bmax);
+
+	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	if (bmax[Y]+dist < pt.y)
+	    continue;
+	if (bmin[Y]-dist < pt.y) {
+	    if (bmax[X]+dist > pt.x) {
+		out_leaves.push_back(br);
+	    }
+	}
+    }
+}
 
 fastf_t
 CurveTree::getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)

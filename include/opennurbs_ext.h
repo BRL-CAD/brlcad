@@ -191,6 +191,7 @@ public:
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
     fastf_t getLinearEstimateOfV(fastf_t u);
     fastf_t getCurveEstimateOfV(fastf_t u, fastf_t tol) const;
+    fastf_t getCurveEstimateOfU(fastf_t v, fastf_t tol) const;
 
     int isTrimmed(const ON_2dPoint& uv, fastf_t &trimdist) const;
     bool doTrimming() const;
@@ -302,6 +303,7 @@ BANode<BA>::isLeaf() {
     return false;
 }
 
+/*
 template<class BA>
 inline void
 BANode<BA>::GetBBox(double* min, double* max) const {
@@ -311,6 +313,16 @@ BANode<BA>::GetBBox(double* min, double* max) const {
     max[0] = m_node.m_max[0];
     max[1] = m_node.m_max[1];
     max[2] = m_node.m_max[2];
+}
+*/
+
+template<class BA>
+inline void
+BANode<BA>::GetBBox(double* min, double* max) const {
+    VSETALL(min, MAX_FASTF);
+    VSETALL(max, -MAX_FASTF);
+	VMINMAX(min, max, m_start);
+	VMINMAX(min, max, m_end);
 }
 
 template<class BA>
@@ -529,6 +541,77 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
     return p[Y];
 }
 
+template<class BA>
+fastf_t
+BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const {
+    ON_3dVector tangent;
+    point_t A, B;
+    double Ta, Tb;
+
+    if (m_start[Y] < v) {
+	VMOVE(A, m_start);
+	VMOVE(B, m_end);
+	Ta = m_t[0];
+	Tb = m_t[1];
+    } else {
+	VMOVE(A, m_end);
+	VMOVE(B, m_start);
+	Ta = m_t[1];
+	Tb = m_t[0];
+    }
+
+    ON_3dVector Tan_start = m_trim->TangentAt(Ta);
+    ON_3dVector Tan_end = m_trim->TangentAt(Tb);
+
+
+    fastf_t dv = fabs(Tan_end.y - Tan_start.y);
+    fastf_t dT = Tb - Ta;
+    fastf_t guess;
+    ON_3dPoint p;
+
+    /* Use quick binary subdivision until derivatives at end points in 'u' are within 5 percent */
+    while (dv > 0.05) {
+    	guess = Ta + dT/2;
+    	p = m_trim->PointAt(guess);
+    	if (p[Y] < v) {
+    	    Ta = guess;
+    	    VMOVE(A, p);
+    	    Tan_start = m_trim->TangentAt(Ta);
+    	} else {
+    	    Tb = guess;
+    	    VMOVE(B, p);
+    	    Tan_end = m_trim->TangentAt(Tb);
+    	}
+    	dT = Tb - Ta;
+    	dv = fabs(Tan_end.y - Tan_start.y);
+    }
+
+    fastf_t dV = B[Y] - A[Y];
+
+    guess = Ta + (v - A[Y]) * dT/dV;
+    p = m_trim->PointAt(guess);
+
+    int cnt=0;
+    while ((cnt < 1000) && (!NEAR_ZERO(p[Y]-v, tol))) {
+	if (p[Y] < v) {
+	    Ta = guess;
+	    VMOVE(A, p);
+	} else {
+	    Tb = guess;
+	    VMOVE(B, p);
+	}
+	dV = B[Y] - A[Y];
+	dT = Tb - Ta;
+	guess = Ta + (v - A[Y]) * dT/dV;
+	p = m_trim->PointAt(guess);
+	cnt++;
+    }
+    if (cnt > 999) {
+	    bu_log("getCurveEstimateOfV(): estimate of 'u' given a trim curve and 'v' did not converge within iteration bound(%d).\n",
+	    		cnt);
+    }
+    return p[X];
+}
 
 extern bool sortX(BRNode* first, BRNode* second);
 extern bool sortY(BRNode* first, BRNode* second);
@@ -555,7 +638,9 @@ public:
      */
     void getLeaves(list<BRNode*>& out_leaves);
     void getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-//	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
+    void getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt);
+	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
+	void getLeavesRight(list<BRNode*>& out_leaves, const ON_2dPoint& pt);
     int depth();
 
 private:
