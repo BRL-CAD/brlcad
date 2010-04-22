@@ -282,8 +282,8 @@ static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, int num_entries);
 static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-int wdb_dir_check(struct db_i *input_dbip, const char *name, size_t laddr, size_t len, int flags, genptr_t ptr);
-void wdb_dir_check5(struct db_i *input_dbip, const struct db5_raw_internal *rip, size_t addr, genptr_t ptr);
+int wdb_dir_check(struct db_i *input_dbip, const char *name, off_t laddr, size_t len, int flags, genptr_t ptr);
+void wdb_dir_check5(struct db_i *input_dbip, const struct db5_raw_internal *rip, off_t addr, genptr_t ptr);
 
 static int pathListNoLeaf = 0;
 
@@ -3736,7 +3736,7 @@ struct dir_check_stuff {
 void
 wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
-	       size_t UNUSED(addr),
+	       off_t UNUSED(addr),
 	       genptr_t ptr)
 {
     char *name;
@@ -3799,7 +3799,7 @@ wdb_dir_check5(struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(struct db_i *input_dbip, const char *name, size_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), genptr_t ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), genptr_t ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;
