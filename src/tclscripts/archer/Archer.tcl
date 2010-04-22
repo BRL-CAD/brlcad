@@ -264,7 +264,6 @@ package provide Archer 1.0
 	method handleTreeSelect {}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
-	method selectNode {_tags {_rflag 1}}
 	method setActivePane {_pane}
 	method updateCheckpointMode {}
 	method updateSaveMode {}
@@ -2496,99 +2495,6 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::selectNode {tags {rflag 1}} {
-    return
-
-    set mLastTags $tags
-    set tags [split $tags ":"]
-    if {[llength $tags] > 1} {
-	set element [lindex $tags 1]
-    } else {
-	set element $tags
-    }
-    if {$element == ""} {
-	return
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set type [$itk_component(tree) query -nodetype $element]
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    #XXX Hack to get around the fact that somehow this
-    #    routine gets randomly called by the
-    #    hierarchy widget after a Load. When called its
-    #    tag refers to a node in the previous database.
-    set savePwd ""
-
-    if {[catch {gedCmd get_type $node} ret]} {
-	if {$savePwd != ""} {
-	    cd $savePwd
-	}
-
-	return
-    }
-
-    if {!$mViewOnly} {
-	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
-	    initObjAttrView
-	} else {
-	    if {!$mRestoringTree} {
-		selection_checkpoint $mSelectedObj
-		initObjEditView
-		switch -- $mDefaultBindingMode \
-		    $OBJECT_ROTATE_MODE { \
-					      beginObjRotate
-		    } \
-		    $OBJECT_SCALE_MODE { \
-					     beginObjScale
-		    } \
-		    $OBJECT_TRANSLATE_MODE { \
-						 beginObjTranslate
-		    } \
-		    $OBJECT_CENTER_MODE { \
-					      beginObjCenter
-		    }
-	    }
-	}
-    }
-
-    # label the object if it's being drawn
-    set mRenderMode [gedCmd how $node]
-
-    if {$mShowPrimitiveLabels} {
-	if {0 <= $mRenderMode} {
-	    gedCmd configure -primitiveLabels $node
-	} else {
-	    gedCmd configure -primitiveLabels {}
-	}
-    }
-
-#    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
-#	gedCmd configure -primitiveLabels $node
-#    } else {
-#	gedCmd configure -primitiveLabels {}
-#    }
-#
-#    if {$rflag} {
-#	gedCmd refresh
-#    }
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-
-    if {$savePwd != ""} {
-	cd $savePwd
-    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $element
-}
-
-
 ::itcl::body Archer::setActivePane {_pane} {
     $itk_component(rtcntrl) setActivePane $_pane
 }
@@ -3210,6 +3116,23 @@ proc title_node_handler {node} {
 	{}
     $itk_component(unitsCB) configure -state disabled
 
+    itk_component add treeAttrsL {
+	::ttk::label $itk_component(generalF).treeAttrsL \
+	    -anchor e \
+	    -text "Tree Attributes"
+    } {}
+    itk_component add treeAttrsE {
+	::ttk::entry $itk_component(generalF).treeAttrsE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mTreeAttrColumnsPref]
+    } {}
+
+    itk_component add affectedTreeNodesModeCB {
+	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
+	    -text "Highlight Affected Tree Nodes" \
+	    -variable [::itcl::scope mEnableAffectedTreeNodeHighlightPref]
+    } {}
+
     itk_component add generalF2 {
 	::ttk::frame $itk_component(generalF).generalF2 \
 	    -height 10
@@ -3231,7 +3154,7 @@ proc title_node_handler {node} {
     grid $itk_component(generalF2) -column 0 -row $i -columnspan 2 -sticky nsew
     incr i
     grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
-    grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
+    grid $itk_component(backgroundColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
     grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
@@ -3245,12 +3168,22 @@ proc title_node_handler {node} {
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(bigEMenuItemCB) \
+    grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
+    grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(affectedTreeNodesModeCB) \
 	-columnspan 2 \
 	-column 0 \
 	-row $i \
 	-sticky sw
     grid rowconfigure $itk_component(generalF) $i -weight 1
+    incr i
+    grid $itk_component(bigEMenuItemCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
+    grid columnconfigure $itk_component(generalF) 1 -weight 1
 
     set i 0
     grid $itk_component(generalF) -column 0 -row $i -sticky nsew
@@ -3418,6 +3351,8 @@ proc title_node_handler {node} {
     grid $itk_component(gridRvE) -column 1 -row $i -sticky ew
     grid $itk_component(gridRvUnitsL) -column 2 -row $i -sticky ew
 
+    grid columnconfigure $itk_component(gridF) 1 -weight 1
+
     set i 0
     grid $itk_component(gridF) -column 0 -row $i -sticky nw
 
@@ -3495,6 +3430,8 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(groundPlaneMinorColorL) -column 0 -row $i -sticky e
     grid $itk_component(groundPlaneMinorColorF) -column 1 -row $i -sticky ew
+
+    grid columnconfigure $itk_component(groundPlaneF) 1 -weight 1
 
     set i 0
     grid $itk_component(groundPlaneF) -column 0 -row $i -sticky nw
@@ -3727,6 +3664,8 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(modelAxesTickMajorColorL) -column 0 -row $i -sticky e
     grid $itk_component(modelAxesTickMajorColorF) -column 1 -row $i -sticky ew
+
+    grid columnconfigure $itk_component(modelAxesF) 1 -weight 1
 
     set i 0
     grid $itk_component(modelAxesF) -column 0 -row $i -sticky nw
@@ -4255,6 +4194,8 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(viewAxesLabelColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewAxesLabelColorF) -column 1 -row $i -sticky ew
+
+    grid columnconfigure $itk_component(viewAxesF) 1 -weight 1
 
     set i 0
     grid $itk_component(viewAxesF) -column 0 -row $i -sticky nw
@@ -7236,7 +7177,6 @@ proc title_node_handler {node} {
     }
 
     refreshTree
-#    selectNode [$itk_component(tree) find $obj]
 }
 
 ::itcl::body Archer::pluginGetMinAllowableRid {} {
@@ -7454,6 +7394,16 @@ proc title_node_handler {node} {
 
     if {$mMeasuringStickColor != $mMeasuringStickColorPref} {
 	set mMeasuringStickColor $mMeasuringStickColorPref
+    }
+
+    if {$mTreeAttrColumns != $mTreeAttrColumnsPref} {
+	set mTreeAttrColumns $mTreeAttrColumnsPref
+	refreshTree
+    }
+
+    if {$mEnableAffectedTreeNodeHighlight != $mEnableAffectedTreeNodeHighlightPref} {
+	set mEnableAffectedTreeNodeHighlight $mEnableAffectedTreeNodeHighlightPref
+	handleTreeSelect
     }
 
     if {$mEnableBigEPref != $mEnableBigE} {
@@ -7898,6 +7848,8 @@ proc title_node_handler {node} {
     set mPrimitiveLabelColorPref $mPrimitiveLabelColor
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
+    set mTreeAttrColumnsPref $mTreeAttrColumns
+    set mEnableAffectedTreeNodeHighlightPref $mEnableAffectedTreeNodeHighlight
     set mDbUnits [gedCmd units -s]
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
@@ -8025,6 +7977,8 @@ proc title_node_handler {node} {
     puts $_pfile "set mPrimitiveLabelColor \"$mPrimitiveLabelColor\""
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
+    puts $_pfile "set mTreeAttrColumns \"$mTreeAttrColumns\""
+    puts $_pfile "set mEnableAffectedTreeNodeHighlight \"$mEnableAffectedTreeNodeHighlight\""
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
     puts $_pfile "set mGridColor \"$mGridColor\""
@@ -8060,7 +8014,7 @@ proc title_node_handler {node} {
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
     puts $_pfile "set mZClipMode $mZClipMode"
-    puts $_pfile "set mAffectedTreeNodesMode $mAffectedTreeNodesMode"
+    puts $_pfile "set mEnableAffectedTreeNodeHighlight $mEnableAffectedTreeNodeHighlight"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"

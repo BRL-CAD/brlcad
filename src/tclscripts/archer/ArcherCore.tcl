@@ -327,8 +327,8 @@ namespace eval ArcherCore {
 	variable mShowADC 0
 
 	# variables for preference state
-	variable mAffectedTreeNodesMode 0
-	variable mAffectedTreeNodesModePref ""
+	variable mEnableAffectedTreeNodeHighlight 0
+	variable mEnableAffectedTreeNodeHighlightPref ""
 	variable mTreeAttrColumns ""
 	variable mTreeAttrColumnsPref ""
 
@@ -1372,9 +1372,6 @@ Popup Menu    Right or Ctrl-Left
     bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleTreeOpen]
     bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleTreeClose]
     $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup %x %y %X %Y]
-#    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground cornflowerblue
-#    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground 
-#    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG -foreground darkorange
     $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG \
 	-foreground red \
 	-font TkHeadingFont
@@ -3542,7 +3539,7 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
-    if {!$mAffectedTreeNodesMode} {
+    if {!$mEnableAffectedTreeNodeHighlight} {
 	return
     }
 
