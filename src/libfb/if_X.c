@@ -1165,7 +1165,7 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
 	/* save map for later */
 	i=creat(TMP_FILE, 0666);
 	if ( i >= 0 )  {
-	    write( i, cmp, sizeof(*cmp) );
+	    int ret = write( i, cmp, sizeof(*cmp) );
 	    close(i);
 	} else {
 	    fprintf(stderr, "if_X: couldn't save color map\n");

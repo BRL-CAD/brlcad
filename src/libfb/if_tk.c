@@ -306,7 +306,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    }
 
 	    /* Unpack inputs from pipe */
-	    read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
+	    count = read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
 	    memcpy(lines, buffer, sizeof(uint32_t)*3);
 	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
 	    y[0] = ntohl(lines[0]);
@@ -356,11 +356,12 @@ HIDDEN int
 fb_tk_close(FBIO *ifp)
 {
     int y[2];
+    int ret;
     y[0] = -1;
     y[1] = 0;
     printf("Entering fb_tk_close\n");
     FB_CK_FBIO(ifp);
-    write(p[1], y, sizeof(y));
+    ret = write(p[1], y, sizeof(y));
     close(p[1]);
     printf("Sent write from fb_tk_close\n");
     return 0;
