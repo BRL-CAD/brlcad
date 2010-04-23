@@ -56,8 +56,8 @@
 		return TCL_ERROR; \
 	} else if (*((long *)(_ptr)) != (_magic)) { \
 		bu_vls_init(&_fb_vls); \
-		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%lx, s/b x%x, was x%lx, file %s, line %d\n", \
-		_str, (long)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
+		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr %p, s/b x%x, was x%lx, file %s, line %d\n", \
+		_str, (void *)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
 		Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
 		bu_vls_free(&_fb_vls); \
 \
@@ -73,26 +73,26 @@ extern int Fbo_Init(Tcl_Interp *interp);
 /* XXX -- At some point these routines should be moved to FBIO */
 #ifdef IF_WGL
 extern int wgl_open_existing();
-extern int wgl_close_existing();
 extern FBIO wgl_interface;
 extern void wgl_configureWindow();
 extern int wgl_refresh();
+static const char *wgl_device_name = "/dev/wgl";
 #endif
 
 #ifdef IF_OGL
 extern int ogl_open_existing();
-extern int ogl_close_existing();
 extern FBIO ogl_interface;
 extern void ogl_configureWindow();
 extern int ogl_refresh();
+static const char *ogl_device_name = "/dev/ogl";
 #endif
 
 #ifdef IF_X
 extern void X24_configureWindow();
 extern int X24_refresh();
 extern int X24_open_existing();
-extern int X24_close_existing();
 extern FBIO X24_interface;
+static const char *X_device_name = "/dev/X";
 #endif
 
 #ifdef IF_TK
@@ -101,9 +101,9 @@ extern FBIO X24_interface;
 extern void tk_configureWindow();
 extern int tk_refresh();
 extern int tk_open_existing();
-extern int tk_close_existing();
 extern FBIO tk_interface;
 #endif
+static const char *tk_device_name = "/dev/tk";
 #endif
 
 int fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -117,15 +117,9 @@ static struct bu_cmdtab cmdtab[] = {
     {(char *)0, (int (*)())0}
 };
 
-/* XXX this device list shouldn't be in here */
-static const char *X_device_name = "/dev/X";
-static const char *tk_device_name = "/dev/tk";
-static const char *ogl_device_name = "/dev/ogl";
-static const char *wgl_device_name = "/dev/wgl";
-
 
 int
-fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     register FBIO *ifp;
     struct bu_vls vls;
@@ -230,7 +224,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
     if (found) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%lu", (unsigned long)ifp);
+	bu_vls_printf(&vls, "%p", (void *)ifp);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -267,7 +261,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 
 int
-fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_close_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     FBIO *ifp;
 
@@ -281,7 +275,7 @@ fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char 
 	return TCL_ERROR;
     }
 
-    FB_TCL_CK_FBIO(ifp);
+    /* FB_TCL_CK_FBIO(ifp); */
     return fb_close_existing(ifp);
 }
 
@@ -375,7 +369,7 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
  * Hook function wrapper to the fb_common_file_size Tcl command
  */
 int
-fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     unsigned long int width, height;
     int pixel_size = 3;

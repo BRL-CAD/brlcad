@@ -126,7 +126,7 @@ rt_grp_print(const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead __attribute__((unused)))
+rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *UNUSED(seghead))
 {
     if (stp) RT_CK_SOLTAB(stp);
     if (rp) RT_CK_RAY(rp);
@@ -224,7 +224,7 @@ rt_grp_class(void)
  *
  */
 int
-rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_grip_internal *gip;
     vect_t xbase, ybase;	/* perpendiculars to normal */
@@ -335,7 +335,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
  * R T _ G R P _ E X P O R T
  */
 int
-rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
     union record *rec;
@@ -497,7 +497,7 @@ rt_grp_ifree(struct rt_db_internal *ip)
  * R T _ G R P _ T E S S
  */
 int
-rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_grip_internal *gip;
 

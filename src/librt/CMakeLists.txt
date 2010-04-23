@@ -1,22 +1,23 @@
 set(LIBRT_SOURCES
+    attributes.c
     bezier_2d_isect.c
-    binary_obj.c
+    binunif/binunif.c
+    binunif/db5_bin.c
     bomb.c
     bool.c
     bundle.c
     cmd.c
-    comb_mirror.c
+    comb/comb.c
+    comb/comb_mirror.c
+    comb/db_comb.c
     constraint.c
     cut.c
     db5_alloc.c
-    db5_bin.c
-    db5_comb.c
     db5_io.c
     db5_scan.c
     db5_types.c
     db_alloc.c
     db_anim.c
-    db_comb.c
     db_flags.c
     db_inmem.c
     db_io.c
@@ -124,7 +125,6 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_index.c
     primitives/nmg/nmg_info.c
     primitives/nmg/nmg_inter.c
-    primitives/nmg/nmg_junk.c
     primitives/nmg/nmg_manif.c
     primitives/nmg/nmg_mesh.c
     primitives/nmg/nmg_mirror.c
@@ -139,6 +139,27 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_tri.c
     primitives/nmg/nmg_tri_mc.c
     primitives/nmg/nmg_visit.c
+    primitives/obj_adjust.c
+    primitives/obj_curve.c
+    primitives/obj_describe.c
+    primitives/obj_export.c
+    primitives/obj_free.c
+    primitives/obj_get.c
+    primitives/obj_ifree.c
+    primitives/obj_import.c
+    primitives/obj_make.c
+    primitives/obj_mirror.c
+    primitives/obj_norm.c
+    primitives/obj_params.c
+    primitives/obj_plot.c
+    primitives/obj_prep.c
+    primitives/obj_print.c
+    primitives/obj_shot.c
+    primitives/obj_tess.c
+    primitives/obj_tnurb.c
+    primitives/obj_uv.c
+    primitives/obj_vshot.c
+    primitives/obj_xform.c
     primitives/part/part.c
     primitives/part/part_mirror.c
     primitives/pipe/pipe.c
@@ -190,7 +211,10 @@ set(LIBRT_SOURCES
 
 set(IGNORED_SOURCES
     brep_test.cpp
+    columnparse.c
+    namegen.c
     nurb_example.c
+    prcomb.c
     primitives/xxx/xxx.c
 )
 

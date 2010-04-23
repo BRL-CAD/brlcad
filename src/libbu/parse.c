@@ -33,13 +33,13 @@
 
 
 /* Note: struct parsing requires no space after the commas.  take care
- * when formatting this file if compile breaks here that spaces are
- * not getting inserted.
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
  */
 #define COMMA ','
 
 #define CKMEM(_len) {  \
-	register int offset; \
+	register ssize_t offset; \
 	if ((offset = (ep - cp) - (_len)) < 0) { \
 		do { \
 			offset += ext->ext_nbytes;	/* decr by new growth */ \
@@ -52,6 +52,7 @@
 		cp = (char *) ext->ext_buf + offset; \
 	} \
 }
+
 
 #define BU_GETPUT_MAGIC_1 0x15cb
 #define BU_GETPUT_MAGIC_2 0xbc51
@@ -66,9 +67,10 @@
 	((unsigned char *) _p->ext_buf)[_l-2] = (BU_GETPUT_MAGIC_2 >> 8) & 0xFF; \
 }
 
+
 #define BU_CK_GETPUT(_p) {\
-	register long _i; \
-	register long _len; \
+	register unsigned long _i; \
+	register size_t _len; \
 	BU_CK_EXTERNAL(_p); \
 	if (!(_p->ext_buf)) { \
 		bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
@@ -76,8 +78,8 @@
 		bu_bomb("NULL pointer"); \
 	} \
 	if (_p->ext_nbytes < 6) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer only %lu bytes, file %s, line %d\n", \
-		    (unsigned long)_p->ext_nbytes, __FILE__, __LINE__); \
+		bu_log("ERROR: BU_CK_GETPUT buffer only %llu bytes, file %s, line %d\n", \
+		    (unsigned long long)_p->ext_nbytes, __FILE__, __LINE__); \
 		bu_bomb("getput buffer too small"); \
 	} \
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) | \
@@ -93,8 +95,8 @@
 	       (((unsigned char *)(_p->ext_buf))[4] <<  8) | \
 		((unsigned char *)(_p->ext_buf))[5]; \
 	if (_len > _p->ext_nbytes) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%ld, ext_nbytes=%lu, file %s, line %d\n", \
-		    (void *)_p->ext_buf, _len, (unsigned long)_p->ext_nbytes, \
+		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%llu, ext_nbytes=%llu, file %s, line %d\n", \
+		       (void *)_p->ext_buf, (unsigned long long)_len, (unsigned long long)_p->ext_nbytes, \
 		    __FILE__, __LINE__); \
 		bu_bomb("Bad getput buffer"); \
 	} \
@@ -116,8 +118,8 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
     char *ep;		/* &ext->ext_buf[ext->ext_nbytes] */
     const struct bu_structparse *ip;	/* current imexport structure */
     char *loc;		/* where host-format data is */
-    int len;
-    register int i;
+    size_t len;
+    register size_t i;
 
     BU_INIT_EXTERNAL(ext);
 
@@ -134,10 +136,17 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
 	switch (ip->sp_fmt[0]) {
 	    case 'i':
-		/* Indirect to another structure */
-		/* deferred */
-		bu_free((char *) ext->ext_buf, "output ext_buf");
-		return 0;
+		{
+		    /* DEPRECATED: use %p instead. */
+		    static int warned = 0;
+		    if (!warned) {
+#ifdef NOTYET
+			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
+#endif
+			warned++;
+		    }
+		}
+		continue;
 	    case '%':
 		/* See below */
 		break;
@@ -160,7 +169,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		CKMEM(ip->sp_count * 4);
 		{
 		    register unsigned long l;
-		    for (i = ip->sp_count-1; i >= 0; i--) {
+		    for (i = ip->sp_count; i > 0; i--) {
 			l = *((int *)loc);
 			cp[3] = l;
 			cp[2] = l >> 8;
@@ -176,7 +185,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		CKMEM(ip->sp_count * 2);
 		{
 		    register unsigned short s;
-		    for (i = ip->sp_count-1; i >= 0; i--) {
+		    for (i = ip->sp_count; i > 0; i--) {
 			s = *((int *)loc);
 			cp[1] = s;
 			cp[0] = s >> 8;
@@ -194,7 +203,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		     *
 		     * ip->sp_count == sizeof(char array)
 		     */
-		    register int lenstr;
+		    register size_t lenstr;
 
 		    /* include the terminating null */
 		    lenstr = (int)strlen(loc) + 1;
@@ -209,10 +218,10 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
 		    /* put the length on the front of the string
 		     */
-		    cp[3] = len;
-		    cp[2] = len >> 8;
-		    cp[1] = len >> 16;
-		    cp[0] = len >> 24;
+		    cp[3] = (char)len;
+		    cp[2] = (char)(len >> 8);
+		    cp[1] = (char)(len >> 16);
+		    cp[0] = (char)(len >> 24);
 
 		    cp += 4;
 
@@ -224,13 +233,19 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 	    case 'c':
 		{
 		    CKMEM(ip->sp_count + 4);
-		    cp[3] = ip->sp_count;
-		    cp[2] = ip->sp_count >> 8;
-		    cp[1] = ip->sp_count >> 16;
-		    cp[0] = ip->sp_count >> 24;
+		    cp[3] = (char)ip->sp_count;
+		    cp[2] = (char)(ip->sp_count >> 8);
+		    cp[1] = (char)(ip->sp_count >> 16);
+		    cp[0] = (char)(ip->sp_count >> 24);
 		    cp += 4;
 		    memcpy(cp, loc, ip->sp_count);
 		    cp += ip->sp_count;
+		}
+		continue;
+	    case 'p':
+		{
+		    /* Indirect to another structure */
+		    /* FIXME: unimplemented */
 		}
 		continue;
 	    default:
@@ -243,10 +258,10 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
     i = cp - (char *)ext->ext_buf;
     /* Fill in length in external buffer */
-    ((char *)ext->ext_buf)[5] = i;
-    ((char *)ext->ext_buf)[4] = i >> 8;
-    ((char *)ext->ext_buf)[3] = i >>16;
-    ((char *)ext->ext_buf)[2] = i >>24;
+    ((char *)ext->ext_buf)[5] = (char)i;
+    ((char *)ext->ext_buf)[4] = (char)(i >> 8);
+    ((char *)ext->ext_buf)[3] = (char)(i >>16);
+    ((char *)ext->ext_buf)[2] = (char)(i >>24);
     BU_INIT_GETPUT_2(ext, i);
     ext->ext_nbytes = i;	/* XXX this changes nbytes if i < 480 ? */
     return 1;
@@ -259,9 +274,9 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     register const unsigned char *cp;	/* current possition in buffer */
     const struct bu_structparse *ip;	/* current imexport structure */
     char *loc;		/* where host-format data is */
-    int len;
-    int bytes_used;
-    register int i;
+    size_t len;
+    size_t bytes_used;
+    register size_t i;
 
     BU_CK_GETPUT(ext);
 
@@ -273,9 +288,17 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 
 	switch (ip->sp_fmt[0]) {
 	    case 'i':
-		/* Indirect to another structure */
-		/* deferred */
-		return -1;
+		{
+		    /* DEPRECATED: use %p instead. */
+		    static int warned = 0;
+		    if (!warned) {
+#ifdef NOTYET
+			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
+#endif
+			warned++;
+		    }
+		}
+		continue;
 	    case '%':
 		/* See below */
 		break;
@@ -296,7 +319,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		/* 32-bit network integer, from "int" */
 		{
 		    register long l;
-		    for (i = ip->sp_count-1; i >= 0; i--) {
+		    for (i = ip->sp_count; i > 0; i--) {
 			l =	(cp[0] << 24) |
 			    (cp[1] << 16) |
 			    (cp[2] <<  8) |
@@ -310,7 +333,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		break;
 	    case 'i':
 		/* 16-bit integer, from "int" */
-		for (i = ip->sp_count-1; i >= 0; i--) {
+		for (i = ip->sp_count; i > 0; i--) {
 		    *(int *)loc =	(cp[0] <<  8) |
 			cp[1];
 		    loc += sizeof(int); /* XXX */
@@ -367,6 +390,12 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		    bytes_used += lenarray;
 		}
 		break;
+	    case 'p':
+		{
+		    /* Indirect to another structure */
+		    /* FIXME: unimplemented */
+		}
+		break;
 	    default:
 		return -1;
 	}
@@ -376,7 +405,8 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     }
 
     /* This number may differ from that stored as "claimed_length" */
-    return (bytes_used);
+    /* FIXME: possible loss of data here */
+    return (int)(bytes_used);
 }
 
 
@@ -385,6 +415,7 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
 {
     BU_CK_GETPUT(ext);
 
+    /* FIXME: possible loss of data here */
     return (int)(fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
 }
 
@@ -487,9 +518,9 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
  *         <0 upon failure
  */
 HIDDEN int
-_bu_parse_double(const char *str, long int count, double *loc)
+_bu_parse_double(const char *str, size_t count, double *loc)
 {
-    long i;
+    size_t i;
     int dot_seen;
     const char *numstart;
     double tmp_double;
@@ -569,7 +600,8 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
     /* string containing value */
 {
     register char *loc;
-    int i, retval = 0;
+    size_t i;
+    int retval = 0;
 
     for (; sdp->sp_name != (char *)0; sdp++) {
 
@@ -585,6 +617,13 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	loc = (char *)(base + sdp->sp_offset);
 
 	if (sdp->sp_fmt[0] == 'i') {
+	    static int warned = 0;
+	    if (!warned) {
+#ifdef NOTYET
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
+#endif
+		warned++;
+	    }
 	    /* Indirect to another structure */
 	    if (_bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value) == 0)
 		return 0;	/* found */
@@ -601,7 +640,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	    case 'c':
 	    case 's':
 		{
-		    register int j;
+		    register size_t j;
 
 		    /* copy the string, converting escaped double
 		     * quotes to just double quotes
@@ -729,8 +768,10 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 		}
 		break;
 	    case 'f':
-		retval = _bu_parse_double(value, sdp->sp_count,
-					  (double *)loc);
+		retval = _bu_parse_double(value, sdp->sp_count, (double *)loc);
+		break;
+	    case 'p':
+		retval = _bu_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value);
 		break;
 	    default:
 		bu_log("_bu_struct_lookup(%s): unknown format '%s'\n",
@@ -935,38 +976,55 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	case 'S': /* XXX - DEPRECATED [7.14] */
 	    printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
 	    /* fall through */
-	case 'V': {
-	    register struct bu_vls *vls = (struct bu_vls *)loc;
+	case 'V':
+	    {
+		register struct bu_vls *vls = (struct bu_vls *)loc;
 
-	    bu_vls_vlscat(vp, vls); }
+		bu_vls_vlscat(vp, vls);
+	    }
 	    break;
-	case 'i': {
-	    register int i = sdp->sp_count;
-	    register short *sp = (short *)loc;
+	case 'i':
+	    {
+		register size_t i = sdp->sp_count;
+		register short *sp = (short *)loc;
 
-	    bu_vls_printf(vp, "%d", *sp++);
-	    while (--i > 0) bu_vls_printf(vp, "%c%d", sep_char, *sp++); }
+		bu_vls_printf(vp, "%d", *sp++);
+		while (--i > 0) bu_vls_printf(vp, "%c%d", sep_char, *sp++);
+	    }
 	    break;
-	case 'd': {
-	    register int i = sdp->sp_count;
-	    register int *dp = (int *)loc;
+	case 'd':
+	    {
+		register size_t i = sdp->sp_count;
+		register int *dp = (int *)loc;
 
-	    bu_vls_printf(vp, "%d", *dp++);
-	    while (--i > 0) bu_vls_printf(vp, "%c%d", sep_char, *dp++); }
+		bu_vls_printf(vp, "%d", *dp++);
+		while (--i > 0) bu_vls_printf(vp, "%c%d", sep_char, *dp++);
+	    }
 	    break;
-	case 'f': {
-	    register int i = sdp->sp_count;
-	    register double *dp = (double *)loc;
+	case 'f':
+	    {
+		register size_t i = sdp->sp_count;
+		register double *dp = (double *)loc;
 
-	    bu_vls_printf(vp, "%.25G", *dp++);
-	    while (--i > 0) bu_vls_printf(vp, "%c%.25G", sep_char, *dp++); }
+		bu_vls_printf(vp, "%.25G", *dp++);
+		while (--i > 0) bu_vls_printf(vp, "%c%.25G", sep_char, *dp++);
+	    }
 	    break;
-	case 'x': {
-	    register int i = sdp->sp_count;
-	    register int *dp = (int *)loc;
+	case 'x':
+	    {
+		register size_t i = sdp->sp_count;
+		register int *dp = (int *)loc;
 
-	    bu_vls_printf(vp, "%08x", *dp++);
-	    while (--i > 0) bu_vls_printf(vp, "%c%08x", sep_char, *dp++);  }
+		bu_vls_printf(vp, "%08x", *dp++);
+		while (--i > 0) bu_vls_printf(vp, "%c%08x", sep_char, *dp++);
+	    }
+	    break;
+	case 'p':
+	    {
+		bu_log("Cannot print type '%%p' yet!\n");
+		/* Indirect to another structure */
+		/* FIXME: unimplemented */
+	    }
 	    break;
 	default:
 	    break;
@@ -987,7 +1045,6 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 
     return -1;
 }
-
 
 
 void
@@ -1015,9 +1072,15 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	loc = (char *)(base + sdp->sp_offset);
 
 	if (sdp->sp_fmt[0] == 'i') {
-	    bu_struct_print(sdp->sp_name,
-			    (struct bu_structparse *)sdp->sp_count,
-			    base);
+	    /* DEPRECATED: use %p instead. */
+	    static int warned = 0;
+	    if (!warned) {
+#ifdef NOTYET
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
+#endif
+		warned++;
+	    }
+	    bu_struct_print(sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
 	    continue;
 	}
 
@@ -1026,11 +1089,6 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		   sdp->sp_name, sdp->sp_fmt);
 	    continue;
 	}
-#if 0
-	bu_vls_trunc(&vls, 0);
-	bu_vls_struct_item(&vls, sdp, base, ', ');
-	bu_log(" %s=%s\n", sdp->sp_name, bu_vls_addr(&vls));
-#else
 	switch (sdp->sp_fmt[1]) {
 	    case 'c':
 	    case 's':
@@ -1062,7 +1120,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'i':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
 
 		    bu_log(" %s=%d", sdp->sp_name, *sp++);
@@ -1074,7 +1132,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'd':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_log(" %s=%d", sdp->sp_name, *dp++);
@@ -1086,7 +1144,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'f':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
@@ -1115,7 +1173,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'x':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_log(" %s=%08x", sdp->sp_name, *dp++);
@@ -1125,24 +1183,26 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    bu_log("\n");
 		}
 		break;
+	    case 'p':
+		bu_struct_print(sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
+		break;
 	    default:
 		bu_log(" bu_struct_print: Unknown format: %s=%s ??\n",
 		       sdp->sp_name, sdp->sp_fmt);
 		break;
 	}
-#endif
     }
 }
 
 
 HIDDEN void
-_bu_vls_print_double(struct bu_vls *vls, const char *name, register long int count, register const double *dp)
+_bu_vls_print_double(struct bu_vls *vls, const char *name, register size_t count, register const double *dp)
 {
     register int tmpi;
     register char *cp;
 
-    int increase = (int)(strlen(name) + 3 + 32 * count);
-    bu_vls_extend(vls, increase);
+    size_t increase = strlen(name) + 3 + 32 * count;
+    bu_vls_extend(vls, (unsigned int)increase);
 
     cp = vls->vls_str + vls->vls_offset + vls->vls_len;
     snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
@@ -1167,7 +1227,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
     register char *loc;
     register int lastoff = -1;
     register char *cp;
-    int increase;
+    size_t increase;
 
     BU_CK_VLS(vls);
 
@@ -1187,6 +1247,15 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 	if (sdp->sp_fmt[0] == 'i') {
 	    struct bu_vls sub_str;
+
+	    /* DEPRECATED: use %p instead. */
+	    static int warned = 0;
+	    if (!warned) {
+#ifdef NOTYET
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
+#endif
+		warned++;
+	    }
 
 	    bu_vls_init(&sub_str);
 	    bu_vls_struct_print(&sub_str,
@@ -1210,8 +1279,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1) {
-		    increase = (int)strlen(sdp->sp_name)+6;
-		    bu_vls_extend(vls, increase);
+		    increase = strlen(sdp->sp_name)+6;
+		    bu_vls_extend(vls, (unsigned int)increase);
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    if (*loc == '"')
 			snprintf(cp, increase, "%s%s=\"%s\"",
@@ -1232,8 +1301,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			++p;
 			++count;
 		    }
-		    increase = (int)(strlen(sdp->sp_name)+strlen(loc)+5+count);
-		    bu_vls_extend(vls, increase);
+		    increase = strlen(sdp->sp_name)+strlen(loc)+5+count;
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    if (vls->vls_len) (void)strcat(cp, " ");
@@ -1263,8 +1332,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		{
 		    register struct bu_vls *vls_p = (struct bu_vls *)loc;
 
-		    increase =  (int)(bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name));
-		    bu_vls_extend(vls, increase);
+		    increase =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    snprintf(cp, increase, "%s%s=\"%s\"",
@@ -1276,12 +1345,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		break;
 	    case 'i':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
 		    register int tmpi;
 
-		    increase = 64 * i + (int)strlen(sdp->sp_name) + 3;
-		    bu_vls_extend(vls, increase);
+		    increase = 64 * i + strlen(sdp->sp_name) + 3;
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -1301,12 +1370,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		break;
 	    case 'd':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 		    register int tmpi;
 
-		    increase = (int)(64 * i + strlen(sdp->sp_name) + 3);
-		    bu_vls_extend(vls, increase);
+		    increase = 64 * i + strlen(sdp->sp_name) + 3;
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    snprintf(cp, increase, "%s%s=%d",
@@ -1327,6 +1396,16 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		_bu_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
 				     (double *)loc);
 		break;
+	    case 'p':
+		{
+		    struct bu_vls sub_str;
+		    bu_vls_init(&sub_str);
+		    bu_vls_struct_print(&sub_str, (struct bu_structparse *)sdp->sp_count, base);
+		    bu_vls_vlscat(vls, &sub_str);
+		    bu_vls_free(&sub_str);
+		    continue;
+		}
+
 	    default:
 		bu_log(" %s=%s ??\n", sdp->sp_name, sdp->sp_fmt);
 		bu_bomb("unexpected case encountered in bu_vls_struct_print\n");
@@ -1362,9 +1441,15 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 	loc = (char *)(base + sdp->sp_offset);
 
 	if (sdp->sp_fmt[0] == 'i') {
-	    bu_vls_struct_print2(vls_out, sdp->sp_name,
-				 (struct bu_structparse *)sdp->sp_count,
-				 base);
+	    /* DEPRECATED: use %p instead. */
+	    static int warned = 0;
+	    if (!warned) {
+#ifdef NOTYET
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
+#endif
+		warned++;
+	    }
+	    bu_vls_struct_print2(vls_out, sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
 	    continue;
 	}
 
@@ -1406,7 +1491,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'i':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
 
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *sp++);
@@ -1419,7 +1504,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'd':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *dp++);
@@ -1432,7 +1517,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'f':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
@@ -1463,7 +1548,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'x':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_vls_printf(vls_out, " %s=%08x", sdp->sp_name, *dp++);
@@ -1473,6 +1558,9 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 
 		    bu_vls_printf(vls_out, "\n");
 		}
+		break;
+	    case 'p':
+		bu_vls_struct_print2(vls_out, sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
 		break;
 	    default:
 		bu_vls_printf(vls_out, " bu_vls_struct_print2: Unknown format: %s=%s ??\n",
@@ -1824,6 +1912,7 @@ _bu_list_elem(const char *in, int idx)
     return (out);
 }
 
+
 /**
  * _ B U _ T C L _ L I S T _ L E N G T H
  *
@@ -2019,12 +2108,12 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 {
     const unsigned char *cp;
     const unsigned char *endp;
-    int i, j, k;
+    size_t i, j, k;
 
     BU_CK_EXTERNAL(ep);
 
     fprintf(fp, "%s:\n", str);
-    if (ep->ext_nbytes <= 0)  fprintf(fp, "\tWarning: 0 length external buffer\n");
+    if (ep->ext_nbytes <= 0) fprintf(fp, "\tWarning: 0 length external buffer\n");
 
     cp = (const unsigned char *)ep->ext_buf;
     endp = cp + ep->ext_nbytes;
@@ -2043,7 +2132,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 	fprintf(fp, " |");
 
 	for (j=0; j < 16; j++, sp++) {
-	    if (sp >= endp)  break;
+	    if (sp >= endp) break;
 	    if (isprint(*sp))
 		putc(*sp, fp);
 	    else
@@ -2099,7 +2188,7 @@ void
 bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse *sp)
 {
     struct bu_vls str;
-    int i;
+    size_t i;
 
     bu_vls_init(&str);
 
@@ -2143,8 +2232,8 @@ bu_structparse_argv(struct bu_vls *logstr,
 {
     register char *cp, *loc;
     register const struct bu_structparse *sdp;
-    register int j;
-    register int ii;
+    register size_t j;
+    register size_t ii;
     struct bu_vls str;
 
     if (desc == (struct bu_structparse *)NULL) {
@@ -2446,6 +2535,12 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr, "%s ", argv[0]);
 		    break;
 		}
+		case 'p':
+		{
+		    /* Indirect to another structure */
+		    /* FIXME: unimplemented */
+		}
+
 		default: {
 		    bu_vls_printf(logstr,
 				  "%s line:%d Parse error, unknown format: '%s' for element \"%s\"",
@@ -2475,6 +2570,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 
     return BRLCAD_OK;
 }
+
 
 /** @} */
 

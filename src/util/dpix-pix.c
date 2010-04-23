@@ -37,32 +37,32 @@
 #include "bu.h"
 
 
-#define NUM	(1024 * 16)	/* Note the powers of 2 -- v. efficient */
-static double		doub[NUM];
-static unsigned char	cha[NUM];
+#define NUM (1024 * 16)	/* Note the powers of 2 -- v. efficient */
+static double doub[NUM];
+static unsigned char cha[NUM];
 
 
 int
 main(int argc, char **argv)
 {
-    int		count;			/* count of items */
-    int		got;			/* count of bytes */
-    int		fd;			/* UNIX file descriptor */
-    double	*dp;			/* ptr to d */
+    int count;			/* count of items */
+    int got;			/* count of bytes */
+    int fd;			/* UNIX file descriptor */
+    double *dp;			/* ptr to d */
     double *ep;
-    double		m;			/* slope */
-    double		b;			/* intercept */
+    double m;			/* slope */
+    double b;			/* intercept */
 
-    if ( argc < 2 )  {
+    if (argc < 2) {
 	bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
     }
 
-    if ( (fd = open(argv[1], 0)) < 0 )  {
+    if ((fd = open(argv[1], 0)) < 0) {
 	perror(argv[1]);
 	exit(1);
     }
 
-    if ( isatty(fileno(stdout)) )  {
+    if (isatty(fileno(stdout))) {
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
     }
 
@@ -73,14 +73,14 @@ main(int argc, char **argv)
      * bigger than it.
      */
     {
-	double	min, max;		/* high usage items */
+	double min, max;		/* high usage items */
 
 	min = 1.0e20;
 	max = -1.0e20;
 
-	while (1)  {
-	    got = read( fd, (char *)&doub[0], NUM*sizeof(doub[0]) );
-	    if ( got <= 0 ) {
+	while (1) {
+	    got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
+	    if (got <= 0) {
 		if (got < 0) {
 		    perror("dpix-pix READ ERROR");
 		}
@@ -88,16 +88,16 @@ main(int argc, char **argv)
 	    }
 	    count = got / sizeof(doub[0]);
 	    ep = &doub[count];
-	    for (dp = &doub[0]; dp < ep;)  {
+	    for (dp = &doub[0]; dp < ep;) {
 		double val;
-		if ( (val = *dp++) < min )
+		if ((val = *dp++) < min)
 		    min = val;
-		else if ( val > max )
+		else if (val > max)
 		    max = val;
 	    }
 	}
 
-	lseek( fd, 0L, 0 );		/* rewind(fp); */
+	lseek(fd, 0L, 0);		/* rewind(fp); */
 
 
 	/* This section uses the maximum and the minimum values found to
@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	 * equation y = mx + b.
 	 */
 	fprintf(stderr, "min=%f, max=%f\n", min, max);
-	if (max < min)  {
+	if (max < min) {
 	    bu_exit(1, "MINMAX: max less than min!\n");
 	}
 
@@ -113,16 +113,16 @@ main(int argc, char **argv)
 	b = (-255 * min)/(max - min);
     }
 
-    while (1)  {
-	char	*cp;		/* ptr to c */
-	double	mm;		/* slope */
-	double	bb;		/* intercept */
+    while (1) {
+	char *cp;		/* ptr to c */
+	double mm;		/* slope */
+	double bb;		/* intercept */
 
 	mm = m;
 	bb = b;
 
-	got = read( fd, (char *)&doub[0], NUM*sizeof(doub[0]) );
-	if (got <=  0 ) {
+	got = read(fd, (char *)&doub[0], NUM*sizeof(doub[0]));
+	if (got <=  0) {
 	    if (got < 0) {
 		perror("dpix-pix READ ERROR");
 	    }
@@ -131,13 +131,13 @@ main(int argc, char **argv)
 	count = got / sizeof(doub[0]);
 	ep = &doub[count];
 	cp = (char *)&cha[0];
-	for (dp = &doub[0]; dp < ep;)  {
+	for (dp = &doub[0]; dp < ep;) {
 	    *cp++ = mm * (*dp++) + bb;
 	}
 
 	/* fd 1 is stdout */
-	got = write( 1, (char *)&cha[0], count*sizeof(cha[0]) );
-	if ( got != count*sizeof(cha[0]) )  {
+	got = write(1, (char *)&cha[0], count*sizeof(cha[0]));
+	if (got != count*sizeof(cha[0])) {
 	    perror("write");
 	    exit(2);
 	}
@@ -145,6 +145,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

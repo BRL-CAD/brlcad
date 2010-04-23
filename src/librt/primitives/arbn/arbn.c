@@ -270,7 +270,7 @@ rt_arbn_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     h = hitp->hit_surfno;
     if (h < 0 || h > aip->neqn) {
-	bu_log("rt_arbn_norm(%s): hit_surfno=%d?\n", h);
+	bu_log("rt_arbn_norm(): hit_surfno=%d?\n", h);
 	VSETALL(hitp->hit_normal, 0);
 	return;
     }
@@ -347,7 +347,7 @@ rt_arbn_free(struct soltab *stp)
  * Note that the vectors will be drawn in no special order.
  */
 int
-rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arbn_internal *aip;
     int i;
@@ -526,7 +526,7 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
  *  0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arbn_internal *aip;
     struct shell *s;
@@ -903,7 +903,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int i;
     unsigned long neqn;
     int double_count;
-    int byte_count;
+    size_t byte_count;
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);

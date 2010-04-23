@@ -1,23 +1,23 @@
-/*
- *                            O B J - G . C BRL-CAD
+/*                         O B J - G . C
+ * BRL-CAD
  *
- * Copyright (c) 2002-2010 United States Government as represented by the U.S.
- * Army Research Laboratory.
+ * Copyright (c) 2009-2010 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License version 2.1 as
- * published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- * License for more details.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this file; see the file named COPYING for more information.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
  *
  */
-
 /** @file obj-g.c
  *
  * Convert wavefront obj format files to BRL-CAD .g binary format
@@ -45,18 +45,26 @@ static char *usage = "%s [-d] [-x rt_debug_flag] input.obj output.g\n\
 			 The -x option specifies an RT debug flags (see raytrace.h).\n";
 static int debug = 0;
 static int verbose = 0;
-static int vertmax = 1;
 
-struct region_s {
+struct object_s {
     char *name;
     struct rt_bot_internal *bot;
 };
 
-struct region_s *
-new_region(char *name)
+
+struct obj_data {
+    size_t num_vertices;
+    fastf_t *vertices;
+    size_t num_faces;
+    long *faces;
+};
+
+
+struct object_s *
+new_object(const char *name)
 {
-    struct region_s *r = (struct region_s *)bu_calloc(1, sizeof(struct region_s), "new_region");;
-    r->bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "new_region:rt_bot_internal");;
+    struct object_s *r = (struct object_s *)bu_calloc(1, sizeof(struct object_s), "new_object");
+    r->bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "new_object:rt_bot_internal");
     r->name = strdup(name);
     r->bot->magic = RT_BOT_INTERNAL_MAGIC;
     r->bot->mode = RT_BOT_SURFACE;
@@ -68,91 +76,163 @@ new_region(char *name)
     return r;
 }
 
+
 int
-free_region(struct region_s * r)
+free_object(struct object_s *r)
 {
-    if (r && r->name)
-	bu_free(r->name, "region name");
-    if (r && r->bot)
+    if (!r)
+	return 0;
+
+    if (r->name)
+	bu_free(r->name, "object name");
+    r->name = NULL;
+
+    if (r->bot)
 	bu_free(r->bot, "rt_bot_internal");
-    if (r)
-	bu_free(r, "region");
+    r->bot = NULL;
+
+    bu_free(r, "object");
+
     return 0;
 }
 
+
 int
-write_region(struct region_s *r, struct rt_wdb *out_fp)
+write_object(struct object_s *r, struct rt_wdb *out_fp)
 {
     int rval = -1;
     const char *regname;
 
     if (r->bot->num_faces == 0) {
-	if (strncmp(r->name, "all.s", 6))
-	    rval = fprintf(stderr, "%s has 0 faces, skipping\n", r->name), 0;
+	rval = 0;
+	if (r->name && verbose) {
+	    bu_log("%s has 0 faces, skipping\n", r->name);
+	}
     } else {
 	int faces;
-	/* add the region long name to list */
-	vertmax += r->bot->num_vertices;
+	/* add the object long name to list */
 	regname = bu_basename(r->name);
 	faces = r->bot->num_faces;
 	rval = wdb_export(out_fp, regname, (genptr_t)(r->bot), ID_BOT, 1.0);
-	if(verbose)
-	    printf("Wrote %s (%d faces)\n", regname, faces);
+	r->bot = NULL; /* released during export */
+	if (verbose)
+	    bu_log("Wrote %s (%d faces)\n", regname, faces);
     }
+
+    /* done with this object, let it go */
+    free_object(r);
+    r = NULL;
+
     return rval;
 }
 
 
 int
-add_vertex(struct region_s * r, char *buf)
+add_vertex(struct obj_data *o, char *buf)
 {
     /* syntax is "v <x> <y> <z> [w]" */
-    r->bot->vertices = bu_realloc(r->bot->vertices, sizeof(fastf_t) * 3 * (r->bot->num_vertices + 1), "bot vertices");
-    sscanf(buf, "%lf %lf %lf", 
-	   r->bot->vertices + 3*r->bot->num_vertices,
-	   r->bot->vertices + 3*r->bot->num_vertices + 1,
-	   r->bot->vertices + 3*r->bot->num_vertices + 2);
-    r->bot->num_vertices++;
-    return 0;
-}
-
-int
-add_face(struct region_s * r, char *buf)
-{
-    char *contains_slash = strchr( buf,'/');
-    /* syntax is ... messy. v1/vt1/vn1, can be
-     * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ... */
-    r->bot->faces = bu_realloc(r->bot->faces, sizeof(int) * 3 * (r->bot->num_faces + 1), "bot faces");
-    /*
-     * checking to see if OBJ file contains texture and/or normal data
-     * we won't be using it but will need to parse around it.
-     */
-    if (contains_slash) {
-	sscanf(buf, "%d/%*s %d/%*s %d/%*s", 
-	       r->bot->faces + 3*r->bot->num_faces,
-	       r->bot->faces + 3*r->bot->num_faces + 1,
-	       r->bot->faces + 3*r->bot->num_faces + 2);
+    if (!o->vertices) {
+	o->vertices = bu_calloc(3, sizeof(fastf_t), "vertices");
+	o->num_vertices = 0;
     } else {
-	sscanf(buf, "%d %d %d", 
-	       r->bot->faces + 3*r->bot->num_faces,
-	       r->bot->faces + 3*r->bot->num_faces + 1,
-	       r->bot->faces + 3*r->bot->num_faces + 2);
+	o->vertices = bu_realloc(o->vertices, 3 * sizeof(fastf_t) * (o->num_vertices+1), "vertices");
     }
-    r->bot->faces[3*r->bot->num_faces+0]-=vertmax;
-    r->bot->faces[3*r->bot->num_faces+1]-=vertmax;
-    r->bot->faces[3*r->bot->num_faces+2]-=vertmax;
-    r->bot->num_faces++;
+
+    sscanf(buf, "%lf %lf %lf", 
+	   &(o->vertices[3*o->num_vertices + 0]),
+	   &(o->vertices[3*o->num_vertices + 1]),
+	   &(o->vertices[3*o->num_vertices + 2]));
+    o->num_vertices++;
+
     return 0;
 }
 
+
 int
-main(int argc, char **argv)
+add_face(struct object_s *r, struct obj_data *o, char *buf)
+{
+    long vertex;
+
+    /* checking to see if OBJ file contains texture and/or normal data.
+     * we won't be using it but will need to parse around it.
+     * syntax is ... messy. v1/vt1/vn1, can be:
+     *
+     * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ...
+     */
+
+    char *contains_slash = strchr(buf, '/');
+
+    if (!o->faces) {
+	o->faces = bu_calloc(3, sizeof(long), "faces");
+	o->num_faces = 0;
+    } else {
+	o->faces = bu_realloc(o->faces, 3 * sizeof(long) * (o->num_faces+1), "faces");
+    }
+
+    /* add to global data */
+    if (contains_slash) {
+	sscanf(buf, "%ld/%*s %ld/%*s %ld/%*s", 
+	       &(o->faces[3*o->num_faces + 0]),
+	       &(o->faces[3*o->num_faces + 1]),
+	       &(o->faces[3*o->num_faces + 2]));
+    } else {
+	sscanf(buf, "%ld %ld %ld", 
+	       &(o->faces[3*o->num_faces + 0]),
+	       &(o->faces[3*o->num_faces + 1]),
+	       &(o->faces[3*o->num_faces + 2]));
+    }
+
+    /* add to BoT */
+    if (!r->bot->vertices) {
+	r->bot->vertices = bu_calloc(9, sizeof(fastf_t), "bot vertices");
+	r->bot->num_vertices = 0;
+    } else {
+	r->bot->vertices = bu_realloc(r->bot->vertices, 3 * sizeof(fastf_t) * (r->bot->num_vertices+3), "bot vertices");
+    }
+
+    /* face vertices are indexed from 1, not 0 */
+    vertex = o->faces[3*o->num_faces+0] - 1;
+    r->bot->vertices[3*r->bot->num_vertices + 0] = o->vertices[3*vertex + 0];
+    r->bot->vertices[3*r->bot->num_vertices + 1] = o->vertices[3*vertex + 1];
+    r->bot->vertices[3*r->bot->num_vertices + 2] = o->vertices[3*vertex + 2];
+    r->bot->num_vertices++;
+
+    vertex = o->faces[3*o->num_faces+1] - 1;
+    r->bot->vertices[3*r->bot->num_vertices + 0] = o->vertices[3*vertex + 0];
+    r->bot->vertices[3*r->bot->num_vertices + 1] = o->vertices[3*vertex + 1];
+    r->bot->vertices[3*r->bot->num_vertices + 2] = o->vertices[3*vertex + 2];
+    r->bot->num_vertices++;
+
+    vertex = o->faces[3*o->num_faces+2] - 1;
+    r->bot->vertices[3*r->bot->num_vertices + 0] = o->vertices[3*vertex + 0];
+    r->bot->vertices[3*r->bot->num_vertices + 1] = o->vertices[3*vertex + 1];
+    r->bot->vertices[3*r->bot->num_vertices + 2] = o->vertices[3*vertex + 2];
+    r->bot->num_vertices++;
+
+    if (!r->bot->faces)
+	r->bot->faces = bu_calloc(3, sizeof(int), "bot faces");
+    else
+	r->bot->faces = bu_realloc(r->bot->faces, 3 * sizeof(int) * (r->bot->num_faces+1), "bot faces");
+    r->bot->faces[3*r->bot->num_faces+0] = r->bot->num_vertices-3;
+    r->bot->faces[3*r->bot->num_faces+1] = r->bot->num_vertices-2;
+    r->bot->faces[3*r->bot->num_faces+2] = r->bot->num_vertices-1;
+    r->bot->num_faces++;
+
+    o->num_faces++;
+
+    return 0;
+}
+
+
+int
+main(int argc, char *argv[])
 {
     int c;
     char *prog = *argv, buf[BUFSIZ];
-    FILE *fd_in;	/* input file */
-    struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
-    struct region_s *region = NULL;
+    FILE *fd_in; /* input file */
+    struct rt_wdb *fd_out; /* Resulting BRL-CAD file */
+    struct object_s *object = NULL;
+    struct obj_data data = {0, NULL, 0, NULL};
 
     if (argc < 2)
 	bu_exit(1, usage, argv[0]);
@@ -193,13 +273,12 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    /* prep the region, use a default name in case the OBJ has no groups */
-    region = new_region("all.s");
+    /* prep the object, use a default name in case the OBJ has no groups */
+    object = new_object("default.s");
     /* loop through the OBJ file. */
     while (bu_fgets(buf, BUFSIZ, fd_in)) {
 	if (ferror(fd_in)) {
-	    fprintf(stderr, "Ack! %d\nflaming death\n", ferror(fd_in));
-	    return EXIT_FAILURE;
+	    bu_exit(EXIT_FAILURE, "Ack! %d\nflaming death\n", ferror(fd_in));
 	}
 	/* ghetto chomp() */
 	if (strlen(buf)>2 && buf[strlen(buf) - 1] == '\n')
@@ -211,13 +290,19 @@ main(int argc, char **argv)
 	    case '\n':
 	    case ' ':
 		continue;
-	    case 'g':	/* group (region) */
-		if (region) {
-		    write_region(region, fd_out);
-		    free_region(region);
+	    case 'o':
+	    case 'g':	/* group (object) */
+		if (object && object->bot) {
+		    if (object->bot->num_faces > 0 && object->bot->num_vertices > 0) {
+			bu_log("Writing [%s]\n", object->name);
+			write_object(object, fd_out);
+		    } else {
+			if (strncmp(object->name, "default.s", 9) != 0)
+			    bu_log("Skipping invalid mesh [%s] (faces=%ld, vertices=%ld)\n", object->name, (long)object->bot->num_faces, (long)object->bot->num_vertices);
+		    }
 		}
-		region = new_region(buf + 2);
-		if (!region) {
+		object = new_object(buf + 2);
+		if (!object) {
 		    perror(prog);
 		    return EXIT_FAILURE;
 		}
@@ -225,49 +310,84 @@ main(int argc, char **argv)
 	    case 'v':	/* vertex */
 		switch(buf[1]) {
 		    case ' ':
-			if (!region) {
+			if (!object) {
 			    perror(prog);
+			    if (data.vertices)
+				bu_free(data.vertices, "vertices");
+			    if (data.faces)
+				bu_free(data.faces, "faces");
 			    return EXIT_FAILURE;
 			}
-			add_vertex(region, buf + 2);
+			add_vertex(&data, buf + 2);
 			break;
 		    case 'n':
 			/* vertex normal here */
 			break;
+		    case 't':
+			/* vertex texture coordinate here */
+			break;
 		}
 		break;
 	    case 'f':	/* face */
-		if (!region) {
+		if (!object) {
 		    perror(prog);
 		    return EXIT_FAILURE;
 		}
-		add_face(region, buf + 2);
+		add_face(object, &data, buf + 2);
 		break;
 	    case 'l': 
-		{ static int seen = 0; if(!seen) { printf("Saw a 'line' statement, ignoring lines.\n"); seen++; } } 
+		{
+		    static int seen = 0;
+		    if (!seen) {
+			if (verbose)
+			    bu_log("Saw a 'line' statement, ignoring lines.\n");
+			seen++;
+		    }
+		}
 		break;
 	    case 's':
-		{ static int seen = 0; if(!seen) { printf("Saw a 'smoothing group' statement, ignoring.\n"); seen++; } } 
+		{
+		    static int seen = 0;
+		    if (!seen) {
+			if (verbose)
+			    bu_log("Saw a 'smoothing group' statement, ignoring.\n");
+			seen++;
+		    }
+		}
 		break;
 	    case 'm':
-		if(!strncmp(buf,"mtllib",6)) printf("Ignoring this mtllib for now\n");
+		if (!strncmp(buf, "mtllib", 6))
+		    if (verbose)
+			bu_log("Ignoring this mtllib for now\n");
 		break;
 	    case 'u':
-		if(!strncmp(buf,"usemtl",6)) printf("Ignoring this usemtl for now\n");
+		if (!strncmp(buf, "usemtl", 6))
+		    if (verbose)
+			bu_log("Ignoring this usemtl for now\n");
 		break;
 	    default:
-		fprintf(stderr, "Unknown control code: %c\n", *buf);
-		return EXIT_FAILURE;
-	} 
+		bu_log("Ignoring unknown OBJ code: %c\n", *buf);
+		continue;
+	}
     }
-    write_region(region, fd_out);
+    if (object && object->bot && object->bot->num_faces > 0) {
+	bu_log("Writing [%s]\n", object->name);
+	write_object(object, fd_out);
+    }
 
-    /* using the list generated in write regions, build the tree. */
+    /* using the list generated in write objects, build the tree. */
 
     wdb_close(fd_out);
 
+    /* release face memory */
+    if (data.vertices)
+	bu_free(data.vertices, "vertices");
+    if (data.faces)
+	bu_free(data.faces, "faces");
+
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -277,8 +277,8 @@ main (int argc, char **argv)
 	    while (BU_LIST_WHILE(lrp, locrec, (&(gp_locs.l))))
 	    {
 		BU_LIST_DEQUEUE(&(lrp->l));
-		bu_log("%g %g	%d %d\n", lrp -> h, lrp -> v,
-		       (int) H2SCRX(lrp -> h), (int) V2SCRY(lrp -> v));
+		bu_log("%g %g	%d %d\n", lrp->h, lrp->v,
+		       (int) H2SCRX(lrp->h), (int) V2SCRY(lrp->v));
 		bu_free((char *) lrp, "location record");
 	    }
 	else
@@ -693,9 +693,9 @@ static struct locrec *mk_locrec (fastf_t h, fastf_t v)
 
     lrp = (struct locrec *)
 	bu_malloc(sizeof(struct locrec), "location record");
-    lrp -> locrec_magic = LOCREC_MAGIC;
-    lrp -> h = h;
-    lrp -> v = v;
+    lrp->locrec_magic = LOCREC_MAGIC;
+    lrp->h = h;
+    lrp->v = v;
     return (lrp);
 }
 
@@ -797,7 +797,7 @@ static bool pars_Argv (int argc, char **argv)
 		    return (false);
 		}
 		lrp = mk_locrec(h, v);
-		BU_LIST_INSERT(&(gp_locs.l), &(lrp -> l));
+		BU_LIST_INSERT(&(gp_locs.l), &(lrp->l));
 	    }
 	    break;
 	    case 'b':

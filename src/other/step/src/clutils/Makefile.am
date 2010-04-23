@@ -1,6 +1,8 @@
 lib_LTLIBRARIES = libsteputils.la
 noinst_LTLIBRARIES = libsteputils_nil.la
 
+AM_CPPFLAGS = ${NOWARN}
+
 libsteputils_nil_la_SOURCES = \
 	Str.cc \
 	dirobj.cc \

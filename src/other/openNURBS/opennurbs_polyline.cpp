@@ -257,11 +257,8 @@ bool ON_Polyline::ClosestPointTo( const ON_3dPoint& point, double *t, int segmen
           segment_t = 1.0;
       }
       segment_d = point.DistanceTo((1-segment_t)*m_a[segment_index] + segment_t*m_a[segment_index+1]);
-      if ( !segment_index ) {
-        best_t = segment_t;
-        best_d = segment_d;
-      }
-      else if ( segment_d < best_d ) {
+      if ( !rc || segment_d < best_d ) 
+      {
         best_t = segment_t + ((double)segment_index);
         best_d = segment_d;
       }

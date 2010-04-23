@@ -44,35 +44,35 @@ dm_draw_scale(struct dm *dmp,
 	      int       *textColor)
 {
     int soffset;
-    fastf_t x1, x2;
-    fastf_t y1, y2;
+    fastf_t xpos1, xpos2;
+    fastf_t ypos1, ypos2;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "%g", viewSize*0.5);
     soffset = (int)(strlen(bu_vls_addr(&vls)) * 0.5);
 
-    x1 = -0.5;
-    x2 = 0.5;
-    y1 = -0.8;
-    y2 = -0.8;
+    xpos1 = -0.5;
+    xpos2 = 0.5;
+    ypos1 = -0.8;
+    ypos2 = -0.8;
 
     DM_SET_FGCOLOR(dmp,
 		   (unsigned char)lineColor[0],
 		   (unsigned char)lineColor[1],
 		   (unsigned char)lineColor[2], 1, 1.0);
-    DM_DRAW_LINE_2D(dmp, x1, y1, x2, y2);
-    DM_DRAW_LINE_2D(dmp, x1, y1+0.01, x1, y1-0.01);
-    DM_DRAW_LINE_2D(dmp, x2, y1+0.01, x2, y1-0.01);
+    DM_DRAW_LINE_2D(dmp, xpos1, ypos1, xpos2, ypos2);
+    DM_DRAW_LINE_2D(dmp, xpos1, ypos1+0.01, xpos1, ypos1-0.01);
+    DM_DRAW_LINE_2D(dmp, xpos2, ypos1+0.01, xpos2, ypos1-0.01);
 
     DM_SET_FGCOLOR(dmp,
 		   (unsigned char)textColor[0],
 		   (unsigned char)textColor[1],
 		   (unsigned char)textColor[2], 1, 1.0);
-    DM_DRAW_STRING_2D(dmp, "0", x1-0.005, y1 + 0.02, 1, 0);
+    DM_DRAW_STRING_2D(dmp, "0", xpos1-0.005, ypos1 + 0.02, 1, 0);
     DM_DRAW_STRING_2D(dmp, bu_vls_addr(&vls),
-		      x2-(soffset * 0.015),
-		      y1 + 0.02, 1, 0);
+		      xpos2-(soffset * 0.015),
+		      ypos1 + 0.02, 1, 0);
 
     bu_vls_free(&vls);
 }

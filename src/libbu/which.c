@@ -51,7 +51,7 @@ bu_which(const char *cmd)
     }
 
     if (!cmd || (strlen(cmd) == 0)) {
-	return 0;
+	return NULL;
     }
 
     /* start fresh */

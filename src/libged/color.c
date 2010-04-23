@@ -46,6 +46,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     struct mater *mp;
     struct mater *zot;
     FILE *fp;
+    int c;
     char line[128];
     static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
     char tmpfil[MAXPATHLEN];
@@ -55,11 +56,21 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    bu_optind = 1;
     /* First, grab the editstring off of the argv list */
-    editstring = (char *)argv[0];
-    argc--;
-    argv++;
-        
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != EOF) {
+	switch (c) {
+	    case 'E' :
+	    	editstring = bu_optarg;
+		break;
+	    default :
+		break;
+	}
+    }
+
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
+    
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -172,7 +183,7 @@ ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (argc != 1) {
+    if (argc != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
@@ -304,7 +315,7 @@ _ged_color_putrec(struct ged		*gedp,
 
     if (mp->mt_daddr == MATER_NO_ADDR) {
 	/* Need to allocate new database space */
-	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1) < 0) {
+	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1) == (size_t)-1) {
 	    bu_vls_printf(&gedp->ged_result_str, "Database alloc error, aborting");
 	    return;
 	}
@@ -314,7 +325,7 @@ _ged_color_putrec(struct ged		*gedp,
 	dir.d_len = 1;
     }
 
-    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1) < 0) {
+    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1) == (size_t)-1) {
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
 	return;
     }
@@ -342,7 +353,7 @@ _ged_color_zaprec(struct ged		*gedp,
     dir.d_addr = mp->mt_daddr;
     dir.d_flags = 0;
 
-    if (db_delete(gedp->ged_wdbp->dbip, &dir) < 0) {
+    if (db_delete(gedp->ged_wdbp->dbip, &dir) == (size_t)-1) {
 	bu_vls_printf(&gedp->ged_result_str, "Database delete error, aborting");
 	return;
     }

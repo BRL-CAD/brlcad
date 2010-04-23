@@ -80,17 +80,17 @@ struct bu_structparse dm_xvars_vparse[] = {
 
 
 /*
- *  Based upon new state, possibly do extra stuff,
- *  including enabling continuous tablet tracking,
- *  object highlighting.
+ * Based upon new state, possibly do extra stuff,
+ * including enabling continuous tablet tracking,
+ * object highlighting.
  *
- *  This routine was taken and modified from the original dm-X.c
- *  that was written by Phil Dykstra.
+ * This routine was taken and modified from the original dm-X.c
+ * that was written by Phil Dykstra.
  */
 void
 stateChange(int a, int b)
 {
-    switch ( b )  {
+    switch (b) {
 	case ST_VIEW:
 	    /* constant tracking OFF */
 	    doMotion = 0;
@@ -114,6 +114,7 @@ stateChange(int a, int b)
 
     ++update_views;
 }
+
 
 int
 common_dm(int argc, char **argv)
@@ -163,7 +164,7 @@ common_dm(int argc, char **argv)
 
 	if (mged_variables->mv_faceplate &&
 	    mged_variables->mv_orig_gui) {
-#define        MENUXLIM        (-1250)
+#define MENUXLIM (-1250)
 
 	    if (x >= MENUXLIM && scroll_select(x, y, 0)) {
 		stolen = 1;
@@ -189,7 +190,7 @@ common_dm(int argc, char **argv)
 	    if (grid_state->gr_snap)
 		snap_to_grid(&fx, &fy);
 
-	    if ( mged_variables->mv_perspective_mode )
+	    if (mged_variables->mv_perspective_mode)
 		VSET(view_pt, fx, fy, 0.0)
 		    else
 			VSET(view_pt, fx, fy, 1.0)
@@ -412,28 +413,28 @@ common_dm(int argc, char **argv)
 		am_mode = AMM_ADC_ANG2;
 		break;
 	    case 't':
-	    {
-		point_t model_pt;
-		point_t view_pt;
+		{
+		    point_t model_pt;
+		    point_t view_pt;
 
-		bu_vls_init(&vls);
+		    bu_vls_init(&vls);
 
-		VSET(view_pt, dm_Xx2Normal(dmp, dml_omx), dm_Xy2Normal(dmp, dml_omy, 1), 0.0);
+		    VSET(view_pt, dm_Xx2Normal(dmp, dml_omx), dm_Xy2Normal(dmp, dml_omy, 1), 0.0);
 
-		if (grid_state->gr_snap)
-		    snap_to_grid(&view_pt[X], &view_pt[Y]);
+		    if (grid_state->gr_snap)
+			snap_to_grid(&view_pt[X], &view_pt[Y]);
 
-		MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
-		VSCALE(model_pt, model_pt, base2local);
+		    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
+		    VSCALE(model_pt, model_pt, base2local);
 
-		bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
+		    bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
+		    Tcl_Eval(interp, bu_vls_addr(&vls));
 
-		bu_vls_free(&vls);
-		am_mode = AMM_ADC_TRAN;
-	    }
+		    bu_vls_free(&vls);
+		    am_mode = AMM_ADC_TRAN;
+		}
 
-	    break;
+		break;
 	    case 'd':
 		fx = (dm_Xx2Normal(dmp, dml_omx) * GED_MAX -
 		      adc_state->adc_dv_x) * view_state->vs_gvp->gv_scale * base2local * INV_GED;
@@ -592,9 +593,9 @@ common_dm(int argc, char **argv)
 	}
 
 	/* set the window size */
-	if ( argc == 3 ) {
-	    width = atoi( argv[1] );
-	    height = atoi( argv[2] );
+	if (argc == 3) {
+	    width = atoi(argv[1]);
+	    height = atoi(argv[2]);
 
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
 #  if 0
@@ -624,8 +625,7 @@ common_dm(int argc, char **argv)
 	    bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
 	    bu_vls_init(&vls);
-	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1],
-				     (const char *)dmp->dm_vars.pub_vars, ',');
+	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dmp->dm_vars.pub_vars, COMMA);
 	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 	}
@@ -677,6 +677,7 @@ common_dm(int argc, char **argv)
     Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
     return TCL_ERROR;
 }
+
 
 /*
  * Local Variables:

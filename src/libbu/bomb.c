@@ -42,7 +42,7 @@ static char tracefile[512] = {0};
 
 /* release memory on application exit */
 static void
-_free_bu_bomb_failsafe()
+_free_bu_bomb_failsafe(void)
 {
     if (_bu_bomb_failsafe) {
 	free(_bu_bomb_failsafe);
@@ -52,7 +52,7 @@ _free_bu_bomb_failsafe()
 
 
 int
-bu_bomb_failsafe_init()
+bu_bomb_failsafe_init(void)
 {
     if (_bu_bomb_failsafe) {
 	return 1;
@@ -108,8 +108,9 @@ bu_bomb(const char *str)
 	fd = open("/dev/tty", 1);
 	if (fd > 0) {
 	    if (str && (strlen(str) > 0)) {
-		write(fd, str, strlen(str));
-		write(fd, "\n", 1);
+		int ret;
+		ret = write(fd, str, strlen(str));
+		ret = write(fd, "\n", 1);
 	    }
 	    close(fd);
 	}
@@ -154,7 +155,8 @@ bu_bomb(const char *str)
 
 	fd = open("/dev/tty", 1);
 	if (fd > 0) {
-	    write(fd, "Causing intentional core dump due to debug flag\n", 48);
+	    int ret;
+	    ret = write(fd, "Causing intentional core dump due to debug flag\n", 48);
 	    close(fd);
 	}
 	abort();	/* should dump if ulimit is non-zero */

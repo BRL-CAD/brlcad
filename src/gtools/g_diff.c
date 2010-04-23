@@ -49,9 +49,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "mater.h"
-#include "ged.h"
 #include "tclcad.h"
-
 
 static struct mater *mater_hd1 = MATER_NULL;
 static struct mater *mater_hd2 = MATER_NULL;
@@ -971,6 +969,7 @@ main(int argc, char **argv)
 	bu_exit(1, "%s and %s are the same file\n", file1, file2);
     }
 
+    Tcl_FindExecutable(argv[0]);
     interp = Tcl_CreateInterp();
     tclcad_auto_path(interp);
     tclcad_tcl_library(interp);

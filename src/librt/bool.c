@@ -1896,7 +1896,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 
 		regp = *regpp;
 		RT_CK_REGION(regp);
-		bu_log("%9lx %s\n", (long)regp, regp->reg_name);
+		bu_log("%p %s\n", (void *)regp, regp->reg_name);
 	    }
 	}
 

@@ -53,7 +53,6 @@ main(int argc, char **argv)
     struct db_i	*dbip4;
     struct directory	*dp;
     struct bn_tol tol;
-    struct mater *mp;
     struct bu_vls colortab;
     char name[17];
     int reverse=0;

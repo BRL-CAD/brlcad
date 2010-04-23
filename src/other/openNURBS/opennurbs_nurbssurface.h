@@ -58,8 +58,6 @@ public:
 class ON_Brep;
 class ON_NurbsSurface;
 
-typedef ON_Mesh* (*ON_MeshNurbsSurface)( const ON_NurbsSurface&, const ON_MeshParameters&, ON_Mesh* );
-
 class ON_CLASS ON_NurbsSurface : public ON_Surface
 {
   ON_OBJECT_DECLARE(ON_NurbsSurface);
@@ -1032,9 +1030,6 @@ public:
                             //
                             //         [ CV(i)[0], ..., CV(i)[m_dim] ].
                             // 
-
-public:
-  static ON_MeshNurbsSurface _MeshNurbsSurface;
 };
 
 

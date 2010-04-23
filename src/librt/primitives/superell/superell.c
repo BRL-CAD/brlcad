@@ -658,7 +658,7 @@ rt_superell_16pts(fastf_t *ov,
  * R T _ S U P E R E L L _ P L O T
  */
 int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i;
     struct rt_superell_internal *eip;
@@ -744,7 +744,7 @@ struct superell_vert_strip {
  * 0 OK.  *r points to nmgregion that holds this tesssuperellation.
  */
 int
-rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (r) NMG_CK_REGION(*r);
     if (m) NMG_CK_MODEL(m);

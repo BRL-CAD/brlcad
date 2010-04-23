@@ -126,7 +126,6 @@ EXTRA_DIST = \
 	win32-msvc8/proe \
 	win32-msvc8/proe-brl-3.0/proe-brl-3.0.vcproj \
 	win32-msvc8/proe-brl-4.0/proe-brl-4.0.vcproj \
-	win32-msvc8/proe-brl-4.0/proe-brl.vcproj \
 	win32-msvc8/proe-brl-5.0/proe-brl-5.0.vcproj \
 	win32-msvc8/proe/proe.sln
 

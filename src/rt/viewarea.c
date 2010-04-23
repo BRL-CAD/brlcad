@@ -43,9 +43,10 @@ extern int	npsw;			/* number of worker PSWs to run */
 
 extern int 	 rpt_overlap;
 
-extern fastf_t  rt_cline_radius;        /* from g_cline.c */
-
-extern double units; /* from opt.c */
+/* from opt.c */
+extern double units;
+extern int default_units;
+extern int model_units;
 
 static long hit_count=0;
 static fastf_t cell_area=0.0;
@@ -83,8 +84,11 @@ Options:\n\
  -x #		Set librt debug flags\n\
  -c             Auxillary commands (see man page)\n\
 \n\
-WARNING: Rtarea may not correctly report area or center when instancing is\n\
+WARNING: rtarea may not correctly report area or center when instancing is\n\
 done at the group level. Using 'xpush' can be a workaround for this problem.\n\
+\n\
+WARNING: rtarea presently outputs in storage units (mm) by default but will\n\
+be changed to output in local units in the near future.\n\
 \n\
 ";
 
@@ -265,7 +269,7 @@ view_pixel()
 static void
 increment_assembly_counter(register struct area *cell, const char *path, area_type_t type, point_t *hit_point)
 {
-    int l = 0;
+    size_t l = 0;
     char *buffer = (char *) NULL;
     int depth = 0;
     int parent_found = 0;
@@ -282,7 +286,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
     }
 
     l = strlen(path);
-    buffer = bu_calloc(l+1, sizeof(char), "increment_assembly_counter buffer allocation");
+    buffer = bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
     bu_strlcpy(buffer, path, l+1);
 
     /* trim off the region name */
@@ -364,7 +368,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
              */
 	    if (!parent_found) {
 		char *name;
-		int len;
+		size_t len;
 
                 /* create new area record */
                 BU_GETSTRUCT(area_record_ptr, area);
@@ -454,7 +458,6 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     struct rt_i *rtip = ap->a_rt_i;
     register struct partition *pp = PartHeadp->pt_forw;
     register struct area *cell;
-    register int l;
     struct area *cellp;
 
 /* exposed hit sums */
@@ -606,7 +609,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
              * then assign the name within the area record.
              */
 	    if (!cell->name) {
-		int l = strlen(reg->reg_name);
+		size_t l = strlen(reg->reg_name);
 		while (l > 0) {
 		    if (reg->reg_name[l-1] == '/') {
 			break;
@@ -677,7 +680,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 
 	    if (!cell->name) {
 	        /* get the region name */
-	        int l = strlen(reg->reg_name);
+	        size_t l = strlen(reg->reg_name);
 	        while (l > 0) {
 		    if (reg->reg_name[l-1] == '/') {
 		        break;
@@ -775,15 +778,26 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
 	struct area_list *prev = listp;
 	double factor = 1.0; /* show mm in parens by default */
 
-	/* if millimeters, show meters in parens */
+	/* show some common larger units in parens otherwise default to mm^2*/
 	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
 	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("km");
+	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	    factor = bu_units_conversion("ft");
+	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	    factor = bu_units_conversion("yd");
+	} else {
+		factor = bu_units_conversion("mm");
 	}
-
 	cell = listp->cell;
 
 	if (type == PRESENTED_AREA) {
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)",
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->hits,
 		   cell_area * (fastf_t)cell->hits / (units*units),
@@ -794,12 +808,17 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
             if (rtarea_compute_centers) {
                 point_t temp;
                 if (area_center((cell->hit_points), (cell->num_hit_points), &temp)) {
-                    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf)", temp[X], temp[Y], temp[Z]);
+		    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
+			temp[X]/units,
+			temp[Y]/units,
+			temp[Z]/units,
+			bu_units_string(units)
+		    );
                 }
             }
 	}
 	if (type == EXPOSED_AREA) {
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)",
+	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->exposures,
 		   cell_area * (fastf_t)cell->exposures / (units*units),
@@ -810,7 +829,12 @@ print_region_area_list(long int *count, struct rt_i *rtip, area_type_t type)
             if (rtarea_compute_centers) {
                 point_t temp;
                 if (area_center((cell->exp_points), (cell->num_exp_points), &temp)) {
-                    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf)", temp[X], temp[Y], temp[Z]);
+		    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
+			temp[X]/units,
+			temp[Y]/units,
+			temp[Z]/units,
+			bu_units_string(units)
+		    );
                 }
             }
 	}
@@ -839,7 +863,6 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 {
     struct region *rp;
     struct area *cellp;
-    int depth;
     register struct area *cell = (struct area *)NULL;
     long int count = 0;
 
@@ -906,11 +929,22 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	struct area_list *prev = listp;
 	double factor = 1.0; /* show mm in parens by default */
 
-	/* if millimeters, show meters in parens */
+	/* show some common larger units in parens otherwise default to mm^2*/
 	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
 	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("km");
+	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	    factor = bu_units_conversion("ft");
+	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	    factor = bu_units_conversion("yd");
+	} else {
+		factor = bu_units_conversion("mm");
 	}
-
 	cell = listp->cell;
 
 	while (indents-- > 0) {
@@ -922,7 +956,7 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 	}
     
 	if (type == PRESENTED_AREA) {
-	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)",
+	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->hits,
 		   cell_area * (fastf_t)cell->hits / (units*units),
@@ -932,16 +966,17 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		);
             if (rtarea_compute_centers) {
                 if (cell->hits) {
-                    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf)",
-                    cell->group_presented_hit_x_sum / (fastf_t)cell->hits,
-                    cell->group_presented_hit_y_sum / (fastf_t)cell->hits,
-                    cell->group_presented_hit_z_sum / (fastf_t)cell->hits
+                    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
+                	cell->group_presented_hit_x_sum / (fastf_t)cell->hits / units,
+                	cell->group_presented_hit_y_sum / (fastf_t)cell->hits / units,
+                	cell->group_presented_hit_z_sum / (fastf_t)cell->hits / units,
+			bu_units_string(units)
                     );
                 }
             }
 	}
 	if (type == EXPOSED_AREA) {
-	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf square %s)",
+	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->exposures,
 		   cell_area * (fastf_t)cell->exposures / (units*units),
@@ -951,10 +986,11 @@ print_assembly_area_list(struct rt_i *rtip, long int max_depth, area_type_t type
 		);
             if (rtarea_compute_centers) {
                 if (cell->exposures) {
-                    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf)",
-                    cell->group_exposed_hit_x_sum / (fastf_t)cell->exposures,
-                    cell->group_exposed_hit_y_sum / (fastf_t)cell->exposures,
-                    cell->group_exposed_hit_z_sum / (fastf_t)cell->exposures 
+                    bu_log("\tcenter at (%.4lf, %.4lf, %.4lf) %s",
+                    cell->group_exposed_hit_x_sum / (fastf_t)cell->exposures / units,
+                    cell->group_exposed_hit_y_sum / (fastf_t)cell->exposures / units,
+                    cell->group_exposed_hit_z_sum / (fastf_t)cell->exposures / units,
+		    bu_units_string(units)
                     );
                 }
             }
@@ -992,19 +1028,45 @@ view_end(struct application *ap)
     long int exposed_region_count = 0;
     long int exposed_assembly_count = 0;
 
-    double factor = 1.0; /* show mm in parens by default */
-
-    /* if millimeters, show meters in parens */
-    if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
-	factor = bu_units_conversion("m");
+    /* if not specified by user use local database units for summary units */
+    if (model_units) {
+    	units = rtip->rti_dbip->dbi_local2base;
+    	bu_log("WARNING: using current model working units of (%s)\n", bu_units_string(units));
     }
 
+    double factor = 1.0; /* show local database units in parens by default */
+	/* show some common larger units in parens otherwise default to mm^2*/
+	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("m");
+	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	    factor = bu_units_conversion("km");
+	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	    factor = bu_units_conversion("ft");
+	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	    factor = bu_units_conversion("yd");
+	} else {
+		factor = bu_units_conversion("mm");
+	}
     bu_log("\n"
 	   "********************************************************************\n"
 	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"
 	   "         and subject to change in a future release of BRL-CAD.\n"
 	   "********************************************************************\n"
 	   "\n");
+    if (default_units) {
+	bu_log("\n"
+	       "WARNING: Default units of measurement is presently storage units (%s).\n"
+	       "         Future output default will be local units (%s)\n"
+	       "\n",
+	       bu_units_string(units),
+	       bu_units_string(ap->a_rt_i->rti_dbip->dbi_local2base)
+	    );
+	    
+    }
 
     cumulative = print_region_area_list(&presented_region_count, rtip, PRESENTED_AREA);
     (void) print_region_area_list(&exposed_region_count, rtip, EXPOSED_AREA);
@@ -1025,14 +1087,14 @@ view_end(struct application *ap)
 
     bu_log("\nSummary\n=======\n");
     total_area = cell_area * (fastf_t)hit_count;
-    bu_log("Cumulative Presented Areas (%ld hits) = %18.4lf square %s\t(%.4lf square %s)\n",
+    bu_log("Cumulative Presented Areas (%ld hits) = %18.4lf square %s\t(%.4lf %s^2)\n",
 	   cumulative,
 	   cell_area * (fastf_t)cumulative / (units*units),
 	   bu_units_string(units),
 	   cell_area * (fastf_t)cumulative / (factor*factor),
 	   bu_units_string(factor)
 	);
-    bu_log("Total Exposed Area         (%ld hits) = %18.4lf square %s\t(%.4lf square %s)\n",
+    bu_log("Total Exposed Area         (%ld hits) = %18.4lf square %s\t(%.4lf %s^2)\n",
 	   hit_count,
 	   total_area / (units*units),
 	   bu_units_string(units),
@@ -1041,11 +1103,12 @@ view_end(struct application *ap)
 	);
     /* output of center of exposed area */
     if (rtarea_compute_centers) {
-        bu_log("Center of Exposed Area     (%lu hits) = (%.4lf, %.4lf, %.4lf)\n",
-               exposed_hit_sum,
-               exposed_hit_x_sum / (fastf_t)exposed_hit_sum,
-               exposed_hit_y_sum / (fastf_t)exposed_hit_sum,
-               exposed_hit_z_sum / (fastf_t)exposed_hit_sum
+        bu_log("Center of Exposed Area     (%lu hits) = (%.4lf, %.4lf, %.4lf) %s\n",
+		exposed_hit_sum,
+		exposed_hit_x_sum / (fastf_t)exposed_hit_sum / units,
+		exposed_hit_y_sum / (fastf_t)exposed_hit_sum / units,
+		exposed_hit_z_sum / (fastf_t)exposed_hit_sum / units,
+		bu_units_string(units)
 	);
     }
     bu_log("Number of Presented Regions:    %8d\n", presented_region_count);

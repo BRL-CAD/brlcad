@@ -1282,7 +1282,7 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_add_loop_to_face(s=x%x, fu=x%x, verts[]=x%x, n=%d, %s) fu=x%x\n",
 	       s, fu, verts, n,
-	       nmg_orientation(dir));
+	       nmg_orientation(dir), fu);
     }
     return (fu);
 }
@@ -3321,7 +3321,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	/* if splitting lu at this touching jaunt is not desirable, check the next one */
 	if (!do_split) {
 	    if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
-		bu_log("\t\tCannot split lu x%x at proposed vu\n");
+		bu_log("\t\tCannot split lu x%x at proposed vu\n", lu);
 	    }
 	    continue;
 	}
@@ -4971,7 +4971,7 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x) new_eu=x%x\n",
-	       dest, src, eu);
+	       dest, src, eu, eumate);
     }
 }
 

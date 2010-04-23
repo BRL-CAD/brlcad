@@ -53,7 +53,7 @@
 	BU_EXTERN(int rt_##name##_class, ()); \
 	BU_EXTERN(void rt_##name##_free, (struct soltab *stp)); \
 	BU_EXTERN(int rt_##name##_plot, (struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)); \
-	BU_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], struct xray *rp[], struct seg segp[], int n, struct application *ap)); \
+	BU_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap)); \
 	BU_EXTERN(int rt_##name##_tess, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)); \
 	BU_EXTERN(int rt_##name##_tnurb, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)); \
 	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \

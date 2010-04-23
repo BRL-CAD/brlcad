@@ -194,6 +194,7 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <string.h>
@@ -235,8 +236,8 @@ extern "C" {
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif
-  
+#endif  
+
 #if defined (cplusplus) || defined(_cplusplus) || defined(__cplusplus)
 // C++ system includes
 
@@ -305,6 +306,25 @@ typedef unsigned short wchar_t;
 #define ON_32BIT_POINTER
 #endif
 
+#if defined(ON_PURIFY_BUILD)
+// ON_PURIFY_BUILD is defined in the DebugPurify
+// build configuration.  
+#pragma message(" --- OpenNURBS Purify build.")
+#if defined(ON_32BIT_POINTER) && defined(ON_COMPILING_OPENNURBS)
+// The header file ..\PurifyAPI\pure.h contains delclarations
+// of the Purify API functions.
+// The file ..\PurifyAPI\pure_api.c contains the definitions.
+// The versions we have only work in WIN32.
+#include "../PurifyAPI/pure.h"
+#endif
+#endif
+
+// 8 bit integer
+typedef char ON__INT8;
+
+// 8 bit unsigned integer
+typedef unsigned char ON__UINT8;
+
 // 16 bit integer
 typedef short ON__INT16;
 
@@ -317,12 +337,17 @@ typedef int ON__INT32;
 // 32 bit unsigned integer
 typedef unsigned int ON__UINT32;
 
-// 32 bit boolean (true/false) value
-// When we can break the SDK, this will be replaced with "bool", which is 1 byte on windows.
-typedef int ON_BOOL32;
+#if defined(ON_COMPILER_MSC)
 
+// Microsoft uses __int64
 
-#if defined(ON_COMPILER_GNU)
+// 64 bit integer
+typedef __int64 ON__INT64;
+
+// 64 bit unsigned integer
+typedef unsigned __int64 ON__UINT64;
+
+#elif defined(ON_COMPILER_GNU)
 
 // GNU uses long long
 
@@ -334,16 +359,19 @@ typedef unsigned long long ON__UINT64;
 
 #else
 
-// Microsoft uses __int64
+#error Verify that long long is a 64 bit integer with your compiler!
 
 // 64 bit integer
-typedef __int64 ON__INT64;
+typedef long long ON__INT64;
 
 // 64 bit unsigned integer
-typedef unsigned __int64 ON__UINT64;
+typedef unsigned long long ON__UINT64;
 
 #endif
 
+// 32 bit boolean (true/false) value
+// When we can break the SDK, this will be replaced with "bool", which is 1 byte on windows.
+typedef int ON_BOOL32;
 
 // ON_INT_PTR must be an integer type with sizeof(ON_INT_PTR) = sizeof(void*).
 #if 8 == ON_SIZEOF_POINTER

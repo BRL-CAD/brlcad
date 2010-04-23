@@ -19,11 +19,11 @@
  */
 /** @file hex.c
  *
- *    Give a good ole' CPM style Hex dump of a file or standard input.
+ * Give a good ole' CPM style Hex dump of a file or standard input.
  *
- *    Options
- *    h    help
- *    o    offset from begining of data from which to start dump
+ * Options
+ * h    help
+ * o    offset from begining of data from which to start dump
  */
 
 #include "common.h"
@@ -37,25 +37,25 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-static char	*options = "o:";
-static char	*progname = "(noname)";
+static char *options = "o:";
+static char *progname = "(noname)";
 
 static long offset=0;	 /* offset from begining of file from which to start */
 
 #define DUMPLEN 16    /* number of bytes to dump on one line */
 
 /*
- *    D U M P --- Dump file in hex
+ * D U M P --- Dump file in hex
  */
 void dump(FILE *fd)
 {
-    int	i;
-    char	*p;
-    int		bytes;
-    long		addr = 0L;
-    static char	buf[DUMPLEN];    /* input buffer */
+    int i;
+    char *p;
+    int bytes;
+    long addr = 0L;
+    static char buf[DUMPLEN];    /* input buffer */
 
-    if (offset != 0)  {
+    if (offset != 0) {
   	/* skip over "offset" bytes first */
 	if (fseek(fd, offset, 0)) {
 
@@ -68,8 +68,7 @@ void dump(FILE *fd)
 		if ((i=fread(buf, 1, sizeof(buf), fd)) == 0) {
 		    fprintf(stderr, "%s: offset exceeds end of input!\n", progname);
 		    bu_exit (-1, NULL);
-		}
-		else addr += i;
+		} else addr += i;
 	    }
 	} else addr = offset;
     }
@@ -85,8 +84,7 @@ void dump(FILE *fd)
 	    if (i < bytes) {
 		if (i%4 == 0) printf("  %02x", *p++ & 0x0ff);
 		else printf(" %02x", *p++ & 0x0ff);
-	    }
-	    else {
+	    } else {
 		if (i%4 == 0) printf("    ");
 		else printf("   ");
 	    }
@@ -103,8 +101,9 @@ void dump(FILE *fd)
     }
 }
 
+
 /*
- *	U S A G E --- Print helpful message and bail out
+ * U S A G E --- Print helpful message and bail out
  */
 void usage(void)
 {
@@ -112,14 +111,15 @@ void usage(void)
     bu_exit (1, NULL);
 }
 
-/*    M A I N
+
+/* M A I N
  *
- *    Parse arguemnts and  call 'dump' to perform primary task.
+ * Parse arguemnts and call 'dump' to perform primary task.
  */
 int
 main(int ac, char **av)
 {
-    int  c, optlen, files;
+    int c, optlen, files;
     FILE *fd;
     char *eos;
     long newoffset;
@@ -144,17 +144,15 @@ main(int ac, char **av)
 	    else
 		fprintf(stderr, "%s: error parsing offset \"%s\"\n",
 			progname, bu_optarg);
-	}
-	else usage();
+	} else usage();
 
     if (offset%DUMPLEN != 0) offset -= offset % DUMPLEN;
 
-    if (bu_optind >= ac ) {
+    if (bu_optind >= ac) {
 	/* no file left, try processing stdin */
 	if (isatty(fileno(stdin))) usage();
 	else dump(stdin);
-    }
-    else {
+    } else {
 	/* process each remaining arguments */
 	for (files = ac-bu_optind; bu_optind < ac; bu_optind++) {
 	    if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
@@ -168,6 +166,7 @@ main(int ac, char **av)
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

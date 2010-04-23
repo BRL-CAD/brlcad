@@ -216,8 +216,10 @@ tclcad_auto_path(Tcl_Interp *interp)
     root = bu_brlcad_root("", 1);
     data = bu_brlcad_data("", 1);
 
-
 #ifdef _WIN32
+    /* FIXME: this should be completely unnecessary and breaks
+     * constness.  wtf, seriously.  make the right fix.
+     */
     {
 	char *cp;
 

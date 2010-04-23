@@ -19,7 +19,7 @@
  */
 /** @file dm-rtgl.c
  *
- *  Routines specific to MGED's use of LIBDM's Ray Tracing OpenGl display manager.
+ * Routines specific to MGED's use of LIBDM's Ray Tracing OpenGl display manager.
  *
  */
 
@@ -58,18 +58,18 @@
 extern void dm_var_init();		/* defined in attach.c */
 extern void cs_set_bg();		/* defined in color_scheme.c */
 
-static int	Rtgl_dm();
-static int	Rtgl_doevent();
-static void     Rtgl_colorchange();
-static void     establish_zbuffer();
-static void     establish_lighting();
-static void     establish_transparency();
-static void     dirty_hook();
-static void     zclip_hook();
-static void     debug_hook();
-static void     bound_hook();
-static void     boundFlag_hook();
-static void     do_fogHint();
+static int Rtgl_dm();
+static int Rtgl_doevent();
+static void Rtgl_colorchange();
+static void establish_zbuffer();
+static void establish_lighting();
+static void establish_transparency();
+static void dirty_hook();
+static void zclip_hook();
+static void debug_hook();
+static void bound_hook();
+static void boundFlag_hook();
+static void do_fogHint();
 
 struct bu_structparse Rtgl_vparse[] = {
     {"%d", 1, "depthcue",	  Rtgl_MV_O(cueing_on),       Rtgl_colorchange },
@@ -91,9 +91,9 @@ struct bu_structparse Rtgl_vparse[] = {
 
 
 int
-Rtgl_dm_init(struct dm_list	*o_dm_list,
-	    int			argc,
-	    char		*argv[])
+Rtgl_dm_init(struct dm_list *o_dm_list,
+	     int argc,
+	     char *argv[])
 {
     struct bu_vls vls;
 
@@ -123,6 +123,7 @@ Rtgl_dm_init(struct dm_list	*o_dm_list,
     return TCL_OK;
 }
 
+
 void
 Rtgl_fb_open()
 {
@@ -151,12 +152,13 @@ Rtgl_fb_open()
 		       ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
 }
 
+
 /*
   This routine is being called from doEvent() to handle Expose events.
 */
 static int
-Rtgl_doevent(ClientData	clientData,
-	    XEvent	*eventPtr)
+Rtgl_doevent(ClientData clientData,
+	     XEvent *eventPtr)
 {
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
@@ -177,17 +179,18 @@ Rtgl_doevent(ClientData	clientData,
     return TCL_OK;
 }
 
+
 /*
- *			O G L _ D M
+ * O G L _ D M
  *
- *  Implement display-manager specific commands, from MGED "dm" command.
+ * Implement display-manager specific commands, from MGED "dm" command.
  */
 static int
-Rtgl_dm(int	argc,
-       char	**argv)
+Rtgl_dm(int argc,
+	char **argv)
 {
     if (!strcmp(argv[0], "set")) {
-	struct bu_vls	vls;
+	struct bu_vls vls;
 
 	bu_vls_init(&vls);
 
@@ -202,7 +205,7 @@ Rtgl_dm(int	argc,
 				     Rtgl_vparse,
 				     argv[1],
 				     (const char *)&((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars,
-				     ',');
+				     COMMA);
 	} else {
 	    struct bu_vls tmp_vls;
 
@@ -225,6 +228,7 @@ Rtgl_dm(int	argc,
     return common_dm(argc, argv);
 }
 
+
 static void
 Rtgl_colorchange()
 {
@@ -237,12 +241,14 @@ Rtgl_colorchange()
     view_state->vs_flag = 1;
 }
 
+
 static void
 establish_zbuffer()
 {
     (void)DM_SET_ZBUFFER(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
     view_state->vs_flag = 1;
 }
+
 
 static void
 establish_lighting()
@@ -251,12 +257,14 @@ establish_lighting()
     view_state->vs_flag = 1;
 }
 
+
 static void
 establish_transparency()
 {
     (void)DM_SET_TRANSPARENCY(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
     view_state->vs_flag = 1;
 }
+
 
 static void
 do_fogHint()
@@ -265,11 +273,13 @@ do_fogHint()
     view_state->vs_flag = 1;
 }
 
+
 static void
 dirty_hook()
 {
     dirty = 1;
 }
+
 
 static void
 zclip_hook()
@@ -279,11 +289,13 @@ zclip_hook()
     dirty_hook();
 }
 
+
 static void
 debug_hook()
 {
     DM_DEBUG(dmp, ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
 }
+
 
 static void
 bound_hook()
@@ -293,6 +305,7 @@ bound_hook()
     dirty_hook();
 }
 
+
 static void
 boundFlag_hook()
 {
@@ -300,6 +313,7 @@ boundFlag_hook()
 	((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag;
     dirty_hook();
 }
+
 
 /*
  * Local Variables:

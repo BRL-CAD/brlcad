@@ -53,7 +53,7 @@
  *  @return	-1	Fail.  This is a horrible error.
  */
 int
-db5_write_free( struct db_i *dbip, struct directory *dp, long length )
+db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 {
     struct bu_external	ext;
 
@@ -133,8 +133,8 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 int
 db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 {
-    long	baseaddr;
-    long	baselen;
+    off_t	baseaddr;
+    size_t	baselen;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -221,8 +221,8 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
      *  Keep in mind that free blocks may be very large (e.g. 50 MBytes).
      */
     {
-	struct mem_map	*mmp;
-	long		newaddr;
+	struct mem_map *mmp;
+	off_t newaddr;
 
 	if ( (mmp = rt_memalloc_nosplit( &(dbip->dbi_freep), ep->ext_nbytes )) != MAP_NULL )  {
 	    if (RT_G_DEBUG&DEBUG_DB)

@@ -19,7 +19,7 @@
  */
 /** @file rtif.c
  *
- *  Routines to interface to RT, and RT-style command files
+ * Routines to interface to RT, and RT-style command files
  *
  */
 
@@ -57,15 +57,15 @@
 
 
 /**
- *  C M D _ R T
+ * C M D _ R T
  *
- *  rt, rtarea, rtweight, rtcheck, and rtedge all use this.
+ * rt, rtarea, rtweight, rtcheck, and rtedge all use this.
  */
 int
-cmd_rt(ClientData	clientData,
-       Tcl_Interp	*interp,
-       int		argc,
-       char		**argv)
+cmd_rt(ClientData clientData,
+       Tcl_Interp *interp,
+       int argc,
+       char **argv)
 {
     int doRtcheck;
     int ret;
@@ -101,17 +101,15 @@ cmd_rt(ClientData	clientData,
 
 
 /**
- *  C M D _ R R T
+ * C M D _ R R T
  *
- *  Invoke any program with the current view & stuff, just like
- *  an "rt" command (above).
- *  Typically used to invoke a remote RT (hence the name).
+ * Invoke any program with the current view & stuff, just like
+ * an "rt" command (above).
+ * Typically used to invoke a remote RT (hence the name).
  */
 int
 cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    char **vp;
-    int i;
     int ret;
     Tcl_DString ds;
 
@@ -127,7 +125,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_VIEW, "Ray-trace of current view" ) )
+    if (not_state(ST_VIEW, "Ray-trace of current view"))
 	return TCL_ERROR;
 
     Tcl_DStringInit(&ds);
@@ -142,10 +140,11 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 /**
- *  			R T _ R E A D
+ * R T _ R E A D
  *
- *  Read in one view in the old RT format.
+ * Read in one view in the old RT format.
  */
 HIDDEN int
 rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
@@ -153,16 +152,16 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
     int i;
     double d;
 
-    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return(-1);
     *scale = d*0.5;
-    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return(-1);
     eye[X] = d;
-    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return(-1);
     eye[Y] = d;
-    if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return(-1);
     eye[Z] = d;
-    for ( i=0; i < 16; i++ )  {
-	if ( fscanf( fp, "%lf", &d ) != 1 )
+    for (i=0; i < 16; i++) {
+	if (fscanf(fp, "%lf", &d) != 1)
 	    return(-1);
 	mat[i] = d;
     }
@@ -171,14 +170,14 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 
 
 /**
- *			F _ R M A T S
+ * F _ R M A T S
  *
  * Load view matrixes from a file.  rmats filename [mode]
  *
  * Modes:
- *	-1	put eye in viewcenter (default)
- *	0	put eye in viewcenter, don't rotate.
- *	1	leave view alone, animate solid named "EYE"
+ * -1 put eye in viewcenter (default)
+ * 0 put eye in viewcenter, don't rotate.
+ * 1 leave view alone, animate solid named "EYE"
  */
 int
 f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -188,13 +187,13 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     FILE *fp;
     struct directory *dp;
     struct solid *sp;
-    vect_t	eye_model;
-    vect_t	xlate;
-    vect_t	sav_center;
-    vect_t	sav_start;
-    int	mode;
-    fastf_t	scale;
-    mat_t	rot;
+    vect_t eye_model;
+    vect_t xlate;
+    vect_t sav_center;
+    vect_t sav_start;
+    int mode;
+    fastf_t scale;
+    mat_t rot;
     struct bn_vlist *vp;
 
     CHECK_DBI_NULL;
@@ -209,10 +208,10 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_VIEW, "animate from matrix file") )
+    if (not_state(ST_VIEW, "animate from matrix file"))
 	return TCL_ERROR;
 
-    if ( (fp = fopen(argv[1], "r")) == NULL )  {
+    if ((fp = fopen(argv[1], "r")) == NULL) {
 	perror(argv[1]);
 	return TCL_ERROR;
     }
@@ -220,11 +219,11 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     sp = SOLID_NULL;
 
     mode = -1;
-    if ( argc > 2 )
+    if (argc > 2)
 	mode = atoi(argv[2]);
-    switch (mode)  {
+    switch (mode) {
 	case 1:
-	    if ( (dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL )  {
+	    if ((dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL) {
 		mode = -1;
 		break;
 	    }
@@ -234,11 +233,11 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 		FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-		    if ( LAST_SOLID(sp) != dp )  continue;
-		    if ( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
-		    vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
-		    VMOVE( sav_start, vp->pt[vp->nused-1] );
-		    VMOVE( sav_center, sp->s_center );
+		    if (LAST_SOLID(sp) != dp) continue;
+		    if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) continue;
+		    vp = BU_LIST_LAST(bn_vlist, &(sp->s_vlist));
+		    VMOVE(sav_start, vp->pt[vp->nused-1]);
+		    VMOVE(sav_center, sp->s_center);
 		    Tcl_AppendResult(interp, "animating EYE solid\n", (char *)NULL);
 		    goto work;
 		}
@@ -260,14 +259,14 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* If user hits ^C, this will stop, but will leave hanging filedes */
     (void)signal(SIGINT, cur_sigint);
 #else
-    if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interrupts */
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 #endif
-    while ( !feof( fp ) &&
-	    rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
-	switch (mode)  {
+    while (!feof(fp) &&
+	   rt_read(fp, &scale, eye_model, rot) >= 0) {
+	switch (mode) {
 	    case -1:
 		/* First step:  put eye in center */
 		view_state->vs_gvp->gv_scale = scale;
@@ -283,24 +282,24 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    case 0:
 		view_state->vs_gvp->gv_scale = scale;
 		MAT_IDN(view_state->vs_gvp->gv_rotation);	/* top view */
-		MAT_DELTAS_VEC_NEG( view_state->vs_gvp->gv_center, eye_model);
+		MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, eye_model);
 		new_mats();
 		break;
 	    case 1:
 		/* Adjust center for displaylist devices */
-		VMOVE( sp->s_center, eye_model );
+		VMOVE(sp->s_center, eye_model);
 
 		/* Adjust vector list for non-dl devices */
-		if ( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
-		vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
-		VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
-		for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-		    int	i;
-		    int	nused = vp->nused;
-		    int	*cmd = vp->cmd;
+		if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) break;
+		vp = BU_LIST_LAST(bn_vlist, &(sp->s_vlist));
+		VSUB2(xlate, eye_model, vp->pt[vp->nused-1]);
+		for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		    int i;
+		    int nused = vp->nused;
+		    int *cmd = vp->cmd;
 		    point_t *pt = vp->pt;
-		    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-			switch ( *cmd )  {
+		    for (i = 0; i < nused; i++, cmd++, pt++) {
+			switch (*cmd) {
 			    case BN_VLIST_POLY_START:
 			    case BN_VLIST_POLY_VERTNORM:
 				break;
@@ -309,7 +308,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			    case BN_VLIST_POLY_MOVE:
 			    case BN_VLIST_POLY_DRAW:
 			    case BN_VLIST_POLY_END:
-				VADD2( *pt, *pt, xlate );
+				VADD2(*pt, *pt, xlate);
 				break;
 			}
 		    }
@@ -319,18 +318,18 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	view_state->vs_flag = 1;
 	refresh();	/* Draw new display */
     }
-    if ( mode == 1 )  {
-	VMOVE( sp->s_center, sav_center );
-	if ( BU_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
-	    vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
-	    VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
-	    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-		int	i;
-		int	nused = vp->nused;
-		int	*cmd = vp->cmd;
+    if (mode == 1) {
+	VMOVE(sp->s_center, sav_center);
+	if (BU_LIST_NON_EMPTY(&(sp->s_vlist))) {
+	    vp = BU_LIST_LAST(bn_vlist, &(sp->s_vlist));
+	    VSUB2(xlate, sav_start, vp->pt[vp->nused-1]);
+	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		int i;
+		int nused = vp->nused;
+		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;
-		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-		    switch ( *cmd )  {
+		for (i = 0; i < nused; i++, cmd++, pt++) {
+		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
 			    break;
@@ -339,7 +338,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
-			    VADD2( *pt, *pt, xlate );
+			    VADD2(*pt, *pt, xlate);
 			    break;
 		    }
 		}
@@ -350,15 +349,15 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     fclose(fp);
     (void)mged_svbase();
 
-    (void)signal( SIGINT, SIG_IGN );
+    (void)signal(SIGINT, SIG_IGN);
     return TCL_OK;
 }
 
 
 /**
- *			F _ N I R T
+ * F _ N I R T
  *
- *  Invoke nirt with the current view & stuff
+ * Invoke nirt with the current view & stuff
  */
 int
 f_nirt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)

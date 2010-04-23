@@ -351,11 +351,11 @@ public:
 
 struct ON_MeshPart
 {
-  // Faces with indices fi[0] <= i < fi[1] only reference
-  // vertices with indices vi[0] <= j <= vi[1].
+  // ON_Mesh faces with indices fi[0] <= i < fi[1] reference
+  // vertices with indices vi[0] <= j < vi[1].
   int vi[2]; // subinterval of mesh m_V[] array
   int fi[2]; // subinterval of mesh m_F[] array
-  int vertex_count; // = vi[1] - vi[0];
+  int vertex_count;   // = vi[1] - vi[0];
   int triangle_count; // tris + 2*quads >= fi[1] - fi[0]
 };
 
@@ -714,9 +714,7 @@ public:
   ON_SimpleArray<struct ON_MeshPart> m_part;
 };
 
-typedef int (*ON_MassPropertiesMesh)( const ON_Mesh&, void*, int, ON_3dPoint, ON_MassProperties&, bool, bool, bool, bool, double, double );
 
-typedef int (*ON_fnMesh2dPolygon)(int,int,const double*,int,int*);
 
 class ON_CLASS ON_MappingTag
 {
@@ -1309,6 +1307,11 @@ public:
                   this list.
   Returns:
     number of lines appended to lines[] array.
+  Remarks:
+    The InstersectMesh function will will create a meshtree, a mesh topology 
+    and face normals of this mesh and meshB. Note: if you create these in 
+    multiple memory pools you run the risk of crashing or leaking memory if
+    you are not careful.
   */
   int IntersectMesh( 
           const ON_Mesh& meshB,
@@ -1325,6 +1328,11 @@ public:
     overlap_tolerance - [in]
   Returns:
     number of olylines appended to x[] array.
+  Remarks:
+    The InstersectMesh function will will create a meshtree, a mesh topology 
+    and face normals of this mesh and meshB. Note: if you create these in 
+    multiple memory pools you run the risk of crashing or leaking memory if
+    you are not careful.
   */
   int IntersectMesh( 
           const ON_Mesh& meshB,
@@ -1639,6 +1647,27 @@ public:
   const ON_MeshPartition* Partition() const;
   void DestroyPartition();
 
+  /*
+  Description:
+    Extract the portion of this mesh defined by mesh_part.
+  Parameters:
+    mesh_part - [in]
+      defines portion of the mesh to extract.
+    mesh - [in] (can be null, cannot be = "this).
+      If mesh is no null, the extracted mesh will be put into
+      this mesh.  If mesh is null, the extracted mesh will
+      be created in a mesh allocated on the heap using the
+      new operator.
+  Returns:
+    A pointer to the submesh.  If the input mesh parameter is null,
+    then the caller must delete this mesh when it is no longer needed.
+    If the input is invalid, then null is returned.
+  */
+  ON_Mesh* MeshPart( 
+    const ON_MeshPart& mesh_part,
+    ON_Mesh* mesh 
+    ) const;
+
   ///////////////////////////////////////////////////////////////////////
   //
   // mesh N-gon lists.  
@@ -1872,9 +1901,6 @@ private:
   bool WriteFaceArray( int, int, ON_BinaryArchive& ) const;
   bool ReadFaceArray( int, int, ON_BinaryArchive& );
   bool SwapEdge_Helper( int, bool );
-public:
-  static ON_MassPropertiesMesh _MassPropertiesMesh;
-  static ON_fnMesh2dPolygon _Mesh2dPolygon;
 };
 
 class ON_CLASS ON_MeshVertexRef : public ON_Geometry
@@ -2286,6 +2312,41 @@ bool ON_Mesh2dPolygon(
           const double* P,
           int tri_stride,
           int* triangle 
+          );
+
+/*
+Description:
+  Fill in a 2d region with triangles.
+Parameters:
+  point_count - [in] number of 2d points.
+  point_stride - [in] i-th point = (point[j],point[j+1]), where
+                      j = i*point_stride.
+  point - [in] 2d point locations.  It is ok to include points that are inside the region
+               but not at the ednd of an edge.  Duplicate points are not permitted.
+  edge_count - [in] number of edges (if 0, then the input list of point
+                    is treated as a counterclockwise closed polyline.
+  edge_stride - [in] i-th edge connects points (edge[j],edge[j+1]) where
+                     j = i*edge_stride.
+  edge - [in] indices of edge ends.  Edges can intersect only at shared end points.
+  edge_side - [in] if NULL, the triangles are built on the left side
+                   of the edges.  If not NULL, then
+                   edge[i] determines which side(s) of the edge need
+                   triangles.  1 = left side only, 2 = right side only, 3 = both sides
+  triangles - [out]  triangles are appended to this list.  The (i,j,k) are
+                     vertex indices.
+Returns:
+  Number of triangles appended to triangles[] array.
+*/
+ON_DECL
+int ON_Mesh2dRegion(
+          int point_count,
+          int point_stride,
+          const double* point,
+          int edge_count,
+          int edge_stride,
+          const int* edge,
+          const int* edge_side,
+          ON_SimpleArray<ON_3dex>& triangles
           );
 
 #endif

@@ -48,6 +48,9 @@
 #include "./cmd.h"
 
 
+/* defined in chgview.c */
+extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
+
 void set_tran();
 void aexists(char *name);
 
@@ -61,17 +64,18 @@ aexists(char *name)
     Tcl_AppendResult(interp, name, ":  already exists\n", (char *)NULL);
 }
 
+
 /*
- *  			F _ M A K E
+ * F _ M A K E
  *
- *  Create a new solid of a given type
- *  (Generic, or explicit)
+ * Create a new solid of a given type
+ * (Generic, or explicit)
  */
 int
-f_make(ClientData	clientData,
-       Tcl_Interp	*interp,
-       int		argc,
-       char		**argv)
+f_make(ClientData clientData,
+       Tcl_Interp *interp,
+       int argc,
+       char **argv)
 {
     Tcl_DString ds;
     int ret;
@@ -122,6 +126,7 @@ f_make(ClientData	clientData,
     return TCL_OK;
 }
 
+
 int
 mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
 {
@@ -147,15 +152,15 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
     MAT4X3PNT(point, modelchanges, model_pt);
 
     /* Find absolute translation vector to go from "model_pt" to
-     * 	"point" without any of the rotations in "modelchanges"
+     * "point" without any of the rotations in "modelchanges"
      */
     VSCALE(s_point, point, modelchanges[15]);
     VSUB2(v_work, s_point, model_pt);
 
     /* REDO "modelchanges" such that:
-     *	1. NO rotations (identity)
-     *	2. trans == v_work
-     *	3. same scale factor
+     * 1. NO rotations (identity)
+     * 2. trans == v_work
+     * 3. same scale factor
      */
     MAT_IDN(temp);
     MAT_DELTAS_VEC(temp, v_work);
@@ -174,7 +179,7 @@ mged_rot_obj(Tcl_Interp *interp, int iflag, fastf_t *argvect)
     /*XXX*/ MAT_COPY(acc_rot_sol, temp); /* used to rotate solid/object axis */
 
     /* Record the new rotation matrix into the revised
-     *	modelchanges matrix wrt "point"
+     * modelchanges matrix wrt "point"
      */
     wrt_point(modelchanges, temp, modelchanges, point);
 
@@ -204,7 +209,7 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_O_EDIT, "Object Rotation" ) )
+    if (not_state(ST_O_EDIT, "Object Rotation"))
 	return TCL_ERROR;
 
     /* Check for -i option */
@@ -223,6 +228,7 @@ f_rot_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return mged_rot_obj(interp, iflag, argvect);
 }
+
 
 /* allow precise changes to object scaling, both local & global */
 int
@@ -244,10 +250,10 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_O_EDIT, "Object Scaling" ) )
+    if (not_state(ST_O_EDIT, "Object Scaling"))
 	return TCL_ERROR;
 
-    if ( atof(argv[1]) <= 0.0 ) {
+    if (atof(argv[1]) <= 0.0) {
 	Tcl_AppendResult(interp, "ERROR: scale factor <=  0\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -257,7 +263,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #if 0
     if (movedir != SARROW) {
 	/* Put in global object scale mode */
-	if ( edobj == 0 )
+	if (edobj == 0)
 	    edobj = BE_O_SCALE;	/* default is global scaling */
 	movedir = SARROW;
     }
@@ -266,7 +272,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     MAT_IDN(incr);
 
     /* switch depending on type of scaling to do */
-    switch ( edobj ) {
+    switch (edobj) {
 	default:
 	case BE_O_SCALE:
 	    /* global scaling */
@@ -303,12 +309,13 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
- *			F _ T R _ O B J
+ * F _ T R _ O B J
  *
- *  Bound to command "translate"
+ * Bound to command "translate"
  *
- *  Allow precise changes to object translation
+ * Allow precise changes to object translation
  */
 int
 f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -330,16 +337,16 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( state == ST_S_EDIT )  {
+    if (state == ST_S_EDIT) {
 	/* In solid edit mode,
 	 * perform the equivalent of "press sxy" and "p xyz"
 	 */
-	if ( be_s_trans(clientData, interp, argc, argv) == TCL_ERROR )
+	if (be_s_trans(clientData, interp, argc, argv) == TCL_ERROR)
 	    return TCL_ERROR;
 	return f_param(clientData, interp, argc, argv);
     }
 
-    if ( not_state( ST_O_EDIT, "Object Translation") )
+    if (not_state(ST_O_EDIT, "Object Translation"))
 	return TCL_ERROR;
 
     /* Remainder of code concerns object edit case */
@@ -349,7 +356,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     MAT_IDN(incr);
     MAT_IDN(old);
 
-    if ( (movedir & (RARROW|UARROW)) == 0 ) {
+    if ((movedir & (RARROW|UARROW)) == 0) {
 	/* put in object trans mode */
 	movedir = UARROW | RARROW;
     }
@@ -372,26 +379,27 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 static int frac_stat;
 void
 mged_add_nmg_part(char *newname, struct model *m)
 {
-    struct rt_db_internal	new_intern;
+    struct rt_db_internal new_intern;
     struct directory *new_dp;
     struct nmgregion *r;
 
     if (dbip == DBI_NULL)
 	return;
 
-    if ( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
-	aexists( newname );
+    if (db_lookup(dbip,  newname, LOOKUP_QUIET) != DIR_NULL) {
+	aexists(newname);
 	/* Free memory here */
 	nmg_km(m);
 	frac_stat = 1;
 	return;
     }
 
-    if ( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
+    if ((new_dp=db_diradd(dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
 	TCL_ALLOC_ERR;
 	return;
     }
@@ -408,7 +416,7 @@ mged_add_nmg_part(char *newname, struct model *m)
     new_intern.idb_meth = &rt_functab[ID_NMG];
     new_intern.idb_ptr = (genptr_t)m;
 
-    if ( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )  {
+    if (rt_db_put_internal(new_dp, dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */
 	nmg_km(m);
 	Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
@@ -420,19 +428,20 @@ mged_add_nmg_part(char *newname, struct model *m)
     frac_stat = 0;
 }
 
+
 /*
- *			F _ Q O R O T
+ * F _ Q O R O T
  *
  * Usage: qorot x y z dx dy dz theta
  *
- *	rotate an object through a specified angle
- *	about a specified ray.
+ * rotate an object through a specified angle
+ * about a specified ray.
  */
 int
 f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     mat_t temp;
-    vect_t	specified_pt, direc;
+    vect_t specified_pt, direc;
     double ang;
 
     CHECK_DBI_NULL;
@@ -448,7 +457,7 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_O_EDIT, "Object Rotation" ) )
+    if (not_state(ST_O_EDIT, "Object Rotation"))
 	return TCL_ERROR;
 
     if (movedir != ROTARROW) {
@@ -459,9 +468,9 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     VSCALE(specified_pt, specified_pt, dbip->dbi_local2base);
     VSET(direc, atof(argv[4]), atof(argv[5]), atof(argv[6]));
 
-    if ( NEAR_ZERO(direc[0],SQRT_SMALL_FASTF) &&
-	 NEAR_ZERO(direc[1],SQRT_SMALL_FASTF) &&
-	 NEAR_ZERO(direc[2],SQRT_SMALL_FASTF) ) {
+    if (NEAR_ZERO(direc[0], SQRT_SMALL_FASTF) &&
+	NEAR_ZERO(direc[1], SQRT_SMALL_FASTF) &&
+	NEAR_ZERO(direc[2], SQRT_SMALL_FASTF)) {
 	Tcl_AppendResult(interp, "ERROR: magnitude of direction vector >=  0\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -469,23 +478,24 @@ f_qorot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     ang = atof(argv[7]) * bn_degtorad;
 
-    /* Get matrix for rotation about a point,direction vector and apply to
-     *	modelchanges matrix
+    /* Get matrix for rotation about a point, direction vector and apply to
+     * modelchanges matrix
      */
     bn_mat_arb_rot(temp, specified_pt, direc, ang);
-    bn_mat_mul2(temp,modelchanges);
+    bn_mat_mul2(temp, modelchanges);
 
     new_edit_mats();
 
     return TCL_OK;
 }
 
+
 void
 set_localunit_TclVar(void)
 {
     struct bu_vls vls;
     struct bu_vls units_vls;
-    const char	*str;
+    const char *str;
 
     if (dbip == DBI_NULL)
 	return;

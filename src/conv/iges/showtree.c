@@ -82,7 +82,7 @@ Showtree( root )
 	    Apush( dir[-(1+ptr->op)/2]->name );
 	else	/* this is an operator */
 	{
-	    int size;
+	    size_t size;
 	    /* Pop the names of the operands */
 	    opb = Apop();
 	    opa = Apop();

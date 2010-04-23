@@ -59,19 +59,25 @@ namespace eval ArcherCore {
 	common splash ""
 	common showWindow 0
 
-	common ROTATE_MODE 0
-	common TRANSLATE_MODE 1
-	common SCALE_MODE 2
-	common CENTER_MODE 3
-	common CENTER_VIEW_OBJECT_MODE 4
-	common COMP_PICK_MODE 5
-	common COMP_ERASE_MODE 6
-	common MEASURE_MODE 7
-	common OBJECT_ROTATE_MODE 8
-	common OBJECT_TRANSLATE_MODE 9
-	common OBJECT_SCALE_MODE 10
-	common OBJECT_CENTER_MODE 11
-	common FIRST_FREE_BINDING_MODE 12
+	common TREE_AFFECTED_TAG "affected"
+	common TREE_FULLY_DISPLAYED_TAG "displayed"
+	common TREE_PARTIALLY_DISPLAYED_TAG "pdisplayed"
+	common TREE_POPUP_TAG "popup"
+	common TREE_OPENED_TAG "opened"
+	common TREE_PLACEHOLDER_TAG "placeholder"
+
+	common VIEW_ROTATE_MODE 0
+	common VIEW_TRANSLATE_MODE 1
+	common VIEW_SCALE_MODE 2
+	common VIEW_CENTER_MODE 3
+	common COMP_PICK_MODE 4
+	common COMP_ERASE_MODE 5
+	common MEASURE_MODE 6
+	common OBJECT_ROTATE_MODE 7
+	common OBJECT_TRANSLATE_MODE 8
+	common OBJECT_SCALE_MODE 9
+	common OBJECT_CENTER_MODE 10
+	common FIRST_FREE_BINDING_MODE 11
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -115,7 +121,6 @@ namespace eval ArcherCore {
 	method cmd                 {args}
 
 	# general
-	method UpdateTheme         {_theme} {set mTheme $_theme; updateTheme}
 	method Load                {_filename}
 	method GetUserCmds         {}
 	method WhatsOpen           {}
@@ -225,6 +230,7 @@ namespace eval ArcherCore {
 	method rmater              {args}
 	method rotate_arb_face     {args}
 	method search		   {args}
+	method sed		   {_prim}
 	method shader              {args}
 	method shells              {args}
 	method tire                {args}
@@ -316,23 +322,28 @@ namespace eval ArcherCore {
 	variable mShowPrimitiveLabels 0
 	variable mShowViewingParams 1
 	variable mShowScale 0
+	variable mShowGrid 0
+	variable mSnapGrid 0
+	variable mShowADC 0
 
 	# variables for preference state
+	variable mEnableAffectedTreeNodeHighlight 0
+	variable mEnableAffectedTreeNodeHighlightPref ""
+	variable mTreeAttrColumns ""
+	variable mTreeAttrColumnsPref ""
+
 	variable mZClipMode 0
 	variable mZClipModePref ""
 
-	variable mBindingMode 0
+	variable mBindingMode Default
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
-	variable mBackgroundRedPref
-	variable mBackgroundGreenPref
-	variable mBackgroundBluePref
+	variable mBackgroundColor Black
+	variable mBackgroundColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
 	variable mViewingParamsColorPref
-	variable mTheme "Crystal_Large"
-	variable mThemePref ""
 	variable mScaleColor Yellow
 	variable mScaleColorPref ""
 	variable mMeasuringStickMode 0
@@ -342,6 +353,21 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColorVDraw ffff00
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
+
+	variable mGridAnchor "0 0 0"
+	variable mGridAnchorXPref ""
+	variable mGridAnchorYPref ""
+	variable mGridAnchorZPref ""
+	variable mGridColor White
+	variable mGridColorPref ""
+	variable mGridMrh 10
+	variable mGridMrhPref ""
+	variable mGridMrv 10
+	variable mGridMrvPref ""
+	variable mGridRh 1
+	variable mGridRhPref ""
+	variable mGridRv 1
+	variable mGridRvPref ""
 
 	variable mGroundPlaneSize 20000
 	variable mGroundPlaneSizePref ""
@@ -403,14 +429,14 @@ namespace eval ArcherCore {
 					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 					   c cd clear clone color comb comb_color copy copyeval copymat \
 					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
-					   edmater erase_all ev exit facetize fracture \
+					   edmater erase erase_all ev exit facetize fracture \
 					   g group hide human i importFg4Section \
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
 					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face search shader shells tire title track \
+					   rotate_arb_face search sed shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
@@ -452,7 +478,6 @@ Popup Menu    Right or Ctrl-Left
 	method menuStatusCB_junk {_w}
 	method transparencyMenuStatusCB {_w}
 
-	method updateTheme {}
 	method updateSaveMode {}
 	method createTargetCopy {}
 	method deleteTargetOldCopy {}
@@ -474,18 +499,139 @@ Popup Menu    Right or Ctrl-Left
 
 	method updateDisplaySettings {}
 
-
-	#XXX Everything that follows use to be private
 	variable mImgDir ""
 	variable mCenterX ""
 	variable mCenterY ""
 	variable mCenterZ ""
 
-	variable mImages
+	# variables for images
+	variable mImage_air ""
+	variable mImage_airInter ""
+	variable mImage_airSub ""
+	variable mImage_airUnion ""
+	variable mImage_airregion ""
+	variable mImage_airregionInter ""
+	variable mImage_airregionSub ""
+	variable mImage_airregionUnion ""
+	variable mImage_comb ""
+	variable mImage_combInter ""
+	variable mImage_combSub ""
+	variable mImage_combUnion ""
+	variable mImage_region ""
+	variable mImage_regionInter ""
+	variable mImage_regionSub ""
+	variable mImage_regionUnion ""
+	variable mImage_arb8 ""
+	variable mImage_arb8Inter ""
+	variable mImage_arb8Sub ""
+	variable mImage_arb8Union ""
+	variable mImage_arbn ""
+	variable mImage_arbnInter ""
+	variable mImage_arbnSub ""
+	variable mImage_arbnUnion ""
+	variable mImage_ars ""
+	variable mImage_arsInter ""
+	variable mImage_arsSub ""
+	variable mImage_arsUnion ""
+	variable mImage_bot ""
+	variable mImage_botInter ""
+	variable mImage_botSub ""
+	variable mImage_botUnion ""
+	variable mImage_dsp ""
+	variable mImage_dspInter ""
+	variable mImage_dspSub ""
+	variable mImage_dspUnion ""
+	variable mImage_ehy ""
+	variable mImage_ehyInter ""
+	variable mImage_ehySub ""
+	variable mImage_ehyUnion ""
+	variable mImage_ell ""
+	variable mImage_ellInter ""
+	variable mImage_ellSub ""
+	variable mImage_ellUnion ""
+	variable mImage_epa ""
+	variable mImage_epaInter ""
+	variable mImage_epaSub ""
+	variable mImage_epaUnion ""
+	variable mImage_eto ""
+	variable mImage_etoInter ""
+	variable mImage_etoSub ""
+	variable mImage_etoUnion ""
+	variable mImage_extrude ""
+	variable mImage_extrudeInter ""
+	variable mImage_extrudeSub ""
+	variable mImage_extrudeUnion ""
+	variable mImage_half ""
+	variable mImage_halfInter ""
+	variable mImage_halfSub ""
+	variable mImage_halfUnion ""
+	variable mImage_hyp ""
+	variable mImage_hypInter ""
+	variable mImage_hypSub ""
+	variable mImage_hypUnion ""
+	variable mImage_invalid ""
+	variable mImage_invalidInter ""
+	variable mImage_invalidSub ""
+	variable mImage_invalidUnion ""
+	variable mImage_metaball ""
+	variable mImage_metaballInter ""
+	variable mImage_metaballSub ""
+	variable mImage_metaballUnion ""
+	variable mImage_nmg ""
+	variable mImage_nmgInter ""
+	variable mImage_nmgSub ""
+	variable mImage_nmgUnion ""
+	variable mImage_other ""
+	variable mImage_otherInter ""
+	variable mImage_otherSub ""
+	variable mImage_otherUnion ""
+	variable mImage_pipe ""
+	variable mImage_pipeInter ""
+	variable mImage_pipeSub ""
+	variable mImage_pipeUnion ""
+	variable mImage_rhc ""
+	variable mImage_rhcInter ""
+	variable mImage_rhcSub ""
+	variable mImage_rhcUnion ""
+	variable mImage_rpc ""
+	variable mImage_rpcInter ""
+	variable mImage_rpcSub ""
+	variable mImage_rpcUnion ""
+	variable mImage_sketch ""
+	variable mImage_sketchInter ""
+	variable mImage_sketchSub ""
+	variable mImage_sketchUnion ""
+	variable mImage_tgc ""
+	variable mImage_tgcInter ""
+	variable mImage_tgcSub ""
+	variable mImage_tgcUnion ""
+	variable mImage_tor ""
+	variable mImage_torInter ""
+	variable mImage_torSub ""
+	variable mImage_torUnion ""
+
+	variable mImage_fbOff ""
+	variable mImage_fbOn ""
+	variable mImage_fbInterlay ""
+	variable mImage_fbOverlay ""
+	variable mImage_fbUnderlay ""
+	variable mImage_rt ""
+	variable mImage_rtAbort ""
+
+	# variables for the new tree
+	variable mCNode2PList
+	variable mPNode2CList
+	variable mNode2Text
+	variable mText2Node
+	variable mNodePDrawList
+	variable mNodeDrawList
+	variable mAffectedNodeList
 
 	# init functions
+	method initImages {}
 	method initTree          {}
-	method initGed          {}
+	method initTreeImages    {}
+	method initGed           {}
 	method closeMged         {}
 	method updateRtControl   {}
 
@@ -498,16 +644,31 @@ Popup Menu    Right or Ctrl-Left
 	method primaryToolbarRemove     {_index}
 
 	# tree commands
-	method alterTreeNodeChildren {node option value}
-	method toggleTreePath   {_path}
 	method updateTree        {}
-	method fillTree          {{_node ""}}
-	method selectNode        {_tags {_rflag 1}}
-	method dblClick          {_tags}
-	method loadMenu          {_menu _snode}
+	method fillTree          {_pnode _ctext}
+	method fillTreeColumns   {_cnode _ctext}
+	method loadMenu          {_menu _node _nodeType}
+	method findTreeChildNodes {_pnode}
+	method findTreeParentNodes {_cnode}
+	method getCNodeFromCText {_pnode _text}
+	method getTreeImage {_obj _type {_op ""} {_isregion 0}}
+	method getTreeNode {_path {_cflag 0}}
+	method getTreeNodes {_path}
+	method getTreePath {_node {_path ""}}
+	method handleTreeClose {}
+	method handleTreeOpen {}
+	method handleTreePopup {_x _y _X _Y}
+	method handleTreeSelect {}
+	method addTreeNodeTag {_node _tag}
+	method removeTreeNodeTag {_node _tag}
+	method addTreePlaceholder {_pnode}
+	method selectTreePath {_path}
 
 	# db/display commands
 	method getNodeChildren  {_node}
+	method getTreeFromGData  {_gdata}
+	method getTreeMembers  {_tlist}
+	method getTreeOp {_parent _child}
 	method renderComp        {_node}
 	method render             {_node _state _trans _updateTree {_wflag 1}}
 	method selectDisplayColor  {_node}
@@ -529,6 +690,9 @@ Popup Menu    Right or Ctrl-Left
 	method showViewAxes     {}
 	method showModelAxes    {}
 	method showModelAxesTicks {}
+	method showGrid     {}
+	method snapGrid     {}
+	method showADC     {}
 
 	# private mged commands
 	method alterObj          {_operation _obj}
@@ -546,11 +710,11 @@ Popup Menu    Right or Ctrl-Left
 	method beginViewTranslate {}
 	method endViewTranslate {_pane}
 
-	method initCenterMode {}
-	method initCenterViewObjectMode {}
+	method initViewCenterMode {}
 
 	method initCompErase {}
 	method initCompPick {}
+
 	method mrayCallback_cvo {_start _target _partitions}
 	method mrayCallback_erase {_start _target _partitions}
 	method mrayCallback_pick {_start _target _partitions}
@@ -811,7 +975,7 @@ Popup Menu    Right or Ctrl-Left
 	pack $itk_component(advancedTabs) -fill both -expand yes
 	pack $itk_component(statusF) -before $itk_component(south) -side bottom -fill x
     }
-    pack $itk_component(tree) -fill both -expand yes
+    pack $itk_component(hierarchyTabs) -fill both -expand yes
     pack $itk_component(hpane) -fill both -expand yes
     pack $itk_component(vpane) -fill both -expand yes
     pack $itk_component(canvasF) -fill both -expand yes
@@ -856,7 +1020,8 @@ Popup Menu    Right or Ctrl-Left
 	[lindex $mBackground 1] \
 	[lindex $mBackground 2]
 
-    updateTheme
+    initImages
+    initTreeImages
 
     $itk_component(primaryToolbar) itemconfigure open -state normal
 
@@ -916,8 +1081,16 @@ Popup Menu    Right or Ctrl-Left
     }
 
     gedCmd configure -primitiveLabels {}
-    if {$tflag} {
-	catch {refreshTree}
+    switch -- $tflag {
+	0 {
+	    # Do nothing
+	}
+	1 {
+	    catch {updateTree}
+	}
+	default {
+	    catch {refreshTree}
+	}
     }
     SetNormalCursor $this
 
@@ -1130,24 +1303,245 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+::itcl::body ArcherCore::initImages {} {
+    set dir $mImgDir
+
+    if {!$mViewOnly} {
+	# Tree Control
+#	$itk_component(tree) configure \
+	    -openimage [image create photo -file [file join $dir folder_open_small.png]] \
+	    -closeimage [image create photo -file [file join $dir folder_closed_small.png]] \
+	    -nodeimage [image create photo -file [file join $dir file_text_small.png]]
+#	$itk_component(tree) redraw
+
+	# Primary Toolbar
+	$itk_component(primaryToolbar) itemconfigure open \
+	    -image [image create photo \
+			-file [file join $dir open.png]]
+	$itk_component(primaryToolbar) itemconfigure save \
+	    -image [image create photo \
+			-file [file join $dir save.png]]
+    }
+
+    # View Toolbar
+    $itk_component(primaryToolbar) itemconfigure rotate \
+	-image [image create photo \
+		    -file [file join $dir view_rotate.png]]
+    $itk_component(primaryToolbar) itemconfigure translate \
+	-image [image create photo \
+		    -file [file join $dir view_translate.png]]
+    $itk_component(primaryToolbar) itemconfigure scale \
+	-image [image create photo \
+		    -file [file join $dir view_scale.png]]
+    $itk_component(primaryToolbar) itemconfigure center \
+	-image [image create photo \
+		    -file [file join $dir view_center.png]]
+    $itk_component(primaryToolbar) itemconfigure cpick \
+	-image [image create photo \
+		    -file [file join $dir component_pick.png]]
+    $itk_component(primaryToolbar) itemconfigure cerase \
+	-image [image create photo \
+		    -file [file join $dir component_erase.png]]
+    $itk_component(primaryToolbar) itemconfigure measure \
+	-image [image create photo \
+		    -file [file join $dir measure.png]]
+}
+
+
 ::itcl::body ArcherCore::initTree {} {
     set parent [$itk_component(vpane) childsite hierarchyView]
-    itk_component add tree {
-	::swidgets::tree $parent.tree \
-	    -background white \
-	    -selectfill 1 \
-	    -selectbackground black \
-	    -selectforeground $SystemWindow \
-	    -querycmd [::itcl::code $this fillTree %n] \
-	    -selectcmd [::itcl::code $this selectNode %n] \
-	    -dblselectcmd [::itcl::code $this dblClick %n] \
-	    -textmenuloadcommand [::itcl::code $this loadMenu]
+
+    itk_component add hierarchyTabs {
+	::ttk::notebook $parent.htabs
     } {}
 
-    [$itk_component(tree) component popupmenu] configure \
-	-background $SystemButtonFace \
-	-activebackground $SystemHighlight \
-	-activeforeground $SystemHighlightText
+    set mNode2Text() ""
+    set mText2Node() ""
+    set mCNode2PList() ""
+    set mPNode2CList() ""
+
+    itk_component add newtreeF {
+	::frame $itk_component(hierarchyTabs).newtreeF
+    } {}
+
+    itk_component add newtree {
+	::ttk::treeview $itk_component(newtreeF).tree \
+	    -selectmode browse
+    } {}
+
+    bind $itk_component(newtree) <<TreeviewSelect>> [::itcl::code $this handleTreeSelect]
+    bind $itk_component(newtree) <<TreeviewOpen>> [::itcl::code $this handleTreeOpen]
+    bind $itk_component(newtree) <<TreeviewClose>> [::itcl::code $this handleTreeClose]
+    $itk_component(newtree) tag bind $TREE_POPUP_TAG <Button-3> [::itcl::code $this handleTreePopup %x %y %X %Y]
+    $itk_component(newtree) tag configure $TREE_FULLY_DISPLAYED_TAG \
+	-foreground red \
+	-font TkHeadingFont
+    $itk_component(newtree) tag configure $TREE_PARTIALLY_DISPLAYED_TAG \
+	-foreground \#9999ff \
+	-font TkHeadingFont
+    $itk_component(newtree) tag configure $TREE_AFFECTED_TAG \
+	-background yellow2
+
+    itk_component add newtreepopup {
+	::menu $itk_interior.newtreemenu \
+	    -tearoff 0
+    } {}
+
+    itk_component add newtreehscroll {
+	::ttk::scrollbar $itk_component(newtreeF).newtreehscroll \
+	    -orient horizontal
+    } {}
+
+    itk_component add newtreevscroll {
+	::ttk::scrollbar $itk_component(newtreeF).newtreevscroll \
+	    -orient vertical
+    } {}
+
+    # Hook up scrollbars
+    $itk_component(newtree) configure -xscrollcommand "$itk_component(newtreehscroll) set"
+    $itk_component(newtree) configure -yscrollcommand "$itk_component(newtreevscroll) set"
+    $itk_component(newtreehscroll) configure -command "$itk_component(newtree) xview"
+    $itk_component(newtreevscroll) configure -command "$itk_component(newtree) yview"
+
+    grid $itk_component(newtree) $itk_component(newtreevscroll) -sticky nsew
+#XXX Leave commented out until ttk::treeview calls its xscrollcommand correctly
+#    grid $itk_component(newtreehscroll) - -sticky nsew
+    grid columnconfigure $itk_component(newtreeF) 0 -weight 1
+    grid rowconfigure $itk_component(newtreeF) 0 -weight 1
+
+    $itk_component(hierarchyTabs) add $itk_component(newtreeF) -text "New Tree"
+}
+
+::itcl::body ArcherCore::initTreeImages {} {
+    set mImage_air [image create photo -file [file join $mImgDir air.png]]
+    set mImage_airInter [image create photo -file [file join $mImgDir air_intersect.png]]
+    set mImage_airSub [image create photo -file [file join $mImgDir air_subtract.png]]
+    set mImage_airUnion [image create photo -file [file join $mImgDir air_union.png]]
+
+    set mImage_airregion [image create photo -file [file join $mImgDir airregion.png]]
+    set mImage_airregionInter [image create photo -file [file join $mImgDir airregion_intersect.png]]
+    set mImage_airregionSub [image create photo -file [file join $mImgDir airregion_subtract.png]]
+    set mImage_airregionUnion [image create photo -file [file join $mImgDir airregion_union.png]]
+
+    set mImage_comb [image create photo -file [file join $mImgDir comb.png]]
+    set mImage_combInter [image create photo -file [file join $mImgDir comb_intersect.png]]
+    set mImage_combSub [image create photo -file [file join $mImgDir comb_subtract.png]]
+    set mImage_combUnion [image create photo -file [file join $mImgDir comb_union.png]]
+
+    set mImage_region [image create photo -file [file join $mImgDir region.png]]
+    set mImage_regionInter [image create photo -file [file join $mImgDir region_intersect.png]]
+    set mImage_regionSub [image create photo -file [file join $mImgDir region_subtract.png]]
+    set mImage_regionUnion [image create photo -file [file join $mImgDir region_union.png]]
+
+    set mImage_arb8 [image create photo -file [file join $mImgDir arb8.png]]
+    set mImage_arb8Inter [image create photo -file [file join $mImgDir arb8_intersect.png]]
+    set mImage_arb8Sub [image create photo -file [file join $mImgDir arb8_subtract.png]]
+    set mImage_arb8Union [image create photo -file [file join $mImgDir arb8_union.png]]
+
+    set mImage_arbn [image create photo -file [file join $mImgDir arbn.png]]
+    set mImage_arbnInter [image create photo -file [file join $mImgDir arbn_intersect.png]]
+    set mImage_arbnSub [image create photo -file [file join $mImgDir arbn_subtract.png]]
+    set mImage_arbnUnion [image create photo -file [file join $mImgDir arbn_union.png]]
+
+    set mImage_ars [image create photo -file [file join $mImgDir ars.png]]
+    set mImage_arsInter [image create photo -file [file join $mImgDir ars_intersect.png]]
+    set mImage_arsSub [image create photo -file [file join $mImgDir ars_subtract.png]]
+    set mImage_arsUnion [image create photo -file [file join $mImgDir ars_union.png]]
+
+    set mImage_bot [image create photo -file [file join $mImgDir bot.png]]
+    set mImage_botInter [image create photo -file [file join $mImgDir bot_intersect.png]]
+    set mImage_botSub [image create photo -file [file join $mImgDir bot_subtract.png]]
+    set mImage_botUnion [image create photo -file [file join $mImgDir bot_union.png]]
+
+    set mImage_dsp [image create photo -file [file join $mImgDir dsp.png]]
+    set mImage_dspInter [image create photo -file [file join $mImgDir dsp_intersect.png]]
+    set mImage_dspSub [image create photo -file [file join $mImgDir dsp_subtract.png]]
+    set mImage_dspUnion [image create photo -file [file join $mImgDir dsp_union.png]]
+
+    set mImage_ehy [image create photo -file [file join $mImgDir ehy.png]]
+    set mImage_ehyInter [image create photo -file [file join $mImgDir ehy_intersect.png]]
+    set mImage_ehySub [image create photo -file [file join $mImgDir ehy_subtract.png]]
+    set mImage_ehyUnion [image create photo -file [file join $mImgDir ehy_union.png]]
+
+    set mImage_ell [image create photo -file [file join $mImgDir ell.png]]
+    set mImage_ellInter [image create photo -file [file join $mImgDir ell_intersect.png]]
+    set mImage_ellSub [image create photo -file [file join $mImgDir ell_subtract.png]]
+    set mImage_ellUnion [image create photo -file [file join $mImgDir ell_union.png]]
+
+    set mImage_epa [image create photo -file [file join $mImgDir epa.png]]
+    set mImage_epaInter [image create photo -file [file join $mImgDir epa_intersect.png]]
+    set mImage_epaSub [image create photo -file [file join $mImgDir epa_subtract.png]]
+    set mImage_epaUnion [image create photo -file [file join $mImgDir epa_union.png]]
+
+    set mImage_eto [image create photo -file [file join $mImgDir eto.png]]
+    set mImage_etoInter [image create photo -file [file join $mImgDir eto_intersect.png]]
+    set mImage_etoSub [image create photo -file [file join $mImgDir eto_subtract.png]]
+    set mImage_etoUnion [image create photo -file [file join $mImgDir eto_union.png]]
+
+    set mImage_extrude [image create photo -file [file join $mImgDir extrude.png]]
+    set mImage_extrudeInter [image create photo -file [file join $mImgDir extrude_intersect.png]]
+    set mImage_extrudeSub [image create photo -file [file join $mImgDir extrude_subtract.png]]
+    set mImage_extrudeUnion [image create photo -file [file join $mImgDir extrude_union.png]]
+
+    set mImage_half [image create photo -file [file join $mImgDir half.png]]
+    set mImage_halfInter [image create photo -file [file join $mImgDir half_intersect.png]]
+    set mImage_halfSub [image create photo -file [file join $mImgDir half_subtract.png]]
+    set mImage_halfUnion [image create photo -file [file join $mImgDir half_union.png]]
+
+    set mImage_hyp [image create photo -file [file join $mImgDir hyp.png]]
+    set mImage_hypInter [image create photo -file [file join $mImgDir hyp_intersect.png]]
+    set mImage_hypSub [image create photo -file [file join $mImgDir hyp_subtract.png]]
+    set mImage_hypUnion [image create photo -file [file join $mImgDir hyp_union.png]]
+
+    set mImage_invalid [image create photo -file [file join $mImgDir invalid.png]]
+    set mImage_invalidInter [image create photo -file [file join $mImgDir invalid_intersect.png]]
+    set mImage_invalidSub [image create photo -file [file join $mImgDir invalid_subtract.png]]
+    set mImage_invalidUnion [image create photo -file [file join $mImgDir invalid_union.png]]
+
+    set mImage_metaball [image create photo -file [file join $mImgDir metaball.png]]
+    set mImage_metaballInter [image create photo -file [file join $mImgDir metaball_intersect.png]]
+    set mImage_metaballSub [image create photo -file [file join $mImgDir metaball_subtract.png]]
+    set mImage_metaballUnion [image create photo -file [file join $mImgDir metaball_union.png]]
+
+    set mImage_nmg [image create photo -file [file join $mImgDir nmg.png]]
+    set mImage_nmgInter [image create photo -file [file join $mImgDir nmg_intersect.png]]
+    set mImage_nmgSub [image create photo -file [file join $mImgDir nmg_subtract.png]]
+    set mImage_nmgUnion [image create photo -file [file join $mImgDir nmg_union.png]]
+
+    set mImage_other [image create photo -file [file join $mImgDir other.png]]
+    set mImage_otherInter [image create photo -file [file join $mImgDir other_intersect.png]]
+    set mImage_otherSub [image create photo -file [file join $mImgDir other_subtract.png]]
+    set mImage_otherUnion [image create photo -file [file join $mImgDir other_union.png]]
+
+    set mImage_pipe [image create photo -file [file join $mImgDir pipe.png]]
+    set mImage_pipeInter [image create photo -file [file join $mImgDir pipe_intersect.png]]
+    set mImage_pipeSub [image create photo -file [file join $mImgDir pipe_subtract.png]]
+    set mImage_pipeUnion [image create photo -file [file join $mImgDir pipe_union.png]]
+
+    set mImage_rhc [image create photo -file [file join $mImgDir rhc.png]]
+    set mImage_rhcInter [image create photo -file [file join $mImgDir rhc_intersect.png]]
+    set mImage_rhcSub [image create photo -file [file join $mImgDir rhc_subtract.png]]
+    set mImage_rhcUnion [image create photo -file [file join $mImgDir rhc_union.png]]
+
+    set mImage_rpc [image create photo -file [file join $mImgDir rpc.png]]
+    set mImage_rpcInter [image create photo -file [file join $mImgDir rpc_intersect.png]]
+    set mImage_rpcSub [image create photo -file [file join $mImgDir rpc_subtract.png]]
+    set mImage_rpcUnion [image create photo -file [file join $mImgDir rpc_union.png]]
+
+    set mImage_sketch [image create photo -file [file join $mImgDir sketch.png]]
+    set mImage_sketchInter [image create photo -file [file join $mImgDir sketch_intersect.png]]
+    set mImage_sketchSub [image create photo -file [file join $mImgDir sketch_subtract.png]]
+    set mImage_sketchUnion [image create photo -file [file join $mImgDir sketch_union.png]]
+
+    set mImage_tgc [image create photo -file [file join $mImgDir tgc.png]]
+    set mImage_tgcInter [image create photo -file [file join $mImgDir tgc_intersect.png]]
+    set mImage_tgcSub [image create photo -file [file join $mImgDir tgc_subtract.png]]
+    set mImage_tgcUnion [image create photo -file [file join $mImgDir tgc_union.png]]
+
+    set mImage_tor [image create photo -file [file join $mImgDir tor.png]]
+    set mImage_torInter [image create photo -file [file join $mImgDir tor_intersect.png]]
+    set mImage_torSub [image create photo -file [file join $mImgDir tor_subtract.png]]
+    set mImage_torUnion [image create photo -file [file join $mImgDir tor_union.png]]
 }
 
 ::itcl::body ArcherCore::initGed {} {
@@ -1189,12 +1583,12 @@ Popup Menu    Right or Ctrl-Left
 
     # RT Control Panel
     itk_component add rtcntrl {
-	RtControl $itk_interior.rtcp -mged $itk_component(ged) -tearoff 0
+	RtControl $itk_interior.rtcp -mged $itk_component(ged)
     } {
 	usual
     }
     $itk_component(ged) fb_active 0
-    $itk_component(rtcntrl) update_fb_mode
+    $itk_component(rtcntrl) updateControlPanel
     bind $itk_component(rtcntrl) <Visibility> "raise $itk_component(rtcntrl)"
     bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
     wm protocol $itk_component(rtcntrl) WM_DELETE_WINDOW "$itk_component(rtcntrl) deactivate"
@@ -1427,6 +1821,121 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(vpane) fraction $fraction [expr {100 - $fraction}]
 }
 
+::itcl::body ArcherCore::refreshTree {{_restore 1}} {
+    foreach node [array names mNode2Text] {
+	catch {$itk_component(newtree) delete $node}
+    }
+
+    $itk_component(newtree) configure -columns $mTreeAttrColumns
+    set i 0
+    foreach column $mTreeAttrColumns {
+	$itk_component(newtree) heading $i -text $column
+	incr i
+    }
+
+    # clobber the associative arrays
+    unset mNode2Text
+    unset mText2Node
+    unset mCNode2PList
+    unset mPNode2CList
+    set mNode2Text() ""
+    set mText2Node() ""
+    set mCNode2PList() ""
+    set mPNode2CList() ""
+    set mNodePDrawList ""
+    set mNodeDrawList ""
+    set mAffectedNodeList ""
+
+    foreach item [lsort -dictionary [$itk_component(ged) tops]] {
+	set item [regsub {/.*} $item {}]
+	fillTree {} $item
+    }
+
+    updateTree
+}
+
+::itcl::body ArcherCore::mouseRay {_dm _x _y} {
+    set target [$_dm screen2model $_x $_y]
+    set view [$_dm screen2view $_x $_y]
+
+    set bounds [$_dm bounds]
+    set vZ [expr {[lindex $bounds 4] / -2048.0}]
+    set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
+
+    set partitions [shootRay $start "at" $target 1 1 0]
+    set partition [lindex $partitions 0]
+
+    if {[llength $mMouseRayCallbacks] == 0} {
+	if {$partition == {}} {
+	    tk_messageBox -message "Nothing hit"
+	} else {
+	    set region [bu_get_value_by_keyword "region" $partition]
+	    tk_messageBox -message [gedCmd l $region]
+	}
+    } else {
+	foreach callback $mMouseRayCallbacks {
+	    catch {$callback $start $target $partitions}
+	}
+    }
+}
+
+::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit} {
+    eval $itk_component(ged) rt_gettrees ray -i -u [gedCmd who]
+    ray prep $_prep
+    ray no_bool $_no_bool
+    ray onehit $_onehit
+
+    return [ray shootray $_start $_op $_target]
+}
+
+::itcl::body ArcherCore::addMouseRayCallback {_callback} {
+    lappend mMouseRayCallbacks $_callback
+}
+
+::itcl::body ArcherCore::deleteMouseRayCallback {_callback} {
+    set i [lsearch $mMouseRayCallbacks $_callback]
+    if {$i != -1} {
+	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
+    }
+}
+
+::itcl::body ArcherCore::setDefaultBindingMode {_mode} {
+    set mDefaultBindingMode $_mode
+
+    set ret 0
+    switch -- $mDefaultBindingMode \
+	$VIEW_ROTATE_MODE { \
+		beginViewRotate \
+		set ret 1
+	} \
+	$VIEW_TRANSLATE_MODE { \
+		beginViewTranslate \
+		set ret 1
+	} \
+	$VIEW_SCALE_MODE { \
+		beginViewScale \
+		set ret 1
+	} \
+	$VIEW_CENTER_MODE { \
+		initViewCenterMode \
+		set ret 1
+	} \
+	$COMP_ERASE_MODE { \
+		initCompErase \
+		set ret 1
+	} \
+	$COMP_PICK_MODE { \
+		initCompPick \
+		set ret 1
+	} \
+	$MEASURE_MODE { \
+		initViewMeasure \
+		set ret 1
+	}
+
+    return $ret
+}
+
 # ------------------------------------------------------------
 #                     MGED COMMANDS
 # ------------------------------------------------------------
@@ -1478,14 +1987,14 @@ Popup Menu    Right or Ctrl-Left
     SetWaitCursor $this
     gedCmd kill $comp
 
-    set select [$itk_component(tree) selection get]
+#    set select [$itk_component(tree) selection get]
     #set element [lindex [split $select ":"] 1]
     set element [split $select ":"]
     if {[llength $element] > 1} {
 	set element [lindex $element 1]
     }
 
-    set node [$itk_component(tree) query -path $element]
+#    set node [$itk_component(tree) query -path $element]
 
     set node ""
     foreach t $tags {
@@ -1501,9 +2010,9 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # remove from tree
-    set parent [$itk_component(tree) query -parent $element]
-    $itk_component(tree) remove $element $parent
-    refreshTree
+#    set parent [$itk_component(tree) query -parent $element]
+#    $itk_component(tree) remove $element $parent
+#    refreshTree
     SetNormalCursor $this
 }
 
@@ -1551,35 +2060,28 @@ Popup Menu    Right or Ctrl-Left
 	-balloonstr "Rotate view" \
 	-helpstr "Rotate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $ROTATE_MODE \
+	-value $VIEW_ROTATE_MODE \
 	-command [::itcl::code $this beginViewRotate]
     $itk_component(primaryToolbar) add radiobutton translate \
 	-balloonstr "Translate view" \
 	-helpstr "Translate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $TRANSLATE_MODE \
+	-value $VIEW_TRANSLATE_MODE \
 	-command [::itcl::code $this beginViewTranslate] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton scale \
 	-balloonstr "Scale view" \
 	-helpstr "Scale view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $SCALE_MODE \
+	-value $VIEW_SCALE_MODE \
 	-command [::itcl::code $this beginViewScale] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton center \
 	-balloonstr "Center view" \
 	-helpstr "Center view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $CENTER_MODE \
-	-command [::itcl::code $this initCenterMode] \
-	-state disabled
-    $itk_component(primaryToolbar) add radiobutton centervo \
-	-balloonstr "Center View on Object" \
-	-helpstr "Center View on Object" \
-	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $CENTER_VIEW_OBJECT_MODE \
-	-command [::itcl::code $this initCenterViewObjectMode] \
+	-value $VIEW_CENTER_MODE \
+	-command [::itcl::code $this initViewCenterMode] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton cpick \
 	-balloonstr "Component Pick" \
@@ -1607,7 +2109,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
-    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
@@ -1634,7 +2135,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_rotate
+    $itk_component(ged) init_view_rotate 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewRotate {_pane} {
@@ -1653,7 +2155,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_scale
+    $itk_component(ged) init_view_scale 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewScale {_pane} {
@@ -1672,7 +2175,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_translate
+    $itk_component(ged) init_view_translate 1
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
@@ -1686,22 +2189,16 @@ Popup Menu    Right or Ctrl-Left
     addHistory "center $center"
 }
 
-::itcl::body ArcherCore::initCenterMode {} {
+::itcl::body ArcherCore::initViewCenterMode {} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(ged) init_view_center
-}
-
-::itcl::body ArcherCore::initCenterViewObjectMode {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
+    $itk_component(ged) init_view_center 1
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 2
 }
 
 ::itcl::body ArcherCore::initCompErase {} {
@@ -1711,7 +2208,8 @@ Popup Menu    Right or Ctrl-Left
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
@@ -1721,7 +2219,8 @@ Popup Menu    Right or Ctrl-Left
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
@@ -1779,9 +2278,10 @@ Popup Menu    Right or Ctrl-Left
 	putString "Missed!"
 	set mStatusStr "Missed!"
     } else {
-	set region [bu_get_value_by_keyword "region" $partition]
-	putString "$region"
-	set mStatusStr "$region"
+	set in [bu_get_value_by_keyword "in" $partition]
+	set path [bu_get_value_by_keyword "path" $in]
+	set path [regsub {^/} $path {}]
+	selectTreePath $path
     }
 }
 
@@ -1809,7 +2309,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state normal
     $itk_component(primaryToolbar) itemconfigure scale -state normal
     $itk_component(primaryToolbar) itemconfigure center -state normal
-    $itk_component(primaryToolbar) itemconfigure centervo -state normal
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
     $itk_component(primaryToolbar) itemconfigure cerase -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
@@ -1817,7 +2316,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) init_view_bindings
 
     # Initialize rotate mode
-    set mDefaultBindingMode $ROTATE_MODE
+    set mDefaultBindingMode $VIEW_ROTATE_MODE
     beginViewRotate
 }
 
@@ -1830,7 +2329,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
-    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
@@ -2074,15 +2572,29 @@ Popup Menu    Right or Ctrl-Left
 	return {}
     }
 
+    return [getTreeMembers $tlist]
+}
+
+::itcl::body ArcherCore::getTreeFromGData {_gdata} {
+    set ti [lsearch $_gdata tree]
+    if {$ti != -1} {
+	incr ti
+	return [lindex $_gdata $ti]
+    }
+
+    return {}
+}
+
+::itcl::body ArcherCore::getTreeMembers {_tlist} {
     # first remove any matrices
-    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $tlist "" tlist
+    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $_tlist "" _tlist
 
     # remove all other unwanted stuff
-    regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $tlist "" tlist
+    regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $_tlist "" _tlist
 
     # finally, remove any duplicates
     set ntlist {}
-    foreach item $tlist {
+    foreach item $_tlist {
 	if {[lsearch $ntlist $item] == -1} {
 	    lappend ntlist $item
 	}
@@ -2091,6 +2603,39 @@ Popup Menu    Right or Ctrl-Left
     return $ntlist
 }
 
+
+::itcl::body ArcherCore::getTreeOp {_parent _child} {
+    if {$_parent == ""} {
+	return ""
+    }
+
+    #XXX The quick and dirty solution calls "l". There should be an option to
+    #    get a clean list of the members and their respective operators.
+    set ldata [split [$itk_component(ged) l $_parent] "\n"]
+    foreach line [lrange $ldata 1 end] {
+	if {[catch {lindex $line 1} member]} {
+	    continue
+	}
+
+	if {$member == $_child} {
+	    switch -- [lindex $line 0] {
+		"-" {
+		    return "Sub"
+		}
+		"+" {
+		    return "Inter"
+		}
+		default {
+		    return "Union"
+		}
+		
+	    }
+	    return 
+	}
+    }
+
+    return ""
+}
 
 ::itcl::body ArcherCore::renderComp {_node} {
     set renderMode [gedCmd how $_node]
@@ -2268,6 +2813,8 @@ Popup Menu    Right or Ctrl-Left
 	set mLastSelectedDir [file dirname $finename]
 
 	#XXX Hack! Hack! Hack!
+	#XXX The png command below needs to be modified to draw
+	#XXX into an off screen buffer to avoid occlusion
 	raise .
 
 	update
@@ -2303,6 +2850,9 @@ Popup Menu    Right or Ctrl-Left
     set mShowModelAxes [gedCmd cget -modelAxesEnable]
     set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnabled]
     set mShowViewAxes [gedCmd cget -viewAxesEnable]
+    set mShowGrid [gedCmd cget -gridEnable]
+    set mSnapGrid [gedCmd cget -gridSnap]
+    set mShowADC [gedCmd cget -adcEnable]
 }
 
 ::itcl::body ArcherCore::doMultiPane {} {
@@ -2397,409 +2947,297 @@ Popup Menu    Right or Ctrl-Left
     catch {gedCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
 }
 
+::itcl::body ArcherCore::showGrid {} {
+    catch {gedCmd configure -gridEnable $mShowGrid}
+}
+
+::itcl::body ArcherCore::snapGrid {} {
+    catch {gedCmd configure -gridSnap $mSnapGrid}
+}
+
+::itcl::body ArcherCore::showADC {} {
+    catch {gedCmd configure -adcEnable $mShowADC}
+}
+
 
 # ------------------------------------------------------------
 #                     TREE COMMANDS
 # ------------------------------------------------------------
-::itcl::body ArcherCore::alterTreeNodeChildren {node option value} {
-    foreach child [$itk_component(tree) query -children $node] {
-	$itk_component(tree) alternode $child $option $value
-	alterTreeNodeChildren $child "-color" \
-	    [$itk_component(tree) query -color $child]
-    }
-}
-
-::itcl::body ArcherCore::refreshTree {{restore 1}} {
-    if {$restore == 1} {
-	# get selected node
-	set selNode [$itk_component(tree) query -selected]
-	if {$selNode != ""} {
-	    set selNodePath [$itk_component(tree) query -path $selNode]
-	} else {
-	    set selNodePath ""
-	}
-
-	# get current open state
-	set opennodes [$itk_component(tree) opennodes "root"]
-
-	set paths ""
-	foreach node $opennodes {
-	    lappend paths [$itk_component(tree) query -path $node]
-	}
-    }
-
-    # remove all elements
-    $itk_component(tree) removeall
-
-    # re-fill tree
-    fillTree
-
-    if {$restore == 1} {
-	set mRestoringTree 1
-
-	catch {
-	    # set the open state of nodes
-	    foreach path $paths {
-		toggleTreePath $path
-	    }
-
-	    if {$selNodePath != ""} {
-		toggleTreePath $selNodePath
-	    }
-	}
-
-	set mRestoringTree 0
-    }
-
-    # force redraw of tree
-    $itk_component(tree) redraw
-}
-
-::itcl::body ArcherCore::toggleTreePath {_path} {
-    set _path [file split $_path]
-    if {[llength $_path] < 2} {
-	#set prev ""
-	set parent "root"
-	set nname $_path
-    } else {
-	set parent [lindex $_path [expr [llength $_path] -2]]
-	set nname  [lindex $_path [expr [llength $_path] -1]]
-    }
-
-    set pnode [$itk_component(tree) find $parent]
-
-    set node [$itk_component(tree) find $nname $pnode]
-    $itk_component(tree) toggle $node
-
-    #set prev $nname
-}
 
 ::itcl::body ArcherCore::updateTree {} {
-    # grab selection
-    set select [$itk_component(tree) selection get]
-    #set element [lindex [split $select ":"] 1]
-    set element [split $select ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
+    foreach node $mNodePDrawList {
+	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
     }
-    set path [$itk_component(tree) query -path $element]
-
-    # alter color of parentage
-    set parent "root"
-    foreach name [file split $path] {
-	set node [$itk_component(tree) find $name $parent]
-	set nname [$itk_component(tree) query -path $node]
-	if {0 <= [gedCmd how $nname]} {
-	    $itk_component(tree) alternode $node -color blue
-	} else {
-	    $itk_component(tree) alternode $node -color black
-	}
+    foreach node $mNodeDrawList {
+	removeTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
     }
 
-    # alter color of subnodes
-    alterTreeNodeChildren $element "-color" \
-	[$itk_component(tree) query -color $element]
+    set mNodePDrawList ""
+    set mNodeDrawList ""
+
+    foreach ditem [gedCmd who] {
+	set nodesList [getTreeNodes $ditem]
+
+	eval lappend mNodePDrawList [lindex $nodesList 0]
+	eval lappend mNodeDrawList [lindex $nodesList 1]
+    }
+
+    set mNodePDrawList [lsort -unique $mNodePDrawList]
+    set mNodeDrawList [lsort -unique $mNodeDrawList]
+
+    foreach node $mNodePDrawList {
+	addTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
+    }
+    foreach node $mNodeDrawList {
+	addTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
+    }
 }
 
-::itcl::body ArcherCore::fillTree {{node ""}} {
-    if {$node == ""} {
-	# set node to root
-	set node "root"
+::itcl::body ArcherCore::fillTree {_pnode _ctext} {
+    set cnode [getCNodeFromCText $_pnode $_ctext]
 
-	# get toplevel objects
-	set tops [gedCmd tops]
-    } else {
-	set nname [$itk_component(tree) query -text $node]
-
-	# get all its children
-	set tops [getNodeChildren $nname]
-    }
-
-    set stem "leaf"
-
-    foreach cname $tops {
-	set cname [string trim $cname " /\\"]
-
-	# need to get rid of any "/R" left
-	set cname [string trimright $cname "/R"]
-	if {$cname == "_GLOBAL"} {
-	    continue
-	}
-
-	# need to add whether its a "leaf" or "branch" ... this seems to work,
-	# as long as they don't change BRL-CAD
-	set l [lindex [split [gedCmd l $cname] "\n"] 0]
-	if {[lindex $l [expr [llength $l] -1]] == "--"} {set stem "branch"}
-
-	# add to tree
-	set cnode [$itk_component(tree) insert end $node $cname $stem]
-	set cpath [$itk_component(tree) query -path $cnode]
-
-	if {0 <= [gedCmd how $cpath]} {
-	    $itk_component(tree) alternode $cnode -color blue
-	} else {
-	    $itk_component(tree) alternode $cnode -color black
-	}
-
-	set stem "leaf"
-    }
-
-    ::update idletasks
-}
-
-::itcl::body ArcherCore::selectNode {tags {rflag 1}} {
-    set mLastTags $tags
-    set tags [split $tags ":"]
-    if {[llength $tags] > 1} {
-	set element [lindex $tags 1]
-    } else {
-	set element $tags
-    }
-    if {$element == ""} {
+    # A node for _pnode/_ctext already exists
+    if {$cnode != ""} {
 	return
     }
 
-    set node [$itk_component(tree) query -path $element]
-    set type [$itk_component(tree) query -nodetype $element]
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    #XXX Hack to get around the fact that somehow this
-    #    routine gets randomly called by the
-    #    hierarchy widget after a Load. When called its
-    #    tag refers to a node in the previous database.
-    set savePwd ""
-
-    if {[catch {gedCmd get_type $node} ret]} {
-	if {$savePwd != ""} {
-	    cd $savePwd
-	}
-
+    if {[catch {$itk_component(ged) get $_ctext} cgdata]} {
 	return
     }
 
-    # label the object if it's being drawn
-    set mRenderMode [gedCmd how $node]
+    set ctype [lindex $cgdata 0]
+    set ptext $mNode2Text($_pnode)
 
-    if {$mShowPrimitiveLabels} {
-	if {0 <= $mRenderMode} {
-	    gedCmd configure -primitiveLabels $node
-	} else {
-	    gedCmd configure -primitiveLabels {}
+    if {$ctype == "comb"} {
+	set ri [lsearch $cgdata region]
+	incr ri
+	set isregion [lindex $cgdata $ri]
+
+	if {$isregion} {
+	    # Check for rid
+	    set ii [lsearch $cgdata id]
+	    if {$ii != -1} {
+		incr ii
+		set hasId [lindex $cgdata $ii]
+	    } else {
+		set hasId 0
+	    }
+
+	    # Check for air
+	    set ai [lsearch $cgdata air]
+
+	    if {$ai != -1} {
+		set hasAir 1
+	    } else {
+		set hasAir 0
+	    }
+
+	    if {($hasId && $hasAir) || (!$hasId && !$hasAir)} {
+		set isregion 3
+	    } else {
+		if {$hasId} {
+		    set isregion 1
+		} else {
+		    set isregion 2
+		}
+	    }
 	}
+
+	set op [getTreeOp $ptext $_ctext]
+	set img [getTreeImage $_ctext $ctype $op $isregion]
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext \
+		       -image $img]
+
+	fillTreeColumns $cnode $_ctext
+
+	if {$_pnode == {}} {
+	    addTreePlaceholder $cnode
+	}
+    } else {
+	set op [getTreeOp $ptext $_ctext]
+	set img [getTreeImage $_ctext $ctype $op]
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext \
+		       -image $img]
+
+	fillTreeColumns $cnode $_ctext
     }
 
-#    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
-#	gedCmd configure -primitiveLabels $node
-#    } else {
-#	gedCmd configure -primitiveLabels {}
-#    }
-#
-#    if {$rflag} {
-#	gedCmd refresh
-#    }
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-
-    if {$savePwd != ""} {
-	cd $savePwd
-    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $element
+    lappend mText2Node($_ctext) [list $cnode $_pnode]
+    set mNode2Text($cnode) $_ctext
+    lappend mPNode2CList($_pnode) [list $_ctext $cnode]
+    set mCNode2PList($cnode) [list $ptext $_pnode]
 }
 
-::itcl::body ArcherCore::dblClick {tags} {
-    set mLastTags $tags
-    set element [split $tags ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
+::itcl::body ArcherCore::fillTreeColumns {_cnode _ctext} {
+    if {$mTreeAttrColumns != {}} {
+	set vals {}
+	set anames {}
+	set avals {}
+	foreach {aname aval} [gedCmd attr get $_ctext] {
+	    lappend anames $aname
+	    lappend avals $aval
+	}
+	foreach attr $mTreeAttrColumns {
+	    set ai [lsearch $anames $attr]
+	    if {$ai != -1} {
+		lappend vals [lindex $avals $ai]
+	    } else {
+		lappend vals {}
+	    }
+	}
 
-    set node [$itk_component(tree) query -path $element]
-    set type [$itk_component(tree) query -nodetype $element]
-
-    set mPrevSelectedObjPath $mSelectedObjPath
-    set mPrevSelectedObj $mSelectedObj
-    set mSelectedObjPath $node
-    set mSelectedObj [$itk_component(tree) query -text $element]
-
-    if {$mPrevSelectedObj != $mSelectedObj} {
-	set mPrevSelectedObjPath $mSelectedObjPath
-	set mPrevSelectedObj $mSelectedObj
-    }
-
-    $itk_component(tree) selection clear
-    $itk_component(tree) selection set $tags
-
-    switch -- $type {
-	"leaf"   -
-	"branch" {renderComp $node}
+	$itk_component(newtree) item $_cnode -values $vals
     }
 }
 
-::itcl::body ArcherCore::loadMenu {menu snode} {
+::itcl::body ArcherCore::loadMenu {_menu _node _nodeType} {
     # destroy old menu
-    if [winfo exists $menu.color] {
-	$menu.color delete 0 end
-	destroy $menu.color
+    if [winfo exists $_menu.color] {
+	$_menu.color delete 0 end
+	destroy $_menu.color
     }
-    if {[winfo exists $menu.trans]} {
-	$menu.trans delete 0 end
-	destroy $menu.trans
+    if {[winfo exists $_menu.trans]} {
+	$_menu.trans delete 0 end
+	destroy $_menu.trans
     }
-    $menu delete 0 end
+    $_menu delete 0 end
 
-    #set element [lindex [split $snode ":"] 1]
-    set element [split $snode ":"]
-    if {[llength $element] > 1} {
-	set element [lindex $element 1]
-    }
-
-    set node [$itk_component(tree) query -path $element]
-    set nodeType [$itk_component(tree) query -nodetype $element]
-
-    set mRenderMode [gedCmd how $node]
+    set mRenderMode [gedCmd how $_node]
     # do this in case "ev" was used from the command line
     if {2 < $mRenderMode} {
 	set mRenderMode 2
     }
 
-    if {$nodeType == "leaf"} {
-	$menu add radiobutton -label "Wireframe" \
+    if {$_nodeType == "leaf"} {
+	$_menu add radiobutton -label "Wireframe" \
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $node 0 1 1]
+	    -command [::itcl::code $this render $_node 0 1 1]
 
-	$menu add radiobutton -label "Shaded" \
+	$_menu add radiobutton -label "Shaded" \
 	    -indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $node 1 1 1]
-#	$menu add radiobutton -label "Shaded (Mode 2)" \
-#	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-#	    -command [::itcl::code $this render $node 2 1 1]
-	$menu add radiobutton -label "Hidden Line)" \
+	    -command [::itcl::code $this render $_node 1 1 1]
+	$_menu add radiobutton -label "Hidden Line" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $node 4 1 1]
+	    -command [::itcl::code $this render $_node 4 1 1]
 
 	if {$mEnableBigE} {
-	    $menu add radiobutton \
+	    $_menu add radiobutton \
 		-label "Evaluated" \
 		-indicatoron 1 \
 		-value 3 \
 		-variable [::itcl::scope mRenderMode] \
-		-command [::itcl::code $this render $node 3 1 1]
+		-command [::itcl::code $this render $_node 3 1 1]
 	}
 
-	$menu add radiobutton -label "Off" \
+	$_menu add radiobutton -label "Off" \
 	    -indicatoron 1 -value -1 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $node -1 1 1]
+	    -command [::itcl::code $this render $_node -1 1 1]
     } else {
-	$menu add command -label "Wireframe" \
-	    -command [::itcl::code $this render $node 0 1 1]
+	$_menu add command -label "Wireframe" \
+	    -command [::itcl::code $this render $_node 0 1 1]
 
-	$menu add command -label "Shaded" \
-	    -command [::itcl::code $this render $node 1 1 1]
-#	$menu add command -label "Shaded (Mode 2)" \
-#	    -command [::itcl::code $this render $node 2 1 1]
-	$menu add command -label "Hidden Line" \
-	    -command [::itcl::code $this render $node 4 1 1]
+	$_menu add command -label "Shaded" \
+	    -command [::itcl::code $this render $_node 1 1 1]
+	$_menu add command -label "Hidden Line" \
+	    -command [::itcl::code $this render $_node 4 1 1]
 
 	if {$mEnableBigE} {
-	    $menu add command \
+	    $_menu add command \
 		-label "Evaluated" \
-		-command [::itcl::code $this render $node 3 1 1]
+		-command [::itcl::code $this render $_node 3 1 1]
 	}
 
-	$menu add command -label "Off" \
-	    -command [::itcl::code $this render $node -1 1 1]
+	$_menu add command -label "Off" \
+	    -command [::itcl::code $this render $_node -1 1 1]
     }
 
     #XXX need to copy over
-    #    $menu add separator
-    #    $menu add command -label "Copy" \
+    #    $_menu add separator
+    #    $_menu add command -label "Copy" \
 	#	    -command [::itcl::code $this alterObj "Copy" $mSelectedComp]
-    #    $menu add command -label "Rename" \
+    #    $_menu add command -label "Rename" \
 	#	    -command [::itcl::code $this alterObj "Rename" $mSelectedComp]
-    #    $menu add command -label "Delete" \
+    #    $_menu add command -label "Delete" \
 	#	    -command [::itcl::code $this deleteObj $mSelectedComp]
 
 
-    $menu add separator
+    $_menu add separator
 
     # Build color menu
-    $menu add cascade -label "Color" \
-	-menu $menu.color
-    set color [menu $menu.color -tearoff 0]
+    $_menu add cascade -label "Color" \
+	-menu $_menu.color
+    set color [menu $_menu.color -tearoff 0]
 
     $color configure \
 	-background $SystemButtonFace
 
     $color add command -label "Red" \
-	-command [::itcl::code $this setDisplayColor $node {255 0 0}]
+	-command [::itcl::code $this setDisplayColor $_node {255 0 0}]
     $color add command -label "Orange" \
-	-command [::itcl::code $this setDisplayColor $node {204 128 51}]
+	-command [::itcl::code $this setDisplayColor $_node {204 128 51}]
     $color add command -label "Yellow" \
-	-command [::itcl::code $this setDisplayColor $node {219 219 112}]
+	-command [::itcl::code $this setDisplayColor $_node {219 219 112}]
     $color add command -label "Green" \
-	-command [::itcl::code $this setDisplayColor $node {0 255 0}]
+	-command [::itcl::code $this setDisplayColor $_node {0 255 0}]
     $color add command -label "Blue" \
-	-command [::itcl::code $this setDisplayColor $node {0 0 255}]
+	-command [::itcl::code $this setDisplayColor $_node {0 0 255}]
     $color add command -label "Indigo" \
-	-command [::itcl::code $this setDisplayColor $node {0 0 128}]
+	-command [::itcl::code $this setDisplayColor $_node {0 0 128}]
     $color add command -label "Violet" \
-	-command [::itcl::code $this setDisplayColor $node {128 0 128}]
+	-command [::itcl::code $this setDisplayColor $_node {128 0 128}]
     $color add separator
     $color add command -label "Default" \
-	-command [::itcl::code $this setDisplayColor $node {}]
+	-command [::itcl::code $this setDisplayColor $_node {}]
     $color add command -label "Select..." \
-	-command [::itcl::code $this selectDisplayColor $node]
+	-command [::itcl::code $this selectDisplayColor $_node]
 
-    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($nodeType != "leaf" || 0 < $mRenderMode)} {
+    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
 	# Build transparency menu
-	$menu add cascade -label "Transparency" \
-	    -menu $menu.trans
-	set trans [menu $menu.trans -tearoff 0]
+	$_menu add cascade -label "Transparency" \
+	    -menu $_menu.trans
+	set trans [menu $_menu.trans -tearoff 0]
 
 	$trans configure \
 	    -background $SystemButtonFace
 
 	$trans add command -label "None" \
-	    -command [::itcl::code $this setTransparency $node 1.0]
+	    -command [::itcl::code $this setTransparency $_node 1.0]
 #	#$trans add command -label "25%" \
-#	    #	-command [::itcl::code $this setTransparency $node 0.75]
+#	    #	-command [::itcl::code $this setTransparency $_node 0.75]
 #	#$trans add command -label "50%" \
-#	    #	-command [::itcl::code $this setTransparency $node 0.5]
+#	    #	-command [::itcl::code $this setTransparency $_node 0.5]
 #	#$trans add command -label "75%" \
-#	    #	-command [::itcl::code $this setTransparency $node 0.25]
+#	    #	-command [::itcl::code $this setTransparency $_node 0.25]
 #	$trans add command -label "10%" \
-#	    -command [::itcl::code $this setTransparency $node 0.9]
+#	    -command [::itcl::code $this setTransparency $_node 0.9]
 #	$trans add command -label "20%" \
-#	    -command [::itcl::code $this setTransparency $node 0.8]
+#	    -command [::itcl::code $this setTransparency $_node 0.8]
 #	$trans add command -label "30%" \
-#	    -command [::itcl::code $this setTransparency $node 0.7]
+#	    -command [::itcl::code $this setTransparency $_node 0.7]
 #	$trans add command -label "40%" \
-#	    -command [::itcl::code $this setTransparency $node 0.6]
+#	    -command [::itcl::code $this setTransparency $_node 0.6]
 #	$trans add command -label "50%" \
-#	    -command [::itcl::code $this setTransparency $node 0.5]
+#	    -command [::itcl::code $this setTransparency $_node 0.5]
 #	$trans add command -label "60%" \
-#	    -command [::itcl::code $this setTransparency $node 0.4]
+#	    -command [::itcl::code $this setTransparency $_node 0.4]
 #	$trans add command -label "70%" \
-#	    -command [::itcl::code $this setTransparency $node 0.3]
+#	    -command [::itcl::code $this setTransparency $_node 0.3]
 	$trans add command -label "80%" \
-	    -command [::itcl::code $this setTransparency $node 0.2]
+	    -command [::itcl::code $this setTransparency $_node 0.2]
 	$trans add command -label "85%" \
-	    -command [::itcl::code $this setTransparency $node 0.15]
+	    -command [::itcl::code $this setTransparency $_node 0.15]
 	$trans add command -label "90%" \
-	    -command [::itcl::code $this setTransparency $node 0.1]
+	    -command [::itcl::code $this setTransparency $_node 0.1]
 	$trans add command -label "95%" \
-	    -command [::itcl::code $this setTransparency $node 0.05]
+	    -command [::itcl::code $this setTransparency $_node 0.05]
 	$trans add command -label "97%" \
-	    -command [::itcl::code $this setTransparency $node 0.03]
+	    -command [::itcl::code $this setTransparency $_node 0.03]
 	$trans add command -label "99%" \
-	    -command [::itcl::code $this setTransparency $node 0.01]
+	    -command [::itcl::code $this setTransparency $_node 0.01]
 
 	# set up bindings for transparency status
 	bind $trans <<MenuSelect>> \
@@ -2807,10 +3245,400 @@ Popup Menu    Right or Ctrl-Left
     }
 
     # set up bindings for status
-    bind $menu <<MenuSelect>> \
+    bind $_menu <<MenuSelect>> \
 	[::itcl::code $this menuStatusCB %W]
     bind $color <<MenuSelect>> \
 	[::itcl::code $this colorMenuStatusCB %W]
+}
+
+::itcl::body ArcherCore::findTreeChildNodes {_pnode} {
+    if {![info exists mPNode2CList($_pnode)]} {
+	 return
+    }
+
+    set cnodes {}
+    foreach clist $mPNode2CList($_pnode) {
+	set ctext [lindex $clist 0]
+	if {$ctext == $TREE_PLACEHOLDER_TAG} {
+	    continue
+	}
+
+	set cnode [lindex $clist 1]
+	lappend cnodes $cnode
+	eval lappend cnodes [findTreeChildNodes $cnode]
+    }
+
+    return $cnodes
+}
+
+::itcl::body ArcherCore::findTreeParentNodes {_cnode} {
+    set plist $mCNode2PList($_cnode)
+    set pnode [lindex $plist 1]
+
+    if {$pnode != {}} {
+	lappend pnodes $pnode
+	eval lappend pnodes [findTreeParentNodes $pnode]
+	return $pnodes
+    }
+
+    return $pnode
+}
+
+::itcl::body ArcherCore::getCNodeFromCText {_pnode _text} {
+    if {[catch {set clists $mPNode2CList($_pnode)}]} {
+	return ""
+    }
+
+    foreach clist $clists {
+	if {[lindex $clist 0] == $_text} {
+	    return [lindex $clist 1]
+	}
+    }
+
+    return ""
+}
+
+::itcl::body ArcherCore::getTreeImage {_obj _type {_op ""} {_isregion 0}} {
+    switch -- $_type {
+	comb {
+	    switch -- $_isregion {
+		1 {
+		    return [subst $[subst mImage_region$_op]]
+		}
+		2 {
+		    return [subst $[subst mImage_air$_op]]
+		}
+		3 {
+		    return [subst $[subst mImage_airregion$_op]]
+		}
+		0 -
+		default {
+		    return [subst $[subst mImage_comb$_op]]
+		}
+	    }
+	}
+	arb8 -
+	arbn -
+	ars -
+	bot -
+	dsp -
+	ehy -
+	ell -
+	epa -
+	eto -
+	extrude -
+	half -
+	hyp -
+	invalid -
+	metaball -
+	nmg -
+	pipe -
+	rhc -
+	rpc -
+	sketch -
+	tgc -
+	tor {
+	    return [subst $[subst mImage_$_type$_op]]
+	}
+	default {
+	    return [subst $[subst mImage_other$_op]]
+	}
+    }
+}
+
+::itcl::body ArcherCore::getTreeNode {_path {_cflag 0}} {
+    set items [split $_path /]
+    set len [llength $items]
+
+    if {$len < 1} {
+	return {}
+    }
+
+    set pnode {}
+    set ptext [lindex $items 0]
+
+    if {![info exists mText2Node($ptext)]} {
+#	if {$_cflag} {
+#	    fillTree {} $ptext
+#	} else {
+#	    return $pnode
+#	}
+
+	return $pnode
+    }
+
+    foreach sublist $mText2Node($ptext) {
+	set gpnode [lindex $sublist 1]
+
+	if {$gpnode == {}} {
+	    set pnode [lindex $sublist 0]
+	    break
+	}
+    }
+
+    foreach item [lrange $items 1 end] {
+	set found 0
+
+	if {![info exists mText2Node($item)]} {
+	    if {$_cflag} {
+		if {![$itk_component(newtree) item $pnode -open]} {
+		    $itk_component(newtree) item $pnode -open true
+		    $itk_component(newtree) focus $pnode
+		    handleTreeOpen
+		} else {
+		    $itk_component(newtree) focus $pnode
+		}
+	    } else {
+		return $pnode
+	    }
+	}
+
+	foreach sublist $mText2Node($item) {
+	    set cnode [lindex $sublist 0]
+
+	    if {$pnode == [lindex $sublist 1]} {
+		set pnode $cnode
+		set found 1
+
+		if {$_cflag} {
+		    if {![$itk_component(newtree) item $cnode -open]} {
+			$itk_component(newtree) item $cnode -open true
+			$itk_component(newtree) focus $cnode
+			handleTreeOpen
+		    } else {
+			$itk_component(newtree) focus $cnode
+		    }
+		}
+
+		continue
+	    }
+	}
+
+	if {!$found} {
+	    return $pnode
+	}
+    }
+
+    return $pnode
+}
+
+::itcl::body ArcherCore::getTreeNodes {_path} {
+    set nlist_partial {}
+    set nlist_full {}
+    set cnode [getTreeNode $_path]
+
+    if {$cnode == {}} {
+	return [list $nlist_partial $nlist_full]
+    }
+
+    lappend nlist_full $cnode
+
+    set nlist_partial [findTreeParentNodes $cnode]
+    eval lappend nlist_full [findTreeChildNodes $cnode]
+
+    return [list $nlist_partial $nlist_full]
+}
+
+::itcl::body ArcherCore::getTreePath {_node {_path ""}} {
+    if {$_node == ""} {
+	return ""
+    }
+
+    if {$_path == ""} {
+	set _path $mNode2Text($_node)
+    }
+
+    set parent [lindex $mCNode2PList($_node) end]
+    if {$parent == {}} {
+	return $_path
+    }
+
+    set text $mNode2Text($parent)
+    set _path "$text/$_path"
+
+    return [getTreePath $parent $_path]
+}
+
+::itcl::body ArcherCore::handleTreeClose {} {
+}
+
+::itcl::body ArcherCore::handleTreeOpen {} {
+    SetWaitCursor $this
+
+    set cnode [$itk_component(newtree) focus]
+    set ctext [$itk_component(newtree) item $cnode -text]
+    set cgdata [$itk_component(ged) get $ctext]
+    set ctype [lindex $cgdata 0]
+
+    if {$ctype == "comb"} {
+	# If this node has never been opened ...
+	if {[addTreeNodeTag $cnode $TREE_OPENED_TAG]} {
+	    # Remove placeholder
+	    set placeholder [lindex [lindex $mPNode2CList($cnode) 0] 1]
+	    $itk_component(newtree) delete $placeholder
+	    unset mPNode2CList($cnode)
+
+	    set tree [getTreeFromGData $cgdata]
+	    foreach gctext [getTreeMembers $tree] {
+		if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
+		    set gcnode [getCNodeFromCText $cnode $gctext]
+		    if {$gcnode == ""} {
+			set op [getTreeOp $ctext $gctext]
+			set img [getTreeImage $gctext "invalid" $op]
+
+			set gcnode [$itk_component(newtree) insert $cnode end \
+					-tags $TREE_POPUP_TAG \
+					-text $gctext \
+					-image $img]
+
+			fillTreeColumns $gcnode $gctext
+
+			lappend mText2Node($gctext) [list $gcnode $cnode]
+			set mNode2Text($gcnode) $gctext
+			lappend mPNode2CList($cnode) [list $gctext $gcnode]
+			set mCNode2PList($gcnode) [list $ctext $cnode]
+		    }
+
+		    continue
+		}
+
+		# Add gchild members
+		fillTree $cnode $gctext
+
+		set gctype [lindex $gcgdata 0]
+
+		if {$gctype == "comb"} {
+		    set gcnode [getCNodeFromCText $cnode $gctext]
+
+		    # Add a placeholder for gcnode's possible members
+		    addTreePlaceholder $gcnode
+		}
+	    }
+	}
+    }
+
+    updateTree
+    SetNormalCursor $this
+}
+
+::itcl::body ArcherCore::handleTreePopup {_x _y _X _Y} {
+    set item [$itk_component(newtree) identify row $_x $_y]
+    set text [$itk_component(newtree) item $item -text]
+    set img [$itk_component(newtree) item $item -image]
+
+    if {$img == $mImage_comb} {
+	set nodeType "branch"
+    } else {
+	set nodeType "leaf"
+    }
+
+    set path [getTreePath $item $text]
+
+    loadMenu $itk_component(newtreepopup) $path $nodeType
+    tk_popup $itk_component(newtreepopup) $_X $_Y
+}
+
+::itcl::body ArcherCore::handleTreeSelect {} {
+    foreach anode $mAffectedNodeList {
+	removeTreeNodeTag $anode $TREE_AFFECTED_TAG
+    }
+
+    set mAffectedNodeList ""
+    set snode [$itk_component(newtree) selection]
+
+    if {$snode == ""} {
+	return
+    }
+
+    set mPrevSelectedObjPath $mSelectedObjPath
+    set mPrevSelectedObj $mSelectedObj
+    set mSelectedObjPath [getTreePath $snode]
+    set mSelectedObj $mNode2Text($snode)
+
+    # label the object if it's being drawn
+    set mRenderMode [gedCmd how $mSelectedObjPath]
+
+    if {$mShowPrimitiveLabels} {
+	if {0 <= $mRenderMode} {
+	    gedCmd configure -primitiveLabels $mSelectedObjPath
+	} else {
+	    gedCmd configure -primitiveLabels {}
+	}
+    }
+
+    if {!$mEnableAffectedTreeNodeHighlight} {
+	return
+    }
+
+    set paths [string trim [gedCmd search -name $mSelectedObj]]
+    foreach path $paths {
+	set path [regsub {^/} $path {}]
+	set pathNodes [getTreeNodes $path]
+	set pnodes [lreverse [lindex $pathNodes 0]]
+	set cnodes [lindex $pathNodes 1]
+	set found 0
+	foreach pnode $pnodes {
+	    if {![$itk_component(newtree) item $pnode -open]} {
+		lappend mAffectedNodeList $pnode
+		set found 1
+		addTreeNodeTag $pnode $TREE_AFFECTED_TAG
+		break
+	    }
+	}
+
+	if {!$found} {
+	    set cnode [lindex $cnodes 0]
+	    if {$cnode != $snode} {
+		lappend mAffectedNodeList $cnode
+		addTreeNodeTag $cnode $TREE_AFFECTED_TAG
+	    }
+	}
+    }
+}
+
+::itcl::body ArcherCore::addTreeNodeTag {_node _tag} {
+    set tags [$itk_component(newtree) item $_node -tags]
+    set ai [lsearch $tags $_tag]
+    if {$ai == -1} {
+	lappend tags $_tag
+	$itk_component(newtree) item $_node -tags $tags
+
+	return 1
+    }
+
+    return 0
+}
+
+::itcl::body ArcherCore::removeTreeNodeTag {_node _tag} {
+    set tags [$itk_component(newtree) item $_node -tags]
+    set ai [lsearch $tags $_tag]
+    if {$ai != -1} {
+	set tags [lreplace $tags $ai $ai]
+	$itk_component(newtree) item $_node -tags $tags
+    }
+}
+
+::itcl::body ArcherCore::addTreePlaceholder {_pnode} {
+    set cnode [$itk_component(newtree) insert $_pnode end \
+		   -text $TREE_PLACEHOLDER_TAG \
+		   -tags $TREE_PLACEHOLDER_TAG]
+
+    set mPNode2CList($_pnode) [list [list $TREE_PLACEHOLDER_TAG $cnode]]
+}
+
+::itcl::body ArcherCore::selectTreePath {_path} {
+    if {$_path == {}} {
+	return
+    }
+
+    getTreeNode $_path 1
+    set snode [$itk_component(newtree) focus]
+
+    if {$snode == {}} {
+	putString $_path
+    } else {
+	$itk_component(newtree) selection set $snode
+    }
 }
 
 # ------------------------------------------------------------
@@ -3151,54 +3979,6 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::updateTheme {} {
-    set dir [file join $mImgDir Themes $mTheme]
-
-    if {!$mViewOnly} {
-	# Tree Control
-	$itk_component(tree) configure \
-	    -openimage [image create photo -file [file join $dir folder_open_small.png]] \
-	    -closeimage [image create photo -file [file join $dir folder_closed_small.png]] \
-	    -nodeimage [image create photo -file [file join $dir file_text_small.png]]
-	$itk_component(tree) redraw
-
-	# Primary Toolbar
-	$itk_component(primaryToolbar) itemconfigure open \
-	    -image [image create photo \
-			-file [file join $dir open.png]]
-	$itk_component(primaryToolbar) itemconfigure save \
-	    -image [image create photo \
-			-file [file join $dir save.png]]
-    }
-
-    # View Toolbar
-    $itk_component(primaryToolbar) itemconfigure rotate \
-	-image [image create photo \
-		    -file [file join $dir view_rotate.png]]
-    $itk_component(primaryToolbar) itemconfigure translate \
-	-image [image create photo \
-		    -file [file join $dir view_translate.png]]
-    $itk_component(primaryToolbar) itemconfigure scale \
-	-image [image create photo \
-		    -file [file join $dir view_scale.png]]
-    $itk_component(primaryToolbar) itemconfigure center \
-	-image [image create photo \
-		    -file [file join $dir view_select.png]]
-    $itk_component(primaryToolbar) itemconfigure centervo \
-	-image [image create photo \
-		    -file [file join $dir view_obj_select.png]]
-    $itk_component(primaryToolbar) itemconfigure cpick \
-	-image [image create photo \
-		    -file [file join $dir compSelect.png]]
-    $itk_component(primaryToolbar) itemconfigure cerase \
-	-image [image create photo \
-		    -file [file join $dir compErase.png]]
-    $itk_component(primaryToolbar) itemconfigure measure \
-	-image [image create photo \
-		    -file [file join $dir measure.png]]
-}
-
-
 ::itcl::body ArcherCore::updateSaveMode {} {
     if {$mViewOnly} {
 	return
@@ -3359,8 +4139,7 @@ Popup Menu    Right or Ctrl-Left
 	gedCmd configure -primitiveLabels {}
     }
 
-    selectNode $mLastTags
-#    redrawObj $mSelectedObjPath
+    handleTreeSelect
 }
 
 ::itcl::body ArcherCore::showViewParams {} {
@@ -3437,92 +4216,6 @@ Popup Menu    Right or Ctrl-Left
     set mStatusStr $_str
 }
 
-::itcl::body ArcherCore::mouseRay {_dm _x _y} {
-    set target [$_dm screen2model $_x $_y]
-    set view [$_dm screen2view $_x $_y]
-
-    set bounds [$_dm bounds]
-    set vZ [expr {[lindex $bounds 4] / -2048.0}]
-    set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
-
-    set partitions [shootRay $start "at" $target 1 1 0]
-    set partition [lindex $partitions 0]
-
-    if {[llength $mMouseRayCallbacks] == 0} {
-	if {$partition == {}} {
-	    tk_messageBox -message "Nothing hit"
-	} else {
-	    set region [bu_get_value_by_keyword "region" $partition]
-	    tk_messageBox -message [gedCmd l $region]
-	}
-    } else {
-	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $start $target $partitions}
-	}
-    }
-}
-
-::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit} {
-    eval $itk_component(ged) rt_gettrees ray -i -u [gedCmd who]
-    ray prep $_prep
-    ray no_bool $_no_bool
-    ray onehit $_onehit
-
-    return [ray shootray $_start $_op $_target]
-}
-
-::itcl::body ArcherCore::addMouseRayCallback {_callback} {
-    lappend mMouseRayCallbacks $_callback
-}
-
-::itcl::body ArcherCore::deleteMouseRayCallback {_callback} {
-    set i [lsearch $mMouseRayCallbacks $_callback]
-    if {$i != -1} {
-	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
-    }
-}
-
-::itcl::body ArcherCore::setDefaultBindingMode {_mode} {
-    set mDefaultBindingMode $_mode
-
-    set ret 0
-    switch -- $mDefaultBindingMode \
-	$ROTATE_MODE { \
-		beginViewRotate \
-		set ret 1
-	} \
-	$TRANSLATE_MODE { \
-		beginViewTranslate \
-		set ret 1
-	} \
-	$SCALE_MODE { \
-		beginViewScale \
-		set ret 1
-	} \
-	$CENTER_MODE { \
-		initCenterMode \
-		set ret 1
-	} \
-	$CENTER_VIEW_OBJECT_MODE { \
-		initCenterViewObjectMode \
-		set ret 1
-	} \
-	$COMP_ERASE_MODE { \
-		initCompErase \
-		set ret 1
-	} \
-	$COMP_PICK_MODE { \
-		initCompPick \
-		set ret 1
-	} \
-	$MEASURE_MODE { \
-		initViewMeasure \
-		set ret 1
-	}
-
-    return $ret
-}
-
 ::itcl::body ArcherCore::getTkColor {r g b} {
     return [format \#%.2x%.2x%.2x $r $g $b]
 }
@@ -3562,7 +4255,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::attr {args} {
-    eval gedWrapper attr 0 0 1 0 $args
+    eval gedWrapper attr 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bb {args} {
@@ -3610,7 +4303,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::bot_split {args} {
-    eval gedWrapper bot_split 0 0 1 1 $args
+    eval gedWrapper bot_split 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bot_sync {args} {
@@ -3784,14 +4477,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd draw $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	refreshTree
+	updateTree
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    refreshTree
+    updateTree
     if {$wflag} {
 	SetNormalCursor $this
     }
@@ -3837,14 +4530,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	refreshTree
+	updateTree
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    refreshTree
+    updateTree
     SetNormalCursor $this
 }
 
@@ -4152,13 +4845,23 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::search {args} {
-     if {$args == {}} {
+    if {$args == {}} {
 	return [gedCmd search]
     } else {
 	return [eval gedCmd search $args]
     }
 }
 
+::itcl::body ArcherCore::sed {_prim} {
+    if {$_prim == ""} {
+	return "Usage: sed prim"
+    }
+
+    set paths [gedCmd search -name $_prim]
+#    $itk_component(tree) selectpaths $paths
+
+#    $itk_component(tree) selectitem $_prim
+}
 
 ::itcl::body ArcherCore::shader {args} {
     eval gedWrapper shader 0 0 1 0 $args
@@ -4193,8 +4896,9 @@ Popup Menu    Right or Ctrl-Left
 	return [gedCmd units]
     }
 
-    if {[llength $args] == 1 && [lindex $args 0] == "-s"} {
-	return [gedCmd units -s]
+    set arg0 [lindex $args 0]
+    if {[llength $args] == 1 && ($arg0 == "-s" || $arg0 == "-t")} {
+	return [gedCmd units $arg0]
     }
 
     eval gedWrapper units 0 0 1 0 $args

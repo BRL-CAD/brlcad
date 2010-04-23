@@ -19,7 +19,7 @@
  */
 /** @file setup.c
  *
- *  routines to initialize mged
+ * routines to initialize mged
  *
  */
 
@@ -62,7 +62,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"ae", cmd_ged_view_wrapper, ged_aet},
     {"ae2dir", cmd_ged_plain_wrapper, ged_ae2dir},
     {"aip", f_aip, GED_FUNC_PTR_NULL},
-    {"analyze", cmd_ged_plain_wrapper, ged_analyze},
+    {"analyze", cmd_ged_info_wrapper, ged_analyze},
     {"annotate", cmd_ged_plain_wrapper, ged_annotate},
     {"arb", cmd_ged_plain_wrapper, ged_arb},
     {"arced", cmd_ged_plain_wrapper, ged_arced},
@@ -92,13 +92,13 @@ static struct cmdtab mged_cmdtab[] = {
     {"bottom",	bv_bottom, GED_FUNC_PTR_NULL},
     {"brep",	cmd_ged_view_wrapper, ged_brep},
     {"c", cmd_ged_plain_wrapper, ged_comb_std},
-    {"cat", cmd_ged_plain_wrapper, ged_cat},
+    {"cat", cmd_ged_info_wrapper, ged_cat},
     {"cc", cmd_ged_plain_wrapper, ged_cc},
     {"center", cmd_center, GED_FUNC_PTR_NULL},
     {"clone", cmd_ged_edit_wrapper, ged_clone},
     {"closedb", f_closedb, GED_FUNC_PTR_NULL},
     {"cmd_win", cmd_cmd_win, GED_FUNC_PTR_NULL},
-    {"color", f_edcolor, GED_FUNC_PTR_NULL},
+    {"color", cmd_ged_plain_wrapper, ged_color},
     {"comb", cmd_ged_plain_wrapper, ged_comb},
     {"comb_color", cmd_ged_plain_wrapper, ged_comb_color},
     {"copyeval", cmd_ged_plain_wrapper, ged_copyeval},
@@ -110,7 +110,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"db", cmd_stub, GED_FUNC_PTR_NULL},
     {"db_glob", cmd_ged_plain_wrapper, ged_glob},
     {"dbconcat", cmd_ged_plain_wrapper, ged_concat},
-    {"dbfind", cmd_ged_plain_wrapper, ged_find},
+    {"dbfind", cmd_ged_info_wrapper, ged_find},
     {"dbip", cmd_ged_plain_wrapper, ged_dbip},
     {"dbversion", cmd_ged_plain_wrapper, ged_version},
     {"debugbu", cmd_ged_plain_wrapper, ged_debugbu},
@@ -131,7 +131,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"echo", cmd_ged_plain_wrapper, ged_echo},
     {"edcodes", f_edcodes, GED_FUNC_PTR_NULL},
     {"color", cmd_ged_plain_wrapper, ged_color},
-    {"edcolor", cmd_ged_plain_wrapper, ged_edcolor},
+    {"edcolor", f_edcolor, GED_FUNC_PTR_NULL},
     {"edcomb", cmd_ged_plain_wrapper, ged_edcomb},
     {"edgedir", f_edgedir, GED_FUNC_PTR_NULL},
     {"edmater", f_edmater, GED_FUNC_PTR_NULL},
@@ -185,7 +185,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"killrefs", cmd_ged_erase_wrapper, ged_killrefs},
     {"killtree", cmd_ged_erase_wrapper, ged_killtree},
     {"knob", f_knob, GED_FUNC_PTR_NULL},
-    {"l", cmd_ged_plain_wrapper, ged_list},
+    {"l", cmd_ged_info_wrapper, ged_list},
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
     {"left",		bv_left, GED_FUNC_PTR_NULL},
@@ -395,7 +395,7 @@ cmd_setup(void)
 {
     struct cmdtab *ctp;
     struct bu_vls temp;
-    struct bu_vls	vls;
+    struct bu_vls vls;
     const char *pathname;
     char buffer[1024];
 
@@ -455,7 +455,7 @@ cmd_setup(void)
 
 
 static void
-mged_output_handler(struct ged *gedp __attribute__((unused)), char *line)
+mged_output_handler(struct ged *UNUSED(gedp), char *line)
 {
     if (line)
 	bu_log("%s", line);
@@ -552,6 +552,7 @@ mged_setup(void)
 	tclcad_auto_path(interp);
     }
 
+    /*XXX FIXME: Should not be importing Itcl into the global namespace */
     /* Import [incr Tcl] commands into the global namespace. */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
 	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
@@ -606,13 +607,8 @@ mged_setup(void)
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_init(&str);
-    bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
+    bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
-
-#if 0
-    /* initialize "Query Ray" variables */
-    init_qray();
-#endif
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);

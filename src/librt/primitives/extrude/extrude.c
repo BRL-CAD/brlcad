@@ -738,8 +738,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    case CURVE_NURB_MAGIC:
 		break;
 	    default:
-		bu_log("Unrecognized segment type in sketch (%s) referenced by extrusion (%s)\n",
-		       stp->st_dp->d_namep);
+		bu_log("Unrecognized segment type in sketch referenced by extrusion (%s)\n",stp->st_dp->d_namep);
 		bu_bomb("Unrecognized segment type in sketch\n");
 		break;
 	}
@@ -1110,7 +1109,7 @@ rt_extrude_class(void)
  * R T _ E X T R U D E _ P L O T
  */
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     struct rt_extrude_internal *extrude_ip;
     struct curve *crv=(struct curve *)NULL;
@@ -2168,7 +2167,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     struct rt_extrude_internal *extrude_ip;
     vect_t tmp_vec[4];
     unsigned char *ptr;
-    int rem;
+    size_t rem;
 
     if (dbip) RT_CK_DBI(dbip);
 

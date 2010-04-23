@@ -104,7 +104,6 @@ _ged_get_obj_bounds(struct ged	*gedp,
     VREVERSE(rpp_max, rpp_min);
     for (i = 0; i < argc; i++) {
 	vect_t reg_min, reg_max;
-	struct region *regp;
 	const char *reg_name;
 
 	/* check if input name is a region */

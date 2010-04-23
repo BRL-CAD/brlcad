@@ -102,9 +102,9 @@ TCLSH_ENV	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
 		  PATH="$(EXTRA_PATH):$(PATH)" \
 		  TCLLIBPATH="$(TCLLIBPATH)"
 #		  TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library`
-TCLSH_PROG	= tclsh # @TCLSH_PROG@
+TCLSH_PROG	= @TCLSH_PROG@
 TCLSH		= $(TCLSH_ENV) $(TCLSH_PROG)
-WISH_PROG	= wish # @WISH_PROG@
+WISH_PROG	= @WISH_PROG@
 WISH		= $(TCLSH_ENV) $(WISH_PROG)
 SHARED_BUILD	= @SHARED_BUILD@
 
@@ -495,8 +495,48 @@ uninstall-doc:
 	done
 
 EXTRA_DIST = \
-	doc \
-	src \
+	doc/html.man \
+	doc/macros.tcl \
+	doc/tkhtml_requirements.tcl \
+	doc/tree.fig \
+	doc/tree.gif \
+	src/css.c \
+	src/cssdynamic.c \
+	src/css.h \
+	src/cssInt.h \
+	src/cssparser.c \
+	src/cssprop.tcl \
+	src/csssearch.c \
+	src/html.css \
+	src/htmldecode.c \
+	src/htmldraw.c \
+	src/htmlfloat.c \
+	src/html.h \
+	src/htmlhash.c \
+	src/htmlimage.c \
+	src/htmlinline.c \
+	src/htmllayout.c \
+	src/htmllayout.h \
+	src/htmlmacros.h \
+	src/htmlparse.c \
+	src/htmlprop.c \
+	src/htmlprop.h \
+	src/htmlstyle.c \
+	src/htmltable.c \
+	src/htmltagdb.c \
+	src/htmltcl.c \
+	src/htmltext.c \
+	src/htmltree.c \
+	src/htmlutil.c \
+	src/main.c \
+	src/mkdefaultstyle.tcl \
+	src/quirks.css \
+	src/restrack.c \
+	src/restrack.h \
+	src/swproc.c \
+	src/swproc.h \
+	src/tkhtml.tcl \
+	src/tokenlist.txt \
 	tclconfig/README.txt \
 	tclconfig/tcl.m4
 

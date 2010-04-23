@@ -44,11 +44,18 @@
 #include "./ged_private.h"
 
 
+struct _ged_rt_client_data {
+    struct ged_run_rt 	*rrtp;
+    struct ged	       	*gedp;
+};
+
+
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
+    int units_supplied = 0;
     char pstring[32];
     static const char *usage = "options";
 
@@ -87,13 +94,23 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i=1; i < argc; i++) {
-	if (argv[i][0] == '-' && argv[i][1] == '-' &&
+	    if (argv[i][0] == '-' && argv[i][1] == 'u' &&
+	    		strcmp(argv[1], "-u") == 0) {
+	    	units_supplied=1;
+	    } else if (argv[i][0] == '-' && argv[i][1] == '-' &&
 	    argv[i][2] == '\0') {
 	    ++i;
 	    break;
 	}
 	*vp++ = (char *)argv[i];
     }
+
+    /* default to local units when not specified on command line */
+    if (!units_supplied) {
+    	*vp++ = "-u";
+    	*vp++ = "model";
+    }
+
     /* XXX why is this different for win32 only? */
 #ifdef _WIN32
     {
@@ -260,7 +277,7 @@ _ged_run_rt(struct ged *gedp)
     CloseHandle(pipe_err[1]);
 
     /* As parent, send view information down pipe */
-    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb" );
+    fp_in = _fdopen( _open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb" );
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model);
@@ -358,8 +375,7 @@ _ged_rt_write(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData	clientData,
-		      int		mask)
+_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
@@ -444,7 +460,7 @@ _ged_rt_output_handler(ClientData	clientData,
 	    bu_log("Raytrace complete.\n");
 
 	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify();
+	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);

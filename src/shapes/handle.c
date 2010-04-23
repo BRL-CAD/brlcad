@@ -43,7 +43,7 @@
 int
 main(int argc, char **argv)
 {
-    /* START # 1  */
+    /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
     char filemged[26];		/* Mged file create. */
     double hgt, len;		/* Height & length of handle. */
@@ -92,9 +92,8 @@ main(int argc, char **argv)
     grpnam[4] = '\0';
 
     /* If there are no arguments ask questions. */
-    if (argc == 1)
-    {
-	/* START # 3  */
+    if (argc == 1) {
+	/* START # 3 */
 
 	/* Explain makings of handle. */
 	(void)printf("\nThis program constructs a handle with the base centered\n");
@@ -128,100 +127,90 @@ main(int argc, char **argv)
 	(void)fflush(stdout);
 	(void)scanf("%lf", &r2);
 
-    }							/* END # 3  */
+    }							/* END # 3 */
 
     /* if there are arguments get the answers from the arguments. */
-    else
-    {
-	/* START # 4  */
+    else {
+	/* START # 4 */
 	/* List of options. */
-	/*	-fname - name = name of .g file. */
-	/*	-n# - # = number of handles. */
-	/*	-l# - # = length of handle in mm. */
-	/*	-h# - # = height of handle in mm. */
-	/*	-r1# - # = r1 radius of torus. */
-	/*	-r2# - # = r2 radius of torus & cylinder. */
+	/* -fname - name = name of .g file. */
+	/* -n# - # = number of handles. */
+	/* -l# - # = length of handle in mm. */
+	/* -h# - # = height of handle in mm. */
+	/* -r1# - # = r1 radius of torus. */
+	/* -r2# - # = r2 radius of torus & cylinder. */
 
-	for (i=1; i<argc; i++)
-	{
-	    /* START # 5  */
+	for (i=1; i<argc; i++) {
+	    /* START # 5 */
 	    /* Put argument into temporary character string. */
 	    temp = argv[i];
 
-	    /*  -f - mged file name. */
-	    if (temp[1] == 'f')
-	    {
-		/* START # 6  */
+	    /* -f - mged file name. */
+	    if (temp[1] == 'f') {
+		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 25))
-		{
-		    /* START # 7  */
+		while ((temp[j] != '\0') && (k < 25)) {
+		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
 		    k++;
-		}					/* END # 7  */
+		}					/* END # 7 */
 		filemged[k] = '\0';
-	    }						/* END # 6  */
+	    }						/* END # 6 */
 
-	    /*  -n - # of handles to be created. */
-	    else if (temp[1] == 'n')
-	    {
-		/* START # 8  */
+	    /* -n - # of handles to be created. */
+	    else if (temp[1] == 'n') {
+		/* START # 8 */
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15))
-		{
-		    /* START # 9  */
+		while ((temp[j] != '\0') && (k < 15)) {
+		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;
 		    k++;
-		}					/* END # 9  */
+		}					/* END # 9 */
 		temp1[k] = '\0';
 		(void)sscanf(temp1, "%d", &numhan);
 		if (numhan > 26) numhan = 26;
-	    }						/* END # 8  */
+	    }						/* END # 8 */
 
-	    /*  -l or -h - length and height of handle in mm. */
-	    else if ((temp[1] == 'l') || (temp[1] == 'h'))
-	    {
-		/* START # 10  */
+	    /* -l or -h - length and height of handle in mm. */
+	    else if ((temp[1] == 'l') || (temp[1] == 'h')) {
+		/* START # 10 */
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15))
-		{
-		    /* START # 11  */
+		while ((temp[j] != '\0') && (k < 15)) {
+		    /* START # 11 */
 		    temp1[k] = temp[j];
 		    j++;
 		    k++;
-		}					/* END # 11  */
+		}					/* END # 11 */
 		temp1[k] = '\0';
 		if (temp[1] == 'l') (void)sscanf(temp1, "%lf", &len);
 		else if (temp[1] == 'h') (void)sscanf(temp1, "%lf", &hgt);
-	    }						/* END # 10  */
+	    }						/* END # 10 */
 
-	    /*  -r1 or -r2 - radii for torus. */
-	    else if (temp[1] == 'r')
-	    {
-		/* START # 12  */
+	    /* -r1 or -r2 - radii for torus. */
+	    else if (temp[1] == 'r') {
+		/* START # 12 */
 		/* Set up temporary character string. */
 		j = 3;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15))
-		{
-		    /* START # 13  */
+		while ((temp[j] != '\0') && (k < 15)) {
+		    /* START # 13 */
 		    temp1[k] = temp[j];
 		    j++;
 		    k++;
-		}					/* END # 13  */
+		}					/* END # 13 */
 		temp1[k] = '\0';
 		if (temp[2] == '1') (void)sscanf(temp1, "%lf", &r1);
 		else if (temp[2] == '2') (void)sscanf(temp1, "%lf", &r2);
-	    }						/* END # 12  */
-	}						/* END # 5  */
-    }							/* END # 4  */
+	    }						/* END # 12 */
+	}						/* END # 5 */
+    }							/* END # 4 */
 
     /* Print out dimensions of the handle. */
     (void)printf("\nmged file name:  %s\n", filemged);
@@ -238,9 +227,8 @@ main(int argc, char **argv)
     /* Write ident record. */
     mk_id(fpw, "handles");
 
-    for (i=0; i<numhan; i++)
-    {
-	/* START # 2  */
+    for (i=0; i<numhan; i++) {
+	/* START # 2 */
 
 	/* Create solids for handle. */
 
@@ -390,13 +378,13 @@ main(int argc, char **argv)
 	grpnam[3] = 97 + i;
 	mk_lfcomb(fpw, grpnam, &comb1, 0);
 
-    }							/* END # 2  */
+    }							/* END # 2 */
 
     /* Close mged file. */
     wdb_close(fpw);
     return 0;
 
-}							/* END # 1  */
+}							/* END # 1 */
 
 /*
  * Local Variables:

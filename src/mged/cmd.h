@@ -40,6 +40,7 @@ struct cmdtab {
 /* Commands */
 
 BU_EXTERN(int cmd_ged_edit_wrapper, (ClientData, Tcl_Interp *, int, const char *argv[]));
+BU_EXTERN(int cmd_ged_info_wrapper, (ClientData, Tcl_Interp *, int, const char *argv[]));
 BU_EXTERN(int cmd_ged_erase_wrapper, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_ged_gqa, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int cmd_ged_in, (ClientData, Tcl_Interp *, int, const char *[]));
@@ -236,6 +237,7 @@ BU_EXTERN(int f_keypoint, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_knob, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_l_muves, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_labelvert, (ClientData, Tcl_Interp *, int, char **));
+BU_EXTERN(int f_list, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_loadview, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_make, (ClientData, Tcl_Interp *, int, char **));
 BU_EXTERN(int f_mater, (ClientData, Tcl_Interp *, int, char **));

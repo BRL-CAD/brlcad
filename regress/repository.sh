@@ -109,7 +109,7 @@ if test "x$FOUND" = "x" ; then
     echo "--> configure documentation check succeeded"
 else
     echo "--> configure documentation check FAILED (non-fatal)"
-    # FAILED="`expr $FAILED + 1`"
+    FAILED="`expr $FAILED + 1`"
 fi
 
 

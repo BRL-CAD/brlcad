@@ -21,36 +21,38 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${BREP_CPPFLAGS}
 
-# must fix roots.c exact floating point comparison
 AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
-	comb \
+	${BREP_TEST} \
+	namegen \
 	nurb_example \
-	${BREP_TEST}
+	parsetest \
+	prcomb
 
 # make sure the example compiles, but don't include it in librt
 librt_xxx_la_SOURCES = primitives/xxx/xxx.c
 
 librt_nil_la_SOURCES = \
+	attributes.c \
 	bezier_2d_isect.c \
-	binary_obj.c \
+	binunif/binunif.c \
+	binunif/db5_bin.c \
 	bomb.c \
 	bool.c \
 	bundle.c \
 	cmd.c \
-	comb_mirror.c \
+	comb/comb.c \
+	comb/comb_mirror.c \
+	comb/db_comb.c \
 	constraint.c \
 	cut.c \
 	db5_alloc.c \
-	db5_bin.c \
-	db5_comb.c \
 	db5_io.c \
 	db5_scan.c \
 	db5_types.c \
 	db_alloc.c \
 	db_anim.c \
-	db_comb.c \
 	db_flags.c \
 	db_inmem.c \
 	db_io.c \
@@ -158,7 +160,6 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_index.c \
 	primitives/nmg/nmg_info.c \
 	primitives/nmg/nmg_inter.c \
-	primitives/nmg/nmg_junk.c \
 	primitives/nmg/nmg_manif.c \
 	primitives/nmg/nmg_mesh.c \
 	primitives/nmg/nmg_mirror.c \
@@ -173,6 +174,27 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_tri.c \
 	primitives/nmg/nmg_tri_mc.c \
 	primitives/nmg/nmg_visit.c \
+	primitives/obj_adjust.c \
+	primitives/obj_curve.c \
+	primitives/obj_describe.c \
+	primitives/obj_export.c \
+	primitives/obj_free.c \
+	primitives/obj_get.c \
+	primitives/obj_ifree.c \
+	primitives/obj_import.c \
+	primitives/obj_make.c \
+	primitives/obj_mirror.c \
+	primitives/obj_norm.c \
+	primitives/obj_params.c \
+	primitives/obj_plot.c \
+	primitives/obj_prep.c \
+	primitives/obj_print.c \
+	primitives/obj_shot.c \
+	primitives/obj_tess.c \
+	primitives/obj_tnurb.c \
+	primitives/obj_uv.c \
+	primitives/obj_vshot.c \
+	primitives/obj_xform.c \
 	primitives/part/part.c \
 	primitives/part/part_mirror.c \
 	primitives/pipe/pipe.c \
@@ -230,8 +252,8 @@ librt_la_LIBADD = \
 	librt_nil.la \
 	${RT_LIBS}
 
-comb_SOURCES = comb.c
-comb_LDADD = \
+prcomb_SOURCES = prcomb.c
+prcomb_LDADD = \
 	librt.la \
 	${RT_LIBS}
 
@@ -239,6 +261,17 @@ nurb_example_SOURCES = nurb_example.c
 nurb_example_LDADD = \
 	librt.la \
 	${RT_LIBS}
+
+namegen_SOURCES = namegen.c
+namegen_LDADD = \
+	librt.la \
+	${RT_LIBS}
+
+parsetest_SOURCES = columnparse.c
+parsetest_LDADD = \
+	librt.la \
+	${RT_LIBS}
+
 
 noinst_HEADERS = \
 	primitives/fixpt.h \
@@ -260,10 +293,12 @@ EXTRA_DIST = \
 	$(sample_applications_DATA) \
         CMakeLists.txt \
 	brep_test.cpp \
+        columnparse.c \
 	namegen.c \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/nmg/nmg_junk.c \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \

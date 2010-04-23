@@ -46,7 +46,7 @@
 #ifndef BRLCAD_MAJOR
 static const int BRLCAD_MAJOR =
 #include "conf/MAJOR"
-;
+-0; /* in case file is empty */
 #endif
 
 /**
@@ -57,7 +57,7 @@ static const int BRLCAD_MAJOR =
 #ifndef BRLCAD_MINOR
 static const int BRLCAD_MINOR =
 #include "conf/MINOR"
-;
+-0; /* in case file is empty */
 #endif
 
 /**
@@ -68,7 +68,7 @@ static const int BRLCAD_MINOR =
 #ifndef BRLCAD_PATCH
 static const int BRLCAD_PATCH =
 #include "conf/PATCH"
-;
+-0; /* in case file is empty */
 #endif
 
 
@@ -82,7 +82,7 @@ static const int BRLCAD_PATCH =
 #ifndef BRLCAD_COUNT
 static const int BRLCAD_COUNT =
 #include "conf/COUNT"
-;
+-0; /* in case file is empty */
 #endif
 
 /**

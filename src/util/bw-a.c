@@ -44,13 +44,13 @@
 #include "bn.h"
 
 
-static long int	file_width = 512L;
-static int	autosize = 0;
-static char	*file_name;
-static FILE	*infp;
-static int	fileinput = 0;
+static long int file_width = 512L;
+static int autosize = 0;
+static char *file_name;
+static FILE *infp;
+static int fileinput = 0;
 
-static char	usage[] = "\
+static char usage[] = "\
 Usage: bw-a [a] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.bw]\n";
 
@@ -59,7 +59,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c=bu_getopt(argc, argv, "as:w:n:")) != EOF ) {
+    while ((c=bu_getopt(argc, argv, "as:w:n:")) != EOF) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
@@ -80,8 +80,8 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (bu_optind >= argc ) {
-	if (isatty(fileno(stdin)) ) return(0);
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) return(0);
 	file_name = "-";
 	infp = stdin;
     } else {
@@ -101,6 +101,7 @@ get_args(int argc, char **argv)
     return(1);	/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
@@ -108,15 +109,15 @@ main(int argc, char **argv)
     long int cur_width = 0;
     long int cur_height = 0;
 
-    if ( !get_args(argc, argv)) {
+    if (!get_args(argc, argv)) {
 	(void) fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
 
     /* autosize the input? */
     if (fileinput && autosize) {
-	unsigned long int	w, h;
-	if ( fb_common_file_size(&w, &h, file_name, 1) ) {
+	unsigned long int w, h;
+	if (fb_common_file_size(&w, &h, file_name, 1)) {
 	    file_width = (long)w;
 	} else {
 	    fprintf(stderr, "bw-a: unable to autosize\n");
@@ -137,6 +138,7 @@ main(int argc, char **argv)
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -19,31 +19,31 @@
  */
 /** @file azel.c
  *
- *	     This program reads data for points in Euclidean 3-space
- *	and prints out the same data, having transformed the coordinates
- *	of the points according to an azimuth-elevation rotation.
+ * This program reads data for points in Euclidean 3-space
+ * and prints out the same data, having transformed the coordinates
+ * of the points according to an azimuth-elevation rotation.
  *
- *	     Each point in the input must be of the form:
+ * Each point in the input must be of the form:
  *
- *			a  b  c  field_1  field_2  ...  field_n.
+ * a b c  field_1 field_2  ...  field_n.
  *
- *	The default behavior of the program is to interpret (a, b, c) as
- *	the point (x, y, z) in unrotated coordinates and to output
+ * The default behavior of the program is to interpret (a, b, c) as
+ * the point (x, y, z) in unrotated coordinates and to output
  *
- *			d  h  v  field_1  field_2  ...  field_n.
+ * d h v  field_1 field_2  ...  field_n.
  *
- *	where (d, h, v) are the "viewer's coordinates."
+ * where (d, h, v) are the "viewer's coordinates."
  *
- *	     The -p option causes the program to output the projection
- *	of the point onto a plane normal to the line of sight:
+ * The -p option causes the program to output the projection
+ * of the point onto a plane normal to the line of sight:
  *
- *			 h  v  field_1  field_2  ...  field_n.
+ * h v field_1 field_2  ...  field_n.
  *
- *	     The -i option causes the program to invert the rotation.
- *	(a, b, c) is interpreted as the point (d, h, v) in the viewer's
- *	coordinates, and the point is output in derotated form:
+ * The -i option causes the program to invert the rotation.
+ * (a, b, c) is interpreted as the point (d, h, v) in the viewer's
+ * coordinates, and the point is output in derotated form:
  *
- *			x  y  z  field_1  field_2  ...  field_n.
+ * x y z  field_1 field_2  ...  field_n.
  *
  */
 
@@ -58,8 +58,8 @@
 #include "bu.h"
 
 
-#define		OPT_STRING	"a:c:e:ipr?"	/* For bu_getopt(3) */
-#define		fpeek(f)	ungetc(fgetc(f), f)
+#define OPT_STRING "a:c:e:ipr?"	/* For bu_getopt(3) */
+#define fpeek(f) ungetc(fgetc(f), f)
 
 
 /* ======================================================================== */
@@ -81,25 +81,22 @@ GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
     /* What input stream? */
 
 {
-    int     Ch;
+    int Ch;
 
 /* Skip leading white space */
     while (((Ch = fgetc(Whence)) == ' ') || (Ch == '\t'))
 	;
 
-    if (ungetc(Ch, Whence) == EOF)
-    {
+    if (ungetc(Ch, Whence) == EOF) {
 	bu_exit(1, "azel:  Premature end-of-file, file %s\n",
 		FileName);
     }
-    if (Ch == '\n')
-    {
+    if (Ch == '\n') {
 	bu_exit(1, "azel:  Premature end-of-line on line %d, file %s\n",
 		LineNm, FileName);
     }
 
-    if (fscanf(Whence, "%lf", Coord) != 1)
-    {
+    if (fscanf(Whence, "%lf", Coord) != 1) {
 	bu_exit(1, "azel:  Bad %c-coordinate at line %d, file %s\n",
 		Label, LineNm, FileName);
     }
@@ -109,66 +106,62 @@ GetCoord (FILE *Whence, double *Coord, char Label, int LineNm, char *FileName)
 int
 main (int argc, char **argv)
 {
-    char            *inFname = "stdin"; /* Name of input source */
-    char            *outFname = "stdout";  /* Name of output destination */
-    char            *Label;             /* Names of input coordinates */
-    char            Tail[4096] = {0};   /* Rest of input line beyond coords */
-    extern char     *bu_optarg;         /* argument from bu_getopt(3C) */
-    FILE            *inPtr = stdin;     /* Pointer to input */
-    FILE            *outPtr = stdout;   /* Pointer to output */
-    double          Azim = 0.0;         /* Azimuth angle (in degrees) */
-    double          Elev = 0.0;         /* Elevation angle (in degrees) */
-    double          CelSiz = 1.0;       /* Size of cells (dimensionless) */
-    double          Cazim;              /* Cosine of the azimuth angle */
-    double          Celev;              /* Cosine of the elevation angle */
-    double          Sazim;              /* Sine of the azimuth angle */
-    double          Selev;              /* Sine of the elevation angle */
-    double          U1;                 /* Input coords of current point */
-    double          V1;                 /*   "      "    "    "      "   */
-    double          W1;                 /*   "      "    "    "      "   */
-    double          U2;			/* Output coords of current point */
-    double          V2;                 /*   "      "    "    "      "   */
-    double          W2;                 /*   "      "    "    "      "   */
-    double          UU;                 /* Weight of U1 in computing U2 */
-    double          UV;                 /*    "    " U1  "     "     V2 */
-    double          UW;                 /*    "    " U1  "     "     W2 */
-    double          VU;                 /* Weight of V1 in computing U2 */
-    double          VV;                 /*    "    " V1  "     "     V2 */
-    double          VW;                 /*    "    " V1  "     "     W2 */
-    double          WU;                 /* Weight of W1 in computing U2 */
-    double          WV;                 /*    "    " W1  "     "     V2 */
-    double          WW;                 /*    "    " W1  "     "     W2 */
-    int             Invert = 0;		/* Undo az-el rotation? */
-    int             PlanarProj = 0;	/* Project points onto plane? */
-    int             Round = 0;		/* Round the output coords? */
-    int             LineNm = 0;         /* How far through input? */
-    int             Ch;                 /* Input character */
-    int             i;                  /* Dummy variable for loop indexing */
-    extern int      bu_optind;             /* index from bu_getopt(3C) */
+    char *inFname = "stdin"; /* Name of input source */
+    char *outFname = "stdout";  /* Name of output destination */
+    char *Label;             /* Names of input coordinates */
+    char Tail[4096] = {0};   /* Rest of input line beyond coords */
+    extern char *bu_optarg;         /* argument from bu_getopt(3C) */
+    FILE *inPtr = stdin;     /* Pointer to input */
+    FILE *outPtr = stdout;   /* Pointer to output */
+    double Azim = 0.0;         /* Azimuth angle (in degrees) */
+    double Elev = 0.0;         /* Elevation angle (in degrees) */
+    double CelSiz = 1.0;       /* Size of cells (dimensionless) */
+    double Cazim;              /* Cosine of the azimuth angle */
+    double Celev;              /* Cosine of the elevation angle */
+    double Sazim;              /* Sine of the azimuth angle */
+    double Selev;              /* Sine of the elevation angle */
+    double U1;                 /* Input coords of current point */
+    double V1;                 /* "      " "    " "   */
+    double W1;                 /* "      " "    " "   */
+    double U2;			/* Output coords of current point */
+    double V2;                 /* "      " "    " "   */
+    double W2;                 /* "      " "    " "   */
+    double UU;                 /* Weight of U1 in computing U2 */
+    double UV;                 /* "    " U1 "     " V2 */
+    double UW;                 /* "    " U1 "     " W2 */
+    double VU;                 /* Weight of V1 in computing U2 */
+    double VV;                 /* "    " V1 "     " V2 */
+    double VW;                 /* "    " V1 "     " W2 */
+    double WU;                 /* Weight of W1 in computing U2 */
+    double WV;                 /* "    " W1 "     " V2 */
+    double WW;                 /* "    " W1 "     " W2 */
+    int Invert = 0;		/* Undo az-el rotation? */
+    int PlanarProj = 0;	/* Project points onto plane? */
+    int Round = 0;		/* Round the output coords? */
+    int LineNm = 0;         /* How far through input? */
+    int Ch;                 /* Input character */
+    int i;                  /* Dummy variable for loop indexing */
+    extern int bu_optind;             /* index from bu_getopt(3C) */
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
-	switch (Ch)
-	{
+	switch (Ch) {
 	    case 'a':
-		if (sscanf(bu_optarg, "%lf", &Azim) != 1)
-		{
+		if (sscanf(bu_optarg, "%lf", &Azim) != 1) {
 		    (void) fprintf(stderr,
 				   "Bad azimuth specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		}
 		break;
 	    case 'c':
-		if (sscanf(bu_optarg, "%lf", &CelSiz) != 1)
-		{
+		if (sscanf(bu_optarg, "%lf", &CelSiz) != 1) {
 		    (void) fprintf(stderr,
 				   "Bad cell-size specification: '%s'\n", bu_optarg);
 		    PrintUsage();
 		}
 		break;
 	    case 'e':
-		if (sscanf(bu_optarg, "%lf", &Elev) != 1)
-		{
+		if (sscanf(bu_optarg, "%lf", &Elev) != 1) {
 		    (void) fprintf(stderr,
 				   "Bad elevation specification: '%s'\n", bu_optarg);
 		    PrintUsage();
@@ -189,30 +182,24 @@ main (int argc, char **argv)
 		PrintUsage();
 	}
 
-    if (PlanarProj && Invert)
-    {
+    if (PlanarProj && Invert) {
 	fputs("Incompatible options: -i and -p\n", stderr);
 	PrintUsage();
     }
 
     /* Determine source and destination */
-    if (argc - bu_optind > 0)
-    {
+    if (argc - bu_optind > 0) {
 	inFname = argv[bu_optind];
-	if ((inPtr = fopen(inFname, "r")) == NULL)
-	{
+	if ((inPtr = fopen(inFname, "r")) == NULL) {
 	    bu_exit(1, "azel:  Cannot open file '%s'\n", inFname);
 	}
-	if (argc - bu_optind > 1)
-	{
+	if (argc - bu_optind > 1) {
 	    outFname = argv[bu_optind + 1];
-	    if ((outPtr = fopen(outFname, "w")) == NULL)
-	    {
+	    if ((outPtr = fopen(outFname, "w")) == NULL) {
 		bu_exit(1, "azel:  Cannot create file '%s'\n", outFname);
 	    }
 	}
-	if (argc - bu_optind > 2)
-	{
+	if (argc - bu_optind > 2) {
 	    PrintUsage();
 	}
     }
@@ -222,8 +209,7 @@ main (int argc, char **argv)
     Celev = cos(Elev * DEG2RAD);
     Sazim = sin(Azim * DEG2RAD);
     Selev = sin(Elev * DEG2RAD);
-    if (Invert)
-    {
+    if (Invert) {
 	UU = Celev * Cazim;
 	VU = -Sazim;
 	WU = -(Selev * Cazim);
@@ -233,9 +219,7 @@ main (int argc, char **argv)
 	UW = Selev;
 	VW = 0.0;
 	WW = Celev;
-    }
-    else
-    {
+    } else {
 	UU = Celev * Cazim;
 	VU = Celev * Sazim;
 	WU = Selev;
@@ -250,8 +234,7 @@ main (int argc, char **argv)
 /* * * * * Filter Data * * * * */
     Label = Invert ? "DHV" : "XYZ";
 
-    while ((Ch = fpeek(inPtr)) != EOF)
-    {
+    while ((Ch = fpeek(inPtr)) != EOF) {
 /* Read U1, V1, and W1 of next point in input frame of reference */
 	GetCoord(inPtr, &U1, *Label, LineNm + 1, inFname);
 	GetCoord(inPtr, &V1, *(Label + 1), LineNm + 1, inFname);
@@ -262,8 +245,7 @@ main (int argc, char **argv)
 	V2 = (U1 * UV + V1 * VV + W1 * WV) / CelSiz;
 	W2 = (U1 * UW + V1 * VW + W1 * WW) / CelSiz;
 
-	if (Round)
-	{
+	if (Round) {
 	    U2 = floor(U2 + .5);
 	    V2 = floor(V2 + .5);
 	    W2 = floor(W2 + .5);
@@ -271,12 +253,10 @@ main (int argc, char **argv)
 
 /* Read in the rest of the line for subsequent dumping out */
 	for (i = 0; (Ch = fgetc(inPtr)) != '\n'; i++)
-	    if (Ch == EOF)
-	    {
+	    if (Ch == EOF) {
 		Tail[i] = '\n';
 		break;
-	    }
-	    else
+	    } else
 		Tail[i] = Ch;
 	Tail[i] = '\0';
 
@@ -288,6 +268,7 @@ main (int argc, char **argv)
     }
     bu_exit (0, NULL);
 }
+
 
 /*
  * Local Variables:

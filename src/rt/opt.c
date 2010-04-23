@@ -39,6 +39,13 @@
 #include "rtprivate.h"
 
 
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
+ */
+#define COMMA ','
+
+
 int		rpt_dist = 0;		/* report distance to each pixel */
 int		width = 0;		/* # of pixels in X */
 int		height = 0;		/* # of lines in Y */
@@ -135,6 +142,8 @@ int             do_kut_plane = 0;
 plane_t         kut_plane;
 
 double units = 1.0;
+int default_units = 1;
+int model_units = 0;
 
 /***** end variables shared with view.c *****/
 
@@ -240,7 +249,7 @@ int get_args( int argc, register char **argv )
 	    case '.':
 		nu_gfactor = (double)atof( bu_optarg );
 		break;
-	    case ',':
+	    case COMMA:
 		space_partition = atoi(bu_optarg);
 		break;
 	    case '@':
@@ -299,7 +308,7 @@ int get_args( int argc, register char **argv )
 		}
 		f = 0;
 		if ( (cp = strchr(bu_optarg, '/')) ||
-		     (cp = strchr(bu_optarg, ',')) )  {
+		     (cp = strchr(bu_optarg, COMMA)) )  {
 		    if ( sscanf( cp+1, "%lf", &f ) == 1 )  {
 			if ( f > 0 && f < 1 )
 			    rt_perp_tol = f;
@@ -457,11 +466,19 @@ int get_args( int argc, register char **argv )
 		}
 		break;
 	    case 'u':
-		units = bu_units_conversion(bu_optarg);
-		if (units <= 0.0) {
-		    units = 1.0;
-		    bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
-		}
+	    	if (strcmp(bu_optarg,"model") == 0) {
+	    		model_units = 1;
+	    		default_units = 0;
+	    	} else {
+	    		units = bu_units_conversion(bu_optarg);
+	    		if (units <= 0.0) {
+	    			units = 1.0;
+	    			default_units = 1;
+	    			bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
+	    		} else {
+	    			default_units = 0;
+	    		}
+			}
 		break;
 	    case 'v': /* Set level of "non-debug" debugging output */
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_verbosity );

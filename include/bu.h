@@ -45,6 +45,9 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+#include <sys/types.h>
+
 __BEGIN_DECLS
 
 #ifndef BU_EXPORT
@@ -134,25 +137,6 @@ __BEGIN_DECLS
 #define BU_ARGS(args) args
 
 /**
- * This is so we can use gcc's "format string vs arguments"-check for
- * various printf-like functions, and still maintain compatability.
- */
-#ifndef __attribute__
-/* This feature is only available in gcc versions 2.5 and later. */
-#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
-#    define __attribute__(ignore) /* empty */
-#  endif
-/* The __-protected variants of `format' and `printf' attributes
- * are accepted by gcc versions 2.6.4 (effectively 2.7) and later.
- */
-#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
-#    define __format__ format
-#    define __printf__ printf
-#    define __noreturn__ noreturn
-#  endif
-#endif
-
-/**
  * shorthand declaration of a printf-style functions
  */
 #define __BU_ATTR_FORMAT12 __attribute__ ((__format__ (__printf__, 1, 2)))
@@ -187,6 +171,10 @@ __BEGIN_DECLS
 #include <setjmp.h> /* for bu_setjmp */
 #include <stddef.h> /* for size_t */
 #include <limits.h> /* for CHAR_BIT */
+
+#ifdef HAVE_STDINT_H
+#  include <stdint.h> /* for [u]int[16|32|64]_t */
+#endif
 
 /* common interface headers */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
@@ -272,8 +260,8 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
 	if (!((_lhs) _relation (_rhs))) { \
-		bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
-			(long)(_lhs), (long)(_rhs), \
+		bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=%p, rhs=%p, file %s, line %d\n", \
+			(void *)(_lhs), (void *)(_rhs), \
 			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT_PTR failure\n"); \
 	}
@@ -289,6 +277,19 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 			(long)(_lhs), (long)(_rhs), \
 			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT_LONG failure\n"); \
+	}
+#endif
+
+
+#ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)
+#else
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
+	if (!((_lhs) _relation (_rhs))) { \
+		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
+			(size_t)(_lhs), (size_t)(_rhs), \
+			__FILE__, __LINE__); \
+		bu_bomb("BU_ASSERT_SIZE_T failure\n"); \
 	}
 #endif
 
@@ -324,6 +325,8 @@ BU_EXPORT BU_EXTERN(const char *bu_version, (void));
  * and K&R C environments.  On some machines, pointers to functions
  * can be wider than pointers to data bytes, so a declaration of
  * "char*" isn't generic enough.
+ *
+ * DEPRECATED: use void* instead
  */
 #if !defined(GENPTR_NULL)
 typedef void *genptr_t;
@@ -509,7 +512,7 @@ BU_EXPORT BU_EXTERN(int bu_cv_itemlen, (int cookie));
  *	done
  @endcode
 */
-BU_EXPORT BU_EXTERN(int bu_cv_w_cookie, (genptr_t, int, size_t, genptr_t, int, int));
+BU_EXPORT BU_EXTERN(size_t bu_cv_w_cookie, (genptr_t, int, size_t, genptr_t, int, size_t));
 
 /**
  * bu_cv_ntohss
@@ -530,46 +533,46 @@ BU_EXPORT BU_EXTERN(int bu_cv_w_cookie, (genptr_t, int, size_t, genptr_t, int, i
  *
  * @return	number of conversions done.
  */
-BU_EXPORT BU_EXTERN(int bu_cv_ntohss,
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohss,
 		    (signed short *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_ntohus,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohus,
 		    (unsigned short *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_ntohsl,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohsl,
 		    (signed long int *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_ntohul,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohul,
 		    (unsigned long int *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonss,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonss,
 		    (genptr_t,
 		     size_t,
 		     signed short *,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonus,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonus,
 		    (genptr_t,
 		     size_t,
 		     unsigned short *,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonsl,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonsl,
 		    (genptr_t,
 		     size_t,
 		     long *,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonul,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonul,
 		    (genptr_t,
 		     size_t,
 		     unsigned long *,
-		     int));
+		     size_t));
 
 #define CV_CHANNEL_MASK 0x00ff
 #define CV_HOST_MASK    0x0100
@@ -624,7 +627,7 @@ typedef enum {
  *
  * returns the platform byte ordering (e.g., big-/little-endian)
  */
-BU_EXPORT BU_EXTERN(inline bu_endian_t bu_byteorder, (void));
+BU_EXPORT BU_EXTERN(bu_endian_t bu_byteorder, (void));
 
 
 /**@}*/
@@ -823,8 +826,8 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_INSERT_LIST(dest_hp, src_hp) \
 	if (BU_LIST_NON_EMPTY(src_hp)) { \
-		register struct bu_list *_first = (src_hp)->forw; \
-		register struct bu_list *_last = (src_hp)->back; \
+		struct bu_list *_first = (src_hp)->forw; \
+		struct bu_list *_last = (src_hp)->back; \
 		(dest_hp)->forw->back = _last; \
 		_last->forw = (dest_hp)->forw; \
 		(dest_hp)->forw = _first; \
@@ -834,8 +837,8 @@ typedef struct bu_list bu_list_t;
 
 #define BU_LIST_APPEND_LIST(dest_hp, src_hp) \
 	if (BU_LIST_NON_EMPTY(src_hp)) {\
-		register struct bu_list *_first = (src_hp)->forw; \
-		register struct bu_list *_last = (src_hp)->back; \
+		struct bu_list *_first = (src_hp)->forw; \
+		struct bu_list *_last = (src_hp)->back; \
 		_first->back = (dest_hp)->back; \
 		(dest_hp)->back->forw = _first; \
 		(dest_hp)->back = _last; \
@@ -1283,11 +1286,11 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 #define BU_BITV_LOOP_START(_bv)	\
 { \
-	register int _wd;	/* Current word number */  \
+	int _wd;	/* Current word number */  \
 	BU_CK_BITV(_bv); \
 	for (_wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd--) {  \
-		register int _b;	/* Current bit-in-word number */  \
-		register bitv_t _val;	/* Current word value */  \
+		int _b;	/* Current bit-in-word number */  \
+		bitv_t _val;	/* Current word value */  \
 		if ((_val = (_bv)->bits[_wd])==0) continue;  \
 		for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1) { \
 			if (!(_val & 1))  continue;
@@ -1349,7 +1352,7 @@ struct bu_hist  {
 	(_hp)->hg_nsamples++;  }
 
 #define BU_HIST_TALLY_MULTIPLE(_hp, _val, _count) { \
-	register int __count = (_count); \
+	int __count = (_count); \
 	if ((_val) <= (_hp)->hg_min) { \
 		(_hp)->hg_bins[0] += __count; \
 	} else if ((_val) >= (_hp)->hg_max) { \
@@ -1385,9 +1388,9 @@ struct bu_hist  {
  * Support for generalized "pointer tables".
  */
 struct bu_ptbl {
-    struct bu_list l;	/**< @brief linked list for caller's use */
-    int end;	/**< @brief index into buffer of first available location */
-    int blen;	/**< @brief # of (long *)'s worth of storage at *buffer */
+    struct bu_list l; /**< @brief linked list for caller's use */
+    off_t end; /**< @brief index into buffer of first available location */
+    size_t blen; /**< @brief # of (long *)'s worth of storage at *buffer */
     long **buffer; /**< @brief data storage area */
 };
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
@@ -1483,11 +1486,11 @@ struct bu_mapped_file {
     struct bu_list l;
     char *name;		/**< @brief bu_strdup() of file name */
     genptr_t buf;	/**< @brief In-memory copy of file (may be mmapped)  */
-    long buflen;	/**< @brief # bytes in 'buf'  */
+    size_t buflen;	/**< @brief # bytes in 'buf'  */
     int is_mapped;	/**< @brief 1=mmap() used, 0=bu_malloc/fread */
     char *appl;		/**< @brief bu_strdup() of tag for application using 'apbuf'  */
     genptr_t apbuf;	/**< @brief opt: application-specific buffer */
-    long apbuflen;	/**< @brief opt: application-specific buflen */
+    size_t apbuflen;	/**< @brief opt: application-specific buflen */
     long modtime;	/**< @brief date stamp, in case file is modified */
     int uses;		/**< @brief # ptrs to this struct handed out */
     int dont_restat;	/**< @brief 1=on subsequent opens, don't re-stat()  */
@@ -1596,7 +1599,7 @@ struct bu_vls  {
 };
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 #define BU_VLS_IS_INITIALIZED(_vp)	\
-	(((unsigned long)(_vp) != 0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
+    (((struct bu_vls *)(_vp) != (struct bu_vls *)0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 /** @} */
 
@@ -1806,11 +1809,7 @@ BU_EXPORT extern int bu_debug;
 #        endif
 #      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#        if defined(_WIN32) && !defined(__CYGWIN__)
-#          define bu_byteoffset(_i)	((long)(((char *)&(_i))-((char *)0)))
-#        else
-#          define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
-#        endif
+#        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
 #      endif
 #    endif
 #  endif
@@ -1824,25 +1823,25 @@ BU_EXPORT extern int bu_debug;
  *@code
 
  struct data_structure {
- char a_char;
- char str[32];
- short a_short;
- int a_int;
- double a_double;
+   char a_char;
+   char str[32];
+   short a_short;
+   int a_int;
+   double a_double;
  }
 
- struct data_structure data_default =
+ struct data_structure default =
  { 'c', "the default string", 32767, 1, 1.0 };
 
  struct data_structure my_values;
 
  struct bu_structparse data_sp[] ={
- {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL, "a single character",	(void*)&default.a_char },
- {"%s", 32, "str",      bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL, "This is a full character string", (void*)default.str }, },
- {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL, "A 16bit integer",	(void*)&default.a_short },
- {"%d", 1,  "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL, "A full integer",	(void*)&default.a_int },
- {"%f", 1,  "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value",  (void*)&default.a_double },
- { "", 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, (char *)NULL, (void *)NULL }
+   {"%c", 1,     "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL,                      "a single character", (void*)&default.a_char},
+   {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
+   {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
+   {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
+   {"%f", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value", (void*)&default.a_double},
+   {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
  };
 
  @endcode
@@ -1861,10 +1860,10 @@ BU_EXPORT extern int bu_debug;
  * probably shouldn't use this technique.
  */
 struct bu_structparse {
-    char sp_fmt[4];		/**< @brief "i" or "%f", etc */
-    long sp_count;		/**< @brief number of elements */
+    char sp_fmt[4];		/**< @brief "%i" or "%f", etc */
+    size_t sp_count;		/**< @brief number of elements */
     char *sp_name;		/**< @brief Element's symbolic name */
-    long sp_offset;		/**< @brief Byte offset in struct */
+    size_t sp_offset;		/**< @brief Byte offset in struct */
     void (*sp_hook)();	/**< @brief Optional hooked function, or indir ptr */
     char *sp_desc;		/**< @brief description of element */
     void *sp_default;		/**< @brief ptr to default value */
@@ -1885,7 +1884,7 @@ struct bu_structparse {
  */
 struct bu_external  {
     unsigned long ext_magic;
-    long ext_nbytes;
+    size_t ext_nbytes;
     genptr_t ext_buf;
 };
 #define BU_INIT_EXTERNAL(_p) {(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
@@ -2557,14 +2556,23 @@ BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearr
  * attempting to locate binaries, libraries, and resources.  This
  * routine will set argv0 if path is provided and should generally be
  * set early on by bu_setprogname().
+ *
+ * this routine will return "(unknown)" if argv[0] cannot be
+ * identified but should never return NULL.
+ *
+ * DEPRECATED: This routine is replaced by bu_argv0_full_path().
+ *             Do not use.
  */
-BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
+DEPRECATED BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
 
 /**
  * b u _ a r g v 0 _ f u l l _ p a t h
  *
  * returns the full path to argv0, regardless of how the application
  * was invoked.
+ *
+ * this routine will return "(unknown)" if argv[0] cannot be
+ * identified but should never return NULL.
  */
 BU_EXPORT BU_EXTERN(const char *bu_argv0_full_path, (void));
 
@@ -2629,41 +2637,37 @@ BU_EXPORT BU_EXTERN(const char *bu_brlcad_root, (const char *rhs, int fail_quiet
  */
 BU_EXPORT BU_EXTERN(const char *bu_brlcad_data, (const char *rhs, int fail_quietly));
 
-/** @file which.c
+/**
+ * b u _ w h i c h
+ *
+ * returns the first USER path match to a given executable name.
  *
  * Routine to provide BSD "which" functionality, locating binaries of
  * specified programs from the user's PATH. This is useful to locate
  * binaries and resources at run-time.
  *
- */
-
-/**
- * b u _ w h i c h
- *
- * returns the first USER path match to a given executable cmd name.
- *
  * caller should not free the result, though it will not be preserved
  * between calls either.  the caller should strdup the result if they
  * need to keep it around.
+ *
+ * routine will return NULL if the executable command cannot be found.
  */
 BU_EXPORT BU_EXTERN(const char *bu_which, (const char *cmd));
-
-/** @file whereis.c
- *
- * Routine to provide BSD "whereis" functionality, locating binaries
- * of specified programs from the SYSTEM path.  This is useful to
- * locate binaries and resources at run-time.
- *
- */
 
 /**
  * b u _ w h e r e i s
  *
  * returns the first SYSTEM path match to a given executable cmd name.
  *
+ * Routine to provide BSD "whereis" functionality, locating binaries
+ * of specified programs from the SYSTEM path.  This is useful to
+ * locate binaries and resources at run-time.
+ *
  * caller should not free the result, though it will not be preserved
  * between calls either.  the caller should strdup the result if they
  * need to keep it around.
+ *
+ * routine will return NULL if the executable command cannot be found.
  */
 BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
 
@@ -2675,11 +2679,13 @@ BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
 
 /**
  * B U _ F O P E N _ U N I Q
- * @brief
- * Open a file for output.  Assures that the file did not previously
- * exist.  This routine is DEPRECATED.  Do not use.
  *
- * Typical Usages:
+ * @brief Open a file for output.  Assures that the file did not previously
+ * exist.
+ *
+ * This routine is DEPRECATED.  Do not use.
+ *
+ * Typical usage:
  @code
  *	static int n = 0;
  *	FILE *fp;
@@ -2693,8 +2699,10 @@ BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
  *	...
  *	fclose(fp);
  @endcode
-*/
-BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)); /**< DEPRECATED */
+ *
+ * DEPRECATED
+ */
+DEPRECATED BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n));
 
 /** @file temp.c
  *
@@ -2869,7 +2877,7 @@ BU_EXPORT BU_EXTERN(void bu_hist_pr, (const struct bu_hist *histp, const char *t
 BU_EXPORT BU_EXTERN(void htond,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /**
  * N T O H D
@@ -2879,7 +2887,7 @@ BU_EXPORT BU_EXTERN(void htond,
 BU_EXPORT BU_EXTERN(void ntohd,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /** @file htonf.c
  *
@@ -2897,7 +2905,7 @@ BU_EXPORT BU_EXTERN(void ntohd,
 BU_EXPORT BU_EXTERN(void htonf,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /**
  * N T O H F
@@ -2907,7 +2915,7 @@ BU_EXPORT BU_EXTERN(void htonf,
 BU_EXPORT BU_EXTERN(void ntohf,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /** @} */
 
@@ -3006,8 +3014,9 @@ BU_EXPORT BU_EXTERN(void bu_list_free,
 /**
  * B U _ L I S T _ P A R A L L E L _ A P P E N D
  *
- * Simple parallel-safe routine for appending a data structure to the end
- * of a bu_list doubly-linked list.
+ * Simple parallel-safe routine for appending a data structure to the
+ * end of a bu_list doubly-linked list.
+ *
  * @par Issues:
  *  	Only one semaphore shared by all list heads.
  * @n	No portable way to notify waiting thread(s) that are sleeping
@@ -3216,7 +3225,7 @@ BU_EXPORT BU_EXTERN(genptr_t bu_malloc,
  * Failure results in bu_bomb() being called.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_calloc,
-		    (unsigned int nelem,
+		    (size_t nelem,
 		     size_t elsize,
 		     const char *str));
 
@@ -3529,7 +3538,7 @@ BU_EXPORT BU_EXTERN(fastf_t bu_get_load_average, ());
  * and should not be relied upon.  a future implementation will
  * utilize environment variables instead of temporary files.
  */
-BU_EXPORT BU_EXTERN(int bu_get_public_cpus, ());
+DEPRECATED BU_EXPORT BU_EXTERN(int bu_get_public_cpus, ());
 
 /**
  * B U _ S E T _ R E A L T I M E
@@ -3906,7 +3915,7 @@ BU_EXPORT BU_EXTERN(void bu_printb,
  */
 BU_EXPORT BU_EXTERN(void bu_ptbl_init,
 		    (struct bu_ptbl *b,
-		     int len,
+		     size_t len,
 		     const char *str));
 
 /**
@@ -4896,6 +4905,31 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		    (struct bu_vls *vp,
 		     char *str));
 
+/**
+ * b u _ v l s _ e n c o d e
+ *
+ * given an input string, wrap the string in double quotes if there is
+ * a space.  escape any existing double quotes.
+ *
+ * the behavior of this routine is subject to change but should remain
+ * a reversible operation when used in conjunction with
+ * bu_vls_decode().
+ */
+BU_EXPORT BU_EXTERN(void bu_vls_encode, (struct bu_vls *vp, const char *str));
+
+
+/**
+ * b u _ v l s _ d e c o d e
+ *
+ * given an encoded input string, unwrap the string from any
+ * surrounding double quotes and unescape any embedded double quotes.
+ *
+ * the behavior of this routine is subject to change but should remain
+ * the reverse operation of bu_vls_encode().
+ */
+BU_EXPORT BU_EXTERN(void bu_vls_decode, (struct bu_vls *vp, const char *str));
+
+
 /** @} */
 /** @addtogroup vlb */
 /** @{ */
@@ -5061,6 +5095,8 @@ BU_EXPORT BU_EXTERN(double bu_units_conversion,
  */
 BU_EXPORT BU_EXTERN(const char *bu_units_string,
 		    (const double mm));
+BU_EXPORT BU_EXTERN(struct bu_vls *bu_units_strings_vls,
+		    ());
 
 /**
  * B U _ N E A R E S T _ U N I T S _ S T R I N G
@@ -5133,46 +5169,51 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
  * The argument is expected to be of type "unsigned char"
  */
 #define BU_GLONGLONG(_cp)	\
-	    ((((long)((_cp)[0])) << 56) |	\
-	     (((long)((_cp)[1])) << 48) |	\
-	     (((long)((_cp)[2])) << 40) |	\
-	     (((long)((_cp)[3])) << 32) |	\
-	     (((long)((_cp)[4])) << 24) |	\
-	     (((long)((_cp)[5])) << 16) |	\
-	     (((long)((_cp)[6])) <<  8) |	\
-	      ((long)((_cp)[7])))
+	    ((((uint64_t)((_cp)[0])) << 56) |	\
+	     (((uint64_t)((_cp)[1])) << 48) |	\
+	     (((uint64_t)((_cp)[2])) << 40) |	\
+	     (((uint64_t)((_cp)[3])) << 32) |	\
+	     (((uint64_t)((_cp)[4])) << 24) |	\
+	     (((uint64_t)((_cp)[5])) << 16) |	\
+	     (((uint64_t)((_cp)[6])) <<  8) |	\
+	      ((uint64_t)((_cp)[7])))
 #define BU_GLONG(_cp)	\
-	    ((((long)((_cp)[0])) << 24) |	\
-	     (((long)((_cp)[1])) << 16) |	\
-	     (((long)((_cp)[2])) <<  8) |	\
-	      ((long)((_cp)[3])))
+	    ((((uint32_t)((_cp)[0])) << 24) |	\
+	     (((uint32_t)((_cp)[1])) << 16) |	\
+	     (((uint32_t)((_cp)[2])) <<  8) |	\
+	      ((uint32_t)((_cp)[3])))
 #define BU_GSHORT(_cp)	\
-	    ((((short)((_cp)[0])) << 8) | \
+	    ((((uint16_t)((_cp)[0])) << 8) | \
 		       (_cp)[1])
 
 /**
  * B U _ G S H O R T
  */
-BU_EXPORT BU_EXTERN(unsigned short bu_gshort, (const unsigned char *msgp));
+BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
 
 /**
  * B U _ G L O N G
  */
-BU_EXPORT BU_EXTERN(unsigned long bu_glong, (const unsigned char *msgp));
+BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
 
 /**
  * B U _ P S H O R T
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, int s));
+BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
 
 /**
  * B U _ P L O N G
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, unsigned long l));
+BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
+
+/**
+ * B U _ P L O N G L O N G
+ */
+BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
 
 /** @} */
 
-/** @addtogroup butcl */
+/** @addtogroup tcl */
 /** @{ */
 /** @file observer.c
  *
@@ -5203,7 +5244,7 @@ BU_EXPORT BU_EXTERN(void bu_observer_notify, (Tcl_Interp *interp, struct bu_obse
  */
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
-/** @file bu_tcl.c
+/** @file tcl.c
  *
  * Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *

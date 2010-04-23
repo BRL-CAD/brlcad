@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file splinef.c
- *  Authors -
- *	John R. Anderson
- *	Susanne L. Muuss
- *	Earl P. Weaver
- *
- */
-
-/* spline function */
 
 #include "common.h"
 
@@ -33,24 +24,25 @@
 
 #include "bu.h"
 
+
+/* spline functionality */
 fastf_t
-splinef( c, s )
-    fastf_t c[4], s;
+splinef(fastf_t c[4], fastf_t s)
 {
     int i;
     float retval;
     double stopow=1.0;
 
     retval = c[0];
-    for ( i=1; i<4; i++ )
-    {
+    for (i=1; i<4; i++) {
 	stopow *= s;
-	if ( c[i] != 0.0 )
+	if (c[i] != 0.0)
 	    retval += c[i]*stopow;
     }
 
-    return( retval );
+    return(retval);
 }
+
 
 /*
  * Local Variables:

@@ -43,6 +43,11 @@
 #       512x512 nrec=32 count=192
 #       640x480 nrec=38 count=160
 
+echo "************************************************************"
+echo "DEPRECATION WARNING: This script is deprecated and may be"
+echo "                     removed in a future release of BRL-CAD."
+echo "************************************************************"
+
 # base string for no rewind tape
 NRW_BASE=/dev/nrmt
 

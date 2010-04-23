@@ -38,6 +38,11 @@
 #include "fb.h"
 
 
+extern int X24_close_existing(FBIO *ifp);
+extern int ogl_close_existing(FBIO *ifp);
+extern int wgl_close_existing(FBIO *ifp);
+
+
 #define Malloc_Bomb(_bytes_ ) \
 		fb_log("\"%s\"(%d) : allocation of %d bytes failed.\n", \
 				__FILE__, __LINE__, _bytes_ )
@@ -60,6 +65,10 @@ int _fb_disk_enable = 1;
  */
 int fb_null(FBIO *ifp)
 {
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
+
     return 0;
 }
 
@@ -69,8 +78,12 @@ int fb_null(FBIO *ifp)
  *
  * Used by if_*.c routines that don't have programmable cursor patterns.
  */
-int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+int fb_null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
+
     return 0;
 }
 
@@ -222,8 +235,6 @@ fb_close(FBIO *ifp)
 int
 fb_close_existing(FBIO *ifp)
 {
-    int status;
-
     if (!ifp)
 	return 0;
 
@@ -237,6 +248,7 @@ fb_close_existing(FBIO *ifp)
     {
 	extern FBIO X24_interface;
 	if (strcasecmp(ifp->if_name, X24_interface.if_type) == 0) {
+	    int status = -1;
 	    if ((status = X24_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
 		return BRLCAD_ERROR;
@@ -255,6 +267,7 @@ fb_close_existing(FBIO *ifp)
     {
 	extern FBIO wgl_interface;
 	if (strcasecmp(ifp->if_name, wgl_interface.if_type) == 0) {
+	    int status = -1;
 	    if ((status = wgl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
 		return BRLCAD_ERROR;
@@ -272,6 +285,7 @@ fb_close_existing(FBIO *ifp)
     {
 	extern FBIO ogl_interface;
 	if (strcasecmp(ifp->if_name, ogl_interface.if_type) == 0) {
+	    int status = -1;
 	    if ((status = ogl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
 		return BRLCAD_ERROR;
@@ -289,6 +303,7 @@ fb_close_existing(FBIO *ifp)
     {
 	extern FBIO ogl_interface;
 	if (strcasecmp(ifp->if_name, ogl_interface.if_type) == 0) {
+	    int status = -1;
 	    if ((status = ogl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
 		return BRLCAD_ERROR;
@@ -306,10 +321,7 @@ fb_close_existing(FBIO *ifp)
     {
 	extern FBIO tk_interface;
 	if (strcasecmp(ifp->if_name, tk_interface.if_type) == 0) {
-	    if ((status = tk_close_existing(ifp)) <= -1) {
-		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
-		return BRLCAD_ERROR;
-	    }
+	    /* may need to close_existing here at some point */
 	    if (ifp->if_pbase != PIXEL_NULL)
 		free((void *)ifp->if_pbase);
 	    free((void *)ifp->if_name);

@@ -1,0 +1,473 @@
+[TH hv3 n]
+
+[Section Name]
+	hv3 - Mega-widget building on Tkhtml.
+
+	THIS IS A WORK IN PROGRESS. IT IS POSSIBLE TO USE THE HV3 WIDGET, BUT
+	IT IS NOT YET PROPERLY PACKAGED. POST ON THE MAILING LIST IF YOU WISH
+	TO USE IT NOW.
+
+	Comments and feedback also welcome.
+
+[Section Synopsis]
+	[Code {
+		package require snit
+		package require hv3
+		::hv3::hv3 pathName ?options?
+	}]
+
+[Section Description]
+
+	The [SQ hv3] command creates a new window (given by the pathName
+	argument) and makes it into hv3 widget. The hv3 command
+	returns its pathName argument. At the time this command is invoked,
+	there must not exist a window named pathName, but pathName's parent
+	must exist. Hv3 is a pure Tcl widget implemented using Tkhtml3 and
+	the excellent mega-widget framework Snit.
+
+	An [SQ hv3] widget is not a web-browser. If it were to be used as
+	a component in a web-browser application it would represent a single
+	browser frame (or iframe). The API described in this document is
+	not the whole API offered by the snit object ::hv3::hv3. Instead,
+	it is the subset of that API that is expected not to change. No
+	guarantees of course.
+
+	There are two 'objects' involved in using the [SQ hv3] widget. One
+	is the widget itself ([SQ ::hv3::hv3]). The other is the 
+	request-handle ([SQ ::hv3::request]). A request-handle is the 
+	interface between the hv3 widget and wherever it is getting its
+	data from (i.e. your implementation of http://, https:// etc.).
+	Many users will also wish to understand the Tkhtml3 "node-handle"
+	interface, documented as part of the Tkhtml3 manpage.
+
+	An [SQ hv3] widget provides the following features on top of the
+	[SQ html] widget:
+
+[Bulletlist {
+		Built-in scrollbars.
+} {
+		Support for selecting text with the pointer.
+} {
+		Support for loading linked images and stylesheets from URIs.
+} {
+		Support for HTML forms and submission thereof.
+} {
+		Support for CSS configured hover (mouseover) effects.
+} {
+		Support for loading a new document by clicking on a hyper-link.
+}]
+
+	The two most important interfaces are the [SQ goto] method and the
+	_-requestcmd_ option. The [SQ goto] method tells the widget to
+	load the document identified by the specified absolute or relative
+	URI.
+
+	The _-requestcmd_ option must be configured with a callback script that
+	the widget invokes to request the requested document. It is the
+	users responsibility to retrieve the document and pass it back to
+	the widget. If the document contains links to external resources
+	(images or CSS stylesheets), then the widget invokes the 
+	_-requestcmd_ script to request these. The _-requestcmd_ callback may
+	choose to implement handling for one or more of http:// URIs, 
+	file:// URIs or any other existing or invented URI scheme. See
+	the "Example Usage" section below for an example.
+
+[Section Standard Options]
+	[Code {
+		-height
+		-width
+	}]
+
+[Section Html Options]
+	The following Tkhtml options are exposed as public options of 
+	this mega-widget.
+
+	[Code {
+		-fontscale
+		-fonttable
+		-forcefontmetrics
+		-zoom
+	}]
+
+[Section Html Commands]
+	The following Tkhtml commands are exposed as public options of 
+	this mega-widget.
+
+	[Code {
+		node ? ?-index? _x_ _y_?
+	}]
+
+[Section Widget-Specific Options]
+
+	[Option enableimages {
+		Boolean option (default true). True for image support, false
+		otherwise. If this option is set to false, then the 
+		_-requestcmd_ script will never be invoked to request an
+		image resource.
+	}]
+	[Option isvisitedcmd {
+		If not an empty string, this option specifies a script for
+		the widget to invoke to determine if a hyperlink (&lt;A&gt;) 
+		node should be styled with the :link or :visited 
+		pseudo-class. The script is invoked with the node handle 
+		appended to it. If true is returned, :visited is used, 
+		otherwise :link.
+	}]
+	[Option requestcmd {
+		If this option is not set by the user code, then the Hv3
+		widget will be unable to display anything.
+
+		It should be set to a script that may be invoked by the hv3
+		widget to request a resource required to display a URI 
+		requested via the [SQ goto] method. Each time a resource
+		is required, the _-requestcmd_ script is invoked with
+		a single argument appended to it, the name of a request
+		handle object. See section "Request Handles" for details.
+	}]
+	[Option targetcmd {
+		If this option is not set to an empty string (the default),
+		it should be set to a script that will be invoked each time
+		a hyper-link is clicked or a form submitted in the hv3 widget
+		by the end-user. A single argument is appended to the script
+		before it is evaluated, the Tkhtml3 node-handle for the 
+		relevant &lt;FORM&gt; (in the case of form submittal) or 
+		&lt;A&gt; (if the end user clicked a hyperlink) node. The
+		script should return the path of an hv3 widget into which
+		the new resource should be loaded. This is useful for
+		implementing browsers that support HTML frames and iframes.
+
+		If the script returns an empty string the request is 
+		abandoned and the new resource never loaded and the
+		form data (if any) not submitted.
+
+		If the option is set to an empty string the new resource is
+		always loaded into the hv3 widget itself.
+	}]
+
+[Section Widget Command]
+	The [SQ hv3] command creates a new Tcl command whose name is
+	pathName. This command may be used to invoke various operations on
+	the widget as follows:
+
+[Subcommand {
+	pathName cget _option_
+		Returns the current value of the configuration option given
+		by option. Option may have any of the values accepted by
+		the [SQ hv3] command.
+}]
+
+[Subcommand {
+	pathName configure _?option?_ _?value?_
+		Query or modify the configuration options of the widget. If
+		no option is specified, returns a list describing all of
+		the available options for pathName (see Tk_ConfigureInfo
+		for information on the format of this list). If option is
+		specified with no value, then the command returns a list
+		describing the one named option (this list will be
+		identical to the corresponding sublist of the value
+		returned if no option is specified). If one or more
+		option-value pairs are specified, then the command modifies
+		the given widget option(s) to have the given value(s); in
+		this case the command returns an empty string. Option may
+		have any of the values accepted by the [SQ hv3] command.
+}]
+
+[Subcommand {
+	pathName goto _uri_
+		Load the resource at _uri_ into the widget. If _uri_ is 
+		not an absolute URI, it is resolved with respect to 
+		the widget's current document URI (or &lt;BASE&gt; element
+		contents, if present).
+}]
+
+[Subcommand {
+	pathName stop
+		Abandon all pending requests. All request handle objects 
+		that are still outstanding are destroyed (it is an error
+		to use such a request handle after calling [SQ stop]).
+}]
+
+[Section Request Handles]
+	To be useful, the user must provide the hv3 with some way to
+	request resources ((X)HTML documents, CSS stylesheets and binary 
+	image files) identified by URI for display. To this end, the
+	user configures a _-requestcmd_ script with the hv3 widget.
+	Each time a resource is required, the _-requestcmd_ script
+	is evaluated with a single argument, a request handle object
+	identifier, appended to it.
+
+	A request handle object is a snit object. The _-requestcmd_
+	script can query the object to determine the parameters of the
+	request and then invoke object methods to return data and
+	meta data. The key APIs are the _-uri_ option and the 
+	[SQ finish] method.
+
+	Data may be returned asynchronously. That is, it is not necessary
+	to return data from within the _-requestcmd_ evaluation, the
+	request handle may be stored and data returned at some later time.
+
+[Subsection Request Handle Options]
+
+[Option enctype {
+	This option is used by "POST" requests, which may be made by an
+	hv3 widget if the loaded document contains a form and the end-user
+	submits it. For a "GET" request (all other requests, the usual
+	case) it is set to an empty string.
+
+	The cannonical test to check if a given request is a POST or GET
+	request is:
+	
+	[Code {
+		if {[$handle cget -postdata] ne ""} {
+		  # This is a POST request.
+		} else {
+		  # This is a GET request.
+		}
+	}]
+
+	For POST requests, this option may be set by the Hv3 widget to
+	contain the Content-Type of the data stored in the _-postdata_
+	option. For example "application/x-www-form-urlencoded".
+}]
+
+[Option header {
+	The Hv3 widget sets this option to an empty string before passing
+	the request handle to the user code.
+
+	The user code may set this option to a list containing data to
+	be handled by the hv3 widget as if it had been returned as the
+	HTTP header for an HTTP request. The list consists of alternating
+	HTTP header-names and values. This is the same format as the 
+	"meta" element of the "state array" interface used by Tcl's 
+	built-in http package. 
+
+	The Hv3 widget interprets the following HTTP headers:
+
+[Bulletlist {
+		TODO.
+}]
+}]
+[Option mimetype {
+	The Hv3 widget sets this option to the expected mime type of the
+	resource requested.
+
+	If the user code knows the mime type of the resource being returned,
+	it should set this option before the first invocation of the 
+	[SQ append] method. Useful values recognized by the hv3 widget 
+	include "text/xhtml" and "image/gif".
+}]
+[Option postdata {
+	This option is used by "POST" requests, which may be made by an
+	hv3 widget if the loaded document contains a form and the end-user
+	submits it.
+
+	It contains the data to be posted.
+}]
+[Option requestheader {
+	The Hv3 widget sets this option to a list of HTTP header-names and
+	values to be handled as request parameters for an HTTP request (i.e.
+	the "referrer" header). 
+
+	The user code should not change the value of this option.
+}]
+[Option uri {
+	This option is always set by the Hv3 widget before passing the
+	request handle to the user code. It contains the absolute URI
+	of the resource required by the widget.
+
+	The user code should not change the value of this option.
+}]
+
+[Subsection Request Handle Methods]
+
+[Subcommand {
+	requestHandle append _data_
+		This method should be invoked one or more times to return 
+		data to the hv3 widget. 
+
+		The data passed to this method should always be binary data.
+		If the data is actually text data for a document or stylesheet,
+		it's encoding is determined based on either a HTTP header
+		returned via the [SQ header] option, or a &lt;meta&gt; 
+		element in the header section of an HTML or XHTML document.
+		If neither of these are present, the assumed encoding is
+		either the document encoding in the case of linked CSS
+		stylesheet, or the value returned by [SQ encoding system] for
+		an HTML or XHTML document.
+}]
+
+[Subcommand {
+	requestHandle finish
+		This method should be called after all data has been 
+		obtained. The request handle object is deleted by the
+		system from within this call, so the object may not be used
+		after this method has been invoked.
+}]
+
+[Section Examples ]
+
+[Subsection Custom URI Schemes]
+
+	The hv3 widget may seem a little unusual at first in that there
+	is no interface to feed data directly from the users script to
+	the widget. Instead, the widget requests the required data by
+	invoking the _-requestcmd_ script. Data is identified by
+	the _-uri_ option of the request handle passed as an argument.
+
+	The reason for this is that the widget often deals with documents
+	that contain linked resources (external CSS stylesheets or images). 
+	The resources are not always known when the user script initiates
+	loading the document. For example, if the following document is
+	to be loaded from URI "http://tkhtml.tcl.tk":
+
+	[Code {
+		<HTML>
+		  <BODY>
+		    <IMG src="image.gif">
+		  </BODY>
+		</HTML>
+	}]
+
+	then the _-requestcmd_ must implement the HTTP protocol. The
+	user calls:
+
+	[Code {
+		$hv3 goto http://tkhtml.tcl.tk
+	}]
+
+	which causes the _-requestcmd_ script to be invoked with a
+	request handle argument specifying the URI "http://tkhtml.tcl.tk".
+
+	When the _-requestcmd_ returns the data for the URI 
+	"http://tkhtml.tcl.tk", the widget invokes the _-requestcmd_ a
+	second time, with a request handle argument specifying the URI
+	"http://tkhtml.tcl.tk/image.gif". If the document contained links
+	to CSS stylesheets or other images, the _-requestcmd- script would
+	be invoked for each of these also.
+
+	All this is fine if you are fetching data from http servers, but
+	a little inconvenient if the user script already has the document
+	to display ready in a Tcl variable (or variables). The solution 
+	here is to invent a custom URI scheme to use within the 
+	application. For example, the following example demonstrates a
+	_-requestcmd_ script that implements the "tclvar:", URI scheme
+	for refering to global Tcl variables.
+	
+	[Code {
+		proc tclvar_requestcmd {R} {
+		  # Get the URI from the request handle. The URI should look 
+		  # something like:
+		  #
+		  #   tclvar:///<global varname>
+		  #
+		  set uri \[$R cget -uri]
+
+		  # Strip "tclvar:///" from the start of the URI.
+		  set var \[string range $uri 10 end]
+
+		  # Return the data in the global variable $var to the widget.
+		  global $var
+		  $R finish \[set $var]
+		}
+	}]
+
+	And a simple script for using this _-requestcmd_:
+
+	[Code {
+		set my_document {
+		  <HTML>
+		    <LINK rel="stylesheet" href="my_stylesheet">
+		    <BODY>
+		      <P>Some red text.</P>
+		    </BODY>
+		  </HTML>
+		}
+		set my_stylesheet {
+		  P { color : red }
+		}
+		
+		::hv3::hv3 .hv3 
+		pack .hv3 -fill both -expand true
+
+		.hv3 configure -requestcmd tclvar_requestcmd
+		.hv3 goto tclvar:///my_document
+	}]
+
+	Note the complication in the code above - the string "tclvar:///" is
+	found at the start of each URI passed to [SQ tclvar_requestcmd]. This
+	is because Hv3 resolves and escapes all URIs against the base URI 
+	of the currently loaded document before passing them to the 
+	_-requestcmd_. This means you need to be careful with special
+	characters. If the name of the variable storing the stylesheet
+	document in the above example were _::css::my_stylesheet_, then
+	markup like this:
+
+	[Code {
+		<LINK rel="stylesheet" href="::css::my_stylesheet">
+	}]
+
+	would not work. The string "::css::my_stylesheet" is not a valid
+	relative or absolute URI, so the results of resolving it against 
+	the base URI of the document, "tclvar:///my_document", are not 
+	defined. The solution is to escape the variable names using URI
+	escapes. The Tkhtml3 package provides the [SQ ::tkhtml::encode]
+	and [SQ ::tkhtml::decode] commands for escaping and unescaping
+	strings, respectively. After modifying the _-requestcmd_ proc
+	to support escaped strings, it looks like this:
+
+	[Code {
+		proc tclvar_requestcmd {R} {
+		  # Get the URI from the request handle. The URI should look 
+		  # something like:
+		  #
+		  #   tclvar:///<global varname>
+		  #
+		  set uri \[$R cget -uri]
+
+		  # Strip "tclvar:///" from the start of the URI.
+		  set var \[::thtml::decode \[string range $uri 10 end]]
+
+		  # Return the data in the global variable $var to the widget.
+		  global $var
+		  $R finish \[set $var]
+		}
+	}]
+
+	This could be used with a script like this:
+
+	[Code {
+		set my/document {
+		  <HTML>
+		    <LINK rel="stylesheet" href="%3A%3Acss%3A%3Amy_stylesheet">
+		    <BODY>
+		      <P>Some red text.</P>
+		    </BODY>
+		  </HTML>
+		}
+		namespace eval ::css {
+		  set my_stylesheet {
+		    P { color : red }
+		  }
+		}
+		
+		::hv3::hv3 .hv3
+		pack .hv3 -fill both -expand true
+		
+		.hv3 configure -requestcmd tclvar_requestcmd
+		.hv3 goto tclvar:///\[::tkhtml::encode my/document]
+	}]
+
+	In this case the two invocation of tclvar_requestcmd are made with
+	request handle arguments with the following _-uri_ option values:
+
+	[Code {
+		tclvar:///my%2Fdocument
+		tclvar:///%3A%3Acss%3A%3Amy_stylesheet
+	}]
+
+	Other custom URI scheme handlers could retrieve data by evaluating
+	Tcl scripts, querying a database or accessing any other part of the
+	application.
+
+
+

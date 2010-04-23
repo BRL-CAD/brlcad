@@ -2468,7 +2468,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     NMG_CK_INTER_STRUCT(is);
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
-	bu_log("nmg_isect_two)face2p_jra: fu1=x%x, fu2=x%x\n");
+	bu_log("nmg_isect_two)face2p_jra: fu1=x%x, fu2=x%x\n", fu1, fu2);
 
     nmg_coplanar_face_vertex_fuse(fu1, fu2, &is->tol);
 
@@ -4866,7 +4866,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
  * N M G _ I S _ E U _ O N _ L I N E 3
  */
 int
-nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *pt __attribute__((unused)), const fastf_t *dir, const struct bn_tol *tol)
+nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fastf_t *dir, const struct bn_tol *tol)
 {
     struct edge_g_lseg *eg;
 
@@ -6323,7 +6323,7 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
 	for (j=start+1; j<face_count; j++) {
 	    if ((increasing && angle[j] < angle[j-1]) ||
 		(!increasing && angle[j] > angle[j-1])) {
-		bu_log(str);
+		bu_log("%s",str);
 		bu_log("nmg_check_radial_angles(): angles not monotonically increasing or decreasing\n");
 		bu_log("start=%d, increasing = %d\n", start, increasing);
 		bu_log("\tfaces around eu x%x\n", eu_start);

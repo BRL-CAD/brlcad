@@ -307,8 +307,8 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # tkhtml3
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
 
-# tkimg
-BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
+# tkpng 
+BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
 
 # force enable/disable building of tnt
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
@@ -417,7 +417,6 @@ BC_ARG_ALIAS([build_strict], [strict])
 BC_ARG_ALIAS([build_strict], [strict-compile])
 BC_ARG_ALIAS([build_strict], [strict-compile-flags])
 
-
 # Docbook documentation (help uses documentation)
 BC_ARG_ALIAS([build_docs], [documentation-install])
 BC_ARG_ALIAS([build_docs], [docs])
@@ -505,10 +504,10 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 # aliases to force building tkhtml3 (help uses tkhtml3-build)
 BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
 
-# aliases to force building tkimg (help uses tkimg-build)
-BC_ARG_ALIAS([build_tkimg], [tkimg])
-BC_ARG_ALIAS([build_tkimg], [libtkimg])
-BC_ARG_ALIAS([build_tkimg], [libtkimg-build])
+# aliases to force building tkpng(help uses tkpng-build)
+BC_ARG_ALIAS([build_tkpng], [tkpng])
+BC_ARG_ALIAS([build_tkpng], [libtkpng])
+BC_ARG_ALIAS([build_tkpng], [libtkpng-build])
 
 # aliases to force building termlib (help uses termlib-build)
 BC_ARG_ALIAS([build_termlib], [termlib])
@@ -671,8 +670,8 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkhtml3" = "xno" ; then
 		bc_build_tkhtml3="$set_everything"
 	fi
-	if test "x$bc_build_tkimg_set" = "xno" ; then
-		bc_build_tkimg="$set_everything"
+	if test "x$bc_build_tkpng_set" = "xno" ; then
+		bc_build_tkpng="$set_everything"
 	fi
 	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
@@ -801,8 +800,8 @@ AC_MSG_RESULT($bc_build_iwidgets)
 AC_MSG_CHECKING(whether to build the tkhtml3 library)
 AC_MSG_RESULT($bc_build_tkhtml3)
 
-AC_MSG_CHECKING(whether to build the tkImg library)
-AC_MSG_RESULT($bc_build_tkimg)
+AC_MSG_CHECKING(whether to build the tkpng library)
+AC_MSG_RESULT($bc_build_tkpng)
 
 AC_MSG_CHECKING(whether to build the termlib library)
 AC_MSG_RESULT($bc_build_termlib)
@@ -1476,7 +1475,6 @@ AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++",
 	 )]
 )
 
-
 dnl *************************
 dnl *** Check for headers ***
 dnl *************************
@@ -1811,7 +1809,26 @@ AC_CHECK_TYPE([socklen_t], [],
 #endif
 ])
 AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
+# AC_TYPE_INT32_T
+# AC_TYPE_INT64_T
+AC_CHECK_TYPES([uint64_t])
+AC_CHECK_TYPES([ssize_t])
 
+# AC_TYPE_UINTPTR_T
+AC_CHECK_TYPE([uintptr_t],
+    [AC_DEFINE([HAVE_UINTPTR_T], 1, [Define to 1 if the system has the type `uintptr_t'.])],
+    [for ac_type in 'unsigned int' 'unsigned long int' 'unsigned long long int'; do
+	AC_COMPILE_IFELSE(
+	    [AC_LANG_BOOL_COMPILE_TRY(
+		[AC_INCLUDES_DEFAULT],
+		[[sizeof (void *) <= sizeof ($ac_type)]])],
+	    [AC_DEFINE_UNQUOTED([uintptr_t], [$ac_type],
+		[Define to the type of an unsigned integer type wide enough to
+		 hold a pointer, if such a type exists, and if the system
+		 does not define it.])
+	    ac_type=])
+	test -z "$ac_type" && break
+    done])
 
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
@@ -1891,6 +1908,14 @@ dnl     AC_SUBST(SSE)
 		AC_MSG_RESULT(yes)
 	fi
 
+	dnl -arch x86_64 must come before -64 or osX.5+ gets ... confused.
+	if test "x$found_64bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch x86_64], [64_flag])
+		if test "x$bc_64_flag_works" = "xyes" ; then
+			found_64bit_flag=yes
+		fi
+	fi
+
 	if test "x$found_64bit_flag" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-64], [64_flag])
 		if test "x$bc_64_flag_works" = "xyes" ; then
@@ -1930,6 +1955,10 @@ if test "x$bc_use_profiling" != "xno" ; then
 		# intel gprof compiler flag
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-p], [profile_flag])
 	fi
+	if test "x$bc_profile_flag_works" = "xno" ; then
+		# intel profiler compiler flag
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-prof_gen], [profile_flag])
+	fi
 
 	if test "x$bc_profile_flag_works" = "xno" ; then
 		# no profiling
@@ -1952,9 +1981,17 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag], [nokeep])
+	if test "x$bc_mac_opt_flag" = "xyes" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs3], [debug_flag])
+	else
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+	fi
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	fi
+	if test "x$bc_debug_flag_works" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-debug], [debug_flag])
 	fi
 
 	if test "x$bc_debug_flag_works" = "xyes" ; then
@@ -1968,12 +2005,18 @@ if test "x$bc_use_debug" != "xno" ; then
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Debug was enabled but -g does not work])
+			AC_MSG_NOTICE([Debug was enabled but cannot find debug flags that work])
 			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
 		fi
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		sleep 1
 	fi
+
+	dnl add -D_FORTIFY_SOURCE=2 to flags. provides compile-time
+	dnl best-practice error checking on certain libc functions
+	dnl (e.g., memcpy), and provides run-time checks on buffer
+	dnl lengths and memory regions.
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-D_FORTIFY_SOURCE=2])
 fi
 
 dnl optimization flags
@@ -2006,15 +2049,25 @@ if test "x$bc_use_optimized" != "xno" ; then
 fi
 
 dnl verbose warning flags (if yes or auto)
+BC_COMPILER_AND_LINKER_RECOGNIZES([-w], [nowarn], [nokeep])
+if test "x$bc_nowarn_works" = "xyes" ; then
+	NOWARN="-w"
+else
+	NOWARN=""
+fi
+AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
+	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
 		sleep 1
 	fi
+else
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-w], [nowarn])
 fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
@@ -2024,7 +2077,7 @@ if test "x$bc_build_strict" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
        STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
        AC_SUBST(STRICT_FLAGS)
-       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if enabling strict compiler flags.])
+       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
 fi
 
@@ -2226,6 +2279,22 @@ else
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 5
 fi
+#if test "x$build_parsers" = "xyes" ; then
+     # test for modern features in lex
+     #echo "%option reentrant bison-bridge" >> lex.l
+     #echo "%%" >> lex.l
+     #$LEX lex.l > /dev/null 2>&1
+     #ret=$?
+     #rm -f lex.l
+     #if test "x${ret}" != "x0" ; then
+	#build_parsers=no
+	#AC_MSG_WARN([The LEX-style scanner found does not support features required by])
+	#AC_MSG_WARN([BRL-CAD's LEX code.  Various MGED commands and geometry conversion])
+	#AC_MSG_WARN([routines will be disabled.])
+	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
+     #fi
+#fi
+	
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
     AC_MSG_RESULT(yes)
@@ -2240,7 +2309,6 @@ else
     fi
     bc_build_step="no"
 fi
-
 
 dnl *** libpng ***
 png_works=no
@@ -2661,12 +2729,13 @@ unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_VERSION="8.5"
     AC_MSG_RESULT(yes)
+    SC_ENABLE_THREADS
     case $host_os in
 	 darwin*)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION $THREADS_LIBS"
 	     ;;
     	 *)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM} $THREADS_LIBS"
 	     ;;
     esac
     TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
@@ -2794,8 +2863,9 @@ if test "x$build_against_tk" = "xyes" ; then
     AC_MSG_CHECKING(whether to build Tk)
     if test "x$build_brlcad_tk" = "xyes" ; then
 	AC_MSG_RESULT(yes)
-	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+    	SC_ENABLE_THREADS
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $THREADS_LIBS"
+	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION} $THREADS_LIBS"
 	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
 	if test "x$bc_build_aquatk" = "xyes" ; then
 	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
@@ -3047,27 +3117,27 @@ fi
 AC_SUBST(TKHTML3)
 
 
-dnl *** tkImg ***
-dnl figure out whether we need to build tkImg
-TKIMG_VERSION="1.3"
+dnl *** tkpng ***
+dnl figure out whether we need to build tkpng 
+TKPNG_VERSION="0.9"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
-	 TKIMG_VERSION="`echo ${TKIMG_VERSION} | tr -d .`"
+	 TKPNG_VERSION="`echo ${TKPNG_VERSION} | tr -d .`"
 	 ;;
 esac
-AC_SUBST(TKIMG_VERSION)
-AC_MSG_CHECKING(whether to build tkimg)
-if test ! "x$bc_build_tkimg" = "xno" ; then
-    build_brlcad_tkimg=yes
-    TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
+AC_SUBST(TKPNG_VERSION)
+AC_MSG_CHECKING(whether to build tkpng)
+if test ! "x$bc_build_tkpng" = "xno" ; then
+    build_brlcad_tkpng=yes
+    TKPNG='${top_builddir}/src/other/tkpng/tkpng${TKPNG_VERSION}.la'
     AC_MSG_RESULT(yes)
 else
-    build_brlcad_tkimg=no
-    TKIMG=""
+    build_brlcad_tkpng=no
+    TKPNG=""
     AC_MSG_RESULT(no)
 fi
-AC_SUBST(TKIMG)
+AC_SUBST(TKPNG)
 
 
 dnl *** TNT ***
@@ -3214,6 +3284,7 @@ TERMLIB_CPPFLAGS=""
 if test "x$build_brlcad_termlib" = "xyes" ; then
     TERMLIB='${top_builddir}/src/other/libtermlib/libtermlib.la'
     TERMLIB_CPPFLAGS='-I${top_srcdir}/src/other/libtermlib'
+    AC_DEFINE(HAVE_TERMCAP_H, 1, [Define to 1 if you have the <termcap.h> header file.])
     AC_MSG_RESULT(yes)
 else
     TERMLIB="$LIBTERMLIB"
@@ -3655,7 +3726,7 @@ AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
-AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
+AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
@@ -3895,6 +3966,9 @@ dnl configure Tcl
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
     ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
+    if test "x$bc_build_64bit" = "xyes" ; then
+	ac_configure_args="$ac_configure_args --enable-64bit"
+    fi
     AC_CONFIG_SUBDIRS([src/other/tcl/unix])
     TCL_PATH="`echo ${TCL_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
@@ -3923,6 +3997,11 @@ fi
 dnl configure tkhtml3
 if test "x$build_brlcad_tkhtml3" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+    # this is a hack to all tkhtml3 to see when the tk headers are in odd 
+    # places. it seems to ignore the CPPFLAGS in it's configure phase.
+    if test ! "x$TKINCDIR" = "x" ; then
+	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+    fi
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
 fi
 
@@ -4038,6 +4117,7 @@ AC_CONFIG_FILES([
 	src/libfb/Makefile
 	src/libfft/Makefile
 	src/libgcv/Makefile
+	src/libgcv/obj/Makefile
 	src/libged/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
@@ -4092,11 +4172,7 @@ AC_CONFIG_FILES([
 	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
-	src/other/tkimg/Makefile
-	src/other/tkimg/base/Makefile
-	src/other/tkimg/png/Makefile
-	src/other/tkimg/pngtcl/Makefile
-	src/other/tkimg/zlibtcl/Makefile
+	src/other/tkpng/Makefile
 	src/other/tnt/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
@@ -4113,6 +4189,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
 	src/tclscripts/archer/images/Themes/Windows/Makefile
 	src/tclscripts/geometree/Makefile
+	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
 	src/tclscripts/nirt/Makefile
@@ -4227,7 +4304,7 @@ AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
 AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
-AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
+AC_MSG_RESULT([Build tkpng ..........................: $build_brlcad_tkpng])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])

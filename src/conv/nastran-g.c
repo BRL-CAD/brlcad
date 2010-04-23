@@ -168,7 +168,8 @@ reset_input(void)
 HIDDEN void
 write_fields(void)
 {
-    int i, j;
+    int i;
+    size_t j;
 
     for (i=0; i<NO_OF_FIELDS; i++) {
 	/* eliminate trailing blanks */
@@ -228,9 +229,9 @@ get_large_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
     int field_no;
-    int card_len;
-    int last_field;
-    int i;
+    size_t card_len;
+    size_t last_field;
+    size_t i;
 
     tmp_rec = prev_rec;
     prev_rec = curr_rec;
@@ -286,8 +287,8 @@ get_small_field_input(FILE *fp, int write_flag)
 {
     char **tmp_rec;
     int field_no;
-    int card_len;
-    int last_field;
+    size_t card_len;
+    size_t last_field;
 
     tmp_rec = prev_rec;
     prev_rec = curr_rec;

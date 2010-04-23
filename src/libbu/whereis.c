@@ -60,7 +60,7 @@ bu_whereis(const char *cmd)
     }
 
     if (!cmd) {
-	return 0;
+	return NULL;
     }
 
     /* start fresh */

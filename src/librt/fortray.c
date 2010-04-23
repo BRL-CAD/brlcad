@@ -288,8 +288,8 @@ BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
 			   int			*idx,		/* input only */
 			   double		*indist,
 			   struct context	*context,
-			   double		*pt __attribute__((unused)),
-			   double		*dir __attribute__((unused)))
+			   double		*UNUSED(pt),
+			   double		*UNUSED(dir))
 {
     register struct context	*ctp;
     struct hit	hit;

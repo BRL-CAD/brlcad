@@ -196,7 +196,7 @@ struct rt_grip_internal {
  */
 struct rt_pg_internal {
     unsigned long magic;
-    int	npoly;
+    size_t	npoly;
     struct rt_pg_face_internal {
 	int	npts;		/**< @brief  number of points for this polygon */
 	fastf_t	*verts;		/**< @brief  has 3*npts elements */
@@ -591,6 +591,11 @@ struct rt_bot_internal
 				 * "normals" array, one per face
 				 * vertex [num_face_normals*3]
 				 */
+};
+
+struct rt_bot_list {
+    struct bu_list l;
+    struct rt_bot_internal *bot;
 };
 
 /* orientationss for BOT */

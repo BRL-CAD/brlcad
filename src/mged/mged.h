@@ -42,10 +42,10 @@
  * The most notable implication of this is the location of the
  * "delta" (translation) values in the matrix, ie:
  *
- *       x'     (R0   R1   R2   Dx)      x
- *       y' =  ( R4   R5   R6   Dy )  *  y
- *       z'    ( R8   R9   R10  Dz )     z
- *       w'     ( 0    0    0   1/s)      w
+ *       x'     (R0   R1   R2   Dx) x
+ *       y' =  (R4   R5   R6   Dy)  *  y
+ *       z'    (R8   R9   R10  Dz) z
+ *       w'     (0    0    0   1/s) w
  *
  * This of course requires that the rotation portion be computed
  * using somewhat different formulas (see buildHrot for both kinds).
@@ -196,8 +196,8 @@ extern void sedit(void);
 extern void setview(double a1, double a2, double a3);
 extern void adcursor(void);
 extern void mmenu_display(int y_top);
-extern void mmenu_set(int index, struct menu_item *value);
-extern void mmenu_set_all(int index, struct menu_item *value);
+extern void mmenu_set(int idx, struct menu_item *value);
+extern void mmenu_set_all(int idx, struct menu_item *value);
 extern void
 col_item();
 extern void col_putchar();
@@ -343,7 +343,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 #define READ_ERR { \
 	(void)printf("Database read error, aborting\n"); }
 
-#define READ_ERR_return		{ \
+#define READ_ERR_return { \
 	READ_ERR; \
 	return;  }
 
@@ -352,7 +352,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 	(void)printf("Database write error, aborting.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
-#define WRITE_ERR_return	{ \
+#define WRITE_ERR_return { \
 	WRITE_ERR; \
 	return;  }
 
@@ -362,7 +362,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 An error has occured while adding a new object to the database.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
-#define ALLOC_ERR_return	{ \
+#define ALLOC_ERR_return { \
 	ALLOC_ERR; \
 	return;  }
 
@@ -385,16 +385,14 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-	if (dbip == DBI_NULL) \
-	{ \
+	if (dbip == DBI_NULL) { \
 		Tcl_AppendResult(interp, "A database is not open!\n", (char *)NULL); \
 		return TCL_ERROR; \
 	}
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-	if (dbip->dbi_read_only) \
-	{ \
+	if (dbip->dbi_read_only) { \
 		Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
 		return TCL_ERROR; \
 	}
@@ -409,6 +407,7 @@ struct funtab {
     int tcl_converted;
 };
 
+
 struct mged_hist {
     struct bu_list l;
     struct bu_vls mh_command;
@@ -416,6 +415,7 @@ struct mged_hist {
     struct timeval mh_finish;
     int mh_status;
 };
+
 
 /* internal variables related to the command window(s) */
 struct cmd_list {
@@ -449,7 +449,7 @@ extern struct run_rt head_run_rt;
 #define CMD_OK 919
 #define CMD_BAD 920
 #define CMD_MORE 921
-#define MORE_ARGS_STR    "more arguments needed::"
+#define MORE_ARGS_STR "more arguments needed::"
 
 
 /* adc.c */
@@ -722,7 +722,7 @@ void transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
     struct rt_db_internal *is,		/* input solid */
-    int free);
+    int freedbi);
 void replot_editing_solid(void);
 void sedit_abs_scale(void);
 void sedit_accept(void);
@@ -766,17 +766,17 @@ int scroll_select(int pen_x, int pen_y, int do_func);
 int scroll_display(int y_top);
 
 /* edpipe.c */
-void pipe_scale_od(struct rt_db_internal *db_int, fastf_t scale);
-void pipe_scale_id(struct rt_db_internal *db_int, fastf_t scale);
-void pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale);
-void pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale);
-void pipe_seg_scale_radius(struct wdb_pipept *ps, fastf_t scale);
-void pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale);
-struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t pt);
-struct wdb_pipept *add_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt);
-void ins_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt);
-struct wdb_pipept *del_pipept(struct wdb_pipept *ps);
-void move_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *ps, const point_t new_pt);
+void pipe_scale_od(struct rt_db_internal *, fastf_t);
+void pipe_scale_id(struct rt_db_internal *, fastf_t);
+void pipe_seg_scale_od(struct wdb_pipept *, fastf_t);
+void pipe_seg_scale_id(struct wdb_pipept *, fastf_t);
+void pipe_seg_scale_radius(struct wdb_pipept *, fastf_t);
+void pipe_scale_radius(struct rt_db_internal *, fastf_t);
+struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *, const point_t);
+struct wdb_pipept *add_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
+void ins_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
+struct wdb_pipept *del_pipept(struct wdb_pipept *);
+void move_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
 
 /* vparse.c */
 void mged_vls_struct_parse_old(

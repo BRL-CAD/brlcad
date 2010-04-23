@@ -191,7 +191,7 @@ main(int argc, char **argv)
     else
     {
 	char tol_str[BRLCAD_TITLE_LENGTH];
-	int title_len, tol_len;
+	size_t title_len, tol_len;
 
 	snprintf( title, BRLCAD_TITLE_LENGTH, "%s", efile );
 	title_len = strlen( title );

@@ -21,7 +21,8 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${ITCL_CPPFLAGS} \
 	${TK_CPPFLAGS} \
-	${compat_cppflags}
+	${compat_cppflags} \
+	${NOWARN}
 
 libitkstub_la_SOURCES = itkStubLib.c
 libitkstub@ITCL_VERSION@_la_SOURCES = $(libitkstub_la_SOURCES)

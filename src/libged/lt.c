@@ -105,7 +105,7 @@ ged_list_children(struct ged			*gedp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource ) - rt_tree_array;
-	    BU_ASSERT_PTR( actual_count, ==, node_count );
+	    BU_ASSERT_LONG( actual_count, ==, node_count );
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;

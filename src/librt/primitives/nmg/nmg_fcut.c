@@ -2014,6 +2014,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
 }
 
 
+#if 0
 /**
  * N M G _ F A C E _ N E X T _ V U _ I N T E R V A L
  *
@@ -2093,6 +2094,7 @@ nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int o
 	bu_log("nmg_face_next_vu_interval() vu[%d] set to x%x\n", j-1, rs->vu[j-1]);
     return j;
 }
+#endif
 
 
 #define VAVERAGE(a, b, c) { \
@@ -3033,6 +3035,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 }
 
 
+#if 0
 /**
  * N M G _ F A C E _ C O M B I N E
  *
@@ -3155,6 +3158,7 @@ nmg_face_combineX(struct nmg_ray_state *rs1, fastf_t *mag1, struct nmg_ray_state
 	bu_bomb("nmg_face_combine() bad ending state\n");
     }
 }
+#endif
 
 
 /**
@@ -3420,7 +3424,7 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 
 
 void
-nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *mag __attribute__((unused)), struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
+nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *UNUSED(mag), struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
 {
     struct nmg_ray_state rs;
     point_t pt;
@@ -3809,8 +3813,8 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 
 		bu_log("nmg_face_state_transition: got action=ERROR\n");
 		bu_vls_init(&str);
-		bu_vls_printf(&str, "nmg_face_state_transition(vu x%lx, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
-			      (long)vu, pos,
+		bu_vls_printf(&str, "nmg_face_state_transition(vu %p, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
+			      (void *)vu, pos,
 			      nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			      nmg_state_names[new_state], action_names[action]);
 		if (RT_G_DEBUG || rt_g.NMG_debug) {

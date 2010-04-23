@@ -56,6 +56,7 @@ libfb_la_SOURCES = \
 
 libfb_la_LDFLAGS = -version-info 19:1 -no-undefined
 libfb_la_CFLAGS = \
+	${STRICT_FLAGS} \
 	-DIF_REMOTE \
 	-DIF_AB \
 	${GL_CPPFLAGS} \

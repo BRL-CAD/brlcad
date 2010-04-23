@@ -35,11 +35,15 @@
 /* !!! this should not be here, should fix the build system settings */
 #define __STDC__ 1
 
-/*  4244 conversion from type 1 to type 2
- *  4305 truncation
- *  4018 signed/unsigned mismatch
+/* 4127 conditional expression is constant
+ * 4244 conversion from type 1 to type 2
+ * 4305 truncation
+ * 4312 type cast: conversion from type1 to type2 of greater size
+ * 4018 signed/unsigned mismatch
+ * 4996 deprecation warning on non-secure functions
  */
-#pragma warning( disable : 4244 4305 4018)
+#pragma warning( disable : 4127 4244 4312 4996 )
+/* #pragma warning( disable : 4244 4305 4018) */
 
 /*
  * Ensure that Project Settings / Project Options includes
@@ -94,6 +98,9 @@
 
 #define HAVE_TK 1
 #define HAVE_X11_TYPES 1
+
+#define YY_NO_UNISTD_H		1
+#define YYTOKENTYPE		1
 
 /*
  * functions declared in io.h
@@ -153,10 +160,10 @@
 #define fmax __max
 #define ioctl ioctlsocket
 
-/* we need the function pointer of this */
-static int isblank(int c) {
-    return ((c == ' ') || (c == '\t')) ? 1 : 0;
-}
+#define SHARED_PTR_BOOST	1
+
+/* provide isblank since msvc doesn't */
+#define isblank(c) ((c == ' ') || (c == '\t')) ? 1 : 0
 
 /*
  * Signal handling
@@ -172,11 +179,9 @@ typedef void (*sig_t)(int);
 
 typedef int pid_t;
 typedef int socklen_t;
-typedef unsigned char uint8_t;
 typedef unsigned int gid_t;
 typedef unsigned int uid_t;
-typedef unsigned int uint32_t;
-typedef unsigned short uint16_t;
+
 
 /*
  * for chmod()
@@ -256,13 +261,6 @@ typedef unsigned short uint16_t;
 #define X_OK 1
 #define F_OK 0
 
-#undef DELETE
-#undef complex
-
-#ifndef STDIN_FILENO
-#   define STDIN_FILENO 0
-#endif
-
 /*
  * faking it
  */
@@ -276,6 +274,37 @@ typedef unsigned short uint16_t;
 /*  Microsoft specific inline specifier */
 #   define inline __inline
 #endif /* not __cplusplus */
+
+/*
+ * defines for stdin/stdout/stderr file numbers
+ */
+
+#ifndef STDIN_FILENO
+#  ifdef _STDIN_FILENO
+#    define STDIN_FILENO _STDIN_FILENO
+#  endif
+#endif
+#ifndef STDIN_FILENO
+#  define STDIN_FILENO _fileno(stdin)
+#endif
+
+#ifndef STDOUT_FILENO
+#  ifdef _STDOUT_FILENO
+#    define STDOUT_FILENO _STDOUT_FILENO
+#  endif
+#endif
+#ifndef STDOUT_FILENO
+#  define STDOUT_FILENO _fileno(stdout)
+#endif
+
+#ifndef STDERR_FILENO
+#  ifdef _STDERR_FILENO
+#    define STDERR_FILENO _STDERR_FILENO
+#  endif
+#endif
+#ifndef STDERR_FILENO
+#  define STDERR_FILENO _fileno(stderr)
+#endif
 
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */

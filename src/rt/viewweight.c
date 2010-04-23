@@ -182,7 +182,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-    register int i;
+    register size_t i;
     char buf[BUFSIZ+1];
     static char null = (char) 0;
     const char *curdir = getenv( "PWD" );
@@ -207,7 +207,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 #define maxm(a, b) (a>b?a:b)
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
-    densityfile = bu_calloc( i, 1, "densityfile");
+    densityfile = bu_calloc( (unsigned int)i, 1, "densityfile");
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 
@@ -291,36 +291,35 @@ void	view_end(struct application *ap)
 
     /* default units */
     bu_strlcpy(units, "grams", sizeof(units));
-    bu_strlcpy(unit2, "in.", sizeof(unit2));
+    bu_strlcpy(unit2, bu_units_string(dbp->dbi_local2base), sizeof(unit2));
 
     (void) time( &clock );
     locltime = localtime( &clock );
     timeptr = asctime( locltime );
 
-    /* XXX this should really use bu_units_conversion() and bu_units_string() */
-    if ( dbp->dbi_base2local == 304.8 )  {
+    /* This section is necessary because libbu doesn't yet
+     * support (nor do BRL-CAD databases store) defaults 
+     * for mass. Once it does, this section should be
+     * reorganized.*/
+    
+    if ( NEAR_ZERO(dbp->dbi_local2base - 304.8, SMALL_FASTF) )  {
 	/* Feet */
 	bu_strlcpy( units, "grams", sizeof(units) );
-	bu_strlcpy( unit2, "ft.", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 25.4 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 25.4, SMALL_FASTF) )  {
 	/* inches */
 	conversion = 0.002204623;  /* lbs./gram */
 	bu_strlcpy( units, "lbs.", sizeof(units) );
-	bu_strlcpy( unit2, "in.", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 1.0 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 1.0, SMALL_FASTF) )  {
 	/* mm */
 	conversion = 0.001;  /* kg/gram */
 	bu_strlcpy( units, "kg", sizeof(units) );
-	bu_strlcpy( unit2, "mm", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 1000.0 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 1000.0, SMALL_FASTF) )  {
 	/* km */
 	conversion = 0.001;  /* kg/gram */
 	bu_strlcpy( units, "kg", sizeof(units) );
-	bu_strlcpy( unit2, "m", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 0.1 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 0.1, SMALL_FASTF) )  {
 	/* cm */
 	bu_strlcpy( units, "grams", sizeof(units) );
-	bu_strlcpy( unit2, "cm.", sizeof(unit2) );
     } else {
 	bu_log("Warning: base2mm=%g, using default of %s--%s\n",
 	       dbp->dbi_base2local, units, unit2 );
@@ -349,7 +348,7 @@ void	view_end(struct application *ap)
     }
     for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	register fastf_t weight = 0;
-	register int l = strlen(rp->reg_name);
+	register size_t l = strlen(rp->reg_name);
 	register fastf_t *ptr;
 
 	/* */
@@ -409,7 +408,7 @@ void	view_end(struct application *ap)
 	    fprintf(outfp, "%4d %8.3f ", i, item_wt[i] );
 	    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 		if ( rp->reg_regionid == i ) {
-		    register int l = strlen(rp->reg_name);
+		    register size_t l = strlen(rp->reg_name);
 		    l = l > 65 ? l-65 : 0;
 		    if ( CR )
 			fprintf(outfp, "              ");

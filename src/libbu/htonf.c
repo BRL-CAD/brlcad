@@ -30,9 +30,9 @@
 
 
 void
-htonf(register unsigned char *out, register const unsigned char *in, int count)
+htonf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
-    register int i;
+    register size_t i;
 
     assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
 
@@ -49,7 +49,7 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 	    /*
 	     * This machine uses IEEE, but in little-endian byte order
 	     */
-	    for (i=count-1; i >= 0; i--) {
+	    for (i=count; i > 0; i--) {
 		*out++ = in[3];
 		*out++ = in[2];
 		*out++ = in[1];
@@ -67,9 +67,9 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 
 
 void
-ntohf(register unsigned char *out, register const unsigned char *in, int count)
+ntohf(register unsigned char *out, register const unsigned char *in, size_t count)
 {
-    register int i;
+    register size_t i;
 
     assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
 
@@ -86,7 +86,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 	    /*
 	     * This machine uses IEEE, but in little-endian byte order
 	     */
-	    for (i=count-1; i >= 0; i--) {
+	    for (i=count; i > 0; i--) {
 		*out++ = in[3];
 		*out++ = in[2];
 		*out++ = in[1];

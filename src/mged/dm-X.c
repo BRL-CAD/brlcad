@@ -58,6 +58,7 @@ dirty_hook(void)
     dirty = 1;
 }
 
+
 static void
 zclip_hook(void)
 {
@@ -107,7 +108,7 @@ X_dm(int argc,
 	    /* Bare set command, print out current settings */
 	    bu_vls_struct_print2(&vls, "dm_X internal variables", X_vparse, (const char *)dmp);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, X_vparse, argv[1], (const char *)dmp, ',');
+	    bu_vls_struct_item_named(&vls, X_vparse, argv[1], (const char *)dmp, COMMA);
 	} else {
 	    struct bu_vls tmp_vls;
 
@@ -166,6 +167,7 @@ X_dm_init(struct dm_list *o_dm_list,
 
     return TCL_OK;
 }
+
 
 void
 X_fb_open(void)

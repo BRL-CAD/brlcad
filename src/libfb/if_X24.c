@@ -145,8 +145,8 @@ struct xinfo {
     unsigned char *xi_andtbl;	/* Lookup table for 1-bit dithering */
     unsigned char *xi_ortbl;	/* Lookup table for 1-bit dithering */
 
-    int xi_ncolors;	/* Number of colors in colorcube */
-    int xi_base;	/* Base color in colorcube */
+    size_t xi_ncolors;		/* Number of colors in colorcube */
+    unsigned int xi_base;	/* Base color in colorcube */
 
     /* The following values are in Image Pixels */
 
@@ -436,7 +436,7 @@ print_display_info(Display *dpy)
 HIDDEN void
 X24_createColorCube(struct xinfo *xi)
 {
-    int i;
+    size_t i;
     int redmul, grnmul;
     unsigned long pixels[256], pmask[1], pixel[1];
     XColor colors[256];
@@ -472,7 +472,8 @@ X24_createColorCube(struct xinfo *xi)
 HIDDEN void
 X24_createColorTables(struct xinfo *xi)
 {
-    int i, j, idx;
+    int i, j;
+    size_t idx;
     int redmul, grnmul;
 
     grnmul = sizeof (blus);
@@ -539,6 +540,8 @@ x24_setup(FBIO *ifp, int width, int height)
     XSetWindowAttributes xswa;
     XRectangle rect;
     char *xname;
+
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("x24_setup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
@@ -1045,7 +1048,9 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
     unsigned int mask_red = xi->xi_image->red_mask << 6;
     unsigned int mask_green = xi->xi_image->green_mask << 6;
     unsigned int mask_blue = xi->xi_image->blue_mask << 6;
-    int i;
+    size_t i;
+
+    FB_CK_FBIO(ifp);
 
     /*
      * Now that we know the mask, we shift a bit left, one bit at a
@@ -1955,6 +1960,7 @@ HIDDEN int
 X24_rmap(FBIO *ifp, ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_rmap(ifp:0x%x, cmp:0x%x) entered.\n",
@@ -1972,6 +1978,7 @@ X24_wmap(FBIO *ifp, const ColorMap *cmp)
     struct xinfo *xi = XI(ifp);
     ColorMap *map = xi->xi_rgb_cmap;
     int waslincmap;
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_wmap(ifp:0x%x, cmp:0x%x) entered.\n",
@@ -2087,6 +2094,8 @@ X24_getmem(FBIO *ifp)
     int size;
     int new = 0;
 
+    FB_CK_FBIO(ifp);
+
     pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
     size = pixsize + sizeof (*xi->xi_rgb_cmap);
 
@@ -2187,6 +2196,8 @@ X24_updstate(FBIO *ifp)
     int lf_w, rt_w;		/* Width of left/right image pixel slots */
 
     int want, avail;	/* Wanted/available image pixels */
+
+    FB_CK_FBIO(ifp);
 
 #if UPD_DBG
     printf("upd: x %dx%d i %dx%d z %d, %d ctr (%d, %d)\n",
@@ -2543,6 +2554,7 @@ X24_open(FBIO *ifp, char *file, int width, int height)
     printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 	   ifp, file, width, height);
 #endif
+
     FB_CK_FBIO(ifp);
 
     /*
@@ -2672,6 +2684,8 @@ X24_configureWindow(FBIO *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
     XRectangle rect;
+
+    FB_CK_FBIO(ifp);
 
     if (!xi) {
 	return;
@@ -3008,6 +3022,7 @@ HIDDEN void
 X24_handle_event(FBIO *ifp, XEvent *event)
 {
     struct xinfo *xi = XI(ifp);
+    FB_CK_FBIO(ifp);
 
     switch ((int)event->type) {
 	case Expose:
@@ -3143,6 +3158,7 @@ x24_linger(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
     XEvent event;
+    FB_CK_FBIO(ifp);
 
     if (fork() != 0)
 	return (1);	/* release the parent */
@@ -3159,6 +3175,7 @@ HIDDEN int
 X24_close(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
+    FB_CK_FBIO(ifp);
 
     XFlush(xi->xi_dpy);
     if ((xi->xi_mode & MODE1_MASK) == MODE1_LINGERING) {
@@ -3175,6 +3192,7 @@ int
 X24_close_existing(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
+    FB_CK_FBIO(ifp);
 
     if (xi->xi_image)
 	XDestroyImage(xi->xi_image);
@@ -3203,6 +3221,8 @@ X24_clear(FBIO *ifp, unsigned char  *pp)
     int npix;
     int n;
     unsigned char *cp;
+
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_clear(ifp:0x%x, pp:0x%x) pixel = (%d, %d, %d): entered.\n",
@@ -3244,6 +3264,7 @@ X24_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
     struct xinfo *xi = XI(ifp);
     int maxcount;
+    FB_CK_FBIO(ifp);
 
     /* check origin bounds */
     if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
@@ -3264,8 +3285,9 @@ HIDDEN int
 X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     struct xinfo *xi = XI(ifp);
-
     int maxcount;
+
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%d) entered.\n",
@@ -3307,6 +3329,7 @@ HIDDEN int
 X24_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct xinfo *xi = XI(ifp);
+    FB_CK_FBIO(ifp);
 
 
 #if X_DBG
@@ -3357,8 +3380,9 @@ X24_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /*ARGSUSED*/
 HIDDEN int
-X24_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+X24_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_setcursor(ifp:0x%x, bits:%u, xbits:%d, ybits:%d, xorig:%d, yorig:%d) entered.\n",
@@ -3448,7 +3472,7 @@ HIDDEN int
 X24_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
-
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_readrect(ifp:0x%x, xmin:%d, ymin:%d, width:%d, height:%d, pp:0x%x) entered.\n",
@@ -3494,6 +3518,7 @@ HIDDEN int
 X24_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_writerect(ifp:0x%x, xmin:%d, ymin:%d, width:%d, height:%d, pp:0x%x) entered.\n",
@@ -3543,8 +3568,9 @@ HIDDEN int
 X24_poll(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
-
     XEvent event;
+
+    FB_CK_FBIO(ifp);
 
 #if 0
     printf("X24_poll(ifp:0x%x) entered\n", ifp);
@@ -3561,6 +3587,7 @@ HIDDEN int
 X24_flush(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
+    FB_CK_FBIO(ifp);
 
 
 #if X_DBG
@@ -3574,6 +3601,7 @@ X24_flush(FBIO *ifp)
 HIDDEN int
 X24_free(FBIO *ifp)
 {
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_free(ifp:0x%x) entered\n", ifp);
@@ -3587,6 +3615,7 @@ X24_help(FBIO *ifp)
 {
     struct xinfo *xi = XI(ifp);
     struct modeflags *mfp;
+    FB_CK_FBIO(ifp);
 
 #if X_DBG
     printf("X24_help(ifp:0x%x) entered\n", ifp);
@@ -3712,7 +3741,13 @@ FBIO X24_interface =  {
     0,			/* page_dirty */
     0L,			/* page_curpos */
     0L,			/* page_pixels */
-    0			/* debug */
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 #else

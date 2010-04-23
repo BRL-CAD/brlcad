@@ -330,7 +330,7 @@ void
 rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoints)
 {
     register int j;
-    fastf_t div;
+    fastf_t divisor;
     point_t sum;
 
     RT_ARB_CK_MAGIC(arb);
@@ -340,8 +340,8 @@ rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoint
     for (j=0; j < npoints; j++) {
 	VADD2(sum, sum, arb->pt[j]);
     }
-    div = 1.0 / npoints;
-    VSCALE(center_pt, sum, div);
+    divisor = 1.0 / npoints;
+    VSCALE(center_pt, sum, divisor);
 }
 
 
@@ -1107,7 +1107,7 @@ rt_arb_free(register struct soltab *stp)
  * be.
  */
 int
-rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_arb_internal *aip;
 
@@ -1319,12 +1319,15 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
-    char buf[256];
-    int i;
-    int arb_type;
+    struct rt_arb_internal *aip = NULL;
+    char buf[256] = {0};
+    int i = 0;
+    int arb_type = -1;
     struct bn_tol tmp_tol;	/* temporay tolerance */
 
+    if (!str || !ip) return 0;
+    RT_CK_DB_INTERNAL(ip);
+    aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
     tmp_tol.magic = BN_TOL_MAGIC;
@@ -1446,7 +1449,7 @@ rt_arb_ifree(struct rt_db_internal *ip)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
     struct shell *s;
@@ -1497,7 +1500,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		   pa.pa_pindex[2][i], pa.pa_pindex[3][i]);
 	}
 	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
-	    bu_log("rt_arb_tess(%s): nmg_cmface() fail on face %d\n", i);
+	    bu_log("rt_arb_tess(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}
     }
@@ -1613,7 +1616,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	/* The edges created will be linear, in parameter space...,
 	 * but need to have edge_g_cnurb geometry. */
 	if ((fu[i] = nmg_cmface(s, vertp, pa.pa_npts[i])) == 0) {
-	    bu_log("rt_arb_tnurb(%s): nmg_cmface() fail on face %d\n", i);
+	    bu_log("rt_arb_tnurb(): nmg_cmface() fail on face %d\n", i);
 	    continue;
 	}
 	/* March around the fu's loop assigning uv parameter values */
@@ -1719,7 +1722,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * This is an analog of rt_arb_calc_planes().
  */
 int
-rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol __attribute__((unused)))
+rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *UNUSED(tol))
 {
     int i;
     point_t pt[8];

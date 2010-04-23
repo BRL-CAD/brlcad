@@ -262,7 +262,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
  *
  * name is the string name of the object being added
  *
- * laddr is the long offset into the file to the object
+ * laddr is the offset into the file to the object
  *
  * len is the length of the object, number of db granules used
  *
@@ -270,11 +270,11 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
  * RT_DIR_INMEM, etc) for db version 5, ptr is the minor_type
  * (non-null pointer to valid unsigned char code)
  *
- * an laddr of RT_DIR_PHONY_ADDR (-1L) means that database storage has
- * not been allocated yet.
+ * an laddr of RT_DIR_PHONY_ADDR means that database storage has not
+ * been allocated yet.
  */
 struct directory *
-db_diradd(struct db_i *dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
+db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flags, genptr_t ptr)
 {
     struct directory **headp;
     struct directory *dp;
@@ -319,7 +319,7 @@ db_diradd(struct db_i *dbip, const char *name, long int laddr, int len, int flag
     RT_GET_DIRECTORY(dp, &rt_uniresource);
     RT_CK_DIR(dp);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
-    dp->d_un.file_offset = laddr;
+    dp->d_addr = laddr;
     dp->d_flags = flags & ~(RT_DIR_INMEM);
     dp->d_len = len;
     dp->d_forw = *headp;

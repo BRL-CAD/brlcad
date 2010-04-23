@@ -100,7 +100,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		    bu_log("ON_BrepTrim::unknown on Face:%d\n", face->m_face_index);
 		    break;
 		case ON_BrepTrim::boundary:
-		    bu_log("ON_BrepTrim::boundary on Face:%d\n", face->m_face_index);
+		    //bu_log("ON_BrepTrim::boundary on Face:%d\n", face->m_face_index);
 		    break;
 		case ON_BrepTrim::mated:
 		    if (edge.m_ti.Count() == 2) {
@@ -239,7 +239,6 @@ CurveTree::getLeaves(list<BRNode*>& out_leaves)
     m_root->getLeaves(out_leaves);
 }
 
-
 void
 CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
 {
@@ -260,6 +259,65 @@ CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const
     }
 }
 
+void
+CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt)
+{
+    point_t bmin, bmax;
+    double dist;
+    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+		BRNode* br = dynamic_cast<BRNode*>(*i);
+		br->GetBBox(bmin, bmax);
+
+		dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+		if (bmax[X]+dist < pt.x)
+			continue;
+		if (bmin[X]-dist < pt.x) {
+			if (bmax[Y]+dist > pt.y) {
+			out_leaves.push_back(br);
+			}
+		}
+    }
+}
+
+void
+CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
+{
+    point_t bmin, bmax;
+    double dist;
+    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+	BRNode* br = dynamic_cast<BRNode*>(*i);
+	br->GetBBox(bmin, bmax);
+
+	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	if (bmax[Y]+dist < v[0])
+	    continue;
+	if (bmin[Y]-dist < v[1]) {
+	    if (bmax[X]+dist > u[0]) {
+		out_leaves.push_back(br);
+	    }
+	}
+    }
+}
+
+void
+CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_2dPoint& pt)
+{
+    point_t bmin, bmax;
+    double dist;
+    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+	BRNode* br = dynamic_cast<BRNode*>(*i);
+	br->GetBBox(bmin, bmax);
+
+	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	if (bmax[Y]+dist < pt.y)
+	    continue;
+	if (bmin[Y]-dist < pt.y) {
+	    if (bmax[X]+dist > pt.x) {
+		out_leaves.push_back(br);
+	    }
+	}
+    }
+}
 
 fastf_t
 CurveTree::getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)
@@ -493,6 +551,12 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
 bool
 CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 {
+    ON_3dVector tangent_start = curve->TangentAt(min);
+    ON_3dVector tangent_end = curve->TangentAt(max);
+    double vdot = tangent_start * tangent_end;
+    if (vdot <  BREP_CURVE_FLATNESS)
+    	return false;
+
     ON_3dPoint pmin = curve->PointAt(min);
     ON_3dPoint pmax = curve->PointAt(max);
 		
@@ -517,7 +581,7 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 
     ON_3dVector A;
     ON_3dVector B;
-    double vdot = 1.0;
+    vdot = 1.0;
     A = points[BREP_BB_CRV_PNT_CNT-1] - points[0];
     A.Unitize();
     for (int i=1;i<BREP_BB_CRV_PNT_CNT-1;i++) {
@@ -956,7 +1020,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 #define SE 4
 
 bool
-SurfaceTree::isFlat(const ON_Surface* surf __attribute__((unused)), ON_3dVector *m_normals, const ON_Interval& u __attribute__((unused)), const ON_Interval& v __attribute__((unused)))
+SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_3dVector *m_normals, const ON_Interval& UNUSED(u), const ON_Interval& UNUSED(v))
 {
     ON_3dVector normals[8];
     for (int i = 0; i < 4; i++) {
@@ -1258,7 +1322,7 @@ getKnotInterval(BSpline& bspline, double u)
 
 
 int
-getCoefficients(BSpline& bspline, Array1D<double>& N, double u)
+getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
 {
     // evaluate the b-spline basis function for the given parameter u
     // place the results in N[]
@@ -1298,10 +1362,10 @@ generateParameters(BSpline& bspline)
     TRACE("generateParameters");
     double lastT = 0.0;
     bspline.params.resize(bspline.n+1);
-    Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
+    TNT::Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
     for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
 	double t = (double)i / (UNIVERSAL_SAMPLE_COUNT-1);
-	Array1D<double> n = Array1D<double>(N.dim2(), N[i]);
+	TNT::Array1D<double> n = TNT::Array1D<double>(N.dim2(), N[i]);
 	getCoefficients(bspline, n, t);
     }
     for (int i = 0; i < bspline.n+1; i++) {
@@ -1325,7 +1389,7 @@ generateParameters(BSpline& bspline)
 
 
 void
-printMatrix(Array2D<double>& m)
+printMatrix(TNT::Array2D<double>& m)
 {
     printf("---\n");
     for (int i = 0; i < m.dim1(); i++) {
@@ -1340,12 +1404,12 @@ printMatrix(Array2D<double>& m)
 void
 generateControlPoints(BSpline& bspline, PBCData& data)
 {
-    Array2D<double> bigN(bspline.n+1, bspline.n+1);
+    TNT::Array2D<double> bigN(bspline.n+1, bspline.n+1);
     for (int i = 0; i < bspline.n+1; i++) {
-	Array1D<double> n = Array1D<double>(bigN.dim2(), bigN[i]);
+	TNT::Array1D<double> n = TNT::Array1D<double>(bigN.dim2(), bigN[i]);
 	getCoefficients(bspline, n, bspline.params[i]);
     }
-    Array2D<double> bigD(bspline.n+1, 2);
+    TNT::Array2D<double> bigD(bspline.n+1, 2);
     for (int i = 0; i < bspline.n+1; i++) {
 	bigD[i][0] = data.samples[i].x;
 	bigD[i][1] = data.samples[i].y;
@@ -1356,7 +1420,7 @@ generateControlPoints(BSpline& bspline, PBCData& data)
 
     JAMA::LU<double> lu(bigN);
     assert(lu.isNonsingular() > 0);
-    Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
+    TNT::Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
 
     // extract the control points
     for (int i = 0; i < bspline.n+1; i++) {

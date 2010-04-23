@@ -355,7 +355,7 @@ proc HMlink_setup {win href} {\
 };\
 \
 proc HMlink_hit {win x y} {\
-	set tags [$win tag names @$x,$y];\
+	set tags [$win tag names @$x, $y];\
 	regsub -all {[^L]*L:([^ ]*).*}  $tags {\\1} link;\
 	HMlink_callback $win $link;\
 };\

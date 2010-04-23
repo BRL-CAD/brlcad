@@ -49,6 +49,13 @@
 #include "rtprivate.h"
 #include "brlcad_version.h"
 
+
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
+ */
+#define COMMA ','
+
 #define GETOPT_STR ".:,:@:a:c:e:f:g:n:p:q:s:v:w:x:A:BC:D:E:F:G:H:J:K:MP:V:WX:!:"
 
 
@@ -502,7 +509,7 @@ int get_args( int argc, register char **argv )
 	    case '.':
 		nu_gfactor = (double)atof( bu_optarg );
 		break;
-	    case ',':
+	    case COMMA:
 		space_partition = atoi(bu_optarg);
 		break;
 	    case '@':

@@ -24,6 +24,21 @@
  * Triangulate the faces of a polygonal NMG using the marching cubes
  * algorithm.
  *
+ *
+ * Vertex and edge indices (note that it seems rotated 90 degrees from the stuff
+ * you see on the sources. They used OpenGL coordinates, we use BRL-CAD.)
+ *              4
+ *        4-----------5
+ *      8/|         9/|
+ *      / |   0     / |
+ *     0-----------1  |5
+ *     |  |7       |  |
+ *     |  |   6   1|  |
+ *    3|  7--------|--6
+ *     | /         | /
+ *     |/11        |/10
+ *     3-----------2
+ *          2
  */
 /** @} */
 
@@ -63,6 +78,13 @@
 #include "raytrace.h"
 #include "plot3.h"
 
+#define MAX_INTERSECTS 1024
+
+#define VOODOO 10010.001
+
+/* set this to 1 for full midpoint use. Set it to 2 for x/y mid and real z. */
+int marching_cubes_use_midpoint = 0;
+
 /*
  * Table data acquired from Paul Borke's page at
  * http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
@@ -73,41 +95,7 @@
  * Grid definition matches SIGGRAPH 1987 p 164 (original presentation of technique)
  */
 
-int mc_edges[256]={
-0x000,0x109,0x203,0x30a,0x406,0x50f,0x605,0x70c,
-0x80c,0x905,0xa0f,0xb06,0xc0a,0xd03,0xe09,0xf00,
-0x190,0x099,0x393,0x29a,0x596,0x49f,0x795,0x69c,
-0x99c,0x895,0xb9f,0xa96,0xd9a,0xc93,0xf99,0xe90,
-0x230,0x339,0x033,0x13a,0x636,0x73f,0x435,0x53c,
-0xa3c,0xb35,0x83f,0x936,0xe3a,0xf33,0xc39,0xd30,
-0x3a0,0x2a9,0x1a3,0x0aa,0x7a6,0x6af,0x5a5,0x4ac,
-0xbac,0xaa5,0x9af,0x8a6,0xfaa,0xea3,0xda9,0xca0,
-0x460,0x569,0x663,0x76a,0x066,0x16f,0x265,0x36c,
-0xc6c,0xd65,0xe6f,0xf66,0x86a,0x963,0xa69,0xb60,
-0x5f0,0x4f9,0x7f3,0x6fa,0x1f6,0x0ff,0x3f5,0x2fc,
-0xdfc,0xcf5,0xfff,0xef6,0x9fa,0x8f3,0xbf9,0xaf0,
-0x650,0x759,0x453,0x55a,0x256,0x35f,0x055,0x15c,
-0xe5c,0xf55,0xc5f,0xd56,0xa5a,0xb53,0x859,0x950,
-0x7c0,0x6c9,0x5c3,0x4ca,0x3c6,0x2cf,0x1c5,0x0cc,
-0xfcc,0xec5,0xdcf,0xcc6,0xbca,0xac3,0x9c9,0x8c0,
-0x8c0,0x9c9,0xac3,0xbca,0xcc6,0xdcf,0xec5,0xfcc,
-0x0cc,0x1c5,0x2cf,0x3c6,0x4ca,0x5c3,0x6c9,0x7c0,
-0x950,0x859,0xb53,0xa5a,0xd56,0xc5f,0xf55,0xe5c,
-0x15c,0x055,0x35f,0x256,0x55a,0x453,0x759,0x650,
-0xaf0,0xbf9,0x8f3,0x9fa,0xef6,0xfff,0xcf5,0xdfc,
-0x2fc,0x3f5,0x0ff,0x1f6,0x6fa,0x7f3,0x4f9,0x5f0,
-0xb60,0xa69,0x963,0x86a,0xf66,0xe6f,0xd65,0xc6c,
-0x36c,0x265,0x16f,0x066,0x76a,0x663,0x569,0x460,
-0xca0,0xda9,0xea3,0xfaa,0x8a6,0x9af,0xaa5,0xbac,
-0x4ac,0x5a5,0x6af,0x7a6,0x0aa,0x1a3,0x2a9,0x3a0,
-0xd30,0xc39,0xf33,0xe3a,0x936,0x83f,0xb35,0xa3c,
-0x53c,0x435,0x73f,0x636,0x13a,0x033,0x339,0x230,
-0xe90,0xf99,0xc93,0xd9a,0xa96,0xb9f,0x895,0x99c,
-0x69c,0x795,0x49f,0x596,0x29a,0x393,0x099,0x190,
-0xf00,0xe09,0xd03,0xc0a,0xb06,0xa0f,0x905,0x80c,
-0x70c,0x605,0x50f,0x406,0x30a,0x203,0x109,0x000};
-
-int mc_tris[256][16] = {
+static int mc_tris[256][16] = {
 /* 00 */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 /* 01 */  {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 /* 02 */  {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -365,20 +353,50 @@ int mc_tris[256][16] = {
 /* fe */  {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 /* ff */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
-fastf_t min3(fastf_t a, fastf_t b, fastf_t c) {
-	fastf_t r=(a<b?a:b);
-	return c<r?c:r;
-}
+/* pairs of vertices associated with the edge. */
+static int edge_vertex[12][2] = {
+	{0, 1}, {1, 2}, {2, 3}, {3, 0},
+	{4, 5}, {5, 6}, {6, 7}, {7, 4},
+	{0, 4}, {1, 5}, {2, 6}, {3, 7}};
+
+static point_t point_offset[8] = {
+	{0, 0, 1}, {1, 0, 1}, {1, 0, 0}, {0, 0, 0},
+	{0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}};
+
 
 /* returns the number of triangles added or -1 on failure */
 int
-rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol)
+rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
 {
     int *vi, fo;
+    fastf_t *mytri = tris;
+
+    vi = (int *)(mc_tris[pv]);
+
+    fo = 0;
+    while( *vi >= 0 ) {
+	if(++fo > 5) {
+	    bu_log("Whoa, too many triangles?\n");
+	    return -1;
+	}
+
+	VMOVE(mytri, edges[vi[0]]);
+	VMOVE(mytri+1, edges[vi[1]]);
+	VMOVE(mytri+2, edges[vi[2]]);
+
+	mytri+=3;
+	vi+=3;
+    }
+
+    return fo;
+}
+
+int
+nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
+{
+    int *vi, fo, valids=0;
     struct faceuse *fu;
     struct vertex *vertl[3], **f_vertl[3];
-
-    p = p;
 
     f_vertl[0] = &vertl[0];
     f_vertl[1] = &vertl[2];
@@ -398,14 +416,24 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
 	    return -1;
 	}
 
-	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) || 
+	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
+	    bu_log("Heh, throwing away a triangle %d/%d/%d (%g %g %g | %g %g %g | %g %g %g)\n",
+		V3ARGS(vi), V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
+	    if(NEAR_ZERO(edges[vi[0]][X]-VOODOO, tol->dist) ||
+		NEAR_ZERO(edges[vi[1]][X]-VOODOO, tol->dist) ||
+		NEAR_ZERO(edges[vi[2]][X]-VOODOO, tol->dist)) {
+		bu_log("Heh, VOODOO!\n");
+	    }
 	    vi+=3;
 	    continue;
 	}
 
+	valids++;
+
 	memset((char *)vertl, 0, sizeof(vertl));
 
+	/* LOCK */
 	fu = nmg_cmface(s, f_vertl, 3);
 
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
@@ -414,22 +442,288 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
 	if (nmg_calc_face_g(fu))
 	    nmg_kfu(fu);
 
-	if(nmg_fu_planeeqn(fu, tol)) {
-	    bu_log("Tiny triangle! %f (%f)\t", 
-		    min3(DIST_PT_PT(edges[vi[0]],edges[vi[1]]), 
-			DIST_PT_PT(edges[vi[1]],edges[vi[2]]), 
-			DIST_PT_PT(edges[vi[0]],edges[vi[2]])), tol->dist);
-	    bu_log("<%f %f %f> <%f %f %f> <%f %f %f> (%f %f %f)\n", 
+	if(nmg_fu_planeeqn(fu, tol))
+	    bu_log("Tiny triangle! <%g %g %g> <%g %g %g> <%g %g %g> (%g %g %g)\n",
 		    V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]),
-		    DIST_PT_PT(edges[vi[0]],edges[vi[1]]), 
-		    DIST_PT_PT(edges[vi[0]],edges[vi[2]]), 
+		    DIST_PT_PT(edges[vi[0]],edges[vi[1]]),
+		    DIST_PT_PT(edges[vi[0]],edges[vi[2]]),
 		    DIST_PT_PT(edges[vi[1]],edges[vi[2]]));
-	}
+	/* UNLOCK */
 
 	vi+=3;
     }
 
-    return fo;
+    return valids;
+}
+
+static fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
+
+#define INHIT 1
+#define OUTHIT 2
+#define NOHIT -1
+struct whack {
+    point_t hit;
+    int in;	/* 1 for inhit, 2 for outhit, -1 to terminate */
+};
+
+static int
+bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
+{
+    struct partition *pp;
+    struct whack *t = (struct whack *)a->a_uptr;
+    int intersects = 0;
+
+    s=s;
+
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+	if(pp->pt_outhit->hit_dist>0.0) {
+	    if(pp->pt_inhit->hit_dist>0.0) {
+		VJOIN1(t->hit, a->a_ray.r_pt, pp->pt_inhit->hit_dist, a->a_ray.r_dir);
+		t->in=INHIT;
+		t++;
+		intersects++;
+	    }
+	    VJOIN1(t->hit, a->a_ray.r_pt, pp->pt_outhit->hit_dist, a->a_ray.r_dir);
+	    t->in=OUTHIT;
+	    t++;
+	    intersects++;
+	    if(intersects >= MAX_INTERSECTS)
+		bu_bomb("Too many intersects in marching cubes");
+	}
+    }
+    t->in = NOHIT;
+    return 0;
+}
+
+static int
+missed(struct application *a)
+{
+    struct whack *t = (struct whack *)a->a_uptr;
+    t->in = NOHIT;
+    return 0;
+}
+
+static int
+bitdiff(unsigned char t, unsigned char a, unsigned char b)
+{
+    unsigned char ma, mb, hb;
+    ma = 1<<a;
+    mb = 1<<b;
+    hb = t&(ma|mb);
+    return hb == ma || hb == mb;
+}
+
+static int
+rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, struct whack *muh, const fastf_t step, const struct bn_tol *tol)
+{
+    struct whack *puh;
+    int i;
+    fastf_t dist;
+
+    for(i=0;i<MAX_INTERSECTS;i++) {
+	muh[i].in=0;
+	VSETALL(muh[i].hit,VOODOO);
+    }
+
+    VJOIN1(a->a_ray.r_pt, *p, -2*tol->dist, a->a_ray.r_dir);
+    rt_shootray(a);
+    puh=muh;
+    while(puh->in > 0 && puh->hit[Z] <= a->a_ray.r_pt[Z]-tol->dist) {
+	bu_log("%d %g isn't close enough, moving on\n", puh->in, puh->hit[Z]);
+	puh++;
+	if(puh->in < 1)
+	    bu_log("puhh?\n");
+    }
+    dist = DIST_PT_PT(a->a_ray.r_pt, puh->hit);
+    if(dist > (step + 2.5*tol->dist)) {
+	bu_log("spooky action on edge:%d. (in:%d) (%g %g %g -> %g %g %g) step:%g dist:%g\n", edge, puh->in, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), step, dist);
+	VJOIN1(edges[edge], a->a_ray.r_pt, 0.5*step+tol->dist, a->a_ray.r_dir);
+    } else if(puh->in > 0)
+	VMOVE(edges[edge], muh->hit);
+    return 0;
+}
+
+static int
+rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t b, fastf_t step, const struct bn_tol *tol)
+{
+    int i, in[4] = { 0, 0, 0, 0}, count=0;
+    fastf_t last_b = -VOODOO;
+
+    while(primp[0]->in>0 || primp[1]->in>0 || primp[2]->in>0 || primp[3]->in>0) {
+	unsigned char pv;
+	point_t edges[12];
+	struct whack muh[MAX_INTERSECTS];
+	point_t p[8];
+
+	a->a_uptr = muh;
+	if((in[0]|in[1]|in[2]|in[3]) == 0) {
+	    b = +INFINITY;
+	    /* figure out the first hit distance and bin it */
+	    for(i=0;i<4;i++)
+		if(primp[i]->in>0 && primp[i]->hit[Z] < b) b = primp[i]->hit[Z];
+	    b = bin(b, step);
+	} else { /* iff we know we're intersecting the surface, walk slow. */
+	    if(NEAR_ZERO(last_b+VOODOO, tol->dist))
+		bu_log("teh fux? lastb = %g\n", last_b);
+	    b = last_b + step;
+	}
+
+	for(i=0;i<8;i++)
+	    VSET(p[i], x+step*point_offset[i][X], y+step*point_offset[i][Y], b+step*point_offset[i][Z]);
+
+	/* build the point vector */
+	pv = 0;
+	if(in[0] && primp[0]->hit[Z] > b+step) pv |= 0x09;
+	if(in[1] && primp[1]->hit[Z] > b+step) pv |= 0x06;
+	if(in[2] && primp[2]->hit[Z] > b+step) pv |= 0x90;
+	if(in[3] && primp[3]->hit[Z] > b+step) pv |= 0x60;
+
+#define MEH(A,I,O) \
+	if(primp[A][1].in > 0 && primp[A][1].hit[Z] < b+step+tol->dist) primp[A]+=2; \
+	if(primp[A]->hit[Z] < b+step+tol->dist) {  \
+	    if(primp[A]->in==1) { in[A]=1; pv |= 1<<I;} \
+	    if(primp[A]->in==2) { in[A]=0; pv |= 1<<O;} \
+	} else pv |= in[A]<<I | in[A]<<O;
+
+	/*  p   t  b */
+	MEH(0, 0, 3);
+	MEH(1, 1, 2);
+	MEH(2, 4, 7);
+	MEH(3, 5, 6);
+#undef MEH
+
+#define MUH(a,l) if(bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) { VMOVE(edges[a], l->hit); l++; } /* we already have ray intersect data for these. */
+	for(i=0;i<12;i++)
+	    VSETALL(edges[i], VOODOO);
+
+	MUH(1 ,primp[1]);
+	MUH(3 ,primp[0]);
+	MUH(5 ,primp[3]);
+	MUH(7 ,primp[2]);
+#undef MUH
+
+	if(marching_cubes_use_midpoint) {
+	    if(marching_cubes_use_midpoint==1)
+		for(i=1;i<8;i+=2)
+		    if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+			VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
+	    for(i=0;i<7;i+=2)
+		if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
+	    for(i=8;i<12;i++)
+		if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
+	} else {
+	    /* the 'muh' list may have to be walked. */
+#define MEH(A,B,C) if(bitdiff(pv,B,C)) rt_nmg_mc_crosspew(a, A, p+B, edges, muh, step, tol)
+	    VSET(a->a_ray.r_dir, 1, 0, 0);
+	    MEH(0 ,0,1);
+	    MEH(2 ,3,2);
+	    MEH(4 ,4,5);
+	    MEH(6 ,7,6);
+
+	    VSET(a->a_ray.r_dir, 0, 1, 0);
+	    MEH(8 ,0,4);
+	    MEH(9 ,1,5);
+	    MEH(10,2,6);
+	    MEH(11,3,7);
+#undef MEH
+#define MEH(A,B,C,D) if(NEAR_ZERO(edges[B][Z]-p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
+	    MEH(0,3,0,8);
+	    MEH(1,1,0,9);
+	    MEH(2,1,2,10);
+	    MEH(3,3,2,11);
+	    MEH(4,7,4,8);
+	    MEH(5,5,4,9);
+	    MEH(6,5,6,10);
+	    MEH(7,7,6,11);
+#undef MEH
+	}
+
+	/* stuff it into an nmg shell */
+	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
+	    count += nmg_mc_realize_cube(s, pv, edges, tol);
+
+	last_b = b;
+    }
+    return count;
+}
+
+/* rtip needs to be valid, s is where the results are stashed */
+int
+nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+{
+    struct application a;
+    fastf_t x, y, z, endx, endy;
+    fastf_t step = 0.0;
+    int ncpu;
+    int count = 0;
+    struct whack prim[4][MAX_INTERSECTS];
+    struct whack *primp[4];
+
+    RT_APPLICATION_INIT(&a);
+    a.a_rt_i = rtip;
+    a.a_rt_i->useair = 1;
+    a.a_hit = bangbang;
+    a.a_miss = missed;
+    a.a_onehit = MAX_INTERSECTS;
+
+    ncpu = bu_avail_cpus();
+
+    rt_gettree( a.a_rt_i, db_path_to_string(pathp) );
+    rt_prep( a.a_rt_i );
+
+    /* use rel value * bounding spheres diameter or the abs tolerance */
+    step = NEAR_ZERO(ttol->abs, tol->dist) ? 0.5 * a.a_rt_i->rti_radius * ttol->rel : ttol->abs;
+
+    x=bin(a.a_rt_i->mdl_min[X], step) - step;
+    endx=bin(a.a_rt_i->mdl_max[X], step) + step;
+    endy=bin(a.a_rt_i->mdl_max[Y], step) + step;
+
+    bu_log("Firing %s at %g\n", db_path_to_string(pathp), step);
+
+    /* TODO: throw "ncpu" threads here? */
+    for(; x<endx; x+=step) {
+	y=bin(a.a_rt_i->mdl_min[Y], step) - step;
+	for(; y<endy; y+=step) {
+	    int i, j;
+
+	    for(i=0;i<4;i++)
+		primp[i] = prim[i];
+
+	    for(i=0;i<4;i++)
+		for(j=0;j<MAX_INTERSECTS-1;j++) {
+		    prim[i][j].in = 0; 
+		    VSETALL(prim[i][j].hit, VOODOO);
+		}
+
+	    z = bin(a.a_rt_i->mdl_min[Z] - tol->dist - step, step);
+
+	    VSET(a.a_ray.r_dir, 0, 0, 1);
+	    a.a_uptr = primp[0]; 
+	    VSET(a.a_ray.r_pt, x, y, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[1]; 
+	    VSET(a.a_ray.r_pt, x+step, y, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[2]; 
+	    VSET(a.a_ray.r_pt, x, y+step, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[3]; 
+	    VSET(a.a_ray.r_pt, x+step, y+step, z); 
+	    rt_shootray(&a);
+
+	    z = +INFINITY;
+
+	    count += rt_nmg_mc_pew(s, primp, &a, x, y, z, step, tol);
+	}
+    }
+    /* free the rt stuff we don't need anymore */
+
+    return count;
 }
 
 void

@@ -36,13 +36,13 @@
 static void
 ged_dir_check5(struct db_i		*input_dbip,
 	       const struct db5_raw_internal	*rip,
-	       long				addr,
+	       off_t				addr,
 	       genptr_t				ptr);
 static int
 ged_dir_check(struct db_i *input_dbip,
 	      const char *name,
-	      long int laddr,
-	      int len,
+	      off_t laddr,
+	      size_t len,
 	      int flags,
 	      genptr_t ptr);
 
@@ -153,7 +153,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
 static void
 ged_dir_check5(struct db_i		*input_dbip,
 	       const struct db5_raw_internal	*rip,
-	       long				addr,
+	       off_t				addr,
 	       genptr_t				ptr)
 {
     char			*name;
@@ -172,7 +172,8 @@ ged_dir_check5(struct db_i		*input_dbip,
 
     name = (char *)rip->name.ext_buf;
 
-    if ( name == (char *)NULL ) return;
+    if (name == (char *)NULL) return;
+    if (addr == 0) return;
 
     /* do not compare _GLOBAL */
     if ( rip->major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
@@ -216,7 +217,7 @@ ged_dir_check5(struct db_i		*input_dbip,
  * Check a name against the global directory.
  */
 static int
-ged_dir_check(struct db_i *input_dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
+ged_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), genptr_t ptr)
 {
     struct directory	*dupdp;
     struct bu_vls		local;

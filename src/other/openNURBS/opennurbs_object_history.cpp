@@ -1679,6 +1679,10 @@ bool ON_HistoryRecord::SetObjRefValues( int value_id, int count, const ON_ObjRef
       ON_ObjRef& vor = v->m_value.AppendNew();
       vor = oref[i];
       vor.DecrementProxyReferenceCount();
+      // Feb 12 2010 - Fixing bug in ExtrudeCrv history
+      //  and probably lots of other subtle history bugs.
+      //  History must lookup by UUID and not by runtime serial number.
+      vor.m_runtime_sn = 0; 
       ON_UUID object_id = v->m_value[i].m_uuid;
       if ( !ON_UuidIsNil(object_id) )
       {

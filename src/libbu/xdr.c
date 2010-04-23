@@ -28,22 +28,22 @@
 #include "bu.h"
 
 
-unsigned short
+uint16_t
 bu_gshort(const unsigned char *msgp)
 {
     register const unsigned char *p = msgp;
-    register unsigned short u;
+    register uint16_t u;
 
     u = *p++ << 8;
-    return ((unsigned short)(u | *p));
+    return ((uint16_t)(u | *p));
 }
 
 
-unsigned long
+uint32_t
 bu_glong(const unsigned char *msgp)
 {
     register const unsigned char *p = msgp;
-    register unsigned long u;
+    register uint32_t u;
 
     u = *p++; u <<= 8;
     u |= *p++; u <<= 8;
@@ -53,25 +53,42 @@ bu_glong(const unsigned char *msgp)
 
 
 unsigned char *
-bu_pshort(register unsigned char *msgp, register int s)
+bu_pshort(register unsigned char *msgp, register uint16_t s)
 {
 
-    msgp[1] = s;
-    msgp[0] = s >> 8;
+    msgp[1] = (unsigned char)s;
+    msgp[0] = (unsigned char)(s >> 8);
     return (msgp+2);
 }
 
 
 unsigned char *
-bu_plong(register unsigned char *msgp, register long unsigned int l)
+bu_plong(register unsigned char *msgp, register uint32_t l)
 {
 
-    msgp[3] = l;
-    msgp[2] = (l >>= 8);
-    msgp[1] = (l >>= 8);
-    msgp[0] = l >> 8;
+    msgp[3] = (unsigned char)l;
+    msgp[2] = (unsigned char)(l >>= 8);
+    msgp[1] = (unsigned char)(l >>= 8);
+    msgp[0] = (unsigned char)(l >> 8);
     return (msgp+4);
 }
+
+
+unsigned char *
+bu_plonglong(register unsigned char *msgp, register uint64_t l)
+{
+
+    msgp[7] = (unsigned char)l;
+    msgp[6] = (unsigned char)(l >>= 8);
+    msgp[5] = (unsigned char)(l >>= 8);
+    msgp[4] = (unsigned char)(l >>= 8);
+    msgp[3] = (unsigned char)(l >>= 8);
+    msgp[2] = (unsigned char)(l >>= 8);
+    msgp[1] = (unsigned char)(l >>= 8);
+    msgp[0] = (unsigned char)(l >> 8);
+    return (msgp+8);
+}
+
 
 /*
  * Local Variables:

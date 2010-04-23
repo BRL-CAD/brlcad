@@ -83,7 +83,7 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    bu_log("Usage: %s ", argv[0], usage);
+    bu_log("Usage: %s %s ", argv[0], usage);
     return GED_ERROR;
 }
 

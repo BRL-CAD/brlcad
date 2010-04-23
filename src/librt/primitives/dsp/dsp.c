@@ -232,7 +232,7 @@ hook_mtos_from_stom(
     const struct bu_structparse *sp,
     const char *sp_name,
     genptr_t base,
-    char *p __attribute__((unused)))
+    char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -249,7 +249,7 @@ hook_file(
     const struct bu_structparse *sp,
     const char *sp_name,
     genptr_t base,
-    char *p __attribute__((unused)))
+    char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -2128,9 +2128,9 @@ HIDDEN int
 recurse_dsp_bb(struct isect_stuff *isect,
 	       struct dsp_bb *dsp_bb,
 	       point_t minpt, /* entry point of dsp_bb */
-	       point_t maxpt __attribute__((unused)), /* exit point of dsp_bb */
+	       point_t UNUSED(maxpt), /* exit point of dsp_bb */
 	       point_t bbmin, /* min point of bb (Z=0) */
-	       point_t bbmax __attribute__((unused))) /* max point of bb */
+	       point_t UNUSED(bbmax)) /* max point of bb */
 {
     double tDX;		/* dist along ray to span 1 cell in X dir */
     double tDY;		/* dist along ray to span 1 cell in Y dir */
@@ -2223,10 +2223,10 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	/* intersect with the current cell */
 	if (RT_G_DEBUG & DEBUG_HF) {
 	    if (loop)
-		bu_log("\nisect sub-cell %d %d  in dist:%g ",
+		bu_log("\nisect sub-cell %d %d  curr_dist:%g out_dist: %g",
 		       cX, cY, curr_dist, out_dist);
 	    else {
-		bu_log("isect sub-cell %d %d  in dist:%g ",
+		bu_log("isect sub-cell %d %d  curr_dist:%g out_dist %g",
 		       cX, cY, curr_dist, out_dist);
 		loop = 1;
 	    }
@@ -3096,7 +3096,7 @@ rt_dsp_class(void)
  * R T _ D S P _ P L O T
  */
 int
-rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
@@ -3471,7 +3471,7 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_dsp_internal *dsp_ip;
     struct shell *s;
@@ -4000,7 +4000,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     out_cookie = bu_cv_cookie("hus");
 
     if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-	int got;
+	size_t got;
 	/* if we're on a little-endian machine we convert the input
 	 * file from network to host format
 	 */
@@ -4010,7 +4010,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
 	got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
 			     mf->buf,    in_cookie, count);
-	if (got != count) {
+	if (got != (size_t)count) {
 	    bu_log("got %d != count %d", got, count);
 	    bu_bomb("\n");
 	}
@@ -4031,7 +4031,8 @@ HIDDEN int
 get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct rt_binunif_internal *bip;
-    int in_cookie, out_cookie, got;
+    int in_cookie, out_cookie;
+    size_t got;
     int ret;
 
     BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
@@ -4067,7 +4068,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 			     bip->u.uint16, in_cookie, bip->count);
 
 	if (got != bip->count) {
-	    bu_log("got %d != count %d", got, bip->count);
+	    bu_log("got %d != count %llu", got, (unsigned long long)bip->count);
 	    bu_bomb("\n");
 	}
     }
@@ -4408,7 +4409,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_dsp_internal *dsp_ip;
     unsigned long name_len;
     unsigned char *cp;
-    int rem;
+    size_t rem;
 
     if (resp) RT_CK_RESOURCE(resp);
     if (dbip) RT_CK_DBI(dbip);
@@ -4505,8 +4506,8 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_dsp_describe(struct bu_vls *str,
 		const struct rt_db_internal *ip,
-		int verbose __attribute__((unused)),
-		double mm2local __attribute__((unused)),
+		int UNUSED(verbose),
+		double UNUSED(mm2local),
 		struct resource *resp,
 		struct db_i *db_ip)
 {
@@ -4587,7 +4588,7 @@ HIDDEN void
 hook_verify(const struct bu_structparse *sp,
 	    const char *sp_name,
 	    genptr_t base,
-	    char *p __attribute__((unused)))
+	    char *UNUSED(p))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 

@@ -80,9 +80,9 @@ rt_ars_free(register struct soltab *stp)
 
 int
 rt_ars_class(const struct soltab *stp,
-	     const vect_t min __attribute__((unused)),
-	     const vect_t max __attribute__((unused)),
-	     const struct bn_tol *tol __attribute__((unused)))
+	     const vect_t UNUSED(min),
+	     const vect_t UNUSED(max),
+	     const struct bn_tol *UNUSED(tol))
 {
     register struct tri_specific *trip =
 	(struct tri_specific *)stp->st_specific;
@@ -483,7 +483,7 @@ rt_ars_ifree(struct rt_db_internal *ip)
  * R T _ A R S _ T E S S
  */
 int
-rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     register int i;
     register int j;
@@ -1152,7 +1152,7 @@ rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ A R S _ P L O T
  */
 int
-rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     register int i;
     register int j;

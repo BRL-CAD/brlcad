@@ -193,9 +193,9 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
     int j;
 
     for (omp = om; omp!= (struct oslo_mat *) 0; omp = omp->next) {
-	fprintf(stderr, "%lx offset %d osize %d next %lx\n",
-		(unsigned long)omp,  omp->offset,  omp->osize,
-		(unsigned long)omp->next);
+	fprintf(stderr, "%p offset %d osize %d next %p\n",
+		(void *)omp,  omp->offset,  omp->osize,
+		(void *)omp->next);
 
 	fprintf(stderr, "\t%f",  omp->o_vec[0]);
 

@@ -36,7 +36,7 @@
 
 
 HIDDEN int
-null_open(FBIO *ifp, char *file, int width, int height)
+null_open(FBIO *ifp, char *UNUSED(file), int width, int height)
 {
     FB_CK_FBIO(ifp);
     if ( width > 0 )
@@ -50,106 +50,140 @@ null_open(FBIO *ifp, char *file, int width, int height)
 HIDDEN int
 null_close(FBIO *ifp)
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
-null_clear(FBIO *ifp, unsigned char *pp)
+null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
-null_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), int count)
 {
+    FB_CK_FBIO(ifp);
+
     return(count);
 }
 
 HIDDEN int
-null_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), int count)
 {
+    FB_CK_FBIO(ifp);
+
     return(count);
 }
 
 HIDDEN int
-null_rmap(FBIO *ifp, ColorMap *cmp)
+null_rmap(FBIO *ifp, ColorMap *UNUSED(cmp))
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
-null_wmap(FBIO *ifp, const ColorMap *cmp)
+null_wmap(FBIO *ifp, const ColorMap *UNUSED(cmp))
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
-null_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+null_view(FBIO *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
+    FB_CK_FBIO(ifp);
+
     /*fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );*/
     return(0);
 }
 
 HIDDEN int
-null_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+null_getview(FBIO *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
+    FB_CK_FBIO(ifp);
+
     /*fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );*/
     return(0);
 }
 
 HIDDEN int
-null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
-null_cursor(FBIO *ifp, int mode, int x, int y)
+null_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
+    FB_CK_FBIO(ifp);
+
     /*fb_sim_cursor(ifp, mode, x, y);*/
     return(0);
 }
 
 HIDDEN int
-null_getcursor(FBIO *ifp, int *mode, int *x, int *y)
+null_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
+    FB_CK_FBIO(ifp);
+
     /*fb_sim_getcursor(ifp, mode, x, y);*/
     return(0);
 }
 
 HIDDEN int
-null_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+null_readrect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
+    FB_CK_FBIO(ifp);
+
     return( width*height );
 }
 
 HIDDEN int
-null_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+null_writerect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
+    FB_CK_FBIO(ifp);
+
     return( width*height );
 }
 
 HIDDEN int
 null_poll(FBIO *ifp)
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
 null_flush(FBIO *ifp)
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
 null_free(FBIO *ifp)
 {
+    FB_CK_FBIO(ifp);
+
     return(0);
 }
 
 HIDDEN int
 null_help(FBIO *ifp)
 {
+    FB_CK_FBIO(ifp);
+
     fb_log( "Description: %s\n", null_interface.if_type );
     fb_log( "Device: %s\n", ifp->if_name );
     fb_log( "Max width/height: %d %d\n",
@@ -203,7 +237,13 @@ FBIO null_interface =  {
     0,			/* page_dirty		*/
     0L,			/* page_curpos		*/
     0L,			/* page_pixels		*/
-    0			/* debug		*/
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 /*

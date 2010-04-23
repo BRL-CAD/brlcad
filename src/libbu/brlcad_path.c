@@ -86,8 +86,10 @@ _bu_ipwd()
     }
 
     ipwd = getenv("PWD"); /* not our memory to free */
+    if (!ipwd)
+        ipwd = bu_which("pwd");
 
-    if (!ipwd && (ipwd = bu_which("pwd"))) {
+    if (ipwd) {
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	FILE *fp = NULL;
 
@@ -113,8 +115,8 @@ _bu_ipwd()
 }
 
 
-const char *
-bu_argv0(void)
+HIDDEN const char *
+_bu_argv0(void)
 {
     /* private stash */
     static const char *argv0 = NULL;
@@ -133,6 +135,10 @@ bu_argv0(void)
     }
 #endif
 
+    if (!argv0) {
+	argv0 = "(unknown)";
+    }
+
     return argv0;
 }
 
@@ -142,29 +148,29 @@ bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
 
-    const char *argv0 = bu_argv0();
+    const char *argv0 = _bu_argv0();
     const char *ipwd = _bu_ipwd();
 
     const char *which = bu_which(argv0);
 
     if (argv0[0] == BU_DIR_SEPARATOR) {
-	/* seems to be a full path */
+	/* seems to already be a full path */
 	snprintf(buffer, MAXPATHLEN, "%s", argv0);
 	return buffer;
     }
 
-    if (argv0[0] == '.' && argv0[1] == BU_DIR_SEPARATOR) {
-	/* remove a ./ if present */
-	argv0 += 2;
-    }
-
-    /* running from installed */
+    /* running from PATH */
     if (which) {
 	snprintf(buffer, MAXPATHLEN, "%s", which);
 	return buffer;
     }
 
-    /* running from source dir */
+    while (argv0[0] == '.' && argv0[1] == BU_DIR_SEPARATOR) {
+	/* remove ./ if present, relative paths are appended to pwd */
+	argv0 += 2;
+    }
+
+    /* running from relative dir */
     snprintf(buffer, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, argv0);
     if (bu_file_exists(buffer)) {
 	return buffer;
@@ -189,10 +195,10 @@ bu_getprogname(void) {
 #endif
 
     if (!name) {
-	name = bu_argv0();
+	name = _bu_argv0();
     }
 
-    snprintf(bu_progname, MAXPATHLEN, "%s", name?name:"unknown");
+    snprintf(bu_progname, MAXPATHLEN, "%s", name);
 
     return bu_basename(bu_progname);
 }
@@ -212,6 +218,14 @@ bu_setprogname(const char *argv0)
     (void)_bu_ipwd();
 
     return;
+}
+
+
+/* DEPRECATED: Do not use. */
+const char *
+bu_argv0(void)
+{
+    return _bu_argv0();
 }
 
 
@@ -688,6 +702,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     bu_vls_free(&searched);
     return NULL;
 }
+
 
 /** @} */
 

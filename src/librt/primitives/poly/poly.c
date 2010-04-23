@@ -63,7 +63,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pg_internal *pgp;
     int i;
-    int p;
+    size_t p;
 
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
@@ -479,10 +479,10 @@ rt_pg_class(void)
  * R T _ P G _ P L O T
  */
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i;
-    int p;	/* current polygon number */
+    size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     BU_CK_LIST_HEAD(vhead);
@@ -511,10 +511,10 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * Convert to vlist, draw as polygons.
  */
 int
-rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i;
-    int p;	/* current polygon number */
+    size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     BU_CK_LIST_HEAD(vhead);
@@ -565,14 +565,14 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * R T _ P G _ T E S S
  */
 int
-rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     int i;
     struct shell *s;
     struct vertex **verts;	/* dynamic array of pointers */
     struct vertex ***vertp;/* dynamic array of ptrs to pointers */
     struct faceuse *fu;
-    int p;	/* current polygon number */
+    size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     RT_CK_DB_INTERNAL(ip);
@@ -648,8 +648,8 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     struct rt_pg_internal *pgp;
     union record *rp;
     int i;
-    int rno;		/* current record number */
-    int p;		/* current polygon index */
+    size_t rno;		/* current record number */
+    size_t p;		/* current polygon index */
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -724,8 +724,8 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     struct rt_pg_internal *pgp;
     union record *rec;
     int i;
-    int rno;		/* current record number */
-    int p;		/* current polygon index */
+    size_t rno;		/* current record number */
+    size_t p;		/* current polygon index */
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -781,7 +781,7 @@ rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (!ep)
 	return -1;
@@ -809,13 +809,13 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     struct rt_pg_internal *pgp =
 	(struct rt_pg_internal *)ip->idb_ptr;
     char buf[256];
-    int i;
+    size_t i;
 
     RT_PG_CK_MAGIC(pgp);
     bu_vls_strcat(str, "polygon solid with no topology (POLY)\n");
 
-    sprintf(buf, "\t%d polygons (faces)\n",
-	    pgp->npoly);
+    sprintf(buf, "\t%ld polygons (faces)\n",
+	    (long int)pgp->npoly);
     bu_vls_strcat(str, buf);
 
     sprintf(buf, "\tMost complex face has %d vertices\n",
@@ -837,8 +837,8 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	fastf_t *v = pgp->poly[i].verts;
 	fastf_t *n = pgp->poly[i].norms;
 
-	sprintf(buf, "\tPolygon %d: (%d pts)\n",
-		i, pgp->poly[i].npts);
+	sprintf(buf, "\tPolygon %lu: (%d pts)\n",
+		(long unsigned int)i, pgp->poly[i].npts);
 	bu_vls_strcat(str, buf);
 	for (j=0; j < pgp->poly[i].npts; j++) {
 	    sprintf(buf, "\t\tV (%g, %g, %g)\n\t\t N (%g, %g, %g)\n",
@@ -867,7 +867,7 @@ void
 rt_pg_ifree(struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
-    int i;
+    size_t i;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -919,9 +919,10 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 {
     struct rt_pg_internal *ip_pg;
     struct rt_bot_internal *ip_bot;
-    int max_pts;
-    int max_tri;
-    int p, i;
+    size_t max_pts;
+    size_t max_tri;
+    size_t p;
+    int i;
 
     RT_CK_DB_INTERNAL(ip);
     BN_CK_TOL(tol);
@@ -943,11 +944,11 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     /* maximum possible vertices */
     max_pts = ip_pg->npoly * ip_pg->max_npts;
-    BU_ASSERT_LONG(max_pts, >, 0);
+    BU_ASSERT_SIZE_T(max_pts, >, 0);
 
     /* maximum possible triangular faces */
     max_tri = ip_pg->npoly * 3;
-    BU_ASSERT_LONG(max_tri, >, 0);
+    BU_ASSERT_SIZE_T(max_tri, >, 0);
 
     ip_bot->num_vertices = 0;
     ip_bot->num_faces = 0;

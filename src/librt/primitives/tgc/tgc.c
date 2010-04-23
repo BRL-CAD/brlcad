@@ -538,7 +538,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      */
     t_scale = MAGNITUDE(dprime);
     if (NEAR_ZERO(t_scale, SMALL_FASTF)) {
-	bu_log("tgc(%s) dprime=(%g, %g, %g), t_scale=%e, miss.\n",
+	bu_log("tgc(%s) dprime=(%g, %g, %g), t_scale=%e, miss.\n", stp->st_dp->d_namep,
 	       V3ARGS(dprime), t_scale);
 	return 0;
     }
@@ -1791,7 +1791,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
  * R T _ T G C _ P L O T
  */
 int
-rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_tgc_internal *tip;
     register int i;
@@ -1939,7 +1939,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t h, a, b, c, d;	/* lengths of TGC vectors */
     fastf_t inv_length;	/* 1.0/length of a vector */
     vect_t unit_a, unit_b, unit_c, unit_d; /* units vectors in a, b, c, d directions */
-    fastf_t rel, abs, norm;	/* interpreted tolerances */
+    fastf_t rel, absolute, norm;	/* interpreted tolerances */
     fastf_t alpha_tol;	/* final tolerance for ellipse parameter */
     fastf_t abs_tol;	/* handle invalid ttol->abs */
     int nells;		/* total number of ellipses */
@@ -2047,9 +2047,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    alpha_tol = bn_halfpi;
     } else {
 	if (abs_tol > 0.0)
-	    abs = 2.0 * acos(1.0 - abs_tol/max_radius);
+	    absolute = 2.0 * acos(1.0 - abs_tol/max_radius);
 	else
-	    abs = bn_halfpi;
+	    absolute = bn_halfpi;
 
 	if (ttol->rel > 0.0) {
 	    if (ttol->rel * 2.0 * radius < max_radius)
@@ -2079,8 +2079,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	} else
 	    norm = bn_halfpi;
 
-	if (abs < rel)
-	    alpha_tol = abs;
+	if (absolute < rel)
+	    alpha_tol = absolute;
 	else
 	    alpha_tol = rel;
 	if (norm < alpha_tol)

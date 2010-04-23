@@ -155,7 +155,7 @@ static double ylim_view = 1.0;
 /* lighting parameters */
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
-static float light0_position[] = {100.0, 200.0, 100.0, 0.0};
+static float light0_position[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0};
 static float wireColor[4];
 static float ambientColor[4];
@@ -863,7 +863,7 @@ rtgl_drawEnd(struct dm *dmp)
     if (dmp->dm_light) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
     }
 
     if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
@@ -1007,6 +1007,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+#if 0
     /* Initial Material Properties */
     {
 	GLfloat mat_specular[] = {.8, .8, .8, .8}; 
@@ -1014,11 +1015,12 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular); 
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess); 
     }
+#endif
 
     /* set light position now, so that it moves with the view */
     {
 	GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 }; 
-	GLfloat white_light[] = { .8, .8, .8, 1.0 }; 
+	GLfloat white_light[] = { .5, .5, .5, 1.0 }; 
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light); 
 	glLightfv(GL_LIGHT0, GL_SPECULAR, white_light); 

@@ -2,7 +2,9 @@
 SUBDIRS = ReleaseNotes manuals
 
 htmldocsdir = $(BRLCAD_DATA)/html
-htmldocs_DATA = bookmarks.html
+htmldocs_DATA = \
+	bookmarks.html \
+	toc.html
 
 EXTRA_DIST = $(htmldocs_DATA)
 

@@ -625,7 +625,7 @@ rt_ell_16pts(fastf_t *ov,
  * R T _ E L L _ P L O T
  */
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     register int i;
     struct rt_ell_internal *eip;
@@ -1475,7 +1475,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     vertp[3] = &verts[1];
 
     if ((fu = nmg_cmface(s, vertp, 4)) == 0) {
-	bu_log("rt_ell_tnurb(%s): nmg_cmface() fail on face\n");
+	bu_log("rt_ell_tnurb(): nmg_cmface() fail on face\n");
 	return -1;
     }
 

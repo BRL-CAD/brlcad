@@ -1713,7 +1713,7 @@ draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end,
  * R T _ P I P E _ P L O T
  */
 int
-rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct wdb_pipept *prevp;
     struct wdb_pipept *curp;
@@ -3341,7 +3341,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     struct wdb_pipept *ptp;
     struct rt_pipe_internal *pip;
     fastf_t *vec;
-    int total_count;
+    size_t total_count;
     int double_count;
     int byte_count;
     unsigned long pipe_count;

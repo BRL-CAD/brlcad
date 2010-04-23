@@ -268,8 +268,10 @@ void ON_SimpleArray<T>::Move( int dest_i, int src_i, int ele_cnt )
 template <class T>
 T& ON_SimpleArray<T>::AppendNew()
 {
-  if ( m_count == m_capacity ) {
-    Reserve( ((m_count < 2) ? 4 : (2*m_count)) );
+  if ( m_count == m_capacity ) 
+  {
+    int new_capacity = NewCapacity();
+    Reserve( new_capacity );
   }
   memset( &m_a[m_count], 0, sizeof(T) );
   return m_a[m_count++];
@@ -280,7 +282,7 @@ void ON_SimpleArray<T>::Append( const T& x )
 {
   if ( m_count == m_capacity ) 
   {
-    const int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
+    const int newcapacity = NewCapacity();
     if (m_a)
     {
       const int s = (int)(&x - m_a); // (int) cast is for 64 bit pointers
@@ -290,9 +292,9 @@ void ON_SimpleArray<T>::Append( const T& x )
         //    User passed in an element of the m_a[]
         //    that will get reallocated by the call
         //    to Reserve(newcapacity).
-        T temp; // ON_*Array<> templates do not require robust copy constructor.
-        temp = x;
-        Reserve(newcapacity);
+        T temp;   // ON_*Array<> templates do not require robust copy constructor.
+        temp = x; // ON_*Array<> templates require a robust operator=.
+        Reserve( newcapacity );
         m_a[m_count++] = temp;
         return;
       }
@@ -309,10 +311,10 @@ void ON_SimpleArray<T>::Append( int count, const T* p )
   {
     if ( count + m_count > m_capacity ) 
     {
-      int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
+      int newcapacity = NewCapacity();
       if ( newcapacity < count + m_count )
         newcapacity = count + m_count;
-      Reserve(newcapacity);
+      Reserve( newcapacity );
     }
     memcpy( m_a + m_count, p, count*sizeof(T) );
     m_count += count;
@@ -326,10 +328,8 @@ void ON_SimpleArray<T>::Insert( int i, const T& x )
   {
     if ( m_count == m_capacity ) 
     {
-      if( m_capacity < 2 )
-        Reserve( 4 );
-      else
-        Reserve( 2*m_capacity );
+      int newcapacity = NewCapacity();
+      Reserve( newcapacity );
     }
 	  m_count++;
     Move( i+1, i, m_count-1-i );
@@ -598,7 +598,69 @@ void ON_SimpleArray<T>::SetCapacity( int capacity )
   }
 }
 
+template <class T>
+int ON_SimpleArray<T>::NewCapacity() const
+{
+  // Note: 
+  //   This code appears in ON_SimpleArray<T>::NewCapacity()
+  //   and ON_ClassArray<T>::NewCapacity().  Changes made to
+  //   either function should be made to both functions.
+  //   Because this code is template code that has to
+  //   support dynamic linking and the code is defined
+  //   in a header, I'm using copy-and-paste rather
+  //   than a static.
 
+  // This function returns 2*m_count unless that will
+  // result in an additional allocation of more than
+  // cap_size bytes.  The cap_size concept was added in
+  // January 2010 because some calculations on enormous
+  // models were slightly underestimating the initial
+  // Reserve() size and then wasting gigabytes of memory.
+
+  // cap_size = 128 MB on 32-bit os, 256 MB on 64 bit os
+  const size_t cap_size = 32*sizeof(void*)*1024*1024;
+  if (m_count*sizeof(T) <= cap_size || m_count < 8)
+    return ((m_count <= 2) ? 4 : 2*m_count);
+
+  // Growing the array will increase the memory
+  // use by more than cap_size.
+  int delta_count = 8 + cap_size/sizeof(T);
+  if ( delta_count > m_count )
+    delta_count = m_count;
+  return (m_count + delta_count);
+}
+
+template <class T>
+int ON_ClassArray<T>::NewCapacity() const
+{
+  // Note: 
+  //   This code appears in ON_SimpleArray<T>::NewCapacity()
+  //   and ON_ClassArray<T>::NewCapacity().  Changes made to
+  //   either function should be made to both functions.
+  //   Because this code is template code that has to
+  //   support dynamic linking and the code is defined
+  //   in a header, I'm using copy-and-paste rather
+  //   than a static.
+
+  // This function returns 2*m_count unless that will
+  // result in an additional allocation of more than
+  // cap_size bytes.  The cap_size concept was added in
+  // January 2010 because some calculations on enormous
+  // models were slightly underestimating the initial
+  // Reserve() size and then wasting gigabytes of memory.
+
+  // cap_size = 128 MB on 32-bit os, 256 MB on 64 bit os
+  const size_t cap_size = 32*sizeof(void*)*1024*1024;
+  if (m_count*sizeof(T) <= cap_size || m_count < 8)
+    return ((m_count <= 2) ? 4 : 2*m_count);
+
+  // Growing the array will increase the memory
+  // use by more than cap_size.
+  int delta_count = 8 + cap_size/sizeof(T);
+  if ( delta_count > m_count )
+    delta_count = m_count;
+  return (m_count + delta_count);
+}
 
 /////////////////////////////////////////////////////////////////////////////////////
 //  Class ON_ObjectArray<>
@@ -898,10 +960,13 @@ void ON_ClassArray<T>::DestroyElement(T& x)
 template <class T>
 T& ON_ClassArray<T>::AppendNew()
 {
-  if ( m_count == m_capacity ) {
-    Reserve( ((m_count < 2) ? 4 : (2*m_count)) );
+  if ( m_count == m_capacity ) 
+  {
+    int newcapacity = NewCapacity();
+    Reserve( newcapacity );
   }
-  else {
+  else
+  {
     // First destroy what's there ..
     DestroyElement(m_a[m_count]);
     // and then get a properly initialized element
@@ -915,7 +980,7 @@ void ON_ClassArray<T>::Append( const T& x )
 {
   if ( m_count == m_capacity ) 
   {
-    const int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
+    const int newcapacity = NewCapacity();
     if (m_a)
     {
       const int s = (int)(&x - m_a); // (int) cast is for 64 bit pointers
@@ -925,9 +990,9 @@ void ON_ClassArray<T>::Append( const T& x )
         //    User passed in an element of the m_a[]
         //    that will get reallocated by the call
         //    to Reserve(newcapacity).
-        T temp; // ON_*Array<> templates do not require robust copy constructor.
-        temp = x;
-        Reserve(newcapacity);
+        T temp;   // ON_*Array<> templates do not require robust copy constructor.
+        temp = x; // ON_*Array<> templates require a robust operator=.
+        Reserve( newcapacity );
         m_a[m_count++] = temp;
         return;
       }
@@ -945,10 +1010,10 @@ void ON_ClassArray<T>::Append( int count, const T* p )
   {
     if ( count + m_count > m_capacity ) 
     {
-      int newcapacity = (m_capacity<2) ? 4 : (2*m_capacity);
+      int newcapacity = NewCapacity();
       if ( newcapacity < count + m_count )
         newcapacity = count + m_count;
-      Reserve(newcapacity);
+      Reserve( newcapacity );
     }
     for ( i = 0; i < count; i++ ) {
       m_a[m_count++] = p[i];
@@ -964,10 +1029,8 @@ void ON_ClassArray<T>::Insert( int i, const T& x )
   {
     if ( m_count == m_capacity ) 
     {
-      if( m_capacity < 2 )
-        Reserve( 4 );
-      else
-        Reserve( 2*m_capacity );
+      int newcapacity = NewCapacity();
+      Reserve( newcapacity );
     }
     DestroyElement( m_a[m_count] );
 	  m_count++;
@@ -1062,9 +1125,7 @@ int ON_ClassArray<T>::BinarySearch( const T* key, int (*compar)(const T*,const T
   return found ? ((int)(found - m_a)) : -1;
 #else
   // for lamer 64 bit compilers
-  // (``Erik used size_t instead of unsigned int in previous version - swap size_t for int for now
-  // in this version as well - need to evaluate impact of ON__UINT_PTR if any...)
-  return found ? ((size_t)((((ON__UINT_PTR)found) - ((ON__UINT_PTR)m_a))/sizeof(T))) : -1;
+  return found ? ((int)((((ON__UINT64)found) - ((ON__UINT64)m_a))/sizeof(T))) : -1;
 #endif
 }
 

@@ -497,7 +497,7 @@ view_pixel(struct application *ap)
 		}
 	    }
 	    if (outfp != NULL) {
-		int count;
+		size_t count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
@@ -819,7 +819,9 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		    pp->pt_inflip = 0;
 		    pp->pt_inseg->seg_stp = kut_soltab;
 		    break;
-		}
+		} else if (pp->pt_inhit->hit_dist > dist) {
+                    break;
+                }
 	    }
 	    if (pp == PartHeadp) {
 		/* we ignored everything, this is now a miss */

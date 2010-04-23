@@ -2061,8 +2061,8 @@ f4_do_hole_wall(int type)
     struct hole_list *list_start;
     int group, comp;
     int igrp, icmp;
-    int s_len;
-    int col;
+    size_t s_len;
+    size_t col;
 
     if (debug)
 	bu_log("f4_do_hole_wall: %s\n", line);

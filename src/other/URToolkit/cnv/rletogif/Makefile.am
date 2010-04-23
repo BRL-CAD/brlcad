@@ -9,7 +9,7 @@ rletogif_SOURCES = \
 noinst_HEADERS = rletogif.h
 
 rletogif_LDADD = ${RLE}
-rletogif_CFLAGS = ${RLE_CPPFLAGS}
+rletogif_CFLAGS = ${RLE_CPPFLAGS} ${NOWARN}
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -2,6 +2,7 @@
 SUBDIRS = \
 	archer \
 	geometree \
+	hv3 \
 	lib \
 	mged \
 	nirt \

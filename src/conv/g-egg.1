@@ -41,7 +41,7 @@
 .SH NAME
 g-egg \- Panda3D Translator (BRL-CAD to EGG)
 .SH SYNOPSIS
-.B g-egg [-v][-i] [-xX lvl]
+.B g-egg [-v][-i][-8] [-xX lvl]
 [-D calculation_tolerance ]
 [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o EGG_file] database.g object(s)
 .SH DESCRIPTION
@@ -79,6 +79,8 @@ The
 .I -o
 option specifies the name of the file to receive the output
 (stdout is the default).
+.I -8
+option tells the facetizer to use the marching cubes algorithm.
 .SH EXAMPLE
 .RS
 $ \|\fIg-egg \|-o sample.egg \|sample.g \|sample_object\fP

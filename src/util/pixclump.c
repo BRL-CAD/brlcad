@@ -34,23 +34,23 @@
 #include "bu.h"
 
 
-#define	RED			0
-#define	GRN			1
-#define	BLU			2
+#define RED 0
+#define GRN 1
+#define BLU 2
 
-#define	PC_DEBUG_TABLE		0x01
-#define	PC_DEBUG_MATCH		0x02
-#define	PC_DEBUG_OUTPUT		0x04
-#define OPT_STRING	"c:f:x:?"
+#define PC_DEBUG_TABLE 0x01
+#define PC_DEBUG_MATCH 0x02
+#define PC_DEBUG_OUTPUT 0x04
+#define OPT_STRING "c:f:x:?"
 
 
 /*
- *	Global variables
+ * Global variables
  */
-unsigned char	(*color_tbl)[3];	/* Table of quantized colors */
-int		color_tbl_size;		/* Capacity of table */
-int		next_color;		/* Number of colors now in table */
-static int	debug = 0;
+unsigned char (*color_tbl)[3];	/* Table of quantized colors */
+int color_tbl_size;		/* Capacity of table */
+int next_color;		/* Number of colors now in table */
+static int debug = 0;
 
 static char usage[] = "\
 Usage: 'pixclump [-c R/G/B] [-f color_file] [-x debug_flags]\n\
@@ -65,15 +65,14 @@ static void print_usage (void)
 
 static void print_debug_usage (void)
 {
-    static char	*flag_denotation[] =
-	{
-	    "",
-	    "color table",
-	    "finding best pixel match",
-	    "writing the pixels out",
-	    0
-	};
-    int		i;
+    static char *flag_denotation[] = {
+	"",
+	"color table",
+	"finding best pixel match",
+	"writing the pixels out",
+	0
+    };
+    int i;
 
     bu_log("Debug bits and their meanings...\n");
     for (i = 1; (flag_denotation[i]) != 0; ++i)
@@ -86,10 +85,9 @@ static void print_debug_usage (void)
 static void add_to_table (unsigned char *rgb)
 {
     /*
-     *	Ensure that the color table can accomodate the new entry
+     * Ensure that the color table can accomodate the new entry
      */
-    if (next_color == color_tbl_size)
-    {
+    if (next_color == color_tbl_size) {
 	color_tbl_size *= 2;
 	color_tbl = (unsigned char (*)[3])
 	    bu_realloc((genptr_t) color_tbl,
@@ -100,13 +98,14 @@ static void add_to_table (unsigned char *rgb)
     ++next_color;
 }
 
+
 static void fill_table (char *f_name)
 {
-    char		*bp;
-    FILE		*fp;
-    int			line_nm;
-    unsigned char	rgb[3];
-    struct bu_vls	v;
+    char *bp;
+    FILE *fp;
+    int line_nm;
+    unsigned char rgb[3];
+    struct bu_vls v;
 
     if ((fp = fopen(f_name, "r")) == NULL)
 	bu_exit(1, "Cannot open color file '%s'\n", bu_optarg);
@@ -125,9 +124,10 @@ static void fill_table (char *f_name)
     }
 }
 
+
 static void print_table (void)
 {
-    int	i;
+    int i;
 
     bu_log("-----------\nColor Table\n-----------\n");
     for (i = 0; i < next_color; ++i)
@@ -136,16 +136,17 @@ static void print_table (void)
     bu_log("-----------\n");
 }
 
+
 /*
- *		C O L O R _ D I F F ( )
+ * C O L O R _ D I F F ()
  *
- *	Returns the square of the Euclidean distance in RGB space
- *	between a specified pixel (R/G/B triple) and a specified
- *	entry in the color table.
+ * Returns the square of the Euclidean distance in RGB space
+ * between a specified pixel (R/G/B triple) and a specified
+ * entry in the color table.
  */
 static int color_diff (unsigned char *pix, int i)
 {
-    unsigned char	*cte;	/* The specified entry in the color table */
+    unsigned char *cte;	/* The specified entry in the color table */
 
     cte = color_tbl[i];
 
@@ -160,24 +161,24 @@ static int color_diff (unsigned char *pix, int i)
 int
 main (int argc, char **argv)
 {
-    char		*cf_name = 0;	/* name of color file */
-    char		*inf_name;	/* name of input stream */
-    char		*outf_name = NULL;	/*  "   "  output   "   */
-    unsigned char	pixbuf[3];	/* the current input pixel */
-    FILE		*infp = NULL;	/* input stream */
-    FILE		*outfp = NULL;	/* output   "   */
-    int			ch;		/* current char in command line */
-    int			i;		/* dummy loop indices */
-    unsigned char	rgb[3];		/* Specified color */
-    int			best_color;	/* index of best match to pixbuf */
-    int			best_diff;	/* error in best match */
-    int			this_diff;	/* pixel-color_tbl difference */
+    char *cf_name = 0;	/* name of color file */
+    char *inf_name;	/* name of input stream */
+    char *outf_name = NULL;	/* "   " output "   */
+    unsigned char pixbuf[3];	/* the current input pixel */
+    FILE *infp = NULL;	/* input stream */
+    FILE *outfp = NULL;	/* output "   */
+    int ch;		/* current char in command line */
+    int i;		/* dummy loop indices */
+    unsigned char rgb[3];		/* Specified color */
+    int best_color;	/* index of best match to pixbuf */
+    int best_diff;	/* error in best match */
+    int this_diff;	/* pixel-color_tbl difference */
 
-    extern int	bu_optind;			/* index from bu_getopt(3C) */
-    extern char	*bu_optarg;		/* argument from bu_getopt(3C) */
+    extern int bu_optind;			/* index from bu_getopt(3C) */
+    extern char *bu_optarg;		/* argument from bu_getopt(3C) */
 
     /*
-     *	Initialize the color table
+     * Initialize the color table
      */
     color_tbl_size = 8;
     color_tbl = (unsigned char (*)[3])
@@ -185,14 +186,12 @@ main (int argc, char **argv)
     next_color = 0;
 
     /*
-     *	Process the command line
+     * Process the command line
      */
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
-	switch (ch)
-	{
+	switch (ch) {
 	    case 'c':
-		if (! bu_str_to_rgb(bu_optarg, rgb))
-		{
+		if (! bu_str_to_rgb(bu_optarg, rgb)) {
 		    bu_log("Illegal color: '%s'\n", bu_optarg);
 		    print_usage();
 		}
@@ -204,8 +203,7 @@ main (int argc, char **argv)
 		next_color = 0;
 		break;
 	    case 'x':
-		if (sscanf(bu_optarg, "%x", (unsigned int *) &debug) != 1)
-		{
+		if (sscanf(bu_optarg, "%x", (unsigned int *) &debug) != 1) {
 		    bu_log("Invalid debug-flag value: '%s'\n", bu_optarg);
 		    print_debug_usage();
 		}
@@ -214,8 +212,7 @@ main (int argc, char **argv)
 	    default:
 		print_usage();
 	}
-    switch (argc - bu_optind)
-    {
+    switch (argc - bu_optind) {
 	case 0:
 	    inf_name = "stdin";
 	    infp = stdin;
@@ -231,15 +228,13 @@ main (int argc, char **argv)
     }
 
     /*
-     *	Open input and output files, as necessary
+     * Open input and output files, as necessary
      */
-    if (infp == NULL)
-    {
+    if (infp == NULL) {
 	inf_name = argv[bu_optind];
 	if ((infp = fopen(inf_name, "r")) == NULL)
 	    bu_exit(1, "Cannot open input file '%s'\n", inf_name);
-	if (outfp == NULL)
-	{
+	if (outfp == NULL) {
 	    outf_name = argv[++bu_optind];
 	    if ((outfp = fopen(outf_name, "w")) == NULL)
 		bu_exit(1, "Cannot open output file '%s'\n", outf_name);
@@ -247,38 +242,32 @@ main (int argc, char **argv)
     }
 
     /*
-     *	Ensure that infp is kosher,
+     * Ensure that infp is kosher,
      */
-    if (infp == stdin)
-    {
-	if (isatty(fileno(stdin)))
-	{
+    if (infp == stdin) {
+	if (isatty(fileno(stdin))) {
 	    bu_log("FATAL: pixclump reads only from file or pipe\n");
 	    print_usage();
 	}
     }
 
     /*
-     *	Ensure that the color table is nonempty
+     * Ensure that the color table is nonempty
      */
     if (cf_name != 0)
 	fill_table(cf_name);
-    if (next_color == 0)
-    {
+    if (next_color == 0) {
 	bu_log("pixclump: No colors specified\n");
 	print_usage();
     }
     if (debug & PC_DEBUG_TABLE)
 	print_table();
 
-    while (fread((void *) pixbuf, 3 * sizeof(unsigned char), 1, infp) == 1)
-    {
+    while (fread((void *) pixbuf, 3 * sizeof(unsigned char), 1, infp) == 1) {
 	best_color = 0;
 	best_diff = color_diff(pixbuf, 0);
-	for (i = 1; i < next_color; ++i)
-	{
-	    if ((this_diff = color_diff(pixbuf, i)) < best_diff)
-	    {
+	for (i = 1; i < next_color; ++i) {
+	    if ((this_diff = color_diff(pixbuf, i)) < best_diff) {
 		best_color = i;
 		best_diff = this_diff;
 	    }
@@ -300,6 +289,7 @@ main (int argc, char **argv)
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

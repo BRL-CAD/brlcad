@@ -59,7 +59,7 @@
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
-				WarningLevel="3"
+				WarningLevel="0"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="0"
 				CompileAs="0"
@@ -156,7 +156,7 @@
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 				CompileAs="0"
 			/>

@@ -49,6 +49,8 @@ ON_COMPONENT_INDEX::TYPE ON_COMPONENT_INDEX::Type(int i)
   case polycurve_segment:  t = polycurve_segment;  break;
   case pointcloud_point:   t = pointcloud_point;   break;
   case group_member:       t = group_member;       break;
+  case extrusion_bottom_profile: t = extrusion_bottom_profile; break;
+  case extrusion_top_profile:    t = extrusion_top_profile;    break;
   case dim_linear_point:   t = dim_linear_point;   break;
   case dim_radial_point:   t = dim_radial_point;   break;
   case dim_angular_point:  t = dim_angular_point;  break;
@@ -154,6 +156,11 @@ bool  ON_COMPONENT_INDEX::IsGroupMemberComponentIndex() const
   return ( ON_COMPONENT_INDEX::group_member == m_type && m_index >= 0 );
 }
 
+bool  ON_COMPONENT_INDEX::IsExtrusionProfileComponentIndex() const
+{
+  return ( (ON_COMPONENT_INDEX::extrusion_bottom_profile  == m_type || ON_COMPONENT_INDEX::extrusion_top_profile == m_type) && m_index >= 0 );
+}
+
 bool  ON_COMPONENT_INDEX::IsPointCloudComponentIndex() const
 {
   return ( ON_COMPONENT_INDEX::pointcloud_point == m_type && m_index >= 0 );
@@ -237,7 +244,8 @@ bool ON_COMPONENT_INDEX::operator>=(const ON_COMPONENT_INDEX& other) const
 }
 
 ON_ObjRefEvaluationParameter::ON_ObjRefEvaluationParameter()
-                              : m_t_type(0)
+: m_t_type(0)
+, m_reserved(0)
 {
   m_t[0] = ON_UNSET_VALUE;
   m_t[1] = ON_UNSET_VALUE;

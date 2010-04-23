@@ -1398,7 +1398,7 @@ wgl_drawPoint2D(dmp, x, y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("wgl_drawPoint2D():\n");
-	bu_log("\tdmp: %lu\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
+	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
     glBegin(GL_POINTS);

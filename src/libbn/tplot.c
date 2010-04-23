@@ -248,12 +248,12 @@ tp_plot(FILE *fp,
 	int n,
 	double cscale)
 {
-    int  ddx, ddy, xend, yend, xpen, ypen;
-    float fxl, fyl, xs, ys, xmin, xmax, ymin, ymax, dx, dy;
-    float lab;
-    int xtics, ytics, i, xtl, ytl, j;
-    int ix[101], iy[101], isave;
-    char str[32];
+    int  ddx = 0, ddy = 0, xend = 0, yend = 0, xpen = 0, ypen = 0;
+    float fxl = 0.0, fyl = 0.0, xs = 0.0, ys = 0.0, xmin = 0.0, xmax = 0.0, ymin = 0.0, ymax = 0.0, dx = 0.0, dy = 0.0;
+    float lab = 0.0;
+    int xtics = 0, ytics = 0, i = 0, xtl = 0, ytl = 0, j = 0;
+    int ix[101] = {0}, iy[101] = {0}, isave = 0;
+    char str[32] = {0};
 
     if ( xl == 0 ) {
 	j = 0;

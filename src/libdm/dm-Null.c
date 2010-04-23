@@ -24,7 +24,7 @@
 #include "common.h"
 #include "bio.h"
 
-#define PLOTBOUND       1000.0  /* Max magnification in Rot matrix */
+#define PLOTBOUND 1000.0  /* Max magnification in Rot matrix */
 #include <stdio.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
@@ -37,13 +37,62 @@
 #include "dm-Null.h"
 
 
-void	Nu_void(void);
-int	Nu_int0(void);
-struct dm *Nu_open(void);
-unsigned Nu_unsign(void);
-static int     Nu_fg(struct dm *, unsigned char, unsigned char, unsigned char, int strict, fastf_t transparency);
-static int     Nu_bg(struct dm *, unsigned char, unsigned char, unsigned char);
-static int     Nu_dr(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data){return TCL_OK;};
+int
+Nu_int0(void)
+{
+    return TCL_OK;
+}
+
+
+void
+Nu_void(void)
+{
+    return;
+}
+
+
+unsigned int
+Nu_unsign(void)
+{
+    return TCL_OK;
+}
+
+
+HIDDEN int
+Nu_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *UNUSED(data))
+{
+    if (!dmp || !callback_function) {
+	bu_log("WARNING: dmp or callback_function is NULL\n");
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+Nu_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+{
+    if (!dmp) {
+	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
+
+HIDDEN int
+Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+{
+    if (!dmp) {
+	bu_log("WARNING: NULL display (r/g/b==%d/%d/%d)\n", r, g, b);
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+}
+
 
 struct dm dm_Null = {
     Nu_int0,
@@ -58,7 +107,7 @@ struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
-    Nu_dr,
+    Nu_draw,
     Nu_fg,
     Nu_bg,
     Nu_int0,
@@ -107,29 +156,6 @@ struct dm dm_Null = {
     0				/* Tcl interpreter */
 };
 
-int Nu_int0(void) {
-    return TCL_OK;
-}
-
-void Nu_void(void) {
-    return;
-}
-
-struct dm *Nu_open(void) {
-    return DM_NULL;
-}
-
-unsigned Nu_unsign(void) {
-    return TCL_OK;
-}
-
-static int Nu_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency) {
-    return TCL_OK;
-}
-
-static int Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b) {
-    return TCL_OK;
-}
 
 /*
  * Local Variables:

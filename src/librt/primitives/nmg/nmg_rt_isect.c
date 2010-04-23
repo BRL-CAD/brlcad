@@ -1683,7 +1683,7 @@ eu_touch_func(struct edgeuse *eu, fastf_t *pt, char *priv)
 
 
 HIDDEN void
-vu_touch_func(struct vertexuse *vu, fastf_t *pt __attribute__((unused)), char *priv)
+vu_touch_func(struct vertexuse *vu, fastf_t *UNUSED(pt), char *priv)
 {
     struct ray_data *rd;
 
@@ -2115,16 +2115,14 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
 
 	new_dist=DIST_PT_PLANE(plane_pt, norm);
 
-	bu_log("\tDIST_PT_PLANE(%16.10e) 0x%08lx 0x%08lx\n", new_dist,
-	       new_dist);
+	bu_log("\tDIST_PT_PLANE(%16.10e) 0x%08lx 0x%08lx\n", new_dist, plane_pt, norm);
 
 	bn_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
 			     norm, rd->tol);
 
 	bu_log("Normal %16.10e %16.10e %16.10e %16.10e)\n",
 	       V4ARGS(norm));
-	bu_log("recalculated plane/pt dist as %16.10e 0x%08lx 0x%08lx\n",
-	       new_dist, new_dist);
+	bu_log("recalculated plane/pt dist as %16.10e 0x%08lx 0x%08lx\n", new_dist, plane_pt, norm);
 	bu_log("distance tol = %16.10e\n", rd->tol->dist);
     }
 
@@ -2343,8 +2341,7 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
     if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 		   s_p->sa_p->min_pt, s_p->sa_p->max_pt)) {
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-	    bu_log("nmg_isect_ray_shell(no RPP overlap)\n",
-		   rd, s_p);
+	    bu_log("nmg_isect_ray_shell(no RPP overlap) 0x%08x, 0x%08x\n", rd, s_p);
 	return;
     }
 
@@ -2363,7 +2360,7 @@ nmg_isect_ray_shell(struct ray_data *rd, const struct shell *s_p)
 	(void)isect_ray_vertexuse(rd, s_p->vu_p);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-	bu_log("nmg_isect_ray_shell(done)\n", rd, s_p);
+	bu_log("nmg_isect_ray_shell(done) 0x%08x, 0x%08x\n", rd, s_p);
 }
 
 

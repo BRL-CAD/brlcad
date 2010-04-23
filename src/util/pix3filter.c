@@ -19,9 +19,9 @@
  */
 /** @file pix3filter.c
  *
- *  Filters a color pix file set with an arbitrary 3x3x3 kernel.
- *  Leaves the outer rows untouched.
- *  Allows an alternate divisor and offset to be given.
+ * Filters a color pix file set with an arbitrary 3x3x3 kernel.
+ * Leaves the outer rows untouched.
+ * Allows an alternate divisor and offset to be given.
  *
  */
 
@@ -34,23 +34,23 @@
 #include "bu.h"
 
 
-#define MAXLINE		(8*1024)
-#define DEFAULT_WIDTH	512
-unsigned char	l11[3*MAXLINE], l12[3*MAXLINE], l13[3*MAXLINE];
-unsigned char	l21[3*MAXLINE], l22[3*MAXLINE], l23[3*MAXLINE];
-unsigned char	l31[3*MAXLINE], l32[3*MAXLINE], l33[3*MAXLINE];
-unsigned char	obuf[3*MAXLINE];
-unsigned char	*topold, *middleold, *bottomold, *temp;
-unsigned char	*topcur, *middlecur, *bottomcur;
-unsigned char	*topnew, *middlenew, *bottomnew;
+#define MAXLINE (8*1024)
+#define DEFAULT_WIDTH 512
+unsigned char l11[3*MAXLINE], l12[3*MAXLINE], l13[3*MAXLINE];
+unsigned char l21[3*MAXLINE], l22[3*MAXLINE], l23[3*MAXLINE];
+unsigned char l31[3*MAXLINE], l32[3*MAXLINE], l33[3*MAXLINE];
+unsigned char obuf[3*MAXLINE];
+unsigned char *topold, *middleold, *bottomold, *temp;
+unsigned char *topcur, *middlecur, *bottomcur;
+unsigned char *topnew, *middlenew, *bottomnew;
 
 /* The filter kernels */
-struct	kernels {
-    char	*name;
-    char	*uname;		/* What is needed to recognize it */
-    int	kern[27];
-    int	kerndiv;	/* Divisor for kernel */
-    int	kernoffset;	/* To be added to result */
+struct kernels {
+    char *name;
+    char *uname;		/* What is needed to recognize it */
+    int kern[27];
+    int kerndiv;	/* Divisor for kernel */
+    int kernoffset;	/* To be added to result */
 } kernel[] = {
     { "Low Pass", "lo", {1, 3, 1, 3, 5, 3, 1, 3, 1,
 			 3, 5, 3, 5, 10, 5, 3, 5, 3,
@@ -67,32 +67,33 @@ struct	kernels {
     { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0 },
 };
 
-int	*kern;
-int	kerndiv;
-int	kernoffset;
-int	width = DEFAULT_WIDTH;
-int	height = DEFAULT_WIDTH;
-int	verbose = 0;
-int	dflag = 0;	/* Different divisor specified */
-int	oflag = 0;	/* Different offset specified */
+
+int *kern;
+int kerndiv;
+int kernoffset;
+int width = DEFAULT_WIDTH;
+int height = DEFAULT_WIDTH;
+int verbose = 0;
+int dflag = 0;	/* Different divisor specified */
+int oflag = 0;	/* Different offset specified */
 
 char *file_name;
 FILE *oldfp, *curfp, *newfp;
 
-void	select_filter(char *str), dousage(void);
+void select_filter(char *str), dousage(void);
 
-char	usage[] = "\
+char usage[] = "\
 Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
 	[-s squaresize] [-w width] [-n height]\n\
-	file.pix.n | file.pix1 file.pix2 file.pix3  > file.pix\n";
+	file.pix.n | file.pix1 file.pix2 file.pix3 > file.pix\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:")) != EOF) {
+	switch (c) {
 	    case 'v':
 		verbose++;
 		break;
@@ -121,30 +122,30 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	(void) fprintf( stderr,
-			"pix3filter: must supply a file name\n");
+    if (bu_optind >= argc) {
+	(void) fprintf(stderr,
+		       "pix3filter: must supply a file name\n");
 	return(0);
-    } else if ( bu_optind + 3 <= argc ) {
+    } else if (bu_optind + 3 <= argc) {
 
-	if ( (oldfp = fopen(argv[bu_optind], "r")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "pix3filter: cannot open \"%s\" for reading\n",
-			   argv[bu_optind] );
+	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "pix3filter: cannot open \"%s\" for reading\n",
+			  argv[bu_optind]);
 	    return(0);
 	}
 
-	if ( (curfp = fopen(argv[++bu_optind], "r")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "pix3filter: cannot open \"%s\" for reading\n",
-			   argv[bu_optind] );
+	if ((curfp = fopen(argv[++bu_optind], "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "pix3filter: cannot open \"%s\" for reading\n",
+			  argv[bu_optind]);
 	    return(0);
 	}
 
-	if ( (newfp = fopen(argv[++bu_optind], "r")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "pix3filter: cannot open \"%s\" for reading\n",
-			   argv[bu_optind] );
+	if ((newfp = fopen(argv[++bu_optind], "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "pix3filter: cannot open \"%s\" for reading\n",
+			  argv[bu_optind]);
 	    return(0);
 	}
 	bu_optind += 3;
@@ -155,10 +156,10 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind];
 	working_name = (char *)malloc(strlen(file_name)+5);
 
-	if ( (curfp = fopen(file_name, "r")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "pix3filter: cannot open \"%s\" for reading\n",
-			   file_name );
+	if ((curfp = fopen(file_name, "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "pix3filter: cannot open \"%s\" for reading\n",
+			  file_name);
 	    return(0);
 	}
 	idx = file_name + strlen(file_name) -1;
@@ -175,14 +176,14 @@ get_args(int argc, char **argv)
 	}
 
 	snprintf(working_name, strlen(file_name)+5, "%s.%d", file_name, frameNumber-1);
-	if ( (oldfp = fopen(working_name, "r")) == NULL) {
+	if ((oldfp = fopen(working_name, "r")) == NULL) {
 	    if (frameNumber-1 != 0) {
 		(void)fprintf(stderr,
 			      "pix3filter: cannot open \"%s\" for reading.\n",
 			      working_name);
 		return(0);
 	    }
-	    if ( (oldfp = fopen(file_name, "r")) == NULL) {
+	    if ((oldfp = fopen(file_name, "r")) == NULL) {
 		(void)fprintf(stderr,
 			      "pix3filter: cannot open \"%s\" for reading.\n",
 			      file_name);
@@ -201,33 +202,34 @@ get_args(int argc, char **argv)
 	bu_optind += 1;
     }
 
-    if ( isatty(fileno(stdout)) )
+    if (isatty(fileno(stdout)))
 	return(0);
 
-    if ( argc > bu_optind )
-	(void)fprintf( stderr, "pix3filter: excess argument(s) ignored\n" );
+    if (argc > bu_optind)
+	(void)fprintf(stderr, "pix3filter: excess argument(s) ignored\n");
 
     return(1);		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	x, y, color;
-    int	value, r1, r2, r3, r4, r5, r6, r7, r8, r9;
-    int	max, min;
+    int x, y, color;
+    int value, r1, r2, r3, r4, r5, r6, r7, r8, r9;
+    int max, min;
 
     /* Select Default Filter (low pass) */
-    select_filter( "low" );
+    select_filter("low");
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	dousage();
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
-    if ( width > MAXLINE )  {
+    if (width > MAXLINE) {
 	fprintf(stderr, "pix3filter:  limited to scanlines of %d\n", MAXLINE);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
 /*
@@ -247,41 +249,41 @@ main(int argc, char **argv)
 /*
  * Read in the bottom and middle rows of the old picture.
  */
-    fread( bottomold, sizeof( char ), 3*width, oldfp );
-    fread( middleold, sizeof( char ), 3*width, oldfp );
+    fread(bottomold, sizeof(char), 3*width, oldfp);
+    fread(middleold, sizeof(char), 3*width, oldfp);
 /*
  * Read in the bottom and middle rows of the current picture.
  */
-    fread( bottomcur, sizeof( char ), 3*width, curfp );
-    fread( middlecur, sizeof( char ), 3*width, curfp );
+    fread(bottomcur, sizeof(char), 3*width, curfp);
+    fread(middlecur, sizeof(char), 3*width, curfp);
 /*
  * Read in the bottom and middle rows of the new picture.
  */
-    fread( bottomnew, sizeof( char ), 3*width, newfp );
-    fread( middlenew, sizeof( char ), 3*width, newfp );
+    fread(bottomnew, sizeof(char), 3*width, newfp);
+    fread(middlenew, sizeof(char), 3*width, newfp);
 /*
  * Write out the bottome row.
  */
-    fwrite( bottomcur, sizeof( char ), 3*width, stdout );
+    fwrite(bottomcur, sizeof(char), 3*width, stdout);
 
     if (verbose) {
-	for ( x = 0; x < 29; x++ )
+	for (x = 0; x < 29; x++)
 	    fprintf(stderr, "kern[%d] = %d\n", x, kern[x]);
     }
 
     max = 0;
     min = 255;
 
-    for ( y = 1; y < height-1; y++ ) {
+    for (y = 1; y < height-1; y++) {
 	/* read in top lines */
-	fread( topold, sizeof( char ), 3*width, oldfp );
-	fread( topcur, sizeof( char ), 3*width, curfp );
-	fread( topnew, sizeof( char ), 3*width, newfp );
+	fread(topold, sizeof(char), 3*width, oldfp);
+	fread(topcur, sizeof(char), 3*width, curfp);
+	fread(topnew, sizeof(char), 3*width, newfp);
 
-	for ( color = 0; color < 3; color++ ) {
+	for (color = 0; color < 3; color++) {
 	    obuf[0+color] = middlecur[0+color];
 	    /* Filter a line */
-	    for ( x = 3+color; x < 3*(width-1); x += 3 ) {
+	    for (x = 3+color; x < 3*(width-1); x += 3) {
 		r1 = topold[x-3] * kern[0] +
 		    topold[x] * kern[1] +
 		    topold[x+3] * kern[2];
@@ -311,22 +313,22 @@ main(int argc, char **argv)
 		    bottomnew[x+3] * kern[26];
 		value = (r1+r2+r3+r4+r5+r6+r7+r8+r9) /
 		    kerndiv + kernoffset;
-		if ( value > max ) max = value;
-		if ( value < min ) min = value;
-		if ( verbose && (value > 255 || value < 0) ) {
+		if (value > max) max = value;
+		if (value < min) min = value;
+		if (verbose && (value > 255 || value < 0)) {
 		    fprintf(stderr, "Value %d\n", value);
 		    fprintf(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
 		}
-		if ( value < 0 )
+		if (value < 0)
 		    obuf[x] = 0;
-		else if ( value > 255 )
+		else if (value > 255)
 		    obuf[x] = 255;
 		else
 		    obuf[x] = value;
 	    }
 	    obuf[3*(width-1)+color] = middlecur[3*(width-1)+color];
 	}
-	fwrite( obuf, sizeof( char ), 3*width, stdout );
+	fwrite(obuf, sizeof(char), 3*width, stdout);
 	/* Adjust row pointers */
 	temp = bottomold;
 	bottomold = middleold;
@@ -345,60 +347,63 @@ main(int argc, char **argv)
 
     }
     /* write out last line untouched */
-    fwrite( topcur, sizeof( char ), 3*width, stdout );
+    fwrite(topcur, sizeof(char), 3*width, stdout);
 
     /* Give advise on scaling factors */
-    if ( verbose )
-	fprintf( stderr, "Max = %d,  Min = %d\n", max, min );
+    if (verbose)
+	fprintf(stderr, "Max = %d,  Min = %d\n", max, min);
 
-    bu_exit ( 0, NULL );
+    bu_exit (0, NULL);
 }
 
+
 /*
- *	S E L E C T _ F I L T E R
+ * S E L E C T _ F I L T E R
  *
  * Looks at the command line string and selects a filter based
- *  on it.
+ * on it.
  */
 void
 select_filter(char *str)
 {
-    int	i;
+    int i;
 
     i = 0;
-    while ( kernel[i].name != NULL ) {
-	if ( strncmp( str, kernel[i].uname, strlen( kernel[i].uname ) ) == 0 )
+    while (kernel[i].name != NULL) {
+	if (strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
 	    break;
 	i++;
     }
 
-    if ( kernel[i].name == NULL ) {
+    if (kernel[i].name == NULL) {
 	/* No match, output list and exit */
-	fprintf( stderr, "Unrecognized filter type \"%s\"\n", str );
+	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
 	dousage();
-	bu_exit ( 3, NULL );
+	bu_exit (3, NULL);
     }
 
     /* Have a match, set up that kernel */
     kern = &kernel[i].kern[0];
-    if ( dflag == 0 )
+    if (dflag == 0)
 	kerndiv = kernel[i].kerndiv;
-    if ( oflag == 0 )
+    if (oflag == 0)
 	kernoffset = kernel[i].kernoffset;
 }
+
 
 void
 dousage(void)
 {
-    int	i;
+    int i;
 
-    fputs( usage, stderr );
+    fputs(usage, stderr);
     i = 0;
-    while ( kernel[i].name != NULL ) {
-	fprintf( stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name );
+    while (kernel[i].name != NULL) {
+	fprintf(stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name);
 	i++;
     }
 }
+
 
 /*
  * Local Variables:

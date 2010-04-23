@@ -876,7 +876,7 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    struct tor_specific *tor = (struct tor_specific *) stp -> st_specific;
+    struct tor_specific *tor = (struct tor_specific *) stp->st_specific;
     vect_t work;
     vect_t pprime;
     vect_t pprime2;
@@ -888,19 +888,19 @@ rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	return;
     RT_CK_HIT(hitp);
 
-    VSUB2(work, hitp -> hit_point, tor -> tor_V);
-    MAT4X3VEC(pprime, tor -> tor_SoR, work);
+    VSUB2(work, hitp->hit_point, tor->tor_V);
+    MAT4X3VEC(pprime, tor->tor_SoR, work);
     /*
      * -pi/2 <= atan2(x, y) <= pi/2
      */
-    uvp -> uv_u = atan2(pprime[Y], pprime[X]) * bn_inv2pi + 0.5;
+    uvp->uv_u = atan2(pprime[Y], pprime[X]) * bn_inv2pi + 0.5;
 
     VSET(work, pprime[X], pprime[Y], 0.0);
     VUNITIZE(work);
     VSUB2(pprime2, pprime, work);
     VUNITIZE(pprime2);
     costheta = VDOT(pprime2, work);
-    uvp -> uv_v = atan2(pprime2[Z], costheta) * bn_inv2pi + 0.5;
+    uvp->uv_v = atan2(pprime2[Z], costheta) * bn_inv2pi + 0.5;
 }
 
 
@@ -995,7 +995,7 @@ rt_num_circular_segments(double maxerr, double radius)
  * ti.a, ti.b perpindicular, to CENTER of torus (for top, bottom)
  */
 int
-rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     fastf_t alpha;
     fastf_t beta;

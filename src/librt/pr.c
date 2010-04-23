@@ -144,7 +144,7 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
     BU_CK_VLS(v);
 
     bu_log_indent_vls( v );
-    bu_vls_printf( v, "%.8lx: PT ", (long)pp );
+    bu_vls_printf( v, "%p: PT ", (void *)pp );
 
     stp = pp->pt_inseg->seg_stp;
     bu_vls_printf(v, "%s (%s#%ld) ",
@@ -219,8 +219,8 @@ rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 
     bu_log_indent_vls( v );
     bu_vls_printf(v,
-		  "%.8lx: SEG %s (%g,%g) st_bit=%ld xray#=%d\n",
-		  (long)segp,
+		  "%p: SEG %s (%g,%g) st_bit=%ld xray#=%d\n",
+		  (void *)segp,
 		  segp->seg_stp->st_dp->d_namep,
 		  segp->seg_in.hit_dist,
 		  segp->seg_out.hit_dist,
@@ -764,7 +764,7 @@ rt_pr_tol(const struct bn_tol *tol)
 void
 rt_pr_uvcoord(const struct uvcoord *uvp)
 {
-    bu_log("%8.8x u, v=(%g, %g), du, dv=(%g, %g)\n",
+    bu_log("u, v=(%g, %g), du, dv=(%g, %g)\n",
 	   INTCLAMP(uvp->uv_u), INTCLAMP(uvp->uv_v),
 	   INTCLAMP(uvp->uv_du), INTCLAMP(uvp->uv_dv) );
 }

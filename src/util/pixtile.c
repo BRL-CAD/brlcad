@@ -48,15 +48,15 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
 
 
 /*
- *			G E T _ A R G S
+ * G E T _ A R G S
  */
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:")) != EOF) {
+	switch (c) {
 	    case 'h':
 		/* high-res */
 		scr_height = scr_width = 1024;
@@ -88,17 +88,18 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( isatty(fileno(stdout)) )  {
+    if (isatty(fileno(stdout))) {
 	return(0);	/* Bad */
     }
 
-    if ( bu_optind >= argc )  {
+    if (bu_optind >= argc) {
 	fprintf(stderr, "pixtile: basename or filename(s) missing\n");
 	return(0);	/* Bad */
     }
 
     return(1);		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
@@ -116,21 +117,21 @@ main(int argc, char **argv)
     int is_stream = 0;	/* set if input is stream on stdin */
     char name[256] = {0};
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
 
-    if ( bu_optind+1 == argc )  {
+    if (bu_optind+1 == argc) {
 	base_name = argv[bu_optind];
 	islist = 0;
-	if ( base_name[0] == '-' && base_name[1] == '\0' )
+	if (base_name[0] == '-' && base_name[1] == '\0')
 	    is_stream = 1;
     } else {
 	islist = 1;
     }
 
-    if ( file_width < 1 ) {
+    if (file_width < 1) {
 	fprintf(stderr, "pixtile: width of %d out of range\n", file_width);
 	bu_exit (12, NULL);
     }
@@ -148,44 +149,44 @@ main(int argc, char **argv)
 
     maximage = im_line * im_high;
 
-    if ( (obuf = (char *)malloc( swathbytes )) == (char *)0 )  {
-	(void)fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes );
+    if ((obuf = (char *)malloc(swathbytes)) == (char *)0) {
+	(void)fprintf(stderr, "pixtile:  malloc %d failure\n", swathbytes);
 	bu_exit (10, NULL);
     }
 
     image = 0;
-    while ( image < maximage )  {
+    while (image < maximage) {
 	memset(obuf, 0, swathbytes);
 	/*
 	 * Collect together one swath
 	 */
-	for ( rel = 0; rel<im_line; rel++, image++, framenumber++ )  {
+	for (rel = 0; rel<im_line; rel++, image++, framenumber++) {
 	    int fd;
 
-	    if (image >= maximage )  {
+	    if (image >= maximage) {
 		fprintf(stderr, "\npixtile: frame full\n");
 		/* All swaths already written out */
 		bu_exit (0, NULL);
 	    }
 	    fprintf(stderr, "%d ", framenumber);  fflush(stdout);
-	    if ( is_stream )  {
+	    if (is_stream) {
 		fd = 0;		/* stdin */
 	    } else {
-		if ( islist )  {
+		if (islist) {
 		    /* See if we read all the files */
-		    if ( bu_optind >= argc )
+		    if (bu_optind >= argc)
 			goto done;
 		    bu_strlcpy(name, argv[bu_optind++], sizeof(name));
 		} else {
 		    snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 		}
-		if ( (fd=open(name, 0))<0 )  {
+		if ((fd=open(name, 0))<0) {
 		    perror(name);
 		    goto done;
 		}
 	    }
 	    /* Read in .pix file.  Bottom to top */
-	    for ( i=0; i<file_height; i++ )  {
+	    for (i=0; i<file_height; i++) {
 		int j;
 
 		/* virtual image l/r offset */
@@ -194,20 +195,20 @@ main(int argc, char **argv)
 		/* select proper scanline within image */
 		j += i*scr_width;
 
-		if ( bu_mread( fd, &obuf[j*3], scanbytes ) != scanbytes ) {
+		if (bu_mread(fd, &obuf[j*3], scanbytes) != scanbytes) {
 		    perror("READ ERROR");
 		    break;
 		}
 	    }
-	    if ( fd > 0 )  close(fd);
+	    if (fd > 0) close(fd);
 	}
-	(void)write( 1, obuf, swathbytes );
+	(void)write(1, obuf, swathbytes);
 	rel = 0;	/* in case we fall through */
     }
  done:
     /* Flush partial frame? */
-    if ( rel != 0 )
-	(void)write( 1, obuf, swathbytes );
+    if (rel != 0)
+	(void)write(1, obuf, swathbytes);
     fprintf(stderr, "\n");
     bu_exit (0, NULL);
 }

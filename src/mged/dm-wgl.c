@@ -19,7 +19,7 @@
  */
 /** @file dm-wgl.c
  *
- *  Routines specific to MGED's use of LIBDM's OpenGl display manager.
+ * Routines specific to MGED's use of LIBDM's OpenGl display manager.
  *
  */
 
@@ -60,18 +60,18 @@
 extern void dm_var_init();		/* defined in attach.c */
 extern void cs_set_bg();		/* defined in color_scheme.c */
 
-static int	Wgl_dm();
-static int	Wgl_doevent();
-static void     Wgl_colorchange();
-static void     establish_zbuffer();
-static void     establish_lighting();
-static void     establish_transparency();
-static void     dirty_hook();
-static void     zclip_hook();
-static void     debug_hook();
-static void     bound_hook();
-static void     boundFlag_hook();
-static void     do_fogHint();
+static int Wgl_dm();
+static int Wgl_doevent();
+static void Wgl_colorchange();
+static void establish_zbuffer();
+static void establish_lighting();
+static void establish_transparency();
+static void dirty_hook();
+static void zclip_hook();
+static void debug_hook();
+static void bound_hook();
+static void boundFlag_hook();
+static void do_fogHint();
 
 struct bu_structparse Wgl_vparse[] = {
     {"%d",	1, "depthcue",		Wgl_MV_O(cueing_on),	Wgl_colorchange },
@@ -93,9 +93,9 @@ struct bu_structparse Wgl_vparse[] = {
 
 
 int
-Wgl_dm_init(struct dm_list	*o_dm_list,
-	    int			argc,
-	    char		*argv[])
+Wgl_dm_init(struct dm_list *o_dm_list,
+	    int argc,
+	    char *argv[])
 {
     struct bu_vls vls;
 
@@ -124,6 +124,7 @@ Wgl_dm_init(struct dm_list	*o_dm_list,
 
     return TCL_OK;
 }
+
 
 void
 Wgl_fb_open()
@@ -154,12 +155,13 @@ Wgl_fb_open()
 		       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
 }
 
+
 /*
   This routine is being called from doEvent() to handle Expose events.
 */
 static int
-Wgl_doevent(ClientData	clientData,
-	    XEvent	*eventPtr)
+Wgl_doevent(ClientData clientData,
+	    XEvent *eventPtr)
 {
     if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc))
@@ -178,17 +180,18 @@ Wgl_doevent(ClientData	clientData,
     return TCL_OK;
 }
 
+
 /*
- *			W G L _ D M
+ * W G L _ D M
  *
- *  Implement display-manager specific commands, from MGED "dm" command.
+ * Implement display-manager specific commands, from MGED "dm" command.
  */
 static int
-Wgl_dm(int	argc,
-       char	**argv)
+Wgl_dm(int argc,
+       char **argv)
 {
     if (!strcmp(argv[0], "set")) {
-	struct bu_vls	vls;
+	struct bu_vls vls;
 
 	bu_vls_init(&vls);
 
@@ -203,7 +206,7 @@ Wgl_dm(int	argc,
 				     Wgl_vparse,
 				     argv[1],
 				     (const char *)&((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars,
-				     ',');
+				     COMMA);
 	} else {
 	    struct bu_vls tmp_vls;
 
@@ -226,6 +229,7 @@ Wgl_dm(int	argc,
     return common_dm(argc, argv);
 }
 
+
 static void
 Wgl_colorchange()
 {
@@ -238,12 +242,14 @@ Wgl_colorchange()
     view_state->vs_flag = 1;
 }
 
+
 static void
 establish_zbuffer()
 {
     (void)DM_SET_ZBUFFER(dmp, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
     view_state->vs_flag = 1;
 }
+
 
 static void
 establish_lighting()
@@ -252,12 +258,14 @@ establish_lighting()
     view_state->vs_flag = 1;
 }
 
+
 static void
 establish_transparency()
 {
     (void)DM_SET_TRANSPARENCY(dmp, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
     view_state->vs_flag = 1;
 }
+
 
 static void
 do_fogHint()
@@ -266,11 +274,13 @@ do_fogHint()
     view_state->vs_flag = 1;
 }
 
+
 static void
 dirty_hook()
 {
     dirty = 1;
 }
+
 
 static void
 zclip_hook()
@@ -280,11 +290,13 @@ zclip_hook()
     dirty_hook();
 }
 
+
 static void
 debug_hook()
 {
     DM_DEBUG(dmp, ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
 }
+
 
 static void
 bound_hook()
@@ -294,6 +306,7 @@ bound_hook()
     dirty_hook();
 }
 
+
 static void
 boundFlag_hook()
 {
@@ -301,6 +314,7 @@ boundFlag_hook()
 	((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag;
     dirty_hook();
 }
+
 
 /*
  * Local Variables:

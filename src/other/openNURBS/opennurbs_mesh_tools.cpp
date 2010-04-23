@@ -679,6 +679,12 @@ bool ON_Mesh::DeleteFace( int meshfi )
       m_FN.Remove(meshfi);
     }
     m_F.Remove(meshfi);
+
+    // 6 Mar 2010 S. Baer
+    // Invalidate the cached IsClosed flag. This forces the mesh to
+    // recompute IsClosed the next time it is called
+    SetClosed(-1);
+
     rc = true;
   }
   return rc;

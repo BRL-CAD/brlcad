@@ -339,7 +339,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 	switch (k) {
 	case 'a':
 	    bu_vls_trunc(&creator, 0);
-	    bu_vls_printf(&creator, bu_optarg);
+	    bu_vls_printf(&creator, "%s", bu_optarg);
 
 	    break;
 	case 'b':
@@ -374,7 +374,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	case 'f':
 	    bu_vls_trunc(&font, 0);
-	    bu_vls_printf(&font, bu_optarg);
+	    bu_vls_printf(&font, "%s", bu_optarg);
 
 	    break;
 	case 's':
@@ -393,7 +393,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	case 't':
 	    bu_vls_trunc(&title, 0);
-	    bu_vls_printf(&title, bu_optarg);
+	    bu_vls_printf(&title, "%s", bu_optarg);
 
 	    break;
 	case 'x':

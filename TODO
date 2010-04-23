@@ -17,11 +17,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test the EDITOR invocation
+* 64-bit port of BRL-CAD on Windows
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix archer/libdm labels/axes to not use pointer printing
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -34,8 +36,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * investigate tessellation failures (Stryker, et al), possibily due to
   recent tolerance checks.
-
-* 64-bit port of BRL-CAD on Windows
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -51,6 +51,31 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* all of the rt* tracers share common code and common options, but do
+  not share common documentation.  refactor documentation to use
+  include directives so that there is one place where all of the
+  common options are documented.  update usage statements to reflect
+  commonality as well.
+
+* document the saveview/loadview options.  migrate them to libged if
+  they're not already.
+
+* improve rtedge documentation, explain how it computes its "centroid"
+  (as it's not exactly the center of bounding box of all objects -- it
+  depends on the booleans).
+
+* add a force option to the tracers to support overwriting the current
+  output file (so long as we're going to make it read-only by default).
+
+* improve min/max bounding box routines for BREP/NURBS
+
+* convert non-planar arb's to brep objects for ray-tracing.  see how
+  well it works to see if we can remove an arb limitation.
+
+* the 'l' and 'analyze' commands now require an object be specified
+  and won't use the currently highlighted solid.  undoubtedly related
+  to libged refactoring.  this is related to sf request 2954409.
 
 * alias objects.  this is an object handle in a geometry database that
   refers to another geometry database object.  in effect, it
@@ -157,6 +182,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   normals.. this certainly saves memory if the triangles don't have
   normals but at a rather expensive malloc cost (which is being seen
   on large BoT models) during prep.
+
+* need a simplified means to programmatically create and edit BoT
+  meshes via the command line without resorting to get/put.
 
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.
@@ -648,7 +676,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
-	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv rtwizard script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
 
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their
@@ -707,7 +735,21 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
 * support for features either as primitives or operations or both
-  e.g. chamfer, fillet, round, etc
+  e.g. chamfer, fillet, round, cut, etc
+
+* a cut feature edit.  implementation could be represented as the cube
+  that bounds a geometry object.  eight points somewhere on the edges
+  of the cube define an intersection volume on the object.  by
+  default, the eight points could be positioned at the corners of the
+  cube and would remain constrained to reside on one of the three
+  adjoining edges for their respective corner.  this would provide a
+  simple user interface where a face could be selected to move a cut
+  plane through an object (moving four points along four edges), or an
+  edge could be moved to move two points simultaneously, or each
+  individual point could be moved along their edges to define the
+  intersection object.  allowing the points to be deconstrained so
+  they can move into the interior of the bounding volume or into the
+  interior of a face could be an advanced option.
 
 * fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
@@ -822,6 +864,8 @@ DOCUMENTATION
 * Geometry Conversion with BRL-CAD
         Overview of the various geometry conversion facilities in BRL-CAD and how they related to solid geometry representations.
 
+* A Developer's Introduction to BRL-CAD
+        An overview of BRL-CAD from a developer perspective intended for new developers.  Provides overview of structure, important sections, operating procedures, and answers to FAQ development questions.
 
 ---
 See the feature request and bug trackers for more tasks and future

@@ -213,6 +213,7 @@ proc cylinder {pts} {
 
 proc pipe {pts} {
     global pipe_number
+    global tcl_platform
 
     # get an index for this pipe number so we have a unique name
     while {[catch {db get pipe$pipe_number} v] == 0} {
@@ -390,7 +391,11 @@ proc pipe {pts} {
     eval "$cmd"
 
     close $fd
-    set asc2pl [bu_brlcad_root "bin/asc-pl"]
+    if {$tcl_platform(platform) == "windows"} {
+	set asc2pl [bu_brlcad_root "bin/asc-pl.exe"]
+    } else {
+	set asc2pl [bu_brlcad_root "bin/asc-pl"]
+    }
     exec "$asc2pl < pipe$pipe_number.plasc > pipe$pipe_nubmer.pl"
 
     incr pipe_number
@@ -696,7 +701,11 @@ if { 1 == 0 } {
 	set c "Q"
     }
     close $fd
-    set asc2pl [bu_brlcad_root "bin/asc-pl"]
+    if {$tcl_platform(platform) == "windows"} {
+	set asc2pl [bu_brlcad_root "bin/asc-pl.exe"]
+    } else {
+	set asc2pl [bu_brlcad_root "bin/asc-pl"]
+    }
     exec "$asc2pl < pipe.asc > pipe.pl"
     overlay pipe.pl
     file delete pipe.asc

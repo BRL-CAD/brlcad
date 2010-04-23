@@ -75,14 +75,14 @@ else
 TKHTMLDIR=
 endif
 
-if BUILD_TKIMG
+if BUILD_TKPNG
 if WITH_TK
-TKIMGDIR=tkimg
+TKPNGDIR=tkpng
 else !WITH_TK
-TKIMGDIR=
+TKPNGDIR=
 endif
-else !BUILD_TKIMG
-TKIMGDIR=
+else !BUILD_TKPNG
+TKPNGDIR=
 endif
 
 if BUILD_OPENNURBS
@@ -139,7 +139,7 @@ SUBDIRS = \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
 	${STEPDIR} \
-	${TKIMGDIR} \
+	${TKPNGDIR} \
 	${TKHTMLDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
@@ -170,7 +170,7 @@ DIST_SUBDIRS = \
 	step \
 	tcl \
 	tk \
-	tkimg \
+	tkpng \
 	tkhtml3 \
 	tnt
 

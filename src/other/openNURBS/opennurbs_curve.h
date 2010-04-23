@@ -33,8 +33,6 @@ class ON_CurveTree;
 ////////////////////////////////////////////////////////////////
 
 
-typedef int (*ON_MassPropertiesCurve)( const ON_Curve&, void*, int, ON_3dPoint, ON_3dVector, ON_MassProperties&, bool, bool, bool, bool, double, double );
-
 class ON_MeshCurveParameters
 {
 public:
@@ -85,8 +83,6 @@ public:
   double m_reserved3;
   double m_reserved4;
 };
-
-typedef class ON_PolylineCurve* (*ON_fnMeshCurve)( const ON_Curve*, const ON_MeshCurveParameters*, class ON_PolylineCurve*, bool, const ON_Interval* );
 
 class ON_CLASS ON_Curve : public ON_Geometry
 {
@@ -906,22 +902,39 @@ public:
   /*
   Description:
     Intersect this curve with surfaceB.
+
   Parameters:
     surfaceB - [in]
-    x - [out] Intersection events are appended to this array.
-    intersection_tolerance - [in]  If the distance from a point
-      on this curve to the surface is <= intersection tolerance,
-      then the point will be part of an intersection event.
-      If the input intersection_tolerance <= 0.0, then 0.001 is used.
-    overlap_tolerance - [in] If t1 and t2 are curve parameters of
-      intersection events and the distance from curve(t) to the
-      surface is <= overlap_tolerance for every t1 <= t <= t2,
-      then the event will be returened as an overlap event.
+
+    x - [out] 
+      Intersection events are appended to this array.
+    intersection_tolerance - [in]  
+      If the distance from a point on this curve to the surface 
+      is <= intersection tolerance, then the point will be part 
+      of an intersection event, or there is an intersection event
+      the point leads to. If the input intersection_tolerance <= 0.0,
+      then 0.001 is used.
+
+    overlap_tolerance - [in] 
       If the input overlap_tolerance <= 0.0, then 
-      intersection_tolerance*2.0 is used.
-    curveA_domain - [in] optional restriction on this curve's domain
-    surfaceB_udomain - [in] optional restriction on surfaceB u domain
-    surfaceB_vdomain - [in] optional restriction on surfaceB v domain
+      2.0*intersection_tolerance is used.  Otherwise, overlap
+      tolerance must be >= intersection_tolerance.
+      In all cases, the intersection calculation is performed 
+      with an overlap_tolerance that is >= intersection_tolerance.
+      If t1 and t2 are curve parameters of intersection events 
+      and the distance from curve(t) to the surface 
+      is <= overlap_tolerance for every t1 <= t <= t2, then the 
+      event will be returned as an overlap event.
+       
+    curveA_domain - [in] 
+      optional restriction on this curve's domain
+
+    surfaceB_udomain - [in]
+      optional restriction on surfaceB u domain
+
+    surfaceB_vdomain - [in]
+      optional restriction on surfaceB v domain
+
   Returns:
     Number of intersection events appended to x.
   */
@@ -1373,9 +1386,19 @@ public:
     ON_PolylineCurve* polyline,
     bool bSkipFirstPoint,
     const ON_Interval* domain
+    ) const;
+
+  // The non-const version of MeshCurve() exists because a version of the
+  // SDK was shipped with the "const" tag missing.  The non-const
+  // version does not modify this.
+  class ON_PolylineCurve* MeshCurve( 
+    ON_MeshCurveParameters& mp,
+    ON_PolylineCurve* polyline,
+    bool bSkipFirstPoint,
+    const ON_Interval* domain
     );
 
-/*
+  /*
 	Description:
 		Lookup a parameter in the m_t array, optionally using a built in snap tolerance to 
 		snap a parameter value to an element of m_t.
@@ -1401,18 +1424,15 @@ public:
 	Returns:		
 		true if the t is exactly equal to (bEnableSnap==false), or within tolerance of
 		(bEnableSnap==true) m_t[index]. 
-*/
-protected:
-bool ParameterSearch( double t, int& index, bool bEnableSnap, const ON_SimpleArray<double>& m_t, 
+  */
+  protected:
+  bool ParameterSearch( double t, int& index, bool bEnableSnap, const ON_SimpleArray<double>& m_t, 
 															double RelTol=ON_SQRT_EPSILON) const;
 
 protected:
   // Runtime only - ignored by Read()/Write()
   ON_CurveTree* CurveTreeHelper();
   ON_CurveTree* m_ctree;
-public:
-  static ON_MassPropertiesCurve _MassPropertiesCurve;
-  static ON_fnMeshCurve _MeshCurve;
 };
 
 #if defined(ON_DLL_TEMPLATE)

@@ -156,13 +156,15 @@ unsigned int Dump3dmChunk( ON_BinaryArchive& file, ON_TextLog& dump, int recursi
   const size_t offset0 = file.CurrentPosition();
   unsigned int typecode = 0;
   const char* typecode_name = 0;
+  ON__INT64 big_value;
   int value;
-  ON_BOOL32 rc = file.BeginRead3dmChunk( &typecode, &value );
+  ON_BOOL32 rc = file.BeginRead3dmBigChunk( &typecode, &big_value );
   if (!rc) {
     ErrorReport(offset0,"BeginRead3dmChunk() failed.",dump);
   }
   else 
   {
+    value = (int)big_value;
     if ( !typecode ) 
     {
       ErrorReport(offset0,"BeginRead3dmChunk() returned typecode = 0.",dump);

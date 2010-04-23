@@ -247,7 +247,7 @@ rt_xxx_free(struct soltab *stp)
  * R T _ X X X _ P L O T
  */
 int
-rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_xxx_internal *xxx_ip;
 
@@ -268,7 +268,7 @@ rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_xxx_internal *xxx_ip;
 

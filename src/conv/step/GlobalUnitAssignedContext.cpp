@@ -24,7 +24,7 @@
  *
  */
 
-#include "SdaiCONFIG_CONTROL_DESIGN.h"
+//#include "SdaiCONFIG_CONTROL_DESIGN.h"
 #include "STEPWrapper.h"
 #include "Factory.h"
 

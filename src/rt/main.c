@@ -222,7 +222,7 @@ int main(int argc, char **argv)
     }
 
     if (rpt_overlap)
-	ap.a_logoverlap = ((void (*)())0);
+	ap.a_logoverlap = ((void (*)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *))0);
     else
 	ap.a_logoverlap = rt_silent_logoverlap;
 

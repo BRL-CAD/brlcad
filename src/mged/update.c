@@ -47,6 +47,7 @@ mged_update(int non_blocking)
     refresh();
 }
 
+
 int
 f_update(ClientData clientData,
 	 Tcl_Interp *interp,
@@ -233,6 +234,7 @@ f_wait(ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_ResetResult(interp);
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

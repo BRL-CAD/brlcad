@@ -49,12 +49,30 @@
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
+
+/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
+ * parameter names that shadow system symbols.  protect the system
+ * symbols by redefining the parameters prior to header inclusion.
+ */
+#define j1 J1
+#define y1 Y1
+#define read rd
+#define index idx
+#define access acs
+#define remainder rem
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif
+#undef remainder
+#undef access
+#undef index
+#undef read
+#undef y1
+#undef j1
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
@@ -249,7 +267,7 @@ HIDDEN struct modeflags {
  * S I G K I D
  */
 HIDDEN void
-sigkid(int pid)
+sigkid(int UNUSED(pid))
 {
     exit(0);
 }
@@ -686,7 +704,7 @@ ogl_clipper(register FBIO *ifp)
 
 
 HIDDEN void
-expose_callback(FBIO *ifp, XEvent *eventPtr)
+expose_callback(FBIO *ifp)
 {
     XWindowAttributes xwa;
     struct ogl_clip *clp;
@@ -846,7 +864,7 @@ ogl_do_event(FBIO *ifp)
 	switch (event.type) {
 	    case Expose:
 		if (!OGL(ifp)->use_ext_ctrl)
-		    expose_callback(ifp, &event);
+		    expose_callback(ifp);
 		break;
 	    case ButtonPress:
 		{
@@ -868,7 +886,6 @@ ogl_do_event(FBIO *ifp)
 			case Button2:
 			    {
 				int x, y;
-				int ix, iy;
 				register struct ogl_pixel *oglp;
 
 				x = event.xbutton.x;
@@ -1064,9 +1081,6 @@ is_linear_cmap(register FBIO *ifp)
 HIDDEN int
 fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 {
-
-    int f;
-    int status;
     static char title[128];
     int mode, i, direct;
     long valuemask;
@@ -1168,6 +1182,8 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	if ((f = fork()) != 0 ) {
 	    /* Parent process */
 	    int k;
+	    int f;
+	    int status;
 
 	    /* parent doesn't need these any more */
 	    for (k=0; k < 20; k++) {
@@ -2304,8 +2320,10 @@ ogl_help(FBIO *ifp)
 
 
 HIDDEN int
-ogl_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+ogl_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
+    FB_CK_FBIO(ifp);
+
     return 0;
 }
 
@@ -2458,7 +2476,13 @@ FBIO ogl_interface =
     0,			/* page_dirty */
     0L,			/* page_curpos */
     0L,			/* page_pixels */
-    0			/* debug */
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 

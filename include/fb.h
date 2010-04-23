@@ -130,18 +130,50 @@ FB_EXPORT extern int	fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y);
 /* FIXME:  these IF_* sections need to die.  they don't belong in a public header. */
 
 #ifdef IF_X
-FB_EXPORT extern int _X24_open_existing();
-FB_EXPORT extern int X24_close_existing();
+#  ifdef HAVE_X11_XLIB_H
+#    include <X11/Xlib.h>
+#    include <X11/Xutil.h>
+#  endif
+FB_EXPORT extern int _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc);
 #endif
 
 #ifdef IF_OGL
-FB_EXPORT extern int _ogl_open_existing();
-FB_EXPORT extern int ogl_close_existing();
+#  ifdef HAVE_X11_XLIB_H
+#    include <X11/Xlib.h>
+#    include <X11/Xutil.h>
+#  endif
+/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
+ * parameter names that shadow system symbols.  protect the system
+ * symbols by redefining the parameters prior to header inclusion.
+ */
+#  define j1 J1
+#  define y1 Y1
+#  define read rd
+#  define index idx
+#  define access acs
+#  define remainder rem
+#  ifdef HAVE_GL_GLX_H
+#    include <GL/glx.h>
+#  endif
+#  undef remainder
+#  undef access
+#  undef index
+#  undef read
+#  undef y1
+#  undef j1
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
 #endif
 
 #ifdef IF_WGL
-FB_EXPORT extern int _wgl_open_existing();
-FB_EXPORT extern int wgl_close_existing();
+#  include <windows.h>
+#  include <tk.h>
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, PIXELFORMATDESCRIPTOR *vip, HDC hdc, int width, int height, HGLRC glxc, int double_buffer, int soft_cmap);
 #endif
 
 /*
@@ -167,10 +199,10 @@ FB_EXPORT extern int wgl_close_existing();
 		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
 			_str, __FILE__, __LINE__ ); \
 		abort(); \
-	} else if ( *((long *)(_ptr)) != (_magic) )  { \
-		fb_log("ERROR: bad %s ptr x%x, s/b x%x, was x%x, file %s, line %d\n", \
-			_str, _ptr, _magic, \
-			*((long *)(_ptr)), __FILE__, __LINE__ ); \
+	} else if ( (uint32_t)(*((uintptr_t *)(_ptr))) != (uint32_t)(_magic) )  { \
+		fb_log("ERROR: bad %s ptr %p, s/b 0x%x, was 0x%x, file %s, line %d\n", \
+			_str, _ptr, (uint32_t)_magic, \
+			(uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__ ); \
 		abort(); \
 	}
 

@@ -10,7 +10,58 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-01-04  Release 7.16.6                                     ---
+--- 2010-04-XX  Release 7.16.8                                     ---
+----------------------------------------------------------------------
+
+TODO: include write-up about marching cubes w.r.t. tessellation.
+
+* rtarea "-u model" specifies output using local units - Keith Bowman
+* new bot_split command separates BoTs into multiple BoTs - Bob Parker
+* rtarea output provides various common larger units - Keith Bowman
+* rtarea run within mged now displays using local units - Keith Bowman
+* re-enabled archer's embedded image framebuffer - Bob Parker
+* fixed mged and nirt crashes handling whitespace lines - Keith Bowman
+* newly enhanced archer tree view hierarchy visualization - Bob Parker
+* fixed mged bug calling 'units' without a database - Erik Greenwald
+* analyze, cat, dbfind, & 'l' describe selected objects - Cliff Yapp
+* openNURBS updated to version 5.0 (2010-04-09) - Cliff Yapp
+* improvements and bug fixes to NURBS ray tracing - Keith Bowman
+* new button images and tree-view icons within archer - Cliff Yapp
+* html man page viewing in archer - Cliff Yapp
+* archer tree view colorization for selected objects - Bob Parker
+* replacement of tkimg external dependency with tkpng 0.9 - Cliff Yapp
+* libpng upgraded to 1.4.1 - Erik Greenwald
+* fixed crash with solids/regions/idents mged commands - Sean Morrison
+* g-stl and g-egg have new -8 marching cubes option - Erik Greenwald
+* fixed mged bug reading from redirected input on Windows - Bob Parker
+* fixed partition selection bug in rt -k cut plane - John Anderson
+* added NURBS support for transformation matrices - Keith Bowman
+* remap_mater mged command to change material codes - Paul Tanenbaum
+* MGED help menu lists all commands with documentation - Cliff Yapp
+* fixed mged units bug supporting decameter (Dm) units - Bob Parker
+* improved robustness of NURBS trimming during raytrace - Keith Bowman
+* Improved put_comb command usage and added documentation - Cliff Yapp
+# mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
+* Improve behavior of editor invocation in classic mode - Cliff Yapp
+* reorganization of archer buttons, panels, & preferences - Bob Parker
+* fix invocation of fbclear from MGED on Windows - Bob Parker
+* fixed obj-g crash when importing multiple objects - Sean Morrison
+* continued work on MGED Docbook man page conversions - Janine Gettier
+* integration of mged authorship dedication into archer - Bob Parker
+* improved behavior of mged initialization options - Bob Parker
+* 3dm-g importer improvements for hierarchical layering - Keith Bowman
+* fixed namspace initialization failure in rtwizard - Bob Parker
+* removed the pcd-pix image conversion tool - Sean Morrison
+* fixed coil tool -S option, now takes 6 parameters - Cliff Yapp
+* fixed g-egg coordinate and polygon format bugs - Erik Greenwald
+* improved obj-g import support for object names - Sean Morrison
+* fix rtweight bug where incorrect units were reported - Cliff Yapp
+* added initial manual page documentation for rtwizard - Sean Morrison
+* support for metaball conversion to polygonal format - Erik Greenwald
+
+
+----------------------------------------------------------------------
+--- 2010-02-04  Release 7.16.6                                     ---
 ----------------------------------------------------------------------
 
 Considerable effort continues towards improving BRL-CAD's
@@ -20,7 +71,6 @@ Jesica Guidice has translated 4 of MGED's 16 introductory tutorials to
 Spanish.  Cliff Yapp continues to work extensively with both to get
 their efforts integrated so that HTML and PDF documentation are
 cleanly generated.
-
 
 * added dbot_dump to Archer for dumping displayed BoTs - Bob Parker
 * added support to Archer for exporting view in OBJ format - Bob Parker
@@ -1513,10 +1563,114 @@ abilities will be missed.
 
 
 ----------------------------------------------------------------------
---- 2001-03-05  Release 5.3                                        ---
+--- 2001-03-06  Release 5.3                                        ---
 ----------------------------------------------------------------------
 
-Bug fixes.
+A new maintenance release of BRL-CAD is now available.  The main
+features are:
+
+mged:
+    - A dedication page has been added in memory of Mike Muuss
+    - Solids are now referred to as Primitive Shapes or "prims" in
+        much of the user interface
+    - The 'make' command now properly distinguishes between "ell" and
+      "ell1"
+    - 'autoview' command added for resetting the view size and center
+    to get all displayed objects on the display
+    - Query ray now works when 'mged' is in perspective mode
+    - Snap-to-grid now works in Matrix Edit mode
+    - 'facetize' command now creates BOT primitives by default
+    - User can now use 'edcodes' and 'red' to view data even if
+    database is read-only
+    - 'rt" command now has a default resolution of 512x512 instead of
+      50x50
+    - 'xpush' command now considers primitives outside the tree being
+    pushed and will not create a duplicate of an existing unpushed
+    primitive
+    - "light" shader added to the shader selection GUI in the
+    combination editor
+    - Combination editor modified to warn user if he is about to
+    overwrite an existing combination that has never been reconciled
+    to the gui
+    - Primitive (solid) and matrix selection listboxes now have
+    horizontal scrollbars to enable users to see entire path
+    - Menu item added to dump current 'mged' state into a users
+    ".mgedrc" file
+    - The overlap tool now plots the actual overlapping regions (to
+    allow user to perform editing)
+    - Upon quit, the overlap tool now restores display to its prior
+      state
+    - The overlap tool now accepts input from a file containing
+    'g_lint' output
+    - The default objects used by the overlap tool are now the
+    currently displayed objects
+    - The ray-trace control panel now has an "abort" button to stop
+    currently running ray traces
+    - The ray-trace control panel is now kept in sync with the
+    relevant elements of the main menubar.
+    - Now handles case of ray-traced image with size different from
+    size of X window.
+    - Added a description of the BOT primitive shape to the online
+      manual
+
+rt:
+    - Ray-trace tolerance lowered to 0.0005 to produce more accurate
+      images
+    - Now honors the -R (do not report overlaps) option
+    - Corrections to handling of some reflection/refraction rays in
+    glass objects
+
+rtg3:
+    - Can now write a "ray_data" file containing ray origin and ray
+    direction for each shotline.
+
+nirt:
+    - Now prints ALL overlaps it finds
+
+poly-bot:
+    - Added man page for poly-bot
+
+fast4-g:
+    - Corrected handling of WALL cards.
+    - Added support for COMPSPLT
+    - Added check for illegal second SECTION card for same component
+
+g-vrml:
+    - Light sources are now only converted once
+    - Assigned colors are used even if no shader is applied
+    - Eliminated emissive color for non-lights
+
+nastran-g:
+    - Default output is now BOT primitives.
+
+g-iges:
+    - Now handles newer primitives (height field, DSP, extrusion,
+      CLINE, and BOT)
+
+iges-g:
+    - BOT primitives are now the default primitive for representing
+      BREP objects
+
+fbpoint:
+    - Now works with mged X frame buffer
+
+liboptical:
+    - Corrected missing specular highlights
+
+librt:
+    - Corrected a bug in rt_boolweave() where fusing two hit points
+    within tolerance gave incorrect results
+    - Added a check to ensure that long shader strings are not
+    truncated without the user being notified.
+    - Added code to prevent spurious lines in the 'mged' display
+    caused by a color change in the display list without a "move"
+    command
+
+CLINE primitive:
+    - Added support for radius addition
+
+PIPE primitive:
+    - Added support for "db put", "db get" and "db adjust"
 
 
 ----------------------------------------------------------------------

@@ -65,7 +65,7 @@ tp_3axis(FILE *fp,
 	 int ndigits,		/**< # digits wide */
 	 double label_start,	/**< label starting value */
 	 double label_incr,	/**< label increment between ticks */
-	 double tick_separation,/**< plot distance between ticks */
+	 double tick_separation, /**< plot distance between ticks */
 	 double char_width)	/**< character scale (size) */
 {
     register int i;
@@ -86,12 +86,12 @@ tp_3axis(FILE *fp,
     char	str[64];
 
     /* Determine direction for ticks */
-    if ( ccw )
+    if (ccw)
 	ccw = -1;			/* counter clockwise */
     else
 	ccw = 1;			/* clockwise */
 
-    if ( NEAR_ZERO(tick_separation, SMALL) )  tick_separation = 1;
+    if (NEAR_ZERO(tick_separation, SMALL)) tick_separation = 1;
 
     /*
      *  The point "origin" will be the center of the axis rotation.
@@ -101,104 +101,103 @@ tp_3axis(FILE *fp,
      *  scaling in his matrix, it will also be applied, but in most
      *  cases that would not be useful.
      */
-    MAT_IDN( xlate_to_0 );
-    MAT_DELTAS_VEC( xlate_to_0, origin);
-    bn_mat_mul( mat, rot, xlate_to_0 );
-    VMOVE( cur_point, origin );
+    MAT_IDN(xlate_to_0);
+    MAT_DELTAS_VEC(xlate_to_0, origin);
+    bn_mat_mul(mat, rot, xlate_to_0);
+    VMOVE(cur_point, origin);
 
     /* Compute the bottom of the first tick */
-    VSET( temp, 0, -TICK_YLEN * ccw, 0 );
-    MAT4X3PNT( tick_bottom, mat, temp );
+    VSET(temp, 0, -TICK_YLEN * ccw, 0);
+    MAT4X3PNT(tick_bottom, mat, temp);
 
     /* Compute the start of this tick's label */
-    VSET( temp, 0, -NUM_YOFF * ccw, 0 );
-    MAT4X3PNT( num_center, mat, temp );
+    VSET(temp, 0, -NUM_YOFF * ccw, 0);
+    MAT4X3PNT(num_center, mat, temp);
     temp[X] = -char_width*ndigits;
-    MAT4X3PNT( num_last_end, mat, temp );
+    MAT4X3PNT(num_last_end, mat, temp);
 
     /* Determine the increment between ticks */
-    VSET( temp, 1, 0, 0 );
-    MAT4X3VEC( axis_dir, mat, temp );
-    VSCALE( axis_incr, axis_dir, tick_separation );
+    VSET(temp, 1, 0, 0);
+    MAT4X3VEC(axis_dir, mat, temp);
+    VSCALE(axis_incr, axis_dir, tick_separation);
 
     /* Center the title, and find left edge */
-    VSET( temp, 0.5*(length - strlen(string)*char_width), -TITLE_YOFF*ccw, 0 );
-    MAT4X3PNT( title_left, mat, temp );
-    tp_3symbol(fp, string, title_left, rot, char_width );
+    VSET(temp, 0.5*(length - strlen(string)*char_width), -TITLE_YOFF*ccw, 0);
+    MAT4X3PNT(title_left, mat, temp);
+    tp_3symbol(fp, string, title_left, rot, char_width);
 
     nticks = length/tick_separation+0.5;
-    pdv_3move( fp, cur_point );
-    for ( i=0; i<=nticks; i++) {
+    pdv_3move(fp, cur_point);
+    for (i=0; i<=nticks; i++) {
 	/*
 	 *  First, draw a tick.
 	 *  Then, if room, draw a numeric label.
 	 *  If last tick, done.
 	 *  Otherwise, advance in axis_dir direction.
 	 */
-	pdv_3cont( fp, tick_bottom );
+	pdv_3cont(fp, tick_bottom);
 
 	if (ndigits > 64) {
 	    bu_bomb("ERROR: Number of digits exceeds available buffer space");
 	}
 
-	if ( ndigits > 0 )  {
+	if (ndigits > 0) {
 	    double f;
-	    snprintf( fmt, 32, "%%%dg", ndigits);
-	    snprintf( str, 64, fmt, label_start );
+	    snprintf(fmt, 32, "%%%dg", ndigits);
+	    snprintf(str, 64, fmt, label_start);
 	    f = strlen(str) * char_width * 0.5;
-	    VJOIN1( num_start, num_center, -f, axis_dir );
+	    VJOIN1(num_start, num_center, -f, axis_dir);
 
 	    /* Only label this tick if the number will not
 	     * overlap with the previous number.
 	     */
-	    VSUB2( diff, num_start, num_last_end );
-	    if ( VDOT( diff, axis_dir ) >= 0 )  {
-		tp_3symbol( fp, str, num_start, rot, char_width );
-		VJOIN1( num_last_end, num_center, f, axis_dir );
+	    VSUB2(diff, num_start, num_last_end);
+	    if (VDOT(diff, axis_dir) >= 0) {
+		tp_3symbol(fp, str, num_start, rot, char_width);
+		VJOIN1(num_last_end, num_center, f, axis_dir);
 	    }
 	}
 
-	if ( i == nticks )  break;
+	if (i == nticks) break;
 
 	/* Advance, and draw next axis segment */
-	pdv_3move( fp, cur_point );
-	VADD2( cur_point, cur_point, axis_incr );
-	VADD2( tick_bottom, tick_bottom, axis_incr );
-	VADD2( num_center, num_center, axis_incr );
+	pdv_3move(fp, cur_point);
+	VADD2(cur_point, cur_point, axis_incr);
+	VADD2(tick_bottom, tick_bottom, axis_incr);
+	VADD2(num_center, num_center, axis_incr);
 
 	label_start += label_incr;
 
-	pdv_3cont( fp, cur_point);		/* draw axis */
+	pdv_3cont(fp, cur_point);		/* draw axis */
     }
 }
 
+
 void
-PL_FORTRAN(f3axis, F3AXIS)(fp, string, x, y, z, length, theta, ccw,
-			   ndigits, label_start, label_incr, tick_separation, char_width )
-    FILE		**fp;
-    char		*string;	/* label for axis */
-    float		*x, *y, *z;		/* start coordinates for axis */
-    float		*length;	/* length of axis */
-    float		*theta;		/* rotation off X-axis, in degrees */
-    int		*ccw;
-    int		*ndigits;	/* # digits wide */
-    float		*label_start;	/* minimum value on axis */
-    float		*label_incr;		/* increment for each tick */
-    float		*tick_separation;		/* distance between ticks */
-    float		*char_width;	/* character scale (size) */
+PL_FORTRAN(f3axis, F3AXIS)(FILE **fp,
+			   char *string /* label for axis */,
+			   float *x, float *y, float *z /* start coordinates for axis */,
+			   float *length /* length of axis */,
+			   float *theta /* rotation off X-axis, in degrees */,
+			   int *ccw,
+			   int *ndigits /* # digits wide */,
+			   float *label_start /* minimum value on axis */,
+			   float *label_incr /* increment for each tick */,
+			   float *tick_separation /* distance between ticks */,
+			   float *char_width /* character scale (size) */)
 {
     char buf[128];
-    mat_t	mat;
-    vect_t	pnt;
+    mat_t mat;
+    vect_t pnt;
 
-    VSET( pnt, *x, *y, *z );
+    VSET(pnt, *x, *y, *z);
     MAT_IDN(mat);
-    bn_mat_angles( mat, 0.0, 0.0, *theta );
-    bu_strlcpy( buf, string, sizeof(buf) );
+    bn_mat_angles(mat, 0.0, 0.0, *theta);
+    bu_strlcpy(buf, string, sizeof(buf));
 
-    tp_3axis( *fp, buf, pnt, mat, *length, *ccw,
-	      *ndigits, *label_start, *label_incr,
-	      *tick_separation, *char_width );
+    tp_3axis(*fp, buf, pnt, mat, *length, *ccw,
+	     *ndigits, *label_start, *label_incr,
+	     *tick_separation, *char_width);
 }
 /** @} */
 /*

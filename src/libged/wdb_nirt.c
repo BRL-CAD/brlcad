@@ -392,7 +392,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 
     /* use fp_in to feed view info to nirt */
     CloseHandle(pipe_in[0]);
-    fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb");
+    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
     setmode(fileno(fp_in), O_BINARY);
 
     /* send commands down the pipe */
@@ -402,12 +402,12 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 
     /* use fp_out to read back the result */
     CloseHandle(pipe_out[1]);
-    fp_out = _fdopen(_open_osfhandle((HFILE)pipe_outDup, _O_TEXT), "rb");
+    fp_out = _fdopen(_open_osfhandle((intptr_t)pipe_outDup, _O_TEXT), "rb");
     setmode(fileno(fp_out), O_BINARY);
 
     /* use fp_err to read any error messages */
     CloseHandle(pipe_err[1]);
-    fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup, _O_TEXT), "rb");
+    fp_err = _fdopen(_open_osfhandle((intptr_t)pipe_errDup, _O_TEXT), "rb");
     setmode(fileno(fp_err), O_BINARY);
 
     /* send quit command to nirt */

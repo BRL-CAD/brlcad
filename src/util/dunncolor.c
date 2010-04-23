@@ -18,16 +18,11 @@
  * information.
  */
 /** @file dunncolor.c
- *			D U N N C O L O R . C
  *
- *	Sets the exposure values in the Dunn camera to the
- *	specified arguments.
+ * Sets the exposure values in the Dunn camera to the
+ * specified arguments.
  *
- *	dunncolor baseval redval greenval blueval
- *
- *  Author -
- *	Don Merritt
- *	August 1985
+ * dunncolor baseval redval greenval blueval
  *
  */
 
@@ -40,9 +35,9 @@
 #include "bu.h"
 
 
-extern int	fd;
-extern char	cmd;
-extern int	polaroid;
+extern int fd;
+extern char cmd;
+extern int polaroid;
 
 extern void dunnopen(void);
 extern int ready(int nsecs);
@@ -60,7 +55,7 @@ main(int argc, char **argv)
 	bu_exit(50, "dunncolor:  camera not ready\n");
     }
 
-    if ( argc > 2 && strcmp( argv[1], "-p" ) == 0 )  {
+    if (argc > 2 && strcmp(argv[1], "-p") == 0) {
 	/* Polaroid rather than external camera */
 	polaroid = 1;
 	argc--; argv++;
@@ -71,7 +66,7 @@ main(int argc, char **argv)
     }
 
     /* check argument */
-    if ( argc != 5 && argc != 6 ) {
+    if (argc != 5 && argc != 6) {
 	bu_exit(25, "usage: dunncolor [-p] baseval redval greenval blueval\n");
     }
 
@@ -88,6 +83,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

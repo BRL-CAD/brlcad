@@ -183,7 +183,7 @@ rt_insert_color( struct mater *newp )
  * Called from db_scan() when initially scanning database.
  */
 void
-rt_color_addrec( int low, int hi, int r, int g, int b, long addr )
+rt_color_addrec( int low, int hi, int r, int g, int b, size_t addr )
 {
     register struct mater *mp;
 

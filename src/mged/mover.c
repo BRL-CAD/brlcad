@@ -37,13 +37,13 @@
 #include "./mged.h"
 
 /* default region ident codes */
-int	item_default = 1000;	/* GIFT region ID */
-int	air_default = 0;
-int	mat_default = 1;	/* GIFT material code */
-int	los_default = 100;	/* Line-of-sight estimate */
+int item_default = 1000;	/* GIFT region ID */
+int air_default = 0;
+int mat_default = 1;	/* GIFT material code */
+int los_default = 100;	/* Line-of-sight estimate */
 
 /*
- *			M O V E H O B J
+ * M O V E H O B J
  *
  * This routine is used when the object to be moved is
  * the top level in its reference path.
@@ -52,22 +52,20 @@ int	los_default = 100;	/* Line-of-sight estimate */
 void
 moveHobj(struct directory *dp, matp_t xlate)
 {
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
 
     if (dbip == DBI_NULL)
 	return;
 
     RT_INIT_DB_INTERNAL(&intern);
-    if ( rt_db_get_internal( &intern, dp, dbip, xlate, &rt_uniresource ) < 0 )
-    {
+    if (rt_db_get_internal(&intern, dp, dbip, xlate, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal() failed for ", dp->d_namep,
-			 (char *)NULL );
+			 (char *)NULL);
 	rt_db_free_internal(&intern);
 	READ_ERR_return;
     }
 
-    if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
-    {
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	rt_db_free_internal(&intern);
@@ -76,8 +74,9 @@ moveHobj(struct directory *dp, matp_t xlate)
     }
 }
 
+
 /*
- *			M O V E H I N S T A N C E
+ * M O V E H I N S T A N C E
  *
  * This routine is used when an instance of an object is to be
  * moved relative to a combination, as opposed to modifying the
@@ -87,45 +86,40 @@ moveHobj(struct directory *dp, matp_t xlate)
 void
 moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate)
 {
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
 
     if (dbip == DBI_NULL)
 	return;
 
-    if ( rt_db_get_internal( &intern, cdp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
+    if (rt_db_get_internal(&intern, cdp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	READ_ERR_return;
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
-    if ( comb->tree )
-    {
+    if (comb->tree) {
 	union tree *tp;
 
-	tp = (union tree *)db_find_named_leaf( comb->tree, dp->d_namep );
-	if ( tp != TREE_NULL )
-	{
-	    if ( tp->tr_l.tl_mat )
-		bn_mat_mul2( xlate, tp->tr_l.tl_mat );
-	    else
-	    {
-		tp->tr_l.tl_mat = (matp_t)bu_malloc( 16 * sizeof( fastf_t ), "tl_mat" );
-		MAT_COPY( tp->tr_l.tl_mat, xlate );
+	tp = (union tree *)db_find_named_leaf(comb->tree, dp->d_namep);
+	if (tp != TREE_NULL) {
+	    if (tp->tr_l.tl_mat)
+		bn_mat_mul2(xlate, tp->tr_l.tl_mat);
+	    else {
+		tp->tr_l.tl_mat = (matp_t)bu_malloc(16 * sizeof(fastf_t), "tl_mat");
+		MAT_COPY(tp->tr_l.tl_mat, xlate);
 	    }
-	    if ( rt_db_put_internal( cdp, dbip, &intern, &rt_uniresource ) < 0 )
-	    {
+	    if (rt_db_put_internal(cdp, dbip, &intern, &rt_uniresource) < 0) {
 		Tcl_AppendResult(interp, "rt_db_put_internal failed for ",
-				 cdp->d_namep, "\n", (char *)NULL );
+				 cdp->d_namep, "\n", (char *)NULL);
 		rt_db_free_internal(&intern);
 	    }
-	}
-	else
-	{
+	} else {
 	    Tcl_AppendResult(interp, "moveHinst:  couldn't find ", cdp->d_namep,
 			     "/", dp->d_namep, "\n", (char *)NULL);
 	    rt_db_free_internal(&intern);
 	}
     }
 }
+
 
 /*
  * Local Variables:

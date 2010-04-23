@@ -44,6 +44,9 @@ facetize_region_end(struct db_tree_state *tsp,
     struct bu_list vhead;
     union tree **facetize_tree;
 
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+
     facetize_tree = (union tree **)client_data;
     BU_LIST_INIT( &vhead );
 

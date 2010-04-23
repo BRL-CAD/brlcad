@@ -1344,7 +1344,11 @@ manual_autogen ( ) {
 
     if [ ! $ret = 0 ] ; then
 	# retry without the -f and check for usage of macros that are too new
-	ac2_59_macros="AC_C_RESTRICT AC_INCLUDES_DEFAULT AC_LANG_ASSERT AC_LANG_WERROR AS_SET_CATFILE"
+	ac2_65_macros="AT_CHECK_EUNIT AC_PROG_OBJCXX AC_PROG_OBJCXXCPP"
+	ac2_64_macros="AT_CHECK_UNQUOTED AT_FAIL_IF AT_SKIP_IF AC_ERLANG_SUBST_ERTS_VER"
+	ac2_62_macros="AC_AUTOCONF_VERSION AC_OPENMP AC_PATH_PROGS_FEATURE_CHECK"
+	ac2_60_macros="AC_C_FLEXIBLE_ARRAY_MEMBER AC_C_VARARRAYS"
+	ac2_59_macros="AC_C_RESTRICT AC_INCLUDES_DEFAULT AC_LANG_ASSERT AC_LANG_WERROR AS_SET_CATFILE AC_PROG_SED AC_PROG_GREP AC_REQUIRE_AUX_FILE AC_CHECK_TARGET_TOOL AC_PATH_TARGET_TOOL AC_CHECK_TARGET_TOOLS AC_CHECK_ALIGNOF AC_PROG_OBJC AC_PROG_OBJCPP AC_ERLANG_SUBST_INSTALL_LIB_DIR AC_ERLANG_SUBST_INSTALL_LIB_SUBDIR AC_ERLANG_PATH_ERLC AC_ERLANG_NEED_ERLC AC_ERLANG_PATH_ERL AC_ERLANG_NEED_ERL AC_ERLANG_CHECK_LIB AC_ERLANG_SUBST_ROOT_DIR AC_ERLANG_SUBST_LIB_DIR AT_COPYRIGHT AS_BOURNE_COMPATIBLE AS_SHELL_SANITIZE AS_CASE AH_HEADER AC_USE_SYSTEM_EXTENSIONS AC_TYPE_INT8_T AC_TYPE_INT16_T AC_TYPE_INT32_T AC_TYPE_INT64_T AC_TYPE_INTMAX_T AC_TYPE_INTPTR_T AC_TYPE_LONG_LONG_INT AC_TYPE_SSIZE_T AC_TYPE_UINT8_T AC_TYPE_UINT16_T AC_TYPE_UINT32_T AC_TYPE_UINT64_T AC_TYPE_UINTMAX_T AC_TYPE_UINTPTR_T AC_TYPE_UNSIGNED_LONG_LONG_INT AC_TYPE_LONG_DOUBLE AC_TYPE_LONG_DOUBLE_WIDER AC_STRUCT_DIRENT_D_INO AC_STRUCT_DIRENT_D_TYPE AC_PROG_CC_C89 AC_PROG_CC_C99 AC_PRESERVE_HELP_ORDER AC_HEADER_ASSERT AC_FUNC_STRTOLD AC_C_TYPEOF AC_PROG_MKDIR_P AC_PROG_CXX_C_O"
 	ac2_55_macros="AC_COMPILER_IFELSE AC_FUNC_MBRTOWC AC_HEADER_STDBOOL AC_LANG_CONFTEST AC_LANG_SOURCE AC_LANG_PROGRAM AC_LANG_CALL AC_LANG_FUNC_TRY_LINK AC_MSG_FAILURE AC_PREPROC_IFELSE"
 	ac2_54_macros="AC_C_BACKSLASH_A AC_CONFIG_LIBOBJ_DIR AC_GNU_SOURCE AC_PROG_EGREP AC_PROG_FGREP AC_REPLACE_FNMATCH AC_FUNC_FNMATCH_GNU AC_FUNC_REALLOC AC_TYPE_MBSTATE_T"
 
@@ -1353,14 +1357,22 @@ manual_autogen ( ) {
 	ac_minor="`echo ${AUTOCONF_VERSION}. | cut -d. -f2 | sed 's/[^0-9]//g'`"
 
 	if [ $ac_major -lt 2 ] ; then
-	    macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
+	    macros_to_search="$ac2_65 $ac2_64 $ac2_62 $ac2_60 $ac2_59 $ac2_55 $ac2_54"
 	else
 	    if [ $ac_minor -lt 54 ] ; then
-		macros_to_search="$ac2_59_macros $ac2_55_macros $ac2_54_macros"
+		macros_to_search="$ac2_65 $ac2_64 $ac2_62 $ac2_60 $ac2_59 $ac2_55 $ac2_54"
 	    elif [ $ac_minor -lt 55 ] ; then
-		macros_to_search="$ac2_59_macros $ac2_55_macros"
+		macros_to_search="$ac2_65 $ac2_64 $ac2_62 $ac2_60 $ac2_59 $ac2_55"
 	    elif [ $ac_minor -lt 59 ] ; then
-		macros_to_search="$ac2_59_macros"
+		macros_to_search="$ac2_65 $ac2_64 $ac2_62 $ac2_60 $ac2_59"
+	    elif [ $ac_minor -lt 60 ] ; then
+		macros_to_search="$ac2_65 $ac2_64 $ac2_62 $ac2_60"
+	    elif [ $ac_minor -lt 62 ] ; then
+		macros_to_search="$ac2_65 $ac2_64 $ac2_62"
+	    elif [ $ac_minor -lt 64 ] ; then
+		macros_to_search="$ac2_65 $ac2_64"
+	    elif [ $ac_minor -lt 65 ] ; then
+		macros_to_search="$ac2_65"
 	    fi
 	fi
 

@@ -51,8 +51,8 @@ typedef struct _bspline
     int p; // degree
     int m; // num_knots-1
     int n; // num_samples-1 (aka number of control points)
-    vector<double> params;
-    vector<double> knots;
+    std::vector<double> params;
+    std::vector<double> knots;
     ON_2dPointArray controls;
 } BSpline;
 
@@ -312,7 +312,7 @@ getKnotInterval(BSpline& bspline, double u)
 
 
 int
-getCoefficients(BSpline& bspline, Array1D<double>& N, double u)
+getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
 {
     // evaluate the b-spline basis function for the given parameter u
     // place the results in N[]
@@ -346,7 +346,7 @@ getCoefficients(BSpline& bspline, Array1D<double>& N, double u)
 
 
 void
-printMatrix(Array1D<double>& m) {
+printMatrix(TNT::Array1D<double>& m) {
     printf("---\n");
     for (int i = 0; i < m.dim1(); i++) {
 	printf("% 5.5f ", m[i]);
@@ -361,10 +361,10 @@ generateParameters(BSpline& bspline)
 {
     double lastT = 0.0;
     bspline.params.resize(bspline.n + 1);
-    Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n + 1);
+    TNT::Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n + 1);
     for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
 	double t = (double) i / (UNIVERSAL_SAMPLE_COUNT - 1);
-	Array1D<double> n = Array1D<double> (N.dim2(), N[i]);
+	TNT::Array1D<double> n = TNT::Array1D<double> (N.dim2(), N[i]);
 	getCoefficients(bspline, n, t);
 	//printMatrix(n);
     }
@@ -389,7 +389,7 @@ generateParameters(BSpline& bspline)
 
 
 void
-printMatrix(Array2D<double>& m)
+printMatrix(TNT::Array2D<double>& m)
 {
     printf("---\n");
     for (int i = 0; i < m.dim1(); i++) {
@@ -601,15 +601,15 @@ interpolateLocalCubicCurve(ON_3dPointArray &Q)
 void
 generateControlPoints(BSpline& bspline, ON_2dPointArray &samples)
 {
-    Array2D<double> bigN(bspline.n+1, bspline.n+1);
+    TNT::Array2D<double> bigN(bspline.n+1, bspline.n+1);
     //printMatrix(bigN);
 
     for (int i = 0; i < bspline.n+1; i++) {
-	Array1D<double> n = Array1D<double>(bigN.dim2(), bigN[i]);
+	TNT::Array1D<double> n = TNT::Array1D<double>(bigN.dim2(), bigN[i]);
 	getCoefficients(bspline, n, bspline.params[i]);
 	//printMatrix(bigN);
     }
-    Array2D<double> bigD(bspline.n+1, 2);
+    TNT::Array2D<double> bigD(bspline.n+1, 2);
     for (int i = 0; i < bspline.n+1; i++) {
 	bigD[i][0] = samples[i].x;
 	bigD[i][1] = samples[i].y;
@@ -620,7 +620,7 @@ generateControlPoints(BSpline& bspline, ON_2dPointArray &samples)
 
     JAMA::LU<double> lu(bigN);
     assert(lu.isNonsingular() > 0);
-    Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
+    TNT::Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
 
     // extract the control points
     for (int i = 0; i < bspline.n+1; i++) {
@@ -1264,9 +1264,9 @@ bool is_closed(const ON_Surface *surf)
 
 
 bool
-check_pullback_closed(list<PBCData*> &pbcs)
+check_pullback_closed(std::list<PBCData*> &pbcs)
 {
-    list<PBCData*>::iterator d = pbcs.begin();
+    std::list<PBCData*>::iterator d = pbcs.begin();
     const ON_Surface *surf = (*d)->surftree->getSurface();
     //TODO:
     // 0 = U, 1 = V
@@ -1285,9 +1285,9 @@ check_pullback_closed(list<PBCData*> &pbcs)
 
 
 bool
-check_pullback_singular_east(list<PBCData*> &pbcs)
+check_pullback_singular_east(std::list<PBCData*> &pbcs)
 {
-    list<PBCData *>::iterator cs = pbcs.begin();
+    std::list<PBCData *>::iterator cs = pbcs.begin();
     const ON_Surface *surf = (*cs)->surftree->getSurface();
     double umin, umax;
     ON_2dPoint *prev = NULL;
@@ -1297,7 +1297,7 @@ check_pullback_singular_east(list<PBCData*> &pbcs)
     std::cout << "Umax: " << umax << std::endl;
     while (cs!=pbcs.end()) {
 	PBCData *data = (*cs);
-	list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	int segcnt = 0;
 	while (si != data->segments.end()) {
 	    ON_2dPointArray *samples = (*si);
@@ -1330,9 +1330,9 @@ check_pullback_singular_east(list<PBCData*> &pbcs)
 
 
 bool
-check_pullback_singular(list<PBCData*> &pbcs)
+check_pullback_singular(std::list<PBCData*> &pbcs)
 {
-    list<PBCData*>::iterator d = pbcs.begin();
+    std::list<PBCData*>::iterator d = pbcs.begin();
     const ON_Surface *surf = (*d)->surftree->getSurface();
     int cnt = 0;
 
@@ -1374,9 +1374,9 @@ check_pullback_singular(list<PBCData*> &pbcs)
 
 
 void
-print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints)
+print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoints)
 {
-    list<PBCData*>::iterator cs = pbcs.begin();
+    std::list<PBCData*>::iterator cs = pbcs.begin();
     int trimcnt=0;
     if (justendpoints) {
 	// print out endpoints before
@@ -1384,7 +1384,7 @@ print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints)
 	while (cs!=pbcs.end()) {
 	    PBCData *data = (*cs);
 	    const ON_Surface *surf = data->surftree->getSurface();
-	    list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    int segcnt = 0;
 	    while (si != data->segments.end()) {
 		ON_2dPointArray *samples = (*si);
@@ -1434,7 +1434,7 @@ print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints)
 	while (cs!=pbcs.end()) {
 	    PBCData *data = (*cs);
 	    const ON_Surface *surf = data->surftree->getSurface();
-	    list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    int segcnt = 0;
 	    while (si != data->segments.end()) {
 		ON_2dPointArray *samples = (*si);
@@ -1715,9 +1715,9 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment)
  * singularity
  */
 bool
-resolve_pullback_seams(list<PBCData*> &pbcs)
+resolve_pullback_seams(std::list<PBCData*> &pbcs)
 {
-    list<PBCData*>::iterator cs;
+    std::list<PBCData*>::iterator cs;
 
     //TODO: remove debugging
     if (false)
@@ -1738,16 +1738,16 @@ resolve_pullback_seams(list<PBCData*> &pbcs)
 	umid = (umin+umax)/2.0;
 	vmid = (vmin+vmax)/2.0;
 
-	list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	while (si != data->segments.end()) {
 	    ON_2dPointArray *samples = (*si);
 	    if (resolve_seam_segment(surf, *samples)) {
 		// Found a starting point
 		//1) walk back up with resolved next point
 		next = &(*samples)[0];
-		list<PBCData*>::reverse_iterator rcs(cs);
+		std::list<PBCData*>::reverse_iterator rcs(cs);
 		rcs--;
-		list<ON_2dPointArray *>::reverse_iterator rsi(si);
+		std::list<ON_2dPointArray *>::reverse_iterator rsi(si);
 		while (rcs != pbcs.rend()) {
 		    PBCData *rdata = (*rcs);
 		    if (data->segments.rend() == rdata->segments.rend()) {
@@ -1817,9 +1817,9 @@ resolve_pullback_seams(list<PBCData*> &pbcs)
  * singularity
  */
 bool
-resolve_pullback_singularities(list<PBCData*> &pbcs)
+resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 {
-    list<PBCData*>::iterator cs = pbcs.begin();
+    std::list<PBCData*>::iterator cs = pbcs.begin();
 
     //TODO: remove debugging
     if (false)
@@ -1843,7 +1843,7 @@ resolve_pullback_singularities(list<PBCData*> &pbcs)
 	    prev=NULL;
 	    PBCData *data = (*cs);
 	    const ON_Surface *surf = data->surftree->getSurface();
-	    list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    while (si != data->segments.end()) {
 		ON_2dPointArray *samples = (*si);
 		for (int i = 0; i < samples->Count(); i++) {
@@ -1934,12 +1934,12 @@ resolve_pullback_singularities(list<PBCData*> &pbcs)
 
 
 void
-remove_consecutive_intersegment_duplicates(list<PBCData*> &pbcs)
+remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 {
-    list<PBCData*>::iterator cs = pbcs.begin();
+    std::list<PBCData*>::iterator cs = pbcs.begin();
     while (cs!=pbcs.end()) {
 	PBCData *data = (*cs);
-	list<ON_2dPointArray *>::iterator si = data->segments.begin();
+	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	while (si != data->segments.end()) {
 	    ON_2dPointArray *samples = (*si);
 	    if (samples->Count() == 0) {
@@ -1969,11 +1969,11 @@ remove_consecutive_intersegment_duplicates(list<PBCData*> &pbcs)
 
 
 bool
-check_pullback_data(list<PBCData*> &pbcs)
+check_pullback_data(std::list<PBCData*> &pbcs)
 {
     bool resolvable = true;
     bool resolved = false;
-    list<PBCData*>::iterator d = pbcs.begin();
+    std::list<PBCData*>::iterator d = pbcs.begin();
 
     //TODO: remove debugging code
     if (false)

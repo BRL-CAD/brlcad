@@ -81,10 +81,10 @@
 #define BU_FNM_RANGE_ERROR   (-1)
 
 /* isblank appears to be obsolete in newer ctype.h files so use
- * ccblank instead when looking for the "blank" character class.
+ * fnblank instead when looking for the "blank" character class.
  */
-static int
-ccblank(int c)
+HIDDEN inline int
+fnblank(int c)
 {
 #ifdef isblank
     return isblank(c);
@@ -93,31 +93,111 @@ ccblank(int c)
 #endif
 }
 
+
+HIDDEN inline int
+fnalnum(int c)
+{
+    return isalnum(c);
+}
+
+
+HIDDEN inline int
+fnalpha(int c)
+{
+    return isalpha(c);
+}
+
+
+HIDDEN inline int
+fncntrl(int c)
+{
+    return iscntrl(c);
+}
+
+
+HIDDEN inline int
+fndigit(int c)
+{
+    return isdigit(c);
+}
+
+
+HIDDEN inline int
+fngraph(int c)
+{
+    return isgraph(c);
+}
+
+
+HIDDEN inline int
+fnlower(int c)
+{
+    return islower(c);
+}
+
+
+HIDDEN inline int
+fnprint(int c)
+{
+    return isprint(c);
+}
+
+
+HIDDEN inline int
+fnpunct(int c)
+{
+    return ispunct(c);
+}
+
+
+HIDDEN inline int
+fnspace(int c)
+{
+    return isspace(c);
+}
+
+
+HIDDEN inline int
+fnupper(int c)
+{
+    return isupper(c);
+}
+
+
+HIDDEN inline int
+fnxdigit(int c)
+{
+    return isxdigit(c);
+}
+
+
 typedef struct _charclass {
     char *idstring;		/* identifying string */
     int (*checkfun)(int);	/* testing function */
 } CHARCLASS;
 
 static CHARCLASS charclasses[] = {
-    { "alnum", isalnum },
-    { "alpha", isalpha },
-    { "blank", ccblank },
-    { "cntrl", iscntrl },
-    { "digit", isdigit },
-    { "graph", isgraph },
-    { "lower", islower },
-    { "print", isprint },
-    { "punct", ispunct },
-    { "space", isspace },
-    { "upper", isupper },
-    { "xdigit", isxdigit },
+    { "alnum", fnalnum },
+    { "alpha", fnalpha },
+    { "blank", fnblank },
+    { "cntrl", fncntrl },
+    { "digit", fndigit },
+    { "graph", fngraph },
+    { "lower", fnlower },
+    { "print", fnprint },
+    { "punct", fnpunct },
+    { "space", fnspace },
+    { "upper", fnupper },
+    { "xdigit", fnxdigit },
 };
+
 
 static int
 classcompare(const void *a, const void *b)
 {
     return (strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring));
 }
+
 
 static CHARCLASS *
 findclass(char *charclass)
@@ -137,14 +217,19 @@ charclassmatch(const char *pattern, char test, int *s)
     struct bu_vls classname;
     CHARCLASS *ctclass;
     bu_vls_init(&classname);
-    while ((c = *pattern++) && (c != ':') && (resultholder != -1)) {
+    c = *pattern++;
+    while (c && (c != ':') && (resultholder != -1)) {
 	if (c == BU_FNM_EOS) resultholder = -1;
 	counter++;
+
+        c = *pattern++; /* next */
     }
     c = *pattern++;
     if (c != ']') resultholder = -1;
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
-    if ((ctclass = findclass(bu_vls_addr(&classname))) == NULL) {
+
+    ctclass = findclass(bu_vls_addr(&classname));
+    if (ctclass == NULL) {
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
 	resultholder = -1;
     } else {
@@ -173,7 +258,8 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
      * consistency with the regular expression syntax.  J.T. Conklin
      * (conklin@ngai.kaleida.com)
      */
-    if ((negate = (*pattern == '!' || *pattern == '^')))
+    negate = (*pattern == '!' || *pattern == '^');
+    if (negate)
 	++pattern;
 
 
@@ -326,6 +412,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
     /* NOTREACHED (unless inf looping) */
     return 0;
 }
+
 
 /*
  * Local Variables:

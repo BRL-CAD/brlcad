@@ -208,17 +208,20 @@ ON_BOOL32 ON_UserData::GetDescription( ON_wString& description )
 ON_OBJECT_IMPLEMENT(ON_UnknownUserData,ON_UserData,"850324A8-050E-11d4-BFFA-0010830122F0");
 
 ON_UnknownUserData::ON_UnknownUserData() 
-                   : m_unknownclass_uuid(ON_nil_uuid), 
-                     m_sizeof_buffer(0),
-                     m_buffer(0),
-                     m_3dm_version(0)
+: m_unknownclass_uuid(ON_nil_uuid)
+, m_sizeof_buffer(0)
+, m_buffer(0)
+, m_3dm_version(0)
+, m_3dm_opennurbs_version(0)
 {}
 
-ON_UnknownUserData::ON_UnknownUserData(const ON_UnknownUserData& src) : ON_UserData(src), 
-                   m_unknownclass_uuid(ON_nil_uuid), 
-                   m_sizeof_buffer(0), 
-                   m_buffer(0),
-                   m_3dm_version(0)
+ON_UnknownUserData::ON_UnknownUserData(const ON_UnknownUserData& src) 
+: ON_UserData(src)
+, m_unknownclass_uuid(ON_nil_uuid)
+, m_sizeof_buffer(0)
+, m_buffer(0)
+, m_3dm_version(0)
+, m_3dm_opennurbs_version(0)
 {
   if ( m_userdata_copycount > 0 && src.m_sizeof_buffer > 0 && src.m_buffer ) 
   {
@@ -234,6 +237,7 @@ ON_UnknownUserData::ON_UnknownUserData(const ON_UnknownUserData& src) : ON_UserD
     m_sizeof_buffer = src.m_sizeof_buffer;
     m_buffer = onmemdup( src.m_buffer, src.m_sizeof_buffer);
     m_3dm_version = src.m_3dm_version;
+    m_3dm_opennurbs_version = src.m_3dm_opennurbs_version;
   }
 }
 
@@ -253,11 +257,13 @@ ON_UnknownUserData& ON_UnknownUserData::operator=(const ON_UnknownUserData& src)
     ON_UserData::operator=(src);
 
     // For most kinds of user data except ON_UnknownUserData,
-    // m_userdata_uuid is set by the constructor and should not
-    // be altered by an operator=.  However, for ON_UnknownUserData,
-    // the value of m_userdata_uuid is varies because it is set
-    // by the missing userdata class.  So it has to be copied here.
+    // m_userdata_uuid and m_application_uuid are set by the
+    // constructor and should not be altered by an operator=.  
+    // However, for ON_UnknownUserData, the value of m_userdata_uuid 
+    // and m_application_uuid vary because they are set by the
+    // missing userdata class.  So they have to be copied here.
     m_userdata_uuid = src.m_userdata_uuid;
+    m_application_uuid = src.m_application_uuid; // fix added 26 January 2010
 
     if ( m_userdata_copycount > 0 && src.m_sizeof_buffer > 0 && src.m_buffer ) 
     {
@@ -265,6 +271,7 @@ ON_UnknownUserData& ON_UnknownUserData::operator=(const ON_UnknownUserData& src)
       m_sizeof_buffer = src.m_sizeof_buffer;
       m_buffer = onmemdup( src.m_buffer, src.m_sizeof_buffer);
       m_3dm_version = src.m_3dm_version;
+      m_3dm_opennurbs_version = src.m_3dm_opennurbs_version;
     }
     else 
     {
@@ -274,6 +281,7 @@ ON_UnknownUserData& ON_UnknownUserData::operator=(const ON_UnknownUserData& src)
       m_sizeof_buffer = 0;
       m_buffer = 0;
       m_3dm_version = 0;
+      m_3dm_opennurbs_version = 0;
     }
   }
   return *this;

@@ -411,7 +411,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* use fp_in to feed view info to nirt */
     CloseHandle(pipe_in[0]);
-    fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "w");
+    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "w");
 
     /* send commands down the pipe */
     for (i=1; i<gedp->ged_gdp->gd_rt_cmd_len-2; i++)
@@ -420,11 +420,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* use fp_out to read back the result */
     CloseHandle(pipe_out[1]);
-    fp_out = _fdopen(_open_osfhandle((HFILE)pipe_outDup, _O_TEXT), "r");
+    fp_out = _fdopen(_open_osfhandle((intptr_t)pipe_outDup, _O_TEXT), "r");
 
     /* use fp_err to read any error messages */
     CloseHandle(pipe_err[1]);
-    fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup, _O_TEXT), "r");
+    fp_err = _fdopen(_open_osfhandle((intptr_t)pipe_errDup, _O_TEXT), "r");
 
     /* send quit command to nirt */
     fwrite("q\n", 1, 2, fp_in);

@@ -33,6 +33,7 @@
 #  include <sys/param.h>
 #endif
 
+#include "bio.h"
 #include "bu.h"
 
 

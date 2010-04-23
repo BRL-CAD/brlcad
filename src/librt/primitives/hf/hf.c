@@ -1579,7 +1579,7 @@ rt_hf_class(void)
  * R T _ H F _ P L O T
  */
 int
-rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
     unsigned short *sp = (unsigned short *)NULL;
@@ -1834,7 +1834,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
 
@@ -1866,8 +1866,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     int in_cookie;	/* format cookie */
     int in_len;
     int out_cookie;
-    int count;
-    int got;
+    size_t count;
+    size_t got;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1944,7 +1944,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	goto err1;
     }
     if (xip->w < 2 || xip->n < 2) {
-	bu_log("rt_hf_import4() w=%d, n=%d too small\n");
+	bu_log("rt_hf_import4() w=%d, n=%d too small\n", xip->w, xip->n);
 	goto err1;
     }
     if (xip->xlen <= 0 || xip->ylen <= 0) {
@@ -2006,8 +2006,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
-	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%d, got=%d\n",
-	       xip->dfile, count, got);
+	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%llu, got=%llu\n",
+	       xip->dfile, (unsigned long long)count, (unsigned long long)got);
     }
 
     return(0);			/* OK */
@@ -2084,7 +2084,7 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (!ep) return -1;
     if (ip) RT_CK_DB_INTERNAL(ip);

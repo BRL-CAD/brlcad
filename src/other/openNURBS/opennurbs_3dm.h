@@ -206,9 +206,22 @@
 
 #define TCODE_LIGHT_RECORD_END        (TCODE_INTERFACE | TCODE_SHORT | 0x006F)
 
-/* records in user table */
-#define TCODE_USER_TABLE_UUID          (TCODE_TABLEREC | TCODE_CRC | 0x0080) /* table id */
-#define TCODE_USER_RECORD              (TCODE_TABLEREC | 0x0081) /* records in user table are in TCODE_USER_RECORD chunks */
+/* records in user table 
+     Each user table entery has two top level chunks, a TCODE_USER_TABLE_UUID chunk
+     and a TCODE_USER_RECORD chunk.
+*/
+
+/* The TCODE_USER_TABLE_UUID chunk
+   contains the plug-in id and, if the archive is V5 or later
+   and was written by an opennurbs with version >= 200910190,
+   a TCODE_USER_TABLE_RECORD_HEADER chunk.
+*/
+#define TCODE_USER_TABLE_UUID          (TCODE_TABLEREC | TCODE_CRC | 0x0080)
+/* the user record header was added in 200910190 and is inside the TCODE_USER_TABLE_UUID chunk */
+#define TCODE_USER_TABLE_RECORD_HEADER (TCODE_TABLEREC | TCODE_CRC | 0x0082)
+/* information saved by the plug-in is in a TCODE_USER_RECORD chunk */
+#define TCODE_USER_RECORD              (TCODE_TABLEREC | 0x0081) 
+
 
 /* records in group table */
 #define TCODE_GROUP_RECORD             (TCODE_TABLEREC  | TCODE_CRC   | 0x0073)

@@ -628,7 +628,7 @@ main(int argc, char **argv)
 	)
 	Fatal(fbp, "Insufficient memory for color maps" );
 
-    entries = 1 << g_pixel;
+    entries = (size_t)(1 << g_pixel);
 
     if ( M_bit )
     {
@@ -846,7 +846,7 @@ main(int argc, char **argv)
 
 	    /* Process local color map. */
 
-	    entries = 1 << pixel;
+	    entries = (size_t)(1 << pixel);
 
 	    if ( M_bit )
 	    {

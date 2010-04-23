@@ -19,7 +19,7 @@
  */
 /** @file dm-ps.c
  *
- *  Routines specific to MGED's use of LIBDM's Postscript display manager.
+ * Routines specific to MGED's use of LIBDM's Postscript display manager.
  *
  */
 
@@ -51,6 +51,7 @@ PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:
