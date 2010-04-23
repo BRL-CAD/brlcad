@@ -24,7 +24,7 @@ documentationdir = $(BRLCAD_DATA)/doc
 documentation_DATA = \
         hv3.man
 
-man_MANS = \
+dist_man_MANS = \
         tkhtml.n
 
 EXTRA_DIST = \
