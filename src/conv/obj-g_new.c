@@ -379,7 +379,7 @@ void test_face(struct ga_t *ga,
                 VSCALE(tmp_v_o, tmp_v_o, conv_factor);
                 VSCALE(tmp_v_i, tmp_v_i, conv_factor);
                 distance_between_vertices = DIST_PT_PT(tmp_v_o, tmp_v_i) ;
-                if ( distance_between_vertices <= tol->dist ) {
+                if ( bn_pt3_pt3_equal(tmp_v_o, tmp_v_i, tol) ) {
                     *degenerate_face = 1;
                     if ( gfi->grouping_type != GRP_NONE )
                         bu_log("WARNING: removed degenerate face (reason: vertices too close); obj file face group name = (%s) obj file face grouping index = (%lu) obj file face index = (%lu) obj file vertice indexes (%lu) vs (%lu) tol.dist = (%lfmm) dist = (%fmm)\n",
@@ -796,8 +796,11 @@ void output_to_nmg(struct ga_t *ga,
     struct bu_ptbl faces;  /* table of faces for one element */
     struct faceuse *fu;
     struct vertexuse *vu = NULL;
+    struct vertexuse *vu2 = NULL;
     struct loopuse *lu = NULL;
     struct edgeuse *eu = NULL;
+    struct loopuse *lu2 = NULL;
+    struct edgeuse *eu2 = NULL;
     size_t face_idx = 0; /* index into faces within for-loop */
     size_t vert_idx = 0; /* index into vertices within for-loop */
     size_t shell_vert_idx = 0; /* index into vertices for entire nmg shell */
@@ -805,8 +808,11 @@ void output_to_nmg(struct ga_t *ga,
     plane_t pl; /* plane equation for face */
     fastf_t tmp_v[3] = { 0.0, 0.0, 0.0 }; /* temporary vertex */
     fastf_t tmp_w = 0.0 ; /* temporary weight */
+    fastf_t tmp_rn[3] = { 0.0, 0.0, 0.0 }; /* temporary reverse normal */
     fastf_t tmp_n[3] = { 0.0, 0.0, 0.0 }; /* temporary normal */
     fastf_t tmp_t[3] = { 0.0, 0.0, 0.0 }; /* temporary texture vertex */
+    vect_t  norm;
+    fastf_t dot;
     size_t  vofi = 0; /* vertex obj file index */
     size_t  nofi = 0; /* normal obj file index */
     size_t  tofi = 0; /* texture vertex obj file index */
@@ -843,16 +849,22 @@ void output_to_nmg(struct ga_t *ga,
         fu = nmg_cface(s, (struct vertex **)&(verts[shell_vert_idx]), (int)(gfi->num_vertices_arr[face_idx]));
         lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
         eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+        lu2 = BU_LIST_FIRST(loopuse, &fu->fumate_p->lu_hd);
+        eu2 = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
 
         for ( vert_idx = 0 ; vert_idx < gfi->num_vertices_arr[face_idx] ; vert_idx++ ) {
 
-            retrieve_coord_index(ga, gfi, face_idx, vert_idx, tmp_v, tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi); 
+            retrieve_coord_index(ga, gfi, face_idx, vert_idx, tmp_v, tmp_n, tmp_t,
+                                 &tmp_w, &vofi, &nofi, &tofi); 
+
             VSCALE(tmp_v, tmp_v, conv_factor);
+            VUNITIZE(tmp_n);
+            VREVERSE(tmp_rn, tmp_n);
 
             bu_log("about to run nmg_vertex_gv\n");
             NMG_CK_VERTEX(eu->vu_p->v_p);
             nmg_vertex_gv(eu->vu_p->v_p, tmp_v);
-
+#if 1
             switch (gfi->face_type) {
                 case FACE_NV :
                 case FACE_TNV :
@@ -862,11 +874,18 @@ void output_to_nmg(struct ga_t *ga,
                         bu_log("about to run nmg_vertex_nv\n");
                         nmg_vertexuse_nv(vu, tmp_n);
                     }
+                    for (BU_LIST_FOR(vu2, vertexuse, &eu2->vu_p->v_p->vu_hd)) {
+                        NMG_CK_VERTEXUSE(vu2);
+                        bu_log("about to run nmg_vertex_nv\n");
+                        nmg_vertexuse_nv(vu2, tmp_rn);
+                    }
                     break;
                 default:
                     break;
             }
+#endif
             eu = BU_LIST_NEXT(edgeuse, &eu->l);
+            eu2 = BU_LIST_NEXT(edgeuse, &eu2->l);
             shell_vert_idx++;
 
         } /* this loop exits when all the vertices and their normals
@@ -877,8 +896,10 @@ void output_to_nmg(struct ga_t *ga,
         if (nmg_fu_planeeqn(fu, tol) < 0) {
             bu_log("Failed nmg_fu_planeeqn\n");
             nmg_pr_fu_briefly( fu, "" );
+            nmg_kfu(fu);
         }
 #endif
+
 #if 0
         if ( nmg_calc_face_g( fu ) )
             bu_log( "Failed to calculate plane eqn\n" );
@@ -1015,6 +1036,14 @@ void output_to_nmg(struct ga_t *ga,
         nmg_close_shell(s, tol);
 #endif
 
+#if 0
+        /* testing nmg_invert_shell function */
+        if (gfi->grouping_index == 82 || gfi->grouping_index == 17 || gfi->grouping_index == 81) {
+            bu_log("about to run nmg_invert_shell for grouping_index 82,17,81\n");
+            nmg_invert_shell(s);
+        }
+#endif
+
         /* run nmg_model_vertex_fuse before nmg_check_closed_shell */
         if ( nmg_check_closed_shell(s, tol) ) {
             /* make bot for a open shell */
@@ -1028,8 +1057,10 @@ void output_to_nmg(struct ga_t *ga,
             bu_vls_printf(gfi->raw_grouping_name, ".%lu.nmg.s", gfi->grouping_index);
             cleanup_name(gfi->raw_grouping_name);
 
+#if 0
             bu_log("about to run nmg_fix_normals\n");
             nmg_fix_normals(s, tol);
+#endif
 
             bu_log("about to run mk_nmg\n");
             /* the model (m) is freed when mk_nmg completes */
