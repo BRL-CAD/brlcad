@@ -21,8 +21,8 @@
 /** @{ */
 /** @file fb_util.c
  *
- *  Subroutines to simulate device specific functions for simple
- *  device interfaces to use, and backward compatibility routines.
+ * Subroutines to simulate device specific functions for simple
+ * device interfaces to use, and backward compatibility routines.
  *
  */
 /** @} */
@@ -35,10 +35,10 @@
 
 
 /*
- *			F B _ S I M _ V I E W
+ * F B _ S I M _ V I E W
  *
- *  A routine to simulate the effect of fb_view() by simply
- *  storing this information into the FBIO structure.
+ * A routine to simulate the effect of fb_view() by simply
+ * storing this information into the FBIO structure.
  */
 int
 fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
@@ -50,14 +50,15 @@ fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     ifp->if_xzoom = xzoom;
     ifp->if_yzoom = yzoom;
 
-    return	0;
+    return 0;
 }
 
+
 /*
- *			F B _ S I M _ G E T V I E W
+ * F B _ S I M _ G E T V I E W
  *
- *  A routine to simulate the effect of fb_getview() by simply
- *  reading this information from the FBIO structure.
+ * A routine to simulate the effect of fb_getview() by simply
+ * reading this information from the FBIO structure.
  */
 int
 fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
@@ -69,14 +70,15 @@ fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     *xzoom = ifp->if_xzoom;
     *yzoom = ifp->if_yzoom;
 
-    return	0;
+    return 0;
 }
 
+
 /*
- *			F B _ S I M _ C U R S O R
+ * F B _ S I M _ C U R S O R
  *
- *  A routine to simulate the effect of fb_cursor() by simply
- *  storing this information into the FBIO structure.
+ * A routine to simulate the effect of fb_cursor() by simply
+ * storing this information into the FBIO structure.
  */
 int
 fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
@@ -87,14 +89,15 @@ fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
     ifp->if_xcurs = x;
     ifp->if_ycurs = y;
 
-    return	0;
+    return 0;
 }
 
+
 /*
- *			F B _ S I M _ G E T C U R S O R
+ * F B _ S I M _ G E T C U R S O R
  *
- *  A routine to simulate the effect of fb_getcursor() by simply
- *  reading this information from the FBIO structure.
+ * A routine to simulate the effect of fb_getcursor() by simply
+ * reading this information from the FBIO structure.
  */
 int
 fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
@@ -105,8 +108,9 @@ fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
     *x = ifp->if_xcurs;
     *y = ifp->if_ycurs;
 
-    return	0;
+    return 0;
 }
+
 
 /* Backward Compatibility Routines */
 
@@ -117,8 +121,9 @@ fb_reset(FBIO *ifp)
 	FB_CK_FBIO(ifp);
     }
 
-    return	0;
+    return 0;
 }
+
 
 int
 fb_viewport(FBIO *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int UNUSED(bottom))
@@ -127,14 +132,15 @@ fb_viewport(FBIO *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int
 	FB_CK_FBIO(ifp);
     }
 
-    return	0;
+    return 0;
 }
+
 
 int
 fb_window(FBIO *ifp, int x, int y)
 {
-    int	xcenter, ycenter;
-    int	xzoom, yzoom;
+    int xcenter, ycenter;
+    int xzoom, yzoom;
 
     if (ifp) {
 	FB_CK_FBIO(ifp);
@@ -146,11 +152,12 @@ fb_window(FBIO *ifp, int x, int y)
     return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 
+
 int
 fb_zoom(FBIO *ifp, int x, int y)
 {
-    int	xcenter, ycenter;
-    int	xzoom, yzoom;
+    int xcenter, ycenter;
+    int xzoom, yzoom;
 
     if (ifp) {
 	FB_CK_FBIO(ifp);
@@ -162,6 +169,7 @@ fb_zoom(FBIO *ifp, int x, int y)
     return fb_view(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 
+
 int
 fb_scursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
@@ -172,8 +180,9 @@ fb_scursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
     /* We could actually implement this but it
      * is probably of no value.
      */
-    return	0;
+    return 0;
 }
+
 
 /*
  * Local Variables:

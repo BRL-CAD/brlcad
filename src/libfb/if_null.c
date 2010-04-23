@@ -21,8 +21,8 @@
 /** @{ */
 /** @file if_null.c
  *
- *  A Null Frame Buffer.
- *  Useful for benchmarking or debugging.
+ * A Null Frame Buffer.
+ * Useful for benchmarking or debugging.
  *
  */
 /** @} */
@@ -39,13 +39,14 @@ HIDDEN int
 null_open(FBIO *ifp, char *UNUSED(file), int width, int height)
 {
     FB_CK_FBIO(ifp);
-    if ( width > 0 )
+    if (width > 0)
 	ifp->if_width = width;
-    if ( height > 0 )
+    if (height > 0)
 	ifp->if_height = height;
 
     return(0);
 }
+
 
 HIDDEN int
 null_close(FBIO *ifp)
@@ -55,6 +56,7 @@ null_close(FBIO *ifp)
     return(0);
 }
 
+
 HIDDEN int
 null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
 {
@@ -62,6 +64,7 @@ null_clear(FBIO *ifp, unsigned char *UNUSED(pp))
 
     return(0);
 }
+
 
 HIDDEN int
 null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), int count)
@@ -71,6 +74,7 @@ null_read(FBIO *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp)
     return(count);
 }
 
+
 HIDDEN int
 null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), int count)
 {
@@ -78,6 +82,7 @@ null_write(FBIO *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(
 
     return(count);
 }
+
 
 HIDDEN int
 null_rmap(FBIO *ifp, ColorMap *UNUSED(cmp))
@@ -87,6 +92,7 @@ null_rmap(FBIO *ifp, ColorMap *UNUSED(cmp))
     return(0);
 }
 
+
 HIDDEN int
 null_wmap(FBIO *ifp, const ColorMap *UNUSED(cmp))
 {
@@ -95,23 +101,26 @@ null_wmap(FBIO *ifp, const ColorMap *UNUSED(cmp))
     return(0);
 }
 
+
 HIDDEN int
 null_view(FBIO *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
     FB_CK_FBIO(ifp);
 
-    /*fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );*/
+    /*fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);*/
     return(0);
 }
+
 
 HIDDEN int
 null_getview(FBIO *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
     FB_CK_FBIO(ifp);
 
-    /*fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );*/
+    /*fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);*/
     return(0);
 }
+
 
 HIDDEN int
 null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
@@ -120,6 +129,7 @@ null_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), 
 
     return(0);
 }
+
 
 HIDDEN int
 null_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
@@ -130,6 +140,7 @@ null_cursor(FBIO *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
     return(0);
 }
 
+
 HIDDEN int
 null_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
@@ -139,21 +150,24 @@ null_getcursor(FBIO *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
     return(0);
 }
 
+
 HIDDEN int
 null_readrect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
     FB_CK_FBIO(ifp);
 
-    return( width*height );
+    return(width*height);
 }
+
 
 HIDDEN int
 null_writerect(FBIO *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
     FB_CK_FBIO(ifp);
 
-    return( width*height );
+    return(width*height);
 }
+
 
 HIDDEN int
 null_poll(FBIO *ifp)
@@ -163,6 +177,7 @@ null_poll(FBIO *ifp)
     return(0);
 }
 
+
 HIDDEN int
 null_flush(FBIO *ifp)
 {
@@ -170,6 +185,7 @@ null_flush(FBIO *ifp)
 
     return(0);
 }
+
 
 HIDDEN int
 null_free(FBIO *ifp)
@@ -179,64 +195,66 @@ null_free(FBIO *ifp)
     return(0);
 }
 
+
 HIDDEN int
 null_help(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
 
-    fb_log( "Description: %s\n", null_interface.if_type );
-    fb_log( "Device: %s\n", ifp->if_name );
-    fb_log( "Max width/height: %d %d\n",
-	    null_interface.if_max_width,
-	    null_interface.if_max_height );
-    fb_log( "Default width/height: %d %d\n",
-	    null_interface.if_width,
-	    null_interface.if_height );
-    fb_log( "Useful for Benchmarking/Debugging\n" );
+    fb_log("Description: %s\n", null_interface.if_type);
+    fb_log("Device: %s\n", ifp->if_name);
+    fb_log("Max width/height: %d %d\n",
+	   null_interface.if_max_width,
+	   null_interface.if_max_height);
+    fb_log("Default width/height: %d %d\n",
+	   null_interface.if_width,
+	   null_interface.if_height);
+    fb_log("Useful for Benchmarking/Debugging\n");
     return(0);
 }
+
 
 /* This is the ONLY thing that we normally "export" */
 FBIO null_interface =  {
     0,
-    null_open,		/* device_open		*/
-    null_close,		/* device_close		*/
-    null_clear,		/* device_clear		*/
-    null_read,		/* buffer_read		*/
-    null_write,		/* buffer_write		*/
-    null_rmap,		/* colormap_read	*/
-    null_wmap,		/* colormap_write	*/
-    null_view,		/* set view		*/
-    null_getview,		/* get view		*/
-    null_setcursor,		/* define cursor	*/
-    null_cursor,		/* set cursor		*/
-    null_getcursor,		/* get cursor		*/
-    null_readrect,		/* rectangle read	*/
-    null_writerect,		/* rectangle write	*/
-    null_readrect,		/* bw rectangle read	*/
-    null_writerect,		/* bw rectangle write	*/
-    null_poll,		/* handle events	*/
-    null_flush,		/* flush output		*/
-    null_free,		/* free resources	*/
-    null_help,		/* help message		*/
-    "Null Device",		/* device description	*/
-    32*1024,		/* max width		*/
-    32*1024,		/* max height		*/
-    "/dev/null",		/* short device name	*/
-    512,			/* default/current width  */
-    512,			/* default/current height */
-    -1,			/* select fd		*/
-    -1,			/* file descriptor	*/
-    1, 1,			/* zoom			*/
-    256, 256,		/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
+    null_open,		/* device_open */
+    null_close,		/* device_close */
+    null_clear,		/* device_clear */
+    null_read,		/* buffer_read */
+    null_write,		/* buffer_write */
+    null_rmap,		/* colormap_read */
+    null_wmap,		/* colormap_write */
+    null_view,		/* set view */
+    null_getview,	/* get view */
+    null_setcursor,	/* define cursor */
+    null_cursor,	/* set cursor */
+    null_getcursor,	/* get cursor */
+    null_readrect,	/* rectangle read */
+    null_writerect,	/* rectangle write */
+    null_readrect,	/* bw rectangle read */
+    null_writerect,	/* bw rectangle write */
+    null_poll,		/* handle events */
+    null_flush,		/* flush output */
+    null_free,		/* free resources */
+    null_help,		/* help message */
+    "Null Device",	/* device description */
+    32*1024,		/* max width */
+    32*1024,		/* max height */
+    "/dev/null",	/* short device name */
+    512,		/* default/current width */
+    512,		/* default/current height */
+    -1,			/* select fd */
+    -1,			/* file descriptor */
+    1, 1,		/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,		/* page_base */
+    PIXEL_NULL,		/* page_curp */
+    PIXEL_NULL,		/* page_endp */
+    -1,			/* page_no */
+    0,			/* page_dirty */
+    0L,			/* page_curpos */
+    0L,			/* page_pixels */
     0,			/* debug */
     {0}, /* u1 */
     {0}, /* u2 */
@@ -245,6 +263,7 @@ FBIO null_interface =  {
     {0}, /* u5 */
     {0}  /* u6 */
 };
+
 
 /*
  * Local Variables:

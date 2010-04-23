@@ -1,3 +1,4 @@
+
 /*                        I F _ X 2 4 . C
  * BRL-CAD
  *
@@ -75,7 +76,7 @@
 
 /* Print a debug message on first time into a piece of code */
 #if 0
-#  define DEBUG1(str) {static int before=1; if (before) {write(2, str, strlen(str)); before=0;} }
+#  define DEBUG1(str) {static int before=1; if (before) {int ret = write(2, str, strlen(str)); before=0;} }
 #else
 #  define DEBUG1(str)	/* NIL */
 #endif
@@ -239,13 +240,14 @@ static struct modeflags {
     { '\0', 0, 0, "" }
 };
 
+
 /* Flags for X24_blit's flags argument */
 
 #define BLIT_DISP 0x1	/* Write bits to screen */
 #define BLIT_PZ 0x2	/* This is a pan or zoom */
 #define BLIT_RESIZE 0x4	/* We just resized (screen empty) */
 
-#define BS_NAME	"/tmp/X24_fb"
+#define BS_NAME "/tmp/X24_fb"
 
 /* Elements of 6x9x4 colorcube */
 
@@ -265,6 +267,7 @@ static float dmsk881[] = {
     0.596078, 0.847059, 0.062745, 0.313726, 0.564706, 0.815686, 0.094118, 0.345098,
     0.000000, 0.250980, 0.501961, 0.752941, 0.031373, 0.282353, 0.533333, 0.784314
 };
+
 
 static float dmsk883[] = {
     0.784314, 0.533333, 0.282353, 0.031373, 0.752941, 0.501961, 0.250980, 0.000000,
@@ -412,21 +415,24 @@ print_display_info(Display *dpy)
 	printf("R[0..%lu] * %lu + G[0..%lu] * %lu  + B[0..%lu] * %lu + %lu\n",
 	       cmap.red_max, cmap.red_mult, cmap.green_max, cmap.green_mult,
 	       cmap.blue_max, cmap.blue_mult, cmap.base_pixel);
-    } else
+    } else {
 	printf("XA_RGB_BEST_MAP    - No\n");
+    }
     if (XGetStandardColormap(dpy, win, &cmap, XA_RGB_DEFAULT_MAP)) {
 	printf("XA_RGB_DEFAULT_MAP - Yes (0x%lx)\n", cmap.colormap);
 	printf("R[0..%lu] * %lu + G[0..%lu] * %lu  + B[0..%lu] * %lu + %lu\n",
 	       cmap.red_max, cmap.red_mult, cmap.green_max, cmap.green_mult,
 	       cmap.blue_max, cmap.blue_mult, cmap.base_pixel);
-    } else
+    } else {
 	printf("XA_RGB_DEFAULT_MAP - No\n");
+    }
     if (XGetStandardColormap(dpy, win, &cmap, XA_RGB_GRAY_MAP)) {
 	printf("XA_RGB_GRAY_MAP    - Yes (0x%lx)\n", cmap.colormap);
 	printf("R[0..%lu] * %lu + %lu\n",
 	       cmap.red_max, cmap.red_mult, cmap.base_pixel);
-    } else
+    } else {
 	printf("XA_RGB_GRAY_MAP    - No\n");
+    }
 }
 
 
@@ -465,6 +471,7 @@ X24_createColorCube(struct xinfo *xi)
 
     XStoreColors(xi->xi_dpy, xi->xi_cmap, colors, xi->xi_ncolors);
 }
+
 
 /*
   Create fast lookup tables for dithering
@@ -507,23 +514,23 @@ X24_createColorTables(struct xinfo *xi)
 	bluval = blus[idx];
 
 	for (j = 0; j < 64; j++) {
-	    if (i - redval > (256 / (sizeof (reds) - 1)) *
-		dmsk883[128+j])
+	    if (i - redval > (256 / (sizeof (reds) - 1)) * dmsk883[128+j]) {
 		xi->xi_ccredtbl[(i << 6) + j] = reditbl;
-	    else
+	    } else {
 		xi->xi_ccredtbl[(i << 6) + j] = redtbl;
+	    }
 
-	    if (i - grnval > (256 / (sizeof (grns) - 1)) *
-		dmsk883[64+j])
+	    if (i - grnval > (256 / (sizeof (grns) - 1)) * dmsk883[64+j]) {
 		xi->xi_ccgrntbl[(i << 6) + j] = grnitbl;
-	    else
+	    } else {
 		xi->xi_ccgrntbl[(i << 6) + j] = grntbl;
+	    }
 
-	    if (i - bluval > (256 / (sizeof (blus) - 1)) *
-		dmsk883[j])
+	    if (i - bluval > (256 / (sizeof (blus) - 1)) * dmsk883[j]) {
 		xi->xi_ccblutbl[(i << 6) + j] = bluitbl;
-	    else
+	    } else {
 		xi->xi_ccblutbl[(i << 6) + j] = blutbl;
+	    }
 	}
     }
 }
@@ -555,11 +562,11 @@ x24_setup(FBIO *ifp, int width, int height)
     /* Open the display - use the env variable DISPLAY */
     xname = XDisplayName(NULL);
     /* Attempt one level of fallback, esp. for fbserv daemon */
-    if (!xname || *xname == '\0')  xname = ":0";
+    if (!xname || *xname == '\0') xname = ":0";
 
     if ((xi->xi_dpy = XOpenDisplay(xname)) == NULL) {
 	fb_log("if_X: Can't open X display \"%s\"\n", xname);
-	return	-1;
+	return -1;
     }
 
 #if 0
@@ -575,8 +582,7 @@ x24_setup(FBIO *ifp, int width, int height)
      * the next.
      */
 
-    switch ((xi->xi_mode & MODEV_MASK) >> 1)
-    {
+    switch ((xi->xi_mode & MODEV_MASK) >> 1) {
 	default:
 	case FLG_VD24:
 	    if (XMatchVisualInfo(xi->xi_dpy, xi->xi_screen, 24, DirectColor,
@@ -645,8 +651,7 @@ x24_setup(FBIO *ifp, int width, int height)
 
     /* Set up colormaps, white/black pixels */
 
-    switch (xi->xi_flags & FLG_VMASK)
-    {
+    switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	    xi->xi_cmap = XCreateColormap(xi->xi_dpy, RootWindow(xi->xi_dpy,
 								 xi->xi_screen), xi->xi_visual, AllocAll);
@@ -786,8 +791,7 @@ x24_setup(FBIO *ifp, int width, int height)
 			if (i > (256.0 * dmsk881[didx])) {
 			    xi->xi_andtbl[(i << 6) + j] = 0xFF;
 			    xi->xi_ortbl[(i << 6) + j] = 1 << x;
-			}
-			else {
+			} else {
 			    xi->xi_andtbl[(i << 6) + j] = ~(1 << x);
 			    xi->xi_ortbl[(i << 6) + j] = 0;
 			}
@@ -839,7 +843,7 @@ x24_setup(FBIO *ifp, int width, int height)
 
     if (xi->xi_win == 0) {
 	fb_log("if_X: Can't create window\n");
-	return	-1;
+	return -1;
     }
 
     /* Tell window manager about colormap */
@@ -903,8 +907,7 @@ x24_setup(FBIO *ifp, int width, int height)
 
     /* Allocate image buffer, and make our X11 Image */
 
-    switch (xi->xi_flags & FLG_VMASK)
-    {
+    switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
 	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned int),
@@ -968,8 +971,7 @@ x24_setup(FBIO *ifp, int width, int height)
 
     /* Calculate luminance tables if we need them */
 
-    switch (xi->xi_flags & FLG_VMASK)
-    {
+    switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VG8:
 	case FLG_VS1:
 	    if (!lumdone) {
@@ -985,6 +987,7 @@ x24_setup(FBIO *ifp, int width, int height)
 
     return (0);
 }
+
 
 /* X 2 4 _ b l i t
  *
@@ -1016,7 +1019,7 @@ x24_setup(FBIO *ifp, int width, int height)
  * register.  This register is then clocked out as bytes in the
  * correct ordering.
  *
- * x1,y1->w,h describes a Rectangle of changed bits (image space coord.)
+ * x1, y1->w, h describes a Rectangle of changed bits (image space coord.)
  */
 HIDDEN void
 X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */)
@@ -1094,7 +1097,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
     blue_shift = i-8;
 
 #if BLIT_DBG
-    printf("blit: enter %dx%d at (%d, %d), disp (%d, %d) to (%d, %d)  flags %d\n",
+    printf("blit: enter %dx%d at (%d, %d), disp (%d, %d) to (%d, %d) flags %d\n",
 	   w, h, x1, y1, xi->xi_ilf, xi->xi_ibt, xi->xi_irt, xi->xi_itp, flags);
 #endif
 
@@ -1133,32 +1136,36 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
     /* Compute ox: offset from left edge of window to left pixel */
 
     xdel = x1 - xi->xi_ilf;
-    if (xdel)
+    if (xdel) {
 	ox = x1wd + ((xdel - 1) * ifp->if_xzoom) + xi->xi_xlf;
-    else
+    } else {
 	ox = xi->xi_xlf;
+    }
 
 
     /* Compute oy: offset from top edge of window to bottom pixel */
 
     ydel = y1 - xi->xi_ibt;
-    if (ydel)
+    if (ydel) {
 	oy = xi->xi_xbt - (y1ht + ((ydel - 1) * ifp->if_yzoom));
-    else
+    } else {
 	oy = xi->xi_xbt;
+    }
 
 
     /* Figure out size of changed area on screen in X pixels */
 
-    if (x2 == x1)
+    if (x2 == x1) {
 	xwd = x1wd;
-    else
+    } else {
 	xwd = x1wd + x2wd + ifp->if_xzoom * (x2 - x1 - 1);
+    }
 
-    if (y2 == y1)
+    if (y2 == y1) {
 	xht = y1ht;
-    else
+    } else {
 	xht = y1ht + y2ht + ifp->if_yzoom * (y2 - y1 - 1);
+    }
 
 #if BLIT_DBG
     printf("blit: output to (%d, %d)\n", ox, oy);
@@ -1172,8 +1179,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
      * quadrant IV, opix _decreases_.
      */
 
-    switch (xi->xi_flags & FLG_VMASK)
-    {
+    switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
 	case FLG_VD16:
@@ -1250,12 +1256,13 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 			/* Calculate # pixels needed */
 			/* See comment above for more info */
 
-			if (x == x1)
+			if (x == x1) {
 			    pxwd = x1wd;
-			else if (x == x2)
+			} else if (x == x2) {
 			    pxwd = x2wd;
-			else
+			} else {
 			    pxwd = ifp->if_xzoom;
+			}
 
 			/*
 			 * Construct a pixel with the color components
@@ -1409,7 +1416,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 			/* For each line, convert/copy pixels */
 
-			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
 			    for (k = x2 - x1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
@@ -1423,7 +1430,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 				dmx = (dmx + 1) & 0x7;
 				lip += sizeof (RGBpixel);
 			    }
-			else
+			} else {
 			    for (k = x2 - x1 + 1; k; k--) {
 				r = red[lip[RED]];
 				g = grn[lip[GRN]];
@@ -1437,6 +1444,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 				dmx = (dmx + 1) & 0x7;
 				lip += sizeof (RGBpixel);
 			    }
+			}
 
 			ip += xi->xi_iwidth * sizeof (RGBpixel);
 			op -= xi->xi_image->bytes_per_line;
@@ -1462,12 +1470,11 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 			/* For each line, convert/copy pixels */
 
-			while (pyht--)
-			{
+			while (pyht--) {
 			    lip = ip;
 			    lop = op;
 
-			    if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+			    if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
 				for (x = x1; x <= x2; x++) {
 				    int pxwd;
 
@@ -1484,8 +1491,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 				    g = lip[GRN];
 				    b = lip[BLU];
 
-				    while (pxwd--)
-				    {
+				    while (pxwd--) {
 					*lop++ = xi->xi_base +
 					    xi->xi_ccredtbl[(r << 6) + dmx + dmy] +
 					    xi->xi_ccgrntbl[(g << 6) + dmx + dmy] +
@@ -1496,7 +1502,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 				    lip += sizeof (RGBpixel);
 				}
-			    else
+			    } else {
 				for (x = x1; x <= x2; x++) {
 				    int pxwd;
 
@@ -1513,8 +1519,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 				    g = grn[lip[GRN]];
 				    b = blu[lip[BLU]];
 
-				    while (pxwd--)
-				    {
+				    while (pxwd--) {
 					*lop++ = xi->xi_base +
 					    xi->xi_ccredtbl[(r << 6) + dmx + dmy] +
 					    xi->xi_ccgrntbl[(g << 6) + dmx + dmy] +
@@ -1525,6 +1530,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 				    lip += sizeof (RGBpixel);
 				}
+			    }
 
 			    op -= xi->xi_image->bytes_per_line;
 			    dmx = ox & 0x7;
@@ -1563,7 +1569,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 			/* For each line, convert/copy pixels */
 
-			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
 			    for (k = x2 - x1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
@@ -1575,7 +1581,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 					  8388608) >> 24;
 				lip += sizeof (RGBpixel);
 			    }
-			else
+			} else {
 			    for (k = x2 - x1 + 1; k; k--) {
 				r = red[lip[RED]];
 				g = grn[lip[GRN]];
@@ -1587,6 +1593,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 					  8388608) >> 24;
 				lip += sizeof (RGBpixel);
 			    }
+			}
 
 			ip += xi->xi_iwidth * sizeof (RGBpixel);
 			op -= xi->xi_xwidth;
@@ -1617,7 +1624,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 			/* For the first line, convert/copy pixels */
 
-			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
 			    for (x = x1; x <= x2; x++) {
 				int pxwd;
 
@@ -1648,7 +1655,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 				while (pxwd--)
 				    *lop++ = pix;
 			    }
-			else
+			} else {
 			    for (x = x1; x <= x2; x++) {
 				int pxwd;
 
@@ -1679,6 +1686,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 				while (pxwd--)
 				    *lop++ = pix;
 			    }
+			}
 
 			copied = lop - op;
 
@@ -1730,7 +1738,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 			/* For each line, convert/copy pixels */
 
-			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+			if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
 			    for (k = x2 - x1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
@@ -1755,7 +1763,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 				lip += sizeof (RGBpixel);
 			    }
-			else
+			} else {
 			    for (k = x2 - x1 + 1; k; k--) {
 				r = lip[RED];
 				g = lip[GRN];
@@ -1780,6 +1788,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 				lip += sizeof (RGBpixel);
 			    }
+			}
 
 			if (dmx)
 			    *lop = loppix;
@@ -1809,13 +1818,12 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 			/* For each line, convert/copy pixels */
 
-			while (pyht--)
-			{
+			while (pyht--) {
 			    lip = ip;
 			    lop = op;
 			    loppix = *lop;
 
-			    if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+			    if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP)) {
 				for (x = x1; x <= x2; x++) {
 				    int pxwd;
 
@@ -1837,8 +1845,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 					   blumtbl[b] +
 					   8388608) >> 24;
 
-				    while (pxwd--)
-				    {
+				    while (pxwd--) {
 					loppix = (loppix &
 						  xi->xi_andtbl[(lum << 6)
 								+ dmx + dmy]) |
@@ -1854,7 +1861,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 				    lip += sizeof (RGBpixel);
 				}
-			    else
+			    } else {
 				for (x = x1; x <= x2; x++) {
 				    int pxwd;
 
@@ -1876,8 +1883,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 					   blumtbl[blu[b]] +
 					   8388608) >> 24;
 
-				    while (pxwd--)
-				    {
+				    while (pxwd--) {
 					loppix = (loppix &
 						  xi->xi_andtbl[(lum << 6)
 								+ dmx + dmy]) |
@@ -1893,6 +1899,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 				    lip += sizeof (RGBpixel);
 				}
+			    }
 
 			    if (dmx)
 				*lop = loppix;
@@ -1919,8 +1926,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
     /* If we changed the valid region, make a new one. */
 
-    if (xi->xi_usereg && (flags & (BLIT_PZ | BLIT_RESIZE)))
-    {
+    if (xi->xi_usereg && (flags & (BLIT_PZ | BLIT_RESIZE))) {
 	XRectangle rect;
 	Region Nreg = XCreateRegion();
 
@@ -1937,8 +1943,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 
 	    XSubtractRegion(xi->xi_reg, Nreg, Creg);
 
-	    if (!XEmptyRegion(Creg))
-	    {
+	    if (!XEmptyRegion(Creg)) {
 		XSetRegion(xi->xi_dpy, xi->xi_cgc, Creg);
 
 		XFillRectangle(xi->xi_dpy, xi->xi_win,
@@ -1956,6 +1961,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 	XFlush(xi->xi_dpy);
 }
 
+
 HIDDEN int
 X24_rmap(FBIO *ifp, ColorMap *cmp)
 {
@@ -1971,6 +1977,7 @@ X24_rmap(FBIO *ifp, ColorMap *cmp)
 
     return(0);
 }
+
 
 HIDDEN int
 X24_wmap(FBIO *ifp, const ColorMap *cmp)
@@ -2070,6 +2077,7 @@ X24_wmap(FBIO *ifp, const ColorMap *cmp)
     return(0);
 }
 
+
 /*
  * Allocate backing store for two reaons.  First, if we are running on
  * a truecolor display then the colormaps are not modifiable and
@@ -2102,8 +2110,7 @@ X24_getmem(FBIO *ifp)
     /*
      * get shared mem segment, creating it if it does not exist
      */
-    switch (xi->xi_mode & MODE10_MASK)
-    {
+    switch (xi->xi_mode & MODE10_MASK) {
 	case MODE10_SHARED:
 	    {
 		/* First try to attach to an existing shared memory */
@@ -2139,9 +2146,7 @@ using private memory instead, errno %d\n", errno);
 		if (xi->xi_shmid < 0) {
 		    fb_log("X24_getmem: can't shmget shared memory, using \
 private memory instead, errno %d\n", errno);
-		}
-		else
-		{
+		} else {
 		    /* Open the segment Read/Write */
 		    if ((mem = (char *)shmat(xi->xi_shmid, 0, 0)) != (char *)-1L)
 			break;
@@ -2183,6 +2188,7 @@ store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
 
     return (new);
 }
+
 
 HIDDEN void
 X24_updstate(FBIO *ifp)
@@ -2244,8 +2250,7 @@ X24_updstate(FBIO *ifp)
      * full size.  We'll adjust ?wp to be the number of full and
      * truncated slots available.
      */
-    switch (xrp)
-    {
+    switch (xrp) {
 	case 0:
 	    lf_w = ifp->if_xzoom;
 	    rt_w = ifp->if_xzoom;
@@ -2264,8 +2269,7 @@ X24_updstate(FBIO *ifp)
 	    break;
     }
 
-    switch (yrp)
-    {
+    switch (yrp) {
 	case 0:
 	    tp_h = ifp->if_yzoom;
 	    bt_h = ifp->if_yzoom;
@@ -2305,8 +2309,7 @@ X24_updstate(FBIO *ifp)
 
     want = ifp->if_xcenter;
     avail = xwp/2;
-    if (want >= avail)
-    {
+    if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be butted
 	 * up against the left edge, so
@@ -2342,8 +2345,7 @@ X24_updstate(FBIO *ifp)
 
     want = ifp->if_ycenter;
     avail = ywp/2;
-    if (want >= avail)
-    {
+    if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be
 	 * butted up against the bottom edge, so
@@ -2381,8 +2383,7 @@ X24_updstate(FBIO *ifp)
 
     want = xi->xi_iwidth - ifp->if_xcenter;
     avail =  xwp - xwp/2;
-    if (want >= avail)
-    {
+    if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be
 	 * butted up against the right edge, so
@@ -2421,8 +2422,7 @@ X24_updstate(FBIO *ifp)
 
     want = xi->xi_iheight - ifp->if_ycenter;
     avail = ywp - ywp/2;
-    if (want >= avail)
-    {
+    if (want >= avail) {
 	/*
 	 * Just enough or too many pixels to display.  We'll be
 	 * butted up against the top edge, so
@@ -2462,6 +2462,7 @@ X24_updstate(FBIO *ifp)
 #endif
 }
 
+
 /*
  * X 2 4 _ Z A P M E M
  */
@@ -2493,6 +2494,7 @@ X24_zapmem()
 #endif
     return;
 }
+
 
 HIDDEN void
 X24_destroy(struct xinfo *xi)
@@ -2539,6 +2541,7 @@ X24_destroy(struct xinfo *xi)
     }
 }
 
+
 /*
  * X 2 4 _ O P E N
  */
@@ -2574,8 +2577,7 @@ X24_open(FBIO *ifp, char *file, int width, int height)
 	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen?? */
 	    mode = 0;
-	}
-	else {
+	} else {
 	    /* Parse the options */
 	    alpha = 0;
 	    mp = &modebuf[0];
@@ -2974,6 +2976,7 @@ _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap c
     return 0;
 }
 
+
 int
 X24_open_existing(FBIO *ifp, int argc, char **argv)
 {
@@ -3015,6 +3018,7 @@ X24_open_existing(FBIO *ifp, int argc, char **argv)
 
     return _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc);
 }
+
 
 static int alive = 1;
 
@@ -3153,6 +3157,7 @@ X24_handle_event(FBIO *ifp, XEvent *event)
     return;
 }
 
+
 HIDDEN int
 x24_linger(FBIO *ifp)
 {
@@ -3188,6 +3193,7 @@ X24_close(FBIO *ifp)
     return (0);
 }
 
+
 int
 X24_close_existing(FBIO *ifp)
 {
@@ -3212,8 +3218,9 @@ X24_close_existing(FBIO *ifp)
     return (0);
 }
 
+
 HIDDEN int
-X24_clear(FBIO *ifp, unsigned char  *pp)
+X24_clear(FBIO *ifp, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -3268,7 +3275,7 @@ X24_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
     /* check origin bounds */
     if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
-	return	-1;
+	return -1;
 
     /* clip read length */
     maxcount = xi->xi_iwidth * (xi->xi_iheight - y) - x;
@@ -3296,7 +3303,7 @@ X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 
     /* Check origin bounds */
     if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
-	return	-1;
+	return -1;
 
     /* Clip write length */
     maxcount = xi->xi_iwidth * (xi->xi_iheight - y) - x;
@@ -3310,9 +3317,9 @@ X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 
     /* Get the bits to the screen */
 
-    if (x + count <= xi->xi_iwidth)
+    if (x + count <= xi->xi_iwidth) {
 	X24_blit(ifp, x, y, count, 1, BLIT_DISP);
-    else {
+    } else {
 	int ylines;
 	int tcount;
 
@@ -3324,6 +3331,7 @@ X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 
     return(count);
 }
+
 
 HIDDEN int
 X24_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
@@ -3344,10 +3352,10 @@ X24_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     /* check bounds */
     if (xcenter < 0 || xcenter >= xi->xi_iwidth
 	|| ycenter < 0 || ycenter >= xi->xi_iheight)
-	return	-1;
+	return -1;
     if (xzoom <= 0 || xzoom >= xi->xi_iwidth/2
 	|| yzoom <= 0 || yzoom >= xi->xi_iheight/2)
-	return	-1;
+	return -1;
 
     ifp->if_xcenter = xcenter;
     ifp->if_ycenter = ycenter;
@@ -3360,6 +3368,7 @@ X24_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     return 0;
 }
+
 
 HIDDEN int
 X24_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
@@ -3378,6 +3387,7 @@ X24_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     return(0);
 }
 
+
 /*ARGSUSED*/
 HIDDEN int
 X24_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
@@ -3391,6 +3401,7 @@ X24_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), i
 
     return(0);
 }
+
 
 HIDDEN int
 X24_cursor(FBIO *ifp, int mode, int x, int y)
@@ -3454,6 +3465,7 @@ X24_cursor(FBIO *ifp, int mode, int x, int y)
     return(0);
 }
 
+
 HIDDEN int
 X24_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
@@ -3467,6 +3479,7 @@ X24_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 
     return(0);
 }
+
 
 HIDDEN int
 X24_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
@@ -3513,6 +3526,7 @@ X24_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 
     return (width * height);
 }
+
 
 HIDDEN int
 X24_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
@@ -3564,6 +3578,7 @@ X24_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
     return (width * height);
 }
 
+
 HIDDEN int
 X24_poll(FBIO *ifp)
 {
@@ -3583,6 +3598,7 @@ X24_poll(FBIO *ifp)
     return(0);
 }
 
+
 HIDDEN int
 X24_flush(FBIO *ifp)
 {
@@ -3598,6 +3614,7 @@ X24_flush(FBIO *ifp)
     return(0);
 }
 
+
 HIDDEN int
 X24_free(FBIO *ifp)
 {
@@ -3609,6 +3626,7 @@ X24_free(FBIO *ifp)
 
     return(0);
 }
+
 
 HIDDEN int
 X24_help(FBIO *ifp)
@@ -3682,6 +3700,7 @@ X24_help(FBIO *ifp)
     return(0);
 }
 
+
 int
 X24_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
@@ -3699,6 +3718,7 @@ X24_refresh(FBIO *ifp, int x, int y, int w, int h)
 
     return 0;
 }
+
 
 /* This is the ONLY thing that we normally "export" */
 FBIO X24_interface =  {
@@ -3749,6 +3769,7 @@ FBIO X24_interface =  {
     {0}, /* u5 */
     {0}  /* u6 */
 };
+
 
 #else
 

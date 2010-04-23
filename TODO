@@ -17,7 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* 64-bit port of BRL-CAD on Windows
+* SHIP IT.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -51,6 +51,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* fix gqa spewing of massive amounts of plot data with th -Av -v
+  options:
+  ../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
+  -rw-rw-r--  1 morrison users 41572569618 Apr 23 15:14 volume.pl
+
+* replace SCLstring with std::string
 
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use
