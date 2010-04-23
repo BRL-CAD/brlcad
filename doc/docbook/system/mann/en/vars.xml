@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../../resources/standard/dtd/docbookx.dtd">
+
+<!-- Copyright (c) 2005-2008 United States Government as represented by -->
+<!-- the U.S. Army Research Laboratory.                                 -->
+<!--                                                                    -->
+<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
+<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
+<!-- modification, are permitted provided that the following conditions -->
+<!-- are met:                                                           -->
+<!--                                                                    -->
+<!-- 1. Redistributions of source code (Docbook format) must retain the -->
+<!-- above copyright notice, this list of conditions and the following  -->
+<!-- disclaimer.                                                        -->
+<!--                                                                    -->
+<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
+<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
+<!-- reproduce the above copyright notice, this list of conditions and  -->
+<!-- the following disclaimer in the documentation and/or other         -->
+<!-- materials provided with the distribution.                          -->
+<!--                                                                    -->
+<!-- 3. The name of the author may not be used to endorse or promote    -->
+<!-- products derived from this documentation without specific prior    -->
+<!-- written permission.                                                -->
+<!--                                                                    -->
+<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
+<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
+<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
+<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
+<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
+<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
+<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
+<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
+<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
+<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
+<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
+<!-- SUCH DAMAGE.                                                       -->
+
+<refentry id='vars'>
+
+<refmeta>
+  <refentrytitle>VARS</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+  <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv id='name'>
+  <refname>vars</refname>
+  <refpurpose>With no arguments, will list all the MGED variables and their
+values.   </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+  <cmdsynopsis>
+    <command>vars</command>    
+    
+    <arg><replaceable>variable</replaceable>=<replaceable>value</replaceable></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'>
+  <title>DESCRIPTION</title>
+  <para>With no arguments, will list all the MGED variables and their
+values. If a <emphasis>variable=value</emphasis> string is included on the command line, then that <emphasis>value</emphasis> is
+assigned to the specified <emphasis>variable</emphasis>.  Note that no spaces are allowed around the “=”.
+The available <emphasis>variables</emphasis> are as follows:
+  </para>
+<itemizedlist mark='bullet'>
+<listitem>
+<para>autosize -- if nonzero, then MGED will set the view size whenever it draws to an
+empty display.
+</para>
+</listitem>
+
+<listitem>
+<para>rateknobs -- if nonzero, then the knobs and sliders act as rate adjustments;
+otherwise, they act as absolute adjustments.
+</para>
+</listitem>
+
+<listitem>
+<para>sliders -- if nonzero, the sliders are displayed.
+</para>
+</listitem>
+<listitem>
+<para>faceplate -- if nonzero, the MGED faceplate is displayed.
+</para>
+</listitem>
+<listitem>
+<para>orig_gui -- if nonzero, the “viewing” menu is displayed.
+</para>
+</listitem>
+
+<listitem>
+<para>linewidth -- indicates how wide to draw lines.
+</para>
+</listitem>
+
+<listitem>
+<para>linestyle -- set line style of wireframe shapes. Currently not being used.
+</para>
+</listitem>
+
+<listitem>
+<para>hot_key -- the X11 keysym definition for the key to toggle the <emphasis>send_key</emphasis> value.
+The default is “0xFFC6” (65478 decimal), which is the F9 key. The keysym
+values are defined in the X11 file named <emphasis>keysymdef.h</emphasis>.
+</para>
+</listitem>
+
+<listitem>
+<para>context -- if nonzero (the default), then primitive editing parameters entered via
+the <command>p</command> command will be applied to the edited shape in the context of the
+combination tree above it in the displayed hierarchy. This means, for example, a
+translation applied to a shape will translate the shape to some point such that
+when the transformation matrices for that path are applied, the edited shape will
+appear at the specified location. If <emphasis>context</emphasis> is set to zero, then the primitive edit
+operations will be applied directly to the edited shape. This means that a
+translation to a specific point may result in the edited shape being drawn at a point
+different from that specified (due to transformations in the <emphasis>combination</emphasis> tree above
+it). Note that this only affects primitive edit operations that use the <emphasis>p</emphasis> command.
+</para>
+</listitem>
+
+<listitem>
+<para>dlist -- if nonzero, use display lists.
+</para>
+</listitem>
+
+<listitem>
+<para>use_air -- if nonzero, use air while raytracing.
+</para>
+</listitem>
+
+<listitem>
+<para>listen -- if nonzero, listen for connections to MGED’s built-in fbserv.</para>
+</listitem>
+
+<listitem>
+<para>port -- port for the built-in fbserv to use.
+</para>
+</listitem>
+
+<listitem>
+<para>fb -- if nonzero, then framebuffer is active.
+</para>
+</listitem>
+
+<listitem>
+<para>fb_all -- if nonzero, use entire geometry window for the framebuffer; otherwise,
+use only the rectangular area.
+</para>
+</listitem>
+
+<listitem>
+<para>fb_overlay -- if nonzero, overlay framebuffer image over geometry; otherwise,
+draw geometry over the framebuffer image.
+</para>
+</listitem>
+
+<listitem>
+<para>mouse_behavior -- see the following list of mouse behaviors:
+</para>
+	<itemizedlist mark='bullet'>
+	<listitem>
+	<para>c -- fire ray for combination edit selection.
+	</para>
+	</listitem>
+	<listitem>
+	<para>d -- default behavior (i.e., as found in classic MGED).
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>m -- fire ray for matrix edit selection.
+	</para>
+	</listitem>
+	<listitem>
+	<para>p -- paint rectangular area.
+	</para>
+	</listitem>
+	<listitem>
+	<para>q -- fire query rays.
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>r -- raytrace rectangular area.
+	</para>
+	</listitem>
+	<listitem>
+	<para>s -- fire ray for primitive edit selection.
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>z -- zoom rectangular area.
+	</para>
+	</listitem>
+	</itemizedlist>
+</listitem>
+<listitem>
+<para>coords -- see the following list of coordinate systems to use for transformations:
+</para>
+	<itemizedlist mark='bullet'>
+	<listitem>
+	<para>m -- model coordinates.
+	</para>
+	</listitem>
+	<listitem>
+	<para>v -- view coordinates.
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>o -- object coordinates.
+	</para>
+	</listitem>
+	</itemizedlist>
+</listitem>
+<listitem>
+<para>rotate_about -- see the following list of centers of rotation:
+</para>
+	<itemizedlist mark='bullet'>
+	<listitem>
+	<para>v -- view center.
+	</para>
+	</listitem>
+	
+	<listitem>
+	<para>e -- eye.
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>m -- model origin.
+	</para>
+	</listitem>
+	
+	<listitem>
+	<para>k -- keypoint.
+	</para>
+	</listitem>
+
+	</itemizedlist>
+</listitem>
+<listitem>
+<para>transform -- see the following list of things to transform:
+</para>
+	<itemizedlist mark='bullet'>
+	<listitem>
+	<para>a -- transform the angle distance cursor if active; otherwise same as v.
+	</para>
+	</listitem>
+	
+	<listitem>
+	<para>e -- apply transformations to the edit.
+	</para>
+	</listitem>
+
+	<listitem>
+	<para>v -- apply transformations to the view.
+	</para>
+	</listitem>
+     </itemizedlist>
+</listitem>
+<listitem>
+<para>predictor -- if nonzero, the predictor frame will be displayed.
+</para>
+</listitem>
+
+<listitem>
+<para>predictor_advance -- the number of seconds into the future to advance the
+predictor frame.
+</para>
+</listitem>
+
+<listitem>
+<para>predictor_length -- not currently used.
+</para>
+</listitem>
+
+<listitem>
+<para>perspective -- if greater than zero, this is the perspective angle in degrees;
+otherwise, perspective is turned off.
+</para>
+</listitem>
+
+<listitem>
+<para>perspective_mode -- if nonzero, turn perspective on; otherwise, turn it off.
+</para>
+</listitem>
+
+<listitem>
+<para>toggle_perspective -- used to toggle among the four canned perspective angles
+(i.e., 30, 45, 60, and 90).
+</para>
+</listitem>
+
+<listitem>
+<para>nmg_eu_dist -- when the <emphasis>-u</emphasis> option to the <command>ev</command> command is used, the NMG edgeuses
+are drawn this distance (mm) away from the actual edge.
+</para>
+</listitem>
+
+<listitem>
+<para>eye_sep_dist -- if greater than zero, this is the eye separation distance (mm) for
+stereo viewing; otherwise, stereo is off.
+</para>
+</listitem>
+
+<listitem>
+<para>union_op -- not currently used.
+</para>
+</listitem>
+
+<listitem>
+<para>intersection_op -- not currently used.
+</para>
+</listitem>
+
+<listitem>
+<para>difference_op -- not currently used.
+</para>
+</listitem>
+</itemizedlist>
+</refsect1>
+
+<refsect1 id='examples'>
+  <title>EXAMPLES</title>
+  <para>The example shows the use of the <command>vars</command> command with an argument.
+    
+  </para>
+ 
+       
+  <example>
+    <title>Display the sliders.</title>
+    <para>
+      <prompt>mged></prompt><userinput>vars sliders=1</userinput>
+    </para>
+    <para>Turns on the <emphasis>sliders</emphasis>.
+       
+    </para>
+  </example>
+ 
+</refsect1>
+
+<refsect1 id='author'>
+  <title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 id='bug_reports'>
+  <title>BUG REPORTS</title>
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsect1>
+</refentry>
+
