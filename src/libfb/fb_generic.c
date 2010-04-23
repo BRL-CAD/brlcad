@@ -43,9 +43,9 @@ extern int ogl_close_existing(FBIO *ifp);
 extern int wgl_close_existing(FBIO *ifp);
 
 
-#define Malloc_Bomb(_bytes_ ) \
-		fb_log("\"%s\"(%d) : allocation of %d bytes failed.\n", \
-				__FILE__, __LINE__, _bytes_ )
+#define Malloc_Bomb(_bytes_)					\
+    fb_log("\"%s\"(%d) : allocation of %d bytes failed.\n",	\
+	   __FILE__, __LINE__, _bytes_)
 
 
 static int fb_totally_numeric(register char *s);
@@ -109,7 +109,7 @@ FBIO *_if_list[] = {
 
     &debug_interface,
 /* never get any of the following by default */
-   &stk_interface,
+    &stk_interface,
     &memory_interface,
     &null_interface,
     (FBIO *) 0
@@ -125,17 +125,17 @@ fb_open(char *file, int width, int height)
     register FBIO *ifp;
     int i;
 
-    if (width < 0 || height < 0 )
+    if (width < 0 || height < 0)
 	return FBIO_NULL;
 
     ifp = (FBIO *) calloc(sizeof(FBIO), 1);
     if (ifp == FBIO_NULL) {
-	Malloc_Bomb(sizeof(FBIO) );
+	Malloc_Bomb(sizeof(FBIO));
 	return FBIO_NULL;
     }
-    if (file == NULL || *file == '\0' ) {
+    if (file == NULL || *file == '\0') {
 	/* No name given, check environment variable first.	*/
-	if ((file = (char *)getenv("FB_FILE" )) == NULL || *file == '\0' ) {
+	if ((file = (char *)getenv("FB_FILE")) == NULL || *file == '\0') {
 	    /* None set, use first device as default */
 	    *ifp = *(_if_list[0]);	/* struct copy */
 	    file = ifp->if_name;
@@ -148,14 +148,14 @@ fb_open(char *file, int width, int height)
      * "file" can in general look like: hostname:/pathname/devname#
      *
      * If we have a ':' assume the remote interface
-     *    (We don't check to see if it's us. Good for debugging.)
+     * (We don't check to see if it's us. Good for debugging.)
      * else strip out "/path/devname" and try to look it up in the
      * device array.  If we don't find it assume it's a file.
      */
     i = 0;
-    while (_if_list[i] != (FBIO *)NULL ) {
+    while (_if_list[i] != (FBIO *)NULL) {
 	if (strncmp(file, _if_list[i]->if_name,
-		    strlen(_if_list[i]->if_name) ) == 0 ) {
+		    strlen(_if_list[i]->if_name)) == 0) {
 	    /* found it, copy its struct in */
 	    *ifp = *(_if_list[i]);
 	    goto found_interface;
@@ -165,14 +165,14 @@ fb_open(char *file, int width, int height)
 
     /* Not in list, check special interfaces or disk files */
     /* "/dev/" protection! */
-    if (strncmp(file, "/dev/", 5) == 0 ) {
-	fb_log("fb_open: no such device \"%s\".\n", file );
-	free((void *) ifp );
+    if (strncmp(file, "/dev/", 5) == 0) {
+	fb_log("fb_open: no such device \"%s\".\n", file);
+	free((void *) ifp);
 	return FBIO_NULL;
     }
 
 #ifdef IF_REMOTE
-    if (fb_totally_numeric(file) || strchr(file, ':' ) != NULL ) {
+    if (fb_totally_numeric(file) || strchr(file, ':') != NULL) {
 	/* We have a remote file name of the form <host>:<file>
 	 * or a port number (which assumes localhost) */
 	*ifp = remote_interface;
@@ -180,37 +180,38 @@ fb_open(char *file, int width, int height)
     }
 #endif /* IF_REMOTE */
     /* Assume it's a disk file */
-    if (_fb_disk_enable ) {
+    if (_fb_disk_enable) {
 	*ifp = disk_interface;
     } else {
-	fb_log("fb_open: no such device \"%s\".\n", file );
-	free((void *) ifp );
+	fb_log("fb_open: no such device \"%s\".\n", file);
+	free((void *) ifp);
 	return FBIO_NULL;
     }
 
- found_interface:
+found_interface:
     /* Copy over the name it was opened by. */
-    ifp->if_name = (char*)malloc((unsigned) strlen(file ) + 1 );
+    ifp->if_name = (char*)malloc((unsigned) strlen(file) + 1);
     if (ifp->if_name == (char *)NULL) {
-	Malloc_Bomb(strlen(file ) + 1 );
-	free((void *) ifp );
+	Malloc_Bomb(strlen(file) + 1);
+	free((void *) ifp);
 	return FBIO_NULL;
     }
-    bu_strlcpy(ifp->if_name, file, strlen(file)+1 );
+    bu_strlcpy(ifp->if_name, file, strlen(file)+1);
 
     /* Mark OK by filling in magic number */
     ifp->if_magic = FB_MAGIC;
 
-    if ((i=(*ifp->if_open)(ifp, file, width, height )) <= -1 ) {
+    if ((i=(*ifp->if_open)(ifp, file, width, height)) <= -1) {
 	fb_log("fb_open: can't open device \"%s\", ret=%d.\n",
-	       file, i );
+	       file, i);
 	ifp->if_magic = 0;		/* sanity */
-	free((void *) ifp->if_name );
-	free((void *) ifp );
+	free((void *) ifp->if_name);
+	free((void *) ifp);
 	return FBIO_NULL;
     }
     return ifp;
 }
+
 
 int
 fb_close(FBIO *ifp)
@@ -218,16 +219,16 @@ fb_close(FBIO *ifp)
     int i;
 
     FB_CK_FBIO(ifp);
-    fb_flush(ifp );
-    if ((i=(*ifp->if_close)(ifp )) <= -1 ) {
+    fb_flush(ifp);
+    if ((i=(*ifp->if_close)(ifp)) <= -1) {
 	fb_log("fb_close: can not close device \"%s\", ret=%d.\n",
-	       ifp->if_name, i );
-	return	-1;
+	       ifp->if_name, i);
+	return -1;
     }
-    if (ifp->if_pbase != PIXEL_NULL )
-	free((void *) ifp->if_pbase );
-    free((void *) ifp->if_name );
-    free((void *) ifp );
+    if (ifp->if_pbase != PIXEL_NULL)
+	free((void *) ifp->if_pbase);
+    free((void *) ifp->if_name);
+    free((void *) ifp);
     return 0;
 }
 
@@ -347,10 +348,10 @@ fb_genhelp(void)
     int i;
 
     i = 0;
-    while (_if_list[i] != (FBIO *)NULL ) {
+    while (_if_list[i] != (FBIO *)NULL) {
 	fb_log("%-12s  %s\n",
 	       _if_list[i]->if_name,
-	       _if_list[i]->if_type );
+	       _if_list[i]->if_type);
 	i++;
     }
 
@@ -358,16 +359,17 @@ fb_genhelp(void)
 #ifdef IF_REMOTE
     fb_log("%-12s  %s\n",
 	   remote_interface.if_name,
-	   remote_interface.if_type );
+	   remote_interface.if_type);
 #endif
-    if (_fb_disk_enable ) {
+    if (_fb_disk_enable) {
 	fb_log("%-12s  %s\n",
 	       disk_interface.if_name,
-	       disk_interface.if_type );
+	       disk_interface.if_type);
     }
 
     return 0;
 }
+
 
 /**
  * True if the non-null string s is all digits
@@ -375,11 +377,11 @@ fb_genhelp(void)
 static int
 fb_totally_numeric(register char *s)
 {
-    if (s == (char *)0 || *s == 0 )
+    if (s == (char *)0 || *s == 0)
 	return 0;
 
-    while (*s ) {
-	if (*s < '0' || *s > '9' )
+    while (*s) {
+	if (*s < '0' || *s > '9')
 	    return 0;
 	s++;
     }
@@ -400,10 +402,10 @@ fb_is_linear_cmap(register const ColorMap *cmap)
 {
     register int i;
 
-    for (i=0; i<256; i++ ) {
-	if (cmap->cm_red[i]>>8 != i )  return(0);
-	if (cmap->cm_green[i]>>8 != i )  return(0);
-	if (cmap->cm_blue[i]>>8 != i )  return(0);
+    for (i=0; i<256; i++) {
+	if (cmap->cm_red[i]>>8 != i) return(0);
+	if (cmap->cm_green[i]>>8 != i) return(0);
+	if (cmap->cm_blue[i]>>8 != i) return(0);
     }
     return(1);
 }
@@ -417,12 +419,13 @@ fb_make_linear_cmap(register ColorMap *cmap)
 {
     register int i;
 
-    for (i=0; i<256; i++ ) {
+    for (i=0; i<256; i++) {
 	cmap->cm_red[i] = i<<8;
 	cmap->cm_green[i] = i<<8;
 	cmap->cm_blue[i] = i<<8;
     }
 }
+
 
 /*
  * Local Variables:

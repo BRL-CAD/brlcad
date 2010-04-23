@@ -319,7 +319,7 @@ wgl_getmem(FBIO *ifp)
 	goto success;
     }
 
- success:
+success:
     ifp->if_mem = sp;
     ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
     i = CMB(ifp)[255];			/* try to deref last word */
@@ -329,7 +329,7 @@ wgl_getmem(FBIO *ifp)
     if (new)
 	wgl_cminit(ifp);
     return(0);
- fail:
+fail:
     fb_log("wgl_getmem:  Unable to attach to shared memory.\n");
     if ((sp = calloc(1, size)) == NULL) {
 	fb_log("wgl_getmem:  malloc failure\n");
@@ -2151,46 +2151,46 @@ wgl_refresh(FBIO *ifp,
 /* This is the ONLY thing that we normally "export" */
 FBIO wgl_interface =
 {
-    0,			/* magic number slot	*/
-    wgl_open,		/* open device		*/
-    wgl_close,		/* close device		*/
-    wgl_clear,		/* clear device		*/
-    wgl_read,		/* read	pixels		*/
-    wgl_write,		/* write pixels		*/
-    wgl_rmap,		/* read colormap	*/
-    wgl_wmap,		/* write colormap	*/
-    wgl_view,		/* set view		*/
-    wgl_getview,	/* get view		*/
-    wgl_setcursor,	/* define cursor	*/
-    wgl_cursor,		/* set cursor		*/
-    fb_sim_getcursor,	/* get cursor		*/
-    fb_sim_readrect,	/* read rectangle	*/
-    wgl_writerect,	/* write rectangle	*/
+    0,			/* magic number slot */
+    wgl_open,		/* open device */
+    wgl_close,		/* close device */
+    wgl_clear,		/* clear device */
+    wgl_read,		/* read pixels */
+    wgl_write,		/* write pixels */
+    wgl_rmap,		/* read colormap */
+    wgl_wmap,		/* write colormap */
+    wgl_view,		/* set view */
+    wgl_getview,	/* get view */
+    wgl_setcursor,	/* define cursor */
+    wgl_cursor,		/* set cursor */
+    fb_sim_getcursor,	/* get cursor */
+    fb_sim_readrect,	/* read rectangle */
+    wgl_writerect,	/* write rectangle */
     fb_sim_bwreadrect,
-    wgl_bwwriterect,	/* write rectangle	*/
-    wgl_poll,		/* process events	*/
-    wgl_flush,		/* flush output		*/
-    wgl_free,		/* free resources	*/
-    wgl_help,		/* help message		*/
-    "Microsoft Windows OpenGL",	/* device description	*/
-    XMAXSCREEN+1,	/* max width		*/
-    YMAXSCREEN+1,	/* max height		*/
-    "/dev/wgl",		/* short device name	*/
-    512,		/* default/current width  */
+    wgl_bwwriterect,	/* write rectangle */
+    wgl_poll,		/* process events */
+    wgl_flush,		/* flush output */
+    wgl_free,		/* free resources */
+    wgl_help,		/* help message */
+    "Microsoft Windows OpenGL",	/* device description */
+    XMAXSCREEN+1,	/* max width */
+    YMAXSCREEN+1,	/* max height */
+    "/dev/wgl",		/* short device name */
+    512,		/* default/current width */
     512,		/* default/current height */
-    -1,			/* select file desc	*/
-    -1,			/* file descriptor	*/
-    1, 1,		/* zoom			*/
-    256, 256,		/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
-    0			/* debug		*/
+    -1,			/* select file desc */
+    -1,			/* file descriptor */
+    1, 1,		/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,		/* page_base */
+    PIXEL_NULL,		/* page_curp */
+    PIXEL_NULL,		/* page_endp */
+    -1,			/* page_no */
+    0,			/* page_dirty */
+    0L,			/* page_curpos */
+    0L,			/* page_pixels */
+    0			/* debug */
 };
 
 

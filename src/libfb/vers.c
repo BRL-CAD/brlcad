@@ -33,6 +33,7 @@ fb_version(void)
     return brlcad_ident("The BRL-CAD Framebuffer Library");
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

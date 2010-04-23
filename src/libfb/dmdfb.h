@@ -26,9 +26,9 @@
 
 #define BLACK		0
 #define WHITE		1
-#define CLR_BIT( word, bit )	word &= ~(bit)
-#define SET_BIT( word, bit )	word |= (bit)
-#define TST_BIT( word, bit )	((word)&(bit))
+#define CLR_BIT(word, bit) word &= ~(bit)
+#define SET_BIT(word, bit) word |= (bit)
+#define TST_BIT(word, bit) ((word)&(bit))
 
 #define PT_ANIMATE	'a'
 #define PT_CLEAR	'e'
