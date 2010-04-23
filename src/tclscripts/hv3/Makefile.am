@@ -30,6 +30,7 @@ dist_man_MANS = \
 EXTRA_DIST = \
 	$(tcl_SCRIPTS) \
         $(documentation_DATA) \
+        $(dist_man_MANS) \
 	license.txt \
 	license_snit.txt \
 	demo/index.html \
