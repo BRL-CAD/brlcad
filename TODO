@@ -52,8 +52,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* investigate gqa dumping out gigabytes of plot data with the -Av -v
-  options.
+* fix gqa spewing of massive amounts of plot data with th -Av -v
+  options:
+  ../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
+  -rw-rw-r--  1 morrison users 41572569618 Apr 23 15:14 volume.pl
 
 * replace SCLstring with std::string
 
