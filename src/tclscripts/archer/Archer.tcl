@@ -430,6 +430,8 @@ package provide Archer 1.0
 	method writePreferences {}
 	method writePreferencesHeader {_pfile}
 	method writePreferencesBody {_pfile}
+	method affectedNodeHighlightCallback {}
+	method listViewAllAffectedCallback {}
 
 	# Primitive Creation Section
 	method createObj {_type}
@@ -3148,7 +3150,8 @@ proc title_node_handler {node} {
     itk_component add affectedTreeNodesModeCB {
 	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
 	    -text "Highlight Affected Tree/List Nodes" \
-	    -variable [::itcl::scope mEnableAffectedNodeHighlightPref]
+	    -variable [::itcl::scope mEnableAffectedNodeHighlightPref] \
+	    -command [::itcl::code $this affectedNodeHighlightCallback]
     } {}
 
     itk_component add listViewCB {
@@ -3160,7 +3163,8 @@ proc title_node_handler {node} {
     itk_component add listViewAllAffectedCB {
 	::ttk::checkbutton $itk_component(generalF).listViewAllAffectedCB \
 	    -text "All Affected Nodes Highlighted (List View Only)" \
-	    -variable [::itcl::scope mEnableListViewAllAffectedPref]
+	    -variable [::itcl::scope mEnableListViewAllAffectedPref] \
+	    -command [::itcl::code $this listViewAllAffectedCallback]
     } {}
 
     itk_component add generalF2 {
@@ -8102,6 +8106,18 @@ proc title_node_handler {node} {
     puts $_pfile "set mVPaneToggle1 $mVPaneToggle1"
     puts $_pfile "set mVPaneToggle3 $mVPaneToggle3"
     puts $_pfile "set mVPaneToggle5 $mVPaneToggle5"
+}
+
+::itcl::body Archer::affectedNodeHighlightCallback {} {
+    if {!$mEnableAffectedNodeHighlightPref} {
+	set mEnableListViewAllAffectedPref 0
+    }
+}
+
+::itcl::body Archer::listViewAllAffectedCallback {} {
+    if {$mEnableListViewAllAffectedPref} {
+	set mEnableAffectedNodeHighlightPref 1
+    }
 }
 
 
