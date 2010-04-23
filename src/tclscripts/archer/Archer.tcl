@@ -3147,8 +3147,20 @@ proc title_node_handler {node} {
 
     itk_component add affectedTreeNodesModeCB {
 	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
-	    -text "Highlight Affected Tree Nodes" \
-	    -variable [::itcl::scope mEnableAffectedTreeNodeHighlightPref]
+	    -text "Highlight Affected Tree/List Nodes" \
+	    -variable [::itcl::scope mEnableAffectedNodeHighlightPref]
+    } {}
+
+    itk_component add listViewCB {
+	::ttk::checkbutton $itk_component(generalF).listViewCB \
+	    -text "List View" \
+	    -variable [::itcl::scope mEnableListViewPref]
+    } {}
+
+    itk_component add listViewAllAffectedCB {
+	::ttk::checkbutton $itk_component(generalF).listViewAllAffectedCB \
+	    -text "All Affected Nodes Highlighted (List View Only)" \
+	    -variable [::itcl::scope mEnableListViewAllAffectedPref]
     } {}
 
     itk_component add generalF2 {
@@ -3195,6 +3207,18 @@ proc title_node_handler {node} {
 	-row $i \
 	-sticky sw
     grid rowconfigure $itk_component(generalF) $i -weight 1
+    incr i
+    grid $itk_component(listViewCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
+    incr i
+    grid $itk_component(listViewAllAffectedCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
     incr i
     grid $itk_component(bigEMenuItemCB) \
 	-columnspan 2 \
@@ -7414,13 +7438,44 @@ proc title_node_handler {node} {
 	set mMeasuringStickColor $mMeasuringStickColorPref
     }
 
+    set fflag 0
+    set cflag 0
+    set tflag 0
     if {$mTreeAttrColumns != $mTreeAttrColumnsPref} {
 	set mTreeAttrColumns $mTreeAttrColumnsPref
-	refreshTree
+	set cflag 1
     }
 
-    if {$mEnableAffectedTreeNodeHighlight != $mEnableAffectedTreeNodeHighlightPref} {
-	set mEnableAffectedTreeNodeHighlight $mEnableAffectedTreeNodeHighlightPref
+    if {$mEnableListView != $mEnableListViewPref} {
+	set mEnableListView $mEnableListViewPref
+	set fflag 1
+    }
+
+    if {$mEnableListViewAllAffected != $mEnableListViewAllAffectedPref} {
+	set mEnableListViewAllAffected $mEnableListViewAllAffectedPref
+	set tflag 1
+    }
+
+    if {$mEnableAffectedNodeHighlight != $mEnableAffectedNodeHighlightPref} {
+	set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlightPref
+	set tflag 1
+    }
+
+    if {$fflag} {
+	setTreeView 1
+#	refreshTree
+
+#	if {$mEnableListView} {
+#	    selectTreePath $mSelectedObj
+#	} else {
+#	    set paths [gedCmd search -name $mSelectedObj]
+#	    if {[llength $paths]} {
+#		selectTreePath [lindex $paths 0]
+#	    }
+#	}
+    } elseif {$cflag} {
+	refreshTree
+    } elseif {$tflag} {
 	handleTreeSelect
     }
 
@@ -7867,7 +7922,9 @@ proc title_node_handler {node} {
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mTreeAttrColumnsPref $mTreeAttrColumns
-    set mEnableAffectedTreeNodeHighlightPref $mEnableAffectedTreeNodeHighlight
+    set mEnableListViewPref $mEnableListView
+    set mEnableListViewAllAffectedPref $mEnableListViewAllAffected
+    set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mDbUnits [gedCmd units -s]
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
@@ -7996,7 +8053,9 @@ proc title_node_handler {node} {
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
     puts $_pfile "set mTreeAttrColumns \"$mTreeAttrColumns\""
-    puts $_pfile "set mEnableAffectedTreeNodeHighlight \"$mEnableAffectedTreeNodeHighlight\""
+    puts $_pfile "set mEnableListView $mEnableListView"
+    puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
+    puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
     puts $_pfile "set mGridColor \"$mGridColor\""
@@ -8032,7 +8091,6 @@ proc title_node_handler {node} {
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
     puts $_pfile "set mZClipMode $mZClipMode"
-    puts $_pfile "set mEnableAffectedTreeNodeHighlight $mEnableAffectedTreeNodeHighlight"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"
