@@ -363,7 +363,7 @@ fb_tk_close(FBIO *ifp)
     FB_CK_FBIO(ifp);
     ret = write(p[1], y, sizeof(y));
     close(p[1]);
-    printf("Sent write from fb_tk_close\n");
+    printf("Sent write (ret=%d) from fb_tk_close\n", ret);
     return 0;
 }
 

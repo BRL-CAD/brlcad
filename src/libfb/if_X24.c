@@ -76,7 +76,14 @@
 
 /* Print a debug message on first time into a piece of code */
 #if 0
-#  define DEBUG1(str) {static int before=1; if (before) {int ret = write(2, str, strlen(str)); before=0;} }
+#  define DEBUG1(str) { \
+	static int before=1;			\
+	if (before) {				\
+	    int ret;				\
+	    ret = write(2, str, strlen(str));	\
+	    before=0;				\
+	}					\
+    }
 #else
 #  define DEBUG1(str)	/* NIL */
 #endif
