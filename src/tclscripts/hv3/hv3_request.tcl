@@ -1,4 +1,4 @@
-namespace eval hv3 { set {version($Id$)} 1 }
+catch {namespace eval hv3 { set {version($Id$)} 1 }}
 
 #--------------------------------------------------------------------------
 # This file contains the implementation of two types used by hv3:
