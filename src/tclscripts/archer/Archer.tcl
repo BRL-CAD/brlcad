@@ -23,6 +23,10 @@
 #    Archer mega-widget.
 #
 
+
+# Set the Tcl encoding to UTF-8
+encoding system utf-8
+
 namespace eval Archer {
     if {![info exists debug]} {
 	set debug 0
