@@ -847,22 +847,22 @@ wgl_open_existing(FBIO *ifp, int argc, char **argv)
     if (argc != 11)
 	return -1;
 
-    if (sscanf(argv[1], "%llu", (unsigned __int64 *)&dpy) != 1)
+    if (sscanf(argv[1], "%p", (void *)&dpy) != 1)
 	return -1;
 
-    if (sscanf(argv[2], "%llu", (unsigned __int64 *)&win) != 1)
+    if (sscanf(argv[2], "%p", (void *)&win) != 1)
 	return -1;
 
-    if (sscanf(argv[3], "%llu", (unsigned __int64 *)&cmap) != 1)
+    if (sscanf(argv[3], "%p", (void *)&cmap) != 1)
 	return -1;
 
-    if (sscanf(argv[4], "%llu", (unsigned __int64 *)&vip) != 1)
+    if (sscanf(argv[4], "%p", (void *)&vip) != 1)
 	return -1;
 
-    if (sscanf(argv[5], "%llu", (unsigned __int64 *)&hdc) != 1)
+    if (sscanf(argv[5], "%p", (void *)&hdc) != 1)
 	return -1;
 
-    if (sscanf(argv[8], "%llu", (unsigned __int64 *)&glxc) != 1)
+    if (sscanf(argv[8], "%p", (void *)&glxc) != 1)
 	return -1;
 
     if (sscanf(argv[6], "%d", &width) != 1)
