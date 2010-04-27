@@ -52,6 +52,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* improve compile-time version management -- port brlcad-version to
+  windows, reconsider providing compile-time header constants.
+
 * fix gqa spewing of massive amounts of plot data with th -Av -v
   options:
   ../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
