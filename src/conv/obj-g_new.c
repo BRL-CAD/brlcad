@@ -315,12 +315,12 @@ void retrieve_coord_index(struct   ga_t *ga,   /* obj file global attributes */
     return;
 }
 
-void test_face(struct ga_t *ga,
+/* return 1 if face failed, otherwise return 0 */
+int test_face(struct ga_t *ga,
                struct gfi_t *gfi,
                size_t face_idx,
                fastf_t conv_factor,  /* conversion factor from obj file units to mm */
-               struct bn_tol *tol,
-               int *degenerate_face) {
+               struct bn_tol *tol) {
 
     fastf_t tmp_v_o[3] = { 0.0, 0.0, 0.0 }; /* temporary vertex, referenced from outer loop */
     fastf_t tmp_v_i[3] = { 0.0, 0.0, 0.0 }; /* temporary vertex, referenced from inner loop */
@@ -335,8 +335,8 @@ void test_face(struct ga_t *ga,
 
     size_t vert = 0;
     size_t vert2 = 0;
+    int degenerate_face = 0;
 
-    *degenerate_face = 0;
     /* added 1 to internal index values so warning message index values
        matches obj file index numbers. this is because obj file indexes
        start at 1, internally indexes start at 0.  changed the warning
@@ -344,9 +344,8 @@ void test_face(struct ga_t *ga,
        grouping index has no meaning to the user if grouping type is
        GRP_NONE */
 
-    bu_log("test_face start\n");
     if ( gfi->num_vertices_arr[face_idx] < 3 ) {
-        *degenerate_face = 1;
+        degenerate_face = 1;
         if ( gfi->grouping_type != GRP_NONE ) 
             bu_log("WARNING: removed degenerate face (reason: < 3 vertices); obj file face group name = (%s) obj file face grouping index = (%lu) obj file face index = (%lu)\n",
                bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index,
@@ -356,16 +355,16 @@ void test_face(struct ga_t *ga,
                gfi->obj_file_face_idx_arr[face_idx] + 1);
     }
 
-    while ( (vert < gfi->num_vertices_arr[face_idx]) && !*degenerate_face ) {
+    while ( (vert < gfi->num_vertices_arr[face_idx]) && !degenerate_face ) {
         vert2 = vert+1;
-        while ( (vert2 < gfi->num_vertices_arr[face_idx]) && !*degenerate_face ) {
+        while ( (vert2 < gfi->num_vertices_arr[face_idx]) && !degenerate_face ) {
             retrieve_coord_index(ga, gfi, face_idx, vert, tmp_v_o,
                                  tmp_n, tmp_t, &tmp_w, &vofi_o, &nofi, &tofi); 
             retrieve_coord_index(ga, gfi, face_idx, vert2, tmp_v_i,
                                  tmp_n, tmp_t, &tmp_w, &vofi_i, &nofi, &tofi); 
             if ( vofi_o == vofi_i ) {
                 /* test for duplicate vertex indexes in face */
-                *degenerate_face = 1;
+                degenerate_face = 1;
                 if ( gfi->grouping_type != GRP_NONE )
                     bu_log("WARNING: removed degenerate face (reason: duplicate vertex index); obj file face group name = (%s) obj file face grouping index = (%lu) obj file face index = (%lu) obj file vertex index = (%lu)\n",
                        bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index,
@@ -380,7 +379,7 @@ void test_face(struct ga_t *ga,
                 VSCALE(tmp_v_i, tmp_v_i, conv_factor);
                 distance_between_vertices = DIST_PT_PT(tmp_v_o, tmp_v_i) ;
                 if ( bn_pt3_pt3_equal(tmp_v_o, tmp_v_i, tol) ) {
-                    *degenerate_face = 1;
+                    degenerate_face = 1;
                     if ( gfi->grouping_type != GRP_NONE )
                         bu_log("WARNING: removed degenerate face (reason: vertices too close); obj file face group name = (%s) obj file face grouping index = (%lu) obj file face index = (%lu) obj file vertice indexes (%lu) vs (%lu) tol.dist = (%lfmm) dist = (%fmm)\n",
                            bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index,
@@ -396,7 +395,7 @@ void test_face(struct ga_t *ga,
         }
         vert++;
     }
-    bu_log("test_face end\n");
+    return degenerate_face;
 }
 
 #if 0
@@ -816,7 +815,6 @@ void output_to_nmg(struct ga_t *ga,
     size_t  vofi = 0; /* vertex obj file index */
     size_t  nofi = 0; /* normal obj file index */
     size_t  tofi = 0; /* texture vertex obj file index */
-    int degenerate_face = 0;
 
     struct vertex  **verts = NULL;
 
@@ -836,74 +834,70 @@ void output_to_nmg(struct ga_t *ga,
     memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
 
     shell_vert_idx = 0;
-    bu_log("about to run chk shell just before assign fu for-loops\n");
     NMG_CK_SHELL(s);
     /* loop thru all the polygons (i.e. faces) to be placed in the current shell/region/model */
     for ( face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++ ) {
-        bu_log("history: num vertices in current polygon = (%lu)\n", gfi->num_vertices_arr[face_idx]);
+        bu_log("num vertices in current polygon = (%lu)\n", gfi->num_vertices_arr[face_idx]);
 
-        test_face(ga, gfi, face_idx, conv_factor, tol, &degenerate_face);
+        /* test for degenerate face */
+        if (test_face(ga, gfi, face_idx, conv_factor, tol)) {
+            num_faces_killed++;
+        } else {
+            fu = nmg_cface(s, (struct vertex **)&(verts[shell_vert_idx]),
+                              (int)(gfi->num_vertices_arr[face_idx]));
+            lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+            eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+            lu2 = BU_LIST_FIRST(loopuse, &fu->fumate_p->lu_hd);
+            eu2 = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
 
-        if ( degenerate_face != 1 ) {
+            for ( vert_idx = 0 ; vert_idx < gfi->num_vertices_arr[face_idx] ; vert_idx++ ) {
+                retrieve_coord_index(ga, gfi, face_idx, vert_idx, tmp_v, tmp_n, tmp_t,
+                                     &tmp_w, &vofi, &nofi, &tofi); 
 
-        fu = nmg_cface(s, (struct vertex **)&(verts[shell_vert_idx]), (int)(gfi->num_vertices_arr[face_idx]));
-        lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-        eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-        lu2 = BU_LIST_FIRST(loopuse, &fu->fumate_p->lu_hd);
-        eu2 = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
+                VSCALE(tmp_v, tmp_v, conv_factor);
+                VUNITIZE(tmp_n);
+                VREVERSE(tmp_rn, tmp_n);
 
-        for ( vert_idx = 0 ; vert_idx < gfi->num_vertices_arr[face_idx] ; vert_idx++ ) {
+                NMG_CK_VERTEX(eu->vu_p->v_p);
+                nmg_vertex_gv(eu->vu_p->v_p, tmp_v);
 
-            retrieve_coord_index(ga, gfi, face_idx, vert_idx, tmp_v, tmp_n, tmp_t,
-                                 &tmp_w, &vofi, &nofi, &tofi); 
+                switch (gfi->face_type) {
+                    case FACE_NV :
+                    case FACE_TNV :
+                        /* assign this normal to all uses of this vertex */
+                        for (BU_LIST_FOR(vu, vertexuse, &eu->vu_p->v_p->vu_hd)) {
+                            NMG_CK_VERTEXUSE(vu);
+                            nmg_vertexuse_nv(vu, tmp_n);
+                        }
+                        for (BU_LIST_FOR(vu2, vertexuse, &eu2->vu_p->v_p->vu_hd)) {
+                            NMG_CK_VERTEXUSE(vu2);
+                            nmg_vertexuse_nv(vu2, tmp_rn);
+                        }
+                        break;
+                    default:
+                        break;
+                }
 
-            VSCALE(tmp_v, tmp_v, conv_factor);
-            VUNITIZE(tmp_n);
-            VREVERSE(tmp_rn, tmp_n);
+                eu = BU_LIST_NEXT(edgeuse, &eu->l);
+                eu2 = BU_LIST_NEXT(edgeuse, &eu2->l);
+                shell_vert_idx++;
 
-            bu_log("about to run nmg_vertex_gv\n");
-            NMG_CK_VERTEX(eu->vu_p->v_p);
-            nmg_vertex_gv(eu->vu_p->v_p, tmp_v);
-#if 1
-            switch (gfi->face_type) {
-                case FACE_NV :
-                case FACE_TNV :
-                    /* assign this normal to all uses of this vertex */
-                    for (BU_LIST_FOR(vu, vertexuse, &eu->vu_p->v_p->vu_hd)) {
-                        NMG_CK_VERTEXUSE(vu);
-                        bu_log("about to run nmg_vertex_nv\n");
-                        nmg_vertexuse_nv(vu, tmp_n);
-                    }
-                    for (BU_LIST_FOR(vu2, vertexuse, &eu2->vu_p->v_p->vu_hd)) {
-                        NMG_CK_VERTEXUSE(vu2);
-                        bu_log("about to run nmg_vertex_nv\n");
-                        nmg_vertexuse_nv(vu2, tmp_rn);
-                    }
-                    break;
-                default:
-                    break;
+            } /* this loop exits when all the vertices and their normals
+                 for the current polygon/faceuse has been inserted into
+                 their appropriate structures */
+
+            NMG_CK_FACEUSE(fu);
+            if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0) {
+                bu_log("Failed nmg_loop_plane_area\n");
+                nmg_pr_fu_briefly( fu, "" );
+                nmg_kfu(fu);
+                fu = (struct faceuse *)NULL;
+                num_faces_killed++;
+            } else {
+                nmg_face_g(fu, pl); /* return is void */
+                nmg_face_bb(fu->f_p, tol); /* return is void */
+                bu_ptbl_ins(&faces, (long *)fu);
             }
-#endif
-            eu = BU_LIST_NEXT(edgeuse, &eu->l);
-            eu2 = BU_LIST_NEXT(edgeuse, &eu2->l);
-            shell_vert_idx++;
-
-        } /* this loop exits when all the vertices and their normals
-             for the current polygon/faceuse has been inserted into
-             their appropriate structures */
-
-#if 1
-        if (nmg_fu_planeeqn(fu, tol) < 0) {
-            bu_log("Failed nmg_fu_planeeqn\n");
-            nmg_pr_fu_briefly( fu, "" );
-            nmg_kfu(fu);
-        }
-#endif
-
-#if 0
-        if ( nmg_calc_face_g( fu ) )
-            bu_log( "Failed to calculate plane eqn\n" );
-#endif
 
         } /* close of degenerate_face if test */
 
@@ -911,87 +905,22 @@ void output_to_nmg(struct ga_t *ga,
          has been placed within one nmg shell, inside one nmg region
          and inside one nmg model */
 
-    /* create the face equations here, which is after all the faceuse
-       have been created and the vertex coordinates and their normals
-       have been assigned */
+    bu_log("num_faces_killed = (%lu)\n", num_faces_killed);
 
-
-    /* run nmg_model_vertex_fuse before nmg_calc_face_g ?? */
-    /* run nmg_rebound before nmg_model_vertex_fuse */
-    bu_log("about to run nmg_model_vertex_fuse\n");
-    total_fused_vertex = nmg_model_vertex_fuse(m, tol);
-    bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
-
-    struct shell *s1;
-    /* calculate plane equations for faces */
-    for (BU_LIST_FOR(s1, shell, &r->s_hd))
-    {
-        NMG_CK_SHELL( s1 );
-        for (BU_LIST_FOR(fu, faceuse, &s1->fu_hd))
-        {
-            NMG_CK_FACEUSE( fu );
-            if ( fu->orientation == OT_SAME )
-            {
-                if ( nmg_calc_face_g( fu ) )
-                    bu_log( "Failed to calculate plane eqn\n" );
-
-                /* save the face in a table */
-                bu_ptbl_ins( &faces, (long *)fu );
-            }
-        }
-    }
-
+    if (!BU_PTBL_END(&faces)){
+        bu_log("Object %s has no faces\n", bu_vls_addr(gfi->raw_grouping_name));
+        nmg_km(m);
+    } else {
 #if 0
-        NMG_CK_FACEUSE(fu);
-        bu_log("about to run nmg_loop_plane_area\n");
-        /* verify the current polygon is valid */
-        if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0) {
-            bu_log("Failed nmg_loop_plane_area\n");
-            bu_log("about to run nmg_kfu just after neg area from nmg_loop_plane_area\n");
-            nmg_pr_fu_briefly( fu, "" );
-            nmg_kfu(fu);
-            fu = (struct faceuse *)NULL;
-            num_faces_killed++;
-        } else {
-            bu_log("about to run nmg_face_g\n");
-            nmg_face_g(fu, pl); /* return is void */
-
-            /* don't run nmg_fu_planeeqn, will fix
-               polygons with vertices off the face 
-               with function nmg_make_faces_within_tol */
-            nmg_face_bb(fu->f_p, tol); /* return is void */
-            bu_ptbl_ins(&faces, (long *)fu);
-#if 0
-            bu_log("about to run nmg_fu_planeeqn\n");
-            if (nmg_fu_planeeqn(fu, tol) < 0) {
-                bu_log("Failed nmg_fu_planeeqn\n");
-                nmg_pr_fu_briefly( fu, "" );
-                nmg_kfu(fu);
-                fu = (struct faceuse *)NULL;
-                num_faces_killed++;
-            } else {
-                bu_log("about to run nmg_face_bb\n");
-                nmg_face_bb(fu->f_p, tol); /* return is void */
-                bu_ptbl_ins(&faces, (long *)fu);
-            }
-#endif
-        }
-#endif
-
-    bu_log("history: num_faces_killed = (%lu)\n", num_faces_killed);
-
-    if (BU_PTBL_END(&faces)){
-
-        bu_log("about to run nmg_break_long_edges\n");
-        nmg_break_long_edges(s, tol);
-
-        /* run nmg_model_vertex_fuse before nmg_calc_face_g ?? */
         /* run nmg_rebound before nmg_model_vertex_fuse */
         bu_log("about to run nmg_model_vertex_fuse\n");
         total_fused_vertex = nmg_model_vertex_fuse(m, tol);
         bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
+#endif
 
-        /* run nmg_gluefaces before nmg_make_faces_within_tol */
+        bu_log("about to run nmg_model_fuse\n");
+        bu_log("total entities fused = (%d)\n", nmg_model_fuse(m, tol));
+
         /* run nmg_model_vertex_fuse before nmg_gluefaces */
         bu_log("about to run nmg_gluefaces\n");
         nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
@@ -1005,85 +934,39 @@ void output_to_nmg(struct ga_t *ga,
         nmg_region_a(r, tol);
 
         bu_log("about to run nmg_kill_cracks\n");
-        nmg_kill_cracks(s);
-
-        /* Some arbs may not be within tolerance, so triangulate faces where needed */
-        /* run nmg_gluefaces before nmg_make_faces_within_tol */
-        bu_log("about to run nmg_make_faces_within_tol\n");
-        nmg_make_faces_within_tol(s, tol);
-
-        bu_log("about to run nmg_rebound 1\n");
-        nmg_rebound(m, tol);
-
-#if 0
-        /* run nmg_rebound before nmg_fix_normals */
-        /* run nmg_model_edge_fuse before nmg_fix_normals */
-        /* run nmg_gluefaces before nmg_fix_normals */
-        bu_log("about to run nmg_fix_normals\n");
-        nmg_fix_normals(s, tol);
-#endif
-
-#if 0
-        bu_log("about to run nmg_shell_coplanar_face_merge\n");   
-        nmg_shell_coplanar_face_merge(s, tol, 1);    
-#endif
-
-        bu_log("about to run nmg_rebound 2\n");
-        nmg_rebound(m, tol);
-
-#if 0
-        bu_log("about to run nmg_close_shell\n");
-        nmg_close_shell(s, tol);
-#endif
-
-#if 0
-        /* testing nmg_invert_shell function */
-        if (gfi->grouping_index == 82 || gfi->grouping_index == 17 || gfi->grouping_index == 81) {
-            bu_log("about to run nmg_invert_shell for grouping_index 82,17,81\n");
-            nmg_invert_shell(s);
-        }
-#endif
-
-        /* run nmg_model_vertex_fuse before nmg_check_closed_shell */
-        if ( nmg_check_closed_shell(s, tol) ) {
-            /* make bot for a open shell */
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.bot.s", gfi->grouping_index);
-            cleanup_name(gfi->raw_grouping_name);
-            bu_log("about to mk_bot_from_nmg\n");
-            mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
+        if (nmg_kill_cracks(s)) {
+            bu_log("Object %s has no faces\n", bu_vls_addr(gfi->raw_grouping_name));
             nmg_km(m);
         } else {
-            /* make nmg for a closed shell */
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.nmg.s", gfi->grouping_index);
-            cleanup_name(gfi->raw_grouping_name);
-
 #if 0
-            bu_log("about to run nmg_fix_normals\n");
-            nmg_fix_normals(s, tol);
+            /* Some faces may not be within tolerance, so triangulate faces where needed */
+            /* run nmg_gluefaces before nmg_make_faces_within_tol */
+            bu_log("about to run nmg_make_faces_within_tol\n");
+            nmg_make_faces_within_tol(s, tol);
 #endif
 
-            bu_log("about to run mk_nmg\n");
-            /* the model (m) is freed when mk_nmg completes */
-            if (mk_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), m)) {
-                bu_log("mk_nmg failed\n");
+            bu_log("about to run nmg_rebound\n");
+            nmg_rebound(m, tol);
+
+            /* run nmg_model_vertex_fuse before nmg_check_closed_shell */
+            if ( nmg_check_closed_shell(s, tol) ) {
+                /* make bot for a open shell */
+                bu_vls_printf(gfi->raw_grouping_name, ".%lu.bot.s", gfi->grouping_index);
+                cleanup_name(gfi->raw_grouping_name);
+                bu_log("about to mk_bot_from_nmg\n");
+                mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
+                nmg_km(m);
+            } else {
+                /* make nmg for a closed shell */
+                bu_vls_printf(gfi->raw_grouping_name, ".%lu.nmg.s", gfi->grouping_index);
+                cleanup_name(gfi->raw_grouping_name);
+                bu_log("about to run mk_nmg\n");
+                /* the model (m) is freed when mk_nmg completes */
+                if (mk_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), m)) {
+                    bu_log("mk_nmg failed\n");
+                }
             }
         }
-
-#if 0
-        bu_log("about to mk_bot_from_nmg\n");
-        mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
-        nmg_km(m);
-#endif
-
-#if 0
-        bu_log("about to run mk_nmg\n");
-        /* the model (m) is freed when mk_nmg completes */
-        if (mk_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), m)) {
-            bu_log("mk_nmg failed\n");
-        }
-#endif
-    } else {
-        bu_log("Object %s has no faces\n", bu_vls_addr(gfi->raw_grouping_name));
     } 
 
     bu_free(verts,"verts");
@@ -1784,14 +1667,17 @@ main(int argc, char **argv)
     struct bn_tol tol_struct ;
     struct bn_tol *tol ;
 
-    rt_g.NMG_debug = rt_g.NMG_debug & DEBUG_TRI ;
-
     /* initialize ga structure */
     memset((void *)&ga, 0, sizeof(struct ga_t));
 
+    /* the raytracer tolerance values (rtip->rti_tol) need to match
+       these otherwise raytrace errors will result. the defaults
+       for the rti_tol are set in the function rt_new_rti.
+       either use here the rti_tol defaults or when raytracing
+       change the raytracer values to these. */
     tol = &tol_struct;
     tol->magic = BN_TOL_MAGIC;
-    tol->dist = 0.005 ;   /* to be selected by user from command line */
+    tol->dist = 0.0005 ;   /* to be selected by user from command line */
     tol->dist_sq = tol->dist * tol->dist;
     tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
@@ -1861,15 +1747,6 @@ main(int argc, char **argv)
         perror(prog);
         bu_exit(1, NULL);
     }
-
-    bu_log("local2base=(%lf) base2local=(%lf)\n", fd_out->dbip->dbi_local2base, fd_out->dbip->dbi_base2local);
-
-#if 0
-    fd_out->wdb_tol.dist    = tol->dist ;
-    fd_out->wdb_tol.dist_sq = fd_out->wdb_tol.dist * fd_out->wdb_tol.dist ;
-    fd_out->wdb_tol.perp    = tol->perp ;
-    fd_out->wdb_tol.para    = 1 - fd_out->wdb_tol.perp ;
-#endif
 
     collect_global_obj_file_attributes(&ga);
 
