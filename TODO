@@ -381,7 +381,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
-  to redraw.
+  to redraw.  Might be worth investigating whether the use of the 
+  extension GL_EXT_framebuffer_object would benefit if_ogl, see:
+  http://www.opengl3.org/wiki/GL_EXT_framebuffer_object
 
 * implement a routine/command to convert from a bot to an nmg
   (similar/related to the nmg-bot tool, but the reverse).
