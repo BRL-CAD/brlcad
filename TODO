@@ -705,6 +705,33 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   then generates tool paths on resulting surfaces and interior paths.
 
 
+RTGL ITEMS
+__________
+
+Need before enabling:
+
+Blasting havoc_tail when raytracing havoc doesn't result in a re-set
+of the raytracing - it just re-sizes the view to havoc_tail and continues
+with the original raytrace.  Track down why - should clear everything
+and start over.  (Appears on Linux, not on OSX).
+
+Need general robustness testing - ensure no crashes when switching
+display manager types multiple times in multiple locations.
+
+For cleanup:
+
+Move pattern raytracing logic into librt.
+
+Need a way to cache point data so we don't re-raytrace unchanged geometry
+over and over.
+
+Job server should be reworked into a general mechanism, instead of being
+rtgl specific.
+
+Provide a generic mechanism in MGED run loop to hook in features like
+point cloud rendering, instead of hard-coding it.
+
+
 LIBPC
 -----
 
