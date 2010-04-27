@@ -117,8 +117,9 @@ namespace eval ArcherCore {
 	method setDefaultBindingMode {_mode}
 
 	# public database commands
-	method gedCmd               {args}
 	method cmd                 {args}
+	method gedCmd              {args}
+	method preDbOpenCmd        {args}
 
 	# general
 	method Load                {_filename}
@@ -209,6 +210,7 @@ namespace eval ArcherCore {
 	method nmg_collapse        {args}
 	method nmg_simplify        {args}
 	method ocenter		   {args}
+	method opendb		   {args}
 	method orotate		   {args}
 	method oscale		   {args}
 	method otranslate	   {args}
@@ -438,13 +440,18 @@ namespace eval ArcherCore {
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
+					   ocenter opendb orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
 					   rotate_arb_face search sed shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
+
+	# Commands in this list get passed directly to the Ged object
 	variable mUnwrappedDbCommands {}
+
+	variable mPreOpenDbCommands {opendb}
+
 	variable mBannedDbCommands {
 	    dbip open rtabort shaded_mode
 	}
@@ -1030,6 +1037,7 @@ Popup Menu    Right or Ctrl-Left
 
     initImages
     initTreeImages
+    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] preDbOpenCmd\""
 
     $itk_component(primaryToolbar) itemconfigure open -state normal
 
@@ -2526,14 +2534,6 @@ Popup Menu    Right or Ctrl-Left
     update idletasks
 }
 
-::itcl::body ArcherCore::gedCmd {args} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
-    return [eval $itk_component(ged) $args]
-}
-
 ::itcl::body ArcherCore::cmd {args} {
     set cmd [lindex $args 0]
     if {$cmd == ""} {
@@ -2578,6 +2578,53 @@ Popup Menu    Right or Ctrl-Left
     }
 
     error "ArcherCore::cmd: unrecognized command - $args, check source code"
+}
+
+::itcl::body ArcherCore::gedCmd {args} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    return [eval $itk_component(ged) $args]
+}
+
+::itcl::body ArcherCore::preDbOpenCmd {args} {
+    set cmd [lindex $args 0]
+    if {$cmd == ""} {
+	return
+    }
+
+    set arg1 [lindex $args 1]
+    if {$cmd == "info"} {
+	switch $arg1 {
+	    function {
+		if {[llength $args] == 3} {
+		    set subcmd [lindex $args 2]
+		    if {[lsearch $mPreOpenDbCommands $subcmd] == -1} {
+			error "ArcherCore::preDbOpenCmd: unrecognized command - $subcmd"
+		    } else {
+			return $subcmd
+		    }
+		} else {
+		    return $mPreOpenDbCommands
+		}
+	    }
+	    class {
+		return [info class]
+	    }
+	    default {
+		return
+	    }
+	}
+    }
+
+    set i [lsearch -exact $mPreOpenDbCommands $cmd]
+    if {$i != -1} {
+	addHistory $args
+	return [eval $args]
+    }
+
+    error "ArcherCore::preDbOpenCmd: unrecognized command - $args"
 }
 
 # ------------------------------------------------------------
@@ -3796,7 +3843,7 @@ Popup Menu    Right or Ctrl-Left
 	grid forget $itk_component(canvas)
 	if {!$mViewOnly} {
 	    grid $itk_component(ged) -row 1 -column 0 -columnspan 3 -sticky news
-	    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
+	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
 	    grid $itk_component(ged) -row 1 -column 0 -sticky news
 	}
@@ -4792,6 +4839,16 @@ Popup Menu    Right or Ctrl-Left
     } else {
 	eval gedCmd ocenter $args
     }
+}
+
+::itcl::body ArcherCore::opendb {args} {
+    set len [llength $args]
+
+    if {$len != 1} {
+	return "Usage: opendb dbfile"
+    }
+
+    Load [lindex $args 0]
 }
 
 ::itcl::body ArcherCore::orotate {args} {
