@@ -54,7 +54,7 @@
 # endif
 
 /* include standard c99 types via compatibility header */
-#include <pstdint.h>
+#include "pstdint.h"
 
 
 #ifndef EXPAND_IN_STRING
