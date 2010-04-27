@@ -824,6 +824,8 @@ Popup Menu    Right or Ctrl-Left
 		-background $LABEL_BACKGROUND_COLOR
 	} {}
 
+	$itk_component(cmd) component text configure -background white
+
 	itk_component add history {
 	    ::iwidgets::scrolledtext $itk_component(advancedTabs).history \
 		-relief sunken -borderwidth 2 \
@@ -1405,8 +1407,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(newtreevscroll) configure -command "$itk_component(newtree) yview"
 
     grid $itk_component(newtree) $itk_component(newtreevscroll) -sticky nsew
-#XXX Leave commented out until ttk::treeview calls its xscrollcommand correctly
-#    grid $itk_component(newtreehscroll) - -sticky nsew
+    grid $itk_component(newtreehscroll) - -sticky nsew
     grid columnconfigure $itk_component(newtreeF) 0 -weight 1
     grid rowconfigure $itk_component(newtreeF) 0 -weight 1
 
@@ -2995,10 +2996,30 @@ Popup Menu    Right or Ctrl-Left
     set mNodeDrawList ""
 
     foreach ditem [gedCmd who] {
-	set nodesList [getTreeNodes $ditem $_cflag]
-
-	eval lappend mNodePDrawList [lindex $nodesList 0]
-	eval lappend mNodeDrawList [lindex $nodesList 1]
+	if {$mEnableListView} {
+	    set ditem [regsub {^/} $ditem {}]
+	    set dlist [split $ditem /]
+	    set dlen [llength $dlist]
+	    if {$dlen == 1} {
+		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
+	    } else {
+		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
+#		incr dlen -1
+#		for {set i 0} {$i < $dlen} {incr i} {
+#		    foreach ilist $mText2Node([lindex $dlist $i]) {
+#			eval lappend mNodePDrawList [lindex $ilist 0]
+#		    }
+#		}
+#
+#		foreach ilist $mText2Node([lindex $dlist end]) {
+#		    eval lappend mNodeDrawList [lindex $ilist 0]
+#		}
+	    }
+	} else {
+	    set nodesList [getTreeNodes $ditem $_cflag]
+	    eval lappend mNodePDrawList [lindex $nodesList 0]
+	    eval lappend mNodeDrawList [lindex $nodesList 1]
+	}
     }
 
     set mNodePDrawList [lsort -unique $mNodePDrawList]
