@@ -133,8 +133,8 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 char *
 bu_strdupm(register const char *cp, const char *label)
 {
-    register char	*base;
-    register size_t	len;
+    char *base;
+    size_t len;
 
     if (!cp && label) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

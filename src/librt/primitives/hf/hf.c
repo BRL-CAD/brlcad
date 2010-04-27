@@ -2006,8 +2006,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
-	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%llu, got=%llu\n",
-	       xip->dfile, (unsigned long long)count, (unsigned long long)got);
+	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%zu, got=%zu\n",
+	       xip->dfile, count, got);
     }
 
     return(0);			/* OK */

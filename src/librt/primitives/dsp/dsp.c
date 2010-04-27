@@ -4068,7 +4068,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 			     bip->u.uint16, in_cookie, bip->count);
 
 	if (got != bip->count) {
-	    bu_log("got %d != count %llu", got, (unsigned long long)bip->count);
+	    bu_log("got %d != count %zu", got, bip->count);
 	    bu_bomb("\n");
 	}
     }
