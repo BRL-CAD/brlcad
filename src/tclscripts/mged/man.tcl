@@ -20,6 +20,8 @@
 
 package require Tkhtml 3.0
 
+encoding system utf-8
+
 proc handle_select { w y } {
     set curr_sel [$w curselection]
     if { $curr_sel != "" } {

@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* X display manager (and probably others) will lock up mged if you Z/B
+  while the wireframe is being actively drawn (in X_drawVList()).
+  reproducible by cloning havoc a dozen or more times, getting
+  sub-1sec fps, Z/B after rotating wireframe but before update
+  finishes drawing.
+
 * rtedge help shows redirection to a file working, but it does not
   seem to work (zero-file results).
 

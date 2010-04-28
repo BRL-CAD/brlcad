@@ -23,6 +23,10 @@
 #    Archer mega-widget.
 #
 
+
+# Set the Tcl encoding to UTF-8
+encoding system utf-8
+
 namespace eval Archer {
     if {![info exists debug]} {
 	set debug 0
@@ -506,6 +510,7 @@ package provide Archer 1.0
 	set mVPaneToggle5 $mVPaneFraction5
 
 	readPreferences
+	setTreeView
 	updateCreationButtons 0
 	updateRaytraceButtons 0
 	updateCheckpointMode
@@ -7442,7 +7447,7 @@ proc title_node_handler {node} {
 	set mMeasuringStickColor $mMeasuringStickColorPref
     }
 
-    set fflag 0
+    set lflag 0
     set cflag 0
     set tflag 0
     if {$mTreeAttrColumns != $mTreeAttrColumnsPref} {
@@ -7452,7 +7457,7 @@ proc title_node_handler {node} {
 
     if {$mEnableListView != $mEnableListViewPref} {
 	set mEnableListView $mEnableListViewPref
-	set fflag 1
+	set lflag 1
     }
 
     if {$mEnableListViewAllAffected != $mEnableListViewAllAffectedPref} {
@@ -7465,20 +7470,28 @@ proc title_node_handler {node} {
 	set tflag 1
     }
 
-    if {$fflag} {
+    if {$lflag} {
 	setTreeView 1
-#	refreshTree
 
-#	if {$mEnableListView} {
-#	    selectTreePath $mSelectedObj
-#	} else {
-#	    set paths [gedCmd search -name $mSelectedObj]
-#	    if {[llength $paths]} {
-#		selectTreePath [lindex $paths 0]
-#	    }
-#	}
+	if {$cflag && $mTreeAttrColumns == {}} {
+	    set twidth [expr {[winfo width $itk_component(newtree)] - 4}]
+	    set c0width [$itk_component(newtree) column \#0 -width]
+
+	    if {$c0width < $twidth} {
+		$itk_component(newtree) column \#0 -width $twidth
+	    }
+	}
     } elseif {$cflag} {
 	refreshTree
+
+	if {$mTreeAttrColumns == {}} {
+	    set twidth [expr {[winfo width $itk_component(newtree)] - 4}]
+	    set c0width [$itk_component(newtree) column \#0 -width]
+
+	    if {$c0width < $twidth} {
+		$itk_component(newtree) column \#0 -width $twidth
+	    }
+	}
     } elseif {$tflag} {
 	handleTreeSelect
     }

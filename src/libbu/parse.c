@@ -78,8 +78,8 @@
 		bu_bomb("NULL pointer"); \
 	} \
 	if (_p->ext_nbytes < 6) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer only %llu bytes, file %s, line %d\n", \
-		    (unsigned long long)_p->ext_nbytes, __FILE__, __LINE__); \
+		bu_log("ERROR: BU_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
+		    _p->ext_nbytes, __FILE__, __LINE__); \
 		bu_bomb("getput buffer too small"); \
 	} \
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) | \
@@ -95,8 +95,8 @@
 	       (((unsigned char *)(_p->ext_buf))[4] <<  8) | \
 		((unsigned char *)(_p->ext_buf))[5]; \
 	if (_len > _p->ext_nbytes) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%llu, ext_nbytes=%llu, file %s, line %d\n", \
-		       (void *)_p->ext_buf, (unsigned long long)_len, (unsigned long long)_p->ext_nbytes, \
+		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
+		       (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes, \
 		    __FILE__, __LINE__); \
 		bu_bomb("Bad getput buffer"); \
 	} \

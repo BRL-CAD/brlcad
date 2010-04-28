@@ -760,14 +760,16 @@ main(int argc, char *argv[])
 	    if (old_mged_gui) {
 		bu_vls_strcpy(&vls, "gui");
 	    } else {
+		const char *archer = bu_brlcad_root("bin/archer", 1);
+
 		/* any remaining parameter should be the name of our
 		 * .g -- archer looks at the 'argv' global for a
 		 * database file name.
 		 */
 		if (argc >= 1)
-		    bu_vls_printf(&vls, "set argv %s; source archer", argv[0]);
+		    bu_vls_printf(&vls, "set argv %s; source %s", argv[0], archer);
 		else
-		    bu_vls_printf(&vls, "source archer");
+		    bu_vls_printf(&vls, "source %s", archer);
 	    }
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);

@@ -44,7 +44,7 @@ bin_PROGRAMS = \
 	rle-fb \
 	spm-fb
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${PNG_CPPFLAGS} ${TCL_CPPFLAGS}
 
 bw_fb_LDADD = ${FB}
 bw_fb_SOURCES = bw-fb.c

@@ -1,4 +1,4 @@
-namespace eval hv3 { set {version($Id$)} 1 }
+catch {namespace eval hv3 { set {version($Id$)} 1 }}
 
 # This file contains the mega-widget hv3::hv3 that is at the core
 # of the Hv3 web browser implementation. An instance of this widget 

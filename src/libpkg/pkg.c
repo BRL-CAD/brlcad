@@ -1139,7 +1139,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %llu) ret=%d\n",
-		     pc->pkc_fd, (void *)&hdr, sizeof(hdr), i);
+		     pc->pkc_fd, (void *)&hdr, (unsigned long long)sizeof(hdr), i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}

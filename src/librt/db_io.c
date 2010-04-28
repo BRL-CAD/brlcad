@@ -260,8 +260,8 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%llu\n",
-				    dp->d_namep, dbip, dp, where, offset, (unsigned long long)len);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%zu\n",
+				    dp->d_namep, dbip, dp, where, offset, len);
 
     if ((len+(size_t)offset) > dp->d_len) {
 	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",

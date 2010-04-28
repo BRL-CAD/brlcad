@@ -181,8 +181,8 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 				   ep->ext_nbytes,
 				   ep->ext_buf, in_cookie, bip->count);
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %llu, did %d",
-			   __FILE__, __LINE__, (unsigned long long)bip->count, gotten);
+		    bu_log("%s:%d: Tried to convert %zu, did %d",
+			   __FILE__, __LINE__, bip->count, gotten);
 		    bu_bomb("\n");
 		}
 	    } else
@@ -292,7 +292,7 @@ rt_binunif_export5( struct bu_external		*ep,
 				   bip->count);
 
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %llu, did %d",
+		    bu_log("%s:%d: Tried to convert %zu, did %d",
 			   __FILE__, __LINE__, bip->count, gotten);
 		    bu_bomb("\n");
 		}

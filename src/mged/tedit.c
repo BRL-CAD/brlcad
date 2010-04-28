@@ -929,10 +929,10 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? default to jove */
     if (!editor || editor[0] == '\0') {
-	const char *binpath = bu_brlcad_root("bin", 1);
+	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = "jove";
-	if (binpath) {
-	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+	if (jovepath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
 	    editor = buffer;
 	}
     }
@@ -946,10 +946,10 @@ get_editor_string(struct bu_vls *editstring)
 
     /* If we're in classic mode on Windows, go with jove */
     if (classic_mged && (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT"))) {
-	const char *binpath = bu_brlcad_root("bin", 1);
+	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = "jove";
-	if (binpath) {
-	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+	if (jovepath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
 	    editor = buffer;
 	}
     }

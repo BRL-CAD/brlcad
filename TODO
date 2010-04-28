@@ -23,6 +23,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* release dm X get_color() memory
+
 * fix archer/libdm labels/axes to not use pointer printing
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
@@ -51,6 +53,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* improve compile-time version management -- port brlcad-version to
+  windows, reconsider providing compile-time header constants.
 
 * fix gqa spewing of massive amounts of plot data with th -Av -v
   options:
@@ -381,7 +386,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * fix framebuffer refresh bug.  problem was caused when the if_ogl
   framebuffer was changed (back) to request a direct rendering
   context.  presumably that is triggering other code that is failing
-  to redraw.
+  to redraw.  Might be worth investigating whether the use of the 
+  extension GL_EXT_framebuffer_object would benefit if_ogl, see:
+  http://www.opengl3.org/wiki/GL_EXT_framebuffer_object
 
 * implement a routine/command to convert from a bot to an nmg
   (similar/related to the nmg-bot tool, but the reverse).
@@ -703,6 +710,33 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * implement a g-gcode exporter.  ideally this converts geometry to
   NURBS format, trims surfaces, evaluates boolean expressions, and
   then generates tool paths on resulting surfaces and interior paths.
+
+
+RTGL ITEMS
+__________
+
+Need before enabling:
+
+Blasting havoc_tail when raytracing havoc doesn't result in a re-set
+of the raytracing - it just re-sizes the view to havoc_tail and continues
+with the original raytrace.  Track down why - should clear everything
+and start over.  (Appears on Linux, not on OSX).
+
+Need general robustness testing - ensure no crashes when switching
+display manager types multiple times in multiple locations.
+
+For cleanup:
+
+Move pattern raytracing logic into librt.
+
+Need a way to cache point data so we don't re-raytrace unchanged geometry
+over and over.
+
+Job server should be reworked into a general mechanism, instead of being
+rtgl specific.
+
+Provide a generic mechanism in MGED run loop to hook in features like
+point cloud rendering, instead of hard-coding it.
 
 
 LIBPC

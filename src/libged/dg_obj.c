@@ -391,7 +391,7 @@ dgo_headSolid_tcl(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%llu", (size_t)(&dgop->dgo_headSolid));
+    bu_vls_printf(&vls, "%p", (void *)(&dgop->dgo_headSolid));
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;

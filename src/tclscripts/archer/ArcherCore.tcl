@@ -117,8 +117,9 @@ namespace eval ArcherCore {
 	method setDefaultBindingMode {_mode}
 
 	# public database commands
-	method gedCmd               {args}
 	method cmd                 {args}
+	method gedCmd              {args}
+	method preDbOpenCmd        {args}
 
 	# general
 	method Load                {_filename}
@@ -209,6 +210,7 @@ namespace eval ArcherCore {
 	method nmg_collapse        {args}
 	method nmg_simplify        {args}
 	method ocenter		   {args}
+	method opendb		   {args}
 	method orotate		   {args}
 	method oscale		   {args}
 	method otranslate	   {args}
@@ -438,13 +440,18 @@ namespace eval ArcherCore {
 					   in inside item kill killall killrefs killtree ls \
 					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
+					   ocenter opendb orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
 					   rotate_arb_face search sed shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
+
+	# Commands in this list get passed directly to the Ged object
 	variable mUnwrappedDbCommands {}
+
+	variable mPreOpenDbCommands {opendb}
+
 	variable mBannedDbCommands {
 	    dbip open rtabort shaded_mode
 	}
@@ -824,6 +831,8 @@ Popup Menu    Right or Ctrl-Left
 		-background $LABEL_BACKGROUND_COLOR
 	} {}
 
+	$itk_component(cmd) component text configure -background white
+
 	itk_component add history {
 	    ::iwidgets::scrolledtext $itk_component(advancedTabs).history \
 		-relief sunken -borderwidth 2 \
@@ -1028,6 +1037,7 @@ Popup Menu    Right or Ctrl-Left
 
     initImages
     initTreeImages
+    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] preDbOpenCmd\""
 
     $itk_component(primaryToolbar) itemconfigure open -state normal
 
@@ -1405,8 +1415,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(newtreevscroll) configure -command "$itk_component(newtree) yview"
 
     grid $itk_component(newtree) $itk_component(newtreevscroll) -sticky nsew
-#XXX Leave commented out until ttk::treeview calls its xscrollcommand correctly
-#    grid $itk_component(newtreehscroll) - -sticky nsew
+    grid $itk_component(newtreehscroll) - -sticky nsew
     grid columnconfigure $itk_component(newtreeF) 0 -weight 1
     grid rowconfigure $itk_component(newtreeF) 0 -weight 1
 
@@ -2525,14 +2534,6 @@ Popup Menu    Right or Ctrl-Left
     update idletasks
 }
 
-::itcl::body ArcherCore::gedCmd {args} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
-    return [eval $itk_component(ged) $args]
-}
-
 ::itcl::body ArcherCore::cmd {args} {
     set cmd [lindex $args 0]
     if {$cmd == ""} {
@@ -2577,6 +2578,53 @@ Popup Menu    Right or Ctrl-Left
     }
 
     error "ArcherCore::cmd: unrecognized command - $args, check source code"
+}
+
+::itcl::body ArcherCore::gedCmd {args} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    return [eval $itk_component(ged) $args]
+}
+
+::itcl::body ArcherCore::preDbOpenCmd {args} {
+    set cmd [lindex $args 0]
+    if {$cmd == ""} {
+	return
+    }
+
+    set arg1 [lindex $args 1]
+    if {$cmd == "info"} {
+	switch $arg1 {
+	    function {
+		if {[llength $args] == 3} {
+		    set subcmd [lindex $args 2]
+		    if {[lsearch $mPreOpenDbCommands $subcmd] == -1} {
+			error "ArcherCore::preDbOpenCmd: unrecognized command - $subcmd"
+		    } else {
+			return $subcmd
+		    }
+		} else {
+		    return $mPreOpenDbCommands
+		}
+	    }
+	    class {
+		return [info class]
+	    }
+	    default {
+		return
+	    }
+	}
+    }
+
+    set i [lsearch -exact $mPreOpenDbCommands $cmd]
+    if {$i != -1} {
+	addHistory $args
+	return [eval $args]
+    }
+
+    error "ArcherCore::preDbOpenCmd: unrecognized command - $args"
 }
 
 # ------------------------------------------------------------
@@ -2995,10 +3043,30 @@ Popup Menu    Right or Ctrl-Left
     set mNodeDrawList ""
 
     foreach ditem [gedCmd who] {
-	set nodesList [getTreeNodes $ditem $_cflag]
-
-	eval lappend mNodePDrawList [lindex $nodesList 0]
-	eval lappend mNodeDrawList [lindex $nodesList 1]
+	if {$mEnableListView} {
+	    set ditem [regsub {^/} $ditem {}]
+	    set dlist [split $ditem /]
+	    set dlen [llength $dlist]
+	    if {$dlen == 1} {
+		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
+	    } else {
+		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
+#		incr dlen -1
+#		for {set i 0} {$i < $dlen} {incr i} {
+#		    foreach ilist $mText2Node([lindex $dlist $i]) {
+#			eval lappend mNodePDrawList [lindex $ilist 0]
+#		    }
+#		}
+#
+#		foreach ilist $mText2Node([lindex $dlist end]) {
+#		    eval lappend mNodeDrawList [lindex $ilist 0]
+#		}
+	    }
+	} else {
+	    set nodesList [getTreeNodes $ditem $_cflag]
+	    eval lappend mNodePDrawList [lindex $nodesList 0]
+	    eval lappend mNodeDrawList [lindex $nodesList 1]
+	}
     }
 
     set mNodePDrawList [lsort -unique $mNodePDrawList]
@@ -3775,7 +3843,7 @@ Popup Menu    Right or Ctrl-Left
 	grid forget $itk_component(canvas)
 	if {!$mViewOnly} {
 	    grid $itk_component(ged) -row 1 -column 0 -columnspan 3 -sticky news
-	    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
+	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
 	    grid $itk_component(ged) -row 1 -column 0 -sticky news
 	}
@@ -4771,6 +4839,16 @@ Popup Menu    Right or Ctrl-Left
     } else {
 	eval gedCmd ocenter $args
     }
+}
+
+::itcl::body ArcherCore::opendb {args} {
+    set len [llength $args]
+
+    if {$len != 1} {
+	return "Usage: opendb dbfile"
+    }
+
+    Load [lindex $args 0]
 }
 
 ::itcl::body ArcherCore::orotate {args} {

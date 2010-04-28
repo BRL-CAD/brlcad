@@ -249,11 +249,11 @@ drawSolid(struct solid *sp,
     if (displaylist && mged_variables->mv_dlist) {
 	DM_DRAWDLIST(dmp, sp->s_dlist);
 	sp->s_flag = UP;
-	ndrawn++;
+	curr_dm_list->dml_ndrawn++;
     } else {
         if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
             sp->s_flag = UP;
-            ndrawn++;
+            curr_dm_list->dml_ndrawn++;
         }
     }
 }
@@ -288,7 +288,7 @@ dozoom(int which_eye)
      */
     struct dm_list *save_dm_list = curr_dm_list;
 
-    ndrawn = 0;
+    curr_dm_list->dml_ndrawn = 0;
     inv_viewsize = view_state->vs_gvp->gv_isize;
 
     /*
@@ -586,12 +586,12 @@ dozoom(int which_eye)
 	    if (displaylist && mged_variables->mv_dlist) {
 		DM_DRAWDLIST(dmp, sp->s_dlist);
 		sp->s_flag = UP;
-		ndrawn++;
+		curr_dm_list->dml_ndrawn++;
 	    } else {
 		/* draw in immediate mode */
 		if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
 		    sp->s_flag = UP;
-		    ndrawn++;
+		    curr_dm_list->dml_ndrawn++;
 		}
 	    }
 	}
