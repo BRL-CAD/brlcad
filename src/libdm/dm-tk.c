@@ -166,6 +166,9 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     Display *dpy = (Display *)NULL;
     XColor fg, bg;
 
+    INIT_XCOLOR(&fg);
+    INIT_XCOLOR(&bg);
+
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
     }
@@ -882,6 +885,8 @@ tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 {
     XColor color;
 
+    INIT_XCOLOR(&color);
+
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
 	return TCL_ERROR;
@@ -913,6 +918,8 @@ HIDDEN int
 tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     XColor color;
+
+    INIT_XCOLOR(&color);
 
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b==%d/%d/%d)\n", r, g, b);

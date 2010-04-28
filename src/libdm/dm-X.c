@@ -153,9 +153,34 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 {
     Status st;
     XColor rgb;
-#define CSCK 0xf800
 
-    rgb = *color;
+#if 0
+    static XColor colors[255][255][255];
+    static int initialized = 0;
+
+    if (!initialized) {
+	int r, g, b;
+	for (r = 0; r < 255; r++) {
+	    for (g = 0; g < 255; g++) {
+		for (b = 0; b < 255; b++) {
+		    memset(colors[r][g][b], 0, sizeof(XColor));
+		    colors[r][g][b].pad = -1;
+		}
+	    }
+	}
+
+	bu_log("INITIALIZING GET_COLOR\n");
+	memset(colors, 0, sizeof(XColor) * 255 * 255 * 255);
+	initialized = 1;
+    }
+
+    if (colors[color->red >> 8][color->green >> 8][color->blue >>8].pad) {
+	*color = colors[color->red >> 8][color->green >> 8][color->blue >>8]; /* struct copy */
+	return;
+    }
+#endif
+
+    rgb = *color; /* struct copy */
 
     st = XAllocColor(dpy, cmap, color);
     switch (st) {
@@ -173,7 +198,22 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 		   rgb.red, rgb.green, rgb.blue);
 	    break;
     }
-#undef CSCK
+
+#if 0
+    bu_log("(%3d, %3d, %3d) %04x, %04x, %04x\n", (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8), rgb.red, rgb.green, rgb.blue);
+    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].pixel = color->pixel;
+    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].red = color->red;
+    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].green = color->green;
+    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].blue = color->blue;
+    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].flags = color->flags;
+    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].pad = color->pad;
+
+    if (colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].pad)
+	bu_log("OH NOES!!!!!! pad is %d\n", colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >>8].pad);
+
+    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >>8].pad = 1;
+#endif
+
 }
 
 
@@ -406,6 +446,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (privars->is_trueColor) {
 	XColor fg, bg;
+
+	INIT_XCOLOR(&fg);
+	INIT_XCOLOR(&bg);
 
 	fg.red = 65535;
 	fg.green = fg.blue = 0;
@@ -1071,6 +1114,8 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
     if (privars->is_trueColor) {
 	XColor color;
 
+	INIT_XCOLOR(&color);
+
 	color.red = r << 8;
 	color.green = g << 8;
 	color.blue = b << 8;
@@ -1108,8 +1153,9 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     dmp->dm_bg[2] = b;
 
     if (privars->is_trueColor) {
-
 	XColor color;
+
+	INIT_XCOLOR(&color);
 
 	color.red = r << 8;
 	color.green = g << 8;
