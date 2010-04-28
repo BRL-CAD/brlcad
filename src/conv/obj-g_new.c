@@ -35,6 +35,14 @@
 #include "wdb.h"
 #include "obj_parser.h"
 
+static char *usage = "%s [-d] [-x rt_debug_flag] input.obj output.g\n\
+                         where input.obj is a WaveFront Object file\n\
+                         and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
+                         The -d option prints additional debugging information.\n\
+                         The -x option specifies an RT debug flags (see raytrace.h).\n";
+static int debug = 0;
+static int verbose = 0;
+
 /* grouping type */
 #define GRP_NONE     0 /* perform no grouping */
 #define GRP_GROUP    1 /* create bot for each obj file 'g' grouping */
@@ -110,70 +118,66 @@ struct ga_t {                                    /* assigned by ... */
 void collect_global_obj_file_attributes(struct ga_t *ga) {
     size_t i = 0;
 
-    bu_log("running obj_polygonal_attributes\n");
     ga->numPolyAttr = obj_polygonal_attributes(ga->contents, &ga->polyattr_list);
 
-    bu_log("running obj_groups\n");
     ga->numGroups = obj_groups(ga->contents, &ga->str_arr_obj_groups);
     bu_log("total number of groups in OBJ file; numGroups = (%lu)\n", ga->numGroups);
 
-    bu_log("list of all groups i.e. 'g' in OBJ file\n");
-    for (i = 0 ; i < ga->numGroups ; i++) {
-        bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_groups[i]);
+    if (verbose) {
+        bu_log("list of all groups i.e. 'g' in OBJ file\n");
+        for (i = 0 ; i < ga->numGroups ; i++) {
+            bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_groups[i]);
+        }
     }
 
-    bu_log("running obj_objects\n");
     ga->numObjects = obj_objects(ga->contents, &ga->str_arr_obj_objects);
     bu_log("total number of object groups in OBJ file; numObjects = (%lu)\n", ga->numObjects);
 
-    bu_log("list of all object groups i.e. 'o' in OBJ file\n");
-    for (i = 0 ; i < ga->numObjects ; i++) {
-        bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_objects[i]);
+    if (verbose) {
+        bu_log("list of all object groups i.e. 'o' in OBJ file\n");
+        for (i = 0 ; i < ga->numObjects ; i++) {
+            bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_objects[i]);
+        }
     }
 
-    bu_log("running obj_materials\n");
     ga->numMaterials = obj_materials(ga->contents, &ga->str_arr_obj_materials);
     bu_log("total number of material names in OBJ file; numMaterials = (%lu)\n", ga->numMaterials);
 
-    bu_log("list of all material names i.e. 'usemtl' in OBJ file\n");
-    for (i = 0 ; i < ga->numMaterials ; i++) {
-        bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_materials[i]);
+    if (verbose) {
+        bu_log("list of all material names i.e. 'usemtl' in OBJ file\n");
+        for (i = 0 ; i < ga->numMaterials ; i++) {
+            bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_materials[i]);
+        }
     }
 
-    bu_log("running obj_texmaps\n");
     ga->numTexmaps = obj_texmaps(ga->contents, &ga->str_arr_obj_texmaps);
     bu_log("total number of texture map names in OBJ file; numTexmaps = (%lu)\n", ga->numTexmaps);
 
-    bu_log("list of all texture map names i.e. 'usemap' in OBJ file\n");
-    for (i = 0 ; i < ga->numTexmaps ; i++) {
-        bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_texmaps[i]);
+    if (verbose) {
+        bu_log("list of all texture map names i.e. 'usemap' in OBJ file\n");
+        for (i = 0 ; i < ga->numTexmaps ; i++) {
+            bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_texmaps[i]);
+        }
     }
 
-    bu_log("running obj_vertices\n");
     ga->numVerts = obj_vertices(ga->contents, &ga->vert_list);
     bu_log("numVerts = (%lu)\n", ga->numVerts);
 
-    bu_log("running obj_normals\n");
     ga->numNorms = obj_normals(ga->contents, &ga->norm_list);
     bu_log("numNorms = (%lu)\n", ga->numNorms);
 
-    bu_log("running obj_texture_coord\n");
     ga->numTexCoords = obj_texture_coord(ga->contents, &ga->texture_coord_list);
     bu_log("numTexCoords = (%lu)\n", ga->numTexCoords);
 
-    bu_log("running obj_polygonal_nv_faces\n");
     ga->numNorFaces = obj_polygonal_nv_faces(ga->contents, &ga->attindex_arr_nv_faces);
     bu_log("number of oriented polygonal faces; numNorFaces = (%lu)\n", ga->numNorFaces);
 
-    bu_log("running obj_polygonal_v_faces\n");
     ga->numFaces = obj_polygonal_v_faces(ga->contents, &ga->attindex_arr_v_faces);
     bu_log("number of polygonal faces only identifed by vertices; numFaces = (%lu)\n", ga->numFaces);
 
-    bu_log("running obj_polygonal_tv_faces\n");
     ga->numTexFaces = obj_polygonal_tv_faces(ga->contents, &ga->attindex_arr_tv_faces);
     bu_log("number of textured polygonal faces; numTexFaces = (%lu)\n", ga->numTexFaces);
 
-    bu_log("running obj_polygonal_tnv_faces\n");
     ga->numTexNorFaces = obj_polygonal_tnv_faces(ga->contents, &ga->attindex_arr_tnv_faces);
     bu_log("number of oriented textured polygonal faces; numTexNorFaces = (%lu)\n", ga->numTexNorFaces);
 
@@ -255,8 +259,9 @@ void retrieve_coord_index(struct   ga_t *ga,   /* obj file global attributes */
             *w = ga->vert_list[index_arr_faces_1D[fi][vi]][3] ;
             /* copy current vertex obj file index into vofi */ 
             *vofi = index_arr_faces_1D[fi][vi] ;
-            bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)v=(%f)(%f)(%f)w=(%f)\n", 
-               fi, vi, fofi+1, *vofi+1, vc[0], vc[1], vc[2], *w);
+            if (verbose)
+                bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)v=(%f)(%f)(%f)w=(%f)\n", 
+                   fi, vi, fofi+1, *vofi+1, vc[0], vc[1], vc[2], *w);
             break;
         case FACE_TV :
             index_arr_faces_2D = (arr_2D_t)(gfi->index_arr_faces);
@@ -270,8 +275,9 @@ void retrieve_coord_index(struct   ga_t *ga,   /* obj file global attributes */
             *vofi = index_arr_faces_2D[fi][vi][0];
             /* copy current texture coordinate obj file index into tofi */ 
             *tofi = index_arr_faces_2D[fi][vi][1];
-            bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)tofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)\n", 
-               fi, vi, fofi+1, *vofi+1, *tofi+1, vc[0], vc[1], vc[2], *w, tc[0], tc[1], tc[2]);
+            if (verbose)
+                bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)tofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)\n", 
+                   fi, vi, fofi+1, *vofi+1, *tofi+1, vc[0], vc[1], vc[2], *w, tc[0], tc[1], tc[2]);
             break;
         case FACE_NV :
             index_arr_faces_2D = (arr_2D_t)(gfi->index_arr_faces);
@@ -285,8 +291,9 @@ void retrieve_coord_index(struct   ga_t *ga,   /* obj file global attributes */
             *vofi = index_arr_faces_2D[fi][vi][0];
             /* copy current normal obj file index into nofi */ 
             *nofi = index_arr_faces_2D[fi][vi][1];
-            bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)n=(%f)(%f)(%f)\n", 
-               fi, vi, fofi+1, *vofi+1, *nofi+1, vc[0], vc[1], vc[2], *w, nc[0], nc[1], nc[2]);
+            if (verbose)
+                bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)n=(%f)(%f)(%f)\n", 
+                   fi, vi, fofi+1, *vofi+1, *nofi+1, vc[0], vc[1], vc[2], *w, nc[0], nc[1], nc[2]);
             break;
         case FACE_TNV :
             index_arr_faces_3D = (arr_3D_t)(gfi->index_arr_faces);
@@ -304,9 +311,10 @@ void retrieve_coord_index(struct   ga_t *ga,   /* obj file global attributes */
             *tofi = index_arr_faces_3D[fi][vi][1];
             /* copy current normal obj file index into nofi */ 
             *nofi = index_arr_faces_3D[fi][vi][2];
-            bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)tofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)n=(%f)(%f)(%f)\n", 
-               fi, vi, fofi+1, *vofi+1, *tofi+1, *nofi+1, vc[0], vc[1], vc[2], *w, 
-               tc[0], tc[1], tc[2], nc[0], nc[1], nc[2]);
+            if (verbose)
+                bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)tofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)t=(%f)(%f)(%f)n=(%f)(%f)(%f)\n", 
+                   fi, vi, fofi+1, *vofi+1, *tofi+1, *nofi+1, vc[0], vc[1], vc[2], *w, 
+                   tc[0], tc[1], tc[2], nc[0], nc[1], nc[2]);
             break;
         default:
             bu_log("ERROR: logic error, invalid face_type in function 'retrieve_coord_index'\n");
@@ -624,9 +632,6 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
         /* if found the first face allocate the output structure and initial allocation
            of the index_arr_faces, num_vertices_arr and obj_file_face_idx_arr arrays */
         if ( found && (numFacesFound == 0)) {
-
-             bu_log("allocating memory for gfi structure and initial size of internal arrays\n");
-
             /* allocate memory for gfi structure */
             *gfi = (struct gfi_t *)bu_calloc(1, sizeof(struct gfi_t), "gfi");
 
@@ -736,8 +741,6 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
             if ( numFacesFound >= (*gfi)->max_faces ) {
                 (*gfi)->max_faces += max_faces_increment;
 
-                bu_log("realloc\n");
-
                 num_vertices_arr_tmp = (size_t *)bu_realloc((*gfi)->num_vertices_arr,
                                        sizeof(size_t) * (*gfi)->max_faces, "num_vertices_arr_tmp");
                 (*gfi)->num_vertices_arr = num_vertices_arr_tmp;
@@ -837,7 +840,8 @@ void output_to_nmg(struct ga_t *ga,
     NMG_CK_SHELL(s);
     /* loop thru all the polygons (i.e. faces) to be placed in the current shell/region/model */
     for ( face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++ ) {
-        bu_log("num vertices in current polygon = (%lu)\n", gfi->num_vertices_arr[face_idx]);
+        if (verbose)
+            bu_log("num vertices in current polygon = (%lu)\n", gfi->num_vertices_arr[face_idx]);
 
         /* test for degenerate face */
         if (test_face(ga, gfi, face_idx, conv_factor, tol)) {
@@ -1645,13 +1649,53 @@ int process_nv_faces(struct ga_t *ga,
     return ret_val;
 }
 
+/*
+ * validate unit string and output conversion factor to millimeters.
+ * if string is not a standard units identifier, the function assumes
+ * a custom conversion factor was specified. a valid null terminated
+ * string is expected as input. return of 0 is success, return of 1
+ * is failure.
+ */
+int
+str2mm(const char *units_string, fastf_t *conv_factor)
+{
+    struct bu_vls str;
+    fastf_t tmp_value = 0.0;
+    char *endp = (char *)NULL;
+    int ret = 0;
+
+    bu_vls_init(&str);
+
+    if ((units_string == (char *)NULL) || (conv_factor == (fastf_t *)NULL)) {
+        bu_log("NULL pointer(s) passed to function 'str2mm'.\n");
+        ret = 1;
+    } else {
+        bu_vls_strcat(&str, units_string);
+        bu_vls_trimspace(&str);
+
+        tmp_value = (fastf_t)strtod(bu_vls_addr(&str), &endp);
+        if ((endp != bu_vls_addr(&str)) && (*endp == '\0')) {
+            /* convert to double success */
+            *conv_factor = tmp_value;
+        } else if ((tmp_value = (fastf_t)bu_mm_value(bu_vls_addr(&str))) > 0.0) {
+            *conv_factor = tmp_value;
+        } else {
+            bu_log("Invalid units string '%s'\n", units_string);
+            ret = 1;
+        }
+    }
+    bu_vls_free(&str);
+    return ret;
+}
+
 int
 main(int argc, char **argv)
 {
-    int face_type_idx = 0;
     char *prog = *argv, buf[BUFSIZ];
-    FILE *fd_in;	/* input file */
-    struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
+    static char *input_file_name;    /* input file name */
+    static char *brlcad_file_name;   /* output file name */
+    FILE *fd_in;	             /* input file */
+    struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     struct region_s *region = NULL;
     int ret_val = 0;
     FILE *my_stream;
@@ -1659,16 +1703,16 @@ main(int argc, char **argv)
     struct gfi_t *gfi = (struct gfi_t *)NULL; /* grouping face indices */
     size_t i = 0;
     int c;
-    char grouping_option = 'o'; /* to be selected by user from command line */
-    fastf_t conv_factor = 1000.0; /* to be selected by user from command line */
+    char option;
+    char grouping_option = 'g'; /* to be selected by user from command line */
+    fastf_t conv_factor = 1.0; /* to be selected by user from command line */
     int weiss_result;
     const char *parse_messages = (char *)0;
     int parse_err = 0;
     struct bn_tol tol_struct ;
     struct bn_tol *tol ;
-
-    /* initialize ga structure */
-    memset((void *)&ga, 0, sizeof(struct ga_t));
+    int face_type_idx = 0;
+    double dist_tmp = 0.0;
 
     /* the raytracer tolerance values (rtip->rti_tol) need to match
        these otherwise raytrace errors will result. the defaults
@@ -1682,14 +1726,84 @@ main(int argc, char **argv)
     tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
 
-    bu_log("running fopen\n");
-    if ((my_stream = fopen("/home/rweiss/diamond.obj","r")) == NULL) {
-        bu_log("Unable to open file.\n");
+    if (argc < 2)
+        bu_exit(1, usage, argv[0]);
+
+    while ((c = bu_getopt(argc, argv, "dx:vt:m:u:g:")) != EOF) {
+        switch (c) {
+            case 'd':
+                debug = 1;
+                break;
+            case 'x':
+                sscanf(bu_optarg, "%x", (unsigned int *) &rt_g.debug);
+                bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+                bu_log("\n");
+                break;
+            case 'v':
+                verbose++;
+                break;
+            case 't':
+                dist_tmp = (double)atof(bu_optarg);
+                if ( dist_tmp < tol->dist ) {
+                    bu_log("distance tolerance too small, must be > %fmm\n", tol->dist);
+                    bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                }
+                tol->dist = dist_tmp;
+                tol->dist_sq = tol->dist * tol->dist;
+                break;
+            case 'm': /* mode */
+                break;
+            case 'u': /* units */
+                if (str2mm(bu_optarg, &conv_factor))
+                    bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                break;
+            case 'g': /* grouping */
+                switch (bu_optarg[0]) {
+                    case 'g': 
+                    case 'o':
+                    case 'm':
+                    case 't':
+                    case 'n':
+                        grouping_option = bu_optarg[0];
+                        break;
+                    default:
+                        bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
+                        bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                        break;
+                }
+                break;
+            default:
+                bu_exit(1, usage, argv[0]);
+                break;
+        }
+    }
+#if 0
+    argv += bu_optind;
+    argc -= bu_optind;
+#endif
+
+    bu_log("using distance tolerance (%fmm)\n", tol->dist);
+    bu_log("using grouping option (%c)\n", grouping_option);
+    bu_log("using conversion factor (%f)\n", conv_factor);
+
+    /* initialize ga structure */
+    memset((void *)&ga, 0, sizeof(struct ga_t));
+
+    input_file_name = argv[bu_optind];
+    if ((my_stream = fopen(input_file_name,"r")) == NULL) {
+        bu_log("Cannot open input file (%s)\n", input_file_name);
         perror(prog);
         return EXIT_FAILURE;
     }
 
-    bu_log("running obj_parser_create\n");
+    bu_optind++;
+    brlcad_file_name = argv[bu_optind];
+    if ((fd_out = wdb_fopen(brlcad_file_name)) == NULL) {
+        bu_log("Cannot create new BRL-CAD file (%s)\n", brlcad_file_name);
+        perror(prog);
+        bu_exit(1, NULL);
+    }
+
     if ((ret_val = obj_parser_create(&ga.parser)) != 0) {
         if (ret_val == ENOMEM) {
             bu_log("Can not allocate an obj_parser_t object, Out of Memory.\n");
@@ -1698,10 +1812,8 @@ main(int argc, char **argv)
         }
 
         /* it is unclear if obj_parser_destroy must be run if obj_parser_create failed */
-        bu_log("obj_parser_destroy\n");
         obj_parser_destroy(ga.parser);
 
-        bu_log("running fclose\n");
         if (fclose(my_stream) != 0) {
             bu_log("Unable to close file.\n");
         }
@@ -1710,7 +1822,6 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    bu_log("running obj_fparse\n");
     if (parse_err = obj_fparse(my_stream,ga.parser,&ga.contents)) {
         if ( parse_err < 0 ) {
             /* syntax error */
@@ -1727,25 +1838,16 @@ main(int argc, char **argv)
         }
 
         /* it is unclear if obj_contents_destroy must be run if obj_fparse failed */
-        bu_log("obj_contents_destroy\n");
         obj_contents_destroy(ga.contents);
 
-        bu_log("obj_parser_destroy\n");
         obj_parser_destroy(ga.parser);
 
-        bu_log("running fclose\n");
         if (fclose(my_stream) != 0) {
             bu_log("Unable to close file.\n");
         }
 
         perror(prog);
         return EXIT_FAILURE;
-    }
-
-    if ((fd_out = wdb_fopen("diamond.g")) == NULL) {
-        bu_log("Cannot create new BRL-CAD file (%s)\n", "diamond.g");
-        perror(prog);
-        bu_exit(1, NULL);
     }
 
     collect_global_obj_file_attributes(&ga);
