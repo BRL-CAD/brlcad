@@ -13,8 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-04-XX  Release 7.16.8                                     ---
 ----------------------------------------------------------------------
 
-TODO: include write-up about marching cubes w.r.t. tessellation.
-
+* fixed Mac OS X 10.5+ mouse input/rotation bug in mged - Bob Parker
 * X11 wireframe performance improvements (dm 'X') - Sean Morrison
 * rtarea "-u model" specifies output using local units - Keith Bowman
 * new bot_split command separates BoTs into multiple BoTs - Bob Parker
