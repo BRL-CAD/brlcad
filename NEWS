@@ -13,6 +13,25 @@ changes made.  See document footer for additional details.
 --- 2010-04-28  Release 7.16.8                                     ---
 ----------------------------------------------------------------------
 
+BRL-CAD's ray tracing support for NURBS boundary representation
+geometry objects continues to be developed towards providing a robust
+foundation for supporting multiple-representation geometry.  This
+release includes several NURBS ray tracing bug fixes, robustness
+improvements, and trimming enhancements.
+
+MGED receives a lot of attention towards improved stability with
+numerous troublesome bugs getting fixed (e.g., "the Mac input bug"),
+restoration of behavior for various introspective commands, and
+continued feature integration with Archer.  MGED's wireframe display
+gets a substantial 5x-10x performance improvement for non-Windows
+platforms while MGED on Windows now supports 64-bit releases and
+restores command-line scripting support.
+
+Archer gets a user interface facelift with the introduction of a new
+geometry browser, list view, buttons, and much more.  As Archer
+approaches feature parity with MGED, it gets closer to an official
+alpha release status as BRL-CAD's next generation geometry editor.
+
 * fixed Mac OS X 10.5+ mouse input/rotation bug in mged - Bob Parker
 * X11 wireframe performance improvements (dm 'X') - Sean Morrison
 * rtarea "-u model" specifies output using local units - Keith Bowman
