@@ -23,10 +23,6 @@
  *  Precomputes the window function.
  */
 
-/*
- * $Id$
- */
-
 #include "common.h"
 
 #include <stdio.h>
