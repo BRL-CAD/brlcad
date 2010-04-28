@@ -71,39 +71,41 @@ extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int,
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
 
 
+struct allocated_colors {
+    struct bu_list l;
+    int r;
+    int g;
+    int b;
+    XColor c;
+};
+
 HIDDEN void
 get_color(Display *dpy, Colormap cmap, XColor *color)
 {
     Status st;
-    XColor rgb;
+    static struct allocated_colors *colors = NULL;
+    struct allocated_colors *c;
+    int r, g, b;
 
-#if 0
-    static XColor colors[255][255][255];
-    static int initialized = 0;
+    if (!colors) {
+	BU_GETSTRUCT(colors, allocated_colors);
+	BU_LIST_INIT(&(colors->l));
+	colors->r = colors->g = colors->b = -1;
+    }
 
-    if (!initialized) {
-	int r, g, b;
-	for (r = 0; r < 255; r++) {
-	    for (g = 0; g < 255; g++) {
-		for (b = 0; b < 255; b++) {
-		    memset(colors[r][g][b], 0, sizeof(XColor));
-		    colors[r][g][b].pad = -1;
-		}
-	    }
+    /* allocated colors are stashed into a list in order to avoid
+     * subsequent repeat allocations.
+     */
+    for (BU_LIST_FOR(c, allocated_colors, &(colors->l))) {
+	if (DM_SAME_COLOR(c->r, c->g, c->b, color->red, color->green, color->blue)) {
+	    *color = c->c; /* struct copy */
+	    return;
 	}
-
-	bu_log("INITIALIZING GET_COLOR\n");
-	memset(colors, 0, sizeof(XColor) * 255 * 255 * 255);
-	initialized = 1;
     }
 
-    if (colors[color->red >> 8][color->green >> 8][color->blue >>8].pad) {
-	*color = colors[color->red >> 8][color->green >> 8][color->blue >>8]; /* struct copy */
-	return;
-    }
-#endif
-
-    rgb = *color; /* struct copy */
+    r = color->red;
+    g = color->green;
+    b = color->blue;
 
     st = XAllocColor(dpy, cmap, color);
     switch (st) {
@@ -111,32 +113,24 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 	    break;
 	case BadColor:
 	    bu_log("XAllocColor failed (BadColor) for (%3d, %3d, %3d) %04x, %04x, %04x\n",
-		   (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
-		   rgb.red, rgb.green, rgb.blue);
+		   (r >> 8), (g >> 8), (b >> 8),
+		   r, g, b);
 	    break;
 
 	default:
 	    bu_log("XAllocColor error for (%3d, %3d, %3d) %04x, %04x, %04x\n",
-		   (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
-		   rgb.red, rgb.green, rgb.blue);
+		   (r >> 8), (g >> 8), (b >> 8),
+		   r, g, b);
 	    break;
     }
 
-#if 0
-    bu_log("(%3d, %3d, %3d) %04x, %04x, %04x\n", (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8), rgb.red, rgb.green, rgb.blue);
-    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].pixel = color->pixel;
-    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].red = color->red;
-    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].green = color->green;
-    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].blue = color->blue;
-    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].flags = color->flags;
-    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].pad = color->pad;
-
-    if (colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >> 8].pad)
-	bu_log("OH NOES!!!!!! pad is %d\n", colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >>8].pad);
-
-    colors[rgb.red >> 8][rgb.green >> 8][rgb.blue >>8].pad = 1;
-#endif
-
+    /* got new valid color, add it to our list */
+    BU_GETSTRUCT(c, allocated_colors);
+    c->r = r;
+    c->g = g;
+    c->b = b;
+    c->c = *color; /* struct copy */
+    BU_LIST_PUSH(&(colors->l), &(c->l));
 }
 
 
@@ -732,11 +726,11 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
     }
-Done:
+ Done:
     XFreeDeviceList(olist);
 #endif
 
-Skip_dials:
+ Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
