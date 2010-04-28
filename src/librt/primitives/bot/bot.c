@@ -4141,6 +4141,11 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
 						sizeof(fastf_t), "Bot vertices");
 	newbot->faces = (int *)bu_calloc(newbot->num_faces * 3,
 					 sizeof(int), "Bot faces");
+	if (bot->mode == RT_BOT_PLATE) {
+	    newbot->thickness = (fastf_t *)bu_calloc(bot->num_faces,
+						     sizeof(fastf_t), "Bot thickness");
+	    newbot->face_mode = bu_bitv_new(newbot->num_faces);
+	}
 
 	i = 0;
 	vcount = 0;
