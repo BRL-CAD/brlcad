@@ -276,6 +276,7 @@ namespace eval ArcherCore {
 	variable mFontText
 	variable mFontTextBold
 
+	variable mDelayCommandViewBuild 0
 	variable mRestoringTree 0
 	variable mViewOnly 0
 	variable mTarget ""
@@ -337,6 +338,10 @@ namespace eval ArcherCore {
 	variable mEnableListViewAllAffectedPref ""
 	variable mTreeAttrColumns ""
 	variable mTreeAttrColumnsPref ""
+
+	variable mSeparateCommandWindow 0
+	variable mSeparateCommandWindowPref ""
+	variable mSepCmdPrefix "sepcmd_"
 
 	variable mZClipMode 0
 	variable mZClipModePref ""
@@ -480,6 +485,7 @@ Popup Menu    Right or Ctrl-Left
 
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 
+	method buildCommandView {}
 	method buildCanvasMenubar {}
 
 	method redrawObj {_obj {_wflag 1}}
@@ -811,39 +817,7 @@ Popup Menu    Right or Ctrl-Left
 	-margin 0
 
     if {!$mViewOnly} {
-	$itk_component(hpane) add bottomView
-	$itk_component(hpane) paneconfigure bottomView \
-	    -margin 0 \
-	    -minimum 0
-
-	set parent [$itk_component(hpane) childsite bottomView]
-	itk_component add advancedTabs {
-	    ::ttk::notebook $parent.tabs
-	} {}
-
-	itk_component add cmd {
-	    Command $itk_component(advancedTabs).cmd \
-		-relief sunken -borderwidth 2 \
-		-hscrollmode none -vscrollmode dynamic \
-		-scrollmargin 2 -visibleitems 80x15 \
-		-textbackground $SystemWindow -prompt "ArcherCore> " \
-		-prompt2 "% " -result_color black -cmd_color red \
-		-background $LABEL_BACKGROUND_COLOR
-	} {}
-
-	$itk_component(cmd) component text configure -background white
-
-	itk_component add history {
-	    ::iwidgets::scrolledtext $itk_component(advancedTabs).history \
-		-relief sunken -borderwidth 2 \
-		-hscrollmode none -vscrollmode dynamic \
-		-scrollmargin 2 -visibleitems 80x15 \
-		-textbackground $SystemWindow
-	} {}
-	[$itk_component(history) component text] configure -state disabled
-
-	$itk_component(advancedTabs) add $itk_component(cmd) -text "Command"
-	$itk_component(advancedTabs) add $itk_component(history) -text "History"
+	buildCommandView
     }
 
     # vertical panes
@@ -987,7 +961,9 @@ Popup Menu    Right or Ctrl-Left
     pack $itk_component(west)  -side left -fill y
     pack $itk_component(east)  -side right -fill y
     if {!$mViewOnly} {
-	pack $itk_component(advancedTabs) -fill both -expand yes
+	if {!$mDelayCommandViewBuild} {
+	    pack $itk_component(advancedTabs) -fill both -expand yes
+	}
 	pack $itk_component(statusF) -before $itk_component(south) -side bottom -fill x
     }
     pack $itk_component(newtreeF) -fill both -expand yes
@@ -1037,7 +1013,9 @@ Popup Menu    Right or Ctrl-Left
 
     initImages
     initTreeImages
-    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] preDbOpenCmd\""
+    if {!$mDelayCommandViewBuild} {
+	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] preDbOpenCmd\""
+    }
 
     $itk_component(primaryToolbar) itemconfigure open -state normal
 
@@ -1111,6 +1089,53 @@ Popup Menu    Right or Ctrl-Left
     SetNormalCursor $this
 
     return $ret
+}
+
+::itcl::body ArcherCore::buildCommandView {} {
+    $itk_component(hpane) add bottomView
+    $itk_component(hpane) paneconfigure bottomView \
+	-margin 0 \
+	-minimum 0
+
+    if {$mSeparateCommandWindow} {
+	itk_component add sepcmdT {
+	    ::toplevel $itk_interior.sepcmdT
+	} {}
+
+	::wm title $itk_component(sepcmdT) "Archer Command"
+	set parent $itk_component(sepcmdT)
+	wm protocol $itk_component(sepcmdT) WM_DELETE_WINDOW {exitArcher $::ArcherCore::application}
+    } else {
+	set parent [$itk_component(hpane) childsite bottomView]
+    }
+
+    itk_component add advancedTabs {
+	::ttk::notebook $parent.tabs
+    } {}
+
+    itk_component add cmd {
+	Command $itk_component(advancedTabs).cmd \
+	    -relief sunken -borderwidth 2 \
+	    -hscrollmode none -vscrollmode dynamic \
+	    -scrollmargin 2 -visibleitems 80x15 \
+	    -textbackground $SystemWindow -prompt "ArcherCore> " \
+	    -prompt2 "% " -result_color black -cmd_color red \
+	    -background $LABEL_BACKGROUND_COLOR
+    } {}
+
+    $itk_component(cmd) component text configure -background white
+
+    itk_component add history {
+	::iwidgets::scrolledtext $itk_component(advancedTabs).history \
+	    -relief sunken -borderwidth 2 \
+	    -hscrollmode none -vscrollmode dynamic \
+	    -scrollmargin 2 -visibleitems 80x15 \
+	    -textbackground $SystemWindow
+    } {}
+    [$itk_component(history) component text] configure -state disabled
+
+    $itk_component(advancedTabs) add $itk_component(cmd) -text "Command"
+    $itk_component(advancedTabs) add $itk_component(history) -text "History"
 }
 
 ::itcl::body ArcherCore::buildCanvasMenubar {}  {
