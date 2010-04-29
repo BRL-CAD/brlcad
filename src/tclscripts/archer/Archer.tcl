@@ -1206,34 +1206,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::in {args} {
-    return [eval createWrapper in $args]
-
-    SetWaitCursor $this
-
-    if {[llength $args] == 0} {
-	set new_args [handleMoreArgs "Enter name of solid: "]
-	while {[llength $new_args] == 0} {
-	    set new_args [handleMoreArgs "Enter name of solid: "]
-	}
-
-	set args $new_args
-    }
-
-    set new_name [lindex $args 0]
-
-    if {[catch {eval gedCmd in $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Checkpoint the created object
-    set lnew_name [checkpoint $new_name $LEDGER_CREATE]
-
-    refreshTree 1
-
-    checkpoint $new_name $LEDGER_MODIFY
-    updateUndoState
-    SetNormalCursor $this
+    eval createWrapper in $args
 }
 
 ::itcl::body Archer::inside {args} {
