@@ -2789,7 +2789,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     if (mat) {
     	ON_Xform xform(mat);
 
-   	if (!xform.IsIdentity()) {
+    	if (!xform.IsIdentity()) {
 			bu_log("Applying transformation matrix....\n");
 	    	for(int row=0;row<4;row++) {
 				bu_log("%d - ", row);

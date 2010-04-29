@@ -182,6 +182,7 @@ public:
     bool m_checkTrim;
     bool m_trimmed;
     bool m_XIncreasing;
+    bool m_Horizontal;
     bool m_Vertical;
     bool m_innerTrim;
 
@@ -218,30 +219,40 @@ inline
 BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
 		   const ON_BrepFace* face, const ON_Interval& t,
 		   bool innerTrim, bool checkTrim, bool trimmed)
-    : m_node(node), m_face(face), m_trim(curve), m_t(t), m_adj_face_index(adj_face_index), m_checkTrim(checkTrim), m_trimmed(trimmed), m_innerTrim(innerTrim)
-{
-    m_start = curve->PointAt(m_t[0]);
-    m_end = curve->PointAt(m_t[1]);
-    // check for vertical segments they can be removed
-    // from trims above (can't tell direction and don't
-    // need
-    if (NEAR_ZERO(m_end[X]-m_start[X], 0.000001)) {
-	m_Vertical = true;
-	if (m_innerTrim) {
-	    m_XIncreasing = false;
-	} else {
-	    m_XIncreasing = true;
-	}
-    } else {
+    : m_node(node), m_face(face), m_trim(curve), m_t(t), m_adj_face_index(adj_face_index),
+      m_checkTrim(checkTrim), m_trimmed(trimmed), m_innerTrim(innerTrim) {
+	m_start = curve->PointAt(m_t[0]);
+	m_end = curve->PointAt(m_t[1]);
+	// check for vertical segments they can be removed
+	// from trims above (can't tell direction and don't
+	// need
+	m_Horizontal = false;
 	m_Vertical = false;
-	if ((m_end[X] - m_start[X]) > 0.0) {
-	    m_XIncreasing = true;
+
+	if (NEAR_ZERO(m_end[X]-m_start[X], 0.000001)) {
+		m_Vertical = true;
+		if (m_innerTrim) {
+			m_XIncreasing = false;
+		} else {
+			m_XIncreasing = true;
+		}
+	} else if (NEAR_ZERO(m_end[Y]-m_start[Y], 0.000001)) {
+		m_Horizontal = true;
+		if ((m_end[X] - m_start[X]) > 0.0) {
+			m_XIncreasing = true;
+		} else {
+			m_XIncreasing = false;
+		}
+		m_slope = 0.0;
 	} else {
-	    m_XIncreasing = false;
+		if ((m_end[X] - m_start[X]) > 0.0) {
+			m_XIncreasing = true;
+		} else {
+			m_XIncreasing = false;
+		}
+		m_slope = (m_end[Y] - m_start[Y])/(m_end[X] - m_start[X]);
 	}
-	m_slope = (m_end[Y] - m_start[Y])/(m_end[X] - m_start[X]);
-    }
-    m_bb_diag = DIST_PT_PT(m_start, m_end);		  
+	m_bb_diag = DIST_PT_PT(m_start, m_end);
 }
 
 
@@ -488,6 +499,11 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
 	Tb = m_t[0];
     }
 
+    fastf_t dU = B[X] - A[X];
+    if (NEAR_ZERO(dU, tol)) {  //vertical
+    	return A[Y];
+    }
+
     ON_3dVector Tan_start = m_trim->TangentAt(Ta);
     ON_3dVector Tan_end = m_trim->TangentAt(Tb);
 
@@ -514,7 +530,10 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
     	du = fabs(Tan_end.x - Tan_start.x);
     }
 
-    fastf_t dU = B[X] - A[X];
+    dU = B[X] - A[X];
+    if (NEAR_ZERO(dU, tol)) {  //vertical
+    	return A[Y];
+    }
 
     guess = Ta + (u - A[X]) * dT/dU;
     p = m_trim->PointAt(guess);
@@ -529,6 +548,10 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
 	    VMOVE(B, p);
 	}
 	dU = B[X] - A[X];
+    if (NEAR_ZERO(dU, tol)) {  //vertical
+    	return A[Y];
+    }
+
 	dT = Tb - Ta;
 	guess = Ta + (u - A[X]) * dT/dU;
 	p = m_trim->PointAt(guess);
@@ -560,6 +583,13 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const {
 	Tb = m_t[0];
     }
 
+    bool xincreasing = !((B[X] - A[X]) < 0.0 );
+
+    fastf_t dV = B[Y] - A[Y];
+    if (NEAR_ZERO(dV, tol)) {  //horizontal
+    		return A[X];
+    }
+
     ON_3dVector Tan_start = m_trim->TangentAt(Ta);
     ON_3dVector Tan_end = m_trim->TangentAt(Tb);
 
@@ -586,7 +616,10 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const {
     	dv = fabs(Tan_end.y - Tan_start.y);
     }
 
-    fastf_t dV = B[Y] - A[Y];
+    dV = B[Y] - A[Y];
+    if (NEAR_ZERO(dV, tol)) {  //horizontal
+    	return A[X];
+    }
 
     guess = Ta + (v - A[Y]) * dT/dV;
     p = m_trim->PointAt(guess);
@@ -601,6 +634,9 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const {
 	    VMOVE(B, p);
 	}
 	dV = B[Y] - A[Y];
+    if (NEAR_ZERO(dV, tol)) {  //horizontal
+    	return A[X];
+    }
 	dT = Tb - Ta;
 	guess = Ta + (v - A[Y]) * dT/dV;
 	p = m_trim->PointAt(guess);
@@ -638,9 +674,9 @@ public:
      */
     void getLeaves(list<BRNode*>& out_leaves);
     void getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-    void getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt);
+    void getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol);
 	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-	void getLeavesRight(list<BRNode*>& out_leaves, const ON_2dPoint& pt);
+	void getLeavesRight(list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol);
     int depth();
 
 private:
