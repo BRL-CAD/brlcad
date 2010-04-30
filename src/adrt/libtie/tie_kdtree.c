@@ -192,6 +192,7 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int t
 {
     tie_geom_t *g;
     TIE_3 min, max;
+    vect_t edge;
     unsigned int i;
 
 
@@ -215,12 +216,13 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int t
 
 /* Get Bounding Box of Triangle */
 	    MATH_BBOX(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
-/*printf("min: [%g, %g, %g], max: [%g, %g, %g]\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
 /* Check to see if defines a new Max or Min point */
 	    MATH_VEC_MIN(tie->min, min);
 	    MATH_VEC_MAX(tie->max, max);
-/* printf("Box: [%g, %g, %g] [%g, %g, %g]\n", tie->min.v[0], tie->min.v[1], tie->min.v[2], tie->max.v[0], tie->max.v[1], tie->max.v[2]);*/
 	}
+	VADD2SCALE(tie->mid, tie->min.v, tie->max.v, 0.5);
+	VSUB2(edge, tie->max.v, tie->mid);
+	tie->radius = MAGNITUDE(edge);
 
 	((tie_geom_t *)(tie->kdtree->data))->tri_num = tri_num;
     }
