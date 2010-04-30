@@ -119,7 +119,6 @@ namespace eval ArcherCore {
 	# public database commands
 	method cmd                 {args}
 	method gedCmd              {args}
-	method preDbOpenCmd        {args}
 
 	# general
 	method Load                {_filename}
@@ -454,8 +453,6 @@ namespace eval ArcherCore {
 
 	# Commands in this list get passed directly to the Ged object
 	variable mUnwrappedDbCommands {}
-
-	variable mPreOpenDbCommands {opendb}
 
 	variable mBannedDbCommands {
 	    dbip open rtabort shaded_mode
@@ -1014,7 +1011,8 @@ Popup Menu    Right or Ctrl-Left
     initImages
     initTreeImages
     if {!$mDelayCommandViewBuild} {
-	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] preDbOpenCmd\""
+	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
+	Load ""
     }
 
     $itk_component(primaryToolbar) itemconfigure open -state normal
@@ -1795,14 +1793,29 @@ Popup Menu    Right or Ctrl-Left
     set mNeedSave 0
     updateSaveMode
 
+    if {$mTarget == ""} {
+	set typelist {
+	    {"BRL-CAD Database" {".g"}}
+	    {"All Files" {*}}
+	}
+
+	set target [tk_getSaveFile -parent $itk_interior \
+			-initialdir $mLastSelectedDir \
+			-title "Save the New Database" \
+			-filetypes $typelist]
+    } else {
+	set target $mTarget
+    }
+
     # Sanity
-    if {$mTarget == "" ||
+    if {$target == "" ||
 	$mTargetCopy == "" ||
 	$mDbReadOnly ||
 	$mDbNoCopy} {
 	return
     }
 
+    set mTarget $target
     file copy -force $mTargetCopy $mTarget
 }
 
@@ -2613,44 +2626,6 @@ Popup Menu    Right or Ctrl-Left
     return [eval $itk_component(ged) $args]
 }
 
-::itcl::body ArcherCore::preDbOpenCmd {args} {
-    set cmd [lindex $args 0]
-    if {$cmd == ""} {
-	return
-    }
-
-    set arg1 [lindex $args 1]
-    if {$cmd == "info"} {
-	switch $arg1 {
-	    function {
-		if {[llength $args] == 3} {
-		    set subcmd [lindex $args 2]
-		    if {[lsearch $mPreOpenDbCommands $subcmd] == -1} {
-			error "ArcherCore::preDbOpenCmd: unrecognized command - $subcmd"
-		    } else {
-			return $subcmd
-		    }
-		} else {
-		    return $mPreOpenDbCommands
-		}
-	    }
-	    class {
-		return [info class]
-	    }
-	    default {
-		return
-	    }
-	}
-    }
-
-    set i [lsearch -exact $mPreOpenDbCommands $cmd]
-    if {$i != -1} {
-	addHistory $args
-	return [eval $args]
-    }
-
-    error "ArcherCore::preDbOpenCmd: unrecognized command - $args"
-}
 
 # ------------------------------------------------------------
 #                  DB/DISPLAY COMMANDS
@@ -4171,12 +4146,18 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::createTargetCopy {} {
+    if {$mTarget == ""} {
+	set target "BBBBogusArcherTargetCopy"
+    } else {
+	set target $mTarget
+    }
+
     set mTargetOldCopy $mTargetCopy
-    set mTargetCopy "$mTarget~"
+    set mTargetCopy "$target~"
 
     set id 1
     while {[file exists $mTargetCopy]} {
-	set mTargetCopy "$mTarget~$id"
+	set mTargetCopy "$target~$id"
 	incr id
     }
 

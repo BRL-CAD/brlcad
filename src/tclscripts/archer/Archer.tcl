@@ -534,6 +534,8 @@ package provide Archer 1.0
 
     $itk_component(primaryToolbar) itemconfigure new -state normal
     $itk_component(primaryToolbar) itemconfigure preferences -state normal
+
+    Load ""
 }
 
 
@@ -1423,12 +1425,19 @@ package provide Archer 1.0
 ::itcl::body Archer::Load {_target} {
     SetWaitCursor $this
     if {$mNeedSave} {
-	if {![askToSave]} {
-	    set mNeedSave 0
-	    updateSaveMode
-	    updateUndoMode
-	}
+	askToSave
     }
+
+    set mNeedSave 0
+    updateSaveMode
+
+    set mNeedCheckpoint 0
+    updateCheckpointMode
+
+    set mNeedGlobalUndo 0
+    set mNeedObjSave 0
+    set mNeedObjUndo 0
+    updateUndoMode
 
     # Get rid of any existing edit dialogs
     foreach ed $mActiveEditDialogs {
@@ -1860,7 +1869,7 @@ package provide Archer 1.0
 
 	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
-	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] preDbOpenCmd\""
+	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
 	}
     } else {
 	if {$_mflag} {
