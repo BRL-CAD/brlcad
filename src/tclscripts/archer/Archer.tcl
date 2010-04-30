@@ -784,122 +784,120 @@ package provide Archer 1.0
 	error "importFg4Sections: wlist is missing the WizardTop key and its corresponding value"
     }
 
-    if {[info exists itk_component(ged)]} {
-	SetWaitCursor $this
-	set savedUnits [$itk_component(ged) units -s]
-	$itk_component(ged) units in
-	$itk_component(ged) configure -autoViewEnable 0
-	$itk_component(ged) detachObservers
+    SetWaitCursor $this
+    set savedUnits [$itk_component(ged) units -s]
+    $itk_component(ged) units in
+    $itk_component(ged) configure -autoViewEnable 0
+    $itk_component(ged) detachObservers
 
-	set pname ""
-	set firstName ""
-	set lastName ""
-	foreach section $slist {
-	    set pname [lindex $section 0]
-	    set sdata [lindex $section 1]
-	    set attrList [lrange $section 2 end]
+    set pname ""
+    set firstName ""
+    set lastName ""
+    foreach section $slist {
+	set pname [lindex $section 0]
+	set sdata [lindex $section 1]
+	set attrList [lrange $section 2 end]
 
-	    set names [split $pname "/"]
-	    set firstName [lindex $names 0]
-	    set lastName [lindex $names end]
-	    set gnames [lrange $names 0 end-1]
+	set names [split $pname "/"]
+	set firstName [lindex $names 0]
+	set lastName [lindex $names end]
+	set gnames [lrange $names 0 end-1]
 
-	    if {[regexp {(.*\.)r([0-9]*)$} $lastName all s1 s2]} {
-		set regionName $lastName
-		set solidName $s1\s$s2
-	    } else {
-		set regionName "$lastName\.r"
-		set solidName "$lastName\.s"
-	    }
-
-	    if {![catch {$itk_component(ged) get_type $solidName} ret]} {
-		#$itk_component(ged) attachObservers
-		$itk_component(ged) units $savedUnits
-		error "importFg4Sections: $solidName already exists!"
-	    }
-
-	    if {[catch {$itk_component(ged) importFg4Section $solidName $sdata} ret]} {
-		#$itk_component(ged) attachObservers
-		$itk_component(ged) units $savedUnits
-		error "importFg4Sections: $ret"
-	    }
-
-	    eval $itk_component(ged) otranslate $solidName $delta
-
-	    # Add to the region
-	    $itk_component(ged) r $regionName u $solidName
-
-	    if {$firstName == $lastName} {
-		continue
-	    }
-
-	    # reverse the list
-	    set reversedGnames {}
-	    foreach item $gnames {
-		set reversedGnames [linsert $reversedGnames 0 $item]
-	    }
-
-	    set gmember $regionName
-	    foreach gname $reversedGnames {
-		if {[catch {$itk_component(ged) get_type $gname} ret]} {
-		    $itk_component(ged) g $gname $gmember
-		} else {
-		    if {[catch {gedCmd get $gname tree} tree]} {
-			#$itk_component(ged) attachObservers
-			$itk_component(ged) units $savedUnits
-			error "importFg4Sections: $gname is not a group!"
-		    }
-
-		    # Add gmember only if its not already there
-		    regsub -all {(\{[ul] )|([{}]+)} $tree " " tmembers
-		    if {[lsearch $tmembers $gmember] == -1} {
-			$itk_component(ged) g $gname $gmember
-		    }
-		}
-
-		# Add WizardTop attribute
-		$itk_component(ged) attr set $gname WizardTop $wizTop
-
-		set gmember $gname
-	    }
-
-	    # Add WizardTop attribute to the region and its solid
-	    $itk_component(ged) attr set $regionName WizardTop $wizTop
-	    $itk_component(ged) attr set $solidName WizardTop $wizTop
-
-	    # Add wizard attributes
-	    #foreach {key val} $wlist {
-	    #$itk_component(ged) attr set $wizTop $key $val
-	    #}
-
-	    # Add other attributes that are specific to this region
-	    foreach {key val} $attrList {
-		$itk_component(ged) attr set $regionName $key $val
-	    }
-
-	    if {[catch {$itk_component(ged) attr get $regionName transparency} tr]} {
-		set tr 1.0
-	    } else {
-		if {![string is double $tr] || $tr < 0.0 || 1.0 < $tr} {
-		    set tr 1.0
-		}
-	    }
-
-	    if {[catch {$itk_component(ged) attr get $regionName vmode} vmode]} {
-		set vmode 0
-	    } else {
-		switch -- $vmode {
-		    "shaded" {
-			set vmode 2
-		    }
-		    default {
-			set vmode 0
-		    }
-		}
-	    }
-
-	    render $pname\.r $vmode $tr 0 0
+	if {[regexp {(.*\.)r([0-9]*)$} $lastName all s1 s2]} {
+	    set regionName $lastName
+	    set solidName $s1\s$s2
+	} else {
+	    set regionName "$lastName\.r"
+	    set solidName "$lastName\.s"
 	}
+
+	if {![catch {$itk_component(ged) get_type $solidName} ret]} {
+	    #$itk_component(ged) attachObservers
+	    $itk_component(ged) units $savedUnits
+	    error "importFg4Sections: $solidName already exists!"
+	}
+
+	if {[catch {$itk_component(ged) importFg4Section $solidName $sdata} ret]} {
+	    #$itk_component(ged) attachObservers
+	    $itk_component(ged) units $savedUnits
+	    error "importFg4Sections: $ret"
+	}
+
+	eval $itk_component(ged) otranslate $solidName $delta
+
+	# Add to the region
+	$itk_component(ged) r $regionName u $solidName
+
+	if {$firstName == $lastName} {
+	    continue
+	}
+
+	# reverse the list
+	set reversedGnames {}
+	foreach item $gnames {
+	    set reversedGnames [linsert $reversedGnames 0 $item]
+	}
+
+	set gmember $regionName
+	foreach gname $reversedGnames {
+	    if {[catch {$itk_component(ged) get_type $gname} ret]} {
+		$itk_component(ged) g $gname $gmember
+	    } else {
+		if {[catch {gedCmd get $gname tree} tree]} {
+		    #$itk_component(ged) attachObservers
+		    $itk_component(ged) units $savedUnits
+		    error "importFg4Sections: $gname is not a group!"
+		}
+
+		# Add gmember only if its not already there
+		regsub -all {(\{[ul] )|([{}]+)} $tree " " tmembers
+		if {[lsearch $tmembers $gmember] == -1} {
+		    $itk_component(ged) g $gname $gmember
+		}
+	    }
+
+	    # Add WizardTop attribute
+	    $itk_component(ged) attr set $gname WizardTop $wizTop
+
+	    set gmember $gname
+	}
+
+	# Add WizardTop attribute to the region and its solid
+	$itk_component(ged) attr set $regionName WizardTop $wizTop
+	$itk_component(ged) attr set $solidName WizardTop $wizTop
+
+	# Add wizard attributes
+	#foreach {key val} $wlist {
+	#$itk_component(ged) attr set $wizTop $key $val
+	#}
+
+	# Add other attributes that are specific to this region
+	foreach {key val} $attrList {
+	    $itk_component(ged) attr set $regionName $key $val
+	}
+
+	if {[catch {$itk_component(ged) attr get $regionName transparency} tr]} {
+	    set tr 1.0
+	} else {
+	    if {![string is double $tr] || $tr < 0.0 || 1.0 < $tr} {
+		set tr 1.0
+	    }
+	}
+
+	if {[catch {$itk_component(ged) attr get $regionName vmode} vmode]} {
+	    set vmode 0
+	} else {
+	    switch -- $vmode {
+		"shaded" {
+		    set vmode 2
+		}
+		default {
+		    set vmode 0
+		}
+	    }
+	}
+
+	render $pname\.r $vmode $tr 0 0
 
 	# Add wizard attributes
 	foreach {key val} $wlist {
@@ -1858,19 +1856,16 @@ package provide Archer 1.0
 	    set mHPaneFraction1 100
 	    set mHPaneFraction2 0
 	}
-	if {[info exists itk_component(ged)]} {
-	    if {!$mSeparateCommandWindow} {
-		set mHPaneFraction1 80
-		set mHPaneFraction2 20
-	    } else {
-		set xy [winfo pointerxy [namespace tail $this]]
-		wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
-	    }
 
-	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
+	if {!$mSeparateCommandWindow} {
+	    set mHPaneFraction1 80
+	    set mHPaneFraction2 20
 	} else {
-	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
+	    set xy [winfo pointerxy [namespace tail $this]]
+	    wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
 	}
+
+	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
     } else {
 	if {$_mflag} {
 	    buildEmbeddedMenubar
@@ -2067,10 +2062,6 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::gedWrapper2 {cmd oindex pindex eflag hflag sflag tflag args} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     SetWaitCursor $this
 
     if {$eflag} {
@@ -2443,11 +2434,7 @@ package provide Archer 1.0
 
 ::itcl::body Archer::initDefaultBindings {{_comp ""}} {
     if {$_comp == ""} {
-	if {[info exists itk_component(ged)]} {
-	    set _comp $itk_component(ged)
-	} else {
-	    return
-	}
+	set _comp $itk_component(ged)
     }
 
     ArcherCore::initDefaultBindings $_comp
@@ -5715,10 +5702,6 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initEdit {{_initEditMode 1}} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     set mSelectedObjType [gedCmd get_type $mSelectedObj]
 
     if {$mSelectedObjType != "bot"} {
@@ -5888,10 +5871,6 @@ proc title_node_handler {node} {
 ################################### Object Edit via Mouse Section ###################################
 
 ::itcl::body Archer::beginObjRotate {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
@@ -5924,10 +5903,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::beginObjScale {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
@@ -5956,10 +5931,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::beginObjTranslate {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
@@ -5989,10 +5960,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::beginObjCenter {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
@@ -6016,10 +5983,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::endObjCenter {_obj} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     updateObjSave
     initEdit 0
 
@@ -6028,10 +5991,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::endObjRotate {dname obj} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) pane_idle_mode $dname
     updateObjSave
     initEdit 0
@@ -6043,10 +6002,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::endObjScale {dname obj} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) pane_idle_mode $dname
     updateObjSave
     initEdit 0
@@ -6058,18 +6013,9 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::endObjTranslate {_dm _obj _mx _my} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) pane_idle_mode $_dm
     handleObjCenter $_dm $_obj $_mx $_my 
     endObjCenter $_obj
-
-#    $itk_component(ged) pane_idle_mode $_dm
-#    updateObjSave
-#    initEdit 0
-
 }
 
 ::itcl::body Archer::handleObjCenter {_dm _obj _mx _my} {
@@ -6087,7 +6033,6 @@ proc title_node_handler {node} {
     set vx [lindex $vl 0]
     set vy [lindex $vl 1]
     set vcenter [list $vx $vy [lindex $ovcenter 2]]
-#   set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
 
     set ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
@@ -6551,10 +6496,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::initDbAttrView {name} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     catch {pack forget $itk_component(dbAttrView)}
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
@@ -6729,10 +6670,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::initObjAttrView {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     if {$mSelectedObj == ""} {
 	return
     }
@@ -6774,10 +6711,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::initObjEditView {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     if {$mSelectedObj == ""} {
 	return
     }
@@ -6824,10 +6757,8 @@ proc title_node_handler {node} {
 
 	initEdit
 
-	if {[info exists itk_component(ged)]} {
-	    pack $itk_component(objViewToolbar) -expand no -fill x -anchor n
-	    pack $itk_component(objEditView) -expand yes -fill both -anchor n
-	}
+	pack $itk_component(objViewToolbar) -expand no -fill x -anchor n
+	pack $itk_component(objEditView) -expand yes -fill both -anchor n
     } else {
 	if {[pluginQuery $mWizardClass] == -1} {
 	    # the wizard plugin has not been loaded
@@ -7306,10 +7237,6 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::pluginGetMinAllowableRid {} {
-    if {![info exists itk_component(ged)]} {
-	return 0
-    }
-
     set maxRid 0
     foreach {rid rname} [$itk_component(ged) rmap] {
 	if {$maxRid < $rid} {
@@ -7588,10 +7515,8 @@ proc title_node_handler {node} {
 	pack $itk_component(advancedTabs) -fill both -expand yes
 	$itk_component(hpane) fraction $mHPaneFraction1 $mHPaneFraction2
 
-	if {[info exists itk_component(ged)]} {
-	    activateMenusEtc
-	    updateSaveMode
-	}
+	activateMenusEtc
+	updateSaveMode
     }
 
     if {$mEnableBigEPref != $mEnableBigE} {
@@ -7715,32 +7640,30 @@ proc title_node_handler {node} {
     if {$mModelAxesSizePref != $mModelAxesSize} {
 	set mModelAxesSize $mModelAxesSizePref
 
-	if {[info exists itk_component(ged)]} {
-	    switch -- $mModelAxesSize {
-		"Small" {
-		    gedCmd configure -modelAxesSize 0.2
-		}
-		"Medium" {
-		    gedCmd configure -modelAxesSize 0.4
-		}
-		"Large" {
-		    gedCmd configure -modelAxesSize 0.8
-		}
-		"X-Large" {
-		    gedCmd configure -modelAxesSize 1.6
-		}
-		"View (1x)" {
-		    gedCmd configure -modelAxesSize 2.0
-		}
-		"View (2x)" {
-		    gedCmd configure -modelAxesSize 4.0
-		}
-		"View (4x)" {
-		    gedCmd configure -modelAxesSize 8.0
-		}
-		"View (8x)" {
-		    gedCmd configure -modelAxesSize 16.0
-		}
+	switch -- $mModelAxesSize {
+	    "Small" {
+		gedCmd configure -modelAxesSize 0.2
+	    }
+	    "Medium" {
+		gedCmd configure -modelAxesSize 0.4
+	    }
+	    "Large" {
+		gedCmd configure -modelAxesSize 0.8
+	    }
+	    "X-Large" {
+		gedCmd configure -modelAxesSize 1.6
+	    }
+	    "View (1x)" {
+		gedCmd configure -modelAxesSize 2.0
+	    }
+	    "View (2x)" {
+		gedCmd configure -modelAxesSize 4.0
+	    }
+	    "View (4x)" {
+		gedCmd configure -modelAxesSize 8.0
+	    }
+	    "View (8x)" {
+		gedCmd configure -modelAxesSize 16.0
 	    }
 	}
     }
@@ -7753,18 +7676,12 @@ proc title_node_handler {node} {
 	$mModelAxesPositionZPref != $Z} {
 	set mModelAxesPosition \
 	    "$mModelAxesPositionXPref $mModelAxesPositionYPref $mModelAxesPositionZPref"
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -modelAxesPosition $mModelAxesPosition
-	}
+	gedCmd configure -modelAxesPosition $mModelAxesPosition
     }
 
     if {$mModelAxesLineWidthPref != $mModelAxesLineWidth} {
 	set mModelAxesLineWidth $mModelAxesLineWidthPref
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -modelAxesLineWidth $mModelAxesLineWidth
-	}
+	gedCmd configure -modelAxesLineWidth $mModelAxesLineWidth
     }
 
     if {$mModelAxesColorPref != $mModelAxesColor} {
@@ -7777,42 +7694,27 @@ proc title_node_handler {node} {
 
     if {$mModelAxesTickIntervalPref != $mModelAxesTickInterval} {
 	set mModelAxesTickInterval $mModelAxesTickIntervalPref
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -modelAxesTickInterval $mModelAxesTickInterval
-	}
+	gedCmd configure -modelAxesTickInterval $mModelAxesTickInterval
     }
 
     if {$mModelAxesTicksPerMajorPref != $mModelAxesTicksPerMajor} {
 	set mModelAxesTicksPerMajor $mModelAxesTicksPerMajorPref
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
-	}
+	gedCmd configure -modelAxesTicksPerMajor $mModelAxesTicksPerMajor
     }
 
     if {$mModelAxesTickThresholdPref != $mModelAxesTickThreshold} {
 	set mModelAxesTickThreshold $mModelAxesTickThresholdPref
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
-	}
+	gedCmd configure -modelAxesTickThreshold $mModelAxesTickThreshold
     }
 
     if {$mModelAxesTickLengthPref != $mModelAxesTickLength} {
 	set mModelAxesTickLength $mModelAxesTickLengthPref
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -modelAxesTickLength $mModelAxesTickLength
-	}
+	gedCmd configure -modelAxesTickLength $mModelAxesTickLength
     }
 
     if {$mModelAxesTickMajorLengthPref != $mModelAxesTickMajorLength} {
 	set mModelAxesTickMajorLength $mModelAxesTickMajorLengthPref
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
-	}
+	gedCmd configure -modelAxesTickMajorLength $mModelAxesTickMajorLength
     }
 
     if {$mModelAxesTickColorPref != $mModelAxesTickColor} {
@@ -7916,50 +7818,46 @@ proc title_node_handler {node} {
     if {$mViewAxesSizePref != $mViewAxesSize} {
 	set mViewAxesSize $mViewAxesSizePref
 
-	if {[info exists itk_component(ged)]} {
-	    # sanity
-	    set offset 0.0
-	    switch -- $mViewAxesSize {
-		"Small" {
-		    set offset 0.85
-		    gedCmd configure -viewAxesSize 0.2
-		}
-		"Medium" {
-		    set offset 0.75
-		    gedCmd configure -viewAxesSize 0.4
-		}
-		"Large" {
-		    set offset 0.55
-		    gedCmd configure -viewAxesSize 0.8
-		}
-		"X-Large" {
-		    set offset 0.0
-		    gedCmd configure -viewAxesSize 1.6
-		}
+	# sanity
+	set offset 0.0
+	switch -- $mViewAxesSize {
+	    "Small" {
+		set offset 0.85
+		gedCmd configure -viewAxesSize 0.2
+	    }
+	    "Medium" {
+		set offset 0.75
+		gedCmd configure -viewAxesSize 0.4
+	    }
+	    "Large" {
+		set offset 0.55
+		gedCmd configure -viewAxesSize 0.8
+	    }
+	    "X-Large" {
+		set offset 0.0
+		gedCmd configure -viewAxesSize 1.6
 	    }
 	}
 
 	set positionNotSet 0
 	set mViewAxesPosition $mViewAxesPositionPref
 
-	if {[info exists itk_component(ged)]} {
-	    switch -- $mViewAxesPosition {
-		default -
-		"Center" {
-		    gedCmd configure -viewAxesPosition {0 0 0}
-		}
-		"Upper Left" {
-		    gedCmd configure -viewAxesPosition "-$offset $offset 0"
-		}
-		"Upper Right" {
-		    gedCmd configure -viewAxesPosition "$offset $offset 0"
-		}
-		"Lower Left" {
-		    gedCmd configure -viewAxesPosition "-$offset -$offset 0"
-		}
-		"Lower Right" {
-		    gedCmd configure -viewAxesPosition "$offset -$offset 0"
-		}
+	switch -- $mViewAxesPosition {
+	    default -
+	    "Center" {
+		gedCmd configure -viewAxesPosition {0 0 0}
+	    }
+	    "Upper Left" {
+		gedCmd configure -viewAxesPosition "-$offset $offset 0"
+	    }
+	    "Upper Right" {
+		gedCmd configure -viewAxesPosition "$offset $offset 0"
+	    }
+	    "Lower Left" {
+		gedCmd configure -viewAxesPosition "-$offset -$offset 0"
+	    }
+	    "Lower Right" {
+		gedCmd configure -viewAxesPosition "$offset -$offset 0"
 	    }
 	}
     }
@@ -7968,51 +7866,46 @@ proc title_node_handler {node} {
 	$mViewAxesPositionPref != $mViewAxesPosition} {
 	set mViewAxesPosition $mViewAxesPositionPref
 
-	if {[info exists itk_component(ged)]} {
-	    # sanity
-	    set offset 0.0
-	    switch -- $mViewAxesSize {
-		"Small" {
-		    set offset 0.85
-		}
-		"Medium" {
-		    set offset 0.75
-		}
-		"Large" {
-		    set offset 0.55
-		}
-		"X-Large" {
-		    set offset 0.0
-		}
+	# sanity
+	set offset 0.0
+	switch -- $mViewAxesSize {
+	    "Small" {
+		set offset 0.85
 	    }
+	    "Medium" {
+		set offset 0.75
+	    }
+	    "Large" {
+		set offset 0.55
+	    }
+	    "X-Large" {
+		set offset 0.0
+	    }
+	}
 
-	    switch -- $mViewAxesPosition {
-		default -
-		"Center" {
-		    gedCmd configure -viewAxesPosition {0 0 0}
-		}
-		"Upper Left" {
-		    gedCmd configure -viewAxesPosition "-$offset $offset 0"
-		}
-		"Upper Right" {
-		    gedCmd configure -viewAxesPosition "$offset $offset 0"
-		}
-		"Lower Left" {
-		    gedCmd configure -viewAxesPosition "-$offset -$offset 0"
-		}
-		"Lower Right" {
-		    gedCmd configure -viewAxesPosition "$offset -$offset 0"
-		}
+	switch -- $mViewAxesPosition {
+	    default -
+	    "Center" {
+		gedCmd configure -viewAxesPosition {0 0 0}
+	    }
+	    "Upper Left" {
+		gedCmd configure -viewAxesPosition "-$offset $offset 0"
+	    }
+	    "Upper Right" {
+		gedCmd configure -viewAxesPosition "$offset $offset 0"
+	    }
+	    "Lower Left" {
+		gedCmd configure -viewAxesPosition "-$offset -$offset 0"
+	    }
+	    "Lower Right" {
+		gedCmd configure -viewAxesPosition "$offset -$offset 0"
 	    }
 	}
     }
 
     if {$mViewAxesLineWidthPref != $mViewAxesLineWidth} {
 	set mViewAxesLineWidth $mViewAxesLineWidthPref
-
-	if {[info exists itk_component(ged)]} {
-	    gedCmd configure -viewAxesLineWidth $mViewAxesLineWidth
-	}
+	gedCmd configure -viewAxesLineWidth $mViewAxesLineWidth
     }
 
     if {$mViewAxesColorPref != $mViewAxesColor} {

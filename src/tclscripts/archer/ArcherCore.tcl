@@ -1047,10 +1047,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     SetWaitCursor $this
 
     if {$eflag} {
@@ -1311,10 +1307,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::redrawObj {obj {wflag 1}} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     if {$obj == ""} {
 	return
     }
@@ -1874,10 +1866,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::refreshTree {{_restore 1}} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     foreach node [array names mNode2Text] {
 	catch {$itk_component(newtree) delete $node}
     }
@@ -2193,19 +2181,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::beginViewRotate {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) init_view_rotate 1
     $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewRotate {_pane} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) end_view_rotate $_pane
 
     set ae [$itk_component(ged) pane_aet $_pane]
@@ -2213,19 +2193,11 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::beginViewScale {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) init_view_scale 1
     $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewScale {_pane} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) end_view_scale $_pane
 
     set size [$itk_component(ged) pane_size $_pane]
@@ -2233,18 +2205,10 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::beginViewTranslate {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) init_view_translate 1
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) end_view_translate $_pane
 
     set center [$itk_component(ged) pane_center $_pane]
@@ -2252,10 +2216,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::initViewCenterMode {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) init_view_center 1
 
     $itk_component(ged) clear_mouse_ray_callback_list
@@ -2264,10 +2224,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::initCompErase {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
     $itk_component(ged) init_comp_pick 1
@@ -2275,10 +2231,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick 1
@@ -2352,10 +2304,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::initViewMeasure {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(ged) clear_view_measure_callback_list
     $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
     $itk_component(ged) init_view_measure
@@ -2367,10 +2315,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::initDefaultBindings {{_comp ""}} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(primaryToolbar) itemconfigure rotate -state normal
     $itk_component(primaryToolbar) itemconfigure translate -state normal
     $itk_component(primaryToolbar) itemconfigure scale -state normal
@@ -2387,10 +2331,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::initBrlcadBindings {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     $itk_component(primaryToolbar) itemconfigure rotate -state disabled
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
@@ -2456,15 +2396,6 @@ Popup Menu    Right or Ctrl-Left
     set mCurrentPaneName ""
     set mBackground [list $r $g $b]
 
-    if {![info exists itk_component(ged)]} {
-	set color [getTkColor \
-		       [lindex $mBackground 0] \
-		       [lindex $mBackground 1] \
-		       [lindex $mBackground 2]]
-	$itk_component(canvas) configure -background $color
-    } else {
-	eval gedCmd bg_all $mBackground
-    }
 }
 
 
@@ -2619,10 +2550,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::gedCmd {args} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     return [eval $itk_component(ged) $args]
 }
 
@@ -2940,20 +2867,12 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::doViewReset {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     set mCurrentPaneName ""
     gedCmd autoview_all
     gedCmd default_views
 }
 
 ::itcl::body ArcherCore::doAutoview {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     if {$mCurrentPaneName == ""} {
 	set pane $mActivePaneName
     } else {
@@ -2965,10 +2884,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::doViewCenter {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     if {$mCurrentPaneName == ""} {
 	set pane $mActivePaneName
     } else {
@@ -4211,10 +4126,6 @@ Popup Menu    Right or Ctrl-Left
 
 #XXXX Needs more flexibility (i.e. position and orientation)
 ::itcl::body ArcherCore::buildGroundPlane {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     catch {gedCmd vdraw vlist delete groundPlaneMajor}
     catch {gedCmd vdraw vlist delete groundPlaneMinor}
 
@@ -4265,10 +4176,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showGroundPlane {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     set savePwd ""
 
     if {$mShowGroundPlane} {
@@ -4289,10 +4196,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showPrimitiveLabels {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     if {!$mShowPrimitiveLabels} {
 	gedCmd configure -primitiveLabels {}
     }
@@ -4301,22 +4204,12 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showViewParams {} {
-    if {[info exists itk_component(ged)]} {
-	$itk_component(ged) configure -showViewingParams $mShowViewingParams
-    } else {
-	return
-    }
-
+    $itk_component(ged) configure -showViewingParams $mShowViewingParams
     refreshDisplay
 }
 
 ::itcl::body ArcherCore::showScale {} {
-    if {[info exists itk_component(ged)]} {
-	$itk_component(ged) configure -scaleEnable $mShowScale
-    } else {
-	return
-    }
-
+    $itk_component(ged) configure -scaleEnable $mShowScale
     refreshDisplay
 }
 
@@ -4329,20 +4222,12 @@ Popup Menu    Right or Ctrl-Left
 
 
 ::itcl::body ArcherCore::launchNirt {} {
-    if {![info exists itk_component(ged)] || $mViewOnly} {
-	return
-    }
-
     putString "nirt -b"
     putString [$itk_component(ged) nirt -b]
 }
 
 ::itcl::body ArcherCore::launchRtApp {app size} {
     global tcl_platform
-
-    if {![info exists itk_component(ged)]} {
-	return
-    }
 
     if {![string is digit $size]} {
 	set size [winfo width $itk_component(ged)]
@@ -5127,10 +5012,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::updateDisplaySettings {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     switch -- $mZClipMode \
 	$ZCLIP_SMALL_CUBE { \
 				$itk_component(ged) zclip_all 1; \
@@ -5349,10 +5230,6 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::watchVar {_name1 _name2 _op} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
-
     switch -- $_name1 {
 	mMeasuringStickColor {
 	    $itk_component(ged) configure -measuringStickColor $mMeasuringStickColor
