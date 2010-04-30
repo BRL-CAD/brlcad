@@ -186,7 +186,7 @@ static OptionMap
 BuildOptionMap(ElementImpl *elementImpl, Tk_OptionTable optionTable)
 {
     OptionMap optionMap = (OptionMap)ckalloc(
-	    sizeof(const Tk_OptionSpec) * elementImpl->nResources);
+	    sizeof(const Tk_OptionSpec) * elementImpl->nResources + 1);
     int i;
 
     for (i = 0; i < elementImpl->nResources; ++i) {
@@ -244,7 +244,7 @@ NewElementImpl(const char *name, Ttk_ElementSpec *specPtr,void *clientData)
     /* Initialize default values:
      */
     elementImpl->defaultValues = (Tcl_Obj**)
-	ckalloc(elementImpl->nResources * sizeof(Tcl_Obj *));
+	ckalloc(elementImpl->nResources * sizeof(Tcl_Obj *) + 1);
     for (i=0; i < elementImpl->nResources; ++i) {
         const char *defaultValue = specPtr->options[i].defaultValue;
 	if (defaultValue) {

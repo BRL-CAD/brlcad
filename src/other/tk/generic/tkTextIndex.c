@@ -113,9 +113,13 @@ DupTextIndexInternalRep(
     dupIndexPtr->tree = indexPtr->tree;
     dupIndexPtr->linePtr = indexPtr->linePtr;
     dupIndexPtr->byteIndex = indexPtr->byteIndex;
-
+    dupIndexPtr->textPtr = indexPtr->textPtr;
+    if (dupIndexPtr->textPtr != NULL) {
+	dupIndexPtr->textPtr->refCount++;
+    }
     SET_TEXTINDEX(copyPtr, dupIndexPtr);
     SET_INDEXEPOCH(copyPtr, epoch);
+    copyPtr->typePtr = &tkTextIndexType;
 }
 
 /*

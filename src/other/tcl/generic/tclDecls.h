@@ -160,7 +160,7 @@ EXTERN Tcl_Obj *	Tcl_ConcatObj (int objc, Tcl_Obj *CONST objv[]);
 #define Tcl_ConvertToType_TCL_DECLARED
 /* 18 */
 EXTERN int		Tcl_ConvertToType (Tcl_Interp * interp, 
-				Tcl_Obj * objPtr, Tcl_ObjType * objTypePtr);
+				Tcl_Obj * objPtr, Tcl_ObjType * typePtr);
 #endif
 #ifndef Tcl_DbDecrRefCount_TCL_DECLARED
 #define Tcl_DbDecrRefCount_TCL_DECLARED
@@ -325,7 +325,7 @@ EXTERN int		Tcl_ListObjGetElements (Tcl_Interp * interp,
 #define Tcl_ListObjIndex_TCL_DECLARED
 /* 46 */
 EXTERN int		Tcl_ListObjIndex (Tcl_Interp * interp, 
-				Tcl_Obj * listPtr, int idx, 
+				Tcl_Obj * listPtr, int index, 
 				Tcl_Obj ** objPtrPtr);
 #endif
 #ifndef Tcl_ListObjLength_TCL_DECLARED
@@ -561,7 +561,7 @@ EXTERN int		Tcl_CreateAliasObj (Tcl_Interp * slave,
 #ifndef Tcl_CreateChannel_TCL_DECLARED
 #define Tcl_CreateChannel_TCL_DECLARED
 /* 88 */
-EXTERN Tcl_Channel	Tcl_CreateChannel (Tcl_ChannelType * channelTypePtr, 
+EXTERN Tcl_Channel	Tcl_CreateChannel (Tcl_ChannelType * typePtr, 
 				CONST char * chanName, 
 				ClientData instanceData, int mask);
 #endif
@@ -1336,7 +1336,7 @@ EXTERN void		Tcl_RegisterChannel (Tcl_Interp * interp,
 #ifndef Tcl_RegisterObjType_TCL_DECLARED
 #define Tcl_RegisterObjType_TCL_DECLARED
 /* 211 */
-EXTERN void		Tcl_RegisterObjType (Tcl_ObjType * objTypePtr);
+EXTERN void		Tcl_RegisterObjType (Tcl_ObjType * typePtr);
 #endif
 #ifndef Tcl_RegExpCompile_TCL_DECLARED
 #define Tcl_RegExpCompile_TCL_DECLARED
@@ -1360,7 +1360,7 @@ EXTERN int		Tcl_RegExpMatch (Tcl_Interp * interp,
 #ifndef Tcl_RegExpRange_TCL_DECLARED
 #define Tcl_RegExpRange_TCL_DECLARED
 /* 215 */
-EXTERN void		Tcl_RegExpRange (Tcl_RegExp regexp, int idx, 
+EXTERN void		Tcl_RegExpRange (Tcl_RegExp regexp, int index, 
 				CONST84 char ** startPtr, 
 				CONST84 char ** endPtr);
 #endif
@@ -1761,7 +1761,7 @@ EXTERN void		Tcl_InitMemory (Tcl_Interp * interp);
 #define Tcl_StackChannel_TCL_DECLARED
 /* 281 */
 EXTERN Tcl_Channel	Tcl_StackChannel (Tcl_Interp * interp, 
-				Tcl_ChannelType * channelTypePtr, 
+				Tcl_ChannelType * typePtr, 
 				ClientData instanceData, int mask, 
 				Tcl_Channel prevChan);
 #endif
@@ -1791,7 +1791,7 @@ EXTERN void		Tcl_AppendObjToObj (Tcl_Obj * objPtr,
 #ifndef Tcl_CreateEncoding_TCL_DECLARED
 #define Tcl_CreateEncoding_TCL_DECLARED
 /* 287 */
-EXTERN Tcl_Encoding	Tcl_CreateEncoding (const Tcl_EncodingType * encodingTypePtr);
+EXTERN Tcl_Encoding	Tcl_CreateEncoding (const Tcl_EncodingType * typePtr);
 #endif
 #ifndef Tcl_CreateThreadExitHandler_TCL_DECLARED
 #define Tcl_CreateThreadExitHandler_TCL_DECLARED
@@ -1983,7 +1983,7 @@ EXTERN void		Tcl_ThreadQueueEvent (Tcl_ThreadId threadId,
 #ifndef Tcl_UniCharAtIndex_TCL_DECLARED
 #define Tcl_UniCharAtIndex_TCL_DECLARED
 /* 320 */
-EXTERN Tcl_UniChar	Tcl_UniCharAtIndex (CONST char * src, int idx);
+EXTERN Tcl_UniChar	Tcl_UniCharAtIndex (CONST char * src, int index);
 #endif
 #ifndef Tcl_UniCharToLower_TCL_DECLARED
 #define Tcl_UniCharToLower_TCL_DECLARED
@@ -2008,7 +2008,7 @@ EXTERN int		Tcl_UniCharToUtf (int ch, char * buf);
 #ifndef Tcl_UtfAtIndex_TCL_DECLARED
 #define Tcl_UtfAtIndex_TCL_DECLARED
 /* 325 */
-EXTERN CONST84_RETURN char * Tcl_UtfAtIndex (CONST char * src, int idx);
+EXTERN CONST84_RETURN char * Tcl_UtfAtIndex (CONST char * src, int index);
 #endif
 #ifndef Tcl_UtfCharComplete_TCL_DECLARED
 #define Tcl_UtfCharComplete_TCL_DECLARED
@@ -2328,7 +2328,7 @@ EXTERN int		Tcl_GetCharLength (Tcl_Obj * objPtr);
 #ifndef Tcl_GetUniChar_TCL_DECLARED
 #define Tcl_GetUniChar_TCL_DECLARED
 /* 381 */
-EXTERN Tcl_UniChar	Tcl_GetUniChar (Tcl_Obj * objPtr, int idx);
+EXTERN Tcl_UniChar	Tcl_GetUniChar (Tcl_Obj * objPtr, int index);
 #endif
 #ifndef Tcl_GetUnicode_TCL_DECLARED
 #define Tcl_GetUnicode_TCL_DECLARED
@@ -2569,7 +2569,7 @@ EXTERN Tcl_HashEntry *	Tcl_CreateHashEntry (Tcl_HashTable * tablePtr,
 #define Tcl_InitCustomHashTable_TCL_DECLARED
 /* 423 */
 EXTERN void		Tcl_InitCustomHashTable (Tcl_HashTable * tablePtr, 
-				int keyType, Tcl_HashKeyType * hashKeyTypePtr);
+				int keyType, Tcl_HashKeyType * typePtr);
 #endif
 #ifndef Tcl_InitObjHashTable_TCL_DECLARED
 #define Tcl_InitObjHashTable_TCL_DECLARED
@@ -2745,13 +2745,13 @@ EXTERN int		Tcl_FSUtime (Tcl_Obj * pathPtr,
 #ifndef Tcl_FSFileAttrsGet_TCL_DECLARED
 #define Tcl_FSFileAttrsGet_TCL_DECLARED
 /* 451 */
-EXTERN int		Tcl_FSFileAttrsGet (Tcl_Interp * interp, int idx, 
+EXTERN int		Tcl_FSFileAttrsGet (Tcl_Interp * interp, int index, 
 				Tcl_Obj * pathPtr, Tcl_Obj ** objPtrRef);
 #endif
 #ifndef Tcl_FSFileAttrsSet_TCL_DECLARED
 #define Tcl_FSFileAttrsSet_TCL_DECLARED
 /* 452 */
-EXTERN int		Tcl_FSFileAttrsSet (Tcl_Interp * interp, int idx, 
+EXTERN int		Tcl_FSFileAttrsSet (Tcl_Interp * interp, int index, 
 				Tcl_Obj * pathPtr, Tcl_Obj * objPtr);
 #endif
 #ifndef Tcl_FSFileAttrStrings_TCL_DECLARED
@@ -3546,7 +3546,7 @@ typedef struct TclStubs {
     void (*tcl_AppendStringsToObj) (Tcl_Obj * objPtr, ...); /* 15 */
     void (*tcl_AppendToObj) (Tcl_Obj* objPtr, CONST char* bytes, int length); /* 16 */
     Tcl_Obj * (*tcl_ConcatObj) (int objc, Tcl_Obj *CONST objv[]); /* 17 */
-    int (*tcl_ConvertToType) (Tcl_Interp * interp, Tcl_Obj * objPtr, Tcl_ObjType * objTypePtr); /* 18 */
+    int (*tcl_ConvertToType) (Tcl_Interp * interp, Tcl_Obj * objPtr, Tcl_ObjType * typePtr); /* 18 */
     void (*tcl_DbDecrRefCount) (Tcl_Obj * objPtr, CONST char * file, int line); /* 19 */
     void (*tcl_DbIncrRefCount) (Tcl_Obj * objPtr, CONST char * file, int line); /* 20 */
     int (*tcl_DbIsShared) (Tcl_Obj * objPtr, CONST char * file, int line); /* 21 */
@@ -3574,7 +3574,7 @@ typedef struct TclStubs {
     int (*tcl_ListObjAppendList) (Tcl_Interp * interp, Tcl_Obj * listPtr, Tcl_Obj * elemListPtr); /* 43 */
     int (*tcl_ListObjAppendElement) (Tcl_Interp * interp, Tcl_Obj * listPtr, Tcl_Obj * objPtr); /* 44 */
     int (*tcl_ListObjGetElements) (Tcl_Interp * interp, Tcl_Obj * listPtr, int * objcPtr, Tcl_Obj *** objvPtr); /* 45 */
-    int (*tcl_ListObjIndex) (Tcl_Interp * interp, Tcl_Obj * listPtr, int idx, Tcl_Obj ** objPtrPtr); /* 46 */
+    int (*tcl_ListObjIndex) (Tcl_Interp * interp, Tcl_Obj * listPtr, int index, Tcl_Obj ** objPtrPtr); /* 46 */
     int (*tcl_ListObjLength) (Tcl_Interp * interp, Tcl_Obj * listPtr, int * lengthPtr); /* 47 */
     int (*tcl_ListObjReplace) (Tcl_Interp * interp, Tcl_Obj * listPtr, int first, int count, int objc, Tcl_Obj *CONST objv[]); /* 48 */
     Tcl_Obj * (*tcl_NewBooleanObj) (int boolValue); /* 49 */
@@ -3616,7 +3616,7 @@ typedef struct TclStubs {
     int (*tcl_ConvertCountedElement) (CONST char * src, int length, char * dst, int flags); /* 85 */
     int (*tcl_CreateAlias) (Tcl_Interp * slave, CONST char * slaveCmd, Tcl_Interp * target, CONST char * targetCmd, int argc, CONST84 char * CONST * argv); /* 86 */
     int (*tcl_CreateAliasObj) (Tcl_Interp * slave, CONST char * slaveCmd, Tcl_Interp * target, CONST char * targetCmd, int objc, Tcl_Obj *CONST objv[]); /* 87 */
-    Tcl_Channel (*tcl_CreateChannel) (Tcl_ChannelType * channelTypePtr, CONST char * chanName, ClientData instanceData, int mask); /* 88 */
+    Tcl_Channel (*tcl_CreateChannel) (Tcl_ChannelType * typePtr, CONST char * chanName, ClientData instanceData, int mask); /* 88 */
     void (*tcl_CreateChannelHandler) (Tcl_Channel chan, int mask, Tcl_ChannelProc * proc, ClientData clientData); /* 89 */
     void (*tcl_CreateCloseHandler) (Tcl_Channel chan, Tcl_CloseProc * proc, ClientData clientData); /* 90 */
     Tcl_Command (*tcl_CreateCommand) (Tcl_Interp * interp, CONST char * cmdName, Tcl_CmdProc * proc, ClientData clientData, Tcl_CmdDeleteProc * deleteProc); /* 91 */
@@ -3771,11 +3771,11 @@ typedef struct TclStubs {
     int (*tcl_RecordAndEval) (Tcl_Interp * interp, CONST char * cmd, int flags); /* 208 */
     int (*tcl_RecordAndEvalObj) (Tcl_Interp * interp, Tcl_Obj * cmdPtr, int flags); /* 209 */
     void (*tcl_RegisterChannel) (Tcl_Interp * interp, Tcl_Channel chan); /* 210 */
-    void (*tcl_RegisterObjType) (Tcl_ObjType * objTypePtr); /* 211 */
+    void (*tcl_RegisterObjType) (Tcl_ObjType * typePtr); /* 211 */
     Tcl_RegExp (*tcl_RegExpCompile) (Tcl_Interp * interp, CONST char * pattern); /* 212 */
     int (*tcl_RegExpExec) (Tcl_Interp * interp, Tcl_RegExp regexp, CONST char * text, CONST char * start); /* 213 */
     int (*tcl_RegExpMatch) (Tcl_Interp * interp, CONST char * text, CONST char * pattern); /* 214 */
-    void (*tcl_RegExpRange) (Tcl_RegExp regexp, int idx, CONST84 char ** startPtr, CONST84 char ** endPtr); /* 215 */
+    void (*tcl_RegExpRange) (Tcl_RegExp regexp, int index, CONST84 char ** startPtr, CONST84 char ** endPtr); /* 215 */
     void (*tcl_Release) (ClientData clientData); /* 216 */
     void (*tcl_ResetResult) (Tcl_Interp * interp); /* 217 */
     int (*tcl_ScanElement) (CONST char * str, int * flagPtr); /* 218 */
@@ -3841,13 +3841,13 @@ typedef struct TclStubs {
     void (*tcl_PanicVA) (CONST char * format, va_list argList); /* 278 */
     void (*tcl_GetVersion) (int * major, int * minor, int * patchLevel, int * type); /* 279 */
     void (*tcl_InitMemory) (Tcl_Interp * interp); /* 280 */
-    Tcl_Channel (*tcl_StackChannel) (Tcl_Interp * interp, Tcl_ChannelType * channelTypePtr, ClientData instanceData, int mask, Tcl_Channel prevChan); /* 281 */
+    Tcl_Channel (*tcl_StackChannel) (Tcl_Interp * interp, Tcl_ChannelType * typePtr, ClientData instanceData, int mask, Tcl_Channel prevChan); /* 281 */
     int (*tcl_UnstackChannel) (Tcl_Interp * interp, Tcl_Channel chan); /* 282 */
     Tcl_Channel (*tcl_GetStackedChannel) (Tcl_Channel chan); /* 283 */
     void (*tcl_SetMainLoop) (Tcl_MainLoopProc * proc); /* 284 */
     void *reserved285;
     void (*tcl_AppendObjToObj) (Tcl_Obj * objPtr, Tcl_Obj * appendObjPtr); /* 286 */
-    Tcl_Encoding (*tcl_CreateEncoding) (const Tcl_EncodingType * encodingTypePtr); /* 287 */
+    Tcl_Encoding (*tcl_CreateEncoding) (const Tcl_EncodingType * typePtr); /* 287 */
     void (*tcl_CreateThreadExitHandler) (Tcl_ExitProc * proc, ClientData clientData); /* 288 */
     void (*tcl_DeleteThreadExitHandler) (Tcl_ExitProc * proc, ClientData clientData); /* 289 */
     void (*tcl_DiscardResult) (Tcl_SavedResult * statePtr); /* 290 */
@@ -3880,12 +3880,12 @@ typedef struct TclStubs {
     Tcl_Obj * (*tcl_SetVar2Ex) (Tcl_Interp * interp, CONST char * part1, CONST char * part2, Tcl_Obj * newValuePtr, int flags); /* 317 */
     void (*tcl_ThreadAlert) (Tcl_ThreadId threadId); /* 318 */
     void (*tcl_ThreadQueueEvent) (Tcl_ThreadId threadId, Tcl_Event* evPtr, Tcl_QueuePosition position); /* 319 */
-    Tcl_UniChar (*tcl_UniCharAtIndex) (CONST char * src, int idx); /* 320 */
+    Tcl_UniChar (*tcl_UniCharAtIndex) (CONST char * src, int index); /* 320 */
     Tcl_UniChar (*tcl_UniCharToLower) (int ch); /* 321 */
     Tcl_UniChar (*tcl_UniCharToTitle) (int ch); /* 322 */
     Tcl_UniChar (*tcl_UniCharToUpper) (int ch); /* 323 */
     int (*tcl_UniCharToUtf) (int ch, char * buf); /* 324 */
-    CONST84_RETURN char * (*tcl_UtfAtIndex) (CONST char * src, int idx); /* 325 */
+    CONST84_RETURN char * (*tcl_UtfAtIndex) (CONST char * src, int index); /* 325 */
     int (*tcl_UtfCharComplete) (CONST char * src, int length); /* 326 */
     int (*tcl_UtfBackslash) (CONST char * src, int * readPtr, char * dst); /* 327 */
     CONST84_RETURN char * (*tcl_UtfFindFirst) (CONST char * src, int ch); /* 328 */
@@ -3941,7 +3941,7 @@ typedef struct TclStubs {
     Tcl_Obj * (*tcl_NewUnicodeObj) (CONST Tcl_UniChar * unicode, int numChars); /* 378 */
     void (*tcl_SetUnicodeObj) (Tcl_Obj * objPtr, CONST Tcl_UniChar * unicode, int numChars); /* 379 */
     int (*tcl_GetCharLength) (Tcl_Obj * objPtr); /* 380 */
-    Tcl_UniChar (*tcl_GetUniChar) (Tcl_Obj * objPtr, int idx); /* 381 */
+    Tcl_UniChar (*tcl_GetUniChar) (Tcl_Obj * objPtr, int index); /* 381 */
     Tcl_UniChar * (*tcl_GetUnicode) (Tcl_Obj * objPtr); /* 382 */
     Tcl_Obj * (*tcl_GetRange) (Tcl_Obj * objPtr, int first, int last); /* 383 */
     void (*tcl_AppendUnicodeToObj) (Tcl_Obj * objPtr, CONST Tcl_UniChar * unicode, int length); /* 384 */
@@ -3983,7 +3983,7 @@ typedef struct TclStubs {
     int (*tcl_UniCharCaseMatch) (CONST Tcl_UniChar * uniStr, CONST Tcl_UniChar * uniPattern, int nocase); /* 420 */
     Tcl_HashEntry * (*tcl_FindHashEntry) (Tcl_HashTable * tablePtr, CONST char * key); /* 421 */
     Tcl_HashEntry * (*tcl_CreateHashEntry) (Tcl_HashTable * tablePtr, CONST char * key, int * newPtr); /* 422 */
-    void (*tcl_InitCustomHashTable) (Tcl_HashTable * tablePtr, int keyType, Tcl_HashKeyType * hashKeyTypePtr); /* 423 */
+    void (*tcl_InitCustomHashTable) (Tcl_HashTable * tablePtr, int keyType, Tcl_HashKeyType * typePtr); /* 423 */
     void (*tcl_InitObjHashTable) (Tcl_HashTable * tablePtr); /* 424 */
     ClientData (*tcl_CommandTraceInfo) (Tcl_Interp * interp, CONST char * varName, int flags, Tcl_CommandTraceProc * procPtr, ClientData prevClientData); /* 425 */
     int (*tcl_TraceCommand) (Tcl_Interp * interp, CONST char * varName, int flags, Tcl_CommandTraceProc * proc, ClientData clientData); /* 426 */
@@ -4011,8 +4011,8 @@ typedef struct TclStubs {
     int (*tcl_FSRenameFile) (Tcl_Obj * srcPathPtr, Tcl_Obj * destPathPtr); /* 448 */
     int (*tcl_FSLstat) (Tcl_Obj * pathPtr, Tcl_StatBuf * buf); /* 449 */
     int (*tcl_FSUtime) (Tcl_Obj * pathPtr, struct utimbuf * tval); /* 450 */
-    int (*tcl_FSFileAttrsGet) (Tcl_Interp * interp, int idx, Tcl_Obj * pathPtr, Tcl_Obj ** objPtrRef); /* 451 */
-    int (*tcl_FSFileAttrsSet) (Tcl_Interp * interp, int idx, Tcl_Obj * pathPtr, Tcl_Obj * objPtr); /* 452 */
+    int (*tcl_FSFileAttrsGet) (Tcl_Interp * interp, int index, Tcl_Obj * pathPtr, Tcl_Obj ** objPtrRef); /* 451 */
+    int (*tcl_FSFileAttrsSet) (Tcl_Interp * interp, int index, Tcl_Obj * pathPtr, Tcl_Obj * objPtr); /* 452 */
     CONST char ** (*tcl_FSFileAttrStrings) (Tcl_Obj * pathPtr, Tcl_Obj ** objPtrRef); /* 453 */
     int (*tcl_FSStat) (Tcl_Obj * pathPtr, Tcl_StatBuf * buf); /* 454 */
     int (*tcl_FSAccess) (Tcl_Obj * pathPtr, int mode); /* 455 */

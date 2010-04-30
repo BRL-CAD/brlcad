@@ -42,7 +42,7 @@ $c create rectangle 245 195 255 205 -outline black -fill red
 
 # First, create the text item and give it bindings so it can be edited.
 
-$c addtag text withtag [$c create text 250 200 -text "This is just a string of text to demonstrate the text facilities of canvas widgets. Bindings have been been defined to support editing (see above)." -width 440 -anchor n -font {Helvetica 24} -justify left]
+$c addtag text withtag [$c create text 250 200 -text "This is just a string of text to demonstrate the text facilities of canvas widgets. Bindings have been been defined to support editing (see above)." -width 440 -anchor n -font $textFont -justify left]
 $c bind text <1> "textB1Press $c %x %y"
 $c bind text <B1-Motion> "textB1Move $c %x %y"
 $c bind text <Shift-1> "$c select adjust current @%x,%y"

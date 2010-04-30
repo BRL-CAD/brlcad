@@ -958,6 +958,107 @@ EXTERN int		TkpTesttextCmd (ClientData dummy,
 				Tcl_Interp * interp, int argc, 
 				CONST char ** argv);
 #endif
+/* Slot 158 is reserved */
+/* Slot 159 is reserved */
+/* Slot 160 is reserved */
+/* Slot 161 is reserved */
+/* Slot 162 is reserved */
+/* Slot 163 is reserved */
+/* Slot 164 is reserved */
+/* Slot 165 is reserved */
+/* Slot 166 is reserved */
+/* Slot 167 is reserved */
+/* Slot 168 is reserved */
+#ifndef TkStateParseProc_TCL_DECLARED
+#define TkStateParseProc_TCL_DECLARED
+/* 169 */
+EXTERN int		TkStateParseProc (ClientData clientData, 
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				const char * value, char * widgRec, 
+				int offset);
+#endif
+#ifndef TkStatePrintProc_TCL_DECLARED
+#define TkStatePrintProc_TCL_DECLARED
+/* 170 */
+EXTERN char *		TkStatePrintProc (ClientData clientData, 
+				Tk_Window tkwin, char * widgRec, int offset, 
+				Tcl_FreeProc ** freeProcPtr);
+#endif
+#ifndef TkCanvasDashParseProc_TCL_DECLARED
+#define TkCanvasDashParseProc_TCL_DECLARED
+/* 171 */
+EXTERN int		TkCanvasDashParseProc (ClientData clientData, 
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				const char * value, char * widgRec, 
+				int offset);
+#endif
+#ifndef TkCanvasDashPrintProc_TCL_DECLARED
+#define TkCanvasDashPrintProc_TCL_DECLARED
+/* 172 */
+EXTERN char *		TkCanvasDashPrintProc (ClientData clientData, 
+				Tk_Window tkwin, char * widgRec, int offset, 
+				Tcl_FreeProc ** freeProcPtr);
+#endif
+#ifndef TkOffsetParseProc_TCL_DECLARED
+#define TkOffsetParseProc_TCL_DECLARED
+/* 173 */
+EXTERN int		TkOffsetParseProc (ClientData clientData, 
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				const char * value, char * widgRec, 
+				int offset);
+#endif
+#ifndef TkOffsetPrintProc_TCL_DECLARED
+#define TkOffsetPrintProc_TCL_DECLARED
+/* 174 */
+EXTERN char *		TkOffsetPrintProc (ClientData clientData, 
+				Tk_Window tkwin, char * widgRec, int offset, 
+				Tcl_FreeProc ** freeProcPtr);
+#endif
+#ifndef TkPixelParseProc_TCL_DECLARED
+#define TkPixelParseProc_TCL_DECLARED
+/* 175 */
+EXTERN int		TkPixelParseProc (ClientData clientData, 
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				const char * value, char * widgRec, 
+				int offset);
+#endif
+#ifndef TkPixelPrintProc_TCL_DECLARED
+#define TkPixelPrintProc_TCL_DECLARED
+/* 176 */
+EXTERN char *		TkPixelPrintProc (ClientData clientData, 
+				Tk_Window tkwin, char * widgRec, int offset, 
+				Tcl_FreeProc ** freeProcPtr);
+#endif
+#ifndef TkOrientParseProc_TCL_DECLARED
+#define TkOrientParseProc_TCL_DECLARED
+/* 177 */
+EXTERN int		TkOrientParseProc (ClientData clientData, 
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				CONST char * value, char * widgRec, 
+				int offset);
+#endif
+#ifndef TkOrientPrintProc_TCL_DECLARED
+#define TkOrientPrintProc_TCL_DECLARED
+/* 178 */
+EXTERN char *		TkOrientPrintProc (ClientData clientData, 
+				Tk_Window tkwin, char * widgRec, int offset, 
+				Tcl_FreeProc ** freeProcPtr);
+#endif
+#ifndef TkSmoothParseProc_TCL_DECLARED
+#define TkSmoothParseProc_TCL_DECLARED
+/* 179 */
+EXTERN int		TkSmoothParseProc (ClientData clientData, 
+				Tcl_Interp * interp, Tk_Window tkwin, 
+				CONST char * value, char * widgRec, 
+				int offset);
+#endif
+#ifndef TkSmoothPrintProc_TCL_DECLARED
+#define TkSmoothPrintProc_TCL_DECLARED
+/* 180 */
+EXTERN char *		TkSmoothPrintProc (ClientData clientData, 
+				Tk_Window tkwin, char * widgRec, int offset, 
+				Tcl_FreeProc ** freeProcPtr);
+#endif
 
 typedef struct TkIntStubs {
     int magic;
@@ -1220,6 +1321,29 @@ typedef struct TkIntStubs {
     void *reserved155;
     int (*tkpTestembedCmd) (ClientData clientData, Tcl_Interp * interp, int argc, CONST char ** argv); /* 156 */
     int (*tkpTesttextCmd) (ClientData dummy, Tcl_Interp * interp, int argc, CONST char ** argv); /* 157 */
+    void *reserved158;
+    void *reserved159;
+    void *reserved160;
+    void *reserved161;
+    void *reserved162;
+    void *reserved163;
+    void *reserved164;
+    void *reserved165;
+    void *reserved166;
+    void *reserved167;
+    void *reserved168;
+    int (*tkStateParseProc) (ClientData clientData, Tcl_Interp * interp, Tk_Window tkwin, const char * value, char * widgRec, int offset); /* 169 */
+    char * (*tkStatePrintProc) (ClientData clientData, Tk_Window tkwin, char * widgRec, int offset, Tcl_FreeProc ** freeProcPtr); /* 170 */
+    int (*tkCanvasDashParseProc) (ClientData clientData, Tcl_Interp * interp, Tk_Window tkwin, const char * value, char * widgRec, int offset); /* 171 */
+    char * (*tkCanvasDashPrintProc) (ClientData clientData, Tk_Window tkwin, char * widgRec, int offset, Tcl_FreeProc ** freeProcPtr); /* 172 */
+    int (*tkOffsetParseProc) (ClientData clientData, Tcl_Interp * interp, Tk_Window tkwin, const char * value, char * widgRec, int offset); /* 173 */
+    char * (*tkOffsetPrintProc) (ClientData clientData, Tk_Window tkwin, char * widgRec, int offset, Tcl_FreeProc ** freeProcPtr); /* 174 */
+    int (*tkPixelParseProc) (ClientData clientData, Tcl_Interp * interp, Tk_Window tkwin, const char * value, char * widgRec, int offset); /* 175 */
+    char * (*tkPixelPrintProc) (ClientData clientData, Tk_Window tkwin, char * widgRec, int offset, Tcl_FreeProc ** freeProcPtr); /* 176 */
+    int (*tkOrientParseProc) (ClientData clientData, Tcl_Interp * interp, Tk_Window tkwin, CONST char * value, char * widgRec, int offset); /* 177 */
+    char * (*tkOrientPrintProc) (ClientData clientData, Tk_Window tkwin, char * widgRec, int offset, Tcl_FreeProc ** freeProcPtr); /* 178 */
+    int (*tkSmoothParseProc) (ClientData clientData, Tcl_Interp * interp, Tk_Window tkwin, CONST char * value, char * widgRec, int offset); /* 179 */
+    char * (*tkSmoothPrintProc) (ClientData clientData, Tk_Window tkwin, char * widgRec, int offset, Tcl_FreeProc ** freeProcPtr); /* 180 */
 } TkIntStubs;
 
 #ifdef __cplusplus
@@ -1895,6 +2019,65 @@ extern TkIntStubs *tkIntStubsPtr;
 #ifndef TkpTesttextCmd
 #define TkpTesttextCmd \
 	(tkIntStubsPtr->tkpTesttextCmd) /* 157 */
+#endif
+/* Slot 158 is reserved */
+/* Slot 159 is reserved */
+/* Slot 160 is reserved */
+/* Slot 161 is reserved */
+/* Slot 162 is reserved */
+/* Slot 163 is reserved */
+/* Slot 164 is reserved */
+/* Slot 165 is reserved */
+/* Slot 166 is reserved */
+/* Slot 167 is reserved */
+/* Slot 168 is reserved */
+#ifndef TkStateParseProc
+#define TkStateParseProc \
+	(tkIntStubsPtr->tkStateParseProc) /* 169 */
+#endif
+#ifndef TkStatePrintProc
+#define TkStatePrintProc \
+	(tkIntStubsPtr->tkStatePrintProc) /* 170 */
+#endif
+#ifndef TkCanvasDashParseProc
+#define TkCanvasDashParseProc \
+	(tkIntStubsPtr->tkCanvasDashParseProc) /* 171 */
+#endif
+#ifndef TkCanvasDashPrintProc
+#define TkCanvasDashPrintProc \
+	(tkIntStubsPtr->tkCanvasDashPrintProc) /* 172 */
+#endif
+#ifndef TkOffsetParseProc
+#define TkOffsetParseProc \
+	(tkIntStubsPtr->tkOffsetParseProc) /* 173 */
+#endif
+#ifndef TkOffsetPrintProc
+#define TkOffsetPrintProc \
+	(tkIntStubsPtr->tkOffsetPrintProc) /* 174 */
+#endif
+#ifndef TkPixelParseProc
+#define TkPixelParseProc \
+	(tkIntStubsPtr->tkPixelParseProc) /* 175 */
+#endif
+#ifndef TkPixelPrintProc
+#define TkPixelPrintProc \
+	(tkIntStubsPtr->tkPixelPrintProc) /* 176 */
+#endif
+#ifndef TkOrientParseProc
+#define TkOrientParseProc \
+	(tkIntStubsPtr->tkOrientParseProc) /* 177 */
+#endif
+#ifndef TkOrientPrintProc
+#define TkOrientPrintProc \
+	(tkIntStubsPtr->tkOrientPrintProc) /* 178 */
+#endif
+#ifndef TkSmoothParseProc
+#define TkSmoothParseProc \
+	(tkIntStubsPtr->tkSmoothParseProc) /* 179 */
+#endif
+#ifndef TkSmoothPrintProc
+#define TkSmoothPrintProc \
+	(tkIntStubsPtr->tkSmoothPrintProc) /* 180 */
 #endif
 
 #endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */

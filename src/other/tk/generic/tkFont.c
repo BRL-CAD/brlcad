@@ -1194,6 +1194,19 @@ Tk_AllocFontFromObj(
 	}
     }
 
+    /*
+     * Detect the system font engine going wrong and fail more gracefully.
+     */
+
+    if (fontPtr == NULL) {
+	if (isNew) {
+	    Tcl_DeleteHashEntry(cacheHashPtr);
+	}
+	Tcl_AppendResult(interp, "failed to allocate font due to ",
+		"internal system font engine problem", NULL);
+	return NULL;
+    }
+
     fontPtr->resourceRefCount = 1;
     fontPtr->objRefCount = 1;
     fontPtr->cacheHashPtr = cacheHashPtr;
@@ -2561,7 +2574,7 @@ Tk_CharBbox(
 {
     TextLayout *layoutPtr;
     LayoutChunk *chunkPtr;
-    int i, x, w;
+    int i, x = 0, w;
     Tk_Font tkfont;
     TkFont *fontPtr;
     const char *end;
@@ -3233,6 +3246,20 @@ ParseFontNameObj(
     xlfd:
 	result = TkFontParseXLFD(string, faPtr, NULL);
 	if (result == TCL_OK) {
+	    return TCL_OK;
+	}
+
+	/*
+	 * If the string failed to parse but was considered to be a XLFD
+	 * then it may be a "-option value" string with a hyphenated family
+	 * name as per bug 2791352
+	 */
+
+	if (Tcl_ListObjGetElements(interp, objPtr, &objc, &objv) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+
+	if (ConfigAttributesObj(interp, tkwin, objc, objv, faPtr) == TCL_OK) {
 	    return TCL_OK;
 	}
     }

@@ -36,6 +36,10 @@
 #define BIF_VALIDATE 0x0020
 #endif
 
+#ifndef BIF_NEWDIALOGSTYLE
+#define BIF_NEWDIALOGSTYLE 0x0040
+#endif
+
 #ifndef BFFM_VALIDATEFAILED
 #ifdef UNICODE
 #define BFFM_VALIDATEFAILED 4
@@ -698,7 +702,8 @@ GetFileNameW(
 	    break;
 	case FILE_TYPEVARIABLE:
 	    typeVariableObj = valuePtr;
-	    initialTypeObj = Tcl_ObjGetVar2(interp, typeVariableObj, NULL, 0);
+	    initialTypeObj = Tcl_ObjGetVar2(interp, typeVariableObj, NULL,
+		    TCL_GLOBAL_ONLY);
 	    break;
 	}
     }
@@ -877,24 +882,26 @@ GetFileNameW(
 		    (char *) ofn.lpstrFile, &ds), NULL);
 	    Tcl_DStringFree(&ds);
 	}
+	result = TCL_OK;
 	if ((ofn.nFilterIndex > 0) &&
 		Tcl_GetCharLength(Tcl_GetObjResult(interp)) > 0 &&
 		typeVariableObj && filterObj) {
 	    int listObjc, count;
 	    Tcl_Obj **listObjv = NULL;
 	    Tcl_Obj **typeInfo = NULL;
+
 	    if (Tcl_ListObjGetElements(interp, filterObj,
-			    &listObjc, &listObjv) != TCL_OK) {
+		    &listObjc, &listObjv) != TCL_OK) {
 		result = TCL_ERROR;
 	    } else if (Tcl_ListObjGetElements(interp,
-			    listObjv[ofn.nFilterIndex - 1],
-			    &count, &typeInfo) != TCL_OK) {
+		    listObjv[ofn.nFilterIndex - 1],
+		    &count, &typeInfo) != TCL_OK) {
 		result = TCL_ERROR;
-	    } else {
-		Tcl_ObjSetVar2(interp, typeVariableObj, NULL, typeInfo[0], 0);
+	    } else if (Tcl_ObjSetVar2(interp, typeVariableObj, NULL,
+		    typeInfo[0], TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
+		result = TCL_ERROR;
 	    }
 	}
-	result = TCL_OK;
     } else {
 	/*
 	 * Use the CommDlgExtendedError() function to retrieve the error code.
@@ -1140,7 +1147,8 @@ GetFileNameA(
 	    break;
 	case FILE_TYPEVARIABLE:
 	    typeVariableObj = valuePtr;
-	    initialTypeObj = Tcl_ObjGetVar2(interp, typeVariableObj, NULL, 0);
+	    initialTypeObj = Tcl_ObjGetVar2(interp, typeVariableObj, NULL,
+		    TCL_GLOBAL_ONLY);
 	    break;
 	}
     }
@@ -1326,24 +1334,26 @@ GetFileNameA(
 		    (char *) ofn.lpstrFile, &ds), NULL);
 	    Tcl_DStringFree(&ds);
 	}
+	result = TCL_OK;
 	if ((ofn.nFilterIndex > 0) &&
 		(Tcl_GetCharLength(Tcl_GetObjResult(interp)) > 0) &&
 		typeVariableObj && filterObj) {
 	    int listObjc, count;
 	    Tcl_Obj **listObjv = NULL;
 	    Tcl_Obj **typeInfo = NULL;
+
 	    if (Tcl_ListObjGetElements(interp, filterObj,
-			    &listObjc, &listObjv) != TCL_OK) {
+		    &listObjc, &listObjv) != TCL_OK) {
 		result = TCL_ERROR;
 	    } else if (Tcl_ListObjGetElements(interp,
-			    listObjv[ofn.nFilterIndex - 1],
-			    &count, &typeInfo) != TCL_OK) {
+		    listObjv[ofn.nFilterIndex - 1],
+		    &count, &typeInfo) != TCL_OK) {
 		result = TCL_ERROR;
-	    } else {
-		Tcl_ObjSetVar2(interp, typeVariableObj, NULL, typeInfo[0], 0);
+	    } else if (Tcl_ObjSetVar2(interp, typeVariableObj, NULL,
+		    typeInfo[0], TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
+		result = TCL_ERROR;
 	    }
 	}
-	result = TCL_OK;
     } else {
 	/*
 	 * Use the CommDlgExtendedError() function to retrieve the error code.
@@ -1661,10 +1671,6 @@ MakeFilter(
  * - Not sure how to implement localization of message prompts.
  *
  * - -title is really -message.
- * ToDo:
- * - Fix bugs.
- * - test to see what platforms this really works on. May require v4.71 of
- *   shell32.dll everywhere (what is standard?).
  *
  *----------------------------------------------------------------------
  */
@@ -1689,6 +1695,7 @@ Tk_ChooseDirectoryObjCmd(
     TCHAR saveDir[MAX_PATH];
     Tcl_DString titleString;	/* UTF Title */
     Tcl_DString initDirString;	/* Initial directory */
+    Tcl_Obj *objPtr;
     static CONST char *optionStrings[] = {
 	"-initialdir", "-mustexist",  "-parent",  "-title", NULL
     };
@@ -1794,12 +1801,19 @@ Tk_ChooseDirectoryObjCmd(
     }
 
     /*
-     * Set flags to add edit box (needs 4.71 Shell DLLs), status text line,
-     * validate edit box and
+     * Set flags to add edit box, status text line and use the new ui.
+     * Allow override with magic variable (ignore errors in retrieval).
+     * See http://msdn.microsoft.com/en-us/library/bb773205(VS.85).aspx
+     * for possible flag values.
      */
 
     bInfo.ulFlags = BIF_EDITBOX | BIF_STATUSTEXT | BIF_RETURNFSANCESTORS
-	    | BIF_VALIDATE;
+	| BIF_VALIDATE | BIF_NEWDIALOGSTYLE;
+    objPtr = Tcl_GetVar2Ex(interp, "::tk::winChooseDirFlags", NULL,
+	    TCL_GLOBAL_ONLY);
+    if (objPtr != NULL) {
+	Tcl_GetIntFromObj(NULL, objPtr, &(bInfo.ulFlags));
+    }
 
     /*
      * Callback to handle events
@@ -1900,8 +1914,6 @@ ChooseDirectoryValidateProc(
 
     chooseDirSharedData = (CHOOSEDIRDATA *)lpData;
 
-    TkWinSetUserData(hwnd, lpData);
-
     if (tsdPtr->debugFlag) {
 	tsdPtr->debugInterp = (Tcl_Interp *) chooseDirSharedData->interp;
 	Tcl_DoWhenIdle(SetTkDialog, (ClientData) hwnd);
@@ -1963,7 +1975,7 @@ ChooseDirectoryValidateProc(
 
     case BFFM_SELCHANGED:
 	/*
-	 * Set the status window to the currently selected path. And enable
+	 * Set the status window to the currently selected path and enable
 	 * the OK button if a file system folder, otherwise disable the OK
 	 * button for things like server names. Perhaps a new switch
 	 * -enablenonfolders can be used to allow non folders to be selected.
@@ -1975,7 +1987,6 @@ ChooseDirectoryValidateProc(
 	    SendMessage(hwnd, BFFM_SETSTATUSTEXT, 0, (LPARAM) selDir);
 	    // enable the OK button
 	    SendMessage(hwnd, BFFM_ENABLEOK, 0, (LPARAM) 1);
-	    SetCurrentDirectory(selDir);
 	} else {
 	    // disable the OK button
 	    SendMessage(hwnd, BFFM_ENABLEOK, 0, (LPARAM) 0);

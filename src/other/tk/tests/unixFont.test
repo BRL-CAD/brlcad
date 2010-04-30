@@ -18,21 +18,27 @@ package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
-set xlsf [auto_execok xlsfonts]
+if {[tk windowingsystem] eq "x11"} {
+    set xlsf [auto_execok xlsfonts]
+}
 foreach {constraint font} {
     hasArial	arial
     hasCourierNew	"courier new"
     hasTimesNew	"times new roman"
 } {
-    testConstraint $constraint 1
-    if {[llength $xlsf]} {
-	if {![catch {eval exec $xlsf [list *-$font-*]} res]
-		&& ![string match *unmatched* $res]} {
-	    # Newer Unix systems have more default fonts installed, 
-	    # so we can't rely on fallbacks for fonts to need to
-	    # fall back on anything.
-	    testConstraint $constraint 0
+    if {[tk windowingsystem] eq "x11"} {
+	testConstraint $constraint 1
+	if {[llength $xlsf]} {
+	    if {![catch {eval exec $xlsf [list *-$font-*]} res]
+		    && ![string match *unmatched* $res]} {
+		# Newer Unix systems have more default fonts installed,
+		# so we can't rely on fallbacks for fonts to need to
+		# fall back on anything.
+		testConstraint $constraint 0
+	    }
 	}
+    } else {
+	testConstraint $constraint 0
     }
 }
 

@@ -211,15 +211,19 @@ bind Text <Delete> {
     if {[%W tag nextrange sel 1.0 end] ne ""} {
 	%W delete sel.first sel.last
     } else {
-	%W delete insert
+	if {[%W compare end != insert+1c]} {
+	    %W delete insert
+	}
 	%W see insert
     }
 }
 bind Text <BackSpace> {
     if {[%W tag nextrange sel 1.0 end] ne ""} {
 	%W delete sel.first sel.last
-    } elseif {[%W compare insert != 1.0]} {
-	%W delete insert-1c
+    } else {
+	if {[%W compare insert != 1.0]} {
+	    %W delete insert-1c
+	}
 	%W see insert
     }
 }
@@ -296,7 +300,7 @@ bind Text <Control-b> {
     }
 }
 bind Text <Control-d> {
-    if {!$tk_strictMotif} {
+    if {!$tk_strictMotif && [%W compare end != insert+1c]} {
 	%W delete insert
     }
 }
@@ -311,7 +315,7 @@ bind Text <Control-f> {
     }
 }
 bind Text <Control-k> {
-    if {!$tk_strictMotif} {
+    if {!$tk_strictMotif && [%W compare end != insert+1c]} {
 	if {[%W compare insert == {insert lineend}]} {
 	    %W delete insert
 	} else {
@@ -355,7 +359,7 @@ bind Text <Meta-b> {
     }
 }
 bind Text <Meta-d> {
-    if {!$tk_strictMotif} {
+    if {!$tk_strictMotif && [%W compare end != insert+1c]} {
 	%W delete insert [tk::TextNextWord %W insert]
     }
 }
@@ -742,7 +746,6 @@ proc ::tk::TextAutoScan {w} {
 # pos -		The desired new position for the cursor in the window.
 
 proc ::tk::TextSetCursor {w pos} {
-
     if {[$w compare $pos == end]} {
 	set pos {end - 1 chars}
     }
@@ -765,7 +768,6 @@ proc ::tk::TextSetCursor {w pos} {
 #		actually been moved to this position yet).
 
 proc ::tk::TextKeySelect {w new} {
-
     set anchorname [tk::TextAnchor $w]
     if {[$w tag nextrange sel 1.0 end] eq ""} {
 	if {[$w compare $new < insert]} {

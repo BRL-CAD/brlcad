@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS MAN_FLAGS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP TCL_THREADS RANLIB ac_ct_RANLIB AR LIBOBJS TCL_LIBS DL_LIBS DL_OBJS PLAT_OBJS PLAT_SRCS CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING LDFLAGS_DEBUG LDFLAGS_OPTIMIZE CC_SEARCH_FLAGS LD_SEARCH_FLAGS STLIB_LD SHLIB_LD TCL_SHLIB_LD_EXTRAS TK_SHLIB_LD_EXTRAS SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX MAKE_LIB MAKE_STUB_LIB INSTALL_LIB INSTALL_STUB_LIB CFLAGS_DEFAULT LDFLAGS_DEFAULT DTRACE TCL_VERSION TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_LEVEL TCL_YEAR TCL_LIB_FILE TCL_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_STUB_LIB_PATH TCL_INCLUDE_SPEC TCL_BUILD_STUB_LIB_SPEC TCL_BUILD_STUB_LIB_PATH TCL_SRC_DIR CFG_TCL_SHARED_LIB_SUFFIX CFG_TCL_UNSHARED_LIB_SUFFIX CFG_TCL_EXPORT_FILE_SUFFIX TCL_SHARED_BUILD LD_LIBRARY_PATH_VAR TCL_BUILD_LIB_SPEC TCL_NEEDS_EXP_FILE TCL_BUILD_EXP_FILE TCL_EXP_FILE TCL_LIB_VERSIONS_OK TCL_SHARED_LIB_SUFFIX TCL_UNSHARED_LIB_SUFFIX TCL_HAS_LONGLONG INSTALL_TZDATA DTRACE_SRC DTRACE_HDR DTRACE_OBJ MAKEFILE_SHELL BUILD_DLTEST TCL_PACKAGE_PATH TCL_MODULE_PATH TCL_LIBRARY PRIVATE_INCLUDE_DIR HTML_DIR EXTRA_CC_SWITCHES EXTRA_APP_CC_SWITCHES EXTRA_INSTALL EXTRA_INSTALL_BINARIES EXTRA_BUILD_HTML EXTRA_TCLSH_LIBS DLTEST_LD DLTEST_SUFFIX'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS MAN_FLAGS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP TCL_THREADS RANLIB ac_ct_RANLIB AR LIBOBJS TCL_LIBS DL_LIBS DL_OBJS PLAT_OBJS PLAT_SRCS LDAIX_SRC CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING LDFLAGS_DEBUG LDFLAGS_OPTIMIZE CC_SEARCH_FLAGS LD_SEARCH_FLAGS STLIB_LD SHLIB_LD TCL_SHLIB_LD_EXTRAS TK_SHLIB_LD_EXTRAS SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX MAKE_LIB MAKE_STUB_LIB INSTALL_LIB INSTALL_STUB_LIB CFLAGS_DEFAULT LDFLAGS_DEFAULT DTRACE TCL_VERSION TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_LEVEL TCL_YEAR TCL_LIB_FILE TCL_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_STUB_LIB_PATH TCL_INCLUDE_SPEC TCL_BUILD_STUB_LIB_SPEC TCL_BUILD_STUB_LIB_PATH TCL_SRC_DIR CFG_TCL_SHARED_LIB_SUFFIX CFG_TCL_UNSHARED_LIB_SUFFIX CFG_TCL_EXPORT_FILE_SUFFIX TCL_SHARED_BUILD LD_LIBRARY_PATH_VAR TCL_BUILD_LIB_SPEC TCL_NEEDS_EXP_FILE TCL_BUILD_EXP_FILE TCL_EXP_FILE TCL_LIB_VERSIONS_OK TCL_SHARED_LIB_SUFFIX TCL_UNSHARED_LIB_SUFFIX TCL_HAS_LONGLONG INSTALL_TZDATA DTRACE_SRC DTRACE_HDR DTRACE_OBJ MAKEFILE_SHELL BUILD_DLTEST TCL_PACKAGE_PATH TCL_MODULE_PATH TCL_LIBRARY PRIVATE_INCLUDE_DIR HTML_DIR EXTRA_CC_SWITCHES EXTRA_APP_CC_SWITCHES EXTRA_INSTALL EXTRA_INSTALL_BINARIES EXTRA_BUILD_HTML EXTRA_TCLSH_LIBS DLTEST_LD DLTEST_SUFFIX'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1343,7 +1343,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".6"
+TCL_PATCH_LEVEL=".8"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -6628,6 +6628,11 @@ fi
 
 
     # Require ranlib early so we can override it in special cases below.
+    LDAIX_SRC=""
+    if test x"${SHLIB_VERSION}" = x; then
+  SHLIB_VERSION="1.0"
+fi
+
 
 
 
@@ -6648,7 +6653,7 @@ fi
     CFLAGS_OPTIMIZE=-O
     if test "$GCC" = yes; then
 
-	CFLAGS_WARNING="-Wall -Wno-implicit-int"
+	CFLAGS_WARNING="-Wall"
 
 else
   CFLAGS_WARNING=""
@@ -6710,11 +6715,12 @@ fi
 
 		# AIX requires the _r compiler when gcc isn't being used
 		case "${CC}" in
-		    *_r)
+		    *_r|*_r\ *)
 			# ok ...
 			;;
 		    *)
-			CC=${CC}_r
+			# Make sure only first arg gets _r
+		    	CC=`echo "$CC" | sed -e 's/^\([^ ]*\)/\1_r/'`
 			;;
 		esac
 		echo "$as_me:$LINENO: result: Using $CC for compiling with threads" >&5
@@ -6733,6 +6739,7 @@ fi
 	    LD_LIBRARY_PATH_VAR="LIBPATH"
 
 	    # Check to enable 64-bit flags for compiler/linker on AIX 4+
+		LDAIX_SRC='$(UNIX_DIR)/ldAix'
 	    if test "$do64bit" = yes -a "`uname -v`" -gt 3; then
 
 		if test "$GCC" = yes; then
@@ -7549,7 +7556,7 @@ echo "${ECHO_T}$tcl_cv_ld_elf" >&6
 
 else
 
-		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
+		SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
 
 fi
 
@@ -7560,6 +7567,7 @@ fi
 	    TCL_LIB_VERSIONS_OK=nodots
 	    ;;
 	OpenBSD-*)
+	    CFLAGS_OPTIMIZE='-O2'
 	    SHLIB_CFLAGS="-fPIC"
 	    SHLIB_LD='${CC} -shared ${SHLIB_CFLAGS}'
 	    SHLIB_LD_LIBS='${LIBS}'
@@ -7572,7 +7580,7 @@ fi
 fi
 
 	    LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
-	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
+	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
 	    echo "$as_me:$LINENO: checking for ELF" >&5
 echo $ECHO_N "checking for ELF... $ECHO_C" >&6
 if test "${tcl_cv_ld_elf+set}" = set; then
@@ -8318,7 +8326,7 @@ fi
 	    # requires an extra version number at the end of .so file names.
 	    # So, the library has to have a name like libtcl75.so.1.0
 
-	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.1.0'
+	    SHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.so.${SHLIB_VERSION}'
 	    UNSHARED_LIB_SUFFIX='${TCL_TRIM_DOTS}.a'
 	    TCL_LIB_VERSIONS_OK=nodots
 	    ;;
@@ -8906,6 +8914,7 @@ fi
     # FIXME: This subst was left in only because the TCL_DL_LIBS
     # entry in tclConfig.sh uses it. It is not clear why someone
     # would use TCL_DL_LIBS instead of TCL_LIBS.
+
 
 
 
@@ -17877,6 +17886,79 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 	fi
+	echo "$as_me:$LINENO: checking if Darwin SUSv3 extensions are available" >&5
+echo $ECHO_N "checking if Darwin SUSv3 extensions are available... $ECHO_C" >&6
+if test "${tcl_cv_cc_darwin_c_source+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+	    hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -Werror"
+	    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+		    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+		    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+		    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+		    #endif
+		    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+		    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+		    #endif
+		    #define _DARWIN_C_SOURCE 1
+		    #include <sys/cdefs.h>
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  tcl_cv_cc_darwin_c_source=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+tcl_cv_cc_darwin_c_source=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+	    CFLAGS=$hold_cflags
+fi
+echo "$as_me:$LINENO: result: $tcl_cv_cc_darwin_c_source" >&5
+echo "${ECHO_T}$tcl_cv_cc_darwin_c_source" >&6
+	if test $tcl_cv_cc_darwin_c_source = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define _DARWIN_C_SOURCE 1
+_ACEOF
+
+	fi
     fi
     # Build .bundle dltest binaries in addition to .dylib
     DLTEST_LD='${CC} -bundle -Wl,-w ${CFLAGS} ${LDFLAGS}'
@@ -18867,9 +18949,9 @@ VERSION=${TCL_VERSION}
 
 if test "$FRAMEWORK_BUILD" = "1" ; then
     test -z "$TCL_PACKAGE_PATH" && \
-	TCL_PACKAGE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl ~/Library/Frameworks /Library/Frameworks /Network/Library/Frameworks /System/Library/Frameworks"
+	TCL_PACKAGE_PATH="~/Library/Tcl /Library/Tcl /System/Library/Tcl ~/Library/Frameworks /Library/Frameworks /System/Library/Frameworks"
     test -z "$TCL_MODULE_PATH"  && \
-	TCL_MODULE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl"
+	TCL_MODULE_PATH="~/Library/Tcl /Library/Tcl /System/Library/Tcl"
 elif test "$prefix/lib" != "$libdir"; then
     TCL_PACKAGE_PATH="${libdir} ${prefix}/lib ${TCL_PACKAGE_PATH}"
 else
@@ -19606,6 +19688,7 @@ s,@DL_LIBS@,$DL_LIBS,;t t
 s,@DL_OBJS@,$DL_OBJS,;t t
 s,@PLAT_OBJS@,$PLAT_OBJS,;t t
 s,@PLAT_SRCS@,$PLAT_SRCS,;t t
+s,@LDAIX_SRC@,$LDAIX_SRC,;t t
 s,@CFLAGS_DEBUG@,$CFLAGS_DEBUG,;t t
 s,@CFLAGS_OPTIMIZE@,$CFLAGS_OPTIMIZE,;t t
 s,@CFLAGS_WARNING@,$CFLAGS_WARNING,;t t

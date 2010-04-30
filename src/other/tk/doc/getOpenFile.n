@@ -83,7 +83,7 @@ Specifies a string to display as the title of the dialog box. If this
 option is not specified, then a default title is displayed. 
 .TP
 \fB\-typevariable\fR \fIvariableName\fR
-The variable \fIvariableName\fR is used to preselect which filter is
+The global variable \fIvariableName\fR is used to preselect which filter is
 used from \fIfilterList\fR when the dialog box is opened and is
 updated when the dialog box is closed, to the last selected
 filter. The variable is read once at the beginning to select the

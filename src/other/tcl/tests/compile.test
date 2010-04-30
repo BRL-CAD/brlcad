@@ -296,6 +296,7 @@ test compile-12.1 {testing literal leak on interp delete} -setup {
     set leakedBytes [expr {$end - $tmp}]
 } -cleanup {
     rename getbytes {}
+    unset -nocomplain end i tmp leakedBytes
 } -result 0
 # Special test for a memory error in a preliminary fix of [Bug 467523]. 
 # It requires executing a helpfile.  Presumably the child process is

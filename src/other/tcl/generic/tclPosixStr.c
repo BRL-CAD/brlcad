@@ -1039,6 +1039,9 @@ Tcl_SignalId(
 #ifdef SIGXFSZ
     case SIGXFSZ: return "SIGXFSZ";
 #endif
+#if defined(SIGINFO) && (!defined(SIGPWR) || (SIGINFO != SIGPWR))
+    case SIGINFO: return "SIGINFO";
+#endif
     }
     return "unknown signal";
 }
@@ -1169,6 +1172,9 @@ Tcl_SignalMsg(
 #endif
 #ifdef SIGXFSZ
     case SIGXFSZ: return "exceeded file size limit";
+#endif
+#if defined(SIGINFO) && (!defined(SIGPWR) || (SIGINFO != SIGPWR))
+    case SIGINFO: return "information request";
 #endif
     }
     return "unknown signal";

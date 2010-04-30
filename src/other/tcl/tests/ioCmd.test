@@ -980,6 +980,38 @@ test iocmd-23.8 {chan read, level is squashed} -match glob -body {
     rename foo {}
     set res
 } -result {{read rc* 4096} 1 *bad code* {-code 1 -level 0 -errorcode NONE -errorline 1 -errorinfo *bad code*subcommand "read"*}}
+test iocmd-23.9 {chan read, no data means eof} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	return ""
+    }
+    set c [chan create {r w} foo]
+} -body {
+    note [read $c 2]
+    note [eof $c]
+    set res
+} -cleanup {
+    close $c
+    rename foo {}
+    unset res
+} -result {{read rc* 4096} {} 1}
+test iocmd-23.10 {chan read, EAGAIN means no data, yet no eof either} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	error EAGAIN
+    }
+    set c [chan create {r w} foo]
+} -body {
+    note [read $c 2]
+    note [eof $c]
+    set res
+} -cleanup {
+    close $c
+    rename foo {}
+    unset res
+} -result {{read rc* 4096} {} 0}
 
 # --- === *** ###########################
 # method write
@@ -2210,6 +2242,46 @@ test iocmd.tf-23.8 {chan read, level is squashed} -match glob -body {
     rename foo {}
     set res
 } -result {{read rc* 4096} 1 *bad code* {-code 1 -level 0 -errorcode NONE -errorline 1 -errorinfo *bad code*subcommand "read"*}} \
+    -constraints {testchannel testthread}
+test iocmd.tf-23.9 {chan read, no data means eof} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	return ""
+    }
+    set c [chan create {r w} foo]
+} -body {
+    notes [inthread $c {
+	note [read $c 2]
+	note [eof $c]
+	close $c
+	notes
+    } c]
+    set res
+} -cleanup {
+    rename foo {}
+    unset res
+} -result {{read rc* 4096} {} 1} \
+    -constraints {testchannel testthread}
+test iocmd.tf-23.10 {chan read, EAGAIN means no data, yet no eof either} -match glob -setup {
+    set res {}
+    proc foo {args} {
+	oninit; onfinal; track
+	error EAGAIN
+    }
+    set c [chan create {r w} foo]
+} -body {
+    notes [inthread $c {
+	note [read $c 2]
+	note [eof $c]
+	close $c
+	notes
+    } c]
+    set res
+} -cleanup {
+    rename foo {}
+    unset res
+} -result {{read rc* 4096} {} 0} \
     -constraints {testchannel testthread}
 
 # --- === *** ###########################

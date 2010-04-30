@@ -6575,3 +6575,101 @@ in screen distances, reducing precision loss (ferrieux)
 2008-12-22 (bug fix)[2207435] [ttk::entry .t -textvar ::noexist::x] (english)
 
 --- Released 8.5.6, December 23, 2008 --- See ChangeLog for details ---
+
+2009-01-07 (bug fix)[1847002] Win: prevent grab bypass (thoyts)
+
+2009-01-11 (bug fix) crash on XCreateIC failure (staplin)
+
+2009-01-14 (bug fix)[2507326] Restore aMSN compat (nijtmans)
+
+2009-01-19 (new feature) CONFIG_INSTALL_DIR - where tclConfig.sh goes (cassoff)
+
+2009-01-19 (platform support) better tools for BSD ports (cassoff)
+
+2009-02-17 (platform support) MSVC and _WIN64 (hobbs)
+
+2009-02-23 (bug fix)[1329198,456299,2507419] menu image display (mcdonald)
+
+2009-02-23 (bug fix)[2513104] fix cursor hotspots (mcdonald)
+
+2009-02-23 (bug fix)[2542828] Win: standard question_arrow cursor (danckaert)
+
+2009-02-27 (bug fix)[2645457] crash in Tk_MakeWindowExist() (thoyts)
+
+2009-03-25 (bug fix)[2178820] stop zero-size allocs in ttk (fellows)
+
+2009-03-25 (bug fix)[1871101] blurry large fonts on Vista (garvey,fellows)
+
+2009-04-10 (bug fix)[2116837] std virtual events with Caps Lock (fellows)
+
+--- Released 8.5.7, April 15, 2009 --- See ChangeLog for details ---
+
+2009-04-23 (bug fix)[2779910] updated Win chooseDir (hobbs)
+
+2009-04-43 (bug fix) prevent delete of selected folder in Win dialog (hobbs)
+
+2009-04-30 (bug fix)[2080533] panedwindow sash draw crash (fellows)
+
+2009-04-30 (bug fix)[2504402] iconphoto on non-32-bit displays (mcdonald,thoyts)
+
+2009-05-03 (bug fix)[2785744] broken flag twiddling (baker,fellows)
+
+2009-05-13 (bug fix)[2791352] XLFD parsing error (thoyts)
+
+2009-05-14 (new feature) Vista theme support (thoyts)
+
+2009-05-14 (bug fix)[1923684] confused checkbutton state (thoyts)
+
+2009-05-21 (bug fix)[2794778] Win menu keyboard traversal (thoyts)
+
+2009-06-02 (bug fix)[2799589] crash on delayed window activation (thoyts)
+
+2009-06-23 (bug fix)[220935] canvas dash update problem (nijtmans)
+
+2009-07-15 (bug fix)[2821962] photo image copy/paste (rib,fellows)
+
+2009-07-22 (bug fix)[2496114] focus in dead window crash (griffin,fellows)
+
+2009-08-01 (bug fix)[2830420] X iconphoto for big endian (misch,fellows)
+
+2009-08-04 (bug fix) [text] word-wrap of non-breaking space (fellows)
+
+2009-08-24 (bug fix) tk::MessageBox bindings for ttk::buttons (steiner,fellows)
+
+2009-08-25 (bug fix)[1909931] [send] update for Fedora 8 (fellows)
+
+2009-09-10 (bug fix) font allocation crash (berezhnoy,fellows)
+
+2009-09-14 (bug fix)[873608] win tearoff menu, no submenu arrows (traum,hobbs)
+
+2009-09-14 (bug fix)[873613] win tearoff menu repeat select (traum,hobbs)
+
+2009-09-25 (bug fix) grayscale from images (vetter,fellows)
+
+2009-10-07 (bug fix)[2088597] min scrollbar slider size (danckaert,fellows)
+
+2009-10-07 (bug fix)[2787164] combobox/menubutton arrow size (thoyts)
+
+2009-10-08 (bug fix)[2870648] file dialog cursor (danckaert,fellows)
+
+2009-10-10 (feature)[1961455] underline, overstrike Xft fonts (caffin,fellows)
+
+2009-10-15 (feature)[2794032] permit [load] into Tcl 8.6+ interps (porter)
+
+2009-10-22 (bug fix)[2168768] file dialog -typevariable scope (danckaert)
+
+2009-10-22 (bug fix)[1469210] [text] modified error (danckaert)
+
+2009-10-24 (bug fix)[2883712] 64-bit Aqua progress bar (haffner)
+
+2009-10-24 (bug fix)[1530276] X checkbutton -selectcolor (danckaert)
+
+2009-10-25 (bug fix)[1854913] [.t delete] before -startindex (danckaert)
+
+2009-10-25 (bug fix)[2809525] prevent X crash on overlong color name (goth)
+
+2009-10-29 (bug fix)[1825353] Russian Windows tiny fonts problem (thoyts)
+
+2009-11-03 (bug fix)[2891541] fix grab behaviour for main window (thoyts)
+
+--- Released 8.5.8, November 16, 2009 --- See ChangeLog for details ---

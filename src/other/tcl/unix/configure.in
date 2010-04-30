@@ -6,8 +6,7 @@ dnl	to configure the system for the local environment.
 # RCS: @(#) $Id$
 
 AC_INIT([tcl],[8.5])
-#AC_PREREQ(2.59)
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
 m4_ifdef([SC_USE_CONFIG_HEADERS], [
@@ -28,7 +27,7 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
 TCL_VERSION=8.5
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".6"
+TCL_PATCH_LEVEL=".8"
 VERSION=${TCL_VERSION}
 
 #------------------------------------------------------------------------
@@ -543,6 +542,25 @@ if test "`uname -s`" = "Darwin" ; then
 	if test $tcl_cv_cc_weak_import = yes; then
 	    AC_DEFINE(HAVE_WEAK_IMPORT, 1, [Is weak import available?])
 	fi
+	AC_CACHE_CHECK([if Darwin SUSv3 extensions are available],
+	    tcl_cv_cc_darwin_c_source, [
+	    hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -Werror"
+	    AC_TRY_COMPILE([
+		    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+		    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+		    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+		    #endif
+		    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+		    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+		    #endif
+		    #define _DARWIN_C_SOURCE 1
+		    #include <sys/cdefs.h>
+		],,tcl_cv_cc_darwin_c_source=yes, tcl_cv_cc_darwin_c_source=no)
+	    CFLAGS=$hold_cflags])
+	if test $tcl_cv_cc_darwin_c_source = yes; then
+	    AC_DEFINE(_DARWIN_C_SOURCE, 1,
+		    [Are Darwin SUSv3 extensions available?])
+	fi
     fi
     # Build .bundle dltest binaries in addition to .dylib
     DLTEST_LD='${CC} -bundle -Wl,-w ${CFLAGS} ${LDFLAGS}'
@@ -737,9 +755,6 @@ if test "`uname -s`" = "Darwin" ; then
     TCL_YEAR="`date +%Y`"
 fi
 
-EXTRA_INSTALL_BINARIES=":"
-EXTRA_BUILD_HTML=":"
-
 if test "$FRAMEWORK_BUILD" = "1" ; then
     AC_DEFINE(TCL_FRAMEWORK, 1, [Is Tcl built as a framework?])
     # Construct a fake local framework structure to make linking with
@@ -814,9 +829,9 @@ VERSION=${TCL_VERSION}
 
 if test "$FRAMEWORK_BUILD" = "1" ; then
     test -z "$TCL_PACKAGE_PATH" && \
-	TCL_PACKAGE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl ~/Library/Frameworks /Library/Frameworks /Network/Library/Frameworks /System/Library/Frameworks"
+	TCL_PACKAGE_PATH="~/Library/Tcl /Library/Tcl /System/Library/Tcl ~/Library/Frameworks /Library/Frameworks /System/Library/Frameworks"
     test -z "$TCL_MODULE_PATH"  && \
-	TCL_MODULE_PATH="~/Library/Tcl /Library/Tcl /Network/Library/Tcl /System/Library/Tcl"
+	TCL_MODULE_PATH="~/Library/Tcl /Library/Tcl /System/Library/Tcl"
 elif test "$prefix/lib" != "$libdir"; then
     TCL_PACKAGE_PATH="${libdir} ${prefix}/lib ${TCL_PACKAGE_PATH}"
 else

@@ -364,7 +364,8 @@ Tk_GetOpenFileObjCmd(
 	initialPtr = &initialDesc;
     }
     if (typeVariablePtr) {
-	initialtype = Tcl_GetVar(interp, Tcl_GetString(typeVariablePtr), 0);
+	initialtype = Tcl_GetVar(interp, Tcl_GetString(typeVariablePtr),
+		TCL_GLOBAL_ONLY);
     }
     result = NavServicesGetFile(interp, &ofd, initialPtr, NULL, &selectDesc,
 	    title, message, initialtype, multiple, OPEN_FILE, parent);
@@ -376,8 +377,11 @@ Tk_GetOpenFileObjCmd(
 	while (filterPtr && i-- > 0) {
 	    filterPtr = filterPtr->next;
 	}
-	Tcl_SetVar(interp, Tcl_GetString(typeVariablePtr), filterPtr ?
-		filterPtr->name : "", 0);
+	if (Tcl_SetVar(interp, Tcl_GetString(typeVariablePtr),
+		filterPtr ? filterPtr->name : "",
+		TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG) == NULL) {
+	    result = TCL_ERROR;
+	}
     }
 
   end:

@@ -1147,18 +1147,42 @@ typedef struct CFWord {
     int       refCount;  /* #times the word is on the stack */
 } CFWord;
 
-typedef struct ExtIndex {
-    Tcl_Obj* obj; /* Reference to the word */
-    int pc;   /* Instruction pointer of a command in ExtCmdLoc.loc[.] */
-    int word; /* Index of word in ExtCmdLoc.loc[cmd]->line[.] */
-} ExtIndex;
-
-
 typedef struct CFWordBC {
     CmdFrame* framePtr;  /* CmdFrame to acess */
-    ExtIndex* eiPtr;     /* Word info: PC and index */
-    int       refCount;  /* #times the word is on the stack */
+    int pc;   /* Instruction pointer of a command in ExtCmdLoc.loc[.] */
+    int word; /* Index of word in ExtCmdLoc.loc[cmd]->line[.] */
+    struct CFWordBC* prevPtr;
 } CFWordBC;
+
+/*
+ * Structure to record the locations of invisible continuation lines in
+ * literal scripts, as character offset from the beginning of the script. Both
+ * compiler and direct evaluator use this information to adjust their line
+ * counters when tracking through the script, because when it is invoked the
+ * continuation line marker as a whole has been removed already, meaning that
+ * the \n which was part of it is gone as well, breaking regular line
+ * tracking.
+ *
+ * These structures are allocated and filled by both the function
+ * TclSubstTokens() in the file "tclParse.c" and its caller TclEvalEx() in the
+ * file "tclBasic.c", and stored in the thread-global hashtable "lineCLPtr" in
+ * file "tclObj.c". They are used by the functions TclSetByteCodeFromAny() and
+ * TclCompileScript(), both found in the file "tclCompile.c". Their memory is
+ * released by the function TclFreeObj(), in the file "tclObj.c", and also by
+ * the function TclThreadFinalizeObjects(), in the same file.
+ */
+
+#define CLL_END (-1)
+
+typedef struct ContLineLoc {
+  int num;      /* Number of entries in loc, not counting the final -1
+		 * marker entry */
+  int loc[1];   /* Table of locations, as character offsets. The table
+		 * is allocated as part of the structure, i.e. the loc
+		 * array extends behind the nominal end of the
+		 * structure. An entry containing the value -1 is put
+		 * after the last location, as end-marker/sentinel. */
+} ContLineLoc;
 
 /*
  * The following macros define the allowed values for the type field of the
@@ -1872,6 +1896,16 @@ typedef struct Interp {
 				 * invoking command. Alt view: An index to the
 				 * CmdFrame stack keyed by command argument
 				 * holders. */
+    ContLineLoc* scriptCLLocPtr;
+                                /* This table points to the location data for
+				 * invisible continuation lines in the script,
+				 * if any. This pointer is set by the function
+				 * TclEvalObjEx() in file "tclBasic.c", and
+				 * used by function ...() in the same file.
+				 * It does for the eval/direct path of script
+				 * execution what CompileEnv.clLoc does for
+				 * the bytecode compiler.
+				 */
     /*
      * TIP #268. The currently active selection mode, i.e. the package require
      * preferences.
@@ -2463,6 +2497,7 @@ MODULE_SCOPE char	tclEmptyString;
  *----------------------------------------------------------------
  */
 
+MODULE_SCOPE void       TclAdvanceContinuations(int* line, int** next, int loc);
 MODULE_SCOPE void       TclAdvanceLines(int *line, const char *start,
 			    const char *end);
 MODULE_SCOPE void       TclArgumentEnter(Tcl_Interp* interp,
@@ -2472,9 +2507,11 @@ MODULE_SCOPE void       TclArgumentRelease(Tcl_Interp* interp,
 MODULE_SCOPE void       TclArgumentGet(Tcl_Interp* interp, Tcl_Obj* obj,
 			    CmdFrame** cfPtrPtr, int* wordPtr);
 MODULE_SCOPE void       TclArgumentBCEnter(Tcl_Interp* interp,
-			    void* codePtr, CmdFrame* cfPtr);
+			    Tcl_Obj* objv[], int objc,
+			    void* codePtr, CmdFrame* cfPtr, int pc);
 MODULE_SCOPE void       TclArgumentBCRelease(Tcl_Interp* interp,
-			    void* codePtr);
+			    Tcl_Obj* objv[], int objc,
+			    void* codePtr, int pc);
 MODULE_SCOPE int	TclArraySet(Tcl_Interp *interp,
 			    Tcl_Obj *arrayNameObj, Tcl_Obj *arrayElemObj);
 MODULE_SCOPE double	TclBignumToDouble(mp_int *bignum);
@@ -2487,11 +2524,16 @@ MODULE_SCOPE int	TclChanCaughtErrorBypass(Tcl_Interp *interp,
 			    Tcl_Channel chan);
 MODULE_SCOPE void	TclCleanupLiteralTable(Tcl_Interp *interp,
 			    LiteralTable *tablePtr);
+MODULE_SCOPE ContLineLoc* TclContinuationsEnter(Tcl_Obj* objPtr, int num, int* loc);
+MODULE_SCOPE void         TclContinuationsEnterDerived(Tcl_Obj* objPtr, int start, int* clNext);
+MODULE_SCOPE ContLineLoc* TclContinuationsGet(Tcl_Obj* objPtr);
+MODULE_SCOPE void         TclContinuationsCopy(Tcl_Obj* objPtr, Tcl_Obj* originObjPtr);
 MODULE_SCOPE int	TclDoubleDigits(char *buf, double value, int *signum);
 MODULE_SCOPE void       TclDeleteNamespaceVars(Namespace *nsPtr);
 /* TIP #280 - Modified token based evulation, with line information */
 MODULE_SCOPE int        TclEvalEx(Tcl_Interp *interp, const char *script,
-			    int numBytes, int flags, int line);
+			    int numBytes, int flags, int line,
+			    int* clNextOuter, CONST char* outerScript);
 MODULE_SCOPE int	TclFileAttrsCmd(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
 MODULE_SCOPE int	TclFileCopyCmd(Tcl_Interp *interp,
@@ -2502,6 +2544,10 @@ MODULE_SCOPE int	TclFileMakeDirsCmd(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
 MODULE_SCOPE int	TclFileRenameCmd(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
+MODULE_SCOPE void	TclCreateLateExitHandler (Tcl_ExitProc * proc,
+						   ClientData clientData);
+MODULE_SCOPE void	TclDeleteLateExitHandler (Tcl_ExitProc * proc,
+						   ClientData clientData);
 MODULE_SCOPE void	TclFinalizeAllocSubsystem(void);
 MODULE_SCOPE void	TclFinalizeAsync(void);
 MODULE_SCOPE void	TclFinalizeDoubleConversion(void);
@@ -2520,6 +2566,7 @@ MODULE_SCOPE void	TclFinalizePreserve(void);
 MODULE_SCOPE void	TclFinalizeSynchronization(void);
 MODULE_SCOPE void	TclFinalizeThreadAlloc(void);
 MODULE_SCOPE void	TclFinalizeThreadData(void);
+MODULE_SCOPE void	TclFinalizeThreadObjects(void);
 MODULE_SCOPE double	TclFloor(mp_int *a);
 MODULE_SCOPE void	TclFormatNaN(double value, char *buffer);
 MODULE_SCOPE int	TclFSFileAttrIndex(Tcl_Obj *pathPtr,
@@ -2565,12 +2612,7 @@ MODULE_SCOPE void	TclInitLimitSupport(Tcl_Interp *interp);
 MODULE_SCOPE void	TclInitNamespaceSubsystem(void);
 MODULE_SCOPE void	TclInitNotifier(void);
 MODULE_SCOPE void	TclInitObjSubsystem(void);
-#ifdef _WIN32
-/* This is a quick hack for BLT on Windows */
-EXTERN void     TclInitSubsystems(void);
-#else
 MODULE_SCOPE void	TclInitSubsystems(void);
-#endif
 MODULE_SCOPE int	TclInterpReady(Tcl_Interp *interp);
 MODULE_SCOPE int	TclIsLocalScalar(const char *src, int len);
 MODULE_SCOPE int	TclJoinThread(Tcl_ThreadId id, int *result);
@@ -2580,8 +2622,8 @@ MODULE_SCOPE Tcl_Obj *	TclLindexList(Tcl_Interp *interp,
 MODULE_SCOPE Tcl_Obj *	TclLindexFlat(Tcl_Interp *interp, Tcl_Obj *listPtr,
 			    int indexCount, Tcl_Obj *const indexArray[]);
 /* TIP #280 */
-MODULE_SCOPE void       TclListLines(const char *listStr, int line, int n,
-			    int *lines);
+MODULE_SCOPE void       TclListLines(Tcl_Obj *listObj, int line, int n,
+			    int *lines, Tcl_Obj* const* elems);
 MODULE_SCOPE Tcl_Obj *	TclListObjCopy(Tcl_Interp *interp, Tcl_Obj *listPtr);
 MODULE_SCOPE int	TclLoadFile(Tcl_Interp *interp, Tcl_Obj *pathPtr,
 			    int symc, const char *symbols[],
@@ -2605,7 +2647,7 @@ MODULE_SCOPE int	TclMergeReturnOptions(Tcl_Interp *interp, int objc,
 MODULE_SCOPE int	TclNokia770Doubles();
 MODULE_SCOPE void       TclObjVarErrMsg(Tcl_Interp *interp, Tcl_Obj *part1Ptr,
 	                    Tcl_Obj *part2Ptr, const char *operation,
-	                    const char *reason, int idx);
+	                    const char *reason, int index);
 MODULE_SCOPE int	TclObjInvokeNamespace(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[],
 			    Tcl_Namespace *nsPtr, int flags);
@@ -2708,7 +2750,8 @@ MODULE_SCOPE int	TclStringMatchObj(Tcl_Obj *stringObj,
 			    Tcl_Obj *patternObj, int flags);
 MODULE_SCOPE Tcl_Obj *	TclStringObjReverse(Tcl_Obj *objPtr);
 MODULE_SCOPE int	TclSubstTokens(Tcl_Interp *interp, Tcl_Token *tokenPtr,
-			    int count, int *tokensLeftPtr, int line);
+			    int count, int *tokensLeftPtr, int line,
+			    int* clNextOuter, CONST char* outerScript);
 MODULE_SCOPE void	TclTransferResult(Tcl_Interp *sourceInterp, int result,
 			    Tcl_Interp *targetInterp);
 MODULE_SCOPE Tcl_Obj *	TclpNativeToNormalized(ClientData clientData);
@@ -3278,20 +3321,20 @@ MODULE_SCOPE Var *	TclLookupArrayElement(Tcl_Interp *interp,
 			    Tcl_Obj *arrayNamePtr, Tcl_Obj *elNamePtr,
 			    const int flags, const char *msg,
 			    const int createPart1, const int createPart2,
-			    Var *arrayPtr, int idx);
+			    Var *arrayPtr, int index);
 MODULE_SCOPE Tcl_Obj *	TclPtrGetVar(Tcl_Interp *interp,
 			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
-			    Tcl_Obj *part2Ptr, const int flags, int idx);
+			    Tcl_Obj *part2Ptr, const int flags, int index);
 MODULE_SCOPE Tcl_Obj *	TclPtrSetVar(Tcl_Interp *interp,
 			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
 			    Tcl_Obj *part2Ptr, Tcl_Obj *newValuePtr,
-			    const int flags, int idx);
+			    const int flags, int index);
 MODULE_SCOPE Tcl_Obj *	TclPtrIncrObjVar(Tcl_Interp *interp,
 			    Var *varPtr, Var *arrayPtr, Tcl_Obj *part1Ptr,
 			    Tcl_Obj *part2Ptr, Tcl_Obj *incrPtr,
-			    const int flags, int idx);
+			    const int flags, int index);
 MODULE_SCOPE int        TclPtrObjMakeUpvar(Tcl_Interp *interp, Var *otherPtr,
-	                    Tcl_Obj *myNamePtr, int myFlags, int idx);
+	                    Tcl_Obj *myNamePtr, int myFlags, int index);
 MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
 
 /*
@@ -3300,7 +3343,7 @@ MODULE_SCOPE void	TclInvalidateNsPath(Namespace *nsPtr);
 
 MODULE_SCOPE int	TclObjCallVarTraces(Interp *iPtr, Var *arrayPtr,
 			    Var *varPtr, Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr,
-			    int flags, int leaveErrMsg, int idx);
+			    int flags, int leaveErrMsg, int index);
 
 /*
  * So tclObj.c and tclDictObj.c can share these implementations.
@@ -3450,12 +3493,13 @@ MODULE_SCOPE Tcl_Mutex	tclObjMutex;
 #endif
 
 #else /* TCL_MEM_DEBUG */
-MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr);
+MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr, CONST char *file,
+			    int line);
 
 # define TclDbNewObj(objPtr, file, line) \
     TclIncrObjsAllocated(); \
     (objPtr) = (Tcl_Obj *) Tcl_DbCkalloc(sizeof(Tcl_Obj), (file), (line)); \
-    TclDbInitNewObj(objPtr); \
+    TclDbInitNewObj((objPtr), (file), (line)); \
     TCL_DTRACE_OBJ_CREATE(objPtr)
 
 # define TclNewObj(objPtr) \
@@ -3565,10 +3609,15 @@ MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr);
  *----------------------------------------------------------------
  */
 
+#define TCL_MAX_TOKENS (int)(UINT_MAX / sizeof(Tcl_Token))
 #define TCL_MIN_TOKEN_GROWTH 50
 #define TclGrowTokenArray(tokenPtr, used, available, append, staticPtr)	\
 {									\
     int needed = (used) + (append);					\
+    if (needed > TCL_MAX_TOKENS) {					\
+	Tcl_Panic("max # of tokens for a Tcl parse (%d) exceeded",	\
+		TCL_MAX_TOKENS);					\
+    }									\
     if (needed > (available)) {						\
 	int allocated = 2 * needed;					\
 	Tcl_Token *oldPtr = (tokenPtr);					\
@@ -3576,10 +3625,16 @@ MODULE_SCOPE void	TclDbInitNewObj(Tcl_Obj *objPtr);
 	if (oldPtr == (staticPtr)) {					\
 	    oldPtr = NULL;						\
 	}								\
+	if (allocated > TCL_MAX_TOKENS) {				\
+	    allocated = TCL_MAX_TOKENS;					\
+	}								\
 	newPtr = (Tcl_Token *) attemptckrealloc( (char *) oldPtr,	\
 		(unsigned int) (allocated * sizeof(Tcl_Token)));	\
 	if (newPtr == NULL) {						\
 	    allocated = needed + (append) + TCL_MIN_TOKEN_GROWTH;	\
+	    if (allocated > TCL_MAX_TOKENS) {				\
+		allocated = TCL_MAX_TOKENS;				\
+	    }								\
 	    newPtr = (Tcl_Token *) ckrealloc( (char *) oldPtr,		\
 		    (unsigned int) (allocated * sizeof(Tcl_Token)));	\
 	}								\
@@ -3892,8 +3947,6 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
 #include "tclIntDecls.h"
 #include "tclIntPlatDecls.h"
 #include "tclTomMathDecls.h"
-
-#include "../../../../include/common.h"
 
 #endif /* _TCLINT */
 

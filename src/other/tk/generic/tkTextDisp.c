@@ -7209,7 +7209,7 @@ TkTextCharLayoutProc(
     } else {
 	for (count = bytesThatFit, p += bytesThatFit - 1; count > 0;
 		count--, p--) {
-	    if (isspace(UCHAR(*p))) {
+	    if (UCHAR(*p) < 0x80 && isspace(UCHAR(*p))) {
 		chunkPtr->breakIndex = count;
 		break;
 	    }

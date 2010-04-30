@@ -338,7 +338,7 @@ AddClause(
 	    globPtr->next = NULL;
 	}
     }
-    if (ostypeCount > 0 && ostypeList != NULL) {
+    if (ostypeList != NULL && ostypeCount > 0) {
 	if (macRoman == NULL) {
 	    macRoman = Tcl_GetEncoding(NULL, "macRoman");
 	}

@@ -7,10 +7,10 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk::image n 8.5 Tk "Tk Themed Widget"
+.TH ttk_image n 8.5 Tk "Tk Themed Widget"
 .BS
 .SH NAME
-ttk::image \- Define an element based on an image
+ttk_image \- Define an element based on an image
 .SH SYNOPSIS
 \fBttk::style element create \fIname\fR \fBimage\fR \fIimageSpec\fR ?\fIoptions\fR?
 .BE
@@ -72,6 +72,6 @@ style element create Button.button image \e
     \-border {2 4} \-sticky we
 .CE
 .SH "SEE ALSO"
-image(n), photo(n)
+ttk::intro(n), ttk::style(n), ttk_vsapi(n), image(n), photo(n)
 .SH KEYWORDS
-pixmap theme, image
+style, theme, appearance, pixmap theme, image

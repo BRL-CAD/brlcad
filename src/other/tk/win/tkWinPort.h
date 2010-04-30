@@ -49,19 +49,13 @@
 #endif
 
 #ifdef _MSC_VER
-#    ifndef hypot
-#        define hypot _hypot
-#    endif
+#    define hypot _hypot
 #endif /* _MSC_VER */
 
 #ifndef __GNUC__
-#    ifndef strcasecmp
-#        define strcasecmp stricmp
-#    endif
-#    ifndef strncasecmp
-#        define strncasecmp strnicmp
-#    endif
-#endif /* __GNUC__ */
+#    define strncasecmp strnicmp
+#    define strcasecmp stricmp
+#endif
 
 #define NBBY 8
 

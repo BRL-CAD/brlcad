@@ -20,6 +20,9 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 testConstraint testsetplatform [llength [info commands testsetplatform]]
 testConstraint testchmod [llength [info commands testchmod]]
+testConstraint winVista 0
+testConstraint win2000orXP 0
+testConstraint winOlderThan2000 0
 # Don't know how to determine this constraint correctly
 testConstraint notNetworkFilesystem 0
 testConstraint 95or98 [expr {[testConstraint 95] || [testConstraint 98]}]
@@ -33,6 +36,20 @@ if {[testConstraint unix]} {
 	set groupList [exec groups]
 	set group [lindex $groupList 0]
 	testConstraint foundGroup 1
+    }
+}
+
+# Also used in winFCmd...
+if {[testConstraint winOnly]} {
+    set major [string index $tcl_platform(osVersion) 0]
+    if {[testConstraint nt] && $major > 4} {
+        if {$major > 5} {
+            testConstraint winVista 1
+        } elseif {$major == 5} {
+            testConstraint win2000orXP 1
+        }
+    } else {
+        testConstraint winOlderThan2000 1
     }
 }
 
@@ -738,7 +755,7 @@ test fCmd-9.3 {file rename: comprehensive: file to new name} -setup {
 } -result {{tf3 tf4} 1 0}
 test fCmd-9.4 {file rename: comprehensive: dir to new name} -setup {
     cleanup
-} -constraints {unixOrPc notRoot testchmod notDarwin9} -body {
+} -constraints {unixOrPc notRoot testchmod notDarwin9 win2000orXP} -body {
     file mkdir td1 td2
     testchmod 555 td2
     file rename td1 td3
@@ -758,7 +775,7 @@ test fCmd-9.5 {file rename: comprehensive: file to self} {notRoot testchmod} {
 } {tf1 tf2 1 0}
 test fCmd-9.6 {file rename: comprehensive: dir to self} -setup {
     cleanup
-} -constraints {notRoot unixOrPc testchmod} -body {
+} -constraints {notRoot unixOrPc testchmod win2000orXP} -body {
     file mkdir td1
     file mkdir td2
     testchmod 555 td2
@@ -835,12 +852,12 @@ test fCmd-9.9 {file rename: comprehensive: dir to non-empty dir} -setup {
     file mkdir tds2
     file mkdir [file join tdd1 tds1 xxx]
     file mkdir [file join tdd2 tds2 xxx]
-    if {![testConstraint unix]} {
+    if {!([testConstraint unix] || [testConstraint winVista])} {
 	testchmod 555 tds2
     }
     set a1 [list [catch {file rename -force tds1 tdd1} msg] $msg]
     set a2 [list [catch {file rename -force tds2 tdd2} msg] $msg]
-    if {[testConstraint unix]} {
+    if {[testConstraint unix] || [testConstraint winVista]} {
 	set w2 0
     } else {
 	set w2 [file writable tds2]
@@ -864,12 +881,12 @@ test fCmd-9.11 {file rename: comprehensive: dir to new name and dir} {notRoot te
     file mkdir td1
     file mkdir td2
     file mkdir td3
-    if {![testConstraint unix]} {
+    if {!([testConstraint unix] || [testConstraint winVista])} {
 	testchmod 555 td2
     }
     file rename td1 [file join td3 td3]
     file rename td2 [file join td3 td4]
-    if {[testConstraint unix]} {
+    if {[testConstraint unix] || [testConstraint winVista]} {
         set w4 0
     } else {
 	set w4 [file writable [file join td3 td4]]
