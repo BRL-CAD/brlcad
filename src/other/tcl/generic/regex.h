@@ -70,49 +70,15 @@ extern "C" {
  * Add your own defines, if needed, here.
  */
 
+#include "./tclInt.h"
+
 /*
  * Location where a chunk of regcustom.h is automatically spliced into this
  * file (working from its prototype, regproto.h).
  */
 
 /* --- begin --- */
-/* ensure certain things don't sneak in from system headers */
-#ifdef __REG_WIDE_T
-#undef __REG_WIDE_T
-#endif
-#ifdef __REG_WIDE_COMPILE
-#undef __REG_WIDE_COMPILE
-#endif
-#ifdef __REG_WIDE_EXEC
-#undef __REG_WIDE_EXEC
-#endif
-#ifdef __REG_REGOFF_T
-#undef __REG_REGOFF_T
-#endif
-#ifdef __REG_VOID_T
-#undef __REG_VOID_T
-#endif
-#ifdef __REG_CONST
-#undef __REG_CONST
-#endif
-#ifdef __REG_NOFRONT
-#undef __REG_NOFRONT
-#endif
-#ifdef __REG_NOCHAR
-#undef __REG_NOCHAR
-#endif
-/* interface types */
-#define	__REG_WIDE_T	Tcl_UniChar
-#define	__REG_REGOFF_T	long	/* not really right, but good enough... */
-#define	__REG_VOID_T	VOID
-#define	__REG_CONST	CONST
-/* names and declarations */
-#define	__REG_WIDE_COMPILE	TclReComp
-#define	__REG_WIDE_EXEC		TclReExec
-#define	__REG_NOFRONT		/* don't want regcomp() and regexec() */
-#define	__REG_NOCHAR		/* or the char versions */
-#define	regfree		TclReFree
-#define	regerror	TclReError
+#define __REG_NOCHAR 1 /* don't define the char versions so we can avoid conflicting type compilation errors */
 /* --- end --- */
 
 /*
