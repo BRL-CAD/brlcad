@@ -47,9 +47,12 @@
 /*
  * These string functions are not defined with the same names on Windows.
  */
-
-#define strcasecmp stricmp
-#define strncasecmp strnicmp
+#ifndef strcasecmp
+#   define strcasecmp stricmp
+#endif
+#ifndef strncasecmp
+#   define strncasecmp strnicmp
+#endif
 
 /*
  * Need to block out these includes for building extensions with MetroWerks
@@ -71,6 +74,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
+
+#ifdef INCL_WINSOCK_API_TYPEDEFS
+#undef INCL_WINSOCK_API_TYPEDEFS
+#endif
 
 /*
  * Ask for the winsock function typedefs, also.
