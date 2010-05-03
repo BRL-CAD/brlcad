@@ -76,6 +76,7 @@ scripties = \
 	reid.tcl \
 	remap_mater.tcl \
 	remat.tcl \
+	rrmb.tcl \
 	rt.tcl \
 	rt_script.tcl \
 	sample.tcl \
