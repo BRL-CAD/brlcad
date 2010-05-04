@@ -767,7 +767,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
  **************** EXPORTED FUNCTIONS *************************
  *************************************************************/
 
-TIE_FUNC(void tie_kdtree_free, tie_t *tie)
+void TIE_VAL(tie_kdtree_free)(tie_t *tie)
 {
 /* Free KDTREE Nodes */
 /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
@@ -776,7 +776,7 @@ TIE_FUNC(void tie_kdtree_free, tie_t *tie)
     bu_free(tie->kdtree, "kdtree");
 }
 
-TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
+uint32_t TIE_VAL(tie_kdtree_cache_free)(tie_t *tie, void **cache)
 {
     uint32_t size, mem;
 
@@ -809,7 +809,7 @@ TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
     return(size);
 }
 
-TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
+void TIE_VAL(tie_kdtree_cache_load)(tie_t *tie, void *cache, uint32_t size)
 {
     tie_kdtree_t *node = 0, *temp_node = 0, *stack[64];
     tie_geom_t *geom = 0;
@@ -896,7 +896,7 @@ TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
     }
 }
 
-TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
+void TIE_VAL(tie_kdtree_prep)(tie_t *tie)
 {
     TIE_3 delta;
     int already_built;

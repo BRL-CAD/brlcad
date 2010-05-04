@@ -34,14 +34,14 @@
 extern "C" {
 #endif
 
-    TIE_VAL(extern int tie_check_degenerate);
+TIE_VAL(extern int tie_check_degenerate);
 #define tie_check_degenerate TIE_VAL(tie_check_degenerate)
 
-    TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod);
-    TIE_FUNC(void tie_free, tie_t *tie);
-    TIE_FUNC(void tie_prep, tie_t *tie);
-    TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr);
-    TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
+void TIE_VAL(tie_init)(tie_t *tie, unsigned int tri_num, unsigned int kdmethod);
+void TIE_VAL(tie_free)(tie_t *tie);
+void TIE_VAL(tie_prep)(tie_t *tie);
+void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr);
+void TIE_VAL(tie_push)(tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
 
 /* backwards compatible macros */
 #define tie_init TIE_VAL(tie_init)

@@ -66,11 +66,9 @@
 /* Type to use for floating precision */
 #if TIE_PRECISION == TIE_SINGLE_PRECISION
 # define tfloat float
-# define TIE_FUNC(x, args...) x##0 ( args )
 # define TIE_VAL(x) x##0
 #elif TIE_PRECISION == TIE_DOUBLE_PRECISION
 # define tfloat double
-# define TIE_FUNC(x, args...) x##1 ( args )
 # define TIE_VAL(x) x##1
 #else
 # error "Unknown precision"
