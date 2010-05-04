@@ -2450,18 +2450,18 @@ package provide Archer 1.0
 	set win $dm
 
 	if {$mViewOnly} {
-	    bind $win <Control-ButtonPress-1> \
+#	    bind $win <Control-ButtonPress-1> \
 		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	    bind $win <3> \
 		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	} else {
 	    if {$ArcherCore::inheritFromToplevel} {
-		bind $win <Control-ButtonPress-1> \
+#		bind $win <Control-ButtonPress-1> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(${prefix}displaymenu) %X %Y]; break"
 		bind $win <3> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(${prefix}displaymenu) %X %Y]; break"
 	    } else {
-		bind $win <Control-ButtonPress-1> \
+#		bind $win <Control-ButtonPress-1> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 		bind $win <3> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"

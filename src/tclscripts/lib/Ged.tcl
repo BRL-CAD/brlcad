@@ -494,13 +494,13 @@ package provide cadwidgets::Ged 1.0
 	method begin_data_arrow {_pane _x _y}
 	method begin_data_line {_pane _x _y}
 	method begin_data_move {_pane _x _y}
-	method begin_view_measure {_pane _x _y}
+	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
 	method end_data_move {_pane}
-	method end_view_measure {_pane {_part2_button 2}}
+	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
 	method getUserCmds {}
 	method handle_data_move {_pane _dtype _dindex _x _y}
@@ -2621,7 +2621,7 @@ package provide cadwidgets::Ged 1.0
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane $mLastDataType $mLastDataIndex %x %y]; break"
 }
 
-::itcl::body cadwidgets::Ged::begin_view_measure {_pane _x _y} {
+::itcl::body cadwidgets::Ged::begin_view_measure {_pane _part1_button _part2_button _x _y} {
     measure_line_erase
 
     set mBegin3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
@@ -2630,6 +2630,10 @@ package provide cadwidgets::Ged 1.0
 
     # start receiving motion events
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_view_measure $_pane %x %y]; break"
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component(ur) <ButtonRelease-$_part1_button> "[::itcl::code $this end_view_measure ur $_part1_button $_part2_button]; break"
+    }
 
     set mMeasuringStickColorVDraw3D [get_vdraw_color $itk_option(-measuringStickColor)]
 }
@@ -2754,8 +2758,14 @@ package provide cadwidgets::Ged 1.0
     refresh_all
 }
 
-::itcl::body cadwidgets::Ged::end_view_measure {_pane {_part2_button 2}} {
+::itcl::body cadwidgets::Ged::end_view_measure {_pane _part1_button _part2_button} {
     $mGed idle_mode $itk_component($_pane)
+
+    # Add specific bindings to eliminate bleed through from measure tool bindings
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <Control-ButtonRelease-$_part1_button> "$mGed idle_mode $itk_component($dm); break"
+	bind $itk_component($dm) <Shift-ButtonRelease-$_part1_button> "$mGed idle_mode $itk_component($dm); break"
+    }
 
     refresh_off
 
@@ -2765,7 +2775,14 @@ package provide cadwidgets::Ged 1.0
     if {[expr {abs($delta) > 0.0001}]} {
 	set mMeasureLineActive 1
 	init_view_measure_part2 $_part2_button
+
+	# Add specific bindings to eliminate bleed through from measure tool bindings
+	foreach dm {ur ul ll lr} {
+	    bind $itk_component($dm) <Control-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	    bind $itk_component($dm) <Shift-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	}
     } else {
+	init_button_no_op_prot $_part2_button
 	refresh_on
 	return
     }
@@ -2793,8 +2810,15 @@ package provide cadwidgets::Ged 1.0
     set diff [vsub2 $mEnd3DPoint $mMiddle3DPoint]
     set delta [expr {[magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
 
-    set A [vunitize [vsub2 $mBegin3DPoint $mMiddle3DPoint]]
-    set B [vunitize [vsub2 $mEnd3DPoint $mMiddle3DPoint]]
+    set ret [catch {
+	set A [vunitize [vsub2 $mBegin3DPoint $mMiddle3DPoint]]
+	set B [vunitize [vsub2 $mEnd3DPoint $mMiddle3DPoint]]
+    }]
+
+    if {$ret} {
+	return
+    }
+
     set cos [vdot $A $B]
     set angle [format "%.2f" [expr {acos($cos) * (180.0 / 3.141592653589793)}]]
 
@@ -2816,6 +2840,10 @@ package provide cadwidgets::Ged 1.0
 	    catch {$callback $mstring}
 	}
     }
+
+    set mBegin3DPoint {0 0 0}
+    set mMiddle3DPoint {0 0 0}
+    set mEndDPoint {0 0 0}
 
     init_button_no_op_prot $_button
 }
@@ -3016,12 +3044,14 @@ package provide cadwidgets::Ged 1.0
 	}
 	default {
 	    foreach pane {ul ur ll lr} {
+		$mGed init_view_bindings $itk_component($pane)
 		set win $itk_component($pane)
 
 		# Turn off mouse bindings
 		bind $win <1> {}
 		bind $win <2> {}
 		bind $win <3> {}
+		if {0} {
 		bind $win <ButtonRelease-1> {}
 
 		# Turn off rotate mode
@@ -3040,19 +3070,14 @@ package provide cadwidgets::Ged 1.0
 		bind $win <Control-Shift-ButtonPress-3> {}
 
 		# Turn off constrained rotate mode
-		bind $win <Alt-Control-ButtonPress-1> {}
-		bind $win <Alt-Control-ButtonPress-2> {}
-		bind $win <Alt-Control-ButtonPress-3> {}
+		bind $win <c><Control-ButtonPress-1> {}
+		bind $win <c><Control-ButtonPress-2> {}
+		bind $win <c><Control-ButtonPress-3> {}
 
 		# Turn off constrained translate mode
-		bind $win <Alt-Shift-ButtonPress-1> {}
-		bind $win <Alt-Shift-ButtonPress-2> {}
-		bind $win <Alt-Shift-ButtonPress-3> {}
-
-		# Turn off constrained scale mode
-		bind $win <Alt-Control-Shift-ButtonPress-1> {}
-		bind $win <Alt-Control-Shift-ButtonPress-2> {}
-		bind $win <Alt-Control-Shift-ButtonPress-3> {}
+		bind $win <C><ButtonPress-1> {}
+		bind $win <C><ButtonPress-2> {}
+		bind $win <C><ButtonPress-3> {}
 
 		# Turn off key bindings
 		bind $win 3 {}
@@ -3075,13 +3100,14 @@ package provide cadwidgets::Ged 1.0
 		# overrides
 		bind $win <Shift-ButtonPress-1> "$mGed rotate_mode $win %x %y; break"
 		bind $win <Shift-ButtonPress-2> "$mGed scale_mode $win %x %y; break"
-		bind $win <Shift-ButtonPress-3> "$mGed translate_mode $win  %x %y; break"
+		bind $win <Shift-ButtonPress-3> "$mGed translate_mode $win %x %y; break"
 		bind $win <Control-Shift-ButtonPress-3> "$mGed vslew $win %x %y; break"
 
 		bind $win <Shift-ButtonRelease-1> "[::itcl::code $this handle_view_rotate_end $pane]; break"
 		bind $win <Shift-ButtonRelease-2> "[::itcl::code $this handle_view_scale_end $pane]; break"
 		bind $win <Shift-ButtonRelease-3> "[::itcl::code $this handle_view_translate_end $pane]; break"
 		bind $win <Control-Shift-ButtonRelease-3> "[::itcl::code $this handle_view_translate_end $pane]; break"
+		}
 	    }
 	}
     }
@@ -3101,18 +3127,12 @@ package provide cadwidgets::Ged 1.0
     bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_view_measure {{_button 1} {_part2_button 2}} {
+::itcl::body cadwidgets::Ged::init_view_measure {{_part1_button 1} {_part2_button 2}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_view_measure ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_view_measure ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_view_measure ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_view_measure lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ur $_part2_button]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ul $_part2_button]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ll $_part2_button]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure lr $_part2_button]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component(ur) <$_part1_button> "[::itcl::code $this begin_view_measure ur $_part1_button $_part2_button %x %y]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_measure_part2 {_button} {
