@@ -65,10 +65,10 @@
 
 /* Type to use for floating precision */
 #if TIE_PRECISION == TIE_SINGLE_PRECISION
-# define tfloat float
+typedef float tfloat;
 # define TIE_VAL(x) x##0
 #elif TIE_PRECISION == TIE_DOUBLE_PRECISION
-# define tfloat double
+typedef double tfloat;
 # define TIE_VAL(x) x##1
 #else
 # error "Unknown precision"
