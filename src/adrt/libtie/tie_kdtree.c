@@ -528,7 +528,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 
 	    for (k = 0; k < slice_num; k++) {
 /*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
-		if (slice[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
+		if (slice[d][k] < (unsigned int)(MIN_DENSITY * (tfloat)smax[d])) {
 		    if (!active) {
 			active = 1;
 			beg = k;
@@ -928,7 +928,7 @@ void TIE_VAL(tie_kdtree_prep)(tie_t *tie)
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if TIE_PRECISION == TIE_PRECISION_SINGLE
-    TIE_PREC *= 0.000000001;
+    TIE_PREC *= (float)0.000000001;
 #else
     TIE_PREC *= 0.000000000001;
 #endif
