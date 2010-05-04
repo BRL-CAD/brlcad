@@ -71,9 +71,9 @@ render_camera_init(render_camera_t *camera, int threads)
     render_normal_init(&camera->render, NULL);
     camera->rm = RENDER_METHOD_PHONG;
 
-    render_tlist = NULL;
 #ifdef HAVE_PTHREAD_H
-    if (camera->thread_num > 1) {
+    render_tlist = NULL;
+	if (camera->thread_num > 1) {
 	bu_log("Allocating thread memory\n");
 	render_tlist = (pthread_t *)bu_malloc(sizeof(pthread_t) * camera->thread_num, "render_tlist");
 	if(render_tlist == NULL) {
@@ -88,8 +88,10 @@ render_camera_init(render_camera_t *camera, int threads)
 void
 render_camera_free(render_camera_t *camera)
 {
+#ifdef HAVE_PTHREAD_H
     if (camera->thread_num > 1)
 	bu_free(render_tlist, "render_tlist");
+#endif
 }
 
 
