@@ -24,11 +24,16 @@
  *
  */
 
-#include <stdint.h>
-#include "adrt_struct.h"
-
 #ifndef _ADRT_H
 #define _ADRT_H
+
+#include "common.h"
+
+#ifdef HAVE_STDINT_H
+# include <stdint.h>
+#endif
+
+#include "adrt_struct.h"
 
 #define	ADRT_PORT		1982
 #define	ADRT_USE_COMPRESSION	1
