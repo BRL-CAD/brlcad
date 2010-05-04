@@ -23,7 +23,13 @@
  *
  */
 
-#include <pthread.h>
+#include "common.h"
+
+#ifdef HAVE_PTHREAD_H
+# include <pthread.h>
+pthread_t *render_tlist;
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,8 +42,6 @@
 #include "component.h"
 #include "cut.h"
 #include "camera.h"
-
-pthread_t *render_tlist;
 
 void* render_camera_render_thread(void *ptr);
 static void render_camera_prep_ortho(render_camera_t *camera);
@@ -56,7 +60,12 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->tilt = 0;
 
     /* The camera will use a thread for every cpu the machine has. */
-    camera->thread_num = threads ? threads : bu_avail_cpus();
+    camera->thread_num = 
+#ifdef HAVE_PTHREAD_H
+	    threads ? threads : bu_avail_cpus();
+#else
+    1;
+#endif
 /* printf("threads: %d\n", camera->thread_num); */
 
     /* Initialize camera to rendering surface normals */
@@ -64,6 +73,7 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->rm = RENDER_METHOD_PHONG;
 
     render_tlist = NULL;
+#ifdef HAVE_PTHREAD_H
     if (camera->thread_num > 1) {
 	bu_log("Allocating thread memory\n");
 	render_tlist = (pthread_t *)bu_malloc(sizeof(pthread_t) * camera->thread_num, "render_tlist");
@@ -72,6 +82,7 @@ render_camera_init(render_camera_t *camera, int threads)
 	    camera->thread_num = 1;
 	}
     }
+#endif
 }
 
 
@@ -414,10 +425,14 @@ void
     while (1)
     {
 	/* Determine if this scanline should be computed by this thread */
+#ifdef HAVE_PTHREAD_H
 	pthread_mutex_lock(&td->mut);
+#endif
 	if (*td->scanline == td->tile->size_y)
 	{
+#ifdef HAVE_PTHREAD_H
 	    pthread_mutex_unlock(&td->mut);
+#endif
 	    return(0);
 	}
 	else
@@ -425,7 +440,9 @@ void
 	    scanline = *td->scanline;
 	    (*td->scanline)++;
 	}
+#ifdef HAVE_PTHREAD_H
 	pthread_mutex_unlock(&td->mut);
+#endif
 
 	v_scanline = scanline + td->tile->orig_y;
 	if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24)
@@ -570,6 +587,8 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
     td.res_buf = &((char *)result->data)[result->ind];
     scanline = 0;
     td.scanline = &scanline;
+
+#ifdef HAVE_PTHREAD_H
     pthread_mutex_init(&td.mut, 0);
 
     /* Launch Render threads */
@@ -579,12 +598,14 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
 	    pthread_create(&render_tlist[i], NULL, render_camera_render_thread, &td);
 	for (i = 0; i < camera->thread_num; i++)
 	    pthread_join(render_tlist[i], NULL);
-    } else {
+    } else
+#endif
 	render_camera_render_thread(&td);
-    }
 
     result->ind = ind;
+#ifdef HAVE_PTHREAD_H
     pthread_mutex_destroy(&td.mut);
+#endif
 
     return;
 }
