@@ -150,32 +150,6 @@ typedef struct tienet_buffer_s {
     uint32_t ind;
 } tienet_buffer_t;
 
-#include <unistd.h>
-#include <sys/select.h>
-
-#define TIENET_OP(name,cmd)  \
-static int tienet_##name(int socket, void* data, size_t size) \
-{ \
-    fd_set	 set; \
-    unsigned int ind = 0; \
-    int		 r; \
-\
-    FD_ZERO(&set); \
-    FD_SET(socket, &set); \
-\
-    do { \
-	select(socket+1, NULL, &set, NULL, NULL); \
-	r = cmd(socket, &((char*)data)[ind], size-ind); \
-	ind += r; \
-	if (r <= 0) return(1);	/* Error, socket is probably dead */ \
-    } while (ind < size); \
-\
-    return(0); \
-}
-
-TIENET_OP(send,write)
-TIENET_OP(recv,read)
-
 int load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
 
 #endif

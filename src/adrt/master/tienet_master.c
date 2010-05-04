@@ -38,6 +38,7 @@
 
 #include "libtie/tie.h"
 #include "adrt.h"
+#include "tienet.h"
 #include "tienet_master.h"
 
 #include "bio.h"

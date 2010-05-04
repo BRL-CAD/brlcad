@@ -110,6 +110,7 @@ tieinclude_HEADERS = \
 
 noinst_HEADERS = \
 	load.h \
+	tienet.h \
 	master/compnet.h \
 	master/dispatcher.h \
 	master/tienet_master.h \
