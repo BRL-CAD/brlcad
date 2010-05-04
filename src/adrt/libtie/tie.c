@@ -42,6 +42,11 @@
 # include <stdint.h>
 #endif
 
+#ifdef _WIN32
+# undef near
+# undef far
+#endif
+
 #define TIE_DEGENERATE_THRESHOLD 0.0001
 TIE_VAL(int tie_check_degenerate) = 1;
 
