@@ -28,6 +28,11 @@
 
 #include "tie_define.h"
 
+#ifdef _WIN32
+# undef near
+# undef far
+#endif
+
 typedef struct TIE_3_s {
     tfloat v[3];
 } TIE_3;
