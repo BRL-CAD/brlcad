@@ -87,19 +87,30 @@ struct gfi_t {
 
 /* triangle indices type */
 struct ti_t { 
-    void   *index_arr_tri; /* triangle indices into vertex, normal, texture vertex lists */
-    size_t  num_tri;       /* number of triangles represented by index_arr_triangles */
-    size_t  max_tri;       /* maximum number of triangles based on current memory allocation */
-    int     tri_type;      /* i.e. FACE_V, FACE_TV, FACE_NV or FACE_TNV */
-    size_t *vsi;           /* triangle vertex sort index array */
-    size_t *vnsi;          /* triangle vertex normal sort index array */
-    size_t *tvsi;          /* triangle texture vertex sort index array */
-    size_t *uvi;           /* unique triangle vertex index array */
-    size_t *uvni;          /* unique triangle vertex normal index array */
-    size_t *utvi;          /* unique triangle texture vertex index array */
-    size_t  num_uvi;       /* number of unique triangle vertex indexes in uvi array */
-    size_t  num_uvni;      /* number of unique triangle vertex normal index in uvni array */
-    size_t  num_utvi;      /* number of unique triangle texture vertex index in utvi array */
+    void    *index_arr_tri; /* triangle indices into vertex, normal, texture vertex lists */
+    size_t   num_tri;       /* number of triangles represented by index_arr_triangles */
+    size_t   max_tri;       /* maximum number of triangles based on current memory allocation */
+    int      tri_type;      /* i.e. FACE_V, FACE_TV, FACE_NV or FACE_TNV */
+    size_t  *vsi;           /* triangle vertex sort index array */
+    size_t  *vnsi;          /* triangle vertex normal sort index array */
+    size_t  *tvsi;          /* triangle texture vertex sort index array */
+    size_t  *uvi;           /* unique triangle vertex index array */
+    size_t  *uvni;          /* unique triangle vertex normal index array */
+    size_t  *utvi;          /* unique triangle texture vertex index array */
+    size_t   num_uvi;       /* number of unique triangle vertex indexes in uvi array */
+    size_t   num_uvni;      /* number of unique triangle vertex normal index in uvni array */
+    size_t   num_utvi;      /* number of unique triangle texture vertex index in utvi array */
+    fastf_t *bot_vertices;             /* array of floats for bot vertices [bot_num_vertices*3] */
+    fastf_t *bot_thickness;            /* array of floats for face thickness [bot_num_faces] */
+    fastf_t *bot_normals;              /* array of floats for bot normals [bot_num_normals*3] */
+    fastf_t *bot_texture_vertices;     /* array of floats for texture vertices [bot_num_texture_vertices*3] */
+    int     *bot_faces;                /* array of indices into bot_vertices array [bot_num_faces*3] */
+    int     *bot_face_normals;         /* array of indices into bot_normals array [bot_num_faces*3] */
+    int     *bot_textures;             /* array indices into bot_texture_vertices array */
+    int      bot_num_vertices;         /* number of vertices in bot_vertices array */
+    int      bot_num_faces;            /* number of faces in bot_faces array */
+    int      bot_num_normals;          /* number of normals in bot_normals array */
+    int      bot_num_texture_vertices; /* number of textures in bot_texture_vertices array */
 };
 
 /* obj file global attributes type */
@@ -1006,33 +1017,218 @@ void populate_sort_indexes(struct ti_t *ti) {
         default:
             break;
     }
+    return;
 }
 
 void sort_indexes(struct ti_t *ti) {
     size_t num_indexes = ti->num_tri * 3;
+
+    /* tmp_ptr is global which is required for qsort */
     tmp_ptr = (size_t *)ti->index_arr_tri;
 
+    /* process vertex indexes */
     qsort(ti->vsi, num_indexes, sizeof ti->vsi[0],
          (int (*)(const void *a, const void *b))comp);
 
-    switch (ti->tri_type) {
-        case FACE_TV :
-            qsort(ti->tvsi, num_indexes, sizeof ti->tvsi[0],
-                 (int (*)(const void *a, const void *b))comp);
-            break;
-        case FACE_NV :
-            qsort(ti->vnsi, num_indexes, sizeof ti->vnsi[0],
-                 (int (*)(const void *a, const void *b))comp);
-            break;
-        case FACE_TNV :
-            qsort(ti->vnsi, num_indexes, sizeof ti->vnsi[0],
-                 (int (*)(const void *a, const void *b))comp);
-            qsort(ti->tvsi, num_indexes, sizeof ti->tvsi[0],
-                 (int (*)(const void *a, const void *b))comp);
-            break;
-        default:
-            break;
+    /* process vertex normal indexes */
+    if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV )
+        qsort(ti->vnsi, num_indexes, sizeof ti->vnsi[0],
+             (int (*)(const void *a, const void *b))comp);
+
+    /* process texture vertex indexes */
+    if ( ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV )
+        qsort(ti->tvsi, num_indexes, sizeof ti->tvsi[0],
+             (int (*)(const void *a, const void *b))comp);
+
+    return;
+}
+
+void create_unique_indexes(struct ti_t *ti) {
+    size_t last = 0;
+    size_t idx = 0;
+    size_t counter = 0;
+    size_t num_indexes = ti->num_tri * 3;
+    size_t *tmp_arr = (size_t *)ti->index_arr_tri;
+
+    /* process vertex indexes */
+    /* count sorted and unique libobj vertex indexes */
+    last = tmp_arr[ti->vsi[0]];
+    ti->num_uvi = 1;
+    for (idx = 1; idx < num_indexes ; ++idx)
+        if (tmp_arr[ti->vsi[idx]] != last) {
+            last = tmp_arr[ti->vsi[idx]];
+            ti->num_uvi++;
+        }
+
+    /* allocate unique triangle vertex index array */
+    ti->uvi = (size_t *)bu_calloc(ti->num_uvi, sizeof(size_t), "ti->uvi");
+
+    /* store unique triangle vertex index array */
+    counter = 0;
+    last = tmp_arr[ti->vsi[0]];
+    ti->uvi[counter] = last ;
+    for (idx = 1; idx < num_indexes ; ++idx)
+        if (tmp_arr[ti->vsi[idx]] != last) {
+            last = tmp_arr[ti->vsi[idx]];
+            counter++;
+            ti->uvi[counter] = last ;
+        }
+
+    /* free 'triangle vertex sort index array' (ti->vsi) since
+       it is no longer needed since 'unique triangle vertex index
+       array' has been created. */
+    bu_free(ti->vsi, "ti->vsi");
+    /* end of process vertex indexes */
+
+    /* process vertex normal indexes */
+    if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV ) {
+        /* count sorted and unique libobj vertex normal indexes */
+        last = tmp_arr[ti->vnsi[0]];
+        ti->num_uvni = 1;
+        for (idx = 1; idx < num_indexes ; ++idx)
+            if (tmp_arr[ti->vnsi[idx]] != last) {
+                last = tmp_arr[ti->vnsi[idx]];
+                ti->num_uvni++;
+            }
+
+        /* allocate unique triangle vertex normal index array */
+        ti->uvni = (size_t *)bu_calloc(ti->num_uvni, sizeof(size_t), "ti->uvni");
+
+        /* store unique triangle vertex normal index array */
+        counter = 0;
+        last = tmp_arr[ti->vnsi[0]];
+        ti->uvni[counter] = last ;
+        for (idx = 1; idx < num_indexes ; ++idx)
+            if (tmp_arr[ti->vnsi[idx]] != last) {
+                last = tmp_arr[ti->vnsi[idx]];
+                counter++;
+                ti->uvni[counter] = last ;
+            }
+
+        /* free 'triangle vertex normal sort index array' (ti->vnsi) since
+           it is no longer needed since 'unique triangle vertex normal index
+           array' has been created. */
+        bu_free(ti->vnsi, "ti->vnsi");
+    } /* end of process vertex normal indexes */
+
+    /* process texture vertex indexes */
+    if ( ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV ) {
+        /* count sorted and unique libobj texture vertex indexes */
+        last = tmp_arr[ti->tvsi[0]];
+        ti->num_utvi = 1;
+        for (idx = 1; idx < num_indexes ; ++idx)
+            if (tmp_arr[ti->tvsi[idx]] != last) {
+                last = tmp_arr[ti->tvsi[idx]];
+                ti->num_utvi++;
+            }
+
+        /* allocate unique triangle texture vertex index array */
+        ti->utvi = (size_t *)bu_calloc(ti->num_utvi, sizeof(size_t), "ti->utvi");
+
+        /* store unique triangle texture vertex index array */
+        counter = 0;
+        last = tmp_arr[ti->tvsi[0]];
+        ti->utvi[counter] = last ;
+        for (idx = 1; idx < num_indexes ; ++idx)
+            if (tmp_arr[ti->tvsi[idx]] != last) {
+                last = tmp_arr[ti->tvsi[idx]];
+                counter++;
+                ti->utvi[counter] = last ;
+            }
+
+        /* free 'triangle texture vertex sort index array' (ti->tvsi) since
+           it is no longer needed since 'unique triangle texture vertex index
+           array' has been created. */
+        bu_free(ti->tvsi, "ti->tvsi");
+    } /* end of process texture vertex indexes */
+    return;
+}
+
+void free_ti(struct ti_t *ti) {
+    if ( ti == (struct ti_t *)NULL ) {
+        bu_log("function free_ti was passed a null pointer\n");
+        return;
     }
+
+    /* do not free sort indexes here since they have already
+       been freed in the 'create_unique_indexes' function */
+
+    /* free 'triangle indices into vertex, normal, texture vertex lists' */
+    bu_free(ti->index_arr_tri, "ti->index_arr_tri");
+
+    /* free 'unique triangle vertex index array' */
+    bu_free(ti->uvi, "ti->uvi");
+
+    /* free 'unique triangle vertex normal index array' */
+    if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV )
+        bu_free(ti->uvni, "ti->uvni");
+
+    /* free 'unique triangle texture vertex index array' */
+    if ( ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV )
+        bu_free(ti->utvi, "ti->utvi");
+
+    return;
+}
+
+void create_bot_float_arrays(struct ga_t *ga,
+                       struct ti_t *ti,
+                       fastf_t conv_factor) {
+    size_t i = 0;
+    size_t j = 0;
+    fastf_t tmp_norm[3] = {0.0, 0.0, 0.0};
+
+    ti->bot_num_vertices = ti->num_uvi;
+    ti->bot_num_faces = ti->num_tri;
+    ti->bot_num_normals = ti->num_uvni;
+    ti->bot_num_texture_vertices = ti->num_utvi;
+
+    /* allocate bot_vertices array */
+    ti->bot_vertices = (fastf_t *)bu_calloc(ti->bot_num_vertices * 3, sizeof(fastf_t), "ti->bot_vertices");
+
+    /* populate bot_vertices array */
+    for ( i = 0 ; i < ti->bot_num_vertices ; i++ )
+        for ( j = 0 ; j < 3 ; j++ )
+            ti->bot_vertices[(i*3)+j] = ga->vert_list[ti->uvi[i]][j] * conv_factor;
+
+    /* allocate bot_thickness array */
+    ti->bot_thickness = (fastf_t *)bu_calloc(ti->bot_num_faces, sizeof(fastf_t), "ti->bot_thickness");
+
+    /* populate bot_thickness array */
+    for ( i = 0 ; i < ti->bot_num_faces ; i++ )
+        ti->bot_thickness[i] = 1.0;
+
+    /* normals */
+    if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV ) {
+        /* allocate bot_normals array */
+        ti->bot_normals = (fastf_t *)bu_calloc(ti->bot_num_normals * 3, sizeof(fastf_t), "ti->bot_normals");
+
+        /* populate bot_normals array */
+        for ( i = 0 ; i < ti->bot_num_normals ; i++ ) {
+            for ( j = 0 ; j < 3 ; j++ )
+                tmp_norm[j] = ga->norm_list[ti->uvni[i]][j];
+ 
+            if ( MAGNITUDE(tmp_norm) < VDIVIDE_TOL ) {
+                bu_log("WARNING: unable to unitize normal (%f)(%f)(%f)\n", tmp_norm[0], tmp_norm[1], tmp_norm[2]);
+                VMOVE(&(ti->bot_normals[i*3]),tmp_norm);
+            } else {
+                VUNITIZE(tmp_norm);
+                VMOVE(&(ti->bot_normals[i*3]),tmp_norm);
+            }
+        }
+    }
+
+    /* textures */
+    if ( ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV ) {
+        /* allocate bot_texture_vertices array */
+        ti->bot_texture_vertices = (fastf_t *)bu_calloc(ti->bot_num_texture_vertices * 3,
+                                              sizeof(fastf_t), "ti->bot_texture_vertices");
+
+        /* populate bot_texture_vertices array */
+        for ( i = 0 ; i < ti->bot_num_texture_vertices ; i++ ) 
+            for ( j = 0 ; j < 3 ; j++ )
+                ti->bot_texture_vertices[(i*3)+j] = ga->texture_coord_list[ti->utvi[i]][j] * conv_factor;
+    }
+    return;
 }
 
 void output_to_bot(struct ga_t *ga,
@@ -1050,7 +1246,6 @@ void output_to_bot(struct ga_t *ga,
     fastf_t *bot_vertices = NULL;
     int *bot_faces_array = NULL; /* bot face vertex index array, passed to mk_bot function */
 
-
     /* initialize triangle indices structure */
     memset((void *)&ti, 0, sizeof(struct ti_t)); /* probably redundant */
     ti.index_arr_tri = (void *)NULL; /* triangle indices into vertex, normal, texture vertex lists */
@@ -1066,6 +1261,17 @@ void output_to_bot(struct ga_t *ga,
     ti.num_uvi = 0;                  /* number of unique triangle vertex indexes in uvi array */
     ti.num_uvni = 0;                 /* number of unique triangle vertex normal index in uvni array */
     ti.num_utvi = 0;                 /* number of unique triangle texture vertex index in utvi array */
+    ti.bot_vertices = (fastf_t *)NULL;         /* array of float for bot vertices [bot_num_vertices*3] */
+    ti.bot_thickness = (fastf_t *)NULL;        /* array of floats for face thickness [bot_num_faces] */
+    ti.bot_normals = (fastf_t *)NULL;          /* array of floats for bot normals [bot_num_normals*3] */
+    ti.bot_texture_vertices = (fastf_t *)NULL; /* array of floats for texture vertices [bot_num_texture_vertices*3] */
+    ti.bot_faces = (int *)NULL;                /* array of indices into bot_vertices array [bot_num_faces*3] */
+    ti.bot_face_normals = (int *)NULL;         /* array of indices into bot_normals array [bot_num_faces*3] */
+    ti.bot_textures  = (int *)NULL;            /* array of indices into bot_texture_vertices array */
+    ti.bot_num_vertices = 0;                   /* number of vertices in bot_vertices array */
+    ti.bot_num_faces = 0;                      /* number of faces in bot_faces array */
+    ti.bot_num_normals = 0;                    /* number of normals in bot_normals array */
+    ti.bot_num_texture_vertices = 0;           /* number of textures in bot_texture_vertices array */
 
     /* loop thru all the polygons (i.e. faces) to be placed in the current bot */
     for ( face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++ ) {
@@ -1091,9 +1297,9 @@ void output_to_bot(struct ga_t *ga,
 
     sort_indexes(&ti);
 
-#if 0
     create_unique_indexes(&ti);
-#endif
+
+    create_bot_float_arrays(ga, &ti, conv_factor);
 
     size_t idx2 = 0;
     tri_arr_1D_t index_arr_tri_1D = NULL;
@@ -1175,8 +1381,9 @@ void output_to_bot(struct ga_t *ga,
                      bot_faces_array, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 #endif
 
-    if ( ti.index_arr_tri != (void *)NULL )
-        bu_free(ti.index_arr_tri, "ti.index_arr_tri");
+    bu_log("about to run free_ti\n");
+    free_ti(&ti);
+
 }
 
 void output_to_nmg(struct ga_t *ga,
