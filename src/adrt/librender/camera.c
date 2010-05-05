@@ -609,6 +609,19 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
     return;
 }
 
+void
+render_shader_init(render_t *camera, const char *name, const char *buf)
+{
+#define SHADER(x) if(!strcmp(name, #x)) render_##x##_init(camera, buf);
+    SHADER(phong);
+    SHADER(normal);
+    SHADER(cut);
+    SHADER(depth);
+    SHADER(component);
+#undef SHADER
+}
+
+
 /*
  * Local Variables:
  * mode: C

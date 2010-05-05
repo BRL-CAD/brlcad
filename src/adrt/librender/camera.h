@@ -96,6 +96,8 @@ BU_EXPORT BU_EXTERN(void render_camera_free, (render_camera_t *camera));
 BU_EXPORT BU_EXTERN(void render_camera_prep, (render_camera_t *camera));
 BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result));
 
+BU_EXPORT BU_EXTERN(void render_shader_init, (render_t *, const char *name, const char *buf));
+
 #endif
 
 /*
