@@ -103,10 +103,7 @@ tieinclude_HEADERS = \
 	librender/surfel.h \
 	librender/texture.h \
 	librender/texture_internal.h \
-	libtie/tie.h \
-	libtie/tie_define.h \
-	libtie/tie_kdtree.h \
-	libtie/tie_struct.h
+	libtie/tie.h
 
 noinst_HEADERS = \
 	load.h \

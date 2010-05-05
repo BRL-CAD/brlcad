@@ -24,13 +24,12 @@
 
 #include "common.h"
 
-#include "tie.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "tie.h"
 #include "bio.h"
-#include "tie_struct.h"
 
 #include "bu.h"
 

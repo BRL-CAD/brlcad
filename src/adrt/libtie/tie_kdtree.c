@@ -22,7 +22,7 @@
  *
  */
 
-#include "tie_kdtree.h"
+#include "tie.h"
 
 #include <math.h>
 #include <stdlib.h>
