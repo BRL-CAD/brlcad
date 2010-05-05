@@ -68,7 +68,7 @@ alpha release status as BRL-CAD's next generation geometry editor.
 * fixed mged units bug supporting decameter (Dm) units - Bob Parker
 * improved robustness of NURBS trimming during raytrace - Keith Bowman
 * Improved put_comb command usage and added documentation - Cliff Yapp
-# mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
+* mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
 * Improve behavior of editor invocation in classic mode - Cliff Yapp
 * reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker
