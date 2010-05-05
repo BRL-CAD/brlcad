@@ -146,11 +146,11 @@ typedef struct tie_s {
 #endif
 } tie_t;
 
-void TIE_VAL(tie_kdtree_free)(tie_t *tie);
-uint32_t TIE_VAL(tie_kdtree_cache_free)(tie_t *tie, void **cache);
-void TIE_VAL(tie_kdtree_cache_load)(tie_t *tie, void *cache, uint32_t size);
-void TIE_VAL(tie_kdtree_prep)(tie_t *tie);
-TIE_VAL(extern tfloat TIE_PREC);
+BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (tie_t *tie));
+BU_EXPORT BU_EXTERN(uint32_t TIE_VAL(tie_kdtree_cache_free), (tie_t *tie, void **cache));
+BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_cache_load), (tie_t *tie, void *cache, uint32_t size));
+BU_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (tie_t *tie));
+BU_EXPORT extern tfloat TIE_VAL(TIE_PREC);
 
 /* compatability macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
@@ -159,14 +159,14 @@ TIE_VAL(extern tfloat TIE_PREC);
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 #define TIE_PREC TIE_VAL(TIE_PREC)
 
-TIE_VAL(extern int tie_check_degenerate);
+BU_EXPORT extern TIE_VAL(int tie_check_degenerate);
 #define tie_check_degenerate TIE_VAL(tie_check_degenerate)
 
-void TIE_VAL(tie_init)(tie_t *tie, unsigned int tri_num, unsigned int kdmethod);
-void TIE_VAL(tie_free)(tie_t *tie);
-void TIE_VAL(tie_prep)(tie_t *tie);
-void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr);
-void TIE_VAL(tie_push)(tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
+BU_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (tie_t *tie, unsigned int tri_num, unsigned int kdmethod));
+BU_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (tie_t *tie));
+BU_EXPORT BU_EXTERN(void TIE_VAL(tie_prep), (tie_t *tie));
+BU_EXPORT BU_EXTERN(void* TIE_VAL(tie_work), (tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr));
+BU_EXPORT BU_EXTERN(void TIE_VAL(tie_push), (tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride));
 
 /* backwards compatible macros */
 #define tie_init TIE_VAL(tie_init)

@@ -26,7 +26,7 @@
 
 #include "tie.h"
 
-extern void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
+BU_EXPORT BU_EXTERN(void* render_hit, (tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr));
 
 #endif
 

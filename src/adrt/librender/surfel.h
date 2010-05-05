@@ -23,29 +23,6 @@
  *
  */
 
-/*                        R E N D E R . H
- * BRL-CAD / ADRT
- *
- * Copyright (c) 2007-2010 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-/** @file render.h
- *
- */
-
 #ifndef _RENDER_SURFEL_H
 #define _RENDER_SURFEL_H
 
@@ -63,10 +40,9 @@ typedef struct render_surfel_s {
     render_surfel_pt_t *list;
 } render_surfel_t;
 
-
-void render_surfel_init(render_t *render, uint32_t num, render_surfel_pt_t *list);
-void render_surfel_free(render_t *render);
-void render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
+BU_EXPORT BU_EXTERN(void render_surfel_init, (render_t *render, uint32_t num, render_surfel_pt_t *list));
+BU_EXPORT BU_EXTERN(void render_surfel_free, (render_t *render));
+BU_EXPORT BU_EXTERN(void render_surfel_work, (render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel));
 
 #endif
 

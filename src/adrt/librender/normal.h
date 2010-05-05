@@ -26,9 +26,9 @@
 
 #include "render_internal.h"
 
-void render_normal_init(render_t *render, char *usr);
-void render_normal_free(render_t *render);
-void render_normal_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
+BU_EXPORT BU_EXTERN(void render_normal_init, (render_t *render, char *usr));
+BU_EXPORT BU_EXTERN(void render_normal_free, (render_t *render));
+BU_EXPORT BU_EXTERN(void render_normal_work, (render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel));
 
 #endif
 
