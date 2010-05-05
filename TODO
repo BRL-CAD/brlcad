@@ -56,6 +56,17 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* automatic anti-aliasing as a second render pass on the edges
+  encountered (possibly using bilinear filtering scheme, improve upon
+  rtedge's current simple filter)
+
+* kdtree spatial partitioning option in librt
+
+* implement rt_volume() API for computing geometry volume (g_qa style
+  for complex, direct for primitives)
+
+* implement parallel prep
+
 * improve compile-time version management -- port brlcad-version to
   windows, reconsider providing compile-time header constants.
 
@@ -836,7 +847,7 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 
 * implement SIMD shots
 
-* implement SAH for all primitives
+* implement SAH for all primitives (routine that fires a ray at each primitive for initial estimate, caches result)
 
 * write and use kdtree - make traversal cache coherent
 
