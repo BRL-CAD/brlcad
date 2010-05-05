@@ -76,7 +76,6 @@ scripties = \
 	reid.tcl \
 	remap_mater.tcl \
 	remat.tcl \
-	rrmb.tcl \
 	rt.tcl \
 	rt_script.tcl \
 	sample.tcl \
@@ -146,6 +145,7 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
+	rrmb.tcl \
 	$(tcl_SCRIPTS)
 
 # CLEANFILES = $(BUILT_SOURCES)
