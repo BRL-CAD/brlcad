@@ -29,12 +29,6 @@
 #ifndef __GED_H__
 #define __GED_H__
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  include <windows.h>
-#  include <io.h>
-#endif
-
 #include "raytrace.h"
 
 
