@@ -21,7 +21,6 @@
  *
  */
 
-#include "spall.h"
 #include "render_util.h"
 
 #include <stdio.h>
@@ -32,13 +31,21 @@
 
 #include "adrt_struct.h"
 #include "hit.h"
+#include "render.h"
 
 #define TESSELATION 32
 #define SPALL_LEN 20
 
+typedef struct render_spall_s {
+    TIE_3 ray_pos;
+    TIE_3 ray_dir;
+    tfloat plane[4];
+    tfloat angle;
+    tie_t tie;
+} render_spall_t;
+
 void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_plane(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
-
 
 typedef struct render_spall_hit_s {
     tie_id_t id;
@@ -48,14 +55,19 @@ typedef struct render_spall_hit_s {
 } render_spall_hit_t;
 
 
-void render_spall_init(render_t *render, TIE_3 ray_pos, TIE_3 ray_dir, tfloat angle) {
+void render_spall_init(render_t *render, char *buf) {
     render_spall_t *d;
-    TIE_3 *tri_list, *vec_list, normal, up;
-    tfloat plane[4];
+    TIE_3 *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
+    tfloat plane[4], angle;
     int i;
 
     render->work = render_spall_work;
     render->free = render_spall_free;
+
+    sscanf(buf, "(%g %g %g) (%g %g %g) %g", 
+		    &ray_pos.v[0], &ray_pos.v[1], &ray_pos.v[2], 
+		    &ray_dir.v[0], &ray_dir.v[1], &ray_dir.v[2], 
+		    &angle);
 
     render->data = (render_spall_t *)bu_malloc(sizeof(render_spall_t), "render_spall_init");
     if (!render->data) {

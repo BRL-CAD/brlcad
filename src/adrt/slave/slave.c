@@ -346,6 +346,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 		    {
 			TIE_3 shot_pos, shot_dir;
 			tfloat angle;
+			char buf[BUFSIZ];
 
 			/* Extract shot position and direction */
 			TCOPY(TIE_3, work->data, ind, &shot_pos, 0);
@@ -357,7 +358,9 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			TCOPY(tfloat, work->data, ind, &angle, 0);
 			ind += sizeof (tfloat);
 
-			render_spall_init (&adrt_workspace_list[wid].camera.render, shot_pos, shot_dir, angle);
+			snprintf(buf, BUFSIZ, "(%g %g %g) (%g %g %g) %g", V3ARGS(shot_pos.v), V3ARGS(shot_dir.v), angle);
+
+			render_spall_init (&adrt_workspace_list[wid].camera.render, buf);
 		    }
 		    break;
 

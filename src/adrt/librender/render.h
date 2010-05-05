@@ -24,18 +24,19 @@
 #ifndef _RENDER_H
 #define _RENDER_H
 
-#include "component.h"
-#include "cut.h"
-#include "depth.h"
-#include "flat.h"
-#include "flos.h"
-#include "grid.h"
-#include "normal.h"
-#include "path.h"
-#include "phong.h"
-#include "spall.h"
-#include "surfel.h"
 #include "render_internal.h"
+
+RENDER_SHADER(component);
+RENDER_SHADER(cut);
+RENDER_SHADER(depth);
+RENDER_SHADER(flat);
+RENDER_SHADER(flos);
+RENDER_SHADER(grid);
+RENDER_SHADER(normal);
+RENDER_SHADER(path);
+RENDER_SHADER(phong);
+RENDER_SHADER(spall);
+RENDER_SHADER(surfel);
 
 #endif
 

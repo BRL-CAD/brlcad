@@ -38,8 +38,6 @@ pthread_t *render_tlist;
 #include "bio.h"
 #include "bu.h"
 
-#include "component.h"
-#include "cut.h"
 #include "camera.h"
 
 void* render_camera_render_thread(void *ptr);

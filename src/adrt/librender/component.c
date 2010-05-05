@@ -21,12 +21,11 @@
  *
  */
 
-#include "component.h"
+#include <stdio.h>
+
 #include "hit.h"
 #include "adrt.h"
 #include "adrt_struct.h"
-#include <stdio.h>
-
 
 void
 render_component_init(render_t *render, char *usr) {

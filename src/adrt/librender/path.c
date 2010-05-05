@@ -25,8 +25,6 @@
 # define TIE_PRECISION 0
 #endif
 
-#include "path.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -37,6 +35,11 @@
 #include "bu.h"
 #include "bn.h"
 #include "vmath.h"
+
+typedef struct render_path_s {
+    int samples;
+    tfloat inv_samples;
+} render_path_t;
 
 
 /* _a is reflected ray, _b is incident ray, _c is normal */

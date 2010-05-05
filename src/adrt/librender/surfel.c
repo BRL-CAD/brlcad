@@ -23,53 +23,40 @@
  *
  */
 
-/*                        S U R F E L . c
- * BRL-CAD / ADRT
- *
- * Copyright (c) 2007-2010 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-/** @file surfel.c
- *
- */
-
-#include "component.h"
-#include "cut.h"
-#include "depth.h"
-#include "flat.h"
-#include "flos.h"
-#include "surfel.h"
-#include "hit.h"
-#include "adrt_struct.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "bu.h"
 
-void render_surfel_init(render_t *render, uint32_t num, render_surfel_pt_t *list) {
+#include "render.h"
+#include "hit.h"
+#include "adrt_struct.h"
+
+typedef struct render_surfel_pt_s {
+    TIE_3 pos;
+    tfloat radius;
+    TIE_3 color;
+} render_surfel_pt_t;
+
+typedef struct render_surfel_s {
+    uint32_t num;
+    render_surfel_pt_t *list;
+} render_surfel_t;
+
+void render_surfel_init(render_t *render, char *buf)
+{
     render_surfel_t *d;
 
     render->work = render_surfel_work;
     render->free = render_surfel_free;
     render->data = (render_surfel_t *)bu_malloc(sizeof(render_surfel_t), "render data");
     d = (render_surfel_t *)render->data;
-    d->list = (render_surfel_pt_t *)bu_malloc(num * sizeof(render_surfel_pt_t), "data list");
-    d->num = num;
-    d->list = list;
+    d->num = 0;
+    d->list = NULL;
+/*
+    d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
+*/
+/* do something to extract num and list from buf */
 }
 
 

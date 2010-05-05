@@ -86,21 +86,9 @@ tieinclude_HEADERS = \
 	adrt.h  \
 	adrt_struct.h \
 	librender/camera.h \
-	librender/component.h \
-	librender/cut.h \
-	librender/depth.h \
-	librender/flat.h \
-	librender/flos.h \
-	librender/grid.h \
-	librender/hit.h \
-	librender/normal.h \
-	librender/path.h \
-	librender/phong.h \
 	librender/render.h \
 	librender/render_internal.h \
 	librender/render_util.h \
-	librender/spall.h \
-	librender/surfel.h \
 	librender/texture.h \
 	librender/texture_internal.h \
 	libtie/tie.h

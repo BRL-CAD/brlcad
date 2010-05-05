@@ -25,14 +25,6 @@
 # define TIE_PRECISION 0
 #endif
 
-#include "component.h"
-#include "cut.h"
-#include "depth.h"
-#include "flat.h"
-#include "flos.h"
-
-
-#include "flos.h"
 #include "hit.h"
 #include "adrt_struct.h"
 
@@ -40,6 +32,11 @@
 #include <stdlib.h>
 
 #include "bu.h"
+
+typedef struct render_flos_s {
+    TIE_3 frag_pos;
+} render_flos_t;
+
 
 void render_flos_init(render_t *render, char *frag_pos) {
     render_flos_t *d;

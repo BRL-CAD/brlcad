@@ -21,7 +21,6 @@
  *
  */
 
-#include "cut.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,13 +28,24 @@
 #include "bu.h"
 #include "vmath.h"
 
+#ifndef TIE_PRECISION
+# define TIE_PRECISION 0
+#endif
+
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "hit.h"
+#include "render.h"
 
 void* render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
 void render_cut(tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 
+typedef struct render_cut_s {
+    TIE_3 ray_pos;
+    TIE_3 ray_dir;
+    tfloat plane[4];
+    tie_t tie;
+} render_cut_t;
 
 typedef struct render_cut_hit_s {
     tie_id_t id;
