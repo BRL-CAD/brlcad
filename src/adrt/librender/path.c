@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "hit.h"
 #include "adrt_struct.h"
 
 #include "bu.h"

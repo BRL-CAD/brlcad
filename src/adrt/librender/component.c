@@ -23,7 +23,6 @@
 
 #include <stdio.h>
 
-#include "hit.h"
 #include "adrt.h"
 #include "adrt_struct.h"
 

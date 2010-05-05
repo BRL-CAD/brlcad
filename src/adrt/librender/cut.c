@@ -34,7 +34,6 @@
 
 #include "adrt.h"
 #include "adrt_struct.h"
-#include "hit.h"
 #include "render.h"
 
 void* render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);

@@ -25,7 +25,6 @@
 
 #include "vmath.h"
 
-#include "hit.h"
 #include "adrt_struct.h"
 
 void

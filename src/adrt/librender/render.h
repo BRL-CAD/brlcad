@@ -38,6 +38,8 @@ RENDER_SHADER(phong);
 RENDER_SHADER(spall);
 RENDER_SHADER(surfel);
 
+void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr);
+
 #endif
 
 /*

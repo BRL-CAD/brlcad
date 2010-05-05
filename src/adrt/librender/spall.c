@@ -30,7 +30,6 @@
 #include "bu.h"
 
 #include "adrt_struct.h"
-#include "hit.h"
 #include "render.h"
 
 #define TESSELATION 32

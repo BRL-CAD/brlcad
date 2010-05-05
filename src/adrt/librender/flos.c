@@ -25,7 +25,6 @@
 # define TIE_PRECISION 0
 #endif
 
-#include "hit.h"
 #include "adrt_struct.h"
 
 #include <stdio.h>

@@ -29,7 +29,6 @@
 #include "bu.h"
 
 #include "render.h"
-#include "hit.h"
 #include "adrt_struct.h"
 
 typedef struct render_surfel_pt_s {

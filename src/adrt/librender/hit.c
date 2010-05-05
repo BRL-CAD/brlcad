@@ -21,7 +21,6 @@
  *
  */
 
-#include "hit.h"
 #include "adrt_struct.h"
 
 
