@@ -157,9 +157,8 @@ void collect_global_obj_file_attributes(struct ga_t *ga) {
 
     if (verbose) {
         bu_log("list of all groups i.e. 'g' in OBJ file\n");
-        for (i = 0 ; i < ga->numGroups ; i++) {
+        for (i = 0 ; i < ga->numGroups ; i++)
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_groups[i]);
-        }
     }
 
     ga->numObjects = obj_objects(ga->contents, &ga->str_arr_obj_objects);
@@ -167,9 +166,8 @@ void collect_global_obj_file_attributes(struct ga_t *ga) {
 
     if (verbose) {
         bu_log("list of all object groups i.e. 'o' in OBJ file\n");
-        for (i = 0 ; i < ga->numObjects ; i++) {
+        for (i = 0 ; i < ga->numObjects ; i++)
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_objects[i]);
-        }
     }
 
     ga->numMaterials = obj_materials(ga->contents, &ga->str_arr_obj_materials);
@@ -177,9 +175,8 @@ void collect_global_obj_file_attributes(struct ga_t *ga) {
 
     if (verbose) {
         bu_log("list of all material names i.e. 'usemtl' in OBJ file\n");
-        for (i = 0 ; i < ga->numMaterials ; i++) {
+        for (i = 0 ; i < ga->numMaterials ; i++)
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_materials[i]);
-        }
     }
 
     ga->numTexmaps = obj_texmaps(ga->contents, &ga->str_arr_obj_texmaps);
@@ -187,9 +184,8 @@ void collect_global_obj_file_attributes(struct ga_t *ga) {
 
     if (verbose) {
         bu_log("list of all texture map names i.e. 'usemap' in OBJ file\n");
-        for (i = 0 ; i < ga->numTexmaps ; i++) {
+        for (i = 0 ; i < ga->numTexmaps ; i++)
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_texmaps[i]);
-        }
     }
 
     ga->numVerts = obj_vertices(ga->contents, &ga->vert_list);
@@ -226,11 +222,9 @@ void cleanup_name(struct bu_vls *outputObjectName_ptr) {
     /* length does not include null */
     outputObjectName_length = bu_vls_strlen(outputObjectName_ptr);
 
-    for ( i = 0 ; i < outputObjectName_length ; i++ ) {
-        if (temp_str[i] == '/') {
+    for ( i = 0 ; i < outputObjectName_length ; i++ )
+        if (strchr("/\\",(int)temp_str[i]) != (char *)NULL )
             temp_str[i] = '_';
-        }
-    }
 
     return;
 }
@@ -437,75 +431,6 @@ int test_face(struct ga_t *ga,
     }
     return degenerate_face;
 }
-
-#if 0
-=================================
-int triangulate_face(const size_t *index_arr_faces, /* n-dimensional array of vertex indexes */
-                     int index_arr_faces_dim,       /* dimension of index_arr_faces array */
-                     size_t numVert,                /* number of vertices in polygon */
-                     size_t *numTri,                /* number of triangles in current bot */
-                     size_t *triangle_indexes_size, /* current allocated size of triangle_indexes */
-                     size_t i) {                    /* libobj face index */
-
-    /* triangle_indexes is global */
-    /* size_t (*triangle_indexes)[3][2] */
-
-    int idx = 0; 
-    int numTriangles = 0; /* number of triangle faces which need to be created */
-    size_t (*triangle_indexes_tmp)[3][2] = NULL ;
-
-    /* size is the number of vertices in the current polygon */
-    if ( numVert > 3 ) {
-        numTriangles = numVert - 2 ;
-    } else {
-        numTriangles = 1 ;
-    }
-
-    /* numTriangles are the number of resulting triangles after triangulation */
-    /* this loop triangulates the current polygon, only works if convex */
-    for (idx = 0 ; idx < numTriangles ; idx++) {
-        /* for each iteration of this loop, write all 6 indexes for the current triangle */
-
-        /* triangle vertices indexes */
-        triangle_indexes[*numTri][0][0] = index_arr_nv_faces[0][0] ;
-        triangle_indexes[*numTri][1][0] = index_arr_nv_faces[idx+1][0] ;
-        triangle_indexes[*numTri][2][0] = index_arr_nv_faces[idx+2][0] ;
-
-        /* triangle vertices normals indexes */
-        triangle_indexes[*numTri][0][1] = index_arr_nv_faces[0][1] ;
-        triangle_indexes[*numTri][1][1] = index_arr_nv_faces[idx+1][1] ;
-        triangle_indexes[*numTri][2][1] = index_arr_nv_faces[idx+2][1] ;
-
-        bu_log("(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)\n",
-           i,
-           *numTri,
-           triangle_indexes[*numTri][0][0],
-           triangle_indexes[*numTri][1][0],
-           triangle_indexes[*numTri][2][0],
-           triangle_indexes[*numTri][0][1],
-           triangle_indexes[*numTri][1][1],
-           triangle_indexes[*numTri][2][1]); 
-
-        /* increment number of triangles in current grouping (i.e. current bot) */
-        (*numTri)++;
-
-        /* test if size of triangle_indexes needs to be increased */
-        if (*numTri >= (triangle_indexes_size / num_indexes_per_triangle)) {
-            /* compute how large to make next alloc */
-            triangle_indexes_size = triangle_indexes_size +
-                                              (num_triangles_per_alloc * num_indexes_per_triangle);
-
-            triangle_indexes_tmp = bu_realloc(triangle_indexes, 
-                                              sizeof(*triangle_indexes) * triangle_indexes_size,
-                                              "triangle_indexes_tmp");
-            triangle_indexes = triangle_indexes_tmp;
-        }
-    } /* this loop exits when all the triangles from the triangulated polygon 
-         are written to the triangle_indexes array */
-    return 0;
-}
-=================================
-#endif
 
 void free_gfi(struct gfi_t **gfi) {
     if (*gfi != NULL ) {
@@ -736,7 +661,6 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
         }
 
         if ( found ) {
-
             /* assign obj file face index into array for tracking errors back
                to the face within the obj file */
             (*gfi)->obj_file_face_idx_arr[numFacesFound] = attindex_arr_faces[i];
@@ -766,7 +690,6 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
                     bu_log("ERROR: logic error, invalid face_type in function 'collect_grouping_faces_indexes'\n");
                     return;
             }
-
             (*gfi)->tot_vertices += (*gfi)->num_vertices_arr[numFacesFound];
 
             /* if needed, increase size of (*gfi)->num_vertices_arr and (*gfi)->index_arr_faces */
@@ -969,11 +892,8 @@ void populate_sort_indexes(struct ti_t *ti) {
         case FACE_V :
             /* vsi ... vertex sort index */
             ti->vsi = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "ti->vsi");
-            for ( idx = 0 ; idx < num_indexes ; idx++ ) {
-                bu_log("idx=(%lu)vsi=(%lu)\n",
-                idx,
-                ti->vsi[idx] = idx);
-            }
+            for ( idx = 0 ; idx < num_indexes ; idx++ )
+                ti->vsi[idx] = idx;
             break;
         case FACE_TV :
             /* vsi ... vertex sort index */
@@ -981,10 +901,8 @@ void populate_sort_indexes(struct ti_t *ti) {
             /* tvsi ... texture vertex sort index */
             ti->tvsi = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "ti->tvsi");
             for ( idx = 0 ; idx < num_indexes ; idx++ ) {
-                bu_log("idx=(%lu)vsi=(%lu)tvsi=(%lu)\n",
-                idx,
-                ti->vsi[idx] = idx * 2,
-                ti->tvsi[idx] = (idx * 2) + 1);
+                ti->vsi[idx] = idx * 2;
+                ti->tvsi[idx] = (idx * 2) + 1;
             }
             break;
         case FACE_NV :
@@ -993,10 +911,8 @@ void populate_sort_indexes(struct ti_t *ti) {
             /* vnsi ... vertex normal sort index */
             ti->vnsi = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "ti->vnsi");
             for ( idx = 0 ; idx < num_indexes ; idx++ ) {
-                bu_log("idx=(%lu)vsi=(%lu)vnsi=(%lu)\n",
-                idx,
-                ti->vsi[idx] = idx * 2,
-                ti->vnsi[idx] = (idx * 2) + 1);
+                ti->vsi[idx] = idx * 2;
+                ti->vnsi[idx] = (idx * 2) + 1;
             }
             break;
         case FACE_TNV :
@@ -1007,11 +923,9 @@ void populate_sort_indexes(struct ti_t *ti) {
             /* vnsi ... vertex normal sort index */
             ti->vnsi = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "ti->vnsi");
             for ( idx = 0 ; idx < num_indexes ; idx++ ) {
-                bu_log("idx=(%lu)vsi=(%lu)tvsi=(%lu)vnsi=(%lu)\n",
-                idx,
-                ti->vsi[idx] = idx * 3,
-                ti->tvsi[idx] = (idx * 3) + 1,
-                ti->vnsi[idx] = (idx * 3) + 2);
+                ti->vsi[idx] = idx * 3;
+                ti->tvsi[idx] = (idx * 3) + 1;
+                ti->vnsi[idx] = (idx * 3) + 2;
             }
             break;
         default:
@@ -1153,19 +1067,25 @@ void free_ti(struct ti_t *ti) {
     /* do not free sort indexes here since they have already
        been freed in the 'create_unique_indexes' function */
 
+    /* do not free unique indexes here since they have already
+       been freed in the 'create_bot_int_arrays' function */
+
     /* free 'triangle indices into vertex, normal, texture vertex lists' */
     bu_free(ti->index_arr_tri, "ti->index_arr_tri");
 
-    /* free 'unique triangle vertex index array' */
-    bu_free(ti->uvi, "ti->uvi");
+    /* free 'array of floats for bot vertices' */
+    bu_free(ti->bot_vertices, "ti->bot_vertices");
 
-    /* free 'unique triangle vertex normal index array' */
+    /* free 'array of floats for face thickness' */
+    bu_free(ti->bot_thickness, "ti->bot_thickness");
+
+    /* free 'array of floats for bot normals' */
     if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV )
-        bu_free(ti->uvni, "ti->uvni");
+        bu_free(ti->bot_normals, "ti->bot_normals");
 
-    /* free 'unique triangle texture vertex index array' */
+    /* free 'array of floats for texture vertices' */
     if ( ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV )
-        bu_free(ti->utvi, "ti->utvi");
+        bu_free(ti->bot_texture_vertices, "ti->bot_texture_vertices");
 
     return;
 }
@@ -1229,6 +1149,114 @@ void create_bot_float_arrays(struct ga_t *ga,
                 ti->bot_texture_vertices[(i*3)+j] = ga->texture_coord_list[ti->utvi[i]][j] * conv_factor;
     }
     return;
+}
+
+/* returns 1 if bsearch failure, otherwise return 0 for success */
+int create_bot_int_arrays(struct ti_t *ti) {
+    size_t i = 0;
+    size_t j = 0;
+    size_t *res_v = 0;
+    size_t *res_n = 0;
+    size_t *res_t = 0;
+
+    tri_arr_1D_t index_arr_tri_1D = NULL;
+    tri_arr_2D_t index_arr_tri_2D = NULL;
+    tri_arr_3D_t index_arr_tri_3D = NULL;
+
+    /* allocate memory for 'array of indices into bot_vertices array' */
+    ti->bot_faces = (int *)bu_calloc(ti->bot_num_faces * 3, sizeof(int), "ti->bot_faces");
+
+    /* allocate memory for 'array of indices into bot_normals array' */
+    if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV )
+        ti->bot_face_normals = (int *)bu_calloc(ti->bot_num_faces * 3, sizeof(int), "ti->bot_face_normals");
+
+    /* allocate memory for 'array indices into bot_texture_vertices array' */
+    if ( ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV )
+        ti->bot_textures = (int *)bu_calloc(ti->bot_num_faces * 3, sizeof(int), "ti->bot_textures");
+
+    if ( ti->tri_type == FACE_V ) {
+        index_arr_tri_1D = (tri_arr_1D_t)ti->index_arr_tri;
+        for ( i = 0 ; i < ti->bot_num_faces ; i++ )
+            for ( j = 0 ; j < 3 ; j++ )
+                if ((res_v = bsearch(&(index_arr_tri_1D[i][j]),ti->uvi, ti->num_uvi, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_V bsearch returned null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
+        bu_free(ti->uvi, "ti->uvi");
+    }
+
+    if ( ti->tri_type == FACE_TV ) {
+        index_arr_tri_2D = (tri_arr_2D_t)ti->index_arr_tri;
+        for ( i = 0 ; i < ti->bot_num_faces ; i++ )
+            for ( j = 0 ; j < 3 ; j++ ) {
+                if ((res_v = bsearch(&(index_arr_tri_2D[i][j][0]),ti->uvi, ti->num_uvi, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_TV bsearch returned vertex null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
+                if ((res_t = bsearch(&(index_arr_tri_2D[i][j][1]),ti->utvi, ti->num_utvi, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_TV bsearch returned texture null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_textures[(i*3)+j] = (int)(res_t - ti->utvi);
+            }
+        bu_free(ti->uvi, "ti->uvi");
+        bu_free(ti->utvi, "ti->utvi");
+    }
+
+    if ( ti->tri_type == FACE_NV ) {
+        index_arr_tri_2D = (tri_arr_2D_t)ti->index_arr_tri;
+        for ( i = 0 ; i < ti->bot_num_faces ; i++ )
+            for ( j = 0 ; j < 3 ; j++ ) {
+                if ((res_v = bsearch(&(index_arr_tri_2D[i][j][0]),ti->uvi, ti->num_uvi, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_NV bsearch returned vertex null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
+                if ((res_n = bsearch(&(index_arr_tri_2D[i][j][1]),ti->uvni, ti->num_uvni, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_NV bsearch returned normal null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_face_normals[(i*3)+j] = (int)(res_n - ti->uvni);
+            }
+        bu_free(ti->uvi, "ti->uvi");
+        bu_free(ti->uvni, "ti->uvni");
+    }
+
+    if ( ti->tri_type == FACE_TNV ) {
+        index_arr_tri_3D = (tri_arr_3D_t)ti->index_arr_tri;
+        for ( i = 0 ; i < ti->bot_num_faces ; i++ )
+            for ( j = 0 ; j < 3 ; j++ ) {
+                if ((res_v = bsearch(&(index_arr_tri_3D[i][j][0]),ti->uvi, ti->num_uvi, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_TNV bsearch returned vertex null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
+                if ((res_t = bsearch(&(index_arr_tri_3D[i][j][1]),ti->utvi, ti->num_utvi, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_TNV bsearch returned texture null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_textures[(i*3)+j] = (int)(res_t - ti->utvi);
+                if ((res_n = bsearch(&(index_arr_tri_3D[i][j][2]),ti->uvni, ti->num_uvni, sizeof(size_t),
+                                    (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+                    bu_log("ERROR: FACE_TNV bsearch returned normal null, face=(%lu)idx=(%lu)\n", i, j);
+                    return 1;
+                } else 
+                    ti->bot_face_normals[(i*3)+j] = (int)(res_n - ti->uvni);
+            }
+        bu_free(ti->uvi, "ti->uvi");
+        bu_free(ti->utvi, "ti->utvi");
+        bu_free(ti->uvni, "ti->uvni");
+    }
+    return 0; /* return success */
 }
 
 void output_to_bot(struct ga_t *ga,
@@ -1301,89 +1329,21 @@ void output_to_bot(struct ga_t *ga,
 
     create_bot_float_arrays(ga, &ti, conv_factor);
 
-    size_t idx2 = 0;
-    tri_arr_1D_t index_arr_tri_1D = NULL;
-    tri_arr_2D_t index_arr_tri_2D = NULL;
-    tri_arr_3D_t index_arr_tri_3D = NULL;
-    for ( idx2 = 0 ; idx2 < ti.num_tri ; idx2++ ) {
-        switch (gfi->face_type) {
-            case FACE_V :
-                index_arr_tri_1D = (tri_arr_1D_t)ti.index_arr_tri;
-                bu_log("(%lu)=(%lu)(%lu)(%lu)\n", idx2, index_arr_tri_1D[idx2][0],
-                       index_arr_tri_1D[idx2][1], index_arr_tri_1D[idx2][2]);
-                break;
-            case FACE_TV :
-                break;
-            case FACE_NV :
-                index_arr_tri_2D = (tri_arr_2D_t)ti.index_arr_tri;
-                bu_log("i=(%lu)vi=(%lu)(%lu)(%lu)ni=(%lu)(%lu)(%lu)\n", 
-                       idx2, 
-                       index_arr_tri_2D[idx2][0][0], /* vertex index */
-                       index_arr_tri_2D[idx2][1][0],
-                       index_arr_tri_2D[idx2][2][0],
-                       index_arr_tri_2D[idx2][0][1], /* normal index */
-                       index_arr_tri_2D[idx2][1][1],
-                       index_arr_tri_2D[idx2][2][1]);
-                break;
-            case FACE_TNV :
-                index_arr_tri_3D = (tri_arr_3D_t)ti.index_arr_tri;
-                bu_log("i=(%lu)vi=(%lu)(%lu)(%lu)ti=(%lu)(%lu)(%lu)ni=(%lu)(%lu)(%lu)\n", 
-                       idx2, 
-                       index_arr_tri_3D[idx2][0][0], /* vertex index */
-                       index_arr_tri_3D[idx2][1][0],
-                       index_arr_tri_3D[idx2][2][0],
-                       index_arr_tri_3D[idx2][0][1], /* texture vertex index */
-                       index_arr_tri_3D[idx2][1][1],
-                       index_arr_tri_3D[idx2][2][1],
-                       index_arr_tri_3D[idx2][0][2], /* normal index */
-                       index_arr_tri_3D[idx2][1][2],
-                       index_arr_tri_3D[idx2][2][2]);
-                break;
-            default:
-                break;
-        }
-    }
-
-    size_t *tmp_arr = (size_t *)NULL;
-    switch (gfi->face_type) {
-        case FACE_V :
-            break;
-        case FACE_TV :
-            break;
-        case FACE_NV :
-            tmp_arr = (size_t *)ti.index_arr_tri;
-            for ( idx2 = 0 ; idx2 < ti.num_tri * 6 ; idx2++ ) {
-            bu_log("i=(%lu)vi=(%lu)\n", 
-                  idx2, tmp_arr[idx2]);
-            }
-            break;
-        case FACE_TNV :
-            tmp_arr = (size_t *)ti.index_arr_tri;
-            for ( idx2 = 0 ; idx2 < ti.num_tri * 9 ; idx2++ ) {
-            bu_log("i=(%lu)vi=(%lu)\n", 
-                  idx2, tmp_arr[idx2]);
-            }
-            break;
-        default:
-            break;
-    }
-
-
-    /* more processing is necessary here */
+    if ( create_bot_int_arrays(&ti) )
+        bu_log("bsearch failure\n");
 
     bu_vls_printf(gfi->raw_grouping_name, ".%lu.s", gfi->grouping_index);
     cleanup_name(gfi->raw_grouping_name);
 
     /* write bot to ".g" file */
-#if 0
     ret_val = mk_bot(outfp, bu_vls_addr(gfi->raw_grouping_name), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
-                     ti.num_tri*3, ti.num_tri, bot_vertices,
-                     bot_faces_array, (fastf_t *)NULL, (struct bu_bitv *)NULL);
-#endif
+                     ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+                     ti.bot_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
     bu_log("about to run free_ti\n");
     free_ti(&ti);
 
+    return;
 }
 
 void output_to_nmg(struct ga_t *ga,
@@ -1575,678 +1535,6 @@ void output_to_nmg(struct ga_t *ga,
 
     bu_free(verts,"verts");
     bu_ptbl_reset(&faces);
-}
-
-int process_nv_faces(struct ga_t *ga, 
-                     struct rt_wdb *outfp, 
-                     int grp_mode, 
-                     size_t grp_indx,
-                     fastf_t conversion_factor, 
-                     struct bn_tol *tol) {
-
-    size_t size = 0 ;
-    size_t setsize = 0 ;
-    size_t vert = 0;
-    size_t vert2 = 0;
-    const size_t (*index_arr_nv_faces)[2]; /* used by nv_faces */
-    const size_t *indexset_arr;
-    size_t groupid = 0;
-    size_t numNorTriangles_in_current_bot = 0;
-    /* NMG2s */
-    struct model *m = (struct model *)NULL;
-    struct nmgregion *r = (struct nmgregion *)NULL;
-    struct shell *s = (struct shell *)NULL;
-    const size_t (**index_arr_nv_faces_history)[2]; /* used by nv_faces */
-    const size_t (**index_arr_nv_faces_history_tmp)[2]; /* used by nv_faces */
-    size_t *size_history = NULL ; 
-    size_t *size_history_tmp = NULL ;
-    size_t history_arrays_size = 0; 
-    size_t numNorPolygons_in_current_shell = 0;
-    size_t numNorPolygonVertices_in_current_nmg = 0 ;
-    struct bu_ptbl faces;            /* table of faces for one element */
-    struct bu_ptbl names2;            /* table of element names */
-    struct faceuse *fu;
-    size_t idx2 = 0;
-    long   tmp_long = 0 ;
-    /* NMG2e */
-    int found = 0;
-    size_t i = 0;
-    int ret_val = 0;  /* 0=success !0=fail */
-
-    fastf_t *bot_vertices = NULL;
-    int *bot_faces_array = NULL; /* bot face vertex index array, passed to mk_bot function */
-    fastf_t *thickness = NULL;
-    fastf_t *normals = NULL;
-    int *face_normals = NULL;
-    size_t j = 0;
-
-    struct bu_vls outputObjectName;
-
-    int skip_degenerate_faces = 1; /* boolean */
-    int degenerate_face = 0; /* boolean */
-
-    size_t bot_vertex_array_size = 0;
-    size_t bot_normals_array_size = 0;
-
-    const size_t num_triangles_per_alloc = 128 ;
-    const size_t num_indexes_per_triangle = 6 ; /* 3 vert/tri, 1 norm/vert, 2 idx/vert */
-
-    size_t (*triangle_indexes_tmp)[3][2] = NULL ;
-    size_t triangle_indexes_size = 0;
-
-    /* NMG2s */
-
-    /* initial number of history elements to create, one is required
-       for each polygon in the current nmg */
-    history_arrays_size = 128 ; 
-
-    /* allocate memory for initial index_arr_nv_faces_history array */
-    index_arr_nv_faces_history = bu_calloc(history_arrays_size,
-                                                             sizeof(size_t *) * 2,
-                                                             "index_arr_nv_faces_history");
-
-    /* allocate memory for initial size_history array */
-    size_history = (size_t *)bu_calloc(history_arrays_size, sizeof(size_t), "size_history");
-    /* NMG2e */
-
-    /* compute memory required for initial triangle_indexes array */
-    triangle_indexes_size = num_triangles_per_alloc * num_indexes_per_triangle ;
-
-    /* allocate memory for initial triangle_indexes array */
-    triangle_indexes = bu_calloc(triangle_indexes_size, sizeof(*triangle_indexes), "triangle_indexes");
-
-    bu_vls_init(&outputObjectName);
-
-    /* traverse list of all nv_faces in OBJ file */
-    for (i = 0 ; i < ga->numNorFaces ; i++) {
-
-        const obj_polygonal_attributes_t *face_attr;
-        face_attr = ga->polyattr_list + ga->attindex_arr_nv_faces[i];
-
-        /* reset for next face */
-        found = 0;
-
-        /* for each type of grouping, check if current face is in current group */
-        switch (grp_mode) {
-            case GRP_GROUP :
-                /* setsize is the number of groups the current nv_face belongs to */
-                setsize = obj_groupset(ga->contents,face_attr->groupset_index,&indexset_arr);
-
-                /* loop through each group this face is in */
-                for (groupid = 0 ; groupid < setsize ; groupid++) {
-                    /* if true, current face is in current group */
-                    if ( grp_indx == indexset_arr[groupid] ) {
-                        found = 1;
-                        bu_vls_sprintf(&outputObjectName, "%s.%lu.surface.s", 
-                           ga->str_arr_obj_groups[indexset_arr[groupid]], indexset_arr[groupid] );
-                        cleanup_name(&outputObjectName);
-                    }
-                }
-                break;
-            case GRP_OBJECT :
-                /* if true, current face is in current object group */
-                if ( grp_indx == face_attr->object_index ) {
-                    found = 1;
-                    bu_vls_sprintf(&outputObjectName, "%s.%lu.surface.s", 
-                       ga->str_arr_obj_objects[face_attr->object_index], face_attr->object_index );
-                    cleanup_name(&outputObjectName);
-                }
-                break;
-            case GRP_MATERIAL :
-                /* if true, current face is in current material group */
-                if ( grp_indx == face_attr->material_index ) {
-                    found = 1;
-                    bu_vls_sprintf(&outputObjectName, "%s.%lu.surface.s", 
-                       ga->str_arr_obj_materials[face_attr->material_index], face_attr->material_index );
-                    cleanup_name(&outputObjectName);
-                }
-                break;
-            case GRP_TEXTURE :
-                break;
-            default:
-                bu_log("ERROR: logic error, invalid grp_mode in function 'process_nv_faces'\n");
-                ret_val = 1;
-                break;
-        }
-
-        /* only find number of vertices for current face if the current face */
-        /* is in the current group */
-        if ( found ) {
-            size = obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
-            if (size < 3) {
-                found = 0; /* i.e. unfind this face */
-                           /* all faces must have at least 3 vertices */
-            }
-        }
-
-	if ( found && !numNorPolygons_in_current_shell) {
-            m = nmg_mm();
-            r = nmg_mrsv(m);
-            s = BU_LIST_FIRST(shell, &r->s_hd);
-            NMG_CK_MODEL(m);
-            NMG_CK_REGION(r);
-            NMG_CK_SHELL(s);
-        }
-
-        /* test for and force the skip of degenerate faces */
-        /* in this case degenerate faces are those with duplicate vertices */
-        if ( found && skip_degenerate_faces ) {
-            /* within the current face, compares vertice indices for duplicates */
-            /* stops looking after found 1st duplicate */
-            degenerate_face = 0;
-            vert = 0;
-            while ( (vert < size) && !degenerate_face ) {
-                vert2 = vert+1;
-                while ( (vert2 < size) && !degenerate_face ) {
-                    if ( index_arr_nv_faces[vert][0] == index_arr_nv_faces[vert2][0] ) {
-                        found = 0; /* i.e. unfind this face */
-                        degenerate_face = 1;
-                        /* add 1 to internal index value so warning message index value */
-                        /* matches obj file index number. this is because obj file indexes */
-                        /* start at 1, internally indexes start at 0. */
-                        bu_log("WARNING: removed degenerate face (reason dup index); grp_indx (%lu) face (%lu) vert index (%lu) = (%lu)\n",
-                           grp_indx,
-                           i+1, 
-                           (index_arr_nv_faces[vert][0])+1, 
-                           (index_arr_nv_faces[vert2][0])+1); 
-                    } else {
-                        /* test distance between vertices. faces with
-                           vertices <= tol.dist adjusted to mm, will be
-                           dropped */
-                        fastf_t distance_between_vertices = 0.0 ;
-                        distance_between_vertices = \
-                           DIST_PT_PT(ga->vert_list[index_arr_nv_faces[vert][0]], \
-                                      ga->vert_list[index_arr_nv_faces[vert2][0]]) ;
-                        if ( 0 && (distance_between_vertices * conversion_factor) <= (tol->dist * outfp->dbip->dbi_local2base)) {
-                            found = 0; /* i.e. unfind this face */
-                            degenerate_face = 1;
-                            bu_log("WARNING: removed degenerate face (reason vertices too close); grp_indx (%lu) face (%lu) vert index (%lu) = (%lu) tol.dist = (%lfmm) dist = (%fmm)\n",
-                               grp_indx,
-                               i+1, 
-                               (index_arr_nv_faces[vert][0])+1, 
-                               (index_arr_nv_faces[vert2][0])+1, 
-                               tol->dist * outfp->dbip->dbi_local2base,
-                               distance_between_vertices * conversion_factor);
-                        }
-                    }
-                    vert2++;
-                }
-                vert++;
-            }
-        }
-
-        /* NMG2s */
-        if ( found ) {
-
-            index_arr_nv_faces_history[numNorPolygons_in_current_shell] = index_arr_nv_faces;
-            size_history[numNorPolygons_in_current_shell] = size;
-
-            numNorPolygonVertices_in_current_nmg = numNorPolygonVertices_in_current_nmg + size ;
-
-                /* if needed, increase size of index_arr_nv_faces_history and size_history */
-                if ( numNorPolygons_in_current_shell >= history_arrays_size ) {
-                    history_arrays_size = history_arrays_size + 128 ;
-
-                    index_arr_nv_faces_history_tmp = bu_realloc(index_arr_nv_faces_history,
-                                                     sizeof(index_arr_nv_faces_history) * history_arrays_size,
-                                                     "index_arr_nv_faces_history_tmp");
-
-                    index_arr_nv_faces_history = index_arr_nv_faces_history_tmp;
-
-                    size_history_tmp = bu_realloc(size_history, sizeof(size_t) * history_arrays_size,
-                                       "size_history_tmp");
-
-                    size_history = size_history_tmp;
-                }
-
-            /* increment number of polygons in current grouping (i.e. current nmg) */
-            numNorPolygons_in_current_shell++;
-        }
-        /* NMG2e */
-
-        /* execute this code when there is a face to process */
-        if ( found ) {
-
-            /* if found then size must be >= 3 */
-            if ( size > 3 ) {
-#if 0
-                if (triangulate_face((const size_t *)index_arr_nv_faces,
-                                     2,
-                                     size,
-                                     &numNorTriangles_in_current_bot,
-                                     &triangle_indexes_size,
-                                     i)) {
-                    bu_log("error in triangulate_face\n");
-                }
-#endif
-            } else {
-                triangle_indexes[numNorTriangles_in_current_bot][0][0] = index_arr_nv_faces[0][0] ;
-                triangle_indexes[numNorTriangles_in_current_bot][1][0] = index_arr_nv_faces[1][0] ;
-                triangle_indexes[numNorTriangles_in_current_bot][2][0] = index_arr_nv_faces[2][0] ;
-
-                triangle_indexes[numNorTriangles_in_current_bot][0][1] = index_arr_nv_faces[0][1] ;
-                triangle_indexes[numNorTriangles_in_current_bot][1][1] = index_arr_nv_faces[1][1] ;
-                triangle_indexes[numNorTriangles_in_current_bot][2][1] = index_arr_nv_faces[2][1] ;
-
-                bu_log("(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)\n",
-                   i,
-                   numNorTriangles_in_current_bot,
-                   triangle_indexes[numNorTriangles_in_current_bot][0][0],
-                   triangle_indexes[numNorTriangles_in_current_bot][1][0],
-                   triangle_indexes[numNorTriangles_in_current_bot][2][0],
-                   triangle_indexes[numNorTriangles_in_current_bot][0][1],
-                   triangle_indexes[numNorTriangles_in_current_bot][1][1],
-                   triangle_indexes[numNorTriangles_in_current_bot][2][1]); 
-
-                /* increment number of triangles in current grouping (i.e. current bot) */
-                numNorTriangles_in_current_bot++;
-
-                /* test if size of triangle_indexes needs to be increased */
-                if (numNorTriangles_in_current_bot >= (triangle_indexes_size / num_indexes_per_triangle)) {
-                    /* compute how large to make next alloc */
-                    triangle_indexes_size = triangle_indexes_size +
-                                                      (num_triangles_per_alloc * num_indexes_per_triangle);
-
-                    triangle_indexes_tmp = bu_realloc(triangle_indexes, 
-                                                      sizeof(*triangle_indexes) * triangle_indexes_size,
-                                                      "triangle_indexes_tmp");
-                    triangle_indexes = triangle_indexes_tmp;
-                }
-
-            }
-        }
-
-    }  /* numNorFaces loop, when loop exits, all nv_faces have been reviewed */
-
-    /* need to process the triangle_indexes to find only the indexes needed */
-
-    if ( numNorTriangles_in_current_bot > 0 ) {
-    size_t num_indexes = 0; /* for vertices and normals */
-
-    /* num_indexes is the number of vertex indexes in triangle_indexes array */
-    /* num_indexes is also the number of vertex normal indexes in triangle_indexes array */
-    num_indexes = (numNorTriangles_in_current_bot * num_indexes_per_triangle) / 2 ;
-    bu_log("#ntri (%lu) #ni/tri (%lu) #elems (%lu)\n", 
-       numNorTriangles_in_current_bot,
-       num_indexes_per_triangle,
-       num_indexes);
-
-    /* replace "some_ints" with "triangle_indexes" */
-    /* where the data-type for "some_ints" is used, change to "size_t" */
-
-    size_t last = 0 ;
-    size_t k = 0 ;
-
-    size_t counter = 0;
-
-    size_t num_unique_vertex_indexes = 0 ;
-    size_t num_unique_vertex_normal_indexes = 0 ;
-
-    /* array to store sorted unique libobj vertex index values for current bot */
-    size_t *unique_vertex_indexes = NULL ;
-
-    /* array to store sorted unique libobj vertex normal index values for current bot */
-    size_t *unique_vertex_normal_indexes = NULL ;
-
-    size_t *vertex_sort_index = NULL ; 
-    size_t *vertex_normal_sort_index = NULL ;
-
-    vertex_sort_index = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "vertex_sort_index");
-
-    vertex_normal_sort_index = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "vertex_normal_sort_index");
-
-    /* populate index arrays */
-    for (k = 0 ; k < num_indexes ; k++) {
-        vertex_sort_index[k] = k*2 ;
-        vertex_normal_sort_index[k] = (k*2)+1 ;
-    }
-
-    tmp_ptr = (size_t *)triangle_indexes;
-
-    bu_log("non-sorted vertex_sort_index index contents ...\n");
-    for (k = 0; k < num_indexes ; ++k) {
-        bu_log("(%lu)\n", vertex_sort_index[k]);
-    }
-
-    /* sort vertex_sort_index containing indexes into vertex
-       indexes within triangle_indexes array */
-    qsort(vertex_sort_index, num_indexes, sizeof vertex_sort_index[0],
-         (int (*)(const void *a, const void *b))comp);
-
-    /* sort vertex_normal_sort_index containing indexes into vertex normal
-       indexes within triangle_indexes array */
-    qsort(vertex_normal_sort_index, num_indexes, sizeof vertex_normal_sort_index[0],
-         (int (*)(const void *a, const void *b))comp);
-
-    /* count sorted and unique libobj vertex indexes */
-    last = tmp_ptr[vertex_sort_index[0]];
-    num_unique_vertex_indexes = 1;
-    for (k = 1; k < num_indexes ; ++k) {
-        if (tmp_ptr[vertex_sort_index[k]] != last) {
-            last = tmp_ptr[vertex_sort_index[k]];
-            num_unique_vertex_indexes++;
-        }
-    }
-    bu_log("num_unique_vertex_indexes = (%lu)\n", num_unique_vertex_indexes);
-
-    /* count sorted and unique libobj vertex normal indexes */
-    last = tmp_ptr[vertex_normal_sort_index[0]];
-    num_unique_vertex_normal_indexes = 1;
-    for (k = 1; k < num_indexes ; ++k) {
-        if (tmp_ptr[vertex_normal_sort_index[k]] != last) {
-            last = tmp_ptr[vertex_normal_sort_index[k]];
-            num_unique_vertex_normal_indexes++;
-        }
-    }
-    bu_log("num_unique_vertex_normal_indexes = (%lu)\n", num_unique_vertex_normal_indexes);
-
-    unique_vertex_indexes = (size_t *)bu_calloc(num_unique_vertex_indexes, 
-                                                sizeof(size_t), "unique_vertex_indexes");
-
-    unique_vertex_normal_indexes = (size_t *)bu_calloc(num_unique_vertex_normal_indexes, 
-                                                sizeof(size_t), "unique_vertex_normal_indexes");
-
-    /* store sorted and unique libobj vertex indexes */
-    bu_log("storing sorted and unique libobj vertex indexes\n");
-    counter = 0;
-    last = tmp_ptr[vertex_sort_index[0]];
-    unique_vertex_indexes[counter] = last ;
-    for (k = 1; k < num_indexes ; ++k) {
-        if (tmp_ptr[vertex_sort_index[k]] != last) {
-            last = tmp_ptr[vertex_sort_index[k]];
-            counter++;
-            unique_vertex_indexes[counter] = last ;
-        }
-    }
-
-    /* store sorted and unique libobj vertex normal indexes */
-    bu_log("storing sorted and unique libobj vertex normal indexes\n");
-    counter = 0;
-    last = tmp_ptr[vertex_normal_sort_index[0]];
-    unique_vertex_normal_indexes[counter] = last ;
-    for (k = 1; k < num_indexes ; ++k) {
-        if (tmp_ptr[vertex_normal_sort_index[k]] != last) {
-            last = tmp_ptr[vertex_normal_sort_index[k]];
-            counter++;
-            unique_vertex_normal_indexes[counter] = last ;
-        }
-    }
-
-    /* output stored sorted and unique libobj vertex indexes */
-    bu_log("stored sorted and unique libobj vertex indexes\n");
-    for (k = 0; k < num_unique_vertex_indexes ; ++k)
-        bu_log("(%lu)\n", unique_vertex_indexes[k]);
-
-    /* output stored sorted and unique libobj vertex normal indexes */
-    bu_log("stored sorted and unique libobj vertex normal indexes\n");
-    for (k = 0; k < num_unique_vertex_normal_indexes ; ++k)
-        bu_log("(%lu)\n", unique_vertex_normal_indexes[k]);
-
-    bu_log("sorted vertex_sort_index & vertex_normal_sort_index index contents ...\n");
-    for (k = 0; k < num_indexes ; ++k) {
-        bu_log("(%lu)(%lu)\n", vertex_sort_index[k], vertex_normal_sort_index[k]);
-    }
-
-    bu_log("raw triangle_indexes contents ...\n");
-    for (k = 0; k < (num_indexes * 2) ; ++k) {
-        bu_log("(%lu)\n", tmp_ptr[k]);
-    }
-
-    bu_log("triangle_indexes vertex index contents ...\n");
-    for (k = 0; k < (num_indexes * 2) ; k=k+2) {
-        bu_log("(%lu)\n", tmp_ptr[k]);
-    }
-
-    bu_log("triangle_indexes vertex index normal contents ...\n");
-    for (k = 1; k < (num_indexes * 2) ; k=k+2) {
-        bu_log("(%lu)\n", tmp_ptr[k]);
-    }
-
-    /* compute memory required for bot vertices array */
-    bot_vertex_array_size = num_unique_vertex_indexes * 3 ; /* i.e. 3 coordinates per vertex index */
-
-    /* compute memory required for bot vertices normals array */
-    bot_normals_array_size = num_unique_vertex_normal_indexes * 3 ; /* i.e. 3 fastf_t per normal */
-
-    /* allocate memory for bot vertices array */
-    bot_vertices = (fastf_t *)bu_calloc((size_t)bot_vertex_array_size, sizeof(fastf_t), "bot_vertices");
-
-    /* allocate memory for bot normals array */
-    normals = (fastf_t *)bu_calloc((size_t)bot_normals_array_size, sizeof(fastf_t), "normals");
-
-    /* populate bot vertex array */
-    /* places xyz vertices into bot structure */
-    j = 0;
-    for (k = 0 ; k < bot_vertex_array_size ; k=k+3 ) {
-        bot_vertices[k] =    (ga->vert_list[unique_vertex_indexes[j]][0]) * conversion_factor;
-        bot_vertices[k+1] =  (ga->vert_list[unique_vertex_indexes[j]][1]) * conversion_factor;
-        bot_vertices[k+2] =  (ga->vert_list[unique_vertex_indexes[j]][2]) * conversion_factor;
-        j++;
-    }
-
-    /* populate bot normals array */
-    /* places normals into bot structure */
-    j = 0;
-    for (k = 0 ; k < bot_normals_array_size ; k=k+3 ) {
-        normals[k] =    (ga->norm_list[unique_vertex_normal_indexes[j]][0]) ;
-        normals[k+1] =  (ga->norm_list[unique_vertex_normal_indexes[j]][1]) ;
-        normals[k+2] =  (ga->norm_list[unique_vertex_normal_indexes[j]][2]) ;
-        j++;
-    }
-
-    bu_log("raw populated bot vertices contents\n");
-    for (k = 0 ; k < bot_vertex_array_size ; k=k+3 ) {
-        bu_log("(%lu) (%f) (%f) (%f)\n", k, bot_vertices[k], bot_vertices[k+1], bot_vertices[k+2]);
-    }
-
-    bu_log("raw populated bot normals contents\n");
-    for (k = 0 ; k < bot_normals_array_size ; k=k+3 ) {
-        bu_log("(%lu) (%f) (%f) (%f)\n", k, normals[k], normals[k+1], normals[k+2]);
-    }
-
-    /* allocate memory for bot face vertex index array (bot_faces_array) */
-    bot_faces_array = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "bot_faces_array");
-
-    /* allocate memory for bot face thickness array */
-    thickness = (fastf_t *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(fastf_t), "thickness");
-
-    /* allocate memory for bot face_normals, i.e. indices into normals array */
-    face_normals = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "face_normals");
-
-    size_t *res0 = NULL;
-    size_t *res1 = NULL;
-    size_t *res2 = NULL;
-
-    /* for each triangle, map libobj vertex indexes to bot vertex
-       indexes, i.e. populate bot faces array */
-    for (k = 0 ; k < numNorTriangles_in_current_bot ; k++ ) {
-
-        res0 = bsearch(&(triangle_indexes[k][0][0]),unique_vertex_indexes,
-                            num_unique_vertex_indexes, sizeof(size_t),
-                            (int (*)(const void *a, const void *b))comp_b) ;
-        res1 = bsearch(&(triangle_indexes[k][1][0]),unique_vertex_indexes,
-                            num_unique_vertex_indexes, sizeof(size_t),
-                            (int (*)(const void *a, const void *b))comp_b) ;
-        res2 = bsearch(&(triangle_indexes[k][2][0]),unique_vertex_indexes,
-                            num_unique_vertex_indexes, sizeof(size_t),
-                            (int (*)(const void *a, const void *b))comp_b) ;
-
-        /* should not need to test for null return from bsearch since we
-           know all values are in the list we just don't know where */
-        if ( res0 == NULL || res1 == NULL || res2 == NULL ) {
-            bu_log("ERROR: bsearch returned null\n");
-            return EXIT_FAILURE;
-        }
-
-        /* bsearch returns pointer to matching element, but need the index of
-           the element, pointer subtraction computes the correct index value
-           of the element */
-        bot_faces_array[k*3] = (int) (res0 - unique_vertex_indexes);
-        bot_faces_array[(k*3)+1] = (int) (res1 - unique_vertex_indexes);
-        bot_faces_array[(k*3)+2] = (int) (res2 - unique_vertex_indexes);
-        thickness[(k*3)] = thickness[(k*3)+1] = thickness[(k*3)+2] = 1.0;
-
-        bu_log("libobj to bot vert idx mapping (%lu), (%lu) --> (%d), (%lu) --> (%d), (%lu) --> (%d)\n",
-           k,
-           triangle_indexes[k][0][0], bot_faces_array[k*3],
-           triangle_indexes[k][1][0], bot_faces_array[(k*3)+1],
-           triangle_indexes[k][2][0], bot_faces_array[(k*3)+2] );
-    }
-
-    /* write bot to ".g" file */
-#if 0
-    ret_val = mk_bot(outfp, bu_vls_addr(&outputObjectName), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
-                     numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, bot_vertices,
-                     bot_faces_array, (fastf_t *)NULL, (struct bu_bitv *)NULL);
-#endif
-
-    /* NMG2s */
-    /* initialize tables */
-    bu_ptbl_init(&faces, 64, " &faces ");
-    bu_ptbl_init(&names2, 64, " &names2 ");
-
-    struct vertex  **nmg_verts = NULL;
-    nmg_verts = (struct vertex **)bu_calloc(numNorPolygonVertices_in_current_nmg,
-                                              sizeof(struct vertex *), "nmg_verts");
-    memset((void *)nmg_verts, 0, sizeof(struct vertex *) * numNorPolygonVertices_in_current_nmg);
-
-    size_t polygon3 = 0;
-    size_t vertex4 = 0;
-    size_t counter2 = 0;
-    size_t end_count = numNorPolygons_in_current_shell ;
-    struct vertexuse *vu = NULL;
-    struct loopuse *lu = NULL;
-    struct edgeuse *eu = NULL;
-    int total_fused_vertex = 0 ;
-    plane_t pl; /* plane equation for face */
-    fastf_t tmp_v[3] = { 0.0, 0.0, 0.0 };
-    fastf_t tmp_n[3] = { 0.0, 0.0, 0.0 };
-    counter2 = 0;
-    bu_log("about to run chk shell just before assign fu for-loops\n");
-    NMG_CK_SHELL(s);
-    bu_log("history: numNorPolygons_in_current_shell = (%lu)\n", numNorPolygons_in_current_shell);
-    /* loop thru all the polygons (i.e. faces) to be placed in the current shell/region/model */
-    for ( polygon3 = 0 ; polygon3 < end_count ; polygon3++ ) {
-        bu_log("history: num vertices in current polygon = (%lu)\n", size_history[polygon3]);
-        fu = nmg_cface(s, (struct vertex **)&(nmg_verts[counter2]), (int)size_history[polygon3] );
-        lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-        eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-        for ( vertex4 = 0 ; vertex4 < size_history[polygon3] ; vertex4++ ) {
-            bu_log("history: (%lu)(%lu)(%lu)(%f)(%f)(%f)(%f)(%f)(%f)(%f)\n", 
-               polygon3,
-               vertex4,
-               index_arr_nv_faces_history[polygon3][vertex4][0],
-               (ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][0]) * conversion_factor,
-               (ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][1]) * conversion_factor,
-               (ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][2]) * conversion_factor,
-               ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][3],
-               ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][0],
-               ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][1],
-               ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][2]);
-
-            /* convert to mm and copy current vertex into tmp_v */
-            VSCALE(tmp_v, (fastf_t *)ga->vert_list[ \
-                                     index_arr_nv_faces_history[polygon3][vertex4][0]], \
-                                     conversion_factor);
-
-            bu_log("about to run nmg_vertex_gv\n");
-            NMG_CK_VERTEX(eu->vu_p->v_p);
-            nmg_vertex_gv(eu->vu_p->v_p, tmp_v);
-
-            /* copy current normal into tmp_n */
-            VMOVE(tmp_n, (fastf_t *)ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][1]]);
-
-            /* assign this normal to all uses of this vertex */
-            for (BU_LIST_FOR(vu, vertexuse, &eu->vu_p->v_p->vu_hd)) {
-                NMG_CK_VERTEXUSE(vu);
-                bu_log("about to run nmg_vertex_nv\n");
-                nmg_vertexuse_nv(vu, tmp_n);
-            }
-
-            eu = BU_LIST_NEXT(edgeuse, &eu->l);
-            counter2++;
-        } /* this loop exits when all the vertices and their normals
-             for the current polygon/faceuse has been inserted into
-             their appropriate structures */
-
-        bu_log("about to run nmg_loop_plane_area\n");
-        /* verify the current polygon is valid */
-        if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0) {
-            bu_log("Failed planeeq\n");
-            bu_log("about to run nmg_kfu just after neg area from nmg_loop_plane_area\n");
-            nmg_kfu(fu);
-            numNorPolygons_in_current_shell--;
-        } else {
-            bu_log("about to run nmg_face_g\n");
-            nmg_face_g(fu, pl); /* return is void */
-            bu_log("about to run nmg_face_bb\n");
-            nmg_face_bb(fu->f_p, tol); /* return is void */
-            bu_ptbl_ins(&faces, (long *)fu);
-        }
-
-    } /* loop exits when all polygons within the current grouping
-         has been placed within one nmg shell, inside one nmg region
-         and inside one nmg model */
-
-    if (BU_PTBL_END(&faces)) {
-
-        bu_log("about to run nmg_model_vertex_fuse\n");
-        total_fused_vertex = nmg_model_vertex_fuse(m, tol);
-        bu_log("total_fused_vertex = (%d)\n", total_fused_vertex);
-
-        bu_log("about to run nmg_gluefaces\n");
-        nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
-
-        bu_log("about to run nmg_rebound 1\n");
-        nmg_rebound(m, tol);
-
-        bu_log("about to run nmg_fix_normals\n");
-        nmg_fix_normals(s, tol);
-
-        bu_log("about to run nmg_shell_coplanar_face_merge\n");   
-        nmg_shell_coplanar_face_merge(s, tol, 1);    
-
-        bu_log("about to run nmg_rebound 2\n");
-        nmg_rebound(m, tol);
-
-#if 0
-        bu_log("about to mk_bot_from_nmg\n");
-        mk_bot_from_nmg(outfp, bu_vls_addr(&outputObjectName), s);
-        nmg_km(m);
-#endif
-
-#if 1
-        bu_log("about to run mk_nmg\n");
-        /* the model (m) is freed when mk_nmg completes */
-        if (mk_nmg(outfp, bu_vls_addr(&outputObjectName), m)) {
-            bu_log("mk_nmg failed\n");
-        }
-#endif
-    } else {
-        bu_log("Object %s has no faces\n", bu_vls_addr(&outputObjectName));
-    } 
-    /* NMG2e */
-
-    bu_free(nmg_verts,"nmg_verts");
-    bu_free(index_arr_nv_faces_history,"index_arr_nv_faces_history");
-    bu_free(size_history,"size_history");
-    bu_free(vertex_sort_index,"vertex_sort_index");
-    bu_free(vertex_normal_sort_index,"vertex_normal_sort_index");
-    bu_free(unique_vertex_indexes,"unique_vertex_indexes");
-    bu_free(bot_vertices,"bot_vertices");
-    bu_free(bot_faces_array,"bot_faces_array");
-    bu_free(thickness,"thickness");
-    bu_free(normals,"normals");
-    bu_free(face_normals,"face_normals");
-    bu_free(triangle_indexes, "triangle_indexes");
-
-    bu_vls_free(&outputObjectName);
-
-    bu_ptbl_reset(&faces);
-
-    }
-
-    return ret_val;
 }
 
 /*
