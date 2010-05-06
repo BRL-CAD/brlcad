@@ -1336,13 +1336,19 @@ void output_to_bot(struct ga_t *ga,
     cleanup_name(gfi->raw_grouping_name);
 
     /* write bot to ".g" file */
-    ret_val = mk_bot(outfp, bu_vls_addr(gfi->raw_grouping_name), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
-                     ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
-                     ti.bot_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+    if ( ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV ) {
+        ret_val = mk_bot_w_normals(outfp, bu_vls_addr(gfi->raw_grouping_name), RT_BOT_SURFACE,
+                         RT_BOT_UNORIENTED, RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS, 
+                         ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+                         ti.bot_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL,
+                         ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
+    } else {
+        ret_val = mk_bot(outfp, bu_vls_addr(gfi->raw_grouping_name), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
+                         ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+                         ti.bot_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+    }
 
-    bu_log("about to run free_ti\n");
     free_ti(&ti);
-
     return;
 }
 
@@ -1680,10 +1686,6 @@ main(int argc, char **argv)
                 break;
         }
     }
-#if 0
-    argv += bu_optind;
-    argc -= bu_optind;
-#endif
 
     bu_log("using distance tolerance (%fmm)\n", tol->dist);
     bu_log("using grouping option (%c)\n", grouping_option);
