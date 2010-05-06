@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* /dev/oglb 'copy mode' fails to refresh the framebuffer
+
 * X display manager (and probably others) will lock up mged if you Z/B
   while the wireframe is being actively drawn (in X_drawVList()).
   reproducible by cloning havoc a dozen or more times, getting
@@ -195,9 +197,6 @@ Recent Bugs
 * rt is consuming 100% CPU in fb_close() on a lingering ogl
   framebuffer waiting to close.  needs to sleep or select for a while.
 
-* /dev/ogl framebuffer is not refreshing/updating on mac os x,
-  resulting in the window remaining blank until you give expose events
-
 * report of mged being locked up on startup taking full cpu, works
   fine with with -c with X dm.
 
@@ -205,9 +204,6 @@ Recent Bugs
   _font" doesn't exist on Linux.
 
 * mged tab-completion doesn't work if the object names have spaces
-
-* OpenGL display manager doesn't refresh automatically when the
-  context is invalidated (on Mac OS X) any more
 
 * Open dialog in MGED seems rather busted for scrolling and selection
   (seems to be Mac OS X specific)

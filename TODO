@@ -396,13 +396,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * break up library headers into subheaders so includes can be more
   specific (and help speed up compilation) and locally documented.
 
-* fix framebuffer refresh bug.  problem was caused when the if_ogl
-  framebuffer was changed (back) to request a direct rendering
-  context.  presumably that is triggering other code that is failing
-  to redraw.  Might be worth investigating whether the use of the 
-  extension GL_EXT_framebuffer_object would benefit if_ogl, see:
-  http://www.opengl3.org/wiki/GL_EXT_framebuffer_object
-
 * implement a routine/command to convert from a bot to an nmg
   (similar/related to the nmg-bot tool, but the reverse).
 
