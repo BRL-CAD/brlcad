@@ -47,8 +47,6 @@ pthread_t *render_tlist;
 struct render_shader_s {
 	char *name;
 	void (*init)(render_t *, char *);
-	void (*work)(render_t *, tie_t *, tie_ray_t, TIE_3 *);
-	void (*free)(render_t *);
 	struct render_shader_s *next;
 };
 
@@ -96,7 +94,7 @@ render_camera_init(render_camera_t *camera, int threads)
 #endif
 
     if(shaders == NULL) {
-#define REGISTER(x) render_shader_register(#x, render_##x##_init, render_##x##_work, render_##x##_free);
+#define REGISTER(x) render_shader_register(#x, render_##x##_init);
 	REGISTER(component);
 	REGISTER(cut);
 	REGISTER(depth);
@@ -640,18 +638,13 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
 }
 
 int
-render_shader_register(const char *name, 
-		void (*init)(render_t *, char *),
-		void (*work)(render_t *, tie_t *, tie_ray_t, TIE_3 *),
-		void (*free)(render_t *))
+render_shader_register(const char *name, void (*init)(render_t *, char *))
 {
 	struct render_shader_s *shader = (struct render_shader_s *)malloc(sizeof(struct render_shader_s));
 	if(shader == NULL)
 		return -1;
 	shader->name = name;
 	shader->init = init;
-	shader->work = work;
-	shader->free = free;
 	shader->next = shaders;
 	shaders = shader;
 	return 0;
@@ -662,8 +655,6 @@ render_shader_load_plugin(const char *filename) {
 #ifdef HAVE_DLFCN_H
     void *lh;	/* library handle */
     void (*init)(render_t *, char *);
-    void (*work)(render_t *, tie_t *, tie_ray_t, TIE_3 *);
-    void (*free)(render_t *);
     char *name;
 
     lh = dlopen(filename, RTLD_LOCAL);
@@ -672,11 +663,7 @@ render_shader_load_plugin(const char *filename) {
     if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return -1; }
     init = dlsym(lh, "init");
     if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return -1; }
-    work = dlsym(lh, "work");
-    if(work == NULL) { bu_log("Faulty plugin %s: No work\n", filename); return -1; }
-    free = dlsym(lh, "free");
-    if(free == NULL) { bu_log("Faulty plugin %s: No free\n", filename); return -1; }
-    return render_shader_register(name, init, work, free);
+    return render_shader_register(name, init);
 #else
     bu_log("No plugin support.\n");
     return -1;

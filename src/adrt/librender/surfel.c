@@ -42,24 +42,10 @@ typedef struct render_surfel_s {
     render_surfel_pt_t *list;
 } render_surfel_t;
 
-void render_surfel_init(render_t *render, char *buf)
+
+void
+render_surfel_free(render_t *render)
 {
-    render_surfel_t *d;
-
-    render->work = render_surfel_work;
-    render->free = render_surfel_free;
-    render->data = (render_surfel_t *)bu_malloc(sizeof(render_surfel_t), "render data");
-    d = (render_surfel_t *)render->data;
-    d->num = 0;
-    d->list = NULL;
-/*
-    d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
-*/
-/* do something to extract num and list from buf */
-}
-
-
-void render_surfel_free(render_t *render) {
     render_surfel_t *d;
 
     d = (render_surfel_t *)render->data;
@@ -68,7 +54,9 @@ void render_surfel_free(render_t *render) {
 }
 
 
-void render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     render_surfel_t *d;
     tie_id_t id;
     adrt_mesh_t *mesh;
@@ -92,6 +80,24 @@ void render_surfel_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pix
 	VSET((*pixel).v, 0.8, 0.8, 0.8);
     }
 }
+
+void
+render_surfel_init(render_t *render, char *buf)
+{
+    render_surfel_t *d;
+
+    render->work = render_surfel_work;
+    render->free = render_surfel_free;
+    render->data = (render_surfel_t *)bu_malloc(sizeof(render_surfel_t), "render data");
+    d = (render_surfel_t *)render->data;
+    d->num = 0;
+    d->list = NULL;
+/*
+    d->list = (render_surfel_pt_t *)bu_malloc(d->num * sizeof(render_surfel_pt_t), "data list");
+*/
+/* do something to extract num and list from buf */
+}
+
 
 /*
  * Local Variables:

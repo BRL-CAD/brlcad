@@ -54,90 +54,24 @@ typedef struct render_spall_hit_s {
 } render_spall_hit_t;
 
 
-void render_spall_init(render_t *render, char *buf) {
-    render_spall_t *d;
-    TIE_3 *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
-    tfloat plane[4], angle;
-    int i;
 
-    render->work = render_spall_work;
-    render->free = render_spall_free;
-
-    sscanf(buf, "(%g %g %g) (%g %g %g) %g", 
-		    &ray_pos.v[0], &ray_pos.v[1], &ray_pos.v[2], 
-		    &ray_dir.v[0], &ray_dir.v[1], &ray_dir.v[2], 
-		    &angle);
-
-    render->data = (render_spall_t *)bu_malloc(sizeof(render_spall_t), "render_spall_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
-    d = (render_spall_t *)render->data;
-
-    d->ray_pos = ray_pos;
-    d->ray_dir = ray_dir;
-
-    tie_init(&d->tie, TESSELATION, TIE_KDTREE_FAST);
-
-    /* Calculate the normal to be used for the plane */
-    up.v[0] = 0;
-    up.v[1] = 0;
-    up.v[2] = 1;
-
-    VCROSS(normal.v,  ray_dir.v,  up.v);
-    VUNITIZE(normal.v);
-
-    /* Construct the plane */
-    d->plane[0] = normal.v[0];
-    d->plane[1] = normal.v[1];
-    d->plane[2] = normal.v[2];
-    plane[3] = VDOT( normal.v,  ray_pos.v); /* up is really new ray_pos */
-    d->plane[3] = -plane[3];
-
-    /******************/
-    /* The spall Cone */
-    /******************/
-    vec_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION, "vec_list");
-    tri_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION * 3, "tri_list");
-
-    render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
-
-    /* triangles to approximate */
-    for (i = 0; i < TESSELATION; i++) {
-	tri_list[3*i+0] = ray_pos;
-
-	VSCALE(tri_list[3*i+1].v,  vec_list[i].v,  SPALL_LEN);
-	VADD2(tri_list[3*i+1].v,  tri_list[3*i+1].v,  ray_pos.v);
-
-	if (i == TESSELATION - 1) {
-	    VSCALE(tri_list[3*i+2].v,  vec_list[0].v,  SPALL_LEN);
-	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
-	} else {
-	    VSCALE(tri_list[3*i+2].v,  vec_list[i+1].v,  SPALL_LEN);
-	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
-	}
-    }
-
-/*  tie_push(&d->tie, tri_list, TESSELATION, NULL, 0);   */
-    tie_prep(&d->tie);
-
-    bu_free(vec_list, "vec_list");
-    bu_free(tri_list, "tri_list");
-}
-
-
-void render_spall_free(render_t *render) {
+void
+render_spall_free(render_t *render)
+{
     bu_free(render->data, "render data");
 }
 
 
-static void* render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+static void *
+render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+{
     return(tri);
 }
 
 
-void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+void *
+render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+{
     render_spall_hit_t *hit = (render_spall_hit_t *)ptr;
 
     hit->id = *id;
@@ -146,7 +80,9 @@ void* render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) 
 }
 
 
-void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     render_spall_t *rd;
     render_spall_hit_t hit;
     TIE_3 color;
@@ -240,6 +176,80 @@ void render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
     pixel->v[0] += 0.1;
     pixel->v[1] += 0.1;
     pixel->v[2] += 0.1;
+}
+
+void
+render_spall_init(render_t *render, char *buf)
+{
+    render_spall_t *d;
+    TIE_3 *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
+    tfloat plane[4], angle;
+    int i;
+
+    render->work = render_spall_work;
+    render->free = render_spall_free;
+
+    sscanf(buf, "(%g %g %g) (%g %g %g) %g",
+		    &ray_pos.v[0], &ray_pos.v[1], &ray_pos.v[2],
+		    &ray_dir.v[0], &ray_dir.v[1], &ray_dir.v[2],
+		    &angle);
+
+    render->data = (render_spall_t *)bu_malloc(sizeof(render_spall_t), "render_spall_init");
+    if (!render->data) {
+	perror("render->data");
+	exit(1);
+    }
+    d = (render_spall_t *)render->data;
+
+    d->ray_pos = ray_pos;
+    d->ray_dir = ray_dir;
+
+    tie_init(&d->tie, TESSELATION, TIE_KDTREE_FAST);
+
+    /* Calculate the normal to be used for the plane */
+    up.v[0] = 0;
+    up.v[1] = 0;
+    up.v[2] = 1;
+
+    VCROSS(normal.v,  ray_dir.v,  up.v);
+    VUNITIZE(normal.v);
+
+    /* Construct the plane */
+    d->plane[0] = normal.v[0];
+    d->plane[1] = normal.v[1];
+    d->plane[2] = normal.v[2];
+    plane[3] = VDOT( normal.v,  ray_pos.v); /* up is really new ray_pos */
+    d->plane[3] = -plane[3];
+
+    /******************/
+    /* The spall Cone */
+    /******************/
+    vec_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION, "vec_list");
+    tri_list = (TIE_3 *)bu_malloc(sizeof(TIE_3) * TESSELATION * 3, "tri_list");
+
+    render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
+
+    /* triangles to approximate */
+    for (i = 0; i < TESSELATION; i++) {
+	tri_list[3*i+0] = ray_pos;
+
+	VSCALE(tri_list[3*i+1].v,  vec_list[i].v,  SPALL_LEN);
+	VADD2(tri_list[3*i+1].v,  tri_list[3*i+1].v,  ray_pos.v);
+
+	if (i == TESSELATION - 1) {
+	    VSCALE(tri_list[3*i+2].v,  vec_list[0].v,  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
+	} else {
+	    VSCALE(tri_list[3*i+2].v,  vec_list[i+1].v,  SPALL_LEN);
+	    VADD2(tri_list[3*i+2].v,  tri_list[3*i+2].v,  ray_pos.v);
+	}
+    }
+
+/*  tie_push(&d->tie, tri_list, TESSELATION, NULL, 0);   */
+    tie_prep(&d->tie);
+
+    bu_free(vec_list, "vec_list");
+    bu_free(tri_list, "tri_list");
 }
 
 /*

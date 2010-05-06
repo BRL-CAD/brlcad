@@ -27,13 +27,6 @@
 #include "adrt_struct.h"
 
 void
-render_component_init(render_t *render, char *usr) {
-    render->work = render_component_work;
-    render->free = render_component_free;
-    return;
-}
-
-void
 render_component_free(render_t *render) {
     return;
 }
@@ -68,6 +61,13 @@ void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *
 	pixel->v[1] += 0.2;
 	pixel->v[2] += 0.2;
     }
+}
+
+void
+render_component_init(render_t *render, char *usr) {
+    render->work = render_component_work;
+    render->free = render_component_free;
+    return;
 }
 
 /*

@@ -49,28 +49,17 @@ typedef struct render_path_s {
     VSUB2(_a.v,  _b.v,  _a.v); \
     VUNITIZE(_a.v); }
 
-void render_path_init(render_t *render, char *samples) {
-    render_path_t *d;
 
-    render->work = render_path_work;
-    render->free = render_path_free;
-    render->data = (render_path_t *)bu_malloc(sizeof(render_path_t), "render_path_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
-    d = (render_path_t *)render->data;
-    d->samples = atoi(samples);	/* TODO: make this more robust */
-    d->inv_samples = 1.0 / d->samples;
-}
-
-
-void render_path_free(render_t *render) {
+void
+render_path_free(render_t *render)
+{
     bu_free(render->data, "render_path_free");
 }
 
 
-void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     tie_ray_t new_ray;
     tie_id_t new_id;
     TIE_3 new_pix, accum, T, ref, bax, bay;
@@ -168,6 +157,24 @@ void render_path_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 
     VSCALE((*pixel).v,  accum.v,  rd->inv_samples);
 }
+
+void
+render_path_init(render_t *render, char *samples)
+{
+    render_path_t *d;
+
+    render->work = render_path_work;
+    render->free = render_path_free;
+    render->data = (render_path_t *)bu_malloc(sizeof(render_path_t), "render_path_init");
+    if (!render->data) {
+	perror("render->data");
+	exit(1);
+    }
+    d = (render_path_t *)render->data;
+    d->samples = atoi(samples);	/* TODO: make this more robust */
+    d->inv_samples = 1.0 / d->samples;
+}
+
 
 /*
  * Local Variables:

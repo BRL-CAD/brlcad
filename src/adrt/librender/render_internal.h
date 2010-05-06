@@ -45,9 +45,7 @@
 
 
 #define RENDER_SHADER(name) \
-	BU_EXPORT BU_EXTERN(void render_##name##_init, (render_t *, char *)); \
-	BU_EXPORT BU_EXTERN(void render_##name##_free, (render_t *)); \
-	BU_EXPORT BU_EXTERN(void render_##name##_work, (render_t *, tie_t *, tie_ray_t *, TIE_3 *));
+	BU_EXPORT BU_EXTERN(void render_##name##_init, (render_t *, char *));
 
 struct render_s;
 typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);

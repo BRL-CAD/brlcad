@@ -60,95 +60,6 @@ void* render_cut_hit_cutline(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void 
 }
 
 extern tie_t *tie;
-void render_cut_init(render_t *render, char *buf) {
-    int i;
-    render_cut_t *d;
-    static TIE_3 list[6];
-    TIE_3 **tlist, up, ray_pos, ray_dir;
-    fastf_t shot_len = 100, shot_width = .02;
-    tie_id_t id;
-    tie_ray_t ray;
-    double step;
-
-    sscanf(buf, "#(%f %f %f) #(%f %f %f)",
-	    ray_pos.v, ray_pos.v+1, ray_pos.v+2,
-	    ray_dir.v, ray_dir.v+1, ray_dir.v+2);
-
-#if 0
-    /* 
-     * fire through the entire geometry, marking each intersected mesh with
-     * ADRT_MESH_HIT 
-     */
-    VMOVE(ray.pos.v, ray_pos.v);
-    VMOVE(ray.dir.v, ray_dir.v);
-    ray.depth = 0;
-    while(tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step))
-	VJOIN1( ray.pos.v, ray.pos.v, step + SMALL_FASTF, ray.dir.v );
-#endif
-
-    /* prepare cut stuff */
-    tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
-
-    render->work = render_cut_work;
-    render->free = render_cut_free;
-
-    render->data = (render_cut_t *)bu_malloc(sizeof(render_cut_t), "render_cut_init");
-    if (!render->data) {
-	perror("render->data");
-	exit(1);
-    }
-    d = (render_cut_t *)render->data;
-
-    d->ray_pos = ray_pos;
-    d->ray_dir = ray_dir;
-
-    /* Calculate the normal to be used for the plane */
-    VSET(up.v, 0, 0, 1);
-    VCROSS(d->plane,  ray_dir.v,  up.v);
-    VUNITIZE(d->plane);
-
-    /* Construct the plane */
-    d->plane[3] = -VDOT( d->plane,  ray_pos.v); /* up is really new ray_pos */
-
-    /* generate the shtuff for the blue line */
-    tie_init(&d->tie, 2, TIE_KDTREE_FAST);
-
-    /* Triangle 1 */
-    VMOVE(list[0].v, ray_pos.v);
-    list[0].v[2] -= shot_width;
-
-    list[0].v[0] = ray_pos.v[0];
-    list[0].v[1] = ray_pos.v[1];
-    list[0].v[2] = ray_pos.v[2] - shot_width;
-
-    list[1].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
-    list[1].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
-    list[1].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] - shot_width;
-
-    list[2].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
-    list[2].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
-    list[2].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width;
-
-    /* Triangle 2 */
-    VMOVE(list[3].v, ray_pos.v);
-    list[3].v[2] -= shot_width;
-
-    list[4].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
-    list[4].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
-    list[4].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width;
-
-    VMOVE(list[5].v, ray_pos.v);
-    list[5].v[2] += shot_width;
-
-    for(i=0;i<6;i++)
-	tlist[i] = &list[i];
-
-    tie_push(&d->tie, tlist, 2, NULL, 0);
-
-    tie_prep(&d->tie);
-    bu_free(tlist, "cutting plane triangles");
-}
-
 
 void render_cut_free(render_t *render) {
     render_cut_t *d;
@@ -262,6 +173,98 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     pixel->v[1] += 0.1;
     pixel->v[2] += 0.1;
 }
+
+void
+render_cut_init(render_t *render, char *buf)
+{
+    int i;
+    render_cut_t *d;
+    static TIE_3 list[6];
+    TIE_3 **tlist, up, ray_pos, ray_dir;
+    fastf_t shot_len = 100, shot_width = .02;
+    tie_id_t id;
+    tie_ray_t ray;
+    double step;
+
+    sscanf(buf, "#(%f %f %f) #(%f %f %f)",
+	    ray_pos.v, ray_pos.v+1, ray_pos.v+2,
+	    ray_dir.v, ray_dir.v+1, ray_dir.v+2);
+
+#if 0
+    /*
+     * fire through the entire geometry, marking each intersected mesh with
+     * ADRT_MESH_HIT
+     */
+    VMOVE(ray.pos.v, ray_pos.v);
+    VMOVE(ray.dir.v, ray_dir.v);
+    ray.depth = 0;
+    while(tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step))
+	VJOIN1( ray.pos.v, ray.pos.v, step + SMALL_FASTF, ray.dir.v );
+#endif
+
+    /* prepare cut stuff */
+    tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
+
+    render->work = render_cut_work;
+    render->free = render_cut_free;
+
+    render->data = (render_cut_t *)bu_malloc(sizeof(render_cut_t), "render_cut_init");
+    if (!render->data) {
+	perror("render->data");
+	exit(1);
+    }
+    d = (render_cut_t *)render->data;
+
+    d->ray_pos = ray_pos;
+    d->ray_dir = ray_dir;
+
+    /* Calculate the normal to be used for the plane */
+    VSET(up.v, 0, 0, 1);
+    VCROSS(d->plane,  ray_dir.v,  up.v);
+    VUNITIZE(d->plane);
+
+    /* Construct the plane */
+    d->plane[3] = -VDOT( d->plane,  ray_pos.v); /* up is really new ray_pos */
+
+    /* generate the shtuff for the blue line */
+    tie_init(&d->tie, 2, TIE_KDTREE_FAST);
+
+    /* Triangle 1 */
+    VMOVE(list[0].v, ray_pos.v);
+    list[0].v[2] -= shot_width;
+
+    list[0].v[0] = ray_pos.v[0];
+    list[0].v[1] = ray_pos.v[1];
+    list[0].v[2] = ray_pos.v[2] - shot_width;
+
+    list[1].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
+    list[1].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
+    list[1].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] - shot_width;
+
+    list[2].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
+    list[2].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
+    list[2].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width;
+
+    /* Triangle 2 */
+    VMOVE(list[3].v, ray_pos.v);
+    list[3].v[2] -= shot_width;
+
+    list[4].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
+    list[4].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
+    list[4].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width;
+
+    VMOVE(list[5].v, ray_pos.v);
+    list[5].v[2] += shot_width;
+
+    for(i=0;i<6;i++)
+	tlist[i] = &list[i];
+
+    tie_push(&d->tie, tlist, 2, NULL, 0);
+
+    tie_prep(&d->tie);
+    bu_free(tlist, "cutting plane triangles");
+}
+
 
 /*
  * Local Variables:
