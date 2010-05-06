@@ -30,6 +30,10 @@
 pthread_t *render_tlist;
 #endif
 
+#ifdef HAVE_DLFCN_H
+# include <dlfcn.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +43,16 @@ pthread_t *render_tlist;
 #include "bu.h"
 
 #include "camera.h"
+
+struct render_shader_s {
+	char *name;
+	void (*init)(render_t *, char *);
+	void (*work)(render_t *, tie_t *, tie_ray_t, TIE_3 *);
+	void (*free)(render_t *);
+	struct render_shader_s *next;
+};
+
+static struct render_shader_s *shaders = NULL;
 
 void* render_camera_render_thread(void *ptr);
 static void render_camera_prep_ortho(render_camera_t *camera);
@@ -59,11 +73,11 @@ render_camera_init(render_camera_t *camera, int threads)
     /* The camera will use a thread for every cpu the machine has. */
     camera->thread_num = 
 #ifdef HAVE_PTHREAD_H
-	    threads ? threads : bu_avail_cpus();
+	threads ? threads : bu_avail_cpus();
 #else
     1;
 #endif
-/* printf("threads: %d\n", camera->thread_num); */
+    /* printf("threads: %d\n", camera->thread_num); */
 
     /* Initialize camera to rendering surface normals */
     render_normal_init(&camera->render, NULL);
@@ -71,7 +85,7 @@ render_camera_init(render_camera_t *camera, int threads)
 
 #ifdef HAVE_PTHREAD_H
     render_tlist = NULL;
-	if (camera->thread_num > 1) {
+    if (camera->thread_num > 1) {
 	bu_log("Allocating thread memory\n");
 	render_tlist = (pthread_t *)bu_malloc(sizeof(pthread_t) * camera->thread_num, "render_tlist");
 	if(render_tlist == NULL) {
@@ -80,6 +94,22 @@ render_camera_init(render_camera_t *camera, int threads)
 	}
     }
 #endif
+
+    if(shaders == NULL) {
+#define REGISTER(x) render_shader_register(#x, render_##x##_init, render_##x##_work, render_##x##_free);
+	REGISTER(component);
+	REGISTER(cut);
+	REGISTER(depth);
+	REGISTER(flat);
+	REGISTER(flos);
+	REGISTER(grid);
+	REGISTER(normal);
+	REGISTER(path);
+	REGISTER(phong);
+	REGISTER(spall);
+	REGISTER(surfel);
+#undef REGISTER
+    }
 }
 
 
@@ -609,18 +639,64 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
     return;
 }
 
-void
-render_shader_init(render_t *camera, const char *name, const char *buf)
+int
+render_shader_register(const char *name, 
+		void (*init)(render_t *, char *),
+		void (*work)(render_t *, tie_t *, tie_ray_t, TIE_3 *),
+		void (*free)(render_t *))
 {
-#define SHADER(x) if(!strcmp(name, #x)) render_##x##_init(camera, buf);
-    SHADER(phong);
-    SHADER(normal);
-    SHADER(cut);
-    SHADER(depth);
-    SHADER(component);
-#undef SHADER
+	struct render_shader_s *shader = (struct render_shader_s *)malloc(sizeof(struct render_shader_s));
+	if(shader == NULL)
+		return -1;
+	shader->name = name;
+	shader->init = init;
+	shader->work = work;
+	shader->free = free;
+	shader->next = shaders;
+	shaders = shader;
+	return 0;
 }
 
+int
+render_shader_load_plugin(const char *filename) {
+#ifdef HAVE_DLFCN_H
+    void *lh;	/* library handle */
+    void (*init)(render_t *, char *);
+    void (*work)(render_t *, tie_t *, tie_ray_t, TIE_3 *);
+    void (*free)(render_t *);
+    char *name;
+
+    lh = dlopen(filename, RTLD_LOCAL);
+    if(lh == NULL) { bu_log("Faulty plugin %s: file not found\n", filename); perror(""); return -1; }
+    name = dlsym(lh, "name");
+    if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return -1; }
+    init = dlsym(lh, "init");
+    if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return -1; }
+    work = dlsym(lh, "work");
+    if(work == NULL) { bu_log("Faulty plugin %s: No work\n", filename); return -1; }
+    free = dlsym(lh, "free");
+    if(free == NULL) { bu_log("Faulty plugin %s: No free\n", filename); return -1; }
+    return render_shader_register(name, init, work, free);
+#else
+    bu_log("No plugin support.\n");
+    return -1;
+#endif
+}
+
+int
+render_shader_init(render_t *camera, const char *name, const char *buf)
+{
+    struct render_shader_s *s = shaders;
+    while(s) {
+	if(!strncmp(s->name, name, 8)) {
+	    s->init(camera, buf);
+	    return -1;
+	}
+	s = s->next;
+    }
+    bu_log("Shader \"%s\" not found\n", name);
+    return -1;
+}
 
 /*
  * Local Variables:
