@@ -28,10 +28,6 @@
  * For 1/3 octave filters y = 2^(1/6) - 2^(-1/6).
  */
 
-/*
- * $Id$
- */
-
 #include "common.h"
 
 #include <stdio.h>
