@@ -111,10 +111,10 @@ struct ogl_cmap {
  * with /dev/sgi
  */
 struct ogl_pixel {
-    unsigned char alpha;
     unsigned char blue;
     unsigned char green;
     unsigned char red;
+    unsigned char alpha;
 };
 
 
@@ -459,7 +459,7 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 
 	    glPixelStorei(GL_UNPACK_SKIP_PIXELS, xbase);
 	    glRasterPos2i(xbase, y);
-	    glDrawPixels(npix, 1, GL_ABGR_EXT, GL_UNSIGNED_BYTE,
+	    glDrawPixels(npix, 1, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
 			 (const GLvoid *) op);
 
 	}
@@ -472,7 +472,7 @@ ogl_xmit_scanlines(register FBIO *ifp, int ybase, int nlines, int xbase, int npi
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
 
 	glRasterPos2i(xbase, ybase);
-	glDrawPixels(npix, nlines, GL_ABGR_EXT, GL_UNSIGNED_BYTE,
+	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE,
 		     (const GLvoid *) ifp->if_mem);
     }
 }
@@ -1554,10 +1554,8 @@ ogl_flush(FBIO *ifp)
 	ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
 	if (SGI(ifp)->mi_doublebuffer) {
 	    glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
-	} else {
-	    if (OGL(ifp)->copy_flag) {
-		backbuffer_to_screen(ifp, -1);
-	    }
+	} else if (OGL(ifp)->copy_flag) {
+	    backbuffer_to_screen(ifp, -1);
 	}
 
 	/* unattach context for other threads to use, also flushes */
@@ -1835,6 +1833,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 		glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
 	    }
 	}
+	glFlush();
 
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
@@ -2006,15 +2005,6 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	}
 
 	if (xstart + count < ifp->if_width) {
-	    /* "Fast path" case for writes of less than one scanline.
-	     * The assumption is that there will be a lot of short
-	     * writes, and it's best just to ignore the backbuffer
-	     */
-	    if (SGI(ifp)->mi_doublebuffer) {
-		/* "turn off" doublebuffering*/
-		SGI(ifp)->mi_doublebuffer = 0;
-		glDrawBuffer(GL_FRONT);
-	    }
 	    ogl_xmit_scanlines(ifp, ybase, 1, xstart, count);
 	    if (OGL(ifp)->copy_flag) {
 		/* repaint one scanline from backbuffer */
@@ -2034,6 +2024,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 		}
 	    }
 	}
+	glFlush();
 
 	/* unattach context for other threads to use */
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
