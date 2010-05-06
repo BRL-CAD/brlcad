@@ -3603,6 +3603,10 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V F {%V aet %V 0 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V R {%V aet %V 180 0; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
@@ -3615,11 +3619,39 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V L {%V aet %V 90 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V t {%V aet %V 0 90; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V T {%V aet %V 0 90; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V b {%V aet %V 0 270; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V B {%V aet %V 0 270; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V + {%V zoom %V 2.0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V = {%V zoom %V 2.0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V _ {%V zoom %V 0.5; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V - {%V zoom %V 0.5; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
