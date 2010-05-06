@@ -73,6 +73,7 @@ struct _ged_obj_material {
     fastf_t a;
 };
 
+static int using_dbot_dump;
 struct bu_list HeadObjMaterials;
 struct bu_vls obj_materials_file;
 FILE *obj_materials_fp;
@@ -409,11 +410,13 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     int i,vi;
     struct _ged_obj_material *gomp;
 
-    gomp = ged_get_obj_material(curr_obj_red,
-				curr_obj_green,
-				curr_obj_blue,
-				curr_obj_alpha);
-    fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
+    if (using_dbot_dump) {
+	gomp = ged_get_obj_material(curr_obj_red,
+				    curr_obj_green,
+				    curr_obj_blue,
+				    curr_obj_alpha);
+	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
+    }
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -835,6 +838,8 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, usage, argv[0]);
 	return GED_HELP;
     }
+
+    using_dbot_dump = 0;
 
     if (ged_bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
 	return GED_ERROR;
@@ -1296,6 +1301,8 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, usage, argv[0]);
 	return GED_HELP;
     }
+
+    using_dbot_dump = 1;
 
     if (ged_bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
 	return GED_ERROR;

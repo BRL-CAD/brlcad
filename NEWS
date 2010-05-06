@@ -32,6 +32,9 @@ geometry browser, list view, buttons, and much more.  As Archer
 approaches feature parity with MGED, it gets closer to an official
 alpha release status as BRL-CAD's next generation geometry editor.
 
+* red command now preserves all attributes - Cliff Yapp
+* find correct libpng version on Mac OS X 10.5+ - Sean Morrison
+* fixed bot_dump crash with plate mode BoTs - Bob Parker
 * fixed Mac OS X 10.5+ mouse input/rotation bug in mged - Bob Parker
 * X11 wireframe performance improvements (dm 'X') - Sean Morrison
 * rtarea "-u model" specifies output using local units - Keith Bowman
