@@ -1269,7 +1269,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     }
 
     /* Open an OpenGL context with this visual*/
-    OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, False /* direct context */);
+    OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, GL_TRUE /* direct context */);
     if (OGL(ifp)->glxc == NULL) {
 	fb_log("ERROR: Couldn't create an OpenGL context!\n");
 	return -1;
@@ -2005,7 +2005,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	    fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
 	}
 
-	if (xstart + count <= ifp->if_width) {
+	if (xstart + count < ifp->if_width) {
 	    /* "Fast path" case for writes of less than one scanline.
 	     * The assumption is that there will be a lot of short
 	     * writes, and it's best just to ignore the backbuffer
