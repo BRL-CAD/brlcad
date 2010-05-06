@@ -69,6 +69,35 @@ find_keyword(int i, char *line, char *word)
     return(ptr2);
 }
 
+static int
+get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
+{
+	char *ptr1;
+	size_t j;
+
+	/* find the '=' */
+	ptr1 = strchr(&line[0], '=');
+	if (!ptr1)
+ 	   return 0;
+
+	/* Everything from the beginning to the = is the attribute name*/
+	bu_vls_strncpy(attr, line, ptr1 - &line[0]);
+
+	/* skip any white space before the value */
+	++ptr1;
+	while (isspace(*(++ptr1)));
+
+	/* eliminate trailing white space */
+	j = strlen(line);
+	while (isspace(line[--j]));
+	line[j+1] = '\0';
+	
+	/* Grab the attribute value */
+	bu_vls_strcpy(val, ptr1);
+
+	return 1;
+}	
+	
 
 static int
 check_comb(struct ged *gedp)
@@ -412,8 +441,13 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     union tree *tp;
     matp_t matrix;
     int ret=0;
+    struct bu_vls attr_vls;
+    struct bu_vls val_vls;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+
+    if (gedp->ged_wdbp->dbip == DBI_NULL) 
 	return GED_OK;
 
     if (comb) {
@@ -425,6 +459,10 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot open edited file: %s\n", _ged_tmpfil);
 	return GED_ERROR;
     }
+
+    bu_vls_init(&attr_vls);
+    bu_vls_init(&val_vls);
+    bu_avs_init_empty(&avs);
 
     /* empty the existing combination */
     if (comb && comb->tree) {
@@ -570,8 +608,12 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	    else
 		comb->inherit = 0;
 	    continue;
-	} else if (!strncmp(&line[i], "COMBINATION:", 12))
+	} else if (!strncmp(&line[i], "COMBINATION:", 12)) {
+	    get_attr_val_pair(line, &attr_vls, &val_vls); 
+	    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
+	    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
 	    continue;
+        }
 
 	done2=0;
 	ptr = strtok(line, _delims);
@@ -629,6 +671,9 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 			if (rt_tree_array)
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			fclose(fp);
+			bu_vls_free(&attr_vls);
+		        bu_vls_free(&val_vls);
+			bu_avs_free(&avs);
 			return(1);
 		    }
 		    matrix[k] = atof(ptr);
@@ -677,6 +722,9 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	bu_free(new_name, "new_name");
     }
 
+    bu_vls_free(&attr_vls);
+    bu_vls_free(&val_vls);
+    bu_avs_free(&avs);
     return ret;
 }
 
@@ -708,10 +756,17 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 {
     /* Writes the file for later editing */
     struct rt_tree_array *rt_tree_array;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+    struct directory *dp;
     FILE *fp;
     int i;
     int node_count;
     int actual_count;
+
+    bu_avs_init_empty(&avs);
+
+    GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, GED_ERROR);
 
     if (comb)
 	RT_CK_COMB(comb);
@@ -787,6 +842,21 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     else
 	fprintf(fp, "INHERIT=No\n");
 
+    if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+       /* Print out any non-standard attributes - region and region_id
+	* are case insensitive as far as key properties being set, need
+	* to check if this is true for the rest of them.
+	*/
+	avpp = avs.avp;
+	for (i=0; i < avs.count; i++, avpp++) {
+	  if ((strcasecmp(avpp->name, "REGION")) && (strcasecmp(avpp->name, "REGION_ID")) &&
+		(strcmp(avpp->name, "AIRCODE")) && (strcmp(avpp->name, "GIFT_MATERIAL")) &&
+		(strcmp(avpp->name, "LOS")) && (strcmp(avpp->name, "COLOR")) &&
+		(strcmp(avpp->name, "SHADER")) && (strcmp(avpp->name, "INHERIT")))
+	      fprintf(fp, "%s=%s\n", avpp->name, avpp->value);
+        }
+    }
+
     fprintf(fp, "COMBINATION:\n");
 
     for (i=0; i<actual_count; i++) {
@@ -805,18 +875,21 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "write_comb: Illegal op code in tree\n");
 		fclose(fp);
+		bu_avs_free(&avs);
 		return GED_ERROR;
 	}
 	if (fprintf(fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name) <= 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot write to temporary file (%s). Aborting edit\n",
 			  _ged_tmpfil);
 	    fclose(fp);
+	    bu_avs_free(&avs);
 	    return GED_ERROR;
 	}
 	_ged_print_matrix(fp, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	fprintf(fp, "\n");
     }
     fclose(fp);
+    bu_avs_free(&avs);
     return GED_OK;
 }
 
