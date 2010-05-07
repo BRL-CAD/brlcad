@@ -3470,6 +3470,10 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::handleTreeOpen {} {
+    if {$mEnableListView} {
+	return
+    }
+
     SetWaitCursor $this
 
     set cnode [$itk_component(newtree) focus]
@@ -3676,6 +3680,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::setTreeView {{_rflag 0}} {
+    SetWaitCursor $this
+
     if {$mEnableListView} {
 	set text "Show Tree"
     } else {
@@ -3696,6 +3702,8 @@ Popup Menu    Right or Ctrl-Left
 	    }
 	}
     }
+
+    SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::toggleTreeView {} {
