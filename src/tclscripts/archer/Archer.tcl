@@ -220,7 +220,8 @@ package provide Archer 1.0
 	method track               {args}
 	method units               {args}
 	method vmake               {args}
-	method initImages         {}
+	method initImages          {}
+	method initFbImages        {}
 
 	# Object Edit Management
 	method checkpoint {_obj _type}
@@ -535,7 +536,7 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure new -state normal
     $itk_component(primaryToolbar) itemconfigure preferences -state normal
 
-    Load ""
+    after idle [::itcl::code $this Load ""]
 }
 
 
@@ -1767,6 +1768,10 @@ package provide Archer 1.0
 			-file [file join $mImgDir option_tree.png]]
     }
 
+    initFbImages
+}
+
+::itcl::body Archer::initFbImages {} {
     set mImage_fbOff [image create photo -file [file join $mImgDir framebuffer_off.png]]
     set mImage_fbOn [image create photo -file [file join $mImgDir framebuffer.png]]
     set mImage_fbInterlay [image create photo -file [file join $mImgDir framebuffer_interlay.png]]
@@ -2450,19 +2455,13 @@ package provide Archer 1.0
 	set win $dm
 
 	if {$mViewOnly} {
-#	    bind $win <Control-ButtonPress-1> \
-		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	    bind $win <3> \
 		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	} else {
 	    if {$ArcherCore::inheritFromToplevel} {
-#		bind $win <Control-ButtonPress-1> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(${prefix}displaymenu) %X %Y]; break"
 		bind $win <3> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(${prefix}displaymenu) %X %Y]; break"
 	    } else {
-#		bind $win <Control-ButtonPress-1> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 		bind $win <3> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 	    }
