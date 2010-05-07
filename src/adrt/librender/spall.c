@@ -178,13 +178,16 @@ render_spall_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     pixel->v[2] += 0.1;
 }
 
-void
+int
 render_spall_init(render_t *render, char *buf)
 {
     render_spall_t *d;
     TIE_3 *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
     tfloat plane[4], angle;
     int i;
+
+    if(buf == NULL)
+	return -1;
 
     render->work = render_spall_work;
     render->free = render_spall_free;
@@ -250,6 +253,7 @@ render_spall_init(render_t *render, char *buf)
 
     bu_free(vec_list, "vec_list");
     bu_free(tri_list, "tri_list");
+    return 0;
 }
 
 /*

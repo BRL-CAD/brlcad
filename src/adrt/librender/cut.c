@@ -53,7 +53,9 @@ typedef struct render_cut_hit_s {
     tfloat mod;
 } render_cut_hit_t;
 
-void* render_cut_hit_cutline(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+void *
+render_cut_hit_cutline(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+{
     ((adrt_mesh_t *)(tri->ptr))->flags |= ADRT_MESH_HIT;
     *((double *)ptr) = id->dist;
     return ptr;
@@ -61,7 +63,9 @@ void* render_cut_hit_cutline(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void 
 
 extern tie_t *tie;
 
-void render_cut_free(render_t *render) {
+void
+render_cut_free(render_t *render)
+{
     render_cut_t *d;
 
     d = (render_cut_t *)render->data;
@@ -70,12 +74,16 @@ void render_cut_free(render_t *render) {
 }
 
 
-static void* render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+static void *
+render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+{
     return tri;
 }
 
 
-void* render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+void *
+render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+{
     render_cut_hit_t *hit = (render_cut_hit_t *)ptr;
 
     hit->id = *id;
@@ -84,7 +92,9 @@ void* render_cut_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
 }
 
 
-void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     render_cut_t *rd;
     render_cut_hit_t hit;
     TIE_3 color;
@@ -174,7 +184,7 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     pixel->v[2] += 0.1;
 }
 
-void
+int
 render_cut_init(render_t *render, char *buf)
 {
     int i;
@@ -185,6 +195,9 @@ render_cut_init(render_t *render, char *buf)
     tie_id_t id;
     tie_ray_t ray;
     double step;
+
+    if(buf == NULL)
+	    return -1;
 
     sscanf(buf, "#(%f %f %f) #(%f %f %f)",
 	    ray_pos.v, ray_pos.v+1, ray_pos.v+2,
@@ -263,6 +276,7 @@ render_cut_init(render_t *render, char *buf)
 
     tie_prep(&d->tie);
     bu_free(tlist, "cutting plane triangles");
+    return 0;
 }
 
 

@@ -44,11 +44,11 @@ render_normal_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
     return;
 }
 
-void
+int
 render_normal_init(render_t *render, char *usr) {
     render->work = render_normal_work;
     render->free = render_normal_free;
-    return;
+    return 0;
 }
 
 /*

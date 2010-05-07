@@ -43,10 +43,12 @@ render_flat_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     }
 }
 
-void
-render_flat_init(render_t *render, char *usr) {
+int
+render_flat_init(render_t *render, char *usr)
+{
     render->work = render_flat_work;
     render->free = render_flat_free;
+    return 0;
 }
 
 

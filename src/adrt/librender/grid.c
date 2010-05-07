@@ -67,11 +67,12 @@ render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     pixel->v[2] += 0.1;
 }
 
-void
+int
 render_grid_init(render_t *render, char *usr)
 {
     render->work = render_grid_work;
     render->free = render_grid_free;
+    return 0;
 }
 
 /*

@@ -25,12 +25,14 @@
 #include <stdio.h>
 
 
-void render_depth_free(render_t *render)
+void
+render_depth_free(render_t *render)
 {
     return;
 }
 
-void render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+void
+render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
 {
     tie_id_t id;
     adrt_mesh_t *mesh;
@@ -40,9 +42,12 @@ void render_depth_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixe
 	pixel->v[0] = 0.0075 * ray->kdtree_depth;
 }
 
-void render_depth_init(render_t *render, char *usr) {
+int
+render_depth_init(render_t *render, char *usr)
+{
     render->work = render_depth_work;
     render->free = render_depth_free;
+    return 0;
 }
 
 /*
