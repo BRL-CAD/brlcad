@@ -97,8 +97,10 @@ BU_EXPORT BU_EXTERN(void render_camera_prep, (render_camera_t *camera));
 BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result));
 
 BU_EXPORT BU_EXTERN(int render_shader_init, (render_t *, const char *name, const char *buf));
-BU_EXPORT BU_EXTERN(int render_shader_register, (const char *name, void (*init)(render_t *, char *)));
-BU_EXPORT BU_EXTERN(int render_shader_load_plugin, (const char *filename));
+BU_EXPORT BU_EXTERN(const char *render_shader_load_plugin, (const char *filename));
+/* r is passed in so something ... sane(?) can be done if the shader being
+ * unloaded is in use. */
+BU_EXPORT BU_EXTERN(int render_shader_unload_plugin, (render_t *r, const char *name));
 
 #endif
 
