@@ -57,8 +57,8 @@ void* render_camera_render_thread(void *ptr);
 static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
-static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, char *));
 
+static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, char *));
 
 void
 render_camera_init(render_camera_t *camera, int threads)
@@ -642,7 +642,7 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
 struct render_shader_s *
 render_shader_register(const char *name, void (*init)(render_t *, char *))
 {
-	struct render_shader_s *shader = (struct render_shader_s *)malloc(sizeof(struct render_shader_s));
+	struct render_shader_s *shader = (struct render_shader_s *)bu_malloc(sizeof(struct render_shader_s), "shader");
 	if(shader == NULL)
 		return NULL;
 	/* should probably search shader list for dups */
@@ -652,15 +652,6 @@ render_shader_register(const char *name, void (*init)(render_t *, char *))
 	shader->dlh = NULL;
 	shaders = shader;
 	return shader;
-}
-
-static void
-print_shaders(struct render_shader_s *s) {
-    if(s == NULL)
-	return;
-    printf("%s\n", s->name);
-    fflush(stdout);
-    print_shaders(s->next);
 }
 
 const char *
@@ -680,7 +671,6 @@ render_shader_load_plugin(const char *filename) {
     if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return NULL; }
     s = render_shader_register(name, init);
     s->dlh = lh;
-    printf("Loaded %s\n", s->name); print_shaders(shaders);
     return s->name;
 #else
     bu_log("No plugin support.\n");
@@ -692,14 +682,12 @@ int
 render_shader_unload_plugin(render_t *r, const char *name)
 {
     struct render_shader_s *t, *s = shaders, *meh;
-    printf("Trying to unload %s\n");
     if(!strncmp(s->name, name, 8)) {
-	printf("W00t, first hit!\n");
-	t = s;
-	if(r) {
+	t = s->next;
+	if(r && r->shader && !strncmp(r->shader, name, 8)) {
 	    meh = s->next;
 	    while( meh ) {
-		if(render_shader_init(r, meh->name, NULL) == 0)
+		if(render_shader_init(r, meh->name, NULL) != -1)
 		    goto LOADED;
 		meh = meh->next;
 	    }
@@ -709,24 +697,20 @@ LOADED:
 
 	if(s->dlh)
 	    dlclose(s->dlh);
-    printf("Unloaded first %s\n", s->name);
-	free(s);
-	shaders = t; print_shaders(shaders);
+	bu_free(s, "unload first shader");
+	shaders = t; 
 	return 0;
     }
 
     while(s->next) {
 	if(!strncmp(s->next->name, name, 8)) {
-	    printf("At %s, trying to unload %s to match %s\n",
-		    s->name, s->next->name, name);
 	    if(r)
 		render_shader_init(r, s->name, NULL);
 	    if(s->next->dlh)
 		dlclose(s->next->dlh);
 	    t = s->next;
 	    s->next = s->next->next;
-	    free(t);
-    printf("Unloaded nonfirst %s\n", s->name); print_shaders(shaders);
+	    bu_free(t, "unload shader");
 	    return 0;
 	}
     }
@@ -739,7 +723,6 @@ int
 render_shader_init(render_t *r, const char *name, const char *buf)
 {
     struct render_shader_s *s = shaders;
-    printf("Trying to initialize %s\n", name);
     while(s) {
 	if(!strncmp(s->name, name, 8)) {
 	    s->init(r, buf);
