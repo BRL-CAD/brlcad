@@ -24,6 +24,12 @@ include_directories(
     ../../../src/other/tcl/generic
 )
 
+if(MSVC)
+    add_definitions(
+        -DNOMINMAX
+    )
+endif(MSVC)
+
 
 # build the BrlcadCore.dll
 set(BRLCADCORE_SOURCES
