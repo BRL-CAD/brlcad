@@ -8131,8 +8131,6 @@ proc title_node_handler {node} {
 ################################### Primitive Creation Section ###################################
 
 ::itcl::body Archer::createObj {type} {
-    return
-
     gedCmd make_name -s 1
 
     switch -- $type {
@@ -8246,16 +8244,10 @@ proc title_node_handler {node} {
 	}
     }
 
-    $itk_component(tree) selection clear
-    set node [$itk_component(tree) insert end "root" $name "leaf"]
-    $itk_component(tree) alternode $node -color blue
-    $itk_component(tree) redraw; # force redraw to
-    # make sure stuff is there to select
-    $itk_component(tree) selection set $node
-
-    gedCmd configure -autoViewEnable 0
-    dblClick [$itk_component(tree) selection get]
-    gedCmd configure -autoViewEnable 1
+    fillTree {} $name $mEnableListView
+    $itk_component(ged) draw $name
+    selectTreePath $name
+    updateTree
 
     set mNeedSave 1
     updateSaveMode
