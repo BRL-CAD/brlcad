@@ -14,6 +14,22 @@ dist_tcl_DATA = \
 	airregion_intersect.png \
 	airregion_subtract.png \
 	airregion_union.png \
+	arb4.png \
+	arb4_intersect.png \
+	arb4_subtract.png \
+	arb4_union.png \
+	arb5.png \
+	arb5_intersect.png \
+	arb5_subtract.png \
+	arb5_union.png \
+	arb6.png \
+	arb6_intersect.png \
+	arb6_subtract.png \
+	arb6_union.png \
+	arb7.png \
+	arb7_intersect.png \
+	arb7_subtract.png \
+	arb7_union.png \
 	arb8.png \
 	arb8_intersect.png \
 	arb8_subtract.png \
