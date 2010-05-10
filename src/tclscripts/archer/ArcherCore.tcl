@@ -615,6 +615,10 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_sketchInter ""
 	variable mImage_sketchSub ""
 	variable mImage_sketchUnion ""
+	variable mImage_sph ""
+	variable mImage_sphInter ""
+	variable mImage_sphSub ""
+	variable mImage_sphUnion ""
 	variable mImage_tgc ""
 	variable mImage_tgcInter ""
 	variable mImage_tgcSub ""
@@ -1561,6 +1565,11 @@ Popup Menu    Right or Ctrl-Left
     set mImage_sketchInter [image create photo -file [file join $mImgDir sketch_intersect.png]]
     set mImage_sketchSub [image create photo -file [file join $mImgDir sketch_subtract.png]]
     set mImage_sketchUnion [image create photo -file [file join $mImgDir sketch_union.png]]
+
+    set mImage_sph [image create photo -file [file join $mImgDir sph.png]]
+    set mImage_sphInter [image create photo -file [file join $mImgDir sph_intersect.png]]
+    set mImage_sphSub [image create photo -file [file join $mImgDir sph_subtract.png]]
+    set mImage_sphUnion [image create photo -file [file join $mImgDir sph_union.png]]
 
     set mImage_tgc [image create photo -file [file join $mImgDir tgc.png]]
     set mImage_tgcInter [image create photo -file [file join $mImgDir tgc_intersect.png]]
@@ -3338,6 +3347,7 @@ Popup Menu    Right or Ctrl-Left
 	rhc -
 	rpc -
 	sketch -
+	sph -
 	tgc -
 	tor {
 	    return [subst $[subst mImage_$_type$_op]]

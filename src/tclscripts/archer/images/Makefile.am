@@ -180,6 +180,10 @@ dist_tcl_DATA = \
 	sketch_intersect.png \
 	sketch_subtract.png \
 	sketch_union.png \
+	sph.png \
+	sph_intersect.png \
+	sph_subtract.png \
+	sph_union.png \
 	tgc.png \
 	tgc_intersect.png \
 	tgc_subtract.png \
