@@ -4155,11 +4155,14 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
 	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->b,i*3+1);
 	    REMAP_BOT_VERTS(bot,newbot,vmap,vcount,tpp->c,i*3+2);
 
-	    newbot->thickness[i] = bot->thickness[tpp->tri];
-	    if (BU_BITTEST(bot->face_mode, tpp->tri))
-		BU_BITSET(newbot->face_mode, i);
-	    else
-		BU_BITCLR(newbot->face_mode, i);
+	    if (bot->mode == RT_BOT_PLATE) {
+		newbot->thickness[i] = bot->thickness[tpp->tri];
+
+		if (BU_BITTEST(bot->face_mode, tpp->tri))
+		    BU_BITSET(newbot->face_mode, i);
+		else
+		    BU_BITCLR(newbot->face_mode, i);
+	    }
 
 	    ++i;
 	}
