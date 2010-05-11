@@ -1295,6 +1295,8 @@ AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-lt
 dnl check if libtk library links
 tk_link_works=no
 LIBTK=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
     [AC_CHECK_LIB(tk86, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk86",
 	[AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
@@ -1308,6 +1310,7 @@ AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if libtkstub library links
 tkstub_link_works=no
@@ -1332,6 +1335,8 @@ LIBS="$PRELIBS"
 dnl check if libitcl library links
 itcl_link_works=no
 LIBITCL=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
     [AC_CHECK_LIB(itcl34, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl34",
 	[AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
@@ -1345,10 +1350,13 @@ AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTKSTUB $LIBTCLSTUB"
 AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
     [AC_CHECK_LIB(itk34, Itk_Init, itk_link_works=yes ; LIBITK="-litk34",
 	[AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
@@ -1362,6 +1370,7 @@ AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if a socket library links
 socket_link_works=no
