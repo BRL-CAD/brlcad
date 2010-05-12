@@ -2029,12 +2029,14 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag], [nokeep])
-	if test "x$bc_mac_opt_flag" = "xyes" ; then
+        case $host_os in
+	     darwin*)
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs3], [debug_flag])
-	else
-		BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
-	fi
+	     ;;
+    	     *)
+	        BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
+	     ;;
+        esac
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
