@@ -725,7 +725,7 @@ package provide cadwidgets::Ged 1.0
 ############################### Configuration Options ###############################
 
 ::itcl::configbody cadwidgets::Ged::centerDotEnable {
-    eval faceplate center_dot draw [get_rgb_color $itk_option(-centerDotEnable)]
+    eval faceplate center_dot draw $itk_option(-centerDotEnable)
 }
 
 ::itcl::configbody cadwidgets::Ged::adcEnable {
@@ -1211,8 +1211,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::faceplate {args} {
     foreach dm {ur ul ll lr} {
-	eval $mGed faceplate $itk_component($dm) $args
+	set ret [eval $mGed faceplate $itk_component($dm) $args]
     }
+
+    return $ret
 }
 
 ::itcl::body cadwidgets::Ged::facetize {args} {
