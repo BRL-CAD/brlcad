@@ -64,6 +64,8 @@ typedef size_t (*tri_arr_1D_t)[3];    /* triangle index array 1 dimensional type
 typedef size_t (*tri_arr_2D_t)[3][2]; /* triangle index array 2 dimensional type (tv) or (nv) */
 typedef size_t (*tri_arr_3D_t)[3][3]; /* triangle index array 3 dimensional type (tnv) */
 
+typedef size_t (*edge_arr_2D_t)[2]; /* edge array type */
+
 /* grouping face indices type */
 struct gfi_t { 
     void   *index_arr_faces;           /* face indices into vertex, normal ,texture vertex lists */
@@ -243,6 +245,17 @@ static int comp(const void *p1, const void *p2) {
    size_t j = * (size_t *) p2;
 
    return (int)(tmp_ptr[i] - tmp_ptr[j]);
+}
+
+/* compare function for qsort for edges */
+static int comp_c(const void *p1, const void *p2) {
+   edge_arr_2D_t i = (edge_arr_2D_t) p1;
+   edge_arr_2D_t j = (edge_arr_2D_t) p2;
+
+   if ((i[0][0] - j[0][0]) != 0)
+       return (int)(i[0][0] - j[0][0]);
+   else
+       return (int)(i[0][1] - j[0][1]);
 }
 
 /* retrieves the coordinates and obj file indexes for the 
@@ -1259,6 +1272,113 @@ int create_bot_int_arrays(struct ti_t *ti) {
     return 0; /* return success */
 }
 
+int test_closure(struct ga_t *ga,
+                 struct gfi_t *gfi,
+                 struct rt_wdb *outfp, 
+                 fastf_t conv_factor, 
+                 struct bn_tol *tol) {
+
+    size_t face_idx = 0; /* index into faces within for-loop */
+    size_t vert_idx = 0; /* index into vertices within for-loop */
+    fastf_t tmp_v[3] = { 0.0, 0.0, 0.0 }; /* temporary vertex */
+    fastf_t tmp_n[3] = { 0.0, 0.0, 0.0 }; /* temporary normal */
+    fastf_t tmp_t[3] = { 0.0, 0.0, 0.0 }; /* temporary texture vertex */
+    fastf_t tmp_w = 0.0 ; /* temporary weight */
+    size_t  vofi0 = 0;    /* vertex obj file index */
+    size_t  vofi1 = 0;    /* vertex obj file index */
+    size_t  nofi = 0;     /* normal obj file index */
+    size_t  tofi = 0;     /* texture vertex obj file index */
+ 
+    size_t first_idx = 0;
+    edge_arr_2D_t edges = (edge_arr_2D_t)NULL;
+    edge_arr_2D_t edges_tmp = (edge_arr_2D_t)NULL;
+    size_t previous_edge[2] = { 0, 0 };
+    size_t max_edges = 0;
+    size_t max_edges_increment = 128;
+    size_t edge_count = 0;
+    size_t idx = 0;
+    size_t match = 0;
+    int open_edges = 0;
+
+    max_edges += max_edges_increment;
+    edges = (edge_arr_2D_t)bu_calloc(max_edges * 2, sizeof(size_t), "edges");
+
+    /* loop thru all polygons */
+    for ( face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++ ) {
+        if (verbose)
+            bu_log("num vertices in current polygon = (%lu)\n", gfi->num_vertices_arr[face_idx]);
+
+#if 0
+        if (!test_face(ga, gfi, face_idx, conv_factor, tol)) {
+#endif
+        if ( 1 ) {
+            for ( vert_idx = 0 ; vert_idx < gfi->num_vertices_arr[face_idx] ; vert_idx++ ) {
+
+                retrieve_coord_index(ga, gfi, face_idx, vert_idx,
+                                     tmp_v, tmp_n, tmp_t, &tmp_w, &vofi0, &nofi, &tofi);
+                if ( vert_idx == 0 )
+                    first_idx = vofi0;
+                if ( (vert_idx + 1) < gfi->num_vertices_arr[face_idx] )
+                    retrieve_coord_index(ga, gfi, face_idx, vert_idx+1,
+                                         tmp_v, tmp_n, tmp_t, &tmp_w, &vofi1, &nofi, &tofi);
+                else
+                    vofi1 = first_idx;
+
+                if (vofi0 <= vofi1) {
+                    edges[edge_count][0] = vofi0;
+                    edges[edge_count][1] = vofi1;
+                } else {
+                    edges[edge_count][0] = vofi1;
+                    edges[edge_count][1] = vofi0;
+                }
+
+                if (verbose)
+                    bu_log("edges (%lu)(%lu)(%lu)(%lu)\n", face_idx, edge_count,
+                            edges[edge_count][0], edges[edge_count][1]);
+                edge_count++;
+
+                if ( edge_count >= max_edges ) {
+                    max_edges += max_edges_increment;
+                    edges_tmp = (edge_arr_2D_t)bu_realloc(edges, sizeof(size_t) * max_edges * 2, "edges_tmp");
+                    edges = edges_tmp;
+                }
+            } 
+        }
+    } /* ends when edges list is complete */
+
+    qsort(edges, edge_count, sizeof(size_t) * 2,
+         (int (*)(const void *a, const void *b))comp_c);
+
+    if (verbose)
+        for ( idx = 0 ; idx < edge_count ; idx++ )
+            bu_log("sorted edges (%lu)(%lu)(%lu)\n", idx, edges[idx][0], edges[idx][1]);
+
+    VMOVE(previous_edge,edges[0]);
+    for ( idx = 1 ; idx < edge_count ; idx++ ) {
+        if ( (previous_edge[0] == edges[idx][0]) && (previous_edge[1] == edges[idx][1]) ) {
+            match++;
+        } else {
+            if ( match == 0 ) {
+                if (verbose)
+                    bu_log("open edge (%lu)(%lu)(%lu)\n", idx, edges[idx][0], edges[idx][1]);
+                open_edges = 1;
+            } else {
+                match = 0;
+            }
+        }
+        VMOVE(previous_edge,edges[idx]);
+    }
+
+    bu_free(edges,"edges");
+
+    if ( open_edges )
+        bu_log("surface closure failed (%s)\n", bu_vls_addr(gfi->raw_grouping_name));
+    else
+        bu_log("surface closure success (%s)\n", bu_vls_addr(gfi->raw_grouping_name));
+
+    return open_edges;
+}
+
 void output_to_bot(struct ga_t *ga,
                    struct gfi_t *gfi,
                    struct rt_wdb *outfp, 
@@ -1766,6 +1886,7 @@ main(int argc, char **argv)
                 if (gfi != NULL) {
                     bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                        gfi->num_faces);
+                    test_closure(&ga, gfi, fd_out, conv_factor, tol);
                     switch (mode_option) {
                         case 'b':
                             output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
@@ -1789,6 +1910,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
@@ -1813,6 +1935,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
@@ -1837,6 +1960,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
@@ -1861,6 +1985,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
