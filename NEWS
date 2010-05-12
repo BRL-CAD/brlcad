@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * improvements to the primitive creation menu in archer - Bob Parker
+* fixed crash using bot_split on non-"plate mode" BoTs - Bob Parker
 * fixed OpenGL framebuffer Mac refresh bug - Sean Morrison, Bob Parker
 
 
