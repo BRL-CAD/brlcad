@@ -788,7 +788,7 @@ static struct go_cmdtab go_cmds[] = {
     {"mouse_trans",	"x y", MAXARGS, go_mouse_trans, GED_FUNC_PTR_NULL},
     {"mv",	(char *)0, MAXARGS, go_pass_through_func, ged_move},
     {"mvall",	(char *)0, MAXARGS, go_pass_through_func, ged_move_all},
-    {"new_view",	"type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
+    {"new_view",	"vname type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
     {"nirt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_nirt},
     {"nmg_collapse",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_collapse},
     {"nmg_simplify",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_simplify},
