@@ -2914,7 +2914,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mShowModelAxes [gedCmd cget -modelAxesEnable]
-    set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnabled]
+    set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnable]
     set mShowViewAxes [gedCmd cget -viewAxesEnable]
     set mShowGrid [gedCmd cget -gridEnable]
     set mSnapGrid [gedCmd cget -gridSnap]
@@ -2998,7 +2998,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showModelAxesTicks {} {
-    catch {gedCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
+    catch {gedCmd configure -modelAxesTickEnable $mShowModelAxesTicks}
 }
 
 ::itcl::body ArcherCore::showGrid {} {
