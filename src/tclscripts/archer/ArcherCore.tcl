@@ -520,6 +520,7 @@ Popup Menu    Right or Ctrl-Left
 
 	# variables for images
 	variable mImage_air ""
+	variable mImage_airLabeled ""
 	variable mImage_airInter ""
 	variable mImage_airSub ""
 	variable mImage_airUnion ""
@@ -528,58 +529,76 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_airregionSub ""
 	variable mImage_airregionUnion ""
 	variable mImage_comb ""
+	variable mImage_combLabeled ""
 	variable mImage_combInter ""
 	variable mImage_combSub ""
 	variable mImage_combUnion ""
 	variable mImage_region ""
+	variable mImage_regionLabeled ""
 	variable mImage_regionInter ""
 	variable mImage_regionSub ""
 	variable mImage_regionUnion ""
 	variable mImage_arb8 ""
+	variable mImage_arb8Labeled ""
 	variable mImage_arb8Inter ""
 	variable mImage_arb8Sub ""
 	variable mImage_arb8Union ""
+	variable mImage_arb7Labeled ""
+	variable mImage_arb6Labeled ""
+	variable mImage_arb5Labeled ""
+	variable mImage_arb4Labeled ""
 	variable mImage_arbn ""
+	variable mImage_arbnLabeled ""
 	variable mImage_arbnInter ""
 	variable mImage_arbnSub ""
 	variable mImage_arbnUnion ""
 	variable mImage_ars ""
+	variable mImage_arsLabeled ""
 	variable mImage_arsInter ""
 	variable mImage_arsSub ""
 	variable mImage_arsUnion ""
 	variable mImage_bot ""
+	variable mImage_botLabeled ""
 	variable mImage_botInter ""
 	variable mImage_botSub ""
 	variable mImage_botUnion ""
 	variable mImage_dsp ""
+	variable mImage_dspLabeled ""
 	variable mImage_dspInter ""
 	variable mImage_dspSub ""
 	variable mImage_dspUnion ""
 	variable mImage_ehy ""
+	variable mImage_ehyLabeled ""
 	variable mImage_ehyInter ""
 	variable mImage_ehySub ""
 	variable mImage_ehyUnion ""
 	variable mImage_ell ""
+	variable mImage_ellLabeled ""
 	variable mImage_ellInter ""
 	variable mImage_ellSub ""
 	variable mImage_ellUnion ""
 	variable mImage_epa ""
+	variable mImage_epaLabeled ""
 	variable mImage_epaInter ""
 	variable mImage_epaSub ""
 	variable mImage_epaUnion ""
 	variable mImage_eto ""
+	variable mImage_etoLabeled ""
 	variable mImage_etoInter ""
 	variable mImage_etoSub ""
 	variable mImage_etoUnion ""
 	variable mImage_extrude ""
+	variable mImage_extrudeLabeled ""
 	variable mImage_extrudeInter ""
 	variable mImage_extrudeSub ""
 	variable mImage_extrudeUnion ""
 	variable mImage_half ""
+	variable mImage_halfLabeled ""
 	variable mImage_halfInter ""
 	variable mImage_halfSub ""
 	variable mImage_halfUnion ""
 	variable mImage_hyp ""
+	variable mImage_hypLabeled ""
 	variable mImage_hypInter ""
 	variable mImage_hypSub ""
 	variable mImage_hypUnion ""
@@ -588,10 +607,12 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_invalidSub ""
 	variable mImage_invalidUnion ""
 	variable mImage_metaball ""
+	variable mImage_metaballLabeled ""
 	variable mImage_metaballInter ""
 	variable mImage_metaballSub ""
 	variable mImage_metaballUnion ""
 	variable mImage_nmg ""
+	variable mImage_nmgLabeled ""
 	variable mImage_nmgInter ""
 	variable mImage_nmgSub ""
 	variable mImage_nmgUnion ""
@@ -599,31 +620,39 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_otherInter ""
 	variable mImage_otherSub ""
 	variable mImage_otherUnion ""
+	variable mImage_partLabeled ""
 	variable mImage_pipe ""
+	variable mImage_pipeLabeled ""
 	variable mImage_pipeInter ""
 	variable mImage_pipeSub ""
 	variable mImage_pipeUnion ""
 	variable mImage_rhc ""
+	variable mImage_rhcLabeled ""
 	variable mImage_rhcInter ""
 	variable mImage_rhcSub ""
 	variable mImage_rhcUnion ""
 	variable mImage_rpc ""
+	variable mImage_rpcLabeled ""
 	variable mImage_rpcInter ""
 	variable mImage_rpcSub ""
 	variable mImage_rpcUnion ""
 	variable mImage_sketch ""
+	variable mImage_sketchLabeled ""
 	variable mImage_sketchInter ""
 	variable mImage_sketchSub ""
 	variable mImage_sketchUnion ""
 	variable mImage_sph ""
+	variable mImage_sphLabeled ""
 	variable mImage_sphInter ""
 	variable mImage_sphSub ""
 	variable mImage_sphUnion ""
 	variable mImage_tgc ""
+	variable mImage_tgcLabeled ""
 	variable mImage_tgcInter ""
 	variable mImage_tgcSub ""
 	variable mImage_tgcUnion ""
 	variable mImage_tor ""
+	variable mImage_torLabeled ""
 	variable mImage_torInter ""
 	variable mImage_torSub ""
 	variable mImage_torUnion ""
@@ -1447,6 +1476,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::initTreeImages {} {
     set mImage_air [image create photo -file [file join $mImgDir air.png]]
+    set mImage_airLabeled [image create photo -file [file join $mImgDir air_labeled.png]]
     set mImage_airInter [image create photo -file [file join $mImgDir air_intersect.png]]
     set mImage_airSub [image create photo -file [file join $mImgDir air_subtract.png]]
     set mImage_airUnion [image create photo -file [file join $mImgDir air_union.png]]
@@ -1457,71 +1487,90 @@ Popup Menu    Right or Ctrl-Left
     set mImage_airregionUnion [image create photo -file [file join $mImgDir airregion_union.png]]
 
     set mImage_comb [image create photo -file [file join $mImgDir comb.png]]
+    set mImage_combLabeled [image create photo -file [file join $mImgDir comb_labeled.png]]
     set mImage_combInter [image create photo -file [file join $mImgDir comb_intersect.png]]
     set mImage_combSub [image create photo -file [file join $mImgDir comb_subtract.png]]
     set mImage_combUnion [image create photo -file [file join $mImgDir comb_union.png]]
 
     set mImage_region [image create photo -file [file join $mImgDir region.png]]
+    set mImage_regionLabeled [image create photo -file [file join $mImgDir region_labeled.png]]
     set mImage_regionInter [image create photo -file [file join $mImgDir region_intersect.png]]
     set mImage_regionSub [image create photo -file [file join $mImgDir region_subtract.png]]
     set mImage_regionUnion [image create photo -file [file join $mImgDir region_union.png]]
 
     set mImage_arb8 [image create photo -file [file join $mImgDir arb8.png]]
+    set mImage_arb8Labeled [image create photo -file [file join $mImgDir arb8_labeled.png]]
     set mImage_arb8Inter [image create photo -file [file join $mImgDir arb8_intersect.png]]
     set mImage_arb8Sub [image create photo -file [file join $mImgDir arb8_subtract.png]]
     set mImage_arb8Union [image create photo -file [file join $mImgDir arb8_union.png]]
 
+    set mImage_arb7Labeled [image create photo -file [file join $mImgDir arb7_labeled.png]]
+    set mImage_arb6Labeled [image create photo -file [file join $mImgDir arb6_labeled.png]]
+    set mImage_arb5Labeled [image create photo -file [file join $mImgDir arb5_labeled.png]]
+    set mImage_arb4Labeled [image create photo -file [file join $mImgDir arb4_labeled.png]]
+
     set mImage_arbn [image create photo -file [file join $mImgDir arbn.png]]
+    set mImage_arbnLabeled [image create photo -file [file join $mImgDir arbn_labeled.png]]
     set mImage_arbnInter [image create photo -file [file join $mImgDir arbn_intersect.png]]
     set mImage_arbnSub [image create photo -file [file join $mImgDir arbn_subtract.png]]
     set mImage_arbnUnion [image create photo -file [file join $mImgDir arbn_union.png]]
 
     set mImage_ars [image create photo -file [file join $mImgDir ars.png]]
+    set mImage_arsLabeled [image create photo -file [file join $mImgDir ars_labeled.png]]
     set mImage_arsInter [image create photo -file [file join $mImgDir ars_intersect.png]]
     set mImage_arsSub [image create photo -file [file join $mImgDir ars_subtract.png]]
     set mImage_arsUnion [image create photo -file [file join $mImgDir ars_union.png]]
 
     set mImage_bot [image create photo -file [file join $mImgDir bot.png]]
+    set mImage_botLabeled [image create photo -file [file join $mImgDir bot_labeled.png]]
     set mImage_botInter [image create photo -file [file join $mImgDir bot_intersect.png]]
     set mImage_botSub [image create photo -file [file join $mImgDir bot_subtract.png]]
     set mImage_botUnion [image create photo -file [file join $mImgDir bot_union.png]]
 
     set mImage_dsp [image create photo -file [file join $mImgDir dsp.png]]
+    set mImage_dspLabeled [image create photo -file [file join $mImgDir dsp_labeled.png]]
     set mImage_dspInter [image create photo -file [file join $mImgDir dsp_intersect.png]]
     set mImage_dspSub [image create photo -file [file join $mImgDir dsp_subtract.png]]
     set mImage_dspUnion [image create photo -file [file join $mImgDir dsp_union.png]]
 
     set mImage_ehy [image create photo -file [file join $mImgDir ehy.png]]
+    set mImage_ehyLabeled [image create photo -file [file join $mImgDir ehy_labeled.png]]
     set mImage_ehyInter [image create photo -file [file join $mImgDir ehy_intersect.png]]
     set mImage_ehySub [image create photo -file [file join $mImgDir ehy_subtract.png]]
     set mImage_ehyUnion [image create photo -file [file join $mImgDir ehy_union.png]]
 
     set mImage_ell [image create photo -file [file join $mImgDir ell.png]]
+    set mImage_ellLabeled [image create photo -file [file join $mImgDir ell_labeled.png]]
     set mImage_ellInter [image create photo -file [file join $mImgDir ell_intersect.png]]
     set mImage_ellSub [image create photo -file [file join $mImgDir ell_subtract.png]]
     set mImage_ellUnion [image create photo -file [file join $mImgDir ell_union.png]]
 
     set mImage_epa [image create photo -file [file join $mImgDir epa.png]]
+    set mImage_epaLabeled [image create photo -file [file join $mImgDir epa_labeled.png]]
     set mImage_epaInter [image create photo -file [file join $mImgDir epa_intersect.png]]
     set mImage_epaSub [image create photo -file [file join $mImgDir epa_subtract.png]]
     set mImage_epaUnion [image create photo -file [file join $mImgDir epa_union.png]]
 
     set mImage_eto [image create photo -file [file join $mImgDir eto.png]]
+    set mImage_etoLabeled [image create photo -file [file join $mImgDir eto_labeled.png]]
     set mImage_etoInter [image create photo -file [file join $mImgDir eto_intersect.png]]
     set mImage_etoSub [image create photo -file [file join $mImgDir eto_subtract.png]]
     set mImage_etoUnion [image create photo -file [file join $mImgDir eto_union.png]]
 
     set mImage_extrude [image create photo -file [file join $mImgDir extrude.png]]
+    set mImage_extrudeLabeled [image create photo -file [file join $mImgDir extrude_labeled.png]]
     set mImage_extrudeInter [image create photo -file [file join $mImgDir extrude_intersect.png]]
     set mImage_extrudeSub [image create photo -file [file join $mImgDir extrude_subtract.png]]
     set mImage_extrudeUnion [image create photo -file [file join $mImgDir extrude_union.png]]
 
     set mImage_half [image create photo -file [file join $mImgDir half.png]]
+    set mImage_halfLabeled [image create photo -file [file join $mImgDir half_labeled.png]]
     set mImage_halfInter [image create photo -file [file join $mImgDir half_intersect.png]]
     set mImage_halfSub [image create photo -file [file join $mImgDir half_subtract.png]]
     set mImage_halfUnion [image create photo -file [file join $mImgDir half_union.png]]
 
     set mImage_hyp [image create photo -file [file join $mImgDir hyp.png]]
+    set mImage_hypLabeled [image create photo -file [file join $mImgDir hyp_labeled.png]]
     set mImage_hypInter [image create photo -file [file join $mImgDir hyp_intersect.png]]
     set mImage_hypSub [image create photo -file [file join $mImgDir hyp_subtract.png]]
     set mImage_hypUnion [image create photo -file [file join $mImgDir hyp_union.png]]
@@ -1532,11 +1581,13 @@ Popup Menu    Right or Ctrl-Left
     set mImage_invalidUnion [image create photo -file [file join $mImgDir invalid_union.png]]
 
     set mImage_metaball [image create photo -file [file join $mImgDir metaball.png]]
+    set mImage_metaballLabeled [image create photo -file [file join $mImgDir metaball_labeled.png]]
     set mImage_metaballInter [image create photo -file [file join $mImgDir metaball_intersect.png]]
     set mImage_metaballSub [image create photo -file [file join $mImgDir metaball_subtract.png]]
     set mImage_metaballUnion [image create photo -file [file join $mImgDir metaball_union.png]]
 
     set mImage_nmg [image create photo -file [file join $mImgDir nmg.png]]
+    set mImage_nmgLabeled [image create photo -file [file join $mImgDir nmg_labeled.png]]
     set mImage_nmgInter [image create photo -file [file join $mImgDir nmg_intersect.png]]
     set mImage_nmgSub [image create photo -file [file join $mImgDir nmg_subtract.png]]
     set mImage_nmgUnion [image create photo -file [file join $mImgDir nmg_union.png]]
@@ -1546,37 +1597,46 @@ Popup Menu    Right or Ctrl-Left
     set mImage_otherSub [image create photo -file [file join $mImgDir other_subtract.png]]
     set mImage_otherUnion [image create photo -file [file join $mImgDir other_union.png]]
 
+    set mImage_partLabeled [image create photo -file [file join $mImgDir part_labeled.png]]
+
     set mImage_pipe [image create photo -file [file join $mImgDir pipe.png]]
+    set mImage_pipeLabeled [image create photo -file [file join $mImgDir pipe_labeled.png]]
     set mImage_pipeInter [image create photo -file [file join $mImgDir pipe_intersect.png]]
     set mImage_pipeSub [image create photo -file [file join $mImgDir pipe_subtract.png]]
     set mImage_pipeUnion [image create photo -file [file join $mImgDir pipe_union.png]]
 
     set mImage_rhc [image create photo -file [file join $mImgDir rhc.png]]
+    set mImage_rhcLabeled [image create photo -file [file join $mImgDir rhc_labeled.png]]
     set mImage_rhcInter [image create photo -file [file join $mImgDir rhc_intersect.png]]
     set mImage_rhcSub [image create photo -file [file join $mImgDir rhc_subtract.png]]
     set mImage_rhcUnion [image create photo -file [file join $mImgDir rhc_union.png]]
 
     set mImage_rpc [image create photo -file [file join $mImgDir rpc.png]]
+    set mImage_rpcLabeled [image create photo -file [file join $mImgDir rpc_labeled.png]]
     set mImage_rpcInter [image create photo -file [file join $mImgDir rpc_intersect.png]]
     set mImage_rpcSub [image create photo -file [file join $mImgDir rpc_subtract.png]]
     set mImage_rpcUnion [image create photo -file [file join $mImgDir rpc_union.png]]
 
     set mImage_sketch [image create photo -file [file join $mImgDir sketch.png]]
+    set mImage_sketchLabeled [image create photo -file [file join $mImgDir sketch_labeled.png]]
     set mImage_sketchInter [image create photo -file [file join $mImgDir sketch_intersect.png]]
     set mImage_sketchSub [image create photo -file [file join $mImgDir sketch_subtract.png]]
     set mImage_sketchUnion [image create photo -file [file join $mImgDir sketch_union.png]]
 
     set mImage_sph [image create photo -file [file join $mImgDir sph.png]]
+    set mImage_sphLabeled [image create photo -file [file join $mImgDir sph_labeled.png]]
     set mImage_sphInter [image create photo -file [file join $mImgDir sph_intersect.png]]
     set mImage_sphSub [image create photo -file [file join $mImgDir sph_subtract.png]]
     set mImage_sphUnion [image create photo -file [file join $mImgDir sph_union.png]]
 
     set mImage_tgc [image create photo -file [file join $mImgDir tgc.png]]
+    set mImage_tgcLabeled [image create photo -file [file join $mImgDir tgc_labeled.png]]
     set mImage_tgcInter [image create photo -file [file join $mImgDir tgc_intersect.png]]
     set mImage_tgcSub [image create photo -file [file join $mImgDir tgc_subtract.png]]
     set mImage_tgcUnion [image create photo -file [file join $mImgDir tgc_union.png]]
 
     set mImage_tor [image create photo -file [file join $mImgDir tor.png]]
+    set mImage_torLabeled [image create photo -file [file join $mImgDir tor_labeled.png]]
     set mImage_torInter [image create photo -file [file join $mImgDir tor_intersect.png]]
     set mImage_torSub [image create photo -file [file join $mImgDir tor_subtract.png]]
     set mImage_torUnion [image create photo -file [file join $mImgDir tor_union.png]]
