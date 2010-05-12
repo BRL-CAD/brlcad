@@ -905,7 +905,7 @@ static struct go_cmdtab go_cmds[] = {
     {"vdraw",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_vdraw},
     {"version",	(char *)0, MAXARGS, go_pass_through_func, ged_version},
     {"view",	"quat|ypr|aet|center|eye|size [args]", 3, go_view_func, ged_view},
-    {"view_axes",	"???", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
+    {"view_axes",	"vname [args]", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
     {"view_win_size",	"[s] | [x y]", 4, go_view_win_size, GED_FUNC_PTR_NULL},
     {"view2model",	"vname", 2, go_view_func, ged_view2model},
     {"viewdir",	"[-i]", 3, go_view_func, ged_viewdir},
@@ -1447,7 +1447,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_enabled") == 0) {
+    if (strcmp(argv[2], "tick_enable") == 0) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
 	    return BRLCAD_OK;

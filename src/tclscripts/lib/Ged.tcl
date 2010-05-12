@@ -63,7 +63,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -modelAxesTripleColor modelAxesTripleColor AxesTripleColor 0
 
     itk_option define -modelAxesTickColor modelAxesTickColor AxesTickColor Yellow
-    itk_option define -modelAxesTickEnabled modelAxesTickEnabled AxesTickEnabled 1
+    itk_option define -modelAxesTickEnable modelAxesTickEnable AxesTickEnable 1
     itk_option define -modelAxesTickInterval modelAxesTickInterval AxesTickInterval 100
     itk_option define -modelAxesTickLength modelAxesTickLength AxesTickLength 4
     itk_option define -modelAxesTickMajorColor modelAxesTickMajorColor AxesTickMajorColor Red
@@ -772,8 +772,8 @@ package provide cadwidgets::Ged 1.0
     eval model_axes tick_color [get_rgb_color $itk_option(-modelAxesTickColor)]
 }
 
-::itcl::configbody cadwidgets::Ged::modelAxesTickEnabled {
-    model_axes tick_enabled $itk_option(-modelAxesTickEnabled)
+::itcl::configbody cadwidgets::Ged::modelAxesTickEnable {
+    model_axes tick_enable $itk_option(-modelAxesTickEnable)
 }
 
 ::itcl::configbody cadwidgets::Ged::modelAxesTickInterval {
@@ -1431,8 +1431,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::model_axes {args} {
     foreach dm {ur ul ll lr} {
-	eval $mGed model_axes $itk_component($dm) $args
+	set ret [eval $mGed model_axes $itk_component($dm) $args]
     }
+
+    return $ret
 }
 
 ::itcl::body cadwidgets::Ged::more_args_callback {args} {
@@ -2443,8 +2445,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::view_axes {args} {
     foreach dm {ur ul ll lr} {
-	eval $mGed view_axes $itk_component($dm) $args
+	set ret [eval $mGed view_axes $itk_component($dm) $args]
     }
+
+    return $ret
 }
 
 ::itcl::body cadwidgets::Ged::viewdir {args} {
