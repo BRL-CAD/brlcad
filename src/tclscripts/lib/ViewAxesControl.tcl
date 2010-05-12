@@ -94,7 +94,8 @@
 	return
     }
 
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {[catch {$itk_option(-mged) isa Mged} result] ||
+	[catch {$itk_option(-mged) isa cadwidgets::Ged} result]} {
 	error "The view axes control panel, $this, is not associated with an Mged object"
     }
 
@@ -322,19 +323,24 @@
     switch -- $pos {
 	default -
 	"Center" {
-	    $itk_option(-mged) setViewAxesPosition {0 0 0}
+	    $itk_option(-mged) configure -viewAxesPosition {0 0 0}
+#	    $itk_option(-mged) setViewAxesPosition {0 0 0}
 	}
 	"Upper Left" {
-	    $itk_option(-mged) setViewAxesPosition "-$offset $offset 0"
+	    $itk_option(-mged) configure -viewAxesPosition "-$offset $offset 0"
+#	    $itk_option(-mged) setViewAxesPosition "-$offset $offset 0"
 	}
 	"Upper Right" {
-	    $itk_option(-mged) setViewAxesPosition "$offset $offset 0"
+	    $itk_option(-mged) configure -viewAxesPosition "$offset $offset 0"
+#	    $itk_option(-mged) setViewAxesPosition "$offset $offset 0"
 	}
 	"Lower Left" {
-	    $itk_option(-mged) setViewAxesPosition "-$offset -$offset 0"
+	    $itk_option(-mged) configure -viewAxesPosition "-$offset -$offset 0"
+#	    $itk_option(-mged) setViewAxesPosition "-$offset -$offset 0"
 	}
 	"Lower Right" {
-	    $itk_option(-mged) setViewAxesPosition "$offset -$offset 0"
+	    $itk_option(-mged) configure -viewAxesPosition "$offset -$offset 0"
+#	    $itk_option(-mged) setViewAxesPosition "$offset -$offset 0"
 	}
     }
 }
