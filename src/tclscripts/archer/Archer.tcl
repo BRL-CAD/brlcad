@@ -4515,6 +4515,9 @@ proc title_node_handler {node} {
 	    "Viewing Parameters" {
 		set mStatusStr "Hide/Show viewing parameters"
 	    }
+	    "Center Dot" {
+		set mStatusStr "Hide/Show the center dot"
+	    }
 	    "Scale" {
 		set mStatusStr "Hide/Show view scale"
 	    }
@@ -5391,6 +5394,8 @@ proc title_node_handler {node} {
 		-helpstr "Toggle display of the primitive labels."
 	    checkbutton vparams -label "Viewing Parameters" \
 		-helpstr "Toggle display of the viewing parameters."
+	    checkbutton cdot -label "Center Dot" \
+		-helpstr "Toggle display of the center dot."
 	    checkbutton scale -label "Scale" \
 		-helpstr "Toggle display of the view scale."
 	    checkbutton light -label "Lighting" \
@@ -5459,6 +5464,12 @@ proc title_node_handler {node} {
 	-onvalue 1 \
 	-variable [::itcl::scope mShowViewingParams] \
 	-command [::itcl::code $this showViewParams] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.cdot \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowCenterDot] \
+	-command [::itcl::code $this showCenterDot] \
 	-state disabled
     $itk_component(menubar) menuconfigure .modes.scale \
 	-offvalue 0 \
@@ -5652,6 +5663,13 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this showViewParams] \
 	-state disabled
     $itk_component(${_prefix}modesmenu) add checkbutton \
+	-label "Center Dot" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowCenterDot] \
+	-command [::itcl::code $this showCenterDot] \
+	-state disabled
+    $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Scale" \
 	-offvalue 0 \
 	-onvalue 1 \
@@ -5716,6 +5734,7 @@ proc title_node_handler {node} {
 		$itk_component(${prefix}modesmenu) entryconfigure "Ground Plane" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Primitive Labels" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Viewing Parameters" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Center Dot" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Scale" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Lighting" -state normal
 		$itk_component(${prefix}modesmenu) entryconfigure "Grid" -state normal
@@ -5744,6 +5763,7 @@ proc title_node_handler {node} {
 	    $itk_component(menubar) menuconfigure .modes.gplane -state normal
 	    $itk_component(menubar) menuconfigure .modes.plabels -state normal
 	    $itk_component(menubar) menuconfigure .modes.vparams -state normal
+	    $itk_component(menubar) menuconfigure .modes.cdot -state normal
 	    $itk_component(menubar) menuconfigure .modes.scale -state normal
 	    $itk_component(menubar) menuconfigure .modes.light -state normal
 	    $itk_component(menubar) menuconfigure .modes.grid -state normal

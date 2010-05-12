@@ -327,6 +327,7 @@ namespace eval ArcherCore {
 	variable mShowGrid 0
 	variable mSnapGrid 0
 	variable mShowADC 0
+	variable mShowCenterDot 1
 
 	# variables for preference state
 	variable mEnableAffectedNodeHighlight 0
@@ -502,6 +503,7 @@ Popup Menu    Right or Ctrl-Left
 	method showPrimitiveLabels {}
 	method showViewParams {}
 	method showScale {}
+	method showCenterDot {}
 
 	# pane commands
 	method updateToggleMode {}
@@ -1656,6 +1658,7 @@ Popup Menu    Right or Ctrl-Left
 	    -sashcursor sb_v_double_arrow \
 	    -hsashcursor sb_h_double_arrow \
 	    -showViewingParams $mShowViewingParams \
+	    -centerDotEnable $mShowCenterDot \
 	    -multi_pane $mMultiPane
     } {
 	keep -sashwidth -sashheight -sashborderwidth
@@ -4288,6 +4291,11 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::showScale {} {
     $itk_component(ged) configure -scaleEnable $mShowScale
+    refreshDisplay
+}
+
+::itcl::body ArcherCore::showCenterDot {} {
+    $itk_component(ged) configure -centerDotEnable $mShowCenterDot
     refreshDisplay
 }
 
