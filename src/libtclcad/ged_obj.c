@@ -8161,31 +8161,7 @@ go_close_fbs(struct ged_dm_view *gdvp)
 	return TCL_OK;
 
     fb_flush(gdvp->gdv_fbs.fbs_fbp);
-
-    switch (gdvp->gdv_dmp->dm_type) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    X24_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_TK
-/* XXX TJM: not ready yet
-   case DM_TYPE_TK:
-   tk_close_existing(gdvp->gdv_fbs.fbs_fbp);
-   break;
-*/
-#endif
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    ogl_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-    }
+    fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
 
     /* free framebuffer memory */
     if (gdvp->gdv_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
