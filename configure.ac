@@ -308,7 +308,7 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
 
 # togl
-BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [yes])
+BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
 
 # tkpng 
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
@@ -681,9 +681,6 @@ if test "x$set_everything" != "x" ; then
 	fi
 	if test "x$bc_build_tkhtml3" = "xno" ; then
 		bc_build_tkhtml3="$set_everything"
-	fi
-	if test "x$bc_build_togl" = "xno" ; then
-		bc_build_togl="$set_everything"
 	fi
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
@@ -3881,6 +3878,8 @@ AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 # XXX need to refactor the above fb/dm interfaces to have a better
 # separation of their external 'with' deps and the interfaces
 AM_CONDITIONAL(BUILD_RTGL, [test "x$build_rtgl" = "xyes"])
+
+AM_CONDITIONAL(WITH_TOGL, [test "x$build_togl" = "xyes"])
 
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])

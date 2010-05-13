@@ -12,6 +12,12 @@ else
 ON_NIL =
 endif
 
+if BUILD_TOGL
+ISSTDIR = isst
+else
+ISSTDIR =
+endif
+
 if BUILD_BOOST
 PCDIR = libpc
 else
@@ -73,7 +79,7 @@ kitchensink_dirs = \
 	gtools \
 	halftone \
 	irprep \
-	isst \
+	${ISST} \
 	java \
 	lgt \
 	mged \
@@ -131,6 +137,7 @@ endif
 
 DIST_SUBDIRS= \
 	other \
+	isst \
 	libbu \
 	libbn \
 	libsysv \
