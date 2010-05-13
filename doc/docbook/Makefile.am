@@ -117,7 +117,7 @@ EXTRA_DIST = \
 	system/man1/mged_cmd_template.xml \
 	system/man3/en/Makefile.am \
 	system/man3/mged_cmd_template.xml \
-	system/man5/en/Makefile.am
+	system/man5/en/Makefile.am \
 	system/mann/en/Makefile.am
 
 include $(top_srcdir)/misc/Makefile.defs
