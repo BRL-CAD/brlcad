@@ -96,7 +96,7 @@
 		 <entry>Yes, R or 1</entry>
                </row>
       	       <row>
-		 <entry>Region ID Number</entry>
+		 <entry>Region Identifier Number</entry>
 	         <entry>region_id</entry>
 	         <entry>REGION_ID</entry>
 	         <entry>id</entry>
@@ -105,7 +105,7 @@
 		 <entry>-1, 0, and positive integers</entry>
                </row>
                <row>
-		 <entry>Material ID Number</entry>
+		 <entry>Material Identifier Number</entry>
 	         <entry>material_id</entry>
 	         <entry>MATERIAL_ID</entry>
 	         <entry>GIFTmater</entry>
@@ -114,7 +114,7 @@
 		 <entry>0 and positive integers</entry>
                </row>
                <row>
-		 <entry>Air Flag</entry>
+		 <entry>Air Code</entry>
 	         <entry>air</entry>
 	         <entry>AIR</entry>
 	         <entry>AIRCODE</entry>
@@ -123,7 +123,7 @@
 		 <entry>0 or 1</entry>
                </row>
                <row>
-		 <entry>Line Of Sight</entry>
+		 <entry>Line Of Sight Thickness Equivalence</entry>
 	         <entry>los</entry>
 	         <entry>LOS</entry>
 	         <entry></entry>
@@ -132,6 +132,7 @@
                </row>
                <row>
 		 <entry>Color (Red Green Blue)</entry>
+	         <entry>color</entry>
 	         <entry>rgb</entry>
 	         <entry>RGB</entry>
 	         <entry>COLOR</entry>

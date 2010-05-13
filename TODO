@@ -56,6 +56,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement namespacing for attributes as a means to group attributes
+  together.  this can predominantly be a naming convention, but
+  requires awareness in the attribute-searching routines to search
+  without the namespace unless one is specified, and to reserve :: in
+  attribute names unless they're quoted.
+
 * clean up default attributes to be consistent and upgrade old
   attributes to their new names.  includes likes of region, region_id,
   material_id, air, los, rgb, oshader, and inherit.  see
