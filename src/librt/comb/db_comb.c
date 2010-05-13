@@ -100,7 +100,7 @@ db_comb_mat_categorize(const fastf_t *matp)
  *
  * Return count of number of leaf nodes in this tree.
  */
-int
+size_t
 db_tree_nleaves(const union tree *tp)
 {
     if (tp == TREE_NULL) return 0;
@@ -135,7 +135,7 @@ db_tree_nleaves(const union tree *tp)
 	    bu_log("db_tree_nleaves: bad op %d\n", tp->tr_op);
 	    bu_bomb("db_tree_nleaves\n");
     }
-    return(-1);	/* for the compiler */
+    return 0;	/* for the compiler */
 }
 
 

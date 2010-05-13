@@ -2798,8 +2798,7 @@ RT_EXPORT BU_EXTERN(int db5_get_attributes,
 		     const struct directory *dp));
 
 /* db_comb.c */
-RT_EXPORT BU_EXTERN(int db_tree_nleaves,
-		    (const union tree *tp));
+RT_EXPORT BU_EXTERN(size_t db_tree_nleaves, (const union tree *tp));
 RT_EXPORT BU_EXTERN(struct rt_tree_array *db_flatten_tree,
 		    (struct rt_tree_array	*rt_tree_array,
 		     union tree			*tp,
