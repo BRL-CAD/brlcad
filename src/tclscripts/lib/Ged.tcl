@@ -259,6 +259,7 @@ package provide cadwidgets::Ged 1.0
 	method nmg_simplify {args}
 	method ocenter {args}
 	method open {args}
+	method opendb {args}
 	method orient {args}
 	method orotate {args}
 	method orotate_mode {args}
@@ -1538,6 +1539,10 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::open {args} {
+    set $mGedFile [eval $mGed open $args]
+}
+
+::itcl::body cadwidgets::Ged::opendb {args} {
     set $mGedFile [eval $mGed open $args]
 }
 
