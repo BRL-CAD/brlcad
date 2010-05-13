@@ -917,7 +917,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	return TCL_ERROR;
     }
 
-    fbsp->fbs_listener.fbsl_port = port;
+    fbsp->fbs_listener.fbsl_port = available_port;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (ClientData *)&fbsp->fbs_listener.fbsl_fd);
