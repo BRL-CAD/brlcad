@@ -1026,7 +1026,7 @@ initialize ( ) {
 	    $ECHO "coding standards were not found.  The files were automatically added"
 	    $ECHO "for you since you do not have a 'foreign' declaration specified."
 	    $ECHO
-	    $ECHO "Considered adding 'foreign' to AM_INIT_AUTOMAKE in `basename \"$CONFIGURE\"`"
+	    $ECHO "Consider adding 'foreign' to AM_INIT_AUTOMAKE in `basename \"$CONFIGURE\"`"
 	    if test -f "`dirname \"$CONFIGURE\"/Makefile.am`" ; then
 		$ECHO "or to AUTOMAKE_OPTIONS in your top-level Makefile.am file."
 	    fi
