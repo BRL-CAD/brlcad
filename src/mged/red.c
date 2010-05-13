@@ -230,8 +230,8 @@ count_nodes(char *line)
 }
 
 
-static int
-make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
+HIDDEN int
+make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
 {
     struct rt_db_internal intern;
     union tree *final_tree;
@@ -304,7 +304,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 HIDDEN int
 put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str)
 {
-    int i;
+    size_t i;
     int done;
     char *line;
     char *ptr;
@@ -312,7 +312,7 @@ put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *ol
     char *name;
     struct rt_tree_array *rt_tree_array;
     struct line_list *llp;
-    int node_count = 0;
+    size_t node_count = 0;
     int tree_index = 0;
     union tree *tp;
     matp_t matrix;
@@ -479,9 +479,9 @@ cmd_get_comb(ClientData clientData,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct rt_tree_array *rt_tree_array;
-    int i;
-    int node_count;
-    int actual_count;
+    size_t i;
+    size_t node_count;
+    size_t actual_count;
     struct bu_vls vls;
 
     CHECK_DBI_NULL;
@@ -520,15 +520,9 @@ cmd_get_comb(ClientData clientData,
 
 	node_count = db_tree_nleaves(comb->tree);
 	if (node_count > 0) {
-	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
-							      sizeof(struct rt_tree_array),
-							      "tree list");
-	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array,
-								   comb->tree,
-								   OP_UNION,
-								   1,
-								   &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_LONG(actual_count, ==, node_count);
+	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    rt_tree_array = (struct rt_tree_array *)NULL;
@@ -633,9 +627,9 @@ writecomb(const struct rt_comb_internal *comb, const char *name)
     /* Writes the file for later editing */
     struct rt_tree_array *rt_tree_array;
     FILE *fp;
-    int i;
-    int node_count;
-    int actual_count;
+    size_t i;
+    size_t node_count;
+    size_t actual_count;
 
     if (comb)
 	RT_CK_COMB(comb);
@@ -671,12 +665,9 @@ writecomb(const struct rt_comb_internal *comb, const char *name)
     }
     node_count = db_tree_nleaves(comb->tree);
     if (node_count > 0) {
-	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
-							  sizeof(struct rt_tree_array), "tree list");
-	actual_count = (struct rt_tree_array *)db_flatten_tree(
-	    rt_tree_array, comb->tree, OP_UNION,
-	    0, &rt_uniresource) - rt_tree_array;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
 	actual_count = 0;
@@ -745,13 +736,14 @@ writecomb(const struct rt_comb_internal *comb, const char *name)
 }
 
 
-int
+/* !!! this function seems to be unused? */
+HIDDEN size_t
 checkcomb(void)
 {
     /* Do some minor checking of the edited file */
 
     FILE *fp;
-    int node_count=0;
+    size_t node_count=0;
     int nonsubs=0;
     int i, j, done, ch;
     int done2, first;
@@ -1018,7 +1010,9 @@ checkcomb(void)
 }
 
 
-int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name)
+/* !!! this function seems to be unused? */
+HIDDEN int
+build_comb(struct rt_comb_internal *comb, struct directory *dp, size_t node_count, char *old_name)
 {
     /* Build the new combination by adding to the recently emptied combination
        This keeps combo info associated with this combo intact */

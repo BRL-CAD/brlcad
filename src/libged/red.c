@@ -99,13 +99,13 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 }	
 	
 
-static int
+static size_t
 check_comb(struct ged *gedp)
 {
     /* Do some minor checking of the edited file */
 
     FILE *fp;
-    int node_count=0;
+    size_t node_count=0;
     int nonsubs=0;
     int i, j, done, ch;
     int done2, first;
@@ -352,7 +352,7 @@ check_comb(struct ged *gedp)
 
 
 int
-_ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, int node_count, const char *old_name, const char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
+_ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, size_t node_count, const char *old_name, const char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
 {
     struct rt_db_internal intern;
     union tree *final_tree;
@@ -419,8 +419,8 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 }
 
 
-static int
-build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name)
+HIDDEN int
+build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, size_t node_count, char *old_name)
 {
     /* Build the new combination by adding to the recently emptied combination
        This keeps combo info associated with this combo intact */
@@ -751,7 +751,7 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 }
 
 
-static int
+HIDDEN int
 write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *name)
 {
     /* Writes the file for later editing */
@@ -760,9 +760,9 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     struct bu_attribute_value_pair *avpp;
     struct directory *dp;
     FILE *fp;
-    int i;
-    int node_count;
-    int actual_count;
+    size_t i;
+    size_t node_count;
+    size_t actual_count;
 
     bu_avs_init_empty(&avs);
 
@@ -802,14 +802,9 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     }
     node_count = db_tree_nleaves(comb->tree);
     if (node_count > 0) {
-	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
-							  sizeof(struct rt_tree_array), "tree list");
-	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array,
-							       comb->tree,
-							       OP_UNION,
-							       0,
-							       &rt_uniresource) - rt_tree_array;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
 	actual_count = 0;
@@ -997,7 +992,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    int node_count;
+    size_t node_count;
     static const char *usage = "comb";
     const char *editstring;
 

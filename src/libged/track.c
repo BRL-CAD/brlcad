@@ -971,8 +971,8 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
     struct wmember *wp;
     union tree *tp;
     struct rt_tree_array *tree_list;
-    int node_count;
-    int actual_count;
+    size_t node_count;
+    size_t actual_count;
     int new_nodes;
 
     if ( (new_nodes = bu_list_len( member_hd )) <= 0 )
@@ -990,8 +990,7 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 
     /* make space for an extra leaf */
     node_count = db_tree_nleaves( comb->tree );
-    tree_list = (struct rt_tree_array *)bu_calloc( node_count + new_nodes,
-						   sizeof( struct rt_tree_array ), "tree list" );
+    tree_list = (struct rt_tree_array *)bu_calloc(node_count + (size_t)new_nodes, sizeof( struct rt_tree_array ), "tree list" );
 
     /* flatten tree */
     if ( comb->tree )  {
@@ -999,7 +998,7 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	actual_count = (struct rt_tree_array *)db_flatten_tree(
 	    tree_list, comb->tree, OP_UNION,
 	    1, &rt_uniresource ) - tree_list;
-	BU_ASSERT_LONG( actual_count, ==, node_count );
+	BU_ASSERT_SIZE_T( actual_count, ==, node_count );
 	comb->tree = TREE_NULL;
     } else {
 	actual_count = 0;
@@ -1036,10 +1035,10 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	    tp->tr_l.tl_mat = (matp_t)NULL;
 	}
     }
-    BU_ASSERT_LONG( node_count, ==, actual_count + new_nodes );
+    BU_ASSERT_SIZE_T(node_count, ==, actual_count + (size_t)new_nodes);
 
     /* rebuild the tree with GIFT semantics */
-    comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
 
     bu_free( (char *)tree_list, "track_mk_tree_gift: tree_list" );
 

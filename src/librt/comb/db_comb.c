@@ -313,7 +313,7 @@ rt_comb_import4(
 	}
     }
     if (node_count)
-	tree = db_mkgift_tree(rt_tree_array, (long)node_count, &rt_uniresource);
+	tree = db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
     else
 	tree = (union tree *)NULL;
 
@@ -1102,15 +1102,19 @@ db_mkbool_tree(
  * D B _ M K G I F T _ T R E E
  */
 union tree *
-db_mkgift_tree(struct rt_tree_array *trees, long subtreecount, struct resource *resp)
+db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource *resp)
 {
     struct rt_tree_array *tstart;
     struct rt_tree_array *tnext;
     union tree *curtree;
     long i;
     long j;
+    long treecount;
 
     RT_CK_RESOURCE(resp);
+
+    BU_ASSERT_SIZE_T(subtreecount, <, LONG_MAX);
+    treecount = (long)subtreecount;
 
     /*
      * This is how GIFT interpreted equations, so it is duplicated here.
@@ -1123,12 +1127,16 @@ db_mkgift_tree(struct rt_tree_array *trees, long subtreecount, struct resource *
      */
     tstart = trees;
     tnext = trees+1;
-    for (i=subtreecount-1; i>=0; i--, tnext++) {
+    for (i=treecount-1; i>=0; i--, tnext++) {
 	/* If we went off end, or hit a union, do it */
+
 	if (i>0 && tnext->tl_op != OP_UNION)
 	    continue;
-	if ((j = tnext-tstart) <= 0)
+
+	j = tnext-tstart;
+	if (j <= 0)
 	    continue;
+
 	curtree = db_mkbool_tree(tstart, (size_t)j, resp);
 	/* db_mkbool_tree() has side effect of zapping tree array,
 	 * so build new first node in array.
@@ -1145,7 +1153,7 @@ db_mkgift_tree(struct rt_tree_array *trees, long subtreecount, struct resource *
 	tstart = tnext;
     }
 
-    curtree = db_mkbool_tree(trees, (size_t)subtreecount, resp);
+    curtree = db_mkbool_tree(trees, subtreecount, resp);
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	bu_log("db_mkgift_tree() returns:\n");
 	rt_pr_tree(curtree, 0);

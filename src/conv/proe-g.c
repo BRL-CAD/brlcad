@@ -955,7 +955,8 @@ Rm_nulls(void)
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	int j;
-	int node_count, actual_count;
+	size_t node_count;
+	size_t actual_count;
 	int changed=0;
 
 	/* skip solids */
@@ -984,7 +985,7 @@ Rm_nulls(void)
 	    tree_list = (struct rt_tree_array *)bu_calloc(node_count,
 							  sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-	    BU_ASSERT_LONG(actual_count, ==, node_count);
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	} else {
 	    tree_list = (struct rt_tree_array *)NULL;
 	    actual_count = 0;
