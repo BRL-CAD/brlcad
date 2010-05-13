@@ -3934,10 +3934,12 @@ OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
 PC='${top_builddir}/src/libpc/libpc.la'
 PKG='${top_builddir}/src/libpkg/libpkg.la'
+RENDER ='${top_builddir}/src/adrt/librender.la'
 RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
 TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
+TIE='${top_builddir}/src/adrt/libtie.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
@@ -3998,10 +4000,12 @@ AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
 AC_SUBST(PC)
+AC_SUBST(RENDER)
 AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
 AC_SUBST(TERMIO)
+AC_SUBST(TIE)
 AC_SUBST(WDB)
 AC_SUBST(BRLCAD)
 
