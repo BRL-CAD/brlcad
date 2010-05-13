@@ -49,6 +49,8 @@
 
 #include "./fbserv.h"
 
+HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
+
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 
@@ -190,7 +192,7 @@ fbserv_new_client(struct pkg_conn *pcp,
 	return;
 
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	Clientdata fd;
+	ClientData fd;
 	if (clients[i].c_fd != 0)
 	    continue;
 
@@ -251,7 +253,7 @@ fbserv_set_port(void)
 
     /* Check to see if previously active --- if so then deactivate */
     if (netchan != NULL) {
-	Clientdata fd;
+	ClientData fd;
 
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
