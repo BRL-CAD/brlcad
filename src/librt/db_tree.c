@@ -1524,7 +1524,7 @@ db_free_tree(union tree *tp, struct resource *resp)
      * Before recursion, smash the magic number, so that if another
      * thread tries to free this same tree, they will fail.
      */
-    tp->magic = -3;		/* special bad flag */
+    tp->magic = (unsigned long)-3;		/* special bad flag */
 
     switch (tp->tr_op) {
 	case OP_FREE :
@@ -2088,8 +2088,8 @@ struct db_walk_parallel_state {
     union tree **reg_trees;
     int reg_count;
     int reg_current;		/* semaphored when parallel */
-    union tree * (*reg_end_func)();
-    union tree * (*reg_leaf_func)();
+    union tree * (*reg_end_func)(struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t);
+    union tree * (*reg_leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *);
     struct rt_i *rtip;
     genptr_t client_data;
 };
