@@ -32,7 +32,6 @@ proc ::isst::drawview {win {tick 100} } {
 #    bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
 #    bind $win <B1-Motion> {::isst::RotMove %x %y %W}
     load_g $win /usr/brlcad/rel-7.16.2/share/brlcad/7.16.2/db/ktank.g tank
-    refresh_ogl %W
     pack $win -expand true -fill both
 }
 
