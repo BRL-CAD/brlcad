@@ -57,9 +57,9 @@
 #define TOL2 0.00001
 
 
-extern int getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
+BU_EXTERN int getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
 
-bool
+BU_EXTERN bool
 ON_NearZero(double x, double tolerance) {
     return (x > -tolerance) && (x < tolerance);
 }
