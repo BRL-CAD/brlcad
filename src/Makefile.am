@@ -12,7 +12,7 @@ else
 ON_NIL =
 endif
 
-if WITH_TOGL 
+if BUILD_TOGL 
 ISSTDIR = isst
 else
 ISSTDIR =

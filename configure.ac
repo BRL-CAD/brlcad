@@ -3879,8 +3879,6 @@ AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 # separation of their external 'with' deps and the interfaces
 AM_CONDITIONAL(BUILD_RTGL, [test "x$build_rtgl" = "xyes"])
 
-AM_CONDITIONAL(WITH_TOGL, [test "x$build_togl" = "xyes"])
-
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
