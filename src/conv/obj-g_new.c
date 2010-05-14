@@ -245,8 +245,7 @@ void cleanup_name(struct bu_vls *outputObjectName_ptr) {
 }
 
 /* compare function for bsearch for triangle indexes */
-/* compare function for qsort for fuse_vertex_normal_texture for
-   vertex_index_list, normal_index_list and texture_vertex_index_list */
+/* compare function for qsort for function 'remove_duplicates' */
 static int comp_b(const void *p1, const void *p2) {
    size_t i = * (size_t *) p1;
    size_t j = * (size_t *) p2;
@@ -1302,6 +1301,48 @@ int create_bot_int_arrays(struct ti_t *ti) {
     return 0; /* return success */
 }
 
+/* remove duplicates from list. count is updated to indicate the
+   new size of list after duplicates are removed. the original
+   input array is freed and the new unique array is returned in
+   its place. the new returned array will be sorted */
+remove_duplicates_and_sort(size_t **list, size_t *count) {
+    size_t last = 0;
+    size_t idx = 0;
+    size_t idx2 = 0;
+    size_t unique_count = 0;
+    size_t *unique_arr = (size_t *)NULL;
+
+    qsort(*list, *count, sizeof(size_t), (int (*)(const void *a, const void *b))comp_b);
+
+    /* process list */
+    /* count sorted and unique list elements */
+    last = (*list)[0];
+    unique_count = 1;
+    for (idx = 1; idx < *count ; ++idx)
+        if ((*list)[idx] != last) {
+            last = (*list)[idx];
+            unique_count++;
+        }
+
+    /* allocate unique array */
+    unique_arr = (size_t *)bu_calloc(unique_count, sizeof(size_t), "unique_arr");
+
+    /* store unique array */
+    idx2 = 0;
+    last = (*list)[0];
+    unique_arr[idx2] = last;
+    for (idx = 1; idx < *count ; ++idx)
+        if ((*list)[idx] != last) {
+            last = (*list)[idx];
+            idx2++;
+            unique_arr[idx2] = last;
+        }
+
+    bu_free(*list, "*list");
+    *list = unique_arr;
+    *count = unique_count;
+}
+
 int fuse_vertex_normal_texture(struct ga_t *ga,
                                struct gfi_t *gfi,
                                struct rt_wdb *outfp, 
@@ -1417,10 +1458,21 @@ int fuse_vertex_normal_texture(struct ga_t *ga,
     gfi->num_vertex_fuse = max_vert_idx - min_vert_idx + 1;
     gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse, sizeof(size_t), "gfi->vertex_fuse_map");
     gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse, sizeof(short int), "gfi->vertex_fuse_flag");
+    /* initialize arrays */
+    for (idx1 = 0 ; idx1 < gfi->num_vertex_fuse ; idx1++) {
+        gfi->vertex_fuse_map[idx1] = 0;
+        gfi->vertex_fuse_flag[idx1] = 0;
+    }
+
     if (gfi->face_type == FACE_NV || gfi->face_type == FACE_TNV) {
         gfi->num_normal_fuse = max_norm_idx - min_norm_idx + 1;
         gfi->normal_fuse_map = (size_t *)bu_calloc(gfi->num_normal_fuse, sizeof(size_t), "gfi->normal_fuse_map");
         gfi->normal_fuse_flag = (short int *)bu_calloc(gfi->num_normal_fuse, sizeof(short int), "gfi->normal_fuse_flag");
+        /* initialize arrays */
+        for (idx1 = 0 ; idx1 < gfi->num_normal_fuse ; idx1++) {
+            gfi->normal_fuse_map[idx1] = 0;
+            gfi->normal_fuse_flag[idx1] = 0;
+        }
     }
     if (gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) {
         gfi->num_texture_vertex_fuse = max_tex_vert_idx - min_tex_vert_idx + 1;
@@ -1428,14 +1480,12 @@ int fuse_vertex_normal_texture(struct ga_t *ga,
                                         sizeof(size_t), "gfi->texture_vertex_fuse_map");
         gfi->texture_vertex_fuse_flag = (short int *)bu_calloc(gfi->num_texture_vertex_fuse,
                                          sizeof(short int), "gfi->texture_vertex_fuse_flag");
+        /* initialize arrays */
+        for (idx1 = 0 ; idx1 < gfi->num_texture_vertex_fuse ; idx1++) {
+            gfi->texture_vertex_fuse_map[idx1] = 0;
+            gfi->texture_vertex_fuse_flag[idx1] = 0;
+        }
     }
-
-    /* sort the index lists */
-    qsort(vertex_index_list, num_index_list, sizeof(size_t), (int (*)(const void *a, const void *b))comp_b);
-    if (gfi->face_type == FACE_NV || gfi->face_type == FACE_TNV)
-        qsort(normal_index_list, num_index_list, sizeof(size_t), (int (*)(const void *a, const void *b))comp_b);
-    if (gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV)
-        qsort(texture_vertex_index_list, num_index_list, sizeof(size_t), (int (*)(const void *a, const void *b))comp_b);
 
     /* initialize unique counts, these will be reduced
        as duplicates are removed from the lists */
@@ -1443,19 +1493,70 @@ int fuse_vertex_normal_texture(struct ga_t *ga,
     num_unique_normal_index_list = num_index_list;
     num_unique_texture_vertex_index_list = num_index_list;
 
-    /* remove duplicate indexes from vertex_index_list */
-    /* this method is slower than a second array but saves memory */
-    for ( idx1 = 0 ; idx1 < num_unique_vertex_index_list; idx1++ ) {
-        idx2 = idx1 + 1;
-        while (idx2 < num_unique_vertex_index_list)
-            if (vertex_index_list[idx1] == vertex_index_list[idx2]) {
-                num_unique_vertex_index_list--;
-                for (idx3 = idx2 ; idx3 < num_unique_vertex_index_list ; idx3++)
-                    vertex_index_list[idx3] = vertex_index_list[idx3 + 1];
-            } else
-                idx2++;
-    }
+#if 0
+    for (idx1 = 0 ; idx1 < num_index_list ; idx1++ )
+        bu_log("non-unique sorted vertex_index_list[idx1] = (%lu)\n", vertex_index_list[idx1]);
+    bu_log("num non-unique sorted vertex_index_list[idx1] = (%lu)\n", num_index_list);
+#endif
 
+    /* remove duplicates from lists and return a sorted list */
+    /* pass in the number of elements in the non-unique array and 
+       receive the number of element in the unique array, a new 
+       list is created and passed back by this function. the new
+       list will be returned sorted */
+    remove_duplicates_and_sort(&vertex_index_list, &num_unique_vertex_index_list);
+    if (gfi->face_type == FACE_NV || gfi->face_type == FACE_TNV)
+        remove_duplicates_and_sort(&normal_index_list, &num_unique_normal_index_list);
+    if (gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV)
+        remove_duplicates_and_sort(&texture_vertex_index_list, &num_unique_texture_vertex_index_list);
+
+#if 0
+    for (idx1 = 0 ; idx1 < num_unique_vertex_index_list ; idx1++ )
+        bu_log("unique sorted vertex_index_list[idx1] = (%lu)\n", vertex_index_list[idx1]);
+    bu_log("num unique sorted vertex_index_list[idx1] = (%lu)\n", num_unique_vertex_index_list);
+#endif
+
+    idx1 = 0;
+    idx2 = 0;
+    size_t dup_found = 0;
+    size_t fuse_count = 0;
+    fastf_t tmp_v1[3];
+    fastf_t tmp_v2[3];
+
+    /* only set the flag for duplicates, not vertices processed already
+       but did not have duplicates */
+    while (idx1 < num_unique_vertex_index_list) {
+        if ( gfi->vertex_fuse_flag[vertex_index_list[idx1] - min_vert_idx] == 0 ) {
+            /* true if current vertex has not already been identified as a duplicate */
+            idx2 = idx1 + 1;
+            dup_found = 0;
+            while (idx2 < num_unique_vertex_index_list) {
+                if ( gfi->vertex_fuse_flag[vertex_index_list[idx2] - min_vert_idx] == 0 ) {
+                    VMOVE(tmp_v1,(fastf_t *)ga->vert_list[vertex_index_list[idx1]]);
+                    VSCALE(tmp_v1, tmp_v1, conv_factor);
+                    VMOVE(tmp_v2,(fastf_t *)ga->vert_list[vertex_index_list[idx2]]);
+                    VSCALE(tmp_v2, tmp_v2, conv_factor);
+                    if ( bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol) ) {
+                        gfi->vertex_fuse_map[vertex_index_list[idx2] - min_vert_idx] = vertex_index_list[idx1];
+                        gfi->vertex_fuse_flag[vertex_index_list[idx2] - min_vert_idx] = 1;
+                        dup_found++;
+                        fuse_count++;
+                    }
+                }
+                idx2++;
+            }
+            if ( dup_found == 0 ) {
+                gfi->vertex_fuse_map[vertex_index_list[idx1] - min_vert_idx] = vertex_index_list[idx1];
+            }
+        }
+        idx1++;
+    }
+    bu_log("total fused = (%lu)\n", fuse_count);
+
+    for (idx1 = 0 ; idx1 < num_unique_vertex_index_list ; idx1++ )
+        bu_log("fused vertex_index_list = (%lu)->(%lu)\n", vertex_index_list[idx1],
+               gfi->vertex_fuse_map[vertex_index_list[idx1] - min_vert_idx]);
+    return;
 }
 
 
@@ -2074,6 +2175,7 @@ main(int argc, char **argv)
                 if (gfi != NULL) {
                     bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                        gfi->num_faces);
+                    fuse_vertex_normal_texture(&ga, gfi, fd_out, conv_factor, tol);
                     test_closure(&ga, gfi, fd_out, conv_factor, tol);
                     switch (mode_option) {
                         case 'b':
@@ -2098,6 +2200,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        fuse_vertex_normal_texture(&ga, gfi, fd_out, conv_factor, tol);
                         test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
@@ -2123,6 +2226,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        fuse_vertex_normal_texture(&ga, gfi, fd_out, conv_factor, tol);
                         test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
@@ -2148,6 +2252,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        fuse_vertex_normal_texture(&ga, gfi, fd_out, conv_factor, tol);
                         test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
@@ -2173,6 +2278,7 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
+                        fuse_vertex_normal_texture(&ga, gfi, fd_out, conv_factor, tol);
                         test_closure(&ga, gfi, fd_out, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
