@@ -78,7 +78,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    ret = (int)fseek(dbip->dbi_fp, (long)offset, 0)
+    ret = (int)fseek(dbip->dbi_fp, (long)offset, 0);
     if (ret)
 	bu_bomb("db_read: fseek error\n");
     got = (size_t)fread(addr, 1, count, dbip->dbi_fp);
