@@ -1003,7 +1003,7 @@ lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3
         double x = (B2*C1 - B1*C2)/det;
         double y = (A1*C2 - A2*C1)/det;
 
-        if ((x >= min(x1, x2)) && (x <= max(x1, x2)) && (x >= min(x3, x4)) && (x <= max(x3, x4)) && (y >= min(y1, y2)) && (y <= max(y1, y2)) && (y >= min(y3, y4)) && (y <= max(y3, y4))) {
+        if ((x >= std::min(x1, x2)) && (x <= std::max(x1, x2)) && (x >= std::min(x3, x4)) && (x <= std::max(x3, x4)) && (y >= std::min(y1, y2)) && (y <= std::max(y1, y2)) && (y >= std::min(y3, y4)) && (y <= std::max(y3, y4))) {
             return true;
         }
 
