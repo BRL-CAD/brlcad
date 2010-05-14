@@ -2785,13 +2785,14 @@ proc Archer::html_help_display {me} {
 
     upvar $me O
     set origurl $O(-uri)
-    regexp {(home://blank/)(.+)} $origurl -> prefix tempurl
-    set url [bu_brlcad_data "html/"]
+    if {[catch {regexp {(home://blank)(.+)} $origurl match prefix tempurl} msg]} {
+	tk_messageBox -message "html_help_display: regexp failed, msg - $msg"
+    }
+    set url [bu_brlcad_data "html"]
     append url $tempurl
     get_html_data $url
     $htmlviewer reset
     $htmlviewer parse $archer_help_data
-    
 }
 
 proc Archer::mkHelpTkImage {file} {
@@ -2950,7 +2951,7 @@ proc title_node_handler {node} {
     if {[file exists [file join [bu_brlcad_data "html/mann/en"] Introduction.html]]} {
 
    # List of available help documents
-    set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en/"] *.html ]
+    set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en"] *.html ]
     set cmds [list ]
     foreach cmdfile $cmdfiles {
            regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
