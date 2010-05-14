@@ -348,10 +348,11 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 int
 db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 {
-    struct directory	dir;
-    union record		rec;
-    char			*old_title;
-    int			v4units;
+    size_t put;
+    struct directory dir;
+    union record rec;
+    char *old_title;
+    int v4units;
     const char *ident = "/IDENT/";
 
     RT_CK_DBI(dbip);
@@ -383,7 +384,7 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 	 rec.u_id != ID_IDENT )  {
 	bu_log("db_update_ident() corrupted database header!\n");
 	dbip->dbi_read_only = 1;
-	return(-1);
+	return -1;
     }
 
     rec.i.i_title[0] = '\0';
@@ -406,7 +407,9 @@ You may wish to consider upgrading your database using \"dbupgrade\".\n",
     if ( old_title )
 	bu_free( old_title, "old dbi_title" );
 
-    return( db_put( dbip, &dir, &rec, 0, 1 ) );
+    put = db_put( dbip, &dir, &rec, 0, 1 );
+    BU_ASSERT_SIZE_T(put, <, INT_MAX);
+    return (int)put;
 
 }
 
