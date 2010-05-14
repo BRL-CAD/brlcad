@@ -43,295 +43,7 @@
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "camera.h"
-
-
-/* GEARS example */
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLEXPORT
-
-#ifndef M_PI
-#  define M_PI 3.14159265
-#endif
-#define FM_PI ((float) M_PI)
-
-#ifdef _MSC_VER
-__inline float
-sinf(double a)
-{
-    return (float) sin(a);
-}
-__inline float
-cosf(double a)
-{
-    return (float) cos(a);
-}
-__inline float
-sqrtf(double a)
-{
-    return (float) sqrt(a);
-}
-
-#  define sin sinf
-#  define cos cosf
-#  define sqrt sqrtf
-#endif
-
-struct WHIRLYGIZMO
-{
-    int     Gear1, Gear2, Gear3;
-    double  Rotx, Roty, Rotz;
-    double  Angle;
-    int     Height, Width;
-};
-
-typedef struct WHIRLYGIZMO WHIRLYGIZMO;
-
-/* 
- * Draw a gear wheel.  You'll probably want to call this function when
- * building a display list since we do a lot of trig here.
- *
- * Input:  inner_radius - radius of hole at center
- *         outer_radius - radius at center of teeth
- *         width - width of gear
- *         teeth - number of teeth
- *         tooth_depth - depth of tooth
- */
-static void
-gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
-        GLint teeth, GLfloat tooth_depth)
-{
-    GLint   i;
-    GLfloat r0, r1, r2;
-    GLfloat angle, da;
-    GLfloat u, v, len;
-
-    r0 = inner_radius;
-    r1 = outer_radius - tooth_depth / 2;
-    r2 = outer_radius + tooth_depth / 2;
-
-    da = 2 * FM_PI / teeth / 4;
-
-    glShadeModel(GL_FLAT);
-
-    glNormal3f(0, 0, 1);
-
-    /* draw front face */
-    glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) {
-        angle = i * 2 * FM_PI / teeth;
-        glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5f);
-        glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5f);
-        glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5f);
-        glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da),
-                width * 0.5f);
-    }
-    glEnd();
-  /* draw front sides of teeth */
-    glBegin(GL_QUADS);
-    da = 2 * FM_PI / teeth / 4;
-    for (i = 0; i < teeth; i++) {
-        angle = i * 2 * FM_PI / teeth;
-
-        glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5f);
-        glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), width * 0.5f);
-        glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da),
-                width * 0.5f);
-        glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da),
-                width * 0.5f);
-    }
-    glEnd();
-
-
-    glNormal3f(0, 0, -1);
-
-    /* draw back face */
-    glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) {
-        angle = i * 2 * FM_PI / teeth;
-        glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5f);
-        glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5f);
-        glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da),
-                -width * 0.5f);
-        glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5f);
-    }
-    glEnd();
-
-    /* draw back sides of teeth */
-    glBegin(GL_QUADS);
-    da = 2 * FM_PI / teeth / 4;
-    for (i = 0; i < teeth; i++) {
-        angle = i * 2 * FM_PI / teeth;
-
-        glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da),
-                -width * 0.5f);
-        glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da),
-                -width * 0.5f);
-        glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), -width * 0.5f);
-        glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5f);
-    }
-    glEnd();
-
-
-    /* draw outward faces of teeth */
-    glBegin(GL_QUAD_STRIP);
-    for (i = 0; i < teeth; i++) {
-        angle = i * 2 * FM_PI / teeth;
-
-        glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5f);
-        glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5f);
-        u = r2 * cos(angle + da) - r1 * cos(angle);
-        v = r2 * sin(angle + da) - r1 * sin(angle);
-        len = sqrt(u * u + v * v);
-        u /= len;
-        v /= len;
-        glNormal3f(v, -u, 0);
-        glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), width * 0.5f);
-        glVertex3f(r2 * cos(angle + da), r2 * sin(angle + da), -width * 0.5f);
-        glNormal3f(cos(angle), sin(angle), 0);
-        glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da),
-                width * 0.5f);
-        glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da),
-                -width * 0.5f);
-        u = r1 * cos(angle + 3 * da) - r2 * cos(angle + 2 * da);
-        v = r1 * sin(angle + 3 * da) - r2 * sin(angle + 2 * da);
-        glNormal3f(v, -u, 0);
-        glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da),
-                width * 0.5f);
-        glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da),
-                -width * 0.5f);
-        glNormal3f(cos(angle), sin(angle), 0);
-    }
-
-    glVertex3f(r1 /* * cos(0) */ , /* r1 * sin(0) */ 0, width * 0.5f);
-    glVertex3f(r1 /* * cos(0) */ , /* r1 * sin(0) */ 0, -width * 0.5f);
-
-    glEnd();
-
-
-    glShadeModel(GL_SMOOTH);
-   /* draw inside radius cylinder */
-    glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) {
-        angle = i * 2 * FM_PI / teeth;
-        glNormal3f(-cos(angle), -sin(angle), 0);
-        glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5f);
-        glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5f);
-    }
-    glEnd();
-
-}
-
-/* 
- * static GLfloat view_rotx=20, view_roty=30, view_rotz=0; static GLint
- * gear1, gear2, gear3; static GLfloat angle = 0; */
-static GLuint limit;
-static GLuint count = 1;
-
-static GLubyte polycolor[4] = { 255, 255, 255, 255 };
-
-static int
-draw(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
-{
-    WHIRLYGIZMO *Wg;
-    Togl   *togl;
-
-    if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
-    }
-
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    Wg = (WHIRLYGIZMO *) Togl_GetClientData(togl);
-    glDisable(GL_TEXTURE_2D);
-    glPushMatrix();
-    glRotatef((float) Wg->Rotx, 1, 0, 0);
-    glRotatef((float) Wg->Roty, 0, 1, 0);
-    glRotatef((float) Wg->Rotz, 0, 0, 1);
-
-    glPushMatrix();
-    glTranslatef(-3, -2, 0);
-    glRotatef((float) Wg->Angle, 0, 0, 1);
-    glEnable(GL_DEPTH_TEST);
-    glCallList(Wg->Gear1);
-    glEnable(GL_DEPTH_TEST);
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(3.1f, -2, 0);
-    glRotatef(-2 * (float) Wg->Angle - 9, 0, 0, 1);
-    glCallList(Wg->Gear2);
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(-3.1f, 4.2f, 0);
-    glRotatef(-2 * (float) Wg->Angle - 25, 0, 0, 1);
-    glCallList(Wg->Gear3);
-    glPopMatrix();
-
-    glPopMatrix();
-
-    Togl_SwapBuffers(togl);
-
-    return TCL_OK;
-}
-
-static int
-gears_zap(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
-{
-    WHIRLYGIZMO *Wg;
-    Togl   *togl;
-
-    if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
-    }
-
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    Wg = (WHIRLYGIZMO *) Togl_GetClientData(togl);
-    free(Wg);
-
-    return TCL_OK;
-}
-
-
-static int
-idle(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
-{
-    WHIRLYGIZMO *Wg;
-    Togl   *togl;
-
-    if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
-    }
-
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    Wg = (WHIRLYGIZMO *) Togl_GetClientData(togl);
-    Wg->Angle += 2;
-    Togl_PostRedisplay(togl);
-
-    return TCL_OK;
-}
-
-
-/* change view angle, exit upon ESC */
-/* 
- * static GLenum key(int k, GLenum mask) { switch (k) { case TK_UP: view_rotx
- * += 5; return GL_TRUE; case TK_DOWN: view_rotx -= 5; return GL_TRUE; case 
- * TK_LEFT: view_roty += 5; return GL_TRUE; case TK_RIGHT: view_roty -= 5;
- * return GL_TRUE; case TK_z: view_rotz += 5; return GL_TRUE; case TK_Z:
- * view_rotz -= 5; return GL_TRUE; } return GL_FALSE; } */
+#include "isst.h"
 
 /* new window size or exposure */
 static int
@@ -373,16 +85,158 @@ reshape(ClientData clientData, Tcl_Interp *interp, int objc,
     return TCL_OK;
 }
 
+void
+resize_isst(struct isst_s *isst)
+{
+    switch(isst->gs) {
+            case 0:
+                isst->camera.w = isst->tile.size_x = isst->w;
+                isst->camera.h = isst->tile.size_y = isst->h;
+                break;
+            case 1:
+                isst->camera.w = isst->tile.size_x = 320;
+                isst->camera.h = isst->tile.size_y = isst->camera.w * isst->h / isst->w;
+                break;
+            case 2:
+                isst->camera.w = isst->tile.size_x = 40;
+                isst->camera.h = isst->tile.size_y = isst->camera.w * isst->h / isst->w;
+                break;
+            default:
+                bu_log("Unknown level...\n");
+    }
+    isst->tile.format = RENDER_CAMERA_BIT_DEPTH_24;
+    TIENET_BUFFER_SIZE(isst->buffer_image, 3 * isst->camera.w * isst->camera.h);
+    glClearColor (0.0, 0, 0.0, 1);
+    glBindTexture (GL_TEXTURE_2D, isst->texid);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    isst->texdata = malloc(isst->camera.w * isst->camera.h * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, isst->camera.w, isst->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, isst->texdata);
+    glDisable(GL_LIGHTING);
+    glViewport(0,0,isst->w, isst->h);
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, isst->w, isst->h, 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
+}
+
 
 static int
-gears_init(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
+        Tcl_Obj *const *objv)
 {
-    WHIRLYGIZMO *Wg;
-    static GLfloat red[4] = { 0.8f, 0.1f, 0, 1 };
-    static GLfloat green[4] = { 0, 0.8f, 0.2f, 1 };
-    static GLfloat blue[4] = { 0.2f, 0.2f, 1, 1 };
-    static GLfloat pos[4] = { 5, 5, 10, 0 };
+    struct isst_s *isst;
+    char *argstring;
+    char **argv;
+    int argc = 2;
     Togl   *togl;
+
+    if (objc < 4) {
+        Tcl_WrongNumArgs(interp, 1, objv, "load_g pathname object");
+        return TCL_ERROR;
+    }
+
+    bu_log("objv[1]: %s\n", Tcl_GetString(objv[1]));
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    argv = (char **)bu_malloc(sizeof(char *)*(argc + 1), "isst tcltk");
+    argv[0] = Tcl_GetString(objv[3]);
+    argv[1] = NULL;
+    isst = (struct isst *) Togl_GetClientData(togl);
+
+    load_g(isst->tie, Tcl_GetString(objv[2]), argc-1, (const char **)argv, &(isst->meshes));
+
+    bu_free((genptr_t)argv, "isst tcltk"); 
+
+    VSETALL(isst->camera.pos.v, isst->tie->radius);
+    VMOVE(isst->camera.focus.v, isst->tie->mid);
+    render_phong_init(&isst->camera.render, NULL);
+
+    isst->ogl = 1;
+    isst->w = Togl_Width(togl);
+    isst->h = Togl_Height(togl);
+
+    resize_isst(isst);
+
+    return TCL_OK;
+}
+
+static int
+paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl   *togl;
+    int glclrbts = GL_DEPTH_BUFFER_BIT;
+
+    if (objc != 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+        return TCL_ERROR;
+    }
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
+        return TCL_ERROR;
+    }
+    
+    isst = (struct isst *) Togl_GetClientData(togl);
+
+    render_camera_prep(&isst->camera);
+    render_camera_render(&isst->camera, isst->tie, &isst->tile, &isst->buffer_image);
+
+    if(isst->ui)
+        glclrbts |= GL_COLOR_BUFFER_BIT;
+    glClear(glclrbts);
+    glLoadIdentity();
+    glColor3f(1,1,1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, isst->texid);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, isst->camera.w, isst->camera.h, GL_RGB, GL_UNSIGNED_BYTE, isst->buffer_image.data + sizeof(camera_tile_t));
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glTexCoord2d(0, 0); glVertex3f(isst->w*isst->uic*0.25,    0,                              0);
+    glTexCoord2d(0, 1); glVertex3f(isst->w*isst->uic*0.25,    isst->h*(.75+.25*(1-isst->uic)),      0);
+    glTexCoord2d(1, 0); glVertex3f(isst->w,                   0,                              0);
+    glTexCoord2d(1, 1); glVertex3f(isst->w,                   isst->h*(.75+.25*(1-isst->uic)),      0);
+
+    glEnd();
+
+    Togl_SwapBuffers(togl);
+
+    return TCL_OK;
+}
+
+static int
+idle(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl   *togl;
+
+    if (objc != 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+        return TCL_ERROR;
+    }
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    isst = (struct isst *) Togl_GetClientData(togl);
+    Togl_PostRedisplay(togl);
+
+    return TCL_OK;
+}
+
+
+static int
+isst_init(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl   *togl;
+    static GLfloat pos[4] = { 5, 5, 10, 0 };
 
     if (objc != 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "pathName");
@@ -398,47 +252,43 @@ gears_init(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_DEPTH_TEST);
-    /* make the gears */
-    Wg = (WHIRLYGIZMO *) malloc(sizeof (WHIRLYGIZMO));
-    if (!Wg) {
-        Tcl_SetResult(Togl_Interp(togl),
-                "\"Cannot allocate client data for widget\"", TCL_STATIC);
-    }
-    Wg->Gear1 = glGenLists(1);
-    glNewList(Wg->Gear1, GL_COMPILE);
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-    gear(1, 4, 1, 20, 0.7f);
-    glEndList();
 
-    Wg->Gear2 = glGenLists(1);
-    glNewList(Wg->Gear2, GL_COMPILE);
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
-    gear(0.5f, 2, 2, 10, 0.7f);
-    glEndList();
+    isst = (struct isst_s *)malloc(sizeof(struct isst_s));
+    isst->tie = (struct tie_s *)bu_calloc(1,sizeof(struct tie_s), "tie");
+    TIENET_BUFFER_INIT(isst->buffer_image);
+    render_camera_init(&isst->camera, bu_avail_cpus());
+    isst->camera.type = RENDER_CAMERA_PERSPECTIVE;
+    isst->camera.fov = 25;
 
-    Wg->Gear3 = glGenLists(1);
-    glNewList(Wg->Gear3, GL_COMPILE);
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
-    gear(1.3f, 2, 0.5f, 10, 0.7f);
-    glEndList();
-
-    glEnable(GL_NORMALIZE);
-    Wg->Height = Togl_Height(togl);
-    Wg->Width = Togl_Width(togl);
-    Wg->Angle = 0;
-    Wg->Rotx = 0;
-    Wg->Roty = 0;
-    Wg->Rotz = 0;
-    Togl_SetClientData(togl, (ClientData) Wg);
+    Togl_SetClientData(togl, (ClientData) isst);
 
     return TCL_OK;
+}
+
+static int
+isst_zap(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl   *togl;
+    if (objc != 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+        return TCL_ERROR;
+    }
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    isst = (struct isst *) Togl_GetClientData(togl);
+
+    bu_free(isst, "isst free");
 }
 
 static int
 position(ClientData clientData, Tcl_Interp *interp, int objc,
         Tcl_Obj *const *objv)
 {
-    WHIRLYGIZMO *Wg;
+    struct isst_s *isst;
     char    Result[100];
     Togl   *togl;
 
@@ -451,15 +301,16 @@ position(ClientData clientData, Tcl_Interp *interp, int objc,
         return TCL_ERROR;
     }
 
-    Wg = (WHIRLYGIZMO *) Togl_GetClientData(togl);
+    isst = (struct isst *) Togl_GetClientData(togl);
 
     /* Let result string equal value */
-    sprintf(Result, "%g %g", Wg->Roty, Wg->Rotx);
+    sprintf(Result, "TODO?");
 
     Tcl_SetResult(interp, Result, TCL_VOLATILE);
     return TCL_OK;
 }
 
+/*
 static int
 rotate(ClientData clientData, Tcl_Interp *interp, int objc,
         Tcl_Obj *const *objv)
@@ -488,10 +339,15 @@ rotate(ClientData clientData, Tcl_Interp *interp, int objc,
 
     return TCL_OK;
 }
+*/
 
-EXTERN int
-Gears_Init(Tcl_Interp *interp)
+int
+Isst_Init(Tcl_Interp *interp)
 {
+    if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
+        return TCL_ERROR;
+    }
+
     /* 
      * Initialize Tcl and the Togl widget module.
      */
@@ -504,31 +360,15 @@ Gears_Init(Tcl_Interp *interp)
      * Specify the C callback functions for widget creation, display,
      * and reshape.
      */
-    Tcl_CreateObjCommand(interp, "gears_init", gears_init, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "gears_zap", gears_zap, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "draw", draw, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "isst_init", isst_init, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "isst_zap", isst_zap, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "refresh_ogl", paint_window, NULL, NULL);
     Tcl_CreateObjCommand(interp, "reshape", reshape, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "load_g", isst_load_g, NULL, NULL);
     Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "rotate", rotate, NULL, NULL);
+    /*Tcl_CreateObjCommand(interp, "rotate", rotate, NULL, NULL);*/
     Tcl_CreateObjCommand(interp, "position", position, NULL, NULL);
-    return TCL_OK;
-}
 
-struct isst_s *isst;
-
-void
-isst_tcl_setup(Tcl_Interp *interp)
-{
-}
-
-int
-Isst_Init(Tcl_Interp *interp)
-{
-    Gears_Init(interp);
-    isst_tcl_setup(interp);
-    if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
-        return TCL_ERROR;
-    }
     return TCL_OK;
 }
 
