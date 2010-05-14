@@ -122,7 +122,6 @@ namespace brlcad {
 template<class BA>
 class BANode;
 
-using namespace std;
 
 template<class BA>
 class BANode {
@@ -135,7 +134,7 @@ public:
     ~BANode();
 
     /** List of all children of a given node */
-    typedef vector<BANode<BA>*> ChildList;
+    typedef std::vector<BANode<BA>*> ChildList;
     ChildList m_children;
 
     /** Bounding Box */
@@ -151,7 +150,7 @@ public:
     bool isLeaf();
 
     /** Return a list of all nodes below this node that are leaf nodes */
-    void getLeaves(list<BANode<BA>*>& out_leaves);
+    void getLeaves(std::list<BANode<BA>*>& out_leaves);
 
     /** Report the depth of this node in the hierarchy */
     int depth();
@@ -341,7 +340,7 @@ int
 BANode<BA>::depth() {
     int d = 0;
     for (size_t i = 0; i < m_children.size(); i++) {
-	d = 1 + max(d, m_children[i]->depth());
+	d = 1 + std::max(d, m_children[i]->depth());
     }
     return d;
 }
@@ -349,7 +348,7 @@ BANode<BA>::depth() {
 
 template<class BA>
 void
-BANode<BA>::getLeaves(list<BANode<BA>*>& out_leaves) {
+BANode<BA>::getLeaves(std::list<BANode<BA>*>& out_leaves) {
     if (m_children.size() > 0) {
 	for (size_t i = 0; i < m_children.size(); i++) {
 	    m_children[i]->getLeaves(out_leaves);
@@ -440,7 +439,7 @@ BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
 	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
 	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
-	    throw new exception(); // FIXME
+	    throw new std::exception(); // FIXME
 	}
 	corners[4] = BANode<BA>::m_estimate;
     			
@@ -466,7 +465,7 @@ BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
 	} else {
-	    throw new exception();
+	    throw new std::exception();
 	}
     }
 }
@@ -672,17 +671,17 @@ public:
     /**
      * Return just the leaves of the surface tree
      */
-    void getLeaves(list<BRNode*>& out_leaves);
-    void getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-    void getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol);
-	void getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
-	void getLeavesRight(list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol);
+    void getLeaves(std::list<BRNode*>& out_leaves);
+    void getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
+    void getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol);
+	void getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v);
+	void getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol);
     int depth();
 
 private:
     fastf_t getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max);
     fastf_t getHorizontalTangent(const ON_Curve *curve, fastf_t min, fastf_t max);
-    bool getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& list);
+    bool getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_t>& list);
     bool isLinear(const ON_Curve* curve, double min, double max);
     BRNode* subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
     BRNode* curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool leaf, bool innerTrim, const ON_BoundingBox& bb);
@@ -691,8 +690,8 @@ private:
     ON_BrepFace* m_face;
     int m_adj_face_index;
     BRNode* m_root;
-    list<BRNode*> m_sortedX;
-    list<BRNode*> m_sortedY;
+    std::list<BRNode*> m_sortedX;
+    std::list<BRNode*> m_sortedY;
 };
 
 
@@ -716,7 +715,7 @@ public:
     ~BVNode();
 
     // List of all children of a given node
-    typedef vector<BVNode<BV>*> ChildList;
+    typedef std::vector<BVNode<BV>*> ChildList;
     ChildList m_children;
 
     // Curve Tree associated with the parent Surface Tree
@@ -729,7 +728,7 @@ public:
     bool isLeaf();
 
     // Return all leaves below this node that are leaf nodes
-    void getLeaves(list<BVNode<BV>*>& out_leaves);
+    void getLeaves(std::list<BVNode<BV>*>& out_leaves);
 		
     // Functions to add and remove child nodes from this node.
     void addChild(const BV& child);
@@ -777,7 +776,7 @@ public:
     // of the node - if so, and node is not a leaf node, query
     // children.  If leaf node, and intersects, add to list.
     bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
-    bool intersectsHierarchy(ON_Ray& ray, list<BVNode<ON_BoundingBox>*>& results = 0);
+    bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<ON_BoundingBox>*>& results = 0);
 
     // Report if a given uv point is within the uv boundardies
     // defined by a node.
@@ -786,19 +785,19 @@ public:
 
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt);
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v);
-    int getLeavesBoundingPoint(const ON_3dPoint& pt, list<BVNode<BV> *>& out);
+    int getLeavesBoundingPoint(const ON_3dPoint& pt, std::list<BVNode<BV> *>& out);
     int isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttrim);
     bool doTrimming() const;
 		
-    void getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves);
+    void getTrimsAbove(const ON_2dPoint& uv, std::list<BRNode*>& out_leaves);
     void BuildBBox();
     bool prepTrims();
 
 private:
     BVNode<BV>* closer(const ON_3dPoint& pt, BVNode<BV>* left, BVNode<BV>* right);
-    list<BRNode*> m_trims_above;
-    list<BRNode*> m_trims_vertical;
-//		list<BRNode*> m_trims_right;
+    std::list<BRNode*> m_trims_above;
+    std::list<BRNode*> m_trims_vertical;
+//		std::list<BRNode*> m_trims_right;
 };
 
 
@@ -956,7 +955,7 @@ BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt) {
 
 template<class BV>
 bool
-BVNode<BV>::intersectsHierarchy(ON_Ray& ray, list<BBNode*>& results_opt) {
+BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BBNode*>& results_opt) {
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);
     if (intersects && isLeaf()) {
@@ -985,7 +984,7 @@ int
 BVNode<BV>::depth() {
     int d = 0;
     for (size_t i = 0; i < m_children.size(); i++) {
-	d = 1 + max(d, m_children[i]->depth());
+	d = 1 + std::max(d, m_children[i]->depth());
     }
     return d;
 }
@@ -993,7 +992,7 @@ BVNode<BV>::depth() {
 
 template<class BV>
 void
-BVNode<BV>::getLeaves(list<BVNode<BV>*>& out_leaves) {
+BVNode<BV>::getLeaves(std::list<BVNode<BV>*>& out_leaves) {
     if (m_children.size() > 0) {
 	for (size_t i = 0; i < m_children.size(); i++) {
 	    m_children[i]->getLeaves(out_leaves);
@@ -1041,7 +1040,7 @@ BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
 	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
 	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3])) {
-	    throw new exception(); // FIXME
+	    throw new std::exception(); // FIXME
 	}
 	corners[4] = BVNode<BV>::m_estimate;
 		
@@ -1069,14 +1068,14 @@ BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
 	}
-	throw new exception();
+	throw new std::exception();
     }
 }
 
 
 template<class BV>
 int
-BVNode<BV>::getLeavesBoundingPoint(const ON_3dPoint& pt, list<BVNode<BV> *>& out) {
+BVNode<BV>::getLeavesBoundingPoint(const ON_3dPoint& pt, std::list<BVNode<BV> *>& out) {
     if (isLeaf()) {
 	double min[3], max[3];
 	GetBBox(min, max);
@@ -1103,7 +1102,7 @@ template<class BV>
 int
 BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttrim) {
     BRNode* br;
-    list<BRNode*> trims;
+    std::list<BRNode*> trims;
 	    
     closesttrim = -1.0;
     if (m_checkTrim) {
@@ -1111,7 +1110,7 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 	if (trims.empty()) {
 	    return 1;
 	} else {//find closest BB
-	    list<BRNode*>::iterator i;
+	    std::list<BRNode*>::iterator i;
 	    BRNode* vclosest = NULL;
 	    BRNode* uclosest = NULL;
 	    fastf_t currHeight;
@@ -1212,10 +1211,10 @@ BVNode<BV>::doTrimming() const {
 
 template<class BV>
 void
-BVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves) {
+BVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, std::list<BRNode*>& out_leaves) {
     point_t bmin, bmax;
     double dist;
-    for (list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 	dist = 0.000001; //0.03*DIST_PT_PT(bmin, bmax);
@@ -1228,7 +1227,7 @@ BVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, list<BRNode*>& out_leaves) {
 template<class BV>
 void BVNode<BV>::BuildBBox() {
     if (m_children.size() > 0) {
-	for (vector<BBNode*>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
+	for (std::vector<BBNode*>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
 
 	    if (!(*childnode)->isLeaf())
 		(*childnode)->BuildBBox();
@@ -1253,7 +1252,7 @@ template<class BV>
 inline bool
 BVNode<BV>::prepTrims() {
     CurveTree* ct = m_ctree;
-    list<BRNode*>::iterator i;
+    std::list<BRNode*>::iterator i;
     BRNode* br;
     //	point_t surfmin, surfmax;
     point_t curvemin, curvemax;
@@ -1370,7 +1369,7 @@ public:
     /**
      * Return just the leaves of the surface tree
      */
-    void getLeaves(list<BBNode*>& out_leaves);
+    void getLeaves(std::list<BBNode*>& out_leaves);
     int depth();
 
 private:
