@@ -579,7 +579,7 @@ brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, p
 
 
 int
-getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
+brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
     plane_ray pr;
     const ON_Surface *surf = node->m_face->SurfaceOf();
     double umin, umax;

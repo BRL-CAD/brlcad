@@ -57,9 +57,9 @@
 #define TOL2 0.00001
 
 
-BU_EXTERN int getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
+BU_EXTERN(int brep_getSurfacePoint, (const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*));
 
-BU_EXTERN bool
+bool
 ON_NearZero(double x, double tolerance) {
     return (x > -tolerance) && (x < tolerance);
 }
@@ -694,7 +694,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     std::list<BBNode*>::iterator i;
     for (i = nodes.begin(); i != nodes.end(); i++) {
 	BBNode* node = (*i);
-	if (::getSurfacePoint(pt, curr_uv, node)) {
+	if (brep_getSurfacePoint(pt, curr_uv, node)) {
 	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
