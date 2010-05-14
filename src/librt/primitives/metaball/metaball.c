@@ -373,12 +373,67 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
     VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
+    VSUB2(p, p, inc);	/* step back (this neeeds to leave the bounding sphere in case we start inside the solid */
 
     /* switching behavior to retain old code for performance and correctness
      * comparisons. */
 #if 0
     {
-	rt_metaball_find_intersection(,mb,a, b, step, mb->finalstep);
+	vect_t dist;
+	int nsamp, i;
+#ifdef SOMETHING
+	point_t *ps;
+	int *vals;
+
+	/* some fu about the initstep and bounding sphere size. yeah. */
+	nsamp = mb->initstep / 1.0;
+	vals = (int *)bu_malloc(sizeof(int) * nsamp, "in/out array");
+	ps = (point_t *)bu_malloc(sizeof(point_t) * nsamp, "point array");
+#else
+#define FAKEVAL 200
+	point_t ps[FAKEVAL];
+	int vals[FAKEVAL];
+	nsamp = FAKEVAL;
+#undef FAKEVAL
+#endif
+
+	for(i=0;i<nsamp;i++) {
+	    VMOVE(ps[i], p);
+	    vals[i] = rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold;
+	    VADD2(p, p, inc);
+	}
+
+	/* search the in/out array for boundry crossings. */
+	for(i=0;i < nsamp-1;i++) {
+	    if(vals[i] != vals[i+1]) {
+		if(vals[i] == 0) {
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
+		    segp->seg_in.hit_surfno = 0;
+		    segp->seg_out.hit_surfno = 0;
+		    rt_metaball_find_intersection(&p ,mb, (const point_t *)ps+i, (const point_t *)ps+i+1, step, mb->finalstep);
+		    VSUB2(dist, p, rp->r_pt);
+		    /* do a dot product to see if hit_dist should be negative? */
+		    segp->seg_in.hit_dist = MAGNITUDE(dist);
+		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+		    retval++;
+		} else if(vals[i] == 1) {
+		    rt_metaball_find_intersection(&p ,mb, (const point_t *)ps+i, (const point_t *)ps+i+1, step, mb->finalstep);
+		    VSUB2(dist, p, rp->r_pt);
+		    /* dot product for netagive hit dist here, too. */
+		    segp->seg_out.hit_dist = MAGNITUDE(dist); 
+#ifdef SOMETHING
+		    bu_free(ps, "Point array");
+		    bu_free(vals, "in/out array");
+#endif
+		    retval++;
+		}
+	    }
+	}
+	if((retval&0x1) == 0x1) {
+	    bu_log("Odd, an odd number of intersections.\n");
+	}
+	return retval;
     }
 #else
     /* we hit, but not as fine-grained as we want. So back up one step,
