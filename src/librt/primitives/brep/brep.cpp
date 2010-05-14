@@ -228,7 +228,7 @@ getHorizontalTangent(const ON_Curve *curve, double min, double max) {
 
 
 bool
-split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list) {
+split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, std::list<double>& list) {
     bool tanx1, tanx2, tanx_changed;
     bool tany1, tany2, tany_changed;
     bool tan_changed;
@@ -1417,7 +1417,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
      * intersected, there is potentially a hit and more evaluation is
      * needed.  Otherwise, return a miss.
      */
-    list<BBNode*> inters;
+    std::list<BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
     if (inters.size() == 0) return 0; // MISS
@@ -1427,7 +1427,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     MissList misses;
     int s = 0;
     hit_count = 0;
-    for (list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
+    for (std::list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
         const BBNode* sbv = (*i);
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
