@@ -353,7 +353,7 @@ _ged_color_zaprec(struct ged		*gedp,
     dir.d_addr = mp->mt_daddr;
     dir.d_flags = 0;
 
-    if (db_delete(gedp->ged_wdbp->dbip, &dir) == (size_t)-1) {
+    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database delete error, aborting");
 	return;
     }

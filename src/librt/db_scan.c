@@ -348,7 +348,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 int
 db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 {
-    size_t put;
+    int put;
     struct directory dir;
     union record rec;
     char *old_title;
@@ -408,10 +408,9 @@ You may wish to consider upgrading your database using \"dbupgrade\".\n",
 	bu_free( old_title, "old dbi_title" );
 
     put = db_put( dbip, &dir, &rec, 0, 1 );
-    BU_ASSERT_SIZE_T(put, <, INT_MAX);
-    return (int)put;
-
+    return put;
 }
+
 
 /**
  *			D B _ F W R I T E _ I D E N T

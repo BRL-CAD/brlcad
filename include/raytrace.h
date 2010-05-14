@@ -2905,7 +2905,7 @@ RT_EXPORT BU_EXTERN(int db_get,
 		     off_t offset,
 		     size_t len));
 /* put several records into db */
-RT_EXPORT BU_EXTERN(size_t db_put,
+RT_EXPORT BU_EXTERN(int db_put,
 		    (struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
@@ -3072,7 +3072,7 @@ RT_EXPORT BU_EXTERN(int db_flags_raw_internal,
 /* db_alloc.c */
 
 /* allocate "count" granules */
-RT_EXPORT BU_EXTERN(size_t db_alloc,
+RT_EXPORT BU_EXTERN(int db_alloc,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t count));
@@ -3082,11 +3082,11 @@ RT_EXPORT BU_EXTERN(int db_delrec,
 		     struct directory *dp,
 		     int recnum));
 /* delete all granules assigned dp */
-RT_EXPORT BU_EXTERN(size_t db_delete,
+RT_EXPORT BU_EXTERN(int db_delete,
 		    (struct db_i *,
 		     struct directory *dp));
 /* write FREE records from 'start' */
-RT_EXPORT BU_EXTERN(size_t db_zapper,
+RT_EXPORT BU_EXTERN(int db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t start));

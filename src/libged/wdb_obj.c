@@ -2569,12 +2569,9 @@ wdb_kill_cmd(struct rt_wdb *wdbp,
 	    else
 		dgo_eraseobjall_callback(wdbp->dbip, interp, dp, 0);
 
-	    if (db_delete(wdbp->dbip, dp) < 0 ||
-		db_dirdelete(wdbp->dbip, dp) < 0) {
+	    if (db_delete(wdbp->dbip, dp) || db_dirdelete(wdbp->dbip, dp)) {
 		/* Abort kill processing on first error */
-		Tcl_AppendResult(interp,
-				 "an error occurred while deleting ",
-				 argv[i], (char *)NULL);
+		Tcl_AppendResult(interp, "an error occurred while deleting ", argv[i], (char *)NULL);
 		return TCL_ERROR;
 	    }
 	}
@@ -2792,10 +2789,8 @@ wdb_killtree_callback(struct db_i *dbip,
     /* notify drawable geometry objects associated with this database object */
     dgo_eraseobjall_callback(dbip, interp, dp, ktdp->notify);
 
-    if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
-	Tcl_AppendResult(interp,
-			 "an error occurred while deleting ",
-			 dp->d_namep, "\n", (char *)NULL);
+    if (db_delete(dbip, dp) || db_dirdelete(dbip, dp)) {
+	Tcl_AppendResult(interp, "an error occurred while deleting ", dp->d_namep, "\n", (char *)NULL);
     }
 }
 

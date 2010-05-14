@@ -99,7 +99,7 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 }	
 	
 
-static size_t
+HIDDEN size_t
 check_comb(struct ged *gedp)
 {
     /* Do some minor checking of the edited file */
@@ -1086,7 +1086,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
 	    const char *saved_name = NULL;
 
-	    if ((node_count = check_comb(gedp)) < 0) {
+	    node_count = check_comb(gedp);
+	    if ((long)node_count < 0) {
 		/* Do some quick checking on the edited file */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 		if (comb)

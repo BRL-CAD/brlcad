@@ -348,7 +348,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
  *
  * Returns -
  * 0 on success
- * -1 on failure
+ * non-0 on failure
  */
 int
 db_dirdelete(struct db_i *dbip, struct directory *dp)
@@ -398,7 +398,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
  *
  * Returns -
  * 0 on success
- * -1 on failure
+ * non-0 on failure
  */
 int
 db_rename(struct db_i *dbip, struct directory *dp, const char *newname)

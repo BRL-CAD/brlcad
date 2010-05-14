@@ -63,7 +63,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 	       dbip, addr, count, offset);
     }
     if (count == 0) {
-	return(-1);
+	return -1;
     }
     if (offset+count > (size_t)dbip->dbi_eof) {
 	/* Attempt to read off the end of the file */
@@ -74,7 +74,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     }
     if (dbip->dbi_inmem) {
 	memcpy(addr, ((char *)dbip->dbi_inmem) + offset, count);
-	return(0);
+	return 0;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
@@ -88,9 +88,9 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     if (got != count) {
 	perror(dbip->dbi_filename);
 	bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n", dbip->dbi_filename, count, got);
-	return(-1);
+	return -1;
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -125,7 +125,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 				    dp->d_namep, dbip, dp);
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR)
-	return((union record *)0);	/* was dummy DB entry */
+	return (union record *)0;	/* was dummy DB entry */
     where = (union record *)bu_malloc(
 	dp->d_len * sizeof(union record),
 	"db_getmrec record[]");
@@ -139,9 +139,9 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 		dp->d_len * sizeof(union record),
 		dp->d_addr) < 0) {
 	bu_free((genptr_t)where, "db_getmrec record[]");
-	return((union record *)0);	/* VERY BAD */
+	return (union record *)0;	/* VERY BAD */
     }
-    return(where);
+    return where;
 }
 
 
@@ -166,13 +166,13 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 	where->u_id = '\0';	/* undefined id */
-	return(-1);
+	return -1;
     }
     if (offset < 0 || len+(size_t)offset > dp->d_len) {
 	bu_log("db_get(%s):  xfer %d..%x exceeds 0..%d\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	where->u_id = '\0';	/* undefined id */
-	return(-1);
+	return -1;
     }
 
     if (dp->d_flags & RT_DIR_INMEM) {
@@ -185,9 +185,9 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
     if (db_read(dbip, (char *)where, len * sizeof(union record),
 		dp->d_addr + offset * sizeof(union record)) < 0) {
 	where->u_id = '\0';	/* undefined id */
-	return(-1);
+	return -1;
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -217,14 +217,14 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
     if (dbip->dbi_read_only) {
 	bu_log("db_write(%s):  READ-ONLY file\n",
 	       dbip->dbi_filename);
-	return(-1);
+	return -1;
     }
     if (count == 0) {
-	return(-1);
+	return -1;
     }
     if (dbip->dbi_inmem) {
 	bu_log("db_write() in memory?\n");
-	return(-1);
+	return -1;
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_suspend_interrupts();
@@ -240,9 +240,9 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 	bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes.\nFile forced read-only.\n",
 	       dbip->dbi_filename, count, got);
 	dbip->dbi_read_only = 1;
-	return(-1);
+	return -1;
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -252,23 +252,23 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
  * Store 'len' records to the database, "offset" granules into this
  * entry.
  *
- * Returns -
+ * Returns:
  * 0 OK
- * -1 FAILURE
+ * non-0 FAILURE
  */
-size_t
+int
 db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
 {
-
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
+
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%zu\n",
 				    dp->d_namep, dbip, dp, where, offset, len);
 
     if ((len+(size_t)offset) > dp->d_len) {
 	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
-	return (size_t)-1;
+	return -1;
     }
 
     if (dp->d_flags & RT_DIR_INMEM) {
@@ -281,14 +281,14 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
     if (dbip->dbi_read_only) {
 	bu_log("db_put(%s):  READ-ONLY file\n",
 	       dbip->dbi_filename);
-	return (size_t)-1;
+	return -1;
     }
 
     if (db_write(dbip, (char *)where, len * sizeof(union record),
 		 dp->d_addr + offset * sizeof(union record)) < 0) {
-	return (size_t)-1;
+	return -1;
     }
-    return (size_t)0;
+    return 0;
 }
 
 
@@ -317,7 +317,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 				    dp->d_namep, ep, dbip, dp);
 
     if ((dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr == RT_DIR_PHONY_ADDR)
-	return(-1);		/* was dummy DB entry */
+	return -1;		/* was dummy DB entry */
 
     BU_INIT_EXTERNAL(ep);
     if (dbip->dbi_version <= 4)
@@ -335,9 +335,9 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	bu_free(ep->ext_buf, "db_get_ext ext_buf");
 	ep->ext_buf = (genptr_t)NULL;
 	ep->ext_nbytes = 0;
-	return(-1);	/* VERY BAD */
+	return -1;	/* VERY BAD */
     }
-    return(0);
+    return 0;
 }
 
 
@@ -375,7 +375,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     if (dbip->dbi_read_only) {
 	bu_log("db_put_external(%s):  READ-ONLY file\n",
 	       dbip->dbi_filename);
-	return(-1);
+	return -1;
     }
 
     if (dbip->dbi_version == 5)
@@ -387,10 +387,10 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {
 	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-		if (db_delete(dbip, dp) == (size_t)-1)
+		if (db_delete(dbip, dp))
 		    return -2;
 	    }
-	    if (db_alloc(dbip, dp, ngran) == (size_t)-1) {
+	    if (db_alloc(dbip, dp, ngran)) {
 		return -3;
 	    }
 	}
@@ -411,9 +411,9 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     }
 
     if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
-	return(-1);
+	return -1;
     }
-    return(0);
+    return 0;
 }
 
 
