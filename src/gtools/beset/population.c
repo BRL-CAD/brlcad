@@ -21,22 +21,18 @@
  *
  * routines to manipulate the population
  *
- * Author -
- *   Ben Poole
  */
 
 #include "common.h"
 
-#include <string.h>
-#include <strings.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
 #include <math.h>
 #include <limits.h>
+#include <string.h>
+#include "bio.h>
 
 #include "bu.h"
 #include "bn.h"

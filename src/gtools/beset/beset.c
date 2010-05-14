@@ -21,21 +21,18 @@
  *
  * Ben's Evolutionary Shape Tool
  *
- *
- * Author - Ben Poole
- *
  */
 
 #include "common.h"
 
-#include <strings.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdio.h>
+#include <string.h>
 #include <math.h>
+#include "bio.h>
 
 #include "bu.h"
 #include "vmath.h"
