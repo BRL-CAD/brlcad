@@ -25,7 +25,6 @@ proc ::isst::setup {} {
     button .f.b1 -text " Quit " -command exit 
     pack .f.b1 -side left -anchor w -padx 5
     newRot .w0 10
-
 }
 
 proc ::isst::newRot {win {tick 100} } {
@@ -36,7 +35,12 @@ proc ::isst::newRot {win {tick 100} } {
 }
 
 proc ::isst::RotStart {x y W} {
-    exit
+    global startx starty xangle0 yangle0 xangle yangle
+    set startx $x
+    set starty $y
+    set vPos [position $W]
+    set xangle0 [lindex $vPos 0]
+    set yangle0 [lindex $vPos 1]
 }
 
 proc ::isst::RotMove {x y W} {
