@@ -55,6 +55,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 /* byte offset from start of file */
 {
     size_t got;
+    int ret;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
@@ -77,9 +78,10 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    if (fseek(dbip->dbi_fp, (long)offset, 0))
+    ret = (int)fseek(dbip->dbi_fp, (long)offset, 0)
+    if (ret)
 	bu_bomb("db_read: fseek error\n");
-    got = fread(addr, 1, count, dbip->dbi_fp);
+    got = (size_t)fread(addr, 1, count, dbip->dbi_fp);
 
     bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -286,7 +288,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
 		 dp->d_addr + offset * sizeof(union record)) < 0) {
 	return (size_t)-1;
     }
-    return(0);
+    return (size_t)0;
 }
 
 
