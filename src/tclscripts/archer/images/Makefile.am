@@ -168,6 +168,11 @@ dist_tcl_DATA = \
 	pane_blank.png \
 	pane_collapse.png \
 	pane_expand.png \
+	part.png \
+	part_intersect.png \
+	part_labeled.png \
+	part_subtract.png \
+	part_union.png \
 	pipe.png \
 	pipe_intersect.png \
 	pipe_labeled.png \
