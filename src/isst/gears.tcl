@@ -1,29 +1,15 @@
 #!/bin/sh
-# the next line restarts using tclsh \
-exec tclsh "$0" "$@"
-
-# Togl - a Tk OpenGL widget
-# Copyright (C) 1996-1997  Brian Paul and Ben Bederson
-# Copyright (C) 2006-2007  Greg Couch
-# See the LICENSE file for copyright details.
-
-
-#
-# Test Togl using GL Gears Demo
-#
-# Copyright (C) 1997 Philip Quaife
-#
-
-package provide gears 1.0
+# the next line restarts using bwish \
+exec bwish "$0" "$@"
 
 package require Togl
 package require isst
 
-# create ::gears namespace
-namespace eval ::gears {
+# create ::isst namespace
+namespace eval ::isst {
 }
 
-proc ::gears::setup {} {
+proc ::isst::setup {} {
     global startx starty xangle0 yangle0 xangle yangle RotCnt
     global vTime
     set RotCnt 1
@@ -36,45 +22,24 @@ proc ::gears::setup {} {
     pack .t -side top -padx 2 -pady 10
     frame .f
     pack .f -side top
-    button .f.n1 -text "  Add " -command ::gears::AutoRot
-    button .f.r1 -text "Remove" -command ::gears::DelRot
     button .f.b1 -text " Quit " -command exit 
-    entry .f.t -width 4 -textvariable vTime
-    pack .f.n1 .f.t .f.r1 .f.b1 -side left -anchor w -padx 5
+    pack .f.b1 -side left -anchor w -padx 5
     newRot .w0 10
 
 }
-proc ::gears::AutoRot {} {
-    global RotCnt vTime
-    newRot .w$RotCnt $vTime
-    set RotCnt [expr $RotCnt + 1]
-}
 
-proc ::gears::DelRot {} {
-    global RotCnt vTime
-    if { $RotCnt != 0 } {
-      set RotCnt [expr $RotCnt - 1]
-      destroy .w$RotCnt
-    }
-}
-
-proc ::gears::newRot {win {tick 100} } {
+proc ::isst::newRot {win {tick 100} } {
     togl $win -width 200 -height 200 -rgba true -double true -depth true -privatecmap false -time $tick -create gears_init -destroy gears_zap -display draw -reshape reshape -timer idle
-    bind $win <ButtonPress-1> {::gears::RotStart %x %y %W}
-    bind $win <B1-Motion> {::gears::RotMove %x %y %W}
+    bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
+    bind $win <B1-Motion> {::isst::RotMove %x %y %W}
     pack $win -expand true -fill both
 }
 
-proc ::gears::RotStart {x y W} {
-    global startx starty xangle0 yangle0 xangle yangle
-    set startx $x
-    set starty $y
-    set vPos [position $W]
-    set xangle0 [lindex $vPos 0]
-    set yangle0 [lindex $vPos 1]
+proc ::isst::RotStart {x y W} {
+    exit
 }
 
-proc ::gears::RotMove {x y W} {
+proc ::isst::RotMove {x y W} {
     global startx starty xangle0 yangle0 xangle yangle
     set xangle [expr $xangle0 + ($x - $startx)]
     set yangle [expr $yangle0 + ($y - $starty)]
@@ -82,5 +47,5 @@ proc ::gears::RotMove {x y W} {
 }
 
 if { [info script] == $argv0 } {
-	::gears::setup
+	::isst::setup
 }
