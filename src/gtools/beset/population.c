@@ -32,7 +32,7 @@
 #include <math.h>
 #include <limits.h>
 #include <string.h>
-#include "bio.h>
+#include "bio.h"
 
 #include "bu.h"
 #include "bn.h"
