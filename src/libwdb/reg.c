@@ -215,7 +215,7 @@ mk_addmember(
 	    break;
 	default:
 	    bu_log("mk_addmember() op=x%x is bad\n", op);
-	    return(WMEMBER_NULL);
+	    return WMEMBER_NULL;
     }
 
     /* if the user gave a matrix, use it.  otherwise use identity matrix*/
@@ -227,7 +227,7 @@ mk_addmember(
 
     /* Append to end of doubly linked list */
     BU_LIST_INSERT( headp, &wp->l );
-    return(wp);
+    return wp;
 }
 
 /*
