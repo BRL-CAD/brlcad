@@ -57,7 +57,7 @@
 #define TOL2 0.00001
 
 
-int brep_getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
+extern int brep_getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
 
 bool
 ON_NearZero(double x, double tolerance) {
@@ -588,7 +588,7 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 	    return false; //already failed
     }
 		
-    return (vdot >= BREP_CURVE_FLATNESS);
+    return vdot >= BREP_CURVE_FLATNESS;
 }
 
 
@@ -694,7 +694,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     std::list<BBNode*>::iterator i;
     for (i = nodes.begin(); i != nodes.end(); i++) {
 	BBNode* node = (*i);
-	if (brep_getSurfacePoint(pt, curr_uv, node)) {
+	if (::brep_getSurfacePoint(pt, curr_uv, node)) {
 	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
