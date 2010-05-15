@@ -132,14 +132,14 @@ init_sintab(int size)
     if (size > MAXSIZE) {
 	fprintf(stderr, "fft: Only compiled for max size of %d\n", MAXSIZE);
 	fprintf(stderr, "fft: Can't do the requested %d\n", size);
-	return(0);
+	return 0;
     }
     for (m = size; (m & 1) == 0; m >>= 1)
 	;
     if (m != 1) {
 	fprintf(stderr, "fft: Can only do powers of two, not %d\n", size);
 	fprintf(stderr, "fft: What do you think this is, a Winograd transform?\n");
-	return(0);
+	return 0;
     }
 
     /* Get some buffer space */
@@ -165,7 +165,7 @@ init_sintab(int size)
      */
     _init_size = size;
 /* fprintf(stderr, "fft: table init, size = %d\n", size);*/
-    return(1);
+    return 1;
 }
 
 /*

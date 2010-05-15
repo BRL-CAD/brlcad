@@ -759,12 +759,12 @@ static int hit_nothing(struct application *ap)
 	VMOVE(ap->a_color, u.sw.sw_color);
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	ap->a_uptr = (genptr_t)&env_region;
-	return(1);
+	return 1;
     }
 
     ap->a_user = 0;		/* Signal view_pixel:  MISS */
     VMOVE(ap->a_color, background);	/* In case someone looks */
-    return(0);
+    return 0;
 }
 
 
@@ -802,7 +802,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
     if (pp == PartHeadp) {
 	bu_log("colorview:  no hit out front?\n");
-	return(0);
+	return 0;
     }
 
     if (do_kut_plane) {
@@ -826,7 +826,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    if (pp == PartHeadp) {
 		/* we ignored everything, this is now a miss */
 		ap->a_miss(ap);
-		return(0);
+		return 0;
 	    }
 	} else if (slant_factor > 1.0e-10) {
 	    /* entry point, ignore everything after "dist" */
@@ -834,7 +834,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    if (pp->pt_inhit->hit_dist > dist) {
 		/* everything is after kut plane, this is now a miss */
 		ap->a_miss(ap);
-		return(0);
+		return 0;
 	    }
 	} else {
 	    /* ray is parallel to plane when dir.N == 0.  If it is
@@ -842,7 +842,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	     */
 	    if (norm_dist < 0.0) {
 		ap->a_miss(ap);
-		return(0);
+		return 0;
 	    }
 	}
 	
@@ -1014,7 +1014,7 @@ out:
 	       pp->pt_regionp->reg_name);
 	VPRINT("color   ", ap->a_color);
     }
-    return(1);
+    return 1;
 }
 
 
@@ -1039,7 +1039,7 @@ int viewit(struct application *ap,
 	if (pp->pt_outhit->hit_dist >= 0.0) break;
     if (pp == PartHeadp) {
 	bu_log("viewit:  no hit out front?\n");
-	return(0);
+	return 0;
     }
 
     if (do_kut_plane) {
@@ -1064,7 +1064,7 @@ int viewit(struct application *ap,
 	    if (pp == PartHeadp) {
 		/* we ignored everything, this is now a miss */
 		ap->a_miss(ap);
-		return(0);
+		return 0;
 	    }
 	} else if (slant_factor > 1.0e-10) {
 	    /* entry point, ignore everything after "dist" */
@@ -1072,14 +1072,14 @@ int viewit(struct application *ap,
 	    if (pp->pt_inhit->hit_dist > dist) {
 		/* everything is after kut plane, this is now a miss */
 		ap->a_miss(ap);
-		return(0);
+		return 0;
 	    }
 	} else {
 	    /* ray is parallel to plane when dir.N == 0.
 	     * If it is inside the solid, this is a miss */
 	    if (norm_dist < 0.0) {
 		ap->a_miss(ap);
-		return(0);
+		return 0;
 	    }
 	}
 	
@@ -1181,7 +1181,7 @@ int viewit(struct application *ap,
 	VPRINT("RGB", ap->a_color);
     }
     ap->a_user = 1;		/* Signal view_pixel:  HIT */
-    return(0);
+    return 0;
 }
 
 

@@ -243,7 +243,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
-	return(-1);
+	return -1;
 
     if (fire_sp->noise_size != -1.0) {
 	VSETALL(fire_sp->noise_vscale, fire_sp->noise_size);
@@ -278,7 +278,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 	bn_mat_print( "colorspline", fire_sp->fire_colorspline_mat );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -491,7 +491,7 @@ fire_render(struct application *ap, struct partition *pp, struct shadework *swp,
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*

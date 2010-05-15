@@ -152,20 +152,20 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
     int i;
     double d;
 
-    if (fscanf(fp, "%lf", &d) != 1) return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return -1;
     *scale = d*0.5;
-    if (fscanf(fp, "%lf", &d) != 1) return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return -1;
     eye[X] = d;
-    if (fscanf(fp, "%lf", &d) != 1) return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return -1;
     eye[Y] = d;
-    if (fscanf(fp, "%lf", &d) != 1) return(-1);
+    if (fscanf(fp, "%lf", &d) != 1) return -1;
     eye[Z] = d;
     for (i=0; i < 16; i++) {
 	if (fscanf(fp, "%lf", &d) != 1)
-	    return(-1);
+	    return -1;
 	mat[i] = d;
     }
-    return(0);
+    return 0;
 }
 
 

@@ -403,11 +403,11 @@ fb_is_linear_cmap(register const ColorMap *cmap)
     register int i;
 
     for (i=0; i<256; i++) {
-	if (cmap->cm_red[i]>>8 != i) return(0);
-	if (cmap->cm_green[i]>>8 != i) return(0);
-	if (cmap->cm_blue[i]>>8 != i) return(0);
+	if (cmap->cm_red[i]>>8 != i) return 0;
+	if (cmap->cm_green[i]>>8 != i) return 0;
+	if (cmap->cm_blue[i]>>8 != i) return 0;
     }
-    return(1);
+    return 1;
 }
 
 

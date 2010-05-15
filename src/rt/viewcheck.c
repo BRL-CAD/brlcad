@@ -140,7 +140,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
     VJOIN1( ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir );
     depth = ohitp->hit_dist - ihitp->hit_dist;
     if ( depth < OVLP_TOL )
-	return(0);
+	return 0;
 
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     pdv_3line( outfp, ihit, ohit );
@@ -216,7 +216,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 	}
     }
 
-    return(0);	/* No further consideration to this partition */
+    return 0;	/* No further consideration to this partition */
 }
 
 /*

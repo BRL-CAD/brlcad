@@ -70,8 +70,8 @@ tables_check(char *a, char *b)
 
     int c= sizeof(struct identt);
 
-    while (c--) if (*a++ != *b++) return(0);	/* no match */
-    return(1);	/* match */
+    while (c--) if (*a++ != *b++) return 0;	/* no match */
+    return 1;	/* match */
 
 }
 
@@ -99,7 +99,7 @@ tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
 
 	if (tables_check((char *)&idbuf1, (char *)&idbuf2) == 1) {
 	    *old = 1;
-	    return(idbuf2.i_index);
+	    return idbuf2.i_index;
 	}
     }
     *numsol++;
@@ -109,7 +109,7 @@ tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
     (void)write(idfd, &idbuf1, sizeof identt);
 
     *old = 0;
-    return(idbuf1.i_index);
+    return idbuf1.i_index;
 }
 
 

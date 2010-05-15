@@ -95,7 +95,7 @@ _ged_editit(char *editstring, const char *filename)
 #ifdef HAVE_UNISTD_H
     if ((pid = fork()) < 0) {
 	perror("fork");
-	return (0);
+	return 0;
     }
 #endif
 

@@ -491,7 +491,7 @@ void* tienet_master_listener(void *ptr)
 	 * units that were out have come back in.
 	 */
 	if (tienet_master_halt_networking)
-	    return(NULL);
+	    return NULL;
 
 
 	/* Slave Communication */

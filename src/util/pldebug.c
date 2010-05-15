@@ -157,10 +157,10 @@ getshort(void)
     v |= (getc(fp)<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if (v <= 0x7FFF) return(v);
+    if (v <= 0x7FFF) return v;
     w = -1;
     w &= ~0x7FFF;
-    return(w | v);
+    return w | v;
 }
 
 

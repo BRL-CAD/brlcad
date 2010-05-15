@@ -90,14 +90,14 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (argc > ++bu_optind)
 	(void)fprintf(stderr, "fbgrid: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 int
@@ -150,7 +150,7 @@ main(int argc, char **argv)
     }
 
     fb_close(fbp);
-    return(0);
+    return 0;
 }
 
 void

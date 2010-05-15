@@ -273,6 +273,6 @@ int obj_split_reference(const char *s, int val[3])
  
    val[2] = strtol(endptr,&endptr,0);
  
-   return (*endptr == 0);
+   return *endptr == 0;
 }
 

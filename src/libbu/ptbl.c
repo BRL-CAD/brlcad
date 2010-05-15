@@ -70,7 +70,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 
     i=b->end++;
     b->buffer[i] = p;
-    return (i);
+    return i;
 }
 
 
@@ -83,9 +83,9 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
     BU_CK_PTBL(b);
     pp = (const long **)b->buffer;
     for (k = b->end-1; k >= 0; k--)
-	if (pp[k] == p) return (k);
+	if (pp[k] == p) return k;
 
-    return (-1);
+    return -1;
 }
 
 
@@ -112,7 +112,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 
     /* search for existing */
     for (k = b->end-1; k >= 0; k--)
-	if (pp[k] == p) return (k);
+	if (pp[k] == p) return k;
 
     if (bu_debug & BU_DEBUG_PTBL)
 	bu_log("bu_ptbl_ins_unique(%p, %p)\n", (void *)b, (void *)p);
@@ -124,7 +124,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
     }
 
     b->buffer[k=b->end++] = p;
-    return (-1);		/* To signal that it was added */
+    return -1;		/* To signal that it was added */
 }
 
 
@@ -226,17 +226,17 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 	return bu_ptbl_locate(b, p);
     } else if (func == BU_PTBL_ZERO) {
 	bu_ptbl_zero(b, p);
-	return (0);
+	return 0;
     } else if (func == BU_PTBL_INS_UNIQUE) {
 	return bu_ptbl_ins_unique(b, p);
     } else if (func == BU_PTBL_RM) {
 	return bu_ptbl_rm(b, p);
     } else if (func == BU_PTBL_CAT) {
 	bu_ptbl_cat(b, (const struct bu_ptbl *)p);
-	return (0);
+	return 0;
     } else if (func == BU_PTBL_FREE) {
 	bu_ptbl_free(b);
-	return (0);
+	return 0;
     }
 
     bu_log("bu_ptbl(%p) Unknown table function %d\n", (void *)b, func);

@@ -51,7 +51,7 @@ sphere( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[entityno]->param );
     Readint( &sol_num, "" );
@@ -64,7 +64,7 @@ sphere( entityno )
     {
 	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
 
@@ -78,7 +78,7 @@ sphere( entityno )
     VSET(center, x, y, z);
     mk_sph(fdout, dir[entityno]->name, center, radius);
 
-    return( 1 );
+    return 1;
 }
 
 /*

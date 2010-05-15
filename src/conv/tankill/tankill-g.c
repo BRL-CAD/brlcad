@@ -78,7 +78,7 @@ Add_solid(int comp_code_num)
 	id_root->next = (struct comp_idents *)NULL;
 	id_root->ident = comp_code_num;
 	id_root->no_of_solids = 1;
-	return( 1 );
+	return 1;
     }
     else
     {
@@ -91,7 +91,7 @@ Add_solid(int comp_code_num)
 	if ( ptr->ident == comp_code_num )
 	{
 	    ptr->no_of_solids++;
-	    return( ptr->no_of_solids );
+	    return ptr->no_of_solids;
 	}
 	else
 	{
@@ -101,7 +101,7 @@ Add_solid(int comp_code_num)
 	    ptr->next = NULL;
 	    ptr->ident = comp_code_num;
 	    ptr->no_of_solids = 1;
-	    return( 1 );
+	    return 1;
 	}
     }
 }

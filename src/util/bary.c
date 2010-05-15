@@ -129,7 +129,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	bu_vls_strcat(tail, cp);
     }
     bu_vls_vlsfree(bp);
-    return (return_code);
+    return return_code;
 }
 
 

@@ -328,14 +328,14 @@ fbserv_makeconn(int fd,
 
     if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
 	communications_error("fbserv_makeconn: malloc failure\n");
-	return(PKC_ERROR);
+	return PKC_ERROR;
     }
 
 #ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	communications_error("fbserv_makeconn:  could not find a usable WinSock DLL\n");
-	return(PKC_ERROR);
+	return PKC_ERROR;
     }
 #endif
 

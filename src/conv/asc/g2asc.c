@@ -88,7 +88,7 @@ tclify_name( const char *name )
     size_t max_len=2*strlen( name ) + 1;
 
     if ( max_len < 2 ) {
-	return( (char *)NULL );
+	return (char *)NULL;
     }
 
     if ( max_len > tclified_name_buffer_len ) {
@@ -106,7 +106,7 @@ tclify_name( const char *name )
     }
     *dest = '\0';
 
-    return( tclified_name );
+    return tclified_name;
 }
 
 int
@@ -1132,9 +1132,9 @@ char *name(char *str)
 	/* Null input name */
 	(void)fprintf(stderr,
 		      "g2asc:  NULL object name converted to -=NULL=-\n");
-	return("-=NULL=-");
+	return "-=NULL=-";
     }
-    return(buf);
+    return buf;
 }
 
 /*
@@ -1173,9 +1173,9 @@ char *strchop(char *str, int len)
 	/* Null input name */
 	(void)fprintf(stderr,
 		      "g2asc:  NULL string converted to -=STRING=-\n");
-	return("-=STRING=-");
+	return "-=STRING=-";
     }
-    return(buf);
+    return buf;
 }
 
 void

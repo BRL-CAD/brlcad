@@ -266,7 +266,7 @@ palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *, struct ged *))
     if ((new = bu_calloc(1, sizeof(PLAN), "Allocate PLAN structure"))) {
 	new->type = t;
 	new->eval = f;
-	return (new);
+	return new;
     }
     bu_exit(1, NULL);
     /* NOTREACHED */
@@ -285,7 +285,7 @@ f_expr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
     for (p = plan->p_data[0];
 	 p && (state = (p->eval)(p, entry, gedp)); p = p->next);
-    return (state);
+    return state;
 }
 
 
@@ -322,7 +322,7 @@ f_not(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
     for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, gedp)); p = p->next)
 	;
-    return (!state);
+    return !state;
 }
 
 int
@@ -365,7 +365,7 @@ f_above(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	DB_FULL_PATH_POP(&abovepath);
     }
     db_free_full_path(&abovepath);
-    return (state);
+    return state;
 }
 
 int
@@ -600,11 +600,11 @@ f_or(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	 p && (state = (p->eval)(p, entry, gedp)); p = p->next);
 
     if (state)
-	return (1);
+	return 1;
 
     for (p = plan->p_data[1];
 	 p && (state = (p->eval)(p, entry, gedp)); p = p->next);
-    return (state);
+    return state;
 }
 
 int
@@ -624,7 +624,7 @@ c_or(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 int
 f_name(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
-    return (!bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0));
+    return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0);
 }
 
 int
@@ -648,7 +648,7 @@ c_name(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 int
 f_iname(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
-    return (!bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_CASEFOLD));
+    return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_CASEFOLD);
 }
 
 int
@@ -673,7 +673,7 @@ c_iname(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 int
 f_regex(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
-    return (!(regexec(&plan->regexp_data, db_path_to_string(entry), 0, NULL, 0)));
+    return !(regexec(&plan->regexp_data, db_path_to_string(entry), 0, NULL, 0));
 }
 
 int
@@ -703,14 +703,14 @@ c_regex_common(enum ntype type, char *regexp, int icase, PLAN **resultplan)
 int
 c_regex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 {
-    return (c_regex_common(N_REGEX, pattern, 0, resultplan));
+    return c_regex_common(N_REGEX, pattern, 0, resultplan);
 }
 
 int
 c_iregex(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 {
 
-    return (c_regex_common(N_IREGEX, pattern, 1, resultplan));
+    return c_regex_common(N_IREGEX, pattern, 1, resultplan);
 }
 
 
@@ -808,12 +808,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
 		if ((checkval == 2) && (strcomparison == 1)) {
@@ -821,12 +821,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
 		if ((checkval == 3) && (strcomparison == 1)) {
@@ -834,12 +834,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
 		if ((checkval == 4) && (strcomparison == 1)) {
@@ -847,12 +847,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
 		if ((checkval == 5) && (strcomparison == 1)) {
@@ -860,12 +860,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
 
@@ -876,12 +876,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
 		if ((checkval == 2) && (strcomparison == 0)) {
@@ -889,12 +889,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
    		if ((checkval == 3) && (strcomparison == 0)) {
@@ -902,12 +902,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
    		if ((checkval == 4) && (strcomparison == 0)) {
@@ -915,12 +915,12 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
    		if ((checkval == 5) && (strcomparison == 0)) {
@@ -928,30 +928,30 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 		    	bu_avs_free( &avs);
     			bu_vls_free( &attribname);
     			bu_vls_free( &value);
-    			return (1);
+    			return 1;
     		    } else {
 			bu_avs_free( &avs);
 			bu_vls_free( &attribname);
 			bu_vls_free( &value);
-			return (0);
+			return 0;
 		    }			
 		}
    		bu_avs_free( &avs);
 		bu_vls_free( &attribname);
 		bu_vls_free( &value);
-		return (0);
+		return 0;
 	    } else {
 		bu_avs_free( &avs);
 		bu_vls_free( &attribname);
 		bu_vls_free( &value);
-		return (1);
+		return 1;
 	    }
 	}
     }
     bu_avs_free( &avs);
     bu_vls_free( &attribname);
     bu_vls_free( &value);
-    return (0);
+    return 0;
 }
 
 int
@@ -1177,7 +1177,7 @@ f_type(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
     }
 
     rt_db_free_internal(&intern);
-    return (type_match);
+    return type_match;
 }
 
 int
@@ -1210,7 +1210,7 @@ f_maxdepth(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	DB_FULL_PATH_POP(&depthtest);
     }
     db_free_full_path(&depthtest);
-    return (depthcount <= plan->max_data);
+    return depthcount <= plan->max_data;
 }
 
 int
@@ -1243,7 +1243,7 @@ f_mindepth(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	DB_FULL_PATH_POP(&depthtest);
     }
     db_free_full_path(&depthtest);
-    return (depthcount >= plan->min_data);
+    return depthcount >= plan->min_data;
 }
 
 int
@@ -1369,7 +1369,7 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	}
     }
 
-    return (0);
+    return 0;
 }
 
 int
@@ -1395,7 +1395,7 @@ c_nnodes(char *pattern, char ***ignored, int unused, PLAN **resultplan)
 int
 f_path(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
-    return(!bu_fnmatch(plan->path_data, db_path_to_string(entry), 0));
+    return !bu_fnmatch(plan->path_data, db_path_to_string(entry), 0);
 }
 
 int
@@ -1421,7 +1421,7 @@ f_print(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
     bu_vls_printf(&gedp->ged_result_str,"%s\n", db_path_to_string(entry));
     isoutput = 0;
-    return(1);
+    return 1;
 }
 
 /* ARGSUSED */
@@ -1429,7 +1429,7 @@ int
 f_print0(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
     bu_vls_printf(&gedp->ged_result_str,"%s\0", db_path_to_string(entry));
-    return(1);
+    return 1;
 }
 
 int
@@ -1511,7 +1511,7 @@ option(char *name)
 int
 typecompare(const void *a, const void *b)
 {
-    return (strcmp(((OPTION *)a)->name, ((OPTION *)b)->name));
+    return strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
 }
 
 
@@ -1525,10 +1525,10 @@ yanknode(PLAN **planp)          /* pointer to top of plan (modified) */
     PLAN *node;             /* top node removed from the plan */
 
     if ((node = (*planp)) == NULL)
-	return (NULL);
+	return NULL;
     (*planp) = (*planp)->next;
     node->next = NULL;
-    return (node);
+    return node;
 }
 
 /*

@@ -451,7 +451,7 @@ master_networking (void *ptr)
 	    {
 		case ADRT_NETOP_SHUTDOWN:
 		    tienet_sem_post (&master.wait_sem);
-		    return (NULL);
+		    return NULL;
 		    break;
 
 		case ADRT_NETOP_INIT:

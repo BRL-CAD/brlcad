@@ -349,14 +349,14 @@ lookup_props( props, name )
     props->color[2] = 0;
 
     if ( name == NULL )
-	return( 1 );
+	return 1;
 
     dp  = db_lookup( dbip, name, 1 );
     if ( dp == DIR_NULL )
-	return( 1 );
+	return 1;
 
     if ( !(dp->d_flags & DIR_COMB) )
-	return( 1 );
+	return 1;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
 
@@ -364,14 +364,14 @@ lookup_props( props, name )
     {
 	rt_db_free_internal(&intern);
 	bu_log( "Could not get internal form of %s\n", dp->d_namep );
-	return( 1 );
+	return 1;
     }
 
     if ( id != ID_COMBINATION )
     {
 	rt_db_free_internal(&intern);
 	bu_log( "Directory/Database mismatch! is %s a combination or not???\n", dp->d_namep );
-	return( 1 );
+	return 1;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -379,7 +379,7 @@ lookup_props( props, name )
 
     get_props( props, comb );
     rt_db_free_internal(&intern);
-    return( 0 );
+    return 0;
 }
 
 
@@ -432,7 +432,7 @@ write_freeform(FILE *fp,	/* output file */
 	    fprintf( fp, global_form, &s[line_start], c, *seq_no );
 	    line_start += paramlen;
 	}
-	return( *seq_no - start_seq );
+	return *seq_no - start_seq;
     }
 
     /* Just print any string that will fit */
@@ -443,7 +443,7 @@ write_freeform(FILE *fp,	/* output file */
 	    fprintf( fp, param_form, s, de, c, *seq_no );
 	else
 	    fprintf( fp, global_form, s, c, *seq_no );
-	return( *seq_no - start_seq );
+	return *seq_no - start_seq;
     }
     else /* break string into lines */
     {
@@ -569,7 +569,7 @@ write_freeform(FILE *fp,	/* output file */
 	    }
 	    line_start = line_end + 1;
 	}
-	return( *seq_no - start_seq );
+	return *seq_no - start_seq;
     }
 }
 
@@ -606,7 +606,7 @@ write_color_entity( color, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -627,7 +627,7 @@ get_color( color, fp_dir, fp_param )
     if ( color_de == 9 )
 	color_de = (-write_color_entity( color, fp_dir, fp_param ));
 
-    return( color_de );
+    return color_de;
 }
 
 int
@@ -672,7 +672,7 @@ write_attribute_definition( fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 
@@ -760,7 +760,7 @@ write_dir_entry(FILE *fp, int entry[])
     }
 
     dir_seq += 2;
-    return( dir_seq - 1 );
+    return dir_seq - 1;
 }
 
 
@@ -899,7 +899,7 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
     }
 
     if ( face_count == 0 )
-	return( 0 );
+	return 0;
 
     /* Find outer shells and void shells and their associations */
     outer_shell_count = nmg_find_outer_and_void_shells( r, &shells, &tol );
@@ -958,9 +958,9 @@ nmgregion_to_iges( name, r, dependent, fp_dir, fp_param )
     (void)bu_ptbl_free( &etab );
 
     if ( outer_shell_count != 1 )
-	return( write_solid_assembly( name, brep_de, outer_shell_count, dependent, fp_dir, fp_param ) );
+	return write_solid_assembly( name, brep_de, outer_shell_count, dependent, fp_dir, fp_param );
     else
-	return( brep_de[0] );
+	return brep_de[0];
 }
 
 int
@@ -975,7 +975,7 @@ verts_to_copious_data( pts, vert_count, pt_size, fp_dir, fp_param )
     int			i;
 
     if ( vert_count < 2 )
-	return( 0 );
+	return 0;
 
     bu_vls_init( &str );
 
@@ -1024,7 +1024,7 @@ verts_to_copious_data( pts, vert_count, pt_size, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -1047,14 +1047,14 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
     NMG_CK_LOOPUSE( lu );
 
     if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-	return( 0 );
+	return 0;
 
     /* count vertices */
     for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	vert_count++;
 
     if ( vert_count < 3 )
-	return( 0 );
+	return 0;
 
     /* Allocate memory for points */
     model_pts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "nmg_loop_to_tcurve: model_pts" );
@@ -1121,7 +1121,7 @@ nmg_loop_to_tcurve( lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 void
@@ -1228,7 +1228,7 @@ int nmgregion_to_tsurf( name, r, fp_dir, fp_param )
 	}
     }
 
-    return( -1 );
+    return -1;
 }
 
 int
@@ -1288,7 +1288,7 @@ write_vertex_list( r, vtab, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -1334,7 +1334,7 @@ write_line_entity( start_vg, end_vg, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -1380,7 +1380,7 @@ write_linear_bspline( start_vg, end_vg, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -1460,7 +1460,7 @@ write_edge_list( r, vert_de, etab, vtab, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -1496,7 +1496,7 @@ write_point_entity( pt, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -1532,7 +1532,7 @@ write_direction_entity( pt, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -1570,7 +1570,7 @@ write_plane_entity( plane, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 
@@ -1611,7 +1611,7 @@ write_planar_nurb( fu, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param )
     if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
     {
 	bu_log( "Write_planar_nurb: could not find a loop (with edges) in face\n" );
-	return( 0 );
+	return 0;
     }
 
     eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
@@ -1691,7 +1691,7 @@ write_planar_nurb( fu, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 
@@ -1999,7 +1999,7 @@ write_shell_face_loop( name, r, dependent, edge_de, etab, vert_de, vtab, fp_dir,
     bu_free( (char *)shell_list, "shell list" );
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 void
@@ -2029,32 +2029,32 @@ arb_is_rpp( arb )
     {
 	VSUB2( v1, arb->pt[i], arb->pt[i-4] );
 	if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
-	    return( 0 );
+	    return 0;
     }
 
     /* check the width vectors */
     VSUB2( v0, arb->pt[1], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[3] );
     if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
-	return( 0 );
+	return 0;
     VSUB2( v1, arb->pt[6], arb->pt[7] );
     if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
-	return( 0 );
+	return 0;
     VSUB2( v1, arb->pt[5], arb->pt[4] );
     if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
-	return( 0 );
+	return 0;
 
     /* check the depth vectors */
     VSUB2( v0, arb->pt[3], arb->pt[0] );
     VSUB2( v1, arb->pt[2], arb->pt[1] );
     if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
-	return( 0 );
+	return 0;
     VSUB2( v1, arb->pt[6], arb->pt[5] );
     if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
-	return( 0 );
+	return 0;
     VSUB2( v1, arb->pt[7], arb->pt[4] );
     if ( !VAPPROXEQUAL( v0, v1, tol.dist ) )
-	return( 0 );
+	return 0;
 
     /* check for a right angle corner */
     VSUB2( v0, arb->pt[3], arb->pt[0] );
@@ -2064,13 +2064,13 @@ arb_is_rpp( arb )
     VUNITIZE( v1 );
     VUNITIZE( v2 );
     if ( !BN_VECT_ARE_PERP( VDOT( v0, v1 ), &tol ) )
-	return( 0 );
+	return 0;
     if ( !BN_VECT_ARE_PERP( VDOT( v0, v2 ), &tol ) )
-	return( 0 );
+	return 0;
     if ( !BN_VECT_ARE_PERP( VDOT( v1, v2 ), &tol ) )
-	return( 0 );
+	return 0;
 
-    return( 1 );
+    return 1;
 }
 
 int
@@ -2085,7 +2085,7 @@ write_name_entity( name, fp_dir, fp_param )
 
     name_len = strlen( name );
     if ( !name_len )
-	return( 0 );
+	return 0;
 
     bu_vls_init( &str );
 
@@ -2112,7 +2112,7 @@ write_name_entity( name, fp_dir, fp_param )
     dir_entry[9] = 1010301;
     dir_entry[11] = 406;
     dir_entry[15] = 15;
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -2164,7 +2164,7 @@ tor_to_iges( ip, name, fp_dir, fp_param )
     dir_entry[9] = 10001;
     dir_entry[11] = 160;
     dir_entry[15] = 0;
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 
@@ -2218,7 +2218,7 @@ sph_to_iges( ip, name, fp_dir, fp_param )
     dir_entry[9] = 10001;
     dir_entry[11] = 158;
     dir_entry[15] = 0;
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 
@@ -2289,7 +2289,7 @@ ell_to_iges( ip, name, fp_dir, fp_param )
     dir_entry[9] = 10001;
     dir_entry[11] = 168;
     dir_entry[15] = 0;
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 int
@@ -2375,7 +2375,7 @@ rpp_to_iges( ip, name, fp_dir, fp_param )
     dir_entry[9] = 10001;
     dir_entry[11] = 150;
     dir_entry[15] = 0;
-    return( write_dir_entry( fp_dir, dir_entry ));
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -2389,7 +2389,7 @@ arb_to_iges( ip, name, fp_dir, fp_param )
     if ( ip->idb_type != ID_ARB8 )
     {
 	bu_log( "arb_to_iges called for non-arb (type=%d)\n", ip->idb_type );
-	return( 0 );
+	return 0;
     }
 
     arb = (struct rt_arb_internal *)ip->idb_ptr;
@@ -2397,9 +2397,9 @@ arb_to_iges( ip, name, fp_dir, fp_param )
     RT_ARB_CK_MAGIC( arb );
 
     if ( arb_is_rpp( arb ) )
-	return( rpp_to_iges( ip, name, fp_dir, fp_param ) );
+	return rpp_to_iges( ip, name, fp_dir, fp_param );
     else
-	return( nmg_to_iges( ip, name, fp_dir, fp_param ) );
+	return nmg_to_iges( ip, name, fp_dir, fp_param );
 }
 
 int
@@ -2420,7 +2420,7 @@ tgc_to_iges( ip, name, fp_dir, fp_param )
     if ( ip->idb_type != ID_TGC )
     {
 	bu_log( "tgc_to_iges called for non-tgc (type=%d)\n", ip->idb_type );
-	return( 0 );
+	return 0;
     }
 
     tgc = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -2449,7 +2449,7 @@ tgc_to_iges( ip, name, fp_dir, fp_param )
 	 !BN_VECT_ARE_PERP( VDOT( h_dir, b_dir ), &tol ) )
     {
 	/* this is not an rcc or a trc */
-	return( nmg_to_iges( ip, name, fp_dir, fp_param ));
+	return nmg_to_iges( ip, name, fp_dir, fp_param );
     }
 
     if ( NEAR_ZERO( a_len-b_len, tol.dist ) &&
@@ -2518,10 +2518,10 @@ tgc_to_iges( ip, name, fp_dir, fp_param )
 	dir_entry[11] = iges_type;
 	dir_entry[15] = 0;
 
-	return( write_dir_entry( fp_dir, dir_entry ));
+	return write_dir_entry( fp_dir, dir_entry );
     }
     else
-	return( nmg_to_iges( ip, name, fp_dir, fp_param ));
+	return nmg_to_iges( ip, name, fp_dir, fp_param );
 }
 
 int
@@ -2600,7 +2600,7 @@ write_tree_of_unions( name, de_list, length, dependent, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -2681,7 +2681,7 @@ write_solid_assembly( name, de_list, length, dependent, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -2726,7 +2726,7 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
 	}
 
 	if ( region_count == 0 )
-	    return( 0 );
+	    return 0;
 	else if ( region_count == 1 )
 	    return( nmgregion_to_iges( name, BU_LIST_FIRST( nmgregion, &model->r_hd ) ,
 				       dependent, fp_dir, fp_param ) );
@@ -2748,7 +2748,7 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
 					    dependent, fp_dir, fp_param );
 
 	    bu_free( (char *)region_de, "nmg_to_iges" );
-	    return( brep_de );
+	    return brep_de;
 	}
     }
     else
@@ -2759,21 +2759,21 @@ nmg_to_iges( ip, name, fp_dir, fp_param )
 	    if ( bot->mode != RT_BOT_SOLID )
 	    {
 		bu_log( "%s is a plate mode primitive, and cannot be converted to IGES format!\n", name );
-		return( 0 );
+		return 0;
 	    }
 	}
 	model = nmg_mm();
 	if ( rt_functab[ip->idb_type].ft_tessellate( &r, model, ip, &ttol, &tol ) )
 	{
 	    nmg_km( model );
-	    return( 0 );
+	    return 0;
 	}
 	else
 	{
 	    solids_to_nmg++;
 	    brep_de =  nmgregion_to_iges( name, r, dependent, fp_dir, fp_param );
 	    nmg_km( model );
-	    return( brep_de );
+	    return brep_de;
 	}
     }
 }
@@ -2806,7 +2806,7 @@ sketch_to_iges( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_pa
     bu_log("The 'sketch' primitive is not yet supported for IGES export.\n");
     bu_log("Unable to export %s\n", name);
 
-    return( 0 );
+    return 0;
 }
 
 
@@ -2816,7 +2816,7 @@ null_to_iges( ip, name, fp_dir, fp_param )
     char *name;
     FILE *fp_dir, *fp_param;
 {
-    return( 0 );
+    return 0;
 }
 
 int
@@ -2852,7 +2852,7 @@ write_xform_entity( mat, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -2887,7 +2887,7 @@ write_solid_instance( orig_de, mat, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 int
@@ -2949,7 +2949,7 @@ write_att_entity( props, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 }
 
 /*
@@ -2973,7 +2973,7 @@ short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param )
 
     /* if member has not been converted, don't try to write the tree */
     if ( de_pointers[0] == 0  )
-	return( 0 );
+	return 0;
 
     if ( dependent )
 	status = 10001;
@@ -3024,7 +3024,7 @@ short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 
@@ -3049,7 +3049,7 @@ count_non_union_ops( tp )
 	    break;
     }
 
-    return( count );
+    return count;
 }
 
 void
@@ -3133,7 +3133,7 @@ tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
 	    actual_length++;
     }
     if ( actual_length != length )
-	return( 0 );
+	return 0;
 
     if ( dependent )
 	status = 10001;
@@ -3201,7 +3201,7 @@ tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
 
     bu_vls_free( &str );
 
-    return( write_dir_entry( fp_dir, dir_entry ) );
+    return write_dir_entry( fp_dir, dir_entry );
 
 }
 
@@ -3216,9 +3216,9 @@ comb_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param )
     RT_CK_COMB( comb );
 
     if ( length == 1 )
-	return( short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param ) );
+	return short_comb_to_iges( props, dependent, de_pointers, fp_dir, fp_param );
     else
-	return( tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param ) );
+	return tree_to_iges( comb, length, dependent, props, de_pointers, fp_dir, fp_param );
 }
 
 /*

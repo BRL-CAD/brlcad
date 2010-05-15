@@ -580,12 +580,12 @@ wrobj(char name[], int flags)
     if (db_lookup(dbip, name, LOOKUP_QUIET) != DIR_NULL) {
 	Tcl_AppendResult(interp, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
-	return(-1);
+	return -1;
     }
 
     if (flags != DIR_SOLID) {
 	Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n");
-	return(-1);
+	return -1;
     }
 
     RT_INIT_DB_INTERNAL(&intern);
@@ -631,22 +631,22 @@ wrobj(char name[], int flags)
 	    break;
 	default:
 	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
-	    return(-1);
+	    return -1;
     }
 
     if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
-	return(-1);
+	return -1;
     }
 
     if (rt_db_put_internal(tdp, dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "wrobj(", name, "):  write error\n", (char *)NULL);
 	TCL_ERROR_RECOVERY_SUGGESTION;
-	return(-1);
+	return -1;
     }
-    return(0);
+    return 0;
 }
 
 

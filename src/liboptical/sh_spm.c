@@ -85,7 +85,7 @@ spm_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	  ((double)cp[RED])/256.,
 	  ((double)cp[GRN])/256.,
 	  ((double)cp[BLU])/256. );
-    return(1);
+    return 1;
 }
 
 /*
@@ -111,7 +111,7 @@ spm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     spp->sp_w = -1;
     if (bu_struct_parse( matparm, spm_parse, (char *)spp ) < 0 )  {
 	bu_free( (char *)spp, "spm_specific" );
-	return(-1);
+	return -1;
     }
     if (spp->sp_w < 0 )  spp->sp_w = 512;
     if (spp->sp_file[0] == '\0' )
@@ -120,10 +120,10 @@ spm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	goto fail;
     if (spm_load( spp->sp_map, spp->sp_file ) < 0 )
 	goto fail;
-    return(1);
+    return 1;
  fail:
     spm_mfree( (char *)spp);
-    return(-1);
+    return -1;
 }
 
 /*

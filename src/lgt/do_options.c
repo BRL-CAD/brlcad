@@ -2964,7 +2964,7 @@ f_Quit()
 {
     exit_Neatly( 0 );
     /*NOTREACHED*/
-    return( 0 ); /* for the compiler */
+    return 0; /* for the compiler */
 }
 
 /*	f _ R e d r a w ( ) */

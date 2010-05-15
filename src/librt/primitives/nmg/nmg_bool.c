@@ -932,7 +932,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     nmg_kill_wire_edges(sA);
 
-    return(sA);
+    return sA;
 }
 
 
@@ -971,10 +971,10 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
 	    bu_bomb("nmg_do_bool: Result of Boolean is an empty shell, but region is not empty!!!\n");
 	}
 	nmg_kr(r);
-	return((struct nmgregion *)NULL);
+	return (struct nmgregion *)NULL;
     }
 
-    return(r);
+    return r;
 }
 
 
@@ -1022,7 +1022,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
     if (ip->idb_meth->ft_tessellate(
 	    &r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
 	bu_log("nmg_booltree_leaf_tess(%s): tessellation failure\n", dp->d_namep);
-	return(TREE_NULL);
+	return TREE_NULL;
     }
 
     NMG_CK_REGION(r1);
@@ -1039,7 +1039,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
     if (RT_G_DEBUG&DEBUG_TREEWALK)
 	bu_log("nmg_booltree_leaf_tess(%s) OK\n", dp->d_namep);
 
-    return(curtree);
+    return curtree;
 }
 
 
@@ -1081,7 +1081,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
     if (ip->idb_meth->ft_tnurb(
 	    &r1, *tsp->ts_m, ip, tsp->ts_tol) < 0) {
 	bu_log("nmg_booltree_leaf_tnurb(%s): CSG to t-NURB conversation failure\n", dp->d_namep);
-	return(TREE_NULL);
+	return TREE_NULL;
     }
 
     NMG_CK_REGION(r1);
@@ -1098,7 +1098,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
     if (RT_G_DEBUG&DEBUG_TREEWALK)
 	bu_log("nmg_booltree_leaf_tnurb(%s) OK\n", dp->d_namep);
 
-    return(curtree);
+    return curtree;
 }
 
 
@@ -1147,7 +1147,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 
     switch (tp->tr_op) {
 	case OP_NOP:
-	    return(0);
+	    return 0;
 	case OP_NMG_TESS:
 	    /* Hit a tree leaf */
 	    if (rt_g.NMG_debug & DEBUG_VERIFY) {
@@ -1168,7 +1168,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	    break;
 	default:
 	    bu_log("nmg_booltree_evaluate: bad op %d\n", tp->tr_op);
-	    return(0);
+	    return 0;
     }
     /* Handle a boolean operation node.  First get it's leaves. */
     tl = nmg_booltree_evaluate(tp->tr_b.tb_left, tol, resp);

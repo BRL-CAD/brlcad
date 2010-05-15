@@ -937,7 +937,7 @@ nmg_find_max_index(const struct model *m)
 	    }
 	}
     }
-    return(maxindex);
+    return maxindex;
 }
 
 

@@ -57,7 +57,7 @@ code(fastf_t x, fastf_t y)
     else if (y > GED_MAX)
 	cval |= 010;
 
-    return (cval);
+    return cval;
 }
 
 
@@ -74,7 +74,7 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 
     while (code1 || code2) {
 	if (code1 & code2)
-	    return (-1);	/* No part is visible */
+	    return -1;	/* No part is visible */
 
 	/* SWAP codes, X's, and Y's */
 	if (code1 == 0) {
@@ -115,7 +115,7 @@ clip(fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 	code1 = code(*xp1, *yp1);
     }
 
-    return (0);
+    return 0;
 }
 
 
@@ -151,14 +151,14 @@ vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
     for (i=0; i < 3; i++, pt++, dir++, max++, min++) {
 	if (*dir < -EPSILON) {
 	    if ((sv = (*min - *pt) / *dir) < 0.0)
-		return(0);	/* MISS */
+		return 0;	/* MISS */
 	    if (maxdist > sv)
 		maxdist = sv;
 	    if (mindist < (st = (*max - *pt) / *dir))
 		mindist = st;
 	}  else if (*dir > EPSILON) {
 	    if ((st = (*max - *pt) / *dir) < 0.0)
-		return(0);	/* MISS */
+		return 0;	/* MISS */
 	    if (maxdist > st)
 		maxdist = st;
 	    if (mindist < ((sv = (*min - *pt) / *dir)))
@@ -170,17 +170,17 @@ vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
 	     * check against the boundaries.
 	     */
 	    if ((*min > *pt) || (*max < *pt))
-		return(0);	/* MISS */;
+		return 0;	/* MISS */;
 	}
     }
     if (mindist >= maxdist)
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     if (mindist > 1 || maxdist < 0)
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     if (mindist <= 0 && maxdist >= 1)
-	return(1);	/* HIT, no clipping needed */
+	return 1;	/* HIT, no clipping needed */
 
     /* Don't grow one end of a contained segment */
     if (mindist < 0)
@@ -191,7 +191,7 @@ vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
     /* Compute actual intercept points */
     VJOIN1(b, a, maxdist, diff);		/* b must go first */
     VJOIN1(a, a, mindist, diff);
-    return(1);		/* HIT */
+    return 1;		/* HIT */
 }
 
 

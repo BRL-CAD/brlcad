@@ -236,7 +236,7 @@ bbd_setup( struct region *rp,
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, bbd_parse_tab, (char *)bbd_sp ) < 0 )
-	return(-1);
+	return -1;
 
     if (bbd_sp->img_count > MAX_IMAGES) {
 	bu_log("too many images (%d) in shader for %s sb < %d\n",
@@ -306,7 +306,7 @@ bbd_setup( struct region *rp,
 	bu_struct_print( " Parameters:", bbd_print_tab, (char *)bbd_sp );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -593,7 +593,7 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
     }
-    return(1);
+    return 1;
 }
 
 /*

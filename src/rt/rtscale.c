@@ -342,7 +342,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     ret = drawscale(outfp, m_startpt, m_len, m_tick_hgt, m_lenv, m_hgtv, m_inv_hgtv);
     if ( ret < 0 )  {
 	fprintf(stderr, "Layout: drawscale failed\n");
-	return(-1);
+	return -1;
     }
 
     if (nticks >  0 )  {
@@ -380,7 +380,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
 
     tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
     tp_3symbol(outfp, descript, m_descript_st, v2symbol, m_char_width);
-    return( 0 );		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -415,7 +415,7 @@ drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv
     drawticks(outfp, startpt, hgtv, hgt, inv_hgtv);
     drawticks(outfp, endpt, hgtv, hgt, inv_hgtv);
 
-    return(0);
+    return 0;
 }
 
 
@@ -450,7 +450,7 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
     pdv_3move(outfp, top);
     pdv_3cont(outfp, bot);
 
-    return( 0 );
+    return 0;
 }
 
 /*		M A K E _ B O R D E R

@@ -167,7 +167,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	    continue;
 
 	if (NEAR_ZERO(diff, SMALL_FASTF))
-	    return(i); /* OK -- can't do better */
+	    return i; /* OK -- can't do better */
 
 	/* FIXME: figure out why SMALL_FASTF is too sensitive, why
 	 * anything smaller than 1.0e-5 is too sensitive and causes
@@ -176,14 +176,14 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	if (diff > (b - diff) * 1.0e-5)
 	    continue;
 
-	return(i);			/* OK */
+	return i;			/* OK */
     }
 
     /* If the thing hasn't converged yet, it probably won't. */
     bu_log("rt_poly_findroot: solving for %s didn't converge in %d iterations, b=%g, diff=%g\n",
 	   str, i, b, diff);
     bu_log("nxZ=%gR+%gI, p0=%gR+%gI\n", nxZ->re, nxZ->im, p0.re, p0.im);
-    return(-1);		/* ERROR */
+    return -1;		/* ERROR */
 }
 
 
@@ -331,13 +331,13 @@ rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
 	if (eqn->dgr == 4) {
 	    if (bn_poly_quartic_roots(&roots[n], eqn)) {
 		if (rt_poly_checkroots(eqn, &roots[n], 4) == 0) {
-		    return(n+4);
+		    return n+4;
 		}
 	    }
 	} else if (eqn->dgr == 3) {
 	    if (bn_poly_cubic_roots(&roots[n], eqn)) {
 		if (rt_poly_checkroots(eqn, &roots[n], 3) == 0) {
-		    return (n+3);
+		    return n+3;
 		}
 	    }
 	}
@@ -348,7 +348,7 @@ rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
 	 */
 	bn_cx_cons(&roots[n], 0.0, SMALL);
 	if ((rt_poly_findroot(eqn, &roots[n], name)) < 0)
-	    return(n);	/* return those we found, anyways */
+	    return n;	/* return those we found, anyways */
 
 	if (fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re)) {
 	    /* If root is complex, its complex conjugate is

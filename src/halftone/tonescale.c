@@ -145,7 +145,7 @@ eq_cubic(int x)
 
     if (!p) {
 	fprintf(stderr, "eq_cubic called with no cubics!\n");
-	return(x);
+	return x;
     }
     while (x >= (p+1)->x) p++;
 
@@ -154,7 +154,7 @@ eq_cubic(int x)
 
     if (y<0) y = 0;
     if (y>255) y = 255;
-    return(y);
+    return y;
 }
 
 /* cubic_init	initialize a cubic list given a set of points.

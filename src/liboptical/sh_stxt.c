@@ -135,7 +135,7 @@ stxt_read(register struct stxt_specific *stp)
 	if ((fp = fopen(name, "rb")) == NULL )  {
 	    bu_log("stxt_read(%s):  can't open\n", name);
 	    stp->stx_file[0] = '\0';
-	    return(0);
+	    return 0;
 	}
 	linebuf = bu_malloc(stp->stx_fw*3, "texture file line");
 
@@ -145,7 +145,7 @@ stxt_read(register struct stxt_specific *stp)
 		stp->stx_file[0] = '\0';
 		(void)fclose(fp);
 		bu_free(linebuf, "file line, error");
-		return(0);
+		return 0;
 	    }
 	    memcpy(stp->stx_pixels + ln*stp->stx_w*3, linebuf, stp->stx_w*3);
 	    ln++;
@@ -154,7 +154,7 @@ stxt_read(register struct stxt_specific *stp)
 	(void)fclose(fp);
 	bu_free(linebuf, "texture file line");
     }
-    return(1);	/* OK */
+    return 1;	/* OK */
 }
 
 
@@ -178,12 +178,12 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
     stp->stx_w = stp->stx_fw = stp->stx_n = stp->stx_d = -1;
 
     if (rt_bound_tree(rp->reg_treetop, stp->stx_min, stp->stx_max) < 0 )
-	return(-1);
+	return -1;
 
     /**	Get input values  **/
     if (bu_struct_parse( matparm, stxt_parse, (char *)stp ) < 0 )  {
 	bu_free( (char *)stp, "stxt_specific" );
-	return(-1);
+	return -1;
     }
     /*** DEFAULT SIZE OF STXT FILES ***/
     if (stp->stx_w < 0 )  stp->stx_w = 512;
@@ -198,7 +198,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 	rp->reg_transmit = 1;
 
     /**	Read in texture file/s  **/
-    return( stxt_read(stp) );
+    return stxt_read(stp);
 }
 
 /*
@@ -250,7 +250,7 @@ brick_render(struct application *ap, struct partition *pp, struct shadework *swp
     if (stp->stx_file[0] == '\0'  ||
 	( stp->stx_pixels == (char *)0 && stxt_read(stp) == 0 ) )  {
 	VSET( swp->sw_color, 1, 0, 1 );
-	return(1);
+	return 1;
     }
 
     /** Local Coordinate Axis **/
@@ -313,7 +313,7 @@ brick_render(struct application *ap, struct partition *pp, struct shadework *swp
 	  (g+0.5) * bn_inv255,
 	  (b+0.5) * bn_inv255 );
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -342,7 +342,7 @@ rbound_render(struct application *ap, struct partition *pp, struct shadework *sw
     if (stp->stx_file[0] == '\0'  ||
 	( stp->stx_pixels == (char *)0 && stxt_read(stp) == 0 ) )  {
 	VSET( swp->sw_color, 1, 0, 1 );
-	return(1);
+	return 1;
     }
 
     /* NORMALIZE x, y, z to [0..1) */
@@ -383,7 +383,7 @@ rbound_render(struct application *ap, struct partition *pp, struct shadework *sw
 	  (g+0.5) * bn_inv255,
 	  (b+0.5) * bn_inv255 );
 
-    return(1);
+    return 1;
 }
 
 
@@ -412,7 +412,7 @@ mbound_render(struct application *ap, struct partition *pp, struct shadework *sw
     if (stp->stx_file[0] == '\0'  ||
 	( stp->stx_pixels == (char *)0 && stxt_read(stp) == 0 ) )  {
 	VSET( swp->sw_color, 1, 0, 1 );
-	return(1);
+	return 1;
     }
 
     /* NORMALIZE x, y, z to [0..1) */
@@ -443,7 +443,7 @@ mbound_render(struct application *ap, struct partition *pp, struct shadework *sw
 	  (g+0.5) * bn_inv255,
 	  (b+0.5) * bn_inv255 );
 
-    return(1);
+    return 1;
 }
 
 /*

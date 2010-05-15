@@ -497,7 +497,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, grass_parse_tab, (char *)grass_sp ) < 0 )
-	return(-1);
+	return -1;
 
     /* The shader needs to operate in a coordinate system which stays
      * fixed on the region when the region is moved (as in animation).
@@ -519,7 +519,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     }
 
 
-    return(1);
+    return 1;
 }
 
 /*

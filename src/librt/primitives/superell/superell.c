@@ -206,7 +206,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     if (magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist) {
 	bu_log("superell(%s):  near-zero length A(%g), B(%g), or C(%g) vector\n",
 	       stp->st_name, magsq_a, magsq_b, magsq_c);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     if (eip->n < rtip->rti_tol.dist || eip->e < rtip->rti_tol.dist) {
 	bu_log("superell(%s):  near-zero length <n, e> curvature (%g, %g) causes problems\n",
@@ -231,17 +231,17 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("superell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("superell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("superell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Solid is OK, compute constant terms now */
@@ -325,7 +325,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_min[Z] = superell->superell_V[Z] - f;	/* V.P +/- f */
     stp->st_max[Z] = superell->superell_V[Z] + f;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -426,7 +426,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 		reported=1;
 	    }
 	}
-	return (0); /* MISS */
+	return 0; /* MISS */
     }
 
     /* XXX BEGIN CUT */
@@ -449,12 +449,12 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     /* Here, 'i' is number of points found */
     switch (i) {
 	case 0:
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 
 	default:
 	    bu_log("rt_superell_shot: reduced 4 to %d roots\n", i);
 	    bn_pr_roots(stp->st_name, complexRoot, 4);
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 
 	case 2:
 	    {
@@ -506,7 +506,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
     if (i == 2) {
-	return(2);			/* HIT */
+	return 2;			/* HIT */
     }
 
     /* 4 points */
@@ -519,7 +519,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     VJOIN1(segp->seg_in.hit_vpriv, newShotPoint, realRoot[3], newShotDir);
     VJOIN1(segp->seg_out.hit_vpriv, newShotPoint, realRoot[2], newShotDir);
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
-    return(4);			/* HIT */
+    return 4;			/* HIT */
     /* XXX END CUT */
 
 }
@@ -605,7 +605,7 @@ rt_superell_free(struct soltab *stp)
 int
 rt_superell_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -689,7 +689,7 @@ rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     for (i=0; i<16; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -775,7 +775,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_superell_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -798,7 +798,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     eip->n = rp->s.s_values[12];
     eip->e = rp->s.s_values[13];
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -814,7 +814,7 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SUPERELL) return(-1);
+    if (ip->idb_type != ID_SUPERELL) return -1;
     tip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(tip);
 
@@ -837,7 +837,7 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     rec->s.s_values[12] = tip->n;
     rec->s.s_values[13] = tip->e;
 
-    return(0);
+    return 0;
 }
 
 
@@ -902,7 +902,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SUPERELL) return(-1);
+    if (ip->idb_type != ID_SUPERELL) return -1;
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
@@ -980,7 +980,7 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     sprintf(buf, "\t<n, e> (%g, %g)\n", INTCLAMP(tip->n), INTCLAMP(tip->e));
     bu_vls_strcat(str, buf);
 
-    if (!verbose) return(0);
+    if (!verbose) return 0;
 
     VSCALE(unitv, tip->a, 1/mag_a);
     rt_find_fallback_angle(angles, unitv);
@@ -994,7 +994,7 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
     rt_find_fallback_angle(angles, unitv);
     rt_pr_fallback_angle(str, "\tC", angles);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1036,7 +1036,7 @@ rt_superell_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

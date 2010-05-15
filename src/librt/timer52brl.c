@@ -87,7 +87,7 @@ rt_read_timer(str, len)
     tvsub(&td, &ru1.ru_utime, &ru0.ru_utime);
     usert = td.tv_sec + ((double)td.tv_usec) / 1000000;
     if (usert < 0.00001) usert = 0.00001;
-    return(usert);
+    return usert;
 }
 
 

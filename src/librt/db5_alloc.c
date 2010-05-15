@@ -180,7 +180,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 
     if ( dbip->dbi_read_only )  {
 	bu_log("db5_realloc(%s) on READ-ONLY file\n", dp->d_namep);
-	return(-1);
+	return -1;
     }
 
     /* If the object is getting smaller... */

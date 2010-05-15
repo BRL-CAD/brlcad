@@ -349,7 +349,7 @@ int main(int ac, char **av)
     if (bu_optind < ac) usage();
 
     doit();
-    return (0);
+    return 0;
 }
 
 

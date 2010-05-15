@@ -495,7 +495,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
 
-    return(hit_num);	/* not hit */
+    return hit_num;	/* not hit */
 #endif /* CONVERT_TO_BREP */
 }
 
@@ -632,7 +632,7 @@ rt_nurb_free(register struct soltab *stp)
 int
 rt_nurb_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -782,7 +782,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     return rt_brep_plot(vhead, &di, ttol, tol);
 #else
-    return(0);
+    return 0;
 #endif /* CONVERT_TO_BREP */
 }
 
@@ -793,7 +793,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 int
 rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
 {
-    return(-1);
+    return -1;
 }
 
 
@@ -814,7 +814,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_BSOLID) {
 	bu_log("rt_nurb_import4: defective header record");
-	return (-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -882,7 +882,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	    }
 	} else {
 	    bu_log("rt_nurb_internal: %d invalid elements per vect\n", rp->d.d_geom_type);
-	    return (-1);
+	    return -1;
 	}
 
 	/* bound the surface for tolerancing and other bounding box tests */
@@ -891,7 +891,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 	rp += 1 + rp->d.d_nknots + rp->d.d_nctls;
     }
-    return (0);
+    return 0;
 }
 
 
@@ -913,7 +913,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_BSPLINE) return(-1);
+    if (ip->idb_type != ID_BSPLINE) return -1;
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
 
@@ -980,7 +980,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	rec_ptr += grans;
 	total_grans -= grans;
     }
-    return(0);
+    return 0;
 }
 
 int
@@ -1014,7 +1014,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_BSPLINE) return(-1);
+    if (ip->idb_type != ID_BSPLINE) return -1;
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
 
@@ -1065,7 +1065,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1157,7 +1157,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		MAT4X4PNT(&srf->ctl_points[i*coords], mat, tmp_vec);
 	    } else {
 		bu_log("rt_nurb_internal: %d invalid elements per vect\n", coords);
-		return (-1);
+		return -1;
 	    }
 	}
 
@@ -1165,7 +1165,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	rt_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
 			sip->srfs[s]->max_pt);
     }
-    return (0);
+    return 0;
 }
 
 
@@ -1439,7 +1439,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 int
 rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 {
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 #ifdef __cplusplus

@@ -75,7 +75,7 @@ struct chunk {
 template<typename T, std::size_t N, std::size_t L>
 struct chunk_compare {
     bool compare(chunk<T, N> &lhs, const chunk<T, N> &rhs) {
-	return (lhs[L] == rhs[L] && chunk_compare<T, N, L-1>(lhs, rhs));
+	return lhs[L] == rhs[L] && chunk_compare<T, N, L-1>(lhs, rhs);
     }
 };
 

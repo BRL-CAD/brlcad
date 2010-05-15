@@ -51,7 +51,7 @@ Add_loop_to_face( s, fu, entityno, face_orient )
     fu_tmp = Make_planar_face( s, entityno, face_orient );
 
     if ( !fu_tmp )
-	return( 0 );
+	return 0;
 
     if ( fu_tmp->orientation != OT_SAME )
 	fu_tmp = fu_tmp->fumate_p;
@@ -74,7 +74,7 @@ Add_loop_to_face( s, fu, entityno, face_orient )
     /* join this temporary face to the existing face */
     nmg_jf( fu, fu_tmp );
 
-    return( 1 );
+    return 1;
 }
 
 /*

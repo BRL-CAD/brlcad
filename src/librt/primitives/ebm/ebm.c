@@ -138,7 +138,7 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
 	if (norm_dist_min < 0.0) {
 	    bu_log("rt_seg_planeclip ERROR -- ray parallel to baseplane, outside \n");
 	    /* XXX Free segp chain */
-	    return(0);
+	    return 0;
 	}
 	kmin = -INFINITY;
     } else
@@ -151,7 +151,7 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
 	if (norm_dist_max < 0.0) {
 	    bu_log("rt_seg_planeclip ERROR -- ray parallel to baseplane, outside \n");
 	    /* XXX Free segp chain */
-	    return(0);
+	    return 0;
 	}
 	kmax = INFINITY;
     } else
@@ -195,7 +195,7 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
 	BU_LIST_INSERT(&(out_hd->l), &(curr->l));
 	count += 2;
     }
-    return(count);
+    return count;
 }
 
 
@@ -248,7 +248,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     /* intersect ray with ideal grid rpp */
     VSETALL(P, 0);
     if (! rt_in_rpp(rp, invdir, P, ebmp->ebm_large))
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     VJOIN1(P, rp->r_pt, rp->r_min, rp->r_dir);
     /* P is hit point (on RPP?) */
@@ -284,7 +284,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	 */
 	if (RT_G_DEBUG&DEBUG_EBM)bu_log("ray on local Z axis\n");
 	if (BIT(&ebmp->ebm_i, igrid[X], igrid[Y]) == 0)
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = 0;
@@ -308,7 +308,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	    segp->seg_out.hit_surfno = NORM_ZPOS;
 	}
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	return(2);			/* HIT */
+	return 2;			/* HIT */
     }
 
     /* X setup */
@@ -500,8 +500,8 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 
     if (BU_LIST_IS_EMPTY(&(seghead->l)))
-	return(0);
-    return(2);
+	return 0;
+    return 2;
 }
 
 
@@ -526,7 +526,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_ebm_import4: defective strsol record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -612,7 +612,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    cp += eip->xdim;
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -632,7 +632,7 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EBM) return(-1);
+    if (ip->idb_type != ID_EBM) return -1;
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
     ebm = *eip;			/* struct copy */
@@ -653,7 +653,7 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bu_strlcpy(rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN);
     bu_vls_free(&str);
 
-    return(0);
+    return 0;
 }
 
 
@@ -758,7 +758,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    cp += eip->xdim;
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -777,7 +777,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EBM) return(-1);
+    if (ip->idb_type != ID_EBM) return -1;
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
     ebm = *eip;			/* struct copy */
@@ -796,7 +796,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bu_strlcpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
 
-    return(0);
+    return 0;
 }
 
 
@@ -933,7 +933,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSCALE(radvec, diam, 0.5);
     stp->st_aradius = stp->st_bradius = MAGNITUDE(radvec);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -982,12 +982,12 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     MAT4X3VEC(ideal_ray.r_dir, ebmp->ebm_mat, rp->r_dir);
 
     if (rt_ebm_dda(&ideal_ray, stp, ap, &myhead) <= 0)
-	return(0);
+	return 0;
 
     VSET(norm, 0, 0, -1);		/* letters grow in +z, which is "inside" the halfspace */
     i = rt_seg_planeclip(seghead, &myhead, norm, 0.0, ebmp->ebm_i.tallness,
 			 &ideal_ray, ap);
-    return(i);
+    return i;
 }
 
 
@@ -1093,7 +1093,7 @@ rt_ebm_free(struct soltab *stp)
 int
 rt_ebm_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -1179,7 +1179,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    }
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1355,7 +1355,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
     /* move sorted list back to "edges" */
     BU_LIST_INSERT_LIST(&edges->l, &loops.l);
 
-    return(max_loop_length);
+    return max_loop_length;
 }
 
 
@@ -1543,7 +1543,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	BU_LIST_DEQUEUE(&e->l);
 	bu_free((char *)e, "rt_ebm_tess: e");
     }
-    return(0);
+    return 0;
 
 fail:
     bu_free((char *)vertp, "rt_ebm_tess: vertp");
@@ -1554,7 +1554,7 @@ fail:
 	bu_free((char *)e, "rt_ebm_tess: e");
     }
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1711,10 +1711,10 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 int
 rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
-    if (!ps) return(0);
+    if (!ps) return 0;
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

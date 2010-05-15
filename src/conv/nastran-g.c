@@ -446,7 +446,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 	    /* set flag to indicate end of input */
 	    input_status = INPUT_NULL;
 	} else	/* no more input */
-	    return(0);
+	    return 0;
     } else {
 	/* put next line of input into "line"
 	 * and save just read line in "next_line"
@@ -458,7 +458,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
     }
 
     if (!call_input)
-	return(1);
+	return 1;
 
     /* check which format is being used */
     tmp = strchr(line, ', ');
@@ -473,7 +473,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
     /* if this is FREE_FIELD, call approporiate processor */
     if (form == FREE_FIELD) {
 	get_free_form_input(fp, write_flag);
-	return(1);
+	return 1;
     }
 
     /* not FREE_FIELD, check for LARGE_FIELD */
@@ -484,13 +484,13 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 
     if (form == LARGE_FIELD) {
 	get_large_field_input(fp, write_flag);
-	return(1);
+	return 1;
     }
 
     /* default is SMALL_FIELD */
     form = SMALL_FIELD;
     get_small_field_input(fp, write_flag);
-    return(1);
+    return 1;
 
 }
 
@@ -527,7 +527,7 @@ convert_cs(struct coord_sys *cs)
     point_t tmp_orig, tmp_pt1, tmp_pt2;
 
     if (!cs->rid)
-	return(0);
+	return 0;
 
     for (BU_LIST_FOR(cs2, coord_sys, &coord_head.l)) {
 	if (cs2->cid != cs->rid)
@@ -540,13 +540,13 @@ convert_cs(struct coord_sys *cs)
     }
 
     if (convert_pt(cs->origin, cs2, tmp_orig))
-	return(1);
+	return 1;
 
     if (convert_pt(cs->v1, cs2, tmp_pt1))
-	return(1);
+	return 1;
 
     if (convert_pt(cs->v2, cs2, tmp_pt2))
-	return(1);
+	return 1;
 
     VMOVE(cs->origin, tmp_orig);
     VSUB2(cs->v3, tmp_pt1, cs->origin);
@@ -556,7 +556,7 @@ convert_cs(struct coord_sys *cs)
     VUNITIZE(cs->v2);
     VCROSS(cs->v1, cs->v3, cs->v2);
     cs->rid = 0;
-    return(0);
+    return 0;
 }
 
 
@@ -568,7 +568,7 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 
     if (cs->rid) {
 	if (convert_cs(cs))
-	    return(1);
+	    return 1;
     }
 
     switch (cs->type) {
@@ -597,7 +597,7 @@ convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 	    bu_exit(1, "Unrecognized coordinate system type (%c) for cid=%d!\n",
 		    cs->type, cs->cid);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -615,7 +615,7 @@ convert_grid(int index)
     point_t tmp_pt;
 
     if (!g_pts[index].cid)
-	return(0);
+	return 0;
 
     for (BU_LIST_FOR(cs, coord_sys, &coord_head.l)) {
 	if (cs->cid != g_pts[index].cid)
@@ -628,12 +628,12 @@ convert_grid(int index)
     }
 
     if (convert_pt(g_pts[index].pt, cs, tmp_pt))
-	return(1);
+	return 1;
 
     VMOVE(g_pts[index].pt, tmp_pt);
     g_pts[index].cid = 0;
 
-    return(0);
+    return 0;
 }
 
 
@@ -661,7 +661,7 @@ get_gridi(int gid)
 	}
     }
 
-    return(found);
+    return found;
 }
 
 
@@ -812,7 +812,7 @@ convert_all_cs(void)
 	    ret = 1;
     }
 
-    return(ret);
+    return ret;
 }
 
 
@@ -827,7 +827,7 @@ convert_all_pts(void)
 	    ret = 1;
     }
 
-    return(ret);
+    return ret;
 }
 
 
@@ -838,15 +838,15 @@ get_pid_index(int pid)
     int index=0;
 
     if (pid == 0)
-	return(0);
+	return 0;
 
     for (BU_LIST_FOR(psh, pshell, &pshell_head.l)) {
 	index++;
 	if (psh->pid == pid)
-	    return(index);
+	    return index;
     }
 
-    return(0);
+    return 0;
 }
 
 

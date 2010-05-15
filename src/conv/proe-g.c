@@ -188,7 +188,7 @@ Build_unique_name(char *name)
 	ptr = ptr->next;
     }
 
-    return(bu_vls_addr(&ret_name));
+    return bu_vls_addr(&ret_name);
 }
 
 static struct name_conv_list *
@@ -236,7 +236,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
     if (type == ASSEMBLY_TYPE) {
 	ptr->solid_name = NULL;
-	return(ptr);
+	return ptr;
     } else if (type == PART_TYPE) {
 	struct bu_vls vls;
 
@@ -259,7 +259,7 @@ Add_new_name(char *name, unsigned int obj, int type)
 
     /* make sure solid name is unique */
     ptr->solid_name = bu_strdup(Build_unique_name(ptr->solid_name));
-    return(ptr);
+    return ptr;
 }
 
 static char *
@@ -291,7 +291,7 @@ Get_unique_name(char *name, unsigned int obj, int type)
 	}
     }
 
-    return(ptr->brlcad_name);
+    return ptr->brlcad_name;
 }
 
 static char *
@@ -307,7 +307,7 @@ Get_solid_name(char *name, unsigned int obj)
     if (!ptr)
 	ptr = Add_new_name(name, 0, PART_TYPE);
 
-    return(ptr->solid_name);
+    return ptr->solid_name;
 }
 
 static void

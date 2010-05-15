@@ -619,13 +619,13 @@ wrobj(struct rt_wdb	*wdbp,
     if ( db_lookup( wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
 	Tcl_AppendResult(interp, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
-	return(-1);
+	return -1;
     }
 
     if ( flags != DIR_SOLID )
     {
 	Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n" );
-	return( -1 );
+	return -1;
     }
 
     RT_INIT_DB_INTERNAL( &intern );
@@ -672,14 +672,14 @@ wrobj(struct rt_wdb	*wdbp,
 	break;
 	default:
 	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL );
-	    return( -1 );
+	    return -1;
     }
 
     if ( (tdp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );
-	return( -1 );
+	return -1;
     }
 
     if ( rt_db_put_internal( tdp, wdbp->dbip, &intern, &rt_uniresource ) < 0 )
@@ -687,9 +687,9 @@ wrobj(struct rt_wdb	*wdbp,
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "wrobj(wdbp, interp, ", name, "):  write error\n", (char *)NULL);
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION;
-	return( -1 );
+	return -1;
     }
-    return(0);
+    return 0;
 }
 
 static void
@@ -1098,7 +1098,7 @@ track_mk_addmember(
 	    break;
 	default:
 	    bu_log("mk_addmember() op=x%x is bad\n", op);
-	    return(WMEMBER_NULL);
+	    return WMEMBER_NULL;
     }
 
     /* if the user gave a matrix, use it.  otherwise use identity matrix*/
@@ -1110,7 +1110,7 @@ track_mk_addmember(
 
     /* Append to end of doubly linked list */
     BU_LIST_INSERT( headp, &wp->l );
-    return(wp);
+    return wp;
 }
 
 /*

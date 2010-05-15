@@ -101,11 +101,11 @@ int PvsV(struct trap *p, struct trap *v)
     NMG_CK_TRAP(p);
     NMG_CK_TRAP(v);
 
-    if (p->top->coord[Y] > v->top->coord[Y]) return(1);
-    else if (p->top->coord[Y] < v->top->coord[Y]) return(-1);
-    else if (p->top->coord[X] < v->top->coord[X]) return(1);
-    else if (p->top->coord[X] > v->top->coord[X]) return(-1);
-    else return(0);
+    if (p->top->coord[Y] > v->top->coord[Y]) return 1;
+    else if (p->top->coord[Y] < v->top->coord[Y]) return -1;
+    else if (p->top->coord[X] < v->top->coord[X]) return 1;
+    else if (p->top->coord[X] > v->top->coord[X]) return -1;
+    else return 0;
 }
 
 
@@ -487,7 +487,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 	} else bu_bomb("bad magic of loopuse child\n");
     }
 
-    return(tbl2d);
+    return tbl2d;
 }
 
 
@@ -519,7 +519,7 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("\tangle == %g tol angle: %g\n", angle, tol->perp);
 
-    return (angle > tol->perp && angle <= M_PI-tol->perp);
+    return angle > tol->perp && angle <= M_PI-tol->perp;
 }
 
 
@@ -566,9 +566,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
     if (p == n && n == v) {
 	/* loopuse of vertexuse or loopuse of 1 edgeuse */
 	if (lu->orientation == OT_SAME)
-	    return(POLY_POINT);
+	    return POLY_POINT;
 	else if (lu->orientation == OT_OPPOSITE)
-	    return(HOLE_POINT);
+	    return HOLE_POINT;
     }
 
     if (P_GT_V(n, v) && P_GT_V(p, v)) {
@@ -583,9 +583,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 
 	if (p == n) {
 	    if (lu->orientation == OT_OPPOSITE)
-		return(HOLE_END);
+		return HOLE_END;
 	    else if (lu->orientation == OT_SAME)
-		return(POLY_END);
+		return POLY_END;
 	    else {
 		bu_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
 		       __FILE__, __LINE__);
@@ -593,8 +593,8 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	    }
 	}
 
-	if (is_convex(p, v, n, tol)) return(POLY_END);
-	else return(HOLE_END);
+	if (is_convex(p, v, n, tol)) return POLY_END;
+	else return HOLE_END;
 
     }
 
@@ -609,9 +609,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 
 	if (p == n) {
 	    if (lu->orientation == OT_OPPOSITE)
-		return(HOLE_START);
+		return HOLE_START;
 	    else if (lu->orientation == OT_SAME)
-		return(POLY_START);
+		return POLY_START;
 	    else {
 		bu_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
 		       __FILE__, __LINE__);
@@ -620,9 +620,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	}
 
 	if (is_convex(p, v, n, tol))
-	    return(POLY_START);
+	    return POLY_START;
 	else
-	    return(HOLE_START);
+	    return HOLE_START;
     }
     if ((P_GT_V(n, v) && P_LT_V(p, v)) ||
 	(P_LT_V(n, v) && P_GT_V(p, v))) {
@@ -635,7 +635,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	 *
 	 * This is the "side" of a polygon.
 	 */
-	return(POLY_SIDE);
+	return POLY_SIDE;
     }
     bu_log(
 	"%s %d HELP! special case:\np:(%g %g) v:(%g %g)\nn:(%g %g)\n",
@@ -644,7 +644,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	v->coord[X], v->coord[Y],
 	n->coord[X], n->coord[Y]);
 
-    return(0);
+    return 0;
 }
 
 

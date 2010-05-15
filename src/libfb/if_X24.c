@@ -650,7 +650,7 @@ x24_setup(FBIO *ifp, int width, int height)
 	    fb_log("if_X24: Can't get supported Visual on X display \"%s\"\n",
 		   XDisplayName(NULL));
 	    print_display_info(xi->xi_dpy);
-	    return (-1);
+	    return -1;
     }
 
     xi->xi_visual = xi->xi_visinfo.visual;
@@ -819,7 +819,7 @@ x24_setup(FBIO *ifp, int width, int height)
 
 	if (!xi->xi_redmap || !xi->xi_grnmap || !xi->xi_blumap) {
 	    fb_log("if_X24: Can't allocate colormap memory\n");
-	    return (-1);
+	    return -1;
 	}
     }
 
@@ -920,7 +920,7 @@ x24_setup(FBIO *ifp, int width, int height)
 	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned int),
 						       width*height)) == NULL) {
 		fb_log("X24_open: pix32 malloc failed\n");
-		return(-1);
+		return -1;
 	    }
 
 	    xi->xi_image = XCreateImage(xi->xi_dpy,
@@ -933,7 +933,7 @@ x24_setup(FBIO *ifp, int width, int height)
 	case FLG_VT16:
 	    if ((xi->xi_pix = (unsigned char *) calloc(2, width*height)) == NULL) {
 		fb_log("X24_open: pix32 malloc failed\n");
-		return(-1);
+		return -1;
 	    }
 
 	    xi->xi_image = XCreateImage(xi->xi_dpy,
@@ -948,7 +948,7 @@ x24_setup(FBIO *ifp, int width, int height)
 	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(char),
 						       width*height)) == NULL) {
 		fb_log("X24_open: pix8 malloc failed\n");
-		return(-1);
+		return -1;
 	    }
 	    memset(xi->xi_pix, xi->xi_bp, width*height);
 
@@ -965,7 +965,7 @@ x24_setup(FBIO *ifp, int width, int height)
 	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(char),
 						       xi->xi_image->bytes_per_line * height)) == NULL) {
 		fb_log("X24_open: pix1 malloc failed\n");
-		return(-1);
+		return -1;
 	    }
 	    xi->xi_image->data = (char *) xi->xi_pix;
 	    xi->xi_image->byte_order = MSBFirst;
@@ -992,7 +992,7 @@ x24_setup(FBIO *ifp, int width, int height)
 	    }
     }
 
-    return (0);
+    return 0;
 }
 
 
@@ -1982,7 +1982,7 @@ X24_rmap(FBIO *ifp, ColorMap *cmp)
 
     memcpy(cmp, xi->xi_rgb_cmap, sizeof (ColorMap));
 
-    return(0);
+    return 0;
 }
 
 
@@ -2040,7 +2040,7 @@ X24_wmap(FBIO *ifp, const ColorMap *cmp)
      * there's nothing to do.
      */
     if (waslincmap && xi->xi_flags & FLG_LINCMAP)
-	return (0);
+	return 0;
 
     if (xi->xi_flags & FLG_XCMAP) {
 	XColor cells[256];
@@ -2081,7 +2081,7 @@ X24_wmap(FBIO *ifp, const ColorMap *cmp)
 		     BLIT_DISP);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -2179,7 +2179,7 @@ using private memory instead, errno %d\n", errno);
 	    if ((mem = (char *)malloc(size)) == 0) {
 		fb_log("if_X24: Unable to allocate %d bytes of backing \
 store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
-		return (-1);
+		return -1;
 	    }
 	    new = 1;
 	    break;
@@ -2193,7 +2193,7 @@ store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
 	memset(mem, 0, size);
     }
 
-    return (new);
+    return new;
 }
 
 
@@ -2617,7 +2617,7 @@ X24_open(FBIO *ifp, char *file, int width, int height)
     if ((mode & MODE11_MASK) == MODE11_ZAP) {
 	/* Only task: Attempt to release shared memory segment */
 	X24_zapmem();
-	return(-1);
+	return -1;
     }
 
     if (width <= 0)
@@ -2640,7 +2640,7 @@ X24_open(FBIO *ifp, char *file, int width, int height)
     /* create a struct of state information */
     if ((xi = (struct xinfo *) calloc(1, sizeof(struct xinfo))) == NULL) {
 	fb_log("X24_open: xinfo malloc failed\n");
-	return(-1);
+	return -1;
     }
     XI_SET(ifp, xi);
 
@@ -2652,14 +2652,14 @@ X24_open(FBIO *ifp, char *file, int width, int height)
 
     if ((getmem_stat = X24_getmem(ifp)) == -1) {
 	X24_destroy(xi);
-	return (-1);
+	return -1;
     }
 
     /* Set up an X window, graphics context, etc. */
 
     if (x24_setup(ifp, width, height) < 0) {
 	X24_destroy(xi);
-	return(-1);
+	return -1;
     }
 
     /* Update state for blits */
@@ -2684,7 +2684,7 @@ X24_open(FBIO *ifp, char *file, int width, int height)
     xi->xi_flags |= FLG_INIT;
 
 
-    return(0);
+    return 0;
 }
 
 
@@ -2920,7 +2920,7 @@ _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap c
 
 	if (!xi->xi_redmap || !xi->xi_grnmap || !xi->xi_blumap) {
 	    fb_log("if_X24: Can't allocate colormap memory\n");
-	    return (-1);
+	    return -1;
 	}
     }
 
@@ -3173,13 +3173,13 @@ x24_linger(FBIO *ifp)
     FB_CK_FBIO(ifp);
 
     if (fork() != 0)
-	return (1);	/* release the parent */
+	return 1;	/* release the parent */
 
     while (alive) {
 	XNextEvent(xi->xi_dpy, &event);
 	X24_handle_event(ifp, &event);
     }
-    return (0);
+    return 0;
 }
 
 
@@ -3192,12 +3192,12 @@ X24_close(FBIO *ifp)
     XFlush(xi->xi_dpy);
     if ((xi->xi_mode & MODE1_MASK) == MODE1_LINGERING) {
 	if (x24_linger(ifp))
-	    return(0);	/* parent leaves the display */
+	    return 0;	/* parent leaves the display */
     }
 
     X24_destroy(xi);
 
-    return (0);
+    return 0;
 }
 
 
@@ -3222,7 +3222,7 @@ X24_close_existing(FBIO *ifp)
 
     free((char *)xi);
 
-    return (0);
+    return 0;
 }
 
 
@@ -3269,7 +3269,7 @@ X24_clear(FBIO *ifp, unsigned char *pp)
     X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight,
 	     BLIT_DISP | BLIT_PZ);
 
-    return(0);
+    return 0;
 }
 
 
@@ -3291,7 +3291,7 @@ X24_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
     memcpy(pixelp, &(xi->xi_mem[(y*xi->xi_iwidth+x)*sizeof(RGBpixel)]),
 	   count*sizeof(RGBpixel));
-    return (count);
+    return count;
 }
 
 
@@ -3336,7 +3336,7 @@ X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	X24_blit(ifp, 0, y, xi->xi_iwidth, ylines, BLIT_DISP);
     }
 
-    return(count);
+    return count;
 }
 
 
@@ -3391,7 +3391,7 @@ X24_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     *xzoom = ifp->if_xzoom;
     *yzoom = ifp->if_yzoom;
 
-    return(0);
+    return 0;
 }
 
 
@@ -3406,7 +3406,7 @@ X24_setcursor(FBIO *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), i
 	   ifp, bits, xbits, ybits, xorig, yorig);
 #endif
 
-    return(0);
+    return 0;
 }
 
 
@@ -3469,7 +3469,7 @@ X24_cursor(FBIO *ifp, int mode, int x, int y)
     ifp->if_xcurs = x;
     ifp->if_ycurs = y;
 
-    return(0);
+    return 0;
 }
 
 
@@ -3484,7 +3484,7 @@ X24_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 
     fb_sim_getcursor(ifp, mode, x, y);
 
-    return(0);
+    return 0;
 }
 
 
@@ -3531,7 +3531,7 @@ X24_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 	}
     }
 
-    return (width * height);
+    return width * height;
 }
 
 
@@ -3582,7 +3582,7 @@ X24_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
     X24_blit(ifp, xmin, ymin, width, height, BLIT_DISP);
 
-    return (width * height);
+    return width * height;
 }
 
 
@@ -3602,7 +3602,7 @@ X24_poll(FBIO *ifp)
     while (XCheckMaskEvent(xi->xi_dpy, ~NoEventMask, &event))
 	X24_handle_event(ifp, &event);
 
-    return(0);
+    return 0;
 }
 
 
@@ -3618,7 +3618,7 @@ X24_flush(FBIO *ifp)
 #endif
 
     XFlush(xi->xi_dpy);
-    return(0);
+    return 0;
 }
 
 
@@ -3631,7 +3631,7 @@ X24_free(FBIO *ifp)
     printf("X24_free(ifp:0x%x) entered\n", ifp);
 #endif
 
-    return(0);
+    return 0;
 }
 
 
@@ -3704,7 +3704,7 @@ X24_help(FBIO *ifp)
     if (xi->xi_visinfo.depth < 24)
 	fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
 
-    return(0);
+    return 0;
 }
 
 

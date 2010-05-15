@@ -98,7 +98,7 @@ temp_render(struct application *ap, struct partition *pp, struct shadework *swp,
 	swp->sw_temperature = ap->a_x + ap->a_y;
 	if ( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);
+	return 1;
     }
 
     /* u is left->right index, v is line number bottom->top */
@@ -222,7 +222,7 @@ temp_render(struct application *ap, struct partition *pp, struct shadework *swp,
 
     if ( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
-    return(1);
+    return 1;
 }
 
 /*
@@ -245,7 +245,7 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const
     tp->t_w = tp->t_n = -1;
     if ( bu_struct_parse( matparm, temp_parse, (char *)tp ) < 0 )  {
 	bu_free( (char *)tp, "temp_specific" );
-	return(-1);
+	return -1;
     }
     if ( tp->t_w < 0 )  tp->t_w = 512;
     if ( tp->t_n < 0 )  tp->t_n = tp->t_w;

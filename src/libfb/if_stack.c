@@ -55,12 +55,12 @@ stk_open(FBIO *ifp, char *file, int width, int height)
     /* Check for /dev/stack */
     if (strncmp(file, ifp->if_name, strlen("/dev/stack")) != 0) {
 	fb_log("stack_dopen: Bad device %s\n", file);
-	return(-1);
+	return -1;
     }
 
     if ((SIL(ifp) = (char *)calloc(1, sizeof(struct stkinfo))) == NULL) {
 	fb_log("stack_dopen:  stkinfo malloc failed\n");
-	return(-1);
+	return -1;
     }
 
     cp = &file[strlen("/dev/stack")];
@@ -71,7 +71,7 @@ stk_open(FBIO *ifp, char *file, int width, int height)
     if (*cp == '\0') {
 	fb_log("stack_dopen: No devices specified\n");
 	fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
-	return(-1);
+	return -1;
     }
 
     ifp->if_width = ifp->if_max_width;
@@ -104,9 +104,9 @@ stk_open(FBIO *ifp, char *file, int width, int height)
 	}
     }
     if (i > 0)
-	return(0);
+	return 0;
     else
-	return(-1);
+	return -1;
 }
 
 
@@ -122,7 +122,7 @@ stk_close(FBIO *ifp)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -136,7 +136,7 @@ stk_clear(FBIO *ifp, unsigned char *pp)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -149,7 +149,7 @@ stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	fb_read((*ip), x, y, pixelp, count);
     }
 
-    return(count);
+    return count;
 }
 
 
@@ -163,7 +163,7 @@ stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	ip++;
     }
 
-    return(count);
+    return count;
 }
 
 
@@ -181,7 +181,7 @@ stk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
 	(void)fb_readrect((*ip), xmin, ymin, width, height, pp);
     }
 
-    return(width*height);
+    return width*height;
 }
 
 
@@ -200,7 +200,7 @@ stk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	ip++;
     }
 
-    return(width*height);
+    return width*height;
 }
 
 
@@ -250,7 +250,7 @@ stk_rmap(FBIO *ifp, ColorMap *cmp)
 	fb_rmap((*ip), cmp);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -264,7 +264,7 @@ stk_wmap(FBIO *ifp, const ColorMap *cmp)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -278,7 +278,7 @@ stk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -291,7 +291,7 @@ stk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 	fb_getview((*ip), xcenter, ycenter, xzoom, yzoom);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -305,7 +305,7 @@ stk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -319,7 +319,7 @@ stk_cursor(FBIO *ifp, int mode, int x, int y)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -332,7 +332,7 @@ stk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 	fb_getcursor((*ip), mode, x, y);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -346,7 +346,7 @@ stk_poll(FBIO *ifp)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -360,7 +360,7 @@ stk_flush(FBIO *ifp)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -374,7 +374,7 @@ stk_free(FBIO *ifp)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -394,7 +394,7 @@ stk_help(FBIO *ifp)
 	ip++;
     }
 
-    return(0);
+    return 0;
 }
 
 

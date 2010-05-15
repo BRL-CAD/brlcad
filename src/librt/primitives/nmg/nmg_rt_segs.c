@@ -1252,7 +1252,7 @@ nmg_ray_segs(struct ray_data *rd)
 	    else bu_log("ray missed NMG\n");
 	}
 	last_miss = 1;
-	return(0);			/* MISS */
+	return 0;			/* MISS */
     } else if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 	int seg_count=0;
 
@@ -1292,7 +1292,7 @@ nmg_ray_segs(struct ray_data *rd)
 	    /* print debugging data before returning */
 	    print_seg_list(rd->seghead, seg_count, "after");
 	}
-	return(seg_count);
+	return seg_count;
     }
 }
 

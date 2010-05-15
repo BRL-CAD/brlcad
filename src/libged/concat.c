@@ -239,7 +239,7 @@ ged_get_new_name(const char		*name,
     ptr = Tcl_CreateHashEntry( name_tbl, name, &new );
 
     if ( !new ) {
-	return( (char *)Tcl_GetHashValue( ptr ) );
+	return (char *)Tcl_GetHashValue( ptr );
     }
 
     bu_vls_init( &new_name );
@@ -323,7 +323,7 @@ ged_get_new_name(const char		*name,
     (void)Tcl_CreateHashEntry( used_names_tbl, ret_name, &new );
     bu_vls_free( &new_name );
 
-    return( ret_name );
+    return ret_name;
 }
 
 /**

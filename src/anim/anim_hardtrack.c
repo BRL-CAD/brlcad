@@ -137,7 +137,7 @@ main(int argc, char **argv)
 
     if (!get_args(argc, argv)) {
 	fprintf(stderr, "anim_hardtrack: argument error.");
-	return(-1);
+	return -1;
     }
 
     if (axes || cent ) {
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 
     if (!(stream = fopen(*(argv+bu_optind), "rb"))) {
 	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
-	return(0);
+	return 0;
     }
     num_wheels = -1;
     if (radius) {
@@ -187,7 +187,7 @@ main(int argc, char **argv)
 
     if (get_circumf) {
 	printf("%.10g\n", tracklen);
-	return(0);
+	return 0;
     }
 
     /* initialize to_track */
@@ -312,7 +312,7 @@ main(int argc, char **argv)
     if (r) {
 	bu_free(r, "struct rlink");
     }
-    return( 0 );
+    return 0;
 }
 
 
@@ -381,7 +381,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 	    VREVERSE(r[i].pos, link_cent);
 	    r[i].ang = -link_angle;
 	}
-    return(0);
+    return 0;
 }
 
 
@@ -398,7 +398,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
-	    return(2*i);
+	    return 2*i;
 	}
 	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
 	    *angle_p = dist/x[i].w.rad;
@@ -407,7 +407,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    pos[1] = x[i].w.pos[1];
 	    pos[2] = x[i].w.pos[2] + x[i].w.rad*sin(*angle_p);
 	    *angle_p -= M_PI_2; /*angle of clockwise tangent to circle*/
-	    return(2*i+1);
+	    return 2*i+1;
 	}
     }
     return -1;
@@ -486,7 +486,7 @@ int get_args(int argc, char **argv)
 			break;
 		    default:
 			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
-			return(0);
+			return 0;
 		}
 		bu_optind += 1;
 		break;
@@ -495,10 +495,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 void show_info(int which)/* for debugging - -1:track 0:both 1:link*/

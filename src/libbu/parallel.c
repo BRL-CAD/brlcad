@@ -203,10 +203,10 @@ bu_cpulimit_get(void)
 	perror("bu_cpulimit_get(): CPU limit(get)");
     }
     if (old <= 0)
-	return (999999);		/* virtually unlimited */
+	return 999999;		/* virtually unlimited */
     return ((old + HZ - 1) / HZ);
 #else
-    return (-1);
+    return -1;
 #endif
 }
 
@@ -546,7 +546,7 @@ _bu_worker_tbl_not_empty(int tbl[MAX_PSW])
     for (i=1; i < MAX_PSW; ++i)
 	if (tbl[i]) children++;
 
-    return (children);
+    return children;
 }
 
 

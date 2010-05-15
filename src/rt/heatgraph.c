@@ -112,7 +112,7 @@ get_pixel_timer(double *total)
 
     if (total) *total = totalTime;
     
-    return (totalTime);
+    return totalTime;
 }
 
 

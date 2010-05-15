@@ -450,7 +450,7 @@ main(int argc, char *argv[])
     if ( comb_error )
 	bu_log( "\t%d combinations were not converted to IGES format\n", comb_error );
 
-    return( 0 );
+    return 0;
 }
 
 /*
@@ -486,7 +486,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     }
 
     if (curtree->tr_op == OP_NOP)
-	return  curtree;
+	return curtree;
 
     regions_tried++;
 
@@ -660,7 +660,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
-    return(curtree);
+    return curtree;
 }
 
 static int de_pointer_number;
@@ -689,13 +689,13 @@ get_de_pointers( tp, dp, de_len, de_pointers )
 
 	    dp_M = db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
 	    if ( dp_M == DIR_NULL )
-		return( 1 );
+		return 1;
 
 	    if ( dp_M->d_uses >= 0 )
 	    {
 		bu_log( "g-iges: member (%s) in combination (%s) has not been written to iges file\n", dp_M->d_namep, dp->d_namep );
 		de_pointers[de_pointer_number++] = 0;
-		return( 1 );
+		return 1;
 	    }
 
 	    if ( tp->tr_l.tl_mat && !bn_mat_is_identity( tp->tr_l.tl_mat ) )
@@ -721,9 +721,9 @@ get_de_pointers( tp, dp, de_len, de_pointers )
 	break;
 	default:
 	    bu_log( "Unrecognized operator in combination!\n" );
-	    return( 1 );
+	    return 1;
     }
-    return( 0 );
+    return 0;
 }
 
 void

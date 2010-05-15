@@ -75,7 +75,7 @@ int	raymiss(register struct application *ap);
  */
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 /*
@@ -156,7 +156,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp)
 {
     bu_log("hit: 0x%x\n", ap->a_resource);
 
-    return(1);	/* report hit to main routine */
+    return 1;	/* report hit to main routine */
 }
 
 /*
@@ -169,7 +169,7 @@ raymiss(register struct application *ap)
 {
     bu_log("miss: 0x%x\n", ap->a_resource);
 
-    return(0);
+    return 0;
 }
 
 void application_init (void) {}

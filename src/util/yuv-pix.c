@@ -91,13 +91,13 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
 	file_name = "-";
 	infd = fileno(stdin);
     } else {
@@ -107,7 +107,7 @@ get_args(int argc, char **argv)
 	    (void)fprintf(stderr,
 			  "yuv-pix: cannot open \"%s\" for reading\n",
 			  file_name);
-	    return(0);
+	    return 0;
 	}
 	fileinput++;
     }
@@ -115,7 +115,7 @@ get_args(int argc, char **argv)
     if (argc > ++bu_optind)
 	(void)fprintf(stderr, "yuv-pix: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

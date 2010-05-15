@@ -59,10 +59,10 @@ static int grab_number (char *buf, int *np)
 
     for (bp = buf; *bp != '\0'; ++bp)
 	if (!isdigit(*bp))
-	    return (0);
+	    return 0;
     if (sscanf(buf, "%d", np) != 1)
 	bu_exit (1, "imgdims: grab_number(%s) failed.  This shouldn't happen\n", buf);
-    return (1);
+    return 1;
 }
 
 
@@ -80,15 +80,15 @@ static int pixel_size (char *buf)
     };
 
     if ((ep = strrchr(buf, '.')) == NULL)
-	return (DFLT_PIXEL_SIZE);
+	return DFLT_PIXEL_SIZE;
     else
 	++ep;
 
     for (ap = a_tbl; ap->ext; ++ap)
 	if (strcmp(ep, ap->ext) == 0)
-	    return (ap->size);
+	    return ap->size;
 
-    return (DFLT_PIXEL_SIZE);
+    return DFLT_PIXEL_SIZE;
 }
 
 

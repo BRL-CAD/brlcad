@@ -64,7 +64,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 
     /* if start column is beyond end of input string, return zero */
     if ( start_col >= strlen( str ) )
-	return( (double)0.0 );
+	return (double)0.0;
 
     /* get width from format spec */
     ptr++;
@@ -125,7 +125,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 	/* and atof can handle it from here */
     }
 
-    return( atof( tmp_str ) );
+    return atof( tmp_str );
 }
 
 int
@@ -149,7 +149,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 
     /* if start column is beyond end of input string, return zero */
     if ( start_col >= strlen( str ) )
-	return( 0 );
+	return 0;
 
     /* get width from format spec */
     ptr++;
@@ -184,7 +184,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
     }
     tmp_str[width] = '\0';
 
-    return( atoi( tmp_str ) );
+    return atoi( tmp_str );
 }
 
 int

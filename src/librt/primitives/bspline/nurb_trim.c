@@ -324,7 +324,7 @@ rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 	return rt_process_casec(trim, u, v);
 
     bu_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
-    return( -1 );
+    return -1;
 }
 
 
@@ -510,7 +510,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
     NMG_CK_LOOPUSE( lu );
 
     if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-	return( 0 );
+	return 0;
 
     for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
     {
@@ -598,9 +598,9 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
     }
 
     if ( crossings & 01 )
-	return( 1 );
+	return 1;
     else
-	return( 0 );
+	return 0;
 }
 
 /*

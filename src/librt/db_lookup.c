@@ -125,7 +125,7 @@ db_dirhash(const char *str)
     for (i=1; *s;)
 	sum += *s++ * i++;
 
-    return(RT_DBHASH(sum));
+    return RT_DBHASH(sum);
 }
 
 
@@ -224,7 +224,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
     if (!name || name[0] == '\0') {
 	if (noisy || RT_G_DEBUG&DEBUG_DB)
 	    bu_log("db_lookup received NULL or empty name\n");
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     n0 = name[0];
@@ -240,14 +240,14 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 	if ((n0 == *(this=dp->d_namep)) && (n1 == this[1]) && (strcmp(name, this) == 0)) {
 	    if (RT_G_DEBUG&DEBUG_DB)
 		bu_log("db_lookup(%s) x%x\n", name, dp);
-	    return(dp);
+	    return dp;
 	}
     }
 
     if (noisy || RT_G_DEBUG&DEBUG_DB)
 	bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
 
-    return(DIR_NULL);
+    return DIR_NULL;
 }
 
 
@@ -333,7 +333,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	dp->d_minor_type = *(unsigned char *)ptr;
     }
     bu_vls_free(&local);
-    return(dp);
+    return dp;
 }
 
 
@@ -373,7 +373,7 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	/* Put 'dp' back on the freelist */
 	dp->d_forw = rt_uniresource.re_directory_hd;
 	rt_uniresource.re_directory_hd = dp;
-	return(0);
+	return 0;
     }
     for (findp = *headp; findp != DIR_NULL; findp = findp->d_forw) {
 	if (findp->d_forw != dp)
@@ -384,9 +384,9 @@ db_dirdelete(struct db_i *dbip, struct directory *dp)
 	/* Put 'dp' back on the freelist */
 	dp->d_forw = rt_uniresource.re_directory_hd;
 	rt_uniresource.re_directory_hd = dp;
-	return(0);
+	return 0;
     }
-    return(-1);
+    return -1;
 }
 
 
@@ -422,7 +422,7 @@ db_rename(struct db_i *dbip, struct directory *dp, const char *newname)
 	    findp->d_forw = dp->d_forw;
 	    goto out;
 	}
-	return(-1);		/* ERROR: can't find */
+	return -1;		/* ERROR: can't find */
     }
 
 out:
@@ -434,7 +434,7 @@ out:
     headp = &(dbip->dbi_Head[db_dirhash(newname)]);
     dp->d_forw = *headp;
     *headp = dp;
-    return(0);
+    return 0;
 }
 
 
@@ -579,7 +579,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	    bu_avs_init_empty(&obj_avs);
 	    if (db5_get_attributes(dbip, &obj_avs, dp) < 0) {
 		bu_log("ERROR: failed to get attributes for %s\n", dp->d_namep);
-		return((struct bu_ptbl *)NULL);
+		return (struct bu_ptbl *)NULL;
 	    }
 	    
 	    draw = 0;
@@ -609,7 +609,7 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	}
     } FOR_ALL_DIRECTORY_END;
 
-    return(tbl);
+    return tbl;
 }
 
 

@@ -93,7 +93,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     if ( fread( (char *)&record, sizeof record, 1, dbip->dbi_fp ) != 1  ||
 	 record.u_id != ID_IDENT )  {
 	bu_log("db_scan ERROR:  File is lacking a proper MGED database header\n");
-	return(-1);
+	return -1;
     }
     rewind( dbip->dbi_fp );
     next = ftell(dbip->dbi_fp);
@@ -104,7 +104,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	nrec = 0;
 	if ( fseek(dbip->dbi_fp, next, 0) != 0 )  {
 	    bu_log("db_scan:  fseek(offset=%d) failure\n", next);
-	    return(-1);
+	    return -1;
 	}
 	addr = next;
 
@@ -333,7 +333,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     dbip->dbi_eof = (off_t)ftell( dbip->dbi_fp );
     rewind( dbip->dbi_fp );
 
-    return( 0 );			/* OK */
+    return 0;			/* OK */
 }
 
 /**

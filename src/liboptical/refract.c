@@ -623,7 +623,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
     if (sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
 #endif
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -634,7 +634,7 @@ HIDDEN int
 rr_miss(struct application *ap, struct partition *PartHeadp)
 {
     RT_AP_CHECK(ap);
-    return(1);	/* treat as escaping ray */
+    return 1;	/* treat as escaping ray */
 }
 
 /*
@@ -907,7 +907,7 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 	beta = 2 * VDOT(u, norml);
 	VSCALE(w, norml, beta);
 	VSUB2(v_2, w, u);
-	return(0);		/* reflected */
+	return 0;		/* reflected */
     } else {
 	/*
 	 * 1 - beta = 1 - sin(theta_2)^^2
@@ -919,7 +919,7 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 	beta = -sqrt(1.0 - beta) - VDOT(w, norml);
 	VSCALE(u, norml, beta);
 	VADD2(v_2, w, u);
-	return(1);		/* refracted */
+	return 1;		/* refracted */
     }
     /* NOTREACHED */
 }

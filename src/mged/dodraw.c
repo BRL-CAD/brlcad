@@ -338,7 +338,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 HIDDEN union tree *
 mged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-    return(curtree);
+    return curtree;
 }
 
 
@@ -379,7 +379,7 @@ mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    tsp->ts_ttol, tsp->ts_tol) < 0) {
 	Tcl_AppendResult(interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 			 ": plot failure\n", (char *)NULL);
-	return(TREE_NULL);		/* ERROR */
+	return TREE_NULL;		/* ERROR */
     }
 
     /*
@@ -409,7 +409,7 @@ mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp,
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
 
-    return(curtree);
+    return curtree;
 }
 /* XXX Grotesque, shameless hack */
 static int mged_do_not_draw_nmg_solids_during_debugging = 0;
@@ -454,7 +454,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     RT_CK_COMB(combp);
     tp = combp->tree;
     if (!tp)
-	return(-1);
+	return -1;
     RT_CK_TREE(tp);
     if (tp->tr_l.tl_op != OP_DB_LEAF)
 	return 0;	/* proceed as usual */
@@ -681,7 +681,7 @@ drawtrees(
 
     RT_CHECK_DBI(dbip);
 
-    if (argc <= 0) return(-1);	/* FAIL */
+    if (argc <= 0) return -1;	/* FAIL */
 
     /* Initial values for options, must be reset each time */
     ncpu = 1;
@@ -815,7 +815,7 @@ drawtrees(
     switch (kind) {
 	default:
 	    Tcl_AppendResult(interp, "ERROR, bad kind\n", (char *)NULL);
-	    return(-1);
+	    return -1;
 	case 1:		/* Wireframes */
 	    ret = db_walk_tree(dbip, argc, (const char **)argv,
 			       ncpu,
@@ -826,7 +826,7 @@ drawtrees(
 	    break;
 	case 2:		/* Big-E */
 	    Tcl_AppendResult(interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
-	    return(-1);
+	    return -1;
 	case 3:
 	    {
 		/* NMG */
@@ -863,8 +863,8 @@ drawtrees(
 	bu_log("%d region%s rendered through polygon fastpath\n",
 	       mged_fastpath_count, mged_fastpath_count==1?"":"s");
     }
-    if (ret < 0) return(-1);
-    return(0);	/* OK */
+    if (ret < 0) return -1;
+    return 0;	/* OK */
 }
 
 
@@ -955,22 +955,22 @@ replot_original_solid(struct solid *sp)
     if (sp->s_Eflag) {
 	Tcl_AppendResult(interp, "replot_original_solid(", dp->d_namep,
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
-	return(-1);
+	return -1;
     }
     pathHmat(sp, mat, sp->s_fullpath.fp_len-2);
 
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, dp->d_namep, ":  solid import failure\n", (char *)NULL);
-	return(-1);		/* ERROR */
+	return -1;		/* ERROR */
     }
     RT_CK_DB_INTERNAL(&intern);
 
     if (replot_modified_solid(sp, &intern, bn_mat_identity) < 0) {
 	rt_db_free_internal(&intern);
-	return(-1);
+	return -1;
     }
     rt_db_free_internal(&intern);
-    return(0);
+    return 0;
 }
 
 
@@ -1001,7 +1001,7 @@ replot_modified_solid(
 
     if (sp == SOLID_NULL) {
 	Tcl_AppendResult(interp, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
-	return(-1);
+	return -1;
     }
 
     /* Release existing vlist of this solid */
@@ -1020,7 +1020,7 @@ replot_modified_solid(
     if (rt_functab[ip->idb_type].ft_plot(&vhead, &intern, &mged_ttol, &mged_tol) < 0) {
 	Tcl_AppendResult(interp, LAST_SOLID(sp)->d_namep,
 			 ": re-plot failure\n", (char *)NULL);
-	return(-1);
+	return -1;
     }
     rt_db_free_internal(&intern);
 
@@ -1030,7 +1030,7 @@ replot_modified_solid(
 		(struct db_tree_state *)0, sp);
 
     view_state->vs_flag = 1;
-    return(0);
+    return 0;
 }
 
 
@@ -1101,7 +1101,7 @@ invent_solid(
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    Tcl_AppendResult(interp, "invent_solid(", name,
 			     ") would clobber existing database entry, ignored\n", (char *)NULL);
-	    return(-1);
+	    return -1;
 	}
 	/* Name exists from some other overlay,
 	 * zap any associated solids
@@ -1146,7 +1146,7 @@ invent_solid(
 
     createDListALL(sp);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1190,7 +1190,7 @@ mged_facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *p
     bu_semaphore_release(RT_SEM_MODEL);
 
     /* Tree has been saved, and will be freed later */
-    return(TREE_NULL);
+    return TREE_NULL;
 }
 
 

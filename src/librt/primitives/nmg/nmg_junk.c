@@ -157,7 +157,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	FREE_VERTEX(v[i]);
     }
     bu_free((char *)v, "vertex array");
-    return(s);
+    return s;
 }
 
 

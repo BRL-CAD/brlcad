@@ -228,7 +228,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
     if ( pp == PartHeadp )  {
 	bu_log("xrayhit:  no hit out front?\n");
-	return(0);
+	return 0;
     }
 
     if (R_DEBUG&RDEBUG_HITS)  {
@@ -238,7 +238,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
     hitp = pp->pt_inhit;
     if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("xrayhit:  entry beyond infinity\n");
-	return(1);
+	return 1;
     }
     /* Check to see if eye is "inside" the solid */
     if ( hitp->hit_dist < 0.0 )  {
@@ -246,7 +246,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
 	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 	    rt_pr_pt( ap->a_rt_i, pp );
-	return(0);
+	return 0;
     }
 
     /* Finally! We are ready to walk the partition chain */
@@ -285,7 +285,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    break;
     }
 
-    return(1);	/* report hit to main routine */
+    return 1;	/* report hit to main routine */
 }
 
 static int
@@ -315,7 +315,7 @@ xraymiss(register struct application *ap)
 	    break;
     }
 
-    return(0);	/* report miss to main routine */
+    return 0;	/* report miss to main routine */
 }
 
 void application_init (void) {}

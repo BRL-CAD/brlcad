@@ -84,7 +84,7 @@ gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
 	old = new;
     }
     if (!success) fprintf(stderr, "warning - max iterations reached\n");
-    return (new);
+    return new;
 
 }
 
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 
     if (query) {
 	printf("%f\n", dist);
-	return(0);
+	return 0;
     }
 
     if (time < DIVIDE_TOL) {
@@ -226,7 +226,7 @@ main(int argc, char **argv)
     bu_free((char *) x, "x[]");
     bu_free((char *) y, "y[]");
     bu_free((char *) z, "z[]");
-    return( 0 );
+    return 0;
 }
 
 /* code to read command line arguments*/

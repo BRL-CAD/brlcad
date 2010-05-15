@@ -86,7 +86,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
     size_t	addr;
 
     if ( size == 0 )
-	return( 0L );	/* fail */
+	return 0L;	/* fail */
 
     for ( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
 	if ( curp->m_size >= size )
@@ -94,7 +94,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
     }
 
     if ( curp == MAP_NULL )
-	return(0L);		/* No more space */
+	return 0L;		/* No more space */
 
     addr = curp->m_addr;
     curp->m_addr += size;
@@ -110,7 +110,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
 	rt_mem_freemap = curp;			/* Make it the start */
     }
 
-    return( addr );
+    return addr;
 }
 
 /*
@@ -197,7 +197,7 @@ rt_memget(struct mem_map **pp, register size_t size, off_t place)
     }
 
     if ( curp == MAP_NULL )
-	return(0L);		/* No space here */
+	return 0L;		/* No space here */
 
     addr = curp->m_addr;
     curp->m_addr += size;
@@ -211,7 +211,7 @@ rt_memget(struct mem_map **pp, register size_t size, off_t place)
 	curp->m_nxtp = rt_mem_freemap;		/* Link it in */
 	rt_mem_freemap = curp;			/* Make it the start */
     }
-    return( addr );
+    return addr;
 }
 
 /*

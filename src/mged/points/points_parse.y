@@ -235,7 +235,7 @@ yywrap()
     plt.code = 0;
     process_point(&plt);
 
-    return(1);
+    return 1;
 }
 
 /*

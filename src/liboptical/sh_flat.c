@@ -220,13 +220,13 @@ flat_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, flat_parse_tab, (char *)flat_sp ) < 0 )
-	return(-1);
+	return -1;
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print( " Parameters:", flat_parse_tab, (char *)flat_sp );
     }
 
-    return(1);
+    return 1;
 }
 
 
@@ -280,7 +280,7 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
 	VADD2(swp->sw_color, swp->sw_color, intensity);
     }
 
-    return(1);
+    return 1;
 }
 
 

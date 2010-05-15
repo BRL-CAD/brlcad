@@ -725,7 +725,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_METABALL)
-	return(-1);
+	return -1;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
     if (mb->metaball_ctrl_head.magic == 0) return -1;

@@ -64,24 +64,24 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind >= argc )  {
-	return(0);		/* missing input framebuffer */
+	return 0;		/* missing input framebuffer */
     }
     in_fb_name = argv[bu_optind++];
 
     if ( bu_optind >= argc )  {
-	return(1);	/* OK */
+	return 1;	/* OK */
     }
     out_fb_name = argv[bu_optind++];
 
     if ( argc > bu_optind )
 	(void)fprintf( stderr, "fb-fb: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 int

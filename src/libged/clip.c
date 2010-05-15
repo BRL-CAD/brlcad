@@ -117,7 +117,7 @@ ged_code(fastf_t x, fastf_t y)
     else if (y > GED_MAX)
 	cval |= 010;
 
-    return (cval);
+    return cval;
 }
 
 /* XXX need to test more thoroughly

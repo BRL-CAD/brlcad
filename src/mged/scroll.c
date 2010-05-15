@@ -702,7 +702,7 @@ scroll_display(int y_top)
 			GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
 			GED2PM1(MENUXLIM), GED2PM1(y));
     }
-    return(y);
+    return y;
 }
 
 
@@ -723,10 +723,10 @@ scroll_select(int pen_x, int pen_y, int do_func)
     struct scroll_item **m;
     struct scroll_item *mptr;
 
-    if (!mged_variables->mv_sliders) return(0);	/* not enabled */
+    if (!mged_variables->mv_sliders) return 0;	/* not enabled */
 
     if (pen_y > scroll_top)
-	return(-1);	/* pen above menu area */
+	return -1;	/* pen above menu area */
 
     /*
      * Start at the top of the list and see if the pen is
@@ -758,10 +758,10 @@ scroll_select(int pen_x, int pen_y, int do_func)
 	    if (do_func)
 		(*(mptr->scroll_func))(mptr, val);
 
-	    return(1);		/* scroll claims pen value */
+	    return 1;		/* scroll claims pen value */
 	}
     }
-    return(0);		/* pen below scroll area */
+    return 0;		/* pen below scroll area */
 }
 
 

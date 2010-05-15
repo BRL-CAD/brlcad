@@ -599,12 +599,12 @@ success:
     /* Provide non-black colormap on creation of new shared mem */
     if (new)
 	ogl_cminit(ifp);
-    return(0);
+    return 0;
 fail:
     fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
     if ((sp = calloc(1, size)) == NULL) {
 	fb_log("ogl_getmem:  malloc failure\n");
-	return(-1);
+	return -1;
     }
     new = 1;
     goto success;
@@ -1033,7 +1033,7 @@ fb_ogl_choose_visual(FBIO *ifp)
 	    /* set flags and return choice */
 	    OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
 	    SGI(ifp)->mi_doublebuffer = m_doub_buf;
-	    return (maxvip);
+	    return maxvip;
 	}
 
 	/* if no success at this point,
@@ -1055,7 +1055,7 @@ fb_ogl_choose_visual(FBIO *ifp)
 	    fb_log("fb_ogl_open: double buffering not available. Using single buffer.\n");
 	} else {
 	    /* nothing else to relax */
-	    return(NULL);
+	    return NULL;
 	}
 
     }
@@ -1075,11 +1075,11 @@ is_linear_cmap(register FBIO *ifp)
     register int i;
 
     for (i=0; i<256; i++) {
-	if (CMR(ifp)[i] != i) return(0);
-	if (CMG(ifp)[i] != i) return(0);
-	if (CMB(ifp)[i] != i) return(0);
+	if (CMR(ifp)[i] != i) return 0;
+	if (CMG(ifp)[i] != i) return 0;
+	if (CMB(ifp)[i] != i) return 0;
     }
-    return(1);
+    return 1;
 }
 
 
@@ -1142,7 +1142,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	if ((mode & MODE_15MASK) == MODE_15ZAP) {
 	    /* Only task: Attempt to release shared memory segment */
 	    ogl_zapmem();
-	    return(-1);
+	    return -1;
 	}
     }
 #if DIRECT_COLOR_VISUAL_ALLOWED
@@ -1158,11 +1158,11 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
     if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
 	fb_log("fb_ogl_open:  sgiinfo malloc failed\n");
-	return(-1);
+	return -1;
     }
     if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo))) == NULL) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
-	return(-1);
+	return -1;
     }
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
@@ -1207,7 +1207,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 	    /* NOTREACHED */
 	} else if (f < 0) {
 	    fb_log("fb_ogl_open:  linger-mode fork failure\n");
-	    return(-1);
+	    return -1;
 	}
 	/* Child Process falls through */
 #endif
@@ -1248,13 +1248,13 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (ogl_getmem(ifp) < 0)
-	return(-1);
+	return -1;
 
     /* Open an X connection to the display.  Sending NULL to XOpenDisplay
        tells it to use the DISPLAY environment variable. */
     if ((OGL(ifp)->dispp = XOpenDisplay(NULL)) == NULL) {
 	fb_log("fb_ogl_open: Failed to open display.  Check DISPLAY environment variable.\n");
-	return (-1);
+	return -1;
     }
     ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
     if (CJDEBUG) {
@@ -1265,7 +1265,7 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     /* Choose an appropriate visual. */
     if ((OGL(ifp)->vip = fb_ogl_choose_visual(ifp)) == NULL) {
 	fb_log("fb_ogl_open: Couldn't find an appropriate visual.  Exiting.\n");
-	return (-1);
+	return -1;
     }
 
     /* Open an OpenGL context with this visual*/
@@ -1538,7 +1538,7 @@ ogl_final_close(FBIO *ifp)
     }
 
     ogl_nwindows--;
-    return(0);
+    return 0;
 }
 
 
@@ -1563,7 +1563,7 @@ ogl_flush(FBIO *ifp)
     }
     XFlush(OGL(ifp)->dispp);
     glFlush();
-    return(0);
+    return 0;
 }
 
 
@@ -1666,9 +1666,9 @@ ogl_poll(FBIO *ifp)
     ogl_do_event(ifp);
 
     if (OGL(ifp)->alive < 0)
-	return(1);
+	return 1;
     else
-	return(0);
+	return 0;
 }
 
 
@@ -1764,7 +1764,7 @@ ogl_clear(FBIO *ifp, unsigned char *pp)
     /* unattach context for other threads to use */
     glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1782,14 +1782,14 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if (yzoom < 1) yzoom = 1;
     if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	&& ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom)
-	return(0);
+	return 0;
 
     if (xcenter < 0 || xcenter >= ifp->if_width)
-	return(-1);
+	return -1;
     if (ycenter < 0 || ycenter >= ifp->if_height)
-	return(-1);
+	return -1;
     if (xzoom >= ifp->if_width || yzoom >= ifp->if_height)
-	return(-1);
+	return -1;
 
     ifp->if_xcenter = xcenter;
     ifp->if_ycenter = ycenter;
@@ -1839,7 +1839,7 @@ ogl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1856,7 +1856,7 @@ ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     *xzoom = ifp->if_xzoom;
     *yzoom = ifp->if_yzoom;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1874,7 +1874,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
-	return(-1);
+	return -1;
 
     ret = 0;
     cp = (unsigned char *)(pixelp);
@@ -1907,7 +1907,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	if (++y >= ifp->if_height)
 	    break;
     }
-    return(ret);
+    return ret;
 }
 
 
@@ -1936,7 +1936,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
-	return(-1);
+	return -1;
 
     ret = 0;
     cp = (unsigned char *)(pixelp);
@@ -2030,7 +2030,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
-    return(ret);
+    return ret;
 
 }
 
@@ -2054,10 +2054,10 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
     if (width <= 0 || height <= 0)
-	return(0);  /* do nothing */
+	return 0;  /* do nothing */
     if (xmin < 0 || xmin+width > ifp->if_width ||
 	ymin < 0 || ymin+height > ifp->if_height)
-	return(-1); /* no can do */
+	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
@@ -2097,7 +2097,7 @@ ogl_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
-    return(width*height);
+    return width*height;
 }
 
 
@@ -2120,10 +2120,10 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 
 
     if (width <= 0 || height <= 0)
-	return(0);  /* do nothing */
+	return 0;  /* do nothing */
     if (xmin < 0 || xmin+width > ifp->if_width ||
 	ymin < 0 || ymin+height > ifp->if_height)
-	return(-1); /* no can do */
+	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
@@ -2163,7 +2163,7 @@ ogl_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
 	glXMakeCurrent(OGL(ifp)->dispp, None, NULL);
     }
 
-    return(width*height);
+    return width*height;
 }
 
 
@@ -2180,7 +2180,7 @@ ogl_rmap(register FBIO *ifp, register ColorMap *cmp)
 	cmp->cm_green[i] = CMG(ifp)[i]<<8;
 	cmp->cm_blue[i]  = CMB(ifp)[i]<<8;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -2211,7 +2211,7 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
     if (!OGL(ifp)->use_ext_ctrl) {
 	if (OGL(ifp)->soft_cmap_flag) {
 	    /* if current and previous maps are linear, return */
-	    if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return(0);
+	    if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
 
 	    /* Software color mapping, trigger a repaint */
 
@@ -2243,7 +2243,7 @@ ogl_wmap(register FBIO *ifp, register const ColorMap *cmp)
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -2383,7 +2383,7 @@ ogl_cursor(FBIO *ifp, int mode, int x, int y)
     ifp->if_xcurs = x;
     ifp->if_ycurs = y;
 
-    return(0);
+    return 0;
 }
 
 

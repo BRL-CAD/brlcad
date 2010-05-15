@@ -2849,13 +2849,13 @@ get_file_name(char *str)
 
     if (Tcl_Eval(interp, bu_vls_addr(&cmd))) {
 	bu_vls_free(&cmd);
-	return((char *)NULL);
+	return (char *)NULL;
     } else if (Tcl_GetStringResult(interp)[0] != '\0') {
 	bu_vls_free(&cmd);
-	return(Tcl_GetStringResult(interp));
+	return Tcl_GetStringResult(interp);
     } else {
 	bu_vls_free(&cmd);
-	return((char *)NULL);
+	return (char *)NULL;
     }
 }
 
@@ -8845,7 +8845,7 @@ rt_vl_closest3d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *closest_pt)
     struct bn_vlist *cur_vp;
 
     if (vhead == BU_LIST_NULL || BU_LIST_IS_EMPTY(vhead))
-	return(1);	/* fail */
+	return 1;	/* fail */
 
     /* initialize smallest distance using 1st point in list */
     cur_vp = BU_LIST_FIRST(bn_vlist, vhead);
@@ -8866,7 +8866,7 @@ rt_vl_closest3d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *closest_pt)
 	}
     }
     VMOVE(closest_pt, c_pt);
-    return(0);	/* success */
+    return 0;	/* success */
 }
 
 
@@ -8888,7 +8888,7 @@ rt_vl_closest2d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *mat, fastf_t *c
     struct bn_vlist *cur_vp;
 
     if (vhead == BU_LIST_NULL || BU_LIST_IS_EMPTY(vhead))
-	return(1);	/* fail */
+	return 1;	/* fail */
 
     /* transform reference point to 2d */
     MAT4X3PNT(ref_pt2d, mat, ref_pt);
@@ -8914,7 +8914,7 @@ rt_vl_closest2d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *mat, fastf_t *c
 	}
     }
     VMOVE(closest_pt, c_pt);
-    return(0);	/* success */
+    return 0;	/* success */
 }
 
 
@@ -8970,7 +8970,7 @@ nurb_closest3d(int *surface, int *uval, int *vval, const struct rt_nurb_internal
     *uval = c_u;
     *vval = c_v;
 
-    return(0);				/* success */
+    return 0;				/* success */
 }
 
 
@@ -9039,7 +9039,7 @@ nurb_closest2d(
     *uval = c_u;
     *vval = c_v;
 
-    return(0);				/* success */
+    return 0;				/* success */
 }
 
 

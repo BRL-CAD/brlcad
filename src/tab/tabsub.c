@@ -277,19 +277,19 @@ multi_words( char *words[], int	nwords )
 	mat_t	mat;
 
 	/* Expects rotations rx, ry, rz, in degrees */
-	if ( nwords < 4 )  return(-1);
+	if ( nwords < 4 )  return -1;
 	MAT_IDN( mat );
 	bn_mat_angles( mat,
 		       atof( words[1] ),
 		       atof( words[2] ),
 		       atof( words[3] ) );
 	out_mat( mat, stdout );
-	return(0);
+	return 0;
     }
     if ( strcmp( words[0], "xlate" ) == 0 )  {
 	mat_t	mat;
 
-	if ( nwords < 4 )  return(-1);
+	if ( nwords < 4 )  return -1;
 	/* Expects translations tx, ty, tz */
 	MAT_IDN( mat );
 	MAT_DELTAS( mat,
@@ -297,7 +297,7 @@ multi_words( char *words[], int	nwords )
 		    atof( words[2] ),
 		    atof( words[3] ) );
 	out_mat( mat, stdout );
-	return(0);
+	return 0;
     }
     if ( strcmp( words[0], "rot_at" ) == 0 )  {
 	mat_t	mat;
@@ -310,7 +310,7 @@ multi_words( char *words[], int	nwords )
 	/* is done first, then the rotation, and finally  */
 	/* back into the original position by (+x, +y, +z). */
 
-	if ( nwords < 7 )  return(-1);
+	if ( nwords < 7 )  return -1;
 
 	MAT_IDN( mat1 );
 	MAT_IDN( mat2 );
@@ -335,7 +335,7 @@ multi_words( char *words[], int	nwords )
 	bn_mat_mul2( mat3, mat );
 
 	out_mat( mat, stdout );
-	return(0);
+	return 0;
     }
     if ( strcmp( words[0], "orient" ) == 0 )  {
 	int i;
@@ -345,7 +345,7 @@ multi_words( char *words[], int	nwords )
 	/* Expects tx, ty, tz, rx, ry, rz, [scale]. */
 	/* All rotation is done first, then translation */
 	/* Note: word[0] and args[0] are the keyword */
-	if ( nwords < 6+1 )  return(-1);
+	if ( nwords < 6+1 )  return -1;
 	for ( i=1; i<6+1; i++ )
 	    args[i] = 0;
 	args[7] = 1.0;	/* optional arg, default to 1 */
@@ -358,18 +358,18 @@ multi_words( char *words[], int	nwords )
 	    /* Nearly zero, signal error */
 	    fprintf(stderr, "Orient scale arg is near zero ('%s')\n",
 		    words[7] );
-	    return(-1);
+	    return -1;
 	} else {
 	    mat[15] = 1 / args[7];
 	}
 	out_mat( mat, stdout );
-	return(0);
+	return 0;
     }
     if ( strcmp( words[0], "ae" ) == 0 )  {
 	mat_t	mat;
 	fastf_t	az, el;
 
-	if ( nwords < 3 )  return(-1);
+	if ( nwords < 3 )  return -1;
 	/* Expects azimuth, elev, optional twist */
 	az = atof(words[1]);
 	el = atof(words[2]);
@@ -383,7 +383,7 @@ multi_words( char *words[], int	nwords )
 	/* XXX does not take twist, for now XXX */
 	bn_mat_ae( mat, az, el );
 	out_mat( mat, stdout );
-	return(0);
+	return 0;
     }
     if ( strcmp( words[0], "arb_rot_pt" ) == 0 )  {
 	mat_t	mat;
@@ -391,7 +391,7 @@ multi_words( char *words[], int	nwords )
 	vect_t	dir;
 	fastf_t	ang;
 
-	if ( nwords < 1+3+3+1 )  return(-1);
+	if ( nwords < 1+3+3+1 )  return -1;
 	/* Expects point1, point2, angle */
 	VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
 	VSET( pt2, atof(words[4]), atof(words[5]), atof(words[6]) );
@@ -401,7 +401,7 @@ multi_words( char *words[], int	nwords )
 	MAT_IDN( mat );
 	bn_mat_arb_rot( mat, pt1, dir, ang );
 	out_mat( mat, stdout );
-	return(0);
+	return 0;
     }
     if ( strcmp( words[0], "arb_rot_dir" ) == 0 )  {
 	mat_t	mat;
@@ -409,7 +409,7 @@ multi_words( char *words[], int	nwords )
 	vect_t	dir;
 	fastf_t	ang;
 
-	if ( nwords < 1+3+3+1 )  return(-1);
+	if ( nwords < 1+3+3+1 )  return -1;
 	/* Expects point1, dir, angle */
 	VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
 	VSET( dir, atof(words[4]), atof(words[5]), atof(words[6]) );
@@ -418,7 +418,7 @@ multi_words( char *words[], int	nwords )
 	MAT_IDN( mat );
 	bn_mat_arb_rot( mat, pt1, dir, ang );
 	out_mat( mat, stdout );
-	return(0);
+	return 0;
     }
     if ( strcmp( words[0], "quat" ) == 0 )  {
 	mat_t	mat;
@@ -478,7 +478,7 @@ multi_words( char *words[], int	nwords )
 	out_mat( mat, stdout );
 	return 0;
     }
-    return(-2);		/* Unknown keyword */
+    return -2;		/* Unknown keyword */
 }
 
 /*
@@ -500,9 +500,9 @@ str2chan_index( char *s )
     chan = atoi( s );
     if ( chan < 0 || chan > nwords-2 )  {
 	fprintf(stderr, "Line %d:  chan %d out of range 0..%d\n", line, chan, nwords-2 );
-	return(0);		/* Flag [0]:  time channel */
+	return 0;		/* Flag [0]:  time channel */
     }
-    return(chan+1);
+    return chan+1;
 }
 
 void

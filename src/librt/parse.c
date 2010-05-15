@@ -324,14 +324,14 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 		     (struct bu_structparse *)sdp->sp_count,
 		     name, base, value )
 		 == 0 )
-		return(0);	/* found */
+		return 0;	/* found */
 	    else
 		continue;
 	}
 	if (sdp->sp_fmt[0] != '%') {
 	    bu_log("bu_struct_lookup(%s): unknown format '%s'\n",
 		   name, sdp->sp_fmt );
-	    return(-1);
+	    return -1;
 	}
 
 	switch ( sdp->sp_fmt[1] )  {
@@ -439,14 +439,14 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 	    default:
 		bu_log("bu_struct_lookup(%s): unknown format '%s'\n",
 		       name, sdp->sp_fmt );
-		return(-1);
+		return -1;
 	}
 	if ( sdp->sp_hook )  {
 	    sdp->sp_hook( sdp, name, base, value );
 	}
-	return(retval);		/* OK or parse error */
+	return retval;		/* OK or parse error */
     }
-    return(-1);			/* Not found */
+    return -1;			/* Not found */
 }
 
 /*
@@ -474,7 +474,7 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
     BU_CK_VLS(in_vls);
     if (desc == (struct bu_structparse *)NULL) {
 	bu_log( "Null \"struct bu_structparse\" pointer\n");
-	return(-1);
+	return -1;
     }
 
     /* Duplicate the input string.  This algorithm is destructive. */
@@ -501,7 +501,7 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 	    bu_log("bu_structparse: name '%s' without '='\n",
 		   name );
 	    bu_vls_free( &vls );
-	    return(-2);
+	    return -2;
 	}
 
 	*cp++ = '\0';
@@ -521,7 +521,7 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 		bu_log("bu_structparse: name '%s'=\" without closing \"\n",
 		       name);
 		bu_vls_free( &vls );
-		return(-3);
+		return -3;
 	    }
 	} else {
 	    /* non-strings are white-space delimited */
@@ -546,7 +546,7 @@ bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, c
 
     }
     bu_vls_free( &vls );
-    return(0);
+    return 0;
 }
 
 

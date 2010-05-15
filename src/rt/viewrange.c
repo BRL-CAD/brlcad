@@ -98,7 +98,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
     output_is_binary = 1;		/* output is binary */
 
-    return(0);			/* No framebuffer needed */
+    return 0;			/* No framebuffer needed */
 }
 
 /*
@@ -187,7 +187,7 @@ raymiss(register struct application *ap)
     VJOIN1(posp->c_hit, ap->a_ray.r_pt, max_dist, ap->a_ray.r_dir);
     posp->c_dist = max_dist;
 
-    return(0);
+    return 0;
 }
 
 /*
@@ -223,7 +223,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 
     if ( pp == PartHeadp )
-	return(0);		/* nothing was actually hit?? */
+	return 0;		/* nothing was actually hit?? */
 
 
     /* Getting defensive.... just in case. */
@@ -251,7 +251,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     posp->c_dist = pp->pt_inhit->hit_dist;
     VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
 
-    return(0);
+    return 0;
 }
 
 /*

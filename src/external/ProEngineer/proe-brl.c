@@ -603,7 +603,7 @@ create_unique_name( char *name )
     if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "\tnew name for %s is %s\n", name, bu_vls_addr( &tmp_name ) );
     }
-    return( bu_vls_strgrab( &tmp_name ) );
+    return bu_vls_strgrab( &tmp_name );
 }
 
 char *
@@ -630,7 +630,7 @@ get_brlcad_name( char *part_name )
 	    fprintf( logger, "\treturning %s\n", (char *)bu_get_hash_value( entry ) );
 	}
 	bu_free( name_copy, "name_copy" );
-	return( (char *)bu_get_hash_value( entry ) );
+	return (char *)bu_get_hash_value( entry );
     } else {
 
 	/* must create a new name */
@@ -641,7 +641,7 @@ get_brlcad_name( char *part_name )
 	    fprintf( logger, "\tCreating new brlcad name (%s) for part (%s)\n", brlcad_name, name_copy );
 	}
 	bu_free( name_copy, "name_copy" );
-	return( brlcad_name );
+	return brlcad_name;
     }
 }
 
@@ -733,13 +733,13 @@ already_done_part( wchar_t *name )
     char *found=NULL;
 
     if ( !done_list_part )
-	return( 0 );
+	return 0;
 
     found = bu_rb_search1( done_list_part, (void *)name );
     if ( !found ) {
-	return( 0 );
+	return 0;
     } else {
-	return( 1 );
+	return 1;
     }
 }
 
@@ -774,13 +774,13 @@ already_done_asm( wchar_t *name )
     char *found=NULL;
 
     if ( !done_list_asm )
-	return( 0 );
+	return 0;
 
     found = bu_rb_search1(done_list_asm, (void *)name );
     if ( !found ) {
-	return( 0 );
+	return 0;
     } else {
-	return( 1 );
+	return 1;
     }
 }
 
@@ -873,7 +873,7 @@ bad_triangle( int v1, int v2, int v3 )
     int i;
 
     if ( v1 == v2 || v2 == v3 || v1 == v3 )
-	return( 1 );
+	return 1;
 
     dist = 0;
     for ( i=0; i<3; i++ ) {
@@ -882,7 +882,7 @@ bad_triangle( int v1, int v2, int v3 )
     }
     dist = sqrt( dist );
     if ( dist < local_tol ) {
-	return( 1 );
+	return 1;
     }
 
     dist = 0;
@@ -892,7 +892,7 @@ bad_triangle( int v1, int v2, int v3 )
     }
     dist = sqrt( dist );
     if ( dist < local_tol ) {
-	return( 1 );
+	return 1;
     }
 
     dist = 0;
@@ -902,10 +902,10 @@ bad_triangle( int v1, int v2, int v3 )
     }
     dist = sqrt( dist );
     if ( dist < local_tol ) {
-	return( 1 );
+	return 1;
     }
 
-    return( 0 );
+    return 0;
 }
 
 /* routine to add a new triangle and its normals to the current part */
@@ -1580,7 +1580,7 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 
     if ( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, data ) ) !=
 	 PRO_TK_NO_ERROR ) {
-	return( ret );
+	return ret;
     }
 
     if ( curr_feat_type == PRO_FEAT_HOLE ) {
@@ -1617,7 +1617,7 @@ int
 feat_adds_material( ProFeattype feat_type )
 {
     if ( feat_type >= PRO_FEAT_UDF_THREAD ) {
-	return( 1 );
+	return 1;
     }
 
     switch ( feat_type ) {
@@ -1639,14 +1639,14 @@ feat_adds_material( ProFeattype feat_type )
 	case PRO_FEAT_OFFSET:
 	case PRO_FEAT_REPLACE_SURF:
 	case PRO_FEAT_PIPE:
-	    return( 1 );
+	    return 1;
 	    break;
 	default:
-	    return( 0 );
+	    return 0;
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 void
@@ -1832,10 +1832,10 @@ output_part( ProMdl model )
     /* if this part has already been output, do not do it again */
     if ( ProMdlNameGet( model, part_name ) != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to get name for a part\n" );
-	return( 1 );
+	return 1;
     }
     if ( already_done_part( part_name ) )
-	return( 0 );
+	return 0;
 
     if ( logger_type == LOGGER_TYPE_ALL ) {
 	fprintf( logger, "Processing %s:\n", ProWstringToString( astr, part_name ) );
@@ -1851,7 +1851,7 @@ output_part( ProMdl model )
     status = ProUILabelTextSet( "proe_brl", "curr_proc", part_name );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to update dialog label for currently processed part\n" );
-	return( 1 );
+	return 1;
     }
     status = ProUIDialogActivate( "proe_brl", &ret_status );
     if ( status != PRO_TK_NO_ERROR ) {
@@ -2285,7 +2285,7 @@ output_part( ProMdl model )
 	    status = ProUIDialogCreate( "proe_brl_error", "proe_brl_error" );
 	    if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
-		return( 0 );
+		return 0;
 	    }
 	    snprintf( err_mess, 512, 
 		      "During the conversion %d features of part %s\n"
@@ -2299,7 +2299,7 @@ output_part( ProMdl model )
 	    status = ProUITextareaValueSet( "proe_brl_error", "the_message", werr_mess );
 	    if ( status != PRO_TK_NO_ERROR ) {
 		fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
-		return( 0 );
+		return 0;
 	    }
 	    (void)ProUIPushbuttonActivateActionSet( "proe_brl_error", "ok", kill_error_dialog, NULL );
 	    status = ProUIDialogActivate( "proe_brl_error", &ret_status );
@@ -2316,7 +2316,7 @@ output_part( ProMdl model )
 	feat_id_count = 0;
     }
 
-    return( ret );
+    return ret;
 }
 
 /* routine to free the memory associated with our assembly info */
@@ -2566,7 +2566,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( status );
+	return status;
     }
 
     /* this call accumulates the xform matrix along the path created above */
@@ -2578,7 +2578,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( PRO_TK_NO_ERROR );
+	return PRO_TK_NO_ERROR;
     }
 
     /* add this member to our assembly info */
@@ -2605,7 +2605,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	ProMessageClear();
 	fprintf( stderr, "memory allocation for member failed\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( PRO_TK_GENERAL_ERROR );
+	return PRO_TK_GENERAL_ERROR;
     }
     member->next = NULL;
 
@@ -2628,7 +2628,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( status );
+	return status;
     }
 
     /* get its type (part or assembly are the only ones that should make it here) */
@@ -2640,7 +2640,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( status );
+	return status;
     }
 
     /* remember the type */
@@ -2664,7 +2664,7 @@ assembly_comp( ProFeature *feat, ProError status, ProAppData app_data )
 	    break;
     }
 
-    return( PRO_TK_NO_ERROR );
+    return PRO_TK_NO_ERROR;
 }
 
 /* this routine is a filter for the feature visit routine
@@ -2685,11 +2685,11 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( PRO_TK_CONTINUE );
+	return PRO_TK_CONTINUE;
     }
 
     if ( type != PRO_FEAT_COMPONENT ) {
-	return( PRO_TK_CONTINUE );
+	return PRO_TK_CONTINUE;
     }
 
     status = ProFeatureStatusGet( feat, &feat_status );
@@ -2700,14 +2700,14 @@ assembly_filter( ProFeature *feat, ProAppData *data )
 	ProMessageClear();
 	fprintf( stderr, "%s\n", astr );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( PRO_TK_CONTINUE );
+	return PRO_TK_CONTINUE;
     }
 
     if ( feat_status != PRO_FEAT_ACTIVE ) {
-	return( PRO_TK_CONTINUE );
+	return PRO_TK_CONTINUE;
     }
 
-    return( PRO_TK_NO_ERROR );
+    return PRO_TK_NO_ERROR;
 }
 
 void
@@ -2736,15 +2736,15 @@ is_non_identity( ProMatrix xform )
 	for ( j=0; j<4; j++ ) {
 	    if ( i == j ) {
 		if ( xform[i][j] != 1.0 )
-		    return( 1 );
+		    return 1;
 	    } else {
 		if ( xform[i][j] != 0.0 )
-		    return( 1 );
+		    return 1;
 	    }
 	}
     }
 
-    return( 0 );
+    return 0;
 }
 
 /* routine to output the top level object that is currently displayed in Pro/E */
@@ -2839,21 +2839,21 @@ create_temp_directory()
     status = ProUIDialogCreate( "proe_brl", "proe_brl" );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
-	return( 0 );
+	return 0;
     }
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to set action for 'Go' button\n" );
 	ProUIDialogDestroy( "proe_brl" );
-	return( 0 );
+	return 0;
     }
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
     if ( status != PRO_TK_NO_ERROR ) {
 	fprintf( stderr, "Failed to set action for 'Go' button\n" );
 	ProUIDialogDestroy( "proe_brl" );
-	return( 0 );
+	return 0;
     }
 
     status = ProUIDialogActivate( "proe_brl", &ret_status );
@@ -2875,10 +2875,10 @@ create_temp_directory()
     range[1] = 1.0;
     status = ProMessageDoubleRead( range, &max_angle_cntrl );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return( 0 );
+	return 0;
     }
 #endif
-    return( 0 );
+    return 0;
 }
 
 void
@@ -2972,7 +2972,7 @@ create_name_hash( FILE *name_fd )
 	bu_set_hash_value( entry, (unsigned char *)part_name );
     }
 
-    return( htbl );
+    return htbl;
 }
 
 void
@@ -3572,7 +3572,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_vls_printf(&vls, "Failed to create dialog box for proe-brl, error = %d\n", status );
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return( 0 );
+	return 0;
     }
 
     status = ProUICheckbuttonActivateActionSet( "proe_brl", "elim_small", elim_small_activate, NULL );
@@ -3583,7 +3583,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	bu_vls_printf(&vls, "Failed to set action for \"eliminate small features\" checkbutton, error = %d\n", status );
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return( 0 );
+	return 0;
     }
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "doit", doit, NULL );
@@ -3595,7 +3595,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	ProUIDialogDestroy( "proe_brl" );
 	bu_vls_free(&vls);
-	return( 0 );
+	return 0;
     }
 
     status = ProUIPushbuttonActivateActionSet( "proe_brl", "quit", do_quit, NULL );
@@ -3607,7 +3607,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProMessageDisplay(MSGFIL, "USER_INFO", bu_vls_addr(&vls));
 	ProUIDialogDestroy( "proe_brl" );
 	bu_vls_free(&vls);
-	return( 0 );
+	return 0;
     }
 
     status = ProUIDialogActivate( "proe_brl", &ret_status );
@@ -3653,7 +3653,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     if ( status == PRO_TK_NO_ERROR ) {
 	(void)ProWstringToString( output_file, w_output_file );
     } else if ( status == PRO_TK_MSG_USER_QUIT) {
-	return( 0 );
+	return 0;
     }
 
     /* get starting ident number */
@@ -3662,7 +3662,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 			     &reg_id );
     status = ProMessageIntegerRead( NULL, &reg_id );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return( 0 );
+	return 0;
     }
 
     /* get the maximum allowed error */
@@ -3673,7 +3673,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     range[1] = 500.0;
     status = ProMessageDoubleRead( range, &max_error );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return( 0 );
+	return 0;
     }
 
     /* get the angle control */
@@ -3684,7 +3684,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     range[1] = 1.0;
     status = ProMessageDoubleRead( range, &max_angle_cntrl );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return( 0 );
+	return 0;
     }
 
     /* get the minimum hole diameter */
@@ -3693,7 +3693,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 			      &min_hole_diameter );
     status = ProMessageDoubleRead( NULL, &min_hole_diameter );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return( 0 );
+	return 0;
     }
     if ( min_hole_diameter < 0.0 ) {
 	min_hole_diameter = 0.0;
@@ -3705,7 +3705,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 			      &min_round_radius );
     status = ProMessageDoubleRead( NULL, &min_round_radius );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return( 0 );
+	return 0;
     }
     if ( min_round_radius < 0.0 ) {
 	min_round_radius = 0.0;
@@ -3717,7 +3717,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 			      &min_chamfer_dim );
     status = ProMessageDoubleRead( NULL, &min_chamfer_dim );
     if ( status == PRO_TK_MSG_USER_QUIT ) {
-	return( 0 );
+	return 0;
     }
     if ( min_chamfer_dim < 0.0 ) {
 	min_chamfer_dim = 0.0;
@@ -3733,7 +3733,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProMessageClear();
 	fprintf( stderr, "Cannot open output file\n" );
 	perror( "\t" );
-	return( PRO_TK_GENERAL_ERROR );
+	return PRO_TK_GENERAL_ERROR;
     }
 
     /* get model type */
@@ -3743,7 +3743,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProMessageClear();
 	fprintf( stderr, "Cannot get type of current model\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( PRO_TK_NO_ERROR );
+	return PRO_TK_NO_ERROR;
     }
 
     /* can only do parts and assemblies, no drawings, etc */
@@ -3752,7 +3752,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	ProMessageClear();
 	fprintf( stderr, "Current model is not a solid object\n" );
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( PRO_TK_NO_ERROR );
+	return PRO_TK_NO_ERROR;
     }
 
     /* get units, and adjust conversion factor */
@@ -3828,7 +3828,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	fprintf( stderr, "\t%s\t%d\n", feat_type[i], feat_type_count[i] );
     }
 #endif
-    return( 0 );
+    return 0;
 }
 
 /* this routine determines whether the "proe-brl" menu item in Pro/E
@@ -3840,21 +3840,21 @@ proe_brl_access( uiCmdAccessMode access_mode )
 
 #if 1
     /* doing the correct checks appears to be unreliable */
-    return( ACCESS_AVAILABLE );
+    return ACCESS_AVAILABLE;
 #else
     ProMode mode;
     ProError status;
 
     status = ProModeCurrentGet( &mode );
     if ( status != PRO_TK_NO_ERROR ) {
-	return( ACCESS_UNAVAILABLE );
+	return ACCESS_UNAVAILABLE;
     }
 
     /* only allow our menu item to be used when parts or assemblies are displayed */
     if ( mode == PRO_MODE_ASSEMBLY || mode == PRO_MODE_PART ) {
-	return( ACCESS_AVAILABLE );
+	return ACCESS_AVAILABLE;
     } else {
-	return( ACCESS_UNAVAILABLE );
+	return ACCESS_UNAVAILABLE;
     }
 #endif
 }
@@ -3876,7 +3876,7 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 	printf("%s\n", astr);
 	ProStringToWstring(errbuf, astr);
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return(-1);
+	return -1;
     }
 
     /* add a command that calls our proe-brl routine */
@@ -3888,7 +3888,7 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 	ProMessageDisplay(MSGFIL, "USER_ERROR", astr);
 	ProStringToWstring(errbuf, astr);
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( -1 );
+	return -1;
     }
 
     /* add a menu item that runs the new command */
@@ -3900,14 +3900,14 @@ user_initialize( int argc, char *argv[], char *version, char *build, wchar_t err
 	ProMessageDisplay(MSGFIL, "USER_ERROR", astr);
 	ProStringToWstring(errbuf, astr);
 	(void)ProWindowRefresh( PRO_VALUE_UNUSED );
-	return( -1 );
+	return -1;
     }
 
     /* let user know we are here */
     ProMessageDisplay( MSGFIL, "OK" );
     (void)ProWindowRefresh( PRO_VALUE_UNUSED );
 
-    return( 0 );
+    return 0;
 }
 
 void

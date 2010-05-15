@@ -242,7 +242,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -687,7 +687,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
 	bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
 	       ip->idb_meth->ft_name,
 	       DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-	return(TREE_NULL);		/* ERROR */
+	return TREE_NULL;		/* ERROR */
     }
 
     /* Indicate success by returning something other than TREE_NULL */
@@ -695,7 +695,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
 
-    return(curtree);
+    return curtree;
 }
 
 
@@ -791,7 +791,7 @@ rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 
-    return(-1);
+    return -1;
 }
 
 
@@ -815,7 +815,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     /* Check record type */
     if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_submodel_import4: defective strsol record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -855,7 +855,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     bn_mat_print("root2leaf", sip->root2leaf);
 #endif
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -874,7 +874,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SUBMODEL) return(-1);
+    if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 #if 0
@@ -900,7 +900,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     bu_log("rt_submodel_export4: '%s'\n", rec->ss.ss_args);
 #endif
 
-    return(0);
+    return 0;
 }
 
 
@@ -958,7 +958,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     bn_mat_print("root2leaf", sip->root2leaf);
 #endif
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -976,7 +976,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SUBMODEL) return(-1);
+    if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 #if 0
@@ -999,7 +999,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     bu_log("rt_submodel_export4: '%s'\n", rec->ss.ss_args);
 #endif
 
-    return(0);
+    return 0;
 }
 
 
@@ -1061,7 +1061,7 @@ rt_submodel_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

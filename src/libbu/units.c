@@ -202,10 +202,10 @@ bu_units_conversion(const char *str)
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
 	    if (ubuf[0] != tp->name[0])  continue;
 	    if (strcmp(ubuf, tp->name) != 0)  continue;
-	    return (tp->val);
+	    return tp->val;
 	}
     }
-    return (0.0);		/* Unable to find it */
+    return 0.0;		/* Unable to find it */
 }
 
 

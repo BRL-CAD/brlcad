@@ -842,10 +842,10 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
     int len, i;
 
     if (Tcl_ListObjGetElements(interp, list, &len, &obj_array) != TCL_OK)
-	return(0);
+	return 0;
 
     if (len < 1)
-	return(0);
+	return 0;
 
     if (*array_len < 1) {
 	*array = (int *)bu_calloc(len, sizeof(int), "array");
@@ -857,7 +857,7 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
 	Tcl_DecrRefCount(obj_array[i]);
     }
 
-    return(len < *array_len ? len : *array_len);
+    return len < *array_len ? len : *array_len;
 }
 
 
@@ -879,7 +879,7 @@ tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *arr
 
     ret = tcl_obj_to_int_array(interp, obj, array, array_len);
 
-    return(ret);
+    return ret;
 }
 
 
@@ -900,10 +900,10 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
     int ret;
 
     if ((ret=Tcl_ListObjGetElements(interp, list, &len, &obj_array)) != TCL_OK)
-	return(ret);
+	return ret;
 
     if (len < 1)
-	return(0);
+	return 0;
 
     if (*array_len < 1) {
 	*array = (fastf_t *)bu_calloc(len, sizeof(fastf_t), "array");
@@ -915,7 +915,7 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
 	Tcl_DecrRefCount(obj_array[i]);
     }
 
-    return(len < *array_len ? len : *array_len);
+    return len < *array_len ? len : *array_len;
 }
 
 
@@ -937,7 +937,7 @@ tcl_list_to_fastf_array(Tcl_Interp *interp, char *char_list, fastf_t **array, in
 
     ret = tcl_obj_to_fastf_array(interp, obj, array, array_len);
 
-    return(ret);
+    return ret;
 }
 
 

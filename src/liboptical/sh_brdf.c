@@ -123,13 +123,13 @@ brdf_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
     if (bu_struct_parse( matparm, brdf_parse, (char *)pp ) < 0 )  {
 	bu_free( (char *)pp, "brdf_specific" );
-	return(-1);
+	return -1;
     }
 
     pp->rms_sq = pp->rms_slope * pp->rms_slope;
     pp->denom = 4.0 * bn_pi * pp->rms_sq;
 
-    return(1);
+    return 1;
 }
 /*
  *			B R D F _ P R I N T
@@ -221,7 +221,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
     if (swp->sw_xmitonly ) {
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);	/* done */
+	return 1;	/* done */
     }
 
     VMOVE( matcolor, swp->sw_color );
@@ -296,7 +296,7 @@ brdf_render(register struct application *ap, struct partition *pp, struct shadew
 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
-    return(1);
+    return 1;
 }
 
 

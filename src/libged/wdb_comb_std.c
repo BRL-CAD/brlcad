@@ -212,7 +212,7 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
 	else {
 	    Tcl_AppendResult(interp, "Cannot determine length of operand name: ",
 			     name, ", aborting\n", (char *)NULL);
-	    return (0);
+	    return 0;
 	}
     } else
 	name_len = (int)strlen( name );
@@ -224,7 +224,7 @@ wdb_add_operand(Tcl_Interp *interp, struct bu_list *hp, char *name)
     tok->type = WDB_TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);
-    return (name_len);
+    return name_len;
 }
 
 HIDDEN void
@@ -349,7 +349,7 @@ wdb_eval_bool(struct bu_list *hp)
 	final_tree = tok->tp;
 	BU_LIST_DEQUEUE(&tok->l);
 	bu_free((char *)tok, "tok");
-	return(final_tree);
+	return final_tree;
     }
 
     return (union tree *)NULL;
@@ -439,10 +439,10 @@ wdb_check_syntax(Tcl_Interp *interp, struct db_i *dbip, struct bu_list *hp, char
     if ( errors )
     {
 	Tcl_AppendResult(interp, "\t---------aborting!\n", (char *)NULL );
-	return( 1 );
+	return 1;
     }
 
-    return( 0 );
+    return 0;
 }
 
 int

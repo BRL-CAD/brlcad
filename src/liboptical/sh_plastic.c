@@ -131,12 +131,12 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 	bu_free( (char *)pp, "phong_specific" );
-	return(-1);
+	return -1;
     }
 
     if (pp->transmit > 0 )
 	rp->reg_transmit = 1;
-    return(1);
+    return 1;
 }
 
 /*
@@ -163,12 +163,12 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 
     if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 	bu_free( (char *)pp, "phong_specific" );
-	return(-1);
+	return -1;
     }
 
     if (pp->transmit > 0 )
 	rp->reg_transmit = 1;
-    return(1);
+    return 1;
 }
 
 /*
@@ -196,12 +196,12 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     if (bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 	bu_free( (char *)pp, "phong_specific" );
-	return(-1);
+	return -1;
     }
 
     if (pp->transmit > 0 )
 	rp->reg_transmit = 1;
-    return(1);
+    return 1;
 }
 
 /*
@@ -330,13 +330,13 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 #endif /* SW_SET_TRANSMIT */
     if (swp->sw_xmitonly ) {
 	if (swp->sw_xmitonly > 1 )
-	    return(1);	/* done -- wanted parameters only */
+	    return 1;	/* done -- wanted parameters only */
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
 	    if (rdebug&RDEBUG_SHADE)
 		bu_log("calling rr_render from phong, sw_xmitonly\n");
 	    (void)rr_render( ap, pp, swp );
 	}
-	return(1);	/* done */
+	return 1;	/* done */
     }
 
 
@@ -548,7 +548,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 #ifdef RT_MULTISPECTRAL
     bn_tabdata_free(ms_matcolor);
 #endif
-    return(1);
+    return 1;
 }
 
 
@@ -565,15 +565,15 @@ phg_ipow( d, cnt )
 {
     fastf_t input, result;
 
-    if ((input=d) < 1e-8 )  return(0.0);
+    if ((input=d) < 1e-8 )  return 0.0;
     if (cnt < 0 || cnt > 200 )  {
 	bu_log("phg_ipow(%g,%d) bad\n", d, cnt);
-	return(d);
+	return d;
     }
     result = 1;
     while ( cnt-- > 0 )
 	result *= input;
-    return( result );
+    return result;
 }
 #endif
 

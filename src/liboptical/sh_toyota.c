@@ -185,7 +185,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
 
     if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0)  {
 	bu_free((char *)tp, "toyota_specific");
-	return(-1);
+	return -1;
     }
 
     /* Read in reflectance data. */
@@ -219,7 +219,7 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
     } else {
 	tp->glass = 0;
     }
-    return(1);
+    return 1;
 }
 
 /*
@@ -240,7 +240,7 @@ tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
     /* use function, fn(lambda), describing spectral */
     /* reflectance of mirror */
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -261,7 +261,7 @@ tglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     /* use function, fn(lambda), describing spectral */
     /* reflectance of glass */
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -305,7 +305,7 @@ air_mass(fastf_t gamma)
     } else
 	m = 1./(sin(gamma*M_PI/180.)
 		+ 0.1500*pow((gamma + 3.885), -1.253));
-    return(m);
+    return m;
 }
 
 /*
@@ -323,7 +323,7 @@ zenith_luminance(fastf_t sun_alt, fastf_t t_vl)
     /* Solar altitude off horizon (degrees). */
     /* atmospheric turbidity (aerosol optical depth) */
 {
-    return(2000.);	/* swag */
+    return 2000.;	/* swag */
 }
 
 /*
@@ -342,7 +342,7 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
     /* luminance of the zenith */
     /* vectors to zenith and a sky element */
 {
-    return(lz * (1. + 2.*VDOT(Zenith, Sky_elmt)/3.));
+    return lz * (1. + 2.*VDOT(Zenith, Sky_elmt)/3.);
 }
 
 /*	H O M O G E N O U S _ S K Y _ L U M
@@ -360,7 +360,7 @@ homogenous_sky_lum(fastf_t *Sky_elmt, fastf_t *Sun, fastf_t t_vl)
     /* vectors to a sky element and to sun */
     /* Turbidity factor. */
 {
-    return(0.);
+    return 0.;
 }
 
 /*
@@ -398,7 +398,7 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
 	* (1. - exp(-0.32/cos_theta))
 	/ 0.27385*(0.91 + 10.*exp(-3.*z0) + 0.45*cos_z0*cos_z0);
 
-    return(lum);
+    return lum;
 }
 
 /*
@@ -1435,7 +1435,7 @@ atmos_irradiance(fastf_t lambda)
 	ratio = (lambda - table[j][0]) / (table[j+1][0] - table[j][0]);
 	irrad = ratio*(table[j+1][1] - table[j][1]) + table[j][1];
     }
-    return(irrad);
+    return irrad;
 }
 
 /*
@@ -1522,7 +1522,7 @@ ozone_absorption(fastf_t lambda)
     coeff = ratio*(table[j+1][1] - table[j][1]) + table[j][1];
 
     /* Convert units from 1/cm to 1/m */
-    return(/* 100. * */ coeff);
+    return /* 100. * */ coeff;
 }
 
 /*
@@ -1660,7 +1660,7 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 	    break;
     }
 /* XXX hack */
-    if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return(0.);}
+    if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return 0.;}
 
     /* Convert to color temperature.  Expression based on careful */
     /* measurements by Toyota. */
@@ -1708,7 +1708,7 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
     /* Get spectral distribution for sky element of interest. */
     sd = e_mean + m1*v1 + m2*v2;
 
-    return(sd);
+    return sd;
 }
 
 /*
@@ -1745,7 +1745,7 @@ sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf
     coz = ozone_absorption(lambda);
     em = e0 * exp(-(cr + cm + coz)*air_mass(sun_alt));
     ls = em/sun_sang;
-    return(ls);
+    return ls;
 }
 
 /*
@@ -1793,7 +1793,7 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
     /* Only accurate for unpolarized radiant energy. */
     refl = 0.5 * (p_parallel + p_perpendicular);
 
-    return(refl);
+    return refl;
 }
 
 /*
@@ -1827,7 +1827,7 @@ absorp_coeff(fastf_t lambda, char *material)
 
     /* Find "nearby" values of lambda, absorption for interpolation. */
     if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l)
-	return(-1.);
+	return -1.;
     lambda_l = l;
     absorp_l = a;
 
@@ -1837,7 +1837,7 @@ absorp_coeff(fastf_t lambda, char *material)
 	absorp_l = a;
     }
     if (n != 2)
-	return(-1.);
+	return -1.;
     else {
 	lambda_h = l;
 	absorp_h = a;
@@ -1848,7 +1848,7 @@ absorp_coeff(fastf_t lambda, char *material)
     absorp = (absorp_h - absorp_l)*(lambda - lambda_l)
 	/(lambda_h - lambda_l) + absorp_l;
 
-    return(absorp);
+    return absorp;
 }
 
 /*
@@ -1942,7 +1942,7 @@ reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
 	+ beta_l;
 
  out:
-    return(beta);
+    return beta;
 }
 
 /*
@@ -2244,7 +2244,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	* del_omega;
     irradiance /= M_PI;
 
-    return(irradiance);
+    return irradiance;
 }
 
 /*
@@ -2390,7 +2390,7 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
     /* Turn off colorview()'s handling of reflect/refract */
     swp->sw_reflect = 0;
     swp->sw_transmit = 0;
-    return(1);
+    return 1;
 }
 
 /*

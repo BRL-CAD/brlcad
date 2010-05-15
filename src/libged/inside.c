@@ -676,7 +676,7 @@ ellgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     fastf_t ratio;
 
     if ( thick[0] <= 0.0 )
-	return(0);
+	return 0;
     thick[2] = thick[1] = thick[0];	/* uniform thickness */
 
     RT_ELL_CK_MAGIC(ell);
@@ -721,7 +721,7 @@ partin(struct ged *gedp, struct rt_db_internal *ip, fastf_t *thick )
     RT_PART_CK_MAGIC( part );
 
     if (*thick >= part->part_vrad || *thick >= part->part_hrad)
-	return(1);    /* BAD */
+	return 1;    /* BAD */
 
     part->part_vrad -= *thick;
     part->part_hrad -= *thick;

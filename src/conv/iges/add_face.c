@@ -46,7 +46,7 @@ Add_face_to_shell( s, entityno, face_orient )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return( (struct faceuse *)NULL );
+	return (struct faceuse *)NULL;
     }
 
     Readrec( dir[entityno]->param );
@@ -117,7 +117,7 @@ Add_face_to_shell( s, entityno, face_orient )
 
     err :
 	bu_free( (char *)loop_de, "Add_face_to_shell: loop DE's" );
-    return( fu );
+    return fu;
 }
 
 /*

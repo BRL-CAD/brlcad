@@ -314,7 +314,7 @@ dsk_help(FBIO *ifp)
 	fb_log("called \"%s\" by running this.\n", ifp->if_name);
     }
 
-    return(0);
+    return 0;
 }
 
 

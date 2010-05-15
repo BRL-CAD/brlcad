@@ -166,7 +166,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 
 }
 
@@ -305,7 +305,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     if (hitp == &hits[0] || hitp == &hits[1] || hitp == &hits[3]) {
-	return(0);	/* MISS */
+	return 0;	/* MISS */
     }
 
     if (hitp == &hits[2]) {
@@ -326,7 +326,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    segp->seg_out = hits[0];	/* struct copy */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
-	return(2);			/* HIT */
+	return 2;			/* HIT */
     } else {
 	/* 4 hits:  0, 1 are sides, 2, 3 are top/bottom*/
 	struct hit sorted[4];
@@ -365,7 +365,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	segp->seg_out = sorted[3];	/* struct copy */
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-	return(4);
+	return 4;
     }
 }
 
@@ -722,13 +722,13 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->hyp_Au, xip->hyp_H) / mag_h;
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* make unit vectors in A, H, and HxA directions */
@@ -1147,7 +1147,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     bu_ptbl_free(&vert_tab);
-    return(0);
+    return 0;
 
  fail:
     /* free mem */
@@ -1159,7 +1159,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)vells, "vertex [][]");
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1207,7 +1207,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     hyp_ip->hyp_b = vec[ 9] / mat[15];
     hyp_ip->hyp_bnr = vec[10] ;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1229,7 +1229,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_HYP) return(-1);
+    if (ip->idb_type != ID_HYP) return -1;
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
@@ -1335,7 +1335,7 @@ rt_hyp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

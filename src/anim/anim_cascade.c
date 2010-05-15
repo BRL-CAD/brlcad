@@ -202,7 +202,7 @@ main (int argc, char **argv)
 
 	if (one_time) break;
     }
-    return( 0 );
+    return 0;
 }
 
 #define OPT_STR "so:f:r:a:"
@@ -294,10 +294,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 /*

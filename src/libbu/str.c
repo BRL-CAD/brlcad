@@ -155,7 +155,7 @@ bu_strdupm(register const char *cp, const char *label)
     }
 
     memcpy(base, cp, len);
-    return (base);
+    return base;
 }
 
 /*

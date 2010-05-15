@@ -137,7 +137,7 @@ rt_nurb_par_edge(const struct face_g_snurb *srf, fastf_t epsilon)
      *	  (2.0 * (d1 + 2 D2 + d3)
      */
 
-    return ( 3.0 * sqrt( epsilon / (2.0*(d1 + (2.0 * d2)+ d3))));
+    return 3.0 * sqrt( epsilon / (2.0*(d1 + (2.0 * d2)+ d3)));
 }
 
 /*
@@ -163,7 +163,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
     int i, j;
 
     if ( crv->order < 3)
-	return( -1.0 );
+	return -1.0;
 
     num_coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
     if ( num_coords > 5 )
@@ -212,9 +212,9 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
     }
 
     if ( NEAR_ZERO(final_t - MAX_FASTF, SMALL_FASTF) )
-	return( -1.0 );
+	return -1.0;
     else
-	return( final_t/2.0 );
+	return final_t/2.0;
 }
 
 /*

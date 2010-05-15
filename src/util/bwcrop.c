@@ -183,7 +183,7 @@ main(int argc, char **argv)
     }
 
     bu_free(buffer, "buffer");
-    return (0);
+    return 0;
 }
 
 

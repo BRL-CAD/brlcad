@@ -32,7 +32,7 @@ bu_list_new(void)
     BU_GETSTRUCT(new_list, bu_list);
     BU_LIST_INIT(new_list);
 
-    return (new_list);
+    return new_list;
 }
 
 struct bu_list *
@@ -42,7 +42,7 @@ bu_list_pop(struct bu_list *hp)
 
     BU_LIST_POP(bu_list, hp, p);
 
-    return (p);
+    return p;
 }
 
 int
@@ -225,7 +225,7 @@ bu_list_dequeue_next(struct bu_list *hp, struct bu_list *p)
     p2 = BU_LIST_NEXT(bu_list, p);
     BU_LIST_DEQUEUE(p2);
 
-    return (p2);
+    return p2;
 }
 
 /*

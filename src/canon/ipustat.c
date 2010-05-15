@@ -72,14 +72,14 @@ int main(int ac, char *av[])
 
     dsclose(dsp);
 
-    return(0);
+    return 0;
 
 #else /* !IPU_FULL_LIB */
 
     fprintf(stderr,
 	    "%s only works on SGI(tm) systems with dslib support\n",
 	    *av);
-    return(-1);
+    return -1;
 
 #endif /* IPU_FULL_LIB */
 

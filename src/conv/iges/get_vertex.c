@@ -35,7 +35,7 @@ Get_vertex( edge_use )
     int				vert_de;
 
     if ( (e_list = Get_edge_list( edge_use )) == NULL )
-	return( (struct vertex **)NULL );
+	return (struct vertex **)NULL;
 
     edge_index = edge_use->index-1;
     if ( edge_use->orient )
@@ -50,9 +50,9 @@ Get_vertex( edge_use )
     }
 
     if ( (v_list = Get_vertex_list( vert_de )) == NULL )
-	return( (struct vertex **)NULL );
+	return (struct vertex **)NULL;
 
-    return( &v_list->i_verts[vert_index].v );
+    return &v_list->i_verts[vert_index].v;
 }
 
 int
@@ -67,7 +67,7 @@ Put_vertex( v, edge )
     int				vert_de;
 
     if ( (e_list = Get_edge_list( edge )) == NULL )
-	return( 0 );
+	return 0;
 
 
     el = e_list;
@@ -92,7 +92,7 @@ Put_vertex( v, edge )
 
 
     if ( (v_list = Get_vertex_list( vert_de )) == NULL )
-	return( 0 );
+	return 0;
 
     if ( v_list->i_verts[vert_index].v )
     {
@@ -101,7 +101,7 @@ Put_vertex( v, edge )
     }
 
     v_list->i_verts[vert_index].v = v;
-    return( 1 );
+    return 1;
 }
 
 struct iges_edge *
@@ -111,9 +111,9 @@ Get_edge( e_use )
     struct iges_edge_list	*e_list;
 
     if ( (e_list = Get_edge_list( e_use )) == NULL )
-	return( (struct iges_edge *)NULL );
+	return (struct iges_edge *)NULL;
 
-    return( &e_list->i_edge[e_use->index-1] );
+    return &e_list->i_edge[e_use->index-1];
 }
 
 struct vertex *
@@ -123,9 +123,9 @@ Get_edge_start_vertex( edge )
     struct iges_vertex_list *v_list;
 
     if ( (v_list = Get_vertex_list( edge->start_vert_de )) == NULL )
-	return( (struct vertex *)NULL );
+	return (struct vertex *)NULL;
 
-    return( v_list->i_verts[edge->start_vert_index-1].v );
+    return v_list->i_verts[edge->start_vert_index-1].v;
 }
 
 
@@ -136,9 +136,9 @@ Get_edge_end_vertex( edge )
     struct iges_vertex_list *v_list;
 
     if ( (v_list = Get_vertex_list( edge->end_vert_de )) == NULL )
-	return( (struct vertex *)NULL );
+	return (struct vertex *)NULL;
 
-    return( v_list->i_verts[edge->end_vert_index-1].v );
+    return v_list->i_verts[edge->end_vert_index-1].v;
 }
 
 /*

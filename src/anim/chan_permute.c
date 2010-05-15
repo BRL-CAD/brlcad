@@ -153,7 +153,7 @@ int max(int *m, int n) /*return greatest of n integers, unless one is greater th
     for (i=0;i<n;i++) {
 	j = (m[i]>j) ? m[i] : j;
     }
-    return( (j>n) ? 0 : j );
+    return (j>n) ? 0 : j;
 }
 
 /*

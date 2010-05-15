@@ -362,7 +362,7 @@ wdb_export(
     if ((id <= 0 || id > ID_MAX_SOLID) && id != ID_COMBINATION) {
 	bu_log("wdb_export(%s): id=%d bad\n",
 	       name, id);
-	return(-1);
+	return -1;
     }
 
     RT_INIT_DB_INTERNAL(&intern);

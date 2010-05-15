@@ -231,7 +231,7 @@ deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
     fb_log("fb_readrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -242,7 +242,7 @@ deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
     fb_log("fb_writerect(%p, %4d, %4d, %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -253,7 +253,7 @@ deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
     fb_log("fb_bwreadrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -264,7 +264,7 @@ deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
     fb_log("fb_bwwriterect(%p, %4d, %4d, %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 

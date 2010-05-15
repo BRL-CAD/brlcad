@@ -112,7 +112,7 @@ struct bridge *mk_bridge (struct vertex *vcp, struct vertex *vup, double weight)
     bp->b_vert_civ = vcp;
     bp->b_vert_unciv = vup;
 
-    return (bp);
+    return bp;
 }
 #define mk_init_bridge(vp)	(mk_bridge(VERTEX_NULL, (vp), 0.0))
 #define is_finite_bridge(bp)	((bp)->b_vert_civ != VERTEX_NULL)
@@ -173,7 +173,7 @@ struct vertex *mk_vertex (long int index, char *label)
     BU_LIST_INIT(&(vp->v_neighbors));
     vp->v_bridge = mk_init_bridge(vp);
 
-    return (vp);
+    return vp;
 }
 
 
@@ -230,7 +230,7 @@ struct neighbor *mk_neighbor (struct vertex *vp, double weight)
     np->n_vertex = vp;
     np->n_weight = weight;
 
-    return (np);
+    return np;
 }
 
 
@@ -251,7 +251,7 @@ int compare_vertex_indices (void *v1, void *v2)
     BU_CKMAG(vert1, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
 
-    return (vert1->v_index -  vert2->v_index);
+    return vert1->v_index -  vert2->v_index;
 }
 
 
@@ -275,7 +275,7 @@ int compare_vertex_labels (void *v1, void *v2)
     else if (*(vert1->v_label) > *(vert2->v_label))
 	return 1;
     else
-	return (strcmp(vert1->v_label, vert2->v_label));
+	return strcmp(vert1->v_label, vert2->v_label);
 }
 
 
@@ -392,7 +392,7 @@ struct vertex *lookup_vertex(bu_rb_tree *dict, long int index, char *label)
 	    bu_exit (1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
-    return (vp);
+    return vp;
 }
 
 
@@ -443,7 +443,7 @@ struct bridge *extract_min (void)
 	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
 	bu_rb_delete(prioq, PRIOQ_WEIGHT);
     }
-    return (bp);
+    return bp;
 }
 
 
@@ -474,7 +474,7 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 	++line_nm;
 	bu_vls_trunc(&buf, 0);
 	if (bu_vls_gets(&buf, fp) == -1)
-	    return (0);
+	    return 0;
 	bp = bu_vls_addr(&buf);
 	while ((*bp == ' ') || (*bp == '\t'))
 	    ++bp;
@@ -483,7 +483,7 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 	if (numeric) {
 	    if (sscanf(bp, "%ld%ld%lg", &index[0], &index[1], w) != 3) {
 		bu_log("Illegal input on line %d: '%s'\n", line_nm, bp);
-		return (-1);
+		return -1;
 	    } else {
 		label[0] = label[1] = NULL;
 		break;
@@ -495,7 +495,7 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 		if (*bep == '\0') {
 		    bu_log("Illegal input on line %d: '%s'\n",
 			   line_nm, bu_vls_addr(&buf));
-		    return (-1);
+		    return -1;
 		}
 	    *bep = '\0';
 	    label[0] = bu_strdup(bp);
@@ -504,13 +504,13 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 		if (*bep == '\0') {
 		    bu_log("Illegal input on line %d: '%s'\n",
 			   line_nm, bu_vls_addr(&buf));
-		    return (-1);
+		    return -1;
 		}
 	    for (bep = bp; (*++bep != ' ') && (*bep != '\t'); ++bep)
 		if (*bep == '\0') {
 		    bu_log("Illegal input on line %d: '%s'\n",
 			   line_nm, bu_vls_addr(&buf));
-		    return (-1);
+		    return -1;
 		}
 	    *bep = '\0';
 	    label[1] = bu_strdup(bp);
@@ -518,14 +518,14 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 	    if (sscanf(bep + 1, "%lg", w) != 1) {
 		bu_log("Illegal input on line %d: '%s'\n",
 		       line_nm, bu_vls_addr(&buf));
-		return (-1);
+		return -1;
 	    } else {
 		index[0] = index[1] = -1;
 		break;
 	    }
 	}
     }
-    return (1);
+    return 1;
 }
 
 
@@ -571,7 +571,7 @@ main (int argc, char **argv)
 	    default:
 		print_usage();
 		bu_exit (ch != '?', NULL);
-		return(0);
+		return 0;
 	}
 
     /*

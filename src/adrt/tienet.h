@@ -51,10 +51,10 @@ static int tienet_##name(int socket, void* data, size_t size) \
 	select(socket+1, NULL, &set, NULL, NULL); \
 	r = cmd(socket, &((char*)data)[ind], size-ind); \
 	ind += r; \
-	if (r <= 0) return(1);	/* Error, socket is probably dead */ \
+	if (r <= 0) return 1;	/* Error, socket is probably dead */ \
     } while (ind < size); \
 \
-    return(0); \
+    return 0; \
 }
 
 TIENET_OP(send,write)

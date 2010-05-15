@@ -408,7 +408,7 @@ FindRoots(
     }
 
     /* Send back total number of solutions      */
-    return (total_count);
+    return total_count;
 }
 
 struct bezier_2d_list *
@@ -424,12 +424,12 @@ subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon,
     BU_LIST_INIT( &new_head->l );
     if ( depth >= MAXDEPTH ) {
 	BU_LIST_APPEND( &new_head->l, &bezier_in->l );
-	return( new_head );
+	return new_head;
     }
 
     if ( ControlPolygonFlatEnough( bezier_in->ctl, degree, epsilon ) ) {
 	BU_LIST_APPEND( &new_head->l, &bezier_in->l );
-	return( new_head );
+	return new_head;
     }
 
     /* allocate memory for left and right curves */
@@ -461,7 +461,7 @@ subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon,
     bu_free( (char *)left_rtrn, "subdivide_bezier: left_rtrn (head)" );
     bu_free( (char *)rt_rtrn, "subdivide_bezier: rt_rtrn (head)" );
 
-    return( new_head );
+    return new_head;
 }
 
 /** @} */

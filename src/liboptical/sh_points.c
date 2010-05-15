@@ -104,7 +104,7 @@ points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     ptp->pt_size = -1;
     if (bu_struct_parse( matparm, points_parse, (char *)ptp ) < 0 )  {
 	bu_free( (char *)ptp, "points_specific" );
-	return(-1);
+	return -1;
     }
     if (ptp->pt_size < 0 )
 	ptp->pt_size = 512;
@@ -142,10 +142,10 @@ points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     }
     (void)fclose(fp);
 
-    return(1);
+    return 1;
  fail:
     bu_free( (char *)ptp, "points_specific" );
-    return(-1);
+    return -1;
 }
 
 /*
@@ -213,7 +213,7 @@ points_render(struct application *ap, struct partition *partp, struct shadework 
 	VSET( swp->sw_color, mag/255.0, mag/255.0, mag/255.0 );
     }
 
-    return(1);
+    return 1;
 }
 
 /*

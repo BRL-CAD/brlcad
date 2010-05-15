@@ -141,6 +141,7 @@ stop_catching_output(struct bu_vls *vp)
 int
 gui_output(genptr_t clientData, genptr_t str)
 {
+    int len;
     Tcl_DString tclcommand;
     Tcl_Obj *save_result;
     static int level = 0;
@@ -165,7 +166,9 @@ gui_output(genptr_t clientData, genptr_t str)
     Tcl_DecrRefCount(save_result);
 
     Tcl_DStringFree(&tclcommand);
-    return (int)strlen(str);
+
+    len = (int)strlen(str);
+    return len;
 }
 
 

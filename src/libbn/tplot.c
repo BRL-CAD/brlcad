@@ -133,7 +133,7 @@ tp_sep(float x, float *coef, int *ex)
  */
 double tp_ipow (double x, int n)
 {
-    return(n>0?x*tp_ipow(x, n-1):1);
+    return n>0?x*tp_ipow(x, n-1):1;
 }
 
 

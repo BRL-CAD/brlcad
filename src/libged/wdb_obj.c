@@ -3173,7 +3173,7 @@ get_new_name(const char *name,
     ptr = Tcl_CreateHashEntry(name_tbl, name, &new_entry);
 
     if (!new_entry) {
-	return((char *)Tcl_GetHashValue(ptr));
+	return (char *)Tcl_GetHashValue(ptr);
     }
 
     bu_vls_init(&new_name);
@@ -3270,7 +3270,7 @@ get_new_name(const char *name,
     (void)Tcl_CreateHashEntry(used_names_tbl, ret_name, &new_entry);
     bu_vls_free(&new_name);
 
-    return(ret_name);
+    return ret_name;
 }
 
 /**
@@ -4340,7 +4340,7 @@ facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path
     }
 
     /* Tree has been saved, and will be freed later */
-    return(TREE_NULL);
+    return TREE_NULL;
 }
 
 /**
@@ -6183,7 +6183,7 @@ Copy_solid(struct db_i *dbip,
     if (!(dp->d_flags & DIR_SOLID)) {
 	Tcl_AppendResult(interp, "Copy_solid: ", dp->d_namep,
 			 " is not a solid!!!!\n", (char *)NULL);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     /* If no transformation is to be applied, just use the original */
@@ -6192,7 +6192,7 @@ Copy_solid(struct db_i *dbip,
 	for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
 	    if (use->dp == dp && use->used == 0) {
 		use->used = 1;
-		return (dp);
+		return dp;
 	    }
 	}
     }
@@ -6202,7 +6202,7 @@ Copy_solid(struct db_i *dbip,
 	if (bn_mat_is_equal(xform, use->xform, &wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
-	    return(use->dp);
+	    return use->dp;
 	}
     }
 
@@ -6226,23 +6226,23 @@ Copy_solid(struct db_i *dbip,
     if (found == DIR_NULL) {
 	Tcl_AppendResult(interp, "Ran out of uses for solid ",
 			 dp->d_namep, "\n", (char *)NULL);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     if (rt_db_get_internal(&sol_int, dp, dbip, xform, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "Cannot import solid ",
 			 dp->d_namep, "\n", (char *)NULL);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     RT_CK_DB_INTERNAL(&sol_int);
     if (rt_db_put_internal(found, dbip, &sol_int, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "Cannot write copy solid (", found->d_namep,
 			 ") to database\n", (char *)NULL);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
-    return (found);
+    return found;
 }
 
 static struct directory *Copy_object(struct db_i *dbip, struct directory *dp, fastf_t *xform, Tcl_Interp *interp, struct rt_wdb *wdbp);
@@ -6324,13 +6324,13 @@ Copy_comb(struct db_i *dbip,
 	if (bn_mat_is_equal(xform, use->xform, &wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
-	    return (use->dp);
+	    return use->dp;
 	}
     }
 
     /* if we can't get records for this combination, just leave it alone */
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-	return (dp);
+	return dp;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     /* copy members */
@@ -6358,7 +6358,7 @@ Copy_comb(struct db_i *dbip,
     if (found == DIR_NULL) {
 	Tcl_AppendResult(interp, "Ran out of uses for combination ",
 			 dp->d_namep, "\n", (char *)NULL);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     if (rt_db_put_internal(found, dbip, &intern, &rt_uniresource) < 0) {
@@ -6366,10 +6366,10 @@ Copy_comb(struct db_i *dbip,
 			 "\n", (char *)NULL);
 	rt_db_free_internal(&intern);
 
-	return(DIR_NULL);
+	return DIR_NULL;
     }
 
-    return(found);
+    return found;
 }
 
 /**
@@ -6386,9 +6386,9 @@ Copy_object(struct db_i *dbip,
     RT_CK_DIR(dp);
 
     if (dp->d_flags & DIR_SOLID)
-	return (Copy_solid(dbip, dp, xform, interp, wdbp));
+	return Copy_solid(dbip, dp, xform, interp, wdbp);
     else
-	return (Copy_comb(dbip, dp, xform, interp, wdbp));
+	return Copy_comb(dbip, dp, xform, interp, wdbp);
 }
 
 /**
@@ -8728,7 +8728,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
 			     ") to database!!! (This is very bad)\n");
 	    rt_db_free_internal(&intern);
 	    bu_vls_free(&vls);
-	    return(TCL_ERROR);
+	    return TCL_ERROR;
 	}
     }
 
@@ -8736,7 +8736,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     }
     bu_vls_free(&vls);
-    return(TCL_OK);
+    return TCL_OK;
 }
 
 /**
@@ -8812,7 +8812,7 @@ wdb_cmpdirname(const genptr_t a,
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return(strcmp((*dp1)->d_namep, (*dp2)->d_namep));
+    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 #define RT_TERMINAL_WIDTH 80
@@ -9198,7 +9198,7 @@ wdb_getspace(struct db_i *dbip,
     /* Allocate and cast num_entries worth of pointers */
     dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
 						"wdb_getspace *dir[]");
-    return(dir_basep);
+    return dir_basep;
 }
 
 /*
@@ -9437,7 +9437,7 @@ wdb_combadd(Tcl_Interp *interp,
 
     bu_free((char *)tree_list, "combadd: tree_list");
 
-    return (dp);
+    return dp;
 }
 
 static void

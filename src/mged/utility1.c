@@ -82,7 +82,7 @@ id_compare(const void *p1, const void *p2)
     id1 = atoi(*(char **)p1);
     id2 = atoi(*(char **)p2);
 
-    return(id1 - id2);
+    return id1 - id2;
 }
 
 
@@ -94,7 +94,7 @@ reg_compare(const void *p1, const void *p2)
     reg1 = strchr(*(char **)p1, '/');
     reg2 = strchr(*(char **)p2, '/');
 
-    return(strcmp(reg1, reg2));
+    return strcmp(reg1, reg2);
 }
 
 
@@ -322,7 +322,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
     }
 
     if (!(dp->d_flags & DIR_COMB))
-	return(0);
+	return 0;
 
     if ((id=rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
 	Tcl_AppendResult(interp, "printcodes: Cannot get records for ",
@@ -534,8 +534,8 @@ check(char *a, char *b)
 
     int c= sizeof(struct identt);
 
-    while (c--) if (*a++ != *b++) return(0);	/* no match */
-    return(1);	/* match */
+    while (c--) if (*a++ != *b++) return 0;	/* no match */
+    return 1;	/* match */
 
 }
 
@@ -653,7 +653,7 @@ sol_number(const matp_t matrix, char *name, int *old)
 
 	if (check((char *)&idbuf1, (char *)&idbuf2) == 1) {
 	    *old = 1;
-	    return(idbuf2.i_index);
+	    return idbuf2.i_index;
 	}
     }
     numsol++;
@@ -663,7 +663,7 @@ sol_number(const matp_t matrix, char *name, int *old)
     (void)write(idfd, &idbuf1, sizeof identt);
 
     *old = 0;
-    return(idbuf1.i_index);
+    return idbuf1.i_index;
 }
 
 

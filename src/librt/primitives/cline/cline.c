@@ -123,7 +123,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSUB2(work, top, rad);
     VMINMAX(stp->st_min, stp->st_max, work);
 
-    return(0);
+    return 0;
 }
 
 
@@ -205,14 +205,14 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	 * this case from consideration before their intersection code
 	 * is even called (see SUBROUTINE BULK)
 	 */
-	return(0);
+	return 0;
 #else
 
 	if (cline->thickness > 0.0)
-	    return(0);	/* No end-on hits for plate mode cline */
+	    return 0;	/* No end-on hits for plate mode cline */
 
 	if (dist[2] > reff*reff)
-	    return(0);	/* missed */
+	    return 0;	/* missed */
 
 	VJOIN2(diff, cline->V, 1.0, cline->height, -1.0, rp->r_pt);
 	dist[0] = VDOT(diff, rp->r_dir);
@@ -242,17 +242,17 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	    VMOVE(segp->seg_out.hit_normal, cline->h);
 	}
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	return(1);
+	return 1;
 #endif
     }
 
     if (dist[2] > reff*reff)
-	return(0);	/* missed */
+	return 0;	/* missed */
 
 
     /* Exactly ==0 and ==1 are hits, not misses */
     if (dist[0] < 0.0 || dist[0] > 1.0)
-	return(0);	/* missed */
+	return 0;	/* missed */
 
     sina = sqrt(1.0 - cosa*cosa);
     tmp = sqrt(dist[2]) - add_radius;
@@ -294,7 +294,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	VMOVE(segp->seg_out.hit_vpriv, cline->h);
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-	return(1);
+	return 1;
     } else {
 	/* plate mode */
 
@@ -325,7 +325,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	VMOVE(segp->seg_out.hit_vpriv, cline->h);
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-	return(2);
+	return 2;
     }
 }
 
@@ -433,7 +433,7 @@ rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max,
     if (!max) return 0;
     if (tol) BN_CK_TOL(tol);
 
-    return(0);
+    return 0;
 }
 
 
@@ -516,7 +516,7 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -785,14 +785,14 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
 	if (nmg_calc_face_g(fu)) {
 	    bu_log("rt_tess_cline: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
-	    return(-1);
+	    return -1;
 	}
     }
 
     nmg_region_a(*r, tol);
     bu_ptbl_free(&faces);
 
-    return(0);
+    return 0;
 }
 
 
@@ -815,7 +815,7 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 
     if (rp->u_id != DBID_CLINE) {
 	bu_log("rt_cline_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     if (dbip) RT_CK_DBI(dbip);
@@ -838,7 +838,7 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     ntohd((unsigned char *)(&work), rp->cli.cli_h, 3);
     MAT4X3VEC(cline_ip->h, mat, work);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -856,7 +856,7 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     point_t work;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_CLINE) return(-1);
+    if (ip->idb_type != ID_CLINE) return -1;
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
@@ -879,7 +879,7 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     VSCALE(work, cline_ip->h, local2mm);
     htond(rec->cli.cli_h, (unsigned char *)work, 3);
 
-    return(0);
+    return 0;
 }
 
 
@@ -918,7 +918,7 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
     MAT4X3PNT(cline_ip->v, mat, &vec[2]);
     MAT4X3VEC(cline_ip->h, mat, &vec[5]);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -936,7 +936,7 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_CLINE) return(-1);
+    if (ip->idb_type != ID_CLINE) return -1;
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);
 
@@ -952,7 +952,7 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 8);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1109,7 +1109,7 @@ rt_cline_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
     
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

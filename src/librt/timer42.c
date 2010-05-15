@@ -105,7 +105,7 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 	prusage(&ru0c, &ru1c, &timedol, &time0, vp);
     }
 
-    return(user_cpu_secs);
+    return user_cpu_secs;
 }
 
 

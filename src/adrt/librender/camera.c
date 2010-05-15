@@ -462,7 +462,7 @@ void
 #ifdef HAVE_PTHREAD_H
 	    pthread_mutex_unlock(&td->mut);
 #endif
-	    return(0);
+	    return 0;
 	}
 	else
 	{
@@ -583,7 +583,7 @@ void
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 

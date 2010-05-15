@@ -452,7 +452,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	tthrm_print(rp, *dpp);
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -694,7 +694,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	       V3ARGS(swp->sw_hit.hit_point),
 	       V3ARGS(pt) );
     }
-    return(1);
+    return 1;
 }
 
 /*

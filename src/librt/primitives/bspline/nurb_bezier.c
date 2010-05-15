@@ -125,7 +125,7 @@ nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
 	}
     }
 
-    return( bezier );
+    return bezier;
 }
 
 /*	N U R B _ C _ T O _ B E Z I E R

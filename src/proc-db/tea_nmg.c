@@ -199,7 +199,7 @@ main(int argc, char **argv)
 	    default	:
 		(void)fprintf(stderr,
 			      "Usage: %s [-d] > database.g\n", *argv);
-		return(-1);
+		return -1;
 	}
     }
 
@@ -239,7 +239,7 @@ main(int argc, char **argv)
 	rt_vlist_to_uplot(fp, &vhead);
     }
 
-    return(0);
+    return 0;
 }
 
 /*

@@ -238,7 +238,7 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
     memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific));
 
     if (bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
-	return(-1);
+	return -1;
 
     /* Optional:  get the matrix which maps model space into
      *  "region" or "shader" space
@@ -273,7 +273,7 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 	bn_mat_print( "xform", camo_sp->xform );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -350,7 +350,7 @@ camo_render(struct application *ap, struct partition *pp, struct shadework *swp,
     }
 #endif
 
-    return(1);
+    return 1;
 }
 /*	M A R B L E 2 _ S E T U P
  *
@@ -382,7 +382,7 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     memcpy(camo_sp, &marble_defaults, sizeof(struct camo_specific));
 
     if (bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
-	return(-1);
+	return -1;
 
     /* Optional:  get the matrix which maps model space into
      *  "region" or "shader" space
@@ -417,7 +417,7 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	bn_mat_print( "xform", camo_sp->xform );
     }
 
-    return(1);
+    return 1;
 }
 
 
@@ -482,7 +482,7 @@ marble_render(struct application *ap, struct partition *pp, struct shadework *sw
     VCOMB2(swp->sw_color, val, swp->sw_color, inv_val, camo_sp->c2);
 #endif
 
-    return(1);
+    return 1;
 }
 
 /*

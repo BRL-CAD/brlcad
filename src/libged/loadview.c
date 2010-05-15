@@ -249,12 +249,12 @@ int
 _ged_cm_vsize(int argc, char **argv)
 {
     if ( argc < 2 )
-	return(-1);
+	return -1;
     /* for some reason, scale is supposed to be half of size... */
     _ged_current_gedp->ged_gvp->gv_size = atof(argv[1]);
     _ged_current_gedp->ged_gvp->gv_scale = _ged_current_gedp->ged_gvp->gv_size * 0.5;
     _ged_current_gedp->ged_gvp->gv_isize = 1.0 / _ged_current_gedp->ged_gvp->gv_size;
-    return(0);
+    return 0;
 }
 
 
@@ -262,12 +262,12 @@ int
 _ged_cm_eyept(int argc, char **argv)
 {
     if ( argc < 4 )
-	return(-1);
+	return -1;
     _ged_eye_model[X] = atof(argv[1]);
     _ged_eye_model[Y] = atof(argv[2]);
     _ged_eye_model[Z] = atof(argv[3]);
     /* Processing is deferred until ged_cm_end() */
-    return(0);
+    return 0;
 }
 
 
@@ -278,7 +278,7 @@ _ged_cm_lookat_pt(int argc, char **argv)
     vect_t	dir;
 
     if ( argc < 4 )
-	return(-1);
+	return -1;
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
@@ -304,7 +304,7 @@ _ged_cm_lookat_pt(int argc, char **argv)
     /*  Final processing is deferred until ged_cm_end(), but eye_pt
      *  must have been specified before here (for now)
      */
-    return(0);
+    return 0;
 }
 
 
@@ -314,11 +314,11 @@ _ged_cm_vrot(int argc, char **argv)
     int	i;
 
     if ( argc < 17 )
-	return(-1);
+	return -1;
     for ( i=0; i<16; i++ )
 	_ged_viewrot[i] = atof(argv[i+1]);
     /* Processing is deferred until ged_cm_end() */
-    return(0);
+    return 0;
 }
 
 int
@@ -330,13 +330,13 @@ _ged_cm_orientation(int argc, char **argv)
     for ( i=0; i<4; i++ )
 	quat[i] = atof( argv[i+1] );
     quat_quat2mat( _ged_viewrot, quat );
-    return(0);
+    return 0;
 }
 
 int
 _ged_cm_set(int argc, char **argv)
 {
-    return(-1);
+    return -1;
 }
 
 /**
@@ -346,7 +346,7 @@ _ged_cm_set(int argc, char **argv)
 int
 _ged_cm_null(int argc, char **argv)
 {
-    return(0);
+    return 0;
 }
 
 

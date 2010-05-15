@@ -191,7 +191,7 @@ db_flatten_tree(
 	    bu_bomb("db_flatten_tree\n");
     }
 
-    return((struct rt_tree_array *)NULL); /* for the compiler */
+    return (struct rt_tree_array *)NULL; /* for the compiler */
 }
 
 
@@ -221,7 +221,7 @@ rt_comb_import4(
 
     if (rp[0].u_id != ID_COMB) {
 	bu_log("rt_comb_import4: Attempt to import a non-combination\n");
-	return(-1);
+	return -1;
     }
 
     /* Compute how many granules of MEMBER records follow */
@@ -236,7 +236,7 @@ rt_comb_import4(
 	if (rp[j+1].u_id != ID_MEMB) {
 	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
-	    return(-1);
+	    return -1;
 	}
 
 	switch (rp[j+1].M.m_relation) {
@@ -402,7 +402,7 @@ rt_comb_import4(
 
     if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
 
-    return(0);
+    return 0;
 }
 
 
@@ -1051,7 +1051,7 @@ db_mkbool_tree(
     RT_CK_RESOURCE(resp);
 
     if (howfar == 0)
-	return(TREE_NULL);
+	return TREE_NULL;
 
     /* Count number of non-null sub-trees to do */
     for (i=howfar, inuse=0, tlp=rt_tree_array; i>0; i--, tlp++) {
@@ -1063,11 +1063,11 @@ db_mkbool_tree(
 
     /* Handle trivial cases */
     if (inuse <= 0)
-	return(TREE_NULL);
+	return TREE_NULL;
     if (inuse == 1) {
 	curtree = first_tlp->tl_tree;
 	first_tlp->tl_tree = TREE_NULL;
-	return(curtree);
+	return curtree;
     }
 
     if (first_tlp->tl_op != OP_UNION) {
@@ -1094,7 +1094,7 @@ db_mkbool_tree(
 	curtree = xtp;
 	tlp->tl_tree = TREE_NULL;	/* empty the input slot */
     }
-    return(curtree);
+    return curtree;
 }
 
 
@@ -1158,7 +1158,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 	bu_log("db_mkgift_tree() returns:\n");
 	rt_pr_tree(curtree, 0);
     }
-    return(curtree);
+    return curtree;
 }
 
 

@@ -336,7 +336,7 @@ nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_cnurb_is_linear(x%x) returning %d\n", cnrb, linear);
 
-    return(linear);
+    return linear;
 }
 
 
@@ -488,7 +488,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_snurb_is_planar(x%x) returning %d\n", srf, planar);
 
-    return(planar);
+    return planar;
 
 }
 
@@ -810,7 +810,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 	}
 	if (rt_g.NMG_debug & DEBUG_MESH)
 	    bu_log("nmg_cnurb_lseg_coincident returning %d\n", coincident);
-	return(coincident);
+	return coincident;
     }
 
     t0 = cnrb->k.knots[0];
@@ -834,7 +834,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
     }
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_cnurb_lseg_coincident returning %d\n", coincident);
-    return(coincident);
+    return coincident;
 }
 
 
@@ -934,7 +934,7 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
 	}
 	if (rt_g.NMG_debug & DEBUG_MESH)
 	    bu_log("nmg_cnurb_is_on_crv() returning %d\n", coincident);
-	return(coincident);
+	return coincident;
     }
 
     coincident = 1;
@@ -968,7 +968,7 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
 
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_cnurb_is_on_crv returning %d\n", coincident);
-    return(coincident);
+    return coincident;
 }
 
 
@@ -1024,7 +1024,7 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 
     bu_ptbl_free(&edges);
 
-    return(count);
+    return count;
 }
 
 
@@ -1192,7 +1192,7 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
     if (worst > TOL_MULTIPLES*tol->dist) {
 	return count;
     } else {
-	return(0);
+	return 0;
     }
 }
 
@@ -1237,7 +1237,7 @@ nmg_ck_fg_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 	count += nmg_ck_fu_verts(fu, f2, tol);
     }
 
-    return(count);
+    return count;
 }
 
 
@@ -1534,7 +1534,7 @@ nmg_break_all_es_on_v(unsigned long *magic_p, struct vertex *v, const struct bn_
 	count++;
     }
     bu_ptbl_free(&eus);
-    return(count);
+    return count;
 }
 
 
@@ -2235,7 +2235,7 @@ nmg_is_crack_outie(const struct edgeuse *eu, const struct bn_tol *tol)
     nmg_pr_lu_briefly(lu, 0);
     bu_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
 
-    return(-1); /* make the compiler happy */
+    return -1; /* make the compiler happy */
 }
 
 
@@ -2257,7 +2257,7 @@ nmg_find_radial_eu(const struct bu_list *hd, const struct edgeuse *eu)
     bu_log("nmg_find_radial_eu() eu=x%x\n", eu);
     bu_bomb("nmg_find_radial_eu() given edgeuse not found on list\n");
 
-    return((struct nmg_radial *)NULL);
+    return (struct nmg_radial *)NULL;
 }
 
 
@@ -2488,7 +2488,7 @@ nmg_radial_find_an_original(const struct bu_list *hd, const struct shell *s, con
     nmg_pr_radial_list(hd, tol);
     bu_bomb("nmg_radial_find_an_original() No entries from indicated shell\n");
 
-    return((struct nmg_radial *)NULL);
+    return (struct nmg_radial *)NULL;
 }
 
 
@@ -2520,7 +2520,7 @@ nmg_radial_mark_flips(struct bu_list *hd, const struct shell *s, const struct bn
 
     if (!orig->fu) {
 	/* nothing but wires */
-	return(0);
+	return 0;
     }
     if (!orig->existing_flag) {
 	/* There were no originals.  Do something sensible to check the newbies */
@@ -2564,7 +2564,7 @@ nmg_radial_mark_flips(struct bu_list *hd, const struct shell *s, const struct bn
     nmg_pr_radial_list(hd, tol);
     bu_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
 
-    return(0); /* for compiler */
+    return 0; /* for compiler */
 }
 
 

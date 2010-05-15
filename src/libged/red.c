@@ -50,12 +50,12 @@ find_keyword(int i, char *line, char *word)
     /* find the keyword */
     ptr1 = strstr(&line[i], word);
     if (!ptr1)
-	return((char *)NULL);
+	return (char *)NULL;
 
     /* find the '=' */
     ptr2 = strchr(ptr1, '=');
     if (!ptr2)
-	return((char *)NULL);
+	return (char *)NULL;
 
     /* skip any white space before the value */
     while (isspace(*(++ptr2)));
@@ -66,7 +66,7 @@ find_keyword(int i, char *line, char *word)
     line[j+1] = '\0';
 
     /* return pointer to the value */
-    return(ptr2);
+    return ptr2;
 }
 
 static int
@@ -145,7 +145,7 @@ check_comb(struct ged *gedp)
 	    line[RT_MAXLINE-1] = '\0';
 	    bu_vls_printf(&gedp->ged_result_str, "Line too long in edited file:\n%s\n", line);
 	    fclose(fp);
-	    return(-1);
+	    return -1;
 	}
 
 	line[++i] = '\0';
@@ -170,7 +170,7 @@ check_comb(struct ged *gedp)
 		if (len > NAMESIZE) {
 		    bu_vls_printf(&gedp->ged_result_str, "Name too long for v4 database: %s\n%s\n", ptr, lineCopy);
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 	    }
 	    continue;
@@ -220,17 +220,17 @@ check_comb(struct ged *gedp)
 	    if (region < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Region flag not correctly set\n\tMust be 'Yes' or 'No'\n\tNo changes made\n");
 		fclose(fp);
-		return(-1);
+		return -1;
 	    } else if (region) {
 		if (id < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "invalid region ID\n\tNo changed made\n");
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 		if (air < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "invalid air code\n\tNo changed made\n");
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 		if (air == 0 && id == 0)
 		    bu_vls_printf(&gedp->ged_result_str, "Warning: both ID and Air codes are 0!!!\n");
@@ -296,7 +296,7 @@ check_comb(struct ged *gedp)
 		fclose(fp);
 		if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
 		    bu_free(name_v5, "name_v5");
-		return(-1);
+		return -1;
 	    }
 
 	    if (relation != '-')
@@ -307,7 +307,7 @@ check_comb(struct ged *gedp)
 		fclose(fp);
 		if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
 		    bu_free(name_v5, "name_v5");
-		return(-1);
+		return -1;
 	    }
 
 	    ptr = strtok((char *)NULL, _delims);
@@ -326,7 +326,7 @@ check_comb(struct ged *gedp)
 			fclose(fp);
 			if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
 			    bu_free(name_v5, "name_v5");
-			return(-1);
+			return -1;
 		    }
 		}
 
@@ -345,9 +345,9 @@ check_comb(struct ged *gedp)
 
     if (nonsubs == 0 && node_count) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
-	return(-1);
+	return -1;
     }
-    return(node_count);
+    return node_count;
 }
 
 
@@ -388,7 +388,7 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
-	    return(1);
+	    return 1;
 	}
     } else if (dp == DIR_NULL) {
 	int flags;
@@ -674,7 +674,7 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 			bu_vls_free(&attr_vls);
 		        bu_vls_free(&val_vls);
 			bu_avs_free(&avs);
-			return(1);
+			return 1;
 		    }
 		    matrix[k] = atof(ptr);
 		}

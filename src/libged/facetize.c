@@ -66,7 +66,7 @@ facetize_region_end(struct db_tree_state *tsp,
     }
 
     /* Tree has been saved, and will be freed later */
-    return( TREE_NULL );
+    return TREE_NULL;
 }
 
 

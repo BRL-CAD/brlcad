@@ -93,12 +93,12 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
     /* when bu_optind >= argc, we have run out of args */
     if (bu_optind+1 >= argc)
-	return(0);		/* only 0 or 1 args */
+	return 0;		/* only 0 or 1 args */
     if (bu_optind+2 == argc) {
 	/* Paramaters are H S */
 	hsv[0] = atof(argv[bu_optind++]);
@@ -115,7 +115,7 @@ get_args(int argc, char **argv)
 	rgbhsv(col, hsv);
 	hsv[2] = h_start;	/* Change given RGB to starting inten */
     }
-    return(1);			/* OK */
+    return 1;			/* OK */
 }
 
 

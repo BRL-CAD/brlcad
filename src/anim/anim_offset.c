@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	    printf("\t%.10g\t%.10g\t%.10g", yaw, pitch, roll);
 	printf("\n");
     }
-    return( 0 );
+    return 0;
 }
 
 #define OPT_STR "ro:"
@@ -98,10 +98,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 

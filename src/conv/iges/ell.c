@@ -58,7 +58,7 @@ ell( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[entityno]->param );
     Readint( &sol_num, "" );
@@ -79,7 +79,7 @@ ell( entityno )
     {
 	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
     /*
@@ -103,7 +103,7 @@ ell( entityno )
 
     mk_ell(fdout, dir[entityno]->name, v, xvec, yvec, zvec );
 
-    return( 1 );
+    return 1;
 
 
 }

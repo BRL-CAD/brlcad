@@ -55,7 +55,7 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
 		dir[loop_entityno]->direct, dir[loop_entityno]->name );
-	return( 0 );
+	return 0;
     }
 
     if ( dir[loop_entityno]->type != 508 )
@@ -372,7 +372,7 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 	    i = 0;
     }
 
-    return( 1 );
+    return 1;
 #if 0
  err:
     for ( i=0; i<no_of_edges; i++ )
@@ -392,7 +392,7 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
     bu_free( (char *)edge_uses, "Add_nurb_loop_to_face: (edge list)" );
     bu_free( (char *)verts, "Add_nurb_loop_to_face: (vertex list)" );
 
-    return( 0 );
+    return 0;
 #endif
 }
 
@@ -412,7 +412,7 @@ Make_nurb_face( s, surf_entityno )
 	bu_log( "Make_nurb_face: Called with surface entity (%d) of type %s\n", surf_entityno,
 		iges_type( dir[surf_entityno]->type ) );
 	bu_log( "Make_nurb_face: Can only handle surfaces of %s, ignoring face\n", iges_type( 128 ) );
-	return( (struct faceuse *)NULL );
+	return (struct faceuse *)NULL;
     }
 
     m = nmg_find_model( &s->l.magic );
@@ -420,7 +420,7 @@ Make_nurb_face( s, surf_entityno )
     if ( (srf = Get_nurb_surf( surf_entityno, m )) == (struct face_g_snurb *)NULL )
     {
 	bu_log( "Make_nurb_face: Get_nurb_surf failed for surface entity (%d), face ignored\n",	 surf_entityno );
-	return( (struct faceuse *)NULL );
+	return (struct faceuse *)NULL;
     }
 
     verts[0] = (struct vertex *)NULL;
@@ -431,7 +431,7 @@ Make_nurb_face( s, surf_entityno )
     lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
     (void)nmg_klu( lu );
 
-    return( fu );
+    return fu;
 }
 
 /*

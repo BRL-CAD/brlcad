@@ -76,7 +76,7 @@ ged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
     bu_semaphore_release( RT_SEM_MODEL );
 
     /* Tree has been saved, and will be freed later */
-    return( TREE_NULL );
+    return TREE_NULL;
 }
 
 

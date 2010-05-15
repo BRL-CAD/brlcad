@@ -609,7 +609,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
     /* create a struct of state information */
     if ((XIL(ifp) = (char *)calloc(1, sizeof(struct xinfo))) == NULL) {
 	fb_log("X_open_fb: xinfo malloc failed\n");
-	return(-1);
+	return -1;
     }
     ifp->if_xzoom = 1;
     ifp->if_yzoom = 1;
@@ -619,7 +619,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 
     /* set up an X window, graphics context, etc. */
     if (x_setup(ifp, width, height) < 0) {
-	return(-1);
+	return -1;
     }
 
     /* check for forced monochrome behavior */
@@ -645,15 +645,15 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
     /* Allocate all of our working pixel/bit buffers */
     if ((bytebuf = (unsigned char *)calloc(1, width*height)) == NULL) {
 	fb_log("X_open_fb: bytebuf malloc failed\n");
-	return(-1);
+	return -1;
     }
     if ((bitbuf = (unsigned char *)calloc(1, (width*height)/8)) == NULL) {
 	fb_log("X_open_fb: bitbuf malloc failed\n");
-	return(-1);
+	return -1;
     }
     if ((scanbuf = (unsigned char *)calloc(1, width)) == NULL) {
 	fb_log("X_open_fb: scanbuf malloc failed\n");
-	return(-1);
+	return -1;
     }
     XI(ifp)->bytebuf = bytebuf;
     XI(ifp)->bitbuf = bitbuf;
@@ -699,7 +699,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 
     ifp->if_selfd = XI(ifp)->dpy->fd;
 
-    return(0);
+    return 0;
 }
 
 
@@ -729,14 +729,14 @@ X_close_fb(FBIO *ifp)
     XFlush(XI(ifp)->dpy);
     if ((XI(ifp)->mode & MODE_1MASK) == MODE_1LINGERING) {
 	if (x_linger(ifp)) {
-	    return(0);	/* parent leaves the display */
+	    return 0;	/* parent leaves the display */
 	}
     }
     if (XIL(ifp) != NULL) {
 	XCloseDisplay(XI(ifp)->dpy);
 	(void)free((char *)XIL(ifp));
     }
-    return(0);
+    return 0;
 }
 
 
@@ -776,7 +776,7 @@ X_clear(FBIO *ifp, unsigned char *pp)
 	XClearWindow(XI(ifp)->dpy, XI(ifp)->win);
     }
     /*XXX*/
-    return(0);
+    return 0;
 }
 
 
@@ -836,9 +836,9 @@ int *error1, *error2;
 int dither_bw(unsigned int pixel, register int count, register int line)
 {
     if (pixel > (unsigned)dm[((line%ditherPeriod)*ditherPeriod) + (count%ditherPeriod)])
-	return(1);
+	return 1;
     else
-	return(0);
+	return 0;
 }
 
 
@@ -871,7 +871,7 @@ fs_bw(unsigned int pixel, register int count)
     error1[count+1] += (int)(3*error)/8;	/* right */
     error2[count+1] = (int)error/4;		/* down */
     error2[count] += (int)(3*error)/8;	/* diagonal */
-    return(onoff);
+    return onoff;
 }
 
 
@@ -905,7 +905,7 @@ mfs_bw(unsigned int pixel, register int count)
     error1[count+1] += (int)(3*error)/8;	/* right */
     error2[count+1] = (int)error/4;		/* down */
     error2[count] += (int)(3*error)/8;	/* diagonal */
-    return(onoff);
+    return onoff;
 }
 
 
@@ -1141,13 +1141,13 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	else
 	    num = todo;
 	if (X_scanwrite(ifp, x, y, pixelp, num, 1) == 0)
-	    return(0);
+	    return 0;
 	x = 0;
 	y++;
 	todo -= num;
 	pixelp += num;
     }
-    return(count);
+    return count;
 }
 
 
@@ -1155,7 +1155,7 @@ HIDDEN int
 X_rmap(FBIO *ifp, ColorMap *cmp)
 {
     *cmp = XI(ifp)->rgb_cmap;	/* struct copy */
-    return(0);
+    return 0;
 }
 
 
@@ -1191,7 +1191,7 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
     }
 
     if (XI(ifp)->depth != 8)
-	return(0);	/* no X colormap allocated - XXX */
+	return 0;	/* no X colormap allocated - XXX */
 
     /* If MODE_2_8BIT, load it in the real window colormap */
     if ((XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT) {
@@ -1206,7 +1206,7 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
 	XStoreColors(XI(ifp)->dpy, XI(ifp)->cmap, color_defs, 256);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1597,7 +1597,7 @@ X_poll(FBIO *ifp)
     while (XPending(XI(ifp)->dpy) > 0)
 	X_do_event(ifp);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1608,7 +1608,7 @@ X_flush(FBIO *ifp)
     while (XPending(XI(ifp)->dpy) > 0)
 	X_do_event(ifp);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1629,7 +1629,7 @@ X_help(FBIO *ifp)
     for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 	fb_log("   %c   %s\n", mfp->c, mfp->help);
     }
-    return(0);
+    return 0;
 }
 
 

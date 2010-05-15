@@ -103,13 +103,13 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist) {
 	bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 	       stp->st_name, magsq_a, magsq_b, magsq_c);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Validate that |A|, |B|, and |C| are nearly equal */
     if (fabs(magsq_a - magsq_b) > 0.0001
 	|| fabs(magsq_a - magsq_c) > 0.0001) {
-	return(1);		/* ELL, not SPH */
+	return 1;		/* ELL, not SPH */
     }
 
     /* Create unit length versions of A, B, C */
@@ -124,17 +124,17 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("sph(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("sph(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("sph(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /*
@@ -176,7 +176,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = sph->sph_V[Z] - sph->sph_rad;
     stp->st_max[Z] = sph->sph_V[Z] + sph->sph_rad;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -238,12 +238,12 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	/* ray origin is outside of sphere */
 	if (b < 0) {
 	    /* ray direction is away from sphere */
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 	}
 	root = b*b - magsq_ov + sph->sph_radsq;
 	if (root <= 0) {
 	    /* no real roots */
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 	}
     } else {
 	root = b*b - magsq_ov + sph->sph_radsq;
@@ -259,7 +259,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_in.hit_surfno = 0;
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -420,7 +420,7 @@ rt_sph_free(register struct soltab *stp)
 int
 rt_sph_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -434,7 +434,7 @@ rt_sph_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -472,7 +472,7 @@ rt_sph_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3PNT(sip->v, mat, &vec[0*3]);
     MAT4XSCALOR(sip->r, mat, vec[1*3]);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -486,7 +486,7 @@ rt_sph_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rec;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ELL) return(-1);
+    if (ip->idb_type != ID_ELL) return -1;
     tip = (struct rt_sph_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(tip);
 
@@ -504,7 +504,7 @@ rt_sph_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&rec->s.s_values[6], tip->b, local2mm);
     VSCALE(&rec->s.s_values[9], tip->c, local2mm);
 
-    return(0);
+    return 0;
 }
 #endif
 

@@ -246,7 +246,7 @@ _ged_combadd(struct ged			*gedp,
 
     bu_free((char *)tree_list, "combadd: tree_list");
 
-    return (dp);
+    return dp;
 }
 
 

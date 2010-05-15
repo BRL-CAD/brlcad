@@ -107,7 +107,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
     if ((dualvu=nmg_find_v_in_face(v, fu))) {
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\tdualvu already exists (x%x)\n", dualvu);
-	return(dualvu);
+	return dualvu;
     }
 
     new_eu = (struct edgeuse *)NULL;
@@ -155,14 +155,14 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
     }
 
     if (new_eu)
-	return(new_eu->vu_p);
+	return new_eu->vu_p;
 
     /* need a self loop */
     lu = nmg_mlv(&fu->l.magic, v, OT_BOOLPLACE);
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	bu_log("nmg_make_dualvu is makeing a self_loop (lu=x%x, vu=x%x) for v=x%x\n", lu, BU_LIST_FIRST(vertexuse, &lu->down_hd), v);
     nmg_loop_g(lu->l_p, tol);
-    return(BU_LIST_FIRST(vertexuse, &lu->down_hd));
+    return BU_LIST_FIRST(vertexuse, &lu->down_hd);
 }
 
 
@@ -3552,7 +3552,7 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
     NMG_CK_INTER_STRUCT(is);
 
     if (nmg_find_v_in_face(v, fu1) && nmg_find_v_in_face(v, fu2))
-	return(1);
+	return 1;
 
     NMG_GET_FU_PLANE(pl1, fu1);
     NMG_GET_FU_PLANE(pl2, fu2);
@@ -3563,27 +3563,27 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
     /* check if vertex is in plane of fu's */
     dist = fabs(DIST_PT_PLANE(vg->coord, pl1));
     if (dist > is->tol.dist)
-	return(0);
+	return 0;
     dist = fabs(DIST_PT_PLANE(vg->coord, pl2));
     if (dist > is->tol.dist)
-	return(0);
+	return 0;
 
     /* check if it is on intersection line */
     if (bn_distsq_line3_pt3(is->pt, is->dir, vg->coord) > is->tol.dist_sq)
-	return(0);
+	return 0;
 
     /* check if it is within fu's */
     code = nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL,
 				  (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
-	return(0);
+	return 0;
 
     code = nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL,
 				  (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
-	return(0);
+	return 0;
 
-    return(1);
+    return 1;
 }
 
 
@@ -6908,7 +6908,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     VCROSS(bs->dir, pl1, pl2);
     dir_len_sq = MAGSQ(bs->dir);
     if (dir_len_sq <= SMALL_FASTF)
-	return(0);
+	return 0;
 
     one_over_dir_len = 1.0/sqrt(dir_len_sq);
     VSCALE(bs->dir, bs->dir, one_over_dir_len);
@@ -6916,7 +6916,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     tmp_pl[W] = VDOT(tmp_pl, min_pt);
 
     if (bn_mkpoint_3planes(bs->pt, tmp_pl, pl1, pl2))
-	return(0);
+	return 0;
 
     VCROSS(left, pl1, bs->dir);
 
@@ -6968,13 +6968,13 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     bu_ptbl_free(&verts);
 
     if (above_left && below_left)
-	return(0);
+	return 0;
     if (on_left)
-	return(0);
+	return 0;
     if (above_right && below_right)
-	return(0);
+	return 0;
     if (on_right)
-	return(0);
+	return 0;
 
     /* check vertices from fu2 versus plane of fu1 */
     nmg_vertex_tabulate(&verts, &fu2->l.magic);
@@ -7024,15 +7024,15 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     bu_ptbl_free(&verts);
 
     if (above_left && below_left)
-	return(0);
+	return 0;
     if (on_left)
-	return(0);
+	return 0;
     if (above_right && below_right)
-	return(0);
+	return 0;
     if (on_right)
-	return(0);
+	return 0;
 
-    return(1);
+    return 1;
 }
 
 

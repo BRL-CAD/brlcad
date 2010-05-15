@@ -46,7 +46,7 @@ edcodes_id_compare(const void *p1, const void *p2)
     id1 = atoi(*(char **)p1);
     id2 = atoi(*(char **)p2);
 
-    return (id1 - id2);
+    return id1 - id2;
 }
 
 

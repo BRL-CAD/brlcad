@@ -38,7 +38,7 @@ int main(int ac, char **av)
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	(void)fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",
 		      *av);
-	return(-1);
+	return -1;
     }
 
     if (ac > 1 && *av[1] == '-' && *av[2] == 'l')
@@ -48,7 +48,7 @@ int main(int ac, char **av)
 
 	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
 		(void)fprintf(stderr, "%s: error writing output\n", *av);
-		return(-1);
+		return -1;
 	    }
 	}
     else
@@ -58,7 +58,7 @@ int main(int ac, char **av)
 
 	    if (fwrite(&obuf[0], sizeof(*obuf), num, stdout)!=num) {
 		(void)fprintf(stderr, "%s: error writing output\n", *av);
-		return(-1);
+		return -1;
 	    }
 	}
     return 0;

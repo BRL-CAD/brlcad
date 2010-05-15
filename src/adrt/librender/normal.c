@@ -31,7 +31,7 @@ render_normal_free(render_t *render) {
 
 static void *
 normal_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
-    return((adrt_mesh_t *)(tri->ptr));
+    return (adrt_mesh_t *)(tri->ptr);
 }
 
 void

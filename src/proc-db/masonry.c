@@ -355,7 +355,7 @@ int parse_args(int ac, char **av)
 	(void)fclose(logfile);
     }
 
-    return(bu_optind);
+    return bu_optind;
 
 }
 
@@ -1014,7 +1014,7 @@ int main(int ac, char **av)
     snprintf(sol_name, 64, "%s.g", progname);
     if ((db_fd = wdb_fopen(sol_name)) == (struct rt_wdb *)NULL) {
 	perror(sol_name);
-	return(-1);
+	return -1;
     }
 
     if (debug) {

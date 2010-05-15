@@ -48,7 +48,7 @@ _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *em
     bu_rb_tree *tree;
 
     if (root == empty_node)
-	return (root);
+	return root;
 
     while (1) {
 	BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
@@ -65,7 +65,7 @@ _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *em
     /* Record the node with which we've been working */
     rb_current(tree) = root;
 
-    return (root);
+    return root;
 }
 
 
@@ -88,7 +88,7 @@ bu_rb_extreme(bu_rb_tree *tree, int order, int sense)
     if (node == rb_null(tree))
 	return NULL;
     else
-	return (rb_data(node, order));
+	return rb_data(node, order);
 }
 
 
@@ -109,7 +109,7 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
     child = (sense == SENSE_MIN) ? rb_left_child(node, order) :
 	rb_right_child(node, order);
     if (child != empty_node)
-	return (_rb_extreme(child, order, 1 - sense, empty_node));
+	return _rb_extreme(child, order, 1 - sense, empty_node);
     parent = rb_parent(node, order);
     while ((parent != empty_node) &&
 	   (node == rb_child(parent, order, sense)))
@@ -121,7 +121,7 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
     /* Record the node with which we've been working */
     rb_current(tree) = parent;
 
-    return (parent);
+    return parent;
 }
 
 
@@ -146,7 +146,7 @@ bu_rb_neighbor(bu_rb_tree *tree, int order, int sense)
     } else {
 	/* Record the node with which we've been working */
 	rb_current(tree) = node;
-	return (rb_data(node, order));
+	return rb_data(node, order);
     }
 }
 
@@ -158,9 +158,9 @@ bu_rb_curr(bu_rb_tree *tree, int order)
     RB_CKORDER(tree, order);
 
     if (rb_current(tree) == rb_null(tree))
-	return (NULL);
+	return NULL;
     else
-	return (rb_data(rb_current(tree), order));
+	return rb_data(rb_current(tree), order);
 }
 
 /** @} */

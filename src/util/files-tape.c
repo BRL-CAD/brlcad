@@ -85,14 +85,14 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);	/* BAD */
+		return 0;	/* BAD */
 	}
     }
 
     if (isatty(fileno(stdout)))
-	return(0);		/* BAD */
+	return 0;		/* BAD */
 
-    return(1);			/* OK */
+    return 1;			/* OK */
 }
 
 

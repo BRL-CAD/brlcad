@@ -65,7 +65,7 @@ render_spall_free(render_t *render)
 static void *
 render_arrow_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 {
-    return(tri);
+    return tri;
 }
 
 
@@ -76,7 +76,7 @@ render_spall_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 
     hit->id = *id;
     hit->mesh = (adrt_mesh_t *)(tri->ptr);
-    return( hit );
+    return hit;
 }
 
 

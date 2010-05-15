@@ -953,7 +953,7 @@ main(int argc, char *argv[])
 	 */
 	refresh();
     }
-    return(0);
+    return 0;
 }
 
 
@@ -2047,7 +2047,7 @@ event_check(int non_blocking)
 	curr_dm_list = save_dm_list;
     }
 
-    return(non_blocking);
+    return non_blocking;
 }
 
 

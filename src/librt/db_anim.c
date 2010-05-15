@@ -78,7 +78,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 	headp = &((*headp)->an_forw);
     }
     *headp = anp;
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 static char	*db_anim_matrix_strings[] = {
@@ -143,7 +143,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		    MAT_COPY( arc, temp );
 		    break;
 		default:
-		    return(-1);		/* BAD */
+		    return -1;		/* BAD */
 	    }
 	    if ( RT_G_DEBUG&DEBUG_ANIM_FULL )  {
 		bn_mat_print("arc result", arc);
@@ -215,9 +215,9 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 	    if ( RT_G_DEBUG&DEBUG_ANIM )
 		bu_log("unknown op\n");
 	    /* Print something here? */
-	    return(-1);			/* BAD */
+	    return -1;			/* BAD */
     }
-    return(0);				/* OK */
+    return 0;				/* OK */
 }
 
 /**

@@ -135,7 +135,7 @@ wdb_add_solid(const struct directory	*dp,
 	Tcl_AppendResult(dgcdp->interp, "Failed to get internal form of ",
 			 dp->d_namep, "\n", (char *)NULL );
 	eptr->l.m = (struct model *)NULL;
-	return( eptr );
+	return eptr;
     }
     if ( id == ID_COMBINATION )
     {
@@ -150,7 +150,7 @@ wdb_add_solid(const struct directory	*dp,
 
 	eptr = wdb_build_etree( comb->tree, dgcdp );
 	rt_db_free_internal(&intern);
-	return( eptr );
+	return eptr;
     }
 #if 0
     if ( id == ID_BOT )
@@ -261,7 +261,7 @@ wdb_add_solid(const struct directory	*dp,
     /* add this leaf to the leaf list */
     bu_ptbl_ins( &dgcdp->leaf_list, (long *)eptr );
 
-    return( eptr );
+    return eptr;
 }
 
 /* build an E_tree corresponding to the region tree (tp) */
@@ -311,7 +311,7 @@ wdb_build_etree(union tree			*tp,
 	default:
 	    bu_bomb("wdb_build_etree() Unknown tr_op\n");
     }
-    return( eptr );
+    return eptr;
 }
 
 /* a handy routine (for debugging) that prints asegment list */
@@ -811,7 +811,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( A, "Returning" );
 #endif
 
-		return( A );
+		return A;
 	    }
 	    else if ( BU_LIST_IS_EMPTY( B ) )
 	    {
@@ -821,7 +821,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( A, "Returning" );
 #endif
 
-		return( A );
+		return A;
 	    }
 
 	    /* A - B:
@@ -854,7 +854,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( A, "Returning" );
 #endif
 
-	    return( A );
+	    return A;
 	case OP_INTERSECT:
 
 #ifdef debug
@@ -871,7 +871,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( A, "Returning" );
 #endif
 
-		return( A );
+		return A;
 	    }
 	    /* A + B
 	     *	This is merely the intersection of segments from A with those from B
@@ -898,7 +898,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( A, "Returning" );
 #endif
 
-	    return( A );
+	    return A;
 	case OP_UNION:
 
 #ifdef debug
@@ -913,7 +913,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( B, "Returning B (A is empty)" );
 #endif
 
-		return( B );
+		return B;
 	    }
 	    if ( BU_LIST_IS_EMPTY( B ) )
 	    {
@@ -923,7 +923,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( A, "Returning A (B is empty)" );
 #endif
 
-		return( A );
+		return A;
 	    }
 	    /* A u B:
 	     *	keep segments:
@@ -1108,7 +1108,7 @@ wdb_eval_op(struct bu_list		*A,
 		wdb_show_seg( A, "Returning" );
 #endif
 
-	    return( A );
+	    return A;
     }
 
     /* should never get here */
@@ -1120,7 +1120,7 @@ wdb_eval_op(struct bu_list		*A,
     wdb_show_seg( A, "Returning (default)" );
 #endif
 
-    return( A );
+    return A;
 
 }
 
@@ -1150,7 +1150,7 @@ wdb_eval_etree(union E_tree			*eptr,
 		wdb_show_seg( A, "LEAF:" );
 #endif
 
-	    return( A );
+	    return A;
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
 	case OP_UNION:
@@ -1160,11 +1160,11 @@ wdb_eval_etree(union E_tree			*eptr,
 
 	    A = wdb_eval_etree( eptr->n.left, dgcdp );
 	    B = wdb_eval_etree( eptr->n.right, dgcdp );
-	    return( wdb_eval_op( A, eptr->n.op, B, dgcdp ) );
+	    return wdb_eval_op( A, eptr->n.op, B, dgcdp );
     }
 
     /* should never get here */
-    return( (struct bu_list *)NULL );	/* for the compilers */
+    return (struct bu_list *)NULL;	/* for the compilers */
 }
 
 HIDDEN void

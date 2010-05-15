@@ -59,7 +59,7 @@ bu_create_hash_tbl(unsigned long tbl_size)
     hsh_tbl = (struct bu_hash_tbl *)malloc(sizeof(struct bu_hash_tbl));
     if (!hsh_tbl) {
 	fprintf(stderr, "Failed to allocate hash table\n");
-	return ((struct bu_hash_tbl *)NULL);
+	return (struct bu_hash_tbl *)NULL;
     }
 
     /* the number of bins in the hash table will be a power of two */
@@ -89,7 +89,7 @@ bu_create_hash_tbl(unsigned long tbl_size)
     hsh_tbl->num_entries = 0;
     hsh_tbl->magic = BU_HASH_TBL_MAGIC;
 
-    return (hsh_tbl);
+    return hsh_tbl;
 }
 
 
@@ -107,7 +107,7 @@ bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 	fprintf(stderr, "hash function returned too large value (%ld), only have %ld lists\n",
 		*idx, hsh_tbl->num_lists);
 	*prev = NULL;
-	return ((struct bu_hash_entry *)NULL);
+	return (struct bu_hash_entry *)NULL;
     }
 
     /* look for the provided key in the list of entries in this bin */
@@ -150,10 +150,10 @@ bu_find_hash_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len,
 
     if (found) {
 	/* return the found entry */
-	return (hsh_entry);
+	return hsh_entry;
     } else {
 	/* did not find the entry, return NULL */
-	return ((struct bu_hash_entry *)NULL);
+	return (struct bu_hash_entry *)NULL;
     }
 }
 
@@ -173,7 +173,7 @@ bu_get_hash_value(struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
-    return (hsh_entry->value);
+    return hsh_entry->value;
 }
 
 
@@ -182,7 +182,7 @@ bu_get_hash_key(struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
-    return (hsh_entry->key);
+    return hsh_entry->key;
 }
 
 
@@ -206,7 +206,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
 	 * flag set to 0
 	 */
 	*new_entry = 0;
-	return (hsh_entry);
+	return hsh_entry;
     }
 
     if (prev) {
@@ -234,7 +234,7 @@ bu_hash_add_entry(struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, 
      */
     *new_entry = 1;
     hsh_tbl->num_entries++;
-    return (hsh_entry);
+    return hsh_entry;
 }
 
 
@@ -307,7 +307,7 @@ bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
 
     if (hsh_tbl->num_entries == 0) {
 	/* this table is empty */
-	return ((struct bu_hash_entry *)NULL);
+	return (struct bu_hash_entry *)NULL;
     }
 
     /* loop through all the bins in this hash table, looking for a
@@ -316,12 +316,12 @@ bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
     for (rec->index=0; rec->index < hsh_tbl->num_lists; rec->index++) {
 	rec->hsh_entry = hsh_tbl->lists[rec->index];
 	if (rec->hsh_entry) {
-	    return (rec->hsh_entry);
+	    return rec->hsh_entry;
 	}
     }
 
     /* no entry found, return NULL */
-    return ((struct bu_hash_entry *)NULL);
+    return (struct bu_hash_entry *)NULL;
 }
 
 
@@ -340,7 +340,7 @@ bu_hash_tbl_next(struct bu_hash_record *rec)
     if (rec->hsh_entry) {
 	rec->hsh_entry = rec->hsh_entry->next;
 	if (rec->hsh_entry) {
-	    return (rec->hsh_entry);
+	    return rec->hsh_entry;
 	}
     }
 
@@ -348,12 +348,12 @@ bu_hash_tbl_next(struct bu_hash_record *rec)
     for (rec->index++; rec->index < hsh_tbl->num_lists; rec->index++) {
 	rec->hsh_entry = hsh_tbl->lists[rec->index];
 	if (rec->hsh_entry) {
-	    return (rec->hsh_entry);
+	    return rec->hsh_entry;
 	}
     }
 
     /* no more entries, return NULL */
-    return ((struct bu_hash_entry *)NULL);
+    return (struct bu_hash_entry *)NULL;
 }
 
 /*

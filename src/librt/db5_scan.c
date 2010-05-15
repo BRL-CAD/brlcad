@@ -193,7 +193,7 @@ db_diradd5(
     dp->d_forw = *headp;
     *headp = dp;
 
-    return(dp);
+    return dp;
 }
 
 
@@ -275,7 +275,7 @@ db5_diradd(struct db_i *dbip,
     dp->d_forw = *headp;
     *headp = dp;
 
-    return(dp);
+    return dp;
 }
 
 
@@ -467,7 +467,7 @@ db_get_version(struct db_i *dbip)
 	return 4;
     }
 
-    return(-1);
+    return -1;
 }
 
 

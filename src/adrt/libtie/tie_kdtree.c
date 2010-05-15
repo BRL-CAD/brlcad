@@ -785,7 +785,7 @@ uint32_t TIE_VAL(tie_kdtree_cache_free)(tie_t *tie, void **cache)
  * Prevent tie from crashing when a tie_free() is called right after a tie_init()
  */
     if (!tie->kdtree)
-	return(0);
+	return 0;
 
     *cache = NULL;
     size = 0;
@@ -806,7 +806,7 @@ uint32_t TIE_VAL(tie_kdtree_cache_free)(tie_t *tie, void **cache)
     bu_free(tie->kdtree, "kdtree");
     tie->kdtree = NULL;
 
-    return(size);
+    return size;
 }
 
 void TIE_VAL(tie_kdtree_cache_load)(tie_t *tie, void *cache, uint32_t size)

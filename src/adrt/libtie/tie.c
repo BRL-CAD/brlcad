@@ -212,7 +212,7 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
 /*ErPLog( "ray: %f %f %f %f %f %f\n", ray->pos.v[0], ray->pos.v[1], ray->pos.v[2], ray->dir.v[0], ray->dir.v[1], ray->dir.v[2] );*/
 
     if (!tie->kdtree)
-	return (NULL);
+	return NULL;
 
     ray->kdtree_depth = 0;
 
@@ -382,12 +382,12 @@ void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfun
 
 	    if (result) {
 		*id = id_list[i];
-		return (result);
+		return result;
 	    }
 	}
     } while (stack_ind >= 0);
 
-    return (NULL);
+    return NULL;
 }
 
 

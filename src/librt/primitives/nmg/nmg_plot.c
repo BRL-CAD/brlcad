@@ -2322,7 +2322,7 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
     bu_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
     bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
 
-    return(0);
+    return 0;
 }
 
 

@@ -523,7 +523,7 @@ tk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char 
     fb_log("fb_readrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -534,7 +534,7 @@ tk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigne
     fb_log("fb_writerect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -545,7 +545,7 @@ tk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned cha
     fb_log("fb_bwreadrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -556,7 +556,7 @@ tk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsig
     fb_log("fb_bwwriterect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 

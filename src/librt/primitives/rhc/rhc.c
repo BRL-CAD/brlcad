@@ -240,13 +240,13 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Check for |H| > 0, |B| > 0, |R| > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
 	|| NEAR_ZERO(mag_r, RT_LEN_TOL)) {
-	return(1);		/* BAD, too small */
+	return 1;		/* BAD, too small */
     }
 
     /* Check for B.H == 0 */
     f = VDOT(xip->rhc_B, xip->rhc_H) / (mag_b * mag_h);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /*
@@ -307,7 +307,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -485,7 +485,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     if (hitp != &hits[2])
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
@@ -506,7 +506,7 @@ rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	segp->seg_out = hits[0];	/* struct copy */
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -659,7 +659,7 @@ rt_rhc_free(struct soltab *stp)
 int
 rt_rhc_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -693,14 +693,14 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	|| NEAR_ZERO(rh, RT_LEN_TOL) || NEAR_ZERO(c, RT_LEN_TOL)) {
 	bu_log("rt_rhc_plot:  zero length H, B, c, or rh\n");
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Check for B.H == 0 */
     f = VDOT(xip->rhc_B, xip->rhc_H) / (b * h);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
 	bu_log("rt_rhc_plot: B not perpendicular to H, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
 
     /* make unit vectors in B, H, and BxH directions */
@@ -806,7 +806,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     bu_free((char *)front, "fastf_t");
     bu_free((char *)back, "fastf_t");
 
-    return(0);
+    return 0;
 }
 
 
@@ -881,7 +881,7 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
 	n += rt_mk_hyperbola(new, r, b, c, dtol, ntol);
     } else
 	n  = 0;
-    return(n);
+    return n;
 }
 
 
@@ -928,14 +928,14 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	|| NEAR_ZERO(rh, RT_LEN_TOL) || NEAR_ZERO(c, RT_LEN_TOL)) {
 	bu_log("rt_rhc_tess:  zero length H, B, c, or rh\n");
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Check for B.H == 0 */
     f = VDOT(xip->rhc_B, xip->rhc_H) / (b * h);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
 	bu_log("rt_rhc_tess: B not perpendicular to H, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
 
     /* make unit vectors in B, H, and BxH directions */
@@ -1155,7 +1155,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)norms, "rt_rhc_tess: norms");
     bu_free((char*)outfaceuses, "faceuse *");
 
-    return(failure);
+    return failure;
 }
 
 
@@ -1178,7 +1178,7 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_rhc_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1200,10 +1200,10 @@ rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF) {
 	bu_log("rt_rhc_import4: r or c are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_rhc_import4: ip->idb_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1221,7 +1221,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_RHC) return(-1);
+    if (ip->idb_type != ID_RHC) return -1;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(xip);
 
@@ -1238,7 +1238,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| xip->rhc_r < RT_LEN_TOL
 	|| xip->rhc_c < RT_LEN_TOL) {
 	bu_log("rt_rhc_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     {
@@ -1250,7 +1250,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	VUNITIZE(uh);
 	if (!NEAR_ZERO(VDOT(ub, uh), RT_DOT_TOL)) {
 	    bu_log("rt_rhc_export4: B and H are not perpendicular!\n");
-	    return(-1);
+	    return -1;
 	}
     }
 
@@ -1261,7 +1261,7 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     rhc->s.s_values[3*3] = xip->rhc_r * local2mm;
     rhc->s.s_values[3*3+1] = xip->rhc_c * local2mm;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1305,10 +1305,10 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->rhc_r <= SMALL_FASTF || xip->rhc_c <= SMALL_FASTF) {
 	bu_log("rt_rhc_import4: r or c are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_rhc_import4: ip->idb_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1326,7 +1326,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_RHC) return(-1);
+    if (ip->idb_type != ID_RHC) return -1;
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(xip);
 
@@ -1339,7 +1339,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| xip->rhc_r < RT_LEN_TOL
 	|| xip->rhc_c < RT_LEN_TOL) {
 	bu_log("rt_rhc_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     {
@@ -1351,7 +1351,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	VUNITIZE(uh);
 	if (!NEAR_ZERO(VDOT(ub, uh), RT_DOT_TOL)) {
 	    bu_log("rt_rhc_export4: B and H are not perpendicular!\n");
-	    return(-1);
+	    return -1;
 	}
     }
 
@@ -1365,7 +1365,7 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 11);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1450,7 +1450,7 @@ rt_rhc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

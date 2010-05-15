@@ -339,7 +339,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "pl-pl: WARNING space command(s) ignored, use -S to apply them.\n");
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -365,10 +365,10 @@ getshort(void)
     v |= (getchar()<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if (v <= 0x7FFF) return(v);
+    if (v <= 0x7FFF) return v;
     w = -1;
     w &= ~0x7FFF;
-    return(w | v);
+    return w | v;
 }
 
 

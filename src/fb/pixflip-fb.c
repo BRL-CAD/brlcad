@@ -123,16 +123,16 @@ get_args(int argc, char **argv)
 		verbose = 1;
 		break;
 	    default:		/* '?' */
-		return(0);	/* Bad */
+		return 0;	/* Bad */
 	}
     }
 
     if ( bu_optind >= argc )  {
 	fprintf(stderr, "pixflip-fb: basename or filename(s) missing\n");
-	return(0);	/* Bad */
+	return 0;	/* Bad */
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 int

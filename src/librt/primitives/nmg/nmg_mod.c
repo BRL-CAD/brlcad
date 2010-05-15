@@ -245,7 +245,7 @@ nmg_simplify_shell(struct shell *s)
 	bu_log("nmg_simplify_shell(s=x%x) returns %d\n", s, ret_val);
     }
 
-    return(ret_val);
+    return ret_val;
 }
 
 
@@ -1120,7 +1120,7 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 	bu_log("nmg_cmface(s=x%x, verts[]=x%x, n=%d) fu=x%x\n",
 	       s, verts, n, fu);
     }
-    return (fu);
+    return fu;
 }
 
 
@@ -1201,7 +1201,7 @@ nmg_cface(struct shell *s, struct vertex **verts, int n)
 	bu_log("nmg_cface(s=x%x, verts[]=x%x, n=%d) fu=x%x\n",
 	       s, verts, n, fu);
     }
-    return (fu);
+    return fu;
 }
 
 
@@ -1284,7 +1284,7 @@ nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts,
 	       s, fu, verts, n,
 	       nmg_orientation(dir), fu);
     }
-    return (fu);
+    return fu;
 }
 
 
@@ -1352,7 +1352,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
 	bu_log("nmg_fu_planeeqn(): First loopuse does not contain edges\n");
-	return(-1);
+	return -1;
     }
     eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
     NMG_CK_EDGEUSE(eu);
@@ -1404,12 +1404,12 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 	       V3ARGS(b->vg_p->coord),
 	       V3ARGS(c->vg_p->coord));
 	HPRINT("plane", plane);
-	return(-1);
+	return -1;
     }
     if (VNEAR_ZERO(plane, SMALL_FASTF)) {
 	bu_log("nmg_fu_planeeqn():  Bad plane equation from bn_mk_plane_3pts\n");
 	HPRINT("plane", plane);
-	return(-1);
+	return -1;
     }
     nmg_face_g(fu, plane);
 
@@ -1422,7 +1422,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_fu_planeeqn(fu=x%x, tol=x%x)\n", fu, tol);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1529,7 +1529,7 @@ nmg_simplify_face(struct faceuse *fu)
 	bu_log("nmg_simplify_face(fut=x%x) return=%d\n", fu, ret_val);
     }
 
-    return(ret_val);
+    return ret_val;
 }
 
 
@@ -1990,7 +1990,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	       fu, s, new_fu);
     }
 
-    return(new_fu);
+    return new_fu;
 }
 
 
@@ -2902,7 +2902,7 @@ nmg_get_touching_jaunts(const struct loopuse *lu, struct bu_ptbl *tbl, int *need
     NMG_CK_LOOPUSE(lu);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-	return(0);
+	return 0;
 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	struct edgeuse *eu2, *eu3;
@@ -2930,7 +2930,7 @@ nmg_get_touching_jaunts(const struct loopuse *lu, struct bu_ptbl *tbl, int *need
 	count++;
     }
 
-    return(count);
+    return count;
 }
 
 
@@ -3191,7 +3191,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	    bu_log("nmg_loop_split_at_touching_jaunt(lu=x%x) END count=%d\n",
 		   lu, count);
 	}
-	return(count);
+	return count;
     }
 
     if (jaunt_count == 1) {
@@ -3218,7 +3218,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	    bu_log("nmg_loop_split_at_touching_jaunt(lu=x%x) END count=%d\n",
 		   lu, count);
 	}
-	return(count);
+	return count;
     }
 
     /* if we get here, there are at least two touching jaunts in the
@@ -3356,7 +3356,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
     bu_bomb("nmg_loop_split_at_touching_jaunt: Can't split lu\n");
 
     /* This return will never execute, but the compilers like it */
-    return(count);
+    return count;
 }
 
 
@@ -3756,7 +3756,7 @@ nmg_dup_loop(struct loopuse *lu, unsigned long *parent, long int **trans_tbl)
 	       parent, trans_tbl, new_lu,
 	       nmg_orientation(new_lu->orientation));
     }
-    return (new_lu);
+    return new_lu;
 }
 
 
@@ -4120,7 +4120,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	       v, oldeu, share_geom,
 	       eu1, eu1->eumate_p);
     }
-    return(eu1);
+    return eu1;
 }
 
 
@@ -4921,7 +4921,7 @@ nmg_eins(struct edgeuse *eu)
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_eins(eu=x%x) eu1=x%x\n", eu, eu1);
     }
-    return(eu1);
+    return eu1;
 }
 
 

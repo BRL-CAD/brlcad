@@ -50,25 +50,25 @@ nmg_rt_inout_str(int code)
 {
     switch (code) {
 	case HMG_HIT_IN_IN:
-	    return("IN_IN");
+	    return "IN_IN";
 	case HMG_HIT_IN_OUT:
-	    return("IN_OUT");
+	    return "IN_OUT";
 	case HMG_HIT_OUT_IN:
-	    return("OUT_IN");
+	    return "OUT_IN";
 	case HMG_HIT_OUT_OUT:
-	    return("OUT_OUT");
+	    return "OUT_OUT";
 	case HMG_HIT_IN_ON:
-	    return("IN_ON");
+	    return "IN_ON";
 	case HMG_HIT_ON_IN:
-	    return("ON_IN");
+	    return "ON_IN";
 	case HMG_HIT_OUT_ON:
-	    return("OUT_ON");
+	    return "OUT_ON";
 	case HMG_HIT_ON_OUT:
-	    return("ON_OUT");
+	    return "ON_OUT";
 	case HMG_HIT_ANY_ANY:
-	    return("ANY_ANY");
+	    return "ANY_ANY";
     }
-    return("?_?\n");
+    return "?_?\n";
 }
 
 
@@ -319,12 +319,12 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("ray_miss_vertex(vertex previously HIT_SUB!?!?)\n");
 	}
-	return(myhit);
+	return myhit;
     }
     if ((myhit=NMG_INDEX_GET(rd->hitmiss, vu_p->v_p))) {
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 	    bu_log("ray_miss_vertex(vertex previously missed)\n");
-	return(myhit);
+	return myhit;
     }
 
     NMG_GET_HITMISS(myhit, rd->ap);
@@ -1045,7 +1045,7 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
 	    /* we've previously hit this vertex */
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously hit\n");
-	    return(1);
+	    return 1;
 	} else {
 	    /* we've previously missed this vertex */
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)

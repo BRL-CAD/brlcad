@@ -92,7 +92,7 @@ create_vert_tree()
     tree->max_vert = VERT_BLOCK;
     tree->the_array = (fastf_t *)bu_malloc( tree->max_vert * 3 * sizeof( fastf_t ), "vert tree array" );
 
-    return( tree );
+    return tree;
 }
 
 /**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
@@ -114,7 +114,7 @@ create_vert_tree_w_norms()
     tree->max_vert = VERT_BLOCK;
     tree->the_array = (fastf_t *)bu_malloc( tree->max_vert * 6 * sizeof( fastf_t ), "vert tree array" );
 
-    return( tree );
+    return tree;
 }
 
 /**		C L E A N _ V E R T_ T R E E _ R E C U R S E
@@ -237,7 +237,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
 	    diff[2] = fabs( vertex[2] - vert_root->the_array[ij+2] );
 	    if ( (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]) <= local_tol_sq ) {
 		/* close enough, use this vertex again */
-		return( ptr->vleaf.index );
+		return ptr->vleaf.index;
 	    }
 	    break;
 	}
@@ -319,7 +319,7 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
     }
 
     /* return the index into the vertex array */
-    return( new_leaf->vleaf.index );
+    return new_leaf->vleaf.index;
 }
 
 /**		A D D _ V E R T _ A N D _ N O R M
@@ -368,7 +368,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	    d2_sq = VDOT( &diff[3], &diff[3] );
 	    if ( d1_sq <= local_tol_sq && d2_sq <= 0.0001 ) {
 		/* close enough, use this vertex and normal again */
-		return( ptr->vleaf.index );
+		return ptr->vleaf.index;
 	    }
 	    break;
 	}
@@ -461,7 +461,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
     }
 
     /* return the index into the vertex array */
-    return( new_leaf->vleaf.index );
+    return new_leaf->vleaf.index;
 }
 /** @} */
 /*

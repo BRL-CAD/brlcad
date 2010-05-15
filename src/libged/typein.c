@@ -2077,7 +2077,7 @@ hyp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	|| MAGNITUDE( rip->hyp_A ) * rip->hyp_bnr <= RT_LEN_TOL 
 	|| rip->hyp_b <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
-	return(GED_ERROR);
+	return GED_ERROR;
     }
 
     if ( !NEAR_ZERO( VDOT( rip->hyp_Hi, rip->hyp_A ), RT_DOT_TOL ) ) {

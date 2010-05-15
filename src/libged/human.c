@@ -1883,7 +1883,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 	bu_strlcpy(topLevel, DEFAULT_HUMANNAME, MAXLENGTH);
     }
     fflush(stdout);
-    return(bu_optind);
+    return bu_optind;
 }
 
 

@@ -69,7 +69,7 @@ butter(double w)
 
     cdiv( &h, &num, &denom );
 /*	printf( "(%f, %f)\n", h.re, h.im );*/
-    return( hypot( h.re, h.im ) );
+    return hypot( h.re, h.im );
 }
 
 /*

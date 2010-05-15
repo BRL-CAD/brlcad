@@ -62,7 +62,7 @@ fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned c
 	}
 	pp += width * sizeof(RGBpixel);
     }
-    return(tot);
+    return tot;
 }
 
 
@@ -94,7 +94,7 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
 	if (got != xlen) break;
 	pp += width * sizeof(RGBpixel);
     }
-    return(tot);
+    return tot;
 }
 
 

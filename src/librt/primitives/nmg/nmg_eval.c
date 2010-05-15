@@ -351,7 +351,7 @@ nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
 	       nmg_class_name(class),
 	       nmg_baction_names[ret]);
     }
-    return(ret);
+    return ret;
 }
 
 

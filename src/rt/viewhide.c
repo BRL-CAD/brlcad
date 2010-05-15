@@ -122,7 +122,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
     output_is_binary = 1;		/* output is binary */
 
-    return(0);			/* No framebuffer needed */
+    return 0;			/* No framebuffer needed */
 }
 
 /*
@@ -255,7 +255,7 @@ raymiss(register struct application *ap)
     VSET(posp->c_normal, 0, 0, 0);
     VSET(posp->c_rdir, 0, 0, 0);
 
-    return(0);
+    return 0;
 }
 
 /*
@@ -291,7 +291,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     register struct hit	*hitp;		/* which hit */
 
     if ( pp == PartHeadp )
-	return(0);		/* nothing was actually hit?? */
+	return 0;		/* nothing was actually hit?? */
 
 
     /* Getting defensive.... just in case. */
@@ -307,7 +307,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     if ( pp == PartHeadp )  {
 	bu_log("rthide/rayhit:  no hit out front? x%d y%d lvl%d\n",
 	       ap->a_x, ap->a_y, ap->a_level);
-	return(0);
+	return 0;
     }
     hitp = pp->pt_inhit;
 
@@ -344,7 +344,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
      */
     if (posp->c_id == ID_BACKGROUND)
 	posp->c_id = 1;
-    return(0);
+    return 0;
 }
 
 /*
@@ -653,7 +653,7 @@ find_cell (struct cell *cur_cellp, struct cell *next_cellp)
     else
 	cellp = next_cellp;
 
-    return (cellp);
+    return cellp;
 }
 
 

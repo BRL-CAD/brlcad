@@ -65,7 +65,7 @@ _ged_getspace(struct db_i *dbip,
     /* Allocate and cast num_entries worth of pointers */
     dir_basep = (struct directory **) bu_malloc((num_entries+1) * sizeof(struct directory *),
 						"_ged_getspace *dir[]");
-    return(dir_basep);
+    return dir_basep;
 }
 
 
@@ -83,7 +83,7 @@ cmpdirname(const genptr_t a,
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return(strcmp((*dp1)->d_namep, (*dp2)->d_namep));
+    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 

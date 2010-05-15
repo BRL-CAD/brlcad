@@ -594,16 +594,16 @@ int get_args( int argc, register char **argv )
 			break;
 		    default:
 			fprintf(stderr, "ERROR: unknown option %c\n", *cp);
-			return(0);	/* BAD */
+			return 0;	/* BAD */
 		}
 	    }
 	    break;
 	    case EOF:
 		fprintf(stderr, "ERROR: unknown option %c\n", c);
-		return(0);	/* BAD */
+		return 0;	/* BAD */
 	    default:		/* '?' */
 		fprintf(stderr, "ERROR: bad option specified\n");
-		return(0);	/* BAD */
+		return 0;	/* BAD */
 	}
     }
 
@@ -628,7 +628,7 @@ int get_args( int argc, register char **argv )
     if (R_DEBUG & RDEBUG_RTMEM_END)
 	bu_debug |= BU_DEBUG_MEM_CHECK;
 
-    return(1);			/* OK */
+    return 1;			/* OK */
 }
 
 /*

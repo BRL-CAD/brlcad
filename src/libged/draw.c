@@ -198,7 +198,7 @@ ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *p
     if (pathp) RT_CK_FULL_PATH(pathp);
     if (curtree) RT_CK_TREE(curtree);
 
-    return (curtree);
+    return curtree;
 }
 
 
@@ -315,7 +315,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     RT_CK_COMB(combp);
     tp = combp->tree;
     if (!tp)
-	return( -1 );
+	return -1;
     RT_CK_TREE(tp);
     if (tp->tr_l.tl_op != OP_DB_LEAF)
 	return 0;	/* proceed as usual */
@@ -569,7 +569,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
     if (argc <= 0)
-	return(-1);	/* FAIL */
+	return -1;	/* FAIL */
 
     ++_ged_drawtrees_depth;
     av[1] = (char *)0;
@@ -733,7 +733,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR, bad kind\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --_ged_drawtrees_depth;
-	    return(-1);
+	    return -1;
 	case 1:		/* Wireframes */
 	{
 	    union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t);
@@ -782,7 +782,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    bu_vls_printf(&gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --_ged_drawtrees_depth;
-	    return (-1);
+	    return -1;
 	case 3:
 	{
 	    /* NMG */
@@ -834,9 +834,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 
     if (ret < 0)
-	return (-1);
+	return -1;
 
-    return (0);	/* OK */
+    return 0;	/* OK */
 }
 
 
@@ -992,7 +992,7 @@ _ged_invent_solid(struct ged	*gedp,
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "_ged_invent_solid(%s) would clobber existing database entry, ignored\n", name);
-	    return (-1);
+	    return -1;
 	}
 
 	/*
@@ -1046,7 +1046,7 @@ _ged_invent_solid(struct ged	*gedp,
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
-    return (0);		/* OK */
+    return 0;		/* OK */
 }
 
 

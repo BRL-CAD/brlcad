@@ -140,7 +140,7 @@ main(int argc, char **argv)
 
     mk_bspline(outfp, tea_name, surfaces);
 
-    return(0);
+    return 0;
 }
 
 /*

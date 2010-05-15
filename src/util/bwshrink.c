@@ -196,14 +196,14 @@ int main(int ac, char **av)
 
     if (c < 0) {
 	perror (filename);
-	return(-1);
+	return -1;
     }
 
     switch (method) {
 	case METH_BOXCAR : shrink_image(width, height, buffer, factor); break;
 	case METH_UNDERSAMPLE : usample_image(width, height, buffer, factor);
 	    break;
-	default: return(-1);
+	default: return -1;
     }
 
     for (t=0; t < size && (c=write(1, (char *)&buffer[t], size-t)) >= 0;
@@ -211,10 +211,10 @@ int main(int ac, char **av)
 
     if (c < 0) {
 	perror("stdout");
-	return(-1);
+	return -1;
     }
 
-    return(0);
+    return 0;
 }
 
 

@@ -53,7 +53,7 @@ int face_orient;
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
-		return( (struct faceuse *)NULL );
+		return (struct faceuse *)NULL;
 	}
 
 	Readrec( dir[entityno]->param );
@@ -124,7 +124,7 @@ NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 
   err :
 	bu_free( (char *)loop_de , "Add_face_to_shell: loop DE's" );
-	return( fu );
+	return fu;
 }
 
 /*

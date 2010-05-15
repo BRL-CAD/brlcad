@@ -377,7 +377,7 @@ out:
 	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
 	       status, ret);
     }
-    return(ret);
+    return ret;
 }
 
 

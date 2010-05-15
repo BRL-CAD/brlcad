@@ -697,7 +697,7 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 is_dm_null(void)
 {
-    return(curr_dm_list == &head_dm_list);
+    return curr_dm_list == &head_dm_list;
 }
 
 

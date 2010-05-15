@@ -630,7 +630,7 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
     *new_rbase = rbase;
 
     if ((!do_base && !do_top && !do_sides) || thick == 0.0)
-	return(0);
+	return 0;
 
     VSUB2(h, new_top, new_base);
     magh = MAGNITUDE(h);
@@ -668,7 +668,7 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
 
     /* if height has reversed direction, we can't make an inside solid */
     if (VDOT(new_h, h) <= 0.0)
-	return(1);
+	return 1;
 
     if (do_sides) {
 	*new_rbase = (*new_rbase) - delta_r;
@@ -676,11 +676,11 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
 
 	/* if radii are greater than zero, we're fine */
 	if (*new_rtop > 0.0 && *new_rbase > 0.0)
-	    return(0);
+	    return 0;
 
 	/* if both radii are less then zero, we're toast */
 	if (*new_rtop <= 0.0 && *new_rbase <= 0.0)
-	    return(1);
+	    return 1;
 
 	if (*new_rtop <= 0.0) {
 	    /* adjust height (move top towards base) */
@@ -700,7 +700,7 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
 	    *new_rbase = 0.00001;
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -745,7 +745,7 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 	snprintf(new_name, NAMESIZE+1, "%c%c.%.4d.c%.2d", side, shflg, in[0].cc, cnt);
     }
 
-    return(new_name);
+    return new_name;
 }
 
 
@@ -999,7 +999,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	if (mirror_name[0])
 	    mk_lcomb(outfp, mirror_name, &mir_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
-	return(0);
+	return 0;
 
     }
 
@@ -1206,7 +1206,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	/* Kill the model */
 	nmg_km(m);
 
-	return(0);
+	return 0;
     }
 
     /* Next section is to fix the normals of the shell Can't use
@@ -1314,7 +1314,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     nmg_patch_coplanar_face_merge(s, &face_count, p_faces, tol, 0);
 
     if (nmg_simplify_shell(s))
-	return(1);
+	return 1;
 
     /* Calculate bounding boxes */
     nmg_region_a(r, tol);
@@ -1442,7 +1442,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    bu_free((char *)flags, "build_solid: flags");
 	    bu_free((char *)copy_tbl, "build_solid: copy_tbl");
 	    bu_ptbl(&verts_to_move, BU_PTBL_FREE, (long *)NULL);
-	    return(1);
+	    return 1;
 	}
 	if (debug > 2)
 	    bu_log(" to (%f %f %f)\n", V3ARGS(new_v->vg_p->coord));
@@ -1473,7 +1473,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	nmg_km(m);
 	bu_free((char *)flags, "Build_solid: flags");
 	bu_free((char *)copy_tbl, "Build_solid: copy_tbl");
-	return(1);
+	return 1;
     }
 
     bu_free((char *)flags, "Build_solid: flags");
@@ -1561,7 +1561,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	nmg_km(m);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -3712,7 +3712,7 @@ inside_cyl(int i, int j)
     r2 = in[i+2].y;
 
     if ((r1 < in[j+2].x) || (r2 < in[j+2].y))
-	return(0);
+	return 0;
 
     VSET(outbase, in[i].x, in[i].y, in[i].z);
     VSET(outtop, in[i+1].x, in[i+1].y, in[i+1].z);
@@ -3721,11 +3721,11 @@ inside_cyl(int i, int j)
     VSET(intop, in[j+1].x, in[j+1].y, in[j+1].z);
 
     if (!pt_inside(inbase, outbase, outtop, r1, r2))
-	return(0);
+	return 0;
     else if (!pt_inside(intop, outbase, outtop, r1, r2))
-	return(0);
+	return 0;
     else
-	return(1);
+	return 1;
 }
 
 /* P T _ I N S I D E
@@ -3753,7 +3753,7 @@ pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
 
     dist = VDOT(bt, ba);
     if (dist < -tol.dist  || dist - mag_bt > tol.dist)
-	return(0);
+	return 0;
 
     radius = ((rad2 - rad1)*dist)/mag_bt + rad1;
 
@@ -3770,9 +3770,9 @@ pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
 	bu_log("pt_inside: dist to normal between axis and point is %f\n", dist/mmtin);
     }
     if (pt_radsq - (radius*radius) < tol.dist_sq)
-	return(1);
+	return 1;
     else
-	return(0);
+	return 0;
 }
 
 
@@ -3859,7 +3859,7 @@ get_subtract(int cnt)
 		slist = add_to_list(slist, (i+3)/3, (j+3)/3, in[j].mirror);
 	}
     }
-    return(slist);
+    return slist;
 }
 
 
@@ -3882,7 +3882,7 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
     } else
 	slist->next = add_to_list(slist->next, outsolid, insolid, inmirror);
 
-    return(slist);
+    return slist;
 }
 
 /*

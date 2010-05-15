@@ -78,7 +78,7 @@ struct pixel *mk_pixel (unsigned char *color)
 	pp->p_color[i] = color[i];
     pp->p_count = 0;
 
-    return (pp);
+    return pp;
 }
 
 
@@ -126,11 +126,11 @@ int compare_pixels (void *v1, void *v2)
 
     for (i = 0; i < pixel_size; ++i) {
 	if (p1->p_color[i] < p2->p_color[i])
-	    return (-1);
+	    return -1;
 	else if (p1->p_color[i] > p2->p_color[i])
-	    return (1);
+	    return 1;
     }
-    return (0);
+    return 0;
 }
 
 
@@ -179,7 +179,7 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 	    bu_exit(1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
-    return (pp);
+    return pp;
 }
 
 

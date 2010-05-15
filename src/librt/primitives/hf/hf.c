@@ -1571,7 +1571,7 @@ rt_hf_free(struct soltab *stp)
 int
 rt_hf_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -1845,7 +1845,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     if (r) *r = NULL;
     if (m) NMG_CK_MODEL(m);
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1876,7 +1876,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     /* Check record type */
     if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_hf_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -2010,7 +2010,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	       xip->dfile, count, got);
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -2039,7 +2039,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_HF) return(-1);
+    if (ip->idb_type != ID_HF) return -1;
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
@@ -2065,7 +2065,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     bu_strlcpy(rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN);
     bu_vls_free(&str);
 
-    return(0);
+    return 0;
 }
 
 
@@ -2159,7 +2159,7 @@ rt_hf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

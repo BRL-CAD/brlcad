@@ -1818,7 +1818,7 @@ rt_id_solid(struct bu_external *ep)
 	bu_log("rt_id_solid: internal error, id=%d?\n", id);
 	id = ID_NULL;		/* very BAD */
     }
-    return(id);
+    return id;
 }
 
 
