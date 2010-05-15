@@ -2,7 +2,7 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                    "../../../resources/standard/dtd/docbookx.dtd">
 
-<refentry id='attributes'>
+<refentry id='gattributes'>
 
 <refmeta>
   <refentrytitle>Standard Attributes</refentrytitle>
@@ -12,7 +12,7 @@
 </refmeta>
 
 <refnamediv id='name'>
-  <refname>attributes</refname>
+  <refname>gattributes</refname>
   <refpurpose>
 	standard attribute conventions in BRL-CAD databases
   </refpurpose>
@@ -129,6 +129,7 @@
 	         <entry></entry>
 	         <entry></entry>
 	         <entry></entry>
+	         <entry></entry>
                </row>
                <row>
 		 <entry>Color (Red Green Blue)</entry>
@@ -136,7 +137,6 @@
 	         <entry>rgb</entry>
 	         <entry>RGB</entry>
 	         <entry>COLOR</entry>
-	         <entry></entry>
 	         <entry></entry>
 		 <entry>###/###/###</entry>
                </row>
