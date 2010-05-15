@@ -1,5 +1,5 @@
 man5DOCBOOK_EN = \
-	system/man5/en/attributes.xml
+	system/man5/en/gattributes.xml
 
 man5DOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/man5/en
 man5DOCBOOK_ENhtml_DATA = $(BUILTMAN5_ENHTML)
