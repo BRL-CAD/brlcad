@@ -3183,7 +3183,7 @@ TOGL_CPPFLAGS=""
 AC_MSG_CHECKING(whether to build togl)
 if test ! "x$bc_build_togl" = "xno" ; then
     build_brlcad_togl=yes
-    TOGL_CPPFLAGS="-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl"
+    TOGL_CPPFLAGS='-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl'
     AC_MSG_RESULT(yes)
 else
     build_brlcad_togl=no
