@@ -1753,6 +1753,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tkhtml", "..\tkhtml\tkhtml.vcproj", "{FF34D6BF-0DB0-4627-A925-5127E7A5CE47}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tkpng", "..\tkpng\tkpng.vcproj", "{A3D12DD8-9715-4939-840E-97235F9D17BE}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
@@ -2431,6 +2443,14 @@ Global
 		{65AE6C9B-AFA3-46FB-BB13-ED37D6E0042E}.Release|Win32.Build.0 = Release|Win32
 		{65AE6C9B-AFA3-46FB-BB13-ED37D6E0042E}.Release|x64.ActiveCfg = Release|x64
 		{65AE6C9B-AFA3-46FB-BB13-ED37D6E0042E}.Release|x64.Build.0 = Release|x64
+		{FF34D6BF-0DB0-4627-A925-5127E7A5CE47}.Release|Win32.ActiveCfg = Release|Win32
+		{FF34D6BF-0DB0-4627-A925-5127E7A5CE47}.Release|Win32.Build.0 = Release|Win32
+		{FF34D6BF-0DB0-4627-A925-5127E7A5CE47}.Release|x64.ActiveCfg = Release|x64
+		{FF34D6BF-0DB0-4627-A925-5127E7A5CE47}.Release|x64.Build.0 = Release|x64
+		{A3D12DD8-9715-4939-840E-97235F9D17BE}.Release|Win32.ActiveCfg = Release|Win32
+		{A3D12DD8-9715-4939-840E-97235F9D17BE}.Release|Win32.Build.0 = Release|Win32
+		{A3D12DD8-9715-4939-840E-97235F9D17BE}.Release|x64.ActiveCfg = Release|x64
+		{A3D12DD8-9715-4939-840E-97235F9D17BE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -2450,6 +2470,8 @@ Global
 		{8E5A0431-1B2B-4747-BC1B-C98DA9F235F1} = {3369FCEC-6336-433D-B840-79AEEAA9956A}
 		{39172035-CC5F-4140-9118-E1A9AD311FC7} = {3369FCEC-6336-433D-B840-79AEEAA9956A}
 		{9CC65742-70A4-49C6-AC96-6C4219F1AB25} = {3369FCEC-6336-433D-B840-79AEEAA9956A}
+		{FF34D6BF-0DB0-4627-A925-5127E7A5CE47} = {3369FCEC-6336-433D-B840-79AEEAA9956A}
+		{A3D12DD8-9715-4939-840E-97235F9D17BE} = {3369FCEC-6336-433D-B840-79AEEAA9956A}
 		{D2A218BF-FAB3-4BEA-B288-E357FE003E29} = {3DBD91F0-4343-45F4-A0AA-BB7E8CCF334F}
 		{13D5E98A-50A1-40DF-A992-84CE4B60B16F} = {3DBD91F0-4343-45F4-A0AA-BB7E8CCF334F}
 		{A0C3B415-61DD-4E5A-B724-D13AA64DA645} = {3DBD91F0-4343-45F4-A0AA-BB7E8CCF334F}
