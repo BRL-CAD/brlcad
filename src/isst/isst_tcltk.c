@@ -37,7 +37,6 @@
 
 #define USE_TOGL_STUBS
 
-#define TOGL_AGL
 #include "togl.h"
 
 #include "tie.h"
