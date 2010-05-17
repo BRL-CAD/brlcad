@@ -16,7 +16,7 @@ issttcltkscriptdir = $(pkglibdir)
 issttcltkscript_SCRIPTS = pkgIndex.tcl
 
 EXTRA_DIST = \
-	gears.tcl \
+	isst.tcl \
 	isst.h
 
 DEPENDS = src/adrt

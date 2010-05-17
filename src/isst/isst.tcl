@@ -10,16 +10,8 @@ namespace eval ::isst {
 }
 
 proc ::isst::setup {} {
-#    global startx starty xangle0 yangle0 xangle yangle RotCnt
-#    global vTime
-#    set RotCnt 1
-#    set xangle 0.0
-#    set yangle 0.0
-#    set vTime 100
-    wm title . "Rotating Gear Widget Test"
+    wm title . "ISST - Interactive Geometry Viewing"
 
-    label .t -text "Click and drag to rotate image"
-    pack .t -side top -padx 2 -pady 10
     frame .f
     pack .f -side top
     button .f.b1 -text " Quit " -command exit 
