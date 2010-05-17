@@ -410,3 +410,16 @@ catch {
     file copy "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.CRT" [file join $installDir bin]
     file copy "C:/Program Files/Microsoft Visual Studio 8/VC/redist/x86/Microsoft.VC80.MFC" [file join $installDir bin]
 }
+
+# Create source files for tkhtml
+puts "Create source files in tkhtml3 ..."
+set savepwd [pwd]
+cd [file join $rootDir src other tkhtml3 src]
+puts "... creating htmltokens files"
+source tokenlist.txt
+puts "... creating cssprop files"
+source cssprop.tcl
+puts "... creating htmldefaultstyle.c"
+exec tclsh mkdefaultstyle.tcl > htmldefaultstyle.c
+cd $savepwd
+# End Create source files for tkhtml
