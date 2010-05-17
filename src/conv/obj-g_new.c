@@ -91,12 +91,16 @@ struct gfi_t {
     short int *vertex_fuse_flag;          /* used during creation of vertex_fuse_map, indicates if the vertex
                                              has already been tested for duplicates or the vertex is a duplicate
                                              of an already processed vertex and does not need to be processed again */
+    size_t     vertex_fuse_offset;        /* subtract this value from libobj vertex index to index into the fuse
+                                             array to find the libobj vertex index this vertex was fused to */
     size_t     num_vertex_fuse;           /* number of elements in vertex_fuse_map and vertex_fuse_flag arrays */
     size_t    *normal_fuse_map;           /* same as vertex_fuse_map but for normals */
     short int *normal_fuse_flag;          /* same as vertex_fuse_flag but for normals */
+    size_t     normal_fuse_offset;        /* same as vertex_fuse_offset but for normals */
     size_t     num_normal_fuse;           /* same as num_vertex_fuse but for normals */
     size_t    *texture_vertex_fuse_map;   /* same as vertex_fuse_map but for texture vertex */
     short int *texture_vertex_fuse_flag;  /* same as vertex_fuse_flag but for texture vertex */
+    size_t     texture_vertex_fuse_offset; /* same as vertex_fuse_offset but for texture vertex */
     size_t     num_texture_vertex_fuse;   /* same as num_vertex_fuse but for texture vertex */
 };
 
@@ -306,12 +310,19 @@ void retrieve_coord_index(struct   ga_t *ga,   /* obj file global attributes */
     switch (gfi->face_type) {
         case FACE_V :
             index_arr_faces_1D = (arr_1D_t)(gfi->index_arr_faces);
-            /* copy current vertex coordinates into vc */
-            VMOVE(vc, ga->vert_list[index_arr_faces_1D[fi][vi]]);
-            /* copy current vertex weight into w */
-            *w = ga->vert_list[index_arr_faces_1D[fi][vi]][3] ;
+
             /* copy current vertex obj file index into vofi */ 
             *vofi = index_arr_faces_1D[fi][vi] ;
+
+            /* used fused vertex index if available */
+            if (gfi->vertex_fuse_map != NULL)
+                *vofi = gfi->vertex_fuse_map[*vofi - gfi->vertex_fuse_offset];
+
+            /* copy current vertex coordinates into vc */
+            VMOVE(vc, ga->vert_list[*vofi]);
+            /* copy current vertex weight into w */
+            *w = ga->vert_list[*vofi][3] ;
+
             if (verbose)
                 bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)v=(%f)(%f)(%f)w=(%f)\n", 
                    fi, vi, fofi+1, *vofi+1, vc[0], vc[1], vc[2], *w);
@@ -334,16 +345,29 @@ void retrieve_coord_index(struct   ga_t *ga,   /* obj file global attributes */
             break;
         case FACE_NV :
             index_arr_faces_2D = (arr_2D_t)(gfi->index_arr_faces);
-            /* copy current vertex coordinates into vc */
-            VMOVE(vc, ga->vert_list[index_arr_faces_2D[fi][vi][0]]);
-            /* copy current vertex weight into w */
-            *w = ga->vert_list[index_arr_faces_2D[fi][vi][0]][3] ;
-            /* copy current normal into nc */
-            VMOVE(nc, ga->norm_list[index_arr_faces_2D[fi][vi][1]]);
+
             /* copy current vertex obj file index into vofi */ 
             *vofi = index_arr_faces_2D[fi][vi][0];
             /* copy current normal obj file index into nofi */ 
             *nofi = index_arr_faces_2D[fi][vi][1];
+
+            /* use fused vertex index if available */
+            if (gfi->vertex_fuse_map != NULL)
+                *vofi = gfi->vertex_fuse_map[*vofi - gfi->vertex_fuse_offset];
+
+#if 0
+            /* use fused normal index if available */
+            if (gfi->normal_fuse_map != NULL)
+                *nofi = gfi->normal_fuse_map[*nofi - gfi->normal_fuse_offset];
+#endif
+
+            /* copy current vertex coordinates into vc */
+            VMOVE(vc, ga->vert_list[*vofi]);
+            /* copy current vertex weight into w */
+            *w = ga->vert_list[*vofi][3] ;
+            /* copy current normal into nc */
+            VMOVE(nc, ga->norm_list[*nofi]);
+
             if (verbose)
                 bu_log("fi=(%lu)vi=(%lu)fofi=(%lu)vofi=(%lu)nofi=(%lu)v=(%f)(%f)(%f)w=(%f)n=(%f)(%f)(%f)\n", 
                    fi, vi, fofi+1, *vofi+1, *nofi+1, vc[0], vc[1], vc[2], *w, nc[0], nc[1], nc[2]);
@@ -639,12 +663,15 @@ void collect_grouping_faces_indexes(struct ga_t *ga,
             (*gfi)->grouping_index = 0;
             (*gfi)->vertex_fuse_map = (size_t *)NULL;
             (*gfi)->vertex_fuse_flag = (short int *)NULL;
+            (*gfi)->vertex_fuse_offset = 0;
             (*gfi)->num_vertex_fuse = 0;
             (*gfi)->normal_fuse_map = (size_t *)NULL;
             (*gfi)->normal_fuse_flag = (short int *)NULL;
+            (*gfi)->normal_fuse_offset = 0;
             (*gfi)->num_normal_fuse = 0;
             (*gfi)->texture_vertex_fuse_map = (size_t *)NULL;
             (*gfi)->texture_vertex_fuse_flag = (short int *)NULL;
+            (*gfi)->texture_vertex_fuse_offset = 0;
             (*gfi)->num_texture_vertex_fuse = 0;
 
             /* set face_type, grouping_type, grouping_index inside gfi structure,
@@ -1343,6 +1370,79 @@ remove_duplicates_and_sort(size_t **list, size_t *count) {
     *count = unique_count;
 }
 
+void populate_fuse_map(struct ga_t *ga,
+                       struct gfi_t *gfi,
+                       fastf_t conv_factor, 
+                       struct bn_tol *tol,
+                       size_t *unique_index_list,
+                       size_t num_unique_index_list,
+                       int fuse_type) {
+
+    size_t  idx1 = 0;
+    size_t  idx2 = 0;
+    size_t  fuse_count = 0;
+    fastf_t tmp_v1[3];
+    fastf_t tmp_v2[3];
+    fastf_t distance_between_vertices = 0.0;
+    size_t *fuse_map = (size_t *)NULL;
+    short int *fuse_flag = (short int *)NULL;
+    size_t fuse_offset = 0; 
+
+    switch (fuse_type) {
+        case 0 :
+            fuse_map = gfi->vertex_fuse_map;
+            fuse_flag = gfi->vertex_fuse_flag;
+            fuse_offset = gfi->vertex_fuse_offset;
+            break;
+        case 1 :
+            fuse_map = gfi->normal_fuse_map;
+            fuse_flag = gfi->normal_fuse_flag;
+            fuse_offset = gfi->normal_fuse_offset;
+            conv_factor = 1.0;
+            break;
+        case 2 :
+            fuse_map = gfi->texture_vertex_fuse_map;
+            fuse_flag = gfi->texture_vertex_fuse_flag;
+            fuse_offset = gfi->texture_vertex_fuse_offset;
+            break;
+    }
+
+    /* only set the flag for duplicates */
+    idx1 = 0;
+    while (idx1 < num_unique_index_list) {
+        if ( fuse_flag[unique_index_list[idx1] - fuse_offset] == 0 ) {
+            /* true if current vertex has not already been identified as a duplicate */
+            idx2 = idx1 + 1;
+            VMOVE(tmp_v1, ga->vert_list[unique_index_list[idx1]]);
+            VSCALE(tmp_v1, tmp_v1, conv_factor);
+            fuse_map[unique_index_list[idx1] - fuse_offset] = unique_index_list[idx1];
+            while (idx2 < num_unique_index_list) {
+                if ( fuse_flag[unique_index_list[idx2] - fuse_offset] == 0 ) {
+                    VMOVE(tmp_v2, ga->vert_list[unique_index_list[idx2]]);
+                    VSCALE(tmp_v2, tmp_v2, conv_factor);
+                    if ( bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol) ) {
+                        distance_between_vertices = DIST_PT_PT(tmp_v1, tmp_v2);
+                        bu_log("found equal i1=(%lu)vi1=(%lu)v1=(%f)(%f)(%f),i2=(%lu)vi2=(%lu)v2=(%f)(%f)(%f), dist = (%fmm)\n", 
+                               idx1, unique_index_list[idx1], tmp_v1[0], tmp_v1[1], tmp_v1[2],
+                               idx2, unique_index_list[idx2], tmp_v2[0], tmp_v2[1], tmp_v2[2],
+                               unique_index_list[idx2], distance_between_vertices);
+                        fuse_map[unique_index_list[idx2] - fuse_offset] = unique_index_list[idx1];
+                        fuse_flag[unique_index_list[idx2] - fuse_offset] = 1;
+                        fuse_count++;
+                    }
+                }
+                idx2++;
+            }
+        }
+        idx1++;
+    }
+    bu_log("total fused = (%lu)\n", fuse_count);
+
+    for (idx1 = 0 ; idx1 < num_unique_index_list ; idx1++ )
+        bu_log("fused unique_index_list = (%lu)->(%lu)\n", unique_index_list[idx1],
+               fuse_map[unique_index_list[idx1] - fuse_offset]);
+}
+
 int fuse_vertex_normal_texture(struct ga_t *ga,
                                struct gfi_t *gfi,
                                struct rt_wdb *outfp, 
@@ -1454,8 +1554,9 @@ int fuse_vertex_normal_texture(struct ga_t *ga,
     } /* end of face_idx for-loop */
 
     /* compute size of fuse_map and fuse_flag arrays and 
-       allocate these arrays */
+       allocate these arrays. set fuse_offset values */
     gfi->num_vertex_fuse = max_vert_idx - min_vert_idx + 1;
+    gfi->vertex_fuse_offset = min_vert_idx;
     gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse, sizeof(size_t), "gfi->vertex_fuse_map");
     gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse, sizeof(short int), "gfi->vertex_fuse_flag");
     /* initialize arrays */
@@ -1466,6 +1567,7 @@ int fuse_vertex_normal_texture(struct ga_t *ga,
 
     if (gfi->face_type == FACE_NV || gfi->face_type == FACE_TNV) {
         gfi->num_normal_fuse = max_norm_idx - min_norm_idx + 1;
+        gfi->normal_fuse_offset = min_norm_idx;
         gfi->normal_fuse_map = (size_t *)bu_calloc(gfi->num_normal_fuse, sizeof(size_t), "gfi->normal_fuse_map");
         gfi->normal_fuse_flag = (short int *)bu_calloc(gfi->num_normal_fuse, sizeof(short int), "gfi->normal_fuse_flag");
         /* initialize arrays */
@@ -1476,6 +1578,7 @@ int fuse_vertex_normal_texture(struct ga_t *ga,
     }
     if (gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) {
         gfi->num_texture_vertex_fuse = max_tex_vert_idx - min_tex_vert_idx + 1;
+        gfi->texture_vertex_fuse_offset = min_tex_vert_idx;
         gfi->texture_vertex_fuse_map = (size_t *)bu_calloc(gfi->num_texture_vertex_fuse,
                                         sizeof(size_t), "gfi->texture_vertex_fuse_map");
         gfi->texture_vertex_fuse_flag = (short int *)bu_calloc(gfi->num_texture_vertex_fuse,
@@ -1516,46 +1619,17 @@ int fuse_vertex_normal_texture(struct ga_t *ga,
     bu_log("num unique sorted vertex_index_list[idx1] = (%lu)\n", num_unique_vertex_index_list);
 #endif
 
-    idx1 = 0;
-    idx2 = 0;
-    size_t dup_found = 0;
-    size_t fuse_count = 0;
-    fastf_t tmp_v1[3];
-    fastf_t tmp_v2[3];
+    populate_fuse_map(ga, gfi, conv_factor, tol, vertex_index_list, num_unique_vertex_index_list, 0);
 
-    /* only set the flag for duplicates, not vertices processed already
-       but did not have duplicates */
-    while (idx1 < num_unique_vertex_index_list) {
-        if ( gfi->vertex_fuse_flag[vertex_index_list[idx1] - min_vert_idx] == 0 ) {
-            /* true if current vertex has not already been identified as a duplicate */
-            idx2 = idx1 + 1;
-            dup_found = 0;
-            while (idx2 < num_unique_vertex_index_list) {
-                if ( gfi->vertex_fuse_flag[vertex_index_list[idx2] - min_vert_idx] == 0 ) {
-                    VMOVE(tmp_v1,(fastf_t *)ga->vert_list[vertex_index_list[idx1]]);
-                    VSCALE(tmp_v1, tmp_v1, conv_factor);
-                    VMOVE(tmp_v2,(fastf_t *)ga->vert_list[vertex_index_list[idx2]]);
-                    VSCALE(tmp_v2, tmp_v2, conv_factor);
-                    if ( bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol) ) {
-                        gfi->vertex_fuse_map[vertex_index_list[idx2] - min_vert_idx] = vertex_index_list[idx1];
-                        gfi->vertex_fuse_flag[vertex_index_list[idx2] - min_vert_idx] = 1;
-                        dup_found++;
-                        fuse_count++;
-                    }
-                }
-                idx2++;
-            }
-            if ( dup_found == 0 ) {
-                gfi->vertex_fuse_map[vertex_index_list[idx1] - min_vert_idx] = vertex_index_list[idx1];
-            }
-        }
-        idx1++;
-    }
-    bu_log("total fused = (%lu)\n", fuse_count);
+#if 0
+    if (gfi->face_type == FACE_NV || gfi->face_type == FACE_TNV)
+        populate_fuse_map(ga, gfi, conv_factor, tol, normal_index_list, num_unique_normal_index_list, 1);
 
-    for (idx1 = 0 ; idx1 < num_unique_vertex_index_list ; idx1++ )
-        bu_log("fused vertex_index_list = (%lu)->(%lu)\n", vertex_index_list[idx1],
-               gfi->vertex_fuse_map[vertex_index_list[idx1] - min_vert_idx]);
+    if (gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV)
+        populate_fuse_map(ga, gfi, conv_factor, tol, texture_vertex_index_list, 
+                          num_unique_texture_vertex_index_list, 2);
+#endif
+
     return;
 }
 
