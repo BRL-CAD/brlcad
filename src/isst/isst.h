@@ -35,8 +35,6 @@ struct isst_s {
     void *texdata;
 };
 
-void resize_isst(struct isst_s *isst);
-
 /*
  * Local Variables:
  * mode: C
