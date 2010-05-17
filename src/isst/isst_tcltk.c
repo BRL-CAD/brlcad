@@ -247,6 +247,8 @@ isst_init(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
     render_camera_init(&isst->camera, bu_avail_cpus());
     isst->camera.type = RENDER_CAMERA_PERSPECTIVE;
     isst->camera.fov = 25;
+    isst->rotx = 0;
+    isst->roty = 0;
 
     Togl_SetClientData(togl, (ClientData) isst);
 
@@ -292,7 +294,7 @@ position(ClientData clientData, Tcl_Interp *interp, int objc,
     isst = (struct isst *) Togl_GetClientData(togl);
 
     /* Let result string equal value */
-    sprintf(Result, "TODO?");
+    sprintf(Result, "%g %g", isst->rotx, isst->roty);
 
     Tcl_SetResult(interp, Result, TCL_VOLATILE);
     return TCL_OK;
@@ -303,9 +305,11 @@ look(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     struct isst_s *isst;
     Togl   *togl;
+    vect_t vec;
+    double x, y, az, el;
 
-    if (objc != 8) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName posX posY posZ focX focY focZ");
+    if (objc != 4) {
+        Tcl_WrongNumArgs(interp, 1, objv, "toglwin x y");
         return TCL_ERROR;
     }
 
@@ -314,19 +318,35 @@ look(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    if (Tcl_GetDoubleFromObj(interp, objv[2], &isst->camera.pos.v[0]) != TCL_OK)
+    if (Tcl_GetDoubleFromObj(interp, objv[2], &x) != TCL_OK)
         return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[3], &isst->camera.pos.v[1]) != TCL_OK)
-        return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[4], &isst->camera.pos.v[2]) != TCL_OK)
+    if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
         return TCL_ERROR;
 
-    if (Tcl_GetDoubleFromObj(interp, objv[5], &isst->camera.focus.v[0]) != TCL_OK)
-        return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[6], &isst->camera.focus.v[1]) != TCL_OK)
-        return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[7], &isst->camera.focus.v[2]) != TCL_OK)
-        return TCL_ERROR;
+    x = -x/10000;
+    y = -y/10000;
+/*
+    printf("x: %f\n", x);  
+    printf("y: %f\n", x);  
+ */
+    /* generate az/el (oddly, this generates degrees instead of radians) */
+    VSUB2(vec, isst->camera.pos.v, isst->camera.focus.v);
+    VSUB2(vec, isst->camera.pos.v, isst->camera.focus.v);
+    VUNITIZE(vec);
+    AZEL_FROM_V3DIR(az, el, vec);
+    az = az * -DEG2RAD - x;
+    el = el * -DEG2RAD - y;
+
+    /* clamp to sane values */
+    while(az > 2*M_PI) az -= 2*M_PI;
+    while(az < 0) az += 2*M_PI;
+    if(el>M_PI_2) el=M_PI_2;
+    if(el<-M_PI_2) el=-M_PI_2;
+
+    /* generate the new lookat point */
+    V3DIR_FROM_AZEL(vec, az, el);
+   /* printf("vec: %f,%f,%f\n", vec[0], vec[1], vec[2]);  */
+    VADD2(isst->camera.focus.v, isst->camera.pos.v, vec);
 
     Togl_PostRedisplay(togl);
 

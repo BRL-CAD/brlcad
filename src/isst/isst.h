@@ -31,6 +31,7 @@ struct isst_s {
     tienet_buffer_t buffer_image;
     int ogl, sflags, w, h, gs, ui;
     double dt, fps, uic;
+    double rotx, roty;
     int texid;
     void *texdata;
 };
