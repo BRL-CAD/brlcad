@@ -45,7 +45,6 @@
 #include "camera.h"
 #include "isst.h"
 
-int     width, height;
 void resize_isst(struct isst_s *);
 
 /* new window size or exposure */
@@ -67,16 +66,8 @@ reshape(ClientData clientData, Tcl_Interp *interp, int objc,
 
     isst = Togl_GetClientData(togl);
 
-    width = Togl_Width(togl);
-    height = Togl_Height(togl);
-
-    glViewport(0,0,isst->w, isst->h);
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    glOrtho(0, isst->w, isst->h, 0, -1, 1);
-    glMatrixMode (GL_MODELVIEW);
-
-    glClear(GL_COLOR_BUFFER_BIT);
+    isst->w = Togl_Width(togl);
+    isst->h = Togl_Height(togl);
 
     resize_isst(isst);
 
@@ -86,8 +77,6 @@ reshape(ClientData clientData, Tcl_Interp *interp, int objc,
 void
 resize_isst(struct isst_s *isst)
 {
-    isst->w = width;
-    isst->h = height;
     switch(isst->gs) {
             case 0:
                 isst->camera.w = isst->tile.size_x = isst->w;
@@ -115,11 +104,14 @@ resize_isst(struct isst_s *isst)
     isst->texdata = realloc(isst->texdata, isst->camera.w * isst->camera.h * 3);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, isst->camera.w, isst->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, isst->texdata);
     glDisable(GL_LIGHTING);
+
     glViewport(0,0,isst->w, isst->h);
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     glOrtho(0, isst->w, isst->h, 0, -1, 1);
     glMatrixMode (GL_MODELVIEW);
+
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 
@@ -187,8 +179,6 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
     render_camera_prep(&isst->camera);
     render_camera_render(&isst->camera, isst->tie, &isst->tile, &isst->buffer_image);
 
-    if(isst->ui)
-        glclrbts |= GL_COLOR_BUFFER_BIT;
     glClear(glclrbts);
     glLoadIdentity();
     glColor3f(1,1,1);
@@ -197,9 +187,13 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, isst->camera.w, isst->camera.h, GL_RGB, GL_UNSIGNED_BYTE, isst->buffer_image.data + sizeof(camera_tile_t));
     glBegin(GL_TRIANGLE_STRIP);
 
+    glColor3d(0,0,1);
     glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
+    glColor3d(1,0,1);
     glTexCoord2d(0, 1); glVertex3f(0, isst->h, 0);
+    glColor3d(0,1,1);
     glTexCoord2d(1, 0); glVertex3f(isst->w, 0, 0);
+    glColor3d(1,1,0);
     glTexCoord2d(1, 1); glVertex3f(isst->w, isst->h, 0);
 
     glEnd();
