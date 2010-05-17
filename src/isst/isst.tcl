@@ -10,10 +10,9 @@ namespace eval ::isst {
 }
 
 proc ::isst::setup {} {
-    global xangle yangle
+    global az el
     wm title . "ISST - Interactive Geometry Viewing"
-    set xangle 0.0
-    set yangle 0.0 
+
     frame .f
     pack .f -side top
     button .f.b1 -text " Quit " -command exit 
@@ -22,6 +21,7 @@ proc ::isst::setup {} {
 }
 
 proc ::isst::drawview {win {tick 100} } {
+    global az el
     togl $win -width 800 -height 600 -rgba true -double true -depth true -privatecmap false -time $tick -create isst_init -destroy isst_zap -display refresh_ogl -reshape reshape -timer idle
      focus $win
      bind $win <Key-1> {focus %W; render_mode %W phong}
@@ -29,28 +29,27 @@ proc ::isst::drawview {win {tick 100} } {
      bind $win <Key-3> {focus %W; render_mode %W depth}
      bind $win <Key-4> {focus %W; render_mode %W component}
      
-     bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
-     bind $win <B1-Motion> {::isst::RotMove %x %y %W}
+    bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
+    bind $win <B1-Motion> {::isst::RotMove %x %y %W}
     load_g $win /usr/brlcad/rel-7.16.2/share/brlcad/7.16.2/db/ktank.g tank
     pack $win -expand true -fill both
 }
 
 proc ::isst::RotStart {x y W} {
-    global startx starty xangle0 yangle0 xangle yangle
+    global startx starty
     set startx $x
     set starty $y
-    set vPos [position $W]
-    set xangle0 [lindex $vPos 0]
-    set yangle0 [lindex $vPos 1]
 }
 
 proc ::isst::RotMove {x y W} {
-    global startx starty xangle0 yangle0 xangle yangle
-    set xangle [expr $xangle0 + ($x - $startx)]
-    set yangle [expr $yangle0 + ($y - $starty)]
-    look $W $xangle $yangle
+    global az el startx starty
+    set az [expr $az + ($x - $startx)*0.0001]
+    set el [expr $el + ($y - $starty)*0.0001]
+    aetolookat $W $az $el
 }
 
 if { [info script] == $argv0 } {
+    global az el
 	::isst::setup
+        puts "$az $el"
 }
