@@ -333,6 +333,31 @@ look(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
     return TCL_OK;
 }
 
+static int
+render_mode(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl *togl;
+    char mode[BUFSIZ], buf[BUFSIZ];
+
+    if (objc < 4) {
+        Tcl_WrongNumArgs(interp, 1, objv, "pathName mode [arguments]");
+        return TCL_ERROR;
+    }
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
+        return TCL_ERROR;
+
+    isst = (struct isst_s *) Togl_GetClientData(togl);
+
+    /* get the mode from objv[2] to mode */
+    /* pack the 'rest' into buf */
+
+    if(render_shader_init(&isst->camera.render, mode, *buf?buf:NULL) != 0)
+	return TCL_ERROR;
+    return TCL_OK;
+}
+
 int
 Isst_Init(Tcl_Interp *interp)
 {
@@ -360,6 +385,7 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
     Tcl_CreateObjCommand(interp, "look", look, NULL, NULL);
     Tcl_CreateObjCommand(interp, "position", position, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
 
     return TCL_OK;
 }
