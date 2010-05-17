@@ -298,36 +298,40 @@ position(ClientData clientData, Tcl_Interp *interp, int objc,
     return TCL_OK;
 }
 
-/*
 static int
-rotate(ClientData clientData, Tcl_Interp *interp, int objc,
-        Tcl_Obj *const *objv)
+look(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
-    WHIRLYGIZMO *Wg;
+    struct isst_s *isst;
     Togl   *togl;
 
-    if (objc != 4) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName yrot xrot");
+    if (objc != 8) {
+        Tcl_WrongNumArgs(interp, 1, objv, "pathName posX posY posZ focX focY focZ");
         return TCL_ERROR;
     }
 
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
         return TCL_ERROR;
-    }
 
-    Wg = (WHIRLYGIZMO *) Togl_GetClientData(togl);
+    isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    if (Tcl_GetDoubleFromObj(interp, objv[2], &Wg->Roty) != TCL_OK) {
+    if (Tcl_GetDoubleFromObj(interp, objv[2], &isst->camera.pos.v[0]) != TCL_OK)
         return TCL_ERROR;
-    }
-    if (Tcl_GetDoubleFromObj(interp, objv[3], &Wg->Rotx) != TCL_OK) {
+    if (Tcl_GetDoubleFromObj(interp, objv[3], &isst->camera.pos.v[1]) != TCL_OK)
         return TCL_ERROR;
-    }
+    if (Tcl_GetDoubleFromObj(interp, objv[4], &isst->camera.pos.v[2]) != TCL_OK)
+        return TCL_ERROR;
+
+    if (Tcl_GetDoubleFromObj(interp, objv[5], &isst->camera.focus.v[0]) != TCL_OK)
+        return TCL_ERROR;
+    if (Tcl_GetDoubleFromObj(interp, objv[6], &isst->camera.focus.v[1]) != TCL_OK)
+        return TCL_ERROR;
+    if (Tcl_GetDoubleFromObj(interp, objv[7], &isst->camera.focus.v[2]) != TCL_OK)
+        return TCL_ERROR;
+
     Togl_PostRedisplay(togl);
 
     return TCL_OK;
 }
-*/
 
 int
 Isst_Init(Tcl_Interp *interp)
@@ -354,7 +358,7 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "reshape", reshape, NULL, NULL);
     Tcl_CreateObjCommand(interp, "load_g", isst_load_g, NULL, NULL);
     Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
-    /*Tcl_CreateObjCommand(interp, "rotate", rotate, NULL, NULL);*/
+    Tcl_CreateObjCommand(interp, "look", look, NULL, NULL);
     Tcl_CreateObjCommand(interp, "position", position, NULL, NULL);
 
     return TCL_OK;
