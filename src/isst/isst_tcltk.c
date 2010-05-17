@@ -37,6 +37,7 @@
 
 #define USE_TOGL_STUBS
 
+#define TOGL_AGL
 #include "togl.h"
 
 #include "tie.h"
@@ -45,12 +46,15 @@
 #include "camera.h"
 #include "isst.h"
 
+int     width, height;
+struct isst_s	*gisst;
+void resize_isst(struct isst_s *);
+
 /* new window size or exposure */
 static int
 reshape(ClientData clientData, Tcl_Interp *interp, int objc,
         Tcl_Obj *const *objv)
 {
-    int     width, height;
     Togl   *togl;
 
     if (objc != 2) {
@@ -82,12 +86,16 @@ reshape(ClientData clientData, Tcl_Interp *interp, int objc,
     glTranslatef(0, 0, -40);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    resize_isst(gisst);
+
     return TCL_OK;
 }
 
 void
 resize_isst(struct isst_s *isst)
 {
+    isst->w = width;
+    isst->h = height;
     switch(isst->gs) {
             case 0:
                 isst->camera.w = isst->tile.size_x = isst->w;
@@ -147,7 +155,7 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
     argv = (char **)bu_malloc(sizeof(char *)*(argc + 1), "isst tcltk");
     argv[0] = Tcl_GetString(objv[3]);
     argv[1] = NULL;
-    isst = (struct isst *) Togl_GetClientData(togl);
+    isst = (struct isst_s *) Togl_GetClientData(togl);
 
     load_g(isst->tie, Tcl_GetString(objv[2]), argc-1, (const char **)argv, &(isst->meshes));
 
@@ -247,13 +255,9 @@ isst_init(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
         return TCL_ERROR;
     }
 
-    glLightfv(GL_LIGHT0, GL_POSITION, pos);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_DEPTH_TEST);
-
-    isst = (struct isst_s *)malloc(sizeof(struct isst_s));
+    gisst = isst = (struct isst_s *)malloc(sizeof(struct isst_s));
+    isst->ui = 0;
+    isst->uic = 0;
     isst->tie = (struct tie_s *)bu_calloc(1,sizeof(struct tie_s), "tie");
     TIENET_BUFFER_INIT(isst->buffer_image);
     render_camera_init(&isst->camera, bu_avail_cpus());
