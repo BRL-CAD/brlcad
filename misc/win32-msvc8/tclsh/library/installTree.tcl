@@ -421,5 +421,9 @@ puts "... creating cssprop files"
 source cssprop.tcl
 puts "... creating htmldefaultstyle.c"
 exec tclsh mkdefaultstyle.tcl > htmldefaultstyle.c
+puts "... creating pkgIndex.tcl"
+set fd [open pkgIndex.tcl "w"]
+puts $fd {package ifneeded Tkhtml 3.0 [list load [file join $dir tkhtml.dll]]}
+close $fd
 cd $savepwd
 # End Create source files for tkhtml
