@@ -46,7 +46,6 @@
 #include "isst.h"
 
 int     width, height;
-struct isst_s	*gisst;
 void resize_isst(struct isst_s *);
 
 /* new window size or exposure */
@@ -55,37 +54,31 @@ reshape(ClientData clientData, Tcl_Interp *interp, int objc,
         Tcl_Obj *const *objv)
 {
     Togl   *togl;
+    struct isst_s *isst;
 
     if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName");
+	return TCL_ERROR;
     }
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
+
+    isst = ToglGetClientData(togl);
 
     width = Togl_Width(togl);
     height = Togl_Height(togl);
-    glViewport(0, 0, (GLint) width, (GLint) height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    if (width > height) {
-        GLfloat w = (GLfloat) width / (GLfloat) height;
 
-        glFrustum(-w, w, -1, 1, 5, 60);
-    } else {
-        GLfloat h = (GLfloat) height / (GLfloat) width;
+    glViewport(0,0,isst->w, isst->h);
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, isst->w, isst->h, 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
 
-        glFrustum(-1, 1, -h, h, 5, 60);
-    }
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0, 0, -40);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    resize_isst(gisst);
+    resize_isst(isst);
 
     return TCL_OK;
 }
@@ -119,7 +112,7 @@ resize_isst(struct isst_s *isst)
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    isst->texdata = malloc(isst->camera.w * isst->camera.h * 3);
+    isst->texdata = realloc(isst->texdata, isst->camera.w * isst->camera.h * 3);
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, isst->camera.w, isst->camera.h, 0, GL_RGB, GL_UNSIGNED_BYTE, isst->texdata);
     glDisable(GL_LIGHTING);
     glViewport(0,0,isst->w, isst->h);
@@ -254,7 +247,7 @@ isst_init(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
         return TCL_ERROR;
     }
 
-    gisst = isst = (struct isst_s *)malloc(sizeof(struct isst_s));
+    isst = (struct isst_s *)bu_calloc(1, sizeof(struct isst_s), isst);
     isst->ui = 0;
     isst->uic = 0;
     isst->tie = (struct tie_s *)bu_calloc(1,sizeof(struct tie_s), "tie");
