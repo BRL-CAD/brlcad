@@ -65,7 +65,7 @@ reshape(ClientData clientData, Tcl_Interp *interp, int objc,
 	return TCL_ERROR;
     }
 
-    isst = ToglGetClientData(togl);
+    isst = Togl_GetClientData(togl);
 
     width = Togl_Width(togl);
     height = Togl_Height(togl);
