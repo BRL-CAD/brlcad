@@ -102,7 +102,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bu_avs_free(&avs);
-	return GED_OK;
 
     } else if ( strcmp( argv[1], "set" ) == 0 ) {
 	/* setting attribute/value pairs */
@@ -129,7 +128,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* avs is freed by db5_update_attributes() */
-	return GED_OK;
+
     } else if (strcmp(argv[1], "rm") == 0) {
 	i = 3;
 	while (i < (size_t)argc) {
@@ -147,7 +146,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* avs is freed by db5_replace_attributes() */
-	return GED_OK;
+
     } else if ( strcmp( argv[1], "append" ) == 0 ) {
 	if ((argc-3)%2) {
 	    bu_vls_printf(&gedp->ged_result_str,
@@ -184,7 +183,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* avs is freed by db5_replace_attributes() */
-	return GED_OK;
+
     } else if ( strcmp( argv[1], "show" ) == 0 ) {
 	int max_attr_name_len=0;
 	int tabs1=0;
@@ -296,14 +295,12 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
 
-	return GED_OK;
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: unrecognized attr subcommand %s\n", argv[1]);
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
 	return GED_ERROR;
     }
-
 
     return GED_OK;
 }
