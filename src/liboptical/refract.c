@@ -47,8 +47,6 @@ int max_bounces = 5;	/* Maximum recursion level */
 
 #define AIR_GAP_TOL 0.01		/* Max permitted air gap for RI tracking */
 
-HIDDEN int rr_hit(), rr_miss();
-HIDDEN int rr_refract();
 
 #ifdef RT_MULTISPECTRAL
 extern const struct bn_table *spectrum;
@@ -58,580 +56,10 @@ extern vect_t background;
 #endif
 
 /*
- * R R _ R E N D E R
- */
-int
-rr_render(register struct application *ap,
-	  struct partition *pp,
-	  struct shadework *swp)
-{
-    struct application sub_ap;
-    vect_t work;
-    vect_t incident_dir;
-    fastf_t shader_fract;
-    fastf_t reflect;
-    fastf_t transmit;
-
-#ifdef RT_MULTISPECTRAL
-    struct bn_tabdata *ms_filter_color = BN_TABDATA_NULL;
-    struct bn_tabdata *ms_shader_color = BN_TABDATA_NULL;
-    struct bn_tabdata *ms_reflect_color = BN_TABDATA_NULL;
-    struct bn_tabdata *ms_transmit_color = BN_TABDATA_NULL;
-#else
-    vect_t filter_color;
-    vect_t shader_color;
-    vect_t reflect_color;
-    vect_t transmit_color;
-#endif
-
-    fastf_t attenuation;
-    vect_t to_eye;
-    int code;
-#if 0
-    static FILE *plotfp;
-#endif
-
-    RT_AP_CHECK(ap);
-
-    RT_APPLICATION_INIT(&sub_ap);
-
-#ifdef RT_MULTISPECTRAL
-    sub_ap.a_spectrum = BN_TABDATA_NULL;
-#endif
-
-    /*
-     * sw_xmitonly is set primarily for light visibility rays.
-     * Need to compute (partial) transmission through to the light,
-     * or procedural shaders won't be able to cast shadows
-     * and light won't be able to get through glass
-     * (including "stained glass" and "filter glass").
-     *
-     * On the other hand, light visibility rays shouldn't be refracted,
-     * it is pointless to shoot at where the light isn't.
-     */
-    if (swp->sw_xmitonly) {
-	/* Caller wants transmission term only, don't fire reflected rays */
-	transmit = swp->sw_transmit + swp->sw_reflect;	/* Don't loose energy */
-	reflect = 0;
-    } else {
-	reflect = swp->sw_reflect;
-	transmit = swp->sw_transmit;
-    }
-    if (R_DEBUG&RDEBUG_REFRACT) {
-	bu_log("rr_render(%s) START: lvl=%d reflect=%g, transmit=%g, xmitonly=%d\n",
-	       pp->pt_regionp->reg_name,
-	       ap->a_level,
-	       reflect, transmit,
-	       swp->sw_xmitonly);
-    }
-    if (reflect <= 0 && transmit <= 0)
-	goto out;
-
-    if (ap->a_level > max_bounces) {
-	/* Nothing more to do for this ray */
-	static long count = 0;		/* Not PARALLEL, should be OK */
-
-	if ((R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
-		count++ < MSG_PROLOGUE ||
-		(count%MSG_INTERVAL) == 3
-		)) {
-	    bu_log("rr_render: %d, %d MAX BOUNCES=%d: %s\n",
-		   ap->a_x, ap->a_y,
-		   ap->a_level,
-		   pp->pt_regionp->reg_name);
-	}
-
-	/*
-	 * Return the basic color of the object, ignoring the
-	 * the fact that it is supposed to be
-	 * filtering or reflecting light here.
-	 * This is much better than returning just black,
-	 * but something better might be done.
-	 */
-#ifdef RT_MULTISPECTRAL
-	BN_CK_TABDATA(swp->msw_color);
-	BN_CK_TABDATA(swp->msw_basecolor);
-	bn_tabdata_copy(swp->msw_color, swp->msw_basecolor);
-#else
-	VMOVE(swp->sw_color, swp->sw_basecolor);
-#endif
-	ap->a_cumlen += pp->pt_inhit->hit_dist;
-	goto out;
-    }
-#ifdef RT_MULTISPECTRAL
-    BN_CK_TABDATA(swp->msw_basecolor);
-    ms_filter_color = bn_tabdata_dup(swp->msw_basecolor);
-
-#else
-    VMOVE(filter_color, swp->sw_basecolor);
-#endif
-
-#if 0
-/* XXX temp hack -Mike & JRA */
-    if (R_DEBUG&RDEBUG_RAYPLOT) {
-	static int count = 0;
-	char name[128];
-	if (plotfp && plotfp != stdout)  fclose(plotfp);
-	sprintf(name, "rr%d.pl", count++);
-	if ((plotfp = fopen(name, "wb")) == NULL) {
-	    perror(name);
-	    plotfp = stdout;
-	}
-    }
-#endif
-
-    if ((swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL))
-	shade_inputs(ap, pp, swp, MFI_HIT|MFI_NORMAL);
-
-    /*
-     * If this ray is being fired from the exit point of
-     * an object, and is directly entering another object,
-     * (ie, there is no intervening air-gap), and
-     * the two refractive indices match, then do not fire a
-     * reflected ray -- just take the transmission contribution.
-     * This is important, eg, for glass gun tubes projecting
-     * through a glass armor plate. :-)
-     */
-    if (NEAR_ZERO(pp->pt_inhit->hit_dist, AIR_GAP_TOL) &&
-	ap->a_refrac_index == swp->sw_refrac_index) {
-	transmit += reflect;
-	reflect = 0;
-    }
-
-    /*
-     * Diminish base color appropriately, and add in
-     * contributions from mirror reflection & transparency
-     */
-    shader_fract = 1 - (reflect + transmit);
-    if (shader_fract < 0) {
-	shader_fract = 0;
-    } else if (shader_fract >= 1) {
-	goto out;
-    }
-    if (R_DEBUG&RDEBUG_REFRACT) {
-	bu_log("rr_render: lvl=%d start shader=%g, reflect=%g, transmit=%g %s\n",
-	       ap->a_level,
-	       shader_fract, reflect, transmit,
-	       pp->pt_regionp->reg_name);
-    }
-#ifdef RT_MULTISPECTRAL
-    BN_GET_TABDATA(ms_shader_color, swp->msw_color->table);
-    bn_tabdata_scale(ms_shader_color, swp->msw_color, shader_fract);
-#else
-    VSCALE(shader_color, swp->sw_color, shader_fract);
-#endif
-
-    /*
-     * Compute transmission through an object.
-     * There may be a mirror reflection, which will be handled
-     * by the reflection code later
-     */
-    if (transmit > 0) {
-	if (R_DEBUG&RDEBUG_REFRACT) {
-	    bu_log("rr_render: lvl=%d transmit=%g.  Calculate refraction at entrance to %s.\n",
-		   ap->a_level, transmit,
-		   pp->pt_regionp->reg_name);
-	}
-	/*
-	 * Calculate refraction at entrance.
-	 */
-	sub_ap = *ap;		/* struct copy */
-#ifdef RT_MULTISPECTRAL
-	sub_ap.a_spectrum = bn_tabdata_dup((struct bn_tabdata *)ap->a_spectrum);
-#endif
-	sub_ap.a_level = 0;	/* # of internal reflections */
-	sub_ap.a_cumlen = 0;	/* distance through the glass */
-	sub_ap.a_user = -1;	/* sanity */
-	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
-	sub_ap.a_diverge = 0.0;
-	sub_ap.a_uptr = (genptr_t)(pp->pt_regionp);
-	VMOVE(sub_ap.a_ray.r_pt, swp->sw_hit.hit_point);
-	VMOVE(incident_dir, ap->a_ray.r_dir);
-
-	/* If there is an air gap, reset ray's RI to air */
-	if (pp->pt_inhit->hit_dist > AIR_GAP_TOL)
-	    sub_ap.a_refrac_index = RI_AIR;
-
-	if (sub_ap.a_refrac_index != swp->sw_refrac_index &&
-	    !rr_refract(incident_dir,		/* input direction */
-			swp->sw_hit.hit_normal,		/* exit normal */
-			sub_ap.a_refrac_index,		/* current RI */
-			swp->sw_refrac_index,		/* next RI */
-			sub_ap.a_ray.r_dir		/* output direction */
-		)) {
-	    /*
-	     * Ray was mirror reflected back outside solid.
-	     * Just add contribution to reflection,
-	     * and quit.
-	     */
-	    reflect += transmit;
-	    transmit = 0;
-#ifdef RT_MULTISPECTRAL
-	    ms_transmit_color = bn_tabdata_get_constval(0.0, spectrum);
-#else
-	    VSETALL(transmit_color, 0);
-#endif
-	    if (R_DEBUG&RDEBUG_REFRACT) {
-		bu_log("rr_render: lvl=%d change xmit into reflection %s\n",
-		       ap->a_level,
-		       pp->pt_regionp->reg_name);
-	    }
-	    goto do_reflection;
-	}
-	if (R_DEBUG&RDEBUG_REFRACT) {
-	    bu_log("rr_render: lvl=%d begin transmission through %s.\n",
-		   ap->a_level,
-		   pp->pt_regionp->reg_name);
-	}
-
-	/*
-	 * Find new exit point from the inside.
-	 * We will iterate, but not recurse, due to the special
-	 * (non-recursing) hit and miss routines used here for
-	 * internal reflection.
-	 *
-	 * a_onehit is set to 3, so that where possible,
-	 * rr_hit() will be given three accurate hit points:
-	 * the entry and exit points of this glass region,
-	 * and the entry point into the next region.
-	 * This permits calculation of the departing
-	 * refraction angle based on the RI of the current and
-	 * *next* regions along the ray.
-	 */
-	sub_ap.a_purpose = "rr first glass transmission ray";
-	sub_ap.a_flag = 0;
-    do_inside:
-	sub_ap.a_hit =  rr_hit;
-	sub_ap.a_miss = rr_miss;
-	sub_ap.a_logoverlap = ap->a_logoverlap;
-	sub_ap.a_onehit = 3;
-	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
-	sub_ap.a_diverge = 0.0;
-	switch (code = rt_shootray(&sub_ap)) {
-	    case 3:
-		/* More glass to come.
-		 * uvec=exit_pt, vvec=N, a_refrac_index = next RI.
-		 */
-		break;
-	    case 2:
-		/* No more glass to come.
-		 * uvec=exit_pt, vvec=N, a_refrac_index = next RI.
-		 */
-		break;
-	    case 1:
-		/* Treat as escaping ray */
-		if (R_DEBUG&RDEBUG_REFRACT)
-		    bu_log("rr_refract: Treating as escaping ray\n");
-		goto do_exit;
-	    case 0:
-	    default:
-		/* Dreadful error */
-#ifdef RT_MULTISPECTRAL
-		bu_bomb("rr_refract: Stuck in glass. Very green pixel, unsupported in multi-spectral mode\n");
-#else
-		VSET(swp->sw_color, 0, 99, 0); /* very green */
-#endif
-		goto out;			/* abandon hope */
-	}
-
-	if (R_DEBUG&RDEBUG_REFRACT) {
-	    bu_log("rr_render: calculating refraction @ exit from %s (green)\n", pp->pt_regionp->reg_name);
-	    bu_log("Start point to exit point:\n\
-vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 %g %g %g; vdraw send\n",
-		   V3ARGS(sub_ap.a_ray.r_pt),
-		   V3ARGS(sub_ap.a_uvec));
-	}
-	/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
-	 * and returns EXIT Normal in sub_ap.a_vvec,
-	 * and returns next RI in sub_ap.a_refrac_index
-	 */
-	if (R_DEBUG&RDEBUG_RAYWRITE) {
-	    wraypts(sub_ap.a_ray.r_pt,
-		    sub_ap.a_ray.r_dir,
-		    sub_ap.a_uvec,
-		    2, ap, stdout);	/* 2 = ?? */
-	}
-	if (R_DEBUG&RDEBUG_RAYPLOT) {
-	    /* plotfp */
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    pl_color(stdout, 0, 255, 0);
-	    pdv_3line(stdout,
-		      sub_ap.a_ray.r_pt,
-		      sub_ap.a_uvec);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-	/* Advance.  Exit point becomes new start point */
-	VMOVE(sub_ap.a_ray.r_pt, sub_ap.a_uvec);
-	VMOVE(incident_dir, sub_ap.a_ray.r_dir);
-
-	/*
-	 * Calculate refraction at exit point.
-	 * Use "look ahead" RI value from rr_hit.
-	 */
-	if (sub_ap.a_refrac_index != swp->sw_refrac_index &&
-	    !rr_refract(incident_dir,		/* input direction */
-			sub_ap.a_vvec,			/* exit normal */
-			swp->sw_refrac_index,		/* current RI */
-			sub_ap.a_refrac_index,		/* next RI */
-			sub_ap.a_ray.r_dir		/* output direction */
-		)) {
-	    static long count = 0;		/* not PARALLEL, should be OK */
-
-	    /* Reflected internally -- keep going */
-	    if ((++sub_ap.a_level) <= max_ireflect) {
-		sub_ap.a_purpose = "rr reflected internal ray, probing for glass exit point";
-		sub_ap.a_flag = 0;
-		goto do_inside;
-	    }
-
-	    /*
-	     * Internal Reflection limit exceeded -- just let
-	     * the ray escape, continuing on current course.
-	     * This will cause some energy from somewhere in the
-	     * sceen to be received through this glass,
-	     * which is much better than just returning
-	     * grey or black, as before.
-	     */
-	    if ((R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
-		    count++ < MSG_PROLOGUE ||
-		    (count%MSG_INTERVAL) == 3
-		    )) {
-		bu_log("rr_render: %d, %d Int.reflect=%d: %s lvl=%d\n",
-		       sub_ap.a_x, sub_ap.a_y,
-		       sub_ap.a_level,
-		       pp->pt_regionp->reg_name,
-		       ap->a_level);
-	    }
-	    VMOVE(sub_ap.a_ray.r_dir, incident_dir);
-	    goto do_exit;
-	}
-    do_exit:
-	/*
-	 * Compute internal spectral transmittance.
-	 * Bouger's law.  pg 30 of "color science"
-	 *
-	 * Apply attenuation factor due to thickness of the glass.
-	 * sw_extinction is in terms of fraction of light absorbed
-	 * per linear meter of glass.  a_cumlen is in mm.
-	 */
-/* XXX extinction should be a spectral curve, not scalor */
-	if (swp->sw_extinction > 0 && sub_ap.a_cumlen > 0) {
-	    attenuation = pow(10.0, -1.0e-3 * sub_ap.a_cumlen *
-			      swp->sw_extinction);
-	} else {
-	    attenuation = 1;
-	}
-
-	/*
-	 * Process the escaping refracted ray.
-	 * This is the only place we might recurse dangerously,
-	 * so we are careful to use our caller's recursion level+1.
-	 * NOTE: point & direction already filled in
-	 */
-	sub_ap.a_hit =  ap->a_hit;
-	sub_ap.a_miss = ap->a_miss;
-	sub_ap.a_logoverlap = ap->a_logoverlap;
-	sub_ap.a_onehit = ap->a_onehit;
-	sub_ap.a_level = ap->a_level+1;
-	sub_ap.a_uptr = ap->a_uptr;
-	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
-	sub_ap.a_diverge = 0.0;
-	if (code == 3) {
-	    sub_ap.a_purpose = "rr recurse on next glass";
-	    sub_ap.a_flag = 0;
-	}  else  {
-	    sub_ap.a_purpose = "rr recurse on escaping internal ray";
-	    sub_ap.a_flag = 1;
-	    sub_ap.a_onehit = sub_ap.a_onehit > -3 ? -3 : sub_ap.a_onehit;
-	}
-	/* sub_ap.a_refrac_index was set to RI of next material by rr_hit().
-	 */
-	sub_ap.a_cumlen = 0;
-	(void) rt_shootray(&sub_ap);
-
-	/* a_user has hit/miss flag! */
-	if (sub_ap.a_user == 0) {
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_transmit_color, background);
-#else
-	    VMOVE(transmit_color, background);
-#endif
-	    sub_ap.a_cumlen = 0;
-	} else {
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_transmit_color, sub_ap.a_spectrum);
-#else
-	    VMOVE(transmit_color, sub_ap.a_color);
-#endif
-	}
-	transmit *= attenuation;
-#ifdef RT_MULTISPECTRAL
-	bn_tabdata_mul(ms_transmit_color, ms_filter_color, ms_transmit_color);
-#else
-	VELMUL(transmit_color, filter_color, transmit_color);
-#endif
-	if (R_DEBUG&RDEBUG_REFRACT) {
-	    bu_log("rr_render: lvl=%d end of xmit through %s\n",
-		   ap->a_level,
-		   pp->pt_regionp->reg_name);
-	}
-    } else {
-#ifdef RT_MULTISPECTRAL
-	bn_tabdata_constval(ms_transmit_color, 0.0);
-#else
-	VSETALL(transmit_color, 0);
-#endif
-    }
-
-    /*
-     * Handle any reflection, including mirror reflections
-     * detected by the transmission code, above.
-     */
- do_reflection:
-#ifdef RT_MULTISPECTRAL
-    if (sub_ap.a_spectrum) {
-	bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
-	sub_ap.a_spectrum = BN_TABDATA_NULL;
-    }
-#endif
-    if (reflect > 0) {
-	register fastf_t f;
-
-	/* Mirror reflection */
-	if (R_DEBUG&RDEBUG_REFRACT)
-	    bu_log("rr_render: calculating mirror reflection off of %s\n", pp->pt_regionp->reg_name);
-	sub_ap = *ap;		/* struct copy */
-#ifdef RT_MULTISPECTRAL
-	sub_ap.a_spectrum = bn_tabdata_dup((struct bn_tabdata *)ap->a_spectrum);
-#endif
-	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
-	sub_ap.a_diverge = 0.0;
-	sub_ap.a_level = ap->a_level+1;
-	sub_ap.a_onehit = -1;	/* Require at least one non-air hit */
-	VMOVE(sub_ap.a_ray.r_pt, swp->sw_hit.hit_point);
-	VREVERSE(to_eye, ap->a_ray.r_dir);
-	f = 2 * VDOT(to_eye, swp->sw_hit.hit_normal);
-	VSCALE(work, swp->sw_hit.hit_normal, f);
-	/* I have been told this has unit length */
-	VSUB2(sub_ap.a_ray.r_dir, work, to_eye);
-	sub_ap.a_purpose = "rr reflected ray";
-	sub_ap.a_flag = 0;
-
-	if (R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_REFRACT)) {
-	    point_t endpt;
-	    /* Plot the surface normal -- green/blue */
-	    /* plotfp */
-	    f = sub_ap.a_rt_i->rti_radius * 0.02;
-	    VJOIN1(endpt, sub_ap.a_ray.r_pt,
-		   f, swp->sw_hit.hit_normal);
-	    if (R_DEBUG&RDEBUG_RAYPLOT) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		pl_color(stdout, 0, 255, 255);
-		pdv_3line(stdout, sub_ap.a_ray.r_pt, endpt);
-		bu_semaphore_release(BU_SEM_SYSCALL);
-	    }
-	    bu_log("Surface normal for reflection:\n\
-vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
-		   V3ARGS(sub_ap.a_ray.r_pt),
-		   V3ARGS(endpt));
-
-	}
-
-	(void)rt_shootray(&sub_ap);
-
-	/* a_user has hit/miss flag! */
-	if (sub_ap.a_user == 0) {
-	    /* MISS */
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_reflect_color, background);
-#else
-	    VMOVE(reflect_color, background);
-#endif
-	} else {
-	    ap->a_cumlen += sub_ap.a_cumlen;
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_reflect_color, sub_ap.a_spectrum);
-#else
-	    VMOVE(reflect_color, sub_ap.a_color);
-#endif
-	}
-    } else {
-#ifdef RT_MULTISPECTRAL
-	bn_tabdata_constval(ms_reflect_color, 0.0);
-#else
-	VSETALL(reflect_color, 0);
-#endif
-    }
-
-    /*
-     * Collect the contributions to the final color
-     */
-#ifdef RT_MULTISPECTRAL
-    bn_tabdata_join2(swp->msw_color, ms_shader_color,
-		     reflect, ms_reflect_color,
-		     transmit, ms_transmit_color);
-#else
-    VJOIN2(swp->sw_color, shader_color,
-	   reflect, reflect_color,
-	   transmit, transmit_color);
-#endif
-    if (R_DEBUG&RDEBUG_REFRACT) {
-	bu_log("rr_render: lvl=%d end shader=%g reflect=%g, transmit=%g %s\n",
-	       ap->a_level,
-	       shader_fract, reflect, transmit,
-	       pp->pt_regionp->reg_name);
-#ifdef RT_MULTISPECTRAL
-	{
-	    struct bu_vls str;
-	    bu_vls_init(&str);
-	    bu_vls_strcat(&str, "ms_shader_color: ");
-	    bn_tabdata_to_tcl(&str, ms_shader_color);
-	    bu_vls_strcat(&str, "\nms_reflect_color: ");
-	    bn_tabdata_to_tcl(&str, ms_reflect_color);
-	    bu_vls_strcat(&str, "\nms_transmit_color: ");
-	    bn_tabdata_to_tcl(&str, ms_transmit_color);
-	    bu_log("rr_render: %s\n", bu_vls_addr(&str));
-	    bu_vls_free(&str);
-	}
-#else
-	VPRINT("shader  ", shader_color);
-	VPRINT("reflect ", reflect_color);
-	VPRINT("transmit", transmit_color);
-#endif
-    }
- out:
-    if (R_DEBUG&RDEBUG_REFRACT) {
-#ifdef RT_MULTISPECTRAL
-	{
-	    struct bu_vls str;
-	    bu_vls_init(&str);
-	    bu_vls_strcat(&str, "final swp->msw_color: ");
-	    bn_tabdata_to_tcl(&str, swp->msw_color);
-	    bu_log("rr_render: %s\n", bu_vls_addr(&str));
-	    bu_vls_free(&str);
-	}
-#else
-	VPRINT("final   ", swp->sw_color);
-#endif
-    }
-
-    /* Release all the dynamic spectral curves */
-#ifdef RT_MULTISPECTRAL
-    if (ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color bn_tabdata*");
-    if (ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color bn_tabdata*");
-    if (ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color bn_tabdata*");
-    if (sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
-#endif
-
-    return 1;
-}
-
-/*
  * R R _ M I S S
  */
 HIDDEN int
-/*ARGSUSED*/
-rr_miss(struct application *ap, struct partition *PartHeadp)
+rr_miss(struct application *ap)
 {
     RT_AP_CHECK(ap);
     return 1;	/* treat as escaping ray */
@@ -656,7 +84,7 @@ rr_miss(struct application *ap, struct partition *PartHeadp)
  *	a_refrac_index	RI of *next* material
  */
 HIDDEN int
-rr_hit(struct application *ap, struct partition *PartHeadp)
+rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     register struct partition *pp;
     register struct hit *hitp;
@@ -922,6 +350,562 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 	return 1;		/* refracted */
     }
     /* NOTREACHED */
+}
+
+
+/*
+ * R R _ R E N D E R
+ */
+int
+rr_render(register struct application *ap,
+	  struct partition *pp,
+	  struct shadework *swp)
+{
+    struct application sub_ap;
+    vect_t work;
+    vect_t incident_dir;
+    fastf_t shader_fract;
+    fastf_t reflect;
+    fastf_t transmit;
+
+#ifdef RT_MULTISPECTRAL
+    struct bn_tabdata *ms_filter_color = BN_TABDATA_NULL;
+    struct bn_tabdata *ms_shader_color = BN_TABDATA_NULL;
+    struct bn_tabdata *ms_reflect_color = BN_TABDATA_NULL;
+    struct bn_tabdata *ms_transmit_color = BN_TABDATA_NULL;
+#else
+    vect_t filter_color;
+    vect_t shader_color;
+    vect_t reflect_color;
+    vect_t transmit_color;
+#endif
+
+    fastf_t attenuation;
+    vect_t to_eye;
+    int code;
+
+    RT_AP_CHECK(ap);
+
+    RT_APPLICATION_INIT(&sub_ap);
+
+#ifdef RT_MULTISPECTRAL
+    sub_ap.a_spectrum = BN_TABDATA_NULL;
+#endif
+
+    /*
+     * sw_xmitonly is set primarily for light visibility rays.
+     * Need to compute (partial) transmission through to the light,
+     * or procedural shaders won't be able to cast shadows
+     * and light won't be able to get through glass
+     * (including "stained glass" and "filter glass").
+     *
+     * On the other hand, light visibility rays shouldn't be refracted,
+     * it is pointless to shoot at where the light isn't.
+     */
+    if (swp->sw_xmitonly) {
+	/* Caller wants transmission term only, don't fire reflected rays */
+	transmit = swp->sw_transmit + swp->sw_reflect;	/* Don't loose energy */
+	reflect = 0;
+    } else {
+	reflect = swp->sw_reflect;
+	transmit = swp->sw_transmit;
+    }
+    if (R_DEBUG&RDEBUG_REFRACT) {
+	bu_log("rr_render(%s) START: lvl=%d reflect=%g, transmit=%g, xmitonly=%d\n",
+	       pp->pt_regionp->reg_name,
+	       ap->a_level,
+	       reflect, transmit,
+	       swp->sw_xmitonly);
+    }
+    if (reflect <= 0 && transmit <= 0)
+	goto out;
+
+    if (ap->a_level > max_bounces) {
+	/* Nothing more to do for this ray */
+	static long count = 0;		/* Not PARALLEL, should be OK */
+
+	if ((R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
+		count++ < MSG_PROLOGUE ||
+		(count%MSG_INTERVAL) == 3
+		)) {
+	    bu_log("rr_render: %d, %d MAX BOUNCES=%d: %s\n",
+		   ap->a_x, ap->a_y,
+		   ap->a_level,
+		   pp->pt_regionp->reg_name);
+	}
+
+	/*
+	 * Return the basic color of the object, ignoring the
+	 * the fact that it is supposed to be
+	 * filtering or reflecting light here.
+	 * This is much better than returning just black,
+	 * but something better might be done.
+	 */
+#ifdef RT_MULTISPECTRAL
+	BN_CK_TABDATA(swp->msw_color);
+	BN_CK_TABDATA(swp->msw_basecolor);
+	bn_tabdata_copy(swp->msw_color, swp->msw_basecolor);
+#else
+	VMOVE(swp->sw_color, swp->sw_basecolor);
+#endif
+	ap->a_cumlen += pp->pt_inhit->hit_dist;
+	goto out;
+    }
+#ifdef RT_MULTISPECTRAL
+    BN_CK_TABDATA(swp->msw_basecolor);
+    ms_filter_color = bn_tabdata_dup(swp->msw_basecolor);
+
+#else
+    VMOVE(filter_color, swp->sw_basecolor);
+#endif
+
+    if ((swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL))
+	shade_inputs(ap, pp, swp, MFI_HIT|MFI_NORMAL);
+
+    /*
+     * If this ray is being fired from the exit point of
+     * an object, and is directly entering another object,
+     * (ie, there is no intervening air-gap), and
+     * the two refractive indices match, then do not fire a
+     * reflected ray -- just take the transmission contribution.
+     * This is important, eg, for glass gun tubes projecting
+     * through a glass armor plate. :-)
+     */
+    if (NEAR_ZERO(pp->pt_inhit->hit_dist, AIR_GAP_TOL)
+	&& NEAR_ZERO(ap->a_refrac_index - swp->sw_refrac_index, SMALL_FASTF))
+    {
+	transmit += reflect;
+	reflect = 0;
+    }
+
+    /*
+     * Diminish base color appropriately, and add in
+     * contributions from mirror reflection & transparency
+     */
+    shader_fract = 1 - (reflect + transmit);
+    if (shader_fract < 0) {
+	shader_fract = 0;
+    } else if (shader_fract >= 1) {
+	goto out;
+    }
+    if (R_DEBUG&RDEBUG_REFRACT) {
+	bu_log("rr_render: lvl=%d start shader=%g, reflect=%g, transmit=%g %s\n",
+	       ap->a_level,
+	       shader_fract, reflect, transmit,
+	       pp->pt_regionp->reg_name);
+    }
+#ifdef RT_MULTISPECTRAL
+    BN_GET_TABDATA(ms_shader_color, swp->msw_color->table);
+    bn_tabdata_scale(ms_shader_color, swp->msw_color, shader_fract);
+#else
+    VSCALE(shader_color, swp->sw_color, shader_fract);
+#endif
+
+    /*
+     * Compute transmission through an object.
+     * There may be a mirror reflection, which will be handled
+     * by the reflection code later
+     */
+    if (transmit > 0) {
+	if (R_DEBUG&RDEBUG_REFRACT) {
+	    bu_log("rr_render: lvl=%d transmit=%g.  Calculate refraction at entrance to %s.\n",
+		   ap->a_level, transmit,
+		   pp->pt_regionp->reg_name);
+	}
+	/*
+	 * Calculate refraction at entrance.
+	 */
+	sub_ap = *ap;		/* struct copy */
+#ifdef RT_MULTISPECTRAL
+	sub_ap.a_spectrum = bn_tabdata_dup((struct bn_tabdata *)ap->a_spectrum);
+#endif
+	sub_ap.a_level = 0;	/* # of internal reflections */
+	sub_ap.a_cumlen = 0;	/* distance through the glass */
+	sub_ap.a_user = -1;	/* sanity */
+	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+	sub_ap.a_diverge = 0.0;
+	sub_ap.a_uptr = (genptr_t)(pp->pt_regionp);
+	VMOVE(sub_ap.a_ray.r_pt, swp->sw_hit.hit_point);
+	VMOVE(incident_dir, ap->a_ray.r_dir);
+
+	/* If there is an air gap, reset ray's RI to air */
+	if (pp->pt_inhit->hit_dist > AIR_GAP_TOL)
+	    sub_ap.a_refrac_index = RI_AIR;
+
+	if (!NEAR_ZERO(sub_ap.a_refrac_index - swp->sw_refrac_index, SMALL_FASTF)
+	    && !rr_refract(incident_dir,		/* input direction */
+			   swp->sw_hit.hit_normal,	/* exit normal */
+			   sub_ap.a_refrac_index,	/* current RI */
+			   swp->sw_refrac_index,	/* next RI */
+			   sub_ap.a_ray.r_dir		/* output direction */
+		))
+	{
+	    /*
+	     * Ray was mirror reflected back outside solid.
+	     * Just add contribution to reflection,
+	     * and quit.
+	     */
+	    reflect += transmit;
+	    transmit = 0;
+#ifdef RT_MULTISPECTRAL
+	    ms_transmit_color = bn_tabdata_get_constval(0.0, spectrum);
+#else
+	    VSETALL(transmit_color, 0);
+#endif
+	    if (R_DEBUG&RDEBUG_REFRACT) {
+		bu_log("rr_render: lvl=%d change xmit into reflection %s\n",
+		       ap->a_level,
+		       pp->pt_regionp->reg_name);
+	    }
+	    goto do_reflection;
+	}
+	if (R_DEBUG&RDEBUG_REFRACT) {
+	    bu_log("rr_render: lvl=%d begin transmission through %s.\n",
+		   ap->a_level,
+		   pp->pt_regionp->reg_name);
+	}
+
+	/*
+	 * Find new exit point from the inside.
+	 * We will iterate, but not recurse, due to the special
+	 * (non-recursing) hit and miss routines used here for
+	 * internal reflection.
+	 *
+	 * a_onehit is set to 3, so that where possible,
+	 * rr_hit() will be given three accurate hit points:
+	 * the entry and exit points of this glass region,
+	 * and the entry point into the next region.
+	 * This permits calculation of the departing
+	 * refraction angle based on the RI of the current and
+	 * *next* regions along the ray.
+	 */
+	sub_ap.a_purpose = "rr first glass transmission ray";
+	sub_ap.a_flag = 0;
+    do_inside:
+	sub_ap.a_hit =  rr_hit;
+	sub_ap.a_miss = rr_miss;
+	sub_ap.a_logoverlap = ap->a_logoverlap;
+	sub_ap.a_onehit = 3;
+	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+	sub_ap.a_diverge = 0.0;
+	switch (code = rt_shootray(&sub_ap)) {
+	    case 3:
+		/* More glass to come.
+		 * uvec=exit_pt, vvec=N, a_refrac_index = next RI.
+		 */
+		break;
+	    case 2:
+		/* No more glass to come.
+		 * uvec=exit_pt, vvec=N, a_refrac_index = next RI.
+		 */
+		break;
+	    case 1:
+		/* Treat as escaping ray */
+		if (R_DEBUG&RDEBUG_REFRACT)
+		    bu_log("rr_refract: Treating as escaping ray\n");
+		goto do_exit;
+	    case 0:
+	    default:
+		/* Dreadful error */
+#ifdef RT_MULTISPECTRAL
+		bu_bomb("rr_refract: Stuck in glass. Very green pixel, unsupported in multi-spectral mode\n");
+#else
+		VSET(swp->sw_color, 0, 99, 0); /* very green */
+#endif
+		goto out;			/* abandon hope */
+	}
+
+	if (R_DEBUG&RDEBUG_REFRACT) {
+	    bu_log("rr_render: calculating refraction @ exit from %s (green)\n", pp->pt_regionp->reg_name);
+	    bu_log("Start point to exit point:\n\
+vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 %g %g %g; vdraw send\n",
+		   V3ARGS(sub_ap.a_ray.r_pt),
+		   V3ARGS(sub_ap.a_uvec));
+	}
+	/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
+	 * and returns EXIT Normal in sub_ap.a_vvec,
+	 * and returns next RI in sub_ap.a_refrac_index
+	 */
+	if (R_DEBUG&RDEBUG_RAYWRITE) {
+	    wraypts(sub_ap.a_ray.r_pt,
+		    sub_ap.a_ray.r_dir,
+		    sub_ap.a_uvec,
+		    2, ap, stdout);	/* 2 = ?? */
+	}
+	if (R_DEBUG&RDEBUG_RAYPLOT) {
+	    /* plotfp */
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    pl_color(stdout, 0, 255, 0);
+	    pdv_3line(stdout,
+		      sub_ap.a_ray.r_pt,
+		      sub_ap.a_uvec);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+	/* Advance.  Exit point becomes new start point */
+	VMOVE(sub_ap.a_ray.r_pt, sub_ap.a_uvec);
+	VMOVE(incident_dir, sub_ap.a_ray.r_dir);
+
+	/*
+	 * Calculate refraction at exit point.
+	 * Use "look ahead" RI value from rr_hit.
+	 */
+	if (!NEAR_ZERO(sub_ap.a_refrac_index - swp->sw_refrac_index, SMALL_FASTF)
+	    && !rr_refract(incident_dir,		/* input direction */
+			   sub_ap.a_vvec,		/* exit normal */
+			   swp->sw_refrac_index,	/* current RI */
+			   sub_ap.a_refrac_index,	/* next RI */
+			   sub_ap.a_ray.r_dir		/* output direction */
+		))
+	{
+	    static long count = 0;		/* not PARALLEL, should be OK */
+
+	    /* Reflected internally -- keep going */
+	    if ((++sub_ap.a_level) <= max_ireflect) {
+		sub_ap.a_purpose = "rr reflected internal ray, probing for glass exit point";
+		sub_ap.a_flag = 0;
+		goto do_inside;
+	    }
+
+	    /*
+	     * Internal Reflection limit exceeded -- just let
+	     * the ray escape, continuing on current course.
+	     * This will cause some energy from somewhere in the
+	     * sceen to be received through this glass,
+	     * which is much better than just returning
+	     * grey or black, as before.
+	     */
+	    if ((R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
+		    count++ < MSG_PROLOGUE ||
+		    (count%MSG_INTERVAL) == 3
+		    )) {
+		bu_log("rr_render: %d, %d Int.reflect=%d: %s lvl=%d\n",
+		       sub_ap.a_x, sub_ap.a_y,
+		       sub_ap.a_level,
+		       pp->pt_regionp->reg_name,
+		       ap->a_level);
+	    }
+	    VMOVE(sub_ap.a_ray.r_dir, incident_dir);
+	    goto do_exit;
+	}
+    do_exit:
+	/*
+	 * Compute internal spectral transmittance.
+	 * Bouger's law.  pg 30 of "color science"
+	 *
+	 * Apply attenuation factor due to thickness of the glass.
+	 * sw_extinction is in terms of fraction of light absorbed
+	 * per linear meter of glass.  a_cumlen is in mm.
+	 */
+/* XXX extinction should be a spectral curve, not scalor */
+	if (swp->sw_extinction > 0 && sub_ap.a_cumlen > 0) {
+	    attenuation = pow(10.0, -1.0e-3 * sub_ap.a_cumlen *
+			      swp->sw_extinction);
+	} else {
+	    attenuation = 1;
+	}
+
+	/*
+	 * Process the escaping refracted ray.
+	 * This is the only place we might recurse dangerously,
+	 * so we are careful to use our caller's recursion level+1.
+	 * NOTE: point & direction already filled in
+	 */
+	sub_ap.a_hit =  ap->a_hit;
+	sub_ap.a_miss = ap->a_miss;
+	sub_ap.a_logoverlap = ap->a_logoverlap;
+	sub_ap.a_onehit = ap->a_onehit;
+	sub_ap.a_level = ap->a_level+1;
+	sub_ap.a_uptr = ap->a_uptr;
+	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+	sub_ap.a_diverge = 0.0;
+	if (code == 3) {
+	    sub_ap.a_purpose = "rr recurse on next glass";
+	    sub_ap.a_flag = 0;
+	}  else  {
+	    sub_ap.a_purpose = "rr recurse on escaping internal ray";
+	    sub_ap.a_flag = 1;
+	    sub_ap.a_onehit = sub_ap.a_onehit > -3 ? -3 : sub_ap.a_onehit;
+	}
+	/* sub_ap.a_refrac_index was set to RI of next material by rr_hit().
+	 */
+	sub_ap.a_cumlen = 0;
+	(void) rt_shootray(&sub_ap);
+
+	/* a_user has hit/miss flag! */
+	if (sub_ap.a_user == 0) {
+#ifdef RT_MULTISPECTRAL
+	    bn_tabdata_copy(ms_transmit_color, background);
+#else
+	    VMOVE(transmit_color, background);
+#endif
+	    sub_ap.a_cumlen = 0;
+	} else {
+#ifdef RT_MULTISPECTRAL
+	    bn_tabdata_copy(ms_transmit_color, sub_ap.a_spectrum);
+#else
+	    VMOVE(transmit_color, sub_ap.a_color);
+#endif
+	}
+	transmit *= attenuation;
+#ifdef RT_MULTISPECTRAL
+	bn_tabdata_mul(ms_transmit_color, ms_filter_color, ms_transmit_color);
+#else
+	VELMUL(transmit_color, filter_color, transmit_color);
+#endif
+	if (R_DEBUG&RDEBUG_REFRACT) {
+	    bu_log("rr_render: lvl=%d end of xmit through %s\n",
+		   ap->a_level,
+		   pp->pt_regionp->reg_name);
+	}
+    } else {
+#ifdef RT_MULTISPECTRAL
+	bn_tabdata_constval(ms_transmit_color, 0.0);
+#else
+	VSETALL(transmit_color, 0);
+#endif
+    }
+
+    /*
+     * Handle any reflection, including mirror reflections
+     * detected by the transmission code, above.
+     */
+ do_reflection:
+#ifdef RT_MULTISPECTRAL
+    if (sub_ap.a_spectrum) {
+	bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
+	sub_ap.a_spectrum = BN_TABDATA_NULL;
+    }
+#endif
+    if (reflect > 0) {
+	register fastf_t f;
+
+	/* Mirror reflection */
+	if (R_DEBUG&RDEBUG_REFRACT)
+	    bu_log("rr_render: calculating mirror reflection off of %s\n", pp->pt_regionp->reg_name);
+	sub_ap = *ap;		/* struct copy */
+#ifdef RT_MULTISPECTRAL
+	sub_ap.a_spectrum = bn_tabdata_dup((struct bn_tabdata *)ap->a_spectrum);
+#endif
+	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+	sub_ap.a_diverge = 0.0;
+	sub_ap.a_level = ap->a_level+1;
+	sub_ap.a_onehit = -1;	/* Require at least one non-air hit */
+	VMOVE(sub_ap.a_ray.r_pt, swp->sw_hit.hit_point);
+	VREVERSE(to_eye, ap->a_ray.r_dir);
+	f = 2 * VDOT(to_eye, swp->sw_hit.hit_normal);
+	VSCALE(work, swp->sw_hit.hit_normal, f);
+	/* I have been told this has unit length */
+	VSUB2(sub_ap.a_ray.r_dir, work, to_eye);
+	sub_ap.a_purpose = "rr reflected ray";
+	sub_ap.a_flag = 0;
+
+	if (R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_REFRACT)) {
+	    point_t endpt;
+	    /* Plot the surface normal -- green/blue */
+	    /* plotfp */
+	    f = sub_ap.a_rt_i->rti_radius * 0.02;
+	    VJOIN1(endpt, sub_ap.a_ray.r_pt,
+		   f, swp->sw_hit.hit_normal);
+	    if (R_DEBUG&RDEBUG_RAYPLOT) {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		pl_color(stdout, 0, 255, 255);
+		pdv_3line(stdout, sub_ap.a_ray.r_pt, endpt);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+	    }
+	    bu_log("Surface normal for reflection:\n\
+vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
+		   V3ARGS(sub_ap.a_ray.r_pt),
+		   V3ARGS(endpt));
+
+	}
+
+	(void)rt_shootray(&sub_ap);
+
+	/* a_user has hit/miss flag! */
+	if (sub_ap.a_user == 0) {
+	    /* MISS */
+#ifdef RT_MULTISPECTRAL
+	    bn_tabdata_copy(ms_reflect_color, background);
+#else
+	    VMOVE(reflect_color, background);
+#endif
+	} else {
+	    ap->a_cumlen += sub_ap.a_cumlen;
+#ifdef RT_MULTISPECTRAL
+	    bn_tabdata_copy(ms_reflect_color, sub_ap.a_spectrum);
+#else
+	    VMOVE(reflect_color, sub_ap.a_color);
+#endif
+	}
+    } else {
+#ifdef RT_MULTISPECTRAL
+	bn_tabdata_constval(ms_reflect_color, 0.0);
+#else
+	VSETALL(reflect_color, 0);
+#endif
+    }
+
+    /*
+     * Collect the contributions to the final color
+     */
+#ifdef RT_MULTISPECTRAL
+    bn_tabdata_join2(swp->msw_color, ms_shader_color,
+		     reflect, ms_reflect_color,
+		     transmit, ms_transmit_color);
+#else
+    VJOIN2(swp->sw_color, shader_color,
+	   reflect, reflect_color,
+	   transmit, transmit_color);
+#endif
+    if (R_DEBUG&RDEBUG_REFRACT) {
+	bu_log("rr_render: lvl=%d end shader=%g reflect=%g, transmit=%g %s\n",
+	       ap->a_level,
+	       shader_fract, reflect, transmit,
+	       pp->pt_regionp->reg_name);
+#ifdef RT_MULTISPECTRAL
+	{
+	    struct bu_vls str;
+	    bu_vls_init(&str);
+	    bu_vls_strcat(&str, "ms_shader_color: ");
+	    bn_tabdata_to_tcl(&str, ms_shader_color);
+	    bu_vls_strcat(&str, "\nms_reflect_color: ");
+	    bn_tabdata_to_tcl(&str, ms_reflect_color);
+	    bu_vls_strcat(&str, "\nms_transmit_color: ");
+	    bn_tabdata_to_tcl(&str, ms_transmit_color);
+	    bu_log("rr_render: %s\n", bu_vls_addr(&str));
+	    bu_vls_free(&str);
+	}
+#else
+	VPRINT("shader  ", shader_color);
+	VPRINT("reflect ", reflect_color);
+	VPRINT("transmit", transmit_color);
+#endif
+    }
+ out:
+    if (R_DEBUG&RDEBUG_REFRACT) {
+#ifdef RT_MULTISPECTRAL
+	{
+	    struct bu_vls str;
+	    bu_vls_init(&str);
+	    bu_vls_strcat(&str, "final swp->msw_color: ");
+	    bn_tabdata_to_tcl(&str, swp->msw_color);
+	    bu_log("rr_render: %s\n", bu_vls_addr(&str));
+	    bu_vls_free(&str);
+	}
+#else
+	VPRINT("final   ", swp->sw_color);
+#endif
+    }
+
+    /* Release all the dynamic spectral curves */
+#ifdef RT_MULTISPECTRAL
+    if (ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color bn_tabdata*");
+    if (ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color bn_tabdata*");
+    if (ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color bn_tabdata*");
+    if (sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
+#endif
+
+    return 1;
 }
 
 /*
