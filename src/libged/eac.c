@@ -110,11 +110,9 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	bu_free((genptr_t)new_argv, "ged_eac: new_argv");
 	bu_vls_free(&v);
 	return retval;
-    } else {
-	bu_vls_free(&v);
-	return TCL_OK;
     }
 
+    bu_vls_free(&v);
     return GED_OK;
 }
 
