@@ -62,10 +62,10 @@ static void dpm_hook(register const struct bu_structparse *sdp, register const c
 struct bu_structparse air_parse[] = {
     {"%f",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook },
     {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "s",			SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "delta",		SHDR_O(delta),		bu_mm_cvt },
-    {"%f",  1, "d",			SHDR_O(delta),		bu_mm_cvt },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",  1, "d",		SHDR_O(delta),		bu_mm_cvt },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), air_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), emist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), tmist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);

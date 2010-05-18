@@ -240,8 +240,8 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     int			node;
     int			i;
     int			long_size = 0;
-    int			file_size_long;
-    int			file_size_int;
+    size_t		file_size_long;
+    size_t		file_size_int;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
