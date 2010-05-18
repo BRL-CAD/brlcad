@@ -682,7 +682,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;
 
-	GED_DB_DIRADD(gedp, dp, comb_name, -1L, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     } else {
 	db_delete(gedp->ged_wdbp->dbip, dp);

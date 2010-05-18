@@ -166,7 +166,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	file_name = (char *)*argv;
 
 	/* make a binunif of the entire file */
-	if ( rt_mk_binunif( gedp->ged_wdbp, obj_name, file_name, minor_type, -1 ) ) {
+	if ( rt_mk_binunif( gedp->ged_wdbp, obj_name, file_name, minor_type, 0) ) {
 	    bu_vls_printf(&gedp->ged_result_str, "Error creating %s", obj_name);
 	    return GED_ERROR;
 	}

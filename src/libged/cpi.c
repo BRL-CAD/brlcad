@@ -89,7 +89,7 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
     /* translate to end of "original" cylinder */
     VADD2( tgc_ip->v, tgc_ip->v, tgc_ip->h );
 
-    if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
+    if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, &proto->d_minor_type)) == DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: An error has occured while adding a new object to the database.\n", argv[0]);
 	return GED_ERROR;
     }

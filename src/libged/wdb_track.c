@@ -675,7 +675,7 @@ wrobj(struct rt_wdb	*wdbp,
 	    return -1;
     }
 
-    if ( (tdp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
+    if ( (tdp = db_diradd( wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );

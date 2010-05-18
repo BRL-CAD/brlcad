@@ -283,7 +283,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	nmg_model = (struct model *)NULL;
     }
 
-    if ( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+    if ( (dp=db_diradd( dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", newname);
 	return GED_ERROR;

@@ -652,7 +652,7 @@ wrobj(struct ged	*gedp,
 	    return GED_ERROR;
     }
 
-    if ( (tdp = db_diradd( gedp->ged_wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
+    if ( (tdp = db_diradd( gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add '%s' to directory, aborting\n", name);

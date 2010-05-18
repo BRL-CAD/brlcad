@@ -3385,7 +3385,7 @@ copy_object(
     if (!new_name) {
 	new_name = input_dp->d_namep;
     }
-    if ((new_dp = db_diradd(curr_dbip, new_name, -1L, 0, input_dp->d_flags,
+    if ((new_dp = db_diradd(curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
 			    (genptr_t)&input_dp->d_minor_type)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "Failed to add new object name (", new_name,
 			 ") to directory - aborting!!\n", (char *)NULL);
@@ -3678,7 +3678,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_diradd(wdbp->dbip, argv[1], -1L, 0,
+    if ((dp=db_diradd(wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0,
 		      gtd.gtd_obj[endpos-1]->d_flags,
 		      (genptr_t)&new_int.idb_type)) == DIR_NULL) {
 	rt_db_free_internal(&internal);
@@ -4563,7 +4563,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	nmg_model = (struct model *)NULL;
     }
 
-    if ((dp=db_diradd(dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL)
+    if ((dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL)
     {
 	Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL);
 	return TCL_ERROR;
@@ -7050,7 +7050,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     new_intern.idb_meth = &rt_functab[ID_ARB8];
     new_intern.idb_ptr = (genptr_t)arb;
 
-    if ((dp=db_diradd(wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
+    if ((dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -7965,7 +7965,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
 	rt_db_free_internal(&nmg_intern);
 
-	if ((dp=db_diradd(wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
+	if ((dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -8096,7 +8096,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     count = nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle);
 
-    if ((dp=db_diradd(wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+    if ((dp=db_diradd(wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 	rt_db_free_internal(&intern);
 	return TCL_ERROR;
@@ -8354,7 +8354,7 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
     }
 
     if (dp_new == DIR_NULL) {
-	if ((dp_new=db_diradd(wdbp->dbip, new_bot_name, -1L, 0, DIR_SOLID,
+	if ((dp_new=db_diradd(wdbp->dbip, new_bot_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID,
 			      (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    rt_db_free_internal(&intern);
 	    Tcl_AppendResult(interp, "Cannot add ", new_bot_name, " to directory\n", (char *)NULL);

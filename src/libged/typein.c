@@ -3044,7 +3044,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
  do_new_update:
     /* The function may have already written via LIBWDB */
     if ( internal.idb_ptr != NULL )  {
-	if ( (dp=db_diradd( gedp->ged_wdbp->dbip, name, -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL ) {
+	if ( (dp=db_diradd( gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL ) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
 	    return GED_ERROR;

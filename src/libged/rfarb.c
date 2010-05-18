@@ -220,7 +220,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
     }
 
-    if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
+    if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
 	return GED_ERROR;
