@@ -379,7 +379,11 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
+#ifndef _WIN32
     int count;
+#else
+    DWORD count;
+#endif
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
 
@@ -413,12 +417,12 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     }
 
     if (read_failed) {
-	int retcode = 0;
 	int aborted;
 
 	/* was it aborted? */
 #ifndef _WIN32
 	int rpid;
+	int retcode = 0;
 
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
@@ -428,6 +432,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 	aborted = run_rtp->aborted;
 #else
+	DWORD retcode = 0;
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
@@ -459,7 +464,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
+	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
 	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	/* free run_rtp */
