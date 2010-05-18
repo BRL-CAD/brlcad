@@ -923,7 +923,8 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
-    if ((ret=curve_to_vlist(vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->skt_curve))) {
+    ret=curve_to_vlist(vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->skt_curve);
+    if (ret) {
 	myret--;
 	bu_log("WARNING: Errors in sketch (%d segments reference non-existent vertices)\n",
 	       ret);
@@ -2156,7 +2157,8 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
     /* get number of segments */
     seg_count = 0;
-    if ((ret=Tcl_ListObjLength(interp, seg_list, &seg_count))) {
+    ret=Tcl_ListObjLength(interp, seg_list, &seg_count);
+    if (ret) {
 	return ret;
     }
 
@@ -2174,14 +2176,17 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 	/* get the next segment */
-	if ((ret=Tcl_ListObjIndex(interp, seg_list, j, &seg)))
+	ret=Tcl_ListObjIndex(interp, seg_list, j, &seg);
+	if (ret)
 	    return ret;
 
-	if ((ret=Tcl_ListObjLength(interp, seg, &seg_len)))
+	ret=Tcl_ListObjLength(interp, seg, &seg_len);
+	if (ret)
 	    return ret;
 
 	/* get the segment type */
-	if ((ret=Tcl_ListObjIndex(interp, seg, 0, &seg_type)))
+	ret=Tcl_ListObjIndex(interp, seg, 0, &seg_type);
+	if (ret)
 	    return ret;
 	type = Tcl_GetString(seg_type);
 
@@ -2190,10 +2195,12 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "lsg");
 	    for (k=1; k<seg_len; k += 2) {
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
 		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
 		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
@@ -2215,10 +2222,12 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    bsg = (struct bezier_seg *)bu_calloc(1, sizeof(struct bezier_seg), "bsg");
 	    for (k=1; k<seg_len; k+= 2) {
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
 		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
 		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
@@ -2247,10 +2256,12 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 	    csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "csg");
 	    for (k=1; k<seg_len; k += 2) {
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
 		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
 		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
@@ -2280,10 +2291,12 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 	    nsg = (struct nurb_seg *)bu_calloc(1, sizeof(struct nurb_seg), "nsg");
 	    for (k=1; k<seg_len; k += 2) {
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
 		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
 		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
