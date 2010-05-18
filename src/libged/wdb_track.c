@@ -842,7 +842,7 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
 }
 
 static void
-trcurve(fastf_t wh[], fastf_t t[])
+trcurve(fastf_t *wh, fastf_t *t)
 {
     sol.s_values[0] = wh[0];
     sol.s_values[1] = t[0];
@@ -855,7 +855,7 @@ trcurve(fastf_t wh[], fastf_t t[])
 }
 
 static void
-bottom(vect_t vec1, vect_t vec2, fastf_t t[])
+bottom(vect_t vec1, vect_t vec2, fastf_t *t)
 {
     vect_t	tvec;
     int i, j;
@@ -879,7 +879,7 @@ bottom(vect_t vec1, vect_t vec2, fastf_t t[])
 }
 
 static void
-top(vect_t vec1, vect_t vec2, fastf_t t[])
+top(vect_t vec1, vect_t vec2, fastf_t *t)
 {
     fastf_t	tooch, mag;
     vect_t	del, tvec;
