@@ -2827,7 +2827,8 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
     struct faceuse *fu=NULL;
     Tcl_Obj *obj, **obj_array;
     int len;
-    int num_verts, num_loops;
+    int num_verts = 0;
+    int num_loops = 0;
     int *loop;
     int loop_len;
     int i, j;

@@ -283,7 +283,8 @@ nmg_m_set_high_bit(struct model *m)
 		MARK_VU(vu);
 	    }
 	    /* Lone vertex in shell */
-	    if ((vu = s->vu_p)) {
+	    vu = s->vu_p;
+	    if (vu) {
 		MARK_VU(vu);
 	    }
 	}
@@ -452,7 +453,8 @@ nmg_m_reindex(struct model *m, register long int newindex)
 		ASSIGN_VU(vu);
 	    }
 	    /* Lone vertex in shell */
-	    if ((vu = s->vu_p)) {
+	    vu = s->vu_p;
+	    if (vu) {
 		ASSIGN_VU(vu);
 	    }
 	}
@@ -715,7 +717,8 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
 		UNIQ_VU(vu);
 	    }
 	    /* Lone vertex in shell */
-	    if ((vu = s->vu_p)) {
+	    vu = s->vu_p;
+	    if (vu) {
 		ctr->shells_of_lone_vert++;
 		UNIQ_VU(vu);
 	    }
@@ -932,7 +935,8 @@ nmg_find_max_index(const struct model *m)
 		CHECK_VU_INDEX(vu);
 	    }
 	    /* Lone vertex in shell */
-	    if ((vu = s->vu_p)) {
+	    vu = s->vu_p;
+	    if (vu) {
 		CHECK_VU_INDEX(vu);
 	    }
 	}

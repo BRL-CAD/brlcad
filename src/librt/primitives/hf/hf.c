@@ -909,9 +909,12 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	VSUB2(tmp, rp->r_pt, hf->hf_V);
 	xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 	yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
-	if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-	    if ((nhits+=r)>MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
-	    hp+=r;
+	r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
+	if (r) {
+	    nhits += r;
+	    if (nhits > MAXHITS)
+		bu_bomb("g_hf.c: too many hits.\n");
+ 	    hp += r;
 	}
     } else if (cosine*cosine > 0.5) {
 	double tmp;
@@ -1077,10 +1080,12 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	     */
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
-		int r;
-		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
-		    hp+=r;
+		int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
+		if (r) {
+		    nhits += r;
+		    if (nhits >= MAXHITS)
+			bu_bomb("g_hf.c: too many hits.\n");
+		    hp += r;
 		}
 	    }
 	    /* This is the DDA trying to fill in the corners as it
@@ -1140,10 +1145,12 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		}
 		if (maxZ+deltaZ > lowest &&
 		    minZ-deltaZ < highest) {
-		    int r;
+		    int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
 		    /* DO HIT */
-		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
+		    if (r) {
+			nhits += r;
+			if (nhits >= MAXHITS)
+			    bu_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		    }
 		}
@@ -1318,9 +1325,11 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	     */
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
-		int r;
-		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
+		int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
+		if (r) {
+		    nhits += r;
+		    if (nhits >= MAXHITS)
+			bu_bomb("g_hf.c: too many hits.\n");
 		    hp+=r;
 		}
 	    }
@@ -1381,11 +1390,13 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		}
 		if (maxZ+deltaZ > lowest &&
 		    minZ-deltaZ < highest) {
-		    int r;
+		    int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
 		    /* DO HIT */
-		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
-			hp+=r;
+		    if (r) {
+			nhits += r;
+			if (nhits >= MAXHITS)
+			    bu_bomb("g_hf.c: too many hits.\n");
+			hp += r;
 		    }
 		}
 		error -= 1.0;
@@ -1977,7 +1988,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     /*
      * Load data file, and transform to internal format
      */
-    if (!(mp = bu_open_mapped_file(xip->dfile, "hf"))) {
+    mp = bu_open_mapped_file(xip->dfile, "hf");
+    if (!mp) {
 	bu_log("rt_hf_import4() unable to open '%s'\n", xip->dfile);
 	goto err1;
     }

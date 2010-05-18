@@ -646,7 +646,8 @@ nmg_mlv(unsigned long *magic, struct vertex *v, int orientation)
 
 	/* Second, build the vertices */
 	/* This "if" degenerates to the "else" clause if no stealing */
-	if ((vu1 = s->vu_p)) {
+	vu1 = s->vu_p;
+	if (vu1) {
 	    /* Use shell's lone vertex */
 	    s->vu_p = (struct vertexuse *)NULL;
 	    vu1->up.lu_p = lu1;
@@ -1704,7 +1705,8 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
 
     NMG_CK_VERTEX(v);
 
-    if ((vg = v->vg_p)) {
+    vg = v->vg_p;
+    if (vg) {
 	NMG_CK_VERTEX_G(v->vg_p);
     } else {
 	m = nmg_find_model(
@@ -1849,7 +1851,8 @@ nmg_edge_g(struct edgeuse *eu)
     if (eu->vu_p->v_p == eu->eumate_p->vu_p->v_p)
 	bu_bomb("nmg_edge_g(): Warning - edge runs from+to same vertex, 0 len!\n");
 
-    if ((eg_p = eu->g.lseg_p)) {
+    eg_p = eu->g.lseg_p;
+    if (eg_p) {
 	NMG_CK_EDGE_G_LSEG(eg_p);
 	bu_bomb("nmg_edge_g() geometry already assigned\n");
     }
@@ -2209,7 +2212,8 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
     lu = l->lu_p;
     NMG_CK_LOOPUSE(lu);
 
-    if ((lg = l->lg_p)) {
+    lg = l->lg_p;
+    if (lg) {
 	NMG_CK_LOOP_G(lg);
     } else {
 	m = nmg_find_model(lu->up.magic_p);

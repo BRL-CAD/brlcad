@@ -1188,7 +1188,8 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	     * else
 	     * This is a real conflict.
 	     */
-	    if ((long_ptr = common_topo(a_tbl, next_tbl))) {
+	    long_ptr = common_topo(a_tbl, next_tbl);
+	    if (long_ptr) {
 		/* morf the two hit points */
 		a_hit->in_out = (a_hit->in_out & 0x0f0) +
 		    NMG_RAY_STATE_ON;

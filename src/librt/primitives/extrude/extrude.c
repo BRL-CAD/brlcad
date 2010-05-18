@@ -591,7 +591,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     int free_dists=0;
     point2d_t *verts;
     point2d_t *intercept;
-    point2d_t *normal;
+    point2d_t *normal = NULL;
     point2d_t ray_perp;
 
     crv = &extr->crv;
@@ -1394,7 +1394,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 	fastf_t radius;
 	point2d_t *verts;
 	point2d_t *intercept;
-	point2d_t *normal;
+	point2d_t *normal = NULL;
 
 	lng = BU_PTBL_GET(loop, i);
 	switch (*lng) {
@@ -1566,7 +1566,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		intercept = NULL;
-		normal = NULL;
 		verts = (point2d_t *)bu_calloc(bsg->degree + 1, sizeof(point2d_t), "Bezier verts");
 		for (j=0; j<=bsg->degree; j++) {
 		    V2MOVE(verts[j], ip->verts[bsg->ctl_points[j]]);

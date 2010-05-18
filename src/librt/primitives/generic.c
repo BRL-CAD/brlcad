@@ -59,10 +59,11 @@ rt_generic_xform(
     int id;
     struct bu_attribute_value_set avs;
 
-
     RT_CK_DB_INTERNAL(ip);
     RT_CK_DBI(dbip);
     RT_CK_RESOURCE(resp);
+
+    avs.magic = 0;
 
     id = ip->idb_type;
     BU_INIT_EXTERNAL(&ext);
@@ -83,8 +84,6 @@ rt_generic_xform(
 	    }
 	    break;
 	case 5:
-	    avs.magic = 0;
-
 	    if (rt_functab[id].ft_export5(&ext, ip, 1.0, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",
 		       rt_functab[id].ft_name);

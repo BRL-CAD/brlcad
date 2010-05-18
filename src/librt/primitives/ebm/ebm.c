@@ -569,7 +569,8 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_COPY(eip->mat, tmat);
 
     /* Get bit map from .bw(5) file */
-    if (!(mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm"))) {
+    mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm");
+    if (!mp) {
 	bu_log("rt_ebm_import4() unable to open '%s'\n", eip->file);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
@@ -715,7 +716,8 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_COPY(eip->mat, tmat);
 
     /* Get bit map from .bw(5) file */
-    if (!(mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm"))) {
+    mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm");
+    if (!mp) {
 	bu_log("rt_ebm_import4() unable to open '%s'\n", eip->file);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:

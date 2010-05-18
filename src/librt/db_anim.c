@@ -463,7 +463,8 @@ int db_parse_anim(struct db_i	*dbip,
     struct animate		*anp;
     int	at_root = 0;
 
-    if ( !(anp = db_parse_1anim( dbip, argc, argv )) )
+    anp = db_parse_1anim( dbip, argc, argv );
+    if (!anp)
 	return -1;	/* BAD */
 
     if ( argv[1][0] == '/' )

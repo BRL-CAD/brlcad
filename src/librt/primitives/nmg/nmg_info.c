@@ -715,7 +715,8 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	NMG_CK_EDGEUSE(eup);
 	eup_mate = eup->eumate_p;
 	NMG_CK_EDGEUSE(eup_mate);
-	if ((fu = nmg_find_fu_of_eu(eup)))
+	fu = nmg_find_fu_of_eu(eup);
+	if (fu)
 	    eup_orientation = fu->orientation;
 	else
 	    eup_orientation = OT_SAME;
@@ -812,7 +813,8 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 	NMG_CK_EDGEUSE(eup);
 	eup_mate = eup->eumate_p;
 	NMG_CK_EDGEUSE(eup_mate);
-	if ((fu1 = nmg_find_fu_of_eu(eup)))
+	fu1 = nmg_find_fu_of_eu(eup);
+	if (fu1)
 	    eup_orientation = fu1->orientation;
 	else
 	    eup_orientation = OT_SAME;
@@ -1614,7 +1616,8 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	v = vu->v_p;
 	NMG_CK_VERTEX(v);
-	if (!(vg = v->vg_p))
+	vg = v->vg_p;
+	if (!vg)
 	    return (struct vertexuse *)NULL;
 	NMG_CK_VERTEX_G(vg);
 	VSUB2(delta, vg->coord, pt);
@@ -1629,7 +1632,9 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-	if (!(vg = v->vg_p)) continue;
+	vg = v->vg_p;
+	if (!vg)
+	    continue;
 	NMG_CK_VERTEX_G(vg);
 	VSUB2(delta, vg->coord, pt);
 	if (MAGSQ(delta) <= tol->dist_sq)
@@ -1661,7 +1666,8 @@ nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
-	if ((vu = nmg_find_pt_in_lu(lu, pt, tol)))
+	vu = nmg_find_pt_in_lu(lu, pt, tol);
+	if (vu)
 	    return vu;
     }
     return (struct vertexuse *)NULL;
@@ -1703,7 +1709,8 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	/* Shell has faces */
 	NMG_CK_FACEUSE(fu);
-	if ((vu = nmg_find_pt_in_face(fu, pt, tol)))
+	vu = nmg_find_pt_in_face(fu, pt, tol);
+	if (vu)
 	    return vu->v_p;
 
 	if (BU_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
@@ -1716,7 +1723,8 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
     while (BU_LIST_NOT_HEAD(lu, &s->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
-	if ((vu = nmg_find_pt_in_lu(lu, pt, tol)))
+	vu = nmg_find_pt_in_lu(lu, pt, tol);
+	if (vu)
 	    return vu->v_p;
 
 	if (BU_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
@@ -1731,7 +1739,8 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	NMG_CK_VERTEXUSE(eu->vu_p);
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-	if ((vg = v->vg_p)) {
+	vg = v->vg_p;
+	if (vg) {
 	    NMG_CK_VERTEX_G(vg);
 	    VSUB2(delta, vg->coord, pt);
 	    if (MAGSQ(delta) <= tol->dist_sq)
@@ -1744,7 +1753,8 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	NMG_CK_VERTEXUSE(s->vu_p);
 	v = s->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-	if ((vg = v->vg_p)) {
+	vg = v->vg_p;
+	if (vg) {
 	    NMG_CK_VERTEX_G(vg);
 	    VSUB2(delta, vg->coord, pt);
 	    if (MAGSQ(delta) <= tol->dist_sq)
@@ -1777,7 +1787,8 @@ nmg_find_pt_in_model(const struct model *m, const fastf_t *pt, const struct bn_t
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    NMG_CK_SHELL(s);
-	    if ((v = nmg_find_pt_in_shell(s, pt, tol))) {
+	    v = nmg_find_pt_in_shell(s, pt, tol);
+	    if (v) {
 		NMG_CK_VERTEX(v);
 		return v;
 	    }

@@ -3410,7 +3410,8 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
      */
 
     /* Merging uses of common edges is OK, though, and quite necessary. */
-    if ((i = nmg_mesh_two_faces(fu1, fu2, tol))) {
+    i = nmg_mesh_two_faces(fu1, fu2, tol);
+    if (i) {
 	if (rt_g.NMG_debug&DEBUG_FCUT)
 	    bu_log("nmg_face_cutjoin() meshed %d edges\n", i);
     }

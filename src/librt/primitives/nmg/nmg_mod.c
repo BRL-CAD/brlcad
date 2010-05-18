@@ -863,7 +863,8 @@ nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol
     /*
      * Final case:  shell of a single vertexuse
      */
-    if ((vu = s2->vu_p)) {
+    vu = s2->vu_p;
+    if (vu) {
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_VERTEX(vu->v_p);
 	nmg_mv_vu_between_shells(s1, s2, vu);
@@ -1091,7 +1092,8 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
     }
 
     if (n > 1) {
-	if ((eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1))) {
+	eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1);
+	if (eur) {
 	    nmg_je(eur, euold);
 	} else {
 	    if (rt_g.NMG_debug & DEBUG_CMFACE)

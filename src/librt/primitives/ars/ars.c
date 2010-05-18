@@ -846,7 +846,8 @@ rt_ars_print(register const struct soltab *stp)
 	VPRINT("BA x CA", trip->tri_wn);
 	VPRINT("Normal", trip->tri_N);
 	bu_log("\n");
-    } while ((trip = trip->tri_forw));
+	trip = trip->tri_forw;
+    } while (trip);
 }
 
 
@@ -1230,7 +1231,8 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    return BRLCAD_ERROR;
 	}
 
-	if ((ptr=strchr(attr, 'P'))) {
+	ptr = strchr(attr, 'P');
+	if (ptr) {
 	    /* a specific point on a specific curve */
 	    if (!isdigit(*(ptr+1))) {
 		bu_vls_printf(logstr, 
@@ -1341,7 +1343,8 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 		char *ptr;
 
 		/* a specific curve */
-		if ((ptr=strchr(argv[0], 'P'))) {
+		ptr = strchr(argv[0], 'P');
+		if (ptr) {
 		    /* a specific point on this curve */
 		    i = atoi(&argv[0][1]);
 		    j = atoi(ptr+1);

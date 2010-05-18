@@ -775,7 +775,8 @@ nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
     NMG_CK_VERTEXUSE(vu);
     NMG_CK_VERTEX(vu->v_p);
 
-    if ((vg = vu->v_p->vg_p)) {
+    vg = vu->v_p->vg_p;
+    if (vg) {
 	NMG_CK_VERTEX_G(vg);
 	bu_log("%sVERTEXUSE %8x, v=x%x, %f %f %f\n", h, vu, vu->v_p,
 	       V3ARGS(vg->coord));

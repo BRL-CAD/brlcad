@@ -7661,7 +7661,7 @@ nmg_follow_free_edges_to_vertex(const struct vertex *vpa, const struct vertex *v
 HIDDEN struct bu_ptbl *
 nmg_find_path(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl *bad_verts, const struct shell *s)
 {
-    int done;
+    int done = 0;
     static struct bu_ptbl verts;
     struct vertexuse *vua;
 

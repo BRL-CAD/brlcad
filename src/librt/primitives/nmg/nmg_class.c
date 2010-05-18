@@ -825,8 +825,8 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, cons
     /* XXX eventually, make this conditional on DEBUG_CLASSIFY */
     {
 	/* Verify this assertion */
-	struct vertex *sv;
-	if ((sv = nmg_find_pt_in_shell(sB, pt, tol))) {
+	struct vertex *sv = nmg_find_pt_in_shell(sB, pt, tol);
+	if (sv) {
 	    bu_log("vu=x%x, v=x%x, sv=x%x, pt=(%g, %g, %g)\n",
 		   vu, vu->v_p, sv, V3ARGS(pt));
 	    bu_bomb("nmg_class_pt_s() vertex topology not shared properly\n");
@@ -1034,12 +1034,14 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const s
 	    FILE *fp;
 	    nmg_pr_fu_around_eu(eu, tol);
 	    VPRINT("class_eu_vs_s: midpoint of edge", pt);
-	    if ((fp = fopen("shell1.pl", "wb"))) {
+	    fp = fopen("shell1.pl", "wb");
+	    if (fp) {
 		nmg_pl_s(fp, s);
 		fclose(fp);
 		bu_log("wrote shell1.pl\n");
 	    }
-	    if ((fp = fopen("shell2.pl", "wb"))) {
+	    fp = fopen("shell2.pl", "wb");
+	    if (fp) {
 		nmg_pl_shell(fp, eu->up.lu_p->up.fu_p->s_p, 1);
 		fclose(fp);
 		bu_log("wrote shell2.pl\n");

@@ -235,10 +235,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
  * stp->st_specific for use by bot_shot().
  */
 int
-XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
-    struct soltab *stp;
-    struct rt_bot_internal *bot_ip;
-    struct rt_i *rtip;
+XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
 {
     register struct bot_specific *bot;
     const struct bn_tol *tol = &rtip->rti_tol;
@@ -1294,11 +1291,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-XGLUE(rt_bot_norm_, TRI_TYPE)(bot, hitp, stp, rp)
-    struct bot_specific *bot;
-    register struct hit *hitp;
-    struct soltab *stp;
-    register struct xray *rp;
+XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t old_norm;
     XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
@@ -1362,8 +1355,7 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(bot, hitp, stp, rp)
  * R T _ B O T _ F R E E
  */
 void
-XGLUE(rt_bot_free_, TRI_TYPE)(bot)
-    register struct bot_specific *bot;
+XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 {
     register XGLUE(tri_specific_, TRI_TYPE) *tri, *ptr;
 

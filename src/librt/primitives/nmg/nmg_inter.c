@@ -104,7 +104,8 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 	bu_log("nmg_make_dualvu(v=x%x, fu=x%x)\n", v, fu);
 
     /* check for existing vu */
-    if ((dualvu=nmg_find_v_in_face(v, fu))) {
+    dualvu=nmg_find_v_in_face(v, fu);
+    if (dualvu) {
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\tdualvu already exists (x%x)\n", dualvu);
 	return dualvu;
@@ -1808,7 +1809,8 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	}
 
 	/* See if start vertex is now shared */
-	if ((vu2_final=nmg_find_v_in_face(eu1->vu_p->v_p, fu2))) {
+	vu2_final=nmg_find_v_in_face(eu1->vu_p->v_p, fu2);
+	if (vu2_final) {
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("\tEdge start vertex lies on other face (2d topology).\n");
 	    vu1_final = eu1->vu_p;
@@ -1833,7 +1835,8 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
      * XXX "only ask geom question once" rule, and doing a geom
      * XXX calculation here before the topology check.
      */
-    if ((vu2_final=nmg_find_v_in_face(v1a, fu2))) {
+    vu2_final=nmg_find_v_in_face(v1a, fu2);
+    if (vu2_final) {
 	vu1_final = eu1->vu_p;
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    bu_log("\tEdge start vertex lies on other face (topology).\n\tAdding vu1_final=x%x (v=x%x), vu2_final=x%x (v=x%x)\n",
@@ -7557,7 +7560,8 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
 	       eu1, s2);
     }
 
-    if ((eu2 = nmg_find_matching_eu_in_s(eu1, s2))) {
+    eu2 = nmg_find_matching_eu_in_s(eu1, s2);
+    if (eu2) {
 	/* XXX Is the fact that s2 has a corresponding edge good enough? */
 	nmg_radial_join_eu(eu1, eu2, &is->tol);
 	return;
@@ -7616,7 +7620,8 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
      * whether this is an interior or exterior edge, and
      * perhaps add a loop into s2 connecting those two verts.
      */
-    if ((eu2 = nmg_find_matching_eu_in_s(eu1, s2))) {
+    eu2 = nmg_find_matching_eu_in_s(eu1, s2);
+    if (eu2) {
 	/* We can't fuse wire edges */
 	goto out;
     }
@@ -7889,7 +7894,8 @@ nmg_fu_touchingloops(const struct faceuse *fu)
     NMG_CK_FACEUSE(fu);
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
-	if ((vu = nmg_loop_touches_self(lu))) {
+	vu = nmg_loop_touches_self(lu);
+	if (vu) {
 	    NMG_CK_VERTEXUSE(vu);
 #if 0
 	    /* Right now, this routine is used for debugging ONLY,
