@@ -25,10 +25,10 @@
  *
  * Acknowledgements:
  * Modifications by Bob Parker (SURVICE Engineering):
- *       *- adapt for use in LIBRT's database object
- *       *- removed prompting for input
- *       *- removed signal catching
- *       *- added basename parameter
+ * *- adapt for use in LIBRT's database object
+ * *- removed prompting for input
+ * *- removed signal catching
+ * *- added basename parameter
  */
 /** @} */
 
@@ -48,7 +48,7 @@
 #include "wdb.h"
 
 /*XXX The following WDB_ defines need to go inside of a header file */
-#define	WDB_TCL_CHECK_READ_ONLY \
+#define WDB_TCL_CHECK_READ_ONLY \
 	if (interp) { \
 		if (wdbp->dbip->dbi_read_only) { \
 			Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
@@ -57,10 +57,10 @@
 	} else { \
 		bu_log("Sorry, this database is READ-ONLY\n"); \
 	}
-#define	WDB_TCL_ERROR_RECOVERY_SUGGESTION\
+#define WDB_TCL_ERROR_RECOVERY_SUGGESTION\
 	Tcl_AppendResult(interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
-database.  The on-disk database should still be intact.  For safety,\n\
+database.  The on-disk database should still be intact.  For safety, \n\
 you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
 
 
@@ -68,7 +68,7 @@ static int Trackpos = 0;
 static int mat_default = 1;
 static int los_default = 50;
 static int item_default = 500;
-static fastf_t	plano[4], plant[4];
+static fastf_t plano[4], plant[4];
 static int grpname_len;
 static int extraTypeChars = 3;
 static int extraChars = 4;
@@ -90,30 +90,30 @@ static void track_mk_freemembers();
 static int track_mk_comb();
 
 
-/*	==== I T O A ( )
- *	convert integer to ascii  wd format
+/*	==== I T O A ()
+ * convert integer to ascii wd format
  */
 static void
 itoa(Tcl_Interp *interp,
      int n,
      char s[],
      int w) {
-    int	 c, i, j, sign;
+    int c, i, j, sign;
 
-    if ( (sign = n) < 0 )	n = -n;
+    if ((sign = n) < 0) n = -n;
     i = 0;
-    do	s[i++] = n % 10 + '0';	while ( (n /= 10) > 0 );
-    if ( sign < 0 )	s[i++] = '-';
+    do s[i++] = n % 10 + '0';	while ((n /= 10) > 0);
+    if (sign < 0) s[i++] = '-';
 
     /* blank fill array
      */
-    for ( j = i; j < w; j++ )	s[j] = ' ';
-    if ( i > w )
+    for (j = i; j < w; j++) s[j] = ' ';
+    if (i > w)
 	Tcl_AppendResult(interp, "itoa: field length too small\n", (char *)NULL);
     s[w] = '\0';
     /* reverse the array
      */
-    for ( i = 0, j = w - 1; i < j; i++, j-- ) {
+    for (i = 0, j = w - 1; i < j; i++, j--) {
 	c    = s[i];
 	s[i] = s[j];
 	s[j] =    c;
@@ -122,10 +122,10 @@ itoa(Tcl_Interp *interp,
 
 
 static void
-crname(Tcl_Interp	*interp,
-       char		name[],
-       int		pos,
-       int		maxlen)
+crname(Tcl_Interp *interp,
+       char name[],
+       int pos,
+       int maxlen)
 {
     char temp[4];
 
@@ -135,9 +135,10 @@ crname(Tcl_Interp	*interp,
     return;
 }
 
+
 static void
-crregion(struct rt_wdb	*wdbp,
-	 Tcl_Interp	*interp,
+crregion(struct rt_wdb *wdbp,
+	 Tcl_Interp *interp,
 	 char region[],
 	 char op[],
 	 int members[],
@@ -156,30 +157,30 @@ crregion(struct rt_wdb	*wdbp,
     for (i=0; i<number; i++) {
 	solidname[grpname_len + extraTypeChars] = '\0';
 	crname(interp, solidname, members[i], maxlen);
-	if ( db_lookup( wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL ) {
+	if (db_lookup(wdbp->dbip, solidname, LOOKUP_QUIET) == DIR_NULL) {
 	    Tcl_AppendResult(interp, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;
 	}
-	track_mk_addmember( solidname, &head, NULL, op[i] );
+	track_mk_addmember(solidname, &head, NULL, op[i]);
     }
-    (void)track_mk_comb( wdbp, region, &head,
-			 1, NULL, NULL, NULL,
-			 500+Trackpos+i, 0, mat_default, los_default,
-			 0, 1, 1 );
+    (void)track_mk_comb(wdbp, region, &head,
+			1, NULL, NULL, NULL,
+			500+Trackpos+i, 0, mat_default, los_default,
+			0, 1, 1);
 }
 
 
 /*
  *
- *	Adds track given "wheel" info
+ * Adds track given "wheel" info
  *
  */
 int
-wdb_track_cmd(struct rt_wdb	*wdbp,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[]) {
+wdb_track_cmd(struct rt_wdb *wdbp,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[]) {
     fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
     char *solname = NULL;
     char *regname = NULL;
@@ -241,7 +242,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     ++arg;
     fw[2] = lw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if ( fw[2] <= 0 ) {
+    if (fw[2] <= 0) {
 	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
@@ -249,9 +250,9 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
     /* drive sprocket X */
     ++arg;
-    dw[0] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    dw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if ( dw[0] >= lw[0] ) {
+    if (dw[0] >= lw[0]) {
 	Tcl_AppendResult(interp, "DRIVE wheel not in the rear - STOP \n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
@@ -259,13 +260,13 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
     /* drive sprocket Z */
     ++arg;
-    dw[1] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    dw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* drive sprocket radius */
     ++arg;
-    dw[2] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    dw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if ( dw[2] <= 0 ) {
+    if (dw[2] <= 0) {
 	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
@@ -273,9 +274,9 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
     /* idler wheel X */
     ++arg;
-    iw[0] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    iw[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if ( iw[0] <= fw[0] ) {
+    if (iw[0] <= fw[0]) {
 	Tcl_AppendResult(interp, "IDLER wheel not in the front - STOP \n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
@@ -283,13 +284,13 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
     /* idler wheel Z */
     ++arg;
-    iw[1] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    iw[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* idler wheel radius */
     ++arg;
-    iw[2] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    iw[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if ( iw[2] <= 0 ) {
+    if (iw[2] <= 0) {
 	Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
@@ -297,18 +298,18 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
     /* track MIN Y */
     ++arg;
-    tr[2] = tr[0] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    tr[2] = tr[0] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
     /* track MAX Y */
     ++arg;
-    tr[1] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    tr[1] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if ( tr[0] == tr[1] ) {
+    if (tr[0] == tr[1]) {
 	Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    if ( tr[0] > tr[1] ) {
+    if (tr[0] > tr[1]) {
 	Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
 	tr[1] = tr[0];
 	tr[0] = tr[2];
@@ -316,9 +317,9 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
     /* track thickness */
     ++arg;
-    tr[2] = atof( argv[arg] ) * wdbp->dbip->dbi_local2base;
+    tr[2] = atof(argv[arg]) * wdbp->dbip->dbi_local2base;
 
-    if ( tr[2] <= 0 ) {
+    if (tr[2] <= 0) {
 	Tcl_AppendResult(interp, "Track thickness <= 0 - STOP\n", (char *)NULL);
 	edit_result = TCL_ERROR;
 	goto end;
@@ -354,14 +355,14 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 */
 
 /* Check for names to use:
- *	grpname.s.0->9 and grpname.r.0->9
+ * grpname.s.0->9 and grpname.r.0->9
  */
 
     for (i=0; i<10; i++) {
 	crname(interp, solname, i, len);
 	crname(interp, regname, i, len);
-	if ((db_lookup( wdbp->dbip, solname, LOOKUP_QUIET) != DIR_NULL) ||
-	    (db_lookup( wdbp->dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
+	if ((db_lookup(wdbp->dbip, solname, LOOKUP_QUIET) != DIR_NULL) ||
+	    (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) != DIR_NULL)) {
 	    /* name already exists */
 	    Tcl_AppendResult(interp, "Track: naming error -- STOP\n",
 			     (char *)NULL);
@@ -398,7 +399,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     trcurve(iw, tr);
     crname(interp, solname, 1, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID ) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
     /* idler dummy rcc */
@@ -409,7 +410,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     /* solid 2 */
     crname(interp, solname, 2, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID ) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -421,7 +422,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(iw, tr, 1);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -445,7 +446,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     trcurve(dw, tr);
     crname(interp, solname, 5, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -457,7 +458,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
     crname(interp, solname, 6, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -469,7 +470,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     bu_strlcpy(sol.s_name, solname, len);
     sol.s_type = ID_ARB8;
     crdummy(dw, tr, 2);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -479,7 +480,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     bottom(temp1, temp2, tr);
     crname(interp, solname, 8, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -493,7 +494,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     top(temp1, temp2, tr);
     crname(interp, solname, 9, len);
     bu_strlcpy(sol.s_name, solname, len);
-    if (wrobj(wdbp, interp, solname, DIR_SOLID) )
+    if (wrobj(wdbp, interp, solname, DIR_SOLID))
 	return TCL_ERROR;
     solname[grpname_len + extraTypeChars] = '\0';
 
@@ -564,7 +565,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 	    continue;
 	regname[grpname_len + extraTypeChars] = '\0';
 	crname(interp, regname, i, len);
-	if (db_lookup( wdbp->dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
+	if (db_lookup(wdbp->dbip, regname, LOOKUP_QUIET) == DIR_NULL) {
 	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 			     regname, "\n", (char *)NULL);
 	    continue;
@@ -573,10 +574,10 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     }
 
     /* Add them all at once */
-    if (track_mk_comb( wdbp, grpname, &head,
-		       0, NULL, NULL, NULL,
-		       0, 0, 0, 0,
-		       0, 1, 1) < 0) {
+    if (track_mk_comb(wdbp, grpname, &head,
+		      0, NULL, NULL, NULL,
+		      0, 0, 0, 0,
+		      0, 1, 1) < 0) {
 	Tcl_AppendResult(interp,
 			 "An error has occured while adding '",
 			 grpname, "' to the database.\n", (char *)NULL);
@@ -605,10 +606,10 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
 
 
 static int
-wrobj(struct rt_wdb	*wdbp,
-      Tcl_Interp	*interp,
-      char		name[],
-      int		flags) {
+wrobj(struct rt_wdb *wdbp,
+      Tcl_Interp *interp,
+      char name[],
+      int flags) {
     struct directory *tdp;
     struct rt_db_internal intern;
     int i;
@@ -616,74 +617,70 @@ wrobj(struct rt_wdb	*wdbp,
     if (wdbp->dbip == DBI_NULL)
 	return 0;
 
-    if ( db_lookup( wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL ) {
+    if (db_lookup(wdbp->dbip, name, LOOKUP_QUIET) != DIR_NULL) {
 	Tcl_AppendResult(interp, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
     }
 
-    if ( flags != DIR_SOLID )
-    {
-	Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n" );
+    if (flags != DIR_SOLID) {
+	Tcl_AppendResult(interp, "wrobj can only write solids, aborting\n");
 	return -1;
     }
 
-    RT_INIT_DB_INTERNAL( &intern );
-    switch ( sol.s_type )
-    {
+    RT_INIT_DB_INTERNAL(&intern);
+    switch (sol.s_type) {
 	case ID_ARB8:
-	{
-	    struct rt_arb_internal *arb;
+	    {
+		struct rt_arb_internal *arb;
 
-	    BU_GETSTRUCT( arb, rt_arb_internal );
+		BU_GETSTRUCT(arb, rt_arb_internal);
 
-	    arb->magic = RT_ARB_INTERNAL_MAGIC;
+		arb->magic = RT_ARB_INTERNAL_MAGIC;
 
-	    VMOVE( arb->pt[0], &sol.s_values[0] );
-	    for ( i=1; i<8; i++ )
-		VADD2( arb->pt[i], &sol.s_values[i*3], arb->pt[0] )
+		VMOVE(arb->pt[0], &sol.s_values[0]);
+		for (i=1; i<8; i++)
+		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
 
-		    intern.idb_ptr = (genptr_t)arb;
-	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	    intern.idb_type = ID_ARB8;
-	    intern.idb_meth = &rt_functab[ID_ARB8];
-	}
-	break;
+			intern.idb_ptr = (genptr_t)arb;
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		intern.idb_type = ID_ARB8;
+		intern.idb_meth = &rt_functab[ID_ARB8];
+	    }
+	    break;
 	case ID_TGC:
-	{
-	    struct rt_tgc_internal *tgc;
+	    {
+		struct rt_tgc_internal *tgc;
 
-	    BU_GETSTRUCT( tgc, rt_tgc_internal );
+		BU_GETSTRUCT(tgc, rt_tgc_internal);
 
-	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
+		tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
-	    VMOVE( tgc->v, &sol.s_values[0] );
-	    VMOVE( tgc->h, &sol.s_values[3] );
-	    VMOVE( tgc->a, &sol.s_values[6] );
-	    VMOVE( tgc->b, &sol.s_values[9] );
-	    VMOVE( tgc->c, &sol.s_values[12] );
-	    VMOVE( tgc->d, &sol.s_values[15] );
+		VMOVE(tgc->v, &sol.s_values[0]);
+		VMOVE(tgc->h, &sol.s_values[3]);
+		VMOVE(tgc->a, &sol.s_values[6]);
+		VMOVE(tgc->b, &sol.s_values[9]);
+		VMOVE(tgc->c, &sol.s_values[12]);
+		VMOVE(tgc->d, &sol.s_values[15]);
 
-	    intern.idb_ptr = (genptr_t)tgc;
-	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	    intern.idb_type = ID_TGC;
-	    intern.idb_meth = &rt_functab[ID_TGC];
-	}
-	break;
+		intern.idb_ptr = (genptr_t)tgc;
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		intern.idb_type = ID_TGC;
+		intern.idb_meth = &rt_functab[ID_TGC];
+	    }
+	    break;
 	default:
-	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL );
+	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
 	    return -1;
     }
 
-    if ( (tdp = db_diradd( wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
-    {
+    if ((tdp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	rt_db_free_internal(&intern);
-	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );
+	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
     }
 
-    if ( rt_db_put_internal( tdp, wdbp->dbip, &intern, &rt_uniresource ) < 0 )
-    {
+    if (rt_db_put_internal(tdp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "wrobj(wdbp, interp, ", name, "):  write error\n", (char *)NULL);
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION;
@@ -692,34 +689,35 @@ wrobj(struct rt_wdb	*wdbp,
     return 0;
 }
 
+
 static void
-tancir(Tcl_Interp	*interp,
+tancir(Tcl_Interp *interp,
        fastf_t cir1[],
        fastf_t cir2[]) {
     static fastf_t mag;
-    vect_t	work;
+    vect_t work;
     fastf_t f;
-    static fastf_t	temp, tempp, ang, angc;
+    static fastf_t temp, tempp, ang, angc;
 
     work[0] = cir2[0] - cir1[0];
     work[2] = cir2[1] - cir1[1];
     work[1] = 0.0;
-    mag = MAGNITUDE( work );
-    if ( mag > 1.0e-20 || mag < -1.0e-20 )  {
+    mag = MAGNITUDE(work);
+    if (mag > 1.0e-20 || mag < -1.0e-20) {
 	f = 1.0/mag;
-    }  else {
+    } else {
 	Tcl_AppendResult(interp, "tancir():  0-length vector!\n", (char *)NULL);
 	return;
     }
     VSCALE(work, work, f);
-    temp = acos( work[0] );
-    if ( work[2] < 0.0 )
+    temp = acos(work[0]);
+    if (work[2] < 0.0)
 	temp = 6.28318512717958646 - temp;
-    tempp = acos( (cir1[2] - cir2[2]) * f );
+    tempp = acos((cir1[2] - cir2[2]) * f);
     ang = temp + tempp;
     angc = temp - tempp;
-    if ( (cir1[1] + cir1[2] * sin(ang)) >
-	 (cir1[1] + cir1[2] * sin(angc)) )
+    if ((cir1[1] + cir1[2] * sin(ang)) >
+	(cir1[1] + cir1[2] * sin(angc)))
 	ang = angc;
     plano[0] = cir1[0] + cir1[2] * cos(ang);
     plano[1] = cir1[1] + cir1[2] * sin(ang);
@@ -729,19 +727,20 @@ tancir(Tcl_Interp	*interp,
     return;
 }
 
+
 static void
 slope(Tcl_Interp *interp,
       fastf_t wh1[],
       fastf_t wh2[],
       fastf_t t[]) {
     int i, j, switchs;
-    fastf_t	temp;
-    fastf_t	mag;
-    fastf_t	z, r, b;
-    vect_t	del, work;
+    fastf_t temp;
+    fastf_t mag;
+    fastf_t z, r, b;
+    vect_t del, work;
 
     switchs = 0;
-    if ( wh1[2] < wh2[2] ) {
+    if (wh1[2] < wh2[2]) {
 	switchs++;
 	for (i=0; i<3; i++) {
 	    temp = wh1[i];
@@ -750,7 +749,7 @@ slope(Tcl_Interp *interp,
 	}
     }
     tancir(interp, wh1, wh2);
-    if ( switchs ) {
+    if (switchs) {
 	for (i=0; i<3; i++) {
 	    temp = wh1[i];
 	    wh1[i] = wh2[i];
@@ -767,16 +766,16 @@ slope(Tcl_Interp *interp,
     del[1] = 0.0;
     del[0] = plano[0] - plant[0];
     del[2] = plano[1] - plant[1];
-    mag = MAGNITUDE( del );
+    mag = MAGNITUDE(del);
     work[0] = -1.0 * t[2] * del[2] / mag;
-    if ( del[0] < 0.0 )
+    if (del[0] < 0.0)
 	work[0] *= -1.0;
     work[1] = 0.0;
     work[2] = t[2] * fabs(del[0]) / mag;
     b = (plano[1] - work[2]) - (del[2]/del[0]*(plano[0] - work[0]));
     z = wh1[1];
     r = wh1[2];
-    if ( wh1[1] >= wh2[1] ) {
+    if (wh1[1] >= wh2[1]) {
 	z = wh2[1];
 	r = wh2[2];
     }
@@ -799,11 +798,12 @@ slope(Tcl_Interp *interp,
     return;
 }
 
+
 static void
 crdummy(fastf_t w[3], fastf_t t[3], int flag)
 {
-    fastf_t	temp;
-    vect_t	vec;
+    fastf_t temp;
+    vect_t vec;
     int i, j;
 
     vec[1] = 0.0;
@@ -816,8 +816,8 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
     }
 
     vec[0] = w[2] + t[2] + 1.0;
-    vec[2] = ( (plano[1] - w[1]) * vec[0] ) / (plano[0] - w[0]);
-    if ( flag > 1 )
+    vec[2] = ((plano[1] - w[1]) * vec[0]) / (plano[0] - w[0]);
+    if (flag > 1)
 	vec[0] *= -1.0;
     if (vec[2] >= 0.0)
 	vec[2] *= -1.0;
@@ -841,6 +841,7 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
 
 }
 
+
 static void
 trcurve(fastf_t *wh, fastf_t *t)
 {
@@ -854,10 +855,11 @@ trcurve(fastf_t *wh, fastf_t *t)
     VMOVE(&sol.s_values[15], &sol.s_values[9]);
 }
 
+
 static void
 bottom(vect_t vec1, vect_t vec2, fastf_t *t)
 {
-    vect_t	tvec;
+    vect_t tvec;
     int i, j;
 
     VMOVE(&sol.s_values[0], vec1);
@@ -878,18 +880,19 @@ bottom(vect_t vec1, vect_t vec2, fastf_t *t)
     }
 }
 
+
 static void
 top(vect_t vec1, vect_t vec2, fastf_t *t)
 {
-    fastf_t	tooch, mag;
-    vect_t	del, tvec;
+    fastf_t tooch, mag;
+    vect_t del, tvec;
     int i, j;
 
     tooch = t[2] * .25;
     del[0] = vec2[0] - vec1[0];
     del[1] = 0.0;
     del[2] = vec2[2] - vec1[2];
-    mag = MAGNITUDE( del );
+    mag = MAGNITUDE(del);
     VSCALE(tvec, del, tooch/mag);
     VSUB2(&sol.s_values[0], vec1, tvec);
     VADD2(del, del, tvec);
@@ -897,7 +900,7 @@ top(vect_t vec1, vect_t vec2, fastf_t *t)
     tvec[0] = tvec[2] = 0.0;
     tvec[1] = t[1] - t[0];
     VCROSS(del, tvec, &sol.s_values[3]);
-    mag = MAGNITUDE( del );
+    mag = MAGNITUDE(del);
     if (del[2] < 0)
 	mag *= -1.0;
     VSCALE(&sol.s_values[9], del, t[2]/mag);
@@ -917,39 +920,39 @@ top(vect_t vec1, vect_t vec2, fastf_t *t)
  */
 
 /*
- *			M K _ T R E E _ P U R E
+ * M K _ T R E E _ P U R E
  *
- *  Given a list of wmember structures, build a tree that performs
- *  the boolean operations in the given sequence.
- *  No GIFT semantics or precedence is provided.
- *  For that, use mk_tree_gift().
+ * Given a list of wmember structures, build a tree that performs
+ * the boolean operations in the given sequence.
+ * No GIFT semantics or precedence is provided.
+ * For that, use mk_tree_gift().
  */
 static void
-track_mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
+track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 {
     struct wmember *wp;
 
-    for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
-	union tree	*leafp, *nodep;
+    for (BU_LIST_FOR(wp, wmember, member_hd)) {
+	union tree *leafp, *nodep;
 
 	WDB_CK_WMEMBER(wp);
 
-	BU_GETUNION( leafp, tree );
+	BU_GETUNION(leafp, tree);
 	leafp->tr_l.magic = RT_TREE_MAGIC;
 	leafp->tr_l.tl_op = OP_DB_LEAF;
-	leafp->tr_l.tl_name = bu_strdup( wp->wm_name );
-	if ( !bn_mat_is_identity( wp->wm_mat ) )  {
-	    leafp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
+	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
+	if (!bn_mat_is_identity(wp->wm_mat)) {
+	    leafp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
 	}
 
-	if ( !comb->tree )  {
+	if (!comb->tree) {
 	    comb->tree = leafp;
 	    continue;
 	}
 	/* Build a left-heavy tree */
-	BU_GETUNION( nodep, tree );
+	BU_GETUNION(nodep, tree);
 	nodep->tr_b.magic = RT_TREE_MAGIC;
-	switch ( wp->wm_op )  {
+	switch (wp->wm_op) {
 	    case WMOP_UNION:
 		nodep->tr_b.tb_op = OP_UNION;
 		break;
@@ -968,20 +971,21 @@ track_mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
     }
 }
 
+
 /*
- *			M K _ T R E E _ G I F T
+ * M K _ T R E E _ G I F T
  *
- *  Add some nodes to a new or existing combination's tree,
- *  with GIFT precedence and semantics.
+ * Add some nodes to a new or existing combination's tree,
+ * with GIFT precedence and semantics.
  *
- *  NON-PARALLEL due to rt_uniresource
+ * NON-PARALLEL due to rt_uniresource
  *
- *  Returns -
- *	-1	ERROR
- *	0	OK
+ * Returns -
+ * -1 ERROR
+ * 0 OK
  */
 static int
-track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
+track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 {
     struct wmember *wp;
     union tree *tp;
@@ -990,39 +994,37 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
     size_t actual_count;
     int new_nodes;
 
-    if ( (new_nodes = bu_list_len( member_hd )) <= 0 )
+    if ((new_nodes = bu_list_len(member_hd)) <= 0)
 	return 0;	/* OK, nothing to do */
 
-    if ( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
-    {
-	db_non_union_push( comb->tree, &rt_uniresource );
-	if ( db_ck_v4gift_tree( comb->tree ) < 0 )
-	{
+    if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+	db_non_union_push(comb->tree, &rt_uniresource);
+	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_log("track_mk_tree_gift() Cannot flatten tree for editing\n");
 	    return -1;
 	}
     }
 
     /* make space for an extra leaf */
-    node_count = db_tree_nleaves( comb->tree );
-    tree_list = (struct rt_tree_array *)bu_calloc( node_count + (size_t)new_nodes,
-						   sizeof( struct rt_tree_array ), "tree list" );
+    node_count = db_tree_nleaves(comb->tree);
+    tree_list = (struct rt_tree_array *)bu_calloc(node_count + (size_t)new_nodes,
+						  sizeof(struct rt_tree_array), "tree list");
 
     /* flatten tree */
-    if ( comb->tree )  {
+    if (comb->tree) {
 	/* Release storage for non-leaf nodes, steal leaves */
-	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource ) - tree_list;
-	BU_ASSERT_SIZE_T( actual_count, ==, node_count );
+	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	comb->tree = TREE_NULL;
     } else {
 	actual_count = 0;
     }
 
     /* Add new members to the array */
-    for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
+    for (BU_LIST_FOR(wp, wmember, member_hd)) {
 	WDB_CK_WMEMBER(wp);
 
-	switch ( wp->wm_op )  {
+	switch (wp->wm_op) {
 	    case WMOP_INTERSECT:
 		tree_list[node_count].tl_op = OP_INTERSECT;
 		break;
@@ -1038,13 +1040,13 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	}
 
 	/* make new leaf node, and insert at end of array */
-	BU_GETUNION( tp, tree );
+	BU_GETUNION(tp, tree);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
-	tp->tr_l.tl_name = bu_strdup( wp->wm_name );
-	if ( !bn_mat_is_identity( wp->wm_mat ) )  {
-	    tp->tr_l.tl_mat = bn_mat_dup( wp->wm_mat );
+	tp->tr_l.tl_name = bu_strdup(wp->wm_name);
+	if (!bn_mat_is_identity(wp->wm_mat)) {
+	    tp->tr_l.tl_mat = bn_mat_dup(wp->wm_mat);
 	} else {
 	    tp->tr_l.tl_mat = (matp_t)NULL;
 	}
@@ -1052,38 +1054,39 @@ track_mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
     BU_ASSERT_SIZE_T(node_count, ==, actual_count + (size_t)new_nodes);
 
     /* rebuild the tree with GIFT semantics */
-    comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
 
-    bu_free( (char *)tree_list, "track_mk_tree_gift: tree_list" );
+    bu_free((char *)tree_list, "track_mk_tree_gift: tree_list");
 
     return 0;	/* OK */
 }
 
+
 /*
- *			M K _ A D D M E M B E R
+ * M K _ A D D M E M B E R
  *
- *  Obtain dynamic storage for a new wmember structure, fill in the
- *  name, default the operation and matrix, and add to doubly linked
- *  list.  In typical use, a one-line call is sufficient.  To change
- *  the defaults, catch the pointer that is returned, and adjust the
- *  structure to taste.
+ * Obtain dynamic storage for a new wmember structure, fill in the
+ * name, default the operation and matrix, and add to doubly linked
+ * list.  In typical use, a one-line call is sufficient.  To change
+ * the defaults, catch the pointer that is returned, and adjust the
+ * structure to taste.
  *
- *  The caller is responsible for initializing the header structures
- *  forward and backward links.
+ * The caller is responsible for initializing the header structures
+ * forward and backward links.
  */
 static struct wmember *
 track_mk_addmember(
-    const char	*name,
-    struct bu_list	*headp,
+    const char *name,
+    struct bu_list *headp,
     mat_t mat,
-    int		op)
+    int op)
 {
     struct wmember *wp;
 
-    BU_GETSTRUCT( wp, wmember );
+    BU_GETSTRUCT(wp, wmember);
     wp->l.magic = WMEMBER_MAGIC;
-    wp->wm_name = bu_strdup( name );
-    switch ( op )  {
+    wp->wm_name = bu_strdup(name);
+    switch (op) {
 	case WMOP_UNION:
 	case WMOP_INTERSECT:
 	case WMOP_SUBTRACT:
@@ -1096,64 +1099,66 @@ track_mk_addmember(
 
     /* if the user gave a matrix, use it.  otherwise use identity matrix*/
     if (mat) {
-	MAT_COPY( wp->wm_mat, mat );
+	MAT_COPY(wp->wm_mat, mat);
     } else {
-	MAT_IDN( wp->wm_mat );
+	MAT_IDN(wp->wm_mat);
     }
 
     /* Append to end of doubly linked list */
-    BU_LIST_INSERT( headp, &wp->l );
+    BU_LIST_INSERT(headp, &wp->l);
     return wp;
 }
 
+
 /*
- *			M K _ F R E E M E M B E R S
+ * M K _ F R E E M E M B E R S
  */
 static void
-track_mk_freemembers( struct bu_list *headp )
+track_mk_freemembers(struct bu_list *headp)
 {
     struct wmember *wp;
 
-    while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
+    while (BU_LIST_WHILE(wp, wmember, headp)) {
 	WDB_CK_WMEMBER(wp);
-	BU_LIST_DEQUEUE( &wp->l );
-	bu_free( (char *)wp->wm_name, "wm_name" );
-	bu_free( (char *)wp, "wmember" );
+	BU_LIST_DEQUEUE(&wp->l);
+	bu_free((char *)wp->wm_name, "wm_name");
+	bu_free((char *)wp, "wmember");
     }
 }
 
+
 /*
- *			M K _ C O M B
+ * M K _ C O M B
  *
- *  Make a combination, where the
- *  members are described by a linked list of wmember structs.
+ * Make a combination, where the
+ * members are described by a linked list of wmember structs.
  *
- *  The linked list is freed when it has been output.
+ * The linked list is freed when it has been output.
  *
- *  Has many operating modes.
+ * Has many operating modes.
  *
- *  Returns -
- *	-1	ERROR
- *	0	OK
+ * Returns -
+ * -1 ERROR
+ * 0 OK
  */
 static int
 track_mk_comb(
-    struct rt_wdb		*wdbp,
-    const char		*combname,
-    struct bu_list		*headp,		/* Made by mk_addmember() */
-    int			region_kind,	/* 1 => region.  'P' and 'V' for FASTGEN */
-    const char		*shadername,	/* shader name, or NULL */
-    const char		*shaderargs,	/* shader args, or NULL */
-    const unsigned char	*rgb,		/* NULL => no color */
-    int			id,		/* region_id */
-    int			air,		/* aircode */
-    int			material,	/* GIFTmater */
-    int			los,
-    int			inherit,
-    int			append_ok,	/* 0 = obj must not exit */
-    int			gift_semantics)	/* 0 = pure, 1 = gift */
+    struct rt_wdb *wdbp,
+    const char *combname,
+    struct bu_list *headp,		/* Made by mk_addmember() */
+    int region_kind,	/* 1 => region.  'P' and 'V' for FASTGEN */
+    const char *shadername,	/* shader name, or NULL */
+    const char *shaderargs,	/* shader args, or NULL */
+    const unsigned char *rgb,		/* NULL => no color */
+    int id,		/* region_id */
+    int air,		/* aircode */
+    int material,	/* GIFTmater */
+    int los,
+    int inherit,
+    int append_ok,	/* 0 = obj must not exit */
+    int gift_semantics)	/* 0 = pure, 1 = gift */
 {
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int fresh_combination;
 
@@ -1161,19 +1166,19 @@ track_mk_comb(
 
     RT_INIT_DB_INTERNAL(&intern);
 
-    if ( append_ok &&
-	 wdb_import( wdbp, &intern, combname, (matp_t)NULL ) >= 0 )  {
+    if (append_ok &&
+	wdb_import(wdbp, &intern, combname, (matp_t)NULL) >= 0) {
 	/* We retrieved an existing object, append to it */
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	RT_CK_COMB( comb );
+	RT_CK_COMB(comb);
 
 	fresh_combination = 0;
     } else {
 	/* Create a fresh new object for export */
-	BU_GETSTRUCT( comb, rt_comb_internal );
+	BU_GETSTRUCT(comb, rt_comb_internal);
 	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init( &comb->shader );
-	bu_vls_init( &comb->material );
+	bu_vls_init(&comb->shader);
+	bu_vls_init(&comb->material);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
@@ -1183,19 +1188,19 @@ track_mk_comb(
 	fresh_combination = 1;
     }
 
-    if ( gift_semantics )
-	track_mk_tree_gift( comb, headp );
+    if (gift_semantics)
+	track_mk_tree_gift(comb, headp);
     else
-	track_mk_tree_pure( comb, headp );
+	track_mk_tree_pure(comb, headp);
 
     /* Release the wmember list dynamic storage */
-    track_mk_freemembers( headp );
+    track_mk_freemembers(headp);
 
     /* Don't change these things when appending to existing combination */
-    if ( fresh_combination )  {
-	if ( region_kind )  {
+    if (fresh_combination) {
+	if (region_kind) {
 	    comb->region_flag = 1;
-	    switch ( region_kind )  {
+	    switch (region_kind) {
 		case 'P':
 		    comb->is_fastgen = REGION_FASTGEN_PLATE;
 		    break;
@@ -1211,24 +1216,22 @@ track_mk_comb(
 			   combname, region_kind, region_kind);
 	    }
 	}
-	if ( shadername )  bu_vls_strcat( &comb->shader, shadername );
-	if ( shaderargs )  {
-	    bu_vls_strcat( &comb->shader, " " );
-	    bu_vls_strcat( &comb->shader, shaderargs );
+	if (shadername) bu_vls_strcat(&comb->shader, shadername);
+	if (shaderargs) {
+	    bu_vls_strcat(&comb->shader, " ");
+	    bu_vls_strcat(&comb->shader, shaderargs);
 	    /* Convert to Tcl form if necessary.  Use heuristics */
-	    if ( strchr( shaderargs, '=' ) != NULL &&
-		 strchr( shaderargs, '{' ) == NULL )
-	    {
+	    if (strchr(shaderargs, '=') != NULL	&& strchr(shaderargs, '{') == NULL) {
 		struct bu_vls old;
 		bu_vls_init(&old);
 		bu_vls_vlscatzap(&old, &comb->shader);
-		if ( bu_shader_to_tcl_list( bu_vls_addr(&old), &comb->shader) )
+		if (bu_shader_to_tcl_list(bu_vls_addr(&old), &comb->shader))
 		    bu_log("Unable to convert shader string '%s %s'\n", shadername, shaderargs);
 		bu_vls_free(&old);
 	    }
 	}
 
-	if ( rgb )  {
+	if (rgb) {
 	    comb->rgb_valid = 1;
 	    comb->rgb[0] = rgb[0];
 	    comb->rgb[1] = rgb[1];
@@ -1244,8 +1247,9 @@ track_mk_comb(
     }
 
     /* The internal representation will be freed */
-    return wdb_put_internal( wdbp, combname, &intern, 1.0);
+    return wdb_put_internal(wdbp, combname, &intern, 1.0);
 }
+
 
 /*
  * Local Variables:
