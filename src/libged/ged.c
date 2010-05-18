@@ -274,7 +274,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	    int i;
 
 	    BU_GETSTRUCT(dbip, db_i);
-	    dbip->dbi_eof = -1L;
+	    dbip->dbi_eof = (off_t)-1L;
 	    dbip->dbi_fp = NULL;
 	    dbip->dbi_mf = NULL;
 	    dbip->dbi_read_only = 0;
