@@ -4259,7 +4259,7 @@ AC_CONFIG_FILES([
 	src/libfb/Makefile
 	src/libfft/Makefile
 	src/libgcv/Makefile
-	src/libgcv/obj/Makefile
+	src/libgcv/wfobj/Makefile
 	src/libged/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
