@@ -2391,6 +2391,7 @@ static int
 pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
     int i;
     unsigned long numPoints;
+    long readPoints;
     struct rt_pnts_internal *pnts;
     void *headPoint;
 
@@ -2457,15 +2458,15 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     } /* endif to process point data file */
 
 
-    /* prompt for numPoints if not entered */
+    /* prompt for readPoints if not entered */
     if (argc < 5) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[1]);
 	return GED_MORE;
     }
-    numPoints = atol(argv[4]);
-    if (numPoints < 0) {
+    readPoints = atol(argv[4]);
+    if (readPoints < 0) {
 	/* negative means automatically figure out how many points */
-	numPoints = -1;
+	readPoints = -1;
     }
 
     /* prompt for orientation */
@@ -2524,7 +2525,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     argv += 9;
     nextPrompt = argc % valuesPerPoint;
 
-    if (numPoints < 0) {
+    /* determine the number of points */
+    if (readPoints < 0) {
 	/* determine count from argc */
 	if (nextPrompt != 0) {
 	    bu_log("WARNING: Data mismatch.\n"
@@ -2537,6 +2539,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		   argc / valuesPerPoint);
 	}
 	numPoints = argc / valuesPerPoint;
+    } else {
+	numPoints = (unsigned long)readPoints;
     }
     
     /* prompt for X, Y, Z of points */
