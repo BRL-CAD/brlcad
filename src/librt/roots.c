@@ -110,18 +110,14 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 		 register bn_complex_t *nxZ, /* initial guess for root */
 		 const char *str)
 {
-    bn_complex_t p0, p1, p2;	/* evaluated polynomial+derivatives */
+    bn_complex_t p0 = {0.0, 0.0}, p1 = {0.0, 0.0}, p2 = {0.0, 0.0};	/* evaluated polynomial+derivatives */
     bn_complex_t p1_H;		/* p1 - H, temporary */
-    bn_complex_t cZ, cH;		/* 'Z' and H(Z) in comment */
+    bn_complex_t cZ, cH;	/* 'Z' and H(Z) in comment */
     bn_complex_t T;		/* temporary for making H */
     fastf_t diff=0.0;		/* test values for convergence */
     fastf_t b=0.0;		/* floating temps */
     int n;
-    register int i;		/* iteration counter */
-
-    p0 = {0.0, 0.0};
-    p1 = {0.0, 0.0};
-    p2 = {0.0, 0.0};
+    int i;
 
     for (i=0; i < 100; i++) {
 	cZ = *nxZ;
