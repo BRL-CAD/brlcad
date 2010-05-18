@@ -175,7 +175,8 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* add the mirrored object to the directory */
-    if ((dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&ip->idb_type)) == DIR_NULL) {
+    dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&ip->idb_type);
+    if (dp == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Unable to add [%s] to the database directory", argv[bu_optind+1]);
 	return GED_ERROR;
     }
@@ -187,9 +188,10 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 
     /* draw the new object */
     {
+	const char *object = (const char *)argv[bu_optind+1];
 	const char *e_argv[3] = {
 	    "draw",
-	    argv[bu_optind+1],
+	    object,
 	    NULL
 	};
 	(void)ged_draw(gedp, 2, e_argv);
