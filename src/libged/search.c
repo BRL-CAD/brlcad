@@ -266,13 +266,10 @@ palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *, struct ged *))
 {
     PLAN *new;
 
-    if ((new = bu_calloc(1, sizeof(PLAN), "Allocate PLAN structure"))) {
-	new->type = t;
-	new->eval = f;
-	return new;
-    }
-    bu_exit(1, NULL);
-    /* NOTREACHED */
+    new = bu_calloc(1, sizeof(PLAN), "Allocate PLAN structure");
+    new->type = t;
+    new->eval = f;
+    return new;
 }
 
 
