@@ -842,7 +842,7 @@ crdummy(fastf_t w[3], fastf_t t[3], int flag)
 }
 
 static void
-trcurve(fastf_t wh[], t[])
+trcurve(fastf_t wh[], fastf_t t[])
 {
     sol.s_values[0] = wh[0];
     sol.s_values[1] = t[0];
