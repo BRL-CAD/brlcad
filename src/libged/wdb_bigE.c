@@ -44,6 +44,10 @@
 
 /* #define debug 1 */
 
+
+extern void dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
+
+
 struct dg_client_data {
     struct dg_obj		*dgop;
     Tcl_Interp		*interp;
