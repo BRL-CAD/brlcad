@@ -404,6 +404,53 @@ aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
     return TCL_OK;
 }
 
+static int
+aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl *togl;
+    vect_t vec, ftemp;
+    double x, y;
+    double az, el;
+    double mag;
+
+    if (objc < 4) {
+        Tcl_WrongNumArgs(interp, 1, objv, "pathName x y");
+        return TCL_ERROR;
+    }
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
+        return TCL_ERROR;
+
+    isst = (struct isst_s *) Togl_GetClientData(togl);
+
+    if (Tcl_GetDoubleFromObj(interp, objv[2], &x) != TCL_OK)
+        return TCL_ERROR;
+    if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
+        return TCL_ERROR;
+
+    VMOVE(ftemp, isst->tie->mid);
+
+    mag = fabs(DIST_PT_PT(isst->camera.pos.v, isst->camera.focus.v));
+
+    VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
+    VUNITIZE(vec);
+    AZEL_FROM_V3DIR(az, el, vec);
+    az = az * -DEG2RAD - x;
+    el = el * -DEG2RAD + y;
+
+   /* clamp to sane values */
+    while(az > 2*M_PI) az -= 2*M_PI;
+    while(az < 0) az += 2*M_PI;
+    if(el>M_PI_2) el=M_PI_2;
+    if(el<-M_PI_2) el=-M_PI_2;
+
+    V3DIR_FROM_AZEL(vec, az, el);
+    VSCALE(vec, vec, mag);
+    VADD2(isst->camera.pos.v, isst->camera.focus.v, vec);
+
+    return TCL_OK;
+}
 int
 Isst_Init(Tcl_Interp *interp)
 {
@@ -431,6 +478,7 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
     Tcl_CreateObjCommand(interp, "look", look, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
     Tcl_CreateObjCommand(interp, "position", position, NULL, NULL);
     Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
 

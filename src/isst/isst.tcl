@@ -30,7 +30,9 @@ proc ::isst::drawview {win {tick 100} } {
      bind $win <Key-4> {focus %W; render_mode %W component}
      
     bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
+    bind $win <ButtonPress-3> {::isst::RotStart %x %y %W}
     bind $win <B1-Motion> {::isst::RotMove %x %y %W}
+    bind $win <B3-Motion> {::isst::RotMove2 %x %y %W}
     load_g $win /usr/brlcad/rel-7.16.2/share/brlcad/7.16.2/db/ktank.g tank
     pack $win -expand true -fill both
 }
@@ -46,6 +48,13 @@ proc ::isst::RotMove {x y W} {
     set az [expr $az + ($x - $startx)*0.0001]
     set el [expr $el + ($y - $starty)*0.0001]
     aetolookat $W $az $el
+}
+
+proc ::isst::RotMove2 {x y W} {
+    global az el startx starty
+    set dx [expr ($x - $startx)*0.0001]
+    set dy [expr ($y - $starty)*0.0001]
+    aerotate $W $dx $dy
 }
 
 if { [info script] == $argv0 } {
