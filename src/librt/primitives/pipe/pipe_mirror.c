@@ -39,7 +39,7 @@
 int
 rt_pipe_mirror(struct rt_db_internal *ip, register const plane_t plane)
 {
-    struct rt_pipe_internal *pipe;
+    struct rt_pipe_internal *pipep;
 
     mat_t mirmat;
     mat_t rmat;
@@ -56,8 +56,8 @@ rt_pipe_mirror(struct rt_db_internal *ip, register const plane_t plane)
 
     RT_CK_DB_INTERNAL(ip);
 
-    pipe = (struct rt_pipe_internal *)ip->idb_ptr;
-    RT_PIPE_CK_MAGIC(pipe);
+    pipep = (struct rt_pipe_internal *)ip->idb_ptr;
+    RT_PIPE_CK_MAGIC(pipep);
 
     MAT_IDN(mirmat);
 
@@ -84,7 +84,7 @@ rt_pipe_mirror(struct rt_db_internal *ip, register const plane_t plane)
     mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
     mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
-    for (BU_LIST_FOR (ps, wdb_pipept, &pipe->pipe_segs_head)) {
+    for (BU_LIST_FOR (ps, wdb_pipept, &pipep->pipe_segs_head)) {
 	point_t pt;
 
 	VMOVE(pt, ps->pp_coord);
