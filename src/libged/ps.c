@@ -303,7 +303,6 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     int linewidth = 4;
     int xoffset = 0;
     int yoffset = 0;
-    int zclip = 0;
     int border = 0;
     int k;
     int r, g, b;
