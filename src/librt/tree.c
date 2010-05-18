@@ -237,6 +237,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (tbl && bu_avs_get(&tsp->ts_attrs, "ORCA_Comp")) {
 	int newentry;
 	long int reg_bit = rp->reg_bit;
+	const char *key = (char *)reg_bit;
 
 	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
 	bn_mat_inv(inv_mat, tsp->ts_mat);
@@ -244,7 +245,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 
-	entry = Tcl_CreateHashEntry(tbl, (char *)reg_bit, &newentry);
+	entry = Tcl_CreateHashEntry(tbl, key, &newentry);
 	Tcl_SetHashValue(entry, (ClientData)inv_mat);
 
 	/* leave critical section */
