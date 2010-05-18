@@ -913,7 +913,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 {
     int i;
     struct directory *dp;
-    int cgtype;		/* cgtype ARB 4..8 */
+    int cgtype = 8;		/* cgtype ARB 4..8 */
     int nface;
     fastf_t thick[6];
     plane_t planes[6];
@@ -967,9 +967,8 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
 	case ID_ARB8:
 	    {
-		char **prompt;
-		struct rt_arb_internal *arb =
-		    (struct rt_arb_internal *)ip->idb_ptr;
+		char **prompt = p_arb6;
+		struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
 
 		nface = 6;
 
