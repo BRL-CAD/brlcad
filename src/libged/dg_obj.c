@@ -1728,7 +1728,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 void
 dgo_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
-    int count;
+    DWORD count;
     char line[RT_MAXLINE];
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
 
@@ -3998,7 +3998,7 @@ dgo_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
-    int count;
+    DWORD count;
     char line[10240+1] = {0};
 
     if (drcdp == (struct dg_rt_client_data *)NULL ||
@@ -4013,7 +4013,7 @@ dgo_rt_output_handler(ClientData clientData, int UNUSED(mask))
     if (Tcl_Eof(run_rtp->chan) ||
 	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
 	int aborted;
-	int retcode;
+	DWORD retcode;
 
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 dgo_rt_output_handler,
