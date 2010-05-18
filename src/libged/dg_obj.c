@@ -853,11 +853,7 @@ dgo_how_cmd(struct dg_obj	*dgop,
  *        procname how obj
  */
 static int
-dgo_how_tcl(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    *argv[];
+dgo_how_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
 
