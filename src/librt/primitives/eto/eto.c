@@ -740,7 +740,7 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_ell;
-    struct rt_pt_node *new, *rt_ptalloc(void);
+    struct rt_pt_node *new;
 
     /* endpoints of segment approximating ellipse */
     VMOVE(p0, pts->p);
@@ -766,7 +766,7 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	new = rt_ptalloc();
+	new = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	VMOVE(new->p, mpt);
 	new->next = pts->next;
 	pts->next = new;
@@ -794,11 +794,11 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
     int i;
     point_t *ell;
-    struct rt_pt_node *ell_quad, *oldpos, *pos, *rt_ptalloc(void);
+    struct rt_pt_node *ell_quad, *oldpos, *pos;
 
-    ell_quad = rt_ptalloc();
+    ell_quad = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VSET(ell_quad->p, b, 0., 0.);
-    ell_quad->next = rt_ptalloc();
+    ell_quad->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VSET(ell_quad->next->p, 0., a, 0.);
     ell_quad->next->next = NULL;
 

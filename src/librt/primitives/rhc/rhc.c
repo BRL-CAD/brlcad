@@ -676,7 +676,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     mat_t R;
     mat_t invR;
     struct rt_rhc_internal *xip;
-    struct rt_pt_node *old, *pos, *pts, *rt_ptalloc(void);
+    struct rt_pt_node *old, *pos, *pts;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -753,8 +753,8 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	ntol = bn_pi;
 
     /* initial hyperbola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -825,7 +825,7 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_hyperb;
-    struct rt_pt_node *new, *rt_ptalloc(void);
+    struct rt_pt_node *new;
 
 #define RHC_TOL .0001
     /* endpoints of segment approximating hyperbola */
@@ -869,7 +869,7 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	new = rt_ptalloc();
+	new = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	VMOVE(new->p, mpt);
 	new->next = pts->next;
 	pts->next = new;
@@ -902,7 +902,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t R;
     mat_t invR;
     struct rt_rhc_internal *xip;
-    struct rt_pt_node *old, *pos, *pts, *rt_ptalloc(void);
+    struct rt_pt_node *old, *pos, *pts;
     struct shell *s;
     struct faceuse **outfaceuses;
     struct vertex **vfront, **vback, **vtemp, *vertlist[4];
@@ -988,8 +988,8 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = bn_pi;
 
     /* initial hyperbola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);

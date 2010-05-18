@@ -718,8 +718,8 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 #if 1
     /* initial parabola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -749,8 +749,8 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 #else
     /* initial parabola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0,   0, -b);
     VSET(pts->next->p, 0,  rh,  0);
@@ -829,7 +829,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_parab;
-    struct rt_pt_node *new, *rt_ptalloc(void);
+    struct rt_pt_node *new;
 
 #define RPC_TOL .0001
     /* endpoints of segment approximating parabola */
@@ -860,7 +860,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	new = rt_ptalloc();
+	new = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	VMOVE(new->p, mpt);
 	new->next = pts->next;
 	pts->next = new;
@@ -873,19 +873,6 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     } else
 	n  = 0;
     return n;
-}
-
-
-/*
- * R T _ P T A L L O C
- */
-struct rt_pt_node *
-rt_ptalloc(void)
-{
-    struct rt_pt_node *mem;
-
-    mem = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    return mem;
 }
 
 
@@ -990,8 +977,8 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = bn_pi;
 
     /* initial parabola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);

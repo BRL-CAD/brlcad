@@ -3411,8 +3411,6 @@ RT_EXPORT BU_EXTERN(int rt_mk_parabola,
 		     fastf_t b,
 		     fastf_t dtol,
 		     fastf_t ntol));
-RT_EXPORT BU_EXTERN(struct rt_pt_node *rt_ptalloc,
-		    ());
 
 /* memalloc.c -- non PARALLEL routines */
 RT_EXPORT BU_EXTERN(size_t rt_memalloc,
