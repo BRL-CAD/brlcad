@@ -42,8 +42,11 @@
 int
 _ged_editit(char *editstring, const char *filename)
 {
-    int pid = 0;
+#ifdef HAVE_UNISTD_H
     int xpid = 0;
+    int stat = 0;
+#endif
+    int pid = 0;
     char **avtmp;
     const char *terminal = (char *)NULL;
     const char *terminal_opt = (char *)NULL;
@@ -51,7 +54,6 @@ _ged_editit(char *editstring, const char *filename)
     const char *editor_opt = (char *)NULL;
     const char *file = (const char *)filename;
 
-    int stat = 0;
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)();
     void (*s3)();
