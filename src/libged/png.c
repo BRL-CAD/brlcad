@@ -129,7 +129,8 @@ ged_draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord
     vp->major = coord2->y - vp->pixel.y;	/* always nonnegative */
     vp->ysign = vp->major ? 1 : 0;
     vp->minor = coord2->x - vp->pixel.x;
-    if ((vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0)
+    vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0;
+    if (vp->xsign < 0)
 	vp->minor = -vp->minor;
 
     /* if Y is not really major, correct the assignments */

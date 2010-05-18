@@ -133,8 +133,13 @@ check_comb(struct ged *gedp)
 	/* Read a line */
 	i = (-1);
 
-	while ((ch=getc(fp)) != EOF && ch != '\n' && i < RT_MAXLINE)
+	ch=getc(fp);
+	while (ch != EOF && ch != '\n' && i < RT_MAXLINE) {
 	    line[++i] = ch;
+
+	    /* next character */
+	    ch=getc(fp);
+	}
 
 	if (ch == EOF) {
 	    /* We must be done */
@@ -159,7 +164,8 @@ check_comb(struct ged *gedp)
 	if (line[i] == '\0')
 	    continue;	/* blank line */
 
-	if ((ptr=find_keyword(i, line, "NAME"))) {
+	ptr=find_keyword(i, line, "NAME");
+	if (ptr) {
 	    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 		size_t len;
 
@@ -175,23 +181,41 @@ check_comb(struct ged *gedp)
 		}
 	    }
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION_ID"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION_ID");
+	if (ptr) {
 	    id = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION");
+	if (ptr) {
 	    if (*ptr == 'y' || *ptr == 'Y')
 		region = 1;
 	    else
 		region = 0;
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "AIRCODE"))) {
+	}
+
+	ptr=find_keyword(i, line, "AIRCODE");
+	if (ptr) {
 	    air = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "GIFT_MATERIAL"))) {
+	}
+
+	ptr=find_keyword(i, line, "GIFT_MATERIAL");
+	if (ptr) {
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "LOS"))) {
+	}
+
+	ptr=find_keyword(i, line, "LOS");
+	if (ptr) {
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "COLOR"))) {
+	}
+
+	ptr=find_keyword(i, line, "COLOR");
+	if (ptr) {
 	    char *ptr2;
 
 	    rgb_valid = 1;
@@ -213,11 +237,17 @@ check_comb(struct ged *gedp)
 		bu_vls_printf(&gedp->ged_result_str, "WARNING: invalid color specification!!! Must be three integers, each 0-255\n");
 	    }
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "SHADER")))
+	}
+
+	ptr=find_keyword(i, line, "SHADER");
+	if (ptr)
 	    continue;
-	else if ((ptr=find_keyword(i, line, "INHERIT")))
+
+	ptr=find_keyword(i, line, "INHERIT");
+	if (ptr)
 	    continue;
-	else if (!strncmp(&line[i], "COMBINATION:", 12)) {
+
+	if (!strncmp(&line[i], "COMBINATION:", 12)) {
 	    if (region < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Region flag not correctly set\n\tMust be 'Yes' or 'No'\n\tNo changes made\n");
 		fclose(fp);
@@ -502,8 +532,13 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	/* Read a line */
 	i = (-1);
 
-	while ((ch=getc(fp)) != EOF && ch != '\n' && i < RT_MAXLINE)
+	ch=getc(fp);
+	while (ch != EOF && ch != '\n' && i < RT_MAXLINE) {
 	    line[++i] = ch;
+
+	    /* get next char */
+	    ch=getc(fp);
+	}
 
 	if (ch == EOF) {
 	    /* We must be done */
@@ -521,7 +556,8 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	if (line[i] == '\0')
 	    continue;	/* blank line */
 
-	if ((ptr=find_keyword(i, line, "NAME"))) {
+	ptr=find_keyword(i, line, "NAME");
+	if (ptr) {
 	    if (gedp->ged_wdbp->dbip->dbi_version < 5)
 		NAMEMOVE(ptr, new_name_v4);
 	    else {
@@ -529,25 +565,43 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		new_name = bu_strdup(ptr);
 	    }
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION_ID"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION_ID");
+	if (ptr) {
 	    comb->region_id = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION");
+	if (ptr) {
 	    if (*ptr == 'y' || *ptr == 'Y')
 		comb->region_flag = 1;
 	    else
 		comb->region_flag = 0;
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "AIRCODE"))) {
+	}
+
+	ptr=find_keyword(i, line, "AIRCODE");
+	if (ptr) {
 	    comb->aircode = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "GIFT_MATERIAL"))) {
+	}
+
+	ptr=find_keyword(i, line, "GIFT_MATERIAL");
+	if (ptr) {
 	    comb->GIFTmater = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "LOS"))) {
+	}
+
+	ptr=find_keyword(i, line, "LOS");
+	if (ptr) {
 	    comb->los = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "COLOR"))) {
+	}
+
+	ptr=find_keyword(i, line, "COLOR");
+	if (ptr) {
 	    char *ptr2;
 	    int value;
 
@@ -600,16 +654,24 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	    comb->rgb[2] = value;
 	    comb->rgb_valid = 1;
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "SHADER"))) {
+	}
+
+	ptr=find_keyword(i, line, "SHADER");
+	if (ptr) {
 	    bu_vls_strcpy(&comb->shader,  ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "INHERIT"))) {
+	}
+
+	ptr=find_keyword(i, line, "INHERIT");
+	if (ptr) {
 	    if (*ptr == 'y' || *ptr == 'Y')
 		comb->inherit = 1;
 	    else
 		comb->inherit = 0;
 	    continue;
-	} else if (!strncmp(&line[i], "COMBINATION:", 12)) {
+	}
+
+	if (!strncmp(&line[i], "COMBINATION:", 12)) {
 	    get_attr_val_pair(line, &attr_vls, &val_vls); 
 	    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
 	    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
@@ -995,7 +1057,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     size_t node_count;
     static const char *usage = "comb";
-    const char *editstring;
+    const char *editstring = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

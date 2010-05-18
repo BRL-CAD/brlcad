@@ -381,9 +381,9 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
 #ifndef _WIN32
-    int count;
+    int count = 0;
 #else
-    DWORD count;
+    DWORD count = 0;
 #endif
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
