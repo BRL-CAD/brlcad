@@ -1196,7 +1196,7 @@ struct bu_bitv {
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
-BU_EXPORT BU_EXTERN(inline unsigned int bu_bitv_shift, ());
+BU_EXPORT BU_EXTERN(unsigned int bu_bitv_shift, ());
 
 /*
  * Bit-string manipulators for arbitrarily long bit strings stored as
