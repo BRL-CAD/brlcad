@@ -186,10 +186,8 @@ wdb_export_external(
 	    /* If name already exists, that object will be updated. */
 	    dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
 	    if (dp == DIR_NULL) {
-		if ((dp = db_diradd(wdbp->dbip, name, -1L, 0, flags,
-				    (genptr_t)&type)) == DIR_NULL) {
-		    bu_log("wdb_export_external(%s): db_diradd error\n",
-			   name);
+		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
+		    bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		    return -3;
 		}
 	    }
@@ -211,10 +209,8 @@ wdb_export_external(
 		return -5;
 	    }
 	    /* If name already exists, new non-conflicting name will be generated */
-	    if ((dp = db_diradd(wdbp->dbip, name, -1L, 0, flags,
-				(genptr_t)&type)) == DIR_NULL) {
-		bu_log("wdb_export_external(%s): db_diradd error\n",
-		       name);
+	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
+		bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		return -3;
 	    }
 	    if (db_put_external(ep, dp, wdbp->dbip) < 0) {
@@ -226,12 +222,10 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
 	    if ((dp = db_lookup(wdbp->dbip, name, 0)) != DIR_NULL) {
-		bu_log("wdb_export_external(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n",
-		       name);
+		bu_log("wdb_export_external(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n", name);
 		return -3;
 	    }
-	    if ((dp = db_diradd(wdbp->dbip, name, -1L, 0, flags,
-				(genptr_t)&type)) == DIR_NULL) {
+	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
 		bu_log("wdb_export_external(%s): db_diradd error\n",
 		       name);
 		return -3;
@@ -243,10 +237,8 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_INMEM:
 	    if ((dp = db_lookup(wdbp->dbip, name, 0)) == DIR_NULL) {
-		if ((dp = db_diradd(wdbp->dbip, name, -1L, 0, flags,
-				    (genptr_t)&type)) == DIR_NULL) {
-		    bu_log("wdb_export_external(%s): db_diradd error\n",
-			   name);
+		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == DIR_NULL) {
+		    bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		    bu_free_external(ep);
 		    return -3;
 		}
