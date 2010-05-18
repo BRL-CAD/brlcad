@@ -205,7 +205,7 @@ is_in_list(struct nametbl l, char *name)
  * state->incr is used for each number level increase.
  */
 static struct bu_vls *
-clone_get_name(struct directory *dp, struct ged_clone_state *state, int iter)
+clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 {
     struct bu_vls *newname;
     char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFSIZE] = {0};
@@ -263,7 +263,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 {
     struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j;
+    size_t i, j;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -349,7 +349,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 static void
 copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, int idx)
 {
-    int i;
+    size_t i;
     mat_t matrix;
 
     MAT_IDN(matrix);
@@ -580,7 +580,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 {
     struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
-    int i;
+    size_t i;
 
     /* sanity */
     if (!proto) {
