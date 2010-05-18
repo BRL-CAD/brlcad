@@ -214,8 +214,11 @@ mlib_setup(struct mfuncs **headp,
 	   register struct region *rp,
 	   struct rt_i *rtip)
 {
-    register const struct mfuncs *mfp;
-    register struct mfuncs *mfp_new = NULL;
+#ifdef HAVE_DLOPEN
+    struct mfuncs *mfp_new = NULL;
+#endif
+
+    const struct mfuncs *mfp;
     int		ret;
     struct bu_vls	param;
     const char	*material;
