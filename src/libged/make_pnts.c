@@ -245,7 +245,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     struct rt_pnts_internal *pnts;
 
     double defaultSize = 0.0;
-    void *headPoint;
+    void *headPoint = NULL;
 
     FILE *fp;
 
@@ -410,7 +410,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
             num_doubles_per_point = 10;
 	    break;
-    }    
+    }
+    BU_ASSERT_PTR(headPoint, !=, NULL);
     pnts->point = headPoint;
 
     if ((fp=fopen(argv[2], "rb")) == NULL) {
