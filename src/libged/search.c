@@ -727,7 +727,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
     struct bu_vls value;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
-    int equalpos = 0;
+    size_t equalpos = 0;
     int checkval = 0;
     int strcomparison = 0;
     int i;
