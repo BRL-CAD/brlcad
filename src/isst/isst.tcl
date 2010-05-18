@@ -53,8 +53,8 @@ proc ::isst::RotMove {x y W} {
 
 proc ::isst::RotMove2 {x y W} {
     global az el startx starty
-    set dx [expr ($x - $startx)*0.0001]
-    set dy [expr ($y - $starty)*0.0001]
+    set dx [expr ($x - $startx)*0.0005]
+    set dy [expr ($y - $starty)*0.0005]
     aerotate $W $dx $dy
 }
 

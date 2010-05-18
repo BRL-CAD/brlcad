@@ -175,6 +175,9 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
 
     resize_isst(isst);
 
+    gettimeofday(&(isst->t1), NULL);
+    gettimeofday(&(isst->t2), NULL);
+
     return TCL_OK;
 }
 
@@ -183,6 +186,7 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
 {
     struct isst_s *isst;
     Togl   *togl;
+    double dt = 1.0;
     int glclrbts = GL_DEPTH_BUFFER_BIT;
 
     if (objc != 2) {
@@ -196,10 +200,17 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
     
     isst = (struct isst *) Togl_GetClientData(togl);
 
+    gettimeofday(&(isst->t2), NULL);
+
+    dt = (((double)isst->t2.tv_sec+(double)isst->t2.tv_usec/(double)1e6) - ((double)isst->t1.tv_sec+(double)isst->t1.tv_usec/(double)1e6));
+
+    if (dt > 0.08) {
     isst->buffer_image.ind = 0;
 
     render_camera_prep(&isst->camera);
     render_camera_render(&isst->camera, isst->tie, &isst->tile, &isst->buffer_image);
+
+    gettimeofday(&(isst->t1), NULL);
 
     glClear(glclrbts);
     glLoadIdentity();
@@ -217,7 +228,7 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
     glEnd();
 
     Togl_SwapBuffers(togl);
-
+    }
     return TCL_OK;
 }
 
@@ -463,8 +474,8 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
    /* clamp to sane values */
     while(az > 2*M_PI) az -= 2*M_PI;
     while(az < 0) az += 2*M_PI;
-    if(el>M_PI_2) el=M_PI_2;
-    if(el<-M_PI_2) el=-M_PI_2;
+    if(el>M_PI_2) el=M_PI_2 - 0.001;
+    if(el<-M_PI_2) el=-M_PI_2 + 0.001;
 
     V3DIR_FROM_AZEL(vec, az, el);
     VSCALE(vec, vec, mag);
