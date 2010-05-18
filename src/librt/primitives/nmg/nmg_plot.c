@@ -1887,7 +1887,7 @@ nmg_show_broken_classifier_stuff(unsigned long *p, long int **classlist, int all
      * will remain, undisturbed, for further use.
      */
     if (nmg_vlblock_anim_upcall) {
-	void (*cur_sigint)();
+	void (*cur_sigint)(int);
 
 	if (!a_string) {
 	    (*nmg_vlblock_anim_upcall)(vbp,
