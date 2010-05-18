@@ -159,8 +159,7 @@ arbin(struct ged *gedp,
 
     /* move new face planes for the desired thicknesses
      * don't do this yet for an arb7 */
-    if (cgtype != 7)
-    {
+    if (cgtype != 7) {
 	for (i=0; i<nface; i++) {
 	    if ((planes[i][W] - VDOT(center_pt, &planes[i][0])) > 0.0)
 		thick[i] *= -1.0;
@@ -185,8 +184,7 @@ arbin(struct ged *gedp,
      * These arbs have a vertex that is the intersection of four planes, and
      * the inside solid may have a single vertex or an edge replacing this vertex
      */
-    if (cgtype == 5)
-    {
+    if (cgtype == 5) {
 	/* Here we are only concerned with the one vertex where 4 planes intersect
 	 * in the original solid
 	 */
@@ -194,8 +192,7 @@ arbin(struct ged *gedp,
 	fastf_t dist0, dist1;
 
 	/* calculate the four possible intersect points */
-	if (bn_mkpoint_3planes(pt[0], planes[1], planes[2], planes[3]))
-	{
+	if (bn_mkpoint_3planes(pt[0], planes[1], planes[2], planes[3])) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 0:\n");
 	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
@@ -203,8 +200,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
 	    return GED_ERROR;
 	}
-	if (bn_mkpoint_3planes(pt[1], planes[2], planes[3], planes[4]))
-	{
+	if (bn_mkpoint_3planes(pt[1], planes[2], planes[3], planes[4])) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 1:\n");
 	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
@@ -212,8 +208,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
 	    return GED_ERROR;
 	}
-	if (bn_mkpoint_3planes(pt[2], planes[3], planes[4], planes[1]))
-	{
+	if (bn_mkpoint_3planes(pt[2], planes[3], planes[4], planes[1])) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 2:\n");
 	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
@@ -221,8 +216,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
 	    return GED_ERROR;
 	}
-	if (bn_mkpoint_3planes(pt[3], planes[4], planes[1], planes[2]))
-	{
+	if (bn_mkpoint_3planes(pt[3], planes[4], planes[1], planes[2])) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 3:\n");
 	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
@@ -231,8 +225,7 @@ arbin(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	if (bn_pt3_pt3_equal(pt[0], pt[1], &gedp->ged_wdbp->wdb_tol))
-	{
+	if (bn_pt3_pt3_equal(pt[0], pt[1], &gedp->ged_wdbp->wdb_tol)) {
 	    /* if any two of the calculates intersection points are equal,
 	     * then all four must be equal
 	     */
@@ -258,23 +251,18 @@ arbin(struct ged *gedp,
 	if (dist1 < 0.0)
 	    dist1 = (-dist1);
 
-	if (dist0 < dist1)
-	{
+	if (dist0 < dist1) {
 	    VMOVE(arb->pt[5], pt[0]);
 	    VMOVE(arb->pt[6], pt[0]);
 	    VMOVE(arb->pt[4], pt[2]);
 	    VMOVE(arb->pt[7], pt[2]);
-	}
-	else
-	{
+	} else {
 	    VMOVE(arb->pt[4], pt[3]);
 	    VMOVE(arb->pt[5], pt[3]);
 	    VMOVE(arb->pt[6], pt[1]);
 	    VMOVE(arb->pt[7], pt[1]);
 	}
-    }
-    else if (cgtype == 7)
-    {
+    } else if (cgtype == 7) {
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s = NULL;
@@ -292,22 +280,19 @@ arbin(struct ged *gedp,
 	m = nmg_mm();
 
 	/* get an NMG version of this arb7 */
-	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol))
-	{
+	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal(ip);
 	    return GED_ERROR;
 	}
 
 	/* move face planes */
-	for (i=0; i<nface; i++)
-	{
+	for (i=0; i<nface; i++) {
 	    int found=0;
 
 	    /* look for the face plane with the same geometry as the arb7 planes */
 	    s = BU_LIST_FIRST(shell, &r->s_hd);
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
-	    {
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		struct face_g_plane *fg;
 		plane_t pl;
 
@@ -316,8 +301,7 @@ arbin(struct ged *gedp,
 		    continue;
 
 		NMG_GET_FU_PLANE(pl, fu);
-		if (bn_coplanar(planes[i], pl, &gedp->ged_wdbp->wdb_tol) > 0)
-		{
+		if (bn_coplanar(planes[i], pl, &gedp->ged_wdbp->wdb_tol) > 0) {
 		    /* found the NMG face geometry that matches arb face i */
 		    found = 1;
 		    fg = fu->f_p->g.plane_p;
@@ -332,8 +316,7 @@ arbin(struct ged *gedp,
 		    break;
 		}
 	    }
-	    if (!found)
-	    {
+	    if (!found) {
 		bu_vls_printf(&gedp->ged_result_str, "Could not move face plane for arb7, face #%d\n", i);
 		nmg_km(m);
 		return GED_ERROR;
@@ -345,15 +328,13 @@ arbin(struct ged *gedp,
 	 */
 	bu_ptbl(&vert_tab, BU_PTBL_INIT, (long *)NULL);
 	nmg_vertex_tabulate(&vert_tab, &m->magic);
-	for (i=0; i<BU_PTBL_END(&vert_tab); i++)
-	{
+	for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
 	    struct vertex *v;
 
 	    v = (struct vertex *)BU_PTBL_GET(&vert_tab, i);
 	    NMG_CK_VERTEX(v);
 
-	    if (nmg_in_vert(v, 0, &gedp->ged_wdbp->wdb_tol))
-	    {
+	    if (nmg_in_vert(v, 0, &gedp->ged_wdbp->wdb_tol)) {
 		bu_vls_printf(&gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
 		nmg_km(m);
 		bu_ptbl(&vert_tab, BU_PTBL_FREE, (long *)NULL);
@@ -464,7 +445,8 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	/* adjust lengths of a and c to account for new vertex position */
 	new_mag_a = mag_a + (mag_c - mag_a)*ratio;
 	new_mag_b = mag_b + (mag_d - mag_b)*ratio;
-    } else { /* just copy the existing values */
+    } else {
+	/* just copy the existing values */
 	VMOVE(v, tgc->v);
 	new_mag_a = mag_a;
 	new_mag_b = mag_b;
@@ -479,7 +461,8 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	/* adjust lengths of c and d */
 	new_mag_c = mag_c + (mag_a - mag_c)*ratio;
 	new_mag_d = mag_d + (mag_b - mag_d)*ratio;
-    } else { /* just copy existing values */
+    } else {
+	/* just copy existing values */
 	VADD2(top, tgc->v, tgc->h);
 	new_mag_c = mag_c;
 	new_mag_d = mag_d;
@@ -488,7 +471,8 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     /* calculate new height vector based on new vertex and top */
     VSUB2(h, top, v);
 
-    if (thick[2] != 0.0) {	/* ther is a side thickness */
+    if (thick[2] != 0.0) {
+	/* ther is a side thickness */
 	vect_t ctoa;	/* unit vector from tip of C to tip of A */
 	vect_t dtob;	/* unit vector from tip of D to tip of B */
 	point_t pt_a, pt_b, pt_c, pt_d;	/* points at tips of semi radii */
@@ -633,7 +617,8 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	    VSUB2(h, top, v);
 	    new_mag_c -= delta_ac;
 	    new_mag_d -= delta_bd;
-	} else { /* just change the vector lengths */
+	} else {
+	    /* just change the vector lengths */
 	    new_mag_a -= delta_ac;
 	    new_mag_b -= delta_bd;
 	    new_mag_c -= delta_ac;
@@ -887,8 +872,7 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
     NMG_CK_MODEL(m);
 
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-    while (BU_LIST_NOT_HEAD(r, &m->r_hd))
-    {
+    while (BU_LIST_NOT_HEAD(r, &m->r_hd)) {
 	struct nmgregion *next_r;
 	struct shell *s;
 
@@ -897,8 +881,7 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 	next_r = BU_LIST_PNEXT(nmgregion, &r->l);
 
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(s, &r->s_hd))
-	{
+	while (BU_LIST_NOT_HEAD(s, &r->s_hd)) {
 	    struct shell *next_s;
 
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
@@ -916,13 +899,11 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 	r = next_r;
     }
 
-    if (BU_LIST_IS_EMPTY(&m->r_hd))
-    {
+    if (BU_LIST_IS_EMPTY(&m->r_hd)) {
 	bu_vls_printf(&gedp->ged_result_str, "No inside created\n");
 	nmg_km(m);
 	return GED_ERROR;
-    }
-    else
+    } else
 	return GED_OK;
 }
 

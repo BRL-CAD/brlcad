@@ -354,7 +354,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trimspace(&format_string);
 
     /* init database structure */
-    RT_INIT_DB_INTERNAL(&internal );
+    RT_INIT_DB_INTERNAL(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_PNTS;
     internal.idb_meth = &rt_functab[ID_PNTS];
@@ -421,7 +421,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         return GED_ERROR;
     }
 
-    while (!found_eof ) {  /* points_loop */
+    while (!found_eof) {
+        /* points_loop */
         /* allocate memory for single point structure for current point-cloud type */
         switch (type) {
             case RT_PNT_TYPE_PNT:
@@ -450,10 +451,12 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                 break;
         }    
 
-        while (!found_eof && !done_processing_format_string ) {   /* format_string_loop */
+        while (!found_eof && !done_processing_format_string) {
+	    /* format_string_loop */
 	    char format = '\0';
 
-            while (!found_eof  && !found_double ) {  /* find_doubles_loop */
+            while (!found_eof  && !found_double) {
+		/* find_doubles_loop */
 		format = bu_vls_addr(&format_string)[format_string_index];
 
                 buf = fgetc(fp);

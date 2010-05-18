@@ -65,7 +65,6 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind - 1;
 
 
-    
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -82,7 +81,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
     av[0] = "wmater";
     av[1] = tmpfil;
-    for(i = 2; i < argc + 1; ++i)
+    for (i = 2; i < argc + 1; ++i)
 	av[i] = argv[i-1];
 
     av[i] = NULL;

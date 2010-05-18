@@ -84,7 +84,7 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
  * when formatting this file.  if the compile breaks here, it means
  * that spaces got inserted incorrectly.
  */
-#define COMMA ','
+#define COMMA ', '
 
 static int analysis_flags;
 static int multiple_analyses;
@@ -2489,7 +2489,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     } while (terminate_check(&state));
 
-aborted:
+ aborted:
     if (plot_overlaps) fclose(plot_overlaps);
     if (plot_weight) fclose(plot_weight);
     if (plot_volume) fclose(plot_volume);

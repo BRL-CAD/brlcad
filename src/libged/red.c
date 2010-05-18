@@ -69,35 +69,36 @@ find_keyword(int i, char *line, char *word)
     return ptr2;
 }
 
+
 static int
 get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
 {
-	char *ptr1;
-	size_t j;
+    char *ptr1;
+    size_t j;
 
-	/* find the '=' */
-	ptr1 = strchr(&line[0], '=');
-	if (!ptr1)
- 	   return 0;
+    /* find the '=' */
+    ptr1 = strchr(&line[0], '=');
+    if (!ptr1)
+	return 0;
 
-	/* Everything from the beginning to the = is the attribute name*/
-	bu_vls_strncpy(attr, line, ptr1 - &line[0]);
+    /* Everything from the beginning to the = is the attribute name*/
+    bu_vls_strncpy(attr, line, ptr1 - &line[0]);
 
-	/* skip any white space before the value */
-	++ptr1;
-	while (isspace(*(++ptr1)));
+    /* skip any white space before the value */
+    ++ptr1;
+    while (isspace(*(++ptr1)));
 
-	/* eliminate trailing white space */
-	j = strlen(line);
-	while (isspace(line[--j]));
-	line[j+1] = '\0';
+    /* eliminate trailing white space */
+    j = strlen(line);
+    while (isspace(line[--j]));
+    line[j+1] = '\0';
 	
-	/* Grab the attribute value */
-	bu_vls_strcpy(val, ptr1);
+    /* Grab the attribute value */
+    bu_vls_strcpy(val, ptr1);
 
-	return 1;
-}	
-	
+    return 1;
+}
+
 
 HIDDEN size_t
 check_comb(struct ged *gedp)
@@ -838,17 +839,17 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	fprintf(fp, "INHERIT=No\n");
 
     if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-       /* Print out any non-standard attributes - region and region_id
-	* are case insensitive as far as key properties being set, need
-	* to check if this is true for the rest of them.
-	*/
+	/* Print out any non-standard attributes - region and region_id
+	 * are case insensitive as far as key properties being set, need
+	 * to check if this is true for the rest of them.
+	 */
 	avpp = avs.avp;
 	for (i=0; i < avs.count; i++, avpp++) {
-	  if ((strcasecmp(avpp->name, "REGION")) && (strcasecmp(avpp->name, "REGION_ID")) &&
+	    if ((strcasecmp(avpp->name, "REGION")) && (strcasecmp(avpp->name, "REGION_ID")) &&
 		(strcmp(avpp->name, "AIRCODE")) && (strcmp(avpp->name, "GIFT_MATERIAL")) &&
 		(strcmp(avpp->name, "LOS")) && (strcmp(avpp->name, "COLOR")) &&
 		(strcmp(avpp->name, "SHADER")) && (strcmp(avpp->name, "INHERIT")))
-	      fprintf(fp, "%s=%s\n", avpp->name, avpp->value);
+		fprintf(fp, "%s=%s\n", avpp->name, avpp->value);
         }
     }
 

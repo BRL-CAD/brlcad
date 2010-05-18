@@ -63,8 +63,8 @@ _ged_editit(char *editstring, const char *filename)
 
     avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
     bu_argv_from_string(avtmp, 4, editstring);
-    
-    
+
+
     if (avtmp[0]) terminal = avtmp[0];
     if (avtmp[1]) terminal_opt = avtmp[1];
     if (avtmp[2]) editor = avtmp[2];
@@ -128,10 +128,10 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    if (!strcmp(terminal,"(null)") && !strcmp(editor_opt, "(null)")) {
+	    if (!strcmp(terminal, "(null)") && !strcmp(editor_opt, "(null)")) {
     		(void)execlp(editor, editor, file, NULL);
 	    }
-	    if (!strcmp(terminal,"(null)") && strcmp(editor_opt, "(null)")) {
+	    if (!strcmp(terminal, "(null)") && strcmp(editor_opt, "(null)")) {
 		(void)execlp(editor, editor, editor_opt, file, NULL);
 	    }
 	    (void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
@@ -160,6 +160,7 @@ _ged_editit(char *editstring, const char *filename)
     return 1;
 }
 
+
 int
 ged_editit(struct ged *gedp, int argc, const char *argv[])
 {
@@ -176,7 +177,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
 
     return _ged_editit((char *)argv[2], argv[4]);
 }
-    
+
 
 /*
  * Local Variables:

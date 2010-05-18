@@ -867,22 +867,19 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     hf->ylen = atof(cmd_argvs[20]) * gedp->ged_wdbp->dbip->dbi_local2base;
     hf->zscale = atof(cmd_argvs[21]);
 
-    if (hf->w < 2 || hf->n < 2)
-    {
+    if (hf->w < 2 || hf->n < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: length or width of fta file is too small\n");
 	return GED_ERROR;
     }
 
-    if (hf->xlen <= 0 || hf->ylen <= 0)
-    {
+    if (hf->xlen <= 0 || hf->ylen <= 0) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: length and width of HF solid must be greater than 0\n");
 	return GED_ERROR;
     }
 
     /* XXXX should check for orthogonality of 'x' and 'y' vectors */
 
-    if (!(hf->mp = bu_open_mapped_file(hf->dfile, "hf")))
-    {
+    if (!(hf->mp = bu_open_mapped_file(hf->dfile, "hf"))) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: cannot open data file\n");
 	hf->mp = (struct bu_mapped_file *)NULL;
 	return GED_ERROR;
@@ -942,52 +939,44 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     }
 
     num_verts = atoi(argv[3]);
-    if (num_verts < 3)
-    {
+    if (num_verts < 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of vertices (must be at least 3)\n");
 	return GED_ERROR;
     }
 
     num_faces = atoi(argv[4]);
-    if (num_faces < 1)
-    {
+    if (num_faces < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of triangles (must be at least 1)\n");
 	return GED_ERROR;
     }
 
     mode = atoi(argv[5]);
-    if (mode < 1 || mode > 3)
-    {
+    if (mode < 1 || mode > 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid mode (must be 1, 2, or 3)\n");
 	return GED_ERROR;
     }
 
     orientation = atoi(argv[6]);
-    if (orientation < 1 || orientation > 3)
-    {
+    if (orientation < 1 || orientation > 3) {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid orientation (must be 1, 2, or 3)\n");
 	return GED_ERROR;
     }
 
     arg_count = argc - 7;
-    if (arg_count < num_verts*3)
-    {
+    if (arg_count < num_verts*3) {
 	bu_vls_printf(&gedp->ged_result_str, "%s for vertex %d : ", prompt[4+arg_count%3], arg_count/3);
 	return GED_MORE;
     }
 
     arg_count = argc - 7 - num_verts*3;
-    if (arg_count < num_faces*3)
-    {
+    if (arg_count < num_faces*3) {
 	bu_vls_printf(&gedp->ged_result_str, "%s for triangle %d : ", prompt[7+arg_count%3], arg_count/3);
 	return GED_MORE;
     }
 
-    if (mode == RT_BOT_PLATE)
-    {
+    if (mode == RT_BOT_PLATE) {
 	arg_count = argc - 7 - num_verts*3 - num_faces*3;
-	if (arg_count < num_faces*2)
-	{
+	if (arg_count < num_faces*2) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s for face %d : ", prompt[10+arg_count%2], arg_count/2);
 	    return GED_MORE;
 	}
@@ -1008,36 +997,31 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     bot->thickness = (fastf_t *)NULL;
     bot->face_mode = (struct bu_bitv *)NULL;
 
-    for (i=0; i<num_verts; i++)
-    {
+    for (i=0; i<num_verts; i++) {
 	bot->vertices[i*3] = atof(argv[7+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	bot->vertices[i*3+1] = atof(argv[8+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	bot->vertices[i*3+2] = atof(argv[9+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
     arg_count = 7 + num_verts*3;
-    for (i=0; i<num_faces; i++)
-    {
+    for (i=0; i<num_faces; i++) {
 	bot->faces[i*3] = atoi(argv[arg_count + i*3]);
 	bot->faces[i*3+1] = atoi(argv[arg_count + i*3 + 1]);
 	bot->faces[i*3+2] = atoi(argv[arg_count + i*3 + 2]);
     }
 
-    if (mode == RT_BOT_PLATE)
-    {
+    if (mode == RT_BOT_PLATE) {
 	arg_count = 7 + num_verts*3 + num_faces*3;
 	bot->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "bot thickness");
 	bot->face_mode = bu_bitv_new(num_faces);
 	bu_bitv_clear(bot->face_mode);
-	for (i=0; i<num_faces; i++)
-	{
+	for (i=0; i<num_faces; i++) {
 	    int j;
 
 	    j = atoi(argv[arg_count + i*2]);
 	    if (j == 1)
 		BU_BITSET(bot->face_mode, i);
-	    else if (j != 0)
-	    {
+	    else if (j != 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Invalid face mode (must be 0 or 1)\n");
 		return GED_ERROR;
 	    }
@@ -1108,20 +1092,17 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     }
 
     num_points = atoi(argv[3]);
-    if (num_points < 2)
-    {
+    if (num_points < 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of points (must be at least 2)\n");
 	return GED_ERROR;
     }
 
-    if (argc < 10)
-    {
+    if (argc < 10) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
 	return GED_MORE;
     }
 
-    if (argc < 4 + num_points*6)
-    {
+    if (argc < 4 + num_points*6) {
 	bu_vls_printf(&gedp->ged_result_str, "%s for point %d : ", prompt[7+(argc-10)%6], 1+(argc-4)/6);
 	return GED_MORE;
     }
@@ -1133,8 +1114,7 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     pipe = (struct rt_pipe_internal *)intern->idb_ptr;
     pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipe->pipe_segs_head);
-    for (i=4; i<argc; i+= 6)
-    {
+    for (i=4; i<argc; i+= 6) {
 	struct wdb_pipept *pipept;
 
 	pipept = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "wdb_pipept");
@@ -1148,8 +1128,7 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	BU_LIST_INSERT(&pipe->pipe_segs_head, &pipept->l);
     }
 
-    if (rt_pipe_ck(&pipe->pipe_segs_head))
-    {
+    if (rt_pipe_ck(&pipe->pipe_segs_head)) {
 	bu_vls_printf(&gedp->ged_result_str, "Illegal pipe, solid not made!!\n");
 	return GED_ERROR;
     }
@@ -2407,20 +2386,17 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
     }
 
     num_points = atoi(argv[5]);
-    if (num_points < 1)
-    {
+    if (num_points < 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Invalid number of points (must be at least 1)\n");
 	return GED_ERROR;
     }
 
-    if (argc < 10)
-    {
+    if (argc < 10) {
 	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[argc-3]);
 	return GED_MORE;
     }
 
-    if (argc < 6 + num_points*4)
-    {
+    if (argc < 6 + num_points*4) {
 	bu_vls_printf(&gedp->ged_result_str, "%s for point %d : ", prompt[6+(argc-9)%4], 1+(argc-5)/4);
 	return GED_MORE;
     }
@@ -2440,8 +2416,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * MORE points than the value in the num_points field if it's all on one
      * line. Is that a bug, or a feature?
      */
-    for (i=6; i<argc; i+= 4)
-    {
+    for (i=6; i<argc; i+= 4) {
 	struct wdb_metaballpt *metaballpt;
 
 	metaballpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "wdb_metaballpt");
