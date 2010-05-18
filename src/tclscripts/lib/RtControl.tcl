@@ -582,6 +582,7 @@
 	}
     }
 
+
     if {$itk_option(-fb_active_pane_callback) != ""} {
 	catch {$itk_option(-fb_active_pane_callback) $rtActivePane}
     }
@@ -1367,7 +1368,7 @@
     }
 
     if {$isaMged} {
-	set size [$itk_option(-mged) component $rtActivePane cget -dmsize]
+	set size [$itk_option(-mged) component $rtAcivePane cget -dmsize]
     } else {
 	set size [$itk_option(-mged) pane_win_size $rtActivePane]
     }
