@@ -50,7 +50,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     char line[128];
     static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
     char tmpfil[MAXPATHLEN];
-    char *editstring;
+    char *editstring = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

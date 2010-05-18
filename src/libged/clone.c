@@ -685,12 +685,12 @@ static struct directory *
 copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *state)
 {
     size_t i;
-    union record   *rp = (union record *)NULL;
+    union record *rp = (union record *)NULL;
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
 
-    struct bu_vls *copyname;
-    struct bu_vls *nextname;
+    struct bu_vls *copyname = NULL;
+    struct bu_vls *nextname = NULL;
 
     /* get the name of what the object "should" get cloned to */
     copyname = clone_get_name(dp, state, 0);
