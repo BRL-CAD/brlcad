@@ -152,6 +152,8 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
 
     VSETALL(isst->camera.pos.v, isst->tie->radius);
     VMOVE(isst->camera.focus.v, isst->tie->mid);
+    VMOVE(isst->camera_pos_init, isst->camera.pos.v);
+    VMOVE(isst->camera_focus_init, isst->camera.focus.v);
 
     /* Set the inital az and el values in Tcl/Tk */
     VSUB2(vec, isst->camera.pos.v, isst->camera.focus.v);
@@ -375,6 +377,27 @@ render_mode(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const 
     return TCL_OK;
 }
 
+
+static int
+zero_view(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl *togl;
+    vect_t vec;
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
+        return TCL_ERROR;
+
+    isst = (struct isst_s *) Togl_GetClientData(togl);
+
+    VMOVE(isst->camera.focus.v, isst->camera_focus_init);
+    VMOVE(isst->camera.pos.v, isst->camera_pos_init);
+
+    return TCL_OK;
+}
+
+
+
 static int
 aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
@@ -409,7 +432,7 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
 {
     struct isst_s *isst;
     Togl *togl;
-    vect_t vec, ftemp;
+    vect_t vec;
     double x, y;
     double az, el;
     double mag;
@@ -428,8 +451,6 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
         return TCL_ERROR;
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
         return TCL_ERROR;
-
-    VMOVE(ftemp, isst->tie->mid);
 
     mag = fabs(DIST_PT_PT(isst->camera.pos.v, isst->camera.focus.v));
 
@@ -479,6 +500,7 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "look", look, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "reset", zero_view, NULL, NULL);
     Tcl_CreateObjCommand(interp, "position", position, NULL, NULL);
     Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
 

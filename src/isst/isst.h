@@ -34,6 +34,8 @@ struct isst_s {
     double rotx, roty;
     int texid;
     void *texdata;
+    vect_t camera_pos_init;
+    vect_t camera_focus_init;
 };
 
 /*

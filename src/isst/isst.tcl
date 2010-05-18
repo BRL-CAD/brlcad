@@ -28,6 +28,7 @@ proc ::isst::drawview {win {tick 100} } {
      bind $win <Key-2> {focus %W; render_mode %W normal}
      bind $win <Key-3> {focus %W; render_mode %W depth}
      bind $win <Key-4> {focus %W; render_mode %W component}
+     bind $win <Key-0> {focus %W; reset %W}
      
     bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
     bind $win <ButtonPress-3> {::isst::RotStart %x %y %W}
