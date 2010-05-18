@@ -40,7 +40,6 @@
 int
 ged_make(struct ged *gedp, int argc, const char *argv[])
 {
-    int status = GED_OK;
     int i;
     int k;
     int save_bu_optind;

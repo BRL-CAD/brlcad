@@ -413,7 +413,6 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 				 */
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
-    const char *cmdname = argv[0];
     static const char *usage = "[-A name/value pairs] OR [-acrslop] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
