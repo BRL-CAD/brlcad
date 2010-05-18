@@ -1533,7 +1533,7 @@ nmg_keu(register struct edgeuse *eu1)
 	if (BU_LIST_IS_EMPTY(&lu1->down_hd)) ret = 1;
     } else if (*eu1->up.magic_p == NMG_SHELL_MAGIC) {
 	if (eu1->up.s_p != eu2->up.s_p) {
-	    bu_bomb("nmg_keu() edguses don't share parent shell\n");
+	    bu_bomb("nmg_keu() edgeuses don't share parent shell\n");
 	}
 
 	/* unlink edgeuses from the parent shell */

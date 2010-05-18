@@ -83,7 +83,7 @@ rt_generic_xform(
 	    }
 	    break;
 	case 5:
-	    avs.magic = -1;
+	    avs.magic = 0;
 
 	    if (rt_functab[id].ft_export5(&ext, ip, 1.0, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",

@@ -1429,7 +1429,7 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	if (eu->e_p == e_p) {
 	    if (rt_g.NMG_debug & DEBUG_PT_FU)
-		bu_log("skipping edguse (%g %g %g) -> (%g %g %g) on \"except\" edge\n",
+		bu_log("skipping edgeuse (%g %g %g) -> (%g %g %g) on \"except\" edge\n",
 		       V3ARGS(eu->vu_p->v_p->vg_p->coord),
 		       V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 

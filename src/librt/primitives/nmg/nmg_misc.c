@@ -2516,7 +2516,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 		}
 
 		/* now eliminate loop from table */
-		eu_used = (struct edgeuse **)bu_calloc(loop_size, sizeof(struct edguse *), "edges used list");
+		eu_used = (struct edgeuse **)bu_calloc(loop_size, sizeof(struct edgeuse *), "edges used list");
 		for (i=0; i<loop_size; i++)
 		    eu_used[i] = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[i]);
 
@@ -2598,7 +2598,7 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 	    bu_ptbl_ins(&vert_tbl, (long *)&eu2->eumate_p->vu_p->v_p);
 
 	    /* save list of used edges to be removed later */
-	    eu_used = (struct edgeuse **)bu_calloc(edges_used, sizeof(struct edguse *), "edges used list");
+	    eu_used = (struct edgeuse **)bu_calloc(edges_used, sizeof(struct edgeuse *), "edges used list");
 	    for (i=0; i<edges_used; i++)
 		eu_used[i] = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[i]);
 
@@ -4229,7 +4229,7 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
     if (fu->orientation != OT_SAME)
 	bu_bomb("First face in shell has no OT_SAME uses!!!!\n");
 
-    /* put all edguses of first faceuse on the stack */
+    /* put all edgeuses of first faceuse on the stack */
     for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
@@ -9449,7 +9449,7 @@ Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
 		    goto not_arb;
 
 
-		/* Make sure shell is convex by checking that edguses
+		/* Make sure shell is convex by checking that edgeuses
 		 * run in direction fu_norm X norm_radial
 		 */
 		NMG_GET_FU_NORMAL(norm_radial, fu_radial);
