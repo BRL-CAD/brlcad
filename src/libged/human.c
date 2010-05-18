@@ -2215,8 +2215,6 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     int is_region = 0;
     unsigned char rgb[3], rgb2[3], rgb3[3];
     char topLevel[MAXLENGTH]="";
-    int textDump = 0;
-    int textRead = 0;
 
     bu_log("Entering Human Builder\n");
     srand(time(NULL));
@@ -2350,8 +2348,8 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	     * bounding boxes to the actual body representation inside.
 	     */
 
-	    BU_LIST_INIT(&hollow.l)
-		(void)mk_addmember("Head.sBox", &hollow.l, NULL, WMOP_UNION);
+	    BU_LIST_INIT(&hollow.l);
+	    (void)mk_addmember("Head.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("Head.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
 	    (void)mk_addmember("Neck.sBox", &hollow.l, NULL, WMOP_UNION);
