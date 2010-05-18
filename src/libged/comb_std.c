@@ -688,7 +688,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	db_delete(gedp->ged_wdbp->dbip, dp);
 
 	dp->d_len = 0;
-	dp->d_un.file_offset = -1;
+	dp->d_un.file_offset = (off_t)-1;
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = final_tree;
 
