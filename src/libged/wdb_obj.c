@@ -1801,8 +1801,8 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	    new_intern.idb_meth = &rt_functab[ID_NMG];
 	    new_intern.idb_ptr = (genptr_t)m_tmp;
 
-	    if ((new_dp=db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), -1, 0,
-				  DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
+	    new_dp=db_diradd(wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	    if (new_dp == DIR_NULL) {
 		WDB_TCL_ALLOC_ERR_return;
 	    }
 
@@ -2845,7 +2845,8 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if ((dp=db_diradd(wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL) {
+    dp=db_diradd(wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type);
+    if (dp == DIR_NULL) {
 	if (interp) {
 	    Tcl_AppendResult(interp, "An error has occured while adding a new object to the database.", (char *)NULL);
 	} else {
@@ -6150,8 +6151,8 @@ Make_new_name(struct db_i *dbip,
 	    }
 
 	    /* Add new name to directory */
-	    if ((use->dp = db_diradd(dbip, name, -1, 0, dp->d_flags,
-				     (genptr_t)&dp->d_minor_type)) == DIR_NULL) {
+	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
+	    if (use->dp == DIR_NULL) {
 		WDB_ALLOC_ERR_return;
 	    }
 	}
@@ -9318,7 +9319,8 @@ wdb_combadd(Tcl_Interp *interp,
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
 
 	/* Update the in-core directory */
-	if ((dp = db_diradd(dbip, combname, -1, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	dp = db_diradd(dbip, combname, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
+	if (dp == DIR_NULL) {
 	    Tcl_AppendResult(interp, "An error has occured while adding '",
 			     combname, "' to the database.\n", (char *)NULL);
 	    return DIR_NULL;

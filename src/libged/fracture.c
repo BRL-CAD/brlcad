@@ -209,7 +209,7 @@ ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 	return;
     }
 
-    if ( (new_dp=db_diradd( gedp->ged_wdbp->dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
+    if ( (new_dp=db_diradd( gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      newname);

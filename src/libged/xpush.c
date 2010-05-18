@@ -192,8 +192,8 @@ Make_new_name(struct db_i *dbip,
 	    }
 
 	    /* Add new name to directory */
-	    if ((use->dp = db_diradd(dbip, name, -1, 0, dp->d_flags,
-				     (genptr_t)&dp->d_minor_type)) == DIR_NULL) {
+	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
+	    if (use->dp == DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "\nAn error has occured while adding a new object to the database.\n"); \
 																 return;
 	    }

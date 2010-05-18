@@ -1150,7 +1150,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     }
 
     /* Add to in-core directory */
-    if ((dp = db_diradd(gedp->ged_wdbp->dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&ip->idb_type)) == DIR_NULL) {
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&ip->idb_type)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
 	return GED_ERROR;
     }
