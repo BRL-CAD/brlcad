@@ -800,9 +800,7 @@ slope(Tcl_Interp *interp,
 }
 
 static void
-crdummy( w, t, flag )
-    fastf_t	w[3], t[3];
-    int	flag;
+crdummy(fastf_t w[3], fastf_t t[3], int flag)
 {
     fastf_t	temp;
     vect_t	vec;
@@ -844,8 +842,7 @@ crdummy( w, t, flag )
 }
 
 static void
-trcurve( wh, t )
-    fastf_t wh[], t[];
+trcurve(fastf_t wh[], t[])
 {
     sol.s_values[0] = wh[0];
     sol.s_values[1] = t[0];
@@ -858,9 +855,7 @@ trcurve( wh, t )
 }
 
 static void
-bottom( vec1, vec2, t )
-    vect_t	vec1, vec2;
-    fastf_t	t[];
+bottom(vect_t vec1, vect_t vec2, fastf_t t[])
 {
     vect_t	tvec;
     int i, j;
@@ -884,9 +879,7 @@ bottom( vec1, vec2, t )
 }
 
 static void
-top( vec1, vec2, t )
-    vect_t	vec1, vec2;
-    fastf_t	t[];
+top(vect_t vec1, vect_t vec2, fastf_t t[])
 {
     fastf_t	tooch, mag;
     vect_t	del, tvec;
