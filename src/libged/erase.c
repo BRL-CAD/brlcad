@@ -75,9 +75,17 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 
-	if (*argv[i] != '-') break;
-	if ((ptr_A=strchr(argv[i], 'A'))) flag_A_attr = 1;
-	if ((ptr_o=strchr(argv[i], 'o'))) flag_o_nonunique = 2;
+	if (*argv[i] != '-')
+	    break;
+
+	ptr_A=strchr(argv[i], 'A');
+	if (ptr_A)
+	    flag_A_attr = 1;
+
+	ptr_o=strchr(argv[i], 'o');
+	if (ptr_o)
+	    flag_o_nonunique = 2;
+
 	last_opt = i;
 
 	if (!ptr_A && !ptr_o) {

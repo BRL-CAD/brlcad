@@ -151,7 +151,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     char **av;
     FILE *fp = NULL;
     char tmpfil[MAXPATHLEN] = {0};
-    const char *editstring;
+    const char *editstring = NULL;
 
     static const char *usage = "[-i|-n|-r] object(s)";
 

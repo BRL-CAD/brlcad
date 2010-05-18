@@ -42,7 +42,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     const char **av;
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
-    const char *editstring;
+    const char *editstring = NULL;
     
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
