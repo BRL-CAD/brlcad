@@ -256,7 +256,8 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
 	rt_db_free_internal(&nmg_intern);
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
+	dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	if (dp == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	    return GED_ERROR;
 	}
