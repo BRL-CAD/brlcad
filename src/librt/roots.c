@@ -119,6 +119,10 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
     int n;
     register int i;		/* iteration counter */
 
+    p0 = {0.0, 0.0};
+    p1 = {0.0, 0.0};
+    p2 = {0.0, 0.0};
+
     for (i=0; i < 100; i++) {
 	cZ = *nxZ;
 	rt_poly_eval_w_2derivatives(&cZ, eqn, &p0, &p1, &p2);

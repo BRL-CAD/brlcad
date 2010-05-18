@@ -402,7 +402,7 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 
 	/* RT_HIT_UV */
 	{
-	    struct uvcoord uv;
+	    struct uvcoord uv = {0.0, 0.0, 0.0, 0.0};
 	    RT_HIT_UVCOORD(ap, inseg->seg_stp, &inseg->seg_in, &uv);
 	    up_segp->seg_in.hit_vpriv[X] = uv.uv_u;
 	    up_segp->seg_in.hit_vpriv[Y] = uv.uv_v;
