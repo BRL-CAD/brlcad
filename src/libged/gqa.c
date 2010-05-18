@@ -84,7 +84,7 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
  * when formatting this file.  if the compile breaks here, it means
  * that spaces got inserted incorrectly.
  */
-#define COMMA ', '
+#define COMMA ','
 
 static int analysis_flags;
 static int multiple_analyses;
@@ -591,10 +591,14 @@ parse_args(int ac, char *av[])
 		    /* find out if we have two or one args user can
 		     * separate them with, or - delimiter
 		     */
-		    if ((p = strchr(bu_optarg, COMMA)))
+		    p = strchr(bu_optarg, COMMA);
+		    if (p)
 			*p++ = '\0';
-		    else if ((p = strchr(bu_optarg, '-')))
-			*p++ = '\0';
+		    else {
+			p = strchr(bu_optarg, '-');
+			if (p)
+			    *p++ = '\0';
+		    }
 
 
 		    if (read_units_double(&value1, bu_optarg, units_tab[0])) {
@@ -1351,7 +1355,9 @@ plane_worker (int cpu, genptr_t ptr)
 
     u = -1;
 
-    while ((v = get_next_row(state))) {
+    v = get_next_row(state);
+
+    while (v) {
 
 	v_coord = v * gridSpacing;
 	if (debug) {
@@ -1426,6 +1432,9 @@ plane_worker (int cpu, genptr_t ptr)
 		    }
 	    }
 	}
+
+	/* iterate */
+	v = get_next_row(state);
     }
 
     if (debug && (u == -1)) {
@@ -1456,7 +1465,8 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     char *str = bu_strdup(name);
     char *p;
 
-    if ((p=strchr(str, '/'))) {
+    p=strchr(str, '/');
+    if (p) {
 	*p = '\0';
     }
 
