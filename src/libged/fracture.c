@@ -42,11 +42,11 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
     struct directory *old_dp;
-    struct rt_db_internal	old_intern;
-    struct model	*m, *new_model;
-    char		newname[32];
-    char		prefix[32];
-    int	maxdigits;
+    struct rt_db_internal old_intern;
+    struct model *m, *new_model;
+    char newname[32];
+    char prefix[32];
+    int maxdigits;
     struct nmgregion *r, *new_r;
     struct shell *s, *new_s;
     struct faceuse *fu;
@@ -101,8 +101,8 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(&gedp->ged_result_str, "%ld = %d digits\n", (long)(tf+tw+tp), maxdigits);
 
-    /*	for (maxdigits=1, i=tf+tw+tp; i > 0; i /= 10)
-     *	maxdigits++;
+    /* for (maxdigits=1, i=tf+tw+tp; i > 0; i /= 10)
+     * maxdigits++;
      */
 
     /* get the prefix for the solids to be created. */
@@ -194,14 +194,15 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 static void
 ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 {
-    struct rt_db_internal	new_intern;
+    struct rt_db_internal new_intern;
     struct directory *new_dp;
     struct nmgregion *r;
 
-    if ( db_lookup( gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
+    if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: already exists\n", newname);
 	/* Free memory here */
 	nmg_km(m);
@@ -209,7 +210,8 @@ ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 	return;
     }
 
-    if ( (new_dp=db_diradd( gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
+    new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    if (new_dp == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      newname);
@@ -228,7 +230,7 @@ ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     new_intern.idb_meth = &rt_functab[ID_NMG];
     new_intern.idb_ptr = (genptr_t)m;
 
-    if ( rt_db_put_internal( new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource ) < 0 )  {
+    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */
 	nmg_km(m);
 	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal() failure\n");
