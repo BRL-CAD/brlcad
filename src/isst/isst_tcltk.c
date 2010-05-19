@@ -443,10 +443,10 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
 {
     struct isst_s *isst;
     Togl *togl;
-    vect_t vec;
+    vect_t vec, vecdpos, vecdfoc;
     double x, y;
     double az, el;
-    double mag;
+    double mag_pos, mag_focus;
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "pathName x y");
@@ -463,11 +463,13 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
         return TCL_ERROR;
 
-    mag = fabs(DIST_PT_PT(isst->camera.pos.v, isst->camera.focus.v));
+    mag_pos = fabs(DIST_PT_PT(isst->camera.pos.v, isst->camera_focus_init));
 
-    VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
-    VUNITIZE(vec);
-    AZEL_FROM_V3DIR(az, el, vec);
+    mag_focus = fabs(DIST_PT_PT(isst->camera.focus.v, isst->camera_focus_init));
+
+    VSUB2(vecdpos, isst->camera_focus_init, isst->camera.pos.v);
+    VUNITIZE(vecdpos);
+    AZEL_FROM_V3DIR(az, el, vecdpos);
     az = az * -DEG2RAD - x;
     el = el * -DEG2RAD + y;
 
@@ -477,10 +479,26 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
     if(el>M_PI_2) el=M_PI_2 - 0.001;
     if(el<-M_PI_2) el=-M_PI_2 + 0.001;
 
-    V3DIR_FROM_AZEL(vec, az, el);
-    VSCALE(vec, vec, mag);
-    VADD2(isst->camera.pos.v, isst->camera.focus.v, vec);
+    V3DIR_FROM_AZEL(vecdpos, az, el);
+    VSCALE(vecdpos, vecdpos, mag_pos);
+    VADD2(isst->camera.pos.v, isst->camera_focus_init, vecdpos);
+    if (mag_focus > 0) {
+	VSUB2(vecdfoc, isst->camera_focus_init, isst->camera.focus.v);
+    	VUNITIZE(vecdfoc);
+    	AZEL_FROM_V3DIR(az, el, vecdfoc);
+    	az = az * -DEG2RAD - x;
+    	el = el * -DEG2RAD + y;
 
+   	/* clamp to sane values */
+    	while(az > 2*M_PI) az -= 2*M_PI;
+    	while(az < 0) az += 2*M_PI;
+    	if(el>M_PI_2) el=M_PI_2 - 0.001;
+    	if(el<-M_PI_2) el=-M_PI_2 + 0.001;
+
+    	V3DIR_FROM_AZEL(vecdfoc, az, el);
+    	VSCALE(vecdfoc, vecdfoc, mag_focus);
+    	VADD2(isst->camera.focus.v, isst->camera_focus_init, vecdfoc);
+    } 
     return TCL_OK;
 }
 int
