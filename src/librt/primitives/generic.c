@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#include <string.h>
+
 #include "bu.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -63,7 +65,7 @@ rt_generic_xform(
     RT_CK_DBI(dbip);
     RT_CK_RESOURCE(resp);
 
-    avs.magic = 0;
+    memset(&avs, 0, sizeof(struct bu_attribute_value_set));
 
     id = ip->idb_type;
     BU_INIT_EXTERNAL(&ext);
