@@ -304,67 +304,6 @@ isst_zap(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
 }
 
 static int
-position(ClientData clientData, Tcl_Interp *interp, int objc,
-        Tcl_Obj *const *objv)
-{
-    struct isst_s *isst;
-    char    Result[100];
-    Togl   *togl;
-
-    if (objc != 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName");
-        return TCL_ERROR;
-    }
-
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    isst = (struct isst *) Togl_GetClientData(togl);
-
-    /* Let result string equal value */
-    sprintf(Result, "TODO?");
-
-    Tcl_SetResult(interp, Result, TCL_VOLATILE);
-    return TCL_OK;
-}
-
-static int
-look(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
-{
-    struct isst_s *isst;
-    Togl   *togl;
-
-    if (objc != 8) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName posX posY posZ focX focY focZ");
-        return TCL_ERROR;
-    }
-
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
-        return TCL_ERROR;
-
-    isst = (struct isst_s *) Togl_GetClientData(togl);
-
-    if (Tcl_GetDoubleFromObj(interp, objv[2], &isst->camera.pos.v[0]) != TCL_OK)
-        return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[3], &isst->camera.pos.v[1]) != TCL_OK)
-        return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[4], &isst->camera.pos.v[2]) != TCL_OK)
-        return TCL_ERROR;
-
-    if (Tcl_GetDoubleFromObj(interp, objv[5], &isst->camera.focus.v[0]) != TCL_OK)
-        return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[6], &isst->camera.focus.v[1]) != TCL_OK)
-        return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[7], &isst->camera.focus.v[2]) != TCL_OK)
-        return TCL_ERROR;
-
-    Togl_PostRedisplay(togl);
-
-    return TCL_OK;
-}
-
-static int
 render_mode(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     struct isst_s *isst;
@@ -401,12 +340,47 @@ zero_view(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    VMOVE(isst->camera.focus.v, isst->camera_focus_init);
-    VMOVE(isst->camera.pos.v, isst->camera_pos_init);
+    VSUB2(vec, isst->camera_focus_init, isst->camera.pos.v);
+    VUNITIZE(vec);
+    VADD2(isst->camera.focus.v, isst->camera.pos.v, vec);
 
     return TCL_OK;
 }
 
+
+void
+move_walk(struct isst_s * isst, double dist)
+{
+    vect_t vec;
+
+    VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
+    VUNITIZE(vec);
+    VSCALE(vec, vec, isst->dt * dist * isst->tie->radius);
+    VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
+    if(dist < 0) VSCALE(vec, vec, -1);
+    VADD2(isst->camera.focus.v, isst->camera.pos.v, vec);
+}
+
+void
+move_strafe(struct isst_s * isst, double dist)
+{
+    vect_t vec, dir, up;
+
+    VSET(up, 0, 0, 1);
+    VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
+    VUNITIZE(dir);
+    VCROSS(vec, dir, up);
+    VSCALE(vec, vec, isst->dt * dist * isst->tie->radius);
+    VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
+    VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
+}
+
+void
+move_float(struct isst_s * isst, double dist)
+{
+    isst->camera.pos.v[2] += 2*isst->dt*dist;
+    isst->camera.focus.v[2] += 2*isst->dt*dist;
+}
 
 
 static int
@@ -543,11 +517,9 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "reshape", reshape, NULL, NULL);
     Tcl_CreateObjCommand(interp, "load_g", isst_load_g, NULL, NULL);
     Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "look", look, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
     Tcl_CreateObjCommand(interp, "reset", zero_view, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "position", position, NULL, NULL);
     Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
 
     return TCL_OK;
