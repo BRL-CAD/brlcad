@@ -879,7 +879,8 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
     /* XXXX should check for orthogonality of 'x' and 'y' vectors */
 
-    if (!(hf->mp = bu_open_mapped_file(hf->dfile, "hf"))) {
+    hf->mp = bu_open_mapped_file(hf->dfile, "hf");
+    if (!hf->mp) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: cannot open data file\n");
 	hf->mp = (struct bu_mapped_file *)NULL;
 	return GED_ERROR;
@@ -1794,8 +1795,8 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
 
 /* R P P _ I N () :   	reads rpp parameters from keyboard
- * returns 0 if successful read
- * 1 if unsuccessful read
+ * returns GED_OK if successful read
+ * GED_ERROR if unsuccessful read
  */
 static int
 rpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, const char *name)
@@ -1865,7 +1866,6 @@ orpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 
     if (mk_rpp(gedp->ged_wdbp, name, min, max) < 0)
 	return GED_ERROR;
-    return 1;
 
     return GED_OK;
 }
@@ -2440,7 +2440,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     unsigned long numPoints;
     long readPoints;
     struct rt_pnts_internal *pnts;
-    void *headPoint;
+    void *headPoint = NULL;
 
     rt_pnt_type type;
 

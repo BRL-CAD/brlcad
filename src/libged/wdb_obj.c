@@ -10476,7 +10476,7 @@ wdb_newcmds_tcl(ClientData clientData,
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
     struct bu_vls vls;
-    int ret;
+    int ret = GED_ERROR;
 
     /*XXX Eventually the clientData will be a "struct ged".
      * In the meantime ...

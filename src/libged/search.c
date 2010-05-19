@@ -281,11 +281,12 @@ palloc(enum ntype t, int (*f)(PLAN *, struct db_full_path *, struct ged *))
 int
 f_expr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
-    PLAN *p;
-    int state;
+    PLAN *p = NULL;
+    int state = 0;
 
-    for (p = plan->p_data[0];
-	 p && (state = (p->eval)(p, entry, gedp)); p = p->next);
+    for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, gedp)); p = p->next)
+	; /* do nothing */
+
     return state;
 }
 
@@ -319,11 +320,12 @@ c_closeparen(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 int
 f_not(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
-    PLAN *p;
-    int state;
+    PLAN *p = NULL;
+    int state = 0;
 
     for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, gedp)); p = p->next)
-	;
+	; /* do nothing */
+
     return !state;
 }
 
@@ -338,11 +340,13 @@ c_not(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 
 int
 find_execute_nested_plans(struct ged *gedp, struct db_full_path *entry, genptr_t inputplan) {
-    PLAN *p;
+    PLAN *p = NULL;
     PLAN *plan = (PLAN *)inputplan;
-    int state;
+    int state = 0;
+
     for (p = plan; p && (state = (p->eval)(p, entry, gedp)); p = p->next)
-	;
+	; /* do nothing */
+
     return state;
 }
 
@@ -599,17 +603,18 @@ c_below(char *ignore, char ***ignored, int unused, PLAN **resultplan)
 int
 f_or(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
-    PLAN *p;
-    int state;
+    PLAN *p = NULL;
+    int state = 0;
 
-    for (p = plan->p_data[0];
-	 p && (state = (p->eval)(p, entry, gedp)); p = p->next);
+    for (p = plan->p_data[0]; p && (state = (p->eval)(p, entry, gedp)); p = p->next)
+	; /* do nothing */
 
     if (state)
 	return 1;
 
-    for (p = plan->p_data[1];
-	 p && (state = (p->eval)(p, entry, gedp)); p = p->next);
+    for (p = plan->p_data[1]; p && (state = (p->eval)(p, entry, gedp)); p = p->next)
+	; /* do nothing */
+
     return state;
 }
 
