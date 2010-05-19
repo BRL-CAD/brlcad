@@ -10,7 +10,6 @@ namespace eval ::isst {
 }
 
 proc ::isst::setup {} {
-    global az el
     wm title . "ISST - Interactive Geometry Viewing"
 
     frame .f
@@ -45,14 +44,16 @@ proc ::isst::RotStart {x y W} {
 }
 
 proc ::isst::RotMove {x y W} {
-    global az el startx starty
-    set az [expr $az + ($x - $startx)*0.0001]
-    set el [expr $el + ($y - $starty)*0.0001]
-    aetolookat $W $az $el
+    global startx starty
+    set dx [expr ($x - $startx)*0.005]
+    set dy [expr ($y - $starty)*0.005]
+    aetolookat $W $dx $dy
+    set startx $x
+    set starty $y
 }
 
 proc ::isst::RotMove2 {x y W} {
-    global az el startx starty
+    global startx starty
     set dx [expr ($x - $startx)*0.005]
     set dy [expr ($y - $starty)*0.005]
     aerotate $W $dx $dy

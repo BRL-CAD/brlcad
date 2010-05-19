@@ -414,7 +414,8 @@ aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
 {
     struct isst_s *isst;
     Togl *togl;
-    vect_t vec;
+    vect_t vecdfoc;
+    double x, y;
     double az, el;
 
     if (objc < 4) {
@@ -427,14 +428,25 @@ aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    if (Tcl_GetDoubleFromObj(interp, objv[2], &az) != TCL_OK)
+    if (Tcl_GetDoubleFromObj(interp, objv[2], &x) != TCL_OK)
         return TCL_ERROR;
-    if (Tcl_GetDoubleFromObj(interp, objv[3], &el) != TCL_OK)
+    if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
         return TCL_ERROR;
 
-    V3DIR_FROM_AZEL(vec, az, el);
-    VADD2(isst->camera.focus.v, isst->camera.pos.v, vec);
+    VSUB2(vecdfoc, isst->camera.pos.v, isst->camera.focus.v);
+    VUNITIZE(vecdfoc);
+    AZEL_FROM_V3DIR(az, el, vecdfoc);
+    printf("init az: %f\n", az);
+    printf("init el: %f\n", el);
 
+    az = az * -DEG2RAD + x;
+    el = el * -DEG2RAD + y;
+
+    V3DIR_FROM_AZEL(vecdfoc, az, el);
+    VADD2(isst->camera.focus.v, isst->camera.pos.v, vecdfoc);
+    printf("az: %f\n", az);
+    printf("el: %f\n", el);
+ 
     return TCL_OK;
 }
 
@@ -447,6 +459,9 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
     double x, y;
     double az, el;
     double mag_pos, mag_focus;
+    struct bu_vls tclstr;
+    bu_vls_init(&tclstr);    
+
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "pathName x y");
@@ -498,7 +513,18 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
     	V3DIR_FROM_AZEL(vecdfoc, az, el);
     	VSCALE(vecdfoc, vecdfoc, mag_focus);
     	VADD2(isst->camera.focus.v, isst->camera_focus_init, vecdfoc);
-    } 
+    }
+    /* Update the tcl copies of the az/el vars */
+    VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
+    VUNITIZE(vec);
+    AZEL_FROM_V3DIR(az, el, vec);
+    printf("az: %f\n", az);
+    printf("el: %f\n", el);
+    bu_vls_sprintf(&tclstr, "%f", az);
+    Tcl_SetVar(interp, "az", bu_vls_addr(&tclstr), 0);
+    bu_vls_sprintf(&tclstr, "%f", el);
+    Tcl_SetVar(interp, "el", bu_vls_addr(&tclstr), 0);
+    bu_vls_free(&tclstr);
     return TCL_OK;
 }
 int
