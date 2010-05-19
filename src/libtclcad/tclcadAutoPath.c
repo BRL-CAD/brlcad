@@ -264,6 +264,10 @@ tclcad_auto_path(Tcl_Interp *interp)
     /* are we running from an installed binary? if so add to path */
     if (bu_file_exists(buffer) && bu_same_file(buffer, which_argv)) {
 	from_installed = 1;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	bu_vls_printf(&auto_path, "%c%s%cbin%cTkhtml3.0",
+		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
