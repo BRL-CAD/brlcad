@@ -213,7 +213,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* Ensure bu_ptbl rti_resources is full size.  Ptrs will be null */
     if ((size_t)BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen) {
-	BU_PTBL_LEN(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
+	BU_PTBL_LEN(&sub_rtip->rti_resources) = (off_t)sub_rtip->rti_resources.blen;
     }
 
     if (RT_G_DEBUG) rt_pr_cut_info(sub_rtip, stp->st_name);
