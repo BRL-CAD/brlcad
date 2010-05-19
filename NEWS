@@ -18,6 +18,7 @@ changes made.  See document footer for additional details.
 * fixed running multiple framebuffer servers concurrently - Bob Parker
 * improvements to the primitive creation menu in archer - Bob Parker
 * fixed crash using bot_split on non-"plate mode" BoTs - Bob Parker
+* improved NURBS curve evaluation for mged brep command - Keith Bowman
 * fixed OpenGL framebuffer Mac refresh bug - Sean Morrison, Bob Parker
 
 
