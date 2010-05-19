@@ -176,7 +176,7 @@ db_fullpath_traverse(struct ged *gedp,
 		     genptr_t client_data)
 {
     struct directory *dp;
-    int i;
+    size_t i;
     RT_CK_FULL_PATH(dfp);
     RT_CK_DBI(gedp->ged_wdbp->dbip);
 
@@ -478,7 +478,7 @@ db_fullpath_stateful_traverse(struct ged *gedp,
 			      genptr_t client_data)
 {
     struct directory *dp;
-    int i;
+    size_t i;
     int state = 0;
     RT_CK_FULL_PATH(dfp);
     RT_CK_DBI(gedp->ged_wdbp->dbip);
@@ -747,7 +747,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
     size_t equalpos = 0;
     int checkval = 0;
     int strcomparison = 0;
-    int i;
+    size_t i;
     bu_vls_init(&attribname);
     bu_vls_init(&value);
 
@@ -815,7 +815,7 @@ f_attr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
      * logical expression before returning success
      */
 
-    for (i = 0; i < avs.count; i++, avpp++) {
+    for (i = 0; i < (size_t)avs.count; i++, avpp++) {
 	if (!bu_fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
 	    if (checkval >= 1) {
     
@@ -997,7 +997,7 @@ f_stdattr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 {
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
-    int i;
+    size_t i;
     int found_nonstd_attr = 0;
     int found_attr = 0;
 
@@ -1010,7 +1010,7 @@ f_stdattr(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
     bu_avs_init_empty(&avs);
     db5_get_attributes(gedp->ged_wdbp->dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
     avpp = avs.avp;
-    for (i = 0; i < avs.count; i++, avpp++) {
+    for (i = 0; i < (size_t)avs.count; i++, avpp++) {
 	found_attr = 1;
 	if (strcmp(avpp->name, "GIFTmater") != 0 &&
 	    strcmp(avpp->name, "aircode") != 0 &&
@@ -1298,8 +1298,8 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
     int dogreaterthan = 0;
     int dolessthan = 0;
     int doequal = 0;
-    int node_count_target = 0;
-    int node_count = 0;
+    size_t node_count_target = 0;
+    size_t node_count = 0;
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
 
@@ -1310,7 +1310,7 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
     if (isdigit(plan->node_data[0])) {
 	doequal = 1;
-	node_count_target = atoi(plan->node_data);
+	node_count_target = (size_t)atoi(plan->node_data);
     } else { 
    	if (plan->node_data[0] == '>') dogreaterthan = 1;
    	if (plan->node_data[0] == '<') dolessthan = 1;
@@ -1321,13 +1321,13 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
    	if (plan->node_data[1] == '=') {
 	    doequal = 1;
 	    if (isdigit(plan->node_data[2])) {
-		node_count_target = atoi((plan->node_data)+2);
+		node_count_target = (size_t)atoi((plan->node_data)+2);
 	    } else {
 		return 0;
 	    }
    	} else {
 	    if (isdigit(plan->node_data[1])) {
-		node_count_target = atoi((plan->node_data)+1);
+		node_count_target = (size_t)atoi((plan->node_data)+1);
 	    } else {
 		return 0;
 	    }

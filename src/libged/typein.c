@@ -2436,7 +2436,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 /* P N T S _ I N */
 static int
 pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
-    int i;
+    unsigned long i;
     unsigned long numPoints;
     long readPoints;
     struct rt_pnts_internal *pnts;
@@ -2591,7 +2591,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     }
     
     /* prompt for X, Y, Z of points */
-    if (argc < numPoints * valuesPerPoint) {
+    if ((unsigned long)argc < numPoints * (unsigned long)valuesPerPoint) {
 	int nextAsk = nextPrompt + 6;
 	struct bu_vls vls;
         bu_vls_init(&vls);
