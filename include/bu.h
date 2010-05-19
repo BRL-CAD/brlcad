@@ -71,6 +71,7 @@ __BEGIN_DECLS
  */
 #define BU_CASEFOLD 0x10
 
+
 /**
  * @def BU_DIR_SEPARATOR
  * the default directory separator character
@@ -81,7 +82,11 @@ __BEGIN_DECLS
 #  ifdef DIR_SEPARATOR_2
 #    define BU_DIR_SEPARATOR DIR_SEPARATOR_2
 #  else
+#    ifdef _WIN32
+#      define BU_DIR_SEPARATOR '\\'
+#    else
 #      define BU_DIR_SEPARATOR '/'
+#    endif  /* _WIN32 */
 #  endif  /* DIR_SEPARATOR_2 */
 #endif  /* DIR_SEPARATOR */
 
