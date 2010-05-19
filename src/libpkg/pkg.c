@@ -713,13 +713,13 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
 {
-    struct sockaddr_in from;
     int s2;
     auto int onoff;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
 #else
+    struct sockaddr_in from;
     unsigned int fromlen = sizeof (from);
 #endif
 
@@ -1143,7 +1143,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	return (int)(len1+len2);
     }
     /* Send it in three pieces */
-    if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
+    if ((i = (ssize_t)PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
 	if (i < 0) {
 	    if (errno == EBADF)
 		return -1;
@@ -1179,7 +1179,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	return i;
 
     i = PKG_SEND(pc->pkc_fd, buf2, len2);
-    if (i != len2) {
+    if (i != (ssize_t)len2) {
 	if (i < 0) {
 	    if (errno == EBADF)
 		return -1;
