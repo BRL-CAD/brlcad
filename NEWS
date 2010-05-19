@@ -20,6 +20,7 @@ changes made.  See document footer for additional details.
 * fixed crash using bot_split on non-"plate mode" BoTs - Bob Parker
 * improved NURBS curve evaluation for mged brep command - Keith Bowman
 * fixed OpenGL framebuffer Mac refresh bug - Sean Morrison, Bob Parker
+* improved archer object list view - Bob Parker
 
 
 ----------------------------------------------------------------------
