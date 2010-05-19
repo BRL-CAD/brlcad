@@ -418,12 +418,12 @@ rt_comb_export4(
     struct resource *resp)
 {
     struct rt_comb_internal *comb;
-    int node_count;
-    int actual_count;
+    size_t node_count;
+    size_t actual_count;
     struct rt_tree_array *rt_tree_array;
     union tree *tp;
     union record *rp;
-    int j;
+    size_t j;
     char *endp;
     struct bu_vls tmp_vls;
 
@@ -452,7 +452,7 @@ rt_comb_export4(
 	/* Convert tree into array form */
 	actual_count = db_flatten_tree(rt_tree_array, comb->tree,
 				       OP_UNION, 1, resp) - rt_tree_array;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	comb->tree = TREE_NULL;
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -595,9 +595,9 @@ db_tree_flatten_describe(
     double mm2local,
     struct resource *resp)
 {
-    int node_count;
+    size_t i;
+    size_t node_count;
     struct rt_tree_array *rt_tree_array;
-    int i;
     char op = OP_NOP;
     int status;
     union tree *ntp;
@@ -613,7 +613,7 @@ db_tree_flatten_describe(
     RT_CK_TREE(tp);
 
     node_count = db_tree_nleaves(tp);
-    if (node_count <= 0) {
+    if (node_count == 0) {
 	if (!indented) bu_vls_spaces(vls, 2*lvl);
 	bu_vls_strcat(vls, "-empty-\n");
 	return;
@@ -1042,7 +1042,7 @@ db_mkbool_tree(
     struct resource *resp)
 {
     register struct rt_tree_array *tlp;
-    register int i;
+    size_t i;
     register struct rt_tree_array *first_tlp = (struct rt_tree_array *)0;
     register union tree *xtp;
     register union tree *curtree;
