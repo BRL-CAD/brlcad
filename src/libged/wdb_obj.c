@@ -5189,8 +5189,8 @@ wdb_list_children(struct rt_wdb *wdbp,
 
     if (comb->tree) {
 	struct bu_vls vls;
-	int node_count;
-	int actual_count;
+	size_t node_count;
+	size_t  actual_count;
 	struct rt_tree_array *rt_tree_array;
 
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
@@ -5207,7 +5207,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_LONG(actual_count, ==, node_count);
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -5407,8 +5407,8 @@ wdb_print_node(struct rt_wdb *wdbp,
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb->tree) {
-	int node_count;
-	int actual_count;
+	size_t node_count;
+	size_t actual_count;
 	struct rt_tree_array *rt_tree_array;
 
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
@@ -5425,7 +5425,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_LONG(actual_count, ==, node_count);
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
