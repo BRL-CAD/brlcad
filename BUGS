@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Detailed BoT model ray trace image had incorrect background pixel
+  values in framebuffer, off slightly by one.
+
 * /dev/oglb 'copy mode' fails to refresh the framebuffer
 
 * X display manager (and probably others) will lock up mged if you Z/B
