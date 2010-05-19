@@ -263,7 +263,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
     vect_t norm;
     struct soltab *stp;
     const struct directory *dp;
-    struct curvature crv;
+    struct curvature crv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
 
     RT_CK_SEG(segp);
     stp = segp->seg_stp;
