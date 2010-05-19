@@ -909,25 +909,25 @@ rt_part_class(void)
 HIDDEN void
 rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fastf_t *b, fastf_t *h)
 {
-    register float cos45 = 0.707107;
+    /* M_SQRT1_2 is cos45 */
 
     /* This is the top of the dome */
     VADD2(ov[12], v, h);
 
     VADD2(ov[0], v, a);
-    VJOIN2(ov[1], v, cos45, a, cos45, b);
+    VJOIN2(ov[1], v, M_SQRT1_2, a, M_SQRT1_2, b);
     VADD2(ov[2], v, b);
-    VJOIN2(ov[3], v, -cos45, a, cos45, b);
+    VJOIN2(ov[3], v, -M_SQRT1_2, a, M_SQRT1_2, b);
     VSUB2(ov[4], v, a);
-    VJOIN2(ov[5], v, -cos45, a, -cos45, b);
+    VJOIN2(ov[5], v, -M_SQRT1_2, a, -M_SQRT1_2, b);
     VSUB2(ov[6], v, b);
-    VJOIN2(ov[7], v, cos45, a, -cos45, b);
+    VJOIN2(ov[7], v, M_SQRT1_2, a, -M_SQRT1_2, b);
 
-    VJOIN2(ov[8], v, cos45, a, cos45, h);
-    VJOIN2(ov[10], v, -cos45, a, cos45, h);
+    VJOIN2(ov[8], v, M_SQRT1_2, a, M_SQRT1_2, h);
+    VJOIN2(ov[10], v, -M_SQRT1_2, a, M_SQRT1_2, h);
 
-    VJOIN2(ov[9], v, cos45, b, cos45, h);
-    VJOIN2(ov[11], v, -cos45, b, cos45, h);
+    VJOIN2(ov[9], v, M_SQRT1_2, b, M_SQRT1_2, h);
+    VJOIN2(ov[11], v, -M_SQRT1_2, b, M_SQRT1_2, h);
     /* Obviously, this could be optimized quite a lot more */
 }
 
