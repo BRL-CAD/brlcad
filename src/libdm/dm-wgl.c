@@ -63,97 +63,11 @@ HIDDEN PIXELFORMATDESCRIPTOR *wgl_choose_visual();
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*wgl_open();
 HIDDEN int	wgl_close();
-HIDDEN int	wgl_drawBegin();
-HIDDEN int      wgl_drawEnd();
-HIDDEN int	wgl_normal();
-HIDDEN int	wgl_loadMatrix();
 HIDDEN int	wgl_drawString2D();
-HIDDEN int	wgl_drawLine2D();
-HIDDEN int	wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-HIDDEN int	wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
-HIDDEN int      wgl_drawPoint2D();
-HIDDEN int	wgl_drawVList();
-HIDDEN int	wgl_drawVListHiddenLine();
-HIDDEN int 	wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
-HIDDEN int      wgl_setFGColor();
-HIDDEN int      wgl_setBGColor();
-HIDDEN int	wgl_setLineAttr();
 HIDDEN int	wgl_configureWin_guts();
-HIDDEN int	wgl_configureWin();
 HIDDEN int	wgl_setLight();
-HIDDEN int	wgl_setTransparency();
-HIDDEN int	wgl_setDepthMask();
 HIDDEN int	wgl_setZBuffer();
-HIDDEN int	wgl_setWinBounds();
-HIDDEN int	wgl_debug();
-HIDDEN int      wgl_beginDList();
-HIDDEN int      wgl_endDList();
-HIDDEN int      wgl_drawDList();
-HIDDEN int      wgl_freeDLists();
-
-struct dm dm_wgl = {
-    wgl_close,
-    wgl_drawBegin,
-    wgl_drawEnd,
-    wgl_normal,
-    wgl_loadMatrix,
-    wgl_drawString2D,
-    wgl_drawLine2D,
-    wgl_drawLine3D,
-    wgl_drawLines3D,
-    wgl_drawPoint2D,
-    wgl_drawVList,
-    wgl_drawVListHiddenLine,
-    wgl_draw,
-    wgl_setFGColor,
-    wgl_setBGColor,
-    wgl_setLineAttr,
-    wgl_configureWin,
-    wgl_setWinBounds,
-    wgl_setLight,
-    wgl_setTransparency,
-    wgl_setDepthMask,
-    wgl_setZBuffer,
-    wgl_debug,
-    wgl_beginDList,
-    wgl_endDList,
-    wgl_drawDList,
-    wgl_freeDLists,
-    0,
-    1,				/* has displaylist */
-    0,                            /* no stereo by default */
-    1.0,				/* zoom-in limit */
-    1,				/* bound flag */
-    "wgl",
-    "Windows with OpenGL graphics",
-    DM_TYPE_WGL,
-    1,
-    0,
-    0,
-    1,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
-    0,				/* no debugging */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    1,				/* depth buffer is writable */
-    1,				/* zbuffer */
-    0,				/* no zclipping */
-    0,                          /* clear back buffer after drawing and swap */
-    0				/* Tcl interpreter */
-};
 
 static fastf_t default_viewscale = 1000.0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
@@ -171,9 +85,7 @@ static float diffuseColor[4];
 static float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
 
 void
-wgl_fogHint(dmp, fastfog)
-    struct dm *dmp;
-    int fastfog;
+wgl_fogHint(struct dm *dmp, int fastfog)
 {
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
@@ -191,7 +103,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     static int count = 0;
     GLfloat backgnd[4];
     int make_square = -1;
-    int nclass = 0;
     struct bu_vls str;
     struct bu_vls init_proc_vls;
     struct dm *dmp = (struct dm *)NULL;
@@ -487,9 +398,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 /*
  */
 int
-wgl_share_dlist(dmp1, dmp2)
-    struct dm *dmp1;
-    struct dm *dmp2;
+wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 {
     GLfloat backgnd[4];
     GLfloat vf;
@@ -653,8 +562,7 @@ wgl_share_dlist(dmp1, dmp2)
  *  Gracefully release the display.
  */
 HIDDEN int
-wgl_close(dmp)
-    struct dm *dmp;
+wgl_close(struct dm *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc) {
@@ -687,8 +595,7 @@ wgl_close(dmp)
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-wgl_drawBegin(dmp)
-    struct dm *dmp;
+wgl_drawBegin(struct dm *dmp)
 {
     GLfloat fogdepth;
 
@@ -759,8 +666,7 @@ wgl_drawBegin(dmp)
  *			W G L _ D R A W E N D
  */
 HIDDEN int
-wgl_drawEnd(dmp)
-    struct dm *dmp;
+wgl_drawEnd(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawEnd\n");
@@ -835,10 +741,7 @@ wgl_drawEnd(dmp)
  *  many calls to wgl_drawVList().
  */
 HIDDEN int
-wgl_loadMatrix(dmp, mat, which_eye)
-    struct dm *dmp;
-    mat_t mat;
-    int which_eye;
+wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
@@ -1077,9 +980,7 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
  *
  */
 HIDDEN int
-wgl_drawVList(dmp, vp)
-    struct dm			*dmp;
-    struct bn_vlist	*vp;
+wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist	*tvp;
     int				first;
@@ -1200,8 +1101,7 @@ wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)),
  * (ie, not scaled, rotated, displaced, etc).
  */
 HIDDEN int
-wgl_normal(dmp)
-    struct dm *dmp;
+wgl_normal(struct dm *dmp)
 {
 
     if (dmp->dm_debugLevel)
@@ -1231,12 +1131,7 @@ wgl_normal(dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-wgl_drawString2D( dmp, str, x, y, size, use_aspect )
-    struct dm *dmp;
-    char *str;
-    fastf_t x, y;
-    int size;
-    int use_aspect;
+wgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawString2D()\n");
@@ -1258,10 +1153,7 @@ wgl_drawString2D( dmp, str, x, y, size, use_aspect )
  *
  */
 HIDDEN int
-wgl_drawLine2D( dmp, x1, y1, x2, y2)
-    struct dm *dmp;
-    fastf_t x1, y1;
-    fastf_t x2, y2;
+wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
 
     if (dmp->dm_debugLevel)
@@ -1392,9 +1284,7 @@ wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 }
 
 HIDDEN int
-wgl_drawPoint2D(dmp, x, y)
-    struct dm *dmp;
-    fastf_t x, y;
+wgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("wgl_drawPoint2D():\n");
@@ -1410,11 +1300,7 @@ wgl_drawPoint2D(dmp, x, y)
 
 
 HIDDEN int
-wgl_setFGColor(dmp, r, g, b, strict, transparency)
-    struct dm *dmp;
-    unsigned char r, g, b;
-    int strict;
-    fastf_t transparency;
+wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict,  fastf_t transparency)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setFGColor()\n");
@@ -1505,10 +1391,7 @@ wgl_setBGColor(struct dm *dmp,
 }
 
 HIDDEN int
-wgl_setLineAttr(dmp, width, style)
-    struct dm *dmp;
-    int width;
-    int style;
+wgl_setLineAttr(struct dm *dmp, int width, int style)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setLineAttr()\n");
@@ -1528,9 +1411,7 @@ wgl_setLineAttr(dmp, width, style)
 
 /* ARGSUSED */
 HIDDEN int
-wgl_debug(dmp, lvl)
-    struct dm *dmp;
-    int lvl;
+wgl_debug(struct dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
@@ -1538,9 +1419,7 @@ wgl_debug(dmp, lvl)
 }
 
 HIDDEN int
-wgl_setWinBounds(dmp, w)
-    struct dm *dmp;
-    int w[6];
+wgl_setWinBounds(struct dm *dmp, int w[6])
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setWinBounds()\n");
@@ -1700,8 +1579,8 @@ wgl_configureWin_guts(struct dm *dmp,
 	logfont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 	logfont.lfFaceName[0] = (TCHAR)0;
 
-	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
-	     CreateFontIndirect(&logfont)) == NULL ) {
+	((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = CreateFontIndirect(&logfont);
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL ) {
 	    /* ????? add backup later */
 	    /* Try hardcoded backup font */
 	    /*     if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
@@ -1968,16 +1847,13 @@ wgl_configureWin_guts(struct dm *dmp,
 
 
 HIDDEN int
-wgl_configureWin(dmp)
-    struct dm *dmp;
+wgl_configureWin(struct dm *dmp)
 {
     return wgl_configureWin_guts(dmp, 0);
 }
 
 HIDDEN int
-wgl_setLight(dmp, lighting_on)
-    struct dm *dmp;
-    int lighting_on;
+wgl_setLight(struct dm *dmp, int lighting_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setLight()\n");
@@ -2064,9 +1940,7 @@ wgl_setDepthMask(struct dm *dmp,
 }
 
 HIDDEN int
-wgl_setZBuffer(dmp, zbuffer_on)
-    struct dm *dmp;
-    int zbuffer_on;
+wgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setZBuffer:\n");
@@ -2096,9 +1970,7 @@ wgl_setZBuffer(dmp, zbuffer_on)
 }
 
 int
-wgl_beginDList(dmp, list)
-    struct dm *dmp;
-    unsigned int list;
+wgl_beginDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_beginDList()\n");
@@ -2114,8 +1986,7 @@ wgl_beginDList(dmp, list)
 }
 
 int
-wgl_endDList(dmp)
-    struct dm *dmp;
+wgl_endDList(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_endDList()\n");
@@ -2125,9 +1996,7 @@ wgl_endDList(dmp)
 }
 
 int
-wgl_drawDList(dmp, list)
-    struct dm *dmp;
-    unsigned int list;
+wgl_drawDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawDList()\n");
@@ -2137,10 +2006,7 @@ wgl_drawDList(dmp, list)
 }
 
 int
-wgl_freeDLists(dmp, list, range)
-    struct dm *dmp;
-    unsigned int list;
-    int range;
+wgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_freeDLists()\n");
@@ -2154,6 +2020,68 @@ wgl_freeDLists(dmp, list, range)
     glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
     return TCL_OK;
 }
+
+struct dm dm_wgl = {
+    wgl_close,
+    wgl_drawBegin,
+    wgl_drawEnd,
+    wgl_normal,
+    wgl_loadMatrix,
+    wgl_drawString2D,
+    wgl_drawLine2D,
+    wgl_drawLine3D,
+    wgl_drawLines3D,
+    wgl_drawPoint2D,
+    wgl_drawVList,
+    wgl_drawVListHiddenLine,
+    wgl_draw,
+    wgl_setFGColor,
+    wgl_setBGColor,
+    wgl_setLineAttr,
+    wgl_configureWin,
+    wgl_setWinBounds,
+    wgl_setLight,
+    wgl_setTransparency,
+    wgl_setDepthMask,
+    wgl_setZBuffer,
+    wgl_debug,
+    wgl_beginDList,
+    wgl_endDList,
+    wgl_drawDList,
+    wgl_freeDLists,
+    0,
+    1,				/* has displaylist */
+    0,                            /* no stereo by default */
+    1.0,				/* zoom-in limit */
+    1,				/* bound flag */
+    "wgl",
+    "Windows with OpenGL graphics",
+    DM_TYPE_WGL,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    {0, 0, 0, 0, 0},		/* bu_vls path name*/
+    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    0,				/* no debugging */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    1,				/* depth buffer is writable */
+    1,				/* zbuffer */
+    0,				/* no zclipping */
+    0,                          /* clear back buffer after drawing and swap */
+    0				/* Tcl interpreter */
+};
 
 #endif /* DM_WGL */
 
