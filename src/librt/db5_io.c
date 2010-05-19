@@ -200,7 +200,6 @@ db5_encode_length(
 	    return bu_plong(cp, (uint32_t)val);
 	case DB5HDR_WIDTHCODE_64BIT:
 	    return bu_plonglong(cp, (uint64_t)val);
-	    bu_bomb("db5_encode_length(): encountered 64-bit length\n");
     }
     bu_bomb("db5_encode_length(): unknown width code\n");
     return 0;
