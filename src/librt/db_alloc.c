@@ -84,7 +84,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 		return -1;
 	    }
 	    dp->d_len = count;
-	    dbip->dbi_eof += count * sizeof(union record);
+	    dbip->dbi_eof += (off_t)(count * sizeof(union record));
 	    dbip->dbi_nrec += count;
 	    break;
 	}
@@ -210,7 +210,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 
     for (i=0; i < todo; i++)
 	rp[i].u_id = ID_FREE;
-    ret = db_put(dbip, dp, rp, start, todo);
+    ret = db_put(dbip, dp, rp, (off_t)start, todo);
     bu_free((char *)rp, "db_zapper buf");
     return ret;
 }

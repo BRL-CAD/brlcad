@@ -99,7 +99,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 
     /* Write trailer byte */
     *((char *)ext.ext_buf) = DB5HDR_MAGIC2;
-    if ( db_write( dbip, (char *)ext.ext_buf, 1, dp->d_addr+length-1 ) < 0 )  {
+    if ( db_write( dbip, (char *)ext.ext_buf, 1, (size_t)dp->d_addr+length-1 ) < 0 )  {
 	bu_free_external( &ext );
 	return -1;
     }
@@ -193,7 +193,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	if ( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
 
 	/* Second, erase back half of storage to remainder. */
-	dp->d_addr = baseaddr + ep->ext_nbytes;
+	dp->d_addr = baseaddr + (off_t)ep->ext_nbytes;
 	dp->d_len = baselen - ep->ext_nbytes;
 	if ( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
 
@@ -237,7 +237,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	    newaddr = mmp->m_addr;
 	    if ( (size_t)mmp->m_size > (size_t)ep->ext_nbytes )  {
 		/* Reformat and free the surplus */
-		dp->d_addr = mmp->m_addr + ep->ext_nbytes;
+		dp->d_addr = mmp->m_addr + (off_t)ep->ext_nbytes;
 		dp->d_len = mmp->m_size - ep->ext_nbytes;
 		if (RT_G_DEBUG&DEBUG_DB)
 		    bu_log("db5_realloc(%s) returning surplus at x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len );
@@ -257,7 +257,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 
     /* No free storage of the desired size, extend the database */
     dp->d_addr = dbip->dbi_eof;
-    dbip->dbi_eof += ep->ext_nbytes;
+    dbip->dbi_eof += (off_t)ep->ext_nbytes;
     dp->d_len = ep->ext_nbytes;
     if (RT_G_DEBUG&DEBUG_DB)
 	bu_log("db5_realloc(%s) extending database addr=x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);

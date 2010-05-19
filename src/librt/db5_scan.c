@@ -85,7 +85,7 @@ db5_scan(
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
-	    addr += raw.object_length;
+	    addr += (off_t)raw.object_length;
 	}
 	dbip->dbi_eof = addr;
 	BU_ASSERT_LONG(dbip->dbi_eof, ==, (off_t)dbip->dbi_mf->buflen);
