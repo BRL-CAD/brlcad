@@ -348,38 +348,90 @@ zero_view(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
 }
 
 
-void
-move_walk(struct isst_s * isst, double dist)
+static int
+move_walk(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
+    struct isst_s *isst;
+    Togl *togl;
     vect_t vec;
+    int flag;
 
-    VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
-    VUNITIZE(vec);
-    VSCALE(vec, vec, isst->dt * dist * isst->tie->radius);
-    VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
-    if(dist < 0) VSCALE(vec, vec, -1);
-    VADD2(isst->camera.focus.v, isst->camera.pos.v, vec);
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
+        return TCL_ERROR;
+
+    isst = (struct isst_s *) Togl_GetClientData(togl);
+
+    if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
+        return TCL_ERROR;
+
+    if (flag >= 0) {
+	VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
+	VUNITIZE(vec);
+	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
+	VADD2(isst->camera.focus.v, isst->camera.focus.v, vec);
+    } else {
+	VSUB2(vec, isst->camera.pos.v, isst->camera.focus.v);
+	VUNITIZE(vec);
+	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
+	VADD2(isst->camera.focus.v, isst->camera.focus.v, vec);
+    }
+    return TCL_OK;
 }
 
-void
-move_strafe(struct isst_s * isst, double dist)
+static int
+move_strafe(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
+    struct isst_s *isst;
+    Togl *togl;
     vect_t vec, dir, up;
 
+    int flag;
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
+        return TCL_ERROR;
+
+    isst = (struct isst_s *) Togl_GetClientData(togl);
+
+    if (Tcl_GetIntFromObj(interp, objv[2], &flag) != TCL_OK)
+        return TCL_ERROR;
+
     VSET(up, 0, 0, 1);
-    VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
-    VUNITIZE(dir);
-    VCROSS(vec, dir, up);
-    VSCALE(vec, vec, isst->dt * dist * isst->tie->radius);
-    VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
-    VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
+    
+    if (flag >= 0) {
+        VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
+        VUNITIZE(dir);
+        VCROSS(vec, dir, up);
+        VSCALE(vec, vec, 0.05 * isst->tie->radius);
+        VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
+        VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
+    } else {
+        VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
+        VUNITIZE(dir);
+        VCROSS(vec, dir, up);
+        VSCALE(vec, vec, -0.05 * isst->tie->radius);
+        VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
+        VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
+    }
+    return TCL_OK;
 }
 
-void
-move_float(struct isst_s * isst, double dist)
+static int
+move_float(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
-    isst->camera.pos.v[2] += 2*isst->dt*dist;
-    isst->camera.focus.v[2] += 2*isst->dt*dist;
+    struct isst_s *isst;
+    Togl *togl;
+    vect_t vec;
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
+        return TCL_ERROR;
+
+    isst = (struct isst_s *) Togl_GetClientData(togl);
+
+    isst->camera.pos.v[2] += 0.05;
+    isst->camera.focus.v[2] += 0.05;
+    return TCL_OK;
 }
 
 
@@ -519,6 +571,9 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "walk", move_walk, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "strafe", move_strafe, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "float", move_float, NULL, NULL);
     Tcl_CreateObjCommand(interp, "reset", zero_view, NULL, NULL);
     Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
 

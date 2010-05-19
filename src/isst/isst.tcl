@@ -29,6 +29,11 @@ proc ::isst::drawview {win {tick 100} } {
      bind $win <Key-4> {focus %W; render_mode %W component}
      bind $win <Key-0> {focus %W; reset %W}
      
+    bind $win <Key-w> {focus %W; ::isst::MoveForward %W}
+    bind $win <Key-s> {focus %W; ::isst::MoveBackward %W}
+    bind $win <Key-a> {focus %W; ::isst::MoveLeft %W}
+    bind $win <Key-d> {focus %W; ::isst::MoveRight %W}
+     
     bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
     bind $win <ButtonPress-3> {::isst::RotStart %x %y %W}
     bind $win <B1-Motion> {::isst::RotMove %x %y %W}
@@ -41,6 +46,22 @@ proc ::isst::RotStart {x y W} {
     global startx starty
     set startx $x
     set starty $y
+}
+
+proc ::isst::MoveForward {W} {
+    walk $W 1
+}
+
+proc ::isst::MoveBackward {W} {
+    walk $W -1
+}
+
+proc ::isst::MoveLeft {W} {
+    strafe $W 1
+}
+
+proc ::isst::MoveRight {W} {
+    strafe $W -1
 }
 
 proc ::isst::RotMove {x y W} {
