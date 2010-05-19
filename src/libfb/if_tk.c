@@ -81,8 +81,8 @@ char *tkwrite_buffer;
 HIDDEN int fb_tk_open(FBIO *ifp, char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
     tk_clear(FBIO *ifp, unsigned char *pp),
-    tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
+    tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count),
+    tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count),
     tk_rmap(FBIO *ifp, ColorMap *cmp),
     tk_wmap(FBIO *ifp, const ColorMap *cmp),
     tk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
@@ -384,18 +384,18 @@ tk_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %d)\n",
+    fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %ld)\n",
 	   (unsigned long)ifp, x, y,
-	   (unsigned long)pixelp, count);
-    return count;
+	   (unsigned long)pixelp, (long)count);
+    return (int)count;
 }
 
 
 HIDDEN int
-tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, int count)
+tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
 {
     uint32_t line[3];
 
@@ -407,7 +407,7 @@ tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, int count
 
     /* Pack values to be sent to parent */
     line[0] = htonl(y);
-    line[1] = htonl(count);
+    line[1] = htonl((long)count);
     line[2] = 0;
     
     memcpy(tkwrite_buffer, line, sizeof(uint32_t)*3);
@@ -419,7 +419,7 @@ tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, int count
 	sleep(1);
     }
 
-    return count;
+    return (int)count;
 }
 
 

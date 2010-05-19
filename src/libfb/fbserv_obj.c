@@ -382,7 +382,7 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
 {
-    int x, y, num;
+    long x, y, num;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -391,7 +391,7 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
     type = pcp->pkc_type;
-    ret = fb_write(curr_fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], num);
+    ret = fb_write(curr_fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], (size_t)num);
 
     if (type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);

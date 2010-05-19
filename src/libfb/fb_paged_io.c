@@ -46,7 +46,7 @@
 static int
 _fb_pgout(register FBIO *ifp)
 {
-    int scans, first_scan;
+    size_t scans, first_scan;
 
     /*fb_log("_fb_pgout(%d)\n", ifp->if_pno);*/
 
@@ -54,7 +54,7 @@ _fb_pgout(register FBIO *ifp)
 	return 1;
 
     first_scan = ifp->if_pno * PAGE_SCANS;
-    if (first_scan + PAGE_SCANS > ifp->if_height)
+    if (first_scan + PAGE_SCANS > (size_t)ifp->if_height)
 	scans = ifp->if_height - first_scan;
     else
 	scans = PAGE_SCANS;
@@ -71,7 +71,7 @@ _fb_pgout(register FBIO *ifp)
 static int
 _fb_pgin(register FBIO *ifp, int pageno)
 {
-    int scans, first_scan;
+    size_t scans, first_scan;
 
     /*fb_log("_fb_pgin(%d)\n", pageno);*/
 
@@ -81,7 +81,7 @@ _fb_pgin(register FBIO *ifp, int pageno)
     ifp->if_pdirty = 0;
 
     first_scan = ifp->if_pno * PAGE_SCANS;
-    if (first_scan + PAGE_SCANS > ifp->if_height)
+    if (first_scan + PAGE_SCANS > (size_t)ifp->if_height)
 	scans = ifp->if_height - first_scan;
     else
 	scans = PAGE_SCANS;

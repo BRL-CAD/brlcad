@@ -141,7 +141,7 @@ stk_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     register FBIO **ip = SI(ifp)->if_list;
 
@@ -149,12 +149,12 @@ stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	fb_read((*ip), x, y, pixelp, count);
     }
 
-    return count;
+    return (int)count;
 }
 
 
 HIDDEN int
-stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register FBIO **ip = SI(ifp)->if_list;
 
@@ -163,7 +163,7 @@ stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	ip++;
     }
 
-    return count;
+    return (int)count;
 }
 
 

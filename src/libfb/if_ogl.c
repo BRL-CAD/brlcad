@@ -1862,12 +1862,12 @@ ogl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /* read count pixels into pixelp starting at x, y */
 HIDDEN int
-ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    register short scan_count;	/* # pix on this scanline */
+    size_t n;
+    size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
     int ret;
-    register unsigned int n;
     register struct ogl_pixel *oglp;
 
     if (CJDEBUG) printf("entering ogl_read\n");
@@ -1900,7 +1900,7 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	    cp += 3;
 	    n--;
 	}
-	ret += scan_count;
+	ret += (int)scan_count;
 	count -= scan_count;
 	x = 0;
 	/* Advance upwards */
@@ -1913,23 +1913,22 @@ ogl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
 /* write count pixels from pixelp starting at xstart, ystart */
 HIDDEN int
-ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count)
+ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
-    register short scan_count;	/* # pix on this scanline */
+    size_t scan_count;	/* # pix on this scanline */
     register unsigned char *cp;
     int ret;
     int ybase;
-    register int pix_count;	/* # pixels to send */
+    size_t pix_count;	/* # pixels to send */
     register int x;
     register int y;
 
     if (CJDEBUG) printf("entering ogl_write\n");
 
     /* fast exit cases */
-    if ((pix_count = count) == 0)
+    pix_count = count;
+    if (pix_count == 0)
 	return 0;	/* OK, no pixels transferred */
-    if (pix_count < 0)
-	return -1;	/* ERROR */
 
     x = xstart;
     ybase = y = ystart;
@@ -1942,7 +1941,7 @@ ogl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
     cp = (unsigned char *)(pixelp);
 
     while (pix_count) {
-	register unsigned int n;
+	size_t n;
 	register struct ogl_pixel *oglp;
 
 	if (y >= ifp->if_height)

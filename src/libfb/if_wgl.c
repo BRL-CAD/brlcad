@@ -1228,12 +1228,12 @@ wgl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
  * read count pixels into pixelp starting at x, y
  */
 HIDDEN int
-wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    short scan_count;	/* # pix on this scanline */
+    size_t n;
+    size_t scan_count;	/* # pix on this scanline */
     unsigned char *cp;
     int ret;
-    unsigned int n;
     struct wgl_pixel *wglp;
 
     if (CJDEBUG) printf("entering wgl_read\n");
@@ -1281,23 +1281,22 @@ wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
  * write count pixels from pixelp starting at xstart, ystart
  */
 HIDDEN int
-wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count)
+wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
-    short scan_count;	/* # pix on this scanline */
+    size_t scan_count;	/* # pix on this scanline */
+    size_t pix_count;	/* # pixels to send */
     unsigned char *cp;
     int ret;
     int ybase;
-    int pix_count;	/* # pixels to send */
     int x;
     int y;
 
     if (CJDEBUG) printf("entering wgl_write\n");
 
     /* fast exit cases */
-    if ((pix_count = count) == 0)
+    pix_count = count;
+    if (pix_count == 0)
 	return 0;	/* OK, no pixels transferred */
-    if (pix_count < 0)
-	return -1;	/* ERROR */
 
     x = xstart;
     ybase = y = ystart;

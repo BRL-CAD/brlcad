@@ -78,16 +78,16 @@ DEVNAME_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-DEVNAME_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+DEVNAME_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    return count;
+    return (int)count;
 }
 
 
 HIDDEN int
-DEVNAME_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+DEVNAME_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    return count;
+    return (int)count;
 }
 
 

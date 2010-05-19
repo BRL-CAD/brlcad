@@ -3274,10 +3274,10 @@ X24_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-X24_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+X24_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
-    int maxcount;
+    size_t maxcount;
     FB_CK_FBIO(ifp);
 
     /* check origin bounds */
@@ -3289,23 +3289,22 @@ X24_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
     if (count > maxcount)
 	count = maxcount;
 
-    memcpy(pixelp, &(xi->xi_mem[(y*xi->xi_iwidth+x)*sizeof(RGBpixel)]),
-	   count*sizeof(RGBpixel));
-    return count;
+    memcpy(pixelp, &(xi->xi_mem[(y*xi->xi_iwidth+x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
+    return (int)count;
 }
 
 
 HIDDEN int
-X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
-    int maxcount;
+    size_t maxcount;
 
     FB_CK_FBIO(ifp);
 
 #if X_DBG
-    printf("X24_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%d) entered.\n",
-	   ifp, x, y, pixelp, count);
+    printf("X24_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%ld) entered.\n",
+	   ifp, x, y, pixelp, (long)count);
 #endif
 
     /* Check origin bounds */
@@ -3324,11 +3323,11 @@ X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 
     /* Get the bits to the screen */
 
-    if (x + count <= xi->xi_iwidth) {
+    if (x + count <= (size_t)xi->xi_iwidth) {
 	X24_blit(ifp, x, y, count, 1, BLIT_DISP);
     } else {
-	int ylines;
-	int tcount;
+	size_t ylines;
+	size_t tcount;
 
 	tcount = count - (xi->xi_iwidth - x);
 	ylines = 1 + (tcount + xi->xi_iwidth - 1) / xi->xi_iwidth;
@@ -3336,7 +3335,7 @@ X24_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	X24_blit(ifp, 0, y, xi->xi_iwidth, ylines, BLIT_DISP);
     }
 
-    return count;
+    return (int)count;
 }
 
 

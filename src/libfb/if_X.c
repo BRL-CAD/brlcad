@@ -64,21 +64,12 @@
 #define yIMG2SCR(y)	(((y)-ifp->if_ycenter)*ifp->if_yzoom+w.height/2)
 
 
-#ifdef USE_PROTOTYPES
-HIDDEN void Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
-HIDDEN int X_do_event(FBIO *ifp);
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap);
-
-
-HIDDEN int X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
+HIDDEN void Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
 HIDDEN int X_wmap(FBIO *ifp, const ColorMap *cmp);
-#else
-HIDDEN void Monochrome();
-HIDDEN int X_do_event();
-HIDDEN void genmap();
-HIDDEN int X_scanwrite();
-HIDDEN int X_wmap();
-#endif
+HIDDEN int X_do_event(FBIO *ifp);
+HIDDEN int X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
+
 /*
  * Per window state information.
  */
@@ -781,11 +772,11 @@ X_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     unsigned char *bytebuf = XI(ifp)->bytebuf;
     register unsigned char *cp;
-    register int i;
+    size_t i;
 
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
 	return -1;
@@ -793,7 +784,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
     /* return 24bit store if available */
     if (XI(ifp)->mem) {
 	memcpy(pixelp, &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]), count*sizeof(RGBpixel));
-	return count;
+	return (int)count;
     }
 
     /* 1st -> 4th quadrant */
@@ -806,7 +797,7 @@ X_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	*pixelp++ = *cp;
 	*pixelp++ = *cp++;
     }
-    return count;
+    return (int)count;
 }
 
 
@@ -1114,10 +1105,10 @@ done:
  * scanline writes.
  */
 HIDDEN int
-X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    int maxcount;
-    int todo;
+    size_t maxcount;
+    size_t todo;
     int num;
 
     /* check origin bounds */
@@ -1136,10 +1127,10 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 
     todo = count;
     while (todo > 0) {
-	if (x + todo > ifp->if_width)
+	if (x + todo > (size_t)ifp->if_width)
 	    num = ifp->if_width - x;
 	else
-	    num = todo;
+	    num = (int)todo;
 	if (X_scanwrite(ifp, x, y, pixelp, num, 1) == 0)
 	    return 0;
 	x = 0;
@@ -1147,7 +1138,7 @@ X_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	todo -= num;
 	pixelp += num;
     }
-    return count;
+    return (int)count;
 }
 
 

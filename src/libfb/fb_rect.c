@@ -49,7 +49,7 @@ fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned c
 
     tot = 0;
     for (y=ymin; y < ymin+height; y++) {
-	got = fb_read(ifp, xmin, y, pp, width);
+	got = fb_read(ifp, xmin, y, pp, (size_t)width);
 	if (got < 0) {
 	    fb_log("fb_sim_readrect() y=%d unexpected EOF\n", y);
 	    break;
@@ -81,7 +81,7 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
     register int y;
     register int tot;
     int got;
-    int xlen;
+    size_t xlen;
 
     xlen = width;
     if (xmin + width > fb_getwidth(ifp))
@@ -91,7 +91,7 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
     for (y=ymin; y < ymin+height; y++) {
 	got = fb_write(ifp, xmin, y, pp, xlen);
 	tot += got;
-	if (got != xlen) break;
+	if (got != (int)xlen) break;
 	pp += width * sizeof(RGBpixel);
     }
     return tot;
@@ -119,7 +119,7 @@ fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned
     for (y=ymin; y < ymin+height; y++) {
 	register int x;
 
-	got = fb_read(ifp, xmin, y, buf, width);
+	got = fb_read(ifp, xmin, y, buf, (size_t)width);
 
 	/* Extract green chan */
 	for (x=0; x < width; x++)
@@ -141,7 +141,7 @@ fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const u
     register int y;
     register int tot;
     int got;
-    int xlen;
+    size_t xlen;
     unsigned char buf[SIMBUF_SIZE];
 
     if (width > SIMBUF_SIZE) {
@@ -170,7 +170,7 @@ fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const u
 
 	got = fb_write(ifp, xmin, y, buf, xlen);
 	tot += got;
-	if (got != xlen) break;
+	if (got != (int)xlen) break;
     }
     return tot;
 }

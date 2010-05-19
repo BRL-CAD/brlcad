@@ -173,10 +173,10 @@ dsk_clear(FBIO *ifp, unsigned char *bgpp)
 
 
 HIDDEN int
-dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    register long bytes = count * (long) sizeof(RGBpixel);
-    register long todo;
+    size_t bytes = count * (long) sizeof(RGBpixel);
+    size_t todo;
     long got;
     size_t dest;
     long bytes_read = 0;
@@ -193,7 +193,7 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
     ifp->if_seekpos = dest;
     while (bytes > 0) {
 	todo = bytes;
-	if ((got = read(fd, (char *) pixelp, todo)) != todo) {
+	if ((got = read(fd, (char *) pixelp, todo)) != (long)todo) {
 	    if (got <= 0) {
 		if (got < 0) {
 		    perror("READ ERROR");
@@ -207,8 +207,8 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	    }
 	    if (fd != 0) {
 		/* This happens all the time reading from pipes */
-		fb_log("disk_buffer_read(fd=%d): y=%d read of %d got %d bytes\n",
-		       fd, y, todo, got);
+		fb_log("disk_buffer_read(fd=%d): y=%d read of %ld got %d bytes\n",
+		       fd, y, (long)todo, got);
 	    }
 	}
 	bytes -= got;
@@ -221,10 +221,10 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
 
 HIDDEN int
-dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register long bytes = count * (long) sizeof(RGBpixel);
-    register long todo;
+    size_t todo;
     size_t dest;
 
     dest = (y * ifp->if_width + x) * sizeof(RGBpixel);
@@ -236,8 +236,10 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	ifp->if_seekpos = dest;
     }
     while (bytes > 0) {
-	todo = bytes;
-	if (write(ifp->if_fd, (char *) pixelp, todo) != todo) {
+	ssize_t ret;
+	todo = (size_t)bytes;
+	ret = (ssize_t)write(ifp->if_fd, (char *) pixelp, todo);
+	if (ret != (ssize_t)todo) {
 	    fb_log("disk_buffer_write: write failed\n");
 	    return -1;
 	}
@@ -245,7 +247,7 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	pixelp += todo / sizeof(RGBpixel);
 	ifp->if_seekpos += todo;
     }
-    return count;
+    return (int)count;
 }
 
 

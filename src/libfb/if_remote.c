@@ -350,26 +350,25 @@ rem_clear(FBIO *ifp, unsigned char *bgpp)
  * Send as longs:  x, y, num
  */
 HIDDEN int
-rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, int num)
+rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, size_t num)
 {
     int ret;
     unsigned char buf[3*NET_LONG_LEN+1];
 
-    if (num <= 0)
+    if (num == 0)
 	return 0;
     /* Send Read Command */
     (void)bu_plong(&buf[0*NET_LONG_LEN], x);
     (void)bu_plong(&buf[1*NET_LONG_LEN], y);
-    (void)bu_plong(&buf[2*NET_LONG_LEN], num);
+    (void)bu_plong(&buf[2*NET_LONG_LEN], (long)num);
     if (pkg_send(MSG_FBREAD, (const char *)buf, 3*NET_LONG_LEN, PCP(ifp)) < 3*NET_LONG_LEN)
 	return -2;
 
     /* Get response;  0 len means failure */
-    ret = pkg_waitfor (MSG_RETURN, (char *)pixelp,
-		       num*sizeof(RGBpixel), PCP(ifp));
+    ret = pkg_waitfor(MSG_RETURN, (char *)pixelp, num*sizeof(RGBpixel), PCP(ifp));
     if (ret <= 0) {
-	fb_log("rem_read: read %d at <%d, %d> failed, ret=%d.\n",
-	       num, x, y, ret);
+	fb_log("rem_read: read %ld at <%d, %d> failed, ret=%d.\n",
+	       (long)num, x, y, ret);
 	return -3;
     }
     return ret/sizeof(RGBpixel);
@@ -380,7 +379,7 @@ rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, int num)
  * As longs, x, y, num
  */
 HIDDEN int
-rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int num)
+rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t num)
 {
     int ret;
     unsigned char buf[3*NET_LONG_LEN+1];
@@ -390,7 +389,7 @@ rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int num
     /* Send Write Command */
     (void)bu_plong(&buf[0*NET_LONG_LEN], x);
     (void)bu_plong(&buf[1*NET_LONG_LEN], y);
-    (void)bu_plong(&buf[2*NET_LONG_LEN], num);
+    (void)bu_plong(&buf[2*NET_LONG_LEN], (long)num);
     ret = pkg_2send(MSG_FBWRITE+MSG_NORETURN,
 		    (const char *)buf, 3*NET_LONG_LEN,
 		    (const char *)pixelp, num*sizeof(RGBpixel),

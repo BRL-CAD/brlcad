@@ -245,9 +245,9 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    int pixels_to_end;
+    size_t pixels_to_end;
 
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
 	return -1;
@@ -259,14 +259,14 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
     memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
 
-    return count;
+    return (int)count;
 }
 
 
 HIDDEN int
-mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    int pixels_to_end;
+    size_t pixels_to_end;
 
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
 	return -1;
@@ -283,7 +283,7 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     } else {
 	MI(ifp)->mem_dirty = 1;
     }
-    return count;
+    return (int)count;
 }
 
 
