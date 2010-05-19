@@ -10,8 +10,9 @@ namespace eval ::isst {
 }
 
 proc ::isst::setup {} {
+    global resolution
+    set resolution 0
     wm title . "ISST - Interactive Geometry Viewing"
-
     frame .f
     pack .f -side top
     button .f.b1 -text " Quit " -command exit 
@@ -20,7 +21,7 @@ proc ::isst::setup {} {
 }
 
 proc ::isst::drawview {win {tick 100} } {
-    global az el
+    global az el resolution
     togl $win -width 800 -height 600 -rgba true -double true -depth true -privatecmap false -time $tick -create isst_init -destroy isst_zap -display refresh_ogl -reshape reshape -timer idle
      focus $win
      bind $win <Key-1> {focus %W; render_mode %W phong}
@@ -33,6 +34,9 @@ proc ::isst::drawview {win {tick 100} } {
     bind $win <Key-s> {focus %W; ::isst::MoveBackward %W}
     bind $win <Key-a> {focus %W; ::isst::MoveLeft %W}
     bind $win <Key-d> {focus %W; ::isst::MoveRight %W}
+
+    bind $win <Key-minus> {focus %W; ::isst::Resolution %W 1}
+    bind $win <Key-equal> {focus %W; ::isst::Resolution %W -1}
      
     bind $win <ButtonPress-1> {::isst::RotStart %x %y %W}
     bind $win <ButtonPress-3> {::isst::RotStart %x %y %W}
@@ -62,6 +66,18 @@ proc ::isst::MoveLeft {W} {
 
 proc ::isst::MoveRight {W} {
     strafe $W -1
+}
+
+proc ::isst::Resolution {W n} {
+    global resolution
+    if { $resolution < 2 && $n > 0 } {
+      set_resolution $W [expr $resolution + $n]
+      set resolution [expr $resolution + $n]
+    }
+    if { $resolution > 0 && $n < 0 } {
+      set_resolution $W [expr $resolution + $n]
+      set resolution [expr $resolution + $n]
+    }
 }
 
 proc ::isst::RotMove {x y W} {

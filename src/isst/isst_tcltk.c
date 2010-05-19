@@ -233,6 +233,35 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
 }
 
 static int
+set_resolution(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+    struct isst_s *isst;
+    Togl   *togl;
+    int resolution;
+
+    if (objc != 3) {
+        Tcl_WrongNumArgs(interp, 1, objv, "pathName resolution");
+        return TCL_ERROR;
+    }
+
+    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    if (Tcl_GetIntFromObj(interp, objv[2], &resolution) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    isst = (struct isst *) Togl_GetClientData(togl);
+
+    isst->gs = resolution;
+
+    resize_isst(isst);
+
+    return TCL_OK;
+}
+
+static int
 idle(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     struct isst_s *isst;
@@ -367,13 +396,13 @@ move_walk(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
     if (flag >= 0) {
 	VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
 	VUNITIZE(vec);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.01 * isst->tie->radius);
 	VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
 	VADD2(isst->camera.focus.v, isst->camera.focus.v, vec);
     } else {
 	VSUB2(vec, isst->camera.pos.v, isst->camera.focus.v);
 	VUNITIZE(vec);
-	VSCALE(vec, vec, 0.1 * isst->tie->radius);
+	VSCALE(vec, vec, 0.01 * isst->tie->radius);
 	VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
 	VADD2(isst->camera.focus.v, isst->camera.focus.v, vec);
     }
@@ -403,14 +432,14 @@ move_strafe(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const 
         VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
         VUNITIZE(dir);
         VCROSS(vec, dir, up);
-        VSCALE(vec, vec, 0.05 * isst->tie->radius);
+        VSCALE(vec, vec, 0.01 * isst->tie->radius);
         VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
         VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
     } else {
         VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
         VUNITIZE(dir);
         VCROSS(vec, dir, up);
-        VSCALE(vec, vec, -0.05 * isst->tie->radius);
+        VSCALE(vec, vec, -0.01 * isst->tie->radius);
         VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
         VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
     }
@@ -575,6 +604,7 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "strafe", move_strafe, NULL, NULL);
     Tcl_CreateObjCommand(interp, "float", move_float, NULL, NULL);
     Tcl_CreateObjCommand(interp, "reset", zero_view, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "set_resolution", set_resolution, NULL, NULL);
     Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
 
     return TCL_OK;
