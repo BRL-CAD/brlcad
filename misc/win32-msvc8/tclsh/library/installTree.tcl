@@ -137,6 +137,8 @@ puts "Creating [file join $installDir]"
 file mkdir [file join $installDir]
 puts "Creating [file join $installDir bin]"
 file mkdir [file join $installDir bin]
+puts "Creating [file join $installDir bin Tkhtml3.0]"
+file mkdir [file join $installDir bin Tkhtml3.0]
 puts "Creating [file join $installDir lib]"
 file mkdir [file join $installDir lib]
 puts "Creating [file join $installDir lib iwidgets$iwidgetsVersion]"
@@ -284,75 +286,6 @@ file copy [file join $rootDir src nirt sfiles] [file join $shareDir nirt]
 # End Copy files to the share directories
 
 
-# Remove undesired directories/files as a result of wholesale copies
-file delete -force [file join $installDir include .cvsignore]
-file delete -force [file join $installDir include conf .cvsignore]
-file delete -force [file join $installDir lib itcl$itclVersion Makefile.am]
-file delete -force [file join $installDir lib itk$itclVersion Makefile.am]
-file delete -force [file join $installDir lib iwidgets$iwidgetsVersion Makefile.am]
-file delete -force [file join $installDir lib iwidgets$iwidgetsVersion scripts Makefile.am]
-#file delete -force [file join $installDir lib tk$tclVersion Makefile.am]
-#file delete -force [file join $installDir lib tk$tclVersion demos Makefile.am]
-#file delete -force [file join $installDir lib tk$tclVersion demos images Makefile.am]
-#file delete -force [file join $installDir lib tk$tclVersion images Makefile.am]
-#file delete -force [file join $installDir lib tk$tclVersion msgs Makefile.am]
-#file delete -force [file join $installDir lib tk$tclVersion ttk Makefile.am]
-
-file delete -force [file join $shareDir doc .cvsignore]
-file delete -force [file join $shareDir doc book Makefile.am]
-file delete -force [file join $shareDir doc html]
-file delete -force [file join $shareDir doc legal Makefile.am]
-file delete -force [file join $shareDir doc Makefile.am]
-
-file delete -force [file join $shareDir html Makefile.am]
-file delete -force [file join $shareDir html manuals Anim_Tutorial Makefile.am]
-file delete -force [file join $shareDir html manuals archer Makefile.am]
-file delete -force [file join $shareDir html manuals cadwidgets Makefile.am]
-file delete -force [file join $shareDir html manuals libbu Makefile.am]
-file delete -force [file join $shareDir html manuals libdm Makefile.am]
-file delete -force [file join $shareDir html manuals librt Makefile.am]
-file delete -force [file join $shareDir html manuals Makefile.am]
-file delete -force [file join $shareDir html manuals mged .cvsignore]
-file delete -force [file join $shareDir html manuals mged Makefile.am]
-file delete -force [file join $shareDir html manuals mged animmate Makefile.am]
-file delete -force [file join $shareDir html manuals shaders Makefile.am]
-file delete -force [file join $shareDir html ReleaseNotes Makefile.am]
-file delete -force [file join $shareDir html ReleaseNotes Rel5.0 Makefile.am]
-file delete -force [file join $shareDir html ReleaseNotes Rel5.0 Summary Makefile.am]
-file delete -force [file join $shareDir html ReleaseNotes Rel6.0 Makefile.am]
-
-file delete -force [file join $shareDir tclscripts archer images Makefile.am]
-file delete -force [file join $shareDir tclscripts archer images Themes Makefile.am]
-file delete -force [file join $shareDir tclscripts archer images Themes Crystal Makefile.am]
-file delete -force [file join $shareDir tclscripts archer images Themes Crystal_Large Makefile.am]
-file delete -force [file join $shareDir tclscripts archer images Themes Windows Makefile.am]
-file delete -force [file join $shareDir tclscripts archer Makefile.am]
-file delete -force [file join $shareDir tclscripts geometree Makefile.am]
-file delete -force [file join $shareDir tclscripts lib Makefile.am]
-file delete -force [file join $shareDir tclscripts mged Makefile.am]
-file delete -force [file join $shareDir tclscripts nirt Makefile.am]
-file delete -force [file join $shareDir tclscripts pl-dm Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard examples Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeA Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeB Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeC Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeD Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeE Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard examples PictureTypeF Makefile.am]
-file delete -force [file join $shareDir tclscripts rtwizard lib Makefile.am]
-file delete -force [file join $shareDir tclscripts sdialogs Makefile.am]
-file delete -force [file join $shareDir tclscripts sdialogs scripts Makefile.am]
-file delete -force [file join $shareDir tclscripts swidgets Makefile.am]
-file delete -force [file join $shareDir tclscripts swidgets images Makefile.am]
-file delete -force [file join $shareDir tclscripts swidgets scripts Makefile.am]
-file delete -force [file join $shareDir tclscripts util Makefile.am]
-file delete -force [file join $shareDir tclscripts Makefile.am]
-file delete -force [file join $shareDir vfont Makefile.am]
-file delete -force [file join $shareDir nirt Makefile.am]
-# End Remove undesired directories/files as a result of wholesale copies
-
-
 # Create iwidgets.tcl
 set fd1 [open [file join $rootDir src other iwidgets iwidgets.tcl.in] r]
 set lines [read $fd1]
@@ -426,4 +359,32 @@ set fd [open pkgIndex.tcl "w"]
 puts $fd {package ifneeded Tkhtml 3.0 [list load [file join $dir tkhtml.dll]]}
 close $fd
 cd $savepwd
+puts "copy [file join $rootDir src other tkhtml3 src pkgIndex.tcl] [file join $installDir bin Tkhtml3.0]"
+file copy [file join $rootDir src other tkhtml3 src pkgIndex.tcl] [file join $installDir bin Tkhtml3.0]
 # End Create source files for tkhtml
+
+proc removeUnwanted {_startDir} {
+    set savepwd [pwd]
+    cd $_startDir
+
+    puts "removing unwanted files in $_startDir ..."
+
+    set files [glob -nocomplain *]
+    set hfiles [glob -nocomplain -type hidden .svn]
+    eval lappend files $hfiles
+    set files [lsort -unique $files]
+
+    foreach file $files {
+	if {$file == ".svn" || $file == "Makefile.am" || [regexp {~$} $file]} {
+	    puts "... deleting $file"
+	    file delete -force $file
+	} elseif {[file isdirectory $file]} {
+	    removeUnwanted $file
+	}
+    }
+
+    cd $savepwd
+}
+
+# Remove unwanted directories/files as a result of wholesale copies
+removeUnwanted $installDir
