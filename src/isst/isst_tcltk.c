@@ -436,17 +436,10 @@ aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
     VSUB2(vecdfoc, isst->camera.pos.v, isst->camera.focus.v);
     VUNITIZE(vecdfoc);
     AZEL_FROM_V3DIR(az, el, vecdfoc);
-    printf("init az: %f\n", az);
-    printf("init el: %f\n", el);
-
     az = az * -DEG2RAD + x;
     el = el * -DEG2RAD + y;
-
     V3DIR_FROM_AZEL(vecdfoc, az, el);
     VADD2(isst->camera.focus.v, isst->camera.pos.v, vecdfoc);
-    printf("az: %f\n", az);
-    printf("el: %f\n", el);
- 
     return TCL_OK;
 }
 
