@@ -980,7 +980,7 @@ go_cmd(ClientData clientData,
     register struct go_cmdtab *ctp;
     struct ged_obj *gop = (struct ged_obj *)clientData;
     Tcl_DString ds;
-    int ret;
+    int ret = GED_ERROR;
 
     Tcl_DStringInit(&ds);
 
@@ -2062,7 +2062,8 @@ go_copy(struct ged *gedp,
     bu_vls_init(&from_vls);
     bu_vls_init(&to_vls);
 
-    if ((cp = strchr(argv[1], ':'))) {
+    cp = strchr(argv[1], ':');
+    if (cp) {
 	bu_vls_strncpy(&db_vls, argv[1], cp-argv[1]);
 	bu_vls_strcpy(&from_vls, cp+1);
 
@@ -2085,7 +2086,8 @@ go_copy(struct ged *gedp,
 	from_gedp = gedp;
     }
 
-    if ((cp = strchr(argv[2], ':'))) {
+    cp = strchr(argv[2], ':');
+    if (cp) {
 	bu_vls_trunc(&db_vls, 0);
 	bu_vls_strncpy(&db_vls, argv[2], cp-argv[2]);
 	bu_vls_strcpy(&to_vls, cp+1);
@@ -5901,7 +5903,8 @@ go_new_view(struct ged *gedp,
 	    av[i+newargs] = (char *)argv[i];
 	av[i+newargs] = (char *)NULL;
 
-	if ((new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av)) == DM_NULL) {
+	new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av);
+	if (new_gdvp->gdv_dmp == DM_NULL) {
 	    bu_free((genptr_t)new_gdvp->gdv_view, "ged_view");
 	    bu_free((genptr_t)new_gdvp, "ged_dm_view");
 	    bu_free((genptr_t)av, "go_new_view: av");
@@ -6175,19 +6178,20 @@ go_png(struct ged *gedp,
        const char *usage,
        int maxargs)
 {
-    struct ged_dm_view *gdvp;
-    FILE *fp;
     png_structp png_p;
     png_infop info_p;
-    unsigned char **rows;
-    unsigned char *idata;
-    unsigned char *irow;
-    int bytes_per_pixel;
+
+    unsigned char *dbyte0 = NULL, *dbyte1 = NULL, *dbyte2 = NULL, *dbyte3 = NULL;
+    struct ged_dm_view *gdvp = NULL;
+    FILE *fp = NULL;
+    unsigned char **rows = NULL;
+    unsigned char *idata = NULL;
+    unsigned char *irow = NULL;
+    int bytes_per_pixel = 0;
     int bits_per_channel = 8;  /* bits per color channel */
-    int i, j, k;
-    unsigned char *dbyte0, *dbyte1, *dbyte2, *dbyte3;
-    int width;
-    int height;
+    int i = 0, j = 0, k = 0;
+    int width = 0;
+    int height = 0;
     int found_valid_dm = 0;
 
     /* initialize result */
