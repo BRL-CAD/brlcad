@@ -1033,7 +1033,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
     cutp->bn.bn_list[cutp->bn.bn_len++] = stp;
 }
 
-#if 0
+#ifdef NEW_WAY
 /**
  * R T _ C T _ P L A N
  *
@@ -1057,7 +1057,7 @@ rt_ct_plan(struct rt_i *rtip, union cutter *cutp)
 
     RT_CK_RTI(rtip);
     for (axis = X; axis <= Z; axis++) {
-#if 0
+#ifdef NEW_WAY
 	/* New way */
 	status[axis] = rt_ct_assess(
 	    cutp, axis, &where[axis], &offcenter[axis]);
