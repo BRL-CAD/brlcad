@@ -1761,18 +1761,28 @@ size_t test_closure(struct ga_t *ga,
     qsort(edges, edge_count, sizeof(size_t) * 2,
          (int (*)(const void *a, const void *b))comp_c);
 
-    if (debug)
+    if (1)
         for ( idx = 0 ; idx < edge_count ; idx++ )
             bu_log("sorted edges (%lu)(%lu)(%lu)\n", idx, edges[idx][0], edges[idx][1]);
 
-    VMOVE(previous_edge, edges[0]);
+    previous_edge[0] = edges[0][0];
+    previous_edge[1] = edges[0][1];
     for ( idx = 1 ; idx < edge_count ; idx++ ) {
         if ( (previous_edge[0] == edges[idx][0]) && (previous_edge[1] == edges[idx][1]) ) {
             match++;
         } else {
             if ( match == 0 ) {
-                if (verbose)
-                    bu_log("open edge (%lu)(%lu)(%lu)\n", idx, edges[idx][0], edges[idx][1]);
+                if (1)
+                    bu_log("open edge (%lu)= %f %f %f (%lu)= %f %f %f \n",
+                           previous_edge[0],
+                           ga->vert_list[previous_edge[0]][0] * conv_factor,
+                           ga->vert_list[previous_edge[0]][1] * conv_factor,
+                           ga->vert_list[previous_edge[0]][2] * conv_factor,
+                           previous_edge[1],
+                           ga->vert_list[previous_edge[1]][0] * conv_factor,
+                           ga->vert_list[previous_edge[1]][1] * conv_factor,
+                           ga->vert_list[previous_edge[1]][2] * conv_factor);
+
                 if (create_plot && (open_edges == 0)) {
                     bu_vls_init(&plot_file_name);
                     bu_vls_sprintf(&plot_file_name, "%s.%lu.o.pl", 
@@ -1784,8 +1794,8 @@ size_t test_closure(struct ga_t *ga,
                     }
                 }
                 if (create_plot) {
-                    VMOVE(pnt1,ga->vert_list[edges[idx][0]]);
-                    VMOVE(pnt2,ga->vert_list[edges[idx][1]]);
+                    VMOVE(pnt1,ga->vert_list[previous_edge[0]]);
+                    VMOVE(pnt2,ga->vert_list[previous_edge[1]]);
                     VSCALE(pnt1, pnt1, conv_factor);
                     VSCALE(pnt2, pnt2, conv_factor);
                     pdv_3line(plotfp, pnt1, pnt2);
@@ -1795,7 +1805,8 @@ size_t test_closure(struct ga_t *ga,
                 match = 0;
             }
         }
-        VMOVE(previous_edge, edges[idx]);
+        previous_edge[0] = edges[idx][0];
+        previous_edge[1] = edges[idx][1];
     }
 
     bu_free(edges,"edges");
