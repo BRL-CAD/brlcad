@@ -1204,7 +1204,10 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3VEC(hyp_ip->hyp_Hi, mat, &vec[1*3]);
     MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
-    hyp_ip->hyp_b = vec[ 9] / mat[15];
+    if (!NEAR_ZERO(mat[15], SMALL_FASTF))
+	hyp_ip->hyp_b = vec[ 9] / mat[15];
+    else
+	hyp_ip->hyp_b = INFINITY;
     hyp_ip->hyp_bnr = vec[10] ;
 
     return 0;			/* OK */
