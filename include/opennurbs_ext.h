@@ -1160,12 +1160,12 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 	    std::list<BRNode*>::iterator i;
 	    BRNode* vclosest = NULL;
 	    BRNode* uclosest = NULL;
-	    fastf_t currHeight;
-	    bool currTrimStatus;
+	    fastf_t currHeight = (fastf_t)0.0;
+	    bool currTrimStatus = false;
 	    bool verticalTrim = false;
 	    bool underTrim = false;
-	    double vdist;
-	    double udist;
+	    double vdist = 0.0;
+	    double udist = 0.0;
 
 	    for (i=trims.begin();i!=trims.end();i++) {
 		br = dynamic_cast<BRNode*>(*i);
