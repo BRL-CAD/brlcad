@@ -100,7 +100,7 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 }
 
 
-HIDDEN size_t
+HIDDEN int
 check_comb(struct ged *gedp)
 {
     /* Do some minor checking of the edited file */
@@ -475,8 +475,6 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     struct bu_vls attr_vls;
     struct bu_vls val_vls;
     struct bu_attribute_value_set avs;
-    struct bu_attribute_value_pair *avpp;
-
 
     if (gedp->ged_wdbp->dbip == DBI_NULL) 
 	return GED_OK;
@@ -1148,9 +1146,10 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	 */
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
 	    const char *saved_name = NULL;
+	    int checked;
 
-	    node_count = check_comb(gedp);
-	    if ((long)node_count < 0) {
+	    checked = check_comb(gedp);
+	    if (checked < 0) {
 		/* Do some quick checking on the edited file */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 		if (comb)
@@ -1158,6 +1157,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		(void)unlink(_ged_tmpfil);
 		return GED_ERROR;
 	    }
+	    node_count = (size_t)checked;
 
 	    if (comb) {
 		saved_name = _ged_save_comb(gedp, dp);
