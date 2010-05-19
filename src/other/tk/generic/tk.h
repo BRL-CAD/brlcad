@@ -100,6 +100,10 @@ extern "C" {
 #  undef index
 #endif
 #define index tcl_scoped_index
+#ifdef y1
+#  undef y1
+#endif
+#define y1 tcl_scoped_y1
 
 /*
  * Dummy types that are used by clients:
@@ -1598,6 +1602,7 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 
 /* quell shadow warnings */
 #undef index
+#undef y1
 
 #ifdef __cplusplus
 }
