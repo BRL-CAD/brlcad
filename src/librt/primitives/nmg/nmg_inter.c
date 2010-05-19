@@ -314,16 +314,13 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	/* Must have come from a wire in other shell, make wire loop */
 	bu_log("\tvu=x%x, %s, fu1=x%x, fu2=x%x\n", vu, (sv==is->s1)?"shell 1":"shell 2", is->fu1, is->fu2);
 	bu_log("nmg_enlist_vu(): QUESTION: What do I search for wire intersections?  Making self-loop\n");
-	if (!dualvu && !(dualvu = nmg_find_v_in_shell(vu->v_p, duals, 0))) {
-	    /* Not found, make self-loop in dual shell */
-	    lu = nmg_mlv(&duals->l.magic, vu->v_p, OT_BOOLPLACE);
-	    nmg_loop_g(lu->l_p, &(is->tol));
-	    dualvu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-	} else {
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		bu_log("nmg_enlist_vu(vu=x%x) re-using dualvu=x%x from dualshell=x%x\n",
-		       vu,
-		       dualvu, duals);
+	if (!dualvu) {
+	    dualvu = nmg_find_v_in_shell(vu->v_p, duals, 0);
+	    if (!dualvu) {
+		/* Not found, make self-loop in dual shell */
+		lu = nmg_mlv(&duals->l.magic, vu->v_p, OT_BOOLPLACE);
+		nmg_loop_g(lu->l_p, &(is->tol));
+		dualvu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	    }
 	}
     }
