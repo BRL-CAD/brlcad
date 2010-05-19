@@ -107,11 +107,11 @@ HIDDEN int dmo_bounds_tcl(ClientData clientData, Tcl_Interp *interp, int argc, c
 HIDDEN int dmo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int dmo_debug_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #ifdef USE_FBSERV
-HIDDEN int dmo_openFb();
-HIDDEN int dmo_closeFb();
-HIDDEN int dmo_listen_tcl();
-HIDDEN int dmo_refreshFb_tcl();
-HIDDEN void dmo_fbs_callback();
+HIDDEN int dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp);
+HIDDEN int dmo_closeFb(struct dm_obj *dmop);
+HIDDEN int dmo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int dmo_refreshFb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+HIDDEN void dmo_fbs_callback(genptr_t clientData);
 #endif
 HIDDEN int dmo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int dmo_sync_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -3196,8 +3196,7 @@ dmo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 
 #ifdef USE_FBSERV
 HIDDEN void
-dmo_fbs_callback(clientData)
-    genptr_t clientData;
+dmo_fbs_callback(genptr_t clientData)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
