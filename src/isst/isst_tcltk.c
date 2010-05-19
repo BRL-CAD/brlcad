@@ -511,8 +511,6 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
     VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
     VUNITIZE(vec);
     AZEL_FROM_V3DIR(az, el, vec);
-    printf("az: %f\n", az);
-    printf("el: %f\n", el);
     bu_vls_sprintf(&tclstr, "%f", az);
     Tcl_SetVar(interp, "az", bu_vls_addr(&tclstr), 0);
     bu_vls_sprintf(&tclstr, "%f", el);
