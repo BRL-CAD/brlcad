@@ -74,15 +74,15 @@ static double	xlim_view = 1.0;	/* args for glOrtho*/
 static double	ylim_view = 1.0;
 
 /* lighting parameters */
-static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
+static float amb_three[] = {0.3f, 0.3f, 0.3f, 1.0f};
 
-static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
-static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
+static float light0_direction[] = {0.0f, 0.0f, 1.0f, 0.0f};
+static float light0_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f}; /* white */
 static float wireColor[4];
 static float ambientColor[4];
 static float specularColor[4];
 static float diffuseColor[4];
-static float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
+static float backColor[] = {1.0f, 1.0f, 0.0f, 1.0f}; /* yellow */
 
 void
 wgl_fogHint(struct dm *dmp, int fastfog)
@@ -90,6 +90,98 @@ wgl_fogHint(struct dm *dmp, int fastfog)
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
+
+HIDDEN int
+wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict,  fastf_t transparency)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_setFGColor()\n");
+
+    dmp->dm_fg[0] = r;
+    dmp->dm_fg[1] = g;
+    dmp->dm_fg[2] = b;
+
+    /* wireColor gets the full rgb */
+    wireColor[0] = r / 255.0;
+    wireColor[1] = g / 255.0;
+    wireColor[2] = b / 255.0;
+    wireColor[3] = transparency;
+
+    if (strict) {
+	glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
+    } else {
+	if (dmp->dm_light) {
+	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
+
+	    /* wireColor gets the full rgb */
+	    wireColor[0] = r / 255.0;
+	    wireColor[1] = g / 255.0;
+	    wireColor[2] = b / 255.0;
+	    wireColor[3] = transparency;
+
+	    ambientColor[0] = wireColor[0] * 0.2;
+	    ambientColor[1] = wireColor[1] * 0.2;
+	    ambientColor[2] = wireColor[2] * 0.2;
+	    ambientColor[3] = wireColor[3];
+
+	    specularColor[0] = ambientColor[0];
+	    specularColor[1] = ambientColor[1];
+	    specularColor[2] = ambientColor[2];
+	    specularColor[3] = ambientColor[3];
+
+	    diffuseColor[0] = wireColor[0] * 0.6;
+	    diffuseColor[1] = wireColor[1] * 0.6;
+	    diffuseColor[2] = wireColor[2] * 0.6;
+	    diffuseColor[3] = wireColor[3];
+
+#if 1
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+#endif
+	} else {
+	    glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
+	}
+    }
+
+    return TCL_OK;
+}
+
+HIDDEN int
+wgl_setBGColor(struct dm *dmp,
+	       unsigned char r,
+	       unsigned char g,
+	       unsigned char b)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_setBGColor()\n");
+
+    dmp->dm_bg[0] = r;
+    dmp->dm_bg[1] = g;
+    dmp->dm_bg[2] = b;
+
+    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
+    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
+    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
+
+    if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
+	if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	    bu_log("wgl_setBGColor: Couldn't make context current\n");
+	    return TCL_ERROR;
+	}
+
+	SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+	glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
+		     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
+		     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
+		     0.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
+    return TCL_OK;
+}
+
 
 /*
  *			W G L _ O P E N
@@ -109,6 +201,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     Tk_Window tkwin;
     HWND hwnd;
     HDC hdc;
+
+    extern struct dm dm_wgl;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -1300,97 +1394,6 @@ wgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict,  fastf_t transparency)
-{
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_setFGColor()\n");
-
-    dmp->dm_fg[0] = r;
-    dmp->dm_fg[1] = g;
-    dmp->dm_fg[2] = b;
-
-    /* wireColor gets the full rgb */
-    wireColor[0] = r / 255.0;
-    wireColor[1] = g / 255.0;
-    wireColor[2] = b / 255.0;
-    wireColor[3] = transparency;
-
-    if (strict) {
-	glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
-    } else {
-	if (dmp->dm_light) {
-	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
-
-	    /* wireColor gets the full rgb */
-	    wireColor[0] = r / 255.0;
-	    wireColor[1] = g / 255.0;
-	    wireColor[2] = b / 255.0;
-	    wireColor[3] = transparency;
-
-	    ambientColor[0] = wireColor[0] * 0.2;
-	    ambientColor[1] = wireColor[1] * 0.2;
-	    ambientColor[2] = wireColor[2] * 0.2;
-	    ambientColor[3] = wireColor[3];
-
-	    specularColor[0] = ambientColor[0];
-	    specularColor[1] = ambientColor[1];
-	    specularColor[2] = ambientColor[2];
-	    specularColor[3] = ambientColor[3];
-
-	    diffuseColor[0] = wireColor[0] * 0.6;
-	    diffuseColor[1] = wireColor[1] * 0.6;
-	    diffuseColor[2] = wireColor[2] * 0.6;
-	    diffuseColor[3] = wireColor[3];
-
-#if 1
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
-#endif
-	} else {
-	    glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
-	}
-    }
-
-    return TCL_OK;
-}
-
-HIDDEN int
-wgl_setBGColor(struct dm *dmp,
-	       unsigned char r,
-	       unsigned char g,
-	       unsigned char b)
-{
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_setBGColor()\n");
-
-    dmp->dm_bg[0] = r;
-    dmp->dm_bg[1] = g;
-    dmp->dm_bg[2] = b;
-
-    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
-    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
-    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
-
-    if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
-	if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-			    ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
-	    bu_log("wgl_setBGColor: Couldn't make context current\n");
-	    return TCL_ERROR;
-	}
-
-	SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
-	glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
-		     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
-		     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
-		     0.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-
-    return TCL_OK;
-}
-
-HIDDEN int
 wgl_setLineAttr(struct dm *dmp, int width, int style)
 {
     if (dmp->dm_debugLevel)
@@ -1457,8 +1460,8 @@ wgl_choose_visual(struct dm *dmp,
     ppfd = &pfd;
     memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
 
-    if ((iPixelFormat =
-	 GetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc))) {
+    iPixelFormat = GetPixelFormat(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+    if (iPixelFormat) {
 	LPVOID buf;
 
 	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
