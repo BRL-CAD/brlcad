@@ -39,17 +39,14 @@
 #include "./ged_private.h"
 
 
-static fastf_t ged_png_color_sf = 1.0/255.0;
 static unsigned int size = 512;
 static unsigned int half_size = 256;
-static int linewidth = 2;
 
 static unsigned char bg_red = 255;
 static unsigned char bg_green = 255;
 static unsigned char bg_blue = 255;
 
 #define GED_TO_PNG(_x) ((int)((_x)+half_size))
-#define GED_TO_PNG_COLOR(_c) ((_c)*ged_png_color_sf)
 
 struct coord {
     short x;
@@ -77,12 +74,12 @@ struct stroke {
 static void
 ged_raster(unsigned char **image, struct stroke *vp, unsigned char *color)
 {
-    short dy;		/* raster within active band */
+    size_t dy;		/* raster within active band */
 
     /*
      * Write the color of this vector on all pixels.
      */
-    for (dy = vp->pixel.y; dy <= size;) {
+    for (dy = vp->pixel.y; dy <= (size_t)size;) {
 
 	/* set the appropriate pixel in the buffer to color */
 	image[size-dy][vp->pixel.x*3] = color[0];
@@ -134,7 +131,8 @@ ged_draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord
 	vp->minor = -vp->minor;
 
     /* if Y is not really major, correct the assignments */
-    if (!(vp->ymajor = vp->minor <= vp->major)) {
+    vp->ymajor = vp->minor <= vp->major;
+    if (!vp->ymajor) {
 	short temp;	/* temporary for swap */
 
 	temp = vp->minor;
@@ -288,7 +286,7 @@ ged_draw_png_body(struct ged *gedp, unsigned char **image)
 	VSET(l, -1.0, -1.0, -1.0);
 	VSET(h, 1.0, 1.0, 200.0);
 
-	if (gedp->ged_gvp->gv_eye_pos[Z] == 1.0) {
+	if (NEAR_ZERO(gedp->ged_gvp->gv_eye_pos[Z] - 1.0, SMALL_FASTF)) {
 	    /* This way works, with reasonable Z-clipping */
 	    ged_persp_mat(perspective_mat, gedp->ged_gvp->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
@@ -319,17 +317,17 @@ ged_draw_png_body(struct ged *gedp, unsigned char **image)
 static int
 ged_draw_png(struct ged *gedp, FILE *fp)
 {
-    int i;
+    long i;
     png_structp png_p;
     png_infop info_p;
     double out_gamma = 1.0;
 #if 1
-    unsigned int num_bytes_per_row = (size+1) * 3;
-    unsigned int num_bytes = num_bytes_per_row * (size+1);
+    size_t num_bytes_per_row = (size+1) * 3;
+    size_t num_bytes = num_bytes_per_row * (size+1);
     unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * (size+1), "ged_draw_png, image");
 #else
-    unsigned int num_bytes_per_row = size * 3;
-    unsigned int num_bytes = num_bytes_per_row * size;
+    size_t num_bytes_per_row = size * 3;
+    size_t num_bytes = num_bytes_per_row * size;
     unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * size, "ged_draw_png, image");
 #endif
     unsigned char *bytes = (unsigned char *)bu_malloc(num_bytes, "ged_draw_png, bytes");
@@ -338,7 +336,7 @@ ged_draw_png(struct ged *gedp, FILE *fp)
     if (bg_red == bg_green && bg_red == bg_blue)
 	memset((void *)bytes, bg_red, num_bytes);
     else {
-	for (i = 0; i < num_bytes; i += 3) {
+	for (i = 0; (size_t)i < num_bytes; i += 3) {
 	    bytes[i] = bg_red;
 	    bytes[i+1] = bg_green;
 	    bytes[i+2] = bg_blue;
