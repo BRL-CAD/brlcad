@@ -10,6 +10,7 @@ namespace eval ::isst {
 }
 
 proc ::isst::overwin {x y W} {
+    global selectedobjs
     set rootxmin [winfo rootx $W]
     set rootymin [winfo rooty $W]
     set rootxmax [expr $rootxmin + [winfo width $W]] 
@@ -25,8 +26,47 @@ proc ::isst::overwin {x y W} {
     return 0
 }
 
+proc ::isst::buildlist {listwidget toplevelwidget filename} {
+    global oglwin selectedobjs
+    set selectedobjs [list ]
+    set selectednums [$listwidget curselection]
+    foreach listitem $selectednums {
+	set selectedobjs [concat $selectedobjs [$listwidget get $listitem]]
+    }
+    puts $selectedobjs
+    if {$selectedobjs != ""} {
+        load_g $oglwin $filename $selectedobjs
+    }
+    destroy $toplevelwidget
+}
+
+proc ::isst::geomlist {filename} {
+    global oglwin selectedobjs
+    toplevel .geomlist
+    wm title .geomlist "Select Geometry to be Viewed"
+    frame .geomlist.listing
+    scrollbar .geomlist.listing.s -command ".geomlist.listing.l yview"
+    listbox .geomlist.listing.l -bd 2 -yscroll ".geomlist.listing.s set" -width 50 -height 50
+    grid .geomlist.listing.l  .geomlist.listing.s -sticky nsew -in .geomlist.listing
+    grid columnconfigure .geomlist.listing 0 -weight 0
+    grid rowconfigure .geomlist.listing 0 -weight 1
+    set objects [list ]
+    set objects [concat $objects [list "tank"]]
+    set objects [lsort $objects]
+    foreach object $objects {
+        .geomlist.listing.l insert end $object
+    }
+    pack .geomlist.listing -side top -expand yes -fill both 
+
+    frame .geomlist.gl
+    pack .geomlist.gl -side bottom 
+    button .geomlist.gl.b1 -text " OK " -command "::isst::buildlist .geomlist.listing.l .geomlist $filename"
+    pack .geomlist.gl.b1 -side left -anchor w -padx 5
+} 
+
 proc ::isst::loaddatabase {} {
-    global oglwin 
+    global oglwin selectedobjs
+    set selectedobjs [list ]
     set filetypes {
         {{BRL-CAD .g Files}	{.g} 	}
         {{All Files}		*	}
@@ -34,8 +74,7 @@ proc ::isst::loaddatabase {} {
     set filename [tk_getOpenFile -filetypes $filetypes]
 
     if {$filename != ""} {
-    #   make_geomlist $filename
-       load_g $oglwin $filename tank
+       ::isst::geomlist $filename
     }
 }
 
