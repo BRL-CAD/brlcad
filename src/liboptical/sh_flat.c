@@ -138,7 +138,7 @@ normalizedInput_hook( register const struct bu_structparse *sdp, register const 
 
     register double *p = (double *)(base+sdp->sp_offset);
     size_t i;
-    size_t ok;
+    int ok;
 
     /* if all the values are in the range [0..1] there's nothing to do */
     for (ok=1, i=0; i < sdp->sp_count; i++, p++) {

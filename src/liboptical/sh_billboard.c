@@ -54,8 +54,8 @@ struct bbd_img {
     double	img_xlen;	/* length of image in u direction */
     vect_t	img_y;		/* v direction in image plane */
     double	img_ylen;	/* length of image in v direction */
-    unsigned long int	img_width;	/* dimension of image */
-    unsigned long int 	img_height;
+    size_t	img_width;	/* dimension of image */
+    size_t 	img_height;
     struct bu_mapped_file *img_mf; /* image data */
 };
 
@@ -67,13 +67,13 @@ struct bbd_img {
 struct bbd_specific {
     long	magic;	/* magic # for memory validity check, must come 1st */
     int img_threshold;
-    int img_width;
-    int img_height;
+    size_t img_width;
+    size_t img_height;
     double img_scale;
     struct bu_vls img_filename;
 
     /* these are not initialized by the user */
-    unsigned	img_count;
+    size_t img_count;
     struct bu_list imgs;
 
     struct rt_i *rtip;	/* this is needed by structparse */
@@ -87,8 +87,8 @@ const static
 struct bbd_specific bbd_defaults = {
     bbd_MAGIC,
     10,		/* img_threshold */
-    512L,	/* img_width */
-    512L,	/* img_height */
+    512,	/* img_width */
+    512,	/* img_height */
     100.0	/* img_scale */
 };
 
@@ -535,7 +535,7 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
     union tree *tp;
     struct bbd_img *bi;
     struct imgdist id[MAX_IMAGES];
-    int i;
+    size_t i;
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);

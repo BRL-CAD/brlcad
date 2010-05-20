@@ -285,7 +285,7 @@ int Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2) {
 
 
 int CheckMaterial(char *cmp, char *MS) {
-    int i;
+    size_t i;
 
     if (MS) {
 	for (i = 0; i < strlen(cmp) && i < strlen(MS); i++)

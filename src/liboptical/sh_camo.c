@@ -189,7 +189,7 @@ color_fix(register const struct bu_structparse *sdp, register const char *name, 
     /* string containing value */
 {
     register double *p = (double *)(base+sdp->sp_offset);
-    register int i;
+    size_t i;
     int ok;
 
     /* if all the values are in the range [0..1] there's nothing to do */
