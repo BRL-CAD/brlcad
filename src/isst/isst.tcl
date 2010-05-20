@@ -35,7 +35,7 @@ proc ::isst::buildlist {listwidget toplevelwidget filename} {
     }
     puts $selectedobjs
     if {$selectedobjs != ""} {
-        load_g $oglwin $filename $selectedobjs
+        load_g $oglwin $filename [split $selectedobjs]
     }
     destroy $toplevelwidget
 }
@@ -46,12 +46,12 @@ proc ::isst::geomlist {filename} {
     wm title .geomlist "Select Geometry to be Viewed"
     frame .geomlist.listing
     scrollbar .geomlist.listing.s -command ".geomlist.listing.l yview"
-    listbox .geomlist.listing.l -bd 2 -yscroll ".geomlist.listing.s set" -width 50 -height 50
+    listbox .geomlist.listing.l -selectmode multiple -bd 2 -yscroll ".geomlist.listing.s set" -width 50 -height 50
     grid .geomlist.listing.l  .geomlist.listing.s -sticky nsew -in .geomlist.listing
     grid columnconfigure .geomlist.listing 0 -weight 0
     grid rowconfigure .geomlist.listing 0 -weight 1
     set objects [list ]
-    set objects [concat $objects [list "tank"]]
+    list_g $filename objects
     set objects [lsort $objects]
     foreach object $objects {
         .geomlist.listing.l insert end $object

@@ -44,6 +44,7 @@
 #include "adrt_struct.h"
 #include "camera.h"
 #include "isst.h"
+#include "raytrace.h"
 
 void resize_isst(struct isst_s *);
 
@@ -117,7 +118,7 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
     struct isst_s *isst;
     char *argstring;
     char **argv;
-    int argc = 2;
+    int argc;
     double az, el;
     struct bu_vls tclstr;
     bu_vls_init(&tclstr);    
@@ -130,18 +131,15 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
         return TCL_ERROR;
     }
 
-    /*bu_log("objv[1]: %s\n", Tcl_GetString(objv[1]));*/
-
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
         return TCL_ERROR;
     }
 
-    argv = (char **)bu_malloc(sizeof(char *)*(argc + 1), "isst tcltk");
-    argv[0] = Tcl_GetString(objv[3]);
-    argv[1] = NULL;
+    argc = bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
+    
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    load_g(isst->tie, Tcl_GetString(objv[2]), argc-1, (const char **)argv, &(isst->meshes));
+    load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
 
     bu_free((genptr_t)argv, "isst tcltk"); 
 
@@ -175,6 +173,37 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
 
     return TCL_OK;
 }
+
+static int
+list_geometry(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
+{
+   static struct db_i *dbip;
+   struct directory *dp;   
+   int i;
+   struct bu_vls tclstr;
+   bu_vls_init(&tclstr);
+
+   if (objc < 3) {
+        Tcl_WrongNumArgs(interp, 1, objv, "file varname");
+        return TCL_ERROR;
+   }
+
+   if ((dbip = db_open(Tcl_GetString(objv[1]), "r")) == DBI_NULL) {
+        bu_log("Unable to open geometry file (%s)\n", Tcl_GetString(objv[1]));
+        return TCL_ERROR;
+   }
+   db_dirbuild(dbip);
+   for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+ 	   if (dp->d_flags & DIR_HIDDEN) continue;
+           bu_vls_sprintf(&tclstr, "set %s [concat $%s [list %s]]", Tcl_GetString(objv[2]), Tcl_GetString(objv[2]), dp->d_namep);
+	   Tcl_Eval(interp, bu_vls_addr(&tclstr));
+        }
+   }
+   bu_vls_free(&tclstr);
+   return TCL_OK;
+} 
+   
 
 static int
 paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
@@ -614,6 +643,7 @@ Isst_Init(Tcl_Interp *interp)
     Tcl_CreateObjCommand(interp, "refresh_ogl", paint_window, NULL, NULL);
     Tcl_CreateObjCommand(interp, "reshape", reshape, NULL, NULL);
     Tcl_CreateObjCommand(interp, "load_g", isst_load_g, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "list_g", list_geometry, NULL, NULL);
     Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
     Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
