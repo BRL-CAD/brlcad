@@ -155,7 +155,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="../../../include;../../../src/other/tkpng;../../../src/other/tcl/generic;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/othter/libz"
+				AdditionalIncludeDirectories="../../../include;../../../src/other/tkpng;../../../src/other/tcl/generic;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib;../../../src/other/libz"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;TCL_THREADS=0;USE_TCL_STUBS=1;USE_TK_STUBS=1"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
@@ -221,7 +221,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkpng.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkpng.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
