@@ -74,12 +74,10 @@ proc ::isst::Resolution {W n} {
     if { $resolution < 2 && $n > 0 } {
       set_resolution $W [expr $resolution + $n]
       set resolution [expr $resolution + $n]
-      puts $resolution
     }
     if { $resolution > 0 && $n < 0 } {
       set_resolution $W [expr $resolution + $n]
       set resolution [expr $resolution + $n]
-      puts $resolution
     }
 }
 
