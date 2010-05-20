@@ -169,7 +169,7 @@ int		mode=CSG_MODE;	/* indicates which type of IGES file is desired */
 int		solid_is_brep;
 int		comb_form;
 char		**independent;
-int		no_of_indeps=0;
+size_t		no_of_indeps=0;
 int		do_nurbs=0;
 
 /*
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 
     /* tree tops must have independent status, so we need to remember them */
     independent = (argv+1);
-    no_of_indeps = argc-1;
+    no_of_indeps = (size_t)argc-1;
 
     if ( mode == FACET_MODE )
     {
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 	if ( !multi_file )
 	{
 	    /* Now walk the same trees again, but only output groups */
-	    for ( i=1; i<argc; i++ )
+	    for ( i=1; i<(size_t)argc; i++ )
 	    {
 		char *ptr;
 
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 	 * as a CSG object, unless there is no IGES equivalent (then the
 	 * solid will be tessellated and output as a BREP object) */
 
-	for ( i=1; i<argc; i++ )
+	for ( i=1; i<(size_t)argc; i++ )
 	{
 	    dp = db_lookup( dbip, argv[i], 1 );
 	    if (!dp) {
@@ -736,7 +736,7 @@ csg_comb_func( dbip, dp, ptr )
     struct rt_comb_internal *comb;
     struct iges_properties props;
     int comb_len;
-    int i;
+    size_t i;
     int dependent=1;
     int *de_pointers;
     int id;

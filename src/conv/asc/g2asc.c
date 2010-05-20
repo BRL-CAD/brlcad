@@ -112,7 +112,7 @@ tclify_name( const char *name )
 int
 main(int argc, char **argv)
 {
-    int i;
+    unsigned i;
 
     if (argc != 3) {
 	bu_exit(1, "%s", usage);
@@ -307,8 +307,6 @@ main(int argc, char **argv)
 	    }
 	    avs = &intern.idb_avs;
 	    if ( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
-		int i;
-
 		fprintf( ofp, "attr set {%s}", tclify_name( dp->d_namep ) );
 		for ( i=0; i<avs->count; i++ ) {
 		    if (strlen(avs->avp[i].name) <= 0) {
