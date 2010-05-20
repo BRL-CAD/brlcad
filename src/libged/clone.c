@@ -75,7 +75,7 @@ struct ged_clone_state {
     struct ged		*gedp;
     struct directory	*src;		/* Source object */
     int			incr;		/* Amount to increment between copies */
-    int			n_copies;	/* Number of copies to make */
+    size_t		n_copies;	/* Number of copies to make */
     hvect_t		trans;		/* Translation between copies */
     hvect_t		rot;		/* Rotation between copies */
     hvect_t		rpnt;		/* Point to rotate about (default 0 0 0) */
@@ -285,7 +285,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 
 	/* add the object to the directory */
 	dp = db_diradd(dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
-	if ((dp == DIR_NULL) || (db_alloc(dbip, dp, proto->d_len) == (size_t)-1)) {
+	if ((dp == DIR_NULL) || db_alloc(dbip, dp, proto->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "Database alloc error, aborting\n");
 	    return;
 	}
@@ -331,7 +331,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	    bu_vls_printf(&state->gedp->ged_result_str, "mods not available on %s\n", proto->d_namep);
 
 	/* write the object to disk */
-	if (db_put(dbip, dp, rp, 0, dp->d_len) == (size_t)-1) {
+	if (db_put(dbip, dp, rp, 0, dp->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
 	    return;
 	}
@@ -511,7 +511,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
 	/* add the object to the directory */
 	dp = db_diradd(dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
-	if ((dp == NULL) || (db_alloc(dbip, dp, proto->d_len) == (size_t)-1)) {
+	if ((dp == NULL) || db_alloc(dbip, dp, proto->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "Database alloc error, aborting\n");
 	    return NULL;
 	}
@@ -527,7 +527,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 	}
 
 	/* write the object to disk */
-	if (db_put(dbip, dp, rp, 0, dp->d_len) == (size_t)-1) {
+	if (db_put(dbip, dp, rp, 0, dp->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
 	    return NULL;
 	}
@@ -544,7 +544,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
  * DESTRUCTIVE RECURSIVE
  */
 static int
-copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, int idx)
+copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, size_t idx)
 {
     char *buf;
     switch (tree->tr_op) {
@@ -576,7 +576,7 @@ copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, int idx)
  * make n copies of a v5 combination.
  */
 static struct directory *
-copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, int idx)
+copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, size_t idx)
 {
     struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
