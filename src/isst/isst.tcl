@@ -50,6 +50,8 @@ proc ::isst::setup {} {
 
     bind . <Key-minus> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin -1}}
     bind . <Key-equal> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin 1}}
+    bind . <Control-Key-minus> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin [expr 1 - $resolution] }}
+    bind . <Control-Key-equal> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin [expr 20 - $resolution] }}
      
     bind . <ButtonPress-1> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
     bind . <ButtonPress-3> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
