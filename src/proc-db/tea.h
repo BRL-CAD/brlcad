@@ -29,7 +29,7 @@
 
 
 typedef struct {
-    float x, y, z;
+    double x, y, z;
 } dt;
 
 
