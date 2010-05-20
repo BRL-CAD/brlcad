@@ -59,8 +59,8 @@ static int	infd;
 static int	fileinput = 0;		/* file of pipe on input? */
 static int	autosize = 0;		/* !0 to autosize input */
 
-static unsigned long int	file_width = 512;	/* default input width */
-static unsigned long int	file_height = 512;	/* default input height */
+static size_t	file_width = 512;	/* default input width */
+static size_t	file_height = 512;	/* default input height */
 static int	scr_width = 0;		/* screen tracks file if not given */
 static int	scr_height = 0;
 static int	file_xoff, file_yoff;
@@ -235,7 +235,7 @@ main(int argc, char **argv)
 
     if ( xout < 0 )
 	bu_exit(0, NULL);			/* off screen */
-    if ( xout > (file_width-file_xoff) )
+    if ( (size_t)xout > (file_width-file_xoff) )
 	xout = (file_width-file_xoff);
     scanpix = xout;				/* # pixels on scanline */
 
@@ -245,13 +245,17 @@ main(int argc, char **argv)
     yout = scr_height - scr_yoff;
     if ( yout < 0 )
 	bu_exit(0, NULL);			/* off screen */
-    if ( yout > (file_height-file_yoff) )
+    if ( (size_t)yout > (file_height-file_yoff) )
 	yout = (file_height-file_yoff);
 
     /* Only in the simplest case use multi-line writes */
-    if ( !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
-	 xout == file_width &&
-	 file_width <= scr_width )  {
+    if (!one_line_only
+	&& multiple_lines > 0
+	&& !inverse
+	&& !zoom
+	&& (size_t)xout == file_width
+	&& file_width <= (size_t)scr_width)
+    {
 	scanpix *= multiple_lines;
     }
 
@@ -268,17 +272,17 @@ main(int argc, char **argv)
     }
     if ( zoom ) {
 	/* Zoom in, and center the display.  Use square zoom. */
-	int	zoom;
-	zoom = scr_width/xout;
-	if ( scr_height/yout < zoom )  zoom = scr_height/yout;
+	int	zoomit;
+	zoomit = scr_width/xout;
+	if ( scr_height/yout < zoomit )  zoomit = scr_height/yout;
 	if ( inverse )  {
 	    fb_view( fbp,
 		     scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
-		     zoom, zoom );
+		     zoomit, zoomit );
 	} else {
 	    fb_view( fbp,
 		     scr_xoff+xout/2, scr_yoff+yout/2,
-		     zoom, zoom );
+		     zoomit, zoomit );
 	}
     }
 
@@ -286,7 +290,7 @@ main(int argc, char **argv)
 
     if ( multiple_lines )  {
 	/* Bottom to top with multi-line reads & writes */
-	int	height;
+	unsigned long height;
 	for ( y = scr_yoff; y < scr_yoff + yout; y += multiple_lines )  {
 	    n = bu_mread( infd, (char *)scanline, scanbytes );
 	    if ( n <= 0 ) break;
@@ -296,17 +300,17 @@ main(int argc, char **argv)
 		if ( height <= 0 )  break;
 	    }
 	    /* Don't over-write */
-	    if ( y + height > scr_yoff + yout )
+	    if ( (size_t)(y + height) > (size_t)(scr_yoff + yout) )
 		height = scr_yoff + yout - y;
 	    if ( height <= 0 )  break;
 	    m = fb_writerect( fbp, scr_xoff, y,
 			      file_width, height,
 			      scanline );
-	    if ( m != file_width*height )  {
+	    if ( (size_t)m != file_width*height )  {
 		fprintf(stderr,
-			"pix-fb: fb_writerect(x=%d, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
+			"pix-fb: fb_writerect(x=%d, y=%d, w=%lu, h=%lu) failure, ret=%d, s/b=%d\n",
 			scr_xoff, y,
-			file_width, height, m, scanbytes );
+			(unsigned long)file_width, height, m, scanbytes );
 	    }
 	}
     } else if ( !inverse )  {
@@ -329,7 +333,7 @@ main(int argc, char **argv)
 			m, xout );
 	    }
 	    /* slop at the end of the line? */
-	    if ( file_xoff+xskip+scanpix < file_width )
+	    if ( (size_t)file_xoff+xskip+scanpix < file_width )
 		skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
 	}
     }  else  {
@@ -352,7 +356,7 @@ main(int argc, char **argv)
 			m, xout );
 	    }
 	    /* slop at the end of the line? */
-	    if ( file_xoff+xskip+scanpix < file_width )
+	    if ( (size_t)file_xoff+xskip+scanpix < file_width )
 		skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
 	}
     }
@@ -361,7 +365,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
     }
 
-    bu_exit(0, NULL);
+    return 0;
 }
 
 /*
