@@ -122,4 +122,10 @@ proc ::isst::RotMove2 {x y W} {
 if { [info script] == $argv0 } {
     global az el oglwin
     ::isst::setup
+    # Do a couple operations to make sure 
+    # the view is properly initialized on OSX
+    update
+    walk $oglwin 1
+    walk $oglwin -1
+    update
 }
