@@ -9,6 +9,22 @@ package require isst
 namespace eval ::isst {
 }
 
+proc ::isst::overglwin {x y W} {
+    set rootxmin [winfo rootx $W]
+    set rootymin [winfo rooty $W]
+    set rootxmax [expr $rootxmin + [winfo width $W]] 
+    set rootymax [expr $rootymin + [winfo height $W]] 
+    set currpointerx [winfo pointerx $W]
+    set currpointery [winfo pointery $W]
+    if { $currpointerx <= $rootxmax && $currpointerx >= $rootxmin &&
+         $currpointery <= $rootymax && $currpointery >= $rootymin} {
+	 return 1
+       } else {
+         return 0
+       }
+    return 0
+}
+
 proc ::isst::setup {} {
     global resolution oglwin
     set resolution 20
@@ -17,24 +33,25 @@ proc ::isst::setup {} {
     pack .f -side top
     button .f.b1 -text " Quit " -command exit 
     pack .f.b1 -side left -anchor w -padx 5
-    bind . <Key-1> {render_mode $oglwin phong}
-    bind . <Key-2> {render_mode $oglwin normal}
-    bind . <Key-3> {render_mode $oglwin depth}
-    bind . <Key-4> {render_mode $oglwin component}
-    bind . <Key-0> {reset $oglwin}
-     
-    bind . <Key-w> {::isst::MoveForward $oglwin}
-    bind . <Key-s> {::isst::MoveBackward $oglwin}
-    bind . <Key-a> {::isst::MoveLeft $oglwin}
-    bind . <Key-d> {::isst::MoveRight $oglwin}
 
-    bind . <Key-minus> {::isst::Resolution $oglwin -1}
-    bind . <Key-equal> {::isst::Resolution $oglwin 1}
+    bind . <Key-1> {if {[::isst::overglwin %X %Y $oglwin]} {render_mode $oglwin phong}}
+    bind . <Key-2> {if {[::isst::overglwin %X %Y $oglwin]} {render_mode $oglwin normal} else {puts "Place mouse over geometry window."}}
+    bind . <Key-3> {if {[::isst::overglwin %X %Y $oglwin]} {render_mode $oglwin depth}}
+    bind . <Key-4> {if {[::isst::overglwin %X %Y $oglwin]} {render_mode $oglwin component}}
+    bind . <Key-0> {if {[::isst::overglwin %X %Y $oglwin]} {reset $oglwin}}
      
-    bind . <ButtonPress-1> {::isst::RotStart %x %y $oglwin}
-    bind . <ButtonPress-3> {::isst::RotStart %x %y $oglwin}
-    bind . <B1-Motion> {::isst::RotMove %x %y $oglwin}
-    bind . <B3-Motion> {::isst::RotMove2 %x %y $oglwin}
+    bind . <Key-w> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::MoveForward $oglwin}}
+    bind . <Key-s> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::MoveBackward $oglwin}}
+    bind . <Key-a> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::MoveLeft $oglwin}}
+    bind . <Key-d> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::MoveRight $oglwin}}
+
+    bind . <Key-minus> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::Resolution $oglwin -1}}
+    bind . <Key-equal> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::Resolution $oglwin 1}}
+     
+    bind . <ButtonPress-1> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
+    bind . <ButtonPress-3> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
+    bind . <B1-Motion> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::RotMove %x %y $oglwin}}
+    bind . <B3-Motion> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::RotMove2 %x %y $oglwin}}
     drawview .w0 10
 }
 
