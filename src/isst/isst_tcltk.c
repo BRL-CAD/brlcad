@@ -130,7 +130,7 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
         return TCL_ERROR;
     }
 
-    bu_log("objv[1]: %s\n", Tcl_GetString(objv[1]));
+    /*bu_log("objv[1]: %s\n", Tcl_GetString(objv[1]));*/
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
         return TCL_ERROR;
@@ -367,14 +367,18 @@ zero_view(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
     struct isst_s *isst;
     Togl *togl;
     vect_t vec;
+    double mag_vec;
 
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK)
         return TCL_ERROR;
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
+    mag_vec = DIST_PT_PT(isst->camera.pos.v, isst->camera.focus.v);
+
     VSUB2(vec, isst->camera_focus_init, isst->camera.pos.v);
     VUNITIZE(vec);
+    VSCALE(vec, vec, mag_vec);
     VADD2(isst->camera.focus.v, isst->camera.pos.v, vec);
 
     isst->dirty = 1;
@@ -400,14 +404,12 @@ move_walk(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
 
     if (flag >= 0) {
 	VSUB2(vec, isst->camera.focus.v, isst->camera.pos.v);
-	VUNITIZE(vec);
-	VSCALE(vec, vec, 0.01 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->tie->radius);
 	VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
 	VADD2(isst->camera.focus.v, isst->camera.focus.v, vec);
     } else {
 	VSUB2(vec, isst->camera.pos.v, isst->camera.focus.v);
-	VUNITIZE(vec);
-	VSCALE(vec, vec, 0.01 * isst->tie->radius);
+	VSCALE(vec, vec, 0.1 * isst->tie->radius);
 	VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
 	VADD2(isst->camera.focus.v, isst->camera.focus.v, vec);
     }
@@ -436,19 +438,18 @@ move_strafe(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const 
     
     if (flag >= 0) {
         VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
-        VUNITIZE(dir);
         VCROSS(vec, dir, up);
-        VSCALE(vec, vec, 0.01 * isst->tie->radius);
+        VSCALE(vec, vec, 0.1 * isst->tie->radius);
         VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
         VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
     } else {
         VSUB2(dir, isst->camera.focus.v, isst->camera.pos.v);
-        VUNITIZE(dir);
         VCROSS(vec, dir, up);
-        VSCALE(vec, vec, -0.01 * isst->tie->radius);
+        VSCALE(vec, vec, -0.1 * isst->tie->radius);
         VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
         VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
-    }
+    } 
+
     isst->dirty = 1;
     return TCL_OK;
 }
@@ -480,6 +481,7 @@ aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
     vect_t vecdfoc;
     double x, y;
     double az, el;
+    double mag_vec;
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "pathName az el");
@@ -496,13 +498,18 @@ aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
         return TCL_ERROR;
 
+    mag_vec = DIST_PT_PT(isst->camera.pos.v, isst->camera.focus.v);
+
     VSUB2(vecdfoc, isst->camera.pos.v, isst->camera.focus.v);
     VUNITIZE(vecdfoc);
     AZEL_FROM_V3DIR(az, el, vecdfoc);
     az = az * -DEG2RAD + x;
     el = el * -DEG2RAD + y;
     V3DIR_FROM_AZEL(vecdfoc, az, el);
+    VUNITIZE(vecdfoc);
+    VSCALE(vecdfoc, vecdfoc, mag_vec);
     VADD2(isst->camera.focus.v, isst->camera.pos.v, vecdfoc);
+   
     isst->dirty = 1;
     return TCL_OK;
 }
@@ -535,9 +542,9 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
         return TCL_ERROR;
 
-    mag_pos = fabs(DIST_PT_PT(isst->camera.pos.v, isst->camera_focus_init));
+    mag_pos = DIST_PT_PT(isst->camera.pos.v, isst->camera_focus_init);
 
-    mag_focus = fabs(DIST_PT_PT(isst->camera.focus.v, isst->camera_focus_init));
+    mag_focus = DIST_PT_PT(isst->camera.focus.v, isst->camera_focus_init);
 
     VSUB2(vecdpos, isst->camera_focus_init, isst->camera.pos.v);
     VUNITIZE(vecdpos);
