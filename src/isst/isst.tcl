@@ -10,19 +10,38 @@ namespace eval ::isst {
 }
 
 proc ::isst::setup {} {
-    global resolution
+    global resolution oglwin
     set resolution 0
     wm title . "ISST - Interactive Geometry Viewing"
     frame .f
     pack .f -side top
     button .f.b1 -text " Quit " -command exit 
     pack .f.b1 -side left -anchor w -padx 5
+    bind . <Key-1> {render_mode $oglwin phong}
+    bind . <Key-2> {render_mode $oglwin normal}
+    bind . <Key-3> {render_mode $oglwin depth}
+    bind . <Key-4> {render_mode $oglwin component}
+    bind . <Key-0> {reset $oglwin}
+     
+    bind . <Key-w> {::isst::MoveForward $oglwin}
+    bind . <Key-s> {::isst::MoveBackward $oglwin}
+    bind . <Key-a> {::isst::MoveLeft $oglwin}
+    bind . <Key-d> {::isst::MoveRight $oglwin}
+
+    bind . <Key-minus> {::isst::Resolution $oglwin 1}
+    bind . <Key-equal> {::isst::Resolution $oglwin -1}
+     
+    bind . <ButtonPress-1> {::isst::RotStart %x %y $oglwin}
+    bind . <ButtonPress-3> {::isst::RotStart %x %y $oglwin}
+    bind . <B1-Motion> {::isst::RotMove %x %y $oglwin}
+    bind . <B3-Motion> {::isst::RotMove2 %x %y $oglwin}
     drawview .w0 10
 }
 
 proc ::isst::drawview {win {tick 100} } {
-    global az el resolution
+    global az el resolution oglwin
     togl $win -width 800 -height 600 -rgba true -double true -depth true -privatecmap false -time $tick -create isst_init -destroy isst_zap -display refresh_ogl -reshape reshape -timer idle
+     set oglwin $win
      focus $win
      bind $win <Key-1> {focus %W; render_mode %W phong}
      bind $win <Key-2> {focus %W; render_mode %W normal}
@@ -73,10 +92,12 @@ proc ::isst::Resolution {W n} {
     if { $resolution < 2 && $n > 0 } {
       set_resolution $W [expr $resolution + $n]
       set resolution [expr $resolution + $n]
+      puts $resolution
     }
     if { $resolution > 0 && $n < 0 } {
       set_resolution $W [expr $resolution + $n]
       set resolution [expr $resolution + $n]
+      puts $resolution
     }
 }
 
