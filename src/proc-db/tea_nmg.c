@@ -36,9 +36,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./tea.h"		/* IEEE Data Structures */
-#include "./ducks.h"		/* Teapot Vertex data */
-#include "./patches.h"		/* Teapot Patch data */
+#include "./tea.h"		/* Teapot Data */
 
 
 static struct shell *s;
