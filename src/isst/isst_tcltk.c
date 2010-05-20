@@ -77,21 +77,15 @@ reshape(ClientData clientData, Tcl_Interp *interp, int objc,
 void
 resize_isst(struct isst_s *isst)
 {
-    switch(isst->gs) {
+   switch(isst->gs) {
             case 0:
                 isst->camera.w = isst->tile.size_x = isst->w;
                 isst->camera.h = isst->tile.size_y = isst->h;
                 break;
-            case 1:
-                isst->camera.w = isst->tile.size_x = 320;
-                isst->camera.h = isst->tile.size_y = isst->camera.w * isst->h / isst->w;
-                break;
-            case 2:
-                isst->camera.w = isst->tile.size_x = 40;
-                isst->camera.h = isst->tile.size_y = isst->camera.w * isst->h / isst->w;
-                break;
             default:
-                bu_log("Unknown level...\n");
+                isst->camera.w = isst->tile.size_x = isst->gs;
+                isst->camera.h = isst->tile.size_y = isst->camera.w * isst->h / isst->w;
+                break;
     }
     isst->tile.format = RENDER_CAMERA_BIT_DEPTH_24;
     TIENET_BUFFER_SIZE(isst->buffer_image, 3 * isst->camera.w * isst->camera.h);
@@ -257,8 +251,13 @@ set_resolution(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *con
 
     isst = (struct isst *) Togl_GetClientData(togl);
 
-    isst->gs = resolution;
-
+    if (resolution < 1) resolution = 1;
+    if (resolution > 20) {
+       resolution = 20;
+       isst->gs = 0;
+    } else {
+       isst->gs = (int)trunc(isst->w * .05 * resolution);
+    }
     resize_isst(isst);
 
     return TCL_OK;

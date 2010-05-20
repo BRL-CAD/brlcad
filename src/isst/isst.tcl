@@ -11,7 +11,7 @@ namespace eval ::isst {
 
 proc ::isst::setup {} {
     global resolution oglwin
-    set resolution 0
+    set resolution 20
     wm title . "ISST - Interactive Geometry Viewing"
     frame .f
     pack .f -side top
@@ -28,8 +28,8 @@ proc ::isst::setup {} {
     bind . <Key-a> {::isst::MoveLeft $oglwin}
     bind . <Key-d> {::isst::MoveRight $oglwin}
 
-    bind . <Key-minus> {::isst::Resolution $oglwin 1}
-    bind . <Key-equal> {::isst::Resolution $oglwin -1}
+    bind . <Key-minus> {::isst::Resolution $oglwin -1}
+    bind . <Key-equal> {::isst::Resolution $oglwin 1}
      
     bind . <ButtonPress-1> {::isst::RotStart %x %y $oglwin}
     bind . <ButtonPress-3> {::isst::RotStart %x %y $oglwin}
@@ -71,11 +71,11 @@ proc ::isst::MoveRight {W} {
 
 proc ::isst::Resolution {W n} {
     global resolution
-    if { $resolution < 2 && $n > 0 } {
+    if { $resolution < 20 && $n > 0 } {
       set_resolution $W [expr $resolution + $n]
       set resolution [expr $resolution + $n]
     }
-    if { $resolution > 0 && $n < 0 } {
+    if { $resolution > 1 && $n < 0 } {
       set_resolution $W [expr $resolution + $n]
       set resolution [expr $resolution + $n]
     }
