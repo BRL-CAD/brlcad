@@ -9,10 +9,10 @@ WFOBJLIB =
 #endif
 
 SUBDIRS = \
-	${OBJ}
+	${WFOBJ}
 
 DIST_SUBDIRS = \
-	${OBJ}
+	${WFOBJ}
 
 lib_LTLIBRARIES = libgcv.la
 noinst_LTLIBRARIES = libgcv_nil.la
@@ -42,7 +42,7 @@ libgcv_la_SOURCES =
 libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS} 
 libgcv_la_LIBADD = \
 	libgcv_nil.la \
-	${OBJLIB} \
+	${WFOBJLIB} \
 	${GCV_LIBS}
 
 AM_CFLAGS = ${STRICT_FLAGS}
