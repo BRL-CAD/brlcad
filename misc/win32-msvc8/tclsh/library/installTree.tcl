@@ -42,38 +42,37 @@ if {$platform == "x64"} {
 set installDir [file join $rootDir $brlcadInstall]
 if {[file exists $installDir]} {
     puts "$installDir already exists."
-    return
 }
 
 # Look for required source files
 set missingFile 0
 if {![file exists [file join $rootDir src other iwidgets iwidgets.tcl.in]]} {
-    puts "Missing [file join $rootDir src other iwidgets iwidgets.tcl.in]"
+    puts "ERROR: Missing [file join $rootDir src other iwidgets iwidgets.tcl.in]"
     set missingFile 1
 }
 
 if {![file exists [file join $rootDir src other iwidgets pkgIndex.tcl.in]]} {
-    puts "Missing [file join $rootDir src other iwidgets pkgIndex.tcl.in]"
+    puts "ERROR: Missing [file join $rootDir src other iwidgets pkgIndex.tcl.in]"
     set missingFile 1
 }
 
 if {![file exists [file join $rootDir src other tk win wish.exe.manifest].in]} {
-    puts "Missing [file join $rootDir src other tk win wish.exe.manifest].in]"
+    puts "ERROR: Missing [file join $rootDir src other tk win wish.exe.manifest].in]"
     set missingFile 1
 }
 
 if {![file exists [file join $rootDir include conf MAJOR]]} {
-    puts "Missing [file join $rootDir include conf MAJOR]]"
+    puts "ERROR: Missing [file join $rootDir include conf MAJOR]]"
     set missingFile 1
 }
 
 if {![file exists [file join $rootDir include conf MINOR]]} {
-    puts "Missing [file join $rootDir include conf MINOR]]"
+    puts "ERROR: Missing [file join $rootDir include conf MINOR]]"
     set missingFile 1
 }
 
 if {![file exists [file join $rootDir include conf PATCH]]} {
-    puts "Missing [file join $rootDir include conf PATCH]]"
+    puts "ERROR: Missing [file join $rootDir include conf PATCH]]"
     set missingFile 1
 }
 
