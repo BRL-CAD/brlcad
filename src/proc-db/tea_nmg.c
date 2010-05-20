@@ -80,7 +80,7 @@ dump_patch(int (*patch)[4])
 	struct vertexuse *vu;
 	vect_t uvw;
 	point_t pnt;
-	int k, j;
+	int k;
 
 	switch (i) {
 	    default:
