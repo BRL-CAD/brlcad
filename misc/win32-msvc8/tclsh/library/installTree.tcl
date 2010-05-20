@@ -393,7 +393,7 @@ proc removeUnwanted {_startDir} {
   foreach file $files {
     if { [regexp {Makefile.*} $file] || [regexp {~$} $file] } {
       if {$verbose} {
-        puts "... deleting $file"
+        puts "... deleting $_startDir/$file"
       } else {
         puts -nonewline "."
         flush stdout
@@ -410,7 +410,7 @@ proc removeUnwanted {_startDir} {
       continue
     } elseif { $dir == ".libs" || $dir == ".deps" || $dir == ".svn" } {
       if {$verbose} {
-        puts "... deleting $dir"
+        puts "... deleting $_startDir/$dir"
       } else {
         puts -nonewline "."
         flush stdout
@@ -436,5 +436,4 @@ proc removeUnwanted {_startDir} {
 
 # Remove unwanted directories/files as a result of wholesale copies
 puts "\[14 of 14] REMOVING UNWANTED FILES FROM $installDir"
-set verbose 1
 removeUnwanted $installDir
