@@ -65,8 +65,8 @@ extern fastf_t cell_height;	/* model space grid cell height */
 extern point_t eye_model;	/* model-space location of eye */
 extern fastf_t eye_backoff;	/* dist of eye from center */
 extern fastf_t rt_perspective;	/* persp (degrees X) 0 => ortho */
-extern int width;		/* # of pixels in X */
-extern int height;		/* # of lines in Y */
+extern size_t width;		/* # of pixels in X */
+extern size_t height;		/* # of lines in Y */
 extern mat_t Viewrotscale;	/* view orientation quaternion */
 extern fastf_t viewsize;
 extern int incr_mode;		/* !0 for incremental resolution */
@@ -343,7 +343,7 @@ int cm_tree(int argc, const char **argv)
 int cm_multiview(int argc, char **argv)
 {
     register struct rt_i *rtip = ap.a_rt_i;
-    int i;
+    size_t i;
     static int a[] = {
 	35,   0,
 	0,  90, 135, 180, 225, 270, 315,

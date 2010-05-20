@@ -194,9 +194,9 @@ timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
 	x = 0;
     if (y < 0)
 	y = 0;
-    if (y > height)
+    if ((size_t)y > height)
 	bu_log("Error, putting in values greater than height!\n");
-    if (x > width)
+    if ((size_t)x > width)
 	bu_log("Error, putting in values greater than width!\n");
     timeTable[x][y] = time;
     /* bu_log("Input %lf into timeTable %d %d\n", time, x, y); */

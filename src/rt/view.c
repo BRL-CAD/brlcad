@@ -110,6 +110,7 @@ extern char *scanbuf;		/* scanline(s) buffer */
 
 void free_scanlines(int, struct scanline *);
 struct scanline* alloc_scanlines(int);
+extern fastf_t** timeTable_init(int x, int y);
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */
@@ -121,7 +122,7 @@ static int buf_mode=0;
 
 static struct scanline* scanline;
 
-static short int pwidth;		/* Width of each pixel (in bytes) */
+static size_t pwidth;		/* Width of each pixel (in bytes) */
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
 fastf_t gamma_corr = 0.0;		/* gamma correction if !0 */
@@ -267,7 +268,7 @@ view_pixel(struct application *ap)
 		 * and hit a different region than this pixel, then
 		 * recompute it too.
 		 */
-		if (ap->a_x >= width-1) return;
+		if ((size_t)ap->a_x >= width-1) return;
 		if (fp[1].ff_frame <= 0) return;	/* not valid, will be recomputed. */
 		if (fp[1].ff_regp == fp->ff_regp)
 		    return;				/* OK */
@@ -395,14 +396,14 @@ view_pixel(struct application *ap)
 
 	case BUFMODE_INCR:
 	    {
-		int dx, dy;
-		int spread;
+		size_t dx, dy;
+		size_t spread;
 
 		spread = 1<<(incr_nlevel-incr_level);
 
 		bu_semaphore_acquire(RT_SEM_RESULTS);
 		for (dy=0; dy<spread; dy++) {
-		    if (ap->a_y+dy >= height) break;
+		    if ((size_t)ap->a_y+dy >= height) break;
 		    slp = &scanline[ap->a_y+dy];
 		    if (slp->sl_buf == (char *)0)
 			slp->sl_buf = bu_calloc(width+32,
@@ -444,9 +445,9 @@ view_pixel(struct application *ap)
     switch (buf_mode) {
 	case BUFMODE_INCR:
 	    {
-		int dy, yy;
-		int spread;
-		int npix = 0;
+		size_t dy, yy;
+		size_t spread;
+		size_t npix = 0;
 
 		if (fbp == FBIO_NULL)
 		    bu_exit(EXIT_FAILURE, "Incremental rendering with no framebuffer?");
@@ -456,12 +457,12 @@ view_pixel(struct application *ap)
 		for (dy=spread; dy >= 0; dy--) {
 		    yy = ap->a_y + dy;
 		    if (sub_grid_mode) {
-			if (dy < sub_ymin || dy > sub_ymax)
+			if (dy < (size_t)sub_ymin || dy > (size_t)sub_ymax)
 			    continue;
 			npix = fb_write(fbp, sub_xmin, yy,
 					(unsigned char *)scanline[yy].sl_buf+3*sub_xmin,
 					sub_xmax-sub_xmin+1);
-			if (npix != sub_xmax-sub_xmin+1) break;
+			if (npix != (size_t)sub_xmax-(size_t)sub_xmin+1) break;
 		    } else {
 			npix = fb_write(fbp, 0, yy,
 					(unsigned char *)scanline[yy].sl_buf,
@@ -477,7 +478,7 @@ view_pixel(struct application *ap)
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
 	    if (fbp != FBIO_NULL) {
-		int npix;
+		size_t npix;
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {
 		    npix = fb_write(fbp, sub_xmin, ap->a_y,
@@ -489,7 +490,7 @@ view_pixel(struct application *ap)
 		}
 		bu_semaphore_release(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {
-		    if (npix < sub_xmax-sub_xmin-1)
+		    if (npix < (size_t)sub_xmax-(size_t)sub_xmin-1)
 			bu_exit(EXIT_FAILURE, "scanline fb_write error");
 		} else {
 		    if (npix < width)
@@ -535,8 +536,6 @@ view_eol(struct application *ap)
 void
 view_end(struct application *ap)
 {
-    extern fastf_t** timeTable_init(int x, int y);
-
     /* FIXME: this should work on windows after the bu_timer() is
      * created to replace the librt timing mechansim.
      */
@@ -1113,7 +1112,7 @@ int viewit(struct application *ap,
 	    break;
 	case 4:
 	    {
-		struct curvature cv;
+                struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
 		fastf_t f;
 
 		RT_CURVATURE(&cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp);
@@ -1134,7 +1133,7 @@ int viewit(struct application *ap,
 	    break;
 	case 5:
 	    {
-		struct curvature cv;
+                struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
 
 		RT_CURVATURE(&cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp);
 
@@ -1145,7 +1144,7 @@ int viewit(struct application *ap,
 	    break;
 	case 6:
 	    {
-		struct uvcoord uv;
+                struct uvcoord uv = {0.0, 0.0, 0.0, 0.0};
 
 		/* Exactly like 'testmap' shader: UV debug */
 		RT_HIT_UVCOORD(ap, pp->pt_inseg->seg_stp, hitp, &uv);
@@ -1302,7 +1301,7 @@ reproject_worker(int cpu, genptr_t arg)
 
 	for (pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++) {
 	    point_t new_view_pt;
-	    int ix, iy;
+	    size_t ix, iy;
 
 	    if (pixelnum > last_pixel)
 		goto out;
@@ -1342,19 +1341,19 @@ reproject_worker(int cpu, genptr_t arg)
 	    }
 
 	    /* 4-way splat.  See if reprojects off of screen */
-	    if (ix >= 0 && ix < width && iy >= 0 && iy < height)
+	    if (ix < width && iy < height)
 		count += reproject_splat(ix, iy, ip, new_view_pt);
 
 	    ix++;
-	    if (ix >= 0 && ix < width && iy >= 0 && iy < height)
+	    if (ix < width && iy < height)
 		count += reproject_splat(ix, iy, ip, new_view_pt);
 
 	    iy++;
-	    if (ix >= 0 && ix < width && iy >= 0 && iy < height)
+	    if (ix < width && iy < height)
 		count += reproject_splat(ix, iy, ip, new_view_pt);
 
 	    ix--;
-	    if (ix >= 0 && ix < width && iy >= 0 && iy < height)
+	    if (ix < width && iy < height)
 		count += reproject_splat(ix, iy, ip, new_view_pt);
 	}
     }
@@ -1395,7 +1394,7 @@ collect_soltabs(struct bu_ptbl *stp_list, union tree *tr)
 void
 view_2init(struct application *ap, char *framename)
 {
-    int i;
+    size_t i;
     struct bu_ptbl stps;
 
     ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
@@ -1488,8 +1487,8 @@ view_2init(struct application *ap, char *framename)
 #endif
 	case BUFMODE_INCR:
 	    {
-		int j = 1<<incr_level;
-		int w = 1<<(incr_nlevel-incr_level);
+		size_t j = 1<<incr_level;
+		size_t w = 1<<(incr_nlevel-incr_level);
 
 		bu_log("Incremental resolution %d\n", j);
 
@@ -1522,7 +1521,7 @@ view_2init(struct application *ap, char *framename)
 	    }
 
 	    if (sub_grid_mode) {
-		for (i=sub_ymin; i<=sub_ymax; i++)
+		for (i=sub_ymin; i<=(size_t)sub_ymax; i++)
 		    scanline[i].sl_left = sub_xmax-sub_xmin+1;
 	    } else {
 		for (i=0; i<height; i++)

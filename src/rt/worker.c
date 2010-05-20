@@ -52,6 +52,9 @@
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
 
+extern fastf_t** timeTable_init(int x, int y);
+extern int timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
+
 extern int query_x;
 extern int query_y;
 extern int Query_one_pixel;
@@ -86,8 +89,8 @@ int stop_worker = 0;
  */
 struct jitter_pattern {
     int num_samples;/* number of samples, or coordinate pairs in coords[] */
-    float rand_scale[2]; /* amount to scale bn_rand_half value */
-    float coords[32]; /* center of each sub-pixel */
+    double rand_scale[2]; /* amount to scale bn_rand_half value */
+    double coords[32]; /* center of each sub-pixel */
 };
 
 
@@ -158,10 +161,8 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     vect_t colorsum = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
     int samplenum = 0;
     static const double one_over_255 = 1.0 / 255.0;
-    register RGBpixel pixel = {0, 0, 0};
     const int pindex = (pixelnum * sizeof(RGBpixel));
 
-    extern fastf_t** timeTable_init(int x, int y);
 
     if (lightmodel == 8) {
 	/* Add timer here to start pixel-time for heat
@@ -231,7 +232,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
 	    /* we're done */
 	    view_pixel(&a);
-	    if (a.a_x == width-1) {
+	    if ((size_t)a.a_x == width-1) {
 		view_eol(&a);		/* End of scan line */
 	    }
 	    return;
@@ -438,7 +439,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 #endif
     /* we're done */
     view_pixel(&a);
-    if (a.a_x == width-1) {
+    if ((size_t)a.a_x == width-1) {
 	view_eol(&a);		/* End of scan line */
     }
     return;
@@ -460,7 +461,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
  * For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
-worker(int cpu, genptr_t arg)
+worker(int cpu, genptr_t UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;
