@@ -111,7 +111,7 @@
 extern FBIO *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
-extern int width, height;
+extern size_t width, height;
 extern int per_processor_chunk;
 extern int default_background;
 

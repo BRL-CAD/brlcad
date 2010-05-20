@@ -103,7 +103,7 @@ void
 view_2init(struct application *ap)
 {
     extern double	cell_width;
-    extern int	width;
+    extern size_t width;
 
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;

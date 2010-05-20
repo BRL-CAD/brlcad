@@ -66,8 +66,8 @@ mat_t		model2view;
 
 struct application ap;
 
-int		width = 0;		/* # of pixels in X */
-int		height = 0;		/* # of lines in Y */
+size_t		width = 0;		/* # of pixels in X */
+size_t		height = 0;		/* # of lines in Y */
 
 double		azimuth = 0.0, elevation = 0.0;
 

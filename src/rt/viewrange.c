@@ -49,7 +49,7 @@ struct cell {
     point_t	c_hit;			/* 3-space hit point of ray */
 };
 
-extern	int	width;			/* # of pixels in X; picture width */
+extern size_t   width;			/* # of pixels in X; picture width */
 extern int	npsw;			/* number of worker PSWs to run */
 float		max_dist;
 struct cell	*cellp;

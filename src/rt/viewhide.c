@@ -63,7 +63,7 @@ struct cell {
     vect_t	c_rdir;			/* ray direction, permits perspective */
 };
 
-extern	int	width;			/* # of pixels in X; picture width */
+extern size_t	width;			/* # of pixels in X; picture width */
 extern int	npsw;			/* number of worker PSWs to run */
 
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
