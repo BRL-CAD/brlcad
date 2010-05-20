@@ -506,7 +506,8 @@ get_solid_number(struct partition *pp)
 	bu_bomb("Choke! ack! gasp! wheeeeeeze.\n");
     }
 
-    if (! (solid_digits=strrchr(solid_name, (int)'_'))) {
+    solid_digits=strrchr(solid_name, (int)'_');
+    if (!solid_digits) {
 	bu_log("%s:%d solid name %s doesn't have '_'\n",
 	       __FILE__, __LINE__, solid_name);
 	bu_bomb("Choke! ack! gasp! wheeeeeeze.\n");
