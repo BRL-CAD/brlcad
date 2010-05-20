@@ -25,15 +25,34 @@ proc ::isst::overwin {x y W} {
     return 0
 }
 
+proc ::isst::loaddatabase {} {
+    global oglwin 
+    set filetypes {
+        {{BRL-CAD .g Files}	{.g} 	}
+        {{All Files}		*	}
+    }
+    set filename [tk_getOpenFile -filetypes $filetypes]
+
+    if {$filename != ""} {
+    #   make_geomlist $filename
+       load_g $oglwin $filename tank
+    }
+}
+
 proc ::isst::setup {} {
     global resolution oglwin fullscreenmode
     set resolution 20
     set fullscreenmode 0
     wm title . "ISST - Interactive Geometry Viewing"
-    frame .f
-    pack .f -side top
-    button .f.b1 -text " Quit " -command exit 
-    pack .f.b1 -side left -anchor w -padx 5
+
+    menu .mb
+    . configure -menu .mb
+    .mb add cascade -label "File" -menu .mb.file -underline 0
+    menu .mb.file -tearoff 0
+    
+    .mb.file add command -label "Open Database" -underline 0 -command ::isst::loaddatabase
+
+    .mb.file add command -label "Exit" -underline 0 -command exit
 
     bind . <Key-1> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin phong}}
     bind . <Key-2> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin normal} else {puts "Place mouse over geometry window."}}
@@ -58,14 +77,18 @@ proc ::isst::setup {} {
     bind . <B1-Motion> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotMove %x %y $oglwin}}
     bind . <B3-Motion> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotMove2 %x %y $oglwin}}
     drawview .w0 10
+
+    frame .f
+    pack .f -side bottom 
+    button .f.b1 -text " Quit " -command exit 
+    pack .f.b1 -side left -anchor w -padx 5
+
 }
 
 proc ::isst::drawview {win {tick 100} } {
     global az el resolution oglwin
     togl $win -width 800 -height 600 -rgba true -double true -depth true -privatecmap false -time $tick -create isst_init -destroy isst_zap -display refresh_ogl -reshape reshape -timer idle
     set oglwin $win
-    load_g $win /usr/brlcad/rel-7.16.2/share/brlcad/7.16.2/db/ktank.g tank
-#    load_g $win /usr/brlcad/share/brlcad/7.16.9/db/ktank.g tank
     pack $win -expand true -fill both
 }
 
