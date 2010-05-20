@@ -38,6 +38,7 @@ struct isst_s {
     vect_t camera_focus_init;
     struct timeval t1;
     struct timeval t2;
+    int dirty;
 };
 
 /*

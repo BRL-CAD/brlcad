@@ -112,6 +112,7 @@ resize_isst(struct isst_s *isst)
     glMatrixMode (GL_MODELVIEW);
 
     glClear(GL_COLOR_BUFFER_BIT);
+    isst->dirty = 1;
 }
 
 
@@ -204,7 +205,7 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
 
     dt = (((double)isst->t2.tv_sec+(double)isst->t2.tv_usec/(double)1e6) - ((double)isst->t1.tv_sec+(double)isst->t1.tv_usec/(double)1e6));
 
-    if (dt > 0.08) {
+    if (dt > 0.08 && isst->dirty) {
     isst->buffer_image.ind = 0;
 
     render_camera_prep(&isst->camera);
@@ -226,6 +227,8 @@ paint_window(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const
     glTexCoord2d(1, 1); glVertex3f(isst->w, isst->h, 0);
 
     glEnd();
+
+    isst->dirty = 0;
 
     Togl_SwapBuffers(togl);
     }
@@ -351,6 +354,8 @@ render_mode(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const 
 
     /* pack the 'rest' into buf - probably should use a vls for this*/
 
+    isst->dirty = 1;
+
     if(render_shader_init(&isst->camera.render, Tcl_GetString(objv[2]), *buf?buf:NULL) != 0)
 	return TCL_ERROR;
     return TCL_OK;
@@ -373,6 +378,7 @@ zero_view(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
     VUNITIZE(vec);
     VADD2(isst->camera.focus.v, isst->camera.pos.v, vec);
 
+    isst->dirty = 1;
     return TCL_OK;
 }
 
@@ -406,6 +412,7 @@ move_walk(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *o
 	VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
 	VADD2(isst->camera.focus.v, isst->camera.focus.v, vec);
     }
+    isst->dirty = 1;
     return TCL_OK;
 }
 
@@ -443,6 +450,7 @@ move_strafe(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const 
         VADD2(isst->camera.pos.v, isst->camera.pos.v, vec);
         VADD2(isst->camera.focus.v, isst->camera.pos.v, dir);
     }
+    isst->dirty = 1;
     return TCL_OK;
 }
 
@@ -460,6 +468,7 @@ move_float(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
 
     isst->camera.pos.v[2] += 0.05;
     isst->camera.focus.v[2] += 0.05;
+    isst->dirty = 1;
     return TCL_OK;
 }
 
@@ -495,6 +504,7 @@ aetolookat(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *
     el = el * -DEG2RAD + y;
     V3DIR_FROM_AZEL(vecdfoc, az, el);
     VADD2(isst->camera.focus.v, isst->camera.pos.v, vecdfoc);
+    isst->dirty = 1;
     return TCL_OK;
 }
 
@@ -571,6 +581,7 @@ aerotate(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const *ob
     bu_vls_sprintf(&tclstr, "%f", el);
     Tcl_SetVar(interp, "el", bu_vls_addr(&tclstr), 0);
     bu_vls_free(&tclstr);
+    isst->dirty = 1;
     return TCL_OK;
 }
 int
