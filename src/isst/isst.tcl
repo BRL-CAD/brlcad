@@ -26,8 +26,9 @@ proc ::isst::overglwin {x y W} {
 }
 
 proc ::isst::setup {} {
-    global resolution oglwin
+    global resolution oglwin fullscreenmode
     set resolution 20
+    set fullscreenmode 0
     wm title . "ISST - Interactive Geometry Viewing"
     frame .f
     pack .f -side top
@@ -45,7 +46,7 @@ proc ::isst::setup {} {
     bind . <Key-a> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::MoveLeft $oglwin}}
     bind . <Key-d> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::MoveRight $oglwin}}
 
-  bind . <Key-F5> {if {[wm attributes . -fullscreen]} {wm attributes . -fullscreen 0} else {wm attributes . -fullscreen 1}}
+    bind . <Key-F5> {if {$fullscreenmode} {wm attributes . -fullscreen 0; set fullscreenmode 0} else {wm attributes . -fullscreen 1; set fullscreenmode 1}}
 
     bind . <Key-minus> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::Resolution $oglwin -1}}
     bind . <Key-equal> {if {[::isst::overglwin %X %Y $oglwin]} {::isst::Resolution $oglwin 1}}
