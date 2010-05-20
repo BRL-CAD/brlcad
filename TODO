@@ -56,6 +56,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* update the msvc build to not use installTree.tcl -- the build
+  shouldn't really be reliant upon tclsh or be all contained within
+  the tclsh project.  sub-projects should build and install by
+  themselves (e.g. tkhtml3 should generate its htmltokens.h file).
+  the "brlcad" project, if any, can build up the installation tree and
+  generate the final installation exe.
+
 * implement namespacing for attributes as a means to group attributes
   together.  this can predominantly be a naming convention, but
   requires awareness in the attribute-searching routines to search
