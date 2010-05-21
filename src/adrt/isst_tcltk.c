@@ -203,6 +203,7 @@ list_geometry(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *cons
 	   Tcl_Eval(interp, bu_vls_addr(&tclstr));
         }
    }
+   db_close(dbip);
    bu_vls_free(&tclstr);
    return TCL_OK;
 } 
