@@ -376,7 +376,8 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
     /* switching behavior to retain old code for performance and correctness
      * comparisons. */
-#if 0
+#define SHOOTALGO 2
+#if SHOOTALGO == 1
     {
 	vect_t dist;
 	int nsamp, i;
@@ -452,7 +453,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	} else bu_log("\n");
 	return retval;
     }
-#else
+#elif SHOOTALGO == 2
     /* we hit, but not as fine-grained as we want. So back up one step,
      * cut the step size in half and start over... Note that once we're
      * happily inside, we do NOT change the step size back!
@@ -504,6 +505,8 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     }
 #undef STEPBACK
 #undef STEPIN
+#else
+# error "pick a valid algo."
 #endif
 
     return retval;
