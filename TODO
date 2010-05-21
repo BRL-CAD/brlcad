@@ -56,6 +56,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* usage statistics.  similar to the eclipse Usage Data Collector, keep
+  track of which BRL-CAD command-line commands and MGED/libged
+  commands are run.  Give the user the option of uploading those
+  statistics (now, always, later, off).  Provide terms of use
+  explaining the ways that their data will be used and shared.
+  aggregate, this can help us focus development resources towards
+  improving workflows, documentation, robustness, and new development
+  areas.
+
 * update the msvc build to not use installTree.tcl -- the build
   shouldn't really be reliant upon tclsh or be all contained within
   the tclsh project.  sub-projects should build and install by
