@@ -141,8 +141,6 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
 
     load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
 
-    bu_free((genptr_t)argv, "isst tcltk"); 
-
     VSETALL(isst->camera.pos.v, isst->tie->radius);
     VMOVE(isst->camera.focus.v, isst->tie->mid);
     VMOVE(isst->camera_pos_init, isst->camera.pos.v);
