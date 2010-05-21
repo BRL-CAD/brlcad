@@ -118,7 +118,7 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
     struct isst_s *isst;
     char *argstring;
     char **argv;
-    int argc, i;
+    int argc;
     double az, el;
     struct bu_vls tclstr;
     bu_vls_init(&tclstr);    
@@ -137,13 +137,10 @@ isst_load_g(ClientData clientData, Tcl_Interp *interp, int objc,
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    argv = (char **)malloc(sizeof(char *) * objc);
-    for(i=0;i<objc-3;i++) {
-	    argv[i] = Tcl_GetString(objv[i+3]);
-	    bu_log("argv[%d] = %s\n", i, argv[i]);
-    }
+    argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3]) + 1)));	/* allocate way too much. */
+    argc = bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
     
-    load_g(isst->tie, Tcl_GetString(objv[2]), objc-3, (const char **)(argv), &(isst->meshes));
+    load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
     free(argv);
 
     VSETALL(isst->camera.pos.v, isst->tie->radius);
