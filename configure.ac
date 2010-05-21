@@ -4244,7 +4244,6 @@ AC_CONFIG_FILES([
 	src/gtools/beset/Makefile
 	src/halftone/Makefile
 	src/irprep/Makefile
-	src/isst/Makefile
 	src/java/Makefile
 	src/java/mil/Makefile
 	src/java/mil/army/Makefile

@@ -12,12 +12,6 @@ else
 ON_NIL =
 endif
 
-if BUILD_TOGL 
-ISSTDIR = isst
-else
-ISSTDIR =
-endif
-
 if BUILD_BOOST
 PCDIR = libpc
 else
@@ -137,7 +131,6 @@ endif
 
 DIST_SUBDIRS= \
 	other \
-	isst \
 	libbu \
 	libbn \
 	libsysv \
