@@ -301,7 +301,7 @@ catch {
   set fd2 [open [file join $installDir lib iwidgets$iwidgetsVersion iwidgets.tcl] w]
   set lines [regsub -all {@ITCL_VERSION@} $lines $itclVersion]
   set lines [regsub -all {@IWIDGETS_VERSION@} $lines $iwidgetsVersion]
-  if {$verbose} { puts $fd2 $lines }
+  puts $fd2 $lines
   close $fd2
 }
 
@@ -314,7 +314,7 @@ catch {
   if {$verbose} { puts "Creating [file join $installDir lib iwidgets$iwidgetsVersion pkgIndex.tcl]" }
   set fd2 [open [file join $installDir lib iwidgets$iwidgetsVersion pkgIndex.tcl] w]
   set lines [regsub -all {@IWIDGETS_VERSION@} $lines $iwidgetsVersion]
-  if {$verbose} { puts $fd2 $lines }
+  puts $fd2 $lines
   close $fd2
 }
 
@@ -328,7 +328,7 @@ catch {
   set fd2 [open [file join $rootDir src other tk win wish.exe.manifest] w]
   set lines [regsub -all {@TK_WIN_VERSION@} $lines $tclVersion]
   set lines [regsub -all {@MACHINE@} $lines "x86"]
-  if {$verbose} { puts $fd2 $lines }
+  puts $fd2 $lines
   close $fd2
 }
 
@@ -366,7 +366,7 @@ catch {
   exec tclsh mkdefaultstyle.tcl > htmldefaultstyle.c
   if {$verbose} { puts "... creating pkgIndex.tcl" }
   set fd [open pkgIndex.tcl "w"]
-  if {$verbose} { puts $fd {package ifneeded Tkhtml 3.0 [list load [file join $dir tkhtml.dll]]} }
+  puts $fd {package ifneeded Tkhtml 3.0 [list load [file join $dir tkhtml.dll]]}
   close $fd
   cd $savepwd
   if {$verbose} { puts "copy -force [file join $rootDir src other tkhtml3 src pkgIndex.tcl] [file join $installDir bin Tkhtml3.0]" }
