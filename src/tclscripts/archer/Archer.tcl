@@ -1939,7 +1939,7 @@ package provide Archer 1.0
 	eval createWrapper $_cmd $args
     } else {
 	# Modifying an existing combination
-	eval gedWrapper $_cmd 0 0 1 1 $args
+	eval gedWrapper $_cmd 0 0 1 2 $args
     }
 }
 
