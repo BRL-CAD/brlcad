@@ -439,7 +439,7 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
     if (!min) return 0;
     if (!max) return 0;
 
-    return RT_CLASSIFY_UNIMPLEMENTED;
+    return 0;
 }
 
 

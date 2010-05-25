@@ -2199,9 +2199,9 @@ rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * const struct bn_tol* tol)
  */
 int
-rt_brep_class()
+rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    return RT_CLASSIFY_UNIMPLEMENTED;
+    return 0;
 }
 
 

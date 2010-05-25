@@ -1136,18 +1136,17 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 
     if (arbp == (struct arb_specific *)0) {
 	bu_log("arb(%s): no faces\n", stp->st_name);
-	return RT_CLASSIFY_UNIMPLEMENTED;
+	return BN_CLASSIFY_UNIMPLEMENTED;
     }
 
     for (i=0; i<arbp->arb_nmfaces; i++) {
 	if (bn_hlf_class(arbp->arb_face[i].peqn, min, max, tol) ==
 	    BN_CLASSIFY_OUTSIDE)
-	    return RT_CLASSIFY_OUTSIDE;
+	    return BN_CLASSIFY_OUTSIDE;
     }
 
-    /* We need to test for RT_CLASSIFY_INSIDE vs. RT_CLASSIFY_OVERLAPPING!
-       XXX Do this soon */
-    return RT_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
+    /* FIXME: We need to test for BN_CLASSIFY_INSIDE vs. BN_CLASSIFY_OVERLAPPING! */
+    return BN_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
 }
 
 

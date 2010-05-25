@@ -613,9 +613,14 @@ rt_metaball_free(register struct soltab *stp)
 
 
 int
-rt_metaball_class(void)
+rt_metaball_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    return RT_CLASSIFY_UNIMPLEMENTED;	/* unused */
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
+    return 0;
 }
 
 

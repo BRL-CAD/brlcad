@@ -399,23 +399,16 @@ rt_hlf_free(struct soltab *stp)
  * Classify this halfspace against a bounding RPP.  Since this is an
  * infinite solid, it is very important that this function properly.
  *
- * Returns -
- * BN_CLASSIFY_INSIDE
- * BN_CLASSIFY_OVERLAPPING
- * BN_CLASSIFY_OUTSIDE
  */
 int
-rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+rt_hlf_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    register const struct half_specific *halfp =
-	(struct half_specific *)stp->st_specific;
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
 
-    if (halfp == HALF_NULL) {
-	bu_log("half(%s):  no data?\n", stp->st_name);
-	return 0;
-    }
-
-    return bn_hlf_class(halfp->half_eqn, min, max, tol);
+    return 0;
 }
 
 
