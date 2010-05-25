@@ -58,41 +58,23 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    int
-    rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
-    void
-    rt_brep_print(register const struct soltab *stp);
-    int
-    rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
-    void
-    rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp);
-    void
-    rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
-    int
-    rt_brep_class();
-    void
-    rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
-    void
-    rt_brep_free(register struct soltab *stp);
-    int
-    rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
-    int
-    rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
-    int
-    rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
-    int
-    rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
-    void
-    rt_brep_ifree(struct rt_db_internal *ip);
-    int
-    rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-    int
-    rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
-    int
-    rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
-    int
-    rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
+    int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
+    void rt_brep_print(register const struct soltab *stp);
+    int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
+    void rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp);
+    void rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
+    int rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol);
+    void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
+    void rt_brep_free(register struct soltab *stp);
+    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
+    int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
+    void rt_brep_ifree(struct rt_db_internal *ip);
+    int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+    int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
+    int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
+    int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 #ifdef __cplusplus
 }
 #endif
@@ -2186,21 +2168,14 @@ rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * R T _ B R E P _ C L A S S
- *
- * Don't know what this is supposed to do...
- *
- * Looking at g_arb.c, seems the actual signature is:
- *
- * class(const struct soltab* stp,
- * const fastf_t* min,
- * const fastf_t* max,
- * const struct bn_tol* tol)
- */
 int
 rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
     return 0;
 }
 
@@ -2786,21 +2761,21 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	// XXX does openNURBS force us to copy? it seems the answer is
 	// YES due to the const-ness
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
-    if (mat) {
-    	ON_Xform xform(mat);
+	if (mat) {
+	    ON_Xform xform(mat);
 
-    	if (!xform.IsIdentity()) {
-			bu_log("Applying transformation matrix....\n");
-	    	for(int row=0;row<4;row++) {
-				bu_log("%d - ", row);
-	    		for(int col=0;col<4;col++) {
-	    			bu_log(" %5f", xform.m_xform[row][col]);
-	    		}
-				bu_log("\n");
+	    if (!xform.IsIdentity()) {
+		bu_log("Applying transformation matrix....\n");
+	    	for (int row=0;row<4;row++) {
+		    bu_log("%d - ", row);
+		    for (int col=0;col<4;col++) {
+			bu_log(" %5f", xform.m_xform[row][col]);
+		    }
+		    bu_log("\n");
 	    	}
     		bi->brep->Transform(xform);
-    	}
-    }
+	    }
+	}
 	return 0;
     } else {
 	return -1;
