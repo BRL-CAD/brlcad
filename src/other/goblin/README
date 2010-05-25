@@ -1,0 +1,142 @@
+Goblin is a full-featured tool chain for handling graphs. The project provides code 
+from the following areas:
+
+Optimization: Nearly all algorithms described in textbooks on graph optimization are 
+              implemented.
+
+Layout:       The most common models (orthogonal, layered, force directed) are supported.
+
+Composition:  Especially for planar graphs, a lot of rules are implemented to derive 
+              one graph from another.
+
+File import and export:   Graphs can be read from Dimacs, Tsplib and Steinlib formats. 
+              Layouts can be exported to nearly arbitrary bitmap and vectorial formats 
+              by implicit use of the fig2dev and the netpbm packages.
+
+Manipulation: Graph incidence structures can be edited and attributes can be assigned to
+              nodes and edges in the graphical front end.
+
+While all algorithms are implemented in a C++ class library (libgoblin.a), the editor 
+code and partially the file I/O code are written in the Tcl/Tk scripting language and use 
+a Tcl wrapper of the C++ library.
+
+Users can choose from the following interfaces:
+
+* A C++ programming interface (API) described here
+* A Tcl/Tk programming interface which is less efficient, but sometimes more convenient
+* A graphical user interface (GUI) to manipulate graphs, but also to run problem solvers 
+  and to visualize the (intermediate) results
+* Solver executables for several optmization problems
+
+Intended audience
+
+Any general software on graph optimization can be considered a loose collection of solvers
+for more or less related combinatorial problems. Other than for LP solvers, the interface 
+is ample and often requires to choose a particular optimization method which is adequate for 
+a certain class of graph instances. Many applications require a programming interface instead 
+of a graphical user interface. In that sense, Goblin is expert software.
+
+Originally, the library has been designed to visualize graph algorithms. While it takes special 
+efforts to produce good running examples and snap shots, the final output can be interpreted 
+by every undergraduate student who has been instructed with the algorithm's key features. 
+The GUI has been prepared to fiddle about with algorithms.
+
+Of course, the library is also suited for practical computations. A general statement on the 
+performance is difficult: Some solvers have been added only for sake of completeness (like max-cut), 
+others can solve large-scale instances (like min-cost flow).
+
+
+Licence
+
+GOBLIN is open source software and licenced by the GNU Lesser Public License (LGPL). That is, 
+GOBLIN may be downloaded, compiled and used for scientific, educational and other purposes free of 
+charge. For details, in particular the statements about redistribution and changes of the source 
+code, observe the LGPL document which is attached to the package.
+
+Project state
+
+The project state permanently toggles between stable and beta: There are frequent functional 
+extensions, and these sometimes require revisions of the internal data structures and even the 
+C++ programming interface.
+
+Here are some more detailed remarks on the development state:
+
+The optimization stuff is very comprehensive and, in general, stable. Future releases will come 
+up with alternative methods and performance improvements rather than solvers for additional problems.
+The drawing codes are mostly stable, but several general features are missing (3D support, infinite 
+nodes and edges, free-style display features). The orthogonal methods lack strong compaction rules.
+
+The internal graph representations still do not allow for node hierarchies and arbitrary tags on nodes 
+and edges. Tracing is supported for many but not for all methods. This functionality is still difficult
+to control.
+Goblin is a full-featured tool chain for handling graphs. The project provides code 
+from the following areas:
+
+Optimization: Nearly all algorithms described in textbooks on graph optimization are 
+              implemented.
+
+Layout:       The most common models (orthogonal, layered, force directed) are supported.
+
+Composition:  Especially for planar graphs, a lot of rules are implemented to derive 
+              one graph from another.
+
+File import and export:   Graphs can be read from Dimacs, Tsplib and Steinlib formats. 
+              Layouts can be exported to nearly arbitrary bitmap and vectorial formats 
+              by implicit use of the fig2dev and the netpbm packages.
+
+Manipulation: Graph incidence structures can be edited and attributes can be assigned to
+              nodes and edges in the graphical front end.
+
+While all algorithms are implemented in a C++ class library (libgoblin.a), the editor 
+code and partially the file I/O code are written in the Tcl/Tk scripting language and use 
+a Tcl wrapper of the C++ library.
+
+Users can choose from the following interfaces:
+
+* A C++ programming interface (API) described here
+* A Tcl/Tk programming interface which is less efficient, but sometimes more convenient
+* A graphical user interface (GUI) to manipulate graphs, but also to run problem solvers 
+  and to visualize the (intermediate) results
+* Solver executables for several optmization problems
+
+Intended audience
+
+Any general software on graph optimization can be considered a loose collection of solvers
+for more or less related combinatorial problems. Other than for LP solvers, the interface 
+is ample and often requires to choose a particular optimization method which is adequate for 
+a certain class of graph instances. Many applications require a programming interface instead 
+of a graphical user interface. In that sense, Goblin is expert software.
+
+Originally, the library has been designed to visualize graph algorithms. While it takes special 
+efforts to produce good running examples and snap shots, the final output can be interpreted 
+by every undergraduate student who has been instructed with the algorithm's key features. 
+The GUI has been prepared to fiddle about with algorithms.
+
+Of course, the library is also suited for practical computations. A general statement on the 
+performance is difficult: Some solvers have been added only for sake of completeness (like max-cut), 
+others can solve large-scale instances (like min-cost flow).
+
+
+Licence
+
+GOBLIN is open source software and licenced by the GNU Lesser Public License (LGPL). That is, 
+GOBLIN may be downloaded, compiled and used for scientific, educational and other purposes free of 
+charge. For details, in particular the statements about redistribution and changes of the source 
+code, observe the LGPL document which is attached to the package.
+
+Project state
+
+The project state permanently toggles between stable and beta: There are frequent functional 
+extensions, and these sometimes require revisions of the internal data structures and even the 
+C++ programming interface.
+
+Here are some more detailed remarks on the development state:
+
+The optimization stuff is very comprehensive and, in general, stable. Future releases will come 
+up with alternative methods and performance improvements rather than solvers for additional problems.
+The drawing codes are mostly stable, but several general features are missing (3D support, infinite 
+nodes and edges, free-style display features). The orthogonal methods lack strong compaction rules.
+
+The internal graph representations still do not allow for node hierarchies and arbitrary tags on nodes 
+and edges. Tracing is supported for many but not for all methods. This functionality is still difficult
+to control.
