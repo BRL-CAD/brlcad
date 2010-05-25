@@ -1761,7 +1761,7 @@ size_t test_closure(struct ga_t *ga,
     qsort(edges, edge_count, sizeof(size_t) * 2,
          (int (*)(const void *a, const void *b))comp_c);
 
-    if (1)
+    if (debug)
         for ( idx = 0 ; idx < edge_count ; idx++ )
             bu_log("sorted edges (%lu)(%lu)(%lu)\n", idx, edges[idx][0], edges[idx][1]);
 
@@ -1772,7 +1772,7 @@ size_t test_closure(struct ga_t *ga,
             match++;
         } else {
             if ( match == 0 ) {
-                if (1)
+                if (verbose)
                     bu_log("open edge (%lu)= %f %f %f (%lu)= %f %f %f \n",
                            previous_edge[0],
                            ga->vert_list[previous_edge[0]][0] * conv_factor,
@@ -1813,7 +1813,8 @@ size_t test_closure(struct ga_t *ga,
 
     if ( open_edges ) {
         gfi->closure_status = SURF_OPEN;
-        bu_log("surface closure failed (%s), (%lu) open edges\n", bu_vls_addr(gfi->raw_grouping_name), open_edges);
+        bu_log("surface closure failed (%s), (%lu) open edges\n",
+                bu_vls_addr(gfi->raw_grouping_name), open_edges);
     } else {
         gfi->closure_status = SURF_CLOSED;
         bu_log("surface closure success (%s)\n", bu_vls_addr(gfi->raw_grouping_name));
@@ -1931,11 +1932,11 @@ void output_to_bot(struct ga_t *ga,
     return;
 }
 
-void output_to_nmg(struct ga_t *ga,
-                   struct gfi_t *gfi,
-                   struct rt_wdb *outfp, 
-                   fastf_t conv_factor, 
-                   struct bn_tol *tol) {
+int output_to_nmg(struct ga_t *ga,
+                  struct gfi_t *gfi,
+                  struct rt_wdb *outfp, 
+                  fastf_t conv_factor, 
+                  struct bn_tol *tol) {
 
     struct model *m = (struct model *)NULL;
     struct nmgregion *r = (struct nmgregion *)NULL;
@@ -1980,6 +1981,17 @@ void output_to_nmg(struct ga_t *ga,
 
     verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
     memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
+
+    /* Begin bomb protection */
+    if ( BU_SETJUMP ) {
+        BU_UNSETJUMP; /* Relinquish the protection */
+
+        bu_free(verts,"verts");
+        bu_ptbl_reset(&faces);
+        nmg_km(m);
+
+        return 1; /* return failure */
+    }
 
     shell_vert_idx = 0;
     NMG_CK_SHELL(s);
@@ -2098,28 +2110,39 @@ void output_to_nmg(struct ga_t *ga,
             nmg_rebound(m, tol);
 
             /* run nmg_model_vertex_fuse before nmg_check_closed_shell */
-            if ( nmg_check_closed_shell(s, tol) ) {
-                /* make bot for a open shell */
-                bu_vls_printf(gfi->raw_grouping_name, ".%lu.bot.s", gfi->grouping_index);
-                cleanup_name(gfi->raw_grouping_name);
-                bu_log("about to mk_bot_from_nmg\n");
-                mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
-                nmg_km(m);
-            } else {
+            if ( !nmg_check_closed_shell(s, tol) ) {
                 /* make nmg for a closed shell */
-                bu_vls_printf(gfi->raw_grouping_name, ".%lu.nmg.s", gfi->grouping_index);
+                bu_vls_printf(gfi->raw_grouping_name, ".%lu.nmg.c.s", gfi->grouping_index);
                 cleanup_name(gfi->raw_grouping_name);
                 bu_log("about to run mk_nmg\n");
                 /* the model (m) is freed when mk_nmg completes */
                 if (mk_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), m)) {
                     bu_log("mk_nmg failed\n");
                 }
+#if 0
+                /* make bot for a closed shell */
+                bu_vls_printf(gfi->raw_grouping_name, ".%lu.bot.c.s", gfi->grouping_index);
+                cleanup_name(gfi->raw_grouping_name);
+                bu_log("about to mk_bot_from_nmg\n");
+                mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s);
+                nmg_km(m);
+#endif
+            } else {
+                /* structure was not closed, so output nothing */
+                BU_UNSETJUMP; /* relinquish bomb the protection */
+                bu_free(verts,"verts");
+                bu_ptbl_reset(&faces);
+                nmg_km(m);
+                return 1; /* return failure */
             }
         }
     } 
 
     bu_free(verts,"verts");
     bu_ptbl_reset(&faces);
+
+    BU_UNSETJUMP; /* Relinquish the protection */
+    return 0; /* return success */
 }
 
 /*
@@ -2337,6 +2360,12 @@ main(int argc, char **argv)
 
     collect_global_obj_file_attributes(&ga);
 
+    /* these options are to be provided by the user from the command line */
+    int fuse_vertex_option = 0;
+    int test_closure_option = 0;
+    int face_validation_level = 0;
+    int ignore_provided_normals = 0;
+
     switch (grouping_option) {
         case 'n':
             bu_log("ENTERED 'n' PROCESSING\n");
@@ -2345,15 +2374,23 @@ main(int argc, char **argv)
                 if (gfi != NULL) {
                     bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                        gfi->num_faces);
-                    fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
-                    retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                    test_closure(&ga, gfi, conv_factor, tol);
                     switch (mode_option) {
                         case 'b':
+                            if (fuse_vertex_option)
+                                (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                            if (face_validation_level)
+                                (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                            if (test_closure_option)
+                                (void)test_closure(&ga, gfi, conv_factor, tol);
                             output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
                             break;
                         case 'n':
-                            output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                            if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol) ) {
+                                (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                (void)test_closure(&ga, gfi, conv_factor, tol);
+                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
+                            }
                             break;
                         default:
                             break;
@@ -2371,15 +2408,23 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
-                        fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
-                        retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                        test_closure(&ga, gfi, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
+                                if (fuse_vertex_option)
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                if (face_validation_level)
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                if (test_closure_option)
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
                                 break;
                             case 'n':
-                                output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                                if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol) ) {
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
+                                }
                                 break;
                             default:
                                 break;
@@ -2398,15 +2443,23 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
-                        fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
-                        retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                        test_closure(&ga, gfi, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
+                                if (fuse_vertex_option)
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                if (face_validation_level)
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                if (test_closure_option)
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
                                 break;
                             case 'n':
-                                output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                                if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol) ) {
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
+                                }
                                 break;
                             default:
                                 break;
@@ -2425,15 +2478,23 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
-                        fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
-                        retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                        test_closure(&ga, gfi, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
+                                if (fuse_vertex_option)
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                if (face_validation_level)
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                if (test_closure_option)
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
                                 break;
                             case 'n':
-                                output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                                if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol) ) {
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
+                                }
                                 break;
                             default:
                                 break;
@@ -2452,15 +2513,23 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("name=(%s) #faces=(%lu)\n", bu_vls_addr(gfi->raw_grouping_name),
                            gfi->num_faces);
-                        fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
-                        retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                        test_closure(&ga, gfi, conv_factor, tol);
                         switch (mode_option) {
                             case 'b':
+                                if (fuse_vertex_option)
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                if (face_validation_level)
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                if (test_closure_option)
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
                                 output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
                                 break;
                             case 'n':
-                                output_to_nmg(&ga, gfi, fd_out, conv_factor, tol);
+                                if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol) ) {
+                                    (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
+                                    (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
+                                    (void)test_closure(&ga, gfi, conv_factor, tol);
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol);
+                                }
                                 break;
                             default:
                                 break;
