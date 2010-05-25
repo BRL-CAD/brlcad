@@ -65,10 +65,10 @@
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
 
-#ifdef DM_OGL
+#ifdef DM_TOGL
 #  include "dm_xvars.h"
 #  include "dm-togl.h"
-#endif /* DM_OGL */
+#endif /* DM_TOGL */
 
 #ifdef DM_WGL
 #  include "dm_xvars.h"

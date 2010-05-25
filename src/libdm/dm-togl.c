@@ -631,8 +631,8 @@ togl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     if (dmp2 == (struct dm *)NULL) {
         /* create a new graphics context for dmp1 with private display lists */
 	old_togl = ((struct togl_vars *)dmp1->dm_vars.priv_vars)->togl;
-	
-
+    }	
+    return 0;
 
 }
 /*
