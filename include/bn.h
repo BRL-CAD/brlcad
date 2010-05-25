@@ -1047,8 +1047,8 @@ BN_EXPORT BU_EXTERN(int bn_hlf_class,
 		     const struct bn_tol *tol));
 
 #define BN_CLASSIFY_UNIMPLEMENTED 0x0000
-#define BN_CLASSIFY_OVERLAPPING   0x0002
 #define BN_CLASSIFY_INSIDE        0x0001
+#define BN_CLASSIFY_OVERLAPPING   0x0002
 #define BN_CLASSIFY_OUTSIDE       0x0003
 
 BN_EXPORT BU_EXTERN(int bn_isect_planes,
