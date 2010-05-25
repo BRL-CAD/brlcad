@@ -1895,15 +1895,7 @@ struct rt_functab {
     void (*ft_curve) BU_ARGS((struct curvature * /**< @brief cvp*/,
 			      struct hit * /**< @brief hitp*/,
 			      struct soltab * /**< @brief stp*/));
-#if 1
-    /*XXX temporarily changing signature to what's actually being used by the funtions */
-    int (*ft_classify) BU_ARGS(());
-#else
-    int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/,
-				const vect_t /*min*/,
-				const vect_t /*max*/,
-				const struct bn_tol * /*tol*/));
-#endif
+    int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/));
     void (*ft_free) BU_ARGS((struct soltab * /*stp*/));
     int (*ft_plot) BU_ARGS((struct bu_list * /*vhead*/,
 			    struct rt_db_internal * /*ip*/,
@@ -1969,10 +1961,6 @@ RT_EXPORT extern const struct rt_functab rt_functab[];
 
 #define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
-#define RT_CLASSIFY_UNIMPLEMENTED	BN_CLASSIFY_UNIMPLEMENTED
-#define RT_CLASSIFY_INSIDE		BN_CLASSIFY_INSIDE
-#define RT_CLASSIFY_OVERLAPPING		BN_CLASSIFY_OVERLAPPING
-#define RT_CLASSIFY_OUTSIDE		BN_CLASSIFY_OUTSIDE
 
 /**
  * R T _ S H O O T R A Y _ S T A T U S
