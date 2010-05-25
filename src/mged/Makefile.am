@@ -9,6 +9,14 @@ OGL_SRCS =
 OGL_CFLAGS =
 endif
 
+if BUILD_TOGL 
+TOGL_SRCS = dm-togl.c
+TOGL_CFLAGS = -DDM_TOGL -DIF_TOGL -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl $(GL_CPPFLAGS)
+else
+TOGL_SRCS =
+TOGL_CFLAGS =
+endif
+
 if BUILD_RTGL
 RTGL_SRCS = dm-rtgl.c
 RTGL_CFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CPPFLAGS)
@@ -78,6 +86,7 @@ mged_SOURCES = \
 	columns.c \
 	dir.c \
 	$(OGL_SRCS) \
+	$(TOGL_SRCS) \
 	$(RTGL_SRCS) \
 	$(WGL_SRCS) \
 	$(X11_SRCS) \
@@ -126,6 +135,7 @@ mged_SOURCES = \
 # per-program CPPFLAGS wasn't added until automake 1.7
 mged_CFLAGS = \
 	$(OGL_CFLAGS) \
+	$(TOGL_CFLAGS) \
 	$(RTGL_CFLAGS) \
 	$(WGL_CFLAGS) \
 	$(X11_CFLAGS) \
@@ -148,6 +158,12 @@ else
 mged_tk_libs =
 endif
 
+if BUILD_TOGL
+togl_libs = ${LIBGL}  -L$(top_builddir)/src/other/togl -lToglstub2.1
+else
+togl_libs =
+endif
+
 mged_LDADD = \
 	${POINTS_LDADD} \
 	${TERMIO} \
@@ -156,7 +172,8 @@ mged_LDADD = \
 	${DM} ${DM_LIBS} \
 	${ITCL} \
 	${TCLCAD} \
-	${mged_tk_libs}
+	${mged_tk_libs} \
+	${togl_libs}
 
 EXTRA_PROGRAMS = sged
 sged_SOURCES = $(mged_SOURCES)
@@ -199,6 +216,7 @@ EXTRA_DIST = \
 	comb_bool_parse.y \
 	comb_bool_scan.l \
 	dm-ogl.c \
+	dm-togl.c \
 	dm-rtgl.c \
 	dm-wgl.c \
 	dm-X.c \

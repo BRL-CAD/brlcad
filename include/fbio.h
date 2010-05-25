@@ -158,6 +158,9 @@ FB_EXPORT extern FBIO remote_interface;	/* not in list[] */
 FB_EXPORT extern FBIO ogl_interface;
 #endif
 
+/*XXX need to ifdef this !!!!!!! */
+FB_EXPORT extern FBIO togl_interface;
+
 #ifdef IF_WGL
 FB_EXPORT extern FBIO wgl_interface;
 #endif

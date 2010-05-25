@@ -55,6 +55,7 @@
 #define NEED_GUI(_type) (\
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
+	IS_DM_TYPE_TOGL(_type) || \
 	IS_DM_TYPE_RTGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
 	IS_DM_TYPE_PEX(_type) || \
@@ -85,6 +86,11 @@ extern void Wgl_fb_open();
 extern int Ogl_dm_init();
 extern void Ogl_fb_open();
 #endif /* DM_OGL */
+
+#ifdef DM_TOGL
+extern int Togl_dm_init();
+extern void Togl_fb_open();
+#endif /* DM_TOGL */
 
 #ifdef DM_RTGL
 extern int Rtgl_dm_init();
@@ -126,6 +132,9 @@ struct w_dm which_dm[] = {
 #ifdef DM_OGL
     { DM_TYPE_OGL, "ogl", Ogl_dm_init },
 #endif /* DM_OGL */
+#ifdef DM_TOGL
+    { DM_TYPE_TOGL, "togl", Togl_dm_init },
+#endif /* DM_TOGL */
 #ifdef DM_RTGL
     { DM_TYPE_RTGL, "rtgl", Rtgl_dm_init },
 #endif /* DM_RTGL */
@@ -158,6 +167,10 @@ mged_fb_open(void)
     if (dmp->dm_type == DM_TYPE_OGL)
 	Ogl_fb_open();
 #endif /* DM_OGL */
+#ifdef DM_TOGL
+    if (dmp->dm_type == DM_TYPE_TOGL)
+	Togl_fb_open();
+#endif /* DM_TOGL */
 #ifdef DM_RTGL
     if (dmp->dm_type == DM_TYPE_RTGL)
 	Rtgl_fb_open();
@@ -320,6 +333,10 @@ print_valid_dm(void)
     Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
     i++;
 #endif /* DM_OGL */
+#ifdef DM_TOGL
+    Tcl_AppendResult(interp, "togl  ", (char *)NULL);
+    i++;
+#endif /* DM_TOGL */
 #ifdef DM_RTGL
     Tcl_AppendResult(interp, "rtgl  ", (char *)NULL);
     i++;
@@ -339,6 +356,7 @@ int
 f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct w_dm *wp;
+    int i;
 
     if (argc < 2) {
 	struct bu_vls vls;
@@ -357,7 +375,7 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
     }
 
     /* Look at last argument, skipping over any options which preceed it */
-    for (wp = &which_dm[2]; wp->type != -1; wp++)
+    for (wp = &which_dm[2]; wp->type != -1; wp++) 
 	if (strcmp(argv[argc - 1], wp->name) == 0)
 	    break;
 
@@ -662,6 +680,11 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_AppendResult(interp, "ogl", (char *)NULL);
 	}
 #endif /* DM_OGL */
+#ifdef DM_TOGL
+    	if (!strcmp(argv[argc-1], "togl")) {
+	    Tcl_AppendResult(interp, "togl", (char *)NULL);
+	}
+#endif /* DM_TOGL */
 #ifdef DM_RTGL
     	if (!strcmp(argv[argc-1], "rtgl")) {
 	    Tcl_AppendResult(interp, "rtgl", (char *)NULL);

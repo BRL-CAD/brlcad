@@ -52,6 +52,12 @@ extern void ogl_fogHint();
 extern int ogl_share_dlist();
 #endif /* DM_OGL */
 
+#ifdef DM_TOGL
+extern struct dm *togl_open();
+extern void togl_fogHint();
+extern int togl_share_dlist();
+#endif /* DM_TOGL */
+
 #ifdef DM_RTGL
 extern struct dm *rtgl_open();
 extern void rtgl_fogHint();
@@ -96,6 +102,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, char **argv)
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
 	    return ogl_open(interp, argc, argv);
+#endif
+#ifdef DM_TOGL
+	case DM_TYPE_TOGL:
+	    return togl_open(interp, argc, argv);
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:
@@ -193,6 +203,11 @@ dm_fogHint(struct dm *dmp, int fastfog)
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
 	    ogl_fogHint(dmp, fastfog);
+	    return;
+#endif
+#ifdef DM_TOGL
+	case DM_TYPE_TOGL:
+	    togl_fogHint(dmp, fastfog);
 	    return;
 #endif
 #ifdef DM_RTGL

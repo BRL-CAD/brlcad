@@ -51,6 +51,15 @@ dm_validXType(char *dpy_string, char *name)
 #endif /* DM_WGL */
     }
 
+    if (strcmp(name, "togl")==0) {
+#ifdef DM_TOGL
+	return 1;
+#else
+	bu_log("Specified display type [%s] is not available in this compilation.", name);
+	return 0;
+#endif /* DM_TOGL */
+    }
+
     if (strcmp(name, "rtgl")==0) {
 #ifdef DM_RTGL
 	Display *dpy;

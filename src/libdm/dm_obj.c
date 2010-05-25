@@ -65,6 +65,11 @@
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
 
+#ifdef DM_OGL
+#  include "dm_xvars.h"
+#  include "dm-togl.h"
+#endif /* DM_OGL */
+
 #ifdef DM_WGL
 #  include "dm_xvars.h"
 #  include <tkwinport.h>
@@ -291,6 +296,11 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
 
+#ifdef DM_TOGL
+    if (!strcmp(argv[2], "togl"))
+	type = DM_TYPE_TOGL;
+#endif /* DM_OGL */
+
 #ifdef DM_WGL
     if (!strcmp(argv[2], "wgl"))
 	type = DM_TYPE_WGL;
@@ -300,7 +310,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	Tcl_AppendStringsToObj(obj,
 			       "Unsupported display manager type - ",
 			       argv[2], "\n",
-			       "The supported types are: X, ogl, wgl, and nu",
+			       "The supported types are: X, togl, ogl, wgl, and nu",
 			       (char *)NULL);
 	Tcl_SetObjResult(interp, obj);
 	return TCL_ERROR;
@@ -2841,6 +2851,31 @@ dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
 			       0);
 	    break;
 #endif
+
+#ifdef DM_TOGL
+	case DM_TYPE_TOGL:
+#if 0
+	    *dmop->dmo_fbs.fbs_fbp = togl_interface; /* struct copy */
+
+	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/togl")+1, "if_name");
+	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/togl", strlen("/dev/togl")+1);
+
+	    /* Mark OK by filling in magic number */
+	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+	    _togl_open_existing(dmop->dmo_fbs.fbs_fbp,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+			       dmop->dmo_dmp->dm_width,
+			       dmop->dmo_dmp->dm_height,
+			       ((struct togl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->togl,
+			       ((struct togl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
+			       0);
+#endif 
+	    break;
+#endif
+
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
 	    *dmop->dmo_fbs.fbs_fbp = wgl_interface; /* struct copy */
