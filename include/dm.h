@@ -103,6 +103,7 @@
 #define DM_TYPE_WGL     7
 #define DM_TYPE_TK	8
 #define DM_TYPE_RTGL	9
+#define DM_TYPE_TOGL	10
 
 /* Line Styles */
 #define DM_SOLID_LINE 0
@@ -114,6 +115,7 @@
 #define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
 #define IS_DM_TYPE_TK(_t) ((_t) == DM_TYPE_TK)
 #define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
+#define IS_DM_TYPE_TOGL(_t) ((_t) == DM_TYPE_TOGL)
 #define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 #define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
 #define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
