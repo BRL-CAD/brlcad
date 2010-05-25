@@ -47,38 +47,32 @@ However, the \fB\-code\fR option may be used to generate an
 exceptional return from the procedure.
 \fICode\fR may have any of the following values:
 .TP 13
-\fBok\fR (or \fB0\fR)
-.
+\fBok (or 0)\fR
 Normal return:  same as if the option is omitted.  The return code
 of the procedure is 0 (\fBTCL_OK\fR).
 .TP 13
-\fBerror\fR (or \fB1\fR)
-.
+\fBerror (1)\fR
 Error return: the return code of the procedure is 1 (\fBTCL_ERROR\fR).
 The procedure command behaves in its calling context as if it
-were the command \fBerror\fR \fIresult\fR.  See below for additional
+were the command \fBerror \fIresult\fR.  See below for additional
 options.
 .TP 13
-\fBreturn\fR (or \fB2\fR)
-.
+\fBreturn (2)\fR
 The return code of the procedure is 2 (\fBTCL_RETURN\fR).  The
 procedure command behaves in its calling context as if it
 were the command \fBreturn\fR (with no arguments).
 .TP 13
-\fBbreak\fR (or \fB3\fR)
-.
+\fBbreak (3)\fR
 The return code of the procedure is 3 (\fBTCL_BREAK\fR).  The
 procedure command behaves in its calling context as if it
 were the command \fBbreak\fR.
 .TP 13
-\fBcontinue\fR (or \fB4\fR)
-.
+\fBcontinue (4)\fR
 The return code of the procedure is 4 (\fBTCL_CONTINUE\fR).  The
 procedure command behaves in its calling context as if it
 were the command \fBcontinue\fR.
 .TP 13
 \fIvalue\fR
-.
 \fIValue\fR must be an integer;  it will be returned as the
 return code for the current procedure.
 .LP
@@ -95,6 +89,7 @@ an invocation of the \fBreturn \-code \fIcode\fR command will cause
 the return code of \fBsource\fR to be \fIcode\fR.
 .SH "RETURN OPTIONS"
 .PP
+.VS 8.5
 In addition to a result and a return code, evaluation of a command
 in Tcl also produces a dictionary of return options.  In general
 usage, all \fIoption value\fR pairs given as arguments to \fBreturn\fR
@@ -103,13 +98,13 @@ are acceptable except as noted below.  The \fBcatch\fR command may be
 used to capture all of this information \(em the return code, the result,
 and the return options dictionary \(em that arise from evaluation of a
 script.
+.VE 8.5
 .PP
 As documented above, the \fB\-code\fR entry in the return options dictionary
 receives special treatment by Tcl.  There are other return options also
 recognized and treated specially by Tcl.  They are:
 .TP
 \fB\-errorcode \fIlist\fR
-.
 The \fB\-errorcode\fR option receives special treatment only when the value
 of the \fB\-code\fR option is \fBTCL_ERROR\fR.  Then the \fIlist\fR value
 is meant to be additional information about the error,
@@ -121,7 +116,6 @@ to the default value of \fBNONE\fR.  The \fB\-errorcode\fR return
 option will also be stored in the global variable \fBerrorCode\fR.
 .TP
 \fB\-errorinfo \fIinfo\fR
-.
 The \fB\-errorinfo\fR option receives special treatment only when the value
 of the \fB\-code\fR option is \fBTCL_ERROR\fR.  Then \fIinfo\fR is the initial
 stack trace, meant to provide to a human reader additional information
@@ -139,7 +133,7 @@ by the \fBcatch\fR command (or from the copy of that information
 stored in the global variable \fBerrorInfo\fR).
 .TP
 \fB\-level \fIlevel\fR
-.
+.VS 8.5
 The \fB\-level\fR and \fB\-code\fR options work together to set the return
 code to be returned by one of the commands currently being evaluated.
 The \fIlevel\fR value must be a non-negative integer representing a number
@@ -149,12 +143,14 @@ be \fIcode\fR.  If no \fB\-level\fR option is provided, the default value
 of \fIlevel\fR is 1, so that \fBreturn\fR sets the return code that the
 current procedure returns to its caller, 1 level up the call stack.  The
 mechanism by which these options work is described in more detail below.
+.VE 8.5
 .TP
 \fB\-options \fIoptions\fR
-.
+.VS 8.5
 The value \fIoptions\fR must be a valid dictionary.  The entries of that
 dictionary are treated as additional \fIoption value\fR pairs for the
 \fBreturn\fR command.
+.VE 8.5
 .SH "RETURN CODE HANDLING MECHANISMS"
 .PP
 Return codes are used in Tcl to control program flow.  A Tcl script
@@ -180,6 +176,7 @@ of \fBTCL_BREAK\fR or \fBTCL_CONTINUE\fR, the loop command can react in such
 a way as to give the \fBbreak\fR and \fBcontinue\fR commands
 their documented interpretation in loops.
 .PP
+.VS 8.5
 Procedure invocation also involves evaluation of a script, the body
 of the procedure.  Procedure invocation provides special treatment
 when evaluation of the procedure body returns the return code 
@@ -207,11 +204,10 @@ of the \fB\-code\fR option (or \fBTCL_OK\fR by default).  Any other value
 for the \fB\-level\fR option (including the default value of 1)
 will cause the return code of the \fBreturn\fR command itself
 to be \fBTCL_RETURN\fR, triggering a return from the enclosing procedure.
+.VE 8.5
 .SH EXAMPLES
-.PP
 First, a simple example of using \fBreturn\fR to return from a
 procedure, interrupting the procedure body.
-.PP
 .CS
 proc printOneLine {} {
    puts "line 1"    ;# This line will be printed.
@@ -222,7 +218,6 @@ proc printOneLine {} {
 .PP
 Next, an example of using \fBreturn\fR to set the value
 returned by the procedure.
-.PP
 .CS
 proc returnX {} {\fBreturn\fR X}
 puts [returnX]    ;# prints "X"
@@ -230,7 +225,6 @@ puts [returnX]    ;# prints "X"
 .PP
 Next, a more complete example, using \fBreturn -code error\fR
 to report invalid arguments.
-.PP
 .CS
 proc factorial {n} {
    if {![string is integer $n] || ($n < 0)} {
@@ -256,23 +250,21 @@ proc factorial {n} {
 .CE
 .PP
 Next, a procedure replacement for \fBbreak\fR.
-.PP
 .CS
 proc myBreak {} {
    \fBreturn\fR -code break
 }
 .CE
 .PP
+.VS 8.5
 With the \fB\-level 0\fR option, \fBreturn\fR itself can serve
-as a replacement for \fBbreak\fR, with the help of \fBinterp alias\fR.
-.PP
+as a replacement for \fBbreak\fR.
 .CS
 interp alias {} Break {} \fBreturn\fR -level 0 -code break
 .CE
 .PP
 An example of using \fBcatch\fR and \fBreturn -options\fR to
 re-raise a caught error:
-.PP
 .CS
 proc doSomething {} {
    set resource [allocate]
@@ -287,7 +279,6 @@ proc doSomething {} {
 .PP
 Finally an example of advanced use of the \fBreturn\fR options
 to create a procedure replacement for \fBreturn\fR itself:
-.PP
 .CS
 proc myReturn {args} {
    set result ""
@@ -300,10 +291,8 @@ proc myReturn {args} {
    \fBreturn\fR -options $options $result
 }
 .CE
+.VE 8.5
 .SH "SEE ALSO"
 break(n), catch(n), continue(n), dict(n), error(n), proc(n), source(n), tclvars(n)
 .SH KEYWORDS
-break, catch, continue, error, exception, procedure, result, return
-.\" Local Variables:
-.\" mode: nroff
-.\" End:
+break, catch, continue, error, procedure, return

@@ -536,6 +536,3 @@ individual widgets or by redefining the class bindings.
 ttk::entry(n)
 .SH KEYWORDS
 entry, widget
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

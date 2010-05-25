@@ -142,7 +142,7 @@ static void DestroyPane(Paned *pw, Pane *pane)
  */
 static int ConfigurePane(
     Tcl_Interp *interp, Paned *pw, Pane *pane, Tk_Window slaveWindow,
-    int objc, Tcl_Obj *const objv[])
+    int objc, Tcl_Obj *CONST objv[])
 {
     Ttk_Manager *mgr = pw->paned.mgr;
     Tk_SavedOptions savedOptions;
@@ -493,7 +493,7 @@ static void PanedEventProc(ClientData clientData, XEvent *eventPtr)
  * +++ Initialization and cleanup hooks.
  */
 
-static void PanedInitialize(Tcl_Interp *interp, void *recordPtr)
+static int PanedInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Paned *pw = recordPtr;
 
@@ -503,6 +503,8 @@ static void PanedInitialize(Tcl_Interp *interp, void *recordPtr)
     pw->paned.paneOptionTable = Tk_CreateOptionTable(interp,PaneOptionSpecs);
     pw->paned.sashLayout = 0;
     pw->paned.sashThickness = 1;
+
+    return TCL_OK;
 }
 
 static void PanedCleanup(void *recordPtr)
@@ -527,7 +529,7 @@ static int PanedPostConfigure(Tcl_Interp *interp, void *clientData, int mask)
 	 * Recalculate sash positions based on requested size.
 	 */
 	Tk_Window tkwin = pw->core.tkwin;
-	PlaceSashes(pw,
+	PlaceSashes(pw, 
 	    pw->paned.width > 0 ? pw->paned.width : Tk_Width(tkwin),
 	    pw->paned.height > 0 ? pw->paned.height : Tk_Height(tkwin));
     }
@@ -573,40 +575,36 @@ static Ttk_Layout PanedGetLayout(
  * +++ Drawing routines.
  */
 
-/* SashLayout --
- * 	Place the sash sublayout after the specified pane,
- * 	in preparation for drawing.
- */
-static Ttk_Layout SashLayout(Paned *pw, int index)
+static void DrawSash(Paned *pw, Drawable d, Ttk_Box b)
 {
-    Pane *pane = Ttk_SlaveData(pw->paned.mgr, index);
-    int thickness = pw->paned.sashThickness,
-	height = Tk_Height(pw->core.tkwin),
-	width = Tk_Width(pw->core.tkwin),
-	sashPos = pane->sashPos;
+    Ttk_Layout sashLayout = pw->paned.sashLayout;
+    Ttk_State state = pw->core.state;
 
-    Ttk_PlaceLayout(
-	pw->paned.sashLayout, pw->core.state,
-	pw->paned.orient == TTK_ORIENT_HORIZONTAL
-	    ? Ttk_MakeBox(sashPos, 0, thickness, height)
-	    : Ttk_MakeBox(0, sashPos, width, thickness));
-
-    return pw->paned.sashLayout;
-}
-
-static void DrawSash(Paned *pw, int index, Drawable d)
-{
-    Ttk_DrawLayout(SashLayout(pw, index), pw->core.state, d);
+    Ttk_PlaceLayout(sashLayout, state, b);
+    Ttk_DrawLayout(sashLayout, state, d);
 }
 
 static void PanedDisplay(void *recordPtr, Drawable d)
 {
     Paned *pw = recordPtr;
-    int i, nSashes = Ttk_NumberSlaves(pw->paned.mgr) - 1;
+    int nPanes = Ttk_NumberSlaves(pw->paned.mgr),
+	horizontal =  pw->paned.orient == TTK_ORIENT_HORIZONTAL,
+	thickness = pw->paned.sashThickness,
+	height = Tk_Height(pw->core.tkwin),
+	width = Tk_Width(pw->core.tkwin);
+    int i;
 
     TtkWidgetDisplay(recordPtr, d);
-    for (i = 0; i < nSashes; ++i) {
-	DrawSash(pw, i, d);
+
+    /* Draw sashes:
+     */
+    for (i = 0; i < nPanes; ++i) {
+	Pane *pane = Ttk_SlaveData(pw->paned.mgr, i);
+	if (horizontal) {
+	    DrawSash(pw, d, Ttk_MakeBox(pane->sashPos, 0, thickness, height));
+	} else {
+	    DrawSash(pw, d, Ttk_MakeBox(0, pane->sashPos, width, thickness));
+	}
     }
 }
 
@@ -617,7 +615,7 @@ static void PanedDisplay(void *recordPtr, Drawable d)
 /* $pw add window [ options ... ]
  */
 static int PanedAddCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Paned *pw = recordPtr;
     Tk_Window slaveWindow;
@@ -638,11 +636,11 @@ static int PanedAddCommand(
 	    objc - 3, objv + 3);
 }
 
-/* $pw insert $index $slave ?-option value ...?
+/* $pw insert $index $slave ?options...?
  * 	Insert new slave, or move existing one.
  */
 static int PanedInsertCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Paned *pw = recordPtr;
     int nSlaves = Ttk_NumberSlaves(pw->paned.mgr);
@@ -650,7 +648,7 @@ static int PanedInsertCommand(
     Tk_Window slaveWindow;
 
     if (objc < 4) {
-	Tcl_WrongNumArgs(interp, 2,objv, "index slave ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 2,objv, "index slave ?options...?");
 	return TCL_ERROR;
     }
 
@@ -663,7 +661,7 @@ static int PanedInsertCommand(
     if (!strcmp(Tcl_GetString(objv[2]), "end")) {
 	destIndex = Ttk_NumberSlaves(pw->paned.mgr);
     } else if (TCL_OK != Ttk_GetSlaveIndexFromObj(
-		interp,pw->paned.mgr,objv[2],&destIndex))
+		interp,pw->paned.mgr,objv[2],&destIndex)) 
     {
 	return TCL_ERROR;
     }
@@ -687,7 +685,7 @@ static int PanedInsertCommand(
 /* $pw forget $pane
  */
 static int PanedForgetCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Paned *pw = recordPtr;
     int paneIndex;
@@ -698,7 +696,7 @@ static int PanedForgetCommand(
     }
 
     if (TCL_OK != Ttk_GetSlaveIndexFromObj(
-		    interp, pw->paned.mgr, objv[2], &paneIndex))
+		    interp, pw->paned.mgr, objv[2], &paneIndex)) 
     {
 	return TCL_ERROR;
     }
@@ -707,31 +705,24 @@ static int PanedForgetCommand(
     return TCL_OK;
 }
 
-/* $pw identify ?what? $x $y --
+/* $pw identify $x $y --
  * 	Return index of sash at $x,$y
  */
 static int PanedIdentifyCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
-    const char *whatTable[] = { "element", "sash", NULL };
-    enum { IDENTIFY_ELEMENT, IDENTIFY_SASH };
-    int what = IDENTIFY_SASH;
     Paned *pw = recordPtr;
     int sashThickness = pw->paned.sashThickness;
     int nSashes = Ttk_NumberSlaves(pw->paned.mgr) - 1;
     int x, y, pos;
     int index;
 
-    if (objc < 4 || objc > 5) {
-	Tcl_WrongNumArgs(interp, 2,objv, "?what? x y");
+    if (objc != 4) {
+	Tcl_WrongNumArgs(interp, 2,objv, "x y");
 	return TCL_ERROR;
     }
-
-    if (   Tcl_GetIntFromObj(interp, objv[objc-2], &x) != TCL_OK
-	|| Tcl_GetIntFromObj(interp, objv[objc-1], &y) != TCL_OK
-	|| (objc == 5 &&
-	    Tcl_GetIndexFromObj(interp, objv[2], whatTable, "option", 0, &what)
-		!= TCL_OK)
+    if (   Tcl_GetIntFromObj(interp, objv[2], &x) != TCL_OK
+	|| Tcl_GetIntFromObj(interp, objv[3], &y) != TCL_OK
     ) {
 	return TCL_ERROR;
     }
@@ -740,33 +731,19 @@ static int PanedIdentifyCommand(
     for (index = 0; index < nSashes; ++index) {
 	Pane *pane = Ttk_SlaveData(pw->paned.mgr, index);
 	if (pane->sashPos <= pos && pos <= pane->sashPos + sashThickness) {
-	    /* Found it. */
-	    switch (what) {
-		case IDENTIFY_SASH:
-		    Tcl_SetObjResult(interp, Tcl_NewIntObj(index));
-		    return TCL_OK;
-		case IDENTIFY_ELEMENT:
-		{
-		    Ttk_Element element =
-			Ttk_IdentifyElement(SashLayout(pw, index), x, y);
-		    if (element) {
-			Tcl_SetObjResult(interp,
-			    Tcl_NewStringObj(Ttk_ElementName(element), -1));
-		    }
-		    return TCL_OK;
-		}
-	    }
+	    Tcl_SetObjResult(interp, Tcl_NewIntObj(index));
+	    return TCL_OK;
 	}
     }
 
-    return TCL_OK; /* nothing found - return empty string */
+    return TCL_OK;	/* return empty string */
 }
 
 /* $pw pane $pane ?-option ?value -option value ...??
  * 	Query/modify pane options.
  */
 static int PanedPaneCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Paned *pw = recordPtr;
     int paneIndex;
@@ -774,7 +751,7 @@ static int PanedPaneCommand(
     Pane *pane;
 
     if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 2,objv, "pane ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 2,objv, "pane ?-option value...?");
 	return TCL_ERROR;
     }
 
@@ -803,7 +780,7 @@ static int PanedPaneCommand(
  * 	Return list of managed panes.
  */
 static int PanedPanesCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Paned *pw = recordPtr;
     Ttk_Manager *mgr = pw->paned.mgr;
@@ -830,7 +807,7 @@ static int PanedPanesCommand(
  * 	Query or modify sash position.
  */
 static int PanedSashposCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Paned *pw = recordPtr;
     int sashIndex, position = -1;
@@ -960,7 +937,7 @@ TTK_END_LAYOUT
 /*------------------------------------------------------------------------
  * +++ Registration routine.
  */
-MODULE_SCOPE
+MODULE_SCOPE 
 void TtkPanedwindow_Init(Tcl_Interp *interp)
 {
     Ttk_Theme themePtr = Ttk_GetDefaultTheme(interp);

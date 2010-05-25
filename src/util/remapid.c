@@ -96,7 +96,7 @@ REMAPID_FILE *remapid_fopen (char *fname, char *type)
     FILE *fp;
 
     if ((fp = fopen(fname, type)) == NULL)
-	return (NULL);
+	return NULL;
 
     bfp = (REMAPID_FILE *) bu_malloc(sizeof(REMAPID_FILE), "remapid_file struct");
 
@@ -110,7 +110,7 @@ REMAPID_FILE *remapid_fopen (char *fname, char *type)
     bfp->file_comment = '#';
     bfp->file_buflen = -1;
 
-    return (bfp);
+    return bfp;
 }
 
 
@@ -134,7 +134,7 @@ remapid_fclose (REMAPID_FILE *bfp)
 	bu_vls_free(&(bfp->file_buf));
 	bu_free((genptr_t) bfp, "remapid_file struct");
     }
-    return (close_status);
+    return close_status;
 }
 
 
@@ -154,7 +154,7 @@ remapid_fgetc (REMAPID_FILE *bfp)
      */
     if ((*(bfp->file_bp) == '\0') && ! (bfp->file_needline)) {
 	bfp->file_needline = 1;
-	return ('\n');
+	return '\n';
     }
 
     /*
@@ -163,7 +163,7 @@ remapid_fgetc (REMAPID_FILE *bfp)
     while (bfp->file_needline) {
 	bu_vls_trunc(&(bfp->file_buf), 0);
 	if (bu_vls_gets(&(bfp->file_buf), bfp->file_ptr) == -1)
-	    return (EOF);
+	    return EOF;
 	bfp->file_bp = bu_vls_addr(&(bfp->file_buf));
 	++(bfp->file_linenm);
 	if (bu_vls_strlen(&(bfp->file_buf)) == 0)
@@ -179,11 +179,11 @@ remapid_fgetc (REMAPID_FILE *bfp)
 		}
 	}
 	if (cp == bfp->file_bp)
-	    return ('\n');
+	    return '\n';
 	bfp->file_needline = 0;
     }
 
-    return (*(bfp->file_bp)++);
+    return *(bfp->file_bp)++;
 }
 
 
@@ -385,7 +385,7 @@ struct curr_id *mk_curr_id (int region_id)
     BU_LIST_INIT(&(cip->ci_regions));
     cip->ci_newid = region_id;
 
-    return (cip);
+    return cip;
 }
 
 
@@ -480,7 +480,7 @@ struct curr_id *lookup_curr_id(int region_id)
 	    bu_exit (1, "bu_rb_insert() returns %d:  This should not happen\n", rc);
     }
 
-    return (cip);
+    return cip;
 }
 
 
@@ -502,7 +502,7 @@ struct remap_reg *mk_remap_reg (char *region_name)
     rp->rr_dp = DIR_NULL;
     rp->rr_ip = (struct rt_db_internal *) 0;
 
-    return (rp);
+    return rp;
 }
 
 
@@ -536,7 +536,7 @@ int compare_curr_ids (void *v1, void *v2)
     BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
     BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
 
-    return (id1->ci_id  -  id2->ci_id);
+    return id1->ci_id  -  id2->ci_id;
 }
 
 
@@ -571,14 +571,14 @@ int read_int (REMAPID_FILE *sfp, int *ch, int *n)
 
     if (got_digit) {
 	*n = result;
-	return (1);
+	return 1;
     } else if (*ch == EOF)
 	remapid_file_err(sfp, "remapid",
 			 "Encountered EOF while expecting an integer", -1);
     else
 	remapid_file_err(sfp, "remapid:read_int()", "Encountered nondigit",
 			 (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
-    return (-1);
+    return -1;
 }
 
 
@@ -590,24 +590,24 @@ int read_block (REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
     BU_CK_FILE(sfp);
 
     if (read_int(sfp, ch, n1) != 1)
-	return (-1);
+	return -1;
 
     while (isspace(*ch))
 	*ch = remapid_fgetc(sfp);
     switch (*ch) {
 	case ', ':
 	case ':':
-	    return (1);
+	    return 1;
 	case '-':
 	    *ch = remapid_fgetc(sfp);
 	    if (read_int(sfp, ch, n2) != 1)
-		return (-1);
+		return -1;
 	    else
-		return (2);
+		return 2;
 	default:
 	    remapid_file_err(sfp, "remapid:read_block()", "Syntax error",
 			     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
-	    return (-1);
+	    return -1;
     }
 }
 
@@ -638,7 +638,7 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 	    while (isspace(ch = remapid_fgetc(sfp)))
 		;
 	    if (ch == EOF)
-		return (1);
+		return 1;
 	    switch (read_block(sfp, &ch, &num1, &num2)) {
 		case 1:
 		    cip = lookup_curr_id(num1);
@@ -656,7 +656,7 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 		    }
 		    break;
 		default:
-		    return (-1);
+		    return -1;
 	    }
 	    while (isspace(ch))
 		ch = remapid_fgetc(sfp);
@@ -667,7 +667,7 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 		case ':':
 		    ch = remapid_fgetc(sfp);
 		    if (read_int(sfp, &ch, &newid) != 1)
-			return (-1);
+			return -1;
 		    break;
 		default:
 		    remapid_file_err(sfp, "remapid:read_spec()", "Syntax error",

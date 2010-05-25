@@ -111,7 +111,7 @@ specified, halting at the first error, if any.  A \fB\-\|\-\fR marks
 the end of switches; the argument following the \fB\-\|\-\fR will be
 treated as a \fIsource\fR even if it starts with a \fB\-\fR.
 .TP
-\fBfile delete \fR?\fB\-force\fR? ?\fB\-\|\-\fR? ?\fIpathname\fR ... ?
+\fBfile delete \fR?\fB\-force\fR? ?\fB\-\|\-\fR? \fIpathname\fR ?\fIpathname\fR ... ?
 .
 Removes the file or directory specified by each \fIpathname\fR
 argument.  Non-empty directories will be removed only if the
@@ -138,26 +138,20 @@ only contains one path element, then returns
 If \fIname\fR refers to a root directory, then the root directory is
 returned.  For example,
 .RS
-.PP
 .CS
 \fBfile dirname c:/\fR
 .CE
-.PP
 returns \fBc:/\fR. 
 .PP
 Note that tilde substitution will only be
 performed if it is necessary to complete the command. For example,
-.PP
 .CS
 \fBfile dirname ~/src/foo.c\fR
 .CE
-.PP
 returns \fB~/src\fR, whereas
-.PP
 .CS
 \fBfile dirname ~\fR
 .CE
-.PP
 returns \fB/home\fR (or something similar).
 .RE
 .TP
@@ -193,11 +187,9 @@ relative, then it will be joined to the previous file name argument.
 Otherwise, any earlier arguments will be discarded, and joining will
 proceed from the current argument.  For example,
 .RS
-.PP
 .CS
 \fBfile join a b /foo bar\fR
 .CE
-.PP
 returns \fB/foo/bar\fR.
 .PP
 Note that any of the names can contain separators, and that the result
@@ -259,7 +251,7 @@ is for the link rather than the file it refers to.  On systems that
 do not support symbolic links this option behaves exactly the same
 as the \fBstat\fR option.
 .TP
-\fBfile mkdir ?\fIdir\fR ...?
+\fBfile mkdir \fIdir\fR ?\fIdir\fR ...?
 .
 Creates each directory specified.  For each pathname \fIdir\fR specified,
 this command will create all non-existing parent directories as
@@ -380,14 +372,10 @@ All other elements will be relative.  Path separators will be discarded
 unless they are needed ensure that an element is unambiguously relative.
 For example, under Unix
 .RS
-.PP
 .CS
 file split /foo/~bar/baz
 .CE
-.PP
-returns
-.QW \fB/\0\0foo\0\0./~bar\0\0baz\fR
-to ensure that later commands
+returns \fB/\0\0foo\0\0./~bar\0\0baz\fR to ensure that later commands
 that use the third component do not attempt to perform tilde
 substitution.
 .RE
@@ -435,25 +423,6 @@ If \fIname\fR contains no separators then returns \fIname\fR.  So,
 \fBfile tail a/b\fR, \fBfile tail a/b/\fR and \fBfile tail b\fR all
 return \fBb\fR.
 .TP
-\fBfile tempfile\fR ?\fInameVar\fR? ?\fItemplate\fR?
-'\" TIP #210
-.VS 8.6
-Creates a temporary file and returns a read-write channel opened on that file.
-If the \fInameVar\fR is given, it specifies a variable that the name of the
-temporary file will be written into; if absent, Tcl will attempt to arrange
-for the temporary file to be deleted once it is no longer required. If the
-\fItemplate\fR is present, it specifies parts of the template of the filename
-to use when creating it (such as the directory, base-name or extension) though
-some platforms may ignore some or all of these parts and use a built-in
-default instead.
-.RS
-.PP
-Note that temporary files are \fIonly\fR ever created on the native
-filesystem. As such, they can be relied upon to be used with operating-system
-native APIs and external programs that require a filename.
-.RE
-.VE 8.6
-.TP
 \fBfile type \fIname\fR
 .
 Returns a string giving the type of file \fIname\fR, which will be one of
@@ -484,11 +453,9 @@ Returns \fB1\fR if file \fIname\fR is writable by the current user,
 These commands always operate using the real user and group identifiers,
 not the effective ones. 
 .SH EXAMPLES
-.PP
 This procedure shows how to search for C files in a given directory
 that have a correspondingly-named object file in the current
 directory:
-.PP
 .CS
 proc findMatchingCFiles {dir} {
    set files {}
@@ -512,7 +479,6 @@ proc findMatchingCFiles {dir} {
 .PP
 Rename a file and leave a symbolic link pointing from the old location
 to the new place:
-.PP
 .CS
 set oldName foobar.txt
 set newName foo/bar.txt
@@ -529,7 +495,6 @@ On Windows, a file can be
 easily enough (equivalent to double-clicking on it in the Explorer
 interface) but the name passed to the operating system must be in
 native format:
-.PP
 .CS
 exec {*}[auto_execok start] {} [\fBfile nativename\fR ~/example.txt]
 .CE
@@ -537,9 +502,4 @@ exec {*}[auto_execok start] {} [\fBfile nativename\fR ~/example.txt]
 filename(n), open(n), close(n), eof(n), gets(n), tell(n), seek(n),
 fblocked(n), flush(n)
 .SH KEYWORDS
-attributes, copy files, delete files, directory, file, move files, name,
-rename files, stat, user
-'\" Local Variables:
-'\" mode: nroff
-'\" fill-column: 78
-'\" End:
+attributes, copy files, delete files, directory, file, move files, name, rename files, stat

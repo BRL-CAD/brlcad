@@ -27,16 +27,6 @@
 #   include "tclUnixPort.h"
 #endif
 
-#if defined(__CYGWIN__)
-#   define USE_PUTENV 1
-#   define USE_PUTENV_FOR_UNSET 1
-/* On Cygwin, the environment is imported from the Cygwin DLL. */
-    DLLIMPORT extern char **__cygwin_environ;
-    DLLIMPORT extern int cygwin_conv_to_win32_path(const char *, char *);
-#    define environ __cygwin_environ
-#    define timezone _timezone
-#endif
-
 #if !defined(LLONG_MIN)
 #   ifdef TCL_WIDE_INT_IS_LONG
 #      define LLONG_MIN LONG_MIN

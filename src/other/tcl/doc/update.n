@@ -16,6 +16,7 @@ update \- Process pending events and idle callbacks
 .SH SYNOPSIS
 \fBupdate\fR ?\fBidletasks\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command is used to bring the application
@@ -44,9 +45,7 @@ the application to respond to events such as user interactions;  if
 you occasionally call \fBupdate\fR then user input will be processed
 during the next call to \fBupdate\fR.
 .SH EXAMPLE
-.PP
 Run computations for about a second and then finish:
-.PP
 .CS
 set x 1000
 set done 0
@@ -61,7 +60,9 @@ while {!$done} {
     \fBupdate\fR
 }
 .CE
+
 .SH "SEE ALSO"
 after(n), interp(n)
+
 .SH KEYWORDS
-asynchronous I/O, event, flush, handler, idle, update
+event, flush, handler, idle, update

@@ -35,18 +35,18 @@
 
 
 /*
- *  			F B _ L O G
+ * F B _ L O G
  *
- *  Log a framebuffer library event in the Standard way.
+ * Log a framebuffer library event in the Standard way.
  */
 #if !defined(_WIN32) || defined(__CYGWIN__)
 void
-fb_log( const char *fmt, ... )
+fb_log(const char *fmt, ...)
 {
     va_list ap;
 
-    va_start( ap, fmt );
-    (void)vfprintf( stderr, fmt, ap );
+    va_start(ap, fmt);
+    (void)vfprintf(stderr, fmt, ap);
     va_end(ap);
 }
 #endif

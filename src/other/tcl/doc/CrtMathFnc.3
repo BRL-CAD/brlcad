@@ -59,6 +59,7 @@ created if the function is not implemented directly in bytecode.
 Pattern to match against function names so as to filter them (by
 passing to \fITcl_StringMatch\fR), or NULL to not apply any filter.
 .BE
+
 .SH DESCRIPTION
 .PP
 Tcl allows a number of mathematical functions to be used in
@@ -86,9 +87,8 @@ or any, respectively.
 Whenever the function is invoked in an expression Tcl will invoke
 \fIproc\fR.  \fIProc\fR should have arguments and result that match
 the type \fBTcl_MathProc\fR:
-.PP
 .CS
-typedef int \fBTcl_MathProc\fR(
+typedef int Tcl_MathProc(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         Tcl_Value *\fIargs\fR,
@@ -99,14 +99,13 @@ When \fIproc\fR is invoked the \fIclientData\fR and \fIinterp\fR
 arguments will be the same as those passed to \fBTcl_CreateMathFunc\fR.
 \fIArgs\fR will point to an array of \fInumArgs\fR Tcl_Value structures,
 which describe the actual arguments to the function:
-.PP
 .CS
 typedef struct Tcl_Value {
-    Tcl_ValueType \fItype\fR;
-    long \fIintValue\fR;
-    double \fIdoubleValue\fR;
-    Tcl_WideInt \fIwideValue\fR;
-} \fBTcl_Value\fR;
+        Tcl_ValueType \fItype\fR;
+        long \fIintValue\fR;
+        double \fIdoubleValue\fR;
+        Tcl_WideInt \fIwideValue\fR;
+} Tcl_Value;
 .CE
 .PP
 The \fItype\fR field indicates the type of the argument and is
@@ -151,7 +150,9 @@ pointed to by \fIargTypesPointer\fR.
 \fBTcl_ListMathFuncs\fR returns a Tcl object containing a list of all
 the math functions defined in the interpreter whose name matches
 \fIpattern\fR.  The returned object has a reference count of zero.
+
 .SH "SEE ALSO"
 expr(n), info(n), Tcl_CreateObjCommand(3), Tcl_Free(3), Tcl_NewListObj(3)
+
 .SH KEYWORDS
 expression, mathematical function

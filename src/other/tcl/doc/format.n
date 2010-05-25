@@ -48,7 +48,6 @@ and a conversion character.
 Any of these fields may be omitted except for the conversion character.
 The fields that are present must appear in the order given above.
 The paragraphs below discuss each of these fields in turn.
-.SS "OPTIONAL POSITIONAL SPECIFIER"
 .PP
 If the \fB%\fR is followed by a decimal number and a \fB$\fR, as in
 .QW \fB%2$d\fR ,
@@ -62,7 +61,6 @@ given by the number.
 This follows the XPG3 conventions for positional specifiers.
 If there are any positional specifiers in \fIformatString\fR
 then all of the specifiers must be positional.
-.SS "OPTIONAL FLAGS"
 .PP
 The second portion of a conversion specifier may contain any of the
 following flag characters, in any order:
@@ -89,14 +87,11 @@ Requests an alternate output form. For \fBo\fR and \fBO\fR
 conversions it guarantees that the first digit is always \fB0\fR.
 For \fBx\fR or \fBX\fR conversions, \fB0x\fR or \fB0X\fR (respectively)
 will be added to the beginning of the result unless it is zero.
-For \fBb\fR conversions, \fB0b\fR
-will be added to the beginning of the result unless it is zero.
 For all floating-point conversions (\fBe\fR, \fBE\fR, \fBf\fR,
 \fBg\fR, and \fBG\fR) it guarantees that the result always 
 has a decimal point.
 For \fBg\fR and \fBG\fR conversions it specifies that 
 trailing zeroes should not be removed.
-.SS "OPTIONAL FIELD WIDTH"
 .PP
 The third portion of a conversion specifier is a decimal number giving a
 minimum field width for this conversion.
@@ -111,7 +106,6 @@ spaces on the right, respectively.
 If the minimum field width is specified as \fB*\fR rather than
 a number, then the next argument to the \fBformat\fR command
 determines the minimum field width; it must be an integer value.
-.SS "OPTIONAL PRECISION/BOUND"
 .PP
 The fourth portion of a conversion specifier is a precision,
 which consists of a period followed by a number.
@@ -129,7 +123,6 @@ printed; if the string is longer than this then the trailing characters will be 
 If the precision is specified with \fB*\fR rather than a number
 then the next argument to the \fBformat\fR command determines the precision;
 it must be a numeric string.
-.SS "OPTIONAL SIZE MODIFIER"
 .PP
 The fifth part of a conversion specifier is a size modifier,
 which must be \fBll\fR, \fBh\fR, or \fBl\fR.
@@ -144,7 +137,6 @@ If neither \fBh\fR nor \fBl\fR are present, the integer value is
 truncated to the same range as that produced by the \fBint()\fR
 function of the \fBexpr\fR command (at least a 32-bit range, but
 determined by the value of \fBtcl_platform(wordSize)\fR).
-.SS "MANDATORY CONVERSION TYPE"
 .PP
 The last thing in a conversion specifier is an alphabetic character
 that determines what kind of conversion to perform.
@@ -168,9 +160,6 @@ Convert integer to unsigned hexadecimal string, using digits
 for \fBx\fR and
 .QW 0123456789ABCDEF
 for \fBX\fR).
-.TP 10
-\fBb\fR
-Convert integer to binary string, using digits 0 and 1.
 .TP 10
 \fBc\fR
 Convert integer to the Unicode character it represents.
@@ -207,21 +196,16 @@ The behavior of the format command is the same as the
 ANSI C \fBsprintf\fR procedure except for the following
 differences:
 .IP [1]
-Tcl guarantees that it will be working with UNICODE characters.
-.IP [2]
 \fB%p\fR and \fB%n\fR specifiers are not supported.
-.IP [3]
+.IP [2]
 For \fB%c\fR conversions the argument must be an integer value,
 which will then be converted to the corresponding character value.
-.IP [4]
+.IP [3]
 The size modifiers are ignored when formatting floating-point values.
 The \fBll\fR modifier has no \fBsprintf\fR counterpart.
-The \fBb\fR specifier has no \fBsprintf\fR counterpart.
 .SH EXAMPLES
-.PP
 Convert the numeric value of a UNICODE character to the character
 itself:
-.PP
 .CS
 set value 120
 set char [\fBformat\fR %c $value]
@@ -229,14 +213,12 @@ set char [\fBformat\fR %c $value]
 .PP
 Convert the output of \fBtime\fR into seconds to an accuracy of
 hundredths of a second:
-.PP
 .CS
 set us [lindex [time $someTclCode] 0]
 puts [\fBformat\fR "%.2f seconds to execute" [expr {$us / 1e6}]]
 .CE
 .PP
 Create a packed X11 literal color specification:
-.PP
 .CS
 # Each color-component should be in range (0..255)
 set color [\fBformat\fR "#%02x%02x%02x" $r $g $b]
@@ -245,7 +227,6 @@ set color [\fBformat\fR "#%02x%02x%02x" $r $g $b]
 Use XPG3 format codes to allow reordering of fields (a technique that
 is often used in localized message catalogs; see \fBmsgcat\fR) without
 reordering the data values passed to \fBformat\fR:
-.PP
 .CS
 set fmt1 "Today, %d shares in %s were bought at $%.2f each"
 puts [\fBformat\fR $fmt1 123 "Global BigCorp" 19.37]
@@ -255,7 +236,6 @@ puts [\fBformat\fR $fmt2 123 "Global BigCorp" 19.37]
 .CE
 .PP
 Print a small table of powers of three:
-.PP
 .CS
 # Set up the column widths
 set w1 5

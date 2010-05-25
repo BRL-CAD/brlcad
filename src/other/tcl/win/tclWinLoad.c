@@ -48,7 +48,7 @@ TclpDlopen(
 				 * file. */
 {
     HINSTANCE handle;
-    const TCHAR *nativeName;
+    CONST TCHAR *nativeName;
 
     /*
      * First try the full path the user gave us. This is particularly
@@ -57,7 +57,7 @@ TclpDlopen(
      */
 
     nativeName = Tcl_FSGetNativePath(pathPtr);
-    handle = tclWinProcs->loadLibraryProc(nativeName);
+    handle = (*tclWinProcs->loadLibraryProc)(nativeName);
     if (handle == NULL) {
 	/*
 	 * Let the OS loader examine the binary search path for whatever
@@ -66,10 +66,10 @@ TclpDlopen(
 	 */
 
 	Tcl_DString ds;
-	const char *fileName = Tcl_GetString(pathPtr);
+	char *fileName = Tcl_GetString(pathPtr);
 
 	nativeName = Tcl_WinUtfToTChar(fileName, -1, &ds);
-	handle = tclWinProcs->loadLibraryProc(nativeName);
+	handle = (*tclWinProcs->loadLibraryProc)(nativeName);
 	Tcl_DStringFree(&ds);
     }
 
@@ -155,7 +155,7 @@ Tcl_PackageInitProc *
 TclpFindSymbol(
     Tcl_Interp *interp,
     Tcl_LoadHandle loadHandle,
-    const char *symbol)
+    CONST char *symbol)
 {
     Tcl_PackageInitProc *proc = NULL;
     HINSTANCE handle = (HINSTANCE)loadHandle;
@@ -230,7 +230,7 @@ TclpUnloadFile(
 
 int
 TclGuessPackageName(
-    const char *fileName,	/* Name of file containing package (already
+    CONST char *fileName,	/* Name of file containing package (already
 				 * translated to local form if needed). */
     Tcl_DString *bufPtr)	/* Initialized empty dstring. Append package
 				 * name to this if possible. */

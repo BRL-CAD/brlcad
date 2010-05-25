@@ -31,6 +31,7 @@ Additional error information to print after leading arguments
 from \fIobjv\fR.  This typically gives the acceptable syntax
 of the command.  This argument may be NULL.
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_WrongNumArgs\fR is a utility procedure that is invoked by
@@ -44,17 +45,13 @@ elements of \fIobjv\fR plus \fImessage\fR.  For example, if
 .QW "\fBfileName count\fR"
 then \fIinterp\fR's result object will be set to the following
 string:
-.PP
 .CS
 wrong # args: should be "foo fileName count"
 .CE
-.PP
 If \fIobjc\fR is 2, the result will be set to the following string:
-.PP
 .CS
 wrong # args: should be "foo bar fileName count"
 .CE
-.PP
 \fIObjc\fR is usually 1, but may be 2 or more for commands like
 \fBstring\fR and the Tk widget commands, which use the first argument
 as a subcommand.  
@@ -71,11 +68,12 @@ originally passed in.  Using the above example, let us assume that
 \fIbar\fR is actually an abbreviation for \fIbarfly\fR and the object
 is now an indexObject because it was passed to
 \fBTcl_GetIndexFromObj\fR.  In this case the error message would be:
-.PP
 .CS
 wrong # args: should be "foo barfly fileName count"
 .CE
+
 .SH "SEE ALSO"
-Tcl_GetIndexFromObj(3)
+Tcl_GetIndexFromObj
+
 .SH KEYWORDS
 command, error message, wrong number of arguments

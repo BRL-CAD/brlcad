@@ -17,6 +17,7 @@ lappend \- Append list elements onto a variable
 .SH SYNOPSIS
 \fBlappend \fIvarName \fR?\fIvalue value value ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command treats the variable given by \fIvarName\fR as a list
@@ -33,9 +34,7 @@ is much more efficient than
 .QW "\fBset a [concat $a [list $b]]\fR"
 when \fB$a\fR is long.
 .SH EXAMPLE
-.PP
 Using \fBlappend\fR to build up a list of numbers.
-.PP
 .CS
 % set var 1
 1
@@ -44,8 +43,10 @@ Using \fBlappend\fR to build up a list of numbers.
 % \fBlappend\fR var 3 4 5
 1 2 3 4 5
 .CE
+
 .SH "SEE ALSO"
 list(n), lindex(n), linsert(n), llength(n), lset(n),
 lsort(n), lrange(n)
+
 .SH KEYWORDS
 append, element, list, variable

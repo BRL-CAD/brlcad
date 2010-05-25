@@ -55,11 +55,9 @@ set to NULL.
 .PP
 If a non-NULL value for \fIchannel\fR is passed to \fBTcl_SetStdChannel\fR,
 then that same value should be passed to \fBTcl_RegisterChannel\fR, like so:
-.PP
 .CS
 Tcl_RegisterChannel(NULL, channel);
 .CE
-.PP
 This is a workaround for a misfeature in \fBTcl_SetStdChannel\fR that it
 fails to do some reference counting housekeeping.  This misfeature cannot
 be corrected without contradicting the assumptions of some existing

@@ -197,7 +197,7 @@ prnt_Status(void)
     bu_strlcpy( DEBUGGER_PTR, scratchbuf, strlen( scratchbuf ) );
     sprintf( scratchbuf, "%-2d", max_bounce );
     bu_strlcpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
-    snprintf( scratchbuf, TEMPLATE_COLS+1, " LGT %s", version );
+    snprintf( scratchbuf, TEMPLATE_COLS+1, " LGT" );
     bu_strlcpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
     snprintf( scratchbuf, TEMPLATE_COLS+1, " %s ",
 	      ged_file == NULL ? "(null)" : ged_file );

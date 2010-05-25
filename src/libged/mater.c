@@ -29,7 +29,6 @@
 int
 ged_mater(struct ged *gedp, int argc, const char *argv[])
 {
-    int status = GED_OK;
     struct directory *dp;
     int r=0, g=0, b=0;
     char inherit;

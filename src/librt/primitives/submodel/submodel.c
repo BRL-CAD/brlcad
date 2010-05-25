@@ -212,8 +212,8 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rt_prep_parallel(sub_rtip, 1);
 
     /* Ensure bu_ptbl rti_resources is full size.  Ptrs will be null */
-    if (BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen) {
-	BU_PTBL_LEN(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
+    if ((size_t)BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen) {
+	BU_PTBL_LEN(&sub_rtip->rti_resources) = (off_t)sub_rtip->rti_resources.blen;
     }
 
     if (RT_G_DEBUG) rt_pr_cut_info(sub_rtip, stp->st_name);
@@ -242,7 +242,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -295,7 +295,7 @@ struct submodel_gobetween {
  * R T _ S U B M O D E L _ A _ H I T
  */
 int
-rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp __attribute__((unused)))
+rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     struct partition *pp;
     struct application *up_ap;
@@ -402,7 +402,7 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 
 	/* RT_HIT_UV */
 	{
-	    struct uvcoord uv;
+	    struct uvcoord uv = {0.0, 0.0, 0.0, 0.0};
 	    RT_HIT_UVCOORD(ap, inseg->seg_stp, &inseg->seg_in, &uv);
 	    up_segp->seg_in.hit_vpriv[X] = uv.uv_u;
 	    up_segp->seg_in.hit_vpriv[Y] = uv.uv_v;
@@ -635,9 +635,14 @@ rt_submodel_free(struct soltab *stp)
  * R T _ S U B M O D E L _ C L A S S
  */
 int
-rt_submodel_class()
+rt_submodel_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    return RT_CLASSIFY_UNIMPLEMENTED;
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
+    return 0;
 }
 
 
@@ -654,7 +659,7 @@ struct goodies {
  * This routine should be generally exported for other uses.
  */
 HIDDEN union tree *
-rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     union tree *curtree;
     struct goodies *gp;
@@ -687,7 +692,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
 	bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
 	       ip->idb_meth->ft_name,
 	       DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-	return(TREE_NULL);		/* ERROR */
+	return TREE_NULL;		/* ERROR */
     }
 
     /* Indicate success by returning something other than TREE_NULL */
@@ -695,7 +700,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
 
-    return(curtree);
+    return curtree;
 }
 
 
@@ -780,7 +785,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_submodel_internal *sip;
 
@@ -791,7 +796,7 @@ rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 
-    return(-1);
+    return -1;
 }
 
 
@@ -815,7 +820,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     /* Check record type */
     if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_submodel_import4: defective strsol record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -855,7 +860,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     bn_mat_print("root2leaf", sip->root2leaf);
 #endif
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -874,7 +879,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SUBMODEL) return(-1);
+    if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 #if 0
@@ -900,7 +905,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     bu_log("rt_submodel_export4: '%s'\n", rec->ss.ss_args);
 #endif
 
-    return(0);
+    return 0;
 }
 
 
@@ -958,7 +963,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
     bn_mat_print("root2leaf", sip->root2leaf);
 #endif
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -976,7 +981,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SUBMODEL) return(-1);
+    if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 #if 0
@@ -999,7 +1004,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     bu_log("rt_submodel_export4: '%s'\n", rec->ss.ss_args);
 #endif
 
-    return(0);
+    return 0;
 }
 
 
@@ -1011,7 +1016,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
+rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     struct rt_submodel_internal *sip = (struct rt_submodel_internal *)ip->idb_ptr;
 
@@ -1061,7 +1066,7 @@ rt_submodel_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

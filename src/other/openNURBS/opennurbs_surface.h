@@ -54,8 +54,6 @@ class ON_PolyCurve;
 class ON_CurveProxy;
 class ON_Surface;
 
-typedef int (*ON_MassPropertiesSurface)( const ON_Surface&, void*, int, ON_3dPoint, ON_MassProperties&, bool, bool, bool, bool, double, double );
-
 class ON_CLASS ON_Surface : public ON_Geometry
 {
   ON_OBJECT_DECLARE(ON_Surface);
@@ -404,6 +402,13 @@ public:
         int        // side of parameter space to test
                    // 0 = south, 1 = east, 2 = north, 3 = west
         ) const;
+
+  /*
+  Returns:
+    True if the surface defines a solid, like a sphere or torus.
+    False if the surface does not define a solid, like a plane or cone.
+  */
+  bool IsSolid() const;
 
   /*
   Description:
@@ -1073,22 +1078,38 @@ public:
   /*
   Description:
     Intersect this surface with surfaceB.
+
   Parameters:
     surfaceB - [in]
-    x - [out] Intersection events are appended to this array.
-    intersection_tolerance - [in] If the input 
-      intersection_tolerance <= 0.0, then 0.001 is used.
-    overlap_tolerance - [in] If positive, then overlap_tolerance
-      is used to test for overlapping regions. If the input 
-      overlap_tolerance <= 0.0, then 2*intersection_tolerance
+
+    x - [out]
+      Intersection events are appended to this array.
+
+    intersection_tolerance - [in]
+      If the input intersection_tolerance <= 0.0, then 0.001 is used.
+
+    overlap_tolerance - [in]
+      If positive, then overlap_tolerance must be 
+      >= intersection_tolerance and is used to test for 
+      overlapping regions. If the input 
+      overlap_tolerance <= 0.0, then 2*intersection_tolerance 
       is used.
-    fitting_tolerance - [in] if > 0 and >= intersection_tolerance,
+
+    fitting_tolerance - [in] 
+      If fitting_tolerance is > 0 and >= intersection_tolerance,
       then the intersection curves are fit to this tolerance.
-      If input fitting_tolerance <= 0.0, then intersection_tolerance
-      is used.
-    curveA_domain - [in] optional restriction on this curve's domain
-    surfaceB_udomain - [in] optional restriction on surfaceB u domain
-    surfaceB_vdomain - [in] optional restriction on surfaceB v domain
+      If input fitting_tolerance <= 0.0 or < intersection_tolerance,
+      then intersection_tolerance is used.
+
+    surfaceA_udomain - [in]
+      optional restriction on surfaceA u domain
+    surfaceA_vdomain - [in] 
+      optional restriction on surfaceA v domain
+
+    surfaceB_udomain - [in]
+      optional restriction on surfaceB u domain
+    surfaceB_vdomain - [in] 
+      optional restriction on surfaceB v domain
   Returns:
     Number of intersection events appended to x.
   */
@@ -1103,6 +1124,143 @@ public:
           const ON_Interval* surfaceB_udomain = 0,
           const ON_Interval* surfaceB_vdomain = 0
           ) const;
+
+  /*
+  Description:
+    Create a cubic nurbs surface that interpolates a list of curves.    
+
+  Parameters:
+    curve_count - [in]  >= 2 
+      number of curves
+
+    curve_list - [in]
+      array of pointers to curves.  These curves define
+      the location of the The returned surface's "v" parameter
+
+    k - [in] (0.0 <= k) or k = ON_UNSET_VALUE
+      k determines how the surface's m_knot[0] values
+      are calculated. Most frequently, 0.0, 0.5, or 1.0 should be used.
+        0.0: uniform
+        0.5: sqrt(chord length)
+        1.0: chord length
+          In general, when k >= 0.0, then spacing is pow(d,k), where d is the
+          average distance between the curves defining the span.
+        ON_UNSET_VALUE: the intepolation knot vector is explicity specified.
+          The knots in the interpolated direction are specified.  You must
+          understand the mathematics of NURBS surfaces to use this option.
+          To specify an explicit knot vector for the interpolation, the 
+          nurbs_suface parameter must be non-null, and nurbs_surface->m_knot[0]
+          must be an array of length 4+curve_count, and
+          (nurbs_surface->m_knot[0][2], ..., nurbs_surface->m_knot[0][curve_count+1])
+          must be a strictly increasing list of values.
+
+    is_closed - [in]
+      0: open
+      1: closed
+      2: periodic
+
+    start_shape - [in]
+    end_shape - [in]
+      The start_shape and end_shape paramters determine the
+      starting and ending shape of the lofted surface.
+      Simple shapes:
+        The simple end conditions calculate the rows of free
+        control points based on the locations of the input
+        curves and do not require additional input information.
+          ON::cubic_loft_ec_quadratic: quadratic
+          ON::cubic_loft_ec_linear: linear
+          ON::cubic_loft_ec_cubic: cubic
+          ON::cubic_loft_ec_natural: natrual (zero 2nd derivative)
+      Explicit shapes:
+        In order to specify explicit end conditions, curve_count must
+        be at least 3, is_closed must be 0 or 1, the nurbs_surface
+        parameter must be non-null, the nurbs_surface control
+        points must be allocated, nurbs_surface->m_cv_count[0]
+        must be curve_count+2, and the input curves must have nurbs
+        curve formats with the same number of control points as 
+        nurbs_surface->m_cv_count[1]. The values of the starting 
+        shape points are specified in nurbs_surface->CV(1,...) and
+        the values of ending shape points are specified in 
+        nurbs_surface->CV(curve_count,...).
+        N = curve_count
+          ON::cubic_loft_ec_unit_tangent: unit tangent is specified
+          ON::cubic_loft_ec_1st_derivative: first derivative is specified
+          ON::cubic_loft_ec_2nd_derivative: second derivative is specified
+          ON::cubic_loft_ec_free_cv: free control vertex is specified
+
+    nurbs_surface - [in]
+      If not null, the result will returned in this ON_NurbsSurface.
+      Typically, this paramter is used when you want to store the
+      result in an ON_NurbsSurface that is on the stack.  This
+      paramter is also used when you want to specify the interpolation
+      knots or end conditions.
+
+  Returns:
+    If successful, a pointer to the surface is returned. If the input
+    nurbs_surface parameter was null, then this surface is on the heap
+    and will need to be deleted to avoid memory leaks.  If the input
+    is not valid, null is returned, even when nurbs_surface is not
+    null.
+
+  Example:
+    
+    // EXAMPLE 1: Loft a surface through a list of curves
+      ON_SimpleArray< const ON_Curve* > curve_list = ....;
+      ON_NurbsSurface* srf = ON_Surface::CreateCubicLoft(
+                     curve_list.Count(),
+                     curve_list,
+                     0.5 // sqrt(chord length) spacing
+                     );
+    
+    // EXAMPLE 2: Create adjacent surfaces with an identical shared edge.
+      // First make two curve lists with 
+      // curve_listA.Count() == curve_listB.Count() and
+      // curve_listA[i]->PointAtEnd() == curve_listB[i]->PointAtStart()
+      ON_SimpleArray< const ON_Curve* > curve_listA = ....;
+      ON_SimpleArray< const ON_Curve* > curve_listB = ....;
+      curve_count = curve_listA.Count(); 
+      ON_NurbsSurface* srfA = 0;
+      ON_NurbsSurface* srfB = 0;
+      if ( curve_count == curve_listB.Count() )
+      {
+        srfA = ON_Surface::CreateCubicLoft(
+                       curve_count,
+                       curve_listA.Array(),
+                       1.0 // chord length spacing
+                       );
+        if (0 != srfA)
+        {
+          srfB = new ON_NurbsSurface();
+          int knot_count0 = srfA->KnotCount(0);
+          srfB->ReserveKnotCapacity(0,knot_count0);
+          memcpy(srfB->m_knot[0],srfA->m_knot[0],knot_count0*sizeof(srfB->m_knot[0][0]))
+          if ( 0 == ON_Surface::CreateCubicLoft(
+                         curve_count,
+                         curve_listB.Array(),
+                         ON_UNSET_VALUE, // knots specified in srfB->m_knot[0]
+                         0, // open loft
+                         ON::cubic_loft_ec_quadratic,
+                         ON::cubic_loft_ec_quadratic,
+                         srfB
+                         ) )
+         {
+           // clean up to prevent memory leaks
+           delete srfB;
+           srfB = 0;
+         }
+       }
+     }
+  */
+  static 
+  class ON_NurbsSurface* CreateCubicLoft(
+    int curve_count,
+    const ON_Curve* const* curve_list,
+    double k,
+    int is_closed = 0,
+    ON::cubic_loft_end_condition start_shape = ON::cubic_loft_ec_quadratic,
+    ON::cubic_loft_end_condition end_shape   = ON::cubic_loft_ec_quadratic,
+    class ON_NurbsSurface* nurbs_surface = 0
+    );
 
 protected:
   // Runtime only - ignored by Read()/Write()
@@ -1141,8 +1299,6 @@ protected:
                     double tolerance,
                     const ON_Interval* curve_2d_subdomain
                     ) const;
-public:
-  static ON_MassPropertiesSurface _MassPropertiesSurface;
 };
 
 

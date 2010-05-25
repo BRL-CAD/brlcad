@@ -33,35 +33,22 @@ otherwise. Note that this only ever returns 1 when the channel has
 been configured to be non-blocking; all Tcl channels have blocking
 turned on by default.
 .TP
-\fBchan close \fIchannelId\fR ?\fIdirection\fR?
+\fBchan close \fIchannelId\fR
 .
 Close and destroy the channel called \fIchannelId\fR. Note that this
 deletes all existing file-events registered on the channel.
-.VS 8.6
-If the \fIdirection\fR argument (which must be \fBread\fR or \fBwrite\fR or
-any unique abbreviation of them) is present, the channel will only be
-half-closed, so that it can go from being read-write to write-only or
-read-only respectively. If a read-only channel is closed for reading, it is
-the same as if the channel is fully closed, and respectively similar for
-write-only channels. Without the \fIdirection\fR argument, the channel is
-closed for both reading and writing (but only if those directions are
-currently open). It is an error to close a read-only channel for writing, or a
-write-only channel for reading.
-.VE 8.6
 .RS
 .PP
 As part of closing the channel, all buffered output is flushed to the
-channel's output device (only if the channel is ceasing to be writable), any
-buffered input is discarded (only if the channel is ceasing to be readable),
-the underlying operating system resource is closed and \fIchannelId\fR becomes
-unavailable for future use (both only if the channel is being completely
-closed).
+channel's output device, any buffered input is discarded, the
+underlying operating system resource is closed and \fIchannelId\fR
+becomes unavailable for future use.
 .PP
-If the channel is blocking and the channel is ceasing to be writable, the
-command does not return until all output is flushed.  If the channel is
-nonblocking and there is unflushed output, the channel remains open and the
-command returns immediately; output will be flushed in the background and the
-channel will be closed when all the flushing is complete.
+If the channel is blocking, the command does not return until all
+output is flushed.  If the channel is nonblocking and there is
+unflushed output, the channel remains open and the command returns
+immediately; output will be flushed in the background and the channel
+will be closed when all the flushing is complete.
 .PP
 If \fIchannelId\fR is a blocking channel for a command pipeline then
 \fBchan close\fR waits for the child processes to complete.
@@ -71,12 +58,10 @@ makes \fIchannelId\fR unavailable in the invoking interpreter but has
 no other effect until all of the sharing interpreters have closed the
 channel. When the last interpreter in which the channel is registered
 invokes \fBchan close\fR (or \fBclose\fR), the cleanup actions
-described above occur. With half-closing, the half-close of the channel only
-applies to the current interpreter's view of the channel until all channels
-have closed it in that direction (or completely).
-See the \fBinterp\fR command for a description of channel sharing.
+described above occur. See the \fBinterp\fR command for a description
+of channel sharing.
 .PP
-Channels are automatically fully closed when an interpreter is destroyed and
+Channels are automatically closed when an interpreter is destroyed and
 when the process exits.  Channels are switched to blocking mode, to
 ensure that all output is correctly flushed before the process exits.
 .PP
@@ -84,13 +69,6 @@ The command returns an empty string, and may generate an error if
 an error occurs while flushing output.  If a command in a command
 pipeline created with \fBopen\fR returns an error, \fBchan close\fR
 generates an error (similar to the \fBexec\fR command.)
-.PP
-.VS 8.6
-Note that half-closes of sockets and command pipelines can have important side
-effects because they result in a shutdown() or close() of the underlying
-system resource, which can change how other processes or systems respond to
-the Tcl program.
-.VE 8.6
 .RE
 .TP
 \fBchan configure \fIchannelId\fR ?\fIoptionName\fR? ?\fIvalue\fR? ?\fIoptionName value\fR?...
@@ -111,9 +89,8 @@ The options described below are supported for all channels. In
 addition, each channel type may add options that only it supports. See
 the manual entry for the command that creates each type of channels
 for the options that that specific type of channel supports. For
-example, see the manual entry for the \fBsocket\fR command for additional
-options for sockets, and the \fBopen\fR command for additional options for
-serial devices.
+example, see the manual entry for the \fBsocket\fR command for its
+additional options.
 .TP
 \fB\-blocking\fR \fIboolean\fR
 .
@@ -353,7 +330,7 @@ This subcommand creates a new script level channel using the command
 prefix \fIcmdPrefix\fR as its handler. Any such channel is called a
 \fBreflected\fR channel. The specified command prefix, \fBcmdPrefix\fR,
 must be a non-empty list, and should provide the API described in the
-\fBrefchan\fR manual page. The handle of the new channel is
+\fBreflectedchan\fR manual page. The handle of the new channel is
 returned as the result of the \fBchan create\fR command, and the
 channel is open. Use either \fBclose\fR or \fBchan close\fR to remove
 the channel.
@@ -372,7 +349,7 @@ mode, or an error is thrown.
 .PP
 The command prefix is executed in the global namespace, at the top of
 call stack, following the appending of arguments as described in the
-\fBrefchan\fR manual page. Command resolution happens at the
+\fBreflectedchan\fR manual page. Command resolution happens at the
 time of the call. Renaming the command, or destroying it means that
 the next call of a handler method may fail, causing the channel
 command invoking the handler to fail as well. Depending on the
@@ -539,27 +516,6 @@ a potential denial-of-service attack where a hostile user crafts
 an extremely long line that exceeds the available memory to buffer it).
 Returns -1 if the channel was not opened for the mode in question.
 .TP
-\fBchan pipe\fR
-.VS 8.6
-Creates a standalone pipe whose read- and write-side channels are
-returned as a 2-element list, the first element being the read side and
-the second the write side. Can be useful e.g. to redirect
-separately \fBstderr\fR and \fBstdout\fR from a subprocess. To do
-this, spawn with "2>@" or
-">@" redirection operators onto the write side of a pipe, and then
-immediately close it in the parent. This is necessary to get an EOF on
-the read side once the child has exited or otherwise closed its output. 
-.VE 8.6
-.TP
-\fBchan pop \fIchannelId\fR
-.VS 8.6
-Removes the topmost transformation from the channel \fIchannelId\fR, if there
-is any. If there are no transformations added to \fIchannelId\fR, this is
-equivalent to \fBchan close\fR of that channel. The result is normally the
-empty string, but can be an error in some situations (i.e. where the
-underlying system stream is closed and that results in an error).
-.VE 8.6
-.TP
 \fBchan postevent \fIchannelId eventSpec\fR
 .
 This subcommand is used by command handlers specified with \fBchan
@@ -585,7 +541,7 @@ other interpreter will cause this subcommand to report an error.
 Another restriction is that it is not possible to post events that the
 I/O core has not registered an interest in. Trying to do so will cause
 the method to throw an error. See the command handler method
-\fBwatch\fR described in \fBrefchan\fR, the document specifying
+\fBwatch\fR described in \fBreflectedchan\fR, the document specifying
 the API of command handlers for reflected channels.
 .PP
 This command is \fBsafe\fR and made accessible to safe interpreters.
@@ -595,18 +551,6 @@ where the event is posted from a safe interpreter and listened for by
 a trusted interpreter. \fBChan event\fR handlers are \fIalways\fR
 executed in the interpreter that set them up.
 .RE
-.TP
-\fBchan push \fIchannelId cmdPrefix\fR
-.VS 8.6
-Adds a new transformation on top of the channel \fIchannelId\fR. The
-\fIcmdPrefix\fR argument describes a list of one or more words which represent
-a handler that will be used to implement the transformation. The command
-prefix must provide the API described in the \fBtranschan\fR manual page.
-The result of this subcommand is a handle to the transformation. Note that it
-is important to make sure that the transformation is capable of supporting the
-channel mode that it is used with or this can make the channel neither
-readable nor writable.
-.VE 8.6
 .TP
 \fBchan puts\fR ?\fB\-nonewline\fR? ?\fIchannelId\fR? \fIstring\fR
 .
@@ -678,11 +622,9 @@ in which \fBchan configure\fR will alter input).
 .PP
 When reading from a serial port, most applications should configure
 the serial port channel to be nonblocking, like this:
-.PP
 .CS
 \fBchan configure \fIchannelId \fB\-blocking \fI0\fR.
 .CE
-.PP
 Then \fBchan read\fR behaves much like described above.  Note that
 most serial ports are comparatively slow; it is entirely possible to
 get a \fBreadable\fR event for each character read from them. Care
@@ -755,9 +697,7 @@ Sets the byte length of the underlying data stream for the channel
 named \fIchannelId\fR to be \fIlength\fR (or to the current byte
 offset within the underlying data stream if \fIlength\fR is
 omitted). The channel is flushed before truncation.
-.
-.SH EXAMPLES
-.PP
+.SH EXAMPLE
 This opens a file using a known encoding (CP1252, a very common encoding
 on Windows), searches for a string, rewrites that part, and truncates the
 file after a further two lines.
@@ -790,49 +730,9 @@ while {[\fBchan gets\fR $f line] >= 0} {
 }
 \fBchan close\fR $f
 .CE
-.PP
-A network server that does echoing of its input line-by-line without
-preventing servicing of other connections at the same time.
-.PP
-.CS
-# This is a very simple logger...
-proc log {message} {
-    \fBchan puts\fR stdout $message
-}
-
-# This is called whenever a new client connects to the server
-proc connect {chan host port} {
-    set clientName [format <%s:%d> $host $port]
-    log "connection from $clientName"
-    \fBchan configure\fR $chan -blocking 0 -buffering line
-    \fBchan event\fR $chan readable [list echoLine $chan $clientName]
-}
-
-# This is called whenever either at least one byte of input
-# data is available, or the channel was closed by the client.
-proc echoLine {chan clientName} {
-    \fBchan gets\fR $chan line
-    if {[\fBchan eof\fR $chan]} {
-        log "finishing connection from $clientName"
-        \fBchan close\fR $chan
-    } elseif {![\fBchan blocked\fR $chan]} {
-        # Didn't block waiting for end-of-line
-        log "$clientName - $line"
-        \fBchan puts\fR $chan $line
-    }
-}
-
-# Create the server socket and enter the event-loop to wait
-# for incoming connections...
-socket -server connect 12345
-vwait forever
-.CE
 .SH "SEE ALSO"
 close(n), eof(n), fblocked(n), fconfigure(n), fcopy(n), file(n),
 fileevent(n), flush(n), gets(n), open(n), puts(n), read(n), seek(n),
-socket(n), tell(n), refchan(n), transchan(n)
+socket(n), tell(n), refchan(n)
 .SH KEYWORDS
 channel, input, output, events, offset
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

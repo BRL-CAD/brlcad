@@ -18,8 +18,6 @@
 
 class ON_PlaneSurface;
 
-typedef ON_Mesh* (*ON_MeshPlaneSurface)( const ON_PlaneSurface&, const ON_MeshParameters&, ON_Mesh* );
-
 class ON_CLASS ON_PlaneSurface : public ON_Surface
 {
   ON_OBJECT_DECLARE(ON_PlaneSurface);
@@ -603,9 +601,6 @@ public:
   ON_Interval Extents(
          int dir
          ) const;
-
-public:
-  static ON_MeshPlaneSurface _MeshPlaneSurface;
 
 protected:
   // evaluation domain (always increasing)

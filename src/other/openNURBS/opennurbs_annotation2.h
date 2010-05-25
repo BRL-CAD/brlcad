@@ -79,6 +79,70 @@ public:
   ON_RECT m_rect;
 };
 
+// Extension to ON_TextEntity added 12/10/2009 for Text background drawing
+class ON_CLASS ON_TextExtra : public ON_UserData
+{
+  ON_OBJECT_DECLARE(ON_TextExtra);
+public:
+
+  ON_TextExtra();
+  ~ON_TextExtra();
+
+  static
+  ON_TextExtra* TextExtension(class ON_TextEntity2* pDim, bool bCreate);
+  static const 
+  ON_TextExtra* TextExtension(const class ON_TextEntity2* pDim, bool bCreate);
+
+  void SetDefaults();
+
+  // override virtual ON_Object::Dump function
+  void Dump( ON_TextLog& text_log ) const;
+
+  // override virtual ON_Object::Dump function
+  unsigned int SizeOf() const;
+
+  // override virtual ON_Object::Write function
+  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
+
+  // override virtual ON_Object::Read function
+  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
+
+  // override virtual ON_UserData::GetDescription function
+  ON_BOOL32 GetDescription( ON_wString& description );
+
+  // override virtual ON_UserData::Archive function
+  ON_BOOL32 Archive() const; 
+
+  ON_UUID ParentUUID() const;
+  void SetParentUUID( ON_UUID parent_uuid);
+
+  bool DrawTextMask() const;
+  void SetDrawTextMask(bool bDraw);
+
+  int MaskColorSource() const;
+  void SetMaskColorSource(int source);
+
+  ON_Color MaskColor() const;  // Only works right if MaskColorSource returns 2.
+                               // Does not return viewport background color
+  void SetMaskColor(ON_Color color);
+
+  double MaskOffsetFactor() const;
+  void SetMaskOffsetFactor(double offset);
+
+  ON_UUID  m_partent_uuid;   // uuid of the text using this extension
+
+  bool     m_bDrawMask;      // do or don't draw a mask
+
+  int      m_color_source;   // 0: Use background color from viewport
+                             // 1: Use specific color from m_mask_color
+
+  ON_Color m_mask_color;     // Color to use for mask if m_color_source is 2
+
+  double   m_border_offset;  // Offset for the border around text to the rectangle used to draw the mask
+                             // This number * HeightOfI for the text is the offset on each side of the 
+                             // tight rectangle around the text characters to the mask rectangle.
+};
+
 
 class ON_CLASS ON_DimensionExtra : public ON_UserData
 {
@@ -87,6 +151,11 @@ public:
 
   ON_DimensionExtra();
   ~ON_DimensionExtra();
+
+  static
+  ON_DimensionExtra* DimensionExtension(class ON_LinearDimension2* pDim, bool bCreate);
+  static const 
+  ON_DimensionExtra* DimensionExtension(const class ON_LinearDimension2* pDim, bool bCreate);
 
   void SetDefaults();
 
@@ -117,30 +186,30 @@ public:
   int ArrowPosition() const;
   void SetArrowPosition( int position);
 
-  const wchar_t* ToleranceUpperString() const;
-  ON_wString& ToleranceUpperString();
-  void SetToleranceUpperString( const wchar_t* upper_string);
-  void SetToleranceUpperString( ON_wString& upper_string);
+  //const wchar_t* ToleranceUpperString() const;
+  //ON_wString& ToleranceUpperString();
+  //void SetToleranceUpperString( const wchar_t* upper_string);
+  //void SetToleranceUpperString( ON_wString& upper_string);
 
-  const wchar_t* ToleranceLowerString() const;
-  ON_wString& ToleranceLowerString();
-  void SetToleranceLowerString( const wchar_t* lower_string);
-  void SetToleranceLowerString( ON_wString& lower_string);
+  //const wchar_t* ToleranceLowerString() const;
+  //ON_wString& ToleranceLowerString();
+  //void SetToleranceLowerString( const wchar_t* lower_string);
+  //void SetToleranceLowerString( ON_wString& lower_string);
 
-  const wchar_t* AlternateString() const;
-  ON_wString& AlternateString();
-  void SetAlternateString( const wchar_t* alt_string);
-  void SetAlternateString( ON_wString& alt_string);
+  //const wchar_t* AlternateString() const;
+  //ON_wString& AlternateString();
+  //void SetAlternateString( const wchar_t* alt_string);
+  //void SetAlternateString( ON_wString& alt_string);
 
-  const wchar_t* AlternateToleranceUpperString() const;
-  ON_wString& AlternateToleranceUpperString();
-  void SetAlternateToleranceUpperString( const wchar_t* upper_string);
-  void SetAlternateToleranceUpperString( ON_wString& upper_string);
+  //const wchar_t* AlternateToleranceUpperString() const;
+  //ON_wString& AlternateToleranceUpperString();
+  //void SetAlternateToleranceUpperString( const wchar_t* upper_string);
+  //void SetAlternateToleranceUpperString( ON_wString& upper_string);
 
-  const wchar_t* AlternateToleranceLowerString() const;
-  ON_wString& AlternateToleranceLowerString();
-  void SetAlternateToleranceLowerString( const wchar_t* lower_string);
-  void SetAlternateToleranceLowerString( ON_wString& lower_string);
+  //const wchar_t* AlternateToleranceLowerString() const;
+  //ON_wString& AlternateToleranceLowerString();
+  //void SetAlternateToleranceLowerString( const wchar_t* lower_string);
+  //void SetAlternateToleranceLowerString( ON_wString& lower_string);
 
   ON_UUID m_partent_uuid;  // the dimension using this extension
 
@@ -1040,13 +1109,13 @@ public:
     // Do not change these enum values.  They are saved in files as the 
     // ON_COMPONENT_INDEX.m_index value.
     //
-    // Indices of angular dimension definition points in 
+    // Indices of radial dimension definition points in 
     // the m_points[] array
     center_pt_index = 0, // location of + (usually at center of circle)
     arrow_pt_index  = 1, // arrow tip
     tail_pt_index   = 2, // end of radial dimension
-    knee_pt_index   = 3, // number of m_points[] in an angular dim
-    dim_pt_count    = 4, // number of m_points[] in an angular dim
+    knee_pt_index   = 3, // number of m_points[] in a radial dim
+    dim_pt_count    = 4, // number of m_points[] in a radial dim
 
     // Points calculated from values in m_points[]
     text_pivot_pt = 10000, // start/end of dimension text at tail
@@ -1236,7 +1305,9 @@ public:
     arcstart_pt   = 10001,
     arcend_pt     = 10002,
     arcmid_pt     = 10003,
-    arccenter_pt  = 10004 // center of circle arc lies on  
+    arccenter_pt  = 10004, // center of circle arc lies on  
+    extension0_pt = 10005, // point where first extension line starts
+    extension1_pt = 10006  // point where second extension line starts
   };
 
   ON_AngularDimension2();
@@ -1351,6 +1422,8 @@ public:
 
   bool GetArc( ON_Arc& arc ) const;
 
+  bool GetExtensionLines(ON_Line extensions[2]) const;
+
   // Set or get the measured angle in radians
   void SetAngle( double angle);
   double Angle() const;
@@ -1437,6 +1510,29 @@ public:
       double a[6],
       bool& bInside
       ) const;
+
+  
+  /*
+  Description:
+    Get distance from dimension apex to extension line offset points
+  Parameters:
+    index - [in]  which distance to get
+  Returns:
+    Distance to offset point [index]
+  */
+  double DimpointOffset(
+    int index) const;
+
+  /*
+  Description:
+    Set distance from dimension apex to extension line offset points
+  Parameters:
+    index  - [in]  which distance to set
+    offset - [in] Value to set
+  */
+  void SetDimpointOffset(
+    int index, 
+    double offset);
 };
 
 
@@ -1753,6 +1849,26 @@ public:
 
   unsigned int Justification();
 
+  // Determines whether or not to draw a Text Mask
+  bool DrawTextMask() const;
+  void SetDrawTextMask(bool bDraw);
+
+  // Determines where to get the color to draw a Text Mask
+  // 0: Use background color of the viewport.  Initially, gradient backgrounds will not be supported
+  // 1: Use the ON_Color returned by MaskColor()
+  int MaskColorSource() const;
+  void SetMaskColorSource(int source);
+
+  ON_Color MaskColor() const;  // Only works right if MaskColorSource returns 1.
+                               // Does not return viewport background color
+  void SetMaskColor(ON_Color color);
+
+  // Offset for the border around text to the rectangle used to draw the mask
+  // This number * CRhinoAnnotation::TextHeight() for the text is the offset 
+  // on each side of the tight rectangle around the text characters to the mask rectangle.
+  double MaskOffsetFactor() const;
+  void SetMaskOffsetFactor(double offset);
+
 };
 
 //////////
@@ -2037,7 +2153,7 @@ public:
     Description:
       Get or Set whether the dot is drawn with a transparent background
     Parameters:
-      [in] bTop  bool - It is or isn't on transparent
+      [in] bTransparent  bool - It is or isn't transparent
     Returns:
       @untitled table
       true - transparent
@@ -2045,6 +2161,32 @@ public:
   */
   void SetTransparent(bool bTransparent);
   bool Transparent() const;
+
+  /*
+    Description:
+      Get or Set whether the dot is drawn with Bold text
+    Parameters:
+      [in] bBold  bool - It is or isn't Bold
+    Returns:
+      @untitled table
+      true - Bold
+      false - not Bold
+  */
+  void SetBold(bool bBold);
+  bool Bold() const;
+
+  /*
+    Description:
+      Get or Set whether the dot is drawn with Italic text
+    Parameters:
+      [in] bItalic  bool - It is or isn't Italic
+    Returns:
+      @untitled table
+      true - Italic
+      false - not Italic
+  */
+  void SetItalic(bool bItalic);
+  bool Italic() const;
 
 
   ON_3dPoint m_point;

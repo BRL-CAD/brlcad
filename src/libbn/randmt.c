@@ -105,7 +105,7 @@ double bn_randmt() {
     y ^= TEMPERING_SHIFT_T(y) & TEMPERING_MASK_C;
     y ^= TEMPERING_SHIFT_L(y);
 
-    return ( (double)y / (unsigned long)0xffffffff );
+    return (double)y / (unsigned long)0xffffffff;
 }
 
 /*

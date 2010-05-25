@@ -37,10 +37,10 @@ static void		FreeUidThreadExitProc(ClientData clientData);
  * used by Tk_GetAnchorFromObj and Tk_GetJustifyFromObj.
  */
 
-static const char *const anchorStrings[] = {
+static CONST char *anchorStrings[] = {
     "n", "ne", "e", "se", "s", "sw", "w", "nw", "center", NULL
 };
-static const char *const justifyStrings[] = {
+static CONST char *justifyStrings[] = {
     "left", "right", "center", NULL
 };
 
@@ -103,7 +103,7 @@ Tk_GetAnchorFromObj(
 int
 Tk_GetAnchor(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    const char *string,		/* String describing a direction. */
+    CONST char *string,		/* String describing a direction. */
     Tk_Anchor *anchorPtr)	/* Where to store Tk_Anchor corresponding to
 				 * string. */
 {
@@ -175,7 +175,7 @@ Tk_GetAnchor(
  *--------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tk_NameOfAnchor(
     Tk_Anchor anchor)		/* Anchor for which identifying string is
 				 * desired. */
@@ -216,7 +216,7 @@ Tk_NameOfAnchor(
 int
 Tk_GetJoinStyle(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    const char *string,		/* String describing a justification style. */
+    CONST char *string,		/* String describing a justification style. */
     int *joinPtr)		/* Where to store join style corresponding to
 				 * string. */
 {
@@ -260,7 +260,7 @@ Tk_GetJoinStyle(
  *--------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tk_NameOfJoinStyle(
     int join)			/* Join style for which identifying string is
 				 * desired. */
@@ -295,7 +295,7 @@ Tk_NameOfJoinStyle(
 int
 Tk_GetCapStyle(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    const char *string,		/* String describing a justification style. */
+    CONST char *string,		/* String describing a justification style. */
     int *capPtr)		/* Where to store cap style corresponding to
 				 * string. */
 {
@@ -339,7 +339,7 @@ Tk_GetCapStyle(
  *--------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tk_NameOfCapStyle(
     int cap)			/* Cap style for which identifying string is
 				 * desired. */
@@ -411,7 +411,7 @@ Tk_GetJustifyFromObj(
 int
 Tk_GetJustify(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    const char *string,		/* String describing a justification style. */
+    CONST char *string,		/* String describing a justification style. */
     Tk_Justify *justifyPtr)	/* Where to store Tk_Justify corresponding to
 				 * string. */
 {
@@ -456,7 +456,7 @@ Tk_GetJustify(
  *--------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tk_NameOfJustify(
     Tk_Justify justify)		/* Justification style for which identifying
 				 * string is desired. */
@@ -489,9 +489,8 @@ static void
 FreeUidThreadExitProc(
     ClientData clientData)		/* Not used. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
             Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-
     Tcl_DeleteHashTable(&tsdPtr->uidTable);
     tsdPtr->initialized = 0;
 }
@@ -520,10 +519,10 @@ FreeUidThreadExitProc(
 
 Tk_Uid
 Tk_GetUid(
-    const char *string)		/* String to convert. */
+    CONST char *string)		/* String to convert. */
 {
     int dummy;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
             Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashTable *tablePtr = &tsdPtr->uidTable;
 
@@ -562,7 +561,7 @@ Tk_GetScreenMM(
     Tk_Window tkwin,		/* Window whose screen determines conversion
 				 * from centimeters and other absolute
 				 * units. */
-    const char *string,		/* String describing a screen distance. */
+    CONST char *string,		/* String describing a screen distance. */
     double *doublePtr)		/* Place to store converted result. */
 {
     char *end;
@@ -636,7 +635,7 @@ Tk_GetPixels(
     Tk_Window tkwin,		/* Window whose screen determines conversion
 				 * from centimeters and other absolute
 				 * units. */
-    const char *string,		/* String describing a number of pixels. */
+    CONST char *string,		/* String describing a number of pixels. */
     int *intPtr)		/* Place to store converted result. */
 {
     double d;
@@ -661,6 +660,7 @@ Tk_GetPixels(
  *	string.
  *
  * Results:
+
  *	The return value is a standard Tcl return result. If TCL_OK is
  *	returned, then everything went well and the pixel distance is stored
  *	at *doublePtr; otherwise TCL_ERROR is returned and an error message is
@@ -678,7 +678,7 @@ TkGetDoublePixels(
     Tk_Window tkwin,		/* Window whose screen determines conversion
 				 * from centimeters and other absolute
 				 * units. */
-    const char *string,		/* String describing a number of pixels. */
+    CONST char *string,		/* String describing a number of pixels. */
     double *doublePtr)		/* Place to store converted result. */
 {
     char *end;

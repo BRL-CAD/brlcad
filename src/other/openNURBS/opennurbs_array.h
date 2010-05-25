@@ -261,6 +261,9 @@ public:
                                       // is reduced to value.
                                       //
 
+  int NewCapacity() const;            // When the dynamic array needs to grow,
+                                      // this calculates the new value for m_capacity.
+
   /*
   Returns:
      A pointer to the array and zeros out this class.
@@ -339,7 +342,6 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_2dex>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3dex>;
 
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_COMPONENT_INDEX>;
-
 #pragma warning( pop )
 #endif
 
@@ -948,6 +950,9 @@ public:
                                       // is < current Count(), then count
                                       // is reduced to value.
 
+  int NewCapacity() const;            // When the dynamic array needs to grow,
+                                      // this calculates the new value for m_capacity.
+
   T* KeepArray();                     // returns pointer to array and zeros
                                       // out this class.  Caller is responsible
                                       // for calling destructor on each element
@@ -1057,6 +1062,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_DisplayMaterialRef>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_LinetypeSegment>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_UuidPair>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_PlaneEquation>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_SimpleArray<int> >;
 #pragma warning( pop )
 
 #endif

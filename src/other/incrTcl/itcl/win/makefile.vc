@@ -7,19 +7,8 @@
 # Copyright (c) 1993-1998 Lucent Technologies, Inc.
 # RCS: $Id$
 #------------------------------------------------------------------------------
-#  There is no requirement to modify this file to generate a build.
+#  Do not modify this file!
 #------------------------------------------------------------------------------
-
-# Check to see we are configured to build with MSVC (MSDEVDIR or MSVCDIR)
-# or with the MS Platform SDK (MSSDK). Visual Studio .NET 2003 and 2005 define
-# VCINSTALLDIR instead.
-!if !defined(MSDEVDIR) && !defined(MSVCDIR) && !defined(MSSDK) && !defined(VCINSTALLDIR)
-MSG = ^
-You need to run vcvars32.bat from Developer Studio or setenv.bat from the^
-Platform SDK first to setup the environment.  Jump to this line to read^
-the build instructions.
-!error $(MSG)
-!endif
 
 !if !exist("makefile.vc")
 MSG = ^
@@ -29,7 +18,7 @@ Please `cd` to its location first.
 !endif
 
 PROJECT	= itcl
-!include "rules.vc"
+!include "..\..\rules.vc"
 
 !if $(TCLINSTALL)
 !message *** Warning: [Incr Tcl] requires the source distribution of Tcl to build from,
@@ -37,62 +26,64 @@ PROJECT	= itcl
 !message ***    sources.
 !endif
 
-!if [echo REM = This file is generated from rules.vc > versions.vc]
+!if [nmakehlp -g ..\generic\itcl.h ITCL_VERSION] == 33
+ITCL_DOTVERSION	= 3.3
+!elseif [nmakehlp -g ..\generic\itcl.h ITCL_VERSION] == 34
+ITCL_DOTVERSION	= 3.4
+!elseif [nmakehlp -g ..\generic\itcl.h ITCL_VERSION] == 35
+ITCL_DOTVERSION	= 3.5
+!elseif [nmakehlp -g ..\generic\itcl.h ITCL_VERSION] == 0
+MSG =^
+Can't get version string from ..\generic\itcl.h
+!error $(MSG)
 !endif
-!if [echo ITCL_VERSION = \>> versions.vc] \
-   && [nmakehlp -V ..\generic\itcl.h ITCL_VERSION >> versions.vc]
-!endif
-!if [echo ITCL_MAJOR_VERSION = \>> versions.vc] \
-   && [nmakehlp -V ..\generic\itcl.h ITCL_MAJOR_VERSION >> versions.vc]
-!endif
-!if [echo ITCL_MINOR_VERSION = \>> versions.vc] \
-   && [nmakehlp -V ..\generic\itcl.h ITCL_MINOR_VERSION >> versions.vc]
-!endif
-!if [echo ITCL_PATCH_LEVEL = \>> versions.vc] \
-   && [nmakehlp -V ..\generic\itcl.h ITCL_PATCH_LEVEL >> versions.vc]
-!endif
-!include "versions.vc"
+ITCL_VERSION	= $(ITCL_DOTVERSION:.=)
 
 
 BINROOT		= .
 ROOT		= ..
 STUBPREFIX	= $(PROJECT)stub
-DOTVERSION      = $(ITCL_MAJOR_VERSION).$(ITCL_MINOR_VERSION)
-VERSION         = $(ITCL_MAJOR_VERSION)$(ITCL_MINOR_VERSION)
 
 PKGINDEX	= "$(TMP_DIR)\pkgIndex.tcl"
-ITCLLIBNAME	= $(PROJECT)$(VERSION)$(SUFX).$(EXT)
+
+!if $(TCL_DOES_STUBS)
+ITCLLIBNAME	= $(PROJECT)$(ITCL_VERSION)$(SUFX).$(EXT)
+!else
+ITCLLIBNAME	= $(PROJECT)$(ITCL_VERSION)80$(SUFX).$(EXT)
+!endif
+
 ITCLLIB		= "$(OUT_DIR)\$(ITCLLIBNAME)"
-ITCLIMPLIB	= "$(OUT_DIR)\$(PROJECT)$(VERSION)$(SUFX).lib"
-ITCLSTUBLIBNAME	= $(STUBPREFIX)$(VERSION).lib
+ITCLIMPLIB	= "$(OUT_DIR)\$(PROJECT)$(ITCL_VERSION)$(SUFX).lib"
+
+!if $(TCL_DOES_STUBS)
+ITCLSTUBLIBNAME	= $(STUBPREFIX)$(ITCL_VERSION).lib
 ITCLSTUBLIB	= "$(OUT_DIR)\$(ITCLSTUBLIBNAME)"
+!else
+ITCLSTUBLIBNAME	=
+ITCLSTUBLIB	= 
+TCLSTUBLIB	= $(TCLIMPLIB)
+!endif
 
 BIN_INSTALL_DIR		= $(_INSTALLDIR)\bin
 DOC_INSTALL_DIR		= $(_INSTALLDIR)\doc
 LIB_INSTALL_DIR		= $(_INSTALLDIR)\lib
-SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\lib\$(PROJECT)$(DOTVERSION)
+SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\lib\itcl$(ITCL_DOTVERSION)
 INCLUDE_INSTALL_DIR	= $(_INSTALLDIR)\include
 
 ITCLOBJS = \
-        $(TMP_DIR)\itcl2TclOO.obj \
-        $(TMP_DIR)\itclBase.obj \
-        $(TMP_DIR)\itclBuiltin.obj \
-        $(TMP_DIR)\itclClass.obj \
-        $(TMP_DIR)\itclCmd.obj \
-        $(TMP_DIR)\itclEnsemble.obj \
-        $(TMP_DIR)\itclHelpers.obj \
-        $(TMP_DIR)\itclInfo.obj \
-        $(TMP_DIR)\itclLinkage.obj \
-        $(TMP_DIR)\itclMethod.obj \
-        $(TMP_DIR)\itclMigrate2TclCore.obj \
-        $(TMP_DIR)\itclNeededFromTclOO.obj \
-        $(TMP_DIR)\itclObject.obj \
-        $(TMP_DIR)\itclParse.obj \
-        $(TMP_DIR)\itclResolve.obj \
-        $(TMP_DIR)\itclStubs.obj \
-        $(TMP_DIR)\itclStubInit.obj \
-        $(TMP_DIR)\itclTclIntStubsFcn.obj \
-        $(TMP_DIR)\itclUtil.obj \
+	$(TMP_DIR)\itcl_bicmds.obj \
+	$(TMP_DIR)\itcl_class.obj \
+	$(TMP_DIR)\itcl_cmds.obj \
+	$(TMP_DIR)\itcl_ensemble.obj \
+	$(TMP_DIR)\itcl_linkage.obj \
+	$(TMP_DIR)\itcl_migrate.obj \
+	$(TMP_DIR)\itcl_methods.obj \
+	$(TMP_DIR)\itcl_objects.obj \
+	$(TMP_DIR)\itcl_parse.obj \
+	$(TMP_DIR)\itcl_util.obj \
+!if $(TCL_DOES_STUBS)
+	$(TMP_DIR)\itclStubInit.obj \
+!endif
 !if !$(STATIC_BUILD)
 	$(TMP_DIR)\dllEntryPoint.obj \
 	$(TMP_DIR)\itcl.res
@@ -105,69 +96,9 @@ ITCLSTUBOBJS = \
 
 GENERICDIR	= $(ROOT)\generic
 DOCDIR		= $(ROOT)\doc
+RCDIR		= $(ROOT)\win\rc
 WINDIR		= $(ROOT)\win
 TOOLSDIR	= ..\..\tools
-
-#---------------------------------------------------------------------
-# Compile flags
-#---------------------------------------------------------------------
-
-!if !$(DEBUG)
-!if $(OPTIMIZING)
-### This cranks the optimization level to maximize speed
-cdebug	= -O2 $(OPTIMIZATIONS)
-!else
-cdebug	= 
-!endif
-!if $(SYMBOLS)
-cdebug	= $(cdebug) -Zi
-!endif
-!else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
-### Warnings are too many, can't support warnings into errors.
-cdebug	= -Zi -Od $(DEBUGFLAGS)
-!else
-cdebug	= -Zi -WX $(DEBUGFLAGS)
-!endif
-
-### Declarations common to all compiler options
-cwarn = $(WARNINGS) -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
-cflags = -nologo -c $(COMPILERFLAGS) $(cwarn) -Fp$(TMP_DIR)^\
-
-!if $(MSVCRT)
-!if $(DEBUG) && !$(UNCHECKED)
-crt = -MDd
-!else
-crt = -MD
-!endif
-!else
-!if $(DEBUG) && !$(UNCHECKED)
-crt = -MTd
-!else
-crt = -MT
-!endif
-!endif
-
-!if $(TCLINSTALL)
-TCL_INCLUDES	= -I"$(TCLDIR)\include"
-!else
-TCL_INCLUDES	= -I"$(TCLDIR)\generic" -I"$(TCLDIR)\win"
-!endif
-
-ITCL_INCLUDES	= -I$(WINDIR) -I$(GENERICDIR)
-ITCL_DEFINES	= -DBUILD_itcl -DTCL_THREADS=1
-!if $(DEBUG)
-ITCL_DEFINES	= $(ITCL_DEFINES) -DITCL_DEBUG
-!endif
-ITCL_DLL_CFLAGS	= $(cflags) $(cdebug) $(crt) $(ITCL_INCLUDES) $(ITCL_DEFINES) $(TCL_INCLUDES) $(OPTDEFINES)
-ITCL_STUB_CFLAGS= $(cflags) $(cdebug:-GL=) $(ITCL_INCLUDES) $(TCL_INCLUDES) $(OPTDEFINES)
-
-### By convention, static builds do not use Stubs.  This is just a practice,
-### not a technical limitation.
-!if $(STATIC_BUILD)
-ITCL_CFLAGS	= $(ITCL_DLL_CFLAGS) -DSTATIC_BUILD
-!else
-ITCL_CFLAGS	= $(ITCL_DLL_CFLAGS) -DUSE_TCL_STUBS -DUSE_TCLOO_STUBS
-!endif
 
 #---------------------------------------------------------------------
 # Link flags
@@ -180,7 +111,7 @@ ldebug	= -release -opt:ref -opt:icf,3
 !endif
 
 # declarations common to all linker options
-lflags	= -nologo -machine:$(MACHINE) $(LINKERFLAGS) $(ldebug) 
+lflags	= -nologo -machine:$(MACHINE) $(ldebug)
 
 !if $(PROFILE)
 lflags	= $(lflags) -profile
@@ -206,13 +137,56 @@ ITCL_DLLBASE	= -base:@$(TCLDIR)\win\coffbase.txt,itcl
 ITCL_DLLBASE	=
 !endif
 
-baselibs   = 
-# Avoid 'unresolved external symbol __security_cookie' errors.
-# c.f. http://support.microsoft.com/?id=894573
-!if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
-!if $(VCVERSION) > 1399 && $(VCVERSION) < 1500
-baselibs   = $(baselibs) bufferoverflowU.lib
+#---------------------------------------------------------------------
+# Compile flags
+#---------------------------------------------------------------------
+
+!if $(DEBUG)
+!if "$(MACHINE)" == "IA64"
+cdebug = -Od -Zi
+!else
+cdebug = -Z7 -Od -WX
 !endif
+!else
+# This cranks the optimization level up to max.
+cdebug = -O2
+!endif
+
+# declarations common to all compiler options
+cflags = -nologo -c -W3 -YX -Fp$(TMP_DIR)^\
+
+!if $(PENT_0F_ERRATA)
+cflags = $(cflags) -QI0f
+!endif
+
+!if $(ITAN_B_ERRATA)
+cflags = $(cflags) -QIA64_Bx
+!endif
+
+!if $(MSVCRT)
+crt = -MD$(DBGX)
+!else
+crt = -MT$(DBGX)
+!endif
+
+!if $(TCLINSTALL)
+TCL_INCLUDES	= -I"$(TCLDIR)\include"
+!else
+TCL_INCLUDES	= -I"$(TCLDIR)\generic" -I"$(TCLDIR)\win"
+!endif
+
+ITCL_INCLUDES	= -I$(WINDIR) -I$(GENERICDIR)
+ITCL_DEFINES	= -DBUILD_itcl -DTCL_THREADS=1
+ITCL_EXE_CFLAGS	= $(cdebug) $(cflags) $(crt) $(ITCL_INCLUDES) $(ITCL_DEFINES) $(TCL_INCLUDES)
+
+### By convention, static builds do not use Stubs.  This is just a practice,
+### not a technical limitation.
+!if $(STATIC_BUILD)
+ITCL_CFLAGS	= $(ITCL_EXE_CFLAGS) -DSTATIC_BUILD
+!elseif $(TCL_DOES_STUBS)
+ITCL_CFLAGS	= $(ITCL_EXE_CFLAGS) -DUSE_TCL_STUBS
+!else
+ITCL_CFLAGS	= $(ITCL_EXE_CFLAGS)
 !endif
 
 #---------------------------------------------------------------------
@@ -238,14 +212,12 @@ setup :
 $(ITCLLIB): $(ITCLOBJS)
 !if $(STATIC_BUILD)
 	$(lib32) -nologo -machine:$(MACHINE) -out:$@ @<<
-$**
+$(ITCLOBJS)
 <<
 !else
-	$(link32) $(ITCL_LFLAGS) $(ITCL_DLLBASE) -out:$@ $(TCLSTUBLIB) \
-		$(baselibs) @<<
-$**
+	$(link32) $(ITCL_LFLAGS) $(ITCL_DLLBASE) -out:$@ $(TCLSTUBLIB) @<<
+$(ITCLOBJS)
 <<
-	$(_VC_MANIFEST_EMBED_DLL)
 	-@del $*.exp
 !endif
 
@@ -276,14 +248,14 @@ install-binaries :
 	echo if {[info exists ::tcl_platform(debug)] ^&^&\
 		$$::tcl_platform(debug)	^&^& \>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
 	echo ^ ^ ^ ^ ^ ^ ^ ^ [file exists [file join $$dir\
-		$(PROJECT)$(VERSION)$${add}g.dll]]}\
+		$(PROJECT)$(ITCL_VERSION)$${add}g.dll]]}\
 		{>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
-	echo ^ ^ ^ ^ package ifneeded Itcl $(VERSION) [list load\
-		[file join $$dir $(PROJECT)$(VERSION)$${add}g.dll]\
+	echo ^ ^ ^ ^ package ifneeded Itcl $(ITCL_DOTVERSION) [list load\
+		[file join $$dir $(PROJECT)$(ITCL_VERSION)$${add}g.dll]\
 		Itcl]>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
 	echo } else {>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
-	echo ^ ^ ^ ^ package ifneeded Itcl $(DOTVERSION) [list load\
-		[file join $$dir $(PROJECT)$(VERSION)$${add}.dll]\
+	echo ^ ^ ^ ^ package ifneeded Itcl $(ITCL_DOTVERSION) [list load\
+		[file join $$dir $(PROJECT)$(ITCL_VERSION)$${add}.dll]\
 		Itcl]>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
 	echo }>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
 	echo unset add>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
@@ -317,37 +289,33 @@ genstubs:
 
 # The following object is part of the stub library and should not
 # be built as DLL objects but none of the symbols should be exported
-# and without reference to any specific C-runtime.
 
 $(TMP_DIR)\itclStubLib.obj : $(GENERICDIR)\itclStubLib.c
-	$(cc32) -DSTATIC_BUILD $(ITCL_STUB_CFLAGS) -Zl -Fo$@ $?
+	$(cc32) -DSTATIC_BUILD $(ITCL_EXE_CFLAGS) -Zl -Fo$@ $?
 
 #---------------------------------------------------------------------
 # Inference rules.  Use batch-mode when supported.
 #---------------------------------------------------------------------
 
-{$(WINDIR)}.c{$(TMP_DIR)}.obj::
+{$(WINDIR)}.c{$(TMP_DIR)}.obj ::
 	$(cc32) $(ITCL_CFLAGS) -Fo$(TMP_DIR)\ @<<
 $<
 <<
 
-{$(GENERICDIR)}.c{$(TMP_DIR)}.obj::
+{$(GENERICDIR)}.c{$(TMP_DIR)}.obj ::
 	$(cc32) $(ITCL_CFLAGS) -Fo$(TMP_DIR)\ @<<
 $<
 <<
 
-{$(WINDIR)}.rc{$(TMP_DIR)}.res:
+{$(RCDIR)}.rc{$(TMP_DIR)}.res :
 	$(rc32) -fo $@ -d DEBUG=$(DEBUG) -d UNCHECKED=$(UNCHECKED) \
 		$(ITCL_INCLUDES) $(TCL_INCLUDES) $(ITCL_DEFINES) $<
-
-.SUFFIXES:
-.SUFFIXES:.c .rc
 
 #---------------------------------------------------------------------
 # Generate the windows help files.
 #---------------------------------------------------------------------
 
-HLPBASE		= $(PROJECT)$(VERSION)
+HLPBASE		= $(PROJECT)$(ITCL_VERSION)
 HELPFILE	= $(OUT_DIR)\$(HLPBASE).hlp
 HELPCNT		= $(OUT_DIR)\$(HLPBASE).cnt
 DOCTMP_DIR	= $(OUT_DIR)\$(PROJECT)_docs
@@ -402,7 +370,7 @@ $(MAN2TCL): $(TCLTOOLSDIR)\$$(@B).c
 	$(cc32) -nologo -G4 -ML -O2 -Fo$(@D)\ $(TCLTOOLSDIR)\$(@B).c -link -out:$@
 
 $(HELPRTF): $(MAN2TCL) $(MAN2HELP) $(MAN2HELP2) $(INDEX)
-	$(TCLSH) $(MAN2HELP) -bitmap $(BMP_NOPATH) $(PROJECT) $(VERSION) $(DOCDIR:\=/)
+	$(TCLSH) $(MAN2HELP) -bitmap $(BMP_NOPATH) $(PROJECT) $(ITCL_VERSION) $(DOCDIR:\=/)
 
 install-docs:
 !if exist($(HELPFILE))
@@ -418,7 +386,7 @@ while {![eof $$f]} {
 	    exit
 	} else {
 	    # do something here logical to remove (or replace) it.
-	    puts "$$ver != $(VERSION), unfinished code path, die, die!"
+	    puts "$$ver != $(ITCL_VERSION), unfinished code path, die, die!"
 	    exit 1
 	}
     }

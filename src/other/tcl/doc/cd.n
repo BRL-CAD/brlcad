@@ -16,6 +16,7 @@ cd \- Change working directory
 .SH SYNOPSIS
 \fBcd \fR?\fIdirName\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 Change the current working directory to \fIdirName\fR, or to the
@@ -26,20 +27,19 @@ Note that the current working directory is a per-process resource; the
 \fBcd\fR command changes the working directory for all interpreters
 and (in a threaded environment) all threads.
 .SH EXAMPLES
-.PP
 Change to the home directory of the user \fBfred\fR:
-.PP
 .CS
 \fBcd\fR ~fred
 .CE
 .PP
 Change to the directory \fBlib\fR that is a sibling directory of the
 current one:
-.PP
 .CS
 \fBcd\fR ../lib
 .CE
+
 .SH "SEE ALSO"
 filename(n), glob(n), pwd(n)
+
 .SH KEYWORDS
 working directory

@@ -171,7 +171,7 @@ test switch-4.1 {error in executed command} {
 "switch a a {error "Just a test"} default {subst 1}"}}
 test switch-4.2 {error: not enough args} -returnCodes error -body {
     switch
-} -result {wrong # args: should be "switch ?-switch ...? string ?pattern body ...? ?default body?"}
+} -result {wrong # args: should be "switch ?switches? string pattern body ... ?default body?"}
 test switch-4.3 {error: pattern with no body} -body {
     switch a b
 } -returnCodes error -result {extra switch pattern with no body}
@@ -271,16 +271,16 @@ test switch-8.3 {weird body text, variable} {
 
 test switch-9.1 {empty pattern/body list} -returnCodes error -body {
     switch x
-} -result {wrong # args: should be "switch ?-switch ...? string ?pattern body ...? ?default body?"}
+} -result {wrong # args: should be "switch ?switches? string pattern body ... ?default body?"}
 test switch-9.2 {unpaired pattern} -returnCodes error -body {
     switch -- x
 } -result {extra switch pattern with no body}
 test switch-9.3 {empty pattern/body list} -body {
     switch x {}
-} -returnCodes error -result {wrong # args: should be "switch ?-switch ...? string {?pattern body ...? ?default body?}"}
+} -returnCodes error -result {wrong # args: should be "switch ?switches? string {pattern body ... ?default body?}"}
 test switch-9.4 {empty pattern/body list} -body {
     switch -- x {}
-} -returnCodes error -result {wrong # args: should be "switch ?-switch ...? string {?pattern body ...? ?default body?}"}
+} -returnCodes error -result {wrong # args: should be "switch ?switches? string {pattern body ... ?default body?}"}
 test switch-9.5 {unpaired pattern} -body {
     switch x a {} b
 } -returnCodes error -result {extra switch pattern with no body}
@@ -738,24 +738,7 @@ test switch-14.16 {switch -regexp compilation} {
     }}
 } no
 
-test switch-15.1 {coroutine safety of non-bytecoded switch} {*}{
-    -body {
-	proc coro {} {
-	    switch -glob a {
-		a {yield ok1}
-	    }
-	    return ok2
-	}
-	list [coroutine c coro] [c]
-    }
-    -result {ok1 ok2}
-    -cleanup {
-	rename coro {}
-    }
-}
-
 # cleanup
-catch {rename foo {}}
 ::tcltest::cleanupTests
 return
 

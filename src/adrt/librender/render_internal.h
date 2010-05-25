@@ -44,6 +44,9 @@
 #define RENDER_MAX_DEPTH	24
 
 
+#define RENDER_SHADER(name) \
+	BU_EXPORT BU_EXTERN(int render_##name##_init, (render_t *, char *));
+
 struct render_s;
 typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel);
 typedef void render_free_t(struct render_s *render);
@@ -55,6 +58,7 @@ typedef struct render_s {
     render_free_t *free;
     void *data;
     struct render_s *next;
+    char *shader;
 } render_t;
 
 #endif

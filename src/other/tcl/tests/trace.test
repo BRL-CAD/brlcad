@@ -857,13 +857,13 @@ foreach type {variable command} {
 
 test trace-14.1 "trace command, wrong # args errors" {
     list [catch {trace} msg] $msg
-} [list 1 "wrong # args: should be \"trace option ?arg ...?\""]
+} [list 1 "wrong # args: should be \"trace option ?arg arg ...?\""]
 test trace-14.2 "trace command, wrong # args errors" {
     list [catch {trace add} msg] $msg
-} [list 1 "wrong # args: should be \"trace add type ?arg ...?\""]
+} [list 1 "wrong # args: should be \"trace add type ?arg arg ...?\""]
 test trace-14.3 "trace command, wrong # args errors" {
     list [catch {trace remove} msg] $msg
-} [list 1 "wrong # args: should be \"trace remove type ?arg ...?\""]
+} [list 1 "wrong # args: should be \"trace remove type ?arg arg ...?\""]
 test trace-14.4 "trace command, wrong # args errors" {
     list [catch {trace info} msg] $msg
 } [list 1 "wrong # args: should be \"trace info type name\""]

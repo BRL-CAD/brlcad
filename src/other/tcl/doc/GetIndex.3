@@ -31,7 +31,7 @@ provided on errors.
 The string value of this object is used to search through \fItablePtr\fR.
 The internal representation is modified to hold the index of the matching
 table entry.
-.AP "const char *const" *tablePtr in
+.AP "const char" **tablePtr in
 An array of null-terminated strings.  The end of the array is marked
 by a NULL string pointer.
 .AP "const void" *structTablePtr in
@@ -51,6 +51,7 @@ operation.  The only bit that is currently defined is \fBTCL_EXACT\fR.
 The index of the string in \fItablePtr\fR that matches the value of
 \fIobjPtr\fR is returned here.
 .BE
+
 .SH DESCRIPTION
 .PP
 This procedure provides an efficient way for looking up keywords,
@@ -94,7 +95,9 @@ array of characters at \fItablePtr\fR+\fIoffset\fR bytes, etc.)
 This is particularly useful when processing things like
 \fBTk_ConfigurationSpec\fR, whose string keys are in the same place in
 each of several array elements.
+
 .SH "SEE ALSO"
-prefix(n), Tcl_WrongNumArgs(3)
+Tcl_WrongNumArgs
+
 .SH KEYWORDS
 index, object, table lookup

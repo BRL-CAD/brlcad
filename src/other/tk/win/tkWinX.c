@@ -70,7 +70,7 @@ static TkWinProcs asciiProcs = {
 	    WPARAM wParam, LPARAM lParam)) CallWindowProcA,
     (LRESULT (WINAPI *)(HWND hWnd, UINT Msg, WPARAM wParam,
 	    LPARAM lParam)) DefWindowProcA,
-    (ATOM (WINAPI *)(const WNDCLASS *lpWndClass)) RegisterClassA,
+    (ATOM (WINAPI *)(CONST WNDCLASS *lpWndClass)) RegisterClassA,
     (BOOL (WINAPI *)(HWND hWnd, LPCTSTR lpString)) SetWindowTextA,
     (HWND (WINAPI *)(DWORD dwExStyle, LPCTSTR lpClassName,
 	    LPCTSTR lpWindowName, DWORD dwStyle, int x, int y,
@@ -79,8 +79,6 @@ static TkWinProcs asciiProcs = {
     (BOOL (WINAPI *)(HMENU hMenu, UINT uPosition, UINT uFlags,
 	    UINT uIDNewItem, LPCTSTR lpNewItem)) InsertMenuA,
     (int (WINAPI *)(HWND hWnd, LPCTSTR lpString, int nMaxCount)) GetWindowTextA,
-    (HWND (WINAPI *)(LPCTSTR lpClassName, LPCTSTR lpWindowName)) FindWindowA,
-    (int (WINAPI *)(HWND hwnd, LPTSTR lpClassName, int nMaxCount)) GetClassNameA,
 };
 
 static TkWinProcs unicodeProcs = {
@@ -90,7 +88,7 @@ static TkWinProcs unicodeProcs = {
 	    WPARAM wParam, LPARAM lParam)) CallWindowProcW,
     (LRESULT (WINAPI *)(HWND hWnd, UINT Msg, WPARAM wParam,
 	    LPARAM lParam)) DefWindowProcW,
-    (ATOM (WINAPI *)(const WNDCLASS *lpWndClass)) RegisterClassW,
+    (ATOM (WINAPI *)(CONST WNDCLASS *lpWndClass)) RegisterClassW,
     (BOOL (WINAPI *)(HWND hWnd, LPCTSTR lpString)) SetWindowTextW,
     (HWND (WINAPI *)(DWORD dwExStyle, LPCTSTR lpClassName,
 	    LPCTSTR lpWindowName, DWORD dwStyle, int x, int y,
@@ -99,8 +97,6 @@ static TkWinProcs unicodeProcs = {
     (BOOL (WINAPI *)(HMENU hMenu, UINT uPosition, UINT uFlags,
 	    UINT uIDNewItem, LPCTSTR lpNewItem)) InsertMenuW,
     (int (WINAPI *)(HWND hWnd, LPCTSTR lpString, int nMaxCount)) GetWindowTextW,
-    (HWND (WINAPI *)(LPCTSTR lpClassName, LPCTSTR lpWindowName)) FindWindowW,
-    (int (WINAPI *)(HWND hwnd, LPTSTR lpClassName, int nMaxCount)) GetClassNameW,
 };
 
 TkWinProcs *tkWinProcs;
@@ -260,7 +256,6 @@ TkWinXInit(
     INITCOMMONCONTROLSEX comctl;
     CHARSETINFO lpCs;
     DWORD lpCP;
-    int useWide;
 
     if (childClassInitialized != 0) {
 	return;
@@ -273,8 +268,7 @@ TkWinXInit(
 	Tcl_Panic("Unable to load common controls?!");
     }
 
-    useWide = (TkWinGetPlatformId() != VER_PLATFORM_WIN32_WINDOWS);
-    if (useWide) {
+    if (TkWinGetPlatformId() == VER_PLATFORM_WIN32_NT) {
 	tkWinProcs = &unicodeProcs;
     } else {
 	tkWinProcs = &asciiProcs;
@@ -304,7 +298,7 @@ TkWinXInit(
      * Initialize input language info
      */
 
-    if (GetLocaleInfo(LANGIDFROMLCID((DWORD)GetKeyboardLayout(0)),
+    if (GetLocaleInfo(LANGIDFROMLCID(GetKeyboardLayout(0)),
 	       LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
 	       (LPTSTR) &lpCP, sizeof(lpCP)/sizeof(TCHAR))
 	    && TranslateCharsetInfo((DWORD *)lpCP, &lpCs, TCI_SRCCODEPAGE)) {
@@ -411,7 +405,7 @@ TkWinGetPlatformId(void)
 		    KEY_READ, &hKey) != ERROR_SUCCESS) {
 		tkWinTheme = TK_THEME_WIN_XP;
 	    } else {
-		RegQueryValueEx(hKey, szCurrent, NULL, NULL, (LPBYTE) pBuffer, &dwSize);
+		RegQueryValueEx(hKey, szCurrent, NULL, NULL, pBuffer, &dwSize);
 		RegCloseKey(hKey);
 		if (strcmp(pBuffer, "Windows Standard") == 0) {
 		    tkWinTheme = TK_THEME_WIN_CLASSIC;
@@ -470,10 +464,10 @@ TkWinGetPlatformTheme(void)
  *----------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 TkGetDefaultScreenName(
     Tcl_Interp *interp,		/* Not used. */
-    const char *screenName)	/* If NULL, use default string. */
+    CONST char *screenName)	/* If NULL, use default string. */
 {
     if ((screenName == NULL) || (screenName[0] == '\0')) {
 	screenName = winScreenName;
@@ -595,7 +589,7 @@ TkWinDisplayChanged(
 
 TkDisplay *
 TkpOpenDisplay(
-    const char *display_name)
+    CONST char *display_name)
 {
     Screen *screen;
     TkWinDrawable *twdPtr;
@@ -1008,32 +1002,14 @@ GenerateXEvent(
     LPARAM lParam)
 {
     XEvent event;
-    TkWindow *winPtr;
+    TkWindow *winPtr = (TkWindow *)Tk_HWNDToWindow(hwnd);
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (message == WM_MOUSEWHEEL) {
-	union {LPARAM lParam; POINTS point;} root;
-	POINT pos;
-	root.lParam = lParam;
-
-	/*
-	 * Redirect mousewheel events to the window containing the cursor.
-	 * That feels much less strange to users, and is how all the other
-	 * platforms work.
-	 */
-
-	pos.x = root.point.x;
-	pos.y = root.point.y;
-	hwnd = WindowFromPoint(pos);
-    }
-
-    winPtr = (TkWindow *) Tk_HWNDToWindow(hwnd);
     if (!winPtr || winPtr->window == None) {
 	return;
     }
 
-    memset(&event, 0, sizeof(XEvent));
     event.xany.serial = winPtr->display->request++;
     event.xany.send_event = False;
     event.xany.display = winPtr->display;
@@ -1127,6 +1103,11 @@ GenerateXEvent(
 	break;
 
     case WM_MOUSEWHEEL:
+	/*
+	 * The mouse wheel event is closer to a key event than a mouse event
+	 * in that the message is sent to the window that has focus.
+	 */
+
     case WM_CHAR:
     case WM_UNICHAR:
     case WM_SYSKEYDOWN:
@@ -1136,15 +1117,17 @@ GenerateXEvent(
 	unsigned int state = GetState(message, wParam, lParam);
 	Time time = TkpGetMS();
 	POINT clientPoint;
-	union {DWORD msgpos; POINTS point;} root;	/* Note: POINT and POINTS are different */
+	POINTS rootPoint;	/* Note: POINT and POINTS are different */
+	DWORD msgPos;
 
 	/*
 	 * Compute the screen and window coordinates of the event.
 	 */
 
-	root.msgpos = GetMessagePos();
-	clientPoint.x = root.point.x;
-	clientPoint.y = root.point.y;
+	msgPos = GetMessagePos();
+	rootPoint = MAKEPOINTS(msgPos);
+	clientPoint.x = rootPoint.x;
+	clientPoint.y = rootPoint.y;
 	ScreenToClient(hwnd, &clientPoint);
 
 	/*
@@ -1155,8 +1138,8 @@ GenerateXEvent(
 	event.xbutton.subwindow = None;
 	event.xbutton.x = clientPoint.x;
 	event.xbutton.y = clientPoint.y;
-	event.xbutton.x_root = root.point.x;
-	event.xbutton.y_root = root.point.y;
+	event.xbutton.x_root = rootPoint.x;
+	event.xbutton.y_root = rootPoint.y;
 	event.xbutton.state = state;
 	event.xbutton.time = time;
 	event.xbutton.same_screen = True;

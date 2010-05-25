@@ -24,12 +24,10 @@ system as the exit status.
 If \fIreturnCode\fR is not specified then it defaults
 to 0.
 .SH EXAMPLE
-.PP
 Since non-zero exit codes are usually interpreted as error cases by
 the calling process, the \fBexit\fR command is an important part of
 signaling that something fatal has gone wrong. This code fragment is
 useful in scripts to act as a general problem trap:
-.PP
 .CS
 proc main {} {
     # ... put the real main code in here ...
@@ -47,7 +45,9 @@ if {[catch {main} msg options]} {
     \fBexit\fR 2
 }
 .CE
+
 .SH "SEE ALSO"
 exec(n)
+
 .SH KEYWORDS
-abort, exit, process
+exit, process

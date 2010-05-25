@@ -12,9 +12,6 @@
  * RCS: @(#) $Id$
  */
 
-#ifndef USE_TCL_STUBS
-#   define USE_TCL_STUBS
-#endif
 #include "tclInt.h"
 
 /*
@@ -58,7 +55,7 @@ static Pipe testPipes[MAX_PIPES];
  * The stuff below is used by the testalarm and testgotsig ommands.
  */
 
-static const char *gotsig = "0";
+static char *gotsig = "0";
 
 /*
  * Forward declarations of functions defined later in this file:
@@ -66,24 +63,25 @@ static const char *gotsig = "0";
 
 static void		TestFileHandlerProc(ClientData clientData, int mask);
 static int		TestfilehandlerCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestfilewaitCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestfindexecutableCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestgetopenfileCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestgetdefencdirCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestsetdefencdirCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
+int			TclplatformtestInit(Tcl_Interp *interp);
 static int		TestalarmCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 static int		TestgotsigCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 static void		AlarmHandler(int signum);
 static int		TestchmodCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+			    Tcl_Interp *interp, int argc, CONST char **argv);
 
 /*
  *----------------------------------------------------------------------
@@ -109,21 +107,21 @@ TclplatformtestInit(
     Tcl_CreateCommand(interp, "testchmod", TestchmodCmd,
 	    (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testfilehandler", TestfilehandlerCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testfilewait", TestfilewaitCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testfindexecutable", TestfindexecutableCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testgetopenfile", TestgetopenfileCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testgetdefenc", TestgetdefencdirCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testsetdefenc", TestsetdefencdirCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testalarm", TestalarmCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     Tcl_CreateCommand(interp, "testgotsig", TestgotsigCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     return TCL_OK;
 }
 
@@ -149,7 +147,7 @@ TestfilehandlerCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     Pipe *pipePtr;
     int i, mask, timeout;
@@ -171,7 +169,7 @@ TestfilehandlerCmd(
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
-		" option ... \"", NULL);
+                " option ... \"", NULL);
         return TCL_ERROR;
     }
     pipePtr = NULL;
@@ -198,7 +196,7 @@ TestfilehandlerCmd(
     } else if (strcmp(argv[1], "clear") == 0) {
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
-		    argv[0], " clear index\"", NULL);
+                    argv[0], " clear index\"", NULL);
 	    return TCL_ERROR;
 	}
 	pipePtr->readCount = pipePtr->writeCount = 0;
@@ -207,7 +205,7 @@ TestfilehandlerCmd(
 
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
-		    argv[0], " counts index\"", NULL);
+                    argv[0], " counts index\"", NULL);
 	    return TCL_ERROR;
 	}
 	sprintf(buf, "%d %d", pipePtr->readCount, pipePtr->writeCount);
@@ -215,7 +213,7 @@ TestfilehandlerCmd(
     } else if (strcmp(argv[1], "create") == 0) {
 	if (argc != 5) {
 	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
-		    argv[0], " create index readMode writeMode\"", NULL);
+                    argv[0], " create index readMode writeMode\"", NULL);
 	    return TCL_ERROR;
 	}
 	if (pipePtr->readFile == NULL) {
@@ -263,30 +261,30 @@ TestfilehandlerCmd(
     } else if (strcmp(argv[1], "empty") == 0) {
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
-		    argv[0], " empty index\"", NULL);
+                    argv[0], " empty index\"", NULL);
 	    return TCL_ERROR;
 	}
 
         while (read(GetFd(pipePtr->readFile), buffer, 4000) > 0) {
-	    /* Empty loop body. */
+            /* Empty loop body. */
         }
     } else if (strcmp(argv[1], "fill") == 0) {
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
-		    argv[0], " fill index\"", NULL);
+                    argv[0], " fill index\"", NULL);
 	    return TCL_ERROR;
 	}
 
 	memset(buffer, 'a', 4000);
         while (write(GetFd(pipePtr->writeFile), buffer, 4000) > 0) {
-	    /* Empty loop body. */
+            /* Empty loop body. */
         }
     } else if (strcmp(argv[1], "fillpartial") == 0) {
 	char buf[TCL_INTEGER_SPACE];
 
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
-		    argv[0], " fillpartial index\"", NULL);
+                    argv[0], " fillpartial index\"", NULL);
 	    return TCL_ERROR;
 	}
 
@@ -298,7 +296,7 @@ TestfilehandlerCmd(
     } else if (strcmp(argv[1], "wait") == 0) {
 	if (argc != 5) {
 	    Tcl_AppendResult(interp, "wrong # arguments: should be \"",
-		    argv[0], " wait index readable|writable timeout\"", NULL);
+                    argv[0], " wait index readable|writable timeout\"", NULL);
 	    return TCL_ERROR;
 	}
 	if (pipePtr->readFile == NULL) {
@@ -371,7 +369,7 @@ TestfilewaitCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     int mask, result, timeout;
     Tcl_Channel channel;
@@ -440,7 +438,7 @@ TestfindexecutableCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     Tcl_Obj *saveName;
 
@@ -483,22 +481,22 @@ TestgetopenfileCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     ClientData filePtr;
 
     if (argc != 3) {
         Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		" channelName forWriting\"", NULL);
+                " channelName forWriting\"", NULL);
         return TCL_ERROR;
     }
     if (Tcl_GetOpenFile(interp, argv[1], atoi(argv[2]), 1, &filePtr)
-	    == TCL_ERROR) {
+            == TCL_ERROR) {
         return TCL_ERROR;
     }
     if (filePtr == (ClientData) NULL) {
         Tcl_AppendResult(interp,
-		"Tcl_GetOpenFile succeeded but FILE * NULL!", NULL);
+                "Tcl_GetOpenFile succeeded but FILE * NULL!", NULL);
         return TCL_ERROR;
     }
     return TCL_OK;
@@ -526,11 +524,11 @@ TestsetdefencdirCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     if (argc != 2) {
         Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		" defaultDir\"", NULL);
+                " defaultDir\"", NULL);
         return TCL_ERROR;
     }
 
@@ -560,7 +558,7 @@ TestgetdefencdirCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     if (argc != 1) {
         Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0], NULL);
@@ -594,7 +592,7 @@ TestalarmCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
 #ifdef SA_RESTART
     unsigned int sec;
@@ -673,7 +671,7 @@ TestgotsigCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     Tcl_AppendResult(interp, gotsig, NULL);
     gotsig = "0";
@@ -704,7 +702,7 @@ TestchmodCmd(
     ClientData dummy,			/* Not used. */
     Tcl_Interp *interp,			/* Current interpreter. */
     int argc,				/* Number of arguments. */
-    const char **argv)			/* Argument strings. */
+    CONST char **argv)			/* Argument strings. */
 {
     int i, mode;
     char *rest;
@@ -723,7 +721,7 @@ TestchmodCmd(
 
     for (i = 2; i < argc; i++) {
 	Tcl_DString buffer;
-	const char *translated;
+	CONST char *translated;
 
 	translated = Tcl_TranslateFileName(interp, argv[i], &buffer);
 	if (translated == NULL) {

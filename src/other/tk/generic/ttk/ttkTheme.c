@@ -15,10 +15,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tk.h>
-#include <tkInt.h>
 #include "ttkThemeInt.h"
 
-#define PKG_ASSOC_KEY "Ttk"
+#ifdef NO_PRIVATE_HEADERS
+EXTERN CONST Tk_OptionSpec *TkGetOptionSpec (CONST char *name,
+                            Tk_OptionTable optionTable);
+#else
+#include <tkInt.h>
+#endif
 
 /*------------------------------------------------------------------------
  * +++ Styles.
@@ -61,7 +65,7 @@ static void FreeStyle(Style *stylePtr)
 
     entryPtr = Tcl_FirstHashEntry(&stylePtr->settingsTable, &search);
     while (entryPtr != NULL) {
-	Ttk_StateMap stateMap = Tcl_GetHashValue(entryPtr);
+	Ttk_StateMap stateMap = (Ttk_StateMap)Tcl_GetHashValue(entryPtr);
 	Tcl_DecrRefCount(stateMap);
 	entryPtr = Tcl_NextHashEntry(&search);
     }
@@ -69,7 +73,7 @@ static void FreeStyle(Style *stylePtr)
 
     entryPtr = Tcl_FirstHashEntry(&stylePtr->defaultsTable, &search);
     while (entryPtr != NULL) {
-	Tcl_Obj *defaultValue = Tcl_GetHashValue(entryPtr);
+	Tcl_Obj *defaultValue = (Ttk_StateMap)Tcl_GetHashValue(entryPtr);
 	Tcl_DecrRefCount(defaultValue);
 	entryPtr = Tcl_NextHashEntry(&search);
     }
@@ -77,39 +81,38 @@ static void FreeStyle(Style *stylePtr)
 
     Ttk_FreeLayoutTemplate(stylePtr->layoutTemplate);
 
-    ckfree((ClientData)stylePtr);
+    ckfree((char*)stylePtr);
 }
 
 /*
- * Ttk_StyleMap --
- * 	Look up state-specific option value from specified style.
+ * LookupStateMap --
+ * 	Look up dynamic resource settings in the in the specified style.
  */
-Tcl_Obj *Ttk_StyleMap(Ttk_Style style, const char *optionName, Ttk_State state)
+
+static Ttk_StateMap LookupStateMap(Ttk_Style stylePtr, const char *optionName)
 {
-    while (style) {
+    while (stylePtr) {
 	Tcl_HashEntry *entryPtr =
-	    Tcl_FindHashEntry(&style->settingsTable, optionName);
-	if (entryPtr) {
-	    Ttk_StateMap stateMap = Tcl_GetHashValue(entryPtr);
-	    return Ttk_StateMapLookup(NULL, stateMap, state);
-	}
-	style = style->parentStyle;
+	    Tcl_FindHashEntry(&stylePtr->settingsTable, optionName);
+	if (entryPtr)
+	    return (Ttk_StateMap)Tcl_GetHashValue(entryPtr);
+	stylePtr = stylePtr->parentStyle;
     }
     return 0;
 }
 
 /*
- * Ttk_StyleDefault --
+ * LookupDefault --
  * 	Look up default resource setting the in the specified style.
  */
-Tcl_Obj *Ttk_StyleDefault(Ttk_Style style, const char *optionName)
+static Tcl_Obj *LookupDefault(Ttk_Style stylePtr, const char *optionName)
 {
-    while (style) {
+    while (stylePtr) {
 	Tcl_HashEntry *entryPtr =
-	    Tcl_FindHashEntry(&style->defaultsTable, optionName);
+	    Tcl_FindHashEntry(&stylePtr->defaultsTable, optionName);
 	if (entryPtr)
-	    return Tcl_GetHashValue(entryPtr);
-	style= style->parentStyle;
+	    return (Tcl_Obj *)Tcl_GetHashValue(entryPtr);
+	stylePtr = stylePtr->parentStyle;
     }
     return 0;
 }
@@ -120,7 +123,8 @@ Tcl_Obj *Ttk_StyleDefault(Ttk_Style style, const char *optionName)
 typedef const Tk_OptionSpec **OptionMap;
     /* array of Tk_OptionSpecs mapping widget options to element options */
 
-struct Ttk_ElementClass_ {
+typedef struct Ttk_ElementImpl_		/* Element implementation */
+{
     const char *name;		/* Points to hash table key */
     Ttk_ElementSpec *specPtr;	/* Template provided during registration. */
     void *clientData;		/* Client data passed in at registration time */
@@ -128,7 +132,7 @@ struct Ttk_ElementClass_ {
     int nResources;		/* #Element options */
     Tcl_Obj **defaultValues;	/* Array of option default values */
     Tcl_HashTable optMapCache;	/* Map: Tk_OptionTable * -> OptionMap */
-};
+} ElementImpl;
 
 /* TTKGetOptionSpec --
  * 	Look up a Tk_OptionSpec by name from a Tk_OptionTable,
@@ -179,14 +183,14 @@ static const Tk_OptionSpec *TTKGetOptionSpec(
  * 	Construct the mapping from element options to widget options.
  */
 static OptionMap
-BuildOptionMap(Ttk_ElementClass *elementClass, Tk_OptionTable optionTable)
+BuildOptionMap(ElementImpl *elementImpl, Tk_OptionTable optionTable)
 {
     OptionMap optionMap = (OptionMap)ckalloc(
-	    sizeof(const Tk_OptionSpec) * elementClass->nResources + 1);
+	    sizeof(const Tk_OptionSpec) * elementImpl->nResources + 1);
     int i;
 
-    for (i = 0; i < elementClass->nResources; ++i) {
-	Ttk_ElementOptionSpec *e = elementClass->specPtr->options+i;
+    for (i = 0; i < elementImpl->nResources; ++i) {
+	Ttk_ElementOptionSpec *e = elementImpl->specPtr->options+i;
 	optionMap[i] = TTKGetOptionSpec(e->optionName, optionTable, e->type);
     }
 
@@ -198,72 +202,71 @@ BuildOptionMap(Ttk_ElementClass *elementClass, Tk_OptionTable optionTable)
  * 	for the specified element, creating it if necessary.
  */
 static OptionMap
-GetOptionMap(Ttk_ElementClass *elementClass, Tk_OptionTable optionTable)
+GetOptionMap(ElementImpl *elementImpl, Tk_OptionTable optionTable)
 {
     OptionMap optionMap;
     int isNew;
     Tcl_HashEntry *entryPtr = Tcl_CreateHashEntry(
-	&elementClass->optMapCache, (void*)optionTable, &isNew);
+	&elementImpl->optMapCache, (ClientData)optionTable, &isNew);
 
     if (isNew) {
-	optionMap = BuildOptionMap(elementClass, optionTable);
+	optionMap = BuildOptionMap(elementImpl, optionTable);
 	Tcl_SetHashValue(entryPtr, optionMap);
     } else {
-	optionMap = Tcl_GetHashValue(entryPtr);
+	optionMap = (OptionMap)(Tcl_GetHashValue(entryPtr));
     }
 
     return optionMap;
 }
 
 /*
- * NewElementClass --
- * 	Allocate and initialize an element class record
+ * NewElementImpl --
+ * 	Allocate and initialize an element implementation record
  * 	from the specified element specification.
  */
-static Ttk_ElementClass *
-NewElementClass(const char *name, Ttk_ElementSpec *specPtr,void *clientData)
+static ElementImpl *
+NewElementImpl(const char *name, Ttk_ElementSpec *specPtr,void *clientData)
 {
-    Ttk_ElementClass *elementClass =
-	    (Ttk_ElementClass*)ckalloc(sizeof(Ttk_ElementClass));
+    ElementImpl *elementImpl = (ElementImpl*)ckalloc(sizeof(ElementImpl));
     int i;
 
-    elementClass->name = name;
-    elementClass->specPtr = specPtr;
-    elementClass->clientData = clientData;
-    elementClass->elementRecord = ckalloc(specPtr->elementSize);
+    elementImpl->name = name;
+    elementImpl->specPtr = specPtr;
+    elementImpl->clientData = clientData;
+    elementImpl->elementRecord = ckalloc(specPtr->elementSize);
 
     /* Count #element resources:
      */
     for (i = 0; specPtr->options[i].optionName != 0; ++i)
 	continue;
-    elementClass->nResources = i;
+    elementImpl->nResources = i;
 
     /* Initialize default values:
      */
-    elementClass->defaultValues = (Tcl_Obj**)
-	ckalloc(elementClass->nResources * sizeof(Tcl_Obj *) + 1);
-    for (i=0; i < elementClass->nResources; ++i) {
+    elementImpl->defaultValues = (Tcl_Obj**)
+	ckalloc(elementImpl->nResources * sizeof(Tcl_Obj *) + 1);
+    for (i=0; i < elementImpl->nResources; ++i) {
         const char *defaultValue = specPtr->options[i].defaultValue;
 	if (defaultValue) {
-	    elementClass->defaultValues[i] = Tcl_NewStringObj(defaultValue,-1);
-	    Tcl_IncrRefCount(elementClass->defaultValues[i]);
+	    elementImpl->defaultValues[i] = Tcl_NewStringObj(defaultValue,-1);
+	    Tcl_IncrRefCount(elementImpl->defaultValues[i]);
 	} else {
-	    elementClass->defaultValues[i] = 0;
+	    elementImpl->defaultValues[i] = 0;
 	}
     }
 
     /* Initialize option map cache:
      */
-    Tcl_InitHashTable(&elementClass->optMapCache, TCL_ONE_WORD_KEYS);
+    Tcl_InitHashTable(&elementImpl->optMapCache, TCL_ONE_WORD_KEYS);
 
-    return elementClass;
+    return elementImpl;
 }
 
 /*
- * FreeElementClass --
- * 	Release resources associated with an element class record.
+ * FreeElementImpl --
+ * 	Release resources associated with an element implementation record.
  */
-static void FreeElementClass(Ttk_ElementClass *elementClass)
+static void FreeElementImpl(ElementImpl *elementImpl)
 {
     Tcl_HashSearch search;
     Tcl_HashEntry *entryPtr;
@@ -272,26 +275,27 @@ static void FreeElementClass(Ttk_ElementClass *elementClass)
     /*
      * Free default values:
      */
-    for (i = 0; i < elementClass->nResources; ++i) {
-	if (elementClass->defaultValues[i]) {
-	    Tcl_DecrRefCount(elementClass->defaultValues[i]);
+    for (i = 0; i < elementImpl->nResources; ++i) {
+	if (elementImpl->defaultValues[i]) {
+	    Tcl_DecrRefCount(elementImpl->defaultValues[i]);
 	}
     }
-    ckfree((ClientData)elementClass->defaultValues);
+    ckfree((ClientData)elementImpl->defaultValues);
 
     /*
      * Free option map cache:
      */
-    entryPtr = Tcl_FirstHashEntry(&elementClass->optMapCache, &search);
+    entryPtr = Tcl_FirstHashEntry(&elementImpl->optMapCache, &search);
     while (entryPtr != NULL) {
 	ckfree(Tcl_GetHashValue(entryPtr));
 	entryPtr = Tcl_NextHashEntry(&search);
     }
-    Tcl_DeleteHashTable(&elementClass->optMapCache);
+    Tcl_DeleteHashTable(&elementImpl->optMapCache);
 
-    ckfree(elementClass->elementRecord);
-    ckfree((ClientData)elementClass);
+    ckfree(elementImpl->elementRecord);
+    ckfree((ClientData)elementImpl);
 }
+
 
 /*------------------------------------------------------------------------
  * +++ Themes.
@@ -303,7 +307,7 @@ static int ThemeEnabled(Ttk_Theme theme, void *clientData) { return 1; }
 typedef struct Ttk_Theme_
 {
     Ttk_Theme parentPtr;             	/* Parent theme. */
-    Tcl_HashTable elementTable;	     	/* Map element names to class records */
+    Tcl_HashTable elementTable;	     	/* Map element names to ElementImpls */
     Tcl_HashTable styleTable;	     	/* Map style names to Styles */
     Ttk_Style rootStyle;		/* "." style, root of chain */
     Ttk_ThemeEnabledProc *enabledProc;	/* Function called by SetTheme */
@@ -329,10 +333,10 @@ static Theme *NewTheme(Ttk_ResourceCache cache, Ttk_Theme parent)
      */
     entryPtr = Tcl_CreateHashEntry(&themePtr->styleTable, ".", &unused);
     themePtr->rootStyle = NewStyle();
-    themePtr->rootStyle->styleName =
+    themePtr->rootStyle->styleName = 
 	Tcl_GetHashKey(&themePtr->styleTable, entryPtr);
     themePtr->rootStyle->cache = themePtr->cache;
-    Tcl_SetHashValue(entryPtr, themePtr->rootStyle);
+    Tcl_SetHashValue(entryPtr, (ClientData)themePtr->rootStyle);
 
     return themePtr;
 }
@@ -343,12 +347,12 @@ static void FreeTheme(Theme *themePtr)
     Tcl_HashEntry *entryPtr;
 
     /*
-     * Free element table:
+     * Free associated ElementImpl's
      */
     entryPtr = Tcl_FirstHashEntry(&themePtr->elementTable, &search);
     while (entryPtr != NULL) {
-	Ttk_ElementClass *elementClass = Tcl_GetHashValue(entryPtr);
-	FreeElementClass(elementClass);
+	ElementImpl *elementImpl = (ElementImpl *)Tcl_GetHashValue(entryPtr);
+	FreeElementImpl(elementImpl);
 	entryPtr = Tcl_NextHashEntry(&search);
     }
     Tcl_DeleteHashTable(&themePtr->elementTable);
@@ -358,7 +362,7 @@ static void FreeTheme(Theme *themePtr)
      */
     entryPtr = Tcl_FirstHashEntry(&themePtr->styleTable, &search);
     while (entryPtr != NULL) {
-	Style *stylePtr = Tcl_GetHashValue(entryPtr);
+	Style *stylePtr = (Style*)Tcl_GetHashValue(entryPtr);
 	FreeStyle(stylePtr);
 	entryPtr = Tcl_NextHashEntry(&search);
     }
@@ -367,7 +371,7 @@ static void FreeTheme(Theme *themePtr)
     /*
      * Free theme record:
      */
-    ckfree((ClientData)themePtr);
+    ckfree((char *)themePtr);
 
     return;
 }
@@ -411,9 +415,10 @@ static void ThemeChangedProc(ClientData);	/* Forward */
  */
 static void Ttk_StylePkgFree(ClientData clientData, Tcl_Interp *interp)
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     Tcl_HashSearch search;
     Tcl_HashEntry *entryPtr;
+    Theme *themePtr;
     Cleanup *cleanup;
 
     /*
@@ -428,7 +433,7 @@ static void Ttk_StylePkgFree(ClientData clientData, Tcl_Interp *interp)
      */
     entryPtr = Tcl_FirstHashEntry(&pkgPtr->themeTable, &search);
     while (entryPtr != NULL) {
-	Theme *themePtr = Tcl_GetHashValue(entryPtr);
+	themePtr = (Theme *) Tcl_GetHashValue(entryPtr);
 	FreeTheme(themePtr);
 	entryPtr = Tcl_NextHashEntry(&search);
     }
@@ -460,7 +465,7 @@ static void Ttk_StylePkgFree(ClientData clientData, Tcl_Interp *interp)
 	cleanup = next;
     }
 
-    ckfree((ClientData)pkgPtr);
+    ckfree((char*)pkgPtr);
 }
 
 /*
@@ -470,7 +475,7 @@ static void Ttk_StylePkgFree(ClientData clientData, Tcl_Interp *interp)
 
 static StylePackageData *GetStylePackageData(Tcl_Interp *interp)
 {
-    return Tcl_GetAssocData(interp, PKG_ASSOC_KEY, NULL);
+    return (StylePackageData*)Tcl_GetAssocData(interp, "StylePackage", NULL);
 }
 
 /*
@@ -494,7 +499,7 @@ void Ttk_RegisterCleanup(
     pkgPtr->cleanupList = cleanup;
 }
 
-/* ThemeChangedProc --
+/* ThemeChangedProc -- 
  * 	Notify all widgets that the theme has been changed.
  * 	Scheduled as an idle callback; clientData is a StylePackageData *.
  *
@@ -503,13 +508,13 @@ void Ttk_RegisterCleanup(
  * 	which in turn recreates the layout.
  *
  * 	The Tk C API doesn't doesn't provide an easy way to traverse
- * 	the widget hierarchy, so this is done by evaluating a Tcl script.
+ * 	the widget hierarchy, so this is done by evaluating a Tcl script. 
  */
 
 static void ThemeChangedProc(ClientData clientData)
 {
     static char ThemeChangedScript[] = "ttk::ThemeChanged";
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
 
     if (Tcl_GlobalEval(pkgPtr->interp, ThemeChangedScript) != TCL_OK) {
 	Tcl_BackgroundError(pkgPtr->interp);
@@ -562,10 +567,11 @@ Ttk_CreateTheme(
     if (!parent) parent = pkgPtr->defaultTheme;
 
     themePtr = NewTheme(pkgPtr->cache, parent);
-    Tcl_SetHashValue(entryPtr, themePtr);
+    Tcl_SetHashValue(entryPtr, (ClientData) themePtr);
 
     return themePtr;
 }
+
 
 /*
  * Ttk_SetThemeEnabledProc --
@@ -581,7 +587,7 @@ void Ttk_SetThemeEnabledProc(
 
 /*
  * LookupTheme --
- *	Retrieve a registered theme by name.  If not found,
+ *	Retrieve a registered theme by name.  If not found, 
  *	returns NULL and leaves an error message in interp's result.
  */
 
@@ -599,7 +605,7 @@ static Ttk_Theme LookupTheme(
 	return NULL;
     }
 
-    return Tcl_GetHashValue(entryPtr);
+    return (Ttk_Theme)Tcl_GetHashValue(entryPtr);
 }
 
 /*
@@ -709,10 +715,10 @@ Ttk_Style Ttk_GetStyle(Ttk_Theme themePtr, const char *styleName)
 
 	stylePtr->styleName = Tcl_GetHashKey(&themePtr->styleTable, entryPtr);
 	stylePtr->cache = stylePtr->parentStyle->cache;
-	Tcl_SetHashValue(entryPtr, stylePtr);
+	Tcl_SetHashValue(entryPtr, (ClientData)stylePtr);
 	return stylePtr;
     }
-    return Tcl_GetHashValue(entryPtr);
+    return (Style*)Tcl_GetHashValue(entryPtr);
 }
 
 /* FindLayoutTemplate --
@@ -743,12 +749,12 @@ const char *Ttk_StyleName(Ttk_Style stylePtr)
 
 /*
  * Ttk_GetElement --
- *	Look up an element class by name in a given theme.
+ *	Look up an element implementation by name in a given theme.
  *	If not found, try generic element names in this theme, then
  *	repeat the lookups in the parent theme.
  *	If not found, return the null element.
  */
-Ttk_ElementClass *Ttk_GetElement(Ttk_Theme themePtr, const char *elementName)
+Ttk_ElementImpl Ttk_GetElement(Ttk_Theme themePtr, const char *elementName)
 {
     Tcl_HashEntry *entryPtr;
     const char *dot = elementName;
@@ -758,7 +764,7 @@ Ttk_ElementClass *Ttk_GetElement(Ttk_Theme themePtr, const char *elementName)
      */
     entryPtr = Tcl_FindHashEntry(&themePtr->elementTable, elementName);
     if (entryPtr) {
-	return Tcl_GetHashValue(entryPtr);
+	return (Ttk_ElementImpl)Tcl_GetHashValue(entryPtr);
     }
 
     /*
@@ -769,7 +775,7 @@ Ttk_ElementClass *Ttk_GetElement(Ttk_Theme themePtr, const char *elementName)
 	entryPtr = Tcl_FindHashEntry(&themePtr->elementTable, dot);
     }
     if (entryPtr) {
-	return Tcl_GetHashValue(entryPtr);
+	return (ElementImpl *)Tcl_GetHashValue(entryPtr);
     }
 
     /*
@@ -785,12 +791,12 @@ Ttk_ElementClass *Ttk_GetElement(Ttk_Theme themePtr, const char *elementName)
      */
     entryPtr = Tcl_FindHashEntry(&themePtr->elementTable, "");
     /* ASSERT: entryPtr != 0 */
-    return Tcl_GetHashValue(entryPtr);
+    return (Ttk_ElementImpl)Tcl_GetHashValue(entryPtr);
 }
 
-const char *Ttk_ElementClassName(Ttk_ElementClass *elementClass)
+const char *Ttk_ElementName(ElementImpl *elementImpl)
 {
-    return elementClass->name;
+    return elementImpl->name;
 }
 
 /*
@@ -819,16 +825,17 @@ int Ttk_RegisterElementFactory(
     return TCL_OK;
 }
 
+
 /* Ttk_CloneElement -- element factory procedure.
  * 	(style element create $name) "from" $theme ?$element?
  */
 static int Ttk_CloneElement(
     Tcl_Interp *interp, void *clientData,
     Ttk_Theme theme, const char *elementName,
-    int objc, Tcl_Obj *const objv[])
+    int objc, Tcl_Obj *CONST objv[])
 {
     Ttk_Theme fromTheme;
-    Ttk_ElementClass *fromElement;
+    ElementImpl *fromElement;
 
     if (objc <= 0 || objc > 2) {
 	Tcl_WrongNumArgs(interp, 0, objv, "theme ?element?");
@@ -860,18 +867,18 @@ static int Ttk_CloneElement(
 /* Ttk_RegisterElement--
  *	Register an element in the given theme.
  *	Returns: Element handle if successful, NULL otherwise.
- *	On failure, leaves an error message in interp's result
+ *	On failure, leaves an error message in interp's result 
  *	if interp is non-NULL.
  */
 
-Ttk_ElementClass *Ttk_RegisterElement(
+Ttk_ElementImpl Ttk_RegisterElement(
     Tcl_Interp *interp,		/* Where to leave error messages */
     Ttk_Theme theme,		/* Style engine providing the implementation. */
     const char *name,		/* Name of new element */
     Ttk_ElementSpec *specPtr, 	/* Static template information */
     void *clientData)		/* application-specific data */
 {
-    Ttk_ElementClass *elementClass;
+    ElementImpl *elementImpl;
     Tcl_HashEntry *entryPtr;
     int newEntry;
 
@@ -896,10 +903,10 @@ Ttk_ElementClass *Ttk_RegisterElement(
     }
 
     name = Tcl_GetHashKey(&theme->elementTable, entryPtr);
-    elementClass = NewElementClass(name, specPtr, clientData);
-    Tcl_SetHashValue(entryPtr, elementClass);
+    elementImpl = NewElementImpl(name, specPtr, clientData);
+    Tcl_SetHashValue(entryPtr, elementImpl);
 
-    return elementClass;
+    return elementImpl;
 }
 
 /* Ttk_RegisterElementSpec (deprecated) --
@@ -908,7 +915,7 @@ Ttk_ElementClass *Ttk_RegisterElement(
 int Ttk_RegisterElementSpec(Ttk_Theme theme,
     const char *name, Ttk_ElementSpec *specPtr, void *clientData)
 {
-    return Ttk_RegisterElement(NULL, theme, name, specPtr, clientData)
+    return Ttk_RegisterElement(NULL, theme, name, specPtr, clientData) 
 	   ? TCL_OK : TCL_ERROR;
 }
 
@@ -968,27 +975,32 @@ static int AllocateResource(
 
 static
 int InitializeElementRecord(
-    Ttk_ElementClass *eclass,	/* Element instance to initialize */
+    ElementImpl *element,	/* Element instance to initialize */
     Ttk_Style style,		/* Style table */
     char *widgetRecord,		/* Source of widget option values */
     Tk_OptionTable optionTable,	/* Option table describing widget record */
     Tk_Window tkwin,		/* Corresponding window */
     Ttk_State state)	/* Widget or element state */
 {
-    char *elementRecord = eclass->elementRecord;
-    OptionMap optionMap = GetOptionMap(eclass,optionTable);
-    int nResources = eclass->nResources;
+    char *elementRecord = element->elementRecord;
+    OptionMap optionMap = GetOptionMap(element,optionTable);
+    int nResources = element->nResources;
     Ttk_ResourceCache cache = style->cache;
-    Ttk_ElementOptionSpec *elementOption = eclass->specPtr->options;
+    Ttk_ElementOptionSpec *elementOption = element->specPtr->options;
 
     int i;
     for (i=0; i<nResources; ++i, ++elementOption) {
 	Tcl_Obj **dest = (Tcl_Obj **)
 	    (elementRecord + elementOption->offset);
 	const char *optionName = elementOption->optionName;
-	Tcl_Obj *dynamicSetting = Ttk_StyleMap(style, optionName, state);
+	Tcl_Obj *stateMap = LookupStateMap(style, optionName);
+	Tcl_Obj *dynamicSetting = 0;
 	Tcl_Obj *widgetValue = 0;
-	Tcl_Obj *elementDefault = eclass->defaultValues[i];
+	Tcl_Obj *elementDefault = element->defaultValues[i];
+
+	if (stateMap) {
+	    dynamicSetting = Ttk_StateMapLookup(NULL, stateMap, state);
+	}
 
 	if (optionMap[i]) {
 	    widgetValue = *(Tcl_Obj **)
@@ -1000,7 +1012,7 @@ int InitializeElementRecord(
 	} else if (dynamicSetting) {
 	    *dest = dynamicSetting;
 	} else {
-	    Tcl_Obj *styleDefault = Ttk_StyleDefault(style, optionName);
+	    Tcl_Obj *styleDefault = LookupDefault(style, optionName);
 	    *dest = styleDefault ? styleDefault : elementDefault;
 	}
 
@@ -1027,6 +1039,7 @@ Tcl_Obj *Ttk_QueryStyle(
     const char *optionName,	/* Option name */
     Ttk_State state) 		/* Current state */
 {
+    Tcl_Obj *stateMap;
     const Tk_OptionSpec *optionSpec;
     Tcl_Obj *result;
 
@@ -1044,15 +1057,18 @@ Tcl_Obj *Ttk_QueryStyle(
     /*
      * Check dynamic settings:
      */
-    result = Ttk_StyleMap(style, optionName, state);
-    if (result) {
-	return result;
+    stateMap = LookupStateMap(style, optionName);
+    if (stateMap) {
+	result = Ttk_StateMapLookup(NULL, stateMap, state);
+	if (result) {
+	    return result;
+	}
     }
 
     /*
      * Use style default:
      */
-    return Ttk_StyleDefault(style, optionName);
+    return LookupDefault(style, optionName);
 }
 
 /*
@@ -1062,7 +1078,7 @@ Tcl_Obj *Ttk_QueryStyle(
 
 void
 Ttk_ElementSize(
-    Ttk_ElementClass *eclass,		/* Element to query */
+    ElementImpl *element,		/* Element to query */
     Ttk_Style style,			/* Style settings */
     char *recordPtr,			/* The widget record. */
     Tk_OptionTable optionTable,		/* Description of widget record */
@@ -1075,13 +1091,10 @@ Ttk_ElementSize(
     paddingPtr->left = paddingPtr->right = paddingPtr->top = paddingPtr->bottom
 	= *widthPtr = *heightPtr = 0;
 
-    if (!InitializeElementRecord(
-	    eclass, style, recordPtr, optionTable, tkwin,  state))
-    {
+    if (!InitializeElementRecord(element, style, recordPtr, optionTable, tkwin,  state))
 	return;
-    }
-    eclass->specPtr->size(
-	eclass->clientData, eclass->elementRecord,
+    element->specPtr->size(
+	element->clientData, element->elementRecord,
 	tkwin, widthPtr, heightPtr, paddingPtr);
 }
 
@@ -1092,7 +1105,7 @@ Ttk_ElementSize(
 
 void
 Ttk_DrawElement(
-    Ttk_ElementClass *eclass,		/* Element instance */
+    ElementImpl *element,		/* Element instance */
     Ttk_Style style,			/* Style settings */
     char *recordPtr,			/* The widget record. */
     Tk_OptionTable optionTable,		/* Description of option table */
@@ -1103,13 +1116,10 @@ Ttk_DrawElement(
 {
     if (b.width <= 0 || b.height <= 0)
 	return;
-    if (!InitializeElementRecord(
-	    eclass, style, recordPtr, optionTable, tkwin,  state))
-    {
+    if (!InitializeElementRecord(element, style, recordPtr, optionTable, tkwin,  state))
 	return;
-    }
-    eclass->specPtr->draw(
-	eclass->clientData, eclass->elementRecord,
+    element->specPtr->draw(
+	element->clientData, element->elementRecord,
 	tkwin, d, b, state);
 }
 
@@ -1143,7 +1153,7 @@ static int EnumerateHashTable(Tcl_Interp *interp, Tcl_HashTable *ht)
 }
 
 /* HashTableToDict --
- * 	Helper routine.  Converts a TCL_STRING_KEYS Tcl_HashTable
+ * 	Helper routine.  Converts a TCL_STRING_KEYS Tcl_HashTable 
  * 	with Tcl_Obj * entries into a dictionary.
  */
 static Tcl_Obj* HashTableToDict(Tcl_HashTable *ht)
@@ -1154,7 +1164,7 @@ static Tcl_Obj* HashTableToDict(Tcl_HashTable *ht)
 
     while (entryPtr != NULL) {
 	Tcl_Obj *nameObj = Tcl_NewStringObj(Tcl_GetHashKey(ht, entryPtr),-1);
-	Tcl_Obj *valueObj = Tcl_GetHashValue(entryPtr);
+	Tcl_Obj *valueObj = (Tcl_Obj*)Tcl_GetHashValue(entryPtr);
 	Tcl_ListObjAppendElement(NULL, result, nameObj);
 	Tcl_ListObjAppendElement(NULL, result, valueObj);
 	entryPtr = Tcl_NextHashEntry(&search);
@@ -1173,9 +1183,9 @@ StyleMapCmd(
     ClientData clientData,		/* Master StylePackageData pointer */
     Tcl_Interp *interp,			/* Current interpreter */
     int objc,				/* Number of arguments */
-    Tcl_Obj *const objv[])		/* Argument objects */
+    Tcl_Obj * CONST objv[])		/* Argument objects */
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
     const char *styleName;
     Style *stylePtr;
@@ -1198,7 +1208,7 @@ usage:
 	return TCL_OK;
     } else if (objc == 4) {	/* style map $styleName -option */
 	const char *optionName = Tcl_GetString(objv[3]);
-	Tcl_HashEntry *entryPtr =
+	Tcl_HashEntry *entryPtr = 
 	    Tcl_FindHashEntry(&stylePtr->settingsTable, optionName);
 	if (entryPtr) {
 	    Tcl_SetObjResult(interp, (Tcl_Obj*)Tcl_GetHashValue(entryPtr));
@@ -1237,9 +1247,9 @@ usage:
 /* + style configure $style -option ?value...
  */
 static int StyleConfigureCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
     const char *styleName;
     Style *stylePtr;
@@ -1259,7 +1269,7 @@ usage:
 	return TCL_OK;
     } else if (objc == 4) {	/* style default $styleName -option */
 	const char *optionName = Tcl_GetString(objv[3]);
-	Tcl_HashEntry *entryPtr =
+	Tcl_HashEntry *entryPtr = 
 	    Tcl_FindHashEntry(&stylePtr->defaultsTable, optionName);
 	if (entryPtr) {
 	    Tcl_SetObjResult(interp, (Tcl_Obj*)Tcl_GetHashValue(entryPtr));
@@ -1292,7 +1302,7 @@ usage:
 /* + style lookup $style -option ?statespec? ?defaultValue?
  */
 static int StyleLookupCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
     StylePackageData *pkgPtr = clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
@@ -1333,45 +1343,12 @@ static int StyleLookupCmd(
     return TCL_OK;
 }
 
-static int StyleThemeCurrentCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * const objv[])
-{
-    StylePackageData *pkgPtr = clientData;
-    Tcl_HashSearch search;
-    Tcl_HashEntry *entryPtr = NULL;
-    const char *name = NULL;
-
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 3, objv, "");
-	return TCL_ERROR;
-    }
-
-    entryPtr = Tcl_FirstHashEntry(&pkgPtr->themeTable, &search);
-    while (entryPtr != NULL) {
-	Theme *ptr = Tcl_GetHashValue(entryPtr);
-	if (ptr == pkgPtr->currentTheme) {
-	    name = Tcl_GetHashKey(&pkgPtr->themeTable, entryPtr);
-	    break;
-	}
-	entryPtr = Tcl_NextHashEntry(&search);
-    }
-
-    if (name == NULL) {
-	Tcl_SetObjResult(interp,
-	    Tcl_NewStringObj("error: failed to get theme name", -1));
-	return TCL_ERROR;
-    }
-
-    Tcl_SetObjResult(interp, Tcl_NewStringObj(name, -1));
-    return TCL_OK;
-}
-
 /* + style theme create name ?-parent $theme? ?-settings { script }?
  */
 static int StyleThemeCreateCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     static const char *optStrings[] =
     	 { "-parent", "-settings", NULL };
     enum { OP_PARENT, OP_SETTINGS };
@@ -1381,7 +1358,7 @@ static int StyleThemeCreateCmd(
     int i;
 
     if (objc < 4 || objc % 2 != 0) {
-	Tcl_WrongNumArgs(interp, 3, objv, "name ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 3, objv, "name ?options?");
 	return TCL_ERROR;
     }
 
@@ -1433,7 +1410,7 @@ static int StyleThemeCreateCmd(
  * 	Return list of registered themes.
  */
 static int StyleThemeNamesCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
     StylePackageData *pkgPtr = clientData;
     return EnumerateHashTable(interp, &pkgPtr->themeTable);
@@ -1449,9 +1426,9 @@ StyleThemeSettingsCmd(
     ClientData clientData,		/* Master StylePackageData pointer */
     Tcl_Interp *interp,			/* Current interpreter */
     int objc,				/* Number of arguments */
-    Tcl_Obj *const objv[])		/* Argument objects */
+    Tcl_Obj * CONST objv[])		/* Argument objects */
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     Ttk_Theme oldTheme = pkgPtr->currentTheme;
     Ttk_Theme newTheme;
     int status;
@@ -1475,16 +1452,16 @@ StyleThemeSettingsCmd(
 /* + style element create name type ? ...args ?
  */
 static int StyleElementCreateCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
     const char *elementName, *factoryName;
     Tcl_HashEntry *entryPtr;
     FactoryRec *recPtr;
 
     if (objc < 5) {
-	Tcl_WrongNumArgs(interp, 3, objv, "name type ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 3, objv, "name type ?options...?");
 	return TCL_ERROR;
     }
 
@@ -1497,7 +1474,7 @@ static int StyleElementCreateCmd(
 	return TCL_ERROR;
     }
 
-    recPtr = Tcl_GetHashValue(entryPtr);
+    recPtr = (FactoryRec *)Tcl_GetHashValue(entryPtr);
 
     return recPtr->factory(interp, recPtr->clientData,
 	    theme, elementName, objc - 5, objv + 5);
@@ -1507,9 +1484,9 @@ static int StyleElementCreateCmd(
  * 	Return a list of elements defined in the current theme.
  */
 static int StyleElementNamesCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
 
     if (objc != 3) {
@@ -1523,12 +1500,12 @@ static int StyleElementNamesCmd(
  * 	Return list of element options for specified element
  */
 static int StyleElementOptionsCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
     StylePackageData *pkgPtr = clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
     const char *elementName;
-    Ttk_ElementClass *elementClass;
+    ElementImpl *elementImpl;
 
     if (objc != 4) {
 	Tcl_WrongNumArgs(interp, 3, objv, "element");
@@ -1536,9 +1513,9 @@ static int StyleElementOptionsCmd(
     }
 
     elementName = Tcl_GetString(objv[3]);
-    elementClass = Ttk_GetElement(theme, elementName);
-    if (elementClass) {
-	Ttk_ElementSpec *specPtr = elementClass->specPtr;
+    elementImpl = Ttk_GetElement(theme, elementName);
+    if (elementImpl) {
+	Ttk_ElementSpec *specPtr = elementImpl->specPtr;
 	Ttk_ElementOptionSpec *option = specPtr->options;
 	Tcl_Obj *result = Tcl_NewListObj(0,0);
 
@@ -1559,9 +1536,9 @@ static int StyleElementOptionsCmd(
 /* + style layout name ?spec?
  */
 static int StyleLayoutCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[])
 {
-    StylePackageData *pkgPtr = clientData;
+    StylePackageData *pkgPtr = (StylePackageData *)clientData;
     Ttk_Theme theme = pkgPtr->currentTheme;
     const char *layoutName;
     Ttk_LayoutTemplate layoutTemplate;
@@ -1599,18 +1576,14 @@ StyleThemeUseCmd(
     ClientData clientData,		/* Master StylePackageData pointer */
     Tcl_Interp *interp,			/* Current interpreter */
     int objc,				/* Number of arguments */
-    Tcl_Obj *const objv[])		/* Argument objects */
+    Tcl_Obj * CONST objv[])		/* Argument objects */
 {
     StylePackageData *pkgPtr = clientData;
     Ttk_Theme theme;
 
-    if (objc < 3 || objc > 4) {
-	Tcl_WrongNumArgs(interp, 3, objv, "?theme?");
+    if (objc != 4) {
+	Tcl_WrongNumArgs(interp, 3, objv, "theme");
 	return TCL_ERROR;
-    }
-
-    if (objc == 3) {
-	return StyleThemeCurrentCmd(clientData, interp, objc, objv);
     }
 
     theme = LookupTheme(interp, pkgPtr, Tcl_GetString(objv[3]));
@@ -1662,7 +1635,7 @@ StyleObjCmd(
     ClientData clientData,		/* Master StylePackageData pointer */
     Tcl_Interp *interp,			/* Current interpreter */
     int objc,				/* Number of arguments */
-    Tcl_Obj *const objv[])		/* Argument objects */
+    Tcl_Obj * CONST objv[])		/* Argument objects */
 {
     struct Ensemble *ensemble = StyleEnsemble;
     int optPtr = 1;
@@ -1707,7 +1680,8 @@ void Ttk_StylePkgInit(Tcl_Interp *interp)
     pkgPtr->cache = Ttk_CreateResourceCache(interp);
     pkgPtr->themeChangePending = 0;
 
-    Tcl_SetAssocData(interp, PKG_ASSOC_KEY, Ttk_StylePkgFree, pkgPtr);
+    Tcl_SetAssocData(interp, "StylePackage", Ttk_StylePkgFree,
+	(ClientData)pkgPtr);
 
     /*
      * Create the default system theme:
@@ -1728,7 +1702,8 @@ void Ttk_StylePkgInit(Tcl_Interp *interp)
     /*
      * Register commands:
      */
-    Tcl_CreateObjCommand(interp, "::ttk::style", StyleObjCmd, pkgPtr, 0);
+    Tcl_CreateObjCommand(interp, "::ttk::style", StyleObjCmd,
+	    (ClientData)pkgPtr, 0);
 
     nsPtr = Tcl_FindNamespace(interp, "::ttk", (Tcl_Namespace *) NULL,
 	    TCL_LEAVE_ERR_MSG);

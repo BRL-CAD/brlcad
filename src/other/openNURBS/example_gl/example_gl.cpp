@@ -213,11 +213,11 @@ void MY_GL_CALLBACK myGLUT_SpecialKeyEvent( int ch, int x, int y );    // for au
 // If you are using Apple's Xcode and you get a compile error
 // on the typedef below, then try using the commented out typedef.
 //
-// Apple's Xcode 2.4 likes this typedef witht the (...)
-typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)(...);
+// Apple's Xcode 2.4 likes this typedef with the (...)
+//typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)(...);
 //
-// Apple's Xcode 3.2 likes this typedef witht the (...)
-//typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)();
+// Apple's Xcode 3.2 likes this typedef without the ()
+typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)();
 #endif
 
 }

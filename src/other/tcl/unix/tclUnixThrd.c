@@ -5,7 +5,6 @@
  *
  * Copyright (c) 1991-1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
- * Copyright (c) 2008 by George Peter Staplin
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -17,7 +16,7 @@
 
 #ifdef TCL_THREADS
 
-#include <pthread.h>
+#include "pthread.h"
 
 typedef struct ThreadSpecificData {
     char nabuf[16];
@@ -197,6 +196,99 @@ TclpThreadExit(
     int status)
 {
     pthread_exit(INT2PTR(status));
+}
+#endif /* TCL_THREADS */
+
+#ifdef TCL_THREADS
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpThreadGetStackSize --
+ *
+ *	This procedure returns the size of the current thread's stack.
+ *
+ * Results:
+ *	Stack size (in bytes?) or -1 for error or 0 for undeterminable.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+size_t
+TclpThreadGetStackSize(void)
+{
+    size_t stackSize = 0;
+#if defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && defined(TclpPthreadGetAttrs)
+    pthread_attr_t threadAttr;	/* This will hold the thread attributes for
+				 * the current thread. */
+#ifdef __GLIBC__ 
+    /*
+     * Fix for [Bug 1815573]
+     *
+     * DESCRIPTION:
+     * On linux TclpPthreadGetAttrs (which is pthread_attr_get_np) may return
+     * bogus values on the initial thread. 
+     *
+     * ASSUMPTIONS:
+     * There seems to be no api to determine if we are on the initial
+     * thread. The simple scheme implemented here assumes:
+     *   1. The first Tcl interp to be created lives in the initial thread. If
+     *      this assumption is not true, the fix is to call
+     *      TclpThreadGetStackSize from the initial thread previous to
+     *      creating any Tcl interpreter. In this case, especially if another
+     *      Tcl interpreter may be created in the initial thread, it might be
+     *      better to enable the second branch in the #if below
+     *   2. There will be no races in creating the first Tcl interp - ie, the
+     *      second Tcl interp will be created only after the first call to
+     *      Tcl_CreateInterp returns.
+     *
+     * These assumptions are satisfied by tclsh. Embedders on linux may want
+     * to check their validity, and possibly adapt the code on failing to meet
+     * them.
+     */
+
+    static int initialized = 0;
+
+    if (!initialized) {
+	initialized = 1;
+	return 0;
+    } else {
+#else
+    {
+#endif
+	if (pthread_attr_init(&threadAttr) != 0) {
+	    return -1;
+	}
+	if (TclpPthreadGetAttrs(pthread_self(), &threadAttr) != 0) {
+	    pthread_attr_destroy(&threadAttr);
+	    return (size_t)-1;
+	}
+    }
+
+    
+    if (pthread_attr_getstacksize(&threadAttr, &stackSize) != 0) {
+	pthread_attr_destroy(&threadAttr);
+	return (size_t)-1;
+    }
+    pthread_attr_destroy(&threadAttr);
+#elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP)
+#ifdef __APPLE__
+    /*
+     * On Darwin, the API below does not return the correct stack size for the
+     * main thread (which is not a real pthread), so fallback to getrlimit().
+     */  
+    if (!pthread_main_np())
+#endif
+    stackSize = pthread_get_stacksize_np(pthread_self());
+#else
+    /*
+     * Cannot determine the real stack size of this thread. The caller might
+     * want to try looking at the process accounting limits instead.
+     */
+#endif
+    return stackSize;
 }
 #endif /* TCL_THREADS */
 
@@ -524,7 +616,7 @@ void
 Tcl_ConditionWait(
     Tcl_Condition *condPtr,	/* Really (pthread_cond_t **) */
     Tcl_Mutex *mutexPtr,	/* Really (pthread_mutex_t **) */
-    const Tcl_Time *timePtr) /* Timeout on waiting period */
+    Tcl_Time *timePtr)		/* Timeout on waiting period */
 {
     pthread_cond_t *pcondPtr;
     pthread_mutex_t *pmutexPtr;
@@ -759,48 +851,6 @@ TclpSetAllocCache(
     pthread_setspecific(key, arg);
 }
 #endif /* USE_THREAD_ALLOC */
-
-
-
-void *TclpThreadCreateKey(void) {
-    pthread_key_t *key;
-
-    key = TclpSysAlloc(sizeof *key, 0);
-    if (NULL == key) {
-	Tcl_Panic("unable to allocate thread key!");
-    }
-
-    if (pthread_key_create(key, NULL)) {
-	Tcl_Panic("unable to create pthread key!");
-    }
-
-    return key;
-}
-
-void TclpThreadDeleteKey(void *keyPtr) {
-    pthread_key_t *key = keyPtr;
-
-    if (pthread_key_delete(*key)) {
-	Tcl_Panic("unable to delete key!");
-    }
-
-    TclpSysFree(keyPtr);
-}
-
-void TclpThreadSetMasterTSD(void *tsdKeyPtr, void *ptr) {
-    pthread_key_t *key = tsdKeyPtr;
-
-    if (pthread_setspecific(*key, ptr)) {
-	Tcl_Panic("unable to set master TSD value");
-    }
-}
-
-void *TclpThreadGetMasterTSD(void *tsdKeyPtr) {
-    pthread_key_t *key = tsdKeyPtr;
-
-    return pthread_getspecific(*key);
-}
-
 #endif /* TCL_THREADS */
 
 /*

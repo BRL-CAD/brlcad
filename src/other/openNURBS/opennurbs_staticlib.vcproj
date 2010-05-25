@@ -1438,6 +1438,22 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_plus.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_plus_function.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_plus_mesh_marker.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_plus_registry.h"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_point.h"
 				>
 			</File>

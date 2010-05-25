@@ -13,8 +13,11 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2.2
-namespace import ::tcltest::test
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2.1
+    namespace import -force ::tcltest::test
+}
+
 ::tcltest::loadTestedCommands
 
 # ----------------------------------------------------------------------
@@ -136,11 +139,10 @@ test delete-3.4 {object destructors get invoked, even during catastrophe} {
     lsort $test_delete_watch
 } {::test_delete0 ::test_delete1 ::test_delete2 ::test_delete_base0 ::test_delete_base1 ::test_delete_base2}
 
-
 # ----------------------------------------------------------------------
 #  Self-destructing objects
 # ----------------------------------------------------------------------
-test delete-4.1 {define a class where objects destroy themselves} {
+test basic-4.1 {define a class where objects destroy themselves} {
     itcl::class test_delete {
         public variable x ""
         public variable deletecommand ""
@@ -157,20 +159,17 @@ test delete-4.1 {define a class where objects destroy themselves} {
     }
 } {}
 
-test delete-4.2 {an object can delete itself
-} -body {
+test basic-4.2 {an object can delete itself} {
     set obj [test_delete #auto -x "data stays"]
     list [$obj killme {return $x}] [itcl::find objects -isa test_delete]
-} -constraints {
-    only_working_in_itcl3.4
-} -result {{data stays} {}}
+} {{data stays} {}}
 
-test delete-4.3 {the "this" variable becomes null after delete} {
+test basic-4.3 {the "this" variable becomes null after delete} {
     set obj [test_delete #auto]
     list [$obj killme {return $this}] [itcl::find objects -isa test_delete]
 } {{} {}}
 
-test delete-4.4 {an object being destructed can't be deleted} {
+test basic-4.4 {an object being destructed can't be deleted} {
     set obj [test_delete #auto -deletecommand {itcl::delete object $this}]
     list [catch {itcl::delete object $obj} msg] $msg
 } {1 {can't delete an object while it is being destructed}}
@@ -180,7 +179,7 @@ namespace delete test_delete
 # ----------------------------------------------------------------------
 #  Delete objects using path names and scoped values
 # ----------------------------------------------------------------------
-test delete-5.1 {define a simple class} {
+test basic-5.1 {define a simple class} {
     itcl::class test_delete_name {
         private variable x 0
         method test {x} {
@@ -189,19 +188,19 @@ test delete-5.1 {define a simple class} {
     }
 } {}
 
-test delete-5.2 {delete using a qualified name} {
+test basic-5.2 {delete using a qualified name} {
     namespace eval test_delete2 {test_delete_name #auto}
     set cmd {itcl::delete object test_delete2::test_delete_name0}
     list [catch $cmd msg] $msg [itcl::find objects -isa test_delete_name]
 } {0 {} {}}
 
-test delete-5.3 {delete using a scoped value} {
+test basic-5.3 {delete using a scoped value} {
     set obj [namespace eval test_delete2 {itcl::code [test_delete_name #auto]}]
     set cmd [list itcl::delete object $obj]
     list [catch $cmd msg] $msg [itcl::find objects -isa test_delete_name]
 } {0 {} {}}
 
-test delete-5.4 {scoped command names are decoded properly} {
+test basic-5.4 {scoped command names are decoded properly} {
     list [catch {itcl::delete object {namespace inscope ::xyzzy xxx}} msg] $msg \
          [catch {itcl::delete object {namespace inscope :: xxx yyy}} msg] $msg \
          [catch {itcl::delete object {namespace inscope :: xyzzy}} msg] $msg

@@ -29,7 +29,6 @@ top-level window.
 The legal forms for the \fBwm\fR command are:
 .TP
 \fBwm aspect \fIwindow\fR ?\fIminNumer minDenom maxNumer maxDenom\fR?
-.
 If \fIminNumer\fR, \fIminDenom\fR, \fImaxNumer\fR, and \fImaxDenom\fR
 are all specified, then they will be passed to the window manager
 and the window manager should use them to enforce a range of
@@ -50,7 +49,6 @@ returned).
 \fBwm attributes \fIwindow\fR ?\fBoption\fR?
 .TP
 \fBwm attributes \fIwindow\fR ?\fBoption value option value...\fR?
-.
 This subcommand returns or sets platform specific attributes associated
 with a window. The first form returns a list of the platform specific
 flags and their values. The second form returns the value for the
@@ -62,88 +60,81 @@ All platforms support the following attributes (though X11 users
 should see the notes below):
 .TP
 \fB\-fullscreen\fR
-.
 Places the window in a mode that takes up the entire screen, has no
 borders, and covers the general use area (i.e. Start menu and taskbar on
 Windows, dock and menubar on OSX, general window decorations on X11).
 .TP
 \fB\-topmost\fR
-.
 Specifies whether this is a topmost window (displays above all other windows).
 .PP
 On Windows, the following attributes may be set.
 .TP
 \fB\-alpha\fR
-.
+.VS 8.5
 Specifies the alpha transparency level of the toplevel.
 It accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR
 (opaque).  Values outside that range will be constrained.  This is
 supported on Windows 2000/XP+.  Where not supported, the \fB\-alpha\fR
 value remains at \fB1.0\fR.
+.VE 8.5
 .TP
 \fB\-disabled\fR
-.
 Specifies whether the window is in a disabled state.
 .TP
 \fB\-toolwindow\fR
-.
 Specifies a toolwindow style window (as defined in the MSDN).
 .TP
 \fB\-transparentcolor\fR
-.
+.VS 8.5
 Specifies the transparent color index of the toplevel.  It takes any color
 value accepted by \fBTk_GetColor\fR.  If the empty string is specified
 (default), no transparent color is used.  This is supported on Windows
 2000/XP+.  Where not supported, the \fB\-transparentcolor\fR value remains
 at \fB{}\fR.
+.VE 8.5
 .PP
 On Mac OS X, the following attributes may be set.
 .TP
 \fB\-alpha\fR
-.
 Specifies the alpha transparency level of the window.
 It accepts a value from \fB0.0\fR (fully transparent) to \fB1.0\fR (opaque),
 values outside that range will be constrained.
 .TP
 \fB\-modified\fR
-.
 Specifies the modification state of the window (determines whether the
 window close widget contains the modification indicator and whether the
 proxy icon is draggable).
 .TP
 \fB\-notify\fR
-.
 Specifies process notification state (bouncing of the application dock icon).
 .TP
 \fB\-titlepath\fR
-.
 Specifies the path of the file referenced as the window proxy icon (which
 can be dragged and dropped in lieu of the file's finder icon).
 .TP
 \fB\-transparent\fR
-.
 Makes the window content area transparent and turns off the window shadow. For
 the transparency to be effecive, the toplevel background needs to be set to a
 color with some alpha, e.g.
 .QW systemTransparent .
 .PP
-On X11, the following attributes may be set. These are not supported by all
-window managers, and will have no effect under older WMs.
+On X11, the following attributes may be set.
+These are not supported by all window managers,
+and will have no effect under older WMs.
 .\" See http://www.freedesktop.org/Standards/wm-spec
 .TP
 \fB\-zoomed\fR
-.
-Requests that the window should be maximized. This is the same as \fBwm state
-zoomed\fR on Windows and Mac OS X.
+Requests that the window should be maximized.
+This is the same as \fBwm state zoomed\fR on Windows and Mac OS X.
 .PP
-On X11, changes to window attributes are performed asynchronously. Querying
-the value of an attribute returns the current state, which will not be the
-same as the value most recently set if the window manager has not yet
-processed the request or if it does not support the attribute.
+On X11, changes to window attributes are performed asynchronously.
+Querying the value of an attribute returns the current state,
+which will not be the same as the value most recently set
+if the window manager has not yet processed the request
+or if it does not support the attribute.
 .RE
 .TP
 \fBwm client \fIwindow\fR ?\fIname\fR?
-.
 If \fIname\fR is specified, this command stores \fIname\fR (which
 should be the name of
 the host on which the application is executing) in \fIwindow\fR's
@@ -156,7 +147,6 @@ If \fIname\fR is specified as an empty string, the command deletes the
 \fBWM_CLIENT_MACHINE\fR property from \fIwindow\fR.
 .TP
 \fBwm colormapwindows \fIwindow\fR ?\fIwindowList\fR?
-.
 This command is used to manipulate the \fBWM_COLORMAP_WINDOWS\fR
 property, which provides information to the window managers about
 windows that have private colormaps.
@@ -187,7 +177,6 @@ See the ICCCM documentation for more information on the
 .RE
 .TP
 \fBwm command \fIwindow\fR ?\fIvalue\fR?
-.
 If \fIvalue\fR is specified, this command stores \fIvalue\fR in \fIwindow\fR's
 \fBWM_COMMAND\fR property for use by the window manager or
 session manager and returns an empty string.
@@ -199,7 +188,6 @@ If \fIvalue\fR is specified as an empty string, the command
 deletes the \fBWM_COMMAND\fR property from \fIwindow\fR.
 .TP
 \fBwm deiconify \fIwindow\fR
-.
 Arrange for \fIwindow\fR to be displayed in normal (non-iconified) form.
 This is done by mapping the window.  If the window has never been
 mapped then this command will not map the window, but it will ensure
@@ -209,7 +197,6 @@ raised and be given the focus (made the active window).
 Returns an empty string.
 .TP
 \fBwm focusmodel \fIwindow\fR ?\fBactive\fR|\fBpassive\fR?
-.
 If \fBactive\fR or \fBpassive\fR is supplied as an optional argument
 to the command, then it specifies the focus model for \fIwindow\fR.
 In this case the command returns an empty string.  If no additional
@@ -229,7 +216,6 @@ assumes a passive model of focusing.
 .RE
 .TP
 \fBwm forget \fIwindow\fR
-.
 The \fIwindow\fR will be unmapped from the screen and will no longer
 be managed by \fBwm\fR.  Windows created with the \fBtoplevel\fR
 command will be treated like \fBframe\fR windows once they are no
@@ -237,7 +223,6 @@ longer managed by \fBwm\fR, however, the \fB\-menu\fR configuration will be
 remembered and the menus will return once the widget is managed again.
 .TP
 \fBwm frame \fIwindow\fR
-.
 If \fIwindow\fR has been reparented by the window manager into a
 decorative frame, the command returns the platform specific window
 identifier for the outermost frame that contains \fIwindow\fR (the
@@ -246,7 +231,6 @@ has not been reparented by the window manager then the command returns
 the platform specific window identifier for \fIwindow\fR.
 .TP
 \fBwm geometry \fIwindow\fR ?\fInewGeometry\fR?
-.
 If \fInewGeometry\fR is specified, then the geometry of \fIwindow\fR
 is changed and an empty string is returned.  Otherwise the current
 geometry for \fIwindow\fR is returned (this is the most recent
@@ -281,7 +265,6 @@ widgets.
 .RE
 .TP
 \fBwm grid \fIwindow\fR ?\fIbaseWidth baseHeight widthInc heightInc\fR?
-.
 This command indicates that \fIwindow\fR is to be managed as a
 gridded window.
 It also specifies the relationship between grid units and pixel units.
@@ -317,7 +300,6 @@ provide easier access to the same functionality.
 .RE
 .TP
 \fBwm group \fIwindow\fR ?\fIpathName\fR?
-.
 If \fIpathName\fR is specified, it gives the path name for the leader of
 a group of related windows.  The window manager may use this information,
 for example, to unmap all of the windows in a group when the group's
@@ -328,7 +310,6 @@ returns the path name of \fIwindow\fR's current group leader, or an empty
 string if \fIwindow\fR is not part of any group.
 .TP
 \fBwm iconbitmap \fIwindow\fR ?\fIbitmap\fR?
-.
 If \fIbitmap\fR is specified, then it names a bitmap in the standard
 forms accepted by Tk (see the \fBTk_GetBitmap\fR manual entry for details).
 This bitmap is passed to the window manager to be displayed in
@@ -339,11 +320,10 @@ If \fIbitmap\fR is specified then the command returns an empty string.
 Otherwise it returns the name of
 the current icon bitmap associated with \fIwindow\fR, or an empty
 string if \fIwindow\fR has no icon bitmap.  On the Windows operating
-system, an additional flag is supported:
+system, an additional flag is supported: 
 .RS
 .TP
 \fBwm iconbitmap \fIwindow\fR ?\fB\-default\fR? ?\fIimage\fR?
-.
 If the \fB\-default\fR
 flag is given, the icon is applied to all toplevel windows (existing
 and future) to which no other specific icon has yet been applied.
@@ -357,13 +337,11 @@ a bitmap.
 .RE
 .TP
 \fBwm iconify \fIwindow\fR
-.
 Arrange for \fIwindow\fR to be iconified.  It \fIwindow\fR has not
 yet been mapped for the first time, this command will arrange for
 it to appear in the iconified state when it is eventually mapped.
 .TP
 \fBwm iconmask \fIwindow\fR ?\fIbitmap\fR?
-.
 If \fIbitmap\fR is specified, then it names a bitmap in the standard
 forms accepted by Tk (see the \fBTk_GetBitmap\fR manual entry for details).
 This bitmap is passed to the window manager to be used as a mask
@@ -378,7 +356,6 @@ returns the name of the current icon mask associated with
 \fIwindow\fR, or an empty string if no mask is in effect.
 .TP
 \fBwm iconname \fIwindow\fR ?\fInewName\fR?
-.
 If \fInewName\fR is specified, then it is passed to the window
 manager;  the window manager should display \fInewName\fR inside
 the icon associated with \fIwindow\fR.  In this case an empty
@@ -387,9 +364,9 @@ then the command returns the current icon name for \fIwindow\fR,
 or an empty string if no icon name has been specified (in this
 case the window manager will normally display the window's title,
 as specified with the \fBwm title\fR command).
+.VS 8.5
 .TP
 \fBwm iconphoto \fIwindow\fR ?\fB\-default\fR? \fIimage1\fR ?\fIimage2 ...\fR?
-.
 Sets the titlebar icon for \fIwindow\fR based on the named photo images.
 If \fB\-default\fR is specified, this is applied to all future created
 toplevels as well.  The data in the images is taken as a snapshot at the
@@ -409,10 +386,10 @@ simultaneously.  It is recommended to use not more than 2 icons, placing
 the larger icon first.
 .PP
 On Macintosh, this currently does nothing.
+.VE 8.5
 .RE
 .TP
 \fBwm iconposition \fIwindow\fR ?\fIx y\fR?
-.
 If \fIx\fR and \fIy\fR are specified, they are passed to the window
 manager as a hint about where to position the icon for \fIwindow\fR.
 In this case an empty string is returned.  If \fIx\fR and \fIy\fR are
@@ -422,7 +399,6 @@ a Tcl list containing two values, which are the current icon position
 hints (if no hints are in effect then an empty string is returned).
 .TP
 \fBwm iconwindow \fIwindow\fR ?\fIpathName\fR?
-.
 If \fIpathName\fR is specified, it is the path name for a window to
 use as icon for \fIwindow\fR: when \fIwindow\fR is iconified then
 \fIpathName\fR will be mapped to serve as icon, and when \fIwindow\fR
@@ -440,7 +416,6 @@ those events.
 Note: not all window managers support the notion of an icon window.
 .TP
 \fBwm manage \fIwidget\fR
-.
 The \fIwidget\fR specified will become a stand alone top-level window.  The
 window will be decorated with the window managers title bar, etc. Only
 \fIframe\fR, \fIlabelframe\fR and \fItoplevel\fR widgets can be used
@@ -449,7 +424,6 @@ an error. Attempting to manage a \fItoplevel\fR widget is benign and
 achieves nothing. See also \fBGEOMETRY MANAGEMENT\fR.
 .TP
 \fBwm maxsize \fIwindow\fR ?\fIwidth height\fR?
-.
 If \fIwidth\fR and \fIheight\fR are specified, they give
 the maximum permissible dimensions for \fIwindow\fR.
 For gridded windows the dimensions are specified in
@@ -464,7 +438,6 @@ The maximum size defaults to the size of the screen.
 See the sections on geometry management below for more information.
 .TP
 \fBwm minsize \fIwindow\fR ?\fIwidth height\fR?
-.
 If \fIwidth\fR and \fIheight\fR are specified, they give the
 minimum permissible dimensions for \fIwindow\fR.
 For gridded windows the dimensions are specified in
@@ -479,7 +452,6 @@ The minimum size defaults to one pixel in each dimension.
 See the sections on geometry management below for more information.
 .TP
 \fBwm overrideredirect \fIwindow\fR ?\fIboolean\fR?
-.
 If \fIboolean\fR is specified, it must have a proper boolean form and
 the override-redirect flag for \fIwindow\fR is set to that value.
 If \fIboolean\fR is not specified then \fB1\fR or \fB0\fR is
@@ -490,16 +462,8 @@ it to be ignored by the window manager;  among other things, this means
 that the window will not be reparented from the root window into a
 decorative frame and the user will not be able to manipulate the
 window using the normal window manager mechanisms.
-.RS
-.PP
-Note that the override-redirect flag is only guaranteed to be taken notice of
-when the window is first mapped or when mapped after the state is changed from
-withdrawn to normal. Some, but not all, platforms will take notice at
-additional times.
-.RE
 .TP
 \fBwm positionfrom \fIwindow\fR ?\fIwho\fR?
-.
 If \fIwho\fR is specified, it must be either \fBprogram\fR or
 \fBuser\fR, or an abbreviation of one of these two.  It indicates
 whether \fIwindow\fR's current position was requested by the
@@ -520,7 +484,6 @@ when a \fBwm geometry\fR command is invoked, unless the source has
 been set explicitly to \fBprogram\fR.
 .TP
 \fBwm protocol \fIwindow\fR ?\fIname\fR? ?\fIcommand\fR?
-.
 This command is used to manage window manager protocols such as
 \fBWM_DELETE_WINDOW\fR.
 \fIName\fR is the name of an atom corresponding to a window manager
@@ -554,7 +517,6 @@ which it was received.
 .RE
 .TP
 \fBwm resizable \fIwindow\fR ?\fIwidth height\fR?
-.
 This command controls whether or not the user may interactively
 resize a top-level window.  If \fIwidth\fR and \fIheight\fR are
 specified, they are boolean values that determine whether the
@@ -570,7 +532,6 @@ command.  If there has been no such operation then
 the window's natural size will be used.
 .TP
 \fBwm sizefrom \fIwindow\fR ?\fIwho\fR?
-.
 If \fIwho\fR is specified, it must be either \fBprogram\fR or
 \fBuser\fR, or an abbreviation of one of these two.  It indicates
 whether \fIwindow\fR's current size was requested by the
@@ -588,7 +549,6 @@ no source has been specified yet.  Most window managers interpret
 as equivalent to \fBprogram\fR.
 .TP
 \fBwm stackorder \fIwindow\fR ?\fBisabove\fR|\fBisbelow \fIwindow\fR?
-.
 The \fBstackorder\fR command returns a list of toplevel windows
 in stacking order, from lowest to highest. When a single toplevel
 window is passed, the returned list recursively includes all of the
@@ -602,7 +562,6 @@ or not the first window is currently above or below the second
 window in the stacking order.
 .TP
 \fBwm state \fIwindow\fR ?newstate?
-.
 If \fInewstate\fR is specified, the window will be set to the new state,
 otherwise it returns the current state of \fIwindow\fR: either
 \fBnormal\fR, \fBiconic\fR, \fBwithdrawn\fR, \fBicon\fR, or (Windows and Mac
@@ -614,7 +573,6 @@ purpose is to serve as the icon for some other window (via the \fBwm
 iconwindow\fR command).  The \fBicon\fR state cannot be set.
 .TP
 \fBwm title \fIwindow\fR ?\fIstring\fR?
-.
 If \fIstring\fR is specified, then it will be passed to the window
 manager for use as the title for \fIwindow\fR (the window manager
 should display this string in \fIwindow\fR's title bar).  In this
@@ -623,7 +581,6 @@ specified then the command returns the current title for the
 \fIwindow\fR.  The title for a window defaults to its name.
 .TP
 \fBwm transient \fIwindow\fR ?\fImaster\fR?
-.
 If \fImaster\fR is specified, then the window manager is informed
 that \fIwindow\fR is a transient window (e.g. pull-down menu) working
 on behalf of \fImaster\fR (where \fImaster\fR is the
@@ -637,7 +594,6 @@ inherit the state of the master when initially mapped. It is an
 error to attempt to make a window a transient of itself.
 .TP
 \fBwm withdraw \fIwindow\fR
-.
 Arranges for \fIwindow\fR to be withdrawn from the screen.  This
 causes the window to be unmapped and forgotten about by the window
 manager.  If the window
@@ -730,7 +686,6 @@ operation of the \fBwm\fR command.  For example, some changes will not
 take effect if the window is already active:  the window will have
 to be withdrawn and de-iconified in order to make the change happen.
 .SH EXAMPLES
-.PP
 A fixed-size window that says that it is fixed-size too:
 .CS
 toplevel .fixed
@@ -765,6 +720,3 @@ set y [expr {([winfo screenheight .]\-[winfo height .msg])/2}]
 toplevel(n), winfo(n)
 .SH KEYWORDS
 aspect ratio, deiconify, focus model, geometry, grid, group, icon, iconify, increments, position, size, title, top-level window, units, window manager
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

@@ -355,7 +355,10 @@ test expr-8.11 {CompileEqualityExpr: error compiling equality arm} -body {
     expr 2!=x
 } -returnCodes error -match glob -result *
 test expr-8.12 {CompileBitAndExpr: equality expr} {expr {"a"eq"a"}} 1
-test expr-8.13 {CompileBitAndExpr: equality expr} {expr {"\374" eq [set s \u00fc]}} 1
+test expr-8.13 {CompileBitAndExpr: equality expr} {
+    set s \u00fc
+    expr {"\374" eq $s}
+} 1
 test expr-8.14 {CompileBitAndExpr: equality expr} {expr 3eq2} 0
 test expr-8.15 {CompileBitAndExpr: equality expr} {expr 2.0eq2} 0
 test expr-8.16 {CompileBitAndExpr: equality expr} {expr 3.2ne2.2} 1
@@ -7145,13 +7148,6 @@ test expr-47.13 {isqrt and floating point rounding (Bug 2143288)} {
 test expr-48.1 {Bug 1770224} {
     expr {-0x8000000000000001 >> 0x8000000000000000}
 } -1
-
-test expr-49.1 {Bug 2823282} {
-    coroutine foo apply {{} {set expr expr; $expr {[yield]}}}
-    foo 1
-} 1
-
-
 
 # cleanup
 if {[info exists a]} {

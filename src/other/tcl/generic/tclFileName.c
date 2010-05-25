@@ -34,21 +34,11 @@ static const char *	ExtractWinRoot(const char *path,
 			    Tcl_DString *resultPtr, int offset,
 			    Tcl_PathType *typePtr);
 static int		SkipToChar(char **stringPtr, int match);
-static Tcl_Obj *	SplitWinPath(const char *path);
-static Tcl_Obj *	SplitUnixPath(const char *path);
+static Tcl_Obj*		SplitWinPath(const char *path);
+static Tcl_Obj*		SplitUnixPath(const char *path);
 static int		DoGlob(Tcl_Interp *interp, Tcl_Obj *resultPtr,
 			    const char *separators, Tcl_Obj *pathPtr, int flags,
 			    char *pattern, Tcl_GlobTypeData *types);
-
-/*
- * When there is no support for getting the block size of a file in a stat()
- * call, use this as a guess. Allow it to be overridden in the platform-
- * specific files.
- */
-
-#if (!defined(HAVE_STRUCT_STAT_ST_BLKSIZE) && !defined(GUESSED_BLOCK_SIZE))
-#define GUESSED_BLOCK_SIZE	1024
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -211,7 +201,7 @@ ExtractWinRoot(
 	    Tcl_DStringAppend(resultPtr, path, 2);
 	    return &path[2];
 	} else {
-	    const char *tail = &path[3];
+	    char *tail = (char*)&path[3];
 
 	    /*
 	     * Skip separators.
@@ -389,7 +379,7 @@ TclpGetNativePathType(
 {
     Tcl_PathType type = TCL_PATH_ABSOLUTE;
     int pathLen;
-    const char *path = Tcl_GetStringFromObj(pathPtr, &pathLen);
+    char *path = Tcl_GetStringFromObj(pathPtr, &pathLen);
 
     if (path[0] == '~') {
 	/*
@@ -398,7 +388,7 @@ TclpGetNativePathType(
 	 */
 
 	if (driveNameLengthPtr != NULL) {
-	    const char *end = path + 1;
+	    char *end = path + 1;
 	    while ((*end != '\0') && (*end != '/')) {
 		end++;
 	    }
@@ -407,7 +397,7 @@ TclpGetNativePathType(
     } else {
 	switch (tclPlatform) {
 	case TCL_PLATFORM_UNIX: {
-	    const char *origPath = path;
+	    char *origPath = path;
 
 	    /*
 	     * Paths that begin with / are absolute.
@@ -550,8 +540,7 @@ Tcl_SplitPath(
     Tcl_Obj *resultPtr = NULL;	/* Needed only to prevent gcc warnings. */
     Tcl_Obj *tmpPtr, *eltPtr;
     int i, size, len;
-    char *p;
-    const char *str;
+    char *p, *str;
 
     /*
      * Perform the splitting, using objectified, vfs-aware code.
@@ -836,12 +825,10 @@ Tcl_FSJoinToPath(
 void
 TclpNativeJoinPath(
     Tcl_Obj *prefix,
-    const char *joining)
+    char *joining)
 {
     int length, needsSep;
-    char *dest;
-    const char *p;
-    const char *start;
+    char *dest, *p, *start;
 
     start = Tcl_GetStringFromObj(prefix, &length);
 
@@ -965,7 +952,7 @@ Tcl_JoinPath(
     int i, len;
     Tcl_Obj *listObj = Tcl_NewObj();
     Tcl_Obj *resultObj;
-    const char *resultStr;
+    char *resultStr;
 
     /*
      * Build the list of paths.
@@ -1215,7 +1202,7 @@ Tcl_GlobObjCmd(
     Tcl_Obj *typePtr, *resultPtr, *look;
     Tcl_Obj *pathOrDir = NULL;
     Tcl_DString prefix;
-    static const char *const options[] = {
+    static const char *options[] = {
 	"-directory", "-join", "-nocomplain", "-path", "-tails",
 	"-types", "--", NULL
     };
@@ -1312,6 +1299,10 @@ Tcl_GlobObjCmd(
     }
 
   endOfForLoop:
+    if (objc - i < 1) {
+	Tcl_WrongNumArgs(interp, 1, objv, "?switches? name ?name ...?");
+	return TCL_ERROR;
+    }
     if ((globFlags & TCL_GLOBMODE_TAILS) && (pathOrDir == NULL)) {
 	Tcl_AppendResult(interp,
 		"\"-tails\" must be used with either "
@@ -1331,8 +1322,8 @@ Tcl_GlobObjCmd(
 
     if (dir == PATH_GENERAL) {
 	int pathlength;
-	const char *last;
-	const char *first = Tcl_GetStringFromObj(pathOrDir,&pathlength);
+	char *last;
+	char *first = Tcl_GetStringFromObj(pathOrDir,&pathlength);
 
 	/*
 	 * Find the last path separator in the path
@@ -1424,8 +1415,8 @@ Tcl_GlobObjCmd(
 	if (length <= 0) {
 	    goto skipTypes;
 	}
-	globTypes = (Tcl_GlobTypeData *)
-		TclStackAlloc(interp, sizeof(Tcl_GlobTypeData));
+	globTypes = (Tcl_GlobTypeData*)
+		TclStackAlloc(interp,sizeof(Tcl_GlobTypeData));
 	globTypes->type = 0;
 	globTypes->perm = 0;
 	globTypes->macType = NULL;
@@ -1433,7 +1424,7 @@ Tcl_GlobObjCmd(
 
 	while (--length >= 0) {
 	    int len;
-	    const char *str;
+	    char *str;
 
 	    Tcl_ListObjIndex(interp, typePtr, length, &look);
 	    str = Tcl_GetStringFromObj(look, &len);
@@ -1489,7 +1480,7 @@ Tcl_GlobObjCmd(
 		Tcl_IncrRefCount(look);
 
 	    } else {
-		Tcl_Obj *item;
+		Tcl_Obj* item;
 
 		if ((Tcl_ListObjLength(NULL, look, &len) == TCL_OK) &&
 			(len == 3)) {
@@ -1895,29 +1886,27 @@ TclGlob(
 
     if (*tail == '\0' && pathPrefix != NULL) {
 	/*
-	 * An empty pattern. This means 'pathPrefix' is actually a full path
-	 * of a file/directory we want to simply check for existence and type.
+	 * An empty pattern.  This means 'pathPrefix' is actually
+	 * a full path of a file/directory we want to simply check
+	 * for existence and type.
 	 */
-
 	if (types == NULL) {
-	    /*
-	     * We just want to check for existence. In this case we make it
-	     * easy on Tcl_FSMatchInDirectory and its sub-implementations by
-	     * not bothering them (even though they should support this
-	     * situation) and we just use the simple existence check with
-	     * Tcl_FSAccess.
+	    /* 
+	     * We just want to check for existence.  In this case we
+	     * make it easy on Tcl_FSMatchInDirectory and its
+	     * sub-implementations by not bothering them (even though
+	     * they should support this situation) and we just use the
+	     * simple existence check with Tcl_FSAccess.
 	     */
-
 	    if (Tcl_FSAccess(pathPrefix, F_OK) == 0) {
 		Tcl_ListObjAppendElement(interp, filenamesObj, pathPrefix);
 	    }
 	    result = TCL_OK;
 	} else {
-	    /*
-	     * We want to check for the correct type. Tcl_FSMatchInDirectory
+	    /* 
+	     * We want to check for the correct type.  Tcl_FSMatchInDirectory
 	     * is documented to do this for us, if we give it a NULL pattern.
 	     */
-
 	    result = Tcl_FSMatchInDirectory(interp, filenamesObj, pathPrefix,
 		    NULL, types);
 	}
@@ -1963,7 +1952,7 @@ TclGlob(
 	if (pathPrefix == NULL) {
 	    Tcl_Panic("Called TclGlob with TCL_GLOBMODE_TAILS and pathPrefix==NULL");
 	}
-
+	
 	pre = Tcl_GetStringFromObj(pathPrefix, &prefixLen);
 	if (prefixLen > 0
 		&& (strchr(separators, pre[prefixLen-1]) == NULL)) {
@@ -1982,8 +1971,8 @@ TclGlob(
 	Tcl_ListObjGetElements(NULL, filenamesObj, &objc, &objv);
 	for (i = 0; i< objc; i++) {
 	    int len;
-	    const char *oldStr = Tcl_GetStringFromObj(objv[i], &len);
-	    Tcl_Obj *elems[1];
+	    char *oldStr = Tcl_GetStringFromObj(objv[i], &len);
+	    Tcl_Obj* elems[1];
 
 	    if (len == prefixLen) {
 		if ((pattern[0] == '\0')
@@ -2110,7 +2099,7 @@ DoGlob(
 				 * resulting filenames. Caller allocates and
 				 * deallocates; DoGlob must not touch the
 				 * refCount of this object. */
-    const char *separators,	/* String containing separator characters that
+    const char *separators, /* String containing separator characters that
 				 * should be used to identify globbing
 				 * boundaries. */
     Tcl_Obj *pathPtr,		/* Completely expanded prefix. */
@@ -2342,7 +2331,7 @@ DoGlob(
 	    TCL_GLOB_TYPE_DIR, 0, NULL, NULL
 	};
 	char save = *p;
-	Tcl_Obj *subdirsPtr;
+	Tcl_Obj* subdirsPtr;
 
 	if (*p == '\0') {
 	    return Tcl_FSMatchInDirectory(interp, matchesObj, pathPtr,
@@ -2445,6 +2434,7 @@ DoGlob(
 
 #if defined(__CYGWIN__) && defined(__WIN32__)
 	    {
+		extern int cygwin_conv_to_win32_path(const char *, char *);
 		char winbuf[MAX_PATH+1];
 
 		cygwin_conv_to_win32_path(Tcl_DStringValue(&append), winbuf);
@@ -2462,16 +2452,6 @@ DoGlob(
 		    Tcl_DStringAppend(&append, ".", 1);
 		}
 	    }
-#if defined(__CYGWIN__) && !defined(__WIN32__)
-	    DLLIMPORT extern int cygwin_conv_to_posix_path(const char *, char *);
-	    {
-		char winbuf[MAXPATHLEN+1];
-
-		cygwin_conv_to_posix_path(Tcl_DStringValue(&append), winbuf);
-		Tcl_DStringFree(&append);
-		Tcl_DStringAppend(&append, winbuf, -1);
-	    }
-#endif /* __CYGWIN__ && __WIN32__ */
 	    break;
 	}
 
@@ -2571,129 +2551,6 @@ Tcl_StatBuf *
 Tcl_AllocStatBuf(void)
 {
     return (Tcl_StatBuf *) ckalloc(sizeof(Tcl_StatBuf));
-}
-
-/*
- *---------------------------------------------------------------------------
- *
- * Access functions for Tcl_StatBuf --
- *
- *	These functions provide portable read-only access to the portable
- *	fields of the Tcl_StatBuf structure (really a 'struct stat', 'struct
- *	stat64' or something else related). [TIP #316]
- *
- * Results:
- *	The value from the field being retrieved.
- *
- * Side effects:
- *	None.
- *
- *---------------------------------------------------------------------------
- */
-
-unsigned
-Tcl_GetFSDeviceFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (unsigned) statPtr->st_dev;
-}
-
-unsigned
-Tcl_GetFSInodeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (unsigned) statPtr->st_ino;
-}
-
-unsigned
-Tcl_GetModeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (unsigned) statPtr->st_mode;
-}
-
-int
-Tcl_GetLinkCountFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (int)statPtr->st_nlink;
-}
-
-int
-Tcl_GetUserIdFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (int) statPtr->st_uid;
-}
-
-int
-Tcl_GetGroupIdFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (int) statPtr->st_gid;
-}
-
-int
-Tcl_GetDeviceTypeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (int) statPtr->st_rdev;
-}
-
-Tcl_WideInt
-Tcl_GetAccessTimeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (Tcl_WideInt) statPtr->st_atime;
-}
-
-Tcl_WideInt
-Tcl_GetModificationTimeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (Tcl_WideInt) statPtr->st_mtime;
-}
-
-Tcl_WideInt
-Tcl_GetChangeTimeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (Tcl_WideInt) statPtr->st_ctime;
-}
-
-Tcl_WideUInt
-Tcl_GetSizeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-    return (Tcl_WideUInt) statPtr->st_size;
-}
-
-Tcl_WideUInt
-Tcl_GetBlocksFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
-    return (Tcl_WideUInt) statPtr->st_blocks;
-#else
-    register unsigned blksize = Tcl_GetBlockSizeFromStat(statPtr);
-
-    return ((Tcl_WideUInt) statPtr->st_size + blksize - 1) / blksize;
-#endif
-}
-
-unsigned
-Tcl_GetBlockSizeFromStat(
-    const Tcl_StatBuf *statPtr)
-{
-#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
-    return (unsigned) statPtr->st_blksize;
-#else
-    /*
-     * Not a great guess, but will do...
-     */
-
-    return GUESSED_BLOCK_SIZE;
-#endif
 }
 
 /*

@@ -892,7 +892,7 @@ rt_fdiff(double a, double b)
     ret = 1;
 out:
     if (RT_G_DEBUG&DEBUG_FDIFF) bu_log("rt_fdiff(%.18e, %.18e)=%d\n", a, b, ret);
-    return(ret);
+    return ret;
 }
 
 
@@ -1504,11 +1504,11 @@ stack:
 	    goto stack;
 	default:
 	    bu_log("rt_booleval:  bad stack op [%d]\n", treep->tr_op);
-	    return(BOOL_TRUE);	/* screw up output */
+	    return BOOL_TRUE;	/* screw up output */
     }
 pop:
     if ((treep = *--sp) == TREE_NULL)
-	return(ret);		/* top of tree again */
+	return ret;		/* top of tree again */
     /*
      * Here, each operation will look at the operation just completed
      * (the left branch of the tree generally), and rewrite the top of
@@ -1517,7 +1517,7 @@ pop:
     switch (treep->tr_op) {
 	case OP_SOLID:
 	    bu_log("rt_booleval:  pop SOLID?\n");
-	    return(BOOL_TRUE);	/* screw up output */
+	    return BOOL_TRUE;	/* screw up output */
 	case OP_UNION:
 	    if (ret) goto pop;	/* BOOL_TRUE, we are done */
 	    /* lhs was false, rewrite as rhs tree */
@@ -1577,7 +1577,7 @@ pop:
 		/* stacked temp val: rhs */
 		if (sp[-1]->tr_regionp)
 		    trueregp[1] = sp[-1]->tr_regionp;
-		return(-1);	/* GUARD error */
+		return -1;	/* GUARD error */
 	    }
 	    ret = BOOL_TRUE;
 	    sp--;			/* pop temp val */
@@ -1595,7 +1595,7 @@ pop:
 	    goto pop;
 	default:
 	    bu_log("rt_booleval:  bad pop op [%d]\n", treep->tr_op);
-	    return(BOOL_TRUE);	/* screw up output */
+	    return BOOL_TRUE;	/* screw up output */
     }
     /* NOTREACHED */
 }
@@ -2125,9 +2125,9 @@ rt_reldiff(double a, double b)
 	if ((-b) > d) d = (-b);
     }
     if (NEAR_ZERO(d, SMALL_FASTF))
-	return(0.0);
+	return 0.0;
     if ((diff = a - b) < 0.0) diff = -diff;
-    return(diff / d);
+    return diff / d;
 }
 
 
@@ -2144,7 +2144,7 @@ rt_partition_len(const struct partition *partheadp)
 
     pp = partheadp->pt_forw;
     if (pp == PT_NULL)
-	return(0);		/* Header not initialized yet */
+	return 0;		/* Header not initialized yet */
     for (; pp != partheadp; pp = pp->pt_forw) {
 	if (pp->pt_magic != 0) {
 	    /* Partitions on the free queue have pt_magic = 0 */
@@ -2152,7 +2152,7 @@ rt_partition_len(const struct partition *partheadp)
 	}
 	if (++count > 1000000) bu_bomb("partition length > 10000000 elements\n");
     }
-    return((int)count);
+    return (int)count;
 }
 
 

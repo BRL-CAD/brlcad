@@ -219,10 +219,10 @@ test regexp-5.5 {exercise cache of compiled expressions} {
 
 test regexp-6.1 {regexp errors} {
     list [catch {regexp a} msg] $msg
-} {1 {wrong # args: should be "regexp ?-switch ...? exp string ?matchVar? ?subMatchVar ...?"}}
+} {1 {wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"}}
 test regexp-6.2 {regexp errors} {
     list [catch {regexp -nocase a} msg] $msg
-} {1 {wrong # args: should be "regexp ?-switch ...? exp string ?matchVar? ?subMatchVar ...?"}}
+} {1 {wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"}}
 test regexp-6.3 {regexp errors} {
     list [catch {regexp -gorp a} msg] $msg
 } {1 {bad switch "-gorp": must be -all, -about, -indices, -inline, -expanded, -line, -linestop, -lineanchor, -nocase, -start, or --}}
@@ -246,9 +246,6 @@ test regexp-6.8 {regexp errors} {
 test regexp-6.9 {regexp errors, -start bad int check} {
     list [catch {regexp -start bogus {^$} {}} msg] $msg
 } {1 {bad index "bogus": must be integer?[+-]integer? or end?[+-]integer?}}
-test regexp-6.10 {regexp errors} {
-    list [catch {regexp {a[} b} msg] $msg
-} {1 {couldn't compile regular expression pattern: brackets [] not balanced}}
 
 test regexp-7.1 {basic regsub operation} {
     list [regsub aa+ xaxaaaxaa 111&222 foo] $foo
@@ -308,15 +305,6 @@ test regexp-7.17 {regsub utf compliance} {
     regsub a\u4e4eb xyza\u4e4ebijka\u4e4ebpqr 555 bar
     list [string compare $foo $bar] [regexp 4 $bar]
 } {0 0}
-test regexp-7.18 {basic regsub replacement} {
-    list [regsub a+ aaa {&} foo] $foo
-} {1 aaa}
-test regexp-7.19 {basic regsub backslash replacement} {
-    list [regsub a+ aaa {\0} foo] $foo
-} {1 aaa}
-test regexp-7.20 {basic regsub backslash replacement} {
-    list [regsub a+ aaa {\\\0} foo] $foo
-} {1 {\aaa}}
 
 test regexp-8.1 {case conversion in regsub} {
     list [regsub -nocase a(a+) xaAAaAAay & foo] $foo
@@ -391,16 +379,16 @@ test regexp-10.5 {inverse partial newline sensitivity in regsub} {
 
 test regexp-11.1 {regsub errors} {
     list [catch {regsub a b} msg] $msg
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexp-11.2 {regsub errors} {
     list [catch {regsub -nocase a b} msg] $msg
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexp-11.3 {regsub errors} {
     list [catch {regsub -nocase -all a b} msg] $msg
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexp-11.4 {regsub errors} {
     list [catch {regsub a b c d e f} msg] $msg
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexp-11.5 {regsub errors} {
     list [catch {regsub -gorp a b c} msg] $msg
 } {1 {bad switch "-gorp": must be -all, -nocase, -expanded, -line, -linestop, -lineanchor, -start, or --}}

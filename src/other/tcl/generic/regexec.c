@@ -125,13 +125,13 @@ struct vars {
 /* =====^!^===== begin forwards =====^!^===== */
 /* automatically gathered by fwd; do not hand-edit */
 /* === regexec.c === */
-int exec(regex_t *, const chr *, size_t, rm_detail_t *, size_t, regmatch_t [], int);
+int exec(regex_t *, CONST chr *, size_t, rm_detail_t *, size_t, regmatch_t [], int);
 static int find(struct vars *, struct cnfa *, struct colormap *);
 static int cfind(struct vars *, struct cnfa *, struct colormap *);
 static int cfindloop(struct vars *, struct cnfa *, struct colormap *, struct dfa *, struct dfa *, chr **);
-static void zapsubs(regmatch_t *, size_t);
-static void zapmem(struct vars *, struct subre *);
-static void subset(struct vars *, struct subre *, chr *, chr *);
+static VOID zapsubs(regmatch_t *, size_t);
+static VOID zapmem(struct vars *, struct subre *);
+static VOID subset(struct vars *, struct subre *, chr *, chr *);
 static int dissect(struct vars *, struct subre *, chr *, chr *);
 static int condissect(struct vars *, struct subre *, chr *, chr *);
 static int altdissect(struct vars *, struct subre *, chr *, chr *);
@@ -145,7 +145,7 @@ static chr *longest(struct vars *, struct dfa *, chr *, chr *, int *);
 static chr *shortest(struct vars *, struct dfa *, chr *, chr *, chr *, chr **, int *);
 static chr *lastcold(struct vars *, struct dfa *);
 static struct dfa *newdfa(struct vars *, struct cnfa *, struct colormap *, struct smalldfa *);
-static void freedfa(struct dfa *);
+static VOID freedfa(struct dfa *);
 static unsigned hash(unsigned *, int);
 static struct sset *initialize(struct vars *, struct dfa *, chr *);
 static struct sset *miss(struct vars *, struct dfa *, struct sset *, pcolor, chr *, chr *);
@@ -157,13 +157,13 @@ static struct sset *pickss(struct vars *, struct dfa *, chr *, chr *);
 
 /*
  - exec - match regular expression
- ^ int exec(regex_t *, const chr *, size_t, rm_detail_t *,
+ ^ int exec(regex_t *, CONST chr *, size_t, rm_detail_t *,
  ^					size_t, regmatch_t [], int);
  */
 int
 exec(
     regex_t *re,
-    const chr *string,
+    CONST chr *string,
     size_t len,
     rm_detail_t *details,
     size_t nmatch,
@@ -539,7 +539,7 @@ cfindloop(
 
 /*
  - zapsubs - initialize the subexpression matches to "no match"
- ^ static void zapsubs(regmatch_t *, size_t);
+ ^ static VOID zapsubs(regmatch_t *, size_t);
  */
 static void
 zapsubs(
@@ -556,7 +556,7 @@ zapsubs(
 
 /*
  - zapmem - initialize the retry memory of a subtree to zeros
- ^ static void zapmem(struct vars *, struct subre *);
+ ^ static VOID zapmem(struct vars *, struct subre *);
  */
 static void
 zapmem(
@@ -585,7 +585,7 @@ zapmem(
 
 /*
  - subset - set any subexpression relevant to a successful subre
- ^ static void subset(struct vars *, struct subre *, chr *, chr *);
+ ^ static VOID subset(struct vars *, struct subre *, chr *, chr *);
  */
 static void
 subset(
@@ -1132,7 +1132,7 @@ cbrdissect(
 
     i = 0;
     for (p = begin; p <= stop && (i < max || max == INFINITY); p += len) {
-	if (v->g->compare(paren, p, len) != 0) {
+	if ((*v->g->compare)(paren, p, len) != 0) {
 	    break;
 	}
 	i++;

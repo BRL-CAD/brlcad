@@ -5,15 +5,15 @@
 
 Name:          tk
 Summary:       Tk graphical toolkit for the Tcl scripting language.
-Version:       8.6b1
+Version:       8.5.8
 Release:       2
 License:       BSD
 Group:         Development/Languages
 Source:        http://prdownloads.sourceforge.net/tcl/tk%{version}-src.tar.gz
 URL:           http://www.tcl.tk/
 Buildroot:     /var/tmp/%{name}%{version}
-Buildrequires: XFree86-devel tcl >= %version
-Requires:      tcl >= %version
+Buildrequires: XFree86-devel tcl >= 8.5.0
+Requires:      tcl >= 8.5.0
 
 %description
 The Tcl (Tool Command Language) provides a powerful platform for

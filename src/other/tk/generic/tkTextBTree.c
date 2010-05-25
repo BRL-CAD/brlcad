@@ -867,7 +867,7 @@ DestroyNode(
 	    while (linePtr->segPtr != NULL) {
 		segPtr = linePtr->segPtr;
 		linePtr->segPtr = segPtr->nextPtr;
-		segPtr->typePtr->deleteProc(segPtr, linePtr, 1);
+		(*segPtr->typePtr->deleteProc)(segPtr, linePtr, 1);
 	    }
 	    ckfree((char *) linePtr->pixels);
 	    ckfree((char *) linePtr);
@@ -1207,7 +1207,7 @@ SplitSeg(
 	    if (count == 0) {
 		return prevPtr;
 	    }
-	    segPtr = segPtr->typePtr->splitProc(segPtr, count);
+	    segPtr = (*segPtr->typePtr->splitProc)(segPtr, count);
 	    if (prevPtr == NULL) {
 		indexPtr->linePtr->segPtr = segPtr;
 	    } else {
@@ -1233,9 +1233,8 @@ SplitSeg(
 		/*
 		 * Reached end of the text.
 		 */
-	    } else {
-		segPtr = linePtr->segPtr;
 	    }
+	    segPtr = linePtr->segPtr;
 	}
     }
     Tcl_Panic("SplitSeg reached end of line!");
@@ -1283,7 +1282,7 @@ CleanupLine(
 		segPtr != NULL;
 		prevPtrPtr = &(*prevPtrPtr)->nextPtr, segPtr = *prevPtrPtr) {
 	    if (segPtr->typePtr->cleanupProc != NULL) {
-		*prevPtrPtr = segPtr->typePtr->cleanupProc(segPtr, linePtr);
+		*prevPtrPtr = (*segPtr->typePtr->cleanupProc)(segPtr, linePtr);
 		if (segPtr != *prevPtrPtr) {
 		    anyChanges = 1;
 		}
@@ -1390,7 +1389,6 @@ TkBTreeDeleteIndexRange(
 		    }
 		}
 		changeToLineCount++;
-		CLANG_ASSERT(curNodePtr);
 		curNodePtr->numChildren--;
 
 		/*
@@ -1454,7 +1452,7 @@ TkBTreeDeleteIndexRange(
 	}
 
 	nextPtr = segPtr->nextPtr;
-	if (segPtr->typePtr->deleteProc(segPtr, curLinePtr, 0) != 0) {
+	if ((*segPtr->typePtr->deleteProc)(segPtr, curLinePtr, 0) != 0) {
 	    /*
 	     * This segment refuses to die. Move it to prevPtr and advance
 	     * prevPtr if the segment has left gravity.
@@ -1485,7 +1483,7 @@ TkBTreeDeleteIndexRange(
 	for (segPtr = lastPtr; segPtr != NULL;
 		segPtr = segPtr->nextPtr) {
 	    if (segPtr->typePtr->lineChangeProc != NULL) {
-		segPtr->typePtr->lineChangeProc(segPtr, index2Ptr->linePtr);
+		(*segPtr->typePtr->lineChangeProc)(segPtr, index2Ptr->linePtr);
 	    }
 	}
 	curNodePtr = index2Ptr->linePtr->parentPtr;
@@ -2467,7 +2465,7 @@ FindTagStart(
      * level 0 node.
      */
 
-    while (nodePtr && nodePtr->level > 0) {
+    while (nodePtr->level > 0) {
 	for (nodePtr = nodePtr->children.nodePtr ; nodePtr != NULL;
 		nodePtr = nodePtr->nextPtr) {
 	    for (summaryPtr = nodePtr->summaryPtr ; summaryPtr != NULL;
@@ -2479,10 +2477,6 @@ FindTagStart(
 	}
     gotNodeWithTag:
 	continue;
-    }
-
-    if (nodePtr == NULL) {
-	return NULL;
     }
 
     /*
@@ -2552,7 +2546,7 @@ FindTagEnd(
      * level 0 node.
      */
 
-    while (nodePtr && nodePtr->level > 0) {
+    while (nodePtr->level > 0) {
 	for (lastNodePtr = NULL, nodePtr = nodePtr->children.nodePtr ;
 		nodePtr != NULL; nodePtr = nodePtr->nextPtr) {
 	    for (summaryPtr = nodePtr->summaryPtr ; summaryPtr != NULL;
@@ -2564,10 +2558,6 @@ FindTagEnd(
 	    }
 	}
 	nodePtr = lastNodePtr;
-    }
-
-    if (nodePtr == NULL) {
-	return NULL;
     }
 
     /*
@@ -3774,7 +3764,7 @@ TkBTreeCheck(
 
     for (entryPtr=Tcl_FirstHashEntry(&treePtr->sharedTextPtr->tagTable,&search);
 	    entryPtr != NULL ; entryPtr = Tcl_NextHashEntry(&search)) {
-	tagPtr = Tcl_GetHashValue(entryPtr);
+	tagPtr = (TkTextTag *) Tcl_GetHashValue(entryPtr);
 	nodePtr = tagPtr->tagRootPtr;
 	if (nodePtr == NULL) {
 	    if (tagPtr->toggleCount != 0) {
@@ -3946,7 +3936,7 @@ CheckNodeConsistency(
 	    for (segPtr = linePtr->segPtr; segPtr != NULL;
 		    segPtr = segPtr->nextPtr) {
 		if (segPtr->typePtr->checkProc != NULL) {
-		    segPtr->typePtr->checkProc(segPtr, linePtr);
+		    (*segPtr->typePtr->checkProc)(segPtr, linePtr);
 		}
 		if ((segPtr->size == 0) && (!segPtr->typePtr->leftGravity)
 			&& (segPtr->nextPtr != NULL)
@@ -4287,11 +4277,9 @@ Rebalance(
 	     */
 
 	    if (nodePtr->level == 0) {
-		CLANG_ASSERT(halfwayLinePtr);
 		otherPtr->children.linePtr = halfwayLinePtr->nextPtr;
 		halfwayLinePtr->nextPtr = NULL;
 	    } else {
-		CLANG_ASSERT(halfwayNodePtr);
 		otherPtr->children.nodePtr = halfwayNodePtr->nextPtr;
 		halfwayNodePtr->nextPtr = NULL;
 	    }

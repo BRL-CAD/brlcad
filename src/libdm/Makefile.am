@@ -21,15 +21,6 @@ DM_OGL_CFLAGS =
 DM_OGL_LIBS =
 endif
 
-if WITH_OPENGL
-DM_TOGL_CFLAGS = -DDM_OGL -DIF_OGL $(GL_CPPFLAGS) $(TOGL_CPPFLAGS)
-DM_TOGL_LIBS = ${LIBGL}
-else
-DM_TOGL_CFLAGS =
-DM_TOGL_LIBS =
-endif
-
-
 if BUILD_RTGL
 DM_RTGL_CFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CPPFLAGS)
 DM_RTGL_LIBS = ${LIBGL}
@@ -58,7 +49,6 @@ libdm_la_SOURCES = \
 	dm-rtgl.c \
 	dm-plot.c \
 	dm-ps.c \
-	dm-togl.c \
 	dm-wgl.c \
 	dm_obj.c \
 	focus.c \
@@ -81,7 +71,6 @@ libdm_la_CFLAGS = \
 	${DM_TK_CFLAGS} \
 	${DM_WGL_CFLAGS} \
 	${DM_OGL_CFLAGS} \
-	${DM_TOGL_CFLAGS} \
 	${DM_RTGL_CFLAGS} \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
@@ -89,7 +78,7 @@ libdm_la_CFLAGS = \
 
 libdm_la_LIBADD = \
 	${DM_LIBS} \
-	${DM_TOGL_LIBS} \
+	${DM_OGL_LIBS} \
 	${DM_RTGL_LIBS}
 
 EXTRA_DIST = \

@@ -125,7 +125,7 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
  */
 
 static int
-FileMatchPIX(Tcl_Channel chan __attribute__((unused)), const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
+FileMatchPIX(Tcl_Channel UNUSED(chan), const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
 
     /* The name of the image file. */
     /* User-specified format string, or NULL. */

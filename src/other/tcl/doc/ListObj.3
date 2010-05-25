@@ -222,7 +222,7 @@ referenced by the array of object pointers \fIobjv\fR
 just before the element \fIindex\fR of the list referenced by \fIlistPtr\fR:
 .PP
 .CS
-result = \fBTcl_ListObjReplace\fR(interp, listPtr, index, 0,
+result = Tcl_ListObjReplace(interp, listPtr, index, 0,
         objc, objv);
 .CE
 .PP
@@ -231,9 +231,9 @@ referenced by the array \fIobjv\fR
 to the end of the list \fIlistPtr\fR:
 .PP
 .CS
-result = \fBTcl_ListObjLength\fR(interp, listPtr, &length);
+result = Tcl_ListObjLength(interp, listPtr, &length);
 if (result == TCL_OK) {
-    result = \fBTcl_ListObjReplace\fR(interp, listPtr, length, 0,
+    result = Tcl_ListObjReplace(interp, listPtr, length, 0,
             objc, objv);
 }
 .CE
@@ -243,10 +243,10 @@ by simply calling \fBTcl_ListObjReplace\fR
 with a NULL \fIobjvPtr\fR:
 .PP
 .CS
-result = \fBTcl_ListObjReplace\fR(interp, listPtr, first, count,
+result = Tcl_ListObjReplace(interp, listPtr, first, count,
         0, NULL);
 .CE
 .SH "SEE ALSO"
-Tcl_NewObj(3), Tcl_DecrRefCount(3), Tcl_IncrRefCount(3), Tcl_GetObjResult(3)
+Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount, Tcl_GetObjResult
 .SH KEYWORDS
 append, index, insert, internal representation, length, list, list object, list type, object, object type, replace, string representation

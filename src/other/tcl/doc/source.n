@@ -17,7 +17,9 @@ source \- Evaluate a file or resource as a Tcl script
 .SH SYNOPSIS
 \fBsource \fIfileName\fR
 .sp
+.VS 8.5
 \fBsource\fR \fB\-encoding \fIencodingName fileName\fR
+.VE 8.5
 .BE
 .SH DESCRIPTION
 .PP
@@ -45,21 +47,19 @@ or
 which will be safely substituted by the Tcl interpreter into
 .QW ^Z .
 .PP
+.VS 8.5
 The \fB\-encoding\fR option is used to specify the encoding of
 the data stored in \fIfileName\fR.  When the \fB\-encoding\fR option
 is omitted, the system encoding is assumed.
+.VE 8.5
 .SH EXAMPLE
-.PP
 Run the script in the file \fBfoo.tcl\fR and then the script in the
 file \fBbar.tcl\fR:
-.PP
 .CS
 \fBsource\fR foo.tcl
 \fBsource\fR bar.tcl
 .CE
-.PP
 Alternatively:
-.PP
 .CS
 foreach scriptFile {foo.tcl bar.tcl} {
    \fBsource\fR $scriptFile

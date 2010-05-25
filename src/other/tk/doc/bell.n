@@ -17,6 +17,7 @@ bell \- Ring a display's bell
 .SH SYNOPSIS
 \fBbell \fR?\fB\-displayof \fIwindow\fR? ?\fB\-nice\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command rings the bell on the display for \fIwindow\fR and
@@ -29,8 +30,6 @@ may be modified with programs such as \fBxset\fR.
 If \fB\-nice\fR is not specified, this command also resets the screen saver
 for the screen.  Some screen savers will ignore this, but others will reset
 so that the screen becomes visible again.
+
 .SH KEYWORDS
 beep, bell, ring
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

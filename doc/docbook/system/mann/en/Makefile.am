@@ -48,6 +48,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/cpi.xml \
 	system/mann/en/d.xml \
 	system/mann/en/dall.xml \
+	system/mann/en/db.xml \
 	system/mann/en/db_glob.xml \
 	system/mann/en/dbconcat.xml \
 	system/mann/en/debugbu.xml \
@@ -86,6 +87,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/g.xml \
 	system/mann/en/garbage_collect.xml \
 	system/mann/en/gastank.xml \
+	system/mann/en/gqa.xml \
 	system/mann/en/gui.xml \
 	system/mann/en/handle.xml \
 	system/mann/en/help.xml \
@@ -123,6 +125,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/mrot.xml \
 	system/mann/en/mv.xml \
 	system/mann/en/mvall.xml \
+	system/mann/en/nirt.xml \
 	system/mann/en/nmg_collapse.xml \
 	system/mann/en/nmg_simplify.xml \
 	system/mann/en/oed.xml \
@@ -175,6 +178,8 @@ mannDOCBOOK_EN = \
 	system/mann/en/rpp-arch.xml \
 	system/mann/en/rpp-cap.xml \
 	system/mann/en/rrt.xml \
+	system/mann/en/rt.xml \
+	system/mann/en/rtcheck.xml \
 	system/mann/en/rtwizard.xml \
 	system/mann/en/savekey.xml \
 	system/mann/en/saveview.xml \

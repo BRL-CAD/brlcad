@@ -16,6 +16,7 @@ winfo \- Return window-related information
 .SH SYNOPSIS
 \fBwinfo\fR \fIoption \fR?\fIarg arg ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 The \fBwinfo\fR command is used to retrieve information about windows
@@ -336,7 +337,6 @@ parent, of the
 upper-left corner of \fIwindow\fR's border (or \fIwindow\fR if it
 has no border).
 .SH EXAMPLE
-.PP
 Print where the mouse pointer is and what window it is currently over:
 .CS
 lassign [\fBwinfo pointerxy\fR .] x y
@@ -348,9 +348,7 @@ if {$win eq ""} {
     puts "over $win"
 }
 .CE
+
 .SH KEYWORDS
 atom, children, class, geometry, height, identifier, information, interpreters,
 mapped, parent, path name, screen, virtual root, width, window
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

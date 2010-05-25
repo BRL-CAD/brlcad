@@ -5,8 +5,8 @@
  *	functions.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
- * Copyright 2001-2009, Apple Inc.
- * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2005-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -16,12 +16,72 @@
 
 #include "tkMacOSXPrivate.h"
 
+#include "tclInt.h" /* for Tcl_GetStartupScript() & Tcl_SetStartupScript() */
+
 #include <sys/stat.h>
 #include <sys/utsname.h>
-#include <dlfcn.h>
-#include <objc/objc-auto.h>
+#include <mach-o/dyld.h>
+#include <mach-o/getsect.h>
 
-static char tkLibPath[PATH_MAX + 1] = "";
+/*
+ * Define the following to 0 to not attempt to use an undocumented SPI to
+ * notify the window server that an unbundled executable is a full GUI
+ * application after loading Tk.
+ */
+
+#ifndef MAC_OSX_TK_USE_CPS_SPI
+#define MAC_OSX_TK_USE_CPS_SPI 1
+#endif
+
+/*
+ * The following structures are used to map the script/language codes of a
+ * font to the name that should be passed to Tcl_GetEncoding() to obtain the
+ * encoding for that font. The set of numeric constants is fixed and defined
+ * by Apple.
+ */
+
+typedef struct Map {
+    CFStringEncoding numKey;
+    const char *strKey;
+} Map;
+
+static Map scriptMap[] = {
+    {smRoman,		"macRoman"},
+    {smJapanese,	"macJapan"},
+    {smTradChinese,	"macChinese"},
+    {smKorean,		"macKorean"},
+    {smArabic,		"macArabic"},
+    {smHebrew,		"macHebrew"},
+    {smGreek,		"macGreek"},
+    {smCyrillic,	"macCyrillic"},
+    {smRSymbol,		"macRSymbol"},
+    {smDevanagari,	"macDevanagari"},
+    {smGurmukhi,	"macGurmukhi"},
+    {smGujarati,	"macGujarati"},
+    {smOriya,		"macOriya"},
+    {smBengali,		"macBengali"},
+    {smTamil,		"macTamil"},
+    {smTelugu,		"macTelugu"},
+    {smKannada,		"macKannada"},
+    {smMalayalam,	"macMalayalam"},
+    {smSinhalese,	"macSinhalese"},
+    {smBurmese,		"macBurmese"},
+    {smKhmer,		"macKhmer"},
+    {smThai,		"macThailand"},
+    {smLaotian,		"macLaos"},
+    {smGeorgian,	"macGeorgia"},
+    {smArmenian,	"macArmenia"},
+    {smSimpChinese,	"macSimpChinese"},
+    {smTibetan,		"macTIbet"},
+    {smMongolian,	"macMongolia"},
+    {smGeez,		"macEthiopia"},
+    {smEastEurRoman,	"macCentEuro"},
+    {smVietnamese,	"macVietnam"},
+    {smExtArabic,	"macSindhi"},
+    {0,			NULL}
+};
+
+Tcl_Encoding TkMacOSXCarbonEncoding = NULL;
 
 /*
  * If the App is in an App package, then we want to add the Scripts directory
@@ -30,163 +90,7 @@ static char tkLibPath[PATH_MAX + 1] = "";
 
 static char scriptPath[PATH_MAX + 1] = "";
 
-int tkMacOSXGCEnabled = 0;
-long tkMacOSXMacOSXVersion = 0;
-
-#pragma mark TKApplication(TKInit)
-
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
-#define NSTextInputContextKeyboardSelectionDidChangeNotification @"NSTextInputContextKeyboardSelectionDidChangeNotification"
-static void keyboardChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
-    [[NSNotificationCenter defaultCenter] postNotificationName:NSTextInputContextKeyboardSelectionDidChangeNotification object:nil userInfo:nil];
-}
-#endif
-
-@interface TKApplication(TKKeyboard)
-- (void) keyboardChanged: (NSNotification *) notification;
-@end
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-#define TKApplication_NSApplicationDelegate <NSApplicationDelegate>
-#else
-#define TKApplication_NSApplicationDelegate
-#endif
-@interface TKApplication(TKWindowEvent) TKApplication_NSApplicationDelegate
-- (void) _setupWindowNotifications;
-@end
-
-@interface TKApplication(TKScrlbr)
-- (void) _setupScrollBarNotifications;
-@end
-
-@interface TKApplication(TKMenus)
-- (void) _setupMenus;
-@end
-
-@implementation TKApplication
-@end
-
-@implementation TKApplication(TKInit)
-#ifdef TK_MAC_DEBUG_NOTIFICATIONS
-- (void) _postedNotification: (NSNotification *) notification
-{
-    TKLog(@"-[%@(%p) %s] %@", [self class], self, _cmd, notification);
-}
-#endif
-
-- (void) _setupApplicationNotifications
-{
-    NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-#define observe(n, s) \
-	[nc addObserver:self selector:@selector(s) name:(n) object:nil]
-    observe(NSApplicationDidBecomeActiveNotification, applicationActivate:);
-    observe(NSApplicationDidResignActiveNotification, applicationDeactivate:);
-    observe(NSApplicationDidUnhideNotification, applicationShowHide:);
-    observe(NSApplicationDidHideNotification, applicationShowHide:);
-    observe(NSApplicationDidChangeScreenParametersNotification, displayChanged:);
-    observe(NSTextInputContextKeyboardSelectionDidChangeNotification, keyboardChanged:);
-#undef observe
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
-    CFNotificationCenterAddObserver(CFNotificationCenterGetDistributedCenter(), NULL, &keyboardChanged, kTISNotifySelectedKeyboardInputSourceChanged, NULL, CFNotificationSuspensionBehaviorCoalesce);
-#endif
-}
-
-- (void) _setupEventLoop
-{
-    _running = 1;
-    if (!_appFlags._hasBeenRun) {
-        _appFlags._hasBeenRun = YES;
-	[self finishLaunching];
-    }
-    [self setWindowsNeedUpdate:YES];
-}
-
-- (void) _setup: (Tcl_Interp *) interp
-{
-    _eventInterp = interp;
-    _defaultMainMenu = nil;
-    [self _setupMenus];
-    [self setDelegate:self];
-#ifdef TK_MAC_DEBUG_NOTIFICATIONS
-    [[NSNotificationCenter defaultCenter] addObserver:self
-	    selector:@selector(_postedNotification:) name:nil object:nil];
-#endif
-    [self _setupWindowNotifications];
-    [self _setupScrollBarNotifications];
-    [self _setupApplicationNotifications];
-}
-
-- (NSString *) tkFrameworkImagePath: (NSString *) image
-{
-    NSString *path = nil;
-
-    if (tkLibPath[0] != '\0') {
-	path = [[NSBundle bundleWithPath:[[NSString stringWithUTF8String:
-		tkLibPath] stringByAppendingString:@"/../.."]]
-		pathForImageResource:image];
-    }
-    if (!path) {
-	const char *tk_library = Tcl_GetVar2(_eventInterp, "tk_library", NULL,
-		TCL_GLOBAL_ONLY);
-
-	if (tk_library) {
-	    NSFileManager *fm = [NSFileManager defaultManager];
-
-	    path = [[NSString stringWithUTF8String:tk_library]
-		    stringByAppendingFormat:@"/%@", image];
-	    if (![fm isReadableFileAtPath:path]) {
-		path = [[NSString stringWithUTF8String:tk_library]
-			stringByAppendingFormat:@"/../macosx/%@", image];
-		if (![fm isReadableFileAtPath:path]) {
-		    path = nil;
-		}
-	    }
-	}
-    }
-#ifdef TK_MAC_DEBUG
-    if (!path && getenv("TK_SRCROOT")) {
-	path = [[NSString stringWithUTF8String:getenv("TK_SRCROOT")]
-		stringByAppendingFormat:@"/macosx/%@", image];
-	if (![[NSFileManager defaultManager] isReadableFileAtPath:path]) {
-	    path = nil;
-	}
-    }
-#endif
-    return path;
-}
-@end
-
-#pragma mark -
-
-/*
- *----------------------------------------------------------------------
- *
- * DoWindowActivate --
- *
- *	Idle handler that sets the application icon to the generic Tk icon.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-SetApplicationIcon(
-    ClientData clientData)
-{
-    NSString *path = [NSApp tkFrameworkImagePath:@"Tk.icns"];
-    if (path) {
-	NSImage *image = [[NSImage alloc] initWithContentsOfFile:path];
-	if (image) {
-	    [NSApp setApplicationIconImage:image];
-	    [image release];
-	}
-    }
-}
+float tkMacOSXToolboxVersionNumber = 0;
 
 /*
  *----------------------------------------------------------------------
@@ -210,7 +114,10 @@ int
 TkpInit(
     Tcl_Interp *interp)
 {
+    static char tkLibPath[PATH_MAX + 1];
     static int initialized = 0;
+
+    Tk_MacOSXSetupTkNotifier();
 
     /*
      * Since it is possible for TkInit to be called multiple times and we
@@ -222,56 +129,122 @@ TkpInit(
 	int bundledExecutable = 0;
 	CFBundleRef bundleRef;
 	CFURLRef bundleUrl = NULL;
+	CFStringEncoding encoding;
+	const char *encodingStr = NULL;
+	int i;
 	struct utsname name;
-	struct stat st;
+	long osVersion = 0;
 
 	initialized = 1;
-
+	
 	/*
 	 * Initialize/check OS version variable for runtime checks.
 	 */
-
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#   error Mac OS X 10.5 required
-#endif
-
+	
 	if (!uname(&name)) {
-	    tkMacOSXMacOSXVersion = (strtod(name.release, NULL) + 96) * 10;
+	    osVersion = strtol(name.release, NULL, 10) - 4;
 	}
-	if (tkMacOSXMacOSXVersion &&
-		tkMacOSXMacOSXVersion/10 < MAC_OS_X_VERSION_MIN_REQUIRED/10) {
+	if (osVersion && osVersion < (MAC_OS_X_VERSION_MIN_REQUIRED-1000)/10) {
 	    Tcl_Panic("Mac OS X 10.%d or later required !",
-		    (MAC_OS_X_VERSION_MIN_REQUIRED/10)-100);
+		    (MAC_OS_X_VERSION_MIN_REQUIRED-1000)/10);
 	}
+	TK_IF_MAC_OS_X_API (3, &kHIToolboxVersionNumber,
+	    tkMacOSXToolboxVersionNumber = kHIToolboxVersionNumber;
+	) TK_ELSE_MAC_OS_X (3,
+	    if (osVersion > 5) {
+		tkMacOSXToolboxVersionNumber = INFINITY;
+	    } else if (osVersion >= 3) {
+		static const float tbVersions[3] = {
+		    kHIToolboxVersionNumber10_3,
+		    kHIToolboxVersionNumber10_4,
+		    kHIToolboxVersionNumber10_5,
+		};
 
-#ifdef TK_FRAMEWORK
+		tkMacOSXToolboxVersionNumber = tbVersions[osVersion-3];
+	    }
+	) TK_ENDIF
+
 	/*
 	 * When Tk is in a framework, force tcl_findLibrary to look in the
 	 * framework scripts directory.
 	 * FIXME: Should we come up with a more generic way of doing this?
 	 */
 
+#ifdef TK_FRAMEWORK
 	if (Tcl_MacOSXOpenVersionedBundleResources(interp,
-		"com.tcltk.tklibrary", TK_FRAMEWORK_VERSION, 0, PATH_MAX,
-		tkLibPath) != TCL_OK) {
-	    TkMacOSXDbgMsg("Tcl_MacOSXOpenVersionedBundleResources failed");
-	}
+		"com.tcltk.tklibrary", TK_FRAMEWORK_VERSION, 1, PATH_MAX,
+		tkLibPath) != TCL_OK)
 #endif
+	{
+	    /* Tk.framework not found, check if resource file is open */
+	    Handle rsrc = Get1NamedResource('CURS', "\phand");
+	    if (rsrc) {
+		ReleaseResource(rsrc);
+	    } else {
+#ifndef __LP64__
+		const struct mach_header *image;
+		char *data = NULL;
+		uint32_t size;
+		int fd = -1;
+		char fileName[L_tmpnam + 15];
+		uint32_t i, n;
 
-	static NSAutoreleasePool *pool = nil;
-	if (!pool) {
-	    pool = [NSAutoreleasePool new];
+		/* Get resource data from __tk_rsrc section of tk dylib file*/
+		n = _dyld_image_count();
+		for (i = 0; i < n; i++) {
+		    image = _dyld_get_image_header(i);
+		    if (image) {
+			data = getsectdatafromheader(image, SEG_TEXT,
+				"__tk_rsrc", (void *) &size);
+			if (data) {
+			    data += _dyld_get_image_vmaddr_slide(i);
+			    break;
+			}
+		    }
+		}
+		while (data) {
+		    FSRef ref;
+		    SInt16 refNum;
+
+		    /*
+		     * Write resource data to temporary file and open it.
+		     */
+
+		    strcpy(fileName, P_tmpdir);
+		    if (fileName[strlen(fileName) - 1] != '/') {
+			strcat(fileName, "/");
+		    }
+		    strcat(fileName, "tkMacOSX_XXXXXX");
+		    fd = mkstemp(fileName);
+		    if (fd == -1) {
+			break;
+		    }
+		    fcntl(fd, F_SETFD, FD_CLOEXEC);
+		    if (write(fd, data, size) == -1) {
+			break;
+		    }
+		    if(ChkErr(FSPathMakeRef, (unsigned char *) fileName, &ref,
+			    NULL) != noErr) {
+			break;
+		    }
+		    ChkErr(FSOpenResourceFile, &ref, 0, NULL, fsRdPerm,
+			    &refNum);
+		    break;
+		}
+		if (fd != -1) {
+		    unlink(fileName);
+		    close(fd);
+		}
+#endif /* __LP64__ */
+	    }
 	}
-	tkMacOSXGCEnabled = ([NSGarbageCollector defaultCollector] != nil);
-	[[NSUserDefaults standardUserDefaults] registerDefaults:
-		[NSDictionary dictionaryWithObjectsAndKeys:
-		[NSNumber numberWithBool:YES],
-		@"_NSCanWrapButtonTitles",
-		[NSNumber numberWithInt:-1],
-		@"NSStringDrawingTypesetterBehavior",
-		nil]];
-	[TKApplication sharedApplication];
-	[NSApp _setup:interp];
+
+	/*
+	 * If we are loaded into an executable that is not a bundled
+	 * application, the window server does not let us come to the
+	 * foreground. For such an executable, notify the window server that
+	 * we are now a full GUI application.
+	 */
 
 	/* Check whether we are a bundled executable: */
 	bundleRef = CFBundleGetMainBundle();
@@ -306,34 +279,60 @@ TkpInit(
 	    CFRelease(bundleUrl);
 	}
 
-	if (!bundledExecutable) {
-	    /*
-	     * If we are loaded into an executable that is not a bundled
-	     * application, the window server does not let us come to the
-	     * foreground. For such an executable, notify the window server
-	     * that we are now a full GUI application.
-	     */
+	/*
+	 * If we are not a bundled executable, notify the window server that
+	 * we are a foregroundable app.
+	 */
 
+	if (!bundledExecutable) {
 	    OSStatus err = procNotFound;
 	    ProcessSerialNumber psn = { 0, kCurrentProcess };
 
-	    err = ChkErr(TransformProcessType, &psn,
-		    kProcessTransformToForegroundApplication);
+	    TK_IF_MAC_OS_X_API (3, TransformProcessType,
+		err = ChkErr(TransformProcessType, &psn,
+			kProcessTransformToForegroundApplication);
+	    ) TK_ENDIF
+#if MAC_OSX_TK_USE_CPS_SPI
+	    if (err != noErr) {
+		/*
+		 * When building or running on 10.2 or when the above fails,
+		 * attempt to use undocumented CPS SPI to notify the window
+		 * server. Load the SPI symbol dynamically, so that we don't
+		 * break if it ever disappears or changes its name.
+		 */
 
-	    /*
-	     * Set application icon to generic Tk icon, do it at idle time
-	     * instead of now to ensure tk_library is setup.
-	     */
-
-	    Tcl_DoWhenIdle(SetApplicationIcon, NULL);
+		TkMacOSXInitNamedSymbol(CoreGraphics, OSStatus,
+			CPSEnableForegroundOperation, ProcessSerialNumberPtr);
+		if (CPSEnableForegroundOperation) {
+		    ChkErr(CPSEnableForegroundOperation, &psn);
+		}
+	    }
+#endif /* MAC_OSX_TK_USE_CPS_SPI */
 	}
 
-	[NSApp _setupEventLoop];
 	TkMacOSXInitAppleEvents(interp);
+	TkMacOSXInitCarbonEvents(interp);
+	TkMacOSXInitMenus(interp);
 	TkMacOSXUseAntialiasedText(interp, -1);
 	TkMacOSXInitCGDrawing(interp, TRUE, 0);
-	[pool drain];
-	pool = [NSAutoreleasePool new];
+	TkMacOSXInitKeyboard(interp);
+
+	encoding = CFStringGetSystemEncoding();
+
+	for (i = 0; scriptMap[i].strKey != NULL; i++) {
+	    if (scriptMap[i].numKey == encoding) {
+		encodingStr = scriptMap[i].strKey;
+		break;
+	    }
+	}
+	if (encodingStr == NULL) {
+	    encodingStr = "macRoman";
+	}
+
+	TkMacOSXCarbonEncoding = Tcl_GetEncoding(NULL, encodingStr);
+	if (TkMacOSXCarbonEncoding == NULL) {
+	    TkMacOSXCarbonEncoding = Tcl_GetEncoding(NULL, NULL);
+	}
 
 	/*
 	 * FIXME: Close stdin & stdout for remote debugging otherwise we will
@@ -351,35 +350,35 @@ TkpInit(
 	 * clicking Wish) then use the Tk based console interpreter.
 	 */
 
-	if (getenv("TK_CONSOLE") ||
-		(!isatty(0) && (fstat(0, &st) ||
-		(S_ISCHR(st.st_mode) && st.st_blocks == 0)))) {
-	    Tk_InitConsoleChannels(interp);
-	    Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDIN));
-	    Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDOUT));
-	    Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDERR));
+	if (!isatty(0)) {
+	    struct stat st;
 
-	    /*
-	     * Only show the console if we don't have a startup script
-	     * and tcl_interactive hasn't been set already.
-	     */
+	    if (fstat(0, &st) || (S_ISCHR(st.st_mode) && st.st_blocks == 0)) {
+		Tk_InitConsoleChannels(interp);
+		Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDIN));
+		Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDOUT));
+		Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDERR));
 
-	    if (Tcl_GetStartupScript(NULL) == NULL) {
-		const char *intvar = Tcl_GetVar(interp,
-			"tcl_interactive", TCL_GLOBAL_ONLY);
+		/*
+		 * Only show the console if we don't have a startup script
+		 * and tcl_interactive hasn't been set already.
+		 */
 
-		if (intvar == NULL) {
-		    Tcl_SetVar(interp, "tcl_interactive", "1",
-			    TCL_GLOBAL_ONLY);
+		if (Tcl_GetStartupScript(NULL) == NULL) {
+		    const char *intvar = Tcl_GetVar(interp,
+			    "tcl_interactive", TCL_GLOBAL_ONLY);
+
+		    if (intvar == NULL) {
+			Tcl_SetVar(interp, "tcl_interactive", "1",
+				TCL_GLOBAL_ONLY);
+		    }
 		}
-	    }
-	    if (Tk_CreateConsoleWindow(interp) == TCL_ERROR) {
-		return TCL_ERROR;
+		if (Tk_CreateConsoleWindow(interp) == TCL_ERROR) {
+		    return TCL_ERROR;
+		}
 	    }
 	}
     }
-
-    Tk_MacOSXSetupTkNotifier();
 
     if (tkLibPath[0] != '\0') {
 	Tcl_SetVar(interp, "tk_library", tkLibPath, TCL_GLOBAL_ONLY);
@@ -389,11 +388,6 @@ TkpInit(
 	Tcl_SetVar(interp, "auto_path", scriptPath,
 		TCL_GLOBAL_ONLY|TCL_LIST_ELEMENT|TCL_APPEND_VALUE);
     }
-    
-    Tcl_CreateObjCommand(interp, "::tk::mac::standardAboutPanel",
-	    TkMacOSXStandardAboutPanelObjCmd, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "::tk::mac::iconBitmap",
-	    TkMacOSXIconBitmapObjCmd, NULL, NULL);
 
     return TCL_OK;
 }
@@ -454,8 +448,8 @@ TkpGetAppName(
 
 void
 TkpDisplayWarning(
-    const char *msg,		/* Message to be displayed. */
-    const char *title)		/* Title of warning. */
+    CONST char *msg,		/* Message to be displayed. */
+    CONST char *title)		/* Title of warning. */
 {
     Tcl_Channel errChannel = Tcl_GetStdChannel(TCL_STDERR);
 
@@ -525,7 +519,8 @@ TkMacOSXDefaultStartupScript(void)
  *
  *	Dynamically acquire address of a named symbol from a loaded dynamic
  *	library, so that we can use API that may not be available on all OS
- *	versions.
+ *	versions. If module is non-NULL and not the empty string, use twolevel
+ *	namespace lookup.
  *
  * Results:
  *	Address of given symbol or NULL if unavailable.
@@ -541,11 +536,22 @@ TkMacOSXGetNamedSymbol(
     const char* module,
     const char* symbol)
 {
-    void *addr = dlsym(RTLD_NEXT, symbol);
-    if (!addr) {
-	(void) dlerror(); /* Clear dlfcn error state */
+    NSSymbol nsSymbol = NULL;
+
+    if (module && *module) {
+	if (NSIsSymbolNameDefinedWithHint(symbol, module)) {
+	    nsSymbol = NSLookupAndBindSymbolWithHint(symbol, module);
+	}
+    } else {
+	if (NSIsSymbolNameDefined(symbol)) {
+	    nsSymbol = NSLookupAndBindSymbol(symbol);
+	}
     }
-    return addr;
+
+    if (!nsSymbol) {
+	return NULL;
+    }
+    return NSAddressOfSymbol(nsSymbol);
 }
 
 /*
@@ -590,7 +596,7 @@ TkMacOSXGetStringObjFromCFString(
 
 /*
  * Local Variables:
- * mode: objc
+ * mode: c
  * c-basic-offset: 4
  * fill-column: 79
  * coding: utf-8

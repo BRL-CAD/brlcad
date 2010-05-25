@@ -35,11 +35,8 @@
 #
 ###
 #
-#  A user-friendly shell script to ease the reporting of BRL-CAD bugs.
+# A user-friendly shell script to ease the reporting of BRL-CAD bugs.
 #
-#  Lee Butler, ARL, Sept 1994
-#
-# $Revision$
 
 echo "************************************************************"
 echo "DEPRECATION WARNING: This script is deprecated and may be"

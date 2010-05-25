@@ -1,4 +1,4 @@
-'\"
+'\" -*- nroff -*-
 '\" Copyright (c) 2006 by Donal K. Fellows.  All rights reserved.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
@@ -31,6 +31,3 @@ list(n), lsearch(n), lsort(n)
 
 .SH KEYWORDS
 element, list, reverse
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

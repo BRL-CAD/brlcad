@@ -12,6 +12,7 @@
 #include "togl.h"
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLEXPORT
@@ -41,10 +42,15 @@ create_cb(ClientData clientData, Tcl_Interp *interp, int objc,
         return TCL_ERROR;
     }
 
-    toglFont = Togl_LoadBitmapFont(togl, "Helvetica");
+    if (!toglFont)
+        toglFont = Togl_LoadBitmapFont(togl, "Helvetica");
     if (!toglFont) {
-        Tcl_AppendResult(interp, "create_cb: ", "Couldn't load font!\n", NULL);
-        return TCL_ERROR;
+        static int shown;
+
+        if (!shown) {
+            fprintf(stderr, "Couldn't load font!\n");
+            shown = 1;
+        }
     }
     return TCL_OK;
 }
@@ -99,7 +105,8 @@ reshape_cb(ClientData clientData, Tcl_Interp *interp, int objc,
 static void
 print_string(Togl *togl, const char *s)
 {
-    Togl_WriteChars(togl, toglFont, s, 0);
+    if (toglFont)
+        Togl_WriteChars(togl, toglFont, s, 0);
 }
 
 
@@ -176,11 +183,8 @@ display_cb(ClientData clientData, Tcl_Interp *interp, int objc,
     glColor3f(1, 1, 1);
     glRasterPos3d(CornerX, CornerY, CornerZ);
     ident = Togl_Ident(togl);
-    if (strcmp(ident, "Single") == 0) {
-        print_string(togl, "Single buffered");
-    } else {
-        print_string(togl, "Double buffered");
-    }
+    if (ident)
+        print_string(togl, ident);
     Togl_SwapBuffers(togl);
     return TCL_OK;
 }
@@ -192,35 +196,25 @@ static int
 setXrot_cb(ClientData clientData, Tcl_Interp *interp, int objc,
         Tcl_Obj *const *objv)
 {
-    Togl   *togl;
-
-    if (objc != 3) {
-        Tcl_WrongNumArgs(interp, 1, objv, "pathName angle");
+    if (objc != 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "angle");
         return TCL_ERROR;
     }
 
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    if (Tcl_GetDoubleFromObj(interp, objv[2], &xAngle) != TCL_OK) {
+    if (Tcl_GetDoubleFromObj(interp, objv[1], &xAngle) != TCL_OK) {
         return TCL_ERROR;
     }
 
     /* printf( "before %f ", xAngle ); */
 
-    if (xAngle < 0) {
-        xAngle += 360;
-    } else if (xAngle > 360) {
-        xAngle -= 360;
-    }
+    xAngle = fmod(xAngle, 360.0);
+    if (xAngle < 0)
+        xAngle += 360.0;
 
     /* printf( "after %f \n", xAngle ); */
 
-    Togl_PostRedisplay(togl);
-
     /* Let result string equal value */
-    Tcl_SetObjResult(interp, objv[2]);
+    Tcl_SetObjResult(interp, objv[1]);
     return TCL_OK;
 }
 
@@ -229,47 +223,21 @@ static int
 setYrot_cb(ClientData clientData, Tcl_Interp *interp, int objc,
         Tcl_Obj *const *objv)
 {
-    Togl   *togl;
-
-    if (objc != 3) {
+    if (objc != 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "pathName angle");
         return TCL_ERROR;
     }
 
-    if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
+    if (Tcl_GetDoubleFromObj(interp, objv[1], &yAngle) != TCL_OK) {
         return TCL_ERROR;
     }
 
-    if (Tcl_GetDoubleFromObj(interp, objv[2], &yAngle) != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    if (yAngle < 0) {
-        yAngle += 360;
-    } else if (yAngle > 360) {
-        yAngle -= 360;
-    }
-
-    Togl_PostRedisplay(togl);
+    yAngle = fmod(yAngle, 360.0);
+    if (yAngle < 0)
+        yAngle += 360.0;
 
     /* Let result string equal value */
-    Tcl_SetObjResult(interp, objv[2]);
-    return TCL_OK;
-}
-
-static int
-getXrot_cb(ClientData clientData, Tcl_Interp *interp, int argc,
-        CONST84 char *argv[])
-{
-    Tcl_SetObjResult(interp, Tcl_NewDoubleObj(xAngle));
-    return TCL_OK;
-}
-
-static int
-getYrot_cb(ClientData clientData, Tcl_Interp *interp, int argc,
-        CONST84 char *argv[])
-{
-    Tcl_SetObjResult(interp, Tcl_NewDoubleObj(yAngle));
+    Tcl_SetObjResult(interp, objv[1]);
     return TCL_OK;
 }
 
@@ -291,23 +259,21 @@ Double_Init(Tcl_Interp *interp)
      * Specify the C callback functions for widget creation, display,
      * and reshape.
      */
-    Tcl_CreateObjCommand(interp, "create_cb", create_cb, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "display_cb", display_cb, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "reshape_cb", reshape_cb, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "double::create_cb", create_cb, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "double::display_cb", display_cb, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "double::reshape_cb", reshape_cb, NULL, NULL);
 
     /* 
      * Make a new Togl widget command so the Tcl code can set a C variable.
      */
 
-    Tcl_CreateObjCommand(interp, "setXrot", setXrot_cb, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "setYrot", setYrot_cb, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "double::setXrot", setXrot_cb, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "double::setYrot", setYrot_cb, NULL, NULL);
 
     /* 
      * Call Tcl_CreateCommand for application-specific commands, if
      * they weren't already created by the init procedures called above.
      */
 
-    Tcl_CreateCommand(interp, "getXrot", getXrot_cb, NULL, NULL);
-    Tcl_CreateCommand(interp, "getYrot", getYrot_cb, NULL, NULL);
     return TCL_OK;
 }

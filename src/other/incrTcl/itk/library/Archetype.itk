@@ -56,41 +56,32 @@
 itcl::class itk::Archetype {
 
     constructor {args} {
-        ::itcl::builtin::Archetype init
+        _initOptionInfo
         eval itk_initialize $args
     }
 
     destructor {
-        ::itcl::builtin::Archetype delete
+        _deleteOptionInfo
     }
 
-    method cget {option} {
-        ::itcl::builtin::Archetype cget $option
-    }
-
-    method configure {{option ""} args} {
-        ::itcl::builtin::Archetype configure $option {*}$args
-    }
-
+    method cget {option} @Archetype-cget
+    method configure {{option ""} args} \
+        @Archetype-configure
     method config {{option ""} args} {
         eval configure $option $args
     }
 
-    method component {{name ""} args} {
-        ::itcl::builtin::Archetype component $name {*}$args
-    }
+    method component {{name ""} args} \
+        @Archetype-component
 
-    protected method itk_component {option args} {
-        ::itcl::builtin::Archetype itk_component $option {*}$args
-    }
+    protected method itk_component {option args} \
+        @Archetype-itk_component
 
-    protected method itk_option {option args} {
-        ::itcl::builtin::Archetype itk_option $option {*}$args
-    }
+    protected method itk_option {option args} \
+        @Archetype-itk_option
 
-    protected method itk_initialize {args} {
-        ::itcl::builtin::Archetype itk_initialize {*}$args
-    }
+    protected method itk_initialize {args} \
+        @Archetype-itk_initialize
 
     protected variable itk_option
     protected variable itk_component

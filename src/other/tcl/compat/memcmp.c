@@ -17,7 +17,7 @@
  * Here is the prototype just in case it is not included in tclPort.h.
  */
 
-int		memcmp(const void *s1, const void *s2, size_t n);
+int		memcmp(CONST VOID *s1, CONST VOID *s2, size_t n);
 
 /*
  *----------------------------------------------------------------------
@@ -40,12 +40,12 @@ int		memcmp(const void *s1, const void *s2, size_t n);
 
 int
 memcmp(
-    const void *s1,		/* First string. */
-    const void *s2,		/* Second string. */
+    CONST VOID *s1,		/* First string. */
+    CONST VOID *s2,		/* Second string. */
     size_t n)			/* Length to compare. */
 {
-    const unsigned char *ptr1 = (const unsigned char *) s1;
-    const unsigned char *ptr2 = (const unsigned char *) s2;
+    CONST unsigned char *ptr1 = (CONST unsigned char *) s1;
+    CONST unsigned char *ptr2 = (CONST unsigned char *) s2;
 
     for ( ; n-- ; ptr1++, ptr2++) {
 	unsigned char u1 = *ptr1, u2 = *ptr2;

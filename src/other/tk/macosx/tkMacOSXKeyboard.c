@@ -4,8 +4,8 @@
  *	Routines to support keyboard events on the Macintosh.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
- * Copyright 2001-2009, Apple Inc.
- * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -13,8 +13,10 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXPrivate.h"
-#include "tkMacOSXEvent.h"
+#include "tkMacOSXInt.h"
+#include "tkMacOSXEvent.h"	/* for TkMacOSXKeycodeToUnicode()
+				 * FIXME: That function should probably move
+				 * here. */
 
 /*
  * A couple of simple definitions to make code a bit more self-explaining.
@@ -106,8 +108,6 @@ static Tcl_HashTable vkeyTable;		/* virtualkeyArray hashed by virtual
 static int latin1Table[LATIN1_MAX+1];	/* Reverse mapping table for
 					 * controls, ASCII and Latin-1. */
 
-static int keyboardChanged = 1;
-
 /*
  * Prototypes for static functions used in this file.
  */
@@ -115,23 +115,7 @@ static int keyboardChanged = 1;
 static void	InitKeyMaps (void);
 static void	InitLatin1Table(Display *display);
 static int	XKeysymToMacKeycode(Display *display, KeySym keysym);
-static int	KeycodeToUnicode(UniChar * uniChars, int maxChars,
-			UInt16 keyaction, UInt32 keycode, UInt32 modifiers,
-			UInt32 * deadKeyStatePtr);
 
-#pragma mark TKApplication(TKKeyboard)
-
-@implementation TKApplication(TKKeyboard)
-- (void) keyboardChanged: (NSNotification *) notification
-{
-#ifdef TK_MAC_DEBUG_NOTIFICATIONS
-    TKLog(@"-[%@(%p) %s] %@", [self class], self, _cmd, notification);
-#endif
-    keyboardChanged = 1;
-}
-@end
-
-#pragma mark -
 
 /*
  *----------------------------------------------------------------------
@@ -162,13 +146,13 @@ InitKeyMaps(void)
 
     Tcl_InitHashTable(&keycodeTable, TCL_ONE_WORD_KEYS);
     for (kPtr = keyArray; kPtr->keycode != 0; kPtr++) {
-	hPtr = Tcl_CreateHashEntry(&keycodeTable, INT2PTR(kPtr->keycode),
+	hPtr = Tcl_CreateHashEntry(&keycodeTable, (char *) kPtr->keycode,
 		&dummy);
 	Tcl_SetHashValue(hPtr, kPtr->keysym);
     }
     Tcl_InitHashTable(&vkeyTable, TCL_ONE_WORD_KEYS);
     for (kPtr = virtualkeyArray; kPtr->keycode != 0; kPtr++) {
-	hPtr = Tcl_CreateHashEntry(&vkeyTable, INT2PTR(kPtr->keycode),
+	hPtr = Tcl_CreateHashEntry(&vkeyTable, (char *) kPtr->keycode,
 		&dummy);
 	Tcl_SetHashValue(hPtr, kPtr->keysym);
     }
@@ -180,10 +164,10 @@ InitKeyMaps(void)
  *
  * InitLatin1Table --
  *
- *	Creates a simple table to be used for mapping from keysyms to keycodes.
- *	Always needs to be called before using latin1Table, because the
- *	keyboard layout may have changed, and than the table must be
- *	re-computed.
+ *	Creates a simple table to be used for mapping from keysyms to
+ *	keycodes. Always needs to be called before using latin1Table,
+ *	because the keyboard layout may have changed, and than the table must
+ *	be re-computed.
  *
  * Results:
  *	None.
@@ -198,128 +182,57 @@ static void
 InitLatin1Table(
     Display *display)
 {
-    int keycode;
-    KeySym keysym;
-    int state;
-    int modifiers;
+    static Boolean latin1_initialized = false;
+    static SInt16 lastKeyLayoutID = -1;
 
-    memset(latin1Table, 0, sizeof(latin1Table));
+    SInt16 keyScript;
+    SInt16 keyLayoutID;
 
-    /*
-     * In the common X11 implementations, a keymap has four columns
-     * "plain", "Shift", "Mode_switch" and "Mode_switch + Shift". We don't
-     * use "Mode_switch", but we use "Option" instead. (This is similar to
-     * Apple's X11 implementation, where "Mode_switch" is used as an alias
-     * for "Option".)
-     *
-     * So here we go through all 4 columns of the keymap and find all
-     * Latin-1 compatible keycodes. We go through the columns back-to-front
-     * from the more exotic columns to the more simple, so that simple
-     * keycode-modifier combinations are preferred in the resulting table.
-     */
+    keyScript = GetScriptManagerVariable(smKeyScript);
+    keyLayoutID = GetScriptVariable(keyScript,smScriptKeys);
 
-    for (state = 3; state >= 0; state--) {
-	modifiers = 0;
-	if (state & 1) {
-	    modifiers |= shiftKey;
-	}
-	if (state & 2) {
-	    modifiers |= optionKey;
-	}
+    if (!latin1_initialized || (lastKeyLayoutID != keyLayoutID)) {
+	int keycode;
+	KeySym keysym;
+	int state;
+	int modifiers;
 
-	for (keycode = 0; keycode <= MAC_KEYCODE_MAX; keycode++) {
-	    keysym = XKeycodeToKeysym(display,keycode<<16,state);
-	    if (keysym <= LATIN1_MAX) {
-		latin1Table[keysym] = keycode | modifiers;
+	latin1_initialized = true;
+	lastKeyLayoutID = keyLayoutID;
+
+	memset(latin1Table, 0, sizeof(latin1Table));
+
+	/*
+	 * In the common X11 implementations, a keymap has four columns
+	 * "plain", "Shift", "Mode_switch" and "Mode_switch + Shift". We
+	 * don't use "Mode_switch", but we use "Option" instead. (This is
+	 * similar to Apple's X11 implementation, where "Mode_switch" is used
+	 * as an alias for "Option".)
+	 *
+	 * So here we go through all 4 columns of the keymap and find all
+	 * Latin-1 compatible keycodes. We go through the columns
+	 * back-to-front from the more exotic columns to the more simple, so
+	 * that simple keycode-modifier combinations are preferred in the
+	 * resulting table.
+	 */
+
+	for (state = 3; state >= 0; state--) {
+	    modifiers = 0;
+	    if (state & 1) {
+		modifiers |= shiftKey;
+	    }
+	    if (state & 2) {
+		modifiers |= optionKey;
+	    }
+
+	    for (keycode = 0; keycode <= MAC_KEYCODE_MAX; keycode++) {
+		keysym = XKeycodeToKeysym(display,keycode<<16,state);
+		if (keysym <= LATIN1_MAX) {
+		    latin1Table[keysym] = keycode | modifiers;
+		}
 	    }
 	}
     }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * KeycodeToUnicode --
- *
- *	Given MacOS key event data this function generates the Unicode
- *	characters. It does this using OS resources and APIs.
- *
- *	The parameter deadKeyStatePtr can be NULL, if no deadkey handling is
- *	needed.
- *
- *	This function is called from XKeycodeToKeysym() in tkMacOSKeyboard.c.
- *
- * Results:
- *	The number of characters generated if any, 0 if we are waiting for
- *	another byte of a dead-key sequence. Fills in the uniChars array with a
- *	Unicode string.
- *
- * Side Effects:
- *	None
- *
- *----------------------------------------------------------------------
- */
-
-static int
-KeycodeToUnicode(
-    UniChar *uniChars,
-    int maxChars,
-    UInt16 keyaction,
-    UInt32 keycode,
-    UInt32 modifiers,
-    UInt32 *deadKeyStatePtr)
-{
-    static const void *uchr = NULL;
-    static UInt32 keyboardType = 0;
-    UniCharCount actuallength = 0;
-
-    if (keyboardChanged) {
-	TISInputSourceRef currentKeyboardLayout =
-		TISCopyCurrentKeyboardLayoutInputSource();
-
-	if (currentKeyboardLayout) {
-	    CFDataRef keyLayoutData = (CFDataRef) TISGetInputSourceProperty(
-		    currentKeyboardLayout, kTISPropertyUnicodeKeyLayoutData);
-
-	    if (keyLayoutData) {
-		uchr = CFDataGetBytePtr(keyLayoutData);
-		keyboardType = LMGetKbdType();
-	    }
-	    CFRelease(currentKeyboardLayout);
-	}
-	keyboardChanged = 0;
-    }
-    if (uchr) {
-	OptionBits options = 0;
-	UInt32 dummyState;
-	OSStatus err;
-
-	keycode &= 0xFF;
-	modifiers = (modifiers >> 8) & 0xFF;
-
-	if (!deadKeyStatePtr) {
-	    options = kUCKeyTranslateNoDeadKeysMask;
-	    dummyState = 0;
-	    deadKeyStatePtr = &dummyState;
-	}
-
-	err = ChkErr(UCKeyTranslate, uchr, keycode, keyaction, modifiers,
-		keyboardType, options, deadKeyStatePtr, maxChars,
-		&actuallength, uniChars);
-
-	if (!actuallength && *deadKeyStatePtr) {
-	    /*
-	     * More data later
-	     */
-
-	    return 0;
-	}
-	*deadKeyStatePtr = 0;
-	if (err != noErr) {
-	    actuallength = 0;
-	}
-    }
-    return actuallength;
 }
 
 /*
@@ -356,21 +269,21 @@ XKeycodeToKeysym(
     }
 
     /*
-     * When determining what keysym to produce we first check to see if the key
-     * is a function key. We then check to see if the character is another
-     * non-printing key. Finally, we return the key syms for all ASCII and
-     * Latin-1 chars.
+     * When determining what keysym to produce we first check to see if the
+     * key is a function key. We then check to see if the character is
+     * another non-printing key. Finally, we return the key syms for all
+     * ASCII and Latin-1 chars.
      */
 
     newKeycode = keycode >> 16;
 
-    if ((keycode & 0xFFFF) >= 0xF700) { /* NSEvent.h function key unicodes */
-	hPtr = Tcl_FindHashEntry(&vkeyTable, INT2PTR(newKeycode));
+    if ((keycode & 0xFFFF) == 0x10) {
+	hPtr = Tcl_FindHashEntry(&vkeyTable, (char *) newKeycode);
 	if (hPtr != NULL) {
 	    return (KeySym) Tcl_GetHashValue(hPtr);
 	}
     }
-    hPtr = Tcl_FindHashEntry(&keycodeTable, INT2PTR(newKeycode));
+    hPtr = Tcl_FindHashEntry(&keycodeTable, (char *) newKeycode);
     if (hPtr != NULL) {
 	return (KeySym) Tcl_GetHashValue(hPtr);
     }
@@ -387,12 +300,13 @@ XKeycodeToKeysym(
     }
 
     newChar = 0;
-    KeycodeToUnicode(&newChar, 1, kUCKeyActionDown, newKeycode & 0x00FF,
-	    newKeycode & 0xFF00, NULL);
+    TkMacOSXKeycodeToUnicode(
+	&newChar, 1, kEventRawKeyDown,
+	newKeycode & 0x00FF, newKeycode & 0xFF00, NULL);
 
     /*
-     * X11 keysyms are identical to Unicode for ASCII and Latin-1. Give up for
-     * other characters for now.
+     * X11 keysyms are identical to Unicode for ASCII and Latin-1. Give up
+     * for other characters for now.
      */
 
     if ((newChar >= XK_space) && (newChar <= LATIN1_MAX)) {
@@ -418,7 +332,7 @@ XKeycodeToKeysym(
  *----------------------------------------------------------------------
  */
 
-const char *
+char *
 TkpGetString(
     TkWindow *winPtr,		/* Window where event occurred: Needed to get
 				 * input context. */
@@ -449,15 +363,15 @@ TkpGetString(
 
 XModifierKeymap *
 XGetModifierMapping(
-    Display *display)
+    Display* display)
 {
-    XModifierKeymap *modmap;
+    XModifierKeymap * modmap;
 
     (void) display; /*unused*/
 
     /*
-     * MacOSX doesn't use the key codes for the modifiers for anything, and we
-     * don't generate them either. So there is no modifier map.
+     * MacOSX doesn't use the key codes for the modifiers for anything, and
+     * we don't generate them either. So there is no modifier map.
      */
 
     modmap = (XModifierKeymap *) ckalloc(sizeof(XModifierKeymap));
@@ -498,9 +412,9 @@ XFreeModifiermap(
  * XKeysymToString, XStringToKeysym --
  *
  *	These X window functions map keysyms to strings & strings to keysyms.
- *	However, Tk already does this for the most common keysyms. Therefore,
- *	these functions only need to support keysyms that will be specific to
- *	the Macintosh. Currently, there are none.
+ *	However, Tk already does this for the most common keysyms.
+ *	Therefore, these functions only need to support keysyms that will be
+ *	specific to the Macintosh. Currently, there are none.
  *
  * Results:
  *	None.
@@ -530,8 +444,8 @@ XStringToKeysym(
  *
  * XKeysymToMacKeycode --
  *
- *	An internal function like XKeysymToKeycode but only generating the Mac
- *	specific keycode plus the modifiers Shift and Option.
+ *	An internal function like XKeysymToKeycode but only generating the
+ *	Mac specific keycode plus the modifiers Shift and Option.
  *
  * Results:
  *	A Mac keycode with the actual keycode in the low byte and Mac-style
@@ -548,44 +462,45 @@ XKeysymToMacKeycode(
     Display *display,
     KeySym keysym)
 {
-    KeyInfo *kPtr;
-
     if (keysym <= LATIN1_MAX) {
+
 	/*
 	 * Handle keysyms in the Latin-1 range where keysym and Unicode
 	 * character code point are the same.
 	 */
 
-	if (keyboardChanged) {
-	    InitLatin1Table(display);
-	    keyboardChanged = 0;
-	}
+	InitLatin1Table(display);
 	return latin1Table[keysym];
-    }
 
-    /*
-     * Handle special keys from our exception tables. Don't mind if this is
-     * slow, neither the test suite nor [event generate] need to be optimized
-     * (we hope).
-     */
+    } else {
 
-    for (kPtr = keyArray; kPtr->keycode != 0; kPtr++) {
-	if (kPtr->keysym == keysym) {
-	    return kPtr->keycode;
+	/*
+	 * Handle special keys from our exception tables. Don't mind if this
+	 * is slow, neither the test suite nor [event generate] need to be
+	 * optimized (we hope).
+	 */
+
+	KeyInfo *kPtr;
+
+	for (kPtr = keyArray; kPtr->keycode != 0; kPtr++) {
+	    if (kPtr->keysym == keysym) {
+		return kPtr->keycode;
+	    }
 	}
-    }
-    for (kPtr = virtualkeyArray; kPtr->keycode != 0; kPtr++) {
-	if (kPtr->keysym == keysym) {
-	    return kPtr->keycode;
+	for (kPtr = virtualkeyArray; kPtr->keycode != 0; kPtr++) {
+	    if (kPtr->keysym == keysym) {
+		return kPtr->keycode;
+	    }
 	}
+
+	/*
+	 * For other keysyms (not Latin-1 and not special keys), we'd need a
+	 * generic keysym-to-unicode table. We don't have that, so we give
+	 * up here.
+	 */
+
+	return 0;
     }
-
-    /*
-     * For other keysyms (not Latin-1 and not special keys), we'd need a
-     * generic keysym-to-unicode table. We don't have that, so we give up here.
-     */
-
-    return 0;
 }
 
 /*
@@ -593,9 +508,9 @@ XKeysymToMacKeycode(
  *
  * XKeysymToKeycode --
  *
- *	The function XKeysymToKeycode takes an X11 keysym and converts it into
- *	a Mac keycode. It is in the stubs table for compatibility but not used
- *	anywhere in the core.
+ *	The function XKeysymToKeycode takes an X11 keysym and converts it
+ *	into a Mac keycode. It is in the stubs table for compatibility but
+ *	not used anywhere in the core.
  *
  * Results:
  *	A 32 bit keycode with the the mac keycode (without modifiers) in the
@@ -631,6 +546,32 @@ XKeysymToKeycode(
 
     return result;
 }
+
+/*
+NB: Keep this commented code for a moment for reference.
+
+    if ((keysym >= XK_space) && (XK_asciitilde)) {
+	if (keysym == 'a') {
+	    virtualKeyCode = 0x00;
+	} else if (keysym == 'b' || keysym == 'B') {
+	    virtualKeyCode = 0x0B;
+	} else if (keysym == 'c') {
+	    virtualKeyCode = 0x08;
+	} else if (keysym == 'x' || keysym == 'X') {
+	    virtualKeyCode = 0x07;
+	} else if (keysym == 'z') {
+	    virtualKeyCode = 0x06;
+	} else if (keysym == ' ') {
+	    virtualKeyCode = 0x31;
+	} else if (keysym == XK_Return) {
+	    virtualKeyCode = 0x24;
+	    keysym = '\r';
+	}
+	keycode = keysym + (virtualKeyCode <<16);
+    }
+
+    return keycode;
+*/
 
 /*
  *----------------------------------------------------------------------
@@ -639,8 +580,8 @@ XKeysymToKeycode(
  *
  *	The function TkpSetKeycodeAndState takes a keysym and fills in the
  *	appropriate members of an XEvent. It is similar to XKeysymToKeycode,
- *	but it also sets the modifier mask in the XEvent. It is used by [event
- *	generate] and it is in the stubs table.
+ *	but it also sets the modifier mask in the XEvent. It is used by
+ *	[event generate] and it is in the stubs table.
  *
  * Results:
  *	Fills an XEvent, sets the member xkey.keycode with a keycode
@@ -685,8 +626,8 @@ TkpSetKeycodeAndState(
 	}
 
 	if (keysym <= LATIN1_MAX) {
-	    int done = Tcl_UniCharToUtf(keysym, eventPtr->xkey.trans_chars);
-
+	    int done;
+	    done = Tcl_UniCharToUtf(keysym,eventPtr->xkey.trans_chars);
 	    eventPtr->xkey.trans_chars[done] = 0;
 	} else {
 	    eventPtr->xkey.trans_chars[0] = 0;
@@ -736,30 +677,28 @@ TkpGetKeySym(
 
     if (eventPtr->xany.send_event == -1) {
 	int modifier = eventPtr->xkey.keycode;
-
-	if (modifier == NSCommandKeyMask) {
+	if (modifier == cmdKey) {
 	    return XK_Meta_L;
-	} else if (modifier == NSShiftKeyMask) {
+	} else if (modifier == shiftKey) {
 	    return XK_Shift_L;
-	} else if (modifier == NSAlphaShiftKeyMask) {
+	} else if (modifier == alphaLock) {
 	    return XK_Caps_Lock;
-	} else if (modifier == NSAlternateKeyMask) {
+	} else if (modifier == optionKey) {
 	    return XK_Alt_L;
-	} else if (modifier == NSControlKeyMask) {
+	} else if (modifier == controlKey) {
 	    return XK_Control_L;
-	} else if (modifier == NSNumericPadKeyMask) {
+	} else if (modifier == kEventKeyModifierNumLockMask) {
 	    return XK_Num_Lock;
-	} else if (modifier == NSFunctionKeyMask) {
+	} else if (modifier == kEventKeyModifierFnMask) {
 	    return XK_Super_L;
-/*
 	} else if (modifier == rightShiftKey) {
 	    return XK_Shift_R;
 	} else if (modifier == rightOptionKey) {
 	    return XK_Alt_R;
 	} else if (modifier == rightControlKey) {
 	    return XK_Control_R;
-*/
 	} else {
+
 	    /*
 	     * If we get here, we probably need to implement something new.
 	     */
@@ -768,17 +707,11 @@ TkpGetKeySym(
 	}
     }
 
-#if 0
-    if (eventPtr->xkey.nbytes) {
-	return eventPtr->xkey.nbytes;
-    }
-#endif
-
     /*
-     * Figure out which of the four slots in the keymap vector to use for this
-     * key. Refer to Xlib documentation for more info on how this computation
-     * works. (Note: We use "Option" in keymap columns 2 and 3 where other
-     * implementations have "Mode_switch".)
+     * Figure out which of the four slots in the keymap vector to use for
+     * this key. Refer to Xlib documentation for more info on how this
+     * computation works. (Note: We use "Option" in keymap columns 2 and 3
+     * where other implementations have "Mode_switch".)
      */
 
     index = 0;
@@ -796,7 +729,7 @@ TkpGetKeySym(
 
     if ((eventPtr->xkey.state & ShiftMask)
 	    || (/* (dispPtr->lockUsage != LU_IGNORE)
-	    && */ (eventPtr->xkey.state & LockMask))) {
+		   && */ (eventPtr->xkey.state & LockMask))) {
 	index |= 1;
     }
 
@@ -808,16 +741,17 @@ TkpGetKeySym(
 
     /*
      * Special handling: If the key was shifted because of Lock, but lock is
-     * only caps lock, not shift lock, and the shifted keysym isn't upper-case
-     * alphabetic, then switch back to the unshifted keysym.
+     * only caps lock, not shift lock, and the shifted keysym isn't
+     * upper-case alphabetic, then switch back to the unshifted keysym.
      */
 
     if ((index & 1) && !(eventPtr->xkey.state & ShiftMask)
 	    /*&& (dispPtr->lockUsage == LU_CAPS)*/ ) {
+
 	/*
-	 * FIXME: Keysyms are only identical to Unicode for ASCII and Latin-1,
-	 * so we can't use Tcl_UniCharIsUpper() for keysyms outside that range.
-	 * This may be a serious problem here.
+	 * FIXME: Keysyms are only identical to Unicode for ASCII and
+	 * Latin-1, so we can't use Tcl_UniCharIsUpper() for keysyms outside
+	 * that range. This may be a serious problem here.
 	 */
 
 	if ((sym == NoSymbol) || (sym > LATIN1_MAX)
@@ -845,9 +779,9 @@ TkpGetKeySym(
  *
  * TkpInitKeymapInfo --
  *
- *	This procedure is invoked to scan keymap information to recompute stuff
- *	that's important for binding, such as the modifier key (if any) that
- *	corresponds to the "Mode_switch" keysym.
+ *	This procedure is invoked to scan keymap information to recompute
+ *	stuff that's important for binding, such as the modifier key (if any)
+ *	that corresponds to the "Mode_switch" keysym.
  *
  * Results:
  *	None.
@@ -867,8 +801,8 @@ TkpInitKeymapInfo(
 
     /*
      * Behaviours that are variable on X11 are defined constant on MacOSX.
-     * lockUsage is only used above in TkpGetKeySym(), nowhere else currently.
-     * There is no offical "Mode_switch" key.
+     * lockUsage is only used above in TkpGetKeySym(), nowhere else
+     * currently. There is no offical "Mode_switch" key.
      */
 
     dispPtr->lockUsage = LU_CAPS;
@@ -892,10 +826,10 @@ TkpInitKeymapInfo(
 
     /*
      * MacOSX doesn't use the keycodes for the modifiers for anything, and we
-     * don't generate them either (the keycodes actually given in the simulated
-     * modifier events are bogus). So there is no modifier map. If we ever want
-     * to simulate real modifier keycodes, the list will be constant in the
-     * Carbon implementation.
+     * don't generate them either (the keycodes actually given in the
+     * simulated modifier events are bogus). So there is no modifier map.
+     * If we ever want to simulate real modifier keycodes, the list will be
+     * constant in the Carbon implementation.
      */
 
     if (dispPtr->modKeyCodes != NULL) {
@@ -904,12 +838,3 @@ TkpInitKeymapInfo(
     dispPtr->numModKeyCodes = 0;
     dispPtr->modKeyCodes = NULL;
 }
-
-/*
- * Local Variables:
- * mode: objc
- * c-basic-offset: 4
- * fill-column: 79
- * coding: utf-8
- * End:
- */

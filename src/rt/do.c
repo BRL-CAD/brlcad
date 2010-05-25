@@ -65,8 +65,8 @@ extern fastf_t cell_height;	/* model space grid cell height */
 extern point_t eye_model;	/* model-space location of eye */
 extern fastf_t eye_backoff;	/* dist of eye from center */
 extern fastf_t rt_perspective;	/* persp (degrees X) 0 => ortho */
-extern int width;		/* # of pixels in X */
-extern int height;		/* # of lines in Y */
+extern size_t width;		/* # of pixels in X */
+extern size_t height;		/* # of lines in Y */
 extern mat_t Viewrotscale;	/* view orientation quaternion */
 extern fastf_t viewsize;
 extern int incr_mode;		/* !0 for incremental resolution */
@@ -119,20 +119,20 @@ old_frame(FILE *fp)
     char number[128];
 
     /* Visible part is from -1 to +1 in view space */
-    if (fscanf(fp, "%128s", number) != 1) return(-1);
+    if (fscanf(fp, "%128s", number) != 1) return -1;
     viewsize = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return(-1);
+    if (fscanf(fp, "%128s", number) != 1) return -1;
     eye_model[X] = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return(-1);
+    if (fscanf(fp, "%128s", number) != 1) return -1;
     eye_model[Y] = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return(-1);
+    if (fscanf(fp, "%128s", number) != 1) return -1;
     eye_model[Z] = atof(number);
     for (i=0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1)
-	    return(-1);
+	    return -1;
 	Viewrotscale[i] = atof(number);
     }
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -154,7 +154,7 @@ old_way(FILE *fp)
     /* Sneek a peek at the first character, and then put it back */
     if ((c = fgetc(fp)) == EOF) {
 	/* Claim old way, all (ie, nothing) done */
-	return(1);
+	return 1;
     }
     if (ungetc(c, fp) != c)
 	bu_exit(EXIT_FAILURE, "do.c:old_way() ungetc failure\n");
@@ -164,12 +164,12 @@ old_way(FILE *fp)
      * very first character should be a digit or '-'.
      */
     if ((c < '0' || c > '9') && c != '-') {
-	return(0);		/* Not old way */
+	return 0;		/* Not old way */
     }
 
     if (old_frame(fp) < 0 || viewsize <= 0.0) {
 	rewind(fp);
-	return(0);		/* Not old way */
+	return 0;		/* Not old way */
     }
     bu_log("Interpreting command stream in old format\n");
 
@@ -178,12 +178,12 @@ old_way(FILE *fp)
     curframe = 0;
     do {
 	if (finalframe >= 0 && curframe > finalframe)
-	    return(1);
+	    return 1;
 	if (curframe >= desiredframe)
 	    do_frame(curframe);
 	curframe++;
     }  while (old_frame(fp) >= 0 && viewsize > 0.0);
-    return(1);			/* old way, all done */
+    return 1;			/* old way, all done */
 }
 
 
@@ -199,10 +199,10 @@ int cm_start(int argc, char **argv)
 
     frame = atoi(argv[1]);
     if (finalframe >= 0 && frame > finalframe)
-	return(-1);	/* Indicate EOF -- user declared a halt */
+	return -1;	/* Indicate EOF -- user declared a halt */
     if (frame >= desiredframe) {
 	curframe = frame;
-	return(0);
+	return 0;
     }
 
     /* Skip over unwanted frames -- find next frame start */
@@ -218,20 +218,20 @@ int cm_start(int argc, char **argv)
 	bu_free(buf, "rt_read_cmd command buffer (skipping frames)");
 	buf = (char *)0;
 	if (finalframe >= 0 && frame > finalframe)
-	    return(-1);			/* "EOF" */
+	    return -1;			/* "EOF" */
 	if (frame >= desiredframe) {
 	    curframe = frame;
-	    return(0);
+	    return 0;
 	}
     }
-    return(-1);		/* EOF */
+    return -1;		/* EOF */
 }
 
 
 int cm_vsize(int argc, char **argv)
 {
     viewsize = atof(argv[1]);
-    return(0);
+    return 0;
 }
 
 
@@ -241,7 +241,7 @@ int cm_eyept(int argc, char **argv)
 
     for (i=0; i<3; i++)
 	eye_model[i] = atof(argv[i+1]);
-    return(0);
+    return 0;
 }
 
 
@@ -253,7 +253,7 @@ int cm_lookat_pt(int argc, char **argv)
     quat_t quat;
 
     if (argc < 4)
-	return(-1);
+	return -1;
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
@@ -274,7 +274,7 @@ int cm_lookat_pt(int argc, char **argv)
 	bn_mat_lookat(Viewrotscale, dir, yflip);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -284,7 +284,7 @@ int cm_vrot(int argc, char **argv)
 
     for (i=0; i<16; i++)
 	Viewrotscale[i] = atof(argv[i+1]);
-    return(0);
+    return 0;
 }
 
 
@@ -296,7 +296,7 @@ int cm_orientation(int argc, char **argv)
     for (i=0; i<4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
-    return(0);
+    return 0;
 }
 
 
@@ -312,8 +312,8 @@ int cm_end(int argc, char **argv)
     if (Viewrotscale[15] <= 0.0)
 	do_ae(azimuth, elevation);
 
-    if (do_frame(curframe) < 0) return(-1);
-    return(0);
+    if (do_frame(curframe) < 0) return -1;
+    return 0;
 }
 
 
@@ -324,7 +324,7 @@ int cm_tree(int argc, const char **argv)
 
     if (argc <= 1) {
 	def_tree(rtip);		/* Load the default trees */
-	return(0);
+	return 0;
     }
     bu_vls_init(&times);
 
@@ -336,14 +336,14 @@ int cm_tree(int argc, const char **argv)
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
-    return(0);
+    return 0;
 }
 
 
 int cm_multiview(int argc, char **argv)
 {
     register struct rt_i *rtip = ap.a_rt_i;
-    int i;
+    size_t i;
     static int a[] = {
 	35,   0,
 	0,  90, 135, 180, 225, 270, 315,
@@ -362,7 +362,7 @@ int cm_multiview(int argc, char **argv)
 	do_ae((double)a[i], (double)e[i]);
 	(void)do_frame(curframe++);
     }
-    return(-1);	/* end RT by returning an error */
+    return -1;	/* end RT by returning an error */
 }
 
 
@@ -378,9 +378,9 @@ int cm_anim(int argc, const char **argv)
 
     if (db_parse_anim(ap.a_rt_i->rti_dbip, argc, argv) < 0) {
 	bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
-    return(0);
+    return 0;
 }
 
 
@@ -398,7 +398,7 @@ int cm_clean(int argc, char **argv)
 
     if (R_DEBUG&RDEBUG_RTMEM_END)
 	bu_prmem("After cm_clean");
-    return(0);
+    return 0;
 }
 
 
@@ -421,7 +421,7 @@ int cm_closedb(int argc, char **argv)
     bu_prmem("After _closedb");
     bu_exit(0, NULL);
 
-    return(1);	/* for compiler */
+    return 1;	/* for compiler */
 }
 
 
@@ -457,16 +457,16 @@ int cm_set(int argc, char **argv)
     if (argc <= 1) {
 	bu_struct_print("Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0);
-	return(0);
+	return 0;
     }
     bu_vls_init(&str);
     bu_vls_from_argv(&str, argc-1, (const char **)argv+1);
     if (bu_struct_parse(&str, set_parse, (char *)0) < 0) {
 	bu_vls_free(&str);
-	return(-1);
+	return -1;
     }
     bu_vls_free(&str);
-    return(0);
+    return 0;
 }
 
 
@@ -479,7 +479,7 @@ int cm_ae(int argc, char **argv)
     elevation = atof(argv[2]);
     do_ae(azimuth, elevation);
 
-    return(0);
+    return 0;
 }
 
 
@@ -492,10 +492,10 @@ int cm_opt(int argc, char **argv)
 
     if (get_args(argc, argv) <= 0) {
 	bu_optind = old_bu_optind;
-	return(-1);
+	return -1;
     }
     bu_optind = old_bu_optind;
-    return(0);
+    return 0;
 }
 
 
@@ -577,9 +577,9 @@ do_frame(int framenumber)
     struct rt_i *rtip = ap.a_rt_i;
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
-    double wallclock;			/* # seconds of wall clock time */
-    int npix;				/* # of pixel values to be done */
-    int lim;
+    double wallclock = 0.0;		/* # seconds of wall clock time */
+    int npix = 0;			/* # of pixel values to be done */
+    int lim = 0;
     vect_t work, temp;
     quat_t quat;
 
@@ -759,8 +759,8 @@ do_frame(int framenumber)
 		if ((fd = open(framename, 2)) < 0 ||
 		    (outfp = fdopen(fd, "r+")) == NULL) {
 		    perror(framename);
-		    if (matflag) return(0);	/* OK */
-		    return(-1);			/* Bad */
+		    if (matflag) return 0;	/* OK */
+		    return -1;			/* Bad */
 		}
 		/* Read existing pix data into the frame buffer */
 		if (sb.st_size > 0) {
@@ -773,8 +773,8 @@ do_frame(int framenumber)
 	/* Ordinary case for creating output file */
 	if (outfp == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 	    perror(framename);
-	    if (matflag) return(0);	/* OK */
-	    return(-1);			/* Bad */
+	    if (matflag) return 0;	/* OK */
+	    return -1;			/* Bad */
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
@@ -913,7 +913,7 @@ do_frame(int framenumber)
     bu_log("\n");
     bu_free(pixmap, "pixmap allocate");
     pixmap = (unsigned char *)NULL;
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 

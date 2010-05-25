@@ -149,27 +149,20 @@ static void NotebookStyleOptions(Notebook *nb, NotebookStyle *nbstyle)
 	TtkGetLabelAnchorFromObj(NULL, objPtr, &nbstyle->tabPosition);
     }
 
-    /* Guess default tabPlacement as function of tabPosition:
+    /* compute tabPlacement and tabOrient as function of tabPosition:
      */
     if (nbstyle->tabPosition & TTK_PACK_LEFT) {
 	nbstyle->tabPlacement = TTK_PACK_TOP | TTK_STICK_E;
+	nbstyle->tabOrient = TTK_ORIENT_VERTICAL;
     } else if (nbstyle->tabPosition & TTK_PACK_RIGHT) {
 	nbstyle->tabPlacement = TTK_PACK_TOP | TTK_STICK_W;
+	nbstyle->tabOrient = TTK_ORIENT_VERTICAL;
     } else if (nbstyle->tabPosition & TTK_PACK_BOTTOM) {
 	nbstyle->tabPlacement = TTK_PACK_LEFT | TTK_STICK_N;
+	nbstyle->tabOrient = TTK_ORIENT_HORIZONTAL;
     } else { /* Assume TTK_PACK_TOP */
 	nbstyle->tabPlacement = TTK_PACK_LEFT | TTK_STICK_S;
-    }
-    if ((objPtr = Ttk_QueryOption(nb->core.layout, "-tabplacement", 0)) != 0) {
-	TtkGetLabelAnchorFromObj(NULL, objPtr, &nbstyle->tabPlacement);
-    }
-
-    /* Compute tabOrient as function of tabPlacement:
-     */
-    if (nbstyle->tabPlacement & (TTK_PACK_LEFT|TTK_PACK_RIGHT)) {
 	nbstyle->tabOrient = TTK_ORIENT_HORIZONTAL;
-    } else {
-	nbstyle->tabOrient = TTK_ORIENT_VERTICAL;
     }
 
     nbstyle->tabMargins = Ttk_UniformPadding(0);
@@ -215,7 +208,7 @@ static void DestroyTab(Notebook *nb, Tab *tab)
 
 static int ConfigureTab(
     Tcl_Interp *interp, Notebook *nb, Tab *tab, Tk_Window slaveWindow,
-    int objc, Tcl_Obj *const objv[])
+    int objc, Tcl_Obj *CONST objv[])
 {
     Ttk_Sticky sticky = tab->sticky;
     Ttk_Padding padding = tab->padding;
@@ -374,7 +367,7 @@ static int NotebookSize(void *clientData, int *widthPtr, int *heightPtr)
     Notebook *nb = clientData;
     NotebookStyle nbstyle;
     Ttk_Padding padding;
-    Ttk_Element clientNode = Ttk_FindElement(nb->core.layout, "client");
+    Ttk_LayoutNode *clientNode = Ttk_LayoutFindNode(nb->core.layout, "client");
     int clientWidth = 0, clientHeight = 0,
     	reqWidth = 0, reqHeight = 0,
 	tabrowWidth = 0, tabrowHeight = 0;
@@ -420,13 +413,8 @@ static int NotebookSize(void *clientData, int *widthPtr, int *heightPtr)
 	padding = Ttk_AddPadding(padding, ipad);
     }
 
-    if (nbstyle.tabPosition & (TTK_PACK_TOP|TTK_PACK_BOTTOM)) {
-	*widthPtr = MAX(tabrowWidth, clientWidth) + Ttk_PaddingWidth(padding);
-	*heightPtr = tabrowHeight + clientHeight + Ttk_PaddingHeight(padding);
-    } else {
-	*widthPtr = tabrowWidth + clientWidth + Ttk_PaddingWidth(padding);
-	*heightPtr = MAX(tabrowHeight,clientHeight) + Ttk_PaddingHeight(padding);
-    }
+    *widthPtr = MAX(tabrowWidth, clientWidth) + Ttk_PaddingWidth(padding);
+    *heightPtr = tabrowHeight + clientHeight + Ttk_PaddingHeight(padding);
 
     return 1;
 }
@@ -436,12 +424,12 @@ static int NotebookSize(void *clientData, int *widthPtr, int *heightPtr)
  */
 
 /* SqueezeTabs --
- *	Squeeze or stretch tabs to fit within the tab area parcel.
+ *	If the notebook is not wide enough to display all tabs,
+ *	attempt to decrease tab widths to fit.
  *
- *	All tabs are adjusted by an equal amount, but will not be made
+ *	All tabs are shrunk by an equal amount, but will not be made
  *	smaller than the minimum width.  (If all the tabs still do
- *	not fit in the available space, the rightmost ones will
- *	be further squozen by PlaceTabs()).
+ *	not fit in the available space, the rightmost tabs are truncated).
  *
  *	The algorithm does not always yield an optimal layout, but does
  *	have the important property that decreasing the available width
@@ -450,35 +438,23 @@ static int NotebookSize(void *clientData, int *widthPtr, int *heightPtr)
  *	and grows.
  *
  * @@@ <<NOTE-TABPOSITION>> bug: only works for horizontal orientations
- * @@@ <<NOTE-SQUEEZE-HIDDEN>> does not account for hidden tabs.
  */
 
 static void SqueezeTabs(
-    Notebook *nb, int needed, int available, int minTabWidth)
+    Notebook *nb, int desiredWidth, int availableWidth, int minTabWidth)
 {
     int nTabs = Ttk_NumberSlaves(nb->notebook.mgr);
+    int shrinkage = desiredWidth - availableWidth;
+    int extra = 0;
+    int i;
 
-    if (nTabs > 0) {
-	int difference = available - needed,
-	    delta = difference / nTabs,
-	    remainder = difference % nTabs,
-	    slack = 0;
-	int i;
-
-	if (remainder < 0) { remainder += nTabs; --delta; }
-
-	for (i = 0; i < nTabs; ++i) {
-	    Tab *tab = Ttk_SlaveData(nb->notebook.mgr,i);
-	    int adj = delta + (i < remainder) + slack;
-
-	    if (tab->width + adj >= minTabWidth) {
-		tab->width += adj;
-		slack = 0;
-	    } else {
-		slack = adj - (minTabWidth - tab->width);
-		tab->width = minTabWidth;
-	    }
-	}
+    for (i = 0; i < nTabs; ++i) {
+	Tab *tab = Ttk_SlaveData(nb->notebook.mgr,i);
+	int shrink = (shrinkage/nTabs) + (i < (shrinkage%nTabs)) + extra;
+	int shrinkability = MAX(0, tab->width - minTabWidth);
+	int delta = MIN(shrinkability, shrink);
+	tab->width -= delta;
+	extra = shrink - delta;
     }
 }
 
@@ -525,7 +501,7 @@ static void NotebookDoLayout(void *recordPtr)
     Tk_Window nbwin = nb->core.tkwin;
     Ttk_Box cavity = Ttk_WinBox(nbwin);
     int tabrowWidth = 0, tabrowHeight = 0;
-    Ttk_Element clientNode = Ttk_FindElement(nb->core.layout, "client");
+    Ttk_LayoutNode *clientNode = Ttk_LayoutFindNode(nb->core.layout, "client");
     Ttk_Box tabrowBox;
     NotebookStyle nbstyle;
 
@@ -549,13 +525,15 @@ static void NotebookDoLayout(void *recordPtr)
 			nbstyle.tabPosition),
 		    nbstyle.tabMargins);
 
-    SqueezeTabs(nb, tabrowWidth, tabrowBox.width, nbstyle.minTabWidth);
+    if (tabrowWidth > tabrowBox.width) {
+	SqueezeTabs(nb, tabrowWidth, tabrowBox.width, nbstyle.minTabWidth);
+    }
     PlaceTabs(nb, tabrowBox, nbstyle.tabPlacement);
 
     /* Layout for client area frame:
      */
     if (clientNode) {
-	Ttk_PlaceElement(nb->core.layout, clientNode, cavity);
+	Ttk_PlaceLayoutNode(nb->core.layout, clientNode, cavity);
 	cavity = Ttk_LayoutNodeInternalParcel(nb->core.layout, clientNode);
     }
 
@@ -876,7 +854,7 @@ static int GetTabIndex(
 /* $nb add window ?options ... ?
  */
 static int NotebookAddCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Notebook *nb = recordPtr;
     int index = Ttk_NumberSlaves(nb->notebook.mgr);
@@ -885,7 +863,7 @@ static int NotebookAddCommand(
     Tab *tab;
 
     if (objc <= 2 || objc % 2 != 1) {
-	Tcl_WrongNumArgs(interp, 2, objv, "window ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 2, objv, "window ?options...?");
 	return TCL_ERROR;
     }
 
@@ -912,7 +890,7 @@ static int NotebookAddCommand(
     return TCL_OK;
 }
 
-/* $nb insert $index $tab ?-option value ...?
+/* $nb insert $index $tab ?options...?
  * 	Insert new tab, or move existing one.
  */
 static int NotebookInsertCommand(
@@ -924,7 +902,7 @@ static int NotebookInsertCommand(
     int srcIndex, destIndex;
 
     if (objc < 4) {
-	Tcl_WrongNumArgs(interp, 2,objv, "index slave ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 2,objv, "index slave ?options...?");
 	return TCL_ERROR;
     }
 
@@ -990,7 +968,7 @@ static int NotebookInsertCommand(
  * 	Removes the specified tab.
  */
 static int NotebookForgetCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Notebook *nb = recordPtr;
     int index;
@@ -1014,7 +992,7 @@ static int NotebookForgetCommand(
  * 	Hides the specified tab.
  */
 static int NotebookHideCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Notebook *nb = recordPtr;
     int index;
@@ -1044,26 +1022,20 @@ static int NotebookHideCommand(
  * 	Returns name of tab element at $x,$y; empty string if none.
  */
 static int NotebookIdentifyCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
-    static const char *whatTable[] = { "element", "tab", NULL };
-    enum { IDENTIFY_ELEMENT, IDENTIFY_TAB };
-    int what = IDENTIFY_ELEMENT;
     Notebook *nb = recordPtr;
-    Ttk_Element element = NULL;
+    Ttk_LayoutNode *node = NULL;
     int x, y, tabIndex;
 
-    if (objc < 4 || objc > 5) {
-	Tcl_WrongNumArgs(interp, 2,objv, "?what? x y");
+    if (objc != 4) {
+	Tcl_WrongNumArgs(interp, 2, objv, "x y");
 	return TCL_ERROR;
     }
 
-    if (   Tcl_GetIntFromObj(interp, objv[objc-2], &x) != TCL_OK
-	|| Tcl_GetIntFromObj(interp, objv[objc-1], &y) != TCL_OK
-	|| (objc == 5 &&
-	    Tcl_GetIndexFromObj(interp, objv[2], whatTable, "option", 0, &what)
-		!= TCL_OK)
-    ) {
+    if (   Tcl_GetIntFromObj(interp, objv[2], &x) != TCL_OK
+	|| Tcl_GetIntFromObj(interp, objv[3], &y) != TCL_OK)
+    {
 	return TCL_ERROR;
     }
 
@@ -1076,22 +1048,14 @@ static int NotebookIdentifyCommand(
 	Ttk_RebindSublayout(tabLayout, tab);
 	Ttk_PlaceLayout(tabLayout, state, tab->parcel);
 
-	element = Ttk_IdentifyElement(tabLayout, x, y);
+	node = Ttk_LayoutIdentify(tabLayout, x, y);
     }
 
-    switch (what) {
-	case IDENTIFY_ELEMENT:
-	    if (element) {
-		const char *elementName = Ttk_ElementName(element);
-		Tcl_SetObjResult(interp,Tcl_NewStringObj(elementName,-1));
-	    }
-	    break;
-	case IDENTIFY_TAB:
-	    if (tabIndex >= 0) {
-		Tcl_SetObjResult(interp, Tcl_NewIntObj(tabIndex));
-	    }
-	    break;
+    if (node) {
+	const char *elementName = Ttk_LayoutNodeName(node);
+	Tcl_SetObjResult(interp,Tcl_NewStringObj(elementName,-1));
     }
+
     return TCL_OK;
 }
 
@@ -1101,7 +1065,7 @@ static int NotebookIdentifyCommand(
  *	See above for valid item formats.
  */
 static int NotebookIndexCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Notebook *nb = recordPtr;
     int index, status;
@@ -1133,7 +1097,7 @@ static int NotebookIndexCommand(
  * 	the currently-selected pane.
  */
 static int NotebookSelectCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Notebook *nb = recordPtr;
 
@@ -1159,7 +1123,7 @@ static int NotebookSelectCommand(
  * 	Return list of tabs.
  */
 static int NotebookTabsCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     Notebook *nb = recordPtr;
     Ttk_Manager *mgr = nb->notebook.mgr;
@@ -1184,7 +1148,7 @@ static int NotebookTabsCommand(
 /* $nb tab $tab ?-option ?value -option value...??
  */
 static int NotebookTabCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[], void *recordPtr)
 {
     Notebook *nb = recordPtr;
     Ttk_Manager *mgr = nb->notebook.mgr;
@@ -1250,7 +1214,7 @@ static WidgetCommandSpec NotebookCommands[] =
  * +++ Widget class hooks.
  */
 
-static void NotebookInitialize(Tcl_Interp *interp, void *recordPtr)
+static int NotebookInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Notebook *nb = recordPtr;
 
@@ -1268,6 +1232,8 @@ static void NotebookInitialize(Tcl_Interp *interp, void *recordPtr)
 
     Tk_CreateEventHandler(
 	nb->core.tkwin, NotebookEventMask, NotebookEventHandler, recordPtr);
+
+    return TCL_OK;
 }
 
 static void NotebookCleanup(void *recordPtr)
@@ -1275,6 +1241,9 @@ static void NotebookCleanup(void *recordPtr)
     Notebook *nb = recordPtr;
 
     Ttk_DeleteManager(nb->notebook.mgr);
+    Tk_DeleteOptionTable(nb->notebook.tabOptionTable);
+    Tk_DeleteOptionTable(nb->notebook.paneOptionTable);
+
     if (nb->notebook.tabLayout)
 	Ttk_FreeLayout(nb->notebook.tabLayout);
 }
@@ -1401,7 +1370,7 @@ TTK_END_LAYOUT
  * +++ Initialization.
  */
 
-MODULE_SCOPE
+MODULE_SCOPE 
 void TtkNotebook_Init(Tcl_Interp *interp)
 {
     Ttk_Theme themePtr = Ttk_GetDefaultTheme(interp);

@@ -37,7 +37,7 @@
 void do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od);
 void pr_pipe(const char *name, struct wdb_pipept *head);
 
-struct wdb_pipept pipe1[] = {
+struct wdb_pipept pipeA[] = {
     {
 	{(long)WDB_PIPESEG_MAGIC, 0, 0},
 	{0, 1, 0},
@@ -62,7 +62,7 @@ struct wdb_pipept pipe1[] = {
 	0.05, 0.1, 0.1
     }
 };
-int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
+int pipeA_npts = sizeof(pipeA)/sizeof(struct wdb_pipept);
 
 #define Q 0.05	/* inset from borders of enclsing cube */
 #define R 0.05	/* pushout factor */
@@ -70,7 +70,7 @@ int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
 #define A 0+Q
 #define B 1-Q
 
-point_t pipe2[] = {
+point_t pipeB[] = {
     /* Front face, in Y= A-R plane */
     {A-R, A-R, A+0.5},
     {A-R, A-R, B},
@@ -98,7 +98,7 @@ point_t pipe2[] = {
     {A-R, A-R, A},
     {A-R, A-R, A+0.5}		/* "repeat" of first point */
 };
-int pipe2_npts = sizeof(pipe2)/sizeof(point_t);
+int pipeB_npts = sizeof(pipeB)/sizeof(point_t);
 
 struct rt_wdb *outfp;
 
@@ -131,14 +131,14 @@ main(int argc, char **argv)
 
     /* Make a piece of pipe */
     BU_LIST_INIT(&head);
-    for (i=0; i<pipe1_npts; i++) {
-	BU_LIST_INSERT(&head, &pipe1[i].l);
+    for (i=0; i<pipeA_npts; i++) {
+	BU_LIST_INSERT(&head, &pipeA[i].l);
     }
     pr_pipe("pipe1", (struct wdb_pipept *)&head);
     if ((i = mk_pipe(outfp, "pipe1", &head)) < 0)
 	fprintf(stderr, "mk_pipe(%s) returns %d\n", "pipe1", i);
 
-    do_bending(outfp, "pipe2", pipe2, pipe2_npts, 0.1, 0.05);
+    do_bending(outfp, "pipe2", pipeB, pipeB_npts, 0.1, 0.05);
     return 0;
 }
 

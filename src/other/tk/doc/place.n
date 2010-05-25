@@ -16,6 +16,7 @@ place \- Geometry manager for fixed or rubber-sheet placement
 .SH SYNOPSIS
 \fBplace \fIoption arg \fR?\fIarg ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 The placer is a geometry manager for Tk.
@@ -49,9 +50,9 @@ sublist of the value returned if no \fIoption\fR is specified).  If
 one or more \fIoption\-value\fR pairs are specified, then the command
 modifies the given option(s) to have the given value(s); in this case
 the command returns an empty string.
-.RS
-.PP
+
 The following \fIoption\-value\fR pairs are supported:
+.RS
 .TP
 \fB\-anchor \fIwhere\fR
 \fIWhere\fR specifies which point of \fIwindow\fR is to be positioned
@@ -74,8 +75,7 @@ an option of \fB\-x 0\fR corresponds to an x-coordinate just
 inside the border and an option of \fB\-relwidth 1.0\fR
 means \fIwindow\fR will fill the area inside the master's
 border.
-.RS
-.PP
+
 If \fImode\fR is \fBoutside\fR then the placer considers
 the area of the master to include its border;
 this mode is typically used when placing \fIwindow\fR
@@ -85,7 +85,6 @@ case borders are ignored:  the area of the master is considered
 to be its official X area, which includes any internal border but
 no external border.  A bordermode of \fBignore\fR is probably
 not very useful.
-.RE
 .TP
 \fB\-height \fIsize\fR
 \fISize\fR specifies the height for \fIwindow\fR in screen units
@@ -241,17 +240,15 @@ set their requested sizes).
 To control the sizes of these windows, make them windows like
 frames and canvases that provide configuration options for this purpose.
 .SH EXAMPLE
-.PP
 Make the label occupy the middle bit of the toplevel, no matter how it
 is resized:
 .CS
 label .l \-text "In the\enMiddle!" \-bg black \-fg white
 \fBplace\fR .l \-relwidth .3 \-relx .35 \-relheight .3 \-rely .35
 .CE
+
 .SH "SEE ALSO"
 grid(n), pack(n)
+
 .SH KEYWORDS
 geometry manager, height, location, master, place, rubber sheet, slave, width
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

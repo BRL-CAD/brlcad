@@ -105,13 +105,6 @@ namespace eval ttk::theme::clam {
 				  readonly $colors(-frame)] \
 	    -foreground [list {readonly focus} $colors(-selectfg)] \
 	    ;
-	ttk::style configure ComboboxPopdownFrame \
-	    -relief solid -borderwidth 1
-
-	ttk::style configure TSpinbox -arrowsize 10 -padding {2 0 10 0}
-	ttk::style map TSpinbox \
-	    -background [list  readonly $colors(-frame)] \
-            -arrowcolor [list disabled $colors(-disabledfg)]
 
 	ttk::style configure TNotebook.Tab -padding {6 2 6 2}
 	ttk::style map TNotebook.Tab \
@@ -123,8 +116,15 @@ namespace eval ttk::theme::clam {
 	# Treeview:
 	ttk::style configure Heading \
 	    -font TkHeadingFont -relief raised -padding {3}
-	ttk::style configure Treeview -background $colors(-window)
-	ttk::style map Treeview \
+	ttk::style configure Row -background $colors(-window)
+	ttk::style configure Cell -background $colors(-window)
+	ttk::style map Row \
+	    -background [list selected $colors(-selectbg)] \
+	    -foreground [list selected $colors(-selectfg)] ;
+	ttk::style map Cell \
+	    -background [list selected $colors(-selectbg)] \
+	    -foreground [list selected $colors(-selectfg)] ;
+	ttk::style map Item \
 	    -background [list selected $colors(-selectbg)] \
 	    -foreground [list selected $colors(-selectfg)] ;
 

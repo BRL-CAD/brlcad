@@ -142,10 +142,10 @@ get_args(int argc, char **argv)
 	bu_log("rle-pix:  excess arguments ignored\n");
 
     if (isatty(fileno(infp)))
-	return(0);
+	return 0;
     if (!hflag && isatty(fileno(outfp)))
-	return(0);
-    return(1);				/* OK */
+	return 0;
+    return 1;				/* OK */
 }
 
 

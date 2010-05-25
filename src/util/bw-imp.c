@@ -138,7 +138,7 @@ get_args(int argc, char **argv)
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(false);
+	    return false;
 	file_name = "-";
 	infp = stdin;
     } else {
@@ -185,7 +185,7 @@ main(int argc, char **argv)
     if (im_wpatches*32 > 2560) {
 	fprintf(stderr, "bw-imp:  output %d too wide, limit is 2560\n",
 		im_wpatches*32);
-	return(1);
+	return 1;
     }
 
     if (!im_header())

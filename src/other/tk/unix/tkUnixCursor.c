@@ -30,8 +30,8 @@ typedef struct {
  * the official cursor font:
  */
 
-static const struct CursorName {
-    const char *name;
+static struct CursorName {
+    CONST char *name;
     unsigned int shape;
 } cursorNames[] = {
     {"X_cursor",		XC_X_cursor},
@@ -161,9 +161,9 @@ static const struct CursorName {
 
 #endif /* DEFINE_MYARROW_CURSOR */
 
-static const struct TkCursorName {
-    const char *name;
-    const char *data;
+static struct TkCursorName {
+    char *name;
+    char *data;
     char *mask;
 } tkCursorNames[] = {
     {"none",	CURSOR_NONE_DATA,	NULL},
@@ -182,9 +182,9 @@ static const struct TkCursorName {
 #endif
 
 static Cursor		CreateCursorFromTableOrFile(Tcl_Interp *interp,
-			    Tk_Window tkwin, int argc, const char **argv,
-			    const struct TkCursorName *tkCursorPtr);
-
+			    Tk_Window tkwin, int argc, CONST char **argv,
+			    struct TkCursorName *tkCursorPtr);
+
 /*
  *----------------------------------------------------------------------
  *
@@ -213,10 +213,10 @@ TkGetCursorByName(
     TkUnixCursor *cursorPtr = NULL;
     Cursor cursor = None;
     int argc;
-    const char **argv = NULL;
+    CONST char **argv = NULL;
     Display *display = Tk_Display(tkwin);
     int inTkTable = 0;
-    const struct TkCursorName *tkCursorPtr = NULL;
+    struct TkCursorName* tkCursorPtr = NULL;
 
     if (Tcl_SplitList(interp, string, &argc, &argv) != TCL_OK) {
 	return NULL;
@@ -247,7 +247,7 @@ TkGetCursorByName(
     if ((argv[0][0] != '@') && !inTkTable) {
 	XColor fg, bg;
 	unsigned int maskIndex;
-	register const struct CursorName *namePtr;
+	register struct CursorName *namePtr;
 	TkDisplay *dispPtr;
 
 	/*
@@ -377,8 +377,8 @@ CreateCursorFromTableOrFile(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
     Tk_Window tkwin,		/* Window in which cursor will be used. */
     int argc,
-    const char **argv,		/* Cursor spec parsed into elements. */
-    const struct TkCursorName *tkCursorPtr)
+    CONST char **argv,		/* Cursor spec parsed into elements. */
+    struct TkCursorName *tkCursorPtr)
 				/* Non-NULL when cursor is defined in Tk
 				 * table. */
 {
@@ -388,8 +388,8 @@ CreateCursorFromTableOrFile(
     int xHot = -1, yHot = -1;
     int dummy1, dummy2;
     XColor fg, bg;
-    const char *fgColor;
-    const char *bgColor;
+    CONST char *fgColor;
+    CONST char *bgColor;
     int inTkTable = (tkCursorPtr != NULL);
 
     Display *display = Tk_Display(tkwin);
@@ -430,7 +430,7 @@ CreateCursorFromTableOrFile(
 	ckfree(data);
     } else {
 	if (TkReadBitmapFile(display, drawable, &argv[0][1],
-		(unsigned *) &width, (unsigned *) &height,
+		(unsigned int *) &width, (unsigned int *) &height,
 		&source, &xHot, &yHot) != BitmapSuccess) {
 	    Tcl_AppendResult(interp, "cleanup reading bitmap file \"",
 		    &argv[0][1], "\"", NULL);
@@ -550,7 +550,7 @@ CreateCursorFromTableOrFile(
     }
     return cursor;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -570,8 +570,8 @@ CreateCursorFromTableOrFile(
 TkCursor *
 TkCreateCursorFromData(
     Tk_Window tkwin,		/* Window in which cursor will be used. */
-    const char *source,		/* Bitmap data for cursor shape. */
-    const char *mask,		/* Bitmap data for cursor mask. */
+    CONST char *source,		/* Bitmap data for cursor shape. */
+    CONST char *mask,		/* Bitmap data for cursor mask. */
     int width, int height,	/* Dimensions of cursor. */
     int xHot, int yHot,		/* Location of hot-spot in cursor. */
     XColor fgColor,		/* Foreground color for cursor. */
@@ -600,7 +600,7 @@ TkCreateCursorFromData(
     }
     return (TkCursor *) cursorPtr;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -627,7 +627,7 @@ TkpFreeCursor(
     XFreeCursor(unixCursorPtr->display, (Cursor) unixCursorPtr->info.cursor);
     Tk_FreeXId(unixCursorPtr->display, (XID) unixCursorPtr->info.cursor);
 }
-
+
 /*
  * Local Variables:
  * mode: c

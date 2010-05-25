@@ -14,7 +14,7 @@
 pkg_mkIndex \- Build an index for automatic loading of packages
 .SH SYNOPSIS
 .nf
-\fBpkg_mkIndex ?\fIoptions...\fR? \fIdir\fR ?\fIpattern pattern ...\fR?
+\fBpkg_mkIndex ?\fI\-direct\fR?  ?\fI\-lazy\fR?  ?\fI\-load pkgPat\fR? ?\fI\-verbose\fR? \fIdir\fR ?\fIpattern pattern ...\fR?
 .fi
 .BE
 .SH DESCRIPTION
@@ -114,7 +114,7 @@ The index process will pre-load any packages that exist in the
 current interpreter and match \fIpkgPat\fR into the slave interpreter used to
 generate the index.  The pattern match uses string match rules, but without
 making case distinctions.
-See \fBCOMPLEX CASES\fR below.
+See COMPLEX CASES below.
 .TP 15
 \fB\-verbose\fR
 Generate output during the indexing process.  Output is via

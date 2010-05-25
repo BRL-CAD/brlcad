@@ -137,7 +137,7 @@ Tcl_LoadObjCmd(
     const char *symbols[4];
     Tcl_PackageInitProc **procPtrs[4];
     ClientData clientData;
-    const char *p, *fullFileName, *packageName;
+    char *p, *fullFileName, *packageName;
     Tcl_LoadHandle loadHandle;
     Tcl_FSUnloadFileProc *unLoadProcPtr = NULL;
     Tcl_UniChar ch;
@@ -179,7 +179,7 @@ Tcl_LoadObjCmd(
 
     target = interp;
     if (objc == 4) {
-	const char *slaveIntName = Tcl_GetString(objv[3]);
+	char *slaveIntName = Tcl_GetString(objv[3]);
 
 	target = Tcl_GetSlave(interp, slaveIntName);
 	if (target == NULL) {
@@ -252,7 +252,8 @@ Tcl_LoadObjCmd(
      */
 
     if (pkgPtr != NULL) {
-	ipFirstPtr = Tcl_GetAssocData(target, "tclLoad", NULL);
+	ipFirstPtr = (InterpPackage *) Tcl_GetAssocData(target,
+		"tclLoad", NULL);
 	for (ipPtr = ipFirstPtr; ipPtr != NULL; ipPtr = ipPtr->nextPtr) {
 	    if (ipPtr->pkgPtr == pkgPtr) {
 		code = TCL_OK;
@@ -292,7 +293,7 @@ Tcl_LoadObjCmd(
 		Tcl_Obj *splitPtr;
 		Tcl_Obj *pkgGuessPtr;
 		int pElements;
-		const char *pkgGuess;
+		char *pkgGuess;
 
 		/*
 		 * The platform-specific code couldn't figure out the module
@@ -371,7 +372,7 @@ Tcl_LoadObjCmd(
 	code = TclLoadFile(interp, objv[1], 4, symbols, procPtrs,
 		&loadHandle, &clientData, &unLoadProcPtr);
 	Tcl_MutexUnlock(&packageMutex);
-	loadHandle = clientData;
+	loadHandle = (Tcl_LoadHandle) clientData;
 	if (code != TCL_OK) {
 	    goto done;
 	}
@@ -380,7 +381,7 @@ Tcl_LoadObjCmd(
 	    Tcl_AppendResult(interp, "couldn't find procedure ",
 		    Tcl_DStringValue(&initName), NULL);
 	    if (unLoadProcPtr != NULL) {
-		unLoadProcPtr(loadHandle);
+		(*unLoadProcPtr)(loadHandle);
 	    }
 	    code = TCL_ERROR;
 	    goto done;
@@ -391,18 +392,18 @@ Tcl_LoadObjCmd(
 	 */
 
 	pkgPtr = (LoadedPackage *) ckalloc(sizeof(LoadedPackage));
-	pkgPtr->fileName	   =
-		ckalloc((unsigned) (strlen(fullFileName) + 1));
+	pkgPtr->fileName	   = (char *) ckalloc((unsigned)
+		(strlen(fullFileName) + 1));
 	strcpy(pkgPtr->fileName, fullFileName);
-	pkgPtr->packageName	   =
-		ckalloc((unsigned) (Tcl_DStringLength(&pkgName) + 1));
+	pkgPtr->packageName	   = (char *) ckalloc((unsigned)
+		(Tcl_DStringLength(&pkgName) + 1));
 	strcpy(pkgPtr->packageName, Tcl_DStringValue(&pkgName));
 	pkgPtr->loadHandle	   = loadHandle;
 	pkgPtr->unLoadProcPtr	   = unLoadProcPtr;
 	pkgPtr->initProc	   = *procPtrs[0];
 	pkgPtr->safeInitProc	   = *procPtrs[1];
-	pkgPtr->unloadProc	   = (Tcl_PackageUnloadProc *) *procPtrs[2];
-	pkgPtr->safeUnloadProc	   = (Tcl_PackageUnloadProc *) *procPtrs[3];
+	pkgPtr->unloadProc	   = (Tcl_PackageUnloadProc*) *procPtrs[2];
+	pkgPtr->safeUnloadProc	   = (Tcl_PackageUnloadProc*) *procPtrs[3];
 	pkgPtr->interpRefCount	   = 0;
 	pkgPtr->safeInterpRefCount = 0;
 
@@ -419,7 +420,7 @@ Tcl_LoadObjCmd(
 
     if (Tcl_IsSafe(target)) {
 	if (pkgPtr->safeInitProc != NULL) {
-	    code = pkgPtr->safeInitProc(target);
+	    code = (*pkgPtr->safeInitProc)(target);
 	} else {
 	    Tcl_AppendResult(interp,
 		    "can't use package in a safe interpreter: no ",
@@ -428,7 +429,7 @@ Tcl_LoadObjCmd(
 	    goto done;
 	}
     } else {
-	code = pkgPtr->initProc(target);
+	code = (*pkgPtr->initProc)(target);
     }
 
     /*
@@ -454,13 +455,15 @@ Tcl_LoadObjCmd(
 	 * additional static packages at the head of the linked list!
 	 */
 
-	ipFirstPtr = Tcl_GetAssocData(target, "tclLoad", NULL);
+	ipFirstPtr = (InterpPackage *) Tcl_GetAssocData(target,
+		"tclLoad", NULL);
 	ipPtr = (InterpPackage *) ckalloc(sizeof(InterpPackage));
 	ipPtr->pkgPtr = pkgPtr;
 	ipPtr->nextPtr = ipFirstPtr;
-	Tcl_SetAssocData(target, "tclLoad", LoadCleanupProc, ipPtr);
+	Tcl_SetAssocData(target, "tclLoad", LoadCleanupProc,
+		(ClientData) ipPtr);
     } else {
-	Tcl_TransferResult(target, code, interp);
+	TclTransferResult(target, code, interp);
     }
 
   done:
@@ -505,8 +508,8 @@ Tcl_UnloadObjCmd(
     int i, index, code, complain = 1, keepLibrary = 0;
     int trustedRefCount = -1, safeRefCount = -1;
     const char *fullFileName = "";
-    const char *packageName;
-    static const char *const options[] = {
+    char *packageName;
+    static const char *options[] = {
 	"-nocomplain", "-keeplibrary", "--", NULL
     };
     enum options {
@@ -549,7 +552,7 @@ Tcl_UnloadObjCmd(
   endOfForLoop:
     if ((objc-i < 1) || (objc-i > 3)) {
 	Tcl_WrongNumArgs(interp, 1, objv,
-		"?-switch ...? fileName ?packageName? ?interp?");
+		"?switches? fileName ?packageName? ?interp?");
 	return TCL_ERROR;
     }
     if (Tcl_FSConvertToPathType(interp, objv[i]) != TCL_OK) {
@@ -581,8 +584,8 @@ Tcl_UnloadObjCmd(
 
     target = interp;
     if (objc - i == 3) {
-	const char *slaveIntName = Tcl_GetString(objv[i + 2]);
-
+	char *slaveIntName;
+	slaveIntName = Tcl_GetString(objv[i+2]);
 	target = Tcl_GetSlave(interp, slaveIntName);
 	if (target == NULL) {
 	    return TCL_ERROR;
@@ -664,7 +667,8 @@ Tcl_UnloadObjCmd(
 
     code = TCL_ERROR;
     if (pkgPtr != NULL) {
-	ipFirstPtr = Tcl_GetAssocData(target, "tclLoad", NULL);
+	ipFirstPtr = (InterpPackage *) Tcl_GetAssocData(target,
+		"tclLoad", NULL);
 	for (ipPtr = ipFirstPtr; ipPtr != NULL; ipPtr = ipPtr->nextPtr) {
 	    if (ipPtr->pkgPtr == pkgPtr) {
 		code = TCL_OK;
@@ -734,9 +738,9 @@ Tcl_UnloadObjCmd(
 	    code = TCL_UNLOAD_DETACH_FROM_PROCESS;
 	}
     }
-    code = unloadProc(target, code);
+    code = (*unloadProc)(target, code);
     if (code != TCL_OK) {
-	Tcl_TransferResult(target, code, interp);
+	TclTransferResult(target, code, interp);
 	goto done;
     }
 
@@ -792,7 +796,7 @@ Tcl_UnloadObjCmd(
 	    if (unLoadProcPtr != NULL) {
 		Tcl_MutexLock(&packageMutex);
 		if ((pkgPtr->unloadProc != NULL) || (unLoadProcPtr == TclFSUnloadTempFile)) {
-		    unLoadProcPtr(pkgPtr->loadHandle);
+		    (*unLoadProcPtr)(pkgPtr->loadHandle);
 		}
 
 		/*
@@ -816,7 +820,8 @@ Tcl_UnloadObjCmd(
 		 * Remove this library from the interpreter's library cache.
 		 */
 
-		ipFirstPtr = Tcl_GetAssocData(target, "tclLoad", NULL);
+		ipFirstPtr = (InterpPackage *) Tcl_GetAssocData(target,
+			"tclLoad", NULL);
 		ipPtr = ipFirstPtr;
 		if (ipPtr->pkgPtr == defaultPtr) {
 		    ipFirstPtr = ipFirstPtr->nextPtr;
@@ -832,7 +837,7 @@ Tcl_UnloadObjCmd(
 		    }
 		}
 		Tcl_SetAssocData(target, "tclLoad", LoadCleanupProc,
-			ipFirstPtr);
+			(ClientData) ipFirstPtr);
 		ckfree(defaultPtr->fileName);
 		ckfree(defaultPtr->packageName);
 		ckfree((char *) defaultPtr);
@@ -872,8 +877,8 @@ Tcl_UnloadObjCmd(
 	 * Our result is the two reference counts.
 	 */
 
-	TclNewIntObj(objPtr[0], trustedRefCount);
-	TclNewIntObj(objPtr[1], safeRefCount);
+	objPtr[0] = Tcl_NewIntObj(trustedRefCount);
+	objPtr[1] = Tcl_NewIntObj(safeRefCount);
 	if (objPtr[0] == NULL || objPtr[1] == NULL) {
 	    if (objPtr[0]) {
 		Tcl_DecrRefCount(objPtr[0]);
@@ -882,7 +887,7 @@ Tcl_UnloadObjCmd(
 		Tcl_DecrRefCount(objPtr[1]);
 	    }
 	} else {
-	    TclNewListObj(resultObjPtr, 2, objPtr);
+	    resultObjPtr = Tcl_NewListObj(2, objPtr);
 	    if (resultObjPtr != NULL) {
 		Tcl_SetObjResult(interp, resultObjPtr);
 	    }
@@ -952,11 +957,12 @@ Tcl_StaticPackage(
      * to the list now.
      */
 
-    if (pkgPtr == NULL) {
+    if ( pkgPtr == NULL ) {
 	pkgPtr = (LoadedPackage *) ckalloc(sizeof(LoadedPackage));
-	pkgPtr->fileName	= ckalloc((unsigned) 1);
+	pkgPtr->fileName	= (char *) ckalloc((unsigned) 1);
 	pkgPtr->fileName[0]	= 0;
-	pkgPtr->packageName	= ckalloc((unsigned) (strlen(pkgName) + 1));
+	pkgPtr->packageName	= (char *)
+		ckalloc((unsigned) (strlen(pkgName) + 1));
 	strcpy(pkgPtr->packageName, pkgName);
 	pkgPtr->loadHandle	= NULL;
 	pkgPtr->initProc	= initProc;
@@ -974,9 +980,10 @@ Tcl_StaticPackage(
 	 * it's already loaded.
 	 */
 
-	ipFirstPtr = Tcl_GetAssocData(interp, "tclLoad", NULL);
-	for (ipPtr = ipFirstPtr; ipPtr != NULL; ipPtr = ipPtr->nextPtr) {
-	    if (ipPtr->pkgPtr == pkgPtr) {
+	ipFirstPtr = (InterpPackage *) Tcl_GetAssocData(interp,
+		"tclLoad", NULL);
+	for ( ipPtr = ipFirstPtr; ipPtr != NULL; ipPtr = ipPtr->nextPtr ) {
+	    if ( ipPtr->pkgPtr == pkgPtr ) {
 		return;
 	    }
 	}
@@ -989,7 +996,8 @@ Tcl_StaticPackage(
 	ipPtr = (InterpPackage *) ckalloc(sizeof(InterpPackage));
 	ipPtr->pkgPtr = pkgPtr;
 	ipPtr->nextPtr = ipFirstPtr;
-	Tcl_SetAssocData(interp, "tclLoad", LoadCleanupProc, ipPtr);
+	Tcl_SetAssocData(interp, "tclLoad", LoadCleanupProc,
+		(ClientData) ipPtr);
     }
 }
 
@@ -1018,12 +1026,11 @@ int
 TclGetLoadedPackages(
     Tcl_Interp *interp,		/* Interpreter in which to return information
 				 * or error message. */
-    const char *targetName)	/* Name of target interpreter or NULL. If
+    char *targetName)		/* Name of target interpreter or NULL. If
 				 * NULL, return info about all interps;
 				 * otherwise, just return info about this
 				 * interpreter. */
 {
-    /* TODO: Use Tcl_Obj APIs to generate this info for cleanliness. */
     Tcl_Interp *target;
     LoadedPackage *pkgPtr;
     InterpPackage *ipPtr;
@@ -1057,9 +1064,9 @@ TclGetLoadedPackages(
     if (target == NULL) {
 	return TCL_ERROR;
     }
-    ipPtr = Tcl_GetAssocData(target, "tclLoad", NULL);
+    ipPtr = (InterpPackage *) Tcl_GetAssocData(target, "tclLoad", NULL);
     prefix = "{";
-    for (; ipPtr != NULL; ipPtr = ipPtr->nextPtr) {
+    for ( ; ipPtr != NULL; ipPtr = ipPtr->nextPtr) {
 	pkgPtr = ipPtr->pkgPtr;
 	Tcl_AppendResult(interp, prefix, NULL);
 	Tcl_AppendElement(interp, pkgPtr->fileName);
@@ -1096,7 +1103,7 @@ LoadCleanupProc(
 {
     InterpPackage *ipPtr, *nextPtr;
 
-    ipPtr = clientData;
+    ipPtr = (InterpPackage *) clientData;
     while (ipPtr != NULL) {
 	nextPtr = ipPtr->nextPtr;
 	ckfree((char *) ipPtr);
@@ -1129,8 +1136,8 @@ TclFinalizeLoad(void)
     /*
      * No synchronization here because there should just be one thread alive
      * at this point. Logically, packageMutex should be grabbed at this point,
-     * but the Mutexes get finalized before the call to this routine. The only
-     * subsystem left alive at this point is the memory allocator.
+     * but the Mutexes get finalized before the call to this routine. The
+     * only subsystem left alive at this point is the memory allocator.
      */
 
     while (firstPackagePtr != NULL) {
@@ -1150,7 +1157,7 @@ TclFinalizeLoad(void)
 	    if ((unLoadProcPtr != NULL)
 		    && ((pkgPtr->unloadProc != NULL)
 		    || (unLoadProcPtr == TclFSUnloadTempFile))) {
-		unLoadProcPtr(pkgPtr->loadHandle);
+		(*unLoadProcPtr)(pkgPtr->loadHandle);
 	    }
 	}
 #endif

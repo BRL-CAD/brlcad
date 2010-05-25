@@ -81,21 +81,19 @@ proc ::safe::loadTk {} {}
 	    }
 	}
     }
-
-    # Get state for access to the cleanupHook.
-    namespace upvar ::safe S$slave state
-
     if {![::tcl::OptProcArgGiven "-use"]} {
 	# create a decorated toplevel
-	lassign [tkTopLevel $slave $display] w use
+	::tcl::Lassign [tkTopLevel $slave $display] w use
 
 	# set our delete hook (slave arg is added by interpDelete)
 	# to clean up both window related code and tkInit(slave)
-	set state(cleanupHook) [list tkDelete {} $w]
+	Set [DeleteHookName $slave] [list tkDelete {} $w]
+
     } else {
+
 	# set our delete hook (slave arg is added by interpDelete)
 	# to clean up tkInit(slave)
-	set state(cleanupHook) [list disallowTk]
+	Set [DeleteHookName $slave] [list disallowTk]
 
 	# Let's be nice and also accept tk window names instead of ids
 	if {[string match ".*" $use]} {

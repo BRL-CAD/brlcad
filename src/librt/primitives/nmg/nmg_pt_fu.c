@@ -248,14 +248,14 @@ Quadrant(fastf_t x, fastf_t y)
 {
     if (x >= 0.0) {
 	if (y >= 0.0)
-	    return(1);
+	    return 1;
 	else
-	    return(4);
+	    return 4;
     } else {
 	if (y >= 0.0)
-	    return(2);
+	    return 2;
 	else
-	    return(3);
+	    return 3;
     }
 }
 
@@ -270,7 +270,7 @@ nmg_eu_is_part_of_crack(const struct edgeuse *eu)
 
     /* must be part of a loop to be a crack */
     if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
-	return(0);
+	return 0;
 
     lu = eu->up.lu_p;
     NMG_CK_LOOPUSE(lu);
@@ -281,10 +281,10 @@ nmg_eu_is_part_of_crack(const struct edgeuse *eu)
 
 	if (eu_test->vu_p->v_p == eu->eumate_p->vu_p->v_p &&
 	    eu_test->eumate_p->vu_p->v_p == eu->vu_p->v_p)
-	    return(1);
+	    return 1;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -346,7 +346,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 
     /* if both EU's are cracks, we cannot classify */
     if (eu_is_crack && prev_eu_is_crack)
-	return(NMG_CLASS_Unknown);
+	return NMG_CLASS_Unknown;
 
     if (eu_is_crack) {
 	struct edgeuse *eu_test;
@@ -372,7 +372,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	}
 
 	if (eu_test == eu) /* can't get away from crack */
-	    return(NMG_CLASS_Unknown);
+	    return NMG_CLASS_Unknown;
 	else
 	    eu = eu_test;
 
@@ -404,7 +404,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	}
 
 	if (eu_test == prev_eu) /* can't get away from crack */
-	    return(NMG_CLASS_Unknown);
+	    return NMG_CLASS_Unknown;
 	else
 	    prev_eu = eu_test;
 
@@ -473,10 +473,10 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 
     /* do a quadrant comparison first (cheap!!!) */
     if (quadpt < quado)
-	return(NMG_CLASS_AinB);
+	return NMG_CLASS_AinB;
 
     if (quadpt > quado)
-	return(NMG_CLASS_AoutB);
+	return NMG_CLASS_AoutB;
 
     /* both are in the same quadrant, need to normalize the corrdinates */
     len = sqrt(xo*xo + yo*yo);
@@ -523,7 +523,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     if (rt_g.NMG_debug & DEBUG_PT_FU)
 	bu_log("returning %s\n", nmg_class_name(class));
 
-    return(class);
+    return class;
 }
 
 
@@ -1429,7 +1429,7 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	if (eu->e_p == e_p) {
 	    if (rt_g.NMG_debug & DEBUG_PT_FU)
-		bu_log("skipping edguse (%g %g %g) -> (%g %g %g) on \"except\" edge\n",
+		bu_log("skipping edgeuse (%g %g %g) -> (%g %g %g) on \"except\" edge\n",
 		       V3ARGS(eu->vu_p->v_p->vg_p->coord),
 		       V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 

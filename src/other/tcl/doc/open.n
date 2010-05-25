@@ -36,84 +36,73 @@ The \fIaccess\fR argument, if present, indicates the way in which the file
 In the first form \fIaccess\fR may have any of the following values:
 .TP 15
 \fBr\fR
-.
 Open the file for reading only; the file must already exist. This is the
 default value if \fIaccess\fR is not specified.
 .TP 15
 \fBr+\fR
-.
 Open the file for both reading and writing; the file must
 already exist.
 .TP 15
 \fBw\fR
-.
 Open the file for writing only.  Truncate it if it exists.  If it does not
 exist, create a new file.
 .TP 15
 \fBw+\fR
-.
 Open the file for reading and writing.  Truncate it if it exists.
 If it does not exist, create a new file.
 .TP 15
 \fBa\fR
-.
 Open the file for writing only.  If the file does not exist,
 create a new empty file.
 Set the file pointer to the end of the file prior to each write.
 .TP 15
 \fBa+\fR
-.
 Open the file for reading and writing.  If the file does not exist,
 create a new empty file.
 Set the initial access position  to the end of the file.
+.VS 8.5
 .PP
 All of the legal \fIaccess\fR values above may have the character
 \fBb\fR added as the second or third character in the value to
 indicate that the opened channel should be configured with the
 \fB\-translation binary\fR option, making the channel suitable for 
 reading or writing of binary data.
+.VE 8.5
 .PP
 In the second form, \fIaccess\fR consists of a list of any of the
 following flags, all of which have the standard POSIX meanings.
 One of the flags must be either \fBRDONLY\fR, \fBWRONLY\fR or \fBRDWR\fR.
 .TP 15
 \fBRDONLY\fR
-.
 Open the file for reading only.
 .TP 15
 \fBWRONLY\fR
-.
 Open the file for writing only.
 .TP 15
 \fBRDWR\fR
-.
 Open the file for both reading and writing.
 .TP 15
 \fBAPPEND\fR
-.
 Set the file pointer to the end of the file prior to each write.
+.VS 8.5
 .TP 15
 \fBBINARY\fR
-.
 Configure the opened channel with the \fB\-translation binary\fR option.
+.VE 8.5
 .TP 15
 \fBCREAT\fR
-.
 Create the file if it does not already exist (without this flag it
 is an error for the file not to exist).
 .TP 15
 \fBEXCL\fR
-.
 If \fBCREAT\fR is also specified, an error is returned if the
 file already exists.
 .TP 15
 \fBNOCTTY\fR
-.
 If the file is a terminal device, this flag prevents the file from
 becoming the controlling terminal of the process.
 .TP 15
 \fBNONBLOCK\fR
-.
 Prevents the process from blocking while opening the file, and
 possibly in subsequent I/O operations.  The exact behavior of
 this flag is system- and device-dependent;  its use is discouraged
@@ -123,7 +112,6 @@ For details refer to your system documentation on the \fBopen\fR system
 call's \fBO_NONBLOCK\fR flag.
 .TP 15
 \fBTRUNC\fR
-.
 If the file exists it is truncated to zero length.
 .PP
 If a new file is created as part of opening it, \fIpermissions\fR
@@ -170,7 +158,6 @@ The \fBfconfigure\fR command can be used to query and set additional
 configuration options specific to serial ports (where supported):
 .TP
 \fB\-mode\fR \fIbaud\fB,\fIparity\fB,\fIdata\fB,\fIstop\fR
-.
 This option is a set of 4 comma-separated values: the baud rate, parity,
 number of data bits, and number of stop bits for this serial port.  The
 \fIbaud\fR rate is a simple integer that specifies the connection speed.
@@ -187,7 +174,6 @@ data bits and should be an integer from 5 to 8, while \fIstop\fR is the
 number of stop bits and should be the integer 1 or 2.
 .TP
 \fB\-handshake\fR \fItype\fR
-.
 (Windows and Unix). This option is used to setup automatic handshake
 control. Note that not all handshake types maybe supported by your operating
 system. The \fItype\fR parameter is case-independent.
@@ -205,13 +191,11 @@ The \fB\-handshake\fR option cannot be queried.
 .RE
 .TP
 \fB\-queue\fR
-.
 (Windows and Unix). The \fB\-queue\fR option can only be queried.
 It returns a list of two integers representing the current number
 of bytes in the input and output queue respectively.
 .TP
 \fB\-timeout\fR \fImsec\fR
-.
 (Windows and Unix). This option is used to set the timeout for blocking
 read operations. It specifies the maximum interval between the
 reception of two bytes in milliseconds.
@@ -221,7 +205,6 @@ nonblocking reads.
 This option cannot be queried.
 .TP
 \fB\-ttycontrol\fR \fI{signal boolean signal boolean ...}\fR
-.
 (Windows and Unix). This option is used to setup the handshake
 output lines (see below) permanently or to send a BREAK over the serial line.
 The \fIsignal\fR names are case-independent.
@@ -234,7 +217,6 @@ The result is unpredictable.
 The \fB\-ttycontrol\fR option cannot be queried.
 .TP
 \fB\-ttystatus\fR
-.
 (Windows and Unix). The \fB\-ttystatus\fR option can only be
 queried.  It returns the current modem status and handshake input signals
 (see below).
@@ -243,14 +225,12 @@ e.g. \fB{CTS 1 DSR 0 RING 1 DCD 0}\fR.
 The \fIsignal\fR names are returned upper case.
 .TP
 \fB\-xchar\fR \fI{xonChar xoffChar}\fR
-.
 (Windows and Unix). This option is used to query or change the software
 handshake characters. Normally the operating system default should be
 DC1 (0x11) and DC3 (0x13) representing the ASCII standard
 XON and XOFF characters.
 .TP
 \fB\-pollinterval\fR \fImsec\fR
-.
 (Windows only). This option is used to set the maximum time between
 polling for fileevents.
 This affects the time interval between checking for events throughout the Tcl
@@ -261,7 +241,6 @@ you want to poll the serial port more or less often than 10 msec
 \fB\-sysbuffer\fR \fIinSize\fR
 .TP
 \fB\-sysbuffer\fR \fI{inSize outSize}\fR
-.
 (Windows only). This option is used to change the size of Windows
 system buffers for a serial channel. Especially at higher communication
 rates the default input buffer size of 4096 bytes can overrun
@@ -269,7 +248,6 @@ for latent systems. The first form specifies the input buffer size,
 in the second form both input and output buffers are defined.
 .TP
 \fB\-lasterror\fR
-.
 (Windows only). This option is query only.
 In case of a serial communication error, \fBread\fR or \fBputs\fR
 returns a general Tcl file I/O error.
@@ -327,42 +305,35 @@ general file I/O error.  Then \fBfconfigure -lasterror\fR may help to
 locate the problem.  The following error codes may be returned.
 .TP 10
 \fBRXOVER\fR
-.
 Windows input buffer overrun. The data comes faster than your scripts reads
 it or your system is overloaded. Use \fBfconfigure -sysbuffer\fR to avoid a
 temporary bottleneck and/or make your script faster.
 .TP 10
 \fBTXFULL\fR
-.
 Windows output buffer overrun. Complement to RXOVER. This error should
 practically not happen, because Tcl cares about the output buffer status.
 .TP 10
 \fBOVERRUN\fR
-.
 UART buffer overrun (hardware) with data lost.
 The data comes faster than the system driver receives it.
 Check your advanced serial port settings to enable the FIFO (16550) buffer
 and/or setup a lower(1) interrupt threshold value.
 .TP 10
 \fBRXPARITY\fR
-.
 A parity error has been detected by your UART.
 Wrong parity settings with \fBfconfigure -mode\fR or a noisy data line (RXD)
 may cause this error.
 .TP 10
 \fBFRAME\fR
-.
 A stop-bit error has been detected by your UART.
 Wrong mode settings with \fBfconfigure -mode\fR or a noisy data line (RXD)
 may cause this error.
 .TP 10
 \fBBREAK\fR
-.
 A BREAK condition has been detected by your UART (see above).
 .SH "PORTABILITY ISSUES"
 .TP
 \fBWindows \fR(all versions)
-.
 Valid values for \fIfileName\fR to open a serial port are of the form
 \fBcom\fIX\fB:\fR, where \fIX\fR is a number, generally from 1 to 4.
 This notation only works for serial ports from 1 to 9, if the system
@@ -373,7 +344,6 @@ where X is any number that corresponds to a serial port; please note
 that this method is considerably slower on Windows 95 and Windows 98.
 .TP
 \fBWindows NT\fR
-.
 When running Tcl interactively, there may be some strange interactions
 between the real console, if one is present, and a command pipeline that uses
 standard input or output.  If a command pipeline is opened for reading, some
@@ -389,7 +359,6 @@ standard input or output, but is redirected from or to a file, then the
 above problems do not occur.  
 .TP
 \fBWindows 95\fR 
-.
 A command pipeline that executes a 16-bit DOS application cannot be opened
 for both reading and writing, since 16-bit DOS applications that receive
 standard input from a pipe and send standard output to a pipe run
@@ -421,7 +390,6 @@ applications are run synchronously, as described above.
 .RE
 .TP
 \fBUnix\fR\0\0\0\0\0\0\0
-.
 Valid values for \fIfileName\fR to open a serial port are generally of the
 form \fB/dev/tty\fIX\fR, where \fIX\fR is \fBa\fR or \fBb\fR, but the name
 of any pseudo-file that maps to a serial port may be used.
@@ -444,9 +412,7 @@ See the \fBPORTABILITY ISSUES\fR section of the \fBexec\fR command for
 additional information not specific to command pipelines about executing
 applications on the various platforms
 .SH "EXAMPLE"
-.PP
 Open a command pipeline and catch any errors:
-.PP
 .CS
 set fl [\fBopen\fR "| ls this_file_does_not_exist"]
 set data [read $fl]

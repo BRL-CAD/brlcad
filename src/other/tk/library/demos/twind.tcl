@@ -164,7 +164,7 @@ $t window create end -window $t.smallP
 $t insert end "\n\nFinally, images fit comfortably in text widgets too:"
 
 $t image create end -image \
-    [image create photo -file [file join $tk_demoDirectory images ouster.png]]
+  [image create bitmap -file [file join $tk_demoDirectory images face.xbm]]
 
 
 proc textWindBigB w {

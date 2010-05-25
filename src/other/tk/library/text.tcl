@@ -88,10 +88,10 @@ bind Text <ButtonRelease-1> {
 bind Text <Control-1> {
     %W mark set insert @%x,%y
 }
-bind Text <<PrevChar>> {
+bind Text <Left> {
     tk::TextSetCursor %W insert-1displayindices
 }
-bind Text <<NextChar>> {
+bind Text <Right> {
     tk::TextSetCursor %W insert+1displayindices
 }
 bind Text <Up> {
@@ -100,10 +100,10 @@ bind Text <Up> {
 bind Text <Down> {
     tk::TextSetCursor %W [tk::TextUpDownLine %W 1]
 }
-bind Text <<SelectPrevChar>> {
+bind Text <Shift-Left> {
     tk::TextKeySelect %W [%W index {insert - 1displayindices}]
 }
-bind Text <<SelectNextChar>> {
+bind Text <Shift-Right> {
     tk::TextKeySelect %W [%W index {insert + 1displayindices}]
 }
 bind Text <Shift-Up> {
@@ -112,10 +112,10 @@ bind Text <Shift-Up> {
 bind Text <Shift-Down> {
     tk::TextKeySelect %W [tk::TextUpDownLine %W 1]
 }
-bind Text <<PrevWord>> {
+bind Text <Control-Left> {
     tk::TextSetCursor %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
 }
-bind Text <<NextWord>> {
+bind Text <Control-Right> {
     tk::TextSetCursor %W [tk::TextNextWord %W insert]
 }
 bind Text <Control-Up> {
@@ -124,10 +124,10 @@ bind Text <Control-Up> {
 bind Text <Control-Down> {
     tk::TextSetCursor %W [tk::TextNextPara %W insert]
 }
-bind Text <<SelectPrevWord>> {
+bind Text <Shift-Control-Left> {
     tk::TextKeySelect %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
 }
-bind Text <<SelectNextWord>> {
+bind Text <Shift-Control-Right> {
     tk::TextKeySelect %W [tk::TextNextWord %W insert]
 }
 bind Text <Shift-Control-Up> {
@@ -155,16 +155,16 @@ bind Text <Control-Next> {
     %W xview scroll 1 page
 }
 
-bind Text <<LineStart>> {
+bind Text <Home> {
     tk::TextSetCursor %W {insert display linestart}
 }
-bind Text <<SelectLineStart>> {
+bind Text <Shift-Home> {
     tk::TextKeySelect %W {insert display linestart}
 }
-bind Text <<LineEnd>> {
+bind Text <End> {
     tk::TextSetCursor %W {insert display lineend}
 }
-bind Text <<SelectLineEnd>> {
+bind Text <Shift-End> {
     tk::TextKeySelect %W {insert display lineend}
 }
 bind Text <Control-Home> {
@@ -475,13 +475,6 @@ if {[tk windowingsystem] eq "aqua"} {
 	    %W yview scroll [expr {(2-%D)/3}] pixels
 	}
     }
-    bind Text <Shift-MouseWheel> {
-	if {%D >= 0} {
-	    %W xview scroll [expr {-%D/3}] pixels
-	} else {
-	    %W xview scroll [expr {(2-%D)/3}] pixels
-	}
-    }
 }
 
 if {"x11" eq [tk windowingsystem]} {
@@ -497,16 +490,6 @@ if {"x11" eq [tk windowingsystem]} {
     bind Text <5> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll 50 pixels
-	}
-    }
-    bind Text <Shift-4> {
-	if {!$tk_strictMotif} {
-	    %W xview scroll -50 pixels
-	}
-    }
-    bind Text <Shift-5> {
-	if {!$tk_strictMotif} {
-	    %W xview scroll 50 pixels
 	}
     }
 }

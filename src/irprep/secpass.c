@@ -1163,7 +1163,7 @@ int main(int argc, char **argv)
 	bu_free(cond, "cond");
 
     }	/*  END # 2  */
-    return(0);
+    return 0;
 }	/*  END # 1  */
 
 
@@ -1314,7 +1314,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	iprev = icur;
     }	/*  END # 2H  */
 
-    return(1);
+    return 1;
 
 }	/*  END # 1H  */
 
@@ -1330,14 +1330,14 @@ miss(struct application *ap_p)
      * (void)fflush(stdout);
      */
 
-    return(0);
+    return 0;
 }	/*  END # 1M */
 
 /*  User supplied overlap function that does nothing.  */
 int
 ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
-    return(1);
+    return 1;
 }
 
 /*

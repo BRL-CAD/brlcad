@@ -45,10 +45,10 @@ typedef struct CharSet {
  * Declarations for functions used only in this file.
  */
 
-static const char * BuildCharSet(CharSet *cset, const char *format);
+static char *		BuildCharSet(CharSet *cset, char *format);
 static int		CharInSet(CharSet *cset, int ch);
 static void		ReleaseCharSet(CharSet *cset);
-static int		ValidateFormat(Tcl_Interp *interp, const char *format,
+static int		ValidateFormat(Tcl_Interp *interp, char *format,
 			    int numVars, int *totalVars);
 
 /*
@@ -69,14 +69,14 @@ static int		ValidateFormat(Tcl_Interp *interp, const char *format,
  *----------------------------------------------------------------------
  */
 
-static const char *
+static char *
 BuildCharSet(
     CharSet *cset,
-    const char *format)		/* Points to first char of set. */
+    char *format)		/* Points to first char of set. */
 {
     Tcl_UniChar ch, start;
     int offset, nranges;
-    const char *end;
+    char *end;
 
     memset(cset, 0, sizeof(CharSet));
 
@@ -252,7 +252,7 @@ ReleaseCharSet(
 static int
 ValidateFormat(
     Tcl_Interp *interp,		/* Current interpreter. */
-    const char *format,		/* The format string. */
+    char *format,		/* The format string. */
     int numVars,		/* The number of variables passed to the scan
 				 * command. */
     int *totalSubs)		/* The number of variables that will be
@@ -343,7 +343,7 @@ ValidateFormat(
 	 */
 
 	if ((ch < 0x80) && isdigit(UCHAR(ch))) {	/* INTL: "C" locale. */
-	    value = strtoul(format-1, (char **) &format, 10);	/* INTL: "C" locale. */
+	    value = strtoul(format-1, &format, 10);	/* INTL: "C" locale. */
 	    flags |= SCAN_WIDTH;
 	    format += Tcl_UtfToUniChar(format, &ch);
 	}
@@ -405,7 +405,6 @@ ValidateFormat(
 	case 'i':
 	case 'o':
 	case 'x':
-	case 'b':
 	    break;
 	case 'u':
 	    if (flags & SCAN_BIG) {
@@ -557,13 +556,13 @@ Tcl_ScanObjCmd(
     ClientData dummy,    	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    const char *format;
+    char *format;
     int numVars, nconversions, totalVars = -1;
     int objIndex, offset, i, result, code;
     long value;
-    const char *string, *end, *baseString;
+    CONST char *string, *end, *baseString;
     char op = 0;
     int width, underflow = 0;
     Tcl_WideInt wideValue;
@@ -576,7 +575,7 @@ Tcl_ScanObjCmd(
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 1, objv,
-		"string format ?varName ...?");
+		"string format ?varName varName ...?");
 	return TCL_ERROR;
     }
 
@@ -596,7 +595,7 @@ Tcl_ScanObjCmd(
      */
 
     if (totalVars > 0) {
-	objs = (Tcl_Obj **) ckalloc(sizeof(Tcl_Obj *) * totalVars);
+	objs = (Tcl_Obj **) ckalloc(sizeof(Tcl_Obj*) * totalVars);
 	for (i = 0; i < totalVars; i++) {
 	    objs[i] = NULL;
 	}
@@ -676,7 +675,7 @@ Tcl_ScanObjCmd(
 	 */
 
 	if ((ch < 0x80) && isdigit(UCHAR(ch))) {	/* INTL: "C" locale. */
-	    width = (int) strtoul(format-1, (char **) &format, 10);/* INTL: "C" locale. */
+	    width = (int) strtoul(format-1, &format, 10);/* INTL: "C" locale. */
 	    format += Tcl_UtfToUniChar(format, &ch);
 	} else {
 	    width = 0;
@@ -712,7 +711,6 @@ Tcl_ScanObjCmd(
 	    if (!(flags & SCAN_SUPPRESS)) {
 		objPtr = Tcl_NewIntObj(string - baseString);
 		Tcl_IncrRefCount(objPtr);
-		CLANG_ASSERT(objs);
 		objs[objIndex++] = objPtr;
 	    }
 	    nconversions++;
@@ -733,10 +731,6 @@ Tcl_ScanObjCmd(
 	case 'x':
 	    op = 'i';
 	    parseFlag |= TCL_PARSE_HEXADECIMAL_ONLY;
-	    break;
-	case 'b':
-	    op = 'i';
-	    parseFlag |= TCL_PARSE_BINARY_ONLY;
 	    break;
 	case 'u':
 	    op = 'i';
@@ -820,7 +814,6 @@ Tcl_ScanObjCmd(
 	    if (!(flags & SCAN_SUPPRESS)) {
 		objPtr = Tcl_NewStringObj(string, end-string);
 		Tcl_IncrRefCount(objPtr);
-		CLANG_ASSERT(objs);
 		objs[objIndex++] = objPtr;
 	    }
 	    string = end;
@@ -871,7 +864,6 @@ Tcl_ScanObjCmd(
 	    if (!(flags & SCAN_SUPPRESS)) {
 		objPtr = Tcl_NewIntObj((int)sch);
 		Tcl_IncrRefCount(objPtr);
-		CLANG_ASSERT(objs);
 		objs[objIndex++] = objPtr;
 	    }
 	    break;
@@ -976,7 +968,6 @@ Tcl_ScanObjCmd(
 		    }
 		}
 		Tcl_SetDoubleObj(objPtr, dvalue);
-		CLANG_ASSERT(objs);
 		objs[objIndex++] = objPtr;
 		string = end;
 	    }
@@ -1026,7 +1017,7 @@ Tcl_ScanObjCmd(
 	}
     }
     if (objs != NULL) {
-	ckfree((char *) objs);
+	ckfree((char*) objs);
     }
     if (code == TCL_OK) {
 	if (underflow && (nconversions == 0)) {
@@ -1046,7 +1037,7 @@ Tcl_ScanObjCmd(
     }
     return code;
 }
-
+
 /*
  * Local Variables:
  * mode: c

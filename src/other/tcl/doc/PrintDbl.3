@@ -30,6 +30,7 @@ Floating-point value to be converted.
 Where to store the string representing \fIvalue\fR.  Must have at
 least \fBTCL_DOUBLE_SPACE\fR characters of storage.
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_PrintDouble\fR generates a string that represents the value
@@ -42,6 +43,7 @@ or an
 so that it does not look like an integer.  Where \fB%g\fR would
 generate an integer with no decimal point, \fBTcl_PrintDouble\fR adds
 .QW .0 .
+.VS 8.5
 .PP
 If the \fBtcl_precision\fR value is non-zero, the result will have
 precisely that many digits of significance.  If the value is zero
@@ -49,5 +51,7 @@ precisely that many digits of significance.  If the value is zero
 represent the number in such a way that \fBTcl_NewDoubleObj\fR
 will generate the same number when presented with the given string.
 IEEE semantics of rounding to even apply to the conversion.
+.VE
+
 .SH KEYWORDS
 conversion, double-precision, floating-point, string

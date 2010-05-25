@@ -63,7 +63,7 @@
 
 /*
  - lexstart - set up lexical stuff, scan leading options
- ^ static void lexstart(struct vars *);
+ ^ static VOID lexstart(struct vars *);
  */
 static void
 lexstart(
@@ -89,7 +89,7 @@ lexstart(
 
 /*
  - prefixes - implement various special prefixes
- ^ static void prefixes(struct vars *);
+ ^ static VOID prefixes(struct vars *);
  */
 static void
 prefixes(
@@ -207,7 +207,7 @@ prefixes(
  - lexnest - "call a subroutine", interpolating string at the lexical level
  * Note, this is not a very general facility.  There are a number of
  * implicit assumptions about what sorts of strings can be subroutines.
- ^ static void lexnest(struct vars *, const chr *, const chr *);
+ ^ static VOID lexnest(struct vars *, const chr *, const chr *);
  */
 static void
 lexnest(
@@ -275,7 +275,7 @@ static const chr brbackw[] = {	/* \w within brackets */
 /*
  - lexword - interpolate a bracket expression for word characters
  * Possibly ought to inquire whether there is a "word" character class.
- ^ static void lexword(struct vars *);
+ ^ static VOID lexword(struct vars *);
  */
 static void
 lexword(
@@ -922,7 +922,7 @@ lexdigits(
     int len;
     chr c;
     int d;
-    const uchr ub = (uchr) base;
+    CONST uchr ub = (uchr) base;
 
     n = 0;
     for (len = 0; len < maxlen && !ATEOS(); len++) {
@@ -1080,7 +1080,7 @@ brenext(
 
 /*
  - skip - skip white space and comments in expanded form
- ^ static void skip(struct vars *);
+ ^ static VOID skip(struct vars *);
  */
 static void
 skip(

@@ -41,6 +41,7 @@ int
 .sp
 void
 \fBTk_TextLayoutToPostscript(\fIinterp, layout\fB)\fR
+
 .SH ARGUMENTS
 .AS Tk_TextLayout "*xPtr, *yPtr"
 .AP Tk_Font tkfont in
@@ -125,8 +126,9 @@ Specifies the width and height, in pixels, of the rectangular area to
 compare for intersection against the text layout.
 .AP Tcl_Interp *interp out
 Postscript code that will print the text layout is appended to
-the result of interpreter \fIinterp\fR.
+\fIinterp->result\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 These routines are for measuring and displaying single-font, multi-line,
@@ -184,11 +186,9 @@ whose \fIx\fR-value is less than 0 will be considered closest to the first
 character on that line; any point whose \fIx\fR-value is greater than the
 width of the text layout will be considered closest to the last character on
 that line.  The return value is the index of the character that was closest
-to the point, or one more than the index of any character (to indicate that
-the point was after the end of the string and that the corresponding caret
-would be at the end of the string).  Given a \fIlayout\fR with no characters,
-the value 0 will always be returned, referring to a hypothetical zero-width
-placeholder character.
+to the point.  Given a \fIlayout\fR with no characters, the value 0 will
+always be returned, referring to a hypothetical zero-width placeholder
+character.  
 .PP
 \fBTk_CharBbox\fR uses the information in \fIlayout\fR to return the
 bounding box for the character specified by \fIindex\fR.  The width of the
@@ -233,9 +233,8 @@ array of strings that represent the individual lines in \fIlayout\fR.  It
 is the responsibility of the caller to take the Postscript array of
 strings and add some Postscript function operate on the array to render
 each of the lines.  The code that represents the Postscript array of
-strings is appended to interpreter \fIinterp\fR's result.
+strings is appended to \fIinterp->result\fR.
 .SH "DISPLAY MODEL"
-.PP
 When measuring a text layout, space characters that occur at the end of a
 line are ignored.  The space characters still exist and the insertion point
 can be positioned amongst them, but their additional width is ignored when

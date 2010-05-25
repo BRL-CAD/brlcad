@@ -197,9 +197,11 @@ height may later be adjusted by the movement of sashes in the
 panedwindow.  \fISize\fR may be any value accepted by \fBTk_GetPixels\fR.
 .TP
 \fB\-hide \fIboolean\fR
+.VS 8.5
 Controls the visibility of a pane.  When the \fIboolean\fR is true
 (according to \fBTcl_GetBoolean\fR) the pane will not be visible, but
 it will still be maintained in the list of panes.
+.VE 8.5
 .TP
 \fB\-minsize \fIn\fR
 Specifies that the size of the window cannot be made less than
@@ -232,6 +234,7 @@ are specified, the window will be stretched to fill the entire height
 (or width) of its cavity.
 .TP
 \fB\-stretch \fIwhen\fR
+.VS 8.5
 Controls how extra space is allocated to each of the panes.
 \fIWhen\fR is one of \fBalways\fR, \fBfirst\fR, \fBlast\fR,
 \fBmiddle\fR, and \fBnever\fR.
@@ -246,11 +249,11 @@ definition:
 This pane will always stretch.
 .TP
 \fBfirst\fR
-Only if this pane is the first pane (left-most or top-most) will it
+Only if this pane is the first pane (left-most or top-most) will it 
 stretch.
 .TP
 \fBlast\fR
-Only if this pane is the last pane (right-most or bottom-most) will it
+Only if this pane is the last pane (right-most or bottom-most) will it 
 stretch.  This is the default value.
 .TP
 \fBmiddle\fR
@@ -259,6 +262,7 @@ Only if this pane is not the first or last pane will it stretch.
 \fBnever\fR
 This pane will never stretch.
 .RE
+.VE 8.5
 .TP
 \fB\-width \fIsize\fR
 Specify a width for the window.  The width will be the outer
@@ -272,7 +276,6 @@ panedwindow.  \fISize\fR may be any value accepted by \fBTk_GetPixels\fR.
 \fIpathName \fBpanes\fR
 Returns an ordered list of the widgets managed by \fIpathName\fR.
 .SH "RESIZING PANES"
-.PP
 A pane is resized by grabbing the sash (or sash handle if present) and
 dragging with the mouse.  This is accomplished via mouse motion
 bindings on the widget.  When a sash is moved, the sizes of the panes
@@ -286,6 +289,3 @@ fill, and the containing toplevel is resized), space is added to the final
 ttk::panedwindow(n)
 .SH KEYWORDS
 panedwindow, widget, geometry management
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

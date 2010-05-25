@@ -40,7 +40,6 @@ turns the file dialog into a sheet attached to the parent window.
 Specifies a string to display as the title of the dialog box. If this
 option is not specified, then a default title will be displayed.
 .SH EXAMPLE
-.PP
 .CS
 set dir [\fBtk_chooseDirectory\fR \e
         \-initialdir ~ \-title "Choose a directory"]
@@ -50,10 +49,8 @@ if {$dir eq ""} {
    label .l \-text "Selected $dir"
 }
 .CE
+
 .SH "SEE ALSO"
 tk_getOpenFile(n), tk_getSaveFile(n)
 .SH KEYWORDS
 directory, selection, dialog, platform-specific
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

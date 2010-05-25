@@ -37,76 +37,78 @@
 
 
 /**
- *  			D B _ A L L O C
+ * D B _ A L L O C
  *
- *  Find a block of database storage of "count" granules.
+ * Find a block of database storage of "count" granules.
  *
- *  Returns -
- *	 0	OK
- *	-1	failure
+ * Returns:
+ * 0 OK
+ * non-0 failure
  */
-size_t
+int
 db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count)
 {
-    size_t addr;
+    size_t len;
     union record rec;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
-				    dp->d_namep, dbip, dp, count );
-    if ( count <= 0 )  {
+				    dp->d_namep, dbip, dp, count);
+    if (count <= 0) {
 	bu_log("db_alloc(0)\n");
-	return(-1);
+	return -1;
     }
 
-    if ( dp->d_flags & RT_DIR_INMEM )  {
-	if ( dp->d_un.ptr )  {
-	    dp->d_un.ptr = bu_realloc( dp->d_un.ptr,
-				       count * sizeof(union record), "db_alloc() d_un.ptr" );
+    if (dp->d_flags & RT_DIR_INMEM) {
+	if (dp->d_un.ptr) {
+	    dp->d_un.ptr = bu_realloc(dp->d_un.ptr,
+				      count * sizeof(union record), "db_alloc() d_un.ptr");
 	} else {
-	    dp->d_un.ptr = bu_malloc( count * sizeof(union record), "db_alloc() d_un.ptr" );
+	    dp->d_un.ptr = bu_malloc(count * sizeof(union record), "db_alloc() d_un.ptr");
 	}
 	dp->d_len = count;
 	return 0;
     }
 
-    if ( dbip->dbi_read_only )  {
+    if (dbip->dbi_read_only) {
 	bu_log("db_alloc on READ-ONLY file\n");
-	return(-1);
+	return -1;
     }
-    while (1)  {
-	if ( (addr = rt_memalloc( &(dbip->dbi_freep), (unsigned)count )) == 0L )  {
+    while (1) {
+	len = rt_memalloc(&(dbip->dbi_freep), (unsigned)count);
+	if (len == 0L) {
 	    /* No contiguous free block, append to file */
-	    if ( (dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR )  {
+	    if ((dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR) {
 		bu_log("db_alloc: bad EOF\n");
-		return(-1);
+		return -1;
 	    }
 	    dp->d_len = count;
-	    dbip->dbi_eof += count * sizeof(union record);
+	    dbip->dbi_eof += (off_t)(count * sizeof(union record));
 	    dbip->dbi_nrec += count;
 	    break;
 	}
-	dp->d_addr = addr * sizeof(union record);
+	dp->d_addr = (off_t)(len * sizeof(union record));
 	dp->d_len = count;
-	if ( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
-	    return(-1);
-	if ( rec.u_id != ID_FREE )  {
-	    bu_log("db_alloc():  addr %ld non-FREE (id %d), skipping\n",
-		   addr, rec.u_id );
+	if (db_get(dbip, dp, &rec, 0, 1) < 0)
+	    return -1;
+	if (rec.u_id != ID_FREE) {
+	    bu_log("db_alloc():  len %ld non-FREE (id %d), skipping\n",
+		   len, rec.u_id);
 	    continue;
 	}
     }
 
     /* Clear out ALL the granules, for safety */
-    return( db_zapper( dbip, dp, 0 ) );
+    return db_zapper(dbip, dp, 0);
 }
 
+
 /**
- *			D B _ D E L R E C
+ * D B _ D E L R E C
  *
- *  Delete a specific record from database entry
- *  No longer supported.
+ * Delete a specific record from database entry
+ * No longer supported.
  */
 int
 db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
@@ -115,44 +117,47 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
-				    dp->d_namep, dbip, dp, recnum );
+				    dp->d_namep, dbip, dp, recnum);
 
     bu_log("ERROR db_delrec() is no longer supported.  Use combination import/export routines.\n");
     return -1;
 }
 
+
 /**
- *  			D B _ D E L E T E
+ * D B _ D E L E T E
  *
- *  Delete the indicated database record(s).
- *  Arrange to write "free storage" database markers in it's place,
- *  positively erasing what had been there before.
+ * Delete the indicated database record(s).
+ * Arrange to write "free storage" database markers in it's place,
+ * positively erasing what had been there before.
+ *
+ * Returns:
+ * 0 on success
+ * non-zero on failure
  */
-size_t
+int
 db_delete(struct db_i *dbip, struct directory *dp)
 {
-    register size_t i = -1;
+    int i = 0;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delete(%s) x%x, x%x\n",
-				    dp->d_namep, dbip, dp );
+				    dp->d_namep, dbip, dp);
 
-    if ( dp->d_flags & RT_DIR_INMEM )  {
-	bu_free( dp->d_un.ptr, "db_delete d_un.ptr");
+    if (dp->d_flags & RT_DIR_INMEM) {
+	bu_free(dp->d_un.ptr, "db_delete d_un.ptr");
 	dp->d_un.ptr = NULL;
 	dp->d_len = 0;
 	return 0;
     }
 
-    if ( dbip->dbi_version == 4 )  {
-	i = db_zapper( dbip, dp, 0 );
-	rt_memfree( &(dbip->dbi_freep), (unsigned)dp->d_len,
-		    dp->d_addr/(sizeof(union record)) );
-    } else if ( dbip->dbi_version == 5 )  {
-	i = db5_write_free( dbip, dp, dp->d_len );
-	rt_memfree( &(dbip->dbi_freep), dp->d_len,
-		    dp->d_addr );
+    if (dbip->dbi_version == 4) {
+	i = db_zapper(dbip, dp, 0);
+	rt_memfree(&(dbip->dbi_freep), (unsigned)dp->d_len, dp->d_addr/(sizeof(union record)));
+    } else if (dbip->dbi_version == 5) {
+	i = db5_write_free(dbip, dp, dp->d_len);
+	rt_memfree(&(dbip->dbi_freep), dp->d_len, dp->d_addr);
     } else {
 	bu_bomb("db_delete() unsupported database version\n");
     }
@@ -162,49 +167,52 @@ db_delete(struct db_i *dbip, struct directory *dp)
     return i;
 }
 
+
 /**
- *			D B _ Z A P P E R
+ * D B _ Z A P P E R
  *
- *  Using a single call to db_put(), write multiple zeroed records out,
- *  all with u_id field set to ID_FREE.
- *  This will zap all records from "start" to the end of this entry.
+ * Using a single call to db_put(), write multiple zeroed records out,
+ * all with u_id field set to ID_FREE.
+ * This will zap all records from "start" to the end of this entry.
  *
- *  Returns:
- *	-1	on error
- *	0	on success (from db_put())
+ * Returns:
+ * 0 on success (from db_put())
+ * non-zero on failure
  */
-size_t
+int
 db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 {
-    register union record	*rp;
-    register size_t		i;
-    size_t			todo;
+    union record *rp;
+    size_t i;
+    size_t todo;
+    int ret;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
-				    dp->d_namep, dbip, dp, start );
+				    dp->d_namep, dbip, dp, start);
 
-    if ( dp->d_flags & RT_DIR_INMEM )  bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
+    if (dp->d_flags & RT_DIR_INMEM) bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
 
-    if ( dbip->dbi_read_only )
-	return(-1);
+    if (dbip->dbi_read_only)
+	return -1;
 
-    BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
+    BU_ASSERT_LONG(dbip->dbi_version, ==, 4);
 
-    if ( dp->d_len < start )
-	return(-1);
+    if (dp->d_len < start)
+	return -1;
 
-    if ( (todo = dp->d_len - start) == 0 )
-	return(0);		/* OK -- trivial */
+    if ((todo = dp->d_len - start) == 0)
+	return 0;		/* OK -- trivial */
 
-    rp = (union record *)bu_malloc( todo * sizeof(union record), "db_zapper buf");
+    rp = (union record *)bu_malloc(todo * sizeof(union record), "db_zapper buf");
     memset((char *)rp, 0, todo * sizeof(union record));
-    for ( i=0; i < todo; i++ )
+
+    for (i=0; i < todo; i++)
 	rp[i].u_id = ID_FREE;
-    i = db_put( dbip, dp, rp, start, todo );
-    bu_free( (char *)rp, "db_zapper buf" );
-    return i;
+    ret = db_put(dbip, dp, rp, (off_t)start, todo);
+    bu_free((char *)rp, "db_zapper buf");
+    return ret;
 }
 /** @} */
 

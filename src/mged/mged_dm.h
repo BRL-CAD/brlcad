@@ -37,6 +37,11 @@
 #  include <tk.h>
 #endif
 
+
+#ifndef COMMA
+#  define COMMA ','
+#endif
+
 #define MGED_DISPLAY_VAR "mged_display"
 
 /* +-2048 to +-1 */
@@ -463,7 +468,6 @@ struct dm_list {
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner
 #define am_mode curr_dm_list->dml_am_mode
-#define ndrawn curr_dm_list->dml_ndrawn
 #define perspective_angle curr_dm_list->dml_perspective_angle
 #define zclip_ptr curr_dm_list->dml_zclip_ptr
 

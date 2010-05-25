@@ -155,7 +155,7 @@ int parse_args(int ac, char **av)
     if (brick_name == (char *)NULL || *brick_name == '\0')
 	usage("bad or no brick name\n");
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 void gen_mortar(int horiz_bricks, int vert_bricks, double horiz_spacing, double vert_spacing)
@@ -322,7 +322,7 @@ int main(int ac, char **av)
 
     if (horiz_bricks <= 0) {
 	(void)fprintf(stderr, "wall not wide enough for brick\n");
-	return(-1);
+	return -1;
     }
 
     if (standalone) {
@@ -357,7 +357,7 @@ int main(int ac, char **av)
     if (make_mortar && (vert_spacing > tol || horiz_spacing > tol))
 	gen_mortar(horiz_bricks, vert_bricks, horiz_spacing, vert_spacing);
 
-    return(0);
+    return 0;
 }
 
 /*

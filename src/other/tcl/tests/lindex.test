@@ -26,7 +26,7 @@ testConstraint testevalex [llength [info commands testevalex]]
 
 test lindex-1.1 {wrong # args} testevalex {
     list [catch {testevalex lindex} result] $result
-} "1 {wrong # args: should be \"lindex list ?index ...?\"}"
+} "1 {wrong # args: should be \"lindex list ?index...?\"}"
 
 # Indices that are lists or convertible to lists
 
@@ -190,7 +190,7 @@ test lindex-8.7 {data reuse} testevalex {
 
 test lindex-9.1 {wrong # args} {
     list [catch {lindex} result] $result
-} "1 {wrong # args: should be \"lindex list ?index ...?\"}"
+} "1 {wrong # args: should be \"lindex list ?index...?\"}"
 test lindex-9.2 {ensure that compilation works in the right order} {
     proc foo {} {
 	rename foo {}

@@ -30,9 +30,7 @@ Break exceptions are also handled in a few other situations, such
 as the \fBcatch\fR command, Tk event bindings, and the outermost
 scripts of procedure bodies.
 .SH EXAMPLE
-.PP
 Print a line for each of the integers from 0 to 5:
-.PP
 .CS
 for {set x 0} {$x<10} {incr x} {
    if {$x > 5} {

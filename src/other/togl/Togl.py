@@ -23,7 +23,11 @@ class Togl(Tkinter.Widget):
 		if master is None:
 			master = Tkinter._default_root
 		master.tk.call('package', 'require', 'Togl', '2.0')
-		Tkinter.Widget.__init__(self, master, "togl", cnf, kw)
+		try:
+			Tkinter.Widget.__init__(self, master, "togl", cnf, kw)
+		except:
+			Tkinter.Widget.destroy(self)
+			raise
 		Togl._instances[self] = True
 
 	def _cbsubst(self, *args):

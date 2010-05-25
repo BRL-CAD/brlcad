@@ -213,7 +213,7 @@ dlopen(
 
     if (mp->info = (struct dl_info *)dlsym(mp, "dl_info")) {
 	if (mp->info->init) {
-	    mp->info->init();
+	    (*mp->info->init)();
 	}
     } else {
 	errvalid = 0;
@@ -226,7 +226,7 @@ dlopen(
 
     if (mp->cdtors = (CdtorPtr) dlsym(mp, "__cdtors")) {
 	while (mp->cdtors->init) {
-	    mp->cdtors->init();
+	    (*mp->cdtors->init)();
 	    mp->cdtors++;
 	}
     } else {
@@ -328,12 +328,12 @@ dlclose(
     }
 
     if (mp->info && mp->info->fini) {
-	mp->info->fini();
+	(*mp->info->fini)();
     }
 
     if (mp->cdtors) {
 	while (mp->cdtors->term) {
-	    mp->cdtors->term();
+	    (*mp->cdtors->term)();
 	    mp->cdtors++;
 	}
     }

@@ -23,6 +23,9 @@
 
 /* #define TCL_MAC_DEBUG_NOTIFIER 1 */
 
+extern TclStubs tclStubs;
+extern Tcl_NotifierProcs tclOriginalNotifier;
+
 /*
  * We use the Darwin-native spinlock API rather than pthread mutexes for
  * notifier locking: this radically simplifies the implementation and lowers
@@ -425,10 +428,6 @@ Tcl_InitNotifier(void)
 {
     ThreadSpecificData *tsdPtr;
 
-    if (tclNotifierHooks.initNotifierProc) {
-	return tclNotifierHooks.initNotifierProc();
-    }
-
     tsdPtr = TCL_TSD_INIT(&dataKey);
 
 #ifdef WEAK_IMPORT_SPINLOCKLOCK
@@ -591,7 +590,7 @@ Tcl_InitNotifier(void)
 
 void
 TclMacOSXNotifierAddRunLoopMode(
-    const void *runLoopMode)
+    CONST void *runLoopMode)
 {
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
     CFStringRef mode = (CFStringRef) runLoopMode;
@@ -671,11 +670,6 @@ Tcl_FinalizeNotifier(
     ClientData clientData)		/* Not used. */
 {
     ThreadSpecificData *tsdPtr;
-
-    if (tclNotifierHooks.finalizeNotifierProc) {
-	tclNotifierHooks.finalizeNotifierProc(clientData);
-	return;
-    }
 
     tsdPtr = TCL_TSD_INIT(&dataKey);
 
@@ -773,11 +767,6 @@ Tcl_AlertNotifier(
 {
     ThreadSpecificData *tsdPtr = clientData;
 
-    if (tclNotifierHooks.alertNotifierProc) {
-	tclNotifierHooks.alertNotifierProc(clientData);
-	return;
-    }
-
     LOCK_NOTIFIER_TSD;
     if (tsdPtr->runLoop) {
 	CFRunLoopSourceSignal(tsdPtr->runLoopSource);
@@ -804,14 +793,14 @@ Tcl_AlertNotifier(
 
 void
 Tcl_SetTimer(
-    const Tcl_Time *timePtr)		/* Timeout value, may be NULL. */
+    Tcl_Time *timePtr)		/* Timeout value, may be NULL. */
 {
     ThreadSpecificData *tsdPtr;
     CFRunLoopTimerRef runLoopTimer;
     CFTimeInterval waitTime;
 
-    if (tclNotifierHooks.setTimerProc) {
-	tclNotifierHooks.setTimerProc(timePtr);
+    if (tclStubs.tcl_SetTimer != tclOriginalNotifier.setTimerProc) {
+	tclStubs.tcl_SetTimer(timePtr);
 	return;
     }
 
@@ -883,11 +872,6 @@ Tcl_ServiceModeHook(
 {
     ThreadSpecificData *tsdPtr;
 
-    if (tclNotifierHooks.serviceModeHookProc) {
-	tclNotifierHooks.serviceModeHookProc(mode);
-	return;
-    }
-
     tsdPtr = TCL_TSD_INIT(&dataKey);
 
     if (mode == TCL_SERVICE_ALL && !tsdPtr->runLoopTimer) {
@@ -935,8 +919,9 @@ Tcl_CreateFileHandler(
     ThreadSpecificData *tsdPtr;
     FileHandler *filePtr;
 
-    if (tclNotifierHooks.createFileHandlerProc) {
-	tclNotifierHooks.createFileHandlerProc(fd, mask, proc, clientData);
+    if (tclStubs.tcl_CreateFileHandler !=
+	    tclOriginalNotifier.createFileHandlerProc) {
+	tclStubs.tcl_CreateFileHandler(fd, mask, proc, clientData);
 	return;
     }
 
@@ -1010,8 +995,9 @@ Tcl_DeleteFileHandler(
     int i, numFdBits;
     ThreadSpecificData *tsdPtr;
 
-    if (tclNotifierHooks.deleteFileHandlerProc) {
-	tclNotifierHooks.deleteFileHandlerProc(fd);
+    if (tclStubs.tcl_DeleteFileHandler !=
+	    tclOriginalNotifier.deleteFileHandlerProc) {
+	tclStubs.tcl_DeleteFileHandler(fd);
 	return;
     }
 
@@ -1185,15 +1171,15 @@ FileHandlerEventProc(
 
 int
 Tcl_WaitForEvent(
-    const Tcl_Time *timePtr)		/* Maximum block time, or NULL. */
+    Tcl_Time *timePtr)		/* Maximum block time, or NULL. */
 {
     int result, polling, runLoopRunning;
     CFTimeInterval waitTime;
     SInt32 runLoopStatus;
     ThreadSpecificData *tsdPtr;
 
-    if (tclNotifierHooks.waitForEventProc) {
-	return tclNotifierHooks.waitForEventProc(timePtr);
+    if (tclStubs.tcl_WaitForEvent != tclOriginalNotifier.waitForEventProc) {
+	return tclStubs.tcl_WaitForEvent(timePtr);
     }
     result = -1;
     polling = 0;
@@ -1998,7 +1984,7 @@ AtForkChild(void)
 
 void
 TclMacOSXNotifierAddRunLoopMode(
-    const void *runLoopMode)
+    CONST void *runLoopMode)
 {
     Tcl_Panic("TclMacOSXNotifierAddRunLoopMode: "
 	    "Tcl not built with CoreFoundation support");

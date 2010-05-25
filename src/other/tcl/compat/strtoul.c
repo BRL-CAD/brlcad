@@ -52,7 +52,7 @@ static char cvtIn[] = {
 
 unsigned long int
 strtoul(
-    const char *string,		/* String of ASCII digits, possibly preceded
+    CONST char *string,		/* String of ASCII digits, possibly preceded
 				 * by white space. For bases greater than 10,
 				 * either lower- or upper-case digits may be
 				 * used. */
@@ -64,7 +64,7 @@ strtoul(
 				 * hex, "0" means octal, anything else means
 				 * decimal. */
 {
-    register const char *p;
+    register CONST char *p;
     register unsigned long int result = 0;
     register unsigned digit;
     int anyDigits = 0;

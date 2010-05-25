@@ -21,8 +21,10 @@ Tcl_Encoding
 void
 \fBTcl_FreeEncoding\fR(\fIencoding\fR)
 .sp
+.VS 8.5
 int
 \fBTcl_GetEncodingFromObj\fR(\fIinterp, objPtr, encodingPtr\fR)
+.VE 8.5
 .sp
 char *
 \fBTcl_ExternalToUtfDString\fR(\fIencoding, src, srcLen, dstPtr\fR)
@@ -50,8 +52,10 @@ const char *
 int
 \fBTcl_SetSystemEncoding\fR(\fIinterp, name\fR)
 .sp
+.VS 8.5
 const char *
 \fBTcl_GetEncodingNameFromEnvironment\fR(\fIbufPtr\fR)
+.VE 8.5
 .sp
 void
 \fBTcl_GetEncodingNames\fR(\fIinterp\fR)
@@ -59,11 +63,13 @@ void
 Tcl_Encoding
 \fBTcl_CreateEncoding\fR(\fItypePtr\fR)
 .sp
+.VS 8.5
 Tcl_Obj *
 \fBTcl_GetEncodingSearchPath\fR()
 .sp
 int
 \fBTcl_SetEncodingSearchPath\fR(\fIsearchPath\fR)
+.VE 8.5
 .sp
 const char *
 \fBTcl_GetDefaultEncodingDir\fR(\fIvoid\fR)
@@ -81,9 +87,13 @@ Name of encoding to load.
 The encoding to query, free, or use for converting text.  If \fIencoding\fR is 
 NULL, the current system encoding is used.
 .AP Tcl_Obj *objPtr in
+.VS 8.5
 Name of encoding to get token for.
+.VE 8.5
 .AP Tcl_Encoding *encodingPtr out
+.VS 8.5
 Points to storage where encoding token is to be written.
+.VE 8.5
 .AP "const char" *src in
 For the \fBTcl_ExternalToUtf\fR functions, an array of bytes in the
 specified encoding that are to be converted to UTF-8.  For the
@@ -137,11 +147,15 @@ buffer as a result of the conversion.  May be NULL.
 Filled with the number of characters that correspond to the number of bytes
 stored in the output buffer.  May be NULL.
 .AP Tcl_DString *bufPtr out
+.VS 8.5
 Storage for the prescribed system encoding name.
+.VE 8.5
 .AP "const Tcl_EncodingType" *typePtr in
 Structure that defines a new type of encoding.  
 .AP Tcl_Obj *searchPath in
+.VS 8.5
 List of filesystem directories in which to search for encoding data files.
+.VE 8.5
 .AP "const char" *path in
 A path to the location of the encoding file.  
 .BE
@@ -190,6 +204,7 @@ anywhere (i.e., it has been freed as many times as it has been gotten)
 \fBTcl_FreeEncoding\fR will release all storage the encoding was using
 and delete it from the database. 
 .PP
+.VS 8.5
 \fBTcl_GetEncodingFromObj\fR treats the string representation of
 \fIobjPtr\fR as an encoding name, and finds an encoding with that
 name, just as \fBTcl_GetEncoding\fR does. When an encoding is found,
@@ -201,6 +216,7 @@ writing to \fB*\fR\fIencodingPtr\fR takes place. Just as with
 \fBTcl_GetEncoding\fR, the caller should call \fBTcl_FreeEncoding\fR
 on the resulting encoding token when that token will no longer be
 used.
+.VE 8.5
 .PP
 \fBTcl_ExternalToUtfDString\fR converts a source buffer \fIsrc\fR from the
 specified \fIencoding\fR into UTF-8.  The converted bytes are stored in 
@@ -282,7 +298,6 @@ and the
 interfaces when running on Windows 95, you would have
 to perform the following type of test over and over in your program
 (as represented in pseudo-code):
-.PP
 .CS
 if (running NT) {
     encoding <- Tcl_GetEncoding("unicode");
@@ -292,7 +307,6 @@ if (running NT) {
     nativeBuffer <- Tcl_UtfToExternal(NULL, utfBuffer);
 }
 .CE
-.PP
 \fBTcl_WinUtfToTChar\fR and \fBTcl_WinTCharToUtf\fR automatically
 handle this test and use the proper encoding based on the current
 operating system.  \fBTcl_WinUtfToTChar\fR returns a pointer to
@@ -317,12 +331,14 @@ procedure increments the reference count of the new system encoding,
 decrements the reference count of the old system encoding, and returns
 \fBTCL_OK\fR.
 .PP
+.VS 8.5
 \fBTcl_GetEncodingNameFromEnvironment\fR provides a means for the Tcl
 library to report the encoding name it believes to be the correct one
 to use as the system encoding, based on system calls and examination of
 the environment suitable for the platform.  It accepts \fIbufPtr\fR,
 a pointer to an uninitialized or freed \fBTcl_DString\fR and writes
 the encoding name to it.  The \fBTcl_DStringValue\fR is returned.
+.VE 8.5
 .PP
 \fBTcl_GetEncodingNames\fR sets the \fIinterp\fR result to a list
 consisting of the names of all the encodings that are currently defined
@@ -350,13 +366,13 @@ convert between this encoding and UTF-8.  It is defined as follows:
 .PP
 .CS
 typedef struct Tcl_EncodingType {
-    const char *\fIencodingName\fR;
-    Tcl_EncodingConvertProc *\fItoUtfProc\fR;
-    Tcl_EncodingConvertProc *\fIfromUtfProc\fR;
-    Tcl_EncodingFreeProc *\fIfreeProc\fR;
-    ClientData \fIclientData\fR;
-    int \fInullSize\fR;
-} \fBTcl_EncodingType\fR;  
+        const char *\fIencodingName\fR;
+        Tcl_EncodingConvertProc *\fItoUtfProc\fR;
+        Tcl_EncodingConvertProc *\fIfromUtfProc\fR;
+        Tcl_EncodingFreeProc *\fIfreeProc\fR;
+        ClientData \fIclientData\fR;
+        int \fInullSize\fR;
+} Tcl_EncodingType;  
 .CE
 .PP
 The \fIencodingName\fR provides a string name for the encoding, by
@@ -384,7 +400,7 @@ The callback procedures \fItoUtfProc\fR and \fIfromUtfProc\fR should match the
 type \fBTcl_EncodingConvertProc\fR:
 .PP
 .CS
-typedef int \fBTcl_EncodingConvertProc\fR(
+typedef int Tcl_EncodingConvertProc(
         ClientData \fIclientData\fR,
         const char *\fIsrc\fR, 
         int \fIsrcLen\fR, 
@@ -414,9 +430,8 @@ procedure will be a non-NULL location.
 .PP
 The callback procedure \fIfreeProc\fR, if non-NULL, should match the type 
 \fBTcl_EncodingFreeProc\fR:
-.PP
 .CS
-typedef void \fBTcl_EncodingFreeProc\fR(
+typedef void Tcl_EncodingFreeProc(
         ClientData \fIclientData\fR);
 .CE
 .PP
@@ -424,6 +439,7 @@ This \fIfreeProc\fR function is called when the encoding is deleted.  The
 \fIclientData\fR parameter is the same as the \fIclientData\fR field
 specified to \fBTcl_CreateEncoding\fR when the encoding was created.  
 .PP
+.VS 8.5
 \fBTcl_GetEncodingSearchPath\fR and \fBTcl_SetEncodingSearchPath\fR
 are called to access and set the list of filesystem directories searched
 for encoding data files.  
@@ -451,6 +467,7 @@ list.  Since Tcl searches \fIsearchPath\fR for encoding data files in
 list order, these routines establish the
 .QW default
 directory in which to find encoding data files.
+.VE 8.5
 .SH "ENCODING FILES"
 Space would prohibit precompiling into Tcl every possible encoding
 algorithm, so many encodings are stored on disk as dynamically-loadable
@@ -491,7 +508,6 @@ Cases [1], [2], and [3] are collectively referred to as table-based encoding
 files.  The lines in a table-based encoding file are in the same
 format as this example taken from the \fBshiftjis\fR encoding (this is not
 the complete file):
-.PP
 .CS
 # Encoding file: shiftjis, multi-byte
 M
@@ -557,7 +573,6 @@ If all characters on a page would map to 0000, that page can be omitted.
 Case [4] is the escape-sequence encoding file.  The lines in an this type of
 file are in the same format as this example taken from the \fBiso2022-jp\fR
 encoding:
-.PP
 .CS
 .ta 1.5i
 # Encoding file: iso2022-jp, escape-driven

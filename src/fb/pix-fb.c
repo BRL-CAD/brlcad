@@ -20,7 +20,7 @@
  */
 /** @file pix-fb.c
  *
- *  Program to take bottom-up pixel files and send them to a framebuffer.
+ * Program to take bottom-up pixel files and send them to a framebuffer.
  *
  */
 
@@ -44,33 +44,31 @@
 #include "pkg.h"
 
 
-int skipbytes(int fd, off_t num);
+static unsigned char *scanline;	/* 1 scanline pixel buffer */
+static int scanbytes;		/* # of bytes of scanline */
+static int scanpix;		/* # of pixels of scanline */
 
-static unsigned char *scanline;		/* 1 scanline pixel buffer */
-static int	scanbytes;		/* # of bytes of scanline */
-static int	scanpix;		/* # of pixels of scanline */
+static int multiple_lines = 0;	/* Streamlined operation */
 
-static int	multiple_lines = 0;	/* Streamlined operation */
+static char *framebuffer = NULL;
+static char *file_name;
+static int infd;
 
-static char	*framebuffer = NULL;
-static char	*file_name;
-static int	infd;
+static int fileinput = 0;	/* file of pipe on input? */
+static int autosize = 0;	/* !0 to autosize input */
 
-static int	fileinput = 0;		/* file of pipe on input? */
-static int	autosize = 0;		/* !0 to autosize input */
-
-static unsigned long int	file_width = 512;	/* default input width */
-static unsigned long int	file_height = 512;	/* default input height */
-static int	scr_width = 0;		/* screen tracks file if not given */
-static int	scr_height = 0;
-static int	file_xoff, file_yoff;
-static int	scr_xoff, scr_yoff;
-static int	clear = 0;
-static int	zoom = 0;
-static int	inverse = 0;		/* Draw upside-down */
-static int	one_line_only = 0;	/* insist on 1-line writes */
-static int	pause_sec = 0; /* Pause that many seconds before closing the FB
-				  and exiting */
+static size_t file_width = 512;	/* default input width */
+static size_t file_height = 512;/* default input height */
+static int scr_width = 0;	/* screen tracks file if not given */
+static int scr_height = 0;
+static int file_xoff, file_yoff;
+static int scr_xoff, scr_yoff;
+static int clear = 0;
+static int zoom = 0;
+static int inverse = 0;		/* Draw upside-down */
+static int one_line_only = 0;	/* insist on 1-line writes */
+static int pause_sec = 0; 	/* Pause that many seconds before
+				   closing the FB and exiting */
 
 static char usage[] = "\
 Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
@@ -84,8 +82,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "1m:ahiczF:p:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "1m:ahiczF:p:s:w:n:x:y:X:Y:S:W:N:")) != EOF) {
+	switch (c) {
 	    case '1':
 		one_line_only = 1;
 		break;
@@ -152,22 +150,22 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )
-	    return(0);
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
+	    return 0;
 	file_name = "-";
 	infd = 0;
     } else {
 	file_name = argv[bu_optind];
-	if ( (infd = open(file_name, 0)) < 0 )  {
+	if ((infd = open(file_name, 0)) < 0) {
 	    perror(file_name);
-	    (void)fprintf( stderr,
-			   "pix-fb: cannot open \"%s\" for reading\n",
-			   file_name );
+	    (void)fprintf(stderr,
+			  "pix-fb: cannot open \"%s\" for reading\n",
+			  file_name);
 	    bu_exit(1, NULL);
 	}
 #ifdef _WIN32
@@ -176,28 +174,54 @@ get_args(int argc, char **argv)
 	fileinput++;
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "pix-fb: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
+
+
+/*
+ * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
+ */
+int
+skipbytes(int fd, off_t num)
+{
+    int n, try;
+
+    if (fileinput) {
+	(void)lseek(fd, (off_t)num, 1);
+	return 0;
+    }
+
+    while (num > 0) {
+	try = num > scanbytes ? scanbytes : num;
+	n = read(fd, scanline, try);
+	if (n <= 0) {
+	    return -1;
+	}
+	num -= n;
+    }
+    return 0;
+}
+
 
 int
 main(int argc, char **argv)
 {
     int y;
     FBIO *fbp;
-    int	xout, yout, n, m, xstart, xskip;
+    int xout, yout, n, m, xstart, xskip;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit( 1, NULL );
+	bu_exit(1, NULL);
     }
 
     /* autosize input? */
-    if ( fileinput && autosize ) {
-	unsigned long int	w, h;
-	if ( fb_common_file_size(&w, &h, file_name, 3) ) {
+    if (fileinput && autosize) {
+	unsigned long int w, h;
+	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = w;
 	    file_height = h;
 	} else {
@@ -206,12 +230,12 @@ main(int argc, char **argv)
     }
 
     /* If screen size was not set, track the file size */
-    if ( scr_width == 0 )
+    if (scr_width == 0)
 	scr_width = file_width;
-    if ( scr_height == 0 )
+    if (scr_height == 0)
 	scr_height = file_height;
 
-    if ((fbp = fb_open( framebuffer, scr_width, scr_height)) == NULL) {
+    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == NULL) {
 	bu_exit(12, NULL);
     }
 
@@ -220,173 +244,149 @@ main(int argc, char **argv)
     scr_height = fb_getheight(fbp);
 
     /* compute number of pixels to be output to screen */
-    if ( scr_xoff < 0 )
-    {
+    if (scr_xoff < 0) {
 	xout = scr_width + scr_xoff;
 	xskip = (-scr_xoff);
 	xstart = 0;
-    }
-    else
-    {
+    } else {
 	xout = scr_width - scr_xoff;
 	xskip = 0;
 	xstart = scr_xoff;
     }
 
-    if ( xout < 0 )
+    if (xout < 0)
 	bu_exit(0, NULL);			/* off screen */
-    if ( xout > (file_width-file_xoff) )
+    if ((size_t)xout > (file_width-file_xoff))
 	xout = (file_width-file_xoff);
     scanpix = xout;				/* # pixels on scanline */
 
-    if ( inverse )
+    if (inverse)
 	scr_yoff = (-scr_yoff);
 
     yout = scr_height - scr_yoff;
-    if ( yout < 0 )
+    if (yout < 0)
 	bu_exit(0, NULL);			/* off screen */
-    if ( yout > (file_height-file_yoff) )
+    if ((size_t)yout > (file_height-file_yoff))
 	yout = (file_height-file_yoff);
 
     /* Only in the simplest case use multi-line writes */
-    if ( !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
-	 xout == file_width &&
-	 file_width <= scr_width )  {
+    if (!one_line_only
+	&& multiple_lines > 0
+	&& !inverse
+	&& !zoom
+	&& (size_t)xout == file_width
+	&& file_width <= (size_t)scr_width)
+    {
 	scanpix *= multiple_lines;
     }
 
     scanbytes = scanpix * sizeof(RGBpixel);
-    if ( (scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
+    if ((scanline = (unsigned char *)malloc(scanbytes)) == RGBPIXEL_NULL) {
 	fprintf(stderr,
 		"pix-fb:  malloc(%d) failure for scanline buffer\n",
 		scanbytes);
 	bu_exit(2, NULL);
     }
 
-    if ( clear )  {
-	fb_clear( fbp, PIXEL_NULL );
+    if (clear) {
+	fb_clear(fbp, PIXEL_NULL);
     }
-    if ( zoom ) {
+    if (zoom) {
 	/* Zoom in, and center the display.  Use square zoom. */
-	int	zoom;
-	zoom = scr_width/xout;
-	if ( scr_height/yout < zoom )  zoom = scr_height/yout;
-	if ( inverse )  {
-	    fb_view( fbp,
-		     scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
-		     zoom, zoom );
+	int zoomit;
+	zoomit = scr_width/xout;
+	if (scr_height/yout < zoomit) zoomit = scr_height/yout;
+	if (inverse) {
+	    fb_view(fbp,
+		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
+		    zoomit, zoomit);
 	} else {
-	    fb_view( fbp,
-		     scr_xoff+xout/2, scr_yoff+yout/2,
-		     zoom, zoom );
+	    fb_view(fbp,
+		    scr_xoff+xout/2, scr_yoff+yout/2,
+		    zoomit, zoomit);
 	}
     }
 
-    if ( file_yoff != 0 ) skipbytes( infd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel) );
+    if (file_yoff != 0) skipbytes(infd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel));
 
-    if ( multiple_lines )  {
+    if (multiple_lines) {
 	/* Bottom to top with multi-line reads & writes */
-	int	height;
-	for ( y = scr_yoff; y < scr_yoff + yout; y += multiple_lines )  {
-	    n = bu_mread( infd, (char *)scanline, scanbytes );
-	    if ( n <= 0 ) break;
+	unsigned long height;
+	for (y = scr_yoff; y < scr_yoff + yout; y += multiple_lines) {
+	    n = bu_mread(infd, (char *)scanline, scanbytes);
+	    if (n <= 0) break;
 	    height = multiple_lines;
-	    if ( n != scanbytes )  {
+	    if (n != scanbytes) {
 		height = (n/sizeof(RGBpixel)+xout-1)/xout;
-		if ( height <= 0 )  break;
+		if (height <= 0) break;
 	    }
 	    /* Don't over-write */
-	    if ( y + height > scr_yoff + yout )
+	    if ((size_t)(y + height) > (size_t)(scr_yoff + yout))
 		height = scr_yoff + yout - y;
-	    if ( height <= 0 )  break;
-	    m = fb_writerect( fbp, scr_xoff, y,
-			      file_width, height,
-			      scanline );
-	    if ( m != file_width*height )  {
+	    if (height <= 0) break;
+	    m = fb_writerect(fbp, scr_xoff, y,
+			     file_width, height,
+			     scanline);
+	    if ((size_t)m != file_width*height) {
 		fprintf(stderr,
-			"pix-fb: fb_writerect(x=%d, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
+			"pix-fb: fb_writerect(x=%d, y=%d, w=%lu, h=%lu) failure, ret=%d, s/b=%d\n",
 			scr_xoff, y,
-			file_width, height, m, scanbytes );
+			(unsigned long)file_width, height, m, scanbytes);
 	    }
 	}
-    } else if ( !inverse )  {
+    } else if (!inverse) {
 	/* Normal way -- bottom to top */
-	for ( y = scr_yoff; y < scr_yoff + yout; y++ )  {
-	    if ( y < 0 || y > scr_height )
-	    {
-		skipbytes( infd, (off_t)file_width*sizeof(RGBpixel) );
+	for (y = scr_yoff; y < scr_yoff + yout; y++) {
+	    if (y < 0 || y > scr_height) {
+		skipbytes(infd, (off_t)file_width*sizeof(RGBpixel));
 		continue;
 	    }
-	    if ( file_xoff+xskip != 0 )
-		skipbytes( infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel) );
-	    n = bu_mread( infd, (char *)scanline, scanbytes );
-	    if ( n <= 0 ) break;
-	    m = fb_write( fbp, xstart, y, scanline, xout );
-	    if ( m != xout )  {
+	    if (file_xoff+xskip != 0)
+		skipbytes(infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel));
+	    n = bu_mread(infd, (char *)scanline, scanbytes);
+	    if (n <= 0) break;
+	    m = fb_write(fbp, xstart, y, scanline, xout);
+	    if (m != xout) {
 		fprintf(stderr,
 			"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
 			scr_xoff, y, xout,
-			m, xout );
+			m, xout);
 	    }
 	    /* slop at the end of the line? */
-	    if ( file_xoff+xskip+scanpix < file_width )
-		skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
+	    if ((size_t)file_xoff+xskip+scanpix < file_width)
+		skipbytes(infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
 	}
-    }  else  {
+    } else {
 	/* Inverse -- top to bottom */
-	for ( y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y-- )  {
-	    if ( y < 0 || y >= scr_height )
-	    {
-		skipbytes( infd, (off_t)file_width*sizeof(RGBpixel) );
+	for (y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y--) {
+	    if (y < 0 || y >= scr_height) {
+		skipbytes(infd, (off_t)file_width*sizeof(RGBpixel));
 		continue;
 	    }
-	    if ( file_xoff+xskip != 0 )
-		skipbytes( infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel) );
-	    n = bu_mread( infd, (char *)scanline, scanbytes );
-	    if ( n <= 0 ) break;
-	    m = fb_write( fbp, xstart, y, scanline, xout );
-	    if ( m != xout )  {
+	    if (file_xoff+xskip != 0)
+		skipbytes(infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel));
+	    n = bu_mread(infd, (char *)scanline, scanbytes);
+	    if (n <= 0) break;
+	    m = fb_write(fbp, xstart, y, scanline, xout);
+	    if (m != xout) {
 		fprintf(stderr,
 			"pix-fb: fb_write(x=%d, y=%d, npix=%d) ret=%d, s/b=%d\n",
 			scr_xoff, y, xout,
-			m, xout );
+			m, xout);
 	    }
 	    /* slop at the end of the line? */
-	    if ( file_xoff+xskip+scanpix < file_width )
-		skipbytes( infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel) );
+	    if ((size_t)file_xoff+xskip+scanpix < file_width)
+		skipbytes(infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
 	}
     }
     sleep(pause_sec);
-    if ( fb_close( fbp ) < 0 )  {
+    if (fb_close(fbp) < 0) {
 	fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
     }
 
-    bu_exit(0, NULL);
+    return 0;
 }
 
-/*
- * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
- */
-int
-skipbytes(int fd, off_t num)
-{
-    int	n, try;
-
-    if ( fileinput ) {
-	(void)lseek( fd, (off_t)num, 1 );
-	return 0;
-    }
-
-    while ( num > 0 ) {
-	try = num > scanbytes ? scanbytes : num;
-	n = read( fd, scanline, try );
-	if ( n <= 0 ) {
-	    return -1;
-	}
-	num -= n;
-    }
-    return	0;
-}
 
 /*
  * Local Variables:

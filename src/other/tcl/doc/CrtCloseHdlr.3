@@ -30,6 +30,7 @@ The procedure to call as the callback.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_CreateCloseHandler\fR arranges for \fIproc\fR to be called when
@@ -38,7 +39,7 @@ Arbitrary one-word value to pass to \fIproc\fR.
 \fIProc\fR should match the following prototype:
 .PP
 .CS
-typedef void \fBTcl_CloseProc\fR(
+typedef void Tcl_CloseProc(
         ClientData \fIclientData\fR);
 .CE
 .PP
@@ -50,7 +51,9 @@ The \fIproc\fR and \fIclientData\fR identify which close callback to
 remove; \fBTcl_DeleteCloseHandler\fR does nothing if its \fIproc\fR and
 \fIclientData\fR arguments do not match the \fIproc\fR and \fIclientData\fR
 for a  close handler for \fIchannel\fR.
+
 .SH "SEE ALSO"
 close(n), Tcl_Close(3), Tcl_UnregisterChannel(3)
+
 .SH KEYWORDS
 callback, channel closing

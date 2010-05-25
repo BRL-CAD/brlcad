@@ -21,20 +21,18 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${ITCL_CPPFLAGS} \
 	${TK_CPPFLAGS} \
-	${compat_cppflags}
+	${compat_cppflags} \
+	${NOWARN}
 
 libitkstub_la_SOURCES = itkStubLib.c
 libitkstub@ITCL_VERSION@_la_SOURCES = $(libitkstub_la_SOURCES)
 
 libitg_la_SOURCES = \
-	itkArchBase.c \
-	itkArchetype.c \
-	itkBase.c \
-	itkCmd.c \
-	itkHelpers.c \
-	itkOption.c \
 	itkStubInit.c \
-	itkUtil.c
+	itk_archetype.c \
+	itk_cmds.c \
+	itk_option.c \
+	itk_util.c
 
 include_HEADERS = \
 	itk.h \

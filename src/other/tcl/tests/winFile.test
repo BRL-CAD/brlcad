@@ -29,63 +29,65 @@ if {[testConstraint nt] && $::tcl_platform(osVersion) >= 5.0} {
     testConstraint win2000 1
 }
 
-test winFile-1.1 {TclpGetUserHome} -constraints {win} -body {
-    glob ~nosuchuser
-} -returnCodes error -result {user "nosuchuser" doesn't exist}
-test winFile-1.2 {TclpGetUserHome} -constraints {win nt nonPortable} -body {
+test winFile-1.1 {TclpGetUserHome} {win} {
+    list [catch {glob ~nosuchuser} msg] $msg
+} {1 {user "nosuchuser" doesn't exist}}
+test winFile-1.2 {TclpGetUserHome} {win nt nonPortable} {
     # The administrator account should always exist.
-    glob ~administrator
-} -match glob -result *
-test winFile-1.3 {TclpGetUserHome} -constraints {win 95} -body {
+
+    catch {glob ~administrator}
+} {0}
+test winFile-1.3 {TclpGetUserHome} {win 95} {
     # Find some user in system.ini and then see if they have a home.
 
     set f [open $::env(windir)/system.ini]
-    while {[gets $f line] >= 0} {
-	if {$line ne {[Password Lists]}} {
-	    continue
-	}
-	gets $f
-	set name [lindex [split [gets $f] =] 0]
-	if {$name ne ""} {
-	    return [catch {glob ~$name}]
+    set x 0
+    while {![eof $f]} {
+	set line [gets $f]
+	if {$line == "\[Password Lists]"} {
+	    gets $f
+	    set name [lindex [split [gets $f] =] 0]
+	    if {$name != ""} {
+		set x [catch {glob ~$name}]
+		break
+	    }
 	}
     }
-    return 0 ;# didn't find anything...
-} -cleanup {
-    catch {close $f}
-} -result {0}
+    close $f
+    set x
+} {0}
 test winFile-1.4 {TclpGetUserHome} {win nt nonPortable} {
     catch {glob ~stanton@workgroup}
 } {0}
 
-test winFile-2.1 {TclpMatchFiles: case sensitivity} -constraints {win} -body {
+test winFile-2.1 {TclpMatchFiles: case sensitivity} {win} {
     makeFile {} GlobCapS
-    list [glob -nocomplain GlobC*] [glob -nocomplain globc*]
-} -cleanup {
+    set result [list [glob -nocomplain GlobC*] [glob -nocomplain globc*]]
     removeFile GlobCapS
-} -result {GlobCapS GlobCapS}
-test winFile-2.2 {TclpMatchFiles: case sensitivity} -constraints {win} -body {
+    set result
+} {GlobCapS GlobCapS}
+test winFile-2.2 {TclpMatchFiles: case sensitivity} {win} {
     makeFile {} globlower
-    list [glob -nocomplain globl*] [glob -nocomplain gLOBl*]
-} -cleanup {
+    set result [list [glob -nocomplain globl*] [glob -nocomplain gLOBl*]]
     removeFile globlower
-} -result {globlower globlower}
+    set result
+} {globlower globlower}
 
-test winFile-3.1 {file system} -constraints {win testvolumetype} -setup {
-    set res ""
-} -body {
+test winFile-3.1 {file system} {win testvolumetype} {
+    set res "volume types ok"
     foreach vol [file volumes] {
 	# Have to catch in case there is a removable drive (CDROM, floppy)
 	# with nothing in it.
 	catch {
-	    if {[lindex [file system $vol] 1] ne [testvolumetype $vol]} {
-		append res "For $vol, we found [file system $vol]\
-			and [testvolumetype $vol] are different\n"
+	    if {![string equal [lindex [file system $vol] 1] [testvolumetype $vol]]} {
+		set res "For $vol, we found [file system $vol]\
+		  and [testvolumetype $vol] are different"
+		break
 	    }
 	}
     }
     set res
-} -result {}
+} {volume types ok}
 
 proc cacls {fname args} {
     string trim [eval [list exec cacls [file nativename $fname]] $args <<y]
@@ -105,7 +107,7 @@ proc getuser {fname} {
     }
     set owner ""
     set tail [file tail $tryname]
-    if {[info exists env(OSTYPE)] && $env(OSTYPE) eq "msys"} {
+    if {[info exists env(OSTYPE)] && [string equal $env(OSTYPE) "msys"]} {
         set dirtext [exec ls -l $fname]
         foreach line [split $dirtext "\n"] {
             set owner [lindex $line 2]
@@ -114,20 +116,21 @@ proc getuser {fname} {
         set dirtext [exec cmd /c dir /q [file nativename $fname]]
         foreach line [split $dirtext "\n"] {
             if {[string match -nocase "*$tail" $line]} {
-                set attrs [string range $line 0 end-[string length $tail]]
+                set attrs [string range $line \
+                               0 end-[string length $tail]]
                 regexp { [^ \\]+\\.*$} $attrs owner
                 set owner [string trim $owner]
             }
         }
     }
-    if {$owner eq ""} {
+    if {[string length $owner] == 0} {
 	error "getuser: Owner not found in output of dir/q"
     }
     return $owner
 }
 
 proc test_read {fname} {
-    if {[catch {open $fname r} ifs]} {
+    if {[catch {set ifs [open $fname r]}]} {
 	return 0
     }
     set readfailed [catch {read $ifs}]
@@ -135,7 +138,7 @@ proc test_read {fname} {
 }
 
 proc test_writ {fname} {
-    if {[catch {open $fname w} ofs]} {
+    if {[catch {set ofs [open $fname w]}]} {
 	return 0
     }
     set writefailed [catch {puts $ofs "Hello"}]
@@ -152,10 +155,11 @@ proc test_access {fname read writ} {
 	    lappend problem "[set $type] != \[test_${type} $fname\]"
 	}
     }
-    if {![llength $problem]} {
-	return
+    if {[llength $problem]} {
+	return "Problem [join $problem \n]\nActual rights are: [cacls $fname]"
+    } else {
+	return ""
     }
-    return "Problem [join $problem \n]\nActual rights are: [cacls $fname]"
 }
 
 if {[testConstraint win]} {

@@ -1,7 +1,6 @@
 '\"
 '\" Copyright (c) 1994 The Regents of the University of California.
 '\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
-'\" Copyright (c) 2008 Pat Thoyts
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -93,11 +92,6 @@ In nonblocking mode \fBputs\fR, \fBread\fR, and \fBgets\fR never block.
 See the documentation for the individual commands for information
 on how they handle blocking and nonblocking channels.
 .PP
-Testing for the end of file condition should be done after any attempts
-read the channel data. The eof flag is set once an attempt to read the
-end of data has occurred and testing before this read will require an
-additional event to be fired.
-.PP
 The script for a file event is executed at global level (outside the
 context of any Tcl procedure) in the interpreter in which the
 \fBfileevent\fR command was invoked.
@@ -107,49 +101,26 @@ In addition, the file event handler is deleted if it ever returns
 an error;  this is done in order to prevent infinite loops due to
 buggy handlers.
 .SH EXAMPLE
-.PP
 In this setup \fBGetData\fR will be called with the channel as an
-argument whenever $chan becomes readable. The \fBread\fR call will
-read whatever binary data is currently available without blocking.
-Here the channel has the fileevent removed when an end of file 
-occurs to avoid being continually called (see above). Alternatively
-the channel may be closed on this condition.
-.PP
+argument whenever $chan becomes readable.
 .CS
 proc GetData {chan} {
-    set data [read $chan]
-    puts "[string length $data] $data"
-    if {[eof $chan]} {
-        fileevent $chan readable {}
+    if {![eof $chan]} {
+        puts [gets $chan]
     }
 }
 
-fconfigure $chan -blocking 0 -encoding binary
-fileevent $chan readable [list GetData $chan]
+\fBfileevent\fR $chan readable [list GetData $chan]
 .CE
-.PP
-The next example demonstrates use of \fBgets\fR to read line-oriented
-data.
-.PP
-.CS
-proc GetData {chan} {
-    if {[gets $chan line] >= 0} {
-        puts $line
-    }
-    if {[eof $chan]} {
-        close $chan
-    }
-}
 
-fconfigure $chan -blocking 0 -buffering line -translation crlf
-fileevent $chan readable [list GetData $chan]
-.CE
 .SH CREDITS
 .PP
 \fBfileevent\fR is based on the \fBaddinput\fR command created
 by Mark Diekhans.
+
 .SH "SEE ALSO"
 fconfigure(n), gets(n), interp(n), puts(n), read(n), Tcl_StandardChannels(3)
+
 .SH KEYWORDS
 asynchronous I/O, blocking, channel, event handler, nonblocking, readable,
 script, writable.

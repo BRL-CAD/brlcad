@@ -22,6 +22,7 @@ pack-old \- Obsolete syntax for packer geometry manager
 .sp
 \fBpack unpack \fIwindow\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 \fINote: this manual entry describes the syntax for the \fBpack\fI
@@ -190,8 +191,6 @@ The packer makes geometry requests on behalf of the parent windows
 it manages.  For each parent window it requests a size large enough
 to accommodate all the options specified by all the packed children,
 such that zero space would be leftover for \fBexpand\fR options.
+
 .SH KEYWORDS
 geometry manager, location, packer, parcel, size
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

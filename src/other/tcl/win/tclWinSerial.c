@@ -16,6 +16,8 @@
 
 #include "tclWinInt.h"
 
+#include <fcntl.h>
+#include <io.h>
 #include <sys/stat.h>
 
 /*
@@ -177,16 +179,16 @@ static ThreadSpecificData *SerialInit(void);
 static int		SerialInputProc(ClientData instanceData, char *buf,
 			    int toRead, int *errorCode);
 static int		SerialOutputProc(ClientData instanceData,
-			    const char *buf, int toWrite, int *errorCode);
+			    CONST char *buf, int toWrite, int *errorCode);
 static void		SerialSetupProc(ClientData clientData, int flags);
 static void		SerialWatchProc(ClientData instanceData, int mask);
 static void		ProcExitHandler(ClientData clientData);
 static int		SerialGetOptionProc(ClientData instanceData,
-			    Tcl_Interp *interp, const char *optionName,
+			    Tcl_Interp *interp, CONST char *optionName,
 			    Tcl_DString *dsPtr);
 static int		SerialSetOptionProc(ClientData instanceData,
-			    Tcl_Interp *interp, const char *optionName,
-			    const char *value);
+			    Tcl_Interp *interp, CONST char *optionName,
+			    CONST char *value);
 static DWORD WINAPI	SerialWriterThread(LPVOID arg);
 static void		SerialThreadActionProc(ClientData instanceData,
 			    int action);
@@ -201,7 +203,7 @@ static int		SerialBlockingWrite(SerialInfo *infoPtr, LPVOID buf,
  * based IO.
  */
 
-static const Tcl_ChannelType serialChannelType = {
+static Tcl_ChannelType serialChannelType = {
     "serial",			/* Type name. */
     TCL_CHANNEL_VERSION_5,	/* v5 channel */
     SerialCloseProc,		/* Close proc. */
@@ -218,7 +220,7 @@ static const Tcl_ChannelType serialChannelType = {
     NULL,			/* handler proc. */
     NULL,			/* wide seek proc */
     SerialThreadActionProc,	/* thread action proc */
-    NULL                       /* truncate */
+    NULL,                       /* truncate */
 };
 
 /*
@@ -1000,7 +1002,7 @@ SerialInputProc(
 static int
 SerialOutputProc(
     ClientData instanceData,	/* Serial state. */
-    const char *buf,		/* The data buffer. */
+    CONST char *buf,		/* The data buffer. */
     int toWrite,		/* How many bytes to write? */
     int *errorCode)		/* Where to store error code. */
 {
@@ -1432,7 +1434,7 @@ SerialWriterThread(
 HANDLE
 TclWinSerialReopen(
     HANDLE handle,
-    const TCHAR *name,
+    CONST TCHAR *name,
     DWORD access)
 {
     ThreadSpecificData *tsdPtr;
@@ -1448,8 +1450,8 @@ TclWinSerialReopen(
     if (CloseHandle(handle) == FALSE) {
 	return INVALID_HANDLE_VALUE;
     }
-    handle = tclWinProcs->createFileProc(name, access, 0, 0, OPEN_EXISTING,
-	    FILE_FLAG_OVERLAPPED, 0);
+    handle = (*tclWinProcs->createFileProc)(name, access, 0, 0,
+	    OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
     return handle;
 }
 
@@ -1649,17 +1651,17 @@ static int
 SerialSetOptionProc(
     ClientData instanceData,	/* File state. */
     Tcl_Interp *interp,		/* For error reporting - can be NULL. */
-    const char *optionName,	/* Which option to set? */
-    const char *value)		/* New value for option. */
+    CONST char *optionName,	/* Which option to set? */
+    CONST char *value)		/* New value for option. */
 {
     SerialInfo *infoPtr;
     DCB dcb;
     BOOL result, flag;
     size_t len, vlen;
     Tcl_DString ds;
-    const TCHAR *native;
+    CONST TCHAR *native;
     int argc;
-    const char **argv;
+    CONST char **argv;
 
     infoPtr = (SerialInfo *) instanceData;
 
@@ -1683,7 +1685,7 @@ SerialSetOptionProc(
 	    return TCL_ERROR;
 	}
 	native = Tcl_WinUtfToTChar(value, -1, &ds);
-	result = tclWinProcs->buildCommDCBProc(native, &dcb);
+	result = (*tclWinProcs->buildCommDCBProc)(native, &dcb);
 	Tcl_DStringFree(&ds);
 
 	if (result == FALSE) {
@@ -1742,16 +1744,16 @@ SerialSetOptionProc(
 	dcb.XonLim = (WORD) (infoPtr->sysBufRead*1/2);
 	dcb.XoffLim = (WORD) (infoPtr->sysBufRead*1/4);
 
-	if (strncasecmp(value, "NONE", vlen) == 0) {
+	if (strnicmp(value, "NONE", vlen) == 0) {
 	    /*
 	     * Leave all handshake options disabled.
 	     */
-	} else if (strncasecmp(value, "XONXOFF", vlen) == 0) {
+	} else if (strnicmp(value, "XONXOFF", vlen) == 0) {
 	    dcb.fOutX = dcb.fInX = TRUE;
-	} else if (strncasecmp(value, "RTSCTS", vlen) == 0) {
+	} else if (strnicmp(value, "RTSCTS", vlen) == 0) {
 	    dcb.fOutxCtsFlow = TRUE;
 	    dcb.fRtsControl = RTS_CONTROL_HANDSHAKE;
-	} else if (strncasecmp(value, "DTRDSR", vlen) == 0) {
+	} else if (strnicmp(value, "DTRDSR", vlen) == 0) {
 	    dcb.fOutxDsrFlow = TRUE;
 	    dcb.fDtrControl = DTR_CONTROL_HANDSHAKE;
 	} else {
@@ -1861,7 +1863,7 @@ SerialSetOptionProc(
 		result = TCL_ERROR;
 		break;
 	    }
-	    if (strncasecmp(argv[i], "DTR", strlen(argv[i])) == 0) {
+	    if (strnicmp(argv[i], "DTR", strlen(argv[i])) == 0) {
 		if (!EscapeCommFunction(infoPtr->handle,
 			(DWORD) (flag ? SETDTR : CLRDTR))) {
 		    if (interp != NULL) {
@@ -1870,7 +1872,7 @@ SerialSetOptionProc(
 		    result = TCL_ERROR;
 		    break;
 		}
-	    } else if (strncasecmp(argv[i], "RTS", strlen(argv[i])) == 0) {
+	    } else if (strnicmp(argv[i], "RTS", strlen(argv[i])) == 0) {
 		if (!EscapeCommFunction(infoPtr->handle,
 			(DWORD) (flag ? SETRTS : CLRRTS))) {
 		    if (interp != NULL) {
@@ -1879,7 +1881,7 @@ SerialSetOptionProc(
 		    result = TCL_ERROR;
 		    break;
 		}
-	    } else if (strncasecmp(argv[i], "BREAK", strlen(argv[i])) == 0) {
+	    } else if (strnicmp(argv[i], "BREAK", strlen(argv[i])) == 0) {
 		if (!EscapeCommFunction(infoPtr->handle,
 			(DWORD) (flag ? SETBREAK : CLRBREAK))) {
 		    if (interp != NULL) {
@@ -2029,7 +2031,7 @@ static int
 SerialGetOptionProc(
     ClientData instanceData,	/* File state. */
     Tcl_Interp *interp,		/* For error reporting - can be NULL. */
-    const char *optionName,	/* Option to get. */
+    CONST char *optionName,	/* Option to get. */
     Tcl_DString *dsPtr)		/* Where to store value(s). */
 {
     SerialInfo *infoPtr;
@@ -2054,7 +2056,7 @@ SerialGetOptionProc(
     }
     if (len==0 || (len>2 && (strncmp(optionName, "-mode", len) == 0))) {
 	char parity;
-	const char *stop;
+	char *stop;
 	char buf[2 * TCL_INTEGER_SPACE + 16];
 
 	if (!GetCommState(infoPtr->handle, &dcb)) {

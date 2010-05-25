@@ -174,10 +174,10 @@ _bu_file_access(const char *path, int access_level)
     gid = getegid();
 #endif
 
-    if (sb.st_uid == uid) {
+    if ((uid_t)sb.st_uid == uid) {
 	/* we own it */
 	return sb.st_mode & (mask & usr_mask);
-    } else if (sb.st_gid == gid) {
+    } else if ((gid_t)sb.st_gid == gid) {
 	/* our primary group */
 	return sb.st_mode & (mask & grp_mask);
     }

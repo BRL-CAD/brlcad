@@ -42,7 +42,7 @@ typedef struct {
  */
 
 static struct CursorName {
-    const char *name;
+    char *name;
     LPCTSTR id;
 } cursorNames[] = {
     {"starting",		IDC_APPSTARTING},
@@ -75,7 +75,7 @@ static struct CursorName {
 
 #define TK_DEFAULT_CURSOR	IDC_ARROW
 
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -102,7 +102,7 @@ TkGetCursorByName(
     struct CursorName *namePtr;
     TkWinCursor *cursorPtr;
     int argc;
-    const char **argv = NULL;
+    CONST char **argv = NULL;
 
     /*
      * All cursor names are valid lists of one element (for
@@ -175,7 +175,7 @@ TkGetCursorByName(
 	return (TkCursor *) cursorPtr;
     }
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -195,8 +195,8 @@ TkGetCursorByName(
 TkCursor *
 TkCreateCursorFromData(
     Tk_Window tkwin,		/* Window in which cursor will be used. */
-    const char *source,		/* Bitmap data for cursor shape. */
-    const char *mask,		/* Bitmap data for cursor mask. */
+    CONST char *source,		/* Bitmap data for cursor shape. */
+    CONST char *mask,		/* Bitmap data for cursor mask. */
     int width, int height,	/* Dimensions of cursor. */
     int xHot, int yHot,		/* Location of hot-spot in cursor. */
     XColor fgColor,		/* Foreground color for cursor. */
@@ -204,7 +204,7 @@ TkCreateCursorFromData(
 {
     return NULL;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -228,7 +228,7 @@ TkpFreeCursor(
 {
     /* TkWinCursor *winCursorPtr = (TkWinCursor *) cursorPtr; */
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -263,7 +263,7 @@ TkpSetCursor(
 	SetCursor(hcursor);
     }
 }
-
+
 /*
  * Local Variables:
  * mode: c

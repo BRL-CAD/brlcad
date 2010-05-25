@@ -90,7 +90,7 @@
 #  define CFG_PROFILED		"0"
 #endif
 
-static Tcl_Config const cfg[] = {
+static Tcl_Config cfg[] = {
     {"debug",			CFG_DEBUG},
     {"threaded",		CFG_THREADED},
     {"profiled",		CFG_PROFILED},

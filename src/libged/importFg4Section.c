@@ -438,7 +438,6 @@ make_bot_object(const char	*name,
     int num_vertices;
     struct bu_bitv *bv=NULL;
     int bot_mode;
-    int element_id=bot;
     int count;
     struct rt_bot_internal bot_ip;
 

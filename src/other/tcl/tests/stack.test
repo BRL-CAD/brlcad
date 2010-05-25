@@ -16,25 +16,59 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
-# Note that a failure in this test may result in a crash of the executable.
+# Note that a failure in this test results in a crash of the executable.
+# In order to avoid that, we do a basic check of the current stacksize.
+# This size can be changed with ulimit (ksh/bash/sh) or limit (csh/tcsh).
 
-test stack-1.1 {maxNestingDepth reached on infinite recursion} -body {
+# This doesn't catch all cases, for example threads of lower stacksize
+# can still squeak through.  A core check is really needed. -- JH
+
+testConstraint minStack2400 1
+if {[testConstraint unix]} {
+    set stackSize [exec /bin/sh -c "ulimit -s"]
+    if {[string is integer $stackSize] && ($stackSize < 2400)} {
+        puts stderr "WARNING: the default application stacksize of $stackSize\
+                may cause Tcl to\ncrash due to stack overflow before the\
+                recursion limit is reached.\nA minimum stacksize of 2400\
+                kbytes is recommended.\nSkipping infinite recursion test."
+        testConstraint minStack2400 0
+    }
+}
+
+#
+# Custom match to detect a stack overflow independently of the mechanism that
+# triggered the error.
+#
+
+customMatch stackOverflow StackOverflow
+proc StackOverflow {- res} {
+    set msgList [list \
+            "too many nested evaluations (infinite loop?)"\
+	    "out of stack space (infinite loop?)"]
+    expr {$res in $msgList}
+}
+
+test stack-1.1 {maxNestingDepth reached on infinite recursion} -constraints {
+    minStack2400
+} -body {
     # do this in a sub process in case it segfaults
     exec [interpreter] << {
 	proc recurse {} { recurse }
 	catch { recurse } rv
 	puts $rv
     }
-} -result {too many nested evaluations (infinite loop?)}
+} -match stackOverflow
 
-test stack-2.1 {maxNestingDepth reached on infinite recursion} -body {
+test stack-2.1 {maxNestingDepth reached on infinite recursion} -constraints {
+    minStack2400
+} -body {
     # do this in a sub process in case it segfaults
     exec [interpreter] << {
 	interp alias {} unknown {} notaknownproc
 	catch { unknown } msg
 	puts $msg
     }
-} -result {too many nested evaluations (infinite loop?)}
+} -match stackOverflow 
     
 # Make sure that there is enough stack to run regexp even if we're
 # close to the recursion limit. [Bug 947070] [Patch 746378]

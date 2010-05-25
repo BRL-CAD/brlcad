@@ -173,15 +173,15 @@ static void		MessageCmdDeletedProc(ClientData clientData);
 static void		MessageEventProc(ClientData clientData,
 			    XEvent *eventPtr);
 static char *		MessageTextVarProc(ClientData clientData,
-			    Tcl_Interp *interp, const char *name1,
-			    const char *name2, int flags);
+			    Tcl_Interp *interp, CONST char *name1,
+			    CONST char *name2, int flags);
 static int		MessageWidgetObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static void		MessageWorldChanged(ClientData instanceData);
 static void		ComputeMessageGeometry(Message *msgPtr);
 static int		ConfigureMessage(Tcl_Interp *interp, Message *msgPtr,
-			    int objc, Tcl_Obj *const objv[], int flags);
+			    int objc, Tcl_Obj *CONST objv[], int flags);
 static void		DestroyMessage(char *memPtr);
 static void		DisplayMessage(ClientData clientData);
 
@@ -190,11 +190,9 @@ static void		DisplayMessage(ClientData clientData);
  * that can be invoked from generic window code.
  */
 
-static const Tk_ClassProcs messageClass = {
+static Tk_ClassProcs messageClass = {
     sizeof(Tk_ClassProcs),	/* size */
     MessageWorldChanged,	/* worldChangedProc */
-    NULL,					/* createProc */
-    NULL					/* modalProc */
 };
 
 /*
@@ -219,14 +217,14 @@ Tk_MessageObjCmd(
     ClientData clientData,	/* NULL. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument strings. */
+    Tcl_Obj *CONST objv[])	/* Argument strings. */
 {
     register Message *msgPtr;
     Tk_OptionTable optionTable;
     Tk_Window tkwin;
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?options?");
 	return TCL_ERROR;
     }
 
@@ -254,8 +252,8 @@ Tk_MessageObjCmd(
     msgPtr->display = Tk_Display(tkwin);
     msgPtr->interp = interp;
     msgPtr->widgetCmd = Tcl_CreateObjCommand(interp,
-	    Tk_PathName(msgPtr->tkwin), MessageWidgetObjCmd, msgPtr,
-	    MessageCmdDeletedProc);
+	    Tk_PathName(msgPtr->tkwin), MessageWidgetObjCmd,
+	    (ClientData) msgPtr, MessageCmdDeletedProc);
     msgPtr->optionTable = optionTable;
     msgPtr->relief = TK_RELIEF_FLAT;
     msgPtr->textGC = None;
@@ -265,10 +263,10 @@ Tk_MessageObjCmd(
     msgPtr->cursor = None;
 
     Tk_SetClass(msgPtr->tkwin, "Message");
-    Tk_SetClassProcs(msgPtr->tkwin, &messageClass, msgPtr);
+    Tk_SetClassProcs(msgPtr->tkwin, &messageClass, (ClientData) msgPtr);
     Tk_CreateEventHandler(msgPtr->tkwin,
 	    ExposureMask|StructureNotifyMask|FocusChangeMask,
-	    MessageEventProc, msgPtr);
+	    MessageEventProc, (ClientData) msgPtr);
     if (Tk_InitOptions(interp, (char *)msgPtr, optionTable, tkwin) != TCL_OK) {
 	Tk_DestroyWindow(msgPtr->tkwin);
 	return TCL_ERROR;
@@ -306,17 +304,17 @@ MessageWidgetObjCmd(
     ClientData clientData,	/* Information about message widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument strings. */
+    Tcl_Obj *CONST objv[])	/* Argument strings. */
 {
-    register Message *msgPtr = clientData;
-    static const char *const optionStrings[] = { "cget", "configure", NULL };
+    register Message *msgPtr = (Message *) clientData;
+    static CONST char *optionStrings[] = { "cget", "configure", NULL };
     enum options { MESSAGE_CGET, MESSAGE_CONFIGURE };
     int index;
     int result = TCL_OK;
     Tcl_Obj *objPtr;
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
 
@@ -325,7 +323,7 @@ MessageWidgetObjCmd(
 	return TCL_ERROR;
     }
 
-    Tcl_Preserve(msgPtr);
+    Tcl_Preserve((ClientData) msgPtr);
 
     switch ((enum options) index) {
     case MESSAGE_CGET:
@@ -360,7 +358,7 @@ MessageWidgetObjCmd(
 	break;
     }
 
-    Tcl_Release(msgPtr);
+    Tcl_Release((ClientData) msgPtr);
     return result;
 }
 
@@ -392,7 +390,7 @@ DestroyMessage(
 
     Tcl_DeleteCommandFromToken(msgPtr->interp, msgPtr->widgetCmd);
     if (msgPtr->flags & REDRAW_PENDING) {
-	Tcl_CancelIdleCall(DisplayMessage, msgPtr);
+	Tcl_CancelIdleCall(DisplayMessage, (ClientData) msgPtr);
     }
 
     /*
@@ -409,7 +407,7 @@ DestroyMessage(
     if (msgPtr->textVarName != NULL) {
 	Tcl_UntraceVar(msgPtr->interp, msgPtr->textVarName,
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		MessageTextVarProc, msgPtr);
+		MessageTextVarProc, (ClientData) msgPtr);
     }
     Tk_FreeConfigOptions((char *) msgPtr, msgPtr->optionTable, msgPtr->tkwin);
     msgPtr->tkwin = NULL;
@@ -442,7 +440,7 @@ ConfigureMessage(
     register Message *msgPtr,	/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in argv. */
-    Tcl_Obj *const objv[],	/* Arguments. */
+    Tcl_Obj *CONST objv[],	/* Arguments. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget. */
 {
     Tk_SavedOptions savedOptions;
@@ -454,7 +452,7 @@ ConfigureMessage(
     if (msgPtr->textVarName != NULL) {
 	Tcl_UntraceVar(interp, msgPtr->textVarName,
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		MessageTextVarProc, msgPtr);
+		MessageTextVarProc, (ClientData) msgPtr);
     }
 
     if (Tk_SetOptions(interp, (char *) msgPtr, msgPtr->optionTable, objc, objv,
@@ -470,7 +468,7 @@ ConfigureMessage(
      */
 
     if (msgPtr->textVarName != NULL) {
-	const char *value;
+	CONST char *value;
 
 	value = Tcl_GetVar(interp, msgPtr->textVarName, TCL_GLOBAL_ONLY);
 	if (value == NULL) {
@@ -484,7 +482,7 @@ ConfigureMessage(
 	}
 	Tcl_TraceVar(interp, msgPtr->textVarName,
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		MessageTextVarProc, msgPtr);
+		MessageTextVarProc, (ClientData) msgPtr);
     }
 
     /*
@@ -500,7 +498,7 @@ ConfigureMessage(
     }
 
     Tk_FreeSavedOptions(&savedOptions);
-    MessageWorldChanged(msgPtr);
+    MessageWorldChanged((ClientData) msgPtr);
     return TCL_OK;
 }
 
@@ -529,7 +527,9 @@ MessageWorldChanged(
     XGCValues gcValues;
     GC gc = None;
     Tk_FontMetrics fm;
-    Message *msgPtr = instanceData;
+    Message *msgPtr;
+
+    msgPtr = (Message *) instanceData;
 
     if (msgPtr->border != NULL) {
 	Tk_SetBackgroundFromBorder(msgPtr->tkwin, msgPtr->border);
@@ -559,7 +559,7 @@ MessageWorldChanged(
     ComputeMessageGeometry(msgPtr);
     if ((msgPtr->tkwin != NULL) && Tk_IsMapped(msgPtr->tkwin)
 	    && !(msgPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayMessage, msgPtr);
+	Tcl_DoWhenIdle(DisplayMessage, (ClientData) msgPtr);
 	msgPtr->flags |= REDRAW_PENDING;
     }
 }
@@ -668,7 +668,7 @@ static void
 DisplayMessage(
     ClientData clientData)	/* Information about window. */
 {
-    register Message *msgPtr = clientData;
+    register Message *msgPtr = (Message *) clientData;
     register Tk_Window tkwin = msgPtr->tkwin;
     int x, y;
     int borderWidth = msgPtr->highlightWidth;
@@ -744,13 +744,13 @@ MessageEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    Message *msgPtr = clientData;
+    Message *msgPtr = (Message *) clientData;
 
     if (((eventPtr->type == Expose) && (eventPtr->xexpose.count == 0))
 	    || (eventPtr->type == ConfigureNotify)) {
 	goto redraw;
     } else if (eventPtr->type == DestroyNotify) {
-	DestroyMessage(clientData);
+	DestroyMessage((char *) clientData);
     } else if (eventPtr->type == FocusIn) {
 	if (eventPtr->xfocus.detail != NotifyInferior) {
 	    msgPtr->flags |= GOT_FOCUS;
@@ -770,7 +770,7 @@ MessageEventProc(
 
   redraw:
     if ((msgPtr->tkwin != NULL) && !(msgPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayMessage, msgPtr);
+	Tcl_DoWhenIdle(DisplayMessage, (ClientData) msgPtr);
 	msgPtr->flags |= REDRAW_PENDING;
     }
 }
@@ -797,7 +797,7 @@ static void
 MessageCmdDeletedProc(
     ClientData clientData)	/* Pointer to widget record for widget. */
 {
-    Message *msgPtr = clientData;
+    Message *msgPtr = (Message *) clientData;
 
     /*
      * This function could be invoked either because the window was destroyed
@@ -833,12 +833,12 @@ static char *
 MessageTextVarProc(
     ClientData clientData,	/* Information about message. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    const char *name1,		/* Name of variable. */
-    const char *name2,		/* Second part of variable name. */
+    CONST char *name1,		/* Name of variable. */
+    CONST char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
-    register Message *msgPtr = clientData;
-    const char *value;
+    register Message *msgPtr = (Message *) clientData;
+    CONST char *value;
 
     /*
      * If the variable is unset, then immediately recreate it unless the whole
@@ -870,7 +870,7 @@ MessageTextVarProc(
 
     if ((msgPtr->tkwin != NULL) && Tk_IsMapped(msgPtr->tkwin)
 	    && !(msgPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayMessage, msgPtr);
+	Tcl_DoWhenIdle(DisplayMessage, (ClientData) msgPtr);
 	msgPtr->flags |= REDRAW_PENDING;
     }
     return NULL;

@@ -314,15 +314,19 @@ main(int argc, char *argv[])
     int c;
     int read_only_flag=0;
 
-    int parent_pipe[2];
+    int parent_pipe[2] = {0, 0};
     int use_pipe = 0;
     int run_in_foreground=1;
 
     Tcl_Channel chan;
-    fd_set read_set, exception_set;
     struct timeval timeout;
-    int result;
     FILE *out;
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+    fd_set read_set;
+    fd_set exception_set;
+    int result;
+#endif
 
     char *attach = (char *)NULL;
 
@@ -746,24 +750,41 @@ main(int argc, char *argv[])
 	} else {
 	    struct bu_vls vls;
 	    int status;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    const char *tkhtml_path = bu_brlcad_root("bin/Tkhtml3.0", 1);
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "lappend auto_path {%s}", tkhtml_path);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_trunc(&vls, 0);
+#else
+	    bu_vls_init(&vls);
+#endif
+
 
 #ifdef HAVE_SETPGID
 	    /* make this a process group leader */
 	    setpgid(0, 0);
 #endif
 
-	    bu_vls_init(&vls);
 	    if (old_mged_gui) {
 		bu_vls_strcpy(&vls, "gui");
 	    } else {
-		if (argv >= 1)
-		    bu_vls_printf(&vls, "set argv %s; source archer", argv[0]);
+		const char *archer = bu_brlcad_root("bin/archer", 1);
+
+		/* any remaining parameter should be the name of our
+		 * .g -- archer looks at the 'argv' global for a
+		 * database file name.
+		 */
+		if (argc >= 1)
+		    bu_vls_printf(&vls, "set argv %s; source %s", argv[0], archer);
 		else
-		    bu_vls_printf(&vls, "source archer");
+		    bu_vls_printf(&vls, "source %s", archer);
 	    }
 	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
+#ifdef HAVE_PIPE
 	    /* if we are going to run in the background, let the
 	     * parent process know that we are done initializing so
 	     * that it may exit.
@@ -771,6 +792,7 @@ main(int argc, char *argv[])
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
+#endif /* HAVE_PIPE */
 
 	    if (status != TCL_OK) {
 		if (use_pipe) {
@@ -941,7 +963,7 @@ main(int argc, char *argv[])
 	 */
 	refresh();
     }
-    return(0);
+    return 0;
 }
 
 
@@ -2035,7 +2057,7 @@ event_check(int non_blocking)
 	curr_dm_list = save_dm_list;
     }
 
-    return(non_blocking);
+    return non_blocking;
 }
 
 

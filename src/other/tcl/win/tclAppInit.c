@@ -19,8 +19,10 @@
 #include <locale.h>
 
 #ifdef TCL_TEST
+extern Tcl_PackageInitProc	Procbodytest_Init;
+extern Tcl_PackageInitProc	Procbodytest_SafeInit;
 extern Tcl_PackageInitProc	Tcltest_Init;
-extern Tcl_PackageInitProc	Tcltest_SafeInit;
+extern Tcl_PackageInitProc	TclObjTest_Init;
 #endif /* TCL_TEST */
 
 #if defined(__GNUC__)
@@ -59,7 +61,7 @@ main(
 #ifndef TCL_LOCAL_APPINIT
 #define TCL_LOCAL_APPINIT Tcl_AppInit
 #endif
-    extern int TCL_LOCAL_APPINIT(Tcl_Interp *interp);
+    extern int TCL_LOCAL_APPINIT _ANSI_ARGS_((Tcl_Interp *interp));
 
     /*
      * The following #if block allows you to change how Tcl finds the startup
@@ -68,7 +70,7 @@ main(
      */
 
 #ifdef TCL_LOCAL_MAIN_HOOK
-    extern int TCL_LOCAL_MAIN_HOOK(int *argc, char ***argv);
+    extern int TCL_LOCAL_MAIN_HOOK _ANSI_ARGS_((int *argc, char ***argv));
 #endif
 
     char *p;
@@ -79,7 +81,7 @@ main(
      */
 
 #if defined(__GNUC__)
-    setargv(&argc, &argv);
+    setargv( &argc, &argv );
 #endif
     setlocale(LC_ALL, "C");
 
@@ -134,6 +136,14 @@ Tcl_AppInit(
 	return TCL_ERROR;
     }
     Tcl_StaticPackage(interp, "Tcltest", Tcltest_Init, NULL);
+    if (TclObjTest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    if (Procbodytest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "procbodytest", Procbodytest_Init,
+	    Procbodytest_SafeInit);
 #endif /* TCL_TEST */
 
 #if defined(STATIC_BUILD) && TCL_USE_STATIC_PACKAGES

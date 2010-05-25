@@ -63,7 +63,7 @@ int parse_args(int ac, char **av, char *progname)
 	    default		: usage(progname); break;
 	}
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 void comp_stats(FILE *fd)
@@ -118,7 +118,7 @@ int main(int ac, char *av[])
 	/* open file of shorts */
 	if (freopen(av[arg_index], "r", stdin) == (FILE *)NULL) {
 	    perror(av[arg_index]);
-	    return(-1);
+	    return -1;
 	}
     } else if (isatty((int)fileno(stdin))) {
 	usage(progname);

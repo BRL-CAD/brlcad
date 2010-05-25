@@ -23,6 +23,9 @@ declare 3 generic {
 declare 33 generic {
 	Bool Togl_SwapInterval(const Togl *togl, int interval)
 }
+declare 48 generic {
+	int Togl_CopyContext(const Togl *from, const Togl *to, unsigned int mask)
+}
 
 # Query functions
 declare 4 generic {
@@ -48,6 +51,38 @@ declare 36 generic {
 }
 declare 37 generic {
 	Bool Togl_UpdatePending(const Togl *togl)
+}
+
+declare 40 generic {
+	Bool Togl_HasRGBA(const Togl *togl)
+}
+
+declare 41 generic {
+	Bool Togl_IsDoubleBuffered(const Togl *togl)
+}
+
+declare 42 generic {
+	Bool Togl_HasDepthBuffer(const Togl *togl)
+}
+
+declare 43 generic {
+	Bool Togl_HasAccumulationBuffer(const Togl *togl)
+}
+
+declare 44 generic {
+	Bool Togl_HasDestinationAlpha(const Togl *togl)
+}
+
+declare 45 generic {
+	Bool Togl_HasStencilBuffer(const Togl *togl)
+}
+
+declare 46 generic {
+	int Togl_StereoMode(const Togl *togl)
+}
+
+declare 47 generic {
+	Bool Togl_HasMultisample(const Togl *togl)
 }
 
 # Color Index mode

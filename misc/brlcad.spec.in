@@ -18,7 +18,6 @@
 # information.
 #
 ###
-# $Id$
 
 Summary: @PACKAGE_NAME@
 Name: @PACKAGE_NAME@

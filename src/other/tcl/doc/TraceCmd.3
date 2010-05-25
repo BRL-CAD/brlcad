@@ -64,16 +64,14 @@ Invoke \fIproc\fR when the command is deleted.
 Whenever one of the specified operations occurs to the command,
 \fIproc\fR will be invoked.  It should have arguments and result that
 match the type \fBTcl_CommandTraceProc\fR:
-.PP
 .CS
-typedef void \fBTcl_CommandTraceProc\fR(
+typedef void Tcl_CommandTraceProc(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         const char *\fIoldName\fR,
         const char *\fInewName\fR,
         int \fIflags\fR);
 .CE
-.PP
 The \fIclientData\fR and \fIinterp\fR parameters will have the same
 values as those passed to \fBTcl_TraceCommand\fR when the trace was
 created.  \fIClientData\fR typically points to an application-specific

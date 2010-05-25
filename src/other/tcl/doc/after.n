@@ -26,6 +26,7 @@ after \- Execute a command after a time delay
 .sp
 \fBafter info \fR?\fIid\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command is used to delay execution of the program or to execute
@@ -33,14 +34,12 @@ a command in background sometime in the future.  It has several forms,
 depending on the first argument to the command:
 .TP
 \fBafter \fIms\fR
-.
 \fIMs\fR must be an integer giving a time in milliseconds.
 The command sleeps for \fIms\fR milliseconds and then returns.
 While the command is sleeping the application does not respond to
 events.
 .TP
 \fBafter \fIms \fR?\fIscript script script ...\fR?
-.
 In this form the command returns immediately, but it arranges
 for a Tcl command to be executed \fIms\fR milliseconds later as an
 event handler.
@@ -56,7 +55,6 @@ The \fBafter\fR command returns an identifier that can be used
 to cancel the delayed command using \fBafter cancel\fR.
 .TP
 \fBafter cancel \fIid\fR
-.
 Cancels the execution of a delayed command that
 was previously scheduled.
 \fIId\fR indicates which command should be canceled;  it must have
@@ -65,16 +63,14 @@ If the command given by \fIid\fR has already been executed then
 the \fBafter cancel\fR command has no effect.
 .TP
 \fBafter cancel \fIscript script ...\fR
-.
 This command also cancels the execution of a delayed command.
 The \fIscript\fR arguments are concatenated together with space
 separators (just as in the \fBconcat\fR command).
 If there is a pending command that matches the string, it is
-canceled and will never be executed;  if no such command is
+cancelled and will never be executed;  if no such command is
 currently pending then the \fBafter cancel\fR command has no effect.
 .TP
 \fBafter idle \fIscript \fR?\fIscript script ...\fR?
-.
 Concatenates the \fIscript\fR arguments together with space
 separators (just as in the \fBconcat\fR command), and arranges
 for the resulting script to be evaluated later as an idle callback.
@@ -87,7 +83,6 @@ background error will be reported by the command
 registered with \fB interp bgerror\fR.
 .TP
 \fBafter info \fR?\fIid\fR?
-.
 This command returns information about existing event handlers.
 If no \fIid\fR argument is supplied, the command returns
 a list of the identifiers for all existing
@@ -95,7 +90,7 @@ event handlers created by the \fBafter\fR command for this
 interpreter.
 If \fIid\fR is supplied, it specifies an existing handler;
 \fIid\fR must have been the return value from some previous call
-to \fBafter\fR and it must not have triggered yet or been canceled.
+to \fBafter\fR and it must not have triggered yet or been cancelled.
 In this case the command returns a list with two elements.
 The first element of the list is the script associated
 with \fIid\fR, and the second element is either
@@ -111,7 +106,6 @@ and \fBupdate\fR commands.
 .SH "EXAMPLES"
 This defines a command to make Tcl do nothing at all for \fIN\fR
 seconds:
-.PP
 .CS
 proc sleep {N} {
    \fBafter\fR [expr {int($N * 1000)}]
@@ -120,7 +114,6 @@ proc sleep {N} {
 .PP
 This arranges for the command \fIwake_up\fR to be run in eight hours
 (providing the event loop is active at that time):
-.PP
 .CS
 \fBafter\fR [expr {1000 * 60 * 60 * 8}] wake_up
 .CE
@@ -135,7 +128,6 @@ processing steps (arranging for the next step to be done using an
 already-triggered timer event only when the event queue has been
 drained) and is useful when you want to ensure that a Tk GUI remains
 responsive during a slow task.
-.PP
 .CS
 proc doOneStep {} {
    if {[::my_calc::one_step]} {
@@ -144,10 +136,9 @@ proc doOneStep {} {
 }
 doOneStep
 .CE
+
 .SH "SEE ALSO"
 concat(n), interp(n), update(n), vwait(n)
+
 .SH KEYWORDS
 cancel, delay, idle callback, sleep, time
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

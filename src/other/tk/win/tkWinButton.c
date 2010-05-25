@@ -89,11 +89,10 @@ static void		InitBoxes(void);
  * The class procedure table for the button widgets.
  */
 
-const Tk_ClassProcs tkpButtonProcs = {
+Tk_ClassProcs tkpButtonProcs = {
     sizeof(Tk_ClassProcs),	/* size */
     TkButtonWorldChanged,	/* worldChangedProc */
     CreateProc,			/* createProc */
-    NULL					/* modalProc */
 };
 
 
@@ -297,7 +296,7 @@ CreateProc(
 {
     Window window;
     HWND parent;
-    const char *class;
+    char *class;
     WinButton *butPtr = (WinButton *)instanceData;
 
     parent = Tk_GetHWND(parentWin);
@@ -1330,7 +1329,7 @@ ButtonProc(
 	    if (code != TCL_OK && code != TCL_CONTINUE
 		    && code != TCL_BREAK) {
 		Tcl_AddErrorInfo(interp, "\n    (button invoke)");
-		Tcl_BackgroundException(interp, code);
+		Tcl_BackgroundError(interp);
 	    }
 	    Tcl_Release((ClientData)interp);
 	}

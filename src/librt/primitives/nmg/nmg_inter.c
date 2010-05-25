@@ -104,10 +104,11 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
 	bu_log("nmg_make_dualvu(v=x%x, fu=x%x)\n", v, fu);
 
     /* check for existing vu */
-    if ((dualvu=nmg_find_v_in_face(v, fu))) {
+    dualvu=nmg_find_v_in_face(v, fu);
+    if (dualvu) {
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	    bu_log("\tdualvu already exists (x%x)\n", dualvu);
-	return(dualvu);
+	return dualvu;
     }
 
     new_eu = (struct edgeuse *)NULL;
@@ -155,14 +156,14 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
     }
 
     if (new_eu)
-	return(new_eu->vu_p);
+	return new_eu->vu_p;
 
     /* need a self loop */
     lu = nmg_mlv(&fu->l.magic, v, OT_BOOLPLACE);
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	bu_log("nmg_make_dualvu is makeing a self_loop (lu=x%x, vu=x%x) for v=x%x\n", lu, BU_LIST_FIRST(vertexuse, &lu->down_hd), v);
     nmg_loop_g(lu->l_p, tol);
-    return(BU_LIST_FIRST(vertexuse, &lu->down_hd));
+    return BU_LIST_FIRST(vertexuse, &lu->down_hd);
 }
 
 
@@ -313,16 +314,13 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
 	/* Must have come from a wire in other shell, make wire loop */
 	bu_log("\tvu=x%x, %s, fu1=x%x, fu2=x%x\n", vu, (sv==is->s1)?"shell 1":"shell 2", is->fu1, is->fu2);
 	bu_log("nmg_enlist_vu(): QUESTION: What do I search for wire intersections?  Making self-loop\n");
-	if (!dualvu && !(dualvu = nmg_find_v_in_shell(vu->v_p, duals, 0))) {
-	    /* Not found, make self-loop in dual shell */
-	    lu = nmg_mlv(&duals->l.magic, vu->v_p, OT_BOOLPLACE);
-	    nmg_loop_g(lu->l_p, &(is->tol));
-	    dualvu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-	} else {
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		bu_log("nmg_enlist_vu(vu=x%x) re-using dualvu=x%x from dualshell=x%x\n",
-		       vu,
-		       dualvu, duals);
+	if (!dualvu) {
+	    dualvu = nmg_find_v_in_shell(vu->v_p, duals, 0);
+	    if (!dualvu) {
+		/* Not found, make self-loop in dual shell */
+		lu = nmg_mlv(&duals->l.magic, vu->v_p, OT_BOOLPLACE);
+		nmg_loop_g(lu->l_p, &(is->tol));
+		dualvu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	    }
 	}
     }
@@ -1808,7 +1806,8 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
 	}
 
 	/* See if start vertex is now shared */
-	if ((vu2_final=nmg_find_v_in_face(eu1->vu_p->v_p, fu2))) {
+	vu2_final=nmg_find_v_in_face(eu1->vu_p->v_p, fu2);
+	if (vu2_final) {
 	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("\tEdge start vertex lies on other face (2d topology).\n");
 	    vu1_final = eu1->vu_p;
@@ -1833,7 +1832,8 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
      * XXX "only ask geom question once" rule, and doing a geom
      * XXX calculation here before the topology check.
      */
-    if ((vu2_final=nmg_find_v_in_face(v1a, fu2))) {
+    vu2_final=nmg_find_v_in_face(v1a, fu2);
+    if (vu2_final) {
 	vu1_final = eu1->vu_p;
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    bu_log("\tEdge start vertex lies on other face (topology).\n\tAdding vu1_final=x%x (v=x%x), vu2_final=x%x (v=x%x)\n",
@@ -3552,7 +3552,7 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
     NMG_CK_INTER_STRUCT(is);
 
     if (nmg_find_v_in_face(v, fu1) && nmg_find_v_in_face(v, fu2))
-	return(1);
+	return 1;
 
     NMG_GET_FU_PLANE(pl1, fu1);
     NMG_GET_FU_PLANE(pl2, fu2);
@@ -3563,27 +3563,27 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
     /* check if vertex is in plane of fu's */
     dist = fabs(DIST_PT_PLANE(vg->coord, pl1));
     if (dist > is->tol.dist)
-	return(0);
+	return 0;
     dist = fabs(DIST_PT_PLANE(vg->coord, pl2));
     if (dist > is->tol.dist)
-	return(0);
+	return 0;
 
     /* check if it is on intersection line */
     if (bn_distsq_line3_pt3(is->pt, is->dir, vg->coord) > is->tol.dist_sq)
-	return(0);
+	return 0;
 
     /* check if it is within fu's */
     code = nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL,
 				  (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
-	return(0);
+	return 0;
 
     code = nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL,
 				  (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, &is->tol);
     if (code != NMG_CLASS_AinB)
-	return(0);
+	return 0;
 
-    return(1);
+    return 1;
 }
 
 
@@ -4866,7 +4866,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
  * N M G _ I S _ E U _ O N _ L I N E 3
  */
 int
-nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *pt __attribute__((unused)), const fastf_t *dir, const struct bn_tol *tol)
+nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *UNUSED(pt), const fastf_t *dir, const struct bn_tol *tol)
 {
     struct edge_g_lseg *eg;
 
@@ -6908,7 +6908,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     VCROSS(bs->dir, pl1, pl2);
     dir_len_sq = MAGSQ(bs->dir);
     if (dir_len_sq <= SMALL_FASTF)
-	return(0);
+	return 0;
 
     one_over_dir_len = 1.0/sqrt(dir_len_sq);
     VSCALE(bs->dir, bs->dir, one_over_dir_len);
@@ -6916,7 +6916,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     tmp_pl[W] = VDOT(tmp_pl, min_pt);
 
     if (bn_mkpoint_3planes(bs->pt, tmp_pl, pl1, pl2))
-	return(0);
+	return 0;
 
     VCROSS(left, pl1, bs->dir);
 
@@ -6968,13 +6968,13 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     bu_ptbl_free(&verts);
 
     if (above_left && below_left)
-	return(0);
+	return 0;
     if (on_left)
-	return(0);
+	return 0;
     if (above_right && below_right)
-	return(0);
+	return 0;
     if (on_right)
-	return(0);
+	return 0;
 
     /* check vertices from fu2 versus plane of fu1 */
     nmg_vertex_tabulate(&verts, &fu2->l.magic);
@@ -7024,15 +7024,15 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     bu_ptbl_free(&verts);
 
     if (above_left && below_left)
-	return(0);
+	return 0;
     if (on_left)
-	return(0);
+	return 0;
     if (above_right && below_right)
-	return(0);
+	return 0;
     if (on_right)
-	return(0);
+	return 0;
 
-    return(1);
+    return 1;
 }
 
 
@@ -7557,7 +7557,8 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
 	       eu1, s2);
     }
 
-    if ((eu2 = nmg_find_matching_eu_in_s(eu1, s2))) {
+    eu2 = nmg_find_matching_eu_in_s(eu1, s2);
+    if (eu2) {
 	/* XXX Is the fact that s2 has a corresponding edge good enough? */
 	nmg_radial_join_eu(eu1, eu2, &is->tol);
 	return;
@@ -7616,7 +7617,8 @@ nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct 
      * whether this is an interior or exterior edge, and
      * perhaps add a loop into s2 connecting those two verts.
      */
-    if ((eu2 = nmg_find_matching_eu_in_s(eu1, s2))) {
+    eu2 = nmg_find_matching_eu_in_s(eu1, s2);
+    if (eu2) {
 	/* We can't fuse wire edges */
 	goto out;
     }
@@ -7889,7 +7891,8 @@ nmg_fu_touchingloops(const struct faceuse *fu)
     NMG_CK_FACEUSE(fu);
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
-	if ((vu = nmg_loop_touches_self(lu))) {
+	vu = nmg_loop_touches_self(lu);
+	if (vu) {
 	    NMG_CK_VERTEXUSE(vu);
 #if 0
 	    /* Right now, this routine is used for debugging ONLY,

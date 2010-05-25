@@ -57,7 +57,7 @@ rt_dirbuild( const char *filename, char *buf, int len )
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
     if ( (dbip = db_open( filename, "r" )) == DBI_NULL )
-	return( RTI_NULL );		/* FAIL */
+	return RTI_NULL;		/* FAIL */
     RT_CK_DBI(dbip);
 
     if ( db_dirbuild( dbip ) < 0 )  {
@@ -71,7 +71,7 @@ rt_dirbuild( const char *filename, char *buf, int len )
     if ( buf != (char *)NULL )
 	bu_strlcpy( buf, dbip->dbi_title, len );
 
-    return( rtip );				/* OK */
+    return rtip;				/* OK */
 }
 
 /*
@@ -220,7 +220,7 @@ rt_fwrite_internal(
 	bu_log("rt_file_put_internal(%s): solid export failure\n",
 	       name );
 	bu_free_external( &ext );
-	return(-2);				/* FAIL */
+	return -2;				/* FAIL */
     }
     BU_CK_EXTERNAL( &ext );
 
@@ -228,10 +228,10 @@ rt_fwrite_internal(
 	bu_log("rt_fwrite_internal(%s): db_fwrite_external() error\n",
 	       name );
 	bu_free_external( &ext );
-	return(-3);
+	return -3;
     }
     bu_free_external( &ext );
-    return(0);
+    return 0;
 
 }
 
@@ -300,7 +300,7 @@ rt_db_lookup_internal (
     }
 
     *dpp = dp;
-    return (ip->idb_type);
+    return ip->idb_type;
 }
 
 /** @} */

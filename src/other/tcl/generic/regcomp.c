@@ -131,7 +131,7 @@ static void cloneouts(struct nfa *, struct state *, struct state *, struct state
 static void delsub(struct nfa *, struct state *, struct state *);
 static void deltraverse(struct nfa *, struct state *, struct state *);
 static void dupnfa(struct nfa *, struct state *, struct state *, struct state *, struct state *);
-static void duptraverse(struct nfa *, struct state *, struct state *, int);
+static void duptraverse(struct nfa *, struct state *, struct state *);
 static void cleartraverse(struct nfa *, struct state *);
 static void specialcolors(struct nfa *);
 static long optimize(struct nfa *, FILE *);

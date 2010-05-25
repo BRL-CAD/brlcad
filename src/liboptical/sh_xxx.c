@@ -191,7 +191,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, xxx_parse_tab, (char *)xxx_sp ) < 0 )
-	return(-1);
+	return -1;
 
     /* Optional:
      *
@@ -220,7 +220,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	bn_mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -292,7 +292,7 @@ xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*

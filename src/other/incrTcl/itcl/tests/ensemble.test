@@ -13,8 +13,11 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2.2
-namespace import ::tcltest::test
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2.1
+    namespace import -force ::tcltest::test
+}
+
 ::tcltest::loadTestedCommands
 
 test ensemble-1.1 {ensemble name must be specified} {
@@ -31,7 +34,6 @@ test ensemble-1.2 {creating a new ensemble} {
         }
     }
 } ""
-
 test ensemble-1.3 {adding to an existing ensemble} {
     itcl::ensemble test_numbers part three {x y z} {
         return "three: $x $y $z"
@@ -146,14 +148,7 @@ test ensemble-2.2 {invoking sub-ensemble parts} {
 
 test ensemble-2.3 {errors from sub-ensembles} {
     list [catch "test_numbers hex" msg] $msg
-} {1 {wrong # args: should be "test_numbers hex subcommand ?arg ...?"}}
-
-test ensemble-2.3a {errors from sub-ensembles
-} -body {
-    list [catch "test_numbers hex" msg] $msg
-} -constraints {
-    needs_frq_1773103
-} -result {1 {wrong # args: should be one of...
+} {1 {wrong # args: should be one of...
   test_numbers hex base
   test_numbers hex digits ?arg arg ...?}}
 
@@ -167,14 +162,7 @@ test ensemble-2.5 {invoking sub-ensemble parts} {
 
 test ensemble-2.6 {errors from sub-ensembles} {
     list [catch "test_numbers octal" msg] $msg
-} {1 {wrong # args: should be "test_numbers octal subcommand ?arg ...?"}}
-
-test ensemble-2.6a {errors from sub-ensembles
-} -body {
-    list [catch "test_numbers octal" msg] $msg
-} -constraints {
-    needs_frq_1773103
-} -result {1 {wrong # args: should be one of...
+} {1 {wrong # args: should be one of...
   test_numbers octal base
   test_numbers octal digits ?prefix? ?arg arg ...?}}
 
@@ -198,22 +186,13 @@ test ensemble-3.0 {an error handler part can be used to handle errors} {
 
 test ensemble-3.1 {the error handler part shows up as generic "...and"} {
     list [catch {test_numbers} msg] $msg
-} {1 {wrong # args: should be "test_numbers subcommand ?arg ...?"}}
-
-test ensemble-3.1a {the error handler part shows up as generic "...and"
-} -body {
-    list [catch {test_numbers} msg] $msg
-} -constraints {
-    needs_frq_1773103
-} -result {1 {wrong # args: should be one of...
+} {1 {wrong # args: should be one of...
   test_numbers hex option ?arg arg ...?
   test_numbers octal option ?arg arg ...?
   test_numbers one x
   test_numbers three x y z
   test_numbers two x y
 ...and others described on the man page}}
-
-::itcl::delete ensemble test_numbers
 
 ::tcltest::cleanupTests
 return

@@ -52,7 +52,7 @@ struct mater {
     unsigned char	mt_r;		/**< @brief color */
     unsigned char	mt_g;
     unsigned char	mt_b;
-    size_t		mt_daddr;	/**< @brief db address, for updating */
+    off_t		mt_daddr;	/**< @brief db address, for updating */
     struct mater	*mt_forw;	/**< @brief next in chain */
 };
 #define MATER_NULL	((struct mater *)0)

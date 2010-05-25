@@ -1,18 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <!-- vi:set sw=2: -->
   <!--
   Copyright (C) 1996-2002  Brian Paul and Ben Bederson
-  Copyright (C) 2005-2008  Greg Couch
+  Copyright (C) 2005-2009  Greg Couch
   See the LICENSE file for copyright details.
   -->
 
   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <title>Togl C API</title>
   </head>
 
   <body>
-    <script language="javascript" src="header.js"></script>
-    <script language="javascript">
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
       NavigationBar();
     </script>
 
@@ -20,7 +23,7 @@
 
     <h2>Contents</h2>
     <ul>
-      <li><a href="#compile">Compling and linking C Togl Functions</a>
+      <li><a href="#compile">Compiling and linking C Togl Functions</a>
       <li><a href="#setup">Setup and Initialization Functions</a>
       <ul>
 	<li><code>Togl_Init</code>,
@@ -32,6 +35,7 @@
 	<code>Togl_SwapBuffers</code>,
 	<code>Togl_MakeCurrent</code>,
 	<code>Togl_SwapInterval</code>
+	<code>Togl_CopyContext</code>
       </ul>
       <li><a href="#query">Query Functions</a>
       <ul>
@@ -43,6 +47,14 @@
 	<code>Togl_GetProcAddr</code>,
 	<code>Togl_ContextTag</code>
 	<code>Togl_UpdatePending</code>
+	<code>Togl_HasRGBA</code>
+	<code>Togl_IsDoubleBuffered</code>
+	<code>Togl_HasDepthBuffer</code>
+	<code>Togl_HasAccumulationBuffer</code>
+	<code>Togl_HasDestinationAlpha</code>
+	<code>Togl_HasStencilBuffer</code>
+	<code>Togl_StereoMode</code>
+	<code>Togl_HasMultisample</code>
       </ul>
       <li><a href="#index">Color Index Mode Functions</a>
       <ul>
@@ -95,7 +107,7 @@
 
     <hr>
 
-    <h2><a name="compile">Compling and linking C Togl Functions</a></h2>
+    <h2><a name="compile">Compiling and linking C Togl Functions</a></h2>
 
     <p>
     All Togl functions are found in the Togl header file.
@@ -137,11 +149,11 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
     If you are using a prebuilt binary,
     be sure to link against the stub library.
     On Microsoft Windows,
-    link against <code>Toglstub20.lib opengl32.lib user32.lib gdi32.lib</code>,
-    on Apple Mac OS X,
-    link against <code>-lToglstub2.0 -framework OpenGL</code>,
+    link against <code>Toglstub21.lib opengl32.lib user32.lib gdi32.lib</code>,
+    on Mac OS X,
+    link against <code>-lToglstub2.1 -framework OpenGL</code>,
     on other platforms,
-    link against <code>-lToglstub2.0 -lGLU -lGL -lm</code>.
+    link against <code>-lToglstub2.1 -lGLU -lGL -lm</code>.
 
     <p>
     If building your own Togl package,
@@ -149,11 +161,11 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
     If using the stubs interface, link as shown above.
     Otherwise:
     on Microsoft Windows,
-    link against <code>Togl20.lib tk84.lib tcl84.lib opengl32.lib user32.lib gdi32.lib</code>,
-    on Apple Mac OS X,
-    link against <code>-lTogl2.0 -framework Tk -framework Tcl -framework OpenGL</code>,
+    link against <code>Togl21.lib tk84.lib tcl84.lib opengl32.lib user32.lib gdi32.lib</code>,
+    on Mac OS X,
+    link against <code>-lTogl2.1 -framework Tk -framework Tcl -framework OpenGL</code>,
     on other platforms,
-    link against <code>-lTogl2.0 -ltk8.4 -ltcl8.4 -lGLU -lGL -lm</code>.
+    link against <code>-lTogl2.1 -ltk8.4 -ltcl8.4 -lGLU -lGL -lm</code>.
 
     <h2><a name="setup">Setup and Initialization Functions</a></h2>
 
@@ -166,6 +178,7 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
       to the Togl (shared) library.
       It is also indirectly called via
       Tcl's <code>package require Togl</code> command.
+      If successful, the return value is TCL_OK.
     </dl>
 
     <dl>
@@ -194,7 +207,8 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
       <dt><code>void Togl_SwapBuffers(const Togl *togl)</code>
       <dd>
       Swaps the front and back color buffers for a double-buffered widget.
-      glFlush() is executed if the window is single-buffered.  So this call
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFlush.xml">
+	glFlush</a> is executed if the window is single-buffered.  So this call
       works for both single- and double-buffered contexts.  This is
       typically called in the <code>displaycommand</code> callback function.
     </dl>
@@ -212,10 +226,20 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
     <dl>
       <dt><code>Bool Togl_SwapInterval(const Togl *togl, int interval)</code>
       <dd>
-      Returns 1 (true) if sucessful.
+      Returns True if successful.
       Attempts to change the maximum refresh rate
       by setting the minimum number of cycles between successive swap buffers.
       For benchmarking purposes, you should set the swap interval to 0.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_CopyContext(const Togl *from, const Togl *to, unsigned int mask)</code>
+      <dd>
+      Copy a subset of the OpenGL context state from from one context
+      to another using the mask parameter who values are the same as
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glPushAttrib.xml">
+	glPushAttrib</a>.
+      The return value is TCL_OK if the context was copied.
     </dl>
 
     <h2><a name="query">Query Functions</a></h2>
@@ -258,7 +282,7 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
       <dd>
       Platform-independent way to get OpenGL function pointers from a
       function name.
-      Note that in Windows (WGL) versions that
+      Note that in Microsoft Windows (WGL) versions that
       "the extension function addresses are unique for each pixel format.
       All rendering contexts of a given pixel format
       share the same extension function addresses."
@@ -278,7 +302,56 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
     <dl>
       <dt><code>Bool Togl_UpdatePending(const Togl *t)</code>
       <dd>
-      Returns 1 (true) if the window should be redrawn.  See Togl_PostRedisplay.
+      Returns True if the window should be redrawn.  See Togl_PostRedisplay.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasRGBA(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a RBGA color buffer.
+      False means that the widget is using a color index buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_IsDoubleBuffered(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget is double buffered.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasDepthBuffer(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget is has a depth buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasAccumulationBuffer(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has an accumulation buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasDestinationAlpha(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a destination alpha buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasStencilBuffer(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a stencil buffer.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_StereoMode(const Togl *t)</code>
+      <dd>
+      Return current stereo mode.  See ??
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasMultisample(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a multisample buffer.
     </dl>
 
     <h2><a name="index">Color Index Mode Functions</a></h2>
@@ -326,25 +399,20 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
     or <a href="http://sourceforge.net/projects/ftgl">FTGL</a>.
 
     <dl>
-      <dt><code>GLuint Togl_LoadBitmapFont(Togl *togl,
+      <dt><code>Tcl_Obj *Togl_LoadBitmapFont(Togl *togl,
 	const char *fontname)</code>
       <dd>
-      Load the named font as a set of glBitmap display lists.
+      Load the named font as a set of
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glBitmap.xml">
+	glBitmap</a> display lists.
       <var>fontname</var> may be any of the font description styles
       accepted by the Tk font command.
       For maximum portability, one of the standard Tk fonts,
       <b>Courier</b>, <b>Times</b>, and <b>Helvetica</b>, should be used.
       Unicode fonts are treated as if they have only have an 8-bit index
       (so poorly).
-      After Togl_LoadBitmapFont() has been called, returning <var>fontbase</var>,
-      you can render a string <em>s</em> with:
-      <blockquote>
-	<code>
-	  glListBase(fontbase);<br>
-	  glCallLists(strlen(s), GL_BYTE, s);
-	</code>
-      </blockquote>
-      Zero is returned if this function fails.
+      If successful, a Togl BitmapFont object is returned.
+      NULL is returned on failure.
     </dl>
 
     <dl>
@@ -352,11 +420,15 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
       </code>
       <dd>
       Destroys the bitmap display lists created by by Togl_LoadBitmapFont().
+      If successful, the return value is TCL_OK.
     </dl>
 
     <dl>
-      <dt><code>int Togl_WriteChars(const Togl *togl, const Tcl_Obj *toglfont, const char *str, int len)
+      <dt><code>int Togl_WriteChars(const Togl *togl, const Tcl_Obj *toglfont, const char *string, int length)
       </code>
+      Draw the given <em>string</em>.
+      If the given <em>length</em> is zero, then it is computed using strlen.
+      Returns the length of the drawn string.
       <dd>
     </dl>
 
@@ -369,27 +441,26 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
 
     <h2><a name="client">Client Data Functions</a></h2>
 
+    <p>
+    Each Togl structure has a pointer to an arbitrary client data structure.
+
     <dl>
       <dt><code>void Togl_SetClientData(Togl *togl, ClientData clientData)</code>
       <dd>
-      <em>clientData</em> is a pointer to an arbitrary user data structure.
-      Each Togl struct has such a pointer.
-      This function sets the Togl widget's client data pointer.
+      Set the Togl widget's client data pointer to <em>clientData</em>.
     </dl>
 
     <dl>
       <dt><code>ClientData Togl_GetClientData(const Togl *togl)</code>
       <dd>
-      <em>clientData</em> is a pointer to an arbitrary user data structure.
-      Each Togl struct has such a pointer.
-      This function returns the Togl widget's client data pointer.
+      Return the Togl widget's client data pointer.
     </dl>
 
 
     <h2><a name="overlay">Overlay Functions</a></h2>
 
     <p>
-    These functions are modelled after GLUT's overlay sub-API.
+    These functions are modeled after GLUT's overlay sub-API.
 
     <dl>
       <dt><code>void Togl_UseLayer(Togl *togl, int layer)</code>
@@ -457,7 +528,9 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
     <p>
     Togl abstracts part of the stereo drawing process to seamlessly
     support quad-buffered stereo as well as various alternative stereo
-    formats.
+    formats.  The stereo viewing parameters, <code>eyeseparation</code>
+    and <code>convergence</code> need to be set with the Togl's
+    <a href="tclapi.html#stereo options">stereo options</a>.
 
     <dl>
       <dt><code>void Togl_DrawBuffer(Togl *togl, GLenum mode)</code>
@@ -472,30 +545,25 @@ if (Tcl_InitStubs(interp, "8.1", 0) == NULL
     <dl>
       <dt><code>void Togl_Clear(const Togl *togl, GLbitfield mask)</code>
       <dd>
-      Replacement for OpenGL's glClear that takes into account
-      the alternate stereo mode.
+      Replacement for OpenGL's
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glClear.xml">
+	glClear</a> that takes into account the alternate stereo mode.
     </dl>
 
     <dl>
       <dt><code>void Togl_Frustum(const Togl *togl, GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far)</code>
       <dd>
-      eyeOffset is the distance from the center line and is negative for the
-      left eye and positive for right eye.
-      eyeDist and eyeOffset need to be in the same units as your model space.
-      In physical space, eyeDist might be 30 inches from the screen
-      and eyeDist would be +/- 1.25 inch (for a total interocular distance
-      of 2.5 inches).  So you need to convert those values.
+      Replacement for OpenGL's
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFrustum.xml">
+	glFrustum</a> that takes into account the alternate stereo mode.
     </dl>
 
     <dl>
       <dt><code>void Togl_Ortho(const Togl *togl, GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far)</code>
       <dd>
-      eyeOffset is the distance from the center line and is negative for the
-      left eye and positive for right eye.
-      eyeDist and eyeOffset need to be in the same units as your model space.
-      In physical space, eyeDist might be 30 inches from the screen
-      and eyeDist would be +/- 1.25 inch (for a total interocular distance
-      of 2.5 inches).  So you need to convert those values.
+      Replacement for OpenGL's
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glOrtho.xml">
+	glOrtho</a> that takes into account the alternate stereo mode.
     </dl>
 
     <dl>
@@ -550,6 +618,7 @@ Togl_SwapBuffers(togl);
       If the window is partially obscured,
       either by other windows or by the edges of the display,
       the results are undefined in the obscured region. 
+      If successful, the return value is TCL_OK.
     </dl>
 
     <h2><a name="convert">Conversion Functions</a></h2>
@@ -561,17 +630,23 @@ Togl_SwapBuffers(togl);
       <dt><code>int Togl_GetToglFromObj(Tcl_Interp *interp, Tcl_Obj *obj, Togl **toglPtr)</code>
       <dd>
       Attempt to return a Togl structure "toglPtr" from the Tcl object "obj".
+      If successful, the return value is TCL_OK.
     </dl>
 
     <dl>
       <dt><code>int Togl_GetToglFromName(Tcl_Interp *interp, const char *cmdName, Togl **toglPtr)</code>
       <dd>
       Attempt to return a Togl structure "toglPtr" from the Tcl command name "cmdName".
+      If successful, the return value is TCL_OK.
     </dl>
 
     <hr>
-    Hosted by <a href="http://sourceforge.net/">
-      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo" align="middle"/>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
     </a>
   </body>
 </html>

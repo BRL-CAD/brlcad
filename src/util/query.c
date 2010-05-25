@@ -76,7 +76,7 @@ get_args(int argc, char **argv)
 		Loop = 1;
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
     if (Timeout < 0) Timeout = 0;
@@ -84,7 +84,7 @@ get_args(int argc, char **argv)
 
     if (Loop) Verbose = 0;
 
-    return(1);
+    return 1;
 }
 
 

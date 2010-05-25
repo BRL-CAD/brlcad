@@ -171,7 +171,7 @@ main(int argc, char **argv)
 	}
 	frame++;
     }
-    return( 0 );
+    return 0;
 }
 
 #define OPT_STR	"a:b:c:d:f:m:pqrstv:"
@@ -263,10 +263,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 

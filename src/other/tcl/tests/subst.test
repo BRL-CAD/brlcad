@@ -18,12 +18,12 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
-test subst-1.1 {basics} -returnCodes error -body {
-    subst
-} -result {wrong # args: should be "subst ?-nobackslashes? ?-nocommands? ?-novariables? string"}
-test subst-1.2 {basics} -returnCodes error -body {
-    subst a b c
-} -result {bad switch "a": must be -nobackslashes, -nocommands, or -novariables}
+test subst-1.1 {basics} {
+    list [catch {subst} msg] $msg
+} {1 {wrong # args: should be "subst ?-nobackslashes? ?-nocommands? ?-novariables? string"}}
+test subst-1.2 {basics} {
+    list [catch {subst a b c} msg] $msg
+} {1 {bad switch "a": must be -nobackslashes, -nocommands, or -novariables}}
 
 test subst-2.1 {simple strings} {
     subst {}
@@ -56,13 +56,12 @@ test subst-4.2 {variable substitutions} {
     set a 44
     subst {x$a.y{$a}.z}
 } {x44.y{44}.z}
-test subst-4.3 {variable substitutions} -setup {
+test subst-4.3 {variable substitutions} {
     catch {unset a}
-} -body {
     set a(13) 82
     set i 13
     subst {x.$a($i)}
-} -result {x.82}
+} {x.82}
 catch {unset a}
 set long {This is a very long string, intentionally made so long that it
 	will overflow the static character size for dstrings, so that
@@ -71,9 +70,9 @@ set long {This is a very long string, intentionally made so long that it
 	an error, there will be memory that isn't freed (this will be
 	detected when the tests are run under a checking memory allocator
 	such as Purify).}
-test subst-4.4 {variable substitutions} -returnCodes error -body {
-    subst {$long $a}
-} -result {can't read "a": no such variable}
+test subst-4.4 {variable substitutions} {
+    list [catch {subst {$long $a}} msg] $msg
+} {1 {can't read "a": no such variable}}
 
 test subst-5.1 {command substitutions} {
     subst {[concat {}]}
@@ -114,20 +113,20 @@ test subst-5.10 {command substitutions} {
     list [catch {exec [info nameofexecutable] << $script} msg] $msg 
 } {1 {missing close-bracket}}
 
-test subst-6.1 {clear the result after command substitution} -body {
+test subst-6.1 {clear the result after command substitution} {
     catch {unset a}
-    subst {[concat foo] $a}
-} -returnCodes error -result {can't read "a": no such variable}
+    list [catch {subst {[concat foo] $a}} msg] $msg
+} {1 {can't read "a": no such variable}}
 
-test subst-7.1 {switches} -returnCodes error -body {
-    subst foo bar
-} -result {bad switch "foo": must be -nobackslashes, -nocommands, or -novariables}
-test subst-7.2 {switches} -returnCodes error -body {
-    subst -no bar
-} -result {ambiguous switch "-no": must be -nobackslashes, -nocommands, or -novariables}
-test subst-7.3 {switches} -returnCodes error -body {
-    subst -bogus bar
-} -result {bad switch "-bogus": must be -nobackslashes, -nocommands, or -novariables}
+test subst-7.1 {switches} {
+    list [catch {subst foo bar} msg] $msg
+} {1 {bad switch "foo": must be -nobackslashes, -nocommands, or -novariables}}
+test subst-7.2 {switches} {
+    list [catch {subst -no bar} msg] $msg
+} {1 {ambiguous switch "-no": must be -nobackslashes, -nocommands, or -novariables}}
+test subst-7.3 {switches} {
+    list [catch {subst -bogus bar} msg] $msg
+} {1 {bad switch "-bogus": must be -nobackslashes, -nocommands, or -novariables}}
 test subst-7.4 {switches} {
     set x 123
     subst -nobackslashes {abc $x [expr 1+2] \\\x41}
@@ -160,30 +159,28 @@ test subst-8.4 {return in a subst} {
 test subst-8.5 {return in a subst} {
     subst {foo [return {]}; bogus code] bar}
 } {foo ] bar}
-test subst-8.6 {return in a subst} -returnCodes error -body {
-    subst "foo \[return {x}; bogus code bar"
-} -result {missing close-bracket}
+test subst-8.6 {return in a subst} {
+    list [catch {subst {foo [return {x}; bogus code bar}} msg] $msg
+} {1 {missing close-bracket}}
 test subst-8.7 {return in a subst, parse error} -body {
-    subst {foo [return {x} ; set a {}"" ; stuff] bar} 
+    subst {foo [return {x} ; set a {}" ; stuff] bar}
 } -returnCodes error -result {extra characters after close-brace}
 test subst-8.8 {return in a subst, parse error} -body {
-    subst {foo [return {x} ; set bar baz ; set a {}"" ; stuff] bar}
+    subst {foo [return {x} ; set bar baz ; set a {}" ; stuff] bar}
 } -returnCodes error -result {extra characters after close-brace}
 test subst-8.9 {return in a variable subst} {
     subst {foo $var([return {x}]) bar}
 } {foo x bar}
 
-test subst-9.1 {error in a subst} -body {
-    subst {[error foo; bogus code]bar}
-} -returnCodes error -result foo
-test subst-9.2 {error in a subst} -body {
-    subst {[if 1 { error foo; bogus code}]bar}
-} -returnCodes error -result foo
-test subst-9.3 {error in a variable subst} -setup {
-    catch {unset var}
-} -body {
-    subst {foo $var([error foo]) bar}
-} -returnCodes error -result foo
+test subst-9.1 {error in a subst} {
+    list [catch {subst {[error foo; bogus code]bar}} msg] $msg
+} {1 foo}
+test subst-9.2 {error in a subst} {
+    list [catch {subst {[if 1 { error foo; bogus code}]bar}} msg] $msg
+} {1 foo}
+test subst-9.3 {error in a variable subst} {
+    list [catch {subst {foo $var([error foo]) bar}} msg] $msg
+} {1 foo}
 
 test subst-10.1 {break in a subst} {
     subst {foo [break; bogus code] bar}
@@ -228,14 +225,14 @@ test subst-12.1 {nasty case, Bug 1036649} {
 	set res [list [catch {subst "\[subst {};"} msg] $msg]
 	if {$msg ne "missing close-bracket"} break
     }
-    return $res
+    set res
 } {1 {missing close-bracket}}
 test subst-12.2 {nasty case, Bug 1036649} {
     for {set i 0} {$i < 10} {incr i} {
 	set res [list [catch {subst "\[subst {}; "} msg] $msg]
 	if {$msg ne "missing close-bracket"} break
     }
-    return $res
+    set res
 } {1 {missing close-bracket}}
 test subst-12.3 {nasty case, Bug 1036649} {
     set x 0
@@ -243,24 +240,24 @@ test subst-12.3 {nasty case, Bug 1036649} {
 	set res [list [catch {subst "\[incr x;"} msg] $msg]
 	if {$msg ne "missing close-bracket"} break
     }
-    lappend res $x
-} {1 {missing close-bracket} 10}
+    list $res $x
+} {{1 {missing close-bracket}} 10}
 test subst-12.4 {nasty case, Bug 1036649} {
     set x 0
     for {set i 0} {$i < 10} {incr i} {
 	set res [list [catch {subst "\[incr x; "} msg] $msg]
 	if {$msg ne "missing close-bracket"} break
     }
-    lappend res $x
-} {1 {missing close-bracket} 10}
+    list $res $x
+} {{1 {missing close-bracket}} 10}
 test subst-12.5 {nasty case, Bug 1036649} {
     set x 0
     for {set i 0} {$i < 10} {incr i} {
 	set res [list [catch {subst "\[incr x"} msg] $msg]
 	if {$msg ne "missing close-bracket"} break
     }
-    lappend res $x
-} {1 {missing close-bracket} 0}
+    list $res $x
+} {{1 {missing close-bracket}} 0}
 
 # cleanup
 ::tcltest::cleanupTests

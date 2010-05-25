@@ -248,8 +248,8 @@ ErrorProc(
 		    && (errorPtr->lastRequest < errEventPtr->serial))) {
 	    continue;
 	}
-	if (errorPtr->errorProc == NULL ||
-		errorPtr->errorProc(errorPtr->clientData, errEventPtr) == 0) {
+	if (errorPtr->errorProc == NULL || (*errorPtr->errorProc)(
+		errorPtr->clientData, errEventPtr) == 0) {
 	    return 0;
 	}
     }
@@ -271,7 +271,8 @@ ErrorProc(
     if (errEventPtr->error_code == BadWindow) {
 	Window w = (Window) errEventPtr->resourceid;
 
-	if (Tk_IdToWindow(display, w) != NULL) {
+	if (Tk_IdToWindow(display, w) != NULL
+		|| TkpWindowWasRecentlyDeleted(w, dispPtr)) {
 	    return 0;
 	}
     }
@@ -281,7 +282,7 @@ ErrorProc(
      */
 
   couldntHandle:
-    return defaultHandler(display, errEventPtr);
+    return (*defaultHandler)(display, errEventPtr);
 }
 
 /*

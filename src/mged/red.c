@@ -57,12 +57,12 @@ find_keyword(int i, char *line, char *word)
     /* find the keyword */
     ptr1 = strstr(&line[i], word);
     if (!ptr1)
-	return((char *)NULL);
+	return (char *)NULL;
 
     /* find the '=' */
     ptr2 = strchr(ptr1, '=');
     if (!ptr2)
-	return((char *)NULL);
+	return (char *)NULL;
 
     /* skip any white space before the value */
     while (isspace(*(++ptr2)));
@@ -73,7 +73,7 @@ find_keyword(int i, char *line, char *word)
     line[j+1] = '\0';
 
     /* return pointer to the value */
-    return(ptr2);
+    return ptr2;
 }
 
 
@@ -190,7 +190,7 @@ count_nodes(char *line)
 	    bu_vls_printf(&tmp_vls, " %c is not a legal operator\n", relation);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
-	    return(-1);
+	    return -1;
 	}
 
 	/* Next must be the member name */
@@ -198,7 +198,7 @@ count_nodes(char *line)
 
 	if (name == NULL) {
 	    Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
-	    return(-1);
+	    return -1;
 	}
 
 	ptr = strtok((char *)NULL, delims);
@@ -215,7 +215,7 @@ count_nodes(char *line)
 		ptr = strtok((char *)NULL, delims);
 		if (!ptr) {
 		    Tcl_AppendResult(interp, "expecting a matrix\n", (char *)NULL);
-		    return(-1);
+		    return -1;
 		}
 	    }
 
@@ -230,8 +230,8 @@ count_nodes(char *line)
 }
 
 
-static int
-make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
+HIDDEN int
+make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count, char *old_name, char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
 {
     struct rt_db_internal intern;
     union tree *final_tree;
@@ -261,7 +261,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 		Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
 				 old_name, "\n", (char *)NULL);
 		intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
-		return(1);
+		return 1;
 	    }
 	}
 
@@ -269,7 +269,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
 	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
-	    return(1);
+	    return 1;
 	}
     } else if (dp == DIR_NULL) {
 	int flags;
@@ -283,7 +283,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
 	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
-	    return(1);
+	    return 1;
 	}
     } else {
 	if (comb->region_flag)
@@ -297,14 +297,14 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, int node_count, c
 	return 1;
     }
 
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *old_name, char *new_name, char *str)
 {
-    int i;
+    size_t i;
     int done;
     char *line;
     char *ptr;
@@ -312,7 +312,7 @@ put_tree_into_comb(struct rt_comb_internal *comb, struct directory *dp, char *ol
     char *name;
     struct rt_tree_array *rt_tree_array;
     struct line_list *llp;
-    int node_count = 0;
+    size_t node_count = 0;
     int tree_index = 0;
     union tree *tp;
     matp_t matrix;
@@ -479,9 +479,9 @@ cmd_get_comb(ClientData clientData,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct rt_tree_array *rt_tree_array;
-    int i;
-    int node_count;
-    int actual_count;
+    size_t i;
+    size_t node_count;
+    size_t actual_count;
     struct bu_vls vls;
 
     CHECK_DBI_NULL;
@@ -520,15 +520,9 @@ cmd_get_comb(ClientData clientData,
 
 	node_count = db_tree_nleaves(comb->tree);
 	if (node_count > 0) {
-	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
-							      sizeof(struct rt_tree_array),
-							      "tree list");
-	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array,
-								   comb->tree,
-								   OP_UNION,
-								   1,
-								   &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_LONG(actual_count, ==, node_count);
+	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	    actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    rt_tree_array = (struct rt_tree_array *)NULL;
@@ -633,9 +627,9 @@ writecomb(const struct rt_comb_internal *comb, const char *name)
     /* Writes the file for later editing */
     struct rt_tree_array *rt_tree_array;
     FILE *fp;
-    int i;
-    int node_count;
-    int actual_count;
+    size_t i;
+    size_t node_count;
+    size_t actual_count;
 
     if (comb)
 	RT_CK_COMB(comb);
@@ -644,7 +638,7 @@ writecomb(const struct rt_comb_internal *comb, const char *name)
     if ((fp=fopen(red_tmpfil, "w")) == NULL) {
 	perror("MGED");
 	Tcl_AppendResult(interp, "Cannot open temporary file for writing\n", (char *)NULL);
-	return(1);
+	return 1;
     }
 
     if (!comb) {
@@ -659,24 +653,21 @@ writecomb(const struct rt_comb_internal *comb, const char *name)
 	fprintf(fp, "INHERIT=No\n");
 	fprintf(fp, "COMBINATION:\n");
 	fclose(fp);
-	return(0);
+	return 0;
     }
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL);
-	    return(1);
+	    return 1;
 	}
     }
     node_count = db_tree_nleaves(comb->tree);
     if (node_count > 0) {
-	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
-							  sizeof(struct rt_tree_array), "tree list");
-	actual_count = (struct rt_tree_array *)db_flatten_tree(
-	    rt_tree_array, comb->tree, OP_UNION,
-	    0, &rt_uniresource) - rt_tree_array;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
 	actual_count = 0;
@@ -730,28 +721,29 @@ writecomb(const struct rt_comb_internal *comb, const char *name)
 		Tcl_AppendResult(interp, "Illegal op code in tree\n",
 				 (char *)NULL);
 		fclose(fp);
-		return(1);
+		return 1;
 	}
 	if (fprintf(fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name) <= 0) {
 	    Tcl_AppendResult(interp, "Cannot write to temporary file (", red_tmpfil, "). Aborting edit\n", (char *)NULL);
 	    fclose(fp);
-	    return(1);
+	    return 1;
 	}
 	print_matrix(fp, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	fprintf(fp, "\n");
     }
     fclose(fp);
-    return(0);
+    return 0;
 }
 
 
-int
+/* !!! this function seems to be unused? */
+HIDDEN size_t
 checkcomb(void)
 {
     /* Do some minor checking of the edited file */
 
     FILE *fp;
-    int node_count=0;
+    size_t node_count=0;
     int nonsubs=0;
     int i, j, done, ch;
     int done2, first;
@@ -769,7 +761,7 @@ checkcomb(void)
     if ((fp=fopen(red_tmpfil, "r")) == NULL) {
 	perror("MGED");
 	Tcl_AppendResult(interp, "Cannot open temporary file for reading\n", (char *)NULL);
-	return(-1);
+	return -1;
     }
 
     /* Read a line at a time */
@@ -792,7 +784,7 @@ checkcomb(void)
 	    Tcl_AppendResult(interp, "Line too long in edited file:\n",
 			     line, "\n", (char *)NULL);
 	    fclose(fp);
-	    return(-1);
+	    return -1;
 	}
 
 	line[++i] = '\0';
@@ -818,7 +810,7 @@ checkcomb(void)
 		    Tcl_AppendResult(interp, "Name too long for v4 database: ",
 				     ptr, "\n", lineCopy, "\n", (char *)NULL);
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 	    }
 	    continue;
@@ -874,21 +866,21 @@ checkcomb(void)
 				 "\tMust be 'Yes' or 'No'\n", "\tNo Changes made\n",
 				 (char *)NULL);
 		fclose(fp);
-		return(-1);
+		return -1;
 	    } else if (region) {
 		if (id < 0) {
 		    Tcl_AppendResult(interp, "invalid region ID\n",
 				     "\tNo Changes made\n",
 				     (char *)NULL);
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 		if (air < 0) {
 		    Tcl_AppendResult(interp, "invalid Air code\n",
 				     "\tNo Changes made\n",
 				     (char *)NULL);
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 		if (air == 0 && id == 0)
 		    Tcl_AppendResult(interp, "Warning: both ID and Air codes are 0!!!\n", (char *)NULL);
@@ -960,7 +952,7 @@ checkcomb(void)
 		fclose(fp);
 		if (dbip->dbi_version >= 5 && name_v5)
 		    bu_free(name_v5, "name_v5");
-		return(-1);
+		return -1;
 	    }
 
 	    if (relation != '-')
@@ -972,7 +964,7 @@ checkcomb(void)
 		fclose(fp);
 		if (dbip->dbi_version >= 5 && name_v5)
 		    bu_free(name_v5, "name_v5");
-		return(-1);
+		return -1;
 	    }
 
 	    ptr = strtok((char *)NULL, delims);
@@ -992,7 +984,7 @@ checkcomb(void)
 			fclose(fp);
 			if (dbip->dbi_version >= 5 && name_v5)
 			    bu_free(name_v5, "name_v5");
-			return(-1);
+			return -1;
 		    }
 		}
 
@@ -1012,13 +1004,15 @@ checkcomb(void)
     if (nonsubs == 0 && node_count) {
 	Tcl_AppendResult(interp, "Cannot create a combination with all subtraction operators\n",
 			 (char *)NULL);
-	return(-1);
+	return -1;
     }
-    return(node_count);
+    return node_count;
 }
 
 
-int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name)
+/* !!! this function seems to be unused? */
+HIDDEN int
+build_comb(struct rt_comb_internal *comb, struct directory *dp, size_t node_count, char *old_name)
 {
     /* Build the new combination by adding to the recently emptied combination
        This keeps combo info associated with this combo intact */
@@ -1050,7 +1044,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 
     if ((fp=fopen(red_tmpfil, "r")) == NULL) {
 	Tcl_AppendResult(interp, " Cannot open edited file: ", red_tmpfil, "\n", (char *)NULL);
-	return(1);
+	return 1;
     }
 
     /* empty the existing combination */
@@ -1264,7 +1258,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 			if (rt_tree_array)
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			fclose(fp);
-			return(1);
+			return 1;
 		    }
 		    matrix[k] = atof(ptr);
 		}
@@ -1313,7 +1307,7 @@ int build_comb(struct rt_comb_internal *comb, struct directory *dp, int node_cou
 	bu_free(new_name, "new_name");
     }
 
-    return(ret);
+    return ret;
 }
 
 
@@ -1372,16 +1366,16 @@ int save_comb(struct directory *dpold)
     if ((dp=db_diradd(dbip, red_tmpcomb, -1L, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,
 			 ", no changes made\n", (char *)NULL);
-	return(1);
+	return 1;
     }
 
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,
 			 ", no changes made\n", (char *)NULL);
-	return(1);
+	return 1;
     }
 
-    return(0);
+    return 0;
 }
 
 

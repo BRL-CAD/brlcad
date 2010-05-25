@@ -229,12 +229,6 @@ test parse-5.26 {Tcl_ParseCommand: {*} parsing} testparser {
 test parse-5.27 {Tcl_ParseCommand: {*} parsing} testparser {
     testparser "{*}\\\n foo bar" 0
 } {- \{*\}\\\n\ foo\ bar 3 simple {{*}} 1 text * 0 simple foo 1 text foo 0 simple bar 1 text bar 0 {}}
-test parse-5.28 {Tcl_ParseCommand: {*} parsing, expanded literals} testparser {
-    testparser {{*}{a b}} 0
-} {- {{*}{a b}} 2 simple a 1 text a 0 simple b 1 text b 0 {}}
-test parse-5.29 {Tcl_ParseCommand: {*} parsing, expanded literals, naked backslashes} testparser {
-    testparser {{*}{a \n b}} 0
-} {- {{*}{a \n b}} 1 expand {{*}{a \n b}} 1 text {a \n b} 0 {}}
 
 test parse-6.1 {ParseTokens procedure, empty word} testparser {
     testparser {""} 0
@@ -895,7 +889,7 @@ test parse-15.60 {CommandComplete procedure} {
     info complete \\\n
 } 0
 
-test parse-16.1 {Bug 218885 (Scriptics bug 2535)} {
+test parse-16.1 {Tcl_EvalEx, check termOffset is set correctly for non TCL_OK cases, bug 2535} {
     subst {[eval {return foo}]bar}
 } foobar
 
@@ -1031,19 +1025,32 @@ test parse-19.2 {Bug 1115904: recursion limit in Tcl_EvalEx} -constraints {
     interp create i
     load {} Tcltest i
     i eval {proc {} args {}}
-    interp recursionlimit i 2
+    interp recursionlimit i 3
 } -body {
     i eval {testevalex {[[]]}}
 } -cleanup {
     interp delete i
 } -returnCodes error -match glob -result {too many nested*}
 
-test parse-19.3 {Bug 1115904: recursion limit in Tcl_EvalEx} emptyTest {
-    # Test no longer valid in Tcl 8.6
-} {}
-test parse-19.4 {Bug 1115904: recursion limit in Tcl_EvalEx} emptyTest {
-    # Test no longer valid in Tcl 8.6
-} {}
+test parse-19.3 {Bug 1115904: recursion limit in Tcl_EvalEx} -setup {
+    interp create i
+    i eval {proc {} args {}}
+    interp recursionlimit i 3
+} -body {
+    i eval {subst {[]}}
+} -cleanup {
+    interp delete i
+}
+
+test parse-19.4 {Bug 1115904: recursion limit in Tcl_EvalEx} -setup {
+    interp create i
+    i eval {proc {} args {}}
+    interp recursionlimit i 3
+} -body {
+    i eval {subst {[[]]}}
+} -cleanup {
+    interp delete i
+} -returnCodes error -match glob -result {too many nested*}
 
 cleanupTests
 }

@@ -50,7 +50,7 @@
  */
 
 typedef struct TkOption {
-    const Tk_OptionSpec *specPtr;
+    CONST Tk_OptionSpec *specPtr;
 				/* The original spec from the template passed
 				 * to Tk_CreateOptionTable.*/
     Tk_Uid dbNameUID;	 	/* The Uid form of the option database
@@ -102,8 +102,6 @@ typedef struct OptionTable {
 				 * chain. */
     int numOptions;		/* The number of items in the options array
 				 * below. */
-    int refCount2; /* Reference counter for controlling the freeing
-                    * of the memory occupied by this OptionTable */
     Option options[1];		/* Information about the individual options in
 				 * the table. This must be the last field in
 				 * the structure: the actual size of the array
@@ -125,11 +123,10 @@ static Tcl_Obj *	GetConfigList(char *recordPtr,
 			    Option *optionPtr, Tk_Window tkwin);
 static Tcl_Obj *	GetObjectForOption(char *recordPtr,
 			    Option *optionPtr, Tk_Window tkwin);
-static Option *		GetOption(const char *name, OptionTable *tablePtr);
+static Option *		GetOption(CONST char *name, OptionTable *tablePtr);
 static Option *		GetOptionFromObj(Tcl_Interp *interp,
 			    Tcl_Obj *objPtr, OptionTable *tablePtr);
 static int		ObjectIsEmpty(Tcl_Obj *objPtr);
-static void		FreeOptionInternalRep(Tcl_Obj *objPtr);
 static int		SetOptionFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
 
 /*
@@ -139,9 +136,9 @@ static int		SetOptionFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
  * the internalPtr2 field points to the entry that matched.
  */
 
-static const Tcl_ObjType optionObjType = {
+Tcl_ObjType tkOptionObjType = {
     "option",			/* name */
-    FreeOptionInternalRep,	/* freeIntRepProc */
+    NULL,			/* freeIntRepProc */
     NULL,			/* dupIntRepProc */
     NULL,			/* updateStringProc */
     SetOptionFromAny		/* setFromAnyProc */
@@ -169,7 +166,7 @@ Tk_OptionTable
 Tk_CreateOptionTable(
     Tcl_Interp *interp,		/* Interpreter associated with the application
 				 * in which this table will be used. */
-    const Tk_OptionSpec *templatePtr)
+    CONST Tk_OptionSpec *templatePtr)
 				/* Static information about the configuration
 				 * options. */
 {
@@ -177,7 +174,7 @@ Tk_CreateOptionTable(
     Tcl_HashEntry *hashEntryPtr;
     int newEntry;
     OptionTable *tablePtr;
-    const Tk_OptionSpec *specPtr, *specPtr2;
+    CONST Tk_OptionSpec *specPtr, *specPtr2;
     Option *optionPtr;
     int numOptions, i;
 
@@ -197,7 +194,7 @@ Tk_CreateOptionTable(
 	hashTablePtr = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
 	Tcl_InitHashTable(hashTablePtr, TCL_ONE_WORD_KEYS);
 	Tcl_SetAssocData(interp, OPTION_HASH_KEY, DestroyOptionHashTable,
-		hashTablePtr);
+		(ClientData) hashTablePtr);
     }
 
     /*
@@ -225,7 +222,6 @@ Tk_CreateOptionTable(
     tablePtr = (OptionTable *) (ckalloc(sizeof(OptionTable)
 	    + (numOptions * sizeof(Option))));
     tablePtr->refCount = 1;
-    tablePtr->refCount2 = 1;
     tablePtr->hashEntryPtr = hashEntryPtr;
     tablePtr->nextPtr = NULL;
     tablePtr->numOptions = numOptions;
@@ -274,7 +270,7 @@ Tk_CreateOptionTable(
 		    || (specPtr->type == TK_OPTION_BORDER))
 		    && (specPtr->clientData != NULL)) {
 		optionPtr->extra.monoColorPtr =
-			Tcl_NewStringObj(specPtr->clientData, -1);
+			Tcl_NewStringObj((char *) specPtr->clientData, -1);
 		Tcl_IncrRefCount(optionPtr->extra.monoColorPtr);
 	    }
 
@@ -282,8 +278,8 @@ Tk_CreateOptionTable(
 		/*
 		 * Get the custom parsing, etc., functions.
 		 */
-
-		optionPtr->extra.custom = specPtr->clientData;
+		optionPtr->extra.custom =
+			(Tk_ObjCustomOption *) specPtr->clientData;
 	    }
 	}
 	if (((specPtr->type == TK_OPTION_STRING)
@@ -307,8 +303,8 @@ Tk_CreateOptionTable(
      */
 
     if (specPtr->clientData != NULL) {
-	tablePtr->nextPtr = (OptionTable *)
-		Tk_CreateOptionTable(interp, specPtr->clientData);
+	tablePtr->nextPtr = (OptionTable *) Tk_CreateOptionTable(interp,
+		(Tk_OptionSpec *) specPtr->clientData);
     }
 
     return (Tk_OptionTable) tablePtr;
@@ -361,10 +357,7 @@ Tk_DeleteOptionTable(
 	}
     }
     Tcl_DeleteHashEntry(tablePtr->hashEntryPtr);
-    tablePtr->refCount2--;
-    if (tablePtr->refCount2 <= 0) {
-	ckfree((char *) tablePtr);
-    }
+    ckfree((char *) tablePtr);
 }
 
 /*
@@ -392,7 +385,7 @@ DestroyOptionHashTable(
     ClientData clientData,	/* The hash table we are destroying */
     Tcl_Interp *interp)		/* The interpreter we are destroying */
 {
-    Tcl_HashTable *hashTablePtr = clientData;
+    Tcl_HashTable *hashTablePtr = (Tcl_HashTable *) clientData;
     Tcl_HashSearch search;
     Tcl_HashEntry *hashEntryPtr;
     OptionTable *tablePtr;
@@ -641,7 +634,7 @@ DoObjConfig(
     Tk_SavedOption internal;	/* Used to save the old internal
 				 * representation of the value if
 				 * savedOptionPtr is NULL. */
-    const Tk_OptionSpec *specPtr;
+    CONST Tk_OptionSpec *specPtr;
     int nullOK;
 
     /*
@@ -719,8 +712,7 @@ DoObjConfig(
 	break;
     }
     case TK_OPTION_STRING: {
-	char *newStr;
-	const char *value;
+	char *newStr, *value;
 	int length;
 
 	if (nullOK && ObjectIsEmpty(valuePtr)) {
@@ -743,7 +735,7 @@ DoObjConfig(
 	int newValue;
 
 	if (Tcl_GetIndexFromObj(interp, valuePtr,
-		optionPtr->specPtr->clientData,
+		(CONST char **) optionPtr->specPtr->clientData,
 		optionPtr->specPtr->optionName+1, 0, &newValue) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -1038,13 +1030,13 @@ ObjectIsEmpty(
 
 static Option *
 GetOption(
-    const char *name,		/* String balue to be looked up in the option
+    CONST char *name,		/* String balue to be looked up in the option
 				 * table. */
     OptionTable *tablePtr)	/* Table in which to look up name. */
 {
     Option *bestPtr, *optionPtr;
     OptionTable *tablePtr2;
-    const char *p1, *p2;
+    CONST char *p1, *p2;
     int count;
 
     /*
@@ -1131,13 +1123,13 @@ GetOptionFromObj(
     OptionTable *tablePtr)	/* Table in which to look up objPtr. */
 {
     Option *bestPtr;
-    const char *name;
+    char *name;
 
     /*
      * First, check to see if the object already has the answer cached.
      */
 
-    if (objPtr->typePtr == &optionObjType) {
+    if (objPtr->typePtr == &tkOptionObjType) {
 	if (objPtr->internalRep.twoPtrValue.ptr1 == (void *) tablePtr) {
 	    return (Option *) objPtr->internalRep.twoPtrValue.ptr2;
 	}
@@ -1159,8 +1151,7 @@ GetOptionFromObj(
     }
     objPtr->internalRep.twoPtrValue.ptr1 = (void *) tablePtr;
     objPtr->internalRep.twoPtrValue.ptr2 = (void *) bestPtr;
-    objPtr->typePtr = &optionObjType;
-    tablePtr->refCount2++;
+    objPtr->typePtr = &tkOptionObjType;
     return bestPtr;
 
   error:
@@ -1193,9 +1184,9 @@ GetOptionFromObj(
  *----------------------------------------------------------------------
  */
 
-const Tk_OptionSpec *
+CONST Tk_OptionSpec *
 TkGetOptionSpec(
-    const char *name,		/* String value to be looked up. */
+    CONST char *name,		/* String value to be looked up. */
     Tk_OptionTable optionTable)	/* Table in which to look up name. */
 {
     Option *optionPtr;
@@ -1232,45 +1223,10 @@ SetOptionFromAny(
     Tcl_Interp *interp,		/* Used for error reporting if not NULL. */
     register Tcl_Obj *objPtr)	/* The object to convert. */
 {
-    Tcl_AppendResult(interp,
+    Tcl_AppendToObj(Tcl_GetObjResult(interp),
 	    "can't convert value to option except via GetOptionFromObj API",
-	    NULL);
+	    -1);
     return TCL_ERROR;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * FreeOptionInternalRep --
- *
- *	Part of the option Tcl object type implementation. Frees the storage
- *	associated with a option object's internal representation unless it
- *	is still in use.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The option object's internal rep is marked invalid and its memory
- *	gets freed unless it is still in use somewhere. In that case the
- *	cleanup is delayed until the last reference goes away.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-FreeOptionInternalRep(
-    register Tcl_Obj *objPtr)	/* Object whose internal rep to free. */
-{
-    register OptionTable *tablePtr = (OptionTable *) objPtr->internalRep.twoPtrValue.ptr1;
-
-    tablePtr->refCount2--;
-    if (tablePtr->refCount2 <= 0) {
-	ckfree((char *)tablePtr);
-    }
-    objPtr->typePtr = NULL;
-    objPtr->internalRep.twoPtrValue.ptr1 = NULL;
-    objPtr->internalRep.twoPtrValue.ptr2 = NULL;
 }
 
 /*
@@ -1306,7 +1262,7 @@ Tk_SetOptions(
     char *recordPtr,	    	/* The record to configure. */
     Tk_OptionTable optionTable,	/* Describes valid options. */
     int objc,			/* The number of elements in objv. */
-    Tcl_Obj *const objv[],	/* Contains one or more name-value pairs. */
+    Tcl_Obj *CONST objv[],	/* Contains one or more name-value pairs. */
     Tk_Window tkwin,		/* Window associated with the thing being
 				 * configured; needed for some options (such
 				 * as colors). */
@@ -1350,8 +1306,9 @@ Tk_SetOptions(
 
 	if (objc < 2) {
 	    if (interp != NULL) {
-		Tcl_AppendResult(interp, "value for \"",
-			Tcl_GetStringFromObj(*objv, NULL), "\" missing",NULL);
+		Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+			"value for \"", Tcl_GetStringFromObj(*objv, NULL),
+			"\" missing", NULL);
 		goto error;
 	    }
 	}
@@ -1428,7 +1385,7 @@ Tk_RestoreSavedOptions(
 				 * record. */
     char *internalPtr;		/* Points to internal value of option in
 				 * record. */
-    const Tk_OptionSpec *specPtr;
+    CONST Tk_OptionSpec *specPtr;
 
     /*
      * Be sure to restore the options in the opposite order they were set.
@@ -1478,7 +1435,6 @@ Tk_RestoreSavedOptions(
 	if (specPtr->internalOffset >= 0) {
 	    register char *ptr = (char *) &savePtr->items[i].internalForm;
 
-	    CLANG_ASSERT(internalPtr);
 	    switch (specPtr->type) {
 	    case TK_OPTION_BOOLEAN:
 		*((int *) internalPtr) = *((int *) ptr);
@@ -1619,7 +1575,7 @@ Tk_FreeConfigOptions(
     int count;
     Tcl_Obj **oldPtrPtr, *oldPtr;
     char *oldInternalPtr;
-    const Tk_OptionSpec *specPtr;
+    CONST Tk_OptionSpec *specPtr;
 
     for (tablePtr = (OptionTable *) optionTable; tablePtr != NULL;
 	    tablePtr = tablePtr->nextPtr) {

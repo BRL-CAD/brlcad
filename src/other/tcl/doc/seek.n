@@ -16,6 +16,7 @@ seek \- Change the access position for an open channel
 .SH SYNOPSIS
 \fBseek \fIchannelId offset \fR?\fIorigin\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 Changes the current access position for \fIchannelId\fR.
@@ -31,23 +32,20 @@ for \fIchannelId\fR. \fIOffset\fR must be an integer (which may be
 negative) and \fIorigin\fR must be one of the following:
 .TP 10
 \fBstart\fR
-.
 The new access position will be \fIoffset\fR bytes from the start
 of the underlying file or device.
 .TP 10
 \fBcurrent\fR
-.
 The new access position will be \fIoffset\fR bytes from the current
 access position; a negative \fIoffset\fR moves the access position
 backwards in the underlying file or device.
 .TP 10
 \fBend\fR
-.
 The new access position will be \fIoffset\fR bytes from the end of
 the file or device.  A negative \fIoffset\fR places the access position
 before the end of file, and a positive \fIoffset\fR places the access
 position after the end of file.
-.PP
+.LP
 The \fIorigin\fR argument defaults to \fBstart\fR.
 .PP
 The command flushes all buffered output for the channel before the command
@@ -61,20 +59,17 @@ Note that \fIoffset\fR values are byte offsets, not character
 offsets.  Both \fBseek\fR and \fBtell\fR operate in terms of bytes,
 not characters, unlike \fBread\fR.
 .SH EXAMPLES
-.PP
 Read a file twice:
-.PP
 .CS
 set f [open file.txt]
 set data1 [read $f]
 \fBseek\fR $f 0
 set data2 [read $f]
 close $f
-# $data1 eq $data2 if the file wasn't updated
+# $data1 == $data2 if the file wasn't updated
 .CE
 .PP
 Read the last 10 bytes from a file:
-.PP
 .CS
 set f [open file.data]
 # This is guaranteed to work with binary data but
@@ -84,7 +79,9 @@ fconfigure $f -translation binary
 set data [read $f 10]
 close $f
 .CE
+
 .SH "SEE ALSO"
 file(n), open(n), close(n), gets(n), tell(n), Tcl_StandardChannels(3)
+ 
 .SH KEYWORDS
 access position, file, seek

@@ -51,13 +51,13 @@
 #ifndef Tcl_WinUtfToTChar_TCL_DECLARED
 #define Tcl_WinUtfToTChar_TCL_DECLARED
 /* 0 */
-EXTERN TCHAR *		Tcl_WinUtfToTChar (const char * str, int len,
+EXTERN TCHAR *		Tcl_WinUtfToTChar (CONST char * str, int len, 
 				Tcl_DString * dsPtr);
 #endif
 #ifndef Tcl_WinTCharToUtf_TCL_DECLARED
 #define Tcl_WinTCharToUtf_TCL_DECLARED
 /* 1 */
-EXTERN char *		Tcl_WinTCharToUtf (const TCHAR * str, int len,
+EXTERN char *		Tcl_WinTCharToUtf (CONST TCHAR * str, int len, 
 				Tcl_DString * dsPtr);
 #endif
 #endif /* WIN */
@@ -65,38 +65,42 @@ EXTERN char *		Tcl_WinTCharToUtf (const TCHAR * str, int len,
 #ifndef Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 #define Tcl_MacOSXOpenBundleResources_TCL_DECLARED
 /* 0 */
-EXTERN int		Tcl_MacOSXOpenBundleResources (Tcl_Interp * interp,
-				const char * bundleName, int hasResourceFile,
+EXTERN int		Tcl_MacOSXOpenBundleResources (Tcl_Interp * interp, 
+				CONST char * bundleName, int hasResourceFile, 
 				int maxPathLen, char * libraryPath);
 #endif
 #ifndef Tcl_MacOSXOpenVersionedBundleResources_TCL_DECLARED
 #define Tcl_MacOSXOpenVersionedBundleResources_TCL_DECLARED
 /* 1 */
 EXTERN int		Tcl_MacOSXOpenVersionedBundleResources (
-				Tcl_Interp * interp, const char * bundleName,
-				const char * bundleVersion,
-				int hasResourceFile, int maxPathLen,
+				Tcl_Interp * interp, CONST char * bundleName, 
+				CONST char * bundleVersion, 
+				int hasResourceFile, int maxPathLen, 
 				char * libraryPath);
 #endif
 #endif /* MACOSX */
 
 typedef struct TclPlatStubs {
     int magic;
-    const struct TclPlatStubHooks *hooks;
+    struct TclPlatStubHooks *hooks;
 
 #ifdef __WIN32__ /* WIN */
-    TCHAR * (*tcl_WinUtfToTChar) (const char * str, int len, Tcl_DString * dsPtr); /* 0 */
-    char * (*tcl_WinTCharToUtf) (const TCHAR * str, int len, Tcl_DString * dsPtr); /* 1 */
+    TCHAR * (*tcl_WinUtfToTChar) (CONST char * str, int len, Tcl_DString * dsPtr); /* 0 */
+    char * (*tcl_WinTCharToUtf) (CONST TCHAR * str, int len, Tcl_DString * dsPtr); /* 1 */
 #endif /* WIN */
 #ifdef MAC_OSX_TCL /* MACOSX */
-    int (*tcl_MacOSXOpenBundleResources) (Tcl_Interp * interp, const char * bundleName, int hasResourceFile, int maxPathLen, char * libraryPath); /* 0 */
-    int (*tcl_MacOSXOpenVersionedBundleResources) (Tcl_Interp * interp, const char * bundleName, const char * bundleVersion, int hasResourceFile, int maxPathLen, char * libraryPath); /* 1 */
+    int (*tcl_MacOSXOpenBundleResources) (Tcl_Interp * interp, CONST char * bundleName, int hasResourceFile, int maxPathLen, char * libraryPath); /* 0 */
+    int (*tcl_MacOSXOpenVersionedBundleResources) (Tcl_Interp * interp, CONST char * bundleName, CONST char * bundleVersion, int hasResourceFile, int maxPathLen, char * libraryPath); /* 1 */
 #endif /* MACOSX */
 } TclPlatStubs;
 
-#if defined(USE_TCL_STUBS) && !defined(USE_TCL_STUB_PROCS)
-extern const TclPlatStubs *tclPlatStubsPtr;
-#endif /* defined(USE_TCL_STUBS) && !defined(USE_TCL_STUB_PROCS) */
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern TclPlatStubs *tclPlatStubsPtr;
+#ifdef __cplusplus
+}
+#endif
 
 #if defined(USE_TCL_STUBS) && !defined(USE_TCL_STUB_PROCS)
 

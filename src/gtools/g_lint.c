@@ -143,7 +143,7 @@ int log_2 (unsigned long x)
 
     for (result = 0; x > 1; ++result)
 	x >>= 1;
-    return (result);
+    return result;
 }
 
 
@@ -200,7 +200,7 @@ struct g_lint_seg *create_segment (void)
     sp->gls_length = -1.0;
     sp->gls_next = G_LINT_SEG_NULL;
 
-    return (sp);
+    return sp;
 }
 
 
@@ -247,7 +247,7 @@ struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
 	bu_exit (1, "This shouldn't happen\n");
     }
 
-    return (op);
+    return op;
 }
 
 
@@ -331,15 +331,15 @@ int compare_overlaps (void *v1, void *v2)
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
 
     if (o1->glo_r1 < o2->glo_r1)
-	return (-1);
+	return -1;
     else if (o1->glo_r1 > o2->glo_r1)
-	return (1);
+	return 1;
     else if (o1->glo_r2 < o2->glo_r2)
-	return (-1);
+	return -1;
     else if (o1->glo_r2 > o2->glo_r2)
-	return (1);
+	return 1;
     else
-	return (0);
+	return 0;
 }
 
 
@@ -358,11 +358,11 @@ int compare_by_vol (void *v1, void *v2)
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
 
     if (o1->glo_cum_length < o2->glo_cum_length)
-	return (1);
+	return 1;
     else if (o1->glo_cum_length > o2->glo_cum_length)
-	return (-1);
+	return -1;
     else
-	return (0);
+	return 0;
 }
 
 
@@ -436,7 +436,7 @@ unsigned char *get_color (unsigned char *ucp, unsigned long x)
     for (index = 0; x > 1; ++index)
 	x >>= 1;
 
-    return (ucp + (index * 3));
+    return ucp + (index * 3);
 }
 
 
@@ -691,7 +691,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
 	    }
 	}
     }
-    return (problems);
+    return problems;
 }
 
 
@@ -702,7 +702,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
  */
 static int no_op_overlap (struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {
-    return (0);
+    return 0;
 }
 
 
@@ -713,7 +713,7 @@ static int no_op_overlap (struct application *ap, struct partition *pp, struct r
  */
 static int no_op_hit (struct application *ap, struct partition *ph, struct seg *dummy)
 {
-    return (1);
+    return 1;
 }
 
 
@@ -724,7 +724,7 @@ static int no_op_hit (struct application *ap, struct partition *ph, struct seg *
  */
 static int no_op_miss (struct application *ap)
 {
-    return (1);
+    return 1;
 }
 
 
@@ -779,7 +779,7 @@ static int rpt_ovlp (struct application *ap, struct partition *pp, struct region
 			  pp->pt_inhit->hit_point,
 			  pp->pt_outhit->hit_point);
     }
-    return (mag_del > tolerance);
+    return mag_del > tolerance;
 }
 
 void init_plot3 (struct application *ap)

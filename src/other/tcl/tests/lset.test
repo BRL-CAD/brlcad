@@ -31,7 +31,7 @@ trace add variable noWrite write failTrace
 
 test lset-1.1 {lset, not compiled, arg count} testevalex {
     list [catch {testevalex lset} msg] $msg
-} "1 {wrong \# args: should be \"lset listVar index ?index ...? value\"}"
+} "1 {wrong \# args: should be \"lset listVar index ?index...? value\"}"
 test lset-1.2 {lset, not compiled, no such var} testevalex {
     list [catch {testevalex {lset noSuchVar 0 {}}} msg] $msg
 } "1 {can't read \"noSuchVar\": no such variable}"
@@ -100,19 +100,13 @@ test lset-4.3 {lset, not compiled, 3 args, index out of range} testevalex {
 test lset-4.4 {lset, not compiled, 3 args, index out of range} testevalex {
     set a {x y z}
     list [catch {
-	testevalex {lset a [list 4] w}
+	testevalex {lset a [list 3] w}
     } msg] $msg
 } {1 {list index out of range}}
-test lset-4.5a {lset, not compiled, 3 args, index out of range} testevalex {
+test lset-4.5 {lset, not compiled, 3 args, index out of range} testevalex {
     set a {x y z}
     list [catch {
-	testevalex {lset a [list end--2] w}
-    } msg] $msg
-} {1 {list index out of range}}
-test lset-4.5b {lset, not compiled, 3 args, index out of range} testevalex {
-    set a {x y z}
-    list [catch {
-	testevalex {lset a [list end+2] w}
+	testevalex {lset a [list end--1] w}
     } msg] $msg
 } {1 {list index out of range}}
 test lset-4.6 {lset, not compiled, 3 args, index out of range} testevalex {
@@ -142,19 +136,13 @@ test lset-4.9 {lset, not compiled, 3 args, index out of range} testevalex {
 test lset-4.10 {lset, not compiled, 3 args, index out of range} testevalex {
     set a {x y z}
     list [catch {
-	testevalex {lset a 4 w}
-    } msg] $msg
-} {1 {list index out of range}}
-test lset-4.11a {lset, not compiled, 3 args, index out of range} testevalex {
-    set a {x y z}
-    list [catch {
-	testevalex {lset a end--2 w}
+	testevalex {lset a 3 w}
     } msg] $msg
 } {1 {list index out of range}}
 test lset-4.11 {lset, not compiled, 3 args, index out of range} testevalex {
     set a {x y z}
     list [catch {
-	testevalex {lset a end+2 w}
+	testevalex {lset a end--1 w}
     } msg] $msg
 } {1 {list index out of range}}
 test lset-4.12 {lset, not compiled, 3 args, index out of range} testevalex {
@@ -287,27 +275,19 @@ test lset-8.6 {lset, not compiled, second index out of range} testevalex {
 } {1 {list index out of range}}
 test lset-8.7 {lset, not compiled, second index out of range} testevalex {
     set a {{b c} {d e} {f g}}
-    list [catch {testevalex {lset a 2 3 h}} msg] $msg
+    list [catch {testevalex {lset a 2 2 h}} msg] $msg
 } {1 {list index out of range}}
 test lset-8.8 {lset, not compiled, second index out of range} testevalex {
     set a {{b c} {d e} {f g}}
-    list [catch {testevalex {lset a {2 3} h}} msg] $msg
+    list [catch {testevalex {lset a {2 2} h}} msg] $msg
 } {1 {list index out of range}}
-test lset-8.9a {lset, not compiled, second index out of range} testevalex {
+test lset-8.9 {lset, not compiled, second index out of range} testevalex {
     set a {{b c} {d e} {f g}}
-    list [catch {testevalex {lset a 2 end--2 h}} msg] $msg
+    list [catch {testevalex {lset a 2 end--1 h}} msg] $msg
 } {1 {list index out of range}}
-test lset-8.9b {lset, not compiled, second index out of range} testevalex {
+test lset-8.10 {lset, not compiled, second index out of range} testevalex {
     set a {{b c} {d e} {f g}}
-    list [catch {testevalex {lset a 2 end+2 h}} msg] $msg
-} {1 {list index out of range}}
-test lset-8.10a {lset, not compiled, second index out of range} testevalex {
-    set a {{b c} {d e} {f g}}
-    list [catch {testevalex {lset a {2 end--2} h}} msg] $msg
-} {1 {list index out of range}}
-test lset-8.10b {lset, not compiled, second index out of range} testevalex {
-    set a {{b c} {d e} {f g}}
-    list [catch {testevalex {lset a {2 end+2} h}} msg] $msg
+    list [catch {testevalex {lset a {2 end--1} h}} msg] $msg
 } {1 {list index out of range}}
 test lset-8.11 {lset, not compiled, second index out of range} testevalex {
     set a {{b c} {d e} {f g}}
@@ -426,48 +406,6 @@ test lset-15.1 {lset: shared intrep [Bug 1677512]} -setup {
 } -cleanup {
     unset -nocomplain x l
 } -result 1
-
-test lset-16.1 {lset - grow a variable} testevalex {
-    set x {}
-    testevalex {lset x 0 {test 1}}
-    testevalex {lset x 1 {test 2}}
-    set x
-} {{test 1} {test 2}}
-test lset-16.2 {lset - multiple created sublists} testevalex {
-    set x {}
-    testevalex {lset x 0 0 {test 1}}
-} {{{test 1}}}
-test lset-16.3 {lset - sublists 3 deep} testevalex {
-    set x {}
-    testevalex {lset x 0 0 0 {test 1}}
-} {{{{test 1}}}}
-test lset-16.4 {lset - append to inner list} testevalex {
-    set x {test 1}
-    testevalex {lset x 1 1 2}
-    testevalex {lset x 1 2 3}
-    testevalex {lset x 1 2 1 4}
-} {test {1 2 {3 4}}}
-
-test lset-16.5 {lset - grow a variable} testevalex {
-    set x {}
-    testevalex {lset x end+1 {test 1}}
-    testevalex {lset x end+1 {test 2}}
-    set x
-} {{test 1} {test 2}}
-test lset-16.6 {lset - multiple created sublists} testevalex {
-    set x {}
-    testevalex {lset x end+1 end+1 {test 1}}
-} {{{test 1}}}
-test lset-16.7 {lset - sublists 3 deep} testevalex {
-    set x {}
-    testevalex {lset x end+1 end+1 end+1 {test 1}}
-} {{{{test 1}}}}
-test lset-16.8 {lset - append to inner list} testevalex {
-    set x {test 1}
-    testevalex {lset x end end+1 2}
-    testevalex {lset x end end+1 3}
-    testevalex {lset x end end end+1 4}
-} {test {1 2 {3 4}}}
 
 catch {unset noRead}
 catch {unset noWrite}

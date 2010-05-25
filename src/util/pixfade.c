@@ -91,14 +91,14 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
 	    fprintf(stderr, "pixfade: stdin is a tty\n");
-	    return(0);
+	    return 0;
 	}
 	inp = stdin;
     } else {
@@ -106,7 +106,7 @@ get_args(int argc, char **argv)
 	    (void)fprintf(stderr,
 			  "pixfade: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
-	    return(0);
+	    return 0;
 	}
     }
 
@@ -115,10 +115,10 @@ get_args(int argc, char **argv)
 
     if (isatty(fileno(stdout))) {
 	fprintf(stderr, "pixfade: stdout is a tty\n");
-	return(0);
+	return 0;
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

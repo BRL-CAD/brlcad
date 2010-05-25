@@ -44,8 +44,29 @@
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #include <X11/extensions/XInput.h>
-#include <GL/glx.h>
-#include <GL/gl.h>
+
+/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
+ * parameter names that shadow system symbols.  protect the system
+ * symbols by redefining the parameters prior to header inclusion.
+ */
+#define j1 J1
+#define y1 Y1
+#define read rd
+#define index idx
+#define access acs
+#define remainder rem
+#ifdef HAVE_GL_GLX_H
+#  include <GL/glx.h>
+#endif
+#undef remainder
+#undef access
+#undef index
+#undef read
+#undef y1
+#undef j1
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
 
 #include "tk.h"
 
@@ -84,7 +105,7 @@ HIDDEN int      ogl_drawEnd(struct dm *dmp);
 HIDDEN int	ogl_normal(struct dm *dmp);
 HIDDEN int	ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
 HIDDEN int	ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
 HIDDEN int	ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int      ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
@@ -176,7 +197,6 @@ static double ylim_view = 1.0;
 /* lighting parameters */
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 
-static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_position[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
 static float wireColor[4];
@@ -1381,7 +1401,6 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
     int				first;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
@@ -1681,7 +1700,7 @@ ogl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawString2D()\n");
@@ -1703,7 +1722,7 @@ ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int 
  *
  */
 HIDDEN int
-ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
+ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
 {
 
     if (dmp->dm_debugLevel)
@@ -1727,8 +1746,8 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     }
 
     glBegin(GL_LINES);
-    glVertex2f(x1, y1);
-    glVertex2f(x2, y2);
+    glVertex2f(X1, Y1);
+    glVertex2f(X2, Y2);
     glEnd();
 
     return TCL_OK;

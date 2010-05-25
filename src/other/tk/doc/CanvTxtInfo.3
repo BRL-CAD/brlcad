@@ -22,6 +22,7 @@ Tk_CanvasTextInfo *
 .AP Tk_Canvas canvas in
 A token that identifies a particular canvas widget.
 .BE
+
 .SH DESCRIPTION
 .PP
 Textual canvas items are somewhat more complicated to manage than
@@ -48,7 +49,7 @@ typedef struct Tk_CanvasTextInfo {
     Tk_Item *\fIfocusItemPtr\fR;
     int \fIgotFocus\fR;
     int \fIcursorOn\fR;
-} \fBTk_CanvasTextInfo\fR;
+} Tk_CanvasTextInfo;
 .CE
 The \fBselBorder\fR field identifies a Tk_3DBorder that should be
 used for drawing the background under selected text.
@@ -98,5 +99,6 @@ anchor, as determined by \fIselItemPtr\fR or \fIanchorItemPtr\fR).
 If all of the selected text in the item is deleted, the item should
 set \fIselItemPtr\fR to NULL to indicate that there is no longer a
 selection.
+
 .SH KEYWORDS
 canvas, focus, insertion cursor, selection, selection anchor, text

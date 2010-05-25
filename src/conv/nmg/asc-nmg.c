@@ -152,7 +152,7 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
     /* Associate the face geometry. */
     fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
     if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0)
-	return(-1);
+	return -1;
     else
 	nmg_face_g( fu, pl );
 
@@ -165,7 +165,7 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 
     create_brlcad_db(fpout, m, reg_name, grp_name);
 
-    return( 0 );
+    return 0;
 }
 
 /*

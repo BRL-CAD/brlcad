@@ -33,8 +33,8 @@
 
 
 /* Note: struct parsing requires no space after the commas.  take care
- * when formatting this file if compile breaks here that spaces are
- * not getting inserted.
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
  */
 #define COMMA ','
 
@@ -78,8 +78,8 @@
 		bu_bomb("NULL pointer"); \
 	} \
 	if (_p->ext_nbytes < 6) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer only %llu bytes, file %s, line %d\n", \
-		    (unsigned long long)_p->ext_nbytes, __FILE__, __LINE__); \
+		bu_log("ERROR: BU_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
+		    _p->ext_nbytes, __FILE__, __LINE__); \
 		bu_bomb("getput buffer too small"); \
 	} \
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) | \
@@ -95,8 +95,8 @@
 	       (((unsigned char *)(_p->ext_buf))[4] <<  8) | \
 		((unsigned char *)(_p->ext_buf))[5]; \
 	if (_len > _p->ext_nbytes) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%llu, ext_nbytes=%llu, file %s, line %d\n", \
-		       (void *)_p->ext_buf, (unsigned long long)_len, (unsigned long long)_p->ext_nbytes, \
+		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
+		       (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes, \
 		    __FILE__, __LINE__); \
 		bu_bomb("Bad getput buffer"); \
 	} \
@@ -405,8 +405,8 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     }
 
     /* This number may differ from that stored as "claimed_length" */
-    /* FIXME: possible loss of data here */
-    return (int)(bytes_used);
+    BU_ASSERT_LONG(bytes_used, <, INT_MAX);
+    return (int)bytes_used;
 }
 
 
@@ -781,7 +781,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	if (sdp->sp_hook) {
 	    sdp->sp_hook(sdp, name, base, value);
 	}
-	return (retval);		/* OK or parse error */
+	return retval;		/* OK or parse error */
     }
     return -1;			/* Not found */
 }
@@ -1883,12 +1883,12 @@ _bu_list_elem(const char *in, int idx)
     }
 
     if (!start)
-	return ((char *)NULL);
+	return (char *)NULL;
 
     if (*start == '{') {
 	if (!end || *end != '}') {
 	    bu_log("Error in list (uneven braces?): %s\n", in);
-	    return ((char *)NULL);
+	    return (char *)NULL;
 	}
 
 	/* remove enclosing braces */
@@ -1901,7 +1901,7 @@ _bu_list_elem(const char *in, int idx)
 	    end--;
 
 	if (start == end)
-	    return ((char *)NULL);
+	    return (char *)NULL;
     }
 
     len = end - start + 1;
@@ -1909,7 +1909,7 @@ _bu_list_elem(const char *in, int idx)
     strncpy(out, start, len);
     *(out + len) = '\0';
 
-    return (out);
+    return out;
 }
 
 
@@ -1961,7 +1961,7 @@ _bu_tcl_list_length(const char *in)
 	}
     }
 
-    return (count);
+    return count;
 }
 
 
@@ -2083,7 +2083,7 @@ bu_shader_to_key_eq(const char *in, struct bu_vls *vls)
     bu_free(shader, "shader");
     bu_free(params, "params");
 
-    return (ret);
+    return ret;
 }
 
 
@@ -2180,7 +2180,7 @@ bu_next_token(char *str)
     while (isspace(*ret))
 	ret++;
 
-    return (ret);
+    return ret;
 }
 
 

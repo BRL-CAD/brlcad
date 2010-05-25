@@ -234,7 +234,7 @@ main(int ac, char *av[])
 		      "%s: Excess command line arguments ignored\n", *av);
     else if (freopen(av[arg_index], "r", stdin) == NULL) {
 	perror(av[arg_index]);
-	return(-1);
+	return -1;
     } else if (autosize &&
 	       !fb_common_file_size( &width, &height, av[arg_index], ipu_bytes_per_pixel)) {
 	fprintf(stderr, "unable to autosize\n");
@@ -315,7 +315,7 @@ main(int ac, char *av[])
     ipu_acquire(dsp, 30 * copies);
 
     dsclose(dsp);
-    return(0);
+    return 0;
 }
 
 #else /* !IPU_FULL_LIB */
@@ -325,7 +325,7 @@ main(int ac, char *av[])
 {
     fprintf(stderr,
 	    "%s only works on SGI(tm) systems with dslib (direct SCSI library) support\n", *av);
-    return(-1);
+    return -1;
 }
 
 #endif /* IPU_FULL_LIB */

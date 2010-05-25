@@ -14,19 +14,19 @@
 .SH NAME
 close \- Close an open channel
 .SH SYNOPSIS
-\fBclose \fIchannelId\fR ?r(ead)|w(rite)?
+\fBclose \fIchannelId\fR
 .BE
+
 .SH DESCRIPTION
 .PP
-Closes or half-closes the channel given by \fIchannelId\fR.
+Closes the channel given by \fIchannelId\fR.
 .PP
 \fIChannelId\fR must be an identifier for an open channel such as a
 Tcl standard channel (\fBstdin\fR, \fBstdout\fR, or \fBstderr\fR),
 the return value from an invocation of \fBopen\fR or \fBsocket\fR, or
 the result of a channel creation command provided by a Tcl extension.
 .PP
-The single-argument form is a simple "full-close":
-all buffered output is flushed to the channel's output device,
+All buffered output is flushed to the channel's output device,
 any buffered input is discarded, the underlying file or device is closed,
 and \fIchannelId\fR becomes unavailable for use.
 .PP
@@ -56,32 +56,10 @@ The command returns an empty string, and may generate an error if
 an error occurs while flushing output.  If a command in a command
 pipeline created with \fBopen\fR returns an error, \fBclose\fR
 generates an error (similar to the \fBexec\fR command.)
-.PP
-.VS 8.6
-The two-argument form is a "half-close": given a bidirectional channel like a
-socket or command pipeline and a (possibly abbreviated) direction, it closes
-only the substream going in that direction. This means a shutdown() on a
-socket, and a close() of one end of a pipe for a command pipeline. Then, the
-Tcl-level channel data structure is either kept or freed depending on whether
-the other direction is still open.
-.PP
-A single-argument close on an already half-closed bi-channel is defined to
-just "finish the job. A half-close on an already closed half, or on a
-wrong-sided unidirectional channel, raises an error.
-.PP
-In the case of a command pipeline, the child-reaping duty falls upon the
-shoulders of the last close or half-close, which is thus allowed to report an
-abnormal exit error.
-.PP
-Currently only sockets and command pipelines support half-close. A future
-extension will allow reflected and stacked channels to do so.
-.VE 8.6
 .SH EXAMPLE
-.PP
 This illustrates how you can use Tcl to ensure that files get closed
 even when errors happen by combining \fBcatch\fR, \fBclose\fR and
 \fBreturn\fR:
-.PP
 .CS
 proc withOpenFile {filename channelVar script} {
     upvar 1 $channelVar chan
@@ -93,11 +71,9 @@ proc withOpenFile {filename channelVar script} {
     return -options $options $result
 }
 .CE
+
 .SH "SEE ALSO"
 file(n), open(n), socket(n), eof(n), Tcl_StandardChannels(3)
+
 .SH KEYWORDS
-blocking, channel, close, nonblocking, half-close
-'\" Local Variables:
-'\" mode: nroff
-'\" fill-column: 78
-'\" End:
+blocking, channel, close, nonblocking

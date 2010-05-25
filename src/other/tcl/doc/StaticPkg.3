@@ -31,9 +31,10 @@ Procedure to invoke to incorporate this package into a trusted
 interpreter.
 .AP Tcl_PackageInitProc *safeInitProc in
 Procedure to call to incorporate this package into a safe interpreter
-(one that will execute untrusted scripts).  NULL means the package
+(one that will execute untrusted scripts).   NULL means the package
 cannot be used in safe interpreters.
 .BE
+
 .SH DESCRIPTION
 .PP
 This procedure may be invoked to announce that a package has been
@@ -53,12 +54,9 @@ be invoked, depending on whether the target interpreter is safe
 or not.
 \fIinitProc\fR and \fIsafeInitProc\fR must both match the
 following prototype:
-.PP
 .CS
-typedef int \fBTcl_PackageInitProc\fR(
-        Tcl_Interp *\fIinterp\fR);
+typedef int Tcl_PackageInitProc(Tcl_Interp *\fIinterp\fR);
 .CE
-.PP
 The \fIinterp\fR argument identifies the interpreter in which the package
 is to be loaded.  The initialization procedure must return \fBTCL_OK\fR or
 \fBTCL_ERROR\fR to indicate whether or not it completed successfully; in
@@ -66,7 +64,6 @@ the event of an error it should set the interpreter's result to point to an
 error message.  The result or error from the initialization procedure will
 be returned as the result of the \fBload\fR command that caused the
 initialization procedure to be invoked.
+
 .SH KEYWORDS
 initialization procedure, package, static linking
-.SH "SEE ALSO"
-load(n), package(n), Tcl_PkgRequire(3)

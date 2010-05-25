@@ -111,7 +111,6 @@ and their interpretation, are described under \fBFORMAT GROUPS\fR.
 .RS
 .PP
 On \fBclock format\fR, the default format is
-.PP
 .CS
 %a %b %d %H:%M:%S %z %Y
 .CE
@@ -161,14 +160,12 @@ the environment variable \fBTZ\fR.
 .IP [3]
 on Windows systems, the time zone settings from the Control Panel.
 .RE
-.PP
 If none of these is present, the C \fBlocaltime\fR and \fBmktime\fR
 functions are used to attempt to convert times between local and
 Greenwich.  On 32-bit systems, this approach is likely to have bugs,
 particularly for times that lie outside the window (approximately the
 years 1902 to 2037) that can be represented in a 32-bit integer.
 .SH "CLOCK ARITHMETIC"
-.PP
 The \fBclock add\fR command performs clock arithmetic on a value
 (expressed as nominal seconds from the epoch time of 1 January 1970, 00:00 UTC)
 given as its first argument.  The remaining arguments (other than the
@@ -198,7 +195,6 @@ absolute time means that it will add fixed amounts of time in time zones
 that observe summer time (Daylight Saving Time).  For example,
 the following code sets the value of \fBx\fR to \fB04:00:00\fR because
 the clock has changed in the interval in question.
-.PP
 .CS
 set s [\fBclock scan\fR {2004-10-30 05:00:00} \e
            -format {%Y-%m-%d %H:%M:%S} \e
@@ -219,7 +215,6 @@ Adding and subtracting a given number of days across the point that
 the time changes at the start or end of summer time (Daylight Saving Time)
 results in the \fIsame local time\fR on the day in question.  For
 instance, the following code sets the value of \fBx\fR to \fB05:00:00\fR.
-.PP
 .CS
 set s [\fBclock scan\fR {2004-10-30 05:00:00} \e
            -format {%Y-%m-%d %H:%M:%S} \e
@@ -235,7 +230,6 @@ yields an impossible time (for instance, 02:30 during the Spring
 Daylight Saving Time change using US rules), the time is converted
 as if the clock had not changed.  Thus, the following code
 will set the value of \fBx\fR to \fB03:30:00\fR.
-.PP
 .CS
 set s [\fBclock scan\fR {2004-04-03 02:30:00} \e
            -format {%Y-%m-%d %H:%M:%S} \e
@@ -248,7 +242,6 @@ set x [\fBclock format\fR $a \e
 Adding a given number of days or weeks works correctly across the conversion
 between the Julian and Gregorian calendars; the omitted days are skipped.
 The following code sets \fBz\fR to \fB1752-09-14\fR.
-.PP
 .CS
 set x [\fBclock scan\fR 1752-09-02 -format %Y-%m-%d -locale en_US]
 set y [\fBclock add\fR $x 1 day -locale en_US]
@@ -277,7 +270,6 @@ years as they are when adding/subtracting days and weeks.
 If multiple \fIcount unit\fR pairs are present on the command, they
 are evaluated consecutively, from left to right.
 .SH "HIGH RESOLUTION TIMERS"
-.PP
 Most of the subcommands supported by the \fBclock\fR command deal with
 times represented as a count of seconds from the epoch time, and this is the
 representation that \fBclock seconds\fR returns.  There are three exceptions,
@@ -292,7 +284,6 @@ epoch; it is simply intended to be the most precise interval timer
 available, and is intended only for relative timing studies such as
 benchmarks.
 .SH "FORMATTING TIMES"
-.PP
 The \fBclock format\fR command produces times for display to a user
 or writing to an external medium.  The command accepts times that are
 expressed in seconds from the epoch time of 1 January 1970, 00:00 UTC,
@@ -331,7 +322,6 @@ platforms that do not define a user selection of date and time formats
 separate from \fBLC_TIME\fR, \fB\-locale\fR \fBsystem\fR is
 synonymous with \fB\-locale\fR \fBcurrent\fR.
 .SH "SCANNING TIMES"
-.PP
 The \fBclock scan\fR command accepts times that are formatted as
 strings and converts them to counts of seconds from the epoch time
 of 1 January 1970, 00:00 UTC.  It normally takes a \fB\-format\fR
@@ -454,7 +444,6 @@ If this situation occurs, the first occurrence of the time is chosen.
 time zone when converting local times.  This caveat does not apply to
 UTC times.)
 .SH "FORMAT GROUPS"
-.PP
 The following format groups are recognized by the \fBclock scan\fR and
 \fBclock format\fR commands.
 .TP
@@ -744,7 +733,6 @@ character.
 Synonymous with
 .QW "\fB%a %b %e %H:%M:%S %Z %Y\fR" .
 .SH "TIME ZONES"
-.PP
 When the \fBclock\fR command is processing a local time, it has several
 possible sources for the time zone to use.  In order of preference, they
 are:
@@ -766,7 +754,6 @@ The C library's idea of the local time zone, as defined by the
 .PP
 In case [1] \fIonly,\fR the string is tested to see if it is one 
 of the strings:
-.PP
 .CS
  gmt     ut      utc     bst     wet     wat     at
  nft     nst     ndt     ast     adt     est     edt
@@ -778,7 +765,6 @@ of the strings:
  cadt    east    eadt    gst     nzt     nzst    nzdt
  idle
 .CE
-.PP
 If it is a string in the above list, it designates a known
 time zone, and is interpreted as such.
 .PP
@@ -812,32 +798,13 @@ environment variable will be recognized.  The specification
 may be found at
 \fIhttp://www.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap08.html\fR.
 .PP
-If the Posix time zone string contains a DST (Daylight Savings Time)
-part, but doesn't contain a rule stating when DST starts or ends,
-then default rules are used. For Timezones with an offset between 0
-and +12, the current European/Russian rules are used, otherwise the
-current US rules are used. In Europe (offset +0 to +2) the switch
-to summertime is done each last Sunday in March at 1:00 GMT, and
-the switch back is each last Sunday in October at 2:00 GMT. In
-Russia (offset +3 to +12), the switch dates are the same, only
-the switch to summertime is at 2:00 local time, and the switch
-back is at 3:00 local time in all time zones. The US switch to
-summertime takes place each second Sunday in March at 2:00 local
-time, and the switch back is each first Sunday in November at
-3:00 local time. These default rules mean that in all European,
-Russian and US (or compatible) time zones, DST calculations will
-be correct for dates in 2007 and later, unless in the future the
-rules change again.
-.PP
 Any other time zone string is processed by prefixing a colon and attempting
 to use it as a location name, as above.
 .SH "LOCALIZATION"
-.PP
 Developers wishing to localize the date and time formatting and parsing
 are referred to \fIhttp://tip.tcl.tk/173\fR for a
 specification.
 .SH "FREE FORM SCAN"
-.PP
 If the \fBclock scan\fR command is invoked without a \fB\-format\fR
 option, then it requests a \fIfree-form scan.\fR  \fI
 This form of scan is deprecated.\fR  The reason for the deprecation
@@ -932,6 +899,3 @@ msgcat(n)
 clock, date, time
 .SH "COPYRIGHT"
 Copyright (c) 2004 Kevin B. Kenny <kennykb@acm.org>. All rights reserved.
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

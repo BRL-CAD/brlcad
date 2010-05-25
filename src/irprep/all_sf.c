@@ -644,7 +644,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
     /*  Increment the leaving ray since it leaves & doesn't hit anything.  */
     info[rh1].lvrays += 1.;
 
-    return(0);
+    return 0;
 }							/*  END # 1000  */
 
 /***************************************************************************/
@@ -653,7 +653,7 @@ int
 miss(struct application *ap)
 {
     /*  START # 2000  */
-    return(1);
+    return 1;
 }							/*  END # 2000  */
 
 /***************************************************************************/
@@ -662,7 +662,7 @@ int
 overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp)
 {
     /*  START # 3000  */
-    return(2);
+    return 2;
 }							/*  END # 3000  */
 
 /*

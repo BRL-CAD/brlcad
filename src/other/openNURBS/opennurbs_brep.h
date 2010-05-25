@@ -976,8 +976,6 @@ private:
   ON_BrepLoop(const ON_BrepLoop&); // no implementation
 };
 
-typedef ON_Mesh* (*ON_MeshBrepFace)( const ON_BrepFace&, const ON_MeshParameters&, ON_Mesh* );
-
 class ON_CLASS ON_BrepFace : public ON_SurfaceProxy
 {
   ON_OBJECT_DECLARE(ON_BrepFace);
@@ -1274,9 +1272,6 @@ private:
   friend class ON_Brep;
   ON_Brep* m_brep;
   ON_BrepFace( const ON_BrepFace& );
-
-public:
-  static ON_MeshBrepFace _MeshBrepFace;
 };
 
 class ON_CLASS ON_BrepFaceSide : public ON_Object
@@ -1585,19 +1580,6 @@ private:
   friend class ON_Brep;
   ON_Brep* m_brep;
 };
-
-
-typedef int (*ON__m__Brep_Mesh)( const ON_Brep&, const ON_MeshParameters&, ON_SimpleArray<ON_Mesh*>& );
-
-typedef int (*ON__m__Brep_MassProperties)( const ON_Brep&, void*, int, ON_3dPoint, ON_MassProperties&, bool, bool, bool, bool, double, double );
-
-typedef bool (*ON__m__Brep_SplitFaces)( ON_Brep&, int, const int*, const int*, const double* );
-
-typedef bool (*ON__m__Brep_RegionTopologyHelper)( ON_Brep&, ON_BrepRegionTopology& );
-
-typedef ON_Brep* (*ON__m__Brep_MergeBrepsHelper)( const ON_Brep&, const ON_Brep&, double );
-
-typedef bool (*ON__m__Brep_IsPointInsideHelper)( const ON_Brep&, ON_3dPoint, double, bool );
 
 class ON_CLASS ON_Brep : public ON_Geometry 
 {
@@ -4193,14 +4175,6 @@ protected:
   bool ReadV1_LegacyLoop( ON_BinaryArchive&, ON_BrepFace& );
   bool ReadV1_LegacyFaceStuff( ON_BinaryArchive& );
   bool ReadV1_LegacyShellStuff( ON_BinaryArchive& );
-
-public:
-  static ON__m__Brep_Mesh m__Mesh;
-  static ON__m__Brep_MassProperties m__MassProperties;
-  static ON__m__Brep_SplitFaces m__SplitFaces;
-  static ON__m__Brep_RegionTopologyHelper m__RegionTopologyHelper;
-  static ON__m__Brep_MergeBrepsHelper m__MergeBrepsHelper;
-  static ON__m__Brep_IsPointInsideHelper m__IsPointInsideHelper;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

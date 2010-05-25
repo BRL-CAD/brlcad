@@ -187,19 +187,6 @@ void* operator new( size_t sz )
     }
     else
     {
-      // 21 April 2009 Dale Lear
-      //    With the V5 DWG IO plug-ins, Lowell discovered that
-      //    it was the third call to "new" that was allocating
-      //    the CDynLinkLibrary.  We added this counter
-      //    so that a limited number of early allocations are
-      //    tested for sz == sizeof(CDynLinkLibrary) before
-      //    we stop testing.  It is possible that an early allocation
-      //    for something besides the CDynLinkLibrary will have
-      //    size = sizeof(CDynLinkLibrary), in which case both
-      //    that allocation and the one for CDynLinkLibrary
-      //    will end up potentially crashing when the memory is
-      //    deallocated, but there is no other good solution to
-      //    work around this bug in MFC.
       static int early_allocation_counter = 0;
       early_allocation_counter++;
       if ( early_allocation_counter > 16 )

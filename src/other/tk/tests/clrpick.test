@@ -8,10 +8,9 @@
 # RCS: @(#) $Id$
 #
 
-package require tcltest 2.2
+package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
-namespace import -force tcltest::test
 
 if {[testConstraint defaultPseudocolor8]} {
     # let's soak up a bunch of colors...so that
@@ -47,54 +46,51 @@ if {[testConstraint defaultPseudocolor8]} {
     testConstraint colorsLeftover 0
 }
 
-test clrpick-1.1 {tk_chooseColor command} -body {
-    tk_chooseColor -foo
-} -returnCodes error -result {bad option "-foo": must be -initialcolor, -parent, or -title}
+test clrpick-1.1 {tk_chooseColor command} {
+    list [catch {tk_chooseColor -foo} msg] $msg
+} {1 {bad option "-foo": must be -initialcolor, -parent, or -title}}
 
-test clrpick-1.2 {tk_chooseColor command } -body {
-    tk_chooseColor -initialcolor
-} -returnCodes error -result {value for "-initialcolor" missing}
-test clrpick-1.2.1 {tk_chooseColor command } -body {
-    tk_chooseColor -parent
-} -returnCodes error -result {value for "-parent" missing}
-test clrpick-1.2.2 {tk_chooseColor command } -body {
-    tk_chooseColor -title
-} -returnCodes error -result {value for "-title" missing}
+catch {tk_chooseColor -foo 1} msg
+regsub -all ,      $msg "" options
+regsub \"-foo\" $options "" options
 
-test clrpick-1.3 {tk_chooseColor command} -body {
-    tk_chooseColor -foo bar
-} -returnCodes error -result {bad option "-foo": must be -initialcolor, -parent, or -title}
-test clrpick-1.4 {tk_chooseColor command} -body {
-    tk_chooseColor -initialcolor
-} -returnCodes error -result {value for "-initialcolor" missing}
-test clrpick-1.5 {tk_chooseColor command} -body {
-    tk_chooseColor -parent foo.bar
-} -returnCodes error -result {bad window path name "foo.bar"}
-test clrpick-1.6 {tk_chooseColor command} -body {
-    tk_chooseColor -initialcolor badbadbaadcolor
-} -returnCodes error -result {unknown color name "badbadbaadcolor"}
-test clrpick-1.7 {tk_chooseColor command} -body {
-    tk_chooseColor -initialcolor ##badbadbaadcolor
-} -returnCodes error -result {invalid color name "##badbadbaadcolor"}
+foreach option $options {
+    if {[string index $option 0] eq "-"} {
+	test clrpick-1.2$option {tk_chooseColor command} -body {
+	    tk_chooseColor $option
+	} -returnCodes error -result "value for \"$option\" missing"
+    }
+}
 
+test clrpick-1.3 {tk_chooseColor command} {
+    list [catch {tk_chooseColor -foo bar} msg] $msg
+} {1 {bad option "-foo": must be -initialcolor, -parent, or -title}}
+test clrpick-1.4 {tk_chooseColor command} {
+    list [catch {tk_chooseColor -initialcolor} msg] $msg
+} {1 {value for "-initialcolor" missing}}
+test clrpick-1.5 {tk_chooseColor command} {
+    list [catch {tk_chooseColor -parent foo.bar} msg] $msg
+} {1 {bad window path name "foo.bar"}}
+test clrpick-1.6 {tk_chooseColor command} {
+    list [catch {tk_chooseColor -initialcolor badbadbaadcolor} msg] $msg
+} {1 {unknown color name "badbadbaadcolor"}}
+test clrpick-1.7 {tk_chooseColor command} {
+    list [catch {tk_chooseColor -initialcolor ##badbadbaadcolor} msg] $msg
+} {1 {invalid color name "##badbadbaadcolor"}}
 
-# tests 3.1 and 3.2 fail when individually run
-# if there is no catch {tk_chooseColor -foo 1} msg
-# before settin isNative
-catch {tk_chooseColor -foo 1} msg 
 set isNative [expr {[info commands tk::dialog::color::] eq ""}]
 
 proc ToPressButton {parent btn} {
     global isNative
     if {!$isNative} {
-	after 200 "SendButtonPress . $btn mouse"
+	after 200 "SendButtonPress $parent $btn mouse"
     }
 }
 
 proc ToChooseColorByKey {parent r g b} {
     global isNative
     if {!$isNative} {
-	after 200 ChooseColorByKey . $r $g $b
+	after 200 ChooseColorByKey $parent $r $g $b
     }
 }
 
@@ -122,7 +118,7 @@ proc ChooseColorByKey {parent r g b} {
     # the values for us.
     tk::dialog::color::HandleRGBEntry $w
 
-    SendButtonPress . ok mouse
+    SendButtonPress $parent ok mouse
 }
 
 proc SendButtonPress {parent btn type} {
@@ -144,76 +140,65 @@ proc SendButtonPress {parent btn type} {
     }
 }
 
+set parent .
 
+set verylongstring longstring:
+set verylongstring $verylongstring$verylongstring
+set verylongstring $verylongstring$verylongstring
+set verylongstring $verylongstring$verylongstring
+set verylongstring $verylongstring$verylongstring
+#set verylongstring $verylongstring$verylongstring
+# Interesting thing...when this is too long, the
+# delay caused in processing it kills the automated testing,
+# and makes a lot of the test cases fail.
+#set verylongstring $verylongstring$verylongstring
+#set verylongstring $verylongstring$verylongstring
+#set verylongstring $verylongstring$verylongstring
+#set verylongstring $verylongstring$verylongstring
 
-test clrpick-2.1 {tk_chooseColor command} -constraints {
-    nonUnixUserInteraction colorsLeftover
-} -setup {
-    set verylongstring longstring:
-    set verylongstring $verylongstring$verylongstring
-    set verylongstring $verylongstring$verylongstring
-    set verylongstring $verylongstring$verylongstring
-    set verylongstring $verylongstring$verylongstring
-    #set verylongstring $verylongstring$verylongstring
-    # Interesting thing...when this is too long, the
-    # delay caused in processing it kills the automated testing,
-    # and makes a lot of the test cases fail.
-    #set verylongstring $verylongstring$verylongstring
-    #set verylongstring $verylongstring$verylongstring
-    #set verylongstring $verylongstring$verylongstring
-    #set verylongstring $verylongstring$verylongstring
-} -body {
-    ToPressButton . ok
-    tk_chooseColor -title "Press Ok $verylongstring" -initialcolor #404040 \
-        -parent .
-} -result {#404040}
-test clrpick-2.2 {tk_chooseColor command} -constraints {
-    nonUnixUserInteraction colorsLeftover
-} -body {
+set color #404040
+test clrpick-2.1 {tk_chooseColor command} \
+	{nonUnixUserInteraction colorsLeftover} {
+    ToPressButton $parent ok
+    tk_chooseColor -title "Press Ok $verylongstring" -initialcolor $color \
+	    -parent $parent
+} "$color"
+set color #808040
+test clrpick-2.2 {tk_chooseColor command} \
+	{nonUnixUserInteraction colorsLeftover} {
     set colors "128 128 64"
-    ToChooseColorByKey . 128 128 64
-    tk_chooseColor -parent . -title "choose #808040"
-} -result {#808040}
-test clrpick-2.3 {tk_chooseColor command} -constraints {
-    nonUnixUserInteraction colorsLeftover
-} -body {
-    ToPressButton . ok
-    tk_chooseColor -parent . -title "Press OK"
-} -result {#808040}
-test clrpick-2.4 {tk_chooseColor command} -constraints {
-    nonUnixUserInteraction colorsLeftover
-} -body {
-    ToPressButton . cancel
-    tk_chooseColor -parent . -title "Press Cancel"
-} -result {}
+    ToChooseColorByKey $parent 128 128 64
+    tk_chooseColor -parent $parent -title "choose $colors"
+} "$color"
+test clrpick-2.3 {tk_chooseColor command} \
+	{nonUnixUserInteraction colorsLeftover} {
+    ToPressButton $parent ok
+    tk_chooseColor -parent $parent -title "Press OK"
+} "$color"
+test clrpick-2.4 {tk_chooseColor command} {nonUnixUserInteraction} {
+    ToPressButton $parent cancel
+    tk_chooseColor -parent $parent -title "Press Cancel"
+} ""
 
-
-test clrpick-3.1 {tk_chooseColor: background events} -constraints {
-	nonUnixUserInteraction
-} -body {
+set color "#000000"
+test clrpick-3.1 {tk_chooseColor: background events} {nonUnixUserInteraction} {
     after 1 {set x 53}
-    ToPressButton . ok
-    tk_chooseColor -parent . -title "Press OK" -initialcolor #000000
-} -result {#000000}
-test clrpick-3.2 {tk_chooseColor: background events} -constraints {
-	nonUnixUserInteraction
-} -body {
+    ToPressButton $parent ok
+    tk_chooseColor -parent $parent -title "Press OK" -initialcolor $color
+} "#000000"
+test clrpick-3.2 {tk_chooseColor: background events} {nonUnixUserInteraction} {
     after 1 {set x 53}
-    ToPressButton . cancel
-    tk_chooseColor -parent . -title "Press Cancel"
-} -result {}
+    ToPressButton $parent cancel
+    tk_chooseColor -parent $parent -title "Press Cancel"
+} ""
 
-
-test clrpick-4.1 {tk_chooseColor: screen is inherited from parent} -constraints {
-	unix notAqua
-} -body {
+test clrpick-4.1 {tk_chooseColor: screen is inherited from parent} {unix notAqua} {
     after 50 {set ::scr [winfo screen .__tk__color]}
-    ToPressButton . cancel
-    tk_chooseColor -parent .
+    ToPressButton $parent cancel
+    tk_chooseColor -parent $parent
     set ::scr
-} -result [winfo screen .]
+} [winfo screen $parent]
 
 # cleanup
 cleanupTests
 return
-

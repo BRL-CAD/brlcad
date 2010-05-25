@@ -19,8 +19,7 @@ wm iconname $w "text"
 positionWindow $w
 
 ## See Code / Dismiss buttons
-set btns [addSeeDismiss $w.buttons $w {} \
-	{ttk::button $w.buttons.fontchooser -command fontchooserToggle}]
+set btns [addSeeDismiss $w.buttons $w]
 pack $btns -side bottom -fill x
 
 text $w.text -yscrollcommand [list $w.scroll set] -setgrid 1 \
@@ -28,30 +27,6 @@ text $w.text -yscrollcommand [list $w.scroll set] -setgrid 1 \
 scrollbar $w.scroll -command [list $w.text yview]
 pack $w.scroll -side right -fill y
 pack $w.text -expand yes -fill both
-
-# TIP 324 Demo: [tk fontchooser]
-proc fontchooserToggle {} {
-    tk fontchooser [expr {[tk fontchooser configure -visible] ?
-            "hide" : "show"}]
-}
-proc fontchooserVisibility {w} {
-    $w configure -text [expr {[tk fontchooser configure -visible] ?
-            "Hide Font Dialog" : "Show Font Dialog"}]
-}
-proc fontchooserFocus {w} {
-    tk fontchooser configure -font [$w cget -font] \
-	    -command [list fontchooserFontSel $w]
-}
-proc fontchooserFontSel {w font args} {
-    $w configure -font [font actual $font]
-}
-tk fontchooser configure -parent $w
-bind $w.text <FocusIn> [list fontchooserFocus $w.text]
-fontchooserVisibility $w.buttons.fontchooser
-bind $w <<TkFontchooserVisibility>> [list \
-	fontchooserVisibility $w.buttons.fontchooser]
-focus $w.text
-
 $w.text insert 0.0 \
 {This window is a text widget.  It displays one or more lines of text
 and allows you to edit the text.  Here is a summary of the things you

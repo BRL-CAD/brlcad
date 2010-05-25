@@ -70,10 +70,10 @@ TclUnixSetBlockingMode(
  * 'length' stay aligned.
  */
 
-#define PadBuffer(buffer, length, size)			\
-    if (((length) % (size))) {				\
-	(buffer) += ((size) - ((length) % (size)));	\
-	(length) += ((size) - ((length) % (size)));	\
+#define PadBuffer(buffer, length, size)             \
+    if (((length) % (size))) {                      \
+	(buffer) += ((size) - ((length) % (size))); \
+	(length) += ((size) - ((length) % (size))); \
     }
 
 /*
@@ -127,7 +127,7 @@ static int		CopyGrp(struct group *tgtPtr, char *buf, int buflen);
 static int		CopyHostent(struct hostent *tgtPtr, char *buf,
 			    int buflen);
 static int		CopyPwd(struct passwd *tgtPtr, char *buf, int buflen);
-static int		CopyString(const char *src, char *buf, int buflen);
+static int		CopyString(char *src, char *buf, int buflen);
 
 #endif
 #endif /* TCL_THREADS */
@@ -736,7 +736,7 @@ CopyArray(
     p = buf + len;
 
     for (j = 0; j < i; j++) {
-	int sz = (elsize<0 ? (int) strlen(src[j]) + 1 : elsize);
+	int sz = (elsize<0 ? strlen(src[j])+1 : elsize);
 
 	len += sz;
 	if (len > buflen) {
@@ -772,7 +772,7 @@ CopyArray(
 #ifdef NEED_COPYSTRING
 static int
 CopyString(
-    const char *src,	/* String to copy. */
+    char *src,			/* String to copy. */
     char *buf,			/* Buffer to copy into. */
     int buflen)			/* Size of buffer. */
 {

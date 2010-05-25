@@ -134,6 +134,3 @@ frames are not intended to be interactive.
 labelframe(n), toplevel(n), ttk::frame(n)
 .SH KEYWORDS
 frame, widget
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

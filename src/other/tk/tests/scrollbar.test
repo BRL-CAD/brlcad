@@ -59,7 +59,7 @@ foreach test {
     {-activebackground #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
     {-activerelief sunken sunken non-existent
-	    {bad relief "non-existent": must be flat, groove, raised, ridge, solid, or sunken}}
+	    {bad relief type "non-existent": must be flat, groove, raised, ridge, solid, or sunken}}
     {-background #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
     {-bd 4 4 badValue {bad screen distance "badValue"}}
@@ -77,7 +77,7 @@ foreach test {
     {-orient horizontal horizontal badValue
 	    {bad orientation "badValue": must be vertical or horizontal}}
     {-orient horizontal horizontal bogus {bad orientation "bogus": must be vertical or horizontal}}
-    {-relief ridge ridge badValue {bad relief "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-relief ridge ridge badValue {bad relief type "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
     {-repeatdelay 140 140 129.3 {expected integer but got "129.3"}}
     {-repeatinterval 140 140 129.3 {expected integer but got "129.3"}}
     {-takefocus "any string" "any string" {} {}}
@@ -101,7 +101,7 @@ foreach test {
 destroy .s
 test scrollbar-2.1 {Tk_ScrollbarCmd procedure} -returnCodes error -body {
     scrollbar
-} -result {wrong # args: should be "scrollbar pathName ?-option value ...?"}
+} -result {wrong # args: should be "scrollbar pathName ?options?"}
 test scrollbar-2.2 {Tk_ScrollbarCmd procedure} -body {
     scrollbar gorp
 } -returnCodes error -result {bad window path name "gorp"}
@@ -129,7 +129,7 @@ pack .s -side right -fill y
 update
 test scrollbar-3.1 {ScrollbarWidgetCmd procedure} {
     list [catch {.s} msg] $msg
-} {1 {wrong # args: should be ".s option ?arg ...?"}}
+} {1 {wrong # args: should be ".s option ?arg arg ...?"}}
 test scrollbar-3.2 {ScrollbarWidgetCmd procedure, "cget" option} {
     list [catch {.s cget} msg] $msg
 } {1 {wrong # args: should be ".s cget option"}}

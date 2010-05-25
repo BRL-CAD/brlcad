@@ -17,11 +17,12 @@ catch \- Evaluate script and trap exceptional returns
 .SH SYNOPSIS
 \fBcatch\fI script \fR?\fIresultVarName\fR? ?\fIoptionsVarName\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 The \fBcatch\fR command may be used to prevent errors from aborting command
-interpretation.  The \fBcatch\fR command calls the Tcl interpreter recursively
-to execute \fIscript\fR, and always returns without raising an error,
+interpretation.  The \fBcatch\fR command calls the Tcl interpreter recursively to
+execute \fIscript\fR, and always returns without raising an error,
 regardless of any errors that might occur while executing \fIscript\fR.
 .PP
 If \fIscript\fR raises an error, \fBcatch\fR will return a non-zero integer
@@ -38,11 +39,12 @@ and scripts that make use of the \fBreturn -code\fR command can also
 have return codes other than the five defined by Tcl.
 .PP
 If the \fIresultVarName\fR argument is given, then the variable it names is
-set to the result of the script evaluation.  When the return code from the
-script is 1 (\fBTCL_ERROR\fR), the value stored in \fIresultVarName\fR is an
-error message.  When the return code from the script is 0 (\fBTCL_OK\fR), the
-value stored in \fIresultVarName\fR is the value returned from \fIscript\fR.
+set to the result of the script evaluation.  When the return code from
+the script is 1 (\fBTCL_ERROR\fR), the value stored in \fIresultVarName\fR is an error
+message.  When the return code from the script is 0 (\fBTCL_OK\fR), the value
+stored in \fIresultVarName\fR is the value returned from \fIscript\fR.
 .PP
+.VS 8.5
 If the \fIoptionsVarName\fR argument is given, then the variable it
 names is set to a dictionary of return options returned by evaluation
 of \fIscript\fR.  Tcl specifies two entries that are always 
@@ -75,11 +77,10 @@ Tcl packages may provide commands that set other entries in the
 dictionary of return options, and the \fBreturn\fR command may be
 used by scripts to set return options in addition to those defined
 above.
+.VE 8.5
 .SH EXAMPLES
-.PP
 The \fBcatch\fR command may be used in an \fBif\fR to branch based on
 the success of a script.
-.PP
 .CS
 if { [\fBcatch\fR {open $someFile w} fid] } {
     puts stderr "Could not open $someFile for writing\en$fid"
@@ -89,7 +90,9 @@ if { [\fBcatch\fR {open $someFile w} fid] } {
 .PP
 There are more complex examples of \fBcatch\fR usage in the
 documentation for the \fBreturn\fR command.
+
 .SH "SEE ALSO" 
 break(n), continue(n), dict(n), error(n), return(n), tclvars(n)
+
 .SH KEYWORDS
-catch, error, exception
+catch, error

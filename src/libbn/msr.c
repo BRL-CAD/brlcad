@@ -91,7 +91,7 @@ bn_unif_init(long int setseed, int method)
 
     if (setseed&0x7fffffff) p->msr_seed=setseed&0x7fffffff;
     p->magic = BN_UNIF_MAGIC;
-    return(p);
+    return p;
 }
 
 /*	bn_unif_long_fill	fill a random number table.
@@ -114,7 +114,7 @@ bn_unif_init(long int setseed, int method)
  *	None.
  *
  * @par Method @code
- *	if (!p) return(1);
+ *	if (!p) return 1;
  *	if p->msr_longs != NULL
  *		msr_longs is reloaded with random numbers;
  *		msr_long_ptr is set to BN_MSR_MAXTBL
@@ -153,7 +153,7 @@ bn_unif_long_fill(struct bn_unif *p)
     }
     test = A*(work_seed % Q) - R*(work_seed / Q);
     p->msr_seed =  (test < 0) ? test+M : test;
-    return(p->msr_seed);
+    return p->msr_seed;
 }
 
 /*	bn_unif_double_fill	fill a random number table.
@@ -273,7 +273,7 @@ bn_gauss_init(long int setseed, int method)
 
     if (setseed&0x7fffffff) p->msr_gauss_seed=setseed&0x7fffffff;
     p->magic = BN_GAUSS_MAGIC;
-    return(p);
+    return p;
 }
 
 /*	bn_gauss_fill	fill a random number table.
@@ -330,7 +330,7 @@ bn_gauss_fill(struct bn_gauss *p)
 	BN_UNIF_CIRCLE((struct bn_unif *)p, v1, v2, r);
     } while (r < 0.00001);
     fac = sqrt(-2.0*log(r)/r);
-    return(v1*fac);
+    return v1*fac;
 }
 /*	bn_gauss_free	free random number table
  *

@@ -25,7 +25,7 @@ test platform-1.1 {TclpSetVariables: tcl_platform} {
     set result [i eval {lsort [array names tcl_platform]}]
     interp delete i
     set result
-} {byteOrder machine os osVersion pathSeparator platform pointerSize user wordSize}
+} {byteOrder machine os osVersion platform pointerSize user wordSize}
 
 # Test assumes twos-complement arithmetic, which is true of virtually
 # everything these days.  Note that this does *not* use wide(), and

@@ -104,10 +104,10 @@ test lreplace-1.26 {lreplace command} {
 
 test lreplace-2.1 {lreplace errors} {
     list [catch lreplace msg] $msg
-} {1 {wrong # args: should be "lreplace list first last ?element ...?"}}
+} {1 {wrong # args: should be "lreplace list first last ?element element ...?"}}
 test lreplace-2.2 {lreplace errors} {
     list [catch {lreplace a b} msg] $msg
-} {1 {wrong # args: should be "lreplace list first last ?element ...?"}}
+} {1 {wrong # args: should be "lreplace list first last ?element element ...?"}}
 test lreplace-2.3 {lreplace errors} {
     list [catch {lreplace x a 10} msg] $msg
 } {1 {bad index "a": must be integer?[+-]integer? or end?[+-]integer?}}

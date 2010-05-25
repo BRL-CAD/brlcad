@@ -100,14 +100,14 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific));
 
     if (bu_struct_parse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
-	return(-1);
+	return -1;
 
     BN_RANDSEED(rtrans_sp->next_rand, 3);
 
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -159,7 +159,7 @@ rtrans_render(struct application *ap, struct partition *pp, struct shadework *sw
 	    (void)rr_render( ap, pp, swp );
     }
 
-    return(1);
+    return 1;
 }
 
 /*

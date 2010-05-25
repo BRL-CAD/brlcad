@@ -14,10 +14,9 @@
 .SH NAME
 variable \- create and initialize a namespace variable
 .SH SYNOPSIS
-\fBvariable \fR\fIname\fR
-.sp
-\fBvariable \fR?\fIname value...\fR?
+\fBvariable \fR?\fIname value...\fR? \fIname \fR?\fIvalue\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command is normally used within a
@@ -60,9 +59,7 @@ After the variable has been declared,
 elements within the array can be set using ordinary
 \fBset\fR or \fBarray\fR commands.
 .SH EXAMPLES
-.PP
 Create a variable in a namespace:
-.PP
 .CS
 namespace eval foo {
     \fBvariable\fR bar 12345
@@ -70,7 +67,6 @@ namespace eval foo {
 .CE
 .PP
 Create an array in a namespace:
-.PP
 .CS
 namespace eval someNS {
     \fBvariable\fR someAry
@@ -82,7 +78,6 @@ namespace eval someNS {
 .CE
 .PP
 Access variables in namespaces from a procedure:
-.PP
 .CS
 namespace eval foo {
     proc spong {} {
@@ -96,7 +91,9 @@ namespace eval foo {
     }
 }
 .CE
+
 .SH "SEE ALSO"
 global(n), namespace(n), upvar(n)
+
 .SH KEYWORDS
 global, namespace, procedure, variable

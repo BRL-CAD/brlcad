@@ -51,7 +51,7 @@ test case-2.1 {error in executed command} {
 "case a in a {error "Just a test"} default {format 1}"}}
 test case-2.2 {error: not enough args} {
     list [catch {case} msg] $msg
-} {1 {wrong # args: should be "case string ?in? ?pattern body ...? ?default body?"}}
+} {1 {wrong # args: should be "case string ?in? patList body ... ?default body?"}}
 test case-2.3 {error: pattern with no body} {
     list [catch {case a b} msg] $msg
 } {1 {extra case pattern with no body}}

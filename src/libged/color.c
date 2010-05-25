@@ -50,7 +50,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     char line[128];
     static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
     char tmpfil[MAXPATHLEN];
-    char *editstring;
+    char *editstring = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -353,7 +353,7 @@ _ged_color_zaprec(struct ged		*gedp,
     dir.d_addr = mp->mt_daddr;
     dir.d_flags = 0;
 
-    if (db_delete(gedp->ged_wdbp->dbip, &dir) == (size_t)-1) {
+    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Database delete error, aborting");
 	return;
     }

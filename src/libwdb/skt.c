@@ -25,27 +25,20 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include <math.h>
-#include "bio.h"
-
 #include "bu.h"
-#include "vmath.h"
-#include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-int
-mk_sketch(
-    struct rt_wdb *fp,
-    const char *name,
-    struct rt_sketch_internal *skt )
-{
-    RT_SKETCH_CK_MAGIC( skt );
 
-    return wdb_export( fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm );
+int
+mk_sketch(struct rt_wdb *fp, const char *name, struct rt_sketch_internal *skt)
+{
+    RT_SKETCH_CK_MAGIC(skt);
+
+    return wdb_export(fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:

@@ -36,13 +36,14 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#define STRSIZ 64
 
 mat_t identity;
 double degtorad = 0.0174532925199433;
 double sin60;
 
 struct mtab {
-    char mt_name[64];
+    char mt_name[STRSIZ];
     char mt_param[96];
 } mtab[] = {
     {"plastic",	""},
@@ -83,7 +84,7 @@ main(int argc, char **argv)
     double size;
     double base;
     int quant;
-    char name[64];
+    char name[STRSIZ];
     vect_t pos, aim;
     unsigned char white[3];
     int n;
@@ -187,9 +188,9 @@ crystal_stack(char *cname, double xc, double yc, double size)
     double high;
     double height = 0;
     double esz;
-    char name[64];
-    char rppname[64];
-    char crystalname[64];
+    char name[STRSIZ];
+    char rppname[STRSIZ];
+    char crystalname[STRSIZ];
     vect_t minpt, maxpt;
     struct wmember head;
     struct wmember reg_head;
@@ -203,7 +204,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
     VUNITIZE(min);
 
     for (i=0; i<3; i++) {
-	snprintf(name, 64, "%sL%c", cname, 'a'+i);
+	snprintf(name, STRSIZ, "%sL%c", cname, 'a'+i);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
 	VSET(center, xc, yc, size/2*i);
 	nsolids = 3 + (rand() & 7);
@@ -217,14 +218,14 @@ crystal_stack(char *cname, double xc, double yc, double size)
     }
 
     /* Build the crystal union */
-    snprintf(crystalname, 64, "%scrystal", cname);
+    snprintf(crystalname, STRSIZ, "%scrystal", cname);
     mk_lfcomb(outfp, crystalname, &head, 0);
 
     /* Make the trimming RPP */
     esz = size*0.5;	/* dist from ctr to edge of base */
     VSET(minpt, xc-esz, yc-esz, 10);
     VSET(maxpt, xc+esz, yc+esz, height);
-    snprintf(rppname, 64, "%srpp", cname);
+    snprintf(rppname, STRSIZ, "%srpp", cname);
     mk_rpp(outfp, rppname, minpt, maxpt);
 
     /* Build the final combination */
@@ -235,7 +236,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
     (void)mk_addmember(rppname, &reg_head.l, NULL, WMOP_INTERSECT);
     mk_lcomb(outfp, cname, &reg_head, 1,
 	     mtab[i].mt_name, mtab[i].mt_param, rgb, 0);
-    return(height);
+    return height;
 }
 
 double
@@ -261,7 +262,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
     double m_cos_var;
     double length, width;
     point_t pt[8];
-    char name[32];
+    char name[STRSIZ];
     int i;
     struct wmember head;
 
@@ -310,7 +311,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
 
 	/* Consider fusing points here, for visual complexity */
 
-	snprintf(name, 64, "%s%d", crname, index++);
+	snprintf(name, STRSIZ, "%s%d", crname, index++);
 	mk_arb8(outfp, name, &pt[0][X]);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
@@ -321,7 +322,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
     }
 
     mk_lfcomb(outfp, crname, &head, 0);
-    return(height);
+    return height;
 }
 
 void
@@ -332,11 +333,11 @@ do_plate(char *name, double xc, double yc, double size)
 {
     double esz;
     vect_t minpt, maxpt;
-    char sname[64];
+    char sname[STRSIZ];
     unsigned char rgb[4];		/* needs all 4 */
     int i;
 
-    snprintf(sname, 64, "%s.s", name);
+    snprintf(sname, STRSIZ, "%s.s", name);
     /* Make the base */
     esz = size*0.5*0.9;	/* dist from ctr to edge of base */
     VSET(minpt, xc-esz, yc-esz, -9);
@@ -361,7 +362,7 @@ ball_stack(char *bname, double xc, double yc, double size)
     unsigned char rgb[4];		/* needs all 4 */
     int i;
     int n;
-    char name[32];
+    char name[STRSIZ];
     struct wmember head;
 
     BU_LIST_INIT(&head.l);
@@ -370,7 +371,7 @@ ball_stack(char *bname, double xc, double yc, double size)
     esz = size*0.5*0.9;	/* dist from ctr to edge of base */
     n = rand()&7;
     for (i=0; i<n; i++) {
-	snprintf(name, 64, "%s%c", bname, 'A'+i);
+	snprintf(name, STRSIZ, "%s%c", bname, 'A'+i);
 	VSET(center, xc, yc, size/2+i*size);
 	mk_sph(outfp, name, center, esz/2);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
@@ -380,7 +381,7 @@ ball_stack(char *bname, double xc, double yc, double size)
     get_rgb(rgb);
     mk_lcomb(outfp, bname, &head, 0, (char *)0, "", rgb, 0);
 
-    return(n*size);
+    return n*size;
 }
 
 double
@@ -400,7 +401,7 @@ prim_stack(char *pname, double xc, double yc, double size)
     double vpos = 0.0;
     double height;
     double xbase, ybase;
-    char name[32];
+    char name[STRSIZ];
     struct wmember head;
 
     BU_LIST_INIT(&head.l);
@@ -412,7 +413,7 @@ prim_stack(char *pname, double xc, double yc, double size)
     /* Make some objects */
     n = (rand()&7)+1;
     for (nobj=0; nobj<n; nobj++) {
-	snprintf(name, 64, "%s%c", pname, 'A'+nobj);
+	snprintf(name, STRSIZ, "%s%c", pname, 'A'+nobj);
 	(void)mk_addmember(name, &head.l, NULL, WMOP_UNION);
 	height = ((rand()&7)+1)*size/3;
 	i = rand()%5;
@@ -460,7 +461,7 @@ prim_stack(char *pname, double xc, double yc, double size)
     mk_lcomb(outfp, pname, &head, 0,
 	     mtab[i].mt_name, mtab[i].mt_param,
 	     rgb, 0);
-    return(vpos);
+    return vpos;
 }
 
 void
@@ -469,16 +470,16 @@ do_rings(char *ringname, fastf_t *center, double r1, double r2, double incr, int
     int i;
     vect_t normal;
     unsigned char rgb[4];
-    char rname[32];
-    char sname[32];
+    char rname[STRSIZ];
+    char sname[STRSIZ];
     struct wmember head;
 
     BU_LIST_INIT(&head.l);
 
     VSET(normal, 0, 0, 1);
     for (i=0; i<n; i++) {
-	snprintf(sname, 32, "%s%ds", ringname, i);
-	snprintf(rname, 32, "%s%dr", ringname, i);
+	snprintf(sname, STRSIZ, "%s%ds", ringname, i);
+	snprintf(rname, STRSIZ, "%s%dr", ringname, i);
 
 	mk_tor(outfp, sname, center, normal, r1, r2);
 	r1 += incr;

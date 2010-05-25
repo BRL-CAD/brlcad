@@ -131,7 +131,6 @@ Most other behaviour is the same as a conventional text widget except
 for the way that the \fI<<Cut>>\fR event is handled identically to the
 \fI<<Copy>>\fR event.
 .SH EXAMPLE
-.PP
 Not all platforms have the \fBconsole\fR command, so debugging code
 often has the following code fragment in it so output produced by
 \fBputs\fR can be seen while during development:
@@ -142,6 +141,3 @@ catch {\fBconsole show\fR}
 destroy(n), fconfigure(n), history(n), interp(n), puts(n), text(n), wm(n)
 .SH KEYWORDS
 console, interpreter, window, interactive, output channels
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

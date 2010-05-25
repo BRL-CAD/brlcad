@@ -45,6 +45,8 @@ static Tcl_ThreadDataKey dataKey;
 
 static void		ContainerEventProc(ClientData clientData,
 			    XEvent *eventPtr);
+static void		EmbeddedEventProc(ClientData clientData,
+			    XEvent *eventPtr);
 static void		EmbedGeometryRequest(Container *containerPtr,
 			    int width, int height);
 static void		EmbedWindowDeleted(TkWindow *winPtr);
@@ -104,7 +106,7 @@ TkpTestembedCmd(
     ClientData clientData,
     Tcl_Interp *interp,
     int argc,
-    const char **argv)
+    CONST char **argv)
 {
     return TCL_OK;
 }
@@ -232,7 +234,7 @@ TkpUseWindow(
 				 * string is bogus. */
     Tk_Window tkwin,		/* Tk window that does not yet have an
 				 * associated X window. */
-    const char *string)		/* String identifying an X window to use for
+    CONST char *string)		/* String identifying an X window to use for
 				 * tkwin; must be an integer value. */
 {
     TkWindow *winPtr = (TkWindow *) tkwin;
@@ -386,6 +388,39 @@ TkpMakeContainer(
     Tk_CreateEventHandler(tkwin, StructureNotifyMask,
 	    ContainerEventProc, (ClientData) containerPtr);
 }
+
+#if 0
+/*
+ *----------------------------------------------------------------------
+ *
+ * EmbeddedEventProc --
+ *
+ *	This procedure is invoked by the Tk event dispatcher when various
+ *	useful events are received for a window that is embedded in another
+ *	application.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Our internal state gets cleaned up when an embedded window is
+ *	destroyed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+EmbeddedEventProc(
+    ClientData clientData,	/* Token for container window. */
+    XEvent *eventPtr)		/* ResizeRequest event. */
+{
+    TkWindow *winPtr = (TkWindow *) clientData;
+
+    if (eventPtr->type == DestroyNotify) {
+	EmbedWindowDeleted(winPtr);
+    }
+}
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -738,7 +773,7 @@ TkWinEmbeddedEventProc(
 	     */
 
 	    if (topwinPtr) {
-		if (wParam <= 3) {
+		if (wParam >= 0 && wParam <= 3) {
 		    TkpWmSetState(topwinPtr, wParam);
 		}
 		result = 1+TkpWmGetState(topwinPtr);

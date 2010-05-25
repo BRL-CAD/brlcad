@@ -18,23 +18,11 @@
 #include "default.h"
 
 /*
- * The structure below defines menubutton class behavior by means of
- * procedures that can be invoked from generic window code.
- */
-
-static const Tk_ClassProcs menubuttonClass = {
-    sizeof(Tk_ClassProcs),	/* size */
-    TkMenuButtonWorldChanged,	/* worldChangedProc */
-    NULL,					/* createProc */
-    NULL					/* modalProc */
-};
-
-/*
  * The following table defines the legal values for the -direction option. It
  * is used together with the "enum direction" declaration in tkMenubutton.h.
  */
 
-static const char *const directionStrings[] = {
+static char *directionStrings[] = {
     "above", "below", "flush", "left", "right", NULL
 };
 
@@ -43,7 +31,7 @@ static const char *const directionStrings[] = {
  * used together with the "enum state" declaration in tkMenubutton.h.
  */
 
-static const char *const stateStrings[] = {
+static char *stateStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -52,7 +40,7 @@ static const char *const stateStrings[] = {
  * is used with the "enum compound" declaration in tkMenuButton.h
  */
 
-static const char *const compoundStrings[] = {
+static char *compoundStrings[] = {
     "bottom", "center", "left", "none", "right", "top", NULL
 };
 
@@ -165,7 +153,7 @@ static const Tk_OptionSpec optionSpecs[] = {
  * dispatch the scale widget command.
  */
 
-static const char *const commandNames[] = {
+static CONST char *commandNames[] = {
     "cget", "configure", NULL
 };
 
@@ -184,14 +172,14 @@ static void		MenuButtonImageProc(ClientData clientData,
 			    int x, int y, int width, int height, int imgWidth,
 			    int imgHeight);
 static char *		MenuButtonTextVarProc(ClientData clientData,
-			    Tcl_Interp *interp, const char *name1,
-			    const char *name2, int flags);
+			    Tcl_Interp *interp, CONST char *name1,
+			    CONST char *name2, int flags);
 static int		MenuButtonWidgetObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static int		ConfigureMenuButton(Tcl_Interp *interp,
 			    TkMenuButton *mbPtr, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static void		DestroyMenuButton(char *memPtr);
 
 /*
@@ -217,14 +205,14 @@ Tk_MenubuttonObjCmd(
     ClientData clientData,	/* NULL. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     register TkMenuButton *mbPtr;
     Tk_OptionTable optionTable;
     Tk_Window tkwin;
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?options?");
 	return TCL_ERROR;
     }
 
@@ -248,7 +236,7 @@ Tk_MenubuttonObjCmd(
     Tk_SetClass(tkwin, "Menubutton");
     mbPtr = TkpCreateMenuButton(tkwin);
 
-    Tk_SetClassProcs(tkwin, &menubuttonClass, mbPtr);
+    Tk_SetClassProcs(tkwin, &tkpMenubuttonClass, (ClientData) mbPtr);
 
     /*
      * Initialize the data structure for the button.
@@ -258,8 +246,8 @@ Tk_MenubuttonObjCmd(
     mbPtr->display = Tk_Display (tkwin);
     mbPtr->interp = interp;
     mbPtr->widgetCmd = Tcl_CreateObjCommand(interp,
-	    Tk_PathName(mbPtr->tkwin), MenuButtonWidgetObjCmd, mbPtr,
-	    MenuButtonCmdDeletedProc);
+	    Tk_PathName(mbPtr->tkwin), MenuButtonWidgetObjCmd,
+	    (ClientData) mbPtr, MenuButtonCmdDeletedProc);
     mbPtr->optionTable = optionTable;
     mbPtr->menuName = NULL;
     mbPtr->text = NULL;
@@ -308,7 +296,7 @@ Tk_MenubuttonObjCmd(
 
     Tk_CreateEventHandler(mbPtr->tkwin,
 	    ExposureMask|StructureNotifyMask|FocusChangeMask,
-	    MenuButtonEventProc, mbPtr);
+	    MenuButtonEventProc, (ClientData) mbPtr);
 
     if (Tk_InitOptions(interp, (char *) mbPtr, optionTable, tkwin) != TCL_OK) {
 	Tk_DestroyWindow(mbPtr->tkwin);
@@ -320,7 +308,7 @@ Tk_MenubuttonObjCmd(
 	return TCL_ERROR;
     }
 
-    Tcl_SetObjResult(interp, TkNewWindowObj(mbPtr->tkwin));
+    Tcl_SetStringObj(Tcl_GetObjResult(interp), Tk_PathName(mbPtr->tkwin), -1);
     return TCL_OK;
 }
 
@@ -347,14 +335,14 @@ MenuButtonWidgetObjCmd(
     ClientData clientData,	/* Information about button widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    register TkMenuButton *mbPtr = clientData;
+    register TkMenuButton *mbPtr = (TkMenuButton *) clientData;
     int result, index;
     Tcl_Obj *objPtr;
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
     result = Tcl_GetIndexFromObj(interp, objv[1], commandNames, "option", 0,
@@ -362,7 +350,7 @@ MenuButtonWidgetObjCmd(
     if (result != TCL_OK) {
 	return result;
     }
-    Tcl_Preserve(mbPtr);
+    Tcl_Preserve((ClientData) mbPtr);
 
     switch (index) {
     case COMMAND_CGET:
@@ -375,8 +363,9 @@ MenuButtonWidgetObjCmd(
 		mbPtr->optionTable, objv[2], mbPtr->tkwin);
 	if (objPtr == NULL) {
 	    goto error;
+	} else {
+	    Tcl_SetObjResult(interp, objPtr);
 	}
-	Tcl_SetObjResult(interp, objPtr);
 	break;
 
     case COMMAND_CONFIGURE:
@@ -386,18 +375,19 @@ MenuButtonWidgetObjCmd(
 		    mbPtr->tkwin);
 	    if (objPtr == NULL) {
 		goto error;
+	    } else {
+		Tcl_SetObjResult(interp, objPtr);
 	    }
-	    Tcl_SetObjResult(interp, objPtr);
 	} else {
 	    result = ConfigureMenuButton(interp, mbPtr, objc-2, objv+2);
 	}
 	break;
     }
-    Tcl_Release(mbPtr);
+    Tcl_Release((ClientData) mbPtr);
     return result;
 
   error:
-    Tcl_Release(mbPtr);
+    Tcl_Release((ClientData) mbPtr);
     return TCL_ERROR;
 }
 
@@ -428,7 +418,7 @@ DestroyMenuButton(
     TkpDestroyMenuButton(mbPtr);
 
     if (mbPtr->flags & REDRAW_PENDING) {
-	Tcl_CancelIdleCall(TkpDisplayMenuButton, mbPtr);
+	Tcl_CancelIdleCall(TkpDisplayMenuButton, (ClientData) mbPtr);
     }
 
     /*
@@ -440,7 +430,7 @@ DestroyMenuButton(
     if (mbPtr->textVarName != NULL) {
 	Tcl_UntraceVar(mbPtr->interp, mbPtr->textVarName,
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		MenuButtonTextVarProc, mbPtr);
+		MenuButtonTextVarProc, (ClientData) mbPtr);
     }
     if (mbPtr->image != NULL) {
 	Tk_FreeImage(mbPtr->image);
@@ -465,7 +455,7 @@ DestroyMenuButton(
     }
     Tk_FreeConfigOptions((char *) mbPtr, mbPtr->optionTable, mbPtr->tkwin);
     mbPtr->tkwin = NULL;
-    Tcl_EventuallyFree(mbPtr, TCL_DYNAMIC);
+    Tcl_EventuallyFree((ClientData) mbPtr, TCL_DYNAMIC);
 }
 
 /*
@@ -496,7 +486,7 @@ ConfigureMenuButton(
 				/* Information about widget; may or may not
 				 * already have values for some fields. */
     int objc,			/* Number of valid entries in objv. */
-    Tcl_Obj *const objv[])	/* Arguments. */
+    Tcl_Obj *CONST objv[])	/* Arguments. */
 {
     Tk_SavedOptions savedOptions;
     Tcl_Obj *errorResult = NULL;
@@ -510,7 +500,7 @@ ConfigureMenuButton(
     if (mbPtr->textVarName != NULL) {
 	Tcl_UntraceVar(interp, mbPtr->textVarName,
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		MenuButtonTextVarProc, mbPtr);
+		MenuButtonTextVarProc, (ClientData) mbPtr);
     }
 
     /*
@@ -573,7 +563,8 @@ ConfigureMenuButton(
 
 	if (mbPtr->imageString != NULL) {
 	    image = Tk_GetImage(mbPtr->interp, mbPtr->tkwin,
-		    mbPtr->imageString, MenuButtonImageProc, mbPtr);
+		    mbPtr->imageString, MenuButtonImageProc,
+		    (ClientData) mbPtr);
 	    if (image == NULL) {
 		return TCL_ERROR;
 	    }
@@ -625,7 +616,7 @@ ConfigureMenuButton(
 	 * Set up a trace to watch for any changes in it, create the variable
 	 * if it doesn't exist, and fetch its current value.
 	 */
-	const char *value;
+	CONST char *value;
 
 	value = Tcl_GetVar(interp, mbPtr->textVarName, TCL_GLOBAL_ONLY);
 	if (value == NULL) {
@@ -640,10 +631,10 @@ ConfigureMenuButton(
 	}
 	Tcl_TraceVar(interp, mbPtr->textVarName,
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		MenuButtonTextVarProc, mbPtr);
+		MenuButtonTextVarProc, (ClientData) mbPtr);
     }
 
-    TkMenuButtonWorldChanged(mbPtr);
+    TkMenuButtonWorldChanged((ClientData) mbPtr);
     if (error) {
 	Tcl_SetObjResult(interp, errorResult);
 	Tcl_DecrRefCount(errorResult);
@@ -677,7 +668,9 @@ TkMenuButtonWorldChanged(
     XGCValues gcValues;
     GC gc;
     unsigned long mask;
-    TkMenuButton *mbPtr = instanceData;
+    TkMenuButton *mbPtr;
+
+    mbPtr = (TkMenuButton *) instanceData;
 
     gcValues.font = Tk_FontId(mbPtr->tkfont);
     gcValues.foreground = mbPtr->normalFg->pixel;
@@ -750,7 +743,7 @@ TkMenuButtonWorldChanged(
      */
 
     if (Tk_IsMapped(mbPtr->tkwin) && !(mbPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayMenuButton, mbPtr);
+	Tcl_DoWhenIdle(TkpDisplayMenuButton, (ClientData) mbPtr);
 	mbPtr->flags |= REDRAW_PENDING;
     }
 }
@@ -778,8 +771,7 @@ MenuButtonEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkMenuButton *mbPtr = clientData;
-
+    TkMenuButton *mbPtr = (TkMenuButton *) clientData;
     if ((eventPtr->type == Expose) && (eventPtr->xexpose.count == 0)) {
 	goto redraw;
     } else if (eventPtr->type == ConfigureNotify) {
@@ -810,7 +802,7 @@ MenuButtonEventProc(
 
   redraw:
     if ((mbPtr->tkwin != NULL) && !(mbPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayMenuButton, mbPtr);
+	Tcl_DoWhenIdle(TkpDisplayMenuButton, (ClientData) mbPtr);
 	mbPtr->flags |= REDRAW_PENDING;
     }
 }
@@ -837,7 +829,7 @@ static void
 MenuButtonCmdDeletedProc(
     ClientData clientData)	/* Pointer to widget record for widget. */
 {
-    TkMenuButton *mbPtr = clientData;
+    TkMenuButton *mbPtr = (TkMenuButton *) clientData;
     Tk_Window tkwin = mbPtr->tkwin;
 
     /*
@@ -875,12 +867,12 @@ static char *
 MenuButtonTextVarProc(
     ClientData clientData,	/* Information about button. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    const char *name1,		/* Name of variable. */
-    const char *name2,		/* Second part of variable name. */
+    CONST char *name1,		/* Name of variable. */
+    CONST char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
-    register TkMenuButton *mbPtr = clientData;
-    const char *value;
+    register TkMenuButton *mbPtr = (TkMenuButton *) clientData;
+    CONST char *value;
     unsigned len;
 
     /*
@@ -913,7 +905,7 @@ MenuButtonTextVarProc(
 
     if ((mbPtr->tkwin != NULL) && Tk_IsMapped(mbPtr->tkwin)
 	    && !(mbPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayMenuButton, mbPtr);
+	Tcl_DoWhenIdle(TkpDisplayMenuButton, (ClientData) mbPtr);
 	mbPtr->flags |= REDRAW_PENDING;
     }
     return NULL;
@@ -946,12 +938,12 @@ MenuButtonImageProc(
 				 * 0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkMenuButton *mbPtr = clientData;
+    register TkMenuButton *mbPtr = (TkMenuButton *) clientData;
 
     if (mbPtr->tkwin != NULL) {
 	TkpComputeMenuButtonGeometry(mbPtr);
 	if (Tk_IsMapped(mbPtr->tkwin) && !(mbPtr->flags & REDRAW_PENDING)) {
-	    Tcl_DoWhenIdle(TkpDisplayMenuButton, mbPtr);
+	    Tcl_DoWhenIdle(TkpDisplayMenuButton, (ClientData) mbPtr);
 	    mbPtr->flags |= REDRAW_PENDING;
 	}
     }

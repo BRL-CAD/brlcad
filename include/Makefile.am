@@ -39,7 +39,6 @@ brlcadinclude_wanted = \
 	dm-ps.h \
 	dm-rtgl.h \
 	dm-tk.h \
-	dm-togl.h \
 	dm-wgl.h \
 	dm.h \
 	dm_color.h \

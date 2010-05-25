@@ -27,13 +27,13 @@
 
 
 void
-bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
+bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 {
     if (bu_debug & BU_DEBUG_PTBL)
-	bu_log("bu_ptbl_init(%p, len=%d, %s)\n", (void *)b, len, str);
+	bu_log("bu_ptbl_init(%p, len=%z, %s)\n", (void *)b, len, str);
     BU_LIST_INIT(&b->l);
     b->l.magic = BU_PTBL_MAGIC;
-    if (len <= 0)  len = 64;
+    if (len <= (size_t)0)  len = 64;
     b->blen = len;
     b->buffer = (long **)bu_calloc(b->blen, sizeof(long *), str);
     b->end = 0;
@@ -62,7 +62,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 	bu_log("bu_ptbl_ins(%p, %p)\n", (void *)b, (void *)p);
 
     if (b->blen == 0) bu_ptbl_init(b, 64, "bu_ptbl_ins() buffer");
-    if (b->end >= b->blen) {
+    if ((size_t)b->end >= b->blen) {
 	b->buffer = (long **)bu_realloc((char *)b->buffer,
 					sizeof(p)*(b->blen *= 4),
 					"bu_ptbl.buffer[] (ins)");
@@ -70,7 +70,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 
     i=b->end++;
     b->buffer[i] = p;
-    return (i);
+    return i;
 }
 
 
@@ -83,9 +83,9 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
     BU_CK_PTBL(b);
     pp = (const long **)b->buffer;
     for (k = b->end-1; k >= 0; k--)
-	if (pp[k] == p) return (k);
+	if (pp[k] == p) return k;
 
-    return (-1);
+    return -1;
 }
 
 
@@ -112,19 +112,19 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 
     /* search for existing */
     for (k = b->end-1; k >= 0; k--)
-	if (pp[k] == p) return (k);
+	if (pp[k] == p) return k;
 
     if (bu_debug & BU_DEBUG_PTBL)
 	bu_log("bu_ptbl_ins_unique(%p, %p)\n", (void *)b, (void *)p);
 
-    if (b->blen <= 0 || b->end >= b->blen) {
+    if (b->blen <= 0 || (size_t)b->end >= b->blen) {
 	/* Table needs to grow */
 	bu_ptbl_ins(b, p);
 	return -1;	/* To signal that it was added */
     }
 
     b->buffer[k=b->end++] = p;
-    return (-1);		/* To signal that it was added */
+    return -1;		/* To signal that it was added */
 }
 
 
@@ -165,7 +165,7 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
     if (bu_debug & BU_DEBUG_PTBL)
 	bu_log("bu_ptbl_cat(%p, %p)\n", (void *)dest, (void *)src);
 
-    if ((dest->blen - dest->end) < src->end) {
+    if ((dest->blen - dest->end) < (size_t)src->end) {
 	dest->blen = (dest->blen + src->end) * 2 + 8;
 	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
 					   dest->blen * sizeof(long *),
@@ -187,7 +187,7 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
 	bu_log("bu_ptbl_cat_uniq(%p, %p)\n", (void *)dest, (void *)src);
 
     /* Assume the worst, ensure sufficient space to add all 'src' items */
-    if ((dest->blen - dest->end) < src->end) {
+    if ((dest->blen - dest->end) < (size_t)src->end) {
 	dest->buffer = (long **)bu_realloc((char *)dest->buffer,
 					   sizeof(long *)*(dest->blen += src->blen + 8),
 					   "bu_ptbl.buffer[] (cat_uniq)");
@@ -226,17 +226,17 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
 	return bu_ptbl_locate(b, p);
     } else if (func == BU_PTBL_ZERO) {
 	bu_ptbl_zero(b, p);
-	return (0);
+	return 0;
     } else if (func == BU_PTBL_INS_UNIQUE) {
 	return bu_ptbl_ins_unique(b, p);
     } else if (func == BU_PTBL_RM) {
 	return bu_ptbl_rm(b, p);
     } else if (func == BU_PTBL_CAT) {
 	bu_ptbl_cat(b, (const struct bu_ptbl *)p);
-	return (0);
+	return 0;
     } else if (func == BU_PTBL_FREE) {
 	bu_ptbl_free(b);
-	return (0);
+	return 0;
     }
 
     bu_log("bu_ptbl(%p) Unknown table function %d\n", (void *)b, func);

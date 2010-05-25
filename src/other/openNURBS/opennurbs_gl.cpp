@@ -642,6 +642,8 @@ void ON_GL( const ON_Light& light, GLenum light_index )
     glPushMatrix();
     glLoadIdentity();
     break;
+  case ON::screen_cs:
+    break;
   }
 
   GLfloat ambient[4], diffuse[4], specular[4];

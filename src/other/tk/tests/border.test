@@ -7,60 +7,49 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.2
-namespace import ::tcltest::*
+package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
-test border-1.1 {Tk_AllocBorderFromObj - converting internal reps} -constraints {  
-    testborder 
-} -body {
+if {[testConstraint pseudocolor8]} {
+    toplevel .t -visual {pseudocolor 8} -colormap new
+    wm geom .t +0+0
+}
+
+test border-1.1 {Tk_AllocBorderFromObj - converting internal reps} testborder {
     set x orange
     lindex $x 0
+    destroy .b1
     button .b1 -bg $x -text .b1
     lindex $x 0
     testborder orange
-} -cleanup {
-    destroy .b1
-} -result {{1 0}}
-test border-1.2 {Tk_AllocBorderFromObj - discard stale border} -constraints {  
-    testborder 
-} -setup {
-    set result {}
-} -body {
+} {{1 0}}
+test border-1.3 {Tk_AllocBorderFromObj - discard stale border} testborder {
     set x orange
+    destroy .b1 .b2
     button .b1 -bg $x -text First
     destroy .b1
+    set result {}
     lappend result [testborder orange]
     button .b2 -bg $x -text Second
     lappend result [testborder orange]
-} -cleanup {
-    destroy .b1 .b2
-} -result {{} {{1 1}}}
-test border-1.3 {Tk_AllocBorderFromObj - reuse existing border} -constraints {  
-    testborder 
-} -setup {
-    set result {}
-} -body {
+} {{} {{1 1}}}
+test border-1.2 {Tk_AllocBorderFromObj - reuse existing border} testborder {
     set x orange
+    destroy .b1 .b2
     button .b1 -bg $x -text First
+    set result {}
     lappend result [testborder orange]
     button .b2 -bg $x -text Second
     pack .b1 .b2 -side top
     lappend result [testborder orange]
-} -cleanup {
-    destroy .b1 .b2
-} -result {{{1 1}} {{2 1}}}
-test border-1.4 {Tk_AllocBorderFromObj - try other borders in list} -constraints {  
-    testborder pseudocolor8
-} -setup {
-    toplevel .t -visual {pseudocolor 8} -colormap new
-    wm geom .t +0+0
-    set result {}
-} -body {
+} {{{1 1}} {{2 1}}}
+test border-1.4 {Tk_AllocBorderFromObj - try other borders in list} {pseudocolor8 testborder} {
     set x purple
+    destroy .b1 .b2 .t.b
     button .b1 -bg $x -text First
     pack .b1 -side top
+    set result {}
     lappend result [testborder purple]
     button .t.b -bg $x -text Second
     pack .t.b -side top
@@ -68,24 +57,18 @@ test border-1.4 {Tk_AllocBorderFromObj - try other borders in list} -constraints
     button .b2 -bg $x -text Third
     pack .b2 -side top
     lappend result [testborder purple]
-} -cleanup {
-    destroy .b1 .b2 .t
-} -result {{{1 1}} {{1 1} {1 0}} {{1 0} {2 1}}}
+} {{{1 1}} {{1 1} {1 0}} {{1 0} {2 1}}}
 
-test border-2.1 {Tk_Free3DBorder - reference counts} -constraints {  
-    testborder pseudocolor8
-} -setup {
-    toplevel .t -visual {pseudocolor 8} -colormap new
-    wm geom .t +0+0
-    set result {}
-} -body {
+test border-3.1 {Tk_Free3DBorder - reference counts} {pseudocolor8 testborder} {
     set x purple
+    destroy .b1 .b2 .t.b
     button .b1 -bg $x -text First
     pack .b1 -side top
     button .t.b -bg $x -text Second
     pack .t.b -side top
     button .b2 -bg $x -text Third
     pack .b2 -side top
+    set result {}
     lappend result [testborder purple]
     destroy .b1
     lappend result [testborder purple]
@@ -93,18 +76,11 @@ test border-2.1 {Tk_Free3DBorder - reference counts} -constraints {
     lappend result [testborder purple]
     destroy .t.b
     lappend result [testborder purple]
-} -cleanup {
-    destroy .b1 .b2 .t
-} -result {{{1 0} {2 1}} {{1 0} {1 1}} {{1 0}} {}}
-test border-2.2 {Tk_Free3DBorder - unlinking from list} -constraints {  
-    testborder pseudocolor8
-} -setup {
-    toplevel .t -visual {pseudocolor 8} -colormap new
-    wm geom .t +0+0
+} {{{1 0} {2 1}} {{1 0} {1 1}} {{1 0}} {}}
+test border-3.4 {Tk_Free3DBorder - unlinking from list} {pseudocolor8 testborder} {
+    destroy .b .t.b .t2 .t3
     toplevel .t2 -visual {pseudocolor 8} -colormap new
     toplevel .t3 -visual {pseudocolor 8} -colormap new
-    set result {}
-} -body {
     set x purple
     button .b -bg $x -text .b1
     button .t.b1 -bg $x -text .t.b1
@@ -116,6 +92,7 @@ test border-2.2 {Tk_Free3DBorder - unlinking from list} -constraints {
     button .t3.b2 -bg $x -text .t3.b2
     button .t3.b3 -bg $x -text .t3.b3
     button .t3.b4 -bg $x -text .t3.b4
+    set result {}
     lappend result [testborder purple]
     destroy .t2
     lappend result [testborder purple]
@@ -125,21 +102,17 @@ test border-2.2 {Tk_Free3DBorder - unlinking from list} -constraints {
     lappend result [testborder purple]
     destroy .t
     lappend result [testborder purple]
-} -cleanup {
-    destroy .b .t2 .t3 .t
-} -result {{{4 1} {3 0} {2 0} {1 0}} {{4 1} {2 0} {1 0}} {{4 1} {2 0}} {{2 0}} {}}
+} {{{4 1} {3 0} {2 0} {1 0}} {{4 1} {2 0} {1 0}} {{4 1} {2 0}} {{2 0}} {}}
 
-test border-3.1 {FreeBorderObjProc} -constraints {  
-    testborder 
-} -setup {
-    set result {}
-} -body {
+test border-4.1 {FreeBorderObjProc} testborder {
+    destroy .b
     set x [format purple]
     button .b -bg $x -text .b1
     set y [format purple]
     .b configure -bg $y
     set z [format purple]
     .b configure -bg $z
+    set result {}
     lappend result [testborder purple]
     set x red
     lappend result [testborder purple]
@@ -148,53 +121,42 @@ test border-3.1 {FreeBorderObjProc} -constraints {
     destroy .b
     lappend result [testborder purple]
     set y bogus
-    return $result
-} -cleanup {
-    destroy .b
-} -result {{{1 3}} {{1 2}} {{1 1}} {}}
+    set result
+} {{{1 3}} {{1 2}} {{1 1}} {}}
 
-test border-4.1 {Tk_GetReliefFromObj} -body {
-    button .b -relief flat
+catch {destroy .b}
+button .b
+test border-5.1 {Tk_GetReliefFromObj} {
+    .b configure -relief flat
     .b cget -relief
-} -cleanup {
-    destroy .b
-} -result {flat}
-test border-4.2 {Tk_GetReliefFromObj} -body {
-    button .b -relief groove
+} {flat}
+test border-5.2 {Tk_GetReliefFromObj} {
+    .b configure -relief groove
     .b cget -relief
-} -cleanup {
-    destroy .b
-} -result {groove}
-test border-4.3 {Tk_GetReliefFromObj} -body {
-    button .b -relief raised
+} {groove}
+test border-5.3 {Tk_GetReliefFromObj} {
+    .b configure -relief raised
     .b cget -relief
-} -cleanup {
-    destroy .b
-} -result {raised}
-test border-4.4 {Tk_GetReliefFromObj} -body {
-    button .b -relief ridge
+} {raised}
+test border-5.4 {Tk_GetReliefFromObj} {
+    .b configure -relief ridge
     .b cget -relief
-} -cleanup {
-    destroy .b
-} -result {ridge}
-test border-4.5 {Tk_GetReliefFromObj} -body {
-    button .b -relief solid
+} {ridge}
+test border-5.5 {Tk_GetReliefFromObj} {
+    .b configure -relief solid
     .b cget -relief
-} -cleanup {
-    destroy .b
-} -result {solid}
-test border-4.6 {Tk_GetReliefFromObj} -body {
-    button .b -relief sunken
+} {solid}
+test border-5.6 {Tk_GetReliefFromObj} {
+    .b configure -relief sunken
     .b cget -relief
-} -cleanup {
-    destroy .b
-} -result {sunken}
-test border-4.7 {Tk_GetReliefFromObj - error} -body {
-    button .b -relief upanddown
-} -cleanup {
-    destroy .b
-} -returnCodes error -result {bad relief "upanddown": must be flat, groove, raised, ridge, solid, or sunken}
+} {sunken}
+test border-5.7 {Tk_GetReliefFromObj - error} {
+    list [catch {.b configure -relief upanddown} msg] $msg
+} {1 {bad relief "upanddown": must be flat, groove, raised, ridge, solid, or sunken}}
 
+if {[testConstraint pseudocolor8]} {
+    destroy .t
+}
 
 # cleanup
 cleanupTests

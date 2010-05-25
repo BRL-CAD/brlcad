@@ -39,17 +39,14 @@ with the \fBcatch\fR command:
 if a caught error cannot be handled successfully, \fIinfo\fR can be used
 to return a stack trace reflecting the original point of occurrence
 of the error:
-.PP
 .CS
 \fBcatch {...} errMsg
 set savedInfo $::errorInfo
 \&...
 error $errMsg $savedInfo\fR
 .CE
-.PP
 When working with Tcl 8.5 or later, the following code
 should be used instead:
-.PP
 .CS
 \fBcatch {...} errMsg options
 \&...
@@ -63,15 +60,15 @@ of the error in cases where such information is available; see
 the \fBreturn\fR manual page for information on the proper format
 for this option's value.
 .SH EXAMPLE
-.PP
 Generate an error if a basic mathematical operation fails:
-.PP
 .CS
 if {1+2 != 3} {
     \fBerror\fR "something is very wrong with addition"
 }
 .CE
+
 .SH "SEE ALSO"
 catch(n), return(n)
+
 .SH KEYWORDS
-error, exception
+error

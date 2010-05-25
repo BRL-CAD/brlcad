@@ -13,31 +13,29 @@
  * RCS: @(#) $Id$
  */
 
-#ifndef USE_TCL_STUBS
-#   define USE_TCL_STUBS
-#endif
 #include "tclInt.h"
 
 /*
  * name and version of this package
  */
 
-static const char packageName[] = "procbodytest";
-static const char packageVersion[] = "1.0";
+static char packageName[] = "procbodytest";
+static char packageVersion[] = "1.0";
 
 /*
  * Name of the commands exported by this package
  */
 
-static const char procCommand[] = "proc";
+static char procCommand[] = "proc";
 
 /*
  * this struct describes an entry in the table of command names and command
  * procs
  */
 
-typedef struct CmdTable {
-    const char *cmdName;		/* command name */
+typedef struct CmdTable
+{
+    char *cmdName;		/* command name */
     Tcl_ObjCmdProc *proc;	/* command proc */
     int exportIt;		/* if 1, export the command */
 } CmdTable;
@@ -47,24 +45,24 @@ typedef struct CmdTable {
  */
 
 static int	ProcBodyTestProcObjCmd(ClientData dummy,
-			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+			Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 static int	ProcBodyTestInitInternal(Tcl_Interp *interp, int isSafe);
 static int	RegisterCommand(Tcl_Interp* interp,
-			const char *namespace, const CmdTable *cmdTablePtr);
-int		Procbodytest_Init(Tcl_Interp * interp);
-int		Procbodytest_SafeInit(Tcl_Interp * interp);
+			char *namespace, CONST CmdTable *cmdTablePtr);
+int             Procbodytest_Init(Tcl_Interp * interp);
+int             Procbodytest_SafeInit(Tcl_Interp * interp);
 
 /*
  * List of commands to create when the package is loaded; must go after the
  * declarations of the enable command procedure.
  */
 
-static const CmdTable commands[] = {
+static CONST CmdTable commands[] = {
     { procCommand,	ProcBodyTestProcObjCmd,	1 },
     { 0, 0, 0 }
 };
 
-static const CmdTable safeCommands[] = {
+static CONST CmdTable safeCommands[] = {
     { procCommand,	ProcBodyTestProcObjCmd,	1 },
     { 0, 0, 0 }
 };
@@ -74,13 +72,13 @@ static const CmdTable safeCommands[] = {
  *
  * Procbodytest_Init --
  *
- *	This function initializes the "procbodytest" package.
+ *  This function initializes the "procbodytest" package.
  *
  * Results:
- *	A standard Tcl result.
+ *  A standard Tcl result.
  *
  * Side effects:
- *	None.
+ *  None.
  *
  *----------------------------------------------------------------------
  */
@@ -88,7 +86,7 @@ static const CmdTable safeCommands[] = {
 int
 Procbodytest_Init(
     Tcl_Interp *interp)		/* the Tcl interpreter for which the package
-				 * is initialized */
+                                 * is initialized */
 {
     return ProcBodyTestInitInternal(interp, 0);
 }
@@ -98,13 +96,13 @@ Procbodytest_Init(
  *
  * Procbodytest_SafeInit --
  *
- *	This function initializes the "procbodytest" package.
+ *  This function initializes the "procbodytest" package.
  *
  * Results:
- *	A standard Tcl result.
+ *  A standard Tcl result.
  *
  * Side effects:
- *	None.
+ *  None.
  *
  *----------------------------------------------------------------------
  */
@@ -112,7 +110,7 @@ Procbodytest_Init(
 int
 Procbodytest_SafeInit(
     Tcl_Interp *interp)		/* the Tcl interpreter for which the package
-				 * is initialized */
+                                 * is initialized */
 {
     return ProcBodyTestInitInternal(interp, 1);
 }
@@ -122,38 +120,36 @@ Procbodytest_SafeInit(
  *
  * RegisterCommand --
  *
- *	This function registers a command in the context of the given
- *	namespace.
+ *  This function registers a command in the context of the given namespace.
  *
  * Results:
- *	A standard Tcl result.
+ *  A standard Tcl result.
  *
  * Side effects:
- *	None.
+ *  None.
  *
  *----------------------------------------------------------------------
  */
 
-static int
-RegisterCommand(
-    Tcl_Interp* interp,		/* the Tcl interpreter for which the operation
+static int RegisterCommand(interp, namespace, cmdTablePtr)
+    Tcl_Interp* interp;		/* the Tcl interpreter for which the operation
 				 * is performed */
-    const char *namespace,		/* the namespace in which the command is
+    char *namespace;		/* the namespace in which the command is
 				 * registered */
-    const CmdTable *cmdTablePtr)/* the command to register */
+    CONST CmdTable *cmdTablePtr;/* the command to register */
 {
     char buf[128];
 
     if (cmdTablePtr->exportIt) {
-	sprintf(buf, "namespace eval %s { namespace export %s }",
-		namespace, cmdTablePtr->cmdName);
-	if (Tcl_Eval(interp, buf) != TCL_OK) {
-	    return TCL_ERROR;
-	}
+        sprintf(buf, "namespace eval %s { namespace export %s }",
+                namespace, cmdTablePtr->cmdName);
+        if (Tcl_Eval(interp, buf) != TCL_OK)
+            return TCL_ERROR;
     }
 
     sprintf(buf, "%s::%s", namespace, cmdTablePtr->cmdName);
     Tcl_CreateObjCommand(interp, buf, cmdTablePtr->proc, 0, 0);
+
     return TCL_OK;
 }
 
@@ -177,16 +173,16 @@ RegisterCommand(
 static int
 ProcBodyTestInitInternal(
     Tcl_Interp *interp,		/* the Tcl interpreter for which the package
-				 * is initialized */
+                                 * is initialized */
     int isSafe)			/* 1 if this is a safe interpreter */
 {
-    const CmdTable *cmdTablePtr;
+    CONST CmdTable *cmdTablePtr;
 
     cmdTablePtr = (isSafe) ? &safeCommands[0] : &commands[0];
     for ( ; cmdTablePtr->cmdName ; cmdTablePtr++) {
-	if (RegisterCommand(interp, packageName, cmdTablePtr) != TCL_OK) {
-	    return TCL_ERROR;
-	}
+        if (RegisterCommand(interp, packageName, cmdTablePtr) != TCL_OK) {
+            return TCL_ERROR;
+        }
     }
 
     return Tcl_PkgProvide(interp, packageName, packageVersion);
@@ -232,7 +228,7 @@ ProcBodyTestProcObjCmd(
     int objc,			/* argument count */
     Tcl_Obj *const objv[])	/* arguments */
 {
-    const char *fullName;
+    char *fullName;
     Tcl_Command procCmd;
     Command *cmdPtr;
     Proc *procPtr = NULL;
@@ -252,20 +248,20 @@ ProcBodyTestProcObjCmd(
     fullName = Tcl_GetStringFromObj(objv[3], NULL);
     procCmd = Tcl_FindCommand(interp, fullName, NULL, TCL_LEAVE_ERR_MSG);
     if (procCmd == NULL) {
-	return TCL_ERROR;
+        return TCL_ERROR;
     }
 
     cmdPtr = (Command *) procCmd;
 
     /*
      * check that this is a procedure and not a builtin command:
-     * If a procedure, cmdPtr->objClientData is TclIsProc(cmdPtr).
+     * If a procedure, cmdPtr->objProc is TclObjInterpProc.
      */
 
-    if (cmdPtr->objClientData != TclIsProc(cmdPtr)) {
-	Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+    if (cmdPtr->objProc != TclGetObjInterpProc()) {
+        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
 		"command \"", fullName, "\" is not a Tcl procedure", NULL);
-	return TCL_ERROR;
+        return TCL_ERROR;
     }
 
     /*
@@ -274,9 +270,10 @@ ProcBodyTestProcObjCmd(
 
     procPtr = (Proc *) cmdPtr->objClientData;
     if (procPtr == NULL) {
-	Tcl_AppendStringsToObj(Tcl_GetObjResult(interp), "procedure \"",
-		fullName, "\" does not have a Proc struct!", NULL);
-	return TCL_ERROR;
+        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+		"procedure \"", fullName,
+		"\" does not have a Proc struct!", NULL);
+        return TCL_ERROR;
     }
 
     /*
@@ -285,10 +282,10 @@ ProcBodyTestProcObjCmd(
 
     bodyObjPtr = TclNewProcBodyObj(procPtr);
     if (bodyObjPtr == NULL) {
-	Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
 		"failed to create a procbody object for procedure \"",
-		fullName, "\"", NULL);
-	return TCL_ERROR;
+                fullName, "\"", NULL);
+        return TCL_ERROR;
     }
     Tcl_IncrRefCount(bodyObjPtr);
 

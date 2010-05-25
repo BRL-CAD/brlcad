@@ -19,7 +19,7 @@ dnl	to configure the system for the local environment.
 # so you can encode the package version directly into the source files.
 #-----------------------------------------------------------------------
 
-AC_INIT([Togl], [2.0])
+AC_INIT([Togl], [2.1])
 
 #--------------------------------------------------------------------
 # Call TEA_INIT as the first TEA_ macro to set up initial vars.
@@ -27,7 +27,7 @@ AC_INIT([Togl], [2.0])
 # as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
 #--------------------------------------------------------------------
 
-TEA_INIT([3.6])
+TEA_INIT([3.7])
 
 AC_CONFIG_AUX_DIR(tclconfig)
 
@@ -98,15 +98,20 @@ TEA_ADD_TCL_SOURCES([])
 # TEA_ADD_* any platform specific compiler/build info here.
 #--------------------------------------------------------------------
 
+# Add pkgIndex.tcl if it is generated in the Makefile instead of ./configure
+# and change Makefile.in to move it from CONFIG_CLEAN_FILES to BINARIES var.
+#CLEANFILES="pkgIndex.tcl"
 if test "${TEA_PLATFORM}" = "windows" ; then
     AC_DEFINE(BUILD_togl, 1, [Build windows export dll])
-    CLEANFILES="*.lib *.dll *.exp *.ilk *.pdb vc*.pch"
+    CLEANFILES="$CLEANFILES *.lib *.dll *.exp *.ilk *.pdb vc*.pch *.manifest"
     if test "$GCC" != "yes" ; then
 	    TEA_ADD_LIBS([StereoI/StereoI.lib])
     fi
     #TEA_ADD_SOURCES([win/winFile.c])
     #TEA_ADD_INCLUDES([-I\"$(${CYGPATH} ${srcdir}/win)\"])
 else
+    # Ensure no empty else clauses
+    :
     CLEANFILES="so_locations"
     #TEA_ADD_SOURCES([unix/unixFile.c])
     #TEA_ADD_LIBS([-lsuperfly])
@@ -121,6 +126,14 @@ AC_SUBST(CLEANFILES)
 # notice.
 # This MUST be called after TEA_LOAD_TCLCONFIG / TEA_LOAD_TKCONFIG
 #--------------------------------------------------------------------
+
+# find Tcl, Tk, and X11 headers
+#TEA_PUBLIC_TCL_HEADERS
+TEA_PRIVATE_TCL_HEADERS
+
+#TEA_PUBLIC_TK_HEADERS
+TEA_PRIVATE_TK_HEADERS
+TEA_PATH_X
 
 # find autostereo header, lib, and daemon
 AC_ARG_WITH([autostereo],
@@ -160,8 +173,25 @@ case "${TEA_WINDOWINGSYSTEM}" in
 		;;
 	x11)
 		AC_SUBST(TOGL_WINDOWINGSYSTEM,TOGL_X11)
-		TEA_ADD_LIBS([-lGL -lXmu])
+		AC_ARG_WITH([Xmu],
+		    [AS_HELP_STRING([--with-Xmu],
+		        [use system's shared Xmu library])],
+		    [],
+		    [with_Xmu=no])
+		AS_IF([test "x$with_Xmu" != xno],
+		    [AC_CHECK_LIB([Xmu], [XmuLookupStandardColormap],
+			[TEA_ADD_LIBS([-lXmu])
+			 AC_DEFINE(USE_SYSTEM_LIBXMU, 1,
+				   [Define to use system Xmu library])
+			],
+			[with_Xmu=no],
+			[-lXt -lX11]
+		    )])
+		AS_IF([test "x$with_Xmu" = xno],
+			[TEA_ADD_SOURCES([Xmu_CmapAlloc.c Xmu_CrCmap.c Xmu_DelCmap.c Xmu_LookupCmap.c Xmu_StdCmap.c])])
+		TEA_ADD_LIBS([-lGL])
 		LIBGLU=-lGLU
+		TOGL_UNDEF_GET_PROC_ADDRESS
 		;;
 	win32)
 		AC_SUBST(TOGL_WINDOWINGSYSTEM,TOGL_WGL)
@@ -180,14 +210,6 @@ case "${TEA_WINDOWINGSYSTEM}" in
 esac
 AC_SUBST(LIBGLU)
 AC_SUBST(TEA_WINDOWINGSYSTEM)
-
-# find Tcl, Tk, and X11 headers
-#TEA_PUBLIC_TCL_HEADERS
-TEA_PRIVATE_TCL_HEADERS
-
-#TEA_PUBLIC_TK_HEADERS
-TEA_PRIVATE_TK_HEADERS
-TEA_PATH_X
 
 #--------------------------------------------------------------------
 # Check whether --enable-threads or --disable-threads was given.
@@ -252,7 +274,7 @@ fi
 #--------------------------------------------------------------------
 
 TEA_PROG_TCLSH
-TEA_PROG_WISH
+#TEA_PROG_WISH
 
 #--------------------------------------------------------------------
 # Finally, substitute all of the various values into the Makefile.

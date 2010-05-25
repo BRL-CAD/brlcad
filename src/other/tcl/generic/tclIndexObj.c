@@ -3,11 +3,9 @@
  *
  *	This file implements objects of type "index". This object type is used
  *	to lookup a keyword in a table of valid values and cache the index of
- *	the matching entry. Also provides table-based argv/argc processing.
+ *	the matching entry.
  *
- * Copyright (c) 1990-1994 The Regents of the University of California.
  * Copyright (c) 1997 Sun Microsystems, Inc.
- * Copyright (c) 2006 Sam Bromley.
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -21,31 +19,17 @@
  * Prototypes for functions defined later in this file:
  */
 
-static int 		GetIndexFromObjList(Tcl_Interp *interp,
-			    Tcl_Obj *objPtr, Tcl_Obj *tableObjPtr,
-			    const char *msg, int flags, int *indexPtr);
 static int		SetIndexFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
 static void		UpdateStringOfIndex(Tcl_Obj *objPtr);
 static void		DupIndex(Tcl_Obj *srcPtr, Tcl_Obj *dupPtr);
 static void		FreeIndex(Tcl_Obj *objPtr);
-static int		PrefixAllObjCmd(ClientData clientData,
-			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
-static int		PrefixLongestObjCmd(ClientData clientData,
-			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
-static int		PrefixMatchObjCmd(ClientData clientData,
-			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
-static void		PrintUsage(Tcl_Interp *interp,
-			    const Tcl_ArgvInfo *argTable);
 
 /*
  * The structure below defines the index Tcl object type by means of functions
  * that can be invoked by generic object code.
  */
 
-static const Tcl_ObjType indexType = {
+static Tcl_ObjType indexType = {
     "index",				/* name */
     FreeIndex,				/* freeIntRepProc */
     DupIndex,				/* dupIntRepProc */
@@ -62,9 +46,9 @@ static const Tcl_ObjType indexType = {
  */
 
 typedef struct {
-    void *tablePtr;		/* Pointer to the table of strings */
-    int offset;			/* Offset between table entries */
-    int index;			/* Selected index into table. */
+    void *tablePtr;			/* Pointer to the table of strings */
+    int offset;				/* Offset between table entries */
+    int index;				/* Selected index into table. */
 } IndexRep;
 
 /*
@@ -88,7 +72,7 @@ typedef struct {
  *
  * Results:
  *	If the value of objPtr is identical to or a unique abbreviation for
- *	one of the entries in tablePtr, then the return value is TCL_OK and the
+ *	one of the entries in objPtr, then the return value is TCL_OK and the
  *	index of the matching entry is stored at *indexPtr. If there isn't a
  *	proper match, then TCL_ERROR is returned and an error message is left
  *	in interp's result (unless interp is NULL). The msg argument is used
@@ -107,7 +91,7 @@ int
 Tcl_GetIndexFromObj(
     Tcl_Interp *interp, 	/* Used for error reporting if not NULL. */
     Tcl_Obj *objPtr,		/* Object containing the string to lookup. */
-    const char *const*tablePtr,	/* Array of strings to compare against the
+    const char **tablePtr,	/* Array of strings to compare against the
 				 * value of objPtr; last entry must be NULL
 				 * and there must not be duplicate entries. */
     const char *msg,		/* Identifying word to use in error
@@ -143,92 +127,6 @@ Tcl_GetIndexFromObj(
 /*
  *----------------------------------------------------------------------
  *
- * GetIndexFromObjList --
- *
- *	This procedure looks up an object's value in a table of strings
- *	and returns the index of the matching string, if any.
- *
- * Results:
- *	If the value of objPtr is identical to or a unique abbreviation
- *	for one of the entries in tableObjPtr, then the return value is
- *	TCL_OK and the index of the matching entry is stored at
- *	*indexPtr.  If there isn't a proper match, then TCL_ERROR is
- *	returned and an error message is left in interp's result (unless
- *	interp is NULL).  The msg argument is used in the error
- *	message; for example, if msg has the value "option" then the
- *	error message will say something flag 'bad option "foo": must be
- *	...'
- *
- * Side effects:
- *	The result of the lookup is cached as the internal rep of
- *	objPtr, so that repeated lookups can be done quickly.
- *
- *----------------------------------------------------------------------
- */
-
-int
-GetIndexFromObjList(
-    Tcl_Interp *interp, 	/* Used for error reporting if not NULL. */
-    Tcl_Obj *objPtr,		/* Object containing the string to lookup. */
-    Tcl_Obj *tableObjPtr,	/* List of strings to compare against the
-				 * value of objPtr. */
-    const char *msg,		/* Identifying word to use in error
-				 * messages. */
-    int flags,			/* 0 or TCL_EXACT */
-    int *indexPtr)		/* Place to store resulting integer index. */
-{
-
-    int objc, result, t;
-    Tcl_Obj **objv;
-    const char **tablePtr;
-
-    /*
-     * Use Tcl_GetIndexFromObjStruct to do the work to avoid duplicating
-     * most of the code there.  This is a bit ineffiecient but simpler.
-     */
-
-    result = Tcl_ListObjGetElements(interp, tableObjPtr, &objc, &objv);
-    if (result != TCL_OK) {
-	return result;
-    }
-
-    /*
-     * Build a string table from the list.
-     */
-
-    tablePtr = (const char **) ckalloc((objc + 1) * sizeof(char *));
-    for (t = 0; t < objc; t++) {
-	if (objv[t] == objPtr) {
-	    /*
-	     * An exact match is always chosen, so we can stop here.
-	     */
-
-	    ckfree((char *) tablePtr);
-	    *indexPtr = t;
-	    return TCL_OK;
-	}
-
-	tablePtr[t] = Tcl_GetString(objv[t]);
-    }
-    tablePtr[objc] = NULL;
-
-    result = Tcl_GetIndexFromObjStruct(interp, objPtr, tablePtr,
-	    sizeof(char *), msg, flags, indexPtr);
-
-    /*
-     * The internal rep must be cleared since tablePtr will go away.
-     */
-
-    TclFreeIntRep(objPtr);
-    objPtr->typePtr = NULL;
-    ckfree((char *) tablePtr);
-
-    return result;
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * Tcl_GetIndexFromObjStruct --
  *
  *	This function looks up an object's value given a starting string and
@@ -237,7 +135,7 @@ GetIndexFromObjList(
  *
  * Results:
  *	If the value of objPtr is identical to or a unique abbreviation for
- *	one of the entries in tablePtr, then the return value is TCL_OK and the
+ *	one of the entries in objPtr, then the return value is TCL_OK and the
  *	index of the matching entry is stored at *indexPtr. If there isn't a
  *	proper match, then TCL_ERROR is returned and an error message is left
  *	in interp's result (unless interp is NULL). The msg argument is used
@@ -268,7 +166,7 @@ Tcl_GetIndexFromObjStruct(
     int *indexPtr)		/* Place to store resulting integer index. */
 {
     int index, idx, numAbbrev;
-    const char *key, *p1;
+    char *key, *p1;
     const char *p2;
     const char *const *entryPtr;
     Tcl_Obj *resultPtr;
@@ -348,8 +246,8 @@ Tcl_GetIndexFromObjStruct(
  	objPtr->typePtr = &indexType;
     }
     indexRep->tablePtr = (void *) tablePtr;
-    indexRep->offset   = offset;
-    indexRep->index    = index;
+    indexRep->offset = offset;
+    indexRep->index = index;
 
     *indexPtr = index;
     return TCL_OK;
@@ -499,313 +397,6 @@ FreeIndex(
     Tcl_Obj *objPtr)
 {
     ckfree((char *) objPtr->internalRep.otherValuePtr);
-    objPtr->typePtr = NULL;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclInitPrefixCmd --
- *
- *	This procedure creates the "prefix" Tcl command. See the user
- *	documentation for details on what it does.
- *
- * Results:
- *	A standard Tcl result.
- *
- * Side effects:
- *	See the user documentation.
- *
- *----------------------------------------------------------------------
- */
-
-Tcl_Command
-TclInitPrefixCmd(
-    Tcl_Interp *interp)		/* Current interpreter. */
-{
-    static const EnsembleImplMap prefixImplMap[] = {
-	{"all",		PrefixAllObjCmd, NULL, NULL, NULL},
-	{"longest",	PrefixLongestObjCmd, NULL, NULL, NULL},
-	{"match",	PrefixMatchObjCmd, NULL, NULL, NULL},
-	{NULL, NULL, NULL, NULL, NULL}
-    };
-    Tcl_Command prefixCmd;
-
-    prefixCmd = TclMakeEnsemble(interp, "::tcl::prefix", prefixImplMap);
-    Tcl_Export(interp, Tcl_FindNamespace(interp, "::tcl", NULL, 0),
-	    "prefix", 0);
-    return prefixCmd;
-}
-
-/*----------------------------------------------------------------------
- *
- * PrefixMatchObjCmd --
- *
- *	This function implements the 'prefix match' Tcl command. Refer to the
- *	user documentation for details on what it does.
- *
- * Results:
- *	Returns a standard Tcl result.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-PrefixMatchObjCmd(
-    ClientData clientData,	/* Not used. */
-    Tcl_Interp *interp,		/* Current interpreter. */
-    int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
-{
-    int flags = 0, result, index;
-    int dummyLength, i, errorLength;
-    Tcl_Obj *errorPtr = NULL;
-    const char *message = "option";
-    Tcl_Obj *tablePtr, *objPtr, *resultPtr;
-    static const char *const matchOptions[] = {
-	"-error", "-exact", "-message", NULL
-    };
-    enum matchOptions {
-	PRFMATCH_ERROR, PRFMATCH_EXACT, PRFMATCH_MESSAGE
-    };
-
-    if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 1, objv, "?options? table string");
-	return TCL_ERROR;
-    }
-
-    for (i = 1; i < (objc - 2); i++) {
-	if (Tcl_GetIndexFromObj(interp, objv[i], matchOptions, "option", 0,
-		&index) != TCL_OK) {
-	    return TCL_ERROR;
-	}
-	switch ((enum matchOptions) index) {
-	case PRFMATCH_EXACT:
-	    flags |= TCL_EXACT;
-	    break;
-	case PRFMATCH_MESSAGE:
-	    if (i > (objc - 4)) {
-		Tcl_AppendResult(interp, "missing message", NULL);
-		return TCL_ERROR;
-	    }
-	    i++;
-	    message = Tcl_GetString(objv[i]);
-	    break;
-	case PRFMATCH_ERROR:
-	    if (i > (objc - 4)) {
-		Tcl_AppendResult(interp, "missing error options", NULL);
-		return TCL_ERROR;
-	    }
-	    i++;
-	    result = Tcl_ListObjLength(interp, objv[i], &errorLength);
-	    if (result != TCL_OK) {
-		return TCL_ERROR;
-	    }
-	    if ((errorLength % 2) != 0) {
-		Tcl_AppendResult(interp, "error options must have an even"
-			" number of elements", NULL);
-		return TCL_ERROR;
-	    }
-	    errorPtr = objv[i];
-	    break;
-	}
-    }
-
-    tablePtr = objv[objc - 2];
-    objPtr = objv[objc - 1];
-
-    /*
-     * Check that table is a valid list first, since we want to handle that
-     * error case regardless of level.
-     */
-
-    result = Tcl_ListObjLength(interp, tablePtr, &dummyLength);
-    if (result != TCL_OK) {
-	return result;
-    }
-
-    result = GetIndexFromObjList(interp, objPtr, tablePtr, message, flags,
-	    &index);
-    if (result != TCL_OK) {
-	if (errorPtr != NULL && errorLength == 0) {
-	    Tcl_ResetResult(interp);
-	    return TCL_OK;
-	} else if (errorPtr == NULL) {
-	    return TCL_ERROR;
-	}
-
-	if (Tcl_IsShared(errorPtr)) {
-	    errorPtr = Tcl_DuplicateObj(errorPtr);
-	}
-	Tcl_ListObjAppendElement(interp, errorPtr,
-		Tcl_NewStringObj("-code", 5));
-	Tcl_ListObjAppendElement(interp, errorPtr, Tcl_NewIntObj(result));
-
-	return Tcl_SetReturnOptions(interp, errorPtr);
-    }
-
-    result = Tcl_ListObjIndex(interp, tablePtr, index, &resultPtr);
-    if (result != TCL_OK) {
-	return result;
-    }
-    Tcl_SetObjResult(interp, resultPtr);
-    return TCL_OK;
-}
-
-/*----------------------------------------------------------------------
- *
- * PrefixAllObjCmd --
- *
- *	This function implements the 'prefix all' Tcl command. Refer to the
- *	user documentation for details on what it does.
- *
- * Results:
- *	Returns a standard Tcl result.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-PrefixAllObjCmd(
-    ClientData clientData,	/* Not used. */
-    Tcl_Interp *interp,		/* Current interpreter. */
-    int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
-{
-    int tableObjc, result, t, length, elemLength;
-    const char *string, *elemString;
-    Tcl_Obj **tableObjv, *resultPtr;
-
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 1, objv, "table string");
-	return TCL_ERROR;
-    }
-
-    result = Tcl_ListObjGetElements(interp, objv[1], &tableObjc, &tableObjv);
-    if (result != TCL_OK) {
-	return result;
-    }
-    resultPtr = Tcl_NewListObj(0, NULL);
-    string = Tcl_GetStringFromObj(objv[2], &length);
-
-    for (t = 0; t < tableObjc; t++) {
-	elemString = Tcl_GetStringFromObj(tableObjv[t], &elemLength);
-
-	/*
-	 * A prefix cannot match if it is longest.
-	 */
-
-	if (length <= elemLength) {
-	    if (TclpUtfNcmp2(elemString, string, length) == 0) {
-		Tcl_ListObjAppendElement(interp, resultPtr, tableObjv[t]);
-	    }
-	}
-    }
-
-    Tcl_SetObjResult(interp, resultPtr);
-    return TCL_OK;
-}
-
-/*----------------------------------------------------------------------
- *
- * PrefixLongestObjCmd --
- *
- *	This function implements the 'prefix longest' Tcl command. Refer to
- *	the user documentation for details on what it does.
- *
- * Results:
- *	Returns a standard Tcl result.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-PrefixLongestObjCmd(
-    ClientData clientData,	/* Not used. */
-    Tcl_Interp *interp,		/* Current interpreter. */
-    int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
-{
-    int tableObjc, result, i, t, length, elemLength, resultLength;
-    const char *string, *elemString, *resultString;
-    Tcl_Obj **tableObjv;
-
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 1, objv, "table string");
-	return TCL_ERROR;
-    }
-
-    result = Tcl_ListObjGetElements(interp, objv[1], &tableObjc, &tableObjv);
-    if (result != TCL_OK) {
-	return result;
-    }
-    string = Tcl_GetStringFromObj(objv[2], &length);
-
-    resultString = NULL;
-    resultLength = 0;
-
-    for (t = 0; t < tableObjc; t++) {
-	elemString = Tcl_GetStringFromObj(tableObjv[t], &elemLength);
-
-	/*
-	 * First check if the prefix string matches the element. A prefix
-	 * cannot match if it is longest.
-	 */
-
-	if ((length > elemLength) ||
-		TclpUtfNcmp2(elemString, string, length) != 0) {
-	    continue;
-	}
-
-	if (resultString == NULL) {
-	    /*
-	     * If this is the first match, the longest common substring this
-	     * far is the complete string. The result is part of this string
-	     * so we only need to adjust the length later.
-	     */
-
-	    resultString = elemString;
-	    resultLength = elemLength;
-	} else {
-	    /*
-	     * Longest common substring cannot be longer than shortest string.
-	     */
-
-	    if (elemLength < resultLength) {
-		resultLength = elemLength;
-	    }
-
-	    /*
-	     * Compare strings.
-	     */
-
-	    for (i = 0; i < resultLength; i++) {
-		if (resultString[i] != elemString[i]) {
-		    /*
-		     * Adjust in case we stopped in the middle of a UTF char.
-		     */
-
-		    resultLength = Tcl_UtfPrev(&resultString[i+1],
-			    resultString) - resultString;
-		    break;
-		}
-	    }
-	}
-    }
-    if (resultLength > 0) {
-	Tcl_SetObjResult(interp,
-		Tcl_NewStringObj(resultString, resultLength));
-    }
-    return TCL_OK;
 }
 
 /*
@@ -887,7 +478,6 @@ Tcl_WrongNumArgs(
 
     TclNewObj(objPtr);
     if (iPtr->flags & INTERP_ALTERNATE_WRONG_ARGS) {
-	iPtr->flags &= ~INTERP_ALTERNATE_WRONG_ARGS;
 	Tcl_AppendObjToObj(objPtr, Tcl_GetObjResult(interp));
 	Tcl_AppendToObj(objPtr, " or \"", -1);
     } else {
@@ -1036,384 +626,9 @@ Tcl_WrongNumArgs(
 	Tcl_AppendStringsToObj(objPtr, message, NULL);
     }
     Tcl_AppendStringsToObj(objPtr, "\"", NULL);
-    Tcl_SetErrorCode(interp, "TCL", "WRONGARGS", NULL);
     Tcl_SetObjResult(interp, objPtr);
 #undef MAY_QUOTE_WORD
 #undef AFTER_FIRST_WORD
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_ParseArgsObjv --
- *
- *	Process an objv array according to a table of expected command-line
- *	options. See the manual page for more details.
- *
- * Results:
- *	The return value is a standard Tcl return value. If an error occurs
- *	then an error message is left in the interp's result. Under normal
- *	conditions, both *objcPtr and *objv are modified to return the
- *	arguments that couldn't be processed here (they didn't match the
- *	option table, or followed an TCL_ARGV_REST argument).
- *
- * Side effects:
- *	Variables may be modified, or procedures may be called. It all depends
- *	on the arguments and their entries in argTable. See the user
- *	documentation for details.
- *
- *----------------------------------------------------------------------
- */
-
-int
-Tcl_ParseArgsObjv(
-    Tcl_Interp *interp,		/* Place to store error message. */
-    const Tcl_ArgvInfo *argTable,
-				/* Array of option descriptions. */
-    int *objcPtr,		/* Number of arguments in objv. Modified to
-				 * hold # args left in objv at end. */
-    Tcl_Obj *const *objv,	/* Array of arguments to be parsed. */
-    Tcl_Obj ***remObjv)		/* Pointer to array of arguments that were not
-				 * processed here. Should be NULL if no return
-				 * of arguments is desired. */
-{
-    Tcl_Obj **leftovers;	/* Array to write back to remObjv on
-				 * successful exit. Will include the name of
-				 * the command. */
-    int nrem;			/* Size of leftovers.*/
-    register const Tcl_ArgvInfo *infoPtr;
-				/* Pointer to the current entry in the table
-				 * of argument descriptions. */
-    const Tcl_ArgvInfo *matchPtr;
-				/* Descriptor that matches current argument. */
-    Tcl_Obj *curArg;		/* Current argument */
-    const char *str = NULL;
-    register char c;		/* Second character of current arg (used for
-				 * quick check for matching; use 2nd char.
-				 * because first char. will almost always be
-				 * '-'). */
-    int srcIndex;		/* Location from which to read next argument
-				 * from objv. */
-    int dstIndex;		/* Used to keep track of current arguments
-				 * being processed, primarily for error
-				 * reporting. */
-    int objc;			/* # arguments in objv still to process. */
-    int length;			/* Number of characters in current argument. */
-
-    if (remObjv != NULL) {
-	/*
-	 * Then we should copy the name of the command (0th argument).
-	 */
-
-	nrem = 1;
-	leftovers = (Tcl_Obj **) ckalloc((nrem+1) * sizeof(Tcl_Obj *));
-	leftovers[nrem-1] = objv[0];
-	leftovers[nrem] = NULL;
-    } else {
-	nrem = 0;
-	leftovers = NULL;
-    }
-
-    /*
-     * OK, now start processing from the second element (1st argument).
-     */
-
-    srcIndex = dstIndex = 1;
-    objc = *objcPtr-1;
-
-    while (objc > 0) {
-	curArg = objv[srcIndex];
-	srcIndex++;
-	objc--;
-	str = Tcl_GetStringFromObj(curArg, &length);
-	if (length > 0) {
-	    c = str[1];
-	} else {
-	    c = 0;
-	}
-
-	/*
-	 * Loop throught the argument descriptors searching for one with the
-	 * matching key string. If found, leave a pointer to it in matchPtr.
-	 */
-
-	matchPtr = NULL;
-	infoPtr = argTable;
-	for (; (infoPtr != NULL) && (infoPtr->type != TCL_ARGV_END);
-		infoPtr++) {
-	    if (infoPtr->keyStr == NULL) {
-		continue;
-	    }
-	    if ((infoPtr->keyStr[1] != c)
-		    || (strncmp(infoPtr->keyStr, str, length) != 0)) {
-		continue;
-	    }
-	    if (infoPtr->keyStr[length] == 0) {
-		matchPtr = infoPtr;
-		goto gotMatch;
-	    }
-	    if (matchPtr != NULL) {
-		Tcl_AppendResult(interp, "ambiguous option \"", str, "\"",
-			NULL);
-		goto error;
-	    }
-	    matchPtr = infoPtr;
-	}
-	if (matchPtr == NULL) {
-	    /*
-	     * Unrecognized argument. Just copy it down, unless the caller
-	     * prefers an error to be registered.
-	     */
-
-	    if (remObjv == NULL) {
-		Tcl_AppendResult(interp, "unrecognized argument \"", str,
-			"\"", NULL);
-		goto error;
-	    }
-
-	    dstIndex++;		/* This argument is now handled */
-	    nrem++;
-
-	    /*
-	     * Allocate nrem (+1 extra for NULL terminator) pointers.
-	     */
-
-	    leftovers = (Tcl_Obj **) ckrealloc((void *) leftovers,
-		    (nrem+1) * sizeof(Tcl_Obj *));
-	    leftovers[nrem-1] = curArg;
-	    continue;
-	}
-
-	/*
-	 * Take the appropriate action based on the option type
-	 */
-
-    gotMatch:
-	infoPtr = matchPtr;
-	switch (infoPtr->type) {
-	case TCL_ARGV_CONSTANT:
-	    *((int *) infoPtr->dstPtr) = PTR2INT(infoPtr->srcPtr);
-	    break;
-	case TCL_ARGV_INT:
-	    if (objc == 0) {
-		goto missingArg;
-	    }
-	    if (Tcl_GetIntFromObj(interp, objv[srcIndex],
-		    (int *) infoPtr->dstPtr) == TCL_ERROR) {
-		Tcl_AppendResult(interp, "expected integer argument for \"",
-			infoPtr->keyStr, "\" but got \"",
-			Tcl_GetString(objv[srcIndex]), "\"", NULL);
-		goto error;
-	    }
-	    srcIndex++;
-	    objc--;
-	    break;
-	case TCL_ARGV_STRING:
-	    if (objc == 0) {
-		goto missingArg;
-	    }
-	    *((const char **) infoPtr->dstPtr) =
-		    Tcl_GetString(objv[srcIndex]);
-	    srcIndex++;
-	    objc--;
-	    break;
-	case TCL_ARGV_REST:
-	    *((int *) infoPtr->dstPtr) = dstIndex;
-	    goto argsDone;
-	case TCL_ARGV_FLOAT:
-	    if (objc == 0) {
-		goto missingArg;
-	    }
-	    if (Tcl_GetDoubleFromObj(interp, objv[srcIndex],
-		    (double *) infoPtr->dstPtr) == TCL_ERROR) {
-		Tcl_AppendResult(interp, "expected floating-point argument ",
-			"for \"", infoPtr->keyStr, "\" but got \"",
-			Tcl_GetString((Tcl_Obj *) objv[srcIndex]),"\"", NULL);
-		goto error;
-	    }
-	    srcIndex++;
-	    objc--;
-	    break;
-	case TCL_ARGV_FUNC: {
-	    Tcl_ArgvFuncProc handlerProc;
-	    Tcl_Obj *argObj;
-
-	    if (objc == 0) {
-		argObj = NULL;
-	    } else {
-		argObj = objv[srcIndex];
-	    }
-	    handlerProc = (Tcl_ArgvFuncProc) infoPtr->srcPtr;
-	    if (handlerProc(infoPtr->clientData, argObj, infoPtr->dstPtr)) {
-		srcIndex++;
-		objc--;
-	    }
-	    break;
-	}
-	case TCL_ARGV_GENFUNC: {
-	    Tcl_ArgvGenFuncProc handlerProc;
-
-	    handlerProc = (Tcl_ArgvGenFuncProc) infoPtr->srcPtr;
-	    objc = handlerProc(infoPtr->clientData, interp, objc,
-		    &objv[srcIndex], infoPtr->dstPtr);
-	    if (objc < 0) {
-		goto error;
-	    }
-	    break;
-	}
-	case TCL_ARGV_HELP:
-	    PrintUsage(interp, argTable);
-	    goto error;
-	default: {
-	    char buf[64 + TCL_INTEGER_SPACE];
-
-	    sprintf(buf, "bad argument type %d in Tcl_ArgvInfo",
-		    infoPtr->type);
-	    Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
-	    goto error;
-	}
-	}
-    }
-
-    /*
-     * If we broke out of the loop because of an OPT_REST argument, copy the
-     * remaining arguments down.
-     */
-
-  argsDone:
-    if (remObjv==NULL) {
-	/*
-	 * Nothing to do.
-	 */
-
-	return TCL_OK;
-    }
-
-    if (objc > 0) {
-	leftovers = (Tcl_Obj **) ckrealloc((void *) leftovers,
-		(nrem+objc+1) * sizeof(Tcl_Obj*));
-	while (objc) {
-	    leftovers[nrem]=objv[srcIndex];
-	    nrem++;
-	    srcIndex++;
-	    objc--;
-	}
-    } else if (leftovers != NULL) {
-	ckfree((char *) leftovers);
-    }
-    leftovers[nrem] = NULL;
-    *objcPtr = nrem;
-    *remObjv = leftovers;
-    return TCL_OK;
-
-    /*
-     * Make sure to handle freeing any temporary space we've allocated on the
-     * way to an error.
-     */
-
-  missingArg:
-    Tcl_AppendResult(interp, "\"", str,
-	    "\" option requires an additional argument", NULL);
-  error:
-    if (leftovers != NULL) {
-	ckfree((char *) leftovers);
-    }
-    return TCL_ERROR;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * PrintUsage --
- *
- *	Generate a help string describing command-line options.
- *
- * Results:
- *	The interp's result will be modified to hold a help string describing
- *	all the options in argTable.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-PrintUsage(
-    Tcl_Interp *interp,		/* Place information in this interp's result
-				 * area. */
-    const Tcl_ArgvInfo *argTable)
-				/* Array of command-specific argument
-				 * descriptions. */
-{
-    register const Tcl_ArgvInfo *infoPtr;
-    int width, numSpaces;
-#define NUM_SPACES 20
-    static char spaces[] = "                    ";
-    char tmp[TCL_DOUBLE_SPACE];
-
-    /*
-     * First, compute the width of the widest option key, so that we can make
-     * everything line up.
-     */
-
-    width = 4;
-    for (infoPtr = argTable; infoPtr->type != TCL_ARGV_END; infoPtr++) {
-	int length;
-
-	if (infoPtr->keyStr == NULL) {
-	    continue;
-	}
-	length = strlen(infoPtr->keyStr);
-	if (length > width) {
-	    width = length;
-	}
-    }
-
-    /*
-     * Now add the option information, with pretty-printing.
-     */
-
-    Tcl_AppendResult(interp, "Command-specific options:", NULL);
-    for (infoPtr = argTable; infoPtr->type != TCL_ARGV_END; infoPtr++) {
-	if ((infoPtr->type == TCL_ARGV_HELP) && (infoPtr->keyStr == NULL)) {
-	    Tcl_AppendResult(interp, "\n", infoPtr->helpStr, NULL);
-	    continue;
-	}
-	Tcl_AppendResult(interp, "\n ", infoPtr->keyStr, ":", NULL);
-	numSpaces = width + 1 - strlen(infoPtr->keyStr);
-	while (numSpaces > 0) {
-	    if (numSpaces >= NUM_SPACES) {
-		Tcl_AppendResult(interp, spaces, NULL);
-	    } else {
-		Tcl_AppendResult(interp, spaces+NUM_SPACES-numSpaces, NULL);
-	    }
-	    numSpaces -= NUM_SPACES;
-	}
-	Tcl_AppendResult(interp, infoPtr->helpStr, NULL);
-	switch (infoPtr->type) {
-	case TCL_ARGV_INT:
-	    sprintf(tmp, "%d", *((int *) infoPtr->dstPtr));
-	    Tcl_AppendResult(interp, "\n\t\tDefault value: ", tmp, NULL);
-	    break;
-	case TCL_ARGV_FLOAT:
-	    sprintf(tmp, "%g", *((double *) infoPtr->dstPtr));
-	    Tcl_AppendResult(interp, "\n\t\tDefault value: ", tmp, NULL);
-	    break;
-	case TCL_ARGV_STRING: {
-	    char *string;
-
-	    string = *((char **) infoPtr->dstPtr);
-	    if (string != NULL) {
-		Tcl_AppendResult(interp, "\n\t\tDefault value: \"", string,
-			"\"", NULL);
-	    }
-	    break;
-	}
-	default:
-	    break;
-	}
-    }
 }
 
 /*

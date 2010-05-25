@@ -6,7 +6,7 @@
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * Copyright (c) 2002 Apple Inc.
+ * Copyright (c) 2002 Apple Computer, Inc.
  */
 
 #ifndef _TKENTRY
@@ -48,7 +48,7 @@ typedef struct {
      * Fields that are set by widget commands other than "configure".
      */
 
-    const char *string;		/* Pointer to storage for string;
+    CONST char *string;		/* Pointer to storage for string;
 				 * NULL-terminated; malloc-ed. */
     int insertPos;		/* Character index before which next typed
 				 * character will be inserted. */
@@ -138,7 +138,7 @@ typedef struct {
      * configuration settings above.
      */
 
-    const char *displayString;	/* String to use when displaying. This may be
+    CONST char *displayString;	/* String to use when displaying. This may be
 				 * a pointer to string, or a pointer to
 				 * malloced memory with the same character
 				 * length as string but whose characters are

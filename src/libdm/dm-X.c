@@ -64,98 +64,48 @@
 #include "solid.h"
 
 
-HIDDEN void label();
-HIDDEN void draw();
-HIDDEN void x_var_init();
-HIDDEN XVisualInfo *X_choose_visual(struct dm *dmp);
+#define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
+
 
 extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int, int, int);
-
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
 
-/* Display Manager package interface */
 
-#define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
-struct dm *X_open_dm(Tcl_Interp *interp, int argc, char **argv);
-
-HIDDEN_DM_FUNCTION_PROTOTYPES(X)
-
-struct dm dm_X = {
-    X_close,
-    X_drawBegin,
-    X_drawEnd,
-    X_normal,
-    X_loadMatrix,
-    X_drawString2D,
-    X_drawLine2D,
-    X_drawLine3D,
-    X_drawLines3D,
-    X_drawPoint2D,
-    X_drawVList,
-    X_drawVList,
-    X_draw,
-    X_setFGColor,
-    X_setBGColor,
-    X_setLineAttr,
-    X_configureWin,
-    X_setWinBounds,
-    X_setLight,
-    Nu_int0,
-    Nu_int0,
-    X_setZBuffer,
-    X_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    0,
-    0,				/* no displaylist */
-    0,                            /* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
-    "X",
-    "X Window System (X11)",
-    DM_TYPE_X,
-    1,
-    0,
-    0,
-    0,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
-    0,				/* no debugging */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
-    0,				/* no zclipping */
-    1,                            /* clear back buffer after drawing and swap */
-    0				/* Tcl interpreter */
+struct allocated_colors {
+    struct bu_list l;
+    int r;
+    int g;
+    int b;
+    XColor c;
 };
 
-
-fastf_t min_short = (fastf_t)SHRT_MIN;
-fastf_t max_short = (fastf_t)SHRT_MAX;
-
-extern int vectorThreshold;	/* defined in libdm/tcl.c */
-
-static void
+HIDDEN void
 get_color(Display *dpy, Colormap cmap, XColor *color)
 {
     Status st;
-    XColor rgb;
-#define CSCK 0xf800
+    static struct allocated_colors *colors = NULL;
+    struct allocated_colors *c;
+    int r, g, b;
 
-    rgb = *color;
+    if (!colors) {
+	BU_GETSTRUCT(colors, allocated_colors);
+	BU_LIST_INIT(&(colors->l));
+	colors->r = colors->g = colors->b = -1;
+    }
+
+    /* allocated colors are stashed into a list in order to avoid
+     * subsequent repeat allocations.
+     */
+    for (BU_LIST_FOR(c, allocated_colors, &(colors->l))) {
+	if (DM_SAME_COLOR(c->r, c->g, c->b, color->red, color->green, color->blue)) {
+	    *color = c->c; /* struct copy */
+	    return;
+	}
+    }
+
+    r = color->red;
+    g = color->green;
+    b = color->blue;
 
     st = XAllocColor(dpy, cmap, color);
     switch (st) {
@@ -163,17 +113,282 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 	    break;
 	case BadColor:
 	    bu_log("XAllocColor failed (BadColor) for (%3d, %3d, %3d) %04x, %04x, %04x\n",
-		   (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
-		   rgb.red, rgb.green, rgb.blue);
+		   (r >> 8), (g >> 8), (b >> 8),
+		   r, g, b);
 	    break;
 
 	default:
 	    bu_log("XAllocColor error for (%3d, %3d, %3d) %04x, %04x, %04x\n",
-		   (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
-		   rgb.red, rgb.green, rgb.blue);
+		   (r >> 8), (g >> 8), (b >> 8),
+		   r, g, b);
 	    break;
     }
-#undef CSCK
+
+    /* got new valid color, add it to our list */
+    BU_GETSTRUCT(c, allocated_colors);
+    c->r = r;
+    c->g = g;
+    c->b = b;
+    c->c = *color; /* struct copy */
+    BU_LIST_PUSH(&(colors->l), &(c->l));
+}
+
+
+HIDDEN int
+X_configureWin_guts(struct dm *dmp, int force)
+{
+    XWindowAttributes xwa;
+    XFontStruct *newfontstruct;
+    XGCValues gcv;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
+
+    XGetWindowAttributes(pubvars->dpy,
+			 pubvars->win, &xwa);
+
+    /* nothing to do */
+    if (!force &&
+	dmp->dm_height == xwa.height &&
+	dmp->dm_width == xwa.width)
+	return TCL_OK;
+
+    dmp->dm_height = xwa.height;
+    dmp->dm_width = xwa.width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("X_configureWin_guts()\n");
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+    }
+
+#ifdef HAVE_TK
+    Tk_FreePixmap(pubvars->dpy,
+		  privars->pix);
+    privars->pix =
+	Tk_GetPixmap(pubvars->dpy,
+		     DefaultRootWindow(pubvars->dpy),
+		     dmp->dm_width,
+		     dmp->dm_height,
+		     Tk_Depth(pubvars->xtkwin));
+#endif
+
+    /* First time through, load a font or quit */
+    if (pubvars->fontstruct == NULL) {
+	if ((pubvars->fontstruct =
+	     XLoadQueryFont(pubvars->dpy, FONT9)) == NULL) {
+	    /* Try hardcoded backup font */
+	    if ((pubvars->fontstruct =
+		 XLoadQueryFont(pubvars->dpy, FONTBACK)) == NULL) {
+		bu_log("dm-X: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
+		return TCL_ERROR;
+	    }
+	}
+
+	gcv.font = pubvars->fontstruct->fid;
+	XChangeGC(pubvars->dpy,
+		  privars->gc, GCFont, &gcv);
+    }
+
+    /* Always try to choose a the font that best fits the window size.
+     */
+
+    if (dmp->dm_width < 582) {
+	if (pubvars->fontstruct->per_char->width != 5) {
+	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+						FONT5)) != NULL) {
+		XFreeFont(pubvars->dpy,
+			  pubvars->fontstruct);
+		pubvars->fontstruct = newfontstruct;
+		gcv.font = pubvars->fontstruct->fid;
+		XChangeGC(pubvars->dpy,
+			  privars->gc, GCFont, &gcv);
+	    }
+	}
+    } else if (dmp->dm_width < 679) {
+	if (pubvars->fontstruct->per_char->width != 6) {
+	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+						FONT6)) != NULL) {
+		XFreeFont(pubvars->dpy,
+			  pubvars->fontstruct);
+		pubvars->fontstruct = newfontstruct;
+		gcv.font = pubvars->fontstruct->fid;
+		XChangeGC(pubvars->dpy,
+			  privars->gc, GCFont, &gcv);
+	    }
+	}
+    } else if (dmp->dm_width < 776) {
+	if (pubvars->fontstruct->per_char->width != 7) {
+	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+						FONT7)) != NULL) {
+		XFreeFont(pubvars->dpy,
+			  pubvars->fontstruct);
+		pubvars->fontstruct = newfontstruct;
+		gcv.font = pubvars->fontstruct->fid;
+		XChangeGC(pubvars->dpy,
+			  privars->gc, GCFont, &gcv);
+	    }
+	}
+    } else if (dmp->dm_width < 873) {
+	if (pubvars->fontstruct->per_char->width != 8) {
+	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+						FONT8)) != NULL) {
+		XFreeFont(pubvars->dpy,
+			  pubvars->fontstruct);
+		pubvars->fontstruct = newfontstruct;
+		gcv.font = pubvars->fontstruct->fid;
+		XChangeGC(pubvars->dpy,
+			  privars->gc, GCFont, &gcv);
+	    }
+	}
+    } else {
+	if (pubvars->fontstruct->per_char->width != 9) {
+	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+						FONT9)) != NULL) {
+		XFreeFont(pubvars->dpy,
+			  pubvars->fontstruct);
+		pubvars->fontstruct = newfontstruct;
+		gcv.font = pubvars->fontstruct->fid;
+		XChangeGC(pubvars->dpy,
+			  privars->gc, GCFont, &gcv);
+	    }
+	}
+    }
+
+    return TCL_OK;
+}
+
+
+HIDDEN XVisualInfo *
+X_choose_visual(struct dm *dmp)
+{
+    XVisualInfo *vip, vitemp, *vibase, *maxvip;
+    int num, i, j;
+    int tries, baddepth;
+    int desire_trueColor = 1;
+    int min_depth = 8;
+    int *good = NULL;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
+
+    vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
+
+    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
+
+    while (1) {
+	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
+	    /* requirements */
+	    if (vip->depth < min_depth)
+		continue;
+	    if (desire_trueColor) {
+		if (vip->class != TrueColor)
+		    continue;
+	    } else if (vip->class != PseudoColor)
+		continue;
+
+	    /* this visual meets criteria */
+	    good[j++] = i;
+	}
+
+	baddepth = 1000;
+	for (tries = 0; tries < j; ++tries) {
+	    maxvip = vibase + good[0];
+	    for (i=1; i<j; i++) {
+		vip = vibase + good[i];
+		if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)) {
+		    maxvip = vip;
+		}
+	    }
+
+	    /* make sure Tk handles it */
+	    if (desire_trueColor) {
+		pubvars->cmap =
+		    XCreateColormap(pubvars->dpy,
+				    RootWindow(pubvars->dpy,
+					       maxvip->screen),
+				    maxvip->visual, AllocNone);
+		privars->is_trueColor = 1;
+	    } else {
+		pubvars->cmap =
+		    XCreateColormap(pubvars->dpy,
+				    RootWindow(pubvars->dpy,
+					       maxvip->screen),
+				    maxvip->visual, AllocAll);
+		privars->is_trueColor = 0;
+	    }
+
+#ifdef HAVE_TK
+	    if (Tk_SetWindowVisual(pubvars->xtkwin,
+				   maxvip->visual,
+				   maxvip->depth,
+				   pubvars->cmap)) {
+		pubvars->depth = maxvip->depth;
+
+		bu_free(good, "dealloc good visuals");
+		return maxvip; /* success */
+	    } else
+#endif
+	    {
+		/* retry with lesser depth */
+		baddepth = maxvip->depth;
+		XFreeColormap(pubvars->dpy, pubvars->cmap);
+	    }
+	}
+
+	if (desire_trueColor) {
+	    desire_trueColor = 0;
+	} else {
+	    /* ran out of visuals, give up */
+	    break;
+	}
+    }
+
+    bu_free(good, "dealloc good visuals");
+    return (XVisualInfo *)NULL; /* failure */
+}
+
+
+/*
+ * X _ C L O S E
+ *
+ * Gracefully release the display.
+ */
+HIDDEN int
+X_close(struct dm *dmp)
+{
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
+
+    if (pubvars->dpy) {
+	if (privars->gc)
+	    XFreeGC(pubvars->dpy,
+		    privars->gc);
+
+#ifdef HAVE_TK
+	if (privars->pix)
+	    Tk_FreePixmap(pubvars->dpy,
+			  privars->pix);
+#endif
+
+	/*XXX Possibly need to free the colormap */
+	if (pubvars->cmap)
+	    XFreeColormap(pubvars->dpy,
+			  pubvars->cmap);
+
+#ifdef HAVE_TK
+	if (pubvars->xtkwin)
+	    Tk_DestroyWindow(pubvars->xtkwin);
+#endif
+
+    }
+
+    bu_vls_free(&dmp->dm_pathName);
+    bu_vls_free(&dmp->dm_tkName);
+    bu_vls_free(&dmp->dm_dName);
+    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
+    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
+    bu_free((genptr_t)dmp, "X_close: dmp");
+
+    return TCL_OK;
 }
 
 
@@ -186,6 +401,8 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 struct dm *
 X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
+    extern struct dm dm_X;
+
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
@@ -407,6 +624,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     if (privars->is_trueColor) {
 	XColor fg, bg;
 
+	INIT_XCOLOR(&fg);
+	INIT_XCOLOR(&bg);
+
 	fg.red = 65535;
 	fg.green = fg.blue = 0;
 
@@ -506,11 +726,11 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
     }
-Done:
+ Done:
     XFreeDeviceList(olist);
 #endif
 
-Skip_dials:
+ Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
@@ -522,51 +742,6 @@ Skip_dials:
     MAT_IDN(privars->xmat);
 
     return dmp;
-}
-
-
-/*
- * X _ C L O S E
- *
- * Gracefully release the display.
- */
-HIDDEN int
-X_close(struct dm *dmp)
-{
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
-    if (pubvars->dpy) {
-	if (privars->gc)
-	    XFreeGC(pubvars->dpy,
-		    privars->gc);
-
-#ifdef HAVE_TK
-	if (privars->pix)
-	    Tk_FreePixmap(pubvars->dpy,
-			  privars->pix);
-#endif
-
-	/*XXX Possibly need to free the colormap */
-	if (pubvars->cmap)
-	    XFreeColormap(pubvars->dpy,
-			  pubvars->cmap);
-
-#ifdef HAVE_TK
-	if (pubvars->xtkwin)
-	    Tk_DestroyWindow(pubvars->xtkwin);
-#endif
-
-    }
-
-    bu_vls_free(&dmp->dm_pathName);
-    bu_vls_free(&dmp->dm_tkName);
-    bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
-    bu_free((genptr_t)dmp, "X_close: dmp");
-
-    return TCL_OK;
 }
 
 
@@ -666,6 +841,8 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 HIDDEN int
 X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
+    extern int vectorThreshold;	/* defined in libdm/tcl.c */
+
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
     XSegment segbuf[1024];	/* XDrawSegments list */
@@ -830,6 +1007,9 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			    continue;
 			}
 		    } else {
+			fastf_t min_short = (fastf_t)SHRT_MIN;
+			fastf_t max_short = (fastf_t)SHRT_MAX;
+
 			/* Check to see if lpnt or pnt contain values
 			 * that exceed the capacity of a short (segbuf
 			 * is an array of XSegments which contain
@@ -1071,6 +1251,8 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
     if (privars->is_trueColor) {
 	XColor color;
 
+	INIT_XCOLOR(&color);
+
 	color.red = r << 8;
 	color.green = g << 8;
 	color.blue = b << 8;
@@ -1108,8 +1290,9 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     dmp->dm_bg[2] = b;
 
     if (privars->is_trueColor) {
-
 	XColor color;
+
+	INIT_XCOLOR(&color);
 
 	color.red = r << 8;
 	color.green = g << 8;
@@ -1184,130 +1367,6 @@ X_setWinBounds(struct dm *dmp, int *w)
 
 
 HIDDEN int
-X_configureWin_guts(struct dm *dmp, int force)
-{
-    XWindowAttributes xwa;
-    XFontStruct *newfontstruct;
-    XGCValues gcv;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
-    XGetWindowAttributes(pubvars->dpy,
-			 pubvars->win, &xwa);
-
-    /* nothing to do */
-    if (!force &&
-	dmp->dm_height == xwa.height &&
-	dmp->dm_width == xwa.width)
-	return TCL_OK;
-
-    dmp->dm_height = xwa.height;
-    dmp->dm_width = xwa.width;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
-
-    if (dmp->dm_debugLevel) {
-	bu_log("X_configureWin_guts()\n");
-	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
-    }
-
-#ifdef HAVE_TK
-    Tk_FreePixmap(pubvars->dpy,
-		  privars->pix);
-    privars->pix =
-	Tk_GetPixmap(pubvars->dpy,
-		     DefaultRootWindow(pubvars->dpy),
-		     dmp->dm_width,
-		     dmp->dm_height,
-		     Tk_Depth(pubvars->xtkwin));
-#endif
-
-    /* First time through, load a font or quit */
-    if (pubvars->fontstruct == NULL) {
-	if ((pubvars->fontstruct =
-	     XLoadQueryFont(pubvars->dpy, FONT9)) == NULL) {
-	    /* Try hardcoded backup font */
-	    if ((pubvars->fontstruct =
-		 XLoadQueryFont(pubvars->dpy, FONTBACK)) == NULL) {
-		bu_log("dm-X: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
-	    }
-	}
-
-	gcv.font = pubvars->fontstruct->fid;
-	XChangeGC(pubvars->dpy,
-		  privars->gc, GCFont, &gcv);
-    }
-
-    /* Always try to choose a the font that best fits the window size.
-     */
-
-    if (dmp->dm_width < 582) {
-	if (pubvars->fontstruct->per_char->width != 5) {
-	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT5)) != NULL) {
-		XFreeFont(pubvars->dpy,
-			  pubvars->fontstruct);
-		pubvars->fontstruct = newfontstruct;
-		gcv.font = pubvars->fontstruct->fid;
-		XChangeGC(pubvars->dpy,
-			  privars->gc, GCFont, &gcv);
-	    }
-	}
-    } else if (dmp->dm_width < 679) {
-	if (pubvars->fontstruct->per_char->width != 6) {
-	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT6)) != NULL) {
-		XFreeFont(pubvars->dpy,
-			  pubvars->fontstruct);
-		pubvars->fontstruct = newfontstruct;
-		gcv.font = pubvars->fontstruct->fid;
-		XChangeGC(pubvars->dpy,
-			  privars->gc, GCFont, &gcv);
-	    }
-	}
-    } else if (dmp->dm_width < 776) {
-	if (pubvars->fontstruct->per_char->width != 7) {
-	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT7)) != NULL) {
-		XFreeFont(pubvars->dpy,
-			  pubvars->fontstruct);
-		pubvars->fontstruct = newfontstruct;
-		gcv.font = pubvars->fontstruct->fid;
-		XChangeGC(pubvars->dpy,
-			  privars->gc, GCFont, &gcv);
-	    }
-	}
-    } else if (dmp->dm_width < 873) {
-	if (pubvars->fontstruct->per_char->width != 8) {
-	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT8)) != NULL) {
-		XFreeFont(pubvars->dpy,
-			  pubvars->fontstruct);
-		pubvars->fontstruct = newfontstruct;
-		gcv.font = pubvars->fontstruct->fid;
-		XChangeGC(pubvars->dpy,
-			  privars->gc, GCFont, &gcv);
-	    }
-	}
-    } else {
-	if (pubvars->fontstruct->per_char->width != 9) {
-	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						FONT9)) != NULL) {
-		XFreeFont(pubvars->dpy,
-			  pubvars->fontstruct);
-		pubvars->fontstruct = newfontstruct;
-		gcv.font = pubvars->fontstruct->fid;
-		XChangeGC(pubvars->dpy,
-			  privars->gc, GCFont, &gcv);
-	    }
-	}
-    }
-
-    return TCL_OK;
-}
-
-
-HIDDEN int
 X_configureWin(struct dm *dmp)
 {
     /* don't force */
@@ -1339,93 +1398,68 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
 }
 
 
-HIDDEN XVisualInfo *
-X_choose_visual(struct dm *dmp)
-{
-    XVisualInfo *vip, vitemp, *vibase, *maxvip;
-    int num, i, j;
-    int tries, baddepth;
-    int desire_trueColor = 1;
-    int min_depth = 8;
-    int *good = NULL;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
-    vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
-
-    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
-
-    while (1) {
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
-	    /* requirements */
-	    if (vip->depth < min_depth)
-		continue;
-	    if (desire_trueColor) {
-		if (vip->class != TrueColor)
-		    continue;
-	    } else if (vip->class != PseudoColor)
-		continue;
-
-	    /* this visual meets criteria */
-	    good[j++] = i;
-	}
-
-	baddepth = 1000;
-	for (tries = 0; tries < j; ++tries) {
-	    maxvip = vibase + good[0];
-	    for (i=1; i<j; i++) {
-		vip = vibase + good[i];
-		if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)) {
-		    maxvip = vip;
-		}
-	    }
-
-	    /* make sure Tk handles it */
-	    if (desire_trueColor) {
-		pubvars->cmap =
-		    XCreateColormap(pubvars->dpy,
-				    RootWindow(pubvars->dpy,
-					       maxvip->screen),
-				    maxvip->visual, AllocNone);
-		privars->is_trueColor = 1;
-	    } else {
-		pubvars->cmap =
-		    XCreateColormap(pubvars->dpy,
-				    RootWindow(pubvars->dpy,
-					       maxvip->screen),
-				    maxvip->visual, AllocAll);
-		privars->is_trueColor = 0;
-	    }
-
-#ifdef HAVE_TK
-	    if (Tk_SetWindowVisual(pubvars->xtkwin,
-				   maxvip->visual,
-				   maxvip->depth,
-				   pubvars->cmap)) {
-		pubvars->depth = maxvip->depth;
-
-		bu_free(good, "dealloc good visuals");
-		return maxvip; /* success */
-	    } else
-#endif
-	    {
-		/* retry with lesser depth */
-		baddepth = maxvip->depth;
-		XFreeColormap(pubvars->dpy, pubvars->cmap);
-	    }
-	}
-
-	if (desire_trueColor) {
-	    desire_trueColor = 0;
-	} else {
-	    /* ran out of visuals, give up */
-	    break;
-	}
-    }
-
-    bu_free(good, "dealloc good visuals");
-    return (XVisualInfo *)NULL; /* failure */
-}
+/* Display Manager package interface */
+struct dm dm_X = {
+    X_close,
+    X_drawBegin,
+    X_drawEnd,
+    X_normal,
+    X_loadMatrix,
+    X_drawString2D,
+    X_drawLine2D,
+    X_drawLine3D,
+    X_drawLines3D,
+    X_drawPoint2D,
+    X_drawVList,
+    X_drawVList,
+    X_draw,
+    X_setFGColor,
+    X_setBGColor,
+    X_setLineAttr,
+    X_configureWin,
+    X_setWinBounds,
+    X_setLight,
+    Nu_int0,
+    Nu_int0,
+    X_setZBuffer,
+    X_debug,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    Nu_int0,
+    0,
+    0,				/* no displaylist */
+    0,                            /* no stereo */
+    PLOTBOUND,			/* zoom-in limit */
+    1,				/* bound flag */
+    "X",
+    "X Window System (X11)",
+    DM_TYPE_X,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    {0, 0, 0, 0, 0},		/* bu_vls path name*/
+    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    0,				/* no debugging */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    0,				/* depth buffer is not writable */
+    0,				/* no zbuffer */
+    0,				/* no zclipping */
+    1,                            /* clear back buffer after drawing and swap */
+    0				/* Tcl interpreter */
+};
 
 
 #endif /* DM_X */

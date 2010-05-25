@@ -14,8 +14,8 @@
 .SH NAME
 options \- Standard options supported by widgets
 .BE
+
 .SH DESCRIPTION
-.PP
 This manual entry describes the common configuration options supported
 by widgets in the Tk toolkit.  Every widget does not necessarily support
 every option (see the manual entries for individual widgets for a list
@@ -351,10 +351,9 @@ scrollbars.  This option is treated in the same way as the
 scrollbars and is provided by widgets that support vertical scrolling.
 See the description of \fBxScrollCommand\fR for details
 on how this option is used.
+
 .SH "SEE ALSO"
 colors, cursors, font
+
 .SH KEYWORDS
 class, name, standard option, switch
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

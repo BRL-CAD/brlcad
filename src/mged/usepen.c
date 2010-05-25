@@ -281,11 +281,11 @@ illuminate(int y) {
     struct solid *sp;
 
     /*
-     * Divide the mouse into 'ndrawn' VERTICAL zones, and use the
-     * zone number as a sequential position among solids
-     * which are drawn.
+     * Divide the mouse into 'curr_dm_list->dml_ndrawn' VERTICAL
+     * zones, and use the zone number as a sequential position among
+     * solids which are drawn.
      */
-    count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
+    count = ((fastf_t)y + GED_MAX) * curr_dm_list->dml_ndrawn / GED_RANGE;
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
@@ -337,7 +337,7 @@ f_aip(
 	return TCL_ERROR;
     }
 
-    if (!ndrawn) {
+    if (!(curr_dm_list->dml_ndrawn)) {
 	return TCL_OK;
     } else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH) {
 	return TCL_OK;

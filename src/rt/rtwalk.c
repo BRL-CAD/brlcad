@@ -116,10 +116,10 @@ get_args(int argc, register char **argv)
 
 	    default:		/* '?' */
 		fprintf(stderr, "unknown option %c\n", c);
-		return(0);	/* BAD */
+		return 0;	/* BAD */
 	}
     }
-    return(1);			/* OK */
+    return 1;			/* OK */
 }
 
 /*
@@ -380,7 +380,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
     if ( pp == PartHeadp )  {
 	bu_log("hit:  no hit out front?\n");
-	return(0);
+	return 0;
     }
     hitp = pp->pt_inhit;
     stp = pp->pt_inseg->seg_stp;
@@ -390,13 +390,13 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 
     clear_dist = hitp->hit_dist - 1;	/* Decrease 1mm */
 
-    return(1);	/* HIT */
+    return 1;	/* HIT */
 }
 
 int
 miss(register struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 /*

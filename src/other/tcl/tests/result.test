@@ -49,6 +49,7 @@ test result-1.8 {Tcl_SaveInterpResult} {testsaveresult} {
     testsaveresult object {set x 42} 1
 } {42 different}
 
+
 # Tcl_RestoreInterpResult is mostly tested by the previous tests except
 # for the following case
 
@@ -59,9 +60,9 @@ test result-2.1 {Tcl_RestoreInterpResult} {testsaveresult} {
 # Tcl_DiscardInterpResult is mostly tested by the previous tests except
 # for the following cases
 
-test result-3.1 {Tcl_DiscardInterpResult} -constraints testsaveresult -body {
-    testsaveresult append {cd _foobar} 1
-} -returnCodes error -result {couldn't change working directory to "_foobar": no such file or directory}
+test result-3.1 {Tcl_DiscardInterpResult} {testsaveresult} {
+    list [catch {testsaveresult append {cd _foobar} 1} msg] $msg
+} {1 {couldn't change working directory to "_foobar": no such file or directory}}
 test result-3.2 {Tcl_DiscardInterpResult} {testsaveresult} {
     testsaveresult free {set x 42} 1
 } {42}
@@ -131,6 +132,7 @@ test result-6.2 {Bug 1649062} -setup {
 } -cleanup {
     rename foo {}
 } -result {foo {} {}}
+
 
 # cleanup
 cleanupTests

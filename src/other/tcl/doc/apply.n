@@ -63,10 +63,8 @@ proc apply {fun args} {
 }
 .CE
 .SH EXAMPLES
-.PP
 This shows how to make a simple general command that applies a transformation
 to each element of a list.
-.PP
 .CS
 proc map {lambda list} {
    set result {}
@@ -83,7 +81,6 @@ map {x {expr {$x**2 + 3*$x - 2}}} {-4 -3 -2 -1 0 1 2 3 4}
 .PP
 The \fBapply\fR command is also useful for defining callbacks for use in the
 \fBtrace\fR command:
-.PP
 .CS
 set vbl "123abc"
 trace add variable vbl write {\fBapply\fR {{v1 v2 op} {
@@ -96,4 +93,4 @@ set vbl abc
 .SH "SEE ALSO"
 proc(n), uplevel(n)
 .SH KEYWORDS
-anonymous function, argument, lambda, procedure, 
+argument, procedure, anonymous function

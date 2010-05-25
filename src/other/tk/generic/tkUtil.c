@@ -20,7 +20,7 @@
  * object, used for quickly finding a mapping in a TkStateMap.
  */
 
-const Tcl_ObjType tkStateKeyObjType = {
+Tcl_ObjType tkStateKeyObjType = {
     "statekey",			/* name */
     NULL,			/* freeIntRepProc */
     NULL,			/* dupIntRepProc */
@@ -61,7 +61,7 @@ TkStateParseProc(
 
     register Tk_State *statePtr = (Tk_State *) (widgRec + offset);
 
-    if (value == NULL || *value == 0) {
+    if(value == NULL || *value == 0) {
 	*statePtr = TK_STATE_NULL;
 	return TCL_OK;
     }
@@ -123,7 +123,7 @@ TkStateParseProc(
  *--------------------------------------------------------------
  */
 
-const char *
+char *
 TkStatePrintProc(
     ClientData clientData,	/* Ignored. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
@@ -181,7 +181,7 @@ TkOrientParseProc(
 
     register int *orientPtr = (int *) (widgRec + offset);
 
-    if (value == NULL || *value == 0) {
+    if(value == NULL || *value == 0) {
 	*orientPtr = 0;
 	return TCL_OK;
     }
@@ -224,7 +224,7 @@ TkOrientParseProc(
  *--------------------------------------------------------------
  */
 
-const char *
+char *
 TkOrientPrintProc(
     ClientData clientData,	/* Ignored. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
@@ -275,7 +275,7 @@ TkOffsetParseProc(
     tsoffset.flags = 0;
     p = value;
 
-    switch (value[0]) {
+    switch(value[0]) {
     case '#':
 	if (PTR2INT(clientData) & TK_OFFSET_RELATIVE) {
 	    tsoffset.flags = TK_OFFSET_RELATIVE;
@@ -338,13 +338,7 @@ TkOffsetParseProc(
 	tsoffset.flags = TK_OFFSET_CENTER|TK_OFFSET_MIDDLE;
 	goto goodTSOffset;
     }
-
-    /*
-     * Check for an extra offset.
-     */
-
-    q = strchr(p, ',');
-    if (q == NULL) {
+    if ((q = strchr(p,',')) == NULL) {
 	if (PTR2INT(clientData) & TK_OFFSET_INDEX) {
 	    if (Tcl_GetInt(interp, (char *) p, &tsoffset.flags) != TCL_OK) {
 		Tcl_ResetResult(interp);
@@ -355,7 +349,6 @@ TkOffsetParseProc(
 	}
 	goto badTSOffset;
     }
-
     *((char *) q) = 0;
     result = Tk_GetPixels(interp, tkwin, (char *) p, &tsoffset.xoffset);
     *((char *) q) = ',';
@@ -366,14 +359,14 @@ TkOffsetParseProc(
 	return TCL_ERROR;
     }
 
+  goodTSOffset:
     /*
      * Below is a hack to allow the stipple/tile offset to be stored in the
      * internal tile structure. Most of the times, offsetPtr is a pointer to
      * an already existing tile structure. However if this structure is not
-     * already created, we must do it with Tk_GetTile()!!!!
+     * already created, we must do it with Tk_GetTile()!!!!;
      */
 
-  goodTSOffset:
     memcpy(offsetPtr, &tsoffset, sizeof(Tk_TSOffset));
     return TCL_OK;
 
@@ -403,7 +396,7 @@ TkOffsetParseProc(
  *----------------------------------------------------------------------
  */
 
-const char *
+char *
 TkOffsetPrintProc(
     ClientData clientData,	/* not used */
     Tk_Window tkwin,		/* not used */
@@ -418,7 +411,7 @@ TkOffsetPrintProc(
 	if (offsetPtr->flags >= INT_MAX) {
 	    return "end";
 	}
-	p = ckalloc(32);
+	p = (char *) ckalloc(32);
 	sprintf(p, "%d", offsetPtr->flags & ~TK_OFFSET_INDEX);
 	*freeProcPtr = TCL_DYNAMIC;
 	return p;
@@ -448,7 +441,7 @@ TkOffsetPrintProc(
 	    return "se";
 	}
     }
-    q = p = ckalloc(32);
+    q = p = (char *) ckalloc(32);
     if (offsetPtr->flags & TK_OFFSET_RELATIVE) {
 	*q++ = '#';
     }
@@ -470,7 +463,7 @@ TkOffsetPrintProc(
 int
 TkPixelParseProc(
     ClientData clientData,	/* If non-NULL, negative values are allowed as
-				 * well. */
+				 * well */
     Tcl_Interp *interp,		/* Interpreter to send results back to */
     Tk_Window tkwin,		/* Window on same display as tile */
     const char *value,		/* Name of image */
@@ -502,7 +495,7 @@ TkPixelParseProc(
  *----------------------------------------------------------------------
  */
 
-const char *
+char *
 TkPixelPrintProc(
     ClientData clientData,	/* not used */
     Tk_Window tkwin,		/* not used */
@@ -511,7 +504,7 @@ TkPixelPrintProc(
     Tcl_FreeProc **freeProcPtr)	/* not used */
 {
     double *doublePtr = (double *) (widgRec + offset);
-    char *p = ckalloc(24);
+    char *p = (char *) ckalloc(24);
 
     Tcl_PrintDouble(NULL, *doublePtr, p);
     *freeProcPtr = TCL_DYNAMIC;
@@ -716,10 +709,11 @@ Tk_GetScrollInfoObj(
 				 * scroll, if any. */
 {
     int length;
-    const char *arg = Tcl_GetStringFromObj(objv[2], &length);
+    const char *arg;
 
-#define ArgPfxEq(str) \
-	((arg[0] == str[0]) && !strncmp(arg, str, (unsigned)length))
+    arg = Tcl_GetStringFromObj(objv[2], &length);
+
+#define ArgPfxEq(str) ((arg[0]==str[0])&&!strncmp(arg,str,(unsigned)length))
 
     if (ArgPfxEq("moveto")) {
 	if (objc != 4) {
@@ -856,14 +850,14 @@ TkComputeAnchor(
  *---------------------------------------------------------------------------
  */
 
-const char *
+char *
 TkFindStateString(
     const TkStateMap *mapPtr,	/* The state table. */
     int numKey)			/* The key to try to find in the table. */
 {
     for (; mapPtr->strKey!=NULL ; mapPtr++) {
 	if (numKey == mapPtr->numKey) {
-	    return mapPtr->strKey;
+	    return (char *) mapPtr->strKey;
 	}
     }
     return NULL;
@@ -956,7 +950,7 @@ TkFindStateNumObj(
 	if (strcmp(key, mPtr->strKey) == 0) {
 	    typePtr = keyPtr->typePtr;
 	    if ((typePtr != NULL) && (typePtr->freeIntRepProc != NULL)) {
-		typePtr->freeIntRepProc(keyPtr);
+		(*typePtr->freeIntRepProc)(keyPtr);
 	    }
 	    keyPtr->internalRep.twoPtrValue.ptr1 = (void *) mapPtr;
 	    keyPtr->internalRep.twoPtrValue.ptr2 = INT2PTR(mPtr->numKey);
@@ -983,206 +977,6 @@ TkFindStateNumObj(
     return mPtr->numKey;
 }
 
-/*
- * ----------------------------------------------------------------------
- *
- * TkBackgroundEvalObjv --
- *
- *	Evaluate a command while ensuring that we do not affect the
- *	interpreters state. This is important when evaluating script
- *	during background tasks.
- *
- * Results:
- *	A standard Tcl result code.
- *
- * Side Effects:
- *	The interpreters variables and code may be modified by the script
- *	but the result will not be modified.
- *
- * ----------------------------------------------------------------------
- */
-
-int
-TkBackgroundEvalObjv(
-    Tcl_Interp *interp,
-    int objc,
-    Tcl_Obj *const *objv,
-    int flags)
-{
-    Tcl_DString errorInfo, errorCode;
-    Tcl_SavedResult state;
-    int n, r = TCL_OK;
-
-    Tcl_DStringInit(&errorInfo);
-    Tcl_DStringInit(&errorCode);
-
-    Tcl_Preserve(interp);
-
-    /*
-     * Record the state of the interpreter
-     */
-
-    Tcl_SaveResult(interp, &state);
-    Tcl_DStringAppend(&errorInfo,
-	Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY), -1);
-    Tcl_DStringAppend(&errorCode,
-	Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY), -1);
-
-    /*
-     * Evaluate the command and handle any error.
-     */
-
-    for (n = 0; n < objc; ++n) {
-	Tcl_IncrRefCount(objv[n]);
-    }
-    r = Tcl_EvalObjv(interp, objc, objv, flags);
-    for (n = 0; n < objc; ++n) {
-	Tcl_DecrRefCount(objv[n]);
-    }
-    if (r == TCL_ERROR) {
-	Tcl_AddErrorInfo(interp, "\n    (background event handler)");
-	Tcl_BackgroundException(interp, r);
-    }
-
-    Tcl_Release(interp);
-
-    /*
-     * Restore the state of the interpreter
-     */
-
-    Tcl_SetVar(interp, "errorInfo",
-	Tcl_DStringValue(&errorInfo), TCL_GLOBAL_ONLY);
-    Tcl_SetVar(interp, "errorCode",
-	Tcl_DStringValue(&errorCode), TCL_GLOBAL_ONLY);
-    Tcl_RestoreResult(interp, &state);
-
-    /*
-     * Clean up references.
-     */
-
-    Tcl_DStringFree(&errorInfo);
-    Tcl_DStringFree(&errorCode);
-
-    return r;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TkMakeEnsemble --
- *
- *	Create an ensemble from a table of implementation commands. This may
- *	be called recursively to create sub-ensembles.
- *
- * Results:
- *	Handle for the ensemble, or NULL if creation of it fails.
- *
- *----------------------------------------------------------------------
- */
-
-Tcl_Command
-TkMakeEnsemble(
-    Tcl_Interp *interp,
-    const char *namespace,
-    const char *name,
-    ClientData clientData,
-    const TkEnsemble map[])
-{
-    Tcl_Namespace *namespacePtr = NULL;
-    Tcl_Command ensemble = NULL;
-    Tcl_Obj *dictObj = NULL, *nameObj;
-    Tcl_DString ds;
-    int i;
-
-    if (map == NULL) {
-	return NULL;
-    }
-
-    Tcl_DStringInit(&ds);
-
-    namespacePtr = Tcl_FindNamespace(interp, namespace, NULL, 0);
-    if (namespacePtr == NULL) {
-	namespacePtr = Tcl_CreateNamespace(interp, namespace, NULL, NULL);
-	if (namespacePtr == NULL) {
-	    Tcl_Panic("failed to create namespace \"%s\"", namespace);
-	}
-    }
-
-    nameObj = Tcl_NewStringObj(name, -1);
-    ensemble = Tcl_FindEnsemble(interp, nameObj, 0);
-    Tcl_DecrRefCount(nameObj);
-    if (ensemble == NULL) {
-	ensemble = Tcl_CreateEnsemble(interp, name, namespacePtr,
-		TCL_ENSEMBLE_PREFIX);
-	if (ensemble == NULL) {
-	    Tcl_Panic("failed to create ensemble \"%s\"", name);
-	}
-    }
-
-    Tcl_DStringSetLength(&ds, 0);
-    Tcl_DStringAppend(&ds, namespace, -1);
-    if (!(strlen(namespace) == 2 && namespace[1] == ':')) {
-	Tcl_DStringAppend(&ds, "::", -1);
-    }
-    Tcl_DStringAppend(&ds, name, -1);
-
-    dictObj = Tcl_NewObj();
-    for (i = 0; map[i].name != NULL ; ++i) {
-	Tcl_Obj *nameObj, *fqdnObj;
-
-	nameObj = Tcl_NewStringObj(map[i].name, -1);
-	fqdnObj = Tcl_NewStringObj(Tcl_DStringValue(&ds),
-		Tcl_DStringLength(&ds));
-	Tcl_AppendStringsToObj(fqdnObj, "::", map[i].name, NULL);
-	Tcl_DictObjPut(NULL, dictObj, nameObj, fqdnObj);
-	if (map[i].proc) {
-	    Tcl_CreateObjCommand(interp, Tcl_GetString(fqdnObj),
-		    map[i].proc, clientData, NULL);
-	} else if (map[i].subensemble) {
-	    TkMakeEnsemble(interp, Tcl_DStringValue(&ds),
-		    map[i].name, clientData, map[i].subensemble);
-	}
-    }
-
-    if (ensemble) {
-	Tcl_SetEnsembleMappingDict(interp, ensemble, dictObj);
-    }
-
-    Tcl_DStringFree(&ds);
-    return ensemble;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TkSendVirtualEvent --
- *
- * 	Send a virtual event notification to the specified target window.
- * 	Equivalent to "event generate $target <<$eventName>>"
- *
- * 	Note that we use Tk_QueueWindowEvent, not Tk_HandleEvent, so this
- * 	routine does not reenter the interpreter.
- *
- *----------------------------------------------------------------------
- */
-
-void
-TkSendVirtualEvent(
-    Tk_Window target,
-    const char *eventName)
-{
-    union {XEvent general; XVirtualEvent virtual;} event;
-
-    memset(&event, 0, sizeof(event));
-    event.general.xany.type = VirtualEvent;
-    event.general.xany.serial = NextRequest(Tk_Display(target));
-    event.general.xany.send_event = False;
-    event.general.xany.window = Tk_WindowId(target);
-    event.general.xany.display = Tk_Display(target);
-    event.virtual.name = Tk_GetUid(eventName);
-
-    Tk_QueueWindowEvent(&event.general, TCL_QUEUE_TAIL);
-}
 /*
  * Local Variables:
  * mode: c

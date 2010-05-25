@@ -31,7 +31,7 @@
 #  error "Need single floating point precision out of tie"
 # endif
 #else
-# error "Need TIE_PRECISION set to 0 in the CFLAGS"
+# define TIE_PRECISION 0
 #endif
 
 #include "tie.h"

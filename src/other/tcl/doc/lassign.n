@@ -14,8 +14,9 @@
 .SH NAME
 lassign \- Assign list elements to variables
 .SH SYNOPSIS
-\fBlassign \fIlist \fR?\fIvarName ...\fR?
+\fBlassign \fIlist varName \fR?\fIvarName ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command treats the value \fIlist\fR as a list and assigns
@@ -25,10 +26,8 @@ than list elements, the remaining variables are set to the empty
 string.  If there are more list elements than variables, a list of
 unassigned elements is returned.
 .SH EXAMPLES
-.PP
 An illustration of how multiple assignment works, and what happens
 when there are either too few or too many elements.
-.PP
 .CS
 lassign {a b c} x y z       ;# Empty return
 puts $x                     ;# Prints "a"
@@ -44,19 +43,15 @@ lassign {f g h i} x y       ;# Returns "h i"
 puts $x                     ;# Prints "f"
 puts $y                     ;# Prints "g"
 .CE
-.PP
 The \fBlassign\fR command has other uses.  It can be used to create
 the analogue of the
 .QW shift
 command in many shell languages like this:
-.PP
 .CS
 set ::argv [lassign $::argv argumentToReadOff]
 .CE
 .SH "SEE ALSO"
 lindex(n), list(n), lset(n), set(n)
+
 .SH KEYWORDS
 assign, element, list, multiple, set, variable
-'\"Local Variables:
-'\"mode: nroff
-'\"End:

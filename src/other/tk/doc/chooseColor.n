@@ -15,6 +15,7 @@ tk_chooseColor \- pops up a dialog box for the user to select a color.
 .SH SYNOPSIS
 \fBtk_chooseColor \fR?\fIoption value ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 The procedure \fBtk_chooseColor\fR pops up a dialog box for the
@@ -39,12 +40,9 @@ name of the color in a form acceptable to \fBTk_GetColor\fR.  If the
 user cancels the operation, both commands will return the empty
 string.
 .SH EXAMPLE
-.PP
 .CS
 button .b \-bg [tk_chooseColor \-initialcolor gray \-title "Choose color"]
 .CE
+
 .SH KEYWORDS
-color, color selection, dialog
-'\" Local Variables:
-'\" mode: nroff
-'\" End:
+color selection dialog

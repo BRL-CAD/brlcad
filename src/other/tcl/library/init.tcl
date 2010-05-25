@@ -17,7 +17,7 @@
 if {[info commands package] == ""} {
     error "version mismatch: library\nscripts expect Tcl version 7.5b1 or later but the loaded version is\nonly [info patchlevel]"
 }
-package require -exact Tcl 8.6b1.1
+package require -exact Tcl 8.5.8
 
 # Compute the auto path to use in this interpreter.
 # The values on the path come from several locations:
@@ -179,9 +179,9 @@ if {[interp issafe]} {
 		-subcommands {
 		    add clicks format microseconds milliseconds scan seconds
 		}]
-
+	
 	# Auto-loading stubs for 'clock.tcl'
-
+	
 	foreach cmd {add format scan} {
 	    proc ::tcl::clock::$cmd args {
 		variable TclLibDir
@@ -218,9 +218,11 @@ if {[namespace which -command tclLog] eq ""} {
 # exist in the interpreter.  It takes the following steps to make the
 # command available:
 #
-#	1. See if the autoload facility can locate the command in a
+#	1. See if the command has the form "namespace inscope ns cmd" and
+#	   if so, concatenate its arguments onto the end and evaluate it.
+#	2. See if the autoload facility can locate the command in a
 #	   Tcl script file.  If so, load it and execute it.
-#	2. If the command was invoked interactively at top-level:
+#	3. If the command was invoked interactively at top-level:
 #	    (a) see if the command exists as an executable UNIX program.
 #		If so, "exec" the command.
 #	    (b) see if the command requests csh-like history substitution
@@ -237,15 +239,22 @@ proc unknown args {
     variable ::tcl::UnknownPending
     global auto_noexec auto_noload env tcl_interactive
 
+    # If the command word has the form "namespace inscope ns cmd"
+    # then concatenate its arguments onto the end and evaluate it.
 
-    if {[info exists ::errorInfo]} {
-	set savedErrorInfo $::errorInfo
-    }
-    if {[info exists ::errorCode]} {
-	set savedErrorCode $::errorCode
+    set cmd [lindex $args 0]
+    if {[regexp "^:*namespace\[ \t\n\]+inscope" $cmd] && [llength $cmd] == 4} {
+	#return -code error "You need an {*}"
+        set arglist [lrange $args 1 end]
+	set ret [catch {uplevel 1 ::$cmd $arglist} result opts]
+	dict unset opts -errorinfo
+	dict incr opts -level
+	return -options $opts $result
     }
 
-    set name [lindex $args 0]
+    catch {set savedErrorInfo $::errorInfo}
+    catch {set savedErrorCode $::errorCode}
+    set name $cmd
     if {![info exists auto_noload]} {
 	#
 	# Make sure we're not trying to load the same proc twice.
@@ -281,7 +290,7 @@ proc unknown args {
 	    if {$code ==  1} {
 		#
 		# Compute stack trace contribution from the [uplevel].
-		# Note the dependence on how Tcl_AddErrorInfo, etc.
+		# Note the dependence on how Tcl_AddErrorInfo, etc. 
 		# construct the stack trace.
 		#
 		set errorInfo [dict get $opts -errorinfo]
@@ -412,7 +421,7 @@ proc unknown args {
 # library file to create the procedure.  Returns 1 if it successfully
 # loaded the procedure, 0 otherwise.
 #
-# Arguments:
+# Arguments: 
 # cmd -			Name of the command to find and load.
 # namespace (optional)  The namespace where the command is being used - must be
 #                       a canonical namespace as returned [namespace current]
@@ -436,7 +445,7 @@ proc auto_load {cmd {namespace {}}} {
 	    #    info commands $name
 	    # Unfortunately, if the name has glob-magic chars in it like *
 	    # or [], it may not match.  For our purposes here, a better
-	    # route is to use
+	    # route is to use 
 	    #    namespace which -command $name
 	    if {[namespace which -command $name] ne ""} {
 		return 1
@@ -467,7 +476,7 @@ proc auto_load {cmd {namespace {}}} {
 # of available commands.  Returns 1 if the index is loaded, and 0 if
 # the index is already loaded and up to date.
 #
-# Arguments:
+# Arguments: 
 # None.
 
 proc auto_load_index {} {
@@ -557,7 +566,7 @@ proc auto_qualify {cmd namespace} {
 	    return [list [string range $cmd 2 end]]
 	}
     }
-
+    
     # Potentially returning 2 elements to try  :
     # (if the current namespace is not the global one)
 
@@ -615,13 +624,13 @@ proc auto_import {pattern} {
 
 # auto_execok --
 #
-# Returns string that indicates name of program to execute if
+# Returns string that indicates name of program to execute if 
 # name corresponds to a shell builtin or an executable in the
-# Windows search path, or "" otherwise.  Builds an associative
-# array auto_execs that caches information about previous checks,
+# Windows search path, or "" otherwise.  Builds an associative 
+# array auto_execs that caches information about previous checks, 
 # for speed.
 #
-# Arguments:
+# Arguments: 
 # name -			Name of a command.
 
 if {$tcl_platform(platform) eq "windows"} {
@@ -676,7 +685,7 @@ proc auto_execok name {
 
     set path "[file dirname [info nameof]];.;"
     if {[info exists env(WINDIR)]} {
-	set windir $env(WINDIR)
+	set windir $env(WINDIR) 
     }
     if {[info exists windir]} {
 	if {$tcl_platform(os) eq "Windows NT"} {
@@ -741,13 +750,13 @@ proc auto_execok name {
 # This procedure is called by Tcl's core when attempts to call the
 # filesystem's copydirectory function fail.  The semantics of the call
 # are that 'dest' does not yet exist, i.e. dest should become the exact
-# image of src.  If dest does exist, we throw an error.
-#
+# image of src.  If dest does exist, we throw an error.  
+# 
 # Note that making changes to this procedure can change the results
 # of running Tcl's tests.
 #
-# Arguments:
-# action -              "renaming" or "copying"
+# Arguments: 
+# action -              "renaming" or "copying" 
 # src -			source directory
 # dest -		destination directory
 proc tcl::CopyDirectory {action src dest} {
@@ -775,7 +784,7 @@ proc tcl::CopyDirectory {action src dest} {
 	    # exists, then we should only call this function if -force
 	    # is true, which means we just want to over-write.  So,
 	    # the following code is now commented out.
-	    #
+	    # 
 	    # return -code error "error $action \"$src\" to\
 	    # \"$dest\": file already exists"
 	} else {
@@ -808,7 +817,7 @@ proc tcl::CopyDirectory {action src dest} {
     # Have to be careful to capture both visible and hidden files.
     # We will also be more generous to the file system and not
     # assume the hidden and non-hidden lists are non-overlapping.
-    #
+    # 
     # On Unix 'hidden' files begin with '.'.  On other platforms
     # or filesystems hidden files may have other interpretations.
     set filelist [concat [glob -nocomplain -directory $src *] \

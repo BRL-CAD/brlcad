@@ -35,7 +35,7 @@ test pkgconfig-1.3 {query value multiple times} {
 test pkgconfig-2.0 {error: missing subcommand} {
     catch {::tcl::pkgconfig} msg
     set msg
-} {wrong # args: should be "::tcl::pkgconfig subcommand ?arg?"}
+} {wrong # args: should be "::tcl::pkgconfig subcommand ?argument?"}
 test pkgconfig-2.1 {error: illegal subcommand} {
     catch {::tcl::pkgconfig foo} msg
     set msg
@@ -55,7 +55,7 @@ test pkgconfig-2.4 {error: query unknown key} {
 test pkgconfig-2.5 {error: query with to many arguments} {
     catch {::tcl::pkgconfig get foo bar} msg
     set msg
-} {wrong # args: should be "::tcl::pkgconfig subcommand ?arg?"}
+} {wrong # args: should be "::tcl::pkgconfig subcommand ?argument?"}
 
 # cleanup
 ::tcltest::cleanupTests

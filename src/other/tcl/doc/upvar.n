@@ -45,18 +45,16 @@ The \fBupvar\fR command simplifies the implementation of call-by-name
 procedure calling and also makes it easier to build new control constructs
 as Tcl procedures.
 For example, consider the following procedure:
-.PP
 .CS
 proc \fIadd2\fR name {
    \fBupvar\fR $name x
    set x [expr {$x + 2}]
 }
 .CE
-.PP
 If \fIadd2\fR is invoked with an argument giving the name of a variable,
 it adds two to the value of that variable.
 Although \fIadd2\fR could have been implemented using \fBuplevel\fR
-instead of \fBupvar\fR, \fBupvar\fR makes it simpler for \fIadd2\fR
+instead of \fBupvar\fR, \fBupvar\fR makes it simpler for \fBadd2\fR
 to access the variable in the caller's procedure frame.
 .PP
 \fBnamespace eval\fR is another way (besides procedure calls)
@@ -64,7 +62,7 @@ that the Tcl naming context can change.
 It adds a call frame to the stack to represent the namespace context.
 This means each \fBnamespace eval\fR command
 counts as another call level for \fBuplevel\fR and \fBupvar\fR commands.
-For example, \fBinfo level\fR \fB1\fR will return a list
+For example, \fBinfo level 1\fR will return a list
 describing a command that is either
 the outermost procedure call or the outermost \fBnamespace eval\fR command.
 Also, \fBuplevel #0\fR evaluates a script
@@ -87,7 +85,6 @@ will be
 .QW "\fIlocalVar\fR"
 rather than
 .QW "\fIoriginalVar\fR" :
-.PP
 .CS
 proc \fItraceproc\fR { name index op } {
    puts $name
@@ -109,17 +106,15 @@ made to \fImyVar\fR will not be passed to subprocesses correctly.
 .SH EXAMPLE
 A \fBdecr\fR command that works like \fBincr\fR except it subtracts
 the value from the variable instead of adding it:
-.PP
 .CS
 proc decr {varName {decrement 1}} {
     \fBupvar\fR 1 $varName var
     incr var [expr {-$decrement}]
 }
 .CE
+
 .SH "SEE ALSO"
 global(n), namespace(n), uplevel(n), variable(n)
+
 .SH KEYWORDS
-context, frame, global, level, namespace, procedure, upvar, variable
-.\" Local Variables:
-.\" mode: nroff
-.\" End:
+context, frame, global, level, namespace, procedure, variable

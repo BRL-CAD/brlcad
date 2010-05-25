@@ -51,10 +51,8 @@ The \fBbreak\fR and \fBcontinue\fR statements may be
 invoked inside \fIbody\fR, with the same effect as in the \fBfor\fR
 command.  \fBForeach\fR returns an empty string.
 .SH EXAMPLES
-.PP
 This loop prints every value in a list together with the square and
 cube of the value:
-.PP
 .CS
 '\" Maintainers: notice the tab hacking below!
 .ta 3i
@@ -67,7 +65,6 @@ puts "Value\etSquare\etCube"	;# Neat-looking header
 .PP
 The following loop uses i and j as loop variables to iterate over
 pairs of elements of a single list.
-.PP
 .CS
 set x {}
 \fBforeach\fR {i j} {a b c d e f} {
@@ -78,7 +75,6 @@ set x {}
 .CE
 .PP
 The next loop uses i and j to iterate over two lists in parallel.
-.PP
 .CS
 set x {}
 \fBforeach\fR i {a b c} j {d e f g} {
@@ -89,7 +85,6 @@ set x {}
 .CE
 .PP
 The two forms are combined in the following example.
-.PP
 .CS
 set x {}
 \fBforeach\fR i {a b c} {j k} {d e f g} {
@@ -103,4 +98,4 @@ set x {}
 for(n), while(n), break(n), continue(n)
 
 .SH KEYWORDS
-foreach, iteration, list, loop
+foreach, iteration, list, looping

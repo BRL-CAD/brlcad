@@ -252,7 +252,7 @@ void
 XSetCommand(
     Display *display,
     Window w,
-    const char **argv,
+    CONST char **argv,
     int argc)
 {
 }

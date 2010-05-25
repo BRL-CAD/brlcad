@@ -1960,7 +1960,8 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
   // be added to a view and old I/O code will still
   // work.
   unsigned int tcode = 0;
-  int value = 0;
+  ON__INT64 big_value = 0;
+  int i32;
   bool rc = true;
 
   Default();
@@ -1970,7 +1971,7 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
   ON_3dPoint target_point = ON_3dPoint::UnsetPoint;
 
   while(rc) {
-    rc = file.BeginRead3dmChunk(&tcode,&value);
+    rc = file.BeginRead3dmBigChunk(&tcode,&big_value);
     if (!rc)
       break;
     switch(tcode) 
@@ -1994,13 +1995,13 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
       rc = file.ReadObjectUserData(m_vp);
       break;
     case TCODE_VIEW_SHOWCONGRID:
-      m_bShowConstructionGrid = value?true:false;
+      m_bShowConstructionGrid = big_value?true:false;
       break;
     case TCODE_VIEW_SHOWCONAXES:
-      m_bShowConstructionAxes = value?true:false;
+      m_bShowConstructionAxes = big_value?true:false;
       break;
     case TCODE_VIEW_SHOWWORLDAXES:
-      m_bShowWorldAxes = value?true:false;
+      m_bShowWorldAxes = big_value?true:false;
       break;
     case TCODE_VIEW_TRACEIMAGE:
       rc = m_trace_image.Read(file);
@@ -2022,7 +2023,8 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
         bHaveTargetPoint = true;
       break;
     case TCODE_VIEW_DISPLAYMODE:
-      m_display_mode = ON::DisplayMode(value);
+      i32 = (int)big_value;
+      m_display_mode = ON::DisplayMode(i32);
       break;
     case TCODE_VIEW_NAME:
       rc = file.ReadString(m_name);
@@ -2044,9 +2046,10 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
         {
           // Added 23 March 2005 Dale Lear
           // 1.1 fields (there are no 1.0 fields)
-          rc = file.ReadInt( &value );
+          i32 = 0;
+          rc = file.ReadInt( &i32 );
           if (!rc) break;
-          m_view_type = ON::ViewType(value);
+          m_view_type = ON::ViewType(i32);
           
           rc = file.ReadDouble( &m_page_settings.m_width_mm );
           if (!rc) break;
@@ -2718,10 +2721,11 @@ static bool ON_3dmSettings_Read_v1_TCODE_NAMED_VIEW(ON_BinaryArchive& file, ON_3
   view.Default();
   bool rc = true;
   unsigned int tcode;
-  int value;
+  ON__INT64 big_value;
 
-  while(rc) {
-    rc = file.BeginRead3dmChunk( &tcode, &value );
+  while(rc) 
+  {
+    rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
     if (!rc )
       break;
     switch(tcode) {
@@ -2739,15 +2743,15 @@ static bool ON_3dmSettings_Read_v1_TCODE_NAMED_VIEW(ON_BinaryArchive& file, ON_3
       break;
 
     case TCODE_SHOWGRID:
-      view.m_bShowConstructionGrid = value?true:false;
+      view.m_bShowConstructionGrid = big_value?true:false;
       break;
 						
     case TCODE_SHOWGRIDAXES:
-      view.m_bShowConstructionAxes = value?true:false;
+      view.m_bShowConstructionAxes = big_value?true:false;
       break;
 						
     case TCODE_SHOWWORLDAXES:
-      view.m_bShowWorldAxes = value?true:false;
+      view.m_bShowWorldAxes = big_value?true:false;
       break; 			
       
     }
@@ -2766,10 +2770,11 @@ static bool ON_3dmSettings_Read_v1_TCODE_NAMED_CPLANE(ON_BinaryArchive& file, ON
 
   bool rc = true;
   unsigned int tcode;
-  int value;
+  ON__INT64 big_value;
 
-  while(rc) {
-    rc = file.BeginRead3dmChunk( &tcode, &value );
+  while(rc) 
+  {
+    rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
     if (!rc )
       break;
     switch(tcode) {
@@ -2850,8 +2855,8 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
   // reads legacy 1.0 named construction plane TCODE_VIEWPORT chunk
   view.Default();
   bool rc = true;
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode;
+  ON__INT64 big_value;
 
   double clipdist = 0.0;
   double snapsize = 0.0;
@@ -2859,7 +2864,7 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
   int chunk_count = 0;// debugging counter
   for ( chunk_count = 0; rc; chunk_count++ )
   {
-    rc = file.BeginRead3dmChunk( &tcode, &value );
+    rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
     if (!rc )
       break;
     switch(tcode) {
@@ -2885,15 +2890,15 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
       break;
 
     case TCODE_SHOWGRID:
-      view.m_bShowConstructionGrid = value?true:false;
+      view.m_bShowConstructionGrid = big_value?true:false;
       break;
 						
     case TCODE_SHOWGRIDAXES:
-      view.m_bShowConstructionAxes = value?true:false;
+      view.m_bShowConstructionAxes = big_value?true:false;
       break;
 						
     case TCODE_SHOWWORLDAXES:
-      view.m_bShowWorldAxes = value?true:false;
+      view.m_bShowWorldAxes = big_value?true:false;
       break; 			
       
     case TCODE_VIEWPORT_POSITION:
@@ -2929,12 +2934,13 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
       break;
       
     case TCODE_MAXIMIZED_VIEWPORT:
-      if ( value )
+      if ( big_value )
         view.m_position.m_bMaximized = true;
       break; 
 
     case TCODE_VIEWPORT_DISPLAY_MODE: // short TCODE with display mode value
-      switch ( value ) {
+      switch ( big_value ) 
+      {
       case 0: // wireframe working mode
         view.m_display_mode = ON::wireframe_display;
         break;
@@ -2961,14 +2967,14 @@ bool ON_3dmSettings::Read_v1( ON_BinaryArchive& file )
   size_t pos0 = file.CurrentPosition();
 
   // need to start at the beginning of the file
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode;
+  ON__INT64 big_value;
   rc = file.SeekFromStart(32)?true:false; // skip 32 byte header
   
   int chunk_count = 0; // debugging counter
   for ( chunk_count = 0; rc; chunk_count++ )
   {
-    rc = file.BeginRead3dmChunk( &tcode, &value );
+    rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
     if ( !rc ) 
       break; // assume we are at the end of the file
 
@@ -3019,13 +3025,14 @@ bool ON_3dmSettings::Read_v1( ON_BinaryArchive& file )
 bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
 {
   bool rc = true;
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode;
+  ON__INT64 big_value;
 
   while(rc) 
   {
-
-    rc = file.BeginRead3dmChunk( &tcode, &value );
+    tcode = 0;
+    big_value = 0;
+    rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
     if ( !rc )
       break;
 
@@ -3072,11 +3079,12 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
     case TCODE_SETTINGS_NAMED_CPLANE_LIST: // named cplanes
       {
         m_named_cplanes.Empty();
-        unsigned int subtcode;
-        int count, i, subvalue;
+        ON__UINT32 subtcode = 0;
+        ON__INT64 subvalue = 0;
+        int count, i;
         rc = file.ReadInt(&count);
         for ( i = 0; i < count && rc ; i++ ) {
-          rc = file.BeginRead3dmChunk( &subtcode, &subvalue );
+          rc = file.BeginRead3dmBigChunk( &subtcode, &subvalue );
           if (rc ) {
             if ( subtcode != TCODE_VIEW_CPLANE )
               rc = false;
@@ -3095,19 +3103,24 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
     case TCODE_SETTINGS_NAMED_VIEW_LIST: // named views
       {
         m_named_views.Empty();
-        unsigned int subtcode;
-        int count, i, subvalue;
+        ON__UINT32 subtcode = 0;
+        ON__INT64 subvalue = 0;
+        int count, i;
         rc = file.ReadInt(&count);
-        for ( i = 0; i < count && rc ; i++ ) {
-          rc = file.BeginRead3dmChunk( &subtcode, &subvalue );
-          if (rc ) {
+        for ( i = 0; i < count && rc ; i++ ) 
+        {
+          rc = file.BeginRead3dmBigChunk( &subtcode, &subvalue );
+          if (rc ) 
+          {
             if ( subtcode != TCODE_VIEW_RECORD )
               rc = false;
-            else {
+            else 
+            {
               ON_3dmView& cplane = m_named_views.AppendNew();
               rc = cplane.Read(file);
             }
-            if ( !file.EndRead3dmChunk() ) {
+            if ( !file.EndRead3dmChunk() )
+            {
               rc = false;
             }
           }
@@ -3118,20 +3131,25 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
     case TCODE_SETTINGS_VIEW_LIST: // active view is first in list
       {
         m_views.Empty();
-        unsigned int subtcode;
-        int count, i, subvalue;
+        ON__UINT32 subtcode = 0;
+        ON__INT64 subvalue = 0;
+        int count, i;
         rc = file.ReadInt(&count);
         m_views.Reserve(count);
-        for ( i = 0; i < count && rc ; i++ ) {
-          rc = file.BeginRead3dmChunk( &subtcode, &subvalue );
-          if (rc ) {
+        for ( i = 0; i < count && rc ; i++ ) 
+        {
+          rc = file.BeginRead3dmBigChunk( &subtcode, &subvalue );
+          if (rc ) 
+          {
             if ( subtcode != TCODE_VIEW_RECORD )
               rc = false;
-            else {
+            else 
+            {
               ON_3dmView& view = m_views.AppendNew();
               rc = view.Read(file);
             }
-            if ( !file.EndRead3dmChunk() ) {
+            if ( !file.EndRead3dmChunk() )
+            {
               rc = false;
             }
           }
@@ -3141,7 +3159,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
       
     case TCODE_SETTINGS__NEVER__USE__THIS:
       {
-        if ( 28 == value )
+        if ( 28 == big_value )
         {
           // 23 March 2005 Dale Lear - this was the ON_LineStyle
           //                           and a linesytlesource int
@@ -3155,37 +3173,67 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
       break;
 
     case TCODE_SETTINGS_CURRENT_LAYER_INDEX:
-      m_current_layer_index = value;
+      if ( big_value < -1 || big_value > 0x7FFFFFFF )
+      {
+        ON_ERROR("ON_3dmSettings::Read_v2() - TCODE_SETTINGS_CURRENT_LAYER_INDEX - invalid layer index value");
+      }
+      else
+      {
+        m_current_layer_index = (int)big_value;
+      }
       break;
       
     case TCODE_SETTINGS_CURRENT_FONT_INDEX:
-      // in archives with opennurbs version >= 200106100
-      m_current_font_index = value;
+      if ( big_value < -1 || big_value > 0x7FFFFFFF )
+      {
+        ON_ERROR("ON_3dmSettings::Read_v2() - TCODE_SETTINGS_CURRENT_FONT_INDEX - invalid font index value");
+      }
+      else
+      {
+        // in archives with opennurbs version >= 200106100
+        m_current_font_index = (int)big_value;
+      }
       break;
       
     case TCODE_SETTINGS_CURRENT_DIMSTYLE_INDEX:
-      // in archives with opennurbs version >= 200106100
-      m_current_dimstyle_index = value;
+      if ( big_value < -1 || big_value > 0x7FFFFFFF )
+      {
+        ON_ERROR("ON_3dmSettings::Read_v2() - TCODE_SETTINGS_CURRENT_DIMSTYLE_INDEX - invalid dimstyle index value");
+      }
+      else
+      {
+        // in archives with opennurbs version >= 200106100
+        m_current_dimstyle_index = (int)big_value;
+      }
       break;
       
     case TCODE_SETTINGS_CURRENT_MATERIAL_INDEX:
       {
+        int i32 = 0;
         if (rc) rc = file.ReadInt( &m_current_material_index );
-        if (rc) rc = file.ReadInt( &value );
-        if (rc) m_current_material_source = ON::ObjectMaterialSource(value);
+        if (rc) rc = file.ReadInt( &i32 );
+        if (rc) m_current_material_source = ON::ObjectMaterialSource(i32);
       }
       break;
       
     case TCODE_SETTINGS_CURRENT_COLOR:
       {
+        int i32 = 0;
         if (rc) rc = file.ReadColor( m_current_color );
-        if (rc) rc = file.ReadInt( &value );
-        if (rc) m_current_color_source = ON::ObjectColorSource(value);
+        if (rc) rc = file.ReadInt( &i32 );
+        if (rc) m_current_color_source = ON::ObjectColorSource(i32);
       }
       break;
       
     case TCODE_SETTINGS_CURRENT_WIRE_DENSITY:
-      m_current_wire_density = value;
+      if ( big_value < -2 || big_value > 0x7FFFFFFF )
+      {
+        ON_ERROR("ON_3dmSettings::Read_v2() - TCODE_SETTINGS_CURRENT_WIRE_DENSITY - invalid current_wire_density value");
+      }
+      else
+      {
+        m_current_wire_density = (int)big_value;
+      }
       break;
       
     case TCODE_SETTINGS_RENDER:

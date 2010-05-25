@@ -34,6 +34,7 @@ by \fIfile\fR meets the conditions specified by \fImask\fR.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_CreateFileHandler\fR arranges for \fIproc\fR to be
@@ -50,13 +51,11 @@ as \fBvwait\fR.
 .PP
 \fIProc\fR should have arguments and result that match the
 type \fBTcl_FileProc\fR:
-.PP
 .CS
-typedef void \fBTcl_FileProc\fR(
+typedef void Tcl_FileProc(
         ClientData \fIclientData\fR,
         int \fImask\fR);
 .CE
-.PP
 The \fIclientData\fR parameter to \fIproc\fR is a copy
 of the \fIclientData\fR
 argument given to \fBTcl_CreateFileHandler\fR when the callback
@@ -66,6 +65,7 @@ the file.  \fIMask\fR is an integer mask indicating which
 of the requested conditions actually exists for the file;  it
 will contain a subset of the bits in the \fImask\fR argument
 to \fBTcl_CreateFileHandler\fR.
+.PP
 .PP
 There may exist only one handler for a given file at a given time.
 If \fBTcl_CreateFileHandler\fR is called when a handler already
@@ -86,8 +86,7 @@ complete the application will not be able to service other events. Use
 blocking or nonblocking mode as required.
 .PP
 Note that these interfaces are only supported by the Unix
-implementation of the Tcl notifier.
-.SH "SEE ALSO"
-fileevent(n), Tcl_CreateTimerHandler(3), Tcl_DoWhenIdle(3)
+implementation of the Tcl notifier.   
+
 .SH KEYWORDS
 callback, file, handler

@@ -33,7 +33,7 @@ test stringComp-1.1 {error conditions} {
 test stringComp-1.2 {error conditions} {
     proc foo {} {string}
     list [catch {foo} msg] $msg
-} {1 {wrong # args: should be "string subcommand ?arg ...?"}}
+} {1 {wrong # args: should be "string subcommand ?argument ...?"}}
 test stringComp-1.3 {error condition - undefined method during compile} {
     # We don't want this to complain about 'never' because it may never
     # be called, or string may get redefined.  This must compile OK.
@@ -714,6 +714,5 @@ test stringComp-11.54 {string match, failure} {
 ## not yet bc
 
 # cleanup
-catch {rename foo {}}
 ::tcltest::cleanupTests
 return

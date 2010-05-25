@@ -51,9 +51,9 @@ for {set i 90} {$i>=0} {incr i -10} {
     # Coordinates of these items don't matter; they will be set properly below
     $w.k create line 0 0 1 1 -smooth true -tags graph$i -fill grey$i
 }
-
-$w.k create text 0 0 -anchor ne -text "\u03b8" -tags label_theta
-$w.k create text 0 0 -anchor ne -text "\u03b4\u03b8" -tags label_dtheta
+# FIXME: UNICODE labels
+$w.k create text 0 0 -anchor ne -text "q" -font {Symbol 8} -tags label_theta
+$w.k create text 0 0 -anchor ne -text "dq" -font {Symbol 8} -tags label_dtheta
 pack $w.k -in $w.p.l2 -fill both -expand true
 
 # Initialize some variables

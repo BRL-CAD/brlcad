@@ -50,10 +50,10 @@ dm_limit(i)
     int i;
 {
     if ( i > NOISE )
-	return( i-NOISE );
+	return i-NOISE;
     if ( i < -NOISE )
-	return( i+NOISE );
-    return(0);
+	return i+NOISE;
+    return 0;
 }
 
 /*
@@ -66,10 +66,10 @@ dm_unlimit(i)
     int i;
 {
     if ( i > 0 )
-	return( i + NOISE );
+	return i + NOISE;
     if ( i < 0 )
-	return( i - NOISE );
-    return(0);
+	return i - NOISE;
+    return 0;
 }
 
 /*			D M _ W R A P
@@ -94,7 +94,7 @@ dm_wrap(f)
 	if (tmp_f == 0)
 	    return 1.0;
 	else
-	    return (-1.0 + tmp_f);
+	    return -1.0 + tmp_f;
     }
 
     if (f < -1.0) {
@@ -105,15 +105,15 @@ dm_wrap(f)
 	if (tmp_f == 0)
 	    return -1.0;
 	else
-	    return (1.0 + tmp_f);
+	    return 1.0 + tmp_f;
     }
 
     return f;
 #else
     if (f > 1.0)
-	return(f - 2.0);
+	return f - 2.0;
     if (f < -1.0)
-	return(f + 2.0);
+	return f + 2.0;
     return f;
 #endif
 }

@@ -24,11 +24,11 @@
  *
  * Copyright (c) 1989-1994 The Regents of the University of California.
  * Copyright (c) 1994-1998 Sun Microsystems, Inc.
- * Copyright 2001-2009, Apple Inc.
- * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  * RCS: @(#) $Id$
  */
@@ -80,7 +80,7 @@ typedef struct NameRegistry {
 				 * XFree; zero means use ckfree. */
 } NameRegistry;
 
-static int initialized = 0; /* A flag to denote if we have initialized
+static int initialized = false; /* A flag to denote if we have initialized
 				 * yet. */
 
 static RegisteredInterp *interpListPtr = NULL;
@@ -200,12 +200,12 @@ static int SendInit(Tcl_Interp *interp);
  *--------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tk_SetAppName(
     Tk_Window tkwin,		/* Token for any window in the application to
 				 * be named: it is just used to identify the
 				 * application and the display. */
-    const char *name)		/* The name that will be used to refer to the
+    CONST char *name)		/* The name that will be used to refer to the
 				 * interpreter in later "send" commands. Must
 				 * be globally unique. */
 {
@@ -256,7 +256,7 @@ Tk_SetAppName(
     Tcl_IncrRefCount(resultObjPtr);
     for (i = 0; ; ) {
 	result = Tcl_ListObjIndex(NULL, resultObjPtr, i, &interpNamePtr);
-	if (result != TCL_OK || interpNamePtr == NULL) {
+	if (interpNamePtr == NULL) {
 	    break;
 	}
 	interpName = Tcl_GetString(interpNamePtr);
@@ -325,14 +325,14 @@ Tk_SendObjCmd(
     ClientData clientData,	/* Used only for deletion */
     Tcl_Interp *interp,		/* The interp we are sending from */
     int objc,			/* Number of arguments */
-    Tcl_Obj *const objv[])	/* The arguments */
+    Tcl_Obj *CONST objv[])	/* The arguments */
 {
-    const char *const sendOptions[] = {"-async", "-displayof", "-", NULL};
+    const char *sendOptions[] = {"-async", "-displayof", "-", NULL};
     char *stringRep, *destName;
-    /*int async = 0;*/
+    int async = 0;
     int i, index, firstArg;
     RegisteredInterp *riPtr;
-    Tcl_Obj *listObjPtr;
+    Tcl_Obj *resultPtr, *listObjPtr;
     int result = TCL_OK;
 
     for (i = 1; i < (objc - 1); ) {
@@ -343,7 +343,7 @@ Tk_SendObjCmd(
 		return TCL_ERROR;
 	    }
 	    if (index == 0) {
-		/*async = 1;*/
+		async = 1;
 		i++;
 	    } else if (index == 1) {
 		i += 2;
@@ -357,12 +357,14 @@ Tk_SendObjCmd(
 
     if (objc < (i + 2)) {
 	Tcl_WrongNumArgs(interp, 1, objv,
-		"?-option value ...? interpName arg ?arg ...?");
+		"?options? interpName arg ?arg ...?");
 	return TCL_ERROR;
     }
 
     destName = Tcl_GetString(objv[i]);
     firstArg = i + 1;
+
+    resultPtr = Tcl_GetObjResult(interp);
 
     /*
      * See if the target interpreter is local. If so, execute the command
@@ -506,12 +508,3 @@ SendInit(
 {
     return TCL_OK;
 }
-
-/*
- * Local Variables:
- * mode: c
- * c-basic-offset: 4
- * fill-column: 79
- * coding: utf-8
- * End:
- */

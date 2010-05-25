@@ -103,7 +103,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     stp->st_aradius = INFINITY;
     stp->st_bradius = INFINITY;
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -159,18 +159,18 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    /* exit point, when dir.N < 0.  out = min(out, s) */
 	    out = norm_dist/slant_factor;
 	    if (!NEAR_ZERO(out, INFINITY))
-		return(0);	/* MISS */
+		return 0;	/* MISS */
 	} else if (slant_factor > 1.0e-10) {
 	    /* entry point, when dir.N > 0.  in = max(in, s) */
 	    in = norm_dist/slant_factor;
 	    if (!NEAR_ZERO(in, INFINITY))
-		return(0);	/* MISS */
+		return 0;	/* MISS */
 	} else {
 	    /* ray is parallel to plane when dir.N == 0.  If it is
 	     * outside the solid, stop now
 	     */
 	    if (norm_dist > 0.0)
-		return(0);	/* MISS */
+		return 0;	/* MISS */
 	}
     }
     if (RT_G_DEBUG & DEBUG_ARB8)
@@ -187,7 +187,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
         segp->seg_out.hit_surfno = 0;
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -399,23 +399,16 @@ rt_hlf_free(struct soltab *stp)
  * Classify this halfspace against a bounding RPP.  Since this is an
  * infinite solid, it is very important that this function properly.
  *
- * Returns -
- * BN_CLASSIFY_INSIDE
- * BN_CLASSIFY_OVERLAPPING
- * BN_CLASSIFY_OUTSIDE
  */
 int
-rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+rt_hlf_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    register const struct half_specific *halfp =
-	(struct half_specific *)stp->st_specific;
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
 
-    if (halfp == HALF_NULL) {
-	bu_log("half(%s):  no data?\n", stp->st_name);
-	return 0;
-    }
-
-    return bn_hlf_class(halfp->half_eqn, min, max, tol);
+    return 0;
 }
 
 
@@ -430,7 +423,7 @@ rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_
  * the plane, with the outward normal drawn shorter.
  */
 int
-rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
@@ -475,7 +468,7 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VADD2(tip, cent, tip);
     RT_ADD_VLIST(vhead, cent, BN_VLIST_LINE_MOVE);
     RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-    return(0);
+    return 0;
 }
 
 
@@ -532,7 +525,7 @@ rt_hlf_xform(
     f = MAGNITUDE(hop->eqn);
     if (f <= SMALL) {
 	bu_log("rt_half_xform: bad normal, len = %g\n", f);
-	return(-1);
+	return -1;
     }
     t = f - 1.0;
     if (!NEAR_ZERO(t, 0.001)) {
@@ -568,7 +561,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_hlf_import4: defective record, id=x%x\n", rp->u_id);
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -598,7 +591,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     f = MAGNITUDE(hip->eqn);
     if (f <= SMALL) {
 	bu_log("rt_hlf_import4:  bad normal, len=%g\n", f);
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
     t = f - 1.0;
     if (!NEAR_ZERO(t, 0.001)) {
@@ -607,7 +600,7 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	VSCALE(hip->eqn, hip->eqn, f);
 	hip->eqn[W] *= f;
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -623,7 +616,7 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_HALF) return(-1);
+    if (ip->idb_type != ID_HALF) return -1;
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
 
@@ -637,7 +630,7 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VMOVE(rec->s.s_values, hip->eqn);
     rec->s.s_values[W] = hip->eqn[W] * local2mm;
 
-    return(0);
+    return 0;
 }
 
 
@@ -687,7 +680,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     f = MAGNITUDE(hip->eqn);
     if (f <= SMALL) {
 	bu_log("rt_hlf_import4:  bad normal, len=%g\n", f);
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
     t = f - 1.0;
     if (!NEAR_ZERO(t, 0.001)) {
@@ -696,7 +689,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	VSCALE(hip->eqn, hip->eqn, f);
 	hip->eqn[W] *= f;
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -783,7 +776,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
  * R T _ H L F _ T E S S
  */
 int
-rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_half_internal *vip;
 
@@ -795,7 +788,7 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (m) NMG_CK_MODEL(m);
 
     /* XXX tess routine needed */
-    return(-1);
+    return -1;
 }
 
 
@@ -809,7 +802,7 @@ rt_hlf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

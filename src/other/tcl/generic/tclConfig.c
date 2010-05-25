@@ -44,7 +44,7 @@ typedef struct QCCD {
 
 static int		QueryConfigObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    struct Tcl_Obj *const *objv);
+			    struct Tcl_Obj *CONST *objv);
 static void		QueryConfigDelete(ClientData clientData);
 static Tcl_Obj *	GetConfigDict(Tcl_Interp *interp);
 static void		ConfigDictDeleteProc(ClientData clientData,
@@ -70,17 +70,18 @@ void
 Tcl_RegisterConfig(
     Tcl_Interp *interp,		/* Interpreter the configuration command is
 				 * registered in. */
-    const char *pkgName,	/* Name of the package registering the
+    CONST char *pkgName,	/* Name of the package registering the
 				 * embedded configuration. ASCII, thus in
 				 * UTF-8 too. */
-    const Tcl_Config *configuration,	/* Embedded configuration. */
-    const char *valEncoding)	/* Name of the encoding used to store the
+    Tcl_Config *configuration,	/* Embedded configuration. */
+    CONST char *valEncoding)	/* Name of the encoding used to store the
 				 * configuration values, ASCII, thus UTF-8. */
 {
+    Tcl_Obj *pDB, *pkgDict;
     Tcl_DString cmdName;
-    const Tcl_Config *cfg;
+    Tcl_Config *cfg;
     Tcl_Encoding venc = Tcl_GetEncoding(NULL, valEncoding);
-    QCCD *cdPtr = (QCCD *) ckalloc(sizeof(QCCD));
+    QCCD *cdPtr = (QCCD *)ckalloc(sizeof(QCCD));
 
     cdPtr->interp = interp;
     cdPtr->pkg = Tcl_NewStringObj(pkgName, -1);
@@ -106,14 +107,14 @@ Tcl_RegisterConfig(
      */
 
     if (venc != NULL) {
-	Tcl_Obj *pkgDict, *pDB = GetConfigDict(interp);
-
 	/*
 	 * Retrieve package specific configuration...
 	 */
 
+	pDB = GetConfigDict(interp);
+
 	if (Tcl_DictObjGet(interp, pDB, cdPtr->pkg, &pkgDict) != TCL_OK
-		|| (pkgDict == NULL)) {
+	    || (pkgDict == NULL)) {
 	    pkgDict = Tcl_NewDictObj();
 	} else if (Tcl_IsShared(pkgDict)) {
 	    pkgDict = Tcl_DuplicateObj(pkgDict);
@@ -125,8 +126,8 @@ Tcl_RegisterConfig(
 
 	for (cfg=configuration ; cfg->key!=NULL && cfg->key[0]!='\0' ; cfg++) {
 	    Tcl_DString conv;
-	    const char *convValue =
-		    Tcl_ExternalToUtfDString(venc, cfg->value, -1, &conv);
+	    CONST char *convValue =
+		Tcl_ExternalToUtfDString(venc, cfg->value, -1, &conv);
 
 	    /*
 	     * We know that the keys are in ASCII/UTF-8, so for them is no
@@ -134,7 +135,7 @@ Tcl_RegisterConfig(
 	     */
 
 	    Tcl_DictObjPut(interp, pkgDict, Tcl_NewStringObj(cfg->key, -1),
-		    Tcl_NewStringObj(convValue, -1));
+			   Tcl_NewStringObj(convValue, -1));
 	    Tcl_DStringFree(&conv);
 	}
 
@@ -178,8 +179,8 @@ Tcl_RegisterConfig(
     Tcl_DStringAppend(&cmdName, "::pkgconfig", -1);
 
     if (Tcl_CreateObjCommand(interp, Tcl_DStringValue(&cmdName),
-	    QueryConfigObjCmd, cdPtr, QueryConfigDelete) == NULL) {
-	Tcl_Panic("%s: %s", "Tcl_RegisterConfig",
+	    QueryConfigObjCmd, (ClientData) cdPtr, QueryConfigDelete) == NULL) {
+        Tcl_Panic("%s: %s", "Tcl_RegisterConfig",
 		"Unable to create query command for package configuration");
     }
 
@@ -208,13 +209,13 @@ QueryConfigObjCmd(
     ClientData clientData,
     Tcl_Interp *interp,
     int objc,
-    struct Tcl_Obj *const *objv)
+    struct Tcl_Obj *CONST *objv)
 {
-    QCCD *cdPtr = clientData;
+    QCCD *cdPtr = (QCCD *) clientData;
     Tcl_Obj *pkgName = cdPtr->pkg;
     Tcl_Obj *pDB, *pkgDict, *val, *listPtr;
     int n, index;
-    static const char *const subcmdStrings[] = {
+    static CONST char *subcmdStrings[] = {
 	"get", "list", NULL
     };
     enum subcmds {
@@ -222,7 +223,7 @@ QueryConfigObjCmd(
     };
 
     if ((objc < 2) || (objc > 3)) {
-	Tcl_WrongNumArgs(interp, 1, objv, "subcommand ?arg?");
+	Tcl_WrongNumArgs(interp, 1, objv, "subcommand ?argument?");
 	return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[1], subcmdStrings, "subcommand", 0,
@@ -233,12 +234,12 @@ QueryConfigObjCmd(
     pDB = GetConfigDict(interp);
     if (Tcl_DictObjGet(interp, pDB, pkgName, &pkgDict) != TCL_OK
 	    || pkgDict == NULL) {
-	/*
+        /*
 	 * Maybe a Tcl_Panic is better, because the package data has to be
 	 * present.
 	 */
 
-	Tcl_SetResult(interp, "package not known", TCL_STATIC);
+        Tcl_SetResult(interp, "package not known", TCL_STATIC);
 	return TCL_ERROR;
     }
 
@@ -385,7 +386,7 @@ ConfigDictDeleteProc(
     ClientData clientData,	/* Pointer to Tcl_Obj. */
     Tcl_Interp *interp)		/* Interpreter being deleted. */
 {
-    Tcl_Obj *pDB = clientData;
+    Tcl_Obj *pDB = (Tcl_Obj *) clientData;
 
     Tcl_DecrRefCount(pDB);
 }

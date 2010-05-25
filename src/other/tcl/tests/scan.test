@@ -100,10 +100,10 @@ test scan-3.13 {ValidateFormat} {
 
 test scan-4.1 {Tcl_ScanObjCmd, argument checks} {
     list [catch {scan} msg] $msg
-} {1 {wrong # args: should be "scan string format ?varName ...?"}}
+} {1 {wrong # args: should be "scan string format ?varName varName ...?"}}
 test scan-4.2 {Tcl_ScanObjCmd, argument checks} {
     list [catch {scan string} msg] $msg
-} {1 {wrong # args: should be "scan string format ?varName ...?"}}
+} {1 {wrong # args: should be "scan string format ?varName varName ...?"}}
 test scan-4.3 {Tcl_ScanObjCmd, argument checks} {
     # degenerate case, before changed from 8.2 to 8.3
     list [catch {scan string format} msg] $msg
@@ -248,14 +248,10 @@ test scan-4.40.2 {Tcl_ScanObjCmd, base-16 integer scanning} {
     catch {unset x}
     list [scan {xF} {%x} x] [info exists x]
 } {0 0}
-test scan-4.40.3 {Tcl_ScanObjCmd, base-2 integer scanning} {
-    set x {}
-    list [scan {1001 0b101 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000} {%b %b %llb} x y z] $x $y $z
-} {3 9 5 340282366920938463463374607431768211456}
 test scan-4.41 {Tcl_ScanObjCmd, base-unknown integer scanning} {
     set x {}
-    list [scan {10 010 0x10 0b10} {%i%i%i%i} x y z t] $x $y $z $t
-} {4 10 8 16 0}
+    list [scan {10 010 0x10} {%i%i%i} x y z] $x $y $z
+} {3 10 8 16}
 test scan-4.42 {Tcl_ScanObjCmd, base-unknown integer scanning} {
     set x {}
     list [scan {10 010 0X10} {%i%i%i} x y z] $x $y $z
@@ -513,7 +509,7 @@ test scan-8.1 {error conditions} {
 test scan-8.2 {error conditions} {
     catch {scan a} msg
     set msg
-} {wrong # args: should be "scan string format ?varName ...?"}
+} {wrong # args: should be "scan string format ?varName varName ...?"}
 test scan-8.3 {error conditions} {
     list [catch {scan a %D x} msg] $msg
 } {1 {bad scan conversion character "D"}}

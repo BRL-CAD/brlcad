@@ -41,27 +41,27 @@ set alreadyTotalLoaded [info loaded]
 testConstraint teststaticpkg [llength [info commands teststaticpkg]]
 
 # Basic tests: parameter testing...
-test unload-1.1 {basic errors} -returnCodes error -body {
-    unload
-} -result {wrong # args: should be "unload ?-switch ...? fileName ?packageName? ?interp?"}
-test unload-1.2 {basic errors} -returnCodes error -body {
-    unload a b c d
-} -result {wrong # args: should be "unload ?-switch ...? fileName ?packageName? ?interp?"}
-test unload-1.3 {basic errors} -returnCodes error -body {
-    unload a b foobar
-} -result {could not find interpreter "foobar"}
-test unload-1.4 {basic errors} -returnCodes error -body {
-    unload {}
-} -result {must specify either file name or package name}
-test unload-1.5 {basic errors} -returnCodes error -body {
-    unload {} {}
-} -result {must specify either file name or package name}
-test unload-1.6 {basic errors} -returnCodes error -body {
-    unload {} Unknown
-} -result {package "Unknown" is loaded statically and cannot be unloaded}
-test unload-1.7 {-nocomplain switch} {
-    unload -nocomplain {} Unknown
-} {}
+test unload-1.1 {basic errors} {} {
+    list [catch {unload} msg] $msg
+} "1 {wrong \# args: should be \"unload ?switches? fileName ?packageName? ?interp?\"}"
+test unload-1.2 {basic errors} {} {
+    list [catch {unload a b c d} msg] $msg
+} "1 {wrong \# args: should be \"unload ?switches? fileName ?packageName? ?interp?\"}"
+test unload-1.3 {basic errors} {} {
+    list [catch {unload a b foobar} msg] $msg
+} {1 {could not find interpreter "foobar"}}
+test unload-1.4 {basic errors} {} {
+    list [catch {unload {}} msg] $msg
+} {1 {must specify either file name or package name}}
+test unload-1.5 {basic errors} {} {
+    list [catch {unload {} {}} msg] $msg
+} {1 {must specify either file name or package name}}
+test unload-1.6 {basic errors} {} {
+    list [catch {unload {} Unknown} msg] $msg
+} {1 {package "Unknown" is loaded statically and cannot be unloaded}}
+test unload-1.7 {-nocomplain switch} {} {
+    list [unload -nocomplain {} Unknown]
+} {{}}
 
 set pkgua_loaded {}
 set pkgua_detached {}

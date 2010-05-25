@@ -1,18 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <!-- vi:set sw=2: -->
   <!--
   Copyright (C) 1996-2002  Brian Paul and Ben Bederson
-  Copyright (C) 2005-2008  Greg Couch
+  Copyright (C) 2005-2009  Greg Couch
   See the LICENSE file for copyright details.
   -->
 
   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <title>Togl Tcl API</title>
   </head>
 
   <body>
-    <script language="javascript" src="header.js"></script>
-    <script language="javascript">
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
       NavigationBar();
     </script>
 
@@ -106,11 +109,11 @@
       <dt><code><var>pathName</var> extensions</code>
       <dd>
       Returns a list of OpenGL extensions available.  For example:
-      <blockquote><code><pre>
+      <blockquote><pre><code>
 if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
     ....
 }
-</pre></code></blockquote>
+</code></pre></blockquote>
       would check if the GL_EXT_bgra extension were supported.
     </dl>
 
@@ -143,6 +146,16 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
       Make the widget specified by <var>pathName</var> and its OpenGL context
       the current ones.
       This is implicitly called before any callback command is invoked.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> copycontextto <var>toPathName</var> <var>mask</var></code>
+      <dd>
+      Copy a subset of the OpenGL context state from <var>pathName</var> to
+      <var>toPathName</var> according the given mask.
+      The mask is an integer corresponding to the same values as
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glPushAttrib.xml">
+	glPushAttrib</a>.
     </dl>
 
     <h3><a name="image">Image commands</a></h3>
@@ -252,27 +265,35 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
     <dl>
       <dt><code><var>pathName</var> drawbuffer <var>mode</var></code>
       <dd>
-      Replaces calls to glDrawBuffer.
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glDrawBuffer.xml">
+	glDrawBuffer</a>.
       The mode is an integer.
     </dl>
 
     <dl>
       <dt><code><var>pathName</var> clear <var>mask</var></code>
       <dd>
-      Replaces calls to glClear.
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glClear.xml">
+	glClear</a>.
       The mask is an integer.
     </dl>
 
     <dl>
       <dt><code><var>pathName</var> frustum <var>left right bottom top near far</var></code>
       <dd>
-      Replaces calls to glFrustum.
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFrustum.xml">
+	glFrustum</a>.
     </dl>
 
     <dl>
       <dt><code><var>pathName</var> ortho <var>left right bottom top near far</var></code>
       <dd>
-      Replaces calls to glOrtho.
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glOrtho.xml">
+	glOrtho</a>.
     </dl>
 
     <dl>
@@ -522,7 +543,7 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
 	  <td>Minimum number of bits in red component.</td>
 	</tr>
 	<tr valign="top">
-	  <td nowrap="1"><code>-greensize</code></td>
+	  <td nowrap="nowrap"><code>-greensize</code></td>
 	  <td align="center">1</td>
 	  <td>Minimum number of bits in green component.</td>
 	</tr>
@@ -578,7 +599,7 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
 	  <td>Minimum number of bits in accumulation buffer red component.</td>
 	</tr>
 	<tr valign="top">
-	  <td nowrap="1"><code>-accumgreensize</code></td>
+	  <td nowrap="nowrap"><code>-accumgreensize</code></td>
 	  <td align="center">1</td>
 	  <td>
 	    Minimum number of bits in accumulation buffer green component.
@@ -645,8 +666,14 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
 	    <a href="#stereo options">stereo options</a>.
 	    <p>
 	    When using a non-native stereo mode, the OpenGL
-	    <code>glDrawBuffer</code>, <code>glClear</code>,
-	    <code>glFrustum</code>, and <code>glOrtho</code> calls
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glDrawBuffer.xml">
+	      glDrawBuffer</a>,
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glClear.xml">
+	      glClear</a>,
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFrustum.xml">
+	      glFrustum</a>, and
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glOrtho.xml">
+	      glOrtho</a> calls
 	    must be replaced with the Togl
 	    <a href="#stereo cmds">Tcl</a> or
 	    <a href="capi.html#stereo">C</a> versions.
@@ -654,6 +681,44 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
 	</tr>
 
 	<tr><td colspan="3" height="0">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-pbuffer</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, request off-screen framebuffer memory for the graphics.
+	    The resulting togl widget should not be managed.
+	  </td>
+	</tr>
+	<tr>
+	  <td><code>-largestpbuffer</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, when asking for a pbuffer of a given size
+	    and there isn't enough framebuffer memory available,
+	    fallback to the largest size available.
+	  </td>
+	</tr>
+
+	<tr><td colspan="3" height="0">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-multisample</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, request an multisampled rendering context.
+	  </td>
+	</tr>
+
+	<!--
+	<tr valign="top">
+	  <td><code>-fullscreen</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, request an multisampled rendering context.
+	    <em>Requires Tcl/Tk 8.5 or newer on UNIX and Microsoft Windows platforms.</em>
+	  </td>
+	</tr>
+	-->
+
 	<tr valign="top">
 	  <td><code>-indirect</code></td>
 	  <td align="center">false</td>
@@ -668,18 +733,20 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
 	  <td><code>-sharelist</code></td>
 	  <td align="center">""</td>
 	  <td>
-	    Name of an existing Togl widget with which to share display lists.
-	    If it is not possible to share contexts between the two togl
-	    widgets (depends on the graphics driver
-	    and the particular formats), it fails.
+	    Togl identification string or window path name
+	    of an existing Togl widget with which to share display lists.
+	    If it is not possible to share display lists
+	    between the two togl widgets
+	    (depends on the graphics driver and the particular formats),
+	    it fails.
 	  </td>
 	</tr>
 	<tr valign="top">
 	  <td><code>-sharecontext</code></td>
 	  <td align="center">""</td>
 	  <td>
-	    Name of an existing Togl widget with which to
-	    share the OpenGL context.
+	    Togl identification string or window path name
+	    of an existing Togl widget with which to share the OpenGL context.
 	    <i>Note:  all other pixel format options are ignored.</i>
 	  </td>
 	</tr>
@@ -696,8 +763,12 @@ if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
     </table>
 
     <hr>
-    Hosted by <a href="http://sourceforge.net/">
-      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo" align="middle"/>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
     </a>
   </body>
 </html>

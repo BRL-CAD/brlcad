@@ -276,7 +276,7 @@ test compile-11.9 {Tcl_Append*: ensure Tcl_ResetResult is used properly} {
 # TclReleaseLiteral. They are only effective when tcl is compiled 
 # with TCL_MEM_DEBUG
 #
-# Special test for leak on interp delete [Bug 467523]. 
+# Special test for leak on interp delete [Bug 467523].
 test compile-12.1 {testing literal leak on interp delete} -setup {
     proc getbytes {} {
 	set lines [split [memory info] "\n"]
@@ -569,13 +569,6 @@ test compile-16.24.$noComp {
 } -constraints $constraints -body {
     run "{*}\"\{foo bar\""
 } -returnCodes error -result {unmatched open brace in list}
-test compile-16.25.$noComp {TclCompileScript: word expansion, naked backslashes} $constraints {
-    run {list {*}{a \n b}}
-} {a {
-} b}
-test compile-16.26.$noComp {TclCompileScript: word expansion, protected backslashes} $constraints {
-    run {list {*}{a {\n} b}}
-} {a {\n} b}
 }	;# End of noComp loop
 
 # These tests are messy because it wrecks the interpreter it runs in!
@@ -608,91 +601,6 @@ test compile-17.2 {Command interpretation binding for non-compiled code} -setup 
 } -cleanup {
     interp delete $i
 } -result substituted
-
-# This tests the supported parts of the unsupported [disassemble] command. It
-# does not check the format of disassembled bytecode though; that's liable to
-# change without warning.
-
-test compile-18.1 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble
-} -match glob -result {wrong # args: should be "*"}
-test compile-18.2 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble ?
-} -match glob -result {bad type "?": must be *}
-test compile-18.3 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble lambda
-} -match glob -result {wrong # args: should be "* lambda lambdaTerm"}
-test compile-18.4 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble lambda \{
-} -result "can't interpret \"\{\" as a lambda expression"
-test compile-18.5 {disassembler - basics} -body {
-    # Allow any string: the result format is not defined anywhere!
-    tcl::unsupported::disassemble lambda {{} {}}
-} -match glob -result *
-test compile-18.6 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble proc
-} -match glob -result {wrong # args: should be "* proc procName"}
-test compile-18.7 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble proc nosuchproc
-} -result {"nosuchproc" isn't a procedure}
-test compile-18.8 {disassembler - basics} -setup {
-    proc chewonthis {} {}
-} -body {
-    # Allow any string: the result format is not defined anywhere!
-    tcl::unsupported::disassemble proc chewonthis
-} -cleanup {
-    rename chewonthis {}
-} -match glob -result *
-test compile-18.9 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble script
-} -match glob -result {wrong # args: should be "* script script"}
-test compile-18.10 {disassembler - basics} -body {
-    # Allow any string: the result format is not defined anywhere!
-    tcl::unsupported::disassemble script {}
-} -match glob -result *
-test compile-18.11 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble method
-} -match glob -result {wrong # args: should be "* method className methodName"}
-test compile-18.12 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble method nosuchclass foo
-} -result {nosuchclass does not refer to an object}
-test compile-18.13 {disassembler - basics} -returnCodes error -setup {
-    oo::object create justanobject
-} -body {
-    tcl::unsupported::disassemble method justanobject foo
-} -cleanup {
-    justanobject destroy
-} -result {"justanobject" is not a class}
-test compile-18.14 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble method oo::object nosuchmethod
-} -result {unknown method "nosuchmethod"}
-test compile-18.15 {disassembler - basics} -setup {
-    oo::class create foo {method bar {} {}}
-} -body {
-    # Allow any string: the result format is not defined anywhere!
-    tcl::unsupported::disassemble method foo bar
-} -cleanup {
-    foo destroy
-} -match glob -result *
-test compile-18.16 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble objmethod
-} -match glob -result {wrong # args: should be "* objmethod objectName methodName"}
-test compile-18.17 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble objmethod nosuchobject foo
-} -result {nosuchobject does not refer to an object}
-test compile-18.18 {disassembler - basics} -returnCodes error -body {
-    tcl::unsupported::disassemble objmethod oo::object nosuchmethod
-} -result {unknown method "nosuchmethod"}
-test compile-18.19 {disassembler - basics} -setup {
-    oo::object create foo
-    oo::objdefine foo {method bar {} {}}
-} -body {
-    # Allow any string: the result format is not defined anywhere!
-    tcl::unsupported::disassemble objmethod foo bar
-} -cleanup {
-    foo destroy
-} -match glob -result *
-# TODO sometime - check that bytecode from tbcload is *not* disassembled.
 
 # cleanup
 catch {rename p ""}

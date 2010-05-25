@@ -77,8 +77,8 @@ typedef struct BitmapInstance {
 
 static int		GetByte(Tcl_Channel chan);
 static int		ImgBmapCreate(Tcl_Interp *interp,
-			    const char *name, int argc, Tcl_Obj *const objv[],
-			    const Tk_ImageType *typePtr, Tk_ImageMaster master,
+			    char *name, int argc, Tcl_Obj *CONST objv[],
+			    Tk_ImageType *typePtr, Tk_ImageMaster master,
 			    ClientData *clientDataPtr);
 static ClientData	ImgBmapGet(Tk_Window tkwin, ClientData clientData);
 static void		ImgBmapDisplay(ClientData clientData,
@@ -131,7 +131,7 @@ static Tk_ConfigSpec configSpecs[] = {
 
 #define MAX_WORD_LENGTH 100
 typedef struct ParseInfo {
-    const char *string; /* Next character of string data for bitmap,
+    char *string;		/* Next character of string data for bitmap,
 				 * or NULL if bitmap is being read from
 				 * file. */
     Tcl_Channel chan;		/* File containing bitmap data, or NULL if no
@@ -147,13 +147,13 @@ typedef struct ParseInfo {
  */
 
 static int		ImgBmapCmd(ClientData clientData, Tcl_Interp *interp,
-			    int argc, Tcl_Obj *const objv[]);
+			    int argc, Tcl_Obj *CONST objv[]);
 static void		ImgBmapCmdDeletedProc(ClientData clientData);
 static void		ImgBmapConfigureInstance(BitmapInstance *instancePtr);
 static int		ImgBmapConfigureMaster(BitmapMaster *masterPtr,
-			    int argc, Tcl_Obj *const objv[], int flags);
+			    int argc, Tcl_Obj *CONST objv[], int flags);
 static int		NextBitmapWord(ParseInfo *parseInfoPtr);
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -175,11 +175,11 @@ static int
 ImgBmapCreate(
     Tcl_Interp *interp,		/* Interpreter for application containing
 				 * image. */
-    const char *name,			/* Name to use for image. */
+    char *name,			/* Name to use for image. */
     int argc,			/* Number of arguments. */
-    Tcl_Obj *const argv[],	/* Argument objects for options (doesn't
+    Tcl_Obj *CONST argv[],	/* Argument objects for options (doesn't
 				 * include image name or type). */
-    const Tk_ImageType *typePtr,/* Pointer to our type record (not used). */
+    Tk_ImageType *typePtr,	/* Pointer to our type record (not used). */
     Tk_ImageMaster master,	/* Token for image, to be used by us in later
 				 * callbacks. */
     ClientData *clientDataPtr)	/* Store manager's token for image here; it
@@ -191,7 +191,7 @@ ImgBmapCreate(
     masterPtr->tkMaster = master;
     masterPtr->interp = interp;
     masterPtr->imageCmd = Tcl_CreateObjCommand(interp, name, ImgBmapCmd,
-	    masterPtr, ImgBmapCmdDeletedProc);
+	    (ClientData) masterPtr, ImgBmapCmdDeletedProc);
     masterPtr->width = masterPtr->height = 0;
     masterPtr->data = NULL;
     masterPtr->maskData = NULL;
@@ -203,13 +203,13 @@ ImgBmapCreate(
     masterPtr->maskDataString = NULL;
     masterPtr->instancePtr = NULL;
     if (ImgBmapConfigureMaster(masterPtr, argc, argv, 0) != TCL_OK) {
-	ImgBmapDelete(masterPtr);
+	ImgBmapDelete((ClientData) masterPtr);
 	return TCL_ERROR;
     }
-    *clientDataPtr = masterPtr;
+    *clientDataPtr = (ClientData) masterPtr;
     return TCL_OK;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -235,21 +235,22 @@ ImgBmapConfigureMaster(
     BitmapMaster *masterPtr,	/* Pointer to data structure describing
 				 * overall bitmap image to (reconfigure). */
     int objc,			/* Number of entries in objv. */
-    Tcl_Obj *const objv[],	/* Pairs of configuration options for image. */
+    Tcl_Obj *CONST objv[],	/* Pairs of configuration options for image. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget, such
 				 * as TK_CONFIG_ARGV_ONLY. */
 {
     BitmapInstance *instancePtr;
     int maskWidth, maskHeight, dummy1, dummy2;
 
-    const char **argv = (const char **) ckalloc((objc+1) * sizeof(char *));
+    CONST char **argv = (CONST char **) ckalloc((objc+1) * sizeof(char *));
     for (dummy1 = 0; dummy1 < objc; dummy1++) {
 	argv[dummy1]=Tcl_GetString(objv[dummy1]);
     }
     argv[objc] = NULL;
 
     if (Tk_ConfigureWidget(masterPtr->interp, Tk_MainWindow(masterPtr->interp),
-	    configSpecs, objc, argv, (char *) masterPtr, flags) != TCL_OK) {
+	    configSpecs, objc, argv, (char *) masterPtr, flags)
+	    != TCL_OK) {
 	ckfree((char *) argv);
 	return TCL_ERROR;
     }
@@ -313,7 +314,7 @@ ImgBmapConfigureMaster(
 	    masterPtr->height, masterPtr->width, masterPtr->height);
     return TCL_OK;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -443,12 +444,12 @@ ImgBmapConfigureInstance(
 	Tk_FreeGC(Tk_Display(instancePtr->tkwin), instancePtr->gc);
     }
     instancePtr->gc = None;
-    Tcl_AppendObjToErrorInfo(masterPtr->interp, Tcl_ObjPrintf(
-	    "\n    (while configuring image \"%s\")", Tk_NameOfImage(
-	    masterPtr->tkMaster)));
+    Tcl_AddErrorInfo(masterPtr->interp, "\n    (while configuring image \"");
+    Tcl_AddErrorInfo(masterPtr->interp, Tk_NameOfImage(masterPtr->tkMaster));
+    Tcl_AddErrorInfo(masterPtr->interp, "\")");
     Tcl_BackgroundError(masterPtr->interp);
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -474,8 +475,8 @@ ImgBmapConfigureInstance(
 char *
 TkGetBitmapData(
     Tcl_Interp *interp,		/* For reporting errors, or NULL. */
-    const char *string,		/* String describing bitmap. May be NULL. */
-    const char *fileName,		/* Name of file containing bitmap description.
+    char *string,		/* String describing bitmap. May be NULL. */
+    char *fileName,		/* Name of file containing bitmap description.
 				 * Used only if string is NULL. Must not be
 				 * NULL if string is NULL. */
     int *widthPtr, int *heightPtr,
@@ -483,7 +484,7 @@ TkGetBitmapData(
     int *hotXPtr, int *hotYPtr)	/* Position of hot spot or -1,-1. */
 {
     int width, height, numBytes, hotX, hotY;
-    const char *expandedFileName;
+    CONST char *expandedFileName;
     char *p, *end;
     ParseInfo pi;
     char *data = NULL;
@@ -612,7 +613,7 @@ TkGetBitmapData(
 	goto error;
     }
     numBytes = ((width+7)/8) * height;
-    data = ckalloc((unsigned) numBytes);
+    data = (char *) ckalloc((unsigned) numBytes);
     for (p = data; numBytes > 0; p++, numBytes--) {
 	if (NextBitmapWord(&pi) != TCL_OK) {
 	    goto error;
@@ -650,7 +651,7 @@ TkGetBitmapData(
     }
     return NULL;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -675,8 +676,7 @@ NextBitmapWord(
     ParseInfo *parseInfoPtr)	/* Describes what we're reading and where we
 				 * are in it. */
 {
-    const char *src;
-    char *dst;
+    char *src, *dst;
     int c;
 
     parseInfoPtr->wordLength = 0;
@@ -720,7 +720,7 @@ NextBitmapWord(
     parseInfoPtr->word[parseInfoPtr->wordLength] = 0;
     return TCL_OK;
 }
-
+
 /*
  *--------------------------------------------------------------
  *
@@ -744,14 +744,14 @@ ImgBmapCmd(
     ClientData clientData,	/* Information about the image master. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    static const char *const bmapOptions[] = {"cget", "configure", NULL};
-    BitmapMaster *masterPtr = clientData;
+    static CONST char *bmapOptions[] = {"cget", "configure", NULL};
+    BitmapMaster *masterPtr = (BitmapMaster *) clientData;
     int index;
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[1], bmapOptions, "option", 0,
@@ -783,7 +783,7 @@ ImgBmapCmd(
 	return TCL_OK;
     }
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -809,7 +809,7 @@ ImgBmapGet(
     ClientData masterData)	/* Pointer to our master structure for the
 				 * image. */
 {
-    BitmapMaster *masterPtr = masterData;
+    BitmapMaster *masterPtr = (BitmapMaster *) masterData;
     BitmapInstance *instancePtr;
 
     /*
@@ -821,7 +821,7 @@ ImgBmapGet(
 	    instancePtr = instancePtr->nextPtr) {
 	if (instancePtr->tkwin == tkwin) {
 	    instancePtr->refCount++;
-	    return instancePtr;
+	    return (ClientData) instancePtr;
 	}
     }
 
@@ -852,9 +852,9 @@ ImgBmapGet(
 		masterPtr->height);
     }
 
-    return instancePtr;
+    return (ClientData) instancePtr;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -884,7 +884,7 @@ ImgBmapDisplay(
 				/* Coordinates within drawable that correspond
 				 * to imageX and imageY. */
 {
-    BitmapInstance *instancePtr = clientData;
+    BitmapInstance *instancePtr = (BitmapInstance *) clientData;
     int masking;
 
     /*
@@ -914,7 +914,7 @@ ImgBmapDisplay(
 	XSetClipOrigin(display, instancePtr->gc, 0, 0);
     }
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -938,7 +938,7 @@ ImgBmapFree(
 				 * instance to be displayed. */
     Display *display)		/* Display containing window that used image. */
 {
-    BitmapInstance *instancePtr = clientData;
+    BitmapInstance *instancePtr = (BitmapInstance *) clientData;
     BitmapInstance *prevPtr;
 
     instancePtr->refCount--;
@@ -977,7 +977,7 @@ ImgBmapFree(
     }
     ckfree((char *) instancePtr);
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1000,7 +1000,7 @@ ImgBmapDelete(
     ClientData masterData)	/* Pointer to BitmapMaster structure for
 				 * image. Must not have any more instances. */
 {
-    BitmapMaster *masterPtr = masterData;
+    BitmapMaster *masterPtr = (BitmapMaster *) masterData;
 
     if (masterPtr->instancePtr != NULL) {
 	Tcl_Panic("tried to delete bitmap image when instances still exist");
@@ -1018,7 +1018,7 @@ ImgBmapDelete(
     Tk_FreeOptions(configSpecs, (char *) masterPtr, NULL, 0);
     ckfree((char *) masterPtr);
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1041,14 +1041,14 @@ ImgBmapCmdDeletedProc(
     ClientData clientData)	/* Pointer to BitmapMaster structure for
 				 * image. */
 {
-    BitmapMaster *masterPtr = clientData;
+    BitmapMaster *masterPtr = (BitmapMaster *) clientData;
 
     masterPtr->imageCmd = NULL;
     if (masterPtr->tkMaster != NULL) {
 	Tk_DeleteImage(masterPtr->interp, Tk_NameOfImage(masterPtr->tkMaster));
     }
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1080,7 +1080,7 @@ GetByte(
     }
 }
 
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1176,7 +1176,7 @@ ImgBmapPsImagemask(
     Tcl_AppendResult(interp, ">} imagemask \n", NULL);
     return TCL_OK;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1205,7 +1205,7 @@ ImgBmapPostscript(
     int x, int y, int width, int height,
     int prepass)
 {
-    BitmapMaster *masterPtr = clientData;
+    BitmapMaster *masterPtr = (BitmapMaster *) clientData;
     char buffer[200];
 
     if (prepass) {
@@ -1283,7 +1283,7 @@ ImgBmapPostscript(
     }
     return TCL_OK;
 }
-
+
 /*
  * Local Variables:
  * mode: c

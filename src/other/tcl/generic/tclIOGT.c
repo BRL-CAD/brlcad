@@ -118,7 +118,7 @@ static inline void	ResultAdd(ResultBuffer *r, unsigned char *buf,
  * transformations.
  */
 
-static const Tcl_ChannelType transformChannelType = {
+static Tcl_ChannelType transformChannelType = {
     "transform",		/* Type name. */
     TCL_CHANNEL_VERSION_5,	/* v5 channel */
     TransformCloseProc,		/* Close proc. */
@@ -135,7 +135,7 @@ static const Tcl_ChannelType transformChannelType = {
     TransformNotifyProc,	/* Handling of events bubbling up. */
     TransformWideSeekProc,	/* Wide seek proc. */
     NULL,			/* Thread action. */
-    NULL			/* Truncate. */
+    NULL,			/* Truncate. */
 };
 
 /*
@@ -802,7 +802,7 @@ TransformSeekProc(
 {
     TransformChannelData *dataPtr = instanceData;
     Tcl_Channel parent = Tcl_GetStackedChannel(dataPtr->self);
-    const Tcl_ChannelType *parentType = Tcl_GetChannelType(parent);
+    Tcl_ChannelType *parentType = Tcl_GetChannelType(parent);
     Tcl_DriverSeekProc *parentSeekProc = Tcl_ChannelSeekProc(parentType);
 
     if ((offset == 0) && (mode == SEEK_CUR)) {
@@ -866,7 +866,7 @@ TransformWideSeekProc(
 {
     TransformChannelData *dataPtr = instanceData;
     Tcl_Channel parent = Tcl_GetStackedChannel(dataPtr->self);
-    const Tcl_ChannelType *parentType	= Tcl_GetChannelType(parent);
+    Tcl_ChannelType *parentType	= Tcl_GetChannelType(parent);
     Tcl_DriverSeekProc *parentSeekProc = Tcl_ChannelSeekProc(parentType);
     Tcl_DriverWideSeekProc *parentWideSeekProc =
 	    Tcl_ChannelWideSeekProc(parentType);

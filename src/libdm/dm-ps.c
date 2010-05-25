@@ -643,7 +643,7 @@ ps_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-ps_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect __attribute__((unused)))
+ps_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
 

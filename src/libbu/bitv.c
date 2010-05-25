@@ -75,7 +75,7 @@ floor_ilog2(register unsigned int x)
 inline unsigned int
 bu_bitv_shift()
 {
-    return (floor_ilog2(sizeof(bitv_t)*8));
+    return floor_ilog2(sizeof(bitv_t)*8);
 }
 
 
@@ -253,7 +253,7 @@ bu_hex_to_bitv(const char *str)
     if (len < 2 || len % 2) {
 	/* Must be two digits per byte */
 	bu_log("ERROR: bitv length is not a multiple of two.\nIllegal hex bitv: [%s]\n", str_start);
-	return ((struct bu_bitv *)NULL);
+	return (struct bu_bitv *)NULL;
     }
 
     bytes = len / 2; /* two hex digits per byte */
@@ -285,7 +285,7 @@ bu_hex_to_bitv(const char *str)
 	chunksize = (unsigned int)BVS;
     }
 
-    return (bv);
+    return bv;
 }
 
 
@@ -298,7 +298,7 @@ bu_bitv_dup(register const struct bu_bitv *bv)
     bu_bitv_clear(bv2);
     bu_bitv_or(bv2, bv);
 
-    return (bv2);
+    return bv2;
 }
 
 

@@ -13,8 +13,11 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2.2
-namespace import ::tcltest::test
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2.1
+    namespace import -force ::tcltest::test
+}
+
 ::tcltest::loadTestedCommands
 
 # ----------------------------------------------------------------------
@@ -22,14 +25,7 @@ namespace import ::tcltest::test
 # ----------------------------------------------------------------------
 test import-1.1 {basic syntax for "stub" command} {
     list [catch {itcl::import::stub} result] $result
-} {1 {wrong # args: should be "itcl::import::stub subcommand ?arg ...?"}}
-
-test import-1.1a {basic syntax for "stub" command
-} -body {
-    list [catch {itcl::import::stub} result] $result
-} -constraints {
-    needs_frq_1773103
-} -result {1 {wrong # args: should be one of...
+} {1 {wrong # args: should be one of...
   stub create name
   stub exists name}}
 
@@ -132,8 +128,7 @@ test import-2.3 {stubs can be autoloaded and imported links remain} {
     }
 } {{::test::foo1: 1 2 3 4} ::test::foo1 ::test::foo1 ::test::foo1 0}
 
-test import-2.4 {itcl::class handles stubs correctly
-} -body {
+test import-2.3 {itcl::class handles stubs correctly} {
     $interp eval {
         proc auto_load {cmd {namespace {}}} {
             itcl::class $cmd { }
@@ -146,17 +141,10 @@ test import-2.4 {itcl::class handles stubs correctly
              [namespace origin ::user3::foo2] \
              [itcl::import::stub exists ::test::foo2]
     }
-} -constraints {
-    only_working_in_itcl3.4
+} {x ::test::foo2 ::test::foo2 ::test::foo2 ::test::foo2 0}
 
-} -result {x ::test::foo2 ::test::foo2 ::test::foo2 ::test::foo2 0}
-
-test import-2.5 {itcl::class will overwrite stubs in an existing namespace} {
+test import-2.3 {itcl::class will overwrite stubs in an existing namespace} {
     $interp eval {
-        proc auto_load {cmd {namespace {}}} {
-            itcl::class $cmd { }
-            return 1
-        }
         namespace eval test::buried { }
         itcl::import::stub create ::test::buried
         itcl::import::stub create ::test::buried::stub

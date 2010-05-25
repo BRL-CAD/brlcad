@@ -118,11 +118,33 @@ public:
   void SetBaselineSpacing( double);
   double BaselineSpacing() const;
 
+  // Determines whether or not to draw a Text Mask
+  bool DrawTextMask() const;
+  void SetDrawTextMask(bool bDraw);
+
+  // Determines where to get the color to draw a Text Mask
+  // 0: Use background color of the viewport.  Initially, gradient backgrounds will not be supported
+  // 1: Use the ON_Color returned by MaskColor()
+  int MaskColorSource() const;
+  void SetMaskColorSource(int source);
+
+  ON_Color MaskColor() const;  // Only works right if MaskColorSource returns 1.
+                               // Does not return viewport background color
+  void SetMaskColor(ON_Color color);
+
+  void SetDimScale(double scale);
+  double DimScale() const;
+  void SetDimScaleSource(int source);
+  int DimScaleSource() const;
+
+
+  bool CompareFields(const ON_DimStyleExtra* pOther) const;
+
   // Data storage
 
   ON_UUID m_parent_dimstyle;  // ON_nil_uuid if there is no parent dimstyle
   ON_SimpleArray<bool> m_valid_fields;
-  enum { eFieldCount = 64 };
+  enum { eFieldCount = 66 };
 
   int    m_tolerance_style;
   int    m_tolerance_resolution;
@@ -131,6 +153,15 @@ public:
   double m_tolerance_height_scale;  // relative to the main dimension text
 
   double m_baseline_spacing;
+
+  // Text mask - added Dec 12 2009
+  bool     m_bDrawMask;
+  int      m_mask_color_source;
+  ON_Color m_mask_color;
+
+  // Per dimstyle DimScale added Dec 16, 2009
+  double   m_dimscale;
+  int      m_dimscale_source;
 };
 
 
@@ -195,6 +226,11 @@ void ON_DimStyleExtra::SetDefaults()
   m_tolerance_lower_value = ON_DimStyle::DefaultToleranceLowerValue();
   m_tolerance_height_scale = ON_DimStyle::DefaultToleranceHeightScale();
   m_baseline_spacing = ON_DimStyle::DefaultBaselineSpacing();
+  m_bDrawMask = false;
+  m_mask_color_source = 0;
+  m_mask_color.SetRGB(255,255,255);
+  m_dimscale = 1.0;
+  m_dimscale_source = 0;
 
   for( int i = 0; i < eFieldCount; i++)
     m_valid_fields[i] = false;
@@ -214,7 +250,9 @@ unsigned int ON_DimStyleExtra::SizeOf() const
 
 ON_BOOL32 ON_DimStyleExtra::Write(ON_BinaryArchive& archive) const
 {
-  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+//  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0); Changed to 1,1 for mask settings 12/12/09
+//  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,1); Changed to 1,2 for dimscale 12/17/09
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,2);
 
   if(rc) rc = archive.WriteUuid( m_parent_dimstyle);
   if(rc) rc = archive.WriteArray( m_valid_fields);
@@ -228,6 +266,13 @@ ON_BOOL32 ON_DimStyleExtra::Write(ON_BinaryArchive& archive) const
 
   if(rc) rc = archive.WriteDouble(m_baseline_spacing);
 
+  if(rc) rc = archive.WriteBool(m_bDrawMask);
+  if(rc) rc = archive.WriteInt(m_mask_color_source);
+  if(rc) rc = archive.WriteColor(m_mask_color);
+
+  if(rc) rc = archive.WriteDouble(m_dimscale);
+  if(rc) rc = archive.WriteInt(m_dimscale_source);
+
   if(!archive.EndWrite3dmChunk())
     rc = false;
 
@@ -236,6 +281,7 @@ ON_BOOL32 ON_DimStyleExtra::Write(ON_BinaryArchive& archive) const
 
 ON_BOOL32 ON_DimStyleExtra::Read(ON_BinaryArchive& archive)
 {
+  // Changed to 1,0 for mask settings 12/12/09
   int major_version = 0;
   int minor_version = 0;
   bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
@@ -253,6 +299,17 @@ ON_BOOL32 ON_DimStyleExtra::Read(ON_BinaryArchive& archive)
   if(rc) rc = archive.ReadDouble(&m_tolerance_height_scale);
 
   if(rc) rc = archive.ReadDouble(&m_baseline_spacing);
+
+  if(minor_version >= 1)
+  {
+    if(rc) rc = archive.ReadBool(&m_bDrawMask);
+    if(rc) rc = archive.ReadInt(&m_mask_color_source);
+    if(rc) rc = archive.ReadColor(m_mask_color);
+  }
+
+  if(minor_version >= 2)
+    if(rc) rc = archive.ReadDouble(&m_dimscale);
+    if(rc) rc = archive.ReadInt(&m_dimscale_source);
 
   if ( !archive.EndRead3dmChunk() )
     rc = false;
@@ -343,6 +400,88 @@ void ON_DimStyleExtra::SetBaselineSpacing( double spacing)
 double ON_DimStyleExtra::BaselineSpacing() const
 {
   return m_baseline_spacing;
+}
+
+bool ON_DimStyleExtra::DrawTextMask() const
+{
+  return m_bDrawMask;
+}
+
+void ON_DimStyleExtra::SetDrawTextMask(bool bDraw)
+{
+  m_bDrawMask = bDraw;
+}
+
+int ON_DimStyleExtra::MaskColorSource() const
+{
+  return m_mask_color_source;
+}
+
+void ON_DimStyleExtra::SetMaskColorSource(int source)
+{
+  if(source == 1)
+    m_mask_color_source = 1;
+  else
+    m_mask_color_source = 0;
+}
+
+ON_Color ON_DimStyleExtra::MaskColor() const
+{
+  return m_mask_color;
+}
+
+void ON_DimStyleExtra::SetMaskColor(ON_Color color)
+{
+  m_mask_color = color;
+}
+
+void ON_DimStyleExtra::SetDimScale(double scale)
+{
+  m_dimscale = scale;
+}
+
+double ON_DimStyleExtra::DimScale() const
+{
+  return m_dimscale;
+}
+
+void ON_DimStyleExtra::SetDimScaleSource(int source)
+{
+  m_dimscale_source = source;
+}
+
+int ON_DimStyleExtra::DimScaleSource() const
+{
+  return m_dimscale_source;
+}
+
+// returns true if they are the same
+bool ON_DimStyleExtra::CompareFields(const ON_DimStyleExtra* pOther) const
+{
+  if(pOther == 0)
+    return false;
+
+  if((m_parent_dimstyle        != pOther->m_parent_dimstyle) ||
+     (m_tolerance_style        != pOther->m_tolerance_style) ||
+     (m_tolerance_resolution   != pOther->m_tolerance_resolution) ||
+     (m_tolerance_upper_value  != pOther->m_tolerance_upper_value) ||
+     (m_tolerance_lower_value  != pOther->m_tolerance_lower_value) ||
+     (m_tolerance_height_scale != pOther->m_tolerance_height_scale) ||
+     (m_baseline_spacing       != pOther->m_baseline_spacing) ||
+     (m_bDrawMask              != pOther->m_bDrawMask) ||
+     (m_mask_color_source      != pOther->m_mask_color_source) ||
+     (m_mask_color             != pOther->m_mask_color) ||
+     (m_dimscale               != pOther->m_dimscale) ||
+     (m_dimscale_source        != pOther->m_dimscale_source)
+     )
+    return false;
+
+  for(int i = 0; i < m_valid_fields.Count(); i++)
+  {
+    if(m_valid_fields[i] != pOther->m_valid_fields[i])
+      return false;
+  }
+  return true;
 }
 
 
@@ -1333,6 +1472,41 @@ bool ON_DimStyle::OverrideFields( const ON_DimStyle& src, const ON_DimStyle& par
           SetBaselineSpacing( parent.BaselineSpacing());
           rc = true;
           break;
+      case fn_draw_mask:
+        if( pDEsrc->m_valid_fields[i])
+          SetDrawTextMask( src.DrawTextMask());
+        else
+          SetDrawTextMask( parent.DrawTextMask());
+          rc = true;
+          break;
+      case fn_mask_color_source:
+        if( pDEsrc->m_valid_fields[i])
+          SetMaskColorSource( src.MaskColorSource());
+        else
+          SetMaskColorSource( parent.MaskColorSource());
+          rc = true;
+          break;
+      case fn_mask_color:
+        if( pDEsrc->m_valid_fields[i])
+          SetMaskColor( src.MaskColor());
+        else
+          SetMaskColor( parent.MaskColor());
+          rc = true;
+          break;
+      case fn_dimscale:
+        if( pDEsrc->m_valid_fields[i])
+          SetDimScale( src.DimScale());
+        else
+          SetDimScale( parent.DimScale());
+          rc = true;
+          break;
+      case fn_dimscale_source:
+        if( pDEsrc->m_valid_fields[i])
+          SetDimScaleSource( src.DimScaleSource());
+        else
+          SetDimScaleSource( parent.DimScaleSource());
+          rc = true;
+          break;
       }
     }
   }
@@ -1601,6 +1775,41 @@ bool ON_DimStyle::InheritFields( const ON_DimStyle& parent)
             rc = true;
         }
         break;
+      case fn_draw_mask:
+        if( !pDE->m_valid_fields[i])
+        {
+          SetDrawTextMask( parent.DrawTextMask());
+            rc = true;
+        }
+        break;
+      case fn_mask_color_source:
+        if( !pDE->m_valid_fields[i])
+        {
+          SetMaskColorSource( parent.MaskColorSource());
+            rc = true;
+        }
+        break;
+      case fn_mask_color:
+        if( !pDE->m_valid_fields[i])
+        {
+          SetMaskColor( parent.MaskColor());
+            rc = true;
+        }
+        break;
+      case fn_dimscale:
+        if( !pDE->m_valid_fields[i])
+        {
+          SetDimScale( parent.DimScale());
+            rc = true;
+        }
+        break;
+      case fn_dimscale_source:
+        if( !pDE->m_valid_fields[i])
+        {
+          SetDimScaleSource( parent.DimScaleSource());
+            rc = true;
+        }
+        break;
       }
     }
   }
@@ -1811,9 +2020,141 @@ void ON_DimStyle::SetBaselineSpacing( double spacing)
   }
 }
 
+bool ON_DimStyle::DrawTextMask() const
+{
+  const ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, false);
+  if(pDE)
+    return pDE->DrawTextMask();
+  else
+    return false;
+}
+
+void ON_DimStyle::SetDrawTextMask(bool bDraw)
+{
+  ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, true);
+  if(pDE)
+    pDE->SetDrawTextMask(bDraw);
+}
+
+int ON_DimStyle::MaskColorSource() const
+{
+  const ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, false);
+  if(pDE)
+    return pDE->MaskColorSource();
+  else
+    return 0;
+}
+
+void ON_DimStyle::SetMaskColorSource(int source)
+{
+  ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, true);
+  if(pDE)
+    pDE->SetMaskColorSource(source);
+}
+
+ON_Color ON_DimStyle::MaskColor() const
+{
+  const ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, false);
+  if(pDE)
+    return pDE->MaskColor();
+  else
+    return 0;
+}
+
+void ON_DimStyle::SetMaskColor(ON_Color color)
+{
+  ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, true);
+  if(pDE)
+    pDE->SetMaskColor(color);
+}
+
+double ON_DimStyle::MaskOffsetFactor() const
+{
+  if(m_textheight != 0.0)
+    return 0.5 * m_textgap / m_textheight;
+  else
+    return 0.0;
+ }
+
+void ON_DimStyle::SetDimScale(double scale)
+{
+  ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, true);
+  if(pDE)
+    pDE->SetDimScale(scale);
+}
+
+double ON_DimStyle::DimScale() const
+{
+  const ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, false);
+  if(pDE) // && pDE->DimScaleSource() == 1)
+      return pDE->DimScale();
+  else
+    return 1.0;
+}
+
+void ON_DimStyle::SetDimScaleSource(int source)
+{
+  ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, true);
+  if(pDE)
+    pDE->SetDimScaleSource(source);
+}
+
+int ON_DimStyle::DimScaleSource() const
+{
+  const ON_DimStyleExtra* pDE = ON_DimStyleExtra::DimStyleExtension( this, false);
+  if(pDE)
+    return pDE->DimScaleSource();
+  else
+    return 0;
+}
+
 // This function is temporary and will be removed next time the SDK can be modified.
 class ON_DimStyleExtra* ON_DimStyle::DimStyleExtension()
 {
   ON_DimStyleExtra* pExtra = ON_DimStyleExtra::Cast( GetUserData( ON_DimStyleExtra::m_ON_DimStyleExtra_class_id.Uuid()));
   return pExtra;
+}
+
+// returns true if they are the same
+bool ON_DimStyle::CompareFields(const ON_DimStyle& other) const
+{
+  if((m_extextension               != other.m_extextension) ||
+     (m_extoffset                  != other.m_extoffset) ||
+     (m_arrowsize                  != other.m_arrowsize) ||
+     (m_centermark                 != other.m_centermark) ||
+     (m_textgap                    != other.m_textgap) ||
+     (m_textheight                 != other.m_textheight) ||
+     (m_textalign                  != other.m_textalign) ||
+     (m_arrowtype                  != other.m_arrowtype) ||
+     (m_angularunits               != other.m_angularunits) ||
+     (m_lengthformat               != other.m_lengthformat) ||
+     (m_angleformat                != other.m_angleformat) ||
+     (m_angleresolution            != other.m_angleresolution) ||
+     (m_lengthresolution           != other.m_lengthresolution) ||
+     (m_fontindex                  != other.m_fontindex) ||
+     (m_lengthfactor               != other.m_lengthfactor) ||
+     (m_bAlternate                 != other.m_bAlternate) ||
+     (m_alternate_lengthfactor     != other.m_alternate_lengthfactor) ||
+     (m_alternate_lengthformat     != other.m_alternate_lengthformat) ||
+     (m_alternate_lengthresolution != other.m_alternate_lengthresolution) ||
+     (m_alternate_angleformat      != other.m_alternate_angleformat) ||
+     (m_alternate_angleresolution  != other.m_alternate_angleresolution) ||
+     (m_prefix                     != other.m_prefix) ||
+     (m_suffix                     != other.m_suffix) ||
+     (m_alternate_prefix           != other.m_alternate_prefix) ||
+     (m_alternate_suffix           != other.m_alternate_suffix) ||
+     (m_dimextension               != other.m_dimextension) ||
+     (m_leaderarrowsize            != other.m_leaderarrowsize) ||
+     (m_leaderarrowtype            != other.m_leaderarrowtype) ||
+     (m_bSuppressExtension1        != other.m_bSuppressExtension1) ||
+     (m_bSuppressExtension2        != other.m_bSuppressExtension2))
+    return false;
+
+  const ON_DimStyleExtra* pDEo = ON_DimStyleExtra::DimStyleExtension(&other,false);
+  const ON_DimStyleExtra* pDE  = ON_DimStyleExtra::DimStyleExtension(this,false);
+  if((pDEo == 0 && pDE != 0) || (pDEo != 0 && pDE == 0))
+    return false;
+  if(pDE != 0)
+    return pDE->CompareFields(pDEo);
+  return true;
 }

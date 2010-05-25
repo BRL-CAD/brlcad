@@ -24,15 +24,12 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 testConstraint testobj [expr {[info commands testobj] != {}}]
 testConstraint testindexobj [expr {[info commands testindexobj] != {}}]
 
-# Used for constraining memory leak tests
-testConstraint memory [llength [info commands memory]]
-
 test string-1.1 {error conditions} {
     list [catch {string gorp a b} msg] $msg
 } {1 {unknown or ambiguous subcommand "gorp": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, totitle, toupper, trim, trimleft, trimright, wordend, or wordstart}}
 test string-1.2 {error conditions} {
     list [catch {string} msg] $msg
-} {1 {wrong # args: should be "string subcommand ?arg ...?"}}
+} {1 {wrong # args: should be "string subcommand ?argument ...?"}}
 
 test string-2.1 {string compare, too few args} {
     list [catch {string compare a} msg] $msg
@@ -340,7 +337,9 @@ test string-6.12 {string is alnum, true} {
 test string-6.13 {string is alnum, false} {
     list [string is alnum -failindex var abc1.23] $var
 } {0 4}
-test string-6.14 {string is alnum, unicode} "string is alnum abc\xfc" 1
+test string-6.14 {string is alnum, unicode} {
+    string is alnum abc\u00fc
+} 1
 test string-6.15 {string is alpha, true} {
     string is alpha abc
 } 1
@@ -1410,9 +1409,6 @@ test string-18.10 {string trim} {
 test string-18.11 {string trim, unicode} {
     string trim "\xe7\xe8 AB\xe7C \xe8\xe7" \xe7\xe8
 } " AB\xe7C "
-test string-18.12 {string trim, unicode default} {
-    string trim ABC\u1361\u1680\u3000
-} ABC
 
 test string-19.1 {string trimleft} {
     list [catch {string trimleft} msg] $msg
@@ -1420,9 +1416,6 @@ test string-19.1 {string trimleft} {
 test string-19.2 {string trimleft} {
     string trimleft "    XYZ      "
 } {XYZ      }
-test string-19.3 {string trimleft, unicode default} {
-    string trimleft \u1361\u1680\u3000ABC
-} ABC
 
 test string-20.1 {string trimright errors} {
     list [catch {string trimright} msg] $msg
@@ -1439,9 +1432,6 @@ test string-20.4 {string trimright} {
 test string-20.5 {string trimright} {
     string trimright ""
 } {}
-test string-20.6 {string trimright, unicode default} {
-    string trimright ABC\u1361\u1680\u3000
-} ABC
 
 test string-21.1 {string wordend} {
     list [catch {string wordend a} msg] $msg
@@ -1670,205 +1660,7 @@ test string-25.14 {string is list} {
     list [string is list -failindex x "\uabcd {b c}d e"] $x
 } {0 2}
 
-test string-26.1 {tcl::prefix, too few args} -body {
-    tcl::prefix match a
-} -returnCodes 1 -result {wrong # args: should be "tcl::prefix match ?options? table string"}
-test string-26.2 {tcl::prefix, bad args} -body {
-    tcl::prefix match a b c
-} -returnCodes 1 -result {bad option "a": must be -error, -exact, or -message}
-test string-26.3 {tcl::prefix, bad args} -body {
-    tcl::prefix match -error "{}x" -exact str1 str2
-} -returnCodes 1 -result {list element in braces followed by "x" instead of space}
-test string-26.3.1 {tcl::prefix, bad args} -body {
-    tcl::prefix match -error "x" -exact str1 str2
-} -returnCodes 1 -result {error options must have an even number of elements}
-test string-26.3.2 {tcl::prefix, bad args} -body {
-    tcl::prefix match -error str1 str2
-} -returnCodes 1 -result {missing error options}
-test string-26.4 {tcl::prefix, bad args} -body {
-    tcl::prefix match -message str1 str2
-} -returnCodes 1 -result {missing message}
-test string-26.5 {tcl::prefix} {
-    tcl::prefix match {apa bepa cepa depa} cepa
-} cepa
-test string-26.6 {tcl::prefix} {
-    tcl::prefix match {apa bepa cepa depa} be
-} bepa
-test string-26.7 {tcl::prefix} -body {
-    tcl::prefix match -exact {apa bepa cepa depa} be
-} -returnCodes 1 -result {bad option "be": must be apa, bepa, cepa, or depa}
-test string-26.8 {tcl::prefix} -body {
-    tcl::prefix match -message switch {apa bepa bear depa} be
-} -returnCodes 1 -result {ambiguous switch "be": must be apa, bepa, bear, or depa}
-test string-26.9 {tcl::prefix} -body {
-    tcl::prefix match -error {} {apa bepa bear depa} be
-} -returnCodes 0 -result {}
-test string-26.10 {tcl::prefix} -body {
-    tcl::prefix match -error {-level 1} {apa bepa bear depa} be
-} -returnCodes 2 -result {ambiguous option "be": must be apa, bepa, bear, or depa}
-test string-26.10.1 {tcl::prefix} -setup {
-    proc _testprefix {args} {
-        array set opts {-a x -b y -c y}
-        foreach {opt val} $args {
-            set opt [tcl::prefix match -error {-level 1} {-a -b -c} $opt]
-            set opts($opt) $val
-        }
-        array get opts
-    }
-} -body {
-    set a [catch {_testprefix -x u} result options]
-    dict get $options -errorinfo
-} -cleanup {
-    rename _testprefix {}
-} -result {bad option "-x": must be -a, -b, or -c
-    while executing
-"_testprefix -x u"}
-
-# Helper for memory stress tests
-# Repeat each body in a local space checking that memory does not increase
-proc MemStress {args} {
-    set res {}
-    foreach body $args {
-        set end 0
-        for {set i 0} {$i < 5} {incr i} { 
-            proc MemStress_Body {} $body
-            uplevel 1 MemStress_Body
-            rename MemStress_Body {}
-            set tmp $end
-            set end [lindex [lindex [split [memory info] "\n"] 3] 3]
-        }
-        lappend res [expr {$end - $tmp}]
-    }
-    return $res
-}
-
-test string-26.11 {tcl::prefix: testing for leaks} -body {
-    # This test is made to stress object reference management
-    MemStress {
-        set table {hejj miff gurk}
-        set item [lindex $table 1]
-        # If not careful, this can cause a circular reference
-        # that will cause a leak.
-        tcl::prefix match $table $item
-    } {
-        # A similar case with nested lists
-        set table2 {hejj {miff maff} gurk}
-        set item [lindex [lindex $table2 1] 0]
-        tcl::prefix match $table2 $item
-    } {
-        # A similar case with dict
-        set table3 {hejj {miff maff} gurk2}
-        set item [lindex [dict keys [lindex $table3 1]] 0]
-        tcl::prefix match $table3 $item
-    }
-} -constraints memory -result {0 0 0}
-
-test string-26.12 {tcl::prefix: testing for leaks} -body {
-    # This is a memory leak test in a form that might actually happen
-    # in real code.  The shared literal "miff" causes a connection
-    # between the item and the table.
-    MemStress {
-        proc stress1 {item} {
-            set table [list hejj miff gurk]
-            tcl::prefix match $table $item
-        }
-        proc stress2 {} {
-            stress1 miff
-        }
-        stress2
-        rename stress1 {}
-        rename stress2 {}
-    }
-} -constraints memory -result 0
-
-test string-26.13 {tcl::prefix: testing for leaks} -body {
-    # This test is made to stress object reference management
-    MemStress {
-        set table [list hejj miff]
-        set item $table
-        set error $table
-        # Use the same objects in all places
-        catch {
-            tcl::prefix match -error $error $table $item
-        }
-    }
-} -constraints memory -result {0}
-
-test string-27.1 {tcl::prefix all, too few args} -body {
-    tcl::prefix all a
-} -returnCodes 1 -result {wrong # args: should be "tcl::prefix all table string"}
-test string-27.2 {tcl::prefix all, bad args} -body {
-    tcl::prefix all a b c
-} -returnCodes 1 -result {wrong # args: should be "tcl::prefix all table string"}
-test string-27.3 {tcl::prefix all, bad args} -body {
-    tcl::prefix all "{}x" str2
-} -returnCodes 1 -result {list element in braces followed by "x" instead of space}
-test string-27.4 {tcl::prefix all} {
-    tcl::prefix all {apa bepa cepa depa} c
-} cepa
-test string-27.5 {tcl::prefix all} {
-    tcl::prefix all {apa bepa cepa depa} cepa
-} cepa
-test string-27.6 {tcl::prefix all} {
-    tcl::prefix all {apa bepa cepa depa} cepax
-} {}
-test string-27.7 {tcl::prefix all} {
-    tcl::prefix all {apa aska appa} a
-} {apa aska appa}
-test string-27.8 {tcl::prefix all} {
-    tcl::prefix all {apa aska appa} ap
-} {apa appa}
-test string-27.9 {tcl::prefix all} {
-    tcl::prefix all {apa aska appa} p
-} {}
-test string-27.10 {tcl::prefix all} {
-    tcl::prefix all {apa aska appa} {}
-} {apa aska appa}
-
-test string-28.1 {tcl::prefix longest, too few args} -body {
-    tcl::prefix longest a
-} -returnCodes 1 -result {wrong # args: should be "tcl::prefix longest table string"}
-test string-28.2 {tcl::prefix longest, bad args} -body {
-    tcl::prefix longest a b c
-} -returnCodes 1 -result {wrong # args: should be "tcl::prefix longest table string"}
-test string-28.3 {tcl::prefix longest, bad args} -body {
-    tcl::prefix longest "{}x" str2
-} -returnCodes 1 -result {list element in braces followed by "x" instead of space}
-test string-28.4 {tcl::prefix longest} {
-    tcl::prefix longest {apa bepa cepa depa} c
-} cepa
-test string-28.5 {tcl::prefix longest} {
-    tcl::prefix longest {apa bepa cepa depa} cepa
-} cepa
-test string-28.6 {tcl::prefix longest} {
-    tcl::prefix longest {apa bepa cepa depa} cepax
-} {}
-test string-28.7 {tcl::prefix longest} {
-    tcl::prefix longest {apa aska appa} a
-} a
-test string-28.8 {tcl::prefix longest} {
-    tcl::prefix longest {apa aska appa} ap
-} ap
-test string-28.9 {tcl::prefix longest} {
-    tcl::prefix longest {apa bska appa} a
-} ap
-test string-28.10 {tcl::prefix longest} {
-    tcl::prefix longest {apa bska appa} {}
-} {}
-test string-28.11 {tcl::prefix longest} {
-    tcl::prefix longest {{} bska appa} {}
-} {}
-test string-28.12 {tcl::prefix longest} {
-    tcl::prefix longest {apa {} appa} {}
-} {}
-test string-28.13 {tcl::prefix longest} {
-    # Test UTF8 handling
-    tcl::prefix longest {ax\x90 bep ax\x91} a
-} ax
-
 # cleanup
-rename MemStress {}
-catch {rename foo {}}
 ::tcltest::cleanupTests
 return
 

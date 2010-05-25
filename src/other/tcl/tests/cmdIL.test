@@ -1,12 +1,12 @@
-# This file contains a collection of tests for the procedures in the file
-# tclCmdIL.c. Sourcing this file into Tcl runs the tests and generates output
-# for errors. No output means no errors were found.
+# This file contains a collection of tests for the procedures in the
+# file tclCmdIL.c.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution of
-# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 # RCS: @(#) $Id$
 
@@ -17,23 +17,22 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 # Used for constraining memory leak tests
 testConstraint memory [llength [info commands memory]]
-testConstraint testobj [llength [info commands testobj]]
 
-test cmdIL-1.1 {Tcl_LsortObjCmd procedure} -returnCodes error -body {
-    lsort
-} -result {wrong # args: should be "lsort ?-option value ...? list"}
-test cmdIL-1.2 {Tcl_LsortObjCmd procedure} -returnCodes error -body {
-    lsort -foo {1 3 2 5}
-} -result {bad option "-foo": must be -ascii, -command, -decreasing, -dictionary, -increasing, -index, -indices, -integer, -nocase, -real, -stride, or -unique}
+test cmdIL-1.1 {Tcl_LsortObjCmd procedure} {
+    list [catch {lsort} msg] $msg
+} {1 {wrong # args: should be "lsort ?options? list"}}
+test cmdIL-1.2 {Tcl_LsortObjCmd procedure} {
+    list [catch {lsort -foo {1 3 2 5}} msg] $msg
+} {1 {bad option "-foo": must be -ascii, -command, -decreasing, -dictionary, -increasing, -index, -indices, -integer, -nocase, -real, or -unique}}
 test cmdIL-1.3 {Tcl_LsortObjCmd procedure, default options} {
     lsort {d e c b a \{ d35 d300}
 } {a b c d d300 d35 e \{}
 test cmdIL-1.4 {Tcl_LsortObjCmd procedure, -ascii option} {
     lsort -integer -ascii {d e c b a d35 d300}
 } {a b c d d300 d35 e}
-test cmdIL-1.5 {Tcl_LsortObjCmd procedure, -command option} -body {
-    lsort -command {1 3 2 5}
-} -returnCodes error -result {"-command" option must be followed by comparison command}
+test cmdIL-1.5 {Tcl_LsortObjCmd procedure, -command option} {
+    list [catch {lsort -command {1 3 2 5}} msg] $msg
+} {1 {"-command" option must be followed by comparison command}}
 test cmdIL-1.6 {Tcl_LsortObjCmd procedure, -command option} -setup {
     proc cmp {a b} {
 	expr {[string match x* $b] - [string match x* $a]}
@@ -55,12 +54,12 @@ test cmdIL-1.9 {Tcl_LsortObjCmd procedure, -dictionary option} {
 test cmdIL-1.10 {Tcl_LsortObjCmd procedure, -increasing option} {
     lsort -decreasing -increasing {d e c b a d35 d300}
 } {a b c d d300 d35 e}
-test cmdIL-1.11 {Tcl_LsortObjCmd procedure, -index option} -body {
-    lsort -index {1 3 2 5}
-} -returnCodes error -result {"-index" option must be followed by list index}
-test cmdIL-1.12 {Tcl_LsortObjCmd procedure, -index option} -body {
-    lsort -index foo {1 3 2 5}
-} -returnCodes error -result {bad index "foo": must be integer?[+-]integer? or end?[+-]integer?}
+test cmdIL-1.11 {Tcl_LsortObjCmd procedure, -index option} {
+    list [catch {lsort -index {1 3 2 5}} msg] $msg
+} {1 {"-index" option must be followed by list index}}
+test cmdIL-1.12 {Tcl_LsortObjCmd procedure, -index option} {
+    list [catch {lsort -index foo {1 3 2 5}} msg] $msg
+} {1 {bad index "foo": must be integer?[+-]integer? or end?[+-]integer?}}
 test cmdIL-1.13 {Tcl_LsortObjCmd procedure, -index option} {
     lsort -index end -integer {{2 25} {10 20 50 100} {3 16 42} 1}
 } {1 {2 25} {3 16 42} {10 20 50 100}}
@@ -70,15 +69,15 @@ test cmdIL-1.14 {Tcl_LsortObjCmd procedure, -index option} {
 test cmdIL-1.15 {Tcl_LsortObjCmd procedure, -integer option} {
     lsort -integer {24 6 300 18}
 } {6 18 24 300}
-test cmdIL-1.16 {Tcl_LsortObjCmd procedure, -integer option} -body {
-    lsort -integer {1 3 2.4}
-} -returnCodes error -result {expected integer but got "2.4"}
+test cmdIL-1.16 {Tcl_LsortObjCmd procedure, -integer option} {
+    list [catch {lsort -integer {1 3 2.4}} msg] $msg
+} {1 {expected integer but got "2.4"}}
 test cmdIL-1.17 {Tcl_LsortObjCmd procedure, -real option} {
     lsort -real {24.2 6e3 150e-1}
 } {150e-1 24.2 6e3}
-test cmdIL-1.18 {Tcl_LsortObjCmd procedure, bogus list} -body {
-    lsort "1 2 3 \{ 4"
-} -returnCodes error -result {unmatched open brace in list}
+test cmdIL-1.18 {Tcl_LsortObjCmd procedure, bogus list} {
+    list [catch {lsort "1 2 3 \{ 4"} msg] $msg
+} {1 {unmatched open brace in list}}
 test cmdIL-1.19 {Tcl_LsortObjCmd procedure, empty list} {
     lsort {}
 } {}
@@ -94,21 +93,22 @@ test cmdIL-1.24 {Tcl_LsortObjCmd procedure, order of -index and -command} -setup
     proc testcmp {a b} {return [string compare $a $b]}
 } -body {
     set l [list [list a b] [list c d]]
-    lsort -command testcmp -index 1 $l
+    list [catch {lsort -command testcmp -index 1 $l} msg] $msg
 } -cleanup {
     rename testcmp ""
-} -result [list [list a b] [list c d]]
+} -result [list 0 [list [list a b] [list c d]]]
 test cmdIL-1.25 {Tcl_LsortObjCmd procedure, order of -index and -command} -setup {
     catch {rename 1 ""}
     proc testcmp {a b} {return [string compare $a $b]}
 } -body {
     set l [list [list a b] [list c d]]
-    lsort -index 1 -command testcmp $l
+    list [catch {lsort -index 1 -command testcmp $l} msg] $msg
 } -cleanup {
     rename testcmp ""
-} -result [list [list a b] [list c d]]
-# Note that the required order only exists in the end-1'th element; indexing
-# using the end element or any fixed offset from the start will not work...
+} -result [list 0 [list [list a b] [list c d]]]
+# Note that the required order only exists in the end-1'th element;
+# indexing using the end element or any fixed offset from the start
+# will not work...
 test cmdIL-1.26 {Tcl_LsortObjCmd procedure, offset indexing from end} {
     lsort -index end-1 {{a 1 e i} {b 2 3 f g} {c 4 5 6 d h}}
 } {{c 4 5 6 d h} {a 1 e i} {b 2 3 f g}}
@@ -122,33 +122,9 @@ test cmdIL-1.29 {Tcl_LsortObjCmd procedure, loss of list rep during sorting} {
     set l {1 2 3}
     string length [lsort -command {apply {args {string length $::l}}} $l]
 } 5
-test cmdIL-1.30 {Tcl_LsortObjCmd procedure, -stride option} {
-    lsort -stride 2 {f e d c b a}
-} {b a d c f e}
-test cmdIL-1.31 {Tcl_LsortObjCmd procedure, -stride option} {
-    lsort -stride 3 {f e d c b a}
-} {c b a f e d}
-test cmdIL-1.32 {lsort -stride errors} -returnCodes error -body {
-    lsort -stride foo bar
-} -result {expected integer but got "foo"}
-test cmdIL-1.33 {lsort -stride errors} -returnCodes error -body {
-    lsort -stride 1 bar
-} -result {stride length must be at least 2}
-test cmdIL-1.34 {lsort -stride errors} -returnCodes error -body {
-    lsort -stride 2 {a b c}
-} -result {list size must be a multiple of the stride length}
-test cmdIL-1.35 {lsort -stride errors} -returnCodes error -body {
-    lsort -stride 2 -index 3 {a b c d}
-} -result {when used with "-stride", the leading "-index" value must be within the group}
-test cmdIL-1.36 {lsort -stride and -index: Bug 2918962} {
-    lsort -stride 2 -index {0 1} {
-	{{c o d e} 54321} {{b l a h} 94729}
-	{{b i g} 12345} {{d e m o} 34512}
-    }
-} {{{b i g} 12345} {{d e m o} 34512} {{c o d e} 54321} {{b l a h} 94729}}
 
-# Can't think of any good tests for the MergeSort and MergeLists procedures,
-# except a bunch of random lists to sort.
+# Can't think of any good tests for the MergeSort and MergeLists
+# procedures, except a bunch of random lists to sort.
 
 test cmdIL-2.1 {MergeSort and MergeLists procedures} -setup {
     set result {}
@@ -173,35 +149,39 @@ test cmdIL-2.1 {MergeSort and MergeLists procedures} -setup {
 	    set old $el
 	}
     }
-    string trim $result
+    set result
 } -cleanup {
     rename rand ""
 } -result {}
 
-test cmdIL-3.1 {SortCompare procedure, skip comparisons after error} -body {
-    set ::x 0
-    list [catch {
-	lsort -integer -command {apply {{a b} {
-	    incr ::x
-	    error "error #$::x"
-	}}} {48 6 28 190 16 2 3 6 1}
-    } msg] $msg $::x
+test cmdIL-3.1 {SortCompare procedure, skip comparisons after error} -setup {
+    proc cmp {a b} {
+	global x
+	incr x
+	error "error #$x"
+    }
+} -body {
+    set x 0
+    list [catch {lsort -integer -command cmp {48 6 28 190 16 2 3 6 1}} msg] \
+	    $msg $x
+} -cleanup {
+    rename cmp ""
 } -result {1 {error #1} 1}
-test cmdIL-3.2 {SortCompare procedure, -index option} -body {
-    lsort -integer -index 2 "\\\{ {30 40 50}"
-} -returnCodes error -result {unmatched open brace in list}
-test cmdIL-3.3 {SortCompare procedure, -index option} -body {
-    lsort -integer -index 2 {{20 10} {15 30 40}}
-} -returnCodes error -result {element 2 missing from sublist "20 10"}
-test cmdIL-3.4 {SortCompare procedure, -index option} -body {
-    lsort -integer -index 2 "{a b c} \\\{"
-} -returnCodes error -result {expected integer but got "c"}
-test cmdIL-3.4.1 {SortCompare procedure, -index option} -body {
-    lsort -integer -index 2 "{1 2 3} \\\{"
-} -returnCodes error -result {unmatched open brace in list}
-test cmdIL-3.5 {SortCompare procedure, -index option} -body {
-    lsort -integer -index 2 {{20 10 13} {15}}
-} -returnCodes error -result {element 2 missing from sublist "15"}
+test cmdIL-3.2 {SortCompare procedure, -index option} {
+    list [catch {lsort -integer -index 2 "\\\{ {30 40 50}"} msg] $msg
+} {1 {unmatched open brace in list}}
+test cmdIL-3.3 {SortCompare procedure, -index option} {
+    list [catch {lsort -integer -index 2 {{20 10} {15 30 40}}} msg] $msg
+} {1 {element 2 missing from sublist "20 10"}}
+test cmdIL-3.4 {SortCompare procedure, -index option} {
+    list [catch {lsort -integer -index 2 "{a b c} \\\{"} msg] $msg
+} {1 {expected integer but got "c"}}
+test cmdIL-3.4.1 {SortCompare procedure, -index option} {
+    list [catch {lsort -integer -index 2 "{1 2 3} \\\{"} msg] $msg
+} {1 {unmatched open brace in list}}
+test cmdIL-3.5 {SortCompare procedure, -index option} {
+    list [catch {lsort -integer -index 2 {{20 10 13} {15}}} msg] $msg
+} {1 {element 2 missing from sublist "15"}}
 test cmdIL-3.6 {SortCompare procedure, -index option} {
     lsort -integer -index 2 {{1 15 30} {2 5 25} {3 25 20}}
 } {{3 25 20} {2 5 25} {1 15 30}}
@@ -211,21 +191,21 @@ test cmdIL-3.7 {SortCompare procedure, -ascii option} {
 test cmdIL-3.8 {SortCompare procedure, -dictionary option} {
     lsort -dictionary {d e c b a d35 d300 100 20}
 } {20 100 a b c d d35 d300 e}
-test cmdIL-3.9 {SortCompare procedure, -integer option} -body {
-    lsort -integer {x 3}
-} -returnCodes error -result {expected integer but got "x"}
-test cmdIL-3.10 {SortCompare procedure, -integer option} -body {
-    lsort -integer {3 q}
-} -returnCodes error -result {expected integer but got "q"}
+test cmdIL-3.9 {SortCompare procedure, -integer option} {
+    list [catch {lsort -integer {x 3}} msg] $msg
+} {1 {expected integer but got "x"}}
+test cmdIL-3.10 {SortCompare procedure, -integer option} {
+    list [catch {lsort -integer {3 q}} msg] $msg
+} {1 {expected integer but got "q"}}
 test cmdIL-3.11 {SortCompare procedure, -integer option} {
     lsort -integer {35 21 0x20 30 0o23 100 8}
 } {8 0o23 21 30 0x20 35 100}
-test cmdIL-3.12 {SortCompare procedure, -real option} -body {
-    lsort -real {6...4 3}
-} -returnCodes error -result {expected floating-point number but got "6...4"}
-test cmdIL-3.13 {SortCompare procedure, -real option} -body {
-    lsort -real {3 1x7}
-} -returnCodes error -result {expected floating-point number but got "1x7"}
+test cmdIL-3.12 {SortCompare procedure, -real option} {
+    list [catch {lsort -real {6...4 3}} msg] $msg
+} {1 {expected floating-point number but got "6...4"}}
+test cmdIL-3.13 {SortCompare procedure, -real option} {
+    list [catch {lsort -real {3 1x7}} msg] $msg
+} {1 {expected floating-point number but got "1x7"}}
 test cmdIL-3.14 {SortCompare procedure, -real option} {
     lsort -real {24 2.5e01 16.7 85e-1 10.004}
 } {85e-1 10.004 16.7 24 2.5e01}
@@ -257,10 +237,10 @@ test cmdIL-3.17 {SortCompare procedure, -command option, non-integer result} -bo
     proc cmp {a b} {
 	return foow
     }
-    lsort -command cmp {48 6}
-} -returnCodes error -cleanup {
+    list [catch {lsort -command cmp {48 6}} msg] $msg
+} -cleanup {
     rename cmp ""
-} -result {-compare command returned non-integer result}
+} -result {1 {-compare command returned non-integer result}}
 test cmdIL-3.18 {SortCompare procedure, -command option} -body {
     proc cmp {a b} {
 	expr {$b - $a}
@@ -460,71 +440,108 @@ test cmdIL-5.5 {lsort with list style index and sharing} -body {
 }
 
 # Compiled version
-test cmdIL-6.1 {lassign command syntax} -returnCodes error -body {
-    apply {{} { lassign }}
-} -result {wrong # args: should be "lassign list ?varName ...?"}
-test cmdIL-6.2 {lassign command syntax} {
-    apply {{} { lassign x }}
-} x
+test cmdIL-6.1 {lassign command syntax} -body {
+    proc testLassign {} {
+	lassign
+    }
+    testLassign
+} -returnCodes 1 -cleanup {
+    rename testLassign {}
+} -result {wrong # args: should be "lassign list varName ?varName ...?"}
+test cmdIL-6.2 {lassign command syntax} -body {
+    proc testLassign {} {
+	lassign x
+    }
+    testLassign
+} -returnCodes 1 -cleanup {
+    rename testLassign {}
+} -result {wrong # args: should be "lassign list varName ?varName ...?"}
 test cmdIL-6.3 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x FAIL
 	list [lassign a x] $x
-    }}
-} -result {{} a}
+    }
+    testLassign
+} -result {{} a} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.4 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x FAIL
 	set y FAIL
 	list [lassign a x y] $x $y
-    }}
-} -result {{} a {}}
+    }
+    testLassign
+} -result {{} a {}} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.5 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x FAIL
 	set y FAIL
 	list [lassign {a b} x y] $x $y
-    }}
-} -result {{} a b}
+    }
+    testLassign
+} -result {{} a b} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.6 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x FAIL
 	set y FAIL
 	list [lassign {a b c} x y] $x $y
-    }}
-} -result {c a b}
+    }
+    testLassign
+} -result {c a b} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.7 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x FAIL
 	set y FAIL
 	list [lassign {a b c d} x y] $x $y
-    }}
-} -result {{c d} a b}
+    }
+    testLassign
+} -result {{c d} a b} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.8 {lassign command - list format error} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x FAIL
 	set y FAIL
 	list [catch {lassign {a {b}c d} x y} msg] $msg $x $y
-    }}
-} -result {1 {list element in braces followed by "c" instead of space} FAIL FAIL}
+    }
+    testLassign
+} -result {1 {list element in braces followed by "c" instead of space} FAIL FAIL} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.9 {lassign command - assignment to arrays} -body {
-    apply {{} {
+    proc testLassign {} {
 	list [lassign {a b} x(x)] $x(x)
-    }}
-} -result {b a}
+    }
+    testLassign
+} -result {b a} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.10 {lassign command - variable update error} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x(x) {}
 	lassign a x
-    }}
-} -returnCodes error -result {can't set "x": variable is array}
+    }
+    testLassign
+} -returnCodes 1 -result {can't set "x": variable is array} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.11 {lassign command - variable update error} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x(x) {}
 	set y FAIL
 	list [catch {lassign a y x} msg] $msg $y
-    }}
-} -result {1 {can't set "x": variable is array} a}
+    }
+    testLassign
+} -result {1 {can't set "x": variable is array} a} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.12 {lassign command - memory leak testing} -setup {
     unset -nocomplain x y
     set x(x) {}
@@ -553,86 +570,119 @@ test cmdIL-6.12 {lassign command - memory leak testing} -setup {
     rename stress {}
 }
 # Force non-compiled version
-test cmdIL-6.13 {lassign command syntax} -returnCodes error -body {
-    apply {{} {
+test cmdIL-6.13 {lassign command syntax} -body {
+    proc testLassign {} {
 	set lassign lassign
 	$lassign
-    }}
-} -result {wrong # args: should be "lassign list ?varName ...?"}
-test cmdIL-6.14 {lassign command syntax} {
-    apply {{} {
+    }
+    testLassign
+} -returnCodes 1 -cleanup {
+    rename testLassign {}
+} -result {wrong # args: should be "lassign list varName ?varName ...?"}
+test cmdIL-6.14 {lassign command syntax} -body {
+    proc testLassign {} {
 	set lassign lassign
 	$lassign x
-    }}
-} x
+    }
+    testLassign
+} -returnCodes 1 -cleanup {
+    rename testLassign {}
+} -result {wrong # args: should be "lassign list varName ?varName ...?"}
 test cmdIL-6.15 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x FAIL
 	list [$lassign a x] $x
-    }}
-} -result {{} a}
+    }
+    testLassign
+} -result {{} a} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.16 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x FAIL
 	set y FAIL
 	list [$lassign a x y] $x $y
-    }}
-} -result {{} a {}}
+    }
+    testLassign
+} -result {{} a {}} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.17 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x FAIL
 	set y FAIL
 	list [$lassign {a b} x y] $x $y
-    }}
-} -result {{} a b}
+    }
+    testLassign
+} -result {{} a b} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.18 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x FAIL
 	set y FAIL
 	list [$lassign {a b c} x y] $x $y
-    }}
-} -result {c a b}
+    }
+    testLassign
+} -result {c a b} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.19 {lassign command} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x FAIL
 	set y FAIL
 	list [$lassign {a b c d} x y] $x $y
-    }}
-} -result {{c d} a b}
+    }
+    testLassign
+} -result {{c d} a b} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.20 {lassign command - list format error} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x FAIL
 	set y FAIL
 	list [catch {$lassign {a {b}c d} x y} msg] $msg $x $y
-    }}
-} -result {1 {list element in braces followed by "c" instead of space} FAIL FAIL}
+    }
+    testLassign
+} -result {1 {list element in braces followed by "c" instead of space} FAIL FAIL} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.21 {lassign command - assignment to arrays} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	list [$lassign {a b} x(x)] $x(x)
-    }}
-} -result {b a}
+    }
+    testLassign
+} -result {b a} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.22 {lassign command - variable update error} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x(x) {}
 	$lassign a x
-    }}
-} -returnCodes 1 -result {can't set "x": variable is array}
+    }
+    testLassign
+} -returnCodes 1 -result {can't set "x": variable is array} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.23 {lassign command - variable update error} -body {
-    apply {{} {
+    proc testLassign {} {
 	set lassign lassign
 	set x(x) {}
 	set y FAIL
 	list [catch {$lassign a y x} msg] $msg $y
-    }}
-} -result {1 {can't set "x": variable is array} a}
+    }
+    testLassign
+} -result {1 {can't set "x": variable is array} a} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.24 {lassign command - memory leak testing} -setup {
     set x(x) {}
     set y FAIL
@@ -662,18 +712,24 @@ test cmdIL-6.24 {lassign command - memory leak testing} -setup {
 }
 # Assorted shimmering problems
 test cmdIL-6.25 {lassign command - shimmering protection} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x {a b c}
 	list [lassign $x $x y] $x [set $x] $y
-    }}
-} -result {c {a b c} a b}
+    }
+    testLassign
+} -result {c {a b c} a b} -cleanup {
+    rename testLassign {}
+}
 test cmdIL-6.26 {lassign command - shimmering protection} -body {
-    apply {{} {
+    proc testLassign {} {
 	set x {a b c}
 	set lassign lassign
 	list [$lassign $x $x y] $x [set $x] $y
-    }}
-} -result {c {a b c} a b}
+    }
+    testLassign
+} -result {c {a b c} a b} -cleanup {
+    rename testLassign {}
+}
 
 test cmdIL-7.1 {lreverse command} -body {
     lreverse
@@ -697,6 +753,8 @@ test cmdIL-7.6 {lreverse command - unshared object [Bug 1672585]} {
 test cmdIL-7.7 {lreverse command - empty object [Bug 1876793]} {
     lreverse [list]
 } {}
+
+testConstraint testobj [llength [info commands testobj]]
 test cmdIL-7.8 {lreverse command - shared intrep [Bug 1675044]} -setup {
     teststringobj set 1 {1 2 3}
     testobj convert 1 list

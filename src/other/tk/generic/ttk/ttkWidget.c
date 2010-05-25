@@ -61,7 +61,7 @@ static void SizeChanged(WidgetCore *corePtr)
 static Drawable BeginDrawing(Tk_Window tkwin)
 {
     return Tk_GetPixmap(Tk_Display(tkwin), Tk_WindowId(tkwin),
-	    Tk_Width(tkwin), Tk_Height(tkwin), Tk_Depth(tkwin));
+	    Tk_Width(tkwin), Tk_Height(tkwin),Tk_Depth(tkwin));
 }
 
 /* EndDrawing --
@@ -115,7 +115,7 @@ void TtkRedisplayWidget(WidgetCore *corePtr)
     }
 
     if (!(corePtr->flags & REDISPLAY_PENDING)) {
-	Tcl_DoWhenIdle(DrawWidget, corePtr);
+	Tcl_DoWhenIdle(DrawWidget, (ClientData) corePtr);
 	corePtr->flags |= REDISPLAY_PENDING;
     }
 }
@@ -170,16 +170,20 @@ int TtkWidgetEnsembleCommand(
     return commands[index].command(interp, objc, objv, clientData);
 }
 
-/* WidgetInstanceObjCmd --
+/*
+ * WidgetInstanceObjCmd --
  *	Widget instance command implementation.
  */
 static int
 WidgetInstanceObjCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData,		/* Widget record pointer */
+    Tcl_Interp *interp,			/* Current interpreter. */
+    int objc,				/* Number of arguments. */
+    Tcl_Obj * const objv[])		/* Argument objects. */
 {
-    WidgetCore *corePtr = clientData;
+    WidgetCore *corePtr = (WidgetCore *)clientData;
     const WidgetCommandSpec *commands = corePtr->widgetSpec->commands;
-    int status;
+    int status = TCL_OK;
 
     Tcl_Preserve(clientData);
     status = TtkWidgetEnsembleCommand(commands,1, interp,objc,objv,clientData);
@@ -188,74 +192,30 @@ WidgetInstanceObjCmd(
     return status;
 }
 
-/*------------------------------------------------------------------------
- * +++ Widget destruction.
- *
- * A widget can be destroyed when the application explicitly
- * destroys the window or one of its ancestors via [destroy]
- * or Tk_DestroyWindow(); when the application deletes the widget
- * instance command; when there is an error in the widget constructor;
- * or when another application calls XDestroyWindow on the window ID.
- *
- * The window receives a <DestroyNotify> event in all cases,
- * so we do the bulk of the cleanup there.  See [#2207435] for
- * further notes (esp. re: Tk_FreeConfigOptions).
- *
- * Widget code that reenters the interp should only do so
- * when the widtget is Tcl_Preserve()d, and should check
- * the WIDGET_DESTROYED flag bit upon return.
- */
-
-/* WidgetInstanceObjCmdDeleted --
- * 	Widget instance command	deletion callback.
+/*
+ * Command deletion callback for widget instance commands.
  */
 static void
 WidgetInstanceObjCmdDeleted(ClientData clientData)
 {
-    WidgetCore *corePtr = clientData;
+    WidgetCore *corePtr = (WidgetCore *) clientData;
     corePtr->widgetCmd = NULL;
     if (corePtr->tkwin != NULL)
 	Tk_DestroyWindow(corePtr->tkwin);
 }
 
-/* FreeWidget --
- *	 Final cleanup for widget; called via Tcl_EventuallyFree().
+/*
+ * WidgetCleanup --
+ *	 Final cleanup for widget.
+ *
+ * @@@ TODO: check all code paths leading to widget destruction,
+ * @@@ describe here.
+ * @@@ Call widget-specific cleanup routine at an appropriate point.
  */
 static void
-FreeWidget(char *memPtr)
+WidgetCleanup(char *memPtr)
 {
     ckfree(memPtr);
-}
-
-/* DestroyWidget --
- * 	Main widget destructor; called from <DestroyNotify> event handler.
- */
-static void
-DestroyWidget(WidgetCore *corePtr)
-{
-    corePtr->flags |= WIDGET_DESTROYED;
-
-    corePtr->widgetSpec->cleanupProc(corePtr);
-
-    Tk_FreeConfigOptions(
-	(ClientData)corePtr, corePtr->optionTable, corePtr->tkwin);
-
-    if (corePtr->layout) {
-	Ttk_FreeLayout(corePtr->layout);
-    }
-
-    if (corePtr->flags & REDISPLAY_PENDING) {
-	Tcl_CancelIdleCall(DrawWidget, corePtr);
-    }
-
-    corePtr->tkwin = NULL;
-    if (corePtr->widgetCmd) {
-	Tcl_Command cmd = corePtr->widgetCmd;
-	corePtr->widgetCmd = 0;
-	/* NB: this can reenter the interpreter via a command traces */
-	Tcl_DeleteCommandFromToken(corePtr->interp, cmd);
-    }
-    Tcl_EventuallyFree(corePtr, FreeWidget);
 }
 
 /*
@@ -287,7 +247,7 @@ static const unsigned CoreEventMask
 
 static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
 {
-    WidgetCore *corePtr = clientData;
+    WidgetCore *corePtr = (WidgetCore *) clientData;
 
     switch (eventPtr->type)
     {
@@ -300,10 +260,35 @@ static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
 	    }
 	    break;
 	case DestroyNotify :
-	    Tk_DeleteEventHandler(
-		corePtr->tkwin, CoreEventMask,CoreEventProc,clientData);
-	    DestroyWidget(corePtr);
+	    corePtr->flags |= WIDGET_DESTROYED;
+
+	    Tk_DeleteEventHandler(corePtr->tkwin,
+		    CoreEventMask,CoreEventProc,clientData);
+
+	    if (corePtr->flags & REDISPLAY_PENDING) {
+		Tcl_CancelIdleCall(DrawWidget, clientData);
+	    }
+
+	    corePtr->widgetSpec->cleanupProc(corePtr);
+
+	    Tk_UndefineCursor(corePtr->tkwin);	/* workaround for #2207435 */
+	    Tk_FreeConfigOptions(
+		clientData, corePtr->optionTable, corePtr->tkwin);
+	    corePtr->tkwin = NULL;
+
+	    if (corePtr->layout) {
+		Ttk_FreeLayout(corePtr->layout);
+	    }
+
+	    /* NB: this can reenter the interpreter via a command traces */
+	    if (corePtr->widgetCmd) {
+		Tcl_Command cmd = corePtr->widgetCmd;
+		corePtr->widgetCmd = 0;
+		Tcl_DeleteCommandFromToken(corePtr->interp, cmd);
+	    }
+	    Tcl_EventuallyFree(clientData, WidgetCleanup);
 	    break;
+
 	case FocusIn:
 	case FocusOut:
 	    /* Don't process "virtual crossing" events */
@@ -354,16 +339,14 @@ static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
  */
 static void WidgetWorldChanged(ClientData clientData)
 {
-    WidgetCore *corePtr = clientData;
+    WidgetCore *corePtr = (WidgetCore*)clientData;
     SizeChanged(corePtr);
     TtkRedisplayWidget(corePtr);
 }
 
-static Tk_ClassProcs widgetClassProcs = {
-    sizeof(Tk_ClassProcs),	/* size */
-    WidgetWorldChanged,	/* worldChangedProc */
-    NULL,					/* createProc */
-    NULL					/* modalProc */
+static struct Tk_ClassProcs widgetClassProcs = {
+    sizeof(Tk_ClassProcs),
+    WidgetWorldChanged
 };
 
 /*
@@ -372,45 +355,55 @@ static Tk_ClassProcs widgetClassProcs = {
  *	ClientData is a WidgetSpec *.
  */
 int TtkWidgetConstructorObjCmd(
-    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+    ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
 {
-    WidgetSpec *widgetSpec = clientData;
+    WidgetSpec *widgetSpec = (WidgetSpec *)clientData;
     const char *className = widgetSpec->className;
-    Tk_OptionTable optionTable =
-	Tk_CreateOptionTable(interp, widgetSpec->optionSpecs);
-    Tk_Window tkwin;
-    void *recordPtr;
     WidgetCore *corePtr;
-    Tk_SavedOptions savedOptions;
+    ClientData recordPtr;
+    Tk_Window tkwin;
+    Tk_OptionTable optionTable;
     int i;
 
-    if (objc < 2 || objc % 2 == 1) {
-	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?-option value ...?");
+    if (objc < 2 || objc % 1 == 1) {
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?options?");
 	return TCL_ERROR;
     }
 
-    /* Check if a -class option has been specified.
+    tkwin = Tk_CreateWindowFromPath(interp, Tk_MainWindow(interp),
+	    Tcl_GetStringFromObj(objv[1], NULL), (char *) NULL);
+    if (tkwin == NULL)
+	return TCL_ERROR;
+
+    /*
+     * Check if a -class resource has been specified:
      * We have to do this before the InitOptions() call,
      * since InitOptions() is affected by the widget class.
      */
     for (i = 2; i < objc; i += 2) {
-	if (!strcmp(Tcl_GetString(objv[i]), "-class")) {
+	const char *resourceName = Tcl_GetString(objv[i]);
+	if (!strcmp(resourceName, "-class")) {
 	    className = Tcl_GetString(objv[i+1]);
 	    break;
 	}
     }
 
-    tkwin = Tk_CreateWindowFromPath(
-	interp, Tk_MainWindow(interp), Tcl_GetString(objv[1]), NULL);
-    if (tkwin == NULL)
-	return TCL_ERROR;
+    Tk_SetClass(tkwin, className);
+
+    /*
+     * Set the BackgroundPixmap to ParentRelative here, so
+     * subclasses don't need to worry about setting the background.
+     */
+    Tk_SetWindowBackgroundPixmap(tkwin, ParentRelative);
+
+    optionTable = Tk_CreateOptionTable(interp, widgetSpec->optionSpecs);
 
     /*
      * Allocate and initialize the widget record.
      */
     recordPtr = ckalloc(widgetSpec->recordSize);
     memset(recordPtr, 0, widgetSpec->recordSize);
-    corePtr = recordPtr;
+    corePtr = (WidgetCore *)recordPtr;
 
     corePtr->tkwin	= tkwin;
     corePtr->interp 	= interp;
@@ -418,57 +411,52 @@ int TtkWidgetConstructorObjCmd(
     corePtr->widgetCmd	= Tcl_CreateObjCommand(interp, Tk_PathName(tkwin),
 	WidgetInstanceObjCmd, recordPtr, WidgetInstanceObjCmdDeleted);
     corePtr->optionTable = optionTable;
-    corePtr->layout	= NULL;
-    corePtr->flags 	= 0;
-    corePtr->state 	= 0;
 
-    Tk_SetClass(tkwin, className);
     Tk_SetClassProcs(tkwin, &widgetClassProcs, recordPtr);
-    Tk_SetWindowBackgroundPixmap(tkwin, ParentRelative);
 
-    widgetSpec->initializeProc(interp, recordPtr);
+    if (Tk_InitOptions(interp, recordPtr, optionTable, tkwin) != TCL_OK)
+    	goto error_nocleanup;
 
-    Tk_CreateEventHandler(tkwin, CoreEventMask, CoreEventProc, recordPtr);
+    if (widgetSpec->initializeProc(interp, recordPtr) != TCL_OK)
+	goto error_nocleanup;
 
-    /*
-     * Initial configuration.
-     */
-
-    Tcl_Preserve(corePtr);
-    if (Tk_InitOptions(interp, recordPtr, optionTable, tkwin) != TCL_OK) {
+    if (Tk_SetOptions(interp, recordPtr, optionTable, objc - 2,
+	    objv + 2, tkwin, NULL/*savePtr*/, (int *)NULL/*maskPtr*/) != TCL_OK)
 	goto error;
-    }
 
-    if (Tk_SetOptions(interp, recordPtr, optionTable,
-	    objc - 2, objv + 2, tkwin, &savedOptions, NULL) != TCL_OK) {
-	Tk_RestoreSavedOptions(&savedOptions);
-	goto error;
-    } else {
-	Tk_FreeSavedOptions(&savedOptions);
-    }
     if (widgetSpec->configureProc(interp, recordPtr, ~0) != TCL_OK)
 	goto error;
+
     if (widgetSpec->postConfigureProc(interp, recordPtr, ~0) != TCL_OK)
 	goto error;
 
     if (WidgetDestroyed(corePtr))
 	goto error;
 
-    Tcl_Release(corePtr);
+    if (UpdateLayout(interp, corePtr) != TCL_OK)
+	goto error;
 
     SizeChanged(corePtr);
+    Tk_CreateEventHandler(tkwin, CoreEventMask, CoreEventProc, recordPtr);
+
     Tk_MakeWindowExist(tkwin);
 
     Tcl_SetObjResult(interp, Tcl_NewStringObj(Tk_PathName(tkwin), -1));
+
     return TCL_OK;
 
 error:
-    if (WidgetDestroyed(corePtr)) {
-	Tcl_SetResult(interp, "Widget has been destroyed", TCL_STATIC);
-    } else {
-	Tk_DestroyWindow(tkwin);
+    widgetSpec->cleanupProc(recordPtr);
+error_nocleanup:
+    if (corePtr->layout) {
+	Ttk_FreeLayout(corePtr->layout);
+	corePtr->layout = 0;
     }
-    Tcl_Release(corePtr);
+    Tk_FreeConfigOptions(recordPtr, optionTable, tkwin);
+    Tk_DestroyWindow(tkwin);
+    corePtr->tkwin = 0;
+    Tcl_DeleteCommandFromToken(interp, corePtr->widgetCmd);
+    ckfree(recordPtr);
     return TCL_ERROR;
 }
 
@@ -544,8 +532,9 @@ Ttk_Layout TtkWidgetGetOrientedLayout(
 /* TtkNullInitialize --
  * 	Default widget initializeProc (no-op)
  */
-void TtkNullInitialize(Tcl_Interp *interp, void *recordPtr)
+int TtkNullInitialize(Tcl_Interp *interp, void *recordPtr)
 {
+    return TCL_OK;
 }
 
 /* TtkNullPostConfigure --
@@ -615,7 +604,7 @@ int TtkWidgetSize(void *recordPtr, int *widthPtr, int *heightPtr)
 /* $w cget -option
  */
 int TtkWidgetCgetCommand(
-Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[], void *recordPtr)
 {
     WidgetCore *corePtr = recordPtr;
     Tcl_Obj *result;
@@ -635,14 +624,14 @@ Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
 /* $w configure ?-option ?value ....??
  */
 int TtkWidgetConfigureCommand(
-Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     WidgetCore *corePtr = recordPtr;
     Tcl_Obj *result;
 
     if (objc == 2) {
 	result = Tk_GetOptionInfo(interp, recordPtr,
-		corePtr->optionTable, NULL, corePtr->tkwin);
+		corePtr->optionTable, (Tcl_Obj *) NULL, corePtr->tkwin);
     } else if (objc == 3) {
 	result = Tk_GetOptionInfo(interp, recordPtr,
 		corePtr->optionTable, objv[2], corePtr->tkwin);
@@ -672,10 +661,6 @@ Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
 	Tk_FreeSavedOptions(&savedOptions);
 
 	status = corePtr->widgetSpec->postConfigureProc(interp,recordPtr,mask);
-	if (WidgetDestroyed(corePtr)) {
-	    Tcl_SetResult(interp, "Widget has been destroyed", TCL_STATIC);
-	    status = TCL_ERROR;
-	}
 	if (status != TCL_OK) {
 	    return status;
 	}
@@ -704,7 +689,7 @@ Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
  */
 
 int TtkWidgetStateCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     WidgetCore *corePtr = recordPtr;
     Ttk_StateSpec spec;
@@ -744,7 +729,7 @@ int TtkWidgetStateCommand(
  */
 
 int TtkWidgetInstateCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     WidgetCore *corePtr = recordPtr;
     Ttk_State state = corePtr->state;
@@ -771,39 +756,27 @@ int TtkWidgetInstateCommand(
 }
 
 /* $w identify $x $y
- * $w identify element $x $y
  * 	Returns: name of element at $x, $y
  */
 int TtkWidgetIdentifyCommand(
-    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], void *recordPtr)
 {
     WidgetCore *corePtr = recordPtr;
-    Ttk_Element element;
-    static const char *whatTable[] = { "element", NULL };
-    int x, y, what;
+    Ttk_LayoutNode *node;
+    int x, y;
 
-    if (objc < 4 || objc > 5) {
-	Tcl_WrongNumArgs(interp, 2, objv, "?what? x y");
-	return TCL_ERROR;
-    }
-    if (objc == 5) {
-	/* $w identify element $x $y */
-	if (Tcl_GetIndexFromObj(interp,objv[2],whatTable,"option",0,&what)
-		!= TCL_OK)
-	{
-	    return TCL_ERROR;
-	}
-    }
-
-    if (   Tcl_GetIntFromObj(interp, objv[objc-2], &x) != TCL_OK
-	|| Tcl_GetIntFromObj(interp, objv[objc-1], &y) != TCL_OK
-    ) {
+    if (objc != 4) {
+	Tcl_WrongNumArgs(interp, 2, objv, "x y");
 	return TCL_ERROR;
     }
 
-    element = Ttk_IdentifyElement(corePtr->layout, x, y);
-    if (element) {
-	const char *elementName = Ttk_ElementName(element);
+    if (Tcl_GetIntFromObj(interp, objv[2], &x) != TCL_OK
+	|| Tcl_GetIntFromObj(interp, objv[3], &y) != TCL_OK)
+	return TCL_ERROR;
+
+    node = Ttk_LayoutIdentify(corePtr->layout, x, y);
+    if (node) {
+	const char *elementName = Ttk_LayoutNodeName(node);
 	Tcl_SetObjResult(interp,Tcl_NewStringObj(elementName,-1));
     }
 

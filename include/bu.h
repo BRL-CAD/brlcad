@@ -137,25 +137,6 @@ __BEGIN_DECLS
 #define BU_ARGS(args) args
 
 /**
- * This is so we can use gcc's "format string vs arguments"-check for
- * various printf-like functions, and still maintain compatability.
- */
-#ifndef __attribute__
-/* This feature is only available in gcc versions 2.5 and later. */
-#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
-#    define __attribute__(ignore) /* empty */
-#  endif
-/* The __-protected variants of `format' and `printf' attributes
- * are accepted by gcc versions 2.6.4 (effectively 2.7) and later.
- */
-#  if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
-#    define __format__ format
-#    define __printf__ printf
-#    define __noreturn__ noreturn
-#  endif
-#endif
-
-/**
  * shorthand declaration of a printf-style functions
  */
 #define __BU_ATTR_FORMAT12 __attribute__ ((__format__ (__printf__, 1, 2)))
@@ -167,11 +148,6 @@ __BEGIN_DECLS
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
 /**
- * shorthand declaration of a function that is deprecated
- */
-#define __BU_ATTR_DEPRECATED __attribute__ ((deprecated))
-
-/**
  *  If we're compiling strict, turn off "format string vs arguments"
  *  checks - BRL-CAD customizes the arguments to some of these
  *  function types (adding bu_vls support) and that is a problem with
@@ -181,11 +157,9 @@ __BEGIN_DECLS
 #  undef __BU_ATTR_FORMAT12
 #  undef __BU_ATTR_FORMAT23
 #  undef __BU_ATTR_NORETURN
-#  undef __BU_ATTR_DEPRECATED
 #  define __BU_ATTR_FORMAT12
 #  define __BU_ATTR_FORMAT23
 #  define __BU_ATTR_NORETURN
-#  define __BU_ATTR_DEPRECATED
 #endif
 
 
@@ -312,10 +286,10 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
 	if (!((_lhs) _relation (_rhs))) { \
-		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%llu, rhs=%llu, file %s, line %d\n", \
+		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
 			(size_t)(_lhs), (size_t)(_rhs), \
 			__FILE__, __LINE__); \
-		bu_bomb("BU_ASSERT_LONG failure\n"); \
+		bu_bomb("BU_ASSERT_SIZE_T failure\n"); \
 	}
 #endif
 
@@ -351,6 +325,8 @@ BU_EXPORT BU_EXTERN(const char *bu_version, (void));
  * and K&R C environments.  On some machines, pointers to functions
  * can be wider than pointers to data bytes, so a declaration of
  * "char*" isn't generic enough.
+ *
+ * DEPRECATED: use void* instead
  */
 #if !defined(GENPTR_NULL)
 typedef void *genptr_t;
@@ -850,8 +826,8 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_INSERT_LIST(dest_hp, src_hp) \
 	if (BU_LIST_NON_EMPTY(src_hp)) { \
-		register struct bu_list *_first = (src_hp)->forw; \
-		register struct bu_list *_last = (src_hp)->back; \
+		struct bu_list *_first = (src_hp)->forw; \
+		struct bu_list *_last = (src_hp)->back; \
 		(dest_hp)->forw->back = _last; \
 		_last->forw = (dest_hp)->forw; \
 		(dest_hp)->forw = _first; \
@@ -861,8 +837,8 @@ typedef struct bu_list bu_list_t;
 
 #define BU_LIST_APPEND_LIST(dest_hp, src_hp) \
 	if (BU_LIST_NON_EMPTY(src_hp)) {\
-		register struct bu_list *_first = (src_hp)->forw; \
-		register struct bu_list *_last = (src_hp)->back; \
+		struct bu_list *_first = (src_hp)->forw; \
+		struct bu_list *_last = (src_hp)->back; \
 		_first->back = (dest_hp)->back; \
 		(dest_hp)->back->forw = _first; \
 		(dest_hp)->back = _last; \
@@ -1220,7 +1196,7 @@ struct bu_bitv {
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
-BU_EXPORT BU_EXTERN(inline unsigned int bu_bitv_shift, ());
+BU_EXPORT BU_EXTERN(unsigned int bu_bitv_shift, ());
 
 /*
  * Bit-string manipulators for arbitrarily long bit strings stored as
@@ -1310,11 +1286,11 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 #define BU_BITV_LOOP_START(_bv)	\
 { \
-	register int _wd;	/* Current word number */  \
+	int _wd;	/* Current word number */  \
 	BU_CK_BITV(_bv); \
 	for (_wd=BU_BITS2WORDS((_bv)->nbits)-1; _wd>=0; _wd--) {  \
-		register int _b;	/* Current bit-in-word number */  \
-		register bitv_t _val;	/* Current word value */  \
+		int _b;	/* Current bit-in-word number */  \
+		bitv_t _val;	/* Current word value */  \
 		if ((_val = (_bv)->bits[_wd])==0) continue;  \
 		for (_b=0; _b < BU_BITV_MASK+1; _b++, _val >>= 1) { \
 			if (!(_val & 1))  continue;
@@ -1376,7 +1352,7 @@ struct bu_hist  {
 	(_hp)->hg_nsamples++;  }
 
 #define BU_HIST_TALLY_MULTIPLE(_hp, _val, _count) { \
-	register int __count = (_count); \
+	int __count = (_count); \
 	if ((_val) <= (_hp)->hg_min) { \
 		(_hp)->hg_bins[0] += __count; \
 	} else if ((_val) >= (_hp)->hg_max) { \
@@ -1412,9 +1388,9 @@ struct bu_hist  {
  * Support for generalized "pointer tables".
  */
 struct bu_ptbl {
-    struct bu_list l;	/**< @brief linked list for caller's use */
-    int end;	/**< @brief index into buffer of first available location */
-    int blen;	/**< @brief # of (long *)'s worth of storage at *buffer */
+    struct bu_list l; /**< @brief linked list for caller's use */
+    off_t end; /**< @brief index into buffer of first available location */
+    size_t blen; /**< @brief # of (long *)'s worth of storage at *buffer */
     long **buffer; /**< @brief data storage area */
 };
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
@@ -2587,7 +2563,7 @@ BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearr
  * DEPRECATED: This routine is replaced by bu_argv0_full_path().
  *             Do not use.
  */
-BU_EXPORT BU_EXTERN(const char *bu_argv0, (void)) __BU_ATTR_DEPRECATED;
+DEPRECATED BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
 
 /**
  * b u _ a r g v 0 _ f u l l _ p a t h
@@ -2726,7 +2702,7 @@ BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
  *
  * DEPRECATED
  */
-BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)) __BU_ATTR_DEPRECATED;
+DEPRECATED BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n));
 
 /** @file temp.c
  *
@@ -3562,7 +3538,7 @@ BU_EXPORT BU_EXTERN(fastf_t bu_get_load_average, ());
  * and should not be relied upon.  a future implementation will
  * utilize environment variables instead of temporary files.
  */
-BU_EXPORT BU_EXTERN(int bu_get_public_cpus, ());
+DEPRECATED BU_EXPORT BU_EXTERN(int bu_get_public_cpus, ());
 
 /**
  * B U _ S E T _ R E A L T I M E
@@ -3939,7 +3915,7 @@ BU_EXPORT BU_EXTERN(void bu_printb,
  */
 BU_EXPORT BU_EXTERN(void bu_ptbl_init,
 		    (struct bu_ptbl *b,
-		     int len,
+		     size_t len,
 		     const char *str));
 
 /**

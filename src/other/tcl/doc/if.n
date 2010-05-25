@@ -40,15 +40,12 @@ The return value from the command is the result of the body script
 that was executed, or an empty string
 if none of the expressions was non-zero and there was no \fIbodyN\fR.
 .SH EXAMPLES
-.PP
 A simple conditional:
-.PP
 .CS
 \fBif\fR {$vbl == 1} { puts "vbl is one" }
 .CE
 .PP
 With an \fBelse\fR-clause:
-.PP
 .CS
 \fBif\fR {$vbl == 1} {
    puts "vbl is one"
@@ -58,7 +55,6 @@ With an \fBelse\fR-clause:
 .CE
 .PP
 With an \fBelseif\fR-clause too:
-.PP
 .CS
 \fBif\fR {$vbl == 1} {
    puts "vbl is one"
@@ -71,17 +67,16 @@ With an \fBelseif\fR-clause too:
 .PP
 Remember, expressions can be multi-line, but in that case it can be a
 good idea to use the optional \fBthen\fR keyword for clarity:
-.PP
 .CS
 \fBif\fR {
-   $vbl == 1
-   || $vbl == 2
-   || $vbl == 3
+   $vbl == 1 || $vbl == 2 || $vbl == 3
 } \fBthen\fR {
    puts "vbl is one, two or three"
 }
 .CE
+
 .SH "SEE ALSO"
 expr(n), for(n), foreach(n)
+
 .SH KEYWORDS
 boolean, conditional, else, false, if, true

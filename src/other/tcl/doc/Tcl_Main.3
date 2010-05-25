@@ -12,17 +12,12 @@
 .TH Tcl_Main 3 8.4 Tcl "Tcl Library Procedures"
 .BS
 .SH NAME
-Tcl_Main, Tcl_SetStartupScript, Tcl_GetStartupScript, Tcl_SetMainLoop \- main program, startup script, and event loop definition for Tcl-based applications
+Tcl_Main, Tcl_SetMainLoop \- main program and event loop definition for Tcl-based applications
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
 .sp
 \fBTcl_Main\fR(\fIargc, argv, appInitProc\fR)
-.sp
-\fBTcl_SetStartupScript\fR(\fIpath, encoding\fR)
-.sp
-Tcl_Obj *
-\fBTcl_GetStartupScript\fR(\fIencodingPtr\fR)
 .sp
 \fBTcl_SetMainLoop\fR(\fImainLoopProc\fR)
 .SH ARGUMENTS
@@ -34,16 +29,10 @@ Array of strings containing command-line arguments.
 .AP Tcl_AppInitProc *appInitProc in
 Address of an application-specific initialization procedure.
 The value for this argument is usually \fBTcl_AppInit\fR.
-.AP Tcl_Obj *path in
-Name of file to use as startup script, or NULL.
-.AP "const char" *encoding in
-Encoding of file to use as startup script, or NULL.
-.AP "const char" **encodingPtr out
-If non-NULL, location to write a copy of the (const char *)
-pointing to the encoding name.
 .AP Tcl_MainLoopProc *mainLoopProc in
 Address of an application-specific event loop procedure.
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_Main\fR can serve as the main program for Tcl-based shell
@@ -59,7 +48,7 @@ library and interactive shell operation.  Other styles of embedding
 Tcl in an application are not supported by \fBTcl_Main\fR.  Those
 must be achieved by calling lower level functions in the Tcl library
 directly.
-.PP
+
 The \fBTcl_Main\fR function has been offered by the Tcl library
 since release Tcl 7.4.  In older releases of Tcl, the Tcl library
 itself defined a function \fBmain\fR, but that lacks flexibility
@@ -88,46 +77,17 @@ restriction is not a problem with normal use described above.
 channels to their default values. See \fBTcl_StandardChannels\fR for
 more information.
 .PP
-\fBTcl_Main\fR supports two modes of operation, depending on
-whether the filename and encoding of a startup script has been
-established.  The routines \fBTcl_SetStartupScript\fR and
-\fBTcl_GetStartupScript\fR are the tools for controlling this
-configuration of \fBTcl_Main\fR.
-.PP
-\fBTcl_SetStartupScript\fR registers the value \fIpath\fR
-as the name of the file for \fBTcl_Main\fR to evaluate as
-its startup script.  The value \fIencoding\fR is Tcl's name
-for the encoding used to store the text in that file.  A
-value of \fBNULL\fR for \fIencoding\fR is a signal to use
-the system encoding.  A value of \fBNULL\fR for \fIpath\fR
-erases any existing registration so that \fBTcl_Main\fR
-will not evaluate any startup script.
-.PP
-\fBTcl_GetStartupScript\fR queries the registered file name
-and encoding set by the most recent \fBTcl_SetStartupScript\fR
-call in the same thread.  The stored file name is returned,
-and the stored encoding name is written to space pointed to
-by \fIencodingPtr\fR, when that is not NULL.  
-.PP
-The file name and encoding values managed by the routines
-\fBTcl_SetStartupScript\fR and \fBTcl_GetStartupScript\fR
-are stored per-thread.  Although the storage and retrieval
-functions of these routines work in any thread, only those
-calls in the same master thread as \fBTcl_Main\fR can have
-any influence on it.
-.PP
-The caller of \fBTcl_Main\fR may call \fBTcl_SetStartupScript\fR
-first to establish its desired startup script.  If \fBTcl_Main\fR
-finds that no such startup script has been established, it consults
-the first few arguments in \fIargv\fR.  If they match
-?\fB\-encoding \fIname\fR? \fIfileName\fR,
+\fBTcl_Main\fR supports two modes of operation, depending on the
+values of \fIargc\fR and \fIargv\fR.  If the first few arguments
+in \fIargv\fR match ?\fB\-encoding \fIname\fR? \fIfileName\fR,
 where \fIfileName\fR does not begin with the character \fI\-\fR,
 then \fIfileName\fR is taken to be the name of a file containing
 a \fIstartup script\fR, and \fIname\fR is taken to be the name
-of the encoding of the contents of that file.  \fBTcl_Main\fR
-then calls \fBTcl_SetStartupScript\fR with these values.
+of the encoding of the contents of that file, which \fBTcl_Main\fR
+will attempt to evaluate.  Otherwise, \fBTcl_Main\fR will enter an
+interactive mode.
 .PP
-\fBTcl_Main\fR then defines in its master interpreter
+In either mode, \fBTcl_Main\fR will define in its master interpreter
 the Tcl variables \fIargc\fR, \fIargv\fR, \fIargv0\fR, and
 \fItcl_interactive\fR, as described in the documentation for \fBtclsh\fR.
 .PP
@@ -137,27 +97,22 @@ commands, \fBTcl_Main\fR calls the procedure given by the
 .QW hook
 for the application to perform its own initialization of the interpreter
 created by \fBTcl_Main\fR, such as defining application-specific
-commands.  The application initialization routine might also 
-call \fBTcl_SetStartupScript\fR to (re-)set the file and encoding
-to be used as a startup script.  The procedure must have an interface
-that matches the type \fBTcl_AppInitProc\fR:
-.PP
+commands.  The procedure must have an interface that matches the
+type \fBTcl_AppInitProc\fR:
 .CS
-typedef int \fBTcl_AppInitProc\fR(
-        Tcl_Interp *\fIinterp\fR);
+typedef int Tcl_AppInitProc(Tcl_Interp *\fIinterp\fR);
 .CE
-.PP
+
 \fIAppInitProc\fR is almost always a pointer to \fBTcl_AppInit\fR; for more
 details on this procedure, see the documentation for \fBTcl_AppInit\fR.
 .PP
-When the \fIappInitProc\fR is finished, \fBTcl_Main\fR calls
-\fBTcl_GetStartupScript\fR to determine what startup script has
-been requested, if any.  If a startup script has been provided,
-\fBTcl_Main\fR attempts to evaluate it.  Otherwise, interactive
-mode begins with examination of the variable \fItcl_rcFileName\fR
-in the master interpreter.  If that variable exists and holds the
-name of a readable file, the contents of that file are evaluated
-in the master interpreter.  Then interactive operations begin,
+When the \fIappInitProc\fR is finished, \fBTcl_Main\fR enters one
+of its two modes.  If a startup script has been provided, \fBTcl_Main\fR
+attempts to evaluate it.  Otherwise, interactive mode begins with
+examination of the variable \fItcl_rcFileName\fR in the master
+interpreter.  If that variable exists and holds the name of a readable
+file, the contents of that file are evaluated in the master interpreter.
+Then interactive operations begin,
 with prompts and command evaluation results written to the standard
 output channel, and commands read from the standard input channel
 and then evaluated.  The prompts written to the standard output
@@ -176,9 +131,8 @@ When the loop procedure returns in interactive mode, interactive operation
 will continue.
 The main loop procedure must have an interface that matches the type
 \fBTcl_MainLoopProc\fR:
-.PP
 .CS
-typedef void \fBTcl_MainLoopProc\fR(void);
+typedef void Tcl_MainLoopProc(void);
 .CE
 .PP
 \fBTcl_Main\fR does not return.  Normally a program based on
@@ -190,8 +144,10 @@ procedure (if any) returns.  In non-interactive mode, after
 \fBTcl_Main\fR evaluates the startup script, and the main loop
 procedure (if any) returns, \fBTcl_Main\fR will also evaluate
 the \fBexit\fR command.
+
 .SH "SEE ALSO"
 tclsh(1), Tcl_GetStdChannel(3), Tcl_StandardChannels(3), Tcl_AppInit(3),
-exit(n), encoding(n)
+exit(n)
+
 .SH KEYWORDS
 application-specific initialization, command-line arguments, main program

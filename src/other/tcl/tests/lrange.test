@@ -66,6 +66,7 @@ test lrange-1.15 {range of list elements} {
 test lrange-1.16 {list element quoting} {
     lrange {[append a .b]} 0 end    
 } {{[append} a .b\]}
+
 test lrange-2.1 {error conditions} {
     list [catch {lrange a b} msg] $msg
 } {1 {wrong # args: should be "lrange list first last"}}

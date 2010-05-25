@@ -78,7 +78,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
     vbp->rgb[1] = 0xFFFFFFL;	/* White */
     vbp->nused = 2;
 
-    return(vbp);
+    return vbp;
 }
 
 
@@ -131,13 +131,13 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 
     for (n=0; n < vbp->nused; n++) {
 	if (vbp->rgb[n] == new)
-	    return(&(vbp->head[n]));
+	    return &(vbp->head[n]);
     }
     if (vbp->nused < vbp->max) {
 	/* Allocate empty slot */
 	n = vbp->nused++;
 	vbp->rgb[n] = new;
-	return(&(vbp->head[n]));
+	return &(vbp->head[n]);
     }
 
     /************** enlarge the table ****************/
@@ -623,10 +623,10 @@ getshort(FILE *fp)
     v |= (getc(fp)<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if (v <= 0x7FFF) return(v);
+    if (v <= 0x7FFF) return v;
     w = -1;
     w &= ~0x7FFF;
-    return(w | v);
+    return w | v;
 }
 
 
@@ -737,7 +737,7 @@ rt_process_uplot_value(register struct bu_list **vhead,
 
     if (up->targ == TBAD) {
 	fprintf(stderr, "Lee : Bad command '%c' (0x%02x)\n", c, c);
-	return(-1);
+	return -1;
     }
 
     if (up->narg > 0) {
@@ -852,7 +852,7 @@ rt_process_uplot_value(register struct bu_list **vhead,
 	    break;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -882,10 +882,10 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 				     char_size,
 				     mode);
 	if (ret)
-	    return(ret);
+	    return ret;
     }
     
-    return(0);
+    return 0;
 }
 
 

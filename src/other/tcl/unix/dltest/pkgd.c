@@ -20,9 +20,9 @@
  */
 
 static int    Pkgd_SubObjCmd(ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+		Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 static int    Pkgd_UnsafeObjCmd(ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+		Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
 
 /*
  *----------------------------------------------------------------------
@@ -46,7 +46,7 @@ Pkgd_SubObjCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     int first, second;
 
@@ -84,7 +84,7 @@ Pkgd_UnsafeObjCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tcl_SetObjResult(interp, Tcl_NewStringObj("unsafe command invoked", -1));
     return TCL_OK;

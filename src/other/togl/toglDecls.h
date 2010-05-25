@@ -5,7 +5,7 @@
  * Togl - a Tk OpenGL widget
  *
  * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
- * Copyright (C) 2005-2008  Greg Couch
+ * Copyright (C) 2005-2009  Greg Couch
  * See the LICENSE file for copyright details.
  */
 
@@ -122,6 +122,27 @@ EXTERN int		Togl_WriteObj _ANSI_ARGS_((const Togl * togl,
 EXTERN int		Togl_WriteChars _ANSI_ARGS_((const Togl * togl, 
 				const Tcl_Obj * toglfont, const char * str, 
 				int len));
+/* 40 */
+EXTERN Bool		Togl_HasRGBA _ANSI_ARGS_((const Togl * togl));
+/* 41 */
+EXTERN Bool		Togl_IsDoubleBuffered _ANSI_ARGS_((const Togl * togl));
+/* 42 */
+EXTERN Bool		Togl_HasDepthBuffer _ANSI_ARGS_((const Togl * togl));
+/* 43 */
+EXTERN Bool		Togl_HasAccumulationBuffer _ANSI_ARGS_((
+				const Togl * togl));
+/* 44 */
+EXTERN Bool		Togl_HasDestinationAlpha _ANSI_ARGS_((
+				const Togl * togl));
+/* 45 */
+EXTERN Bool		Togl_HasStencilBuffer _ANSI_ARGS_((const Togl * togl));
+/* 46 */
+EXTERN int		Togl_StereoMode _ANSI_ARGS_((const Togl * togl));
+/* 47 */
+EXTERN Bool		Togl_HasMultisample _ANSI_ARGS_((const Togl * togl));
+/* 48 */
+EXTERN int		Togl_CopyContext _ANSI_ARGS_((const Togl * from, 
+				const Togl * to, unsigned int mask));
 
 typedef struct ToglStubs {
     int magic;
@@ -167,6 +188,15 @@ typedef struct ToglStubs {
     Bool (*togl_UpdatePending) _ANSI_ARGS_((const Togl * togl)); /* 37 */
     int (*togl_WriteObj) _ANSI_ARGS_((const Togl * togl, const Tcl_Obj * toglfont, Tcl_Obj * obj)); /* 38 */
     int (*togl_WriteChars) _ANSI_ARGS_((const Togl * togl, const Tcl_Obj * toglfont, const char * str, int len)); /* 39 */
+    Bool (*togl_HasRGBA) _ANSI_ARGS_((const Togl * togl)); /* 40 */
+    Bool (*togl_IsDoubleBuffered) _ANSI_ARGS_((const Togl * togl)); /* 41 */
+    Bool (*togl_HasDepthBuffer) _ANSI_ARGS_((const Togl * togl)); /* 42 */
+    Bool (*togl_HasAccumulationBuffer) _ANSI_ARGS_((const Togl * togl)); /* 43 */
+    Bool (*togl_HasDestinationAlpha) _ANSI_ARGS_((const Togl * togl)); /* 44 */
+    Bool (*togl_HasStencilBuffer) _ANSI_ARGS_((const Togl * togl)); /* 45 */
+    int (*togl_StereoMode) _ANSI_ARGS_((const Togl * togl)); /* 46 */
+    Bool (*togl_HasMultisample) _ANSI_ARGS_((const Togl * togl)); /* 47 */
+    int (*togl_CopyContext) _ANSI_ARGS_((const Togl * from, const Togl * to, unsigned int mask)); /* 48 */
 } ToglStubs;
 
 #ifdef __cplusplus
@@ -342,6 +372,42 @@ extern ToglStubs *toglStubsPtr;
 #ifndef Togl_WriteChars
 #define Togl_WriteChars \
 	(toglStubsPtr->togl_WriteChars) /* 39 */
+#endif
+#ifndef Togl_HasRGBA
+#define Togl_HasRGBA \
+	(toglStubsPtr->togl_HasRGBA) /* 40 */
+#endif
+#ifndef Togl_IsDoubleBuffered
+#define Togl_IsDoubleBuffered \
+	(toglStubsPtr->togl_IsDoubleBuffered) /* 41 */
+#endif
+#ifndef Togl_HasDepthBuffer
+#define Togl_HasDepthBuffer \
+	(toglStubsPtr->togl_HasDepthBuffer) /* 42 */
+#endif
+#ifndef Togl_HasAccumulationBuffer
+#define Togl_HasAccumulationBuffer \
+	(toglStubsPtr->togl_HasAccumulationBuffer) /* 43 */
+#endif
+#ifndef Togl_HasDestinationAlpha
+#define Togl_HasDestinationAlpha \
+	(toglStubsPtr->togl_HasDestinationAlpha) /* 44 */
+#endif
+#ifndef Togl_HasStencilBuffer
+#define Togl_HasStencilBuffer \
+	(toglStubsPtr->togl_HasStencilBuffer) /* 45 */
+#endif
+#ifndef Togl_StereoMode
+#define Togl_StereoMode \
+	(toglStubsPtr->togl_StereoMode) /* 46 */
+#endif
+#ifndef Togl_HasMultisample
+#define Togl_HasMultisample \
+	(toglStubsPtr->togl_HasMultisample) /* 47 */
+#endif
+#ifndef Togl_CopyContext
+#define Togl_CopyContext \
+	(toglStubsPtr->togl_CopyContext) /* 48 */
 #endif
 
 #endif /* defined(USE_TOGL_STUBS) && !defined(USE_TOGL_STUB_PROCS) */

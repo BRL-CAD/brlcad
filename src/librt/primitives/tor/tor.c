@@ -185,7 +185,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (rt_fdiff(tip->r_a, tip->r_b) != 0) {
 	bu_log("tor(%s):  (|A|=%f) != (|B|=%f) \n",
 	       stp->st_name, tip->r_a, tip->r_b);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Validate that A.B == 0, B.H == 0, A.H == 0 */
@@ -194,26 +194,26 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (!NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("tor(%s):  A not perpendicular to B, f=%f\n",
 	       stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(tip->b, tip->h)/(tip->r_b);
     if (!NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("tor(%s):  B not perpendicular to H, f=%f\n",
 	       stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(tip->a, tip->h)/(tip->r_a);
     if (!NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("tor(%s):  A not perpendicular to H, f=%f\n",
 	       stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Validate that 0 < r2 <= r1 for alpha computation */
     if (0.0 >= tip->r_h  || tip->r_h > tip->r_a) {
 	bu_log("r1 = %f, r2 = %f\n", tip->r_a, tip->r_h);
 	bu_log("tor(%s):  0 < r2 <= r1 is not true\n", stp->st_name);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Solid is OK, compute constant terms now */
@@ -278,7 +278,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = tor->tor_V[Z] - f;
     stp->st_max[Z] = tor->tor_V[Z] + f;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -432,7 +432,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		reported=1;
 	    }
 	}
-	return(0);		/* MISS */
+	return 0;		/* MISS */
     }
 
     /* Only real roots indicate an intersection in real space.
@@ -454,12 +454,12 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /* Here, 'i' is number of points found */
     switch (i) {
 	case 0:
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 
 	default:
 	    bu_log("rt_tor_shot: reduced 4 to %d roots\n", i);
 	    bn_pr_roots(stp->st_name, val, 4);
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 
 	case 2:
 	    {
@@ -505,7 +505,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
     if (i == 2)
-	return(2);			/* HIT */
+	return 2;			/* HIT */
 
     /* 4 points */
     /* k[3] is entry point, and k[2] is exit point */
@@ -517,7 +517,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     VJOIN1(segp->seg_in.hit_vpriv, pprime, k[3], dprime);
     VJOIN1(segp->seg_out.hit_vpriv, pprime, k[2], dprime);
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
-    return(4);			/* HIT */
+    return 4;			/* HIT */
 }
 
 
@@ -920,7 +920,7 @@ rt_tor_free(struct soltab *stp)
 int
 rt_tor_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -956,7 +956,7 @@ rt_num_circular_segments(double maxerr, double radius)
 
     if (radius <= SMALL_FASTF || maxerr <= SMALL_FASTF || maxerr >= radius) {
 	/* Return a default number of segments */
-	return(6);
+	return 6;
     }
     cos_half_theta = 1.0 - maxerr / radius;
 
@@ -966,7 +966,7 @@ rt_num_circular_segments(double maxerr, double radius)
      */
     if (cos_half_theta <= SMALL_FASTF || cos_half_theta-1.0 >= -SMALL_FASTF) {
 	/* Return a default number of segments */
-	return(6);
+	return 6;
     }
     
     half_theta = acos(cos_half_theta);
@@ -975,14 +975,14 @@ rt_num_circular_segments(double maxerr, double radius)
 	/* A very large number of segments will be needed.  Impose an
 	 * upper bound here
 	 */
-	return(360*10);
+	return 360*10;
     }
     n = (bn_pi / half_theta) + 0.99;
 
     /* Impose the limits again */
-    if (n <= 6) return(6);
-    if (n >= 360*10) return(360*10);
-    return(n);
+    if (n <= 6) return 6;
+    if (n >= 360*10) return 360*10;
+    return n;
 }
 
 
@@ -995,7 +995,7 @@ rt_num_circular_segments(double maxerr, double radius)
  * ti.a, ti.b perpindicular, to CENTER of torus (for top, bottom)
  */
 int
-rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     fastf_t alpha;
     fastf_t beta;
@@ -1105,7 +1105,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
     bu_free((char *)pts, "rt_tor_plot pts[]");
-    return(0);
+    return 0;
 }
 
 
@@ -1280,7 +1280,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)verts, "rt_tor_tess *verts[]");
     bu_free((char *)faces, "rt_tor_tess *faces[]");
     bu_free((char *)norms, "rt_tor_tess norms[]");
-    return(0);
+    return 0;
 }
 
 
@@ -1306,7 +1306,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_tor_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1333,7 +1333,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->r_h = MAGNITUDE(tip->h);
     if (tip->r_a <= SMALL_FASTF || tip->r_b <= SMALL_FASTF || tip->r_h <= SMALL_FASTF) {
 	bu_log("rt_tor_import4:  zero length A, B, or H vector\n");
-	return(-1);
+	return -1;
     }
     /* In memory, the H vector is unit length */
     f = 1.0/tip->r_h;
@@ -1346,7 +1346,7 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 	VREVERSE(tip->h, tip->h);
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1402,7 +1402,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_TOR) return(-1);
+    if (ip->idb_type != ID_TOR) return -1;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -1420,12 +1420,12 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Validate that 0 < r2 <= r1 */
     if (r2 <= 0.0) {
 	bu_log("rt_tor_export4:  illegal r2=%.12e <= 0\n", r2);
-	return(-1);
+	return -1;
     }
     if (r2 > r1) {
 	bu_log("rt_tor_export4:  illegal r2=%.12e > r1=%.12e\n",
 	       r2, r1);
-	return(-1);
+	return -1;
     }
 
     r1 *= local2mm;
@@ -1436,7 +1436,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     m2 = MAGNITUDE(norm);		/* F2 is NORMAL to torus */
     if (m2 <= SQRT_SMALL_FASTF) {
 	bu_log("rt_tor_export4: normal magnitude is zero!\n");
-	return(-1);		/* failure */
+	return -1;		/* failure */
     }
     m2 = 1.0/m2;
     VSCALE(norm, norm, m2);	/* Give normal unit length */
@@ -1467,7 +1467,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&rec->s.s_values[6*3], cross1, r4);
     VSCALE(&rec->s.s_values[7*3], cross2, r4);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1568,7 +1568,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		  INTCLAMP(tip->h[Y] * mm2local),
 		  INTCLAMP(tip->h[Z] * mm2local));
 
-    if (!verbose) return(0);
+    if (!verbose) return 0;
 
     bu_vls_printf(str, "\tA=(%g, %g, %g)\n",
 		  INTCLAMP(tip->a[X] * mm2local / tip->r_a),
@@ -1592,7 +1592,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		  INTCLAMP(tip->a[Y] * mm2local / tip->r_a * r4),
 		  INTCLAMP(tip->a[Z] * mm2local / tip->r_a * r4));
 
-    return(0);
+    return 0;
 }
 
 
@@ -1627,7 +1627,7 @@ rt_tor_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

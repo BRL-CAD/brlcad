@@ -28,14 +28,14 @@ static Tcl_ThreadDataKey dataKey;
  * tkButton.h.
  */
 
-static const char *const classNames[] = {"Label", "Button", "Checkbutton", "Radiobutton"};
+static const char *classNames[] = {"Label", "Button", "Checkbutton", "Radiobutton"};
 
 /*
  * The following table defines the legal values for the -default option. It is
  * used together with the "enum defaultValue" declaration in tkButton.h.
  */
 
-static const char *const defaultStrings[] = {
+static const char *defaultStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -44,7 +44,7 @@ static const char *const defaultStrings[] = {
  * It is used together with the "enum state" declaration in tkButton.h.
  */
 
-static const char *const stateStrings[] = {
+static const char *stateStrings[] = {
     "active", "disabled", "normal", NULL
 };
 
@@ -53,7 +53,7 @@ static const char *const stateStrings[] = {
  * It is used with the "enum compound" declaration in tkButton.h
  */
 
-static const char *const compoundStrings[] = {
+static const char *compoundStrings[] = {
     "bottom", "center", "left", "none", "right", "top", NULL
 };
 
@@ -144,7 +144,7 @@ static Tk_OptionSpec labelOptionSpecs[] = {
     {TK_OPTION_PIXELS, "-wraplength", "wrapLength", "WrapLength",
 	DEF_BUTTON_WRAP_LENGTH, Tk_Offset(TkButton, wrapLengthPtr),
 	Tk_Offset(TkButton, wrapLength), 0, 0, 0},
-    {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0}
+    {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0}
 };
 
 static Tk_OptionSpec buttonOptionSpecs[] = {
@@ -478,7 +478,7 @@ static Tk_OptionSpec radiobuttonOptionSpecs[] = {
  * such as TYPE_LABEL, to the option template for that class of widgets.
  */
 
-static Tk_OptionSpec *const optionSpecs[] = {
+static Tk_OptionSpec * const optionSpecs[] = {
     labelOptionSpecs,
     buttonOptionSpecs,
     checkbuttonOptionSpecs,
@@ -491,7 +491,7 @@ static Tk_OptionSpec *const optionSpecs[] = {
  * enumerated type used to dispatch the widget command.
  */
 
-static const char *const commandNames[][8] = {
+static const char *commandNames[][8] = {
     {"cget", "configure", NULL},
     {"cget", "configure", "flash", "invoke", NULL},
     {"cget", "configure", "deselect", "flash", "invoke", "select",
@@ -633,7 +633,7 @@ ButtonCreate(
     TkButton *butPtr;
     Tk_OptionTable optionTable;
     Tk_Window tkwin;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (!tsdPtr->defaultsInitialized) {
@@ -642,7 +642,7 @@ ButtonCreate(
     }
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?options?");
 	return TCL_ERROR;
     }
 
@@ -666,7 +666,7 @@ ButtonCreate(
     Tk_SetClass(tkwin, classNames[type]);
     butPtr = TkpCreateButton(tkwin);
 
-    Tk_SetClassProcs(tkwin, &tkpButtonProcs, butPtr);
+    Tk_SetClassProcs(tkwin, &tkpButtonProcs, (ClientData) butPtr);
 
     /*
      * Initialize the data structure for the button.
@@ -676,7 +676,7 @@ ButtonCreate(
     butPtr->display = Tk_Display(tkwin);
     butPtr->interp = interp;
     butPtr->widgetCmd = Tcl_CreateObjCommand(interp, Tk_PathName(tkwin),
-	    ButtonWidgetObjCmd, butPtr, ButtonCmdDeletedProc);
+	    ButtonWidgetObjCmd, (ClientData) butPtr, ButtonCmdDeletedProc);
     butPtr->type = type;
     butPtr->optionTable = optionTable;
     butPtr->textPtr = NULL;
@@ -741,7 +741,7 @@ ButtonCreate(
 
     Tk_CreateEventHandler(butPtr->tkwin,
 	    ExposureMask|StructureNotifyMask|FocusChangeMask,
-	    ButtonEventProc, butPtr);
+	    ButtonEventProc, (ClientData) butPtr);
 
     if (Tk_InitOptions(interp, (char *) butPtr, optionTable, tkwin)
 	    != TCL_OK) {
@@ -753,7 +753,8 @@ ButtonCreate(
 	return TCL_ERROR;
     }
 
-    Tcl_SetObjResult(interp, TkNewWindowObj(butPtr->tkwin));
+    Tcl_SetStringObj(Tcl_GetObjResult(interp), Tk_PathName(butPtr->tkwin),
+	    -1);
     return TCL_OK;
 }
 
@@ -782,13 +783,13 @@ ButtonWidgetObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument values. */
 {
-    TkButton *butPtr = clientData;
+    TkButton *butPtr = (TkButton *) clientData;
     int index;
     int result;
     Tcl_Obj *objPtr;
 
     if (objc < 2) {
-        Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
+        Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
     result = Tcl_GetIndexFromObj(interp, objv[1], commandNames[butPtr->type],
@@ -796,7 +797,7 @@ ButtonWidgetObjCmd(
     if (result != TCL_OK) {
 	return result;
     }
-    Tcl_Preserve(butPtr);
+    Tcl_Preserve((ClientData) butPtr);
 
     switch (map[butPtr->type][index]) {
     case COMMAND_CGET:
@@ -808,8 +809,9 @@ ButtonWidgetObjCmd(
 		butPtr->optionTable, objv[2], butPtr->tkwin);
 	if (objPtr == NULL) {
 	    goto error;
+	} else {
+	    Tcl_SetObjResult(interp, objPtr);
 	}
-	Tcl_SetObjResult(interp, objPtr);
 	break;
 
     case COMMAND_CONFIGURE:
@@ -819,8 +821,9 @@ ButtonWidgetObjCmd(
 		    butPtr->tkwin);
 	    if (objPtr == NULL) {
 		goto error;
+	    } else {
+		Tcl_SetObjResult(interp, objPtr);
 	    }
-	    Tcl_SetObjResult(interp, objPtr);
 	} else {
 	    result = ConfigureButton(interp, butPtr, objc-2, objv+2);
 	}
@@ -863,7 +866,7 @@ ButtonWidgetObjCmd(
 		    Tk_SetBackgroundFromBorder(butPtr->tkwin,
 			    butPtr->normalBorder);
 		}
-		TkpDisplayButton(butPtr);
+		TkpDisplayButton((ClientData) butPtr);
 
 		/*
 		 * Special note: must cancel any existing idle handler for
@@ -871,7 +874,7 @@ ButtonWidgetObjCmd(
 		 * TkpDisplayButton cleared the REDRAW_PENDING flag.
 		 */
 
-		Tcl_CancelIdleCall(TkpDisplayButton, butPtr);
+		Tcl_CancelIdleCall(TkpDisplayButton, (ClientData) butPtr);
 		XFlush(butPtr->display);
 		Tcl_Sleep(50);
 	    }
@@ -913,11 +916,11 @@ ButtonWidgetObjCmd(
 	}
 	break;
     }
-    Tcl_Release(butPtr);
+    Tcl_Release((ClientData) butPtr);
     return result;
 
   error:
-    Tcl_Release(butPtr);
+    Tcl_Release((ClientData) butPtr);
     return TCL_ERROR;
 }
 
@@ -946,7 +949,7 @@ DestroyButton(
     TkpDestroyButton(butPtr);
 
     if (butPtr->flags & REDRAW_PENDING) {
-	Tcl_CancelIdleCall(TkpDisplayButton, butPtr);
+	Tcl_CancelIdleCall(TkpDisplayButton, (ClientData) butPtr);
     }
 
     /*
@@ -958,7 +961,7 @@ DestroyButton(
     if (butPtr->textVarNamePtr != NULL) {
 	Tcl_UntraceVar(butPtr->interp, Tcl_GetString(butPtr->textVarNamePtr),
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		ButtonTextVarProc, butPtr);
+		ButtonTextVarProc, (ClientData) butPtr);
     }
     if (butPtr->image != NULL) {
 	Tk_FreeImage(butPtr->image);
@@ -993,12 +996,12 @@ DestroyButton(
     if (butPtr->selVarNamePtr != NULL) {
 	Tcl_UntraceVar(butPtr->interp, Tcl_GetString(butPtr->selVarNamePtr),
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		ButtonVarProc, butPtr);
+		ButtonVarProc, (ClientData) butPtr);
     }
     Tk_FreeConfigOptions((char *) butPtr, butPtr->optionTable,
 	    butPtr->tkwin);
     butPtr->tkwin = NULL;
-    Tcl_EventuallyFree(butPtr, TCL_DYNAMIC);
+    Tcl_EventuallyFree((ClientData) butPtr, TCL_DYNAMIC);
 }
 
 /*
@@ -1041,12 +1044,12 @@ ConfigureButton(
     if (butPtr->textVarNamePtr != NULL) {
 	Tcl_UntraceVar(interp, Tcl_GetString(butPtr->textVarNamePtr),
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		ButtonTextVarProc, butPtr);
+		ButtonTextVarProc, (ClientData) butPtr);
     }
     if (butPtr->selVarNamePtr != NULL) {
 	Tcl_UntraceVar(interp, Tcl_GetString(butPtr->selVarNamePtr),
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		ButtonVarProc, butPtr);
+		ButtonVarProc, (ClientData) butPtr);
     }
 
     /*
@@ -1178,7 +1181,7 @@ ConfigureButton(
 	if (butPtr->imagePtr != NULL) {
 	    image = Tk_GetImage(butPtr->interp, butPtr->tkwin,
 		    Tcl_GetString(butPtr->imagePtr), ButtonImageProc,
-		    butPtr);
+		    (ClientData) butPtr);
 	    if (image == NULL) {
 		continue;
 	    }
@@ -1192,7 +1195,7 @@ ConfigureButton(
 	if (butPtr->selectImagePtr != NULL) {
 	    image = Tk_GetImage(butPtr->interp, butPtr->tkwin,
 		    Tcl_GetString(butPtr->selectImagePtr),
-		    ButtonSelectImageProc, butPtr);
+		    ButtonSelectImageProc, (ClientData) butPtr);
 	    if (image == NULL) {
 		continue;
 	    }
@@ -1206,7 +1209,7 @@ ConfigureButton(
 	if (butPtr->tristateImagePtr != NULL) {
 	    image = Tk_GetImage(butPtr->interp, butPtr->tkwin,
 		    Tcl_GetString(butPtr->tristateImagePtr),
-		    ButtonTristateImageProc, butPtr);
+		    ButtonTristateImageProc, (ClientData) butPtr);
 	    if (image == NULL) {
 		continue;
 	    }
@@ -1293,15 +1296,15 @@ ConfigureButton(
     if (butPtr->textVarNamePtr != NULL) {
 	Tcl_TraceVar(interp, Tcl_GetString(butPtr->textVarNamePtr),
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		ButtonTextVarProc, butPtr);
+		ButtonTextVarProc, (ClientData) butPtr);
     }
     if (butPtr->selVarNamePtr != NULL) {
 	Tcl_TraceVar(interp, Tcl_GetString(butPtr->selVarNamePtr),
 		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		ButtonVarProc, butPtr);
+		ButtonVarProc, (ClientData) butPtr);
     }
 
-    TkButtonWorldChanged(butPtr);
+    TkButtonWorldChanged((ClientData) butPtr);
     if (error) {
 	Tcl_SetObjResult(interp, errorResult);
 	Tcl_DecrRefCount(errorResult);
@@ -1336,7 +1339,9 @@ TkButtonWorldChanged(
     XGCValues gcValues;
     GC newGC;
     unsigned long mask;
-    TkButton *butPtr = instanceData;
+    TkButton *butPtr;
+
+    butPtr = (TkButton *) instanceData;
 
     /*
      * Recompute GCs.
@@ -1419,7 +1424,7 @@ TkButtonWorldChanged(
      */
 
     if (Tk_IsMapped(butPtr->tkwin) && !(butPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayButton, butPtr);
+	Tcl_DoWhenIdle(TkpDisplayButton, (ClientData) butPtr);
 	butPtr->flags |= REDRAW_PENDING;
     }
 }
@@ -1447,7 +1452,7 @@ ButtonEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkButton *butPtr = clientData;
+    TkButton *butPtr = (TkButton *) clientData;
     if ((eventPtr->type == Expose) && (eventPtr->xexpose.count == 0)) {
 	goto redraw;
     } else if (eventPtr->type == ConfigureNotify) {
@@ -1478,7 +1483,7 @@ ButtonEventProc(
 
   redraw:
     if ((butPtr->tkwin != NULL) && !(butPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayButton, butPtr);
+	Tcl_DoWhenIdle(TkpDisplayButton, (ClientData) butPtr);
 	butPtr->flags |= REDRAW_PENDING;
     }
 }
@@ -1505,7 +1510,7 @@ static void
 ButtonCmdDeletedProc(
     ClientData clientData)	/* Pointer to widget record for widget. */
 {
-    TkButton *butPtr = clientData;
+    TkButton *butPtr = (TkButton *) clientData;
 
     /*
      * This function could be invoked either because the window was destroyed
@@ -1600,9 +1605,11 @@ ButtonVarProc(
     const char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
-    register TkButton *butPtr = clientData;
-    const char *value;
+    register TkButton *butPtr = (TkButton *) clientData;
+    char *name, *value;
     Tcl_Obj *valuePtr;
+
+    name = Tcl_GetString(butPtr->selVarNamePtr);
 
     /*
      * If the variable is being unset, then just re-establish the trace unless
@@ -1610,9 +1617,10 @@ ButtonVarProc(
      */
 
     if (flags & TCL_TRACE_UNSETS) {
-	butPtr->flags &= ~(SELECTED | TRISTATED);
+	butPtr->flags &= ~SELECTED;
+        butPtr->flags &= ~TRISTATED;
 	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
-	    Tcl_TraceVar(interp, Tcl_GetString(butPtr->selVarNamePtr),
+	    Tcl_TraceVar(interp, name,
 		    TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		    ButtonVarProc, clientData);
 	}
@@ -1624,8 +1632,7 @@ ButtonVarProc(
      * button.
      */
 
-    valuePtr = Tcl_ObjGetVar2(interp, butPtr->selVarNamePtr, NULL,
-	    TCL_GLOBAL_ONLY);
+    valuePtr = Tcl_GetVar2Ex(interp, name, NULL, TCL_GLOBAL_ONLY);
     if (valuePtr == NULL) {
 	value = Tcl_GetString(butPtr->tristateValuePtr);
     } else {
@@ -1658,7 +1665,7 @@ ButtonVarProc(
   redisplay:
     if ((butPtr->tkwin != NULL) && Tk_IsMapped(butPtr->tkwin)
 	    && !(butPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayButton, butPtr);
+	Tcl_DoWhenIdle(TkpDisplayButton, (ClientData) butPtr);
 	butPtr->flags |= REDRAW_PENDING;
     }
     return NULL;
@@ -1690,12 +1697,15 @@ ButtonTextVarProc(
     const char *name2,		/* Not used. */
     int flags)			/* Information about what happened. */
 {
-    TkButton *butPtr = clientData;
+    TkButton *butPtr = (TkButton *) clientData;
+    char *name;
     Tcl_Obj *valuePtr;
 
     if (butPtr->flags & BUTTON_DELETED) {
 	return NULL;
     }
+
+    name = Tcl_GetString(butPtr->textVarNamePtr);
 
     /*
      * If the variable is unset, then immediately recreate it unless the whole
@@ -1704,17 +1714,16 @@ ButtonTextVarProc(
 
     if (flags & TCL_TRACE_UNSETS) {
 	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
-	    Tcl_ObjSetVar2(interp, butPtr->textVarNamePtr, NULL,
-		    butPtr->textPtr, TCL_GLOBAL_ONLY);
-	    Tcl_TraceVar(interp, Tcl_GetString(butPtr->textVarNamePtr),
+	    Tcl_SetVar2Ex(interp, name, NULL, butPtr->textPtr,
+		    TCL_GLOBAL_ONLY);
+	    Tcl_TraceVar(interp, name,
 		    TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		    ButtonTextVarProc, clientData);
 	}
 	return NULL;
     }
 
-    valuePtr = Tcl_ObjGetVar2(interp, butPtr->textVarNamePtr, NULL,
-	    TCL_GLOBAL_ONLY);
+    valuePtr = Tcl_GetVar2Ex(interp, name, NULL, TCL_GLOBAL_ONLY);
     if (valuePtr == NULL) {
 	valuePtr = Tcl_NewObj();
     }
@@ -1725,7 +1734,7 @@ ButtonTextVarProc(
 
     if ((butPtr->tkwin != NULL) && Tk_IsMapped(butPtr->tkwin)
 	    && !(butPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayButton, butPtr);
+	Tcl_DoWhenIdle(TkpDisplayButton, (ClientData) butPtr);
 	butPtr->flags |= REDRAW_PENDING;
     }
     return NULL;
@@ -1758,12 +1767,12 @@ ButtonImageProc(
 				 * <= 0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkButton *butPtr = clientData;
+    register TkButton *butPtr = (TkButton *) clientData;
 
     if (butPtr->tkwin != NULL) {
 	TkpComputeButtonGeometry(butPtr);
 	if (Tk_IsMapped(butPtr->tkwin) && !(butPtr->flags & REDRAW_PENDING)) {
-	    Tcl_DoWhenIdle(TkpDisplayButton, butPtr);
+	    Tcl_DoWhenIdle(TkpDisplayButton, (ClientData) butPtr);
 	    butPtr->flags |= REDRAW_PENDING;
 	}
     }
@@ -1796,22 +1805,16 @@ ButtonSelectImageProc(
 				 * <= 0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkButton *butPtr = clientData;
+    register TkButton *butPtr = (TkButton *) clientData;
 
-#ifdef MAC_OSX_TK
-    if (butPtr->tkwin != NULL) {
-	TkpComputeButtonGeometry(butPtr);
-    }
-#else
     /*
      * Don't recompute geometry: it's controlled by the primary image.
      */
-#endif
 
     if ((butPtr->flags & SELECTED) && (butPtr->tkwin != NULL)
 	    && Tk_IsMapped(butPtr->tkwin)
 	    && !(butPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayButton, butPtr);
+	Tcl_DoWhenIdle(TkpDisplayButton, (ClientData) butPtr);
 	butPtr->flags |= REDRAW_PENDING;
     }
 }
@@ -1843,22 +1846,16 @@ ButtonTristateImageProc(
 				 * <= 0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkButton *butPtr = clientData;
+    register TkButton *butPtr = (TkButton *) clientData;
 
-#ifdef MAC_OSX_TK
-    if (butPtr->tkwin != NULL) {
-	TkpComputeButtonGeometry(butPtr);
-    }
-#else
     /*
      * Don't recompute geometry: it's controlled by the primary image.
      */
-#endif
 
     if ((butPtr->flags & TRISTATED) && (butPtr->tkwin != NULL)
 	    && Tk_IsMapped(butPtr->tkwin)
 	    && !(butPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(TkpDisplayButton, butPtr);
+	Tcl_DoWhenIdle(TkpDisplayButton, (ClientData) butPtr);
 	butPtr->flags |= REDRAW_PENDING;
     }
 }

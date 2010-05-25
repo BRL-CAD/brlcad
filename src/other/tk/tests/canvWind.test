@@ -8,14 +8,12 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.2
-namespace import ::tcltest::*
+package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
-test canvWind-1.1 {DisplayWinItem, windows off-screen vertically} -setup {
-    destroy .t
-} -body {
+test canvWind-1.1 {DisplayWinItem, windows off-screen vertically} {
+    catch {destroy .t}
     toplevel .t
     canvas .t.c -scrollregion {0 0 1000 800} -width 250 -height 200 -bd 2 \
 	    -relief sunken -xscrollincrement 1 -yscrollincrement 1 \
@@ -41,13 +39,9 @@ test canvWind-1.1 {DisplayWinItem, windows off-screen vertically} -setup {
     .t.c yview scroll -1 units
     update
     lappend x [list [winfo ismapped $f] [winfo y $f]]
-} -cleanup {
-    destroy .t
-} -result {{1 23} {1 -29} {0 -29} {1 225} {0 225}}
-
-test canvWind-1.2 {DisplayWinItem, windows off-screen vertically} -setup {
-    destroy .t
-} -body {
+} {{1 23} {1 -29} {0 -29} {1 225} {0 225}}
+test canvWind-1.2 {DisplayWinItem, windows off-screen vertically} {
+    catch {destroy .t}
     toplevel .t
     canvas .t.c -scrollregion {0 0 1000 800} -width 250 -height 200 -bd 2 \
 	    -relief sunken -xscrollincrement 1 -yscrollincrement 1 \
@@ -73,13 +67,9 @@ test canvWind-1.2 {DisplayWinItem, windows off-screen vertically} -setup {
     .t.c yview scroll -1 units
     update
     lappend x [list [winfo ismapped $f] [winfo y $f]]
-} -cleanup {
-    destroy .t
-} -result {{1 3} {1 -49} {0 -49} {1 205} {0 205}}
-
-test canvWind-1.3 {DisplayWinItem, windows off-screen horizontally} -setup {
-    destroy .t
-} -body {
+} {{1 3} {1 -49} {0 -49} {1 205} {0 205}}
+test canvWind-1.3 {DisplayWinItem, windows off-screen horizontally} {
+    catch {destroy .t}
     toplevel .t
     canvas .t.c -scrollregion {0 0 1000 800} -width 250 -height 200 -bd 2 \
 	    -relief sunken -xscrollincrement 1 -yscrollincrement 1 \
@@ -105,13 +95,9 @@ test canvWind-1.3 {DisplayWinItem, windows off-screen horizontally} -setup {
     .t.c xview scroll -1 units
     update
     lappend x [list [winfo ismapped $f] [winfo x $f]]
-} -cleanup {
-    destroy .t
-} -result {{1 23} {1 -59} {0 -59} {1 275} {0 275}}
-
-test canvWind-1.4 {DisplayWinItem, windows off-screen horizontally} -setup {
-    destroy .t
-} -body {
+} {{1 23} {1 -59} {0 -59} {1 275} {0 275}}
+test canvWind-1.4 {DisplayWinItem, windows off-screen horizontally} {
+    catch {destroy .t}
     toplevel .t
     canvas .t.c -scrollregion {0 0 1000 800} -width 250 -height 200 -bd 2 \
 	    -relief sunken -xscrollincrement 1 -yscrollincrement 1 \
@@ -137,9 +123,8 @@ test canvWind-1.4 {DisplayWinItem, windows off-screen horizontally} -setup {
     .t.c xview scroll -1 units
     update
     lappend x [list [winfo ismapped $f] [winfo x $f]]
-} -cleanup {
-    destroy .t
-} -result {{1 3} {1 -79} {0 -79} {1 255} {0 255}}
+} {{1 3} {1 -79} {0 -79} {1 255} {0 255}}
+catch {destroy .t}
 
 # cleanup
 cleanupTests

@@ -1,8 +1,8 @@
 /*
  * tclCompExpr.c --
  *
- *	This file contains the code to parse and compile Tcl expressions and
- *	implementations of the Tcl commands corresponding to expression
+ *	This file contains the code to parse and compile Tcl expressions
+ *	and implementations of the Tcl commands corresponding to expression
  *	operators, such as the command ::tcl::mathop::+ .
  *
  * Contributions from Don Porter, NIST, 2006-2007. (not subject to US copyright)
@@ -17,11 +17,11 @@
 #include "tclCompile.h"		/* CompileEnv */
 
 /*
- * Expression parsing takes place in the routine ParseExpr(). It takes a
- * string as input, parses that string, and generates a representation of the
- * expression in the form of a tree of operators, a list of literals, a list
- * of function names, and an array of Tcl_Token's within a Tcl_Parse struct.
- * The tree is composed of OpNodes.
+ * Expression parsing takes place in the routine ParseExpr().  It takes a
+ * string as input, parses that string, and generates a representation of
+ * the expression in the form of a tree of operators, a list of literals,
+ * a list of function names, and an array of Tcl_Token's within a Tcl_Parse
+ * struct.  The tree is composed of OpNodes.
  */
 
 typedef struct OpNode {
@@ -38,36 +38,36 @@ typedef struct OpNode {
 } OpNode;
 
 /*
- * The storage for the tree is dynamically allocated array of OpNodes. The
+ * The storage for the tree is dynamically allocated array of OpNodes.  The
  * array is grown as parsing needs dictate according to a scheme similar to
  * Tcl's string growth algorithm, so that the resizing costs are O(N) and so
  * that we use at least half the memory allocated as expressions get large.
  *
  * Each OpNode in the tree represents an operator in the expression, either
- * unary or binary. When parsing is completed successfully, a binary operator
+ * unary or binary.  When parsing is completed successfully, a binary operator
  * OpNode will have its left and right fields filled with "pointers" to its
- * left and right operands. A unary operator OpNode will have its right field
- * filled with a pointer to its single operand. When an operand is a
+ * left and right operands.  A unary operator OpNode will have its right field
+ * filled with a pointer to its single operand.  When an operand is a
  * subexpression the "pointer" takes the form of the index -- a non-negative
  * integer -- into the OpNode storage array where the root of that
- * subexpression parse tree is found.
+ * subexpression parse tree is found.  
  *
  * Non-operator elements of the expression do not get stored in the OpNode
- * tree. They are stored in the other structures according to their type.
- * Literal values get appended to the literal list. Elements that denote forms
- * of quoting or substitution known to the Tcl parser get stored as
- * Tcl_Tokens. These non-operator elements of the expression are the leaves of
- * the completed parse tree. When an operand of an OpNode is one of these leaf
- * elements, the following negative integer codes are used to indicate which
- * kind of elements it is.
+ * tree.  They are stored in the other structures according to their type.
+ * Literal values get appended to the literal list.  Elements that denote
+ * forms of quoting or substitution known to the Tcl parser get stored as
+ * Tcl_Tokens.  These non-operator elements of the expression are the
+ * leaves of the completed parse tree.  When an operand of an OpNode is
+ * one of these leaf elements, the following negative integer codes are used
+ * to indicate which kind of elements it is.
  */
 
 enum OperandTypes {
     OT_LITERAL = -3,	/* Operand is a literal in the literal list */
     OT_TOKENS = -2,	/* Operand is sequence of Tcl_Tokens */
-    OT_EMPTY = -1	/* "Operand" is an empty string. This is a special
-			 * case used only to represent the EMPTY lexeme. See
-			 * below. */
+    OT_EMPTY = -1	/* "Operand" is an empty string.  This is a
+			 * special case used only to represent the
+			 * EMPTY lexeme.  See below. */
 };
 
 /*
@@ -81,30 +81,31 @@ enum OperandTypes {
 
 /*
  * Note that it is sufficient to store in the tree just the type of leaf
- * operand, without any explicit pointer to which leaf. This is true because
- * the traversals of the completed tree we perform are known to visit the
- * leaves in the same order as the original parse.
+ * operand, without any explicit pointer to which leaf.  This is true because
+ * the traversals of the completed tree we perform are known to visit
+ * the leaves in the same order as the original parse.
  *
  * In a completed parse tree, those OpNodes that are themselves (roots of
  * subexpression trees that are) operands of some operator store in their
- * p.parent field a "pointer" to the OpNode of that operator. The p.parent
- * field permits a traversal of the tree within a non-recursive routine
- * (ConvertTreeToTokens() and CompileExprTree()). This means that even
+ * p.parent field a "pointer" to the OpNode of that operator.  The p.parent
+ * field permits a traversal of the tree within a * non-recursive routine
+ * (ConvertTreeToTokens() and CompileExprTree()).  This means that even
  * expression trees of great depth pose no risk of blowing the C stack.
  *
- * While the parse tree is being constructed, the same memory space is used to
- * hold the p.prev field which chains together a stack of incomplete trees
- * awaiting their right operands.
+ * While the parse tree is being constructed, the same memory space is used
+ * to hold the p.prev field which chains together a stack of incomplete
+ * trees awaiting their right operands.
  *
  * The lexeme field is filled in with the lexeme of the operator that is
- * returned by the ParseLexeme() routine. Only lexemes for unary and binary
- * operators get stored in an OpNode. Other lexmes get different treatement.
+ * returned by the ParseLexeme() routine.  Only lexemes for unary and
+ * binary operators get stored in an OpNode.  Other lexmes get different
+ * treatement.
  *
  * The precedence field provides a place to store the precedence of the
  * operator, so it need not be looked up again and again.
  *
- * The mark field is use to control the traversal of the tree, so that it can
- * be done non-recursively. The mark values are:
+ * The mark field is use to control the traversal of the tree, so
+ * that it can be done non-recursively.  The mark values are:
  */
 
 enum Marks {
@@ -120,51 +121,52 @@ enum Marks {
  */
 
 /*
- * Each lexeme belongs to one of four categories, which determine its place in
- * the parse tree. We use the two high bits of the (unsigned char) value to
- * store a NODE_TYPE code.
+ * Each lexeme belongs to one of four categories, which determine
+ * its place in the parse tree.  We use the two high bits of the
+ * (unsigned char) value to store a NODE_TYPE code.
  */
 
 #define NODE_TYPE	0xC0
 
 /*
- * The four category values are LEAF, UNARY, and BINARY, explained below, and
- * "uncategorized", which is used either temporarily, until context determines
- * which of the other three categories is correct, or for lexemes like
- * INVALID, which aren't really lexemes at all, but indicators of a parsing
- * error. Note that the codes must be distinct to distinguish categories, but
- * need not take the form of a bit array.
+ * The four category values are LEAF, UNARY, and BINARY, explained below,
+ * and "uncategorized", which is used either temporarily, until context
+ * determines which of the other three categories is correct, or for
+ * lexemes like INVALID, which aren't really lexemes at all, but indicators
+ * of a parsing error.  Note that the codes must be distinct to distinguish
+ * categories, but need not take the form of a bit array.
  */
 
-#define BINARY		0x40	/* This lexeme is a binary operator. An OpNode
-				 * representing it should go into the parse
-				 * tree, and two operands should be parsed for
-				 * it in the expression. */
-#define UNARY		0x80	/* This lexeme is a unary operator. An OpNode
+#define BINARY		0x40	/* This lexeme is a binary operator.  An
+				 * OpNode representing it should go into the
+				 * parse tree, and two operands should be
+				 * parsed for it in the expression.  */
+#define UNARY		0x80	/* This lexeme is a unary operator.  An OpNode
 				 * representing it should go into the parse
 				 * tree, and one operand should be parsed for
 				 * it in the expression. */
 #define LEAF		0xC0	/* This lexeme is a leaf operand in the parse
-				 * tree. No OpNode will be placed in the tree
-				 * for it. Either a literal value will be
+				 * tree.  No OpNode will be placed in the tree
+				 * for it.  Either a literal value will be
 				 * appended to the list of literals in this
 				 * expression, or appropriate Tcl_Tokens will
-				 * be appended in a Tcl_Parse struct to
+				 * be appended in a Tcl_Parse struct to 
 				 * represent those leaves that require some
-				 * form of substitution. */
+				 * form of substitution.
+				 */
 
 /* Uncategorized lexemes */
 
-#define PLUS		1	/* Ambiguous. Resolves to UNARY_PLUS or
+#define PLUS		1	/* Ambiguous.  Resolves to UNARY_PLUS or
 				 * BINARY_PLUS according to context. */
-#define MINUS		2	/* Ambiguous. Resolves to UNARY_MINUS or
+#define MINUS		2	/* Ambiguous.  Resolves to UNARY_MINUS or
 				 * BINARY_MINUS according to context. */
-#define BAREWORD	3	/* Ambigous. Resolves to BOOLEAN or to
+#define BAREWORD	3	/* Ambigous.  Resolves to BOOLEAN or to
 				 * FUNCTION or a parse error according to
 				 * context and value. */
-#define INCOMPLETE	4	/* A parse error. Used only when the single
+#define INCOMPLETE	4	/* A parse error.  Used only when the single
 				 * "=" is encountered.  */
-#define INVALID		5	/* A parse error. Used when any punctuation
+#define INVALID		5	/* A parse error.  Used when any punctuation
 				 * appears that's not a supported operator. */
 
 /* Leaf lexemes */
@@ -176,9 +178,9 @@ enum Marks {
 #define VARIABLE	( LEAF | 5)	/* Variable substitution; $x */
 #define QUOTED		( LEAF | 6)	/* Quoted string; "foo $bar [soom]" */
 #define EMPTY		( LEAF | 7)	/* Used only for an empty argument
-					 * list to a function. Represents the
-					 * empty string within parens in the
-					 * expression: rand() */
+					 * list to a function.  Represents
+					 * the empty string within parens in
+					 * the expression: rand() */
 
 /* Unary operator lexemes */
 
@@ -186,29 +188,28 @@ enum Marks {
 #define UNARY_MINUS	( UNARY | MINUS)
 #define FUNCTION	( UNARY | BAREWORD)	/* This is a bit of "creative
 					 * interpretation" on the part of the
-					 * parser. A function call is parsed
+					 * parser.  A function call is parsed
 					 * into the parse tree according to
 					 * the perspective that the function
 					 * name is a unary operator and its
 					 * argument list, enclosed in parens,
-					 * is its operand. The additional
+					 * is its operand.  The additional
 					 * requirements not implied generally
 					 * by treatment as a unary operator --
 					 * for example, the requirement that
-					 * the operand be enclosed in parens
-					 * -- are hard coded in the relevant
-					 * portions of ParseExpr(). We trade
+					 * the operand be enclosed in parens --
+					 * are hard coded in the relevant
+					 * portions of ParseExpr().  We trade
 					 * off the need to include such
 					 * exceptional handling in the code
 					 * against the need we would otherwise
 					 * have for more lexeme categories. */
 #define START		( UNARY | 4)	/* This lexeme isn't parsed from the
-					 * expression text at all. It
+					 * expression text at all.  It
 					 * represents the start of the
 					 * expression and sits at the root of
 					 * the parse tree where it serves as
-					 * the start/end point of
-					 * traversals. */
+					 * the start/end point of traversals. */
 #define OPEN_PAREN	( UNARY | 5)	/* Another bit of creative
 					 * interpretation, where we treat "("
 					 * as a unary operator with the
@@ -222,15 +223,14 @@ enum Marks {
 
 #define BINARY_PLUS	( BINARY |  PLUS)
 #define BINARY_MINUS	( BINARY |  MINUS)
-#define COMMA		( BINARY |  3)	/* The "," operator is a low
-					 * precedence binary operator that
-					 * separates the arguments in a
-					 * function call. The additional
-					 * constraint that this operator can
-					 * only legally appear at the right
-					 * places within a function call
-					 * argument list are hard coded within
-					 * ParseExpr().  */
+#define COMMA		( BINARY |  3)	/* The "," operator is a low precedence
+					 * binary operator that separates the
+					 * arguments in a function call.  The
+					 * additional constraint that this
+					 * operator can only legally appear
+					 * at the right places within a
+					 * function call argument list are
+					 * hard coded within ParseExpr().  */
 #define MULT		( BINARY |  4)
 #define DIVIDE		( BINARY |  5)
 #define MOD		( BINARY |  6)
@@ -241,13 +241,14 @@ enum Marks {
 #define BIT_OR		( BINARY | 11)
 #define QUESTION	( BINARY | 12)	/* These two lexemes make up the */
 #define COLON		( BINARY | 13)	/* ternary conditional operator,
-					 * $x ? $y : $z . We treat them as two
-					 * binary operators to avoid another
-					 * lexeme category, and code the
-					 * additional constraints directly in
-					 * ParseExpr(). For instance, the
-					 * right operand of a "?" operator
-					 * must be a ":" operator. */
+					 * $x ? $y : $z .  We treat them as
+					 * two binary operators to avoid
+					 * another lexeme category, and
+					 * code the additional constraints
+					 * directly in ParseExpr().  For
+					 * instance, the right operand of
+					 * a "?" operator must be a ":"
+					 * operator. */
 #define LEFT_SHIFT	( BINARY | 14)
 #define RIGHT_SHIFT	( BINARY | 15)
 #define LEQ		( BINARY | 16)
@@ -274,22 +275,23 @@ enum Marks {
 					 * operators according to precedence
 					 * performs most of the work of
 					 * matching open and close parens for
-					 * us. In the end though, a close
+					 * us.  In the end though, a close
 					 * paren is not really a binary
 					 * operator, and some special coding
 					 * in ParseExpr() make sure we never
-					 * put an actual CLOSE_PAREN node in
-					 * the parse tree. The sub-expression
-					 * between parens becomes the single
-					 * argument of the matching OPEN_PAREN
-					 * unary operator. */
+					 * put an actual CLOSE_PAREN node
+					 * in the parse tree.   The
+					 * sub-expression between parens
+					 * becomes the single argument of
+					 * the matching OPEN_PAREN unary
+					 * operator. */
 #define END		( BINARY | 28)	/* This lexeme represents the end of
-					 * the string being parsed. Treating
+					 * the string being parsed.  Treating
 					 * it as a binary operator follows the
-					 * same logic as the CLOSE_PAREN
-					 * lexeme and END pairs with START, in
-					 * the same way that CLOSE_PAREN pairs
-					 * with OPEN_PAREN. */
+					 * same logic as the CLOSE_PAREN lexeme
+					 * and END pairs with START, in the
+					 * same way that CLOSE_PAREN pairs with
+					 * OPEN_PAREN. */
 /*
  * When ParseExpr() builds the parse tree it must choose which operands to
  * connect to which operators.  This is done according to operator precedence.
@@ -521,6 +523,7 @@ static int		ParseExpr(Tcl_Interp *interp, const char *start,
 			    Tcl_Parse *parsePtr, int parseOnly);
 static int		ParseLexeme(const char *start, int numBytes,
 			    unsigned char *lexemePtr, Tcl_Obj **literalPtr);
+
 
 /*
  *----------------------------------------------------------------------
@@ -528,27 +531,27 @@ static int		ParseLexeme(const char *start, int numBytes,
  * ParseExpr --
  *
  *	Given a string, the numBytes bytes starting at start, this function
- *	parses it as a Tcl expression and constructs a tree representing the
- *	structure of the expression. The caller must pass in empty lists as
- *	the funcList and litList arguments. The elements of the parsed
- *	expression are returned to the caller as that tree, a list of literal
- *	values, a list of function names, and in Tcl_Tokens added to a
- *	Tcl_Parse struct passed in by the caller.
+ *	parses it as a Tcl expression and constructs a tree representing
+ *	the structure of the expression.  The caller must pass in empty
+ * 	lists as the funcList and litList arguments.  The elements of the
+ *	parsed expression are returned to the caller as that tree, a list of
+ *	literal values, a list of function names, and in Tcl_Tokens
+ *	added to a Tcl_Parse struct passed in by the caller.
  *
  * Results:
  *	If the string is successfully parsed as a valid Tcl expression, TCL_OK
- *	is returned, and data about the expression structure is written to the
- *	last four arguments. If the string cannot be parsed as a valid Tcl
- *	expression, TCL_ERROR is returned, and if interp is non-NULL, an error
- *	message is written to interp.
+ *	is returned, and data about the expression structure is written to
+ *	the last four arguments.  If the string cannot be parsed as a valid
+ *	Tcl expression, TCL_ERROR is returned, and if interp is non-NULL, an
+ *	error message is written to interp.
  *
  * Side effects:
- *	Memory will be allocated. If TCL_OK is returned, the caller must clean
- *	up the returned data structures. The (OpNode *) value written to
- *	opTreePtr should be passed to ckfree() and the parsePtr argument
- *	should be passed to Tcl_FreeParse(). The elements appended to the
- *	litList and funcList will automatically be freed whenever the refcount
- *	on those lists indicates they can be freed.
+ *	Memory will be allocated.  If TCL_OK is returned, the caller must
+ *	clean up the returned data structures.  The (OpNode *) value written
+ *	to opTreePtr should be passed to ckfree() and the parsePtr argument
+ *	should be passed to Tcl_FreeParse().  The elements appended to the
+ *	litList and funcList will automatically be freed whenever the
+ *	refcount on those lists indicates they can be freed.
  *
  *----------------------------------------------------------------------
  */
@@ -567,39 +570,38 @@ ParseExpr(
 				 * substitutions. */
     int parseOnly)		/* A boolean indicating whether the caller's
 				 * aim is just a parse, or whether it will go
-				 * on to compile the expression. Different
-				 * optimizations are appropriate for the two
-				 * scenarios. */
+				 * on to compile the expression.  Different
+				 * optimizations are appropriate for the
+				 * two scenarios. */
 {
     OpNode *nodes = NULL;	/* Pointer to the OpNode storage array where
 				 * we build the parse tree. */
-    int nodesAvailable = 64;	/* Initial size of the storage array. This
-				 * value establishes a minimum tree memory
-				 * cost of only about 1 kibyte, and is large
-				 * enough for most expressions to parse with
-				 * no need for array growth and
-				 * reallocation. */
+    int nodesAvailable = 64;	/* Initial size of the storage array.  This
+				 * value establishes a minimum tree memory cost
+				 * of only about 1 kibyte, and is large enough
+				 * for most expressions to parse with no need
+				 * for array growth and reallocation. */
     int nodesUsed = 0;		/* Number of OpNodes filled. */
-    int scanned = 0;		/* Capture number of byte scanned by parsing
-				 * routines. */
+    int scanned = 0;		/* Capture number of byte scanned by 
+				 * parsing routines. */
     int lastParsed;		/* Stores info about what the lexeme parsed
 				 * the previous pass through the parsing loop
-				 * was. If it was an operator, lastParsed is
+				 * was.  If it was an operator, lastParsed is
 				 * the index of the OpNode for that operator.
 				 * If it was not an operator, lastParsed holds
-				 * an OperandTypes value encoding what we need
-				 * to know about it. */
-    int incomplete;		/* Index of the most recent incomplete tree in
-				 * the OpNode array. Heads a stack of
+				 * an OperandTypes value encoding what we
+				 * need to know about it. */
+    int incomplete;		/* Index of the most recent incomplete tree
+				 * in the OpNode array.  Heads a stack of
 				 * incomplete trees linked by p.prev. */
     int complete = OT_EMPTY;	/* "Index" of the complete tree (that is, a
 				 * complete subexpression) determined at the
-				 * moment. OT_EMPTY is a nonsense value used
-				 * only to silence compiler warnings. During a
-				 * parse, complete will always hold an index
-				 * or an OperandTypes value pointing to an
-				 * actual leaf at the time the complete tree
-				 * is needed. */
+				 * moment.   OT_EMPTY is a nonsense value
+				 * used only to silence compiler warnings.
+				 * During a parse, complete will always hold
+				 * an index or an OperandTypes value pointing
+				 * to an actual leaf at the time the complete
+				 * tree is needed. */
 
     /* These variables control generation of the error message. */
     Tcl_Obj *msg = NULL;	/* The error message. */
@@ -607,19 +609,19 @@ ParseExpr(
 				 * for the error message, supplying more
 				 * information after the error msg and
 				 * location have been reported. */
-    const char *mark = "_@_";	/* In the portion of the complete error
-				 * message where the error location is
-				 * reported, this "mark" substring is inserted
-				 * into the string being parsed to aid in
-				 * pinpointing the location of the syntax
-				 * error in the expression. */
+    const char *mark = "_@_";	/* In the portion of the complete error message
+				 * where the error location is reported, this
+				 * "mark" substring is inserted into the
+				 * string being parsed to aid in pinpointing
+				 * the location of the syntax error in the
+				 * expression. */
     int insertMark = 0;		/* A boolean controlling whether the "mark"
 				 * should be inserted. */
     const int limit = 25;	/* Portions of the error message are
 				 * constructed out of substrings of the
-				 * original expression. In order to keep the
-				 * error message readable, we impose this
-				 * limit on the substring size we extract. */
+				 * original expression.  In order to keep the
+				 * error message readable, we impose this limit
+				 * on the substring size we extract. */
 
     TclParseInit(interp, start, numBytes, parsePtr);
 
@@ -629,10 +631,7 @@ ParseExpr(
 	goto error;
     }
 
-    /*
-     * Initialize the parse tree with the special "START" node.
-     */
-
+    /* Initialize the parse tree with the special "START" node. */
     nodes->lexeme = START;
     nodes->precedence = prec[START];
     nodes->mark = MARK_RIGHT;
@@ -641,24 +640,25 @@ ParseExpr(
     nodesUsed++;
 
     /*
-     * Main parsing loop parses one lexeme per iteration. We exit the loop
-     * only when there's a syntax error with a "goto error" which takes us to
-     * the error handling code following the loop, or when we've successfully
-     * completed the parse and we return to the caller.
+     * Main parsing loop parses one lexeme per iteration.  We exit the
+     * loop only when there's a syntax error with a "goto error" which
+     * takes us to the error handling code following the loop, or when
+     * we've successfully completed the parse and we return to the caller.
      */
 
     while (1) {
-	OpNode *nodePtr;	/* Points to the OpNode we may fill this pass
-				 * through the loop. */
+	OpNode *nodePtr;	/* Points to the OpNode we may fill this
+				 * pass through the loop. */
 	unsigned char lexeme;	/* The lexeme we parse this iteration. */
-	Tcl_Obj *literal;	/* Filled by the ParseLexeme() call when a
-				 * literal is parsed that has a Tcl_Obj rep
-				 * worth preserving. */
+	Tcl_Obj *literal;	/* Filled by the ParseLexeme() call when
+				 * a literal is parsed that has a Tcl_Obj
+				 * rep worth preserving. */
 	const char *lastStart = start - scanned;
 				/* Compute where the lexeme parsed the
-				 * previous pass through the loop began. This
-				 * is helpful for detecting invalid octals and
-				 * providing more complete error messages. */
+				 * previous pass through the loop began.
+				 * This is helpful for detecting invalid
+				 * octals and providing more complete error
+				 * messages. */
 
 	/*
 	 * Each pass through this loop adds up to one more OpNode. Allocate
@@ -705,10 +705,11 @@ ParseExpr(
 	    case BAREWORD:
 
 		/*
-		 * Most barewords in an expression are a syntax error. The
-		 * exceptions are that when a bareword is followed by an open
-		 * paren, it might be a function call, and when the bareword
-		 * is a legal literal boolean value, we accept that as well.
+		 * Most barewords in an expression are a syntax error.
+		 * The exceptions are that when a bareword is followed by
+		 * an open paren, it might be a function call, and when the
+		 * bareword is a legal literal boolean value, we accept that 
+		 * as well.
 		 */
 
 		if (start[scanned+TclParseAllWhiteSpace(
@@ -750,9 +751,8 @@ ParseExpr(
 				    && (lastStart[2] >= '0')
 				    && (lastStart[2] <= '9')) {
 				const char *end = lastStart + 2;
-				Tcl_Obj *copy;
-
-				while (isdigit(UCHAR(*end))) {
+				Tcl_Obj* copy;
+				while (isdigit(*end)) {
 				    end++;
 				}
 				copy = Tcl_NewStringObj(lastStart,
@@ -775,9 +775,10 @@ ParseExpr(
 	    case PLUS:
 	    case MINUS:
 		if (IsOperator(lastParsed)) {
+
 		    /*
-		     * A "+" or "-" coming just after another operator must be
-		     * interpreted as a unary operator.
+		     * A "+" or "-" coming just after another operator
+		     * must be interpreted as a unary operator.
 		     */
 
 		    lexeme |= UNARY;
@@ -793,8 +794,8 @@ ParseExpr(
 	/*
 	 * Each LEAF results in either a literal getting appended to the
 	 * litList, or a sequence of Tcl_Tokens representing a Tcl word
-	 * getting appended to the parsePtr->tokens. No OpNode is filled for
-	 * this lexeme.
+	 * getting appended to the parsePtr->tokens.  No OpNode is filled
+	 * for this lexeme.
 	 */
 
 	case LEAF: {
@@ -840,16 +841,15 @@ ParseExpr(
 		 * Pro:	~75% memory saving on expressions like
 		 *	{1+1+1+1+1+.....+1} (Convert "pointer + Tcl_Obj" cost
 		 *	to "pointer" cost only)
-		 * Con:	Cost of the dict store/retrieve on every literal in
-		 *	every expression when expressions like the above tend
-		 *	to be uncommon.
+		 * Con:	Cost of the dict store/retrieve on every literal
+		 *	in every expression when expressions like the above
+		 *	tend to be uncommon.
 		 *	The memory savings is temporary; Compiling to bytecode
 		 *	will collapse things as literals are registered
-		 *	anyway, so the savings applies only to the time
-		 *	between parsing and compiling. Possibly important due
-		 *	to high-water mark nature of memory allocation.
+		 * 	anyway, so the savings applies only to the time
+		 *	between parsing and compiling.  Possibly important
+		 *	due to high-water mark nature of memory allocation.
 		 */
-
 		Tcl_ListObjAppendElement(NULL, litList, literal);
 		complete = lastParsed = OT_LITERAL;
 		start += scanned;
@@ -861,8 +861,8 @@ ParseExpr(
 	    }
 
 	    /*
-	     * Remaining LEAF cases may involve filling Tcl_Tokens, so make
-	     * room for at least 2 more tokens.
+	     * Remaining LEAF cases may involve filling Tcl_Tokens, so
+	     * make room for at least 2 more tokens.
 	     */
 
 	    TclGrowParseTokenArray(parsePtr, 2);
@@ -902,8 +902,8 @@ ParseExpr(
 		break;
 
 	    case SCRIPT: {
-		Tcl_Parse *nestedPtr = (Tcl_Parse *)
-			TclStackAlloc(interp, sizeof(Tcl_Parse));
+		Tcl_Parse *nestedPtr =
+			(Tcl_Parse *) TclStackAlloc(interp, sizeof(Tcl_Parse));
 
 		tokenPtr = parsePtr->tokenPtr + parsePtr->numTokens;
 		tokenPtr->type = TCL_TOKEN_COMMAND;
@@ -947,19 +947,21 @@ ParseExpr(
 	    }
 	    }
 	    if (code != TCL_OK) {
+
 		/*
-		 * Here we handle all the syntax errors generated by the
-		 * Tcl_Token generating parsing routines called in the switch
-		 * just above. If the value of parsePtr->incomplete is 1, then
-		 * the error was an unbalanced '[', '(', '{', or '"' and
-		 * parsePtr->term is pointing to that unbalanced character. If
-		 * the value of parsePtr->incomplete is 0, then the error is
-		 * one of lacking whitespace following a quoted word, for
-		 * example: expr {[an error {foo}bar]}, and parsePtr->term
-		 * points to where the whitespace is missing. We reset our
-		 * values of start and scanned so that when our error message
-		 * is constructed, the location of the syntax error is sure to
-		 * appear in it, even if the quoted expression is truncated.
+		 * Here we handle all the syntax errors generated by
+		 * the Tcl_Token generating parsing routines called in the
+		 * switch just above.  If the value of parsePtr->incomplete
+		 * is 1, then the error was an unbalanced '[', '(', '{',
+		 * or '"' and parsePtr->term is pointing to that unbalanced
+		 * character.  If the value of parsePtr->incomplete is 0,
+		 * then the error is one of lacking whitespace following a
+		 * quoted word, for example: expr {[an error {foo}bar]},
+		 * and parsePtr->term points to where the whitespace is
+		 * missing.  We reset our values of start and scanned so that
+		 * when our error message is constructed, the location of
+		 * the syntax error is sure to appear in it, even if the
+		 * quoted expression is truncated.
 		 */
 
 		start = parsePtr->term;
@@ -971,19 +973,20 @@ ParseExpr(
 	    tokenPtr->size = scanned;
 	    tokenPtr->numComponents = parsePtr->numTokens - wordIndex - 1;
 	    if (!parseOnly && ((lexeme == QUOTED) || (lexeme == BRACED))) {
+
 		/*
 		 * When this expression is destined to be compiled, and a
 		 * braced or quoted word within an expression is known at
-		 * compile time (no runtime substitutions in it), we can store
-		 * it as a literal rather than in its tokenized form. This is
-		 * an advantage since the compiled bytecode is going to need
-		 * the argument in Tcl_Obj form eventually, so it's just as
-		 * well to get there now. Another advantage is that with this
-		 * conversion, larger constant expressions might be grown and
-		 * optimized.
+		 * compile time (no runtime substitutions in it), we can
+		 * store it as a literal rather than in its tokenized form.
+		 * This is an advantage since the compiled bytecode is going
+		 * to need the argument in Tcl_Obj form eventually, so it's
+		 * just as well to get there now.  Another advantage is that
+		 * with this conversion, larger constant expressions might
+		 * be grown and optimized.
 		 *
-		 * On the contrary, if the end goal of this parse is to fill a
-		 * Tcl_Parse for a caller of Tcl_ParseExpr(), then it's
+		 * On the contrary, if the end goal of this parse is to
+		 * fill a Tcl_Parse for a caller of Tcl_ParseExpr(), then it's
 		 * wasteful to convert to a literal only to convert back again
 		 * later.
 		 */
@@ -1024,16 +1027,16 @@ ParseExpr(
 	    /*
 	     * A FUNCTION cannot be a constant expression, because Tcl allows
 	     * functions to return variable results with the same arguments;
-	     * for example, rand(). Other unary operators can root a constant
+	     * for example, rand().  Other unary operators can root a constant
 	     * expression, so long as the argument is a constant expression.
 	     */
 
 	    nodePtr->constant = (lexeme != FUNCTION);
 
 	    /*
-	     * This unary operator is a new incomplete tree, so push it onto
-	     * our stack of incomplete trees. Also remember it as the last
-	     * lexeme we parsed.
+	     * This unary operator is a new incomplete tree, so push it
+	     * onto our stack of incomplete trees.  Also remember it as
+	     * the last lexeme we parsed.
 	     */
 
 	    nodePtr->p.prev = incomplete;
@@ -1054,14 +1057,15 @@ ParseExpr(
 		if ((lexeme == CLOSE_PAREN)
 			&& (nodePtr[-1].lexeme == OPEN_PAREN)) {
 		    if (nodePtr[-2].lexeme == FUNCTION) {
+
 			/*
 			 * Normally, "()" is a syntax error, but as a special
 			 * case accept it as an argument list for a function.
 			 * Treat this as a special LEAF lexeme, and restart
-			 * the parsing loop with zero characters scanned. We
-			 * will parse the ")" again the next time through, but
-			 * with the OT_EMPTY leaf as the subexpression between
-			 * the parens.
+			 * the parsing loop with zero characters scanned.
+			 * We'll parse the ")" again the next time through,
+			 * but with the OT_EMPTY leaf as the subexpression
+			 * between the parens.
 			 */
 
 			scanned = 0;
@@ -1107,33 +1111,34 @@ ParseExpr(
 	    }
 
 	    /*
-	     * Here is where the tree comes together. At this point, we have a
-	     * stack of incomplete trees corresponding to substrings that are
-	     * incomplete expressions, followed by a complete tree
-	     * corresponding to a substring that is itself a complete
-	     * expression, followed by the binary operator we have just
-	     * parsed. The incomplete trees can each be completed by adding a
-	     * right operand.
+	     * Here is where the tree comes together.  At this point, we
+	     * have a stack of incomplete trees corresponding to 
+	     * substrings that are incomplete expressions, followed by
+	     * a complete tree corresponding to a substring that is itself
+	     * a complete expression, followed by the binary operator we have
+	     * just parsed.  The incomplete trees can each be completed by
+	     * adding a right operand.
 	     *
 	     * To illustrate with an example, when we parse the expression
 	     * "1+2*3-4" and we reach this point having just parsed the "-"
 	     * operator, we have these incomplete trees: START, "1+", and
-	     * "2*". Next we have the complete subexpression "3". Last is the
-	     * "-" we've just parsed.
+	     * "2*".  Next we have the complete subexpression "3".  Last is
+	     * the "-" we've just parsed.
 	     *
-	     * The next step is to join our complete tree to an operator. The
-	     * choice is governed by the precedence and associativity of the
-	     * competing operators. If we connect it as the right operand of
-	     * our most recent incomplete tree, we get a new complete tree,
-	     * and we can repeat the process. The while loop following repeats
-	     * this until precedence indicates it is time to join the complete
-	     * tree as the left operand of the just parsed binary operator.
+	     * The next step is to join our complete tree to an operator.
+	     * The choice is governed by the precedence and associativity
+	     * of the competing operators.  If we connect it as the right
+	     * operand of our most recent incomplete tree, we get a new
+	     * complete tree, and we can repeat the process.  The while
+	     * loop following repeats this until precedence indicates it
+	     * is time to join the complete tree as the left operand of
+	     * the just parsed binary operator.
 	     *
-	     * Continuing the example, the first pass through the loop will
-	     * join "3" to "2*"; the next pass will join "2*3" to "1+". Then
-	     * we'll exit the loop and join "1+2*3" to "-". When we return to
-	     * parse another lexeme, our stack of incomplete trees is START
-	     * and "1+2*3-".
+	     * Continuing the example, the first pass through the loop
+	     * will join "3" to "2*"; the next pass will join "2*3" to
+	     * "1+".  Then we'll exit the loop and join "1+2*3" to "-".
+	     * When we return to parse another lexeme, our stack of
+	     * incomplete trees is START and "1+2*3-".
 	     */
 
 	    while (1) {
@@ -1144,18 +1149,16 @@ ParseExpr(
 		}
 
 		if (incompletePtr->precedence == precedence) {
-		    /*
-		     * Right association rules for exponentiation.
-		     */
 
+		    /* Right association rules for exponentiation. */
 		    if (lexeme == EXPON) {
 			break;
 		    }
 
 		    /*
-		     * Special association rules for the conditional
-		     * operators. The "?" and ":" operators have equal
-		     * precedence, but must be linked up in sensible pairs.
+		     * Special association rules for the conditional operators.
+		     * The "?" and ":" operators have equal precedence, but
+		     * must be linked up in sensible pairs.
 		     */
 
 		    if ((incompletePtr->lexeme == QUESTION)
@@ -1169,9 +1172,7 @@ ParseExpr(
 		    }
 		}
 
-		/*
-		 * Some special syntax checks...
-		 */
+		/* Some special syntax checks... */
 
 		/* Parens must balance */
 		if ((incompletePtr->lexeme == OPEN_PAREN)
@@ -1218,9 +1219,9 @@ ParseExpr(
 		}
 
 		/*
-		 * The QUESTION/COLON and FUNCTION/OPEN_PAREN combinations
-		 * each make up a single operator. Force them to agree whether
-		 * they have a constant expression.
+		 * The QUESTION/COLON and FUNCTION/OPEN_PAREN combinations each
+		 * make up a single operator.  Force them to agree whether they
+		 * have a constant expression.
 		 */
 
 		if ((incompletePtr->lexeme == QUESTION)
@@ -1229,6 +1230,7 @@ ParseExpr(
 		}
 
 		if (incompletePtr->lexeme == START) {
+
 		    /*
 		     * Completing the START tree indicates we're done.
 		     * Transfer the parse tree to the caller and return.
@@ -1240,8 +1242,8 @@ ParseExpr(
 
 		/*
 		 * With a right operand attached, last incomplete tree has
-		 * become the complete tree. Pop it from the incomplete tree
-		 * stack.
+		 * become the complete tree.  Pop it from the incomplete
+		 * tree stack.
 		 */
 
 		complete = incomplete;
@@ -1253,9 +1255,7 @@ ParseExpr(
 		}
 	    }
 
-	    /*
-	     * More syntax checks...
-	     */
+	    /* More syntax checks... */
 
 	    /* Parens must balance. */
 	    if (lexeme == CLOSE_PAREN) {
@@ -1282,18 +1282,12 @@ ParseExpr(
 		goto error;
 	    }
 
-	    /*
-	     * Create no node for a CLOSE_PAREN lexeme.
-	     */
-
+	    /* Create no node for a CLOSE_PAREN lexeme. */
 	    if (lexeme == CLOSE_PAREN) {
 		break;
 	    }
 
-	    /*
-	     * Link complete tree as left operand of new node.
-	     */
-
+	    /* Link complete tree as left operand of new node. */
 	    nodePtr->lexeme = lexeme;
 	    nodePtr->precedence = precedence;
 	    nodePtr->mark = MARK_LEFT;
@@ -1301,9 +1295,9 @@ ParseExpr(
 
 	    /* 
 	     * The COMMA operator cannot be optimized, since the function
-	     * needs all of its arguments, and optimization would reduce the
-	     * number. Other binary operators root constant expressions when
-	     * both arguments are constant expressions.
+	     * needs all of its arguments, and optimization would reduce
+	     * the number.  Other binary operators root constant expressions
+	     * when both arguments are constant expressions.
 	     */
 
 	    nodePtr->constant = (lexeme != COMMA);
@@ -1318,9 +1312,9 @@ ParseExpr(
 	    }
 
 	    /*
-	     * With a left operand attached and a right operand missing, the
-	     * just-parsed binary operator is root of a new incomplete tree.
-	     * Push it onto the stack of incomplete trees.
+	     * With a left operand attached and a right operand missing,
+	     * the just-parsed binary operator is root of a new incomplete
+	     * tree.  Push it onto the stack of incomplete trees.
 	     */
 
 	    nodePtr->p.prev = incomplete;
@@ -1338,35 +1332,31 @@ ParseExpr(
   error:
 
     /*
-     * We only get here if there's been an error. Any errors that didn't get a
-     * suitable parsePtr->errorType, get recorded as syntax errors.
+     * We only get here if there's been an error.
+     * Any errors that didn't get a suitable parsePtr->errorType,
+     * get recorded as syntax errors.
      */
 
     if (parsePtr->errorType == TCL_PARSE_SUCCESS) {
 	parsePtr->errorType = TCL_PARSE_SYNTAX;
     }
 
-    /*
-     * Free any partial parse tree we've built.
-     */
-
+    /* Free any partial parse tree we've built. */
     if (nodes != NULL) {
 	ckfree((char*) nodes);
     }
 
     if (interp == NULL) {
-	/*
-	 * Nowhere to report an error message, so just free it.
-	 */
 
+	/* Nowhere to report an error message, so just free it */
 	if (msg) {
 	    Tcl_DecrRefCount(msg);
 	}
     } else {
 
 	/*
-	 * Construct the complete error message. Start with the simple error
-	 * message, pulled from the interp result if necessary...
+	 * Construct the complete error message.  Start with the simple
+	 * error message, pulled from the interp result if necessary...
 	 */
 
 	if (msg == NULL) {
@@ -1391,10 +1381,7 @@ ParseExpr(
 		start + scanned,
 		(start + scanned + limit > parsePtr->end) ? "" : "...");
 
-	/*
-	 * Next, append any postscript message.
-	 */
-
+	/* Next, append any postscript message. */
 	if (post != NULL) {
 	    Tcl_AppendToObj(msg, ";\n", -1);
 	    Tcl_AppendObjToObj(msg, post);
@@ -1402,10 +1389,7 @@ ParseExpr(
 	}
 	Tcl_SetObjResult(interp, msg);
 
-	/*
-	 * Finally, place context information in the errorInfo.
-	 */
-
+	/* Finally, place context information in the errorInfo. */
 	numBytes = parsePtr->end - parsePtr->string;
 	Tcl_AppendObjToErrorInfo(interp, Tcl_ObjPrintf(
 		"\n    (parsing expression \"%.*s%s\")",
@@ -1424,10 +1408,10 @@ ParseExpr(
  *	Given a string, the numBytes bytes starting at start, and an OpNode
  *	tree and Tcl_Token array created by passing that same string to
  *	ParseExpr(), this function writes into *parsePtr the sequence of
- *	Tcl_Tokens needed so to satisfy the historical interface provided by
- *	Tcl_ParseExpr(). Note that this routine exists only for the sake of
- *	the public Tcl_ParseExpr() routine. It is not used by Tcl itself at
- *	all.
+ * 	Tcl_Tokens needed so to satisfy the historical interface provided
+ * 	by Tcl_ParseExpr().  Note that this routine exists only for the sake
+ *	of the public Tcl_ParseExpr() routine.  It is not used by Tcl itself
+ * 	at all.
  *
  * Results:
  *	None.
@@ -1463,10 +1447,7 @@ ConvertTreeToTokens(
 
 	nodePtr->mark++;
 
-	/*
-	 * Handle next child node or leaf.
-	 */
-
+	/* Handle next child node or leaf */
 	switch (next) {
 	case OT_EMPTY:
 
@@ -1480,10 +1461,7 @@ ConvertTreeToTokens(
 	    start +=scanned;
 	    numBytes -= scanned;
 
-	    /*
-	     * Reparse the literal to get pointers into source string.
-	     */
-
+	    /* Reparse the literal to get pointers into source string */
 	    scanned = ParseLexeme(start, numBytes, &lexeme, NULL);
 
 	    TclGrowParseTokenArray(parsePtr, 2);
@@ -1503,25 +1481,27 @@ ConvertTreeToTokens(
 	    break;
 
 	case OT_TOKENS: {
+
 	    /*
-	     * tokenPtr points to a token sequence that came from parsing a
-	     * Tcl word. A Tcl word is made up of a sequence of one or more
-	     * elements. When the word is only a single element, it's been the
-	     * historical practice to replace the TCL_TOKEN_WORD token
-	     * directly with a TCL_TOKEN_SUB_EXPR token. However, when the
-	     * word has multiple elements, a TCL_TOKEN_WORD token is kept as a
-	     * grouping device so that TCL_TOKEN_SUB_EXPR always has only one
-	     * element. Wise or not, these are the rules the Tcl expr parser
-	     * has followed, and for the sake of those few callers of
-	     * Tcl_ParseExpr() we do not change them now. Internally, we can
-	     * do better.
+	     * tokenPtr points to a token sequence that came from parsing
+	     * a Tcl word.  A Tcl word is made up of a sequence of one or
+	     * more elements.  When the word is only a single element, it's
+	     * been the historical practice to replace the TCL_TOKEN_WORD
+	     * token directly with a TCL_TOKEN_SUB_EXPR token.  However,
+	     * when the word has multiple elements, a TCL_TOKEN_WORD token
+	     * is kept as a grouping device so that TCL_TOKEN_SUB_EXPR
+	     * always has only one element.  Wise or not, these are the
+	     * rules the Tcl expr parser has followed, and for the sake
+	     * of those few callers of Tcl_ParseExpr() we do not change
+	     * them now.  Internally, we can do better.
 	     */
 	
 	    int toCopy = tokenPtr->numComponents + 1;
 
 	    if (tokenPtr->numComponents == tokenPtr[1].numComponents + 1) {
+
 		/*
-		 * Single element word. Copy tokens and convert the leading
+		 * Single element word.  Copy tokens and convert the leading
 		 * token to TCL_TOKEN_SUB_EXPR.
 		 */
 
@@ -1532,10 +1512,11 @@ ConvertTreeToTokens(
 		subExprTokenPtr->type = TCL_TOKEN_SUB_EXPR;
 		parsePtr->numTokens += toCopy;
 	    } else {
+
 		/* 
-		 * Multiple element word. Create a TCL_TOKEN_SUB_EXPR token to
-		 * lead, with fields initialized from the leading token, then
-		 * copy entire set of word tokens.
+		 * Multiple element word.  Create a TCL_TOKEN_SUB_EXPR
+		 * token to lead, with fields initialized from the leading
+		 * token, then copy entire set of word tokens.
 		 */
 
 		TclGrowParseTokenArray(parsePtr, toCopy+1);
@@ -1561,18 +1542,12 @@ ConvertTreeToTokens(
 	    /* Advance to the child node, which is an operator. */
 	    nodePtr = nodes + next;
 
-	    /*
-	     * Skip any white space that comes before the subexpression.
-	     */
-
+	    /* Skip any white space that comes before the subexpression */
 	    scanned = TclParseAllWhiteSpace(start, numBytes);
 	    start +=scanned;
 	    numBytes -= scanned;
 
-	    /*
-	     * Generate tokens for the operator / subexpression...
-	     */
-
+	    /* Generate tokens for the operator / subexpression... */
 	    switch (nodePtr->lexeme) {
 	    case OPEN_PAREN:
 	    case COMMA:
@@ -1589,16 +1564,16 @@ ConvertTreeToTokens(
 
 		/*
 		 * Remember the index of the last subexpression we were
-		 * working on -- that of our parent. We'll stack it later.
+		 * working on -- that of our parent.  We'll stack it later.
 		 */
 
 		parentIdx = subExprTokenIdx;
 
 		/*
 		 * Verify space for the two leading Tcl_Tokens representing
-		 * the subexpression rooted by this operator. The first
-		 * Tcl_Token will be of type TCL_TOKEN_SUB_EXPR; the second of
-		 * type TCL_TOKEN_OPERATOR.
+		 * the subexpression rooted by this operator.  The first
+		 * Tcl_Token will be of type TCL_TOKEN_SUB_EXPR; the second
+		 * of type TCL_TOKEN_OPERATOR.
 		 */
 
 		TclGrowParseTokenArray(parsePtr, 2);
@@ -1617,7 +1592,7 @@ ConvertTreeToTokens(
 
 		/*
 		 * Eventually, we know that the numComponents field of the
-		 * Tcl_Token of type TCL_TOKEN_OPERATOR will be 0. This means
+		 * Tcl_Token of type TCL_TOKEN_OPERATOR will be 0.  This means
 		 * we can make other use of this field for now to track the
 		 * stack of subexpressions we have pending.
 		 */
@@ -1715,7 +1690,7 @@ ConvertTreeToTokens(
 
 		/*
 		 * All the Tcl_Tokens allocated and filled belong to
-		 * this subexpresion. The first token is the leading
+		 * this subexpresion.  The first token is the leading
 		 * TCL_TOKEN_SUB_EXPR token, and all the rest (one fewer)
 		 * are its components.
 		 */
@@ -1736,10 +1711,7 @@ ConvertTreeToTokens(
 	    }
 	    }
 
-	    /*
-	     * Since we're returning to parent, skip child handling code.
-	     */
-
+	    /* Since we're returning to parent, skip child handling code. */
 	    nodePtr = nodes + nodePtr->p.parent;
 	    goto router;
 	}
@@ -1787,16 +1759,16 @@ Tcl_ParseExpr(
     OpNode *opTree = NULL;	/* Will point to the tree of operators */
     Tcl_Obj *litList = Tcl_NewObj();	/* List to hold the literals */
     Tcl_Obj *funcList = Tcl_NewObj();	/* List to hold the functon names*/
-    Tcl_Parse *exprParsePtr = (Tcl_Parse *)
-	    TclStackAlloc(interp, sizeof(Tcl_Parse));
+    Tcl_Parse *exprParsePtr =
+	    (Tcl_Parse *) TclStackAlloc(interp, sizeof(Tcl_Parse));
 				/* Holds the Tcl_Tokens of substitutions */
 
     if (numBytes < 0) {
 	numBytes = (start ? strlen(start) : 0);
     }
 
-    code = ParseExpr(interp, start, numBytes, &opTree, litList, funcList,
-	    exprParsePtr, 1 /* parseOnly */);
+    code = ParseExpr(interp, start, numBytes, &opTree, litList,
+	    funcList, exprParsePtr, 1 /* parseOnly */);
     Tcl_DecrRefCount(funcList);
     Tcl_DecrRefCount(litList);
 
@@ -1851,7 +1823,7 @@ ParseLexeme(
 	*lexemePtr = END;
 	return 0;
     }
-    byte = UCHAR(*start);
+    byte = (unsigned char)(*start);
     if (byte < sizeof(Lexeme) && Lexeme[byte] != 0) {
 	*lexemePtr = Lexeme[byte];
 	return 1;
@@ -1928,10 +1900,11 @@ ParseLexeme(
     case 'i':
 	if ((numBytes > 1) && (start[1] == 'n')
 		&& ((numBytes == 2) || !isalpha(UCHAR(start[2])))) {
+
 	    /*
-	     * Must make this check so we can tell the difference between the
-	     * "in" operator and the "int" function name and the "infinity"
-	     * numeric value.
+	     * Must make this check so we can tell the difference between
+	     * the "in" operator and the "int" function name and the
+	     * "infinity" numeric value.
 	     */
 
 	    *lexemePtr = IN_LIST;
@@ -1977,7 +1950,6 @@ ParseLexeme(
 	scanned = Tcl_UtfToUniChar(start, &ch);
     } else {
 	char utfBytes[TCL_UTF_MAX];
-
 	memcpy(utfBytes, start, (size_t) numBytes);
 	utfBytes[numBytes] = '\0';
 	scanned = Tcl_UtfToUniChar(utfBytes, &ch);
@@ -1995,7 +1967,6 @@ ParseLexeme(
 	    scanned = Tcl_UtfToUniChar(end, &ch);
 	} else {
 	    char utfBytes[TCL_UTF_MAX];
-
 	    memcpy(utfBytes, end, (size_t) numBytes);
 	    utfBytes[numBytes] = '\0';
 	    scanned = Tcl_UtfToUniChar(utfBytes, &ch);
@@ -2034,23 +2005,21 @@ TclCompileExpr(
     const char *script,		/* The source script to compile. */
     int numBytes,		/* Number of bytes in script. */
     CompileEnv *envPtr,		/* Holds resulting instructions. */
-    int optimize)		/* 0 for one-off expressions. */
+    int optimize)               /* 0 for one-off expressions */
 {
     OpNode *opTree = NULL;	/* Will point to the tree of operators */
     Tcl_Obj *litList = Tcl_NewObj();	/* List to hold the literals */
     Tcl_Obj *funcList = Tcl_NewObj();	/* List to hold the functon names*/
-    Tcl_Parse *parsePtr = (Tcl_Parse *)
-	    TclStackAlloc(interp, sizeof(Tcl_Parse));
+    Tcl_Parse *parsePtr =
+	    (Tcl_Parse *) TclStackAlloc(interp, sizeof(Tcl_Parse));
 				/* Holds the Tcl_Tokens of substitutions */
 
     int code = ParseExpr(interp, script, numBytes, &opTree, litList,
 	    funcList, parsePtr, 0 /* parseOnly */);
 
     if (code == TCL_OK) {
-	/*
-	 * Valid parse; compile the tree.
-	 */
 
+	/* Valid parse; compile the tree. */
 	int objc;
 	Tcl_Obj *const *litObjv;
 	Tcl_Obj **funcObjv;
@@ -2129,20 +2098,20 @@ ExecConstantExprTree(
  *----------------------------------------------------------------------
  *
  * CompileExprTree --
- *
- *	Compiles and writes to envPtr instructions for the subexpression tree
- *	at index in the nodes array. (*litObjvPtr) must point to the proper
- *	location in a corresponding literals list. Likewise, when non-NULL,
- *	funcObjv and tokenPtr must point into matching arrays of function
- *	names and Tcl_Token's derived from earlier call to ParseExpr(). When
- *	optimize is true, any constant subexpressions will be precomputed.
+ *	Compiles and writes to envPtr instructions for the subexpression
+ *	tree at index in the nodes array.  (*litObjvPtr) must point to the
+ *	proper location in a corresponding literals list.  Likewise, when
+ *	non-NULL, funcObjv and tokenPtr must point into matching arrays of
+ * 	function names and Tcl_Token's derived from earlier call to
+ *	ParseExpr().  When optimize is true, any constant subexpressions
+ *	will be precomputed.
  *
  * Results:
  *	None.
  *
  * Side effects:
  *	Adds instructions to envPtr to evaluate the expression at runtime.
- *	Consumes subtree of nodes rooted at index. Advances the pointer
+ *	Consumes subtree of nodes rooted at index.  Advances the pointer
  *	*litObjvPtr.
  *
  *----------------------------------------------------------------------
@@ -2218,9 +2187,9 @@ CompileExprTree(
 
 		/*
 		 * Start a count of the number of words in this function
-		 * command invocation. In case there's already a count in
-		 * progress (nested functions), save it in our unused "left"
-		 * field for restoring later.
+		 * command invocation.  In case there's already a count
+		 * in progress (nested functions), save it in our unused
+		 * "left" field for restoring later.
 		 */
 
 		nodePtr->left = numWords;
@@ -2231,7 +2200,6 @@ CompileExprTree(
 		TclEmitForwardJump(envPtr, TCL_FALSE_JUMP, &(jumpPtr->jump));
 		break;
 	    case COLON:
-		CLANG_ASSERT(jumpPtr);
 		TclEmitForwardJump(envPtr, TCL_UNCONDITIONAL_JUMP,
 			&(jumpPtr->next->jump));
 		envPtr->currStackDepth = jumpPtr->depth;
@@ -2259,9 +2227,10 @@ CompileExprTree(
 		/* do nothing */
 		break;
 	    case FUNCTION:
+
 		/*
-		 * Use the numWords count we've kept to invoke the function
-		 * command with the correct number of arguments.
+		 * Use the numWords count we've kept to invoke the
+		 * function command with the correct number of arguments.
 		 */
 		
 		if (numWords < 255) {
@@ -2270,22 +2239,16 @@ CompileExprTree(
 		    TclEmitInstInt4(INST_INVOKE_STK4, numWords, envPtr);
 		}
 
-		/*
-		 * Restore any saved numWords value.
-		 */
-
+		/* Restore any saved numWords value. */
 		numWords = nodePtr->left;
 		convert = 1;
 		break;
 	    case COMMA:
-		/*
-		 * Each comma implies another function argument.
-		 */
 
+		/* Each comma implies another function argument. */
 		numWords++;
 		break;
 	    case COLON:
-		CLANG_ASSERT(jumpPtr);
 		if (TclFixupForwardJump(envPtr, &(jumpPtr->next->jump),
 			(envPtr->codeNext - envPtr->codeStart)
 			- jumpPtr->next->jump.codeOffset, 127)) {
@@ -2304,7 +2267,6 @@ CompileExprTree(
 		break;
 	    case AND:
 	    case OR:
-		CLANG_ASSERT(jumpPtr);
 		TclEmitForwardJump(envPtr, (nodePtr->lexeme == AND)
 			?  TCL_FALSE_JUMP : TCL_TRUE_JUMP,
 			&(jumpPtr->next->jump));
@@ -2374,10 +2336,10 @@ CompileExprTree(
 		     *
 		     * However, the design of the "global" and "local"
 		     * LiteralTable does not permit the value of lePtr->objPtr
-		     * to change. So rather than replace lePtr->objPtr, we do
-		     * surgery to transfer our desired intrep into it.
+		     * to change.  So rather than replace lePtr->objPtr, we
+		     * do surgery to transfer our desired intrep into it.
+		     *
 		     */
-
 		    objPtr->typePtr = literal->typePtr;
 		    objPtr->internalRep = literal->internalRep;
 		    literal->typePtr = NULL;
@@ -2385,14 +2347,13 @@ CompileExprTree(
 		TclEmitPush(index, envPtr);
 	    } else {
 		/*
-		 * When optimize==0, we know the expression is a one-off and
-		 * there's nothing to be gained from sharing literals when
-		 * they won't live long, and the copies we have already have
-		 * an appropriate intrep. In this case, skip literal
+		 * When optimize==0, we know the expression is a one-off
+		 * and there's nothing to be gained from sharing literals
+		 * when they won't live long, and the copies we have already
+		 * have an appropriate intrep.  In this case, skip literal
 		 * registration that would enable sharing, and use the routine
 		 * that preserves intreps.
 		 */
-
 		TclEmitPush(TclAddLiteralObj(envPtr, literal, NULL), envPtr);
 	    }
 	    (*litObjvPtr)++;
@@ -2406,7 +2367,6 @@ CompileExprTree(
 	default:
 	    if (optimize && nodes[next].constant) {
 		Tcl_InterpState save = Tcl_SaveInterpState(interp, TCL_OK);
-
 		if (ExecConstantExprTree(interp, nodes, next, litObjvPtr)
 			== TCL_OK) {
 		    TclEmitPush(TclAddLiteralObj(envPtr,
@@ -2448,7 +2408,7 @@ TclSingleOpCmd(
     int objc,
     Tcl_Obj *const objv[])
 {
-    TclOpCmdClientData *occdPtr = clientData;
+    TclOpCmdClientData *occdPtr = (TclOpCmdClientData *)clientData;
     unsigned char lexeme;
     OpNode nodes[2];
     Tcl_Obj *const *litObjv = objv + 1;
@@ -2479,11 +2439,10 @@ TclSingleOpCmd(
  *----------------------------------------------------------------------
  *
  * TclSortingOpCmd --
- *	Implements the commands:
- *		<, <=, >, >=, ==, eq 
- *	in the ::tcl::mathop namespace. These commands are defined for
+ *	Implements the commands: <, <=, >, >=, ==, eq 
+ *	in the ::tcl::mathop namespace.  These commands are defined for
  *	arbitrary number of arguments by computing the AND of the base
- *	operator applied to all neighbor argument pairs.
+ * 	operator applied to all neighbor argument pairs.
  *
  * Results:
  *	A standard Tcl return code and result left in interp.
@@ -2506,7 +2465,7 @@ TclSortingOpCmd(
     if (objc < 3) {
 	Tcl_SetObjResult(interp, Tcl_NewBooleanObj(1));
     } else {
-	TclOpCmdClientData *occdPtr = clientData;
+	TclOpCmdClientData *occdPtr = (TclOpCmdClientData *)clientData;
 	Tcl_Obj **litObjv = (Tcl_Obj **) TclStackAlloc(interp,
 		2*(objc-2)*sizeof(Tcl_Obj *));
 	OpNode *nodes = (OpNode *) TclStackAlloc(interp,
@@ -2561,9 +2520,9 @@ TclSortingOpCmd(
  *
  * TclVariadicOpCmd --
  *	Implements the commands: +, *, &, |, ^, **
- *	in the ::tcl::mathop namespace. These commands are defined for
+ *	in the ::tcl::mathop namespace.  These commands are defined for
  *	arbitrary number of arguments by repeatedly applying the base
- *	operator with suitable associative rules. When fewer than two
+ *	operator with suitable associative rules.  When fewer than two
  *	arguments are provided, suitable identity values are returned.
  *
  * Results:
@@ -2582,7 +2541,7 @@ TclVariadicOpCmd(
     int objc,
     Tcl_Obj *const objv[])
 {
-    TclOpCmdClientData *occdPtr = clientData;
+    TclOpCmdClientData *occdPtr = (TclOpCmdClientData *)clientData;
     unsigned char lexeme;
     int code;
 
@@ -2644,7 +2603,7 @@ TclVariadicOpCmd(
 	nodes[0].lexeme = START;
 	nodes[0].mark = MARK_RIGHT;
 	if (lexeme == EXPON) {
-	    for (i=objc-2; i>0; i--) {
+	    for (i=objc-2; i>0; i-- ) {
 		nodes[i].lexeme = lexeme;
 		nodes[i].mark = MARK_LEFT;
 		nodes[i].left = OT_LITERAL;
@@ -2655,7 +2614,7 @@ TclVariadicOpCmd(
 		lastOp = i;
 	    }
 	} else {
-	    for (i=1; i<objc-1; i++) {
+	    for (i=1; i<objc-1; i++ ) {
 		nodes[i].lexeme = lexeme;
 		nodes[i].mark = MARK_LEFT;
 		nodes[i].left = lastOp;
@@ -2672,6 +2631,7 @@ TclVariadicOpCmd(
 	code = ExecConstantExprTree(interp, nodes, 0, &litObjv);
 
 	TclStackFree(interp, nodes);
+
 	return code;
     }
 }
@@ -2681,10 +2641,10 @@ TclVariadicOpCmd(
  *
  * TclNoIdentOpCmd --
  *	Implements the commands: -, /
- *	in the ::tcl::mathop namespace. These commands are defined for
- *	arbitrary non-zero number of arguments by repeatedly applying the base
- *	operator with suitable associative rules. When no arguments are
- *	provided, an error is raised.
+ *	in the ::tcl::mathop namespace.  These commands are defined for
+ *	arbitrary non-zero number of arguments by repeatedly applying
+ *	the base operator with suitable associative rules.  When no
+ *	arguments are provided, an error is raised.
  *
  * Results:
  *	A standard Tcl return code and result left in interp.
@@ -2702,8 +2662,7 @@ TclNoIdentOpCmd(
     int objc,
     Tcl_Obj *const objv[])
 {
-    TclOpCmdClientData *occdPtr = clientData;
-
+    TclOpCmdClientData *occdPtr = (TclOpCmdClientData *)clientData;
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, occdPtr->expected);
 	return TCL_ERROR;

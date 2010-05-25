@@ -49,7 +49,9 @@
 #endif
 
 #ifdef _MSC_VER
-#    define hypot _hypot
+#    ifndef hypot
+#       define hypot _hypot
+#    endif
 #endif /* _MSC_VER */
 
 #ifndef __GNUC__
@@ -85,6 +87,8 @@
  * under Windows.
  */
 
+#define TkFreeWindowId(dispPtr,w)
+#define TkInitXId(dispPtr)
 #define TkpCmapStressed(tkwin,colormap) (0)
 #define XFlush(display)
 #define XGrabServer(display)
@@ -125,5 +129,14 @@ struct timezone {
     int tz_minuteswest;
     int tz_dsttime;
 };
+
+/*
+ * Disabled inclusion of Tcl's private header in hope of discovering we
+ * no longer need it.
+ *
+#ifndef _TCLINT
+#include <tclInt.h>
+#endif
+ */
 
 #endif /* _WINPORT */

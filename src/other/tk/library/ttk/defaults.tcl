@@ -8,9 +8,7 @@ namespace eval ttk::theme::default {
     variable colors
     array set colors {
 	-frame		"#d9d9d9"
-	-foreground	"#000000"
 	-window		"#ffffff"
-	-text   	"#000000"
 	-activebg	"#ececec"
 	-selectbg	"#4a6984"
 	-selectfg	"#ffffff"
@@ -24,7 +22,7 @@ namespace eval ttk::theme::default {
 	ttk::style configure "." \
 	    -borderwidth 	1 \
 	    -background 	$colors(-frame) \
-	    -foreground 	$colors(-foreground) \
+	    -foreground 	black \
 	    -troughcolor 	$colors(-darker) \
 	    -font 		TkDefaultFont \
 	    -selectborderwidth	1 \
@@ -66,11 +64,6 @@ namespace eval ttk::theme::default {
 	ttk::style map TCombobox -fieldbackground \
 	    [list readonly $colors(-frame) disabled $colors(-frame)]
 
-	ttk::style configure TSpinbox -arrowsize 10 -padding {2 0 10 0}
-	ttk::style map TSpinbox -fieldbackground \
-	    [list readonly $colors(-frame) disabled $colors(-frame)] \
-	    -arrowcolor [list disabled $colors(-disabledfg)]
-
 	ttk::style configure TLabelframe \
 	    -relief groove -borderwidth 2
 
@@ -92,19 +85,17 @@ namespace eval ttk::theme::default {
 	# Treeview.
 	#
 	ttk::style configure Heading -font TkHeadingFont -relief raised
-	ttk::style configure Treeview \
-	    -background $colors(-window) \
-	    -foreground $colors(-text) ;
-	ttk::style map Treeview \
+	ttk::style configure Row -background $colors(-window)
+	ttk::style configure Cell -background $colors(-window)
+	ttk::style map Row \
 	    -background [list selected $colors(-selectbg)] \
 	    -foreground [list selected $colors(-selectfg)] ;
-
-	# Combobox popdown frame
-	ttk::style layout ComboboxPopdownFrame {
-	    ComboboxPopdownFrame.border -sticky nswe
-	}
- 	ttk::style configure ComboboxPopdownFrame \
-	    -borderwidth 1 -relief solid
+	ttk::style map Cell \
+	    -background [list selected $colors(-selectbg)] \
+	    -foreground [list selected $colors(-selectfg)] ;
+	ttk::style map Item \
+	    -background [list selected $colors(-selectbg)] \
+	    -foreground [list selected $colors(-selectfg)] ;
 
 	#
 	# Toolbar buttons:

@@ -48,7 +48,7 @@ int
 A condition variable, which must be associated with a mutex lock.
 .AP Tcl_Mutex *mutexPtr in
 A mutex lock.
-.AP "const Tcl_Time" *timePtr in
+.AP Tcl_Time *timePtr in
 A time limit on the condition wait.  NULL to wait forever.
 Note that a polling value of 0 seconds does not make much sense.
 .AP Tcl_ThreadDataKey *keyPtr in
@@ -182,12 +182,13 @@ explicitly by calls to \fBTcl_MutexFinalize\fR or
 \fBTcl_ConditionFinalize\fR.
 Thread local storage is reclaimed during \fBTcl_FinalizeThread\fR.
 .SH "SCRIPT-LEVEL ACCESS TO THREADS"
-.PP
+.VS 8.5
 Tcl provides no built-in commands for scripts to use to create,
 manage, or join threads, nor any script-level access to mutex or
 condition variables.  It provides such facilities only via C
 interfaces, and leaves it up to packages to expose these matters to
 the script level.  One such package is the \fBThread\fR package.
+.VE 8.5
 .SH "SEE ALSO"
 Tcl_GetCurrentThread(3), Tcl_ThreadQueueEvent(3), Tcl_ThreadAlert(3),
 Tcl_ExitThread(3), Tcl_FinalizeThread(3), Tcl_CreateThreadExitHandler(3),

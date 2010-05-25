@@ -26,6 +26,7 @@ Procedure to invoke.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_DoWhenIdle\fR arranges for \fIproc\fR to be invoked
@@ -42,12 +43,9 @@ use \fBTcl_DoOneEvent\fR to dispatch events.
 .PP
 \fIProc\fR should have arguments and result that match the
 type \fBTcl_IdleProc\fR:
-.PP
 .CS
-typedef void \fBTcl_IdleProc\fR(
-        ClientData \fIclientData\fR);
+typedef void Tcl_IdleProc(ClientData \fIclientData\fR);
 .CE
-.PP
 The \fIclientData\fR parameter to \fIproc\fR is a copy of the \fIclientData\fR
 argument given to \fBTcl_DoWhenIdle\fR.  Typically, \fIclientData\fR
 points to a data structure containing application-specific information about
@@ -83,7 +81,6 @@ continuously.  This will interact badly with certain features of Tk
 that attempt to wait for all idle callbacks to complete.  If you would
 like for an idle callback to reschedule itself continuously, it is
 better to use a timer handler with a zero timeout period.
-.SH "SEE ALSO"
-after(n), Tcl_CreateFileHandler(3), Tcl_CreateTimerHandler(3)
+
 .SH KEYWORDS
 callback, defer, idle callback

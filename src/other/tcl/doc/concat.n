@@ -16,10 +16,11 @@ concat \- Join lists together
 .SH SYNOPSIS
 \fBconcat\fI \fR?\fIarg arg ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command joins each of its arguments together with spaces after
-trimming leading and trailing white-space from each of them.  If all of the
+trimming leading and trailing white-space from each of them.  If all the
 arguments are lists, this has the same effect as concatenating them
 into a single list.
 It permits any number of arguments;
@@ -54,7 +55,4 @@ values, as can be seen here:
 .SH "SEE ALSO"
 append(n), eval(n), join(n)
 .SH KEYWORDS
-concatenate, join, list
-'\" Local Variables:
-'\" mode: nroff
-'\" End:
+concatenate, join, lists

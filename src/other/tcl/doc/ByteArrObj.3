@@ -29,8 +29,7 @@ unsigned char *
 .SH ARGUMENTS
 .AS "const unsigned char" *lengthPtr in/out
 .AP "const unsigned char" *bytes in
-The array of bytes used to initialize or set a byte-array object. May be NULL
-even if \fIlength\fR is non-zero.
+The array of bytes used to initialize or set a byte-array object.
 .AP int length in
 The length of the array of bytes.  It must be >= 0.
 .AP Tcl_Obj *objPtr in/out
@@ -56,7 +55,7 @@ byte-array or to convert an arbitrary object to a byte-array.  Obtaining the
 string representation of a byte-array object (by calling
 \fBTcl_GetStringFromObj\fR) produces a properly formed UTF-8 sequence with a
 one-to-one mapping between the bytes in the internal representation and the
-UTF-8 characters in the string representation.
+UTF-8 characters in the string representation.  
 .PP
 \fBTcl_NewByteArrayObj\fR and \fBTcl_SetByteArrayObj\fR will
 create a new object of byte-array type or modify an existing object to have a
@@ -66,8 +65,7 @@ array of bytes given by \fIbytes\fR. \fBTcl_NewByteArrayObj\fR returns a
 pointer to a newly allocated object with a reference count of zero.
 \fBTcl_SetByteArrayObj\fR invalidates any old string representation and, if
 the object is not already a byte-array object, frees any old internal
-representation. If \fIbytes\fR is NULL then the new byte array contains
-arbitrary values.
+representation.
 .PP
 \fBTcl_GetByteArrayFromObj\fR converts a Tcl object to byte-array type and
 returns a pointer to the object's new internal representation as an array of
@@ -75,7 +73,7 @@ bytes.  The length of this array is stored in \fIlengthPtr\fR if
 \fIlengthPtr\fR is non-NULL.  The storage for the array of bytes is owned by
 the object and should not be freed.  The contents of the array may be
 modified by the caller only if the object is not shared and the caller
-invalidates the string representation.
+invalidates the string representation.  
 .PP
 \fBTcl_SetByteArrayLength\fR converts the Tcl object to byte-array type
 and changes the length of the object's internal representation as an

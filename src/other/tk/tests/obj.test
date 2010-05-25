@@ -7,23 +7,25 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.2
-namespace import ::tcltest::*
+package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
-test obj-1.1 {TkGetPixelsFromObj} -body {
-} -result {}
+test obj-1.1 {TkGetPixelsFromObj} {
+} {}
 
-test obj-2.1 {FreePixelInternalRep} -body {
-} -result {}
+test obj-2.1 {FreePixelInternalRep} {
+} {}
 
-test obj-3.1 {DupPixelInternalRep} -body {
-} -result {}
+test obj-3.1 {DupPixelInternalRep} {
+} {}
 
-test obj-4.1 {SetPixelFromAny} -body {
-} -result {}
+test obj-4.1 {SetPixelFromAny} {
+} {}
 
+
+
+deleteWindows
 
 # cleanup
 cleanupTests

@@ -88,8 +88,8 @@ test indexObj-4.1 {free old internal representation} testindexobj {
 } {2}
 
 test indexObj-5.1 {Tcl_WrongNumArgs} testindexobj {
-    testwrongnumargs 1 "?-switch?" mycmd
-} "wrong # args: should be \"mycmd ?-switch?\""
+    testwrongnumargs 1 "?option?" mycmd
+} "wrong # args: should be \"mycmd ?option?\""
 test indexObj-5.2 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 2 "bar" mycmd foo
 } "wrong # args: should be \"mycmd foo bar\""

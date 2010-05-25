@@ -102,7 +102,7 @@ get_args(int argc, char **argv)
 		bytes_per_pixel = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
@@ -112,7 +112,7 @@ get_args(int argc, char **argv)
 
     if (inputmode == INTERACTIVE) {
 	if (argc != 4 && argc != 3)
-	    return(0);
+	    return 0;
 
 	/* Obtain file pointers */
 	if ((ifp = fopen(argv[argc-2], "r")) == NULL) {
@@ -146,7 +146,7 @@ get_args(int argc, char **argv)
 	    if (isatty(fileno(stdin))) {
 		fprintf(stderr,
 			"pixrect: input from sdtin\n");
-		return(0);
+		return 0;
 	    }
 	    ifp = stdin;
 	} else {
@@ -155,13 +155,13 @@ get_args(int argc, char **argv)
 		fprintf(stderr,
 			"pixrect: cannot open \"%s\" for reading\n",
 			file_name);
-		return(0);
+		return 0;
 	    }
 	}
 
 	if (isatty(fileno(stdout))) {
 	    fprintf(stderr, "pixrect: output to stdout\n\n");
-	    return(0);
+	    return 0;
 	}
     }
 
@@ -170,7 +170,7 @@ get_args(int argc, char **argv)
 	fprintf(stderr, "pixrect: excess argument(s) ignored\n");
 #endif
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

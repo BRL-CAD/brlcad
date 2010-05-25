@@ -27,7 +27,7 @@ registered for. Must not be NULL.
 Contains the name of the package registering the embedded
 configuration as ASCII string. This means that this information is in
 UTF-8 too. Must not be NULL.
-.AP "const Tcl_Config" *configuration in
+.AP Tcl_Config *configuration in
 Refers to an array of Tcl_Config entries containing the information
 embedded in the binary library. Must not be NULL. The end of the array
 is signaled by either a key identical to NULL, or a key referring to
@@ -37,6 +37,7 @@ Contains the name of the encoding used to store the configuration
 values as ASCII string. This means that this information is in UTF-8
 too. Must not be NULL.
 .BE
+
 .SH DESCRIPTION
 .PP
 The function described here has its base in TIP 59 and provides
@@ -102,9 +103,9 @@ The \fBTcl_Config\fR structure contains the following fields:
 .PP
 .CS
 typedef struct Tcl_Config {
-    const char *\fIkey\fR;
-    const char *\fIvalue\fR;
-} \fBTcl_Config\fR;
+    const char* key;
+    const char* value;
+} Tcl_Config;
 .CE
 .\" No cross references yet.
 .\" .SH "SEE ALSO"

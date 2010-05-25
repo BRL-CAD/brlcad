@@ -61,7 +61,7 @@ test lsearch-2.9 {search modes} {
 } 1
 test lsearch-2.10 {search modes} {
     list [catch {lsearch -glib {b.x bx xy bcx} b.x} msg] $msg
-} {1 {bad option "-glib": must be -all, -ascii, -bisect, -decreasing, -dictionary, -exact, -glob, -increasing, -index, -inline, -integer, -nocase, -not, -real, -regexp, -sorted, -start, or -subindices}}
+} {1 {bad option "-glib": must be -all, -ascii, -decreasing, -dictionary, -exact, -glob, -increasing, -index, -inline, -integer, -nocase, -not, -real, -regexp, -sorted, -start, or -subindices}}
 test lsearch-2.11 {search modes with -nocase} {
     lsearch -exact -nocase {a b c A B C} A
 } 0
@@ -83,16 +83,16 @@ test lsearch-2.16 {search modes without -nocase} {
 
 test lsearch-3.1 {lsearch errors} {
     list [catch lsearch msg] $msg
-} {1 {wrong # args: should be "lsearch ?-option value ...? list pattern"}}
+} {1 {wrong # args: should be "lsearch ?options? list pattern"}}
 test lsearch-3.2 {lsearch errors} {
     list [catch {lsearch a} msg] $msg
-} {1 {wrong # args: should be "lsearch ?-option value ...? list pattern"}}
+} {1 {wrong # args: should be "lsearch ?options? list pattern"}}
 test lsearch-3.3 {lsearch errors} {
     list [catch {lsearch a b c} msg] $msg
-} {1 {bad option "a": must be -all, -ascii, -bisect, -decreasing, -dictionary, -exact, -glob, -increasing, -index, -inline, -integer, -nocase, -not, -real, -regexp, -sorted, -start, or -subindices}}
+} {1 {bad option "a": must be -all, -ascii, -decreasing, -dictionary, -exact, -glob, -increasing, -index, -inline, -integer, -nocase, -not, -real, -regexp, -sorted, -start, or -subindices}}
 test lsearch-3.4 {lsearch errors} {
     list [catch {lsearch a b c d} msg] $msg
-} {1 {bad option "a": must be -all, -ascii, -bisect, -decreasing, -dictionary, -exact, -glob, -increasing, -index, -inline, -integer, -nocase, -not, -real, -regexp, -sorted, -start, or -subindices}}
+} {1 {bad option "a": must be -all, -ascii, -decreasing, -dictionary, -exact, -glob, -increasing, -index, -inline, -integer, -nocase, -not, -real, -regexp, -sorted, -start, or -subindices}}
 test lsearch-3.5 {lsearch errors} {
     list [catch {lsearch "\{" b} msg] $msg
 } {1 {unmatched open brace in list}}
@@ -472,46 +472,6 @@ test lsearch-21.2 {lsearch shimmering crash} {
     lsearch -exact -real $x $x
 } 0
 
-test lsearch-22.1 {lsearch -bisect} -setup {
-    set res {}
-} -body {
-    foreach i {0 1 5 6 7 8 15 16} {
-	lappend res [lsearch -bisect -integer {1 4 5 7 9 15} $i]
-    }
-    return $res
-} -result {-1 0 2 2 3 3 5 5}
-test lsearch-22.2 {lsearch -bisect, last of equals} -setup {
-    set res {}
-} -body {
-    foreach i {0 1 2 3} {
-	lappend res [lsearch -bisect -integer {0 0 1 1 1 2 2 2 3 3 3} $i]
-    }
-    return $res
-} -result {1 4 7 10}
-test lsearch-22.3 {lsearch -bisect decreasing order} -setup {
-    set res {}
-} -body {
-    foreach i {0 1 5 6 7 8 15 16} {
-	lappend res [lsearch -bisect -integer -decreasing {15 9 7 5 4 1} $i]
-    }
-    return $res
-} -result {5 5 3 2 2 1 0 -1}
-test lsearch-22.4 {lsearch -bisect, last of equals, decreasing} -setup {
-    set res {}
-} -body {
-    foreach i {0 1 2 3} {
-	lappend res [lsearch -bisect -integer -decreasing \
-		{3 3 3 2 2 2 1 1 1 0 0} $i]
-    }
-    return $res
-} -result {10 8 5 2}
-test lsearch-22.5 {lsearch -bisect, all equal} {
-    lsearch -bisect -integer {5 5 5 5} 5
-} {3}
-test lsearch-22.6 {lsearch -sorted, all equal} {
-    lsearch -sorted -integer {5 5 5 5} 5
-} {0}
-
 # cleanup
 catch {unset res}
 catch {unset increasingIntegers}
@@ -524,7 +484,3 @@ catch {unset increasingDictionary}
 catch {unset decreasingDictionary}
 ::tcltest::cleanupTests
 return
-
-# Local Variables:
-# mode: tcl
-# End:

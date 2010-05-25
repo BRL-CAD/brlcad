@@ -37,6 +37,10 @@
 #include "raytrace.h"
 #include "nurb.h"
 
+
+extern fastf_t spl_crv_flat();
+
+
 int
 rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
 
@@ -55,7 +59,6 @@ rt_nurb_s_flat(struct face_g_snurb *srf, fastf_t epsilon)
     fastf_t         nrmln;
     fastf_t         dist;
     fastf_t        * crv;
-    fastf_t 	spl_crv_flat();
     int	otherdir;
 
     dir = srf->dir;

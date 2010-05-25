@@ -731,7 +731,7 @@ test mathop-20.2 { zero args, not allowed } {
     set exp {}
     foreach op {~ ! << >> % != ne in ni - /} {
         set res [TestOp $op]
-        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
+        if {[string match "wrong # args* NONE" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -762,7 +762,7 @@ test mathop-20.5 { one arg, not allowed } {
     set exp {}
     foreach op {% != ne in ni << >>} {
         set res [TestOp $op 1]
-        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
+        if {[string match "wrong # args* NONE" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -861,7 +861,7 @@ test mathop-21.6 { unary ops, too many } {
     set exp {}
     foreach op {~ !} {
         set res [TestOp $op 7 8]
-        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
+        if {[string match "wrong # args* NONE" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -1088,7 +1088,7 @@ test mathop-24.3 { binary ops, bad values } {
     }
     foreach op {in ni} {
         lappend res [TestOp $op 5 "a b \{ c"]
-        lappend exp "unmatched open brace in list TCL VALUE LIST"
+        lappend exp "unmatched open brace in list NONE"
     }
     lappend res [TestOp % 5 0]
     lappend exp "divide by zero ARITH DIVZERO {divide by zero}"
@@ -1185,7 +1185,7 @@ test mathop-24.8 { binary ops, too many } {
     set exp {}
     foreach op {<< >> % != ne in ni ~ !} {
         set res [TestOp $op 7 8 9]
-        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
+        if {[string match "wrong # args* NONE" $res]} {
             lappend exp 0
         } else {
             lappend exp $res

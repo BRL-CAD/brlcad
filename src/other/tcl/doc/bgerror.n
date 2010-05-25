@@ -16,8 +16,9 @@ bgerror \- Command invoked to process background errors
 .SH SYNOPSIS
 \fBbgerror \fImessage\fR
 .BE
+
 .SH DESCRIPTION
-.PP
+.VS 8.5
 Release 8.5 of Tcl supports the \fBinterp bgerror\fR command,
 which allows applications to register in an interpreter the command
 that will handle background errors in that interpreter.  In older
@@ -29,6 +30,7 @@ describes the interface requirements of the \fBbgerror\fR command
 an application might define to retain compatibility with pre-8.5
 releases of Tcl.  Applications intending to support only
 Tcl releases 8.5 and later should simply make use of \fBinterp bgerror\fR.
+.VE 8.5
 .PP
 The \fBbgerror\fR command does not exist as built-in part of Tcl.  Instead,
 individual applications or users can define a \fBbgerror\fR
@@ -75,9 +77,7 @@ The reason for this is that the application programmer may also want
 to define a \fBbgerror\fR, or use other code that does and thus will
 have trouble integrating your code.
 .SH "EXAMPLE"
-.PP
 This \fBbgerror\fR procedure appends errors to a file, with a timestamp.
-.PP
 .CS
 proc bgerror {message} {
     set timestamp [clock format [clock seconds]]
@@ -86,7 +86,9 @@ proc bgerror {message} {
     close $fl
 }
 .CE
+
 .SH "SEE ALSO"
 after(n), interp(n), tclvars(n)
+
 .SH KEYWORDS
 background error, reporting

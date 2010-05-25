@@ -80,6 +80,12 @@ char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f density
 #  endif
 #endif
 
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
+ */
+#define COMMA ','
+
 static int analysis_flags;
 static int multiple_analyses;
 
@@ -89,7 +95,7 @@ static char *densityFileName;
 static double gridSpacing;
 static double gridSpacingLimit;
 static char makeOverlapAssemblies;
-static int require_num_hits;
+static size_t require_num_hits;
 static int ncpu;
 static double Samples_per_model_axis;
 static double overlap_tolerance;
@@ -473,7 +479,6 @@ parse_args(int ac, char *av[])
 	switch (c) {
 	    case 'A':
 		{
-		    char *p;
 		    analysis_flags = 0;
 		    multiple_analyses = 0;
 		    for (p = bu_optarg; *p; p++) {
@@ -586,10 +591,14 @@ parse_args(int ac, char *av[])
 		    /* find out if we have two or one args user can
 		     * separate them with, or - delimiter
 		     */
-		    if ((p = strchr(bu_optarg, ', ')))
+		    p = strchr(bu_optarg, COMMA);
+		    if (p)
 			*p++ = '\0';
-		    else if ((p = strchr(bu_optarg, '-')))
-			*p++ = '\0';
+		    else {
+			p = strchr(bu_optarg, '-');
+			if (p)
+			    *p++ = '\0';
+		    }
 
 
 		    if (read_units_double(&value1, bu_optarg, units_tab[0])) {
@@ -629,7 +638,7 @@ parse_args(int ac, char *av[])
 		    return -1;
 		}
 
-		require_num_hits = c;
+		require_num_hits = (size_t)c;
 		break;
 
 	    case 'N':
@@ -735,7 +744,7 @@ parse_args(int ac, char *av[])
 	}
     }
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 
@@ -852,6 +861,9 @@ overlap(struct application *ap,
     point_t ohit;
     double depth;
 
+    if (!hp) /* unexpected */
+	return 0;
+
     /* if one of the regions is air, let it loose */
     if (reg1->reg_aircode && ! reg2->reg_aircode)
 	return 2;
@@ -862,7 +874,7 @@ overlap(struct application *ap,
 
     if (depth < overlap_tolerance)
 	/* too small to matter, pick one or none */
-	return(1);
+	return 1;
 
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
@@ -906,7 +918,7 @@ overlap(struct application *ap,
     /* XXX We should somehow flag the volume/weight calculations as invalid */
 
     /* since we have no basis to pick one over the other, just pick */
-    return(1);	/* No further consideration to this partition */
+    return 1;	/* No further consideration to this partition */
 }
 
 
@@ -922,6 +934,11 @@ logoverlap(struct application *ap,
     RT_CK_AP(ap);
     RT_CK_PT(pp);
     BU_CK_PTBL(regiontable);
+    if (!InputHdp)
+	return;
+
+    /* do nothing */
+
     return;
 }
 
@@ -969,6 +986,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     double last_out_dist = -1.0;
     double val;
     struct cstate *state = ap->A_STATE;
+
+    if (!segs) /* unexpected */
+	return 0;
 
     if (PartHeadp->pt_forw == PartHeadp) return 1;
 
@@ -1202,8 +1222,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    }
 
 	    if (plot_volume) {
-		point_t opt;
-
 		VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -1261,7 +1279,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     /* This value is returned by rt_shootray a hit usually returns 1,
      * miss 0.
      */
-    return(1);
+    return 1;
 }
 
 
@@ -1273,12 +1291,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 int
 miss(struct application *ap)
 {
+    RT_CK_APPLICATION(ap);
+
 #if 0
     bu_semaphore_acquire(GED_SEM_WORKER);
     bu_vls_printf(&_ged_current_gedp->ged_result_str, "missed\n");
     bu_semaphore_release(GED_SEM_WORKER);
 #endif
-    return(0);
+    return 0;
 }
 
 
@@ -1335,7 +1355,9 @@ plane_worker (int cpu, genptr_t ptr)
 
     u = -1;
 
-    while ((v = get_next_row(state))) {
+    v = get_next_row(state);
+
+    while (v) {
 
 	v_coord = v * gridSpacing;
 	if (debug) {
@@ -1410,6 +1432,9 @@ plane_worker (int cpu, genptr_t ptr)
 		    }
 	    }
 	}
+
+	/* iterate */
+	v = get_next_row(state);
     }
 
     if (debug && (u == -1)) {
@@ -1440,7 +1465,8 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     char *str = bu_strdup(name);
     char *p;
 
-    if ((p=strchr(str, '/'))) {
+    p=strchr(str, '/');
+    if (p) {
 	*p = '\0';
     }
 
@@ -1468,6 +1494,9 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     struct rt_i *rtip = state->rtip;
     int i;
     int m;
+
+    if (start > ac) /* what? */
+	return;
 
     state->m_lenDensity = bu_calloc(num_views, sizeof(double), "densityLen");
     state->m_len = bu_calloc(num_views, sizeof(double), "volume");
@@ -1585,7 +1614,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	}
     }
 
-    if (newGridSpacing != gridSpacing) {
+    if (!NEAR_ZERO(newGridSpacing - gridSpacing, SMALL_FASTF)) {
 	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Grid spacing %g %s is does not allow %g samples per axis\n",
 		      gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
@@ -1598,7 +1627,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     /* if the vol/weight tolerances are not set, pick something */
     if (analysis_flags & ANALYSIS_VOLUME) {
 	char *name = "volume.pl";
-	if (volume_tolerance == -1.0) {
+	if (NEAR_ZERO(volume_tolerance - 1.0, SMALL_FASTF)) {
 	    volume_tolerance = span[X] * span[Y] * span[Z] * 0.001;
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "setting volume tolerance to %g %s\n",
 			  volume_tolerance / units[VOL]->val, units[VOL]->name);
@@ -1610,7 +1639,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    }
     }
     if (analysis_flags & ANALYSIS_WEIGHT) {
-	if (weight_tolerance == -1.0) {
+	if (NEAR_ZERO(weight_tolerance - 1.0, SMALL_FASTF)) {
 	    double max_den = 0.0;
 	    int i;
 	    for (i=0; i < num_densities; i++) {
@@ -1634,7 +1663,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	    }
     }
     if (analysis_flags & ANALYSIS_OVERLAPS) {
-	if (overlap_tolerance != 0.0)
+	if (!NEAR_ZERO(overlap_tolerance, SMALL_FASTF))
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "overlap tolerance to %g\n", overlap_tolerance);
 	if (plot_files) {
 	    char *name = "overlaps.pl";
@@ -1932,14 +1961,14 @@ terminate_check(struct cstate *state)
 	} else {
 	    struct region *regp;
 	    int all_hit = 1;
-	    unsigned long hits;
+	    size_t hits;
 
 	    if (require_num_hits > 0) {
 		/* check to make sure every region was hit at least once */
 		for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
 		    RT_CK_REGION(regp);
 
-		    hits = ((struct per_region_data *)regp->reg_udata)->hits;
+		    hits = (size_t)((struct per_region_data *)regp->reg_udata)->hits;
 		    if (hits < require_num_hits) {
 			all_hit = 0;
 			if (verbose) {
@@ -1986,7 +2015,7 @@ terminate_check(struct cstate *state)
  * summary_reports
  */
 void
-summary_reports(struct cstate *state, int start, int ac, const char *av[])
+summary_reports(struct cstate *state)
 {
     int view;
     int obj;
@@ -2263,10 +2292,10 @@ summary_reports(struct cstate *state, int start, int ac, const char *av[])
     if (analysis_flags & ANALYSIS_EXP_AIR) list_report(&exposedAirList);
 
     for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
-	unsigned long hits;
+	size_t hits;
 
 	RT_CK_REGION(regp);
-	hits = ((struct per_region_data *)regp->reg_udata)->hits;
+	hits = (size_t)((struct per_region_data *)regp->reg_udata)->hits;
 	if (hits < require_num_hits) {
 	    if (hits == 0) {
 		bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
@@ -2396,7 +2425,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     /* if the user did not specify the initial grid spacing limit, we
      * need to compute a reasonable one for them.
      */
-    if (gridSpacing == 0.0) {
+    if (NEAR_ZERO(gridSpacing, SMALL_FASTF)) {
 	double min_span = MAX_FASTF;
 	VPRINT("span", state.span);
 
@@ -2470,7 +2499,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     } while (terminate_check(&state));
 
-aborted:
+ aborted:
     if (plot_overlaps) fclose(plot_overlaps);
     if (plot_weight) fclose(plot_weight);
     if (plot_volume) fclose(plot_volume);
@@ -2483,7 +2512,7 @@ aborted:
 	bu_vls_printf(&gedp->ged_result_str, "Computation Done\n");
 
     if (!aborted) {
-	summary_reports(&state, start_objs, argc, argv);
+	summary_reports(&state);
 
 	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
 	    _ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);

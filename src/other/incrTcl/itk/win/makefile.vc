@@ -224,11 +224,11 @@ ITK_EXE_CFLAGS	= $(cdebug) $(cflags) $(crt) $(ITCL_INCLUDES) $(ITK_INCLUDES) \
 ### By convention, static builds do not use Stubs.  This is just a practice,
 ### not a technical limitation.
 !if $(STATIC_BUILD)
-ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DSTATIC_BUILD $(OPTDEFINES)
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DSTATIC_BUILD
 !elseif $(TCL_DOES_STUBS)
-ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_ITCL_STUBS $(OPTDEFINES)
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_ITCL_STUBS
 !else
-ITK_CFLAGS	= $(ITK_EXE_CFLAGS) $(OPTDEFINES)
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS)
 !endif
 
 #---------------------------------------------------------------------

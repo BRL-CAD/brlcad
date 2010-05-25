@@ -199,19 +199,6 @@ test for-2.6 {continue tests, long command body} {
     }
     set a
 } {1 3}
-test for-2.7 {continue tests, uncompiled [for]} -body {
-    set file [makeFile {
-    	set guard 0
-	for {set i 20} {$i > 0} {incr i -1} {
-	    if {[incr guard]>30} {return BAD}
-	    continue
-	}
-	return GOOD
-    } source.file]
-    source $file
-} -cleanup {
-    removeFile source.file
-} -result GOOD
 
 # Check "for" and "break".
 

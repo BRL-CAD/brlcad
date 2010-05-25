@@ -112,6 +112,3 @@ occur long after the overwrite occurred.
 ckalloc, ckfree, Tcl_ValidateAllMemory, Tcl_DumpActiveMemory, TCL_MEM_DEBUG
 .SH KEYWORDS
 memory, debug
-'\"Local Variables:
-'\"mode: nroff
-'\"End:

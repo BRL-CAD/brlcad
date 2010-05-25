@@ -67,6 +67,7 @@ Information about \fIsrc\fR. Must be value returned by previous
 call to \fBTcl_ScanElement\fR, possibly OR-ed
 with \fBTCL_DONT_USE_BRACES\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 These procedures may be used to disassemble and reassemble Tcl lists.
@@ -81,18 +82,15 @@ also holds copies of all the list elements.  It is the caller's
 responsibility to free up all of this storage.
 For example, suppose that you have called \fBTcl_SplitList\fR with
 the following code:
-.PP
 .CS
 int argc, code;
 char *string;
 char **argv;
 \&...
-code = \fBTcl_SplitList\fR(interp, string, &argc, &argv);
+code = Tcl_SplitList(interp, string, &argc, &argv);
 .CE
-.PP
 Then you should eventually free the storage with a call like the
 following:
-.PP
 .CS
 Tcl_Free((char *) argv);
 .CE
@@ -168,6 +166,7 @@ used to generate a portion of an argument for a Tcl command.
 In this case, surrounding \fIsrc\fR with curly braces would cause
 the command not to be parsed correctly.
 .PP
+.VS 8.5
 By default, \fBTcl_ConvertElement\fR will use quoting in its output
 to be sure the first character of an element is not the hash
 character
@@ -179,12 +178,12 @@ is not necessary.  When the caller can be sure that the element is
 not the first element of a list, it can disable quoting of the leading
 hash character by OR-ing the flag value returned by \fBTcl_ScanElement\fR
 with \fBTCL_DONT_QUOTE_HASH\fR.
+.VE 8.5
 .PP
 \fBTcl_ScanCountedElement\fR and \fBTcl_ConvertCountedElement\fR are
 the same as \fBTcl_ScanElement\fR and \fBTcl_ConvertElement\fR, except
 the length of string \fIsrc\fR is specified by the \fIlength\fR
 argument, and the string may contain embedded nulls.
+
 .SH KEYWORDS
 backslash, convert, element, list, merge, split, strings
-.SH "SEE ALSO"
-Tcl_GetListFromObj(3)

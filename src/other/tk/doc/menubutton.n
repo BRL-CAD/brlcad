@@ -191,6 +191,3 @@ individual widgets or by redefining the class bindings.
 ttk::menubutton(n), menu(n)
 .SH KEYWORDS
 menubutton, widget
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

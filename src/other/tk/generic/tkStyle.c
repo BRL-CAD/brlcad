@@ -26,7 +26,7 @@ typedef struct StyledWidgetSpec {
 				 * structure. */
     Tk_OptionTable optionTable;	/* Option table for the widget class using the
 				 * element. */
-    const Tk_OptionSpec **optionsPtr;
+    CONST Tk_OptionSpec **optionsPtr;
 				/* Table of option spec pointers, matching the
 				 * option list provided during element
 				 * registration. Malloc'd. */
@@ -60,11 +60,11 @@ typedef struct StyledElement {
  */
 
 typedef struct StyleEngine {
-    const char *name;		/* Name of engine. Points to a hash key. */
+    CONST char *name;		/* Name of engine. Points to a hash key. */
     StyledElement *elements;	/* Table of widget element descriptors. Each
 				 * element is indexed by a unique system-wide
 				 * ID. Table grows dynamically as new elements
-				 * are registered. Malloc'd. */
+				 * are registered. Malloc'd*/
     struct StyleEngine *parentPtr;
 				/* Parent engine. Engines may be layered to
 				 * form a fallback chain, terminated by the
@@ -77,7 +77,7 @@ typedef struct StyleEngine {
  */
 
 typedef struct Style {
-    const char *name;		/* Name of style. Points to a hash key. */
+    CONST char *name;		/* Name of style. Points to a hash key. */
     StyleEngine *enginePtr;	/* Style engine of which the style is an
 				 * instance. */
     ClientData clientData;	/* Data provided during registration. */
@@ -88,7 +88,7 @@ typedef struct Style {
  */
 
 typedef struct Element {
-    const char *name;		/* Name of element. Points to a hash key. */
+    CONST char *name;		/* Name of element. Points to a hash key. */
     int id;			/* Id of element. */
     int genericId;		/* Id of generic element. */
     int created;		/* Boolean, whether the element was created
@@ -122,7 +122,7 @@ static Tcl_ThreadDataKey dataKey;
  * Forward declarations for functions defined later in this file:
  */
 
-static int		CreateElement(const char *name, int create);
+static int		CreateElement(CONST char *name, int create);
 static void		DupStyleObjProc(Tcl_Obj *srcObjPtr,
 			    Tcl_Obj *dupObjPtr);
 static void		FreeElement(Element *elementPtr);
@@ -134,13 +134,13 @@ static StyledElement *	GetStyledElement(StyleEngine *enginePtr,
 			    int elementId);
 static StyledWidgetSpec*GetWidgetSpec(StyledElement *elementPtr,
 			    Tk_OptionTable optionTable);
-static void		InitElement(Element *elementPtr, const char *name,
+static void		InitElement(Element *elementPtr, CONST char *name,
 			    int id, int genericId, int created);
-static void		InitStyle(Style *stylePtr, const char *name,
+static void		InitStyle(Style *stylePtr, CONST char *name,
 			    StyleEngine *enginePtr, ClientData clientData);
 static void		InitStyledElement(StyledElement *elementPtr);
 static void		InitStyleEngine(StyleEngine *enginePtr,
-			    const char *name, StyleEngine *parentPtr);
+			    CONST char *name, StyleEngine *parentPtr);
 static void		InitWidgetSpec(StyledWidgetSpec *widgetSpecPtr,
 			    StyledElement *elementPtr,
 			    Tk_OptionTable optionTable);
@@ -152,7 +152,7 @@ static int		SetStyleFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
  * object points to the Style structure for the stylefont, or NULL.
  */
 
-static const Tcl_ObjType styleObjType = {
+static Tcl_ObjType styleObjType = {
     "style",			/* name */
     FreeStyleObjProc,		/* freeIntRepProc */
     DupStyleObjProc,		/* dupIntRepProc */
@@ -182,7 +182,7 @@ void
 TkStylePkgInit(
     TkMainInfo *mainPtr)	/* The application being created. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (tsdPtr->nbInit != 0) {
@@ -238,7 +238,7 @@ void
 TkStylePkgFree(
     TkMainInfo *mainPtr)	/* The application being deleted. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashSearch search;
     Tcl_HashEntry *entryPtr;
@@ -267,7 +267,7 @@ TkStylePkgFree(
 
     entryPtr = Tcl_FirstHashEntry(&tsdPtr->engineTable, &search);
     while (entryPtr != NULL) {
-	enginePtr = Tcl_GetHashValue(entryPtr);
+	enginePtr = (StyleEngine *) Tcl_GetHashValue(entryPtr);
 	FreeStyleEngine(enginePtr);
 	ckfree((char *) enginePtr);
 	entryPtr = Tcl_NextHashEntry(&search);
@@ -305,12 +305,12 @@ TkStylePkgFree(
 
 Tk_StyleEngine
 Tk_RegisterStyleEngine(
-    const char *name,		/* Name of the engine to create. NULL or empty
+    CONST char *name,		/* Name of the engine to create. NULL or empty
 				 * means the default system engine. */
     Tk_StyleEngine parent)	/* The engine's parent. NULL means the default
 				 * system engine. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashEntry *entryPtr;
     int newEntry;
@@ -337,7 +337,7 @@ Tk_RegisterStyleEngine(
     enginePtr = (StyleEngine *) ckalloc(sizeof(StyleEngine));
     InitStyleEngine(enginePtr, Tcl_GetHashKey(&tsdPtr->engineTable, entryPtr),
 	    (StyleEngine *) parent);
-    Tcl_SetHashValue(entryPtr, enginePtr);
+    Tcl_SetHashValue(entryPtr, (ClientData) enginePtr);
 
     return (Tk_StyleEngine) enginePtr;
 }
@@ -361,13 +361,13 @@ Tk_RegisterStyleEngine(
 static void
 InitStyleEngine(
     StyleEngine *enginePtr,	/* Points to an uninitialized engine. */
-    const char *name,		/* Name of the registered engine. NULL or empty
+    CONST char *name,		/* Name of the registered engine. NULL or empty
 				 * means the default system engine. Usually
 				 * points to the hash key. */
     StyleEngine *parentPtr)	/* The engine's parent. NULL means the default
 				 * system engine. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     int elementId;
 
@@ -377,12 +377,14 @@ InitStyleEngine(
 	 */
 
 	enginePtr->parentPtr = NULL;
+
     } else if (parentPtr == NULL) {
 	/*
 	 * The default style engine is the parent.
 	 */
 
 	enginePtr->parentPtr = tsdPtr->defaultEnginePtr;
+
     } else {
 	enginePtr->parentPtr = parentPtr;
     }
@@ -422,7 +424,7 @@ static void
 FreeStyleEngine(
     StyleEngine *enginePtr)	/* The style engine to free. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     int elementId;
 
@@ -454,10 +456,10 @@ FreeStyleEngine(
 
 Tk_StyleEngine
 Tk_GetStyleEngine(
-    const char *name)		/* Name of the engine to retrieve. NULL or
+    CONST char *name)		/* Name of the engine to retrieve. NULL or
 				 * empty means the default system engine. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashEntry *entryPtr;
 
@@ -470,7 +472,7 @@ Tk_GetStyleEngine(
 	return NULL;
     }
 
-    return Tcl_GetHashValue(entryPtr);
+    return (Tk_StyleEngine) Tcl_GetHashValue(entryPtr);
 }
 
 /*
@@ -492,7 +494,7 @@ Tk_GetStyleEngine(
 static void
 InitElement(
     Element *elementPtr,	/* Points to an uninitialized element.*/
-    const char *name,		/* Name of the registered element. Usually
+    CONST char *name,		/* Name of the registered element. Usually
 				 * points to the hash key. */
     int id,			/* Unique element ID. */
     int genericId,		/* ID of generic element. -1 means none. */
@@ -602,16 +604,17 @@ FreeStyledElement(
 
 static int
 CreateElement(
-    const char *name,		/* Name of the element. */
-    int create)			/* Boolean, whether the element is being
-				 * created explicitly (being registered) or
-				 * implicitly (by a derived element). */
+    CONST char *name,	/* Name of the element. */
+    int create)		/* Boolean, whether the element is being created
+			 * explicitly (being registered) or implicitly (by a
+			 * derived element). */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashEntry *entryPtr, *engineEntryPtr;
     Tcl_HashSearch search;
-    int newEntry, elementId, genericId = -1;
+    int newEntry;
+    int elementId, genericId = -1;
     char *dot;
     StyleEngine *enginePtr;
 
@@ -639,7 +642,7 @@ CreateElement(
     }
 
     elementId = tsdPtr->nbElements++;
-    Tcl_SetHashValue(entryPtr, INT2PTR(elementId));
+    Tcl_SetHashValue(entryPtr, (ClientData) INT2PTR(elementId));
 
     /*
      * Reallocate element table.
@@ -657,7 +660,7 @@ CreateElement(
 
     engineEntryPtr = Tcl_FirstHashEntry(&tsdPtr->engineTable, &search);
     while (engineEntryPtr != NULL) {
-	enginePtr = Tcl_GetHashValue(engineEntryPtr);
+	enginePtr = (StyleEngine *) Tcl_GetHashValue(engineEntryPtr);
 
 	enginePtr->elements = (StyledElement *) ckrealloc(
 		(char *) enginePtr->elements,
@@ -688,9 +691,9 @@ CreateElement(
 
 int
 Tk_GetElementId(
-    const char *name)		/* Name of the element. */
+    CONST char *name)		/* Name of the element. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashEntry *entryPtr;
     int genericId = -1;
@@ -848,7 +851,7 @@ GetStyledElement(
     int elementId)		/* Unique element ID */
 {
     StyledElement *elementPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     StyleEngine *enginePtr2;
 
@@ -909,7 +912,7 @@ InitWidgetSpec(
 {
     int i, nbOptions;
     Tk_ElementOptionSpec *elementOptionPtr;
-    const Tk_OptionSpec *widgetOptionPtr;
+    CONST Tk_OptionSpec *widgetOptionPtr;
 
     widgetSpecPtr->elementPtr = elementPtr;
     widgetSpecPtr->optionTable = optionTable;
@@ -927,7 +930,7 @@ InitWidgetSpec(
      * Build the widget option list.
      */
 
-    widgetSpecPtr->optionsPtr = (const Tk_OptionSpec **)
+    widgetSpecPtr->optionsPtr = (CONST Tk_OptionSpec **)
 	    ckalloc(sizeof(Tk_OptionSpec *) * nbOptions);
     for (i = 0, elementOptionPtr = elementPtr->specPtr->options;
 	    i < nbOptions; i++, elementOptionPtr++) {
@@ -1229,12 +1232,12 @@ Tk_DrawElement(
 
 Tk_Style
 Tk_CreateStyle(
-    const char *name,		/* Name of the style to create. NULL or empty
+    CONST char *name,		/* Name of the style to create. NULL or empty
 				 * means the default system style. */
     Tk_StyleEngine engine,	/* The style engine. */
     ClientData clientData)	/* Private data passed as is to engine code. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashEntry *entryPtr;
     int newEntry;
@@ -1260,9 +1263,10 @@ Tk_CreateStyle(
 
     stylePtr = (Style *) ckalloc(sizeof(Style));
     InitStyle(stylePtr, Tcl_GetHashKey(&tsdPtr->styleTable, entryPtr),
-	    (engine!=NULL ? (StyleEngine*) engine : tsdPtr->defaultEnginePtr),
+	    (engine != NULL ? (StyleEngine *) engine :
+		    tsdPtr->defaultEnginePtr),
 	    clientData);
-    Tcl_SetHashValue(entryPtr, stylePtr);
+    Tcl_SetHashValue(entryPtr, (ClientData) stylePtr);
 
     return (Tk_Style) stylePtr;
 }
@@ -1286,7 +1290,7 @@ Tk_CreateStyle(
  *---------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tk_NameOfStyle(
     Tk_Style style)		/* Style whose name is desired. */
 {
@@ -1314,7 +1318,7 @@ Tk_NameOfStyle(
 static void
 InitStyle(
     Style *stylePtr,		/* Points to an uninitialized style. */
-    const char *name,		/* Name of the registered style. NULL or empty
+    CONST char *name,		/* Name of the registered style. NULL or empty
 				 * means the default system style. Usually
 				 * points to the hash key. */
     StyleEngine *enginePtr,	/* The style engine. */
@@ -1346,10 +1350,10 @@ InitStyle(
 Tk_Style
 Tk_GetStyle(
     Tcl_Interp *interp,		/* Interp for error return. */
-    const char *name)		/* Name of the style to retrieve. NULL or empty
+    CONST char *name)		/* Name of the style to retrieve. NULL or empty
 				 * means the default system style. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashEntry *entryPtr;
     Style *stylePtr;
@@ -1366,7 +1370,7 @@ Tk_GetStyle(
 	}
 	return (Tk_Style) NULL;
     }
-    stylePtr = Tcl_GetHashValue(entryPtr);
+    stylePtr = (Style *) Tcl_GetHashValue(entryPtr);
 
     return (Tk_Style) stylePtr;
 }
@@ -1413,8 +1417,10 @@ Tk_AllocStyleFromObj(
 
     if (objPtr->typePtr != &styleObjType) {
 	SetStyleFromAny(interp, objPtr);
+	stylePtr = (Style *) objPtr->internalRep.otherValuePtr;
+    } else {
+	stylePtr = (Style *) objPtr->internalRep.otherValuePtr;
     }
-    stylePtr = objPtr->internalRep.otherValuePtr;
 
     return (Tk_Style) stylePtr;
 }
@@ -1446,7 +1452,7 @@ Tk_GetStyleFromObj(
 	SetStyleFromAny(NULL, objPtr);
     }
 
-    return objPtr->internalRep.otherValuePtr;
+    return (Tk_Style) objPtr->internalRep.otherValuePtr;
 }
 
 /*
@@ -1497,11 +1503,11 @@ SetStyleFromAny(
     name = Tcl_GetString(objPtr);
     typePtr = objPtr->typePtr;
     if ((typePtr != NULL) && (typePtr->freeIntRepProc != NULL)) {
-	typePtr->freeIntRepProc(objPtr);
+	(*typePtr->freeIntRepProc)(objPtr);
     }
 
     objPtr->typePtr = &styleObjType;
-    objPtr->internalRep.otherValuePtr = Tk_GetStyle(interp, name);
+    objPtr->internalRep.otherValuePtr = (VOID *) Tk_GetStyle(interp, name);
 
     return TCL_OK;
 }
@@ -1545,8 +1551,7 @@ DupStyleObjProc(
     Tcl_Obj *dupObjPtr)		/* The object we are copying to. */
 {
     dupObjPtr->typePtr = srcObjPtr->typePtr;
-    dupObjPtr->internalRep.otherValuePtr =
-	    srcObjPtr->internalRep.otherValuePtr;
+    dupObjPtr->internalRep.otherValuePtr=srcObjPtr->internalRep.otherValuePtr;
 }
 
 /*

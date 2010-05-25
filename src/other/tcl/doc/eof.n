@@ -16,6 +16,7 @@ eof \- Check for end of file condition on channel
 .SH SYNOPSIS
 \fBeof \fIchannelId\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 Returns 1 if an end of file condition occurred during the most
@@ -27,9 +28,7 @@ Tcl standard channel (\fBstdin\fR, \fBstdout\fR, or \fBstderr\fR),
 the return value from an invocation of \fBopen\fR or \fBsocket\fR, or
 the result of a channel creation command provided by a Tcl extension.
 .SH EXAMPLES
-.PP
 Read and print out the contents of a file line-by-line:
-.PP
 .CS
 set f [open somefile.txt]
 while {1} {
@@ -43,7 +42,6 @@ while {1} {
 .CE
 .PP
 Read and print out the contents of a file by fixed-size records:
-.PP
 .CS
 set f [open somefile.dat]
 fconfigure $f -translation binary
@@ -57,7 +55,9 @@ while {1} {
     puts "Read record: $record"
 }
 .CE
+
 .SH "SEE ALSO"
 file(n), open(n), close(n), fblocked(n), Tcl_StandardChannels(3)
+
 .SH KEYWORDS
 channel, end of file

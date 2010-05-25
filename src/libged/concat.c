@@ -239,7 +239,7 @@ ged_get_new_name(const char		*name,
     ptr = Tcl_CreateHashEntry( name_tbl, name, &new );
 
     if ( !new ) {
-	return( (char *)Tcl_GetHashValue( ptr ) );
+	return (char *)Tcl_GetHashValue( ptr );
     }
 
     bu_vls_init( &new_name );
@@ -323,7 +323,7 @@ ged_get_new_name(const char		*name,
     (void)Tcl_CreateHashEntry( used_names_tbl, ret_name, &new );
     bu_vls_free( &new_name );
 
-    return( ret_name );
+    return ret_name;
 }
 
 /**
@@ -432,7 +432,7 @@ ged_copy_object(struct ged		*gedp,
     if ( !new_name ) {
 	new_name = input_dp->d_namep;
     }
-    if ( (new_dp = db_diradd( curr_dbip, new_name, -1L, 0, input_dp->d_flags,
+    if ( (new_dp = db_diradd( curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
 			      (genptr_t)&input_dp->d_minor_type ) ) == DIR_NULL ) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",

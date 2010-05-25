@@ -13,8 +13,11 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require tcltest 2.1
-namespace import ::tcltest::test
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2.1
+    namespace import -force ::tcltest::test
+}
+
 ::tcltest::loadTestedCommands
 
 # ----------------------------------------------------------------------
@@ -123,7 +126,6 @@ test inherit-1.7 {destruction ok if destructors are missing} {
     set ::test_cd_watch ""
     list [itcl::delete object test_cd_skip0] [set ::test_cd_watch]
 } {{} {{skip destruct} {bar destruct} {geek destruct}}}
-
 
 test inherit-1.8 {errors during construction are cleaned up and reported} {
     global errorInfo test_cd_watch
@@ -565,8 +567,6 @@ test inherit-7.4 {cannot have more than one inherit statement} {
         }
     } msg] $msg
 } {1 {inheritance "test_inherit_base1 " already defined for class "::bogus"}}
-
-::itcl::delete class test_inherit_base1 test_inherit_base2
 
 # ----------------------------------------------------------------------
 #  Multiple base class error detection

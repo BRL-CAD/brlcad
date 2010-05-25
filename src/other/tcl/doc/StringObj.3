@@ -62,6 +62,7 @@ void
 .sp
 void
 \fBTcl_AppendStringsToObjVA\fR(\fIobjPtr, argList\fR)
+.VS 8.5
 .sp
 void
 \fBTcl_AppendLimitedToObj\fR(\fIobjPtr, bytes, length, limit, ellipsis\fR)
@@ -75,8 +76,9 @@ int
 Tcl_Obj *
 \fBTcl_ObjPrintf\fR(\fIformat, ...\fR)
 .sp
-void
+int
 \fBTcl_AppendPrintfToObj\fR(\fIobjPtr, format, ...\fR)
+.VE 8.5
 .sp
 void
 \fBTcl_SetObjLength\fR(\fIobjPtr, newLength\fR)
@@ -133,9 +135,7 @@ An argument list which must have been initialised using
 Maximum number of bytes to be appended.
 .AP "const char" *ellipsis in
 Suffix to append when the limit leads to string truncation.
-If NULL is passed then the suffix
-.QW "..."
-is used.
+If NULL is passed then the suffix "..." is used.
 .AP "const char" *format in
 Format control string including % conversion specifiers.
 .AP int objc in
@@ -146,6 +146,7 @@ The array of objects to format or concatenate.
 New length for the string value of \fIobjPtr\fR, not including the
 final null character.
 .BE
+
 .SH DESCRIPTION
 .PP
 The procedures described in this manual entry allow Tcl objects to
@@ -252,6 +253,7 @@ must be a NULL pointer to indicate the end of the list.
 except that instead of taking a variable number of arguments it takes an
 argument list.
 .PP
+.VS 8.5
 \fBTcl_AppendLimitedToObj\fR is similar to \fBTcl_AppendToObj\fR
 except that it imposes a limit on how many bytes are appended.
 This can be handy when the string to be appended might be
@@ -275,11 +277,9 @@ bytes is necessary to append only whole multi-byte characters.
 \fBTcl_Format\fR is the C-level interface to the engine of the \fBformat\fR
 command.  The actual command procedure for \fBformat\fR is little more
 than
-.PP
 .CS
-\fBTcl_Format\fR(interp, \fBTcl_GetString\fR(objv[1]), objc-2, objv+2);
+Tcl_Format(interp, Tcl_GetString(objv[1]), objc-2, objv+2);
 .CE
-.PP
 The \fIobjc\fR Tcl_Obj values in \fIobjv\fR are formatted into a string
 according to the conversion specification in \fIformat\fR argument, following
 the documentation for the \fBformat\fR command.  The resulting formatted
@@ -289,26 +289,22 @@ returned, and an error message is recorded in \fIinterp\fR, if \fIinterp\fR
 is non-NULL.
 .PP
 \fBTcl_AppendFormatToObj\fR is an appending alternative form
-of \fBTcl_Format\fR with functionality equivalent to:
-.PP
+of \fBTcl_Format\fR with functionality equivalent to
 .CS
-Tcl_Obj *newPtr = \fBTcl_Format\fR(interp, format, objc, objv);
+Tcl_Obj *newPtr = Tcl_Format(interp, format, objc, objv);
 if (newPtr == NULL) return TCL_ERROR;
-\fBTcl_AppendObjToObj\fR(objPtr, newPtr);
+Tcl_AppendObjToObj(objPtr, newPtr);
 return TCL_OK;
 .CE
-.PP
 but with greater convenience and efficiency when the appending
 functionality is needed.
 .PP
 \fBTcl_ObjPrintf\fR serves as a replacement for the common sequence
-.PP
 .CS
 char buf[SOME_SUITABLE_LENGTH];
 sprintf(buf, format, ...);
-\fBTcl_NewStringObj\fR(buf, -1);
+Tcl_NewStringObj(buf, -1);
 .CE
-.PP
 but with greater convenience and no need to 
 determine \fBSOME_SUITABLE_LENGTH\fR. The formatting is done with the same
 core formatting engine used by \fBTcl_Format\fR.  This means the set of
@@ -321,26 +317,23 @@ assumption that C code is more likely to know how many bytes it is
 passing around than the number of encoded characters those bytes happen
 to represent.  The variable number of arguments passed in should be of
 the types that would be suitable for passing to \fBsprintf\fR.  Note in
-this example usage, \fIx\fR is of type \fBint\fR.
-.PP
+this example usage, \fIx\fR is of type \fBlong\fR.
 .CS
-int x = 5;
-Tcl_Obj *objPtr = \fBTcl_ObjPrintf\fR("Value is %d", x);
+long x = 5;
+Tcl_Obj *objPtr = Tcl_ObjPrintf("Value is %d", x);
 .CE
-.PP
 If the value of \fIformat\fR contains internal inconsistencies or invalid
 specifier formats, the formatted string result produced by
 \fBTcl_ObjPrintf\fR will be an error message describing the error.
 .PP
 \fBTcl_AppendPrintfToObj\fR is an appending alternative form
 of \fBTcl_ObjPrintf\fR with functionality equivalent to
-.PP
 .CS
-\fBTcl_AppendObjToObj\fR(objPtr, \fBTcl_ObjPrintf\fR(format, ...));
+Tcl_AppendObjToObj(objPtr, Tcl_ObjPrintf(format, ...));
 .CE
-.PP
 but with greater convenience and efficiency when the appending
 functionality is needed.
+.VE 8.5
 .PP
 The \fBTcl_SetObjLength\fR procedure changes the length of the
 string value of its \fIobjPtr\fR argument.  If the \fInewLength\fR
@@ -376,8 +369,10 @@ white space, then that object is ignored entirely. This white-space
 removal was added to make the output of the \fBconcat\fR command
 cleaner-looking. \fBTcl_ConcatObj\fR returns a pointer to a
 newly-created object whose ref count is zero.
+
 .SH "SEE ALSO"
-Tcl_NewObj(3), Tcl_IncrRefCount(3), Tcl_DecrRefCount(3), format(n), sprintf(3)
+Tcl_NewObj, Tcl_IncrRefCount, Tcl_DecrRefCount, format, sprintf
+
 .SH KEYWORDS
 append, internal representation, object, object type, string object,
 string type, string representation, concat, concatenate, unicode

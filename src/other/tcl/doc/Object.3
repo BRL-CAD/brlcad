@@ -35,6 +35,7 @@ int
 Points to an object;
 must have been the result of a previous call to \fBTcl_NewObj\fR.
 .BE
+
 .SH INTRODUCTION
 .PP
 This man page presents an overview of Tcl objects and how they are used.
@@ -109,30 +110,28 @@ by defining their own \fBTcl_ObjType\fR structs.
 .PP
 Each Tcl object is represented by a \fBTcl_Obj\fR structure
 which is defined as follows.
-.PP
 .CS
 typedef struct Tcl_Obj {
-    int \fIrefCount\fR;
-    char *\fIbytes\fR;
-    int \fIlength\fR;
-    const Tcl_ObjType *\fItypePtr\fR;
-    union {
-        long \fIlongValue\fR;
-        double \fIdoubleValue\fR;
-        void *\fIotherValuePtr\fR;
-        Tcl_WideInt \fIwideValue\fR;
-        struct {
-            void *\fIptr1\fR;
-            void *\fIptr2\fR;
-        } \fItwoPtrValue\fR;
-        struct {
-            void *\fIptr\fR;
-            unsigned long \fIvalue\fR;
-        } \fIptrAndLongRep\fR;
-    } \fIinternalRep\fR;
-} \fBTcl_Obj\fR;
+        int \fIrefCount\fR;
+        char *\fIbytes\fR;
+        int \fIlength\fR;
+        Tcl_ObjType *\fItypePtr\fR;
+        union {
+                long \fIlongValue\fR;
+                double \fIdoubleValue\fR;
+                void *\fIotherValuePtr\fR;
+                Tcl_WideInt \fIwideValue\fR;
+                struct {
+                        void *\fIptr1\fR;
+                        void *\fIptr2\fR;
+                } \fItwoPtrValue\fR;
+                struct {
+                        void *\fIptr\fR;
+                        unsigned long \fIvalue\fR;
+                } \fIptrAndLongRep\fR;
+        } \fIinternalRep\fR;
+} Tcl_Obj;
 .CE
-.PP
 The \fIbytes\fR and the \fIlength\fR members together hold
 an object's UTF-8 string representation,
 which is a \fIcounted string\fR not containing null bytes (UTF-8 null
@@ -234,26 +233,20 @@ to see how to create a new object type.
 .PP
 As an example of the lifetime of an object,
 consider the following sequence of commands:
-.PP
 .CS
 \fBset x 123\fR
 .CE
-.PP
 This assigns to \fIx\fR an untyped object whose
 \fIbytes\fR member points to \fB123\fR and \fIlength\fR member contains 3.
 The object's \fItypePtr\fR member is NULL.
-.PP
 .CS
 \fBputs "x is $x"\fR
 .CE
-.PP
 \fIx\fR's string representation is valid (since \fIbytes\fR is non-NULL)
 and is fetched for the command.
-.PP
 .CS
 \fBincr x\fR
 .CE
-.PP
 The \fBincr\fR command first gets an integer from \fIx\fR's object
 by calling \fBTcl_GetIntFromObj\fR.
 This procedure checks whether the object is already an integer object.
@@ -268,11 +261,9 @@ then invalidates its string representation
 (by calling \fBTcl_InvalidateStringRep\fR)
 since the string representation
 no longer corresponds to the internal representation.
-.PP
 .CS
 \fBputs "x is now $x"\fR
 .CE
-.PP
 The string representation of \fIx\fR's object is needed
 and is recomputed.
 The string representation is now \fB124\fR
@@ -334,8 +325,8 @@ by inserting \fIobjc-3\fR new elements before \fIindex\fR.
 .PP
 .CS
 listPtr = objv[1];
-if (\fBTcl_IsShared\fR(listPtr)) {
-    listPtr = \fBTcl_DuplicateObj\fR(listPtr);
+if (Tcl_IsShared(listPtr)) {
+    listPtr = Tcl_DuplicateObj(listPtr);
 }
 result = Tcl_ListObjReplace(interp, listPtr, index, 0,
         (objc-3), &(objv[3]));

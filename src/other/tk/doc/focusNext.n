@@ -20,6 +20,7 @@ tk_focusNext, tk_focusPrev, tk_focusFollowsMouse \- Utility procedures for manag
 .sp
 \fBtk_focusFollowsMouse\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBtk_focusNext\fR is a utility procedure used for keyboard traversal.
@@ -55,8 +56,6 @@ Note: at present there is no built-in support for returning the
 application to an explicit focus model;  to do this you will have
 to write a script that deletes the bindings created by
 \fBtk_focusFollowsMouse\fR.
+
 .SH KEYWORDS
 focus, keyboard traversal, top-level
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

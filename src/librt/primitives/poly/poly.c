@@ -90,7 +90,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
     if (stp->st_specific == (genptr_t)0) {
 	bu_log("pg(%s):  no faces\n", stp->st_name);
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
 
     {
@@ -109,7 +109,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -148,7 +148,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 	bu_free((char *)trip, "getstruct tri_specific");
 	if (RT_G_DEBUG & DEBUG_ARB8)
 	    bu_log("pg(%s): degenerate facet\n", stp->st_name);
-	return(0);			/* BAD */
+	return 0;			/* BAD */
     }
 
     /* wn is a normal of not necessarily unit length.
@@ -161,7 +161,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (struct tri_specific *)stp->st_specific;
     stp->st_specific = (genptr_t)trip;
-    return(3);				/* OK */
+    return 3;				/* OK */
 }
 
 
@@ -185,7 +185,9 @@ rt_pg_print(const struct soltab *stp)
 	VPRINT("BA x CA", trip->tri_wn);
 	VPRINT("Normal", trip->tri_N);
 	bu_log("\n");
-    } while ((trip = trip->tri_forw));
+
+	trip = trip->tri_forw;
+    } while (trip);
 }
 
 
@@ -273,7 +275,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	hp++;
     }
     if (nhits == 0)
-	return(0);		/* MISS */
+	return 0;		/* MISS */
 
     /* Sort hits, Near to Far */
     rt_hitsort(hits, nhits);
@@ -409,7 +411,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
     }
-    return(nhits);			/* HIT */
+    return nhits;			/* HIT */
 }
 
 
@@ -471,7 +473,7 @@ rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uv
 int
 rt_pg_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -479,7 +481,7 @@ rt_pg_class(void)
  * R T _ P G _ P L O T
  */
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i;
     size_t p;	/* current polygon number */
@@ -501,7 +503,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 			 BN_VLIST_LINE_DRAW);
 	}
     }
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -511,7 +513,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * Convert to vlist, draw as polygons.
  */
 int
-rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i;
     size_t p;	/* current polygon number */
@@ -541,7 +543,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
 	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BN_VLIST_POLY_END);
     }
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -565,7 +567,7 @@ rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * R T _ P G _ T E S S
  */
 int
-rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     int i;
     struct shell *s;
@@ -631,7 +633,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     bu_free((char *)verts, "pg_tess verts[]");
     bu_free((char *)vertp, "pg_tess vertp[]");
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -657,7 +659,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_P_HEAD) {
 	bu_log("rt_pg_import4: defective header record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -708,7 +710,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	/* XXX free storage */
 	return -1;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -730,7 +732,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_POLY) return(-1);
+    if (ip->idb_type != ID_POLY) return -1;
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
@@ -749,7 +751,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	if (pp->npts < 3 || pp->npts > 5) {
 	    bu_log("rt_pg_export4:  unable to support npts=%d\n",
 		   pp->npts);
-	    return(-1);
+	    return -1;
 	}
 
 	rec[rno].q.q_id = ID_P_DATA;
@@ -761,7 +763,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	    VMOVE(rec[rno].q.q_norms[i], &pp->norms[i*3]);
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -781,7 +783,7 @@ rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (!ep)
 	return -1;
@@ -830,7 +832,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	bu_vls_strcat(str, buf);
     }
 
-    if (!verbose) return(0);
+    if (!verbose) return 0;
 
     /* Print out all the vertices of all the faces */
     for (i=0; i < pgp->npoly; i++) {
@@ -854,7 +856,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -898,7 +900,7 @@ rt_pg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

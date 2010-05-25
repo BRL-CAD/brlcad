@@ -3,6 +3,11 @@
 #
 # Combobox bindings.
 #
+# Each combobox $cb has a child $cb.popdown, which contains
+# a listbox $cb.popdown.l and a scrollbar.  The listbox -listvariable
+# is set to a namespace variable, which is used to synchronize the
+# combobox values with the listbox values.
+#
 # <<NOTE-WM-TRANSIENT>>:
 #
 #	Need to set [wm transient] just before mapping the popdown
@@ -55,9 +60,12 @@ bind TCombobox <Shift-ButtonPress-1>	{ ttk::combobox::Press "s" %W %x %y }
 bind TCombobox <Double-ButtonPress-1> 	{ ttk::combobox::Press "2" %W %x %y }
 bind TCombobox <Triple-ButtonPress-1> 	{ ttk::combobox::Press "3" %W %x %y }
 bind TCombobox <B1-Motion>		{ ttk::combobox::Drag %W %x }
-bind TCombobox <Motion>			{ ttk::combobox::Motion %W %x %y }
 
-ttk::bindMouseWheel TCombobox [list ttk::combobox::Scroll %W]
+bind TCombobox <MouseWheel> 	{ ttk::combobox::Scroll %W [expr {%D/-120}] }
+if {[tk windowingsystem] eq "x11"} {
+    bind TCombobox <ButtonPress-4>	{ ttk::combobox::Scroll %W -1 }
+    bind TCombobox <ButtonPress-5>	{ ttk::combobox::Scroll %W  1 }
+}
 
 bind TCombobox <<TraverseIn>> 		{ ttk::combobox::TraverseIn %W }
 
@@ -144,19 +152,6 @@ proc ttk::combobox::Drag {w x}  {
     }
 }
 
-## Motion --
-#	Set cursor.
-#
-proc ttk::combobox::Motion {w x y} {
-    if {   [$w identify $x $y] eq "textarea"
-        && [$w instate {!readonly !disabled}]
-    } {
-	ttk::setCursor $w text
-    } else {
-	ttk::setCursor $w ""
-    }
-}
-
 ## TraverseIn -- receive focus due to keyboard navigation
 #	For editable comboboxes, set the selection and insert cursor.
 #
@@ -221,9 +216,9 @@ proc ttk::combobox::LBTab {lb dir} {
 	LBSelect $lb
 	Unpost $cb
 	# The [grab release] call in [Unpost] queues events that later
-	# re-set the focus (@@@ NOTE: this might not be true anymore).
-	# Set new focus later:
-	after 0 [list ttk::traverseTo $newFocus]
+	# re-set the focus.  [update] to make sure these get processed first:
+	update
+	ttk::traverseTo $newFocus
     }
 }
 
@@ -270,9 +265,7 @@ proc ttk::combobox::PopdownWindow {cb} {
     variable scrollbar
 
     if {![winfo exists $cb.popdown]} {
-	set poplevel [PopdownToplevel $cb.popdown]
-
-        set popdown [ttk::frame $poplevel.f -style ComboboxPopdownFrame]
+	set popdown [PopdownToplevel $cb.popdown]
 
 	$scrollbar $popdown.sb \
 	    -orient vertical -command [list $popdown.l yview]
@@ -287,14 +280,9 @@ proc ttk::combobox::PopdownWindow {cb} {
 	bindtags $popdown.l \
 	    [list $popdown.l ComboboxListbox Listbox $popdown all]
 
-	grid $popdown.l -row 0 -column 0 -padx {1 0} -pady 1 -sticky nsew
-        grid $popdown.sb -row 0 -column 1 -padx {0 1} -pady 1 -sticky ns
+	grid $popdown.l $popdown.sb -sticky news
 	grid columnconfigure $popdown 0 -weight 1
 	grid rowconfigure $popdown 0 -weight 1
-
-        grid $popdown -sticky news -padx 0 -pady 0
-        grid rowconfigure $poplevel 0 -weight 1
-        grid columnconfigure $poplevel 0 -weight 1
     }
     return $cb.popdown
 }
@@ -309,13 +297,12 @@ proc ttk::combobox::PopdownToplevel {w} {
     switch -- [tk windowingsystem] {
 	default -
 	x11 {
-	    $w configure -relief flat -borderwidth 0
+	    $w configure -relief solid -borderwidth 1
 	    wm overrideredirect $w true
 	}
 	win32 {
-	    $w configure -relief flat -borderwidth 0
+	    $w configure -relief solid -borderwidth 1
 	    wm overrideredirect $w true
-	    wm attributes $w -topmost 1
 	}
 	aqua {
 	    $w configure -relief solid -borderwidth 0
@@ -334,7 +321,7 @@ proc ttk::combobox::PopdownToplevel {w} {
 proc ttk::combobox::ConfigureListbox {cb} {
     variable Values
 
-    set popdown [PopdownWindow $cb].f
+    set popdown [PopdownWindow $cb]
     set values [$cb cget -values]
     set current [$cb current]
     if {$current < 0} {
@@ -349,10 +336,8 @@ proc ttk::combobox::ConfigureListbox {cb} {
     if {$height > [$cb cget -height]} {
 	set height [$cb cget -height]
     	grid $popdown.sb
-        grid configure $popdown.l -padx {1 0}
     } else {
 	grid remove $popdown.sb
-        grid configure $popdown.l -padx 1
     }
     $popdown.l configure -height $height
 }
@@ -397,7 +382,7 @@ proc ttk::combobox::Post {cb} {
 
     set popdown [PopdownWindow $cb]
     ConfigureListbox $cb
-    update idletasks	;# needed for geometry propagation.
+    update idletasks
     PlacePopdown $cb $popdown
     # See <<NOTE-WM-TRANSIENT>>
     switch -- [tk windowingsystem] {
@@ -425,7 +410,7 @@ proc ttk::combobox::Unpost {cb} {
 #	Return the combobox main widget that owns the listbox.
 #
 proc ttk::combobox::LBMaster {lb} {
-    winfo parent [winfo parent [winfo parent $lb]]
+    winfo parent [winfo parent $lb]
 }
 
 ## LBSelect $lb --

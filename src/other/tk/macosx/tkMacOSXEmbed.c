@@ -8,17 +8,16 @@
  *	Tk application is allowed on the Macintosh.
  *
  * Copyright (c) 1996-1997 Sun Microsystems, Inc.
- * Copyright 2001-2009, Apple Inc.
- * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001, Apple Computer, Inc.
+ * Copyright (c) 2006-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  *  RCS: @(#) $Id$
  */
 
-#include "tkMacOSXPrivate.h"
-#include "tkBusy.h"
+#include "tkMacOSXInt.h"
 
 /*
  * One of the following structures exists for each container in this
@@ -146,10 +145,10 @@ TkpMakeWindow(
 	winPtr->privatePtr = macWin;
 	macWin->visRgn = NULL;
 	macWin->aboveVisRgn = NULL;
-	macWin->drawRgn = NULL;
+	macWin->drawRect = CGRectNull;
 	macWin->referenceCount = 0;
 	macWin->flags = TK_CLIP_INVALID;
-	macWin->view = nil;
+	macWin->grafPtr = NULL;
 	macWin->context = NULL;
 	macWin->size = CGSizeZero;
 	if (Tk_IsTopLevel(macWin->winPtr)) {
@@ -202,7 +201,7 @@ TkpUseWindow(
 				 * string is bogus. */
     Tk_Window tkwin,		/* Tk window that does not yet have an
 				 * associated X window. */
-    const char *string)		/* String identifying an X window to use for
+    CONST char *string)		/* String identifying an X window to use for
 				 * tkwin; must be an integer value. */
 {
     TkWindow *winPtr = (TkWindow *) tkwin;
@@ -280,12 +279,12 @@ TkpUseWindow(
      * correctly find the container's port.
      */
 
-    macWin->view = nil;
+    macWin->grafPtr = NULL;
     macWin->context = NULL;
     macWin->size = CGSizeZero;
     macWin->visRgn = NULL;
     macWin->aboveVisRgn = NULL;
-    macWin->drawRgn = NULL;
+    macWin->drawRect = CGRectNull;
     macWin->referenceCount = 0;
     macWin->flags = TK_CLIP_INVALID;
     macWin->toplevel = macWin;
@@ -313,7 +312,7 @@ TkpUseWindow(
 	 */
 
 	if (tkMacOSXEmbedHandler == NULL ||
-		tkMacOSXEmbedHandler->registerWinProc((long) parent,
+		tkMacOSXEmbedHandler->registerWinProc((int) parent,
 		(Tk_Window) winPtr) != TCL_OK) {
 	    Tcl_AppendResult(interp, "The window ID ", string,
 		    " does not correspond to a valid Tk Window.", NULL);
@@ -564,7 +563,7 @@ TkpTestembedCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     int all;
     Container *containerPtr;
@@ -643,7 +642,6 @@ TkpRedirectKeyEvent(
     XEvent *eventPtr)		/* X event to redirect (should be KeyPress or
 				 * KeyRelease). */
 {
-    /* TODO: Implement this or decide it definitely needs no implementation */
 }
 
 /*
@@ -1089,7 +1087,7 @@ EmbedWindowDeleted(
 		XEvent event;
 
 		event.xany.serial =
-			LastKnownRequestProcessed(Tk_Display(containerPtr->parentPtr));
+			Tk_Display(containerPtr->parentPtr)->request;
 		event.xany.send_event = False;
 		event.xany.display = Tk_Display(containerPtr->parentPtr);
 
@@ -1120,66 +1118,3 @@ EmbedWindowDeleted(
 	ckfree((char *) containerPtr);
     }
 }
-
-/*
- *----------------------------------------------------------------------
- *
- * TkpShowBusyWindow, TkpHideBusyWindow, TkpMakeTransparentWindowExist,
- * TkpCreateBusy --
- *
- *	Portability layer for busy windows. Holds platform-specific gunk for
- *	the [tk busy] command, which is currently a dummy implementation for
- *	OSX/Aqua. The individual functions are supposed to do the following:
- *
- * TkpShowBusyWindow --
- *	Make the busy window appear.
- *
- * TkpHideBusyWindow --
- *	Make the busy window go away.
- *
- * TkpMakeTransparentWindowExist --
- *	Actually make a transparent window.
- *
- * TkpCreateBusy --
- *	Creates the platform-specific part of a busy window structure.
- *
- *----------------------------------------------------------------------
- */
-
-void
-TkpShowBusyWindow(
-    TkBusy busy)
-{
-}
-
-void
-TkpHideBusyWindow(
-    TkBusy busy)
-{
-}
-
-void
-TkpMakeTransparentWindowExist(
-    Tk_Window tkwin,		/* Token for window. */
-    Window parent)		/* Parent window. */
-{
-}
-
-void
-TkpCreateBusy(
-    Tk_FakeWin *winPtr,
-    Tk_Window tkRef,
-    Window* parentPtr,
-    Tk_Window tkParent,
-    TkBusy busy)
-{
-}
-
-/*
- * Local Variables:
- * mode: c
- * c-basic-offset: 4
- * fill-column: 79
- * coding: utf-8
- * End:
- */

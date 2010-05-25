@@ -15,6 +15,7 @@ tk_popup \- Post a popup menu
 .SH SYNOPSIS
 \fBtk_popup \fImenu x y \fR?\fIentry\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This procedure posts a menu at a given position on the screen and
@@ -28,7 +29,6 @@ Otherwise \fIentry\fR gives the index of an entry in \fImenu\fR and
 the menu will be positioned so that the entry is positioned over
 the given point.
 .SH EXAMPLE
-.PP
 How to attach a simple popup menu to a widget.
 .CS
 # Create a menu
@@ -42,10 +42,9 @@ pack [label .l \-text "Click me!"]
 # Arrange for the menu to pop up when the label is clicked
 bind .l <1> {\fBtk_popup\fR .popupMenu %X %Y}
 .CE
+
 .SH "SEE ALSO"
 bind(n), menu(n), tk_optionMenu(n)
+
 .SH KEYWORDS
 menu, popup
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

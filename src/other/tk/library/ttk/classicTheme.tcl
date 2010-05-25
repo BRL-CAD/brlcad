@@ -70,12 +70,6 @@ namespace eval ttk::theme::classic {
 	ttk::style configure TCombobox -padding 1
 	ttk::style map TCombobox -fieldbackground \
 		[list readonly $colors(-frame) disabled $colors(-frame)]
-	ttk::style configure ComboboxPopdownFrame \
-	    -relief solid -borderwidth 1
-
-	ttk::style configure TSpinbox -arrowsize 10 -padding {2 0 10 0}
-	ttk::style map TSpinbox -fieldbackground \
-	    [list readonly $colors(-frame) disabled $colors(-frame)]
 
 	ttk::style configure TLabelframe -borderwidth 2 -relief groove
 
@@ -93,8 +87,12 @@ namespace eval ttk::theme::classic {
 
 	# Treeview:
 	ttk::style configure Heading -font TkHeadingFont -relief raised
-	ttk::style configure Treeview -background $colors(-window)
-	ttk::style map Treeview \
+	ttk::style configure Row -background $colors(-window)
+	ttk::style configure Cell -background $colors(-window)
+	ttk::style map Row \
+	    -background [list selected $colors(-selectbg)] \
+	    -foreground [list selected $colors(-selectfg)] ;
+	ttk::style map Cell \
 	    -background [list selected $colors(-selectbg)] \
 	    -foreground [list selected $colors(-selectfg)] ;
 

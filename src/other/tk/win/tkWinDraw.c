@@ -19,6 +19,7 @@
  * These macros convert between X's bizarre angle units to radians.
  */
 
+#define PI 3.14159265358979
 #define XAngleToRadians(a) ((double)(a) / 64 * PI / 180);
 
 /*
@@ -102,7 +103,7 @@ int tkpWinBltModes[] = {
  * The followng typedef is used to pass Windows GDI drawing functions.
  */
 
-typedef BOOL (CALLBACK *WinDrawFunc)(HDC dc, const POINT *points, int npoints);
+typedef BOOL (CALLBACK *WinDrawFunc)(HDC dc, CONST POINT* points, int npoints);
 
 typedef struct ThreadSpecificData {
     POINT *winPoints;		/* Array of points that is reused. */
@@ -745,7 +746,7 @@ RenderObject(
     HPEN pen,
     WinDrawFunc func)
 {
-    RECT rect = {0,0,0,0};
+    RECT rect;
     HPEN oldPen;
     HBRUSH oldBrush;
     POINT *winPoints = ConvertPoints(points, npoints, mode, &rect);
@@ -813,7 +814,7 @@ RenderObject(
 	SetPolyFillMode(dcMem, (gc->fill_rule == EvenOddRule) ? ALTERNATE
 		: WINDING);
 	oldMemBrush = SelectObject(dcMem, CreateSolidBrush(gc->foreground));
-	func(dcMem, winPoints, npoints);
+	(*func)(dcMem, winPoints, npoints);
 	BitBlt(dc, rect.left, rect.top, width, height, dcMem, 0, 0, COPYFG);
 
 	/*
@@ -825,7 +826,7 @@ RenderObject(
 	if (gc->fill_style == FillOpaqueStippled) {
 	    DeleteObject(SelectObject(dcMem,
 		    CreateSolidBrush(gc->background)));
-	    func(dcMem, winPoints, npoints);
+	    (*func)(dcMem, winPoints, npoints);
 	    BitBlt(dc, rect.left, rect.top, width, height, dcMem, 0, 0,
 		    COPYBG);
 	}
@@ -841,7 +842,9 @@ RenderObject(
 
 	SetPolyFillMode(dc, (gc->fill_rule == EvenOddRule) ? ALTERNATE
 		: WINDING);
-	func(dc, winPoints, npoints);
+
+	(*func)(dc, winPoints, npoints);
+
 	SelectObject(dc, oldPen);
     }
     DeleteObject(SelectObject(dc, oldBrush));

@@ -35454,7 +35454,7 @@ test clock-33.2 {clock clicks tests} {
 } {1}
 test clock-33.3 {clock clicks tests} {
     list [catch {clock clicks foo} msg] $msg
-} {1 {bad switch "foo": must be -milliseconds or -microseconds}}
+} {1 {bad option "foo": must be -milliseconds or -microseconds}}
 test clock-33.4 {clock clicks tests} {
     expr [clock clicks -milliseconds]+1
     concat {}
@@ -35489,10 +35489,10 @@ test clock-33.5a {clock tests, millisecond timing test} {
 } {ok}
 test clock-33.6 {clock clicks, milli with too much abbreviation} {
     list [catch { clock clicks ? } msg] $msg
-} {1 {bad switch "?": must be -milliseconds or -microseconds}}
+} {1 {bad option "?": must be -milliseconds or -microseconds}}
 test clock-33.7 {clock clicks, milli with too much abbreviation} {
     list [catch { clock clicks - } msg] $msg
-} {1 {ambiguous switch "-": must be -milliseconds or -microseconds}}
+} {1 {ambiguous option "-": must be -milliseconds or -microseconds}}
 
 test clock-33.8 {clock clicks test, microsecond timing test} {
     # This test can fail on a system that is so heavily loaded that
@@ -36728,8 +36728,8 @@ test clock-65.1 {clock add, bad option [Bug 2481670]} {*}{
     -body {
 	clock add 0 1 year -foo bar
     }
-    -match glob
     -returnCodes error
+    -match glob
     -result {bad switch "-foo"*}
 }
 

@@ -140,7 +140,7 @@ rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (rtip) RT_CK_RTI(rtip);
 
     stp->st_specific = (genptr_t)NULL;
-    return(0);
+    return 0;
 }
 
 
@@ -257,7 +257,7 @@ rt_sketch_free(struct soltab *stp)
 int
 rt_sketch_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -368,7 +368,7 @@ rt_sketch_contains(struct rt_sketch_internal *sk, point2d_t pt)
 		break;
 	}
     }
-    return (hits%2);
+    return hits%2;
 }
 
 
@@ -875,7 +875,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 	    break;
     }
 
-    return(ret);
+    return ret;
 }
 
 
@@ -904,7 +904,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
 	bu_mem_barriercheck();
     }
 
-    return(ret);
+    return ret;
 }
 
 
@@ -912,7 +912,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
  * R T _ S K E T C H _ P L O T
  */
 int
-rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     struct rt_sketch_internal *sketch_ip;
     int ret;
@@ -923,13 +923,14 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
-    if ((ret=curve_to_vlist(vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->skt_curve))) {
+    ret=curve_to_vlist(vhead, ttol, sketch_ip->V, sketch_ip->u_vec, sketch_ip->v_vec, sketch_ip, &sketch_ip->skt_curve);
+    if (ret) {
 	myret--;
 	bu_log("WARNING: Errors in sketch (%d segments reference non-existent vertices)\n",
 	       ret);
     }
 
-    return(myret);
+    return myret;
 }
 
 
@@ -941,13 +942,13 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (r) NMG_CK_REGION(*r);
     if (m) NMG_CK_MODEL(m);
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(-1);
+    return -1;
 }
 
 
@@ -975,7 +976,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     /* Check record type */
     if (rp->u_id != DBID_SKETCH) {
 	bu_log("rt_sketch_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
@@ -1105,7 +1106,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	bu_mem_barriercheck();
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1126,7 +1127,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SKETCH) return(-1);
+    if (ip->idb_type != ID_SKETCH) return -1;
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
@@ -1288,7 +1289,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	bu_mem_barriercheck();
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1444,7 +1445,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	bu_mem_barriercheck();
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1470,7 +1471,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_SKETCH) return(-1);
+    if (ip->idb_type != ID_SKETCH) return -1;
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
@@ -1628,7 +1629,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	bu_mem_barriercheck();
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1665,7 +1666,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
     bu_vls_strcat(str, buf);
 
     if (!verbose)
-	return(0);
+	return 0;
 
     if (sketch_ip->vert_count) {
 	bu_vls_strcat(str, "\tVertices:\n\t");
@@ -1828,7 +1829,7 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -2019,7 +2020,7 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 	bu_mem_barriercheck();
     }
 
-    return(out);
+    return out;
 }
 
 
@@ -2077,7 +2078,7 @@ curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
     }
     bu_vls_strcat(vls, " }");	/* end of segment list */
 
-    return(0);
+    return 0;
 }
 
 
@@ -2156,8 +2157,9 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
     /* get number of segments */
     seg_count = 0;
-    if ((ret=Tcl_ListObjLength(interp, seg_list, &seg_count))) {
-	return(ret);
+    ret=Tcl_ListObjLength(interp, seg_list, &seg_count);
+    if (ret) {
+	return ret;
     }
 
     if (seg_count) {
@@ -2174,15 +2176,18 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 	/* get the next segment */
-	if ((ret=Tcl_ListObjIndex(interp, seg_list, j, &seg)))
-	    return(ret);
+	ret=Tcl_ListObjIndex(interp, seg_list, j, &seg);
+	if (ret)
+	    return ret;
 
-	if ((ret=Tcl_ListObjLength(interp, seg, &seg_len)))
-	    return(ret);
+	ret=Tcl_ListObjLength(interp, seg, &seg_len);
+	if (ret)
+	    return ret;
 
 	/* get the segment type */
-	if ((ret=Tcl_ListObjIndex(interp, seg, 0, &seg_type)))
-	    return(ret);
+	ret=Tcl_ListObjIndex(interp, seg, 0, &seg_type);
+	if (ret)
+	    return ret;
 	type = Tcl_GetString(seg_type);
 
 	if (!strcmp(type, "line")) {
@@ -2190,11 +2195,13 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "lsg");
 	    for (k=1; k<seg_len; k += 2) {
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
+		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
+		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
 		switch (*elem) {
@@ -2215,11 +2222,13 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    bsg = (struct bezier_seg *)bu_calloc(1, sizeof(struct bezier_seg), "bsg");
 	    for (k=1; k<seg_len; k+= 2) {
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
+		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
+		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
 		switch (*elem) {
@@ -2235,7 +2244,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 			if (num_points != bsg->degree + 1) {
 			    Tcl_SetResult(interp, "ERROR: degree and number of control points disagree for a Bezier segment\n", TCL_STATIC);
-			    return(TCL_ERROR);
+			    return TCL_ERROR;
 			}
 		}
 	    }
@@ -2247,11 +2256,13 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 	    csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "csg");
 	    for (k=1; k<seg_len; k += 2) {
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
+		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
+		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
 		switch (*elem) {
@@ -2280,11 +2291,13 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 	    nsg = (struct nurb_seg *)bu_calloc(1, sizeof(struct nurb_seg), "nsg");
 	    for (k=1; k<seg_len; k += 2) {
-		if ((ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k, &seg_elem);
+		if (ret)
+		    return ret;
 
-		if ((ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val)))
-		    return(ret);
+		ret=Tcl_ListObjIndex(interp, seg, k+1, &seg_val);
+		if (ret)
+		    return ret;
 
 		elem = Tcl_GetString(seg_elem);
 		switch (*elem) {
@@ -2311,11 +2324,11 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 	    Tcl_ResetResult(interp);
 	    Tcl_AppendResult(interp, "ERROR: Unrecognized segment type: ",
 			     Tcl_GetString(seg), (char *)NULL);
-	    return(TCL_ERROR);
+	    return TCL_ERROR;
 	}
     }
 
-    return(TCL_OK);
+    return TCL_OK;
 }
 
 
@@ -2395,7 +2408,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 	    crv->segments = (genptr_t)NULL;
 
 	    if ((ret=get_tcl_curve(brlcad_interp, crv, tmp)) != TCL_OK)
-		return(ret);
+		return ret;
 	} else if (*argv[0] == 'V' && isdigit(*(argv[0]+1))) {
 	    /* changing a specific vertex */
 	    int vert_no;
@@ -2432,7 +2445,7 @@ rt_sketch_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

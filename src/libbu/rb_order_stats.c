@@ -54,11 +54,11 @@ _rb_select(struct bu_rb_node *root, int order, int k)
 	       root, order, k, rank);
 
     if (rank == k)
-	return (root);
+	return root;
     else if (rank > k)
-	return (_rb_select(rb_left_child(root, order), order, k));
+	return _rb_select(rb_left_child(root, order), order, k);
     else
-	return (_rb_select(rb_right_child(root, order), order, k - rank));
+	return _rb_select(rb_right_child(root, order), order, k - rank);
 }
 
 
@@ -75,7 +75,7 @@ bu_rb_select(bu_rb_tree *tree, int order, int k)
 	    bu_log("bu_rb_select(<%p>, %d, %d): k out of bounds [1, %d]\n",
 		   tree, order, k, tree->rbt_nm_nodes);
 	rb_current(tree) = rb_null(tree);
-	return (NULL);
+	return NULL;
     }
     if (tree->rbt_debug & BU_RB_DEBUG_OS)
 	bu_log("bu_rb_select(<%p>, %d, %d): root=<%p>\n",
@@ -83,7 +83,7 @@ bu_rb_select(bu_rb_tree *tree, int order, int k)
 
     rb_current(tree) = node
 	= _rb_select(rb_root(tree, order), order, k);
-    return (rb_data(node, order));
+    return rb_data(node, order);
 }
 
 
@@ -98,7 +98,7 @@ int bu_rb_rank(bu_rb_tree *tree, int order)
     RB_CKORDER(tree, order);
 
     if ((node = rb_current(tree)) == rb_null(tree))
-	return (0);
+	return 0;
 
     root = rb_root(tree, order);
     rank = rb_size(rb_left_child(node, order), order) + 1;
@@ -109,7 +109,7 @@ int bu_rb_rank(bu_rb_tree *tree, int order)
 	node = parent;
     }
 
-    return (rank);
+    return rank;
 }
 
 /** @} */

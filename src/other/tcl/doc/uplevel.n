@@ -42,20 +42,16 @@ at top-level (only global variables will be visible).
 The \fBuplevel\fR command causes the invoking procedure to disappear
 from the procedure calling stack while the command is being executed.
 In the above example, suppose \fBc\fR invokes the command
-.PP
 .CS
 \fBuplevel\fR 1 {set x 43; d}
 .CE
-.PP
 where \fBd\fR is another Tcl procedure.  The \fBset\fR command will
 modify the variable \fBx\fR in \fBb\fR's context, and \fBd\fR will execute
 at level 3, as if called from \fBb\fR.  If it in turn executes
 the command
-.PP
 .CS
 \fBuplevel\fR {set x 42}
 .CE
-.PP
 then the \fBset\fR command will modify the same variable \fBx\fR in \fBb\fR's
 context:  the procedure \fBc\fR does not appear to be on the call stack
 when \fBd\fR is executing.  The \fBinfo level\fR command may
@@ -81,7 +77,6 @@ control constructs.  This example shows how (without error handling)
 it can be used to create a \fBdo\fR command that is the counterpart of
 \fBwhile\fR except for always performing the test after running the
 loop body:
-.PP
 .CS
 proc do {body while condition} {
     if {$while ne "while"} {
@@ -99,7 +94,4 @@ proc do {body while condition} {
 .SH "SEE ALSO"
 apply(n), namespace(n), upvar(n)
 .SH KEYWORDS
-context, level, namespace, stack frame, variable
-.\" Local Variables:
-.\" mode: nroff
-.\" End:
+context, level, namespace, stack frame, variables

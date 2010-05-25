@@ -59,11 +59,4 @@ ITCL_STUB_LIB_PATH='@itcl_STUB_LIB_PATH@'
 # containing the source files, this points to the location of the sources,
 # not the location where [incr Tcl] was compiled.
 itcl_SRC_DIR='@itcl_SRC_DIR@'
-
-# String to pass to the compiler so that an extension can
-# find installed Tcl headers.
-itcl_INCLUDE_SPEC='@itcl_INCLUDE_SPEC@'
-ITCL_INCLUDE_SPEC='@itcl_INCLUDE_SPEC@'
-
-
 ITCL_SRC_DIR='@itcl_SRC_DIR@'

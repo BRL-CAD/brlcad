@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file glob.c
-    Author:		Gary S. Moss
-*/
 
 #include "common.h"
 
@@ -78,13 +75,12 @@ char	fb_file[MAX_LN] = { 0 };     /* Raster image output.		*/
 char	ir_file[MAX_LN] = { 0 };     /* IR input data.			*/
 
 /* Global buffers and pointers.						*/
-char	input_ln[BUFSIZ];
+char	input_ln[BUFSIZ] = {0};
 char	prefix[MAX_LN] = "frame";
-char	prompt[MAX_LN];
-char	version[] = "$Revision$";
-char	title[TITLE_LEN];
-char	timer[TIMER_LEN];
-char	script_file[MAX_LN];
+char	prompt[MAX_LN] = {0};
+char	title[TITLE_LEN] = {0};
+char	timer[TIMER_LEN] = {0};
+char	script_file[MAX_LN] = {0};
 char	*ged_file = NULL;
 
 /* Unit vectors representing horizontal and vertical directions of grid	*/

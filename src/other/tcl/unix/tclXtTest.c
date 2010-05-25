@@ -1,4 +1,4 @@
-/*
+/* 
  * tclXtTest.c --
  *
  *	Contains commands for Xt notifier specific tests on Unix.
@@ -11,27 +11,12 @@
  * RCS: @(#) $Id$
  */
 
-#ifndef USE_TCL_STUBS
-#   define USE_TCL_STUBS
-#endif
 #include <X11/Intrinsic.h>
 #include "tcl.h"
 
 static int	TesteventloopCmd(ClientData clientData,
-		    Tcl_Interp *interp, int argc, const char **argv);
+		    Tcl_Interp *interp, int argc, CONST char **argv);
 extern void	InitNotifier(void);
-
-/*
- * TCL_STORAGE_CLASS is set unconditionally to DLLEXPORT because the
- * Tcltest_Init declaration is in the source file itself, which is only
- * accessed when we are building a library.
- */
-
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLEXPORT
-EXTERN int		Tclxttest_Init(Tcl_Interp *interp);
-
-
 
 /*
  *----------------------------------------------------------------------
@@ -56,13 +41,13 @@ int
 Tclxttest_Init(
     Tcl_Interp *interp)		/* Interpreter for application. */
 {
-    if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
+    if (Tcl_InitStubs(interp, TCL_VERSION, 0) == NULL) {
 	return TCL_ERROR;
     }
     XtToolkitInitialize();
     InitNotifier();
     Tcl_CreateCommand(interp, "testeventloop", TesteventloopCmd,
-	    (ClientData) 0, NULL);
+            (ClientData) 0, NULL);
     return TCL_OK;
 }
 
@@ -89,7 +74,7 @@ TesteventloopCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     static int *framePtr = NULL;/* Pointer to integer on stack frame of
 				 * innermost invocation of the "wait"
@@ -97,7 +82,7 @@ TesteventloopCmd(
 
    if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
-		" option ... \"", NULL);
+                " option ... \"", NULL);
         return TCL_ERROR;
     }
     if (strcmp(argv[1], "done") == 0) {

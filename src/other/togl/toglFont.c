@@ -1,6 +1,6 @@
 /* $Id$ */
 
-/* vi:set sw=4: */
+/* vi:set sw=4 expandtab: */
 
 /* 
  * Togl - a Tk OpenGL widget
@@ -10,7 +10,7 @@
  * See the LICENSE file for copyright details.
  */
 
-/*
+/* 
  * Togl Bitmap Font support
  *
  * If bitmap font support is requested, then this file is included into
@@ -26,23 +26,20 @@
 
 #include <tkFont.h>
 
-#ifdef _WIN32
-# define snprintf _snprintf
-#endif
-
-struct Togl_BitmapFontInfo {
-    GLuint base;
-    GLuint first;
-    GLuint last;
-    int contextTag;
+struct Togl_BitmapFontInfo
+{
+    GLuint  base;
+    GLuint  first;
+    GLuint  last;
+    int     contextTag;
     /* TODO: keep original font and/or encoding */
 };
 typedef struct Togl_BitmapFontInfo Togl_BitmapFontInfo;
 
 #define BITMAP_FONT_INFO(obj) \
-		((Togl_BitmapFontInfo *) (obj)->internalRep.otherValuePtr)
+                ((Togl_BitmapFontInfo *) (obj)->internalRep.otherValuePtr)
 #define SET_BITMAP_FONT_INFO(obj) \
-		(obj)->internalRep.otherValuePtr
+                (obj)->internalRep.otherValuePtr
 
 static void Togl_FontFree(Tcl_Obj *obj);
 static void Togl_FontDup(Tcl_Obj *src, Tcl_Obj *dup);
@@ -50,53 +47,57 @@ static void Togl_FontString(Tcl_Obj *obj);
 static int Togl_FontSet(Tcl_Interp *interp, Tcl_Obj *obj);
 
 static Tcl_ObjType Togl_BitmapFontType = {
-	"Togl BitmapFont",	/* name */
-	Togl_FontFree,		/* free internal rep */
-	Togl_FontDup,		/* dup internal rep */
-	Togl_FontString,	/* update string from internal rep */
-	Togl_FontSet		/* set internal rep from string */
+    "Togl BitmapFont",          /* name */
+    Togl_FontFree,              /* free internal rep */
+    Togl_FontDup,               /* dup internal rep */
+    Togl_FontString,            /* update string from internal rep */
+    Togl_FontSet                /* set internal rep from string */
 };
 
 static int
 Togl_FontSet(Tcl_Interp *interp, Tcl_Obj *obj)
 {
-	if (interp)
-		Tcl_AppendResult(interp, "cannot (re)build object of type \"",
-					Togl_BitmapFontType.name, "\"", NULL);
-	return TCL_ERROR;
+    if (interp)
+        Tcl_AppendResult(interp, "cannot (re)build object of type \"",
+                Togl_BitmapFontType.name, "\"", NULL);
+    return TCL_ERROR;
 }
 
 static void
 Togl_FontFree(Tcl_Obj *obj)
 {
     Togl_BitmapFontInfo *bfi = BITMAP_FONT_INFO(obj);
+
     ckfree((char *) bfi);
 }
 
 static void
 Togl_FontString(Tcl_Obj *obj)
 {
-	/* assert(obj->bytes == NULL) */
-	static char buf[256];
-	register unsigned len;
-	Togl_BitmapFontInfo *bfi = BITMAP_FONT_INFO(obj);
+    /* assert(obj->bytes == NULL) */
+    static char buf[256];
+    register unsigned len;
+    Togl_BitmapFontInfo *bfi = BITMAP_FONT_INFO(obj);
+
 #ifndef TOGL_AGL
-	snprintf(buf, sizeof buf, "{{%s} %d %d %d}", Togl_BitmapFontType.name,
-			bfi->base, bfi->first, bfi->last);
+    snprintf(buf, sizeof buf - 1, "{{%s} %d %d %d}",
+            Togl_BitmapFontType.name, bfi->base, bfi->first, bfi->last);
 #else
-	/* unlike every other platform, on Aqua, GLint is long */
-	snprintf(buf, sizeof buf, "{{%s} %ld %ld %ld}",
-		Togl_BitmapFontType.name, bfi->base, bfi->first, bfi->last);
+    /* unlike every other platform, on Aqua, GLint is long */
+    snprintf(buf, sizeof buf - 1, "{{%s} %ld %ld %ld}",
+            Togl_BitmapFontType.name, bfi->base, bfi->first, bfi->last);
 #endif
-	len = strlen(buf);
-	obj->bytes = (char *) ckalloc(len + 1);
-	strcpy(obj->bytes, buf);
-	obj->length = len;
+    buf[sizeof buf - 1] = '\0';
+    len = strlen(buf);
+    obj->bytes = (char *) ckalloc(len + 1);
+    strcpy(obj->bytes, buf);
+    obj->length = len;
 }
 
-static void Togl_FontDup(Tcl_Obj *src, Tcl_Obj *dup)
+static void
+Togl_FontDup(Tcl_Obj *src, Tcl_Obj *dup)
 {
-    /*
+    /* 
      * When duplicated, lose the font-ness and just be a string.
      * So don't copy the internal representation and don't set
      * dup->typePtr.
@@ -358,7 +359,7 @@ Togl_LoadBitmapFont(const Togl *togl, const char *fontname)
 #endif
 
     if (last > 255)
-	last = 255;		/* no unicode support */
+        last = 255;             /* no unicode support */
 
     count = last - first + 1;
     fontbase = glGenLists((GLuint) (last + 1));
@@ -375,7 +376,8 @@ Togl_LoadBitmapFont(const Togl *togl, const char *fontname)
 #elif defined(TOGL_X11)
     glXUseXFont(fontinfo->fid, first, count, (int) fontbase + first);
 #elif defined(TOGL_AGL)
-    aglUseFont(togl->aglCtx,
+    /* deprecated in OS X 10.5 */
+    aglUseFont(togl->Ctx,
             macfont->subFontArray->familyPtr->faceNum,
             macfont->style, macfont->size, first, count, fontbase + first);
 #endif
@@ -401,13 +403,15 @@ int
 Togl_UnloadBitmapFont(const Togl *togl, Tcl_Obj *toglfont)
 {
     Togl_BitmapFontInfo *bfi;
+
     if (toglfont == NULL || toglfont->typePtr != &Togl_BitmapFontType) {
-	Tcl_Interp *interp = Togl_Interp(togl);
-	Tcl_AppendResult(interp, "font not found", NULL);
-	return TCL_ERROR;
+        Tcl_Interp *interp = Togl_Interp(togl);
+
+        Tcl_AppendResult(interp, "font not found", NULL);
+        return TCL_ERROR;
     }
     bfi = BITMAP_FONT_INFO(toglfont);
-    glDeleteLists(bfi->base, bfi->last + 1);	/* match glGenLists */
+    glDeleteLists(bfi->base, bfi->last + 1);    /* match glGenLists */
     return TCL_OK;
 }
 
@@ -415,24 +419,26 @@ int
 Togl_WriteObj(const Togl *togl, const Tcl_Obj *toglfont, Tcl_Obj *obj)
 {
     const char *str;
-    int len;
+    int     len;
 
     str = Tcl_GetStringFromObj(obj, &len);
     return Togl_WriteChars(togl, toglfont, str, len);
 }
 
 int
-Togl_WriteChars(const Togl *togl, const Tcl_Obj *toglfont, const char *str, int len)
+Togl_WriteChars(const Togl *togl, const Tcl_Obj *toglfont, const char *str,
+        int len)
 {
     /* TODO: assume utf8 encoding and convert to font encoding */
     Togl_BitmapFontInfo *bfi;
+
     if (toglfont == NULL || toglfont->typePtr != &Togl_BitmapFontType)
-	return -1;
+        return -1;
     bfi = BITMAP_FONT_INFO(toglfont);
     if (Togl_ContextTag(togl) != bfi->contextTag)
-	return -1;
+        return -1;
     if (len == 0)
-	len = strlen(str);
+        len = strlen(str);
     glListBase(bfi->base);
     glCallLists(len, GL_UNSIGNED_BYTE, str);
     return len;

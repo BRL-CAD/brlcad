@@ -50,6 +50,7 @@
 #
 # Not yet modified:
 #   - The 'plug-in-DLL' and the associated shell.
+#   - The programs to create the windows help files.
 #
 # Suggestions and / or improvements are always welcome.
 #
@@ -123,8 +124,8 @@ CFG_ENCODING	= \"cp1252\"
 
 NAMEPREFIX	= tcl
 STUBPREFIX	= $(NAMEPREFIX)stub
-DOTVERSION	= 8.6
-VERSION		= 86
+DOTVERSION	= 8.5
+VERSION		= 85
 
 DDEVERSION = 13
 DDEDOTVERSION = 1.3
@@ -230,13 +231,6 @@ TCLOBJS	= \
 	$(TMPDIR)\tclMain.obj \
 	$(TMPDIR)\tclNamesp.obj \
 	$(TMPDIR)\tclNotify.obj \
-	$(TMPDIR)\tclOO.obj \
-	$(TMPDIR)\tclOOBasic.obj \
-	$(TMPDIR)\tclOOCall.obj \
-	$(TMPDIR)\tclOODefineCmds.obj \
-	$(TMPDIR)\tclOOInfo.obj \
-	$(TMPDIR)\tclOOMethod.obj \
-	$(TMPDIR)\tclOOStubInit.obj \
 	$(TMPDIR)\tclObj.obj \
 	$(TMPDIR)\tclPanic.obj \
 	$(TMPDIR)\tclParse.obj \
@@ -252,6 +246,7 @@ TCLOBJS	= \
 	$(TMPDIR)\tclScan.obj \
 	$(TMPDIR)\tclStringObj.obj \
 	$(TMPDIR)\tclStubInit.obj \
+	$(TMPDIR)\tclStubLib.obj \
 	$(TMPDIR)\tclThread.obj \
 	$(TMPDIR)\tclThreadJoin.obj \
 	$(TMPDIR)\tclTimer.obj \
@@ -272,12 +267,9 @@ TCLOBJS	= \
 	$(TMPDIR)\tclWinPipe.obj \
 	$(TMPDIR)\tclWinSock.obj \
 	$(TMPDIR)\tclWinThrd.obj \
-	$(TMPDIR)\tclWinTime.obj \
-	$(TMPDIR)\tclZlib.obj
+	$(TMPDIR)\tclWinTime.obj
 
-TCLSTUBOBJS	= \
-	$(TMPDIR)\tclStubLib.obj \
-	$(TMPDIR)\tclOOStubLib.obj
+TCLSTUBOBJS	= $(TMPDIR)\tclStubLib.obj
 
 WINDIR		= $(ROOT)\win
 GENERICDIR	= $(ROOT)\generic
@@ -286,7 +278,6 @@ TCL_INCLUDES	= -I"$(WINDIR)" -I"$(GENERICDIR)"
 TCL_DEFINES	= $(DEBUGDEFINES) $(THREADDEFINES) $(SYMDEFINES) \
 			$(PROFDEFINES) $(OPTDEFINES) $(SIXFOURDEFINES) \
 			-DTCL_CFGVAL_ENCODING=${CFG_ENCODING}
-### TODO: Add -DHAVE_ZLIB=1
 
 ######################################################################
 # Compiler flags
@@ -420,8 +411,6 @@ install-binaries: $(TCLSH)
 	@copy "$(TCLPIPEDLL)" "$(BIN_INSTALL_DIR)"
 	@echo installing $(TCLSTUBLIBNAME)
 	@copy "$(TCLSTUBLIB)" "$(LIB_INSTALL_DIR)"
-	@echo installing $(WINDIR)\tclooConfig.sh
-	@copy "$(WINDIR)\tclooConfig.sh" "$(LIB_INSTALL_DIR)"
 
 install-libraries:
 	-@$(MKDIR) "$(LIB_INSTALL_DIR)"
@@ -431,10 +420,10 @@ install-libraries:
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http1.0"
 	-@copy "$(ROOT)\library\http1.0\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http1.0"
 	-@copy "$(ROOT)\library\http1.0\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http1.0"
-	@echo installing http2.8
-	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http2.8"
-	-@copy "$(ROOT)\library\http\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http2.8"
-	-@copy "$(ROOT)\library\http\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http2.8"
+	@echo installing http2.7
+	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\http2.7"
+	-@copy "$(ROOT)\library\http\http.tcl"     "$(SCRIPT_INSTALL_DIR)\http2.7"
+	-@copy "$(ROOT)\library\http\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\http2.7"
 	@echo installing opt0.4
 	-@$(MKDIR) "$(SCRIPT_INSTALL_DIR)\opt0.4"
 	-@copy "$(ROOT)\library\opt\optparse.tcl" "$(SCRIPT_INSTALL_DIR)\opt0.4"
@@ -466,8 +455,6 @@ install-libraries:
 	@echo installing library files
 	-@copy "$(GENERICDIR)\tcl.h"         "$(INCLUDE_INSTALL_DIR)"
 	-@copy "$(GENERICDIR)\tclDecls.h"    "$(INCLUDE_INSTALL_DIR)"
-	-@copy "$(GENERICDIR)\tclOO.h"       "$(INCLUDE_INSTALL_DIR)"
-	-@copy "$(GENERICDIR)\tclOODecls.h"  "$(INCLUDE_INSTALL_DIR)"
 	-@copy "$(GENERICDIR)\tclPlatDecls.h" "$(INCLUDE_INSTALL_DIR)"
 	-@copy "$(ROOT)\library\history.tcl" "$(SCRIPT_INSTALL_DIR)"
 	-@copy "$(ROOT)\library\init.tcl"    "$(SCRIPT_INSTALL_DIR)"
@@ -485,6 +472,29 @@ install-libraries:
 genstubs:
 	tclsh$(VERSION) $(ROOT)\tools\genStubs.tcl $(GENERICDIR) \
 		$(GENERICDIR)\tcl.decls $(GENERICDIR)\tclInt.decls
+
+#
+# Regenerate the windows help files.
+#
+
+TCLTOOLS	= $(ROOT)/tools
+MAN2TCL		= $(TCLTOOLS)/man2tcl
+TCLRTF		= $(TCLTOOLS)/tcl.rtf
+TCLHPJ		= $(TCLTOOLS)/tcl.hpj
+MAN2HELP	= $(TCLTOOLS)/man2help.tcl
+HCRTF		= $(TOOLS32)/bin/hcrtf.exe
+
+winhelp: $(TCLRTF)
+	cd $(TCLTOOLS)
+	start /wait $(HCRTF) -xn $(TCLHPJ)
+
+$(MAN2TCL).exe: $(MAN2TCL).obj
+	cd $(TCLTOOLS)
+	$(cc32) /nologo /G4 /ML /O2 $(MAN2TCL).c
+
+$(TCLRTF): $(MAN2TCL).exe $(TCLSH)
+	cd $(TCLTOOLS)
+	..\win\$(TCLSH) $(MAN2HELP) $(NAMEPREFIX) $(VERSION) $(ROOT)/doc ../../tk$(DOTVERSION)/doc
 
 #
 # Special case object file targets
@@ -565,7 +575,7 @@ $(GENERICDIR)\regguts.h: $(GENERICDIR)\regcustom.h
 	$(cc32) -DBUILD_tcl $(TCL_CFLAGS) -o$@ $<
 
 {$(GENERICDIR)}.c{$(TMPDIR)}.obj:
-	$(cc32) -DBUILD_tcl -DBUILD_tcloo $(TCL_CFLAGS) -o$@ $<
+	$(cc32) -DBUILD_tcl $(TCL_CFLAGS) -o$@ $<
 
 {$(ROOT)\compat}.c{$(TMPDIR)}.obj:
 	$(cc32) -DBUILD_tcl $(TCL_CFLAGS) -o$@ $<
@@ -585,3 +595,4 @@ clean:
 	-@$(RM) $(TMPDIR)\*.exe
 	-@$(RMDIR) $(OUTDIR)
 	-@$(RMDIR) $(TMPDIR)
+

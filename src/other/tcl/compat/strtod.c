@@ -63,7 +63,7 @@ static double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
 
 double
 strtod(
-    const char *string,		/* A decimal ASCII floating-point number,
+    CONST char *string,		/* A decimal ASCII floating-point number,
 				 * optionally preceded by white space. Must
 				 * have form "-I.FE-X", where I is the integer
 				 * part of the mantissa, F is the fractional
@@ -79,7 +79,7 @@ strtod(
 {
     int sign, expSign = FALSE;
     double fraction, dblExp, *d;
-    register const char *p;
+    register CONST char *p;
     register int c;
     int exp = 0;		/* Exponent read from "EX" field. */
     int fracExp = 0;		/* Exponent that derives from the fractional
@@ -94,7 +94,7 @@ strtod(
     int mantSize;		/* Number of digits in mantissa. */
     int decPt;			/* Number of mantissa digits BEFORE decimal
 				 * point. */
-    const char *pExp;		/* Temporarily holds location of exponent in
+    CONST char *pExp;		/* Temporarily holds location of exponent in
 				 * string. */
 
     /*

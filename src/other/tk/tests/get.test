@@ -8,133 +8,73 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.2
+package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
-namespace import -force tcltest::test
 
-test get-1.1 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+button .b
+test get-1.1 {Tk_GetAnchorFromObj} {
     .b configure -anchor n
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {n}
-test get-1.2 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {n}
+test get-1.2 {Tk_GetAnchorFromObj} {
     .b configure -anchor ne
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {ne}
-test get-1.3 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {ne}
+test get-1.3 {Tk_GetAnchorFromObj} {
     .b configure -anchor e
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {e}
-test get-1.4 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {e}
+test get-1.4 {Tk_GetAnchorFromObj} {
     .b configure -anchor se
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {se}
-test get-1.5 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {se}
+test get-1.5 {Tk_GetAnchorFromObj} {
     .b configure -anchor s
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {s}
-test get-1.6 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {s}
+test get-1.6 {Tk_GetAnchorFromObj} {
     .b configure -anchor sw
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {sw}
-test get-1.7 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {sw}
+test get-1.7 {Tk_GetAnchorFromObj} {
     .b configure -anchor w
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {w}
-test get-1.8 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {w}
+test get-1.8 {Tk_GetAnchorFromObj} {
     .b configure -anchor nw
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {nw}
-test get-1.9 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {nw}
+test get-1.9 {Tk_GetAnchorFromObj} {
     .b configure -anchor n
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {n}
-test get-1.10 {Tk_GetAnchorFromObj} -setup {
-    button .b
-} -body {
+} {n}
+test get-1.10 {Tk_GetAnchorFromObj} {
     .b configure -anchor center
     .b cget -anchor
-} -cleanup {
-    destroy .b
-} -result {center}
-test get-1.11 {Tk_GetAnchorFromObj - error} -setup {
-    button .b
-} -body {
-    .b configure -anchor unknown
-} -cleanup {
-    destroy .b
-} -returnCodes {error} -result {bad anchor "unknown": must be n, ne, e, se, s, sw, w, nw, or center}
+} {center}
+test get-1.11 {Tk_GetAnchorFromObj - error} {
+    list [catch {.b configure -anchor unknown} msg] $msg
+} {1 {bad anchor "unknown": must be n, ne, e, se, s, sw, w, nw, or center}}
 
-
-test get-2.1 {Tk_GetJustifyFromObj} -setup {
-    button .b
-} -body {
+catch {destroy .b}
+button .b
+test get-2.1 {Tk_GetJustifyFromObj} {
     .b configure -justify left
     .b cget -justify
-} -cleanup {
-    destroy .b
-} -result {left}
-test get-2.2 {Tk_GetJustifyFromObj} -setup {
-    button .b
-} -body {
+} {left}
+test get-2.2 {Tk_GetJustifyFromObj} {
     .b configure -justify right
     .b cget -justify
-} -cleanup {
-    destroy .b
-} -result {right}
-test get-2.3 {Tk_GetJustifyFromObj} -setup {
-    button .b
-} -body {
+} {right}
+test get-2.3 {Tk_GetJustifyFromObj} {
     .b configure -justify center
     .b cget -justify
-} -cleanup {
-    destroy .b
-} -result {center}
-test get-2.4 {Tk_GetJustifyFromObj - error} -setup {
-    button .b
-} -body {
-    .b configure -justify stupid
-} -cleanup {
-    destroy .b
-} -returnCodes {error} -result {bad justification "stupid": must be left, right, or center}
+} {center}
+test get-2.4 {Tk_GetJustifyFromObj - error} {
+    list [catch {.b configure -justify stupid} msg] $msg
+} {1 {bad justification "stupid": must be left, right, or center}}
 
 # cleanup
 cleanupTests
 return
-

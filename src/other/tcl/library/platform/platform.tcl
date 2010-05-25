@@ -254,7 +254,7 @@ proc ::platform::patterns {id} {
 	    }
 	}
 	macosx*-*    {
-	    # 10.5+
+	    # 10.5+ 
 	    if {[regexp {macosx([^-]*)-(.*)} $id -> v cpu]} {
 		if {$v ne ""} {
 		    foreach {major minor} [split $v .] break

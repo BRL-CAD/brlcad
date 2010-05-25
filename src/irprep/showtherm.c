@@ -567,7 +567,7 @@ int main(int argc, char **argv)
 	}
 
     }							/*  END # 4  */
-    return(0);
+    return 0;
 }							/*  END # 1  */
 
 
@@ -591,7 +591,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
      * (void)fflush(stdout);
      */
 
-    return(pp->pt_regionp->reg_bit + 1);
+    return pp->pt_regionp->reg_bit + 1;
 }
 
 /****************************************************************************/
@@ -604,7 +604,7 @@ miss(struct application *ap_p)
      * (void)fflush(stdout);
      */
 
-    return(0);
+    return 0;
 }
 
 /****************************************************************************/
@@ -615,7 +615,7 @@ overlap(struct application *ap, struct partition *pp, struct region *r1, struct 
     (void)printf("It is an overlap.\n");
     (void)fflush(stdout);
 
-    return(-1);
+    return -1;
 }
 
 /*

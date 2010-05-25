@@ -112,7 +112,7 @@ MODULE_SCOPE long tclMacOSXDarwinRelease;
  *----------------------------------------------------------------------
  */
 
-static const char*
+static CONST char*
 DyldOFIErrorMsg(
     int err)
 {
@@ -346,7 +346,7 @@ MODULE_SCOPE Tcl_PackageInitProc *
 TclpFindSymbol(
     Tcl_Interp *interp,		/* For error reporting. */
     Tcl_LoadHandle loadHandle,	/* Handle from TclpDlopen. */
-    const char *symbol)		/* Symbol name to look up. */
+    CONST char *symbol)		/* Symbol name to look up. */
 {
     Tcl_DyldLoadHandle *dyldLoadHandle = (Tcl_DyldLoadHandle *) loadHandle;
     Tcl_PackageInitProc *proc = NULL;
@@ -528,7 +528,7 @@ TclpUnloadFile(
 
 int
 TclGuessPackageName(
-    const char *fileName,	/* Name of file containing package (already
+    CONST char *fileName,	/* Name of file containing package (already
 				 * translated to local form if needed). */
     Tcl_DString *bufPtr)	/* Initialized empty dstring. Append package
 				 * name to this if possible. */
@@ -629,14 +629,14 @@ TclpLoadMemory(
 	uint32_t ms = 0;
 #ifndef __LP64__
 	const struct mach_header *mh = NULL;
-#	define mh_size  sizeof(struct mach_header)
-#	define mh_magic MH_MAGIC
-#	define arch_abi 0
+	#define mh_size  sizeof(struct mach_header)
+	#define mh_magic MH_MAGIC
+	#define arch_abi 0
 #else
 	const struct mach_header_64 *mh = NULL;
-#	define mh_size  sizeof(struct mach_header_64)
-#	define mh_magic MH_MAGIC_64
-#	define arch_abi CPU_ARCH_ABI64
+	#define mh_size  sizeof(struct mach_header_64)
+	#define mh_magic MH_MAGIC_64
+	#define arch_abi CPU_ARCH_ABI64
 #endif
 
 	if ((size_t) codeSize >= sizeof(struct fat_header)

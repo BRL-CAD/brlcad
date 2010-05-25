@@ -21,12 +21,12 @@ test tm-1.1 {tm: path command exists} {
 test tm-1.2 {tm: path command syntax} -returnCodes error -body {
     ::tcl::tm::path foo
 } -result {unknown or ambiguous subcommand "foo": must be add, list, or remove}
-test tm-1.3 {tm: path command syntax} {
+test tm-1.3 {tm: path command syntax} -returnCodes error -body {
     ::tcl::tm::path add
-} {}
-test tm-1.4 {tm: path command syntax} {
+} -result "wrong # args: should be \"::tcl::tm::path add path ...\""
+test tm-1.4 {tm: path command syntax} -returnCodes error -body {
     ::tcl::tm::path remove
-} {}
+} -result "wrong # args: should be \"::tcl::tm::path remove path ...\""
 test tm-1.5 {tm: path command syntax} -returnCodes error -body {
     ::tcl::tm::path list foobar
 } -result "wrong # args: should be \"::tcl::tm::path list\""

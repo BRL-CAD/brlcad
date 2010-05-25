@@ -27,11 +27,11 @@
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
-typedef struct {
-    WidgetCore		*corePtr;	/* widget to track */
-    Ttk_Layout		tracking;	/* current layout being tracked */
-    Ttk_Element 	activeElement;	/* element under the mouse cursor */
-    Ttk_Element 	pressedElement; /* currently pressed element */
+typedef struct 
+{
+    WidgetCore		*corePtr;	/* Widget to track */
+    Ttk_LayoutNode	*activeElement;	/* element under the mouse cursor */
+    Ttk_LayoutNode	*pressedElement; /* currently pressed element */
 } ElementStateTracker;
 
 /*
@@ -42,9 +42,9 @@ typedef struct {
  * 	The active element has TTK_STATE_ACTIVE set _unless_
  * 	another element is 'pressed'
  */
-static void ActivateElement(ElementStateTracker *es, Ttk_Element element)
+static void ActivateElement(ElementStateTracker *es, Ttk_LayoutNode *node)
 {
-    if (es->activeElement == element) {
+    if (es->activeElement == node) {
 	/* No change */
 	return;
     }
@@ -53,15 +53,15 @@ static void ActivateElement(ElementStateTracker *es, Ttk_Element element)
 	if (es->activeElement) {
 	    /* Deactivate old element */
 	    Ttk_ChangeElementState(es->activeElement, 0,TTK_STATE_ACTIVE);
-	}
-	if (element) {
+	} 
+	if (node) {
 	    /* Activate new element */
-	    Ttk_ChangeElementState(element, TTK_STATE_ACTIVE,0);
+	    Ttk_ChangeElementState(node, TTK_STATE_ACTIVE,0);
 	}
 	TtkRedisplayWidget(es->corePtr);
     }
 
-    es->activeElement = element;
+    es->activeElement = node;
 }
 
 /* ReleaseElement --
@@ -87,18 +87,18 @@ static void ReleaseElement(ElementStateTracker *es)
 /* PressElement --
  * 	Presses the specified element.
  */
-static void PressElement(ElementStateTracker *es, Ttk_Element element)
+static void PressElement(ElementStateTracker *es, Ttk_LayoutNode *node)
 {
     if (es->pressedElement) {
 	ReleaseElement(es);
     }
 
-    if (element) {
+    if (node) {
 	Ttk_ChangeElementState(
-	    element, TTK_STATE_PRESSED|TTK_STATE_ACTIVE, 0);
+	    node, TTK_STATE_PRESSED|TTK_STATE_ACTIVE, 0);
     }
 
-    es->pressedElement = element;
+    es->pressedElement = node;
     TtkRedisplayWidget(es->corePtr);
 }
 
@@ -107,10 +107,10 @@ static void PressElement(ElementStateTracker *es, Ttk_Element element)
  */
 
 static const unsigned ElementStateMask =
-      ButtonPressMask
-    | ButtonReleaseMask
-    | PointerMotionMask
-    | LeaveWindowMask
+      ButtonPressMask 
+    | ButtonReleaseMask 
+    | PointerMotionMask 
+    | LeaveWindowMask 
     | EnterWindowMask
     | StructureNotifyMask
     ;
@@ -118,23 +118,15 @@ static const unsigned ElementStateMask =
 static void
 ElementStateEventProc(ClientData clientData, XEvent *ev)
 {
-    ElementStateTracker *es = clientData;
-    Ttk_Layout layout = es->corePtr->layout;
-    Ttk_Element element;
-
-    /* Guard against dangling pointers [#2431428]
-     */
-    if (es->tracking != layout) {
-	es->pressedElement = es->activeElement = 0;
-	es->tracking = layout;
-    }
+    ElementStateTracker *es = (ElementStateTracker *)clientData;
+    Ttk_LayoutNode *node;
 
     switch (ev->type)
     {
 	case MotionNotify :
-	    element = Ttk_IdentifyElement(
-		layout, ev->xmotion.x, ev->xmotion.y);
-	    ActivateElement(es, element);
+	    node = Ttk_LayoutIdentify(
+		es->corePtr->layout,ev->xmotion.x,ev->xmotion.y);
+	    ActivateElement(es, node);
 	    break;
 	case LeaveNotify:
 	    ActivateElement(es, 0);
@@ -142,21 +134,21 @@ ElementStateEventProc(ClientData clientData, XEvent *ev)
 		PressElement(es, 0);
 	    break;
 	case EnterNotify:
-	    element = Ttk_IdentifyElement(
-		layout, ev->xcrossing.x, ev->xcrossing.y);
-	    ActivateElement(es, element);
+	    node = Ttk_LayoutIdentify(
+		es->corePtr->layout,ev->xcrossing.x,ev->xcrossing.y);
+	    ActivateElement(es, node);
 	    break;
 	case ButtonPress:
-	    element = Ttk_IdentifyElement(
-		layout, ev->xbutton.x, ev->xbutton.y);
-	    if (element)
-		PressElement(es, element);
+	    node = Ttk_LayoutIdentify(
+		es->corePtr->layout, ev->xbutton.x, ev->xbutton.y);
+	    if (node) 
+		PressElement(es, node);
 	    break;
 	case ButtonRelease:
 	    ReleaseElement(es);
 	    break;
 	case DestroyNotify:
-	    /* Unregister this event handler and free client data.
+	    /* Unregister this event handler and free client data. 
 	     */
 	    Tk_DeleteEventHandler(es->corePtr->tkwin,
 		    ElementStateMask, ElementStateEventProc, es);
@@ -175,7 +167,6 @@ void TtkTrackElementState(WidgetCore *corePtr)
 {
     ElementStateTracker *es = (ElementStateTracker*)ckalloc(sizeof(*es));
     es->corePtr = corePtr;
-    es->tracking = 0;
     es->activeElement = es->pressedElement = 0;
     Tk_CreateEventHandler(corePtr->tkwin,
 	    ElementStateMask,ElementStateEventProc,es);

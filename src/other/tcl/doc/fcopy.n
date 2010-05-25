@@ -92,13 +92,13 @@ the system will assume that the incoming
 bytes are valid UTF-8 characters and convert them according to the
 output encoding. The behaviour of the system for bytes which are not
 valid UTF-8 characters is undefined in this case.
+
 .SH EXAMPLES
 .PP
 The first example transfers the contents of one channel exactly to
 another. Note that when copying one file to another, it is better to
 use \fBfile copy\fR which also copies file metadata (e.g. the file
 access permissions) where possible.
-.PP
 .CS
 fconfigure $in -translation binary
 fconfigure $out -translation binary
@@ -110,7 +110,6 @@ passed the number of bytes transferred.
 It also uses vwait to put the application into the event loop.
 Of course, this simplified example could be done without the command 
 callback.
-.PP
 .CS
 proc Cleanup {in out bytes {error {}}} {
     global total
@@ -118,7 +117,7 @@ proc Cleanup {in out bytes {error {}}} {
     close $in
     close $out
     if {[string length $error] != 0} {
-        # error occurred during the copy
+	# error occurred during the copy
     }
 }
 set in [open $file1]
@@ -128,18 +127,17 @@ vwait total
 .CE
 .PP
 The third example copies in chunks and tests for end of file
-in the command callback.
-.PP
+in the command callback
 .CS
 proc CopyMore {in out chunk bytes {error {}}} {
     global total done
     incr total $bytes
     if {([string length $error] != 0) || [eof $in]} {
-        set done $total
-        close $in
-        close $out
+	set done $total
+	close $in
+	close $out
     } else {
-        \fBfcopy\fR $in $out -size $chunk \e
+	\fBfcopy\fR $in $out -size $chunk \e
                 -command [list CopyMore $in $out $chunk]
     }
 }
@@ -151,7 +149,9 @@ set total 0
         -command [list CopyMore $in $out $chunk]
 vwait done
 .CE
+
 .SH "SEE ALSO"
 eof(n), fblocked(n), fconfigure(n), file(n)
+
 .SH KEYWORDS
 blocking, channel, end of line, end of file, nonblocking, read, translation

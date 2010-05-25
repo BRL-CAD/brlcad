@@ -58,14 +58,14 @@ Extrudcon( entityno, curve, evect )
 	bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 		dir[entityno]->name );
 	bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
-	return( 0 );
+	return 0;
     }
 
     if ( dir[curve]->param <= pstart )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[curve]->direct, dir[curve]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[curve]->param );
     Readint( &sol_num, "" );
@@ -113,7 +113,7 @@ Extrudcon( entityno, curve, evect )
 	bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 		dir[entityno]->name );
 	bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
-	return( 0 );
+	return 0;
     }
 
     /* Check type of conic */
@@ -136,7 +136,7 @@ Extrudcon( entityno, curve, evect )
 	bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 		dir[entityno]->name );
 	bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
-	return( 0 );
+	return 0;
     }
 
     /* Calculate center of ellipse */
@@ -173,7 +173,7 @@ Extrudcon( entityno, curve, evect )
     /* Construct solid */
     mk_tgc( fdout, dir[entityno]->name, center, evect, r1, r2, r1, r2 );
 
-    return( 1 );
+    return 1;
 }
 
 /*

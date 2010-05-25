@@ -22,8 +22,8 @@ lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged01_terminal.png \
 	lessons/en/images/mged02_coordsys.png \
 	lessons/en/images/mged02_defaultradio.png \
-	lessons/en/images/mged02_flower_zooomin.png \
-	lessons/en/images/mged02_flower_zooomout.png \
+	lessons/en/images/mged02_flower_zoomin.png \
+	lessons/en/images/mged02_flower_zoomout.png \
 	lessons/en/images/mged02_multipane.png \
 	lessons/en/images/mged02_radio_35_25.png \
 	lessons/en/images/mged02_radio_front.png \
@@ -40,6 +40,10 @@ lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged02_truck_left.png \
 	lessons/en/images/mged02_truck_rear.png \
 	lessons/en/images/mged02_truck_right.png \
+	lessons/en/images/mged03_shapes_in_command.png \
+	lessons/en/images/mged03_shapes_make_command.png \
+	lessons/en/images/mged03_wireframe_sph.png \
+	lessons/en/images/mged03_wireframe_sph_rcc.png \
 	lessons/en/images/mged04_commandwindow.png \
 	lessons/en/images/mged04_fb_overlay_mode.png \
 	lessons/en/images/mged04_raytracedshapes.png \
@@ -52,7 +56,7 @@ lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged05_subtractionspheres.png \
 	lessons/en/images/mged05_twoprimitivespheres.png \
 	lessons/en/images/mged05_unionspheres.png \
-	lessons/en/images/mged06_base_substracted_vol.png \
+	lessons/en/images/mged06_base_subtracted_vol.png \
 	lessons/en/images/mged06_goblet1stsphere.png \
 	lessons/en/images/mged06_gobletbase.png \
 	lessons/en/images/mged06_gobletbasestembasin.png \
@@ -119,7 +123,11 @@ lessonsDOCBOOK_EN_IMAGES = \
 	lessons/en/images/mged16_radio_new_design.png \
 	lessons/en/images/mged16_radio_transparent.png \
 	lessons/en/images/mged16_radio_wireframe_circ_board.png \
-	lessons/en/images/mged16_radio_with_mater_props.png
+	lessons/en/images/mged16_radio_with_mater_props.png \
+	lessons/en/images/mged16_radio_structure_1.png \
+	lessons/en/images/mged16_radio_structure_2.png \
+	lessons/en/images/mged16_radio_structure_3.png \
+	lessons/en/images/mged16_radio_cutaways.png
 
 
 lessonsDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/lessons/en

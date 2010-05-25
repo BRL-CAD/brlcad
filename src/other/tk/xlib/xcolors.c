@@ -34,11 +34,11 @@ static int	FindColor(const char *name, XColor *colorPtr);
  */
 
 typedef struct {
-    const char *name;
+    char *name;
     unsigned char red, green, blue;
 } XColorEntry;
 
-static const XColorEntry xColors[] = {
+static XColorEntry xColors[] = {
      { "alice blue", 240, 248, 255 },
      { "AliceBlue", 240, 248, 255 },
      { "antique white", 250, 235, 215 },
@@ -825,7 +825,7 @@ FindColor(
      */
 
     if (numXColors == 0) {
-	const XColorEntry *ePtr;
+	XColorEntry *ePtr;
 	for (ePtr = xColors; ePtr->name != NULL; ePtr++) {
 	    numXColors++;
 	}

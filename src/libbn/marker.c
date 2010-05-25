@@ -65,12 +65,7 @@ tp_2marker(FILE *fp, register int c, double x, double y, double scale)
 }
 
 void
-PL_FORTRAN(f2mark, F2MARK)( fp, c, x, y, scale )
-    FILE	**fp;
-    int	*c;
-    float	*x;
-    float	*y;
-    float	*scale;
+PL_FORTRAN(f2mark, F2MARK)(FILE **fp, int *c, float *x, float*y, float *scale)
 {
     tp_2marker( *fp, *c, *x, *y, *scale );
 }
@@ -93,13 +88,7 @@ tp_3marker(FILE *fp, register int c, double x, double y, double z, double scale)
 }
 
 void
-PL_FORTRAN(f3mark, F3MARK)( fp, c, x, y, z, scale )
-    FILE	**fp;
-    int	*c;
-    float	*x;
-    float	*y;
-    float	*z;
-    float	*scale;
+PL_FORTRAN(f3mark, F3MARK)(FILE **fp, int *c, float *x, float *y, float *z, float *scale)
 {
     tp_3marker( *fp, *c, *x, *y, *z, *scale );
 }

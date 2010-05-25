@@ -2,7 +2,7 @@
  * Togl - a Tk OpenGL widget
  *
  * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
- * Copyright (C) 2005-2008  Greg Couch
+ * Copyright (C) 2005-2009  Greg Couch
  * See the LICENSE file for copyright details.
  */
 
@@ -53,6 +53,15 @@ ToglStubs toglStubs = {
     Togl_UpdatePending, /* 37 */
     Togl_WriteObj, /* 38 */
     Togl_WriteChars, /* 39 */
+    Togl_HasRGBA, /* 40 */
+    Togl_IsDoubleBuffered, /* 41 */
+    Togl_HasDepthBuffer, /* 42 */
+    Togl_HasAccumulationBuffer, /* 43 */
+    Togl_HasDestinationAlpha, /* 44 */
+    Togl_HasStencilBuffer, /* 45 */
+    Togl_StereoMode, /* 46 */
+    Togl_HasMultisample, /* 47 */
+    Togl_CopyContext, /* 48 */
 };
 
 /* !END!: Do not edit above this line. */

@@ -38,7 +38,7 @@
 int
 Tcl_GetInt(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
-    const char *src,		/* String containing a (possibly signed)
+    CONST char *src,		/* String containing a (possibly signed)
 				 * integer in a form acceptable to
 				 * Tcl_GetIntFromObj(). */
     int *intPtr)		/* Place to store converted result. */
@@ -52,6 +52,51 @@ Tcl_GetInt(
     obj.typePtr = NULL;
 
     code = Tcl_GetIntFromObj(interp, &obj, intPtr);
+    if (obj.refCount > 1) {
+	Tcl_Panic("invalid sharing of Tcl_Obj on C stack");
+    }
+    return code;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclGetLong --
+ *
+ *	Given a string, produce the corresponding long integer value. This
+ *	routine is a version of Tcl_GetInt but returns a "long" instead of an
+ *	"int" (a difference that matters on 64-bit architectures).
+ *
+ * Results:
+ *	The return value is normally TCL_OK; in this case *longPtr will be set
+ *	to the long integer value equivalent to src. If src is improperly
+ *	formed then TCL_ERROR is returned and an error message will be left in
+ *	the interp's result if interp is non-NULL.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclGetLong(
+    Tcl_Interp *interp,		/* Interpreter used for error reporting if not
+				 * NULL. */
+    CONST char *src,		/* String containing a (possibly signed) long
+				 * integer in a form acceptable to
+				 * Tcl_GetLongFromObj(). */
+    long *longPtr)		/* Place to store converted long result. */
+{
+    Tcl_Obj obj;
+    int code;
+
+    obj.refCount = 1;
+    obj.bytes = (char *) src;
+    obj.length = strlen(src);
+    obj.typePtr = NULL;
+
+    code = Tcl_GetLongFromObj(interp, &obj, longPtr);
     if (obj.refCount > 1) {
 	Tcl_Panic("invalid sharing of Tcl_Obj on C stack");
     }
@@ -81,8 +126,8 @@ Tcl_GetInt(
 int
 Tcl_GetDouble(
     Tcl_Interp *interp,		/* Interpreter used for error reporting. */
-    const char *src,		/* String containing a floating-point number
-				 * in a form acceptable to
+    CONST char *src,		/* String containing a floating-point number
+				 * in a form acceptable to 
 				 * Tcl_GetDoubleFromObj(). */
     double *doublePtr)		/* Place to store converted result. */
 {
@@ -124,8 +169,8 @@ Tcl_GetDouble(
 int
 Tcl_GetBoolean(
     Tcl_Interp *interp,		/* Interpreter used for error reporting. */
-    const char *src,		/* String containing one of the boolean values
-				 * 1, 0, true, false, yes, no, on, off. */
+    CONST char *src,		/* String containing one of the boolean values
+				 * 1, 0, true, false, yes, no, on off. */
     int *boolPtr)		/* Place to store converted result, which will
 				 * be 0 or 1. */
 {

@@ -62,8 +62,8 @@ elements of \fIargv\fR.
 .PP
 \fBTk_ParseArgv\fR normally returns the value \fBTCL_OK\fR.  If an error
 occurs while parsing the arguments, then \fBTCL_ERROR\fR is returned and
-\fBTk_ParseArgv\fR will leave an error message in the result of
-interpreter \fIinterp\fR in the standard Tcl fashion.  In
+\fBTk_ParseArgv\fR will leave an error message in \fIinterp->result\fR
+in the standard Tcl fashion.  In
 the event of an error return, \fI*argvPtr\fR will not have been
 modified, but \fIargv\fR could have been partially modified.  The
 possible causes of errors are explained below.
@@ -72,12 +72,12 @@ The \fIargTable\fR array specifies the kinds of arguments that are
 expected;  each of its entries has the following structure:
 .CS
 typedef struct {
-    const char *\fIkey\fR;
+    char *\fIkey\fR;
     int \fItype\fR;
     char *\fIsrc\fR;
     char *\fIdst\fR;
-    const char *\fIhelp\fR;
-} \fBTk_ArgvInfo\fR;
+    char *\fIhelp\fR;
+} Tk_ArgvInfo;
 .CE
 The \fIkey\fR field is a string such as
 .QW \-display
@@ -188,8 +188,7 @@ specifiers of this type are ignored (as if they did not exist).
 \fBTK_ARGV_HELP\fR
 When this kind of option is encountered, \fBTk_ParseArgv\fR uses the
 \fIhelp\fR fields of \fIargTable\fR to format a message describing
-all the valid arguments.  The message is placed in interpreter
-\fIinterp\fR's result
+all the valid arguments.  The message is placed in \fIinterp->result\fR
 and \fBTk_ParseArgv\fR returns \fBTCL_ERROR\fR.  When this happens, the
 caller normally prints the help message and aborts.  If the \fIkey\fR
 field of a \fBTK_ARGV_HELP\fR specifier is NULL, then the specifier will
@@ -262,12 +261,11 @@ then return any that are left by compacting them to the beginning of
 \fIargv\fR (starting at \fIargv\fR[0]).  \fIGenfunc\fR
 should return a count of how many arguments are left in \fIargv\fR;
 \fBTk_ParseArgv\fR will process them.  If \fIgenfunc\fR encounters
-an error then it should leave an error message in interpreter
-\fIinterp\fR's result,
+an error then it should leave an error message in \fIinterp->result\fR,
 in the usual Tcl fashion, and return \-1;  when this happens
 \fBTk_ParseArgv\fR will abort its processing and return \fBTCL_ERROR\fR.
 .RE
-.SS "FLAGS"
+.SH "FLAGS"
 .TP
 \fBTK_ARGV_DONT_SKIP_FIRST_ARG\fR
 \fBTk_ParseArgv\fR normally treats \fIargv[0]\fR as a program
@@ -333,7 +331,7 @@ main(argc, argv)
     \&...
 
     if (Tk_ParseArgv(interp, tkwin, &argc, argv, argTable, 0) != TCL_OK) {
-        fprintf(stderr, "%s\en", Tcl_GetString(Tcl_GetObjResult(interp)));
+        fprintf(stderr, "%s\en", interp->result);
         exit(1);
     }
 

@@ -30,7 +30,7 @@ typedef struct TclRegexp {
     int flags;			/* Regexp compile flags. */
     regex_t re;			/* Compiled re, includes number of
 				 * subexpressions. */
-    const char *string;		/* Last string passed to Tcl_RegExpExec. */
+    CONST char *string;		/* Last string passed to Tcl_RegExpExec. */
     Tcl_Obj *objPtr;		/* Last object passed to Tcl_RegExpExecObj. */
     Tcl_Obj *globObjPtr;	/* Glob pattern rep of RE or NULL if none. */
     regmatch_t *matches;	/* Array of indices into the Tcl_UniChar

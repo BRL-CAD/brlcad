@@ -30,7 +30,7 @@ testConstraint memory [llength [info commands memory]]
 test apply-1.1 {too few arguments} {
     set res [catch apply msg]
     list $res $msg
-} {1 {wrong # args: should be "apply lambdaExpr ?arg ...?"}}
+} {1 {wrong # args: should be "apply lambdaExpr ?arg1 arg2 ...?"}}
 
 # Tests for malformed lambda
 

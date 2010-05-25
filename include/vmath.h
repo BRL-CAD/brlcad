@@ -747,7 +747,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VUNITIZE_RET(a, ret) { \
 	register double _f; \
 	_f = MAGNITUDE(a); \
-	if (_f < VDIVIDE_TOL) return(ret); \
+	if (_f < VDIVIDE_TOL) return ret; \
 	_f = 1.0/_f; \
 	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
 }

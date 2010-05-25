@@ -82,7 +82,7 @@ void	view_cleanup(void) {}
 int
 raymiss(struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 /*
@@ -101,7 +101,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     vect_t		inormal2;
 
     if ( pp == PartHeadp )
-	return(0);		/* nothing was actually hit?? */
+	return 0;		/* nothing was actually hit?? */
 
     /* "1st entry" paint */
     RT_HIT_NORMAL( inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
@@ -184,7 +184,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		   inormal,
 		   PAINT_FINAL_EXIT, ap, outfp );
     }
-    return(0);
+    return 0;
 }
 
 /*
@@ -200,7 +200,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     ap->a_miss = raymiss;
     ap->a_onehit = 0;
 
-    return(0);		/* No framebuffer needed */
+    return 0;		/* No framebuffer needed */
 }
 
 void	view_eol(void) {;}

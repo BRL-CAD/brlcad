@@ -442,7 +442,7 @@ main(int argc, char **argv)
 		break;
 	}
     }
-    return(0);
+    return 0;
 }
 
 void
@@ -609,7 +609,7 @@ long numb(void)
 	n+=((long)(io&31))<<shift;
 	shift += 5;
     }
-    return(n);
+    return n;
 }
 int cclr(char *pc)
 
@@ -619,10 +619,10 @@ int cclr(char *pc)
     int i;
     for (i=0;i<20;i++) {
 	cp=colortab[i].name;
-	if (*cp== *pc&&*(cp+1)== *(pc+1)&&*(cp+2)==*(pc+2)) return(i);
-	else if (*cp> *pc) return(-1);
+	if (*cp== *pc&&*(cp+1)== *(pc+1)&&*(cp+2)==*(pc+2)) return i;
+	else if (*cp> *pc) return -1;
     }
-    return(-1);
+    return -1;
 }
 long ctoi(void)
 /*		change char string to integer */
@@ -640,7 +640,7 @@ long ctoi(void)
 	num=10*num+cc-'0';
 	cc=gc();
     }
-    return(num*neg);
+    return num*neg;
 }
 char g(void)
 /* get char from plot file - check for 75 columns and discard rest */
@@ -650,16 +650,16 @@ char g(void)
 	if ((++nc)>75) {
 	    while ((c=gc())!='\n');
 	    nc=1;
-	    return(gc());
+	    return gc();
 	}
-	return(c);
+	return c;
     } else if (nc==75) {
 	nc=1;
-	return(gc());
+	return gc();
     } else {
 	nc++;
 	ib--;
-	return(' ');
+	return ' ';
     }
 }
 int bsp(void)
@@ -674,14 +674,14 @@ int bsp(void)
 	    if (loct<=loci) {
 		loct=loci;
 		ib=0;
-		return(1);
+		return 1;
 	    }
 	    ib=kib;
 	    loct=kloct;
-	    return(0);
+	    return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 char gc(void)
 /* get char from plot file buff */
@@ -690,13 +690,13 @@ char gc(void)
     if ((++ib)>=ic) {
 	ic=read(ifd, ibuf, 1024);
 	ib=0;
-	if (ic<=0) return(0);
+	if (ic<=0) return 0;
     }
     if (ibuf[ib]=='>') ibuf[ib]='^';
     if (ibuf[ib]=='?') ibuf[ib]='@';
 /*	printf("GC: ibuf[ib], ib, ic %c %d %d \n", ibuf[ib], ib, ic);*/
 /*	putchar(ibuf[ib]); */
-    return(ibuf[ib]);
+    return ibuf[ib];
 }
 int gclr(void)
 {
@@ -704,16 +704,16 @@ int gclr(void)
     int i;
     for (i=0;i<3;i++) {
 	while ((c=getchar())<97||c>122) {
-	    if (c==2) return(-2);
-	    if (c==3) return(-3);
-	    if (c==13) return(-13);
-	    if (c==22) return(-22);
-	    if (c==32) return(-32);
-	    if (c=='?') return(-63);
+	    if (c==2) return -2;
+	    if (c==3) return -3;
+	    if (c==13) return -13;
+	    if (c==22) return -22;
+	    if (c==32) return -32;
+	    if (c=='?') return -63;
 	}
 	cs[i]=c;
     }
-    return(cclr(cs));
+    return cclr(cs);
 }
 int lookup(long int ix, long int *jx, int n)
 {
@@ -723,8 +723,8 @@ int lookup(long int ix, long int *jx, int n)
     while (1) {
 	i=(i_a+i_b)/2;
 	/*printf("LOOKUP: ix, jx, ia, ib, i %d %d %d %d %d\n", ix, *(jx+i), i_a, i_b, i);*/
-	if (ix== *(jx+i)) return(i);
-	if (i<=i_a) return(-1);
+	if (ix== *(jx+i)) return i;
+	if (i<=i_a) return -1;
 	if (ix> *(jx+i)) i_a=i;
 	else i_b=i;
     }

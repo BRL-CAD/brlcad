@@ -15,7 +15,7 @@
 .SH NAME
 lindex \- Retrieve an element from a list
 .SH SYNOPSIS
-\fBlindex \fIlist ?index ...?\fR
+\fBlindex \fIlist ?index...?\fR
 .BE
 .SH DESCRIPTION
 .PP
@@ -26,17 +26,13 @@ command line, or grouped in a
 Tcl list and presented as a single argument.
 .PP
 If no indices are presented, the command takes the form:
-.PP
 .CS
 lindex list
 .CE
-.PP
 or
-.PP
 .CS
 lindex list {}
 .CE
-.PP
 In this case, the return value of \fBlindex\fR is simply the value of the
 \fIlist\fR parameter.
 .PP
@@ -50,34 +46,32 @@ substitution and command substitution do not occur.
 If \fIindex\fR is negative or greater than or equal to the number
 of elements in \fIvalue\fR, then an empty
 string is returned.
+.VS 8.5
 The interpretation of each simple \fIindex\fR value is the same as 
 for the command \fBstring index\fR, supporting simple index
 arithmetic and indices relative to the end of the list.
+.VE 8.5
 .PP
 If additional \fIindex\fR arguments are supplied, then each argument is
 used in turn to select an element from the previous indexing operation,
 allowing the script to select elements from sublists.  The command,
-.PP
 .CS
 lindex $a 1 2 3
 .CE
-.PP
 or
-.PP
 .CS
 lindex $a {1 2 3}
 .CE
-.PP
 is synonymous with
-.PP
 .CS
 lindex [lindex [lindex $a 1] 2] 3
 .CE
 .SH EXAMPLES
-.PP
-Lists can be indexed into from either end:
-.PP
 .CS
+\fBlindex\fR {a b c}
+      \fI\(-> a b c\fR
+\fBlindex\fR {a b c} {}
+      \fI\(-> a b c\fR
 \fBlindex\fR {a b c} 0
       \fI\(-> a\fR
 \fBlindex\fR {a b c} 2
@@ -86,15 +80,6 @@ Lists can be indexed into from either end:
       \fI\(-> c\fR
 \fBlindex\fR {a b c} end-1
       \fI\(-> b\fR
-.CE
-.PP
-Lists or sequences of indices allow selection into lists of lists:
-.PP
-.CS
-\fBlindex\fR {a b c}
-      \fI\(-> a b c\fR
-\fBlindex\fR {a b c} {}
-      \fI\(-> a b c\fR
 \fBlindex\fR {{a b c} {d e f} {g h i}} 2 1
       \fI\(-> h\fR
 \fBlindex\fR {{a b c} {d e f} {g h i}} {2 1}
@@ -104,24 +89,12 @@ Lists or sequences of indices allow selection into lists of lists:
 \fBlindex\fR {{{a b} {c d}} {{e f} {g h}}} {1 1 0}
       \fI\(-> g\fR
 .CE
-.PP
-List indices may also perform limited computation, adding or subtracting fixed
-amounts from other indices:
-.PP
-.CS
-set idx 1
-\fBlindex\fR {a b c d e f} $idx+2
-      \fI\(-> d\fR
-set idx 3
-\fBlindex\fR {a b c d e f} $idx+2
-      \fI\(-> f\fR
-.CE
 .SH "SEE ALSO"
 list(n), lappend(n), linsert(n), llength(n), lsearch(n), 
 lset(n), lsort(n), lrange(n), lreplace(n),
+.VS 8.5
 string(n)
+.VE
+
 .SH KEYWORDS
 element, index, list
-'\"Local Variables:
-'\"mode: nroff
-'\"End:

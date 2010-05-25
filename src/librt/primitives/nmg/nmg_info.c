@@ -71,11 +71,11 @@ nmg_find_model(const unsigned long *magic_p_arg)
 
     switch (*magic_p) {
 	case NMG_MODEL_MAGIC:
-	    return((struct model *)magic_p);
+	    return (struct model *)magic_p;
 	case NMG_REGION_MAGIC:
-	    return(((struct nmgregion *)magic_p)->m_p);
+	    return ((struct nmgregion *)magic_p)->m_p;
 	case NMG_SHELL_MAGIC:
-	    return(((struct shell *)magic_p)->r_p->m_p);
+	    return ((struct shell *)magic_p)->r_p->m_p;
 	case NMG_FACEUSE_MAGIC:
 	    magic_p = &((struct faceuse *)magic_p)->s_p->l.magic;
 	    goto top;
@@ -107,7 +107,7 @@ nmg_find_model(const unsigned long *magic_p_arg)
 		   *magic_p, bu_identify_magic(*magic_p));
 	    bu_bomb("nmg_find_model() failure\n");
     }
-    return((struct model *)NULL);
+    return (struct model *)NULL;
 }
 
 
@@ -176,11 +176,11 @@ nmg_shell_is_empty(register const struct shell *s)
 struct shell *
 nmg_find_s_of_lu(const struct loopuse *lu)
 {
-    if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
+    if (*lu->up.magic_p == NMG_SHELL_MAGIC) return lu->up.s_p;
     else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
 	bu_bomb("nmg_find_s_of_lu() bad parent for loopuse\n");
 
-    return(lu->up.fu_p->s_p);
+    return lu->up.fu_p->s_p;
 }
 
 
@@ -193,11 +193,11 @@ nmg_find_s_of_lu(const struct loopuse *lu)
 struct shell *
 nmg_find_s_of_eu(const struct edgeuse *eu)
 {
-    if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
+    if (*eu->up.magic_p == NMG_SHELL_MAGIC) return eu->up.s_p;
     else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
 	bu_bomb("nmg_find_s_of_eu() bad parent for edgeuse\n");
 
-    return(nmg_find_s_of_lu(eu->up.lu_p));
+    return nmg_find_s_of_lu(eu->up.lu_p);
 }
 
 
@@ -279,7 +279,7 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 	case NMG_SHELL_MAGIC:
 	    if (rt_g.NMG_debug & DEBUG_BASIC)
 		bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell, can't find faceuse\n", vu);
-	    return ((struct faceuse *)NULL);
+	    return (struct faceuse *)NULL;
 	case NMG_EDGEUSE_MAGIC:
 	    switch (*vu->up.eu_p->up.magic_p) {
 		case NMG_LOOPUSE_MAGIC:
@@ -287,7 +287,7 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 		case NMG_SHELL_MAGIC:
 		    if (rt_g.NMG_debug & DEBUG_BASIC)
 			bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell/edgeuse, can't find faceuse\n", vu);
-		    return ((struct faceuse *)NULL);
+		    return (struct faceuse *)NULL;
 	    }
 	    bu_log("Error at %s %d:\nInvalid loopuse parent magic 0x%x\n", __FILE__, __LINE__, *vu->up.lu_p->up.magic_p);
 	    break;
@@ -296,7 +296,7 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 	    break;
     }
 
-    return ((struct faceuse *)NULL);
+    return (struct faceuse *)NULL;
 }
 /**
  * N M G _ F I N D _ F U _ W I T H _ F G _ I N _ S
@@ -363,7 +363,7 @@ nmg_find_fu_with_fg_in_s(const struct shell *s1, const struct faceuse *fu2)
  * That will be the only case for negative returns.
  */
 double
-nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec __attribute__((unused)))
+nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *UNUSED(zvec))
 {
     vect_t left;
     double ret;
@@ -569,7 +569,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *norm, const struct bn_t
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_loop_is_ccw(lu=x%x) ret=%d\n", lu, ret);
 
-    return(ret);
+    return ret;
 }
 
 
@@ -715,7 +715,8 @@ nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell 
 	NMG_CK_EDGEUSE(eup);
 	eup_mate = eup->eumate_p;
 	NMG_CK_EDGEUSE(eup_mate);
-	if ((fu = nmg_find_fu_of_eu(eup)))
+	fu = nmg_find_fu_of_eu(eup);
+	if (fu)
 	    eup_orientation = fu->orientation;
 	else
 	    eup_orientation = OT_SAME;
@@ -812,7 +813,8 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
 	NMG_CK_EDGEUSE(eup);
 	eup_mate = eup->eumate_p;
 	NMG_CK_EDGEUSE(eup_mate);
-	if ((fu1 = nmg_find_fu_of_eu(eup)))
+	fu1 = nmg_find_fu_of_eu(eup);
+	if (fu1)
 	    eup_orientation = fu1->orientation;
 	else
 	    eup_orientation = OT_SAME;
@@ -1007,7 +1009,7 @@ nmg_find_eu_with_vu_in_lu(const struct loopuse *lu, const struct vertexuse *vu)
     }
     bu_bomb("nmg_find_eu_with_vu_in_lu:  Unable to find vu!\n");
     /* NOTREACHED */
-    return((struct edgeuse *)NULL);
+    return (struct edgeuse *)NULL;
 }
 
 
@@ -1034,7 +1036,7 @@ nmg_faceradial(const struct edgeuse *eu)
 	   eur->up.lu_p->up.fu_p->f_p != fu->f_p)
 	eur = eur->eumate_p->radial_p;
 
-    return(eur);
+    return eur;
 }
 
 
@@ -1066,7 +1068,7 @@ nmg_radial_face_edge_in_shell(const struct edgeuse *eu)
 	    NMG_CK_EDGEUSE(eur);
 	}
     }
-    return(eur);
+    return eur;
 }
 
 
@@ -1175,7 +1177,7 @@ struct fen2d_state {
 
 
 static void
-nmg_find_e_pt2_handler(long int *lp, genptr_t state, int unused __attribute__((unused)))
+nmg_find_e_pt2_handler(long int *lp, genptr_t state, int UNUSED(unused))
 {
     register struct fen2d_state *sp = (struct fen2d_state *)state;
     register struct edge *e = (struct edge *)lp;
@@ -1534,16 +1536,16 @@ nmg_find_v_in_face(const struct vertex *v, const struct faceuse *fu)
 	    if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 		lu = eu->up.lu_p;
 		if (*lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->up.fu_p == fu)
-		    return(vu);
+		    return vu;
 	    }
 
 	} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 	    lu = vu->up.lu_p;
 	    if (*lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->up.fu_p == fu)
-		return(vu);
+		return vu;
 	}
     }
-    return((struct vertexuse *)NULL);
+    return (struct vertexuse *)NULL;
 }
 
 
@@ -1614,13 +1616,14 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	v = vu->v_p;
 	NMG_CK_VERTEX(v);
-	if (!(vg = v->vg_p))
-	    return ((struct vertexuse *)NULL);
+	vg = v->vg_p;
+	if (!vg)
+	    return (struct vertexuse *)NULL;
 	NMG_CK_VERTEX_G(vg);
 	VSUB2(delta, vg->coord, pt);
 	if (MAGSQ(delta) <= tol->dist_sq)
-	    return(vu);
-	return ((struct vertexuse *)NULL);
+	    return vu;
+	return (struct vertexuse *)NULL;
     }
     if (magic1 != NMG_EDGEUSE_MAGIC) {
 	bu_bomb("nmg_find_pt_in_lu() Bogus child of loop\n");
@@ -1629,13 +1632,15 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-	if (!(vg = v->vg_p)) continue;
+	vg = v->vg_p;
+	if (!vg)
+	    continue;
 	NMG_CK_VERTEX_G(vg);
 	VSUB2(delta, vg->coord, pt);
 	if (MAGSQ(delta) <= tol->dist_sq)
-	    return(eu->vu_p);
+	    return eu->vu_p;
     }
-    return ((struct vertexuse *)NULL);
+    return (struct vertexuse *)NULL;
 
 }
 
@@ -1661,10 +1666,11 @@ nmg_find_pt_in_face(const struct faceuse *fu, const fastf_t *pt, const struct bn
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
-	if ((vu = nmg_find_pt_in_lu(lu, pt, tol)))
+	vu = nmg_find_pt_in_lu(lu, pt, tol);
+	if (vu)
 	    return vu;
     }
-    return ((struct vertexuse *)NULL);
+    return (struct vertexuse *)NULL;
 }
 
 
@@ -1703,8 +1709,9 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	/* Shell has faces */
 	NMG_CK_FACEUSE(fu);
-	if ((vu = nmg_find_pt_in_face(fu, pt, tol)))
-	    return(vu->v_p);
+	vu = nmg_find_pt_in_face(fu, pt, tol);
+	if (vu)
+	    return vu->v_p;
 
 	if (BU_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
 	    fu = BU_LIST_PNEXT_PNEXT(faceuse, fu);
@@ -1716,7 +1723,8 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
     while (BU_LIST_NOT_HEAD(lu, &s->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
-	if ((vu = nmg_find_pt_in_lu(lu, pt, tol)))
+	vu = nmg_find_pt_in_lu(lu, pt, tol);
+	if (vu)
 	    return vu->v_p;
 
 	if (BU_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
@@ -1731,11 +1739,12 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	NMG_CK_VERTEXUSE(eu->vu_p);
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-	if ((vg = v->vg_p)) {
+	vg = v->vg_p;
+	if (vg) {
 	    NMG_CK_VERTEX_G(vg);
 	    VSUB2(delta, vg->coord, pt);
 	    if (MAGSQ(delta) <= tol->dist_sq)
-		return(v);
+		return v;
 	}
     }
 
@@ -1744,14 +1753,15 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	NMG_CK_VERTEXUSE(s->vu_p);
 	v = s->vu_p->v_p;
 	NMG_CK_VERTEX(v);
-	if ((vg = v->vg_p)) {
+	vg = v->vg_p;
+	if (vg) {
 	    NMG_CK_VERTEX_G(vg);
 	    VSUB2(delta, vg->coord, pt);
 	    if (MAGSQ(delta) <= tol->dist_sq)
-		return(v);
+		return v;
 	}
     }
-    return((struct vertex *)0);
+    return (struct vertex *)0;
 }
 
 
@@ -1777,7 +1787,8 @@ nmg_find_pt_in_model(const struct model *m, const fastf_t *pt, const struct bn_t
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    NMG_CK_SHELL(s);
-	    if ((v = nmg_find_pt_in_shell(s, pt, tol))) {
+	    v = nmg_find_pt_in_shell(s, pt, tol);
+	    if (v) {
 		NMG_CK_VERTEX(v);
 		return v;
 	    }
@@ -1804,9 +1815,9 @@ nmg_is_vertex_in_edgelist(register const struct vertex *v, const struct bu_list 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
 	NMG_CK_VERTEX(eu->vu_p->v_p);
-	if (eu->vu_p->v_p == v) return(1);
+	if (eu->vu_p->v_p == v) return 1;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1833,15 +1844,15 @@ nmg_is_vertex_in_looplist(register const struct vertex *v, const struct bu_list 
 	    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	    NMG_CK_VERTEXUSE(vu);
 	    NMG_CK_VERTEX(vu->v_p);
-	    if (vu->v_p == v) return(1);
+	    if (vu->v_p == v) return 1;
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 	    if (nmg_is_vertex_in_edgelist(v, &lu->down_hd))
-		return(1);
+		return 1;
 	} else {
 	    bu_bomb("nmg_is_vertex_in_loopuse() bad magic\n");
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1928,9 +1939,9 @@ nmg_is_vertex_in_facelist(register const struct vertex *v, const struct bu_list 
     for (BU_LIST_FOR(fu, faceuse, hd)) {
 	NMG_CK_FACEUSE(fu);
 	if (nmg_is_vertex_in_looplist(v, &fu->lu_hd, 1))
-	    return(1);
+	    return 1;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1950,9 +1961,9 @@ nmg_is_edge_in_edgelist(const struct edge *e, const struct bu_list *hd)
     for (BU_LIST_FOR(eu, edgeuse, hd)) {
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE(eu->e_p);
-	if (e == eu->e_p) return(1);
+	if (e == eu->e_p) return 1;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1978,12 +1989,12 @@ nmg_is_edge_in_looplist(const struct edge *e, const struct bu_list *hd)
 	    continue;
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 	    if (nmg_is_edge_in_edgelist(e, &lu->down_hd))
-		return(1);
+		return 1;
 	} else {
 	    bu_bomb("nmg_is_edge_in_loopuse() bad magic\n");
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -2003,9 +2014,9 @@ nmg_is_edge_in_facelist(const struct edge *e, const struct bu_list *hd)
     for (BU_LIST_FOR(fu, faceuse, hd)) {
 	NMG_CK_FACEUSE(fu);
 	if (nmg_is_edge_in_looplist(e, &fu->lu_hd))
-	    return(1);
+	    return 1;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -2028,10 +2039,10 @@ nmg_is_loop_in_facelist(const struct loop *l, const struct bu_list *fu_hd)
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu);
 	    NMG_CK_LOOP(lu->l_p);
-	    if (l == lu->l_p) return(1);
+	    if (l == lu->l_p) return 1;
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -2055,7 +2066,7 @@ struct vf_state {
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2rvf_handler(long int *vp, genptr_t state, int unused __attribute__((unused)))
+nmg_2rvf_handler(long int *vp, genptr_t state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct vertex *v = (struct vertex *)vp;
@@ -2109,7 +2120,7 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_vert_a_handler(long int *vp, genptr_t state, int unused __attribute__((unused)))
+nmg_vert_a_handler(long int *vp, genptr_t state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct vertexuse_a_plane *va;
@@ -2166,7 +2177,7 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2edgeuse_handler(long int *eup, genptr_t state, int unused __attribute__((unused)))
+nmg_2edgeuse_handler(long int *eup, genptr_t state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct edgeuse *eu = (struct edgeuse *)eup;
@@ -2220,7 +2231,7 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2edge_handler(long int *ep, genptr_t state, int unused __attribute__((unused)))
+nmg_2edge_handler(long int *ep, genptr_t state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct edge *e = (struct edge *)ep;
@@ -2274,7 +2285,7 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_edge_g_handler(long int *ep, genptr_t state, int unused __attribute__((unused)))
+nmg_edge_g_handler(long int *ep, genptr_t state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
 
@@ -2337,7 +2348,7 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2face_handler(long int *fp, genptr_t state, int unused __attribute__((unused)))
+nmg_2face_handler(long int *fp, genptr_t state, int UNUSED(unused))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct face *f = (struct face *)fp;
@@ -2428,7 +2439,7 @@ struct edge_line_state {
  * add it to the bu_ptbl array.
  */
 static void
-nmg_line_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
+nmg_line_handler(long int *longp, genptr_t state, int UNUSED(unused))
 {
     register struct edge_line_state *sp = (struct edge_line_state *)state;
     register struct edgeuse *eu = (struct edgeuse *)longp;
@@ -2525,7 +2536,7 @@ struct e_and_v_state {
  * in the eventual application.
  */
 static void
-nmg_e_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
+nmg_e_handler(long int *longp, genptr_t state, int UNUSED(unused))
 {
     register struct e_and_v_state *sp = (struct e_and_v_state *)state;
     register struct edge *e = (struct edge *)longp;
@@ -2545,7 +2556,7 @@ nmg_e_handler(long int *longp, genptr_t state, int unused __attribute__((unused)
  * A private support routine for nmg_e_and_v_tabulate().
  */
 static void
-nmg_v_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
+nmg_v_handler(long int *longp, genptr_t state, int UNUSED(unused))
 {
     register struct e_and_v_state *sp = (struct e_and_v_state *)state;
     register struct vertex *v = (struct vertex *)longp;

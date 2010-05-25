@@ -105,7 +105,6 @@ source [file join $::ttk::library notebook.tcl]
 source [file join $::ttk::library panedwindow.tcl]
 source [file join $::ttk::library entry.tcl]
 source [file join $::ttk::library combobox.tcl]	;# dependency: entry.tcl
-source [file join $::ttk::library spinbox.tcl]  ;# dependency: entry.tcl
 source [file join $::ttk::library treeview.tcl]
 source [file join $::ttk::library sizegrip.tcl]
 

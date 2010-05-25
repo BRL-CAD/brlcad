@@ -164,8 +164,8 @@ struct cvt_tab bu_units_mass_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
-static const struct conv_table unit_lists[3] = {
-    {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}
+static const struct conv_table unit_lists[4] = {
+    {bu_units_length_tab}, {bu_units_volume_tab}, {bu_units_mass_tab}, {NULL}
 };
 
 
@@ -183,11 +183,14 @@ bu_units_conversion(const char *str)
 
     /* Copy the given string, making it lower case */
     ip = ubuf;
-    while ((c = *ip)) {
+    c = *ip;
+    while (c) {
 	if (isupper(c))
 	    *ip++ = tolower(c);
 	else
 	    ip++;
+
+	c = *ip;
     }
 
     /* Remove any trailing "s" (plural) */
@@ -199,10 +202,10 @@ bu_units_conversion(const char *str)
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
 	    if (ubuf[0] != tp->name[0])  continue;
 	    if (strcmp(ubuf, tp->name) != 0)  continue;
-	    return (tp->val);
+	    return tp->val;
 	}
     }
-    return (0.0);		/* Unable to find it */
+    return 0.0;		/* Unable to find it */
 }
 
 

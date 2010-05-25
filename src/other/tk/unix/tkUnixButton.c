@@ -37,11 +37,9 @@ typedef struct UnixButton {
  * The class function table for the button widgets.
  */
 
-const Tk_ClassProcs tkpButtonProcs = {
+Tk_ClassProcs tkpButtonProcs = {
     sizeof(Tk_ClassProcs),	/* size */
     TkButtonWorldChanged,	/* worldChangedProc */
-    NULL,					/* createProc */
-    NULL					/* modalProc */
 };
 
 /*
@@ -59,7 +57,7 @@ const Tk_ClassProcs tkpButtonProcs = {
  */
 
 /* XPM */
-static const char *button_images[] = {
+static char *button_images[] = {
     /* width height ncolors chars_per_pixel */
     "52 26 7 1",
     /* colors */
@@ -283,7 +281,7 @@ TkpDrawCheckIndicator(
     for (iy=0 ; iy<dim ; iy++) {
 	for (ix=0 ; ix<dim ; ix++) {
 	    XPutPixel(img, ix, iy,
-		    imgColors[button_images[imgstart+iy][imgsel+ix] - 'A']);
+		    imgColors[button_images[imgstart+iy][imgsel+ix] - 'A'] );
 	}
     }
 
@@ -297,9 +295,9 @@ TkpDrawCheckIndicator(
     copyGC = Tk_GetGC(tkwin, 0, &gcValues);
 
     XPutImage(display, pixmap, copyGC, img, 0, 0, 0, 0,
-	    (unsigned)dim, (unsigned)dim);
+	    (unsigned int)dim, (unsigned int)dim);
     XCopyArea(display, pixmap, d, copyGC, 0, 0,
-	    (unsigned)dim, (unsigned)dim, x, y);
+	    (unsigned int)dim, (unsigned int)dim, x, y);
 
     /*
      * Tidy up.

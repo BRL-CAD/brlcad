@@ -13,15 +13,16 @@
 .SH NAME
 lrepeat \- Build a list by repeating elements
 .SH SYNOPSIS
-\fBlrepeat \fIcount \fR?\fIelement ...\fR?
+\fBlrepeat \fInumber element1 \fR?\fIelement2 element3 ...\fR?
 .BE
 .SH DESCRIPTION
 .PP
-The \fBlrepeat\fR command creates a list of size \fIcount * number of
-elements\fR by repeating \fIcount\fR times the sequence of elements
-\fIelement ...\fR.  \fIcount\fR must be a non-negative integer,
-\fIelement\fR can be any Tcl value.  Note that \fBlrepeat 1 element ...\fR
-is identical to \fBlist element ...\fR.
+The \fBlrepeat\fR command creates a list of size \fInumber * number of
+elements\fR by repeating \fInumber\fR times the sequence of elements
+\fIelement1 element2 ...\fR.  \fInumber\fR must be a positive integer,
+\fIelementn\fR can be any Tcl value.  Note that \fBlrepeat 1 arg ...\fR
+is identical to \fBlist arg ...\fR, though the \fIarg\fR is required
+with \fBlrepeat\fR.
 .SH EXAMPLES
 .CS
 \fBlrepeat\fR 3 a

@@ -231,51 +231,35 @@ to system restrictions.
 .SS "SPECIAL MENUS IN MENUBARS"
 .PP
 Certain menus in a menubar will be treated specially.  On the Macintosh,
-access to the special Application, Window and Help menus is provided. On
-Windows, access to the Windows System menu in each window is provided.
-On X Windows, a special right-justified help menu may be provided if
-Motif menu compatibility is enabled. In all
-cases, these menus must be created with the command name of the menubar
-menu concatenated with the special name. So for a menubar named
-\.menubar, on the Macintosh, the special menus would be .menubar.apple,
-\.menubar.window and .menubar.help; on Windows, the special menu would be
-\.menubar.system; on X Windows, the help menu would be .menubar.help.
+access to the special Application and Help menus is provided. On Windows,
+access to the Windows System menu in each window is provided. On X Windows,
+a special right-justified help menu is provided. In all cases, these
+menus must be created with the command name of the menubar menu concatenated
+with the special name. So for a menubar named .menubar, on the Macintosh,
+the special menus would be .menubar.apple and .menubar.help; on Windows,
+the special menu would be .menubar.system; on X Windows, the help
+menu would be .menubar.help.
 .PP
-When Tk sees a .menubar.apple menu as the first menu in a menubar on the
-Macintosh, that menu's contents make up the first items of the
-Application menu whenever the window containing the menubar is in front.
+When Tk sees a .menubar.apple menu on the Macintosh, that menu's contents
+make up the first items of the Application menu whenever the window
+containing the menubar is in front.
 After all of the Tk-defined items, the menu will have a separator,
 followed by all standard Application menu items.
-Such a .apple menu must be present in a menu when that menu is first
-configured as a toplevel's menubar, otherwise a default application menu
-(hidden from Tk) will be inserted into the menubar at that time and
-subsequent addition of a .apple menu will no longer result in it
-becoming the Application menu.
 .PP
-When Tk sees a .menubar.window menu on the Macintosh, the menu's
-contents are inserted into the standard Window menu of the user's
-menubar whenever the window's menubar is in front. The first items in
-the menu are provided by Mac OS X, and the names of the current
-toplevels are automatically appended after all the Tk-defined items and
-a separator.
-.PP
-When Tk sees a .menubar.help menu on the Macintosh, the menu's contents
-are appended to the standard Help menu of the user's menubar whenever
-the window's menubar is in front. The first items in the menu
+When Tk sees a Help menu on the Macintosh, the menu's contents are
+appended to the standard Help menu on the right of the user's menubar
+whenever the window's menubar is in front. The first items in the menu
 are provided by Mac OS X.
 .PP
 When Tk sees a System menu on Windows, its items are appended to the 
-system menu that the menubar is attached to. This menu is tied to the 
-application icon and can be invoked with the mouse or by typing
+system menu that the menubar is attached to. This menu has an icon
+representing a spacebar, and can be invoked with the mouse or by typing
 Alt+Spacebar.  Due to limitations in the Windows API, any font changes,
 colors, images, bitmaps, or tearoff images will not appear in the
 system menu.
 .PP
-When Tk sees a Help menu on X Windows and Motif menu compatibility is
-enabled the menu is moved to be last in the menubar and is right
-justified. Motif menu compatibility is enabled by setting the Tk option
-\fB*Menu.useMotifHelp\fR to true or by calling
-\fBtk::classic::restore menu\fR.
+When Tk see a Help menu on X Windows, the menu is moved to be last in
+the menubar and is right justified.
 .SH "CLONES"
 .PP
 When a menu is set as a menubar for a toplevel window, or when a menu
@@ -285,7 +269,7 @@ configuration of the original are reflected in the
 clone. Additionally, any cascades that are pointed to are also cloned
 so that menu traversal will work right. Clones are destroyed when
 either the tearoff or menubar goes away, or when the original menu is
-destroyed.
+destroyed. 
 .SH "WIDGET COMMAND"
 .PP
 The \fBmenu\fR command creates a new Tcl command whose
@@ -304,29 +288,24 @@ indicators are called \fIindex\fRes and may be specified in
 any of the following forms:
 .TP 12
 \fInumber\fR
-.
 Specifies the entry numerically, where 0 corresponds
 to the top-most entry of the menu, 1 to the entry below it, and
 so on.
 .TP 12
 \fBactive\fR
-.
 Indicates the entry that is currently active.  If no entry is
 active then this form is equivalent to \fBnone\fR.  This form may
 not be abbreviated.
 .TP 12
 \fBend\fR
-.
 Indicates the bottommost entry in the menu.  If there are no
 entries in the menu then this form is equivalent to \fBnone\fR.
 This form may not be abbreviated.
 .TP 12
 \fBlast\fR
-.
 Same as \fBend\fR.
 .TP 12
 \fBnone\fR
-.
 Indicates
 .QW "no entry at all" ;
 this is used most commonly with
@@ -336,7 +315,6 @@ nothing to happen in the widget command.
 This form may not be abbreviated.
 .TP 12
 \fB@\fInumber\fR
-.
 In this form, \fInumber\fR is treated as a y-coordinate in the
 menu's window;  the entry closest to that y-coordinate is used.
 For example,
@@ -344,7 +322,6 @@ For example,
 indicates the top-most entry in the window.
 .TP 12
 \fIpattern\fR
-.
 If the index does not satisfy one of the above forms then this
 form is used.  \fIPattern\fR is pattern-matched against the label of
 each entry in the menu, in order from the top down, until a
@@ -354,7 +331,6 @@ are used.
 The following widget commands are possible for menu widgets:
 .TP
 \fIpathName \fBactivate \fIindex\fR
-.
 Change the state of the entry indicated by \fIindex\fR to \fBactive\fR
 and redisplay it using its active colors.
 Any previously-active entry is deactivated.  If \fIindex\fR
@@ -363,151 +339,14 @@ disabled, then the menu ends up with no active entry.
 Returns an empty string.
 .TP
 \fIpathName \fBadd \fItype \fR?\fIoption value option value ...\fR?
-.
 Add a new entry to the bottom of the menu.  The new entry's type
 is given by \fItype\fR and must be one of \fBcascade\fR,
 \fBcheckbutton\fR, \fBcommand\fR, \fBradiobutton\fR, or \fBseparator\fR,
 or a unique abbreviation of one of the above.  If additional arguments
-are present, they specify the options listed in the \fBMENU ENTRY OPTIONS\fR
-section below.
-The \fBadd\fR widget command returns an empty string.
-.TP
-\fIpathName \fBcget\fR \fIoption\fR
-.
-Returns the current value of the configuration option given
-by \fIoption\fR.
-\fIOption\fR may have any of the values accepted by the \fBmenu\fR
-command.
-.TP
-\fIpathName\fR \fBclone\fR \fInewPathname\fR ?\fIcloneType\fR?
-.
-Makes a clone of the current menu named \fInewPathName\fR. This clone
-is a menu in its own right, but any changes to the clone are
-propagated to the original menu and vice versa. \fIcloneType\fR can be
-\fBnormal\fR, \fBmenubar\fR, or \fBtearoff\fR. Should not normally be
-called outside of the Tk library. See the \fBCLONES\fR section for
-more information.
-.TP
-\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-.
-Query or modify the configuration options of the widget.
-If no \fIoption\fR is specified, returns a list describing all of
-the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
-information on the format of this list).  If \fIoption\fR is specified
-with no \fIvalue\fR, then the command returns a list describing the
-one named option (this list will be identical to the corresponding
-sublist of the value returned if no \fIoption\fR is specified).  If
-one or more \fIoption\-value\fR pairs are specified, then the command
-modifies the given widget option(s) to have the given value(s);  in
-this case the command returns an empty string.
-\fIOption\fR may have any of the values accepted by the \fBmenu\fR
-command.
-.TP
-\fIpathName \fBdelete \fIindex1\fR ?\fIindex2\fR?
-.
-Delete all of the menu entries between \fIindex1\fR and
-\fIindex2\fR inclusive.
-If \fIindex2\fR is omitted then it defaults to \fIindex1\fR.
-Attempts to delete a tear-off menu entry are ignored (instead, you
-should change the \fBtearOff\fR option to remove the tear-off entry).
-.TP
-\fIpathName \fBentrycget\fR \fIindex option\fR
-.
-Returns the current value of a configuration option for
-the entry given by \fIindex\fR.
-\fIOption\fR may have any of the names described in the
-\fBMENU ENTRY OPTIONS\fR section below.
-.TP
-\fIpathName \fBentryconfigure \fIindex \fR?\fIoptions...\fR?
-.
-This command is similar to the \fBconfigure\fR command, except that
-it applies to the options for an individual entry, whereas \fBconfigure\fR
-applies to the options for the menu as a whole.
-\fIOptions\fR may have any of the values described in the
-\fBMENU ENTRY OPTIONS\fR
-section below.  If \fIoptions\fR are specified, options are
-modified as indicated in the command and the command returns an empty string.
-If no \fIoptions\fR are specified, returns a list describing
-the current options for entry \fIindex\fR (see \fBTk_ConfigureInfo\fR for
-information on the format of this list).
-.TP
-\fIpathName \fBindex \fIindex\fR
-.
-Returns the numerical index corresponding to \fIindex\fR, or
-\fBnone\fR if \fIindex\fR was specified as \fBnone\fR.
-.TP
-\fIpathName \fBinsert \fIindex type \fR?\fIoption value option value ...\fR?
-.
-Same as the \fBadd\fR widget command except that it inserts the new
-entry just before the entry given by \fIindex\fR, instead of appending
-to the end of the menu.  The \fItype\fR, \fIoption\fR, and \fIvalue\fR
-arguments have the same interpretation as for the \fBadd\fR widget
-command.  It is not possible to insert new menu entries before the
-tear-off entry, if the menu has one.
-.TP
-\fIpathName \fBinvoke \fIindex\fR
-.
-Invoke the action of the menu entry.  See the sections on the
-individual entries above for details on what happens.  If the
-menu entry is disabled then nothing happens.  If the
-entry has a command associated with it then the result of that
-command is returned as the result of the \fBinvoke\fR widget
-command.  Otherwise the result is an empty string.  Note:  invoking
-a menu entry does not automatically unpost the menu;  the default
-bindings normally take care of this before invoking the \fBinvoke\fR
-widget command.
-.TP
-\fIpathName \fBpost \fIx y\fR
-.
-Arrange for the menu to be displayed on the screen at the root-window
-coordinates given by \fIx\fR and \fIy\fR.  These coordinates are
-adjusted if necessary to guarantee that the entire menu is visible on
-the screen.  This command normally returns an empty string.
-If the \fBpostCommand\fR option has been specified, then its value is
-executed as a Tcl script before posting the menu and the result of
-that script is returned as the result of the \fBpost\fR widget
-command.
-If an error returns while executing the command, then the error is
-returned without posting the menu.
-.TP
-\fIpathName \fBpostcascade \fIindex\fR
-.
-Posts the submenu associated with the cascade entry given by
-\fIindex\fR, and unposts any previously posted submenu.
-If \fIindex\fR does not correspond to a cascade entry,
-or if \fIpathName\fR is not posted,
-the command has no effect except to unpost any currently posted
-submenu.
-.TP
-\fIpathName \fBtype \fIindex\fR
-.
-Returns the type of the menu entry given by \fIindex\fR.
-This is the \fItype\fR argument passed to the \fBadd\fR or \fBinsert\fR widget
-command when the entry was created, such as \fBcommand\fR
-or \fBseparator\fR, or \fBtearoff\fR for a tear-off entry.
-.TP
-\fIpathName \fBunpost\fR
-.
-Unmap the window so that it is no longer displayed.  If a
-lower-level cascaded menu is posted, unpost that menu.  Returns an
-empty string. This subcommand does not work on Windows and the
-Macintosh, as those platforms have their own way of unposting menus.
-.TP
-\fIpathName \fBxposition \fIindex\fR
-.
-Returns a decimal string giving the x-coordinate within the menu
-window of the leftmost pixel in the entry specified by \fIindex\fR.
-.TP
-\fIpathName \fByposition \fIindex\fR
-.
-Returns a decimal string giving the y-coordinate within the menu
-window of the topmost pixel in the entry specified by \fIindex\fR.
-.SH "MENU ENTRY OPTIONS"
-The following options are allowed on menu entries. Most options are not
-supported by all entry types.
+are present, they specify any of the following options:
+.RS
 .TP
 \fB\-activebackground \fIvalue\fR
-.
 Specifies a background color to use for displaying this entry when it
 is active.
 If this option is specified as an empty string (the default), then the
@@ -518,7 +357,6 @@ option is used in its place.
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-activeforeground \fIvalue\fR
-.
 Specifies a foreground color to use for displaying this entry when it
 is active.
 If this option is specified as an empty string (the default), then the
@@ -526,14 +364,12 @@ If this option is specified as an empty string (the default), then the
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-accelerator \fIvalue\fR
-.
 Specifies a string to display at the right side of the menu entry.
 Normally describes an accelerator keystroke sequence that may be
 typed to invoke the same function as the menu entry.  This option
 is not available for separator or tear-off entries.
 .TP
 \fB\-background \fIvalue\fR
-.
 Specifies a background color to use for displaying this entry when it
 is in the normal state (neither active nor disabled).
 If this option is specified as an empty string (the default), then the
@@ -541,7 +377,6 @@ If this option is specified as an empty string (the default), then the
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-bitmap \fIvalue\fR
-.
 Specifies a bitmap to display in the menu instead of a textual
 label, in any of the forms accepted by \fBTk_GetBitmap\fR.
 This option overrides the \fB\-label\fR option
@@ -553,18 +388,15 @@ If a \fB\-image\fR option has been specified, it overrides
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-columnbreak \fIvalue\fR
-.
 When this option is zero, the entry appears below the previous entry. When
 this option is one, the entry appears at the top of a new column in the
 menu.
 .TP
 \fB\-command \fIvalue\fR
-.
 Specifies a Tcl command to execute when the menu entry is invoked.
 Not available for separator or tear-off entries.
 .TP
 \fB\-compound \fIvalue\fR
-.
 Specifies whether the menu entry should display both an image and text,
 and if so, where the image should be placed relative to the text.
 Valid values for this option are \fBbottom\fR, \fBcenter\fR,
@@ -574,7 +406,6 @@ text, depending on the values of the \fB\-image\fR and \fB\-bitmap\fR
 options.
 .TP
 \fB\-font \fIvalue\fR
-.
 Specifies the font to use when drawing the label or accelerator
 string in this entry.
 If this option is specified as an empty string (the default) then
@@ -582,7 +413,6 @@ the \fBfont\fR option for the overall menu is used.
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-foreground \fIvalue\fR
-.
 Specifies a foreground color to use for displaying this entry when it
 is in the normal state (neither active nor disabled).
 If this option is specified as an empty string (the default), then the
@@ -590,14 +420,12 @@ If this option is specified as an empty string (the default), then the
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-hidemargin \fIvalue\fR
-.
 Specifies whether the standard margins should be drawn for this menu
 entry. This is useful when creating palette with images in them, i.e.,
 color palettes, pattern palettes, etc. 1 indicates that the margin for
 the entry is hidden; 0 means that the margin is used.
 .TP
 \fB\-image \fIvalue\fR
-.
 Specifies an image to display in the menu instead of a text string
 or bitmap.
 The image must have been created by some previous invocation of
@@ -609,35 +437,29 @@ bitmap label to be displayed.
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-indicatoron \fIvalue\fR
-.
 Available only for checkbutton and radiobutton entries.
 \fIValue\fR is a boolean that determines whether or not the
 indicator should be displayed.
 .TP
 \fB\-label \fIvalue\fR
-.
 Specifies a string to display as an identifying label in the menu
 entry.  Not available for separator or tear-off entries.
 .TP
 \fB\-menu \fIvalue\fR
-.
 Available only for cascade entries.  Specifies the path name of
 the submenu associated with this entry.
 The submenu must be a child of the menu.
 .TP
 \fB\-offvalue \fIvalue\fR
-.
 Available only for checkbutton entries.  Specifies the value to
 store in the entry's associated variable when the entry is
 deselected.
 .TP
 \fB\-onvalue \fIvalue\fR
-.
 Available only for checkbutton entries.  Specifies the value to
 store in the entry's associated variable when the entry is selected.
 .TP
 \fB\-selectcolor \fIvalue\fR
-.
 Available only for checkbutton and radiobutton entries.
 Specifies the color to display in the indicator when the entry is
 selected.
@@ -645,7 +467,6 @@ If the value is an empty string (the default) then the \fBselectColor\fR
 option for the menu determines the indicator color.
 .TP
 \fB\-selectimage \fIvalue\fR
-.
 Available only for checkbutton and radiobutton entries.
 Specifies an image to display in the entry (in place of
 the \fB\-image\fR option) when it is selected.
@@ -655,7 +476,6 @@ This option is ignored unless the \fB\-image\fR option has
 been specified.
 .TP
 \fB\-state \fIvalue\fR
-.
 Specifies one of three states for the entry:  \fBnormal\fR, \fBactive\fR,
 or \fBdisabled\fR.  In normal state the entry is displayed using the
 \fBforeground\fR option for the menu and the \fBbackground\fR
@@ -672,7 +492,6 @@ In this state the entry is displayed according to the
 This option is not available for separator entries.
 .TP
 \fB\-underline \fIvalue\fR
-.
 Specifies the integer index of a character to underline in the entry.
 This option is also queried by the default bindings and used to
 implement keyboard traversal.
@@ -682,32 +501,143 @@ If a bitmap or image is displayed in the entry then this option is ignored.
 This option is not available for separator or tear-off entries.
 .TP
 \fB\-value \fIvalue\fR
-.
 Available only for radiobutton entries.  Specifies the value to
 store in the entry's associated variable when the entry is selected.
 If an empty string is specified, then the \fB\-label\fR option
 for the entry as the value to store in the variable.
 .TP
 \fB\-variable \fIvalue\fR
-.
 Available only for checkbutton and radiobutton entries.  Specifies
 the name of a global value to set when the entry is selected.
 For checkbutton entries the variable is also set when the entry
 is deselected.  For radiobutton entries, changing the variable
 causes the currently-selected entry to deselect itself.
-.RS
-.PP
-For checkbutton entries, the default value of this option is taken from the
-\fB\-label\fR option, and for radiobutton entries a single fixed value is
-used. It is recommended that you always set the \fB\-variable\fR option when
-creating either a checkbutton or a radiobutton.
+.LP
+The \fBadd\fR widget command returns an empty string.
 .RE
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBmenu\fR
+command.
+.TP
+\fIpathName\fR \fBclone\fR \fInewPathname ?cloneType?\fR
+Makes a clone of the current menu named \fInewPathName\fR. This clone
+is a menu in its own right, but any changes to the clone are
+propagated to the original menu and vice versa. \fIcloneType\fR can be
+\fBnormal\fR, \fBmenubar\fR, or \fBtearoff\fR. Should not normally be
+called outside of the Tk library. See the \fBCLONES\fR section for
+more information.
+.TP
+\fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBmenu\fR
+command.
+.TP
+\fIpathName \fBdelete \fIindex1\fR ?\fIindex2\fR?
+Delete all of the menu entries between \fIindex1\fR and
+\fIindex2\fR inclusive.
+If \fIindex2\fR is omitted then it defaults to \fIindex1\fR.
+Attempts to delete a tear-off menu entry are ignored (instead, you
+should change the \fBtearOff\fR option to remove the tear-off entry).
+.TP
+\fIpathName \fBentrycget\fR \fIindex option\fR
+Returns the current value of a configuration option for
+the entry given by \fIindex\fR.
+\fIOption\fR may have any of the values accepted by the \fBadd\fR
+widget command.
+.TP
+\fIpathName \fBentryconfigure \fIindex \fR?\fIoptions\fR?
+This command is similar to the \fBconfigure\fR command, except that
+it applies to the options for an individual entry, whereas \fBconfigure\fR
+applies to the options for the menu as a whole.
+\fIOptions\fR may have any of the values accepted by the \fBadd\fR
+widget command.  If \fIoptions\fR are specified, options are modified
+as indicated
+in the command and the command returns an empty string.
+If no \fIoptions\fR are specified, returns a list describing
+the current options for entry \fIindex\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).
+.TP
+\fIpathName \fBindex \fIindex\fR
+Returns the numerical index corresponding to \fIindex\fR, or
+\fBnone\fR if \fIindex\fR was specified as \fBnone\fR.
+.TP
+\fIpathName \fBinsert \fIindex\fR \fItype \fR?\fIoption value option value ...\fR?
+Same as the \fBadd\fR widget command except that it inserts the new
+entry just before the entry given by \fIindex\fR, instead of appending
+to the end of the menu.  The \fItype\fR, \fIoption\fR, and \fIvalue\fR
+arguments have the same interpretation as for the \fBadd\fR widget
+command.  It is not possible to insert new menu entries before the
+tear-off entry, if the menu has one.
+.TP
+\fIpathName \fBinvoke \fIindex\fR
+Invoke the action of the menu entry.  See the sections on the
+individual entries above for details on what happens.  If the
+menu entry is disabled then nothing happens.  If the
+entry has a command associated with it then the result of that
+command is returned as the result of the \fBinvoke\fR widget
+command.  Otherwise the result is an empty string.  Note:  invoking
+a menu entry does not automatically unpost the menu;  the default
+bindings normally take care of this before invoking the \fBinvoke\fR
+widget command.
+.TP
+\fIpathName \fBpost \fIx y\fR
+Arrange for the menu to be displayed on the screen at the root-window
+coordinates given by \fIx\fR and \fIy\fR.  These coordinates are
+adjusted if necessary to guarantee that the entire menu is visible on
+the screen.  This command normally returns an empty string.
+If the \fBpostCommand\fR option has been specified, then its value is
+executed as a Tcl script before posting the menu and the result of
+that script is returned as the result of the \fBpost\fR widget
+command.
+If an error returns while executing the command, then the error is
+returned without posting the menu.
+.TP
+\fIpathName \fBpostcascade \fIindex\fR
+Posts the submenu associated with the cascade entry given by
+\fIindex\fR, and unposts any previously posted submenu.
+If \fIindex\fR does not correspond to a cascade entry,
+or if \fIpathName\fR is not posted,
+the command has no effect except to unpost any currently posted
+submenu.
+.TP
+\fIpathName \fBtype \fIindex\fR
+Returns the type of the menu entry given by \fIindex\fR.
+This is the \fItype\fR argument passed to the \fBadd\fR widget
+command when the entry was created, such as \fBcommand\fR
+or \fBseparator\fR, or \fBtearoff\fR for a tear-off entry.
+.TP
+\fIpathName \fBunpost\fR
+Unmap the window so that it is no longer displayed.  If a
+lower-level cascaded menu is posted, unpost that menu.  Returns an
+empty string. This subcommand does not work on Windows and the
+Macintosh, as those platforms have their own way of unposting menus.
+.TP
+\fIpathName \fBxposition \fIindex\fR
+.VS 8.5
+Returns a decimal string giving the x-coordinate within the menu
+window of the leftmost pixel in the entry specified by \fIindex\fR.
+.VE 8.5
+.TP
+\fIpathName \fByposition \fIindex\fR
+Returns a decimal string giving the y-coordinate within the menu
+window of the topmost pixel in the entry specified by \fIindex\fR.
 .SH "MENU CONFIGURATIONS"
 .PP
 The default bindings support four different ways of using menus:
 .TP
 \fBPulldown Menus in Menubar\fR
-.
 This is the most common case. You create a menu widget that will become the
 menu bar. You then add cascade entries to this menu, specifying the
 pull down menus you wish to use in your menu bar. You then create all
@@ -716,7 +646,6 @@ of the pulldowns. Once you have done this, specify the menu using the
 \fBtoplevel\fR manual entry for details.
 .TP
 \fBPulldown Menus in Menu Buttons\fR
-.
 This is the compatible way to do menu bars.  You create one menubutton
 widget for each top-level menu, and typically you arrange a series of
 menubuttons in a row in a menubar window.  You also create the top-level menus
@@ -728,14 +657,12 @@ will allow users to traverse and invoke the tree of menus via its
 menubutton;  see the \fBmenubutton\fR manual entry for details.
 .TP
 \fBPopup Menus\fR
-.
 Popup menus typically post in response to a mouse button press or
 keystroke.  You create the popup menus and any cascaded submenus,
 then you call the \fBtk_popup\fR procedure at the appropriate time
 to post the top-level menu.
 .TP
 \fBOption Menus\fR
-.
 An option menu consists of a menubutton with an associated menu
 that allows you to select one of several values.  The current value
 is displayed in the menubutton and is also stored in a global
@@ -743,7 +670,6 @@ variable.  Use the \fBtk_optionMenu\fR procedure to create option
 menubuttons and their menus.
 .TP
 \fBTorn-off Menus\fR
-.
 You create a torn-off menu by invoking the tear-off entry at
 the top of an existing menu.  The default bindings will create a new menu
 that is a copy of the original menu and leave it permanently
@@ -818,6 +744,3 @@ entries.
 bind(n), menubutton(n), ttk::menubutton(n), toplevel(n)
 .SH KEYWORDS
 menu, widget
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

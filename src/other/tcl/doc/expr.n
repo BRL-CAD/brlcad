@@ -28,11 +28,9 @@ as the corresponding C operators.
 Expressions almost always yield numeric results
 (integer or floating-point values).
 For example, the expression
-.PP
 .CS
 \fBexpr 8.2 + 6\fR
 .CE
-.PP
 evaluates to 14.2.
 Tcl expressions differ from C expressions in the way that
 operands are specified.  Also, Tcl expressions support
@@ -45,6 +43,7 @@ and parentheses.
 White space may be used between the operands and operators and
 parentheses; it is ignored by the expression's instructions.
 Where possible, operands are interpreted as integer values.
+.VS 8.5
 Integer values may be specified in decimal (the normal case), in binary
 (if the first two characters of the operand are \fB0b\fR), in octal
 (if the first two characters of the operand are \fB0o\fR), or in hexadecimal
@@ -61,6 +60,7 @@ the sign characters \fB+\fR or \fB\-\fR.  For example, all of the
 following are valid floating-point numbers:  2.1, 3., 6e4, 7.91e+16.
 Also recognized as floating point values are the strings \fBInf\fR
 and \fBNaN\fR making use of any case for each character.
+.VE 8.5
 If no numeric interpretation is possible (note that all literal
 operands that are not numeric or boolean must be quoted with either
 braces or with double quotes), then an operand is left as a string
@@ -91,7 +91,7 @@ the operand.
 As a mathematical function whose arguments have any of the above
 forms for operands, such as \fBsin($x)\fR.  See \fBMATH FUNCTIONS\fR below for
 a discussion of how mathematical functions are handled.
-.PP
+.LP
 Where the above substitutions occur (e.g. inside quoted strings), they
 are performed by the expression's instructions.
 However, the command parser may already have performed one round of
@@ -105,7 +105,6 @@ For some examples of simple expressions, suppose the variable
 the variable \fBb\fR has the value 6.
 Then the command on the left side of each of the lines below
 will produce the value on the right side of the line:
-.PP
 .CS
 .ta 6c
 \fBexpr\fR 3.1 + $a	\fI6.1\fR
@@ -120,17 +119,16 @@ the \fBtcl::mathop\fR namespace; see the \fBmathop\fR(n) manual page
 for details) are listed below, grouped in decreasing order of precedence:
 .TP 20
 \fB\-\0\0+\0\0~\0\0!\fR
-.
 Unary minus, unary plus, bit-wise NOT, logical NOT.  None of these operators
 may be applied to string operands, and bit-wise NOT may be
 applied only to integers.
 .TP 20
 \fB**\fR
-.
+.VS 8.5
 Exponentiation.  Valid for any numeric operands.
+.VE 8.5
 .TP 20
 \fB*\0\0/\0\0%\fR
-.
 Multiply, divide, remainder.  None of these operators may be
 applied to string operands, and remainder may be applied only
 to integers.
@@ -138,98 +136,80 @@ The remainder will always have the same sign as the divisor and
 an absolute value smaller than the divisor.
 .TP 20
 \fB+\0\0\-\fR
-.
 Add and subtract.  Valid for any numeric operands.
 .TP 20
 \fB<<\0\0>>\fR
-.
 Left and right shift.  Valid for integer operands only.
 A right shift always propagates the sign bit.
 .TP 20
 \fB<\0\0>\0\0<=\0\0>=\fR
-.
 Boolean less, greater, less than or equal, and greater than or equal.
 Each operator produces 1 if the condition is true, 0 otherwise.
 These operators may be applied to strings as well as numeric operands,
 in which case string comparison is used.
 .TP 20
 \fB==\0\0!=\fR
-.
 Boolean equal and not equal.  Each operator produces a zero/one result.
 Valid for all operand types.
 .TP 20
 \fBeq\0\0ne\fR
-.
 Boolean string equal and string not equal.  Each operator produces a
 zero/one result.  The operand types are interpreted only as strings.
 .TP 20
 \fBin\0\0ni\fR
-.
+.VS 8.5
 List containment and negated list containment.  Each operator produces
 a zero/one result and treats its first argument as a string and its
 second argument as a Tcl list.  The \fBin\fR operator indicates
 whether the first argument is a member of the second argument list;
 the \fBni\fR operator inverts the sense of the result.
+.VE 8.5
 .TP 20
 \fB&\fR
-.
 Bit-wise AND.  Valid for integer operands only.
 .TP 20
 \fB^\fR
-.
 Bit-wise exclusive OR.  Valid for integer operands only.
 .TP 20
 \fB|\fR
-.
 Bit-wise OR.  Valid for integer operands only.
 .TP 20
 \fB&&\fR
-.
 Logical AND.  Produces a 1 result if both operands are non-zero,
 0 otherwise.
 Valid for boolean and numeric (integers or floating-point) operands only.
 .TP 20
 \fB||\fR
-.
 Logical OR.  Produces a 0 result if both operands are zero, 1 otherwise.
 Valid for boolean and numeric (integers or floating-point) operands only.
 .TP 20
 \fIx\fB?\fIy\fB:\fIz\fR
-.
 If-then-else, as in C.  If \fIx\fR
 evaluates to non-zero, then the result is the value of \fIy\fR.
 Otherwise the result is the value of \fIz\fR.
 The \fIx\fR operand must have a boolean or numeric value.
-.PP
+.LP
 See the C manual for more details on the results
 produced by each operator.
+.VS 8.5
 The exponentiation operator promotes types like the multiply and
 divide operators, and produces a result that is the same as the output
 of the \fBpow\fR function (after any type conversions.)
-All of the binary operators but exponentiation group left-to-right
-within the same precedence level; exponentiation groups right-to-left.  For example, the command
-.PP
+.VE 8.5
+All of the binary operators group left-to-right within the same
+precedence level.  For example, the command
 .CS
 \fBexpr\fR {4*2 < 7}
 .CE
-.PP
-returns 0, while
-.PP
-.CS
-\fBexpr\fR {2**3**2}
-.CE
-.PP
-returns 512.
+returns 0.
 .PP
 The \fB&&\fR, \fB||\fR, and \fB?:\fR operators have
 .QW "lazy evaluation" ,
 just as in C, which means that operands are not evaluated if they are
 not needed to determine the outcome.  For example, in the command
-.PP
 .CS
 \fBexpr {$v ? [a] : [b]}\fR
 .CE
-.PP
 only one of
 .QW \fB[a]\fR
 or
@@ -244,23 +224,19 @@ and
 before invoking the \fBexpr\fR command.
 .SS "MATH FUNCTIONS"
 .PP
+.VS 8.5
 When the expression parser encounters a mathematical function
 such as \fBsin($x)\fR, it replaces it with a call to an ordinary
 Tcl function in the \fBtcl::mathfunc\fR namespace.  The processing
 of an expression such as:
-.PP
 .CS
 \fBexpr {sin($x+$y)}\fR
 .CE
-.PP
 is the same in every way as the processing of:
-.PP
 .CS
 \fBexpr {[tcl::mathfunc::sin [expr {$x+$y}]]}\fR
 .CE
-.PP
 which in turn is the same as the processing of:
-.PP
 .CS
 \fBtcl::mathfunc::sin [expr {$x+$y}]\fR
 .CE
@@ -273,8 +249,10 @@ may as well (depending on the current \fBnamespace path\fR setting).
 .PP
 See the \fBmathfunc\fR(n) manual page for the math functions that are
 available by default.
+.VE 8.5
 .SS "TYPES, OVERFLOW, AND PRECISION"
 .PP
+.VS 8.5
 All internal computations involving integers are done calling on the
 LibTomMath multiple precision integer library as required so that all
 integer calculations are performed exactly.  Note that in Tcl releases
@@ -284,6 +262,7 @@ in those calculations where values overflowed the range of those types.
 Any code that relied on these implicit truncations will need to explicitly
 add \fBint()\fR or \fBwide()\fR function calls to expressions at the points
 where such truncation is required to take place.
+.VE 8.5
 .PP
 All internal computations involving floating-point are
 done with the C type \fIdouble\fR.
@@ -298,29 +277,23 @@ and string operands is done automatically as needed.
 For arithmetic computations, integers are used until some
 floating-point number is introduced, after which floating-point is used.
 For example,
-.PP
 .CS
 \fBexpr\fR {5 / 4}
 .CE
-.PP
 returns 1, while
-.PP
 .CS
 \fBexpr\fR {5 / 4.0}
 \fBexpr\fR {5 / ( [string length "abcd"] + 0.0 )}
 .CE
-.PP
 both return 1.25.
 Floating-point values are always returned with a
 .QW \fB.\fR
 or an
 .QW \fBe\fR
 so that they will not look like integer values.  For example,
-.PP
 .CS
 \fBexpr\fR {20.0/5.0}
 .CE
-.PP
 returns \fB4.0\fR, not \fB4\fR.
 .SS "STRING OPERATIONS"
 .PP
@@ -335,12 +308,10 @@ Canonical string representation for integer values is a decimal string
 format.  Canonical string representation for floating-point values
 is that produced by the \fB%g\fR format specifier of Tcl's
 \fBformat\fR command.  For example, the commands
-.PP
 .CS
 \fBexpr {"0x03" > "2"}\fR
 \fBexpr {"0y" < "0x12"}\fR
 .CE
-.PP
 both return 1.  The first comparison is done using integer
 comparison, and the second is done using string comparison after
 the second operand is converted to the string \fB18\fR.
@@ -358,13 +329,11 @@ This allows the Tcl bytecode compiler to generate the best code.
 As mentioned above, expressions are substituted twice:
 once by the Tcl parser and once by the \fBexpr\fR command.
 For example, the commands
-.PP
 .CS
 \fBset a 3\fR
 \fBset b {$a + 2}\fR
 \fBexpr $b*4\fR
 .CE
-.PP
 return 11, not a multiple of 4.
 This is because the Tcl parser will first substitute \fB$a + 2\fR for
 the variable \fBb\fR,
@@ -382,15 +351,15 @@ The most expensive code is required for
 unbraced expressions that contain command substitutions.
 These expressions must be implemented by generating new code
 each time the expression is executed.
+.VS 8.5
 When the expression is unbraced to allow the substitution of a function or
 operator, consider using the commands documented in the \fBmathfunc\fR(n) or
 \fBmathop\fR(n) manual pages directly instead.
+.VE 8.5
 .SH EXAMPLES
-.PP
 Define a procedure that computes an
 .QW interesting
 mathematical function:
-.PP
 .CS
 proc tcl::mathfunc::calc {x y} {
     \fBexpr\fR { ($x**2 - $y**2) / exp($x**2 + $y**2) }
@@ -398,7 +367,6 @@ proc tcl::mathfunc::calc {x y} {
 .CE
 .PP
 Convert polar coordinates into cartesian coordinates:
-.PP
 .CS
 # convert from ($radius,$angle)
 set x [\fBexpr\fR { $radius * cos($angle) }]
@@ -406,7 +374,6 @@ set y [\fBexpr\fR { $radius * sin($angle) }]
 .CE
 .PP
 Convert cartesian coordinates into polar coordinates:
-.PP
 .CS
 # convert from ($x,$y)
 set radius [\fBexpr\fR { hypot($y, $x) }]
@@ -415,14 +382,12 @@ set angle  [\fBexpr\fR { atan2($y, $x) }]
 .PP
 Print a message describing the relationship of two string values to
 each other:
-.PP
 .CS
 puts "a and b are [\fBexpr\fR {$a eq $b ? {equal} : {different}}]"
 .CE
 .PP
 Set a variable to whether an environment variable is both defined at
 all and also set to a true boolean value:
-.PP
 .CS
 set isTrue [\fBexpr\fR {
     [info exists ::env(SOME_ENV_VAR)] &&
@@ -431,7 +396,6 @@ set isTrue [\fBexpr\fR {
 .CE
 .PP
 Generate a random integer in the range 0..99 inclusive:
-.PP
 .CS
 set randNum [\fBexpr\fR { int(100 * rand()) }]
 .CE

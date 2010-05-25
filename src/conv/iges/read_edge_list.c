@@ -41,7 +41,7 @@ Read_edge_list( edge )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return( (struct iges_edge_list *)NULL );
+	return (struct iges_edge_list *)NULL;
     }
 
     Readrec( dir[entityno]->param );
@@ -50,7 +50,7 @@ Read_edge_list( edge )
     {
 	/* this is not an edge list entity */
 	bu_log( "Read_edge_list: entity at DE %d is not an edge list entity\n", edge->edge_de );
-	return( (struct iges_edge_list *)NULL );
+	return (struct iges_edge_list *)NULL;
     }
 
     edge_list = (struct iges_edge_list *)bu_malloc( sizeof( struct iges_edge_list )  ,
@@ -71,7 +71,7 @@ Read_edge_list( edge )
 	Readint( &edge_list->i_edge[i].end_vert_index, "" );
     }
 
-    return( edge_list );
+    return edge_list;
 }
 
 /*

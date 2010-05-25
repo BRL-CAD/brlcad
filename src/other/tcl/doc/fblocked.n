@@ -63,7 +63,9 @@ proc echoLine {chan clientName} {
 socket -server connect 12345
 vwait forever
 .CE
+
 .SH "SEE ALSO"
 gets(n), open(n), read(n), socket(n), Tcl_StandardChannels(3)
+
 .SH KEYWORDS
 blocking, nonblocking

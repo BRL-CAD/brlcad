@@ -108,8 +108,6 @@ noinst_HEADERS = \
 	brepintersect.h \
 	mkbuilding.h \
 	surfaceintersect.h \
-	ducks.h \
-	patches.h \
 	tea.h \
 	vegitation.h
 

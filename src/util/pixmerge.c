@@ -113,12 +113,12 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind+2 > argc)
-	return(0);
+	return 0;
 
     f1_name = argv[bu_optind++];
     if (strcmp(f1_name, "-") == 0)
@@ -128,7 +128,7 @@ get_args(int argc, char **argv)
 	(void)fprintf(stderr,
 		      "pixmerge: cannot open \"%s\" for reading\n",
 		      f1_name);
-	return(0);
+	return 0;
     }
 
     f2_name = argv[bu_optind++];
@@ -139,13 +139,13 @@ get_args(int argc, char **argv)
 	(void)fprintf(stderr,
 		      "pixmerge: cannot open \"%s\" for reading\n",
 		      f2_name);
-	return(0);
+	return 0;
     }
 
     if (argc > bu_optind)
 	(void)fprintf(stderr, "pixmerge: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

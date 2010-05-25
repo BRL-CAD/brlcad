@@ -4,6 +4,12 @@
     #ifndef _TCLCONFIG
     #define _TCLCONFIG
 
+/* Is pthread_attr_get_np() declared in <pthread.h>? */
+#undef ATTRGETNP_NOT_DECLARED
+
+/* Is pthread_getattr_np declared in <pthread.h>? */
+#undef GETATTRNP_NOT_DECLARED
+
 /* Is gettimeofday() actually declared in <sys/time.h>? */
 #undef GETTOD_NOT_DECLARED
 
@@ -121,12 +127,6 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the `mkstemp' function. */
-#undef HAVE_MKSTEMP
-
-/* Define to 1 if you have the `mkstemps' function. */
-#undef HAVE_MKSTEMPS
-
 /* Define to 1 if you have the `mktime' function. */
 #undef HAVE_MKTIME
 
@@ -151,8 +151,17 @@
 /* Define to 1 if you have the `pthread_atfork' function. */
 #undef HAVE_PTHREAD_ATFORK
 
+/* Do we want a BSD-like thread-attribute interface? */
+#undef HAVE_PTHREAD_ATTR_GET_NP
+
 /* Define to 1 if you have the `pthread_attr_setstacksize' function. */
 #undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
+
+/* Do we want a Linux-like thread-attribute interface? */
+#undef HAVE_PTHREAD_GETATTR_NP
+
+/* Define to 1 if you have the `pthread_get_stacksize_np' function. */
+#undef HAVE_PTHREAD_GET_STACKSIZE_NP
 
 /* Does putenv() copy strings or incorporate them by reference? */
 #undef HAVE_PUTENV_THAT_COPIES
@@ -183,6 +192,13 @@
 
 /* Define to 1 if `st_blksize' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_BLKSIZE
+
+/* Define to 1 if `tm_zone' is member of `struct tm'. */
+#undef HAVE_STRUCT_TM_TM_ZONE
+
+/* Define to 1 if your `struct stat' has `st_blksize'. Deprecated, use
+   `HAVE_STRUCT_STAT_ST_BLKSIZE' instead. */
+#undef HAVE_ST_BLKSIZE
 
 /* Define to 1 if you have the <sys/filio.h> header file. */
 #undef HAVE_SYS_FILIO_H
@@ -217,8 +233,16 @@
 /* Should we use the tm_tzadj field of struct tm? */
 #undef HAVE_TM_TZADJ
 
+/* Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
+   `HAVE_STRUCT_TM_TM_ZONE' instead. */
+#undef HAVE_TM_ZONE
+
 /* Is off64_t in <sys/types.h>? */
 #undef HAVE_TYPE_OFF64_T
+
+/* Define to 1 if you don't have `tm_zone' but do have the external array
+   `tzname'. */
+#undef HAVE_TZNAME
 
 /* Do we have the uintptr_t type? */
 #undef HAVE_UINTPTR_T
@@ -231,9 +255,6 @@
 
 /* Is weak import available? */
 #undef HAVE_WEAK_IMPORT
-
-/* Is there an installed zlib? */
-#undef HAVE_ZLIB
 
 /* Is this a Mac I see before me? */
 #undef MAC_OSX_TCL
@@ -343,6 +364,9 @@
 /* Are bytecode statistics enabled? */
 #undef TCL_COMPILE_STATS
 
+/* Are we cross-compiling? */
+#undef TCL_CROSS_COMPILE
+
 /* Are we to override what our default encoding is? */
 #undef TCL_DEFAULT_ENCODING
 
@@ -357,6 +381,9 @@
 
 /* What is the default extension for shared libraries? */
 #undef TCL_SHLIB_EXT
+
+/* The C stack grows upwards in memory. */
+#undef TCL_STACK_GROWS_UP
 
 /* Are we building with threads enabled? */
 #undef TCL_THREADS
@@ -378,6 +405,9 @@
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* Define to 1 if your <sys/time.h> declares `struct tm'. */
+#undef TM_IN_SYS_TIME
 
 /* Is getcwd Posix-compliant? */
 #undef USEGETWD

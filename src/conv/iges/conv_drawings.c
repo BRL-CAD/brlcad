@@ -551,7 +551,7 @@ Get_views_visible( entno )
     if ( dir[entno]->form != 3 && dir[entno]->form != 4 )
     {
 	bu_log( "Get_views_visible called for wrong form of Associatitivity entity\n");
-	return( (struct views_visible *)NULL );
+	return (struct views_visible *)NULL;
     }
 
     Readrec( dir[entno]->param );
@@ -559,7 +559,7 @@ Get_views_visible( entno )
     if ( entity_type != 402 )
     {
 	bu_log( "Expected Views Visible entity data at P%07d, got type %d\n", dir[entno]->param, entity_type );
-	return( (struct views_visible *)NULL );
+	return (struct views_visible *)NULL;
     }
 
     Readint( &no_of_views, "" );
@@ -579,7 +579,7 @@ Get_views_visible( entno )
 	    Readint( &junk, "" );
     }
 
-    return( vv );
+    return vv;
 }
 
 void

@@ -3,7 +3,7 @@
 /* 
  * Togl - a Tk OpenGL widget
  * Copyright (C) 1996-1997  Brian Paul and Ben Bederson
- * Copyright (C) 2006-2007  Greg Couch
+ * Copyright (C) 2006-2009  Greg Couch
  * See the LICENSE file for copyright details.
  */
 
@@ -44,11 +44,6 @@ create_cb(ClientData clientData, Tcl_Interp *interp, int objc,
         return TCL_ERROR;
     }
 
-    toglFont = Togl_LoadBitmapFont(togl, "Helvetica");
-    if (!toglFont) {
-        printf("Couldn't load font!\n");
-        exit(1);
-    }
     return TCL_OK;
 }
 
@@ -98,46 +93,50 @@ reshape_cb(ClientData clientData, Tcl_Interp *interp, int objc,
 
 
 static void
-print_string(Togl *togl, const char *s)
-{
-    Togl_WriteChars(togl, toglFont, s, 0);
-}
-
-static void
 draw_eye(Togl *togl)
 {
+    static GLuint cubeList = 0;
+
     Togl_Clear(togl, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     Togl_Frustum(togl, -1, 1, -1, 1, 1, 10);
     glMatrixMode(GL_MODELVIEW);
 
-    /* Front face */
-    glBegin(GL_QUADS);
-    glColor3f(0.4f, 0.8f, 0.4f);        /* Green-ish */
-    glVertex3f(-1, 1, 1);
-    glVertex3f(1, 1, 1);
-    glVertex3f(1, -1, 1);
-    glVertex3f(-1, -1, 1);
-    /* Back face */
-    glColor3f(0.8f, 0.8f, 0.4f);        /* Yellow-ish */
-    glVertex3f(-1, 1, -1);
-    glVertex3f(1, 1, -1);
-    glVertex3f(1, -1, -1);
-    glVertex3f(-1, -1, -1);
-    /* Top side face */
-    glColor3f(0.4f, 0.4f, 0.8f);        /* Blue-ish */
-    glVertex3f(-1, 1, 1);
-    glVertex3f(1, 1, 1);
-    glVertex3f(1, 1, -1);
-    glVertex3f(-1, 1, -1);
-    /* Bottom side face */
-    glColor3f(0.8f, 0.4f, 0.4f);        /* Red-ish */
-    glVertex3f(-1, -1, 1);
-    glVertex3f(1, -1, 1);
-    glVertex3f(1, -1, -1);
-    glVertex3f(-1, -1, -1);
-    glEnd();
+    if (!cubeList) {
+        cubeList = glGenLists(1);
+        glNewList(cubeList, GL_COMPILE);
+
+	/* Front face */
+	glBegin(GL_QUADS);
+	glColor3f(0.4f, 0.8f, 0.4f);        /* Green-ish */
+	glVertex3f(-1, 1, 1);
+	glVertex3f(1, 1, 1);
+	glVertex3f(1, -1, 1);
+	glVertex3f(-1, -1, 1);
+	/* Back face */
+	glColor3f(0.8f, 0.8f, 0.4f);        /* Yellow-ish */
+	glVertex3f(-1, 1, -1);
+	glVertex3f(1, 1, -1);
+	glVertex3f(1, -1, -1);
+	glVertex3f(-1, -1, -1);
+	/* Top side face */
+	glColor3f(0.4f, 0.4f, 0.8f);        /* Blue-ish */
+	glVertex3f(-1, 1, 1);
+	glVertex3f(1, 1, 1);
+	glVertex3f(1, 1, -1);
+	glVertex3f(-1, 1, -1);
+	/* Bottom side face */
+	glColor3f(0.8f, 0.4f, 0.4f);        /* Red-ish */
+	glVertex3f(-1, -1, 1);
+	glVertex3f(1, -1, 1);
+	glVertex3f(1, -1, -1);
+	glVertex3f(-1, -1, -1);
+	glEnd();
+
+        glEndList();
+    }
+    glCallList(cubeList);
 }
 
 /* 
@@ -189,7 +188,6 @@ display_cb(ClientData clientData, Tcl_Interp *interp, int objc,
     glLoadIdentity();
     glColor3f(1, 1, 1);
     glRasterPos3f(CornerX, CornerY, CornerZ);
-    print_string(togl, Togl_Ident(togl));
     Togl_SwapBuffers(togl);
     return TCL_OK;
 }

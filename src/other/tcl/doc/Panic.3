@@ -35,7 +35,9 @@ Must have been initialized using \fBva_start\fR,
 and cleared using \fBva_end\fR.
 .AP Tcl_PanicProc *panicProc in
 Procedure to report fatal error message and abort.
+
 .BE
+
 .SH DESCRIPTION
 .PP
 When the Tcl library detects that its internal data structures are in an
@@ -58,7 +60,7 @@ return.
 type \fBTcl_PanicProc\fR:
 .PP
 .CS
-typedef void \fBTcl_PanicProc\fR(
+typedef void Tcl_PanicProc(
         const char *\fBformat\fR,
         \fBarg\fR, \fBarg\fR,...);
 .CE
@@ -87,7 +89,10 @@ will be displayed.
 .PP
 \fBTcl_PanicVA\fR is the same as \fBTcl_Panic\fR except that instead of
 taking a variable number of arguments it takes an argument list.
+
 .SH "SEE ALSO"
 abort(3), printf(3), exec(n), format(n)
+
 .SH KEYWORDS
 abort, fatal, error
+

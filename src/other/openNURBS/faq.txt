@@ -3,7 +3,7 @@
 
 Legal Stuff:
 
-  Copyright (c) 1993-2006 Robert McNeel & Associates. All Rights Reserved.
+  Copyright (c) 1993-2010 Robert McNeel & Associates. All Rights Reserved.
   Rhinoceros is a registered trademark of Robert McNeel & Associates.
 
   THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED
@@ -58,6 +58,12 @@ Version 4 3DM files:
   or after September 2006 create version 4 files.  (Rhino 1, 
   Rhino 2, and Rhino 3 will not read version 4 files.)
 
+Version 5 3DM files:
+  The openNURBS toolkit will read and write version 5 files.
+  Rhino 5 and applications using an openNURBS toolkit released on
+  or after September 2009 create version 5 files.  (Rhino 1, 
+  Rhino 2, Rhino 3 and Rhino 4 will not read version 5 files.)
+
 ====================================================================
 
 Supported compilers:
@@ -70,14 +76,9 @@ Answer:
 
 The openNURBS toolkit has been successfully used with
 
-  Microsoft Visual C++ 6.0 SP5 (Windows XP)
-    Requires the November 2001, version 5.1.3590.2,
-    Microsoft Platform SDK.
+  Microsoft Visual C++ 2005 (VC 8.0) (32 and 64 bit Windows 7, Vista, XP )
 
-  Microsoft Visual C++ 2005 (VC 8.0) (Windows XP and x64)
-
-  gcc version 3.2.2 20030222 (Red Hat Linux 3.2.2-5)
-  gcc version 4.1.2 20061115 (SUSE Linux)
+  gcc version 4.2.1 (Apple Inc. build 5646)
   
   Apple XCode (MaxBook Pro + OSX)
 
@@ -98,24 +99,6 @@ If you are using a good quality C++ compiler and run into
 some toolkit code that causes problems, please let us know
 and we'll attempt to change the code to accommodate the
 compiler.
-
-====================================================================
-
-Microsoft Visual C++ 6.0 Users:
-  If you get a compile bug error c2676 binary != not defined 
-  for stuct _GUID, then you are not using the November 2001
-  Platform SDK or the platform SDK is not first in your includes
-  list.
-
-====================================================================
-
-Microsoft Visual Studio 2003 users:
-  You will have to modify the opennurbs source code to get
-  it to compile with VS 2003. It tedius, but not hard, to 
-  get opennurbs to compile with VS 2003.  If you need to use
-  a Microsoft Windows compiler, we strongly suggest you 
-  avoid VS 2003 and use either VC 6.0 or VS 2005.  We will
-  NOT provide support for using Microsoft Visual Studio 2003.
 
 ====================================================================
 

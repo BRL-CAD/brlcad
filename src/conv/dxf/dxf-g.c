@@ -273,7 +273,7 @@ make_brlcad_name( char *line )
 	c++;
     }
 
-    return( name );
+    return name;
 }
 
 static void
@@ -448,7 +448,7 @@ process_unknown_code( int code )
 	    curr_color = atoi( line );
 	    break;
     }
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -485,7 +485,7 @@ process_header_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -506,7 +506,7 @@ process_classes_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -544,7 +544,7 @@ process_tables_unknown_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -580,16 +580,16 @@ process_tables_layer_code( int code )
 	    }
 	    curr_color = 0;
 	    curr_state->sub_state = UNKNOWN_TABLE_STATE;
-	    return( process_tables_unknown_code( code ) );
+	    return process_tables_unknown_code( code );
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
 process_tables_code( int code )
 {
-    return( process_tables_sub_code[curr_state->sub_state]( code ) );
+    return process_tables_sub_code[curr_state->sub_state]( code );
 }
 
 static int
@@ -649,7 +649,7 @@ process_blocks_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 void
@@ -707,7 +707,7 @@ process_point_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -725,7 +725,7 @@ process_entities_polyline_vertex_code( int code )
 	    face[2] = 0;
 	    face[3] = 0;
 	    vertex_flag = 0;
-	    return( 0 );
+	    return 0;
 	case 8:		/* layer name */
 	    if ( curr_layer_name ) {
 		bu_free( curr_layer_name, "curr_layer_name" );
@@ -780,7 +780,7 @@ process_entities_polyline_vertex_code( int code )
 	    if ( verbose ) {
 		bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 	    }
-	    return( process_entities_code[curr_state->sub_state]( code ) );
+	    return process_entities_code[curr_state->sub_state]( code );
 	case 999:	/* comment */
 	    printf( "%s\n", line );
 	    break;
@@ -798,7 +798,7 @@ process_entities_polyline_vertex_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -815,7 +815,7 @@ process_entities_polyline_code( int code )
 		/* build any polyline meshes here */
 		if ( polyline_flag & POLY_3D_MESH ) {
 		    if ( polyline_vert_indices_count == 0 ) {
-			return( 0 );
+			return 0;
 		    } else if ( polyline_vert_indices_count != mesh_m_count * mesh_n_count ) {
 			bu_log( "Incorrect number of vertices for polygon mesh!!!\n" );
 			polyline_vert_indices_count = 0;
@@ -953,7 +953,7 @@ process_entities_polyline_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -1106,7 +1106,7 @@ process_entities_unknown_code( int code )
 	    }
     }
 
-    return( 0 );
+    return 0;
 }
 
 static void
@@ -1217,7 +1217,7 @@ process_insert_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -1309,7 +1309,7 @@ process_solid_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -1415,7 +1415,7 @@ process_lwpolyline_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -1486,7 +1486,7 @@ process_line_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -1643,7 +1643,7 @@ process_ellipse_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -1739,7 +1739,7 @@ process_circle_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 /* horizontal alignment codes for text */
@@ -2213,7 +2213,7 @@ process_leader_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -2321,7 +2321,7 @@ process_mtext_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 
@@ -2427,7 +2427,7 @@ process_text_attrib_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -2507,7 +2507,7 @@ process_dimension_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -2657,7 +2657,7 @@ process_arc_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -2871,7 +2871,7 @@ process_spline_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 static int
 process_3dface_entities_code( int code )
@@ -2941,13 +2941,13 @@ process_3dface_entities_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
 process_entity_code( int code )
 {
-    return( process_entities_code[curr_state->sub_state]( code ) );
+    return process_entities_code[curr_state->sub_state]( code );
 }
 
 static int
@@ -2968,7 +2968,7 @@ process_objects_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 static int
@@ -2989,7 +2989,7 @@ process_thumbnail_code( int code )
 	    break;
     }
 
-    return( 0 );
+    return 0;
 }
 
 /*
@@ -3084,17 +3084,17 @@ readcodes()
     curr_state->file_offset = ftell( dxf );
 
     if ( bu_fgets( line, MAX_LINE_SIZE, dxf ) == NULL ) {
-	return( ERROR_FLAG );
+	return ERROR_FLAG;
     } else {
 	code = atoi( line );
     }
 
     if ( bu_fgets( line, MAX_LINE_SIZE, dxf ) == NULL ) {
-	return( ERROR_FLAG );
+	return ERROR_FLAG;
     }
 
     if ( !strncmp( line, "EOF", 3 ) ) {
-	return( EOF_FLAG );
+	return EOF_FLAG;
     }
 
     line_len = strlen( line );
@@ -3115,7 +3115,7 @@ readcodes()
 	bu_log( "%d:\t%s\n", line_num, line );
     }
 
-    return( code );
+    return code;
 }
 
 int
@@ -3411,7 +3411,7 @@ main( int argc, char *argv[] )
 	(void)mk_comb( out_fp, bu_vls_addr( &top_name ), &head_all, 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0 );
     }
 
-    return( 0 );
+    return 0;
 }
 
 /*

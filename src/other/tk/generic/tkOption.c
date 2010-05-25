@@ -223,9 +223,9 @@ static int		GetDefaultOptions(Tcl_Interp *interp,
 static ElArray *	NewArray(int numEls);
 static void		OptionThreadExitProc(ClientData clientData);
 static void		OptionInit(TkMainInfo *mainPtr);
-static int		ParsePriority(Tcl_Interp *interp, const char *string);
+static int		ParsePriority(Tcl_Interp *interp, char *string);
 static int		ReadOptionFile(Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *fileName, int priority);
+			    char *fileName, int priority);
 static void		SetupStacks(TkWindow *winPtr, int leaf);
 
 /*
@@ -248,8 +248,8 @@ void
 Tk_AddOption(
     Tk_Window tkwin,		/* Window token; option will be associated
 				 * with main window for this window. */
-    const char *name,		/* Multi-element name of option. */
-    const char *value,		/* String value for option. */
+    CONST char *name,		/* Multi-element name of option. */
+    CONST char *value,		/* String value for option. */
     int priority)		/* Overall priority level to use for this
 				 * option, such as TK_USER_DEFAULT_PRIO or
 				 * TK_INTERACTIVE_PRIO. Must be between 0 and
@@ -259,13 +259,13 @@ Tk_AddOption(
     register ElArray **arrayPtrPtr;
     register Element *elPtr;
     Element newEl;
-    register const char *p;
-    const char *field;
+    register CONST char *p;
+    CONST char *field;
     int count, firstField;
     ptrdiff_t length;
 #define TMP_SIZE 100
     char tmp[TMP_SIZE+1];
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->mainPtr->optionRootPtr == NULL) {
@@ -402,8 +402,8 @@ Tk_Uid
 Tk_GetOption(
     Tk_Window tkwin,		/* Token for window that option is associated
 				 * with. */
-    const char *name,		/* Name of option. */
-    const char *className)	/* Class of option. NULL means there is no
+    CONST char *name,		/* Name of option. */
+    CONST char *className)	/* Class of option. NULL means there is no
 				 * class for this option: just check for
 				 * name. */
 {
@@ -413,7 +413,7 @@ Tk_GetOption(
     register int count;
     StackLevel *levelPtr;
     int stackDepth[NUM_STACKS];
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -477,16 +477,16 @@ Tk_GetOption(
      */
 
     for (elPtr = tsdPtr->stacks[EXACT_LEAF_NAME]->els,
-	    count = stackDepth[EXACT_LEAF_NAME]; count > 0;
-	    elPtr++, count--) {
+	     count = stackDepth[EXACT_LEAF_NAME]; count > 0;
+	 elPtr++, count--) {
 	if ((elPtr->nameUid == nameId)
 		&& (elPtr->priority > bestPtr->priority)) {
 	    bestPtr = elPtr;
 	}
     }
     for (elPtr = tsdPtr->stacks[WILDCARD_LEAF_NAME]->els,
-	    count = stackDepth[WILDCARD_LEAF_NAME]; count > 0;
-	    elPtr++, count--) {
+	     count = stackDepth[WILDCARD_LEAF_NAME]; count > 0;
+	 elPtr++, count--) {
 	if ((elPtr->nameUid == nameId)
 		&& (elPtr->priority > bestPtr->priority)) {
 	    bestPtr = elPtr;
@@ -496,16 +496,16 @@ Tk_GetOption(
     if (className != NULL) {
 	classId = Tk_GetUid(className);
 	for (elPtr = tsdPtr->stacks[EXACT_LEAF_CLASS]->els,
-		count = stackDepth[EXACT_LEAF_CLASS]; count > 0;
-		elPtr++, count--) {
+		 count = stackDepth[EXACT_LEAF_CLASS]; count > 0;
+	     elPtr++, count--) {
 	    if ((elPtr->nameUid == classId)
 		    && (elPtr->priority > bestPtr->priority)) {
 		bestPtr = elPtr;
 	    }
 	}
 	for (elPtr = tsdPtr->stacks[WILDCARD_LEAF_CLASS]->els,
-		count = stackDepth[WILDCARD_LEAF_CLASS]; count > 0;
-		elPtr++, count--) {
+		 count = stackDepth[WILDCARD_LEAF_CLASS]; count > 0;
+	     elPtr++, count--) {
 	    if ((elPtr->nameUid == classId)
 		    && (elPtr->priority > bestPtr->priority)) {
 		bestPtr = elPtr;
@@ -535,7 +535,7 @@ Tk_GetOption(
 	 * Extract the masquerade class name from the name field.
 	 */
 
-	classNameLength	= (unsigned) (masqName - name);
+	classNameLength	= (unsigned int)(masqName - name);
 	masqClass = (char *) ckalloc(classNameLength + 1);
 	strncpy(masqClass, name, classNameLength);
 	masqClass[classNameLength] = '\0';
@@ -614,14 +614,14 @@ Tk_OptionObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of Tcl_Obj arguments. */
-    Tcl_Obj *const objv[])	/* Tcl_Obj arguments. */
+    Tcl_Obj *CONST objv[])	/* Tcl_Obj arguments. */
 {
-    Tk_Window tkwin = clientData;
+    Tk_Window tkwin = (Tk_Window) clientData;
     int index, result;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    static const char *const optionCmds[] = {
+    static CONST char *optionCmds[] = {
 	"add", "clear", "get", "readfile", NULL
     };
 
@@ -644,7 +644,6 @@ Tk_OptionObjCmd(
     switch ((enum optionVals) index) {
     case OPTION_ADD: {
 	int priority;
-
 	if ((objc != 4) && (objc != 5)) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "pattern value ?priority?");
 	    return TCL_ERROR;
@@ -694,7 +693,7 @@ Tk_OptionObjCmd(
 	value = Tk_GetOption(window, Tcl_GetString(objv[3]),
 		Tcl_GetString(objv[4]));
 	if (value != NULL) {
-	    Tcl_SetResult(interp, (char *) value, TCL_STATIC);
+	    Tcl_SetResult(interp, (char *)value, TCL_STATIC);
 	}
 	break;
     }
@@ -744,7 +743,7 @@ void
 TkOptionDeadWindow(
     register TkWindow *winPtr)	/* Window to be cleaned up. */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -800,7 +799,7 @@ TkOptionClassChanged(
 {
     int i, j, *basePtr;
     ElArray *arrayPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->optionLevel == -1) {
@@ -855,7 +854,7 @@ TkOptionClassChanged(
 static int
 ParsePriority(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
-    const char *string)		/* Describes a priority level, either
+    char *string)		/* Describes a priority level, either
 				 * symbolically or numerically. */
 {
     int priority, c;
@@ -931,6 +930,7 @@ AddFromString(
     src = string;
     lineNum = 1;
     while (1) {
+
 	/*
 	 * Skip leading white space and empty lines and comment lines, and
 	 * check for the end of the spec.
@@ -1067,13 +1067,13 @@ ReadOptionFile(
     Tcl_Interp *interp,		/* Interpreter to use for reporting results. */
     Tk_Window tkwin,		/* Token for window: options are entered for
 				 * this window's main window. */
-    const char *fileName,		/* Name of file containing options. */
+    char *fileName,		/* Name of file containing options. */
     int priority)		/* Priority level to use for options in this
 				 * file, such as TK_USER_DEFAULT_PRIO or
 				 * TK_INTERACTIVE_PRIO. Must be between 0 and
 				 * TK_MAX_PRIO. */
 {
-    const char *realName;
+    CONST char *realName;
     char *buffer;
     int result, bufferSize;
     Tcl_Channel chan;
@@ -1108,7 +1108,7 @@ ReadOptionFile(
      */
 
     bufferSize = (int) Tcl_Seek(chan, (Tcl_WideInt) 0, SEEK_END);
-    Tcl_Seek(chan, (Tcl_WideInt) 0, SEEK_SET);
+    (void) Tcl_Seek(chan, (Tcl_WideInt) 0, SEEK_SET);
 
     if (bufferSize < 0) {
 	Tcl_AppendResult(interp, "error seeking to end of file \"",
@@ -1117,7 +1117,7 @@ ReadOptionFile(
 	return TCL_ERROR;
 
     }
-    buffer = ckalloc((unsigned) bufferSize+1);
+    buffer = (char *) ckalloc((unsigned) bufferSize+1);
     bufferSize = Tcl_Read(chan, buffer, bufferSize);
     if (bufferSize < 0) {
 	Tcl_AppendResult(interp, "error reading file \"", fileName, "\":",
@@ -1153,8 +1153,9 @@ static ElArray *
 NewArray(
     int numEls)			/* How many elements of space to allocate. */
 {
-    register ElArray *arrayPtr = (ElArray *) ckalloc(EL_ARRAY_SIZE(numEls));
+    register ElArray *arrayPtr;
 
+    arrayPtr = (ElArray *) ckalloc(EL_ARRAY_SIZE(numEls));
     arrayPtr->arraySize = numEls;
     arrayPtr->numUsed = 0;
     arrayPtr->nextToUse = arrayPtr->els;
@@ -1188,12 +1189,16 @@ ExtendArray(
      */
 
     if (arrayPtr->numUsed >= arrayPtr->arraySize) {
-	register int newSize = 2*arrayPtr->arraySize;
+	register ElArray *newPtr;
 
-	arrayPtr = (ElArray *)
-		ckrealloc((char *) arrayPtr, EL_ARRAY_SIZE(newSize));
-	arrayPtr->arraySize = newSize;
-	arrayPtr->nextToUse = &arrayPtr->els[arrayPtr->numUsed];
+	newPtr = (ElArray *) ckalloc(EL_ARRAY_SIZE(2*arrayPtr->arraySize));
+	newPtr->arraySize = 2*arrayPtr->arraySize;
+	newPtr->numUsed = arrayPtr->numUsed;
+	newPtr->nextToUse = &newPtr->els[newPtr->numUsed];
+	memcpy(newPtr->els, arrayPtr->els,
+		arrayPtr->arraySize * sizeof(Element));
+	ckfree((char *) arrayPtr);
+	arrayPtr = newPtr;
     }
 
     *arrayPtr->nextToUse = *elPtr;
@@ -1231,7 +1236,7 @@ SetupStacks(
     int level, i, *iPtr;
     register StackLevel *levelPtr;
     register ElArray *arrayPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -1308,8 +1313,10 @@ SetupStacks(
      */
 
     if (tsdPtr->curLevel >= tsdPtr->numLevels) {
-	StackLevel *newLevels = (StackLevel *)
-		ckalloc((unsigned) (tsdPtr->numLevels*2*sizeof(StackLevel)));
+	StackLevel *newLevels;
+
+	newLevels = (StackLevel *) ckalloc((unsigned)
+		(tsdPtr->numLevels * 2 * sizeof(StackLevel)));
 	memcpy(newLevels, tsdPtr->levels,
 		tsdPtr->numLevels * sizeof(StackLevel));
 	ckfree((char *) tsdPtr->levels);
@@ -1391,7 +1398,7 @@ ExtendStacks(
 {
     register int count;
     register Element *elPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     for (elPtr = arrayPtr->els, count = arrayPtr->numUsed;
@@ -1424,7 +1431,7 @@ static void
 OptionThreadExitProc(
     ClientData clientData)	/* not used */
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (tsdPtr->initialized) {
@@ -1462,7 +1469,7 @@ OptionInit(
 {
     int i;
     Tcl_Interp *interp;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Element *defaultMatchPtr = &tsdPtr->defaultMatch;
 
@@ -1498,7 +1505,7 @@ OptionInit(
 
     mainPtr->optionRootPtr = NewArray(20);
     interp = Tcl_CreateInterp();
-    GetDefaultOptions(interp, mainPtr->winPtr);
+    (void) GetDefaultOptions(interp, mainPtr->winPtr);
     Tcl_DeleteInterp(interp);
 }
 

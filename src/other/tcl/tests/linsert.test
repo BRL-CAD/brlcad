@@ -84,22 +84,16 @@ test linsert-1.20 {linsert command, use of end-int index} {
 
 test linsert-2.1 {linsert errors} {
     list [catch linsert msg] $msg
-} {1 {wrong # args: should be "linsert list index ?element ...?"}}
+} {1 {wrong # args: should be "linsert list index element ?element ...?"}}
 test linsert-2.2 {linsert errors} {
     list [catch {linsert a b} msg] $msg
-} {1 {bad index "b": must be integer?[+-]integer? or end?[+-]integer?}}
+} {1 {wrong # args: should be "linsert list index element ?element ...?"}}
 test linsert-2.3 {linsert errors} {
     list [catch {linsert a 12x 2} msg] $msg
 } {1 {bad index "12x": must be integer?[+-]integer? or end?[+-]integer?}}
 test linsert-2.4 {linsert errors} {
     list [catch {linsert \{ 12 2} msg] $msg
 } {1 {unmatched open brace in list}}
-test linsert-2.5 {syntax (TIP 323)} {
-    linsert {a b c} 0
-} [list a b c]
-test linsert-2.6 {syntax (TIP 323)} {
-    linsert "a\nb\nc" 0
-} [list a b c]
 
 test linsert-3.1 {linsert won't modify shared argument objects} {
     proc p {} {

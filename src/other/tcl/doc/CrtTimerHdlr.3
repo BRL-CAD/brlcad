@@ -32,6 +32,7 @@ Arbitrary one-word value to pass to \fIproc\fR.
 Token for previously created timer handler (the return value
 from some previous call to \fBTcl_CreateTimerHandler\fR).
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_CreateTimerHandler\fR arranges for \fIproc\fR to be
@@ -50,12 +51,9 @@ are other pending events to process before the call to
 .PP
 \fIProc\fR should have arguments and return value that match
 the type \fBTcl_TimerProc\fR:
-.PP
 .CS
-typedef void \fBTcl_TimerProc\fR(
-        ClientData \fIclientData\fR);
+typedef void Tcl_TimerProc(ClientData \fIclientData\fR);
 .CE
-.PP
 The \fIclientData\fR parameter to \fIproc\fR is a
 copy of the \fIclientData\fR argument given to
 \fBTcl_CreateTimerHandler\fR when the callback
@@ -72,7 +70,6 @@ has been invoked then \fBTcl_DeleteTimerHandler\fR does nothing.
 The tokens returned by \fBTcl_CreateTimerHandler\fR never have
 a value of NULL, so if NULL is passed to \fBTcl_DeleteTimerHandler\fR
 then the procedure does nothing.
-.SH "SEE ALSO"
-after(n), Tcl_CreateFileHandler(3), Tcl_DoWhenIdle(3)
+
 .SH KEYWORDS
 callback, clock, handler, timer

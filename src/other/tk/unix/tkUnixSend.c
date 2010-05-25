@@ -79,7 +79,7 @@ typedef struct NameRegistry {
 typedef struct PendingCommand {
     int serial;			/* Serial number expected in result. */
     TkDisplay *dispPtr;		/* Display being used for communication. */
-    const char *target;		/* Name of interpreter command is being sent
+    CONST char *target;		/* Name of interpreter command is being sent
 				 * to. */
     Window commWindow;		/* Target's communication window. */
     Tcl_Interp *interp;		/* Interpreter from which the send was
@@ -212,10 +212,10 @@ static void		AppendPropCarefully(Display *display,
 			    int length, PendingCommand *pendingPtr);
 static void		DeleteProc(ClientData clientData);
 static void		RegAddName(NameRegistry *regPtr,
-			    const char *name, Window commWindow);
+			    CONST char *name, Window commWindow);
 static void		RegClose(NameRegistry *regPtr);
-static void		RegDeleteName(NameRegistry *regPtr, const char *name);
-static Window		RegFindName(NameRegistry *regPtr, const char *name);
+static void		RegDeleteName(NameRegistry *regPtr, CONST char *name);
+static Window		RegFindName(NameRegistry *regPtr, CONST char *name);
 static NameRegistry *	RegOpen(Tcl_Interp *interp,
 			    TkDisplay *dispPtr, int lock);
 static void		SendEventProc(ClientData clientData, XEvent *eventPtr);
@@ -224,7 +224,7 @@ static Tk_RestrictAction SendRestrictProc(ClientData clientData,
 			    XEvent *eventPtr);
 static int		ServerSecure(TkDisplay *dispPtr);
 static void		UpdateCommWindow(TkDisplay *dispPtr);
-static int		ValidateName(TkDisplay *dispPtr, const char *name,
+static int		ValidateName(TkDisplay *dispPtr, CONST char *name,
 			    Window commWindow, int oldOK);
 
 /*
@@ -349,7 +349,7 @@ static Window
 RegFindName(
     NameRegistry *regPtr,	/* Pointer to a registry opened with a
 				 * previous call to RegOpen. */
-    const char *name)		/* Name of an application. */
+    CONST char *name)		/* Name of an application. */
 {
     char *p;
 
@@ -360,7 +360,7 @@ RegFindName(
 	    p++;
 	}
 	if ((*p != 0) && (strcmp(name, p+1) == 0)) {
-	    unsigned id;
+	    unsigned int id;
 
 	    if (sscanf(entry, "%x", &id) == 1) {
 		/*
@@ -402,7 +402,7 @@ static void
 RegDeleteName(
     NameRegistry *regPtr,	/* Pointer to a registry opened with a
 				 * previous call to RegOpen. */
-    const char *name)		/* Name of an application. */
+    CONST char *name)		/* Name of an application. */
 {
     char *p;
 
@@ -464,7 +464,7 @@ static void
 RegAddName(
     NameRegistry *regPtr,	/* Pointer to a registry opened with a
 				 * previous call to RegOpen. */
-    const char *name,		/* Name of an application. The caller must
+    CONST char *name,		/* Name of an application. The caller must
 				 * ensure that this name isn't already
 				 * registered. */
     Window commWindow)		/* X identifier for comm. window of
@@ -473,7 +473,7 @@ RegAddName(
     char id[30], *newProp;
     int idLength, newBytes;
 
-    sprintf(id, "%x ", (unsigned) commWindow);
+    sprintf(id, "%x ", (unsigned int) commWindow);
     idLength = strlen(id);
     newBytes = idLength + strlen(name) + 1;
     newProp = ckalloc((unsigned) (regPtr->propLength + newBytes));
@@ -575,7 +575,7 @@ static int
 ValidateName(
     TkDisplay *dispPtr,		/* Display for which to perform the
 				 * validation. */
-    const char *name,		/* The name of an application. */
+    CONST char *name,		/* The name of an application. */
     Window commWindow,		/* X identifier for the application's comm.
 				 * window. */
     int oldOK)			/* Non-zero means that we should consider an
@@ -588,7 +588,7 @@ ValidateName(
     Atom actualType;
     char *property, **propertyPtr = &property;
     Tk_ErrorHandler handler;
-    const char **argv;
+    CONST char **argv;
 
     property = NULL;
 
@@ -679,74 +679,54 @@ ServerSecure(
     int numHosts, secure;
     Bool enabled;
 
+    secure = 0;
     addrPtr = XListHosts(dispPtr->display, &numHosts, &enabled);
-    if (!enabled) {
-    insecure:
-	secure = 0;
-    } else if (numHosts == 0) {
-	secure = 1;
-    } else {
+    if (enabled) {
+	if (numHosts == 0) {
+	    secure = 1;
+	}
+
 	/*
 	 * Recent versions of X11 have the extra feature of allowing more
 	 * sophisticated authorization checks to be performed than the dozy
 	 * old ones that used to plague xhost usage. However, not all deployed
 	 * versions of Xlib know how to deal with this feature, so this code
 	 * is conditional on having the right #def in place. [Bug 1909931]
-	 *
-	 * Note that at this point we know that there's at least one entry in
-	 * the list returned by XListHosts. However there may be multiple
-	 * entries; as long as each is one of either 'SI:localhost:*' or
-	 * 'SI:localgroup:*' then we will claim to be secure enough.
 	 */
 
 #ifdef FamilyServerInterpreted
-	XServerInterpretedAddress *siPtr;
-	int i;
+	if (numHosts == 1 && addrPtr[0].family == FamilyServerInterpreted) {
+	    XServerInterpretedAddress *siPtr =
+		    (XServerInterpretedAddress *) addrPtr[0].address;
 
-	for (i=0 ; i<numHosts ; i++) {
-	    if (addrPtr[i].family != FamilyServerInterpreted) {
+	    if (siPtr->typelength==9 && !memcmp(siPtr->type,"localuser",9)) {
 		/*
-		 * We don't understand what the X server is letting in, so we
-		 * err on the side of safety.
+		 * We don't check the username here. This is because it's
+		 * officially non-portable and we are just making sure there
+		 * aren't silly misconfigurations. (Apparently 'root' is not a
+		 * very good choice, but we still don't put any effort in to
+		 * spot that.)
 		 */
 
-		goto insecure;
+		secure = 1;
+	    } else if (siPtr->typelength == 10
+		    && !memcmp(siPtr->type, "localgroup", 10)) {
+		/*
+		 * Similarly to above, we don't attempt to peek inside server
+		 * interpreted group names. If someone set it, it's what they
+		 * want and we assume it's OK.
+		 */
+
+		secure = 1;
 	    }
-	    siPtr = (XServerInterpretedAddress *) addrPtr[0].address;
 
 	    /*
-	     * We don't check the username or group here. This is because it's
-	     * officially non-portable and we are just making sure there
-	     * aren't silly misconfigurations. (Apparently 'root' is not a
-	     * very good choice, but we still don't put any effort in to spot
-	     * that.) However we do check to see that the constraints are
-	     * imposed against the connecting user and/or group.
+	     * The other defined types of server-interpreted controls involve
+	     * particular hosts; these are still insecure for the same reasons
+	     * that classic xhost access is insecure.
 	     */
-
-	    if (       !(siPtr->typelength == 9 /* ==strlen("localuser") */
-			&& !memcmp(siPtr->type, "localuser", 9))
-		    && !(siPtr->typelength == 10 /* ==strlen("localgroup") */
-			&& !memcmp(siPtr->type, "localgroup", 10))) {
-		/*
-		 * The other defined types of server-interpreted controls
-		 * involve particular hosts. These are still insecure for the
-		 * same reasons that classic xhost access is insecure; there's
-		 * just no way to be sure that the users on those systems are
-		 * the ones who should be allowed to connect to this display.
-		 */
-
-		goto insecure;
-	    }
 	}
-	secure = 1;
-#else
-	/*
-	 * We don't understand what the X server is letting in, so we err on
-	 * the side of safety.
-	 */
-
-	secure = 0;
-#endif /* FamilyServerInterpreted */
+#endif
     }
     if (addrPtr != NULL) {
 	XFree((char *) addrPtr);
@@ -756,7 +736,7 @@ ServerSecure(
 }
 
 /*
- *----------------------------------------------------------------------
+ *--------------------------------------------------------------
  *
  * Tk_SetAppName --
  *
@@ -777,15 +757,15 @@ ServerSecure(
  *	registration will be removed automatically if the interpreter is
  *	deleted or the "send" command is removed.
  *
- *----------------------------------------------------------------------
+ *--------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tk_SetAppName(
     Tk_Window tkwin,		/* Token for any window in the application to
 				 * be named: it is just used to identify the
 				 * application and the display. */
-    const char *name)		/* The name that will be used to refer to the
+    CONST char *name)		/* The name that will be used to refer to the
 				 * interpreter in later "send" commands. Must
 				 * be globally unique. */
 {
@@ -795,10 +775,10 @@ Tk_SetAppName(
     TkDisplay *dispPtr = winPtr->dispPtr;
     NameRegistry *regPtr;
     Tcl_Interp *interp;
-    const char *actualName;
+    CONST char *actualName;
     Tcl_DString dString;
     int offset, i;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     interp = winPtr->mainPtr->interp;
@@ -826,7 +806,8 @@ Tk_SetAppName(
 	    riPtr->nextPtr = tsdPtr->interpListPtr;
 	    tsdPtr->interpListPtr = riPtr;
 	    riPtr->name = NULL;
-	    Tcl_CreateCommand(interp, "send", Tk_SendCmd, riPtr, DeleteProc);
+	    Tcl_CreateCommand(interp, "send", Tk_SendCmd, (ClientData) riPtr,
+		    DeleteProc);
 	    if (Tcl_IsSafe(interp)) {
 		Tcl_HideCommand(interp, "send", "send");
 	    }
@@ -937,13 +918,13 @@ Tk_SendCmd(
 				 * field is used). */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
     TkWindow *winPtr;
     Window commWindow;
     PendingCommand pending;
     register RegisteredInterp *riPtr;
-    const char *destName;
+    CONST char *destName;
     int result, c, async, i, firstArg;
     size_t length;
     Tk_RestrictProc *prevRestrictProc;
@@ -952,7 +933,7 @@ Tk_SendCmd(
     Tcl_Time timeout;
     NameRegistry *regPtr;
     Tcl_DString request;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_Interp *localInterp;	/* Used when the interpreter to send the
 				 * command to is within the same process. */
@@ -995,7 +976,7 @@ Tk_SendCmd(
 
     if (argc < (i+2)) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		" ?-option value ...? interpName arg ?arg ...?\"", NULL);
+		" ?options? interpName arg ?arg ...?\"", NULL);
 	return TCL_ERROR;
     }
     destName = argv[i];
@@ -1019,9 +1000,9 @@ Tk_SendCmd(
 		|| (strcmp(riPtr->name, destName) != 0)) {
 	    continue;
 	}
-	Tcl_Preserve(riPtr);
+	Tcl_Preserve((ClientData) riPtr);
 	localInterp = riPtr->interp;
-	Tcl_Preserve(localInterp);
+	Tcl_Preserve((ClientData) localInterp);
 	if (firstArg == (argc-1)) {
 	    result = Tcl_GlobalEval(localInterp, argv[firstArg]);
 	} else {
@@ -1057,8 +1038,8 @@ Tk_SendCmd(
 	    Tcl_SetObjResult(interp, Tcl_GetObjResult(localInterp));
 	    Tcl_ResetResult(localInterp);
 	}
-	Tcl_Release(riPtr);
-	Tcl_Release(localInterp);
+	Tcl_Release((ClientData) riPtr);
+	Tcl_Release((ClientData) localInterp);
 	return result;
     }
 
@@ -1087,7 +1068,7 @@ Tk_SendCmd(
 	char buffer[TCL_INTEGER_SPACE * 2];
 
 	sprintf(buffer, "%x %d",
-		(unsigned) Tk_WindowId(dispPtr->commTkwin),
+		(unsigned int) Tk_WindowId(dispPtr->commTkwin),
 		localData.sendSerial);
 	Tcl_DStringAppend(&request, "\0-r ", 4);
 	Tcl_DStringAppend(&request, buffer, -1);
@@ -1151,7 +1132,7 @@ Tk_SendCmd(
 
 	    if (!ValidateName(pending.dispPtr, pending.target,
 		    pending.commWindow, 0)) {
-		const char *msg;
+		char *msg;
 
 		if (ValidateName(pending.dispPtr, pending.target,
 			pending.commWindow, 1)) {
@@ -1198,8 +1179,7 @@ Tk_SendCmd(
 	Tcl_SetObjErrorCode(interp, errorObjPtr);
 	ckfree(pending.errorCode);
     }
-    Tcl_SetResult(interp, pending.result, TCL_VOLATILE);
-    ckfree(pending.result);
+    Tcl_SetResult(interp, pending.result, TCL_DYNAMIC);
     return pending.code;
 }
 
@@ -1242,9 +1222,9 @@ TkGetInterpNames(
     for (p=regPtr->property ; p-regPtr->property<(int)regPtr->propLength ;) {
 	char *entry = p, *entryName;
 	Window commWindow;
-	unsigned id;
+	unsigned int id;
 
-	if (sscanf(p, "%x", (unsigned *) &id) != 1) {
+	if (sscanf(p, "%x",(unsigned int *) &id) != 1) {
 	    commWindow = None;
 	} else {
 	    commWindow = id;
@@ -1314,9 +1294,9 @@ TkSendCleanup(
 {
     if (dispPtr->commTkwin != NULL) {
 	Tk_DeleteEventHandler(dispPtr->commTkwin, PropertyChangeMask,
-		SendEventProc, dispPtr);
+		SendEventProc, (ClientData) dispPtr);
 	Tk_DestroyWindow(dispPtr->commTkwin);
-	Tcl_Release(dispPtr->commTkwin);
+	Tcl_Release((ClientData) dispPtr->commTkwin);
 	dispPtr->commTkwin = NULL;
     }
 }
@@ -1357,12 +1337,12 @@ SendInit(
     if (dispPtr->commTkwin == NULL) {
 	Tcl_Panic("Tk_CreateWindow failed in SendInit!");
     }
-    Tcl_Preserve(dispPtr->commTkwin);
+    Tcl_Preserve((ClientData) dispPtr->commTkwin);
     atts.override_redirect = True;
     Tk_ChangeWindowAttributes(dispPtr->commTkwin,
 	    CWOverrideRedirect, &atts);
     Tk_CreateEventHandler(dispPtr->commTkwin, PropertyChangeMask,
-	    SendEventProc, dispPtr);
+	    SendEventProc, (ClientData) dispPtr);
     Tk_MakeWindowExist(dispPtr->commTkwin);
 
     /*
@@ -1403,14 +1383,14 @@ SendEventProc(
     ClientData clientData,	/* Display information. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkDisplay *dispPtr = clientData;
+    TkDisplay *dispPtr = (TkDisplay *) clientData;
     char *propInfo, **propInfoPtr = &propInfo;
-    const char *p;
+    register char *p;
     int result, actualFormat;
     unsigned long numItems, bytesAfter;
     Atom actualType;
     Tcl_Interp *remoteInterp;	/* Interp in which to execute the command. */
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if ((eventPtr->xproperty.atom != dispPtr->commProperty)
@@ -1460,8 +1440,7 @@ SendEventProc(
 
 	if ((*p == 'c') && (p[1] == 0)) {
 	    Window commWindow;
-	    const char *interpName, *script, *serial;
-	    char *end;
+	    char *interpName, *script, *serial, *end;
 	    Tcl_DString reply;
 	    RegisteredInterp *riPtr;
 
@@ -1550,7 +1529,7 @@ SendEventProc(
 		    break;
 		}
 	    }
-	    Tcl_Preserve(riPtr);
+	    Tcl_Preserve((ClientData) riPtr);
 
 	    /*
 	     * We must protect the interpreter because the script may enter
@@ -1558,7 +1537,7 @@ SendEventProc(
 	     */
 
 	    remoteInterp = riPtr->interp;
-	    Tcl_Preserve(remoteInterp);
+	    Tcl_Preserve((ClientData) remoteInterp);
 
 	    result = Tcl_GlobalEval(remoteInterp, script);
 
@@ -1573,7 +1552,7 @@ SendEventProc(
 		Tcl_DStringAppend(&reply, Tcl_GetStringResult(remoteInterp),
 			-1);
 		if (result == TCL_ERROR) {
-		    const char *varValue;
+		    CONST char *varValue;
 
 		    varValue = Tcl_GetVar2(remoteInterp, "errorInfo",
 			    NULL, TCL_GLOBAL_ONLY);
@@ -1589,8 +1568,8 @@ SendEventProc(
 		    }
 		}
 	    }
-	    Tcl_Release(remoteInterp);
-	    Tcl_Release(riPtr);
+	    Tcl_Release((ClientData) remoteInterp);
+	    Tcl_Release((ClientData) riPtr);
 
 	    /*
 	     * Return the result to the sender if a commWindow was specified
@@ -1616,7 +1595,7 @@ SendEventProc(
 	    }
 	} else if ((*p == 'r') && (p[1] == 0)) {
 	    int serial, code, gotSerial;
-	    const char *errorInfo, *errorCode, *resultString;
+	    char *errorInfo, *errorCode, *resultString;
 	    PendingCommand *pcPtr;
 
 	    /*
@@ -1682,19 +1661,19 @@ SendEventProc(
 		}
 		pcPtr->code = code;
 		if (resultString != NULL) {
-		    pcPtr->result =
-			    ckalloc((unsigned) (strlen(resultString) + 1));
+		    pcPtr->result = (char *) ckalloc((unsigned)
+			    (strlen(resultString) + 1));
 		    strcpy(pcPtr->result, resultString);
 		}
 		if (code == TCL_ERROR) {
 		    if (errorInfo != NULL) {
-			pcPtr->errorInfo =
-				ckalloc((unsigned) (strlen(errorInfo) + 1));
+			pcPtr->errorInfo = (char *) ckalloc((unsigned)
+				(strlen(errorInfo) + 1));
 			strcpy(pcPtr->errorInfo, errorInfo);
 		    }
 		    if (errorCode != NULL) {
-			pcPtr->errorCode =
-				ckalloc((unsigned) (strlen(errorCode) + 1));
+			pcPtr->errorCode = (char *) ckalloc((unsigned)
+				(strlen(errorCode) + 1));
 			strcpy(pcPtr->errorCode, errorCode);
 		    }
 		}
@@ -1750,7 +1729,7 @@ AppendPropCarefully(
     Tk_ErrorHandler handler;
 
     handler = Tk_CreateErrorHandler(display, -1, -1, -1, AppendErrorProc,
-	    pendingPtr);
+	    (ClientData) pendingPtr);
     XChangeProperty(display, window, property, XA_STRING, 8,
 	    PropModeAppend, (unsigned char *) value, length);
     Tk_DeleteErrorHandler(handler);
@@ -1767,9 +1746,9 @@ AppendErrorProc(
     ClientData clientData,	/* Command to mark complete, or NULL. */
     XErrorEvent *errorPtr)	/* Information about error. */
 {
-    PendingCommand *pendingPtr = clientData;
+    PendingCommand *pendingPtr = (PendingCommand *) clientData;
     register PendingCommand *pcPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (pendingPtr == NULL) {
@@ -1817,10 +1796,10 @@ DeleteProc(
     ClientData clientData)	/* Info about registration, passed as
 				 * ClientData. */
 {
-    RegisteredInterp *riPtr = clientData;
+    RegisteredInterp *riPtr = (RegisteredInterp *) clientData;
     register RegisteredInterp *riPtr2;
     NameRegistry *regPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     regPtr = RegOpen(riPtr->interp, riPtr->dispPtr, 1);
@@ -1841,7 +1820,7 @@ DeleteProc(
     ckfree((char *) riPtr->name);
     riPtr->interp = NULL;
     UpdateCommWindow(riPtr->dispPtr);
-    Tcl_EventuallyFree(riPtr, TCL_DYNAMIC);
+    Tcl_EventuallyFree((ClientData) riPtr, TCL_DYNAMIC);
 }
 
 /*
@@ -1909,7 +1888,7 @@ UpdateCommWindow(
 {
     Tcl_DString names;
     RegisteredInterp *riPtr;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     Tcl_DStringInit(&names);
@@ -1948,9 +1927,9 @@ TkpTestsendCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    CONST char **argv)		/* Argument strings. */
 {
-    TkWindow *winPtr = clientData;
+    TkWindow *winPtr = (TkWindow *) clientData;
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args; must be \"", argv[0],

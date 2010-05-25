@@ -759,7 +759,7 @@ main(void)
 			(void)fflush(stdout);
 		    }					/*  END # 1.  */
 
-		    return(0);
+		    return 0;
 		}
 		break;
 	}

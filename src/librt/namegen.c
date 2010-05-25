@@ -76,15 +76,16 @@
 #define PRIM_EXT 's'
 
 
+#if 0
 static void
 count_if_region(struct db_i *dbip, struct directory *dp, genptr_t rcount)
 {
     int *counter = (int*)rcount;
+    RT_CK_DBI(dbip);
     if (dp->d_flags & DIR_REGION) {
 	(*counter)++;
     }
 }
-
 static int
 determine_object_type(struct db_i *dbip, struct directory *dp)
 {
@@ -119,7 +120,7 @@ determine_object_type(struct db_i *dbip, struct directory *dp)
     }
     return object_type;
 }
-
+#endif
 
 struct formatting_style {
     struct bu_vls regex_spec;
@@ -129,9 +130,9 @@ struct formatting_style {
 static int
 count_format_blocks(char *formatstring)
 {
-    int i;
+    size_t i;
     int components = 0;
-    for (i=0; i<strlen(formatstring); i++){
+    for (i=0; i < strlen(formatstring); i++){
 	if (formatstring[i] == '(') {
 	    components++;
 	}
@@ -176,7 +177,7 @@ test_regex(char *name, int style)
 
     regex_t compiled_regex;
     regmatch_t *result_locations;
-    int i, ret, components;
+    int i, ret, components = 0;
     struct bu_vls testresult;
 
     int *iterators;
@@ -251,7 +252,7 @@ struct object_name_item {
     struct bu_vls namestring;
 };
 
-
+#if 0
 /*NOTE - this needs to be redone to use regex instead of the custom parse!!!*/
 static struct object_name_data *
 parse_obj_name(struct db_i *dbip, char *fmt, char *name)
@@ -268,8 +269,8 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
     char *stringholder;
     int ignore_separator_flag = 0;
 
-    int len = 0;
-    int i;
+    size_t len = 0;
+    size_t i;
 
     BU_GETSTRUCT(objcomponents, object_name_data);
     BU_LIST_INIT(&(objcomponents->name_components));
@@ -279,13 +280,13 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
 
     if (!fmt || fmt[0] == '\0' || !name || name[0] == '\0') {
 	bu_log("ERROR: empty name or format string passed to parse_name\n");
-	return;
+	return 0;
     }
 
     dp = db_lookup(dbip, name, LOOKUP_QUIET);
     if (!dp) {
 	bu_log("ERROR:  No object named %s found in database.\n", name);
-	return;
+	return 0;
     }
 
     objcomponents->object_type = determine_object_type(dbip, dp);
@@ -451,7 +452,6 @@ parse_obj_name(struct db_i *dbip, char *fmt, char *name)
     return objcomponents;
 }
 
-
 static void
 test_obj_struct(struct db_i *dbip, char *fmt, char *testname)
 {
@@ -505,7 +505,8 @@ get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, in
     struct object_name_item *objname;
     struct increment_data *incdata;
     struct object_name_item *objsep;
-    int i,j;
+    size_t i;
+    int j;
     int iterator_pos;
     int iterator_count = 0;
     int ignore_separator_flag = 0;
@@ -579,21 +580,23 @@ get_next_name(struct db_i *dbip, char *fmt, char *basename, int pos_iterator, in
 	argv[j] = strcpy(finishedname, bu_vls_addr(&stringassembly));
     }
 }
-
+#endif
 
 int
-main(int argc, char *argv[])
+main()
 {
+    /*
     int num_of_copies = 10;
     int j;
     char **av;
     struct db_i *dbip;
+    */
     struct bu_vls temp;
-
+    bu_vls_init(&temp);
+#if 0
     dbip = db_open( "./test.g", "r" );
     db_dirbuild(dbip);
 
-    bu_vls_init(&temp);
 
 
     /*	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
@@ -610,6 +613,7 @@ main(int argc, char *argv[])
 
 	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
     */
+#endif
     bu_vls_trunc(&temp,0);
     bu_vls_printf(&temp,"%s","s.bcore12.b3");
 
@@ -684,7 +688,8 @@ main(int argc, char *argv[])
 	}
 	bu_free(av, "done with name strings, free memory");
     */
-    db_close(dbip);
+/*    db_close(dbip);*/
+    return 1;
 }
 
 /** @} */

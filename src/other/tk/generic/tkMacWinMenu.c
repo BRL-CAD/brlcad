@@ -45,10 +45,10 @@ PreprocessMenu(
     TkMenu *menuPtr)
 {
     int index, result, finished;
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    Tcl_Preserve(menuPtr);
+    Tcl_Preserve((ClientData) menuPtr);
 
     /*
      * First, let's process the post command on ourselves. If this command
@@ -93,7 +93,7 @@ PreprocessMenu(
     } while (!finished);
 
   done:
-    Tcl_Release(menuPtr);
+    Tcl_Release((ClientData) menuPtr);
     return result;
 }
 
@@ -131,7 +131,7 @@ int
 TkPreprocessMenu(
     TkMenu *menuPtr)
 {
-    ThreadSpecificData *tsdPtr =
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     tsdPtr->postCommandGeneration++;

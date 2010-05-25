@@ -129,14 +129,15 @@ proc ::tk_dialog {w title text bitmap default args} {
 
     # 4. Create a binding for <Return> on the dialog if there is a
     # default button.
-    # Convention also dictates that if the keyboard focus moves among the
-    # the buttons that the <Return> binding affects the button with the focus.
 
     if {$default >= 0} {
-	bind $w <Return> [list $w.button$default invoke]
+	bind $w <Return> "
+	[list $w.button$default] configure -state active -relief sunken
+	update idletasks
+	after 100
+	set ::tk::Priv(button) $default
+	"
     }
-    bind $w <<PrevWindow>> [list bind $w <Return> {[tk_focusPrev %W] invoke}]
-    bind $w <<NextWindow>> [list bind $w <Return> {[tk_focusNext %W] invoke}]
 
     # 5. Create a <Destroy> binding for the window that sets the
     # button variable to -1;  this is needed in case something happens
@@ -171,12 +172,17 @@ proc ::tk_dialog {w title text bitmap default args} {
 
     # 7. Set a grab and claim the focus too.
 
-    if {$default >= 0} {
-        set focus $w.button$default
-    } else {
-        set focus $w
+    set oldFocus [focus]
+    set oldGrab [grab current $w]
+    if {$oldGrab ne ""} {
+	set grabStatus [grab status $oldGrab]
     }
-    tk::SetFocusGrab $w $focus
+    grab $w
+    if {$default >= 0} {
+	focus $w.button$default
+    } else {
+	focus $w
+    }
 
     # 8. Wait for the user to respond, then restore the focus and
     # return the index of the selected button.  Restore the focus
@@ -185,14 +191,21 @@ proc ::tk_dialog {w title text bitmap default args} {
     # restore any grab that was in effect.
 
     vwait ::tk::Priv(button)
-
+    catch {focus $oldFocus}
     catch {
 	# It's possible that the window has already been destroyed,
 	# hence this "catch".  Delete the Destroy handler so that
 	# Priv(button) doesn't get reset by it.
 
 	bind $w <Destroy> {}
+	destroy $w
     }
-    tk::RestoreFocusGrab $w $focus
+    if {$oldGrab ne ""} {
+	if {$grabStatus ne "global"} {
+	    grab $oldGrab
+	} else {
+	    grab -global $oldGrab
+	}
+    }
     return $Priv(button)
 }

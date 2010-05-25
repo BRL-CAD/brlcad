@@ -448,7 +448,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     }
 
     if (curtree->tr_op == OP_NOP)
-	return  curtree;
+	return curtree;
 
     dir = DB_FULL_PATH_CUR_DIR( pathp );
     if ((fp_out = fopen( dir->d_namep, "wb")) == NULL) {
@@ -590,7 +590,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
-    return(curtree);
+    return curtree;
 }
 
 

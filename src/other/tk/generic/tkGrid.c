@@ -242,13 +242,10 @@ typedef struct UniformGroup {
  *				size. 0 means if this window is a master then
  *				Tk will set its requested size to fit the
  *				needs of its slaves.
- * ALLOCED_MASTER               1 means that Grid has allocated itself as
- *                              geometry master for this window.   
  */
 
 #define REQUESTED_RELAYOUT	1
 #define DONT_PROPAGATE		2
-#define ALLOCED_MASTER		4
 
 /*
  * Prototypes for procedures used only in this file:
@@ -262,31 +259,31 @@ static void		ArrangeGrid(ClientData clientData);
 static int		CheckSlotData(Gridder *masterPtr, int slot,
 			    int slotType, int checkOnly);
 static int		ConfigureSlaves(Tcl_Interp *interp, Tk_Window tkwin,
-			    int objc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *CONST objv[]);
 static void		DestroyGrid(char *memPtr);
 static Gridder *	GetGrid(Tk_Window tkwin);
 static int		GridAnchorCommand(Tk_Window tkwin, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *CONST objv[]);
 static int		GridBboxCommand(Tk_Window tkwin, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *CONST objv[]);
 static int		GridForgetRemoveCommand(Tk_Window tkwin,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static int		GridInfoCommand(Tk_Window tkwin, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *CONST objv[]);
 static int		GridLocationCommand(Tk_Window tkwin,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static int		GridPropagateCommand(Tk_Window tkwin,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static int		GridRowColumnConfigureCommand(Tk_Window tkwin,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 static int		GridSizeCommand(Tk_Window tkwin, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *CONST objv[]);
 static int		GridSlavesCommand(Tk_Window tkwin, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *CONST objv[]);
 static void		GridStructureProc(ClientData clientData,
 			    XEvent *eventPtr);
 static void		GridLostSlaveProc(ClientData clientData,
@@ -303,7 +300,7 @@ static int		SetSlaveColumn(Tcl_Interp *interp, Gridder *slavePtr,
 static int		SetSlaveRow(Tcl_Interp *interp, Gridder *slavePtr,
 			    int row, int numRows);
 static void		StickyToString(int flags, char *result);
-static int		StringToSticky(const char *string);
+static int		StringToSticky(char *string);
 static void		Unlink(Gridder *gridPtr);
 
 static const Tk_GeomMgr gridMgrType = {
@@ -334,10 +331,10 @@ Tk_GridObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    Tk_Window tkwin = clientData;
-    static const char *const optionStrings[] = {
+    Tk_Window tkwin = (Tk_Window) clientData;
+    static CONST char *optionStrings[] = {
 	"anchor", "bbox", "columnconfigure", "configure",
 	"forget", "info", "location", "propagate", "remove",
 	"rowconfigure", "size",	"slaves", NULL
@@ -350,7 +347,7 @@ Tk_GridObjCmd(
     int index;
 
     if (objc >= 2) {
-	const char *argv1 = Tcl_GetString(objv[1]);
+	char *argv1 = Tcl_GetString(objv[1]);
 
 	if ((argv1[0] == '.') || (argv1[0] == REL_SKIP) ||
     		(argv1[0] == REL_VERT)) {
@@ -429,7 +426,7 @@ GridAnchorCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window master;
     Gridder *masterPtr;
@@ -470,7 +467,7 @@ GridAnchorCommand(
 	}
 	if (!(masterPtr->flags & REQUESTED_RELAYOUT)) {
 	    masterPtr->flags |= REQUESTED_RELAYOUT;
-	    Tcl_DoWhenIdle(ArrangeGrid, masterPtr);
+	    Tcl_DoWhenIdle(ArrangeGrid, (ClientData) masterPtr);
 	}
     }
     return TCL_OK;
@@ -497,7 +494,7 @@ GridBboxCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window master;
     Gridder *masterPtr;		/* master grid record */
@@ -627,12 +624,12 @@ GridForgetRemoveCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window slave;
     Gridder *slavePtr;
     int i;
-    const char *string = Tcl_GetString(objv[1]);
+    char *string = Tcl_GetString(objv[1]);
     char c = string[0];
 
     for (i = 2; i < objc; i++) {
@@ -659,12 +656,12 @@ GridForgetRemoveCommand(
 		slavePtr->iPadY = 0;
 		slavePtr->doubleBw = 2*Tk_Changes(tkwin)->border_width;
 		if (slavePtr->flags & REQUESTED_RELAYOUT) {
-		    Tcl_CancelIdleCall(ArrangeGrid, slavePtr);
+		    Tcl_CancelIdleCall(ArrangeGrid, (ClientData) slavePtr);
 		}
 		slavePtr->flags = 0;
 		slavePtr->sticky = 0;
 	    }
-	    Tk_ManageGeometry(slave, NULL, NULL);
+	    Tk_ManageGeometry(slave, NULL, (ClientData) NULL);
 	    if (slavePtr->masterPtr->tkwin != Tk_Parent(slavePtr->tkwin)) {
 		Tk_UnmaintainGeometry(slavePtr->tkwin,
 			slavePtr->masterPtr->tkwin);
@@ -698,7 +695,7 @@ GridInfoCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     register Gridder *slavePtr;
     Tk_Window slave;
@@ -754,7 +751,7 @@ GridLocationCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window master;
     Gridder *masterPtr;		/* Master grid record. */
@@ -794,8 +791,8 @@ GridLocationCommand(
      */
 
     while (masterPtr->flags & REQUESTED_RELAYOUT) {
-	Tcl_CancelIdleCall(ArrangeGrid, masterPtr);
-	ArrangeGrid(masterPtr);
+	Tcl_CancelIdleCall(ArrangeGrid, (ClientData) masterPtr);
+	ArrangeGrid((ClientData) masterPtr);
     }
     SetGridSize(masterPtr);
     endX = MAX(gridPtr->columnEnd, gridPtr->columnMax);
@@ -847,7 +844,7 @@ GridPropagateCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window master;
     Gridder *masterPtr;
@@ -878,22 +875,8 @@ GridPropagateCommand(
     old = !(masterPtr->flags & DONT_PROPAGATE);
     if (propagate != old) {
 	if (propagate) {
-	    /*
-	     * If we have slaves, we need to register as geometry master.
-	     */
-
-	    if (masterPtr->slavePtr != NULL) {
-		if (TkSetGeometryMaster(interp, master, "grid")	!= TCL_OK) {
-		    return TCL_ERROR;	
-		}
-		masterPtr->flags |= ALLOCED_MASTER;
-	    }
 	    masterPtr->flags &= ~DONT_PROPAGATE;
 	} else {
-	    if (masterPtr->flags & ALLOCED_MASTER) {
-		TkFreeGeometryMaster(master, "grid");
-		masterPtr->flags &= ~ALLOCED_MASTER;
-	    }
 	    masterPtr->flags |= DONT_PROPAGATE;
 	}
 
@@ -907,7 +890,7 @@ GridPropagateCommand(
 	}
 	if (!(masterPtr->flags & REQUESTED_RELAYOUT)) {
 	    masterPtr->flags |= REQUESTED_RELAYOUT;
-	    Tcl_DoWhenIdle(ArrangeGrid, masterPtr);
+	    Tcl_DoWhenIdle(ArrangeGrid, (ClientData) masterPtr);
 	}
     }
     return TCL_OK;
@@ -935,7 +918,7 @@ GridRowColumnConfigureCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window master, slave;
     Gridder *masterPtr, *slavePtr;
@@ -947,8 +930,8 @@ GridRowColumnConfigureCommand(
     Tcl_Obj **lObjv;		/* array of indices */
     int ok;			/* temporary TCL result code */
     int i, j, first, last;
-    const char *string;
-    static const char *const optionStrings[] = {
+    char *string;
+    static CONST char *optionStrings[] = {
 	"-minsize", "-pad", "-uniform", "-weight", NULL
     };
     enum options {
@@ -958,7 +941,7 @@ GridRowColumnConfigureCommand(
     Tcl_Obj *listCopy;
 
     if (((objc % 2 != 0) && (objc > 6)) || (objc < 4)) {
-	Tcl_WrongNumArgs(interp, 2, objv, "master index ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 2, objv, "master index ?-option value...?");
 	return TCL_ERROR;
     }
 
@@ -1134,7 +1117,7 @@ GridRowColumnConfigureCommand(
 			    Tcl_GetString(objv[1]), ": \"",
 			    Tcl_GetString(lObjv[j]),
 			    "\" is out of range", NULL);
-		    Tcl_DecrRefCount(listCopy);
+   		    Tcl_DecrRefCount(listCopy);
 		    return TCL_ERROR;
 		}
 		slotPtr = (slotType == COLUMN) ?
@@ -1149,13 +1132,13 @@ GridRowColumnConfigureCommand(
 		for (i = 4; i < objc; i += 2) {
 		    if (Tcl_GetIndexFromObj(interp, objv[i], optionStrings,
 			    "option", 0, &index) != TCL_OK) {
-			Tcl_DecrRefCount(listCopy);
+   			Tcl_DecrRefCount(listCopy);
 			return TCL_ERROR;
 		    }
 		    if (index == ROWCOL_MINSIZE) {
 			if (Tk_GetPixelsFromObj(interp, master, objv[i+1],
 				&size) != TCL_OK) {
-			    Tcl_DecrRefCount(listCopy);
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else {
 			    slotPtr[slot].minSize = size;
@@ -1164,13 +1147,13 @@ GridRowColumnConfigureCommand(
 			int wt;
 
 			if (Tcl_GetIntFromObj(interp,objv[i+1],&wt)!=TCL_OK) {
-			    Tcl_DecrRefCount(listCopy);
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else if (wt < 0) {
 			    Tcl_AppendResult(interp, "invalid arg \"",
 				    Tcl_GetString(objv[i]),
 				    "\": should be non-negative", NULL);
-			    Tcl_DecrRefCount(listCopy);
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else {
 			    slotPtr[slot].weight = wt;
@@ -1185,13 +1168,13 @@ GridRowColumnConfigureCommand(
 		    } else if (index == ROWCOL_PAD) {
 			if (Tk_GetPixelsFromObj(interp, master, objv[i+1],
 				&size) != TCL_OK) {
-			    Tcl_DecrRefCount(listCopy);
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else if (size < 0) {
 			    Tcl_AppendResult(interp, "invalid arg \"",
 				    Tcl_GetString(objv[i]),
 				    "\": should be non-negative", NULL);
-			    Tcl_DecrRefCount(listCopy);
+   			    Tcl_DecrRefCount(listCopy);
 			    return TCL_ERROR;
 			} else {
 			    slotPtr[slot].pad = size;
@@ -1238,7 +1221,7 @@ GridRowColumnConfigureCommand(
     }
     if (!(masterPtr->flags & REQUESTED_RELAYOUT)) {
 	masterPtr->flags |= REQUESTED_RELAYOUT;
-	Tcl_DoWhenIdle(ArrangeGrid, masterPtr);
+	Tcl_DoWhenIdle(ArrangeGrid, (ClientData) masterPtr);
     }
     return TCL_OK;
 }
@@ -1265,7 +1248,7 @@ GridSizeCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window master;
     Gridder *masterPtr;
@@ -1316,21 +1299,21 @@ GridSlavesCommand(
     Tk_Window tkwin,		/* Main window of the application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *const objv[])	/* Argument objects. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
     Tk_Window master;
     Gridder *masterPtr;		/* master grid record */
     Gridder *slavePtr;
     int i, value, index;
     int row = -1, column = -1;
-    static const char *const optionStrings[] = {
+    static CONST char *optionStrings[] = {
 	"-column", "-row", NULL
     };
     enum options { SLAVES_COLUMN, SLAVES_ROW };
     Tcl_Obj *res;
 
     if ((objc < 3) || ((objc % 2) == 0)) {
-	Tcl_WrongNumArgs(interp, 2, objv, "window ?-option value ...?");
+	Tcl_WrongNumArgs(interp, 2, objv, "window ?-option value...?");
 	return TCL_ERROR;
     }
 
@@ -1370,7 +1353,8 @@ GridSlavesCommand(
 		slavePtr->row+slavePtr->numRows-1 < row)) {
 	    continue;
 	}
-	Tcl_ListObjAppendElement(interp,res, TkNewWindowObj(slavePtr->tkwin));
+	Tcl_ListObjAppendElement(interp, res,
+		Tcl_NewStringObj(Tk_PathName(slavePtr->tkwin), -1));
     }
     Tcl_SetObjResult(interp, res);
     return TCL_OK;
@@ -1401,12 +1385,12 @@ GridReqProc(
     Tk_Window tkwin)		/* Other Tk-related information about the
 				 * window. */
 {
-    register Gridder *gridPtr = clientData;
+    register Gridder *gridPtr = (Gridder *) clientData;
 
     gridPtr = gridPtr->masterPtr;
     if (gridPtr && !(gridPtr->flags & REQUESTED_RELAYOUT)) {
 	gridPtr->flags |= REQUESTED_RELAYOUT;
-	Tcl_DoWhenIdle(ArrangeGrid, gridPtr);
+	Tcl_DoWhenIdle(ArrangeGrid, (ClientData) gridPtr);
     }
 }
 
@@ -1433,7 +1417,7 @@ GridLostSlaveProc(
 				 * stolen away. */
     Tk_Window tkwin)		/* Tk's handle for the slave window. */
 {
-    register Gridder *slavePtr = clientData;
+    register Gridder *slavePtr = (Gridder *) clientData;
 
     if (slavePtr->masterPtr->tkwin != Tk_Parent(slavePtr->tkwin)) {
 	Tk_UnmaintainGeometry(slavePtr->tkwin, slavePtr->masterPtr->tkwin);
@@ -1691,7 +1675,7 @@ ArrangeGrid(
     ClientData clientData)	/* Structure describing master whose slaves
 				 * are to be re-layed out. */
 {
-    register Gridder *masterPtr = clientData;
+    register Gridder *masterPtr = (Gridder *) clientData;
     register Gridder *slavePtr;
     GridMaster *slotPtr = masterPtr->masterDataPtr;
     int abort;
@@ -1727,7 +1711,7 @@ ArrangeGrid(
     }
     masterPtr->abortPtr = &abort;
     abort = 0;
-    Tcl_Preserve(masterPtr);
+    Tcl_Preserve((ClientData) masterPtr);
 
     /*
      * Call the constraint engine to fill in the row and column offsets.
@@ -1754,10 +1738,10 @@ ArrangeGrid(
 	Tk_GeometryRequest(masterPtr->tkwin, width, height);
 	if (width>1 && height>1) {
 	    masterPtr->flags |= REQUESTED_RELAYOUT;
-	    Tcl_DoWhenIdle(ArrangeGrid, masterPtr);
+	    Tcl_DoWhenIdle(ArrangeGrid, (ClientData) masterPtr);
 	}
 	masterPtr->abortPtr = NULL;
-	Tcl_Release(masterPtr);
+	Tcl_Release((ClientData) masterPtr);
 	return;
     }
 
@@ -1843,7 +1827,7 @@ ArrangeGrid(
     }
 
     masterPtr->abortPtr = NULL;
-    Tcl_Release(masterPtr);
+    Tcl_Release((ClientData) masterPtr);
 }
 
 /*
@@ -2410,7 +2394,7 @@ GetGrid(
 
     hPtr = Tcl_CreateHashEntry(&dispPtr->gridHashTable, (char*) tkwin, &isNew);
     if (!isNew) {
-	return Tcl_GetHashValue(hPtr);
+	return (Gridder *) Tcl_GetHashValue(hPtr);
     }
     gridPtr = (Gridder *) ckalloc(sizeof(Gridder));
     gridPtr->tkwin = tkwin;
@@ -2431,7 +2415,7 @@ GetGrid(
     gridPtr->padTop = 0;
     gridPtr->iPadX = 0;
     gridPtr->iPadY = 0;
-    gridPtr->doubleBw = 2 * Tk_Changes(tkwin)->border_width;
+    gridPtr->doubleBw = 2*Tk_Changes(tkwin)->border_width;
     gridPtr->abortPtr = NULL;
     gridPtr->flags = 0;
     gridPtr->sticky = 0;
@@ -2439,7 +2423,7 @@ GetGrid(
     gridPtr->masterDataPtr = NULL;
     Tcl_SetHashValue(hPtr, gridPtr);
     Tk_CreateEventHandler(tkwin, StructureNotifyMask,
-	    GridStructureProc, gridPtr);
+	    GridStructureProc, (ClientData) gridPtr);
     return gridPtr;
 }
 
@@ -2733,7 +2717,7 @@ Unlink(
     }
     if (!(masterPtr->flags & REQUESTED_RELAYOUT)) {
 	masterPtr->flags |= REQUESTED_RELAYOUT;
-	Tcl_DoWhenIdle(ArrangeGrid, masterPtr);
+	Tcl_DoWhenIdle(ArrangeGrid, (ClientData) masterPtr);
     }
     if (masterPtr->abortPtr != NULL) {
 	*masterPtr->abortPtr = 1;
@@ -2741,16 +2725,6 @@ Unlink(
 
     SetGridSize(slavePtr->masterPtr);
     slavePtr->masterPtr = NULL;
-
-    /*
-     * If we have emptied this master from slaves it means we are no longer
-     * handling it and should mark it as free.
-     */
-
-    if ((masterPtr->slavePtr == NULL) && (masterPtr->flags & ALLOCED_MASTER)) {
-	TkFreeGeometryMaster(masterPtr->tkwin, "grid");
-	masterPtr->flags &= ~ALLOCED_MASTER;
-    }
 }
 
 /*
@@ -2815,21 +2789,21 @@ GridStructureProc(
 				 * eventPtr. */
     XEvent *eventPtr)		/* Describes what just happened. */
 {
-    register Gridder *gridPtr = clientData;
+    register Gridder *gridPtr = (Gridder *) clientData;
     TkDisplay *dispPtr = ((TkWindow *) gridPtr->tkwin)->dispPtr;
 
     if (eventPtr->type == ConfigureNotify) {
 	if ((gridPtr->slavePtr != NULL)
 		&& !(gridPtr->flags & REQUESTED_RELAYOUT)) {
 	    gridPtr->flags |= REQUESTED_RELAYOUT;
-	    Tcl_DoWhenIdle(ArrangeGrid, gridPtr);
+	    Tcl_DoWhenIdle(ArrangeGrid, (ClientData) gridPtr);
 	}
 	if ((gridPtr->masterPtr != NULL) &&
 		(gridPtr->doubleBw != 2*Tk_Changes(gridPtr->tkwin)->border_width)) {
 	    if (!(gridPtr->masterPtr->flags & REQUESTED_RELAYOUT)) {
 		gridPtr->doubleBw = 2*Tk_Changes(gridPtr->tkwin)->border_width;
 		gridPtr->masterPtr->flags |= REQUESTED_RELAYOUT;
-		Tcl_DoWhenIdle(ArrangeGrid, gridPtr->masterPtr);
+		Tcl_DoWhenIdle(ArrangeGrid, (ClientData) gridPtr->masterPtr);
 	    }
 	}
     } else if (eventPtr->type == DestroyNotify) {
@@ -2848,15 +2822,15 @@ GridStructureProc(
 	Tcl_DeleteHashEntry(Tcl_FindHashEntry(&dispPtr->gridHashTable,
 		(char *) gridPtr->tkwin));
 	if (gridPtr->flags & REQUESTED_RELAYOUT) {
-	    Tcl_CancelIdleCall(ArrangeGrid, gridPtr);
+	    Tcl_CancelIdleCall(ArrangeGrid, (ClientData) gridPtr);
 	}
 	gridPtr->tkwin = NULL;
-	Tcl_EventuallyFree(gridPtr, DestroyGrid);
+	Tcl_EventuallyFree((ClientData) gridPtr, DestroyGrid);
     } else if (eventPtr->type == MapNotify) {
 	if ((gridPtr->slavePtr != NULL)
 		&& !(gridPtr->flags & REQUESTED_RELAYOUT)) {
 	    gridPtr->flags |= REQUESTED_RELAYOUT;
-	    Tcl_DoWhenIdle(ArrangeGrid, gridPtr);
+	    Tcl_DoWhenIdle(ArrangeGrid, (ClientData) gridPtr);
 	}
     } else if (eventPtr->type == UnmapNotify) {
 	register Gridder *gridPtr2;
@@ -2894,7 +2868,7 @@ ConfigureSlaves(
     Tk_Window tkwin,		/* Any window in application containing
 				 * slaves. Used to look up slave names. */
     int objc,			/* Number of elements in argv. */
-    Tcl_Obj *const objv[])	/* Argument objects: contains one or more
+    Tcl_Obj *CONST objv[])	/* Argument objects: contains one or more
 				 * window names followed by any number of
 				 * "option value" pairs. Caller must make sure
 				 * that there is at least one window name. */
@@ -2908,10 +2882,10 @@ ConfigureSlaves(
     int defaultRow = -1;
     int defaultColumn = 0;	/* Default column number */
     int defaultColumnSpan = 1;	/* Default number of columns */
-    const char *lastWindow;	/* Use this window to base current row/col
+    char *lastWindow;		/* Use this window to base current row/col
 				 * on */
     int numSkip;		/* Number of 'x' found */
-    static const char *const optionStrings[] = {
+    static CONST char *optionStrings[] = {
 	"-column", "-columnspan", "-in", "-ipadx", "-ipady",
 	"-padx", "-pady", "-row", "-rowspan", "-sticky", NULL
     };
@@ -2919,7 +2893,7 @@ ConfigureSlaves(
 	CONF_COLUMN, CONF_COLUMNSPAN, CONF_IN, CONF_IPADX, CONF_IPADY,
 	CONF_PADX, CONF_PADY, CONF_ROW, CONF_ROWSPAN, CONF_STICKY };
     int index;
-    const char *string;
+    char *string;
     char firstChar;
     int positionGiven;
 
@@ -3067,7 +3041,7 @@ ConfigureSlaves(
 
 	for (defaultColumnSpan = 1; j + defaultColumnSpan < numWindows;
 		defaultColumnSpan++) {
-	    const char *string = Tcl_GetString(objv[j + defaultColumnSpan]);
+	    char *string = Tcl_GetString(objv[j + defaultColumnSpan]);
 
 	    if (*string != REL_HORIZ) {
 		break;
@@ -3162,7 +3136,7 @@ ConfigureSlaves(
 			    "positive screen distance", NULL);
 		    return TCL_ERROR;
 		}
-		slavePtr->iPadX = tmp * 2;
+		slavePtr->iPadX = tmp*2;
 		break;
 	    case CONF_IPADY:
 		if ((Tk_GetPixelsFromObj(NULL, slave, objv[i+1],
@@ -3172,7 +3146,7 @@ ConfigureSlaves(
 			    "positive screen distance", NULL);
 		    return TCL_ERROR;
 		}
-		slavePtr->iPadY = tmp * 2;
+		slavePtr->iPadY = tmp*2;
 		break;
 	    case CONF_PADX:
 		if (TkParsePadAmount(interp, tkwin, objv[i+1],
@@ -3287,17 +3261,7 @@ ConfigureSlaves(
 	    return TCL_ERROR;
      	}
 
-	Tk_ManageGeometry(slave, &gridMgrType, slavePtr);
-
-	if (!(masterPtr->flags & DONT_PROPAGATE)) {
-	    if (TkSetGeometryMaster(interp, masterPtr->tkwin, "grid")
-		    != TCL_OK) {
-		Tk_ManageGeometry(slave, NULL, NULL);
-		Unlink(slavePtr);
-		return TCL_ERROR;
-	    }
-	    masterPtr->flags |= ALLOCED_MASTER;
-	}
+	Tk_ManageGeometry(slave, &gridMgrType, (ClientData) slavePtr);
 
 	/*
 	 * Assign default position information.
@@ -3330,7 +3294,7 @@ ConfigureSlaves(
 	}
 	if (!(masterPtr->flags & REQUESTED_RELAYOUT)) {
 	    masterPtr->flags |= REQUESTED_RELAYOUT;
-	    Tcl_DoWhenIdle(ArrangeGrid, masterPtr);
+	    Tcl_DoWhenIdle(ArrangeGrid, (ClientData) masterPtr);
 	}
     }
 
@@ -3369,7 +3333,7 @@ ConfigureSlaves(
 	 */
 
 	for (width = 1; width + j < numWindows; width++) {
-	    const char *string = Tcl_GetString(objv[j+width]);
+	    char *string = Tcl_GetString(objv[j+width]);
 
 	    if (*string != REL_VERT) {
 		break;
@@ -3423,17 +3387,6 @@ ConfigureSlaves(
 	return TCL_ERROR;
     }
     SetGridSize(masterPtr);
-
-    /*
-     * If we have emptied this master from slaves it means we are no longer
-     * handling it and should mark it as free.
-     */
-
-    if (masterPtr->slavePtr == NULL && masterPtr->flags & ALLOCED_MASTER) {
-	TkFreeGeometryMaster(masterPtr->tkwin, "grid");
-	masterPtr->flags &= ~ALLOCED_MASTER;
-    }
-
     return TCL_OK;
 }
 
@@ -3499,7 +3452,7 @@ StickyToString(
 
 static int
 StringToSticky(
-    const char *string)
+    char *string)
 {
     int sticky = 0;
     char c;

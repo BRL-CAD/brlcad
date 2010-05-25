@@ -211,6 +211,12 @@ typedef struct {
 #define INDICATOR_HEIGHT	17
 
 /*
+ * Declaration of variables shared between the files in the button module.
+ */
+
+MODULE_SCOPE Tk_ClassProcs tkpMenubuttonClass;
+
+/*
  * Declaration of procedures used in the implementation of the button widget.
  */
 

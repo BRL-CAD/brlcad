@@ -42,7 +42,7 @@ fastf_t brlabs( a )
     else
 	b = (-a);
 
-    return( b );
+    return b;
 }
 
 /*

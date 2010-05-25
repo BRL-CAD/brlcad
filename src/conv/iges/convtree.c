@@ -32,6 +32,11 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+
+union tree *Readtree();
+union tree *Copytree();
+
+
 void
 Convtree()
 {
@@ -39,7 +44,6 @@ Convtree()
     int			conv=0;
     int			tottrees=0;
     union tree		*ptr;
-    union tree		*Readtree(), *Copytree();
     struct rt_comb_internal	*comb;
     int			no_of_assoc=0;
     int			no_of_props=0;

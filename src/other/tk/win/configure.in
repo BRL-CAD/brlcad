@@ -13,10 +13,10 @@ AC_PREREQ(2.59)
 # /bin/sh. The bash shell seems to suffer from some strange failures.
 SHELL=/bin/sh
 
-TK_VERSION=8.6
+TK_VERSION=8.5
 TK_MAJOR_VERSION=8
-TK_MINOR_VERSION=6
-TK_PATCH_LEVEL="b1.1"
+TK_MINOR_VERSION=5
+TK_PATCH_LEVEL=".8"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -146,9 +146,6 @@ AC_SUBST(MAN2TCLFLAGS)
 AC_CHECK_HEADER([uxtheme.h], [AC_DEFINE(HAVE_UXTHEME_H)],
 	[AC_MSG_NOTICE([xpnative theme will be unavailable])],
 	[#include <windows.h>])
-AC_CHECK_HEADER([vssym32.h], [AC_DEFINE(HAVE_VSSYM32_H)], [],
-	[#include <windows.h>
-#include <uxtheme.h>])
 
 #--------------------------------------------------------------------
 # Set the default compiler switches based on the --enable-symbols 

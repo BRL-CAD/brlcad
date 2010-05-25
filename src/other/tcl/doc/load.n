@@ -19,6 +19,7 @@ load \- Load machine code and initialize new commands
 .br
 \fBload \fIfileName packageName interp\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 This command loads binary code from a file into the
@@ -57,12 +58,9 @@ by the package that is safe for use by untrusted code. For more information
 on Safe\-Tcl, see the \fBsafe\fR manual entry.
 .PP
 The initialization procedure must match the following prototype:
-.PP
 .CS
-typedef int \fBTcl_PackageInitProc\fR(
-        Tcl_Interp *\fIinterp\fR);
+typedef int Tcl_PackageInitProc(Tcl_Interp *\fIinterp\fR);
 .CE
-.PP
 The \fIinterp\fR argument identifies the interpreter in which the
 package is to be loaded.  The initialization procedure must return
 \fBTCL_OK\fR or \fBTCL_ERROR\fR to indicate whether or not it completed
@@ -75,10 +73,12 @@ in an application.  If a given \fIfileName\fR is loaded into multiple
 interpreters, then the first \fBload\fR will load the code and
 call the initialization procedure;  subsequent \fBload\fRs will
 call the initialization procedure without loading the code again.
+.VS 8.5
 For Tcl versions lower than 8.5, it is not possible to unload or reload a
 package. From version 8.5 however, the \fBunload\fR command allows the unloading
 of libraries loaded with \fBload\fR, for libraries that are aware of the
 Tcl's unloading mechanism.
+.VE 8.5
 .PP
 The \fBload\fR command also supports packages that are statically
 linked with the application, if those packages have been registered
@@ -121,7 +121,6 @@ When loading a DLL in the current directory, Windows will ignore
 .QW ./
 as a path specifier and use a search heuristic to find the DLL instead.
 To avoid this, load the DLL with:
-.PP
 .CS
 \fBload\fR [file join [pwd] mylib.DLL]
 .CE
@@ -132,7 +131,6 @@ be loaded into the process's address space multiple times.  The
 behavior of this varies from system to system (some systems may
 detect the redundant loads, others may not).
 .SH EXAMPLE
-.PP
 The following is a minimal extension:
 .PP
 .CS
@@ -171,10 +169,9 @@ switch $tcl_platform(platform) {
 # Now execute the command defined by the extension
 foo
 .CE
+
 .SH "SEE ALSO"
-info sharedlibextension, package(n), Tcl_StaticPackage(3), safe(n)
+info sharedlibextension, Tcl_StaticPackage(3), safe(n)
+
 .SH KEYWORDS
-binary code, dynamic library, load, safe interpreter, shared library
-'\"Local Variables:
-'\"mode: nroff
-'\"End:
+binary code, loading, safe interpreter, shared library

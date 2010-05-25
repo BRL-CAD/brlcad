@@ -17,7 +17,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
-
+
 test join-1.1 {basic join commands} {
     join {a b c} xyz
 } axyzbxyzc
@@ -33,25 +33,22 @@ test join-1.4 {basic join commands} {
 
 test join-2.1 {join errors} {
     list [catch join msg] $msg $errorCode
-} {1 {wrong # args: should be "join list ?joinString?"} {TCL WRONGARGS}}
+} {1 {wrong # args: should be "join list ?joinString?"} NONE}
 test join-2.2 {join errors} {
     list [catch {join a b c} msg] $msg $errorCode
-} {1 {wrong # args: should be "join list ?joinString?"} {TCL WRONGARGS}}
+} {1 {wrong # args: should be "join list ?joinString?"} NONE}
 test join-2.3 {join errors} {
     list [catch {join "a \{ c" 111} msg] $msg $errorCode
-} {1 {unmatched open brace in list} {TCL VALUE LIST}}
+} {1 {unmatched open brace in list} NONE}
 
 test join-3.1 {joinString is binary ok} {
   string length [join {a b c} a\0b]
 } 9
+
 test join-3.2 {join is binary ok} {
   string length [join "a\0b a\0b a\0b"]
 } 11
-
+
 # cleanup
 ::tcltest::cleanupTests
 return
-
-# Local Variables:
-# mode: tcl
-# End:

@@ -33,9 +33,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./tea.h"		/* IEEE Data Structures */
-#include "./ducks.h"		/* Teapot Vertex data */
-#include "./patches.h"		/* Teapot Patch data */
+#include "./tea.h"		/* Teapot Data */
 
 
 /* IEEE patch number of the Bi-Cubic Bezier patch and convert it
@@ -140,7 +138,7 @@ main(int argc, char **argv)
 
     mk_bspline(outfp, tea_name, surfaces);
 
-    return(0);
+    return 0;
 }
 
 /*

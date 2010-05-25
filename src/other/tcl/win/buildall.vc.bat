@@ -24,24 +24,17 @@ goto OPTIONS_DONE
 :: reset errorlevel
 cd > nul
 
-:: You might have installed your developer studio to add itself to the
-:: path or have already run vcvars32.bat.  Testing these envars proves
-:: cl.exe and friends are in your path.
-::
-if defined VCINSTALLDIR (goto :startBuilding)
-if defined MSDRVDIR     (goto :startBuilding)
-if defined MSVCDIR      (goto :startBuilding)
-if defined MSSDK        (goto :startBuilding)
-
 :: We need to run the development environment batch script that comes
-:: with developer studio (v4,5,6,7,etc...)  All have it.  This path
-:: might not be correct.  You should call it yourself prior to running
-:: this batchfile.
+:: with developer studio (v4,5,6,7,etc...)  All have it.  These paths
+:: might not be correct.  You may need to edit these.
 ::
-call "C:\Program Files\Microsoft Developer Studio\vc98\bin\vcvars32.bat"
-if errorlevel 1 (goto no_vcvars)
+if not defined MSDevDir (
+    call "C:\Program Files\Microsoft Developer Studio\vc98\bin\vcvars32.bat"
+    ::call "C:\Program Files\Microsoft Developer Studio\vc\bin\vcvars32.bat"
+    ::call c:\dev\devstudio60\vc98\bin\vcvars32.bat
+    if errorlevel 1 goto no_vcvars
+)
 
-:startBuilding
 
 echo.
 echo Sit back and have a cup of coffee while this grinds through ;)
@@ -61,7 +54,7 @@ if "%INSTALLDIR%" == "" set INSTALLDIR=C:\Program Files\Tcl
 ::
 set OPTS=none
 if not %SYMBOLS%.==. set OPTS=symbols
-nmake -nologo -f makefile.vc release htmlhelp OPTS=%OPTS% %1
+nmake -nologo -f makefile.vc release winhelp OPTS=%OPTS% %1
 if errorlevel 1 goto error
 
 :: Build the static core, dlls and shell.
@@ -109,15 +102,15 @@ echo *** BOOM! ***
 goto end
 
 :no_vcvars
-echo vcvars32.bat was not run prior to this batchfile, nor are the MS tools in your path.
+echo vcvars32.bat not found.  You'll need to edit this batch script.
 goto out
 
 :help
 title buildall.vc.bat help message
 echo usage:
-echo   %0                 : builds Tcl for all build types (do this first)
-echo   %0 install         : installs all the release builds (do this second)
-echo   %0 symbols         : builds Tcl for all debugging build types
+echo   %0           : builds Tcl for all build types (do this first)
+echo   %0 install   : installs all the release builds (do this second)
+echo   %0 symbols   : builds Tcl for all debugging build types
 echo   %0 symbols install : install all the debug builds.
 echo.
 goto out
@@ -130,3 +123,4 @@ goto out
 :out
 pause
 title Command Prompt
+

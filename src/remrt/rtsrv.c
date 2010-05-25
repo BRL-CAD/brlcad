@@ -378,7 +378,7 @@ main(int argc, char **argv)
 	}
     }
 
-    return(0);		/* bu_exit(0, NULL) */
+    return 0;		/* bu_exit(0, NULL) */
 }
 
 /*

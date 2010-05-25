@@ -10,6 +10,7 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
+package require Ttk
 
 set w .tree
 catch {destroy $w}
@@ -73,8 +74,13 @@ proc populateTree {tree node} {
 ## Create the tree and set it up
 ttk::treeview $w.tree -columns {fullpath type size} -displaycolumns {size} \
 	-yscroll "$w.vsb set" -xscroll "$w.hsb set"
-ttk::scrollbar $w.vsb -orient vertical -command "$w.tree yview"
-ttk::scrollbar $w.hsb -orient horizontal -command "$w.tree xview"
+if {[tk windowingsystem] ne "aqua"} {
+    ttk::scrollbar $w.vsb -orient vertical -command "$w.tree yview"
+    ttk::scrollbar $w.hsb -orient horizontal -command "$w.tree xview"
+} else {
+    scrollbar $w.vsb -orient vertical -command "$w.tree yview"
+    scrollbar $w.hsb -orient horizontal -command "$w.tree xview"
+}
 $w.tree heading \#0 -text "Directory Structure"
 $w.tree heading size -text "File Size"
 $w.tree column size -stretch 0 -width 70

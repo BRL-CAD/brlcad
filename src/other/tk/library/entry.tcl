@@ -121,45 +121,45 @@ bind Entry <Control-1> {
     %W icursor @%x
 }
 
-bind Entry <<PrevChar>> {
+bind Entry <Left> {
     tk::EntrySetCursor %W [expr {[%W index insert] - 1}]
 }
-bind Entry <<NextChar>> {
+bind Entry <Right> {
     tk::EntrySetCursor %W [expr {[%W index insert] + 1}]
 }
-bind Entry <<SelectPrevChar>> {
+bind Entry <Shift-Left> {
     tk::EntryKeySelect %W [expr {[%W index insert] - 1}]
     tk::EntrySeeInsert %W
 }
-bind Entry <<SelectNextChar>> {
+bind Entry <Shift-Right> {
     tk::EntryKeySelect %W [expr {[%W index insert] + 1}]
     tk::EntrySeeInsert %W
 }
-bind Entry <<PrevWord>> {
+bind Entry <Control-Left> {
     tk::EntrySetCursor %W [tk::EntryPreviousWord %W insert]
 }
-bind Entry <<NextWord>> {
+bind Entry <Control-Right> {
     tk::EntrySetCursor %W [tk::EntryNextWord %W insert]
 }
-bind Entry <<SelectPrevWord>> {
+bind Entry <Shift-Control-Left> {
     tk::EntryKeySelect %W [tk::EntryPreviousWord %W insert]
     tk::EntrySeeInsert %W
 }
-bind Entry <<SelectNextWord>> {
+bind Entry <Shift-Control-Right> {
     tk::EntryKeySelect %W [tk::EntryNextWord %W insert]
     tk::EntrySeeInsert %W
 }
-bind Entry <<LineStart>> {
+bind Entry <Home> {
     tk::EntrySetCursor %W 0
 }
-bind Entry <<SelectLineStart>> {
+bind Entry <Shift-Home> {
     tk::EntryKeySelect %W 0
     tk::EntrySeeInsert %W
 }
-bind Entry <<LineEnd>> {
+bind Entry <End> {
     tk::EntrySetCursor %W end
 }
-bind Entry <<SelectLineEnd>> {
+bind Entry <Shift-End> {
     tk::EntryKeySelect %W end
     tk::EntrySeeInsert %W
 }
@@ -210,8 +210,6 @@ bind Entry <Escape> {# nothing}
 bind Entry <Return> {# nothing}
 bind Entry <KP_Enter> {# nothing}
 bind Entry <Tab> {# nothing}
-bind Entry <Prior> {# nothing}
-bind Entry <Next> {# nothing}
 if {[tk windowingsystem] eq "aqua"} {
     bind Entry <Command-KeyPress> {# nothing}
 }

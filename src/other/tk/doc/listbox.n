@@ -414,8 +414,10 @@ In both modes, clicking button 1 on an element selects
 it and deselects any other selected item.
 In \fBbrowse\fR mode it is also possible to drag the selection
 with button 1.
+.VS 8.5
 On button 1, the listbox will also take focus if it has a \fBnormal\fR
 state and \fB\-takefocus\fR is true.
+.VE 8.5
 .PP
 If the selection mode is \fBmultiple\fR or \fBextended\fR,
 any number of elements may be selected at once, including discontiguous
@@ -533,9 +535,6 @@ a selection.
 The behavior of listboxes can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 .SH "SEE ALSO"
-ttk::treeview(n)
+ttk_listbox(n)
 .SH KEYWORDS
 listbox, widget
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

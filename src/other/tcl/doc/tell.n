@@ -16,6 +16,7 @@ tell \- Return current access position for an open channel
 .SH SYNOPSIS
 \fBtell \fIchannelId\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 Returns an integer string giving the current access position in
@@ -30,9 +31,7 @@ Tcl standard channel (\fBstdin\fR, \fBstdout\fR, or \fBstderr\fR),
 the return value from an invocation of \fBopen\fR or \fBsocket\fR, or
 the result of a channel creation command provided by a Tcl extension.
 .SH EXAMPLE
-.PP
 Read a line from a file channel only if it starts with \fBfoobar\fR:
-.PP
 .CS
 # Save the offset in case we need to undo the read...
 set offset [\fBtell\fR $chan]
@@ -44,7 +43,9 @@ if {[read $chan 6] eq "foobar"} {
     seek $chan $offset
 }
 .CE
+
 .SH "SEE ALSO"
 file(n), open(n), close(n), gets(n), seek(n), Tcl_StandardChannels(3)
+
 .SH KEYWORDS
 access position, channel, seeking

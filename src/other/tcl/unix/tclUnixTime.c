@@ -114,7 +114,7 @@ TclpGetClicks(void)
     if (tclGetTimeProcPtr != NativeGetTime) {
 	Tcl_Time time;
 
-	tclGetTimeProcPtr(&time, tclTimeClientData);
+	(*tclGetTimeProcPtr) (&time, tclTimeClientData);
 	now = time.sec*1000000 + time.usec;
     } else {
 	/*
@@ -127,7 +127,7 @@ TclpGetClicks(void)
 #else
     Tcl_Time time;
 
-    tclGetTimeProcPtr(&time, tclTimeClientData);
+    (*tclGetTimeProcPtr) (&time, tclTimeClientData);
     now = time.sec*1000000 + time.usec;
 #endif
 
@@ -162,7 +162,7 @@ TclpGetWideClicks(void)
     if (tclGetTimeProcPtr != NativeGetTime) {
 	Tcl_Time time;
 
-	tclGetTimeProcPtr(&time, tclTimeClientData);
+	(*tclGetTimeProcPtr) (&time, tclTimeClientData);
 	now = (Tcl_WideInt) (time.sec*1000000 + time.usec);
     } else {
 #ifdef MAC_OSX_TCL
@@ -363,7 +363,7 @@ void
 Tcl_GetTime(
     Tcl_Time *timePtr)		/* Location to store time information. */
 {
-    tclGetTimeProcPtr(timePtr, tclTimeClientData);
+    (*tclGetTimeProcPtr) (timePtr, tclTimeClientData);
 }
 
 /*
@@ -386,7 +386,7 @@ Tcl_GetTime(
 
 struct tm *
 TclpGetDate(
-    const time_t *time,
+    CONST time_t *time,
     int useGMT)
 {
     if (useGMT) {
@@ -414,7 +414,7 @@ TclpGetDate(
 
 struct tm *
 TclpGmtime(
-    const time_t *timePtr)	/* Pointer to the number of seconds since the
+    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
 {
     /*
@@ -440,7 +440,7 @@ TclpGmtime(
 
 struct tm *
 TclpGmtime_unix(
-    const time_t *timePtr)
+    CONST time_t *timePtr)
 {
     return TclpGmtime(timePtr);
 }
@@ -464,7 +464,7 @@ TclpGmtime_unix(
 
 struct tm *
 TclpLocaltime(
-    const time_t *timePtr)	/* Pointer to the number of seconds since the
+    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
 {
     /*
@@ -489,7 +489,7 @@ TclpLocaltime(
  */
 struct tm*
 TclpLocaltime_unix(
-    const time_t *timePtr)
+    CONST time_t *timePtr)
 {
     return TclpLocaltime(timePtr);
 }
@@ -630,7 +630,7 @@ NativeGetTime(
 static void
 SetTZIfNecessary(void)
 {
-    const char *newTZ = getenv("TZ");
+    CONST char *newTZ = getenv("TZ");
 
     Tcl_MutexLock(&tmMutex);
     if (newTZ == NULL) {

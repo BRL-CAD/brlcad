@@ -1670,8 +1670,8 @@ test io-14.3 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec openpipe} {
 out
 } {err
 }}
-# This test relies on the fact that stdout is used before stderr
-test io-14.4 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec} {
+# This test relies on the fact that the smallest available fd is used first.
+test io-14.4 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec unix} {
     set f [open $path(test1) w]
     puts -nonewline $f { close stdin
 	close stdout
@@ -1696,8 +1696,8 @@ test io-14.4 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec} {
     close $f2
     set result
 } {{ close stdin
-stdout
-} {stderr
+file1
+} {file2
 }}
 catch {interp delete z}
 test io-14.5 {Tcl_GetChannel: stdio name translation} {
@@ -6575,7 +6575,7 @@ test io-52.5a {TclCopyChannel, all, other negative value} {fcopy} {
     }
     set result
 } {0 0 ok}
-test io-52.5b {TclCopyChannel, all, wrap to negative value} {fcopy} {
+test io-52.5b {TclCopyChannel, all, wrapped to negative value} {fcopy} {
     file delete $path(test1)
     set f1 [open $thisScript]
     set f2 [open $path(test1) w]
@@ -7726,18 +7726,15 @@ test io-73.1 {channel Tcl_Obj SetChannelFromAny} {} {
     catch {close [lreplace [list a] 0 end]}
 } {1}
 
-test io-73.2 {channel Tcl_Obj SetChannelFromAny, bug 2407783} -setup {
+test io-73.2 {channel Tcl_Obj SetChannelFromAny, bug 2407783} {} {
     # Invalidate intrep of 'channel' Tcl_Obj when transiting between interpreters.
-    set f [open [info script] r]
-} -body {
     interp create foo
+    set f [open [info script] r]
     seek $f 0
     set code [catch {interp eval foo [list seek $f 0]} msg]
     # The string map converts the changing channel handle to a fixed string
     list $code [string map [list $f @@] $msg]
-} -cleanup {
-    close $f
-} -result {1 {can not find channel named "@@"}}
+} {1 {can not find channel named "@@"}}
 
 # ### ### ### ######### ######### #########
 

@@ -537,7 +537,7 @@ static TABLE MonthDayTable[] = {
     { "thurs",		tDAY, 4 },
     { "friday",		tDAY, 5 },
     { "saturday",	tDAY, 6 },
-    { NULL, 0, 0 }
+    { NULL }
 };
 
 /*
@@ -555,7 +555,7 @@ static TABLE UnitsTable[] = {
     { "min",		tSEC_UNIT,	60 },
     { "second",		tSEC_UNIT,	 1 },
     { "sec",		tSEC_UNIT,	 1 },
-    { NULL, 0, 0 }
+    { NULL }
 };
 
 /*
@@ -587,7 +587,7 @@ static TABLE OtherTable[] = {
     { "ago",		tAGO,		1 },
     { "epoch",		tEPOCH,		0 },
     { "stardate",	tSTARDATE,	0 },
-    { NULL, 0, 0 }
+    { NULL }
 };
 
 /*
@@ -673,7 +673,7 @@ static TABLE TimezoneTable[] = {
     /* ADDED BY Marco Nijdam */
     { "dst",	tDST,	  HOUR( 0) },	    /* DST on (hour is ignored) */
     /* End ADDED */
-    { NULL, 0, 0 }
+    {  NULL  }
 };
 
 /*
@@ -706,7 +706,7 @@ static TABLE	MilitaryTable[] = {
     { "x",	tZONE,	HOUR( 11) },
     { "y",	tZONE,	HOUR( 12) },
     { "z",	tZONE,	HOUR( 0) },
-    { NULL, 0, 0 }
+    { NULL }
 };
 
 /*
@@ -969,7 +969,7 @@ TclClockOldscanObjCmd(
     ClientData clientData,	/* Unused */
     Tcl_Interp *interp,		/* Tcl interpreter */
     int objc,			/* Count of paraneters */
-    Tcl_Obj *const *objv)	/* Parameters */
+    Tcl_Obj *CONST *objv)	/* Parameters */
 {
     Tcl_Obj *result, *resultElement;
     int yr, mo, da;

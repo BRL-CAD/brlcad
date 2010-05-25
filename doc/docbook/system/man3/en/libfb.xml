@@ -488,7 +488,7 @@ $ &thinsp;<filename>/bin/cc &thinsp;program.c &thinsp;-lfb -l\&lt;system-library
 
 <refsect1 id='author'>
   <title>AUTHOR</title>
-  <para>BRLCAD-TEAM</para>
+  <para>BRL-CAD TEAM</para>
 </refsect1>
 
 <refsect1 id='bug_reports'>

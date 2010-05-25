@@ -203,7 +203,7 @@ int main(int ac, char *av[])
 	if ((fd=creat(av[arg_index], 0444)) == -1) {
 	    perror(av[arg_index]);
 	    (void)fprintf(stderr, "%s: ", progname);
-	    return(-1);
+	    return -1;
 	}
     } else if (isatty(fileno(stdout))) {
 	usage("Cannot scan to tty\n");
@@ -267,7 +267,7 @@ int main(int ac, char *av[])
     (void)fchmod(fd, 0444);
     (void)dsclose(dsp);
     (void)close(fd);
-    return(0);
+    return 0;
 }
 
 #else /* !IPU_FULL_LIB */
@@ -277,7 +277,7 @@ main(int ac, char *av[])
 {
     fprintf(stderr,
 	    "%s only works on SGI(tm) systems with dslib support\n", *av);
-    return(-1);
+    return -1;
 }
 #endif /* IPU_FULL_LIB */
 

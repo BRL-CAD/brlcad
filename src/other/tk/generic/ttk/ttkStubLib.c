@@ -8,8 +8,10 @@
  * contains no references to any of the tcl stub functions.
  */
 
-#undef USE_TCL_STUBS
+#ifndef USE_TCL_STUBS
 #define USE_TCL_STUBS
+#endif
+#undef USE_TCL_STUB_PROCS
 
 #include "tk.h"
 

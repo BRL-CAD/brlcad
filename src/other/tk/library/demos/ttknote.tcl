@@ -10,6 +10,7 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
+package require Ttk
 
 set w .ttknote
 catch {destroy $w}
@@ -54,6 +55,10 @@ ttk::frame $w.note.editor
 $w.note add $w.note.editor -text "Text Editor" -underline 0
 text $w.note.editor.t -width 40 -height 10 -wrap char \
 	-yscroll "$w.note.editor.s set"
-ttk::scrollbar $w.note.editor.s -orient vertical -command "$w.note.editor.t yview"
+if {[tk windowingsystem] ne "aqua"} {
+    ttk::scrollbar $w.note.editor.s -orient vertical -command "$w.note.editor.t yview"
+} else {
+    scrollbar $w.note.editor.s -orient vertical -command "$w.note.editor.t yview"
+}
 pack $w.note.editor.s -side right -fill y -padx {0 2} -pady 2
 pack $w.note.editor.t -fill both -expand 1 -pady 2 -padx {2 0}

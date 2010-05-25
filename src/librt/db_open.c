@@ -115,7 +115,7 @@ db_open(const char *name, const char *mode)
 
 	BU_GETSTRUCT(dbip, db_i);
 	dbip->dbi_mf = mfp;
-	dbip->dbi_eof = mfp->buflen;
+	dbip->dbi_eof = (off_t)mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (genptr_t)dbip;
 
@@ -133,7 +133,7 @@ db_open(const char *name, const char *mode)
 	/* Read-write mode */
 
 	BU_GETSTRUCT(dbip, db_i);
-	dbip->dbi_eof = -1L;
+	dbip->dbi_eof = (off_t)-1L;
 
 	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
 	    if (RT_G_DEBUG & DEBUG_DB) {
@@ -209,7 +209,7 @@ db_create(const char *name,
 
     if (fp == NULL) {
 	perror(name);
-	return(DBI_NULL);
+	return DBI_NULL;
     }
 
     if (version == 5) {

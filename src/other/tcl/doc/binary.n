@@ -1,6 +1,5 @@
 '\"
 '\" Copyright (c) 1997 by Sun Microsystems, Inc.
-'\" Copyright (c) 2008 by Donal K. Fellows
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -14,12 +13,6 @@
 .SH NAME
 binary \- Insert and extract fields from binary strings
 .SH SYNOPSIS
-.VS 8.6
-\fBbinary decode \fIformat\fR ?\fI-option value ...\fR? \fIdata\fR
-.br
-\fBbinary encode \fIformat\fR ?\fI-option value ...\fR? \fIdata\fR
-.br
-.VE 8.6
 \fBbinary format \fIformatString \fR?\fIarg arg ...\fR?
 .br
 \fBbinary scan \fIstring formatString \fR?\fIvarName varName ...\fR?
@@ -27,98 +20,12 @@ binary \- Insert and extract fields from binary strings
 .SH DESCRIPTION
 .PP
 This command provides facilities for manipulating binary data.  The
-subcommand \fBbinary format\fR creates a binary string from normal
+first form, \fBbinary format\fR, creates a binary string from normal
 Tcl values.  For example, given the values 16 and 22, on a 32-bit
 architecture, it might produce an 8-byte binary string consisting of
-two 4-byte integers, one for each of the numbers.  The subcommand
-\fBbinary scan\fR, does the opposite: it extracts data
+two 4-byte integers, one for each of the numbers.  The second form of
+the command, \fBbinary scan\fR, does the opposite: it extracts data
 from a binary string and returns it as ordinary Tcl string values.
-.VS 8.6
-The \fBbinary encode\fR and \fBbinary decode\fR subcommands convert
-binary data to or from string encodings such as base64 (used in MIME
-messages for example).
-.VE 8.6
-.SH "BINARY ENCODE AND DECODE"
-.VS 8.6
-.PP
-When encoding binary data as a readable string, the starting binary data is
-passed to the \fBbinary encode\fR command, together with the name of the
-encoding to use and any encoding-specific options desired. Data which has been
-encoded can be converted back to binary form using \fBbinary decode\fR. The
-following formats and options are supported.
-.TP
-\fBbase64\fR
-.
-The \fBbase64\fR binary encoding is commonly used in mail messages and XML
-documents, and uses mostly upper and lower case letters and digits. It has the
-distinction of being able to be rewrapped arbitrarily without losing
-information.
-.RS
-.PP
-During encoding, the following options are supported:
-.TP
-\fB\-maxlen \fIlength\fR
-.
-Indicates that the output should be split into lines of no more than
-\fIlength\fR characters. By default, lines are not split.
-.TP
-\fB\-wrapchar \fIcharacter\fR
-.
-Indicates that, when lines are split because of the \fB\-maxlen\fR option,
-\fIcharacter\fR should be used to separate lines. By default, this is a
-newline character,
-.QW \en .
-.PP
-During decoding, the following options are supported:
-.TP
-\fB\-strict\fR
-.
-Instructs the decoder to throw an error if it encounters whitespace characters. Otherwise it ignores them.
-.RE
-.TP
-\fBhex\fR
-.
-The \fBhex\fR binary encoding converts each byte to a pair of hexadecimal
-digits in big-endian form.
-.RS
-.PP
-No options are supported during encoding. During decoding, the following
-options are supported:
-.TP
-\fB\-strict\fR
-.
-Instructs the decoder to throw an error if it encounters whitespace characters. Otherwise it ignores them.
-.RE
-.TP
-\fBuuencode\fR
-.
-The \fBuuencode\fR binary encoding used to be common for transfer of data
-between Unix systems and on USENET, but is less common these days, having been
-largely superceded by the \fBbase64\fR binary encoding.
-.RS
-.PP
-During encoding, the following options are supported:
-'\" This is wrong! The uuencode format had more complexity than this!
-.TP
-\fB\-maxlen \fIlength\fR
-.
-Indicates that the output should be split into lines of no more than
-\fIlength\fR characters. By default, lines are not split.
-.TP
-\fB\-wrapchar \fIcharacter\fR
-.
-Indicates that, when lines are split because of the \fB\-maxlen\fR option,
-\fIcharacter\fR should be used to separate lines. By default, this is a
-newline character,
-.QW \en .
-.PP
-During decoding, the following options are supported:
-.TP
-\fB\-strict\fR
-.
-Instructs the decoder to throw an error if it encounters whitespace characters. Otherwise it ignores them.
-.RE
-.VE 8.6
 .SH "BINARY FORMAT"
 .PP
 The \fBbinary format\fR command generates a binary string whose layout
@@ -305,11 +212,13 @@ will return a string equivalent to
 \fB\ex00\ex03\exff\exfd\ex01\ex02\fR.
 .RE
 .IP \fBt\fR 5
+.VS 8.5
 This form (mnemonically \fItiny\fR) is the same as \fBs\fR and \fBS\fR
 except that it stores the 16-bit integers in the output string in the
 native byte order of the machine where the Tcl script is running.
 To determine what the native byte order of the machine is, refer to
 the \fBbyteOrder\fR element of the \fBtcl_platform\fR array.
+.VE 8.5
 .IP \fBi\fR 5
 This form is the same as \fBc\fR except that it stores one or more
 32-bit integers in little-endian byte order in the output string.  The
@@ -335,12 +244,14 @@ will return a string equivalent to
 \fB\ex00\ex00\ex00\ex03\exff\exff\exff\exfd\ex00\ex01\ex00\ex00\fR
 .RE
 .IP \fBn\fR 5
+.VS 8.5
 This form (mnemonically \fInumber\fR or \fInormal\fR) is the same as
 \fBi\fR and \fBI\fR except that it stores the 32-bit integers in the
 output string in the native byte order of the machine where the Tcl
 script is running.
 To determine what the native byte order of the machine is, refer to
 the \fBbyteOrder\fR element of the \fBtcl_platform\fR array.
+.VE 8.5
 .IP \fBw\fR 5
 This form is the same as \fBc\fR except that it stores one or more
 64-bit integers in little-endian byte order in the output string.  The
@@ -364,12 +275,14 @@ For example,
 will return the string \fBBigEndian\fR
 .RE
 .IP \fBm\fR 5
+.VS 8.5
 This form (mnemonically the mirror of \fBw\fR) is the same as \fBw\fR
 and \fBW\fR except that it stores the 64-bit integers in the output
 string in the native byte order of the machine where the Tcl script is
 running.
 To determine what the native byte order of the machine is, refer to
 the \fBbyteOrder\fR element of the \fBtcl_platform\fR array.
+.VE 8.5
 .IP \fBf\fR 5
 This form is the same as \fBc\fR except that it stores one or more one
 or more single-precision floating point numbers in the machine's native
@@ -391,14 +304,18 @@ will return a string equivalent to
 \fB\excd\excc\excc\ex3f\ex9a\ex99\ex59\ex40\fR.
 .RE
 .IP \fBr\fR 5
+.VS 8.5
 This form (mnemonically \fIreal\fR) is the same as \fBf\fR except that
 it stores the single-precision floating point numbers in little-endian
 order.  This conversion only produces meaningful output when used on
 machines which use the IEEE floating point representation (very
 common, but not universal.)
+.VE 8.5
 .IP \fBR\fR 5
+.VS 8.5
 This form is the same as \fBr\fR except that it stores the
 single-precision floating point numbers in big-endian order.
+.VE 8.5
 .IP \fBd\fR 5
 This form is the same as \fBf\fR except that it stores one or more one
 or more double-precision floating point numbers in the machine's native
@@ -412,14 +329,18 @@ will return a string equivalent to
 \fB\ex9a\ex99\ex99\ex99\ex99\ex99\exf9\ex3f\fR.
 .RE
 .IP \fBq\fR 5
+.VS 8.5
 This form (mnemonically the mirror of \fBd\fR) is the same as \fBd\fR
 except that it stores the double-precision floating point numbers in
 little-endian order.  This conversion only produces meaningful output
 when used on machines which use the IEEE floating point representation
 (very common, but not universal.)
+.VE 8.5
 .IP \fBQ\fR 5
+.VS 8.5
 This form is the same as \fBq\fR except that it stores the
 double-precision floating point numbers in big-endian order.
+.VE 8.5
 .IP \fBx\fR 5
 Stores \fIcount\fR null bytes in the output string.  If \fIcount\fR is
 not specified, stores one null byte.  If \fIcount\fR is \fB*\fR,
@@ -624,10 +545,9 @@ reverse (low-to-high) order within each byte. For example,
 .CE
 will return \fB2\fR with \fB706\fR stored in \fIvar1\fR and
 \fB502143\fR stored in \fIvar2\fR.
-.PP
+.RE
 Note that most code that wishes to parse the hexadecimal digits from
 multiple bytes in order should use the \fBH\fR format.
-.RE
 .IP \fBc\fR 5
 The data is turned into \fIcount\fR 8-bit signed integers and stored
 in the corresponding variable as a list. If \fIcount\fR is \fB*\fR,
@@ -677,11 +597,13 @@ will return \fB2\fR with \fB5 7\fR stored in \fIvar1\fR and \fB\-16\fR
 stored in \fIvar2\fR. 
 .RE
 .IP \fBt\fR 5
+.VS 8.5
 The data is interpreted as \fIcount\fR 16-bit signed integers
 represented in the native byte order of the machine running the Tcl
 script.  It is otherwise identical to \fBs\fR and \fBS\fR.
 To determine what the native byte order of the machine is, refer to
 the \fBbyteOrder\fR element of the \fBtcl_platform\fR array.
+.VE 8.5
 .IP \fBi\fR 5
 The data is interpreted as \fIcount\fR 32-bit signed integers
 represented in little-endian byte order.  The integers are stored in
@@ -715,11 +637,13 @@ will return \fB2\fR with \fB5 7\fR stored in \fIvar1\fR and \fB\-16\fR
 stored in \fIvar2\fR.
 .RE
 .IP \fBn\fR 5
+.VS 8.5
 The data is interpreted as \fIcount\fR 32-bit signed integers
 represented in the native byte order of the machine running the Tcl
 script.  It is otherwise identical to \fBi\fR and \fBI\fR.
 To determine what the native byte order of the machine is, refer to
 the \fBbyteOrder\fR element of the \fBtcl_platform\fR array.
+.VE 8.5
 .IP \fBw\fR 5
 The data is interpreted as \fIcount\fR 64-bit signed integers
 represented in little-endian byte order.  The integers are stored in
@@ -749,11 +673,13 @@ will return \fB2\fR with \fB21474836487\fR stored in \fIvar1\fR and \fB\-16\fR
 stored in \fIvar2\fR.
 .RE
 .IP \fBm\fR 5
+.VS 8.5
 The data is interpreted as \fIcount\fR 64-bit signed integers
 represented in the native byte order of the machine running the Tcl
 script.  It is otherwise identical to \fBw\fR and \fBW\fR.
 To determine what the native byte order of the machine is, refer to
 the \fBbyteOrder\fR element of the \fBtcl_platform\fR array.
+.VE 8.5
 .IP \fBf\fR 5
 The data is interpreted as \fIcount\fR single-precision floating point
 numbers in the machine's native representation.  The floating point
@@ -774,15 +700,19 @@ will return \fB1\fR with \fB1.6000000238418579\fR stored in
 \fIvar1\fR.
 .RE
 .IP \fBr\fR 5
+.VS 8.5
 This form is the same as \fBf\fR except that the data is interpreted
 as \fIcount\fR single-precision floating point number in little-endian
 order.  This conversion is not portable to the minority of systems not
 using IEEE floating point representations.
+.VE 8.5
 .IP \fBR\fR 5
+.VS 8.5
 This form is the same as \fBf\fR except that the data is interpreted
 as \fIcount\fR single-precision floating point number in big-endian
 order.  This conversion is not portable to the minority of systems not
 using IEEE floating point representations.
+.VE 8.5
 .IP \fBd\fR 5
 This form is the same as \fBf\fR except that the data is interpreted
 as \fIcount\fR double-precision floating point numbers in the
@@ -796,15 +726,19 @@ will return \fB1\fR with \fB1.6000000000000001\fR
 stored in \fIvar1\fR.
 .RE
 .IP \fBq\fR 5
+.VS 8.5
 This form is the same as \fBd\fR except that the data is interpreted
 as \fIcount\fR double-precision floating point number in little-endian
 order.  This conversion is not portable to the minority of systems not
 using IEEE floating point representations.
+.VE 8.5
 .IP \fBQ\fR 5
+.VS 8.5
 This form is the same as \fBd\fR except that the data is interpreted
 as \fIcount\fR double-precision floating point number in big-endian
 order.  This conversion is not portable to the minority of systems not
 using IEEE floating point representations.
+.VE 8.5
 .IP \fBx\fR 5
 Moves the cursor forward \fIcount\fR bytes in \fIstring\fR.  If
 \fIcount\fR is \fB*\fR or is larger than the number of bytes after the
@@ -846,7 +780,6 @@ will return \fB2\fR with \fB1 2\fR stored in \fIvar1\fR and \fB020304\fR
 stored in \fIvar2\fR.
 .RE
 .SH "PORTABILITY ISSUES"
-.PP
 The \fBr\fR, \fBR\fR, \fBq\fR and \fBQ\fR conversions will only work
 reliably for transferring data between computers which are all using
 IEEE floating point representations.  This is very common, but not
@@ -854,7 +787,6 @@ universal.  To transfer floating-point numbers portably between all
 architectures, use their textual representation (as produced by
 \fBformat\fR) instead.
 .SH EXAMPLES
-.PP
 This is a procedure to write a Tcl string to a binary-encoded channel as
 UTF-8 data preceded by a length word:
 .CS
@@ -876,19 +808,7 @@ proc \fIreadString\fR {channel} {
     return [encoding convertfrom utf-8 $data]
 }
 .CE
-.PP
-This converts the contents of a file (named in the variable \fIfilename\fR) to
-base64 and prints them:
-.CS
-set f [open $filename rb]
-set data [read $f]
-close $f
-puts [\fBbinary encode\fR base64 \-maxlen 64 $data]
-.CE
 .SH "SEE ALSO"
 format(n), scan(n), tclvars(n)
 .SH KEYWORDS
 binary, format, scan
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

@@ -356,7 +356,7 @@ union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *path
 
     bu_free( layer_name, "layer name" );
 
-    return( (union tree *)NULL );
+    return (union tree *)NULL;
 }
 
 

@@ -189,7 +189,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 	bu_exit(1, "ERROR: Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
     }
 
-    return(i);
+    return i;
 }
 
 /*
@@ -205,7 +205,7 @@ read_psurf_face(FILE *fp, int *lst)
     for (i = 0; fscanf(fp, "%d", &n) == 1; i++)
 	lst[i] = n;
     fscanf(fp, "%*[^\n]");
-    return(i);
+    return i;
 }
 
 /*
@@ -278,7 +278,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	    nmg_face_g( outfaceuses[i], pl );
     }
     if (fail)
-	return(-1);
+	return -1;
 
     if ( face )
     {
@@ -294,7 +294,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	nmg_model_edge_fuse( m, &tol );
     }
 
-    return(0);
+    return 0;
 }
 
 /*

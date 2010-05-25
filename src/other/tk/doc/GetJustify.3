@@ -29,12 +29,11 @@ const char *
 .AP Tcl_Interp *interp in
 Interpreter to use for error reporting, or NULL.
 .AP Tcl_Obj *objPtr in/out
-String value contains name of justification style \- one of
-.QW \fBleft\fR ,
-.QW \fBright\fR ,
+String value contains name of justification style, one of
+.QW left ,
+.QW right ,
 or
-.QW \fBcenter\fR
-\- or a unique abbreviation of one.
+.QW center .
 The internal rep will be modified to cache corresponding justify value.
 .AP "const char" *string in
 Same as \fIobjPtr\fR except description of justification style is passed as
@@ -85,5 +84,6 @@ corresponding to \fIjustify\fR.
 If \fIjustify\fR is not a legal justify value, then
 .QW "unknown justification style"
 is returned.
+
 .SH KEYWORDS
 center, fill, justification, string

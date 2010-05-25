@@ -26,12 +26,13 @@
 #undef USE_TCL_STUB_PROCS
 
 #ifndef USE_ITK_STUBS
-#define USE_ITK_STUBS 1
+#define USE_ITK_STUBS
 #endif
 #undef USE_ITK_STUB_PROCS
-#undef BUILD_itk
 
 #include "itk.h"
+
+ItkStubs *itkStubsPtr;
 
 
 /*
@@ -53,15 +54,16 @@
  */
 
 CONST char *
-Itk_InitStubs (
-    Tcl_Interp *interp,
-    const char *version,
-    int exact)
+Itk_InitStubs (interp, version, exact)
+    Tcl_Interp *interp;
+    CONST char *version;
+    int exact;
 {
     CONST char *actualVersion;
     
-    actualVersion = Tcl_PkgRequireEx(interp, "itk", (const char *)version,
-            exact, (ClientData *) &itkStubsPtr);
+    actualVersion = Tcl_PkgRequireEx(interp, "Itk", (CONST84 char *)version, exact,
+        (ClientData *) &itkStubsPtr);
+
     if (actualVersion == NULL) {
 	itkStubsPtr = NULL;
 	return NULL;

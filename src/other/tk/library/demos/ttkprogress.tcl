@@ -9,6 +9,7 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
+package require Ttk
 
 set w .ttkprogress
 catch {destroy $w}

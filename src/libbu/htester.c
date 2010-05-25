@@ -48,17 +48,17 @@ ckbytes(unsigned char *a, unsigned char *b, unsigned int n)
 #ifndef vax
     while (n-- > 0) {
 	if (*a++ != *b++)
-	    return (-1);	/* BAD */
+	    return -1;	/* BAD */
     }
-    return (0);			/* OK */
+    return 0;			/* OK */
 #else
     /* VAX floating point has bytes swapped, vis-a-vis normal VAX order */
     int i;
     for (i=0; i<n; i++) {
 	if (a[i^1] != b[i^1])
-	    return (-1);	/* BAD */
+	    return -1;	/* BAD */
     }
-    return (0);			/* OK */
+    return 0;			/* OK */
 #endif
 }
 

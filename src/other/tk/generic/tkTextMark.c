@@ -15,7 +15,6 @@
 
 #include "tkInt.h"
 #include "tkText.h"
-#include "tk3d.h"
 
 /*
  * Macro that determines the size of a mark segment:
@@ -107,7 +106,7 @@ TkTextMarkCmd(
     TkTextIndex index;
     const Tk_SegType *newTypePtr;
     int optionIndex;
-    static const char *const markOptionStrings[] = {
+    static const char *markOptionStrings[] = {
 	"gravity", "names", "next", "previous", "set", "unset", NULL
     };
     enum markOptions {
@@ -116,7 +115,7 @@ TkTextMarkCmd(
     };
 
     if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg ...?");
+	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[2], markOptionStrings, "mark option",
@@ -128,7 +127,7 @@ TkTextMarkCmd(
     case MARK_GRAVITY: {
 	char c;
 	int length;
-	const char *str;
+	char *str;
 
 	if (objc < 4 || objc > 5) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "markName ?gravity?");
@@ -146,7 +145,7 @@ TkTextMarkCmd(
 			Tcl_GetString(objv[3]), "\"", NULL);
 		return TCL_ERROR;
 	    }
-	    markPtr = Tcl_GetHashValue(hPtr);
+	    markPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
 	}
 	if (objc == 4) {
 	    if (markPtr->typePtr == &tkTextRightMarkType) {
@@ -158,10 +157,10 @@ TkTextMarkCmd(
 	}
 	str = Tcl_GetStringFromObj(objv[4],&length);
 	c = str[0];
-	if ((c == 'l') && (strncmp(str, "left", (unsigned) length) == 0)) {
+	if ((c == 'l') && (strncmp(str, "left", (unsigned)length) == 0)) {
 	    newTypePtr = &tkTextLeftMarkType;
 	} else if ((c == 'r') &&
-		(strncmp(str, "right", (unsigned) length) == 0)) {
+		(strncmp(str, "right", (unsigned)length) == 0)) {
 	    newTypePtr = &tkTextRightMarkType;
 	} else {
 	    Tcl_AppendResult(interp, "bad mark gravity \"", str,
@@ -216,7 +215,7 @@ TkTextMarkCmd(
 	    hPtr = Tcl_FindHashEntry(&textPtr->sharedTextPtr->markTable,
 		    Tcl_GetString(objv[i]));
 	    if (hPtr != NULL) {
-		markPtr = Tcl_GetHashValue(hPtr);
+		markPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
 
 		/*
 		 * Special case not needed with peer widgets.
@@ -277,7 +276,7 @@ TkTextSetMark(
 	widgetSpecific = 0;
 	hPtr = Tcl_CreateHashEntry(&textPtr->sharedTextPtr->markTable, name,
 		&isNew);
-	markPtr = Tcl_GetHashValue(hPtr);
+	markPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
     }
     if (!isNew) {
 	/*
@@ -290,7 +289,7 @@ TkTextSetMark(
 	    TkTextIndex index, index2;
 
 	    TkTextMarkSegToIndex(textPtr, textPtr->insertMarkPtr, &index);
-	    TkTextIndexForwChars(NULL, &index, 1, &index2, COUNT_INDICES);
+	    TkTextIndexForwChars(NULL,&index, 1, &index2, COUNT_INDICES);
 
 	    /*
 	     * While we wish to redisplay, no heights have changed, so no need
@@ -299,8 +298,8 @@ TkTextSetMark(
 
 	    TkTextChanged(NULL, textPtr, &index, &index2);
 	    if (TkBTreeLinesTo(textPtr, indexPtr->linePtr) ==
-		    TkBTreeNumLines(textPtr->sharedTextPtr->tree, textPtr)) {
-		TkTextIndexBackChars(NULL, indexPtr, 1, &insertIndex,
+		    TkBTreeNumLines(textPtr->sharedTextPtr->tree, textPtr))  {
+		TkTextIndexBackChars(NULL,indexPtr, 1, &insertIndex,
 			COUNT_INDICES);
 		indexPtr = &insertIndex;
 	    }
@@ -331,7 +330,7 @@ TkTextSetMark(
     if (markPtr == textPtr->insertMarkPtr) {
 	TkTextIndex index2;
 
-	TkTextIndexForwChars(NULL, indexPtr, 1, &index2, COUNT_INDICES);
+	TkTextIndexForwChars(NULL,indexPtr, 1, &index2, COUNT_INDICES);
 
 	/*
 	 * While we wish to redisplay, no heights have changed, so no need to
@@ -415,13 +414,12 @@ TkTextMarkNameToIndex(
     } else if (!strcmp(name, "current")) {
 	segPtr = textPtr->currentMarkPtr;
     } else {
-	Tcl_HashEntry *hPtr =
-		Tcl_FindHashEntry(&textPtr->sharedTextPtr->markTable, name);
-
+	Tcl_HashEntry *hPtr;
+	hPtr = Tcl_FindHashEntry(&textPtr->sharedTextPtr->markTable, name);
 	if (hPtr == NULL) {
 	    return TCL_ERROR;
 	}
-	segPtr = Tcl_GetHashValue(hPtr);
+	segPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
     }
     TkTextMarkSegToIndex(textPtr, segPtr, indexPtr);
     return TCL_OK;
@@ -541,7 +539,7 @@ MarkLayoutProc(
      */
 
     chunkPtr->breakIndex = -1;
-    chunkPtr->clientData = textPtr;
+    chunkPtr->clientData = (ClientData) textPtr;
     return 1;
 }
 
@@ -582,13 +580,13 @@ TkTextInsertDisplayProc(
      * We have no need for the clientData.
      */
 
-    /* TkText *textPtr = chunkPtr->clientData; */
+    /* TkText *textPtr = (TkText *) chunkPtr->clientData; */
     TkTextIndex index;
     int halfWidth = textPtr->insertWidth/2;
     int rightSideWidth;
     int ix = 0, iy = 0, iw = 0, ih = 0, charWidth = 0;
 
-    if (textPtr->insertCursorType) {
+    if(textPtr->insertCursorType) {
 	TkTextMarkSegToIndex(textPtr, textPtr->insertMarkPtr, &index);
 	TkTextIndexBbox(textPtr, &index, &ix, &iy, &iw, &ih, &charWidth);
 	rightSideWidth = charWidth + halfWidth;
@@ -616,37 +614,14 @@ TkTextInsertDisplayProc(
      * the cursor.
      */
 
-    if (textPtr->flags & GOT_FOCUS) {
-	if (textPtr->flags & INSERT_ON) {
-	    Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->insertBorder,
-		    x - halfWidth, y, charWidth + textPtr->insertWidth,
-		    height, textPtr->insertBorderWidth, TK_RELIEF_RAISED);
-	} else if (textPtr->selBorder == textPtr->insertBorder) {
-	    Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->border,
-		    x - halfWidth, y, charWidth + textPtr->insertWidth,
-		    height, 0, TK_RELIEF_FLAT);
-	}
-    } else if (textPtr->insertUnfocussed == TK_TEXT_INSERT_NOFOCUS_HOLLOW) {
-	if (textPtr->insertBorderWidth < 1) {
-	    /*
-	     * Hack to work around the fact that a "solid" border always
-	     * paints in black.
-	     */
-
-	    TkBorder *borderPtr = (TkBorder *) textPtr->insertBorder;
-
-	    XDrawRectangle(Tk_Display(textPtr->tkwin), dst, borderPtr->bgGC,
-		    x - halfWidth, y, charWidth + textPtr->insertWidth - 1,
-		    height - 1);
-	} else {
-	    Tk_Draw3DRectangle(textPtr->tkwin, dst, textPtr->insertBorder,
-		    x - halfWidth, y, charWidth + textPtr->insertWidth,
-		    height, textPtr->insertBorderWidth, TK_RELIEF_RAISED);
-	}
-    } else if (textPtr->insertUnfocussed == TK_TEXT_INSERT_NOFOCUS_SOLID) {
+    if (textPtr->flags & INSERT_ON) {
 	Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->insertBorder,
 		x - halfWidth, y, charWidth + textPtr->insertWidth, height,
 		textPtr->insertBorderWidth, TK_RELIEF_RAISED);
+    } else if (textPtr->selBorder == textPtr->insertBorder) {
+	Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->border,
+		x - halfWidth, y, charWidth + textPtr->insertWidth, height,
+		0, TK_RELIEF_FLAT);
     }
 }
 
@@ -775,7 +750,7 @@ MarkFindNext(
 	     * position.
 	     */
 
-	    segPtr = Tcl_GetHashValue(hPtr);
+	    segPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
 	    TkTextMarkSegToIndex(textPtr, segPtr, &index);
 	    segPtr = segPtr->nextPtr;
 	} else {
@@ -873,7 +848,7 @@ MarkFindPrev(
 	     * position.
 	     */
 
-	    segPtr = Tcl_GetHashValue(hPtr);
+	    segPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
 	    TkTextMarkSegToIndex(textPtr, segPtr, &index);
 	} else {
 	    /*

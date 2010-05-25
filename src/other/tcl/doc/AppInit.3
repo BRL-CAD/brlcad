@@ -50,11 +50,6 @@ Process command-line arguments, which can be accessed from the
 Tcl variables \fBargv\fR and \fBargv0\fR in \fIinterp\fR.
 .IP [3]
 Invoke a startup script to initialize the application.
-.IP [4]
-Use the routines \fBTcl_SetStartupScript\fR and
-\fBTcl_GetStartupScript\fR to set or query the file and encoding
-that the active \fBTcl_Main\fR or \fBTk_Main\fR routine will
-use as a startup script. 
 .LP
 \fBTcl_AppInit\fR returns \fBTCL_OK\fR or \fBTCL_ERROR\fR.
 If it returns \fBTCL_ERROR\fR then it must leave an error message in
@@ -62,11 +57,9 @@ for the interpreter's result;  otherwise the result is ignored.
 .PP
 In addition to \fBTcl_AppInit\fR, your application should also contain
 a procedure \fBmain\fR that calls \fBTcl_Main\fR as follows:
-.PP
 .CS
 Tcl_Main(argc, argv, Tcl_AppInit);
 .CE
-.PP
 The third argument to \fBTcl_Main\fR gives the address of the
 application-specific initialization procedure to invoke.
 This means that you do not have to use the name \fBTcl_AppInit\fR
@@ -77,9 +70,6 @@ The best way to get started is to make a copy of the file
 \fBtclAppInit.c\fR from the Tcl library or source directory.
 It already contains a \fBmain\fR procedure and a template for
 \fBTcl_AppInit\fR that you can modify for your application.
-
-.SH "SEE ALSO"
-Tcl_Main(3)
 
 .SH KEYWORDS
 application, argument, command, initialization, interpreter

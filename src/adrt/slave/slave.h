@@ -17,10 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file slave.h
- *
- * $Id$
- */
 
 #ifndef _ISST_SLAVE_H
 #define _ISST_SLAVE_H

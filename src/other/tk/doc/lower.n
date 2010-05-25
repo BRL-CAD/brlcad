@@ -16,6 +16,7 @@ lower \- Change a window's position in the stacking order
 .SH SYNOPSIS
 \fBlower \fIwindow \fR?\fIbelowThis\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 If the \fIbelowThis\fR argument is omitted then the command lowers
@@ -29,10 +30,9 @@ In this case the \fBlower\fR command will insert
 \fIwindow\fR into the stacking order just below \fIbelowThis\fR
 (or the ancestor of \fIbelowThis\fR that is a sibling of \fIwindow\fR);
 this could end up either raising or lowering \fIwindow\fR.
+
 .SH "SEE ALSO"
 raise
+
 .SH KEYWORDS
 lower, obscure, stacking order
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

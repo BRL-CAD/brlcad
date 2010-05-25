@@ -49,7 +49,7 @@ int entityno;
 	{
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
-		return(0);
+		return 0;
 	}
 
 	Readrec( dir[entityno]->param );
@@ -151,7 +151,7 @@ int entityno;
 		e_list = e_list->next;
 	}
 	edge_root = NULL;
-	return( 1 );
+	return 1;
 
  err :
 	if( num_of_voids )
@@ -161,7 +161,7 @@ int entityno;
 		bu_free( (char *)void_shells , "brep: void shell list" );
 	}
 	nmg_km( m );
-	return( 0 );
+	return 0;
 }
 
 /*

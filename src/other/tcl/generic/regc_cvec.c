@@ -74,7 +74,7 @@ clearcvec(
 
 /*
  - addchr - add a chr to a cvec
- ^ static void addchr(struct cvec *, pchr);
+ ^ static VOID addchr(struct cvec *, pchr);
  */
 static void
 addchr(
@@ -86,7 +86,7 @@ addchr(
 
 /*
  - addrange - add a range to a cvec
- ^ static void addrange(struct cvec *, pchr, pchr);
+ ^ static VOID addrange(struct cvec *, pchr, pchr);
  */
 static void
 addrange(
@@ -128,7 +128,7 @@ getcvec(
 
 /*
  - freecvec - free a cvec
- ^ static void freecvec(struct cvec *);
+ ^ static VOID freecvec(struct cvec *);
  */
 static void
 freecvec(

@@ -11,7 +11,6 @@ namespace eval ttk::theme::alt {
 	-frame 		"#d9d9d9"
 	-window		"#ffffff"
 	-darker 	"#c3c3c3"
-	-border		"#414141"
 	-activebg 	"#ececec"
 	-disabledfg	"#a3a3a3"
 	-selectbg	"#4a6984"
@@ -24,7 +23,6 @@ namespace eval ttk::theme::alt {
 	    -background 	$colors(-frame) \
 	    -foreground 	black \
 	    -troughcolor	$colors(-darker) \
-	    -bordercolor	$colors(-border) \
 	    -selectbackground 	$colors(-selectbg) \
 	    -selectforeground 	$colors(-selectfg) \
 	    -font 		TkDefaultFont \
@@ -61,13 +59,6 @@ namespace eval ttk::theme::alt {
 	ttk::style configure TCombobox -padding 1
 	ttk::style map TCombobox -fieldbackground \
 		[list readonly $colors(-frame) disabled $colors(-frame)]
-	ttk::style configure ComboboxPopdownFrame \
-	    -relief solid -borderwidth 1
-
-	ttk::style configure TSpinbox -arrowsize 10 -padding {2 0 10 0}
-	ttk::style map TSpinbox -fieldbackground \
-	    [list readonly $colors(-frame) disabled $colors(-frame)] \
-	    -arrowcolor [list disabled $colors(-disabledfg)]
 
 	ttk::style configure Toolbutton -relief flat -padding 2
 	ttk::style map Toolbutton -relief \
@@ -89,8 +80,15 @@ namespace eval ttk::theme::alt {
 
 	# Treeview:
 	ttk::style configure Heading -font TkHeadingFont -relief raised
-	ttk::style configure Treeview -background $colors(-window)
-	ttk::style map Treeview \
+	ttk::style configure Row -background $colors(-window)
+	ttk::style configure Cell -background $colors(-window)
+	ttk::style map Row \
+	    -background [list selected $colors(-selectbg)] \
+	    -foreground [list selected $colors(-selectfg)] ;
+	ttk::style map Cell \
+	    -background [list selected $colors(-selectbg)] \
+	    -foreground [list selected $colors(-selectfg)] ;
+	ttk::style map Item \
 	    -background [list selected $colors(-selectbg)] \
 	    -foreground [list selected $colors(-selectfg)] ;
 

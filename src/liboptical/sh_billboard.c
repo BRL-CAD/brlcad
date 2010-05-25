@@ -54,8 +54,8 @@ struct bbd_img {
     double	img_xlen;	/* length of image in u direction */
     vect_t	img_y;		/* v direction in image plane */
     double	img_ylen;	/* length of image in v direction */
-    unsigned long int	img_width;	/* dimension of image */
-    unsigned long int 	img_height;
+    size_t	img_width;	/* dimension of image */
+    size_t 	img_height;
     struct bu_mapped_file *img_mf; /* image data */
 };
 
@@ -67,13 +67,13 @@ struct bbd_img {
 struct bbd_specific {
     long	magic;	/* magic # for memory validity check, must come 1st */
     int img_threshold;
-    int img_width;
-    int img_height;
+    size_t img_width;
+    size_t img_height;
     double img_scale;
     struct bu_vls img_filename;
 
     /* these are not initialized by the user */
-    unsigned	img_count;
+    size_t img_count;
     struct bu_list imgs;
 
     struct rt_i *rtip;	/* this is needed by structparse */
@@ -87,8 +87,8 @@ const static
 struct bbd_specific bbd_defaults = {
     bbd_MAGIC,
     10,		/* img_threshold */
-    512L,	/* img_width */
-    512L,	/* img_height */
+    512,	/* img_width */
+    512,	/* img_height */
     100.0	/* img_scale */
 };
 
@@ -236,7 +236,7 @@ bbd_setup( struct region *rp,
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, bbd_parse_tab, (char *)bbd_sp ) < 0 )
-	return(-1);
+	return -1;
 
     if (bbd_sp->img_count > MAX_IMAGES) {
 	bu_log("too many images (%d) in shader for %s sb < %d\n",
@@ -306,7 +306,7 @@ bbd_setup( struct region *rp,
 	bu_struct_print( " Parameters:", bbd_print_tab, (char *)bbd_sp );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -535,7 +535,7 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
     union tree *tp;
     struct bbd_img *bi;
     struct imgdist id[MAX_IMAGES];
-    int i;
+    size_t i;
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
@@ -593,7 +593,7 @@ bbd_render( struct application *ap, struct partition *pp, struct shadework *swp,
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
     }
-    return(1);
+    return 1;
 }
 
 /*

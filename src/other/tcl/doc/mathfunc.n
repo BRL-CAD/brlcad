@@ -37,8 +37,10 @@ package require \fBTcl 8.5\fR
 .br
 \fB::tcl::mathfunc::double\fR \fIarg\fR
 .br
+.VS 8.5
 \fB::tcl::mathfunc::entier\fR \fIarg\fR
 .br
+.VE 8.5
 \fB::tcl::mathfunc::exp\fR \fIarg\fR
 .br
 \fB::tcl::mathfunc::floor\fR \fIarg\fR
@@ -115,34 +117,28 @@ for new implementations.
 .SS "DETAILED DEFINITIONS"
 .TP
 \fBabs \fIarg\fR
-.
 Returns the absolute value of \fIarg\fR.  \fIArg\fR may be either
 integer or floating-point, and the result is returned in the same form.
 .TP
 \fBacos \fIarg\fR
-.
 Returns the arc cosine of \fIarg\fR, in the range [\fI0\fR,\fIpi\fR]
 radians. \fIArg\fR should be in the range [\fI\-1\fR,\fI1\fR].
 .TP
 \fBasin \fIarg\fR
-.
 Returns the arc sine of \fIarg\fR, in the range [\fI\-pi/2\fR,\fIpi/2\fR]
 radians.  \fIArg\fR should be in the range [\fI\-1\fR,\fI1\fR].
 .TP
 \fBatan \fIarg\fR
-.
 Returns the arc tangent of \fIarg\fR, in the range [\fI\-pi/2\fR,\fIpi/2\fR]
 radians.
 .TP
 \fBatan2 \fIy x\fR
-.
 Returns the arc tangent of \fIy\fR/\fIx\fR, in the range [\fI\-pi\fR,\fIpi\fR]
 radians.  \fIx\fR and \fIy\fR cannot both be 0.  If \fIx\fR is greater
 than \fI0\fR, this is equivalent to
 .QW "\fBatan \fR[\fBexpr\fR {\fIy\fB/\fIx\fR}]" .
 .TP
 \fBbool \fIarg\fR
-.
 Accepts any numeric value, or any string acceptable to
 \fBstring is boolean\fR, and returns the corresponding 
 boolean value \fB0\fR or \fB1\fR.  Non-zero numbers are true.
@@ -150,22 +146,18 @@ Other numbers are false.  Non-numeric strings produce boolean value in
 agreement with \fBstring is true\fR and \fBstring is false\fR.
 .TP
 \fBceil \fIarg\fR
-.
 Returns the smallest integral floating-point value (i.e. with a zero
 fractional part) not less than \fIarg\fR.  The argument may be any
 numeric value.
 .TP
 \fBcos \fIarg\fR
-.
 Returns the cosine of \fIarg\fR, measured in radians.
 .TP
 \fBcosh \fIarg\fR
-.
 Returns the hyperbolic cosine of \fIarg\fR.  If the result would cause
 an overflow, an error is returned.
 .TP
 \fBdouble \fIarg\fR
-.
 The argument may be any numeric value,
 If \fIarg\fR is a floating-point value, returns \fIarg\fR, otherwise converts
 \fIarg\fR to floating-point and returns the converted value.  May return
@@ -173,35 +165,31 @@ If \fIarg\fR is a floating-point value, returns \fIarg\fR, otherwise converts
 the floating-point range.
 .TP
 \fBentier \fIarg\fR
-.
+.VS 8.5
 The argument may be any numeric value.  The integer part of \fIarg\fR
 is determined and returned.  The integer range returned by this function
 is unlimited, unlike \fBint\fR and \fBwide\fR which
 truncate their range to fit in particular storage widths.
+.VE 8.5
 .TP
 \fBexp \fIarg\fR
-.
 Returns the exponential of \fIarg\fR, defined as \fIe\fR**\fIarg\fR.
 If the result would cause an overflow, an error is returned.
 .TP
 \fBfloor \fIarg\fR
-.
 Returns the largest integral floating-point value (i.e. with a zero
 fractional part) not greater than \fIarg\fR.  The argument may be
 any numeric value.
 .TP
 \fBfmod \fIx y\fR
-.
 Returns the floating-point remainder of the division of \fIx\fR by
 \fIy\fR.  If \fIy\fR is 0, an error is returned.
 .TP
 \fBhypot \fIx y\fR
-.
 Computes the length of the hypotenuse of a right-angled triangle
 .QW "\fBsqrt\fR [\fBexpr\fR {\fIx\fB*\fIx\fB+\fIy\fB*\fIy\fR}]".
 .TP
 \fBint \fIarg\fR
-.
 The argument may be any numeric value.  The integer part of \fIarg\fR
 is determined, and then the low order bits of that integer value up
 to the machine word size are returned as an integer value.  For reference,
@@ -209,39 +197,32 @@ the number of bytes in the machine word are stored in
 \fBtcl_platform(wordSize)\fR.
 .TP
 \fBisqrt \fIarg\fR
-.
 Computes the integer part of the square root of \fIarg\fR.  \fIArg\fR must be
 a positive value, either an integer or a floating point number.
 Unlike \fBsqrt\fR, which is limited to the precision of a floating point
 number, \fIisqrt\fR will return a result of arbitrary precision.
 .TP
 \fBlog \fIarg\fR
-.
 Returns the natural logarithm of \fIarg\fR.  \fIArg\fR must be a
 positive value.
 .TP
 \fBlog10 \fIarg\fR
-.
 Returns the base 10 logarithm of \fIarg\fR.  \fIArg\fR must be a
 positive value.
 .TP
 \fBmax \fIarg\fB \fI...\fR
-.
 Accepts one or more numeric arguments.  Returns the one argument
 with the greatest value.
 .TP
 \fBmin \fIarg\fB \fI...\fR
-.
 Accepts one or more numeric arguments.  Returns the one argument
 with the least value.
 .TP
 \fBpow \fIx y\fR
-.
 Computes the value of \fIx\fR raised to the power \fIy\fR.  If \fIx\fR
 is negative, \fIy\fR must be an integer value.
 .TP
 \fBrand\fR
-.
 Returns a pseudo-random floating-point value in the range (\fI0\fR,\fI1\fR).  
 The generator algorithm is a simple linear congruential generator that
 is not cryptographically secure.  Each result from \fBrand\fR completely
@@ -251,42 +232,34 @@ one-time passwords.  The seed of the generator is initialized from the
 internal clock of the machine or may be set with the \fBsrand\fR function.
 .TP
 \fBround \fIarg\fR
-.
 If \fIarg\fR is an integer value, returns \fIarg\fR, otherwise converts
 \fIarg\fR to integer by rounding and returns the converted value.
 .TP
 \fBsin \fIarg\fR
-.
 Returns the sine of \fIarg\fR, measured in radians.
 .TP
 \fBsinh \fIarg\fR
-.
 Returns the hyperbolic sine of \fIarg\fR.  If the result would cause
 an overflow, an error is returned.
 .TP
 \fBsqrt \fIarg\fR
-.
 The argument may be any non-negative numeric value.  Returns a floating-point
 value that is the square root of \fIarg\fR.  May return \fBInf\fR when the
 argument is a numeric value that exceeds the square of the maximum value of
 the floating-point range.
 .TP
 \fBsrand \fIarg\fR
-.
 The \fIarg\fR, which must be an integer, is used to reset the seed for
 the random number generator of \fBrand\fR.  Returns the first random
 number (see \fBrand\fR) from that seed.  Each interpreter has its own seed.
 .TP
 \fBtan \fIarg\fR
-.
 Returns the tangent of \fIarg\fR, measured in radians.
 .TP
 \fBtanh \fIarg\fR
-.
 Returns the hyperbolic tangent of \fIarg\fR.
 .TP
 \fBwide \fIarg\fR
-.
 The argument may be any numeric value.  The integer part of \fIarg\fR
 is determined, and then the low order 64 bits of that integer value
 are returned as an integer value.  

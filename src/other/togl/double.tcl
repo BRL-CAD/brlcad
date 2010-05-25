@@ -29,35 +29,38 @@ namespace eval ::double {
 proc double::setup {} {
     wm title . "Single vs Double Buffering"
 
-    frame .f1
-
     # create first Togl widget
-    togl .f1.o1 -width 200 -height 200 -rgba true -double false -depth true -ident Single -create create_cb -display display_cb -reshape reshape_cb
+    togl .o1 -width 200 -height 200 -rgba true -double false -depth true -ident "Single Buffered" -create double::create_cb -display double::display_cb -reshape double::reshape_cb
 
     # create second Togl widget, share display lists with first widget
-    togl .f1.o2 -width 200 -height 200 -rgba true -double true -depth true -ident Double -sharelist Single -create create_cb -display display_cb -reshape reshape_cb
+    togl .o2 -width 200 -height 200 -rgba true -double true -depth true -ident "Double Buffered" -sharelist "Single Buffered" -create double::create_cb -display double::display_cb -reshape double::reshape_cb
 
     scale .sx -label {X Axis} -from 0 -to 360 -command {::double::setAngle x} -orient horizontal
     scale .sy -label {Y Axis} -from 0 -to 360 -command {::double::setAngle y} -orient horizontal
     button .btn -text Quit -command exit
 
-    bind .f1.o1 <B1-Motion> {
+    bind .o1 <B1-Motion> {
 	::double::motion_event [lindex [%W config -width] 4] \
 		     [lindex [%W config -height] 4] \
 		     %x %y
     }
 
-    bind .f1.o2 <B1-Motion> {
+    bind .o2 <B1-Motion> {
 	::double::motion_event [lindex [%W config -width] 4] \
 		     [lindex [%W config -height] 4] \
 		     %x %y
     }
 
-    pack .f1.o1 .f1.o2 -side left -padx 3 -pady 3 -fill both -expand t
-    pack .f1 -fill both -expand t
-    pack .sx -fill x
-    pack .sy -fill x
-    pack .btn -fill x
+    grid rowconfigure . 0 -weight 1
+    grid columnconfigure . 0 -weight 1 -uniform same
+    grid columnconfigure . 1 -weight 1 -uniform same
+    grid .o1 -row 0 -column 0 -sticky nesw -padx 3 -pady 3
+    grid .o2 -row 0 -column 1 -sticky nesw -padx 3 -pady 3
+    #grid .l1 -row 1 -column 0 -sticky ew -padx 3 -pady 3
+    #grid .l2 -row 1 -column 1 -sticky ew -padx 3 -pady 3
+    grid .sx -row 2 -column 0 -columnspan 2 -sticky ew
+    grid .sy -row 3 -column 0 -columnspan 2 -sticky ew
+    grid .btn -row 4 -column 0 -columnspan 2 -sticky ew
 }
 
 
@@ -65,16 +68,11 @@ proc double::setup {} {
 # This is called when mouse button 1 is pressed and moved in either of
 # the OpenGL windows.
 proc double::motion_event { width height x y } {
-    setXrot .f1.o1 [expr 360.0 * $y / $height]
-    setXrot .f1.o2 [expr 360.0 * $y / $height]
-    setYrot .f1.o1 [expr 360.0 * ($width - $x) / $width]
-    setYrot .f1.o2 [expr 360.0 * ($width - $x) / $width]
+    .sx set [double::setXrot [expr 360.0 * $y / $height]]
+    .sy set [double::setYrot [expr 360.0 * ($width - $x) / $width]]
 
-#    .sx set [expr 360.0 * $y / $height]
-#    .sy set [expr 360.0 * ($width - $x) / $width]
-
-    .sx set [getXrot]
-    .sy set [getYrot]
+    .o1 postredisplay
+    .o2 postredisplay
 }
 
 # This is called when a slider is changed.
@@ -82,11 +80,14 @@ proc double::setAngle {axis value} {
     global xAngle yAngle zAngle
 
     switch -exact $axis {
-	x {setXrot .f1.o1 $value
-	   setXrot .f1.o2 $value}
-	y {setYrot .f1.o1 $value
-	   setYrot .f1.o2 $value}
+	x {double::setXrot $value
+	   double::setXrot $value}
+	y {double::setYrot $value
+	   double::setYrot $value}
     }
+
+    .o1 postredisplay
+    .o2 postredisplay
 }
 
 # Execution starts here!

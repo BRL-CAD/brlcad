@@ -207,7 +207,6 @@ proc genStubs::rewriteFile {file text} {
     }
     set in [open ${file} r]
     set out [open ${file}.new w]
-    fconfigure $out -translation lf
 
     while {![eof $in]} {
 	set line [gets $in]
@@ -441,7 +440,7 @@ proc genStubs::makeDecl {name decl index} {
 			[lindex $arg 2]
 		if {[string length $line] + [string length $next] \
 			+ $pad > 76} {
-		    append text [string trimright $line] \n
+		    append text $line \n
 		    set line "\t\t\t\t"
 		    set pad 28
 		}
@@ -459,7 +458,7 @@ proc genStubs::makeDecl {name decl index} {
 			[lindex $arg 2]
 		if {[string length $line] + [string length $next] \
 			+ $pad > 76} {
-		    append text [string trimright $line] \n
+		    append text $line \n
 		    set line "\t\t\t\t"
 		    set pad 28
 		}
@@ -503,6 +502,71 @@ proc genStubs::makeMacro {name decl index} {
     return $text
 }
 
+# genStubs::makeStub --
+#
+#	Emits a stub function definition.
+#
+# Arguments:
+#	name	The interface name.
+#	decl	The function declaration.
+#	index	The slot index for this function.
+#
+# Results:
+#	Returns the formatted stub function definition.
+
+proc genStubs::makeStub {name decl index} {
+    lassign $decl rtype fname args
+
+    set lfname [string tolower [string index $fname 0]]
+    append lfname [string range $fname 1 end]
+
+    append text "/* Slot $index */\n" $rtype "\n" $fname
+
+    set arg1 [lindex $args 0]
+
+    if {![string compare $arg1 "TCL_VARARGS"]} {
+	lassign [lindex $args 1] type argName
+	append text " ($type$argName, ...)\n\{\n"
+	append text "    " $type " var;\n    va_list argList;\n"
+	if {[string compare $rtype "void"]} {
+	    append text "    " $rtype " resultValue;\n"
+	}
+	append text "\n    var = (" $type ") (va_start(argList, " \
+		$argName "), " $argName ");\n\n    "
+	if {[string compare $rtype "void"]} {
+	    append text "resultValue = "
+	}
+	append text "(" $name "StubsPtr->" $lfname "VA)(var, argList);\n"
+	append text "    va_end(argList);\n"
+	if {[string compare $rtype "void"]} {
+	    append text "return resultValue;\n"
+	}
+	append text "\}\n\n"
+	return $text
+    }
+
+    if {![string compare $arg1 "void"]} {
+	set argList "()"
+	set argDecls ""
+    } else {
+	set argList ""
+	set sep "("
+	foreach arg $args {
+	    append argList $sep [lindex $arg 1]
+	    append argDecls "    " [lindex $arg 0] " " \
+		    [lindex $arg 1] [lindex $arg 2] ";\n"
+	    set sep ", "
+	}
+	append argList ")"
+    }
+    append text $argList "\n" $argDecls "{\n    "
+    if {[string compare $rtype "void"]} {
+	append text "return "
+    }
+    append text "(" $name "StubsPtr->" $lfname ")" $argList ";\n}\n\n"
+    return $text
+}
+
 # genStubs::makeSlot --
 #
 #	Generate the stub table entry for a function.
@@ -526,11 +590,8 @@ proc genStubs::makeSlot {name decl index} {
 	append text $rtype " *" $lfname "; /* $index */\n"
 	return $text
     }
-    if {[string range $rtype end-7 end] == "CALLBACK"} {
-	append text [string trim [string range $rtype 0 end-8]] " (CALLBACK *" $lfname ") "
-    } else {
-	append text $rtype " (*" $lfname ") "
-    }
+    append text $rtype " (*" $lfname ") "
+
     set arg1 [lindex $args 0]
     switch -exact $arg1 {
 	void {
@@ -911,7 +972,6 @@ proc genStubs::emitMacros {name textVar} {
 proc genStubs::emitHeader {name} {
     variable outDir
     variable hooks
-    variable libraryName
 
     set capName [string toupper [string index $name 0]]
     append capName [string range $name 1 end]
@@ -923,26 +983,46 @@ proc genStubs::emitHeader {name} {
 	foreach hook $hooks($name) {
 	    set capHook [string toupper [string index $hook 0]]
 	    append capHook [string range $hook 1 end]
-	    append text "    const struct ${capHook}Stubs *${hook}Stubs;\n"
+	    append text "    struct ${capHook}Stubs *${hook}Stubs;\n"
 	}
 	append text "} ${capName}StubHooks;\n"
     }
     append text "\ntypedef struct ${capName}Stubs {\n"
     append text "    int magic;\n"
-    append text "    const struct ${capName}StubHooks *hooks;\n\n"
+    append text "    struct ${capName}StubHooks *hooks;\n\n"
 
     emitSlots $name text
 
     append text "} ${capName}Stubs;\n"
 
-    set upName [string toupper $libraryName]
-    append text "\n#if defined(USE_${upName}_STUBS) && !defined(USE_${upName}_STUB_PROCS)\n"
-    append text "extern const ${capName}Stubs *${name}StubsPtr;"
-    append text "\n#endif /* defined(USE_${upName}_STUBS) && !defined(USE_${upName}_STUB_PROCS) */\n"
+    append text "\n#ifdef __cplusplus\nextern \"C\" {\n#endif\n"
+    append text "extern ${capName}Stubs *${name}StubsPtr;\n"
+    append text "#ifdef __cplusplus\n}\n#endif\n"
 
     emitMacros $name text
 
     rewriteFile [file join $outDir ${name}Decls.h] $text
+    return
+}
+
+# genStubs::emitStubs --
+#
+#	This function emits the body of the <name>Stubs.c file for
+#	the specified interface.
+#
+# Arguments:
+#	name	The name of the interface being emitted.
+#
+# Results:
+#	None.
+
+proc genStubs::emitStubs {name} {
+    variable outDir
+
+    append text "\n/*\n * Exported stub functions:\n */\n\n"
+    forAllStubs $name makeStub 0 text
+
+    rewriteFile [file join $outDir ${name}Stubs.c] $text
     return
 }
 
@@ -966,7 +1046,7 @@ proc genStubs::emitInit {name textVar} {
     append capName [string range $name 1 end]
 
     if {[info exists hooks($name)]} {
-	append text "\nstatic const ${capName}StubHooks ${name}StubHooks = \{\n"
+	append text "\nstatic ${capName}StubHooks ${name}StubHooks = \{\n"
 	set sep "    "
 	foreach sub $hooks($name) {
 	    append text $sep "&${sub}Stubs"
@@ -974,7 +1054,7 @@ proc genStubs::emitInit {name textVar} {
 	}
 	append text "\n\};\n"
     }
-    append text "\nstatic const ${capName}Stubs ${name}Stubs = \{\n"
+    append text "\n${capName}Stubs ${name}Stubs = \{\n"
     append text "    TCL_STUB_MAGIC,\n"
     if {[info exists hooks($name)]} {
 	append text "    &${name}StubHooks,\n"
@@ -1075,7 +1155,7 @@ proc genStubs::init {} {
 if {[string length [namespace which lassign]] == 0} {
     proc lassign {valueList args} {
 	if {[llength $args] == 0} {
-	    error "wrong # args: should be \"lassign list varName ?varName ...?\""
+	    error "wrong # args: lassign list varname ?varname..?"
 	}
 	uplevel [list foreach $args $valueList {break}]
 	return [lrange $valueList [llength $args] end]

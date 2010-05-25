@@ -99,7 +99,7 @@ extern int Glx_dm_init();
 extern int Pex_dm_init();
 #endif /* DM_PEX */
 
-extern void set_port(void);		/* defined in fbserv.c */
+extern void fbserv_set_port(void);		/* defined in fbserv.c */
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
 extern void predictor_init(void);	/* defined in predictor.c */
 extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
@@ -226,7 +226,7 @@ release(char *name, int need_close)
 	if (mged_variables->mv_listen) {
 	    /* drop all clients */
 	    mged_variables->mv_listen = 0;
-	    set_port();
+	    fbserv_set_port();
 	}
 
 	/* release framebuffer resources */
@@ -697,7 +697,7 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 is_dm_null(void)
 {
-    return(curr_dm_list == &head_dm_list);
+    return curr_dm_list == &head_dm_list;
 }
 
 

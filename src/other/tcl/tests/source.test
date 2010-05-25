@@ -21,7 +21,7 @@ if {[catch {package require tcltest 2.1}]} {
 
 namespace eval ::tcl::test::source {
     namespace import ::tcltest::*
-
+
 test source-1.1 {source command} -setup {
     set x "old x value"
     set y "old y value"
@@ -269,23 +269,7 @@ test source-7.6 {source -encoding: mismatch encoding error} -setup {
     removeFile source.file
 } -returnCodes error -match glob -result {invalid command name*}
 
-test source-8.1 {source and coroutine/yield} -setup {
-    set sourcefile [makeFile {} source.file]
-    file delete $sourcefile
-} -body {
-    makeFile {yield 1; yield 2; return 3;} $sourcefile
-    coroutine coro apply {f {yield;source $f}} $sourcefile
-    list [coro] [coro] [coro] [info exist coro]
-} -cleanup {
-    catch {rename coro {}}
-    removeFile source.file
-} -result {1 2 3 0}
-
 cleanupTests
 }
 namespace delete ::tcl::test::source
 return
-
-# Local Variables:
-# mode: tcl
-# End:

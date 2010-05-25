@@ -108,7 +108,7 @@ ifeq (${EMBEDDED_BUILD},)
 INSTALL_TARGETS		+= install-private-headers
 endif
 ifeq (${INSTALL_BUILD}_${EMBEDDED_BUILD}_${BUILD_STYLE},1__Deployment)
-INSTALL_TARGETS		+= install-packages html-tcl
+INSTALL_TARGETS		+= html-tcl
 ifneq (${INSTALL_MANPAGES},)
 INSTALL_TARGETS		+= install-doc
 endif

@@ -24,7 +24,7 @@ SHLIB_SUFFIX	= @SHLIB_SUFFIX@
 MATH_LIBS	= @MATH_LIBS@
 LIBGLU		= @LIBGLU@
 
-EXAMPLE_SRCS	= double.c gears.c index.c overlay.c stereo.c texture.c
+EXAMPLE_SRCS	= double.c gears.c index.c overlay.c stereo.c texture.c pbuffer.c
 EXAMPLE_OBJS	= $(EXAMPLE_SRCS:.c=.$(OBJEXT))
 EXAMPLE_SHLIBS	= $(EXAMPLE_SRCS:.c=$(SHLIB_SUFFIX))
 
@@ -59,7 +59,7 @@ PKG_TCL_SOURCES = @PKG_TCL_SOURCES@
 # This is a list of public header files to be installed, if any.
 #========================================================================
 
-PKG_HEADERS	= @PKG_HEADERS@
+PKG_HEADERS	= @PKG_HEADERS@ 
 
 #========================================================================
 # "PKG_LIB_FILE" refers to the library (dynamic or static as per
@@ -152,7 +152,6 @@ WISH	= $(TCLSH_ENV) $(WISH_PROG)
 
 SHARED_BUILD	= @SHARED_BUILD@
 
-#INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@
 INCLUDES	= -I. @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
 
 PKG_CFLAGS	= @PKG_CFLAGS@
@@ -180,7 +179,7 @@ COMPILE		= $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(C
 
 #========================================================================
 # TEA TARGETS.  Please note that the "libraries:" target refers to platform
-# independent files, and the "binaries:" target inclues executable programs and
+# independent files, and the "binaries:" target includes executable programs and
 # platform-dependent libraries.  Modify these targets so that they install
 # the various pieces of your package.  The make and install rules
 # for the BINARIES that you specified above have already been done.
@@ -255,11 +254,19 @@ texture$(SHLIB_SUFFIX): texture.$(OBJEXT) image.$(OBJEXT) $(PKG_STUB_LIB_FILE)
 		$(MAKE) PKG_OBJECTS="texture.$(OBJEXT) image.$(OBJEXT) $(PKG_STUB_LIB_FILE) $(LIBGLU)" $@ ; \
 	fi
 
+pbuffer$(SHLIB_SUFFIX): pbuffer.$(OBJEXT) $(PKG_STUB_LIB_FILE)
+	-match=`expr 'x$(PKG_OBJECTS)' : '.*togl.*'`; \
+	if [ $$match -eq 0 ]; then \
+		$(MAKE_SHARED_LIB) ; \
+	else \
+		$(MAKE) PKG_OBJECTS="pbuffer.$(OBJEXT) $(PKG_STUB_LIB_FILE) $(LIBGLU)" $@ ; \
+	fi
+
 #========================================================================
 # Stub section.
 #========================================================================
 
-toglDecls.h toglStubInit.c: togl.decls
+$(srcdir)/toglDecls.h $(srcdir)/toglStubInit.c: togl.decls
 	$(TCLSH) `@CYGPATH@ $(TCL_SRC_DIR)/tools/genStubs.tcl` . $(srcdir)/togl.decls
 
 #========================================================================
@@ -290,8 +297,7 @@ install-libraries: libraries
 	    echo "Installing $(srcdir)/$$i" ; \
 	    $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(includedir) ; \
 	done
-	@echo "Installing togl_ws.h"
-	@$(INSTALL_DATA) ./togl_ws.h $(DESTDIR)$(includedir)
+	@$(INSTALL_DATA) togl_ws.h $(DESTDIR)$(includedir)
 
 
 #========================================================================
@@ -354,7 +360,7 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 # As necessary, add $(srcdir):$(srcdir)/compat:....
 #========================================================================
 
-VPATH = $(srcdir):$(srcdir)/generic:$(srcdir)/unix:$(srcdir)/win
+VPATH = $(srcdir)
 
 .c.@OBJEXT@:
 	$(COMPILE) -c `@CYGPATH@ $<` -o $@
@@ -396,7 +402,7 @@ dist: dist-clean
 	chmod 664 $(DIST_DIR)/tclconfig/tcl.m4
 	chmod +x $(DIST_DIR)/tclconfig/install-sh
 
-	list='examples doc generic library mac tests unix win StereoI'; \
+	list='examples doc tests StereoI GL'; \
 	for p in $$list; do \
 	    if test -d $(srcdir)/$$p ; then \
 		mkdir $(DIST_DIR)/$$p; \
@@ -512,11 +518,11 @@ install-lib-binaries: binaries
 	@if test "x$(SHARED_BUILD)" = "x1"; then \
 	    echo " Install pkgIndex.tcl $(DESTDIR)$(pkglibdir)"; \
 	    $(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir); \
-	    echo " Install LICENSE $(DESTDIR)$(pkglibdir)"; \
-	    $(INSTALL_DATA) LICENSE $(DESTDIR)$(pkglibdir); \
+	    echo " Install $(srcdir)/LICENSE $(DESTDIR)$(pkglibdir)"; \
+	    $(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(pkglibdir); \
 	else \
 	    echo " Install LICENSE.togl $(DESTDIR)$(libdir)"; \
-	    $(INSTALL_DATA) LICENSE $(DESTDIR)$(libdir)/LICENSE.togl; \
+	    $(INSTALL_DATA) $(srcdir)/LICENSE $(DESTDIR)$(libdir)/LICENSE.togl; \
 	fi
 
 #========================================================================
@@ -565,4 +571,4 @@ uninstall-binaries:
 .NOEXPORT:
 
 # Additional dependencies
-togl.$(OBJEXT): toglFont.c
+togl.$(OBJEXT): toglFont.c toglAGL.c toglGLX.c toglWGL.c

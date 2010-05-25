@@ -58,23 +58,23 @@ sgetc (char *string)
 	if (nirt_debug & DEBUG_INTERACT)
 	    bu_log("initializing\n");
 	if (string == 0)
-	    return (EOF);
+	    return EOF;
     }
     if (*sp == '\0') {
 	if (reported_EOS) {
 	    if (nirt_debug & DEBUG_INTERACT)
 		bu_log("returning EOF\n");
-	    return (EOF);
+	    return EOF;
 	} else {
 	    reported_EOS = 1;
 	    if (nirt_debug & DEBUG_INTERACT)
 		bu_log("returning EOS\n");
-	    return ('\0');
+	    return '\0';
 	}
     } else {
 	if (nirt_debug & DEBUG_INTERACT)
 	    bu_log("returning '%c' (o%o)\n", *sp, *sp);
-	return ((int) *sp++);
+	return (int) *sp++;
     }
 }
 
@@ -205,7 +205,7 @@ get_comtab_ent(char *pattern, int pat_len)
 	if ((strncmp (pattern, ctp->com_name, len)) == 0)
 	    break;
     }
-    return ((ctp->com_name) ? ctp : CT_NULL);
+    return (ctp->com_name) ? ctp : CT_NULL;
 }
 
 /*

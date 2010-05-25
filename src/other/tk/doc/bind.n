@@ -153,6 +153,7 @@ requirement.
 The \fBCommand\fR and \fBOption\fR modifiers are equivalents of \fBMod1\fR
 resp. \fBMod2\fR, they correspond to Macintosh-specific modifier keys.
 .PP
+.VS 8.5
 The \fBExtended\fR modifier is, at present, specific to Windows.  It
 appears on events that are associated with the keys on the
 .QW "extended keyboard" .
@@ -161,6 +162,7 @@ and \fBControl\fR keys at the right of the keyboard, the cursor keys
 in the cluster to the left of the numeric pad, the \fBNumLock\fR key,
 the \fBBreak\fR key, the \fBPrintScreen\fR key, and the \fB/\fR and
 \fBEnter\fR keys in the numeric keypad.
+.VE 8.5
 .SS "EVENT TYPES"
 .PP
 The \fItype\fR field may be any of the standard X event types, with a
@@ -429,7 +431,10 @@ The \fIcount\fR field from the event.  Valid only for \fBExpose\fR events.
 Indicates that there are \fIcount\fR pending \fBExpose\fR events which have not
 yet been delivered to the window.
 .IP \fB%d\fR 5
-The \fIdetail\fR or \fIuser_data\fR
+The \fIdetail\fR
+.VS 8.5
+or \fIuser_data\fR
+.VE 8.5
 field from the event.  The \fB%d\fR is replaced by
 a string identifying the detail.  For \fBEnter\fR,
 \fBLeave\fR, \fBFocusIn\fR, and \fBFocusOut\fR events,
@@ -449,11 +454,13 @@ For \fBConfigureRequest\fR events, the string will be one of:
 \fBBelow\fR	\fBNone\fR
 \fBBottomIf\fR	\fBTopIf\fR
 .DE
+.VS 8.5
 For virtual events, the string will be whatever value is stored in the
 \fIuser_data\fR field when the event was created (typically with
 \fBevent generate\fR), or the empty string if the field is NULL.
 Virtual events corresponding to key sequence presses (see \fBevent
 add\fR for details) set the \fIuser_data\fR to NULL.
+.VE 8.5
 For events other than these, the substituted string is undefined.
 .RE
 .IP \fB%f\fR 5
@@ -696,7 +703,6 @@ If an error occurs in executing the script for a binding then the
 The \fBbgerror\fR command will be executed at global level
 (outside the context of any Tcl procedure).
 .SH "EXAMPLES"
-.PP
 Arrange for a string describing the motion of the mouse to be printed
 out when the mouse is double-clicked:
 .CS
@@ -718,6 +724,3 @@ pack [label .l \-textvariable keysym \-padx 2m \-pady 1m]
 bgerror(n), bindtags(n), event(n), focus(n), grab(n), keysyms(n)
 .SH KEYWORDS
 binding, event
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

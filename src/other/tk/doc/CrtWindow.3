@@ -60,8 +60,8 @@ are used to create new windows for
 use in Tk-based applications.  Each of the procedures returns a token
 that can be used to manipulate the window in other calls to the Tk
 library.  If the window could not be created successfully, then NULL
-is returned and the result of interpreter \fIinterp\fR is modified to
-hold an error message.
+is returned and \fIinterp->result\fR is modified to hold an error
+message.
 .PP
 Tk supports two different kinds of windows:  internal
 windows and top-level windows.
@@ -143,6 +143,7 @@ but has not been mapped, so no X window exists, it is
 possible to force the creation of the X window by
 calling \fBTk_MakeWindowExist\fR.  This procedure issues
 the X commands to instantiate the window given by \fItkwin\fR.
+
 .SH KEYWORDS
 create, deferred creation, destroy, display, internal window,
 screen, top-level window, window

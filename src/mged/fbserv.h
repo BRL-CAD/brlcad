@@ -25,7 +25,6 @@
 
 #include "fbmsg.h"
 
-void pkgfoo(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
 void rfbopen(struct pkg_conn *pcp, char *buf), rfbclose(struct pkg_conn *pcp, char *buf), rfbclear(struct pkg_conn *pcp, char *buf), rfbread(struct pkg_conn *pcp, char *buf), rfbwrite(struct pkg_conn *pcp, char *buf);
 void rfbcursor(struct pkg_conn *pcp, char *buf), rfbgetcursor(struct pkg_conn *pcp, char *buf);
 void rfbrmap(struct pkg_conn *pcp, char *buf), rfbwmap(struct pkg_conn *pcp, char *buf);
@@ -35,6 +34,7 @@ void rfbbwreadrect(struct pkg_conn *pcp, char *buf), rfbbwwriterect(struct pkg_c
 void rfbpoll(struct pkg_conn *pcp, char *buf), rfbflush(struct pkg_conn *pcp, char *buf), rfbfree(struct pkg_conn *pcp, char *buf);
 void rfbview(struct pkg_conn *pcp, char *buf), rfbgetview(struct pkg_conn *pcp, char *buf);
 void rfbsetcursor(struct pkg_conn *pcp, char *buf);
+void rfbunknown(struct pkg_conn *pcp, char *buf);
 /* Old Routines */
 void rfbscursor(struct pkg_conn *pcp, char *buf), rfbwindow(struct pkg_conn *pcp, char *buf), rfbzoom(struct pkg_conn *pcp, char *buf);
 
@@ -55,8 +55,8 @@ static struct pkg_switch pkg_switch[] = {
     { MSG_FBRMAP,		rfbrmap,	"R Map" },
     { MSG_FBWMAP,		rfbwmap,	"W Map" },
     { MSG_FBHELP,		rfbhelp,	"Help Request" },
-    { MSG_ERROR,		pkgfoo,		"Error Message" },
-    { MSG_CLOSE,		pkgfoo,		"Close Connection" },
+    { MSG_ERROR,		rfbunknown,	"Error Message" },
+    { MSG_CLOSE,		rfbunknown,	"Close Connection" },
     { MSG_FBREADRECT, 	rfbreadrect,	"Read Rectangle" },
     { MSG_FBWRITERECT,	rfbwriterect,	"Write Rectangle" },
     { MSG_FBWRITERECT + MSG_NORETURN, rfbwriterect, "Write Rectangle" },

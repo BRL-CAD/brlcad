@@ -14,6 +14,8 @@
 
 #include "tclWinInt.h"
 
+#include <fcntl.h>
+#include <io.h>
 #include <sys/stat.h>
 
 /*
@@ -146,7 +148,7 @@ static void		ConsoleInit(void);
 static int		ConsoleInputProc(ClientData instanceData, char *buf,
 			    int toRead, int *errorCode);
 static int		ConsoleOutputProc(ClientData instanceData,
-			    const char *buf, int toWrite, int *errorCode);
+			    CONST char *buf, int toWrite, int *errorCode);
 static DWORD WINAPI	ConsoleReaderThread(LPVOID arg);
 static void		ConsoleSetupProc(ClientData clientData, int flags);
 static void		ConsoleWatchProc(ClientData instanceData, int mask);
@@ -161,7 +163,7 @@ static void		ConsoleThreadActionProc(ClientData instanceData,
  * based IO.
  */
 
-static const Tcl_ChannelType consoleChannelType = {
+static Tcl_ChannelType consoleChannelType = {
     "console",			/* Type name. */
     TCL_CHANNEL_VERSION_5,	/* v5 channel */
     ConsoleCloseProc,		/* Close proc. */
@@ -178,7 +180,7 @@ static const Tcl_ChannelType consoleChannelType = {
     NULL,			/* handler proc. */
     NULL,			/* wide seek proc */
     ConsoleThreadActionProc,    /* thread action proc */
-    NULL                       /* truncation */
+    NULL,                       /* truncation */
 };
 
 /*
@@ -209,7 +211,7 @@ readConsoleBytes(
 static BOOL
 writeConsoleBytes(
     HANDLE hConsole,
-    const void *lpBuffer,
+    const VOID *lpBuffer,
     DWORD nbytes,
     LPDWORD nbyteswritten)
 {
@@ -770,7 +772,7 @@ ConsoleInputProc(
 static int
 ConsoleOutputProc(
     ClientData instanceData,	/* Console state. */
-    const char *buf,		/* The data buffer. */
+    CONST char *buf,		/* The data buffer. */
     int toWrite,		/* How many bytes to write? */
     int *errorCode)		/* Where to store error code. */
 {
@@ -1185,7 +1187,7 @@ ConsoleReaderThread(
 	    DWORD err;
 	    err = GetLastError();
 
-	    if (err == (DWORD)EOF) {
+	    if (err == EOF) {
 		infoPtr->readFlags = CONSOLE_EOF;
 	    }
 	}

@@ -167,21 +167,21 @@ dm_label_primitive(struct rt_wdb *wdbp,
 		case ARB8:
 		    for (i=0; i<8; i++) {
 			MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			POINT_LABEL(pos_view, i+'1');
+			POINT_LABEL(pos_view, (unsigned char)i+'1');
 		    }
 
 		    break;
 		case ARB7:
 		    for (i=0; i<7; i++) {
 			MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			POINT_LABEL(pos_view, i+'1');
+			POINT_LABEL(pos_view, (unsigned char)i+'1');
 		    }
 
 		    break;
 		case ARB6:
 		    for (i=0; i<5; i++) {
 			MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			POINT_LABEL(pos_view, i+'1');
+			POINT_LABEL(pos_view, (unsigned char)i+'1');
 		    }
 		    MAT4X3PNT(pos_view, xform, arb->pt[6]);
 		    POINT_LABEL(pos_view, '6');
@@ -190,14 +190,14 @@ dm_label_primitive(struct rt_wdb *wdbp,
 		case ARB5:
 		    for (i=0; i<5; i++) {
 			MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			POINT_LABEL(pos_view, i+'1');
+			POINT_LABEL(pos_view, (unsigned char)i+'1');
 		    }
 
 		    break;
 		case ARB4:
 		    for (i=0; i<3; i++) {
 			MAT4X3PNT(pos_view, xform, arb->pt[i]);
-			POINT_LABEL(pos_view, i+'1');
+			POINT_LABEL(pos_view, (unsigned char)i+'1');
 		    }
 		    MAT4X3PNT(pos_view, xform, arb->pt[4]);
 		    POINT_LABEL(pos_view, '4');

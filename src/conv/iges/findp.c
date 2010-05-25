@@ -95,7 +95,7 @@ Findp()
 
     dirarraylen = totentities;
 
-    return( pstart );
+    return pstart;
 }
 
 void

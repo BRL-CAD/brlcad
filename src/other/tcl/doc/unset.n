@@ -37,10 +37,8 @@ deleted.  An error can occur when the named variable does not exist, or the
 name refers to an array element but the variable is a scalar, or the name
 refers to a variable in a non-existent namespace.
 .SH EXAMPLE
-.PP
 Create an array containing a mapping from some numbers to their
 squares and remove the array elements for non-prime numbers:
-.PP
 .CS
 array set squares {
     1 1    6 36

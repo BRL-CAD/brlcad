@@ -50,12 +50,12 @@ find_keyword(int i, char *line, char *word)
     /* find the keyword */
     ptr1 = strstr(&line[i], word);
     if (!ptr1)
-	return((char *)NULL);
+	return (char *)NULL;
 
     /* find the '=' */
     ptr2 = strchr(ptr1, '=');
     if (!ptr2)
-	return((char *)NULL);
+	return (char *)NULL;
 
     /* skip any white space before the value */
     while (isspace(*(++ptr2)));
@@ -66,17 +66,47 @@ find_keyword(int i, char *line, char *word)
     line[j+1] = '\0';
 
     /* return pointer to the value */
-    return(ptr2);
+    return ptr2;
 }
 
 
 static int
+get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
+{
+    char *ptr1;
+    size_t j;
+
+    /* find the '=' */
+    ptr1 = strchr(&line[0], '=');
+    if (!ptr1)
+	return 0;
+
+    /* Everything from the beginning to the = is the attribute name*/
+    bu_vls_strncpy(attr, line, ptr1 - &line[0]);
+
+    /* skip any white space before the value */
+    ++ptr1;
+    while (isspace(*(++ptr1)));
+
+    /* eliminate trailing white space */
+    j = strlen(line);
+    while (isspace(line[--j]));
+    line[j+1] = '\0';
+	
+    /* Grab the attribute value */
+    bu_vls_strcpy(val, ptr1);
+
+    return 1;
+}
+
+
+HIDDEN int
 check_comb(struct ged *gedp)
 {
     /* Do some minor checking of the edited file */
 
     FILE *fp;
-    int node_count=0;
+    size_t node_count=0;
     int nonsubs=0;
     int i, j, done, ch;
     int done2, first;
@@ -103,8 +133,13 @@ check_comb(struct ged *gedp)
 	/* Read a line */
 	i = (-1);
 
-	while ((ch=getc(fp)) != EOF && ch != '\n' && i < RT_MAXLINE)
+	ch=getc(fp);
+	while (ch != EOF && ch != '\n' && i < RT_MAXLINE) {
 	    line[++i] = ch;
+
+	    /* next character */
+	    ch=getc(fp);
+	}
 
 	if (ch == EOF) {
 	    /* We must be done */
@@ -116,7 +151,7 @@ check_comb(struct ged *gedp)
 	    line[RT_MAXLINE-1] = '\0';
 	    bu_vls_printf(&gedp->ged_result_str, "Line too long in edited file:\n%s\n", line);
 	    fclose(fp);
-	    return(-1);
+	    return -1;
 	}
 
 	line[++i] = '\0';
@@ -129,7 +164,8 @@ check_comb(struct ged *gedp)
 	if (line[i] == '\0')
 	    continue;	/* blank line */
 
-	if ((ptr=find_keyword(i, line, "NAME"))) {
+	ptr=find_keyword(i, line, "NAME");
+	if (ptr) {
 	    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
 		size_t len;
 
@@ -141,27 +177,45 @@ check_comb(struct ged *gedp)
 		if (len > NAMESIZE) {
 		    bu_vls_printf(&gedp->ged_result_str, "Name too long for v4 database: %s\n%s\n", ptr, lineCopy);
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 	    }
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION_ID"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION_ID");
+	if (ptr) {
 	    id = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION");
+	if (ptr) {
 	    if (*ptr == 'y' || *ptr == 'Y')
 		region = 1;
 	    else
 		region = 0;
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "AIRCODE"))) {
+	}
+
+	ptr=find_keyword(i, line, "AIRCODE");
+	if (ptr) {
 	    air = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "GIFT_MATERIAL"))) {
+	}
+
+	ptr=find_keyword(i, line, "GIFT_MATERIAL");
+	if (ptr) {
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "LOS"))) {
+	}
+
+	ptr=find_keyword(i, line, "LOS");
+	if (ptr) {
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "COLOR"))) {
+	}
+
+	ptr=find_keyword(i, line, "COLOR");
+	if (ptr) {
 	    char *ptr2;
 
 	    rgb_valid = 1;
@@ -183,25 +237,31 @@ check_comb(struct ged *gedp)
 		bu_vls_printf(&gedp->ged_result_str, "WARNING: invalid color specification!!! Must be three integers, each 0-255\n");
 	    }
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "SHADER")))
+	}
+
+	ptr=find_keyword(i, line, "SHADER");
+	if (ptr)
 	    continue;
-	else if ((ptr=find_keyword(i, line, "INHERIT")))
+
+	ptr=find_keyword(i, line, "INHERIT");
+	if (ptr)
 	    continue;
-	else if (!strncmp(&line[i], "COMBINATION:", 12)) {
+
+	if (!strncmp(&line[i], "COMBINATION:", 12)) {
 	    if (region < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Region flag not correctly set\n\tMust be 'Yes' or 'No'\n\tNo changes made\n");
 		fclose(fp);
-		return(-1);
+		return -1;
 	    } else if (region) {
 		if (id < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "invalid region ID\n\tNo changed made\n");
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 		if (air < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "invalid air code\n\tNo changed made\n");
 		    fclose(fp);
-		    return(-1);
+		    return -1;
 		}
 		if (air == 0 && id == 0)
 		    bu_vls_printf(&gedp->ged_result_str, "Warning: both ID and Air codes are 0!!!\n");
@@ -267,7 +327,7 @@ check_comb(struct ged *gedp)
 		fclose(fp);
 		if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
 		    bu_free(name_v5, "name_v5");
-		return(-1);
+		return -1;
 	    }
 
 	    if (relation != '-')
@@ -278,7 +338,7 @@ check_comb(struct ged *gedp)
 		fclose(fp);
 		if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
 		    bu_free(name_v5, "name_v5");
-		return(-1);
+		return -1;
 	    }
 
 	    ptr = strtok((char *)NULL, _delims);
@@ -297,7 +357,7 @@ check_comb(struct ged *gedp)
 			fclose(fp);
 			if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
 			    bu_free(name_v5, "name_v5");
-			return(-1);
+			return -1;
 		    }
 		}
 
@@ -316,14 +376,14 @@ check_comb(struct ged *gedp)
 
     if (nonsubs == 0 && node_count) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
-	return(-1);
+	return -1;
     }
-    return(node_count);
+    return node_count;
 }
 
 
 int
-_ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, int node_count, const char *old_name, const char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
+_ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, size_t node_count, const char *old_name, const char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
 {
     struct rt_db_internal intern;
     union tree *final_tree;
@@ -356,10 +416,10 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	    }
 	}
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
-	    return(1);
+	    return 1;
 	}
     } else if (dp == DIR_NULL) {
 	int flags;
@@ -369,7 +429,7 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	else
 	    flags = DIR_COMB;
 
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
@@ -390,8 +450,8 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 }
 
 
-static int
-build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, int node_count, char *old_name)
+HIDDEN int
+build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, size_t node_count, char *old_name)
 {
     /* Build the new combination by adding to the recently emptied combination
        This keeps combo info associated with this combo intact */
@@ -412,8 +472,11 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     union tree *tp;
     matp_t matrix;
     int ret=0;
+    struct bu_vls attr_vls;
+    struct bu_vls val_vls;
+    struct bu_attribute_value_set avs;
 
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
+    if (gedp->ged_wdbp->dbip == DBI_NULL) 
 	return GED_OK;
 
     if (comb) {
@@ -425,6 +488,10 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot open edited file: %s\n", _ged_tmpfil);
 	return GED_ERROR;
     }
+
+    bu_vls_init(&attr_vls);
+    bu_vls_init(&val_vls);
+    bu_avs_init_empty(&avs);
 
     /* empty the existing combination */
     if (comb && comb->tree) {
@@ -463,8 +530,13 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	/* Read a line */
 	i = (-1);
 
-	while ((ch=getc(fp)) != EOF && ch != '\n' && i < RT_MAXLINE)
+	ch=getc(fp);
+	while (ch != EOF && ch != '\n' && i < RT_MAXLINE) {
 	    line[++i] = ch;
+
+	    /* get next char */
+	    ch=getc(fp);
+	}
 
 	if (ch == EOF) {
 	    /* We must be done */
@@ -482,7 +554,8 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	if (line[i] == '\0')
 	    continue;	/* blank line */
 
-	if ((ptr=find_keyword(i, line, "NAME"))) {
+	ptr=find_keyword(i, line, "NAME");
+	if (ptr) {
 	    if (gedp->ged_wdbp->dbip->dbi_version < 5)
 		NAMEMOVE(ptr, new_name_v4);
 	    else {
@@ -490,25 +563,43 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		new_name = bu_strdup(ptr);
 	    }
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION_ID"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION_ID");
+	if (ptr) {
 	    comb->region_id = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "REGION"))) {
+	}
+
+	ptr=find_keyword(i, line, "REGION");
+	if (ptr) {
 	    if (*ptr == 'y' || *ptr == 'Y')
 		comb->region_flag = 1;
 	    else
 		comb->region_flag = 0;
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "AIRCODE"))) {
+	}
+
+	ptr=find_keyword(i, line, "AIRCODE");
+	if (ptr) {
 	    comb->aircode = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "GIFT_MATERIAL"))) {
+	}
+
+	ptr=find_keyword(i, line, "GIFT_MATERIAL");
+	if (ptr) {
 	    comb->GIFTmater = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "LOS"))) {
+	}
+
+	ptr=find_keyword(i, line, "LOS");
+	if (ptr) {
 	    comb->los = atoi(ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "COLOR"))) {
+	}
+
+	ptr=find_keyword(i, line, "COLOR");
+	if (ptr) {
 	    char *ptr2;
 	    int value;
 
@@ -561,17 +652,29 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	    comb->rgb[2] = value;
 	    comb->rgb_valid = 1;
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "SHADER"))) {
+	}
+
+	ptr=find_keyword(i, line, "SHADER");
+	if (ptr) {
 	    bu_vls_strcpy(&comb->shader,  ptr);
 	    continue;
-	} else if ((ptr=find_keyword(i, line, "INHERIT"))) {
+	}
+
+	ptr=find_keyword(i, line, "INHERIT");
+	if (ptr) {
 	    if (*ptr == 'y' || *ptr == 'Y')
 		comb->inherit = 1;
 	    else
 		comb->inherit = 0;
 	    continue;
-	} else if (!strncmp(&line[i], "COMBINATION:", 12))
+	}
+
+	if (!strncmp(&line[i], "COMBINATION:", 12)) {
+	    get_attr_val_pair(line, &attr_vls, &val_vls); 
+	    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
+	    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
 	    continue;
+        }
 
 	done2=0;
 	ptr = strtok(line, _delims);
@@ -629,7 +732,10 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 			if (rt_tree_array)
 			    bu_free((char *)rt_tree_array, "red: tree list");
 			fclose(fp);
-			return(1);
+			bu_vls_free(&attr_vls);
+		        bu_vls_free(&val_vls);
+			bu_avs_free(&avs);
+			return 1;
 		    }
 		    matrix[k] = atof(ptr);
 		}
@@ -677,6 +783,9 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	bu_free(new_name, "new_name");
     }
 
+    bu_vls_free(&attr_vls);
+    bu_vls_free(&val_vls);
+    bu_avs_free(&avs);
     return ret;
 }
 
@@ -703,15 +812,22 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 }
 
 
-static int
+HIDDEN int
 write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *name)
 {
     /* Writes the file for later editing */
     struct rt_tree_array *rt_tree_array;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+    struct directory *dp;
     FILE *fp;
-    int i;
-    int node_count;
-    int actual_count;
+    size_t i;
+    size_t node_count;
+    size_t actual_count;
+
+    bu_avs_init_empty(&avs);
+
+    GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, GED_ERROR);
 
     if (comb)
 	RT_CK_COMB(comb);
@@ -747,14 +863,9 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     }
     node_count = db_tree_nleaves(comb->tree);
     if (node_count > 0) {
-	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
-							  sizeof(struct rt_tree_array), "tree list");
-	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array,
-							       comb->tree,
-							       OP_UNION,
-							       0,
-							       &rt_uniresource) - rt_tree_array;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
 	actual_count = 0;
@@ -787,6 +898,21 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     else
 	fprintf(fp, "INHERIT=No\n");
 
+    if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	/* Print out any non-standard attributes - region and region_id
+	 * are case insensitive as far as key properties being set, need
+	 * to check if this is true for the rest of them.
+	 */
+	avpp = avs.avp;
+	for (i=0; i < avs.count; i++, avpp++) {
+	    if ((strcasecmp(avpp->name, "REGION")) && (strcasecmp(avpp->name, "REGION_ID")) &&
+		(strcmp(avpp->name, "AIRCODE")) && (strcmp(avpp->name, "GIFT_MATERIAL")) &&
+		(strcmp(avpp->name, "LOS")) && (strcmp(avpp->name, "COLOR")) &&
+		(strcmp(avpp->name, "SHADER")) && (strcmp(avpp->name, "INHERIT")))
+		fprintf(fp, "%s=%s\n", avpp->name, avpp->value);
+        }
+    }
+
     fprintf(fp, "COMBINATION:\n");
 
     for (i=0; i<actual_count; i++) {
@@ -805,18 +931,21 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "write_comb: Illegal op code in tree\n");
 		fclose(fp);
+		bu_avs_free(&avs);
 		return GED_ERROR;
 	}
 	if (fprintf(fp, " %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name) <= 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "write_comb: Cannot write to temporary file (%s). Aborting edit\n",
 			  _ged_tmpfil);
 	    fclose(fp);
+	    bu_avs_free(&avs);
 	    return GED_ERROR;
 	}
 	_ged_print_matrix(fp, rt_tree_array[i].tl_tree->tr_l.tl_mat);
 	fprintf(fp, "\n");
     }
     fclose(fp);
+    bu_avs_free(&avs);
     return GED_OK;
 }
 
@@ -876,7 +1005,7 @@ _ged_save_comb(struct ged *gedp, struct directory *dpold)
 	return NULL;
     }
 
-    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, -1L, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
@@ -924,9 +1053,9 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    int node_count;
+    size_t node_count;
     static const char *usage = "comb";
-    const char *editstring;
+    const char *editstring = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -1017,8 +1146,10 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	 */
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
 	    const char *saved_name = NULL;
+	    int checked;
 
-	    if ((node_count = check_comb(gedp)) < 0) {
+	    checked = check_comb(gedp);
+	    if (checked < 0) {
 		/* Do some quick checking on the edited file */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 		if (comb)
@@ -1026,6 +1157,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		(void)unlink(_ged_tmpfil);
 		return GED_ERROR;
 	    }
+	    node_count = (size_t)checked;
 
 	    if (comb) {
 		saved_name = _ged_save_comb(gedp, dp);

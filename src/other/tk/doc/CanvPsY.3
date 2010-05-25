@@ -63,6 +63,7 @@ and so on.
 .AP int numPoints in
 Number of points at \fIcoordPtr\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 These procedures are called by canvas type managers to carry out
@@ -84,40 +85,38 @@ transformation.
 of a bitmap.
 The Postscript is generated in proper image data format for Postscript,
 i.e., as data between angle brackets, one bit per pixel.
-The Postscript is appended to the result of interpreter \fIinterp\fR
-and \fBTCL_OK\fR is returned unless an error occurs, in which case
-\fBTCL_ERROR\fR is returned and the interpreter result is overwritten
-with an error message.
+The Postscript is appended to \fIinterp->result\fR and \fBTCL_OK\fR is returned
+unless an error occurs, in which case \fBTCL_ERROR\fR is returned and
+\fIinterp->result\fR is overwritten with an error message.
 .PP
 \fBTk_CanvasPsColor\fR generates Postscript to set the current color
 to correspond to its \fIcolorPtr\fR argument, taking into account any
 color map specified in the \fBpostscript\fR command.
-It appends the Postscript to the interpreter \fIinterp\fR's result and returns
-\fBTCL_OK\fR unless an error occurs, in which case \fBTCL_ERROR\fR is
-returned and the interpreter's result is overwritten with an error message.
+It appends the Postscript to \fIinterp->result\fR and returns
+\fBTCL_OK\fR unless an error occurs, in which case \fBTCL_ERROR\fR is returned and
+\fIinterp->result\fR is overwritten with an error message.
 .PP
 \fBTk_CanvasPsFont\fR generates Postscript that sets the current font
 to match \fItkFont\fR as closely as possible.
 \fBTk_CanvasPsFont\fR takes into account any font map specified
 in the \fBpostscript\fR command, and it does
 the best it can at mapping X fonts to Postscript fonts.
-It appends the Postscript to interpreter \fIinterp\fR's result and
-returns \fBTCL_OK\fR unless an error occurs, in which case
-\fBTCL_ERROR\fR is returned and the interpreter's result is
-overwritten with an error message.
+It appends the Postscript to \fIinterp->result\fR and returns \fBTCL_OK\fR
+unless an error occurs, in which case \fBTCL_ERROR\fR is returned and
+\fIinterp->result\fR is overwritten with an error message.
 .PP
 \fBTk_CanvasPsPath\fR generates Postscript to set the current path
 to the set of points given by \fIcoordPtr\fR and \fInumPoints\fR.
-It appends the resulting Postscript to the result of interpreter \fIinterp\fR.
+It appends the resulting Postscript to \fIinterp->result\fR.
 .PP
 \fBTk_CanvasPsStipple\fR generates Postscript that will fill the
 current path in stippled fashion.
 It uses \fIbitmap\fR as the stipple pattern and the current Postscript
 color;  ones in the stipple bitmap are drawn in the current color, and
 zeroes are not drawn at all.
-The Postscript is appended to interpreter \fIinterp\fR's result and
-\fBTCL_OK\fR is returned, unless an error occurs, in which case
-\fBTCL_ERROR\fR is returned and the interpreter's result is
-overwritten with an error message.
+The Postscript is appended to \fIinterp->result\fR and \fBTCL_OK\fR is
+returned, unless an error occurs, in which case \fBTCL_ERROR\fR is returned and
+\fIinterp->result\fR is overwritten with an error message.
+
 .SH KEYWORDS
 bitmap, canvas, color, font, path, Postscript, stipple

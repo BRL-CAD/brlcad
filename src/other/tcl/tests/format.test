@@ -77,9 +77,6 @@ test format-1.11 {integer formatting} longIs32bit {
 test format-1.11.1 {integer formatting} longIs64bit {
     format "%-#20o %#-20o %#-20o %#-20o" 6 34 16923 -12 -1
 } {06                   042                  041033               01777777777777777777764}
-test format-1.12 {integer formatting} {
-    format "%b %#b %llb" 5 5 [expr {2**100}]
-} {101 0b101 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000}
 
 test format-2.1 {string formatting} {
     format "%s %s %c %s" abcd {This is a very long test string.} 120 x
@@ -291,7 +288,7 @@ test format-8.1 {error conditions} {
 test format-8.2 {error conditions} {
     catch format msg
     set msg
-} {wrong # args: should be "format formatString ?arg ...?"}
+} {wrong # args: should be "format formatString ?arg arg ...?"}
 test format-8.3 {error conditions} {
     catch {format %*d}
 } 1

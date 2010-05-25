@@ -2,7 +2,7 @@
 "../../resources/standard/dtd/docbookx.dtd">
 <article xmlns:xi="http://www.w3.org/2001/XInclude">
   <articleinfo>
-    <title>Using the Pipe Primitive</title>
+    <title>Using the Build Pattern Tool</title>
 
     <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 

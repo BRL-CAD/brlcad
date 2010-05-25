@@ -127,7 +127,7 @@ main(int ac, char **av)
 
 
     bu_free(image, "image buffer");
-    return(0);
+    return 0;
 }
 
 

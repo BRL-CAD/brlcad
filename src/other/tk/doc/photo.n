@@ -18,22 +18,9 @@
 .SH NAME
 photo \- Full-color images
 .SH SYNOPSIS
-.nf
 \fBimage create photo \fR?\fIname\fR? ?\fIoptions\fR?
-
-\fIimageName \fBblank\fR
-\fIimageName \fBcget \fIoption\fR
-\fIimageName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-\fIimageName \fBcopy \fIsourceImage\fR ?\fIoption value(s) ...\fR?
-\fIimageName \fBdata\fR ?\fIoption value(s) ...\fR?
-\fIimageName \fBget \fIx y\fR
-\fIimageName \fBput \fIdata\fR ?\fIoption value(s) ...\fR?
-\fIimageName \fBread \fIfilename\fR ?\fIoption value(s) ...\fR?
-\fIimageName \fBredither\fR
-\fIimageName \fBtransparency \fIsubcommand \fR?\fIarg arg ...\fR?
-\fIimageName \fBwrite \fIfilename\fR ?\fIoption value(s) ...\fR?
-.fi
 .BE
+
 .SH DESCRIPTION
 .PP
 A photo is an image whose pixels can display any color or be
@@ -41,11 +28,7 @@ transparent.  A photo image is stored internally in full color (32
 bits per pixel), and is displayed using dithering if necessary.  Image
 data for a photo image can be obtained from a file or a string, or it
 can be supplied from
-C code through a procedural interface.  At present, only
-.VS 8.6
-PNG,
-.VE 8.6
-GIF and PPM/PGM
+C code through a procedural interface.  At present, only GIF and PPM/PGM
 formats are supported, but an interface exists to allow additional
 image file formats to be added easily.  A photo image is transparent
 in regions where no image data has been supplied
@@ -58,29 +41,24 @@ command.
 Photos support the following \fIoptions\fR:
 .TP
 \fB\-data \fIstring\fR
-.
 Specifies the contents of the image as a string.  The string should
 contain binary data or, for some formats, base64-encoded data (this is
-currently guaranteed to be supported for PNG and GIF images). The
-format of the
+currently guaranteed to be supported for GIF images).  The format of the
 string must be one of those for which there is an image file format
 handler that will accept string data.  If both the \fB\-data\fR
 and \fB\-file\fR options are specified, the \fB\-file\fR option takes
 precedence.
 .TP
 \fB\-format \fIformat-name\fR
-.
 Specifies the name of the file format for the data specified with the
 \fB\-data\fR or \fB\-file\fR option.
 .TP
 \fB\-file \fIname\fR
-.
 \fIname\fR gives the name of a file that is to be read to supply data
 for the photo image.  The file format must be one of those for which
 there is an image file format handler that can read data.
 .TP
 \fB\-gamma \fIvalue\fR
-.
 Specifies that the colors allocated for displaying this image in a
 window should be corrected for a non-linear display with the specified
 gamma exponent value.  (The intensity produced by most
@@ -92,14 +70,12 @@ will make the image lighter, and values less than one will make it
 darker.
 .TP
 \fB\-height \fInumber\fR
-.
 Specifies the height of the image, in pixels.  This option is useful
 primarily in situations where the user wishes to build up the contents
 of the image piece by piece.  A value of zero (the default) allows the
 image to expand or shrink vertically to fit the data stored in it.
 .TP
 \fB\-palette \fIpalette-spec\fR
-.
 Specifies the resolution of the color cube to be allocated for
 displaying this image, and thus the number of colors used from the
 colormaps of the windows where it is displayed.  The
@@ -111,7 +87,6 @@ number) is used, the image will be displayed in monochrome (i.e.,
 grayscale).
 .TP
 \fB\-width \fInumber\fR
-.
 Specifies the width of the image, in pixels.    This option is useful
 primarily in situations where the user wishes to build up the contents
 of the image piece by piece.  A value of zero (the default) allows the
@@ -139,20 +114,17 @@ changed.
 The following commands are possible for photo images:
 .TP
 \fIimageName \fBblank\fR
-.
 Blank the image; that is, set the entire image to have no data, so it
 will be displayed as transparent, and the background of whatever
 window it is displayed in will show through.
 .TP
 \fIimageName \fBcget\fR \fIoption\fR
-.
 Returns the current value of the configuration option given
 by \fIoption\fR.
 \fIOption\fR may have any of the values accepted by the
-\fBimage create\fR \fBphoto\fR command.
+\fBimage create photo\fR command.
 .TP
 \fIimageName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
-.
 Query or modify the configuration options for the image.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIimageName\fR (see \fBTk_ConfigureInfo\fR for
@@ -164,10 +136,9 @@ one or more \fIoption\-value\fR pairs are specified, then the command
 modifies the given option(s) to have the given value(s);  in
 this case the command returns an empty string.
 \fIOption\fR may have any of the values accepted by the
-\fBimage create\fR \fBphoto\fR command.
+\fBimage create photo\fR command.
 .TP
 \fIimageName \fBcopy\fR \fIsourceImage\fR ?\fIoption value(s) ...\fR?
-.
 Copies a region from the image called \fIsourceImage\fR (which must
 be a photo image) to the image called \fIimageName\fR, possibly with
 pixel zooming and/or subsampling.  If no options are specified, this
@@ -177,7 +148,6 @@ options may be specified:
 .RS
 .TP
 \fB\-from \fIx1 y1 x2 y2\fR
-.
 Specifies a rectangular sub-region of the source image to be copied.
 (\fIx1,y1\fR) and (\fIx2,y2\fR) specify diagonally opposite corners of
 the rectangle.  If \fIx2\fR and \fIy2\fR are not specified, the
@@ -187,7 +157,6 @@ rectangle but not the bottom or right edges.  If the \fB\-from\fR
 option is not given, the default is the whole source image.
 .TP
 \fB\-to \fIx1 y1 x2 y2\fR
-.
 Specifies a rectangular sub-region of the destination image to be
 affected.  (\fIx1,y1\fR) and (\fIx2,y2\fR) specify diagonally opposite
 corners of the rectangle.  If \fIx2\fR and \fIy2\fR are not specified,
@@ -197,7 +166,6 @@ region (after subsampling and zooming, if specified).  If \fIx2\fR and
 necessary to fill the destination region in a tiled fashion.
 .TP
 \fB\-shrink\fR
-.
 Specifies that the size of the destination image should be reduced, if
 necessary, so that the region being copied into is at the bottom-right
 corner of the image.  This option will not affect the width or height
@@ -205,7 +173,6 @@ of the image if the user has specified a non-zero value for the
 \fB\-width\fR or \fB\-height\fR configuration option, respectively.
 .TP
 \fB\-zoom \fIx y\fR
-.
 Specifies that the source region should be magnified by a factor of
 \fIx\fR in the X direction and \fIy\fR in the Y direction.  If \fIy\fR
 is not given, the default value is the same as \fIx\fR.  With this
@@ -214,7 +181,6 @@ of \fIx\fR x \fIy\fR pixels in the destination image, all the same
 color.  \fIx\fR and \fIy\fR must be greater than 0.
 .TP
 \fB\-subsample \fIx y\fR
-.
 Specifies that the source image should be reduced in size by using
 only every \fIx\fRth pixel in the X direction and \fIy\fRth pixel in
 the Y direction.  Negative values will cause the image to be flipped
@@ -222,7 +188,6 @@ about the Y or X axes, respectively.  If \fIy\fR is not given, the
 default value is the same as \fIx\fR.
 .TP
 \fB\-compositingrule \fIrule\fR
-.
 Specifies how transparent pixels in the source image are combined with
 the destination image.  When a compositing rule of \fIoverlay\fR is
 set, the old contents of the destination image are visible, as if the
@@ -233,20 +198,17 @@ the source image is used as-is.  The default compositing rule is
 \fIoverlay\fR.
 .RE
 .TP
-\fIimageName \fBdata\fR ?\fIoption value(s) ...\fR?
-.
+\fIimageName \fBdata ?\fIoption value(s) ...\fR?
 Returns image data in the form of a string. The following options
 may be specified:
 .RS
 .TP
 \fB\-background\fI color\fR
-.
 If the color is specified, the data will not contain any transparency
 information. In all transparent pixels the color will be replaced by
 the specified color.
 .TP
 \fB\-format\fI format-name\fR
-.
 Specifies the name of the image file format handler to be used.
 Specifically, this subcommand searches
 for the first handler whose name matches an initial substring of
@@ -255,7 +217,6 @@ If this option is not given, this subcommand uses the first
 handler that has the capability to read the image data.
 .TP
 \fB\-from \fIx1 y1 x2 y2\fR
-.
 Specifies a rectangular region of \fIimageName\fR to be returned.
 If only \fIx1\fR and \fIy1\fR are specified, the region
 extends from \fI(x1,y1)\fR to the bottom-right corner of
@@ -265,19 +226,16 @@ and excluding x2,y2.  The default, if this option is not given, is the
 whole image.
 .TP
 \fB\-grayscale\fR
-.
 If this options is specified, the data will not contain color
 information. All pixel data will be transformed into grayscale.
 .RE
 .TP
 \fIimageName \fBget\fR \fIx y\fR
-.
 Returns the color of the pixel at coordinates (\fIx\fR,\fIy\fR) in the
 image as a list of three integers between 0 and 255, representing the
 red, green and blue components respectively.
 .TP
 \fIimageName \fBput\fR \fIdata\fR ?\fIoption value(s) ...\fR?
-.
 Sets pixels in \fI imageName\fR to the data specified in \fIdata\fR.
 This command first searches the list of image file format handlers for
 a handler that can interpret the data in \fIdata\fR, and then reads
@@ -292,17 +250,15 @@ that color.  The following options may be specified:
 .RS
 .TP
 \fB\-format \fIformat-name\fR
-.
 Specifies the format of the image data in \fIdata\fR.
 Specifically, only image file format handlers whose names begin with
 \fIformat-name\fR will be used while searching for an image data
 format handler to read the data.
 .TP
 \fB\-to \fIx1 y1\fR ?\fIx2 y2\fR?
-.
 Specifies the coordinates of the top-left corner (\fIx1\fR,\fIy1\fR)
-of the region of \fIimageName\fR into which the image data will be
-copied.  The default position is (0,0).  If \fIx2\fR,\fIy2\fR is given
+of the region of \fIimageName\fR into which data from \fIfilename\fR
+are to be read.  The default is (0,0).  If \fIx2\fR,\fIy2\fR is given
 and \fIdata\fR is not large enough to cover the rectangle specified by
 this option, the image data extracted will be tiled so it covers the
 entire destination rectangle.  Note that if \fIdata\fR specifies a
@@ -311,7 +267,6 @@ represented by (\fIx2\fR,\fIy2\fR) will be filled with that color.
 .RE
 .TP
 \fIimageName \fBread\fR \fIfilename\fR ?\fIoption value(s) ...\fR?
-.
 Reads image data from the file named \fIfilename\fR into the image.
 This command first searches the list of
 image file format handlers for a handler that can interpret the data
@@ -321,14 +276,12 @@ specified:
 .RS
 .TP
 \fB\-format \fIformat-name\fR
-.
 Specifies the format of the image data in \fIfilename\fR.
 Specifically, only image file format handlers whose names begin with
 \fIformat-name\fR will be used while searching for an image data
 format handler to read the data.
 .TP
 \fB\-from \fIx1 y1 x2 y2\fR
-.
 Specifies a rectangular sub-region of the image file data to be copied
 to the destination image.  If only \fIx1\fR and \fIy1\fR are
 specified, the region extends from (\fIx1,y1\fR) to the bottom-right
@@ -338,7 +291,6 @@ The default, if this option is not specified, is the whole of the
 image in the image file.
 .TP
 \fB\-shrink\fR
-.
 If this option, the size of \fIimageName\fR will be reduced, if
 necessary, so that the region into which the image file data are read
 is at the bottom-right corner of the \fIimageName\fR.  This option
@@ -347,14 +299,12 @@ specified a non-zero value for the \fB\-width\fR or \fB\-height\fR
 configuration option, respectively.
 .TP
 \fB\-to \fIx y\fR
-.
 Specifies the coordinates of the top-left corner of the region of
 \fIimageName\fR into which data from \fIfilename\fR are to be read.
 The default is (0,0).
 .RE
 .TP
 \fIimageName \fBredither\fR
-.
 The dithering algorithm used in displaying photo images propagates
 quantization errors from one pixel to its neighbors.
 If the image data for \fIimageName\fR is supplied in pieces, the
@@ -363,37 +313,31 @@ not noticeable, but if it is a problem, this command can be used to
 recalculate the dithered image in each window where the image is
 displayed.
 .TP
-\fIimageName \fBtransparency \fIsubcommand \fR?\fIarg arg ...\fR?
-.
+\fIimageName \fBtransparency \fIsubcommand ?arg arg ...?\fR
 Allows examination and manipulation of the transparency information in
 the photo image.  Several subcommands are available:
 .RS
 .TP
 \fIimageName \fBtransparency get \fIx y\fR
-.
 Returns a boolean indicating if the pixel at (\fIx\fR,\fIy\fR) is
 transparent.
 .TP
 \fIimageName \fBtransparency set \fIx y boolean\fR
-.
 Makes the pixel at (\fIx\fR,\fIy\fR) transparent if \fIboolean\fR is
 true, and makes that pixel opaque otherwise.
 .RE
 .TP
 \fIimageName \fBwrite \fIfilename\fR ?\fIoption value(s) ...\fR?
-.
 Writes image data from \fIimageName\fR to a file named \fIfilename\fR.
 The following options may be specified:
 .RS
 .TP
 \fB\-background\fI color\fR
-.
 If the color is specified, the data will not contain any transparency
 information. In all transparent pixels the color will be replaced by
 the specified color.
 .TP
 \fB\-format\fI format-name\fR
-.
 Specifies the name of the image file format handler to be used to
 write the data to the file.  Specifically, this subcommand searches
 for the first handler whose name matches an initial substring of
@@ -402,7 +346,6 @@ file.  If this option is not given, this subcommand uses the first
 handler that has the capability to write an image file.
 .TP
 \fB\-from \fIx1 y1 x2 y2\fR
-.
 Specifies a rectangular region of \fIimageName\fR to be written to the
 image file.  If only \fIx1\fR and \fIy1\fR are specified, the region
 extends from \fI(x1,y1)\fR to the bottom-right corner of
@@ -411,7 +354,6 @@ diagonally opposite corners of the rectangular region.  The default,
 if this option is not given, is the whole image.
 .TP
 \fB\-grayscale\fR
-.
 If this options is specified, the data will not contain color
 information. All pixel data will be transformed into grayscale.
 .RE
@@ -421,8 +363,8 @@ The photo image code is structured to allow handlers for additional
 image file formats to be added easily.  The photo image code maintains
 a list of these handlers.  Handlers are added to the list by
 registering them with a call to \fBTk_CreatePhotoImageFormat\fR.  The
-standard Tk distribution comes with handlers for PPM/PGM, PNG and GIF
-formats, which are automatically registered on initialization.
+standard Tk distribution comes with handlers for PPM/PGM and GIF formats,
+which are automatically registered on initialization.
 .PP
 When reading an image file or processing
 string data specified with the \fB\-data\fR configuration option, the
@@ -446,27 +388,6 @@ that, which the handler can use, for example, to specify which variant
 to use of the formats supported by the handler.
 Note that not all image handlers may support writing transparency data
 to a file, even where the target image format does.
-.SS "FORMAT SUBOPTIONS"
-.PP
-.VS 8.6
-Some image formats support sub-options, which are specified at the time that
-the image is loaded using additional words in the \fB\-format\fR option. At
-the time of writing, the following are supported:
-.TP
-\fBgif \-index\fI indexValue\fR
-.
-When parsing a multi-part GIF image, Tk normally only accesses the first
-image. By giving the \fB\-index\fR sub-option, the \fIindexValue\fR'th value
-may be used instead. The \fIindexValue\fR must be an integer from 0 up to the
-number of image parts in the GIF data.
-.TP
-\fBpng \-alpha\fI alphaValue\fR
-.
-An additional alpha filtering for the overall image, which allows the
-background on which the image is displayed to show through. This usually also
-has the effect of desaturating the image. The \fIalphaValue\fR must be between
-0.0 and 1.0.
-.VE 8.6
 .SH "COLOR ALLOCATION"
 .PP
 When a photo image is displayed in a window, the photo image code
@@ -502,10 +423,8 @@ The photo image type was designed and implemented by Paul Mackerras,
 based on his earlier photo widget and some suggestions from
 John Ousterhout.
 .SH EXAMPLE
-.PP
 Load an image from a file and tile it to the size of a window, which
 is useful for producing a tiled background:
-.PP
 .CS
 # These lines should be called once
 \fBimage create photo\fR untiled \-file "theFile.ppm"
@@ -517,23 +436,9 @@ set width  [winfo width .someWidget]
 set height [winfo height .someWidget]
 tiled \fBcopy\fR untiled \-to 0 0 $width $height \-shrink
 .CE
-.PP
-.VS 8.6
-The PNG image loader allows the application of an additional alpha factor
-during loading, which is useful for generating images suitable for disabled
-buttons:
-.PP
-.CS
-\fBimage create photo\fR icon \-file "icon.png"
-\fBimage create photo\fR iconDisabled \-file "icon.png" \e
-        \-format "png \-alpha 0.5"
-button .b \-image icon \-disabledimage iconDisabled
-.CE
-.VE 8.6
+
 .SH "SEE ALSO"
 image(n)
+
 .SH KEYWORDS
 photo, image, color
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

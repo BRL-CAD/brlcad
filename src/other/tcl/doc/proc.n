@@ -16,6 +16,7 @@ proc \- Create a Tcl procedure
 .SH SYNOPSIS
 \fBproc \fIname args body\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 The \fBproc\fR command creates a new Tcl procedure named
@@ -75,10 +76,8 @@ executed in the procedure's body.
 If an error occurs while executing the procedure
 body, then the procedure-as-a-whole will return that same error.
 .SH EXAMPLES
-.PP
 This is a procedure that accepts arbitrarily many arguments and prints
 them out, one by one.
-.PP
 .CS
 \fBproc\fR printArguments args {
    foreach arg $args {
@@ -90,14 +89,15 @@ them out, one by one.
 This procedure is a bit like the \fBincr\fR command, except it
 multiplies the contents of the named variable by the value, which
 defaults to \fB2\fR:
-.PP
 .CS
 \fBproc\fR mult {varName {multiplier 2}} {
    upvar 1 $varName var
    set var [expr {$var * $multiplier}]
 }
 .CE
+
 .SH "SEE ALSO"
 info(n), unknown(n)
+
 .SH KEYWORDS
 argument, procedure

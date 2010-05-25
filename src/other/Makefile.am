@@ -61,27 +61,6 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
-if WITH_OPENGL
-TOGL_MAKE=$(MAKE)
-else
-TOGL_MAKE=:
-endif
-
-togl-all:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" all
-
-togl-install:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" install
-
-togl-clean:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" clean
-
-togl-distclean:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" distclean
-
-togl-uninstall:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" uninstall
-
 if BUILD_DOCS
 if BUILD_TKHTML3
 if WITH_TK
@@ -96,20 +75,24 @@ else
 TKHTMLDIR=
 endif
 
-if BUILD_TKIMG
+if BUILD_TOGL
 if WITH_TK
-TKIMGDIR=tkimg
-else !WITH_TK
-TKIMGDIR=
+TOGLDIR=togl
+else
+TOGLDIR=
 endif
-else !BUILD_TKIMG
-TKIMGDIR=
+else
+TOGLDIR=
 endif
 
-if BUILD_GOBLIN
-GOBLINDIR=goblin
-else !BUILD_GOBLIN
-GOBLINDIR=
+if BUILD_TKPNG
+if WITH_TK
+TKPNGDIR=tkpng
+else !WITH_TK
+TKPNGDIR=
+endif
+else !BUILD_TKPNG
+TKPNGDIR=
 endif
 
 if BUILD_OPENNURBS
@@ -165,11 +148,11 @@ SUBDIRS = \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
-	${GOBLINDIR} \
-	${OPENNURBSDIR} \
 	${STEPDIR} \
-	${TKIMGDIR} \
+	${TKPNGDIR} \
 	${TKHTMLDIR} \
+	${TOGLDIR} \
+	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
 
@@ -180,7 +163,7 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost 
+	boost
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -198,7 +181,7 @@ DIST_SUBDIRS = \
 	step \
 	tcl \
 	tk \
-	tkimg \
+	tkpng \
 	tkhtml3 \
 	tnt
 

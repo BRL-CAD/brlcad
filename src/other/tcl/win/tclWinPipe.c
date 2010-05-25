@@ -14,6 +14,8 @@
 
 #include "tclWinInt.h"
 
+#include <fcntl.h>
+#include <io.h>
 #include <sys/stat.h>
 
 /*
@@ -206,7 +208,7 @@ static void		PipeThreadActionProc(ClientData instanceData,
  * I/O.
  */
 
-static const Tcl_ChannelType pipeChannelType = {
+static Tcl_ChannelType pipeChannelType = {
     "pipe",			/* Type name. */
     TCL_CHANNEL_VERSION_5,	/* v5 channel */
     TCL_CLOSE2PROC,		/* Close proc. */
@@ -223,7 +225,7 @@ static const Tcl_ChannelType pipeChannelType = {
     NULL,			/* handler proc. */
     NULL,			/* wide seek proc */
     PipeThreadActionProc,	/* thread action proc */
-    NULL                       /* truncate */
+    NULL,                       /* truncate */
 };
 
 /*
@@ -480,8 +482,8 @@ TempFileName(
     TCHAR *prefix;
 
     prefix = (tclWinProcs->useWide) ? (TCHAR *) L"TCL" : (TCHAR *) "TCL";
-    if (tclWinProcs->getTempPathProc(MAX_PATH, name) != 0) {
-	if (tclWinProcs->getTempFileNameProc((TCHAR *) name, prefix, 0,
+    if ((*tclWinProcs->getTempPathProc)(MAX_PATH, name) != 0) {
+	if ((*tclWinProcs->getTempFileNameProc)((TCHAR *) name, prefix, 0,
 		name) != 0) {
 	    return 1;
 	}
@@ -493,7 +495,8 @@ TempFileName(
 	((char *) name)[0] = '.';
 	((char *) name)[1] = '\0';
     }
-    return tclWinProcs->getTempFileNameProc((TCHAR *) name, prefix, 0, name);
+    return (*tclWinProcs->getTempFileNameProc)((TCHAR *) name, prefix, 0,
+	    name);
 }
 
 /*
@@ -605,7 +608,7 @@ TclpOpenFile(
 
     flags = 0;
     if (!(mode & O_CREAT)) {
-	flags = tclWinProcs->getFileAttributesProc(nativePath);
+	flags = (*tclWinProcs->getFileAttributesProc)(nativePath);
 	if (flags == 0xFFFFFFFF) {
 	    flags = 0;
 	}
@@ -621,8 +624,8 @@ TclpOpenFile(
      * Now we get to create the file.
      */
 
-    handle = tclWinProcs->createFileProc(nativePath, accessMode, shareMode,
-	    NULL, createMode, flags, NULL);
+    handle = (*tclWinProcs->createFileProc)(nativePath, accessMode,
+	    shareMode, NULL, createMode, flags, NULL);
     Tcl_DStringFree(&ds);
 
     if (handle == INVALID_HANDLE_VALUE) {
@@ -678,7 +681,7 @@ TclpCreateTempFile(
 	return NULL;
     }
 
-    handle = tclWinProcs->createFileProc((TCHAR *) name,
+    handle = (*tclWinProcs->createFileProc)((TCHAR *) name,
 	    GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
 	    FILE_ATTRIBUTE_TEMPORARY|FILE_FLAG_DELETE_ON_CLOSE, NULL);
     if (handle == INVALID_HANDLE_VALUE) {
@@ -738,7 +741,7 @@ TclpCreateTempFile(
 
     TclWinConvertError(GetLastError());
     CloseHandle(handle);
-    tclWinProcs->deleteFileProc((TCHAR *) name);
+    (*tclWinProcs->deleteFileProc)((TCHAR *) name);
     return NULL;
 }
 
@@ -1171,7 +1174,7 @@ TclpCreateProcess(
 	     * tcl dll.
 	     */
 	    Tcl_Obj *tclExePtr, *pipeDllPtr;
-	    const char *start, *end;
+	    char *start, *end;
 	    int i, fileExists;
 	    Tcl_DString pipeDll;
 
@@ -1242,7 +1245,7 @@ TclpCreateProcess(
 
     BuildCommandLine(execPath, argc, argv, &cmdLine);
 
-    if (tclWinProcs->createProcessProc(NULL,
+    if ((*tclWinProcs->createProcessProc)(NULL,
 	    (TCHAR *) Tcl_DStringValue(&cmdLine), NULL, NULL, TRUE,
 	    (DWORD) createFlags, NULL, NULL, &startInfo, &procInfo) == 0) {
 	TclWinConvertError(GetLastError());
@@ -1401,8 +1404,8 @@ ApplicationType(
 	Tcl_DStringAppend(&nameBuf, extensions[i], -1);
 	nativeName = Tcl_WinUtfToTChar(Tcl_DStringValue(&nameBuf),
 		Tcl_DStringLength(&nameBuf), &ds);
-	found = tclWinProcs->searchPathProc(NULL, nativeName, NULL, MAX_PATH,
-		nativeFullPath, &rest);
+	found = (*tclWinProcs->searchPathProc)(NULL, nativeName, NULL,
+		MAX_PATH, nativeFullPath, &rest);
 	Tcl_DStringFree(&ds);
 	if (found == 0) {
 	    continue;
@@ -1413,7 +1416,7 @@ ApplicationType(
 	 * known type.
 	 */
 
-	attr = tclWinProcs->getFileAttributesProc((TCHAR *) nativeFullPath);
+	attr = (*tclWinProcs->getFileAttributesProc)((TCHAR *) nativeFullPath);
 	if ((attr == 0xffffffff) || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
 	    continue;
 	}
@@ -1421,12 +1424,12 @@ ApplicationType(
 	Tcl_DStringFree(&ds);
 
 	ext = strrchr(fullName, '.');
-	if ((ext != NULL) && (strcasecmp(ext, ".bat") == 0)) {
+	if ((ext != NULL) && (stricmp(ext, ".bat") == 0)) {
 	    applType = APPL_DOS;
 	    break;
 	}
 
-	hFile = tclWinProcs->createFileProc((TCHAR *) nativeFullPath,
+	hFile = (*tclWinProcs->createFileProc)((TCHAR *) nativeFullPath,
 		GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
@@ -1445,7 +1448,7 @@ ApplicationType(
 	     */
 
 	    CloseHandle(hFile);
-	    if ((ext != NULL) && (strcasecmp(ext, ".com") == 0)) {
+	    if ((ext != NULL) && (stricmp(ext, ".com") == 0)) {
 		applType = APPL_DOS;
 		break;
 	    }
@@ -1506,7 +1509,7 @@ ApplicationType(
 	 * application name from the arguments.
 	 */
 
-	tclWinProcs->getShortPathNameProc((TCHAR *) nativeFullPath,
+	(*tclWinProcs->getShortPathNameProc)((TCHAR *) nativeFullPath,
 		nativeFullPath, MAX_PATH);
 	strcpy(fullName, Tcl_WinTCharToUtf((TCHAR *) nativeFullPath, -1, &ds));
 	Tcl_DStringFree(&ds);
@@ -1571,7 +1574,6 @@ BuildCommandLine(
 	} else {
 	    int count;
 	    Tcl_UniChar ch;
-
 	    for (start = arg; *start != '\0'; start += count) {
 		count = Tcl_UtfToUniChar(start, &ch);
 		if (Tcl_UniCharIsSpace(ch)) {	/* INTL: ISO space. */
@@ -1672,18 +1674,18 @@ TclpCreateCommandChannel(
     infoPtr->writeBuf = 0;
     infoPtr->writeBufLen = 0;
     infoPtr->writeError = 0;
-    infoPtr->channel = NULL;
+    infoPtr->channel = (Tcl_Channel) NULL;
 
     /*
      * Use one of the fds associated with the channel as the channel id.
      */
 
     if (readFile) {
-	channelId = (int) ((WinFile *) readFile)->handle;
+	channelId = (int) ((WinFile*)readFile)->handle;
     } else if (writeFile) {
-	channelId = (int) ((WinFile *) writeFile)->handle;
+	channelId = (int) ((WinFile*)writeFile)->handle;
     } else if (errorFile) {
-	channelId = (int) ((WinFile *) errorFile)->handle;
+	channelId = (int) ((WinFile*)errorFile)->handle;
     } else {
 	channelId = 0;
     }
@@ -1730,7 +1732,7 @@ TclpCreateCommandChannel(
 
     wsprintfA(channelName, "file%lx", infoPtr);
     infoPtr->channel = Tcl_CreateChannel(&pipeChannelType, channelName,
-	    infoPtr, infoPtr->validMask);
+	    (ClientData) infoPtr, infoPtr->validMask);
 
     /*
      * Pipes have AUTO translation mode on Windows and ^Z eof char, which
@@ -1738,53 +1740,11 @@ TclpCreateCommandChannel(
      * Windows programs that expect a ^Z at EOF.
      */
 
-    Tcl_SetChannelOption(NULL, infoPtr->channel, "-translation", "auto");
-    Tcl_SetChannelOption(NULL, infoPtr->channel, "-eofchar", "\032 {}");
+    Tcl_SetChannelOption((Tcl_Interp *) NULL, infoPtr->channel,
+	    "-translation", "auto");
+    Tcl_SetChannelOption((Tcl_Interp *) NULL, infoPtr->channel,
+	    "-eofchar", "\032 {}");
     return infoPtr->channel;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_CreatePipe --
- *
- *	System dependent interface to create a pipe for the [chan pipe]
- *	command. Stolen from TclX.
- *
- * Results:
- *	TCL_OK or TCL_ERROR.
- *
- *----------------------------------------------------------------------
- */
-
-int
-Tcl_CreatePipe(
-    Tcl_Interp *interp,		/* Errors returned in result.*/
-    Tcl_Channel *rchan,		/* Where to return the read side. */
-    Tcl_Channel *wchan,		/* Where to return the write side. */
-    int flags)			/* Reserved for future use. */
-{
-    HANDLE readHandle, writeHandle;
-    SECURITY_ATTRIBUTES sec;
-
-    sec.nLength = sizeof(SECURITY_ATTRIBUTES);
-    sec.lpSecurityDescriptor = NULL;
-    sec.bInheritHandle = FALSE;
-
-    if (!CreatePipe(&readHandle, &writeHandle, &sec, 0)) {
-	TclWinConvertError(GetLastError());
-	Tcl_AppendResult(interp, "pipe creation failed: ",
-		Tcl_PosixError(interp), NULL);
-	return TCL_ERROR;
-    }
-
-    *rchan = Tcl_MakeFileChannel((ClientData) readHandle, TCL_READABLE);
-    Tcl_RegisterChannel(interp, *rchan);
-
-    *wchan = Tcl_MakeFileChannel((ClientData) writeHandle, TCL_WRITABLE);
-    Tcl_RegisterChannel(interp, *wchan);
-
-    return TCL_OK;
 }
 
 /*
@@ -2090,8 +2050,9 @@ PipeClose2Proc(
 	 */
 
 	if (pipePtr->errorFile) {
-	    WinFile *filePtr = (WinFile *) pipePtr->errorFile;
+	    WinFile *filePtr;
 
+	    filePtr = (WinFile*)pipePtr->errorFile;
 	    errChan = Tcl_MakeFileChannel((ClientData) filePtr->handle,
 		    TCL_READABLE);
 	    ckfree((char *) filePtr);
@@ -3145,109 +3106,6 @@ PipeThreadActionProc(
 	infoPtr->threadId = NULL;
     }
     Tcl_MutexUnlock(&pipeMutex);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclpOpenTemporaryFile --
- *
- *	Creates a temporary file, possibly based on the supplied bits and
- *	pieces of template supplied in the first three arguments. If the
- *	fourth argument is non-NULL, it contains a Tcl_Obj to store the name
- *	of the temporary file in (and it is caller's responsibility to clean
- *	up). If the fourth argument is NULL, try to arrange for the temporary
- *	file to go away once it is no longer needed.
- *
- * Results:
- *	A read-write Tcl Channel open on the file.
- *
- *----------------------------------------------------------------------
- */
-
-Tcl_Channel
-TclpOpenTemporaryFile(
-    Tcl_Obj *dirObj,
-    Tcl_Obj *basenameObj,
-    Tcl_Obj *extensionObj,
-    Tcl_Obj *resultingNameObj)
-{
-    WCHAR name[MAX_PATH];
-    char *namePtr;
-    HANDLE handle;
-    DWORD flags = FILE_ATTRIBUTE_TEMPORARY;
-    int length, counter, counter2;
-    Tcl_DString buf;
-
-    if (!resultingNameObj) {
-	flags |= FILE_FLAG_DELETE_ON_CLOSE;
-    }
-
-    namePtr = (char *) name;
-    length = tclWinProcs->getTempPathProc(MAX_PATH, name);
-    if (length == 0) {
-	goto gotError;
-    }
-    if (tclWinProcs->useWide) {
-	namePtr += length * sizeof(WCHAR);
-    } else {
-	namePtr += length;
-    }
-    if (basenameObj) {
-	const char *string = Tcl_GetStringFromObj(basenameObj, &length);
-
-	Tcl_WinUtfToTChar(string, length, &buf);
-	memcpy(namePtr, Tcl_DStringValue(&buf), Tcl_DStringLength(&buf));
-	namePtr += Tcl_DStringLength(&buf);
-	Tcl_DStringFree(&buf);
-    } else {
-	TCHAR *baseStr = tclWinProcs->useWide ?
-		(TCHAR *) L"TCL" : (TCHAR *) "TCL";
-	int length = tclWinProcs->useWide ? 3*sizeof(WCHAR) : 3;
-
-	memcpy(namePtr, baseStr, length);
-	namePtr += length;
-    }
-    counter = TclpGetClicks() % 65533;
-    counter2 = 1024;			/* Only try this many times! Prevents
-					 * an infinite loop. */
-
-    do {
-	char number[TCL_INTEGER_SPACE + 4];
-
-	sprintf(number, "%d.TMP", counter);
-	counter = (unsigned short) (counter + 1);
-	Tcl_WinUtfToTChar(number, strlen(number), &buf);
-	memcpy(namePtr, Tcl_DStringValue(&buf), Tcl_DStringLength(&buf));
-	if (tclWinProcs->useWide) {
-	    *(WCHAR *)(namePtr + Tcl_DStringLength(&buf) + 1) = '\0';
-	} else {
-	    namePtr[Tcl_DStringLength(&buf) + 1] = '\0';
-	}
-	Tcl_DStringFree(&buf);
-
-	handle = tclWinProcs->createFileProc((TCHAR *) name,
-		GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_NEW, flags, NULL);
-    } while (handle == INVALID_HANDLE_VALUE
-	    && --counter2 > 0
-	    && GetLastError() == ERROR_FILE_EXISTS);
-    if (handle == INVALID_HANDLE_VALUE) {
-	goto gotError;
-    }
-
-    if (resultingNameObj) {
-	Tcl_Obj *tmpObj = TclpNativeToNormalized(name);
-
-	Tcl_AppendObjToObj(resultingNameObj, tmpObj);
-	TclDecrRefCount(tmpObj);
-    }
-
-    return Tcl_MakeFileChannel((ClientData) handle,
-	    TCL_READABLE|TCL_WRITABLE);
-
-  gotError:
-    TclWinConvertError(GetLastError());
-    return NULL;
 }
 
 /*

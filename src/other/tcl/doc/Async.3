@@ -83,14 +83,12 @@ the world is in a safe state, and \fIproc\fR can then carry out
 the actions associated with the asynchronous event.
 \fIProc\fR should have arguments and result that match the
 type \fBTcl_AsyncProc\fR:
-.PP
 .CS
-typedef int \fBTcl_AsyncProc\fR(
+typedef int Tcl_AsyncProc(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         int \fIcode\fR);
 .CE
-.PP
 The \fIclientData\fR will be the same as the \fIclientData\fR
 argument passed to \fBTcl_AsyncCreate\fR when the handler was
 created.

@@ -125,7 +125,6 @@ command returns an error message if the script did not run, unless the
 \fB\-async\fR flag was used, in which case the command returns immediately
 with no error.  This command can be used to replace send on Windows.
 .SH "DDE AND TCL"
-.PP
 A Tcl interpreter always has a service name of \fBTclEval\fR.  Each
 different interpreter of all running Tcl applications must be
 given a unique
@@ -158,10 +157,8 @@ If for any reason the event queue is not flushed, DDE commands may
 hang until the event queue is flushed.  This can create a deadlock
 situation.
 .SH EXAMPLE
-.PP
 This asks Internet Explorer (which must already be running) to go to a
 particularly important website:
-.PP
 .CS
 package require dde
 \fBdde execute\fR iexplore WWW_OpenURL http://www.tcl.tk/

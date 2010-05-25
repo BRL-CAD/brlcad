@@ -339,10 +339,10 @@ defined as follows:
 .PP
 .CS
 typedef struct Tcl_RegExpInfo {
-    int \fInsubs\fR;
-    Tcl_RegExpIndices *\fImatches\fR;
-    long \fIextendStart\fR;
-} \fBTcl_RegExpInfo\fR;
+        int \fInsubs\fR;
+        Tcl_RegExpIndices *\fImatches\fR;
+        long \fIextendStart\fR;
+} Tcl_RegExpInfo;
 .CE
 .PP
 The \fInsubs\fR field contains a count of the number of parenthesized
@@ -357,9 +357,9 @@ follows:
 .PP
 .CS
 typedef struct Tcl_RegExpIndices {
-    long \fIstart\fR;
-    long \fIend\fR;
-} \fBTcl_RegExpIndices\fR;
+        long \fIstart\fR;
+        long \fIend\fR;
+} Tcl_RegExpIndices;
 .CE
 .PP
 The \fIstart\fR and \fIend\fR values are Unicode character indices

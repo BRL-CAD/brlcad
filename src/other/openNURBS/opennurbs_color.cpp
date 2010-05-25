@@ -115,11 +115,29 @@ ON_Color::SetRGBA( int red, int green, int blue, int alpha )
 void
 ON_Color::SetFractionalRGBA( double red, double green, double blue, double alpha )
 {
+  int r,g,b,a;
 	if (red   < 0.0 ) red   = 0.0; else if ( red   > 1.0 ) red   = 1.0;	
 	if (green < 0.0 ) green = 0.0; else if ( green > 1.0 ) green = 1.0;	
 	if (blue  < 0.0 ) blue  = 0.0; else if ( blue  > 1.0 ) blue  = 1.0;	
-	if (alpha < 0.0 ) alpha = 0.0; else if ( alpha > 1.0 ) alpha = 1.0;	
-  SetRGBA( (int)(red*255.0), (int)(green*255.0), (int)(blue*255.0), (int)(alpha*255.0) );
+	if (alpha < 0.0 ) alpha = 0.0; else if ( alpha > 1.0 ) alpha = 1.0;
+
+  red   *= 255.0;
+  green *= 255.0;
+  blue  *= 255.0;
+  alpha *= 255.0;
+
+  r = (int)red;
+  g = (int)green;
+  b = (int)blue;
+  a = (int)alpha;
+
+  // round to closest int
+  if( (red-r)>=0.5 ) r++;
+  if( (green-g)>=0.5 ) g++;
+  if( (blue-b)>=0.5 ) b++;
+  if( (alpha-a)>=0.5 ) a++;
+
+  SetRGBA( r, g, b, a );
 }
 
 double ON_Color::Hue() const

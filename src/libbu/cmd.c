@@ -27,21 +27,15 @@
 #include "bu.h"
 #include "cmd.h"
 
+
 int
-bu_cmd(ClientData clientData,
-       Tcl_Interp *interp,
-       int argc,
-       const char **argv,
-       struct bu_cmdtab *cmds,
-       int cmd_index)
+bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, struct bu_cmdtab *cmds, int cmd_index)
 {
-    register struct bu_cmdtab *ctp;
+    struct bu_cmdtab *ctp = NULL;
 
     /* sanity */
     if (cmd_index >= argc) {
-	Tcl_AppendResult(interp,
-			 "missing command; must be one of:",
-			 (char *)NULL);
+	Tcl_AppendResult(interp, "missing command; must be one of:", (char *)NULL);
 	goto missing_cmd;
     }
 
@@ -52,11 +46,7 @@ bu_cmd(ClientData clientData,
 	}
     }
 
-    Tcl_AppendResult(interp,
-		     "unknown command: ",
-		     argv[cmd_index], ";",
-		     " must be one of: ",
-		     (char *)NULL);
+    Tcl_AppendResult(interp, "unknown command: ", argv[cmd_index], ";", " must be one of: ", (char *)NULL);
 
  missing_cmd:
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
@@ -67,17 +57,18 @@ bu_cmd(ClientData clientData,
     return TCL_ERROR;
 }
 
+
 void
-bu_register_cmds(Tcl_Interp *interp,
-		 struct bu_cmdtab *cmds)
+bu_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 {
-    register struct bu_cmdtab *ctp;
+    struct bu_cmdtab *ctp = NULL;
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
-				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CmdProc *func = (Tcl_CmdProc *)ctp->ct_func;
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 }
+
 
 /*
  * Local Variables:

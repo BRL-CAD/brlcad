@@ -51,7 +51,7 @@ Same as \fIobjPtr\fR except description of bitmap is passed as a string and
 resulting Pixmap is not cached.
 .AP "const char" *name in
 Name for new bitmap to be defined.
-.AP "const void" *source in
+.AP "const char" *source in
 Data for bitmap, in standard bitmap format.
 Must be stored in static memory whose value will never change.
 .AP "int" width in
@@ -68,6 +68,7 @@ Display for which \fIbitmap\fR was allocated.
 Identifier for a bitmap allocated by \fBTk_AllocBitmapFromObj\fR or
 \fBTk_GetBitmap\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 These procedures manage a collection of bitmaps (one-plane pixmaps)
@@ -83,7 +84,7 @@ of the following forms:
 .TP 20
 \fB@\fIfileName\fR
 \fIFileName\fR must be the name of a file containing a bitmap
-description in the standard X11 format.
+description in the standard X11 or X10 format.
 .TP 20
 \fIname\fR
 \fIName\fR must be the name of a bitmap defined previously with
@@ -211,7 +212,7 @@ describe the bitmap.
 \fBTk_DefineBitmap\fR normally returns \fBTCL_OK\fR; if an error occurs
 (e.g. a bitmap named \fInameId\fR has already been defined) then
 \fBTCL_ERROR\fR is returned and an error message is left in
-interpreter \fIinterp\fR's result.
+\fIinterp->result\fR.
 Note:  \fBTk_DefineBitmap\fR expects the memory pointed to by
 \fIsource\fR to be static:  \fBTk_DefineBitmap\fR does not make
 a private copy of this memory, but uses the bytes pointed to
@@ -283,8 +284,8 @@ with its Pixmap token.
 There should be exactly one call to \fBTk_FreeBitmapFromObj\fR
 or \fBTk_FreeBitmap\fR for each call to \fBTk_AllocBitmapFromObj\fR or
 \fBTk_GetBitmap\fR.
+
 .SH BUGS
-.PP
 In determining whether an existing bitmap can be used to satisfy
 a new request, \fBTk_AllocBitmapFromObj\fR and \fBTk_GetBitmap\fR
 consider only the immediate value of the string description.  For
@@ -294,5 +295,6 @@ bitmap created from the same file name:  it will not check to
 see whether the file itself has changed, or whether the current
 directory has changed, thereby causing the name to refer to
 a different file.
+
 .SH KEYWORDS
 bitmap, pixmap

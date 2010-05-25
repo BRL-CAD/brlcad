@@ -16,7 +16,6 @@
  */
 
 #include "tclInt.h"
-#undef Tcl_Panic
 
 /*
  * The panicProc variable contains a pointer to an application specific panic
@@ -24,6 +23,13 @@
  */
 
 static Tcl_PanicProc *panicProc = NULL;
+
+/*
+ * The platformPanicProc variable contains a pointer to a platform specific
+ * panic procedure, if any. (TclpPanic may be NULL via a macro.)
+ */
+
+static Tcl_PanicProc *CONST platformPanicProc = TclpPanic;
 
 /*
  *----------------------------------------------------------------------
@@ -66,13 +72,13 @@ Tcl_SetPanicProc(
 
 void
 Tcl_PanicVA(
-    const char *format,		/* Format string, suitable for passing to
+    CONST char *format,		/* Format string, suitable for passing to
 				 * fprintf. */
     va_list argList)		/* Variable argument list. */
 {
-    char *arg1, *arg2, *arg3;	/* Additional arguments (variable in number)
-				 * to pass to fprintf. */
-    char *arg4, *arg5, *arg6, *arg7, *arg8;
+    char *arg1, *arg2, *arg3, *arg4;	/* Additional arguments (variable in
+					 * number) to pass to fprintf. */
+    char *arg5, *arg6, *arg7, *arg8;
 
     arg1 = va_arg(argList, char *);
     arg2 = va_arg(argList, char *);
@@ -84,12 +90,16 @@ Tcl_PanicVA(
     arg8 = va_arg(argList, char *);
 
     if (panicProc != NULL) {
-	panicProc(format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+	(void) (*panicProc)(format, arg1, arg2, arg3, arg4,
+		arg5, arg6, arg7, arg8);
+    } else if (platformPanicProc != NULL) {
+	(void) (*platformPanicProc)(format, arg1, arg2, arg3, arg4,
+		arg5, arg6, arg7, arg8);
     } else {
-	fprintf(stderr, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7,
-		arg8);
-	fprintf(stderr, "\n");
-	fflush(stderr);
+	(void) fprintf(stderr, format, arg1, arg2, arg3, arg4, arg5, arg6,
+		arg7, arg8);
+	(void) fprintf(stderr, "\n");
+	(void) fflush(stderr);
 	abort();
     }
 }
@@ -113,7 +123,7 @@ Tcl_PanicVA(
 	/* ARGSUSED */
 void
 Tcl_Panic(
-    const char *format,
+    CONST char *format,
     ...)
 {
     va_list argList;

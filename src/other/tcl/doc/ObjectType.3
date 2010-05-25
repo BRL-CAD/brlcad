@@ -17,7 +17,7 @@ Tcl_RegisterObjType, Tcl_GetObjType, Tcl_AppendAllObjTypes, Tcl_ConvertToType  \
 .sp
 \fBTcl_RegisterObjType\fR(\fItypePtr\fR)
 .sp
-const Tcl_ObjType *
+Tcl_ObjType *
 \fBTcl_GetObjType\fR(\fItypeName\fR)
 .sp
 int
@@ -27,7 +27,7 @@ int
 \fBTcl_ConvertToType\fR(\fIinterp, objPtr, typePtr\fR)
 .SH ARGUMENTS
 .AS "const char" *typeName
-.AP "const Tcl_ObjType" *typePtr in
+.AP Tcl_ObjType *typePtr in
 Points to the structure containing information about the Tcl object type.
 This storage must live forever,
 typically by being statically allocated.
@@ -100,19 +100,19 @@ Extension writers can define new object types by defining four
 procedures and
 initializing a Tcl_ObjType structure to describe the type.
 Extension writers may also pass a pointer to their Tcl_ObjType
-structure to \fBTcl_RegisterObjType\fR if they wish to permit
+structire to \fBTcl_RegisterObjType\fR if they wish to permit
 other extensions to look up their Tcl_ObjType by name with
 the \fBTcl_GetObjType\fR routine.
 The \fBTcl_ObjType\fR structure is defined as follows:
 .PP
 .CS
 typedef struct Tcl_ObjType {
-    const char *\fIname\fR;
+    char *\fIname\fR;
     Tcl_FreeInternalRepProc *\fIfreeIntRepProc\fR;
     Tcl_DupInternalRepProc *\fIdupIntRepProc\fR;
     Tcl_UpdateStringProc *\fIupdateStringProc\fR;
     Tcl_SetFromAnyProc *\fIsetFromAnyProc\fR;
-} \fBTcl_ObjType\fR;
+} Tcl_ObjType;
 .CE
 .SS "THE NAME FIELD"
 .PP
@@ -129,8 +129,7 @@ called to create a valid internal representation
 from an object's string representation.
 .PP
 .CS
-typedef int \fBTcl_SetFromAnyProc\fR(
-        Tcl_Interp *\fIinterp\fR,
+typedef int (Tcl_SetFromAnyProc) (Tcl_Interp *\fIinterp\fR,
         Tcl_Obj *\fIobjPtr\fR);
 .CE
 .PP
@@ -164,7 +163,7 @@ replace it with a new one or reset the \fItypePtr\fR member to NULL.
 The \fIsetFromAnyProc\fR member may be set to NULL, if the routines
 making use of the internal representation have no need to derive that
 internal representation from an arbitrary string value.  However, in
-this case, passing a pointer to the type to \fBTcl_ConvertToType\fR will
+this case, passing a pointer to the type to Tcl_ConvertToType() will
 lead to a panic, so to avoid this possibility, the type
 should \fInot\fR be registered.
 .SS "THE UPDATESTRINGPROC FIELD"
@@ -174,8 +173,7 @@ called to create a valid string representation
 from an object's internal representation.
 .PP
 .CS
-typedef void \fBTcl_UpdateStringProc\fR(
-        Tcl_Obj *\fIobjPtr\fR);
+typedef void (Tcl_UpdateStringProc) (Tcl_Obj *\fIobjPtr\fR);
 .CE
 .PP
 \fIobjPtr\fR's \fIbytes\fR member is always NULL when it is called.
@@ -208,8 +206,7 @@ The \fIdupIntRepProc\fR member contains the address of a function
 called to copy an internal representation from one object to another.
 .PP
 .CS
-typedef void \fBTcl_DupInternalRepProc\fR(
-        Tcl_Obj *\fIsrcPtr\fR,
+typedef void (Tcl_DupInternalRepProc) (Tcl_Obj *\fIsrcPtr\fR,
         Tcl_Obj *\fIdupPtr\fR);
 .CE
 .PP
@@ -231,8 +228,7 @@ The \fIfreeIntRepProc\fR member contains the address of a function
 that is called when an object is freed.
 .PP
 .CS
-typedef void \fBTcl_FreeInternalRepProc\fR(
-        Tcl_Obj *\fIobjPtr\fR);
+typedef void (Tcl_FreeInternalRepProc) (Tcl_Obj *\fIobjPtr\fR);
 .CE
 .PP
 The \fIfreeIntRepProc\fR function can deallocate the storage
@@ -252,6 +248,6 @@ uses of that field during object deletion.  The defined tasks for
 the \fIfreeIntRepProc\fR have no need to consult the \fIbytes\fR
 member.
 .SH "SEE ALSO"
-Tcl_NewObj(3), Tcl_DecrRefCount(3), Tcl_IncrRefCount(3)
+Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount
 .SH KEYWORDS
 internal representation, object, object type, string representation, type conversion

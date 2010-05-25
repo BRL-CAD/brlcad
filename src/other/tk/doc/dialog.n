@@ -16,6 +16,7 @@ tk_dialog \- Create modal dialog and wait for response
 .SH SYNOPSIS
 \fBtk_dialog \fIwindow title text bitmap default string string ...\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 This procedure is part of the Tk script library.
@@ -60,15 +61,13 @@ While waiting for the user to respond, \fBtk_dialog\fR sets a local
 grab.  This prevents the user from interacting with the application
 in any way except to invoke the dialog box.
 .SH EXAMPLE
-.PP
 .CS
 set reply [\fBtk_dialog\fR .foo "The Title" "Do you want to say yes?" \e
         questhead 0 Yes No "I'm not sure"]
 .CE
+
 .SH "SEE ALSO"
 tk_messageBox(n)
+
 .SH KEYWORDS
 bitmap, dialog, modal
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

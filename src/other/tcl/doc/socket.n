@@ -18,6 +18,7 @@ socket \- Open a TCP network connection
 .sp
 \fBsocket\fR \fB\-server \fIcommand\fR ?\fIoptions\fR? \fIport\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 This command opens a network socket and returns a channel
@@ -53,7 +54,6 @@ The following options may also be present before \fIhost\fR
 to specify additional information about the connection:
 .TP
 \fB\-myaddr\fI addr\fR
-.
 \fIAddr\fR gives the domain-style name or numerical IP address of
 the client-side network interface to use for the connection.
 This option may be useful if the client machine has multiple network
@@ -61,7 +61,6 @@ interfaces.  If the option is omitted then the client-side interface
 will be chosen by the system software.
 .TP
 \fB\-myport\fI port\fR
-.
 \fIPort\fR specifies an integer port number (or service name, where
 supported and understood by the host operating system) to use for the
 client's
@@ -69,7 +68,6 @@ side of the connection.  If this option is omitted, the client's
 port number will be chosen at random by the system software.
 .TP
 \fB\-async\fR
-.
 The \fB\-async\fR option will cause the client socket to be connected
 asynchronously. This means that the socket will be created immediately but
 may not yet be connected to the server, when the call to \fBsocket\fR
@@ -82,7 +80,6 @@ returns immediately and \fBfblocked\fR on the socket returns 1. Synchronous
 client sockets may be switched (after they have connected) to operating in
 asynchronous mode using:
 .RS
-.PP
 .CS
 \fBfconfigure \fIchan \fB\-blocking 0\fR
 .CE
@@ -104,10 +101,9 @@ with three additional arguments: the name of the new channel, the
 address, in network address notation, of the client's host, and
 the client's port number.
 .PP
-The following additional option may also be specified before \fIport\fR:
+The following additional option may also be specified before \fIhost\fR:
 .TP
 \fB\-myaddr\fI addr\fR
-.
 \fIAddr\fR gives the domain-style name or numerical IP address of
 the server-side network interface to use for the connection.
 This option may be useful if the server machine has multiple network
@@ -133,26 +129,22 @@ allocated may be retrieved from the created server socket using the
 \fBfconfigure\fR command to retrieve the \fB\-sockname\fR option as
 described below.
 .SH "CONFIGURATION OPTIONS"
-.PP
 The \fBfconfigure\fR command can be used to query several readonly
 configuration options for socket channels:
 .TP
 \fB\-error\fR
-.
 This option gets the current error status of the given socket.  This
 is useful when you need to determine if an asynchronous connect
 operation succeeded.  If there was an error, the error message is
 returned.  If there was no error, an empty string is returned.
 .TP
 \fB\-sockname\fR
-.
 This option returns a list of three elements, the address, the host name
 and the port number for the socket. If the host name cannot be computed,
 the second element is identical to the address, the first element of the
 list.
 .TP
 \fB\-peername\fR
-.
 This option is not supported by server sockets. For client and accepted
 sockets, this option returns a list of three elements; these are the
 address, the host name and the port to which the peer socket is connected
@@ -160,9 +152,7 @@ or bound. If the host name cannot be computed, the second element of the
 list is identical to the address, its first element.
 .PP
 .SH "EXAMPLES"
-.PP
 Here is a very simple time server:
-.PP
 .CS
 proc Server {channel clientaddr clientport} {
    puts "Connection from $clientaddr registered"
@@ -175,7 +165,6 @@ vwait forever
 .CE
 .PP
 And here is the corresponding client to talk to the server:
-.PP
 .CS
 set server localhost
 set sockChan [\fBsocket\fR $server 9900]
@@ -183,7 +172,9 @@ gets $sockChan line
 close $sockChan
 puts "The time on $server is $line"
 .CE
+
 .SH "SEE ALSO"
 fconfigure(n), flush(n), open(n), read(n)
+
 .SH KEYWORDS
-asynchronous I/O, bind, channel, connection, domain name, host, network address, socket, tcp
+bind, channel, connection, domain name, host, network address, socket, tcp

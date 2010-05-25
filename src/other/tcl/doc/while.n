@@ -16,6 +16,7 @@ while \- Execute script repeatedly as long as a condition is met
 .SH SYNOPSIS
 \fBwhile \fItest body\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 The \fBwhile\fR command evaluates \fItest\fR as an expression
@@ -42,7 +43,6 @@ expression is evaluated (before
 each loop iteration), so changes in the variables will be visible.
 For an example, try the following script with and without the braces
 around \fB$x<10\fR:
-.PP
 .CS
 set x 0
 \fBwhile\fR {$x<10} {
@@ -51,17 +51,17 @@ set x 0
 }
 .CE
 .SH EXAMPLE
-.PP
 Read lines from a channel until we get to the end of the stream, and
 print them out with a line-number prepended:
-.PP
 .CS
 set lineCount 0
 \fBwhile\fR {[gets $chan line] >= 0} {
     puts "[incr lineCount]: $line"
 }
 .CE
+
 .SH "SEE ALSO"
 break(n), continue(n), for(n), foreach(n)
+
 .SH KEYWORDS
-boolean, loop, test, while
+boolean value, loop, test, while

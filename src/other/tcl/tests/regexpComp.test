@@ -317,12 +317,12 @@ test regexpComp-6.1 {regexp errors} {
     evalInProc {
 	list [catch {regexp a} msg] $msg
     }
-} {1 {wrong # args: should be "regexp ?-switch ...? exp string ?matchVar? ?subMatchVar ...?"}}
+} {1 {wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"}}
 test regexpComp-6.2 {regexp errors} {
     evalInProc {
 	list [catch {regexp -nocase a} msg] $msg
     }
-} {1 {wrong # args: should be "regexp ?-switch ...? exp string ?matchVar? ?subMatchVar ...?"}}
+} {1 {wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"}}
 test regexpComp-6.3 {regexp errors} {
     evalInProc {
 	list [catch {regexp -gorp a} msg] $msg
@@ -563,22 +563,22 @@ test regexpComp-11.1 {regsub errors} {
     evalInProc {
 	list [catch {regsub a b} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexpComp-11.2 {regsub errors} {
     evalInProc {
 	list [catch {regsub -nocase a b} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexpComp-11.3 {regsub errors} {
     evalInProc {
 	list [catch {regsub -nocase -all a b} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexpComp-11.4 {regsub errors} {
     evalInProc {
 	list [catch {regsub a b c d e f} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?-switch ...? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
 test regexpComp-11.5 {regsub errors} {
     evalInProc {
 	list [catch {regsub -gorp a b c} msg] $msg

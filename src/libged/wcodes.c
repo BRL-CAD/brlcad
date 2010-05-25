@@ -99,7 +99,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 
 
 HIDDEN void
-wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *comb __attribute__((unused)), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
     FILE *fp;
     int *pathpos;

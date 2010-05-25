@@ -99,16 +99,7 @@ tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, doubl
 }
 
 void
-PL_FORTRAN(f3vect, F3VECT)(fp, fx, fy, fz, tx, ty, tz, fl, tl)
-    FILE **fp;
-    float *fx;
-    float *fy;
-    float *fz;
-    float *tx;
-    float *ty;
-    float *tz;
-    float *fl;
-    float *tl;
+PL_FORTRAN(f3vect, F3VECT)(FILE **fp, float *fx, float *fy, float *fz, float *tx, float *ty, float *tz, float *fl , float *tl)
 {
     point_t from, to;
 

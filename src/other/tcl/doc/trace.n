@@ -56,11 +56,9 @@ execute them.
 When the trace triggers, depending on the operations being traced, a number of
 arguments are appended to \fIcommandPrefix\fR so that the actual command is as
 follows:
-.PP
 .CS
 \fIcommandPrefix oldName newName op\fR
 .CE
-.PP
 \fIOldName\fR and \fInewName\fR give the traced command's current (old) name,
 and the name to which it is being renamed (the empty string if this is a
 .QW delete
@@ -125,11 +123,9 @@ number of arguments are appended to \fIcommandPrefix\fR so that the actual
 command is as follows:
 .PP
 For \fBenter\fR and \fBenterstep\fR operations:
-.PP
 .CS
 \fIcommandPrefix command-string op\fR
 .CE
-.PP
 \fICommand-string\fR gives the complete current command being
 executed (the traced command for a \fBenter\fR operation, an
 arbitrary command for a \fBenterstep\fR operation), including
@@ -143,11 +139,9 @@ course when the command is subsequently executed, an
 error will occur.
 .PP
 For \fBleave\fR and \fBleavestep\fR operations:
-.PP
 .CS
 \fIcommand command-string code result op\fR
 .CE
-.PP
 \fICommand-string\fR gives the complete current command being
 executed (the traced command for a \fBenter\fR operation, an
 arbitrary command for a \fBenterstep\fR operation), including
@@ -225,11 +219,9 @@ interpreter in which to execute them.
 .PP
 When the trace triggers, three arguments are appended to
 \fIcommandPrefix\fR so that the actual command is as follows:
-.PP
 .CS
 \fIcommandPrefix name1 name2 op\fR
 .CE
-.PP
 \fIName1\fR and \fIname2\fR give the name(s) for the variable
 being accessed:  if the variable is a scalar then \fIname1\fR
 gives the variable's name and \fIname2\fR is an empty string;
@@ -378,11 +370,9 @@ future version of Tcl.  They use an older syntax in which \fBarray\fR,
 list, but simply a string concatenation of the operations, such as
 \fBrwua\fR.
 .SH EXAMPLES
-.PP
 Print a message whenever either of the global variables \fBfoo\fR and
 \fBbar\fR are updated, even if they have a different local name at the
 time (which can be done with the \fBupvar\fR command):
-.PP
 .CS
 proc tracer {varname args} {
     upvar #0 $varname var
@@ -394,7 +384,6 @@ proc tracer {varname args} {
 .PP
 Ensure that the global variable \fBfoobar\fR always contains the
 product of the global variables \fBfoo\fR and \fBbar\fR:
-.PP
 .CS
 proc doMult args {
     global foo bar foobar
@@ -406,7 +395,6 @@ proc doMult args {
 .PP
 Print a trace of what commands are executed during the processing of a Tcl
 procedure:
-.PP
 .CS
 proc x {} { y }
 proc y {} { z }
@@ -423,6 +411,3 @@ x
 set(n), unset(n)
 .SH KEYWORDS
 read, command, rename, variable, write, trace, unset
-.\" Local Variables:
-.\" mode: nroff
-.\" End:

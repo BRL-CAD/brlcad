@@ -328,7 +328,7 @@ TkSelPropProc(
 		length = strlen(incrPtr->converts[i].buffer);
 		strcpy((char *)buffer, incrPtr->converts[i].buffer);
 
-		numItems = selPtr->proc(selPtr->clientData,
+		numItems = (*selPtr->proc)(selPtr->clientData,
 			incrPtr->converts[i].offset,
 			((char *) buffer) + length,
 			TK_SEL_BYTES_AT_ONCE - length);
@@ -596,7 +596,7 @@ TkSelEventProc(
 		return;
 	    }
 	    interp = retrPtr->interp;
-	    Tcl_Preserve(interp);
+	    Tcl_Preserve((ClientData) interp);
 
 	    /*
 	     * Convert the X selection data into UTF before passing it to the
@@ -619,10 +619,10 @@ TkSelEventProc(
 		Tcl_FreeEncoding(encoding);
 	    }
 
-	    retrPtr->result = retrPtr->proc(retrPtr->clientData, interp,
-		    Tcl_DStringValue(&ds));
+	    retrPtr->result = (*retrPtr->proc)(retrPtr->clientData,
+		    interp, Tcl_DStringValue(&ds));
 	    Tcl_DStringFree(&ds);
-	    Tcl_Release(interp);
+	    Tcl_Release((ClientData) interp);
 	} else if (type == dispPtr->utf8Atom) {
 	    /*
 	     * The X selection data is in UTF-8 format already. We can't
@@ -648,7 +648,7 @@ TkSelEventProc(
 		strcpy(propData, propInfo);
 		propData[numItems] = '\0';
 	    }
-	    retrPtr->result = retrPtr->proc(retrPtr->clientData,
+	    retrPtr->result = (*retrPtr->proc)(retrPtr->clientData,
 		    retrPtr->interp, propData);
 	    if (propData != propInfo) {
 		ckfree((char *) propData);
@@ -692,10 +692,10 @@ TkSelEventProc(
 			(Tk_Window) winPtr, &ds);
 	    }
 	    interp = retrPtr->interp;
-	    Tcl_Preserve(interp);
-	    retrPtr->result = retrPtr->proc(retrPtr->clientData,
+	    Tcl_Preserve((ClientData) interp);
+	    retrPtr->result = (*retrPtr->proc)(retrPtr->clientData,
 		    interp, Tcl_DStringValue(&ds));
-	    Tcl_Release(interp);
+	    Tcl_Release((ClientData) interp);
 	    Tcl_DStringFree(&ds);
 	}
 	XFree(propInfo);
@@ -924,8 +924,8 @@ ConvertSelection(
 	    ip.nextPtr = TkSelGetInProgress();
 	    TkSelSetInProgress(&ip);
 	    type = selPtr->format;
-	    numItems = selPtr->proc(selPtr->clientData, 0, (char *) buffer,
-		    TK_SEL_BYTES_AT_ONCE);
+	    numItems = (*selPtr->proc)(selPtr->clientData, 0,
+		    (char *) buffer, TK_SEL_BYTES_AT_ONCE);
 	    TkSelSetInProgress(ip.nextPtr);
 	    if ((ip.selPtr == NULL) || (numItems < 0)) {
 		incr.multAtoms[2*i + 1] = None;
@@ -1233,7 +1233,7 @@ SelRcvIncrProc(
 	}
 	Tcl_DStringSetLength(dstPtr, soFar);
 
-	result = retrPtr->proc(retrPtr->clientData, interp,
+	result = (*retrPtr->proc)(retrPtr->clientData, interp,
 		Tcl_DStringValue(dstPtr));
 	Tcl_Release((ClientData) interp);
 
@@ -1275,10 +1275,10 @@ SelRcvIncrProc(
 		    (Tk_Window) retrPtr->winPtr, &ds);
 	}
 	interp = retrPtr->interp;
-	Tcl_Preserve(interp);
-	result = retrPtr->proc(retrPtr->clientData, interp,
+	Tcl_Preserve((ClientData) interp);
+	result = (*retrPtr->proc)(retrPtr->clientData, interp,
 		Tcl_DStringValue(&ds));
-	Tcl_Release(interp);
+	Tcl_Release((ClientData) interp);
 	Tcl_DStringFree(&ds);
 	if (result != TCL_OK) {
 	    retrPtr->result = result;
@@ -1324,7 +1324,7 @@ SelectionSize(
     TkSelSetInProgress(&ip);
 
     do {
-	chunkSize = selPtr->proc(selPtr->clientData, size, (char *) buffer,
+	chunkSize = (*selPtr->proc)(selPtr->clientData, size, (char *) buffer,
 		TK_SEL_BYTES_AT_ONCE);
 	if (ip.selPtr == NULL) {
 	    size = 0;

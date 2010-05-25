@@ -168,7 +168,6 @@ static Tcl_EventProc		SocketEventProc;
 static Tcl_EventSetupProc	SocketSetupProc;
 static Tcl_DriverBlockModeProc	TcpBlockProc;
 static Tcl_DriverCloseProc	TcpCloseProc;
-static Tcl_DriverClose2Proc	TcpClose2Proc;
 static Tcl_DriverSetOptionProc	TcpSetOptionProc;
 static Tcl_DriverGetOptionProc	TcpGetOptionProc;
 static Tcl_DriverInputProc	TcpInputProc;
@@ -181,7 +180,7 @@ static Tcl_DriverGetHandleProc	TcpGetHandleProc;
  * based IO.
  */
 
-static const Tcl_ChannelType tcpChannelType = {
+static Tcl_ChannelType tcpChannelType = {
     "tcp",		    /* Type name. */
     TCL_CHANNEL_VERSION_5,  /* v5 channel */
     TcpCloseProc,	    /* Close proc. */
@@ -192,13 +191,13 @@ static const Tcl_ChannelType tcpChannelType = {
     TcpGetOptionProc,	    /* Get option proc. */
     TcpWatchProc,	    /* Set up notifier to watch this channel. */
     TcpGetHandleProc,	    /* Get an OS handle from channel. */
-    TcpClose2Proc,	    /* Close2proc. */
+    NULL,		    /* close2proc. */
     TcpBlockProc,	    /* Set socket into (non-)blocking mode. */
     NULL,		    /* flush proc. */
     NULL,		    /* handler proc. */
     NULL,		    /* wide seek proc */
     TcpThreadActionProc,    /* thread action proc */
-    NULL		    /* truncate */
+    NULL,		    /* truncate */
 };
 
 /*
@@ -813,58 +812,6 @@ TcpCloseProc(
      */
 
     ckfree((char *) infoPtr);
-    return errorCode;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TcpClose2Proc --
- *
- *	This function is called by the generic IO level to perform the channel
- *	type specific part of a half-close: namely, a shutdown() on a socket.
- *
- * Results:
- *	0 if successful, the value of errno if failed.
- *
- * Side effects:
- *	Shuts down one side of the socket.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-TcpClose2Proc(
-    ClientData instanceData,	/* The socket to close. */
-    Tcl_Interp *interp,		/* For error reporting. */
-    int flags)			/* Flags that indicate which side to close. */
-{
-    SocketInfo *infoPtr = (SocketInfo *) instanceData;
-    int errorCode = 0;
-    int sd;
-
-    /*
-     * Shutdown the OS socket handle.
-     */
-    switch(flags)
-	{
-	case TCL_CLOSE_READ:
-	    sd=SD_RECEIVE;
-	    break;
-	case TCL_CLOSE_WRITE:
-	    sd=SD_SEND;
-	    break;
-	default:
-	    if (interp) {
-		Tcl_AppendResult(interp, "Socket close2proc called bidirectionally", NULL);
-	    }
-	    return TCL_ERROR;
-	}
-    if (shutdown(infoPtr->socket,sd) == SOCKET_ERROR) {
-	TclWinConvertWSAError((DWORD) WSAGetLastError());
-	errorCode = Tcl_GetErrno();
-    }
-
     return errorCode;
 }
 
@@ -1525,7 +1472,7 @@ TcpAccept(
      */
 
     if (infoPtr->acceptProc != NULL) {
-	infoPtr->acceptProc(infoPtr->acceptProcData, newInfoPtr->channel,
+	(infoPtr->acceptProc) (infoPtr->acceptProcData, newInfoPtr->channel,
 		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     }
 }
@@ -1821,7 +1768,7 @@ TcpSetOptionProc(
     sock = infoPtr->socket;
 
 #ifdef TCL_FEATURE_KEEPALIVE_NAGLE
-    if (!strcasecmp(optionName, "-keepalive")) {
+    if (!stricmp(optionName, "-keepalive")) {
 	BOOL val = FALSE;
 	int boolVar, rtn;
 
@@ -1842,7 +1789,7 @@ TcpSetOptionProc(
 	    return TCL_ERROR;
 	}
 	return TCL_OK;
-    } else if (!strcasecmp(optionName, "-nagle")) {
+    } else if (!stricmp(optionName, "-nagle")) {
 	BOOL val = FALSE;
 	int boolVar, rtn;
 
@@ -2186,7 +2133,7 @@ SocketThread(
     LPVOID arg)
 {
     MSG msg;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) arg;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)(arg);
 
     /*
      * Create a dummy window receiving socket events.
@@ -2427,7 +2374,7 @@ InitializeHostName(
     DWORD length = sizeof(wbuf) / sizeof(WCHAR);
     Tcl_DString ds;
 
-    if (tclWinProcs->getComputerNameProc(wbuf, &length) != 0) {
+    if ((*tclWinProcs->getComputerNameProc)(wbuf, &length) != 0) {
 	/*
 	 * Convert string from native to UTF then change to lowercase.
 	 */

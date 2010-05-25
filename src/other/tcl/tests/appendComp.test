@@ -1,15 +1,15 @@
 # Commands covered:  append lappend
 #
-# This file contains a collection of tests for one or more of the Tcl built-in
-# commands. Sourcing this file into Tcl runs the tests and generates output
-# for errors. No output means no errors were found.
+# This file contains a collection of tests for one or more of the Tcl
+# built-in commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution of
-# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 # RCS: @(#) $Id$
 
@@ -54,24 +54,24 @@ test appendComp-2.1 {long appends} {
     foo
 } 1
 
-test appendComp-3.1 {append errors} -returnCodes error -body {
+test appendComp-3.1 {append errors} {
     proc foo {} {append}
-    foo
-} -result {wrong # args: should be "append varName ?value ...?"}
-test appendComp-3.2 {append errors} -returnCodes error -body {
+    list [catch {foo} msg] $msg
+} {1 {wrong # args: should be "append varName ?value value ...?"}}
+test appendComp-3.2 {append errors} {
     proc foo {} {
 	set x ""
 	append x(0) 44
     }
-    foo
-} -result {can't set "x(0)": variable isn't array}
-test appendComp-3.3 {append errors} -returnCodes error -body {
+    list [catch {foo} msg] $msg
+} {1 {can't set "x(0)": variable isn't array}}
+test appendComp-3.3 {append errors} {
     proc foo {} {
 	catch {unset x}
 	append x
     }
-    foo
-} -result {can't read "x": no such variable}
+    list [catch {foo} msg] $msg
+} {1 {can't read "x": no such variable}}
 
 test appendComp-4.1 {lappend command} {
     proc foo {} {
@@ -134,34 +134,34 @@ test appendComp-4.8 {lappend command} {
     }
     foo
 } "\\{ abc"
-test appendComp-4.9 {lappend command} -returnCodes error -body {
+test appendComp-4.9 {lappend command} {
     proc foo {} {
 	set x " \{"
-	lappend x abc
+	list [catch {lappend x abc} msg] $msg
     }
     foo
-} -result {unmatched open brace in list}
-test appendComp-4.10 {lappend command} -returnCodes error -body {
+} {1 {unmatched open brace in list}}
+test appendComp-4.10 {lappend command} {
     proc foo {} {
 	set x "	\{"
-	lappend x abc
+	list [catch {lappend x abc} msg] $msg
     }
     foo
-} -result {unmatched open brace in list}
-test appendComp-4.11 {lappend command} -returnCodes error -body {
+} {1 {unmatched open brace in list}}
+test appendComp-4.11 {lappend command} {
     proc foo {} {
 	set x "\{\{\{"
-	lappend x abc
+	list [catch {lappend x abc} msg] $msg
     }
     foo
-} -result {unmatched open brace in list}
-test appendComp-4.12 {lappend command} -returnCodes error -body {
+} {1 {unmatched open brace in list}}
+test appendComp-4.12 {lappend command} {
     proc foo {} {
 	set x "x \{\{\{"
-	lappend x abc
+	list [catch {lappend x abc} msg] $msg
     }
     foo
-} -result {unmatched open brace in list}
+} {1 {unmatched open brace in list}}
 test appendComp-4.13 {lappend command} {
     proc foo {} {
 	set x "x\{\{\{"
@@ -229,24 +229,23 @@ test appendComp-5.1 {long lappends} {
     check $x 300
 } ok
 
-test appendComp-6.1 {lappend errors} -returnCodes error -body {
+test appendComp-6.1 {lappend errors} {
     proc foo {} {lappend}
-    foo
-} -result {wrong # args: should be "lappend varName ?value ...?"}
-test appendComp-6.2 {lappend errors} -returnCodes error -body {
+    list [catch {foo} msg] $msg
+} {1 {wrong # args: should be "lappend varName ?value value ...?"}}
+test appendComp-6.2 {lappend errors} {
     proc foo {} {
 	set x ""
 	lappend x(0) 44
     }
-    foo
-} -result {can't set "x(0)": variable isn't array}
+    list [catch {foo} msg] $msg
+} {1 {can't set "x(0)": variable isn't array}}
 
-test appendComp-7.1 {lappendComp-created var and error in trace on that var} -setup {
-    catch {rename foo ""}
-    catch {unset x}
-} -body {
+test appendComp-7.1 {lappendComp-created var and error in trace on that var} {
     proc bar {} {
 	global x
+	catch {rename foo ""}
+	catch {unset x}
 	trace variable x w foo
 	proc foo {} {global x; unset x}
 	catch {lappend x 1}
@@ -257,103 +256,100 @@ test appendComp-7.1 {lappendComp-created var and error in trace on that var} -se
 	list [info exists x] [catch {set x} msg] $msg
     }
     bar
-} -result {0 1 {can't read "x": no such variable}}
-test appendComp-7.2 {lappend var triggers read trace, index var} -setup {
-    catch {unset ::result}
-} -body {
+} {0 1 {can't read "x": no such variable}}
+test appendComp-7.2 {lappend var triggers read trace, index var} {
     proc bar {} {
+	catch {unset myvar}
+	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar a
-	return $::result
+	list [catch {set ::result} msg] $msg
     }
     bar
-} -result {myvar {} r}
-test appendComp-7.3 {lappend var triggers read trace, stack var} -setup {
-    unset -nocomplain ::result
-    unset -nocomplain ::myvar
-} -body {
+} {0 {myvar {} r}}
+test appendComp-7.3 {lappend var triggers read trace, stack var} {
     proc bar {} {
+	catch {unset ::myvar}
+	catch {unset ::result}
 	trace variable ::myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend ::myvar a
-	return $::result
+	list [catch {set ::result} msg] $msg
     }
     bar
-} -result {::myvar {} r}
-test appendComp-7.4 {lappend var triggers read trace, array var} -setup {
-    catch {unset ::result}
-} -body {
-    # The behavior of read triggers on lappend changed in 8.0 to not trigger
-    # them. Maybe not correct, but been there a while.
+} {0 {::myvar {} r}}
+test appendComp-7.4 {lappend var triggers read trace, array var} {
+    # The behavior of read triggers on lappend changed in 8.0 to
+    # not trigger them.  Maybe not correct, but been there a while.
     proc bar {} {
+	catch {unset myvar}
+	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar(b) a
-	return $::result
+	list [catch {set ::result} msg] $msg
     }
     bar
-} -result {myvar b r}
-test appendComp-7.5 {lappend var triggers read trace, array var} -setup {
-    catch {unset ::result}
-} -body {
-    # The behavior of read triggers on lappend changed in 8.0 to not trigger
-    # them. Maybe not correct, but been there a while.
+} {0 {myvar b r}}
+test appendComp-7.5 {lappend var triggers read trace, array var} {
+    # The behavior of read triggers on lappend changed in 8.0 to
+    # not trigger them.  Maybe not correct, but been there a while.
     proc bar {} {
+	catch {unset myvar}
+	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar(b) a b
-	return $::result
+	list [catch {set ::result} msg] $msg
     }
     bar
-} -result {myvar b r}
-test appendComp-7.6 {lappend var triggers read trace, array var exists} -setup {
-    catch {unset ::result}
-} -body {
+} {0 {myvar b r}}
+test appendComp-7.6 {lappend var triggers read trace, array var exists} {
     proc bar {} {
+	catch {unset myvar}
+	catch {unset ::result}
 	set myvar(0) 1
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar(b) a
-	return $::result
+	list [catch {set ::result} msg] $msg
     }
     bar
-} -result {myvar b r}
-test appendComp-7.7 {lappend var triggers read trace, array stack var} -setup {
-    catch {unset ::myvar}
-    catch {unset ::result}
-} -body {
+} {0 {myvar b r}}
+test appendComp-7.7 {lappend var triggers read trace, array stack var} {
     proc bar {} {
+	catch {unset ::myvar}
+	catch {unset ::result}
 	trace variable ::myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend ::myvar(b) a
-	return $::result
+	list [catch {set ::result} msg] $msg
     }
     bar
-} -result {::myvar b r}
-test appendComp-7.8 {lappend var triggers read trace, array stack var} -setup {
-    catch {unset ::myvar}
-    catch {unset ::result}
-} -body {
+} {0 {::myvar b r}}
+test appendComp-7.8 {lappend var triggers read trace, array stack var} {
     proc bar {} {
+	catch {unset ::myvar}
+	catch {unset ::result}
 	trace variable ::myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend ::myvar(b) a b
-	return $::result
+	list [catch {set ::result} msg] $msg
     }
     bar
-} -result {::myvar b r}
-test appendComp-7.9 {append var does not trigger read trace} -setup {
-    catch {unset ::result}
-} -body {
+} {0 {::myvar b r}}
+test appendComp-7.9 {append var does not trigger read trace} {
     proc bar {} {
+	catch {unset myvar}
+	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	append myvar a
 	info exists ::result
     }
     bar
-} -result {0}
+} {0}
 
 test appendComp-8.1 {defer error to runtime} -setup {
     interp create slave

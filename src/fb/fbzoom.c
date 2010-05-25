@@ -329,7 +329,7 @@ pars_Argv(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
     return	1;

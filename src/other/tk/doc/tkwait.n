@@ -20,6 +20,7 @@ tkwait \- Wait for variable to change or window to be destroyed
 .sp
 \fBtkwait window \fIname\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 The \fBtkwait\fR command waits for one of several things to happen,
@@ -45,8 +46,6 @@ the normal fashion, so the application will continue to respond
 to user interactions.
 If an event handler invokes \fBtkwait\fR again, the nested call
 to \fBtkwait\fR must complete before the outer call can complete.
+
 .SH KEYWORDS
 variable, visibility, wait, window
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

@@ -909,9 +909,12 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	VSUB2(tmp, rp->r_pt, hf->hf_V);
 	xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 	yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
-	if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-	    if ((nhits+=r)>MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
-	    hp+=r;
+	r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
+	if (r) {
+	    nhits += r;
+	    if (nhits > MAXHITS)
+		bu_bomb("g_hf.c: too many hits.\n");
+ 	    hp += r;
 	}
     } else if (cosine*cosine > 0.5) {
 	double tmp;
@@ -1077,10 +1080,12 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	     */
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
-		int r;
-		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
-		    hp+=r;
+		int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
+		if (r) {
+		    nhits += r;
+		    if (nhits >= MAXHITS)
+			bu_bomb("g_hf.c: too many hits.\n");
+		    hp += r;
 		}
 	    }
 	    /* This is the DDA trying to fill in the corners as it
@@ -1140,10 +1145,12 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		}
 		if (maxZ+deltaZ > lowest &&
 		    minZ-deltaZ < highest) {
-		    int r;
+		    int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
 		    /* DO HIT */
-		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
+		    if (r) {
+			nhits += r;
+			if (nhits >= MAXHITS)
+			    bu_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		    }
 		}
@@ -1318,9 +1325,11 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	     */
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
-		int r;
-		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
+		int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
+		if (r) {
+		    nhits += r;
+		    if (nhits >= MAXHITS)
+			bu_bomb("g_hf.c: too many hits.\n");
 		    hp+=r;
 		}
 	    }
@@ -1381,11 +1390,13 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		}
 		if (maxZ+deltaZ > lowest &&
 		    minZ-deltaZ < highest) {
-		    int r;
+		    int r = hf_cell_shot(stp, rp, ap, hp, xCell, yCell);
 		    /* DO HIT */
-		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
-			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
-			hp+=r;
+		    if (r) {
+			nhits += r;
+			if (nhits >= MAXHITS)
+			    bu_bomb("g_hf.c: too many hits.\n");
+			hp += r;
 		    }
 		}
 		error -= 1.0;
@@ -1571,7 +1582,7 @@ rt_hf_free(struct soltab *stp)
 int
 rt_hf_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -1579,7 +1590,7 @@ rt_hf_class(void)
  * R T _ H F _ P L O T
  */
 int
-rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
     unsigned short *sp = (unsigned short *)NULL;
@@ -1834,7 +1845,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
 
@@ -1845,7 +1856,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     if (r) *r = NULL;
     if (m) NMG_CK_MODEL(m);
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1876,7 +1887,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     /* Check record type */
     if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_hf_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1977,7 +1988,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     /*
      * Load data file, and transform to internal format
      */
-    if (!(mp = bu_open_mapped_file(xip->dfile, "hf"))) {
+    mp = bu_open_mapped_file(xip->dfile, "hf");
+    if (!mp) {
 	bu_log("rt_hf_import4() unable to open '%s'\n", xip->dfile);
 	goto err1;
     }
@@ -2006,11 +2018,11 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
-	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%llu, got=%llu\n",
-	       xip->dfile, (unsigned long long)count, (unsigned long long)got);
+	bu_log("rt_hf_import4(%s) bu_cv_w_cookie count=%zu, got=%zu\n",
+	       xip->dfile, count, got);
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -2039,7 +2051,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_HF) return(-1);
+    if (ip->idb_type != ID_HF) return -1;
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
@@ -2065,7 +2077,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     bu_strlcpy(rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN);
     bu_vls_free(&str);
 
-    return(0);
+    return 0;
 }
 
 
@@ -2084,7 +2096,7 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
+rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     if (!ep) return -1;
     if (ip) RT_CK_DB_INTERNAL(ip);
@@ -2159,7 +2171,7 @@ rt_hf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

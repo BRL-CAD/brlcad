@@ -3155,8 +3155,15 @@ bool ON_Viewport::SetFrustumNearFar(
             }
             s = 1.0; 
           }
-          double n = target_dist + s*(near_dist-target_dist);
-          double f = target_dist + s*(far_dist-target_dist);
+
+          // 19 Jan 2010, Mikko:
+          // Reordered the operations to guarantee n==near_dist and f==far_dist
+          // when s==1.0. The old system generated bogus problem reports when the dist
+          // difference was big.
+          double n = s*near_dist + target_dist*(1.0-s);
+          double f = s*far_dist + target_dist*(1.0-s);
+          //double n = target_dist + s*(near_dist-target_dist);
+          //double f = target_dist + s*(far_dist-target_dist);
 
 #if defined(_DEBUG)
           double m = ((f != 0.0) ? n/f : 0.0)/min_near_over_far;
@@ -3580,3 +3587,159 @@ ON_UUID  ON_Viewport::ViewportId(void) const
 }
 
 
+class ON_PgonPt
+{
+public:
+  ON_3dPoint m_P;
+  ON_2dVector m_Q;
+  double m_negcotangle;
+};
+
+static 
+int comparePptAngle( const void* pa, const void* pb )
+{
+  double a = ((const ON_PgonPt*)pa)->m_negcotangle;
+  double b = ((const ON_PgonPt*)pb)->m_negcotangle;
+  if ( a == b )
+  {
+    a = ((const ON_PgonPt*)pa)->m_Q.LengthSquared();
+    b = ((const ON_PgonPt*)pb)->m_Q.LengthSquared();
+  }
+  return ((a>b) ? 1 : ((a==b) ? 0 : -1));
+}
+
+bool ON_IntersectViewFrustumPlane( 
+    const ON_Viewport& vp,
+    const ON_PlaneEquation& plane_equation, 
+    ON_SimpleArray<ON_3dPoint>& points 
+    )
+{
+
+  double left, right, bottom, top, near_dist, far_dist;
+  double v[8], v0, v1, s;
+  ON_PgonPt ppt, ppt_list[24];
+  ON_3dPoint F[8], P0, P1, P;
+  ON_2dVector D;
+  const ON_3dPoint  C = vp.CameraLocation();
+  const ON_3dVector X = vp.CameraX();
+  const ON_3dVector Y = vp.CameraY();
+  const ON_3dVector Z = -vp.CameraZ();
+  int e[12][2] = {{0,1},{1,2},{2,3},{3,0},
+                  {4,5},{5,6},{6,7},{7,4},
+                  {0,4},{1,5},{2,6},{3,7}};
+  int i, i0, i1;
+  int ppt_count = 0;
+
+  if ( !vp.IsValidCamera() || !vp.GetFrustum(&left,&right,&bottom,&top,&near_dist,&far_dist) )
+    return false;
+
+  const ON_Plane plane(plane_equation);
+  if ( !plane.IsValid() )
+    return false;
+
+  s = ON::perspective_view == vp.Projection() 
+    ? far_dist/near_dist
+    : 1.0;
+  F[0] = C + left*X  + bottom*Y + near_dist*Z;
+  F[1] = C + right*X + bottom*Y + near_dist*Z;
+  F[2] = C + right*X + top*Y    + near_dist*Z;
+  F[3] = C + left*X  + top*Y    + near_dist*Z;
+
+  F[4] = C + s*left*X  + s*bottom*Y + far_dist*Z;
+  F[5] = C + s*right*X + s*bottom*Y + far_dist*Z;
+  F[6] = C + s*right*X + s*top*Y    + far_dist*Z;
+  F[7] = C + s*left*X  + s*top*Y    + far_dist*Z;
+
+  for ( i = 0; i < 8; i++ )
+  {
+    v[i] = plane_equation.ValueAt(F[i]);
+  }
+
+  for ( i = 0; i < 12; i++ )
+  {
+    v0 = v[e[i][0]];
+    v1 = v[e[i][1]];
+    P0 = F[e[i][0]];
+    P1 = F[e[i][1]];
+    if ( (v0 <= 0.0 && v1 >= 0.0) || (v0 >= 0.0 && v1 <= 0.0) )
+    {
+      if ( v0 == v1 )
+      {
+        ppt_list[ppt_count++].m_P = P0;
+        ppt_list[ppt_count++].m_P = P1;
+      }
+      else
+      {
+        s = v1/(v1-v0);
+        P = s*P0 + (1.0-s)*P1;
+        ppt_list[ppt_count++].m_P = P;
+      }
+    }
+  }
+
+  if ( ppt_count <= 0 )
+    return true; // plane misses frustum
+
+  i0 = 0;
+  for ( i = 0; i < ppt_count; i++ )
+  {
+    plane.ClosestPointTo( ppt_list[i].m_P, &ppt_list[i].m_Q.x, &ppt_list[i].m_Q.y );
+    if (     ppt_list[i].m_Q.y < ppt_list[i0].m_Q.y 
+         || (ppt_list[i].m_Q.y == ppt_list[i0].m_Q.y && ppt_list[i].m_Q.x < ppt_list[i0].m_Q.x) )
+      i0 = i;
+  }
+
+  // Use Gram scan to get the convex hull and save it in points[].
+  // See http://en.wikipedia.org/wiki/Graham_scan for details.
+
+  // put point with smallest m_Q.y coordinate in ppt_list[0].
+  ppt = ppt_list[i0];
+  if ( i0 )
+  {
+    ppt_list[i0] = ppt_list[0];
+    ppt_list[0] = ppt;
+    i0 = 0;
+  }
+
+  // sort points by the angle (ppt_list[i].m_Q = ppt_list[0].m_Q) makes
+  // with the positve x axis.  This is the same as sorting them by
+  // -cot(angle) = -deltax/deltay.
+  ppt_list[0].m_negcotangle = -ON_DBL_MAX; // -cot(0) = - infinity
+  for ( i = 1; i < ppt_count; i++ )
+  {
+    ppt_list[i].m_Q.x -= ppt_list[0].m_Q.x;
+    ppt_list[i].m_Q.y -= ppt_list[0].m_Q.y;
+    ppt_list[i].m_negcotangle = (0.0 >= ppt_list[i].m_Q.y) ? -ON_DBL_MAX : -ppt_list[i].m_Q.x/ppt_list[i].m_Q.y;
+  }
+  ppt_list[0].m_Q.x = 0.0;
+  ppt_list[0].m_Q.y = 0.0;
+  ON_hsort(ppt_list+1,ppt_count-1,sizeof(ppt_list[0]),comparePptAngle);
+
+  points.Append(ppt_list[0].m_P);
+  i0 = 0;
+  i1 = 1;
+  D = ppt_list[i1].m_Q - ppt_list[i0].m_Q;
+
+  for ( i = 2; i < ppt_count; i++ )
+  {
+    if ( (ppt_list[i].m_Q.y - ppt_list[i0].m_Q.y)*D.x <= (ppt_list[i].m_Q.x - ppt_list[i0].m_Q.x)*D.y )
+    {
+      // ppt_list[i0], ppt_list[i1], ppt_list[i] is a "right" turn or colinear.
+      // Drop ppt_list[i1].
+      i1 = i;
+    }
+    else
+    {
+      // ppt_list[i0], ppt_list[i1], ppt_list[i] is a "left" turn.
+      points.Append(ppt_list[i1].m_P);
+      i0 = i1;
+      i1 = i;
+    }
+    D = ppt_list[i1].m_Q - ppt_list[i0].m_Q;
+  }
+
+  if ( i1 > i0 )
+    points.Append(ppt_list[i1].m_P);
+
+  return true;
+}

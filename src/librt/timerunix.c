@@ -115,7 +115,7 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 		      user_cpu_secs, sys_cpu_secs, elapsed_secs, percent);
 #endif
     }
-    return(user_cpu_secs);
+    return user_cpu_secs;
 }
 
 

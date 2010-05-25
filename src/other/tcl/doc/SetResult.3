@@ -11,7 +11,7 @@
 .TH Tcl_SetResult 3 8.0 Tcl "Tcl Library Procedures"
 .BS
 .SH NAME
-Tcl_SetObjResult, Tcl_GetObjResult, Tcl_SetResult, Tcl_GetStringResult, Tcl_AppendResult, Tcl_AppendResultVA, Tcl_AppendElement, Tcl_ResetResult, Tcl_TransferResult, Tcl_FreeResult \- manipulate Tcl result
+Tcl_SetObjResult, Tcl_GetObjResult, Tcl_SetResult, Tcl_GetStringResult, Tcl_AppendResult, Tcl_AppendResultVA, Tcl_AppendElement, Tcl_ResetResult, Tcl_FreeResult \- manipulate Tcl result
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -30,17 +30,13 @@ const char *
 .sp
 \fBTcl_AppendResultVA\fR(\fIinterp, argList\fR)
 .sp
-\fBTcl_ResetResult\fR(\fIinterp\fR)
-.sp
-.VS 8.6
-\fBTcl_TransferResult\fR(\fIsourceInterp, result, targetInterp\fR)
-.VE 8.6
-.sp
 \fBTcl_AppendElement\fR(\fIinterp, element\fR)
+.sp
+\fBTcl_ResetResult\fR(\fIinterp\fR)
 .sp
 \fBTcl_FreeResult\fR(\fIinterp\fR)
 .SH ARGUMENTS
-.AS Tcl_FreeProc sourceInterp out
+.AS Tcl_FreeProc freeProc out
 .AP Tcl_Interp *interp out
 Interpreter whose result is to be modified or read.
 .AP Tcl_Obj *objPtr in
@@ -48,7 +44,7 @@ Object value to become result for \fIinterp\fR.
 .AP char *result in
 String value to become result for \fIinterp\fR or to be
 appended to the existing result.
-.AP "const char" *element in
+.AP char *element in
 String value to append as a list element
 to the existing result of \fIinterp\fR.
 .AP Tcl_FreeProc *freeProc in
@@ -58,19 +54,6 @@ Address of procedure to call to release storage at
 .AP va_list argList in
 An argument list which must have been initialized using
 \fBva_start\fR, and cleared using \fBva_end\fR.
-.AP Tcl_Interp *sourceInterp in
-.VS 8.6
-Interpreter that the result and error information should be copied from.
-.VE 8.6
-.AP Tcl_Interp *targetInterp in
-.VS 8.6
-Interpreter that the result and error information should be copied to.
-.VE 8.6
-.AP int result in
-.VS 8.6
-If \fBTCL_OK\fR, only copy the result. If \fBTCL_ERROR\fR, copy the error
-information as well.
-.VE 8.6
 .BE
 .SH DESCRIPTION
 .PP
@@ -149,22 +132,14 @@ of the result are produced.
 storage management issues associated with managing \fIinterp\fR's
 result, such as allocating a larger result area if necessary.
 It also manages conversion to and from the \fIresult\fR field of the
-\fIinterp\fR so as to handle backward-compatibility with old-style
+\fIinterp\fR so as to handle backward-compatability with old-style
 extensions.
 Any number of \fIresult\fR arguments may be passed in a single
 call; the last argument in the list must be a NULL pointer.
 .PP
 \fBTcl_AppendResultVA\fR is the same as \fBTcl_AppendResult\fR except that
 instead of taking a variable number of arguments it takes an argument list.
-.PP
-.VS 8.6
-\fBTcl_TransferResult\fR moves a result from one interpreter to another,
-optionally (dependent on the \fIresult\fR parameter) including the error
-information dictionary as well. The interpreters must be in the same thread.
-The source interpreter will have its result reset by this operation.
-.VE 8.6
-.SH "DEPRECATED INTERFACES"
-.SS "OLD STRING PROCEDURES"
+.SH "OLD STRING PROCEDURES"
 .PP
 Use of the following procedures (is deprecated
 since they manipulate the Tcl result as a string.
@@ -199,19 +174,16 @@ It also sets \fIinterp->freeProc\fR to zero, but does not
 change \fIinterp->result\fR or clear error state.
 \fBTcl_FreeResult\fR is most commonly used when a procedure
 is about to replace one result value with another.
-.SS "DIRECT ACCESS TO INTERP->RESULT"
+.SH "DIRECT ACCESS TO INTERP->RESULT IS DEPRECATED"
 .PP
 It used to be legal for programs to
 directly read and write \fIinterp->result\fR
-to manipulate the interpreter result.  The Tcl headers no longer
-permit this access by default, and C code still doing this must
-be updated to use supported routines \fBTcl_GetObjResult\fR,
-\fBTcl_GetStringResult\fR, \fBTcl_SetObjResult\fR, and \fBTcl_SetResult\fR.
-As a migration aid, access can be restored with the compiler directive
-.CS
-#define USE_INTERP_RESULT
-.CE
-but this is meant only to offer life support to otherwise dead code.
+to manipulate the interpreter result.
+Direct access to \fIinterp->result\fR is now strongly deprecated
+because it can make the result's string and object forms inconsistent.
+Programs should always read the result
+using the procedures \fBTcl_GetObjResult\fR or \fBTcl_GetStringResult\fR,
+and write the result using \fBTcl_SetObjResult\fR or \fBTcl_SetResult\fR.
 .SH "THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT"
 .PP
 \fBTcl_SetResult\fR's \fIfreeProc\fR argument specifies how 
@@ -243,12 +215,9 @@ This allows applications to use non-standard storage allocators.
 When Tcl no longer needs the storage for the string, it will
 call \fIfreeProc\fR. \fIFreeProc\fR should have arguments and
 result that match the type \fBTcl_FreeProc\fR:
-.PP
 .CS
-typedef void \fBTcl_FreeProc\fR(
-        char *\fIblockPtr\fR);
+typedef void Tcl_FreeProc(char *\fIblockPtr\fR);
 .CE
-.PP
 When \fIfreeProc\fR is called, its \fIblockPtr\fR will be set to
 the value of \fIresult\fR passed to \fBTcl_SetResult\fR.
 .SH "SEE ALSO"

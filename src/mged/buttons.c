@@ -305,7 +305,7 @@ label_button(int bnum)
     for (bp = button_table; bp->bu_code >= 0; bp++) {
 	if (bnum != bp->bu_code)
 	    continue;
-	return(bp->bu_name);
+	return bp->bu_name;
     }
 
     {
@@ -317,7 +317,7 @@ label_button(int bnum)
 	bu_vls_free(&tmp_vls);
     }
 
-    return("");
+    return "";
 }
 
 
@@ -506,7 +506,7 @@ ill_common(void) {
 
     if (is_empty) {
 	Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
-	return(0);	/* BAD */
+	return 0;	/* BAD */
     }
 
     illum_gdlp = gdlp;
@@ -517,7 +517,7 @@ ill_common(void) {
     movedir = 0;		/* No edit modes set */
     MAT_IDN(modelchanges);	/* No changes yet */
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -903,7 +903,7 @@ chg_state(int from, int to, char *str)
 
     if (state != from) {
 	bu_log("Unable to do <%s> going from %s to %s state.\n", str, state_str[from], state_str[to]);
-	return(1);	/* BAD */
+	return 1;	/* BAD */
     }
 
     state = to;
@@ -924,7 +924,7 @@ chg_state(int from, int to, char *str)
     Tcl_SetVar(interp, bu_vls_addr(&vls), state_str[state], TCL_GLOBAL_ONLY);
     bu_vls_free(&vls);
 
-    return(0);		/* GOOD */
+    return 0;		/* GOOD */
 }
 
 

@@ -9,7 +9,7 @@
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
-#if defined(TTK_SQUARE_WIDGET) || 1
+#ifdef TTK_SQUARE_WIDGET
 
 #ifndef DEFAULT_BORDERWIDTH
 #define DEFAULT_BORDERWIDTH "2"
@@ -100,9 +100,9 @@ SquareDoLayout(void *clientData)
 {
     WidgetCore *corePtr = (WidgetCore *)clientData;
     Ttk_Box winBox;
-    Ttk_Element squareNode;
+    Ttk_LayoutNode *squareNode;
 
-    squareNode = Ttk_FindElement(corePtr->layout, "square");
+    squareNode = Ttk_LayoutFindNode(corePtr->layout, "square");
     winBox = Ttk_WinBox(corePtr->tkwin);
     Ttk_PlaceLayout(corePtr->layout, corePtr->state, winBox);
 
@@ -116,12 +116,12 @@ SquareDoLayout(void *clientData)
 	Tk_Anchor anchor = TK_ANCHOR_CENTER;
 	Ttk_Box b;
 
-	b = Ttk_ElementParcel(squareNode);
+	b = Ttk_LayoutNodeParcel(squareNode);
 	if (squarePtr->square.anchorObj != NULL)
 	    Tk_GetAnchorFromObj(NULL, squarePtr->square.anchorObj, &anchor);
 	b = Ttk_AnchorBox(winBox, b.width, b.height, anchor);
 
-	Ttk_PlaceElement(corePtr->layout, squareNode, b);
+	Ttk_PlaceLayoutNode(corePtr->layout, squareNode, b);
     }
 }
 

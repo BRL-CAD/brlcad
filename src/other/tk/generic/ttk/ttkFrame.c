@@ -515,7 +515,7 @@ static Ttk_ManagerSpec LabelframeManagerSpec = {
 /* LabelframeInitialize --
  * 	Initialization hook.
  */
-static void LabelframeInitialize(Tcl_Interp *interp, void *recordPtr)
+static int LabelframeInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Labelframe *lframe = recordPtr;
 
@@ -524,6 +524,8 @@ static void LabelframeInitialize(Tcl_Interp *interp, void *recordPtr)
     lframe->label.labelWidget = 0;
     lframe->label.labelLayout = 0;
     lframe->label.labelParcel = Ttk_MakeBox(-1,-1,-1,-1);
+
+    return TCL_OK;
 }
 
 /* LabelframeCleanup --

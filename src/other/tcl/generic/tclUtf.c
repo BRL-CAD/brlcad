@@ -62,7 +62,7 @@
  * UTF-8.
  */
 
-static const unsigned char totalBytes[256] = {
+static CONST unsigned char totalBytes[256] = {
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -234,13 +234,13 @@ Tcl_UniCharToUtf(
 
 char *
 Tcl_UniCharToUtfDString(
-    const Tcl_UniChar *uniStr,	/* Unicode string to convert to UTF-8. */
+    CONST Tcl_UniChar *uniStr,	/* Unicode string to convert to UTF-8. */
     int uniLength,		/* Length of Unicode string in Tcl_UniChars
 				 * (must be >= 0). */
     Tcl_DString *dsPtr)		/* UTF-8 representation of string is appended
 				 * to this previously initialized DString. */
 {
-    const Tcl_UniChar *w, *wEnd;
+    CONST Tcl_UniChar *w, *wEnd;
     char *p, *string;
     int oldLength;
 
@@ -292,7 +292,7 @@ Tcl_UniCharToUtfDString(
 
 int
 Tcl_UtfToUniChar(
-    register const char *src,	/* The UTF-8 string. */
+    register CONST char *src,	/* The UTF-8 string. */
     register Tcl_UniChar *chPtr)/* Filled with the Tcl_UniChar represented by
 				 * the UTF-8 string. */
 {
@@ -396,7 +396,7 @@ Tcl_UtfToUniChar(
 
 Tcl_UniChar *
 Tcl_UtfToUniCharDString(
-    const char *src,		/* UTF-8 string to convert to Unicode. */
+    CONST char *src,		/* UTF-8 string to convert to Unicode. */
     int length,			/* Length of UTF-8 string in bytes, or -1 for
 				 * strlen(). */
     Tcl_DString *dsPtr)		/* Unicode representation of string is
@@ -404,7 +404,7 @@ Tcl_UtfToUniCharDString(
 				 * DString. */
 {
     Tcl_UniChar *w, *wString;
-    const char *p, *end;
+    CONST char *p, *end;
     int oldLength;
 
     if (length < 0) {
@@ -417,7 +417,6 @@ Tcl_UtfToUniCharDString(
      */
 
     oldLength = Tcl_DStringLength(dsPtr);
-/* TODO: fix overreach! */
     Tcl_DStringSetLength(dsPtr,
 	    (int) ((oldLength + length + 1) * sizeof(Tcl_UniChar)));
     wString = (Tcl_UniChar *) (Tcl_DStringValue(dsPtr) + oldLength);
@@ -456,7 +455,7 @@ Tcl_UtfToUniCharDString(
 
 int
 Tcl_UtfCharComplete(
-    const char *src,		/* String to check if first few bytes contain
+    CONST char *src,		/* String to check if first few bytes contain
 				 * a complete UTF-8 character. */
     int length)			/* Length of above string in bytes. */
 {
@@ -486,7 +485,7 @@ Tcl_UtfCharComplete(
 
 int
 Tcl_NumUtfChars(
-    register const char *src,	/* The UTF-8 string to measure. */
+    register CONST char *src,	/* The UTF-8 string to measure. */
     int length)			/* The length of the string in bytes, or -1
 				 * for strlen(string). */
 {
@@ -544,9 +543,9 @@ Tcl_NumUtfChars(
  *---------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tcl_UtfFindFirst(
-    const char *src,		/* The UTF-8 string to be searched. */
+    CONST char *src,		/* The UTF-8 string to be searched. */
     int ch)			/* The Tcl_UniChar to search for. */
 {
     int len;
@@ -583,14 +582,14 @@ Tcl_UtfFindFirst(
  *---------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tcl_UtfFindLast(
-    const char *src,		/* The UTF-8 string to be searched. */
+    CONST char *src,		/* The UTF-8 string to be searched. */
     int ch)			/* The Tcl_UniChar to search for. */
 {
     int len;
     Tcl_UniChar find;
-    const char *last;
+    CONST char *last;
 
     last = NULL;
     while (1) {
@@ -625,9 +624,9 @@ Tcl_UtfFindLast(
  *---------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tcl_UtfNext(
-    const char *src)		/* The current location in the string. */
+    CONST char *src)		/* The current location in the string. */
 {
     Tcl_UniChar ch;
 
@@ -655,13 +654,13 @@ Tcl_UtfNext(
  *---------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tcl_UtfPrev(
-    const char *src,		/* The current location in the string. */
-    const char *start)		/* Pointer to the beginning of the string, to
+    CONST char *src,		/* The current location in the string. */
+    CONST char *start)		/* Pointer to the beginning of the string, to
 				 * avoid going backwards too far. */
 {
-    const char *look;
+    CONST char *look;
     int i, byte;
 
     src--;
@@ -704,10 +703,10 @@ Tcl_UtfPrev(
 
 Tcl_UniChar
 Tcl_UniCharAtIndex(
-    register const char *src,	/* The UTF-8 string to dereference. */
+    register CONST char *src,	/* The UTF-8 string to dereference. */
     register int index)		/* The position of the desired character. */
 {
-    Tcl_UniChar ch = 0;
+    Tcl_UniChar ch;
 
     while (index >= 0) {
 	index--;
@@ -733,9 +732,9 @@ Tcl_UniCharAtIndex(
  *---------------------------------------------------------------------------
  */
 
-const char *
+CONST char *
 Tcl_UtfAtIndex(
-    register const char *src,	/* The UTF-8 string. */
+    register CONST char *src,	/* The UTF-8 string. */
     register int index)		/* The position of the desired character. */
 {
     Tcl_UniChar ch;
@@ -775,7 +774,7 @@ Tcl_UtfAtIndex(
 
 int
 Tcl_UtfBackslash(
-    const char *src,		/* Points to the backslash character of a
+    CONST char *src,		/* Points to the backslash character of a
 				 * backslash sequence. */
     int *readPtr,		/* Fill in with number of characters read from
 				 * src, unless NULL. */
@@ -987,8 +986,8 @@ Tcl_UtfToTitle(
 
 int
 TclpUtfNcmp2(
-    const char *cs,		/* UTF string to compare to ct. */
-    const char *ct,		/* UTF string cs is compared to. */
+    CONST char *cs,		/* UTF string to compare to ct. */
+    CONST char *ct,		/* UTF string cs is compared to. */
     unsigned long numBytes)	/* Number of *bytes* to compare. */
 {
     /*
@@ -1034,8 +1033,8 @@ TclpUtfNcmp2(
 
 int
 Tcl_UtfNcmp(
-    const char *cs,		/* UTF string to compare to ct. */
-    const char *ct,		/* UTF string cs is compared to. */
+    CONST char *cs,		/* UTF string to compare to ct. */
+    CONST char *ct,		/* UTF string cs is compared to. */
     unsigned long numChars)	/* Number of UTF chars to compare. */
 {
     Tcl_UniChar ch1, ch2;
@@ -1082,8 +1081,8 @@ Tcl_UtfNcmp(
 
 int
 Tcl_UtfNcasecmp(
-    const char *cs,		/* UTF string to compare to ct. */
-    const char *ct,		/* UTF string cs is compared to. */
+    CONST char *cs,		/* UTF string to compare to ct. */
+    CONST char *ct,		/* UTF string cs is compared to. */
     unsigned long numChars)	/* Number of UTF chars to compare. */
 {
     Tcl_UniChar ch1, ch2;
@@ -1219,7 +1218,7 @@ Tcl_UniCharToTitle(
 
 int
 Tcl_UniCharLen(
-    const Tcl_UniChar *uniStr)	/* Unicode string to find length of. */
+    CONST Tcl_UniChar *uniStr)	/* Unicode string to find length of. */
 {
     int len = 0;
 
@@ -1249,8 +1248,8 @@ Tcl_UniCharLen(
 
 int
 Tcl_UniCharNcmp(
-    const Tcl_UniChar *ucs,	/* Unicode string to compare to uct. */
-    const Tcl_UniChar *uct,	/* Unicode string ucs is compared to. */
+    CONST Tcl_UniChar *ucs,	/* Unicode string to compare to uct. */
+    CONST Tcl_UniChar *uct,	/* Unicode string ucs is compared to. */
     unsigned long numChars)	/* Number of unichars to compare. */
 {
 #ifdef WORDS_BIGENDIAN
@@ -1294,8 +1293,8 @@ Tcl_UniCharNcmp(
 
 int
 Tcl_UniCharNcasecmp(
-    const Tcl_UniChar *ucs,	/* Unicode string to compare to uct. */
-    const Tcl_UniChar *uct,	/* Unicode string ucs is compared to. */
+    CONST Tcl_UniChar *ucs,	/* Unicode string to compare to uct. */
+    CONST Tcl_UniChar *uct,	/* Unicode string ucs is compared to. */
     unsigned long numChars)	/* Number of unichars to compare. */
 {
     for ( ; numChars != 0; numChars--, ucs++, uct++) {
@@ -1609,8 +1608,8 @@ Tcl_UniCharIsWordChar(
 
 int
 Tcl_UniCharCaseMatch(
-    const Tcl_UniChar *uniStr,	/* Unicode String. */
-    const Tcl_UniChar *uniPattern,
+    CONST Tcl_UniChar *uniStr,	/* Unicode String. */
+    CONST Tcl_UniChar *uniPattern,
 				/* Pattern, which may contain special
 				 * characters. */
     int nocase)			/* 0 for case sensitive, 1 for insensitive */
@@ -1797,14 +1796,14 @@ Tcl_UniCharCaseMatch(
 
 int
 TclUniCharMatch(
-    const Tcl_UniChar *string,	/* Unicode String. */
+    CONST Tcl_UniChar *string,	/* Unicode String. */
     int strLen,			/* Length of String */
-    const Tcl_UniChar *pattern,	/* Pattern, which may contain special
+    CONST Tcl_UniChar *pattern,	/* Pattern, which may contain special
 				 * characters. */
     int ptnLen,			/* Length of Pattern */
     int nocase)			/* 0 for case sensitive, 1 for insensitive */
 {
-    const Tcl_UniChar *stringEnd, *patternEnd;
+    CONST Tcl_UniChar *stringEnd, *patternEnd;
     Tcl_UniChar p;
 
     stringEnd = string + strLen;

@@ -1,4 +1,4 @@
-#------------------------------------------------------------- -*- makefile -*-
+#------------------------------------------------------------------------------
 # makefile.vc --
 #
 #	Microsoft Visual C++ makefile for use with nmake.exe v1.62+ (VC++ 5.0+)
@@ -10,7 +10,6 @@
 # Copyright (c) 1998-2000 Ajuba Solutions.
 # Copyright (c) 2001-2005 ActiveState Corporation.
 # Copyright (c) 2001-2004 David Gravereaux.
-# Copyright (c) 2003-2008 Pat Thoyts.
 #
 #------------------------------------------------------------------------------
 # RCS: @(#) $Id$
@@ -89,9 +88,7 @@ the build instructions.
 #		staticpkg= Affects the static option only to switch wishXX.exe
 #			   to have the dde and reg extension linked inside it.
 #		threads  = Turns on full multithreading support.
-#		thrdalloc = Use the thread allocator (shared global free pool)
-#			   This is the default on threaded builds.
-#		tclalloc  = Use the old non-thread allocator
+#		thrdalloc= Use the thread allocator (shared global free pool).
 #		symbols  = Adds symbols for step debugging.
 #		profile  = Adds profiling hooks.  Map file is assumed.
 #		loimpact = Adds a flag for how NT treats the heap to keep
@@ -290,7 +287,6 @@ TKOBJS = \
 	$(TMP_DIR)\tkAtom.obj \
 	$(TMP_DIR)\tkBind.obj \
 	$(TMP_DIR)\tkBitmap.obj \
-	$(TMP_DIR)\tkBusy.obj \
 	$(TMP_DIR)\tkButton.obj \
 	$(TMP_DIR)\tkCanvArc.obj \
 	$(TMP_DIR)\tkCanvBmap.obj \
@@ -322,10 +318,8 @@ TKOBJS = \
 	$(TMP_DIR)\tkImage.obj \
 	$(TMP_DIR)\tkImgBmap.obj \
 	$(TMP_DIR)\tkImgGIF.obj \
-	$(TMP_DIR)\tkImgPNG.obj \
 	$(TMP_DIR)\tkImgPPM.obj \
 	$(TMP_DIR)\tkImgPhoto.obj \
-	$(TMP_DIR)\tkImgPhInstance.obj \
 	$(TMP_DIR)\tkImgUtil.obj \
 	$(TMP_DIR)\tkListbox.obj \
 	$(TMP_DIR)\tkMacWinMenu.obj \
@@ -359,6 +353,7 @@ TKOBJS = \
 	$(TMP_DIR)\tkUtil.obj \
 	$(TMP_DIR)\tkVisual.obj \
 	$(TMP_DIR)\tkStubInit.obj \
+	$(TMP_DIR)\tkStubLib.obj \
 	$(TMP_DIR)\tkWindow.obj \
         $(TTK_OBJS) \
 !if !$(STATIC_BUILD)
@@ -426,7 +421,7 @@ CONFIG_DEFS     =-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 \
 		 -DTTK_SQUARE_WIDGET=1 \
 !endif
 
-TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS) -Dinline=__inline
+TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS)
 
 #---------------------------------------------------------------------
 # Compile flags
@@ -439,9 +434,6 @@ TK_DEFINES	=-DBUILD_ttk $(OPTDEFINES)  $(CONFIG_DEFS) -Dinline=__inline
 cdebug	= $(OPTIMIZATIONS)
 !else
 cdebug	=
-!endif
-!if $(SYMBOLS)
-cdebug	= $(cdebug) -Zi
 !endif
 !else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
 ### Warnings are too many, can't support warnings into errors.
@@ -469,15 +461,11 @@ crt = -MT
 !endif
 
 BASE_CFLAGS	= $(cdebug) $(cflags) $(crt) $(TK_INCLUDES)
-TK_CFLAGS	= $(BASE_CFLAGS) $(TK_DEFINES)
+TK_CFLAGS	= $(BASE_CFLAGS) $(TK_DEFINES) -DUSE_TCL_STUBS
 CON_CFLAGS	= $(cdebug) $(cflags) $(crt) -DCONSOLE
 WISH_CFLAGS	= $(BASE_CFLAGS) $(TK_DEFINES)
-### Stubs files should not be compiled with -GL
-STUB_CFLAGS     = $(cflags) $(cdebug:-GL=) $(TK_DEFINES)
+STUB_CFLAGS     = $(cflags) $(cdebug) $(TK_DEFINES)
 
-!if !$(STATIC_BUILD)
-TK_CFLAGS = $(TK_CFLAGS) -DUSE_TCL_STUBS
-!endif
 
 #---------------------------------------------------------------------
 # Link flags
@@ -487,9 +475,6 @@ TK_CFLAGS = $(TK_CFLAGS) -DUSE_TCL_STUBS
 ldebug	= -debug:full -debugtype:cv
 !else
 ldebug	= -release -opt:ref -opt:icf,3
-!if $(SYMBOLS)
-ldebug	= $(ldebug) -debug:full -debugtype:cv
-!endif
 !endif
 
 ### Declarations common to all linker options
@@ -515,12 +500,7 @@ dlllflags = $(lflags) -dll
 conlflags = $(lflags) -subsystem:console
 guilflags = $(lflags) -subsystem:windows
 
-tcllibs    = $(TCLIMPLIB)
-!if !$(STATIC_BUILD)
-tcllibs    = $(TCLSTUBLIB) $(tcllibs)
-!endif
-
-baselibs   = kernel32.lib user32.lib ws2_32.lib
+baselibs   = kernel32.lib user32.lib
 # Avoid 'unresolved external symbol __security_cookie' errors.
 # c.f. http://support.microsoft.com/?id=894573
 !if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
@@ -564,9 +544,9 @@ test-classic: setup $(TKTEST) $(TKLIB) $(CAT32)
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
-	$(DEBUGGER) $(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
 !else
-	$(DEBUGGER) $(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
 !endif
 
 test-ttk: setup $(TKTEST) $(TKLIB) $(CAT32)
@@ -579,9 +559,9 @@ test-ttk: setup $(TKTEST) $(TKLIB) $(CAT32)
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
-	$(DEBUGGER) $(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
 !else
-	$(DEBUGGER) $(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
+	$(TKTEST) "$(ROOT)/tests/ttk/all.tcl" $(TESTFLAGS) | $(CAT32)
 !endif
 
 runtest: setup $(TKTEST) $(TKLIB) $(CAT32)
@@ -593,7 +573,7 @@ runtest: setup $(TKTEST) $(TKLIB) $(CAT32)
 !else
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
-	$(DEBUGGER) $(TKTEST)
+	$(TKTEST) 
 
 rundemo: setup $(TKTEST) $(TKLIB) $(CAT32)
 	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
@@ -615,9 +595,20 @@ shell: setup $(WISH)
 !else
 	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
-	$(DEBUGGER) $(WISH) <<
+	$(WISH) <<
 	console show
 <<
+
+dbgshell: setup $(WISH)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TK_LIBRARY=$(TK_LIBRARY:\=/)
+	@set TCLLIBPATH=
+!if $(TCLINSTALL)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
+!else
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+!endif
+	windbg $(WISH)
 
 setup:
 	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR)
@@ -646,18 +637,18 @@ $(TKSTUBLIB): $(TKSTUBOBJS)
 	$(lib32) -nologo -out:$@ $**
 
 
-$(WISH): $(WISHOBJS) $(TKSTUBLIB) $(TKIMPLIB)
-	$(link32) $(guilflags) -stack:2300000 -out:$@ $(guilibs) $(tcllibs) $**
+$(WISH): $(WISHOBJS) $(TKIMPLIB)
+	$(link32) $(guilflags) -stack:2300000 -out:$@ $(guilibs) $(TCLIMPLIB) $**
 	$(_VC_MANIFEST_EMBED_EXE)
 
 
-$(WISHC): $(WISHOBJS) $(TKSTUBLIB) $(TKIMPLIB)
-	$(link32) $(conlflags) -stack:2300000 -out:$@ $(guilibs) $(tcllibs) $**
+$(WISHC): $(WISHOBJS) $(TKIMPLIB)
+	$(link32) $(conlflags) -stack:2300000 -out:$@ $(guilibs) $(TCLIMPLIB) $**
 	$(_VC_MANIFEST_EMBED_EXE)
 
 
-$(TKTEST): $(TKTESTOBJS) $(TKSTUBLIB) $(TKIMPLIB)
-	$(link32) $(guilflags) -stack:2300000 -out:$@ $(guilibs) $(tcllibs) $**
+$(TKTEST): $(TKTESTOBJS) $(TKIMPLIB)
+	$(link32) $(guilflags) -stack:2300000 -out:$@ $(guilibs) $(TCLIMPLIB) $**
 	$(_VC_MANIFEST_EMBED_EXE)
 
 
@@ -906,7 +897,7 @@ install-binaries:
 !if !$(STATIC_BUILD)
 	@echo creating package index
 	@type << > $(OUT_DIR)\pkgIndex.tcl
-if {[package vcompare [package provide Tcl] $(TCL_PATCH_LEVEL)] != 0} { return }
+if {[catch {package present Tcl 8.5.0}]} { return }
 package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
 <<
 	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"
@@ -972,3 +963,4 @@ clean:
 hose:
 	@echo Hosing $(OUT_DIR)\* ...
 	@if exist $(OUT_DIR)\nul $(RMDIR) $(OUT_DIR)
+

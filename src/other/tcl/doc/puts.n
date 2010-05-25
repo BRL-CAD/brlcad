@@ -16,6 +16,7 @@ puts \- Write to a channel
 .SH SYNOPSIS
 \fBputs \fR?\fB\-nonewline\fR? ?\fIchannelId\fR? \fIstring\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 Writes the characters given by \fIstring\fR to the channel given
@@ -65,36 +66,33 @@ be used in an event-driven fashion with the \fBfileevent\fR command
 (do not invoke \fBputs\fR unless you have recently been notified
 via a file event that the channel is ready for more output data).
 .SH EXAMPLES
-.PP
 Write a short message to the console (or wherever \fBstdout\fR is
 directed):
-.PP
 .CS
 \fBputs\fR "Hello, World!"
 .CE
 .PP
 Print a message in several parts:
-.PP
 .CS
 \fBputs\fR -nonewline "Hello, "
 \fBputs\fR "World!"
 .CE
 .PP
 Print a message to the standard error channel:
-.PP
 .CS
 \fBputs\fR stderr "Hello, World!"
 .CE
 .PP
 Append a log message to a file:
-.PP
 .CS
 set chan [open my.log a]
 set timestamp [clock format [clock seconds]]
 \fBputs\fR $chan "$timestamp - Hello, World!"
 close $chan
 .CE
+
 .SH "SEE ALSO"
 file(n), fileevent(n), Tcl_StandardChannels(3)
+
 .SH KEYWORDS
 channel, newline, output, write

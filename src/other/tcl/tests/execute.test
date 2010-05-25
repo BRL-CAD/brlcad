@@ -43,12 +43,14 @@ testConstraint testexprlongobj [llength [info commands testexprlongobj]]
 # INST_PUSH4 not tested
 # INST_POP not tested
 # INST_DUP not tested
+# INST_CONCAT1 not tested
 # INST_INVOKE_STK4 not tested
 # INST_INVOKE_STK1 not tested
 # INST_EVAL_STK not tested
 # INST_EXPR_STK not tested
 
 # INST_LOAD_SCALAR1
+
 test execute-1.1 {TclExecuteByteCode, INST_LOAD_SCALAR1, small opnd} {
     proc foo {} {
 	set x 1
@@ -66,6 +68,7 @@ test execute-1.2 {TclExecuteByteCode, INST_LOAD_SCALAR1, large opnd} {
 	set y 1
 	return $y
     }
+
     proc foo {} $body
     foo
 } 1
@@ -78,7 +81,9 @@ test execute-1.3 {TclExecuteByteCode, INST_LOAD_SCALAR1, error} {
     list [catch {foo} msg] $msg
 } {1 {can't read "x": no such variable}}
 
+
 # INST_LOAD_SCALAR4
+
 test execute-2.1 {TclExecuteByteCode, INST_LOAD_SCALAR4, simple case} {
     set body {}
     for {set i 0} {$i < 256} {incr i} {
@@ -88,6 +93,7 @@ test execute-2.1 {TclExecuteByteCode, INST_LOAD_SCALAR4, simple case} {
 	set y 1
 	return $y
     }
+
     proc foo {} $body
     foo
 } 1
@@ -101,9 +107,11 @@ test execute-2.2 {TclExecuteByteCode, INST_LOAD_SCALAR4, error} {
 	unset y
 	return $y
     }
+
     proc foo {} $body
     list [catch {foo} msg] $msg
 } {1 {can't read "y": no such variable}}
+
 
 # INST_LOAD_SCALAR_STK not tested
 # INST_LOAD_ARRAY4 not tested
@@ -892,40 +900,43 @@ test execute-8.1 {Stack protection} -setup {
     trace remove variable ::errorInfo {write unset} whatever
     rename whatever {}
 } -returnCodes error -match glob -result *
+
 test execute-8.2 {Stack restoration} -body {
     # Test for [Bug #816641], correct restoration
     # of the stack top after the stack is grown
-    proc f {args} { f bee bop }
-    catch f msg
-    set msg
-} -setup {
+     proc f {args} { f bee bop }
+     catch f msg
+     set msg
+ } -setup {
     # Avoid crashes when system stack size is limited (thread-enabled!)
-    set limit [interp recursionlimit {}]
-    interp recursionlimit {} 100
-} -cleanup {
-    interp recursionlimit {} $limit
-} -result {too many nested evaluations (infinite loop?)}
+     set limit [interp recursionlimit {}]
+     interp recursionlimit {} 100
+ } -cleanup {
+     interp recursionlimit {} $limit
+ } -result {too many nested evaluations (infinite loop?)}
+
 test execute-8.3 {Stack restoration} -body {
     # Test for [Bug #1055676], correct restoration
     # of the stack top after the epoch is bumped and 
     # the stack is grown in a call from a nested evaluation
-    set arglst [string repeat "a " 1000]
-    proc f {args} "f $arglst"
-    proc run {} {
-	# bump the interp's epoch
-	rename ::set ::dummy
-	rename ::dummy ::set
-	catch f msg
-	set msg
-    }
-    run
-} -setup {
+     set arglst [string repeat "a " 1000]
+     proc f {args} "f $arglst"
+     proc run {} {
+	 # bump the interp's epoch
+	 rename ::set ::dummy
+	 rename ::dummy ::set
+	 catch f msg
+	 set msg
+     }
+     run
+ } -setup {
     # Avoid crashes when system stack size is limited (thread-enabled!)
-    set limit [interp recursionlimit {}]
-    interp recursionlimit {} 100
-} -cleanup {
-    interp recursionlimit {} $limit
-} -result {too many nested evaluations (infinite loop?)}
+     set limit [interp recursionlimit {}]
+     interp recursionlimit {} 100
+ } -cleanup {
+     interp recursionlimit {} $limit
+ } -result {too many nested evaluations (infinite loop?)}
+
 test execute-8.4 {Compile epoch bump effect on stack trace} -setup {
     proc foo {} {
 	error bar
@@ -945,22 +956,7 @@ test execute-8.4 {Compile epoch bump effect on stack trace} -setup {
 } -cleanup {
     rename foo {}
     rename FOO {}
-    unset -nocomplain m o stack1 stack2
 } -result {}
-test execute-8.5 {Bug 2038069} -setup {
-    proc demo {} {
-	catch [list error FOO] m o
-	return $o
-    }
-} -body {
-    demo
-} -cleanup {
-    rename demo {}
-} -result {-code 1 -level 0 -errorcode NONE -errorinfo {FOO
-    while executing
-"error FOO"
-    invoked from within
-"catch [list error FOO] m o"} -errorline 2}
 
 test execute-9.1 {Interp result resetting [Bug 1522803]} {
     set c 0
@@ -975,10 +971,6 @@ test execute-9.1 {Interp result resetting [Bug 1522803]} {
     }
     set result
 } SUCCESS
-
-test execute-10.1 {TclExecuteByteCode, INST_CONCAT1, bytearrays} {
-    apply {s {binary scan $s c x; list $x [scan $s$s %c%c]}} \u0130
-} {48 {304 304}}
 
 test execute-10.2 {Bug 2802881} -setup {
     interp create slave

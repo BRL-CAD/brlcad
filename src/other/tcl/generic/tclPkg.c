@@ -742,7 +742,7 @@ Tcl_PackageObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static const char *const pkgOptions[] = {
+    static const char *pkgOptions[] = {
 	"forget",  "ifneeded", "names",   "prefer",   "present",
 	"provide", "require",  "unknown", "vcompare", "versions",
 	"vsatisfies", NULL
@@ -760,11 +760,10 @@ Tcl_PackageObjCmd(
     Tcl_HashSearch search;
     Tcl_HashTable *tablePtr;
     const char *version;
-    const char *argv2, *argv3, *argv4;
-    char *iva = NULL, *ivb = NULL;
+    char *argv2, *argv3, *argv4, *iva = NULL, *ivb = NULL;
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
 	return TCL_ERROR;
     }
 
@@ -774,7 +773,7 @@ Tcl_PackageObjCmd(
     }
     switch ((enum pkgOptions) optionIndex) {
     case PKG_FORGET: {
-	const char *keyString;
+	char *keyString;
 
 	for (i = 2; i < objc; i++) {
 	    keyString = TclGetString(objv[i]);
@@ -950,7 +949,7 @@ Tcl_PackageObjCmd(
 	if (objc < 3) {
 	requireSyntax:
 	    Tcl_WrongNumArgs(interp, 2, objv,
-		    "?-exact? package ?requirement ...?");
+		    "?-exact? package ?requirement...?");
 	    return TCL_ERROR;
 	}
 
@@ -1016,7 +1015,7 @@ Tcl_PackageObjCmd(
 	break;
     }
     case PKG_PREFER: {
-	static const char *const pkgPreferOptions[] = {
+	static const char *pkgPreferOptions[] = {
 	    "latest", "stable", NULL
 	};
 
@@ -1101,7 +1100,7 @@ Tcl_PackageObjCmd(
 
 	if (objc < 4) {
 	    Tcl_WrongNumArgs(interp, 2, objv,
-		    "version ?requirement ...?");
+		    "version requirement requirement...");
 	    return TCL_ERROR;
 	}
 
@@ -1646,7 +1645,7 @@ AddRequirementsToResult(
 
 	for (i = 0; i < reqc; i++) {
 	    int length;
-	    const char *v = Tcl_GetStringFromObj(reqv[i], &length);
+	    char *v = Tcl_GetStringFromObj(reqv[i], &length);
 
 	    if ((length & 0x1) && (v[length/2] == '-')
 		    && (strncmp(v, v+((length+1)/2), length/2) == 0)) {
@@ -1865,7 +1864,7 @@ Tcl_PkgInitStubsCheck(
 	int count = 0;
 
 	while (*p) {
-	    count += !isdigit(UCHAR(*p++));
+	    count += !isdigit(*p++);
 	}
 	if (count == 1) {
 	    if (0 != strncmp(version, actualVersion, strlen(version))) {

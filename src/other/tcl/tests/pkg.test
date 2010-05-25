@@ -525,7 +525,7 @@ test pkg-2.52 {Tcl_PkgRequire procedure, picking best stable version} {
 
 test pkg-3.1 {Tcl_PackageCmd procedure} {
     list [catch {package} msg] $msg
-} {1 {wrong # args: should be "package option ?arg ...?"}}
+} {1 {wrong # args: should be "package option ?arg arg ...?"}}
 test pkg-3.2 {Tcl_PackageCmd procedure, "forget" option} {
     foreach i [package names] {
 	package forget $i
@@ -648,13 +648,13 @@ test pkg-3.21 {Tcl_PackageCmd procedure, "provide" option} {
 } {1 {expected version number but got "a.b"}}
 test pkg-3.22 {Tcl_PackageCmd procedure, "require" option} {
     list [catch {package require} msg] $msg
-} {1 {wrong # args: should be "package require ?-exact? package ?requirement ...?"}}
+} {1 {wrong # args: should be "package require ?-exact? package ?requirement...?"}}
 
 test pkg-3.24 {Tcl_PackageCmd procedure, "require" option} {
     list [catch {package require -exact a b c} msg] $msg
     # Exact syntax: -exact name version
-    #              name ?requirement ...?
-} {1 {wrong # args: should be "package require ?-exact? package ?requirement ...?"}}
+    #              name ?requirement...?
+} {1 {wrong # args: should be "package require ?-exact? package ?requirement...?"}}
 
 test pkg-3.26 {Tcl_PackageCmd procedure, "require" option} {
     list [catch {package require x a.b} msg] $msg
@@ -664,10 +664,10 @@ test pkg-3.27 {Tcl_PackageCmd procedure, "require" option} {
 } {1 {expected version number but got "a.b"}}
 test pkg-3.28 {Tcl_PackageCmd procedure, "require" option} {
     list [catch {package require -exact x} msg] $msg
-} {1 {wrong # args: should be "package require ?-exact? package ?requirement ...?"}}
+} {1 {wrong # args: should be "package require ?-exact? package ?requirement...?"}}
 test pkg-3.29 {Tcl_PackageCmd procedure, "require" option} {
     list [catch {package require -exact} msg] $msg
-} {1 {wrong # args: should be "package require ?-exact? package ?requirement ...?"}}
+} {1 {wrong # args: should be "package require ?-exact? package ?requirement...?"}}
 test pkg-3.30 {Tcl_PackageCmd procedure, "require" option} {
     package forget t
     package provide t 2.3
@@ -735,7 +735,7 @@ test pkg-3.46 {Tcl_PackageCmd procedure, "versions" option} {
 } {2.3 2.4}
 test pkg-3.47 {Tcl_PackageCmd procedure, "vsatisfies" option} {
     list [catch {package vsatisfies a} msg] $msg
-} {1 {wrong # args: should be "package vsatisfies version ?requirement ...?"}}
+} {1 {wrong # args: should be "package vsatisfies version requirement requirement..."}}
 
 test pkg-3.49 {Tcl_PackageCmd procedure, "vsatisfies" option} {
     list [catch {package vsatisfies x.y 3.4} msg] $msg
@@ -888,13 +888,13 @@ test pkg-7.10 {Tcl_PkgPresent procedure, unknown package} {
 } {1 {package t 2.4 is not present}}
 test pkg-7.11 {Tcl_PackageCmd procedure, "present" option} {
     list [catch {package present} msg] $msg
-} {1 {wrong # args: should be "package present ?-exact? package ?requirement ...?"}}
+} {1 {wrong # args: should be "package present ?-exact? package ?requirement...?"}}
 test pkg-7.12 {Tcl_PackageCmd procedure, "present" option} {
     list [catch {package present a b c} msg] $msg
 } {1 {expected version number but got "b"}}
 test pkg-7.13 {Tcl_PackageCmd procedure, "present" option} {
     list [catch {package present -exact a b c} msg] $msg
-} {1 {wrong # args: should be "package present ?-exact? package ?requirement ...?"}}
+} {1 {wrong # args: should be "package present ?-exact? package ?requirement...?"}}
 test pkg-7.14 {Tcl_PackageCmd procedure, "present" option} {
     list [catch {package present -bs a b} msg] $msg
 } {1 {expected version number but got "a"}}
@@ -906,10 +906,10 @@ test pkg-7.16 {Tcl_PackageCmd procedure, "present" option} {
 } {1 {expected version number but got "a.b"}}
 test pkg-7.17 {Tcl_PackageCmd procedure, "present" option} {
     list [catch {package present -exact x} msg] $msg
-} {1 {wrong # args: should be "package present ?-exact? package ?requirement ...?"}}
+} {1 {wrong # args: should be "package present ?-exact? package ?requirement...?"}}
 test pkg-7.18 {Tcl_PackageCmd procedure, "present" option} {
     list [catch {package present -exact} msg] $msg
-} {1 {wrong # args: should be "package present ?-exact? package ?requirement ...?"}}
+} {1 {wrong # args: should be "package present ?-exact? package ?requirement...?"}}
 
 
 

@@ -117,6 +117,14 @@ void ON_String::CopyToArray( int w_count, const wchar_t* w )
 /////////////////////////////////////////////////////////////////////////////
 // Empty strings point at empty_wstring
 
+struct ON_wStringHeader
+{
+	int    ref_count;       // reference count (>=0 or -1 for empty string)
+	int    string_length;   // does not include any terminators
+	int    string_capacity; // does not include any terminators
+	wchar_t* string_array() {return (wchar_t*)(this+1);}
+};
+
 static struct {
   ON_wStringHeader header;
   wchar_t           s;  
@@ -198,6 +206,17 @@ void ON_wString::EmergencyDestroy()
 {
 	Create();
 }
+
+void ON_wString::EnableReferenceCounting( bool bEnable )
+{
+  // TODO fill this in;
+}
+
+bool ON_wString::IsReferenceCounted() const
+{
+  return true;
+}
+
 
 void ON_wString::CopyArray()
 {
@@ -517,6 +536,7 @@ int ON_wString::Length() const
 
 wchar_t& ON_wString::operator[](int i)
 {
+  CopyArray();
   return m_s[i];
 }
 
@@ -746,6 +766,7 @@ void ON_wString::SetLength(size_t string_length)
 
 wchar_t* ON_wString::Array()
 {
+  CopyArray();
   return ( Header()->string_capacity > 0 ) ? m_s : 0;
 }
 
@@ -1083,7 +1104,7 @@ int ON_wString::Replace( const wchar_t* token1, const wchar_t* token2 )
       {
         // in-place
         ON_SimpleArray<int> n(32);
-        wchar_t* s = m_s;
+        const wchar_t* s = m_s;
         int i;
         for ( i = 0; i <= len-len1; /*empty*/ )
         {
@@ -1110,6 +1131,8 @@ int ON_wString::Replace( const wchar_t* token1, const wchar_t* token2 )
           Destroy();
           return count;
         }
+
+        CopyArray();
 
         // 24 August 2006 Dale Lear
         //    This used to say
@@ -1179,6 +1202,8 @@ int ON_wString::Replace( wchar_t token1, wchar_t token2 )
   {
     if ( token1 == m_s[i] )
     {
+      if ( 0 == count )
+        CopyArray();
       m_s[i] = token2;
       count++;
     }

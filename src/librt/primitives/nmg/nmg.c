@@ -120,7 +120,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      */
     nmg_s->manifolds = nmg_manifolds(m);
 
-    return(0);
+    return 0;
 }
 
 
@@ -225,7 +225,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
-    return(status);
+    return status;
 }
 
 
@@ -312,7 +312,7 @@ rt_nmg_free(struct soltab *stp)
 int
 rt_nmg_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -320,7 +320,7 @@ rt_nmg_class(void)
  * R T _ N M G _ P L O T
  */
 int
-rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct model *m;
 
@@ -331,7 +331,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     nmg_m_to_vlist(vhead, m, 0);
 
-    return(0);
+    return 0;
 }
 
 
@@ -348,7 +348,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
+rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct model *lm;
 
@@ -391,7 +391,7 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_merge_models(m, lm);
     ip->idb_ptr = GENPTR_NULL;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1000,7 +1000,7 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	}
     }
 /*bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, idx, ret);*/
-    return(ret);
+    return ret;
 }
 
 
@@ -1941,7 +1941,7 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 	    subscript++;
 	}
     }
-    return(m);
+    return m;
 }
 
 
@@ -2025,7 +2025,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     /* Check record type */
     if (rp->u_id != DBID_NMG) {
 	bu_log("rt_nmg_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     /*
@@ -2099,7 +2099,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     bu_free((char *)ecnt, "ecnt[]");
     bu_free((char *)real_ptrs, "ptrs[]");
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -2165,7 +2165,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     int fastf_byte_count;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_NMG) return(-1);
+    if (ip->idb_type != ID_NMG) return -1;
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
@@ -2317,7 +2317,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     bu_free((genptr_t)ptrs, "ptrs[]");
     bu_free((genptr_t)ecnt, "ecnt[]");
 
-    return(0);
+    return 0;
 }
 
 
@@ -2341,7 +2341,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check record type */
     if (rp->u_id != DBID_NMG) {
 	bu_log("rt_nmg_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     /* XXX The bounding box routines need a tolerance.
@@ -2356,7 +2356,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     tol.para = 1 - tol.perp;
 
     if (rt_nmg_import4_internal(ip, ep, mat, 1, &tol) < 0)
-	return(-1);
+	return -1;
 
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
@@ -2364,7 +2364,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (RT_G_DEBUG || rt_g.NMG_debug)
 	nmg_vmodel(m);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -2478,7 +2478,7 @@ rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_NMG) return(-1);
+    if (ip->idb_type != ID_NMG) return -1;
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
@@ -2673,7 +2673,7 @@ rt_nmg_export5(
  * tab, and give parameter values.
  */
 int
-rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
+rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     struct model *m =
 	(struct model *)ip->idb_ptr;
@@ -2682,9 +2682,9 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     bu_vls_printf(str, "n-Manifold Geometry solid (NMG) maxindex=%ld\n",
 		  (long)m->maxindex);
 
-    if (!verbose) return(0);
+    if (!verbose) return 0;
 
-    return(0);
+    return 0;
 }
 
 
@@ -2827,7 +2827,8 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
     struct faceuse *fu=NULL;
     Tcl_Obj *obj, **obj_array;
     int len;
-    int num_verts, num_loops;
+    int num_verts = 0;
+    int num_loops = 0;
     int *loop;
     int loop_len;
     int i, j;
@@ -2989,7 +2990,7 @@ rt_nmg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

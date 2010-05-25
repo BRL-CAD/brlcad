@@ -233,7 +233,7 @@ test proc-old-30.12 {arguments and defaults} {
 	return [list $x $y $args]
     }
     list [catch {tproc} msg] $msg
-} {1 {wrong # args: should be "tproc x ?y? ?arg ...?"}}
+} {1 {wrong # args: should be "tproc x ?y? ..."}}
 
 test proc-old-4.1 {variable numbers of arguments} {
     proc tproc args {return $args}
@@ -258,7 +258,7 @@ test proc-old-4.5 {variable numbers of arguments} {
 test proc-old-4.6 {variable numbers of arguments} {
     proc tproc {x missing args} {return $args}
     list [catch {tproc 1} msg] $msg
-} {1 {wrong # args: should be "tproc x missing ?arg ...?"}}
+} {1 {wrong # args: should be "tproc x missing ..."}}
 
 test proc-old-5.1 {error conditions} {
     list [catch {proc} msg] $msg
@@ -284,6 +284,9 @@ test proc-old-5.7 {error conditions} {
 test proc-old-5.8 {error conditions} {
     catch {return}
 } 2
+test proc-old-5.9 {error conditions} {
+    list [catch {global} msg] $msg
+} {1 {wrong # args: should be "global varName ?varName ...?"}}
 proc tproc {} {
     set a 22
     global a

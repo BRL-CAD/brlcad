@@ -40,8 +40,10 @@ Saved state token to be restored or discarded.
 .AP Tcl_SavedResult *savedPtr in
 Pointer to location where interpreter result should be saved or restored.
 .BE
+
 .SH DESCRIPTION
 .PP
+.VS 8.5
 These routines allows a C procedure to take a snapshot of the current
 state of an interpreter so that it can be restored after a call
 to \fBTcl_Eval\fR or some other routine that modifies the interpreter
@@ -97,6 +99,7 @@ must eventually be passed to either \fBTcl_RestoreInterpState\fR
 or \fBTcl_DiscardInterpState\fR to avoid a memory leak.  Once
 the \fBTcl_InterpState\fR token is passed to one of them, the
 token is no longer valid and should not be used anymore.
+.VE 8.5
 .PP
 \fBTcl_SaveResult\fR moves the string and object results
 of \fIinterp\fR into the location specified by \fIstatePtr\fR.
@@ -118,5 +121,6 @@ Once \fBTcl_SaveResult\fR is called to save the interpreter
 result, either \fBTcl_RestoreResult\fR or
 \fBTcl_DiscardResult\fR must be called to properly clean up the
 memory associated with the saved state.  
+
 .SH KEYWORDS
 result, state, interp

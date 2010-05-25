@@ -36,6 +36,7 @@ the conditions specified by \fImask\fR.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
+
 .SH DESCRIPTION
 .PP
 \fBTcl_CreateChannelHandler\fR arranges for \fIproc\fR to be called in the
@@ -46,9 +47,8 @@ invoked are specified by the \fImask\fR argument.
 See the manual entry for \fBfileevent\fR for a precise description of
 what it means for a channel to be readable or writable.
 \fIProc\fR must conform to the following prototype:
-.PP
 .CS
-typedef void \fBTcl_ChannelProc\fR(
+typedef void Tcl_ChannelProc(
         ClientData \fIclientData\fR,
         int \fImask\fR);
 .CE
@@ -84,7 +84,9 @@ so that the channel is no longer readable when the second handler
 is invoked.
 For this reason it may be useful to use nonblocking I/O on channels
 for which there are event handlers.
+
 .SH "SEE ALSO"
 Notifier(3), Tcl_CreateChannel(3), Tcl_OpenFileChannel(3), vwait(n).
+
 .SH KEYWORDS
 blocking, callback, channel, events, handler, nonblocking.

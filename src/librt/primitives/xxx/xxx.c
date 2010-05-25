@@ -155,10 +155,10 @@ rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /* add segment to list of those encountered for this primitive */
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-    return(2); /* num surface intersections == in + out == 2 */
+    return 2; /* num surface intersections == in + out == 2 */
 #endif
 
-    return(0);			/* MISS */
+    return 0;			/* MISS */
 }
 
 
@@ -247,7 +247,7 @@ rt_xxx_free(struct soltab *stp)
  * R T _ X X X _ P L O T
  */
 int
-rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_xxx_internal *xxx_ip;
 
@@ -256,7 +256,7 @@ rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
 
-    return(-1);
+    return -1;
 }
 
 
@@ -268,7 +268,7 @@ rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_xxx_internal *xxx_ip;
 
@@ -278,7 +278,7 @@ rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
 
-    return(-1);
+    return -1;
 }
 
 
@@ -321,7 +321,7 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     if (mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(xxx_ip->v, mat, vv);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -341,7 +341,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     fastf_t vec[ELEMENTS_PER_VECT];
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_XXX) return(-1);
+    if (ip->idb_type != ID_XXX) return -1;
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
     if (dbip) RT_CK_DBI(dbip);

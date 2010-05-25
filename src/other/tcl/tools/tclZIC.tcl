@@ -361,7 +361,7 @@ proc parseON {on} {
 	  # third possibility - lastWeekday - field 5
 	  last([[:alpha:]]+)
 	)$
-    } $on -> dom1 wday2 dir2 num2 wday3]} {
+    } $on -> dom1 wday2 dir2 num2 wday3]} then {
 	error "can't parse ON field \"$on\""
     }
     if {$dom1 ne ""} {
@@ -509,7 +509,7 @@ proc parseTOD {tod} {
 	(?:
 	    ([wsugz])			# field 4 - type indicator
 	)?
-    } $tod -> hour minute second ind]} {
+    } $tod -> hour minute second ind]} then {
 	puts stderr "$fileName:$lno:can't parse time field \"$tod\""
 	incr errorCount
     }
@@ -558,7 +558,7 @@ proc parseOffsetTime {offset} {
 		:([[:digit:]]{2})	# field 4 - second
 	    )?
 	)?
-    } $offset -> signum hour minute second]} {
+    } $offset -> signum hour minute second]} then {
 	puts stderr "$fileName:$lno:can't parse offset time \"$offset\""
 	incr errorCount
     }
@@ -940,7 +940,7 @@ proc applyRules {ruleSet year startSecs stdGMTOffset DSTOffset nextGMTOffset
 	    if {
 		$earliestSecs > $startSecs &&
 		($until eq "" || $earliestSecs < $untilSecs)
-	    } {
+	    } then {
 		# Test if the initial transition has been done.
 		# If not, do it now.
 
@@ -989,7 +989,7 @@ proc applyRules {ruleSet year startSecs stdGMTOffset DSTOffset nextGMTOffset
 	set date [::tcl::clock::GetJulianDayFromEraYearMonthDay \
 		[dict create era CE year $year month 1 dayOfMonth 1] 2361222]
 	set startSecs [expr {
-	    [dict get $date julianDay] * wide(86400) - 210866803200
+	    [dict get $date julianDay] * wide(86400) - 210866803200 
 		- $stdGMTOffset - $DSTOffset
 	}]
 

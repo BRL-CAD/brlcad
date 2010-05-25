@@ -128,15 +128,15 @@ get_args(int argc, char **argv)
 		num_bytes = atol(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
     if (bu_optind >= argc) {
-	return(0);
+	return 0;
     } else {
 	orig_name = argv[bu_optind];
 	if (strcmp(orig_name, "-") == 0) {
-	    if (isatty(fileno(stdin))) return(0);
+	    if (isatty(fileno(stdin))) return 0;
 	    orig = stdin;
 	} else {
 	    if ((orig = fopen(orig_name, "r")) == NULL) {
@@ -144,22 +144,22 @@ get_args(int argc, char **argv)
 		(void)fprintf(stderr,
 			      "pixpaste: cannot open \"%s\" for reading\n",
 			      orig_name);
-		return(0);
+		return 0;
 	    }
 	    orig_isfile = 1;
 	}
     }
     if (++bu_optind >= argc) {
-	return(0);
+	return 0;
     } else {
 	paste_name = argv[bu_optind];
 	if (strcmp(paste_name, "-") == 0) {
-	    if (isatty(fileno(stdin))) return(0);
+	    if (isatty(fileno(stdin))) return 0;
 	    paste = stdin;
 	    if (!orig_isfile) {
 		(void)fprintf(stderr,
 			      "pixpaste: The original file and paste file cannot both be stdin!.\n");
-		return(0);
+		return 0;
 	    }
 	} else {
 	    if ((paste = fopen(paste_name, "r")) == NULL) {
@@ -167,12 +167,12 @@ get_args(int argc, char **argv)
 		(void)fprintf(stderr,
 			      "pixpaste: cannot open \"%s\" for reading",
 			      paste_name);
-		return(0);
+		return 0;
 	    }
 	    paste_isfile=1;
 	}
     }
-    return(1);	/* OK */
+    return 1;	/* OK */
 }
 
 
@@ -348,7 +348,7 @@ pixpaste: new image == original image.\n");
 	}
 	row++;
     }
-    return(0);
+    return 0;
 }
 
 

@@ -75,7 +75,7 @@ struct WidgetSpec_
     /*
      * Hooks:
      */
-    void  	(*initializeProc)(Tcl_Interp *, void *recordPtr);
+    int  	(*initializeProc)(Tcl_Interp *, void *recordPtr);
     void	(*cleanupProc)(void *recordPtr);
     int 	(*configureProc)(Tcl_Interp *, void *recordPtr, int flags);
     int 	(*postConfigureProc)(Tcl_Interp *, void *recordPtr, int flags);
@@ -88,7 +88,7 @@ struct WidgetSpec_
 /*
  * Common factors for widget implementations:
  */
-MODULE_SCOPE void TtkNullInitialize(Tcl_Interp *, void *);
+MODULE_SCOPE int  TtkNullInitialize(Tcl_Interp *, void *);
 MODULE_SCOPE int  TtkNullPostConfigure(Tcl_Interp *, void *, int);
 MODULE_SCOPE void TtkNullCleanup(void *recordPtr);
 MODULE_SCOPE Ttk_Layout TtkWidgetGetLayout(
@@ -211,39 +211,20 @@ MODULE_SCOPE void TtkScrollbarUpdateRequired(ScrollHandle);
 
 typedef struct TtkTag *Ttk_Tag;
 typedef struct TtkTagTable *Ttk_TagTable;
-typedef struct TtkTagSet {	/* TODO: make opaque */
-    Ttk_Tag	*tags;
-    int 	nTags;
-} *Ttk_TagSet;
 
-MODULE_SCOPE Ttk_TagTable Ttk_CreateTagTable(
-	Tcl_Interp *, Tk_Window tkwin, Tk_OptionSpec[], int recordSize);
+MODULE_SCOPE Ttk_TagTable Ttk_CreateTagTable(Tk_OptionTable, int tagRecSize);
 MODULE_SCOPE void Ttk_DeleteTagTable(Ttk_TagTable);
 
 MODULE_SCOPE Ttk_Tag Ttk_GetTag(Ttk_TagTable, const char *tagName);
 MODULE_SCOPE Ttk_Tag Ttk_GetTagFromObj(Ttk_TagTable, Tcl_Obj *);
 
-MODULE_SCOPE Tcl_Obj *Ttk_TagOptionValue(
-    Tcl_Interp *, Ttk_TagTable, Ttk_Tag, Tcl_Obj *optionName);
+MODULE_SCOPE Tcl_Obj **Ttk_TagRecord(Ttk_Tag);
 
-MODULE_SCOPE int Ttk_EnumerateTagOptions(
-    Tcl_Interp *, Ttk_TagTable, Ttk_Tag);
+MODULE_SCOPE int Ttk_GetTagListFromObj(
+    Tcl_Interp *interp, Ttk_TagTable, Tcl_Obj *objPtr,
+    int *nTags_rtn, void **taglist_rtn);
 
-MODULE_SCOPE int Ttk_ConfigureTag(
-    Tcl_Interp *interp, Ttk_TagTable tagTable, Ttk_Tag tag,
-    int objc, Tcl_Obj *const objv[]);
-
-MODULE_SCOPE Ttk_TagSet Ttk_GetTagSetFromObj(
-    Tcl_Interp *interp, Ttk_TagTable, Tcl_Obj *objPtr);
-
-MODULE_SCOPE void Ttk_FreeTagSet(Ttk_TagSet);
-
-MODULE_SCOPE int Ttk_TagSetContains(Ttk_TagSet, Ttk_Tag tag);
-MODULE_SCOPE void Ttk_TagSetAdd(Ttk_TagSet, Ttk_Tag tag);
-MODULE_SCOPE void Ttk_TagSetRemove(Ttk_TagSet, Ttk_Tag tag);
-
-MODULE_SCOPE void Ttk_TagSetValues(Ttk_TagTable, Ttk_TagSet, void *record);
-MODULE_SCOPE void Ttk_TagSetApplyStyle(Ttk_TagTable,Ttk_Style,Ttk_State,void*);
+MODULE_SCOPE void Ttk_FreeTagList(void **taglist);
 
 /*
  * Useful widget base classes:

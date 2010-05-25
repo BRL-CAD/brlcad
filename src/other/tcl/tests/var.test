@@ -352,15 +352,6 @@ test var-6.4 {Tcl_GlobalObjCmd, variable name matching :*} {
     p
     set :v
 } {fixed}
-test var-6.5 {Tcl_GlobalObjCmd, no-op case (TIP 323)} {
-    global
-} {}
-test var-6.6 {Tcl_GlobalObjCmd, no-op case (TIP 323)} {
-    proc p {} {
-	global
-    }
-    p
-} {}
 
 test var-7.1 {Tcl_VariableObjCmd, create and initialize one new ns variable} {
     catch {namespace delete test_ns_var}
@@ -510,14 +501,14 @@ test var-7.15 {Tcl_VariableObjCmd, array element parameter} {
     } res
     set res
 } "can't define \"arrayvar(1)\": name refers to an element in an array"
-test var-7.16 {Tcl_VariableObjCmd, no args (TIP 323)} {
-    variable
-} {}
-test var-7.17 {Tcl_VariableObjCmd, no args (TIP 323)} {
+test var-7.16 {Tcl_VariableObjCmd, no args} {
+    list [catch {variable} msg] $msg
+} {1 {wrong # args: should be "variable ?name value...? name ?value?"}}
+test var-7.17 {Tcl_VariableObjCmd, no args} {
     namespace eval test_ns_var {
-	variable
+	list [catch {variable} msg] $msg
     }
-} {}
+} {1 {wrong # args: should be "variable ?name value...? name ?value?"}}
 
 test var-8.1 {TclDeleteVars, "unset" traces are called with fully-qualified var names} {
     catch {namespace delete test_ns_var}

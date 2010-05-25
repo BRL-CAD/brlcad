@@ -10,11 +10,66 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-04-XX  Release 7.16.8                                     ---
+--- 2010-05-XX  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
-* g-stl and g-egg have -M for marching cubes - Erik Greenwald
-* marching cubes algorithm available in librt - Erik Greenwald
+* added fullscreen display mode via F5 keybinding to ISST - Cliff Yapp
+* restored archer view commands to work without a .g file - Bob Parker
+* fixed memory leak in ISST during window resizing - Erik Greenwald
+* fixed running multiple framebuffer servers concurrently - Bob Parker
+* improvements to the primitive creation menu in archer - Bob Parker
+* fixed crash using bot_split on non-"plate mode" BoTs - Bob Parker
+* improved NURBS curve evaluation for mged brep command - Keith Bowman
+* fixed OpenGL framebuffer Mac refresh bug - Sean Morrison, Bob Parker
+* improved archer object list view - Bob Parker
+
+
+----------------------------------------------------------------------
+--- 2010-04-28  Release 7.16.8                                     ---
+----------------------------------------------------------------------
+
+BRL-CAD's ray tracing support for NURBS boundary representation
+geometry objects continues to be developed towards providing a robust
+foundation for supporting multiple-representation geometry.  This
+release includes several NURBS ray tracing bug fixes, robustness
+improvements, and trimming enhancements.
+
+MGED receives a lot of attention towards improved stability with
+numerous troublesome bugs getting fixed (e.g., "the Mac input bug"),
+restoration of behavior for various introspective commands, and
+continued feature integration with Archer.  MGED's wireframe display
+gets a substantial 5x-10x performance improvement for non-Windows
+platforms while MGED on Windows now supports 64-bit releases and
+restores command-line scripting support.
+
+Archer gets a user interface facelift with the introduction of a new
+geometry browser, list view, buttons, and much more.  As Archer
+approaches feature parity with MGED, it gets closer to an official
+alpha release status as BRL-CAD's next generation geometry editor.
+
+* find correct libpng version on Mac OS X 10.5+ - Sean Morrison
+* fixed bot_dump crash with plate mode BoTs - Bob Parker
+* fixed Mac OS X 10.5+ mouse input/rotation bug in mged - Bob Parker
+* X11 wireframe performance improvements (dm 'X') - Sean Morrison
+* rtarea "-u model" specifies output using local units - Keith Bowman
+* new bot_split command separates BoTs into multiple BoTs - Bob Parker
+* rtarea output provides various common larger units - Keith Bowman
+* rtarea run within mged now displays using local units - Keith Bowman
+* re-enabled archer's embedded image framebuffer - Bob Parker
+* fixed mged and nirt crashes handling whitespace lines - Keith Bowman
+* newly enhanced archer tree view hierarchy visualization - Bob Parker
+* fixed nirt backout bug when origin was ahead of model - Keith Bowman
+* fixed mged bug calling 'units' without a database - Erik Greenwald
+* analyze, cat, dbfind, & 'l' describe selected objects - Cliff Yapp
+* openNURBS updated to version 5.0 (2010-04-09) - Cliff Yapp
+* improvements and bug fixes to NURBS ray tracing - Keith Bowman
+* new button images and tree-view icons within archer - Cliff Yapp
+* html man page viewing in archer - Cliff Yapp
+* archer tree view colorization for selected objects - Bob Parker
+* replacement of tkimg external dependency with tkpng 0.9 - Cliff Yapp
+* libpng upgraded to 1.4.1 - Erik Greenwald
+* fixed crash with solids/regions/idents mged commands - Sean Morrison
+* g-stl and g-egg have new -8 marching cubes option - Erik Greenwald
 * fixed mged bug reading from redirected input on Windows - Bob Parker
 * fixed partition selection bug in rt -k cut plane - John Anderson
 * added NURBS support for transformation matrices - Keith Bowman
@@ -23,7 +78,7 @@ changes made.  See document footer for additional details.
 * fixed mged units bug supporting decameter (Dm) units - Bob Parker
 * improved robustness of NURBS trimming during raytrace - Keith Bowman
 * Improved put_comb command usage and added documentation - Cliff Yapp
-# mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
+* mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
 * Improve behavior of editor invocation in classic mode - Cliff Yapp
 * reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker
@@ -88,7 +143,6 @@ cleanly generated.
 * librt now queries env LIBRT_DEBUG for more flags - Erik Greenwald
 * pixdiff outputs matching pixels at half-intensity - Sean Morrison
 * fixed rate interpolation bug in tabinterp - Emton
-* runtime toggling of display managers - Cliff Yapp
 
 
 ----------------------------------------------------------------------

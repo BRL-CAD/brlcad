@@ -6,7 +6,7 @@
  * Togl - a Tk OpenGL widget
  *
  * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
- * Copyright (C) 2005-2008  Greg Couch
+ * Copyright (C) 2005-2009  Greg Couch
  * See the LICENSE file for copyright details.
  */
 
@@ -74,9 +74,9 @@ extern "C" {
 /* *INDENT-ON* */
 #  endif
 
-#  define TOGL_VERSION "2.0"
+#  define TOGL_VERSION "2.1"
 #  define TOGL_MAJOR_VERSION 2
-#  define TOGL_MINOR_VERSION 0
+#  define TOGL_MINOR_VERSION 1
 
 /* 
  * "Standard" fonts which can be specified to Togl_LoadBitmapFont()
@@ -114,6 +114,7 @@ extern "C" {
 #  define TOGL_STEREO_CROSS_EYE		131
 #  define TOGL_STEREO_WALL_EYE		132
 #  define TOGL_STEREO_DTI		133     /* dti3d.com */
+#  define TOGL_STEREO_ROW_INTERLEAVED	134     /* www.vrex.com/developer/interleave.htm */
 
 struct Togl;
 typedef struct Togl Togl;

@@ -16,6 +16,7 @@ tk \- Manipulate Tk internal state
 .SH SYNOPSIS
 \fBtk\fR \fIoption \fR?\fIarg arg ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 The \fBtk\fR command provides access to miscellaneous
@@ -47,14 +48,7 @@ If sends have been disabled by deleting the \fBsend\fR command,
 this command will reenable them and recreate the \fBsend\fR
 command.
 .TP
-\fBtk busy \fIsubcommand\fR ...
-.
-This command controls the marking of window hierarchies as
-.QW busy ,
-rendering them non-interactive while some other operation is proceeding. For
-more details see the \fBbusy\fR manual page.
-.TP
-\fBtk caret \fIwindow \fR?\fB\-x \fIx\fR? ?\fB\-y \fIy\fR? ?\fB\-height \fIheight\fR?
+\fBtk caret window \fR?\fB\-x \fIx\fR? ?\fB\-y \fIy\fR? ?\fB\-height \fIheight\fR?
 .
 Sets and queries the caret location for the display of the specified
 Tk window \fIwindow\fR.  The caret is the per-display cursor location
@@ -66,35 +60,13 @@ format.  \fI\-x\fR and \fI\-y\fR represent window-relative coordinates, and
 \fI\-height\fR is the height of the current cursor location, or the height
 of the specified \fIwindow\fR if none is given.
 .TP
-\fBtk inactive \fR?\fB\-displayof \fIwindow\fR? ?\fBreset\fR?
-.
-Returns a positive integer, the number of milliseconds since the last
-time the user interacted with the system. If the \fB\-displayof\fR
-option is given then the return value refers to the display of
-\fIwindow\fR; otherwise it refers to the display of the application's
-main window.
-.RS
-.PP
-\fBtk inactive\fR will return \-1, if querying the user inactive time
-is not supported by the system, and in safe interpreters.
-.PP
-If the literal string \fBreset\fR is given as an additional argument,
-the timer is reset and an empty string is returned. Resetting the
-inactivity time is forbidden in safe interpreters and will throw an
-error if tried.
-.RE
-.TP
-\fBtk fontchooser \fIsubcommand\fR ...
-Controls the Tk font selection dialog. For more details see the
-\fBfontchooser\fR manual page.
-.TP
 \fBtk scaling \fR?\fB\-displayof \fIwindow\fR? ?\fInumber\fR?
 .
 Sets and queries the current scaling factor used by Tk to convert between
 physical units (for example, points, inches, or millimeters) and pixels.  The
 \fInumber\fR argument is a floating point number that specifies the number of
 pixels per point on \fIwindow\fR's display.  If the \fIwindow\fR argument is
-omitted, it defaults to the main window.  If the \fInumber\fR argument is
+omitted, it defaults to the main window.  If the \fInumber\fR argument is 
 omitted, the current value of the scaling factor is returned.
 .RS
 .PP
@@ -113,6 +85,24 @@ is undefined whether existing widgets will resize themselves dynamically to
 accommodate the new scaling factor.
 .RE
 .TP
+\fBtk inactive \fR?\fB\-displayof \fIwindow\fR? ?\fBreset\fR?
+.
+Returns a positive integer, the number of milliseconds since the last
+time the user interacted with the system. If the \fB\-displayof\fR
+option is given then the return value refers to the display of
+\fIwindow\fR; otherwise it refers to the display of the application's
+main window.
+.RS
+.PP
+\fBtk inactive\fR will return \-1, if querying the user inactive time
+is not supported by the system, and in safe interpreters.
+.PP
+If the literal string \fBreset\fR is given as an additional argument,
+the timer is reset and an empty string is returned. Resetting the
+inactivity time is forbidden in safe interpreters and will throw and
+error if tried.
+.RE
+.TP
 \fBtk useinputmethods \fR?\fB\-displayof \fIwindow\fR? ?\fIboolean\fR?
 .
 Sets and queries the state of whether Tk should use XIM (X Input Methods)
@@ -129,9 +119,6 @@ Returns the current Tk windowing system, one of
 \fBx11\fR (X11-based), \fBwin32\fR (MS Windows),
 or \fBaqua\fR (Mac OS X Aqua).
 .SH "SEE ALSO"
-busy(n), fontchooser(n), send(n), winfo(n)
+send(n), winfo(n)
 .SH KEYWORDS
 application name, send
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

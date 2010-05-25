@@ -41,8 +41,7 @@ The options described below are supported for all channels. In addition,
 each channel type may add options that only it supports. See the manual
 entry for the command that creates each type of channels for the options
 that that specific type of channel supports. For example, see the manual
-entry for the \fBsocket\fR command for additional options for sockets, and
-the \fBopen\fR command for additional options for serial devices.
+entry for the \fBsocket\fR command for its additional options.
 .TP
 \fB\-blocking\fR \fIboolean\fR
 The \fB\-blocking\fR option determines whether I/O operations on the
@@ -216,17 +215,14 @@ If, for example, a Tcl application is started by the \fBinet\fR
 super-server common on Unix system its Tcl standard channels will be
 sockets and thus support the socket options.
 .SH EXAMPLES
-.PP
 Instruct Tcl to always send output to \fBstdout\fR immediately,
 whether or not it is to a terminal:
-.PP
 .CS
 \fBfconfigure\fR stdout -buffering none
 .CE
 .PP
 Open a socket and read lines from it without ever blocking the
 processing of other events:
-.PP
 .CS
 set s [socket some.where.com 12345]
 \fBfconfigure\fR $s -blocking 0
@@ -247,7 +243,6 @@ proc readMe chan {
 .CE
 .PP
 Read a PPM-format image from a file:
-.PP
 .CS
 # Open the file and put it into Unix ASCII mode
 set f [open teapot.ppm]
@@ -279,13 +274,12 @@ set data [read $f $numDataBytes]
 
 close $f
 .CE
+
 .SH "SEE ALSO"
 close(n), flush(n), gets(n), open(n), puts(n), read(n), socket(n),
 Tcl_StandardChannels(3)
+
 .SH KEYWORDS
 blocking, buffering, carriage return, end of line, flushing, linemode,
 newline, nonblocking, platform, translation, encoding, filter, byte array,
 binary
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

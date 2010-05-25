@@ -69,7 +69,7 @@ test encoding-2.2 {Tcl_FreeEncoding: refcount != 0} {testencoding} {
     encoding dirs [list [pwd]]
     set x [encoding convertto shiftjis \u4e4e]	;# old one found   
     encoding system identity
-    llength shiftjis		;# Shimmer away any cache of Tcl_Encoding
+    llength shiftjis
     lappend x [catch {encoding convertto shiftjis \u4e4e} msg] $msg
     encoding system identity
     encoding dirs $path
@@ -223,7 +223,7 @@ test encoding-11.1 {LoadEncodingFile: unknown encoding} {testencoding} {
     set path [encoding dirs]
     encoding system iso8859-1
     encoding dirs {}
-    llength jis0208	;# Shimmer any cached Tcl_Encoding in shared literal
+    llength jis0208
     set x [list [catch {encoding convertto jis0208 \u4e4e} msg] $msg]
     encoding dirs $path
     encoding system $system
@@ -414,10 +414,9 @@ test encoding-24.2 {EscapeFreeProc on open channels} -constraints {
 } -setup {
     # Bug #524674 output
     set file [makeFile {
-	encoding system cp1252;	# Bug #2891556 crash revelator
 	fconfigure stdout -encoding iso2022-jp
 	puts ab\u4e4e\u68d9g
-	testfinexit
+	exit
     } iso2022.tcl]
 } -body {
     viewable [exec [interpreter] $file]

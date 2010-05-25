@@ -572,7 +572,7 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
  * edges involving the same vertex pair are indeed shared.
  * This means worrying about merging ("meshing") all the faces in the
  * proper radial orientation around the edge.
- * XXX probably should return(count);
+ * XXX probably should return count;
  */
 void
 nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)

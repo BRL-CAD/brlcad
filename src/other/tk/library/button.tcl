@@ -746,10 +746,3 @@ proc ::tk::CheckLeave {w} {
 
     set Priv(window) ""
 }
-
-return
-
-# Local Variables:
-# mode: tcl
-# fill-column: 78
-# End:

@@ -463,12 +463,12 @@ hit_nothing(struct application *ap)
 	bn_tabdata_copy(ap->a_spectrum, u.sw.msw_color);
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	ap->a_uptr = (genptr_t)&env_region;
-	return(1);
+	return 1;
     }
 
     ap->a_user = 0;		/* Signal view_pixel:  MISS */
     background_radiation(ap);	/* In case someone looks */
-    return(0);
+    return 0;
 }
 
 
@@ -491,7 +491,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	if (pp->pt_outhit->hit_dist >= 0.0) break;
     if (pp == PartHeadp) {
 	bu_log("colorview:  no hit out front?\n");
-	return(0);
+	return 0;
     }
     hitp = pp->pt_inhit;
     ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
@@ -640,7 +640,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	       pp->pt_regionp->reg_name);
 	bn_pr_tabdata("a_spectrum", ap->a_spectrum);
     }
-    return(1);
+    return 1;
 }
 
 

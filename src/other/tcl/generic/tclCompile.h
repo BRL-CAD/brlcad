@@ -139,9 +139,6 @@ typedef struct ECL {
 
 typedef struct ExtCmdLoc {
     int type;			/* Context type. */
-    int start;                  /* Starting line for compiled script. Needed
-				 * for the extended recompile check in
-				 * tclCompileObj. */
     Tcl_Obj *path;		/* Path of the sourced file the command is
 				 * in. */
     ECL *loc;			/* Command word locations (lines). */
@@ -185,7 +182,7 @@ typedef void	   (AuxDataPrintProc)(ClientData clientData,
  */
 
 typedef struct AuxDataType {
-    const char *name;		/* The name of the type. Types can be
+    char *name;			/* The name of the type. Types can be
 				 * registered and found by name */
     AuxDataDupProc *dupProc;	/* Callback procedure to invoke when the aux
 				 * data is duplicated (e.g., when the ByteCode
@@ -208,7 +205,7 @@ typedef struct AuxDataType {
  */
 
 typedef struct AuxData {
-    const AuxDataType *type;		/* Pointer to the AuxData type associated with
+    AuxDataType *type;		/* Pointer to the AuxData type associated with
 				 * this ClientData. */
     ClientData clientData;	/* The compilation data itself. */
 } AuxData;
@@ -666,12 +663,8 @@ typedef struct ByteCode {
 #define INST_EXIST_ARRAY_STK		130
 #define INST_EXIST_STK			131
 
-/* For [subst] compilation */
-#define INST_NOP			132
-#define INST_RETURN_CODE_BRANCH		133
-
 /* The last opcode */
-#define LAST_INST_OPCODE		133
+#define LAST_INST_OPCODE		131
 
 /*
  * Table describing the Tcl bytecode instructions: their name (for displaying
@@ -701,7 +694,7 @@ typedef enum InstOperandType {
 } InstOperandType;
 
 typedef struct InstructionDesc {
-    const char *name;	/* Name of instruction. */
+    char *name;			/* Name of instruction. */
     int numBytes;		/* Total number of bytes for instruction. */
     int stackEffect;		/* The worst-case balance stack effect of the
 				 * instruction, used for stack requirements
@@ -713,7 +706,7 @@ typedef struct InstructionDesc {
 				/* The type of each operand. */
 } InstructionDesc;
 
-MODULE_SCOPE InstructionDesc const tclInstructionTable[];
+MODULE_SCOPE InstructionDesc tclInstructionTable[];
 
 /*
  * Compilation of some Tcl constructs such as if commands and the logical or
@@ -803,7 +796,7 @@ typedef struct ForeachInfo {
 				 * LAST FIELD IN THE STRUCTURE! */
 } ForeachInfo;
 
-MODULE_SCOPE const AuxDataType tclForeachInfoType;
+MODULE_SCOPE AuxDataType	tclForeachInfoType;
 
 /*
  * Structure used to hold information about a switch command that is needed
@@ -816,7 +809,7 @@ typedef struct JumptableInfo {
 				 * offsets). */
 } JumptableInfo;
 
-MODULE_SCOPE const AuxDataType tclJumptableInfoType;
+MODULE_SCOPE AuxDataType	tclJumptableInfoType;
 
 /*
  * Structure used to hold information about a [dict update] command that is
@@ -834,7 +827,7 @@ typedef struct {
 				 * STRUCTURE. */
 } DictUpdateInfo;
 
-MODULE_SCOPE const AuxDataType tclDictUpdateInfoType;
+MODULE_SCOPE AuxDataType	tclDictUpdateInfoType;
 
 /*
  * ClientData type used by the math operator commands.
@@ -849,29 +842,22 @@ typedef struct {
     } i;
 } TclOpCmdClientData;
 
-
 /*
  *----------------------------------------------------------------
  * Procedures exported by tclBasic.c to be used within the engine.
  *----------------------------------------------------------------
  */
 
-MODULE_SCOPE Tcl_NRPostProc   NRCallTEBC;
-MODULE_SCOPE Tcl_NRPostProc   NRCommand;
-MODULE_SCOPE Tcl_ObjCmdProc   NRInterpCoroutine;
-
-#define TCL_NR_BC_TYPE         0
-#define TCL_NR_ATEXIT_TYPE     1
-#define TCL_NR_TAILCALL_TYPE   2
-#define TCL_NR_YIELD_TYPE      3
-
+MODULE_SCOPE int	TclEvalObjvInternal(Tcl_Interp *interp,
+			    int objc, Tcl_Obj *const objv[],
+			    CONST char *command, int length, int flags);
 /*
  *----------------------------------------------------------------
  * Procedures exported by the engine to be used by tclBasic.c
  *----------------------------------------------------------------
  */
 
-MODULE_SCOPE ByteCode *	TclCompileObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
+MODULE_SCOPE int	TclCompEvalObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
 			    const CmdFrame *invoker, int word);
 
 /*
@@ -885,26 +871,24 @@ MODULE_SCOPE void	TclCleanupByteCode(ByteCode *codePtr);
 MODULE_SCOPE void	TclCompileCmdWord(Tcl_Interp *interp,
 			    Tcl_Token *tokenPtr, int count,
 			    CompileEnv *envPtr);
-MODULE_SCOPE void	TclCompileExpr(Tcl_Interp *interp, const char *script,
+MODULE_SCOPE void	TclCompileExpr(Tcl_Interp *interp, CONST char *script,
 	                    int numBytes, CompileEnv *envPtr, int optimize);
 MODULE_SCOPE void	TclCompileExprWords(Tcl_Interp *interp,
 			    Tcl_Token *tokenPtr, int numWords,
 			    CompileEnv *envPtr);
 MODULE_SCOPE void	TclCompileScript(Tcl_Interp *interp,
-			    const char *script, int numBytes,
+			    CONST char *script, int numBytes,
 			    CompileEnv *envPtr);
 MODULE_SCOPE void	TclCompileSyntaxError(Tcl_Interp *interp,
 			    CompileEnv *envPtr);
 MODULE_SCOPE void	TclCompileTokens(Tcl_Interp *interp,
 			    Tcl_Token *tokenPtr, int count,
 			    CompileEnv *envPtr);
-MODULE_SCOPE void	TclCompileVarSubst(Tcl_Interp *interp,
-			    Tcl_Token *tokenPtr, CompileEnv *envPtr);
 MODULE_SCOPE int	TclCreateAuxData(ClientData clientData,
-			    const AuxDataType *typePtr, CompileEnv *envPtr);
+			    AuxDataType *typePtr, CompileEnv *envPtr);
 MODULE_SCOPE int	TclCreateExceptRange(ExceptionRangeType type,
 			    CompileEnv *envPtr);
-MODULE_SCOPE ExecEnv *	TclCreateExecEnv(Tcl_Interp *interp, int size);
+MODULE_SCOPE ExecEnv *	TclCreateExecEnv(Tcl_Interp *interp);
 MODULE_SCOPE Tcl_Obj *  TclCreateLiteral(Interp *iPtr, char *bytes,
 	                    int length, unsigned int hash, int *newPtr,
 	                    Namespace *nsPtr, int flags,
@@ -920,8 +904,8 @@ MODULE_SCOPE void	TclExpandJumpFixupArray(JumpFixupArray *fixupArrayPtr);
 MODULE_SCOPE int	TclExecuteByteCode(Tcl_Interp *interp,
 			    ByteCode *codePtr);
 MODULE_SCOPE void	TclFinalizeAuxDataTypeTable(void);
-MODULE_SCOPE int	TclFindCompiledLocal(const char *name, int nameChars,
-			    int create, CompileEnv *envPtr);
+MODULE_SCOPE int	TclFindCompiledLocal(CONST char *name, int nameChars,
+			    int create, Proc *procPtr);
 MODULE_SCOPE LiteralEntry * TclLookupLiteralEntry(Tcl_Interp *interp,
 			    Tcl_Obj *objPtr);
 MODULE_SCOPE int	TclFixupForwardJump(CompileEnv *envPtr,
@@ -935,7 +919,7 @@ MODULE_SCOPE void	TclInitByteCodeObj(Tcl_Obj *objPtr,
 MODULE_SCOPE void	TclInitCompilation(void);
 MODULE_SCOPE void	TclInitCompileEnv(Tcl_Interp *interp,
 			    CompileEnv *envPtr, const char *string,
-			    int numBytes, const CmdFrame* invoker, int word);
+			    int numBytes, CONST CmdFrame* invoker, int word);
 MODULE_SCOPE void	TclInitJumpFixupArray(JumpFixupArray *fixupArrayPtr);
 MODULE_SCOPE void	TclInitLiteralTable(LiteralTable *tablePtr);
 #ifdef TCL_COMPILE_STATS
@@ -947,27 +931,27 @@ MODULE_SCOPE void	TclPrintByteCodeObj(Tcl_Interp *interp,
 			    Tcl_Obj *objPtr);
 #endif
 MODULE_SCOPE int	TclPrintInstruction(ByteCode* codePtr,
-			    const unsigned char *pc);
+			    unsigned char *pc);
 MODULE_SCOPE void	TclPrintObject(FILE *outFile,
 			    Tcl_Obj *objPtr, int maxChars);
 MODULE_SCOPE void	TclPrintSource(FILE *outFile,
-			    const char *string, int maxChars);
-MODULE_SCOPE void	TclRegisterAuxDataType(const AuxDataType *typePtr);
+			    CONST char *string, int maxChars);
+MODULE_SCOPE void	TclRegisterAuxDataType(AuxDataType *typePtr);
 MODULE_SCOPE int	TclRegisterLiteral(CompileEnv *envPtr,
 			    char *bytes, int length, int flags);
 MODULE_SCOPE void	TclReleaseLiteral(Tcl_Interp *interp, Tcl_Obj *objPtr);
 MODULE_SCOPE int	TclSingleOpCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 MODULE_SCOPE int	TclSortingOpCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 MODULE_SCOPE int	TclVariadicOpCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 MODULE_SCOPE int	TclNoIdentOpCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
+			    Tcl_Obj *CONST objv[]);
 #ifdef TCL_COMPILE_DEBUG
 MODULE_SCOPE void	TclVerifyGlobalLiteralTable(Interp *iPtr);
 MODULE_SCOPE void	TclVerifyLocalLiteralTable(CompileEnv *envPtr);
@@ -986,8 +970,8 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 #define LITERAL_NS_SCOPE   0x02
 
 /*
- * Form of TclRegisterLiteral with flags == 0. In that case, it is safe to
- * cast away constness, and it is cleanest to do that here, all in one place.
+ * Form of TclRegisterLiteral with onHeap == 0. In that case, it is safe to
+ * cast away CONSTness, and it is cleanest to do that here, all in one place.
  *
  * int TclRegisterNewLiteral(CompileEnv *envPtr, const char *bytes,
  *			     int length);
@@ -997,8 +981,8 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 	TclRegisterLiteral(envPtr, (char *)(bytes), length, /*flags*/ 0)
 
 /*
- * Form of TclRegisterLiteral with flags == LITERAL_NS_SCOPE. In that case, it is safe to
- * cast away constness, and it is cleanest to do that here, all in one place.
+ * Form of TclRegisterNSLiteral with onHeap == 0. In that case, it is safe to
+ * cast away CONSTness, and it is cleanest to do that here, all in one place.
  *
  * int TclRegisterNewNSLiteral(CompileEnv *envPtr, const char *bytes,
  *			       int length);
@@ -1255,7 +1239,7 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
  * If the second macro is defined, logging to file starts immediately,
  * otherwise only after the first call to [tcl::dtrace]. Note that the debug
  * probe data is always computed, even when it is not logged to file.
- *
+ * 
  * Defining the third macro enables debug logging of inst probes (disabled
  * by default due to the significant performance impact).
  */
@@ -1269,6 +1253,8 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 #if !(defined(TCL_DTRACE_DEBUG) && defined(__GNUC__))
 
 #ifdef USE_DTRACE
+
+#include "tclDTrace.h"
 
 #if defined(__GNUC__) && __GNUC__ > 2
 /* Use gcc branch prediction hint to minimize cost of DTrace ENABLED checks. */
@@ -1287,8 +1273,8 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 #define TCL_DTRACE_PROC_RESULT(a0, a1, a2, a3) TCL_PROC_RESULT(a0, a1, a2, a3)
 #define TCL_DTRACE_PROC_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) \
 	TCL_PROC_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9)
-#define TCL_DTRACE_PROC_INFO(a0, a1, a2, a3, a4, a5, a6, a7) \
-	TCL_PROC_INFO(a0, a1, a2, a3, a4, a5, a6, a7)
+#define TCL_DTRACE_PROC_INFO(a0, a1, a2, a3, a4, a5) \
+	TCL_PROC_INFO(a0, a1, a2, a3, a4, a5)
 
 #define TCL_DTRACE_CMD_ENTRY_ENABLED()	    unlikely(TCL_CMD_ENTRY_ENABLED())
 #define TCL_DTRACE_CMD_RETURN_ENABLED()	    unlikely(TCL_CMD_RETURN_ENABLED())
@@ -1300,8 +1286,8 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 #define TCL_DTRACE_CMD_RESULT(a0, a1, a2, a3) TCL_CMD_RESULT(a0, a1, a2, a3)
 #define TCL_DTRACE_CMD_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) \
 	TCL_CMD_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9)
-#define TCL_DTRACE_CMD_INFO(a0, a1, a2, a3, a4, a5, a6, a7) \
-	TCL_CMD_INFO(a0, a1, a2, a3, a4, a5, a6, a7)
+#define TCL_DTRACE_CMD_INFO(a0, a1, a2, a3, a4, a5) \
+	TCL_CMD_INFO(a0, a1, a2, a3, a4, a5)
 
 #define TCL_DTRACE_INST_START_ENABLED()	    unlikely(TCL_INST_START_ENABLED())
 #define TCL_DTRACE_INST_DONE_ENABLED()	    unlikely(TCL_INST_DONE_ENABLED())
@@ -1314,7 +1300,7 @@ MODULE_SCOPE int	TclWordKnownAtCompileTime(Tcl_Token *tokenPtr,
 
 #define TCL_DTRACE_DEBUG_LOG()
 
-MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, const char **args, int *argsi);
+MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, char **args, int *argsi);
 
 #else /* USE_DTRACE */
 
@@ -1323,11 +1309,11 @@ MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, const char **args, int *argsi);
 #define TCL_DTRACE_PROC_RESULT_ENABLED()    0
 #define TCL_DTRACE_PROC_ARGS_ENABLED()	    0
 #define TCL_DTRACE_PROC_INFO_ENABLED()	    0
-#define TCL_DTRACE_PROC_ENTRY(a0, a1, a2)   {if (a0) {}}
-#define TCL_DTRACE_PROC_RETURN(a0, a1)	    {if (a0) {}}
-#define TCL_DTRACE_PROC_RESULT(a0, a1, a2, a3) {if (a0) {}; if (a3) {}}
+#define TCL_DTRACE_PROC_ENTRY(a0, a1, a2)   {}
+#define TCL_DTRACE_PROC_RETURN(a0, a1)	    {}
+#define TCL_DTRACE_PROC_RESULT(a0, a1, a2, a3) {}
 #define TCL_DTRACE_PROC_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) {}
-#define TCL_DTRACE_PROC_INFO(a0, a1, a2, a3, a4, a5, a6, a7) {}
+#define TCL_DTRACE_PROC_INFO(a0, a1, a2, a3, a4, a5) {}
 
 #define TCL_DTRACE_CMD_ENTRY_ENABLED()	    0
 #define TCL_DTRACE_CMD_RETURN_ENABLED()	    0
@@ -1338,7 +1324,7 @@ MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, const char **args, int *argsi);
 #define TCL_DTRACE_CMD_RETURN(a0, a1)	    {}
 #define TCL_DTRACE_CMD_RESULT(a0, a1, a2, a3) {}
 #define TCL_DTRACE_CMD_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) {}
-#define TCL_DTRACE_CMD_INFO(a0, a1, a2, a3, a4, a5, a6, a7) {}
+#define TCL_DTRACE_CMD_INFO(a0, a1, a2, a3, a4, a5) {}
 
 #define TCL_DTRACE_INST_START_ENABLED()	    0
 #define TCL_DTRACE_INST_DONE_ENABLED()	    0
@@ -1369,7 +1355,7 @@ MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, const char **args, int *argsi);
 MODULE_SCOPE int tclDTraceDebugEnabled, tclDTraceDebugIndent;
 MODULE_SCOPE FILE *tclDTraceDebugLog;
 MODULE_SCOPE void TclDTraceOpenDebugLog(void);
-MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, const char **args, int *argsi);
+MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, char **args, int *argsi);
 
 #define TCL_DTRACE_DEBUG_LOG() \
 	int tclDTraceDebugEnabled = TCL_DTRACE_DEBUG_LOG_ENABLED;\
@@ -1407,9 +1393,9 @@ MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, const char **args, int *argsi);
 #define TCL_DTRACE_PROC_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) \
 	TclDTraceDbgMsg(" | proc-args", "%s %s %s %s %s %s %s %s %s %s", a0, \
 		a1, a2, a3, a4, a5, a6, a7, a8, a9)
-#define TCL_DTRACE_PROC_INFO(a0, a1, a2, a3, a4, a5, a6, a7) \
-	TclDTraceDbgMsg(" | proc-info", "%s %s %s %s %d %d %s %s", a0, a1, \
-		a2, a3, a4, a5, a6, a7)
+#define TCL_DTRACE_PROC_INFO(a0, a1, a2, a3, a4, a5) \
+	TclDTraceDbgMsg(" | proc-info", "%s %s %s %s %d %d", a0, a1, \
+		a2, a3, a4, a5)
 
 #define TCL_DTRACE_CMD_ENTRY_ENABLED()	    1
 #define TCL_DTRACE_CMD_RETURN_ENABLED()	    1
@@ -1427,9 +1413,9 @@ MODULE_SCOPE void TclDTraceInfo(Tcl_Obj *info, const char **args, int *argsi);
 #define TCL_DTRACE_CMD_ARGS(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) \
 	TclDTraceDbgMsg(" | cmd-args", "%s %s %s %s %s %s %s %s %s %s", a0, \
 		a1, a2, a3, a4, a5, a6, a7, a8, a9)
-#define TCL_DTRACE_CMD_INFO(a0, a1, a2, a3, a4, a5, a6, a7) \
-	TclDTraceDbgMsg(" | cmd-info", "%s %s %s %s %d %d %s %s", a0, a1, \
-		a2, a3, a4, a5, a6, a7)
+#define TCL_DTRACE_CMD_INFO(a0, a1, a2, a3, a4, a5) \
+	TclDTraceDbgMsg(" | cmd-info", "%s %s %s %s %d %d", a0, a1, \
+		a2, a3, a4, a5)
 
 #define TCL_DTRACE_INST_START_ENABLED()	    TCL_DTRACE_DEBUG_INST_PROBES
 #define TCL_DTRACE_INST_DONE_ENABLED()	    TCL_DTRACE_DEBUG_INST_PROBES

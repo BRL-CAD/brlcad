@@ -271,6 +271,5 @@ test foreach-10.1 {foreach: [Bug 1671087]} -setup {
 # cleanup
 catch {unset a}
 catch {unset x}
-catch {rename foo {}}
 ::tcltest::cleanupTests
 return

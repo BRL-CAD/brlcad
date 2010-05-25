@@ -36,10 +36,10 @@ Get_vertex_list( vert_de )
 	if ( vertex_root != NULL )
 	{
 	    vertex_root->next = NULL;
-	    return( vertex_root );
+	    return vertex_root;
 	}
 	else
-	    return( (struct iges_vertex_list *)NULL );
+	    return (struct iges_vertex_list *)NULL;
     }
     else
     {
@@ -49,13 +49,13 @@ Get_vertex_list( vert_de )
     }
 
     if ( v_list->vert_de == vert_de )
-	return( v_list );
+	return v_list;
 
     v_list->next = Read_vertex_list( vert_de );
     if ( v_list->next == NULL )
-	return( (struct iges_vertex_list *)NULL );
+	return (struct iges_vertex_list *)NULL;
     else
-	return( v_list->next );
+	return v_list->next;
 
 }
 

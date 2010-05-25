@@ -124,6 +124,18 @@ public:
   */
   ON__UINT32 RandomNumber();
 
+  /*
+  Returns:
+    double in the interval [0.0 and 1.0]
+  */
+  double RandomDouble();
+
+  /*
+  Returns:
+    double in the interval [t0,t1]
+  */
+  double RandomDouble(double t0, double t1);
+
 private:
   struct ON_RANDOM_NUMBER_CONTEXT m_rand_context;
 };

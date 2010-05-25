@@ -37,16 +37,16 @@
 int
 ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    int			i;
-    int			solve[3];
-    fastf_t			pt[3][2];
-    fastf_t			thick, rota, fba;
-    vect_t			norm;
-    fastf_t			ndotv;
+    struct directory *dp;
+    int i;
+    int solve[3];
+    fastf_t pt[3][2];
+    fastf_t thick, rota, fba;
+    vect_t norm;
+    fastf_t ndotv;
     point_t known_pt;
-    struct rt_db_internal	internal;
-    struct rt_arb_internal	*aip;
+    struct rt_db_internal internal;
+    struct rt_arb_internal *aip;
     static const char *usage = "name pX pY pZ rA fbA c X Y c X Y c X Y th";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -99,7 +99,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     norm[2] = sin(fba);
 
     for (i=0; i<3; i++) {
-	switch ( argv[7+3*i][0] ) {
+	switch (argv[7+3*i][0]) {
 	    case 'x':
 		if (norm[0] == 0.0) {
 		    bu_vls_printf(&gedp->ged_result_str, "X not unique in this face\n");
@@ -163,50 +163,50 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     }
     thick *= gedp->ged_wdbp->dbip->dbi_local2base;
 
-    RT_INIT_DB_INTERNAL( &internal );
+    RT_INIT_DB_INTERNAL(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
     internal.idb_meth = &rt_functab[ID_ARB8];
-    internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal" );
+    internal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arb_internal), "rt_arb_internal");
     aip = (struct rt_arb_internal *)internal.idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
     for (i=0; i<8; i++) {
-	VSET( aip->pt[i], 0.0, 0.0, 0.0 );
+	VSET(aip->pt[i], 0.0, 0.0, 0.0);
     }
 
     VSCALE(aip->pt[0], known_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
-    ndotv = VDOT( aip->pt[0], norm );
+    ndotv = VDOT(aip->pt[0], norm);
 
     /* calculate the unknown coordinate for points 2, 3, 4 */
     for (i=0; i<3; i++) {
 	int j;
 	j = i+1;
 
-	switch ( solve[i] ) {
+	switch (solve[i]) {
 	    case X:
 		aip->pt[j][Y] = pt[i][0];
 		aip->pt[j][Z] = pt[i][1];
-		aip->pt[j][X] = ( ndotv
-				  - norm[1] * aip->pt[j][Y]
-				  - norm[2] * aip->pt[j][Z])
+		aip->pt[j][X] = (ndotv
+				 - norm[1] * aip->pt[j][Y]
+				 - norm[2] * aip->pt[j][Z])
 		    / norm[0];
 		break;
 	    case Y:
 		aip->pt[j][X] = pt[i][0];
 		aip->pt[j][Z] = pt[i][1];
-		aip->pt[j][Y] = ( ndotv
-				  - norm[0] * aip->pt[j][X]
-				  - norm[2] * aip->pt[j][Z])
+		aip->pt[j][Y] = (ndotv
+				 - norm[0] * aip->pt[j][X]
+				 - norm[2] * aip->pt[j][Z])
 		    / norm[1];
 		break;
 	    case Z:
 		aip->pt[j][X] = pt[i][0];
 		aip->pt[j][Y] = pt[i][1];
-		aip->pt[j][Z] = ( ndotv
-				  - norm[0] * aip->pt[j][X]
-				  - norm[1] * aip->pt[j][Y])
+		aip->pt[j][Z] = (ndotv
+				 - norm[0] * aip->pt[j][X]
+				 - norm[1] * aip->pt[j][Y])
 		    / norm[2];
 		break;
 
@@ -217,23 +217,23 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
     /* calculate the remaining 4 vertices */
     for (i=0; i<4; i++) {
-	VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
+	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    if ( (dp = db_diradd( gedp->ged_wdbp->dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
-    {
+    dp = db_diradd(gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type);
+    if (dp == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource) < 0)
-    {
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource) < 0) {
 	rt_db_free_internal(&internal);
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting.\n", argv[0]);
     }
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

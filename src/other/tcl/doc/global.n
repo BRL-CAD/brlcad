@@ -14,8 +14,9 @@
 .SH NAME
 global \- Access global variables
 .SH SYNOPSIS
-\fBglobal \fR?\fIvarname ...\fR?
+\fBglobal \fIvarname \fR?\fIvarname ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command has no effect unless executed in the context of a proc body.
@@ -32,9 +33,7 @@ the unqualified name of the global variable, as determined by the
 array element.  An error is returned if the name looks like an array element,
 such as \fBa(b)\fR.
 .SH EXAMPLES
-.PP
 This procedure sets the namespace variable \fI::a::x\fR
-.PP
 .CS
 proc reset {} {
     \fBglobal\fR a::x
@@ -47,14 +46,15 @@ buffer, separated by newlines.  It is useful for situations when you
 want to build a message piece-by-piece (as if with \fBputs\fR) but
 send that full message in a single piece (e.g. over a connection
 opened with \fBsocket\fR or as part of a counted HTTP response).
-.PP
 .CS
 proc accum {string} {
     \fBglobal\fR accumulator
     append accumulator $string \en
 }
 .CE
+
 .SH "SEE ALSO"
 namespace(n), upvar(n), variable(n)
+
 .SH KEYWORDS
 global, namespace, procedure, variable

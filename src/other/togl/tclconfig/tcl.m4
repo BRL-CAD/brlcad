@@ -15,7 +15,7 @@ AC_PREREQ(2.57)
 
 dnl TEA extensions pass us the version of TEA they think they
 dnl are compatible with (must be set in TEA_INIT below)
-dnl TEA_VERSION="3.6"
+dnl TEA_VERSION="3.7"
 
 # Possible values for key variables defined:
 #
@@ -159,8 +159,7 @@ AC_DEFUN([TEA_PATH_TCLCONFIG], [
 
 	if test x"${ac_cv_c_tclconfig}" = x ; then
 	    TCL_BIN_DIR="# no Tcl configs found"
-	    AC_MSG_WARN([Can't find Tcl configuration definitions])
-	    exit 0
+	    AC_MSG_ERROR([Can't find Tcl configuration definitions])
 	else
 	    no_tcl=
 	    TCL_BIN_DIR=${ac_cv_c_tclconfig}
@@ -302,8 +301,7 @@ AC_DEFUN([TEA_PATH_TKCONFIG], [
 
 	if test x"${ac_cv_c_tkconfig}" = x ; then
 	    TK_BIN_DIR="# no Tk configs found"
-	    AC_MSG_WARN([Can't find Tk configuration definitions])
-	    exit 0
+	    AC_MSG_ERROR([Can't find Tk configuration definitions])
 	else
 	    no_tk=
 	    TK_BIN_DIR=${ac_cv_c_tkconfig}
@@ -702,7 +700,7 @@ AC_DEFUN([TEA_ENABLE_THREADS], [
 
 	if test "${TEA_PLATFORM}" != "windows" ; then
 	    # We are always OK on Windows, so check what this platform wants:
-    
+
 	    # USE_THREAD_ALLOC tells us to try the special thread-based
 	    # allocator that significantly reduces lock contention
 	    AC_DEFINE(USE_THREAD_ALLOC, 1,
@@ -1290,8 +1288,10 @@ dnl AC_CHECK_TOOL(AR, ar)
 		PATHTYPE=-w
 		# For information on what debugtype is most useful, see:
 		# http://msdn.microsoft.com/library/en-us/dnvc60/html/gendepdebug.asp
+		# and also
+		# http://msdn2.microsoft.com/en-us/library/y0zzbyt4%28VS.80%29.aspx
 		# This essentially turns it all on.
-		LDFLAGS_DEBUG="-debug:full -debugtype:both -warn:2"
+		LDFLAGS_DEBUG="-debug -debugtype:cv"
 		LDFLAGS_OPTIMIZE="-release"
 		if test "$doWince" != "no" ; then
 		    LDFLAGS_CONSOLE="-link ${lflags}"
@@ -1800,6 +1800,9 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    AS_IF([test $tcl_cv_ld_single_module = yes], [
 		SHLIB_LD="${SHLIB_LD} -Wl,-single_module"
 	    ])
+	    # TEA specific: link shlib with current and compatiblity version flags
+	    vers=`echo ${PACKAGE_VERSION} | sed -e 's/^\([[0-9]]\{1,5\}\)\(\(\.[[0-9]]\{1,3\}\)\{0,2\}\).*$/\1\2/p' -e d`
+	    SHLIB_LD="${SHLIB_LD} -current_version ${vers:-0} -compatibility_version ${vers:-0}"
 	    SHLIB_LD_LIBS='${LIBS}'
 	    SHLIB_SUFFIX=".dylib"
 	    DL_OBJS="tclLoadDyld.o"
@@ -1895,11 +1898,11 @@ dnl AC_CHECK_TOOL(AR, ar)
 	    # Digital OSF/1
 	    SHLIB_CFLAGS=""
 	    AS_IF([test "$SHARED_BUILD" = 1], [
-	        SHLIB_LD="${CC} -shared"
+	        SHLIB_LD='${CC} -shared'
 	    ], [
-	        SHLIB_LD="${CC} -non_shared"
+	        SHLIB_LD='${CC} -non_shared'
 	    ])
-	    SHLIB_LD_LIBS='${LIBS}'
+	    SHLIB_LD_LIBS="${LIBS}"
 	    SHLIB_SUFFIX=".so"
 	    DL_OBJS="tclLoadDl.o"
 	    DL_LIBS=""
@@ -2048,15 +2051,28 @@ dnl AC_CHECK_TOOL(AR, ar)
 		    ])
 		], [AS_IF([test "$arch" = "amd64 i386"], [
 		    AS_IF([test "$GCC" = yes], [
-			AC_MSG_WARN([64bit mode not supported with GCC on $system])
+			case $system in
+			    SunOS-5.1[[1-9]]*|SunOS-5.[[2-9]][[0-9]]*)
+				do64bit_ok=yes
+				CFLAGS="$CFLAGS -m64"
+				LDFLAGS="$LDFLAGS -m64";;
+			    *)
+				AC_MSG_WARN([64bit mode not supported with GCC on $system]);;
+			esac
 		    ], [
 			do64bit_ok=yes
-			CFLAGS="$CFLAGS -xarch=amd64"
-			LDFLAGS="$LDFLAGS -xarch=amd64"
+			case $system in
+			    SunOS-5.1[[1-9]]*|SunOS-5.[[2-9]][[0-9]]*)
+				CFLAGS="$CFLAGS -m64"
+				LDFLAGS="$LDFLAGS -m64";;
+			    *)
+				CFLAGS="$CFLAGS -xarch=amd64"
+				LDFLAGS="$LDFLAGS -xarch=amd64";;
+			esac
 		    ])
 		], [AC_MSG_WARN([64bit mode not supported for $arch])])])
 	    ])
-	    
+
 	    # Note: need the LIBS below, otherwise Tk won't find Tcl's
 	    # symbols when dynamically loaded into tclsh.
 
@@ -2069,15 +2085,21 @@ dnl AC_CHECK_TOOL(AR, ar)
 		CC_SEARCH_FLAGS='-Wl,-R,${LIB_RUNTIME_DIR}'
 		LD_SEARCH_FLAGS=${CC_SEARCH_FLAGS}
 		AS_IF([test "$do64bit_ok" = yes], [
-		    # We need to specify -static-libgcc or we need to
-		    # add the path to the sparv9 libgcc.
-		    # JH: static-libgcc is necessary for core Tcl, but may
-		    # not be necessary for extensions.
-		    SHLIB_LD="$SHLIB_LD -m64 -mcpu=v9 -static-libgcc"
-		    # for finding sparcv9 libgcc, get the regular libgcc
-		    # path, remove so name and append 'sparcv9'
-		    #v9gcclibdir="`gcc -print-file-name=libgcc_s.so` | ..."
-		    #CC_SEARCH_FLAGS="${CC_SEARCH_FLAGS},-R,$v9gcclibdir"
+		    AS_IF([test "$arch" = "sparcv9 sparc"], [
+			# We need to specify -static-libgcc or we need to
+			# add the path to the sparv9 libgcc.
+			# JH: static-libgcc is necessary for core Tcl, but may
+			# not be necessary for extensions.
+			SHLIB_LD="$SHLIB_LD -m64 -mcpu=v9 -static-libgcc"
+			# for finding sparcv9 libgcc, get the regular libgcc
+			# path, remove so name and append 'sparcv9'
+			#v9gcclibdir="`gcc -print-file-name=libgcc_s.so` | ..."
+			#CC_SEARCH_FLAGS="${CC_SEARCH_FLAGS},-R,$v9gcclibdir"
+		    ], [AS_IF([test "$arch" = "amd64 i386"], [
+			# JH: static-libgcc is necessary for core Tcl, but may
+			# not be necessary for extensions.
+			SHLIB_LD="$SHLIB_LD -m64 -static-libgcc"
+		    ])])
 		])
 	    ], [
 		case $system in
@@ -2468,7 +2490,7 @@ AC_DEFUN([TEA_PATH_UNIX_X], [
 	XLIBSW=nope
 	dirs="/usr/unsupported/lib /usr/local/lib /usr/X386/lib /usr/X11R6/lib /usr/X11R5/lib /usr/lib/X11R5 /usr/lib/X11R4 /usr/openwin/lib /usr/X11/lib /usr/sww/X11/lib"
 	for i in $dirs ; do
-	    if test -r $i/libX11.a -o -r $i/libX11.so -o -r $i/libX11.sl; then
+	    if test -r $i/libX11.a -o -r $i/libX11.so -o -r $i/libX11.sl -o -r $i/libX11.dylib; then
 		AC_MSG_RESULT([$i])
 		XLIBSW="-L$i -lX11"
 		x_libraries="$i"
@@ -2740,7 +2762,7 @@ AC_DEFUN([TEA_TCL_LINK_LIBS], [
     fi
     AC_CHECK_FUNC(gethostbyname, , [AC_CHECK_LIB(nsl, gethostbyname,
 	    [LIBS="$LIBS -lnsl"])])
-    
+
     # TEA specific: Don't perform the eval of the libraries here because
     # DL_LIBS won't be set until we call TEA_CONFIG_CFLAGS
 
@@ -2914,7 +2936,7 @@ AC_DEFUN([TEA_TCL_64BIT_FLAGS], [
 AC_DEFUN([TEA_INIT], [
     # TEA extensions pass this us the version of TEA they think they
     # are compatible with.
-    TEA_VERSION="3.6"
+    TEA_VERSION="3.7"
 
     AC_MSG_CHECKING([for correct TEA configuration])
     if test x"${PACKAGE_NAME}" = x ; then
@@ -3493,69 +3515,70 @@ AC_DEFUN([TEA_LIB_SPEC], [
 #
 #	Requires:
 #		TCL_SRC_DIR	Assumes that TEA_LOAD_TCLCONFIG has
-#				 already been called.
+#				already been called.
 #
 # Results:
 #
 #	Substs the following vars:
 #		TCL_TOP_DIR_NATIVE
-#		TCL_GENERIC_DIR_NATIVE
-#		TCL_UNIX_DIR_NATIVE
-#		TCL_WIN_DIR_NATIVE
-#		TCL_BMAP_DIR_NATIVE
-#		TCL_TOOL_DIR_NATIVE
-#		TCL_PLATFORM_DIR_NATIVE
-#		TCL_BIN_DIR_NATIVE
 #		TCL_INCLUDES
 #------------------------------------------------------------------------
 
 AC_DEFUN([TEA_PRIVATE_TCL_HEADERS], [
+    # Allow for --with-tclinclude to take effect and define ${ac_cv_c_tclh}
+    AC_REQUIRE([TEA_PUBLIC_TCL_HEADERS])
     AC_MSG_CHECKING([for Tcl private include files])
 
     TCL_SRC_DIR_NATIVE=`${CYGPATH} ${TCL_SRC_DIR}`
     TCL_TOP_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}\"
-    TCL_GENERIC_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/generic\"
-    TCL_UNIX_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/unix\"
-    TCL_WIN_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/win\"
-    TCL_BMAP_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/bitmaps\"
-    TCL_TOOL_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/tools\"
-    TCL_COMPAT_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/compat\"
 
-    if test "${TEA_PLATFORM}" = "windows"; then
-	TCL_PLATFORM_DIR_NATIVE=${TCL_WIN_DIR_NATIVE}
+    # Check to see if tcl<Plat>Port.h isn't already with the public headers
+    # Don't look for tclInt.h because that resides with tcl.h in the core
+    # sources, but the <plat>Port headers are in a different directory
+    if test "${TEA_PLATFORM}" = "windows" -a \
+	-f "${ac_cv_c_tclh}/tclWinPort.h"; then
+	result="private headers found with public headers"
+    elif test "${TEA_PLATFORM}" = "unix" -a \
+	-f "${ac_cv_c_tclh}/tclUnixPort.h"; then
+	result="private headers found with public headers"
     else
-	TCL_PLATFORM_DIR_NATIVE=${TCL_UNIX_DIR_NATIVE}
-    fi
-    # We want to ensure these are substituted so as not to require
-    # any *_NATIVE vars be defined in the Makefile
-    TCL_INCLUDES="-I${TCL_GENERIC_DIR_NATIVE} -I${TCL_PLATFORM_DIR_NATIVE}"
-    if test "`uname -s`" = "Darwin"; then
-        # If Tcl was built as a framework, attempt to use
-        # the framework's Headers and PrivateHeaders directories
-        case ${TCL_DEFS} in
-	    *TCL_FRAMEWORK*)
-	        if test -d "${TCL_BIN_DIR}/Headers" -a -d "${TCL_BIN_DIR}/PrivateHeaders"; then
-	        TCL_INCLUDES="-I\"${TCL_BIN_DIR}/Headers\" -I\"${TCL_BIN_DIR}/PrivateHeaders\" ${TCL_INCLUDES}"; else
-	        TCL_INCLUDES="${TCL_INCLUDES} ${TCL_INCLUDE_SPEC} `echo "${TCL_INCLUDE_SPEC}" | sed -e 's/Headers/PrivateHeaders/'`"; fi
-	        ;;
-	esac
-    else
-	if test ! -f "${TCL_SRC_DIR}/generic/tclInt.h" ; then
-	    AC_MSG_ERROR([Cannot find private header tclInt.h in ${TCL_SRC_DIR}])
+	TCL_GENERIC_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/generic\"
+	if test "${TEA_PLATFORM}" = "windows"; then
+	    TCL_PLATFORM_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/win\"
+	else
+	    TCL_PLATFORM_DIR_NATIVE=\"${TCL_SRC_DIR_NATIVE}/unix\"
+	fi
+	# Overwrite the previous TCL_INCLUDES as this should capture both
+	# public and private headers in the same set.
+	# We want to ensure these are substituted so as not to require
+	# any *_NATIVE vars be defined in the Makefile
+	TCL_INCLUDES="-I${TCL_GENERIC_DIR_NATIVE} -I${TCL_PLATFORM_DIR_NATIVE}"
+	if test "`uname -s`" = "Darwin"; then
+            # If Tcl was built as a framework, attempt to use
+            # the framework's Headers and PrivateHeaders directories
+            case ${TCL_DEFS} in
+	    	*TCL_FRAMEWORK*)
+		    if test -d "${TCL_BIN_DIR}/Headers" -a \
+			    -d "${TCL_BIN_DIR}/PrivateHeaders"; then
+			TCL_INCLUDES="-I\"${TCL_BIN_DIR}/Headers\" -I\"${TCL_BIN_DIR}/PrivateHeaders\" ${TCL_INCLUDES}"
+		    else
+			TCL_INCLUDES="${TCL_INCLUDES} ${TCL_INCLUDE_SPEC} `echo "${TCL_INCLUDE_SPEC}" | sed -e 's/Headers/PrivateHeaders/'`"
+		    fi
+	            ;;
+	    esac
+	    result="Using ${TCL_INCLUDES}"
+	else
+	    if test ! -f "${TCL_SRC_DIR}/generic/tclInt.h" ; then
+		AC_MSG_ERROR([Cannot find private header tclInt.h in ${TCL_SRC_DIR}])
+	    fi
+	    result="Using srcdir found in tclConfig.sh: ${TCL_SRC_DIR}"
 	fi
     fi
 
-
     AC_SUBST(TCL_TOP_DIR_NATIVE)
-    AC_SUBST(TCL_GENERIC_DIR_NATIVE)
-    AC_SUBST(TCL_UNIX_DIR_NATIVE)
-    AC_SUBST(TCL_WIN_DIR_NATIVE)
-    AC_SUBST(TCL_BMAP_DIR_NATIVE)
-    AC_SUBST(TCL_TOOL_DIR_NATIVE)
-    AC_SUBST(TCL_PLATFORM_DIR_NATIVE)
 
     AC_SUBST(TCL_INCLUDES)
-    AC_MSG_RESULT([Using srcdir found in tclConfig.sh: ${TCL_SRC_DIR}])
+    AC_MSG_RESULT([${result}])
 ])
 
 #------------------------------------------------------------------------
@@ -3668,57 +3691,72 @@ AC_DEFUN([TEA_PUBLIC_TCL_HEADERS], [
 #------------------------------------------------------------------------
 
 AC_DEFUN([TEA_PRIVATE_TK_HEADERS], [
+    # Allow for --with-tkinclude to take effect and define ${ac_cv_c_tkh}
+    AC_REQUIRE([TEA_PUBLIC_TK_HEADERS])
     AC_MSG_CHECKING([for Tk private include files])
 
     TK_SRC_DIR_NATIVE=`${CYGPATH} ${TK_SRC_DIR}`
     TK_TOP_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}\"
-    TK_UNIX_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/unix\"
-    TK_WIN_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/win\"
-    TK_GENERIC_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/generic\"
-    TK_XLIB_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/xlib\"
-    if test "${TEA_PLATFORM}" = "windows"; then
-	TK_PLATFORM_DIR_NATIVE=${TK_WIN_DIR_NATIVE}
+
+    # Check to see if tk<Plat>Port.h isn't already with the public headers
+    # Don't look for tkInt.h because that resides with tk.h in the core
+    # sources, but the <plat>Port headers are in a different directory
+    if test "${TEA_PLATFORM}" = "windows" -a \
+	-f "${ac_cv_c_tkh}/tkWinPort.h"; then
+	result="private headers found with public headers"
+    elif test "${TEA_PLATFORM}" = "unix" -a \
+	-f "${ac_cv_c_tkh}/tkUnixPort.h"; then
+	result="private headers found with public headers"
     else
-	TK_PLATFORM_DIR_NATIVE=${TK_UNIX_DIR_NATIVE}
-    fi
-    # We want to ensure these are substituted so as not to require
-    # any *_NATIVE vars be defined in the Makefile
-    TK_INCLUDES="-I${TK_GENERIC_DIR_NATIVE} -I${TK_PLATFORM_DIR_NATIVE}"
-    # Detect and add ttk subdir
-    if test -d ${TK_SRC_DIR_NATIVE}/generic/ttk; then
-	TK_INCLUDES="${TK_INCLUDES} -I\"${TK_SRC_DIR_NATIVE}/generic/ttk\""
-    fi
-    if test "${TEA_WINDOWINGSYSTEM}" = "win32" \
-	-o "${TEA_WINDOWINGSYSTEM}" = "aqua"; then
-	TK_INCLUDES="${TK_INCLUDES} -I${TK_XLIB_DIR_NATIVE}"
-    fi
-    if test "${TEA_WINDOWINGSYSTEM}" = "aqua"; then
-	TK_INCLUDES="${TK_INCLUDES} -I${TK_SRC_DIR_NATIVE}/macosx"
-    fi
-    if test "`uname -s`" = "Darwin"; then
-        # If Tk was built as a framework, attempt to use
-        # the framework's Headers and PrivateHeaders directories
-        case ${TK_DEFS} in
-	    *TK_FRAMEWORK*)
-	        if test -d "${TK_BIN_DIR}/Headers" -a -d "${TK_BIN_DIR}/PrivateHeaders"; then
-	        TK_INCLUDES="-I\"${TK_BIN_DIR}/Headers\" -I\"${TK_BIN_DIR}/PrivateHeaders\" ${TK_INCLUDES}"; fi
-	        ;;
-	esac
-    else
-	if test ! -f "${TK_SRC_DIR}/generic/tkInt.h" ; then
-	    AC_MSG_ERROR([Cannot find private header tkInt.h in ${TK_SRC_DIR}])
+	TK_GENERIC_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/generic\"
+	TK_XLIB_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/xlib\"
+	if test "${TEA_PLATFORM}" = "windows"; then
+	    TK_PLATFORM_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/win\"
+	else
+	    TK_PLATFORM_DIR_NATIVE=\"${TK_SRC_DIR_NATIVE}/unix\"
+	fi
+	# Overwrite the previous TK_INCLUDES as this should capture both
+	# public and private headers in the same set.
+	# We want to ensure these are substituted so as not to require
+	# any *_NATIVE vars be defined in the Makefile
+	TK_INCLUDES="-I${TK_GENERIC_DIR_NATIVE} -I${TK_PLATFORM_DIR_NATIVE}"
+	# Detect and add ttk subdir
+	if test -d "${TK_SRC_DIR}/generic/ttk"; then
+	   TK_INCLUDES="${TK_INCLUDES} -I\"${TK_SRC_DIR_NATIVE}/generic/ttk\""
+	fi
+	if test "${TEA_WINDOWINGSYSTEM}" != "x11"; then
+	   TK_INCLUDES="${TK_INCLUDES} -I${TK_XLIB_DIR_NATIVE}"
+	fi
+	if test "${TEA_WINDOWINGSYSTEM}" = "aqua"; then
+	   TK_INCLUDES="${TK_INCLUDES} -I\"${TK_SRC_DIR_NATIVE}/macosx\""
+	fi
+	if test "`uname -s`" = "Darwin"; then
+	    # If Tk was built as a framework, attempt to use
+	    # the framework's Headers and PrivateHeaders directories
+	    case ${TK_DEFS} in
+		*TK_FRAMEWORK*)
+			if test -d "${TK_BIN_DIR}/Headers" -a \
+				-d "${TK_BIN_DIR}/PrivateHeaders"; then
+			    TK_INCLUDES="-I\"${TK_BIN_DIR}/Headers\" -I\"${TK_BIN_DIR}/PrivateHeaders\" ${TK_INCLUDES}"
+			else
+			    TK_INCLUDES="${TK_INCLUDES} ${TK_INCLUDE_SPEC} `echo "${TK_INCLUDE_SPEC}" | sed -e 's/Headers/PrivateHeaders/'`"
+			fi
+			;;
+	    esac
+	    result="Using ${TK_INCLUDES}"
+	else
+	    if test ! -f "${TK_SRC_DIR}/generic/tkInt.h" ; then
+	       AC_MSG_ERROR([Cannot find private header tkInt.h in ${TK_SRC_DIR}])
+	    fi
+	    result="Using srcdir found in tkConfig.sh: ${TK_SRC_DIR}"
 	fi
     fi
 
     AC_SUBST(TK_TOP_DIR_NATIVE)
-    AC_SUBST(TK_UNIX_DIR_NATIVE)
-    AC_SUBST(TK_WIN_DIR_NATIVE)
-    AC_SUBST(TK_GENERIC_DIR_NATIVE)
     AC_SUBST(TK_XLIB_DIR_NATIVE)
-    AC_SUBST(TK_PLATFORM_DIR_NATIVE)
 
     AC_SUBST(TK_INCLUDES)
-    AC_MSG_RESULT([Using srcdir found in tkConfig.sh: ${TK_SRC_DIR}])
+    AC_MSG_RESULT([${result}])
 ])
 
 #------------------------------------------------------------------------
@@ -3811,8 +3849,7 @@ AC_DEFUN([TEA_PUBLIC_TK_HEADERS], [
 
     AC_SUBST(TK_INCLUDES)
 
-    if test "${TEA_WINDOWINGSYSTEM}" = "win32" \
-	-o "${TEA_WINDOWINGSYSTEM}" = "aqua"; then
+    if test "${TEA_WINDOWINGSYSTEM}" != "x11"; then
 	# On Windows and Aqua, we need the X compat headers
 	AC_MSG_CHECKING([for X11 header files])
 	if test ! -r "${INCLUDE_DIR_NATIVE}/X11/Xlib.h"; then

@@ -391,8 +391,8 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if (BU_LIST_IS_EMPTY(&(seghead->l)))
-	return(0);
-    return(2);
+	return 0;
+    return 2;
 }
 
 
@@ -422,7 +422,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_ebm_import4: defective strsol record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -455,7 +455,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	vip->lo < 0 || vip->hi > 255) {
 	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip);
-	return(-1);
+	return -1;
     }
 
     /* Apply any modeling transforms to get final matrix */
@@ -473,7 +473,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if ((fp = fopen(vip->file, "rb")) == NULL) {
 	perror(vip->file);
 	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	return(-1);
+	return -1;
     }
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
@@ -496,7 +496,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-    return(0);
+    return 0;
 }
 
 
@@ -516,7 +516,7 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_VOL) return(-1);
+    if (ip->idb_type != ID_VOL) return -1;
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
     vol = *vip;			/* struct copy */
@@ -537,7 +537,7 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bu_strlcpy(rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN);
     bu_vls_free(&str);
 
-    return(0);
+    return 0;
 }
 
 
@@ -594,7 +594,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	vip->lo < 0 || vip->hi > 255) {
 	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip);
-	return(-1);
+	return -1;
     }
 
     /* Apply any modeling transforms to get final matrix */
@@ -612,7 +612,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if ((fp = fopen(vip->file, "rb")) == NULL) {
 	perror(vip->file);
 	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	return(-1);
+	return -1;
     }
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
@@ -635,7 +635,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-    return(0);
+    return 0;
 }
 
 
@@ -654,7 +654,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_VOL) return(-1);
+    if (ip->idb_type != ID_VOL) return -1;
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
     vol = *vip;			/* struct copy */
@@ -672,7 +672,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     bu_strlcpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
 
-    return(0);
+    return 0;
 }
 
 
@@ -807,7 +807,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSCALE(radvec, diam, 0.5);
     stp->st_aradius = stp->st_bradius = MAGNITUDE(radvec);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -930,7 +930,7 @@ rt_vol_free(struct soltab *stp)
 int
 rt_vol_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -938,7 +938,7 @@ rt_vol_class(void)
  * R T _ V O L _ P L O T
  */
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     register struct rt_vol_internal *vip;
     register short x, y, z;
@@ -1028,7 +1028,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    }
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1301,13 +1301,13 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_merge_models(m, m_tmp);
     *r = r_tmp;
 
-    return(0);
+    return 0;
 
  fail:
     nmg_km(m_tmp);
     *r = (struct nmgregion *)NULL;
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1321,7 +1321,7 @@ rt_vol_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

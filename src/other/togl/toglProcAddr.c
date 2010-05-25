@@ -6,7 +6,7 @@
  * Togl - a Tk OpenGL widget
  *
  * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
- * Copyright (C) 2005-2006  Greg Couch
+ * Copyright (C) 2005-2009  Greg Couch
  * See the LICENSE file for copyright details.
  */
 
@@ -31,13 +31,16 @@ Togl_GetProcAddr(const char *funcname)
     return (Togl_FuncPtr) wglGetProcAddress(funcname);
 #elif defined(__APPLE__)
     char    buf[256];
-    NSSymbol nssym = NULL;
 
-    sprintf(buf, "_%.*s", (int) sizeof buf - 1, funcname);
-    if (NSIsSymbolNameDefined(buf))
+    snprintf(buf, sizeof buf - 1, "_%s", funcname);
+    buf[sizeof buf - 1] = '\0';
+    if (NSIsSymbolNameDefined(buf)) {
+        NSSymbol nssym;
+
         nssym = NSLookupAndBindSymbol(buf);
-    if (nssym)
-        return (Togl_FuncPtr) NSAddressOfSymbol(nssym);
+        if (nssym)
+            return (Togl_FuncPtr) NSAddressOfSymbol(nssym);
+    }
     return NULL;
 #else
 #  if defined(TOGL_X11) && defined(GLX_VERSION_1_4)

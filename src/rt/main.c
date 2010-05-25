@@ -50,6 +50,8 @@
 #include "brlcad_version.h"
 
 
+extern void application_init();
+
 extern const char title[];
 extern const char usage[];
 
@@ -65,10 +67,8 @@ mat_t		model2view;
 struct application ap;
 vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
-extern int	width;			/* # of pixels in X */
-extern int	height;			/* # of lines in Y */
 extern int	incr_mode;		/* !0 for incremental resolution */
-extern int	incr_nlevel;		/* number of levels */
+extern size_t	incr_nlevel;		/* number of levels */
 extern int	npsw;			/* number of worker PSWs to run */
 /***** end variables shared with worker() *****/
 
@@ -105,7 +105,7 @@ int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
  *			S I G I N F O _ H A N D L E R
  */
 void
-siginfo_handler(int arg)
+siginfo_handler(int UNUSED(arg))
 {
     report_progress = 1;
 #ifdef SIGUSR1
@@ -150,7 +150,6 @@ int main(int argc, char **argv)
     struct rt_i *rtip = NULL;
     char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
-    void	application_init();
     struct bu_vls	times;
     int i;
 
@@ -241,17 +240,17 @@ int main(int argc, char **argv)
 
     if ( sub_grid_mode ) {
 	/* check that we have a legal subgrid */
-	if ( sub_xmax >= width || sub_ymax >= height ) {
+	if ( (size_t)sub_xmax >= width || (size_t)sub_ymax >= height ) {
 	    fprintf( stderr, "rt: illegal values for subgrid %d,%d,%d,%d\n",
 		     sub_xmin, sub_ymin, sub_xmax, sub_ymax );
-	    fprintf( stderr, "\tFor a %d X %d image, the subgrid must be within 0, 0,%d,%d\n",
-		     width, height, width-1, height-1 );
+	    fprintf( stderr, "\tFor a %lu X %lu image, the subgrid must be within 0, 0,%lu,%lu\n",
+		     (unsigned long)width, (unsigned long)height, (unsigned long)width-1, (unsigned long)height-1 );
 	    return 1;
 	}
     }
 
     if ( incr_mode )  {
-	int x = height;
+	size_t x = height;
 	if ( x < width )  x = width;
 	incr_nlevel = 1;
 	while ( (1<<incr_nlevel) < x )
@@ -259,8 +258,8 @@ int main(int argc, char **argv)
 	height = width = 1<<incr_nlevel;
 	if (rt_verbosity & VERBOSE_INCREMENTAL)
 	    fprintf(stderr,
-		    "incremental resolution, nlevels = %d, width=%d\n",
-		    incr_nlevel, width);
+		    "incremental resolution, nlevels = %d, width=%lu\n",
+		    incr_nlevel, (unsigned long)width);
     }
 
     /*
@@ -389,7 +388,7 @@ int main(int argc, char **argv)
      */
     if ( view_init( &ap, title_file, title_obj, outputfile!=(char *)0, framebuffer!=(char *)0 ) != 0 )  {
 	/* Framebuffer is desired */
-	register int xx, yy;
+	size_t xx, yy;
 	int	zoom;
 
 	/* Ask for a fb big enough to hold the image, at least 512. */
@@ -409,13 +408,13 @@ int main(int argc, char **argv)
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	/* If fb came out smaller than requested, do less work */
-	if ( fb_getwidth(fbp) < width )  width = fb_getwidth(fbp);
-	if ( fb_getheight(fbp) < height )  height = fb_getheight(fbp);
+	if ( (size_t)fb_getwidth(fbp) < width )  width = fb_getwidth(fbp);
+	if ( (size_t)fb_getheight(fbp) < height )  height = fb_getheight(fbp);
 
 	/* If the fb is lots bigger (>= 2X), zoom up & center */
 	if ( width > 0 && height > 0 )  {
 	    zoom = fb_getwidth(fbp)/width;
-	    if ( fb_getheight(fbp)/height < zoom )
+	    if ( (size_t)fb_getheight(fbp)/height < zoom )
 		zoom = fb_getheight(fbp)/height;
 	} else {
 	    zoom = 1;
@@ -495,7 +494,7 @@ int main(int argc, char **argv)
 	fb_close(fbp);
     }
 
-    return(0);
+    return 0;
 }
 
 /*

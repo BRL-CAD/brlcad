@@ -23,23 +23,20 @@
  *
  * Tesselation/facetization routines for the metaball primitive.
  *
- *
- *
- *
  * Here be magic.
  *
  *
  *              4
- *        4-----------5   
- *      7/|         5/|
- *      / |   6     / |
- *     7-----------6  |9
- *     |  |8       |  |
- *     |  |   0  10|  |
- *   11|  0--------|--1
+ *        4-----------5
+ *      8/|         9/|
+ *      / |   0     / |
+ *     0-----------1  |5
+ *     |  |7       |  |
+ *     |  |   6   1|  |
+ *    3|  7--------|--6
  *     | /         | /
- *     |/3         |/1
- *     3-----------2 
+ *     |/11        |/10
+ *     3-----------2
  *          2
  */
 /** @} */
@@ -171,6 +168,8 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     nmg_mark_edges_real(&s->l.magic);
     nmg_region_a(*r, tol);
+
+    nmg_model_fuse(m, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));

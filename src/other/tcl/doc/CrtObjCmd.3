@@ -90,15 +90,13 @@ the process of being deleted, then it does not create a new command
 and it returns NULL.
 \fIproc\fR should have arguments and result that match the type
 \fBTcl_ObjCmdProc\fR:
-.PP
 .CS
-typedef int \fBTcl_ObjCmdProc\fR(
+typedef int Tcl_ObjCmdProc(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         int \fIobjc\fR,
         Tcl_Obj *const \fIobjv\fR[]);
 .CE
-.PP
 When \fIproc\fR is invoked, the \fIclientData\fR and \fIinterp\fR parameters
 will be copies of the \fIclientData\fR and \fIinterp\fR arguments given to
 \fBTcl_CreateObjCommand\fR.  Typically, \fIclientData\fR points to an
@@ -163,12 +161,10 @@ or by replacing \fIname\fR in another call to \fBTcl_CreateObjCommand\fR.
 application an opportunity to release any structures associated
 with the command.  \fIDeleteProc\fR should have arguments and
 result that match the type \fBTcl_CmdDeleteProc\fR:
-.PP
 .CS
-typedef void \fBTcl_CmdDeleteProc\fR(
+typedef void Tcl_CmdDeleteProc(
         ClientData \fIclientData\fR);
 .CE
-.PP
 The \fIclientData\fR argument will be the same as the \fIclientData\fR
 argument passed to \fBTcl_CreateObjCommand\fR.
 .PP
@@ -203,7 +199,6 @@ Otherwise it places information about the command
 in the \fBTcl_CmdInfo\fR structure
 pointed to by \fIinfoPtr\fR and returns 1.
 A \fBTcl_CmdInfo\fR structure has the following fields:
-.PP
 .CS
 typedef struct Tcl_CmdInfo {
     int \fIisNativeObjectProc\fR;
@@ -214,9 +209,8 @@ typedef struct Tcl_CmdInfo {
     Tcl_CmdDeleteProc *\fIdeleteProc\fR;
     ClientData \fIdeleteData\fR;
     Tcl_Namespace *\fInamespacePtr\fR;
-} \fBTcl_CmdInfo\fR;
+} Tcl_CmdInfo;
 .CE
-.PP
 The \fIisNativeObjectProc\fR field has the value 1
 if \fBTcl_CreateObjCommand\fR was called to register the command;
 it is 0 if only \fBTcl_CreateCommand\fR was called.
@@ -299,6 +293,7 @@ specified by the name in a \fBTcl_Obj\fR.
 The command name is resolved relative to the current namespace.
 Returns NULL if the command is not found.
 .SH "SEE ALSO"
-Tcl_CreateCommand(3), Tcl_ResetResult(3), Tcl_SetObjResult(3)
+Tcl_CreateCommand, Tcl_ResetResult, Tcl_SetObjResult
+
 .SH KEYWORDS
 bind, command, create, delete, namespace, object

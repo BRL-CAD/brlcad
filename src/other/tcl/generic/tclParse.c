@@ -12,6 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
+ * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -893,21 +894,21 @@ TclParseBackslash(
 	 */
 
 	if (isdigit(UCHAR(*p)) && (UCHAR(*p) < '8')) {	/* INTL: digit */
-	    result = UCHAR(*p - '0');
+	    result = (unsigned char)(*p - '0');
 	    p++;
 	    if ((numBytes == 2) || !isdigit(UCHAR(*p))	/* INTL: digit */
 		    || (UCHAR(*p) >= '8')) {
 		break;
 	    }
 	    count = 3;
-	    result = UCHAR((result << 3) + (*p - '0'));
+	    result = (unsigned char)((result << 3) + (*p - '0'));
 	    p++;
 	    if ((numBytes == 3) || !isdigit(UCHAR(*p))	/* INTL: digit */
 		    || (UCHAR(*p) >= '8')) {
 		break;
 	    }
 	    count = 4;
-	    result = UCHAR((result << 3) + (*p - '0'));
+	    result = (unsigned char)((result << 3) + (*p - '0'));
 	    break;
 	}
 
@@ -1865,41 +1866,33 @@ Tcl_ParseQuotedString(
 /*
  *----------------------------------------------------------------------
  *
- * TclSubstParse --
+ * Tcl_SubstObj --
  *
- *	Token parser used by the [subst] command.  Parses the string made
- *	up of 'numBytes' bytes starting at 'bytes'.  Parsing is controlled
- *	by the flags argument to provide support for the -nobackslashes,
- *	-nocommands, and -novariables options, as represented by the flag
- * 	values TCL_SUBST_BACKSLASHES, TCL_SUBST_COMMANDS, TCL_SUBST_VARIABLES.
- *	
+ *	This function performs the substitutions specified on the given string
+ *	as described in the user documentation for the "subst" Tcl command.
+ *
  * Results:
- *	None.
+ *	A Tcl_Obj* containing the substituted string, or NULL to indicate that
+ *	an error occurred.
  *
  * Side effects:
- *	The Tcl_Parse struct '*parsePtr' is filled with parse results.
- *	The caller is expected to eventually call Tcl_FreeParse() to
- *	properly cleanup the value written there.
- *	If a parse error occurs, the Tcl_InterpState value '*statePtr'
- *	is filled with the state created by that error.  When *statePtr
- *	is written to, the caller is expected to make the required calls
- *	to either Tcl_RestoreInterpState() or Tcl_DiscardInterpState()
- *	to dispose of the value written there.
+ *	See the user documentation.
  *
  *----------------------------------------------------------------------
  */
 
-void
-TclSubstParse(
-    Tcl_Interp *interp,
-    const char *bytes,
-    int numBytes,
-    int flags,
-    Tcl_Parse *parsePtr,
-    Tcl_InterpState *statePtr)
+Tcl_Obj *
+Tcl_SubstObj(
+    Tcl_Interp *interp,		/* Interpreter in which substitution occurs */
+    Tcl_Obj *objPtr,		/* The value to be substituted. */
+    int flags)			/* What substitutions to do. */
 {
-    int length = numBytes;
-    const char *p = bytes;
+    int length, tokensLeft, code;
+    Tcl_Token *endTokenPtr;
+    Tcl_Obj *result, *errMsg = NULL;
+    const char *p = TclGetStringFromObj(objPtr, &length);
+    Tcl_Parse *parsePtr = (Tcl_Parse *)
+	    TclStackAlloc(interp, sizeof(Tcl_Parse));
 
     TclParseInit(interp, p, length, parsePtr);
 
@@ -1911,11 +1904,12 @@ TclSubstParse(
 
     if (TCL_OK != ParseTokens(p, length, /* mask */ 0, flags, parsePtr)) {
 	/*
-	 * There was a parse error. Save the interpreter state for possible
-	 * error reporting later.
+	 * There was a parse error. Save the error message for possible
+	 * reporting later.
 	 */
 
-	*statePtr = Tcl_SaveInterpState(interp, TCL_ERROR);
+	errMsg = Tcl_GetObjResult(interp);
+	Tcl_IncrRefCount(errMsg);
 
 	/*
 	 * We need to re-parse to get the portion of the string we can [subst]
@@ -1981,10 +1975,10 @@ TclSubstParse(
 			parsePtr->tokenPtr + parsePtr->numTokens - 2;
 
 		if (varTokenPtr->type != TCL_TOKEN_VARIABLE) {
-		    Tcl_Panic("TclSubstParse: programming error");
+		    Tcl_Panic("Tcl_SubstObj: programming error");
 		}
 		if (varTokenPtr[1].type != TCL_TOKEN_TEXT) {
-		    Tcl_Panic("TclSubstParse: programming error");
+		    Tcl_Panic("Tcl_SubstObj: programming error");
 		}
 		parsePtr->numTokens -= 2;
 	    }
@@ -2058,8 +2052,63 @@ TclSubstParse(
 	    break;
 
 	default:
-	    Tcl_Panic("bad parse in TclSubstParse: %c", p[length]);
+	    Tcl_Panic("bad parse in Tcl_SubstObj: %c", p[length]);
 	}
+    }
+
+    /*
+     * Next, substitute the parsed tokens just as in normal Tcl evaluation.
+     */
+
+    endTokenPtr = parsePtr->tokenPtr + parsePtr->numTokens;
+    tokensLeft = parsePtr->numTokens;
+    code = TclSubstTokens(interp, endTokenPtr - tokensLeft, tokensLeft,
+	    &tokensLeft, 1, NULL, NULL);
+    if (code == TCL_OK) {
+	Tcl_FreeParse(parsePtr);
+	TclStackFree(interp, parsePtr);
+	if (errMsg != NULL) {
+	    Tcl_SetObjResult(interp, errMsg);
+	    Tcl_DecrRefCount(errMsg);
+	    return NULL;
+	}
+	return Tcl_GetObjResult(interp);
+    }
+
+    result = Tcl_NewObj();
+    while (1) {
+	switch (code) {
+	case TCL_ERROR:
+	    Tcl_FreeParse(parsePtr);
+	    TclStackFree(interp, parsePtr);
+	    Tcl_DecrRefCount(result);
+	    if (errMsg != NULL) {
+		Tcl_DecrRefCount(errMsg);
+	    }
+	    return NULL;
+	case TCL_BREAK:
+	    tokensLeft = 0;		/* Halt substitution */
+	default:
+	    Tcl_AppendObjToObj(result, Tcl_GetObjResult(interp));
+	}
+
+	if (tokensLeft == 0) {
+	    Tcl_FreeParse(parsePtr);
+	    TclStackFree(interp, parsePtr);
+	    if (errMsg != NULL) {
+		if (code != TCL_BREAK) {
+		    Tcl_DecrRefCount(result);
+		    Tcl_SetObjResult(interp, errMsg);
+		    Tcl_DecrRefCount(errMsg);
+		    return NULL;
+		}
+		Tcl_DecrRefCount(errMsg);
+	    }
+	    return result;
+	}
+
+	code = TclSubstTokens(interp, endTokenPtr - tokensLeft, tokensLeft,
+		&tokensLeft, 1, NULL, NULL);
     }
 }
 
@@ -2099,7 +2148,7 @@ TclSubstTokens(
 				 * left to be substituted will be written */
     int line,			/* The line the script starts on. */
     int*  clNextOuter,       /* Information about an outer context for */
-    const char* outerScript) /* continuation line data. This is set by
+    CONST char* outerScript) /* continuation line data. This is set by
 			      * EvalEx() to properly handle [...]-nested
 			      * commands. The 'outerScript' refers to the
 			      * most-outer script containing the embedded
@@ -2119,7 +2168,7 @@ TclSubstTokens(
     int code = TCL_OK;
 #define NUM_STATIC_POS 20
     int isLiteral, maxNumCL, numCL, i, adjust;
-    int *clPosition = NULL;
+    int* clPosition = NULL;
     Interp* iPtr = (Interp*) interp;
     int inFile = iPtr->evalFlags & TCL_EVAL_FILE;
 
@@ -2175,7 +2224,6 @@ TclSubstTokens(
 	    appendByteLength = Tcl_UtfBackslash(tokenPtr->start, NULL,
 		    utfCharBytes);
 	    append = utfCharBytes;
-
 	    /*
 	     * If the backslash sequence we found is in a literal, and
 	     * represented a continuation line, we compute and store its
@@ -2214,10 +2262,11 @@ TclSubstTokens(
 	    break;
 
 	case TCL_TOKEN_COMMAND: {
-	    /* TIP #280: Transfer line information to nested command */
- 	    iPtr->numLevels++;
-  	    code = TclInterpReady(interp);
-  	    if (code == TCL_OK) {
+	    Interp *iPtr = (Interp *) interp;
+
+	    iPtr->numLevels++;
+	    code = TclInterpReady(interp);
+	    if (code == TCL_OK) {
 		/*
 		 * Test cases: info-30.{6,8,9}
 		 */
@@ -2226,12 +2275,9 @@ TclSubstTokens(
 		TclAdvanceContinuations (&line, &clNextOuter,
 					 tokenPtr->start - outerScript);
 		theline = line + adjust;
+		/* TIP #280: Transfer line information to nested command */
 		code = TclEvalEx(interp, tokenPtr->start+1, tokenPtr->size-2,
 			0, theline, clNextOuter, outerScript);
-
-		TclAdvanceLines(&line, tokenPtr->start+1,
-			tokenPtr->start + tokenPtr->size - 1);
-
 		/*
 		 * Restore flag reset by nested eval for future bracketed
 		 * commands and their cmdframe setup
@@ -2241,7 +2287,6 @@ TclSubstTokens(
 		}
 	    }
 	    iPtr->numLevels--;
-	    TclResetCancellation(interp, 0);
 	    appendObj = Tcl_GetObjResult(interp);
 	    break;
 	}

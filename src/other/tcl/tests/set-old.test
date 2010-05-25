@@ -206,7 +206,7 @@ test set-old-7.2 {unset command} {
     list [catch {unset} msg] $msg
 } {0 {}}
 # Used to return:
-#{1 {wrong # args: should be "unset ?-nocomplain? ?--? ?varName ...?"}}
+#{1 {wrong # args: should be "unset ?-nocomplain? ?--? ?varName varName ...?"}}
 test set-old-7.3 {unset command} {
     catch {unset a}
     list [catch {unset a} msg] $msg
@@ -913,7 +913,6 @@ catch {unset a}
 catch {unset b}
 catch {unset c}
 catch {unset aVaRnAmE}
-catch {rename foo {}}
 
 # cleanup
 ::tcltest::cleanupTests

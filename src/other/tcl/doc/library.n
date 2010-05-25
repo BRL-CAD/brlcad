@@ -10,13 +10,14 @@
 .TH library n "8.0" Tcl "Tcl Built-In Commands"
 .BS
 .SH NAME
-auto_execok, auto_import, auto_load, auto_mkindex, auto_qualify, auto_reset, tcl_findLibrary, parray, tcl_endOfWord, tcl_startOfNextWord, tcl_startOfPreviousWord, tcl_wordBreakAfter, tcl_wordBreakBefore \- standard library of Tcl procedures
+auto_execok, auto_import, auto_load, auto_mkindex, auto_mkindex_old, auto_qualify, auto_reset, tcl_findLibrary, parray, tcl_endOfWord, tcl_startOfNextWord, tcl_startOfPreviousWord, tcl_wordBreakAfter, tcl_wordBreakBefore \- standard library of Tcl procedures
 .SH SYNOPSIS
 .nf
 \fBauto_execok \fIcmd\fR
 \fBauto_import \fIpattern\fR
 \fBauto_load \fIcmd\fR
 \fBauto_mkindex \fIdir pattern pattern ...\fR
+\fBauto_mkindex_old \fIdir pattern pattern ...\fR
 \fBauto_qualify \fIcommand namespace\fR
 \fBauto_reset\fR
 \fBtcl_findLibrary \fIbasename version patch initScript enVarName varName\fR
@@ -39,16 +40,14 @@ its own library of support procedures as well;  the location of this
 library is normally given by the value of the \fB$\fIapp\fB_library\fR
 global variable, where \fIapp\fR is the name of the application.
 For example, the location of the Tk library is kept in the variable
-\fBtk_library\fR.
+\fB$tk_library\fR.
 .PP
 To access the procedures in the Tcl library, an application should
 source the file \fBinit.tcl\fR in the library, for example with
 the Tcl command
-.PP
 .CS
 \fBsource [file join [info library] init.tcl]\fR
 .CE
-.PP
 If the library procedure \fBTcl_Init\fR is invoked from an application's
 \fBTcl_AppInit\fR procedure, this happens automatically.
 The code in \fBinit.tcl\fR will define the \fBunknown\fR procedure
@@ -85,8 +84,8 @@ matching rules of \fBnamespace import\fR.
 This command attempts to load the definition for a Tcl command named
 \fIcmd\fR.  To do this, it searches an \fIauto-load path\fR, which is
 a list of one or more directories.  The auto-load path is given by the
-global variable \fBauto_path\fR if it exists.  If there is no
-\fBauto_path\fR variable, then the TCLLIBPATH environment variable is
+global variable \fB$auto_path\fR if it exists.  If there is no
+\fB$auto_path\fR variable, then the TCLLIBPATH environment variable is
 used, if it exists.  Otherwise the auto-load path consists of just the
 Tcl library directory.  Within each directory in the auto-load path
 there must be a file \fBtclIndex\fR that describes one or more
@@ -107,7 +106,6 @@ cached index information may be deleted with the command
 reload the index database from disk.
 .TP
 \fBauto_mkindex \fIdir pattern pattern ...\fR
-.
 Generates an index suitable for use by \fBauto_load\fR.  The command
 searches \fIdir\fR for all files whose names match any of the
 \fIpattern\fR arguments (matching is done with the \fBglob\fR
@@ -116,11 +114,10 @@ in all the matching files, and stores the index information in a file
 named \fBtclIndex\fR in \fIdir\fR. If no pattern is given a pattern of
 \fB*.tcl\fR will be assumed.  For example, the command
 .RS
-.PP
 .CS
 \fBauto_mkindex foo *.tcl\fR
 .CE
-.PP
+.LP
 will read all the \fB.tcl\fR files in subdirectory \fBfoo\fR and
 generate a new index file \fBfoo/tclIndex\fR.
 .PP
@@ -131,25 +128,21 @@ auto_mkindex_parser package to register other commands that can
 contribute to the auto_load index. You will have to read through
 auto.tcl to see how this works.
 .PP
-\fBAuto_mkindex_old\fR
-(which has the same syntax as \fBauto_mkindex\fR)
-parses the Tcl scripts in a relatively
-unsophisticated way:  if any line contains the word
-.QW \fBproc\fR
+\fBAuto_mkindex_old\fR parses the Tcl scripts in a relatively
+unsophisticated way:  if any line contains the word \fBproc\fR
 as its first characters then it is assumed to be a procedure
 definition and the next word of the line is taken as the
 procedure's name.
-Procedure definitions that do not appear in this way (e.g.\ they
+Procedure definitions that do not appear in this way (e.g. they
 have spaces before the \fBproc\fR) will not be indexed.  If your 
 script contains
 .QW dangerous
 code, such as global initialization
 code or procedure names with special characters like \fB$\fR,
-\fB*\fR, \fB[\fR or \fB]\fR, you are safer using \fBauto_mkindex_old\fR.
+\fB*\fR, \fB[\fR or \fB]\fR, you are safer using auto_mkindex_old.
 .RE
 .TP
 \fBauto_reset\fR
-.
 Destroys all the information cached by \fBauto_execok\fR and
 \fBauto_load\fR.  This information will be re-read from disk the next
 time it is needed.  \fBAuto_reset\fR also deletes any procedures
@@ -200,7 +193,7 @@ relative to the executable file in a parallel build tree.
 \fBparray \fIarrayName\fR
 Prints on standard output the names and values of all the elements
 in the array \fIarrayName\fR.
-\fIArrayName\fR must be an array accessible to the caller of \fBparray\fR.
+\fBArrayName\fR must be an array accessible to the caller of \fBparray\fR.
 It may be either local or global.
 .TP
 \fBtcl_endOfWord \fIstr start\fR
@@ -242,9 +235,7 @@ boundary.
 .SH "VARIABLES"
 .PP
 The following global variables are defined or used by the procedures in
-the Tcl library. They fall into two broad classes, handling unknown
-commands and packages, and determining what are words.
-.SS "AUTOLOADING AND PACKAGE MANAGEMENT VARIABLES"
+the Tcl library:
 .TP
 \fBauto_execs\fR
 Used by \fBauto_execok\fR to record information about whether
@@ -266,10 +257,10 @@ any commands.
 If set, then it must contain a valid Tcl list giving directories to
 search during auto-load operations.
 This variable is initialized during startup to contain, in order:
-the directories listed in the \fBTCLLIBPATH\fR environment variable,
-the directory named by the \fBtcl_library\fR variable,
-the parent directory of \fBtcl_library\fR,
-the directories listed in the \fBtcl_pkgPath\fR variable.
+the directories listed in the TCLLIBPATH environment variable,
+the directory named by the $tcl_library variable,
+the parent directory of $tcl_library,
+the directories listed in the $tcl_pkgPath variable.
 .TP
 \fBenv(TCL_LIBRARY)\fR
 If set, then it specifies the location of the directory containing
@@ -285,10 +276,6 @@ Tcl format, using
 .QW /
 as the path separator, regardless of platform.
 This variable is only used when initializing the \fBauto_path\fR variable.
-.SS "WORD BOUNDARY DETERMINATION VARIABLES"
-These variables are only used in the \fBtcl_endOfWord\fR,
-\fBtcl_startOfNextWord\fR, \fBtcl_startOfPreviousWord\fR,
-\fBtcl_wordBreakAfter\fR, and \fBtcl_wordBreakBefore\fR commands.
 .TP
 \fBtcl_nonwordchars\fR
 This variable contains a regular expression that is used by routines
@@ -307,9 +294,6 @@ considered to be a word character.  On Windows platforms, words are
 comprised of any character that is not a space, tab, or newline.  Under
 Unix, words are comprised of numbers, letters or underscores.
 .SH "SEE ALSO"
-info(n), re_syntax(n), tclvars(n)
+info(n), re_syntax(n)
 .SH KEYWORDS
 auto-exec, auto-load, library, unknown, word, whitespace 
-'\"Local Variables:
-'\"mode: nroff
-'\"End:

@@ -32,6 +32,9 @@
 #include "vmath.h"
 
 
+extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *);
+
+
 HIDDEN unsigned char *
 pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
@@ -705,8 +708,6 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
     }
 
     if (scale > 0) {
-	extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *);
-
 	/* set local database */
 	db.idb_magic = RT_DB_INTERNAL_MAGIC;
 	db.idb_major_type = ID_ELL;

@@ -98,7 +98,7 @@ cmpdirname(const genptr_t a, const genptr_t b)
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
-    return(strcmp((*dp1)->d_namep, (*dp2)->d_namep));
+    return strcmp((*dp1)->d_namep, (*dp2)->d_namep);
 }
 
 
@@ -119,7 +119,7 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)())cmpdirname);
+	  (int (*)(const void *, const void *))cmpdirname);
 
     /*
      * Traverse the list of names, find the longest name and set the
@@ -206,7 +206,7 @@ vls_long_dpp(
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)())cmpdirname);
+	  (int (*)(const void *, const void *))cmpdirname);
 
     for (i=0; i<num_in_list; i++) {
 	size_t len;
@@ -291,7 +291,7 @@ vls_line_dpp(
 
     qsort((genptr_t)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)())cmpdirname);
+	  (int (*)(const void *, const void *))cmpdirname);
 
     /*
      * i - tracks the list item

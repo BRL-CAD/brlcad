@@ -107,7 +107,6 @@ command.
 When a new label is created, it has no default event bindings:
 labels are not intended to be interactive.
 .SH EXAMPLE
-.PP
 .CS
 # Make the widgets
 \fBlabel\fR .t \-text "This widget is at the top"    \-bg red
@@ -127,6 +126,3 @@ pack .mid \-expand 1    \-fill both
 labelframe(n), button(n), ttk::label(n)
 .SH KEYWORDS
 label, widget
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

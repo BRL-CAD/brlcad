@@ -161,7 +161,7 @@ proc ::tk::MotifFDialog_FileTypes {w} {
     set initialTypeName [lindex $data(-filetypes) 0 0]
     if {$data(-typevariable) ne ""} {
 	upvar #0 $data(-typevariable) typeVariable
-	if {[info exists typeVariable]} {
+	if {[info exist typeVariable]} {
 	    set initialTypeName $typeVariable
 	}
     }

@@ -17,10 +17,7 @@ wm title $w "File Selection Dialogs"
 wm iconname $w "filebox"
 positionWindow $w
 
-ttk::frame $w._bg
-place $w._bg -x 0 -y 0 -relwidth 1 -relheight 1
-
-ttk::label $w.msg -font $font -wraplength 4i -justify left -text "Enter a file name in the entry box or click on the \"Browse\" buttons to select a file name using the file selection dialog."
+label $w.msg -font $font -wraplength 4i -justify left -text "Enter a file name in the entry box or click on the \"Browse\" buttons to select a file name using the file selection dialog."
 pack $w.msg -side top
 
 ## See Code / Dismiss buttons
@@ -28,10 +25,10 @@ set btns [addSeeDismiss $w.buttons $w]
 pack $btns -side bottom -fill x
 
 foreach i {open save} {
-    set f [ttk::frame $w.$i]
-    ttk::label $f.lab -text "Select a file to $i: " -anchor e
-    ttk::entry $f.ent -width 20
-    ttk::button $f.but -text "Browse ..." -command "fileDialog $w $f.ent $i"
+    set f [frame $w.$i]
+    label $f.lab -text "Select a file to $i: " -anchor e
+    entry $f.ent -width 20
+    button $f.but -text "Browse ..." -command "fileDialog $w $f.ent $i"
     pack $f.lab -side left
     pack $f.ent -side left -expand yes -fill x
     pack $f.but -side left
@@ -39,7 +36,7 @@ foreach i {open save} {
 }
 
 if {[tk windowingsystem] eq "x11"} {
-    ttk::checkbutton $w.strict -text "Use Motif Style Dialog" \
+    checkbutton $w.strict -text "Use Motif Style Dialog" \
 	-variable tk_strictMotif -onvalue 1 -offvalue 0
     pack $w.strict -anchor c
 

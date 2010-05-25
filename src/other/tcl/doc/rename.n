@@ -16,6 +16,7 @@ rename \- Rename or delete a command
 .SH SYNOPSIS
 \fBrename \fIoldName newName\fR
 .BE
+
 .SH DESCRIPTION
 .PP
 Rename the command that used to be called \fIoldName\fR so that it
@@ -27,11 +28,9 @@ If a command is renamed into a different namespace,
 future invocations of it will execute in the new namespace.
 The \fBrename\fR command returns an empty string as result.
 .SH EXAMPLE
-.PP
 The \fBrename\fR command can be used to wrap the standard Tcl commands
 with your own monitoring machinery.  For example, you might wish to
 count how often the \fBsource\fR command is called:
-.PP
 .CS
 \fBrename\fR ::source ::theRealSource
 set sourceCount 0
@@ -41,7 +40,9 @@ proc ::source args {
     uplevel 1 ::theRealSource $args
 }
 .CE
+
 .SH "SEE ALSO"
 namespace(n), proc(n)
+
 .SH KEYWORDS
 command, delete, namespace, rename

@@ -110,11 +110,13 @@ Corresponds to the \fB%b\fR substitution for binding scripts.
 \fINumber\fR must be an integer;  it specifies the \fIcount\fR field
 for the event.  Valid for \fBExpose\fR events.
 Corresponds to the \fB%c\fR substitution for binding scripts.
+.VS 8.5
 .TP
 \fB\-data\fI string\fR
 \fIString\fR may be any value; it specifies the \fIuser_data\fR field
 for the event.  Only valid for virtual events.  Corresponds to the
 \fB%d\fR substitution for virtual events in binding scripts.
+.VE 8.5
 .TP
 \fB\-delta\fI number\fR
 \fINumber\fR must be an integer;  it specifies the \fIdelta\fR field
@@ -308,7 +310,6 @@ Any options that are not specified when generating an event are filled
 with the value 0, except for \fIserial\fR, which is filled with the 
 next X event serial number.  
 .SH "PREDEFINED VIRTUAL EVENTS"
-.PP
 Tk defines the following virtual events for the purposes of
 notification:
 .TP
@@ -360,26 +361,6 @@ Copy the currently selected widget contents to the clipboard.
 \fB<<Cut>>\fR
 Move the currently selected widget contents to the clipboard.
 .TP
-\fB<<LineEnd>>\fR
-.
-Move to the end of the line in the current widget while deselecting any
-selected contents.
-.TP
-\fB<<LineStart>>\fR
-.
-Move to the start of the line in the current widget while deselecting any
-selected contents.
-.TP
-\fB<<NextChar>>\fR
-.
-Move to the next item (i.e., visible character) in the current widget while
-deselecting any selected contents.
-.TP
-\fB<<NextWord>>\fR
-.
-Move to the next group of items (i.e., visible word) in the current widget
-while deselecting any selected contents.
-.TP
 \fB<<Paste>>\fR
 Replace the currently selected widget contents with the contents of
 the clipboard.
@@ -388,80 +369,32 @@ the clipboard.
 Insert the contents of the selection at the mouse location. (This
 event has meaningful \fB%x\fR and \fB%y\fR substitutions).
 .TP
-\fB<<PrevChar>>\fR
-.
-Move to the previous item (i.e., visible character) in the current widget
-while deselecting any selected contents.
-.TP
 \fB<<PrevWindow>>\fR
 Traverse to the previous window.
-.TP
-\fB<<PrevWord>>\fR
-.
-Move to the previous group of items (i.e., visible word) in the current widget
-while deselecting any selected contents.
 .TP
 \fB<<Redo>>\fR
 Redo one undone action.
 .TP
-\fB<<SelectLineEnd>>\fR
-.
-Move to the end of the line in the current widget while extending the range
-of selected contents.
-.TP
-\fB<<SelectLineStart>>\fR
-.
-Move to the start of the line in the current widget while extending the range
-of selected contents.
-.TP
-\fB<<SelectNextChar>>\fR
-.
-Move to the next item (i.e., visible character) in the current widget while
-extending the range of selected contents.
-.TP
-\fB<<SelectNextWord>>\fR
-.
-Move to the next group of items (i.e., visible word) in the current widget
-while extending the range of selected contents.
-.TP
-\fB<<SelectPrevChar>>\fR
-.
-Move to the previous item (i.e., visible character) in the current widget
-while extending the range of selected contents.
-.TP
-\fB<<SelectPrevWord>>\fR
-.
-Move to the previous group of items (i.e., visible word) in the current widget
-while extending the range of selected contents.
-.TP
 \fB<<Undo>>\fR
 Undo the last action.
-.SH EXAMPLES
-.SS "MAPPING KEYS TO VIRTUAL EVENTS"
+.SH "VIRTUAL EVENT EXAMPLES"
 .PP
 In order for a virtual event binding to trigger, two things must
 happen.  First, the virtual event must be defined with the
 \fBevent add\fR command.  Second, a binding must be created for
 the virtual event with the \fBbind\fR command.
 Consider the following virtual event definitions:
-.PP
 .CS
-\fBevent add\fR <<Paste>> <Control-y>
-\fBevent add\fR <<Paste>> <Button-2>
-\fBevent add\fR <<Save>> <Control-X><Control-S>
-\fBevent add\fR <<Save>> <Shift-F12>
-if {[tk windowingsystem] eq "aqua"} {
-    \fBevent add\fR <<Save>> <Command-s>
-}
+event add <<Paste>> <Control-y>
+event add <<Paste>> <Button-2>
+event add <<Save>> <Control-X><Control-S>
+event add <<Save>> <Shift-F12>
 .CE
-.PP
 In the \fBbind\fR command, a virtual event can be bound like any other
 builtin event type as follows:
-.PP
 .CS
 bind Entry <<Paste>> {%W insert [selection get]}
 .CE
-.PP
 The double angle brackets are used to specify that a virtual event is being
 bound.  If the user types Control-y or presses button 2, or if
 a \fB<<Paste>>\fR virtual event is synthesized with \fBevent generate\fR,
@@ -470,13 +403,11 @@ then the \fB<<Paste>>\fR binding will be invoked.
 If a virtual binding has the exact same sequence as a separate
 physical binding, then the physical binding will take precedence.
 Consider the following example:
-.PP
 .CS
-\fBevent add\fR <<Paste>> <Control-y> <Meta-Control-y>
+event add <<Paste>> <Control-y> <Meta-Control-y>
 bind Entry <Control-y> {puts Control-y}
 bind Entry <<Paste>> {puts Paste}
 .CE
-.PP
 When the user types Control-y the \fB<Control-y>\fR binding
 will be invoked, because a physical event is considered
 more specific than a virtual event, all other things being equal.
@@ -494,41 +425,18 @@ ungeneratable.
 When a definition of a virtual event changes at run time, all windows
 will respond immediately to the new definition.
 Starting from the preceding example, if the following code is executed:
-.PP
 .CS
-bind Entry <Control-y> {}
-\fBevent add\fR <<Paste>> <Key-F6>
+bind <Entry> <Control-y> {}
+event add <<Paste>> <Key-F6>
 .CE
-.PP
 the behavior will change such in two ways.  First, the shadowed
 \fB<<Paste>>\fR binding will emerge.
 Typing Control-y will no longer invoke the \fB<Control-y>\fR binding, 
 but instead invoke the virtual event \fB<<Paste>>\fR.  Second,
 pressing the F6 key will now also invoke the \fB<<Paste>>\fR binding.
-.SS "MOVING THE MOUSE POINTER"
-.PP
-Sometimes it is useful to be able to really move the mouse pointer. For
-example, if you have some software that is capable of demonstrating directly
-to the user how to use the program. To do this, you need to
-.QW warp
-the mouse around by using \fBevent generate\fR, like this:
-.PP
-.CS
-for {set xy 0} {$xy < 200} {incr xy} {
-    \fBevent generate\fR . <Motion> -x $xy -y $xy -warp 1
-    update
-    after 50
-}
-.CE
-.PP
-Note that it is usually considered bad style to move the mouse pointer for the
-user because it removes control from them. Therefore this technique should be
-used with caution. Also note that it is not guaranteed to function on all
-platforms.
+
 .SH "SEE ALSO"
 bind(n)
+
 .SH KEYWORDS
 event, binding, define, handle, virtual event
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

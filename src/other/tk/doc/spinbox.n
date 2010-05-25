@@ -465,6 +465,7 @@ If \fInumber\fR is negative then characters farther to the left
 become visible;  if it is positive then characters farther to the right
 become visible.
 .RE
+
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for spinboxes that give them
@@ -581,8 +582,6 @@ take place.
 .PP
 The behavior of spinboxes can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
+
 .SH KEYWORDS
 spinbox, entry, widget
-'\" Local Variables:
-'\" mode: nroff
-'\" End:

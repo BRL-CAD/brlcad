@@ -16,6 +16,7 @@ split \- Split a string into a proper Tcl list
 .SH SYNOPSIS
 \fBsplit \fIstring \fR?\fIsplitChars\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 Returns a list created by splitting \fIstring\fR at each character
@@ -30,41 +31,34 @@ If \fIsplitChars\fR is an empty string then each character of
 \fIstring\fR becomes a separate element of the result list.
 \fISplitChars\fR defaults to the standard white-space characters.
 .SH EXAMPLES
-.PP
 Divide up a USENET group name into its hierarchical components:
-.PP
 .CS
-\fBsplit\fR "comp.lang.tcl" .
-      \fI\(-> comp lang tcl\fR
+\fBsplit\fR "comp.lang.tcl.announce" .
+      \fI\(-> comp lang tcl announce\fR
 .CE
 .PP
 See how the \fBsplit\fR command splits on \fIevery\fR character in
 \fIsplitChars\fR, which can result in information loss if you are not
 careful:
-.PP
 .CS
 \fBsplit\fR "alpha beta gamma" "temp"
       \fI\(-> al {ha b} {} {a ga} {} a\fR
 .CE
 .PP
 Extract the list words from a string that is not a well-formed list:
-.PP
 .CS
 \fBsplit\fR "Example with {unbalanced brace character"
       \fI\(-> Example with \e{unbalanced brace character\fR
 .CE
 .PP
 Split a string into its constituent characters
-.PP
 .CS
 \fBsplit\fR "Hello world" {}
       \fI\(-> H e l l o { } w o r l d\fR
 .CE
 .SS "PARSING RECORD-ORIENTED FILES"
-.PP
 Parse a Unix /etc/passwd file, which consists of one entry per line,
 with each line consisting of a colon-separated list of fields:
-.PP
 .CS
 ## Read the file
 set fid [open /etc/passwd]
@@ -86,7 +80,9 @@ foreach rec $records {
    puts "$longName uses [file tail $shell] for a login shell"
 }
 .CE
+
 .SH "SEE ALSO"
 join(n), list(n), string(n)
+
 .SH KEYWORDS
 list, split, string

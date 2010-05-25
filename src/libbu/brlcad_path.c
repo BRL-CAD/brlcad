@@ -86,8 +86,10 @@ _bu_ipwd()
     }
 
     ipwd = getenv("PWD"); /* not our memory to free */
+    if (!ipwd)
+        ipwd = bu_which("pwd");
 
-    if (!ipwd && (ipwd = bu_which("pwd"))) {
+    if (ipwd) {
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	FILE *fp = NULL;
 
@@ -700,6 +702,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     bu_vls_free(&searched);
     return NULL;
 }
+
 
 /** @} */
 

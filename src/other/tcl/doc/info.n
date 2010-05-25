@@ -3,7 +3,6 @@
 '\" Copyright (c) 1994-1997 Sun Microsystems, Inc.
 '\" Copyright (c) 1993-1997 Bell Labs Innovations for Lucent Technologies
 '\" Copyright (c) 1998-2000 Ajuba Solutions
-'\" Copyright (c) 2007-2008 Donal K. Fellows
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -19,6 +18,7 @@ info \- Return information about the state of the Tcl interpreter
 .SH SYNOPSIS
 \fBinfo \fIoption \fR?\fIarg arg ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command provides information about various internals of the Tcl
@@ -26,30 +26,22 @@ interpreter.
 The legal \fIoption\fRs (which may be abbreviated) are:
 .TP
 \fBinfo args \fIprocname\fR
-.
 Returns a list containing the names of the arguments to procedure
 \fIprocname\fR, in order.  \fIProcname\fR must be the name of a
 Tcl command procedure.
 .TP
 \fBinfo body \fIprocname\fR
-.
 Returns the body of procedure \fIprocname\fR.  \fIProcname\fR must be
 the name of a Tcl command procedure.
 .TP
-\fBinfo class\fI subcommand class\fR ?\fIarg ...\fR
-.VS 8.6
-Returns information about the class, \fIclass\fR. The \fIsubcommand\fRs are
-described in \fBCLASS INTROSPECTION\fR below.
-.VE 8.6
-.TP
 \fBinfo cmdcount\fR
-.
 Returns a count of the total number of commands that have been invoked
 in this interpreter.
 .TP
 \fBinfo commands \fR?\fIpattern\fR?
-.
 If \fIpattern\fR is not specified,
+.\" Do not move this .VS above the .TP
+.VS 8.5
 returns a list of names of all the Tcl commands visible
 (i.e. executable without using a qualified name) to the current namespace,
 including both the built-in commands written in C and
@@ -68,9 +60,9 @@ of the specified namespace, and only the commands defined in the named
 namespace are returned.
 .\" Technically, most of this hasn't changed; that's mostly just the
 .\" way it always worked. Hardly anyone knew that though.
+.VE 8.5
 .TP
 \fBinfo complete \fIcommand\fR
-.
 Returns 1 if \fIcommand\fR is a complete Tcl command in the sense of
 having no unclosed quotes, braces, brackets or array element names.
 If the command does not appear to be complete then 0 is returned.
@@ -79,15 +71,7 @@ to allow users to type in commands that span multiple lines;  if the
 command is not complete, the script can delay evaluating it until additional
 lines have been typed to complete the command.
 .TP
-\fBinfo coroutine\fR
-.VS 8.6
-Returns the name of the currently executing coroutine, or the empty string if
-either no coroutine is currently executing, or the current coroutine has been
-deleted (but has not yet returned or yielded since deletion).
-.VE 8.6
-.TP
 \fBinfo default \fIprocname arg varname\fR
-.
 \fIProcname\fR must be the name of a Tcl command procedure and \fIarg\fR
 must be the name of an argument to that procedure.  If \fIarg\fR
 does not have a default value then the command returns \fB0\fR.
@@ -95,13 +79,11 @@ Otherwise it returns \fB1\fR and places the default value of \fIarg\fR
 into variable \fIvarname\fR.
 .TP
 \fBinfo exists \fIvarName\fR
-.
 Returns \fB1\fR if the variable named \fIvarName\fR exists in the
 current context (either as a global or local variable) and has been
 defined by being given a value, returns \fB0\fR otherwise.
 .TP
 \fBinfo frame\fR ?\fInumber\fR?
-.
 This command provides access to all frames on the stack, even those
 hidden from \fBinfo level\fR. If \fInumber\fR is not specified, this
 command returns a number giving the frame level of the command. This
@@ -111,11 +93,10 @@ information for the command at the \fInumber\fRed level on the stack.
 .RS
 .PP
 If \fInumber\fR is positive (> 0) then it selects a particular stack
-level (1 refers to the outer-most active command, 2 to the command it
-called, and so on, up to the current frame level which refers to
-\fBinfo frame\fR itself); otherwise it gives a level relative to the
-current command (0 refers to the current command, i.e., \fBinfo
-frame\fR itself, -1 to its caller, and so on).
+level (1 refers to the top-most active command, i.e., \fBinfo frame\fR
+itself, 2 to the command it was called from, and so on); otherwise it
+gives a level relative to the current command (0 refers to the current
+command, i.e., \fBinfo frame\fR itself, -1 to its caller, and so on).
 .PP
 This is similar to how \fBinfo level\fR works, except that this
 subcommand reports all frames, like \fBsource\fRd scripts,
@@ -133,34 +114,28 @@ The result dictionary may contain the keys listed below, with the
 specified meanings for their values:
 .TP
 \fBtype\fR
-.
 This entry is always present and describes the nature of the location
 for the command. The recognized values are \fBsource\fR, \fBproc\fR,
 \fBeval\fR, and \fBprecompiled\fR.
 .RS
 .TP
 \fBsource\fR\0\0\0\0\0\0\0\0
-.
 means that the command is found in a script loaded by the \fBsource\fR
 command.
 .TP
 \fBproc\fR\0\0\0\0\0\0\0\0
-.
 means that the command is found in dynamically created procedure body.
 .TP
 \fBeval\fR\0\0\0\0\0\0\0\0
-.
 means that the command is executed by \fBeval\fR or \fBuplevel\fR.
 .TP
 \fBprecompiled\fR\0\0\0\0\0\0\0\0
-.
 means that the command is found in a precompiled script (loadable by
 the package \fBtbcload\fR), and no further information will be
 available.
 .RE
 .TP
 \fBline\fR
-.
 This entry provides the number of the line the command is at inside of
 the script it is a part of. This information is not present for type
 \fBprecompiled\fR. For type \fBsource\fR this information is counted
@@ -168,12 +143,10 @@ relative to the beginning of the file, whereas for the last two types
 the line is counted relative to the start of the script.
 .TP
 \fBfile\fR
-.
 This entry is present only for type \fBsource\fR. It provides the
 normalized path of the file the command is in.
 .TP
 \fBcmd\fR
-.
 This entry provides the string representation of the command. This is
 usually the unsubstituted form, however for commands which are a pure
 list executed by eval it is the substituted form as they have no other
@@ -181,18 +154,15 @@ string representation. Care is taken that the pure-List property of
 the latter is not spoiled.
 .TP
 \fBproc\fR
-.
 This entry is present only if the command is found in the body of a
 regular Tcl procedure. It then provides the name of that procedure.
 .TP
 \fBlambda\fR
-.
 This entry is present only if the command is found in the body of an
 anonymous Tcl procedure, i.e. a lambda. It then provides the entire
 definition of the lambda in question.
 .TP
 \fBlevel\fR
-.
 This entry is present only if the queried frame has a corresponding
 frame returned by \fBinfo level\fR. It provides the index of this
 frame, relative to the current level (0 and negative numbers).
@@ -223,7 +193,6 @@ counted relative to the start of each word (smallest scope)
 .RE
 .TP
 \fBinfo functions \fR?\fIpattern\fR?
-.
 If \fIpattern\fR is not specified, returns a list of all the math
 functions currently defined.
 If \fIpattern\fR is specified, only those functions whose name matches
@@ -231,7 +200,6 @@ If \fIpattern\fR is specified, only those functions whose name matches
 rules as for \fBstring match\fR.
 .TP
 \fBinfo globals \fR?\fIpattern\fR?
-.
 If \fIpattern\fR is not specified, returns a list of all the names
 of currently-defined global variables.
 Global variables are variables in the global namespace.
@@ -240,7 +208,6 @@ are returned.  Matching is determined using the same rules as for
 \fBstring match\fR.
 .TP
 \fBinfo hostname\fR
-.
 Returns the name of the computer on which this invocation is being
 executed.
 Note that this name is not guaranteed to be the fully qualified domain
@@ -250,7 +217,6 @@ installed,) it is the name that is suitable for TCP/IP networking that
 is returned.
 .TP
 \fBinfo level\fR ?\fInumber\fR?
-.
 If \fInumber\fR is not specified, this command returns a number
 giving the stack level of the invoking procedure, or 0 if the
 command is invoked at top-level.  If \fInumber\fR is specified,
@@ -264,7 +230,6 @@ See the \fBuplevel\fR command for more information on what stack
 levels mean.
 .TP
 \fBinfo library\fR
-.
 Returns the name of the library directory in which standard Tcl
 scripts are stored.
 This is actually the value of the \fBtcl_library\fR
@@ -272,7 +237,6 @@ variable and may be changed by setting \fBtcl_library\fR.
 See the \fBtclvars\fR manual entry for more information.
 .TP
 \fBinfo loaded \fR?\fIinterp\fR?
-.
 Returns a list describing all of the packages that have been loaded into
 \fIinterp\fR with the \fBload\fR command.
 Each list element is a sub-list with two elements consisting of the
@@ -285,7 +249,6 @@ To get a list of just the packages in the current interpreter, specify
 an empty string for the \fIinterp\fR argument.
 .TP
 \fBinfo locals \fR?\fIpattern\fR?
-.
 If \fIpattern\fR is not specified, returns a list of all the names
 of currently-defined local variables, including arguments to the
 current procedure, if any.
@@ -296,24 +259,15 @@ are returned.  Matching is determined using the same rules as for
 \fBstring match\fR.
 .TP
 \fBinfo nameofexecutable\fR
-.
 Returns the full path name of the binary file from which the application
 was invoked.  If Tcl was unable to identify the file, then an empty
 string is returned.
 .TP
-\fBinfo object\fI subcommand object\fR ?\fIarg ...\fR
-.VS 8.6
-Returns information about the object, \fIobject\fR. The \fIsubcommand\fRs are
-described in \fBOBJECT INTROSPECTION\fR below.
-.VE 8.6
-.TP
 \fBinfo patchlevel\fR
-.
 Returns the value of the global variable \fBtcl_patchLevel\fR; see
 the \fBtclvars\fR manual entry for more information.
 .TP
 \fBinfo procs \fR?\fIpattern\fR?
-.
 If \fIpattern\fR is not specified, returns a list of all the
 names of Tcl command procedures in the current namespace.
 If \fIpattern\fR is specified,
@@ -328,7 +282,6 @@ within; the matching pattern is taken to be the part after the last
 namespace separator.
 .TP
 \fBinfo script\fR ?\fIfilename\fR?
-.
 If a Tcl script file is currently being evaluated (i.e. there is a
 call to \fBTcl_EvalFile\fR active or there is an active invocation
 of the \fBsource\fR command), then this command returns the name
@@ -339,19 +292,16 @@ useful in virtual file system applications.
 Otherwise the command returns an empty string.
 .TP
 \fBinfo sharedlibextension\fR
-.
 Returns the extension used on this platform for the names of files
 containing shared libraries (for example, \fB.so\fR under Solaris).
 If shared libraries are not supported on this platform then an empty
 string is returned.
 .TP
 \fBinfo tclversion\fR
-.
 Returns the value of the global variable \fBtcl_version\fR; see
 the \fBtclvars\fR manual entry for more information.
 .TP
 \fBinfo vars\fR ?\fIpattern\fR?
-.
 If \fIpattern\fR is not specified,
 returns a list of all the names of currently-visible variables.
 This includes locals and currently-visible globals.
@@ -371,228 +321,7 @@ Note that a currently-visible variable may not yet
 .QW exist
 if it has not
 been set (e.g. a variable declared but not set by \fBvariable\fR).
-.SS "CLASS INTROSPECTION"
-.VS 8.6
-.PP
-The following \fIsubcommand\fR values are supported by \fBinfo class\fR:
-.VE 8.6
-.TP
-\fBinfo class constructor\fI class\fR
-.VS 8.6
-This subcommand returns a description of the definition of the constructor of
-class \fIclass\fR. The defintion is described as a two element list; the first
-element is the list of arguments to the constructor in a form suitable for
-passing to another call to \fBproc\fR or a method defintion, and the second
-element is the body of the constructor. If no constructor is present, this
-returns the empty list.
-.VE 8.6
-.TP
-\fBinfo class definition\fI class method\fR
-.VS 8.6
-This subcommand returns a description of the definition of the method named
-\fImethod\fR of class \fIclass\fR. The defintion is described as a two element
-list; the first element is the list of arguments to the method in a form
-suitable for passing to another call to \fBproc\fR or a method defintion, and
-the second element is the body of the method.
-.VE 8.6
-.TP
-\fBinfo class destructor\fI class\fR
-.VS 8.6
-This subcommand returns the body of the destructor of class \fIclass\fR. If no
-destructor is present, this returns the empty string.
-.VE 8.6
-.TP
-\fBinfo class filters\fI class\fR
-.VS 8.6
-This subcommand returns the list of filter methods set on the class.
-.VE 8.6
-.TP
-\fBinfo class forward\fI class method\fR
-.VS 8.6
-This subcommand returns the argument list for the method forwarding called
-\fImethod\fR that is set on the class called \fIclass\fR.
-.VE 8.6
-.TP
-\fBinfo class instances\fI class\fR ?\fIpattern\fR?
-.VS 8.6
-This subcommand returns a list of instances of class \fIclass\fR. If the
-optional \fIpattern\fR argument is present, it constrains the list of returned
-instances to those that match it according to the rules of \fBstring match\fR.
-.VE 8.6
-.TP
-\fBinfo class methods\fI class\fR ?\fIoptions...\fR?
-.VS 8.6
-This subcommand returns a list of all public (i.e. exported) methods of the
-class called \fIclass\fR. Any of the following \fIoption\fRs may be
-specified, controlling exactly which method names are returned:
-.RS
-.VE 8.6
-.TP
-\fB\-all\fR
-.VS 8.6
-If the \fB\-all\fR flag is given, the list of methods will include those
-methods defined not just by the class, but also by the class's superclasses
-and mixins.
-.VE 8.6
-.TP
-\fB\-private\fR
-.VS 8.6
-If the \fB\-private\fR flag is given, the list of methods will also include
-the private (i.e. non-exported) methods of the class (and superclasses and
-mixins, if \fB\-all\fR is also given).
-.RE
-.VE 8.6
-.TP
-\fBinfo class mixins\fI class\fR
-.VS 8.6
-This subcommand returns a list of all classes that have been mixed into the
-class named \fIclass\fR.
-.VE 8.6
-.TP
-\fBinfo class subclasses\fI class\fR ?\fIpattern\fR?
-.VS 8.6
-This subcommand returns a list of direct subclasses of class \fIclass\fR. If
-the optional \fIpattern\fR argument is present, it constrains the list of
-returned classes to those that match it according to the rules of \fBstring
-match\fR.
-.VE 8.6
-.TP
-\fBinfo class superclasses\fI class\fR
-.VS 8.6
-This subcommand returns a list of direct superclasses of class \fIclass\fR in
-inheritance precedence order.
-.VE 8.6
-.TP
-\fBinfo class variables\fI class\fR
-.VS 8.6
-This subcommand returns a list of all variables that have been declared for
-the class named \fIclass\fR (i.e. that are automatically present in the
-class's methods, constructor and destructor).
-.SS "OBJECT INTROSPECTION"
-.PP
-The following \fIsubcommand\fR values are supported by \fBinfo object\fR:
-.VE 8.6
-.TP
-\fBinfo object class\fI object\fR ?\fIclassName\fR?
-.VS 8.6
-If \fIclassName\fR is unspecified, this subcommand returns class of the
-\fIobject\fR object. If \fIclassName\fR is present, this subcommand returns a
-boolean value indicating whether the \fIobject\fR is of that class.
-.VE 8.6
-.TP
-\fBinfo object definition\fI object method\fR
-.VS 8.6
-This subcommand returns a description of the definition of the method named
-\fImethod\fR of object \fIobject\fR. The defintion is described as a two
-element list; the first element is the list of arguments to the method in a
-form suitable for passing to another call to \fBproc\fR or a method defintion,
-and the second element is the body of the method.
-.VE 8.6
-.TP
-\fBinfo object filters\fI object\fR
-.VS 8.6
-This subcommand returns the list of filter methods set on the object.
-.VE 8.6
-.TP
-\fBinfo object forward\fI object method\fR
-.VS 8.6
-This subcommand returns the argument list for the method forwarding called
-\fImethod\fR that is set on the object called \fIobject\fR.
-.VE 8.6
-.TP
-\fBinfo object isa\fI category object\fR ?\fIarg\fR?
-.VS 8.6
-This subcommand tests whether an object belongs to a particular category,
-returning a boolean value that indicates whether the \fIobject\fR argument
-meets the criteria for the category. The supported categories are:
-.VE 8.6
-.RS
-.TP
-\fBinfo object isa class\fI object\fR
-.VS 8.6
-This returns whether \fIobject\fR is a class (i.e. an instance of
-\fBoo::class\fR or one of its subclasses).
-.VE 8.6
-.TP
-\fBinfo object isa metaclass\fI object\fR
-.VS 8.6
-This returns whether \fIobject\fR is a class that can manufacture classes
-(i.e. is \fBoo::class\fR or a subclass of it).
-.VE 8.6
-.TP
-\fBinfo object isa mixin\fI object class\fR
-.VS 8.6
-This returns whether \fIclass\fR is directly mixed into \fIobject\fR.
-.VE 8.6
-.TP
-\fBinfo object isa object\fI object\fR
-.VS 8.6
-This returns whether \fIobject\fR really is an object.
-.VE 8.6
-.TP
-\fBinfo object isa typeof\fI object class\fR
-.VS 8.6
-This returns whether \fIclass\fR is the type of \fIobject\fR (i.e. whether
-\fIobject\fR is an instance of \fIclass\fR or one of its subclasses, whether
-direct or indirect).
-.RE
-.VE 8.6
-.TP
-\fBinfo object methods\fI object\fR ?\fIoption...\fR?
-.VS 8.6
-This subcommand returns a list of all public (i.e. exported) methods of the
-object called \fIobject\fR. Any of the following \fIoption\fRs may be
-specified, controlling exactly which method names are returned:
-.RS
-.VE 8.6
-.TP
-\fB\-all\fR
-.VS 8.6
-If the \fB\-all\fR flag is given, the list of methods will include those
-methods defined not just by the object, but also by the object's class and
-mixins, plus the superclasses of those classes.
-.VE 8.6
-.TP
-\fB\-private\fR
-.VS 8.6
-If the \fB\-private\fR flag is given, the list of methods will also include
-the private (i.e. non-exported) methods of the object (and classes, if
-\fB\-all\fR is also given).
-.RE
-.VE 8.6
-.TP
-\fBinfo object mixins\fI object\fR
-.VS 8.6
-This subcommand returns a list of all classes that have been mixed into the
-object named \fIobject\fR.
-.VE 8.6
-.TP
-\fBinfo object namespace\fI object\fR
-.VS 8.6
-This subcommand returns the name of the internal namespace of the object named
-\fIobject\fR.
-.VE 8.6
-.TP
-\fBinfo object variables\fI object\fR
-.VS 8.6
-This subcommand returns a list of all variables that have been declared for
-the object named \fIobject\fR (i.e. that are automatically present in the
-object's methods).
-.VE 8.6
-.TP
-\fBinfo object vars\fI object\fR ?\fIpattern\fR?
-.VS 8.6
-This subcommand returns a list of all variables in the private namespace of
-the object named \fIobject\fR. If the optional \fIpattern\fR argument is
-given, it is a filter (in the syntax of a \fBstring match\fR glob pattern)
-that constrains the list of variables returned. Note that this is different
-from the lit returned by \fBinfo object variables\fR; that can include
-variables that are currently unset, whereas this can include variables that
-are not automatically included by any of \fIobject\fR's methods (or those of
-its class, superclasses or mixins).
-.VE 8.6
-.SH EXAMPLES
-.PP
+.SH EXAMPLE
 This command prints out a procedure suitable for saving in a Tcl
 script:
 .PP
@@ -612,53 +341,10 @@ proc printProc {procName} {
     puts [lappend result $formals [\fBinfo body\fR $procName]]
 }
 .CE
-.SS "EXAMPLES WITH OBJECTS"
-.VS 8.6
-.PP
-Every object necessarily knows what its class is; this information is
-trivially extractable through introspection:
-.PP
-.CS
-oo::class create c
-c create o
-puts [\fBinfo object class\fR o]
-                     \fI\(-> prints "::c"\fR
-puts [\fBinfo object class\fR c]
-                     \fI\(-> prints "::oo::class"\fR
-.CE
-.PP
-The introspection capabilities can be used to discover what class implements a
-method and get how it is defined. This procedure illustrates how:
-.PP
-.CS
-proc getDef {obj method} {
-    if {$method in [\fBinfo object methods\fR $obj]} {
-        # Assume no forwards
-        return [\fBinfo object definition\fR $obj $method]
-    }
-    set cls [\fBinfo object class\fR $obj]
-    while {$method ni [\fBinfo class methods\fR $cls]} {
-        # Assume the simple case
-        set cls [lindex [\fBinfo class superclass\fR $cls] 0]
-        if {$cls eq {}} {
-            error "no definition for $method"
-        }
-    }
-    # Assume no forwards
-    return [\fBinfo class definition\fR $cls $method]
-}
-.CE
-.VE 8.6
 .SH "SEE ALSO"
-.VS 8.6
-global(n), oo::class(n), oo::define(n), oo::object(n), proc(n), self(n)
-.VE 8.6
+global(n), proc(n)
 .SH KEYWORDS
-command, information, interpreter, introspection, level, namespace,
-.VS 8.6
-object,
-.VE 8.6
-procedure, variable
+command, information, interpreter, level, namespace, procedure, variable
 .\" Local Variables:
 .\" mode: nroff
 .\" End:

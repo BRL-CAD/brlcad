@@ -353,7 +353,7 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 
     /* should probably make a or b necessarily inside, to eliminate one point
      * computation? */
-    return rt_metaball_find_intersection(intersect, mb, (const point_t *)&mid, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside(midp, mb)) ?b:a , step/2.0, finalstep);
+    return rt_metaball_find_intersection(intersect, mb, midp, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside(midp, mb)) ?b:a , step/2.0, finalstep);
 }
 
 
@@ -363,62 +363,152 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 int
 rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    int stat=0, retval = 0, segsleft = abs(ap->a_onehit);
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
     struct seg *segp = NULL;
-    point_t p, inc, delta;
-    fastf_t step, distleft = (rp->r_max-rp->r_min);
+    int retval = 0;
+    fastf_t step;
+    point_t p, inc;
 
     step = mb->initstep;
 
     VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
 
-/* we hit, but not as fine-grained as we want. So back up one step,
- * cut the step size in half and start over... Note that once we're
- * happily inside, we do NOT change the step size back!
- */
-/* TODO: rework this crud to use the rt_metaball_point_intersect function. 
- * And do performance testing. or something.
- * */
-#define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
-#define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
-    while (distleft >= 0.0) {
-	distleft -= step;
-	VADD2(p, p, inc);
-	if (stat == 1) {
-	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
-		if (step<=mb->finalstep) {
-		    STEPIN(out);
-		    stat = 0;
-		    if (ap->a_onehit != 0 && segsleft <= 0)
-			return retval;
-		} else
-		    STEPBACK;
-	    }
-	} else
-	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
-		if (step<=mb->finalstep) {
+    /* switching behavior to retain old code for performance and correctness
+     * comparisons. */
+#define SHOOTALGO 2
+#if SHOOTALGO == 1
+    {
+	vect_t dist;
+	int nsamp, i;
+#ifdef SOMETHING
+	point_t *ps;
+	int *vals;
+
+	/* some fu about the initstep and bounding sphere size. yeah. */
+	nsamp = mb->initstep / 1.0;
+	vals = (int *)bu_malloc(sizeof(int) * nsamp, "in/out array");
+	ps = (point_t *)bu_malloc(sizeof(point_t) * nsamp, "point array");
+#else
+#define FAKEVAL 200
+	point_t ps[FAKEVAL];
+	int vals[FAKEVAL];
+	nsamp = FAKEVAL;
+#undef FAKEVAL
+#endif
+
+	for(i=0;i<nsamp;i++) {
+	    VMOVE(ps[i], p);
+	    vals[i] = rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold;
+	    VADD2(p, p, inc);
+	}
+
+	retval = 0;
+	i = 0;
+
+	if(vals[0] == 1) {
+	    i++;
+	    bu_log("In0!\t");
+	    RT_GET_SEG(segp, ap->a_resource);
+	    segp->seg_stp = stp;
+	    segp->seg_in.hit_surfno = 0;
+	    segp->seg_out.hit_surfno = 0;
+	    segp->seg_in.hit_dist = 0;
+	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	    retval++;
+	}
+
+	/* search the in/out array for boundry crossings. */
+	for(;i < nsamp;i++) {
+	    if(vals[i] != vals[i+1]) {
+		if(vals[i] == 0) {
+		    bu_log("In%d\t",i);
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
-		    STEPIN(in);
-		    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* this causes shelling */
 		    segp->seg_in.hit_surfno = 0;
 		    segp->seg_out.hit_surfno = 0;
+		    rt_metaball_find_intersection(&p ,mb, (const point_t *)ps+i, (const point_t *)ps+i+1, step, mb->finalstep);
+		    VSUB2(dist, p, rp->r_pt);
+		    /* do a dot product to see if hit_dist should be negative? */
+		    segp->seg_in.hit_dist = MAGNITUDE(dist);
 		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-		    if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
-			return retval;
-		    /* reset the ray-walk shtuff */
-		    stat = 1;
-		    VSUB2(p, p, inc);
-		    VSCALE(inc, rp->r_dir, step);
-		    step = mb->initstep;
-		} else
-		    STEPBACK;
+		    retval++;
+		} else if(vals[i] == 1) {
+		    bu_log("Out%d\t",i);
+		    rt_metaball_find_intersection(&p ,mb, (const point_t *)ps+i, (const point_t *)ps+i+1, step, mb->finalstep);
+		    VSUB2(dist, p, rp->r_pt);
+		    /* dot product for netagive hit dist here, too. */
+		    segp->seg_out.hit_dist = MAGNITUDE(dist); 
+#ifdef SOMETHING
+		    bu_free(ps, "Point array");
+		    bu_free(vals, "in/out array");
+#endif
+		    retval++;
+		}
 	    }
+	}
+	if((retval&0x1) == 0x1) {
+	    bu_log("  Odd, an odd number of intersections. %d ([%d]=%d)\n", retval, nsamp, vals[0]);
+	    exit(-1);
+	} else bu_log("\n");
+	return retval;
+    }
+#elif SHOOTALGO == 2
+    /* we hit, but not as fine-grained as we want. So back up one step,
+     * cut the step size in half and start over... Note that once we're
+     * happily inside, we do NOT change the step size back!
+     */
+    /* TODO: rework this crud to use the rt_metaball_point_intersect function. 
+     * And do performance testing. or something.
+     * */
+    {
+	int stat = 0, segsleft = abs(ap->a_onehit);
+	point_t delta;
+	fastf_t distleft = (rp->r_max-rp->r_min);
+
+#define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
+#define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
+	while (distleft >= 0.0) {
+	    distleft -= step;
+	    VADD2(p, p, inc);
+	    if (stat == 1) {
+		if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
+		    if (step<=mb->finalstep) {
+			STEPIN(out);
+			stat = 0;
+			if (ap->a_onehit != 0 && segsleft <= 0)
+			    return retval;
+		    } else
+			STEPBACK;
+		}
+	    } else
+		if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
+		    if (step<=mb->finalstep) {
+			RT_GET_SEG(segp, ap->a_resource);
+			segp->seg_stp = stp;
+			STEPIN(in);
+			segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* this causes shelling */
+			segp->seg_in.hit_surfno = 0;
+			segp->seg_out.hit_surfno = 0;
+			BU_LIST_INSERT(&(seghead->l), &(segp->l));
+			if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
+			    return retval;
+			/* reset the ray-walk shtuff */
+			stat = 1;
+			VSUB2(p, p, inc);
+			VSCALE(inc, rp->r_dir, step);
+			step = mb->initstep;
+		    } else
+			STEPBACK;
+		}
+	}
     }
 #undef STEPBACK
 #undef STEPIN
+#else
+# error "pick a valid algo."
+#endif
+
     return retval;
 }
 
@@ -523,9 +613,14 @@ rt_metaball_free(register struct soltab *stp)
 
 
 int
-rt_metaball_class(void)
+rt_metaball_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    return RT_CLASSIFY_UNIMPLEMENTED;	/* unused */
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
+    return 0;
 }
 
 
@@ -558,7 +653,7 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
  * R T _ M E T A B A L L _ P L O T
  */
 int
-rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_metaball_internal *mb;
     struct wdb_metaballpt *mbpt;
@@ -655,7 +750,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_METABALL)
-	return(-1);
+	return -1;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
     if (mb->metaball_ctrl_head.magic == 0) return -1;
@@ -693,7 +788,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * tab, and give parameter values.
  */
 int
-rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
+rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     int metaball_count = 0;
     char buf[BUFSIZ];
@@ -799,7 +894,7 @@ rt_metaball_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  * db get/g2asc
  */
 int
-rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr __attribute__((unused)))
+rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *UNUSED(attr))
 {
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)intern->idb_ptr;
     struct wdb_metaballpt *mbpt = NULL;

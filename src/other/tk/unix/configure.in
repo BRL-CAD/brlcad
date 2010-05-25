@@ -5,7 +5,7 @@ dnl	to configure the system for the local environment.
 #
 # RCS: @(#) $Id$
 
-AC_INIT([tk],[8.6])
+AC_INIT([tk],[8.5])
 AC_PREREQ(2.59)
 
 dnl This is only used when included from macosx/configure.ac
@@ -24,10 +24,10 @@ m4_ifdef([SC_USE_CONFIG_HEADERS], [
     #endif /* _TKCONFIG */])
 ])
 
-TK_VERSION=8.6
+TK_VERSION=8.5
 TK_MAJOR_VERSION=8
-TK_MINOR_VERSION=6
-TK_PATCH_LEVEL="b1.1"
+TK_MINOR_VERSION=5
+TK_PATCH_LEVEL=".8"
 VERSION=${TK_VERSION}
 LOCALES="cs da de el en en_gb eo es fr hu it nl pl pt ru sv"
 
@@ -40,6 +40,12 @@ SC_LOAD_TCLCONFIG
 
 SC_PROG_TCLSH
 SC_BUILD_TCLSH
+
+if test "${TCL_VERSION}" != "${TK_VERSION}"; then
+    AC_MSG_ERROR([${TCL_BIN_DIR}/tclConfig.sh is for Tcl ${TCL_VERSION}.
+Tk ${TK_VERSION}${TK_PATCH_LEVEL} needs Tcl ${TK_VERSION}.
+Use --with-tcl= option to indicate location of tclConfig.sh file for Tcl ${TK_VERSION}.])
+fi
 
 #------------------------------------------------------------------------
 # Handle the --prefix=... option
@@ -72,7 +78,6 @@ if test "${CFLAGS+set}" != "set" ; then
 fi
 
 AC_PROG_CC
-AC_C_INLINE
 
 # limits header checks must come early to prevent
 # an autoconf bug that throws errors on configure
@@ -262,24 +267,17 @@ fi
 #	On Mac OS X, we can build either with X11 or with Aqua
 #--------------------------------------------------------------------
 
-MACOSX_SRC_DIR=macosx
 if test "`uname -s`" = "Darwin" ; then
     AC_MSG_CHECKING([whether to use Aqua])
     AC_ARG_ENABLE(aqua,
-	AC_HELP_STRING([--enable-aqua=yes|carbon|no],
-	    [use Aqua windowingsystem on Mac OS X (default: no)]),
+	AC_HELP_STRING([--enable-aqua],
+	    [use Aqua windowingsystem on Mac OS X (default: off)]),
 	[tk_aqua=$enableval], [tk_aqua=no])
-    if test $tk_aqua = yes -o $tk_aqua = cocoa; then
-	tk_aqua=yes
-	if test ! -d /System/Library/Frameworks/Cocoa.framework; then
-	    AC_MSG_WARN([Aqua can only be used when Cocoa is available])
+    if test $tk_aqua = yes; then
+	if test $tcl_corefoundation = no; then
+	    AC_MSG_WARN([Aqua can only be used when CoreFoundation is available])
 	    tk_aqua=no
 	fi
-	if test "`uname -r | awk -F. '{print [$]1}'`" -lt 9; then
-	    AC_MSG_WARN([Aqua requires Mac OS X 10.5 or later])
-	    tk_aqua=no
-	fi
-    elif test $tk_aqua = carbon; then
 	if test ! -d /System/Library/Frameworks/Carbon.framework; then
 	    AC_MSG_WARN([Aqua can only be used when Carbon is available])
 	    tk_aqua=no
@@ -288,19 +286,8 @@ if test "`uname -s`" = "Darwin" ; then
 	    AC_MSG_WARN([Aqua requires Mac OS X 10.2 or later])
 	    tk_aqua=no
 	fi
-    else
-	tk_aqua=no
     fi
-    if test $tk_aqua != no -a $tcl_corefoundation = no; then
-	AC_MSG_WARN([Aqua can only be used when CoreFoundation is available])
-	tk_aqua=no
-    fi
-    if test $tk_aqua = carbon; then
-	MACOSX_SRC_DIR=carbon
-	AC_MSG_RESULT([yes (deprecated legacy Carbon implementation)])
-    else
-	AC_MSG_RESULT([$tk_aqua])
-    fi
+    AC_MSG_RESULT([$tk_aqua])
     if test "$fat_32_64" = yes; then
 	if test $tk_aqua = no; then
 	    AC_CACHE_CHECK([for 64-bit X11], tcl_cv_lib_x11_64, [
@@ -317,7 +304,7 @@ if test "`uname -s`" = "Darwin" ; then
 	fi
 	# remove 64-bit arch flags from CFLAGS et al. for combined 32 & 64 bit
 	# fat builds if configuration does not support 64-bit.
-	if test $tk_aqua = carbon -o "$tcl_cv_lib_x11_64" = no; then
+	if test $tk_aqua = yes -o "$tcl_cv_lib_x11_64" = no; then
 	    AC_MSG_NOTICE([Removing 64-bit architectures from compiler & linker flags])
 	    for v in CFLAGS CPPFLAGS LDFLAGS; do
 		eval $v'="`echo "$'$v' "|sed -e "s/-arch ppc64 / /g" -e "s/-arch x86_64 / /g"`"'
@@ -376,15 +363,10 @@ else
     tk_aqua=no
 fi
 
-if test $tk_aqua != no; then
-    if test $tk_aqua = yes; then
-	LIBS="$LIBS -framework Cocoa -framework Carbon -framework IOKit"
-	EXTRA_CC_SWITCHES='-std=gnu99 -x objective-c -fobjc-gc'
-    else
-	LIBS="$LIBS -framework Carbon -framework IOKit"
-	CFLAGS="$CFLAGS -fpascal-strings"
-    fi
+if test $tk_aqua = yes; then
     AC_DEFINE(MAC_OSX_TK, 1, [Are we building TkAqua?])
+    LIBS="$LIBS -framework Carbon -framework IOKit"
+    CFLAGS="$CFLAGS -fpascal-strings"
     TK_WINDOWINGSYSTEM=AQUA
     if test -n "${enable_symbols}" -a "${enable_symbols}" != no; then
         AC_DEFINE(TK_MAC_DEBUG, 1, [Are TkAqua debug messages enabled?])
@@ -640,15 +622,12 @@ WISH_RSRC_FILE='wish$(VERSION).rsrc'
 if test "`uname -s`" = "Darwin" ; then
     SC_ENABLE_FRAMEWORK
     TK_SHLIB_LD_EXTRAS="-compatibility_version ${TK_VERSION} -current_version ${TK_VERSION}`echo ${TK_PATCH_LEVEL} | awk ['{match($0, "\\\.[0-9]+"); print substr($0,RSTART,RLENGTH)}']`"
-    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name "${DYLIB_INSTALL_DIR}"/${TK_LIB_FILE}'
-    if test $tk_aqua = yes; then
-	TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -unexported_symbols_list $$(f=$(TK_LIB_FILE).E && nm -gp tkMacOSX*.o 2>/dev/null | awk "/^[[0-9a-f]]+ . \.objc/ {print \$$3}" > $$f && echo $$f)'
-    fi
+    TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -install_name "${DYLIB_INSTALL_DIR}"/${TK_LIB_FILE} -unexported_symbols_list $$(f=$(TCL_STUB_LIB_FILE).E && nm -gjp "$(TCL_BIN_DIR)"/$(TCL_STUB_LIB_FILE) | grep ^_[[^_]] > $$f && echo $$f)'
     echo "$LDFLAGS " | grep -q -- '-prebind ' && TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -seg1addr 0xb000000'
     TK_SHLIB_LD_EXTRAS="${TK_SHLIB_LD_EXTRAS}"' -sectcreate __TEXT __info_plist Tk-Info.plist'
     EXTRA_WISH_LIBS='-sectcreate __TEXT __info_plist Wish-Info.plist'
     EXTRA_APP_CC_SWITCHES="${EXTRA_APP_CC_SWITCHES}"' -mdynamic-no-pic'
-    AC_CONFIG_FILES([Tk-Info.plist:../${MACOSX_SRC_DIR}/Tk-Info.plist.in Wish-Info.plist:../${MACOSX_SRC_DIR}/Wish-Info.plist.in])
+    AC_CONFIG_FILES([Tk-Info.plist:../macosx/Tk-Info.plist.in Wish-Info.plist:../macosx/Wish-Info.plist.in])
     for l in ${LOCALES}; do CFBUNDLELOCALIZATIONS="${CFBUNDLELOCALIZATIONS}<string>$l</string>"; done
     TK_YEAR="`date +%Y`"
 fi
@@ -662,7 +641,7 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
         rm -rf $f && mkdir -p $f/$v/Resources &&
         ln -s $v/$n $v/Resources $f && ln -s ../../../$n $f/$v &&
         ln -s ../../../../$n-Info.plist $f/$v/Resources/Info.plist &&
-        if test $tk_aqua != no; then ln -s ../../../../$n.rsrc $f/$v/Resources; fi &&
+        if test $tk_aqua = yes; then ln -s ../../../../$n.rsrc $f/$v/Resources; fi &&
         unset n f v
     ], VERSION=${TK_VERSION} && tk_aqua=${tk_aqua})
     LD_LIBRARY_PATH_VAR="DYLD_FRAMEWORK_PATH"
@@ -686,22 +665,13 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     EXTRA_BUILD_HTML='@ln -fs contents.htm "$(HTML_INSTALL_DIR)"/TkTOC.html' 
     EXTRA_INSTALL_BINARIES='@echo "Installing Info.plist to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) Tk-Info.plist "$(LIB_INSTALL_DIR)/Resources/Info.plist"'
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing license.terms to $(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "$(TOP_DIR)/license.terms" "$(LIB_INSTALL_DIR)/Resources"'
-    if test $tk_aqua != no; then
-	if test $tk_aqua = yes; then
-	    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Images to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && for i in Tk.tiff Tk.icns; do $(INSTALL_DATA) "$(MAC_OSX_DIR)/$$i" "$(LIB_INSTALL_DIR)/Resources"; done'
-	else
-	    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing ${TK_RSRC_FILE} to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "${TK_RSRC_FILE}" "$(LIB_INSTALL_DIR)/Resources"'
-        fi
+    if test $tk_aqua = yes; then
+        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing ${TK_RSRC_FILE} to $(LIB_INSTALL_DIR)/Resources" && mkdir -p "$(LIB_INSTALL_DIR)/Resources" && $(INSTALL_DATA) "${TK_RSRC_FILE}" "$(LIB_INSTALL_DIR)/Resources"'
         EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing wish$(VERSION) script to $(INSTALL_ROOT)/'"${bindir}"'" && mkdir -p "$(INSTALL_ROOT)/'"${bindir}"'" && printf > "$(INSTALL_ROOT)/'"${bindir}"'/wish$(VERSION)" "#!/bin/sh\n\"\$$(dirname \$$0)'"`eval d="${bindir}"; echo "$d" | sed -e 's#/[^/][^/]*#/..#g'`"'$(bindir)/Wish\" \"\$$@\"" && chmod +x "$(INSTALL_ROOT)/'"${bindir}"'/wish$(VERSION)"'
         bindir="${libdir}/Resources/Wish.app/Contents/MacOS"
         EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Info.plist to $(BIN_INSTALL_DIR)/.." && $(INSTALL_DATA) Wish-Info.plist "$(BIN_INSTALL_DIR)/../Info.plist" && mv -f "$(BIN_INSTALL_DIR)/wish$(VERSION)" "$(BIN_INSTALL_DIR)/Wish"'
-        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Wish.icns to $(BIN_INSTALL_DIR)/../Resources" && mkdir -p "$(BIN_INSTALL_DIR)/../Resources"'
-	if test $tk_aqua = yes; then
-	    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && $(INSTALL_DATA) "$(MAC_OSX_DIR)/Tk.icns" "$(BIN_INSTALL_DIR)/../Resources/Wish.icns"'
-	    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Wish.sdef to $(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "$(MAC_OSX_DIR)/Wish.sdef" "$(BIN_INSTALL_DIR)/../Resources"'
-	else
-	    EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && $(INSTALL_DATA) "$(MAC_OSX_DIR)/Wish.icns" "$(BIN_INSTALL_DIR)/../Resources" && echo "Installing ${WISH_RSRC_FILE} to $(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "${WISH_RSRC_FILE}" "$(BIN_INSTALL_DIR)/../Resources"'
-        fi
+        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing Wish.icns to $(BIN_INSTALL_DIR)/../Resources" && mkdir -p "$(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "$(MAC_OSX_DIR)/Wish.icns" "$(BIN_INSTALL_DIR)/../Resources"'
+        EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Installing ${WISH_RSRC_FILE} to $(BIN_INSTALL_DIR)/../Resources" && $(INSTALL_DATA) "${WISH_RSRC_FILE}" "$(BIN_INSTALL_DIR)/../Resources"'
     fi
     EXTRA_INSTALL_BINARIES="$EXTRA_INSTALL_BINARIES"' && echo "Finalizing Tk.framework" && rm -f "$(LIB_INSTALL_DIR)/../Current" && ln -s "$(VERSION)" "$(LIB_INSTALL_DIR)/../Current" && for f in "$(LIB_FILE)" tkConfig.sh Resources Headers PrivateHeaders; do rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/Current/$$f" "$(LIB_INSTALL_DIR)/../.."; done && f="$(STUB_LIB_FILE)" && rm -f "$(LIB_INSTALL_DIR)/../../$$f" && ln -s "Versions/$(VERSION)/$$f" "$(LIB_INSTALL_DIR)/../.."'
     # Don't use AC_DEFINE for the following as the framework version define 
@@ -710,9 +680,6 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
     # into CFLAGS as it should not go into tkConfig.sh
     EXTRA_CC_SWITCHES="$EXTRA_CC_SWITCHES"' -DTK_FRAMEWORK_VERSION=\"$(VERSION)\"'
 else
-    if test $tk_aqua = yes; then
-        EXTRA_INSTALL_BINARIES='@echo "Installing Images to $(LIB_INSTALL_DIR)" && mkdir -p "$(LIB_INSTALL_DIR)" && for i in Tk.tiff Tk.icns; do $(INSTALL_DATA) "$(MAC_OSX_DIR)/$$i" "$(LIB_INSTALL_DIR)"; done'
-    fi
     # libdir must be a fully qualified path and not ${exec_prefix}/lib
     eval libdir="$libdir"
     if test "$SHARED_BUILD" = "0" || test "$TCL_NEEDS_EXP_FILE" = "0"; then
@@ -737,10 +704,8 @@ else
     fi
 fi
 
-# Extra bits for legacy Aqua Carbon build (carbon sources and resource files)
-if test $tk_aqua = carbon; then
-    EXTRA_AQUA_OBJS='tkMacOSXCarbonEvents.o'
-    EXTRA_AQUA_SRCS='$(TOP_DIR)/carbon/tkMacOSXCarbonEvents.c'
+# Support for building the Aqua resource files
+if test $tk_aqua = yes; then
     LIB_RSRC_FILE='${TK_RSRC_FILE}'
     APP_RSRC_FILE='${WISH_RSRC_FILE}'
     REZ=/Developer/Tools/Rez
@@ -826,11 +791,8 @@ AC_SUBST(EXTRA_INSTALL)
 AC_SUBST(EXTRA_INSTALL_BINARIES)
 AC_SUBST(EXTRA_BUILD_HTML)
 AC_SUBST(EXTRA_WISH_LIBS)
-AC_SUBST(EXTRA_AQUA_OBJS)
-AC_SUBST(EXTRA_AQUA_SRCS)
 AC_SUBST(CFBUNDLELOCALIZATIONS)
 
-AC_SUBST(MACOSX_SRC_DIR)
 AC_SUBST(TK_RSRC_FILE)
 AC_SUBST(WISH_RSRC_FILE)
 AC_SUBST(LIB_RSRC_FILE)
@@ -841,6 +803,5 @@ AC_SUBST(REZ_FLAGS)
 AC_CONFIG_FILES([
     Makefile:../unix/Makefile.in
     tkConfig.sh:../unix/tkConfig.sh.in
-    tk.pc:../unix/tk.pc.in
 ])
 AC_OUTPUT

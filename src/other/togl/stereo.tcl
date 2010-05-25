@@ -6,7 +6,7 @@ exec tclsh "$0" "$@"
 
 # Togl - a Tk OpenGL widget
 # Copyright (C) 1996  Brian Paul and Ben Bederson
-# Copyright (C) 2006-2007  Greg Couch
+# Copyright (C) 2006-2009  Greg Couch
 # See the LICENSE file for copyright details.
 
 # add parent directory to path to find Togl's pkgIndex in current directory
@@ -20,16 +20,17 @@ load [file dirname [info script]]/stereo[info sharedlibextension]
 namespace eval ::stereo {
 }
 
+variable stereo::mode none
 proc stereo::setup {} {
 	grid rowconfigure . 0 -weight 1 -minsize 200p
 	grid columnconfigure . 1 -weight 1 -minsize 200p
 	labelframe .c -text "Stereo mode:"
-	grid .c -sticky nw -padx 2 -pady 2 -ipadx 2 -ipady 1
+	grid .c -padx 2 -pady 2 -ipadx 2 -ipady 1
 	# add "nvidia" to list below when it works
-	foreach {b} {none native sgioldstyle anaglyph cross-eye wall-eye DTI "left eye" "right eye" } {
+	foreach {b} {none native sgioldstyle anaglyph cross-eye wall-eye DTI "row interleaved" "left eye" "right eye" } {
 		set name [string map {- _ " " _} $b]
-		button .c.b$name -text "$b" -command "::stereo::makeGraphics {$b}"
-		pack .c.b$name -fill x -padx 2 -pady 1
+		radiobutton .c.b$name -text "$b" -command "::stereo::makeGraphics {$b}" -variable stereo::mode -value "$b"
+		pack .c.b$name -padx 2 -pady 1 -anchor w
 	}
 	scale .sx -label {X Axis} -from 0 -to 360 -command {::stereo::setAngle x} -orient horizontal
 	grid .sx -columnspan 2 -sticky ew
@@ -43,19 +44,21 @@ proc stereo::setup {} {
 	grid .quit -sticky se -columnspan 2 -padx 2 -pady 2
 	frame .f -relief groove -borderwidth 2 -bg black
 	grid .f -row 0 -column 1 -sticky news
-	label .f.gr -wraplength 100p -bg black -fg white -text "To start, choose a stereo mode from the choices on the left."
-	pack .f.gr -anchor center -expand 1
 	bind . <Key-Escape> {exit}
+	label .f.error -wraplength 100p -bg black -fg white
+	::stereo::makeGraphics $stereo::mode
 }
 
+set stereo::count 0
+set stereo::gwidget ""
 proc stereo::makeGraphics {mode} {
-	destroy .f.gr
-	set name ".f.gr"
+	incr stereo::count
+	set name .f.gr$stereo::count
 	set width 200
 	set height 200
 	if { "$mode" == "nvidia" } {
 		set mode "nvidia consumer stereo"
-		set name ".gr"
+		set name ".gr$stereo::count"
 		foreach s [grid slaves .] {
 			grid forget $s
 		}
@@ -63,13 +66,23 @@ proc stereo::makeGraphics {mode} {
 		set width [winfo screenwidth .]
 		set height [winfo screenheight .]
 	}
-	if { [catch { togl $name -width $width -height $height -rgba true -stereo "$mode" -double true -depth true -ident "$mode" -create create_cb -display display_cb -reshape reshape_cb -eyeseparation 0.05 -convergence 2.0 } error] } {
-		label $name -wraplength 100p -bg black -fg white -text "$error\n\nMake another choice from the stereo modes on the left."
-	}
-	pack $name -expand 1 -fill both
-	bind $name <B1-Motion> {
-		::stereo::motion_event %W [lindex [%W config -width] 4] \
-		     [lindex [%W config -height] 4] %x %y
+	if { [catch { togl $name -width $width -height $height -rgba true -stereo "$mode" -double true -depth true -sharelist main -create create_cb -display display_cb -reshape reshape_cb -eyeseparation 0.05 -convergence 2.0 -stencil true } error] } {
+		pack forget $stereo::gwidget
+		.f.error configure -text "$error\n\nMake another choice from the stereo modes on the left."
+		pack .f.error -expand 1 -fill both
+	} else {
+		pack forget .f.error
+		$name configure -ident main
+		if { "$stereo::gwidget" != "" } {
+			destroy $stereo::gwidget
+		}
+		set stereo::gwidget $name
+		pack $name -expand 1 -fill both
+		bind $name <B1-Motion> {
+			::stereo::motion_event %W \
+				[lindex [%W config -width] 4] \
+				[lindex [%W config -height] 4] %x %y
+		}
 	}
 }
 
@@ -87,17 +100,18 @@ proc stereo::motion_event { widget width height x y } {
 
 # This is called when a slider is changed.
 proc stereo::setAngle {axis value} {
-    global xAngle yAngle zAngle
-
     # catch because .f.gr might be a label instead of a Togl widget
     catch {
 	    switch -exact $axis {
-		x {setXrot .f.gr $value}
-		y {setYrot .f.gr $value}
+		x {setXrot $stereo::gwidget $value}
+		y {setYrot $stereo::gwidget $value}
 	    }
     }
 }
 
 if { [info script] == $argv0 } {
+	if { $argc == 1 } {
+		set stereo::mode [lindex $argv 0]
+	}
 	::stereo::setup
 }

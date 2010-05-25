@@ -1,19 +1,19 @@
 # This file tests the filename manipulation routines.
 #
-# This file contains a collection of tests for one or more of the Tcl built-in
-# commands. Sourcing this file into Tcl runs the tests and generates output
-# for errors. No output means no errors were found.
+# This file contains a collection of tests for one or more of the Tcl
+# built-in commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
 # Copyright (c) 1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution of
-# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 # RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
+    package require tcltest
     namespace import -force ::tcltest::*
 }
 
@@ -27,28 +27,21 @@ if {[testConstraint win]} {
 	testConstraint linkDirectory 0
     }
     testConstraint symbolicLinkFile 0
-    testConstraint sharedCdrive [expr {![catch {cd //[info hostname]/c}]}]
 }
-# This match compares the first two words of the result. If the wanted result
-# is "equal", then this is successful if the words are equal. If the wanted
-# result is "not equal", then this is successful if the words are different.
-customMatch compareWords {apply {{a b} {
-    lassign $b w1 w2
-    expr {$a eq "equal" ? $w1 eq $w2 : $w1 ne $w2}
-}}}
 
-proc touch filename {catch {close [open $filename w]}}
 global env
 if {[testConstraint testsetplatform]} {
     set platform [testgetplatform]
 }
 
-# Caution: when using 'testsetplatform' to test different file name platform
-# descriptions in this file, one must be very careful not to combine such
-# platform manipulation with commands like 'cd', 'pwd'. That is because the
-# latter commands operate on the real filesystem but will potentially have
-# their logic routed through the wrong generic code paths if we've used
-# 'testsetplatform'. This can lead to serious problems, even crashes.
+# Caution: when using 'testsetplatform' to test different file
+# name platform descriptions in this file, one must be very
+# careful not to combine such platform manipulation with
+# commands like 'cd', 'pwd'.  That is because the latter commands
+# operate on the real filesystem but will potentially have their
+# logic routed through the wrong generic code paths if we've
+# used 'testsetplatform'.  This can lead to serious problems,
+# even crashes.
 test filename-1.1 {Tcl_GetPathType: unix} {testsetplatform} {
     testsetplatform unix
     file pathtype /
@@ -219,33 +212,36 @@ test filename-4.18 {Tcl_SplitPath: unix} {testsetplatform} {
     testsetplatform unix
     file split foo/bar~/baz
 } {foo bar~ baz}
+
 if {[testConstraint testsetplatform]} {
     testsetplatform $platform
 }
-test filename-4.19 {Tcl_SplitPath} -setup {
+
+test filename-4.19 {Tcl_SplitPath} {
     set oldDir [pwd]
-    cd [temporaryDirectory]
-} -body {
-    file mkdir tildetmp
-    set nastydir [file join tildetmp ./~tilde]
-    file mkdir $nastydir
-    set norm [file normalize $nastydir]
-    cd tildetmp
-    cd ./~tilde
-    glob -nocomplain *
-    set idx [string first tildetmp $norm]
-    set norm [string range $norm $idx end]
-    # fix path away so all platforms are the same
-    regsub {(.*):$} $norm {\1} norm
-    regsub -all ":" $norm "/" norm
-    # make sure we can delete the directory we created
-    cd $oldDir
-    file delete -force $nastydir
-    return $norm
-} -cleanup {
+    set res [catch {
+	cd [temporaryDirectory]
+	file mkdir tildetmp
+	set nastydir [file join tildetmp ./~tilde]
+	file mkdir $nastydir
+	set norm [file normalize $nastydir]
+	cd tildetmp
+	cd ./~tilde
+	glob -nocomplain *
+	set idx [string first tildetmp $norm]
+	set norm [string range $norm $idx end]
+	# fix path away so all platforms are the same
+	regsub {(.*):$} $norm {\1} norm
+	regsub -all ":" $norm "/" norm
+	# make sure we can delete the directory we created
+	cd $oldDir
+	file delete -force $nastydir
+	set norm
+    } err]
     cd $oldDir
     catch {file delete -force [file join [temporaryDirectory] tildetmp]}
-} -result {tildetmp/~tilde}
+    list $res $err
+} {0 tildetmp/~tilde}
 
 test filename-6.1 {Tcl_SplitPath: win} {testsetplatform} {
     testsetplatform win
@@ -441,6 +437,7 @@ test filename-7.18 {Tcl_JoinPath: unix} {testsetplatform} {
     file join /// a b
 } {/a/b}
 
+
 test filename-9.1 {Tcl_JoinPath: win} {testsetplatform} {
     testsetplatform win
     file join a b
@@ -517,25 +514,25 @@ test filename-9.19 {Tcl_JoinPath: win} {testsetplatform} {
     testsetplatform win
     set res {}
     lappend res \
-	[file join {C:\foo\bar}] \
-	[file join C:/blah {C:\foo\bar}] \
-	[file join C:/blah C:/blah {C:\foo\bar}]
+      [file join {C:\foo\bar}] \
+      [file join C:/blah {C:\foo\bar}] \
+      [file join C:/blah C:/blah {C:\foo\bar}]
 } {C:/foo/bar C:/foo/bar C:/foo/bar}
 test filename-9.19.1 {Tcl_JoinPath: win} {testsetplatform} {
     testsetplatform win
     set res {}
     lappend res \
-	[file join {foo\bar}] \
-	[file join C:/blah {foo\bar}] \
-	[file join C:/blah C:/blah {foo\bar}]
+      [file join {foo\bar}] \
+      [file join C:/blah {foo\bar}] \
+      [file join C:/blah C:/blah {foo\bar}]
 } {foo/bar C:/blah/foo/bar C:/blah/foo/bar}
 test filename-9.19.2 {Tcl_JoinPath: win} {testsetplatform win} {
     testsetplatform win
     set res {}
     lappend res \
-	[file join {foo\bar}] \
-	[file join [pwd] {foo\bar}] \
-	[file join [pwd] [pwd] {foo\bar}]
+      [file join {foo\bar}] \
+      [file join [pwd] {foo\bar}] \
+      [file join [pwd] [pwd] {foo\bar}]
     set nres {}
     foreach elt $res {
 	lappend nres [string map [list [pwd] pwd] $elt]
@@ -546,206 +543,201 @@ test filename-9.20 {Tcl_JoinPath: unix} {testsetplatform} {
     testsetplatform unix
     set res {}
     lappend res \
-	[file join {/foo/bar}] \
-	[file join /x {/foo/bar}] \
-	[file join /x /x {/foo/bar}]
+      [file join {/foo/bar}] \
+      [file join /x {/foo/bar}] \
+      [file join /x /x {/foo/bar}]
 } {/foo/bar /foo/bar /foo/bar}
 test filename-9.23 {Tcl_JoinPath: win} {testsetplatform} {
     testsetplatform win
     set res {}
     lappend res \
-	[file join {foo\bar}] \
-	[file join C:/blah {foo\bar}] \
-	[file join C:/blah C:/blah {foo\bar}]
+      [file join {foo\bar}] \
+      [file join C:/blah {foo\bar}] \
+      [file join C:/blah C:/blah {foo\bar}]
     string map [list C:/blah ""] $res
 } {foo/bar /foo/bar /foo/bar}
 test filename-9.24 {Tcl_JoinPath: unix} {testsetplatform} {
     testsetplatform unix
     set res {}
     lappend res \
-	[file join {foo/bar}] \
-	[file join /x {foo/bar}] \
-	[file join /x /x {foo/bar}]
+      [file join {foo/bar}] \
+      [file join /x {foo/bar}] \
+      [file join /x /x {foo/bar}]
     string map [list /x ""] $res
 } {foo/bar /foo/bar /foo/bar}
 
-test filename-10.1 {Tcl_TranslateFileName} -body {
+test filename-10.1 {Tcl_TranslateFileName} {testsetplatform} {
     testsetplatform unix
-    testtranslatefilename foo
-} -result {foo} -constraints {testsetplatform testtranslatefilename}
-test filename-10.2 {Tcl_TranslateFileName} -body {
+    list [catch {testtranslatefilename foo} msg] $msg
+} {0 foo}
+test filename-10.2 {Tcl_TranslateFileName} {testsetplatform} {
     testsetplatform windows
-    testtranslatefilename {c:/foo}
-} -result {c:\foo} -constraints {testsetplatform testtranslatefilename}
-test filename-10.3 {Tcl_TranslateFileName} -body {
+    list [catch {testtranslatefilename {c:/foo}} msg] $msg
+} {0 {c:\foo}}
+test filename-10.3 {Tcl_TranslateFileName} {testsetplatform} {
     testsetplatform windows
-    testtranslatefilename {c:/\\foo/}
-} -result {c:\foo} -constraints {testsetplatform testtranslatefilename}
-test filename-10.3.1 {Tcl_TranslateFileName} -body {
+    list [catch {testtranslatefilename {c:/\\foo/}} msg] $msg
+} {0 {c:\foo}}
+test filename-10.3.1 {Tcl_TranslateFileName} {testsetplatform} {
     testsetplatform windows
-    testtranslatefilename {c://///}
-} -result c:\\ -constraints {testsetplatform testtranslatefilename}
-test filename-10.6 {Tcl_TranslateFileName} -setup {
+    list [catch {testtranslatefilename {c://///}} msg] $msg
+} {0 c:\\}
+test filename-10.6 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "/home/test"
     testsetplatform unix
-    testtranslatefilename ~/foo
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~/foo} msg] $msg]
     set env(HOME) $temp
-} -result {/home/test/foo}
-test filename-10.7 {Tcl_TranslateFileName} -setup {
+    set result
+} {0 /home/test/foo}
+test filename-10.7 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     unset env(HOME)
     testsetplatform unix
-    testtranslatefilename ~/foo
-} -returnCodes error -cleanup {
+    set result [list [catch {testtranslatefilename ~/foo} msg] $msg]
     set env(HOME) $temp
-} -result {couldn't find HOME environment variable to expand path}
-test filename-10.8 {Tcl_TranslateFileName} -setup {
+    set result
+} {1 {couldn't find HOME environment variable to expand path}}
+test filename-10.8 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "/home/test"
     testsetplatform unix
-    testtranslatefilename ~
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~} msg] $msg]
     set env(HOME) $temp
-} -result {/home/test}
-test filename-10.9 {Tcl_TranslateFileName} -setup {
+    set result
+} {0 /home/test}
+test filename-10.9 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "/home/test/"
     testsetplatform unix
-    testtranslatefilename ~
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~} msg] $msg]
     set env(HOME) $temp
-} -result {/home/test}
-test filename-10.10 {Tcl_TranslateFileName} -setup {
+    set result
+} {0 /home/test}
+test filename-10.10 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "/home/test/"
     testsetplatform unix
-    testtranslatefilename ~/foo
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~/foo} msg] $msg]
     set env(HOME) $temp
-} -result {/home/test/foo}
-test filename-10.17 {Tcl_TranslateFileName} -setup {
+    set result
+} {0 /home/test/foo}
+test filename-10.17 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "\\home\\"
     testsetplatform windows
-    testtranslatefilename ~/foo
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~/foo} msg] $msg]
     set env(HOME) $temp
-} -result {\home\foo}
-test filename-10.18 {Tcl_TranslateFileName} -setup {
+    set result
+} {0 {\home\foo}}
+test filename-10.18 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "\\home\\"
     testsetplatform windows
-    testtranslatefilename ~/foo\\bar
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~/foo\\bar} msg] $msg]
     set env(HOME) $temp
-} -result {\home\foo\bar}
-test filename-10.19 {Tcl_TranslateFileName} -setup {
+    set result
+} {0 {\home\foo\bar}}
+test filename-10.19 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "c:"
     testsetplatform windows
-    testtranslatefilename ~/foo
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~/foo} msg] $msg]
     set env(HOME) $temp
-} -result {c:foo}
-test filename-10.20 {Tcl_TranslateFileName} -returnCodes error -body {
-    testtranslatefilename ~blorp/foo
-} -constraints {testtranslatefilename testtranslatefilename} \
-    -result {user "blorp" doesn't exist}
-test filename-10.21 {Tcl_TranslateFileName} -setup {
+    set result
+} {0 c:foo}
+test filename-10.20 {Tcl_TranslateFileName} {testtranslatefilename} {
+    list [catch {testtranslatefilename ~blorp/foo} msg] $msg
+} {1 {user "blorp" doesn't exist}}
+test filename-10.21 {Tcl_TranslateFileName} {testsetplatform} {
     global env
     set temp $env(HOME)
-} -constraints {testsetplatform testtranslatefilename} -body {
     set env(HOME) "c:\\"
     testsetplatform windows
-    testtranslatefilename ~/foo
-} -cleanup {
+    set result [list [catch {testtranslatefilename ~/foo} msg] $msg]
     set env(HOME) $temp
-} -result {c:\foo}
-test filename-10.22 {Tcl_TranslateFileName} -body {
+    set result
+} {0 {c:\foo}}
+test filename-10.22 {Tcl_TranslateFileName} {testsetplatform} {
     testsetplatform windows
-    testtranslatefilename foo//bar
-} -constraints {testsetplatform testtranslatefilename} -result {foo\bar}
+    list [catch {testtranslatefilename foo//bar} msg] $msg
+} {0 {foo\bar}}
+
 if {[testConstraint testsetplatform]} {
     testsetplatform $platform
 }
-test filename-10.23 {Tcl_TranslateFileName} -body {
-    # this test fails if ~ouster is not /home/ouster
-    testtranslatefilename ~ouster
-} -constraints {nonPortable testtranslatefilename} -result {/home/ouster}
-test filename-10.24 {Tcl_TranslateFileName} -body {
-    # this test fails if ~ouster is not /home/ouster
-    testtranslatefilename ~ouster/foo
-} -result {/home/ouster/foo} -constraints {nonPortable testtranslatefilename}
 
-test filename-11.1 {Tcl_GlobCmd} -returnCodes error -body {
-    glob
-} -result {no files matched glob patterns ""}
-test filename-11.2 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -gorp
-} -result {bad option "-gorp": must be -directory, -join, -nocomplain, -path, -tails, -types, or --}
-test filename-11.3 {Tcl_GlobCmd} -body {
-    glob -nocomplai
-} -result {}
-test filename-11.4 {Tcl_GlobCmd} -body {
-    glob -nocomplain
-} -result {}
-test filename-11.5 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -nocomplain * ~xyqrszzz
-} -result {user "xyqrszzz" doesn't exist}
-test filename-11.6 {Tcl_GlobCmd} -returnCodes error -body {
-    glob ~xyqrszzz
-} -result {user "xyqrszzz" doesn't exist}
-test filename-11.7 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -- -nocomplain
-} -result {no files matched glob pattern "-nocomplain"}
-test filename-11.8 {Tcl_GlobCmd} -body {
-    glob -nocomplain -- -nocomplain
-} -result {}
-test filename-11.9 {Tcl_GlobCmd} -constraints {testsetplatform} -body {
+test filename-10.23 {Tcl_TranslateFileName} {nonPortable} {
+    # this test fails if ~ouster is not /home/ouster
+    list [catch {testtranslatefilename ~ouster} msg] $msg
+} {0 /home/ouster}
+test filename-10.24 {Tcl_TranslateFileName} {nonPortable} {
+    # this test fails if ~ouster is not /home/ouster
+    list [catch {testtranslatefilename ~ouster/foo} msg] $msg
+} {0 /home/ouster/foo}
+
+
+test filename-11.1 {Tcl_GlobCmd} {
+    list [catch {glob} msg] $msg
+} {1 {wrong # args: should be "glob ?switches? name ?name ...?"}}
+test filename-11.2 {Tcl_GlobCmd} {
+    list [catch {glob -gorp} msg] $msg
+} {1 {bad option "-gorp": must be -directory, -join, -nocomplain, -path, -tails, -types, or --}}
+test filename-11.3 {Tcl_GlobCmd} {
+    list [catch {glob -nocomplai} msg] $msg
+} {1 {wrong # args: should be "glob ?switches? name ?name ...?"}}
+test filename-11.4 {Tcl_GlobCmd} {
+    list [catch {glob -nocomplain} msg] $msg
+} {1 {wrong # args: should be "glob ?switches? name ?name ...?"}}
+test filename-11.5 {Tcl_GlobCmd} {
+    list [catch {glob -nocomplain * ~xyqrszzz} msg] $msg
+} {1 {user "xyqrszzz" doesn't exist}}
+test filename-11.6 {Tcl_GlobCmd} {
+    list [catch {glob ~xyqrszzz} msg] $msg
+} {1 {user "xyqrszzz" doesn't exist}}
+test filename-11.7 {Tcl_GlobCmd} {
+    list [catch {glob -- -nocomplain} msg] $msg
+} {1 {no files matched glob pattern "-nocomplain"}}
+test filename-11.8 {Tcl_GlobCmd} {
+    list [catch {glob -nocomplain -- -nocomplain} msg] $msg
+} {0 {}}
+test filename-11.9 {Tcl_GlobCmd} {testsetplatform} {
     testsetplatform unix
-    glob ~\\xyqrszzz/bar
-} -returnCodes error -result {user "\xyqrszzz" doesn't exist}
-test filename-11.10 {Tcl_GlobCmd} -constraints {testsetplatform} -body {
+    list [catch {glob ~\\xyqrszzz/bar} msg] $msg
+} {1 {user "\xyqrszzz" doesn't exist}}
+test filename-11.10 {Tcl_GlobCmd} {testsetplatform} {
     testsetplatform unix
-    glob -nocomplain ~\\xyqrszzz/bar
-} -returnCodes error -result {user "\xyqrszzz" doesn't exist}
-test filename-11.11 {Tcl_GlobCmd} -constraints {testsetplatform} -body {
+    list [catch {glob -nocomplain ~\\xyqrszzz/bar} msg] $msg
+} {1 {user "\xyqrszzz" doesn't exist}}
+test filename-11.11 {Tcl_GlobCmd} {testsetplatform} {
     testsetplatform unix
-    glob ~xyqrszzz\\/\\bar
-} -returnCodes error -result {user "xyqrszzz" doesn't exist}
-test filename-11.12 {Tcl_GlobCmd} -constraints {testsetplatform} -setup {
+    list [catch {glob ~xyqrszzz\\/\\bar} msg] $msg
+} {1 {user "xyqrszzz" doesn't exist}}
+test filename-11.12 {Tcl_GlobCmd} {testsetplatform} {
     testsetplatform unix
     set home $env(HOME)
-} -body {
     unset env(HOME)
-    glob ~/*
-} -returnCodes error -cleanup {
+    set x [list [catch {glob ~/*} msg] $msg]
     set env(HOME) $home
-} -result {couldn't find HOME environment variable to expand path}
+    set x
+} {1 {couldn't find HOME environment variable to expand path}}
+
 if {[testConstraint testsetplatform]} {
     testsetplatform $platform
 }
+
 test filename-11.13 {Tcl_GlobCmd} {
-    file join [lindex [glob ~] 0]
-} [file join $env(HOME)]
+    list [catch {file join [lindex [glob ~] 0]} msg] $msg
+} [list 0 [file join $env(HOME)]]
+
 set oldpwd [pwd]
 set oldhome $env(HOME)
 cd [temporaryDirectory]
@@ -755,354 +747,395 @@ file mkdir globTest/a1/b1
 file mkdir globTest/a1/b2
 file mkdir globTest/a2/b3
 file mkdir globTest/a3
-touch globTest/x1.c
-touch globTest/y1.c
-touch globTest/z1.c
-touch "globTest/weird name.c"
-touch globTest/a1/b1/x2.c
-touch globTest/a1/b2/y2.c
-touch globTest/.1
-touch globTest/x,z1.c
+close [open globTest/x1.c w]
+close [open globTest/y1.c w]
+close [open globTest/z1.c w]
+close [open "globTest/weird name.c" w]
+close [open globTest/a1/b1/x2.c w]
+close [open globTest/a1/b2/y2.c w]
+
+catch {close [open globTest/.1 w]}
+catch {close [open globTest/x,z1.c w]}
+
 test filename-11.14 {Tcl_GlobCmd} {
-    glob ~/globTest
-} [list [file join $env(HOME) globTest]]
+    list [catch {glob ~/globTest} msg] $msg
+} [list 0 [list [file join $env(HOME) globTest]]]
 test filename-11.15 {Tcl_GlobCmd} {
-    glob ~\\/globTest
-} [list [file join $env(HOME) globTest]]
+    list [catch {glob ~\\/globTest} msg] $msg
+} [list 0 [list [file join $env(HOME) globTest]]]
 test filename-11.16 {Tcl_GlobCmd} {
-    glob globTest
-} {globTest}
+    list [catch {glob globTest} msg] $msg
+} {0 globTest}
+
 set globname "globTest"
 set horribleglobname "glob\[\{Test"
+
 test filename-11.17 {Tcl_GlobCmd} {unix} {
-    lsort [glob -directory $globname *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
+    list [catch {lsort [glob -directory $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.17.1 {Tcl_GlobCmd} {win} {
-    lsort [glob -directory $globname *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
-	[file join $globname .1]\
+    list [catch {lsort [glob -directory $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
+        [file join $globname .1]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
-test filename-11.17.2 {Tcl_GlobCmd} -setup {
+	[file join $globname y1.c] [file join $globname z1.c]]]]
+test filename-11.17.2 {Tcl_GlobCmd} {notRoot linkDirectory} {
     set dir [pwd]
-} -constraints {notRoot linkDirectory} -body {
-    cd $globname
-    file link -symbolic link a1
-    cd $dir
-    lsort [glob -directory $globname -join * b1]
-} -cleanup {
-    cd $dir
+    set ret "error in test"
+    if {[catch {
+	cd $globname
+	file link -symbolic link a1
+	cd $dir
+	set ret [list [catch {
+	    lsort [glob -directory $globname -join * b1]
+	} msg] $msg]
+    }]} {
+	cd $dir
+    }
     file delete [file join $globname link]
-} -result [list [file join $globname a1 b1] \
-	[file join $globname link b1]]
+    set ret
+} [list 0 [lsort [list [file join $globname a1 b1] \
+  [file join $globname link b1]]]]
 # Simpler version of the above test to illustrate a given bug.
-test filename-11.17.3 {Tcl_GlobCmd} -setup {
+test filename-11.17.3 {Tcl_GlobCmd} {notRoot linkDirectory} {
     set dir [pwd]
-} -constraints {notRoot linkDirectory} -body {
-    cd $globname
-    file link -symbolic link a1
-    cd $dir
-    lsort [glob -directory $globname -type d *]
-} -cleanup {
-    cd $dir
+    set ret "error in test"
+    if {[catch {
+	cd $globname
+	file link -symbolic link a1
+	cd $dir
+	set ret [list [catch {
+	    lsort [glob -directory $globname -type d *]
+	} msg] $msg]
+    }]} {
+	cd $dir
+    }
     file delete [file join $globname link]
-} -result [list [file join $globname a1] \
-	[file join $globname a2] \
-	[file join $globname a3] \
-	[file join $globname link]]
-# Make sure the bugfix isn't too simple. We don't want to break 'glob -type l'
-test filename-11.17.4 {Tcl_GlobCmd} -setup {
+    set ret
+} [list 0 [lsort [list [file join $globname a1] \
+  [file join $globname a2] \
+  [file join $globname a3] \
+  [file join $globname link]]]]
+# Make sure the bugfix isn't too simple.  We don't want
+# to break 'glob -type l'.
+test filename-11.17.4 {Tcl_GlobCmd} {notRoot linkDirectory} {
     set dir [pwd]
-} -constraints {notRoot linkDirectory} -body {
-    cd $globname
-    file link -symbolic link a1
-    cd $dir
-    lsort [glob -directory $globname -type l *]
-} -cleanup {
-    cd $dir
+    set ret "error in test"
+    if {[catch {
+	cd $globname
+	file link -symbolic link a1
+	cd $dir
+	set ret [list [catch {
+	    lsort [glob -directory $globname -type l *]
+	} msg] $msg]
+    }]} {
+	cd $dir
+    }
     file delete [file join $globname link]
-} -result [list [file join $globname link]]
+    set ret
+} [list 0 [list [file join $globname link]]]
 test filename-11.17.5 {Tcl_GlobCmd} {
-    lsort [glob -directory $globname -tails *.c]
-} [lsort [list "weird name.c" x,z1.c x1.c y1.c z1.c]]
+    list [catch {lsort [glob -directory $globname -tails *.c]} msg] $msg
+} [list 0 [lsort [list "weird name.c" x,z1.c x1.c y1.c z1.c]]]
 test filename-11.17.6 {Tcl_GlobCmd} {
-    lsort [glob -directory $globname -tails *.c *.c]
-} [lsort [concat [list "weird name.c" x,z1.c x1.c y1.c z1.c] \
-	[list "weird name.c" x,z1.c x1.c y1.c z1.c]]]
-test filename-11.17.7 {Tcl_GlobCmd: broken link and glob -l} -setup {
+    list [catch {lsort [glob -directory $globname -tails *.c *.c]} msg] $msg
+} [list 0 [lsort [concat [list "weird name.c" x,z1.c x1.c y1.c z1.c] \
+  [list "weird name.c" x,z1.c x1.c y1.c z1.c]]]]
+test filename-11.17.7 {Tcl_GlobCmd: broken link and glob -l} {linkDirectory} {
     set dir [pwd]
-} -constraints {linkDirectory} -body {
-    cd $globname
-    file mkdir nonexistent
-    file link -symbolic link nonexistent
-    file delete nonexistent
-    cd $dir
-    lsort [glob -nocomplain -directory $globname -type l *]
-} -cleanup {
-    cd $dir
+    set ret "error in test"
+    if {[catch {
+	cd $globname
+	file mkdir nonexistent
+	file link -symbolic link nonexistent
+	file delete nonexistent
+	cd $dir
+	set ret [list [catch {
+	    lsort [glob -nocomplain -directory $globname -type l *]
+	} msg] $msg]
+    }]} {
+	cd $dir
+    }
     file delete [file join $globname link]
-} -result [list [file join $globname link]]
-test filename-11.17.8 {Tcl_GlobCmd: broken link and glob -l} -setup {
+    set ret
+} [list 0 [list [file join $globname link]]]
+test filename-11.17.8 {Tcl_GlobCmd: broken link and glob -l} {symbolicLinkFile} {
     set dir [pwd]
-} -constraints {symbolicLinkFile} -body {
-    cd $globname
-    touch "nonexistent"
-    file link -symbolic link nonexistent
-    file delete nonexistent
-    cd $dir
-    lsort [glob -nocomplain -directory $globname -type l *]
-} -cleanup {
-    cd $dir
+    set ret "error in test"
+    if {[catch {
+	cd $globname
+	close [open "nonexistent" w]
+	file link -symbolic link nonexistent
+	file delete nonexistent
+	cd $dir
+	set ret [list [catch {
+	    lsort [glob -nocomplain -directory $globname -type l *]
+	} msg] $msg]
+    }]} {
+	cd $dir
+    }
     file delete [file join $globname link]
-} -result [list [file join $globname link]]
+    set ret
+} [list 0 [list [file join $globname link]]]
 test filename-11.18 {Tcl_GlobCmd} {unix} {
-    lsort [glob -path $globname/ *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
+    list [catch {lsort [glob -path $globname/ *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.18.1 {Tcl_GlobCmd} {win} {
-    lsort [glob -path $globname/ *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
-	[file join $globname .1]\
+    list [catch {lsort [glob -path $globname/ *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
+        [file join $globname .1]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.19 {Tcl_GlobCmd} {unix} {
-    lsort [glob -join -path [string range $globname 0 5] * *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
+    list [catch {lsort [glob -join -path \
+	    [string range $globname 0 5] * *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.19.1 {Tcl_GlobCmd} {win} {
-    lsort [glob -join -path [string range $globname 0 5] * *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
-	[file join $globname .1]\
+    list [catch {lsort [glob -join -path \
+	    [string range $globname 0 5] * *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
+        [file join $globname .1]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.20 {Tcl_GlobCmd} {
-    lsort [glob -type d -dir $globname *]
-} [lsort [list [file join $globname a1]\
+    list [catch {lsort [glob -type d -dir $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1]\
 	[file join $globname a2]\
-	[file join $globname a3]]]
+	[file join $globname a3]]]]
 test filename-11.21 {Tcl_GlobCmd} {
-    lsort [glob -type d -path $globname *]
-} [list $globname]
-test filename-11.21.1 {Tcl_GlobCmd} -body {
-    touch {[tcl].testremains}
-    lsort [glob -path {[tcl]} *]
-} -cleanup {
+    list [catch {lsort [glob -type d -path $globname *]} msg] $msg
+} [list 0 [lsort [list $globname]]]
+
+test filename-11.21.1 {Tcl_GlobCmd} {
+    close [open {[tcl].testremains} w]
+    set res [list [catch {lsort [glob -path {[tcl]} *]} msg] $msg]
     file delete -force {[tcl].testremains}
-} -result {{[tcl].testremains}}
-# Get rid of file/dir if it exists, since it will have been left behind by a
-# previous failed run.
+    set res
+} [list 0 {{[tcl].testremains}}]
+
+# Get rid of file/dir if it exists, since it will have
+# been left behind by a previous failed run.
 if {[file exists $horribleglobname]} {
     file delete -force $horribleglobname
 }
 file rename globTest $horribleglobname
 set globname $horribleglobname
+
 test filename-11.22 {Tcl_GlobCmd} {unix} {
-    lsort [glob -dir $globname *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
+    list [catch {lsort [glob -dir $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.22.1 {Tcl_GlobCmd} {win} {
-    lsort [glob -dir $globname *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
-	[file join $globname .1]\
+    list [catch {lsort [glob -dir $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
+        [file join $globname .1]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.23 {Tcl_GlobCmd} {unix} {
-    lsort [glob -path $globname/ *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
+    list [catch {lsort [glob -path $globname/ *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.23.1 {Tcl_GlobCmd} {win} {
-    lsort [glob -path $globname/ *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
-	[file join $globname .1]\
+    list [catch {lsort [glob -path $globname/ *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
+        [file join $globname .1]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.24 {Tcl_GlobCmd} {unix} {
-    lsort [glob -join -path [string range $globname 0 5] * *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
+    list [catch {lsort [glob -join -path \
+	    [string range $globname 0 5] * *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.24.1 {Tcl_GlobCmd} {win} {
-    lsort [glob -join -path [string range $globname 0 5] * *]
-} [lsort [list [file join $globname a1] [file join $globname a2]\
-	[file join $globname .1]\
+    list [catch {lsort [glob -join -path \
+	    [string range $globname 0 5] * *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1] [file join $globname a2]\
+        [file join $globname .1]\
 	[file join $globname a3]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-11.25 {Tcl_GlobCmd} {
-    lsort [glob -type d -dir $globname *]
-} [lsort [list [file join $globname a1]\
+    list [catch {lsort [glob -type d -dir $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1]\
 	[file join $globname a2]\
-	[file join $globname a3]]]
+	[file join $globname a3]]]]
 test filename-11.25.1 {Tcl_GlobCmd} {
-    lsort [glob -type {d r} -dir $globname *]
-} [lsort [list [file join $globname a1]\
-	[file join $globname a2]\
-	[file join $globname a3]]]
+    list [catch {lsort [glob -type {d r} -dir $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1]\
+  [file join $globname a2]\
+  [file join $globname a3]]]]
 test filename-11.25.2 {Tcl_GlobCmd} {
-    lsort [glob -type {d r w} -dir $globname *]
-} [lsort [list [file join $globname a1]\
-	[file join $globname a2]\
-	[file join $globname a3]]]
+    list [catch {lsort [glob -type {d r w} -dir $globname *]} msg] $msg
+} [list 0 [lsort [list [file join $globname a1]\
+  [file join $globname a2]\
+  [file join $globname a3]]]]
 test filename-11.26 {Tcl_GlobCmd} {
-    glob -type d -path $globname *
-} [list $globname]
-test filename-11.27 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types abcde *
-} -result {bad argument to "-types": abcde}
-test filename-11.28 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types z *
-} -result {bad argument to "-types": z}
-test filename-11.29 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types {abcd efgh} *
-} -result {only one MacOS type or creator argument to "-types" allowed}
-test filename-11.30 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types {{macintosh type TEXT} {macintosh creator ALFA} efgh} *
-} -result {only one MacOS type or creator argument to "-types" allowed}
-test filename-11.31 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types
-} -result {missing argument to "-types"}
-test filename-11.32 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -path hello -dir hello *
-} -result {"-directory" cannot be used with "-path"}
-test filename-11.33 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -path
-} -result {missing argument to "-path"}
-test filename-11.34 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -direct
-} -result {missing argument to "-directory"}
-test filename-11.35 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -paths *
-} -result {bad option "-paths": must be -directory, -join, -nocomplain, -path, -tails, -types, or --}
+    list [catch {glob -type d -path $globname *} msg] $msg
+} [list 0 [list $globname]]
+test filename-11.27 {Tcl_GlobCmd} {
+    list [catch {glob -types abcde *} msg] $msg
+} {1 {bad argument to "-types": abcde}}
+test filename-11.28 {Tcl_GlobCmd} {
+    list [catch {glob -types z *} msg] $msg
+} {1 {bad argument to "-types": z}}
+test filename-11.29 {Tcl_GlobCmd} {
+    list [catch {glob -types {abcd efgh} *} msg] $msg
+} {1 {only one MacOS type or creator argument to "-types" allowed}}
+test filename-11.30 {Tcl_GlobCmd} {
+    list [catch {glob -types {{macintosh type TEXT} \
+	    {macintosh creator ALFA} efgh} *} msg] $msg
+} {1 {only one MacOS type or creator argument to "-types" allowed}}
+test filename-11.31 {Tcl_GlobCmd} {
+    list [catch {glob -types} msg] $msg
+} {1 {missing argument to "-types"}}
+test filename-11.32 {Tcl_GlobCmd} {
+    list [catch {glob -path hello -dir hello *} msg] $msg
+} {1 {"-directory" cannot be used with "-path"}}
+test filename-11.33 {Tcl_GlobCmd} {
+    list [catch {glob -path} msg] $msg
+} {1 {missing argument to "-path"}}
+test filename-11.34 {Tcl_GlobCmd} {
+    list [catch {glob -direct} msg] $msg
+} {1 {missing argument to "-directory"}}
+test filename-11.35 {Tcl_GlobCmd} {
+    list [catch {glob -paths *} msg] $msg
+} {1 {bad option "-paths": must be -directory, -join, -nocomplain, -path, -tails, -types, or --}}
 # Test '-tails' flag to glob.
-test filename-11.36 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -tails *
-} -result {"-tails" must be used with either "-directory" or "-path"}
+test filename-11.36 {Tcl_GlobCmd} {
+    list [catch {glob -tails *} msg] $msg
+} {1 {"-tails" must be used with either "-directory" or "-path"}}
 test filename-11.37 {Tcl_GlobCmd} {
-    glob -type d -tails -path $globname *
-} [list $globname]
+    list [catch {glob -type d -tails -path $globname *} msg] $msg
+} [list 0 [list $globname]]
 test filename-11.38 {Tcl_GlobCmd} {
-    glob -tails -path $globname *
-} [list $globname]
+    list [catch {glob -tails -path $globname *} msg] $msg
+} [list 0 [list $globname]]
 test filename-11.39 {Tcl_GlobCmd} {
-    glob -tails -join -path $globname *
-} [list $globname]
-test filename-11.40 {Tcl_GlobCmd} -body {
-    list [glob -dir [pwd] -tails *] [glob *]
-} -match compareWords -result equal
-test filename-11.41 {Tcl_GlobCmd} -body {
-    list [glob -dir [pwd] -tails *] [glob -dir [pwd] *]
-} -match compareWords -result "not equal"
-test filename-11.42 {Tcl_GlobCmd} -body {
+    list [catch {glob -tails -join -path $globname *} msg] $msg
+} [list 0 [list $globname]]
+test filename-11.40 {Tcl_GlobCmd} {
+    expr {[glob -dir [pwd] -tails *] == [glob *]}
+} {1}
+test filename-11.41 {Tcl_GlobCmd} {
+    expr {[glob -dir [pwd] -tails *] != [glob -dir [pwd] *]}
+} {1}
+test filename-11.42 {Tcl_GlobCmd} {
     set res [list]
     foreach f [glob -dir [pwd] *] {
 	lappend res [file tail $f]
     }
-    list $res [glob *]
-} -match compareWords -result equal
-test filename-11.43 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -t *
-} -result {ambiguous option "-t": must be -directory, -join, -nocomplain, -path, -tails, -types, or --}
-test filename-11.44 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -tails -path hello -directory hello *
-} -result {"-directory" cannot be used with "-path"}
-test filename-11.45 {Tcl_GlobCmd on root volume} -setup {
+    expr {$res == [glob *]}
+} {1}
+test filename-11.43 {Tcl_GlobCmd} {
+    list [catch {glob -t *} msg] $msg
+} {1 {ambiguous option "-t": must be -directory, -join, -nocomplain, -path, -tails, -types, or --}}
+test filename-11.44 {Tcl_GlobCmd} {
+    list [catch {glob -tails -path hello -directory hello *} msg] $msg
+} {1 {"-directory" cannot be used with "-path"}}
+test filename-11.45 {Tcl_GlobCmd on root volume} {
     set res1 ""
     set res2 ""
-    set tmpd [pwd]
-} -body {
     catch {
 	set res1 [glob -dir [lindex [file volumes] 0] -tails *]
     }
     catch {
+	set tmpd [pwd]
 	cd [lindex [file volumes] 0]
 	set res2 [glob *]
+	cd $tmpd
     }
-    list $res1 $res2
-} -cleanup {
-    cd $tmpd
-} -match compareWords -result equal
-test filename-11.46 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types abcde -dir foo *
-} -result {bad argument to "-types": abcde}
-test filename-11.47 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types abcde -path foo *
-} -result {bad argument to "-types": abcde}
-test filename-11.48 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types abcde -dir foo -join * *
-} -result {bad argument to "-types": abcde}
-test filename-11.49 {Tcl_GlobCmd} -returnCodes error -body {
-    glob -types abcde -path foo -join * *
-} -result {bad argument to "-types": abcde}
+    set res [expr {$res1 == $res2}]
+    if {!$res} {
+	lappend res $res1 $res2
+    }
+    set res
+} {1}
+test filename-11.46 {Tcl_GlobCmd} {
+    list [catch {glob -types abcde -dir foo *} msg] $msg
+} {1 {bad argument to "-types": abcde}}
+test filename-11.47 {Tcl_GlobCmd} {
+    list [catch {glob -types abcde -path foo *} msg] $msg
+} {1 {bad argument to "-types": abcde}}
+test filename-11.48 {Tcl_GlobCmd} {
+    list [catch {glob -types abcde -dir foo -join * *} msg] $msg
+} {1 {bad argument to "-types": abcde}}
+test filename-11.49 {Tcl_GlobCmd} {
+    list [catch {glob -types abcde -path foo -join * *} msg] $msg
+} {1 {bad argument to "-types": abcde}}
 
 file rename $horribleglobname globTest
 set globname globTest
 unset horribleglobname
 
 test filename-12.1 {simple globbing} {unixOrPc} {
-    glob {}
-} {.}
-test filename-12.1.1 {simple globbing} -constraints {unixOrPc} -body {
-    glob -types f {}
-} -returnCodes error -result {no files matched glob pattern ""}
+    list [catch {glob {}} msg] $msg
+} {0 .}
+test filename-12.1.1 {simple globbing} {unixOrPc} {
+    list [catch {glob -types f {}} msg] $msg
+} {1 {no files matched glob pattern ""}}
 test filename-12.1.2 {simple globbing} {unixOrPc} {
-    glob -types d {}
-} {.}
+    list [catch {glob -types d {}} msg] $msg
+} {0 .}
 test filename-12.1.3 {simple globbing} {unix} {
-    glob -types hidden {}
-} {.}
-test filename-12.1.4 {simple globbing} -constraints {win} -body {
-    glob -types hidden {}
-} -returnCodes error -result {no files matched glob pattern ""}
-test filename-12.1.5 {simple globbing} -constraints {win} -body {
-    glob -types hidden c:/
-} -returnCodes error -result {no files matched glob pattern "c:/"}
+    list [catch {glob -types hidden {}} msg] $msg
+} {0 .}
+test filename-12.1.4 {simple globbing} {win} {
+    list [catch {glob -types hidden {}} msg] $msg
+} {1 {no files matched glob pattern ""}}
+test filename-12.1.5 {simple globbing} {win} {
+    list [catch {glob -types hidden c:/} msg] $msg
+} {1 {no files matched glob pattern "c:/"}}
 test filename-12.1.6 {simple globbing} {win} {
-    glob c:/
-} {c:/}
+    list [catch {glob c:/} msg] $msg
+} {0 c:/}
 test filename-12.3 {simple globbing} {
-    glob -nocomplain \{a1,a2\}
-} {}
+    list [catch {glob -nocomplain \{a1,a2\}} msg] $msg
+} {0 {}}
+
 set globPreResult globTest/
 set x1 x1.c
 set y1 y1.c
@@ -1110,67 +1143,92 @@ test filename-12.4 {simple globbing} {unixOrPc} {
     lsort [glob globTest/x1.c globTest/y1.c globTest/foo]
 } "$globPreResult$x1 $globPreResult$y1"
 test filename-12.5 {simple globbing} {
-    glob globTest\\/x1.c
-} "$globPreResult$x1"
+    list [catch {glob globTest\\/x1.c} msg] $msg
+} "0 $globPreResult$x1"
 test filename-12.6 {simple globbing} {
-    glob globTest\\/\\x1.c
-} "$globPreResult$x1"
-test filename-12.7 {globbing at filesystem root} -constraints {unix} -body {
-    list [glob -nocomplain /*] [glob -path / *]
-} -match compareWords -result equal
-test filename-12.8 {globbing at filesystem root} -constraints {unix} -body {
-    set first [string range [lindex [glob -type d /*] 0] 0 1]
-    list [glob -nocomplain ${first}*] [glob -path $first *]
-} -match compareWords -result equal
-test filename-12.9 {globbing at filesystem root} -constraints {win} -body {
-    # Can't grab just anything from 'file volumes' because we need a dir that
-    # has subdirs - assume that C:/ exists across Windows machines.
-    set first [string range [lindex [glob -type d C:/*] 0] 0 3]
-    list [glob -nocomplain ${first}*] [glob -path $first *]
-} -match compareWords -result equal
-test filename-12.10 {globbing with volume relative paths} -setup {
-    set pwd [pwd]
-} -body {
+    list [catch {glob globTest\\/\\x1.c} msg] $msg
+} "0 $globPreResult$x1"
+test filename-12.7 {globbing at filesystem root} {unix} {
+    set res1 [glob -nocomplain /*]
+    set res2 [glob -path / *]
+    set equal [string equal $res1 $res2]
+    if {!$equal} {
+	lappend equal "not equal" $res1 $res2
+    }
+    set equal
+} {1}
+test filename-12.8 {globbing at filesystem root} {unix} {
+    set dir [lindex [glob -type d /*] 0]
+    set first [string range $dir 0 1]
+    set res1 [glob -nocomplain ${first}*]
+    set res2 [glob -path $first *]
+    set equal [string equal $res1 $res2]
+    if {!$equal} {
+	lappend equal "not equal" $res1 $res2
+    }
+    set equal
+} {1}
+test filename-12.9 {globbing at filesystem root} {win} {
+    # Can't grab just anything from 'file volumes' because we need a dir
+    # that has subdirs - assume that C:/ exists across Windows machines.
     set dir [lindex [glob -type d C:/*] 0]
+    set first [string range $dir 0 3]
+    set res1 [glob -nocomplain ${first}*]
+    set res2 [glob -path $first *]
+    set equal [string equal $res1 $res2]
+    if {!$equal} {
+	lappend equal "not equal" $res1 $res2
+    }
+    set equal
+} {1}
+
+test filename-12.10 {globbing with volume relative paths} {win} {
+    set dir [lindex [glob -type d C:/*] 0]
+    set pwd [pwd]
     cd C:/
-    list [glob -nocomplain [string range $dir 2 end]] [list $dir]
-} -cleanup {
+    set res1 [glob -nocomplain [string range $dir 2 end]]
     cd $pwd
-} -constraints {win} -match compareWords -result equal
+    set res2 [list $dir]
+    set equal [string equal $res1 $res2]
+    if {!$equal} {
+        lappend equal "not equal" $res1 $res2
+    }
+    set equal
+} {1}
 
 test filename-13.1 {globbing with brace substitution} {
-    glob globTest/\{\}
-} "$globPreResult"
-test filename-13.2 {globbing with brace substitution} -body {
-    glob globTest/\{
-} -returnCodes error -result {unmatched open-brace in file name}
-test filename-13.3 {globbing with brace substitution} -body {
-    glob globTest/\{\\\}
-} -returnCodes error -result {unmatched open-brace in file name}
-test filename-13.4 {globbing with brace substitution} -body {
-    glob globTest/\{\\
-} -returnCodes error -result {unmatched open-brace in file name}
-test filename-13.5 {globbing with brace substitution} -body {
-    glob globTest/\}
-} -returnCodes error -result {unmatched close-brace in file name}
+    list [catch {glob globTest/\{\}} msg] $msg
+} "0 $globPreResult"
+test filename-13.2 {globbing with brace substitution} {
+    list [catch {glob globTest/\{} msg] $msg
+} {1 {unmatched open-brace in file name}}
+test filename-13.3 {globbing with brace substitution} {
+    list [catch {glob globTest/\{\\\}} msg] $msg
+} {1 {unmatched open-brace in file name}}
+test filename-13.4 {globbing with brace substitution} {
+    list [catch {glob globTest/\{\\} msg] $msg
+} {1 {unmatched open-brace in file name}}
+test filename-13.5 {globbing with brace substitution} {
+    list [catch {glob globTest/\}} msg] $msg
+} {1 {unmatched close-brace in file name}}
 test filename-13.6 {globbing with brace substitution} {
-    glob globTest/\{\}x1.c
-} "$globPreResult$x1"
+    list [catch {glob globTest/\{\}x1.c} msg] $msg
+} "0 $globPreResult$x1"
 test filename-13.7 {globbing with brace substitution} {
-    glob globTest/\{x\}1.c
-} "$globPreResult$x1"
+    list [catch {glob globTest/\{x\}1.c} msg] $msg
+} "0 $globPreResult$x1"
 test filename-13.8 {globbing with brace substitution} {
-    glob globTest/\{x\{\}\}1.c
-} "$globPreResult$x1"
+    list [catch {glob globTest/\{x\{\}\}1.c} msg] $msg
+} "0 $globPreResult$x1"
 test filename-13.9 {globbing with brace substitution} {
-    lsort [glob globTest/\{x,y\}1.c]
-} [list $globPreResult$x1 $globPreResult$y1]
+    list [lsort [catch {glob globTest/\{x,y\}1.c} msg]] $msg
+} [list 0 [list $globPreResult$x1 $globPreResult$y1]]
 test filename-13.10 {globbing with brace substitution} {
-    lsort [glob globTest/\{x,,y\}1.c]
-} [list $globPreResult$x1 $globPreResult$y1]
+    list [lsort [catch {glob globTest/\{x,,y\}1.c} msg]] $msg
+} [list 0 [list $globPreResult$x1 $globPreResult$y1]]
 test filename-13.11 {globbing with brace substitution} {unixOrPc} {
-    lsort [glob globTest/\{x,x\\,z,z\}1.c]
-} [lsort {globTest/x1.c globTest/x,z1.c globTest/z1.c}]
+    list [lsort [catch {glob globTest/\{x,x\\,z,z\}1.c} msg]] $msg
+} {0 {globTest/x1.c globTest/x,z1.c globTest/z1.c}}
 test filename-13.13 {globbing with brace substitution} {
     lsort [glob globTest/{a,b,x,y}1.c]
 } [list $globPreResult$x1 $globPreResult$y1]
@@ -1186,9 +1244,9 @@ test filename-13.18 {globbing with brace substitution} {unixOrPc} {
 test filename-13.20 {globbing with brace substitution} {unixOrPc} {
     lsort [glob globTest/{a,x}1/*/{x,y}*]
 } {globTest/a1/b1/x2.c globTest/a1/b2/y2.c}
-test filename-13.22 {globbing with brace substitution} -body {
-    glob globTest/\{a,x\}1/*/\{
-} -returnCodes error -result {unmatched open-brace in file name}
+test filename-13.22 {globbing with brace substitution} {
+    list [catch {glob globTest/\{a,x\}1/*/\{} msg] $msg
+} {1 {unmatched open-brace in file name}}
 
 test filename-14.1 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob glo*/*.c]
@@ -1196,21 +1254,22 @@ test filename-14.1 {asterisks, question marks, and brackets} {unixOrPc} {
 test filename-14.3 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob globTest/?1.c]
 } {globTest/x1.c globTest/y1.c globTest/z1.c}
-test filename-14.5 {asterisks, question marks, and brackets} -setup {
-    # The current directory could be anywhere; do this to stop spurious
-    # matches
-    file mkdir globTestContext
-    file rename globTest [file join globTestContext globTest]
-    set savepwd [pwd]
-    cd globTestContext
-} -constraints {unixOrPc} -body {
+
+# The current directory could be anywhere; do this to stop spurious matches
+file mkdir globTestContext
+file rename globTest [file join globTestContext globTest]
+set savepwd [pwd]
+cd globTestContext
+
+test filename-14.5 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob */*/*/*.c]
-} -cleanup {
-    # Reset to where we were
-    cd $savepwd
-    file rename [file join globTestContext globTest] globTest
-    file delete globTestContext
-} -result {globTest/a1/b1/x2.c globTest/a1/b2/y2.c}
+} {globTest/a1/b1/x2.c globTest/a1/b2/y2.c}
+
+# Reset to where we were
+cd $savepwd
+file rename [file join globTestContext globTest] globTest
+file delete globTestContext
+
 test filename-14.7 {asterisks, question marks, and brackets} {unix} {
     lsort [glob globTest/*]
 } {globTest/a1 globTest/a2 globTest/a3 {globTest/weird name.c} globTest/x,z1.c globTest/x1.c globTest/y1.c globTest/z1.c}
@@ -1229,27 +1288,26 @@ test filename-14.13 {asterisks, question marks, and brackets} {unixOrPc} {
 test filename-14.15 {asterisks, question marks, and brackets} {unixOrPc} {
     lsort [glob globTest/*/]
 } {globTest/a1/ globTest/a2/ globTest/a3/}
-test filename-14.17 {asterisks, question marks, and brackets} -setup {
+test filename-14.17 {asterisks, question marks, and brackets} {
     global env
     set temp $env(HOME)
-} -body {
     set env(HOME) [file join $env(HOME) globTest]
-    glob ~/z*
-} -cleanup {
+    set result [list [catch {glob ~/z*} msg] $msg]
     set env(HOME) $temp
-} -result [list [file join $env(HOME) globTest z1.c]]
+    set result
+} [list 0 [list [file join $env(HOME) globTest z1.c]]]
 test filename-14.18 {asterisks, question marks, and brackets} {unixOrPc} {
-    lsort [glob globTest/*.c goo/*]
-} {{globTest/weird name.c} globTest/x,z1.c globTest/x1.c globTest/y1.c globTest/z1.c}
+    list [catch {lsort [glob globTest/*.c goo/*]} msg] $msg
+} {0 {{globTest/weird name.c} globTest/x,z1.c globTest/x1.c globTest/y1.c globTest/z1.c}}
 test filename-14.20 {asterisks, question marks, and brackets} {
-    glob -nocomplain goo/*
-} {}
-test filename-14.21 {asterisks, question marks, and brackets} -body {
-    glob globTest/*/gorp
-} -returnCodes error -result {no files matched glob pattern "globTest/*/gorp"}
-test filename-14.22 {asterisks, question marks, and brackets} -body {
-    glob goo/* x*z foo?q
-} -returnCodes error -result {no files matched glob patterns "goo/* x*z foo?q"}
+    list [catch {glob -nocomplain goo/*} msg] $msg
+} {0 {}}
+test filename-14.21 {asterisks, question marks, and brackets} {
+    list [catch {glob globTest/*/gorp} msg] $msg
+} {1 {no files matched glob pattern "globTest/*/gorp"}}
+test filename-14.22 {asterisks, question marks, and brackets} {
+    list [catch {glob goo/* x*z foo?q} msg] $msg
+} {1 {no files matched glob patterns "goo/* x*z foo?q"}}
 test filename-14.23 {slash globbing} {unix} {
     glob /
 } /
@@ -1260,23 +1318,23 @@ test filename-14.24 {slash globbing} {win} {
     glob {\\}
 } [file norm /]
 test filename-14.25 {type specific globbing} {unix} {
-    lsort [glob -dir globTest -types f *]
-} [lsort [list \
+    list [catch {lsort [glob -dir globTest -types f *]} msg] $msg
+} [list 0 [lsort [list \
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-14.25.1 {type specific globbing} {win} {
-    lsort [glob -dir globTest -types f *]
-} [lsort [list \
-	[file join $globname .1]\
+    list [catch {lsort [glob -dir globTest -types f *]} msg] $msg
+} [list 0 [lsort [list \
+        [file join $globname .1]\
 	[file join $globname "weird name.c"]\
 	[file join $globname x,z1.c]\
 	[file join $globname x1.c]\
-	[file join $globname y1.c] [file join $globname z1.c]]]
+	[file join $globname y1.c] [file join $globname z1.c]]]]
 test filename-14.26 {type specific globbing} {
-    glob -nocomplain -dir globTest -types {readonly} *
-} {}
+    list [catch {glob -nocomplain -dir globTest -types {readonly} *} msg] $msg
+} [list 0 {}]
 test filename-14.27 {Bug 2710920} {unixOrPc} {
     file tail [lindex [lsort [glob globTest/*/]] 0]
 } a1
@@ -1290,86 +1348,80 @@ test filename-14.30 {Bug 2710920} {unixOrPc} {
     file rootname [lindex [lsort [glob globTest/*/]] 0]
 } globTest/a1/
 
-test filename-14.31 {Bug 2918610} -setup {
-    set d [makeDirectory foo]
-    makeFile {} bar.soom $d
-} -body {
-    foreach fn [glob $d/bar.soom] {
-        set root [file rootname $fn]
-        close [open $root {WRONLY CREAT}]
-    }
-    llength [glob -directory $d *]
-} -cleanup {
-    file delete -force $d/bar
-    removeFile bar.soom $d
-    removeDirectory foo
-} -result 2
 
 unset globname
 
-# The following tests are only valid for Unix systems. On some systems, like
-# AFS, "000" protection doesn't prevent access by owner, so the following test
-# is not portable.
+# The following tests are only valid for Unix systems.
+# On some systems, like AFS, "000" protection doesn't prevent
+# access by owner, so the following test is not portable.
 
 catch {file attributes globTest/a1 -permissions 0000}
 test filename-15.1 {unix specific globbing} {unix nonPortable} {
-    string tolower [list [catch {glob globTest/a1/*} msg] $msg $errorCode]
+    string tolower [list [catch {glob globTest/a1/*} msg]  $msg $errorCode]
 } {1 {couldn't read directory "globtest/a1": permission denied} {posix eacces {permission denied}}}
 test filename-15.2 {unix specific no complain: no errors} {unix nonPortable} {
     glob -nocomplain globTest/a1/*
 } {}
 test filename-15.3 {unix specific no complain: no errors, good result} \
 	{unix nonPortable} {
-    # test fails because if an error occurs, the interp's result is reset...
+    # test fails because if an error occur , the interp's result
+    # is reset...
     glob -nocomplain globTest/a2 globTest/a1/* globTest/a3
 } {globTest/a2 globTest/a3}
+
 catch {file attributes globTest/a1 -permissions 0755}
 test filename-15.4 {unix specific no complain: no errors, good result} \
 	{unix nonPortable} {
-    # test fails because if an error occurs, the interp's result is reset...
-    # or you don't run at scriptics where the outser and welch users exists
+    # test fails because if an error occurs, the interp's result
+    # is reset... or you don't run at scriptics where the
+    # outser and welch users exists
     glob -nocomplain ~ouster ~foo ~welch
 } {/home/ouster /home/welch}
 test filename-15.4.1 {no complain: errors, sequencing} {
-    # test used to fail because if an error occurs, the interp's result is
-    # reset... But, the sequence means we throw a different error first.
-    list [catch {glob -nocomplain ~wontexist ~blahxyz ~} res1] $res1 \
-	[catch {glob -nocomplain ~ ~blahxyz ~wontexist} res2] $res2
+    # test used to fail because if an error occurs, the interp's result
+    # is reset... But, the sequence means we throw a different error
+    # first.
+    concat \
+      [list [catch {glob -nocomplain ~wontexist ~blahxyz ~} res1] $res1] \
+      [list [catch {glob -nocomplain ~ ~blahxyz ~wontexist} res2] $res2]
 } {1 {user "wontexist" doesn't exist} 1 {user "blahxyz" doesn't exist}}
-test filename-15.4.2 {no complain: errors, sequencing} -body {
-    # test used to fail because if an error occurs, the interp's result is
-    # reset...
-    list [list [catch {glob -nocomplain ~wontexist *} res1] $res1] \
-	[list [catch {glob -nocomplain * ~wontexist} res2] $res2]
-} -match compareWords -result equal
+test filename-15.4.2 {no complain: errors, sequencing} {
+    # test used to fail because if an error occurs, the interp's result
+    # is reset... 
+    string equal \
+      [list [catch {glob -nocomplain ~wontexist *} res1] $res1] \
+      [list [catch {glob -nocomplain * ~wontexist} res2] $res2]
+} {1}
 test filename-15.5 {unix specific globbing} {unix nonPortable} {
     glob ~ouster/.csh*
 } "/home/ouster/.cshrc"
-touch globTest/odd\\\[\]*?\{\}name
-test filename-15.6 {unix specific globbing} -constraints {unix} -setup {
+catch {close [open globTest/odd\\\[\]*?\{\}name w]} 
+test filename-15.6 {unix specific globbing} {unix} {
     global env
     set temp $env(HOME)
-} -body {
     set env(HOME) $env(HOME)/globTest/odd\\\[\]*?\{\}name
-    glob ~
-} -cleanup {
+    set result [list [catch {glob ~} msg] $msg]
     set env(HOME) $temp
-} -result [list [lindex [glob ~] 0]/globTest/odd\\\[\]*?\{\}name]
+    set result
+} [list 0 [list [lindex [glob ~] 0]/globTest/odd\\\[\]*?\{\}name]]
 catch {file delete -force globTest/odd\\\[\]*?\{\}name}
-test filename-15.7 {win specific globbing} -constraints {win} -body {
-    glob ~
-} -match regexp -result {[^/]$}
-test filename-15.8 {win and unix specific globbing} -constraints {unixOrWin} -setup {
+test filename-15.7 {win specific globbing} {win} {
+    if {[string index [glob ~] end] == "/"} {
+	set res "glob ~ is [glob ~] but shouldn't end in a separator"
+    } else {
+	set res "ok"
+    }
+} {ok}
+test filename-15.8 {win and unix specific globbing} {unixOrWin} {
     global env
     set temp $env(HOME)
-} -body {
-    touch $env(HOME)/globTest/anyname
+    catch {close [open $env(HOME)/globTest/anyname w]} err
     set env(HOME) $env(HOME)/globTest/anyname
-    glob ~
-} -cleanup {
+    set result [list [catch {glob ~} msg] $msg]
     set env(HOME) $temp
     catch {file delete -force $env(HOME)/globTest/anyname}
-} -result [list [lindex [glob ~] 0]/globTest/anyname]
+    set result
+} [list 0 [list [lindex [glob ~] 0]/globTest/anyname]]
 
 # The following tests are only valid for Windows systems.
 set oldDir [pwd]
@@ -1377,25 +1429,24 @@ if {[testConstraint win]} {
     cd c:/
     file delete -force globTest
     file mkdir globTest
-    touch globTest/x1.BAT
-    touch globTest/y1.Bat
-    touch globTest/z1.bat
+    close [open globTest/x1.BAT w]
+    close [open globTest/y1.Bat w]
+    close [open globTest/z1.bat w]
 }
 
 test filename-16.1 {windows specific globbing} {win} {
     lsort [glob globTest/*.bat]
 } {globTest/x1.BAT globTest/y1.Bat globTest/z1.bat}
 test filename-16.2 {windows specific globbing} {win} {
-    glob c:
-} c:
-test filename-16.2.1 {windows specific globbing} -constraints {win} -setup {
+    list [catch {glob c:} res] $res
+} {0 c:}
+test filename-16.2.1 {windows specific globbing} {win} {
     set dir [pwd]
-} -body {
     cd C:/
-    glob c:
-} -cleanup {
+    set res [list [catch {glob c:} err] $err]
     cd $dir
-} -result c:
+    set res
+} {0 c:}
 test filename-16.3 {windows specific globbing} {win} {
     glob -nocomplain c:\\\\
 } c:/
@@ -1423,7 +1474,13 @@ test filename-16.10 {windows specific globbing} {win} {
 test filename-16.11 {windows specific globbing} {win} {
     lsort [glob -nocomplain c:\\\\globTest\\\\*.bat]
 } {c:/globTest/x1.BAT c:/globTest/y1.Bat c:/globTest/z1.bat}
+
 # some tests require a shared C drive
+
+if {[testConstraint win]} {
+    testConstraint sharedCdrive [expr {![catch {cd //[info hostname]/c}]}]
+}
+
 test filename-16.12 {windows specific globbing} {win sharedCdrive} {
     cd //[info hostname]/c
     glob //[info hostname]/c/*Test
@@ -1443,13 +1500,18 @@ test filename-16.15 {windows specific globbing} {win} {
 test filename-16.16 {windows specific globbing} {win} {
     file tail [lindex [glob -nocomplain "[lindex [glob -types d -dir C:/ *] 0]/.."] 0]
 } {..}
-test filename-16.17 {windows specific globbing} -constraints {win} -body {
+test filename-16.17 {windows specific globbing} {win} {
     cd C:/
-    # Ensure correct trimming of tails with absolute and volume relative
-    # globbing.
-    list [glob -nocomplain -tails -dir C:/ *] \
-	[glob -nocomplain -tails -dir C: *]
-} -match compareWords -result equal
+    # Ensure correct trimming of tails with absolute and
+    # volume relative globbing.
+    set res1 [glob -nocomplain -tails -dir C:/ *]
+    set res2 [glob -nocomplain -tails -dir C: *]
+    if {$res1 eq $res2} {
+	concat ok
+    } else {
+        concat $res1 ne $res2
+    }
+} {ok}
 
 # Put the working directory back now that we're done with globbing in C:/
 if {[testConstraint win]} {
@@ -1459,22 +1521,24 @@ if {[testConstraint win]} {
 test filename-17.1 {windows specific special files} {testsetplatform} {
     testsetplatform win
     list [file pathtype com1] [file pathtype con] [file pathtype lpt3] \
-	[file pathtype prn] [file pathtype nul] [file pathtype aux] \
-	[file pathtype foo]
+      [file pathtype prn] [file pathtype nul] [file pathtype aux] \
+      [file pathtype foo]
 } {absolute absolute absolute absolute absolute absolute relative}
 if {[testConstraint testsetplatform]} {
     testsetplatform $platform
 }
-test filename-17.2 {windows specific glob with executable} -body {
+
+test filename-17.2 {windows specific glob with executable} {win} {
     makeDirectory execglob
     makeFile contents execglob/abc.exe
     makeFile contents execglob/abc.notexecutable
-    glob -nocomplain -dir [temporaryDirectory]/execglob -tails -types x *
-} -constraints {win} -cleanup {
+    set res [glob -nocomplain -dir [temporaryDirectory]/execglob \
+      -tails -types x *]
     removeFile execglob/abc.exe
     removeFile execglob/abc.notexecutable
     removeDirectory execglob
-} -result {abc.exe}
+    set res
+} {abc.exe}
 test filename-17.3 {Bug 2571597} win {
     set p /a
     file pathtype $p
@@ -1485,7 +1549,8 @@ test filename-17.3 {Bug 2571597} win {
 test fileName-18.1 {windows - split ADS name correctly} {win} {
     # bug 1194458
     set x [file split c:/c:d]
-    list $x [file join {*}$x]
+    set y [eval [linsert $x 0 file join]]
+    list $x $y
 } {{c:/ ./c:d} c:/c:d}
 
 test fileName-19.1 {ensure that [Bug 1325099] stays fixed} {
@@ -1629,7 +1694,3 @@ if {[testConstraint testsetplatform]} {
 catch {unset oldhome temp result globPreResult}
 ::tcltest::cleanupTests
 return
-
-# Local Variables:
-# mode: tcl
-# End:

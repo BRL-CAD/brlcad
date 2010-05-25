@@ -1,18 +1,21 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <!-- vi:set sw=2: -->
   <!--
   Copyright (C) 1996-2002  Brian Paul and Ben Bederson
-  Copyright (C) 2005-2008  Greg Couch
+  Copyright (C) 2005-2009  Greg Couch
   See the LICENSE file for copyright details.
   -->
 
   <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <title>Togl Stereo Modes</title>
   </head>
 
   <body>
-    <script language="javascript" src="header.js"></script>
-    <script language="javascript">
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
       NavigationBar();
     </script>
 
@@ -26,6 +29,7 @@
       <li><a href="#cross">cross-eye</a>
       <li><a href="#wall">wall-eye</a>
       <li><a href="#dti">dti</a>
+      <li><a href="#row">row interleaved</a>
       <li><a href="#left">left eye</a>
       <li><a href="#right">right eye</a>
       <li><a href="#sgioldstyle">sgioldstyle</a>
@@ -56,10 +60,10 @@
     The various stereo modes are:
     <dl>
       <dt>
-      <a name="none"></a><code>none</code> <i>or</i> &quot;&quot;
+      <a name="none"></a><code>none</code> <i>or</i> &quot;&quot <i>or any false boolean value</i>
       <dd>
       Turn off stereo.
-      <dt><code>native</code>
+      <dt><code>native</code> <i>or any true boolean value</i>
       <dd>
       Use native OpenGL hardware accelerated stereo
       (single- or double-buffered for both the left and the right eyes).
@@ -113,6 +117,20 @@
       and right eye image on the right.
       So each eye is drawn at half of the window resolution.
       <dt>
+      <a name="row"></a><code>row interleaved</code>
+      <dd>
+      Designed for
+      <a href="http://www.vrex.com/">VRex</a>,
+      <a href="http://www.zalman.co.kr/">Zalman</a>, and
+      <a href="http://www.hyundaiq.com/">Hyundai</a> displays.
+      Where the right eye is on the even scanlines
+      and the left is on the odd ones.
+      Requires that there be a stencil buffer
+      and uses the most significant stencil bit.
+      Changes to the stencil state should be placed within 
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glPushAttrib.xml">
+	glPushAttrib</a>(GL_STENCIL_BUFFER_BIT) and glPopAttrib() calls.
+      <dt>
       <a name="left"></a><code>left eye</code>
       <dd>
       Only draw left eye view at full resolution.
@@ -142,8 +160,12 @@
     </dl>
 
     <hr>
-    Hosted by <a href="http://sourceforge.net/">
-      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo" align="middle"/>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
     </a>
   </body>
 </html>

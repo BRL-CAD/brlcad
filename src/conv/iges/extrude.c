@@ -53,7 +53,7 @@ extrude( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[entityno]->param );
     Readint( &sol_num, "" );
@@ -75,7 +75,7 @@ extrude( entityno )
     {
 	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
     /*
@@ -93,9 +93,9 @@ extrude( entityno )
     switch ( dir[curve]->type )
     {
 	case 100:	/* circular arc */
-	    return( Extrudcirc( entityno, curve, evect ) );
+	    return Extrudcirc( entityno, curve, evect );
 	case 104:	/* conic arc */
-	    return( Extrudcon( entityno, curve, evect ) );
+	    return Extrudcon( entityno, curve, evect );
 	case 102:	/* composite curve */
 	case 106:	/* copius data */
 	case 112:	/* parametric spline */
@@ -112,7 +112,7 @@ extrude( entityno )
 
 	    npts = Getcurve( curve, &curv_pts );
 	    if ( npts < 3 )
-		return( 0 );
+		return 0;
 
 
 	    m = nmg_mm();
@@ -136,7 +136,7 @@ extrude( entityno )
 		bu_log( "Extrude: Failed to calculate face geometry\n" );
 		nmg_km( m );
 		bu_free( (char *)curv_pts, "curve_pts" );
-		return( 0 );
+		return 0;
 	    }
 
 	    if ( nmg_extrude_face( fu, evect, &tol ) )
@@ -144,14 +144,14 @@ extrude( entityno )
 		bu_log( "Extrude: extrusion failed\n" );
 		nmg_km( m );
 		bu_free( (char *)curv_pts, "curve_pts" );
-		return( 0 );
+		return 0;
 	    }
 
 	    mk_bot_from_nmg( fdout, dir[entityno]->name, s );
 	    nmg_km( m );
 	    bu_free( (char *)curv_pts, "curve_pts" );
 
-	    return( 1 );
+	    return 1;
 	}
 	default:
 	    i = (-1);
@@ -159,7 +159,7 @@ extrude( entityno )
 	    bu_log( "Extrusions of %s are not allowed\n", typecount[i].name );
 	    break;
     }
-    return( 0 );
+    return 0;
 
 
 }

@@ -17,6 +17,7 @@ exec \- Invoke subprocesses
 .SH SYNOPSIS
 \fBexec \fR?\fIswitches\fR? \fIarg \fR?\fIarg ...\fR?
 .BE
+
 .SH DESCRIPTION
 .PP
 This command treats its arguments as the specification
@@ -31,17 +32,16 @@ of the pipeline specification.  The following switches are
 currently supported:
 .TP 13
 \fB\-ignorestderr\fR
-.
+.VS 8.5
 Stops the \fBexec\fR command from treating the output of messages to the
 pipeline's standard error channel as an error case.
+.VE 8.5
 .TP 13
 \fB\-keepnewline\fR
-.
 Retains a trailing newline in the pipeline's output.
 Normally a trailing newline will be deleted.
 .TP 13
 \fB\-\|\-\fR
-.
 Marks the end of switches.  The argument following this one will
 be treated as the first \fIarg\fR even if it starts with a \fB\-\fR.
 .PP
@@ -57,77 +57,64 @@ or in the same argument with no intervening space (i.e.
 .QW \fB<\fIfileName\fR ).
 .TP 15
 \fB|\fR
-.
 Separates distinct commands in the pipeline.  The standard output
 of the preceding command will be piped into the standard input
 of the next command.
 .TP 15
 \fB|&\fR
-.
 Separates distinct commands in the pipeline.  Both standard output
 and standard error of the preceding command will be piped into
 the standard input of the next command.
 This form of redirection overrides forms such as 2> and >&.
 .TP 15
 \fB<\0\fIfileName\fR
-.
 The file named by \fIfileName\fR is opened and used as the standard
 input for the first command in the pipeline.
 .TP 15
 \fB<@\0\fIfileId\fR
-.
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 It is used as the standard input for the first command in the pipeline.
 \fIFileId\fR must have been opened for reading.
 .TP 15
 \fB<<\0\fIvalue\fR
-.
 \fIValue\fR is passed to the first command as its standard input.
 .TP 15
 \fB>\0\fIfileName\fR
-.
 Standard output from the last command is redirected to the file named
 \fIfileName\fR, overwriting its previous contents.
 .TP 15
 \fB2>\0\fIfileName\fR
-.
 Standard error from all commands in the pipeline is redirected to the
 file named \fIfileName\fR, overwriting its previous contents.
 .TP 15
 \fB>&\0\fIfileName\fR
-.
 Both standard output from the last command and standard error from all
 commands are redirected to the file named \fIfileName\fR, overwriting
 its previous contents.
 .TP 15
 \fB>>\0\fIfileName\fR
-.
 Standard output from the last command is
 redirected to the file named \fIfileName\fR, appending to it rather
 than overwriting it.
 .TP 15
 \fB2>>\0\fIfileName\fR
-.
 Standard error from all commands in the pipeline is
 redirected to the file named \fIfileName\fR, appending to it rather
 than overwriting it.
 .TP 15
 \fB>>&\0\fIfileName\fR
-.
 Both standard output from the last command and standard error from
 all commands are redirected to the file named \fIfileName\fR,
 appending to it rather than overwriting it.
 .TP 15
 \fB>@\0\fIfileId\fR
-.
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 Standard output from the last command is redirected to \fIfileId\fR's
 file, which must have been opened for writing.
 .TP 15
 \fB2>@\0\fIfileId\fR
-.
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 Standard error from all commands in the pipeline is
@@ -135,13 +122,11 @@ redirected to \fIfileId\fR's file.
 The file must have been opened for writing.
 .TP 15
 \fB2>@1\0\fR
-.
 Standard error from all commands in the pipeline is redirected to the
 command result.  This operator is only valid at the end of the command
 pipeline.
 .TP 15
 \fB>&@\0\fIfileId\fR
-.
 \fIFileId\fR must be the identifier for an open file, such as the return
 value from a previous call to \fBopen\fR.
 Both standard output from the last command and standard error from
@@ -150,9 +135,12 @@ The file must have been opened for writing.
 .PP
 If standard output has not been redirected then the \fBexec\fR
 command returns the standard output from the last command
-in the pipeline, unless
+in the pipeline,
+.VS 8.5
+unless
 .QW 2>@1
 was specified, in which case standard error is included as well.
+.VE 8.5
 If any of the commands in the pipeline exit abnormally or
 are killed or suspended, then \fBexec\fR will return an error
 and the error message will include the pipeline's output followed by
@@ -161,7 +149,9 @@ error messages describing the abnormal terminations; the
 about the last abnormal termination encountered.
 If any of the commands writes to its standard error file and that
 standard error is not redirected
+.VS 8.5
 and \fB\-ignorestderr\fR is not specified,
+.VE 8.5
 then \fBexec\fR will return an error;  the error message
 will include the pipeline's standard output, followed by messages
 about abnormal terminations (if any), followed by the standard error
@@ -363,14 +353,11 @@ console window is not available to them.
 .RE
 .TP
 \fBUnix\fR\0\0\0\0\0\0\0
-.
 The \fBexec\fR command is fully functional and works as described.
 .SH "UNIX EXAMPLES"
-.PP
 Here are some examples of the use of the \fBexec\fR command on Unix.
 .PP
 To execute a simple program and get its result:
-.PP
 .CS
 \fBexec\fR uname -a
 .CE
@@ -378,7 +365,6 @@ To execute a simple program and get its result:
 To execute a program that can return a non-zero result, you should
 wrap the call to \fBexec\fR in \fBcatch\fR and check the contents
 of the \fB\-errorcode\fR return option if you have an error:
-.PP
 .CS
 set status 0
 if {[catch {\fBexec\fR grep foo bar.txt} results options]} {
@@ -394,13 +380,10 @@ if {[catch {\fBexec\fR grep foo bar.txt} results options]} {
 When translating a command from a Unix shell invocation, care should
 be taken over the fact that single quote characters have no special
 significance to Tcl.  Thus:
-.PP
 .CS
 awk '{sum += $1} END {print sum}' numbers.list
 .CE
-.PP
 would be translated into something like:
-.PP
 .CS
 \fBexec\fR awk {{sum += $1} END {print sum}} numbers.list
 .CE
@@ -409,23 +392,19 @@ If you are converting invocations involving shell globbing, you should
 remember that Tcl does not handle globbing or expand things into
 multiple arguments by default.  Instead you should write things like
 this:
-.PP
 .CS
 \fBexec\fR ls -l {*}[glob *.tcl]
 .CE
 .SH "WINDOWS EXAMPLES"
-.PP
 Here are some examples of the use of the \fBexec\fR command on Windows.
 .PP
 To start an instance of \fInotepad\fR editing a file without waiting
 for the user to finish editing the file:
-.PP
 .CS
 \fBexec\fR notepad myfile.txt &
 .CE
 .PP
 To print a text file using \fInotepad\fR:
-.PP
 .CS
 \fBexec\fR notepad /p myfile.txt
 .CE
@@ -433,13 +412,10 @@ To print a text file using \fInotepad\fR:
 If a program calls other programs, such as is common with compilers,
 then you may need to resort to batch files to hide the console windows
 that sometimes pop up:
-.PP
 .CS
 \fBexec\fR cmp.bat somefile.c -o somefile
 .CE
-.PP
 With the file \fIcmp.bat\fR looking something like:
-.PP
 .CS
 @gcc %1 %2 %3 %4 %5 %6 %7 %8 %9
 .CE
@@ -457,7 +433,6 @@ applies especially when you want to run
 commands like
 \fIdir\fR from a Tcl script (if you just want to list filenames, use
 the \fBglob\fR command.)  To do that, use this:
-.PP
 .CS
 \fBexec\fR {*}[auto_execok dir] *.tcl
 .CE
