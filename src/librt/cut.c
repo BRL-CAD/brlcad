@@ -1444,7 +1444,7 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 	goto fail;
 
     /* RPP overlaps, invoke per-solid method for detailed check */
-    if (rt_functab[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == RT_CLASSIFY_OUTSIDE)
+    if (rt_functab[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == BN_CLASSIFY_OUTSIDE)
 	goto fail;
 
     if (RT_G_DEBUG&DEBUG_BOXING)
