@@ -1491,22 +1491,31 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	lng = (long *)sketch_ip->skt_curve.segments[seg_no];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
+		/* magic + start + end */
 		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG;
 		break;
 	    case CURVE_CARC_MAGIC:
+		/* magic + start + end + orientation + center_is_left + (double)radius*/
 		ep->ext_nbytes += 5 * SIZEOF_NETWORK_LONG + SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_NURB_MAGIC:
 		nseg = (struct nurb_seg *)lng;
-		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG; /* order, pt_type, c_size */
-		ep->ext_nbytes +=  SIZEOF_NETWORK_LONG + nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;	/* knot vector */
-		ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_LONG; /* control point indices */
+		/* magic + order + pt_type + c_size */
+		ep->ext_nbytes += 4 * SIZEOF_NETWORK_LONG;
+		/* (double)knots */
+		ep->ext_nbytes += SIZEOF_NETWORK_LONG + nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;
+		/* control point count */
+		ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_LONG;
 		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type))
-		    ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_DOUBLE;	/* weights */
+		    /* (double)weights */
+		    ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bseg = (struct bezier_seg *)lng;
-		ep->ext_nbytes += (bseg->degree + 3) * SIZEOF_NETWORK_LONG;
+		/* magic + degree */
+		ep->ext_nbytes += 2 * SIZEOF_NETWORK_LONG;
+		/* control points */
+		ep->ext_nbytes += (bseg->degree + 1) * SIZEOF_NETWORK_LONG;
 		break;
 	    default:
 		bu_log("rt_sketch_export4: unsupported segement type (x%x)\n", *lng);
