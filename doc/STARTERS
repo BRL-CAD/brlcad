@@ -1,0 +1,40 @@
+----------------------------------------------------------------------
+Summary:
+ * Starter project
+Description:
+ * This describes an example starter project.
+Objectives:
+ * Provides an example
+Difficulty:
+ * Easy
+Prerequisites:
+ * None
+References:
+ * doc/STARTERS
+
+
+----------------------------------------------------------------------
+Summary:
+ * Replace SCLstring with std::string
+Description:
+ * The NIST STEP Class Library (SCL) was written before the standard
+   template library (STL) was prevalent, so a custom class was written
+   to encompass variable length strings called SCLstring.  This task
+   involves updating the SCL to use STL strings and creating new
+   functions as necessary for any SCLstring capabilities not provided
+   by the STL.
+Objectives:
+ * Replace all usage of SCLString within the NIST (SCL) with the
+   standard template library std::string type
+ * Delete SCLString class
+Difficulty:
+ * Easy
+Prerequisites:
+ * Basic familiarity with C++ STL
+References:
+ * src/other/step
+ * src/conv/step
+ * include
+ * http://www.sgi.com/tech/stl/
+
+
