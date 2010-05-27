@@ -477,13 +477,16 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
 		dmp->dm_width;
     }
 
-
+    struct bu_vls top_vls;
+    bu_vls_init(&top_vls);
+ 
     if (dmp->dm_top) {
         /* Make xtkwin a toplevel window */
         ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
                                                                                      bu_vls_addr(&dmp->dm_pathName),
                                                                                      bu_vls_addr(&dmp->dm_dName));
         ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
+        bu_vls_trunc(&top_vls,"0");
     } else {
         char *cp;
 
@@ -498,18 +501,20 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
                           bu_vls_addr(&dmp->dm_pathName));
             ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
                 Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
-            bu_vls_free(&top_vls);
         }
 
         /* Make xtkwin an embedded window */
         ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
             Tk_CreateWindow(interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
                             cp + 1, (char *)NULL);
+
+        bu_vls_sprintf(&top_vls, ".%s", (char *)Tk_Name(Tk_Parent(pubvars->xtkwin)));
     }
 
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
         bu_log("tk_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
         (void)tk_close(dmp);
+        bu_vls_free(&top_vls);
         return DM_NULL;
     }
 
@@ -525,6 +530,7 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)togl_close(dmp);
+        bu_vls_free(&top_vls);
 	return DM_NULL;
     }
 
@@ -539,6 +545,7 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)togl_close(dmp);
+        bu_vls_free(&top_vls);
 	return DM_NULL;
     }
 
@@ -557,12 +564,12 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_MapWindow(pubvars->xtkwin);
 
     /* Now that we have a parent tk window, pack the togl widget */
-    bu_vls_sprintf(&tclcmd, "package require Togl; togl .%s.togl -width %d -height %d -rgba true -double true", (char *)Tk_Name(pubvars->xtkwin), dmp->dm_width, dmp->dm_height);
+    bu_vls_sprintf(&tclcmd, "package require Togl; togl %s.%s.togl -width %d -height %d -rgba true -double true", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), dmp->dm_width, dmp->dm_height);
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
     bu_log("%s\n", Tcl_GetStringResult(interp));
-    bu_vls_sprintf(&tclcmd, "pack .%s.togl; update", (char *)Tk_Name(pubvars->xtkwin));
+    bu_vls_sprintf(&tclcmd, "pack %s.%s.togl; update", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
-    bu_vls_sprintf(&tclcmd, ".%s.togl", (char *)Tk_Name(pubvars->xtkwin));
+    bu_vls_sprintf(&tclcmd, "%s.%s.togl", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
     Togl_GetToglFromObj(interp, Tcl_NewStringObj(bu_vls_addr(&tclcmd), -1), &(privvars->togl));
 
     Togl_MakeCurrent(privvars->togl);
@@ -571,9 +578,12 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
     if ((privvars->fontOffset = glGenLists(128))==0) {
 	bu_log("dm-togl: Can't make display lists for font.\n");
 	(void)togl_close(dmp);
+        bu_vls_free(&top_vls);
 	return DM_NULL;
     }
     
+    bu_vls_free(&top_vls);
+   
     /* This is the applications display list offset */
     dmp->dm_displaylist = privvars->fontOffset + 128;
 
