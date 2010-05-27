@@ -194,15 +194,16 @@ Togl_dm(int argc,
 				 "dm_togl internal variables",
 				 Togl_vparse,
 				 (const char *)&((struct togl_vars *)dmp->dm_vars.priv_vars)->mvars);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	} else if (argc == 2) {
 	    bu_vls_struct_item_named(&vls,
 				     Togl_vparse,
 				     argv[1],
 				     (const char *)&((struct togl_vars *)dmp->dm_vars.priv_vars)->mvars,
 				     COMMA);
+	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	} else {
 	    struct bu_vls tmp_vls;
-
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
@@ -213,7 +214,6 @@ Togl_dm(int argc,
 	    bu_vls_free(&tmp_vls);
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
