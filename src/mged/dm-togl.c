@@ -88,6 +88,7 @@ Togl_dm_init(struct dm_list *o_dm_list,
 	    char *argv[])
 {
     struct bu_vls vls;
+    int status;
 
     bu_log("running togl init\n");
 
@@ -97,6 +98,7 @@ Togl_dm_init(struct dm_list *o_dm_list,
     cmd_hook = Togl_dm;
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+    bu_log("interp:%p\n", interp);
 
     bu_log("about to call dm_open\n");
     if ((dmp = dm_open(interp, DM_TYPE_TOGL, argc-1, argv)) == DM_NULL)
@@ -113,10 +115,14 @@ Togl_dm_init(struct dm_list *o_dm_list,
     (void)DM_CONFIGURE_WIN(dmp);
 
     bu_log("did event handler stuff\n");
-/*    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);*/
+    bu_vls_init(&vls);
+    bu_log("inited vls\n");
+    bu_vls_printf(&vls, "winfo width %s.togl", bu_vls_addr(&pathName));
+    bu_log("set up vls: %s, interp:%p\n", bu_vls_addr(&vls), interp);
+    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_log("ran Tcl_eval, status:%d\n", status);
+    bu_vls_free(&vls);
+    bu_log("all done\n");
     return TCL_OK;
 }
 
