@@ -32,6 +32,7 @@ liboptical_la_SOURCES = \
 	sh_stxt.c \
 	sh_tcl.c \
 	sh_text.c \
+	sh_toon.c \
 	sh_toyota.c \
 	sh_treetherm.c \
 	sh_wood.c \
