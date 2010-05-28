@@ -95,6 +95,16 @@ else !BUILD_TKPNG
 TKPNGDIR=
 endif
 
+if BUILD_TKTABLE
+if WITH_TK
+TKTABLEDIR=tktable
+else
+TKTABLEDIR=
+endif
+else
+TKTABLEDIR=
+endif
+
 if BUILD_OPENNURBS
 OPENNURBSDIR=openNURBS
 else !BUILD_OPENNURBS
@@ -152,6 +162,7 @@ SUBDIRS = \
 	${TKPNGDIR} \
 	${TKHTMLDIR} \
 	${TOGLDIR} \
+	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
@@ -183,6 +194,8 @@ DIST_SUBDIRS = \
 	tk \
 	tkpng \
 	tkhtml3 \
+	togl \
+	tktable \
 	tnt
 
 include $(top_srcdir)/misc/Makefile.defs

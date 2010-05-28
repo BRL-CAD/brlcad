@@ -565,6 +565,7 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* Now that we have a parent tk window, pack the togl widget */
     bu_vls_sprintf(&tclcmd, "package require Togl; togl %s.%s.togl -width %d -height %d -rgba true -double true", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), dmp->dm_width, dmp->dm_height);
+    printf("%s\n", bu_vls_addr(&tclcmd));
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
     bu_log("%s\n", Tcl_GetStringResult(interp));
     bu_vls_sprintf(&tclcmd, "pack %s.%s.togl; update", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));

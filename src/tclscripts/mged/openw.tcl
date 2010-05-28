@@ -446,6 +446,8 @@ proc gui { args } {
 	loadtk $screen
     }
 
+    tk_messageBox -message "Phase 0 Complete"
+
     #==============================================================================
     # PHASE 1: Creation of main window
     #==============================================================================
@@ -457,6 +459,7 @@ proc gui { args } {
 
     lappend mged_players $id
     set mged_gui($id,screen) $screen
+
 
     #==============================================================================
     # Create display manager window and menu
@@ -486,6 +489,8 @@ proc gui { args } {
     set mged_gui($id,active_dm) $mged_gui($id,top).$mged_default(pane)
     set mged_gui($id,apply_list) $mged_gui($id,active_dm)
 
+    tk_messageBox -message "Phase 1 Complete"
+    
     #==============================================================================
     # PHASE 2: Construction of menu bar
     #==============================================================================
@@ -2067,6 +2072,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	and /usr/X11/bin/netscape is checked. If a browser has still not
 	been located, the built-in Tcl browser is used." } }
 
+    tk_messageBox -message "Phase 2 Complete"
     #==============================================================================
     # PHASE 3: Bottom-row display
     #==============================================================================

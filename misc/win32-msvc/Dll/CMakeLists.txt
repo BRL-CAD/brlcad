@@ -89,6 +89,7 @@ set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/Hyperboloid.cpp
     ../../../../rt^3/src/coreInterface/MemoryDatabase.cpp
     ../../../../rt^3/src/coreInterface/Object.cpp
+    ../../../../rt^3/src/coreInterface/Paraboloid.cpp
     ../../../../rt^3/src/coreInterface/Particle.cpp
     ../../../../rt^3/src/coreInterface/Torus.cpp
     ../../../../rt^3/src/coreInterface/Unknown.cpp
