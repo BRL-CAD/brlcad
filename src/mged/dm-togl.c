@@ -81,6 +81,12 @@ struct bu_structparse Togl_vparse[] = {
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
+int
+Togl_dobindings(struct bu_vls *string) {
+    int status;
+    status = Tcl_Eval(interp, bu_vls_addr(string));
+    return status;
+}
 
 int
 Togl_dm_init(struct dm_list *o_dm_list,
@@ -119,7 +125,8 @@ Togl_dm_init(struct dm_list *o_dm_list,
     bu_log("inited vls\n");
     bu_vls_printf(&vls, "winfo width %s.togl", bu_vls_addr(&pathName));
     bu_log("set up vls: %s, interp:%p\n", bu_vls_addr(&vls), interp);
-    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+/*    status = Tcl_Eval(interp, bu_vls_addr(&vls));*/
+    status = Togl_dobindings(&vls);
     bu_log("ran Tcl_eval, status:%d\n", status);
     bu_vls_free(&vls);
     bu_log("all done\n");
