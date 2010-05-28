@@ -143,11 +143,13 @@ struct ti_t {
     size_t   num_uvi;       /* number of unique triangle vertex indexes in uvi array */
     size_t   num_uvni;      /* number of unique triangle vertex normal index in uvni array */
     size_t   num_utvi;      /* number of unique triangle texture vertex index in utvi array */
+    unsigned char bot_mode;            /* bot mode (i.e. RT_BOT_PLATE or RT_BOT_SOLID */
     fastf_t *bot_vertices;             /* array of floats for bot vertices [bot_num_vertices*3] */
     fastf_t *bot_thickness;            /* array of floats for face thickness [bot_num_faces] */
     fastf_t *bot_normals;              /* array of floats for bot normals [bot_num_normals*3] */
     fastf_t *bot_texture_vertices;     /* array of floats for texture vertices [bot_num_texture_vertices*3] */
     int     *bot_faces;                /* array of indices into bot_vertices array [bot_num_faces*3] */
+    struct bu_bitv *bot_face_mode;     /* bu_list of face modes for plate-mode-bot [bot_num_faces] */
     int     *bot_face_normals;         /* array of indices into bot_normals array [bot_num_faces*3] */
     int     *bot_textures;             /* array indices into bot_texture_vertices array */
     int      bot_num_vertices;         /* number of vertices in bot_vertices array */
@@ -1228,9 +1230,6 @@ void free_ti(struct ti_t *ti) {
     /* free 'array of floats for bot vertices' */
     bu_free(ti->bot_vertices, "ti->bot_vertices");
 
-    /* free 'array of floats for face thickness' */
-    bu_free(ti->bot_thickness, "ti->bot_thickness");
-
     /* free 'array of floats for bot normals' */
     if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV )
         bu_free(ti->bot_normals, "ti->bot_normals");
@@ -1239,11 +1238,20 @@ void free_ti(struct ti_t *ti) {
     if ( ti->tri_type == FACE_TV || ti->tri_type == FACE_TNV )
         bu_free(ti->bot_texture_vertices, "ti->bot_texture_vertices");
 
+    if ( ti->bot_mode == RT_BOT_PLATE ) {
+        /* free array of bot_face_mode */
+        bu_free((char *)ti->bot_face_mode, "ti->bot_face_mode");
+
+        /* free 'array of floats for face thickness' */
+        bu_free(ti->bot_thickness, "ti->bot_thickness");
+    }
+
     return;
 }
 
 void create_bot_float_arrays(struct ga_t *ga,
                        struct ti_t *ti,
+                       fastf_t bot_thickness, /* user defined bot plate thickness, in user defined units */
                        fastf_t conv_factor) {
     size_t i = 0;
     size_t j = 0;
@@ -1262,12 +1270,18 @@ void create_bot_float_arrays(struct ga_t *ga,
         for ( j = 0 ; j < 3 ; j++ )
             ti->bot_vertices[(i*3)+j] = ga->vert_list[ti->uvi[i]][j] * conv_factor;
 
-    /* allocate bot_thickness array */
-    ti->bot_thickness = (fastf_t *)bu_calloc(ti->bot_num_faces, sizeof(fastf_t), "ti->bot_thickness");
+    if ( ti->bot_mode == RT_BOT_PLATE ) {
+        /* allocate and polulate bot_thickness array */
+        ti->bot_thickness = (fastf_t *)bu_calloc(ti->bot_num_faces, sizeof(fastf_t), "ti->bot_thickness");
+        for ( i = 0 ; i < ti->bot_num_faces ; i++ )
+            ti->bot_thickness[i] = bot_thickness * conv_factor;
 
-    /* populate bot_thickness array */
-    for ( i = 0 ; i < ti->bot_num_faces ; i++ )
-        ti->bot_thickness[i] = 1.0;
+        /* allocate and polulate bot_face_mode array */
+        ti->bot_face_mode = bu_bitv_new(ti->bot_num_faces);
+        bu_bitv_clear(ti->bot_face_mode);
+        BU_BITSET(ti->bot_face_mode, 1); /* 1 indicates thickness is appended to hit point in ray
+                                            direction, 0 indicates thickness is centered about hit point */
+    }
 
     /* normals */
     if ( ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV ) {
@@ -1861,23 +1875,20 @@ size_t test_closure(struct ga_t *ga,
     return open_edges;
 }
 
-void output_to_bot(struct ga_t *ga,
+int output_to_bot(struct ga_t *ga,
                    struct gfi_t *gfi,
                    struct rt_wdb *outfp, 
                    fastf_t conv_factor, 
                    struct bn_tol *tol,
+                   fastf_t bot_thickness, /* user defined bot plate thickness, in user defined units */
                    int texture_mode,      /* PROC_TEX, IGNR_TEX */    
                    int normal_mode,       /* PROC_NORM, IGNR_NORM */
-                   int output_mode) {     /* OUT_PBOT, OUT_VBOT */
+                   unsigned char bot_output_mode) { /* RT_BOT_PLATE, RT_BOT_SOLID, RT_BOT_SURFACE */
 
     struct ti_t ti; /* triangle indices structure */
-
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current bot */
     size_t face_idx = 0; /* index into faces within for-loop */
-
-    int ret_val = 0;  /* 0=success !0=fail */
-    fastf_t *bot_vertices = NULL;
-    int *bot_faces_array = NULL; /* bot face vertex index array, passed to mk_bot function */
+    int ret = 0;  /* 0=success !0=fail */
 
     /* initialize triangle indices structure */
     memset((void *)&ti, 0, sizeof(struct ti_t)); /* probably redundant */
@@ -1894,17 +1905,21 @@ void output_to_bot(struct ga_t *ga,
     ti.num_uvi = 0;                  /* number of unique triangle vertex indexes in uvi array */
     ti.num_uvni = 0;                 /* number of unique triangle vertex normal index in uvni array */
     ti.num_utvi = 0;                 /* number of unique triangle texture vertex index in utvi array */
+    ti.bot_mode = (unsigned char)NULL;         /* bot mode (i.e. RT_BOT_PLATE or RT_BOT_SOLID */
     ti.bot_vertices = (fastf_t *)NULL;         /* array of float for bot vertices [bot_num_vertices*3] */
     ti.bot_thickness = (fastf_t *)NULL;        /* array of floats for face thickness [bot_num_faces] */
     ti.bot_normals = (fastf_t *)NULL;          /* array of floats for bot normals [bot_num_normals*3] */
     ti.bot_texture_vertices = (fastf_t *)NULL; /* array of floats for texture vertices [bot_num_texture_vertices*3] */
     ti.bot_faces = (int *)NULL;                /* array of indices into bot_vertices array [bot_num_faces*3] */
+    ti.bot_face_mode = (struct bu_bitv *)NULL; /* bu_list of face modes for plate-mode-bot [bot_num_faces] */
     ti.bot_face_normals = (int *)NULL;         /* array of indices into bot_normals array [bot_num_faces*3] */
     ti.bot_textures  = (int *)NULL;            /* array of indices into bot_texture_vertices array */
     ti.bot_num_vertices = 0;                   /* number of vertices in bot_vertices array */
     ti.bot_num_faces = 0;                      /* number of faces in bot_faces array */
     ti.bot_num_normals = 0;                    /* number of normals in bot_normals array */
     ti.bot_num_texture_vertices = 0;           /* number of textures in bot_texture_vertices array */
+
+    ti.bot_mode = bot_output_mode;
 
     /* loop thru all the polygons (i.e. faces) to be placed in the current bot */
     for ( face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++ ) {
@@ -1932,7 +1947,7 @@ void output_to_bot(struct ga_t *ga,
 
     create_unique_indexes(&ti);
 
-    create_bot_float_arrays(ga, &ti, conv_factor);
+    create_bot_float_arrays(ga, &ti, bot_thickness, conv_factor);
 
     if ( create_bot_int_arrays(&ti) )
         bu_log("bsearch failure\n");
@@ -1953,19 +1968,20 @@ void output_to_bot(struct ga_t *ga,
 
     /* write bot to ".g" file */
     if ( ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV ) {
-        ret_val = mk_bot_w_normals(outfp, bu_vls_addr(gfi->raw_grouping_name), RT_BOT_SURFACE,
+        ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->raw_grouping_name), ti.bot_mode,
                          RT_BOT_UNORIENTED, RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS, 
                          ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
-                         ti.bot_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL,
+                         ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
                          ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
     } else {
-        ret_val = mk_bot(outfp, bu_vls_addr(gfi->raw_grouping_name), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
+        ret = mk_bot(outfp, bu_vls_addr(gfi->raw_grouping_name), ti.bot_mode, RT_BOT_UNORIENTED, 0, 
                          ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
-                         ti.bot_faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+                         ti.bot_faces, ti.bot_thickness, ti.bot_face_mode);
     }
 
     free_ti(&ti);
-    return;
+
+    return ret;
 }
 
 /* returns a failure if no faces were output, the surface
@@ -2323,6 +2339,7 @@ main(int argc, char **argv)
     double dist_tmp = 0.0;
     int texture_mode = IGNR_TEX;
     int normal_mode = PROC_NORM;
+    unsigned char bot_output_mode; /* bot type to create (i.e. RT_BOT_PLATE, RT_BOT_SOLID, RT_BOT_SURFACE */
     int output_mode = OUT_PBOT;
 
     /* the raytracer tolerance values (rtip->rti_tol) need to match
@@ -2479,10 +2496,13 @@ main(int argc, char **argv)
     int test_closure_option = 1;
     int face_validation_level = 1;
     int ignore_provided_normals = 0;
+    fastf_t bot_thickness = 0.0005 / conv_factor; /* this value is expected to be in
+                                                     the user selected units */
 
     texture_mode = IGNR_TEX;
-    normal_mode = IGNR_NORM;
+    normal_mode = PROC_NORM;
     output_mode = OUT_PBOT;
+    bot_output_mode = RT_BOT_PLATE;
 
     switch (grouping_option) {
         case 'n':
@@ -2497,15 +2517,21 @@ main(int argc, char **argv)
                             if (face_validation_level)
                                 (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
                             if (test_closure_option)
-                                (void)test_closure(&ga, gfi, conv_factor, tol);
-                            output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                if (!test_closure(&ga, gfi, conv_factor, tol))
+                                    bot_output_mode = RT_BOT_SOLID;
+                                else
+                                    bot_output_mode = RT_BOT_PLATE;
+                            output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                             break;
                         case 'n':
                             if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol, PROC_NORM, OUT_NMG) ) {
                                 (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
                                 (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                                (void)test_closure(&ga, gfi, conv_factor, tol);
-                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                if (!test_closure(&ga, gfi, conv_factor, tol))
+                                    bot_output_mode = RT_BOT_SOLID;
+                                else
+                                    bot_output_mode = RT_BOT_PLATE;
+                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                             }
                             break;
                         default:
@@ -2528,15 +2554,21 @@ main(int argc, char **argv)
                                 if (face_validation_level)
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
                                 if (test_closure_option)
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 break;
                             case 'n':
                                 if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol, PROC_NORM, OUT_NMG) ) {
                                     (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 }
                                 break;
                             default:
@@ -2560,15 +2592,21 @@ main(int argc, char **argv)
                                 if (face_validation_level)
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
                                 if (test_closure_option)
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 break;
                             case 'n':
                                 if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol, PROC_NORM, OUT_NMG) ) {
                                     (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 }
                                 break;
                             default:
@@ -2592,15 +2630,21 @@ main(int argc, char **argv)
                                 if (face_validation_level)
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
                                 if (test_closure_option)
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 break;
                             case 'n':
                                 if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol, PROC_NORM, OUT_NMG) ) {
                                     (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 }
                                 break;
                             default:
@@ -2624,15 +2668,21 @@ main(int argc, char **argv)
                                 if (face_validation_level)
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
                                 if (test_closure_option)
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 break;
                             case 'n':
                                 if ( output_to_nmg(&ga, gfi, fd_out, conv_factor, tol, PROC_NORM, OUT_NMG) ) {
                                     (void)fuse_vertex(&ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
                                     (void)retest_grouping_faces(&ga, gfi, conv_factor, tol);
-                                    (void)test_closure(&ga, gfi, conv_factor, tol);
-                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, texture_mode, normal_mode, output_mode);
+                                    if (!test_closure(&ga, gfi, conv_factor, tol))
+                                        bot_output_mode = RT_BOT_SOLID;
+                                    else
+                                        bot_output_mode = RT_BOT_PLATE;
+                                    output_to_bot(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
                                 }
                                 break;
                             default:
