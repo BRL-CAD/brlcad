@@ -81,12 +81,6 @@ struct bu_structparse Togl_vparse[] = {
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-int
-Togl_dobindings(struct bu_vls *string) {
-    int status;
-    status = Tcl_Eval(interp, bu_vls_addr(string));
-    return status;
-}
 
 int
 Togl_dm_init(struct dm_list *o_dm_list,
@@ -94,7 +88,8 @@ Togl_dm_init(struct dm_list *o_dm_list,
 	    char *argv[])
 {
     struct bu_vls vls;
-    int status;
+
+    printf("interp: %p\n", interp);
 
     bu_log("running togl init\n");
 
@@ -104,7 +99,6 @@ Togl_dm_init(struct dm_list *o_dm_list,
     cmd_hook = Togl_dm;
 
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-    bu_log("interp:%p\n", interp);
 
     bu_log("about to call dm_open\n");
     if ((dmp = dm_open(interp, DM_TYPE_TOGL, argc-1, argv)) == DM_NULL)
@@ -121,15 +115,10 @@ Togl_dm_init(struct dm_list *o_dm_list,
     (void)DM_CONFIGURE_WIN(dmp);
 
     bu_log("did event handler stuff\n");
-    bu_vls_init(&vls);
-    bu_log("inited vls\n");
-    bu_vls_printf(&vls, "winfo width %s.togl", bu_vls_addr(&pathName));
-    bu_log("set up vls: %s, interp:%p\n", bu_vls_addr(&vls), interp);
-/*    status = Tcl_Eval(interp, bu_vls_addr(&vls));*/
-    status = Togl_dobindings(&vls);
-    bu_log("ran Tcl_eval, status:%d\n", status);
-    bu_vls_free(&vls);
-    bu_log("all done\n");
+/*    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);*/
     return TCL_OK;
 }
 
@@ -207,14 +196,12 @@ Togl_dm(int argc,
 				 "dm_togl internal variables",
 				 Togl_vparse,
 				 (const char *)&((struct togl_vars *)dmp->dm_vars.priv_vars)->mvars);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	} else if (argc == 2) {
 	    bu_vls_struct_item_named(&vls,
 				     Togl_vparse,
 				     argv[1],
 				     (const char *)&((struct togl_vars *)dmp->dm_vars.priv_vars)->mvars,
 				     COMMA);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	} else {
 	    struct bu_vls tmp_vls;
 	    bu_vls_init(&tmp_vls);
