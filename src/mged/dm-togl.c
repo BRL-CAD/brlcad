@@ -29,11 +29,10 @@
 #include <math.h>
 #include <string.h>
 
-#define USE_TOGL_STUBS
-
-#include "togl.h"
-
 #include "tk.h"
+
+#define USE_TOGL_STUBS
+#include "togl.h"
 
 #include "bu.h"
 #include "vmath.h"
@@ -115,10 +114,10 @@ Togl_dm_init(struct dm_list *o_dm_list,
     (void)DM_CONFIGURE_WIN(dmp);
 
     bu_log("did event handler stuff\n");
-/*    bu_vls_init(&vls);
+    bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
     Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);*/
+    bu_vls_free(&vls);
     return TCL_OK;
 }
 

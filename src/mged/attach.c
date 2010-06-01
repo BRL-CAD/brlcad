@@ -527,14 +527,6 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	goto Bad;
     }
 
-    /* Can't do this in Togl_dm_init, memory access error?????? */
-    struct bu_vls vls;
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-
     /* initialize the background color */
     cs_set_bg();
 
