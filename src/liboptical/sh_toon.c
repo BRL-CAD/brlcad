@@ -85,7 +85,7 @@ HIDDEN void	toon_print(register struct region *rp, char *dp), toon_free(char *cp
  * values for the parameters.
  */
 struct mfuncs toon_mfuncs[] = {
-    {MF_MAGIC,	"toon",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+    {MF_MAGIC,	"toon",	0,	MFI_NORMAL|MFI_HIT,	0,
      toon_setup,	toon_render,	toon_print,	toon_free },
 
     {0,		(char *)0,	0,		0,		0,
