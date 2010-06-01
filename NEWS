@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-05-XX  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
+* added Tktable 2.10 external dependency for archer - Cliff Yapp
 * fixed heap corruption writing NURBS sketch objects - Östen Lundahl
 * added fullscreen display mode via F5 keybinding to ISST - Cliff Yapp
 * restored archer view commands to work without a .g file - Bob Parker
