@@ -208,9 +208,11 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_bradius = stp->st_aradius * 1.01;
 
     /* XXX magic numbers, increase if scalloping is observed. :(*/
-    nmb->initstep = minfstr / 2;
+    nmb->initstep = minfstr / 2.0;
     if (nmb->initstep < (stp->st_aradius / 200.0))
 	nmb->initstep = (stp->st_aradius / 200.0);
+    else if (nmb->initstep > (stp->st_aradius / 10.0))
+	nmb->initstep = (stp->st_aradius / 10.0);
     nmb->finalstep = /*stp->st_aradius * */minfstr / 1e5;
 
     /* generate a bounding box around the sphere...
@@ -331,7 +333,7 @@ rt_metaball_point_inside(const point_t *p, const struct rt_metaball_internal *mb
 }
 
 
-/* 
+/*
  * Solve the surface intersection of mb with an accuracy of finalstep given that
  * one of the two points (a and b) are inside and the other is outside.
  */
@@ -370,7 +372,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     point_t p, inc, inco;
 
     step = mb->initstep;
-    distleft = (rp->r_max-rp->r_min);
+    distleft = (rp->r_max-rp->r_min) + step * 3.0;
 
     VMOVE(p, rp->r_pt);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
@@ -401,7 +403,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     VSUB2(delta, p, rp->r_pt); \
     segp->seg_##x.hit_dist = fhin * MAGNITUDE(delta); \
     segp->seg_##x.hit_surfno = 0; }
-	while (stat == 0 && distleft >= -0.01) {
+	while (stat == 0 && distleft >= -0) {
 	    int in;
 
 	    distleft -= step;
@@ -438,11 +440,11 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 #undef STEPBACK
 #undef STEPIN
 #elif SHOOTALGO == 3
-    {   
+    {
 	int stat = 0, segsleft = abs(ap->a_onehit);
 	point_t lastpoint;
 
-	while (distleft >= 0.0) {
+	while (distleft >= 0.0 || stat == 1) {
 	    /* advance to the next point */
 	    distleft -= step;
 	    VMOVE(lastpoint, p);
@@ -452,32 +454,33 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    point_t intersect, delta;
 		    rt_metaball_find_intersection(intersect, mb, lastpoint, p, step, mb->finalstep);
 		    VMOVE(segp->seg_out.hit_point, intersect);
-		    --segsleft; 
-		    ++retval; 
-		    VSUB2(delta, intersect, rp->r_pt); 
-		    segp->seg_out.hit_dist = MAGNITUDE(delta); 
+		    --segsleft;
+		    ++retval;
+		    VSUB2(delta, intersect, rp->r_pt);
+		    segp->seg_out.hit_dist = MAGNITUDE(delta);
 		    segp->seg_out.hit_surfno = 0;
 		    stat = 0;
 		    if (ap->a_onehit != 0 && segsleft <= 0)
 			return retval;
 		}
-	    } else
+	    } else {
 		if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
 		    point_t intersect, delta;
 		    rt_metaball_find_intersection(intersect, mb, lastpoint, p, step, mb->finalstep);
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
-		    --segsleft; 
-		    ++retval; 
+		    --segsleft;
+		    ++retval;
 		    VMOVE(segp->seg_in.hit_point, intersect);
-		    VSUB2(delta, intersect, rp->r_pt); 
-		    segp->seg_in.hit_dist = MAGNITUDE(delta); 
+		    VSUB2(delta, intersect, rp->r_pt);
+		    segp->seg_in.hit_dist = MAGNITUDE(delta);
 		    segp->seg_in.hit_surfno = 0;
 		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
 		    stat = 1;
 		    step = mb->initstep;
 		}
+	    }
 	}
     }
 
@@ -709,7 +712,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
  * fastf_t X1 (start point)
  * fastf_t Y1
  * fastf_t Z1
- * fastf_t fldstr1 
+ * fastf_t fldstr1
  * fastf_t sweat1 (end point)
  * fastf_t X2 (start point)
  * ...
@@ -892,7 +895,7 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
  *
  * used for db put/asc2g
  */
-int 
+int
 rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_metaball_internal *mb;
