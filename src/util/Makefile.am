@@ -645,6 +645,7 @@ man_MANS = \
 	png-pix.1 \
 	png_info.1 \
 	query.1 \
+	random.1 \
 	remapid.1 \
 	rle-pix.1 \
 	sun-pix.1 \

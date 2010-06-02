@@ -53,6 +53,7 @@ main(int argc, char *argv[])
     int uniform = 0;
     int cdone = 0;
     int c;
+    const char *usage = "[-u] [-g [-c center]] [-s seed] [-v] low high";
 
     while ((c = bu_getopt(argc, argv, "vugs:c:")) != EOF) {
 	switch (c) {
@@ -75,16 +76,16 @@ main(int argc, char *argv[])
 		verbose = 1;
 		break;
 	    case '?':
-		bu_exit(1, "%s [-ugv] [ -s seed] [-c center ] low high \n", argv[0]);
+		bu_exit(1, "%s %s\n", argv[0], usage);
 	}
     }
     if (! gauss && !uniform) uniform = 1;
     if (gauss && uniform) {
-	bu_log("%s [-ugv] [ -s seed] [-c center ] low high \n", argv[0]);
+	bu_log("%s %s\n", argv[0], usage);
 	bu_exit(1, "\tOnly one of gaussian or uniform may be used.\n");
     }
     if (argc - bu_optind != 2) {
-	bu_log("%s [-ugv] [ -s seed] [-c center ] low high \n", argv[0]);
+	bu_log("%s %s\n", argv[0], usage);
 	bu_exit(1, "\tLow High must be given.\n");
     }
     low = atoi(argv[bu_optind]);
