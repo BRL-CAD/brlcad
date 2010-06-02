@@ -32,10 +32,11 @@
 #include <math.h>
 #include <string.h>
 
+#include "tk.h"
+
 #define USE_TOGL_STUBS
 
 #include "togl.h"
-#include "tk.h"
 
 #undef VMIN		/* is used in vmath.h, too */
 
