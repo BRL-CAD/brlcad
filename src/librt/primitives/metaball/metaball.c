@@ -408,7 +408,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 	if(vals[0] == 1) {
 	    i++;
-	    bu_log("In0!\t");
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
 	    segp->seg_in.hit_surfno = 0;
@@ -422,7 +421,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	for(;i < nsamp;i++) {
 	    if(vals[i] != vals[i+1]) {
 		if(vals[i] == 0) {
-		    bu_log("In%d\t",i);
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
 		    segp->seg_in.hit_surfno = 0;
@@ -434,7 +432,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 		    retval++;
 		} else if(vals[i] == 1) {
-		    bu_log("Out%d\t",i);
 		    rt_metaball_find_intersection(&p ,mb, (const point_t *)ps+i, (const point_t *)ps+i+1, step, mb->finalstep);
 		    VSUB2(dist, p, rp->r_pt);
 		    /* dot product for netagive hit dist here, too. */
@@ -450,7 +447,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	if((retval&0x1) == 0x1) {
 	    bu_log("  Odd, an odd number of intersections. %d ([%d]=%d)\n", retval, nsamp, vals[0]);
 	    exit(-1);
-	} else bu_log("\n");
+	}
 	return retval;
     }
 #elif SHOOTALGO == 2
@@ -505,6 +502,51 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     }
 #undef STEPBACK
 #undef STEPIN
+#elif SHOOTALGO == 3
+    {   
+	int stat = 0, segsleft = abs(ap->a_onehit);
+	point_t lastpoint;
+	fastf_t distleft = (rp->r_max-rp->r_min);
+
+	while (distleft >= 0.0) {
+	    /* advance to the next point */
+	    distleft -= step;
+	    VMOVE(lastpoint, p);
+	    VADD2(p, p, inc);
+	    if (stat == 1) {
+		if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
+		    point_t intersect, delta;
+		    rt_metaball_find_intersection(intersect, mb, lastpoint, p, step, mb->finalstep);
+		    VMOVE(segp->seg_out.hit_point, intersect);
+		    --segsleft; 
+		    ++retval; 
+		    VSUB2(delta, intersect, rp->r_pt); 
+		    segp->seg_out.hit_dist = MAGNITUDE(delta); 
+		    segp->seg_out.hit_surfno = 0;
+		    stat = 0;
+		    if (ap->a_onehit != 0 && segsleft <= 0)
+			return retval;
+		}
+	    } else
+		if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
+		    point_t intersect, delta;
+		    rt_metaball_find_intersection(intersect, mb, lastpoint, p, step, mb->finalstep);
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
+		    --segsleft; 
+		    ++retval; 
+		    VMOVE(segp->seg_in.hit_point, intersect);
+		    VSUB2(delta, intersect, rp->r_pt); 
+		    segp->seg_in.hit_dist = MAGNITUDE(delta); 
+		    segp->seg_in.hit_surfno = 0;
+		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+
+		    stat = 1;
+		    step = mb->initstep;
+		}
+	}
+    }
+
 #else
 # error "pick a valid algo."
 #endif
