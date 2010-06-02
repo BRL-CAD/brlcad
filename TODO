@@ -56,6 +56,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* merge conv-vg2g into dbupgrade
+
 * usage statistics.  similar to the eclipse Usage Data Collector, keep
   track of which BRL-CAD command-line commands and MGED/libged
   commands are run.  Give the user the option of uploading those
