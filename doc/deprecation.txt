@@ -56,13 +56,18 @@ new names should be listed for reference.
 
 7.16
 ----
-canon tools
+SGI-specific tools
+	pl-sgi -> pl-fb [ deprecated 7.16 ]
+	sgi-pix [ deprecated 7.16 ]
+Dunn camera tools
+	dunncolor [ deprecated 7.16 ]
+	dunnsnap [ deprecated 7.16 ]
+Canon tools
 	canonize [ deprecated 7.16 ]
 	ipuscan [ deprecated 7.16 ]
 	ipustat [ deprecated 7.16 ]
 	pix-ipu [ deprecated 7.16 ]
 	png-ipu [ deprecated 7.16 ]
-        
 reserved attributes and case-sensitivity
 	id -> region_id [deprecated 7.16]
 	GIFTmater -> material_id [deprecated 7.16]
