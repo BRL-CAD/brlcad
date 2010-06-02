@@ -147,7 +147,6 @@ bin_PROGRAMS = \
 	query \
 	remapid \
 	rle-pix \
-	sgi-pix \
 	sun-pix \
 	terrain \
 	texturescale \
@@ -537,9 +536,6 @@ pc_test_SOURCES = pc_test.c
 pc_test_LDADD = ${PC} ${PC_LIBS} ${WDB} ${WDB_LIBS}
 endif
 # BUILD_BOOST
-
-sgi_pix_SOURCES = sgi-pix.c
-sgi_pix_LDADD = ${BU} ${LIBSGIGL}
 
 sun_pix_SOURCES = sun-pix.c
 sun_pix_LDADD = ${BU}

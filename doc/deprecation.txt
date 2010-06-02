@@ -58,7 +58,6 @@ new names should be listed for reference.
 ----
 SGI-specific tools
 	pl-sgi -> pl-fb [ deprecated 7.16 ]
-	sgi-pix [ deprecated 7.16 ]
 Dunn camera tools
 	dunncolor [ deprecated 7.16 ]
 	dunnsnap [ deprecated 7.16 ]
