@@ -365,64 +365,74 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 {
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
     struct seg *segp = NULL;
-    int retval = 0;
-    fastf_t step;
-    point_t p, inc;
+    int retval = 0, fhin = 1;
+    fastf_t step, distleft;
+    point_t p, inc, inco;
 
     step = mb->initstep;
+    distleft = (rp->r_max-rp->r_min);
 
-    VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
+    VMOVE(p, rp->r_pt);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
+    VMOVE(inco, inc);
 
     /* walk back out of the solid */
-    while(rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold)
+    while(rt_metaball_point_value((const point_t *)&p, mb) >= mb->threshold) {
+	fhin = -1;
+	distleft += step;
 	VSUB2(p, p, inc);
+    }
 
     /* switching behavior to retain old code for performance and correctness
      * comparisons. */
-#define SHOOTALGO 2
+#define SHOOTALGO 3
 #if SHOOTALGO == 2
     /* we hit, but not as fine-grained as we want. So back up one step,
-     * cut the step size in half and start over... Note that once we're
-     * happily inside, we do NOT change the step size back!
+     * cut the step size in half and start over...
      */
     {
 	int stat = 0, segsleft = abs(ap->a_onehit);
 	point_t delta;
-	fastf_t distleft = (rp->r_max-rp->r_min);	/* TODO: intersect the bounding sphere for better value? */
 
 #define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
-#define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
-	while (distleft >= 0.0) {
+#define STEPIN(x) { \
+    --segsleft; \
+    ++retval; \
+    VSUB2(delta, p, rp->r_pt); \
+    segp->seg_##x.hit_dist = fhin * MAGNITUDE(delta); \
+    segp->seg_##x.hit_surfno = 0; }
+	while (stat == 0 && distleft >= -0.01) {
+	    int in;
+
 	    distleft -= step;
 	    VADD2(p, p, inc);
-	    if (stat == 1) {
-		if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
+	    in = rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold;
+	    if (stat == 1)
+		if ( !in )
 		    if (step<=mb->finalstep) {
-			STEPIN(out);
+			STEPIN(out)
+			VMOVE(inc, inco);
+			step = mb->initstep;
 			stat = 0;
-			if (ap->a_onehit != 0 && segsleft <= 0)
+			if (ap->a_onehit != 0 || segsleft <= 0)
 			    return retval;
 		    } else
-			STEPBACK;
-		}
-	    } else
-		if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
+			STEPBACK
+	    else
+		if ( in )
 		    if (step<=mb->finalstep) {
 			RT_GET_SEG(segp, ap->a_resource);
 			segp->seg_stp = stp;
-			STEPIN(in);
-			segp->seg_in.hit_surfno = 0;
-			segp->seg_out.hit_surfno = 0;
+			STEPIN(in)
+			fhin = 1;
 			BU_LIST_INSERT(&(seghead->l), &(segp->l));
 			/* reset the ray-walk shtuff */
 			stat = 1;
-			VSUB2(p, p, inc);
-			VSCALE(inc, rp->r_dir, step);
+			VADD2(p, p, inc);	/* set p to a point inside */
+			VMOVE(inc, inco);
 			step = mb->initstep;
 		    } else
-			STEPBACK;
-		}
+			STEPBACK
 	}
     }
 #undef STEPBACK
@@ -431,7 +441,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     {   
 	int stat = 0, segsleft = abs(ap->a_onehit);
 	point_t lastpoint;
-	fastf_t distleft = (rp->r_max-rp->r_min);
 
 	while (distleft >= 0.0) {
 	    /* advance to the next point */
