@@ -43,7 +43,6 @@ bin_PROGRAMS = \
 	asc-pl \
 	azel \
 	bary \
-	binfo \
 	buffer \
 	bw-a \
 	bw-imp \
@@ -181,9 +180,6 @@ azel_LDADD = ${BU}
 
 bary_SOURCES = bary.c
 bary_LDADD = ${BU}
-
-binfo_SOURCES = binfo.c
-binfo_LDADD = ${RT} ${FB} ${BU}
 
 if WITH_TK
 bombardier_SOURCES = bombardier.c bombardier.h
@@ -671,7 +667,6 @@ FAST_OBJECTS = \
 	$(asc_pl_OBJECTS) \
 	$(azel_OBJECTS) \
 	$(bary_OBJECTS) \
-	$(binfo_OBJECTS) \
 	$(buffer_OBJECTS) \
 	$(bw_a_OBJECTS) \
 	$(bw_imp_OBJECTS) \
