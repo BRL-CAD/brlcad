@@ -56,16 +56,23 @@ new names should be listed for reference.
 
 7.16
 ----
+canon tools
+	canonize [ deprecated 7.16 ]
+	ipuscan [ deprecated 7.16 ]
+	ipustat [ deprecated 7.16 ]
+	pix-ipu [ deprecated 7.16 ]
+	png-ipu [ deprecated 7.16 ]
+        
 reserved attributes and case-sensitivity
-        id -> region_id [deprecated 7.16]
-        GIFTmater -> material_id [deprecated 7.16]
-        GIFT_MATERIAL -> material_id [deprecated 7.16]
-        mat -> material_id [deprecated 7.16]
-        AIRCODE -> air [deprecated 7.16]
-        rgb -> color [deprecated 7.16]
-        oshader -> shader [deprecated 7.16]
+	id -> region_id [deprecated 7.16]
+	GIFTmater -> material_id [deprecated 7.16]
+	GIFT_MATERIAL -> material_id [deprecated 7.16]
+	mat -> material_id [deprecated 7.16]
+	AIRCODE -> air [deprecated 7.16]
+	rgb -> color [deprecated 7.16]
+	oshader -> shader [deprecated 7.16]
 genptr_t/GENPTR_NULL
-        genptr_t -> void* [deprecated 7.16]
+	genptr_t -> void* [deprecated 7.16]
 .pl file suffix
 	.pl -> .plot3 [deprecated 7.16]
 *-pl
