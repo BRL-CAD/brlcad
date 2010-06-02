@@ -80,7 +80,6 @@ bin_PROGRAMS = \
 	lowp \
 	mac-pix \
 	msrandom \
-	mst \
 	orle-pix \
 	pix-alias \
 	pix-bw \
@@ -304,9 +303,6 @@ mac_pix_LDADD = ${BU}
 
 msrandom_SOURCES = msrandom.c
 msrandom_LDADD = ${BN} ${BU}
-
-mst_SOURCES = mst.c
-mst_LDADD = ${BU}
 
 orle_pix_SOURCES = orle-pix.c
 orle_pix_LDADD = ${FB} ${BU} ${ORLE}
@@ -708,14 +704,12 @@ FAST_OBJECTS = \
 	$(dsp_add_OBJECTS) \
 	$(dunncolor_OBJECTS) \
 	$(dunnsnap_OBJECTS) \
-	$(files_tape_OBJECTS) \
 	$(gencolor_OBJECTS) \
 	$(hex_OBJECTS) \
 	$(imgdims_OBJECTS) \
 	$(loop_OBJECTS) \
 	$(mac_pix_OBJECTS) \
 	$(msrandom_OBJECTS) \
-	$(mst_OBJECTS) \
 	$(op_bw_OBJECTS) \
 	$(orle_pix_OBJECTS) \
 	$(pix_alias_OBJECTS) \
