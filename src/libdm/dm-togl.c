@@ -221,7 +221,7 @@ togl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 
 
 /*
- * O G L _ C O N F I G U R E W I N
+ * T O G L _ C O N F I G U R E W I N
  *
  * Either initially, or on resize/reshape of the window,
  * sense the actual size of the window, and perform any
@@ -239,9 +239,14 @@ togl_configureWin_guts(struct dm *dmp, int force)
 	bu_log("togl_configureWin_guts()\n");
 
     Togl_MakeCurrent(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl);
-
+/*
     width = Togl_Width(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl);
     height = Togl_Height(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl);
+*/
+    width = Tk_Width(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    height = Tk_Height(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+
+    Tk_ResizeWindow(Togl_TkWin(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl), width, height);
 
     /* nothing to do */
     if (!force &&
