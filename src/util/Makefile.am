@@ -79,7 +79,7 @@ bin_PROGRAMS = \
 	loop \
 	lowp \
 	mac-pix \
-	msrandom \
+	random \
 	orle-pix \
 	pix-alias \
 	pix-bw \
@@ -301,8 +301,8 @@ lowp_LDADD = ${BU}
 mac_pix_SOURCES = mac-pix.c
 mac_pix_LDADD = ${BU}
 
-msrandom_SOURCES = msrandom.c
-msrandom_LDADD = ${BN} ${BU}
+random_SOURCES = random.c
+random_LDADD = ${BN} ${BU}
 
 orle_pix_SOURCES = orle-pix.c
 orle_pix_LDADD = ${FB} ${BU} ${ORLE}
@@ -709,7 +709,6 @@ FAST_OBJECTS = \
 	$(imgdims_OBJECTS) \
 	$(loop_OBJECTS) \
 	$(mac_pix_OBJECTS) \
-	$(msrandom_OBJECTS) \
 	$(op_bw_OBJECTS) \
 	$(orle_pix_OBJECTS) \
 	$(pix_alias_OBJECTS) \
@@ -776,6 +775,7 @@ FAST_OBJECTS = \
 	$(png_pix_OBJECTS) \
 	$(png_info_OBJECTS) \
 	$(query_OBJECTS) \
+	$(random_OBJECTS) \
 	$(remapid_OBJECTS) \
 	$(rle_pix_OBJECTS) \
 	$(sgi_pix_OBJECTS) \
