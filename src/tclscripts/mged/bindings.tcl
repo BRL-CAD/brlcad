@@ -29,8 +29,6 @@ proc mged_bind_dm { w } {
 
     set hot_key 65478
 
-    tk_messageBox -message "Started binding"
-
     #make this the current display manager
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
 	bind $w <Enter> "winset $w; focus $w;"
