@@ -376,81 +376,8 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
     /* switching behavior to retain old code for performance and correctness
      * comparisons. */
-#define SHOOTALGO 2
-#if SHOOTALGO == 1
-    {
-	vect_t dist;
-	int nsamp, i;
-#ifdef SOMETHING
-	point_t *ps;
-	int *vals;
-
-	/* some fu about the initstep and bounding sphere size. yeah. */
-	nsamp = mb->initstep / 1.0;
-	vals = (int *)bu_malloc(sizeof(int) * nsamp, "in/out array");
-	ps = (point_t *)bu_malloc(sizeof(point_t) * nsamp, "point array");
-#else
-#define FAKEVAL 200
-	point_t ps[FAKEVAL];
-	int vals[FAKEVAL];
-	nsamp = FAKEVAL;
-#undef FAKEVAL
-#endif
-
-	for(i=0;i<nsamp;i++) {
-	    VMOVE(ps[i], p);
-	    vals[i] = rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold;
-	    VADD2(p, p, inc);
-	}
-
-	retval = 0;
-	i = 0;
-
-	if(vals[0] == 1) {
-	    i++;
-	    RT_GET_SEG(segp, ap->a_resource);
-	    segp->seg_stp = stp;
-	    segp->seg_in.hit_surfno = 0;
-	    segp->seg_out.hit_surfno = 0;
-	    segp->seg_in.hit_dist = 0;
-	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	    retval++;
-	}
-
-	/* search the in/out array for boundry crossings. */
-	for(;i < nsamp;i++) {
-	    if(vals[i] != vals[i+1]) {
-		if(vals[i] == 0) {
-		    RT_GET_SEG(segp, ap->a_resource);
-		    segp->seg_stp = stp;
-		    segp->seg_in.hit_surfno = 0;
-		    segp->seg_out.hit_surfno = 0;
-		    rt_metaball_find_intersection(&p ,mb, (const point_t *)ps+i, (const point_t *)ps+i+1, step, mb->finalstep);
-		    VSUB2(dist, p, rp->r_pt);
-		    /* do a dot product to see if hit_dist should be negative? */
-		    segp->seg_in.hit_dist = MAGNITUDE(dist);
-		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-		    retval++;
-		} else if(vals[i] == 1) {
-		    rt_metaball_find_intersection(&p ,mb, (const point_t *)ps+i, (const point_t *)ps+i+1, step, mb->finalstep);
-		    VSUB2(dist, p, rp->r_pt);
-		    /* dot product for netagive hit dist here, too. */
-		    segp->seg_out.hit_dist = MAGNITUDE(dist); 
-#ifdef SOMETHING
-		    bu_free(ps, "Point array");
-		    bu_free(vals, "in/out array");
-#endif
-		    retval++;
-		}
-	    }
-	}
-	if((retval&0x1) == 0x1) {
-	    bu_log("  Odd, an odd number of intersections. %d ([%d]=%d)\n", retval, nsamp, vals[0]);
-	    exit(-1);
-	}
-	return retval;
-    }
-#elif SHOOTALGO == 2
+#define SHOOTALGO 3
+#if SHOOTALGO == 2
     /* we hit, but not as fine-grained as we want. So back up one step,
      * cut the step size in half and start over... Note that once we're
      * happily inside, we do NOT change the step size back!
