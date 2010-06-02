@@ -235,30 +235,28 @@ togl_configureWin_guts(struct dm *dmp, int force)
     GLint mm;
     int width, height, pwidth, pheight;
 
+    int borderleft, borderright, bordertop, borderbottom, bordertotal;
+
+    borderleft = Tk_InternalBorderLeft(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+    borderright = Tk_InternalBorderRight(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+    bordertop = Tk_InternalBorderTop(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+    borderbottom = Tk_InternalBorderBottom(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+
+    bordertotal = borderleft + borderright + bordertop + borderbottom;
+
     if (dmp->dm_debugLevel)
 	bu_log("togl_configureWin_guts()\n");
 
     Togl_MakeCurrent(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl);
-/*
-    width = Togl_Width(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl);
-    height = Togl_Height(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl);
-*/
+
     width = Tk_Width(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     height = Tk_Height(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
     pwidth = Tk_Width(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
     pheight = Tk_Height(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
-/*
-    bu_log("width: %d\n", width);
-    bu_log("height: %d\n", height);
 
-    bu_log("parentwidth: %d\n", pwidth);
-    bu_log("parentheight: %d\n", pheight);
-
-    if (pwidth > width) width = pwidth;
-    if (pheight > height) height = pheight;
-*/
-    if (pheight > height && (pheight - height != 8) && (height > pheight/2 + 8)) height = pheight - 8;
+    /* Manual height tweaking to ensure dm window fills available area */
+    if (pheight > height && (pheight - height != bordertotal) && (height > pheight/2 + bordertotal)) height = pheight - bordertotal;
     Tk_ResizeWindow(Togl_TkWin(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl), width, height);
 
     /* nothing to do */
