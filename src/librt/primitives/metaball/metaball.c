@@ -374,6 +374,10 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
 
+    /* walk back out of the solid */
+    while(rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold)
+	VSUB2(p, p, inc);
+
     /* switching behavior to retain old code for performance and correctness
      * comparisons. */
 #define SHOOTALGO 2
@@ -382,13 +386,10 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
      * cut the step size in half and start over... Note that once we're
      * happily inside, we do NOT change the step size back!
      */
-    /* TODO: rework this crud to use the rt_metaball_point_intersect function. 
-     * And do performance testing. or something.
-     * */
     {
 	int stat = 0, segsleft = abs(ap->a_onehit);
 	point_t delta;
-	fastf_t distleft = (rp->r_max-rp->r_min);
+	fastf_t distleft = (rp->r_max-rp->r_min);	/* TODO: intersect the bounding sphere for better value? */
 
 #define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
 #define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
