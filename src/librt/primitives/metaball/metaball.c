@@ -376,7 +376,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
     /* switching behavior to retain old code for performance and correctness
      * comparisons. */
-#define SHOOTALGO 3
+#define SHOOTALGO 2
 #if SHOOTALGO == 2
     /* we hit, but not as fine-grained as we want. So back up one step,
      * cut the step size in half and start over... Note that once we're
@@ -411,12 +411,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			RT_GET_SEG(segp, ap->a_resource);
 			segp->seg_stp = stp;
 			STEPIN(in);
-			segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* this causes shelling */
 			segp->seg_in.hit_surfno = 0;
 			segp->seg_out.hit_surfno = 0;
 			BU_LIST_INSERT(&(seghead->l), &(segp->l));
-			if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
-			    return retval;
 			/* reset the ray-walk shtuff */
 			stat = 1;
 			VSUB2(p, p, inc);
