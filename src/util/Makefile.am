@@ -72,7 +72,6 @@ bin_PROGRAMS = \
 	dsp_add \
 	dunncolor \
 	dunnsnap \
-	files-tape \
 	fix_polysolids \
 	gencolor \
 	hex \
@@ -282,9 +281,6 @@ dunncolor_LDADD = ${BU}
 
 dunnsnap_SOURCES = dunnsnap.c dunncomm.c
 dunnsnap_LDADD = ${FB} ${BU}
-
-files_tape_SOURCES = files-tape.c
-files_tape_LDADD = ${BU}
 
 fix_polysolids_SOURCES = fix_polysolids.c
 fix_polysolids_LDADD = ${RT} ${BU}
