@@ -233,7 +233,7 @@ HIDDEN int
 togl_configureWin_guts(struct dm *dmp, int force)
 {
     GLint mm;
-    double width, height;
+    int width, height, pwidth, pheight;
 
     if (dmp->dm_debugLevel)
 	bu_log("togl_configureWin_guts()\n");
@@ -246,6 +246,19 @@ togl_configureWin_guts(struct dm *dmp, int force)
     width = Tk_Width(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     height = Tk_Height(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
+    pwidth = Tk_Width(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+    pheight = Tk_Height(Tk_Parent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+/*
+    bu_log("width: %d\n", width);
+    bu_log("height: %d\n", height);
+
+    bu_log("parentwidth: %d\n", pwidth);
+    bu_log("parentheight: %d\n", pheight);
+
+    if (pwidth > width) width = pwidth;
+    if (pheight > height) height = pheight;
+*/
+    if (pheight > height && (pheight - height != 8) && (height > pheight/2 + 8)) height = pheight - 8;
     Tk_ResizeWindow(Togl_TkWin(((struct togl_vars *)dmp->dm_vars.priv_vars)->togl), width, height);
 
     /* nothing to do */
@@ -519,7 +532,7 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
 
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
         bu_log("tk_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-        (void)tk_close(dmp);
+        (void)togl_close(dmp);
         bu_vls_free(&top_vls);
         return DM_NULL;
     }
@@ -574,7 +587,7 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
     printf("%s\n", bu_vls_addr(&tclcmd));
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
     bu_log("%s\n", Tcl_GetStringResult(interp));
-    bu_vls_sprintf(&tclcmd, "pack %s.%s.togl; update", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    bu_vls_sprintf(&tclcmd, "pack %s.%s.togl -expand true -fill both; update", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
     bu_vls_sprintf(&tclcmd, "%s.%s.togl", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
     Togl_GetToglFromObj(interp, Tcl_NewStringObj(bu_vls_addr(&tclcmd), -1), &(privvars->togl));
