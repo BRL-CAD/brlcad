@@ -65,9 +65,13 @@ int
 get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 {
     int c;
-    char *file_name = NULL;
+    char *in_file_name = NULL;
+    char *out_file_name = NULL;
 
-    while ((c = bu_getopt(argc, argv, "fbrihs:w:n:S:W:N:a:")) != EOF) {
+    if (!ifp || !ofp)
+	bu_exit(1, "bwrot: internal error processing arguments\n");
+
+    while ((c = bu_getopt(argc, argv, "fbrihs:w:n:S:W:N:a:o:")) != EOF) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -101,6 +105,14 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 	    case 'a':
 		angle = atof(bu_optarg);
 		break;
+	    case 'o':
+		out_file_name = bu_optarg;
+		*ofp = fopen(out_file_name, "wb+");
+		if (*ofp == NULL) {
+		    bu_log("bwrot: cannot open \"%s\" for writing\n", out_file_name);
+		    return 0;
+		}
+		break;
 
 	    default:		/* '?' */
 		return 0;
@@ -112,23 +124,31 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
     }
+
     if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return 0;
-	file_name = "-";
-	*ifp = stdin;
+	in_file_name = "-";
     } else {
-	file_name = argv[bu_optind];
-	if ((*ifp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwrot: cannot open \"%s\" for reading\n",
-			  file_name);
+	in_file_name = argv[bu_optind];
+    }
+
+    if (strcmp(in_file_name, "-") == 0) {
+	*ifp = stdout;
+    } else {
+	*ifp = fopen(in_file_name, "rb");
+	if (*ifp == NULL) {
+	    bu_log("bwrot: cannot open \"%s\" for reading\n", in_file_name);
 	    return 0;
 	}
     }
 
+    /* sanity */
+    if (isatty(fileno(ifp)))
+	return 0;
+    if (isatty(fileno(ofp)))
+	return 0;
+
     if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwrot: excess argument(s) ignored\n");
+	bu_log("bwrot: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
@@ -249,14 +269,15 @@ main(int argc, char **argv)
 
     char usage[] = "\
 Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
-	[-w width] [-n height] [file.bw] > file.bw\n\
+	[-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n\
   or   bwrot -a angle [-s squaresize]\n\
-	[-w width] [-n height] [file.bw] > file.bw\n";
+	[-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
 
     int x, y;
     long outbyte, outplace;
     FILE *ifp, *ofp;
 
+    ifp = stdin;
     ofp = stdout;
 
     if (!get_args(argc, argv, &ifp, &ofp) || isatty(fileno(ofp))) {
