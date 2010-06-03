@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* gqa manpage has the wrong indentation on the options write-up.
+
 * Detailed BoT model ray trace image had incorrect background pixel
   values in framebuffer, off slightly by one.
 
