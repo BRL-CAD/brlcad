@@ -19,7 +19,6 @@ libpng_la_SOURCES = \
 	pngrtran.c \
 	pngrutil.c \
 	pngset.c \
-	pngtest.c \
 	pngtrans.c \
 	pngwio.c \
 	pngwrite.c \
