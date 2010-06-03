@@ -144,11 +144,11 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 
     /* sanity */
     if (isatty(fileno(*ifp))) {
-	bu_log("ERROR: %s will not read bw data from a tty\n", bu_getprogname());
+	bu_log("ERROR: %s will not read bw data from a tty\nSpecify an input file.\n", bu_getprogname());
 	return 0;
     }
     if (isatty(fileno(*ofp))) {
-	bu_log("ERROR: %s will not write bw data to a tty\n", bu_getprogname());
+	bu_log("ERROR: %s will not write bw data to a tty\nRedirect output or use the -o output option.\n", bu_getprogname());
 	return 0;
     }
 
