@@ -49,26 +49,23 @@
 size_t buflines, scanbytes;
 int firsty = -1;	/* first "y" scanline in buffer */
 int lasty = -1;	/* last "y" scanline in buffer */
-unsigned char *buffer;
 unsigned char *bp;
-unsigned char *obuf;
 unsigned char *obp;
 
 size_t nxin = 512;
 size_t nyin = 512;
 size_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
-double angle;
 
 
 int
-get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
+get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 {
     int c;
     char *in_file_name = NULL;
     char *out_file_name = NULL;
 
-    if (!ifp || !ofp)
+    if (!ifp || !ofp || !angle)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
     while ((c = bu_getopt(argc, argv, "fbrihs:w:n:S:W:N:a:o:")) != EOF) {
@@ -103,7 +100,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 		nyin = atoi(bu_optarg);
 		break;
 	    case 'a':
-		angle = atof(bu_optarg);
+		*angle = atof(bu_optarg);
 		break;
 	    case 'o':
 		out_file_name = bu_optarg;
@@ -161,9 +158,9 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 
 
 static void
-fill_buffer(FILE *ifp)
+fill_buffer(FILE *ifp, unsigned char *buf)
 {
-    buflines = fread(buffer, scanbytes, buflines, ifp);
+    buflines = fread(buf, scanbytes, buflines, ifp);
 
     firsty = lasty + 1;
     lasty = firsty + (buflines - 1);
@@ -171,13 +168,13 @@ fill_buffer(FILE *ifp)
 
 
 static void
-reverse_buffer(void)
+reverse_buffer(unsigned char *buf)
 {
     int i;
     unsigned char *p1, *p2, temp;
 
     for (i = 0; i < buflines; i++) {
-	p1 = &buffer[ i * scanbytes ];
+	p1 = &buf[ i * scanbytes ];
 	p2 = p1 + (scanbytes - 1);
 	while (p1 < p2) {
 	    temp = *p1;
@@ -212,7 +209,7 @@ reverse_buffer(void)
  * dy' = cos(a)
  */
 static void
-arbrot(double a, FILE *ifp)
+arbrot(double a, FILE *ifp, unsigned char *buf)
 {
 #define DtoR(x)	((x)*M_PI/180.0)
     int x, y;				/* working coord */
@@ -228,7 +225,7 @@ arbrot(double a, FILE *ifp)
 	bu_exit (1, NULL);
     }
     if (buflines > nyin) buflines = nyin;
-    fill_buffer(ifp);
+    fill_buffer(ifp, buf);
 
     /*
      * Convert rotation angle to radians.
@@ -257,7 +254,7 @@ arbrot(double a, FILE *ifp)
 	for (x = x_min; x < x_max; x++) {
 	    /* check for in bounds */
 	    if (x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin)
-		putchar(buffer[(int)y2*nyin + (int)x2]);
+		putchar(buf[(int)y2*nyin + (int)x2]);
 	    else
 		putchar(0);	/* XXX - setable color? */
 	    /* "forward difference" our coordinates */
@@ -274,21 +271,22 @@ main(int argc, char **argv)
     const size_t MAXBUFBYTES = 1280*1024;
 
     char usage[] = "\
-Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
-	[-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n\
-  or   bwrot -a angle [-s squaresize]\n\
-	[-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
+Usage: bwrot [-f -b -r -i [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n\
+   or  bwrot -a angle [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
 
     int x, y;
+    int ret = 0;
     long outbyte, outplace;
     FILE *ifp, *ofp;
-    int ret = 0;
+    unsigned char *obuf;
+    unsigned char *buffer;
+    double angle = 0.0;
 
     ifp = stdin;
     ofp = stdout;
     bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv, &ifp, &ofp)) {
+    if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
 	bu_exit(1, "%s", usage);
     }
 
@@ -304,8 +302,8 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
     /*
      * Break out to added arbitrary angle routine
      */
-    if (angle) {
-	arbrot(angle, ifp);
+    if (angle > 0.0) {
+	arbrot(angle, ifp, buffer);
 	goto done;
     }
 
@@ -319,11 +317,11 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
     yin = 0;
     while (yin < nyin) {
 	/* Fill buffer */
-	fill_buffer(ifp);
+	fill_buffer(ifp, buffer);
 	if (!buflines)
 	    break;
 	if (reverse)
-	    reverse_buffer();
+	    reverse_buffer(buffer);
 	if (plus90) {
 	    for (x = 0; x < nxin; x++) {
 		obp = obuf;
