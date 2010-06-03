@@ -343,7 +343,7 @@ main(int argc, char **argv)
 		    /* firsty? */
 		    for (j = 0; j < pixbytes; j++)
 			*obp++ = *bp++;
-		    bp -= scanbytes; /* !!! - pixbytes??? */
+		    bp -= scanbytes - pixbytes;
 		}
 		yout = x;
 		xout = (nyin - 1) - lasty;
@@ -367,7 +367,7 @@ main(int argc, char **argv)
 		for (y = firsty+1; (ssize_t)y < lasty; y++) {
 		    for (j = 0; j < pixbytes; j++)
 			*obp++ = *bp++;
-		    bp += scanbytes; /* !!! - pixbytes??? */
+		    bp += scanbytes - pixbytes;
 		}
 		yout = (nxin - 1) - x + 1;
 		xout = yin;
