@@ -173,6 +173,7 @@ toon_render(struct application *ap, struct partition *pp, struct shadework *swp,
     int i;
     struct toon_specific *toon_sp = (struct toon_specific *)dp;
     struct light_specific *lp;
+    fastf_t cosi, scale;
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
@@ -182,26 +183,30 @@ toon_render(struct application *ap, struct partition *pp, struct shadework *swp,
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print( "toon_render Parameters:", toon_print_tab, (char *)toon_sp );
 
+    /* if surface normal is nearly orthogonal to the ray, make a black line */
+    if (VDOT(swp->sw_hit.hit_normal, ap->a_inv_dir) >= 0.8) {
+	VSETALL(swp->sw_color, 0);
+	return 1;
+    }
+
     /* probably need to set some swp values here to avoid the infinite recursion
      * if specified lights exist. */
     light_obs(ap, swp, MFI_HIT);
 
     /* Consider effects of each light source */
     for ( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
-	fastf_t cosi, scale;
-
 	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
 	    continue;
 
 	cosi = VDOT(swp->sw_hit.hit_normal, swp->sw_tolight);
-	if(cosi <= 0.1) scale = 0.0;
+	if(cosi <= 0.0) scale = 0.0;
 	else if(cosi <= 0.5) scale = 0.5;
 	else if(cosi <= 0.8) scale = 0.8;
 	else scale = 1.0;
 	VSCALE(swp->sw_color, swp->sw_color, scale);
 	return 1;
     }
-
+    
     /* no paths to light source, so just paint it black */
     VSETALL(swp->sw_color, 0);
 
