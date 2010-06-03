@@ -40,6 +40,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -47,8 +48,8 @@
 
 
 size_t buflines, scanbytes;
-int firsty = -1;	/* first "y" scanline in buffer */
-int lasty = -1;	/* last "y" scanline in buffer */
+ssize_t firsty = -1;	/* first "y" scanline in buffer */
+ssize_t lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *bp;
 unsigned char *obp;
 
@@ -130,7 +131,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     }
 
     if (strcmp(in_file_name, "-") == 0) {
-	*ifp = stdout;
+	*ifp = stdin;
     } else {
 	*ifp = fopen(in_file_name, "rb");
 	if (*ifp == NULL) {
@@ -170,7 +171,7 @@ fill_buffer(FILE *ifp, unsigned char *buf)
 static void
 reverse_buffer(unsigned char *buf)
 {
-    int i;
+    size_t i;
     unsigned char *p1, *p2, temp;
 
     for (i = 0; i < buflines; i++) {
@@ -212,10 +213,10 @@ static void
 arbrot(double a, FILE *ifp, unsigned char *buf)
 {
 #define DtoR(x)	((x)*M_PI/180.0)
-    int x, y;				/* working coord */
+    size_t x, y;				/* working coord */
     double x2, y2;				/* its rotated position */
     double xc, yc;				/* rotation origin */
-    int x_min, y_min, x_max, y_max;	/* area to rotate */
+    size_t x_min, y_min, x_max, y_max;		/* area to rotate */
     double x_goop, y_goop;
     double sina, cosa;
 
@@ -253,10 +254,17 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 	y2 = x_min * sina + y * cosa + y_goop;
 	for (x = x_min; x < x_max; x++) {
 	    /* check for in bounds */
-	    if (x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin)
+	    if (x2 > 0.0
+		&& NEAR_ZERO(x2, SMALL_FASTF)
+		&& x2 < (double)nxin
+		&& y2 > 0.0
+		&& NEAR_ZERO(y2, SMALL_FASTF)
+		&& y2 < (double)nyin)
+	    {
 		putchar(buf[(int)y2*nyin + (int)x2]);
-	    else
+	    } else {
 		putchar(0);	/* XXX - setable color? */
+	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;
 	    y2 += sina;
@@ -274,7 +282,7 @@ main(int argc, char **argv)
 Usage: bwrot [-f -b -r -i [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n\
    or  bwrot -a angle [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
 
-    int x, y;
+    size_t x, y;
     int ret = 0;
     long outbyte, outplace;
     FILE *ifp, *ofp;
@@ -326,7 +334,7 @@ Usage: bwrot [-f -b -r -i [-s squaresize] [-w width] [-n height] [-o output.bw] 
 	    for (x = 0; x < nxin; x++) {
 		obp = obuf;
 		bp = &buffer[ (lasty-firsty)*scanbytes + x ];
-		for (y = lasty; y >= yin; y--) {
+		for (y = lasty+1; y > yin; y--) {
 		    /* firsty? */
 		    *obp++ = *bp;
 		    bp -= scanbytes;
@@ -335,9 +343,10 @@ Usage: bwrot [-f -b -r -i [-s squaresize] [-w width] [-n height] [-o output.bw] 
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout);
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
-			bu_log("%s: Can't seek on output, yet I need to!\n", bu_getprogname());
+			perror("fseek");
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -346,20 +355,21 @@ Usage: bwrot [-f -b -r -i [-s squaresize] [-w width] [-n height] [-o output.bw] 
 		outplace += buflines;
 	    }
 	} else if (minus90) {
-	    for (x = nxin-1; x >= 0; x--) {
+	    for (x = nxin; x > 0; x--) {
 		obp = obuf;
-		bp = &buffer[ x ];
-		for (y = firsty; y <= lasty; y++) {
+		bp = &buffer[ x-1 ];
+		for (y = firsty+1; (ssize_t)y < lasty; y++) {
 		    *obp++ = *bp;
 		    bp += scanbytes;
 		}
-		yout = (nxin - 1) - x;
+		yout = (nxin - 1) - x + 1;
 		xout = yin;
 		outbyte = ((yout * nyin) + xout);
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
-			bu_log("%s: Can't seek on output, yet I need to!\n", bu_getprogname());
+			perror("fseek");
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -368,18 +378,19 @@ Usage: bwrot [-f -b -r -i [-s squaresize] [-w width] [-n height] [-o output.bw] 
 		outplace += buflines;
 	    }
 	} else if (invert) {
-	    for (y = lasty; y >= firsty; y--) {
-		yout = (nyin - 1) - y;
+	    for (y = lasty+1; (ssize_t)y > firsty; y--) {
+		yout = (nyin - 1) - y + 1;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
-			bu_log("%s: Can't seek on output, yet I need to!\n", bu_getprogname());
+			perror("fseek");
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(&buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp);
+		fwrite(&buffer[(y-firsty-1)*scanbytes], 1, scanbytes, ofp);
 		outplace += scanbytes;
 	    }
 	} else {
