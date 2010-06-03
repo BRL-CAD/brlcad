@@ -57,6 +57,7 @@ size_t nxin = 512;
 size_t nyin = 512;
 size_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
+size_t pixbytes = 1;
 
 
 int
@@ -69,7 +70,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     if (!ifp || !ofp || !angle)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
-    while ((c = bu_getopt(argc, argv, "fbrihs:w:n:S:W:N:a:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "fbrih#:a:s:o:w:n:S:W:N:")) != EOF) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -86,6 +87,9 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 	    case 'h':
 		/* high-res */
 		nxin = nyin = 1024;
+		break;
+	    case '#':
+		pixbytes = atoi(bu_optarg);
 		break;
 	    case 'S':
 	    case 's':
@@ -171,16 +175,19 @@ fill_buffer(FILE *ifp, unsigned char *buf)
 static void
 reverse_buffer(unsigned char *buf)
 {
-    size_t i;
+    size_t i, j;
     unsigned char *p1, *p2, temp;
 
     for (i = 0; i < buflines; i++) {
 	p1 = &buf[ i * scanbytes ];
-	p2 = p1 + (scanbytes - 1);
+	p2 = p1 + (scanbytes - pixbytes);
 	while (p1 < p2) {
-	    temp = *p1;
-	    *p1++ = *p2;
-	    *p2-- = temp;
+	    for (j = 0; j < pixbytes; j++) {
+		temp = *p1;
+		*p1++ = *p2;
+		*p2++ = temp;
+	    }
+	    p2 -= 2*pixbytes;
 	}
     }
 }
@@ -280,7 +287,7 @@ main(int argc, char **argv)
 
     char usage[] = "Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
 
-    size_t x, y;
+    size_t x, y, j;
     int ret = 0;
     long outbyte, outplace;
     FILE *ifp, *ofp;
@@ -296,14 +303,14 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-    scanbytes = nxin;
+    scanbytes = nxin * pixbytes;
     buflines = MAXBUFBYTES / scanbytes;
     if (buflines <= 0) {
 	bu_exit(1, "%s", "bwrot: I'm not compiled to do a scanline that long!\n");
     }
     if (buflines > nyin) buflines = nyin;
     buffer = (unsigned char *)bu_malloc(buflines * scanbytes, "buffer");
-    obuf = (unsigned char *)bu_malloc((nyin > nxin) ? nyin : nxin, "obuf");
+    obuf = (unsigned char *)bu_malloc((nyin > nxin) ? nyin*pixbytes : nxin*pixbytes, "obuf");
 
     /*
      * Break out to added arbitrary angle routine
@@ -331,15 +338,16 @@ main(int argc, char **argv)
 	if (plus90) {
 	    for (x = 0; x < nxin; x++) {
 		obp = obuf;
-		bp = &buffer[ (lasty-firsty)*scanbytes + x ];
+		bp = &buffer[ (lasty-firsty)*scanbytes + x*pixbytes ];
 		for (y = lasty+1; y > yin; y--) {
 		    /* firsty? */
-		    *obp++ = *bp;
-		    bp -= scanbytes;
+		    for (j = 0; j < pixbytes; j++)
+			*obp++ = *bp++;
+		    bp -= scanbytes; /* !!! - pixbytes??? */
 		}
 		yout = x;
 		xout = (nyin - 1) - lasty;
-		outbyte = ((yout * nyin) + xout);
+		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
@@ -349,20 +357,21 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, 1, buflines, ofp);
-		outplace += buflines;
+		fwrite(obuf, pixbytes, buflines, ofp);
+		outplace += buflines*pixbytes;
 	    }
 	} else if (minus90) {
 	    for (x = nxin; x > 0; x--) {
 		obp = obuf;
-		bp = &buffer[ x-1 ];
+		bp = &buffer[ (x-1)*pixbytes ];
 		for (y = firsty+1; (ssize_t)y < lasty; y++) {
-		    *obp++ = *bp;
-		    bp += scanbytes;
+		    for (j = 0; j < pixbytes; j++)
+			*obp++ = *bp++;
+		    bp += scanbytes; /* !!! - pixbytes??? */
 		}
 		yout = (nxin - 1) - x + 1;
 		xout = yin;
-		outbyte = ((yout * nyin) + xout);
+		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
@@ -372,8 +381,8 @@ main(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, 1, buflines, ofp);
-		outplace += buflines;
+		fwrite(obuf, pixbytes, buflines, ofp);
+		outplace += buflines*pixbytes;
 	    }
 	} else if (invert) {
 	    for (y = lasty+1; (ssize_t)y > firsty; y--) {
