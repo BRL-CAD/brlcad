@@ -142,7 +142,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 
     /* sanity */
     if (isatty(fileno(*ifp))) {
-	bu_log("ERROR: %s will not read bw data from a tty\nSpecify an input file.\n", bu_getprogname());
+	bu_log("ERROR: %s will not read bw data from a tty\nRedirect input or specify an input file.\n", bu_getprogname());
 	return 0;
     }
     if (isatty(fileno(*ofp))) {
@@ -278,9 +278,7 @@ main(int argc, char **argv)
 {
     const size_t MAXBUFBYTES = 1280*1024;
 
-    char usage[] = "\
-Usage: bwrot [-f -b -r -i [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n\
-   or  bwrot -a angle [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
+    char usage[] = "Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
 
     size_t x, y;
     int ret = 0;
