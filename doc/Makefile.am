@@ -54,7 +54,8 @@ documentation_DATA = \
 	regions.txt \
 	rounding.txt \
 	sun.txt \
-	tube.txt
+	tube.txt \
+	tool_categories.txt
 
 man_MANS = \
 	bw.5 \
