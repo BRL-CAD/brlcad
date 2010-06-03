@@ -56,6 +56,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* the 'cp' command no longer displays the object that was copied (and
+  it reportedly did at some point prior to 7.14.8 at least).
+  undoubtedly a libged change, but an interesting consideration for
+  default behavior.
+
 * merge conv-vg2g into dbupgrade
 
 * usage statistics.  similar to the eclipse Usage Data Collector, keep
