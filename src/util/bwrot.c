@@ -40,15 +40,13 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <math.h>
 #include "bio.h"
 
 #include "bu.h"
+#include "bn.h"
 
 
-#define MAXBUFBYTES (1280*1024)
-
-int buflines, scanbytes;
+size_t buflines, scanbytes;
 int firsty = -1;	/* first "y" scanline in buffer */
 int lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *buffer;
@@ -56,19 +54,11 @@ unsigned char *bp;
 unsigned char *obuf;
 unsigned char *obp;
 
-int nxin = 512;
-int nyin = 512;
-int yin, xout, yout;
+size_t nxin = 512;
+size_t nyin = 512;
+size_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
 double angle;
-
-static char usage[] = "\
-Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
-	[-w width] [-n height] [file.bw] > file.bw\n\
-  or   bwrot -a angle [-s squaresize]\n\
-	[-w width] [-n height] [file.bw] > file.bw\n";
-
-void fill_buffer(FILE *ifp), reverse_buffer(void), arbrot(double a, FILE *ifp);
 
 
 int
@@ -144,9 +134,125 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 }
 
 
+static void
+fill_buffer(FILE *ifp)
+{
+    buflines = fread(buffer, scanbytes, buflines, ifp);
+
+    firsty = lasty + 1;
+    lasty = firsty + (buflines - 1);
+}
+
+
+static void
+reverse_buffer(void)
+{
+    int i;
+    unsigned char *p1, *p2, temp;
+
+    for (i = 0; i < buflines; i++) {
+	p1 = &buffer[ i * scanbytes ];
+	p2 = p1 + (scanbytes - 1);
+	while (p1 < p2) {
+	    temp = *p1;
+	    *p1++ = *p2;
+	    *p2-- = temp;
+	}
+    }
+}
+
+
+/*
+ * Arbitrary angle rotation.
+ *
+ * 'a' is rotation angle
+ *
+ * Currently this needs to be able to buffer the entire image
+ * in memory at one time.
+ *
+ * To rotate a point (x, y) CCW about the origin:
+ * x' = x cos(a) - y sin(a)
+ * y' = x sin(a) + y cos(a)
+ * To rotate it about a point (xc, yc):
+ * x' = (x-xc) cos(a) - (y-yc) sin(a) + xc
+ *       = x cos(a) - y sin(a) + [xc - xc cos(a) + yc sin(a)]
+ * y' = (x-xc) sin(a) + (y-yc) cos(a) + yc
+ *	 = x sin(a) + y cos(a) + [yc - yc cos(a) - xc sin(a)]
+ * So, to take one step in x:
+ * dx' = cos(a)
+ * dy' = sin(a)
+ * or one step in y:
+ * dx' = -sin(a)
+ * dy' = cos(a)
+ */
+static void
+arbrot(double a, FILE *ifp)
+{
+#define DtoR(x)	((x)*M_PI/180.0)
+    int x, y;				/* working coord */
+    double x2, y2;				/* its rotated position */
+    double xc, yc;				/* rotation origin */
+    int x_min, y_min, x_max, y_max;	/* area to rotate */
+    double x_goop, y_goop;
+    double sina, cosa;
+
+    if (buflines != nyin) {
+	/* I won't all fit in the buffer */
+	fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
+	bu_exit (1, NULL);
+    }
+    if (buflines > nyin) buflines = nyin;
+    fill_buffer(ifp);
+
+    /*
+     * Convert rotation angle to radians.
+     * Because we "pull down" the pixel from their rotated positions
+     * to their standard ones, the sign of the rotation is reversed.
+     */
+    a = -DtoR(a);
+    sina = sin(a);
+    cosa = cos(a);
+
+    /* XXX - Let the user pick the rotation origin? */
+    xc = nxin / 2.0;
+    yc = nyin / 2.0;
+
+    x_goop = xc - xc * cosa + yc * sina;
+    y_goop = yc - yc * cosa - xc * sina;
+
+    x_min = 0;
+    y_min = 0;
+    x_max = nxin;
+    y_max = nyin;
+
+    for (y = y_min; y < y_max; y++) {
+	x2 = x_min * cosa - y * sina + x_goop;
+	y2 = x_min * sina + y * cosa + y_goop;
+	for (x = x_min; x < x_max; x++) {
+	    /* check for in bounds */
+	    if (x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin)
+		putchar(buffer[(int)y2*nyin + (int)x2]);
+	    else
+		putchar(0);	/* XXX - setable color? */
+	    /* "forward difference" our coordinates */
+	    x2 += cosa;
+	    y2 += sina;
+	}
+    }
+}
+
+
 int
 main(int argc, char **argv)
 {
+    const size_t MAXBUFBYTES = 1280*1024;
+
+    char usage[] = "\
+Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
+	[-w width] [-n height] [file.bw] > file.bw\n\
+  or   bwrot -a angle [-s squaresize]\n\
+	[-w width] [-n height] [file.bw] > file.bw\n";
+
     int x, y;
     long outbyte, outplace;
     FILE *ifp, *ofp;
@@ -262,119 +368,6 @@ main(int argc, char **argv)
 	yin += buflines;
     }
     return 0;
-}
-
-
-void
-fill_buffer(FILE *ifp)
-{
-    buflines = fread(buffer, scanbytes, buflines, ifp);
-
-    firsty = lasty + 1;
-    lasty = firsty + (buflines - 1);
-}
-
-
-void
-reverse_buffer(void)
-{
-    int i;
-    unsigned char *p1, *p2, temp;
-
-    for (i = 0; i < buflines; i++) {
-	p1 = &buffer[ i * scanbytes ];
-	p2 = p1 + (scanbytes - 1);
-	while (p1 < p2) {
-	    temp = *p1;
-	    *p1++ = *p2;
-	    *p2-- = temp;
-	}
-    }
-}
-
-
-/*
- * Arbitrary angle rotation.
- * Currently this needs to be able to buffer the entire image
- * in memory at one time.
- *
- * To rotate a point (x, y) CCW about the origin:
- * x' = x cos(a) - y sin(a)
- * y' = x sin(a) + y cos(a)
- * To rotate it about a point (xc, yc):
- * x' = (x-xc) cos(a) - (y-yc) sin(a) + xc
- *       = x cos(a) - y sin(a) + [xc - xc cos(a) + yc sin(a)]
- * y' = (x-xc) sin(a) + (y-yc) cos(a) + yc
- *	 = x sin(a) + y cos(a) + [yc - yc cos(a) - xc sin(a)]
- * So, to take one step in x:
- * dx' = cos(a)
- * dy' = sin(a)
- * or one step in y:
- * dx' = -sin(a)
- * dy' = cos(a)
- */
-#ifndef M_PI
-#  define PI 3.1415926535898
-#else
-# define PI M_PI
-#endif
-#define DtoR(x)	((x)*PI/180.0)
-
-
-/* 'a' is rotation angle */
-void
-arbrot(double a, FILE *ifp)
-{
-    int x, y;				/* working coord */
-    double x2, y2;				/* its rotated position */
-    double xc, yc;				/* rotation origin */
-    int x_min, y_min, x_max, y_max;	/* area to rotate */
-    double x_goop, y_goop;
-    double sina, cosa;
-
-    if (buflines != nyin) {
-	/* I won't all fit in the buffer */
-	fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
-	bu_exit (1, NULL);
-    }
-    if (buflines > nyin) buflines = nyin;
-    fill_buffer(ifp);
-
-    /*
-     * Convert rotation angle to radians.
-     * Because we "pull down" the pixel from their rotated positions
-     * to their standard ones, the sign of the rotation is reversed.
-     */
-    a = -DtoR(a);
-    sina = sin(a);
-    cosa = cos(a);
-
-    /* XXX - Let the user pick the rotation origin? */
-    xc = nxin / 2.0;
-    yc = nyin / 2.0;
-
-    x_goop = xc - xc * cosa + yc * sina;
-    y_goop = yc - yc * cosa - xc * sina;
-
-    x_min = 0;
-    y_min = 0;
-    x_max = nxin;
-    y_max = nyin;
-
-    for (y = y_min; y < y_max; y++) {
-	x2 = x_min * cosa - y * sina + x_goop;
-	y2 = x_min * sina + y * cosa + y_goop;
-	for (x = x_min; x < x_max; x++) {
-	    /* check for in bounds */
-	    if (x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin)
-		putchar(buffer[(int)y2*nyin + (int)x2]);
-	    else
-		putchar(0);	/* XXX - setable color? */
-	    /* "forward difference" our coordinates */
-	    x2 += cosa;
-	    y2 += sina;
-	}
-    }
 }
 
 
