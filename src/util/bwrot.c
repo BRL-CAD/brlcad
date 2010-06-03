@@ -109,12 +109,13 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 		out_file_name = bu_optarg;
 		*ofp = fopen(out_file_name, "wb+");
 		if (*ofp == NULL) {
-		    bu_log("bwrot: cannot open \"%s\" for writing\n", out_file_name);
+		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), out_file_name);
 		    return 0;
 		}
 		break;
 
 	    default:		/* '?' */
+		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c);
 		return 0;
 	}
     }
@@ -136,19 +137,24 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
     } else {
 	*ifp = fopen(in_file_name, "rb");
 	if (*ifp == NULL) {
-	    bu_log("bwrot: cannot open \"%s\" for reading\n", in_file_name);
+	    bu_log("ERROR: %s cannot open \"%s\" for reading\n", bu_getprogname(), in_file_name);
 	    return 0;
 	}
     }
 
     /* sanity */
-    if (isatty(fileno(ifp)))
+    if (isatty(fileno(*ifp))) {
+	bu_log("ERROR: %s will not read bw data from a tty\n", bu_getprogname());
 	return 0;
-    if (isatty(fileno(ofp)))
+    }
+    if (isatty(fileno(*ofp))) {
+	bu_log("ERROR: %s will not write bw data to a tty\n", bu_getprogname());
 	return 0;
+    }
 
-    if (argc > ++bu_optind)
+    if (argc > ++bu_optind) {
 	bu_log("bwrot: excess argument(s) ignored\n");
+    }
 
     return 1;		/* OK */
 }
@@ -276,35 +282,31 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
     int x, y;
     long outbyte, outplace;
     FILE *ifp, *ofp;
+    int ret = 0;
 
     ifp = stdin;
     ofp = stdout;
+    bu_setprogname(argv[0]);
 
-    if (!get_args(argc, argv, &ifp, &ofp) || isatty(fileno(ofp))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
+    if (!get_args(argc, argv, &ifp, &ofp)) {
+	bu_exit(1, "%s", usage);
     }
 
     scanbytes = nxin;
     buflines = MAXBUFBYTES / scanbytes;
     if (buflines <= 0) {
-	fprintf(stderr, "bwrot: I'm not compiled to do a scanline that long!\n");
-	bu_exit (1, NULL);
+	bu_exit(1, "%s", "bwrot: I'm not compiled to do a scanline that long!\n");
     }
     if (buflines > nyin) buflines = nyin;
-    buffer = (unsigned char *)malloc(buflines * scanbytes);
-    obuf = (unsigned char *)malloc((nyin > nxin) ? nyin : nxin);
-    if (buffer == (unsigned char *)0 || obuf == (unsigned char *)0) {
-	fprintf(stderr, "bwrot: malloc failed\n");
-	bu_exit (3, NULL);
-    }
+    buffer = (unsigned char *)bu_malloc(buflines * scanbytes, "buffer");
+    obuf = (unsigned char *)bu_malloc((nyin > nxin) ? nyin : nxin, "obuf");
 
     /*
      * Break out to added arbitrary angle routine
      */
     if (angle) {
 	arbrot(angle, ifp);
-	bu_exit (0, NULL);
+	goto done;
     }
 
     /*
@@ -336,8 +338,9 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
 		outbyte = ((yout * nyin) + xout);
 		if (outplace != outbyte) {
 		    if (fseek(ofp, outbyte, 0) < 0) {
-			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
-			bu_exit (3, NULL);
+			ret = 3;
+			bu_log("%s: Can't seek on output, yet I need to!\n", bu_getprogname());
+			goto done;
 		    }
 		    outplace = outbyte;
 		}
@@ -357,8 +360,9 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
 		outbyte = ((yout * nyin) + xout);
 		if (outplace != outbyte) {
 		    if (fseek(ofp, outbyte, 0) < 0) {
-			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
-			bu_exit (3, NULL);
+			ret = 3;
+			bu_log("%s: Can't seek on output, yet I need to!\n", bu_getprogname());
+			goto done;
 		    }
 		    outplace = outbyte;
 		}
@@ -371,8 +375,9 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
 		    if (fseek(ofp, outbyte, 0) < 0) {
-			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
-			bu_exit (3, NULL);
+			ret = 3;
+			bu_log("%s: Can't seek on output, yet I need to!\n", bu_getprogname());
+			goto done;
 		    }
 		    outplace = outbyte;
 		}
@@ -388,7 +393,12 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
 
 	yin += buflines;
     }
-    return 0;
+
+done:
+    bu_free(buffer, "buffer");
+    bu_free(obuf, "obuf");
+
+    return ret;
 }
 
 
