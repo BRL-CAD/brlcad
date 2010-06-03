@@ -90,7 +90,7 @@ get_args(int argc, char **argv, long *width, long *height)
 		autosize = 0;
 		break;
 	    case 'o': {
-		outfp = fopen(bu_optarg, "w+");
+		outfp = fopen(bu_optarg, "wb+");
 		if (outfp == (FILE *)NULL) {
 		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
 		}
@@ -109,7 +109,7 @@ get_args(int argc, char **argv, long *width, long *height)
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
 	}
