@@ -57,8 +57,7 @@ void *
 render_cut_hit_cutline(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 {
     ((adrt_mesh_t *)(tri->ptr))->flags |= ADRT_MESH_HIT;
-    *((double *)ptr) = id->dist;
-    return ptr;
+    return NULL;
 }
 
 extern tie_t *tie;
@@ -212,7 +211,6 @@ render_cut_init(render_t *render, char *buf)
 	shot_len = 2.0 * render->tie->radius + MAGNITUDE(v) - render->tie->radius;;
     }
 
-#if 0
     /*
      * fire through the entire geometry, marking each intersected mesh with
      * ADRT_MESH_HIT
@@ -220,9 +218,7 @@ render_cut_init(render_t *render, char *buf)
     VMOVE(ray.pos.v, ray_pos.v);
     VMOVE(ray.dir.v, ray_dir.v);
     ray.depth = 0;
-    while(tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step))
-	VJOIN1( ray.pos.v, ray.pos.v, step + SMALL_FASTF, ray.dir.v );
-#endif
+    tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step);
 
     /* prepare cut stuff */
     tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
