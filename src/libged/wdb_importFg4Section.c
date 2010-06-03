@@ -456,7 +456,6 @@ make_bot_object(char *name,
     if (mode == PLATE_MODE) {
 	bot_mode = RT_BOT_PLATE;
 	bv = bu_bitv_new(face_count);
-	bu_bitv_clear(bv);
 	for (i=0; i<face_count; i++) {
 	    if (facemode[i] == POS_FRONT)
 		BU_BITSET(bv, i);

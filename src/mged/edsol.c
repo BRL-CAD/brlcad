@@ -3245,7 +3245,6 @@ sedit(void)
 			/* need to create some thicknesses */
 			bot->thickness = (fastf_t *)bu_calloc(bot->num_faces, sizeof(fastf_t), "BOT thickness");
 			bot->face_mode = bu_bitv_new(bot->num_faces);
-			bu_bitv_clear(bot->face_mode);
 		    }
 		} else {
 		    if (old_mode == RT_BOT_PLATE || old_mode == RT_BOT_PLATE_NOCOS) {
@@ -3506,11 +3505,10 @@ sedit(void)
 		    struct bu_bitv *new_bitv;
 
 		    new_bitv = bu_bitv_new(bot->num_faces);
-		    BU_BITV_ZEROALL(new_bitv)
-			for (i=0; i<face_no; i++) {
-			    if (BU_BITTEST(bot->face_mode, i))
-				BU_BITSET(new_bitv, i);
-			}
+		    for (i=0; i<face_no; i++) {
+			if (BU_BITTEST(bot->face_mode, i))
+			    BU_BITSET(new_bitv, i);
+		    }
 		    for (i=face_no; i<bot->num_faces; i++) {
 			j = i+1;
 			if (BU_BITTEST(bot->face_mode, j))
@@ -7954,7 +7952,6 @@ sedit_apply(int accept_flag)
 		bot->thickness = (fastf_t *)bu_calloc(bot->num_faces, sizeof(fastf_t), "BOT thickness");
 	    if (!bot->face_mode) {
 		bot->face_mode = bu_bitv_new(bot->num_faces);
-		bu_bitv_clear(bot->face_mode);
 	    }
 	}
     }

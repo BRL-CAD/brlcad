@@ -269,7 +269,6 @@ bu_hex_to_bitv(const char *str)
     }
 
     bv = bu_bitv_new(len * 4); /* 4 bits per hex digit */
-    bu_bitv_clear(bv);
 
     str = str_start;
     while (word_count--) {
@@ -297,7 +296,6 @@ bu_bitv_dup(register const struct bu_bitv *bv)
     struct bu_bitv *bv2;
 
     bv2 = bu_bitv_new(bv->nbits);
-    bu_bitv_clear(bv2);
     bu_bitv_or(bv2, bv);
 
     return bv2;

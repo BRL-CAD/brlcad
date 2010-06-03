@@ -787,7 +787,6 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
 	if (!bot_ip->face_mode) {
 	    bot_ip->face_mode = bu_bitv_new(bot_ip->num_faces);
-	    bu_bitv_clear(bot_ip->face_mode);
 	}
 	if (!bot_ip->thickness)
 	    bot_ip->thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "BOT thickness");
@@ -2381,7 +2380,6 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 	    bot->thickness = (fastf_t *)bu_calloc(bot->num_faces, sizeof(fastf_t), "BOT thickness");
 	if (!bot->face_mode) {
 	    bot->face_mode = bu_bitv_new(bot->num_faces);
-	    bu_bitv_clear(bot->face_mode);
 	}
     } else {
 	if (bot->thickness) {
@@ -2580,7 +2578,6 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 
 	    bot->thickness = bu_realloc(bot->thickness, num_faces*sizeof(fastf_t), "BOT thickness realloc");
 	    new_mode = bu_bitv_new(num_faces);
-	    bu_bitv_clear(new_mode);
 	    for (l=0; l<num_faces; l++) {
 		if (BU_BITTEST(bot->face_mode, l))
 		    BU_BITSET(new_mode, l);
@@ -4160,8 +4157,7 @@ rt_bot_create(struct rt_bot_internal *bot, struct tri_pts *newTpp)
 
 		if (BU_BITTEST(bot->face_mode, tpp->tri))
 		    BU_BITSET(newbot->face_mode, i);
-		else
-		    BU_BITCLR(newbot->face_mode, i);
+		/* else already cleared via bu_bitv_new() */
 	    }
 
 	    ++i;

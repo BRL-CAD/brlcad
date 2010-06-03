@@ -1278,7 +1278,6 @@ void create_bot_float_arrays(struct ga_t *ga,
 
         /* allocate and polulate bot_face_mode array */
         ti->bot_face_mode = bu_bitv_new(ti->bot_num_faces);
-        bu_bitv_clear(ti->bot_face_mode);
         BU_BITSET(ti->bot_face_mode, 1); /* 1 indicates thickness is appended to hit point in ray
                                             direction, 0 indicates thickness is centered about hit point */
     }
