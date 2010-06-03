@@ -68,15 +68,14 @@ Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
   or   bwrot -a angle [-s squaresize]\n\
 	[-w width] [-n height] [file.bw] > file.bw\n";
 
-void fill_buffer(void), reverse_buffer(void), arbrot(double a);
+void fill_buffer(FILE *ifp), reverse_buffer(void), arbrot(double a, FILE *ifp);
 
-static char *file_name;
-FILE *ifp, *ofp;
 
 int
-get_args(int argc, char **argv)
+get_args(int argc, char **argv, FILE **ifp, FILE **ofp)
 {
     int c;
+    char *file_name = NULL;
 
     while ((c = bu_getopt(argc, argv, "fbrihs:w:n:S:W:N:a:")) != EOF) {
 	switch (c) {
@@ -127,10 +126,10 @@ get_args(int argc, char **argv)
 	if (isatty(fileno(stdin)))
 	    return 0;
 	file_name = "-";
-	ifp = stdin;
+	*ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ((ifp = fopen(file_name, "r")) == NULL) {
+	if ((*ifp = fopen(file_name, "r")) == NULL) {
 	    (void)fprintf(stderr,
 			  "bwrot: cannot open \"%s\" for reading\n",
 			  file_name);
@@ -150,13 +149,14 @@ main(int argc, char **argv)
 {
     int x, y;
     long outbyte, outplace;
+    FILE *ifp, *ofp;
 
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
+    ofp = stdout;
+
+    if (!get_args(argc, argv, &ifp, &ofp) || isatty(fileno(ofp))) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
-
-    ofp = stdout;
 
     scanbytes = nxin;
     buflines = MAXBUFBYTES / scanbytes;
@@ -176,7 +176,7 @@ main(int argc, char **argv)
      * Break out to added arbitrary angle routine
      */
     if (angle) {
-	arbrot(angle);
+	arbrot(angle, ifp);
 	bu_exit (0, NULL);
     }
 
@@ -190,7 +190,7 @@ main(int argc, char **argv)
     yin = 0;
     while (yin < nyin) {
 	/* Fill buffer */
-	fill_buffer();
+	fill_buffer(ifp);
 	if (!buflines)
 	    break;
 	if (reverse)
@@ -266,7 +266,7 @@ main(int argc, char **argv)
 
 
 void
-fill_buffer(void)
+fill_buffer(FILE *ifp)
 {
     buflines = fread(buffer, scanbytes, buflines, ifp);
 
@@ -320,9 +320,10 @@ reverse_buffer(void)
 #endif
 #define DtoR(x)	((x)*PI/180.0)
 
+
+/* 'a' is rotation angle */
 void
-arbrot(double a)
-    /* rotation angle */
+arbrot(double a, FILE *ifp)
 {
     int x, y;				/* working coord */
     double x2, y2;				/* its rotated position */
@@ -337,7 +338,7 @@ arbrot(double a)
 	bu_exit (1, NULL);
     }
     if (buflines > nyin) buflines = nyin;
-    fill_buffer();
+    fill_buffer(ifp);
 
     /*
      * Convert rotation angle to radians.
