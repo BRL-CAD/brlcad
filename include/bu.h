@@ -2212,7 +2212,8 @@ BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
  * B U _ B I T V _ N E W
  * @brief
  * Allocate storage for a new bit vector of at least 'nbits' in
- * length.  For efficiency, the bit vector itself is not initialized.
+ * length.  The bit vector itself is guaranteed to be initialized to
+ * all zero.
  */
 BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_new, (unsigned int nbits));
 
@@ -2232,7 +2233,8 @@ BU_EXPORT BU_EXTERN(void bu_bitv_free, (struct bu_bitv *bv));
  * @brief
  * Set all the bits in the bit vector to zero.
  *
- * Also available as a macro if you don't desire the pointer checking.
+ * Also available as a BU_BITV_ZEROALL macro if you don't desire the
+ * pointer checking.
  */
 BU_EXPORT BU_EXTERN(void bu_bitv_clear, (struct bu_bitv *bv));
 
