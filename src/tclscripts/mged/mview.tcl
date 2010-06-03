@@ -242,6 +242,10 @@ proc unpackmv { id } {
     global mged_gui
 
     catch { eval grid forget [grid slaves $mged_gui($id,dmc)] }
+    grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
+    grid columnconfigure $mged_gui($id,dmc) 1 -weight 0
+    grid rowconfigure $mged_gui($id,dmc) 0 -weight 1
+    grid rowconfigure $mged_gui($id,dmc) 1 -weight 0
 }
 
 proc releasemv { id } {
