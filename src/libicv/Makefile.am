@@ -8,7 +8,7 @@ EXTRA_DIST = \
 	CMakeLists.txt
 
 libicv_la_SOURCES =
-ligicv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+libicv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libicv_la_LIBADD = \
 	libicv_nil.la \
 	${ICV_LIBS}
