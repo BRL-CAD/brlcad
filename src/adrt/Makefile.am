@@ -103,8 +103,9 @@ noinst_HEADERS = \
 	slave/slave.h \
 	slave/tienet_slave.h
 
-if BUILD_TOGL
 pkglibdir = $(libdir)/isst
+
+if BUILD_TOGL
 pkglib_LTLIBRARIES = issttcltk.la
 
 issttcltk_la_SOURCES = isst_tcltk.c
