@@ -6126,6 +6126,21 @@ BU_EXPORT BU_EXTERN(int bu_restore_interrupts, ());
 
 /** @} */
 
+/** @addtogroup file */
+/** @{ */
+/** @file simd.c
+ * Detect SIMD type at runtime.
+ */
+
+#define BU_SIMD_ALTIVEC 4
+#define BU_SIMD_SSE2 3
+#define BU_SIMD_SSE 2
+#define BU_SIMD_MMX 1
+#define BU_SIMD_NONE 0
+BU_EXPORT BU_EXTERN(int bu_simd_level, ());
+
+/** @} */
+
 
 __END_DECLS
 
