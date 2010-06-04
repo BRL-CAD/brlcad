@@ -57,6 +57,7 @@ kitchensink_dirs = \
 	libcursor \
 	libdm \
 	libfft \
+	libicv \
 	libmultispectral \
 	libtclcad \
 	libtermio \
