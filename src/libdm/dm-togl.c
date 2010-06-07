@@ -591,10 +591,65 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_sprintf(&tclcmd, "%s.%s.togl", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
     Togl_GetToglFromObj(interp, Tcl_NewStringObj(bu_vls_addr(&tclcmd), -1), &(privvars->togl));
  
-    /* Pass mouse motions seen by .togl up to the parent */ 
-    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Motion> {event generate %s.%s <Motion> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    /* Pass events seen by .togl up to the parent */ 
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <KeyPress> {event generate %s.%s <KeyPress> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+     bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <KeyRelease> {event generate %s.%s <KeyRelease> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
 
+
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Motion> {event generate %s.%s <Motion> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <ButtonRelease> {event generate %s.%s <ButtonRelease> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <ButtonPress-1> {event generate %s.%s <ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <ButtonPress-2> {event generate %s.%s <ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <ButtonPress-3> {event generate %s.%s <ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-ButtonPress-1> {event generate %s.%s <Shift-ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-ButtonPress-2> {event generate %s.%s <Shift-ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-ButtonPress-3> {event generate %s.%s <Shift-ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Control-ButtonPress-1> {event generate %s.%s <Control-ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Control-ButtonPress-2> {event generate %s.%s <Control-ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Control-ButtonPress-3> {event generate %s.%s <Control-ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-Control-ButtonPress-1> {event generate %s.%s <Shift-control-ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-Control-ButtonPress-2> {event generate %s.%s <Shift-control-ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-Control-ButtonPress-3> {event generate %s.%s <Shift-control-ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-Control-ButtonPress-1> {event generate %s.%s <Shift-Control-ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-Control-ButtonPress-2> {event generate %s.%s <Shift-Control-ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Shift-Control-ButtonPress-3> {event generate %s.%s <Shift-Control-ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Shift-ButtonPress-1> {event generate %s.%s <Alt-Shift-ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Shift-ButtonPress-2> {event generate %s.%s <Alt-Shift-ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Shift-ButtonPress-3> {event generate %s.%s <Alt-Shift-ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Control-ButtonPress-1> {event generate %s.%s <Alt-Control-ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Control-ButtonPress-2> {event generate %s.%s <Alt-Control-ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Control-ButtonPress-3> {event generate %s.%s <Alt-Control-ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Shift-Control-ButtonPress-1> {event generate %s.%s <Alt-Shift-Control-ButtonPress-1> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Shift-Control-ButtonPress-2> {event generate %s.%s <Alt-Shift-Control-ButtonPress-2> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Alt-Shift-Control-ButtonPress-3> {event generate %s.%s <Alt-Shift-Control-ButtonPress-3> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
     
 
     Togl_MakeCurrent(privvars->togl);
