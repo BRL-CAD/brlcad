@@ -25,8 +25,8 @@ if BUILD_TOGL
 DM_TOGL_CFLAGS = -DDM_TOGL -DIF_TOGL -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl $(GL_CPPFLAGS)
 DM_TOGL_LIBS = ${LIBGL}  -L$(top_builddir)/src/other/togl -lToglstub2.1
 else
-DM_OGL_CFLAGS =
-DM_OGL_LIBS =
+DM_TOGL_CFLAGS =
+DM_TOGL_LIBS =
 endif
 
 if BUILD_RTGL

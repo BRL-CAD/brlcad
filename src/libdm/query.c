@@ -126,6 +126,11 @@ dm_validXType(char *dpy_string, char *name)
 char *
 dm_bestXType(char *dpy_string)
 {
+
+#ifdef DM_TOGL
+    return "togl";
+#endif
+
 #ifdef DM_WGL
     /* should probably make sure wgl works */
     return "wgl";
