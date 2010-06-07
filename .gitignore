@@ -1,3 +1,2 @@
-/.deps
-/Makefile
-/Makefile.in
+/configure
+/autom4te.cache
