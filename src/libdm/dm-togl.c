@@ -590,6 +590,12 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
     bu_vls_sprintf(&tclcmd, "%s.%s.togl", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
     Togl_GetToglFromObj(interp, Tcl_NewStringObj(bu_vls_addr(&tclcmd), -1), &(privvars->togl));
+ 
+    /* Pass mouse motions seen by .togl up to the parent */ 
+    bu_vls_sprintf(&tclcmd, "bind %s.%s.togl <Motion> {event generate %s.%s <Motion> -x %%x -y %%y -warp 1}", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
+
+    
 
     Togl_MakeCurrent(privvars->togl);
     
