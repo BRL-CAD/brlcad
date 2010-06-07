@@ -80,6 +80,14 @@
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
 
+#ifdef DM_TOGL
+#  include "tk.h"
+#  define USE_TOGL_STUBS
+#  include "togl.h"
+#  include "dm_xvars.h"
+#  include "dm-togl.h"
+#endif /* DM_TOGL */
+
 #ifdef DM_WGL
 #  include <tkwinport.h>
 #  include "dm_xvars.h"
@@ -397,7 +405,7 @@ HIDDEN int go_paint_rect_area(struct ged *gedp,
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-#if defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_OGL) || defined(DM_TOGL) || defined(DM_WGL)
 HIDDEN int go_png(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
@@ -809,7 +817,7 @@ static struct go_cmdtab go_cmds[] = {
     {"plot",	"[options] file.pl", 16, go_view_func, ged_plot},
     {"pmat",	"[mat]", 3, go_view_func, ged_pmat},
     {"pmodel2view",	"vname", 2, go_view_func, ged_pmodel2view},
-#if defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_OGL) || defined(DM_TOGL) || defined(DM_WGL)
     {"png",	"file", MAXARGS, go_png, GED_FUNC_PTR_NULL},
 #endif
     {"pngwf",	"[options] file.png", 16, go_view_func, ged_png},
@@ -5858,15 +5866,16 @@ go_new_view(struct ged *gedp,
 	type = DM_TYPE_X;
 #endif /* DM_X */
 
-#ifdef DM_TK
-    if (!strcmp(argv[2], "tk"))
-	type = DM_TYPE_TK;
-#endif /* DM_TK */
-
 #ifdef DM_OGL
     if (!strcmp(argv[2], "ogl"))
 	type = DM_TYPE_OGL;
 #endif /* DM_OGL */
+
+#ifdef DM_TOGL
+    if (!strcmp(argv[2], "togl"))
+	type = DM_TYPE_TOGL;
+#endif /* DM_TOGL */
+
 
 #ifdef DM_WGL
     if (!strcmp(argv[2], "wgl"))
@@ -6169,7 +6178,7 @@ go_paint_rect_area(struct ged *gedp,
 }
 
 
-#if defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_OGL) || defined(DM_TOGL) || defined(DM_WGL)
 HIDDEN int
 go_png(struct ged *gedp,
        int argc,
@@ -6248,12 +6257,15 @@ go_png(struct ged *gedp,
 #if defined(DM_WGL)
 	make_ret = wglMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->hdc,
 				  ((struct wgl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
-#else
-#  if defined(DM_OGL)
+#endif
+#if defined(DM_OGL)
 	make_ret = glXMakeCurrent(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->dpy,
 				  ((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->win,
 				  ((struct ogl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->glxc);
-#  endif
+#endif
+#if defined(DM_TOGL)
+	Togl_MakeCurrent(((struct togl_vars *)gdvp->gdv_dmp->dm_vars.priv_vars)->togl);
+        make_ret = 1;
 #endif
 	if (!make_ret) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
@@ -7486,7 +7498,7 @@ go_view_win_size(struct ged *gedp,
 	}
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TOGL) || defined(DM_OGL) || defined(DM_WGL)
     Tk_GeometryRequest(((struct dm_xvars *)gdvp->gdv_dmp->dm_vars.pub_vars)->xtkwin,
 		       width, height);
 #endif

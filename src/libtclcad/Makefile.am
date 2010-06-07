@@ -22,6 +22,14 @@ DM_OGL_CFLAGS =
 DM_OGL_LIBS =
 endif
 
+if BUILD_TOGL 
+DM_TOGL_CFLAGS = -DDM_TOGL -DIF_TOGL -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl $(GL_CPPFLAGS)
+DM_TOGL_LIBS = ${LIBGL}  -L$(top_builddir)/src/other/togl -lToglstub2.1
+else
+DM_TOGL_CFLAGS =
+DM_TOGL_LIBS =
+endif
+
 if WITH_TK
 DM_TK_CFLAGS = -DDM_TK -DIF_TK
 else
@@ -39,6 +47,7 @@ libtclcad_la_CFLAGS = \
 	${DM_TK_CFLAGS} \
 	${DM_WGL_CFLAGS} \
 	${DM_OGL_CFLAGS} \
+	${DM_TOGL_CFLAGS} \
 	${PNG_CPPFLAGS} \
 	${X_CFLAGS} \
 	${ITK_CPPFLAGS} \
@@ -50,7 +59,7 @@ libtclcad_la_CFLAGS = \
 	-I$(top_srcdir)/src/other/tk/generic \
 	-I$(top_srcdir)/src/other/tk/unix
 libtclcad_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
-libtclcad_la_LIBADD = ${TCLCAD_LIBS}
+libtclcad_la_LIBADD = ${TCLCAD_LIBS} ${DM_TOGL_LIBS}
 
 EXTRA_DIST = libtclcad.dsp
 

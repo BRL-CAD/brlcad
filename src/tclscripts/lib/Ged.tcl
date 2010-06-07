@@ -680,7 +680,7 @@ package provide cadwidgets::Ged 1.0
     if {$tcl_platform(platform) == "windows"} {
 	set dmType wgl
     } else {
-	set dmType ogl
+	set dmType togl
     }
 
     # create four views

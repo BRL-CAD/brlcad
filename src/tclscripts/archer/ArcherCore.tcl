@@ -830,6 +830,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mDisplayType [dm_bestXType $env(DISPLAY)]
+    puts $mDisplayType
 
     # horizontal panes
     itk_component add hpane {
@@ -3267,7 +3268,7 @@ Popup Menu    Right or Ctrl-Left
     $color add command -label "Select..." \
 	-command [::itcl::code $this selectDisplayColor $_node]
 
-    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
+    if {($mDisplayType == "wgl" || $mDisplayType == "ogl" || $mDisplayType == "togl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
 	# Build transparency menu
 	$_menu add cascade -label "Transparency" \
 	    -menu $_menu.trans

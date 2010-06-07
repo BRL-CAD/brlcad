@@ -212,7 +212,7 @@ Togl_dm(int argc,
 			    (char *)&((struct togl_vars *)dmp->dm_vars.priv_vars)->mvars);
 	    bu_vls_free(&tmp_vls);
 	}
-
+        Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
