@@ -536,6 +536,8 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
         return DM_NULL;
     }
 
+    bu_vls_free(&top_vls);
+  
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
 
@@ -582,13 +584,17 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_MapWindow(pubvars->xtkwin);
 
     /* Now that we have a parent tk window, pack the togl widget */
-    bu_vls_sprintf(&tclcmd, "package require Togl; togl %s.%s.togl -width %d -height %d -rgba true -double true", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin), dmp->dm_width, dmp->dm_height);
+
+    
+
+
+    bu_vls_sprintf(&tclcmd, "package require Togl; togl %s.togl -width %d -height %d -rgba true -double true", (char *)Tk_PathName(pubvars->xtkwin), dmp->dm_width, dmp->dm_height);
     printf("%s\n", bu_vls_addr(&tclcmd));
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
     bu_log("%s\n", Tcl_GetStringResult(interp));
-    bu_vls_sprintf(&tclcmd, "pack %s.%s.togl -expand true -fill both; update", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    bu_vls_sprintf(&tclcmd, "pack %s.togl -expand true -fill both; update", (char *)Tk_PathName(pubvars->xtkwin));
     Tcl_Eval(interp,  bu_vls_addr(&tclcmd));
-    bu_vls_sprintf(&tclcmd, "%s.%s.togl", bu_vls_addr(&top_vls), (char *)Tk_Name(pubvars->xtkwin));
+    bu_vls_sprintf(&tclcmd, "%s.togl", (char *)Tk_PathName(pubvars->xtkwin));
     Togl_GetToglFromObj(interp, Tcl_NewStringObj(bu_vls_addr(&tclcmd), -1), &(privvars->togl));
  
     /* Pass events seen by .togl up to the parent */ 
@@ -658,11 +664,9 @@ togl_open(Tcl_Interp *interp, int argc, char **argv)
     if ((privvars->fontOffset = glGenLists(128))==0) {
 	bu_log("dm-togl: Can't make display lists for font.\n");
 	(void)togl_close(dmp);
-        bu_vls_free(&top_vls);
 	return DM_NULL;
     }
     
-    bu_vls_free(&top_vls);
    
     /* This is the applications display list offset */
     dmp->dm_displaylist = privvars->fontOffset + 128;
