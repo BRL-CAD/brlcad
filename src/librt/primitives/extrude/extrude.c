@@ -1968,7 +1968,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	/* calculate plane of this loop */
 	VSETALLN(pl, 0.0, 4);
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
-	    for (j=1; j<vlp->nused; j++) {
+	    for (j=0; j<vlp->nused; j++) {
 		if (vlp->cmd[j] == BN_VLIST_LINE_DRAW) {
 		    VCROSS(cross, vlp->pt[j-1], vlp->pt[j]);
 		    VADD2(pl, pl, cross);
@@ -1979,7 +1979,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	VUNITIZE(pl);
 
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
-	    for (j=1; j<vlp->nused; j++) {
+	    for (j=0; j<vlp->nused; j++) {
 		if (vlp->cmd[j] == BN_VLIST_LINE_DRAW) {
 		    pl[W] += VDOT(pl, vlp->pt[j]);
 		    pt_count++;
@@ -2001,7 +2001,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 	k = 0;
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
-	    for (j=1; j<vlp->nused; j++) {
+	    for (j=0; j<vlp->nused; j++) {
 		if (vlp->cmd[j] == BN_VLIST_LINE_DRAW) {
 		    if (rev) {
 			nmg_vertex_gv(vertsa[(int)(pt_count) - k - 1], vlp->pt[j]);
