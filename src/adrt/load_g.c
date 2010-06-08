@@ -186,7 +186,6 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
 
     strncpy(mesh->name, db_path_to_string(path), 255);
-    bu_log("%s has mat %d\n", mesh->name, mesh->matid);
 
     if(intern.idb_minor_type == ID_NMG) {
 	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
@@ -240,7 +239,6 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
 
     VMOVE(mesh->attributes->color.v, color);
     strncpy(mesh->name, db_path_to_string(pathp), 255);
-    bu_log("boogers %s has matid %d\n", mesh->name, mesh->matid);
 
     nmg_to_adrt_internal(mesh, r);
 }

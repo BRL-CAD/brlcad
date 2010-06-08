@@ -129,7 +129,6 @@ render_camera_prep_ortho(render_camera_t *camera)
     TIE_3 look, up, side, temp;
     tfloat angle, s, c;
 
-
     /* Generate standard up vector */
     up.v[0] = 0;
     up.v[1] = 0;
