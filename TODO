@@ -56,6 +56,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix forum links to point to the sourceforge forums, not the nabble
+  forums
+
+* write up a brief DSP overview on the wiki
+
 * the 'cp' command no longer displays the object that was copied (and
   it reportedly did at some point prior to 7.14.8 at least).
   undoubtedly a libged change, but an interesting consideration for
