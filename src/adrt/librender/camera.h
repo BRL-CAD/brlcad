@@ -53,10 +53,11 @@ typedef struct render_camera_s
     uint8_t type;
     TIE_3 pos;
     TIE_3 focus;
-    tfloat tilt;
-    tfloat fov;
-    tfloat aspect;
-    tfloat dof;
+    fastf_t tilt;
+    fastf_t fov;
+    fastf_t gridsize;
+    fastf_t aspect;
+    fastf_t dof;
     uint8_t thread_num;
     uint16_t view_num;
     render_camera_view_t *view_list;
