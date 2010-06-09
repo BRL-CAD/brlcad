@@ -167,6 +167,13 @@ FB_EXPORT extern int _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Win
 FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap);
 #endif
 
+#ifdef IF_TOGL
+#  include "tk.h"
+#  define USE_TOGL_STUBS
+#  include "togl.h"
+FB_EXPORT extern int _togl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, int width, int height, Togl *togl, int double_buffer, int soft_cmap);
+#endif
+
 #ifdef IF_WGL
 #  include <windows.h>
 #  include <tk.h>

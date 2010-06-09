@@ -107,6 +107,17 @@ extern FBIO tk_interface;
 static const char *tk_device_name = "/dev/tk";
 #endif
 
+#ifdef IF_TOGL
+#if 0
+/*XXX CWY implement this interface */
+extern void togl_configureWindow();
+extern int togl_refresh();
+extern int togl_open_existing();
+extern FBIO togl_interface;
+#endif
+static const char *tk_device_name = "/dev/togl";
+#endif
+
 int fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int fb_cmd_close_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int fb_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -181,6 +192,32 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 #endif
 #endif  /* IF_TK */
 
+#ifdef IF_TOGL
+#if 0
+/* XXX CWY implment togl_open_existing */
+    if (strcasecmp(argv[1], togl_device_name) == 0) {
+
+	found=1;
+	*ifp = togl_interface; /* struct copy */
+
+	ifp->if_name = malloc((unsigned)strlen(tk_device_name) + 1);
+	bu_strlcpy(ifp->if_name, tk_device_name, strlen(tk_device_name)+1);
+
+	/* Mark OK by filling in magic number */
+	ifp->if_magic = FB_MAGIC;
+
+	if ((togl_open_existing(ifp, argc - 1, argv + 1)) <= -1) {
+	    ifp->if_magic = 0; /* sanity */
+	    free((void *) ifp->if_name);
+	    free((void *) ifp);
+	    Tcl_AppendResult(interp, "fb_open_existing: failed to open togl framebuffer\n", (char *)NULL);
+	    return TCL_ERROR;
+	}
+    }
+#endif
+#endif  /* IF_TOGL */
+
+
 #ifdef IF_WGL
     if (strcasecmp(argv[1], wgl_device_name) == 0) {
 	found=1;
@@ -254,6 +291,10 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
     bu_vls_strcat(&vls, tk_device_name);
     bu_vls_strcat(&vls, "\n");
 #endif  /* IF_TK */
+#ifdef IF_TOGL
+    bu_vls_strcat(&vls, togl_device_name);
+    bu_vls_strcat(&vls, "\n");
+#endif  /* IF_TOGL */
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -307,6 +348,15 @@ fb_configureWindow(FBIO *ifp, int width, int height)
     }
 #endif
 #endif  /* IF_TK */
+#ifdef IF_TOGL
+#if 0
+/* XXX CWY implement togl_configureWindow */
+    if (!strncmp(ifp->if_name, togl_device_name, strlen(togl_device_name))) {
+	togl_configureWindow(ifp, width, height);
+    }
+#endif
+#endif  /* IF_TOGL */
+
 }
 
 
@@ -357,6 +407,16 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
     }
 #endif
 #endif  /* IF_TK */
+#ifdef IF_TOGL
+#if 0
+/* XXX CWY implement togl_refresh */
+    status = -1;
+    if (!strncmp(ifp->if_name, togl_device_name, strlen(togl_device_name))) {
+	status = togl_refresh(ifp, x, y, w, h);
+    }
+#endif
+#endif  /* IF_TOGL */
+
 
     if (status < 0) {
 	return TCL_ERROR;

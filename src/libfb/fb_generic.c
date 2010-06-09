@@ -99,6 +99,9 @@ FBIO *_if_list[] = {
 #ifdef IF_OGL
     &ogl_interface,
 #endif
+#ifdef IF_TOGL
+    &togl_interface,
+#endif
 #ifdef IF_X
     &X24_interface,
     &X_interface,
@@ -331,6 +334,21 @@ fb_close_existing(FBIO *ifp)
 	}
     }
 #endif  /* IF_TK */
+
+#ifdef IF_TOGL
+    {
+	extern FBIO togl_interface;
+	if (strcasecmp(ifp->if_name, togl_interface.if_type) == 0) {
+	    /* may need to close_existing here at some point */
+	    if (ifp->if_pbase != PIXEL_NULL)
+		free((void *)ifp->if_pbase);
+	    free((void *)ifp->if_name);
+	    free((void *)ifp);
+	    return BRLCAD_OK;
+	}
+    }
+#endif  /* IF_TOGL */
+
 
     fb_log("fb_close_existing: cannot close device\nifp: %s\n", ifp->if_name);
 

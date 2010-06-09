@@ -23,6 +23,14 @@ IF_OGL_CFLAGS =
 IF_OGL_LIBADD =
 endif
 
+if BUILD_TOGL
+IF_TOGL_CFLAGS = -DIF_TOGL -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl
+IF_TOGL_LIBADD = ${LIBGL} -L$(top_builddir)/src/other/togl -lToglstub2.1
+else
+IF_TOGL_CFLAGS =
+IF_TOGL_LIBADD =
+endif
+
 if WITH_TK
 IF_TK_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
 IF_TK_LIBADD = ${TK}
@@ -47,6 +55,7 @@ libfb_la_SOURCES = \
 	if_mem.c \
 	if_null.c \
 	if_ogl.c \
+	if_togl.c \
 	if_remote.c \
 	if_stack.c \
 	if_tk.c \
@@ -63,6 +72,7 @@ libfb_la_CFLAGS = \
 	$(IF_X_CFLAGS) \
 	$(IF_TK_CFLAGS) \
 	$(IF_OGL_CFLAGS) \
+	$(IF_TOGL_CFLAGS) \
 	$(IF_WGL_CFLAGS) \
 	${TCL_CPPFLAGS}
 
@@ -70,6 +80,7 @@ libfb_la_LIBADD = \
 	${FB_LIBS} \
 	${IF_X_LIBADD} \
 	${IF_OGL_LIBADD} \
+	${IF_TOGL_LIBADD} \
 	${IF_TK_LIBADD}
 
 noinst_HEADERS = \
