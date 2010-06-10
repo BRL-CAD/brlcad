@@ -76,6 +76,13 @@ set(BRLCAD_HEADERS
     ../../../include/wdb.h
 )
 
+if(MSVC)
+    set(BRLCAD_HEADERS
+        ${BRLCAD_HEADERS}
+        ../../../include/pstdint.h
+    )
+endif(MSVC)
+
 set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/Arb8.cpp
     ../../../../rt^3/src/coreInterface/Combination.cpp
