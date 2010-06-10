@@ -80,8 +80,8 @@ libfb_la_LIBADD = \
 	${FB_LIBS} \
 	${IF_X_LIBADD} \
 	${IF_OGL_LIBADD} \
-	${IF_TOGL_LIBADD} \
-	${IF_TK_LIBADD}
+	${IF_TK_LIBADD} \
+	${IF_TOGL_LIBADD} 
 
 noinst_HEADERS = \
 	dmdfb.h \

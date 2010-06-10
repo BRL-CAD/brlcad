@@ -41,18 +41,17 @@
 #  include <netinet/in.h>
 #endif
 
-#include "tcl.h"
+#include "fb.h"
 #include "tk.h"
 
 #define USE_TOGL_STUBS
 
 #include "togl.h"
 
-#include "fb.h"
 
 
-Tcl_Interp *fbinterp;
-Tk_Window fbwin;
+Tcl_Interp *toglfbinterp;
+Tk_Window toglfbwin;
 Togl *fbtogl;
 
 
@@ -166,38 +165,38 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
     ifp->if_width = width;
     ifp->if_height = height;
 
-    fbinterp = Tcl_CreateInterp();
+    toglfbinterp = Tcl_CreateInterp();
 
-    if (Tcl_Init(fbinterp) == TCL_ERROR) {
+    if (Tcl_Init(toglfbinterp) == TCL_ERROR) {
 	fb_log("Tcl_Init returned error in fb_open.");
     }
 
     bu_vls_sprintf(&tclcmd, "package require Tk");
 
-    if (Tcl_Eval(fbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
+    if (Tcl_Eval(toglfbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
 	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
-    fbwin = Tk_MainWindow(fbinterp);
+    toglfbwin = Tk_MainWindow(toglfbinterp);
 
-    Tk_GeometryRequest(fbwin, width, height);
+    Tk_GeometryRequest(toglfbwin, width, height);
 
-    Tk_MakeWindowExist(fbwin);
+    Tk_MakeWindowExist(toglfbwin);
+     
+    bu_vls_sprintf(&tclcmd, "package require Togl; togl %s.togl -width %d -height %d -rgba true -double true", (char *)Tk_PathName(toglfbwin), width, height);
 
-     bu_vls_sprintf(&tclcmd, "package require Togl; togl %s.togl -width %d -height %d -rgba true -double true", (char *)Tk_PathName(fbwin), width, height);
-
-    if (Tcl_Eval(fbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
+    if (Tcl_Eval(toglfbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
 	fb_log("Error returned attempting to create togl window in fb_open.");
     }
 
-    bu_vls_sprintf(&tclcmd, "pack %s.togl -expand true -fill both; update", (char *)Tk_PathName(fbwin));
+    bu_vls_sprintf(&tclcmd, "pack %s.togl -expand true -fill both; update", (char *)Tk_PathName(toglfbwin));
 
-    if (Tcl_Eval(fbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
+    if (Tcl_Eval(toglfbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
 	fb_log("Error returned attemping to pack togl window in fb_open.");
     }
 
-    bu_vls_sprintf(&tclcmd, "%s.togl", (char *)Tk_PathName(fbwin));
-    Togl_GetToglFromObj(fbinterp, Tcl_NewStringObj(bu_vls_addr(&tclcmd), -1), fbtogl);
+    bu_vls_sprintf(&tclcmd, "%s.togl", (char *)Tk_PathName(toglfbwin));
+    Togl_GetToglFromObj(toglfbinterp, Tcl_NewStringObj(bu_vls_addr(&tclcmd), -1), fbtogl);
 
     /* Set our Tcl variable pertaining to whether a
      * window closing event has been seen from the
@@ -207,16 +206,15 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
      * for a change to the CloseWindow variable ensures
      * a "lingering" tk window.
      */
-    Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
+    Tcl_SetVar(toglfbinterp, "CloseWindow", "open", 0);
     bu_vls_sprintf(&tclcmd, "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}");
-    if (Tcl_Eval(fbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
+    if (Tcl_Eval(toglfbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
 	fb_log("Error binding WM_DELETE_WINDOW.");
     }
     bu_vls_sprintf(&tclcmd, "bind . <Button-3> {set CloseWindow \"close\"}");
-    if (Tcl_Eval(fbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
+    if (Tcl_Eval(toglfbinterp, bu_vls_addr(&tclcmd)) != TCL_OK) {
 	fb_log("Error binding right mouse button.");
     }
- 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
     /* If any texture/opengl setup needs to happen do it... */
@@ -232,11 +230,12 @@ fb_togl_close(FBIO *ifp)
     FB_CK_FBIO(ifp);
     fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
     fclose(stdin);
-    // Wait for CloseWindow to be changed by the WM_DELETE_WINDOW
-    // binding set up in fb_togl_open
-    Tcl_Eval(fbinterp, "vwait CloseWindow");
-    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
-	Tcl_Eval(fbinterp, "destroy .");
+    /* Wait for CloseWindow to be changed by the WM_DELETE_WINDOW
+       binding set up in fb_togl_open */
+    Tcl_Eval(toglfbinterp, "vwait CloseWindow");
+    if (!strcmp(Tcl_GetVar(toglfbinterp, "CloseWindow", 0),"close")) {
+	Tcl_Eval(toglfbinterp, "destroy .");
+    }
     return 0;
 }
 

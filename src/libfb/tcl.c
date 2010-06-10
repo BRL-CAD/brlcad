@@ -115,7 +115,7 @@ extern int togl_refresh();
 extern int togl_open_existing();
 extern FBIO togl_interface;
 #endif
-static const char *tk_device_name = "/dev/togl";
+static const char *togl_device_name = "/dev/togl";
 #endif
 
 int fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
