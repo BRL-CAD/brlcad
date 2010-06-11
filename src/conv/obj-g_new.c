@@ -529,12 +529,24 @@ retest_grouping_faces(struct ga_t *ga,
     return failed_face_count;
 }
 
-
-/* return values 
-   0 valid face
-   1 degenerate, <3 vertices
-   2 degenerate, duplicate vertex indexes
-   3 degenerate, vertices too close */
+/*
+ * T E S T _ F A C E
+ *
+ * Within a given grouping of faces, test an individual face for
+ * degenerate conditions such as duplicate vertex indexes or the
+ * distance between any pair of vertices of a individual face are
+ * equal to or less than the distance tolerance. The test result is
+ * returned by this function and is recorded so it can be used later.
+ * If a face was previously tested, this function will not retest the
+ * face unless the force_retest flag is set. Return codes for tests
+ * are below. Note: the stored test result value is the return code
+ * plus one, since 0 in the results list indicates an untested face
+ * and one indicates a valid face.
+ *   0 valid face
+ *   1 degenerate, <3 vertices
+ *   2 degenerate, duplicate vertex indexes
+ *   3 degenerate, vertices too close
+ */
 int 
 test_face(struct ga_t *ga,
           struct gfi_t *gfi,
@@ -643,6 +655,16 @@ test_face(struct ga_t *ga,
     return degenerate_face;
 }
 
+/*
+ * F R E E _ G F I
+ *
+ * Releases the memory allocated for the contents of the gfi
+ * structure and the gfi structure itself. The gfi structure contains
+ * the 'grouping face indices' into the libobj structures (and
+ * supporting attributes and indexes) for all the faces of a grouping
+ * of faces. A grouping of faces corresponds to an individual BRL-CAD
+ * primitive.
+ */
 void
 free_gfi(struct gfi_t **gfi)
 {
@@ -665,11 +687,22 @@ free_gfi(struct gfi_t **gfi)
     return;
 }
 
-/* this function allocates all memory needed for the
- * gfi structure and its contents. gfi is expected to
- * be a null pointer when passed to this function. the
- * gfi structure and its contents is expected to be
- * freed outside this function.
+/*
+ * C O L L E C T _ G R O U P I N G _ F A C E S _ I N D E X E S
+ *
+ * Collects the face indexes into the libobj structures for a specific
+ * grouping of faces. The grouping_index identifies the grouping to be
+ * collected and corresponds to the index of the grouping defined in
+ * the obj file. This function allocates all memory needed for the gfi
+ * structure and its contents. gfi is expected to be a null pointer
+ * when passed to this function. The gfi structure and its contents is
+ * expected to be freed outside this function. It is not possible to
+ * directly retrieve a list of faces for a specific grouping from the
+ * libobj structures, therefore all faces in the obj file must be
+ * traversed and tested if they are a member of a grouping, if a face
+ * is a member, the index of the found face is stored in a list to be
+ * processed later. This function creates this list of indexes to the
+ * face indexes in the libobj structures.
  */
 void
 collect_grouping_faces_indexes(struct ga_t *ga,
@@ -969,6 +1002,23 @@ collect_grouping_faces_indexes(struct ga_t *ga,
     return;
 }
 
+/*
+ * P O P U L A T E _ T R I A N G L E _ I N D E X E S
+ *
+ * Populate the triangle index structure with the vertex indexes of 
+ * one or more triangles which represent a single face. This function
+ * triangulates a face and places these triangles into the triangle
+ * indexes (ti) structure to be processed later. Only convex
+ * faces/polygons with coplanar vertices can be accurately
+ * triangulated. It is assumed that when this function is called, the
+ * number of face vertices is >= 3. This function allocates the
+ * memory for the contents of the triangle indexes (ti) structure and
+ * this memory is expected to be freed outside this function.
+ *
+ * Recommended function improvements:
+ *  - correctly triangulate more than convex faces
+ *  - warn of faces which may not be triangulated correctly
+ */
 void 
 populate_triangle_indexes(struct ga_t *ga,
                           struct gfi_t *gfi,
@@ -977,9 +1027,6 @@ populate_triangle_indexes(struct ga_t *ga,
                           int texture_mode,  /* PROC_TEX, IGNR_TEX */    
                           int normal_mode)   /* PROC_NORM, IGNR_NORM */
 {
-    /* it is assumed that when this function is called,
-     * the number of face vertices is >= 3
-     */
     size_t vert_idx = 0;                 /* index into vertices within for-loop */
     size_t idx = 0;                      /* sub index */
     size_t num_new_tri = 0;              /* number of new triangles to create */
@@ -1134,8 +1181,18 @@ populate_triangle_indexes(struct ga_t *ga,
             }
         }
     }
+    return;
 }
 
+/*
+ * P O P U L A T E _ S O R T _ I N D E X E S
+ *
+ * Allocate the memory for and populate the sort-indexes used to sort
+ * the necessary libobj vertex indexes. The sort-indexes created are 
+ * determined by the current face_type. Sorting of these indexes is 
+ * necessary as part of the process of creating a unique set of
+ * vertices to build a bot primitive.
+ */
 void
 populate_sort_indexes(struct ti_t *ti)
 {
