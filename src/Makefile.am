@@ -57,6 +57,7 @@ kitchensink_dirs = \
 	libcursor \
 	libdm \
 	libfft \
+	libicv \
 	libmultispectral \
 	libtclcad \
 	libtermio \
@@ -73,7 +74,6 @@ kitchensink_dirs = \
 	gtools \
 	halftone \
 	irprep \
-	${ISSTDIR} \
 	java \
 	lgt \
 	mged \

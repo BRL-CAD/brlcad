@@ -2050,14 +2050,7 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-        case $host_os in
-	     darwin*)
-		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs3], [debug_flag])
-	     ;;
-    	     *)
-	        BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
-	     ;;
-        esac
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
@@ -3982,6 +3975,7 @@ CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 DM='${top_builddir}/src/libdm/libdm.la'
 FB='${top_builddir}/src/libfb/libfb.la'
 FFT='${top_builddir}/src/libfft/libfft.la'
+ICV='${top_builddir}/src/libicv/libicv.la'
 GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
@@ -4020,6 +4014,7 @@ ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -4048,6 +4043,7 @@ AC_SUBST(CURSOR)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
+AC_SUBST(ICV)
 AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
@@ -4083,6 +4079,7 @@ AC_SUBST(CURSOR_LIBS)
 AC_SUBST(DM_LIBS)
 AC_SUBST(FB_LIBS)
 AC_SUBST(FFT_LIBS)
+AC_SUBST(ICV_LIBS)
 AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
@@ -4232,6 +4229,7 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libfft.pc
 	misc/pkgconfig/libged.pc
 	misc/pkgconfig/libgcv.pc
+	misc/pkgconfig/libicv.pc
 	misc/pkgconfig/libmultispectral.pc
 	misc/pkgconfig/liboptical.pc
 	misc/pkgconfig/libpc.pc
@@ -4296,6 +4294,7 @@ AC_CONFIG_FILES([
 	src/libgcv/Makefile
 	src/libgcv/wfobj/Makefile
 	src/libged/Makefile
+	src/libicv/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile

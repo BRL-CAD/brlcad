@@ -1237,6 +1237,26 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libbu\simd.c"
+				>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="$(PlatformName)\$(ConfigurationName)|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libbu\stat.c"
 				>
 				<FileConfiguration

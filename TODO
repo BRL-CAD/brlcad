@@ -56,6 +56,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix forum links to point to the sourceforge forums, not the nabble
+  forums
+
+* write up a brief DSP overview on the wiki
+
+* the 'cp' command no longer displays the object that was copied (and
+  it reportedly did at some point prior to 7.14.8 at least).
+  undoubtedly a libged change, but an interesting consideration for
+  default behavior.
+
+* merge conv-vg2g into dbupgrade
+
 * usage statistics.  similar to the eclipse Usage Data Collector, keep
   track of which BRL-CAD command-line commands and MGED/libged
   commands are run.  Give the user the option of uploading those
@@ -723,7 +735,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
-	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+	a-d archer asc2g asc2pix bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod istat jack-g kurt lowp molecule nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pixpaste pix-spm pix-yuv plstat pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
 
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their

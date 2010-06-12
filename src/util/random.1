@@ -1,5 +1,5 @@
-.TH REMAPID 1 BRL-CAD
-.\"                      R E M A P I D . 1
+.TH RANDOM 1 BRL-CAD
+.\"                       R A N D O M . 1
 .\" BRL-CAD
 .\"
 .\" Copyright (c) 2005-2010 United States Government as represented by
@@ -38,31 +38,49 @@
 .\" SUCH DAMAGE.
 .\"
 .\".\".\"
+.\"
+.\" Begin actual content
+.\"
 .SH NAME
-remapid \- reassign region idents in a BRL-CAD or TANKILL model according to commands in a specification file
+random \- generates a random number between two specified values
 .SH SYNOPSIS
-.B remapid
-.RB [\-{g|t}] {file.g|file.tankill} [spec_file]
+.B random
+.RB [\-s\ seed]
+.RB [\-g\ [\-c\ center]]
+.RB [\-u]
+.RB [\-v]
+low high
 .SH DESCRIPTION
-Performs batch modifications of region IDs for BRL-CAD
-(or TANKILL) geometry.
-The program reads a .g (or TANKILL) file and a spec file
-indicating which region IDs to change to which new values.
-For a .g file, the specified changes are made to that file;
-For a TANKILL file, a modified model is written to stdout.
-The remapping assignment is read from a specification file
-containing commands, the grammar for which looks something like:
+.I random\^
+generates a random number between the two values given.  The number
+can be uniform across the entire range or it can be a gaussian
+distrubution around the center of the range (or a named center).
+.PP
+The
+.I \-s
+option specifies what integer seed to use to prime the random number
+generator.
+The
+.I \-u
+option specifies that the random number distribution should be uniform
+across the low-to-high range.
+The
+.I \-g
+option specifies that the random number distribution should be a
+gaussian distribution around a default or named center, specified with
+the
+.I \-c
+option.
+The
+.I \-v
+option specifies verbose diagnostic output.
+.SH EXAMPLES
+\fI
 .nf
-
-command  --> id_list ':' id
-id_list  --> id_block | id_block ',' id_list
-id_block --> id | id '-' id
-id       --> [0-9]+
-
+random 0 100
+random -g 40 2000
 .fi
-The semantics of a command is:  For every region in the database
-whose region ID appears in the id_list before the ':', change its
-region ID to the value appearing after the ':'.
+\fP
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <devs@brlcad.org>.

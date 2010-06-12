@@ -180,6 +180,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     mesh->texture = NULL;
     mesh->flags = 0;
     mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+    mesh->matid = ts->ts_gmater;
 
     rt_comb_get_color(rgb, rci);
     VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
@@ -234,6 +235,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     mesh->texture = NULL;
     mesh->flags = 0;
     mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
+    mesh->matid = material_id;
 
     VMOVE(mesh->attributes->color.v, color);
     strncpy(mesh->name, db_path_to_string(pathp), 255);
@@ -330,20 +332,6 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
     bu_free(tribuf, "tri");
 
     tie_prep(cur_tie);
-
-    /* TODO: real breakage right here.
-    VMOVE(isst.geom_min.v, tie->min.v);
-    VMOVE(isst.geom_max.v, tie->max.v);
-    VADD2(isst.geom_center.v,  isst.geom_min.v,  isst.geom_max.v);
-    VSCALE(isst.geom_center.v,  isst.geom_center.v,  0.5);
-
-    max.v[0] = fabs (isst.geom_min.v[0]) > fabs (isst.geom_max.v[0]) ? fabs (isst.geom_min.v[0]) : fabs (isst.geom_min.v[0]);
-    max.v[1] = fabs (isst.geom_min.v[1]) > fabs (isst.geom_max.v[1]) ? fabs (isst.geom_min.v[1]) : fabs (isst.geom_min.v[1]);
-    max.v[2] = fabs (isst.geom_min.v[2]) > fabs (isst.geom_max.v[2]) ? fabs (isst.geom_min.v[2]) : fabs (isst.geom_min.v[2]);
-
-    isst.geom_radius = sqrt (max.v[0]*max.v[0] + max.v[1]*max.v[1] + max.v[2]*max.v[2]);
-    isst.pid = 0;
-    */
 
     return 0;
 }

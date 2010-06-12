@@ -192,7 +192,6 @@ main(int argc, char **argv)
     mk_bot(outfp, "bot_cw_solid", RT_BOT_SOLID, RT_BOT_CW, 0, 4, 4, vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
     face_mode = bu_bitv_new(4);
-    bu_bitv_clear(face_mode);
     BU_BITSET(face_mode, 1);
 
     thickness[0] = 2.1;

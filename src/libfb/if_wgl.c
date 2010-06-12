@@ -37,7 +37,6 @@
 
 #ifdef IF_WGL
 
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -981,10 +980,6 @@ wgl_close(FBIO *ifp)
      * with eliminating stdin.
      */
     fclose(stdin);
-
-    /* Ignore likely signals, perhaps in the background, from other
-     * typing at the keyboard
-     */
 
     while (0 < WGL(ifp)->alive)
 	wgl_do_event(ifp);

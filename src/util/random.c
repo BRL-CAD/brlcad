@@ -1,4 +1,4 @@
-/*                      M S R A N D O M . C
+/*                        R A N D O M . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2010 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file msrandom.c
+/** @file random.c
  *
  * Generate a random number between the two values given. The number
  * can be uniform across the entire range or it can be a gaussian
@@ -36,14 +36,14 @@
 #include "bn.h"
 
 
-struct bn_gauss *gp;
-struct bn_unif *up;
-
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     extern int bu_optind;
     extern char *bu_optarg;
+
+    struct bn_gauss *gp;
+    struct bn_unif *up;
 
     int seed = bu_process_id();
     int high, low;
@@ -53,6 +53,7 @@ main(int argc, char **argv)
     int uniform = 0;
     int cdone = 0;
     int c;
+    const char *usage = "[-u] [-g [-c center]] [-s seed] [-v] low high";
 
     while ((c = bu_getopt(argc, argv, "vugs:c:")) != EOF) {
 	switch (c) {
@@ -75,20 +76,17 @@ main(int argc, char **argv)
 		verbose = 1;
 		break;
 	    case '?':
-		fprintf(stderr, "msrandom [-ugv] [ -s seed] [-c center ] low high \n");
-		bu_exit (1, NULL);
+		bu_exit(1, "%s %s\n", argv[0], usage);
 	}
     }
     if (! gauss && !uniform) uniform = 1;
     if (gauss && uniform) {
-	fprintf(stderr, "msrandom [-ugv] [ -s seed] [-c center ] low high \n");
-	fprintf(stderr, "\tOnly one of gaussian or uniform may be used.\n");
-	bu_exit (1, NULL);
+	bu_log("%s %s\n", argv[0], usage);
+	bu_exit(1, "\tOnly one of gaussian or uniform may be used.\n");
     }
     if (argc - bu_optind != 2) {
-	fprintf(stderr, "msrandom [-ugv] [ -s seed] [-c center ] low high \n");
-	fprintf(stderr, "\tLow High must be given.\n");
-	bu_exit (1, NULL);
+	bu_log("%s %s\n", argv[0], usage);
+	bu_exit(1, "\tLow High must be given.\n");
     }
     low = atoi(argv[bu_optind]);
     high = atoi(argv[bu_optind+1]);
@@ -96,8 +94,7 @@ main(int argc, char **argv)
 	center = ((double)(high + low)) / 2.0;
     }
     if (verbose) {
-	fprintf(stderr, "msrandom: seed=%d %s %d %f %d\n",
-		seed, (gauss) ? "Gauss" : "Uniform", low, center, high);
+	bu_log("%s: seed=%d %s %d %f %d\n", argv[0], seed, (gauss) ? "Gauss" : "Uniform", low, center, high);
     }
     if (gauss) {
 	double tmp;

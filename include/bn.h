@@ -1846,7 +1846,7 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  * head.
  *
  * To visit all the elements in the vlist:
- *	for (BU_LIST_FOR(vp, rt_vlist, hp)) {
+ *	for (BU_LIST_FOR(vp, bn_vlist, hp)) {
  *		register int	i;
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;

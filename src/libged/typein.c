@@ -1015,7 +1015,6 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	arg_count = 7 + num_verts*3 + num_faces*3;
 	bot->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "bot thickness");
 	bot->face_mode = bu_bitv_new(num_faces);
-	bu_bitv_clear(bot->face_mode);
 	for (i=0; i<num_faces; i++) {
 	    int j;
 

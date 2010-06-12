@@ -90,7 +90,8 @@ REMAPID_FILE bu_iob[1] = {
 };
 
 
-REMAPID_FILE *remapid_fopen (char *fname, char *type)
+REMAPID_FILE *
+remapid_fopen(char *fname, char *type)
 {
     REMAPID_FILE *bfp;
     FILE *fp;
@@ -118,7 +119,7 @@ REMAPID_FILE *remapid_fopen (char *fname, char *type)
  * Close the file and free the associated memory
  */
 int
-remapid_fclose (REMAPID_FILE *bfp)
+remapid_fclose(REMAPID_FILE *bfp)
 {
     int close_status;
 
@@ -139,7 +140,7 @@ remapid_fclose (REMAPID_FILE *bfp)
 
 
 int
-remapid_fgetc (REMAPID_FILE *bfp)
+remapid_fgetc(REMAPID_FILE *bfp)
 {
     char *cp = (char *)NULL;
     int comment_char;	/* The comment character */
@@ -190,8 +191,8 @@ remapid_fgetc (REMAPID_FILE *bfp)
 /*
  * Diagnostic routine to print out the contents of a struct remapid_file
  */
-static void
-remapid_printfile (REMAPID_FILE *bfp)
+HIDDEN void
+remapid_printfile(REMAPID_FILE *bfp)
 {
     BU_CK_FILE(bfp);
 
@@ -374,7 +375,8 @@ static int debug = 0;
  * M K _ C U R R _ I D
  *
  */
-struct curr_id *mk_curr_id (int region_id)
+struct curr_id *
+mk_curr_id(int region_id)
 {
     struct curr_id *cip;
 
@@ -393,7 +395,8 @@ struct curr_id *mk_curr_id (int region_id)
  * P R I N T _ C U R R _ I D
  *
  */
-void print_curr_id (void *v, int depth)
+void
+print_curr_id(void *v, int depth)
 {
     struct curr_id *cip = (struct curr_id *) v;
     struct remap_reg *rp;
@@ -414,7 +417,8 @@ void print_curr_id (void *v, int depth)
  * P R I N T _ N O N E M P T Y _ C U R R _ I D
  *
  */
-void print_nonempty_curr_id (void *v, int depth)
+void
+print_nonempty_curr_id(void *v, int depth)
 {
     struct curr_id *cip = (struct curr_id *) v;
     struct remap_reg *rp;
@@ -437,7 +441,8 @@ void print_nonempty_curr_id (void *v, int depth)
  * F R E E _ C U R R _ I D
  *
  */
-void free_curr_id (struct curr_id *cip)
+void
+free_curr_id(struct curr_id *cip)
 {
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
     bu_free((genptr_t) cip, "curr_id");
@@ -451,7 +456,8 @@ void free_curr_id (struct curr_id *cip)
  * If it's not found there, add it to the tree.  In either
  * event, return a pointer to it.
  */
-struct curr_id *lookup_curr_id(int region_id)
+struct curr_id *
+lookup_curr_id(int region_id)
 {
     int rc;	/* Return code from bu_rb_insert() */
     struct curr_id *qcip;	/* The query */
@@ -488,7 +494,8 @@ struct curr_id *lookup_curr_id(int region_id)
  * M K _ R E M A P _ R E G
  *
  */
-struct remap_reg *mk_remap_reg (char *region_name)
+struct remap_reg *
+mk_remap_reg(char *region_name)
 {
     struct remap_reg *rp;
 
@@ -510,7 +517,8 @@ struct remap_reg *mk_remap_reg (char *region_name)
  * F R E E _ R E M A P _ R E G
  *
  */
-void free_remap_reg (struct remap_reg *rp)
+void
+free_remap_reg(struct remap_reg *rp)
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
     bu_free((genptr_t) rp->rr_name, "region name");
@@ -528,7 +536,8 @@ void free_remap_reg (struct remap_reg *rp)
 /*
  * C O M P A R E _ C U R R _ I D S
  */
-int compare_curr_ids (void *v1, void *v2)
+int
+compare_curr_ids(void *v1, void *v2)
 {
     struct curr_id *id1 = (struct curr_id *) v1;
     struct curr_id *id2 = (struct curr_id *) v2;
@@ -548,12 +557,11 @@ int compare_curr_ids (void *v1, void *v2)
 
 /*
  * R E A D _ I N T
+ *
+ * ch is the result
  */
-int read_int (REMAPID_FILE *sfp, int *ch, int *n)
-
-
-    /* The result */
-
+int
+read_int(REMAPID_FILE *sfp, int *ch, int *n)
 {
     int got_digit = 0;	/* Did we actually succeed in reading a number? */
     int result;
@@ -585,7 +593,8 @@ int read_int (REMAPID_FILE *sfp, int *ch, int *n)
 /*
  * R E A D _ B L O C K
  */
-int read_block (REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
+int
+read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 {
     BU_CK_FILE(sfp);
 
@@ -615,7 +624,8 @@ int read_block (REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 /*
  * R E A D _ S P E C
  */
-int read_spec (REMAPID_FILE *sfp, char *sf_name)
+int
+read_spec(REMAPID_FILE *sfp, char *sf_name)
 {
     int ch;
     int i;
@@ -648,7 +658,7 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 		    if (num1 >= num2) {
 			remapid_file_err(sfp, "remapid:read_spec()", "Range out of order",
 					 (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
-			bu_exit (-1, NULL);
+			bu_exit(-1, NULL);
 		    }
 		    for (i = num1; i <= num2; ++i) {
 			cip = lookup_curr_id(i);
@@ -672,7 +682,7 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 		default:
 		    remapid_file_err(sfp, "remapid:read_spec()", "Syntax error",
 				     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
-		    bu_exit (-1, NULL);
+		    bu_exit(-1, NULL);
 	    }
 	    break;
 	}
@@ -695,7 +705,8 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
  *									*
  ************************************************************************/
 
-void record_region (char *region_name, int region_id, struct directory *dp, struct rt_db_internal *ip)
+void
+record_region(char *region_name, int region_id, struct directory *dp, struct rt_db_internal *ip)
 {
     struct curr_id *cip;
     struct remap_reg *rp;
@@ -708,14 +719,15 @@ void record_region (char *region_name, int region_id, struct directory *dp, stru
 }
 
 
-void db_init(char *db_name)
+void
+db_init(char *db_name)
 {
     struct directory *dp;
     struct rt_comb_internal *comb;
     struct rt_db_internal *ip;
 
     if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
-	bu_exit (1, "Cannot open database file '%s'\n", db_name);
+	bu_exit(1, "Cannot open database file '%s'\n", db_name);
     db_dirbuild(dbip);
 
     FOR_ALL_DIRECTORY_START(dp, dbip) {
@@ -725,7 +737,7 @@ void db_init(char *db_name)
 	if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0) {
 	    bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		   dp->d_namep);
-	    bu_exit (1, "This shouldn't happen\n");
+	    bu_exit(1, "This shouldn't happen\n");
 	}
 	comb = (struct rt_comb_internal *) (ip->idb_ptr);
 	RT_CK_COMB(comb);
@@ -738,7 +750,8 @@ void db_init(char *db_name)
  * W R I T E _ A S S I G N M E N T
  *
  */
-void write_assignment (void *v, int depth)
+void
+write_assignment(void *v, int depth)
 {
     int region_id;
     struct curr_id *cip = (struct curr_id *) v;
@@ -759,14 +772,14 @@ void write_assignment (void *v, int depth)
 	    if (rt_db_put_internal(rp->rr_dp, dbip, rp->rr_ip, &rt_uniresource) < 0) {
 		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
 		       rp->rr_dp->d_namep);
-		bu_exit (1, "This shouldn't happen\n");
+		bu_exit(1, "This shouldn't happen\n");
 	    }
 	}
     }
 }
 
 
-static void
+HIDDEN void
 tankill_reassign(char *db_name)
 {
     FILE *fd_in;
@@ -825,7 +838,8 @@ tankill_reassign(char *db_name)
 /*
  * P R I N T _ U S A G E
  */
-void print_usage (void)
+void
+print_usage(void)
 {
     bu_exit(1, "Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'\n\
   Note: The '-g' option modifies file.g in place\n\
@@ -837,7 +851,7 @@ void print_usage (void)
  * M A I N
  */
 int
-main (int argc, char **argv)
+main(int argc, char **argv)
 {
     char *db_name;	/* Name of database */
     char *sf_name = NULL;	/* Name of spec file */
@@ -891,7 +905,7 @@ main (int argc, char **argv)
     /*
      * Read in the specification for the reassignment
      */
-    read_spec (sfp, sf_name);
+    read_spec(sfp, sf_name);
 
     /*
      * Make the specified reassignment

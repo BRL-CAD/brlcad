@@ -43,7 +43,6 @@ bin_PROGRAMS = \
 	asc-pl \
 	azel \
 	bary \
-	binfo \
 	buffer \
 	bw-a \
 	bw-imp \
@@ -72,7 +71,6 @@ bin_PROGRAMS = \
 	dsp_add \
 	dunncolor \
 	dunnsnap \
-	files-tape \
 	fix_polysolids \
 	gencolor \
 	hex \
@@ -80,8 +78,7 @@ bin_PROGRAMS = \
 	loop \
 	lowp \
 	mac-pix \
-	msrandom \
-	mst \
+	random \
 	orle-pix \
 	pix-alias \
 	pix-bw \
@@ -146,9 +143,7 @@ bin_PROGRAMS = \
 	png-pix \
 	png_info \
 	query \
-	remapid \
 	rle-pix \
-	sgi-pix \
 	sun-pix \
 	terrain \
 	texturescale \
@@ -185,9 +180,6 @@ azel_LDADD = ${BU}
 
 bary_SOURCES = bary.c
 bary_LDADD = ${BU}
-
-binfo_SOURCES = binfo.c
-binfo_LDADD = ${RT} ${FB} ${BU}
 
 if WITH_TK
 bombardier_SOURCES = bombardier.c bombardier.h
@@ -283,9 +275,6 @@ dunncolor_LDADD = ${BU}
 dunnsnap_SOURCES = dunnsnap.c dunncomm.c
 dunnsnap_LDADD = ${FB} ${BU}
 
-files_tape_SOURCES = files-tape.c
-files_tape_LDADD = ${BU}
-
 fix_polysolids_SOURCES = fix_polysolids.c
 fix_polysolids_LDADD = ${RT} ${BU}
 
@@ -307,11 +296,8 @@ lowp_LDADD = ${BU}
 mac_pix_SOURCES = mac-pix.c
 mac_pix_LDADD = ${BU}
 
-msrandom_SOURCES = msrandom.c
-msrandom_LDADD = ${BN} ${BU}
-
-mst_SOURCES = mst.c
-mst_LDADD = ${BU}
+random_SOURCES = random.c
+random_LDADD = ${BN} ${BU}
 
 orle_pix_SOURCES = orle-pix.c
 orle_pix_LDADD = ${FB} ${BU} ${ORLE}
@@ -526,9 +512,6 @@ png_pix_LDADD = ${BN} ${BU}
 query_SOURCES = query.c
 query_LDADD = ${BU}
 
-remapid_SOURCES = remapid.c
-remapid_LDADD = ${RT} ${BU}
-
 rle_pix_SOURCES = rle-pix.c
 rle_pix_LDADD = ${RLE} ${BU} ${SYSV}
 rle_pix_CFLAGS = ${RLE_CPPFLAGS}
@@ -541,9 +524,6 @@ pc_test_SOURCES = pc_test.c
 pc_test_LDADD = ${PC} ${PC_LIBS} ${WDB} ${WDB_LIBS}
 endif
 # BUILD_BOOST
-
-sgi_pix_SOURCES = sgi-pix.c
-sgi_pix_LDADD = ${BU} ${LIBSGIGL}
 
 sun_pix_SOURCES = sun-pix.c
 sun_pix_LDADD = ${BU}
@@ -657,7 +637,7 @@ man_MANS = \
 	png-pix.1 \
 	png_info.1 \
 	query.1 \
-	remapid.1 \
+	random.1 \
 	rle-pix.1 \
 	sun-pix.1 \
 	terrain.1 \
@@ -687,7 +667,6 @@ FAST_OBJECTS = \
 	$(asc_pl_OBJECTS) \
 	$(azel_OBJECTS) \
 	$(bary_OBJECTS) \
-	$(binfo_OBJECTS) \
 	$(buffer_OBJECTS) \
 	$(bw_a_OBJECTS) \
 	$(bw_imp_OBJECTS) \
@@ -716,14 +695,11 @@ FAST_OBJECTS = \
 	$(dsp_add_OBJECTS) \
 	$(dunncolor_OBJECTS) \
 	$(dunnsnap_OBJECTS) \
-	$(files_tape_OBJECTS) \
 	$(gencolor_OBJECTS) \
 	$(hex_OBJECTS) \
 	$(imgdims_OBJECTS) \
 	$(loop_OBJECTS) \
 	$(mac_pix_OBJECTS) \
-	$(msrandom_OBJECTS) \
-	$(mst_OBJECTS) \
 	$(op_bw_OBJECTS) \
 	$(orle_pix_OBJECTS) \
 	$(pix_alias_OBJECTS) \
@@ -790,7 +766,7 @@ FAST_OBJECTS = \
 	$(png_pix_OBJECTS) \
 	$(png_info_OBJECTS) \
 	$(query_OBJECTS) \
-	$(remapid_OBJECTS) \
+	$(random_OBJECTS) \
 	$(rle_pix_OBJECTS) \
 	$(sgi_pix_OBJECTS) \
 	$(sun_pix_OBJECTS) \

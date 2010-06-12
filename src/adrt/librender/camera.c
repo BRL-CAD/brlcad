@@ -129,7 +129,6 @@ render_camera_prep_ortho(render_camera_t *camera)
     TIE_3 look, up, side, temp;
     tfloat angle, s, c;
 
-
     /* Generate standard up vector */
     up.v[0] = 0;
     up.v[1] = 0;
@@ -162,21 +161,21 @@ render_camera_prep_ortho(render_camera_t *camera)
     /* look direction */
     camera->view_list[0].top_l = look;
 
-    /* fov is milimeters along the horizontal axis to display */
+    /* gridsize is milimeters along the horizontal axis to display */
     /* left (side) */
-    VSCALE(temp.v,  side.v,  (camera->aspect * camera->fov * 0.5));
+    VSCALE(temp.v,  side.v,  (camera->aspect * camera->gridsize * 0.5));
     VADD2(camera->view_list[0].pos.v,  camera->pos.v,  temp.v);
     /* and (up) */
-    VSCALE(temp.v,  up.v,  (camera->fov * 0.5));
+    VSCALE(temp.v,  up.v,  (camera->gridsize * 0.5));
     VADD2(camera->view_list[0].pos.v,  camera->view_list[0].pos.v,  temp.v);
 
     /* compute step vectors for camera position */
 
     /* X */
-    VSCALE(camera->view_list[0].step_x.v,  side.v,  (-camera->fov * camera->aspect / (tfloat)camera->w));
+    VSCALE(camera->view_list[0].step_x.v,  side.v,  (-camera->gridsize * camera->aspect / (tfloat)camera->w));
 
     /* Y */
-    VSCALE(camera->view_list[0].step_y.v,  up.v,  (-camera->fov / (tfloat)camera->h));
+    VSCALE(camera->view_list[0].step_y.v,  up.v,  (-camera->gridsize / (tfloat)camera->h));
 }
 
 static void

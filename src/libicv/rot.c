@@ -1,4 +1,4 @@
-/*                         B W R O T . C
+/*                           R O T . C
  * BRL-CAD
  *
  * Copyright (c) 1986-2010 United States Government as represented by
@@ -17,23 +17,22 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwrot.c
+/** @file rot.c
  *
- * Rotate, Invert, and/or Reverse the pixels in a Black
- * and White (.bw) file.
+ * Rotate, Invert, and/or Reverse the pixels in an image file.
  *
- * The rotation logic was worked out for data ordered with
- * "upper left" first.  It is being used on files in first
- * quadrant order (lower left first).  Thus the "forward",
- * "backward" flags are reversed.
+ * The rotation logic was worked out for data ordered with "upper
+ * left" first.  It is being used on files in first quadrant order
+ * (lower left first).  Thus the "forward", "backward" flags are
+ * reversed.
  *
- * The code was designed to never need to seek on the input,
- * while it *may* need to seek on output (if the max buffer
- * is too small).  It would be nice if we could handle the
- * reverse case also (e.g. pipe on stdout).
+ * The code was designed to never need to seek on the input, while it
+ * *may* need to seek on output (if the max buffer is too small).  It
+ * would be nice if we could handle the reverse case also (e.g. pipe
+ * on stdout).
  *
- * Note that this program can be applied to any collection
- * of single byte entities.
+ * Note that this program can be applied to any collection of
+ * interleaved channel byte entities.
  *
  */
 
@@ -68,7 +67,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     char *out_file_name = NULL;
 
     if (!ifp || !ofp || !angle)
-	bu_exit(1, "bwrot: internal error processing arguments\n");
+	bu_exit(1, "internal error processing arguments\n");
 
     while ((c = bu_getopt(argc, argv, "fbrih#:a:s:o:w:n:S:W:N:")) != EOF) {
 	switch (c) {
@@ -146,16 +145,16 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 
     /* sanity */
     if (isatty(fileno(*ifp))) {
-	bu_log("ERROR: %s will not read bw data from a tty\nRedirect input or specify an input file.\n", bu_getprogname());
+	bu_log("ERROR: %s will not read data from a tty\nRedirect input or specify an input file.\n", bu_getprogname());
 	return 0;
     }
     if (isatty(fileno(*ofp))) {
-	bu_log("ERROR: %s will not write bw data to a tty\nRedirect output or use the -o output option.\n", bu_getprogname());
+	bu_log("ERROR: %s will not write data to a tty\nRedirect output or use the -o output option.\n", bu_getprogname());
 	return 0;
     }
 
     if (argc > ++bu_optind) {
-	bu_log("bwrot: excess argument(s) ignored\n");
+	bu_log("WARNING: excess argument(s) ignored\n");
     }
 
     return 1;		/* OK */
@@ -229,7 +228,7 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 
     if (buflines != nyin) {
 	/* I won't all fit in the buffer */
-	fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
+	fprintf(stderr, "Sorry but I can't do an arbitrary rotate of an image this large\n");
 	bu_exit (1, NULL);
     }
     if (buflines > nyin) buflines = nyin;
@@ -281,11 +280,9 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 
 
 int
-main(int argc, char **argv)
+icv_rot(int argc, char **argv)
 {
-    const size_t MAXBUFBYTES = 1280*1024;
-
-    char usage[] = "Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
+    const size_t MAXPIXELS = 16768 * 16768; /* boo hiss */
 
     size_t x, y, j;
     int ret = 0;
@@ -300,13 +297,13 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
-	bu_exit(1, "%s", usage);
+	bu_exit(1, "Usage: %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]\n", bu_getprogname());
     }
 
     scanbytes = nxin * pixbytes;
-    buflines = MAXBUFBYTES / scanbytes;
+    buflines = MAXPIXELS / nxin;
     if (buflines <= 0) {
-	bu_exit(1, "%s", "bwrot: I'm not compiled to do a scanline that long!\n");
+	bu_exit(1, "ERROR: %s is not compiled to handle a scanline that long!\n");
     }
     if (buflines > nyin) buflines = nyin;
     buffer = (unsigned char *)bu_malloc(buflines * scanbytes, "buffer");
