@@ -36,8 +36,16 @@ lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged06_gobletbase.png \
 	lessons/es/images/mged06_gobletbasestembasin.png \
 	lessons/es/images/mged06_gobletstem.png \
+	lessons/es/images/mged06_rtgoblet.png \
 	lessons/es/images/mged06_rtgobletaz_35_el_25.png \
-	lessons/es/images/mged06_rtgoblet.png
+	lessons/es/images/mged10_mug_wireframe.png \
+	lessons/es/images/mged11_mug_raytraced_norim.png \
+	lessons/es/images/mged11_mug_raytraced_rim.png \
+	lessons/es/images/mged12_cyls_frontview.png \
+	lessons/es/images/mged12_mug_gui_finished_raytraced.png \
+	lessons/es/images/mged12_mug_handle_frontview.png \
+	lessons/es/images/mged12_mug_handle_topview.png \
+	lessons/es/images/mged12_mug_rim_frontview.png
 
 lessonsDOCBOOK_EShtmldir = $(BRLCAD_DATA)/html/lessons/es
 lessonsDOCBOOK_EShtml_DATA = \
