@@ -153,7 +153,7 @@
 	  <imageobject>
 	    <imagedata 
 align = "center" 
-fileref="../../lessons/en/images/mged12_cyls_frontview.png" 
+fileref="../../lessons/es/images/mged12_cyls_frontview.png" 
 format="PNG">
 	  </imagedata>
 	  </imageobject>
@@ -235,11 +235,11 @@ format="PNG">
 	      <row>
 		<entry>
 		  <inlinegraphic 
-fileref="../../lessons/en/images/mged12_mug_handle_frontview.png" />
+fileref="../../lessons/es/images/mged12_mug_handle_frontview.png" />
 		</entry>
 		<entry>
 		  <inlinegraphic 
-fileref="../../lessons/en/images/mged12_mug_handle_topview.png" />
+fileref="../../lessons/es/images/mged12_mug_handle_topview.png" />
 		</entry>
 	      </row>
 	      <row>
@@ -274,7 +274,7 @@ fileref="../../lessons/en/images/mged12_mug_handle_topview.png" />
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged12_mug_rim_frontview.png" format="PNG">
+fileref="../../lessons/es/images/mged12_mug_rim_frontview.png" format="PNG">
 	    </imagedata>
 	  </imageobject>
 	  <caption>
@@ -398,7 +398,7 @@ fileref="../../lessons/en/images/mged12_mug_rim_frontview.png" format="PNG">
 	  <imageobject>
 	    <imagedata 
 align = "center" 
-fileref="../../lessons/en/images/mged12_mug_gui_finished_raytraced.png" 
+fileref="../../lessons/es/images/mged12_mug_gui_finished_raytraced.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
