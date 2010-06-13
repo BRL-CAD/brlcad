@@ -2,7 +2,8 @@ lessonsDOCBOOK_ES = \
 	lessons/es/mged01_crear_figuras_primitivas.xml \
 	lessons/es/mged02_opciones_vistas.xml \
 	lessons/es/mged03_utilizar_comando_in.xml \
-	lessons/es/mged06_crear_una_copa.xml
+	lessons/es/mged06_crear_una_copa.xml \
+	lessons/es/mged12_taza_desde_gui.xml
 
 lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged01_commandwindow.png \
