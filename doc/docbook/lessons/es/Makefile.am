@@ -3,6 +3,7 @@ lessonsDOCBOOK_ES = \
 	lessons/es/mged02_opciones_vistas.xml \
 	lessons/es/mged03_utilizar_comando_in.xml \
 	lessons/es/mged06_crear_una_copa.xml \
+	lessons/es/mged10_crear_taza.xml \
 	lessons/es/mged11_refinar_taza.xml \
 	lessons/es/mged12_taza_desde_gui.xml
 
