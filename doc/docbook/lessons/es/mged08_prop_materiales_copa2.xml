@@ -1,0 +1,358 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Asignar más propiedades de los materiales a la copa</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
+    </legalnotice>
+  </articleinfo>
+
+    <para id="goblet_material_properties2_overviewlist">
+	En este tutorial usted aprenderá a:
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>
+	    Utilizar las opciones de reflexión especular y difusa del 
+	    sombreado de plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar valores a los índices de refracción del sombreado de 
+	    plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar valores a la opción de brillo del sombreado de plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar valores a la opción de extinción del sombreado de 
+	    plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Experimentar con varias combinaciones de opciones del sombreado de 
+	    plástico.
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </para>
+    
+    <para id="goblet_material_properties2_intro1">
+      Abra la base de datos goblet.g utilizando cualquiera de métodos 
+      aprendidos. 
+      Del menú Edit (Edición), seleccione la opción Combination Editor (Editor 
+      de combinación). Seleccione basin1.r.
+
+    <para id="goblet_material_properties2_intro2">
+      En el último tutorial, hemos asignado los valores para los atributos de 
+      transparencia y de reflexión espejada. Ahora asignará valores de otras 
+      propiedades de sombreado. Cuando selecciona el sombreado de plástico 
+      para la región basin1.r, ocho casillas de entrada de atributo 
+      aparecen en el editor de combinación. Estas cajas contienen los valores 
+      que el usuario ha establecido previamente (por ejemplo, las que se 
+      ingresaron previamente para la transparencia y el reflejo espejado) o 
+      los valores por defecto que tiene el programa si no se especifican 
+      otros. Cuando alguno de estos valores es modificado, el cambio puede ser 
+      visto entre llaves en el cuadro Shader (Sombreado) que muestra los 
+      ingresos en una cadena de texto además de en los cuadros de entrada de 
+      los atributos apropiados, como se puede apreciar en la siguiente imagen:
+    </para>
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_goblet_combeditor.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      El Combination Editor (Editor de combinación)
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+    </para>
+
+    <note id="goblet_material_properties2_intro3">
+      <para>
+	Note que en versiones posteriores a <application>BRL-CAD</application> 
+	5.2, se aplican los valores por defecto, pero no son visualizados en 
+	las cajas de atributo de sombreados.
+      </para>
+    </note>
+   
+    <para id="goblet_material_properties2_intro4">
+      En este ejemplo, el cuadro de entrada de sombreado indica que la 
+      transparencia (tr) es de .5 y el reflejo espejado (re) es de .45. Los 
+      ocho abreviaturas que se utilizan actualmente en el cuadro de entrada de 
+      sombreado son las siguientes:
+    <informaltable>
+      <tgroup cols='4'>
+	<tbody>
+	  <row>
+	    <entry>tr - transparency - transparencia</entry>
+	    <entry>sp - specular reflectivity - reflexión especular</entry>
+	    <entry>ri - refractive index - índice de refracción</entry>
+	    <entry>ex - extinction - extinción</entry>
+	  </row>
+	  <row>
+	    <entry>re - mirror reflectance - reflejo espejado</entry>
+	    <entry>di - diffuse reflectivity - reflesión difusa</entry>
+	    <entry>sh - shininess - brillo</entry>
+	    <entry>em - emission - emisión</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
+    </para>
+  
+    <sect1 id="goblet_specular_diffuse">
+      <title>Reflexión especular y difusa</title>
+      <para>
+	Cuando la luz se refleja de una superficie brillante, produce dos 
+	tipos de reflexiones. Los puntos más notables son causados por 
+	reflexión especular. El resto de la superficie produce la 
+	reflectividad difusa. 
+	Mientras más brillante es la superficie, como en un vaso de cristal, 
+	mayor reflexión especular se produce. 
+	Mientras más opaca sea la superficie, como en una pared pintada con 
+	pintura mate, más reflexión disfusa es producida. 
+	En la ilustración siguiente, se muestra un modelo de la relación entre 
+	estas reflectividades: 
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_spec_vs_diff_reflectivity.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Modelos de reflexión especular y difusa
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+
+      <para>
+	Como se observa en la ilustración, la reflexión difusa muestra el 
+	color de un objeto al reflejar la luz ambiental desde del objeto. La 
+	esfera de la parte superior izquierda muestra el valor máximo de 
+	reflexión difusa (1,0), y como resultado, el color de su superficie es 
+	uniforme.
+      </para>
+      
+      <para>
+	La reflexión especular, por otra parte, refleja el color de una luz 
+	fuente. La esfera de la parte inferior derecha muestra el valor máximo 
+	de reflexión especular (1,0), por eso una fuente de luz blanca se 
+	refleja fuera de la superficie de la esfera.
+      </para>
+      
+      <para>
+	El rango para la reflexión, tanto especular como difusa, es entre 0,0 
+	y 1,0. Sin embargo, los valores combinados de estas suelen ser igual a 
+	1,0. Recordar, si se van a establecer los valores de uno de estos 
+	atributos, es necesario asignar un valor correspondiente al atributo 
+	complementario, de manera que la combinación de los valores sea igual 
+	a 1,0.
+      </para>
+    </sect1>
+    
+    <sect1 id="goblet_refractive_index">
+      <title>Índice de refracción</title>
+      
+      <para>
+	Cuando la luz pasa a través de un medio (por ejemplo, aire) a otro 
+	medio de (por ejemplo, agua), se dobla de su trayectoria original. El 
+	ángulo en que la luz se curva se denomina índice de refracción. Cuanto 
+	más disímiles son los medios, mayor es el grado de refracción que se 
+	producirá. Por ejemplo, luz solar que pasa a través de un diamante se 
+	dobla más que la misma luz solar a través del cristal óptico. El 
+	diamante tendría un mayor índice de refracción (aproximadamente 2,42) 
+	mientras que el vidrio óptico tendría un menor índice de refracción 
+	(aproximadamente 1,71).
+      </para>
+      
+      <para>
+	El rango del índice de refracción de <application>MGED</application> 
+	es de 1,0 (el índice de aire) en adelante.
+	Este parámetro sólo es útil para los materiales que tienen un 
+	transparencia mayor que 0. El siguiente dibujo de la luz solar pasando 
+	a través del agua muestra cómo funciona la refracción.
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_refractive_index.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Un rayo de sol atravezando un cuerpo de agua
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      </para>
+    </sect1>
+    
+    <sect1 id="goblet_shininess">
+      <title>Brillo</title>
+      <para>
+	El brillo de un objeto afecta el índice del componente especular del 
+	sombreado de plástico. Mientras mas brillante es la superficie de un 
+	objeto, menor será el reflejo de la fuente de luz en la superficie del 
+	objeto. El rango de de brillo suele ser un valor entero de 1 a 10.
+      </para>
+    </sect1>
+    
+    <sect1 id="goblet_extinction">
+      <title>Extinción</title>
+      <para>
+	El término extinción se aplica al componente transmisivo del sombreado 
+	del plástico, e indica la cantidad de luz absorbida por el material 
+	del objeto. El valor por defecto es 0.0, y el rango puede ser 
+	cualquier número negativo. Éste atributo puede afectar drásticamente 
+	otros atributos del sombreado, especialmente el índice de refracción.
+      </para>
+    </sect1>
+    
+    <sect1 id="goblet_emission">
+      <title>Emisión</title>
+      <para>
+	Emisión es una característica relativamente nueva que se ha añadido al 
+	paquete <application>BRL-CAD</application>. Se refiere a la 
+	cantidad de brillo artificial del objeto.
+      </para>
+    </sect1>
+    
+    <sect1 id="goblet_shader_attributes">
+      <title>Aplicar atributos de material plático a la copa</title>
+      <para>
+	Ahora que puede entender los diversos atributos del sombreado del 
+	plástico, es tiempo de experimentar con las formas en que afectan al 
+	producto final de la copa que ha creado en los últimos dos tutoriales. 
+	Habiendo probado los valores para la transparencia y la reflexión 
+	espejada, agregue los atributos de reflexión especular y difusa a 
+	basin1.r. Una vez que vea cómo estos dos atributos afectan a su 
+	diseño, añada el índice de refracción, y a continuación, el brillo y 
+	la extinción. Es posible que desee capturar algunos de estos 
+	cambios de manera que pueda referirse a ellos más tarde, cuando cree 
+	otro modelo que utiliza el mismo sombreado. Recuerde cliquear en 
+	Aplicar en el Editor de combinación para que incorpore los cambios.
+      </para>
+      
+      <para>
+	Al cambiar los valores de los atributos del sombreado de plástico, 
+	se dará cuenta de que algunos cambios no alteran significativamente el 
+	diseño. Esto es porque hay una variedad de formas para producir una 
+	mirada particular sobre el objeto. Los siguientes son dos ejemplos de 
+	la copa con diversos valores de los atributos de plástico (que crean 
+	una diferencia notable) aplicado a basin1.r.
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_goblet_reflectivity_1.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Copa con valor .9 de reflexión especular y .1 de reflexión difusa
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+	
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_goblet_reflectivity_2.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      La misma copa con valor .5 de extinción
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      
+      <para>
+	En el momento en que haya terminado de experimentar con el cambio de 
+	atributos del sombreado de plástico, la ventana del editor de 
+	combinación puede verse como la siguiente:
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged08_comb_editor_window_mater_prop.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      La ventana del Combination Editor (Editor de combinación)
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      </para>
+      
+      <para>
+	Tenga en cuenta que en el cuadro de entrada de cadena de Shader se 
+	reflejan los valores fijados por el usuario en los cuadros de entrada 
+	de cada atributo (por ejemplo, la transparencia de .5), pero no se 
+	reflejan los valores por defecto (por ejemplo, el brillo de 10).
+
+      </para>
+    </sect1>
+    
+    <sect1 id="goblet_material_properties2_review">
+      <title>Repasemos...</title>
+      <para>
+	  En este tutorial usted aprendió a:
+	<itemizedlist mark='bullet'>
+	  <listitem>
+	    <para>
+	    Utilizar las opciones de reflexión especular y difusa del 
+	    sombreado de plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar valores a los índices de refracción del sombreado de 
+	    plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar valores a la opción de brillo del sombreado de plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Asignar valores a la opción de extinción del sombreado de 
+	    plástico.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Experimentar con varias combinaciones de opciones del sombreado de 
+	    plástico.
+	  </para>
+	</listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>
