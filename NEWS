@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-05-XX  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
+* spanish translations for tutorials 4,5,7,8,10,11,12 - Jesica Giudice
 * fixed extrude object tessellation failures - Östen Lundahl
 * added manual page for 'random' number generator tool - Sean Morrison
 * added Tktable 2.10 external dependency for archer - Cliff Yapp
