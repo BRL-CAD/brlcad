@@ -48,12 +48,13 @@
 
 #include "togl.h"
 
-
-
-Tcl_Interp *toglfbinterp;
-Tk_Window toglfbwin;
-Togl *fbtogl;
-
+struct togl_fb {
+   Tcl_Interp *toglfbinterp;
+   Tk_Window toglfbwin;
+   Togl *fbtogl;
+   int texid;
+   void *texdata;
+};
 
 HIDDEN int fb_togl_open(FBIO *ifp, char *file, int width, int height),
     fb_togl_close(FBIO *ifp),
@@ -126,6 +127,8 @@ FBIO togl_interface = {
     {0}  /* u6 */
 };
 
+#define TOGLFB(ptr) ((struct togl_fb *)((ptr)->u6.p))
+#define TOGLFBL(ptr) ((ptr)->u6.p) /* left hand side version */
 
 HIDDEN int
 fb_togl_open(FBIO *ifp, char *file, int width, int height)
@@ -139,6 +142,12 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
     else
 	fb_log("fb_open(0x%lx, \"%s\", %d, %d)\n",
 	       (unsigned long)ifp, file, width, height);
+
+    /* Set up the togl_fb structure */
+    if ((TOGLFBL(ifp) = (char *)calloc(1, sizeof(struct togl_fb))) == NULL) {
+        fb_log("fb_togl_open:  togl_fb malloc failed\n");
+        return -1;
+    }
 
     /* check for default size */
     if (width <= 0)
@@ -160,50 +169,48 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
     ifp->if_width = width;
     ifp->if_height = height;
 
-    toglfbinterp = Tcl_CreateInterp();
+    TOGLFB(ifp)->toglfbinterp = Tcl_CreateInterp();
 
-    if (Tcl_Init(toglfbinterp) == TCL_ERROR) {
+    if (Tcl_Init(TOGLFB(ifp)->toglfbinterp) == TCL_ERROR) {
 	fb_log("Tcl_Init returned error in fb_open.");
     }
 
     sprintf(tclcmd, "package require Tk");
 
-    if (Tcl_Eval(toglfbinterp, tclcmd) != TCL_OK) {
+    if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
     printf("past tk init\n");
 
-    toglfbwin = Tk_MainWindow(toglfbinterp);
+    TOGLFB(ifp)->toglfbwin = Tk_MainWindow(TOGLFB(ifp)->toglfbinterp);
 
-    Tk_GeometryRequest(toglfbwin, width, height);
+    Tk_GeometryRequest(TOGLFB(ifp)->toglfbwin, width, height);
 
-    Tk_MakeWindowExist(toglfbwin);
+    Tk_MakeWindowExist(TOGLFB(ifp)->toglfbwin);
     
     printf("past make window exist\n");
 
-    if (Tcl_InitStubs(toglfbinterp, "8.1", 0) == NULL
-        || Togl_InitStubs(toglfbinterp, "2.0", 0) == NULL) {
+    if (Tcl_InitStubs(TOGLFB(ifp)->toglfbinterp, "8.1", 0) == NULL
+        || Togl_InitStubs(TOGLFB(ifp)->toglfbinterp, "2.0", 0) == NULL) {
 	fb_log("Error during Togl init\n");
     }
  
-    sprintf(tclcmd, "package require Togl; togl %s.togl -width %d -height %d -rgba true -double true", (char *)Tk_PathName(toglfbwin), width, height);
+    sprintf(tclcmd, "package require Togl; togl %s.togl -width %d -height %d -rgba true -double true", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin), width, height);
 
-    if (Tcl_Eval(toglfbinterp, tclcmd) != TCL_OK) {
+    if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error returned attempting to create togl window in fb_open.");
     }
 
     printf("do inital togl\n");
-    sprintf(tclcmd, "pack %s.togl -expand true -fill both; update", (char *)Tk_PathName(toglfbwin));
+    sprintf(tclcmd, "pack %s.togl -expand true -fill both; update", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
 
-    if (Tcl_Eval(toglfbinterp, tclcmd) != TCL_OK) {
+    if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error returned attemping to pack togl window in fb_open.");
     }
 
-    printf("past pack togl\n");
-    sprintf(tclcmd, "%s.togl", (char *)Tk_PathName(toglfbwin));
-    printf("past string config\n");
-    Togl_GetToglFromObj(toglfbinterp, Tcl_NewStringObj(tclcmd, -1), fbtogl);
+    sprintf(tclcmd, "%s.togl", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
+    Togl_GetToglFromObj(TOGLFB(ifp)->toglfbinterp, Tcl_NewStringObj(tclcmd, -1), TOGLFB(ifp)->fbtogl);
 
     printf("past get obj togl\n");
     /* Set our Tcl variable pertaining to whether a
@@ -214,15 +221,15 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
      * for a change to the CloseWindow variable ensures
      * a "lingering" tk window.
      */
-    Tcl_SetVar(toglfbinterp, "CloseWindow", "open", 0);
+    Tcl_SetVar(TOGLFB(ifp)->toglfbinterp, "CloseWindow", "open", 0);
     printf("past set var\n");
     sprintf(tclcmd, "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}");
-    if (Tcl_Eval(toglfbinterp, tclcmd) != TCL_OK) {
+    if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error binding WM_DELETE_WINDOW.");
     }
     printf("past delete setup\n");
     sprintf(tclcmd, "bind . <Button-3> {set CloseWindow \"close\"}");
-    if (Tcl_Eval(toglfbinterp, tclcmd) != TCL_OK) {
+    if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error binding right mouse button.");
     }
     printf("past bind\n");
@@ -244,9 +251,9 @@ fb_togl_close(FBIO *ifp)
     fclose(stdin);
     /* Wait for CloseWindow to be changed by the WM_DELETE_WINDOW
        binding set up in fb_togl_open */
-    Tcl_Eval(toglfbinterp, "vwait CloseWindow");
-    if (!strcmp(Tcl_GetVar(toglfbinterp, "CloseWindow", 0),"close")) {
-	Tcl_Eval(toglfbinterp, "destroy .");
+    Tcl_Eval(TOGLFB(ifp)->toglfbinterp, "vwait CloseWindow");
+    if (!strcmp(Tcl_GetVar(TOGLFB(ifp)->toglfbinterp, "CloseWindow", 0),"close")) {
+	Tcl_Eval(TOGLFB(ifp)->toglfbinterp, "destroy .");
     }
     return 0;
 }
