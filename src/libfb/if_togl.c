@@ -211,7 +211,7 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
 
     sprintf(tclcmd, "%stogl", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
     printf("tclcmd: %s\n", tclcmd);
-    Togl_GetToglFromObj(TOGLFB(ifp)->toglfbinterp, Tcl_NewStringObj(tclcmd, -1), togl);
+    Togl_GetToglFromObj(TOGLFB(ifp)->toglfbinterp, Tcl_NewStringObj(tclcmd, -1), &togl);
     TOGLFB(ifp)->fbtogl = togl;
 
     /* Set our Tcl variable pertaining to whether a
@@ -303,7 +303,6 @@ togl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_
 {
     Togl *togl;
     togl = TOGLFB(ifp)->fbtogl;
-    printf("writing:  xoffset: %d, yoffset: %d, count: %d\n", xstart, ystart, count); 
     Togl_MakeCurrent(togl);
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_TEXTURE_2D);
