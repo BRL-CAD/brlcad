@@ -1,6 +1,8 @@
 lib_LTLIBRARIES = libicv.la
 noinst_LTLIBRARIES = libicv_nil.la
 
+AM_CPPFLAGS = ${TCL_CPPFLAGS}
+
 libicv_nil_la_SOURCES = \
 	rot.c
 
