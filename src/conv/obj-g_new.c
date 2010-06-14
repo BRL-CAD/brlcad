@@ -49,6 +49,7 @@ static char *usage = "%s -u {m|cm|mm|ft|in|conv_factor} [-ipdv] [-g {g|o|m|t|n}]
         The -i (ignore normals) option forces converter to ignore normals defined in the obj file.\n\
         The -p (plot enable) option enables plot file creation of open edges in plate-mode-bots.\n\
         The -d (debug output) option prints additional debugging information of developer interest.\n\
+               Output from std-err should be piped to a file when using the (-d) option.\n\
         The -v (verbose output) option prints additional debugging information of user interest.\n\
         The -g (grouping) option specifies obj file face grouping using group, object, material, texture or none.\n\
         The -m (mode) option specifies conversion modes to output bot, nmg or bot-via-nmg.\n\
@@ -546,6 +547,9 @@ retest_grouping_faces(struct ga_t *ga,
  *   1 degenerate, <3 vertices
  *   2 degenerate, duplicate vertex indexes
  *   3 degenerate, vertices too close
+ *
+ * Recommended function improvements:
+ *  - Add parameter to choose which face tests should be run.
  */
 int 
 test_face(struct ga_t *ga,
@@ -694,7 +698,7 @@ free_gfi(struct gfi_t **gfi)
  * grouping of faces. The grouping_index identifies the grouping to be
  * collected and corresponds to the index of the grouping defined in
  * the obj file. This function allocates all memory needed for the gfi
- * structure and its contents. gfi is expected to be a null pointer
+ * structure and its contents. Gfi is expected to be a null pointer
  * when passed to this function. The gfi structure and its contents is
  * expected to be freed outside this function. It is not possible to
  * directly retrieve a list of faces for a specific grouping from the
@@ -1016,8 +1020,8 @@ collect_grouping_faces_indexes(struct ga_t *ga,
  * this memory is expected to be freed outside this function.
  *
  * Recommended function improvements:
- *  - correctly triangulate more than convex faces
- *  - warn of faces which may not be triangulated correctly
+ *  - Correctly triangulate more than convex faces
+ *  - Warn of faces which may not be triangulated correctly
  */
 void 
 populate_triangle_indexes(struct ga_t *ga,
@@ -1445,6 +1449,9 @@ free_ti(struct ti_t *ti)
  * Create the arrays used by the bot primitive which contain
  * floating-point values. The unique sorted-indexes are used to
  * retrieve the values from the libobj structures.
+ *
+ * Recommended function improvements:
+ *  - If unable to unitize a normal, determine how to deal with this.
  */
 void
 create_bot_float_arrays(struct ga_t *ga,
@@ -2024,7 +2031,51 @@ fuse_vertex(struct ga_t *ga,
     return fuse_count;
 }
 
-/* returns number of open edges, open edges >0 indicates closure failure */
+/*
+ * T E S T _ C L O S U R E
+ *
+ * For a grouping of faces, test if the surface is closed. This
+ * function returns the number of open edges. Zero open edges
+ * indicates a closed surface. This function traverses all the faces
+ * in the face grouping and generates a list of edges using the
+ * libobj index values of the edge vertices to identify the edges.
+ * For a closed surface, there must be two of each edge in the list.
+ * A BRL-CAD overlay file can be generated containing the open edges
+ * when the plot_mode parameter is set to PLOT_ON. The overlay file
+ * will be of the same name as the BRL-CAD primitive except the file
+ * extension will be ".pl" instead of ".s". The overlay files will be
+ * placed in the same directory as where the "obj-g" command was
+ * executed. It is not required but highly recommended that the
+ * fuse_vertex function be run on the face grouping before
+ * test_closure otherwise some shared edges may be missed. If this
+ * function returns zero open edges, this surface should be closed.
+ * If this function indicates the surface is open, further testing is
+ * necessary, not done by this function, to verify the surface is
+ * open. The overlay of open edges may be useful for analysis of
+ * surfaces reported as open.
+ *
+ * Recommended function improvements:
+ *  - Improve algorithm for identifying shared edges.
+ *
+ *    For example the right edge of triangle 1 would be identified by
+ *    the current algorithm as an open edge since there is no single
+ *    matching edge to pair with it. An improved algorithm should
+ *    identify that the left edges of triangles 2 and 3 should be
+ *    paired with the right edge of triangle 1 to determine this is a
+ *    closed edge. Note: In the diagram below, the top vertex of
+ *    triangle 1 is the same vertex as the top left vertex of
+ *    triangle 2, the same goes for the bottom right vertex of 
+ *    trinagle 1 and the bottom vertex of triangle 3. The bottom
+ *    vertex of triangle 2 (i.e. top left vertex of triangle 3) does
+ *    not exist in triangle 1.
+ *
+ *            * *___*
+ *           / \ \2/
+ *          /   \ *___*
+ *         /  1  \ \3/
+ *        *_______* *
+ *
+ */
 size_t
 test_closure(struct ga_t *ga,
              struct gfi_t *gfi,
@@ -2174,6 +2225,29 @@ test_closure(struct ga_t *ga,
     return open_edges;
 }
 
+/*
+ * O U T P U T _ T O _ B O T
+ *
+ * For a grouping of faces, write a bot primitive to a BRL-CAD
+ * database file (i.e. ".g" file). Texture_mode should be set to
+ * IGNR_TEX since the ability to use the obj file texture vertices is
+ * not implemented. Texture_mode can be set to PROC_TEX but extra 
+ * processing will be performed and will provide no benefit.
+ * If normal_mode is set to PROC_NORM, any normals provided in the obj
+ * file for the current grouping of faces will be included in the bot
+ * primitive. If the provided normals are smoothing normals, the 
+ * resulting raytrace of the bot will be smooth. The type of bot
+ * created is choosen by the bot_output_mode. If the type of bot
+ * selected is RT_BOT_PLATE the thickness of the bot plates is
+ * defined by the parameter bot_thickness. This function will return
+ * a non-zero value if an error occured. Bot primitives will be named
+ * according to the grouping name in the obj file with the following
+ * exceptions. Characters invalid for BRL-CAD primitive names and
+ * operating system file names are converted to underscore. The
+ * remaining portions of the name indicate the decimal index number of
+ * the grouping in the obj file, primitive type {b=bot} and closure
+ * status {u=untested|c=closed|o=open}.
+ */
 int
 output_to_bot(struct ga_t *ga,
               struct gfi_t *gfi,
@@ -2252,23 +2326,26 @@ output_to_bot(struct ga_t *ga,
 
     create_bot_float_arrays(ga, &ti, bot_thickness, conv_factor);
 
-    if (create_bot_int_arrays(&ti)) {
-        bu_log("bsearch failure\n");
-    }
-
     switch (gfi->closure_status) {
         case SURF_UNTESTED:
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.u.s", gfi->grouping_index);
+            bu_vls_printf(gfi->raw_grouping_name, ".%lu.b.u.s", gfi->grouping_index);
             break;
         case SURF_CLOSED:
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.c.s", gfi->grouping_index);
+            bu_vls_printf(gfi->raw_grouping_name, ".%lu.b.c.s", gfi->grouping_index);
             break;
         case SURF_OPEN:
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.o.s", gfi->grouping_index);
+            bu_vls_printf(gfi->raw_grouping_name, ".%lu.b.o.s", gfi->grouping_index);
             break;
     }
 
     cleanup_name(gfi->raw_grouping_name);
+
+    if (create_bot_int_arrays(&ti)) {
+        bu_log("ERROR: function create_bot_int_arrays returned an error, aborting bot creation for object (%s)\n",
+               bu_vls_addr(gfi->raw_grouping_name));
+        free_ti(&ti);
+        return 1;
+    }
 
     /* write bot to ".g" file */
     if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
@@ -2288,8 +2365,38 @@ output_to_bot(struct ga_t *ga,
     return ret;
 }
 
-/* returns a failure if no faces were output, the surface
- * was not closed or an nmg bomb occured
+/*
+ * O U T P U T _ T O _ N M G
+ *
+ * For a grouping of faces, write a nmg primitive or volume-mode-bot
+ * primitive to a BRL-CAD database file (i.e. ".g" file). This
+ * function will return a non-zero value if no primitive was output.
+ * Only face groupings with closed surfaces will be output. Closure is
+ * determined by the function nmg_check_closed_shell. A primitive will
+ * not be output if the face grouping fails the closure test or an 
+ * error occured during processing. The output_mode option determines
+ * if an nmg or volume-mode-bot will be output. The normal_mode will
+ * determine if normals provided in the obj file will be inserted
+ * into the nmg structure. Normal_mode should be set to IGNR_NORM
+ * since, inserted normals are not used for computing face normals
+ * and appear to provide no benefit. The tolerance values passed to
+ * this function (within bn_tol) must be those which will be used
+ * when raytracing (as defined in rtip->rti_tol) otherwise raytracing
+ * errors will occur. Primitives will be named according to the
+ * grouping name in the obj file with the following exceptions.
+ * Characters invalid for BRL-CAD primitive names and operating system
+ * file names are converted to underscore. The remaining portions
+ * of the name indicate the decimal index number of the grouping in
+ * the obj file, primitive type {n=nmg|v=bot-via-nmg} and closure
+ * status {c=closed}.
+ *
+ * Recommended function improvements:
+ *  - Profile the called nmg functions to determine where the
+ *    performance bottlenecks are occurring.
+ *  - Provide cleaner status to the user while processing.
+ *  - Investigate usefulness of inserting obj file face normals into
+ *    nmg structure.
+ *  - If unable to unitize a normal, determine how to deal with this.
  */
 int
 output_to_nmg(struct ga_t *ga,
@@ -2297,8 +2404,8 @@ output_to_nmg(struct ga_t *ga,
               struct rt_wdb *outfp, 
               fastf_t conv_factor, 
               struct bn_tol *tol,
-              int normal_mode,
-              int output_mode)
+              int normal_mode,      /* PROC_NORM, IGNR_NORM */
+              int output_mode)      /* OUT_NMG, OUT_VBOT */
 {
     struct model *m = (struct model *)NULL;
     struct nmgregion *r = (struct nmgregion *)NULL;
@@ -2522,7 +2629,7 @@ output_to_nmg(struct ga_t *ga,
                 }
                 if (output_mode == OUT_NMG) {
                     /* make nmg */
-                    bu_vls_printf(gfi->raw_grouping_name, ".%lu.n.s", gfi->grouping_index);
+                    bu_vls_printf(gfi->raw_grouping_name, ".%lu.n.c.s", gfi->grouping_index);
                     cleanup_name(gfi->raw_grouping_name);
                     if (verbose || debug) {
                         bu_log("Running mk_nmg with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%lu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index);
@@ -2544,7 +2651,7 @@ output_to_nmg(struct ga_t *ga,
                     if (output_mode != OUT_VBOT) {
                         bu_log("NOTE: Currently bot-via-nmg can only create volume bots, ignoring plate mode option and creating volume bot instead.\n");
                     }
-                    bu_vls_printf(gfi->raw_grouping_name, ".%lu.nvb.s", gfi->grouping_index);
+                    bu_vls_printf(gfi->raw_grouping_name, ".%lu.v.c.s", gfi->grouping_index);
                     cleanup_name(gfi->raw_grouping_name);
                     if (verbose || debug) {
                         bu_log("Running mk_bot_from_nmg with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%lu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index);
@@ -2579,10 +2686,12 @@ output_to_nmg(struct ga_t *ga,
 }
 
 /*
- * validate unit string and output conversion factor to millimeters.
+ * S T R 2 M M
+ *
+ * Validate unit string and output conversion factor to millimeters.
  * if string is not a standard units identifier, the function assumes
- * a custom conversion factor was specified. a valid null terminated
- * string is expected as input. return of 0 is success, return of 1
+ * a custom conversion factor was specified. A valid null terminated
+ * string is expected as input. Return of 0 is success, return of 1
  * is failure.
  */
 int
@@ -2617,6 +2726,12 @@ str2mm(const char *units_string, fastf_t *conv_factor)
     return ret;
 }
 
+/*
+ * P R O C E S S _ B _ M O D E _ O P T I O N
+ *
+ * This function is executed from main when the user selects mode
+ * option 'b' from the command line. (i.e. output to "native bot")
+ */
 void
 process_b_mode_option(struct ga_t *ga,
                       struct gfi_t *gfi,
@@ -2635,17 +2750,26 @@ process_b_mode_option(struct ga_t *ga,
     if (!test_closure(ga, gfi, conv_factor, plot_mode, tol)) {
         bot_output_mode = RT_BOT_SOLID;
     }
-    output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
+    (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode, normal_mode, bot_output_mode);
     return;
 }
 
+/*
+ * P R O C E S S _ N V _ M O D E _ O P T I O N
+ *
+ * This function is executed from main when the user selects mode
+ * option 'n' or 'v' from the command line. The 'n' indicates output
+ * to nmg and 'v' indicates output to volume-mode-bot via nmg. If nmg
+ * or volumn-mode-bot creation fails, output will be attempted to
+ * 'native bot'.
+ */
 void
 process_nv_mode_option(struct ga_t *ga,
                        struct gfi_t *gfi,
                        struct rt_wdb *outfp, 
                        fastf_t conv_factor, 
                        struct bn_tol *tol,
-                       fastf_t bot_thickness, /* bot plate thickness, in user defined units */
+                       fastf_t bot_thickness, /* bot plate thickness (mm) */
                        int texture_mode,      /* PROC_TEX, IGNR_TEX */    
                        int normal_mode,       /* PROC_NORM, IGNR_NORM */
                        int output_mode,       /* OUT_NMG, OUT_VBOT */
@@ -2653,13 +2777,13 @@ process_nv_mode_option(struct ga_t *ga,
 
     unsigned char bot_output_mode = RT_BOT_PLATE;
 
-    if (output_to_nmg(ga, gfi, outfp, conv_factor, tol, normal_mode, output_mode)) {
+    if (output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, output_mode)) {
         (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
         (void)retest_grouping_faces(ga, gfi, conv_factor, tol);
         if (!test_closure(ga, gfi, conv_factor, plot_mode, tol)) {
             bot_output_mode = RT_BOT_SOLID;
         }
-        output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode, 
+        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode, 
                       normal_mode, bot_output_mode);
     }
     return;
@@ -2703,9 +2827,9 @@ main(int argc, char **argv)
      */
     tol = &tol_struct;
     tol->magic = BN_TOL_MAGIC;
-    tol->dist = 0.0005;    /* default: which is equal to ray tracer tolerance */
+    tol->dist = 0.0005;    /* default which should be equal to the raytracer default tolerance */
     tol->dist_sq = tol->dist * tol->dist;
-    tol->perp = 1e-6;      /* default: which is equal to ray tracer tolerance */
+    tol->perp = 1e-6;      /* default which should be equal to the raytracer default tolerance */
     tol->para = 1 - tol->perp;
 
     if (argc < 2) {
@@ -2721,6 +2845,7 @@ main(int argc, char **argv)
                 normal_mode = IGNR_NORM;
                 break;
             case 'd': /* turn on local debugging, displays additional information of developer interest */
+                      /* output from std-err should be piped to a file when using this option */
                 debug = 1;
                 break;
             case 'x': /* set librt debug level */
