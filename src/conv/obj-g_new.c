@@ -1244,6 +1244,14 @@ populate_sort_indexes(struct ti_t *ti)
     return;
 }
 
+/*
+ * S O R T _ I N D E X E S
+ *
+ * Sort the sort-indexes used to sort the necessary libobj vertex
+ * indexes. Sorting of these indexes is necessary as part of the
+ * process of creating a unique set of vertices to build a bot
+ * primitive.
+ */
 void 
 sort_indexes(struct ti_t *ti)
 {
@@ -1271,6 +1279,13 @@ sort_indexes(struct ti_t *ti)
     return;
 }
 
+/*
+ * C R E A T E _ U N I Q U E _ I N D E X E S
+ *
+ * Create a unique sort-index from a provided non-unique sorted
+ * sort-index by removing duplicates in the index. The non-unique
+ * sort-indexes are freed when they are no longer needed.
+ */
 void
 create_unique_indexes(struct ti_t *ti)
 {
@@ -1384,6 +1399,12 @@ create_unique_indexes(struct ti_t *ti)
     return;
 }
 
+/*
+ * F R E E _ T I
+ *
+ * Free memory allocated for the contents of the triangle index
+ * structure.
+ */
 void 
 free_ti(struct ti_t *ti)
 {
@@ -1391,14 +1412,6 @@ free_ti(struct ti_t *ti)
         bu_log("function free_ti was passed a null pointer\n");
         return;
     }
-
-    /* do not free sort indexes here since they have already
-     * been freed in the 'create_unique_indexes' function
-     */
-
-    /* do not free unique indexes here since they have already
-     * been freed in the 'create_bot_int_arrays' function
-     */
 
     /* free 'triangle indices into vertex, normal, texture vertex lists' */
     bu_free(ti->index_arr_tri, "ti->index_arr_tri");
@@ -1423,10 +1436,16 @@ free_ti(struct ti_t *ti)
         /* free 'array of floats for face thickness' */
         bu_free(ti->bot_thickness, "ti->bot_thickness");
     }
-
     return;
 }
 
+/*
+ * C R E A T E _ B O T _ F L O A T _ A R R A Y S
+ *
+ * Create the arrays used by the bot primitive which contain
+ * floating-point values. The unique sorted-indexes are used to
+ * retrieve the values from the libobj structures.
+ */
 void
 create_bot_float_arrays(struct ga_t *ga,
                         struct ti_t *ti,
@@ -1504,7 +1523,21 @@ create_bot_float_arrays(struct ga_t *ga,
     return;
 }
 
-/* returns 1 if bsearch failure, otherwise return 0 for success */
+/*
+ * C R E A T E _ B O T _ I N T _ A R R A Y S
+ *
+ * Create the arrays used by the bot primitive which contain
+ * integer values. These integer values are the index values of the
+ * triangle vertices and normals within the bot primitive. The unique
+ * sorted-indexes are searched to convert the libobj index values of
+ * each vertex to the appropriate index value in the bot primitive.
+ * The memory for the bot integer arrays is allocated within this 
+ * function and is expected to be freed once the bot primitive is
+ * created. The unique sorted-indexes are freed by this function once
+ * they are no longer needed. This function returns a non-zero value
+ * (i.e. fails) if bsearch is unable to find a value. This function
+ * should never fail unless there is a logic bug in this code.
+ */
 int 
 create_bot_int_arrays(struct ti_t *ti)
 {
@@ -1626,13 +1659,16 @@ create_bot_int_arrays(struct ti_t *ti)
         bu_free(ti->utvi, "ti->utvi");
         bu_free(ti->uvni, "ti->uvni");
     }
-    return 0; /* return success */
+    return 0;
 }
 
-/* remove duplicates from list. count is updated to indicate the
- * new size of list after duplicates are removed. the original
- * input array is freed and the new unique array is returned in
- * its place. the new returned array will be sorted
+/*
+ * R E M O V E _ D U P L I C A T E S _ A N D _ S O R T
+ *
+ * Given a one-dimensional array of numbers of type size_t, the array
+ * is sorted and duplicate entries removed, resulting in a sorted list
+ * of unique values. For speed, a new list is allocated where the
+ * unique sorted list is stored and the original list is freed.
  */
 void
 remove_duplicates_and_sort(size_t **list, size_t *count)
@@ -1677,6 +1713,15 @@ remove_duplicates_and_sort(size_t **list, size_t *count)
     return;
 }
 
+/*
+ * P O P U L A T E _ F U S E _ M A P
+ *
+ * Populate the fuse map array which maps vertex indexes to their
+ * fused equivalent. This function is a support function for the
+ * fuse_vertex function. This function performs the distance compare
+ * operations between the vertices and populates the fuse map array.
+ * The number of fused vertices is returned by this function.
+ */
 size_t
 populate_fuse_map(struct ga_t *ga,
                   struct gfi_t *gfi,
@@ -1750,7 +1795,25 @@ populate_fuse_map(struct ga_t *ga,
     return fuse_count;
 }
 
-/* returns number of fused vertices */
+/*
+ * F U S E _ V E R T E X
+ *
+ * Perform a vertex fuse of the given face grouping. Vertices which
+ * are close enough together to be considered the same vertex are
+ * joined. A mapping is created to convert each vertex index to their
+ * fused equivalent. The number of fused vertices is returned by this
+ * function. Both vertices and texture vertices can be fused by this
+ * function and the determination of equal vertices can be performed
+ * using the distance tolerance or VEQUAL. Fusing the vertices is
+ * useful when the obj file was formed improperly where identical or
+ * virtually identical vertices have different indexes and it is
+ * desired to identify faces sharing an edge by comparing the index
+ * values of the edge vertices. For this same reason, vertex fusing
+ * is necessary for testing surface closure where closure is defined
+ * by no open edges. A closed edge is where the edge is shared by 
+ * exactly two faces, a open edge is where an edge is used by only
+ * one face.
+ */
 size_t
 fuse_vertex(struct ga_t *ga,
             struct gfi_t *gfi,
