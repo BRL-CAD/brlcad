@@ -133,6 +133,7 @@ FBIO togl_interface = {
 HIDDEN int
 fb_togl_open(FBIO *ifp, char *file, int width, int height)
 {
+    Togl *togl;
     char *tclcmd[255] = {'\0'};
 
     FB_CK_FBIO(ifp);
@@ -181,31 +182,37 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
 	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
+    if (Tcl_InitStubs(TOGLFB(ifp)->toglfbinterp, "8.1", 0) == NULL
+        || Togl_InitStubs(TOGLFB(ifp)->toglfbinterp, "2.0", 0) == NULL) {
+	fb_log("Error during Togl init\n");
+    } 
+
     TOGLFB(ifp)->toglfbwin = Tk_MainWindow(TOGLFB(ifp)->toglfbinterp);
 
     Tk_GeometryRequest(TOGLFB(ifp)->toglfbwin, width, height);
 
     Tk_MakeWindowExist(TOGLFB(ifp)->toglfbwin);
-    
-    if (Tcl_InitStubs(TOGLFB(ifp)->toglfbinterp, "8.1", 0) == NULL
-        || Togl_InitStubs(TOGLFB(ifp)->toglfbinterp, "2.0", 0) == NULL) {
-	fb_log("Error during Togl init\n");
-    }
- 
-    sprintf(tclcmd, "package require Togl; togl %s.togl -width %d -height %d -rgba true -double true", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin), width, height);
 
+    Tk_MapWindow(TOGLFB(ifp)->toglfbwin);
+    
+    sprintf(tclcmd, "package require Togl; togl %stogl -width %d -height %d -rgba true -double true", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin), width, height);
+
+    printf("tclcmd: %s\n", tclcmd);
     if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error returned attempting to create togl window in fb_open.");
     }
 
-    sprintf(tclcmd, "pack %s.togl -expand true -fill both; update", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
+    sprintf(tclcmd, "pack %stogl -expand true -fill both; update", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
 
+    printf("tclcmd: %s\n", tclcmd);
     if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error returned attemping to pack togl window in fb_open.");
     }
 
-    sprintf(tclcmd, "%s.togl", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
-    Togl_GetToglFromObj(TOGLFB(ifp)->toglfbinterp, Tcl_NewStringObj(tclcmd, -1), TOGLFB(ifp)->fbtogl);
+    sprintf(tclcmd, "%stogl", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
+    printf("tclcmd: %s\n", tclcmd);
+    Togl_GetToglFromObj(TOGLFB(ifp)->toglfbinterp, Tcl_NewStringObj(tclcmd, -1), togl);
+    TOGLFB(ifp)->fbtogl = togl;
 
     /* Set our Tcl variable pertaining to whether a
      * window closing event has been seen from the
@@ -226,7 +233,7 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
     }
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
-    Togl_MakeCurrent(TOGLFB(ifp)->fbtogl);
+    Togl_MakeCurrent(togl);
     glClearColor (0.0, 0, 0.0, 1);
     glBindTexture (GL_TEXTURE_2D, TOGLFB(ifp)->texid);
     glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
@@ -292,9 +299,27 @@ togl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-togl_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
+togl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
-    /* Need to do the texture magic for pixels -> opengl window here */
+    Togl *togl;
+    togl = TOGLFB(ifp)->fbtogl;
+    printf("writing:  xoffset: %d, yoffset: %d, count: %d\n", xstart, ystart, count); 
+    Togl_MakeCurrent(togl);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, TOGLFB(ifp)->texid);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, xstart, ifp->if_height-ystart, count, 1, GL_RGB, GL_UNSIGNED_BYTE, pixelp);
+    glBegin(GL_TRIANGLE_STRIP);
+
+    glTexCoord2d(0, 0); glVertex3f(0, 0, 0);
+    glTexCoord2d(0, 1); glVertex3f(0, ifp->if_height, 0);
+    glTexCoord2d(1, 0); glVertex3f(ifp->if_width, 0, 0);
+    glTexCoord2d(1, 1); glVertex3f(ifp->if_width, ifp->if_height, 0);
+
+    glEnd();
+
+    Togl_SwapBuffers(togl);
+
     return (int)count;
 }
 

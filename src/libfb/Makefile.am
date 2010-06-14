@@ -24,7 +24,7 @@ IF_OGL_LIBADD =
 endif
 
 if BUILD_TOGL
-IF_TOGL_CFLAGS = -DIF_TOGL -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl
+IF_TOGL_CFLAGS = -DIF_TOGL -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl $(GL_CPPFLAGS)
 IF_TOGL_LIBADD = ${LIBGL} -L$(top_builddir)/src/other/togl -lToglstub2.1
 else
 IF_TOGL_CFLAGS =
