@@ -181,16 +181,12 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
 	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
-    printf("past tk init\n");
-
     TOGLFB(ifp)->toglfbwin = Tk_MainWindow(TOGLFB(ifp)->toglfbinterp);
 
     Tk_GeometryRequest(TOGLFB(ifp)->toglfbwin, width, height);
 
     Tk_MakeWindowExist(TOGLFB(ifp)->toglfbwin);
     
-    printf("past make window exist\n");
-
     if (Tcl_InitStubs(TOGLFB(ifp)->toglfbinterp, "8.1", 0) == NULL
         || Togl_InitStubs(TOGLFB(ifp)->toglfbinterp, "2.0", 0) == NULL) {
 	fb_log("Error during Togl init\n");
@@ -202,7 +198,6 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
 	fb_log("Error returned attempting to create togl window in fb_open.");
     }
 
-    printf("do inital togl\n");
     sprintf(tclcmd, "pack %s.togl -expand true -fill both; update", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
 
     if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
@@ -212,7 +207,6 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
     sprintf(tclcmd, "%s.togl", (char *)Tk_PathName(TOGLFB(ifp)->toglfbwin));
     Togl_GetToglFromObj(TOGLFB(ifp)->toglfbinterp, Tcl_NewStringObj(tclcmd, -1), TOGLFB(ifp)->fbtogl);
 
-    printf("past get obj togl\n");
     /* Set our Tcl variable pertaining to whether a
      * window closing event has been seen from the
      * Window manager.  WM_DELETE_WINDOW will be
@@ -222,22 +216,34 @@ fb_togl_open(FBIO *ifp, char *file, int width, int height)
      * a "lingering" tk window.
      */
     Tcl_SetVar(TOGLFB(ifp)->toglfbinterp, "CloseWindow", "open", 0);
-    printf("past set var\n");
     sprintf(tclcmd, "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}");
     if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error binding WM_DELETE_WINDOW.");
     }
-    printf("past delete setup\n");
     sprintf(tclcmd, "bind . <Button-3> {set CloseWindow \"close\"}");
     if (Tcl_Eval(TOGLFB(ifp)->toglfbinterp, tclcmd) != TCL_OK) {
 	fb_log("Error binding right mouse button.");
     }
-    printf("past bind\n");
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
-    /* If any texture/opengl setup needs to happen do it... */
+    Togl_MakeCurrent(TOGLFB(ifp)->fbtogl);
+    glClearColor (0.0, 0, 0.0, 1);
+    glBindTexture (GL_TEXTURE_2D, TOGLFB(ifp)->texid);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    TOGLFB(ifp)->texdata = realloc(TOGLFB(ifp)->texdata, width * height * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, TOGLFB(ifp)->texdata);
+    glDisable(GL_LIGHTING);
 
-    printf("at the end\n");
+    glViewport(0,0, width, height);
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    glOrtho(0, width, height, 0, -1, 1);
+    glMatrixMode (GL_MODELVIEW);
+
+    glClear(GL_COLOR_BUFFER_BIT);
 
     return 0;
 }
