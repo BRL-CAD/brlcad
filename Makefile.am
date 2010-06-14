@@ -98,6 +98,7 @@ EXTRA_DIST = \
 	BUGS \
 	ChangeLog \
 	TODO \
+	TODO.togl \
 	autogen.sh \
 	libtool
 

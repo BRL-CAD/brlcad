@@ -1,0 +1,39 @@
+Things left to do before the togl dm/fb setup is mature:
+
+1.  libfb routines using texture drawing (see isst tcl/tk stuff)
+2.  get in-MGED rendering working (probably the open_existing stuff)
+3.  figure out better mechanism for sending all events in tcl/tk
+    child window to the parent
+4.  take a close look at the faceplate text mechanism and figure out
+    what it needs.
+5.  If fonts are really needed (probably) it's time to look at ftgl
+    and freetype, since AGL has deprecated its version of the UseFont
+    command with no replacement in sight.
+
+    http://sourceforge.net/projects/ftgl/
+
+6.  If ftgl, also need fonts - include the following three open fonts
+    (make a note they use OFL, not LGPL/BSD/etc...)
+
+    Inconsolata:
+    http://www.levien.com/type/myfonts/inconsolata.html
+
+    Anonymous Pro:
+    http://www.ms-studio.com/FontSales/anonymouspro.html
+
+    DejaVu:
+    http://dejavu-fonts.org/wiki/Main_Page
+
+    Make sure all three test out and are usable on multiple platforms,
+    as well as the user having a way to switch from one to another.
+
+7.  Once everything is working, make the togl build logic more
+    robust to Mac setups.  May want to explore the possibility
+    of a Windows build as well.
+
+8.  (Not strictly togl related, but will need timing logic for
+     update routines - at least for isst, maybe for all if the
+     togl widget needs idle function instructions for dm/fb as
+     well.  Look at rolling either a C version of bzflag routines
+     or SDL's functionality into libbu.)
+
