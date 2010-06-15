@@ -130,6 +130,87 @@ FBIO togl_interface = {
 #define TOGLFB(ptr) ((struct togl_fb *)((ptr)->u6.p))
 #define TOGLFBL(ptr) ((ptr)->u6.p) /* left hand side version */
 
+void togl_configureWindow(FBIO *ifp, int width, int height) {
+    printf("width: %d height: %d\n",  width, height);
+    ifp->if_width = width;
+    ifp->if_height = height;
+    Togl_MakeCurrent(TOGLFB(ifp)->fbtogl);
+    glBindTexture (GL_TEXTURE_2D, TOGLFB(ifp)->texid);
+    TOGLFB(ifp)->texdata = realloc(TOGLFB(ifp)->texdata, width * height * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, TOGLFB(ifp)->texdata);
+    Togl_SwapBuffers(TOGLFB(ifp)->fbtogl);
+    return 0;
+}
+
+int
+togl_refresh(FBIO *ifp, int x, int y, int w, int h)
+{
+    int mm;
+
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glViewport(0, 0, Togl_Width(TOGLFB(ifp)->fbtogl), Togl_Height(TOGLFB(ifp)->fbtogl));
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(mm);
+
+    glFlush();
+    return 0;
+}
+
+int
+_togl_open_existing(FBIO *ifp, Togl *togl) {
+    char *tclcmd[255] = {'\0'};
+
+    FB_CK_FBIO(ifp);
+    /* Set up the togl_fb structure */
+    if ((TOGLFBL(ifp) = (char *)calloc(1, sizeof(struct togl_fb))) == NULL) {
+        fb_log("fb_togl_open:  togl_fb malloc failed\n");
+        return -1;
+    }
+
+    ifp->if_width = Togl_Width(togl);
+    ifp->if_height = Togl_Height(togl);
+
+    TOGLFB(ifp)->toglfbinterp = Togl_Interp(togl);
+    TOGLFB(ifp)->toglfbwin = Tk_Parent(Togl_TkWin(togl));
+    TOGLFB(ifp)->fbtogl = togl;  
+    Togl_MakeCurrent(togl);
+    glClearColor (0.0, 0, 0.0, 1);
+    glBindTexture (GL_TEXTURE_2D, TOGLFB(ifp)->texid);
+    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    TOGLFB(ifp)->texdata = realloc(TOGLFB(ifp)->texdata, ifp->if_width * ifp->if_height * 3);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, ifp->if_width, ifp->if_height, 0, GL_RGB, GL_UNSIGNED_BYTE, TOGLFB(ifp)->texdata);
+    return 0;
+}
+
+int
+togl_open_existing(FBIO *ifp, int argc, char **argv)
+{
+    Togl *togl;
+
+    if (argc != 10)
+        return -1;
+
+    if (sscanf(argv[1], "%p", (void *)&togl) != 1)
+        return -1;
+
+    return _togl_open_existing(ifp, togl);
+}
+
+
 HIDDEN int
 fb_togl_open(FBIO *ifp, char *file, int width, int height)
 {
@@ -301,6 +382,7 @@ togl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 HIDDEN int
 togl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
+    printf("writing:  xstart: %d, ystart %d, count: %d\n", xstart, ystart, count);
     Togl *togl;
     togl = TOGLFB(ifp)->fbtogl;
     Togl_MakeCurrent(togl);
@@ -308,6 +390,7 @@ togl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, TOGLFB(ifp)->texid);
     glTexSubImage2D(GL_TEXTURE_2D, 0, xstart, ifp->if_height-ystart, count, 1, GL_RGB, GL_UNSIGNED_BYTE, pixelp);
+    printf("writing:  if_width: %d, if_height %d\n", ifp->if_width, ifp->if_height);
     glBegin(GL_TRIANGLE_STRIP);
 
     glTexCoord2d(0, 0); glVertex3f(0, 0, 0);

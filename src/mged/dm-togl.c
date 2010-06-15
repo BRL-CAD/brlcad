@@ -125,30 +125,22 @@ Togl_dm_init(struct dm_list *o_dm_list,
 void
 Togl_fb_open()
 {
-    char *ogl_name = "/dev/togl";
+    char *togl_name = "/dev/togl";
     if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_AppendResult(interp, "Togl_fb_open: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
 
-#if 0
     *fbp = togl_interface; /* struct copy */
 
     fbp->if_name = bu_malloc((unsigned)strlen(togl_name)+1, "if_name");
-    bu_strlcpy(fbp->if_name, ogl_name, strlen(togl_name)+1);
+    bu_strlcpy(fbp->if_name, togl_name, strlen(togl_name)+1);
 
     /* Mark OK by filling in magic number */
     fbp->if_magic = FB_MAGIC;
     _togl_open_existing(fbp,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		       dmp->dm_width, dmp->dm_height,
-		       ((struct togl_vars *)dmp->dm_vars.priv_vars)->togl,
-		       ((struct togl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
-#endif
+		       ((struct togl_vars *)dmp->dm_vars.priv_vars)->togl);
 }
 
 

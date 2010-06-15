@@ -108,13 +108,10 @@ static const char *tk_device_name = "/dev/tk";
 #endif
 
 #ifdef IF_TOGL
-#if 0
-/*XXX CWY implement this interface */
 extern void togl_configureWindow();
 extern int togl_refresh();
 extern int togl_open_existing();
 extern FBIO togl_interface;
-#endif
 static const char *togl_device_name = "/dev/togl";
 #endif
 
@@ -193,8 +190,6 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 #endif  /* IF_TK */
 
 #ifdef IF_TOGL
-#if 0
-/* XXX CWY implment togl_open_existing */
     if (strcasecmp(argv[1], togl_device_name) == 0) {
 
 	found=1;
@@ -214,7 +209,6 @@ fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 	    return TCL_ERROR;
 	}
     }
-#endif
 #endif  /* IF_TOGL */
 
 
@@ -349,12 +343,9 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 #endif
 #endif  /* IF_TK */
 #ifdef IF_TOGL
-#if 0
-/* XXX CWY implement togl_configureWindow */
     if (!strncmp(ifp->if_name, togl_device_name, strlen(togl_device_name))) {
 	togl_configureWindow(ifp, width, height);
     }
-#endif
 #endif  /* IF_TOGL */
 
 }

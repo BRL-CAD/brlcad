@@ -44,12 +44,14 @@ rttherm_SOURCES = \
 
 # have to link static due to librttherm.a, the aix linker, and duplicate symbols in optical/multispectral
 rttherm_LDFLAGS = -static
-rttherm_CFLAGS = -DRT_MULTISPECTRAL
+rttherm_CFLAGS = -DRT_MULTISPECTRAL -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl $(GL_CPPFLAGS)
 rttherm_LDADD = \
 	$(top_builddir)/src/rt/librttherm.a \
 	${MULTISPECTRAL} \
 	${OPTICAL} \
 	${FB} \
+	${LIBGL} \
+	-L$(top_builddir)/src/other/togl -lToglstub2.1 \
 	${GED}
 
 ssamp_bw_SOURCES = ssamp-bw.c

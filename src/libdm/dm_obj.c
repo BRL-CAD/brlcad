@@ -2854,7 +2854,6 @@ dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
 
 #ifdef DM_TOGL
 	case DM_TYPE_TOGL:
-#if 0
 	    *dmop->dmo_fbs.fbs_fbp = togl_interface; /* struct copy */
 
 	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/togl")+1, "if_name");
@@ -2864,15 +2863,7 @@ dmo_openFb(struct dm_obj *dmop, Tcl_Interp *interp)
 	    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
 
 	    _togl_open_existing(dmop->dmo_fbs.fbs_fbp,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
-			       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
-			       dmop->dmo_dmp->dm_width,
-			       dmop->dmo_dmp->dm_height,
-			       ((struct togl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->togl,
-			       ((struct togl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
-			       0);
-#endif 
+			       ((struct togl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->togl);
 	    break;
 #endif
 

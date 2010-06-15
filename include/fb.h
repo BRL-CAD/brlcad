@@ -171,7 +171,7 @@ FB_EXPORT extern int _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 #  include "tk.h"
 #  define USE_TOGL_STUBS
 #  include "togl.h"
-FB_EXPORT extern int _togl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, int width, int height, Togl *togl, int double_buffer, int soft_cmap);
+FB_EXPORT extern int _togl_open_existing(FBIO *ifp, Togl *togl);
 #endif
 
 #ifdef IF_WGL
