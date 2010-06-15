@@ -12,7 +12,7 @@ Things left to do before the togl dm/fb setup is mature:
 
     http://sourceforge.net/projects/ftgl/
 
-6.  If ftgl, also need fonts - include the following three open fonts
+6.  If ftgl, also need fonts - include the following four open fonts
     (make a note they use OFL, not LGPL/BSD/etc...)
 
     Inconsolata:
@@ -23,6 +23,9 @@ Things left to do before the togl dm/fb setup is mature:
 
     DejaVu:
     http://dejavu-fonts.org/wiki/Main_Page
+
+    ProFont: (OK to use under OFL per email from Carl Osterwald, June 14 2010)
+    http://www.tobias-jung.de/seekingprofont/
 
     Make sure all three test out and are usable on multiple platforms,
     as well as the user having a way to switch from one to another.
