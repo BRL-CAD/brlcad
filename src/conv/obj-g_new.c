@@ -42,24 +42,83 @@
 #include "wdb.h"
 #include "obj_parser.h"
 
-static char *usage = "%s -u {m|cm|mm|ft|in|conv_factor} [-ipdv] [-g {g|o|m|t|n}] [-m {b|n|v}] [-t dist_tol] [-h plate_thickness] [-o {v|s|p}] [-c {v|s|p}] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
-        The 'input.obj' is the WaveFront Object file\n\
-        The 'output.g' is the name of a BRL-CAD database file to receive the conversion.\n\
-        The -u (units) option specifies units of obj file or conversion factor from obj file units to mm.\n\
-        The -i (ignore normals) option forces converter to ignore normals defined in the obj file.\n\
-        The -p (plot enable) option enables plot file creation of open edges in plate-mode-bots.\n\
-        The -d (debug output) option prints additional debugging information of developer interest.\n\
-               Output from std-err should be piped to a file when using the (-d) option.\n\
-        The -v (verbose output) option prints additional debugging information of user interest.\n\
-               Output from std-err should be piped to a file when using the (-v) option.\n\
-        The -g (grouping) option specifies obj file face grouping using group, object, material, texture or none.\n\
-        The -m (mode) option specifies conversion modes to output 'native bot', 'nmg' or 'bot-via-nmg'.\n\
-        The -t (dist_tol) option specifies the maximum distance which two vertices are considered the same (mm).\n\
-        The -h (plate_thickness) option specifies the thickness of plate-mode-bots (mm).\n\
-        The -o (open surface 'native bot' output bot type) option specifies volume, surface or plate bot type.\n\
-        The -c (closed surface 'native bot' output bot type) option specifies volume, surface or plate bot type.\n\
-        The -x (rt_debug_flag) option specifies debug bits (see raytrace.h).\n\
-        The -X (NMG_debug_flag) option specifies debug bits for NMG's (see nmg.h).\n";
+static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-ipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
+\n\
+        -u units_str           Units of obj file where units_str can\n\
+                               be any valid BRL-CAD unit such as one\n\
+                               of the following {m|cm|mm|ft|in} or\n\
+                               specify a conversion factor from obj\n\
+                               file units to mm.\n\
+\n\
+        -o open_bot_type       Type of bot to create when the\n\
+                               primitive is not a closed volume.\n\
+                               open_bot_type can be {s|p|n} where ...\n\
+                                 s = surface bot\n\
+                                 p = plate bot\n\
+                                 n = plate-nocos bot\n\
+\n\
+        -h plate_thickness     Plate thickness in mm units of plate\n\
+                               or plate-nocos bots created when the\n\
+                               bot is not a closed volume.\n\
+\n\
+        -i    Ignore normals defined in the obj file when the\n\
+              conversion mode is 'native-bots'.\n\
+\n\
+        -p    Plot open edges when creating bots which are not a\n\
+              closed volume. A plot/overlay (.pl) file will be\n\
+              created with the same name as the bot primitive and be\n\
+              placed in the current directory. If a plot file already\n\
+              exists, it will be overwritten.\n\
+\n\
+        -d    Output debug information to stderr stream. An extremely\n\
+              large amount of information will be output. It is\n\
+              strongly suggested strerr be piped to a file.\n\
+\n\
+        -v    Output verbose user information to stderr stream. There\n\
+              are different levels of verbose output where higher\n\
+              levels increase the amount of output information. Each\n\
+              occurrence of this option in the parameter list\n\
+              increases the level. A large amount of information will\n\
+              be output so piping stderr to a file is highly\n\
+              recommended.\n\
+\n\
+        -g grouping_option     Choose which face grouping, as defined\n\
+                               in the obj file, to use to create the\n\
+                               BRL-CAD primitives. The grouping_option\n\
+                               may be one of {g|o|m|t|n} where ...\n\
+                                g = group (default)\n\
+                                o = object\n\
+                                m = material\n\
+                                t = texture\n\
+                                n = none\n\
+\n\
+        -m mode_option         Choose the conversion mode. The\n\
+                               mode_option may be one of {b|n|v}\n\
+                               where ...\n\
+                                b = bot 'native-bot' (default)\n\
+                                n = nmg\n\
+                                v = bot-via-nmg\n\
+\n\
+        -t distance_tolerance  Maximum distance, in mm units, where\n\
+                               two vertices are considered the same.\n\
+                               The default is 0.0005mm which matches\n\
+                               the raytracer default distance\n\
+                               tolerance. Do not change this value\n\
+                               unless you also change the raytracer\n\
+                               distance tolerance.\n\
+\n\
+        -x rt_debug_flag       Specifies debug bits (see raytrace.h)\n\
+\n\
+        -X NMG_debug_flag      Specifies debug bits for NMG's\n\
+                               (see nmg.h)\n\
+\n\
+        input.obj              The path and file name of the input\n\
+                               WaveFront Object file.\n\
+\n\
+        output.g               The path and file name of the output\n\
+                               BRL-CAD database file. If this file\n\
+                               already exists, it will be\n\
+                               overwritten.\n";
 
 /* global definition */
 size_t *tmp_ptr = NULL;
@@ -177,7 +236,7 @@ struct ti_t {
     size_t   num_uvi;       /* number of unique triangle vertex indexes in uvi array */
     size_t   num_uvni;      /* number of unique triangle vertex normal index in uvni array */
     size_t   num_utvi;      /* number of unique triangle texture vertex index in utvi array */
-    unsigned char bot_mode;            /* bot mode (i.e. RT_BOT_PLATE or RT_BOT_SOLID */
+    unsigned char bot_mode;            /* bot mode RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID, RT_BOT_SURFACE */
     fastf_t *bot_vertices;             /* array of floats for bot vertices [bot_num_vertices*3] */
     fastf_t *bot_thickness;            /* array of floats for face thickness [bot_num_faces] */
     fastf_t *bot_normals;              /* array of floats for bot normals [bot_num_normals*3] */
@@ -566,11 +625,11 @@ test_face(struct ga_t *ga,
                                  * without fused vertices and now vertices are fused
                                  */
 {
-    fastf_t tmp_v_o[3] = { 0.0, 0.0, 0.0 }; /* temporary vertex, referenced from outer loop */
-    fastf_t tmp_v_i[3] = { 0.0, 0.0, 0.0 }; /* temporary vertex, referenced from inner loop */
+    fastf_t tmp_v_o[3] = {0.0, 0.0, 0.0}; /* temporary vertex, referenced from outer loop */
+    fastf_t tmp_v_i[3] = {0.0, 0.0, 0.0}; /* temporary vertex, referenced from inner loop */
     fastf_t tmp_w = 0.0;                    /* temporary weight */
-    fastf_t tmp_n[3] = { 0.0, 0.0, 0.0 };   /* temporary normal */
-    fastf_t tmp_t[3] = { 0.0, 0.0, 0.0 };   /* temporary texture vertex */
+    fastf_t tmp_n[3] = {0.0, 0.0, 0.0};   /* temporary normal */
+    fastf_t tmp_t[3] = {0.0, 0.0, 0.0};   /* temporary texture vertex */
     size_t  nofi = 0;                       /* normal obj file index */
     size_t  tofi = 0;                       /* texture vertex obj file index */
     fastf_t distance_between_vertices = 0.0;
@@ -1448,7 +1507,7 @@ free_ti(struct ti_t *ti)
         bu_free(ti->bot_texture_vertices, "ti->bot_texture_vertices");
     }
 
-    if (ti->bot_mode == RT_BOT_PLATE) {
+    if ((ti->bot_mode == RT_BOT_PLATE) || (ti->bot_mode == RT_BOT_PLATE_NOCOS)) {
         /* free array of bot_face_mode */
         bu_free((char *)ti->bot_face_mode, "ti->bot_face_mode");
 
@@ -1493,7 +1552,7 @@ create_bot_float_arrays(struct ga_t *ga,
         }
     }
 
-    if (ti->bot_mode == RT_BOT_PLATE) {
+    if ((ti->bot_mode == RT_BOT_PLATE) || (ti->bot_mode == RT_BOT_PLATE_NOCOS)) {
         /* allocate and polulate bot_thickness array */
         ti->bot_thickness = (fastf_t *)bu_calloc(ti->bot_num_faces, sizeof(fastf_t), "ti->bot_thickness");
         for (i = 0 ; i < ti->bot_num_faces ; i++) {
@@ -1846,9 +1905,9 @@ fuse_vertex(struct ga_t *ga,
 {
     size_t face_idx = 0; /* index into faces within for-loop */
     size_t vert_idx = 0; /* index into vertices within for-loop */
-    fastf_t tmp_v[3] = { 0.0, 0.0, 0.0 }; /* temporary vertex */
-    fastf_t tmp_n[3] = { 0.0, 0.0, 0.0 }; /* temporary normal */
-    fastf_t tmp_t[3] = { 0.0, 0.0, 0.0 }; /* temporary texture vertex */
+    fastf_t tmp_v[3] = {0.0, 0.0, 0.0}; /* temporary vertex */
+    fastf_t tmp_n[3] = {0.0, 0.0, 0.0}; /* temporary normal */
+    fastf_t tmp_t[3] = {0.0, 0.0, 0.0}; /* temporary texture vertex */
     fastf_t tmp_w = 0.0; /* temporary weight */
     size_t  vofi = 0;     /* vertex obj file index */
     size_t  nofi = 0;     /* normal obj file index */
@@ -2114,7 +2173,7 @@ test_closure(struct ga_t *ga,
     size_t first_idx = 0;
     edge_arr_2D_t edges = (edge_arr_2D_t)NULL;
     edge_arr_2D_t edges_tmp = (edge_arr_2D_t)NULL;
-    size_t previous_edge[2] = { 0, 0 };
+    size_t previous_edge[2] = {0, 0};
     size_t max_edges = 0;
     size_t max_edges_increment = 128;
     size_t edge_count = 0;
@@ -2259,15 +2318,15 @@ test_closure(struct ga_t *ga,
  * primitive. If the provided normals are smoothing normals, the 
  * resulting raytrace of the bot will be smooth. The type of bot
  * created is choosen by the bot_output_mode. If the type of bot
- * selected is RT_BOT_PLATE the thickness of the bot plates is
- * defined by the parameter bot_thickness. This function will return
- * a non-zero value if an error occured. Bot primitives will be named
- * according to the grouping name in the obj file with the following
- * exceptions. Characters invalid for BRL-CAD primitive names and
- * operating system file names are converted to underscore. The
- * remaining portions of the name indicate the decimal index number of
- * the grouping in the obj file, primitive type {b=bot} and closure
- * status {u=untested|c=closed|o=open}.
+ * selected is RT_BOT_PLATE or RT_BOT_PLATE_NOCOS the thickness of
+ * the bot plates is defined by the parameter bot_thickness. This
+ * function will return a non-zero value if an error occured. Bot
+ * primitives will be named according to the grouping name in the obj
+ * file with the following exceptions. Characters invalid for BRL-CAD
+ * primitive names and operating system file names are converted to
+ * underscore. The remaining portions of the name indicate the
+ * decimal index number of the grouping in the obj file, primitive
+ * type {b=bot} and closure status {u=untested|c=closed|o=open}.
  */
 int
 output_to_bot(struct ga_t *ga,
@@ -2278,7 +2337,7 @@ output_to_bot(struct ga_t *ga,
               fastf_t bot_thickness,         /* plate-mode-bot thickness in mm units */
               int texture_mode,              /* PROC_TEX, IGNR_TEX */    
               int normal_mode,               /* PROC_NORM, IGNR_NORM */
-              unsigned char bot_output_mode) /* RT_BOT_PLATE, RT_BOT_SOLID, RT_BOT_SURFACE */
+              unsigned char bot_output_mode) /* RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID, RT_BOT_SURFACE */
 {
     struct ti_t ti;              /* triangle indices structure */
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current bot */
@@ -2300,7 +2359,9 @@ output_to_bot(struct ga_t *ga,
     ti.num_uvi = 0;                  /* number of unique triangle vertex indexes in uvi array */
     ti.num_uvni = 0;                 /* number of unique triangle vertex normal index in uvni array */
     ti.num_utvi = 0;                 /* number of unique triangle texture vertex index in utvi array */
-    ti.bot_mode = (unsigned char)NULL;         /* bot mode (i.e. RT_BOT_PLATE or RT_BOT_SOLID */
+    ti.bot_mode = (unsigned char)NULL;         /* bot mode RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID,
+                                                * RT_BOT_SURFACE
+                                                */
     ti.bot_vertices = (fastf_t *)NULL;         /* array of float for bot vertices [bot_num_vertices*3] */
     ti.bot_thickness = (fastf_t *)NULL;        /* array of floats for face thickness [bot_num_faces] */
     ti.bot_normals = (fastf_t *)NULL;          /* array of floats for bot normals [bot_num_normals*3] */
@@ -2711,10 +2772,10 @@ output_to_nmg(struct ga_t *ga,
  * S T R 2 M M
  *
  * Validate unit string and output conversion factor to millimeters.
- * if string is not a standard units identifier, the function assumes
- * a custom conversion factor was specified. A valid null terminated
- * string is expected as input. Return of 0 is success, return of 1
- * is failure.
+ * If the string is not a standard units identifier, the function
+ * assumes a custom conversion factor was specified. A valid null
+ * terminated string is expected as input. Return of 0 is success,
+ * return of 1 is failure.
  */
 int
 str2mm(const char *units_string, fastf_t *conv_factor)
@@ -2760,21 +2821,19 @@ process_b_mode_option(struct ga_t *ga,
                       struct rt_wdb *outfp, 
                       fastf_t conv_factor, 
                       struct bn_tol *tol,
-                      fastf_t bot_thickness, /* bot plate thickness, in user defined units */
-                      int texture_mode,      /* PROC_TEX, IGNR_TEX */    
-                      int normal_mode,       /* PROC_NORM, IGNR_NORM */
-                      int plot_mode,         /* PLOT_OFF, PLOT_ON */
-                      unsigned char open_bot_output_mode,   /* RT_BOT_SURFACE, RT_BOT_SOLID, RT_BOT_PLATE */
-                      unsigned char closed_bot_output_mode) /* RT_BOT_SURFACE, RT_BOT_SOLID, RT_BOT_PLATE */
+                      fastf_t bot_thickness,              /* bot plate thickness (mm) */
+                      int normal_mode,                    /* PROC_NORM, IGNR_NORM */
+                      int plot_mode,                      /* PLOT_OFF, PLOT_ON */
+                      unsigned char open_bot_output_mode) /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
 {
     (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
     (void)retest_grouping_faces(ga, gfi, conv_factor, tol);
     if (!test_closure(ga, gfi, conv_factor, plot_mode, tol)) {
-        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode, 
-                            normal_mode, closed_bot_output_mode);
+        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, normal_mode,
+            RT_BOT_SOLID);
     } else {
-        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode,
-                            normal_mode, open_bot_output_mode);
+        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, normal_mode, 
+            open_bot_output_mode);
     }
     return;
 }
@@ -2794,23 +2853,20 @@ process_nv_mode_option(struct ga_t *ga,
                        struct rt_wdb *outfp, 
                        fastf_t conv_factor, 
                        struct bn_tol *tol,
-                       fastf_t bot_thickness, /* bot plate thickness (mm) */
-                       int texture_mode,      /* PROC_TEX, IGNR_TEX */    
-                       int normal_mode,       /* PROC_NORM, IGNR_NORM */
-                       int nmg_output_mode,   /* OUT_NMG, OUT_VBOT */
-                       int plot_mode,         /* PLOT_OFF, PLOT_ON */
-                       unsigned char open_bot_output_mode,   /* RT_BOT_SURFACE, RT_BOT_SOLID, RT_BOT_PLATE */
-                       unsigned char closed_bot_output_mode) /* RT_BOT_SURFACE, RT_BOT_SOLID, RT_BOT_PLATE */
+                       fastf_t bot_thickness,              /* bot plate thickness (mm) */
+                       int nmg_output_mode,                /* OUT_NMG, OUT_VBOT */
+                       int plot_mode,                      /* PLOT_OFF, PLOT_ON */
+                       unsigned char open_bot_output_mode) /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
 {
     if (output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, nmg_output_mode)) {
-        (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
+        (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
         (void)retest_grouping_faces(ga, gfi, conv_factor, tol);
         if (!test_closure(ga, gfi, conv_factor, plot_mode, tol)) {
-            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode, 
-                                normal_mode, closed_bot_output_mode);
+            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, IGNR_NORM,
+                RT_BOT_SOLID);
         } else {
-            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, texture_mode, 
-                                normal_mode, open_bot_output_mode);
+            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, IGNR_NORM,
+                open_bot_output_mode);
         }
     }
     return;
@@ -2839,15 +2895,15 @@ main(int argc, char **argv)
     struct bn_tol *tol;
     int nmg_output_mode = OUT_VBOT;
     int open_bot_output_mode = RT_BOT_PLATE;   /* default */
-    int closed_bot_output_mode = RT_BOT_SOLID; /* default */
     int plot_mode = PLOT_OFF;    /* default: do not create plot files of open edges for groupings  */
-    int texture_mode = IGNR_TEX; /* default: do not import texture vertices if included in obj file */
     int normal_mode = PROC_NORM; /* default: import face normals if included in obj file */
     char grouping_option = 'g';  /* default: group by obj file groups */
     char mode_option = 'b';      /* default: import as native bots */
     fastf_t conv_factor = 0.0;   /* user must specify units, there is no default */
-    fastf_t bot_thickness = 1.0; /* default: 1mm thick plate-mode-bots */
+    fastf_t bot_thickness = 0.0; /* user must specify plate bot thickness, there is not default */
     int user_defined_units_flag = 0;  /* flag indicating if user specified units on command line */
+    int user_bot_thickness_flag = 0;  /* flag indicating if user specified plate bot thickness */
+    int user_open_bot_output_mode_flag = 0; /* flag indicating if user specified open bot output mode */
 
     /* the raytracer tolerance values (rtip->rti_tol) need to match
      * these otherwise raytrace errors will result. the defaults
@@ -2866,7 +2922,7 @@ main(int argc, char **argv)
         bu_exit(1, usage, argv[0]);
     }
 
-    while ((c = bu_getopt(argc, argv, "pidx:X:vt:h:m:u:g:o:c:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "pidx:X:vt:h:m:u:g:o:")) != EOF) {
         switch (c) {
             case 'p': /* create plot files for open edges */
                 plot_mode = PLOT_ON;
@@ -2896,13 +2952,14 @@ main(int argc, char **argv)
                 dist_tmp = (double)atof(bu_optarg);
                 if (dist_tmp <= 0.0) {
                     bu_log("Distance tolerance must be greater then zero.\n");
-                    bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
                 }
                 tol->dist = dist_tmp;
                 tol->dist_sq = tol->dist * tol->dist;
                 break;
             case 'h': /* plate-mode-bot thickness in mm units */
                 bot_thickness = (fastf_t)atof(bu_optarg);
+                user_bot_thickness_flag = 1;
                 break;
             case 'm': /* output mode */
                 switch (bu_optarg[0]) {
@@ -2919,13 +2976,13 @@ main(int argc, char **argv)
                         break;
                     default:
                         bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
-                        bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
                         break;
                 }
                 break;
             case 'u': /* units */
                 if (str2mm(bu_optarg, &conv_factor)) {
-                    bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
                 }
                 user_defined_units_flag = 1;
                 break;
@@ -2940,62 +2997,63 @@ main(int argc, char **argv)
                         break;
                     default:
                         bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
-                        bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
                         break;
                 }
                 break;
-            case 'o': /* open surface 'native-bot' output bot type */
+            case 'o': /* open surface output bot type */
                 switch (bu_optarg[0]) {
-                    case 'v': /* volume bot */
-                        open_bot_output_mode = RT_BOT_SOLID;
-                        bu_log("NOTE: volume-mode-bots are not recommended for open surface bots.\n");
-                        break;
                     case 's': /* surface bot */
                         open_bot_output_mode = RT_BOT_SURFACE;
+                        user_open_bot_output_mode_flag = 1;
                         break;
                     case 'p': /* plate bot */
                         open_bot_output_mode = RT_BOT_PLATE;
+                        user_open_bot_output_mode_flag = 1;
+                        break;
+                    case 'n': /* plate bot nocos */
+                        open_bot_output_mode = RT_BOT_PLATE_NOCOS;
+                        user_open_bot_output_mode_flag = 1;
                         break;
                     default:
                         bu_log("Invalid open surface 'native-bot' output bot type '%c'.\n", bu_optarg[0]);
-                        bu_exit(EXIT_FAILURE,  usage, argv[0]);
-                        break;
-                }
-                break;
-            case 'c': /* closed surface 'native-bot' output bot type */
-                switch (bu_optarg[0]) {
-                    case 'v': /* volume bot */
-                        closed_bot_output_mode = RT_BOT_SOLID;
-                        break;
-                    case 's': /* surface bot */
-                        closed_bot_output_mode = RT_BOT_SURFACE;
-                        break;
-                    case 'p': /* plate bot */
-                        closed_bot_output_mode = RT_BOT_PLATE;
-                        break;
-                    default:
-                        bu_log("Invalid closed surface 'native-bot' output bot type '%c'.\n", bu_optarg[0]);
-                        bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
                         break;
                 }
                 break;
             default:
                 bu_log("Invalid option '%c'.\n", c);
-                bu_exit(EXIT_FAILURE,  usage, argv[0]);
+                bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
                 break;
         }
     }
 
     /* if user did not specify units, abort since units are required */
     if (!user_defined_units_flag) {
-        bu_log("Units were not specified but are required.\n");
-        bu_exit(EXIT_FAILURE,  usage, argv[0]);
+        bu_log("'units_str' was not specified but is required\n");
+        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
 
-    bu_log("using distance tolerance (%fmm)\n", tol->dist);
-    bu_log("using grouping option (%c)\n", grouping_option);
-    bu_log("using mode option (%c)\n", mode_option);
-    bu_log("using conversion factor (%f)\n", conv_factor);
+    /* if user did not specify bot type of open bots, abort since this is required */
+    if (!user_open_bot_output_mode_flag) {
+        bu_log("'open_bot_type' was not specified but is required\n");
+        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+    }
+
+    /* if plate bots were selected as the open bot output type but the
+     * user did not specify plate bot thickness, abort since thickness
+     * is required
+     */
+    if ((!user_bot_thickness_flag) && ((open_bot_output_mode == RT_BOT_PLATE)
+        || (open_bot_output_mode == RT_BOT_PLATE_NOCOS))) {
+            bu_log("'plate_thickness' was not specified but is required\n");
+            bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+    }
+
+    bu_log("Using distance tolerance (%fmm)\n", tol->dist);
+    bu_log("Using grouping option (%c)\n", grouping_option);
+    bu_log("Using mode option (%c)\n", mode_option);
+    bu_log("Using conversion factor (%f)\n", conv_factor);
 
     /* initialize ga structure */
     memset((void *)&ga, 0, sizeof(struct ga_t));
@@ -3072,13 +3130,12 @@ main(int argc, char **argv)
                     switch (mode_option) {
                         case 'b':
                             process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
-                                texture_mode, normal_mode, plot_mode, open_bot_output_mode, closed_bot_output_mode);
+                                normal_mode, plot_mode, open_bot_output_mode);
                             break;
                         case 'n':
                         case 'v':
-                            process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, 
-                                bot_thickness, texture_mode, normal_mode, nmg_output_mode, plot_mode,
-                                open_bot_output_mode, closed_bot_output_mode);
+                            process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+                                nmg_output_mode, plot_mode, open_bot_output_mode);
                             break;
                     }
                     free_gfi(&gfi);
@@ -3094,14 +3151,13 @@ main(int argc, char **argv)
                             bu_vls_addr(gfi->raw_grouping_name));
                         switch (mode_option) {
                             case 'b':
-                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode,
-                                    normal_mode, plot_mode, open_bot_output_mode, closed_bot_output_mode);
+                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
+                                    normal_mode, plot_mode, open_bot_output_mode);
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, 
-                                    bot_thickness, texture_mode, normal_mode, nmg_output_mode, plot_mode,
-                                    open_bot_output_mode, closed_bot_output_mode);
+                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+                                    nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
                         free_gfi(&gfi);
@@ -3118,14 +3174,13 @@ main(int argc, char **argv)
                             bu_vls_addr(gfi->raw_grouping_name));
                         switch (mode_option) {
                             case 'b':
-                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode,
-                                    normal_mode, plot_mode, open_bot_output_mode, closed_bot_output_mode);
+                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
+                                    normal_mode, plot_mode, open_bot_output_mode);
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, 
-                                    bot_thickness, texture_mode, normal_mode, nmg_output_mode, plot_mode,
-                                    open_bot_output_mode, closed_bot_output_mode);
+                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+                                    nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
                         free_gfi(&gfi);
@@ -3142,14 +3197,13 @@ main(int argc, char **argv)
                             bu_vls_addr(gfi->raw_grouping_name));
                         switch (mode_option) {
                             case 'b':
-                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode,
-                                    normal_mode, plot_mode, open_bot_output_mode, closed_bot_output_mode);
+                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
+                                    normal_mode, plot_mode, open_bot_output_mode);
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, 
-                                    bot_thickness, texture_mode, normal_mode, nmg_output_mode, plot_mode,
-                                    open_bot_output_mode, closed_bot_output_mode);
+                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+                                    nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
                         free_gfi(&gfi);
@@ -3166,14 +3220,13 @@ main(int argc, char **argv)
                             bu_vls_addr(gfi->raw_grouping_name));
                         switch (mode_option) {
                             case 'b':
-                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, texture_mode,
-                                    normal_mode, plot_mode, open_bot_output_mode, closed_bot_output_mode);
+                                process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
+                                    normal_mode, plot_mode, open_bot_output_mode);
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, 
-                                    bot_thickness, texture_mode, normal_mode, nmg_output_mode, plot_mode,
-                                    open_bot_output_mode, closed_bot_output_mode);
+                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+                                    nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
                         free_gfi(&gfi);
