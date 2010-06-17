@@ -386,6 +386,7 @@ togl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_
     Togl *togl;
     togl = TOGLFB(ifp)->fbtogl;
     Togl_MakeCurrent(togl);
+    glDepthMask(GL_FALSE);
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, TOGLFB(ifp)->texid);
@@ -399,6 +400,7 @@ togl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_
     glTexCoord2d(1, 1); glVertex3f(ifp->if_width, ifp->if_height, 0);
 
     glEnd();
+    glDepthMask(GL_TRUE);
 
     Togl_SwapBuffers(togl);
 
