@@ -33,6 +33,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <time.h>
 
 #include "bu.h"
 #include "vmath.h"
@@ -187,6 +188,7 @@ struct gfi_t {
                                            * value is useful to trace face errors back to the obj file.
                                            */
     struct     bu_vls *raw_grouping_name; /* raw name of grouping from obj file; group/object/material/texture */
+    struct     bu_vls *primitive_name;    /* name of primitive to be created */
     size_t     num_faces;                 /* number of faces represented by index_arr_faces and num_vertices_arr */
     size_t     max_faces;                 /* maximum number of faces based on current memory allocation */
     short int *face_status;               /* test_face result, 0 = untested, 1 = valid, >1 = degenerate */
@@ -201,7 +203,7 @@ struct gfi_t {
     int        grouping_type;             /* i.e. GRP_NONE, GRP_GROUP, GRP_OBJECT, GRP_MATERIAL or GRP_TEXTURE */
     size_t     grouping_index;            /* corresponds to the index of the grouping name within the obj file.  
                                            * this value is useful to append to the raw_grouping_name to
-                                           * ensure the resulting name is unique.
+                                           * create the primitive_name and ensure the primitive_name is unique.
                                            */
     size_t    *vertex_fuse_map;           /* maps the vertex index of duplicate (i.e. within tolerance) vertices
                                            * into a single vertex index. i.e. points all vertices close enough
@@ -297,65 +299,65 @@ collect_global_obj_file_attributes(struct ga_t *ga)
     ga->numPolyAttr = obj_polygonal_attributes(ga->contents, &ga->polyattr_list);
 
     ga->numGroups = obj_groups(ga->contents, &ga->str_arr_obj_groups);
-    bu_log("total number of groups in OBJ file; numGroups = (%lu)\n", ga->numGroups);
+    bu_log("Total number of groups in OBJ file; numGroups = (%lu)\n", ga->numGroups);
 
     if ((verbose > 1) || debug) {
-        bu_log("list of all groups i.e. 'g' in OBJ file\n");
+        bu_log("List of all groups i.e. 'g' in OBJ file\n");
         for (i = 0 ; i < ga->numGroups ; i++) {
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_groups[i]);
         }
     }
 
     ga->numObjects = obj_objects(ga->contents, &ga->str_arr_obj_objects);
-    bu_log("total number of object groups in OBJ file; numObjects = (%lu)\n", ga->numObjects);
+    bu_log("Total number of object groups in OBJ file; numObjects = (%lu)\n", ga->numObjects);
 
     if ((verbose > 1) || debug) {
-        bu_log("list of all object groups i.e. 'o' in OBJ file\n");
+        bu_log("List of all object groups i.e. 'o' in OBJ file\n");
         for (i = 0 ; i < ga->numObjects ; i++) {
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_objects[i]);
         }
     }
 
     ga->numMaterials = obj_materials(ga->contents, &ga->str_arr_obj_materials);
-    bu_log("total number of material names in OBJ file; numMaterials = (%lu)\n", ga->numMaterials);
+    bu_log("Total number of material names in OBJ file; numMaterials = (%lu)\n", ga->numMaterials);
 
     if ((verbose > 1) || debug) {
-        bu_log("list of all material names i.e. 'usemtl' in OBJ file\n");
+        bu_log("List of all material names i.e. 'usemtl' in OBJ file\n");
         for (i = 0 ; i < ga->numMaterials ; i++) {
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_materials[i]);
         }
     }
 
     ga->numTexmaps = obj_texmaps(ga->contents, &ga->str_arr_obj_texmaps);
-    bu_log("total number of texture map names in OBJ file; numTexmaps = (%lu)\n", ga->numTexmaps);
+    bu_log("Total number of texture map names in OBJ file; numTexmaps = (%lu)\n", ga->numTexmaps);
 
     if ((verbose > 1) || debug) {
-        bu_log("list of all texture map names i.e. 'usemap' in OBJ file\n");
+        bu_log("List of all texture map names i.e. 'usemap' in OBJ file\n");
         for (i = 0 ; i < ga->numTexmaps ; i++) {
             bu_log("(%lu)(%s)\n", i, ga->str_arr_obj_texmaps[i]);
         }
     }
 
     ga->numVerts = obj_vertices(ga->contents, &ga->vert_list);
-    bu_log("numVerts = (%lu)\n", ga->numVerts);
+    bu_log("Total number of vertices in OBJ file; numVerts = (%lu)\n", ga->numVerts);
 
     ga->numNorms = obj_normals(ga->contents, &ga->norm_list);
-    bu_log("numNorms = (%lu)\n", ga->numNorms);
+    bu_log("Total number of normals in OBJ file; numNorms = (%lu)\n", ga->numNorms);
 
     ga->numTexCoords = obj_texture_coord(ga->contents, &ga->texture_coord_list);
-    bu_log("numTexCoords = (%lu)\n", ga->numTexCoords);
+    bu_log("Total number of texture coordinates in OBJ file; numTexCoords = (%lu)\n", ga->numTexCoords);
 
     ga->numNorFaces = obj_polygonal_nv_faces(ga->contents, &ga->attindex_arr_nv_faces);
-    bu_log("number of oriented polygonal faces; numNorFaces = (%lu)\n", ga->numNorFaces);
+    bu_log("Number of oriented polygonal faces; numNorFaces = (%lu)\n", ga->numNorFaces);
 
     ga->numFaces = obj_polygonal_v_faces(ga->contents, &ga->attindex_arr_v_faces);
-    bu_log("number of polygonal faces only identifed by vertices; numFaces = (%lu)\n", ga->numFaces);
+    bu_log("Number of polygonal faces only identifed by vertices; numFaces = (%lu)\n", ga->numFaces);
 
     ga->numTexFaces = obj_polygonal_tv_faces(ga->contents, &ga->attindex_arr_tv_faces);
-    bu_log("number of textured polygonal faces; numTexFaces = (%lu)\n", ga->numTexFaces);
+    bu_log("Number of textured polygonal faces; numTexFaces = (%lu)\n", ga->numTexFaces);
 
     ga->numTexNorFaces = obj_polygonal_tnv_faces(ga->contents, &ga->attindex_arr_tnv_faces);
-    bu_log("number of oriented textured polygonal faces; numTexNorFaces = (%lu)\n", ga->numTexNorFaces);
+    bu_log("Number of oriented textured polygonal faces; numTexNorFaces = (%lu)\n", ga->numTexNorFaces);
 
     return;
 }
@@ -748,7 +750,9 @@ free_gfi(struct gfi_t **gfi)
 {
     if (*gfi != NULL) {
         bu_vls_free((*gfi)->raw_grouping_name);
+        bu_vls_free((*gfi)->primitive_name);
         bu_free((*gfi)->raw_grouping_name, "(*gfi)->raw_grouping_name");
+        bu_free((*gfi)->primitive_name, "(*gfi)->primitive_name");
         bu_free((*gfi)->index_arr_faces, "(*gfi)->index_arr_faces");
         bu_free((*gfi)->num_vertices_arr, "(*gfi)->num_vertices_arr");
         bu_free((*gfi)->obj_file_face_idx_arr, "(*gfi)->obj_file_face_idx_arr");
@@ -925,6 +929,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
             (*gfi)->num_vertices_arr = (size_t *)NULL;
             (*gfi)->obj_file_face_idx_arr = (size_t *)NULL;
             (*gfi)->raw_grouping_name = (struct  bu_vls *)NULL;
+            (*gfi)->primitive_name = (struct  bu_vls *)NULL;
             (*gfi)->num_faces = 0;
             (*gfi)->max_faces = 0;
             (*gfi)->face_status = (short int *)NULL;
@@ -961,6 +966,10 @@ collect_grouping_faces_indexes(struct ga_t *ga,
             /* allocate and initialize variable length string (vls) for raw_grouping_name */
             (*gfi)->raw_grouping_name = (struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls), "raw_grouping_name");
             bu_vls_init((*gfi)->raw_grouping_name);
+
+            /* allocate and initialize variable length string (vls) for primitive_name */
+            (*gfi)->primitive_name = (struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls), "primitive_name");
+            bu_vls_init((*gfi)->primitive_name);
 
             /* only need to copy in the grouping name for the first face found within the
              * grouping since all the faces in the grouping will have the same grouping name
@@ -2257,8 +2266,9 @@ test_closure(struct ga_t *ga,
                 }
                 if ((plot_mode == PLOT_ON) && (open_edges == 0)) {
                     bu_vls_init(&plot_file_name);
-                    bu_vls_sprintf(&plot_file_name, "%s.%lu.o.pl", 
-                                   bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index);
+                    bu_vls_sprintf(&plot_file_name, "%s.%lu.%d.o.pl", 
+                                   bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index,
+                                   gfi->face_type);
                     cleanup_name(&plot_file_name);
                     if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
                         bu_log("ERROR: unable to create plot file (%s)\n", bu_vls_addr(&plot_file_name));
@@ -2325,8 +2335,9 @@ test_closure(struct ga_t *ga,
  * file with the following exceptions. Characters invalid for BRL-CAD
  * primitive names and operating system file names are converted to
  * underscore. The remaining portions of the name indicate the
- * decimal index number of the grouping in the obj file, primitive
- * type {b=bot} and closure status {u=untested|c=closed|o=open}.
+ * decimal index number of the grouping in the obj file, face_type
+ * number of the grouping {1=v|2=tv|3=nv|4=tnv}, primitive type
+ * {b=bot} and closure status {u=untested|c=closed|o=open}.
  */
 int
 output_to_bot(struct ga_t *ga,
@@ -2408,19 +2419,26 @@ output_to_bot(struct ga_t *ga,
 
     create_bot_float_arrays(ga, &ti, bot_thickness, conv_factor);
 
+    /* added 1 to grouping_index so the index number used in the
+     * primitive name matches the obj file index since internal
+     * indexes from libobj start at 0 but obj file indexes start at 1.
+     */
     switch (gfi->closure_status) {
         case SURF_UNTESTED:
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.b.u.s", gfi->grouping_index);
+            bu_vls_sprintf(gfi->primitive_name, "%s.%lu.%d.b.u.s", bu_vls_addr(gfi->raw_grouping_name),
+                gfi->grouping_index + 1, gfi->face_type);
             break;
         case SURF_CLOSED:
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.b.c.s", gfi->grouping_index);
+            bu_vls_sprintf(gfi->primitive_name, "%s.%lu.%d.b.c.s", bu_vls_addr(gfi->raw_grouping_name),
+                gfi->grouping_index + 1, gfi->face_type);
             break;
         case SURF_OPEN:
-            bu_vls_printf(gfi->raw_grouping_name, ".%lu.b.o.s", gfi->grouping_index);
+            bu_vls_sprintf(gfi->primitive_name, "%s.%lu.%d.b.o.s", bu_vls_addr(gfi->raw_grouping_name),
+                gfi->grouping_index + 1, gfi->face_type);
             break;
     }
 
-    cleanup_name(gfi->raw_grouping_name);
+    cleanup_name(gfi->primitive_name);
 
     if (create_bot_int_arrays(&ti)) {
         bu_log("ERROR: function create_bot_int_arrays returned an error, aborting bot creation for object (%s)\n",
@@ -2431,13 +2449,13 @@ output_to_bot(struct ga_t *ga,
 
     /* write bot to ".g" file */
     if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
-        ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->raw_grouping_name), ti.bot_mode,
+        ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode,
                          RT_BOT_UNORIENTED, RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS, 
                          ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
                          ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
                          ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
     } else {
-        ret = mk_bot(outfp, bu_vls_addr(gfi->raw_grouping_name), ti.bot_mode, RT_BOT_UNORIENTED, 0, 
+        ret = mk_bot(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode, RT_BOT_UNORIENTED, 0, 
                          ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
                          ti.bot_faces, ti.bot_thickness, ti.bot_face_mode);
     }
@@ -2469,8 +2487,9 @@ output_to_bot(struct ga_t *ga,
  * Characters invalid for BRL-CAD primitive names and operating system
  * file names are converted to underscore. The remaining portions
  * of the name indicate the decimal index number of the grouping in
- * the obj file, primitive type {n=nmg|v=bot-via-nmg} and closure
- * status {c=closed}.
+ * the obj file, face_type number of the grouping
+ * {1=v|2=tv|3=nv|4=tnv}, primitive type {n=nmg|v=bot-via-nmg} and
+ * closure status {c=closed}.
  *
  * Recommended function improvements:
  *  - Profile the called nmg functions to determine where the
@@ -2710,13 +2729,19 @@ output_to_nmg(struct ga_t *ga,
                 }
                 if (output_mode == OUT_NMG) {
                     /* make nmg */
-                    bu_vls_printf(gfi->raw_grouping_name, ".%lu.n.c.s", gfi->grouping_index);
-                    cleanup_name(gfi->raw_grouping_name);
+                    /* added 1 to grouping_index so the index number
+                     * used in the primitive name matches the obj
+                     * file index since internal indexes from libobj
+                     * start at 0 but obj file indexes start at 1.
+                     */
+                    bu_vls_sprintf(gfi->primitive_name, "%s.%lu.%d.n.c.s",
+                        bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1, gfi->face_type);
+                    cleanup_name(gfi->primitive_name);
                     if (verbose || debug) {
                         bu_log("Running mk_nmg with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%lu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index);
                     }
                     /* the model (m) is freed when mk_nmg completes */
-                    if (mk_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), m) < 0) {
+                    if (mk_nmg(outfp, bu_vls_addr(gfi->primitive_name), m) < 0) {
                         bu_log("ERROR: Completed mk_nmg but FAILED for obj file face grouping name (%s), obj file face grouping index (%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index);
                     } else {
                         if (verbose || debug) {
@@ -2732,12 +2757,18 @@ output_to_nmg(struct ga_t *ga,
                     if (output_mode != OUT_VBOT) {
                         bu_log("NOTE: Currently bot-via-nmg can only create volume bots, ignoring plate mode option and creating volume bot instead.\n");
                     }
-                    bu_vls_printf(gfi->raw_grouping_name, ".%lu.v.c.s", gfi->grouping_index);
-                    cleanup_name(gfi->raw_grouping_name);
+                    /* added 1 to grouping_index so the index number
+                     * used in the primitive name matches the obj
+                     * file index since internal indexes from libobj
+                     * start at 0 but obj file indexes start at 1.
+                     */
+                    bu_vls_sprintf(gfi->primitive_name, "%s.%lu.%d.v.c.s",
+                        bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1, gfi->face_type);
+                    cleanup_name(gfi->primitive_name);
                     if (verbose || debug) {
                         bu_log("Running mk_bot_from_nmg with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%lu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index);
                     }
-                    if (mk_bot_from_nmg(outfp, bu_vls_addr(gfi->raw_grouping_name), s) < 0) {
+                    if (mk_bot_from_nmg(outfp, bu_vls_addr(gfi->primitive_name), s) < 0) {
                         bu_log("ERROR: Completed mk_bot_from_nmg but FAILED for obj file face grouping name (%s), obj file face grouping index (%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index);
                     } else {
                         if (verbose || debug) {
@@ -2904,6 +2935,10 @@ main(int argc, char **argv)
     int user_defined_units_flag = 0;  /* flag indicating if user specified units on command line */
     int user_bot_thickness_flag = 0;  /* flag indicating if user specified plate bot thickness */
     int user_open_bot_output_mode_flag = 0; /* flag indicating if user specified open bot output mode */
+    time_t start_time;
+    time_t end_time;
+    time_t elapsed_time;
+    struct tm *timep;
 
     /* the raytracer tolerance values (rtip->rti_tol) need to match
      * these otherwise raytrace errors will result. the defaults
@@ -3124,9 +3159,14 @@ main(int argc, char **argv)
     switch (grouping_option) {
         case 'n':
             for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+                (void)time(&start_time);
+                timep = localtime(&start_time);
                 collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_NONE, 0);
                 if (gfi != NULL) {
-                    bu_log("Processing Grouping (1 of 1): (%s)\n", bu_vls_addr(gfi->raw_grouping_name));
+                    bu_log("Start time: %02d:%02d:%02d Grouping index: (1 of 1) Facetype: (%d) Grouping name: (%s)\n",
+                        timep->tm_hour, timep->tm_min, timep->tm_sec,
+                        face_type_idx, bu_vls_addr(gfi->raw_grouping_name));
+
                     switch (mode_option) {
                         case 'b':
                             process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
@@ -3138,6 +3178,17 @@ main(int argc, char **argv)
                                 nmg_output_mode, plot_mode, open_bot_output_mode);
                             break;
                     }
+
+                    if (1 || verbose || debug) {
+                        (void)time(&end_time);
+                        timep = localtime(&end_time);
+                        elapsed_time = end_time - start_time;
+                        bu_log("End time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (1 of 1) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
+                            timep->tm_hour, timep->tm_min, timep->tm_sec,
+                            elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60), face_type_idx,
+                            bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
+                    }
+
                     free_gfi(&gfi);
                 }
             }
@@ -3145,10 +3196,15 @@ main(int argc, char **argv)
         case 'g':
             for (i = 0 ; i < ga.numGroups ; i++) {
                 for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+                    (void)time(&start_time);
+                    timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_GROUP, i);
                     if (gfi != NULL) {
-                        bu_log("Processing Grouping (%lu of %lu): (%s)\n", gfi->grouping_index + 1, ga.numGroups,
+                        bu_log("Start time: %02d:%02d:%02d Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s)\n",
+                            timep->tm_hour, timep->tm_min, timep->tm_sec,
+                            gfi->grouping_index + 1, ga.numObjects, face_type_idx,
                             bu_vls_addr(gfi->raw_grouping_name));
+
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
@@ -3160,6 +3216,18 @@ main(int argc, char **argv)
                                     nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
+
+                        if (1 || verbose || debug) {
+                            (void)time(&end_time);
+                            timep = localtime(&end_time);
+                            elapsed_time = end_time - start_time;
+                            bu_log("End time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
+                                timep->tm_hour, timep->tm_min, timep->tm_sec,
+                                elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+                                gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                                bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
+                        }
+
                         free_gfi(&gfi);
                     }
                 }
@@ -3168,10 +3236,15 @@ main(int argc, char **argv)
         case 'o':
             for (i = 0 ; i < ga.numObjects ; i++) {
                 for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+                    (void)time(&start_time);
+                    timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_OBJECT, i);
                     if (gfi != NULL) {
-                        bu_log("Processing Grouping (%lu of %lu): (%s)\n", gfi->grouping_index + 1, ga.numObjects,
+                        bu_log("Start time: %02d:%02d:%02d Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s)\n",
+                            timep->tm_hour, timep->tm_min, timep->tm_sec,
+                            gfi->grouping_index + 1, ga.numObjects, face_type_idx,
                             bu_vls_addr(gfi->raw_grouping_name));
+
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
@@ -3183,6 +3256,18 @@ main(int argc, char **argv)
                                     nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
+
+                        if (1 || verbose || debug) {
+                            (void)time(&end_time);
+                            timep = localtime(&end_time);
+                            elapsed_time = end_time - start_time;
+                            bu_log("End time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
+                                timep->tm_hour, timep->tm_min, timep->tm_sec,
+                                elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+                                gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                                bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
+                        }
+
                         free_gfi(&gfi);
                     }
                 }
@@ -3191,10 +3276,15 @@ main(int argc, char **argv)
         case 'm':
             for (i = 0 ; i < ga.numMaterials ; i++) {
                 for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+                    (void)time(&start_time);
+                    timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_MATERIAL, i);
                     if (gfi != NULL) {
-                        bu_log("Processing Grouping (%lu of %lu): (%s)\n", gfi->grouping_index + 1, ga.numMaterials,
+                        bu_log("Start time: %02d:%02d:%02d Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s)\n",
+                            timep->tm_hour, timep->tm_min, timep->tm_sec,
+                            gfi->grouping_index + 1, ga.numObjects, face_type_idx,
                             bu_vls_addr(gfi->raw_grouping_name));
+
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
@@ -3206,6 +3296,18 @@ main(int argc, char **argv)
                                     nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
+
+                        if (1 || verbose || debug) {
+                            (void)time(&end_time);
+                            timep = localtime(&end_time);
+                            elapsed_time = end_time - start_time;
+                            bu_log("End time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
+                                timep->tm_hour, timep->tm_min, timep->tm_sec,
+                                elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+                                gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                                bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
+                        }
+
                         free_gfi(&gfi);
                     }
                 }
@@ -3214,10 +3316,15 @@ main(int argc, char **argv)
         case 't':
             for (i = 0 ; i < ga.numTexmaps ; i++) {
                 for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+                    (void)time(&start_time);
+                    timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_TEXTURE, i);
                     if (gfi != NULL) {
-                        bu_log("Processing Grouping (%lu of %lu): (%s)\n", gfi->grouping_index + 1, ga.numTexmaps,
+                        bu_log("Start time: %02d:%02d:%02d Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s)\n",
+                            timep->tm_hour, timep->tm_min, timep->tm_sec,
+                            gfi->grouping_index + 1, ga.numObjects, face_type_idx,
                             bu_vls_addr(gfi->raw_grouping_name));
+
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
@@ -3229,6 +3336,18 @@ main(int argc, char **argv)
                                     nmg_output_mode, plot_mode, open_bot_output_mode);
                                 break;
                         }
+
+                        if (1 || verbose || debug) {
+                            (void)time(&end_time);
+                            timep = localtime(&end_time);
+                            elapsed_time = end_time - start_time;
+                            bu_log("End time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
+                                timep->tm_hour, timep->tm_min, timep->tm_sec,
+                                elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
+                                gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                                bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
+                        }
+
                         free_gfi(&gfi);
                     }
                 }
