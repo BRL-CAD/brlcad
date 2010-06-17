@@ -9,7 +9,9 @@ lessonsDOCBOOK_ES = \
 	lessons/es/mged08_prop_materiales_copa2.xml \
 	lessons/es/mged10_crear_taza.xml \
 	lessons/es/mged11_refinar_taza.xml \
-	lessons/es/mged12_taza_desde_gui.xml
+	lessons/es/mged12_taza_desde_gui.xml \
+	lessons/es/mged13_ubicar_figuras_en_3d.xml \
+	lessons/es/mged14_ubicar_figuras_en_3d_2.xml
 
 lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged01_commandwindow.png \
@@ -71,7 +73,24 @@ lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged12_mug_gui_finished_raytraced.png \
 	lessons/es/images/mged12_mug_handle_frontview.png \
 	lessons/es/images/mged12_mug_handle_topview.png \
-	lessons/es/images/mged12_mug_rim_frontview.png
+	lessons/es/images/mged12_mug_rim_frontview.png \
+	lessons/es/images/mged13_candle_comb_ed_checker.png \
+	lessons/es/images/mged13_candle_complete_front.png \
+	lessons/es/images/mged13_candle_design.png \
+	lessons/es/images/mged13_candle_raytraced_overlay.png \
+	lessons/es/images/mged13_candle_tabletop_base_candle_front.png \
+	lessons/es/images/mged13_candle_tabletop_base_front.png \
+	lessons/es/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png \
+	lessons/es/images/mged13_candle_tabletop_eto1_wireframe_front.png \
+	lessons/es/images/mged13_candle_tabletop_wireframe_front.png \
+	lessons/es/images/mged14_candle_base_sphere_topview.png \
+	lessons/es/images/mged14_candle_multipane.png \
+	lessons/es/images/mged14_candle_spheres_az35el25.png \
+	lessons/es/images/mged14_candle_spheres_frontview.png \
+	lessons/es/images/mged14_candle_spheres_raytraced.png \
+	lessons/es/images/mged14_candle_spheres_topview.png \
+	lessons/es/images/mged14_primitive_editor.png \
+	lessons/es/images/mged14_primitive_selection_dropdown.png
 
 lessonsDOCBOOK_EShtmldir = $(BRLCAD_DATA)/html/lessons/es
 lessonsDOCBOOK_EShtml_DATA = \
