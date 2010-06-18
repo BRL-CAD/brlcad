@@ -46,7 +46,6 @@ documentation_DATA = \
 	mater.txt \
 	matrix.txt \
 	mged.sh \
-	mged.tar.gz \
 	mk.tr \
 	movie.txt \
 	old-mged.tr \
