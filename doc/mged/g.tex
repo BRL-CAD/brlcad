@@ -1,0 +1,1600 @@
+\chapter{TUTORIALS ON EDITING SOLIDS}
+
+The Solid Editing state of MGED is used to modify the fundamental
+parameters of an individual solid.
+Each solid must be modified individually.
+
+\section{Solid Edit: A Six-Sided Polyhedron}
+
+\begin{figure}
+\centering \includegraphics{es8-top.ps}
+\caption{Top View of ARB8.}
+\label{es8-top}
+\end{figure}
+
+This section illustrates the use of commands while in
+SOL EDIT state to alter the
+shape of a polyhedron with six sides and 8 faces (ARB8).
+
+\noindent{\tt
+\$ {\em mged es.g} \\
+BRL-CAD Release 3.0 Graphics Editor (MGED) Compilation 82 \\
+    Thu Sep 22 08:08:39 EDT 1988 \\
+    mike@video.brl:/cad/.mged.4d2 \\
+ \\
+es.g: No such file or directory \\
+Create new database (y|n)[n]? {\em y} \\
+attach (nu|tek|tek4109|ps|plot|sgi)[nu]? {\em sgi} \\
+ATTACHING sgi (SGI 4d) \\
+Untitled MGED Database (units=mm) \\
+mged> {\em in arb8 rpp -1 1 -1 1 -1 1} \\
+mged> {\em size 10} \\
+mged>
+}
+
+Figure \ref{es8-top}
+is a top view of the six-sided polyhedron.
+The Z-axis perpendicular to the viewing screen.
+Next, the view is rotated so that all sides can be seen.
+
+\noindent{\tt
+mged> {\em Twist ROTY knob clockwise and restore} \\
+mged> {\em Twist ROTX knob counter-clockwise and restore} \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{es8-rot.ps}
+\caption{A Rotated View of the ARB8.}
+\label{es8-rot}
+\end{figure}
+Figure \ref{es8-rot} shows a better perspective of the solid.
+
+The next step in this tutorial is to transfer to the solid edit state.
+This can be accomplished in two ways:  either by going through
+the SOL PICK state (``illuminate mode'') or by direct transfer via
+keyboard command.
+Using illuminate mode is better when the name of the solid to be
+edited may not be known, while the keyboard command is generally
+preferred when the name of the solid is known.
+
+\noindent{\tt
+mged> {\em Select the ``Solid Illum'' entry in the button menu} \\
+mged> {\em Move the mouse out of the menu area} \\
+mged> {\em Click the mouse to enter SOL EDIT state} \\
+mged>
+}
+
+To perform a direct transfer from the viewing state to the solid edit state
+using a keyboard command, enter:
+
+\noindent{\tt
+mged> {\em sed arb8} \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{es8-sed.ps}
+\caption{An ARB8 in Solid Edit State.}
+\label{es8-sed}
+\end{figure}
+
+Figure \ref{es8-sed} corresponds to the view on the display.
+The ARB8 MENU is unique to the ARB primitive,
+and lists operations that can only be performed on an ARB solid.
+The items in the ARB8 MENU are
+selected by using the mouse.
+Each of the other types of solids have a
+similar unique menu.
+When one of these items is selected, the top level ARB8 MENU disappears,
+to be replaced with the indicated subordinate menu.
+The top-level menu reappears when either
+the ``edit menu'' item in the SOLID EDIT menu is selected,
+or the ``RETURN'' item in the subordinate menu is selected.
+
+The  SOLID EDIT  menu applies to all
+solids when in the SOL EDIT state.
+The items in the  SOLID EDIT  menu are selected
+by either using the mouse or by depressing the appropriate button on the
+button box.
+When any of the SOLID EDIT menu items are selected
+(eg, ``Rotate'', ``Translate'', ``Scale''), the solid-specific menu
+disappears.
+Th top-level solid-specific menu reappears when
+the ``edit menu'' item in the SOLID EDIT menu is selected.
+
+The {\em p [params]} command is used to
+make precise changes, where the numeric value of the parameter being
+edited is know.
+Values for all parameters in the ARB8
+and SOLID EDIT menus can be specified by using the {\em p} command,
+or by pointing and clicking with the mouse.
+
+\begin{figure}
+\centering \includegraphics{es8-tr0.ps}
+\caption{Translating ARB8 Point 1 to the Origin.}
+\label{es8-tr0}
+\end{figure}
+
+\subsection{Translate Operation}
+
+\noindent{\tt
+mged> {\em Select the ``Translate'' entry in the solid edit menu} \\
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+Point 1 of the primitive is moved to point 0 0 0,
+as shown in Figure \ref{es8-tr0}.
+
+The translate solid operation is selected
+by either picking ``Translate'' on the solid edit menu
+with the mouse, by depressing the solid edit button on the button box,
+or by entering the {\em press sed} command.
+Parameters to the translate solid operation
+are of the form {\em p a b c}
+where {\em a}, {\em b}, and {\em c} are the new coordinates
+of point 1 in the solid.
+The other points are transferred to keep the same position
+relative to point 1.
+The general form of the new coordinates for point is
+
+\begin{center}
+\begin{verbatim}
+x ' = x + a - x
+y ' = y + b - y
+Z ' = Z + c - Z
+\end{verbatim}
+\end{center}
+
+The command
+
+\noindent{\tt
+mged> {\em p 1 -1 -1} \\
+mged>
+}
+
+can be used to restore the primitive to the original position.
+
+\subsection{Rotate Operation}
+
+\begin{figure}
+\centering \includegraphics{es8-xrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about X.}
+\label{es8-xrot}
+\end{figure}
+
+The rotate operation is initiated by either selecting Rotate on the menu
+screen with the mouse,
+by depressing the Solid Rotate button on the button box,
+or by entering the {\em press srot} command on the keyboard.
+
+\noindent{\tt
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 45 0 0} \\
+mged>
+}
+
+The parameter {\em p} command is used to make precise rotation changes.
+The
+command is entered in the form {\em p a b c} where
+{\em a}, {\em b}, and {\em c} are the angles
+(in degrees) of rotation about the x, y, and z axes respectively.  Point 1,
+the vertex, remains fixed, and the solid is rotated about this point.  A
+positive angle of rotation is counter-clockwise when viewed in the positive
+direction along an axis.
+
+The order of rotation is not commutative.
+Rotation takes place about the
+Z axis, Y axis, and X axis in that order.
+Figure \ref{es8-xrot} shows the rotation of 45 degrees about the X axis.
+
+%The following is the formula for moving point (x,y,z) through angles
+%(a, b, c) to point (x', y', z')
+%\begin{verbatim}
+%[X'] [cos b cos c                     -cos b sin c        sin b        ][X]
+%[Y']=[sin a sin b cos c +cos a sin b   cos a cos c -sin a sin b sin c -sin a cos b ][Y]
+%[Z'] [sin a sin c -cos a sin b cos c   cos a sin b sin c + sin a cos c cos a cos b ][Z]
+%\end{verbatim}
+
+The values entered after the p are absolute - the rotations are applied to
+the primitive as it existed when solid rotation was first selected.  Thus
+entering {\em p 0 0 0} will undo any rotations
+performed since solid rotation was begun.
+
+\begin{figure}
+\centering \includegraphics{es8-yrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about Y.}
+\label{es8-yrot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es8-zrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about Z.}
+\label{es8-zrot}
+\end{figure}
+
+\noindent{\tt
+mged> {\em p 0 45 0} \\
+mged>
+}
+
+Figure \ref{es8-yrot} displays the solid
+after it has been rotated about the Y axis.
+
+\noindent{\tt
+mged> {\em p 0 0 45} \\
+mged>
+}
+
+Figure \ref{es8-zrot} displays the solid
+after it has been rotated about the Z axis.
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+This restores the original orientation of the solid.
+
+\subsection{Scale Operation}
+
+\begin{figure}
+\centering \includegraphics{es8-scale.ps}
+\caption{ARB8 Scale Increased by 2X.}
+\label{es8-scale}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
+mged> {\em p 2} \\
+mged>
+}
+
+Figure \ref{es8-scale} corresponds to the view that is shown on the display.
+The scale operation may be initiated by either selecting
+the Scale entry  on the menu with the mouse,
+by depressing the Solid Scale button,
+or by entering {\em press sscale} on the keyboard.
+The parameter command {\em p n} is
+used to enter a precise scale factors, where {\em n} is
+the scale factor.
+The coordinates of point 1 remain the same.  The distances
+from point 1 to the other points are multiplied by the scale value {\em n}.
+The general equations for the transformation from point p to p' are
+
+\begin{verbatim}
+    x'[i] = x[i] + n (x[i] - x[1] )
+    y'[i] = y[i] + n (y[i] - y[1] )   i != 1
+    z'[i] = z[i] + n (z[i] - z[1] )
+\end{verbatim}
+
+The size of the primitive may be changed by depressing the mouse at
+different positions.  When the mouse is clicked, the
+edited primitive is scaled about point 1 (the key point)
+by an amount proportional
+to the distance the mouse is from the center of the screen.  If the mouse
+is above the center of the screen, the edited primitive will become larger.
+If the
+mouse is below the center, the primitive will become smaller.
+
+The value of {\em n} entered is applied to the primitive as it existed when the
+solid scale state was entered.
+
+Entering {\em p 1} will return the primitive
+to the size it had when the solid scale operation first started.
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+\begin{figure}
+\centering \includegraphics{es8-edge1.ps}
+\caption{ARB8 Edge 15 Moved Through (9, -2, -2).}
+\label{es8-edge1}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es8-edge2.ps}
+\caption{ARB8 Edge 12 Moved Through (2, 5, -2).}
+\label{es8-edge2}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es8-edge3.ps}
+\caption{ARB8 Edge 14 Moved Through (2, -2, 7).}
+\label{es8-edge3}
+\end{figure}
+
+\subsection{Moving Edges}
+
+The move edge command permits the moving of a line or edge so that the
+line passes through the selected point.
+
+\noindent{\tt
+mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
+mged> {\em Select the ``move edges'' entry in the ARB menu} \\
+mged> {\em Select the ``move edge 15'' entry in the ARB8 edges menu} \\
+mged> {\em p 9 -2 -2} \\
+mged>
+}
+
+The edge 15 is moved so that it passes through the point (9, -2, -2).  The
+coordinates of the new points 1 and 5 are the intersection of the new edge
+with the planes 234 and 678.  Since both the old edge and new edge 15 are
+parallel to the X axis,
+the X coordinate of the point given by the {\em p} command
+has no meaning.  The X coordinates for points 1 and 5 are not changed.
+See Figure \ref{es8-edge1}.
+
+\noindent{\tt
+mged> {\em p 9 -1 -1} \\
+mged>
+}
+
+This restores the original shape.
+The choice of ``9'' for the X coordinate was arbitrary.
+
+\noindent{\tt
+mged> {\em Select the ``move edge 12'' entry in the ARB8 edges menu} \\
+mged> {\em p 2 5 -2} \\
+mged>
+}
+
+The edge 12 is parallel to the Y axis.  This command moves the points 1
+and 2 so that their X and Z coordinates are 2 and -2.
+See Figure \ref{es8-edge2}.
+The Y coordinates are not changed.
+
+To restore the view, enter:
+
+\noindent{\tt
+mged> {\em p 1 5 -1} \\
+mged>
+}
+
+The choice of ``5'' for the Y coordinate was arbitrary.
+
+\noindent{\tt
+mged> {\em Select the ``move edge 14'' entry in the ARB8 edges menu} \\
+mged> {\em p 2 -2 7} \\
+mged>
+}
+
+The edge 14 is parallel to the Z axis.
+This command moves the points 1
+and 4 so that their X and Y coordinates are 2 and -2.
+See Figure \ref{es8-edge3}.
+The Z coordinates are not changed.
+
+\noindent{\tt
+mged> {\em p 1 -1 7} \\
+mged>
+}
+
+This restores the original shape.
+The choice of ``7'' for the Z coordinate was arbitrary.
+
+\subsection{Extrude Command}
+
+\begin{figure}
+\centering \includegraphics{es8-ex1.ps}
+\caption{ARB8 Rear Face Extruded 5 Units in -Z.}
+\label{es8-ex1}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es8-ex2.ps}
+\caption{ARB8 Rear Face Extruded 3 Units in +Z.}
+\label{es8-ex2}
+\end{figure}
+
+The extrude command is used to move the opposite surface a distance from
+the specified surface or plate.
+This command can only be used when an ARB solid is in
+solid edit state.
+
+\noindent{\tt
+mged> {\em extrude 1265 5} \\
+mged>
+}
+
+In Figure \ref{es8-ex1},
+the plane opposite surface whose points are 1, 2, 6, and 5
+is moved to a distance of 5 in the positive Z direction from plane 1265.  Note
+that the points were selected counter-clockwise when viewed in the positive
+direction along the Z axis.
+
+\noindent{\tt
+mged> {\em extrude 1562 3} \\
+mged>
+}
+
+In Figure \ref{es8-ex2},
+the plane opposite surface 1562 is moved to a distance of 3
+in the negative Z direction from 1562.  Note that the points were selected
+clockwise when viewed in the positive direction along the Z axis.
+
+\noindent{\tt
+mged> {\em extrude 1265 2} \\
+mged>
+}
+
+This restores the original shape of this solid.
+
+To return control to the VIEWING state, select the ``REJECT Edit''
+item on the button menu, press the ``reject'' button on the button box,
+or enter the command {\em press reject} on the keyboard.
+Then, enter
+
+\noindent{\tt
+mged> {\em d arb8} \\
+mged>
+}
+
+to drop the ARB8 from view.
+
+\section{Solid Edit:  A Five-Sided Polyhedron}
+
+\begin{figure}
+\centering \includegraphics{es5-top.ps}
+\caption{Top View of an ARB5.}
+\label{es5-top}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es5-rot.ps}
+\caption{A Rotated View of the ARB5.}
+\label{es5-rot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es5-sed.ps}
+\caption{The ARB5 in Solid Edit State.}
+\label{es5-sed}
+\end{figure}
+
+This tutorial illustrates the application of the SOL EDIT state to the ARB5
+solid.
+In this tutorial, the view is modified by using the rotation
+knobs so that all sides can be seen.
+
+\noindent{\tt
+mged> {\em size 6} \\
+mged> {\em in arb5 arb5} \\
+Enter X, Y, Z for point 1: {\em 0 0 0} \\
+Enter X, Y, Z for point 2: {\em 0 0 1} \\
+Enter X, Y, Z for point 3: {\em 0 1 1} \\
+Enter X, Y, Z for point 4: {\em 0 1 0} \\
+Enter X, Y, Z for point 5: {\em -1 .5 .5} \\
+mged>
+}
+
+Figure \ref{es5-top} is the display of arb5
+in the VIEWING state that is seen when
+the solid is first created.
+In this view, the Z axis is perpendicular to the viewing screen.
+
+\noindent{\tt
+mged> {\em Twist ROTY knob clockwise and restore} \\
+mged> {\em Twist ROTX knob counter-clockwise and restore} \\
+mged>
+}
+
+These actions generate a view shown in Figure \ref{es5-rot}
+that shows all sides.
+
+\noindent{\tt
+mged> {\em Select the ``Solid Illum'' entry in the button menu} \\
+mged> {\em Move the mouse out of the menu area} \\
+mged> {\em Click the mouse to enter SOL EDIT state} \\
+mged>
+}
+
+These actions will place MGED in the SOL EDIT state
+as shown in Figure \ref{es5-sed}.
+
+\subsection{Translate Operation}
+
+\begin{figure}
+\centering \includegraphics{es5-tr.ps}
+\caption{Translating an ARB5.}
+\label{es5-tr}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Translate'' entry in the solid edit menu} \\
+mged> {\em p -1 -1 1} \\
+mged>
+}
+
+This command cause point 1 to be moved to coordinates (-1, -1, 1) and the
+other points are moved so that they keep the same relative position to point
+1.  See Figure \ref{es5-tr}.
+
+Enter this command to restore the solid to it's original location:
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+\subsection{Rotate Operation}
+
+\begin{figure}
+\centering \includegraphics{es5-xrot.ps}
+\caption{ARB5 Solid Edit Rotation about X.}
+\label{es5-xrot}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 45 0 0} \\
+mged>
+}
+
+Figure \ref{es5-xrot} shows a rotation of 45 degrees
+about an axis parallel to the X axis.
+The rotate command is entered in the form {\em p a b c}
+where {\em a}, {\em b}, and {\em c} are the angles
+(in degrees) of rotation about the x, y, and z axes and intersect at point 1.
+All rotation takes place about point 1.
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+This restores the original orientation of the solid.
+
+\subsection{Scale Operation}
+
+\begin{figure}
+\centering \includegraphics{es5-scale.ps}
+\caption{ARB5 Scale Increased by 2X.}
+\label{es5-scale}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
+mged> {\em p 2} \\
+mged>
+}
+
+Figure \ref{es5-scale} shows the change in the primitive.
+Point 1 remains the same
+and the distances of the other points from point 1 is multiplied by 2.
+
+Entering {\em p 1} will return the primitive
+to the size it had when the solid scale operation first started.
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+\subsection{Move Edge Command}
+
+\begin{figure}
+\centering \includegraphics{es5-edge1.ps}
+\caption{ARB5 Edge 14 Moved Through (1, 1, 1).}
+\label{es5-edge1}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es5-edge2.ps}
+\caption{ARB5 Point 5 Moved to (-1.5, 1, 1).}
+\label{es5-edge2}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es5-edge3.ps}
+\caption{ARB5 Edge 45 Moved Through (-1.5 1 1).}
+\label{es5-edge3}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{es5-edge4.ps}
+\caption{ARB5 Edge 12 Moved Through (2, 1, 2).}
+\label{es5-edge4}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
+mged> {\em Select the ``move edges'' entry in the ARB menu} \\
+mged> {\em Select the ``move edge 14'' entry in the ARB8 edges menu} \\
+mged> {\em p 1 1 1} \\
+mged>
+}
+
+The edge 14 is moved so that it moves through the point (1, 1, 1).
+Note that this point is the mid-point between points 1 and 4.
+See Figure \ref{es5-edge1}.
+
+\noindent{\tt
+mged> {\em p 0 2 0} \\
+mged>
+}
+
+This restores the original shape.
+
+\noindent{\tt
+mged> {\em Select the ``move point 5'' entry in the ARB5 edges menu} \\
+mged> {\em p -1.5 1 1} \\
+mged>
+}
+
+The point 5 is moved to location -1.5, 1, 1.  See Figure \ref{es5-edge2}.
+
+\noindent{\tt
+mged> {\em p -1 .5 .5} \\
+mged>
+}
+
+will restore the original shape.
+
+\noindent{\tt
+mged> {\em Select the ``move edge 45'' entry in the ARB5 edges menu} \\
+mged> {\em p -1.5 1 1} \\
+mged>
+}
+
+In Figure \ref{es5-edge3}, the edge 45 is moved
+so that it passes through the point (-1.5, 1, 1).
+Note that this point lies between the points 4 and 5.
+
+\noindent{\tt
+mged> {\em p -1 .5 .5} \\
+mged>
+}
+
+This restores the original shape.
+
+\noindent{\tt
+mged> {\em Select the ``move edge 12'' entry in the ARB5 edges menu} \\
+mged> {\em p 2 1 2} \\
+mged>
+}
+
+In Figure \ref{es5-edge4},
+the edge 12 is moved so that it passes through the point (2, 1, 2).
+Note that the coordinates correspond to point 2.
+
+The movement of the edges may yield unpredictable results when the edges
+are not parallel to one of the axes.
+
+
+To return control to the VIEWING state, select the ``REJECT Edit''
+item on the button menu, press the ``reject'' button on the button box,
+or enter the command {\em press reject} on the keyboard.
+Then, enter
+
+\noindent{\tt
+mged> {\em d arb5} \\
+mged>
+}
+
+to drop the ARB5 from view.
+
+\section{Solid Edit: Alter a Cylinder}
+
+\begin{figure}
+\centering \includegraphics{esc-top.ps}
+\caption{Top View of a Cylinder.}
+\label{esc-top}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{esc-rot.ps}
+\caption{A Rotated View of the Cylinder.}
+\label{esc-rot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{esc-sed.ps}
+\caption{A Cylinder in Solid Edit State.}
+\label{esc-sed}
+\end{figure}
+
+This tutorial illustrates the application of the SOL EDIT state to
+cylinder solids.
+
+\noindent{\tt
+mged> {\em size 12} \\
+mged> {\em in cyl rcc} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of height (H) vector: {\em 2 0 0} \\
+Enter radius: {\em 1}
+mged>
+}
+
+Figure \ref{esc-top} is the display of the cylinder solid
+when viewed from the top.
+Since the
+Z axis is perpendicular to the viewing screen, a view of all sides cannot be
+seen.
+
+\noindent{\tt
+mged> {\em Twist ROTY knob clockwise and restore} \\
+mged> {\em Twist ROTX knob counter-clockwise and restore} \\
+mged>
+}
+
+These actions generate a view, Figure \ref{esc-rot}, that shows all sides.
+
+\noindent{\tt
+mged> {\em Select the ``Solid Illum'' entry in the button menu} \\
+mged> {\em Move the mouse out of the menu area} \\
+mged> {\em Click the mouse to enter SOL EDIT state} \\
+mged>
+}
+
+Figure \ref{esc-sed} is the view that displays the menu
+for the SOL EDIT state.
+The
+point V is at the origin (0,0,0) in this example and is in the middle of the
+circle that contains points A and B.  H is the point of the center of the
+circle that contains points C and D.  The coordinates of H are the coordinates
+of the vector from V to H and represent the relative position of H to V.  Mag
+is the magnitude of these vectors and is represented by the formula
+\begin{center}
+\begin{verbatim}
+Mag = sqrt( x + y + z )
+\end{verbatim}
+\end{center}
+
+``H dir cos'' are the direction cosines of the vector H which
+is perpendicular to plane of the points A, B, and V.  The coordinates of A
+are the coordinates of the vector from V through A.  Mag is the magnitude of
+the vectors from V to A.  The coordinates of B are the coordinates of the
+vectors from V through B.  Mag is the magnitude of the vector from V to B.
+The values for c and d are the magnitudes of the vectors from the tip of
+vector H to the points C
+and D respectively.
+``A x B dir cos'' represents the direction cosines of the
+vector ``A x B''.
+
+\subsection{Translate Operation}
+
+\begin{figure}
+\centering \includegraphics{esc-tr.ps}
+\caption{Translating Cylinder Vertex to (1, 1, 1).}
+\label{esc-tr}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Translate'' entry in the solid edit menu} \\
+mged> {\em p 1 1 1} \\
+mged>
+}
+
+The location of the vertex point V is moved to (1, 1, 1).
+The locations of the other
+points relative to V remains the same.  See Figure \ref{esc-tr}.
+
+Move the mouse anywhere on the screen (outside the menu area), and click.
+Notice
+that the cylinder is moved so that V is placed at this location, and the
+coordinates of the other points remain the same relative to V.
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+This restores the solid to the original location.
+
+\subsection{Rotate Operation}
+
+\begin{figure}
+\centering \includegraphics{esc-xrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about X.}
+\label{esc-xrot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{esc-yrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about Y.}
+\label{esc-yrot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{esc-zrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about Z.}
+\label{esc-zrot}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 45 0 0} \\
+mged>
+}
+
+When viewing in the positive X direction, the cylinder is rotated counter-
+clockwise 45 degrees about an axis through point V parallel to the x axis.
+See Figure \ref{esc-xrot}.
+
+\noindent{\tt
+mged> {\em p 0 45 0} \\
+mged>
+}
+
+When viewing in the positive Y direction, the cylinder is rotated counter-
+clockwise 45 degrees about an axis through point V parallel to the Y axis.
+See Figure \ref{esc-yrot}.
+
+\noindent{\tt
+mged> {\em p 0 0 45} \\
+mged>
+}
+
+When viewing in the positive Z direction, the cylinder is rotated counter-
+clockwise 45 degrees about an axis through point V parallel to the Z axis.
+See Figure \ref{esc-zrot}.
+
+The command
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+will restore the cylinder to the original orientation.
+
+\subsection{Scale Operation}
+
+\begin{figure}
+\centering \includegraphics{esc-scale.ps}
+\caption{Cylinder Scale Increased by 1.5X.}
+\label{esc-scale}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
+mged> {\em p 1.5} \\
+mged>
+}
+
+The point V remains fixed, the distance H between the two end-plate ellipses
+is multiplied by 1.5.
+See Figure \ref{esc-scale}.
+
+The command
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+restores the original scale.
+
+\subsection{Scale H Command}
+
+\begin{figure}
+\centering \includegraphics{esc-sh.ps}
+\caption{Cylinder Scale H Vector.}
+\label{esc-sh}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
+mged> {\em Select the ``scale H'' entry in the TGC menu} \\
+mged> {\em p 1} \\
+mged>
+}
+
+The magnitude of the vector H is reduced from 2 to 1.
+See Figure \ref{esc-sh}.  The command
+
+\noindent{\tt
+mged> {\em p 2} \\
+mged>
+}
+
+will restore the original shape.
+
+\subsection{Scale A Command}
+
+\begin{figure}
+\centering \includegraphics{esc-sa.ps}
+\caption{Cylinder Scale A Vector.}
+\label{esc-sa}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``scale A'' entry in the TGC menu} \\
+mged> {\em p 2} \\
+mged>
+}
+
+The magnitude of the vector through point A is increased to 2, ie,
+the length of the axis of the ellipse through point A is set equal to p.
+See Figure \ref{esc-sa}.  The command
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+will restore the original shape.
+
+\subsection{Scale B Command}
+
+\begin{figure}
+\centering \includegraphics{esc-sb.ps}
+\caption{Cylinder Scale B Vector.}
+\label{esc-sb}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``scale B'' entry in the TGC menu} \\
+mged> {\em p 2} \\
+mged>
+}
+
+The magnitude of the vector through point B is increased to 2, ie,
+the length of the axis of the ellipse through point B is set equal to p.
+See Figure \ref{esc-sb}.  The command
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+will restore the original shape.
+
+\subsection{Scale C Command}
+
+\begin{figure}
+\centering \includegraphics{esc-sc.ps}
+\caption{Cylinder Scale C Vector.}
+\label{esc-sc}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``scale C'' entry in the TGC menu} \\
+mged> {\em p 2} \\
+mged>
+}
+
+The magnitude of the vector through point c is increased to the value of
+p.  The length of the axis of the ellipse through point c is set equal to the
+value of p.  See Figure \ref{esc-sc}.  The command
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+will restore the original shape.
+
+\subsection{Scale D Command}
+
+\begin{figure}
+\centering \includegraphics{esc-sd.ps}
+\caption{Cylinder Scale D Vector.}
+\label{esc-sd}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``scale D'' entry in the TGC menu} \\
+mged> {\em p 2} \\
+mged>
+}
+
+The magnitude of the vector through point D is changed to the value of p.
+The length of the axis of the ellipse through point D is set equal to the
+value of p.  See Figure \ref{esc-sd}.  The command
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+will restore the original shape.
+
+The scale H, A, B, C, and D commands provide for setting the magnitude
+equal to the value entered by the {\em p} command.
+The solid edit {\bf scale} operation provides
+for multiplying {\bf all} the vectors by the value
+entered by the {\em p} command.
+
+\subsection{Move End H Command}
+
+\begin{figure}
+\centering \includegraphics{esc-mh.ps}
+\caption{Cylinder Move End of H.}
+\label{esc-mh}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``move end H'' entry in the TGC menu} \\
+mged> {\em p 3} \\
+mged>
+}
+
+The length of the vector H is changed to the value of p.
+See Figure \ref{esc-mh}.  The command
+
+\noindent{\tt
+mged> {\em p 2} \\
+mged>
+}
+
+will restore the original shape.
+
+\subsection{Move End H (rt) Command}
+
+\begin{figure}
+\centering \includegraphics{esc-mhrt.ps}
+\caption{Cylinder Move End of H \& Rotate.}
+\label{esc-mhrt}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``move end H(rt)'' entry in the TGC menu} \\
+mged> {\em p 3} \\
+mged>
+}
+
+This command is similar to the ``move end H'' command except the vector
+through point A is rotated so its direction is in the -Y direction.
+See Figure \ref{esc-mhrt}.  The command
+
+\noindent{\tt
+mged> {\em p 2} \\
+mged>
+}
+
+will restore the original shape, but not the original orientation.
+
+To return control to the VIEWING state, select the ``REJECT Edit''
+item on the button menu, press the ``reject'' button on the button box,
+or enter the command {\em press reject} on the keyboard.
+Then, enter
+
+\noindent{\tt
+mged> {\em d cyl} \\
+mged>
+}
+
+to drop the cylinder from view.
+
+\section{Solid Edit: Alter Ellipsoid}
+
+\begin{figure}
+\centering \includegraphics{ese-top.ps}
+\caption{Top View of an Ellipsoid.}
+\label{ese-top}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{ese-sed.ps}
+\caption{An Ellipsoid in Solid Edit State.}
+\label{ese-sed}
+\end{figure}
+
+This tutorial illustrates the application of the SOL EDIT state to the
+ellipsoid primitive.
+
+\noindent{\tt
+mged> press reset
+mged> {\em size 6} \\
+mged> {\em in ell ellg} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of vector A: {\em 1 0 0} \\
+Enter X, Y, Z of vector B: {\em 0 .3536 -0.3536} \\
+Enter X, Y, Z of vector C: {\em 0 .3536  0.3536} \\
+mged>
+}
+
+Figure \ref{ese-top} is the display of the primitive in the viewing state.
+Since the
+Z axis is perpendicular to the viewing screen, a view of all sides cannot be
+seen.
+
+\noindent{\tt
+mged> {\em Twist ROTY knob clockwise and restore} \\
+mged> {\em Twist ROTX knob counter-clockwise and restore} \\
+mged>
+}
+
+These actions generate a view that shows all sides.
+
+\noindent{\tt
+mged> {\em Select the ``Solid Illum'' entry in the button menu} \\
+mged> {\em Move the mouse out of the menu area} \\
+mged> {\em Click the mouse to enter SOL EDIT state} \\
+mged>
+}
+
+The display will be changed from the VIEWING MODE through the SOL PICK to
+the SOL EDIT state.  Figure \ref{ese-sed} is the view that is displayed.
+
+The coordinates of the points A, B, C, are given by the product of the
+magnitude of the vector and the cosine of X, Y, and Z direction cosines.  In
+the display, the coordinates are:
+
+\begin{center}
+\begin{verbatim}
+A = (1, 0, 0)
+B = (0, 0.3536, -0.3536)
+C = (0, 0.3536,  0.3536)
+\end{verbatim}
+\end{center}
+or
+\begin{center}
+\begin{verbatim}
+A = ( 1* cos  0,  1* cos 90,   1* cos 90 )
+B = (.5* cos 90, .5* cos 45, -.5* cos 45 )
+C = (.5* cos 90, .5* cos 45,  .5* cos 45 )
+\end{verbatim}
+\end{center}
+
+\subsection{Translate Operation}
+
+\begin{figure}
+\centering \includegraphics{ese-tr.ps}
+\caption{Translating Ellipsoid to (-1, 1, 1).}
+\label{ese-tr}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Translate'' entry in the solid edit menu} \\
+mged> {\em p -1 1 1} \\
+mged>
+}
+
+The key point V is moved to (-1, 1, 1) and the ellipsoid maintains its
+relative position to V.  See Figure \ref{ese-tr}.
+
+While in the SOL EDIT state, the solid may be translated by
+using the mouse.  These changes are not numerically exact, but they can be
+useful to visually position a solid with respect to other solids.
+Move the mouse to a position outside the menu area on the screen.
+Click the mouse.
+The center point (V) of the ellipsoid will be translated to that point.
+Note that only the value of the coordinates of V are changed.
+The command
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+will restore the original position.
+
+\subsection{Rotate Operation}
+
+\begin{figure}
+\centering \includegraphics{ese-xrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about X.}
+\label{ese-xrot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{ese-yrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about Y.}
+\label{ese-yrot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{ese-zrot.ps}
+\caption{Solid Edit Rotation of 45 Degrees about Z.}
+\label{ese-zrot}
+\end{figure}
+
+The rotate operation is initiated by either selecting Rotate on the menu
+screen with the mouse,
+by depressing the Solid Rotate button on the button box,
+or by entering the {\em press srot} command on the keyboard.
+
+\noindent{\tt
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 45 0 0} \\
+mged>
+}
+
+Figure \ref{ese-xrot} shows the rotation of the ellipsoid about its X axis.
+The angle of rotation is counter-clockwise when viewed in the positive X
+direction.  The direction cosines of vectors VB and VC are changed by 45 .
+
+\noindent{\tt
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 0 45 0} \\
+mged>
+}
+
+Figure \ref{ese-yrot} shows the rotation of the ellipsoid about its Y axis.
+The angle
+of rotation is counter-clockwise when viewed in the positive Y direction.  The
+rotation is made from the original view, and the restoration of the view is
+not necessary.
+
+\noindent{\tt
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 0 0 45} \\
+mged>
+}
+
+Figure \ref{ese-zrot} shows the rotation of the ellipsoid about its Z axis.
+The axis
+of rotation is counter-clockwise when viewed in the positive Z direction.
+The command
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+restores the original orientation of the solid.
+
+\subsection{Scale Operation}
+
+\begin{figure}
+\centering \includegraphics{ese-scale.ps}
+\caption{Ellipsoid Scale Decreased.}
+\label{ese-scale}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
+mged> {\em p .5} \\
+mged>
+}
+
+Point V is not changed,
+but the distance from V to the surface of the ellipsoid is multiplied by 0.5,
+because the magnitude of the vectors are multiplied by the value of 0.5.
+See Figure \ref{ese-scale}.
+
+Move the mouse to a position outside the menu area and above the X axis,
+and click the mouse.
+Notice that the size of the ellipsoid has grown, ie,
+the magnitude of the vectors have increased.
+Move the mouse to a position below the X axis, and click the mouse.
+Notice that the size of the ellipsoid has increased.
+
+The command
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+will restore the original scale.
+
+NOTE:
+The use
+of the scale operation from the Solid Edit menu
+will result in the values of all the vectors being
+multiplied by the value of the scale.
+Use of the scale operaton from the Ellipsoid menu
+with a particular vector A, B, or C changes the
+magnitude of that vector to the value of the scale.
+
+\subsection{Scale A Command}
+
+\begin{figure}
+\centering \includegraphics{ese-sa.ps}
+\caption{Ellipsoid Scale A Vector.}
+\label{ese-sa}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
+mged> {\em Select the ``scale A'' entry in the ellipsoid menu} \\
+mged> {\em p 1.5} \\
+mged>
+}
+
+The magnitude of the vector to point A is set equal to the value of p
+(eg 1.5).
+The components of the vector are (1.5, 0, 0) since the vector was
+parallel to the X axis.  See Figure \ref{ese-sa}.  The command
+
+\noindent{\tt
+mged> {\em Select the ``scale A'' entry in the TGC menu} \\
+mged> {\em p 1} \\
+mged>
+}
+
+will restore the original shape.
+
+\subsection{Scale B Command}
+
+\begin{figure}
+\centering \includegraphics{ese-sb.ps}
+\caption{Ellipsoid Scale B Vector.}
+\label{ese-sb}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``scale B'' entry in the Ellipsoid menu} \\
+mged> {\em p 1.5} \\
+mged>
+}
+
+The magnitude of the vector to point B is set equal to the value of p
+(eg 1.5).
+The coordinates of the vector are the product of p and the
+direction cosines of B.  See Figure \ref{ese-sb}.  The command
+
+\noindent{\tt
+mged> {\em p 0.5} \\
+mged>
+}
+
+will restore the original shape.
+
+\subsection{Scale C Command}
+
+\begin{figure}
+\centering \includegraphics{ese-sc.ps}
+\caption{Ellipsoid Scale C Vector.}
+\label{ese-sc}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``scale C'' entry in the Ellipsoid menu} \\
+mged> {\em p 1.5} \\
+mged>
+}
+
+The magnitude of the vector to point C is set equal to the value of p
+(ie, 1.5).
+The coordinates of the vector are the product of p and the
+direction cosines of C.  See Figure \ref{ese-sc}.  The command
+
+\noindent{\tt
+mged> {\em p 0.5} \\
+mged>
+}
+
+will restore the original shape.
+
+To return control to the VIEWING state, select the ``REJECT Edit''
+item on the button menu, press the ``reject'' button on the button box,
+or enter the command {\em press reject} on the keyboard.
+Then, enter
+
+\noindent{\tt
+mged> {\em d ell} \\
+mged>
+}
+
+to drop the ellipsoid from view.
+
+\section{Solid Edit: Alter Torus}
+
+\begin{figure}
+\centering \includegraphics{est-top.ps}
+\caption{Top View of a Torus.}
+\label{est-top}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{est-sed.ps}
+\caption{The Torus in Solid Edit State.}
+\label{est-sed}
+\end{figure}
+
+This tutorial illustrates the application of the SOL EDIT state to the
+torus solid.
+
+\noindent{\tt
+mged> {\em size 6} \\
+mged> {\em in tor tor} \\
+Enter X, Y, Z of vertex: {\em 0 0 0} \\
+Enter X, Y, Z of normal vector: {\em 0 1 0} \\
+Enter radius 1: {\em 1} \\
+Enter radius 2: {\em 0.2} \\
+mged>
+}
+
+Figure \ref{est-top} is the display of the torus solid in viewing state.
+Since the
+Z-axis is perpendicular to the viewing screen, a view of all sides cannot be
+seen.
+
+\noindent{\tt
+mged> {\em Twist ROTY knob clockwise and restore} \\
+mged> {\em Twist ROTX knob counter-clockwise and restore} \\
+mged>
+}
+
+These actions generate a view of the torus that shows all sides,
+as shown in Figure \ref{est-sed}.
+
+\noindent{\tt
+mged> {\em Select the ``Solid Illum'' entry in the button menu} \\
+mged> {\em Move the mouse out of the menu area} \\
+mged> {\em Click the mouse to enter SOL EDIT state} \\
+mged>
+}
+
+The torus is a ring whose cross-section is a circle.  The distance from
+the vertex to the center of the cross-section is r1 and r2 is the radius of
+the circular cross section.
+
+Let the points I and O be the intersection of the line x=-z and the torus.
+Then,
+\begin{center}
+\begin{verbatim}
+I = (-(r2-r1) cos 45, 0, (r2-r1) cos 45 )
+O = (-(r2+r1) cos 45, 0, (r2+r1) cos 45 )
+\end{verbatim}
+\end{center}
+
+\subsection{Translate Operation}
+
+\begin{figure}
+\centering \includegraphics{est-tr.ps}
+\caption{Translating a Torus.}
+\label{est-tr}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Translate'' entry in the solid edit menu} \\
+mged> {\em p -.5 -1 .5} \\
+mged>
+}
+
+The vertex V of the torus is moved to (-.5, -1, .5).
+See figure \ref{est-tr}.  The
+coordinates of the other points remain the same, relative to the vertex.
+The command
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+will restore the original position.
+
+\subsection{Rotate Operation}
+
+\begin{figure}
+\centering \includegraphics{est-xrot.ps}
+\caption{Torus Solid Edit Rotation about X.}
+\label{est-xrot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{est-yrot.ps}
+\caption{Torus Solid Edit Rotation about Y.}
+\label{est-yrot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{est-zrot.ps}
+\caption{Torus Solid Edit Rotation about Z.}
+\label{est-zrot}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Rotate'' entry in the solid edit menu} \\
+mged> {\em p 45 0 0} \\
+mged>
+}
+
+The torus is rotated 45 degrees counter-clockwise about the positive X axis.
+The
+coordinates of the points I and H are transformed using the following matrix:
+\begin{verbatim}
+    [x'] [1   0      0   ] [x]
+    [y']=[0  .7071 -.7071] [y]
+    [z'] [0  .7071  .7071] [z]
+\end{verbatim}
+See Figure \ref{est-xrot}.
+
+\noindent{\tt
+mged> {\em p 0 45 0} \\
+mged>
+}
+
+The torus is rotated 45 degrees counter-clockwise about the positive Y axis.
+See Figure \ref{est-yrot}.
+
+\noindent{\tt
+mged> {\em p 0 0 45} \\
+mged>
+}
+
+The torus is rotated 45 degrees counter-clockwise about the positive Z axis.
+See Figure \ref{est-zrot}.
+The original orientation is restored by entering
+
+\noindent{\tt
+mged> {\em p 0 0 0} \\
+mged>
+}
+
+\subsection{Scale Operation}
+
+\begin{figure}
+\centering \includegraphics{est-scale.ps}
+\caption{Torus Scale Increased.}
+\label{est-scale}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``Scale'' entry in the solid edit menu} \\
+mged> {\em p 1.5} \\
+mged>
+}
+
+The vertex remains the same and all distances from the vertex are
+multiplied by 1.5, the value entered with p.  See Figure \ref{est-scale}.
+To return to the original scale, enter
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+\subsection{Scale Radius 1 Command}
+
+\begin{figure}
+\centering \includegraphics{est-sr1.ps}
+\caption{Scale Torus Radius 1.}
+\label{est-sr1}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
+mged> {\em Select the ``scale radius 1'' entry in the TORUS menu} \\
+mged> {\em p 1.5} \\
+mged>
+}
+
+The distance from the vertex to the center of the cross-section of the
+ring is set equal to the values given with {\em p}, eg, 1.5.
+See Figure \ref{est-sr1}.
+The original scale can be restored with
+
+\noindent{\tt
+mged> {\em p 1} \\
+mged>
+}
+
+\subsection{Scale Radius 2 Command}
+
+\begin{figure}
+\centering \includegraphics{est-sr2.ps}
+\caption{Scale Torus Radius 2.}
+\label{est-sr2}
+\end{figure}
+
+\noindent{\tt
+mged> {\em Select the ``edit menu'' entry in the solid edit menu} \\
+mged> {\em Select the ``scale radius 2'' entry in the TORUS menu} \\
+mged> {\em p 0.5} \\
+mged>
+}
+
+The distance from the center of the cross-section of the ring is set equal
+to the value given with {\em p}, eg 0.5.
+This value must remain less than the value for r1.
+See Figure \ref{est-sr2}.
+The command
+
+\noindent{\tt
+mged> {\em p 0.2} \\
+mged>
+}
+
+will restore the original shape.
+
+To return control to the VIEWING state, select the ``REJECT Edit''
+item on the button menu, press the ``reject'' button on the button box,
+or enter the command {\em press reject} on the keyboard.
+Then, enter
+
+\noindent{\tt
+mged> {\em d tor} \\
+mged>
+}
+
+to drop the torus from view.
