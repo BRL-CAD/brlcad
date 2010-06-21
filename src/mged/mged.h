@@ -657,11 +657,12 @@ extern int interactive; /* for pr_prompt */
 void pr_prompt(int show_prompt);
 
 /* grid.c */
-void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
-void snap_keypoint_to_grid(void);
-void snap_view_center_to_grid(void);
-void snap_to_grid(fastf_t *mx, fastf_t *my);
-void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
+extern void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
+extern void snap_keypoint_to_grid(void);
+extern void snap_view_center_to_grid(void);
+extern void snap_to_grid(fastf_t *mx, fastf_t *my);
+extern void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
+extern void draw_grid(void);
 
 /* menu.c */
 int mmenu_select(int pen_y, int do_func);
@@ -674,7 +675,8 @@ int f_overlay(
     char **argv);
 
 /* predictor.c */
-void predictor_frame(void);
+extern void predictor_frame(void);
+extern void predictor_init(void);
 
 /* usepen.c */
 int f_mouse(

@@ -101,7 +101,6 @@ extern int Pex_dm_init();
 
 extern void fbserv_set_port(void);		/* defined in fbserv.c */
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
-extern void predictor_init(void);	/* defined in predictor.c */
 
 extern struct _color_scheme default_color_scheme;
 
@@ -266,7 +265,7 @@ release(char *name, int need_close)
 
 
 int
-f_release(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls;
@@ -335,7 +334,7 @@ print_valid_dm(Tcl_Interp *interpreter)
 
 
 int
-f_attach(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **argv)
+f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char **argv)
 {
     struct w_dm *wp;
 
@@ -373,6 +372,8 @@ f_attach(ClientData clientData, Tcl_Interp *interpreter, int argc, const char **
 int
 gui_setup(char *dstr)
 {
+    Tk_GenericProc *handler = doEvent;
+
     /* initialize only once */
     if (tkwin != NULL)
 	return TCL_OK;
@@ -435,7 +436,7 @@ gui_setup(char *dstr)
     }
 
     /* create the event handler */
-    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    Tk_CreateGenericHandler(handler, (ClientData)NULL);
 
     Tcl_Eval(interp, "wm withdraw .");
     Tcl_Eval(interp, "tk appname mged");
@@ -618,7 +619,7 @@ get_attached(void)
  * Run a display manager specific command(s).
  */
 int
-f_dm(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
 
     if (argc < 2) {
@@ -780,11 +781,11 @@ mged_link_vars(struct dm_list *p)
 
 
 int
-f_get_dm_list(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
+f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     struct dm_list *dlp;
 
-    if (argc != 1) {
+    if (argc != 1 || !argv) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

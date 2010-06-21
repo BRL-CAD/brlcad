@@ -108,14 +108,6 @@ extern void draw_e_axes(void);
 extern void draw_m_axes(void);
 extern void draw_v_axes(void);
 
-extern void draw_grid(void);		/* grid.c */
-
-extern void draw_rect(void);		/* rect.c */
-extern void paint_rect_area(void);
-
-/* defined in predictor.c */
-extern void predictor_init(void);
-
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar(void);
 
