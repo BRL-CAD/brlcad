@@ -210,10 +210,11 @@ void std_out_or_err(ClientData clientData, int mask);
 
 
 static int
-mged_bomb_hook(genptr_t UNUSED(clientData), genptr_t data)
+mged_bomb_hook(genptr_t clientData, genptr_t data)
 {
     struct bu_vls vls;
     char *str = (char *)data;
+    Tcl_Interp *interpreter = (Tcl_Interp *)clientData;
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "set mbh_dialog [Dialog .#auto -modality application];");
@@ -221,7 +222,7 @@ mged_bomb_hook(genptr_t UNUSED(clientData), genptr_t data)
     bu_vls_printf(&vls, "label [$mbh_dialog childsite].l -text {%s};", str);
     bu_vls_printf(&vls, "pack [$mbh_dialog childsite].l;");
     bu_vls_printf(&vls, "update; $mbh_dialog activate");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+    Tcl_Eval(interpreter, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -1549,7 +1550,7 @@ main(int argc, char *argv[])
 		(void)pipe(pipe_err);
 #endif  /* HAVE_PIPE */
 
-		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
+		bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, interp);
 	    } /* status -- gui initialized */
 	} /* classic */
 
