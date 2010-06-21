@@ -95,7 +95,7 @@ void free_all_resources(struct dm_list *dlp);
  *	share -u res_type p	--->	causes 'p' to no longer share resource of type 'res_type'
  */
 int
-f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     int uflag = 0;		/* unshare flag */
     struct dm_list *dlp1 = (struct dm_list *)NULL;
@@ -106,7 +106,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc != 4) {
 	bu_vls_printf(&vls, "helpdevel share");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -123,7 +123,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    break;
 
     if (dlp1 == &head_dm_list) {
-	Tcl_AppendResult(interp, "share: unrecognized pathName - ",
+	Tcl_AppendResult(interpreter, "share: unrecognized pathName - ",
 			 argv[2], "\n", (char *)NULL);
 
 	bu_vls_free(&vls);
@@ -136,7 +136,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		break;
 
 	if (dlp2 == &head_dm_list) {
-	    Tcl_AppendResult(interp, "share: unrecognized pathName - ",
+	    Tcl_AppendResult(interpreter, "share: unrecognized pathName - ",
 			     argv[3], "\n", (char *)NULL);
 
 	    bu_vls_free(&vls);
@@ -159,7 +159,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 			SHARE_RESOURCE(uflag, _axes_state, dml_axes_state, ax_rc, dlp1, dlp2, vls, "share: axes_state")
 			    else {
 				bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
-				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+				Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
 
 				bu_vls_free(&vls);
 				return TCL_ERROR;
@@ -239,7 +239,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				}
 		    } else {
 			bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
 
 			bu_vls_free(&vls);
 			return TCL_ERROR;
@@ -248,7 +248,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    break;
 	default:
 	    bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
 
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -273,7 +273,7 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *	rset c bg 0 0 50	--->	sets the background color to dark blue
  */
 int
-f_rset (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_rset (ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     struct bu_vls vls;
 
@@ -296,7 +296,7 @@ f_rset (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	mged_vls_struct_parse(&vls, "MGED Variables, res_type - var", mged_vparse,
 			      (const char *)mged_variables, argc, argv);
 
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -312,7 +312,7 @@ f_rset (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				      (const char *)axes_state, argc-1, argv+1);
 	    else {
 		bu_vls_printf(&vls, "rset: resource type '%s' unknown\n", argv[1]);
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
 
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -343,7 +343,7 @@ f_rset (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_printf(&vls, "rset: no support available for the 'view' resource");
 	    else {
 		bu_vls_printf(&vls, "rset: resource type '%s' unknown\n", argv[1]);
-		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
 
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -352,13 +352,13 @@ f_rset (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    break;
 	default:
 	    bu_vls_printf(&vls, "rset: resource type '%s' unknown\n", argv[1]);
-	    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
 
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
     }
 
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;

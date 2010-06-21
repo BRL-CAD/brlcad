@@ -437,7 +437,7 @@ update_grids(fastf_t sf)
 
 
 int
-f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_grid_set (ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv)
 {
     struct bu_vls vls;
 
@@ -445,7 +445,7 @@ f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc < 1 || 5 < argc) {
 	bu_vls_printf(&vls, "help grid_set");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
@@ -453,7 +453,7 @@ f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     mged_vls_struct_parse(&vls, "Grid", grid_vparse,
 			  (char *)grid_state, argc, argv);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult(interpreter, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
