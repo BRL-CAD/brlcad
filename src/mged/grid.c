@@ -37,7 +37,6 @@
 #include "./mged_dm.h"
 
 
-extern void mged_vls_struct_parse(struct bu_vls *vls, char *title, struct bu_structparse *how_to_parse, char *structp, int argc, char **argv); /* defined in vparse.c */
 extern point_t e_axes_pos;  /* from edsol.c */
 extern point_t curr_e_axes_pos;  /* from edsol.c */
 

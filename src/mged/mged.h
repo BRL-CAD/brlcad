@@ -175,6 +175,7 @@ extern struct solid MGED_FreeSolid;	/* Head of freelist */
 extern int tran();
 extern int irot();
 extern void mged_setup(Tcl_Interp *interpreter);
+extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
 extern void dir_build();
 extern void buildHrot(fastf_t *, double, double, double);
 extern void dozoom(int which_eye);
@@ -545,7 +546,9 @@ int mged_svbase(void);
 int mged_vrot_xyz(char origin, char coords, vect_t rvec);
 void size_reset(void);
 void solid_list_callback(void);
-void view_ring_destroy(struct dm_list *dlp);
+
+extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
+extern void view_ring_destroy(struct dm_list *dlp);
 
 /* cmd.c */
 int cmdline(struct bu_vls *vp, int record);
@@ -779,7 +782,8 @@ struct wdb_pipept *del_pipept(struct wdb_pipept *);
 void move_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
 
 /* vparse.c */
-void mged_vls_struct_parse_old(
+extern void mged_vls_struct_parse(struct bu_vls *vls, char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, char **argv); /* defined in vparse.c */
+extern void mged_vls_struct_parse_old(
     struct bu_vls *vls,
     const char *title,
     struct bu_structparse *how_to_parse,

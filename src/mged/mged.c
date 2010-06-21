@@ -103,8 +103,6 @@
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
-extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
-extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
 extern void draw_e_axes(void);
 extern void draw_m_axes(void);
