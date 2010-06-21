@@ -174,7 +174,7 @@ extern struct solid MGED_FreeSolid;	/* Head of freelist */
 
 extern int tran();
 extern int irot();
-extern void mged_setup(void);
+extern void mged_setup(Tcl_Interp *interpreter);
 extern void dir_build();
 extern void buildHrot(fastf_t *, double, double, double);
 extern void dozoom(int which_eye);
