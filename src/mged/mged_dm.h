@@ -26,16 +26,17 @@
 #ifndef SEEN_MGED_DM_H
 #define SEEN_MGED_DM_H
 
+#include "common.h"
+
 #include "dm.h"	/* struct dm */
-#include "./menu.h" /* struct menu_item */
-#include "./scroll.h" /* struct scroll_item */
+#include "dm_xvars.h"
+
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-#ifdef HAVE_TK
-#  include <tk.h>
-#endif
+#include "./menu.h" /* struct menu_item */
+#include "./scroll.h" /* struct scroll_item */
 
 
 #ifndef COMMA
