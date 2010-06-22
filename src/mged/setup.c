@@ -48,7 +48,8 @@
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
-extern void mged_global_variable_setup(Tcl_Interp *interp);
+extern void mged_global_variable_setup(Tcl_Interp *interpreter);
+
 
 static struct cmdtab mged_cmdtab[] = {
     {"%", f_comm, GED_FUNC_PTR_NULL},
@@ -395,7 +396,6 @@ cmd_setup(void)
 {
     struct cmdtab *ctp;
     struct bu_vls temp;
-    struct bu_vls vls;
     const char *pathname;
     char buffer[1024];
 
@@ -455,7 +455,7 @@ cmd_setup(void)
 
 
 static void
-mged_output_handler(struct ged *UNUSED(gedp), char *line)
+mged_output_handler(struct ged *UNUSED(gp), char *line)
 {
     if (line)
 	bu_log("%s", line);
@@ -474,7 +474,7 @@ mged_refresh_handler(void *clientdata)
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
 void
-mged_setup(Tcl_Interp *interpreter)
+mged_setup(Tcl_Interp **interpreter)
 {
     int try_auto_path = 0;
 
@@ -491,10 +491,10 @@ mged_setup(Tcl_Interp *interpreter)
     }
 
     if (interpreter)
-	Tcl_DeleteInterp(interpreter);
+	Tcl_DeleteInterp(*interpreter);
 
     /* Create the interpreter */
-    interpreter = Tcl_CreateInterp();
+    *interpreter = Tcl_CreateInterp();
 
     /* a two-pass init loop.  the first pass just tries default init
      * routines while the second calls tclcad_auto_path() to help it
@@ -505,85 +505,85 @@ mged_setup(Tcl_Interp *interpreter)
 	/* not called first time through, give Tcl_Init() a chance */
 	if (try_auto_path) {
 	    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-	    tclcad_auto_path(interpreter);
+	    tclcad_auto_path(*interpreter);
 	}
 
 	/* Initialize Tcl */
-	Tcl_ResetResult(interpreter);
-	if (init_tcl && Tcl_Init(interpreter) == TCL_ERROR) {
+	Tcl_ResetResult(*interpreter);
+	if (init_tcl && Tcl_Init(*interpreter) == TCL_ERROR) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		continue;
 	    }
-	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
 	    break;
 	}
 	init_tcl=0;
 
 	/* warn if tcl_library isn't set by now */
 	if (try_auto_path) {
-	    tclcad_tcl_library(interpreter);
+	    tclcad_tcl_library(*interpreter);
 	}
 
 	/* Initialize [incr Tcl] */
-	Tcl_ResetResult(interpreter);
-	if (init_itcl && Itcl_Init(interpreter) == TCL_ERROR) {
+	Tcl_ResetResult(*interpreter);
+	if (init_itcl && Itcl_Init(*interpreter) == TCL_ERROR) {
 	    if (!try_auto_path) {
 		try_auto_path=1;
 		/* Itcl_Init() leaves initialization in a bad state
 		 * and can cause retry failures.  cleanup manually.
 		 */
-		Tcl_DeleteCommand(interpreter, "::itcl::class");
-		Tcl_DeleteNamespace(Tcl_FindNamespace(interpreter, "::itcl", NULL, 0));
+		Tcl_DeleteCommand(*interpreter, "::itcl::class");
+		Tcl_DeleteNamespace(Tcl_FindNamespace(*interpreter, "::itcl", NULL, 0));
 		continue;
 	    }
-	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
 	    break;
 	}
-	Tcl_StaticPackage(interpreter, "Itcl", Itcl_Init, Itcl_SafeInit);
+	Tcl_StaticPackage(*interpreter, "Itcl", Itcl_Init, Itcl_SafeInit);
 	init_itcl=0;
 
 	/* don't actually want to loop forever */
 	break;
 
     } /* end iteration over Init() routines that need auto_path */
-    Tcl_ResetResult(interpreter);
+    Tcl_ResetResult(*interpreter);
 
     /* if we haven't loaded by now, load auto_path so we find our tclscripts */
     if (!try_auto_path) {
 	/* Locate the BRL-CAD-specific Tcl scripts */
-	tclcad_auto_path(interpreter);
+	tclcad_auto_path(*interpreter);
     }
 
     /*XXX FIXME: Should not be importing Itcl into the global namespace */
     /* Import [incr Tcl] commands into the global namespace. */
-    if (Tcl_Import(interpreter, Tcl_GetGlobalNamespace(interpreter), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interpreter));
-	Tcl_ResetResult(interpreter);
+    if (Tcl_Import(*interpreter, Tcl_GetGlobalNamespace(*interpreter), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
+	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(*interpreter));
+	Tcl_ResetResult(*interpreter);
     }
 
     /* Initialize libbu */
-    if (Bu_Init(interpreter) == TCL_ERROR) {
-	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	Tcl_ResetResult(interpreter);
+    if (Bu_Init(*interpreter) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
+	Tcl_ResetResult(*interpreter);
     }
 
     /* Initialize libbn */
-    if (Bn_Init(interpreter) == TCL_ERROR) {
-	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	Tcl_ResetResult(interpreter);
+    if (Bn_Init(*interpreter) == TCL_ERROR) {
+	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
+	Tcl_ResetResult(*interpreter);
     }
 
     /* Initialize librt */
-    if (Rt_Init(interpreter) == TCL_ERROR) {
-	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	Tcl_ResetResult(interpreter);
+    if (Rt_Init(*interpreter) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
+	Tcl_ResetResult(*interpreter);
     }
 
     /* Initialize libged */
-    if (Go_Init(interpreter) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	Tcl_ResetResult(interpreter);
+    if (Go_Init(*interpreter) == TCL_ERROR) {
+	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
+	Tcl_ResetResult(*interpreter);
     }
 
     BU_GETSTRUCT(view_state->vs_gvp, ged_view);
@@ -603,15 +603,12 @@ mged_setup(Tcl_Interp *interpreter)
     cmd_setup();
 
     history_setup();
-    mged_global_variable_setup(interpreter);
-#if !TRY_NEW_MGED_VARS
-    mged_variable_setup(interpreter);
-#endif
+    mged_global_variable_setup(*interpreter);
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_init(&str);
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
-    Tcl_SetVar(interpreter, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
+    Tcl_SetVar(*interpreter, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);
@@ -620,9 +617,9 @@ set mged_display(.topid_0.ur,aet) {az=35.00  el=25.00  tw=0.00};\
 set mged_display(.topid_0.ur,size) sz=1000.000;\
 set mged_display(.topid_0.ur,center) {cent=(0.000 0.000 0.000)};\
 set mged_display(units) mm");
-    Tcl_Eval(interpreter, bu_vls_addr(&str));
+    Tcl_Eval(*interpreter, bu_vls_addr(&str));
 
-    Tcl_ResetResult(interpreter);
+    Tcl_ResetResult(*interpreter);
 
     bu_vls_free(&str);
 }

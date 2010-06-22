@@ -174,7 +174,7 @@ extern struct solid MGED_FreeSolid;	/* Head of freelist */
 
 extern int tran();
 extern int irot();
-extern void mged_setup(Tcl_Interp *interpreter);
+extern void mged_setup(Tcl_Interp **interpreter);
 extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
 extern void dir_build();
 extern void buildHrot(fastf_t *, double, double, double);
@@ -763,7 +763,6 @@ int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
 void set_scroll_private(void);
-void mged_variable_setup(Tcl_Interp *interpreter);
 
 /* scroll.c */
 void set_scroll(void);

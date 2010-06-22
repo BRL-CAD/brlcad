@@ -1351,7 +1351,7 @@ main(int argc, char *argv[])
     input_str_index = 0;
 
     /* prepare mged, adjust our path, get set up to use Tcl */
-    mged_setup(interp);
+    mged_setup(&interp);
     new_mats();
 
     mmenu_init();

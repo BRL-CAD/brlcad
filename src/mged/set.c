@@ -252,31 +252,6 @@ unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 }
 
 
-/**
- ** M G E D _ V A R I A B L E _ S E T U P
- **
- ** Sets the variable traces for each of the MGED variables so they can be
- ** accessed with the Tcl "set" and "$" operators.
- **
- **/
-
-void
-mged_variable_setup(Tcl_Interp *interp)
-{
-    struct bu_structparse *sp;
-
-    for (sp = &mged_vparse[0]; sp->sp_name != NULL; sp++) {
-	read_var((ClientData)sp, interp, sp->sp_name, (char *)NULL, 0);
-	Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
-		     (Tcl_VarTraceProc *)read_var, (ClientData)sp);
-	Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
-		     (Tcl_VarTraceProc *)write_var, (ClientData)sp);
-	Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
-		     (Tcl_VarTraceProc *)unset_var, (ClientData)sp);
-    }
-}
-
-
 int
 f_set(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
