@@ -289,7 +289,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, int if
 }
 
 
-#define GED_GETCOMBTREE(_gedp, _cmd, _name, _intern, _ntp, _rt_tree_array, _node_count) { \
+#define COMBMEM_GETCOMBTREE(_gedp, _cmd, _name, _intern, _ntp, _rt_tree_array, _node_count) { \
   struct directory *_dp; \
   struct rt_comb_internal *_comb; \
 \
@@ -348,7 +348,7 @@ combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
 	return GED_ERROR;
     }
 
-    GED_GETCOMBTREE(gedp, argv[0], argv[1], intern, ntp, rt_tree_array, node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], intern, ntp, rt_tree_array, node_count);
 
     for (i=0; i<node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
@@ -531,7 +531,7 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
     union tree *final_tree;
     char op;
 
-    GED_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
