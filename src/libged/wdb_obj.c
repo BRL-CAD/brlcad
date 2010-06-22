@@ -194,9 +194,6 @@ int wdb_attr_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 int wdb_pathsum_cmd(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char *argv[]);
 
 static int wdb_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
-#if 0
-static int wdb_close_tcl();
-#endif
 static int wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp);
 struct db_i *wdb_prep_dbip(Tcl_Interp *interp, const char *filename);
 
@@ -402,19 +399,6 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"whichid",		wdb_which_tcl},
     {"wmater",		wdb_newcmds_tcl},
     {"xpush",		wdb_xpush_tcl},
-#if 0
-    /* Commands to be added */
-    {"comb_color",	wdb_comb_color_tcl},
-    {"copymat",		wdb_copymat_tcl},
-    {"getmat",		wdb_getmat_tcl},
-    {"putmat",		wdb_putmat_tcl},
-    {"which_shader",	wdb_which_shader_tcl},
-    {"rcodes",		wdb_rcodes_tcl},
-    {"wcodes",		wdb_wcodes_tcl},
-    {"rmater",		wdb_rmater_tcl},
-    {"analyze",		wdb_analyze_tcl},
-    {"inside",		wdb_inside_tcl},
-#endif
     {(char *)NULL,	(int (*)())0 }
 };
 
@@ -468,10 +452,6 @@ wdb_deleteProc(ClientData clientData)
     RT_CK_WDB(wdbp);
     BU_LIST_DEQUEUE(&wdbp->l);
     bu_vls_free(&wdbp->wdb_name);
-#if 0
-    bu_vls_free(&wdbp->wdb_log);
-    bu_vls_free(&wdbp->wdb_result_str);
-#endif
     bu_vls_free(&wdbp->wdb_prestr);
     wdb_close(wdbp);
 }
@@ -2789,10 +2769,6 @@ wdb_killtree_cmd(struct rt_wdb *wdbp,
 	/* ignore phony objects */
 	if (dp->d_addr == RT_DIR_PHONY_ADDR)
 	    continue;
-#if 0
-	if (i == argc-1)
-	    ktd.notify = 1;
-#endif
 
 	db_functree(wdbp->dbip, dp,
 		    wdb_killtree_callback, wdb_killtree_callback,
@@ -8917,33 +8893,6 @@ wdb_importFg4Section_tcl(ClientData clientData,
 }
 
 
-#if 0
-/** skeleton functions for wdb_obj methods */
-int
-wdb__cmd(struct rt_wdb *wdbp,
-	 Tcl_Interp *interp,
-	 int argc,
-	 char *argv[])
-{
-}
-
-
-/**
- * Usage:
- * procname
- */
-static int
-wdb__tcl(ClientData clientData,
-	 Tcl_Interp *interp,
-	 int argc,
-	 char *argv[])
-{
-    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-
-    return wdb__cmd(wdbp, interp, argc-1, argv+1);
-}
-#endif
-
 /****************** utility routines ********************/
 
 /**
@@ -9027,60 +8976,6 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
 		 int num_in_list,
 		 int no_decorate)
 {
-#if 0
-    int lines, i, j, namelen, this_one;
-
-    qsort((genptr_t)list_of_names,
-	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	  (int (*)(const void *, const void *))wdb_cmpdirname);
-
-    /*
-     * For the number of (full and partial) lines that will be needed,
-     * print in vertical format.
-     */
-    lines = (num_in_list + 3) / 4;
-    for (i=0; i < lines; i++) {
-	for (j=0; j < 4; j++) {
-	    this_one = j * lines + i;
-	    /* Restrict the print to 16 chars per spec. */
-	    bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
-	    if (namelen > 16)
-		namelen = 16;
-	    /*
-	     * Region and ident checks here....  Since the code
-	     * has been modified to push and sort on pointers,
-	     * the printing of the region and ident flags must
-	     * be delayed until now.  There is no way to make the
-	     * decision on where to place them before now.
-	     */
-	    if (list_of_names[this_one]->d_flags & DIR_COMB) {
-		bu_vls_putc(vls, '/');
-		namelen++;
-	    }
-	    if (list_of_names[this_one]->d_flags & DIR_REGION) {
-		bu_vls_putc(vls, 'R');
-		namelen++;
-	    }
-	    /*
-	     * Size check (partial lines), and line termination.
-	     * Note that this will catch the end of the lines
-	     * that are full too.
-	     */
-	    if (this_one + lines >= num_in_list) {
-		bu_vls_putc(vls, '\n');
-		break;
-	    } else {
-		/*
-		 * Pad to next boundary as there will be
-		 * another entry to the right of this one.
-		 */
-		while (namelen++ < 20)
-		    bu_vls_putc(vls, ' ');
-	    }
-	}
-    }
-#else
     int lines, i, j, k, namelen, this_one;
     int maxnamelen;	/* longest name in list */
     int cwidth;		/* column width */
@@ -9157,7 +9052,6 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
 	    }
 	}
     }
-#endif
 }
 
 
