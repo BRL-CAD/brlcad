@@ -1542,6 +1542,14 @@ GED_EXPORT BU_EXTERN(int ged_comb, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_comb_std, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set/get comb's members.
+ *
+ * Usage:
+ *     combmem comb_name <az el tw tx ty tz sa sx sy sz ...>
+ */
+GED_EXPORT BU_EXTERN(int ged_combmem, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Import a database into the current database using an auto-incrementing or custom affix
  *
  * Usage:
