@@ -1,9 +1,10 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 
 # Written by Tom Browder (tom.browder@gmail.com), 2009-06-18, and
 # contributed to the BRL-CAD community to use for any purpose
 # without restriction.  User feedback welcome.
 
+use warnings;
 use strict;
 
 # recognized BRL-CAD units
@@ -41,7 +42,7 @@ Options:
     -h      Show details on writing an input script.
     -f      Write to stdout an example script usable in mged.
 
-    HERE
+HERE
     exit;
 }
 
@@ -271,7 +272,7 @@ metaball: <basename>    # yields objects => <basename>.s, <basename>.r
 # metaball definition.
 
  <zero or more additional metaballs>
- HERE
+HERE
  exit;
 } # help
 
@@ -291,6 +292,6 @@ metaball: mb1
 metaball: mb2
  id: 2
  point: 20 0 5 .5
- HERE
+HERE
  exit;
 } # example
