@@ -152,19 +152,19 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
     *sy = sqrt(m[1]*m[1] + m[5]*m[5] + m[9]*m[9]);
     *sz = sqrt(m[2]*m[2] + m[6]*m[6] + m[10]*m[10]);
 
-    if (!NEAR_ZERO(*sx-1.0,VUNITIZE_TOL)) {
+    if (!NEAR_ZERO(*sx-1.0, VUNITIZE_TOL)) {
 	m[0] /= *sx;
 	m[4] /= *sx;
 	m[8] /= *sx;
     }
 
-    if (!NEAR_ZERO(*sy-1.0,VUNITIZE_TOL)) {
+    if (!NEAR_ZERO(*sy-1.0, VUNITIZE_TOL)) {
 	m[1] /= *sy;
 	m[5] /= *sy;
 	m[9] /= *sy;
     }
 
-    if (!NEAR_ZERO(*sz-1.0,VUNITIZE_TOL)) {
+    if (!NEAR_ZERO(*sz-1.0, VUNITIZE_TOL)) {
 	m[2] /= *sz;
 	m[6] /= *sz;
 	m[10] /= *sz;
@@ -194,6 +194,7 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
 
     return 0; /* OK */
 }
+
 
 /**
  * C O M B M E M _ A S S E M B L E _ M A T
@@ -225,26 +226,26 @@ combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, poin
     MAT_IDN(mat_scale);
 
     if (sflag) {
-	if (!NEAR_ZERO(svec[X]-1.0,VUNITIZE_TOL)) {
+	if (!NEAR_ZERO(svec[X]-1.0, VUNITIZE_TOL)) {
 	    mat_scale[0] *= svec[X];
 	    mat_scale[4] *= svec[X];
 	    mat_scale[8] *= svec[X];
 	}
 
-	if (!NEAR_ZERO(svec[Y]-1.0,VUNITIZE_TOL)) {
+	if (!NEAR_ZERO(svec[Y]-1.0, VUNITIZE_TOL)) {
 	    mat_scale[1] *= svec[Y];
 	    mat_scale[5] *= svec[Y];
 	    mat_scale[9] *= svec[Y];
 	}
 
-	if (!NEAR_ZERO(svec[Z]-1.0,VUNITIZE_TOL)) {
+	if (!NEAR_ZERO(svec[Z]-1.0, VUNITIZE_TOL)) {
 	    mat_scale[2] *= svec[Z];
 	    mat_scale[6] *= svec[Z];
 	    mat_scale[10] *= svec[Z];
 	}
     }
 
-    if (!NEAR_ZERO(svec[W]-1.0,VUNITIZE_TOL)) {
+    if (!NEAR_ZERO(svec[W]-1.0, VUNITIZE_TOL)) {
 	mat_scale[MSA] *= 1.0 / svec[W];
     }
 
@@ -287,7 +288,8 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, int if
     }
 }
 
-#define GED_GETCOMBTREE(_gedp,_cmd,_name,_intern,_ntp,_rt_tree_array,_node_count) { \
+
+#define GED_GETCOMBTREE(_gedp, _cmd, _name, _intern, _ntp, _rt_tree_array, _node_count) { \
   struct directory *_dp; \
   struct rt_comb_internal *_comb; \
 \
@@ -346,7 +348,7 @@ combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
 	return GED_ERROR;
     }
 
-    GED_GETCOMBTREE(gedp,argv[0],argv[1],intern,ntp,rt_tree_array,node_count);
+    GED_GETCOMBTREE(gedp, argv[0], argv[1], intern, ntp, rt_tree_array, node_count);
 
     for (i=0; i<node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
@@ -435,17 +437,17 @@ combmem_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
 
       	/* Add it to the combination */
       	switch (op) {
-      	case '+':
-	    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
-	    break;
-	case '-':
-	    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_abs: unrecognized relation (assume UNION)\n");
-	case 'u':
-	    rt_tree_array[tree_index].tl_op = OP_UNION;
-	    break;
+	    case '+':
+		rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+		break;
+	    case '-':
+		rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_abs: unrecognized relation (assume UNION)\n");
+	    case 'u':
+		rt_tree_array[tree_index].tl_op = OP_UNION;
+		break;
 	}
 
 	matp = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_setcombmem_abs: mat");
@@ -529,7 +531,7 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
     union tree *final_tree;
     char op;
 
-    GED_GETCOMBTREE(gedp,argv[0],argv[1],old_intern,old_ntp,old_rt_tree_array,old_node_count);
+    GED_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
@@ -572,17 +574,17 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 
       	/* Add it to the combination */
       	switch (op) {
-      	case '+':
-	    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
-	    break;
-	case '-':
-	    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_rel: unrecognized relation (assume UNION)\n");
-	case 'u':
-	    rt_tree_array[tree_index].tl_op = OP_UNION;
-	    break;
+	    case '+':
+		rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+		break;
+	    case '-':
+		rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_rel: unrecognized relation (assume UNION)\n");
+	    case 'u':
+		rt_tree_array[tree_index].tl_op = OP_UNION;
+		break;
 	}
 
 	MAT_IDN(mat);
@@ -684,6 +686,7 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Set/get a combinations members.
