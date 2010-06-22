@@ -48,7 +48,8 @@ $zmax2 = $zmax - $thickness; #  1; # You want this going through so that you can
 $i = 0; # $i is the counter.
 for ($j = $t_min; $j <= $t_max; $j += $t_max / $granularity, $i++) {
   $x = $j * cos($j); $y = $j * sin($j);
-  $command = "front ; in mflb2_$i.s rpp $xmin $xmax $ymin $ymax $zmin $zmax ; in caboff1_$i.s rpp $xmin2 $xmax2 $ymin2 $ymax2 $zmin2 $zmax2 ; comb cross_section_region_$i.c u mflb2_$i.s - caboff1_$i.s ; draw cross_section_region_$i.c ; oed / /cross_section_region_$i.c/mflb2_$i.s ; translate $x $y 0 ; accept ;";
+  $ang = 90.0 - atan2($y, $x) * 180 / PI;
+  $command = "front ; in mflb2_$i.s rpp $xmin $xmax $ymin $ymax $zmin $zmax ; in caboff1_$i.s rpp $xmin2 $xmax2 $ymin2 $ymax2 $zmin2 $zmax2 ; comb cross_section_region_$i.c u mflb2_$i.s - caboff1_$i.s ; draw cross_section_region_$i.c ; oed / /cross_section_region_$i.c/mflb2_$i.s ; rot 0 0 $ang ; translate $x $y 0 ; accept ;";
   print "#$i at\tx = $x\ty=$y\n\t$command\n\n";
   `mged -c spiral.g \'$command\'`;
 }
