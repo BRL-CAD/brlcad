@@ -10,9 +10,10 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-05-XX  Release 7.16.10                                    ---
+--- 2010-06-22  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
+* fixed pixhalve memory leak and corruption on exit - Sean Morrison
 * Tcl/Tk updated from 8.5.6 to 8.5.8 - Cliff Yapp
 * spanish translations for tutorials 4-5, 7-8, 10-14 - Jesica Giudice
 * fixed extrude object tessellation failures - Östen Lundahl
