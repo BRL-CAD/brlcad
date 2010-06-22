@@ -5150,7 +5150,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 		  Tcl_Interp *interp,
 		  struct directory *dp)
 {
-    int i;
+    size_t i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -5331,7 +5331,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	       int displayDepth,
 	       int currdisplayDepth)
 {
-    int i;
+    size_t i;
     struct directory *nextdp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -5340,7 +5340,7 @@ wdb_print_node(struct rt_wdb *wdbp,
     if (cflag && !(dp->d_flags & DIR_COMB))
 	return;
 
-    for (i=0; i<pathpos; i++)
+    for (i=0; i<(size_t)pathpos; i++)
 	if (indentSize < 0) {
 	    Tcl_AppendResult(interp, "\t", (char *)NULL);
 	} else {
