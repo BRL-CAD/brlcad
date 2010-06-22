@@ -32,17 +32,15 @@
 
 #include "./ged_private.h"
 
-static void ged_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw);
-
 
 /**
- * G E D _ M A T _ A E T
+ * C O M B M E M _ M A T _ A E T
  *
- * Given the azimuth, elevation and twist angles,
- * calculate the rotation part of a 4x4 matrix.
+ * Given the azimuth, elevation and twist angles, calculate the
+ * rotation part of a 4x4 matrix.
  */
-static void
-ged_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
+HIDDEN void
+combmem_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
 {
     fastf_t cos_az, sin_az;
     fastf_t cos_el, sin_el;
@@ -78,13 +76,14 @@ ged_mat_aet(matp_t matp, fastf_t az, fastf_t el, fastf_t tw)
     matp[15] = 1.0;
 }
 
+
 /**
- * G E D _ D I S A S S E M B L E _ R M A T
+ * C O M B M E M _ D I S A S S E M B L E _ R M A T
  *
  * Disassemble the given rotation matrix into az, el, tw.
  */
-static void
-ged_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
+HIDDEN void
+combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 {
     fastf_t cos_az, sin_az;
     fastf_t cos_el, sin_el;
@@ -133,12 +132,12 @@ ged_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 
 
 /**
- * G E D _ D I S A S S E M B L E _ M A T
+ * C O M B M E M _ D I S A S S E M B L E _ M A T
  *
  * Disassemble the given matrix into az, el, tw, tx, ty, tz, sa, sx, sy and sz.
  */
-static int
-ged_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fastf_t *tx, fastf_t *ty, fastf_t *tz, fastf_t *sa, fastf_t *sx, fastf_t *sy, fastf_t *sz)
+HIDDEN int
+combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fastf_t *tx, fastf_t *ty, fastf_t *tz, fastf_t *sa, fastf_t *sx, fastf_t *sy, fastf_t *sz)
 {
     mat_t m;
 
@@ -171,7 +170,7 @@ ged_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fastf_t 
 	m[10] /= *sz;
     }
 
-    if (bn_mat_ck("ged_disassemble_mat", m)) {
+    if (bn_mat_ck("combmem_disassemble_mat", m)) {
 	*az = 0.0;
 	*el = 0.0;
 	*tw = 0.0;
@@ -191,18 +190,18 @@ ged_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fastf_t 
     *ty = m[MDY];
     *tz = m[MDZ];
 
-    ged_disassemble_rmat(m, az, el, tw);
+    combmem_disassemble_rmat(m, az, el, tw);
 
     return 0; /* OK */
 }
 
 /**
- * G E D _ A S S E M B L E _ M A T
+ * C O M B M E M _ A S S E M B L E _ M A T
  *
  * Assemble the given aetvec, tvec and svec into a 4x4 matrix using key_pt for rotations and scale.
  */
-static void
-ged_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, point_t key_pt, int sflag)
+HIDDEN void
+combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, point_t key_pt, int sflag)
 {
     mat_t mat_aet_about_pt;
     mat_t mat_aet;
@@ -220,7 +219,7 @@ ged_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, point_t 
 	return;
     }
 
-    ged_mat_aet(mat_aet, aetvec[X], aetvec[Y], aetvec[Z]);
+    combmem_mat_aet(mat_aet, aetvec[X], aetvec[Y], aetvec[Z]);
     bn_mat_xform_about_pt(mat_aet_about_pt, mat_aet, key_pt);
 
     MAT_IDN(mat_scale);
@@ -263,8 +262,9 @@ ged_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, point_t 
     bn_mat_mul(matp, xlate, tmp);
 }
 
-static void
-ged_vls_print_member_info(struct ged *gedp, char op, union tree *itp, int iflag)
+
+HIDDEN void
+combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, int iflag)
 {
     fastf_t az, el, tw;
     fastf_t tx, ty, tz;
@@ -274,7 +274,7 @@ ged_vls_print_member_info(struct ged *gedp, char op, union tree *itp, int iflag)
 	bu_vls_printf(&gedp->ged_result_str, "%c %s 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
 		      op, itp->tr_l.tl_name);
     else {
-	if (ged_disassemble_mat(itp->tr_l.tl_mat, &az, &el, &tw, &tx, &ty, &tz, &sa, &sx, &sy, &sz))
+	if (combmem_disassemble_mat(itp->tr_l.tl_mat, &az, &el, &tw, &tx, &ty, &tz, &sa, &sx, &sy, &sz))
 	    bu_log("Found bad matrix for %s\n", itp->tr_l.tl_name);
 
 	bu_vls_printf(&gedp->ged_result_str, "%c %s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf 0.0 0.0 0.0",
@@ -331,8 +331,9 @@ ged_vls_print_member_info(struct ged *gedp, char op, union tree *itp, int iflag)
   (void)db_flatten_tree((_rt_tree_array), (_ntp), OP_UNION, 0, &rt_uniresource); \
 }
 
-static int
-ged_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
+
+HIDDEN int
+combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
 {
     struct rt_db_internal intern;
     union tree *ntp;
@@ -362,10 +363,10 @@ ged_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
 		op = 'u';
 		break;
 	    default:
-		bu_bomb("ged_getcombmem() corrupt rt_tree_array");
+		bu_bomb("combmem_getcombmem() corrupt rt_tree_array");
 	}
 
-	ged_vls_print_member_info(gedp, op, itp, iflag);
+	combmem_vls_print_member_info(gedp, op, itp, iflag);
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     }
 
@@ -375,8 +376,9 @@ ged_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
     return GED_OK;
 }
 
-static int
-ged_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
+
+HIDDEN int
+combmem_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -437,13 +439,13 @@ ged_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
 	    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "ged_setcombmem_abs: unrecognized relation (assume UNION)\n");
+	    bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_abs: unrecognized relation (assume UNION)\n");
 	case 'u':
 	    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    break;
 	}
 
-	matp = (matp_t)bu_calloc(16, sizeof(fastf_t), "ged_setcombmem_abs: mat");
+	matp = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_setcombmem_abs: mat");
 	MAT_IDN(matp);
 
 	if (sscanf(argv[i+2], "%lf", &az) == 1 &&
@@ -472,7 +474,7 @@ ged_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
 	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 	    QSET(svec, sx, sy, sz, sa);
 
-	    ged_assemble_mat(matp, aetvec, tvec, svec, key_pt, 1);
+	    combmem_assemble_mat(matp, aetvec, tvec, svec, key_pt, 1);
 	}
 
 	BU_GETUNION(tp, tree);
@@ -504,8 +506,9 @@ ged_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-static int
-ged_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
+
+HIDDEN int
+combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal old_intern;
     union tree *old_ntp;
@@ -574,7 +577,7 @@ ged_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 	    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "ged_setcombmem_rel: unrecognized relation (assume UNION)\n");
+	    bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_rel: unrecognized relation (assume UNION)\n");
 	case 'u':
 	    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    break;
@@ -602,13 +605,13 @@ ged_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 	    VSET(key_pt, kx, ky, kz);
 	    QSET(svec, sx, sy, sz, sa);
 
-	    ged_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
+	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
 
 	    /* If bn_mat_ck fails, it's because scaleX, scaleY and/or scaleZ has been
 	     * been applied along with rotations. This screws up perpendicularity.
 	     */
-	    if (bn_mat_ck("ged_setcombmem_rel", mat)) {
-		ged_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
+	    if (bn_mat_ck("combmem_setcombmem_rel", mat)) {
+		combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
 	    }
 	}
 
@@ -617,7 +620,7 @@ ged_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(argv[i+1]);
-	tp->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "ged_setcombmem_rel: mat");
+	tp->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_setcombmem_rel: mat");
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
 	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
@@ -626,11 +629,11 @@ ged_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 	    /* If bn_mat_ck fails, it's because scaleX, scaleY and/or scaleZ has been
 	     * been applied along with rotations. This screws up perpendicularity.
 	     */
-	    if (bn_mat_ck("ged_setcombmem_rel", tp->tr_l.tl_mat)) {
-		ged_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
+	    if (bn_mat_ck("combmem_setcombmem_rel", tp->tr_l.tl_mat)) {
+		combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
 		bn_mat_mul(tp->tr_l.tl_mat, mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 
-		if (bn_mat_ck("ged_setcombmem_rel", tp->tr_l.tl_mat)) {
+		if (bn_mat_ck("combmem_setcombmem_rel", tp->tr_l.tl_mat)) {
 		    MAT_COPY(tp->tr_l.tl_mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 		}
 	    } else {
@@ -639,7 +642,7 @@ ged_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 		fastf_t sa, sx, sy, sz;
 
 		/* This will check if the 3x3 rotation part is bad after factoring out scaleX, scaleY and scaleZ. */
-		if (ged_disassemble_mat(tp->tr_l.tl_mat, &az, &el, &tw, &tx, &ty, &tz, &sa, &sx, &sy, &sz)) {
+		if (combmem_disassemble_mat(tp->tr_l.tl_mat, &az, &el, &tw, &tx, &ty, &tz, &sa, &sx, &sy, &sz)) {
 		    MAT_COPY(tp->tr_l.tl_mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 		}
 	    }
@@ -710,7 +713,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 2)
-	return ged_getcombmem(gedp, argc, argv, iflag);
+	return combmem_getcombmem(gedp, argc, argv, iflag);
 
     if (argv[1][0] == '-' && argv[1][1] == 'r' && argv[1][2] == '\0') {
 	rflag = 1;
@@ -720,9 +723,9 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 
     if (argc > 16 && !((argc-2)%15)) {
 	if (rflag)
-	    return ged_setcombmem_rel(gedp, argc, argv);
+	    return combmem_setcombmem_rel(gedp, argc, argv);
 	else
-	    return ged_setcombmem_abs(gedp, argc, argv);
+	    return combmem_setcombmem_abs(gedp, argc, argv);
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
