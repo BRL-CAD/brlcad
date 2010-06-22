@@ -673,6 +673,7 @@ static struct go_cmdtab go_cmds[] = {
     {"color",	(char *)0, MAXARGS, go_pass_through_func, ged_color},
     {"comb",	(char *)0, MAXARGS, go_pass_through_func, ged_comb},
     {"comb_color",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_color},
+    {"combmem",	(char *)0, MAXARGS, go_pass_through_func, ged_combmem},
     {"configure",	"vname", MAXARGS, go_configure, GED_FUNC_PTR_NULL},
     {"constrain_rmode",	"x|y|z x y", MAXARGS, go_constrain_rmode, GED_FUNC_PTR_NULL},
     {"constrain_tmode",	"x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
