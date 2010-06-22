@@ -112,6 +112,7 @@ noinst_HEADERS = \
 	vegitation.h
 
 EXTRA_DIST = \
+	metaballs.pl \
 	sgi.sh
 
 DEPENDS = src/libwdb
