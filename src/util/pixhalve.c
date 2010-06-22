@@ -223,9 +223,11 @@ main(int argc, char **argv)
 		 inbuf, file_width);
     }
 
-    bu_free(rlines, "rlines");
-    bu_free(glines, "glines");
-    bu_free(blines, "blines");
+    for (i=0; i<5; i++) {
+	bu_free(rlines[i], "rlines");
+	bu_free(glines[i], "glines");
+	bu_free(blines[i], "blines");
+    }
     bu_free(rout, "rout");
     bu_free(gout, "gout");
     bu_free(bout, "bout");
