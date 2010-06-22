@@ -32,7 +32,6 @@
 
 #include "./ged_private.h"
 
-
 /*
  *	Replace the matrix on an arc in the database from the command line,
  *	when NOT in an edit state.  Used mostly to facilitate writing shell
@@ -75,6 +74,9 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
+
+    if (argc == 2)
+	return ged_getmat(gedp, argc, argv);
 
     if (argc < 3 || 18 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -124,6 +126,117 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
     bu_vls_vlsfree(avp);
     return result;
 }
+
+int
+ged_getmat(struct ged *gedp, int argc, const char *argv[])
+{
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    union tree *tp;
+    char name1[RT_MAXLINE];
+    char name2[RT_MAXLINE];
+    static const char *usage = "a/b";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    {
+	char *begin;
+	char *first_fs;
+	char *last_fs;
+	char *end;
+
+	/* skip leading slashes */
+	begin = argv[1];
+	while (*begin == '/')
+	    ++begin;
+
+	if (*begin == '\0' ||
+	    !(first_fs = strchr(begin, '/')) ||
+	    !(last_fs = strrchr(begin, '/')) ||
+	    first_fs != last_fs) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
+	    return GED_ERROR;
+	}
+
+	/* Note: At this point first_fs == last_fs */
+
+	end = strrchr(begin, '\0');
+	if (last_fs == end-1) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
+	    return GED_ERROR;
+	}
+	strncpy(name1, begin, (size_t)(last_fs-begin));
+	name1[last_fs-begin] = '\0';
+	strncpy(name2, last_fs+1, (size_t)(end-last_fs)); /* This includes the EOS */
+    }
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, name1, LOOKUP_NOISY)) == DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], name1);
+	return GED_ERROR;
+    }
+
+    if (!(dp->d_flags & DIR_COMB)) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], name1);
+	return GED_ERROR;
+    }
+
+    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	return GED_ERROR;
+    }
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+    if (!comb->tree) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: empty combination", dp->d_namep);
+	goto fail;
+    }
+
+    /* Search for first mention of arc */
+    if ((tp = db_find_named_leaf(comb->tree, name2)) == TREE_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "Unable to find instance of '%s' in combination '%s', error",
+		      name2, name1);
+	goto fail;
+    }
+
+    if (!tp->tr_l.tl_mat) {
+	bu_vls_printf(&gedp->ged_result_str, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1");
+	rt_db_free_internal(&intern);
+
+	return GED_OK;
+    } else {
+	register int i;
+
+	for (i=0; i<16; i++)
+	    bu_vls_printf(&gedp->ged_result_str, "%lf ", tp->tr_l.tl_mat[i]);
+
+	rt_db_free_internal(&intern);
+
+	return GED_OK;
+    }
+
+ fail:
+    rt_db_free_internal(&intern);
+    return GED_ERROR;
+}
+
 
 /*
  * Local Variables:
