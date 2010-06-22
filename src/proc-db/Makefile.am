@@ -113,7 +113,8 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	metaballs.pl \
-	sgi.sh
+	sgi.sh \
+	spiral.pl
 
 DEPENDS = src/libwdb
 
