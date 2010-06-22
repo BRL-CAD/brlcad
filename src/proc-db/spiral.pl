@@ -13,9 +13,14 @@
 use warnings;
 use constant PI => 4 * atan2 1, 1;
 
+if (-e "spiral.g") {
+  print "ERROR: spiral.g already exists.  Delete or move it.\n";
+  exit 1;
+}
+
 $t_min = 0;
 $t_max = 10 * PI;
-$granularity = 1000; # Set the granularity of the model.
+$granularity = 100; # Set the granularity of the model.
 
 # in 1.s rpp 0 .5 0 1 0 1
 # in 2.s rpp -2 2 0.1 0.9 0.1 0.9
@@ -39,14 +44,20 @@ $zmax2 = $zmax - $thickness; #  1; # You want this going through so that you can
 
 # Future improvement possibility: make it spiral downward.
 
+# generate the spiral
 $i = 0; # $i is the counter.
 for ($j = $t_min; $j <= $t_max; $j += $t_max / $granularity, $i++) {
   $x = $j * cos($j); $y = $j * sin($j);
-  $command = "front ; if \\[catch {get mflb2_$i.s}\\] {in mflb2_$i.s rpp $xmin $xmax $ymin $ymax $zmin $zmax} ; if \\[catch {get caboff1_$i.s}\\] {in caboff1_$i.s rpp $xmin2 $xmax2 $ymin2 $ymax2 $zmin2 $zmax2} ; if \\[catch {get cross_section_region_$i.c}\\] {comb cross_section_region_$i.c u mflb2_$i.s - caboff1_$i.s ; draw cross_section_region_$i.c ; oed / /cross_section_region_$i.c/mflb2_$i.s ; translate $x $y 0; accept}";
+  $command = "front ; in mflb2_$i.s rpp $xmin $xmax $ymin $ymax $zmin $zmax ; in caboff1_$i.s rpp $xmin2 $xmax2 $ymin2 $ymax2 $zmin2 $zmax2 ; comb cross_section_region_$i.c u mflb2_$i.s - caboff1_$i.s ; draw cross_section_region_$i.c ; oed / /cross_section_region_$i.c/mflb2_$i.s ; translate $x $y 0 ; accept ;";
   print "#$i at\tx = $x\ty=$y\n\t$command\n\n";
-  `mged -c spiral.g \'$command\';`;
+  `mged -c spiral.g \'$command\'`;
 }
-`mged -c spiral.g 'g all.g u *.c'`;
+
+# make the spiral into one region
+# `mged -c spiral.g 'r spiral.r *.c'`;
+
+# create a top-level scene with the one spiral region
+`mged -c spiral.g 'g all.g *.c'`;
 
 # ` g-stl -o spiral.g.stl spiral.g all.g ;`; 
 # ` viewstl spiral.g.stl `;
