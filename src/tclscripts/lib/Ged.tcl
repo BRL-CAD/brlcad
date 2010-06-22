@@ -143,6 +143,7 @@ package provide cadwidgets::Ged 1.0
 	method color {args}
 	method comb {args}
 	method comb_color {args}
+	method combmem {args}
 	method configure_win {args}
 	method constrain_rmode {args}
 	method constrain_tmode {args}
@@ -1036,6 +1037,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::comb_color {args} {
     eval $mGed comb_color $args
+}
+
+::itcl::body cadwidgets::Ged::combmem {args} {
+    eval $mGed combmem $args
 }
 
 ::itcl::body cadwidgets::Ged::configure_win {args} {
@@ -3840,6 +3845,7 @@ package provide cadwidgets::Ged 1.0
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}
+    $help add combmem		{{comb_name <op name az el tw tx ty tz sa sx sy sz ...>} {set/get comb members}}
     $help add copyeval		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
