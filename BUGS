@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* edcomb command seems to be busted similar to red, doesn't seem to do
+  anything.
+
 * gqa manpage has the wrong indentation on the options write-up.
 
 * Detailed BoT model ray trace image had incorrect background pixel
