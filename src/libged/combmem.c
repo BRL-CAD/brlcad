@@ -341,12 +341,16 @@ combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
     size_t i;
     size_t node_count;
 
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: Internal error, missing an object name.\n", argv[0]);
+	return GED_ERROR;
+    }
+
     GED_GETCOMBTREE(gedp,argv[0],argv[1],intern,ntp,rt_tree_array,node_count);
 
     for (i=0; i<node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
 	char op;
-	register int j;
 
 	RT_CK_TREE(itp);
 	BU_ASSERT_LONG(itp->tr_op, ==, OP_DB_LEAF);
@@ -383,7 +387,6 @@ combmem_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    union tree *ntp;
     struct rt_tree_array *rt_tree_array;
     size_t i;
     size_t node_count;
@@ -421,7 +424,7 @@ combmem_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
     rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 
     tree_index = 0;
-    for (i = 2; i < argc; i += 15) {
+    for (i = 2; i < (size_t)argc; i += 15) {
 	matp_t matp;
 	fastf_t az, el, tw;
 	fastf_t tx, ty, tz;
@@ -518,7 +521,6 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    union tree *ntp;
     struct rt_tree_array *rt_tree_array;
     size_t i;
     size_t node_count;
@@ -556,7 +558,7 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
     rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 
     tree_index = 0;
-    for (i = 2; i < argc; i += 15) {
+    for (i = 2; i < (size_t)argc; i += 15) {
 	mat_t mat;
 	fastf_t az, el, tw;
 	fastf_t tx, ty, tz;
@@ -637,10 +639,6 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 		    MAT_COPY(tp->tr_l.tl_mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 		}
 	    } else {
-		fastf_t az, el, tw;
-		fastf_t tx, ty, tz;
-		fastf_t sa, sx, sy, sz;
-
 		/* This will check if the 3x3 rotation part is bad after factoring out scaleX, scaleY and scaleZ. */
 		if (combmem_disassemble_mat(tp->tr_l.tl_mat, &az, &el, &tw, &tx, &ty, &tz, &sa, &sx, &sy, &sz)) {
 		    MAT_COPY(tp->tr_l.tl_mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
