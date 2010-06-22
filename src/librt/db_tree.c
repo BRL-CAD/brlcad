@@ -196,10 +196,12 @@ db_pr_tree_state(const struct db_tree_state *tsp)
     bu_log(" ts_aircode=%d\n", tsp->ts_aircode);
     bu_log(" ts_gmater=%d\n", tsp->ts_gmater);
     bu_log(" ts_los=%d\n", tsp->ts_los);
-    bu_log(" ts_mater.ma_color=%g, %g, %g\n",
-	   tsp->ts_mater.ma_color[0],
-	   tsp->ts_mater.ma_color[1],
-	   tsp->ts_mater.ma_color[2]);
+    if (tsp->ts_mater.ma_color_valid) {
+	bu_log(" ts_mater.ma_color=%g, %g, %g\n",
+	       tsp->ts_mater.ma_color[0],
+	       tsp->ts_mater.ma_color[1],
+	       tsp->ts_mater.ma_color[2]);
+    }
     bu_log(" ts_mater.ma_temperature=%g K\n", tsp->ts_mater.ma_temperature);
     bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "");
     for (i=0; i<(size_t)tsp->ts_attrs.count; i++) {
