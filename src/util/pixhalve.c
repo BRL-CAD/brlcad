@@ -348,8 +348,8 @@ main(int argc, char *argv[])
     out_width = file_width/2;
 
     /* Allocate 1-scanline input & output buffers */
-    inbuf = malloc(3*file_width+8);
-    outbuf = malloc(3*(out_width+2)+8);
+    inbuf = bu_malloc(3*file_width+8, "inbuf");
+    outbuf = bu_malloc(3*(out_width+2)+8, "outbuf");
 
     /* Allocate 5 integer arrays for each color */
     /* each width+2 elements wide */
@@ -424,11 +424,15 @@ main(int argc, char *argv[])
 		 inbuf, file_width);
     }
 
+    bu_free(inbuf, "inbuf");
+    bu_free(outbuf, "outbuf");
+
     for (i=0; i<5; i++) {
 	bu_free(rlines[i], "rlines");
 	bu_free(glines[i], "glines");
 	bu_free(blines[i], "blines");
     }
+
     bu_free(rout, "rout");
     bu_free(gout, "gout");
     bu_free(bout, "bout");
