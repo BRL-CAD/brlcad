@@ -20,7 +20,7 @@ if (-e "spiral.g") {
 
 $t_min = 0;
 $t_max = 10 * PI;
-$granularity = 100; # Set the granularity of the model.
+$granularity = 1000; # Set the granularity of the model.
 
 # in 1.s rpp 0 .5 0 1 0 1
 # in 2.s rpp -2 2 0.1 0.9 0.1 0.9
@@ -53,11 +53,11 @@ for ($j = $t_min; $j <= $t_max; $j += $t_max / $granularity, $i++) {
   `mged -c spiral.g \'$command\'`;
 }
 
-# make the spiral into one region
-# `mged -c spiral.g 'r spiral.r *.c'`;
+# make the spiral into one grouped shape
+`mged -c spiral.g 'g spiral.c *.c'`;
 
-# create a top-level scene with the one spiral region
-`mged -c spiral.g 'g all.g *.c'`;
+# make that shape into a solid region (so it now has mass and occupies space)
+`mged -c spiral.g 'r spiral.r u spiral.c'`;
 
 # ` g-stl -o spiral.g.stl spiral.g all.g ;`; 
 # ` viewstl spiral.g.stl `;
