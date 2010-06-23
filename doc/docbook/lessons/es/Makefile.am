@@ -7,6 +7,7 @@ lessonsDOCBOOK_ES = \
 	lessons/es/mged06_crear_una_copa.xml \
 	lessons/es/mged07_prop_materiales_copa.xml \
 	lessons/es/mged08_prop_materiales_copa2.xml \
+	lessons/es/mged09_esfera_en_caja_exhibidora.xml \
 	lessons/es/mged10_crear_taza.xml \
 	lessons/es/mged11_refinar_taza.xml \
 	lessons/es/mged12_taza_desde_gui.xml \
@@ -66,6 +67,12 @@ lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged08_goblet_reflectivity_2.png \
 	lessons/es/images/mged08_refractive_index.png \
 	lessons/es/images/mged08_spec_vs_diff_reflectivity.png \
+	lessons/es/images/mged09_globe_base_box_raytraced.png \
+	lessons/es/images/mged09_globe_base_box_wireframe.png \
+	lessons/es/images/mged09_globe_inside_outside_box.png \
+	lessons/es/images/mged09_globe_outside_display_box.png \
+	lessons/es/images/mged09_globe_raytraced.png \
+	lessons/es/images/mged09_globe_wireframe.png \
 	lessons/es/images/mged10_mug_wireframe.png \
 	lessons/es/images/mged11_mug_raytraced_norim.png \
 	lessons/es/images/mged11_mug_raytraced_rim.png \
