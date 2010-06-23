@@ -43,7 +43,7 @@
 #include "wdb.h"
 #include "obj_parser.h"
 
-static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-ipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
+static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-sipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
 \n\
         -u units_str           Units of obj file where units_str can\n\
                                be any valid BRL-CAD unit such as one\n\
@@ -61,6 +61,14 @@ static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-ipdv
         -h plate_thickness     Plate thickness in mm units of plate\n\
                                or plate-nocos bots created when the\n\
                                bot is not a closed volume.\n\
+\n\
+        -s    Stop processing on nmg bomb. If this option is set and\n\
+              an nmg bomb occurs (i.e. fatal error during processing\n\
+              nmg or bot-via-nmg) all processing will stop and the\n\
+              converter will exit. If this option is not set, if an\n\
+              nmg bomb occurs, conversion will fall back to outputing\n\
+              the grouping to 'native-bot' and then continue\n\
+              processing the next grouping.\n\
 \n\
         -i    Ignore normals defined in the obj file when the\n\
               conversion mode is 'native-bots'.\n\
@@ -605,6 +613,50 @@ retest_grouping_faces(struct ga_t *ga,
     return failed_face_count;
 }
 
+size_t
+find_last_unique_vertex(struct   ga_t *ga,   /* obj file global attributes */
+                        struct   gfi_t *gfi, /* grouping face indices */
+                        size_t   face_idx)   /* face index number of grouping */
+{
+    fastf_t tmp_v[3] = {0.0, 0.0, 0.0};  /* temporary vertex */
+    fastf_t tmp_w = 0.0;                 /* temporary weight */
+    fastf_t tmp_n[3] = {0.0, 0.0, 0.0};  /* temporary normal */
+    fastf_t tmp_t[3] = {0.0, 0.0, 0.0};  /* temporary texture vertex */
+    size_t  vofi = 0;                    /* vertex obj file index */
+    size_t  nofi = 0;                    /* normal obj file index */
+    size_t  tofi = 0;                    /* texture vertex obj file index */
+    size_t  num_vertex = 0;
+    int     done = 0;
+    fastf_t first_vertex[3] = {0.0, 0.0, 0.0};
+    fastf_t last_vertex[3] = {0.0, 0.0, 0.0};
+    size_t  first_vertex_index = 0;
+    size_t  last_vertex_index = 0;
+
+    num_vertex = gfi->num_vertices_arr[face_idx];
+
+    if (num_vertex >= 3) {
+        retrieve_coord_index(ga, gfi, face_idx, 0, tmp_v, tmp_n, tmp_t,
+            &tmp_w, &vofi, &nofi, &tofi); 
+        VMOVE(first_vertex, tmp_v);
+        first_vertex_index = vofi;
+
+        while ((num_vertex >= 3) && !done) {
+            retrieve_coord_index(ga, gfi, face_idx, num_vertex - 1, tmp_v, tmp_n, tmp_t,
+                &tmp_w, &vofi, &nofi, &tofi); 
+            VMOVE(last_vertex, tmp_v);
+            last_vertex_index = vofi;
+
+            if ((first_vertex_index == last_vertex_index) || VEQUAL(first_vertex, last_vertex)) {
+                num_vertex--;
+            } else {
+                done = 1;
+            } 
+        }
+    }
+
+    return num_vertex;
+}
+
 /*
  * T E S T _ F A C E
  *
@@ -614,17 +666,16 @@ retest_grouping_faces(struct ga_t *ga,
  * equal to or less than the distance tolerance. The test result is
  * returned by this function and is recorded so it can be used later.
  * If a face was previously tested, this function will not retest the
- * face unless the force_retest flag is set. Return codes for tests
- * are below. Note: the stored test result value is the return code
- * plus one, since 0 in the results list indicates an untested face
- * and one indicates a valid face.
+ * face unless the force_retest flag is set. If the face test was
+ * TEST_NUM_VERT, the stored result is untested since this is not an
+ * extensive test. Return codes for tests are below. Note: the stored
+ * test result value is the return code plus one, since 0 in the
+ * results list indicates an untested face and one indicates a valid
+ * face.
  *   0 valid face
  *   1 degenerate, <3 vertices
  *   2 degenerate, duplicate vertex indexes
  *   3 degenerate, vertices too close
- *
- * Recommended function improvements:
- *  - Add parameter to choose which face tests should be run.
  */
 int 
 test_face(struct ga_t *ga,
@@ -665,6 +716,9 @@ test_face(struct ga_t *ga,
             return (gfi->face_status[face_idx] - 1);
         }
     }
+
+    /* removes trailing vertices identical to the first vertex */
+    gfi->num_vertices_arr[face_idx] = find_last_unique_vertex(ga, gfi, face_idx);
 
     /* added 1 to internal index values so warning message index values
      * matches obj file index numbers. this is because obj file indexes
@@ -2498,6 +2552,7 @@ output_to_bot(struct ga_t *ga,
     return ret;
 }
 
+
 /*
  * O U T P U T _ T O _ N M G
  *
@@ -2507,22 +2562,24 @@ output_to_bot(struct ga_t *ga,
  * Only face groupings with closed surfaces will be output. Closure is
  * determined by the function nmg_check_closed_shell. A primitive will
  * not be output if the face grouping fails the closure test or an 
- * error occured during processing. The output_mode option determines
- * if an nmg or volume-mode-bot will be output. The normal_mode will
- * determine if normals provided in the obj file will be inserted
- * into the nmg structure. Normal_mode should be set to IGNR_NORM
- * since, inserted normals are not used for computing face normals
- * and appear to provide no benefit. The tolerance values passed to
- * this function (within bn_tol) must be those which will be used
- * when raytracing (as defined in rtip->rti_tol) otherwise raytracing
- * errors will occur. Primitives will be named according to the
- * grouping name in the obj file with the following exceptions.
- * Characters invalid for BRL-CAD primitive names and operating system
- * file names are converted to underscore. The remaining portions
- * of the name indicate the decimal index number of the grouping in
- * the obj file, face_type number of the grouping
- * {1=v|2=tv|3=nv|4=tnv}, primitive type {n=nmg|v=bot-via-nmg} and
- * closure status {c=closed}.
+ * error occured during processing. A return value of 1 indicates no
+ * primitive was output because the geometry was not closed. A return
+ * value of 2 indicates no primitive was output because an nmg bomb
+ * occured. The output_mode option determines if an nmg or
+ * volume-mode-bot will be output. The normal_mode will determine if
+ * normals provided in the obj file will be inserted into the nmg
+ * structure. Normal_mode should be set to IGNR_NORM since, inserted
+ * normals are not used for computing face normals and appear to
+ * provide no benefit. The tolerance values passed to this function
+ * (within bn_tol) must be those which will be used when raytracing
+ * (as defined in rtip->rti_tol) otherwise raytracing errors will
+ * occur. Primitives will be named according to the grouping name in
+ * the obj file with the following exceptions. Characters invalid for
+ * BRL-CAD primitive names and operating system file names are
+ * converted to underscore. The remaining portions of the name
+ * indicate the decimal index number of the grouping in the obj file,
+ * face_type number of the grouping {1=v|2=tv|3=nv|4=tnv}, primitive
+ * type {n=nmg|v=bot-via-nmg} and closure status {c=closed}.
  *
  * Recommended function improvements:
  *  - Profile the called nmg functions to determine where the
@@ -2605,7 +2662,7 @@ output_to_nmg(struct ga_t *ga,
         bu_log("ERROR: caught nmg bomb for obj file face grouping name (%s), obj file face grouping index (%lu)\n",
             bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 
-        return ret;
+        return 2; /* return code 2 indicates nmg bomb occured */
     }
 
     shell_vert_idx = 0;
@@ -2623,6 +2680,7 @@ output_to_nmg(struct ga_t *ga,
             eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
             lu2 = BU_LIST_FIRST(loopuse, &fu->fumate_p->lu_hd);
             eu2 = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
+
 
             for (vert_idx = 0 ; vert_idx < gfi->num_vertices_arr[face_idx] ; vert_idx++) {
                 retrieve_coord_index(ga, gfi, face_idx, vert_idx, tmp_v, tmp_n, tmp_t,
@@ -2915,10 +2973,13 @@ process_b_mode_option(struct ga_t *ga,
  * This function is executed from main when the user selects mode
  * option 'n' or 'v' from the command line. The 'n' indicates output
  * to nmg and 'v' indicates output to volume-mode-bot via nmg. If nmg
- * or volumn-mode-bot creation fails, output will be attempted to
- * 'native bot'.
+ * or volume-mode-bot creation fails, output will be attempted to
+ * 'native bot'. If stop_on_nmg_bomb_flag is set to true, no
+ * primitive will be output if an nmg bomb occurs. A return value of
+ * 0 indicates no nmg bomb occured, a return of 1 indicates an nmg
+ * bomb occured and stop_on_nmg_bomb_flag was set to true.
  */
-void
+int
 process_nv_mode_option(struct ga_t *ga,
                        struct gfi_t *gfi,
                        struct rt_wdb *outfp, 
@@ -2931,11 +2992,15 @@ process_nv_mode_option(struct ga_t *ga,
                        int nmg_face_test_type,             /* output_to_nmg (nmg or bot-via-nmg) face_test_type
                                                             * TEST_ALL, TEST_NUM_VERT
                                                             */
-                       int native_face_test_type)          /* output_to_bot (i.e. native) face_test_type 
+                       int native_face_test_type,          /* output_to_bot (i.e. native) face_test_type 
                                                             * TEST_ALL, TEST_NUM_VERT
                                                             */
+                       int stop_on_nmg_bomb_flag)
 {
-    if (output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, nmg_output_mode, nmg_face_test_type)) {
+    int ret = 0;
+    ret = output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, nmg_output_mode, nmg_face_test_type);
+
+    if ((ret == 1) || ((ret == 2) && !stop_on_nmg_bomb_flag)) {
         (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
         (void)retest_grouping_faces(ga, gfi, conv_factor, native_face_test_type, tol);
         if (!test_closure(ga, gfi, conv_factor, plot_mode, native_face_test_type, tol)) {
@@ -2946,7 +3011,17 @@ process_nv_mode_option(struct ga_t *ga,
                 open_bot_output_mode, native_face_test_type);
         }
     }
-    return;
+
+    /* convert output_to_nmg return code to process_nv_mode_option
+     * return code
+     */
+    if ((ret == 2) && stop_on_nmg_bomb_flag) {
+        ret = 1;
+    } else {
+        ret = 0;
+    }
+
+    return ret;
 }
 
 int
@@ -2970,11 +3045,13 @@ main(int argc, char **argv)
     double dist_tmp = 0.0;
     struct bn_tol tol_struct;
     struct bn_tol *tol;
-    int nmg_face_test_type = TEST_NUM_VERT;
-    int native_face_test_type = TEST_ALL;
+    int stop_on_nmg_bomb_flag = 0;           /* default: if true, stop processing on nmg bomb */
+    int stop_processing_flag = 0;
+    int nmg_face_test_type = TEST_NUM_VERT;  /* default */
+    int native_face_test_type = TEST_ALL;    /* default */
     int nmg_output_mode = OUT_VBOT;
-    int open_bot_output_mode = RT_BOT_PLATE;   /* default */
-    int plot_mode = PLOT_OFF;    /* default: do not create plot files of open edges for groupings  */
+    int open_bot_output_mode = RT_BOT_PLATE; /* default */
+    int plot_mode = PLOT_OFF;    /* default: do not create plot files of open edges for groupings */
     int normal_mode = PROC_NORM; /* default: import face normals if included in obj file */
     char grouping_option = 'g';  /* default: group by obj file groups */
     char mode_option = 'v';      /* default: import as bot-via-nmg */
@@ -3008,8 +3085,11 @@ main(int argc, char **argv)
         bu_exit(1, usage, argv[0]);
     }
 
-    while ((c = bu_getopt(argc, argv, "pidx:X:vt:h:m:u:g:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "spidx:X:vt:h:m:u:g:o:")) != EOF) {
         switch (c) {
+            case 's': /* stop processing on nmg bomb */
+                stop_on_nmg_bomb_flag = 1;
+                break;
             case 'p': /* create plot files for open edges */
                 plot_mode = PLOT_ON;
                 break;
@@ -3208,6 +3288,14 @@ main(int argc, char **argv)
         bu_log("\tObj file normals ignored\n");
     }
 
+    if (mode_option != 'b') {
+        if (stop_on_nmg_bomb_flag) {
+            bu_log("\tStop on nmg bomb enabled\n");
+        } else {
+            bu_log("\tStop on nmg bomb disabled\n");
+        }
+    }
+
     if (plot_mode == PLOT_ON) {
         bu_log("\tOpen edges plotted\n");
     } else {
@@ -3291,7 +3379,8 @@ main(int argc, char **argv)
 
     switch (grouping_option) {
         case 'n':
-            for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+            face_type_idx = FACE_V;
+            while ((face_type_idx <= FACE_TNV) && !stop_processing_flag) {
                 (void)time(&start_time);
                 timep = localtime(&start_time);
                 collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_NONE, 0);
@@ -3307,9 +3396,9 @@ main(int argc, char **argv)
                             break;
                         case 'n':
                         case 'v':
-                            process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
-                                native_face_test_type);
+                            stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
+                                tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+                                nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
                             break;
                     }
 
@@ -3325,11 +3414,14 @@ main(int argc, char **argv)
 
                     free_gfi(&gfi);
                 }
+                face_type_idx++;
             }
             break;
         case 'g':
-            for (i = 0 ; i < ga.numGroups ; i++) {
-                for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+            i = 0;
+            while ((i < ga.numGroups) && !stop_processing_flag) {
+                face_type_idx = FACE_V;
+                while ((face_type_idx <= FACE_TNV) && !stop_processing_flag) {
                     (void)time(&start_time);
                     timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_GROUP, i);
@@ -3346,9 +3438,9 @@ main(int argc, char **argv)
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
-                                    native_face_test_type);
+                                stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
+                                    tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+                                    nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
                                 break;
                         }
 
@@ -3365,12 +3457,16 @@ main(int argc, char **argv)
 
                         free_gfi(&gfi);
                     }
+                    face_type_idx++;
                 }
+                i++;
             }
             break;
         case 'o':
-            for (i = 0 ; i < ga.numObjects ; i++) {
-                for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+            i = 0;
+            while ((i < ga.numObjects) && !stop_processing_flag) {
+                face_type_idx = FACE_V;
+                while ((face_type_idx <= FACE_TNV) && !stop_processing_flag) {
                     (void)time(&start_time);
                     timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_OBJECT, i);
@@ -3387,9 +3483,9 @@ main(int argc, char **argv)
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
-                                    native_face_test_type);
+                                stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
+                                    tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+                                    nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
                                 break;
                         }
 
@@ -3406,12 +3502,16 @@ main(int argc, char **argv)
 
                         free_gfi(&gfi);
                     }
+                    face_type_idx++;
                 }
+                i++;
             }
             break;
         case 'm':
-            for (i = 0 ; i < ga.numMaterials ; i++) {
-                for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+            i = 0;
+            while ((i < ga.numMaterials) && !stop_processing_flag) {
+                face_type_idx = FACE_V;
+                while ((face_type_idx <= FACE_TNV) && !stop_processing_flag) {
                     (void)time(&start_time);
                     timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_MATERIAL, i);
@@ -3428,9 +3528,9 @@ main(int argc, char **argv)
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
-                                    native_face_test_type);
+                                stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
+                                    tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+                                    nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
                                 break;
                         }
 
@@ -3447,12 +3547,16 @@ main(int argc, char **argv)
 
                         free_gfi(&gfi);
                     }
+                    face_type_idx++;
                 }
+                i++;
             }
             break;
         case 't':
-            for (i = 0 ; i < ga.numTexmaps ; i++) {
-                for (face_type_idx = FACE_V ; face_type_idx <= FACE_TNV ; face_type_idx++) {
+            i = 0;
+            while ((i < ga.numTexmaps) && !stop_processing_flag) {
+                face_type_idx = FACE_V;
+                while ((face_type_idx <= FACE_TNV) && !stop_processing_flag) {
                     (void)time(&start_time);
                     timep = localtime(&start_time);
                     collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_TEXTURE, i);
@@ -3469,9 +3573,9 @@ main(int argc, char **argv)
                                 break;
                             case 'n':
                             case 'v':
-                                process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
-                                    native_face_test_type);
+                                stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
+                                    tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+                                    nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
                                 break;
                         }
 
@@ -3488,7 +3592,9 @@ main(int argc, char **argv)
 
                         free_gfi(&gfi);
                     }
+                    face_type_idx++;
                 }
+                i++;
             }
             break;
     }
