@@ -23,9 +23,9 @@ $t_max = 10 * PI; # 2*PI per revolution, so 5 revolutions
 $granularity = 1500; # this is the total number of segments
 
 # This is the basic hollowed-out box shape:
-# in 1.s rpp 0 .5 0 1 0 1
-# in 2.s rpp -2 2 0.1 0.9 0.1 0.9
-# 1.s - 2.s
+# in box.s rpp 0 .5 0 1 0 1
+# in hole.s rpp -2 2 0.1 0.9 0.1 0.9
+# an individual segment is box.s - hole.s
 
 # dimensions of the box
 $xmin = 0;
