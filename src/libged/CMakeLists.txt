@@ -35,6 +35,7 @@ set(LIBGED_SOURCES
     clone.c
     color.c
     comb.c
+    combmem.c
     comb_color.c
     comb_std.c
     concat.c
