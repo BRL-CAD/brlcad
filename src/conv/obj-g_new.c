@@ -140,6 +140,10 @@ static int verbose = 0;
 #define FACE_NV   3 /* oriented polygonal faces */
 #define FACE_TNV  4 /* textured oriented polygonal faces */
 
+/* face test type */
+#define TEST_ALL      0 /* perform all face tests */
+#define TEST_NUM_VERT 1 /* test only number of vertices */
+
 /* type of vertex to fuse */
 #define FUSE_VERT     0
 #define FUSE_TEX_VERT 1
@@ -584,6 +588,7 @@ size_t
 retest_grouping_faces(struct ga_t *ga,
                       struct gfi_t *gfi,
                       fastf_t conv_factor,  /* conversion factor from obj file units to mm */
+                      int face_test_type,
                       struct bn_tol *tol)
 {
     size_t face_idx = 0;
@@ -592,7 +597,7 @@ retest_grouping_faces(struct ga_t *ga,
     /* face_status is populated within test_face function */
     for (face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++) {
         /* 1 passed into test_face indicates forced retest */
-        if (test_face(ga, gfi, face_idx, conv_factor, tol, 1)) {
+        if (test_face(ga, gfi, face_idx, conv_factor, tol, face_test_type, 1)) {
             failed_face_count++;
         }
     }
@@ -627,6 +632,7 @@ test_face(struct ga_t *ga,
           size_t face_idx,
           fastf_t conv_factor,  /* conversion factor from obj file units to mm */
           struct bn_tol *tol,
+          int face_test_type,   /* TEST_ALL, TEST_NUM_VERT */
           int force_retest)     /* force the retest of this face if it was already
                                  * tested, this is useful when we know a retest is
                                  * required such as when the previous test was performed
@@ -681,6 +687,14 @@ test_face(struct ga_t *ga,
                     gfi->obj_file_face_idx_arr[face_idx] + 1);
             }
         }
+    }
+
+    if (face_test_type == TEST_NUM_VERT) {
+        /* set face test status to zero (i.e. untested) since just
+         * counting the number of vertices is not a true test
+         */
+        gfi->face_status[face_idx] = 0;
+        return degenerate_face;
     }
 
     while ((vert < gfi->num_vertices_arr[face_idx]) && !degenerate_face) {
@@ -2173,6 +2187,7 @@ test_closure(struct ga_t *ga,
              struct gfi_t *gfi,
              fastf_t conv_factor, 
              int plot_mode,        /* PLOT_OFF, PLOT_ON */
+             int face_test_type,
              struct bn_tol *tol)
 {
     size_t face_idx = 0; /* index into faces within for-loop */
@@ -2208,7 +2223,7 @@ test_closure(struct ga_t *ga,
 
     /* loop thru all polygons */
     for (face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++) {
-        if (!test_face(ga, gfi, face_idx, conv_factor, tol, 0)) {
+        if (!test_face(ga, gfi, face_idx, conv_factor, tol, face_test_type, 0)) {
             for (vert_idx = 0 ; vert_idx < gfi->num_vertices_arr[face_idx] ; vert_idx++) {
                 retrieve_coord_index(ga, gfi, face_idx, vert_idx,
                                      tmp_v, tmp_n, tmp_t, &tmp_w, &vofi0, &nofi, &tofi);
@@ -2354,7 +2369,8 @@ output_to_bot(struct ga_t *ga,
               fastf_t bot_thickness,         /* plate-mode-bot thickness in mm units */
               int texture_mode,              /* PROC_TEX, IGNR_TEX */    
               int normal_mode,               /* PROC_NORM, IGNR_NORM */
-              unsigned char bot_output_mode) /* RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID, RT_BOT_SURFACE */
+              unsigned char bot_output_mode, /* RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID, RT_BOT_SURFACE */
+              int face_test_type)
 {
     struct ti_t ti;              /* triangle indices structure */
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current bot */
@@ -2401,7 +2417,7 @@ output_to_bot(struct ga_t *ga,
         }
 
         /* test for degenerate face */
-        if (test_face(ga, gfi, face_idx, conv_factor, tol, 0)) {
+        if (test_face(ga, gfi, face_idx, conv_factor, tol, face_test_type, 0)) {
             num_faces_killed++;
         } else {
             /* populates triangle indexes for the current face.
@@ -2416,6 +2432,13 @@ output_to_bot(struct ga_t *ga,
        * texture vertices indexes have been placed in the array
        * 'ti.index_arr_tri'.
        */
+
+    /* if no triangles exist to process, report this and return */
+    if (ti.num_tri == 0) {
+        bu_log("WARNING: No triangles to output, dropped (%lu) of (%lu) faces for obj file face grouping name (%s), obj file face grouping index (%lu)\n",
+            num_faces_killed, gfi->num_faces, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+        return 0;
+    }
 
     populate_sort_indexes(&ti);
 
@@ -2516,7 +2539,8 @@ output_to_nmg(struct ga_t *ga,
               fastf_t conv_factor, 
               struct bn_tol *tol,
               int normal_mode,      /* PROC_NORM, IGNR_NORM */
-              int output_mode)      /* OUT_NMG, OUT_VBOT */
+              int output_mode,      /* OUT_NMG, OUT_VBOT */
+              int face_test_type)
 {
     struct model *m = (struct model *)NULL;
     struct nmgregion *r = (struct nmgregion *)NULL;
@@ -2578,7 +2602,8 @@ output_to_nmg(struct ga_t *ga,
             nmg_km(m);
         }
 
-        bu_log("ERROR: caught nmg bomb for object (%s)\n", bu_vls_addr(gfi->raw_grouping_name));
+        bu_log("ERROR: caught nmg bomb for obj file face grouping name (%s), obj file face grouping index (%lu)\n",
+            bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 
         return ret;
     }
@@ -2589,7 +2614,7 @@ output_to_nmg(struct ga_t *ga,
     for (face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++) {
 
         /* test for degenerate face */
-        if (test_face(ga, gfi, face_idx, conv_factor, tol, 0)) {
+        if (test_face(ga, gfi, face_idx, conv_factor, tol, face_test_type, 0)) {
             num_faces_killed++;
         } else {
             fu = nmg_cface(s, (struct vertex **)&(verts[shell_vert_idx]),
@@ -2737,6 +2762,13 @@ output_to_nmg(struct ga_t *ga,
                 if ((verbose > 1) || debug) {
                     bu_log("Completed nmg_check_closed_shell for obj file face grouping name (%s), obj file face grouping index (%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
                 }
+                if ((verbose > 1) || debug) {
+                    bu_log("Running nmg_fix_normals with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%lu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+                }
+                nmg_fix_normals(s, tol);
+                if ((verbose > 1) || debug) {
+                    bu_log("Completed nmg_fix_normals for obj file face grouping name (%s), obj file face grouping index (%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+                }
                 if (output_mode == OUT_NMG) {
                     /* make nmg */
                     /* added 1 to grouping_index so the index number
@@ -2760,9 +2792,6 @@ output_to_nmg(struct ga_t *ga,
                         ret = 0; /* set return success */
                     }
                 } else {
-                    if ((verbose > 1) || debug) {
-                        bu_log("Completed nmg_check_closed_shell for obj file face grouping name (%s), obj file face grouping index (%lu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
-                    }
                     /* make volume bot */
                     if (output_mode != OUT_VBOT) {
                         bu_log("NOTE: Currently bot-via-nmg can only create volume bots, ignoring plate mode option and creating volume bot instead.\n");
@@ -2865,16 +2894,17 @@ process_b_mode_option(struct ga_t *ga,
                       fastf_t bot_thickness,              /* bot plate thickness (mm) */
                       int normal_mode,                    /* PROC_NORM, IGNR_NORM */
                       int plot_mode,                      /* PLOT_OFF, PLOT_ON */
-                      unsigned char open_bot_output_mode) /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
+                      unsigned char open_bot_output_mode, /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
+                      int face_test_type)                 /* TEST_ALL, TEST_NUM_VERT */
 {
     (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
-    (void)retest_grouping_faces(ga, gfi, conv_factor, tol);
-    if (!test_closure(ga, gfi, conv_factor, plot_mode, tol)) {
+    (void)retest_grouping_faces(ga, gfi, conv_factor, face_test_type, tol);
+    if (!test_closure(ga, gfi, conv_factor, plot_mode, face_test_type, tol)) {
         (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, normal_mode,
-            RT_BOT_SOLID);
+            RT_BOT_SOLID, face_test_type);
     } else {
         (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, normal_mode, 
-            open_bot_output_mode);
+            open_bot_output_mode, face_test_type);
     }
     return;
 }
@@ -2897,17 +2927,23 @@ process_nv_mode_option(struct ga_t *ga,
                        fastf_t bot_thickness,              /* bot plate thickness (mm) */
                        int nmg_output_mode,                /* OUT_NMG, OUT_VBOT */
                        int plot_mode,                      /* PLOT_OFF, PLOT_ON */
-                       unsigned char open_bot_output_mode) /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
+                       unsigned char open_bot_output_mode, /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
+                       int nmg_face_test_type,             /* output_to_nmg (nmg or bot-via-nmg) face_test_type
+                                                            * TEST_ALL, TEST_NUM_VERT
+                                                            */
+                       int native_face_test_type)          /* output_to_bot (i.e. native) face_test_type 
+                                                            * TEST_ALL, TEST_NUM_VERT
+                                                            */
 {
-    if (output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, nmg_output_mode)) {
+    if (output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, nmg_output_mode, nmg_face_test_type)) {
         (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
-        (void)retest_grouping_faces(ga, gfi, conv_factor, tol);
-        if (!test_closure(ga, gfi, conv_factor, plot_mode, tol)) {
+        (void)retest_grouping_faces(ga, gfi, conv_factor, native_face_test_type, tol);
+        if (!test_closure(ga, gfi, conv_factor, plot_mode, native_face_test_type, tol)) {
             (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, IGNR_NORM,
-                RT_BOT_SOLID);
+                RT_BOT_SOLID, native_face_test_type);
         } else {
             (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, IGNR_NORM,
-                open_bot_output_mode);
+                open_bot_output_mode, native_face_test_type);
         }
     }
     return;
@@ -2934,6 +2970,8 @@ main(int argc, char **argv)
     double dist_tmp = 0.0;
     struct bn_tol tol_struct;
     struct bn_tol *tol;
+    int nmg_face_test_type = TEST_NUM_VERT;
+    int native_face_test_type = TEST_ALL;
     int nmg_output_mode = OUT_VBOT;
     int open_bot_output_mode = RT_BOT_PLATE;   /* default */
     int plot_mode = PLOT_OFF;    /* default: do not create plot files of open edges for groupings  */
@@ -3265,12 +3303,13 @@ main(int argc, char **argv)
                     switch (mode_option) {
                         case 'b':
                             process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
-                                normal_mode, plot_mode, open_bot_output_mode);
+                                normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
                             break;
                         case 'n':
                         case 'v':
                             process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                nmg_output_mode, plot_mode, open_bot_output_mode);
+                                nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
+                                native_face_test_type);
                             break;
                     }
 
@@ -3297,18 +3336,19 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("Grouping start time: %02d:%02d:%02d Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s)\n",
                             timep->tm_hour, timep->tm_min, timep->tm_sec,
-                            gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                            gfi->grouping_index + 1, ga.numGroups, face_type_idx,
                             bu_vls_addr(gfi->raw_grouping_name));
 
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
-                                    normal_mode, plot_mode, open_bot_output_mode);
+                                    normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
                                 break;
                             case 'n':
                             case 'v':
                                 process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode);
+                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
+                                    native_face_test_type);
                                 break;
                         }
 
@@ -3319,7 +3359,7 @@ main(int argc, char **argv)
                             bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
                                 timep->tm_hour, timep->tm_min, timep->tm_sec,
                                 elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
-                                gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                                gfi->grouping_index + 1, ga.numGroups, face_type_idx,
                                 bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
                         }
 
@@ -3343,12 +3383,13 @@ main(int argc, char **argv)
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
-                                    normal_mode, plot_mode, open_bot_output_mode);
+                                    normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
                                 break;
                             case 'n':
                             case 'v':
                                 process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode);
+                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
+                                    native_face_test_type);
                                 break;
                         }
 
@@ -3377,18 +3418,19 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("Grouping start time: %02d:%02d:%02d Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s)\n",
                             timep->tm_hour, timep->tm_min, timep->tm_sec,
-                            gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                            gfi->grouping_index + 1, ga.numMaterials, face_type_idx,
                             bu_vls_addr(gfi->raw_grouping_name));
 
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
-                                    normal_mode, plot_mode, open_bot_output_mode);
+                                    normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
                                 break;
                             case 'n':
                             case 'v':
                                 process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode);
+                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
+                                    native_face_test_type);
                                 break;
                         }
 
@@ -3399,7 +3441,7 @@ main(int argc, char **argv)
                             bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
                                 timep->tm_hour, timep->tm_min, timep->tm_sec,
                                 elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
-                                gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                                gfi->grouping_index + 1, ga.numMaterials, face_type_idx,
                                 bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
                         }
 
@@ -3417,18 +3459,19 @@ main(int argc, char **argv)
                     if (gfi != NULL) {
                         bu_log("Grouping start time: %02d:%02d:%02d Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s)\n",
                             timep->tm_hour, timep->tm_min, timep->tm_sec,
-                            gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                            gfi->grouping_index + 1, ga.numTexmaps, face_type_idx,
                             bu_vls_addr(gfi->raw_grouping_name));
 
                         switch (mode_option) {
                             case 'b':
                                 process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
-                                    normal_mode, plot_mode, open_bot_output_mode);
+                                    normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
                                 break;
                             case 'n':
                             case 'v':
                                 process_nv_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-                                    nmg_output_mode, plot_mode, open_bot_output_mode);
+                                    nmg_output_mode, plot_mode, open_bot_output_mode, nmg_face_test_type,
+                                    native_face_test_type);
                                 break;
                         }
 
@@ -3439,7 +3482,7 @@ main(int argc, char **argv)
                             bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (%lu of %lu) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
                                 timep->tm_hour, timep->tm_min, timep->tm_sec,
                                 elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60),
-                                gfi->grouping_index + 1, ga.numObjects, face_type_idx,
+                                gfi->grouping_index + 1, ga.numTexmaps, face_type_idx,
                                 bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
                         }
 
