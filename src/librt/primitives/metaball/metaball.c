@@ -567,6 +567,8 @@ void
 rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
+    vect_t work, pprime;
+    fastf_t r;
 
     if (ap) RT_CK_APPLICATION(ap);
     if (stp) RT_CK_SOLTAB(stp);
@@ -574,7 +576,27 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
     if (!uvp) return;
     if (!metaball) return;
 
-    bu_log("ERROR: rt_metaball_uv() is not implemented\n");
+    /* stuff stolen from sph */
+    VSUB2(work, hitp->hit_point, stp->st_center);
+    VSCALE(pprime, work, 1.0/MAGNITUDE(work));
+    /* Assert that pprime has unit length */
+
+    /* U is azimuth, atan() range: -pi to +pi */
+    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * bn_inv2pi;
+    if (uvp->uv_u < 0)
+	uvp->uv_u += 1.0;
+    /*
+     * V is elevation, atan() range: -pi/2 to +pi/2, because sqrt()
+     * ensures that X parameter is always >0
+     */
+    uvp->uv_v = bn_atan2(pprime[Z],
+			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
+	bn_invpi + 0.5;
+
+    /* approximation: r / (circumference, 2 * pi * aradius) */
+    r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+    uvp->uv_du = uvp->uv_dv =
+	bn_inv2pi * r / stp->st_aradius;
     return;
 }
 
