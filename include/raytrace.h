@@ -5822,6 +5822,46 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t min_edge_length));
 
 /*
+ *  Utility functions for standard attributes
+ */
+
+/**
+ * D B 5  _ A P P L Y _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "senior" to other values
+ * and other values will be updated to match the attributes.
+ *
+ * @file: db5_types.c
+ */
+
+RT_EXPORT BU_EXTERN(size_t db5_apply_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+
+
+/**
+ * D B 5  _ U P D A T E _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "junior" to other values
+ * and attributes will be updated to reflect those values.
+ *
+ * @file: db5_types.c
+ */
+
+RT_EXPORT BU_EXTERN(size_t db5_update_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+
+
+/*
  *  Constants provided and used by the RT library.
  */
 RT_EXPORT extern const struct db_tree_state rt_initial_tree_state;

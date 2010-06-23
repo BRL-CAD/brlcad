@@ -36,6 +36,7 @@
 #include "vmath.h"
 #include "db5.h"
 #include "raytrace.h"
+#include "regex.h"
 
 struct db5_type {
     int major_code;
@@ -254,6 +255,186 @@ db5_type_sizeof_n_binu(const int minor) {
 	    return (size_t) 8;
     }
     return 0;
+}
+
+size_t
+db5_standardize_attribute(char *attrname) {
+    int i;
+    char *region_flag_names[2];
+    char *region_id_names[4];
+    char *material_id_names[5];
+    char *air_names[3];
+    char *los_names[2];
+    char *color_names[4];
+    char *shader_names[2];
+    char *inherit_names[2];
+    region_flag_names[0] = "region";
+    region_flag_names[1] = "REGION";
+    region_id_names[0] = "region_id";
+    region_id_names[1] = "REGION_ID";
+    region_id_names[2] = "id";
+    region_id_names[3] = "ID";
+    material_id_names[0] = "material_id";
+    material_id_names[1] = "MATERIAL_ID";
+    material_id_names[2] = "GIFTmater";
+    material_id_names[3] = "GIFT_MATERIAL";
+    material_id_names[4] = "mat";
+    los_names[0] = "los";
+    los_names[1] = "LOS";
+    air_names[0] = "air";
+    air_names[1] = "AIR";
+    air_names[2] = "AIRCODE";
+    color_names[0] = "color";
+    color_names[1] = "rgb";
+    color_names[2] = "RGB";
+    color_names[3] = "COLOR";
+    shader_names[0] = "oshader";
+    shader_names[1] = "SHADER";
+    inherit_names[0] = "inherit";
+    inherit_names[1] = "INHERIT";
+    
+    for (i = 0; i < sizeof(region_flag_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, region_flag_names[i]) == 0) return ATTR_REGION;
+    }
+    
+    for (i = 0; i < sizeof(region_id_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, region_id_names[i]) == 0) return ATTR_REGION_ID;
+    }
+    
+    for (i = 0; i < sizeof(material_id_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, material_id_names[i]) == 0) return ATTR_MATERIAL_ID;
+    }
+    
+    for (i = 0; i < sizeof(air_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, air_names[i]) == 0) return ATTR_AIR;
+    }
+    
+    for (i = 0; i < sizeof(los_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, los_names[i]) == 0) return ATTR_LOS;
+    }
+    
+    for (i = 0; i < sizeof(color_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, color_names[i]) == 0) return ATTR_COLOR;
+    }
+    
+    for (i = 0; i < sizeof(shader_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, shader_names[i]) == 0) return ATTR_SHADER;
+    }
+    
+    for (i = 0; i < sizeof(inherit_names)/sizeof(char *); i++) {
+	if (strcmp(attrname, inherit_names[i]) == 0) return ATTR_INHERIT;
+    }
+
+    return -1;    
+
+}
+
+size_t
+db5_standardize_avs(struct bu_attribute_value_set *avs) {
+    return db5_standardize_attribute(avs->avp->name);
+}
+
+size_t
+db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
+
+    size_t i, ret, attr_type, attr_num_val;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+  
+    regex_t compiled_regex;
+    regmatch_t *result_locations;
+    struct bu_vls colorregex;
+    struct bu_vls color;
+
+    bu_vls_init(&colorregex);
+    bu_vls_init(&color);
+
+    RT_CK_COMB(comb);
+    bu_avs_init_empty(&avs);
+
+    if (!db5_get_attributes(dbip, &avs, dp)) {
+        avpp = avs.avp;
+        for (i=0; i < avs.count; i++, avpp++) {
+            attr_type = db5_standardize_attribute(avpp->name);
+            switch (attr_type) {
+		case ATTR_REGION:
+		     if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") ) {
+			comb->region_flag = 1;
+		     } else {
+			comb->region_flag = 0;
+		     }
+		     break;
+		case ATTR_REGION_ID:
+		     attr_num_val = atoi(avpp->value);
+		     printf("region_id: %d\n", attr_num_val);
+		     if (attr_num_val >= 0 || attr_num_val == -1) {
+			comb->region_id = attr_num_val;
+		     } else {
+			bu_log("Warning - invalid region_id value on comb %s - comb->region_id remains at %d\n", dp->d_namep, comb->region_id);
+		     }
+		     break;
+		case ATTR_MATERIAL_ID:
+		     attr_num_val = atoi(avpp->value);
+		     printf("material_id: %d\n", attr_num_val);
+		     if (attr_num_val >= 0) {
+		        comb->GIFTmater = attr_num_val;
+                     } else { 
+			bu_log("Warning - invalid material_id value on comb %s - comb->GIFTmater remains at %d\n", dp->d_namep, comb->GIFTmater);
+		     }
+		     break;
+		case ATTR_AIR:
+		     attr_num_val = atoi(avpp->value);
+		     printf("air: %d\n", attr_num_val);
+		     if (attr_num_val == 0 || attr_num_val == 1) {
+		        comb->aircode = attr_num_val;
+                     } else { 
+			bu_log("Warning - invalid Air Code value on comb %s - comb->aircode remains at %d\n", dp->d_namep, comb->aircode);
+		     }
+		     break;
+		case ATTR_LOS:
+		     attr_num_val = atoi(avpp->value); /* Is LOS really limited to integer values?? - also, need some sanity checking */
+		     printf("los: %d\n", attr_num_val);
+		     comb->los = attr_num_val;
+		     break;
+		case ATTR_COLOR:
+		     bu_vls_sprintf(&colorregex, "([0-9]*)/([0-9]*)/([0-9]*)");
+    		     ret = regcomp(&compiled_regex, bu_vls_addr(&colorregex), REG_EXTENDED);
+		     result_locations = (regmatch_t *)bu_calloc(4, sizeof(regmatch_t), "array to hold answers from regex");
+		     ret=regexec(&compiled_regex, avpp->value, 4, result_locations, 0);
+		     if ( ret != REG_NOMATCH ) {
+		        bu_vls_trunc(&color, 0);
+		        bu_vls_strncpy(&color, avpp->value+result_locations[1].rm_so, result_locations[1].rm_eo - result_locations[1].rm_so);
+	 	        printf("colorval: %s\n", bu_vls_addr(&color));
+		        comb->rgb[0] = atoi(bu_vls_addr(&color));    
+		        bu_vls_trunc(&color, 0);
+		        bu_vls_strncpy(&color, avpp->value+result_locations[2].rm_so, result_locations[2].rm_eo - result_locations[2].rm_so);
+	 	        printf("colorval: %s\n", bu_vls_addr(&color));
+		        comb->rgb[1] = atoi(bu_vls_addr(&color));    
+     		        bu_vls_trunc(&color, 0);
+		        bu_vls_strncpy(&color, avpp->value+result_locations[3].rm_so, result_locations[3].rm_eo - result_locations[3].rm_so);
+	 	        printf("colorval: %s\n", bu_vls_addr(&color));
+		        comb->rgb[2] = atoi(bu_vls_addr(&color));
+		     } else {
+			bu_log("Warning - regexec failed to match color string on comb %s - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+		     }	
+		     break;
+		case ATTR_SHADER:
+		     break;
+		case ATTR_INHERIT:
+		     break;
+		default:
+		     /* not a standard attribute, no action */
+		     break;
+ 	    }
+        }
+    }
+    bu_vls_free(&colorregex);
+    bu_vls_free(&color);
+    bu_free(result_locations, "free regex results");
+}
+
+size_t
+db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
 }
 
 /** @} */
