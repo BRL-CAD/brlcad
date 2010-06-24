@@ -335,7 +335,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, int if
 
 
 HIDDEN int
-combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
+combmem_get(struct ged *gedp, int argc, const char *argv[], int iflag)
 {
     struct rt_db_internal intern;
     union tree *ntp;
@@ -369,7 +369,7 @@ combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
 		op = 'u';
 		break;
 	    default:
-		bu_bomb("combmem_getcombmem() corrupt rt_tree_array");
+		bu_bomb("combmem_get() corrupt rt_tree_array");
 	}
 
 	combmem_vls_print_member_info(gedp, op, itp, iflag);
@@ -383,7 +383,7 @@ combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
 }
 
 HIDDEN int
-combmem_setcombmem(struct ged *gedp, int argc, const char *argv[], int rflag)
+combmem_set(struct ged *gedp, int argc, const char *argv[], int rflag)
 {
     struct rt_db_internal old_intern;
     union tree *old_ntp;
@@ -451,7 +451,7 @@ combmem_setcombmem(struct ged *gedp, int argc, const char *argv[], int rflag)
 		rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem: unrecognized relation (assume UNION)\n");
+		bu_vls_printf(&gedp->ged_result_str, "combmem_set: unrecognized relation (assume UNION)\n");
 	    case 'u':
 		rt_tree_array[tree_index].tl_op = OP_UNION;
 		break;
@@ -486,7 +486,7 @@ combmem_setcombmem(struct ged *gedp, int argc, const char *argv[], int rflag)
 	    /* If bn_mat_ck fails, it's because scaleX, scaleY and/or scaleZ has been
 	     * been applied along with rotations. This screws up perpendicularity.
 	     */
-	    if (bn_mat_ck("combmem_setcombmem", mat)) {
+	    if (bn_mat_ck("combmem_set", mat)) {
 		combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
 	    }
 	}
@@ -496,7 +496,7 @@ combmem_setcombmem(struct ged *gedp, int argc, const char *argv[], int rflag)
 	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(argv[i+1]);
-	tp->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_setcombmem: mat");
+	tp->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_set: mat");
 
 	if (rflag && tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
 	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
@@ -505,11 +505,11 @@ combmem_setcombmem(struct ged *gedp, int argc, const char *argv[], int rflag)
 	    /* If bn_mat_ck fails, it's because scaleX, scaleY and/or scaleZ has been
 	     * been applied along with rotations. This screws up perpendicularity.
 	     */
-	    if (bn_mat_ck("combmem_setcombmem", tp->tr_l.tl_mat)) {
+	    if (bn_mat_ck("combmem_set", tp->tr_l.tl_mat)) {
 		combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
 		bn_mat_mul(tp->tr_l.tl_mat, mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 
-		if (bn_mat_ck("combmem_setcombmem", tp->tr_l.tl_mat)) {
+		if (bn_mat_ck("combmem_set", tp->tr_l.tl_mat)) {
 		    MAT_COPY(tp->tr_l.tl_mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 		}
 	    } else {
@@ -586,7 +586,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 2)
-	return combmem_getcombmem(gedp, argc, argv, iflag);
+	return combmem_get(gedp, argc, argv, iflag);
 
     if (argv[1][0] == '-' && argv[1][1] == 'r' && argv[1][2] == '\0') {
 	rflag = 1;
@@ -595,7 +595,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc > 16 && !((argc-2)%15)) {
-	return combmem_setcombmem(gedp, argc, argv, rflag);
+	return combmem_set(gedp, argc, argv, rflag);
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
