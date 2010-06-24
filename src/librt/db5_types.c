@@ -467,11 +467,10 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
     size_t i, attr_type;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
- 
+    struct bu_vls newval;
+
     RT_CK_COMB(comb);
     bu_avs_init_empty(&avs);
-
-    struct bu_vls newval;
     bu_vls_init(&newval);
 
     if (!db5_get_attributes(dbip, &avs, dp)) {
