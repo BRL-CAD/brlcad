@@ -536,6 +536,7 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 
         /* got all the AV pairs, update and proceed to tree */
 	db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
+        bu_avs_print(&avs, "After build update\n");
 	db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
 
 	done2=0;
@@ -756,8 +757,12 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	actual_count = 0;
     }
 
+    db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    bu_avs_print(&avs, "Initial");
+    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
     db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
     if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+        bu_avs_print(&avs, "After db5_apply_std_attributes followed by db5_update_std_attributes");
         db5_standardize_avs(&avs);
        	avpp = avs.avp;
         for (i=0; i < avs.count; i++, avpp++) {
@@ -1028,7 +1033,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
 	    const char *saved_name = NULL;
 	    int checked;
-#if 0
+
 	    checked = check_comb(gedp);
 	    if (checked < 0) {
 		/* Do some quick checking on the edited file */
@@ -1039,7 +1044,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	    node_count = (size_t)checked;
-#endif
+
 	    if (comb) {
 		saved_name = _ged_save_comb(gedp, dp);
 		if (saved_name == NULL) {
