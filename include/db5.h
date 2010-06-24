@@ -259,7 +259,7 @@ DB5_EXPORT BU_EXTERN(size_t db5_standardize_attribute,
  * @file: db5_types.c
  */
 
-DB5_EXPORT BU_EXTERN(size_t db5_standardize_avs,
+DB5_EXPORT BU_EXTERN(void db5_standardize_avs,
 			 (struct bu_attribute_value_set *avs)); 
 
 

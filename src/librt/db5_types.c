@@ -36,7 +36,6 @@
 #include "vmath.h"
 #include "db5.h"
 #include "raytrace.h"
-#include "regex.h"
 
 struct db5_type {
     int major_code;
@@ -329,26 +328,63 @@ db5_standardize_attribute(char *attrname) {
 
 }
 
-size_t
+void
 db5_standardize_avs(struct bu_attribute_value_set *avs) {
-    return db5_standardize_attribute(avs->avp->name);
+    size_t i, attr_type, attr_val;
+    struct bu_attribute_value_pair *avpp;
+    avpp = avs->avp;
+    for (i=0; i < avs->count; i++, avpp++) {
+	attr_type = db5_standardize_attribute(avpp->name);
+        switch (attr_type) {
+		case ATTR_REGION:
+		     (void)bu_avs_add(&avs, "region", avpp->value);
+		     if (strcmp(avpp->name, "region")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		case ATTR_REGION_ID:
+		     (void)bu_avs_add(&avs, "region_id", avpp->value);
+		     if (strcmp(avpp->name, "region_id")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		case ATTR_MATERIAL_ID:
+		     (void)bu_avs_add(&avs, "material_id", avpp->value);
+		     if (strcmp(avpp->name, "material_id")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		case ATTR_AIR:
+		     (void)bu_avs_add(&avs, "air", avpp->value);
+		     if (strcmp(avpp->name, "air")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		case ATTR_LOS:
+		     (void)bu_avs_add(&avs, "los", avpp->value);
+		     if (strcmp(avpp->name, "los")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		case ATTR_COLOR:
+		     (void)bu_avs_add(&avs, "color", avpp->value);
+		     if (strcmp(avpp->name, "color")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		case ATTR_SHADER:
+		     (void)bu_avs_add(&avs, "oshader", avpp->value);
+		     if (strcmp(avpp->name, "oshader")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		case ATTR_INHERIT:
+		     (void)bu_avs_add(&avs, "inherit", avpp->value);
+		     if (strcmp(avpp->name, "inherit")) bu_avs_remove(&avs, avpp->name);
+		     break;
+		default:
+		     /* not a standard attribute, no action */
+		     break;
+ 	 }
+    }
 }
 
 size_t
 db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
 
-    size_t i, ret, attr_type, attr_num_val;
+    size_t i, j, attr_type, attr_num_val;
+    int color[3];
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
-  
-    regex_t compiled_regex;
-    regmatch_t *result_locations;
-    struct bu_vls colorregex;
-    struct bu_vls color;
-
-    bu_vls_init(&colorregex);
-    bu_vls_init(&color);
-
+    struct bu_vls newval;
+    bu_vls_init(&newval);
+ 
     RT_CK_COMB(comb);
     bu_avs_init_empty(&avs);
 
@@ -358,7 +394,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
             attr_type = db5_standardize_attribute(avpp->name);
             switch (attr_type) {
 		case ATTR_REGION:
-		     if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") ) {
+		     if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") || !strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y") ) {
 			comb->region_flag = 1;
 		     } else {
 			comb->region_flag = 0;
@@ -366,7 +402,6 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 		     break;
 		case ATTR_REGION_ID:
 		     attr_num_val = atoi(avpp->value);
-		     printf("region_id: %d\n", attr_num_val);
 		     if (attr_num_val >= 0 || attr_num_val == -1) {
 			comb->region_id = attr_num_val;
 		     } else {
@@ -375,7 +410,6 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 		     break;
 		case ATTR_MATERIAL_ID:
 		     attr_num_val = atoi(avpp->value);
-		     printf("material_id: %d\n", attr_num_val);
 		     if (attr_num_val >= 0) {
 		        comb->GIFTmater = attr_num_val;
                      } else { 
@@ -384,7 +418,6 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 		     break;
 		case ATTR_AIR:
 		     attr_num_val = atoi(avpp->value);
-		     printf("air: %d\n", attr_num_val);
 		     if (attr_num_val == 0 || attr_num_val == 1) {
 		        comb->aircode = attr_num_val;
                      } else { 
@@ -393,34 +426,30 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 		     break;
 		case ATTR_LOS:
 		     attr_num_val = atoi(avpp->value); /* Is LOS really limited to integer values?? - also, need some sanity checking */
-		     printf("los: %d\n", attr_num_val);
 		     comb->los = attr_num_val;
 		     break;
 		case ATTR_COLOR:
-		     bu_vls_sprintf(&colorregex, "([0-9]*)/([0-9]*)/([0-9]*)");
-    		     ret = regcomp(&compiled_regex, bu_vls_addr(&colorregex), REG_EXTENDED);
-		     result_locations = (regmatch_t *)bu_calloc(4, sizeof(regmatch_t), "array to hold answers from regex");
-		     ret=regexec(&compiled_regex, avpp->value, 4, result_locations, 0);
-		     if ( ret != REG_NOMATCH ) {
-		        bu_vls_trunc(&color, 0);
-		        bu_vls_strncpy(&color, avpp->value+result_locations[1].rm_so, result_locations[1].rm_eo - result_locations[1].rm_so);
-	 	        printf("colorval: %s\n", bu_vls_addr(&color));
-		        comb->rgb[0] = atoi(bu_vls_addr(&color));    
-		        bu_vls_trunc(&color, 0);
-		        bu_vls_strncpy(&color, avpp->value+result_locations[2].rm_so, result_locations[2].rm_eo - result_locations[2].rm_so);
-	 	        printf("colorval: %s\n", bu_vls_addr(&color));
-		        comb->rgb[1] = atoi(bu_vls_addr(&color));    
-     		        bu_vls_trunc(&color, 0);
-		        bu_vls_strncpy(&color, avpp->value+result_locations[3].rm_so, result_locations[3].rm_eo - result_locations[3].rm_so);
-	 	        printf("colorval: %s\n", bu_vls_addr(&color));
-		        comb->rgb[2] = atoi(bu_vls_addr(&color));
+		     if ( sscanf(avpp->value, "%i/%i/%i", color+0, color+1, color+2) == 3 ) {
+		        for (j = 0; j < 3; j++) {       
+             	          if (comb->rgb[j] > 255) comb->rgb[j] = 255;
+             	          if (comb->rgb[j] < 0) comb->rgb[j] = 0;
+          	        }
+		        comb->rgb[0] = color[0];    
+		        comb->rgb[1] = color[1];   
+		        comb->rgb[2] = color[2];
 		     } else {
-			bu_log("Warning - regexec failed to match color string on comb %s - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+			bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 		     }	
 		     break;
 		case ATTR_SHADER:
+		     bu_vls_strcpy(&comb->shader, avpp->value);
 		     break;
 		case ATTR_INHERIT:
+		     if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "1") || !strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y") ) {
+			comb->inherit = 1;
+		     } else {
+			comb->inherit = 0;
+		     }
 		     break;
 		default:
 		     /* not a standard attribute, no action */
@@ -428,13 +457,78 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
  	    }
         }
     }
-    bu_vls_free(&colorregex);
-    bu_vls_free(&color);
-    bu_free(result_locations, "free regex results");
+    db5_update_attributes(dp, &avs, dbip);
+    bu_vls_free(&newval);
 }
 
 size_t
 db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
+    size_t i, attr_type;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+ 
+    RT_CK_COMB(comb);
+    bu_avs_init_empty(&avs);
+
+    struct bu_vls newval;
+    bu_vls_init(&newval);
+
+    if (!db5_get_attributes(dbip, &avs, dp)) {
+	db5_standardize_avs(&avs);
+        if (comb->region_flag) {
+  	  (void)bu_avs_add(&avs, "region", "R"); 
+        } else {
+	  bu_avs_remove(&avs, "region");
+        }
+        if (comb->region_flag && (comb->region_id >=0 || comb->region_id == -1)) {
+	  bu_vls_sprintf(&newval, "%d", comb->region_id);
+  	  (void)bu_avs_add(&avs, "region_id", bu_vls_addr(&newval)); 
+        } else {
+	  bu_avs_remove(&avs, "region_id");
+        }
+        if (comb->GIFTmater >= 0) {
+	  bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
+  	  (void)bu_avs_add(&avs, "material_id", bu_vls_addr(&newval)); 
+        } else {
+	  bu_avs_remove(&avs, "material_id");
+        }
+        if (comb->aircode) {
+	  bu_vls_sprintf(&newval, "%d", comb->aircode);
+  	  (void)bu_avs_add(&avs, "air", bu_vls_addr(&newval)); 
+        } else {
+	  bu_avs_remove(&avs, "air");
+        }
+        if (comb->los) {
+	  bu_vls_sprintf(&newval, "%d", comb->los);
+  	  (void)bu_avs_add(&avs, "los", bu_vls_addr(&newval)); 
+        } else {
+	  bu_avs_remove(&avs, "los");
+        }
+        if (!comb->inherit) {
+	  for (i = 0; i < 3; i++) {
+  	     if (comb->rgb[i] > 255) comb->rgb[i] = 255;
+             if (comb->rgb[i] < 0) comb->rgb[i] = 0;
+          }
+	  bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+  	  (void)bu_avs_add(&avs, "color", bu_vls_addr(&newval)); 
+        } else {
+	  bu_avs_remove(&avs, "color" );
+        }
+        if (strcmp(bu_vls_addr(&comb->shader), "")) {
+	  bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
+  	  (void)bu_avs_add(&avs, "shader", bu_vls_addr(&newval)); 
+        } else {
+	  bu_avs_remove(&avs, "shader");
+        }
+        if (comb->inherit) {
+	  bu_vls_sprintf(&newval, "%d", comb->inherit);
+  	  (void)bu_avs_add(&avs, "inherit", bu_vls_addr(&newval)); 
+        } else {
+	  bu_avs_remove(&avs, "inherit");
+        }
+    }
+    db5_update_attributes(dp, &avs, dbip);
+    bu_vls_free(&newval);
 }
 
 /** @} */
