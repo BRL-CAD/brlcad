@@ -251,10 +251,10 @@ DB5_EXPORT BU_EXTERN(size_t db5_standardize_attribute,
 /**
  * D B 5  _ S T A N D A R D I Z E _ A V S
  *
- * Function for recognizing various versions of the DB5 standard
- * attribute names that have been used - returns the attribute type
- * associated with the attribute name of the supplied avs, or -1 if 
- * it is not a recognized variation of the standard attributes.
+ * Ensures that an attribute set containing one or more standard
+ * attributes, for every attribute type present one of the AV
+ * pairs conforms to modern naming conventions.  It will not remove
+ * other attributes of the same type, but will warn if they are found.
  *
  * @file: db5_types.c
  */
