@@ -382,138 +382,8 @@ combmem_getcombmem(struct ged *gedp, int argc, const char *argv[], int iflag)
     return GED_OK;
 }
 
-
 HIDDEN int
-combmem_setcombmem_abs(struct ged *gedp, int argc, const char *argv[])
-{
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    struct rt_tree_array *rt_tree_array;
-    size_t i;
-    size_t node_count;
-    size_t tree_index;
-    union tree *tp;
-    union tree *final_tree;
-    char op;
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if (!(dp->d_flags & DIR_COMB)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-	return GED_ERROR;
-    }
-
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-    if (!comb->tree) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: empty combination", dp->d_namep);
-	rt_db_free_internal(&intern);
-	return GED_ERROR;
-    }
-
-    db_free_tree(comb->tree, &rt_uniresource);
-    comb->tree = NULL;
-    node_count = (argc - 2) / 15; /* integer division */
-    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
-
-    tree_index = 0;
-    for (i = 2; i < (size_t)argc; i += 15) {
-	matp_t matp;
-	fastf_t az, el, tw;
-	fastf_t tx, ty, tz;
-	fastf_t sa, sx, sy, sz;
-	fastf_t kx, ky, kz;
-
-	op = argv[i][0];
-
-      	/* Add it to the combination */
-      	switch (op) {
-	    case '+':
-		rt_tree_array[tree_index].tl_op = OP_INTERSECT;
-		break;
-	    case '-':
-		rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
-		break;
-	    default:
-		bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_abs: unrecognized relation (assume UNION)\n");
-	    case 'u':
-		rt_tree_array[tree_index].tl_op = OP_UNION;
-		break;
-	}
-
-	matp = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_setcombmem_abs: mat");
-	MAT_IDN(matp);
-
-	if (sscanf(argv[i+2], "%lf", &az) == 1 &&
-	    sscanf(argv[i+3], "%lf", &el) == 1 &&
-	    sscanf(argv[i+4], "%lf", &tw) == 1 &&
-	    sscanf(argv[i+5], "%lf", &tx) == 1 &&
-	    sscanf(argv[i+6], "%lf", &ty) == 1 &&
-	    sscanf(argv[i+7], "%lf", &tz) == 1 &&
-	    sscanf(argv[i+8], "%lf", &sa) == 1 &&
-	    sscanf(argv[i+9], "%lf", &sx) == 1 &&
-	    sscanf(argv[i+10], "%lf", &sy) == 1 &&
-	    sscanf(argv[i+11], "%lf", &sz) == 1 &&
-	    sscanf(argv[i+12], "%lf", &kx) == 1 &&
-	    sscanf(argv[i+13], "%lf", &ky) == 1 &&
-	    sscanf(argv[i+14], "%lf", &kz) == 1) {
-
-	    vect_t aetvec, tvec;
-	    point_t key_pt;
-	    hvect_t svec;
-
-	    VSET(aetvec, az, el, tw);
-	    VSCALE(aetvec, aetvec, bn_degtorad);
-	    VSET(tvec, tx, ty, tz);
-	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
-	    VSET(key_pt, kx, ky, kz);
-	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
-	    QSET(svec, sx, sy, sz, sa);
-
-	    combmem_assemble_mat(matp, aetvec, tvec, svec, key_pt, 1);
-	}
-
-	BU_GETUNION(tp, tree);
-	rt_tree_array[tree_index].tl_tree = tp;
-	tp->tr_l.magic = RT_TREE_MAGIC;
-	tp->tr_l.tl_op = OP_DB_LEAF;
-	tp->tr_l.tl_name = bu_strdup(argv[i+1]);
-	tp->tr_l.tl_mat = matp;
-	tree_index++;
-    }
-
-    if (tree_index)
-	final_tree = (union tree *)db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
-    else
-	final_tree = (union tree *)NULL;
-
-    RT_INIT_DB_INTERNAL(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_COMBINATION;
-    intern.idb_meth = &rt_functab[ID_COMBINATION];
-    intern.idb_ptr = (genptr_t)comb;
-    comb->tree = final_tree;
-
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Unable to write new combination into database.\n");
-	return GED_ERROR;
-    }
-
-    return GED_OK;
-}
-
-
-HIDDEN int
-combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
+combmem_setcombmem(struct ged *gedp, int argc, const char *argv[], int rflag)
 {
     struct rt_db_internal old_intern;
     union tree *old_ntp;
@@ -581,7 +451,7 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 		rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem_rel: unrecognized relation (assume UNION)\n");
+		bu_vls_printf(&gedp->ged_result_str, "combmem_setcombmem: unrecognized relation (assume UNION)\n");
 	    case 'u':
 		rt_tree_array[tree_index].tl_op = OP_UNION;
 		break;
@@ -606,7 +476,9 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 	    VSET(aetvec, az, el, tw);
 	    VSCALE(aetvec, aetvec, bn_degtorad);
 	    VSET(tvec, tx, ty, tz);
+	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
 	    VSET(key_pt, kx, ky, kz);
+	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 	    QSET(svec, sx, sy, sz, sa);
 
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
@@ -614,7 +486,7 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 	    /* If bn_mat_ck fails, it's because scaleX, scaleY and/or scaleZ has been
 	     * been applied along with rotations. This screws up perpendicularity.
 	     */
-	    if (bn_mat_ck("combmem_setcombmem_rel", mat)) {
+	    if (bn_mat_ck("combmem_setcombmem", mat)) {
 		combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
 	    }
 	}
@@ -624,20 +496,20 @@ combmem_setcombmem_rel(struct ged *gedp, int argc, const char *argv[])
 	tp->tr_l.magic = RT_TREE_MAGIC;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(argv[i+1]);
-	tp->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_setcombmem_rel: mat");
+	tp->tr_l.tl_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "combmem_setcombmem: mat");
 
-	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
+	if (rflag && tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
 	    !strcmp(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
 	    bn_mat_mul(tp->tr_l.tl_mat, mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 
 	    /* If bn_mat_ck fails, it's because scaleX, scaleY and/or scaleZ has been
 	     * been applied along with rotations. This screws up perpendicularity.
 	     */
-	    if (bn_mat_ck("combmem_setcombmem_rel", tp->tr_l.tl_mat)) {
+	    if (bn_mat_ck("combmem_setcombmem", tp->tr_l.tl_mat)) {
 		combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 0);
 		bn_mat_mul(tp->tr_l.tl_mat, mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 
-		if (bn_mat_ck("combmem_setcombmem_rel", tp->tr_l.tl_mat)) {
+		if (bn_mat_ck("combmem_setcombmem", tp->tr_l.tl_mat)) {
 		    MAT_COPY(tp->tr_l.tl_mat, old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat);
 		}
 	    } else {
@@ -723,10 +595,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc > 16 && !((argc-2)%15)) {
-	if (rflag)
-	    return combmem_setcombmem_rel(gedp, argc, argv);
-	else
-	    return combmem_setcombmem_abs(gedp, argc, argv);
+	return combmem_setcombmem(gedp, argc, argv, rflag);
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
