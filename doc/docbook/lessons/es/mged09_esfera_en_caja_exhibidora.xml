@@ -65,7 +65,7 @@
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged09_globe_outside_display_box.png" 
+fileref="../../lessons/es/images/mged09_globe_outside_display_box.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -90,7 +90,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged09_globe_inside_outside_box.png" 
+fileref="../../lessons/es/images/mged09_globe_inside_outside_box.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -140,7 +140,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged09_globe_wireframe.png" 
+fileref="../../lessons/es/images/mged09_globe_wireframe.png" 
 format="PNG">
 </imagedata>
 	  </imageobject>
@@ -231,7 +231,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged09_globe_raytraced.png" 
+fileref="../../lessons/es/images/mged09_globe_raytraced.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -345,7 +345,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged09_globe_base_box_wireframe.png" 
+fileref="../../lessons/es/images/mged09_globe_base_box_wireframe.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -401,7 +401,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged09_globe_base_box_raytraced.png" 
+fileref="../../lessons/es/images/mged09_globe_base_box_raytraced.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>

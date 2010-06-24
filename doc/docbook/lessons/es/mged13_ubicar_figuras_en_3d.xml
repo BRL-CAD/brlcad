@@ -51,7 +51,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_design.png" 
+fileref="../../lessons/es/images/mged13_candle_design.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -96,7 +96,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_tabletop_wireframe_front.png" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_wireframe_front.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -145,7 +145,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.png" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_wireframe_front.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -213,7 +213,7 @@ Move End H
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -238,7 +238,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_tabletop_base_front.png" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_base_front.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -284,7 +284,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_tabletop_base_candle_front.png" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_base_candle_front.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -323,7 +323,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_complete_front.png" 
+fileref="../../lessons/es/images/mged13_candle_complete_front.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -449,7 +449,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_comb_ed_checker.png" 
+fileref="../../lessons/es/images/mged13_candle_comb_ed_checker.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -523,7 +523,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged13_candle_raytraced_overlay.png" 
+fileref="../../lessons/es/images/mged13_candle_raytraced_overlay.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>

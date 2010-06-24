@@ -67,7 +67,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged14_candle_base_sphere_topview.png" 
+fileref="../../lessons/es/images/mged14_candle_base_sphere_topview.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -105,7 +105,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged14_candle_multipane.png" 
+fileref="../../lessons/es/images/mged14_candle_multipane.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -149,7 +149,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged14_primitive_editor.png" 
+fileref="../../lessons/es/images/mged14_primitive_editor.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -172,7 +172,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged14_primitive_selection_dropdown.png" 
+fileref="../../lessons/es/images/mged14_primitive_selection_dropdown.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -196,11 +196,11 @@ format="PNG">
 	      <row>
 		<entry>
 		  <inlinegraphic 
-fileref="../../lessons/en/images/mged14_candle_spheres_topview.png" />
+fileref="../../lessons/es/images/mged14_candle_spheres_topview.png" />
 		</entry>
 		<entry>
 		  <inlinegraphic 
-fileref="../../lessons/en/images/mged14_candle_spheres_frontview.png" />
+fileref="../../lessons/es/images/mged14_candle_spheres_frontview.png" />
 		</entry>
 	      </row>
 	      <row>
@@ -226,7 +226,7 @@ fileref="../../lessons/en/images/mged14_candle_spheres_frontview.png" />
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged14_candle_spheres_az35el25.png" 
+fileref="../../lessons/es/images/mged14_candle_spheres_az35el25.png" 
 format="PNG">
 	  </imagedata>
 	  </imageobject>
@@ -569,7 +569,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged14_candle_spheres_raytraced.png" 
+fileref="../../lessons/es/images/mged14_candle_spheres_raytraced.png" 
 format="PNG">
 	  </imagedata>
 	  </imageobject>

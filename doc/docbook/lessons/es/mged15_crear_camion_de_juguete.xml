@@ -70,7 +70,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_design.png" 
+fileref="../../lessons/es/images/mged15_truck_design.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -140,7 +140,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_cab1s.png" 
+fileref="../../lessons/es/images/mged15_truck_cab1s.png" 
 format="PNG"></imagedata>
 	  </imageobject>
 	  <caption>
@@ -245,7 +245,7 @@ format="PNG"></imagedata>
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_cab_cutoff.png" 
+fileref="../../lessons/es/images/mged15_truck_cab_cutoff.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -293,7 +293,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_multipane_1stwheel.png" 
+fileref="../../lessons/es/images/mged15_truck_multipane_1stwheel.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -370,7 +370,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_prim_ed_wheel_well.png" 
+fileref="../../lessons/es/images/mged15_prim_ed_wheel_well.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -396,7 +396,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_2nd_wheel_wheel_place.png" 
+fileref="../../lessons/es/images/mged15_truck_2nd_wheel_wheel_place.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -506,7 +506,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_cab_body.png" 
+fileref="../../lessons/es/images/mged15_truck_cab_body.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -538,7 +538,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_wheel_wells_wireframe.png" 
+fileref="../../lessons/es/images/mged15_truck_wheel_wells_wireframe.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -647,7 +647,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_truck_wheels.png" 
+fileref="../../lessons/es/images/mged15_truck_wheels.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -705,7 +705,7 @@ format="PNG">
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align = "center" 
-fileref="../../lessons/en/images/mged15_cameo_shader.png" 
+fileref="../../lessons/es/images/mged15_cameo_shader.png" 
 format="PNG">
 	    </imagedata>
 	  </imageobject>
@@ -902,10 +902,10 @@ format="PNG">
 	    <tbody>
 	      <row>
 		<entry><inlinegraphic 
-fileref="../../lessons/en/images/mged15_truck_default_lighting.png" />
+fileref="../../lessons/es/images/mged15_truck_default_lighting.png" />
 		</entry>
 		<entry><inlinegraphic 
-fileref="../../lessons/en/images/mged15_truck_ambient_lighting.png" />
+fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png" />
 		</entry>
 	      </row>
 	      <row>
