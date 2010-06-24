@@ -601,8 +601,8 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
         } else {
 	  bu_avs_remove(&avs, "inherit");
         }
+        db5_update_attributes(dp, &avs, dbip);
     }
-    db5_update_attributes(dp, &avs, dbip);
     bu_vls_free(&newval);
 }
 
