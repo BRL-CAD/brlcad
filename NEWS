@@ -14,8 +14,9 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed pixhalve memory leak and corruption on exit - Sean Morrison
+* spanish translation for tutorial 9 - Jesica Giudice, Luciano Lamaita
 * Tcl/Tk updated from 8.5.6 to 8.5.8 - Cliff Yapp
-* spanish translations for tutorials 4, 5, & 7 to 14 - Jesica Giudice
+* spanish translations for tutorials 4-5, 7-8, 10-15 - Jesica Giudice
 * fixed extrude object tessellation failures - Östen Lundahl
 * added manual page for 'random' number generator tool - Sean Morrison
 * added Tktable 2.10 external dependency for archer - Cliff Yapp
