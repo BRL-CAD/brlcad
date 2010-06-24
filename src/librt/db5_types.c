@@ -332,84 +332,113 @@ void
 db5_standardize_avs(struct bu_attribute_value_set *avs) {
     size_t i, attr_type, attr_val;
     struct bu_attribute_value_pair *avpp;
-    int type_count[8];
+    int type_count[8], has_standard[8];
     avpp = avs->avp;
     for (i=0; i < 8; i++) {
 	type_count[i] = 0;
+        has_standard[i] = 0;
     }
+    for (i=0; i < avs->count; i++, avpp++) {
+        if (!strcmp(avpp->name, "region")) has_standard[ATTR_REGION] = 1;
+        if (!strcmp(avpp->name, "region_id")) has_standard[ATTR_REGION_ID] = 1;
+        if (!strcmp(avpp->name, "material_id")) has_standard[ATTR_MATERIAL_ID] = 1;
+        if (!strcmp(avpp->name, "air")) has_standard[ATTR_AIR] = 1;
+        if (!strcmp(avpp->name, "los")) has_standard[ATTR_LOS] = 1;
+        if (!strcmp(avpp->name, "color")) has_standard[ATTR_COLOR] = 1;
+        if (!strcmp(avpp->name, "oshader")) has_standard[ATTR_SHADER] = 1;
+        if (!strcmp(avpp->name, "inherit")) has_standard[ATTR_INHERIT] = 1;
+    }
+
+    avpp = avs->avp;
     for (i=0; i < avs->count; i++, avpp++) {
 	attr_type = db5_standardize_attribute(avpp->name);
         switch (attr_type) {
 		case ATTR_REGION:
-		     if (type_count[0] == 0) {
-		         (void)bu_avs_add(avs, "region", avpp->value);
-		         if (strcmp(avpp->name, "region")) bu_avs_remove(avs, avpp->name);
-			 type_count[0] = 1;
+		     if (type_count[ATTR_REGION] == 0) {
+		         if (has_standard[ATTR_REGION] != 1) {
+			    (void)bu_avs_add(avs, "region", avpp->value);
+			    if (strcmp(avpp->name, "region")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_REGION] = 1;
 		     } else {
-			 bu_log("Warning - multiple region attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple region attributes detected\n");
 		     }
 		     break;
 		case ATTR_REGION_ID:
-		     if (type_count[1] == 0) {
-		         (void)bu_avs_add(avs, "region_id", avpp->value);
-		         if (strcmp(avpp->name, "region_id")) bu_avs_remove(avs, avpp->name);
-			 type_count[1] = 1;
+		     if (type_count[ATTR_REGION_ID] == 0) {
+		         if (has_standard[ATTR_REGION_ID] != 1) {
+		             (void)bu_avs_add(avs, "region_id", avpp->value);
+		             if (strcmp(avpp->name, "region_id")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_REGION_ID] = 1;
 		     } else {
-			 bu_log("Warning - multiple region_id attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple region_id attributes detected\n");
 		     }
 		     break;
 		case ATTR_MATERIAL_ID:
-		     if (type_count[2] == 0) {
-		         (void)bu_avs_add(avs, "material_id", avpp->value);
-		         if (strcmp(avpp->name, "material_id")) bu_avs_remove(avs, avpp->name);
-			 type_count[2] = 1;
+		     if (type_count[ATTR_MATERIAL_ID] == 0) {
+		         if (has_standard[ATTR_MATERIAL_ID] != 1) {
+		             (void)bu_avs_add(avs, "material_id", avpp->value);
+		             if (strcmp(avpp->name, "material_id")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_MATERIAL_ID] = 1;
 		     } else {
-			 bu_log("Warning - multiple material_id attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple material_id attributes detected\n");
 		     }
 		     break;
 		case ATTR_AIR:
-		     if (type_count[3] == 0) {
-		         (void)bu_avs_add(avs, "air", avpp->value);
-		         if (strcmp(avpp->name, "air")) bu_avs_remove(avs, avpp->name);
-			 type_count[3] = 1;
+		     if (type_count[ATTR_AIR] == 0) {
+		         if (has_standard[ATTR_AIR] != 1) {
+		             (void)bu_avs_add(avs, "air", avpp->value);
+		             if (strcmp(avpp->name, "air")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_AIR] = 1;
 		     } else {
-			 bu_log("Warning - multiple air attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple air attributes detected\n");
 		     }
 		     break;
 		case ATTR_LOS:
-		     if (type_count[4] == 0) {
-		         (void)bu_avs_add(avs, "los", avpp->value);
-		         if (strcmp(avpp->name, "los")) bu_avs_remove(avs, avpp->name);
-			 type_count[4] = 1;
+		     if (type_count[ATTR_LOS] == 0) {
+		         if (has_standard[ATTR_LOS] != 1) {
+		             (void)bu_avs_add(avs, "los", avpp->value);
+		             if (strcmp(avpp->name, "los")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_LOS] = 1;
 		     } else {
-			 bu_log("Warning - multiple los attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple los attributes detected\n");
 		     }
 		     break;
 		case ATTR_COLOR:
-		     if (type_count[5] == 0) {
-		         (void)bu_avs_add(avs, "color", avpp->value);
-		         if (strcmp(avpp->name, "color")) bu_avs_remove(avs, avpp->name);
-			 type_count[5] = 1;
+		     if (type_count[ATTR_COLOR] == 0) {
+		         if (has_standard[ATTR_COLOR] != 1) {
+		             (void)bu_avs_add(avs, "color", avpp->value);
+		             if (strcmp(avpp->name, "color")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_COLOR] = 1;
 		     } else {
-			 bu_log("Warning - multiple color attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple color attributes detected\n");
 		     }
 		     break;
 		case ATTR_SHADER:
-		     if (type_count[6] == 0) {
-		         (void)bu_avs_add(avs, "oshader", avpp->value);
-		         if (strcmp(avpp->name, "oshader")) bu_avs_remove(avs, avpp->name);
-			 type_count[6] = 1;
+		     if (type_count[ATTR_SHADER] == 0) {
+		         if (has_standard[ATTR_SHADER] != 1) {
+		            (void)bu_avs_add(avs, "oshader", avpp->value);
+		            if (strcmp(avpp->name, "oshader")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_SHADER] = 1;
 		     } else {
-			 bu_log("Warning - multiple shader attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple shader attributes detected\n");
 		     }
 		     break;
 		case ATTR_INHERIT:
-		     if (type_count[7] == 0) {
-		         (void)bu_avs_add(avs, "inherit", avpp->value);
-		         if (strcmp(avpp->name, "inherit")) bu_avs_remove(avs, avpp->name);
-			 type_count[7] = 1;
+		     if (type_count[ATTR_INHERIT] == 0) {
+		         if (has_standard[ATTR_INHERIT] != 1) {
+		            (void)bu_avs_add(avs, "inherit", avpp->value);
+		            if (strcmp(avpp->name, "inherit")) bu_avs_remove(avs, avpp->name);
+		         }
+			 type_count[ATTR_INHERIT] = 1;
 		     } else {
-			 bu_log("Warning - multiple inherit attributes detected: %s\n", avpp->value);
+			 bu_log("Warning - multiple inherit attributes detected\n");
 		     }
 		     break;
 		default:
@@ -433,75 +462,78 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
     bu_avs_init_empty(&avs);
 
     if (!db5_get_attributes(dbip, &avs, dp)) {
-        avpp = avs.avp;
-        for (i=0; i < avs.count; i++, avpp++) {
-            attr_type = db5_standardize_attribute(avpp->name);
-            switch (attr_type) {
-		case ATTR_REGION:
-		     if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") || !strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y") ) {
-			comb->region_flag = 1;
-		     } else {
-			comb->region_flag = 0;
-		     }
-		     break;
-		case ATTR_REGION_ID:
-		     attr_num_val = atoi(avpp->value);
-		     if (attr_num_val >= 0 || attr_num_val == -1) {
-			comb->region_id = attr_num_val;
-		     } else {
-			bu_log("Warning - invalid region_id value on comb %s - comb->region_id remains at %d\n", dp->d_namep, comb->region_id);
-		     }
-		     break;
-		case ATTR_MATERIAL_ID:
-		     attr_num_val = atoi(avpp->value);
-		     if (attr_num_val >= 0) {
-		        comb->GIFTmater = attr_num_val;
-                     } else { 
-			bu_log("Warning - invalid material_id value on comb %s - comb->GIFTmater remains at %d\n", dp->d_namep, comb->GIFTmater);
-		     }
-		     break;
-		case ATTR_AIR:
-		     attr_num_val = atoi(avpp->value);
-		     if (attr_num_val == 0 || attr_num_val == 1) {
-		        comb->aircode = attr_num_val;
-                     } else { 
-			bu_log("Warning - invalid Air Code value on comb %s - comb->aircode remains at %d\n", dp->d_namep, comb->aircode);
-		     }
-		     break;
-		case ATTR_LOS:
-		     attr_num_val = atoi(avpp->value); /* Is LOS really limited to integer values?? - also, need some sanity checking */
-		     comb->los = attr_num_val;
-		     break;
-		case ATTR_COLOR:
-		     if ( sscanf(avpp->value, "%i/%i/%i", color+0, color+1, color+2) == 3 ) {
-		        for (j = 0; j < 3; j++) {       
-             	          if (comb->rgb[j] > 255) comb->rgb[j] = 255;
-             	          if (comb->rgb[j] < 0) comb->rgb[j] = 0;
-          	        }
-		        comb->rgb[0] = color[0];    
-		        comb->rgb[1] = color[1];   
-		        comb->rgb[2] = color[2];
-		     } else {
-			bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-		     }	
-		     break;
-		case ATTR_SHADER:
-		     bu_vls_strcpy(&comb->shader, avpp->value);
-		     break;
-		case ATTR_INHERIT:
-		     if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "1") || !strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y") ) {
-			comb->inherit = 1;
-		     } else {
-			comb->inherit = 0;
-		     }
-		     break;
-		default:
-		     /* not a standard attribute, no action */
-		     break;
- 	    }
-        }
+
+	db5_standardize_avs(&avs);
+
+	/* region flag */
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
+        if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "R") || !strcmp(bu_vls_addr(&newval), "1") || 
+		!strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y") ) {
+ 	   comb->region_flag = 1;
+	} else {
+           comb->region_flag = 0;
+ 	}
+     
+	/* region_id */ 
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region_id"));
+	attr_num_val = atoi(bu_vls_addr(&newval));
+	if (attr_num_val >= 0 || attr_num_val == -1) {
+	    comb->region_id = attr_num_val;
+	} else {
+	    bu_log("Warning - invalid region_id value on comb %s - comb->region_id remains at %d\n", dp->d_namep, comb->region_id);
+	}
+
+	/* material_id */	
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "material_id"));
+	attr_num_val = atoi(bu_vls_addr(&newval));
+	if (attr_num_val >= 0) {
+	   comb->GIFTmater = attr_num_val;
+        } else { 
+	   bu_log("Warning - invalid material_id value on comb %s - comb->GIFTmater remains at %d\n", dp->d_namep, comb->GIFTmater);
+	}
+
+	/* air */
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "air"));
+	attr_num_val = atoi(bu_vls_addr(&newval));
+	if (attr_num_val == 0 || attr_num_val == 1) {
+	   comb->aircode = attr_num_val;
+        } else { 
+	   bu_log("Warning - invalid Air Code value on comb %s - comb->aircode remains at %d\n", dp->d_namep, comb->aircode);
+	}
+
+	/* los */
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "los"));
+	attr_num_val = atoi(bu_vls_addr(&newval)); /* Is LOS really limited to integer values?? - also, need some sanity checking */
+	comb->los = attr_num_val;
+	
+	/* color */
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "color"));
+	if ( sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3 ) {
+	   for (j = 0; j < 3; j++) {       
+     	     if (comb->rgb[j] > 255) comb->rgb[j] = 255;
+     	     if (comb->rgb[j] < 0) comb->rgb[j] = 0;
+  	   }
+	   comb->rgb[0] = color[0];    
+	   comb->rgb[1] = color[1];   
+	   comb->rgb[2] = color[2];
+	} else {
+	   bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+	}	
+	     
+	/* oshader */
+        bu_vls_strcpy(&comb->shader, bu_avs_get(&avs, "oshader"));
+
+        /* inherit */	
+	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
+	if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "1") || 
+		!strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y") ) {
+	   comb->inherit = 1;
+	} else {
+	   comb->inherit = 0;
+	}
+    
+        db5_update_attributes(dp, &avs, dbip);
     }
-    db5_update_attributes(dp, &avs, dbip);
     bu_vls_free(&newval);
 }
 
