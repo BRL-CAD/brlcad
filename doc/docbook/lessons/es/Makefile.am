@@ -12,7 +12,8 @@ lessonsDOCBOOK_ES = \
 	lessons/es/mged11_refinar_taza.xml \
 	lessons/es/mged12_taza_desde_gui.xml \
 	lessons/es/mged13_ubicar_figuras_en_3d.xml \
-	lessons/es/mged14_ubicar_figuras_en_3d_2.xml
+	lessons/es/mged14_ubicar_figuras_en_3d_2.xml \
+	lessons/es/mged15_crear_camion_de_juguete.xml
 
 lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged01_commandwindow.png \
@@ -97,7 +98,19 @@ lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged14_candle_spheres_raytraced.png \
 	lessons/es/images/mged14_candle_spheres_topview.png \
 	lessons/es/images/mged14_primitive_editor.png \
-	lessons/es/images/mged14_primitive_selection_dropdown.png
+	lessons/es/images/mged14_primitive_selection_dropdown.png \
+	lessons/es/images/mged15_cameo_shader.png \
+	lessons/es/images/mged15_prim_ed_wheel_well.png \
+	lessons/es/images/mged15_truck_2nd_wheel_wheel_place.png \
+	lessons/es/images/mged15_truck_ambient_lighting.png \
+	lessons/es/images/mged15_truck_cab1s.png \
+	lessons/es/images/mged15_truck_cab_body.png \
+	lessons/es/images/mged15_truck_cab_cutoff.png \
+	lessons/es/images/mged15_truck_default_lighting.png \
+	lessons/es/images/mged15_truck_design.png \
+	lessons/es/images/mged15_truck_multipane_1stwheel.png \
+	lessons/es/images/mged15_truck_wheel_wells_wireframe.png \
+	lessons/es/images/mged15_truck_wheels.png
 
 lessonsDOCBOOK_EShtmldir = $(BRLCAD_DATA)/html/lessons/es
 lessonsDOCBOOK_EShtml_DATA = \
