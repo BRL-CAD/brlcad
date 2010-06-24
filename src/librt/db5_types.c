@@ -337,36 +337,37 @@ db5_standardize_avs(struct bu_attribute_value_set *avs) {
 	attr_type = db5_standardize_attribute(avpp->name);
         switch (attr_type) {
 		case ATTR_REGION:
-		     (void)bu_avs_add(&avs, "region", avpp->value);
-		     if (strcmp(avpp->name, "region")) bu_avs_remove(&avs, avpp->name);
+		     (void)bu_avs_add(avs, "region", avpp->value);
+		     if (strcmp(avpp->name, "region")) bu_avs_remove(avs, avpp->name);
 		     break;
 		case ATTR_REGION_ID:
-		     (void)bu_avs_add(&avs, "region_id", avpp->value);
-		     if (strcmp(avpp->name, "region_id")) bu_avs_remove(&avs, avpp->name);
+		     (void)bu_avs_add(avs, "region_id", avpp->value);
+		     if (strcmp(avpp->name, "region_id")) bu_avs_remove(avs, avpp->name);
 		     break;
 		case ATTR_MATERIAL_ID:
-		     (void)bu_avs_add(&avs, "material_id", avpp->value);
-		     if (strcmp(avpp->name, "material_id")) bu_avs_remove(&avs, avpp->name);
+		     (void)bu_avs_add(avs, "material_id", avpp->value);
+		     if (strcmp(avpp->name, "material_id")) bu_avs_remove(avs, avpp->name);
 		     break;
 		case ATTR_AIR:
-		     (void)bu_avs_add(&avs, "air", avpp->value);
-		     if (strcmp(avpp->name, "air")) bu_avs_remove(&avs, avpp->name);
+		     (void)bu_avs_add(avs, "air", avpp->value);
+		     if (strcmp(avpp->name, "air")) bu_avs_remove(avs, avpp->name);
 		     break;
 		case ATTR_LOS:
-		     (void)bu_avs_add(&avs, "los", avpp->value);
-		     if (strcmp(avpp->name, "los")) bu_avs_remove(&avs, avpp->name);
+		     (void)bu_avs_add(avs, "los", avpp->value);
+		     if (strcmp(avpp->name, "los")) bu_avs_remove(avs, avpp->name);
 		     break;
 		case ATTR_COLOR:
-		     (void)bu_avs_add(&avs, "color", avpp->value);
-		     if (strcmp(avpp->name, "color")) bu_avs_remove(&avs, avpp->name);
+		     (void)bu_avs_add(avs, "color", avpp->value);
+		     if (strcmp(avpp->name, "color")) bu_avs_remove(avs, avpp->name);
 		     break;
 		case ATTR_SHADER:
-		     (void)bu_avs_add(&avs, "oshader", avpp->value);
-		     if (strcmp(avpp->name, "oshader")) bu_avs_remove(&avs, avpp->name);
+		     printf("avpp->value: %s\n", avpp->value);
+		     (void)bu_avs_add(avs, "oshader", avpp->value);
+		     if (strcmp(avpp->name, "oshader")) bu_avs_remove(avs, avpp->name);
 		     break;
 		case ATTR_INHERIT:
-		     (void)bu_avs_add(&avs, "inherit", avpp->value);
-		     if (strcmp(avpp->name, "inherit")) bu_avs_remove(&avs, avpp->name);
+		     (void)bu_avs_add(avs, "inherit", avpp->value);
+		     if (strcmp(avpp->name, "inherit")) bu_avs_remove(avs, avpp->name);
 		     break;
 		default:
 		     /* not a standard attribute, no action */
@@ -516,9 +517,9 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
         }
         if (strcmp(bu_vls_addr(&comb->shader), "")) {
 	  bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
-  	  (void)bu_avs_add(&avs, "shader", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add(&avs, "oshader", bu_vls_addr(&newval)); 
         } else {
-	  bu_avs_remove(&avs, "shader");
+	  bu_avs_remove(&avs, "oshader");
         }
         if (comb->inherit) {
 	  bu_vls_sprintf(&newval, "%d", comb->inherit);
