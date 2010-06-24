@@ -257,6 +257,26 @@ db5_type_sizeof_n_binu(const int minor) {
 }
 
 size_t
+db5_is_standard_attribute(char *attrname) {
+    int i;
+    char *standard_attributes[8];
+    standard_attributes[0] = "region";
+    standard_attributes[1] = "region_id";
+    standard_attributes[2] = "material_id";
+    standard_attributes[3] = "los";
+    standard_attributes[4] = "air";
+    standard_attributes[5] = "color";
+    standard_attributes[6] = "oshader";
+    standard_attributes[7] = "inherit";
+   
+    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	if (strcmp(attrname, standard_attributes[i]) == 0) return 1;
+    }
+   
+    return 0;    
+}
+
+size_t
 db5_standardize_attribute(char *attrname) {
     int i;
     char *region_flag_names[2];

@@ -461,7 +461,6 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     char *name=NULL, *new_name;
     char name_v4[NAMESIZE+1];
     char new_name_v4[NAMESIZE+1];
-    char line[RT_MAXLINE] = {0};
     char *ptr;
     int ch;
     int i;
@@ -472,6 +471,7 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     union tree *tp;
     matp_t matrix;
     int ret=0;
+    struct bu_vls line;
     struct bu_vls attr_vls;
     struct bu_vls val_vls;
     struct bu_attribute_value_set avs;
@@ -489,6 +489,7 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	return GED_ERROR;
     }
 
+    bu_vls_init(&line);
     bu_vls_init(&attr_vls);
     bu_vls_init(&val_vls);
     bu_avs_init_empty(&avs);
@@ -526,158 +527,19 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     }
 
     /* Read edited file */
-    while (!done) {
-	/* Read a line */
-	i = (-1);
-
-	ch=getc(fp);
-	while (ch != EOF && ch != '\n' && i < RT_MAXLINE) {
-	    line[++i] = ch;
-
-	    /* get next char */
-	    ch=getc(fp);
-	}
-
-	if (ch == EOF) {
-	    /* We must be done */
-	    done = 1;
-	    if (i < 0)
-		break;
-	}
-
-	line[++i] = '\0';
-
-	/* skip leading white space */
-	i = (-1);
-	while (isspace(line[++i]));
-
-	if (line[i] == '\0')
-	    continue;	/* blank line */
-
-	ptr=find_keyword(i, line, "NAME");
-	if (ptr) {
-	    if (gedp->ged_wdbp->dbip->dbi_version < 5)
-		NAMEMOVE(ptr, new_name_v4);
-	    else {
-		bu_free(new_name, "new_name");
-		new_name = bu_strdup(ptr);
-	    }
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "REGION_ID");
-	if (ptr) {
-	    comb->region_id = atoi(ptr);
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "REGION");
-	if (ptr) {
-	    if (*ptr == 'y' || *ptr == 'Y')
-		comb->region_flag = 1;
-	    else
-		comb->region_flag = 0;
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "AIRCODE");
-	if (ptr) {
-	    comb->aircode = atoi(ptr);
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "GIFT_MATERIAL");
-	if (ptr) {
-	    comb->GIFTmater = atoi(ptr);
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "LOS");
-	if (ptr) {
-	    comb->los = atoi(ptr);
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "COLOR");
-	if (ptr) {
-	    char *ptr2;
-	    int value;
-
-	    ptr2 = strtok(ptr, _delims);
-	    if (!ptr2) {
-		comb->rgb_valid = 0;
-		continue;
-	    }
-	    value = atoi(ptr2);
-	    if (value < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Red value less than 0, assuming 0\n");
-		value = 0;
-	    }
-	    if (value > 255) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Red value greater than 255, assuming 255\n");
-		value = 255;
-	    }
-	    comb->rgb[0] = value;
-	    ptr2 = strtok((char *)NULL, _delims);
-	    if (!ptr2) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Invalid RGB value\n");
-		comb->rgb_valid = 0;
-		continue;
-	    }
-	    value = atoi(ptr2);
-	    if (value < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Green value less than 0, assuming 0\n");
-		value = 0;
-	    }
-	    if (value > 255) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Green value greater than 255, assuming 255\n");
-		value = 255;
-	    }
-	    comb->rgb[1] = value;
-	    ptr2 = strtok((char *)NULL, _delims);
-	    if (!ptr2) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Invalid RGB value\n");
-		comb->rgb_valid = 0;
-		continue;
-	    }
-	    value = atoi(ptr2);
-	    if (value < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Blue value less than 0, assuming 0\n");
-		value = 0;
-	    }
-	    if (value > 255) {
-		bu_vls_printf(&gedp->ged_result_str, "build_comb: Blue value greater than 255, assuming 255\n");
-		value = 255;
-	    }
-	    comb->rgb[2] = value;
-	    comb->rgb_valid = 1;
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "SHADER");
-	if (ptr) {
-	    bu_vls_strcpy(&comb->shader,  ptr);
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "INHERIT");
-	if (ptr) {
-	    if (*ptr == 'y' || *ptr == 'Y')
-		comb->inherit = 1;
-	    else
-		comb->inherit = 0;
-	    continue;
-	}
-
-	if (!strncmp(&line[i], "COMBINATION:", 12)) {
-	    get_attr_val_pair(line, &attr_vls, &val_vls); 
+    while (bu_vls_gets(&line, fp) != -1) {
+	if (strcmp(bu_vls_addr(&line), "combination tree:")) {
+	    get_attr_val_pair(bu_vls_addr(&line), &attr_vls, &val_vls); 
 	    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
-	    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
 	    continue;
         }
 
+        /* got all the AV pairs, update and proceed to tree */
+	db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
+	db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+
 	done2=0;
-	ptr = strtok(line, _delims);
+	ptr = strtok(bu_vls_addr(&line), _delims);
 	while (!done2) {
 	    if (!ptr)
 		break;
@@ -821,11 +683,24 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     struct bu_attribute_value_pair *avpp;
     struct directory *dp;
     FILE *fp;
-    size_t i;
+    size_t i, j, maxlength;
     size_t node_count;
     size_t actual_count;
+    struct bu_vls spacer;
+    char *standard_attributes[8];
+    standard_attributes[0] = "region";
+    standard_attributes[1] = "region_id";
+    standard_attributes[2] = "material_id";
+    standard_attributes[3] = "los";
+    standard_attributes[4] = "air";
+    standard_attributes[5] = "color";
+    standard_attributes[6] = "oshader";
+    standard_attributes[7] = "inherit";
 
     bu_avs_init_empty(&avs);
+
+    bu_vls_init(&spacer);
+    bu_vls_sprintf(&spacer, "");
 
     GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, GED_ERROR);
 
@@ -839,17 +714,27 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	return GED_ERROR;
     }
 
+    maxlength = 0;
+    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	if (strlen(standard_attributes[i]) > maxlength) 
+	   maxlength = strlen(standard_attributes[i]);
+    }
+    printf("maxlength: %d\n", maxlength);
+	
     if (!comb) {
-	fprintf(fp, "NAME=%s\n", name);
-	fprintf(fp, "REGION=No\n");
-	fprintf(fp, "REGION_ID=\n");
-	fprintf(fp, "AIRCODE=\n");
-	fprintf(fp, "GIFT_MATERIAL=\n");
-	fprintf(fp, "LOS=\n");
-	fprintf(fp, "COLOR=\n");
-	fprintf(fp, "SHADER=\n");
-	fprintf(fp, "INHERIT=No\n");
-	fprintf(fp, "COMBINATION:\n");
+  	bu_vls_trunc(&spacer, 0);
+	for (j = 0; j < maxlength - 4 + 1; j++) {
+	    bu_vls_printf(&spacer, " ");
+        }
+	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
+	for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+  	    bu_vls_trunc(&spacer, 0);
+	    for (j = 0; j < maxlength - strlen(standard_attributes[i]); j++) {
+		bu_vls_printf(&spacer, " ");
+            }
+	    fprintf(fp, "%s%s= \n", standard_attributes[i], bu_vls_addr(&spacer));
+        }
+	fprintf(fp, "combination tree:\n");
 	fclose(fp);
 	return GED_OK;
     }
@@ -871,49 +756,45 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	actual_count = 0;
     }
 
-    fprintf(fp, "NAME=%s\n", name);
-    if (comb->region_flag) {
-	fprintf(fp, "REGION=Yes\n");
-	fprintf(fp, "REGION_ID=%ld\n", comb->region_id);
-	fprintf(fp, "AIRCODE=%ld\n", comb->aircode);
-	fprintf(fp, "GIFT_MATERIAL=%ld\n", comb->GIFTmater);
-	fprintf(fp, "LOS=%ld\n", comb->los);
-    } else {
-	fprintf(fp, "REGION=No\n");
-	fprintf(fp, "REGION_ID=\n");
-	fprintf(fp, "AIRCODE=\n");
-	fprintf(fp, "GIFT_MATERIAL=\n");
-	fprintf(fp, "LOS=\n");
-    }
-
-    if (comb->rgb_valid)
-	fprintf(fp, "COLOR= %d %d %d\n", V3ARGS(comb->rgb));
-    else
-	fprintf(fp, "COLOR=\n");
-
-    fprintf(fp, "SHADER=%s\n", bu_vls_addr(&comb->shader));
-
-    if (comb->inherit)
-	fprintf(fp, "INHERIT=Yes\n");
-    else
-	fprintf(fp, "INHERIT=No\n");
-
+    db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
     if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	/* Print out any non-standard attributes - region and region_id
-	 * are case insensitive as far as key properties being set, need
-	 * to check if this is true for the rest of them.
-	 */
+        db5_standardize_avs(&avs);
+       	avpp = avs.avp;
+        for (i=0; i < avs.count; i++, avpp++) {
+	    if (strlen(avpp->name) > maxlength) 
+	       maxlength = strlen(avpp->name);
+        }
+    printf("maxlength: %d\n", maxlength);
+  	bu_vls_trunc(&spacer, 0);
+	for (j = 0; j < maxlength - 4 + 1; j++) {
+	    bu_vls_printf(&spacer, " ");
+        }
+        fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
+        for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+  	    bu_vls_trunc(&spacer, 0);
+	    for (j = 0; j < maxlength - strlen(standard_attributes[i]) + 1; j++) {
+		bu_vls_printf(&spacer, " ");
+            }
+	    if (bu_avs_get(&avs, standard_attributes[i])) {
+                fprintf(fp, "%s%s= %s\n", standard_attributes[i], bu_vls_addr(&spacer),  bu_avs_get(&avs, standard_attributes[i]));
+            } else {
+		fprintf(fp, "%s%s= \n", standard_attributes[i], bu_vls_addr(&spacer));
+	    }
+        }
 	avpp = avs.avp;
-	for (i=0; i < avs.count; i++, avpp++) {
-	    if ((strcasecmp(avpp->name, "REGION")) && (strcasecmp(avpp->name, "REGION_ID")) &&
-		(strcmp(avpp->name, "AIRCODE")) && (strcmp(avpp->name, "GIFT_MATERIAL")) &&
-		(strcmp(avpp->name, "LOS")) && (strcmp(avpp->name, "COLOR")) &&
-		(strcmp(avpp->name, "SHADER")) && (strcmp(avpp->name, "INHERIT")))
-		fprintf(fp, "%s=%s\n", avpp->name, avpp->value);
+        for (i=0; i < avs.count; i++, avpp++) {
+            if (!db5_is_standard_attribute(avpp->name)) {
+  	       bu_vls_trunc(&spacer, 0);
+	       for (j = 0; j < maxlength - strlen(avpp->name) + 1; j++) {
+	  	   bu_vls_printf(&spacer, " ");
+               }
+               fprintf(fp, "%s%s= %s\n", avpp->name, bu_vls_addr(&spacer), avpp->value);
+	    }
         }
     }
+    bu_vls_free(&spacer);
 
-    fprintf(fp, "COMBINATION:\n");
+    fprintf(fp, "combination tree:\n");
 
     for (i=0; i<actual_count; i++) {
 	char op;
@@ -1147,7 +1028,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
 	    const char *saved_name = NULL;
 	    int checked;
-
+#if 0
 	    checked = check_comb(gedp);
 	    if (checked < 0) {
 		/* Do some quick checking on the edited file */
@@ -1158,7 +1039,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	    node_count = (size_t)checked;
-
+#endif
 	    if (comb) {
 		saved_name = _ged_save_comb(gedp, dp);
 		if (saved_name == NULL) {
