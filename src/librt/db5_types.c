@@ -332,42 +332,85 @@ void
 db5_standardize_avs(struct bu_attribute_value_set *avs) {
     size_t i, attr_type, attr_val;
     struct bu_attribute_value_pair *avpp;
+    int type_count[8];
     avpp = avs->avp;
+    for (i=0; i < 8; i++) {
+	type_count[i] = 0;
+    }
     for (i=0; i < avs->count; i++, avpp++) {
 	attr_type = db5_standardize_attribute(avpp->name);
         switch (attr_type) {
 		case ATTR_REGION:
-		     (void)bu_avs_add(avs, "region", avpp->value);
-		     if (strcmp(avpp->name, "region")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[0] == 0) {
+		         (void)bu_avs_add(avs, "region", avpp->value);
+		         if (strcmp(avpp->name, "region")) bu_avs_remove(avs, avpp->name);
+			 type_count[0] = 1;
+		     } else {
+			 bu_log("Warning - multiple region attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		case ATTR_REGION_ID:
-		     (void)bu_avs_add(avs, "region_id", avpp->value);
-		     if (strcmp(avpp->name, "region_id")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[1] == 0) {
+		         (void)bu_avs_add(avs, "region_id", avpp->value);
+		         if (strcmp(avpp->name, "region_id")) bu_avs_remove(avs, avpp->name);
+			 type_count[1] = 1;
+		     } else {
+			 bu_log("Warning - multiple region_id attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		case ATTR_MATERIAL_ID:
-		     (void)bu_avs_add(avs, "material_id", avpp->value);
-		     if (strcmp(avpp->name, "material_id")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[2] == 0) {
+		         (void)bu_avs_add(avs, "material_id", avpp->value);
+		         if (strcmp(avpp->name, "material_id")) bu_avs_remove(avs, avpp->name);
+			 type_count[2] = 1;
+		     } else {
+			 bu_log("Warning - multiple material_id attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		case ATTR_AIR:
-		     (void)bu_avs_add(avs, "air", avpp->value);
-		     if (strcmp(avpp->name, "air")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[3] == 0) {
+		         (void)bu_avs_add(avs, "air", avpp->value);
+		         if (strcmp(avpp->name, "air")) bu_avs_remove(avs, avpp->name);
+			 type_count[3] = 1;
+		     } else {
+			 bu_log("Warning - multiple air attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		case ATTR_LOS:
-		     (void)bu_avs_add(avs, "los", avpp->value);
-		     if (strcmp(avpp->name, "los")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[4] == 0) {
+		         (void)bu_avs_add(avs, "los", avpp->value);
+		         if (strcmp(avpp->name, "los")) bu_avs_remove(avs, avpp->name);
+			 type_count[4] = 1;
+		     } else {
+			 bu_log("Warning - multiple los attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		case ATTR_COLOR:
-		     (void)bu_avs_add(avs, "color", avpp->value);
-		     if (strcmp(avpp->name, "color")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[5] == 0) {
+		         (void)bu_avs_add(avs, "color", avpp->value);
+		         if (strcmp(avpp->name, "color")) bu_avs_remove(avs, avpp->name);
+			 type_count[5] = 1;
+		     } else {
+			 bu_log("Warning - multiple color attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		case ATTR_SHADER:
-		     printf("avpp->value: %s\n", avpp->value);
-		     (void)bu_avs_add(avs, "oshader", avpp->value);
-		     if (strcmp(avpp->name, "oshader")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[6] == 0) {
+		         (void)bu_avs_add(avs, "oshader", avpp->value);
+		         if (strcmp(avpp->name, "oshader")) bu_avs_remove(avs, avpp->name);
+			 type_count[6] = 1;
+		     } else {
+			 bu_log("Warning - multiple shader attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		case ATTR_INHERIT:
-		     (void)bu_avs_add(avs, "inherit", avpp->value);
-		     if (strcmp(avpp->name, "inherit")) bu_avs_remove(avs, avpp->name);
+		     if (type_count[7] == 0) {
+		         (void)bu_avs_add(avs, "inherit", avpp->value);
+		         if (strcmp(avpp->name, "inherit")) bu_avs_remove(avs, avpp->name);
+			 type_count[7] = 1;
+		     } else {
+			 bu_log("Warning - multiple inherit attributes detected: %s\n", avpp->value);
+		     }
 		     break;
 		default:
 		     /* not a standard attribute, no action */
