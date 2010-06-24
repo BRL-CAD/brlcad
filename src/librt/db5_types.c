@@ -577,25 +577,25 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
         }
         if (comb->region_flag && (comb->region_id >=0 || comb->region_id == -1)) {
 	  bu_vls_sprintf(&newval, "%d", comb->region_id);
-  	  (void)bu_avs_add(&avs, "region_id", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add_vls(&avs, "region_id", &newval); 
         } else {
 	  bu_avs_remove(&avs, "region_id");
         }
         if (comb->GIFTmater >= 0) {
 	  bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
-  	  (void)bu_avs_add(&avs, "material_id", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add_vls(&avs, "material_id", &newval); 
         } else {
 	  bu_avs_remove(&avs, "material_id");
         }
         if (comb->aircode) {
 	  bu_vls_sprintf(&newval, "%d", comb->aircode);
-  	  (void)bu_avs_add(&avs, "air", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add_vls(&avs, "air", &newval); 
         } else {
 	  bu_avs_remove(&avs, "air");
         }
         if (comb->los) {
 	  bu_vls_sprintf(&newval, "%d", comb->los);
-  	  (void)bu_avs_add(&avs, "los", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add_vls(&avs, "los", &newval); 
         } else {
 	  bu_avs_remove(&avs, "los");
         }
@@ -605,19 +605,19 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
              if (comb->rgb[i] < 0) comb->rgb[i] = 0;
           }
 	  bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-  	  (void)bu_avs_add(&avs, "color", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add_vls(&avs, "color", &newval); 
         } else {
 	  bu_avs_remove(&avs, "color" );
         }
         if (strcmp(bu_vls_addr(&comb->shader), "")) {
 	  bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
-  	  (void)bu_avs_add(&avs, "oshader", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add_vls(&avs, "oshader", &newval); 
         } else {
 	  bu_avs_remove(&avs, "oshader");
         }
         if (comb->inherit) {
 	  bu_vls_sprintf(&newval, "%d", comb->inherit);
-  	  (void)bu_avs_add(&avs, "inherit", bu_vls_addr(&newval)); 
+  	  (void)bu_avs_add_vls(&avs, "inherit", &newval); 
         } else {
 	  bu_avs_remove(&avs, "inherit");
         }
