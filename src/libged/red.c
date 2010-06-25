@@ -114,12 +114,10 @@ check_comb(struct ged *gedp)
     char name_v4[NAMESIZE+1];
     char *name_v5=NULL;
     char *name=NULL;
-    char line[RT_MAXLINE] = {0};
     char lineCopy[RT_MAXLINE] = {0};
     char *ptr = (char *)NULL;
-    int region=(-1);
-    int id=0, air=0;
-    int rgb_valid;
+    struct bu_vls line;
+    bu_vls_init(&line);
 
     if ((fp=fopen(_ged_tmpfil, "r")) == NULL) {
 	perror("fopen");
@@ -127,154 +125,11 @@ check_comb(struct ged *gedp)
 	return -1;
     }
 
-    /* Read a line at a time */
-    done = 0;
-    while (!done) {
-	/* Read a line */
-	i = (-1);
-
-	ch=getc(fp);
-	while (ch != EOF && ch != '\n' && i < RT_MAXLINE) {
-	    line[++i] = ch;
-
-	    /* next character */
-	    ch=getc(fp);
-	}
-
-	if (ch == EOF) {
-	    /* We must be done */
-	    done = 1;
-	    if (i < 0)
-		break;
-	}
-	if (i == RT_MAXLINE) {
-	    line[RT_MAXLINE-1] = '\0';
-	    bu_vls_printf(&gedp->ged_result_str, "Line too long in edited file:\n%s\n", line);
-	    fclose(fp);
-	    return -1;
-	}
-
-	line[++i] = '\0';
-	bu_strlcpy(lineCopy, line, RT_MAXLINE);
-
-	/* skip leading white space */
-	i = (-1);
-	while (isspace(line[++i]));
-
-	if (line[i] == '\0')
-	    continue;	/* blank line */
-
-	ptr=find_keyword(i, line, "NAME");
-	if (ptr) {
-	    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
-		size_t len;
-
-		len = strlen(ptr);
-		if (len > NAMESIZE) {
-		    while (len > 1 && isspace(ptr[len-1]))
-			len--;
-		}
-		if (len > NAMESIZE) {
-		    bu_vls_printf(&gedp->ged_result_str, "Name too long for v4 database: %s\n%s\n", ptr, lineCopy);
-		    fclose(fp);
-		    return -1;
-		}
-	    }
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "REGION_ID");
-	if (ptr) {
-	    id = atoi(ptr);
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "REGION");
-	if (ptr) {
-	    if (*ptr == 'y' || *ptr == 'Y')
-		region = 1;
-	    else
-		region = 0;
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "AIRCODE");
-	if (ptr) {
-	    air = atoi(ptr);
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "GIFT_MATERIAL");
-	if (ptr) {
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "LOS");
-	if (ptr) {
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "COLOR");
-	if (ptr) {
-	    char *ptr2;
-
-	    rgb_valid = 1;
-	    ptr2 = strtok(ptr, _delims);
-	    if (!ptr2) {
-		continue;
-	    } else {
-		ptr2 = strtok((char *)NULL, _delims);
-		if (!ptr2) {
-		    rgb_valid = 0;
-		} else {
-		    ptr2 = strtok((char *)NULL, _delims);
-		    if (!ptr2) {
-			rgb_valid = 0;
-		    }
-		}
-	    }
-	    if (!rgb_valid) {
-		bu_vls_printf(&gedp->ged_result_str, "WARNING: invalid color specification!!! Must be three integers, each 0-255\n");
-	    }
-	    continue;
-	}
-
-	ptr=find_keyword(i, line, "SHADER");
-	if (ptr)
-	    continue;
-
-	ptr=find_keyword(i, line, "INHERIT");
-	if (ptr)
-	    continue;
-
-	if (!strncmp(&line[i], "COMBINATION:", 12)) {
-	    if (region < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Region flag not correctly set\n\tMust be 'Yes' or 'No'\n\tNo changes made\n");
-		fclose(fp);
-		return -1;
-	    } else if (region) {
-		if (id < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "invalid region ID\n\tNo changed made\n");
-		    fclose(fp);
-		    return -1;
-		}
-		if (air < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "invalid air code\n\tNo changed made\n");
-		    fclose(fp);
-		    return -1;
-		}
-		if (air == 0 && id == 0)
-		    bu_vls_printf(&gedp->ged_result_str, "Warning: both ID and Air codes are 0!!!\n");
-		if (air && id)
-		    bu_vls_printf(&gedp->ged_result_str, "Warning: both ID and Air codes are non-zero!!!\n");
-	    }
-	    continue;
-	}
-
+    while (bu_vls_gets(&line, fp) != -1) {
+        if (!strcmp(bu_vls_addr(&line), "combination tree:")) {
 	done2=0;
 	first=1;
-	ptr = strtok(line, _delims);
-
+	ptr = strtok(bu_vls_addr(&line), _delims);
 	while (!done2) {
 	    if (name_v5) {
 		bu_free(name_v5, "name_v5");
@@ -379,6 +234,7 @@ check_comb(struct ged *gedp)
 	return -1;
     }
     return node_count;
+}
 }
 
 
@@ -748,9 +604,11 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	}
     }
     node_count = db_tree_nleaves(comb->tree);
+    printf("node_count: %d\n", node_count);
     if (node_count > 0) {
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
+    printf("actual_count: %d\n", actual_count);
 	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
