@@ -604,6 +604,7 @@ mged_setup(Tcl_Interp **interpreter)
 
     history_setup();
     mged_global_variable_setup(*interpreter);
+    mged_variable_setup(*interpreter);
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_init(&str);
