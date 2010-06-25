@@ -865,6 +865,13 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   import/export can be performed without relying on minor_type hacks
   in the API.
 
+* implement support for binary attributes.  the idea is to allow
+  arrays of {u,s}int{8,16,32,64}, float, double, and strings, typed as
+  such when written out to storage.  this idea overlaps with what
+  binunif objects provide, so need to reconcile and consolidate into
+  one attribute object entity that can do everything a binunif can do,
+  then allow attributes on objects to provide that same flexibility.
+
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------
