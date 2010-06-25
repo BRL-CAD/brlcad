@@ -604,10 +604,12 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
   	     if (comb->rgb[i] > 255) comb->rgb[i] = 255;
              if (comb->rgb[i] < 0) comb->rgb[i] = 0;
           }
-	  bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-  	  (void)bu_avs_add_vls(&avs, "color", &newval); 
-        } else {
-	  bu_avs_remove(&avs, "color" );
+        }
+        if (!comb->inherit) {
+          if (bu_avs_get(&avs, "color") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
+	     bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+  	     (void)bu_avs_add_vls(&avs, "color", &newval); 
+          }
         }
         if (strcmp(bu_vls_addr(&comb->shader), "")) {
 	  bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
