@@ -109,13 +109,16 @@ check_comb(struct ged *gedp)
     size_t node_count=0;
     int nonsubs=0;
     int i, j, ch;
-    int first, scanning_tree;
+    int first, scanning_tree, matrix_space, matrix_pos, space_cnt;
     char relation;
     char *name=NULL;
+    char *tmpstr;
     char *ptr = (char *)NULL;
     struct bu_vls line;
+    struct bu_vls matrix;
     struct bu_vls name_v5;
     bu_vls_init(&line);
+    bu_vls_init(&matrix);
     bu_vls_init(&name_v5);
 
     if ((fp=fopen(_ged_tmpfil, "r")) == NULL) {
@@ -155,7 +158,35 @@ check_comb(struct ged *gedp)
 		/* blank line, continue */
 		continue;
 	    }
-    
+
+	    /* Check if we have enough spaces for a matrix and if
+	     * so where it is in the string */
+	    space_cnt=0;
+            tmpstr = bu_vls_strdup(&line);
+	    ptr = strtok(tmpstr, _delims);
+	    while (ptr) {
+		space_cnt++;
+		ptr = strtok((char *)NULL, _delims);
+	        printf("pointer: %p\n", ptr);
+	    }
+	    bu_free(tmpstr, "free tmpstr");
+	    if (space_cnt > 17) {
+		matrix_space = space_cnt - 17;
+		tmpstr = bu_vls_strdup(&line);
+	        ptr = strtok(tmpstr, _delims);
+		space_cnt = 0;
+		while (space_cnt < matrix_space) {
+		   space_cnt++;
+		   ptr = strtok((char *)NULL, _delims);
+	           printf("pointer: %p\n", ptr);
+		}
+		matrix_pos = strtok((char *)NULL, _delims) - tmpstr;
+	        printf("position: %d\n", matrix_pos);
+		bu_vls_strncpy(&matrix, bu_vls_addr(&line) + matrix_pos, bu_vls_addr(&line) + bu_vls_strlen(&line));
+	        printf("matrix string: %s\n", bu_vls_addr(&matrix));
+		bu_free(tmpstr, "free tmpstr");
+	    }
+ 
 	    /* First non-white is the relation operator */
 	    relation = bu_vls_addr(&line)[0];
  	    printf("relation: %c\n", relation); 
