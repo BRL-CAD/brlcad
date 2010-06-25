@@ -127,114 +127,114 @@ check_comb(struct ged *gedp)
 
     while (bu_vls_gets(&line, fp) != -1) {
         if (!strcmp(bu_vls_addr(&line), "combination tree:")) {
-	done2=0;
-	first=1;
-	ptr = strtok(bu_vls_addr(&line), _delims);
-	while (!done2) {
-	    if (name_v5) {
-		bu_free(name_v5, "name_v5");
-		name_v5 = NULL;
-	    }
-	    /* First non-white is the relation operator */
-	    if (!ptr) {
-		done2 = 1;
-		break;
-	    }
-
-	    relation = (*ptr);
-	    if (relation == '\0') {
-		if (first)
-		    done = 1;
-
-		done2 = 1;
-		break;
-	    }
-	    first = 0;
-
-	    /* Next must be the member name */
-	    ptr = strtok((char *)NULL, _delims);
-	    name = NULL;
-	    if (ptr != NULL && *ptr != '\0') {
-		if (gedp->ged_wdbp->dbip->dbi_version < 5) {
-		    bu_strlcpy(name_v4 , ptr , NAMESIZE+1);
-
-		    /* Eliminate trailing white space from name */
-		    j = NAMESIZE;
-		    while (isspace(name_v4[--j]))
-			name_v4[j] = '\0';
-		    name = name_v4;
-		} else {
-		    size_t len;
-
-		    len = strlen(ptr);
-		    name_v5 = (char *)bu_malloc(len+1, "name_v5");
-		    bu_strlcpy(name_v5, ptr, len+1);
-		    while (isspace(name_v5[len-1])) {
-			len--;
-			name_v5[len] = '\0';
-		    }
-		    name = name_v5;
+	    done2=0;
+	    first=1;
+	    ptr = strtok(bu_vls_addr(&line), _delims);
+	    while (!done2) {
+		if (name_v5) {
+		    bu_free(name_v5, "name_v5");
+		    name_v5 = NULL;
 		}
-	    }
-
-	    if (relation != '+' && relation != 'u' && relation != '-') {
-		bu_vls_printf(&gedp->ged_result_str, " %c is not a legal operator\n", relation);
-		fclose(fp);
-		if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
-		    bu_free(name_v5, "name_v5");
-		return -1;
-	    }
-
-	    if (relation != '-')
-		nonsubs++;
-
-	    if (name == NULL || name[0] == '\0') {
-		bu_vls_printf(&gedp->ged_result_str, " operand name missing\n%s\n", lineCopy);
-		fclose(fp);
-		if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
-		    bu_free(name_v5, "name_v5");
-		return -1;
-	    }
-
-	    ptr = strtok((char *)NULL, _delims);
-	    if (!ptr)
-		done2 = 1;
-	    else if (*ptr != 'u' &&
-		     (*ptr != '-' || *(ptr+1) != '\0') &&
-		     (*ptr != '+' || *(ptr+1) != '\0')) {
-		int k;
-
-		/* skip past matrix */
-		for (k=1; k<16; k++) {
-		    ptr = strtok((char *)NULL, _delims);
-		    if (!ptr) {
-			bu_vls_printf(&gedp->ged_result_str, "incomplete matrix\n%s\n", lineCopy);
-			fclose(fp);
-			if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
-			    bu_free(name_v5, "name_v5");
-			return -1;
-		    }
+		/* First non-white is the relation operator */
+		if (!ptr) {
+		    done2 = 1;
+		    break;
 		}
 
-		/* get the next relational operator on the current line */
+		relation = (*ptr);
+		if (relation == '\0') {
+		    if (first)
+			done = 1;
+
+		    done2 = 1;
+		    break;
+		}
+		first = 0;
+
+		/* Next must be the member name */
 		ptr = strtok((char *)NULL, _delims);
+		name = NULL;
+		if (ptr != NULL && *ptr != '\0') {
+		    if (gedp->ged_wdbp->dbip->dbi_version < 5) {
+			bu_strlcpy(name_v4 , ptr , NAMESIZE+1);
+
+			/* Eliminate trailing white space from name */
+			j = NAMESIZE;
+			while (isspace(name_v4[--j]))
+			    name_v4[j] = '\0';
+			name = name_v4;
+		    } else {
+			size_t len;
+
+			len = strlen(ptr);
+			name_v5 = (char *)bu_malloc(len+1, "name_v5");
+			bu_strlcpy(name_v5, ptr, len+1);
+			while (isspace(name_v5[len-1])) {
+			    len--;
+			    name_v5[len] = '\0';
+			}
+			name = name_v5;
+		    }
+		}
+
+		if (relation != '+' && relation != 'u' && relation != '-') {
+		    bu_vls_printf(&gedp->ged_result_str, " %c is not a legal operator\n", relation);
+		    fclose(fp);
+		    if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
+			bu_free(name_v5, "name_v5");
+		    return -1;
+		}
+
+		if (relation != '-')
+		    nonsubs++;
+
+		if (name == NULL || name[0] == '\0') {
+		    bu_vls_printf(&gedp->ged_result_str, " operand name missing\n%s\n", lineCopy);
+		    fclose(fp);
+		    if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
+			bu_free(name_v5, "name_v5");
+		    return -1;
+		}
+
+		ptr = strtok((char *)NULL, _delims);
+		if (!ptr)
+		    done2 = 1;
+		else if (*ptr != 'u' &&
+			 (*ptr != '-' || *(ptr+1) != '\0') &&
+			 (*ptr != '+' || *(ptr+1) != '\0')) {
+		    int k;
+
+		    /* skip past matrix */
+		    for (k=1; k<16; k++) {
+			ptr = strtok((char *)NULL, _delims);
+			if (!ptr) {
+			    bu_vls_printf(&gedp->ged_result_str, "incomplete matrix\n%s\n", lineCopy);
+			    fclose(fp);
+			    if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
+				bu_free(name_v5, "name_v5");
+			    return -1;
+			}
+		    }
+
+		    /* get the next relational operator on the current line */
+		    ptr = strtok((char *)NULL, _delims);
+		}
+
+		node_count++;
 	    }
-
-	    node_count++;
 	}
+
+	if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
+	    bu_free(name_v5, "name_v5");
+
+	fclose(fp);
+
+	if (nonsubs == 0 && node_count) {
+	    bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
+	    return -1;
+	}
+	return node_count;
     }
-
-    if (gedp->ged_wdbp->dbip->dbi_version >= 5 && name_v5)
-	bu_free(name_v5, "name_v5");
-
-    fclose(fp);
-
-    if (nonsubs == 0 && node_count) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
-	return -1;
-    }
-    return node_count;
-}
 }
 
 
@@ -574,7 +574,7 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     maxlength = 0;
     for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
 	if (strlen(standard_attributes[i]) > maxlength) 
-	   maxlength = strlen(standard_attributes[i]);
+	    maxlength = strlen(standard_attributes[i]);
     }
     printf("maxlength: %d\n", maxlength);
 	
@@ -608,7 +608,7 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     if (node_count > 0) {
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
-    printf("actual_count: %d\n", actual_count);
+	printf("actual_count: %d\n", actual_count);
 	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -625,9 +625,9 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
        	avpp = avs.avp;
         for (i=0; i < avs.count; i++, avpp++) {
 	    if (strlen(avpp->name) > maxlength) 
-	       maxlength = strlen(avpp->name);
+		maxlength = strlen(avpp->name);
         }
-    printf("maxlength: %d\n", maxlength);
+	printf("maxlength: %d\n", maxlength);
   	bu_vls_trunc(&spacer, 0);
 	for (j = 0; j < maxlength - 4 + 1; j++) {
 	    bu_vls_printf(&spacer, " ");
@@ -647,11 +647,11 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	avpp = avs.avp;
         for (i=0; i < avs.count; i++, avpp++) {
             if (!db5_is_standard_attribute(avpp->name)) {
-  	       bu_vls_trunc(&spacer, 0);
-	       for (j = 0; j < maxlength - strlen(avpp->name) + 1; j++) {
-	  	   bu_vls_printf(&spacer, " ");
-               }
-               fprintf(fp, "%s%s= %s\n", avpp->name, bu_vls_addr(&spacer), avpp->value);
+		bu_vls_trunc(&spacer, 0);
+		for (j = 0; j < maxlength - strlen(avpp->name) + 1; j++) {
+		    bu_vls_printf(&spacer, " ");
+		}
+		fprintf(fp, "%s%s= %s\n", avpp->name, bu_vls_addr(&spacer), avpp->value);
 	    }
         }
     }
