@@ -528,17 +528,19 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	
 	/* color */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "color"));
-	if ( sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3 ) {
-	   for (j = 0; j < 3; j++) {       
-     	     if (comb->rgb[j] > 255) comb->rgb[j] = 255;
-     	     if (comb->rgb[j] < 0) comb->rgb[j] = 0;
-  	   }
-	   comb->rgb[0] = color[0];    
-	   comb->rgb[1] = color[1];   
-	   comb->rgb[2] = color[2];
-	} else {
-	   bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-	}	
+	if (bu_avs_get(&avs, "color")) {
+	   if ( sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3 ) {
+	      for (j = 0; j < 3; j++) {       
+     	        if (comb->rgb[j] > 255) comb->rgb[j] = 255;
+     	        if (comb->rgb[j] < 0) comb->rgb[j] = 0;
+  	      }
+	      comb->rgb[0] = color[0];    
+	      comb->rgb[1] = color[1];   
+	      comb->rgb[2] = color[2];
+	   } else {
+	      bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+	   }
+        }	
 	     
 	/* oshader */
         bu_vls_strcpy(&comb->shader, bu_avs_get(&avs, "oshader"));
@@ -599,17 +601,13 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
         } else {
 	  bu_avs_remove(&avs, "los");
         }
-        if (!comb->inherit) {
-	  for (i = 0; i < 3; i++) {
-  	     if (comb->rgb[i] > 255) comb->rgb[i] = 255;
-             if (comb->rgb[i] < 0) comb->rgb[i] = 0;
-          }
+	for (i = 0; i < 3; i++) {
+  	   if (comb->rgb[i] > 255) comb->rgb[i] = 255;
+           if (comb->rgb[i] < 0) comb->rgb[i] = 0;
         }
-        if (!comb->inherit) {
-          if (bu_avs_get(&avs, "color") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
-	     bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-  	     (void)bu_avs_add_vls(&avs, "color", &newval); 
-          }
+        if (bu_avs_get(&avs, "color") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
+	   bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+  	   (void)bu_avs_add_vls(&avs, "color", &newval); 
         }
         if (strcmp(bu_vls_addr(&comb->shader), "")) {
 	  bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
