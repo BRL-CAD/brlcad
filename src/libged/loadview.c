@@ -138,6 +138,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gvp->gv_perspective = 0;
 
     /* iterate over the contents of the raytrace script */
+    /* TODO: change to bu_fgets or bu_vls_fgets */
     while (!feof(fp)) {
 	memset(buffer, 0, 512);
 	fscanf(fp, "%512s", buffer);
