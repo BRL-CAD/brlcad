@@ -356,6 +356,27 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
         } 
     }
 
+printf("scanned tree:\n");
+
+for (i=0; i<node_count; i++) {
+    char op;
+
+    switch (rt_tree_array[i].tl_op) {
+	case OP_UNION:
+	    op = 'u';
+	    break;
+	case OP_INTERSECT:
+	    op = '+';
+	    break;
+	case OP_SUBTRACT:
+	    op = '-';
+	    break;
+    }
+    printf(" %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+    _ged_print_matrix(stdout, rt_tree_array[i].tl_tree->tr_l.tl_mat);
+    printf("\n");
+}
+
 
     fclose(fp);
     bu_vls_free(&line);
@@ -364,6 +385,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     bu_vls_free(&attr_vls);
     bu_vls_free(&val_vls);
     bu_vls_free(&name_v5);
+    bu_avs_free(&avs);
 
     if (nonsubs == 0 && node_count) {
         bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
