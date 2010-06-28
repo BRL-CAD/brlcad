@@ -118,10 +118,12 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	while (bu_fgets(line, sizeof (line), fp) != NULL) {
 	    int cnt;
 	    int low, hi, r, g, b;
+	    char c;
 
-	    cnt = sscanf(line, "%d %d %d %d %d",
-			 &low, &hi, &r, &g, &b);
-	    if (cnt != 5) {
+	    /* character-separated numbers (ideally a space) */
+	    cnt = sscanf(line, "%d%c%d%c%d%c%d%c%d",
+			 &low, %c, &hi, %c, &r, %c, &g, %c, &b);
+	    if (cnt != 9) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
@@ -147,10 +149,12 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	    int cnt;
 	    int low, hi, r, g, b;
 
+	    /* character-separated numbers (ideally a space) */
+	    cnt = sscanf(line, "%d%c%d%c%d%c%d%c%d",
+			 &low, %c, &hi, %c, &r, %c, &g, %c, &b);
+
 	    /* check to see if line is reasonable */
-	    cnt = sscanf(line, "%d %d %d %d %d",
-			 &low, &hi, &r, &g, &b);
-	    if (cnt != 5) {
+	    if (cnt != 9) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
