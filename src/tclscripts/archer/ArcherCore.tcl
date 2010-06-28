@@ -161,6 +161,7 @@ namespace eval ArcherCore {
 	method color               {args}
 	method comb                {args}
 	method comb_color          {args}
+	method combmem             {args}
 	method copy                {args}
 	method copyeval            {args}
 	method copymat             {args}
@@ -437,7 +438,7 @@ namespace eval ArcherCore {
 					   3ptarb adjust arced attr bb bev blast bo \
 					   bot2pipe bot_condense bot_decimate bot_face_fuse \
 					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-					   c cd clear clone color comb comb_color copy copyeval copymat \
+					   c cd clear clone color comb comb_color combmem copy copyeval copymat \
 					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
 					   edmater erase erase_all ev exit facetize fracture \
 					   g group hide human i importFg4Section \
@@ -4463,6 +4464,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::comb_color {args} {
     eval gedWrapper comb_color 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::combmem {args} {
+    eval gedWrapper combmem 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::copy {args} {

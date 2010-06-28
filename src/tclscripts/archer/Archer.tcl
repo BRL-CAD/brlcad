@@ -98,6 +98,7 @@ namespace eval Archer {
 
 LoadArcherLibs
 package require ArcherCore 1.0
+package require Tktable 2.10
 package provide Archer 1.0
 
 ::itcl::class Archer {
@@ -169,6 +170,7 @@ package provide Archer 1.0
 	method clone               {args}
 	method color               {args}
 	method comb                {args}
+	method combmem             {args}
 	method cp                  {args}
 	method cpi                 {args}
 	method copyeval            {args}
@@ -1025,6 +1027,27 @@ package provide Archer 1.0
 #
 ::itcl::body Archer::comb {args} {
     eval combWrapper comb 3 $args
+}
+
+::itcl::body Archer::combmem {args} {
+    SetWaitCursor $this
+
+    set len [llength $args]
+
+    if {[catch {eval gedCmd combmem $args} ret] ||
+	$len < 2} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Checkpoint the created object
+    checkpoint_olist [lindex $args 0] $LEDGER_MODIFY
+
+    refreshTree 1
+    updateUndoState
+    SetNormalCursor $this
+
+    return $ret
 }
 
 ::itcl::body Archer::cp {args} {
