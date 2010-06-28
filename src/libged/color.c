@@ -318,7 +318,7 @@ _ged_color_putrec(struct ged		*gedp,
 
     if (mp->mt_daddr == MATER_NO_ADDR) {
 	/* Need to allocate new database space */
-	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1) == (size_t)-1) {
+	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
 	    bu_vls_printf(&gedp->ged_result_str, "Database alloc error, aborting");
 	    return;
 	}
@@ -328,7 +328,7 @@ _ged_color_putrec(struct ged		*gedp,
 	dir.d_len = 1;
     }
 
-    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1) == (size_t)-1) {
+    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
 	return;
     }
