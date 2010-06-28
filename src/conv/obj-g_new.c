@@ -43,7 +43,26 @@
 #include "wdb.h"
 #include "obj_parser.h"
 
-static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-sipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
+#if 0
+/* TODO: This logic needs to be reversed.  If the user-specified
+ * grouping option cannot be fulfilled, the application should abort.
+ * It should not try to continue under a different method than the one
+ * they specified just because it can complete.
+ *
+ * Instead of -s to stop, perhaps a -c option to continue processing
+ * on nmg bomb.
+ */
+\n\
+        -s    Stop processing on nmg bomb. If this option is set and\n\
+              an nmg bomb occurs (i.e. fatal error during processing\n\
+              nmg or bot-via-nmg) all processing will stop and the\n\
+              converter will exit. If this option is not set, if an\n\
+              nmg bomb occurs, conversion will fall back to outputing\n\
+              the grouping to 'native-bot' and then continue\n\
+              processing the next grouping.\n\
+#endif
+
+static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-ipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
 \n\
         -u units_str           Units of obj file where units_str can\n\
                                be any valid BRL-CAD unit such as one\n\
@@ -61,14 +80,6 @@ static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-sipd
         -h plate_thickness     Plate thickness in mm units of plate\n\
                                or plate-nocos bots created when the\n\
                                bot is not a closed volume.\n\
-\n\
-        -s    Stop processing on nmg bomb. If this option is set and\n\
-              an nmg bomb occurs (i.e. fatal error during processing\n\
-              nmg or bot-via-nmg) all processing will stop and the\n\
-              converter will exit. If this option is not set, if an\n\
-              nmg bomb occurs, conversion will fall back to outputing\n\
-              the grouping to 'native-bot' and then continue\n\
-              processing the next grouping.\n\
 \n\
         -i    Ignore normals defined in the obj file when the\n\
               conversion mode is 'native-bots'.\n\
