@@ -142,6 +142,8 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     bu_vls_init(&line);
     bu_vls_init(&tmpline);
     bu_vls_init(&matrix_line);
+    bu_vls_init(&attr_vls);
+    bu_vls_init(&val_vls);
     bu_vls_init(&name_v5);
 
     bu_avs_init_empty(&avs);
