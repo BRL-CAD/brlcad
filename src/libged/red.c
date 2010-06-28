@@ -83,18 +83,13 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 
     /* Everything from the beginning to the = is the attribute name*/
     bu_vls_strncpy(attr, line, ptr1 - &line[0]);
+    bu_vls_trimspace(attr);
 
-    /* skip any white space before the value */
     ++ptr1;
-    while (isspace(*(++ptr1)));
-
-    /* eliminate trailing white space */
-    j = strlen(line);
-    while (isspace(line[--j]));
-    line[j+1] = '\0';
 	
     /* Grab the attribute value */
     bu_vls_strcpy(val, ptr1);
+    bu_vls_trimspace(val);
 
     return 1;
 }
@@ -174,7 +169,8 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		return -1;
 	    } else {
 		get_attr_val_pair(bu_vls_addr(&line), &attr_vls, &val_vls);
-		(void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
+		if (strcmp(bu_vls_addr(&val_vls), "") && strcmp(bu_vls_addr(&attr_vls), "name")) 
+		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
 	    }
             bu_vls_trunc(&line, 0);
 	    continue;
@@ -193,6 +189,8 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
             bu_vls_trunc(&line, 0);
 	}
     }
+
+    bu_avs_print(&avs, "Scanned avs\n");
 
     /* If we have a non-zero node count, there is a combination tree to handle - do second pass*/
     if (node_count) {
