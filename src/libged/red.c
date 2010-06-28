@@ -248,9 +248,13 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		    matrix_pos = strtok((char *)NULL, _delims) - tmpstr;
 	            printf("position: %d\n", matrix_pos);
 		    bu_vls_strncpy(&matrix_line, bu_vls_addr(&line) + matrix_pos, bu_vls_addr(&line) + bu_vls_strlen(&line));
-		    /* If the matrix string has no alphabetical characters, assume it really is a matrix and remove
-		     * that portion of the string */
-		    if (!strpbrk(bu_vls_addr(&matrix_line), "abcdfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) {
+		    /* If the matrix string has no alphabetical
+		     * characters, assume it really is a matrix and
+		     * remove that portion of the string.  'eE'
+		     * intentionally left out since it may be part of
+		     * a floating point number.
+		     */
+		    if (!strpbrk(bu_vls_addr(&matrix_line), "abcdfghijklmnopqrstuvwxyzABCDFGHIJKLMNOPQRSTUVWXYZ")) {
 		        bu_vls_strncpy(&tmpline, bu_vls_addr(&line), bu_vls_addr(&line) + bu_vls_strlen(&line) - matrix_pos);
 	                bu_vls_sprintf(&line, "%s", bu_vls_addr(&tmpline));
 	    	        bu_vls_trimspace(&line);
