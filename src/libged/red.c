@@ -234,6 +234,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	    	}
 	    	bu_free(tmpstr, "free tmpstr");
 		/* Handle the matrix portion of the input line, if it exists */
+		matrix_pos = 0;
 	    	if (space_cnt > 17) {
 		    matrix_space = space_cnt - 17;
 		    tmpstr = bu_vls_strdup(&line);
@@ -249,7 +250,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		    bu_vls_strncpy(&matrix_line, bu_vls_addr(&line) + matrix_pos, bu_vls_addr(&line) + bu_vls_strlen(&line));
 		    /* If the matrix string has no alphabetical characters, assume it really is a matrix and remove
 		     * that portion of the string */
-		    if (!strpbrk(bu_vls_addr(&matrix_line), "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) {
+		    if (!strpbrk(bu_vls_addr(&matrix_line), "abcdfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) {
 		        bu_vls_strncpy(&tmpline, bu_vls_addr(&line), bu_vls_addr(&line) + bu_vls_strlen(&line) - matrix_pos);
 	                bu_vls_sprintf(&line, "%s", bu_vls_addr(&tmpline));
 	    	        bu_vls_trimspace(&line);
@@ -301,12 +302,15 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	    	}
 
 		/* Now that we know the name, handle the matrix if any */
+	        printf("position: %d\n", matrix_pos);
 		if (matrix_pos) {
 		    matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
 		    ptr = strtok(bu_vls_addr(&matrix_line), _delims);
+		    printf("%s\n", ptr);
 		    matrix[0] = atof(ptr);
 		    for (k=1; k<16; k++) {
 			ptr = strtok((char *)NULL, _delims);
+		        printf("%s\n", ptr);
 			if (!ptr) {
 			    bu_vls_printf(&gedp->ged_result_str, "build_comb: incomplete matrix for member %s. No changes made\n", bu_vls_addr(&name_v5));
 			    bu_free((char *)matrix, "red: matrix");
