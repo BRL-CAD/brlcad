@@ -364,14 +364,14 @@ _ged_open_dbip(const char *filename, int existing_only)
 void
 _ged_print_node(struct ged		*gedp,
 	       struct directory *dp,
-	       int			pathpos,
+	       size_t			pathpos,
 	       int			indentSize,
 	       char			prefix,
 	       int			cflag,
 	       int                      displayDepth,
 	       int                      currdisplayDepth)
 {
-    int			i;
+    size_t i;
     struct directory	*nextdp;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb;
@@ -460,7 +460,7 @@ _ged_print_node(struct ged		*gedp,
 	    }
 
 	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
-		int j;
+		size_t j;
 
 		for (j=0; j<pathpos+1; j++)
 		    bu_vls_printf(&gedp->ged_result_str, "\t");
