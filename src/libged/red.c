@@ -36,7 +36,6 @@
 
 
 char _ged_tmpfil[MAXPATHLEN] = {0};
-const char _ged_tmpcomb[16] = { 'g', 'e', 'd', '_', 't', 'm', 'p', '.', 'a', 'X', 'X', 'X', 'X', 'X', '\0' };
 char _delims[] = " \t/";	/* allowable delimiters */
 
 
@@ -111,6 +110,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     union tree *tp;
     int tree_index=0;
     struct rt_tree_array *rt_tree_array;
+    struct rt_db_internal intern;
     matp_t matrix;
     struct bu_attribute_value_set avs;
     struct bu_vls line;
@@ -399,6 +399,15 @@ for (i=0; i<node_count; i++) {
         bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
         return -1;
     }
+
+    if (tree_index)
+        tp = (union tree *)db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
+    else
+        tp = (union tree *)NULL;
+
+    comb->tree = tp;
+    
+
 /*    return node_count;*/
     return -1;  /* ensure check never passes until I get build_comb working CWY */
 }
@@ -860,45 +869,6 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 }
 
 
-static const char *
-mktemp_comb(struct ged *gedp, const char *str)
-{
-    /* Make a temporary name for a combination
-       a template name is expected as in "mk_temp()" with
-       5 trailing X's */
-
-    int counter, done;
-    char *ptr;
-    static char name[NAMESIZE] = {0};
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return NULL;
-
-    /* leave room for 5 digits */
-    bu_strlcpy(name, str, NAMESIZE - 5);
-    
-    ptr = name;
-    while (*ptr != '\0')
-	ptr++;
-
-    while (*(--ptr) == 'X')
-	;
-    ptr++;
-
-    counter = 1;
-    done = 0;
-    while (!done && counter < 99999) {
-	sprintf(ptr, "%d", counter);
-	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) == DIR_NULL)
-	    done = 1;
-	else
-	    counter++;
-    }
-
-    return name;
-}
-
-
 const char *
 _ged_save_comb(struct ged *gedp, struct directory *dpold)
 {
@@ -908,7 +878,7 @@ _ged_save_comb(struct ged *gedp, struct directory *dpold)
     struct rt_db_internal intern;
 
     /* Make a new name */
-    const char *name = mktemp_comb(gedp, _ged_tmpcomb);
+    const char *name = (const char *)NULL; /*mktemp_comb(gedp, _ged_tmpcomb);*/
 
     if (rt_db_get_internal(&intern, dpold, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
@@ -959,13 +929,16 @@ int
 ged_red(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    int c;
-    struct directory *dp;
+    int c, counter;
+    int have_tmp_name = 0;
+    struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
+    struct rt_comb_internal *comb, *tmp_comb;
     size_t node_count;
     static const char *usage = "comb";
     const char *editstring = NULL;
+    struct bu_vls comb_name;
+    struct bu_vls temp_name;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -1002,9 +975,26 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, GED_ERROR);
     GED_CHECK_COMB(gedp, dp, GED_ERROR);
 
+    bu_vls_init(&comb_name);
+    bu_vls_init(&temp_name);
+
+    /* Stash original primitive name and find appropriate temp name */
+    bu_vls_sprintf(&comb_name, "%s", dp->d_namep);
+
+    counter = 0;
+    while (!have_tmp_name) {
+	bu_vls_sprintf(&temp_name, "%s_red%d", dp->d_namep, counter);
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), LOOKUP_QUIET) == DIR_NULL)
+	    have_tmp_name = 1;
+	else
+	    counter++;
+    }
+
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s must be a combination to use this command\n", argv[0], argv[1]);
+	    bu_vls_free(&comb_name);
+	    bu_vls_free(&temp_name);
 	    return GED_ERROR;
 	}
 
@@ -1017,6 +1007,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (fp == (FILE *)0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
+	    bu_vls_free(&comb_name);
+	    bu_vls_free(&temp_name);
 	    return GED_ERROR;
 	}
 
@@ -1024,6 +1016,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (write_comb(gedp, comb, dp->d_namep)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    unlink(_ged_tmpfil);
+	    bu_vls_free(&comb_name);
+	    bu_vls_free(&temp_name);
 	    return GED_ERROR;
 	}
     } else {
@@ -1035,6 +1029,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (fp == (FILE *)0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to create %s\n", argv[0], _ged_tmpfil);
+	    bu_vls_free(&comb_name);
+	    bu_vls_free(&temp_name);
 	    return GED_ERROR;
 	}
 
@@ -1042,6 +1038,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (write_comb(gedp, comb, argv[1])) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: unable to edit %s\n", argv[0], argv[1]);
 	    unlink(_ged_tmpfil);
+	    bu_vls_free(&comb_name);
+	    bu_vls_free(&temp_name);
 	    return GED_ERROR;
 	}
     }
@@ -1055,11 +1053,29 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	 * until here so that red may be used to view objects.
 	 */
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
-	    const char *saved_name = NULL;
-	    int checked;
+	    /* comb is to be changed.  All changes will first be made to
+	     * the temporary copy of the comb - if that succeeds, the
+	     * result will be copied over the original comb */
 
-	    checked = check_comb(gedp, comb, dp);
-	    if (checked < 0) {
+	     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
+		return NULL;
+    	     }
+
+	     if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+		bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dp->d_namep);
+		return NULL;
+	     }
+
+	     if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dp->d_namep);
+		return NULL;
+    	     }
+ 
+ 	     GED_DB_GET_INTERNAL(gedp, &intern, tmp_dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+	     tmp_comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	    if (check_comb(gedp, tmp_comb, tmp_dp) < 0) {
 		/* Do some quick checking on the edited file */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 		if (comb)
@@ -1067,9 +1083,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		(void)unlink(_ged_tmpfil);
 		return GED_ERROR;
 	    }
-	    node_count = (size_t)checked;
-
-	    if (comb) {
+#if 0
+	    if (tmp_comb) {
 		saved_name = _ged_save_comb(gedp, dp);
 		if (saved_name == NULL) {
 		    /* Unabled to save combination to a temp name */
@@ -1099,6 +1114,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		av[2] = NULL;
 		(void)ged_kill(gedp, 2, (const char **)av);
 	    }
+#endif
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Because the database is READ-ONLY no changes were made.\n", *argv);
 	}
