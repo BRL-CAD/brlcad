@@ -101,25 +101,37 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 
 
 HIDDEN int
-check_comb(struct ged *gedp)
+check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp)
 {
     /* Do some minor checking of the edited file */
 
     FILE *fp;
     size_t node_count=0;
     int nonsubs=0;
-    int i, j, ch;
-    int first, scanning_tree, matrix_space, matrix_pos, space_cnt;
+    int i, j, k, ch;
+    int scanning_tree, matrix_space, matrix_pos, space_cnt;
     char relation;
-    char *name=NULL;
     char *tmpstr;
     char *ptr = (char *)NULL;
+    union tree *tp;
+    int tree_index=0;
+    struct rt_tree_array *rt_tree_array;
+    matp_t matrix;
+    struct bu_attribute_value_set avs;
     struct bu_vls line;
-    struct bu_vls matrix;
+    struct bu_vls matrix_line;
+    struct bu_vls attr_vls;
+    struct bu_vls val_vls;
+    struct bu_vls tmpline;    
     struct bu_vls name_v5;
-    bu_vls_init(&line);
-    bu_vls_init(&matrix);
-    bu_vls_init(&name_v5);
+
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
+	return -1;
+
+    if (comb) {
+	RT_CK_COMB(comb);
+	RT_CK_DIR(dp);
+    }
 
     if ((fp=fopen(_ged_tmpfil, "r")) == NULL) {
 	perror("fopen");
@@ -127,8 +139,20 @@ check_comb(struct ged *gedp)
 	return -1;
     }
 
+    bu_vls_init(&line);
+    bu_vls_init(&tmpline);
+    bu_vls_init(&matrix_line);
+    bu_vls_init(&name_v5);
+
+    bu_avs_init_empty(&avs);
+
+    rt_tree_array = (struct rt_tree_array *)NULL;
+
     scanning_tree = 0;
     bu_vls_trunc(&line, 0);
+
+    /* We need two passes here - first pass deals with the attribute value pairs and
+     * counts tree nodes, the second pass deals with the combination tree itself */
 
     while (bu_vls_gets(&line, fp) != -1) {
         if (!scanning_tree && strcmp(bu_vls_addr(&line), "combination tree:")) {
@@ -142,6 +166,9 @@ check_comb(struct ged *gedp)
 		bu_vls_free(&line);
 		bu_vls_free(&name_v5);
 		return -1;
+	    } else {
+		get_attr_val_pair(bu_vls_addr(&line), &attr_vls, &val_vls);
+		(void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
 	    }
             bu_vls_trunc(&line, 0);
 	    continue;
@@ -151,75 +178,162 @@ check_comb(struct ged *gedp)
 	        bu_vls_gets(&line, fp);
 		scanning_tree = 1;
 	    }
- 	    printf("into tree checking: %s\n", bu_vls_addr(&line)); 
-
 	    bu_vls_trimspace(&line);
 	    if (bu_vls_strlen(&line) == 0) {
-		/* blank line, continue */
+		/* blank line, don't count, continue */
 		continue;
 	    }
-
-	    /* Check if we have enough spaces for a matrix and if
-	     * so where it is in the string */
-	    space_cnt=0;
-            tmpstr = bu_vls_strdup(&line);
-	    ptr = strtok(tmpstr, _delims);
-	    while (ptr) {
-		space_cnt++;
-		ptr = strtok((char *)NULL, _delims);
-	        printf("pointer: %p\n", ptr);
-	    }
-	    bu_free(tmpstr, "free tmpstr");
-	    if (space_cnt > 17) {
-		matrix_space = space_cnt - 17;
-		tmpstr = bu_vls_strdup(&line);
-	        ptr = strtok(tmpstr, _delims);
-		space_cnt = 0;
-		while (space_cnt < matrix_space) {
-		   space_cnt++;
-		   ptr = strtok((char *)NULL, _delims);
-	           printf("pointer: %p\n", ptr);
-		}
-		matrix_pos = strtok((char *)NULL, _delims) - tmpstr;
-	        printf("position: %d\n", matrix_pos);
-		bu_vls_strncpy(&matrix, bu_vls_addr(&line) + matrix_pos, bu_vls_addr(&line) + bu_vls_strlen(&line));
-	        printf("matrix string: %s\n", bu_vls_addr(&matrix));
-		bu_free(tmpstr, "free tmpstr");
-	    }
- 
-	    /* First non-white is the relation operator */
-	    relation = bu_vls_addr(&line)[0];
- 	    printf("relation: %c\n", relation); 
-	    if (relation != '+' && relation != 'u' && relation != '-') {
-	        bu_vls_printf(&gedp->ged_result_str, " %c is not a legal combination tree operator\n", relation);
-	        fclose(fp);
-		bu_vls_free(&line);
-		bu_vls_free(&name_v5);
-		return -1;
-	    }
-	    if (relation != '-')
-		nonsubs++;
-
-	    /* Next must be the member name */
-	    bu_vls_nibble(&line, 2);
-	    ptr = strpbrk(&(bu_vls_addr(&line))[0], _delims);
-	    if (!ptr && bu_vls_strlen(&line) != 0) ptr = bu_vls_addr(&line) + bu_vls_strlen(&line);
-	    printf("pointers: %p, %p\n", bu_vls_addr(&line), ptr);
-	    bu_vls_trunc(&name_v5, 0);
-	    if (ptr != NULL && (bu_vls_addr(&line) - ptr != 0)) {
-		bu_vls_strncpy(&name_v5, bu_vls_addr(&line), ptr - bu_vls_addr(&line));
- 	        printf("name: %s\n", bu_vls_addr(&name_v5)); 
-	    } else {
-		bu_vls_printf(&gedp->ged_result_str, " operand name missing\n%s\n", bu_vls_addr(&line));
-		fclose(fp);
-		bu_vls_free(&line);
-		bu_vls_free(&name_v5);
-		return -1;
-	    }
-	node_count++;
-        bu_vls_trunc(&line, 0);
+	    node_count++;
+            bu_vls_trunc(&line, 0);
 	}
     }
+
+    /* If we have a non-zero node count, there is a combination tree to handle - do second pass*/
+    if (node_count) {
+	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+    
+        /* Close and open the file again to start reading from the beginning - already opened 
+         * successfully once to get here so don't need to check again. */
+        fclose(fp);
+        fp=fopen(_ged_tmpfil, "r");
+    
+	scanning_tree = 0;
+        bu_vls_trunc(&line, 0);
+        
+        while (bu_vls_gets(&line, fp) != -1) {
+            if (!scanning_tree && strcmp(bu_vls_addr(&line), "combination tree:")) {
+                bu_vls_trunc(&line, 0);
+	        continue;
+            } else {
+ 	        if (scanning_tree != 1) {
+	            bu_vls_trunc(&line, 0);
+	            bu_vls_gets(&line, fp);
+		    scanning_tree = 1;
+	        }
+ 	        printf("into tree checking: %s\n", bu_vls_addr(&line)); 
+
+	    	bu_vls_trimspace(&line);
+	    	if (bu_vls_strlen(&line) == 0) {
+		    /* blank line, continue */
+		    continue;
+	    	}
+
+	    	/* Check if we have enough spaces for a matrix and if
+	     	 * so where it is in the string */
+	    	space_cnt=0;
+            	tmpstr = bu_vls_strdup(&line);
+	   	ptr = strtok(tmpstr, _delims);
+	    	while (ptr) {
+		    space_cnt++;
+		    ptr = strtok((char *)NULL, _delims);
+	            printf("pointer: %p\n", ptr);
+	    	}
+	    	bu_free(tmpstr, "free tmpstr");
+		/* Handle the matrix, if it exists */
+	    	if (space_cnt > 17) {
+		    matrix_space = space_cnt - 17;
+		    tmpstr = bu_vls_strdup(&line);
+	            ptr = strtok(tmpstr, _delims);
+		    space_cnt = 0;
+		    while (space_cnt < matrix_space) {
+		       space_cnt++;
+		       ptr = strtok((char *)NULL, _delims);
+	               printf("pointer: %p\n", ptr);
+		    }
+		    matrix_pos = strtok((char *)NULL, _delims) - tmpstr;
+	            printf("position: %d\n", matrix_pos);
+		    bu_vls_strncpy(&matrix_line, bu_vls_addr(&line) + matrix_pos, bu_vls_addr(&line) + bu_vls_strlen(&line));
+		    /* If the matrix string has no alphabetical characters, assume it really is a matrix and remove
+		     * that portion of the string */
+		    if (!strpbrk(bu_vls_addr(&matrix_line), "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) {
+		        bu_vls_strncpy(&tmpline, bu_vls_addr(&line), bu_vls_addr(&line) + bu_vls_strlen(&line) - matrix_pos);
+	                bu_vls_sprintf(&line, "%s", bu_vls_addr(&tmpline));
+	    	        bu_vls_trimspace(&line);
+			/* Now, to the actual numerical creation of the matrix */
+			matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
+			ptr = strtok(bu_vls_addr(&matrix_line), _delims);
+			matrix[0] = atof(ptr);
+			for (k=1; k<16; k++) {
+			   ptr = strtok((char *)NULL, _delims);
+			   if (!ptr) {
+			      bu_vls_printf(&gedp->ged_result_str, "build_comb: incomplete matrix for member %s. No changes made\n", bu_avs_get(&avs,"name"));
+			      bu_free((char *)matrix, "red: matrix");
+			      if (rt_tree_array) bu_free((char *)rt_tree_array, "red: tree list"); 
+			      fclose(fp);
+                              return -1;
+			   }
+			   matrix[k] = atof(ptr);
+			}
+			if (bn_mat_is_identity(matrix)) {
+			   bu_free((char *)matrix, "red: matrix"); 
+			   matrix = (matp_t)NULL;
+			}
+		    } else {
+		        matrix_pos = 0;
+		    }
+	            printf("matrix string: %s\n", bu_vls_addr(&matrix_line));
+		    bu_free(tmpstr, "free tmpstr");
+	        } else {
+		   matrix = (matp_t)NULL;
+		}
+ 
+	    	/* First non-white is the relation operator */
+	    	relation = bu_vls_addr(&line)[0];
+ 	    	printf("relation: %c\n", relation); 
+	    	if (relation != '+' && relation != 'u' && relation != '-') {
+	            bu_vls_printf(&gedp->ged_result_str, " %c is not a legal combination tree operator\n", relation);
+	            fclose(fp);
+		    bu_vls_free(&line);
+		    bu_vls_free(&name_v5);
+		    return -1;
+	    	}
+	    	if (relation != '-')
+		    nonsubs++;
+
+	    	/* Next must be the member name */
+	    	bu_vls_nibble(&line, 2);
+	    	ptr = strpbrk(&(bu_vls_addr(&line))[0], _delims);
+	    	if (!ptr && bu_vls_strlen(&line) != 0) ptr = bu_vls_addr(&line) + bu_vls_strlen(&line);
+	    	printf("pointers: %p, %p\n", bu_vls_addr(&line), ptr);
+	    	bu_vls_trunc(&name_v5, 0);
+	    	if (ptr != NULL && (bu_vls_addr(&line) - ptr != 0)) {
+		    bu_vls_strncpy(&name_v5, bu_vls_addr(&line), ptr - bu_vls_addr(&line));
+ 	            printf("name: %s\n", bu_vls_addr(&name_v5)); 
+	    	} else {
+		    bu_vls_printf(&gedp->ged_result_str, " operand name missing\n%s\n", bu_vls_addr(&line));
+		    fclose(fp);
+		    bu_vls_free(&line);
+		    bu_vls_free(&name_v5);
+		    return -1;
+	    	}
+	        /* Add it to the combination */
+	    switch (relation) {
+		case '+':
+		    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+		    break;
+		case '-':
+		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+		    break;
+		default:
+		    bu_vls_printf(&gedp->ged_result_str, "build_comb: unrecognized relation (assume UNION)\n");
+		case 'u':
+		    rt_tree_array[tree_index].tl_op = OP_UNION;
+		    break;
+	    }
+	    BU_GETUNION(tp, tree);
+	    rt_tree_array[tree_index].tl_tree = tp;
+	    tp->tr_l.magic = RT_TREE_MAGIC;
+	    tp->tr_l.tl_op = OP_DB_LEAF;
+	    tp->tr_l.tl_name = bu_strdup(bu_avs_get(&avs,"name"));
+	    tp->tr_l.tl_mat = matrix;
+	    tree_index++;
+
+
+                bu_vls_trunc(&line, 0);
+	   } 
+        } 
+    }
+
 
     fclose(fp);
     bu_vls_free(&line);
@@ -888,7 +1002,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    const char *saved_name = NULL;
 	    int checked;
 
-	    checked = check_comb(gedp);
+	    checked = check_comb(gedp, comb, dp);
 	    if (checked < 0) {
 		/* Do some quick checking on the edited file */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
