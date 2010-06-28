@@ -229,7 +229,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	            printf("pointer: %p\n", ptr);
 	    	}
 	    	bu_free(tmpstr, "free tmpstr");
-		/* Handle the matrix, if it exists */
+		/* Handle the matrix portion of the input line, if it exists */
 	    	if (space_cnt > 17) {
 		    matrix_space = space_cnt - 17;
 		    tmpstr = bu_vls_strdup(&line);
@@ -249,25 +249,6 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		        bu_vls_strncpy(&tmpline, bu_vls_addr(&line), bu_vls_addr(&line) + bu_vls_strlen(&line) - matrix_pos);
 	                bu_vls_sprintf(&line, "%s", bu_vls_addr(&tmpline));
 	    	        bu_vls_trimspace(&line);
-			/* Now, to the actual numerical creation of the matrix */
-			matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
-			ptr = strtok(bu_vls_addr(&matrix_line), _delims);
-			matrix[0] = atof(ptr);
-			for (k=1; k<16; k++) {
-			   ptr = strtok((char *)NULL, _delims);
-			   if (!ptr) {
-			      bu_vls_printf(&gedp->ged_result_str, "build_comb: incomplete matrix for member %s. No changes made\n", bu_avs_get(&avs,"name"));
-			      bu_free((char *)matrix, "red: matrix");
-			      if (rt_tree_array) bu_free((char *)rt_tree_array, "red: tree list"); 
-			      fclose(fp);
-                              return -1;
-			   }
-			   matrix[k] = atof(ptr);
-			}
-			if (bn_mat_is_identity(matrix)) {
-			   bu_free((char *)matrix, "red: matrix"); 
-			   matrix = (matp_t)NULL;
-			}
 		    } else {
 		        matrix_pos = 0;
 		    }
@@ -306,6 +287,29 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		    bu_vls_free(&name_v5);
 		    return -1;
 	    	}
+
+		/* Now that we know the name, handle the matrix if any */
+		if (matrix_pos) {
+		matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
+		ptr = strtok(bu_vls_addr(&matrix_line), _delims);
+		matrix[0] = atof(ptr);
+		for (k=1; k<16; k++) {
+		   ptr = strtok((char *)NULL, _delims);
+		   if (!ptr) {
+		      bu_vls_printf(&gedp->ged_result_str, "build_comb: incomplete matrix for member %s. No changes made\n", bu_vls_addr(&name_v5));
+		      bu_free((char *)matrix, "red: matrix");
+		      if (rt_tree_array) bu_free((char *)rt_tree_array, "red: tree list"); 
+		      fclose(fp);
+                      return -1;
+		   }
+		   matrix[k] = atof(ptr);
+		}
+		if (bn_mat_is_identity(matrix)) {
+		   bu_free((char *)matrix, "red: matrix"); 
+		   matrix = (matp_t)NULL;
+		}
+		}
+
 	        /* Add it to the combination */
 	    switch (relation) {
 		case '+':
@@ -324,7 +328,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.magic = RT_TREE_MAGIC;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
-	    tp->tr_l.tl_name = bu_strdup(bu_avs_get(&avs,"name"));
+	    tp->tr_l.tl_name = bu_strdup(bu_vls_addr(&name_v5));
 	    tp->tr_l.tl_mat = matrix;
 	    tree_index++;
 
