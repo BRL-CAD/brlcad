@@ -166,6 +166,10 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		bu_vls_printf(&gedp->ged_result_str, "Not a valid attribute/value pair:  %s\n", bu_vls_addr(&line));
 		fclose(fp);
 		bu_vls_free(&line);
+		bu_vls_free(&tmpline);
+		bu_vls_free(&matrix_line);
+		bu_vls_free(&attr_vls);
+		bu_vls_free(&val_vls);
 		bu_vls_free(&name_v5);
 		return -1;
 	    } else {
@@ -238,9 +242,9 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	            ptr = strtok(tmpstr, _delims);
 		    space_cnt = 0;
 		    while (space_cnt < matrix_space) {
-		       space_cnt++;
-		       ptr = strtok((char *)NULL, _delims);
-	               printf("pointer: %p\n", ptr);
+			space_cnt++;
+			ptr = strtok((char *)NULL, _delims);
+			printf("pointer: %p\n", ptr);
 		    }
 		    matrix_pos = strtok((char *)NULL, _delims) - tmpstr;
 	            printf("position: %d\n", matrix_pos);
@@ -257,7 +261,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	            printf("matrix string: %s\n", bu_vls_addr(&matrix_line));
 		    bu_free(tmpstr, "free tmpstr");
 	        } else {
-		   matrix = (matp_t)NULL;
+		    matrix = (matp_t)NULL;
 		}
  
 	    	/* First non-white is the relation operator */
@@ -267,6 +271,10 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	            bu_vls_printf(&gedp->ged_result_str, " %c is not a legal combination tree operator\n", relation);
 	            fclose(fp);
 		    bu_vls_free(&line);
+		    bu_vls_free(&tmpline);
+		    bu_vls_free(&matrix_line);
+		    bu_vls_free(&attr_vls);
+		    bu_vls_free(&val_vls);
 		    bu_vls_free(&name_v5);
 		    return -1;
 	    	}
@@ -286,63 +294,77 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 		    bu_vls_printf(&gedp->ged_result_str, " operand name missing\n%s\n", bu_vls_addr(&line));
 		    fclose(fp);
 		    bu_vls_free(&line);
+		    bu_vls_free(&tmpline);
+		    bu_vls_free(&matrix_line);
+		    bu_vls_free(&attr_vls);
+		    bu_vls_free(&val_vls);
 		    bu_vls_free(&name_v5);
 		    return -1;
 	    	}
 
 		/* Now that we know the name, handle the matrix if any */
 		if (matrix_pos) {
-		matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
-		ptr = strtok(bu_vls_addr(&matrix_line), _delims);
-		matrix[0] = atof(ptr);
-		for (k=1; k<16; k++) {
-		   ptr = strtok((char *)NULL, _delims);
-		   if (!ptr) {
-		      bu_vls_printf(&gedp->ged_result_str, "build_comb: incomplete matrix for member %s. No changes made\n", bu_vls_addr(&name_v5));
-		      bu_free((char *)matrix, "red: matrix");
-		      if (rt_tree_array) bu_free((char *)rt_tree_array, "red: tree list"); 
-		      fclose(fp);
-                      return -1;
-		   }
-		   matrix[k] = atof(ptr);
-		}
-		if (bn_mat_is_identity(matrix)) {
-		   bu_free((char *)matrix, "red: matrix"); 
-		   matrix = (matp_t)NULL;
-		}
+		    matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
+		    ptr = strtok(bu_vls_addr(&matrix_line), _delims);
+		    matrix[0] = atof(ptr);
+		    for (k=1; k<16; k++) {
+			ptr = strtok((char *)NULL, _delims);
+			if (!ptr) {
+			    bu_vls_printf(&gedp->ged_result_str, "build_comb: incomplete matrix for member %s. No changes made\n", bu_vls_addr(&name_v5));
+			    bu_free((char *)matrix, "red: matrix");
+			    if (rt_tree_array) bu_free((char *)rt_tree_array, "red: tree list"); 
+			    fclose(fp);
+			    bu_vls_free(&line);
+			    bu_vls_free(&tmpline);
+			    bu_vls_free(&matrix_line);
+			    bu_vls_free(&attr_vls);
+			    bu_vls_free(&val_vls);
+			    bu_vls_free(&name_v5);
+			    return -1;
+			}
+			matrix[k] = atof(ptr);
+		    }
+		    if (bn_mat_is_identity(matrix)) {
+			bu_free((char *)matrix, "red: matrix"); 
+			matrix = (matp_t)NULL;
+		    }
 		}
 
 	        /* Add it to the combination */
-	    switch (relation) {
-		case '+':
-		    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
-		    break;
-		case '-':
-		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
-		    break;
-		default:
-		    bu_vls_printf(&gedp->ged_result_str, "build_comb: unrecognized relation (assume UNION)\n");
-		case 'u':
-		    rt_tree_array[tree_index].tl_op = OP_UNION;
-		    break;
-	    }
-	    BU_GETUNION(tp, tree);
-	    rt_tree_array[tree_index].tl_tree = tp;
-	    tp->tr_l.magic = RT_TREE_MAGIC;
-	    tp->tr_l.tl_op = OP_DB_LEAF;
-	    tp->tr_l.tl_name = bu_strdup(bu_vls_addr(&name_v5));
-	    tp->tr_l.tl_mat = matrix;
-	    tree_index++;
+		switch (relation) {
+		    case '+':
+			rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+			break;
+		    case '-':
+			rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+			break;
+		    default:
+			bu_vls_printf(&gedp->ged_result_str, "build_comb: unrecognized relation (assume UNION)\n");
+		    case 'u':
+			rt_tree_array[tree_index].tl_op = OP_UNION;
+			break;
+		}
+		BU_GETUNION(tp, tree);
+		rt_tree_array[tree_index].tl_tree = tp;
+		tp->tr_l.magic = RT_TREE_MAGIC;
+		tp->tr_l.tl_op = OP_DB_LEAF;
+		tp->tr_l.tl_name = bu_strdup(bu_vls_addr(&name_v5));
+		tp->tr_l.tl_mat = matrix;
+		tree_index++;
 
 
                 bu_vls_trunc(&line, 0);
-	   } 
+	    } 
         } 
     }
 
 
     fclose(fp);
     bu_vls_free(&line);
+    bu_vls_free(&tmpline);
+    bu_vls_free(&matrix_line);
+    bu_vls_free(&attr_vls);
+    bu_vls_free(&val_vls);
     bu_vls_free(&name_v5);
 
     if (nonsubs == 0 && node_count) {
@@ -350,7 +372,7 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
         return -1;
     }
 /*    return node_count;*/
-return -1;  /* ensure check never passes until I get build_comb working CWY */
+    return -1;  /* ensure check never passes until I get build_comb working CWY */
 }
 
 
