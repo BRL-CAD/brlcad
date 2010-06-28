@@ -128,6 +128,8 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	RT_CK_DIR(dp);
     }
 
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+
     if ((fp=fopen(_ged_tmpfil, "r")) == NULL) {
 	perror("fopen");
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file for reading\n");
@@ -190,12 +192,12 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	}
     }
 
+    bu_avs_print(&avs, "Scanned avs\n");
     /* Update attributes on the database */
     db5_standardize_avs(&avs);
     db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
     db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
 
-    bu_avs_print(&avs, "Scanned avs\n");
 
     /* If we have a non-zero node count, there is a combination tree to handle - do second pass*/
     if (node_count) {
@@ -410,8 +412,13 @@ for (i=0; i<node_count; i++) {
     else
         tp = (union tree *)NULL;
 
+    if (comb && comb->tree) {
+	db_free_tree(comb->tree, &rt_uniresource);
+	comb->tree = NULL;
+    }
     comb->tree = tp;
-    
+   
+    printf("update attempt: %d\n", rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource));
 
 /*    return node_count;*/
     return -1;  /* ensure check never passes until I get build_comb working CWY */
