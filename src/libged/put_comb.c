@@ -281,7 +281,7 @@ put_rgb_into_comb(struct rt_comb_internal *comb, const char *str)
 {
     int r, g, b;
 
-    if (sscanf(str, "%d%d%d", &r, &g, &b) != 3) {
+    if (sscanf(str, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
 	comb->rgb_valid = 0;
 	return;
     }

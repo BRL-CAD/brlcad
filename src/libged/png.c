@@ -416,7 +416,8 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
     while ((k = bu_getopt(argc, (char * const *)argv, "c:s:")) != EOF) {
 	switch (k) {
 	    case 'c':
-		if (sscanf(bu_optarg, "%d/%d/%d", &r, &g, &b) != 3) {
+		/* parse out a delimited rgb color value */
+		if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
 		    bu_vls_printf(&gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
 		    return GED_ERROR;
 		}
