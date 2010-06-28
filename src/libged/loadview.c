@@ -326,16 +326,20 @@ int
 _ged_cm_orientation(int argc, char **argv)
 {
     int	i;
-    quat_t		quat;
+    quat_t quat;
+
+    if (argc < 4)
+	return -1;
 
     for ( i=0; i<4; i++ )
 	quat[i] = atof( argv[i+1] );
     quat_quat2mat( _ged_viewrot, quat );
+
     return 0;
 }
 
 int
-_ged_cm_set(int argc, char **argv)
+_ged_cm_set(int UNUSED(argc), char **UNUSED(argv))
 {
     return -1;
 }
@@ -347,6 +351,9 @@ _ged_cm_set(int argc, char **argv)
 int
 _ged_cm_null(int argc, char **argv)
 {
+    if (argc < 0 || argv == NULL)
+	return 1;
+
     return 0;
 }
 
