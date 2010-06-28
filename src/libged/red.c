@@ -190,6 +190,11 @@ check_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	}
     }
 
+    /* Update attributes on the database */
+    db5_standardize_avs(&avs);
+    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
+    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+
     bu_avs_print(&avs, "Scanned avs\n");
 
     /* If we have a non-zero node count, there is a combination tree to handle - do second pass*/
