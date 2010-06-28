@@ -2092,14 +2092,6 @@ GED_EXPORT BU_EXTERN(int ged_lookat, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * List the constraint objects in this database
- *
- * Usage:
- *     lscon
- */
-GED_EXPORT BU_EXTERN(int ged_lscon, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
  * List object's tree as a tcl list of {operator object} pairs
  *
  * Usage:

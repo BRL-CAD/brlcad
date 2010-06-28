@@ -111,7 +111,6 @@ libged_nil_la_SOURCES = \
 	log.c \
 	lookat.c \
 	ls.c \
-	lscon.c \
 	lt.c \
 	m2v_point.c \
 	make.c \

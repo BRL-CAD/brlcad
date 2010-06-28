@@ -650,10 +650,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libged\lscon.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\libged\lt.c"
 				>
 			</File>
