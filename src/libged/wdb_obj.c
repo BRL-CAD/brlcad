@@ -295,7 +295,6 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"edmater",		ged_edmater},
     {"item",		ged_item},
     {"log",		ged_log},
-    {"lscon",		ged_lscon},
     {"make",		ged_make},
     {"make_name",	ged_make_name},
     {"mater",		ged_mater},

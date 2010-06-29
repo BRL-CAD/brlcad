@@ -197,7 +197,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"loadview", cmd_ged_view_wrapper, ged_loadview},
     {"lookat", cmd_ged_view_wrapper, ged_lookat},
     {"ls", cmd_ged_plain_wrapper, ged_ls},
-    {"lscon", cmd_ged_plain_wrapper, ged_lscon},
     {"M", f_mouse, GED_FUNC_PTR_NULL},
     {"m2v_point", cmd_ged_plain_wrapper, ged_m2v_point},
     {"make", f_make, GED_FUNC_PTR_NULL},
