@@ -4306,6 +4306,7 @@ AC_CONFIG_FILES([
 	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
+	src/other/tkhtml3/Makefile
 	src/other/tkpng/Makefile
 	src/other/tnt/Makefile
 	src/proc-db/Makefile
