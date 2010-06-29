@@ -86,10 +86,10 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 }
 
 HIDDEN int
-build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, struct rt_db_internal *internal)
+build_comb(struct ged *gedp, struct directory *dp, struct rt_db_internal *internal)
 {
     /* Do some minor checking of the edited file */
-
+    struct rt_comb_internal *comb;
     FILE *fp;
     size_t node_count=0;
     int nonsubs=0;
@@ -100,6 +100,7 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     char *ptr = (char *)NULL;
     union tree *tp;
     int tree_index=0;
+    struct rt_db_internal localintern;
     struct rt_tree_array *rt_tree_array;
     matp_t matrix;
     struct bu_attribute_value_set avs, avs2;
@@ -112,6 +113,8 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
+
+    comb = (struct rt_comb_internal *)internal->idb_ptr;
 
     if (comb) {
 	RT_CK_COMB(comb);
@@ -132,7 +135,6 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     bu_vls_init(&name_v5);
 
     bu_avs_init_empty(&avs);
-    bu_avs_init_empty(&avs2);
 
     rt_tree_array = (struct rt_tree_array *)NULL;
 
@@ -181,14 +183,7 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	}
     }
 
-    bu_avs_print(&avs, "Scanned avs\n");
-    /* Update attributes on the database */
     db5_standardize_avs(&avs);
-    bu_avs_print(&avs, "Standardized avs\n");
-    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
-    bu_avs_print(&avs2, "Applied avs\n");
-    /*db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);*/
-
 
     /* If we have a non-zero node count, there is a combination tree to handle - do second pass*/
     if (node_count) {
@@ -407,18 +402,21 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	comb->tree = NULL;
     }
     comb->tree = tp;
-    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
-    bu_avs_print(&avs2, "Applied avs2\n");
 
-    printf("update attempt: %d\n", rt_db_put_internal(dp, gedp->ged_wdbp->dbip, internal, &rt_uniresource));
+    if(rt_db_put_internal(dp, gedp->ged_wdbp->dbip, internal, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot apply tree\n", dp->d_namep);
+	bu_avs_free(&avs);
+	return -1;
+    }
 
-    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
-    bu_avs_print(&avs2, "Applied avs3\n");
+    /* Now that the tree is handled, get the current data structure pointers and apply
+     * the attribute logic - this apparently must come after the rt_db_put_internal */
+    GED_DB_GET_INTERNAL(gedp, &localintern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
-    bu_avs_print(&avs, "Standardized avs\n");
     db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
-    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
-    bu_avs_print(&avs2, "Applied avs\n");
+    
+    comb = (struct rt_comb_internal *)localintern.idb_ptr;
+    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
 
     bu_avs_free(&avs);
     return node_count;
@@ -911,9 +909,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    }
  
 	    GED_DB_GET_INTERNAL(gedp, &intern, tmp_dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-	    tmp_comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	    if (build_comb(gedp, tmp_comb, tmp_dp, &intern) < 0) {
+	    if (build_comb(gedp, tmp_dp, &intern) < 0) {
 		/* Something went wrong - kill the temporary comb */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 
@@ -926,7 +923,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		/* it worked - kill the original and put the updated copy in its place if a pre-existing
 		 * comb was being edited - otherwise everything is already fine.*/
-/*		if (strcmp(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
+		if (strcmp(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
 		    av[0] = "kill";
 		    av[1] = bu_vls_addr(&comb_name);
 		    av[2] = NULL;
@@ -935,7 +932,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    av[1] = bu_vls_addr(&temp_name);
 		    av[2] = bu_vls_addr(&comb_name);
 		    (void)ged_move(gedp, 3, (const char **)av);
-		} */
+		} 
 	    }
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Because the database is READ-ONLY no changes were made.\n", *argv);
