@@ -86,7 +86,7 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 }
 
 HIDDEN int
-build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp)
+build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, struct rt_db_internal *internal)
 {
     /* Do some minor checking of the edited file */
 
@@ -101,9 +101,8 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     union tree *tp;
     int tree_index=0;
     struct rt_tree_array *rt_tree_array;
-    struct rt_db_internal intern;
     matp_t matrix;
-    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_set avs, avs2;
     struct bu_vls line;
     struct bu_vls matrix_line;
     struct bu_vls attr_vls;
@@ -119,8 +118,6 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	RT_CK_DIR(dp);
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-
     if ((fp=fopen(_ged_tmpfil, "r")) == NULL) {
 	perror("fopen");
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file for reading\n");
@@ -135,6 +132,7 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     bu_vls_init(&name_v5);
 
     bu_avs_init_empty(&avs);
+    bu_avs_init_empty(&avs2);
 
     rt_tree_array = (struct rt_tree_array *)NULL;
 
@@ -186,8 +184,10 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     bu_avs_print(&avs, "Scanned avs\n");
     /* Update attributes on the database */
     db5_standardize_avs(&avs);
-    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
-    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+    bu_avs_print(&avs, "Standardized avs\n");
+    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
+    bu_avs_print(&avs2, "Applied avs\n");
+    /*db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);*/
 
 
     /* If we have a non-zero node count, there is a combination tree to handle - do second pass*/
@@ -391,7 +391,6 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
     bu_vls_free(&attr_vls);
     bu_vls_free(&val_vls);
     bu_vls_free(&name_v5);
-    bu_avs_free(&avs);
 
     if (nonsubs == 0 && node_count) {
         bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
@@ -407,14 +406,21 @@ build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
     }
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_COMBINATION;
-    intern.idb_meth = &rt_functab[ID_COMBINATION];
-    intern.idb_ptr = (genptr_t)comb;
     comb->tree = tp;
-   
-    printf("update attempt: %d\n", rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource));
+    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
+    bu_avs_print(&avs2, "Applied avs2\n");
 
+    printf("update attempt: %d\n", rt_db_put_internal(dp, gedp->ged_wdbp->dbip, internal, &rt_uniresource));
+
+    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
+    bu_avs_print(&avs2, "Applied avs3\n");
+
+    bu_avs_print(&avs, "Standardized avs\n");
+    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
+    db5_get_attributes(gedp->ged_wdbp->dbip, &avs2, dp);
+    bu_avs_print(&avs2, "Applied avs\n");
+
+    bu_avs_free(&avs);
     return node_count;
 }
 
@@ -907,7 +913,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    GED_DB_GET_INTERNAL(gedp, &intern, tmp_dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 	    tmp_comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	    if (build_comb(gedp, tmp_comb, tmp_dp) < 0) {
+	    if (build_comb(gedp, tmp_comb, tmp_dp, &intern) < 0) {
 		/* Something went wrong - kill the temporary comb */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 
