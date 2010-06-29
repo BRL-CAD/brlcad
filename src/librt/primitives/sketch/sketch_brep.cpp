@@ -97,7 +97,6 @@ void FindLoops(ON_Brep **b) {
 	    if (curvearray[j] == i) {
 		ON_Curve *currcurve = (*b)->m_C3[j];
 		currcurve->GetBoundingBox(*lbbox, true);
-		bu_log("curvearray[%d]: %f,%f,%f;%f,%f,%f\n", j, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2], lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
 	    }
 	}
 	point_t minpt, maxpt;
@@ -105,15 +104,12 @@ void FindLoops(ON_Brep **b) {
 	VSET(minpt, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2]);
 	VSET(maxpt, lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
 	currdist = DIST_PT_PT(minpt, maxpt);
-	bu_log("currdist: %f\n", currdist);
 	if (currdist > maxdist) {
 	    maxdist = currdist;
 	    largest_loop_index = i;
 	}
     }
-    bu_log("largest_loop_index = %d\n", largest_loop_index);
 
-    bu_log("curve_array[%d,%d,%d,%d,%d,%d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
 
     for (int i = 0; i < allsegments.Count(); i++) {
 	if (curvearray[i] == largest_loop_index) loopsegments.Append((*b)->m_C3[i]);
@@ -165,7 +161,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     //  points for the vertices.
     for (int i = 0; i < eip->vert_count; i++) {
 	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
-	(*b)->m_V[vertind].Dump(*dump);
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
