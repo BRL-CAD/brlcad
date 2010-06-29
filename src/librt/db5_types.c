@@ -490,8 +490,10 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
         if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "R") || !strcmp(bu_vls_addr(&newval), "1") || 
 		!strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y") ) {
  	   comb->region_flag = 1;
+	   dp->d_flags |= DIR_REGION;
 	} else {
            comb->region_flag = 0;
+	   dp->d_flags &= ~DIR_REGION;
  	}
      
 	/* region_id */ 
