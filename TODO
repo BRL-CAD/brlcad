@@ -759,6 +759,12 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   NURBS format, trims surfaces, evaluates boolean expressions, and
   then generates tool paths on resulting surfaces and interior paths.
 
+* Grazing raytrace behavor - e.g. how to handle a ray that, within tolerance, hits
+  exactly in the plane shared by two arb8 primitives sharing a face?
+  There are some ideas on how to handle this, but it appears to
+  require a boolweave level change - perhaps v8 would be a good time
+  to implement such a solution?
+
 
 RTGL ITEMS
 __________
@@ -842,7 +848,15 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 * fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
-  combinations/regions and binary objects
+  combinations/regions and binary objects.  (CWY would like to explore
+  cleaning up the numbering system for primitives, as long as the.
+  .g specification is being updated and changed for v6 (currently
+  numbers are assigned sequentially as they are implemented - this
+  works but makes the results rather unintuitive.)  If possible,
+  a scheme based on mathematical properties and categorization of
+  the primitives would seem to be much cleaner, particularly when
+  it comes to writing and organizing a real spec.  This part is
+  lower priority.)
 
 * add database support for constraints, expressions, parametric
   values, construction history, and timestamping.
@@ -962,6 +976,9 @@ DOCUMENTATION
 
 * A Developer's Introduction to BRL-CAD
         An overview of BRL-CAD from a developer perspective intended for new developers.  Provides overview of structure, important sections, operating procedures, and answers to FAQ development questions.
+
+* BRL-CAD .g File Format Specification
+	Flesh out the draft spec document for v5 into something more polished and comprehensive.
 
 ---
 See the feature request and bug trackers for more tasks and future
