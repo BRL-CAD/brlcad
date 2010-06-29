@@ -35,18 +35,18 @@
 
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
-static long int	scanbytes;		/* # of bytes of scanline */
+static long int scanbytes;		/* # of bytes of scanline */
 
-static char	*file_name;
-static FILE	*infp;
-static int	fileinput = 0;		/* file of pipe on input? */
+static char *file_name;
+static FILE *infp;
+static int fileinput = 0;		/* file of pipe on input? */
 
-static int	autosize = 0;		/* !0 to autosize input */
+static int autosize = 0;		/* !0 to autosize input */
 
-static long int	file_width = 512L;	/* default input width */
+static long int file_width = 512L;	/* default input width */
 
-static int	thresh = 1;
-static int	bg_x_offset = 0;
+static int thresh = 1;
+static int bg_x_offset = 0;
 
 static char usage[] = "\
 Usage: pixbgstrip [-a -h] [-t thresh] [-x x_off for bg pixel]\n\
@@ -58,8 +58,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "ahs:w:n:t:x:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "ahs:w:n:t:x:")) != EOF) {
+	switch (c) {
 	    case 'a':
 		autosize = 1;
 		break;
@@ -88,54 +88,55 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )
-	    return(0);
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
+	    return 0;
 	file_name = "-";
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ( (infp = fopen(file_name, "r")) == NULL )  {
+	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
-	    (void)fprintf( stderr,
-			   "pixbgstrip: cannot open \"%s\" for reading\n",
-			   file_name );
+	    (void)fprintf(stderr,
+			  "pixbgstrip: cannot open \"%s\" for reading\n",
+			  file_name);
 	    bu_exit (1, NULL);
 	}
 	fileinput++;
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "pixbgstrip: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "pixbgstrip: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
 {
-    int	r, g, b;
-    long int	i;
+    int r, g, b;
+    long int i;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
-    if ( isatty(fileno(stdout)) )  {
+    if (isatty(fileno(stdout))) {
 	(void)fputs("Binary output must be redirected away from the terminal\n", stderr);
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     /* autosize input? */
-    if ( fileinput && autosize ) {
-	unsigned long int	w, h;
-	if ( fb_common_file_size(&w, &h, file_name, 3) ) {
+    if (fileinput && autosize) {
+	unsigned long int w, h;
+	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = (long)w;
 	} else {
 	    fprintf(stderr, "pixbgstrip: unable to autosize\n");
@@ -145,37 +146,38 @@ main(int argc, char **argv)
     scanbytes = file_width * sizeof(RGBpixel);
     scanline = (unsigned char *)bu_malloc(scanbytes, "scanline");
 
-    while ( !feof(infp) )  {
-	if ( fread( scanline, 1, scanbytes, infp ) != scanbytes )
+    while (!feof(infp)) {
+	if (fread(scanline, 1, scanbytes, infp) != scanbytes)
 	    break;
 	r = scanline[bg_x_offset*3+0];
 	g = scanline[bg_x_offset*3+1];
 	b = scanline[bg_x_offset*3+2];
-	for ( i=0; i<file_width; i++ )  {
+	for (i=0; i<file_width; i++) {
 	    int diff;
 
 	    diff = scanline[i*3+0] - r;
-	    if ( diff <= -thresh || diff >= thresh ) continue;
+	    if (diff <= -thresh || diff >= thresh) continue;
 
 	    diff = scanline[i*3+1] - g;
-	    if ( diff <= -thresh || diff >= thresh ) continue;
+	    if (diff <= -thresh || diff >= thresh) continue;
 
 	    diff = scanline[i*3+2] - b;
-	    if ( diff <= -thresh || diff >= thresh ) continue;
+	    if (diff <= -thresh || diff >= thresh) continue;
 
 	    /* Input pixel matches background, set to black */
 	    scanline[i*3+0] =
 		scanline[i*3+1] =
 		scanline[i*3+2] = 0;
 	}
-	if ( fwrite( scanline, 1, scanbytes, stdout) != scanbytes )  {
+	if (fwrite(scanline, 1, scanbytes, stdout) != scanbytes) {
 	    perror("pixbgstrip: fwrite()");
 	    bu_exit (1, NULL);
 	}
     }
     bu_free(scanline, "scanline");
-    return(0);
+    return 0;
 }
+
 
 /*
  * Local Variables:

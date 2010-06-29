@@ -246,7 +246,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 int
 miss(register struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 /**

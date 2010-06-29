@@ -277,7 +277,7 @@ test apply-9.1 {leaking internal rep} -setup {
     set leakedBytes [expr {$end - $tmp}]
 } -cleanup {
     rename getbytes {}
-    unset lam
+    unset -nocomplain lam end i tmp leakedBytes
 } -result 0
 test apply-9.2 {leaking internal rep} -setup {
     proc getbytes {} {
@@ -294,6 +294,7 @@ test apply-9.2 {leaking internal rep} -setup {
     set leakedBytes [expr {$end - $tmp}]
 } -cleanup {
     rename getbytes {}
+    unset -nocomplain end i tmp leakedBytes
 } -result 0
 test apply-9.3 {leaking internal rep} -setup {
     proc getbytes {} {
@@ -312,6 +313,7 @@ test apply-9.3 {leaking internal rep} -setup {
     set leakedBytes [expr {$end - $tmp}]
 } -cleanup {
     rename getbytes {}
+    unset -nocomplain end i x tmp leakedBytes
 } -result 0
 
 # Tests for the avoidance of recompilation

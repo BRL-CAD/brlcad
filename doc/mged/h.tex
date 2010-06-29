@@ -1,0 +1,490 @@
+\chapter{TUTORIALS ON OBJECT EDITING}
+
+\section{Object Editing a Six-Sided Polyhedron}
+
+This tutorial illustrates the application of the {\bf OBJ EDIT} state to
+the ``arb8'' primitive.  The editing of the arb8 illustrates the
+absolute movement of the points.
+
+\begin{figure}
+\centering \includegraphics{eo-start.ps}
+\caption{``arb8'' Object Edit; Top View.}
+\label{eo-start}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em e arb8}\\
+vectorized in 0 seconds\\
+mged> {\em size 8}\\
+mged>\\
+{\em Select the {\bf BUTTON MENU} if not already displayed.} \\
+{\em Select the {\bf Object Illum} menu entry.} \\
+{\em Move the mouse away from the menu area and select twice.} \\
+}
+
+These operations select an object for editing.
+Control is passed through the {\bf OBJ PICK} and {\bf OBJ PATH} states
+to the {\bf OBJ EDIT} state.  The display should look similar to
+Figure \ref{eo-start}.
+
+\subsection{Scale Operation}
+
+\begin{figure}
+\centering \includegraphics{eo-scale.ps}
+\caption{``arb8'' Object Edit; Scaled by 0.5.}
+\label{eo-scale}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em scale 0.5}\\
+mged>\\
+}
+
+As always, the selected operation operates with respect to the key
+vertex -- point 1 remains the same, and the distances from point 1 to
+the other points are multiplied by the scale factor.  See Figure
+\ref{eo-scale}.  What will happen if another {\bf scale 0.5} command
+is given?  The {\bf scale} operator is an absolute operator.  It sets
+the scale factor associated with a particular transformation matrix.
+It does not multiply the current transformation matrix scale factor by
+the new scale factor.
+
+\subsection{X, Y, and XY Move Operation}
+
+\begin{figure}
+\centering \includegraphics{eo-xyzmove.ps}
+\caption{``arb8'' Object Edit; Translated to (0.5, -2, 1.5).}
+\label{eo-xyzmove}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em scale 1}\\
+mged> {\em translate .5 -2 1.5}\\
+mged>\\
+{\em Select the {\bf X move} menu entry.}\\
+}
+
+The first two commands undo the effects of the previous scale operation, and
+translate the key point to (0.5, -2, 1.5).  The coordinates of the other
+points are changed accordingly; preserving their distances relative
+to point 1 (see Figure \ref{eo-xyzmove}).
+The last operation above placed MGED into a state where the key point
+of the object will track the X component of successive selects, but not the Y
+component. Note that on some displays point 1 may not be directly
+visible.  It is actually behind point 4. Watch the area listing the
+information concerning ``arb8'' as selections are made.
+
+\noindent
+{\em Do several selects while moving the cursor slowly in a circle.}\\
+
+   Observe that only the X axis information changes. Similarly, the {\bf
+Y move} tracks only changes in the Y axis, and {\bf XY move} tracks
+changes in both axes.
+
+\begin{figure}
+\centering \includegraphics{eo-xymove.ps}
+\caption{XY Move.}
+\label{eo-xymove}
+\end{figure}
+
+\noindent
+{\tt mged> }{\em press 45,45}\\
+{\tt mged> }\\
+{\em Do several more selects while moving the cursor slowly in a circle.}\\
+
+   This time, moving point 1 modifies the model x and y axes (observe the
+changes in the list of vertices).  If {\bf Y move} is selected, all
+three sets of axes are modified.  These operators work in screen space,
+not model space, so using them with an oblique view moves the model in
+more than one axis (Figure \ref{eo-xymove} for example)..
+
+
+\subsection{Rotate Operation}
+
+\begin{figure}
+\centering \includegraphics{eo-arbrot.ps}
+\caption{``arb8'' Rotated by (30, 45, 60).}
+\label{eo-arbrot}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em press reset}\\
+mged> {\em translate 0 0 0}\\
+mged> {\em rotobj 30 45 60}\\
+mged>\\
+}
+
+The primitive is rotated 60, 45, and 30 about the z, y, and x axes in
+that order as shown in Figure \ref{eo-arbrot}.
+Note that the coordinates of the points are changed when scaling,
+translation, and rotation are performed.
+
+\noindent
+{\tt
+mged> {\em press reset}\\
+mged> {\em d arb8}\\
+mged>\\
+}
+
+If an object which is being edited is deleted from view, MGED transitions
+back into the {\bf VIEWING} state.
+
+\section{Object Editing an Ellipsoid}
+
+\begin{figure}
+\centering \includegraphics{eo-ellg.ps}
+\caption{Object Edit; Ellipse viewed from 45,45 preset.}
+\label{eo-ellg}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em e ellg}\\
+mged>\\
+{\em Select the {\bf 45,45} button menu entry.}\\
+{\em Select the {\bf Object Illum} button menu entry.}\\
+{\em Move the cursor outside the menu area and select twice.}\\
+}
+
+Control is again passed from the {\bf OBJ PICK} state through the
+{\bf OBJ PATH} state to the {\bf OBJ EDIT} state.
+When editing a cylinder, ellipsoid, or torus, the coordinates of the
+primitives are set relative to the center of the primitive, and are not
+changed by any translation of the primitive.  Figure \ref{eo-ellg}
+represents the display.
+
+\subsection{Scale Operation}
+
+\begin{figure}
+\centering \includegraphics{eo-ellg2x.ps}
+\caption{Object Edit; Ellipse scaled up by 2.}
+\label{eo-ellg2x}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em scale 2}\\
+mged>\\
+}
+
+The magnitudes of the vectors from the center V to the points A, B, and C
+are multiplied by the scale factor 2.  The location of the center V is
+unchanged.  See Figure \ref{eo-ellg2x}.
+
+\subsection{Move Operations}
+
+\begin{figure}
+\centering \includegraphics{eo-ellgxyz.ps}
+\caption{Object Edit; Ellipse Translated.}
+\label{eo-ellgxyz}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em scale 1}\\
+mged>\\
+{\em Select the {\bf XY move} buttom menu entry.}\\
+{\em Move the cursor to some location away from the menu area and select.}\\
+}
+
+The as with the arb8 in the previous section, the ellipsoid is moved
+in the model space plane parallel to the plane of the screen so the
+key point (vertex V) is ``placed at'' the point corresponding to the
+cursor location.  Note that there is no explicit control over the
+location of the point with respect to screen Z (depth in the viewing
+cube); the selected point has the same screen Z as the original point.
+The screen should look similar to Figure \ref{eo-ellgxyz}.
+
+\noindent
+{\tt
+mged> {\em d ellg}\\
+mged>\\
+}
+
+\section{Object Path and Object Edit}
+
+This section illustrates the use of the {\bf OBJ PATH} state to select the
+number of objects that are affected by one edit command.  In the previous
+sections the user was shown how to manipulate only one primitive.  A group
+of primitives may also be edited as a single entity.  This section
+shows how an entire group may be edited without addressing each individual
+primitive.
+
+MGED generally has several ways to achieve a particular result.  In
+this section, keyboard commands are used instead of the control buttons and
+the display menu.  The creation and saving of special primitives is
+illustrated.
+
+In the database, the original primitives are centered around
+the origin.  Copies of these primitives will be made, translated away
+from the origin and saved for future editing.
+
+\subsection{Organize the Primitives and Groups}
+
+\begin{figure}
+\centering \includegraphics{eo-stacked.ps}
+\caption{Stacked Primatives.}
+\label{eo-stacked}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em cp arb8 arb8.s}\\
+mged> {\em cp ellg ellg.s}\\
+mged> {\em cp tgc tgc.s}\\
+mged> {\em cp tor tor.s}\\
+mged>\\
+}
+
+Figure \ref{eo-stacked} shows the four primitives; arb8.s, ellg.s, tgc.s,
+and tor.s.  One convention frequently used by experienced modelers is to
+tack an identifying suffix on the names of the various primitives and
+objects.  Often, a ``.s'' suffix denotes a {\em solid}, a ``.r'' denotes
+a {\em region} and a ``.g'' denotes a {\em group} (note that this is a
+different ``.g'' from the ``.g'' suffix used with filenames.).
+
+\noindent
+{\tt
+mged> {\em size 16}\\
+mged> {\em sed arb8.s}\\
+mged> {\em press sxy}\\
+mged> {\em p 3 -3 1}\\
+mged> {\em press accept}\\
+mged>\\
+}
+
+Several things happened in the above sequence.  The net result is that
+the solid arb8.s was ``unstacked'' using a Solid Edit so it is more
+visible.  The same sequence of operations will be performed with the
+other objects to move them to other locations.
+
+\begin{figure}
+\centering \includegraphics{eo-spread.ps}
+\caption{Primatives After Translation.}
+\label{eo-spread}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em sed ellg.s}\\
+mged> {\em press sxy}\\
+mged> {\em p -3 3 1}\\
+mged> {\em press accept}\\
+mged> {\em sed tgc.s}\\
+mged> {\em press sxy}\\
+mged> {\em p -3 -3 1}\\
+mged> {\em press accept}\\
+mged> {\em sed tor.s}\\
+mged> {\em press sxy}\\
+mged> {\em p 3 3 1}\\
+mged> {\em press accept}\\
+mged>\\
+}
+
+The screen should now look like Figure \ref{eo-spread}.  The next step
+is to group the primitives
+
+\noindent
+{\tt
+mged> {\em g a.g tgc.s arb8.s}\\
+mged> {\em g b.g ellg.s tor.s}\\
+mged> {\em g c.g a.g b.g}\\
+mged> {\em B c.g}\\
+vectorized in 0 sec\\
+mged> {\em tree c.g}
+\begin{verbatim}
+| c.g_____________| a.g_____________| tgc.s
+                                    | arb8.s
+                  | b.g_____________| ellg.s
+                                    | tor.s
+\end{verbatim}
+\noindent
+mged>\\
+}
+
+The {\em group} operator ({\bf g}) generates an object, named by the
+first argument, which is the union of all objects named in succeeding
+arguments.  Therefore, the object ``a.g'' is composed of the union of
+``tgc.s'' and ``arb8.s''.  Likewise, the object ``c.g'' is the union of
+``a.g'' and ``b.g''.  The next command in the above sequence is called
+the {\em blast} command.  It is effectively a {\em zap} ({\bf Z})
+followed by an {\em edit} ({\bf e}).
+
+The final command is the {\em tree} command.  It is intended to give the
+user some idea of the hierarchical structure of an object.  It presents
+a tree laid on it's side.  The root is at the left, and the leaves are
+at the right. A vertical bar denotes a connection at a given level, with
+the proviso that a vertical bar having a line of underscores coming
+in from the left represents the start of a particular subtree when read
+from top down (``ellg.s'' and ``arb8.s'' do not have a common parent).
+
+\begin{figure}
+\centering \includegraphics{eo-grpath.ps}
+\caption{Object Path With ``tor.s'' as Reference Solid.}
+\label{eo-grpath}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em press oill}\\
+mged>\\
+{\em Move the cursor up and down the screen until the primitive ``tor.s''
+is illuminated, then select}\\
+}
+
+Selecting the solid ``tor.s'' transitions MGED into the {\bf OBJ PATH}
+state, and establishes ``tor.s'' as the reference solid for any future
+editing operations.
+Note that the name ``tor.s'' is shown in the upper left corner of the
+display, and on the second status line at the bottom of the display
+(Figure \ref{eo-grpath}).
+
+The {\bf OBJ PATH} state has little meaning unless there is more than one path
+or group in the display.  One of the following paths may be selected:
+
+\begin{quote}
+c.g/b.g/\_MATRIX\_/tor.s
+
+c.g/\_MATRIX\_/b.g/tor.s
+
+\_MATRIX\_/c.g/b.g/tor.s
+\end{quote}
+
+Although the torus primitive has been selected as the reference solid,
+the position of {\bf \_MATRIX\_} determines the extent of the effects of
+the edit.  The first choice affects only the torus.  The second choice
+affects everything under the group ``b.g'' (the torus and ellipsoid).
+The third choice affects all of the primitives.  Remember though, that
+in all cases, what is being edited is the Homogeneous Transformation
+Matrix (thought of as the arc connecting objects), not the underlying
+solid.
+
+\subsection{Editing One Primitive}
+
+\begin{figure}
+\centering \includegraphics{eo-gredit.ps}
+\caption{Object Edit With ``tor.s'' as Reference Solid.}
+\label{eo-gredit}
+\end{figure}
+
+\noindent
+{\em Move the cursor up and down until {\tt /c.g/b.g/\_MATRIX\_/tor.s} appears
+in the bottom status line, then select.}\\
+
+Figure \ref{eo-gredit} is the new display.  Note that the torus is
+illuminated. The {\bf OBJ EDIT} state has been reached.
+
+\begin{figure}
+\centering \includegraphics{eo-tor111.ps}
+\caption{Object Edit Affecting Torus Only.}
+\label{eo-tor111}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em translate 1 1 1}\\
+mged>\\
+}
+
+The key point of the torus is moved to 1, 1, 1.  The other primitives are
+not moved.  See Figure \ref{eo-tor111}.
+
+\noindent
+{\tt
+mged> {\em press reject}\\
+mged>\\
+}
+
+\subsection{Editing a Group of Two Primitives}
+
+\begin{figure}
+\centering \includegraphics{eo-bgrp.ps}
+\caption{Torus and Ellipsoid Selected for Object Edit.}
+\label{eo-bgrp}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em press oill}\\
+mged>\\
+{\em Move the cursor up and down the screen until the primitive ``tor.s''
+is illuminated, then select.}\\
+{\em Move the cursor up and down until {\tt /c.g/\_MATRIX\_/b.g/tor.s} appears
+in the bottom status line, then select.}\\
+}
+
+Control has again been passed to the {\bf OBJ EDIT} state. Notice that
+both the torus and ellipsoid are illuminated (Figure \ref{eo-bgrp}.
+Although only the parameters for the torus will be changed in the
+display, the ellipsoid in group ``b.g'' will be affected by the edit.
+
+\begin{figure}
+\centering \includegraphics{eo-bgrp311.ps}
+\caption{Torus and Ellipsoid Translated by (3, 1, 1).}
+\label{eo-bgrp311}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em translate 3 1 1}\\
+mged>\\
+}
+
+The key point of the torus is moved to 3, 1, 1. The ellipsoid is
+moved by the same amount.  See Figure \ref{eo-bgrp311}.
+
+\noindent
+{\tt
+mged> {\em press reject}\\
+mged>\\
+}
+
+\subsection{Editing Two Groups of Four Primitives}
+
+\begin{figure}
+\centering \includegraphics{eo-cgrp.ps}
+\caption{All Primitives Selected for Object Edit.}
+\label{eo-cgrp}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em press oill}\\
+mged>\\
+{\em Move the cursor up and down the screen until the primitive ``tor.s''
+is illuminated, then select.}\\
+{\em Move the cursor up and down until {\tt /\_MATRIX\_/c.g/b.g/tor.s} appears
+in the bottom status line, then select.}\\
+}
+
+Control has again been passed to the {\bf OBJ EDIT} state. Notice that
+all of the primitives are illuminated (Figure \ref{eo-cgrp}).
+Although only the parameters for the torus will be changed in the
+display, the ellipsoid in group ``b.g'' will be affected by the edit.
+
+\begin{figure}
+\centering \includegraphics{eo-cgrp321.ps}
+\caption{All Primitives Translated by (3, 2, 1).}
+\label{eo-cgrp321}
+\end{figure}
+
+\noindent
+{\tt
+mged> {\em translate 3 2 1}\\
+mged>\\
+}
+
+The key point of the torus is moved to 3, 2, 1. All other primitives are
+moved by the same amount.  See Figure \ref{eo-cgrp321}.
+
+\noindent
+{\tt
+mged> {\em press reject}\\
+mged>\\
+}
+
+Control has now returned to the VIEWING state.

@@ -6,7 +6,7 @@
 # RCS: @(#) $Id$
 
 AC_INIT(../generic/tk.h)
-AC_PREREQ(2.52)
+AC_PREREQ(2.59)
 
 # The following define is needed when building with Cygwin since newer
 # versions of autoconf incorrectly set SHELL to /bin/bash instead of
@@ -16,7 +16,7 @@ SHELL=/bin/sh
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".6"
+TK_PATCH_LEVEL=".8"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -43,6 +43,8 @@ if test "${CFLAGS+set}" != "set" ; then
 fi
 
 AC_PROG_CC
+AC_C_INLINE
+AC_HEADER_STDC
 
 # To properly support cross-compilation, one would
 # need to use these tool checks instead of
@@ -50,9 +52,9 @@ AC_PROG_CC
 # autoconf 2.50. You can also just set
 # the CC, AR, RANLIB, and RC environment
 # variables if you want to cross compile.
-#AC_CHECK_TOOL(AR, ar)
-#AC_CHECK_TOOL(RANLIB, ranlib)
-#AC_CHECK_TOOL(RC, windres)
+dnl AC_CHECK_TOOL(AR, ar)
+dnl AC_CHECK_TOOL(RANLIB, ranlib)
+dnl AC_CHECK_TOOL(RC, windres)
 
 if test "${GCC}" = "yes" ; then
     AC_CHECK_PROG(AR, ar, ar)

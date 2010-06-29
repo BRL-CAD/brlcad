@@ -75,14 +75,34 @@ else
 TKHTMLDIR=
 endif
 
-if BUILD_TKIMG
+if BUILD_TOGL
 if WITH_TK
-TKIMGDIR=tkimg
-else !WITH_TK
-TKIMGDIR=
+TOGLDIR=togl
+else
+TOGLDIR=
 endif
-else !BUILD_TKIMG
-TKIMGDIR=
+else
+TOGLDIR=
+endif
+
+if BUILD_TKPNG
+if WITH_TK
+TKPNGDIR=tkpng
+else !WITH_TK
+TKPNGDIR=
+endif
+else !BUILD_TKPNG
+TKPNGDIR=
+endif
+
+if BUILD_TKTABLE
+if WITH_TK
+TKTABLEDIR=tktable
+else
+TKTABLEDIR=
+endif
+else
+TKTABLEDIR=
 endif
 
 if BUILD_OPENNURBS
@@ -139,8 +159,10 @@ SUBDIRS = \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
 	${STEPDIR} \
-	${TKIMGDIR} \
+	${TKPNGDIR} \
 	${TKHTMLDIR} \
+	${TOGLDIR} \
+	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
@@ -170,8 +192,10 @@ DIST_SUBDIRS = \
 	step \
 	tcl \
 	tk \
-	tkimg \
+	tkpng \
 	tkhtml3 \
+	togl \
+	tktable \
 	tnt
 
 include $(top_srcdir)/misc/Makefile.defs

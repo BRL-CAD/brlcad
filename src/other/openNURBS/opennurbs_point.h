@@ -1296,6 +1296,93 @@ public:
   */
   double MaximumValueAt(const class ON_SurfaceLeafBox& srfleafbox) const;
 
+  /*
+  Description:
+    Get the maximum value of the plane equation on a set of 3d points.
+  Parameters:
+    bRational - [in]
+      False if the points are euclidean (x,y,z)
+      True if the points are homogenous rational (x,y,z,w)
+      (x/w,y/w,z/w) is used to evaluate the value.
+    point_count - [in]
+    point_stride - [in]
+      i-th point's x coordinate = points[i*point_stride]
+    points - [in]
+      coordinates of points
+    stop_value - [in]
+      If stop_value is valid and not ON_UNSET_VALUE, then the 
+      evaulation stops if a value > stop_value is found. 
+      If stop_value = ON_UNSET_VALUE, then stop_value is ignored.
+  Returns:
+    Maximum value of the plane equation on the point list.
+    If the input is not valid, then ON_UNSET_VALUE is returned.
+  */
+  double MaximumValueAt(
+    bool bRational,
+    int point_count,
+    int point_stride,
+    const double* points,
+    double stop_value
+    ) const;
+
+  /*
+  Description:
+    Get the minimum value of the plane equation on a set of 3d points.
+  Parameters:
+    bRational - [in]
+      False if the points are euclidean (x,y,z)
+      True if the points are homogenous rational (x,y,z,w)
+      (x/w,y/w,z/w) is used to evaluate the value.
+    point_count - [in]
+    point_stride - [in]
+      i-th point's x coordinate = points[i*point_stride]
+    points - [in]
+      coordinates of points
+    stop_value - [in]
+      If stop_value is valid and not ON_UNSET_VALUE, then the 
+      evaulation stops if a value < stop_value is found. 
+      If stop_value = ON_UNSET_VALUE, then stop_value is ignored.
+  Returns:
+    Maximum value of the plane equation on the point list.
+    If the input is not valid, then ON_UNSET_VALUE is returned.
+  */
+  double MinimumValueAt(
+    bool bRational,
+    int point_count,
+    int point_stride,
+    const double* points,
+    double stop_value
+    ) const;
+
+  /*
+  Description:
+    Get the maximum absolute value of the plane equation 
+    on a set of 3d points.
+  Parameters:
+    bRational - [in]
+      False if the points are euclidean (x,y,z)
+      True if the points are homogenous rational (x,y,z,w)
+      (x/w,y/w,z/w) is used to evaluate the value.
+    point_count - [in]
+    point_stride - [in]
+      i-th point's x coordinate = points[i*point_stride]
+    points - [in]
+      coordinates of points
+    stop_value - [in]
+      If stop_value >= 0.0, then the evaulation stops if an
+      absolute value > stop_value is found. If stop_value < 0.0 
+      or stop_value is invalid, then stop_value is ignored.
+  Returns:
+    Maximum value of the plane equation on the point list.
+    If the input is not valid, then ON_UNSET_VALUE is returned.
+  */
+  double MaximumAbsoluteValueAt(
+    bool bRational,
+    int point_count,
+    int point_stride,
+    const double* points,
+    double stop_value
+    ) const;
 
   /*
   Description:

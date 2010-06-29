@@ -35,25 +35,26 @@
 
 
 struct uplot {
-    int	targ;	/* type of args */
-    int	narg;	/* number or args */
-    char	*desc;	/* description */
-    int	t3d;	/* non-zero if 3D */
+    int targ;	/* type of args */
+    int narg;	/* number or args */
+    char *desc;	/* description */
+    int t3d;	/* non-zero if 3D */
 };
 
-void	putshort(short int s);
-void    putieee(double d);
-void    getstring(void);
-void	putargs(struct uplot *up);
-void    getargs(struct uplot *up);
-void	doscale(void);
 
-#define	TBAD	0	/* no such command */
+void putshort(short int s);
+void putieee(double d);
+void getstring(void);
+void putargs(struct uplot *up);
+void getargs(struct uplot *up);
+void doscale(void);
+
+#define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */
-#define	TIEEE	3	/* IEEE 64-bit floating */
-#define	TCHAR	4	/* unsigned chars */
-#define	TSTRING	5	/* linefeed terminated string */
+#define TIEEE	3	/* IEEE 64-bit floating */
+#define TCHAR	4	/* unsigned chars */
+#define TSTRING	5	/* linefeed terminated string */
 
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
@@ -117,19 +118,20 @@ struct uplot letters[] = {
     /*z*/	{ 0, 0, 0, 0 }
 };
 
-double	getieee(void);
-int	verbose;
-double	arg[6];			/* parsed plot command arguments */
-double	sp[6];			/* space command */
-char	strarg[512];		/* string buffer */
-double	cx, cy, cz;		/* center */
-double	scale = 0;
-int	seenscale = 0;
 
-int	nofloat = 1;
-int	noflush = 1;
-int	nocolor = 1;
-int	no3d = 1;
+double getieee(void);
+int verbose;
+double arg[6];			/* parsed plot command arguments */
+double sp[6];			/* space command */
+char strarg[512];		/* string buffer */
+double cx, cy, cz;		/* center */
+double scale = 0;
+int seenscale = 0;
+
+int nofloat = 1;
+int noflush = 1;
+int nocolor = 1;
+int no3d = 1;
 
 static const char usage[] = "\
 Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
@@ -137,13 +139,13 @@ Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
 int
 main(int argc, char **argv)
 {
-    int	c;
-    struct	uplot *up;
+    int c;
+    struct uplot *up;
 
-    while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-v") == 0 ) {
+    while (argc > 1) {
+	if (strcmp(argv[1], "-v") == 0) {
 	    verbose++;
-	} else if ( strcmp(argv[1], "-S") == 0 ) {
+	} else if (strcmp(argv[1], "-S") == 0) {
 	    scale = 1;
 	} else
 	    break;
@@ -151,34 +153,34 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
-    if ( isatty(fileno(stdin)) ) {
-	bu_exit(1, "%s", usage );
+    if (isatty(fileno(stdin))) {
+	bu_exit(1, "%s", usage);
     }
 
     /* Assume default space, in case one is not provided */
     sp[0] = sp[1] = sp[2] = -32767;
     sp[3] = sp[4] = sp[5] = 32767;
-    if ( scale )
+    if (scale)
 	doscale();
 
-    while ( (c = getchar()) != EOF ) {
+    while ((c = getchar()) != EOF) {
 	/* look it up */
-	if ( c < 'A' || c > 'z' ) {
+	if (c < 'A' || c > 'z') {
 	    up = &uerror;
 	} else {
 	    up = &letters[ c - 'A' ];
 	}
 
-	if ( up->targ == TBAD ) {
-	    fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
+	if (up->targ == TBAD) {
+	    fprintf(stderr, "Bad command '%c' (0x%02x)\n", c, c);
 	    continue;
 	}
 
-	if ( up->narg > 0 )
-	    getargs( up );
+	if (up->narg > 0)
+	    getargs(up);
 
 	/* check for space command */
-	switch ( c ) {
+	switch (c) {
 	    case 's':
 	    case 'w':
 		sp[0] = arg[0];
@@ -187,7 +189,7 @@ main(int argc, char **argv)
 		sp[3] = arg[2];
 		sp[4] = arg[3];
 		sp[5] = 0;
-		if ( scale )
+		if (scale)
 		    doscale();
 		seenscale++;
 		break;
@@ -199,14 +201,14 @@ main(int argc, char **argv)
 		sp[3] = arg[3];
 		sp[4] = arg[4];
 		sp[5] = arg[5];
-		if ( scale )
+		if (scale)
 		    doscale();
 		seenscale++;
 		break;
 	}
 
 	/* do it */
-	switch ( c ) {
+	switch (c) {
 	    case 's':
 	    case 'm':
 	    case 'n':
@@ -217,26 +219,26 @@ main(int argc, char **argv)
 	    case 'f':
 	    case 'e':
 		/* The are as generic as unix plot gets */
-		putchar( c );
-		putargs( up );
+		putchar(c);
+		putargs(up);
 		break;
 
 	    case 't': /* XXX vector lists */
-		putchar( c );
-		putargs( up );
+		putchar(c);
+		putargs(up);
 		break;
 
 	    case 'C':
-		if ( nocolor == 0 ) {
-		    putchar( c );
-		    putargs( up );
+		if (nocolor == 0) {
+		    putchar(c);
+		    putargs(up);
 		}
 		break;
 
 	    case 'F':
-		if ( noflush == 0 ) {
-		    putchar( c );
-		    putargs( up );
+		if (noflush == 0) {
+		    putchar(c);
+		    putargs(up);
 		}
 		break;
 
@@ -245,11 +247,11 @@ main(int argc, char **argv)
 	    case 'N':
 	    case 'P':
 	    case 'L':
-		if ( no3d )
-		    putchar( c + 'a' - 'A' );
+		if (no3d)
+		    putchar(c + 'a' - 'A');
 		else
-		    putchar( c );
-		putargs( up );
+		    putchar(c);
+		putargs(up);
 		break;
 
 	    case 'w':
@@ -260,26 +262,26 @@ main(int argc, char **argv)
 	    case 'i':
 	    case 'r':
 		/* 2d floating */
-		if ( nofloat ) {
+		if (nofloat) {
 		    /* to 2d integer */
-		    if ( c == 'w' )
-			putchar( 's' );
-		    else if ( c == 'o' )
-			putchar( 'm' );
-		    else if ( c == 'q' )
-			putchar( 'n' );
-		    else if ( c == 'x' )
-			putchar( 'p' );
-		    else if ( c == 'v' )
-			putchar( 'l' );
-		    else if ( c == 'i' )
-			putchar( 'c' );
-		    else if ( c == 'r' )
-			putchar( 'a' );
+		    if (c == 'w')
+			putchar('s');
+		    else if (c == 'o')
+			putchar('m');
+		    else if (c == 'q')
+			putchar('n');
+		    else if (c == 'x')
+			putchar('p');
+		    else if (c == 'v')
+			putchar('l');
+		    else if (c == 'i')
+			putchar('c');
+		    else if (c == 'r')
+			putchar('a');
 		} else {
-		    putchar( c );
+		    putchar(c);
 		}
-		putargs( up );
+		putargs(up);
 		break;
 
 	    case 'W':
@@ -288,106 +290,109 @@ main(int argc, char **argv)
 	    case 'X':
 	    case 'V':
 		/* 3d floating */
-		if ( nofloat ) {
-		    if ( no3d ) {
+		if (nofloat) {
+		    if (no3d) {
 			/* to 2d integer */
-			if ( c == 'W' )
-			    putchar( 's' );
-			else if ( c == 'O' )
-			    putchar( 'm' );
-			else if ( c == 'Q' )
-			    putchar( 'n' );
-			else if ( c == 'X' )
-			    putchar( 'p' );
-			else if ( c == 'V' )
-			    putchar( 'l' );
+			if (c == 'W')
+			    putchar('s');
+			else if (c == 'O')
+			    putchar('m');
+			else if (c == 'Q')
+			    putchar('n');
+			else if (c == 'X')
+			    putchar('p');
+			else if (c == 'V')
+			    putchar('l');
 		    } else {
 			/* to 3d integer */
-			if ( c == 'W' )
-			    putchar( 'S' );
-			else if ( c == 'O' )
-			    putchar( 'M' );
-			else if ( c == 'Q' )
-			    putchar( 'N' );
-			else if ( c == 'X' )
-			    putchar( 'P' );
-			else if ( c == 'V' )
-			    putchar( 'L' );
+			if (c == 'W')
+			    putchar('S');
+			else if (c == 'O')
+			    putchar('M');
+			else if (c == 'Q')
+			    putchar('N');
+			else if (c == 'X')
+			    putchar('P');
+			else if (c == 'V')
+			    putchar('L');
 		    }
 		} else {
-		    if ( no3d ) {
+		    if (no3d) {
 			/* to 2d floating */
-			putchar( c + 'a' - 'A' );
+			putchar(c + 'a' - 'A');
 		    } else {
 			/* to 3d floating */
-			putchar( c );
+			putchar(c);
 		    }
 		}
-		putargs( up );
+		putargs(up);
 		break;
 	}
 
-	if ( verbose )
-	    printf( "%s\n", up->desc );
+	if (verbose)
+	    printf("%s\n", up->desc);
     }
 
-    if ( scale && !seenscale ) {
-	fprintf( stderr, "pl-pl: WARNING no space command in file, defaulting to +/-32k\n" );
-    } else if ( !scale && seenscale ) {
-	fprintf( stderr, "pl-pl: WARNING space command(s) ignored, use -S to apply them.\n" );
+    if (scale && !seenscale) {
+	fprintf(stderr, "pl-pl: WARNING no space command in file, defaulting to +/-32k\n");
+    } else if (!scale && seenscale) {
+	fprintf(stderr, "pl-pl: WARNING space command(s) ignored, use -S to apply them.\n");
     }
 
-    return(0);
+    return 0;
 }
 
 
 void
 getstring(void)
 {
-    int	c;
-    char	*cp;
+    int c;
+    char *cp;
 
     cp = strarg;
-    while ( (c = getchar()) != '\n' && c != EOF )
+    while ((c = getchar()) != '\n' && c != EOF)
 	*cp++ = c;
     *cp = 0;
 }
 
+
 short
 getshort(void)
 {
-    long	v, w;
+    long v, w;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if ( v <= 0x7FFF )  return(v);
+    if (v <= 0x7FFF) return v;
     w = -1;
     w &= ~0x7FFF;
-    return( w | v );
+    return w | v;
 }
+
 
 double
 getieee(void)
 {
-    char	in[8];
-    double	d;
+    char in[8];
+    double d;
 
-    fread( in, 8, 1, stdin );
-    ntohd( (unsigned char *)&d, (unsigned char *)in, 1 );
-    return	d;
+    fread(in, 8, 1, stdin);
+    ntohd((unsigned char *)&d, (unsigned char *)in, 1);
+    return d;
 }
+
 
 /*** Input args ***/
 
 void
 getargs(struct uplot *up)
 {
-    int	i;
+    int i;
 
-    for ( i = 0; i < up->narg; i++ ) {
-	switch ( up->targ ) {
+    for (i = 0; i < up->narg; i++) {
+	switch (up->targ) {
 	    case TSHORT:
 		arg[i] = getshort();
 		break;
@@ -412,46 +417,46 @@ getargs(struct uplot *up)
 void
 putargs(struct uplot *up)
 {
-    int	i;
+    int i;
 
-    for ( i = 0; i < up->narg; i++ ) {
-	if ( no3d && ((i % 3) == 2) && up->t3d )
+    for (i = 0; i < up->narg; i++) {
+	if (no3d && ((i % 3) == 2) && up->t3d)
 	    continue;	/* skip z coordinate */
 	/* gag me with a spoon... */
-	if ( scale && (up->targ == TSHORT || up->targ == TIEEE) ) {
-	    if ( up->t3d ) {
-		if ( i % 3 == 0 )
+	if (scale && (up->targ == TSHORT || up->targ == TIEEE)) {
+	    if (up->t3d) {
+		if (i % 3 == 0)
 		    arg[i] = (arg[i] - cx) * scale;
-		else if ( i % 3 == 1 )
+		else if (i % 3 == 1)
 		    arg[i] = (arg[i] - cy) * scale;
 		else
 		    arg[i] = (arg[i] - cz) * scale;
 	    } else {
-		if ( i % 2 == 0 )
+		if (i % 2 == 0)
 		    arg[i] = (arg[i] - cx) * scale;
 		else
 		    arg[i] = (arg[i] - cy) * scale;
 	    }
 	}
-	switch ( up->targ ) {
+	switch (up->targ) {
 	    case TSHORT:
-		if ( arg[i] > 32767 ) arg[i] = 32767;
-		if ( arg[i] < -32767 ) arg[i] = -32767;
-		putshort( (short)arg[i] );
+		if (arg[i] > 32767) arg[i] = 32767;
+		if (arg[i] < -32767) arg[i] = -32767;
+		putshort((short)arg[i]);
 		break;
 	    case TIEEE:
-		if ( nofloat ) {
-		    if ( arg[i] > 32767 ) arg[i] = 32767;
-		    if ( arg[i] < -32767 ) arg[i] = -32767;
-		    putshort( (short)arg[i] );
+		if (nofloat) {
+		    if (arg[i] > 32767) arg[i] = 32767;
+		    if (arg[i] < -32767) arg[i] = -32767;
+		    putshort((short)arg[i]);
 		} else
-		    putieee( arg[i] );
+		    putieee(arg[i]);
 		break;
 	    case TSTRING:
-		printf( "%s\n", strarg );
+		printf("%s\n", strarg);
 		break;
 	    case TCHAR:
-		putchar( arg[i] );
+		putchar(arg[i]);
 		break;
 	    case TNONE:
 	    default:
@@ -460,30 +465,33 @@ putargs(struct uplot *up)
     }
 }
 
+
 void
 putshort(short int s)
 {
     /* For the sake of efficiency, we trust putc()
      * to write only one byte
      */
-    putchar( s );
-    putchar( s>>8 );
+    putchar(s);
+    putchar(s>>8);
 }
+
 
 void
 putieee(double d)
 {
-    unsigned char	out[8];
+    unsigned char out[8];
 
-    htond( out, (unsigned char *)&d, 1 );
-    fwrite( out, 1, 8, stdout );
+    htond(out, (unsigned char *)&d, 1);
+    fwrite(out, 1, 8, stdout);
 }
+
 
 void
 doscale(void)
 {
-    double	dx, dy, dz;
-    double	max;
+    double dx, dy, dz;
+    double max;
 
     cx = (sp[3] + sp[0]) / 2.0;
     cy = (sp[4] + sp[1]) / 2.0;
@@ -494,11 +502,12 @@ doscale(void)
     dz = (sp[5] - sp[2]) / 2.0;
 
     max = dx;
-    if ( dy > max ) max = dy;
-    if ( dz > max ) max = dz;
+    if (dy > max) max = dy;
+    if (dz > max) max = dz;
 
     scale = 32767.0 / max;
 }
+
 
 /*
  * Local Variables:

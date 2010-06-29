@@ -15,27 +15,6 @@
 
 #include "opennurbs.h"
 
-// function pointers to mesh creation tools in Rhino SDK
-ON_MeshNurbsSurface   ON_NurbsSurface::_MeshNurbsSurface = 0;
-ON_MeshPlaneSurface   ON_PlaneSurface::_MeshPlaneSurface = 0;
-ON_MeshRevSurface     ON_RevSurface::_MeshRevSurface = 0;
-ON_MeshSumSurface     ON_SumSurface::_MeshSumSurface = 0;
-ON_MeshBrepFace       ON_BrepFace::_MeshBrepFace = 0;
-
-ON_MassPropertiesCurve     ON_Curve::_MassPropertiesCurve = 0;
-ON_fnMeshCurve             ON_Curve::_MeshCurve = 0;
-ON_MassPropertiesSurface   ON_Surface::_MassPropertiesSurface = 0;
-ON_MassPropertiesMesh      ON_Mesh::_MassPropertiesMesh = 0;
-
-ON__m__Brep_Mesh            ON_Brep::m__Mesh = 0;
-ON__m__Brep_MassProperties  ON_Brep::m__MassProperties = 0;
-ON__m__Brep_SplitFaces      ON_Brep::m__SplitFaces = 0;
-ON__m__Brep_RegionTopologyHelper ON_Brep::m__RegionTopologyHelper = 0;
-ON__m__Brep_MergeBrepsHelper ON_Brep::m__MergeBrepsHelper = 0;
-ON__m__Brep_IsPointInsideHelper ON_Brep::m__IsPointInsideHelper = 0;
-
-ON_fnMesh2dPolygon ON_Mesh::_Mesh2dPolygon = 0;
-
 static // LEAVE THIS STATIC
 void ON_MeshSurfaceHelper(
             ON_Mesh* mesh,
@@ -621,112 +600,9 @@ ON_Mesh* ON_SurfaceProxy::CreateMesh(
   return mesh;
 }
 
-ON_Mesh* ON_NurbsSurface::CreateMesh( 
-           const ON_MeshParameters& mp,
-           ON_Mesh* mesh
-           ) const
-{
-  if ( _MeshNurbsSurface ) // provided by Rhino SDK
-    return _MeshNurbsSurface(*this,mp,mesh);
-  return ON_Surface::CreateMesh(mp,mesh);
-}
-
-ON_Mesh* ON_PlaneSurface::CreateMesh( 
-           const ON_MeshParameters& mp,
-           ON_Mesh* mesh
-           ) const
-{
-  if ( _MeshPlaneSurface ) // provided by Rhino SDK
-    return _MeshPlaneSurface(*this,mp,mesh);
-  return ON_Surface::CreateMesh(mp,mesh);
-
-}
-
-ON_Mesh* ON_RevSurface::CreateMesh( 
-           const ON_MeshParameters& mp,
-           ON_Mesh* mesh
-           ) const
-{
-  if ( _MeshRevSurface ) // provided by Rhino SDK
-    return _MeshRevSurface(*this,mp,mesh);
-  return ON_Surface::CreateMesh(mp,mesh);
-}
-
-ON_Mesh* ON_SumSurface::CreateMesh( 
-           const ON_MeshParameters& mp,
-           ON_Mesh* mesh
-           ) const
-{
-  if ( _MeshSumSurface ) // provided by Rhino SDK
-    return _MeshSumSurface(*this,mp,mesh);
-  return ON_Surface::CreateMesh(mp,mesh);
-}
-
-ON_Mesh* ON_BrepFace::CreateMesh( 
-           const ON_MeshParameters& mp,
-           ON_Mesh* mesh
-           ) const
-{
-  if ( _MeshBrepFace ) // provided by Rhino SDK
-    return _MeshBrepFace(*this,mp,mesh);
-  if ( Brep() && Brep()->FaceIsSurface(m_face_index) )
-    return ON_Surface::CreateMesh(mp,mesh);
-  if ( mesh )
-    mesh->Destroy();
-  return 0;
-}
-
-int ON_Brep::CreateMesh( 
-  const ON_MeshParameters& mp,
-  ON_SimpleArray<ON_Mesh*>& mesh_list
-  ) const
-{
-  if ( ON_Brep::m__Mesh ) 
-  {
-    // provided by Rhino SDK
-    return ON_Brep::m__Mesh(*this,mp,mesh_list);
-  }
-
-  int i, cnt=0, mesh_list_count0 = mesh_list.Count();
-  mesh_list.Reserve(mesh_list_count0 + m_F.Count() );
-  for ( i = 0; i < m_F.Count(); i++ )
-  {
-    ON_Mesh* mesh = m_F[i].CreateMesh( mp );
-    if ( mesh )
-      cnt++;
-    mesh_list.Append(mesh);
-  }
-  if ( cnt < 1 )
-    mesh_list.SetCount(mesh_list_count0);
-  return mesh_list.Count() - mesh_list_count0;
-}
-
 ON_MeshCurveParameters::ON_MeshCurveParameters()
 {
   memset(this,0,sizeof(*this));
-}
-
-
-ON_PolylineCurve* ON_Curve::MeshCurve(
-    ON_MeshCurveParameters& mp,
-    ON_PolylineCurve* polyline,
-    bool bSkipFirstPoint,
-    const ON_Interval* domain
-    )
-{
-  return ( 0 != ON_Curve::_MeshCurve ) 
-         ? ON_Curve::_MeshCurve(this,&mp,polyline,bSkipFirstPoint,domain) 
-         : 0;
-}
-
-bool ON_Mesh2dPolygon( 
-      int point_count, int point_stride, const double* P,
-      int tri_stride, int* triangle 
-      )
-{
-  return (0 != ON_Mesh::_Mesh2dPolygon )
-    ? (ON_Mesh::_Mesh2dPolygon(point_count,point_stride,P,tri_stride,triangle) >= 0)
-    : false;
 }
 
 ON_OBJECT_IMPLEMENT(ON_Mesh,ON_Geometry,"4ED7D4E4-E947-11d3-BFE5-0010830122F0");
@@ -1458,6 +1334,7 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
       }
       else
       {
+        ON_ERROR("ON_Mesh::Read - compressed vertex point buffer size is wrong.");
         rc = false; // buffer is wrong size
       }
     }
@@ -1474,6 +1351,7 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
       }
       else
       {
+        ON_ERROR("ON_Mesh::Read - compressed vertex normal buffer size is wrong.");
         rc = false; // buffer is wrong size
       }
     }
@@ -1490,6 +1368,7 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
       }
       else
       {
+        ON_ERROR("ON_Mesh::Read - compressed texture coordinate buffer size is wrong.");
         rc = false; // buffer is wrong size
       }
     }
@@ -1506,6 +1385,7 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
       }
       else
       {
+        ON_ERROR("ON_Mesh::Read - compressed vertex curvature buffer size is wrong.");
         rc = false; // buffer is wrong size
       }
     }
@@ -1522,6 +1402,7 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
       }
       else
       {
+        ON_ERROR("ON_Mesh::Read - compressed vertex color buffer size is wrong.");
         rc = false; // buffer is wrong size
       }
     }
@@ -1542,7 +1423,6 @@ bool ON_Mesh::Read_2( int vcount, ON_BinaryArchive& file )
       file.ToggleByteOrder( m_C.Count()*3, 4, m_C.Array(), (void*)m_C.Array() );
     }
   }
-
 
   return rc;
 }
@@ -1818,26 +1698,45 @@ ON_BOOL32 ON_Mesh::Read( ON_BinaryArchive& file )
     if (rc) rc = file.ReadInt( &m_closed );
 
     unsigned char b = 0;
-    unsigned int tcode;
-    int value;
+    ON__UINT32 tcode=0;
+    ON__INT64 big_value=0;
     if (rc) rc = file.ReadChar(&b);
-    if (rc && b) {
-      rc = file.BeginRead3dmChunk(&tcode,&value);
-      if (rc) {
-        m_mesh_parameters = new ON_MeshParameters();
-        rc = m_mesh_parameters->Read( file );
+    if (rc && b) 
+    {
+      // mesh parameters are in an anonymous chunk
+      rc = file.BeginRead3dmBigChunk(&tcode,&big_value);
+      if (rc) 
+      {
+        if ( TCODE_ANONYMOUS_CHUNK == tcode )
+        {
+          m_mesh_parameters = new ON_MeshParameters();
+          rc = m_mesh_parameters->Read( file );
+        }
+        else
+          rc = false;
         if (!file.EndRead3dmChunk())
           rc = false;
       }
     }
 
-    for ( i = 0; rc && i < 4; i++ ) {
+    for ( i = 0; rc && i < 4; i++ ) 
+    {
       rc = file.ReadChar(&b);
-      if (rc && b) {
-        rc = file.BeginRead3dmChunk( &tcode, &value );
-        if (rc) {
-          m_kstat[i] = new ON_MeshCurvatureStats();
-          rc = m_kstat[i]->Read(file);
+      if (rc && b) 
+      {
+        // m_kstat[i] curvature stats are in an anonymous chunk
+        tcode = 0;
+        big_value = 0;
+        rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
+        if (rc) 
+        {
+          if ( TCODE_ANONYMOUS_CHUNK == tcode )
+          {
+            m_kstat[i] = new ON_MeshCurvatureStats();
+            rc = m_kstat[i]->Read(file);
+          }
+          else
+            rc = false;
           if ( !file.EndRead3dmChunk() )
             rc = false;
         }
@@ -3185,41 +3084,41 @@ ON_Mesh::ComputeFaceNormals()
 }
 
 
-static int compareRadial3fPoint( const ON_3fPoint* a, const ON_3fPoint* b )
-{
-  double ar = a->x+a->y+a->z;
-  double br = b->x+b->y+b->z;
-  if ( ar < br )
-    return -1;
-  if ( ar > br )
-    return 1;
-  return 0;
-}
+//static int compareRadial3fPoint( const ON_3fPoint* a, const ON_3fPoint* b )
+//{
+//  double ar = a->x+a->y+a->z;
+//  double br = b->x+b->y+b->z;
+//  if ( ar < br )
+//    return -1;
+//  if ( ar > br )
+//    return 1;
+//  return 0;
+//}
 
 bool ON_Mesh::CombineCoincidentVertices( 
         const ON_3fVector tolerance,
         double cos_normal_angle // = -1.0  // cosine(break angle) -1.0 will merge all coincident vertices
         )
 {
-
-  bool rc = false;
-  const int vcount = VertexCount();
-  if ( vcount > 0 && rc ) {
-    ON_Workspace ws;
-    int* index = ws.GetIntMemory(vcount);
-    rc = m_V.Sort( ON::quick_sort, index, compareRadial3fPoint );
-    int i, j;
-    ON_3fPoint p0, p1, pmin, pmax;
-    for ( i = 0; i < vcount; i++ ) {
-      p0 = m_V[i];
-      pmin = p0 - tolerance;
-      pmax = p0 + tolerance;
-      for ( j = i+1; j < vcount; j++ ) {
-        p1 = m_V[j];
-        // TODO        
-      }
-    }
-  }
+  // TODO - If you need this function, please ask Dale Lear to finish it.
+  //bool rc = false;
+  //const int vcount = VertexCount();
+  //if ( vcount > 0 && rc ) {
+  //  ON_Workspace ws;
+  //  int* index = ws.GetIntMemory(vcount);
+  //  rc = m_V.Sort( ON::quick_sort, index, compareRadial3fPoint );
+  //  int i, j;
+  //  ON_3fPoint p0, p1, pmin, pmax;
+  //  for ( i = 0; i < vcount; i++ ) {
+  //    p0 = m_V[i];
+  //    pmin = p0 - tolerance;
+  //    pmax = p0 + tolerance;
+  //    for ( j = i+1; j < vcount; j++ ) {
+  //      p1 = m_V[j];
+  //      // TODO        
+  //    }
+  //  }
+  //}
   return false;
 }
 
@@ -3702,52 +3601,6 @@ ON_3dPoint ON_Mesh::VolumeCentroid(
     *volume = mp.m_mass;
   return c;
 }
-
-
-bool ON_Mesh::AreaMassProperties(
-  ON_MassProperties& mp,
-  bool bArea,
-  bool bFirstMoments,
-  bool bSecondMoments,
-  bool bProductMoments
-  ) const
-{
-  bool rc = false;
-  // The _MassPropertiesMesh() function is provided by the Rhino SDK.
-  if ( 0 != _MassPropertiesMesh )
-  {
-    int mprc = _MassPropertiesMesh( 
-            *this, NULL, 2, ON_UNSET_POINT, mp, 
-            bArea, bFirstMoments, bSecondMoments, bProductMoments, 
-            ON_UNSET_VALUE, ON_UNSET_VALUE );
-    rc = (mprc != 0);
-  }
-  return rc;
-}
-
-
-bool ON_Mesh::VolumeMassProperties(
-  ON_MassProperties& mp, 
-  bool bVolume,
-  bool bFirstMoments,
-  bool bSecondMoments,
-  bool bProductMoments,
-  ON_3dPoint base_point
-  ) const
-{
-  bool rc = false;
-  // The _MassPropertiesMesh() function is provided by the Rhino SDK.
-  if ( 0 != _MassPropertiesMesh )
-  {
-    int mprc = _MassPropertiesMesh( 
-            *this, NULL, 3, base_point, mp, 
-            bVolume, bFirstMoments, bSecondMoments, bProductMoments, 
-            ON_UNSET_VALUE, ON_UNSET_VALUE );
-    rc = (mprc != 0);
-  }
-  return rc;
-}
-
 
 ON_MeshParameters::ON_MeshParameters()
 {
@@ -6766,22 +6619,22 @@ struct tagFPT
   int x, y, z;
 };
 
-static int compare_fpt( const struct tagFPT* a, const struct tagFPT* b )
-{
-  if ( a->x < b->x )
-    return -1;
-  if ( a->x > b->x )
-    return 1;
-  if ( a->y < b->y )
-    return -1;
-  if ( a->y > b->y )
-    return 1;
-  if ( a->z < b->z )
-    return -1;
-  if ( a->z > b->z )
-    return 1;
-  return 0;
-}
+//static int compare_fpt( const struct tagFPT* a, const struct tagFPT* b )
+//{
+//  if ( a->x < b->x )
+//    return -1;
+//  if ( a->x > b->x )
+//    return 1;
+//  if ( a->y < b->y )
+//    return -1;
+//  if ( a->y > b->y )
+//    return 1;
+//  if ( a->z < b->z )
+//    return -1;
+//  if ( a->z > b->z )
+//    return 1;
+//  return 0;
+//}
 
 static int compare_pmark( const int* a, const int* b )
 {
@@ -6856,7 +6709,7 @@ static int AddToPartition( ON_Mesh* mesh, ON_SimpleArray<int>& pmark, int vi, in
         if ( fvi[0] == vi )
           fvi[0] = new_vi;
         if ( fvi[1] == vi )
-          fvi[2] = new_vi;
+          fvi[1] = new_vi;
         if ( fvi[2] == vi )
           fvi[2] = new_vi;
         if ( fvi[3] == vi )
@@ -6916,6 +6769,34 @@ bool ON_MeshPartition_IsValid( const ON_MeshPartition& p, const ON_Mesh& mesh )
   return rc;
 }
 
+static
+bool ON_Mesh_CreatePartition_SortFaces(const ON_Mesh& mesh, int* fmap )
+{
+  ON_RTree rt;
+  if ( !rt.CreateMeshFaceTree(&mesh) )
+    return false;
+
+  const int mesh_F_count = mesh.m_F.Count();
+  int fmap_count = 0;
+
+  const ON_RTreeBranch* branch;
+  ON_RTreeIterator rit(rt);
+  for ( rit.First(); 0 != (branch = rit.Value()); rit.Next() )
+  {
+    if ( fmap_count > mesh_F_count )
+      break;
+    fmap[fmap_count++] = (int)(branch->m_id);
+  }  
+
+  if ( fmap_count != mesh_F_count )
+  {
+    ON_ERROR("ON_Mesh::CreatePartition unable to get fmap[]");
+    return false;
+  }
+
+  return true;
+}
+
 const ON_MeshPartition* ON_Mesh::CreatePartition( 
               int partition_max_vertex_count, // maximum number of vertices in a partition
               int partition_max_triangle_count // maximum number of triangles in a partition
@@ -6965,48 +6846,54 @@ const ON_MeshPartition* ON_Mesh::CreatePartition(
 
       // sort faces
       int* fmap = (int*)ws.GetMemory( face_count*sizeof(fmap[0]) );
-      ON_SimpleArray<struct tagFPT> fpt(face_count);
-      fpt.SetCount(face_count);
-      if ( HasTextureCoordinates() )
+      if ( !ON_Mesh_CreatePartition_SortFaces(*this,fmap) )
       {
-        ON_2fPoint fcenter;
-        ON_BoundingBox bbox = ON_PointListBoundingBox(2,0,m_T.Count(),2,&m_T[0].x);
-        const ON_Interval txdom(bbox.m_min.x,bbox.m_max.x);
-        const ON_Interval tydom(bbox.m_min.y,bbox.m_max.y);
-        for ( fi = 0; fi < face_count; fi++ ) {
-          fvi = m_F[fi].vi;
-          if ( fvi[2] == fvi[3] ) {
-            fcenter = 0.333333333333333333f*(m_T[fvi[0]] + m_T[fvi[1]] + m_T[fvi[2]]);
-          }
-          else {
-            fcenter = 0.25f*(m_T[fvi[0]] + m_T[fvi[1]] + m_T[fvi[2]] + m_T[fvi[3]]);
-          }
-          fpt[fi].x = (int)floor(txdom.NormalizedParameterAt(fcenter.x)*100);
-          fpt[fi].y = (int)floor(tydom.NormalizedParameterAt(fcenter.y)*100);
-          fpt[fi].z = 0;
-        }
+        for ( fi = 0; fi < face_count; fi++ )
+          fmap[fi] = fi;
       }
-      else
-      {
-        ON_3dPoint fcenter;
-        ON_BoundingBox bbox = BoundingBox();
-        const ON_Interval vxdom(bbox.m_min.x,bbox.m_max.x);
-        const ON_Interval vydom(bbox.m_min.y,bbox.m_max.y);
-        const ON_Interval vzdom(bbox.m_min.z,bbox.m_max.z);
-        for ( fi = 0; fi < face_count; fi++ ) {
-          fvi = m_F[fi].vi;
-          if ( fvi[2] == fvi[3] ) {
-            fcenter = 0.333333333333333333f*(m_V[fvi[0]] + m_V[fvi[1]] + m_V[fvi[2]]);
-          }
-          else {
-            fcenter = 0.25f*(m_V[fvi[0]] + m_V[fvi[1]] + m_V[fvi[2]] + m_V[fvi[3]]);
-          }
-          fpt[fi].x = (int)floor(vxdom.NormalizedParameterAt(fcenter.x)*100);
-          fpt[fi].y = (int)floor(vydom.NormalizedParameterAt(fcenter.y)*100);
-          fpt[fi].z = (int)floor(vzdom.NormalizedParameterAt(fcenter.z)*100);
-        }
-      }
-      fpt.Sort( ON::heap_sort, fmap, compare_fpt ); 
+
+      //ON_SimpleArray<struct tagFPT> fpt(face_count);
+      //fpt.SetCount(face_count);
+      //if ( HasTextureCoordinates() )
+      //{
+      //  ON_2fPoint fcenter;
+      //  ON_BoundingBox bbox = ON_PointListBoundingBox(2,0,m_T.Count(),2,&m_T[0].x);
+      //  const ON_Interval txdom(bbox.m_min.x,bbox.m_max.x);
+      //  const ON_Interval tydom(bbox.m_min.y,bbox.m_max.y);
+      //  for ( fi = 0; fi < face_count; fi++ ) {
+      //    fvi = m_F[fi].vi;
+      //    if ( fvi[2] == fvi[3] ) {
+      //      fcenter = 0.333333333333333333f*(m_T[fvi[0]] + m_T[fvi[1]] + m_T[fvi[2]]);
+      //    }
+      //    else {
+      //      fcenter = 0.25f*(m_T[fvi[0]] + m_T[fvi[1]] + m_T[fvi[2]] + m_T[fvi[3]]);
+      //    }
+      //    fpt[fi].x = (int)floor(txdom.NormalizedParameterAt(fcenter.x)*100);
+      //    fpt[fi].y = (int)floor(tydom.NormalizedParameterAt(fcenter.y)*100);
+      //    fpt[fi].z = 0;
+      //  }
+      //}
+      //else
+      //{
+      //  ON_3dPoint fcenter;
+      //  ON_BoundingBox bbox = BoundingBox();
+      //  const ON_Interval vxdom(bbox.m_min.x,bbox.m_max.x);
+      //  const ON_Interval vydom(bbox.m_min.y,bbox.m_max.y);
+      //  const ON_Interval vzdom(bbox.m_min.z,bbox.m_max.z);
+      //  for ( fi = 0; fi < face_count; fi++ ) {
+      //    fvi = m_F[fi].vi;
+      //    if ( fvi[2] == fvi[3] ) {
+      //      fcenter = 0.333333333333333333f*(m_V[fvi[0]] + m_V[fvi[1]] + m_V[fvi[2]]);
+      //    }
+      //    else {
+      //      fcenter = 0.25f*(m_V[fvi[0]] + m_V[fvi[1]] + m_V[fvi[2]] + m_V[fvi[3]]);
+      //    }
+      //    fpt[fi].x = (int)floor(vxdom.NormalizedParameterAt(fcenter.x)*100);
+      //    fpt[fi].y = (int)floor(vydom.NormalizedParameterAt(fcenter.y)*100);
+      //    fpt[fi].z = (int)floor(vzdom.NormalizedParameterAt(fcenter.z)*100);
+      //  }
+      //}
+      //fpt.Sort( ON::heap_sort, fmap, compare_fpt ); 
       m_F.Permute( fmap );
       if ( m_FN.Count() == face_count )
         m_FN.Permute( fmap );
@@ -7030,15 +6917,15 @@ const ON_MeshPartition* ON_Mesh::CreatePartition(
         {
           fvi = m_F[fi1].vi;
           partition_triangle_count++;
-          if ( AddToPartition( this, pmark, fvi[0], partition_mark, fi ) )
+          if ( AddToPartition( this, pmark, fvi[0], partition_mark, fi0 ) )
             partition_vertex_count++;
-          if ( AddToPartition( this, pmark, fvi[1], partition_mark, fi ) )
+          if ( AddToPartition( this, pmark, fvi[1], partition_mark, fi0 ) )
             partition_vertex_count++;
-          if ( AddToPartition( this, pmark, fvi[2], partition_mark, fi ) )
+          if ( AddToPartition( this, pmark, fvi[2], partition_mark, fi0 ) )
             partition_vertex_count++;
           if ( fvi[2] != fvi[3] ) {
             partition_triangle_count++; // quads = 2 triangles
-            if ( AddToPartition( this, pmark, fvi[3], partition_mark, fi ) )
+            if ( AddToPartition( this, pmark, fvi[3], partition_mark, fi0 ) )
               partition_vertex_count++;
           }
         }
@@ -7136,6 +7023,139 @@ ON_MeshPartition::~ON_MeshPartition()
 {
   m_part.Destroy();
 }
+
+
+ON_Mesh* ON_Mesh::MeshPart( 
+  const ON_MeshPart& mesh_part,
+  ON_Mesh* mesh 
+  ) const
+{
+  if ( this == mesh )
+  {
+    ON_ERROR("ON_Mesh::MeshPart this == mesh");
+    return 0;
+  }
+
+  if ( mesh )
+    mesh->Destroy();
+
+  if (    mesh_part.fi[0] < 0 
+       || mesh_part.fi[1] > m_F.Count()
+       || mesh_part.fi[0] > mesh_part.fi[1]
+       )
+  {
+    ON_ERROR("ON_Mesh::MeshPart mesh_part.fi[] is not valid");
+    return 0;
+  }
+
+  if (    mesh_part.vi[0] < 0
+       || mesh_part.vi[1] > m_V.Count()
+       || mesh_part.vi[0] >= mesh_part.vi[1]
+       )
+  {
+    ON_ERROR("ON_Mesh::MeshPart mesh_part.vi[] is not valid");
+    return 0;
+  }
+
+  const int submesh_V_count = mesh_part.vi[1] - mesh_part.vi[0];
+  const int submesh_F_count = mesh_part.fi[1] - mesh_part.fi[0];
+
+  const bool bHasVertexNormals = HasVertexNormals();
+  const bool bHasTextureCoordinates = HasTextureCoordinates();
+  const bool bHasVertexColors = HasVertexColors();
+  const bool bHasFaceNormals = HasFaceNormals();
+  const bool bHasSurfaceParameters = HasSurfaceParameters();
+  const bool bHasPrincipalCurvatures = HasPrincipalCurvatures();
+  const bool bHasHiddenVertices = HiddenVertexCount() > 0;
+
+  ON_Mesh* submesh = (0 != mesh)
+                   ? mesh
+                   : new ON_Mesh(mesh_part.triangle_count,
+                                 mesh_part.vertex_count,
+                                 bHasVertexNormals,
+                                 bHasTextureCoordinates
+                                 );
+
+  if ( bHasVertexColors )
+    submesh->m_C.Reserve(submesh_V_count);
+  if ( bHasSurfaceParameters )
+    submesh->m_S.Reserve(submesh_V_count);
+  if ( bHasPrincipalCurvatures )
+    submesh->m_K.Reserve(submesh_V_count);
+  if ( bHasHiddenVertices )
+    submesh->m_H.Reserve(submesh_V_count);
+  if ( bHasFaceNormals )
+    submesh->m_FN.Reserve(submesh_F_count);
+
+  // put vertex information into submesh
+  const int vi0 = mesh_part.vi[0];
+  const int vi1 = mesh_part.vi[1];
+  for ( int vi = vi0; vi < vi1; vi++ )
+  {
+    submesh->m_V.Append(m_V[vi]);
+    if ( bHasVertexNormals )
+      submesh->m_N.Append(m_N[vi]);
+    if ( bHasTextureCoordinates )
+      submesh->m_T.Append(m_T[vi]);
+    if ( bHasVertexColors )
+      submesh->m_C.Append(m_C[vi]);
+    if ( bHasSurfaceParameters )
+      submesh->m_S.Append(m_S[vi]);
+    if ( bHasPrincipalCurvatures )
+      submesh->m_K.Append(m_K[vi]);
+    if ( bHasHiddenVertices )
+    {
+      bool bHidden = m_H[vi];
+      submesh->m_H.Append(bHidden);
+      if ( bHidden )
+        submesh->m_hidden_count++;
+    }
+  }
+  if ( submesh->m_hidden_count <= 0 )
+  {
+    submesh->m_H.Destroy();
+    submesh->m_hidden_count = 0;
+  }
+
+  // put face information into submesh
+  int bad_face_count = 0;
+  const int fi0 = mesh_part.fi[0];
+  const int fi1 = mesh_part.fi[1];
+  for ( int fi = fi0; fi < fi1; fi++ )
+  {
+    ON_MeshFace f = m_F[fi];
+    f.vi[0] -= vi0;
+    f.vi[1] -= vi0;
+    f.vi[2] -= vi0;
+    f.vi[3] -= vi0;
+    if (    f.vi[0] >= submesh_V_count || f.vi[0] < 0 
+         || f.vi[1] >= submesh_V_count || f.vi[1] < 0 
+         || f.vi[2] >= submesh_V_count || f.vi[2] < 0 
+         || f.vi[3] >= submesh_V_count || f.vi[3] < 0 
+         )
+    {
+      bad_face_count++;
+      ON_ERROR("ON_Mesh::MeshPart Invalid face in partition");
+      continue;
+    }
+    submesh->m_F.Append(f);
+    if ( bHasFaceNormals )
+      submesh->m_FN.Append(m_FN[fi]);
+  }
+
+  if ( submesh->m_F.Count() < 1 && bad_face_count > 0 )
+  {
+    if ( submesh != mesh )
+      delete submesh;
+    else
+      mesh->Destroy();
+
+    submesh = 0;
+  }
+
+  return submesh;
+}
+
 
 ON_OBJECT_IMPLEMENT(ON_MeshVertexRef,ON_Geometry,"C547B4BD-BDCD-49b6-A983-0C4A7F02E31A");
 
@@ -8572,3 +8592,154 @@ ON_TextureCoordinates::ON_TextureCoordinates()
   m_dim = 0;
 }
 
+int ON_Mesh2dRegion(
+      int point_count,
+      int point_stride,
+      const double* point,
+      int edge_count,
+      int edge_stride,
+      const int* edge,
+      const int* edge_side,
+      ON_SimpleArray<ON_3dex>& triangles
+      )
+{
+  return 0;
+}
+
+ON_PolylineCurve* ON_Curve::MeshCurve(
+    ON_MeshCurveParameters& mp,
+    ON_PolylineCurve* polyline,
+    bool bSkipFirstPoint,
+    const ON_Interval* domain
+    ) const
+{
+  return 0;
+}
+
+bool ON_BezierCurve::GetTightBoundingBox( 
+		ON_BoundingBox& tight_bbox, 
+    int bGrowBox,
+		const ON_Xform* xform
+    ) const
+{
+  return GetBoundingBox(tight_bbox,bGrowBox);
+}
+
+ON_Mesh* ON_BrepFace::CreateMesh( 
+           const ON_MeshParameters& mp,
+           ON_Mesh* mesh
+           ) const
+{
+  return 0;
+}
+
+int ON_Brep::CreateMesh( 
+  const ON_MeshParameters& mp,
+  ON_SimpleArray<ON_Mesh*>& mesh_list
+  ) const
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+bool ON_Mesh::AreaMassProperties(
+  ON_MassProperties& mp,
+  bool bArea,
+  bool bFirstMoments,
+  bool bSecondMoments,
+  bool bProductMoments
+  ) const
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+bool ON_Mesh::VolumeMassProperties(
+  ON_MassProperties& mp, 
+  bool bVolume,
+  bool bFirstMoments,
+  bool bSecondMoments,
+  bool bProductMoments,
+  ON_3dPoint base_point
+  ) const
+{
+  return 0;
+}
+
+bool ON_Brep::IsPointInside(
+        ON_3dPoint P, 
+        double tolerance,
+        bool bStrictlyInside
+        ) const
+{
+  return 0;
+}
+
+bool ON_Brep::AreaMassProperties(
+  ON_MassProperties& mp,
+  bool bArea,
+  bool bFirstMoments,
+  bool bSecondMoments,
+  bool bProductMoments,
+  double rel_tol,
+  double abs_tol
+  ) const
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+bool ON_Brep::VolumeMassProperties(
+  ON_MassProperties& mp, 
+  bool bVolume,
+  bool bFirstMoments,
+  bool bSecondMoments,
+  bool bProductMoments,
+  ON_3dPoint base_point,
+  double rel_tol,
+  double abs_tol
+  ) const
+{
+  return 0;
+}
+
+ON_Mesh* ON_NurbsSurface::CreateMesh( 
+           const ON_MeshParameters& mp,
+           ON_Mesh* mesh
+           ) const
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+ON_Mesh* ON_PlaneSurface::CreateMesh( 
+           const ON_MeshParameters& mp,
+           ON_Mesh* mesh
+           ) const
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+ON_Mesh* ON_RevSurface::CreateMesh( 
+           const ON_MeshParameters& mp,
+           ON_Mesh* mesh
+           ) const
+{
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////
+
+ON_Mesh* ON_SumSurface::CreateMesh( 
+           const ON_MeshParameters& mp,
+           ON_Mesh* mesh
+           ) const
+{
+  return 0;
+}

@@ -37,6 +37,9 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
 
 #include <tcl.h>
 #include <tk.h>
@@ -74,17 +77,12 @@ Tk_PhotoImageBlock block = {
 
 char *tkwrite_buffer;
 
-int tk_close_existing()
-{
-    return 0;
-}
-
 
 HIDDEN int fb_tk_open(FBIO *ifp, char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
     tk_clear(FBIO *ifp, unsigned char *pp),
-    tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
+    tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count),
+    tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count),
     tk_rmap(FBIO *ifp, ColorMap *cmp),
     tk_wmap(FBIO *ifp, const ColorMap *cmp),
     tk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
@@ -230,7 +228,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    "canvas .fb_tk_canvas -highlightthickness 0 -height %d -width %d", width, height);
 
     sprintf (reportcolorcmd,
-	    "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([fb_tk_photo get %%x %%y])\n\"}", height);
+	     "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([fb_tk_photo get %%x %%y])\n\"}", height);
     
     if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create canvas in fb_open.");
@@ -308,7 +306,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    }
 
 	    /* Unpack inputs from pipe */
-	    read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
+	    count = read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
 	    memcpy(lines, buffer, sizeof(uint32_t)*3);
 	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
 	    y[0] = ntohl(lines[0]);
@@ -322,8 +320,12 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    block.pixelPtr = (unsigned char *)linebuffer;
 	    block.width = count;
 	    block.pitch = 3 * ifp->if_width;
-		    
+
+#if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION >= 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION >= 5
 	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+#else
+	    Tk_PhotoPutBlock(fbinterp, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+#endif
 		    
 	    do {
 		i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
@@ -354,13 +356,14 @@ HIDDEN int
 fb_tk_close(FBIO *ifp)
 {
     int y[2];
+    int ret;
     y[0] = -1;
     y[1] = 0;
     printf("Entering fb_tk_close\n");
     FB_CK_FBIO(ifp);
-    write(p[1], y, sizeof(y));
+    ret = write(p[1], y, sizeof(y));
     close(p[1]);
-    printf("Sent write from fb_tk_close\n");
+    printf("Sent write (ret=%d) from fb_tk_close\n", ret);
     return 0;
 }
 
@@ -381,18 +384,18 @@ tk_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %d)\n",
+    fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %ld)\n",
 	   (unsigned long)ifp, x, y,
-	   (unsigned long)pixelp, count);
-    return count;
+	   (unsigned long)pixelp, (long)count);
+    return (int)count;
 }
 
 
 HIDDEN int
-tk_write(FBIO *ifp, int x __attribute__((unused)), int y, const unsigned char *pixelp, int count)
+tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
 {
     uint32_t line[3];
 
@@ -404,7 +407,7 @@ tk_write(FBIO *ifp, int x __attribute__((unused)), int y, const unsigned char *p
 
     /* Pack values to be sent to parent */
     line[0] = htonl(y);
-    line[1] = htonl(count);
+    line[1] = htonl((long)count);
     line[2] = 0;
     
     memcpy(tkwrite_buffer, line, sizeof(uint32_t)*3);
@@ -416,7 +419,7 @@ tk_write(FBIO *ifp, int x __attribute__((unused)), int y, const unsigned char *p
 	sleep(1);
     }
 
-    return count;
+    return (int)count;
 }
 
 
@@ -520,7 +523,7 @@ tk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char 
     fb_log("fb_readrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -531,7 +534,7 @@ tk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigne
     fb_log("fb_writerect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -542,7 +545,7 @@ tk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned cha
     fb_log("fb_bwreadrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -553,7 +556,7 @@ tk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsig
     fb_log("fb_bwwriterect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
-    return(width*height);
+    return width*height;
 }
 
 

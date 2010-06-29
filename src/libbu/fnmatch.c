@@ -81,17 +81,95 @@
 #define BU_FNM_RANGE_ERROR   (-1)
 
 /* isblank appears to be obsolete in newer ctype.h files so use
- * ccblank instead when looking for the "blank" character class.
+ * fnblank instead when looking for the "blank" character class.
  */
-static int
-ccblank(int c)
+HIDDEN inline int
+fnblank(int c)
 {
 #ifdef isblank
     return isblank(c);
 #else
-    return (c == ' ' || c == '\t');
+    return c == ' ' || c == '\t';
 #endif
 }
+
+
+HIDDEN inline int
+fnalnum(int c)
+{
+    return isalnum(c);
+}
+
+
+HIDDEN inline int
+fnalpha(int c)
+{
+    return isalpha(c);
+}
+
+
+HIDDEN inline int
+fncntrl(int c)
+{
+    return iscntrl(c);
+}
+
+
+HIDDEN inline int
+fndigit(int c)
+{
+    return isdigit(c);
+}
+
+
+HIDDEN inline int
+fngraph(int c)
+{
+    return isgraph(c);
+}
+
+
+HIDDEN inline int
+fnlower(int c)
+{
+    return islower(c);
+}
+
+
+HIDDEN inline int
+fnprint(int c)
+{
+    return isprint(c);
+}
+
+
+HIDDEN inline int
+fnpunct(int c)
+{
+    return ispunct(c);
+}
+
+
+HIDDEN inline int
+fnspace(int c)
+{
+    return isspace(c);
+}
+
+
+HIDDEN inline int
+fnupper(int c)
+{
+    return isupper(c);
+}
+
+
+HIDDEN inline int
+fnxdigit(int c)
+{
+    return isxdigit(c);
+}
+
 
 typedef struct _charclass {
     char *idstring;		/* identifying string */
@@ -99,32 +177,34 @@ typedef struct _charclass {
 } CHARCLASS;
 
 static CHARCLASS charclasses[] = {
-    { "alnum", isalnum },
-    { "alpha", isalpha },
-    { "blank", ccblank },
-    { "cntrl", iscntrl },
-    { "digit", isdigit },
-    { "graph", isgraph },
-    { "lower", islower },
-    { "print", isprint },
-    { "punct", ispunct },
-    { "space", isspace },
-    { "upper", isupper },
-    { "xdigit", isxdigit },
+    { "alnum", fnalnum },
+    { "alpha", fnalpha },
+    { "blank", fnblank },
+    { "cntrl", fncntrl },
+    { "digit", fndigit },
+    { "graph", fngraph },
+    { "lower", fnlower },
+    { "print", fnprint },
+    { "punct", fnpunct },
+    { "space", fnspace },
+    { "upper", fnupper },
+    { "xdigit", fnxdigit },
 };
+
 
 static int
 classcompare(const void *a, const void *b)
 {
-    return (strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring));
+    return strcmp(((CHARCLASS *)a)->idstring, ((CHARCLASS *)b)->idstring);
 }
+
 
 static CHARCLASS *
 findclass(char *charclass)
 {
     CHARCLASS tmp;
     tmp.idstring = charclass;
-    return ((CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare));
+    return (CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare);
 }
 
 
@@ -137,14 +217,19 @@ charclassmatch(const char *pattern, char test, int *s)
     struct bu_vls classname;
     CHARCLASS *ctclass;
     bu_vls_init(&classname);
-    while ((c = *pattern++) && (c != ':') && (resultholder != -1)) {
+    c = *pattern++;
+    while (c && (c != ':') && (resultholder != -1)) {
 	if (c == BU_FNM_EOS) resultholder = -1;
 	counter++;
+
+        c = *pattern++; /* next */
     }
     c = *pattern++;
     if (c != ']') resultholder = -1;
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
-    if ((ctclass = findclass(bu_vls_addr(&classname))) == NULL) {
+
+    ctclass = findclass(bu_vls_addr(&classname));
+    if (ctclass == NULL) {
 	bu_log("Unknown character class type: %s\n", bu_vls_addr(&classname));
 	resultholder = -1;
     } else {
@@ -173,7 +258,8 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
      * consistency with the regular expression syntax.  J.T. Conklin
      * (conklin@ngai.kaleida.com)
      */
-    if ((negate = (*pattern == '!' || *pattern == '^')))
+    negate = (*pattern == '!' || *pattern == '^');
+    if (negate)
 	++pattern;
 
 
@@ -192,9 +278,9 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	if (c == '\\' && !(flags & BU_FNM_NOESCAPE))
 	    c = *pattern++;
 	if (c == BU_FNM_EOS)
-	    return (BU_FNM_RANGE_ERROR);
+	    return BU_FNM_RANGE_ERROR;
 	if (c == '/' && (flags & BU_FNM_PATHNAME))
-	    return (BU_FNM_RANGE_NOMATCH);
+	    return BU_FNM_RANGE_NOMATCH;
 	if ((flags & BU_CASEFOLD))
 	    c = (char)tolower((unsigned char)c);
 	if (*pattern == '-'
@@ -203,7 +289,7 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	    if (c2 == '\\' && !(flags & BU_FNM_NOESCAPE))
 		c2 = *pattern++;
 	    if (c2 == BU_FNM_EOS)
-		return (BU_FNM_RANGE_ERROR);
+		return BU_FNM_RANGE_ERROR;
 	    if (flags & BU_CASEFOLD)
 		c2 = (char)tolower((unsigned char)c2);
 	    if (c <= test && test <= c2)
@@ -212,14 +298,14 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
 	    ok = 1;
 	} else if ((c == '[') && (*pattern == ':')) {
 	    incpattern = charclassmatch(pattern+1, test, &s);
-	    if (s == -1) return (BU_FNM_RANGE_ERROR);
+	    if (s == -1) return BU_FNM_RANGE_ERROR;
 	    if (s > 0) ok = 1;
 	    pattern = pattern + incpattern + 3;
 	}
     } while ((c = *pattern++) != ']');
 
     *newp = (char *)pattern;
-    return (ok == negate ? BU_FNM_RANGE_NOMATCH : BU_FNM_RANGE_MATCH);
+    return ok == negate ? BU_FNM_RANGE_NOMATCH : BU_FNM_RANGE_MATCH;
 }
 
 
@@ -235,17 +321,17 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 	switch (c = *pattern++) {
 	    case BU_FNM_EOS:
 		if ((flags & BU_FNM_LEADING_DIR) && *string == '/')
-		    return (0);
-		return (*string == BU_FNM_EOS ? 0 : BU_FNM_NOMATCH);
+		    return 0;
+		return *string == BU_FNM_EOS ? 0 : BU_FNM_NOMATCH;
 	    case '?':
 		if (*string == BU_FNM_EOS)
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 		if (*string == '/' && (flags & BU_FNM_PATHNAME))
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 		if (*string == '.' && (flags & BU_FNM_PERIOD) &&
 		    (string == stringstart ||
 		     ((flags & BU_FNM_PATHNAME) && *(string - 1) == '/')))
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 		++string;
 		break;
 	    case '*':
@@ -257,7 +343,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		if (*string == '.' && (flags & BU_FNM_PERIOD) &&
 		    (string == stringstart ||
 		     ((flags & BU_FNM_PATHNAME) && *(string - 1) == '/')))
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 
 		/* Optimize for pattern with * at end or before /. */
 		if (c == BU_FNM_EOS) {
@@ -266,31 +352,31 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 				strchr(string, '/') == NULL ?
 				0 : BU_FNM_NOMATCH);
 		    else
-			return (0);
+			return 0;
 		} else if (c == '/' && (flags & BU_FNM_PATHNAME)) {
 		    if ((string = strchr(string, '/')) == NULL)
-			return (BU_FNM_NOMATCH);
+			return BU_FNM_NOMATCH;
 		    break;
 		}
 
 		/* General case, use recursion. */
 		while ((test = *string) != BU_FNM_EOS) {
 		    if (!bu_fnmatch(pattern, string, flags & ~BU_FNM_PERIOD))
-			return (0);
+			return 0;
 		    if (test == '/' && (flags & BU_FNM_PATHNAME))
 			break;
 		    ++string;
 		}
-		return (BU_FNM_NOMATCH);
+		return BU_FNM_NOMATCH;
 	    case '[':
 		if (*string == BU_FNM_EOS)
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 		if (*string == '/' && (flags & BU_FNM_PATHNAME))
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 		if (*string == '.' && (flags & BU_FNM_PERIOD) &&
 		    (string == stringstart ||
 		     ((flags & BU_FNM_PATHNAME) && *(string - 1) == '/')))
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 
 		switch (_rangematch(pattern, *string, flags, &newp)) {
 		    case BU_FNM_RANGE_ERROR:
@@ -300,7 +386,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 			pattern = newp;
 			break;
 		    case BU_FNM_RANGE_NOMATCH:
-			return (BU_FNM_NOMATCH);
+			return BU_FNM_NOMATCH;
 		}
 		++string;
 		break;
@@ -317,7 +403,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		if (c != *string && !((flags & BU_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))
-		    return (BU_FNM_NOMATCH);
+		    return BU_FNM_NOMATCH;
 		++string;
 		break;
 	}
@@ -326,6 +412,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
     /* NOTREACHED (unless inf looping) */
     return 0;
 }
+
 
 /*
  * Local Variables:

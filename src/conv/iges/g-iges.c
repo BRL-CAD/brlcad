@@ -169,7 +169,7 @@ int		mode=CSG_MODE;	/* indicates which type of IGES file is desired */
 int		solid_is_brep;
 int		comb_form;
 char		**independent;
-int		no_of_indeps=0;
+size_t		no_of_indeps=0;
 int		do_nurbs=0;
 
 /*
@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 
     /* tree tops must have independent status, so we need to remember them */
     independent = (argv+1);
-    no_of_indeps = argc-1;
+    no_of_indeps = (size_t)argc-1;
 
     if ( mode == FACET_MODE )
     {
@@ -357,7 +357,7 @@ main(int argc, char *argv[])
 	if ( !multi_file )
 	{
 	    /* Now walk the same trees again, but only output groups */
-	    for ( i=1; i<argc; i++ )
+	    for ( i=1; i<(size_t)argc; i++ )
 	    {
 		char *ptr;
 
@@ -382,7 +382,7 @@ main(int argc, char *argv[])
 	 * as a CSG object, unless there is no IGES equivalent (then the
 	 * solid will be tessellated and output as a BREP object) */
 
-	for ( i=1; i<argc; i++ )
+	for ( i=1; i<(size_t)argc; i++ )
 	{
 	    dp = db_lookup( dbip, argv[i], 1 );
 	    if (!dp) {
@@ -450,7 +450,7 @@ main(int argc, char *argv[])
     if ( comb_error )
 	bu_log( "\t%d combinations were not converted to IGES format\n", comb_error );
 
-    return( 0 );
+    return 0;
 }
 
 /*
@@ -486,7 +486,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     }
 
     if (curtree->tr_op == OP_NOP)
-	return  curtree;
+	return curtree;
 
     regions_tried++;
 
@@ -660,7 +660,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
-    return(curtree);
+    return curtree;
 }
 
 static int de_pointer_number;
@@ -689,13 +689,13 @@ get_de_pointers( tp, dp, de_len, de_pointers )
 
 	    dp_M = db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
 	    if ( dp_M == DIR_NULL )
-		return( 1 );
+		return 1;
 
 	    if ( dp_M->d_uses >= 0 )
 	    {
 		bu_log( "g-iges: member (%s) in combination (%s) has not been written to iges file\n", dp_M->d_namep, dp->d_namep );
 		de_pointers[de_pointer_number++] = 0;
-		return( 1 );
+		return 1;
 	    }
 
 	    if ( tp->tr_l.tl_mat && !bn_mat_is_identity( tp->tr_l.tl_mat ) )
@@ -721,9 +721,9 @@ get_de_pointers( tp, dp, de_len, de_pointers )
 	break;
 	default:
 	    bu_log( "Unrecognized operator in combination!\n" );
-	    return( 1 );
+	    return 1;
     }
-    return( 0 );
+    return 0;
 }
 
 void
@@ -736,7 +736,7 @@ csg_comb_func( dbip, dp, ptr )
     struct rt_comb_internal *comb;
     struct iges_properties props;
     int comb_len;
-    int i;
+    size_t i;
     int dependent=1;
     int *de_pointers;
     int id;

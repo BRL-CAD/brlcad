@@ -2,7 +2,7 @@
 bin_PROGRAMS = jove findcom
 bin_SCRIPTS = teach-jove
 
-AM_CPPFLAGS = ${TERMLIB_CPPFLAGS}
+AM_CPPFLAGS = ${TERMLIB_CPPFLAGS} ${NOWARN}
 
 SRCS = \
 	jove_buf.c \

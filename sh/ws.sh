@@ -76,11 +76,6 @@
 #   # run all tasks on all files in current directory without backups
 #   WS_BACKUPS=no find . -type f -exec ./ws.sh {} \;
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   BRL-CAD Open Source
 ###
 
 files="$*"

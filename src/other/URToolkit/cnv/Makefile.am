@@ -42,7 +42,7 @@ noinst_HEADERS = \
 	rlb_header.h
 
 LDADD = ${RLE}
-AM_CPPFLAGS = ${RLE_CPPFLAGS}
+AM_CPPFLAGS = ${RLE_CPPFLAGS} ${NOWARN}
 
 aliastorle_SOURCES = aliastorle.c
 cubitorle_SOURCES = cubitorle.c

@@ -35,11 +35,15 @@
 /* !!! this should not be here, should fix the build system settings */
 #define __STDC__ 1
 
-/*  4244 conversion from type 1 to type 2
- *  4305 truncation
- *  4018 signed/unsigned mismatch
+/* 4127 conditional expression is constant
+ * 4244 conversion from type 1 to type 2
+ * 4305 truncation
+ * 4312 type cast: conversion from type1 to type2 of greater size
+ * 4018 signed/unsigned mismatch
+ * 4996 deprecation warning on non-secure functions
  */
-#pragma warning( disable : 4244 4305 4018)
+#pragma warning( disable : 4127 4244 4312 4996 )
+/* #pragma warning( disable : 4244 4305 4018) */
 
 /*
  * Ensure that Project Settings / Project Options includes
@@ -48,6 +52,10 @@
 # if !__STDC__
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif
+
+/* include standard c99 types via compatibility header */
+#include "pstdint.h"
+
 
 #ifndef EXPAND_IN_STRING
 #  define EXPAND_IN_STRING(x) EXPAND_IN_STRING_INTERN(x)
@@ -94,6 +102,9 @@
 
 #define HAVE_TK 1
 #define HAVE_X11_TYPES 1
+
+#define YY_NO_UNISTD_H		1
+#define YYTOKENTYPE		1
 
 /*
  * functions declared in io.h
@@ -153,10 +164,7 @@
 #define fmax __max
 #define ioctl ioctlsocket
 
-/* we need the function pointer of this */
-static int isblank(int c) {
-    return ((c == ' ') || (c == '\t')) ? 1 : 0;
-}
+#define SHARED_PTR_BOOST	1
 
 /*
  * Signal handling
@@ -175,29 +183,6 @@ typedef int socklen_t;
 typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 
-typedef unsigned __int8 uint8_t;
-typedef unsigned __int16  uint16_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int64 uint64_t;
-
-typedef __int8 int8_t;
-typedef __int16 int16_t;
-typedef __int32 int32_t;
-typedef __int64 int64_t;
-typedef __int64 intmax_t;
-
-#define HAVE_UINT8_T		1
-#define HAVE_UINT16_T		1
-#define HAVE_UINT32_T		1
-#define HAVE_UINT64_T		1
-
-#define HAVE_INT8_T		1
-#define HAVE_INT16_T		1
-#define HAVE_INT32_T		1
-#define HAVE_INT64_T		1
-
-#define HAVE_INTMAX_T		1
-#define HAVE_UINTPR_T		1
 
 /*
  * for chmod()
@@ -276,9 +261,6 @@ typedef __int64 intmax_t;
 #define W_OK 2
 #define X_OK 1
 #define F_OK 0
-
-#undef DELETE
-#undef complex
 
 /*
  * faking it

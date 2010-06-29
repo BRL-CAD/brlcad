@@ -30,12 +30,12 @@ FBIO *
 fb_open( name, w, h )
     char *name;
 {
-    return(FBIO_NULL);
+    return FBIO_NULL;
 }
 
 int
 fb_close() {
-    return(0);
+    return 0;
 }
 
 /*

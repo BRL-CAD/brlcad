@@ -137,7 +137,7 @@ void
 normalizedInput_hook( register const struct bu_structparse *sdp, register const char *name, char *base, const char *value ) {
 
     register double *p = (double *)(base+sdp->sp_offset);
-    register int i;
+    size_t i;
     int ok;
 
     /* if all the values are in the range [0..1] there's nothing to do */
@@ -220,13 +220,13 @@ flat_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, flat_parse_tab, (char *)flat_sp ) < 0 )
-	return(-1);
+	return -1;
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print( " Parameters:", flat_parse_tab, (char *)flat_sp );
     }
 
-    return(1);
+    return 1;
 }
 
 
@@ -280,7 +280,7 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
 	VADD2(swp->sw_color, swp->sw_color, intensity);
     }
 
-    return(1);
+    return 1;
 }
 
 

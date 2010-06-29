@@ -2894,6 +2894,7 @@ Tcl_UntraceVar2(
     } else {
 	prevPtr->nextPtr = nextPtr;
     }
+    tracePtr->nextPtr = NULL;
     Tcl_EventuallyFree((ClientData) tracePtr, TCL_DYNAMIC);
 
     for (tracePtr = nextPtr; tracePtr != NULL;

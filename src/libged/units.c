@@ -52,11 +52,21 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (argc == 2 && strcmp(argv[1], "-s") == 0) {
-	--argc;
-	++argv;
+    if (argc == 2) {
+	if (strcmp(argv[1], "-s") == 0) {
+	    --argc;
+	    ++argv;
 
-	sflag = 1;
+	    sflag = 1;
+	} else if (strcmp(argv[1], "-t") == 0) {
+	    struct bu_vls *vlsp = bu_units_strings_vls();
+
+	    bu_vls_printf(&gedp->ged_result_str, "%V", vlsp);
+	    bu_vls_free(vlsp);
+	    bu_free(vlsp, "ged_units: vlsp");
+
+	    return GED_OK;
+	}
     }
 
     /* Get units */

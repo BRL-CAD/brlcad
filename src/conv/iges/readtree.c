@@ -41,7 +41,7 @@ union tree *Readtree( matp )
     if ( i != 180 )
     {
 	bu_log( "Expecting a Boolean Tree, found type %d\n", i );
-	return( (union tree *)NULL );
+	return (union tree *)NULL;
     }
 
     Freestack();
@@ -59,12 +59,12 @@ union tree *Readtree( matp )
 	    if ( k < 0 || k >= totentities )
 	    {
 		bu_log( "Readtree(): pointer in tree is out of bounds (%d)\n", -op );
-		return( (union tree *)NULL );
+		return (union tree *)NULL;
 	    }
 	    if ( dir[k]->type <= 0 )
 	    {
 		bu_log( "Unknown entity type (%d) at D%07d\n", -dir[k]->type, dir[k]->direct );
-		return( (union tree *)NULL );
+		return (union tree *)NULL;
 	    }
 	    ptr->tr_l.tl_name = bu_strdup( dir[k]->name );
 	    if ( matp && dir[k]->rot )
@@ -106,7 +106,7 @@ union tree *Readtree( matp )
 	}
     }
 
-    return( Pop() );
+    return Pop();
 }
 
 

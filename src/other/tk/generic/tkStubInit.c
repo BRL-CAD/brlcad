@@ -315,6 +315,29 @@ TkIntStubs tkIntStubs = {
     NULL, /* 155 */
     TkpTestembedCmd, /* 156 */
     TkpTesttextCmd, /* 157 */
+    NULL, /* 158 */
+    NULL, /* 159 */
+    NULL, /* 160 */
+    NULL, /* 161 */
+    NULL, /* 162 */
+    NULL, /* 163 */
+    NULL, /* 164 */
+    NULL, /* 165 */
+    NULL, /* 166 */
+    NULL, /* 167 */
+    NULL, /* 168 */
+    TkStateParseProc, /* 169 */
+    TkStatePrintProc, /* 170 */
+    TkCanvasDashParseProc, /* 171 */
+    TkCanvasDashPrintProc, /* 172 */
+    TkOffsetParseProc, /* 173 */
+    TkOffsetPrintProc, /* 174 */
+    TkPixelParseProc, /* 175 */
+    TkPixelPrintProc, /* 176 */
+    TkOrientParseProc, /* 177 */
+    TkOrientPrintProc, /* 178 */
+    TkSmoothParseProc, /* 179 */
+    TkSmoothPrintProc, /* 180 */
 };
 
 TkIntPlatStubs tkIntPlatStubs = {

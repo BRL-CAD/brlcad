@@ -39,7 +39,7 @@ Get_cnurb_curve( curve_de, linear )
     if ( curve >= dirarraylen )
     {
 	bu_log( "Get_cnurb_curve: DE=%d is too large, dirarraylen = %d\n", curve_de, dirarraylen );
-	return( (struct edge_g_cnurb *)NULL );
+	return (struct edge_g_cnurb *)NULL;
     }
 
     switch ( dir[curve]->type )
@@ -57,7 +57,7 @@ Get_cnurb_curve( curve_de, linear )
 	    {
 		bu_log( "Error in Get_cnurb_curve, looking for curve type %d, found %d\n" ,
 			dir[curve]->type, type );
-		return( (struct edge_g_cnurb *)NULL );
+		return (struct edge_g_cnurb *)NULL;
 
 	    }
 	    /* Read first point */
@@ -88,19 +88,19 @@ Get_cnurb_curve( curve_de, linear )
 
 	    *linear = 1;
 
-	    return( crv );
+	    return crv;
 	}
 	case 126:	/* B-spline */
 	    crv = Get_cnurb( curve );
 	    if ( crv->order < 3 )
 		*linear = 1;
-	    return( crv );
+	    return crv;
 	default:
 	    bu_log( "Not yet handling curves of type: %s\n", iges_type( dir[curve]->type ) );
 	    break;
     }
 
-    return( (struct edge_g_cnurb *)NULL );
+    return (struct edge_g_cnurb *)NULL;
 }
 
 /*

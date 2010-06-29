@@ -45,6 +45,9 @@
 #include "rtgeom.h"
 
 
+extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+
+
 /* ray tracing form of solid, including precomputed terms */
 struct hyp_specific {
     point_t hyp_V;	/* scaled vector to hyp origin */
@@ -166,7 +169,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 
 }
 
@@ -305,7 +308,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     if (hitp == &hits[0] || hitp == &hits[1] || hitp == &hits[3]) {
-	return(0);	/* MISS */
+	return 0;	/* MISS */
     }
 
     if (hitp == &hits[2]) {
@@ -326,7 +329,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    segp->seg_out = hits[0];	/* struct copy */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
-	return(2);			/* HIT */
+	return 2;			/* HIT */
     } else {
 	/* 4 hits:  0, 1 are sides, 2, 3 are top/bottom*/
 	struct hit sorted[4];
@@ -365,7 +368,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	segp->seg_out = sorted[3];	/* struct copy */
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-	return(4);
+	return 4;
     }
 }
 
@@ -566,7 +569,7 @@ rt_hyp_free(struct soltab *stp)
  * R T _ H Y P _ P L O T
  */
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
@@ -694,9 +697,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
 
-    struct rt_pt_node *rt_ptalloc(void);
-    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
     MAT_ZERO(invRoS);
     MAT_ZERO(SoR);
 
@@ -722,13 +722,13 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->hyp_Au, xip->hyp_H) / mag_h;
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* make unit vectors in A, H, and HxA directions */
@@ -769,15 +769,15 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* calculate major axis hyperbola */
-    pts_a = rt_ptalloc();
+    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 
     /* set base, center, and top points */
     pos_a = pts_a;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, -mag_h);
-    pos_a->next = rt_ptalloc();
+    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pos_a = pos_a->next;
     VSET(pos_a->p, r1, 0, 0);
-    pos_a->next = rt_ptalloc();
+    pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pos_a = pos_a->next;
     VSET(pos_a->p, sqrt((mag_h*mag_h) * (c*c) + (r1*r1)), 0, mag_h);
     pos_a->next = NULL;
@@ -789,7 +789,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fastf_t mm, len, dist, ang0, ang2;
 	vect_t v01, v02; /* vectors from p0->p1 and p0->p2 */
 	vect_t nLine, nHyp;
-	struct rt_pt_node *add, *rt_ptalloc(void);
+	struct rt_pt_node *add;
 
 	while (i) {
 	    pos_a = pts_a;
@@ -829,7 +829,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		if (dist > dtol || ang0 > ntol || ang2 > ntol) {
 		    /* split segment */
-		    add = rt_ptalloc();
+		    add = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 		    VMOVE(add->p, p1);
 		    add->next = pos_a->next;
 		    pos_a->next = add;
@@ -843,7 +843,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* calculate minor axis hyperbola */
-    pts_b = rt_ptalloc();
+    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 
     pos_a = pts_a;
     pos_b = pts_b;
@@ -854,7 +854,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	pos_b->p[Y] = r2 * sqrt(pos_b->p[Z] * pos_b->p[Z]/(r3*r3) + 1.0);
 	pos_a = pos_a->next;
 	if (pos_a) {
-	    pos_b->next = rt_ptalloc();
+	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	    pos_b = pos_b->next;
 	} else {
 	    pos_b->next = NULL;
@@ -1147,7 +1147,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     bu_ptbl_free(&vert_tab);
-    return(0);
+    return 0;
 
  fail:
     /* free mem */
@@ -1159,7 +1159,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)vells, "vertex [][]");
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1204,10 +1204,13 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3VEC(hyp_ip->hyp_Hi, mat, &vec[1*3]);
     MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
-    hyp_ip->hyp_b = vec[ 9] / mat[15];
+    if (!NEAR_ZERO(mat[15], SMALL_FASTF))
+	hyp_ip->hyp_b = vec[ 9] / mat[15];
+    else
+	hyp_ip->hyp_b = INFINITY;
     hyp_ip->hyp_bnr = vec[10] ;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1229,7 +1232,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_HYP) return(-1);
+    if (ip->idb_type != ID_HYP) return -1;
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
@@ -1335,7 +1338,7 @@ rt_hyp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

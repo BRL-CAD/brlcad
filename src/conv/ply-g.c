@@ -345,7 +345,7 @@ get_double( int type )
 	}
     }
 
-    return( val*scale_factor );
+    return val*scale_factor;
 }
 
 int
@@ -445,7 +445,7 @@ get_int( int type )
 	}
     }
 
-    return( val );
+    return val;
 }
 
 struct element *
@@ -480,7 +480,7 @@ new_element(char *str)
     if ( !c ) {
 	bu_log( "Error parsing line %s\n", line );
 	bu_free( (char *)ptr, "element" );
-	return( (struct element *)NULL );
+	return (struct element *)NULL;
     }
 
     if ( !strncmp( c, "vertex", 6 ) ) {
@@ -497,12 +497,12 @@ new_element(char *str)
     if ( !c ) {
 	bu_log( "Error parsing line %s\n", line );
 	bu_free( (char *)ptr, "element" );
-	return( (struct element *)NULL );
+	return (struct element *)NULL;
     }
 
     ptr->count = atoi( c );
 
-    return( ptr );
+    return ptr;
 }
 
 int
@@ -609,7 +609,7 @@ get_property( struct element *ptr )
     p->name = bu_strdup( c );
 
     bu_free( tmp_buf, "copy of line" );
-    return( 0 );
+    return 0;
 }
 
 int
@@ -621,11 +621,11 @@ read_ply_header()
     }
     if ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) == NULL ) {
 	bu_log( "Unexpected EOF in input file!\n" );
-	return( 1 );
+	return 1;
     }
     if ( strncmp( line, "ply", 3 ) ) {
 	bu_log( "Input file does not appear to be a PLY file!\n" );
-	return( 1 );
+	return 1;
     }
     while ( bu_fgets( line, MAX_LINE_SIZE, ply_fp ) ) {
 	struct element *elem_ptr;
@@ -665,7 +665,7 @@ read_ply_header()
 		ply_file_type = PLY_BIN_LITTLE_ENDIAN;
 	    } else {
 		bu_log( "Unrecognized PLY format:%s\n", line );
-		return( 1 );
+		return 1;
 	    }
 
 	    if ( verbose ) {
@@ -690,10 +690,10 @@ read_ply_header()
 	} else if ( !strncmp( line, "property", 8 ) ) {
 	    if ( !elem_ptr ) {
 		bu_log( "Encountered \"property\" before \"element\"\n" );
-		return( 1 );
+		return 1;
 	    }
 	    if ( get_property( elem_ptr ) ) {
-		return( 1 );
+		return 1;
 	    }
 	}
     }
@@ -774,7 +774,7 @@ read_ply_data( struct rt_bot_internal *bot )
 	elem_ptr = elem_ptr->next;
     }
 
-    return( 0 );
+    return 0;
 }
 
 int
@@ -866,7 +866,7 @@ main( int argc, char *argv[] )
 
     if ( bot->num_faces < 1 || bot->num_vertices < 1 ) {
 	bu_log( "This PLY file appears to contain no geometry!\n" );
-	return( 0 );
+	return 0;
     }
 
     bot->faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "bot faces" );
@@ -876,7 +876,7 @@ main( int argc, char *argv[] )
 
     wdb_export( out_fp, "ply_bot", (genptr_t)bot, ID_BOT, 1.0 );
 
-    return( 0 );
+    return 0;
 }
 
 /*

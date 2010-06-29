@@ -32,7 +32,8 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
-        CMakeLists.txt \
+	BrlcadConfig.tmpl \
+	CMakeLists.txt \
 	MAJOR \
 	MINOR \
 	PATCH \

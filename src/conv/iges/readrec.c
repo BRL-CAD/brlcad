@@ -61,11 +61,11 @@ Readrec( recno )
     for ( i=0; i<reclen; i++ )
     {
 	if ( (ch=getc( fd )) == EOF )
-	    return( 1 );
+	    return 1;
 	card[i] = ch;
     }
 
-    return( 0 );
+    return 0;
 }
 
 

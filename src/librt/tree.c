@@ -116,7 +116,7 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
  * This routine must be prepared to run in parallel.
  */
 HIDDEN int
-_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data __attribute__((unused)))
+_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t UNUSED(client_data))
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -128,9 +128,9 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
     /* Ignore "air" regions unless wanted */
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
 	tsp->ts_rtip->rti_air_discards++;
-	return(-1);	/* drop this region */
+	return -1;	/* drop this region */
     }
-    return(0);
+    return 0;
 }
 
 
@@ -237,6 +237,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (tbl && bu_avs_get(&tsp->ts_attrs, "ORCA_Comp")) {
 	int newentry;
 	long int reg_bit = rp->reg_bit;
+	const char *key = (char *)reg_bit;
 
 	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
 	bn_mat_inv(inv_mat, tsp->ts_mat);
@@ -244,7 +245,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 
-	entry = Tcl_CreateHashEntry(tbl, (char *)reg_bit, &newentry);
+	entry = Tcl_CreateHashEntry(tbl, key, &newentry);
 	Tcl_SetHashValue(entry, (ClientData)inv_mat);
 
 	/* leave critical section */
@@ -257,7 +258,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     }
 
     /* Indicate that we have swiped 'curtree' */
-    return(TREE_NULL);
+    return TREE_NULL;
 }
 
 
@@ -451,7 +452,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
     struct soltab *stp;
     struct directory *dp;
@@ -495,7 +496,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	/* stp is an instance of a pre-existing solid */
 	if (stp->st_aradius <= -1) {
 	    /* It's dead, Jim.  st_uses was not incremented. */
-	    return(TREE_NULL);	/* BAD: instance of dead solid */
+	    return TREE_NULL;	/* BAD: instance of dead solid */
 	}
 	goto found_it;
     }
@@ -537,7 +538,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	stp->st_aradius = -1;
 	stp->st_uses--;
 	RELEASE_SEMAPHORE_TREE(hash);
-	return(TREE_NULL);		/* BAD */
+	return TREE_NULL;		/* BAD */
     }
 
     if (rtip->rti_dont_instance) {
@@ -611,7 +612,7 @@ found_it:
 	bu_free(sofar, "path string");
     }
 
-    return(curtree);
+    return curtree;
 }
 
 
@@ -783,10 +784,10 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (!rtip->needprep) {
 	bu_log("ERROR: rt_gettree() called again after rt_prep!\n");
-	return(-1);		/* FAIL */
+	return -1;		/* FAIL */
     }
 
-    if (argc <= 0) return(-1);	/* FAIL */
+    if (argc <= 0) return -1;	/* FAIL */
 
     tbl = (Tcl_HashTable *)bu_malloc(sizeof(Tcl_HashTable), "rtip->Orca_hash_tbl");
     Tcl_InitHashTable(tbl, TCL_ONE_WORD_KEYS);
@@ -917,11 +918,11 @@ again:
 	db_ck_tree(regp->reg_treetop);
     }
 
-    if (i < 0) return(i);
+    if (i < 0) return i;
 
     if (rtip->nsolids <= prev_sol_count)
 	bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
-    return(0);	/* OK */
+    return 0;	/* OK */
 }
 
 
@@ -948,7 +949,7 @@ again:
 int
 rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
-    return(rt_gettrees_muves(rtip, attrs, argc, argv, ncpus));
+    return rt_gettrees_muves(rtip, attrs, argc, argv, ncpus);
 }
 
 
@@ -1033,24 +1034,24 @@ rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 		if (stp->st_aradius >= INFINITY) {
 		    VSETALL(tree_min, -INFINITY);
 		    VSETALL(tree_max,  INFINITY);
-		    return(0);
+		    return 0;
 		}
 		VMOVE(tree_min, stp->st_min);
 		VMOVE(tree_max, stp->st_max);
-		return(0);
+		return 0;
 	    }
 
 	default:
 	    bu_log("rt_bound_tree(x%x): unknown op=x%x\n",
 		   tp, tp->tr_op);
-	    return(-1);
+	    return -1;
 
 	case OP_XOR:
 	case OP_UNION:
 	    /* BINARY type -- expand to contain both */
 	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
 		rt_bound_tree(tp->tr_b.tb_right, r_min, r_max) < 0)
-		return(-1);
+		return -1;
 	    VMIN(tree_min, r_min);
 	    VMAX(tree_max, r_max);
 	    break;
@@ -1058,7 +1059,7 @@ rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 	    /* BINARY type -- find common area only */
 	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
 		rt_bound_tree(tp->tr_b.tb_right, r_min, r_max) < 0)
-		return(-1);
+		return -1;
 	    /* min = largest min, max = smallest max */
 	    VMAX(tree_min, r_min);
 	    VMIN(tree_max, r_max);
@@ -1067,14 +1068,14 @@ rt_bound_tree(const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 	    /* BINARY type -- just use left tree */
 	    if (rt_bound_tree(tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
 		rt_bound_tree(tp->tr_b.tb_right, r_min, r_max) < 0)
-		return(-1);
+		return -1;
 	    /* Discard right rpp */
 	    break;
 	case OP_NOP:
 	    /* Implies that this tree has nothing in it */
 	    break;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1104,12 +1105,12 @@ top:
     switch (tp->tr_op) {
 
 	case OP_SOLID:
-	    return(0);		/* Retain */
+	    return 0;		/* Retain */
 
 	default:
 	    bu_log("rt_tree_elim_nops(x%x): unknown op=x%x\n",
 		   tp, tp->tr_op);
-	    return(-1);
+	    return -1;
 
 	case OP_XOR:
 	case OP_UNION:
@@ -1138,7 +1139,7 @@ top:
 		db_free_tree(left, resp);
 		db_free_tree(right, resp);
 		tp->tr_op = OP_NOP;
-		return(-1);	/* eliminate reference to tp */
+		return -1;	/* eliminate reference to tp */
 	    }
 	    break;
 	case OP_SUBTRACT:
@@ -1151,7 +1152,7 @@ top:
 		db_free_tree(left, resp);
 		db_free_tree(right, resp);
 		tp->tr_op = OP_NOP;
-		return(-1);	/* eliminate reference to tp */
+		return -1;	/* eliminate reference to tp */
 	    }
 	    if (rt_tree_elim_nops(right, resp) < 0) {
 		*tp = *left;	/* struct copy */
@@ -1168,14 +1169,14 @@ top:
 	    if (rt_tree_elim_nops(left, resp) < 0) {
 		RT_FREE_TREE(left, resp);
 		tp->tr_op = OP_NOP;
-		return(-1);	/* Kill ref to unary op, too */
+		return -1;	/* Kill ref to unary op, too */
 	    }
 	    break;
 	case OP_NOP:
 	    /* Implies that this tree has nothing in it */
-	    return(-1);		/* Kill ref to this NOP */
+	    return -1;		/* Kill ref to this NOP */
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1202,13 +1203,13 @@ _rt_getregion(struct rt_i *rtip, const char *reg_name)
 	/* First, check for a match of the full path */
 	if (*reg_base == regp->reg_name[0] &&
 	    strcmp(reg_base, regp->reg_name) == 0)
-	    return(regp);
+	    return regp;
 	/* Second, check for a match of the database node name */
 	cp = bu_basename(regp->reg_name);
 	if (*cp == *reg_name && strcmp(cp, reg_name) == 0)
-	    return(regp);
+	    return regp;
     }
-    return(REGION_NULL);
+    return REGION_NULL;
 }
 
 
@@ -1228,10 +1229,10 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
     RT_CHECK_RTI(rtip);
 
     regp = _rt_getregion(rtip, reg_name);
-    if (regp == REGION_NULL) return(0);
+    if (regp == REGION_NULL) return 0;
     if (rt_bound_tree(regp->reg_treetop, min_rpp, max_rpp) < 0)
-	return(0);
-    return(1);
+	return 0;
+    return 1;
 }
 
 
@@ -1330,13 +1331,13 @@ rt_find_solid(const struct rt_i *rtip, const char *name)
     RT_CHECK_RTI(rtip);
     if ((dp = db_lookup((struct db_i *)rtip->rti_dbip, (char *)name,
 			LOOKUP_QUIET)) == DIR_NULL)
-	return(RT_SOLTAB_NULL);
+	return RT_SOLTAB_NULL;
 
     RT_VISIT_ALL_SOLTABS_START(stp, (struct rt_i *)rtip) {
 	if (stp->st_dp == dp)
-	    return(stp);
+	    return stp;
     } RT_VISIT_ALL_SOLTABS_END
-	  return(RT_SOLTAB_NULL);
+	  return RT_SOLTAB_NULL;
 }
 
 

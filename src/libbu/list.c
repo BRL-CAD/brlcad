@@ -32,7 +32,7 @@ bu_list_new(void)
     BU_GETSTRUCT(new_list, bu_list);
     BU_LIST_INIT(new_list);
 
-    return (new_list);
+    return new_list;
 }
 
 struct bu_list *
@@ -42,7 +42,7 @@ bu_list_pop(struct bu_list *hp)
 
     BU_LIST_POP(bu_list, hp, p);
 
-    return (p);
+    return p;
 }
 
 int
@@ -167,11 +167,14 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	if (cur->magic == BU_LIST_HEAD_MAGIC) {
 	    head_count++;
 	} else if (cur->magic != magic) {
+	    void *curmagic = (void *)(ptrdiff_t)cur->magic;
+	    void *formagic = (void *)(ptrdiff_t)cur->forw->magic;
+	    void *hdmagic = (void *)(ptrdiff_t)hd->magic;
 	    bu_log("bu_ck_list(%s) cur magic=(%s)%p, cur->forw magic=(%s)%p, hd magic=(%s)%p, item=%d\n",
 		   str, 
-		   bu_identify_magic(cur->magic), (void *)cur->magic,
-		   bu_identify_magic(cur->forw->magic), (void *)cur->forw->magic,
-		   bu_identify_magic(hd->magic), (void *)hd->magic,
+		   bu_identify_magic(cur->magic), curmagic,
+		   bu_identify_magic(cur->forw->magic), formagic,
+		   bu_identify_magic(hd->magic), hdmagic,
 		   item);
 	    bu_bomb("bu_ck_list_magic() cur->magic\n");
 	}
@@ -222,7 +225,7 @@ bu_list_dequeue_next(struct bu_list *hp, struct bu_list *p)
     p2 = BU_LIST_NEXT(bu_list, p);
     BU_LIST_DEQUEUE(p2);
 
-    return (p2);
+    return p2;
 }
 
 /*

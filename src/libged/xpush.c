@@ -192,8 +192,8 @@ Make_new_name(struct db_i *dbip,
 	    }
 
 	    /* Add new name to directory */
-	    if ((use->dp = db_diradd(dbip, name, -1, 0, dp->d_flags,
-				     (genptr_t)&dp->d_minor_type)) == DIR_NULL) {
+	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
+	    if (use->dp == DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "\nAn error has occured while adding a new object to the database.\n"); \
 																 return;
 	    }
@@ -246,7 +246,7 @@ Do_copy_membs(struct db_i *dbip,
 
     /* Copy member with current tranform matrix */
     if ((dp_new=Copy_object(gedp, dp, new_xform)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to copy object ", dp->d_namep);
+	bu_vls_printf(&gedp->ged_result_str, "Failed to copy object %s", dp->d_namep);
 	return;
     }
 
@@ -279,7 +279,7 @@ Copy_solid(struct ged *gedp,
 
     if (!(dp->d_flags & DIR_SOLID)) {
 	bu_vls_printf(&gedp->ged_result_str, "Copy_solid: %s is not a solid!!!!\n", dp->d_namep);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     /* If no transformation is to be applied, just use the original */
@@ -288,7 +288,7 @@ Copy_solid(struct ged *gedp,
 	for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
 	    if (use->dp == dp && use->used == 0) {
 		use->used = 1;
-		return (dp);
+		return dp;
 	    }
 	}
     }
@@ -298,7 +298,7 @@ Copy_solid(struct ged *gedp,
 	if (bn_mat_is_equal(xform, use->xform, &gedp->ged_wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
-	    return(use->dp);
+	    return use->dp;
 	}
     }
 
@@ -321,21 +321,21 @@ Copy_solid(struct ged *gedp,
 
     if (found == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Ran out of uses for solid %s\n", dp->d_namep);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     if (rt_db_get_internal(&sol_int, dp, gedp->ged_wdbp->dbip, xform, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot import solid %s\n", dp->d_namep);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     RT_CK_DB_INTERNAL(&sol_int);
     if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &sol_int, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot write copy solid (%s) to database\n", found->d_namep);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
-    return (found);
+    return found;
 }
 
 /**
@@ -359,13 +359,13 @@ Copy_comb(struct ged *gedp,
 	if (bn_mat_is_equal(xform, use->xform, &gedp->ged_wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
-	    return (use->dp);
+	    return use->dp;
 	}
     }
 
     /* if we can't get records for this combination, just leave it alone */
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-	return (dp);
+	return dp;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     /* copy members */
@@ -392,16 +392,16 @@ Copy_comb(struct ged *gedp,
 
     if (found == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Ran out of uses for combination %s\n", dp->d_namep);
-	return (DIR_NULL);
+	return DIR_NULL;
     }
 
     if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal failed for %s\n", dp->d_namep);
 	rt_db_free_internal(&intern);
-	return(DIR_NULL);
+	return DIR_NULL;
     }
 
-    return(found);
+    return found;
 }
 
 

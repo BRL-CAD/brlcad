@@ -1133,12 +1133,23 @@ ConfigureButton(
 	    butPtr->flags &= ~SELECTED;
             butPtr->flags &= ~TRISTATED;
 	    if (valuePtr != NULL) {
-		if (strcmp(Tcl_GetString(valuePtr),
-			Tcl_GetString(butPtr->onValuePtr)) == 0) {
+		const char *value = Tcl_GetString(valuePtr);
+		if (strcmp(value, Tcl_GetString(butPtr->onValuePtr)) == 0) {
 		    butPtr->flags |= SELECTED;
-		} else if (strcmp(Tcl_GetString(valuePtr),
+		} else if (strcmp(value,
                         Tcl_GetString(butPtr->tristateValuePtr)) == 0) {
-                    butPtr->flags |= TRISTATED;
+		    butPtr->flags |= TRISTATED;
+
+		    /*
+		     * For checkbuttons if the tristate value is the
+		     * same as the offvalue then prefer off to tristate
+		     */
+
+		    if (butPtr->offValuePtr
+			&& strcmp(value,
+			    Tcl_GetString(butPtr->offValuePtr)) == 0) {
+			butPtr->flags &= ~TRISTATED;
+		    }
                 }
 	    } else {
 		if (Tcl_ObjSetVar2(interp, namePtr, NULL,
@@ -1623,7 +1634,7 @@ ButtonVarProc(
 
     valuePtr = Tcl_GetVar2Ex(interp, name, NULL, TCL_GLOBAL_ONLY);
     if (valuePtr == NULL) {
-	value = "";
+	value = Tcl_GetString(butPtr->tristateValuePtr);
     } else {
 	value = Tcl_GetString(valuePtr);
     }
@@ -1633,6 +1644,12 @@ ButtonVarProc(
 	}
 	butPtr->flags |= SELECTED;
         butPtr->flags &= ~TRISTATED;
+    } else if (butPtr->offValuePtr 
+	&& strcmp(value, Tcl_GetString(butPtr->offValuePtr)) == 0) {
+	if (!(butPtr->flags & (SELECTED | TRISTATED))) {
+	    return NULL;
+	}
+	butPtr->flags &= ~(SELECTED | TRISTATED);
     } else if (strcmp(value, Tcl_GetString(butPtr->tristateValuePtr)) == 0) {
         if (butPtr->flags & TRISTATED) {
             return NULL;

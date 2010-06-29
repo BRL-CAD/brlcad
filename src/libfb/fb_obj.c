@@ -22,7 +22,7 @@
 /** @file fb_obj.c
  *
  * A framebuffer object contains the attributes and
- * methods for controlling  framebuffers.
+ * methods for controlling framebuffers.
  *
  */
 /** @} */
@@ -30,6 +30,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "bio.h"
 #include "tcl.h"
@@ -58,14 +59,15 @@ static int fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc
 static int fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y);
 static int fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel);
 
-#define FBO_CONSTRAIN(_v, _a, _b)\
-	((_v > _a) ? (_v < _b ? _v : _b) : _a)
+#define FBO_CONSTRAIN(_v, _a, _b)		\
+    ((_v > _a) ? (_v < _b ? _v : _b) : _a)
 
 struct fb_obj {
-    struct bu_list		l;
-    struct bu_vls		fbo_name;	/* framebuffer object name/cmd */
-    struct fbserv_obj	fbo_fbs;	/* fbserv object */
+    struct bu_list l;
+    struct bu_vls fbo_name;	/* framebuffer object name/cmd */
+    struct fbserv_obj fbo_fbs;	/* fbserv object */
 };
+
 
 static struct fb_obj HeadFBObj;			/* head of display manager object list */
 
@@ -87,12 +89,13 @@ static struct bu_cmdtab fbo_cmds[] = {
     {(char *)0,	(int (*)())0}
 };
 
+
 /*
- *			F B O _ C M D
+ * F B O _ C M D
  *
  * Generic interface for framebuffer object routines.
  * Usage:
- *        procname cmd ?args?
+ * procname cmd ?args?
  *
  * Returns: result of FB command.
  */
@@ -101,6 +104,7 @@ fbo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     return bu_cmd(clientData, interp, argc, argv, fbo_cmds, 1);
 }
+
 
 int
 Fbo_Init(Tcl_Interp *interp)
@@ -111,6 +115,7 @@ Fbo_Init(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
 
 /*
  * Called by Tcl when the object is destroyed.
@@ -128,14 +133,15 @@ fbo_deleteProc(ClientData clientData)
     bu_free((genptr_t)fbop, "fbo_deleteProc: fbop");
 }
 
+
 /*
  * Close a framebuffer object.
  *
  * Usage:
- *	  procname close
+ * procname close
  */
 HIDDEN int
-fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **UNUSED(argv))
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
@@ -154,14 +160,15 @@ fbo_close_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * Open/create a framebuffer object.
  *
  * Usage:
- *	  fb_open [name device [args]]
+ * fb_open [name device [args]]
  */
 HIDDEN int
-fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+fbo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct fb_obj *fbop;
     FBIO *ifp;
@@ -189,7 +196,7 @@ fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     /* process args */
     bu_optind = 3;
     bu_opterr = 0;
-    while ((c = bu_getopt(argc, argv, "w:W:s:S:n:N:")) != EOF)  {
+    while ((c = bu_getopt(argc, argv, "w:W:s:S:n:N:")) != EOF) {
 	switch (c) {
 	    case 'W':
 	    case 'w':
@@ -245,12 +252,13 @@ fbo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * Clear the framebuffer with the specified color.
  * Otherwise, clear the framebuffer with black.
  *
  * Usage:
- *	  procname clear [rgb]
+ * procname clear [rgb]
  */
 HIDDEN int
 fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -294,10 +302,11 @@ fbo_clear_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  *
  * Usage:
- *	  procname cursor mode x y
+ * procname cursor mode x y
  */
 HIDDEN int
 fbo_cursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -340,10 +349,11 @@ fbo_cursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 /*
  *
  * Usage:
- *	  procname getcursor
+ * procname getcursor
  */
 HIDDEN int
 fbo_getcursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -354,7 +364,9 @@ fbo_getcursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     int x, y;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getcursor") != 0)
+    {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getcursor");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -375,11 +387,12 @@ fbo_getcursor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     return TCL_ERROR;
 }
 
+
 /*
  * Refresh the entire framebuffer or that part specified by
  * a rectangle (i.e. x y width height)
  * Usage:
- *	  procname refresh [rect]
+ * procname refresh [rect]
  */
 HIDDEN int
 fbo_refresh_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -420,7 +433,7 @@ fbo_refresh_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  * Listen for framebuffer clients.
  *
  * Usage:
- *	  procname listen port
+ * procname listen port
  *
  * Returns the port number actually used.
  *
@@ -459,9 +472,9 @@ fbo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
 
 	if (port >= 0)
-	    fbs_open(interp, &fbop->fbo_fbs, port);
+	    fbs_open(&fbop->fbo_fbs, port);
 	else {
-	    fbs_close(interp, &fbop->fbo_fbs);
+	    fbs_close(&fbop->fbo_fbs);
 	}
 	bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -477,11 +490,12 @@ fbo_listen_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 /*
  * Set/get the pixel value at position (x, y).
  *
  * Usage:
- *	  procname pixel x y [rgb]
+ * procname pixel x y [rgb]
  */
 HIDDEN int
 fbo_pixel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -545,7 +559,7 @@ fbo_pixel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_OK;
     }
 
- error:
+error:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib fb_pixel");
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -553,10 +567,11 @@ fbo_pixel_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 /*
  *
  * Usage:
- *	  procname cell xmin ymin width height color
+ * procname cell xmin ymin width height color
  */
 HIDDEN int
 fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -564,9 +579,9 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
     int xmin, ymin;
-    int width;
-    int height;
-    int i;
+    long width;
+    long height;
+    size_t i;
     RGBpixel pixel;
     unsigned char *pp;
 
@@ -591,7 +606,7 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    /*  check coordinates */
+    /* check coordinates */
     if (!fbo_coords_ok(interp, fbop->fbo_fbs.fbs_fbp, xmin, ymin)) {
 	Tcl_AppendResult(interp,
 			 "fb_cell: coordinates (", argv[2], ", ", argv[3],
@@ -599,13 +614,13 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[4], "%d", &width) != 1) {
+    if (sscanf(argv[4], "%ld", &width) != 1) {
 	Tcl_AppendResult(interp, "fb_cell: bad width - ",
 			 argv[4], (char *)NULL);
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[5], "%d", &height) != 1) {
+    if (sscanf(argv[5], "%ld", &height) != 1) {
 	Tcl_AppendResult(interp, "fb_cell: bad height - ",
 			 argv[5], (char *)NULL);
 	return TCL_ERROR;
@@ -640,10 +655,11 @@ fbo_cell_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  *
  * Usage:
- *	  procname flush
+ * procname flush
  */
 HIDDEN int
 fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -651,7 +667,9 @@ fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct fb_obj *fbop = (struct fb_obj *)clientData;
 
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "flush") != 0)
+    {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -666,10 +684,11 @@ fbo_flush_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  *
  * Usage:
- *	  procname getheight
+ * procname getheight
  */
 HIDDEN int
 fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -677,7 +696,9 @@ fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getheight") != 0)
+    {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getheight");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -693,10 +714,11 @@ fbo_getheight_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     return TCL_OK;
 }
 
+
 /*
  *
  * Usage:
- *	  procname getwidth
+ * procname getwidth
  */
 HIDDEN int
 fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -704,7 +726,9 @@ fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getwidth") != 0)
+    {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getwidth");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -720,10 +744,11 @@ fbo_getwidth_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     return TCL_OK;
 }
 
+
 /*
  *
  * Usage:
- *	  procname getsize
+ * procname getsize
  */
 HIDDEN int
 fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -731,7 +756,10 @@ fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     struct fb_obj *fbop = (struct fb_obj *)clientData;
     struct bu_vls vls;
 
-    if (argc != 2) {
+    if (argc != 2
+	|| strcasecmp(argv[1], "getsize") != 0)
+    {
+
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib fb_getsize");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -750,10 +778,11 @@ fbo_getsize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     return TCL_OK;
 }
 
+
 /*
  *
  * Usage:
- *	  procname cell xmin ymin width height color
+ * procname cell xmin ymin width height color
  */
 HIDDEN int
 fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -787,7 +816,7 @@ fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    /*  check coordinates */
+    /* check coordinates */
     if (!fbo_coords_ok(interp, fbop->fbo_fbs.fbs_fbp, xmin, ymin)) {
 	Tcl_AppendResult(interp,
 			 "fb_rect: coordinates (", argv[2], ", ", argv[3],
@@ -848,9 +877,10 @@ fbo_rect_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *	  procname configure width height
+ * procname configure width height
  */
 int
 fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -886,11 +916,13 @@ fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
     return TCL_OK;
 }
+
+
 #if 0
 /*
  *
  * Usage:
- *	  procname
+ * procname
  */
 int
 fbo__tcl(clientData, interp, argc, argv)
@@ -910,9 +942,9 @@ fbo__tcl(clientData, interp, argc, argv)
 HIDDEN int
 fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y)
 {
-    int	    width;
-    int	    height;
-    int	    errors;
+    int width;
+    int height;
+    int errors;
     width = fb_getwidth(fbp);
     height = fb_getheight(fbp);
 
@@ -942,12 +974,13 @@ fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y)
 	++errors;
     }
 
-    if ( errors ) {
+    if (errors) {
 	return 0;
     } else {
 	return 1;
     }
 }
+
 
 HIDDEN int
 fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel)
@@ -967,6 +1000,7 @@ fbo_tcllist2color(Tcl_Interp *interp, char *string, unsigned char *pixel)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

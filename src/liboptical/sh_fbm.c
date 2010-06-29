@@ -101,12 +101,12 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp)
 	bu_log("fbm_setup\n");
 
     if (bu_struct_parse( matparm, fbm_parse, (char *)fbm ) < 0 )
-	return(-1);
+	return -1;
 
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print( rp->reg_name, fbm_parse, (char *)fbm );
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -158,7 +158,7 @@ fbm_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     VADD2(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, v_noise);
     VUNITIZE(swp->sw_hit.hit_normal);
 
-    return(1);
+    return 1;
 }
 
 /*

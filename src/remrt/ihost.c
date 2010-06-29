@@ -112,14 +112,14 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
 
 	if ( strcmp( ihp->ht_name, addr->h_name ) != 0 )
 	    continue;
-	return( ihp );
+	return ihp;
     }
     if ( enter == 0 )
-	return( IHOST_NULL );
+	return IHOST_NULL;
 
     /* If not found and enter==1, enter in host table w/defaults */
     /* Note: gethostbyxxx() routines keep stuff in a static buffer */
-    return( make_default_host( addr->h_name ) );
+    return make_default_host( addr->h_name );
 }
 
 /*
@@ -149,7 +149,7 @@ make_default_host(const char* name)
     /* Add to linked list of known hosts */
     BU_LIST_INSERT( &HostHead, &ihp->l );
 
-    return(ihp);
+    return ihp;
 }
 
 /*
@@ -180,18 +180,18 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
 	     (addr_tmp    ) & 0xff );
     if ( enter == 0 )  {
 	bu_log("%s: unknown host\n", name);
-	return( IHOST_NULL );
+	return IHOST_NULL;
     }
 
     /* See if this host has been previously entered by number */
     for ( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 	CK_IHOST(ihp);
 	if ( strcmp( ihp->ht_name, name ) == 0 )
-	    return( ihp );
+	    return ihp;
     }
 
     /* Create a new hostent structure */
-    return( make_default_host( name ) );
+    return make_default_host( name );
 }
 
 /*
@@ -208,15 +208,15 @@ host_lookup_by_name(const char* name, int enter)
 	/* Numeric */
 	sockhim.sin_family = AF_INET;
 	sockhim.sin_addr.s_addr = inet_addr(name);
-	return( host_lookup_by_addr( &sockhim, enter ) );
+	return host_lookup_by_addr( &sockhim, enter );
     } else {
 	addr = gethostbyname(name);
     }
     if ( addr == NULL )  {
 	bu_log("%s:  bad host\n", name);
-	return( IHOST_NULL );
+	return IHOST_NULL;
     }
-    return( host_lookup_by_hostent( addr, enter ) );
+    return host_lookup_by_hostent( addr, enter );
 }
 
 /*

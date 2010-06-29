@@ -1227,5 +1227,30 @@ ON_ViewportFromRhinoView( // create ON_Viewport from legacy Rhino projection inf
         int, // screen_height,
         ON_Viewport&
         );
+
+/*
+Description:
+  Calculate the corners of the polygon that is the
+  intersection of a view frustum with and infinte plane.
+Parameters:
+  vp - [in] defines view frustum
+  plane_equation - [in] defined infinte plane
+  points  - [out] corners of the polygon.
+    If true is returned and points.Count() is zero, then
+    the plane missed the frustum.  Note that the start/end
+    point is not duplicated in the list.
+Returns:
+  True if input was valid, false otherwise.  Note that
+  even when true is returned, the returned points.Count()
+  may be zero if the plane and frustum do not intersect.
+*/
+ON_DECL
+bool
+ON_IntersectViewFrustumPlane(
+          const ON_Viewport& vp,
+          const ON_PlaneEquation& plane_equation, 
+          ON_SimpleArray<ON_3dPoint>& points 
+          );
+
 #endif
 

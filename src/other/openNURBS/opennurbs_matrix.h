@@ -23,8 +23,8 @@ class ON_CLASS ON_Matrix
 public:
   ON_Matrix();
   ON_Matrix( 
-     int, // number of rows
-     int  // number of columns
+    int row_count,
+    int col_count
      );
   ON_Matrix( // see ON_Matrix::Create(int,int,int,int) for details
      int, // first valid row index
@@ -34,6 +34,29 @@ public:
      );
   ON_Matrix( const ON_Xform& );
   ON_Matrix( const ON_Matrix& );
+
+  /*
+  Description:
+    This constructor is for experts who have storage for a matrix
+    and need to use it in ON_Matrix form.
+  Parameters:
+    row_count - [in]
+    col_count - [in]
+    M - [in]
+    bDestructorFreeM - [in]
+      If true, ~ON_Matrix will call onfree(M).
+      If false, caller is managing M's memory.
+  Remarks:
+    ON_Matrix functions that increase the value of row_count or col_count
+    will fail on a matrix created with this constructor.
+  */
+  ON_Matrix(
+    int row_count,
+    int col_count,
+    double** M,
+    bool bDestructorFreeM
+    );
+
   virtual ~ON_Matrix();
   void EmergencyDestroy(); // call if memory pool used matrix by becomes invalid
 
@@ -73,6 +96,29 @@ public:
      int  // last valid column index
      );
 
+  /*
+  Description:
+    This constructor is for experts who have storage for a matrix
+    and need to use it in ON_Matrix form.
+  Parameters:
+    row_count - [in]
+    col_count - [in]
+    M - [in]
+    bDestructorFreeM - [in]
+      If true, ~ON_Matrix will call onfree(M).
+      If false, caller is managing M's memory.
+  Remarks:
+    ON_Matrix functions that increase the value of row_count or col_count
+    will fail on a matrix created with this constructor.
+  */
+  bool Create(
+    int row_count,
+    int col_count,
+    double** M,
+    bool bDestructorFreeM
+    );
+
+
   void Destroy();
 
   void Zero();
@@ -90,10 +136,46 @@ public:
           double // zero tolerance
           );
 
-  // safe arithmetic
-  bool Multiply( const ON_Matrix&, const ON_Matrix& );
-  bool Add( const ON_Matrix&, const ON_Matrix& );
-  bool Scale( double );
+  /*
+  Description:
+    Set this = A*B.
+  Parameters:
+    A - [in]
+      (Can be this)
+    B - [in]
+      (Can be this)
+  Returns:
+    True when A is an mXk matrix and B is a k X n matrix; in which case
+    "this" will be an mXn matrix = A*B.
+    False when A.ColCount() != B.RowCount().
+  */
+  bool Multiply( const ON_Matrix& A, const ON_Matrix& B );
+
+  /*
+  Description:
+    Set this = A+B.
+  Parameters:
+    A - [in]
+      (Can be this)
+    B - [in]
+      (Can be this)
+  Returns:
+    True when A and B are mXn matrices; in which case
+    "this" will be an mXn matrix = A+B.
+    False when A and B have different sizes.
+  */
+  bool Add( const ON_Matrix& A, const ON_Matrix& B );
+
+
+  /*
+  Description:
+    Set this = s*this.
+  Parameters:
+    s - [in]
+  Returns:
+    True when A and s are valid.
+  */
+  bool Scale( double s );
 
 
   // Description:
@@ -291,23 +373,202 @@ public:
   bool IsColOrthoganal() const;
   bool IsColOrthoNormal() const;
 
+
   double** m; // m[i][j] = value at row i and column j
               //           0 <= i < RowCount()
               //           0 <= j < ColCount()
 private:
   int m_row_count;
   int m_col_count;
-  ON_SimpleArray<double*> m_row; // m_M[i][j] = row i and column j
-
-  // coefficient memory
-  // 8 July 2003 - changed coefficient memory handling to use
-  //               multiple chunks on large matrices.
-	void* m_reserved1;
-	int   m_reserved2;
-	int   m_reserved3;
+  // m_rowmem[i][j] = row i+m_row_offset and column j+m_col_offset.
+  ON_SimpleArray<double*> m_rowmem; 
+	double** m_Mmem; // used by Create(row_count,col_count,user_memory,true);
+	int   m_row_offset; // = ri0 when sub-matrix constructor is used
+	int   m_col_offset; // = ci0 when sub-matrix constructor is used
   void* m_cmem;
-  //ON_SimpleArray<double> m_a; // array of at least doubles
+  // returns 0 based arrays, even in submatrix case.
+  double const * const * ThisM() const;
+  double * * ThisM();
 };
+
+/*
+Description:
+  Calculate the singular value decomposition of a matrix.
+
+Parameters:
+  row_count - [in]
+    number of rows in matrix A
+  col_count - [in]
+    number of columns in matrix A
+  A - [in]
+    Matrix for which you want the singular value decomposition.
+    A[0][0] = coefficeint in the first row and first column.
+    A[row_count-1][col_count-1] = coefficeint in the last row
+    and last column.
+  U - [out]
+    The singular value decomposition of A is U*Diag(W)*Transpose(V),
+    where U has the same size as A, Diag(W) is a col_count X col_count
+    diagonal matrix with (W[0],...,W[col_count-1]) on the diagonal
+    and V is a col_count X col_count matrix.
+    U and A may be the same pointer.  If the input value of U is
+    null, heap storage will be allocated using onmalloc()
+    and the calling function must call onfree(U).  If the input
+    value of U is not null, U[i] must point to an array of col_count
+    doubles.  
+  W - [out]
+    If the input value W is null, then heap storage will be allocated
+    using onmalloc() and the calling function must call onfree(W).
+    If the input value of W is not null, then W must point to
+    an array of col_count doubles.
+  V - [out]
+    If the input value V is null, then heap storage will be allocated
+    using onmalloc() and the calling function must call onfree(V).
+    If the input value of V is not null, then V[i] must point
+    to an array of col_count doubles.
+
+Example:
+
+          int m = row_count;
+          int n = col_count;
+          ON_Matrix A(m,n);
+          for (i = 0; i < m; i++ ) for ( j = 0; j < n; j++ )
+          {
+            A[i][j] = ...;
+          }
+          ON_Matrix U(m,n);
+          double* W = 0; // ON_GetMatrixSVD() will allocate W
+          ON_Matrix V(n,n);
+          bool rc = ON_GetMatrixSVD(m,n,A.m,U.m,W,V.m);
+          ...
+          onfree(W); // W allocated in ON_GetMatrixSVD()
+
+Returns:
+  True if the singular value decomposition was cacluated.
+  False if the algorithm failed to converge.
+*/
+ON_DECL
+bool ON_GetMatrixSVD(
+  int row_count,
+  int col_count,
+  double const * const * A,
+  double**& U,
+  double*& W,
+  double**& V
+  );
+
+/*
+Description:
+  Invert the diagonal matrix in a the singular value decomposition.
+Parameters:
+  count - [in] number of elements in W
+  W - [in]
+    diagonal values in the singular value decomposition.
+  invW - [out]
+    The inverted diagonal is returned here.  invW may be the same
+    pointer as W.  If the input value of invW is not null, it must
+    point to an array of count doubles.  If the input value of
+    invW is null, heap storage will be allocated using onmalloc()
+    and the calling function must call onfree(invW).
+Remarks:
+  If the singular value decomposition were mathematically perfect, then
+  this function would be:
+    for (i = 0; i < count; i++) 
+      invW[i] = (W[i] != 0.0) ? 1.0/W[i] : 0.0;
+  Because the double precision arithmetic is not mathematically perfect,
+  very small values of W[i] may well be zero and this function makes
+  a reasonable guess as to when W[i] should be treated as zero.  
+Returns:
+  Number of non-zero elements in invW, which, in a mathematically perfect
+  situation, is the rank of Diag(W).
+*/
+ON_DECL
+int ON_InvertSVDW(
+  int count, 
+  const double* W,
+  double*& invW
+  );
+
+/*
+Description:
+  Solve a linear system of equations using the singular value decomposition.
+Parameters:
+  row_count - [in]
+    number of rows in matrix U
+  col_count - [in]
+    number of columns in matrix U
+  U - [in]
+    row_count X col_count matix.
+    See the remarks section for the definition of U.
+  invW - [in]
+    inverted DVD diagonal.
+    See the remarks section for the definition of invW.
+  V - [in]
+    col_count X col_count matrix.
+    See the remarks section for the definition of V.
+  B - [in]
+    An array of row_count values.
+  X - [out]
+    The solution array of col_count values is returned here.
+    If the input value of X is not null, it must point to an
+    array of col_count doubles.  If the input value of X is
+    null, heap storage will be allocated using onmalloc() and
+    the calling function must call onfree(X).
+Remarks:
+  If A*X = B is an m X n system of equations (m = row_count, n = col_count)
+  and A = U*Diag(W)*Transpose(V) is the singular value decompostion of A,
+  then a solution is X = V*Diag(1/W)*Transpose(U).
+Example:
+
+          int m = row_count;
+          int n = col_count;
+          ON_Matrix A(m,n);
+          for (i = 0; i < m; i++ ) for ( j = 0; j < n; j++ )
+          {
+            A[i][j] = ...;
+          }
+          ON_SimpleArray<double> B(m);
+          for (i = 0; i < m; i++ )
+          {
+            B[i] = ...;
+          }
+
+          ON_SimpleArray<double> X; // solution returned here.
+          {
+            double** U = 0;
+            double* W = 0;
+            double** V = 0;
+            if ( ON_GetMatrixSVD(m,n,A.m,U,W,V) )
+            {
+              double* invW = 0;
+              int rankW = ON_InvertSVDW(n,W,W); // save invW into W
+              X.Reserve(n);
+              if ( ON_SolveSVD(m,n,U,W,V,B,X.Array()) )
+                X.SetCount(n);
+            }
+            onfree(U); // U allocated in ON_GetMatrixSVD()
+            onfree(W); // W allocated in ON_GetMatrixSVD()
+            onfree(V); // V allocated in ON_GetMatrixSVD()
+          }
+
+          if ( n == X.Count() )
+          {
+            ... use solution
+          }  
+Returns:
+  True if input is valid and X[] was calculated. 
+  False if input is not valid.
+*/
+ON_DECL
+bool ON_SolveSVD(
+  int row_count,
+  int col_count,
+  double const * const * U,
+  const double* invW,
+  double const * const * V,
+  const double* B,
+  double*& X
+  );
+  
 
 /*
 Description:

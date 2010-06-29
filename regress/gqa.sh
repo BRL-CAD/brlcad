@@ -121,7 +121,7 @@ EOF
 # open_box.r = 1000-576 = 424 m^3
 
 
-GQA="../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p"
+GQA="../src/gtools/g_qa -u m,m^3,kg -g 250mm-50mm -p"
 export GQA
 
 STATUS=0

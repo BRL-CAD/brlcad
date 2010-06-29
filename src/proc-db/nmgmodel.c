@@ -110,7 +110,7 @@ parse_args(int ac, char **av)
 	    default		: usage((char *)NULL); break;
 	}
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 
@@ -589,7 +589,7 @@ main(int ac, char *av[])
     }
 
 
-    return(0);
+    return 0;
 }
 
 

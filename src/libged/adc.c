@@ -40,34 +40,37 @@ static void ged_adc_view_To_adc_grid(struct ged_view *gvp);
 static void ged_adc_reset(struct ged_view *gvp);
 static void ged_adc_vls_print(struct ged_view *gvp, fastf_t base2local, struct bu_vls *out_vp);
 
-static char ged_adc_syntax[] = "\
- adc vname			toggle display of angle/distance cursor\n\
- adc vname vars			print a list of all variables (i.e. var = val)\n\
- adc vname draw [0|1]		set or get the draw parameter\n\
- adc vname a1 [#]		set or get angle1\n\
- adc vname a2 [#]		set or get angle2\n\
- adc vname dst [#]		set or get radius (distance) of tick\n\
- adc vname odst [#]		set or get radius (distance) of tick (+-2047)\n\
- adc vname hv [# #]		set or get position (grid coordinates)\n\
- adc vname xyz [# # #]		set or get position (model coordinates)\n\
- adc vname x [#]		set or get horizontal position (+-2047)\n\
- adc vname y [#]		set or get vertical position (+-2047)\n\
- adc vname dh #			add to horizontal position (grid coordinates)\n\
- adc vname dv #			add to vertical position (grid coordinates)\n\
- adc vname dx #			add to X position (model coordinates)\n\
- adc vname dy #			add to Y position (model coordinates)\n\
- adc vname dz #			add to Z position (model coordinates)\n\
- adc vname anchor_pos		[0|1]	anchor ADC to current position in model coordinates\n\
- adc vname anchor_a1		[0|1]	anchor angle1 to go through anchorpoint_a1\n\
- adc vname anchor_a2		[0|1]	anchor angle2 to go through anchorpoint_a2\n\
- adc vname anchor_dst		[0|1]	anchor tick distance to go through anchorpoint_dst\n\
- adc vname anchorpoint_a1 	[# # #]	set or get anchor point for angle1\n\
- adc vname anchorpoint_a2 	[# # #]	set or get anchor point for angle2\n\
- adc vname anchorpoint_dst 	[# # #]	set or get anchor point for tick distance\n\
- adc vname -i			any of the above appropriate commands will interpret parameters as increments\n\
- adc vname reset		reset angles, location, and tick distance\n\
- adc vname help			prints this help message\n\
-";
+HIDDEN void
+adc_usage(struct bu_vls *vp, const char *name)
+{
+    bu_vls_printf(vp, "Usage: %s \n", name);
+    bu_vls_printf(vp, "%s", " adc vname                           toggle display of angle/distance cursor\n");
+    bu_vls_printf(vp, "%s", " adc vname vars                      print a list of all variables (i.e. var = val)\n");
+    bu_vls_printf(vp, "%s", " adc vname draw [0|1]                set or get the draw parameter\n");
+    bu_vls_printf(vp, "%s", " adc vname a1   [#]                  set or get angle1\n");
+    bu_vls_printf(vp, "%s", " adc vname a2   [#]                  set or get angle2\n");
+    bu_vls_printf(vp, "%s", " adc vname dst  [#]                  set or get radius (distance) of tick\n");
+    bu_vls_printf(vp, "%s", " adc vname odst [#]                  set or get radius (distance) of tick (+-2047)\n");
+    bu_vls_printf(vp, "%s", " adc vname hv   [# #]                set or get position (grid coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc vname xyz  [# # #]              set or get position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc vname x [#]                     set or get horizontal position (+-2047)\n");
+    bu_vls_printf(vp, "%s", " adc vname y [#]                     set or get vertical position (+-2047)\n");
+    bu_vls_printf(vp, "%s", " adc vname dh #                      add to horizontal position (grid coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc vname dv #                      add to vertical position (grid coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc vname dx #                      add to X position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc vname dy #                      add to Y position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc vname dz #                      add to Z position (model coordinates)\n");
+    bu_vls_printf(vp, "%s", " adc vname anchor_pos [0|1]          anchor ADC to current position in model coordinates\n");
+    bu_vls_printf(vp, "%s", " adc vname anchor_a1  [0|1]          anchor angle1 to go through anchorpoint_a1\n");
+    bu_vls_printf(vp, "%s", " adc vname anchor_a2  [0|1]          anchor angle2 to go through anchorpoint_a2\n");
+    bu_vls_printf(vp, "%s", " adc vname anchor_dst [0|1]          anchor tick distance to go through anchorpoint_dst\n");
+    bu_vls_printf(vp, "%s", " adc vname anchorpoint_a1  [# # #]   set or get anchor point for angle1\n");
+    bu_vls_printf(vp, "%s", " adc vname anchorpoint_a2  [# # #]   set or get anchor point for angle2\n");
+    bu_vls_printf(vp, "%s", " adc vname anchorpoint_dst [# # #]   set or get anchor point for tick distance\n");
+    bu_vls_printf(vp, "%s", " adc vname -i                        any of the above appropriate commands will interpret parameters as increments\n");
+    bu_vls_printf(vp, "%s", " adc vname reset                     reset angles, location, and tick distance\n");
+    bu_vls_printf(vp, "%s", " adc vname help                      prints this help message\n");
+}
 
 
 /*
@@ -86,7 +89,6 @@ ged_adc(struct ged	*gedp,
     point_t scaled_pos;
     int incr_flag;
     int i;
-    static const char *usage = ged_adc_syntax;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -96,7 +98,7 @@ ged_adc(struct ged	*gedp,
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc < 2 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	adc_usage(&gedp->ged_result_str, argv[0]);
 	return GED_ERROR;
     }
 
@@ -121,7 +123,7 @@ ged_adc(struct ged	*gedp,
 
     for (i = 0; i < argc; ++i)
 	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    adc_usage(&gedp->ged_result_str, command);
 	    return GED_ERROR;
 	}
 
@@ -582,12 +584,13 @@ ged_adc(struct ged	*gedp,
     }
 
     if (strcmp(parameter, "help") == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", command, usage);
+	adc_usage(&gedp->ged_result_str, command);
 	return GED_HELP;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\nUsage: %s %s\n",
-		  command, parameter, command, usage);
+    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
+    adc_usage(&gedp->ged_result_str, command);
+
     return GED_ERROR;
 }
 

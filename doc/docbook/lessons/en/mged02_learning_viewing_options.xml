@@ -245,8 +245,8 @@
 	  <tgroup cols='2' align='center'>
 	    <tbody>
 	      <row>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged02_flower_zoomin.jpg" scale="60" /></entry>
-		<entry><inlinegraphic fileref="../../lessons/en/images/mged02_flower_zoomout.jpg" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/en/images/mged02_flower_zoomin.png" scale="60" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/en/images/mged02_flower_zoomout.png" /></entry>
 	      </row>
 	      <row>
 		<entry>Zoom In to View Details (small size of view)</entry>

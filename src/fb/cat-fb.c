@@ -430,17 +430,17 @@ get_args(int argc, char **argv)
 	    break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind >= argc )  {
 	/* No file name args */
 	if ( isatty(fileno(stdin)) )
-	    return(0);
+	    return 0;
 	/* mainline will actually do the processing */
     }
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 int
@@ -695,7 +695,7 @@ findsize(int code)
     esc += delta;	/* Compensate for C/A/T hardware shift during size change */
     if (debug)fprintf(stderr, "findsize: changing escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
     last_ssize = psp->stupid_code;
-    return (psp->real_code);
+    return psp->real_code;
 }
 
 void
@@ -719,19 +719,19 @@ loadfont(int fnum, int size)
     fontwanted = 0;
     if (fnum < 0 || fnum >= MAXF) {
 	fprintf(stderr, "Internal error: illegal font\n");
-	return(-1);
+	return -1;
     }
     if (fnum == fontdes[cfont].fnum && size == fontdes[cfont].psize)
-	return(0);
+	return 0;
     for (i = 0; i < NFONTS; i++)
 	if (fontdes[i].fnum == fnum && fontdes[i].psize == size) {
 	    cfont = i;
-	    return (0);
+	    return 0;
 	}
     new_font_num = fnum;
     new_pt_size = size;
     fontwanted++;
-    return (0);
+    return 0;
 }
 
 
@@ -757,7 +757,7 @@ readinfont(void)
 	/* Ignore font change */
 	fprintf(stderr, "cat-fb:  Unable to acquire font '%s'\n", cbuf);
 	fontwanted = 0;
-	return (-1);
+	return -1;
     }
 
     cfont = relfont();
@@ -769,7 +769,7 @@ readinfont(void)
 
     fontwanted = 0;
     new_font_num = new_pt_size = -1;
-    return (0);
+    return 0;
 }
 
 int lastloaded	= -1;
@@ -783,7 +783,7 @@ relfont(void)
     for ( newfont = 0; newfont < NFONTS; newfont++ )  {
 	if ( fontdes[newfont].psize > 0 )
 	    continue;
-	return(newfont);
+	return newfont;
     }
 
     /* Reuse an existing slot, with a strange heuristic */
@@ -804,7 +804,7 @@ relfont(void)
     fontdes[newfont].vfp = VFONT_NULL;
     fontdes[newfont].fnum = -1;
     fontdes[newfont].psize = -1;
-    return (newfont);
+    return newfont;
 }
 
 /*
@@ -831,7 +831,7 @@ outc(int code)
     int off8;		/* offset + 8 */
 
     if (fontwanted)  {
-	if ( readinfont() < 0 )  return(0);
+	if ( readinfont() < 0 )  return 0;
     }
     if (railmag == SPECIALFONT) {
 	c = spectab[code];
@@ -841,7 +841,7 @@ outc(int code)
     vdp = &fontdes[cfont].vfp->vf_dispatch[(int)c];
 
     if (vdp->vd_nbytes <= 0 )
-	return(0);
+	return 0;
 
     /* xpos is vertical (typ. called Y), ypos is horizontal (typ. X)
      * like a strip-chart recorder */
@@ -854,7 +854,7 @@ outc(int code)
     }
     if ( ypos + vdp->vd_right > bytes_per_line*8 )  {
 	fprintf(stderr, "cat-fb: '%c' off right edge of screen\n", c);
-	return(0);
+	return 0;
     }
     addr = (unsigned char *)&fontdes[cfont].vfp->vf_bits[vdp->vd_addr];
     llen = (vdp->vd_left + vdp->vd_right+7)/8;
@@ -884,7 +884,7 @@ outc(int code)
 	scanp += scanp_inc+count;
 	addr += count;
     }
-    return (1);
+    return 1;
 }
 
 void
@@ -965,7 +965,7 @@ writelines(int nlines, char *buf)
 	    fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
 	cur_fb_line--;
     }
-    return(0);
+    return 0;
 }
 
 /*

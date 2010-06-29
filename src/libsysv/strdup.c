@@ -53,10 +53,10 @@ strdup(register const char *cp)
 
     len = strlen( cp )+2;
     if ( (base = (char *)malloc( len )) == (char *)0 )
-	return( (char *)0 );
+	return (char *)0;
 
     memcpy(base, cp, len);
-    return(base);
+    return base;
 }
 
 #endif

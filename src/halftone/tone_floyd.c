@@ -117,7 +117,7 @@ tone_floyd(int pix, int x, int y, int nx, int ny, int new)
     if (x-Dir < width && x-Dir >= 0) {
 	error[x-Dir] += diff*w3;
     }
-    return(value);
+    return value;
 }
 
 /*

@@ -52,7 +52,7 @@
 }
 
 
-static char usage[] = "Usage: %s [-bvi] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
@@ -299,6 +299,7 @@ main(int argc, char *argv[])
     int c;
     double percent;
     int i;
+    int use_mc = 0;
 
     bu_setlinebuf(stderr);
 
@@ -333,7 +334,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:bm:n:o:r:vx:D:P:X:i")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:i")) != EOF) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -345,6 +346,9 @@ main(int argc, char *argv[])
 	    case 'n':		/* Surface normal tolerance. */
 		ttol.norm = atof(bu_optarg);
 		ttol.rel = 0.0;
+		break;
+	    case '8':
+		use_mc = 1;
 		break;
 	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
@@ -463,8 +467,8 @@ main(int argc, char *argv[])
 			1,			/* ncpu */
 			&tree_state,
 			0,			/* take all regions */
-			gcv_region_end,
-			nmg_booltree_leaf_tess,
+			use_mc?gcv_region_end_mc:gcv_region_end,
+			use_mc?NULL:nmg_booltree_leaf_tess,
 			(genptr_t)&gcvwriter);
 
     percent = 0;

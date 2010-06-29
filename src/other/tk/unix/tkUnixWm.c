@@ -822,9 +822,7 @@ TkWmDeadWindow(
 
 	for (prevPtr = (WmInfo *) winPtr->dispPtr->firstWmPtr; ;
 		prevPtr = prevPtr->nextPtr) {
-	    if (prevPtr == NULL) {
-		Tcl_Panic("couldn't unlink window in TkWmDeadWindow");
-	    }
+	    /* ASSERT: prevPtr != NULL [Bug 1789819] */
 	    if (prevPtr->nextPtr == wmPtr) {
 		prevPtr->nextPtr = wmPtr->nextPtr;
 		break;
@@ -917,9 +915,7 @@ TkWmDeadWindow(
 	    }
 	}
     }
-    if (wmPtr->numTransients != 0) {
-	Tcl_Panic("numTransients should be 0");
-    }
+    /* ASSERT: numTransients == 0 [Bug 1789819] */
 
     if (wmPtr->masterPtr != NULL) {
 	wmPtr2 = wmPtr->masterPtr->wmInfoPtr;
@@ -2339,9 +2335,7 @@ WmIconphotoCmd(
     Tk_PhotoHandle photo;
     Tk_PhotoImageBlock block;
     int i, size = 0, width, height, index = 0, x, y, isDefault = 0;
-    long R, G, B, A;
-    long *iconPropertyData;
-    unsigned char *pixelByte;
+    unsigned int *iconPropertyData;
 
     if (objc < 4) {
 	Tcl_WrongNumArgs(interp, 2, objv,
@@ -2384,11 +2378,12 @@ WmIconphotoCmd(
      * memory space.
      */
 
-    iconPropertyData = (long *) Tcl_AttemptAlloc(sizeof(long)*size);
+    iconPropertyData = (unsigned int *)
+	    Tcl_AttemptAlloc(sizeof(unsigned int) * size);
     if (iconPropertyData == NULL) {
 	return TCL_ERROR;
     }
-    memset(iconPropertyData, 0, sizeof(long)*size);
+    memset(iconPropertyData, 0, sizeof(unsigned int) * size);
 
     for (i = 3 + isDefault; i < objc; i++) {
 	photo = Tk_FindPhoto(interp, Tcl_GetString(objv[i]));
@@ -2412,31 +2407,27 @@ WmIconphotoCmd(
 	 *
 	 * This is an array of 32bit packed CARDINAL ARGB with high byte being
 	 * A, low byte being B. The first two cardinals are width, height.
-	 * Data is in rows, left to right and top to bottom.
+	 * Data is in rows, left to right and top to bottom. The data will be
+	 * endian-swapped going to the server if necessary. [Bug 2830420]
 	 */
 
 	/*
 	 * Encode the image data in the iconPropertyData array.
 	 */
 
-	iconPropertyData[index++] = width;
-	iconPropertyData[index++] = height;
+	iconPropertyData[index++] = (unsigned) width;
+	iconPropertyData[index++] = (unsigned) height;
 	for (y = 0; y < height; y++) {
 	    for (x = 0; x < width; x++) {
-		R = *(block.pixelPtr + x*block.pixelSize +
-			y*block.pitch + block.offset[0]);
-		G = *(block.pixelPtr + x*block.pixelSize +
-			y*block.pitch + block.offset[1]);
-		B = *(block.pixelPtr + x*block.pixelSize +
-			y*block.pitch + block.offset[2]);
-		A = *(block.pixelPtr + x*block.pixelSize +
-			y*block.pitch + block.offset[3]);
-		pixelByte = (unsigned char *) &iconPropertyData[index];
-		pixelByte[3] = A;
-		pixelByte[2] = R;
-		pixelByte[1] = G;
-		pixelByte[0] = B;
-		index++;
+		register unsigned char *pixelPtr =
+			block.pixelPtr + x*block.pixelSize + y*block.pitch;
+		register unsigned int R, G, B, A;
+
+		R = pixelPtr[block.offset[0]];
+		G = pixelPtr[block.offset[1]];
+		B = pixelPtr[block.offset[2]];
+		A = pixelPtr[block.offset[3]];
+		iconPropertyData[index++] = A<<24 | R<<16 | G<<8 | B<<0;
 	    }
 	}
     }
@@ -3186,9 +3177,8 @@ WmStackorderCmd(
 
     if (objc == 3) {
 	windows = TkWmStackorderToplevel(winPtr);
-	if (windows == NULL) {
-	    Tcl_Panic("TkWmStackorderToplevel failed");
-	} else {
+	if (windows != NULL) {
+	    /* ASSERT: true [Bug 1789819]*/
 	    for (window_ptr = windows; *window_ptr ; window_ptr++) {
 		Tcl_AppendElement(interp, (*window_ptr)->pathName);
 	    }
@@ -3242,13 +3232,7 @@ WmStackorderCmd(
 		    index2 = (window_ptr - windows);
 		}
 	    }
-	    if (index1 == -1) {
-		Tcl_Panic("winPtr window not found");
-	    }
-	    if (index2 == -1) {
-		Tcl_Panic("winPtr2 window not found");
-	    }
-
+	    /* ASSERT: index1 != -1 && index2 != -2 [Bug 1789819] */
 	    ckfree((char *) windows);
 	}
 
@@ -6228,9 +6212,9 @@ TkWmStackorderToplevel(
 		*window_ptr++ = childWinPtr;
 	    }
 	}
-	if ((window_ptr - windows) != table.numEntries) {
-	    Tcl_Panic("num matched toplevel windows does not equal num children");
-	}
+	/* ASSERT: window_ptr - windows == table.numEntries 
+	 * (#matched toplevel windows == #children) [Bug 1789819]
+	 */
 	*window_ptr = NULL;
 	if (numChildren) {
 	    XFree((char *) children);

@@ -242,7 +242,7 @@ HIDDEN int wood_init (void)
      *	Return to caller
      */
 
-    return (1);
+    return 1;
 }
 
 /*
@@ -350,7 +350,7 @@ HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char *
 
     if (bu_struct_parse( matparm, wood_parse, (char *)wd ) < 0 )  {
 	bu_free( (char *)wd, "wood_specific" );
-	return(-1);
+	return -1;
     }
 
     /*
@@ -361,25 +361,25 @@ HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char *
 	if (wd->dither[i] < 0 || wd->dither[i] > 1.0) {
 	    bu_log ("wood_setup(%s):  dither is out of range.\n",
 		    rp->reg_name);
-	    return (-1);
+	    return -1;
 	}
     }
 
     if (wd->flags == EXPLICIT_VERTEX) {
 	bu_log ("wood_setup(%s):  Explicit vertex specfied without direction\n", rp->reg_name);
-	return (-1);
+	return -1;
     }
 
     if (wd->flags == EXPLICIT_DIRECTION) {
 	bu_log ("wood_setup(%s):  Explicit direction specfied without vertex\n", rp->reg_name);
-	return (-1);
+	return -1;
     }
 
     /*
      *	Get the bounding RPP
      */
 
-    if (rt_bound_tree (rp->reg_treetop, wd->b_min, wd->b_max) < 0) return (-1);
+    if (rt_bound_tree (rp->reg_treetop, wd->b_min, wd->b_max) < 0) return -1;
 
     /*
      *	Add it to the wood chain
@@ -447,7 +447,7 @@ HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, char *
      *	Return to the caller
      */
 
-    return (1);
+    return 1;
 }
 
 /*
@@ -580,7 +580,7 @@ HIDDEN double wood_noise (double x, double y, double z, struct wood_specific *wd
     noise3 = (1 - zr) * noise1 + zr * noise2;
     noise  = pow (noise3, wd->scale);
 
-    return (noise);
+    return noise;
 }
 
 HIDDEN double wood_turb (double x, double y, double z, struct wood_specific *wd)
@@ -609,7 +609,7 @@ HIDDEN double wood_turb (double x, double y, double z, struct wood_specific *wd)
 	turb += wood_noise (a, b, c, wd);
     }
 
-    return (turb);
+    return turb;
 }
 
 /*
@@ -695,7 +695,7 @@ HIDDEN int wood_render(struct application *ap, struct partition *partp, struct s
      *	All done.  Return to the caller
      */
 
-    return(1);
+    return 1;
 }
 
 /*

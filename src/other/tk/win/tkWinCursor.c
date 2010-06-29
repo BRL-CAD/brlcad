@@ -32,6 +32,9 @@ typedef struct {
 #ifndef IDC_HAND
 #define IDC_HAND MAKEINTRESOURCE(32649)
 #endif
+#ifndef IDC_HELP
+#define IDC_HELP MAKEINTRESOURCE(32651)
+#endif
 
 /*
  * The table below is used to map from the name of a predefined cursor to its
@@ -62,6 +65,7 @@ static struct CursorName {
     {"watch",			IDC_WAIT},
     {"xterm",			IDC_IBEAM},
     {"hand2",			IDC_HAND},
+    {"question_arrow",		IDC_HELP},
     {NULL,			0}
 };
 

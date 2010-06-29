@@ -10,9 +10,8 @@ dist_tcl_DATA = \
 	closeall.png \
 	combination.png \
 	command.png \
-	compErase.png \
-	compExclude.png \
-	compSelect.png \
+	component_pick.png \
+	component_erase.png \
 	configure.png \
 	edit_copy.png \
 	edit_cut.png \
@@ -29,6 +28,12 @@ dist_tcl_DATA = \
 	folder_closed_small_disabled.png \
 	folder_open_small.png \
 	folder_open_small_disabled.png \
+	framebuffer.png \
+	framebuffer_clear.png \
+	framebuffer_off.png \
+	framebuffer_underlay.png \
+	framebuffer_interlay.png \
+	framebuffer_overlay.png \
 	global_undo.png \
 	measure.png \
 	object_undo.png \
@@ -61,15 +66,17 @@ dist_tcl_DATA = \
 	primitive_superell.png \
 	primitive_tgc.png \
 	primitive_tor.png \
+	raytrace.png \
+	raytrace_abort.png \
 	refresh.png \
 	revert.png \
 	run.png \
 	save.png \
+	view_center.png \
 	view_left_right_small.png \
 	view_obj_select.png \
 	view_rotate.png \
 	view_scale.png \
-	view_select.png \
 	view_top_bottom_small.png \
 	view_translate.png \
 	wizard.png

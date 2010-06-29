@@ -108,22 +108,181 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* C99 says uintptr_t is an optional type, so make sure something is
- * provided.
+/* make sure most of the C99 stdint types are provided including the
+ * optional uintptr_t type.
  */
-#if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
-#  ifdef HAVE_STDINT_H
+#if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
+#  if defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
+#    define __STDC_LIMIT_MACROS 1
+#    define __STDC_CONSTANT_MACROS 1
 #    include <stdint.h>
-#  endif
-#  if !defined(UINTPTR_MAX) && !defined(_UINTPTR_T_DEFINED)
-#    ifdef HAVE_UINT64_T
-typedef uint64_t uintptr_t;
-#    else
-typedef unsigned long long uintptr_t;
-#    endif
-#    define HAVE_UINT64_T 1
+#  else
+#    include "pstdint.h"
 #  endif
 #endif
+
+/* Provide a means to conveniently test the version of the GNU
+ * compiler.  Use it like this:
+ *
+ * #if GCC_PREREQ(2,8)
+ * ... code requiring gcc 2.8 or later ...
+ * #endif
+ *
+ * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
+ * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
+ */
+#ifndef GCC_PREREQ
+#  if defined __GNUC__
+#    define GCC_PREREQ(major, minor) __GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor))
+#  else
+#    define GCC_PREREQ(major, minor) 0
+#  endif
+#else
+#  warning "GCC_PREREQ is already defined.  See the common.h header."
+#endif
+
+/* Provide a means to conveniently test the version of the Intel
+ * compiler.  Use it like this:
+ *
+ * #if ICC_PREREQ(800)
+ * ... code requiring icc 8.0 or later ...
+ * #endif
+ *
+ * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
+ * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
+ */
+/* provide a means to conveniently test the version of ICC */
+#ifndef ICC_PREREQ
+#  if defined __INTEL_COMPILER
+#    define ICC_PREREQ(version) (__INTEL_COMPILER >= (version))
+#  else
+#    define ICC_PREREQ(version) 0
+#  endif
+#else
+#  warning "ICC_PREREQ is already defined.  See the common.h header."
+#endif
+
+/* This is so we can use gcc's "format string vs arguments"-check for
+ * various printf-like functions, and still maintain compatability.
+ */
+#ifndef __attribute__
+/* This feature is only available in gcc versions 2.5 and later. */
+#  if !GCC_PREREQ(2, 5)
+#    define __attribute__(ignore) /* empty */
+#  endif
+/* The __-protected variants of `format' and `printf' attributes
+ * are accepted by gcc versions 2.6.4 (effectively 2.7) and later.
+ */
+#  if !GCC_PREREQ(2, 7)
+#    define __format__ format
+#    define __printf__ printf
+#    define __noreturn__ noreturn
+#  endif
+#endif
+
+/**
+ * UNUSED provides a common mechanism for declaring unused parameters.
+ * Use it like this:
+ *
+ * int
+ * my_function(int argc, char **UNUSED(argv))
+ * {
+ *   ...
+ * }
+ *
+ */
+#ifndef UNUSED
+#  if GCC_PREREQ(2, 5)
+     /* GCC-style */
+#    define UNUSED(parameter) (parameter) __attribute__((unused))
+#  else
+     /* MSVC/C++ */
+#    ifdef __cplusplus
+#      define UNUSED(parameter) /* parameter */
+#    else
+#      if defined(_MSC_VER)
+         /* disable reporting an "unreferenced formal parameter" */
+#        pragma warning( disable : 4100 )
+#      endif
+#      define UNUSED(parameter) (parameter)
+#    endif
+#  endif
+#else
+#  undef UNUSED
+#  define UNUSED(parameter) (parameter)
+#  warning "UNUSED was previously defined.  Parameter declaration behavior is unknown, see common.h"
+#endif
+
+/**
+ * LIKELY provides a common mechanism for providing branch prediction
+ * hints to the compiler so that it can better optimize.  It should be
+ * used when it's exceptionally likely that an expected code path will
+ * almost always be executed.  Use it like this:
+ *
+ *  if (LIKELY(x == 1)) {
+ *    ... expected code path ...
+ *  }
+ *
+ */
+#ifndef LIKELY
+#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+
+#    define LIKELY(expression) __builtin_expect((expression), 1)
+#  else
+#    define LIKELY(expression) (expression)
+#  endif
+#else
+#  undef LIKELY
+#  define LIKELY(expression) (expression)
+#  warning "LIKELY was previously defined.  Unable to provide branch hinting."
+#endif
+
+/**
+ * UNLIKELY provides a common mechanism for providing branch
+ * prediction hints to the compiler so that it can better optimize.
+ * It should be used when it's exceptionaly unlikely that a given code
+ * path will ever be executed.  Use it like this:
+ *
+ *  if (UNLIKELY(x == 0)) {
+ *    ... unexpected code path ...
+ *  }
+ *
+ */
+#ifndef UNLIKELY
+#  if GCC_PREREQ(3, 0) || ICC_PREREQ(800)
+#    define UNLIKELY(expression) __builtin_expect((expression), 0)
+#  else
+#    define UNLIKELY(expression) (expression)
+#  endif
+#else
+#  undef UNLIKELY
+#  define UNLIKELY(expression) (expression)
+#  warning "UNLIKELY was previously defined.  Unable to provide branch hinting."
+#endif
+
+/**
+ * DEPRECATED provides a common mechanism for denoting public API
+ * (e.g., functions, typedefs, variables) that is considered
+ * deprecated.  Use it like this:
+ *
+ * DEPRECATED int my_function(void);
+ *
+ * typedef struct karma some_type DEPRECATED;
+ */
+#ifndef DEPRECATED
+#  if GCC_PREREQ(3, 1) || ICC_PREREQ(800)
+#    define DEPRECATED __attribute__((deprecated))
+#  elif defined(_WIN32)
+#    define DEPRECATED __declspec(deprecated("This function is DEPRECATED.  Please update code to new API."))
+#  else
+#    define DEPRECATED /* deprecated */
+#  endif
+#else
+#  undef DEPRECATED
+#  define DEPRECATED /* deprecated */
+#  warning "DEPRECATED was previously defined.  Disabling the declaration."
+#endif
+
 
 #endif  /* __COMMON_H__ */
 /** @} */

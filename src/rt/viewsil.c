@@ -85,7 +85,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     }
     scanbuf = (unsigned char *)
 	bu_malloc( width, "scanline buffer" );
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 /*
@@ -175,7 +175,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     bu_semaphore_acquire( RT_SEM_RESULTS );
     scanbuf[ap->a_x] = 1;
     bu_semaphore_release( RT_SEM_RESULTS );
-    return(1);	/* report hit to main routine */
+    return 1;	/* report hit to main routine */
 }
 
 /*
@@ -189,7 +189,7 @@ raymiss(register struct application *ap)
     bu_semaphore_acquire( RT_SEM_RESULTS );
     scanbuf[ap->a_x] = 255;
     bu_semaphore_release( RT_SEM_RESULTS );
-    return(0);
+    return 0;
 }
 
 void application_init (void) {}

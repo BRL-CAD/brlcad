@@ -503,8 +503,8 @@ TclpSetVariables(
     OemId *oemId;
     OSVERSIONINFOA osInfo;
     Tcl_DString ds;
-    TCHAR szUserName[UNLEN+1];
-    DWORD dwUserNameLen = sizeof(szUserName);
+    WCHAR szUserName[UNLEN+1];
+    DWORD cchUserNameLen = UNLEN;
 
     Tcl_SetVar2Ex(interp, "tclDefaultLibrary", NULL,
 	    TclGetProcessGlobalValue(&defaultLibraryDir), TCL_GLOBAL_ONLY);
@@ -573,12 +573,15 @@ TclpSetVariables(
     /*
      * Initialize the user name from the environment first, since this is much
      * faster than asking the system.
+     * Note: cchUserNameLen is number of characters including nul terminator.
      */
 
     Tcl_DStringInit(&ds);
     if (TclGetEnv("USERNAME", &ds) == NULL) {
-	if (GetUserName(szUserName, &dwUserNameLen) != 0) {
-	    Tcl_WinTCharToUtf(szUserName, (int) dwUserNameLen, &ds);
+	if (tclWinProcs->getUserName((LPTSTR)szUserName, &cchUserNameLen) != 0) {
+	    int cbUserNameLen = cchUserNameLen - 1;
+	    if (tclWinProcs->useWide) cbUserNameLen *= sizeof(WCHAR);
+	    Tcl_WinTCharToUtf((LPTSTR)szUserName, cbUserNameLen, &ds);
 	}
     }
     Tcl_SetVar2(interp, "tcl_platform", "user", Tcl_DStringValue(&ds),

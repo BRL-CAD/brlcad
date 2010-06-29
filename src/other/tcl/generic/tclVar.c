@@ -525,12 +525,15 @@ TclObjLookupVarEx(
     const Tcl_ObjType *typePtr = part1Ptr->typePtr;
     const char *errMsg = NULL;
     CallFrame *varFramePtr = iPtr->varFramePtr;
+#if ENABLE_NS_VARNAME_CACHING
     Namespace *nsPtr;
+#endif
     char *part2 = part2Ptr? TclGetString(part2Ptr):NULL;
     char *newPart2 = NULL;
 
     *arrayPtrPtr = NULL;
 
+#if ENABLE_NS_VARNAME_CACHING
     if (varFramePtr) {
 	nsPtr = varFramePtr->nsPtr;
     } else {
@@ -541,6 +544,7 @@ TclObjLookupVarEx(
 
 	nsPtr = NULL;
     }
+#endif
 
     if (typePtr == &localVarNameType) {
 	int localIndex;
@@ -1874,6 +1878,14 @@ TclPtrSetVar(
 	    } else {
 		if (Tcl_IsShared(oldValuePtr)) {	/* Append to copy. */
 		    varPtr->value.objPtr = Tcl_DuplicateObj(oldValuePtr);
+
+		    /*
+		     * TIP #280.
+		     * Ensure that the continuation line data for the string
+		     * is not lost and applies to the extended script as well.
+		     */
+		    TclContinuationsCopy (varPtr->value.objPtr, oldValuePtr);
+
 		    TclDecrRefCount(oldValuePtr);
 		    oldValuePtr = varPtr->value.objPtr;
 		    Tcl_IncrRefCount(oldValuePtr);	/* Since var is ref */
@@ -2352,11 +2364,22 @@ UnsetVarStruct(
 	if ((dummyVar.flags & VAR_TRACED_UNSET)
 		|| (arrayPtr && (arrayPtr->flags & VAR_TRACED_UNSET))) {
 	    dummyVar.flags &= ~VAR_TRACE_ACTIVE;
-	    TclObjCallVarTraces(iPtr, arrayPtr, (Var *) &dummyVar,
-		    part1Ptr, part2Ptr,
+	    TclObjCallVarTraces(iPtr, arrayPtr, &dummyVar, part1Ptr, part2Ptr,
 		    (flags & (TCL_GLOBAL_ONLY|TCL_NAMESPACE_ONLY))
 			    | TCL_TRACE_UNSETS,
 		    /* leaveErrMsg */ 0, -1);
+
+	    /*
+	     * The traces that we just called may have triggered a change in
+	     * the set of traces. [Bug 2629338]
+	     */
+
+	    tracePtr = NULL;
+	    if (TclIsVarTraced(&dummyVar)) {
+		tPtr = Tcl_FindHashEntry(&iPtr->varTraces, (char *) &dummyVar);
+		tracePtr = Tcl_GetHashValue(tPtr);
+	    }
+
 	    if (tPtr) {
 		Tcl_DeleteHashEntry(tPtr);
 	    }
@@ -2369,6 +2392,7 @@ UnsetVarStruct(
 		VarTrace *prevPtr = tracePtr;
 
 		tracePtr = tracePtr->nextPtr;
+		prevPtr->nextPtr = NULL;
 		Tcl_EventuallyFree((ClientData) prevPtr, TCL_DYNAMIC);
 	    }
 	    for (activePtr = iPtr->activeVarTracePtr;  activePtr != NULL;
@@ -4370,7 +4394,7 @@ TclDeleteNamespaceVars(
 	    varPtr = VarHashFirstVar(tablePtr, &search)) {
 	Tcl_Obj *objPtr = Tcl_NewObj();
 	Tcl_IncrRefCount(objPtr);
-	
+
 	VarHashRefCount(varPtr)++;	/* Make sure we get to remove from
 					 * hash. */
 	Tcl_GetVariableFullName(interp, (Tcl_Var) varPtr, objPtr);
@@ -4378,13 +4402,13 @@ TclDeleteNamespaceVars(
 		NULL, flags);
 	Tcl_DecrRefCount(objPtr); /* free no longer needed obj */
 
-
 	/*
 	 * Remove the variable from the table and force it undefined in case
 	 * an unset trace brought it back from the dead.
 	 */
 
 	if (TclIsVarTraced(varPtr)) {
+	    ActiveVarTrace *activePtr;
 	    Tcl_HashEntry *tPtr = Tcl_FindHashEntry(&iPtr->varTraces,
 		    (char *) varPtr);
 	    VarTrace *tracePtr = (VarTrace *) Tcl_GetHashValue(tPtr);
@@ -4393,10 +4417,17 @@ TclDeleteNamespaceVars(
 		VarTrace *prevPtr = tracePtr;
 
 		tracePtr = tracePtr->nextPtr;
+		prevPtr->nextPtr = NULL;
 		Tcl_EventuallyFree((ClientData) prevPtr, TCL_DYNAMIC);
 	    }
 	    Tcl_DeleteHashEntry(tPtr);
 	    varPtr->flags &= ~VAR_ALL_TRACES;
+	    for (activePtr = iPtr->activeVarTracePtr; activePtr != NULL;
+		    activePtr = activePtr->nextPtr) {
+		if (activePtr->varPtr == varPtr) {
+		    activePtr->nextTracePtr = NULL;
+		}
+	    }
 	}
 	VarHashRefCount(varPtr)--;
 	VarHashDeleteEntry(varPtr);
@@ -4499,6 +4530,7 @@ TclDeleteCompiledLocalVars(
 	UnsetVarStruct(varPtr, NULL, iPtr, *namePtrPtr, NULL,
 		TCL_TRACE_UNSETS);
     }
+    framePtr->numCompiledLocals = 0;
 }
 
 /*

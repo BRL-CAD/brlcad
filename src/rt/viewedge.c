@@ -45,6 +45,42 @@
  * still allow edge processing (e.g., basic canny edge detection) on
  * the resultant set so you can control the level of edges visible.
  *
+ * There are a variety of accepted mechanisms for generating an edge
+ * diagram.  Some are found more acceptable than others, though, for
+ * general purpose use.
+ *
+ * THOSE GENERALLY ALL AGREE ON ARE:
+ *
+ * ** Exterior silhouettes: an outer edge contour, changing from one
+ * object to the next or to background. [rtedge implements both]
+ *
+ * ** Occluding contours: depth discontinuities, surface normal is
+ * nearly perpendicular to view direction [rtedge implements both]
+ *
+ * OTHERS THAT COULD BE USEFUL BUT RTEDGE DOES NOT IMPLEMENT ARE:
+ *
+ * ** Suggestive contours
+ *
+ * ** "Almost contours"
+ *
+ * ** A point that becomes a contour in nearby views
+ *
+ * ** DOT(normal, viewdir) is at a local minimum (it's a form of
+ * curvature where radial curvature == 0)
+ *
+ * OTHERS THAT COULD ALSO BE USEFUL INCLUDE:
+ *
+ * ** Image valleys, indicated by intensity
+ *
+ * ** Principal highlights, showing maxima of (n.v) to indicate
+ * view-independent ridges and valleys
+ *
+ * ** Different family of lines in shadowed regions, not just inverted
+ * (e.g., cross-hatching)
+ *
+ * ** Apparent ridges and valleys (view-dependent) where you look for
+ * rapid screen-space normal variation
+ *
  */
 
 #include "common.h"
@@ -75,7 +111,7 @@
 extern FBIO *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
-extern int width, height;
+extern size_t width, height;
 extern int per_processor_chunk;
 extern int default_background;
 
@@ -91,8 +127,9 @@ struct cell {
     vect_t c_rdir;	/* ray direction, permits perspective */
 };
 
+
 #define MISS_DIST MAX_FASTF
-#define MISS_ID		-1
+#define MISS_ID -1
 
 static unsigned char *writeable[MAX_PSW];
 static unsigned char *scanline[MAX_PSW];
@@ -455,7 +492,7 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
 	    occlusion_apps[i]->a_hit = occlusion_hit;
 	    occlusion_apps[i]->a_miss = occlusion_miss;
 	    if (rpt_overlap)
-		occlusion_apps[i]->a_logoverlap = ((void (*)())0);
+		occlusion_apps[i]->a_logoverlap = (void (*)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *))NULL;
 	    else
 		occlusion_apps[i]->a_logoverlap = rt_silent_logoverlap;
 
@@ -523,6 +560,7 @@ view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_
 
     return minus_F || (!minus_o && !minus_F); /* we need a framebuffer */
 }
+
 
 /**
  * beginning of a frame
@@ -597,6 +635,7 @@ view_2init(struct application *ap)
     }
     return;
 }
+
 
 /**
  * end of each pixel
@@ -1359,6 +1398,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     return edge;
 }
 
+
 void application_init(void) {
     bu_vls_init(&occlusion_objects);
 }
@@ -1371,6 +1411,7 @@ int diffpixel(RGBpixel a, RGBpixel b)
     if (a[BLU] != b[BLU]) return 1;
     return 0;
 }
+
 
 /*
  * Local Variables:

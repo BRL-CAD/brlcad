@@ -174,7 +174,8 @@ extern struct solid MGED_FreeSolid;	/* Head of freelist */
 
 extern int tran();
 extern int irot();
-extern void mged_setup(void);
+extern void mged_setup(Tcl_Interp **interpreter);
+extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
 extern void dir_build();
 extern void buildHrot(fastf_t *, double, double, double);
 extern void dozoom(int which_eye);
@@ -545,7 +546,9 @@ int mged_svbase(void);
 int mged_vrot_xyz(char origin, char coords, vect_t rvec);
 void size_reset(void);
 void solid_list_callback(void);
-void view_ring_destroy(struct dm_list *dlp);
+
+extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
+extern void view_ring_destroy(struct dm_list *dlp);
 
 /* cmd.c */
 int cmdline(struct bu_vls *vp, int record);
@@ -654,11 +657,12 @@ extern int interactive; /* for pr_prompt */
 void pr_prompt(int show_prompt);
 
 /* grid.c */
-void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
-void snap_keypoint_to_grid(void);
-void snap_view_center_to_grid(void);
-void snap_to_grid(fastf_t *mx, fastf_t *my);
-void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
+extern void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
+extern void snap_keypoint_to_grid(void);
+extern void snap_view_center_to_grid(void);
+extern void snap_to_grid(fastf_t *mx, fastf_t *my);
+extern void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
+extern void draw_grid(void);
 
 /* menu.c */
 int mmenu_select(int pen_y, int do_func);
@@ -671,7 +675,8 @@ int f_overlay(
     char **argv);
 
 /* predictor.c */
-void predictor_frame(void);
+extern void predictor_frame(void);
+extern void predictor_init(void);
 
 /* usepen.c */
 int f_mouse(
@@ -757,8 +762,8 @@ int epain(struct rt_db_internal *ip, fastf_t thick[2]);
 int etoin(struct rt_db_internal *ip, fastf_t thick[1]);
 
 /* set.c */
-void set_scroll_private(void);
-void mged_variable_setup(Tcl_Interp *interpreter);
+extern void set_scroll_private(void);
+extern void mged_variable_setup(Tcl_Interp *interpreter);
 
 /* scroll.c */
 void set_scroll(void);
@@ -779,7 +784,8 @@ struct wdb_pipept *del_pipept(struct wdb_pipept *);
 void move_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
 
 /* vparse.c */
-void mged_vls_struct_parse_old(
+extern void mged_vls_struct_parse(struct bu_vls *vls, char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, char **argv); /* defined in vparse.c */
+extern void mged_vls_struct_parse_old(
     struct bu_vls *vls,
     const char *title,
     struct bu_structparse *how_to_parse,

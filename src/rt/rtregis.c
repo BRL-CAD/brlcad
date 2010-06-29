@@ -139,7 +139,7 @@ mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat)
 
     MAT_COPY(regismat, mat2);
     bn_mat_print("regismat", regismat);
-    return(1);				/* OK */
+    return 1;				/* OK */
 }
 
 

@@ -355,7 +355,10 @@ test expr-8.11 {CompileEqualityExpr: error compiling equality arm} -body {
     expr 2!=x
 } -returnCodes error -match glob -result *
 test expr-8.12 {CompileBitAndExpr: equality expr} {expr {"a"eq"a"}} 1
-test expr-8.13 {CompileBitAndExpr: equality expr} {expr {"\374" eq "ü"}} 1
+test expr-8.13 {CompileBitAndExpr: equality expr} {
+    set s \u00fc
+    expr {"\374" eq $s}
+} 1
 test expr-8.14 {CompileBitAndExpr: equality expr} {expr 3eq2} 0
 test expr-8.15 {CompileBitAndExpr: equality expr} {expr 2.0eq2} 0
 test expr-8.16 {CompileBitAndExpr: equality expr} {expr 3.2ne2.2} 1
@@ -1103,6 +1106,331 @@ test expr-23.53 {INST_EXPON: intermediate powers of 64-bit integers} {
     }
     set trouble
 } {test intermediate powers of 64-bit ints}
+test expr-23.54.0 {INST_EXPON: Bug 2798543} {
+    expr {3**9 == 3**65545}
+} 0
+test expr-23.54.1 {INST_EXPON: Bug 2798543} {
+    expr {3**10 == 3**65546}
+} 0
+test expr-23.54.2 {INST_EXPON: Bug 2798543} {
+    expr {3**11 == 3**65547}
+} 0
+test expr-23.54.3 {INST_EXPON: Bug 2798543} {
+    expr {3**12 == 3**65548}
+} 0
+test expr-23.54.4 {INST_EXPON: Bug 2798543} {
+    expr {3**13 == 3**65549}
+} 0
+test expr-23.54.5 {INST_EXPON: Bug 2798543} {
+    expr {3**14 == 3**65550}
+} 0
+test expr-23.54.6 {INST_EXPON: Bug 2798543} {
+    expr {3**15 == 3**65551}
+} 0
+test expr-23.54.7 {INST_EXPON: Bug 2798543} {
+    expr {3**16 == 3**65552}
+} 0
+test expr-23.54.8 {INST_EXPON: Bug 2798543} {
+    expr {3**17 == 3**65553}
+} 0
+test expr-23.54.9 {INST_EXPON: Bug 2798543} {
+    expr {3**18 == 3**65554}
+} 0
+test expr-23.54.10 {INST_EXPON: Bug 2798543} {
+    expr {3**19 == 3**65555}
+} 0
+test expr-23.54.11 {INST_EXPON: Bug 2798543} {
+    expr {3**9 == 3**131081}
+} 0
+test expr-23.54.12 {INST_EXPON: Bug 2798543} -body {
+    expr {3**9 == 3**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.54.13 {INST_EXPON: Bug 2798543} {
+    expr {(-3)**9 == (-3)**65545}
+} 0
+test expr-23.55.0 {INST_EXPON: Bug 2798543} {
+    expr {4**9 == 4**65545}
+} 0
+test expr-23.55.1 {INST_EXPON: Bug 2798543} {
+    expr {4**15 == 4**65551}
+} 0
+test expr-23.55.2 {INST_EXPON: Bug 2798543} {
+    expr {4**9 == 4**131081}
+} 0
+test expr-23.55.3 {INST_EXPON: Bug 2798543} -body {
+    expr {4**9 == 4**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.55.4 {INST_EXPON: Bug 2798543} {
+    expr {(-4)**9 == (-4)**65545}
+} 0
+test expr-23.56.0 {INST_EXPON: Bug 2798543} {
+    expr {5**9 == 5**65545}
+} 0
+test expr-23.56.1 {INST_EXPON: Bug 2798543} {
+    expr {5**13 == 5**65549}
+} 0
+test expr-23.56.2 {INST_EXPON: Bug 2798543} {
+    expr {5**9 == 5**131081}
+} 0
+test expr-23.56.3 {INST_EXPON: Bug 2798543} -body {
+    expr {5**9 == 5**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.56.4 {INST_EXPON: Bug 2798543} {
+    expr {(-5)**9 == (-5)**65545}
+} 0
+test expr-23.57.0 {INST_EXPON: Bug 2798543} {
+    expr {6**9 == 6**65545}
+} 0
+test expr-23.57.1 {INST_EXPON: Bug 2798543} {
+    expr {6**11 == 6**65547}
+} 0
+test expr-23.57.2 {INST_EXPON: Bug 2798543} {
+    expr {6**9 == 6**131081}
+} 0
+test expr-23.57.3 {INST_EXPON: Bug 2798543} -body {
+    expr {6**9 == 6**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.57.4 {INST_EXPON: Bug 2798543} {
+    expr {(-6)**9 == (-6)**65545}
+} 0
+test expr-23.58.0 {INST_EXPON: Bug 2798543} {
+    expr {7**9 == 7**65545}
+} 0
+test expr-23.58.1 {INST_EXPON: Bug 2798543} {
+    expr {7**11 == 7**65547}
+} 0
+test expr-23.58.2 {INST_EXPON: Bug 2798543} {
+    expr {7**9 == 7**131081}
+} 0
+test expr-23.58.3 {INST_EXPON: Bug 2798543} -body {
+    expr {7**9 == 7**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.58.4 {INST_EXPON: Bug 2798543} {
+    expr {(-7)**9 == (-7)**65545}
+} 0
+test expr-23.59.0 {INST_EXPON: Bug 2798543} {
+    expr {8**9 == 8**65545}
+} 0
+test expr-23.59.1 {INST_EXPON: Bug 2798543} {
+    expr {8**10 == 8**65546}
+} 0
+test expr-23.59.2 {INST_EXPON: Bug 2798543} {
+    expr {8**9 == 8**131081}
+} 0
+test expr-23.59.3 {INST_EXPON: Bug 2798543} -body {
+    expr {8**9 == 8**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.59.4 {INST_EXPON: Bug 2798543} {
+    expr {(-8)**9 == (-8)**65545}
+} 0
+test expr-23.60.0 {INST_EXPON: Bug 2798543} {
+    expr {9**9 == 9**65545}
+} 0
+test expr-23.60.1 {INST_EXPON: Bug 2798543} {
+    expr {9**9 == 9**131081}
+} 0
+test expr-23.60.2 {INST_EXPON: Bug 2798543} -body {
+    expr {9**9 == 9**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.60.3 {INST_EXPON: Bug 2798543} {
+    expr {(-9)**9 == (-9)**65545}
+} 0
+test expr-23.61.0 {INST_EXPON: Bug 2798543} {
+    expr {10**9 == 10**65545}
+} 0
+test expr-23.61.1 {INST_EXPON: Bug 2798543} {
+    expr {10**9 == 10**131081}
+} 0
+test expr-23.61.2 {INST_EXPON: Bug 2798543} -body {
+    expr {10**9 == 10**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.61.3 {INST_EXPON: Bug 2798543} {
+    expr {(-10)**9 == (-10)**65545}
+} 0
+test expr-23.62.0 {INST_EXPON: Bug 2798543} {
+    expr {11**9 == 11**65545}
+} 0
+test expr-23.62.1 {INST_EXPON: Bug 2798543} {
+    expr {11**9 == 11**131081}
+} 0
+test expr-23.62.2 {INST_EXPON: Bug 2798543} -body {
+    expr {11**9 == 11**268435465}
+} -returnCodes error -result {exponent too large}
+test expr-23.62.3 {INST_EXPON: Bug 2798543} {
+    expr {(-11)**9 == (-11)**65545}
+} 0
+test expr-23.63.0 {INST_EXPON: Bug 2798543} {
+    expr {3**20 == 3**65556}
+} 0
+test expr-23.63.1 {INST_EXPON: Bug 2798543} {
+    expr {3**39 == 3**65575}
+} 0
+test expr-23.63.2 {INST_EXPON: Bug 2798543} {
+    expr {3**20 == 3**131092}
+} 0
+test expr-23.63.3 {INST_EXPON: Bug 2798543} -body {
+    expr {3**20 == 3**268435476}
+} -returnCodes error -result {exponent too large}
+test expr-23.63.4 {INST_EXPON: Bug 2798543} {
+    expr {(-3)**20 == (-3)**65556}
+} 0
+test expr-23.64.0 {INST_EXPON: Bug 2798543} {
+    expr {4**17 == 4**65553}
+} 0
+test expr-23.64.1 {INST_EXPON: Bug 2798543} {
+    expr {4**31 == 4**65567}
+} 0
+test expr-23.64.2 {INST_EXPON: Bug 2798543} {
+    expr {4**17 == 4**131089}
+} 0
+test expr-23.64.3 {INST_EXPON: Bug 2798543} -body {
+    expr {4**17 == 4**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.64.4 {INST_EXPON: Bug 2798543} {
+    expr {(-4)**17 == (-4)**65553}
+} 0
+test expr-23.65.0 {INST_EXPON: Bug 2798543} {
+    expr {5**17 == 5**65553}
+} 0
+test expr-23.65.1 {INST_EXPON: Bug 2798543} {
+    expr {5**27 == 5**65563}
+} 0
+test expr-23.65.2 {INST_EXPON: Bug 2798543} {
+    expr {5**17 == 5**131089}
+} 0
+test expr-23.65.3 {INST_EXPON: Bug 2798543} -body {
+    expr {5**17 == 5**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.65.4 {INST_EXPON: Bug 2798543} {
+    expr {(-5)**17 == (-5)**65553}
+} 0
+test expr-23.66.0 {INST_EXPON: Bug 2798543} {
+    expr {6**17 == 6**65553}
+} 0
+test expr-23.66.1 {INST_EXPON: Bug 2798543} {
+    expr {6**24 == 6**65560}
+} 0
+test expr-23.66.2 {INST_EXPON: Bug 2798543} {
+    expr {6**17 == 6**131089}
+} 0
+test expr-23.66.3 {INST_EXPON: Bug 2798543} -body {
+    expr {6**17 == 6**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.66.4 {INST_EXPON: Bug 2798543} {
+    expr {(-6)**17 == (-6)**65553}
+} 0
+test expr-23.67.0 {INST_EXPON: Bug 2798543} {
+    expr {7**17 == 7**65553}
+} 0
+test expr-23.67.1 {INST_EXPON: Bug 2798543} {
+    expr {7**22 == 7**65558}
+} 0
+test expr-23.67.2 {INST_EXPON: Bug 2798543} {
+    expr {7**17 == 7**131089}
+} 0
+test expr-23.67.3 {INST_EXPON: Bug 2798543} -body {
+    expr {7**17 == 7**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.67.4 {INST_EXPON: Bug 2798543} {
+    expr {(-7)**17 == (-7)**65553}
+} 0
+test expr-23.68.0 {INST_EXPON: Bug 2798543} {
+    expr {8**17 == 8**65553}
+} 0
+test expr-23.68.1 {INST_EXPON: Bug 2798543} {
+    expr {8**20 == 8**65556}
+} 0
+test expr-23.68.2 {INST_EXPON: Bug 2798543} {
+    expr {8**17 == 8**131089}
+} 0
+test expr-23.68.3 {INST_EXPON: Bug 2798543} -body {
+    expr {8**17 == 8**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.68.4 {INST_EXPON: Bug 2798543} {
+    expr {(-8)**17 == (-8)**65553}
+} 0
+test expr-23.69.0 {INST_EXPON: Bug 2798543} {
+    expr {9**17 == 9**65553}
+} 0
+test expr-23.69.1 {INST_EXPON: Bug 2798543} {
+    expr {9**19 == 9**65555}
+} 0
+test expr-23.69.2 {INST_EXPON: Bug 2798543} {
+    expr {9**17 == 9**131089}
+} 0
+test expr-23.69.3 {INST_EXPON: Bug 2798543} -body {
+    expr {9**17 == 9**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.69.4 {INST_EXPON: Bug 2798543} {
+    expr {(-9)**17 == (-9)**65553}
+} 0
+test expr-23.70.0 {INST_EXPON: Bug 2798543} {
+    expr {10**17 == 10**65553}
+} 0
+test expr-23.70.1 {INST_EXPON: Bug 2798543} {
+    expr {10**18 == 10**65554}
+} 0
+test expr-23.70.2 {INST_EXPON: Bug 2798543} {
+    expr {10**17 == 10**131089}
+} 0
+test expr-23.70.3 {INST_EXPON: Bug 2798543} -body {
+    expr {10**17 == 10**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.70.4 {INST_EXPON: Bug 2798543} {
+    expr {(-10)**17 == (-10)**65553}
+} 0
+test expr-23.71.0 {INST_EXPON: Bug 2798543} {
+    expr {11**17 == 11**65553}
+} 0
+test expr-23.71.1 {INST_EXPON: Bug 2798543} {
+    expr {11**18 == 11**65554}
+} 0
+test expr-23.71.2 {INST_EXPON: Bug 2798543} {
+    expr {11**17 == 11**131089}
+} 0
+test expr-23.71.3 {INST_EXPON: Bug 2798543} -body {
+    expr {11**17 == 11**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.71.4 {INST_EXPON: Bug 2798543} {
+    expr {(-11)**17 == (-11)**65553}
+} 0
+test expr-23.72.0 {INST_EXPON: Bug 2798543} {
+    expr {12**17 == 12**65553}
+} 0
+test expr-23.72.1 {INST_EXPON: Bug 2798543} {
+    expr {12**17 == 12**131089}
+} 0
+test expr-23.72.2 {INST_EXPON: Bug 2798543} -body {
+    expr {12**17 == 12**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.72.3 {INST_EXPON: Bug 2798543} {
+    expr {(-12)**17 == (-12)**65553}
+} 0
+test expr-23.73.0 {INST_EXPON: Bug 2798543} {
+    expr {13**17 == 13**65553}
+} 0
+test expr-23.73.1 {INST_EXPON: Bug 2798543} {
+    expr {13**17 == 13**131089}
+} 0
+test expr-23.73.2 {INST_EXPON: Bug 2798543} -body {
+    expr {13**17 == 13**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.73.3 {INST_EXPON: Bug 2798543} {
+    expr {(-13)**17 == (-13)**65553}
+} 0
+test expr-23.74.0 {INST_EXPON: Bug 2798543} {
+    expr {14**17 == 14**65553}
+} 0
+test expr-23.74.1 {INST_EXPON: Bug 2798543} {
+    expr {14**17 == 14**131089}
+} 0
+test expr-23.74.2 {INST_EXPON: Bug 2798543} -body {
+    expr {14**17 == 14**268435473}
+} -returnCodes error -result {exponent too large}
+test expr-23.74.3 {INST_EXPON: Bug 2798543} {
+    expr {(-14)**17 == (-14)**65553}
+} 0
+
 	
 # Some compilers get this wrong; ensure that we work around it correctly
 test expr-24.1 {expr edge cases; shifting} {expr int(5)>>32} 0

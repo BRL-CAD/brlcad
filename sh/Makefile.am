@@ -21,9 +21,9 @@ EXTRA_DIST = \
 	copyright.sh \
 	enumerate.sh \
 	footer.sh \
-	gforge.sh \
 	header.sh \
 	linkroot.sh \
+	libtoolfilename.sh \
 	make_deb.sh \
 	make_dmg.sh \
 	make_pkg.sh \
@@ -32,7 +32,7 @@ EXTRA_DIST = \
 	make_bz2.sh \
 	make_tgz.sh \
 	make_zip.sh \
-	prior.sh \
+	orbit.sh \
 	shtool \
 	template.sh \
 	ws.sh

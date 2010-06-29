@@ -86,7 +86,7 @@ int parse_args(int ac, char *av[])
 	    default		: usage("Bad or help flag specified\n"); break;
 	}
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 

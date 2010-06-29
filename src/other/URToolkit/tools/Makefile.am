@@ -46,7 +46,7 @@ bin_PROGRAMS = \
 	unslice
 
 LDADD = ${RLE}
-AM_CPPFLAGS = ${RLE_CPPFLAGS}
+AM_CPPFLAGS = ${RLE_CPPFLAGS} ${NOWARN}
 
 applymap_SOURCES = applymap.c
 avg4_SOURCES = avg4.c

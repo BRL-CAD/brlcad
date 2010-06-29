@@ -35,7 +35,6 @@ typedef struct {
     XftDraw *ftDraw;
     XftColor color;
 } UnixFtFont;
-
 
 /*
  * Package initialization:
@@ -220,7 +219,6 @@ InitFont(
 
     set = FcFontSort(0, pattern, FcTrue, NULL, &result);
     if (!set) {
-	FcPatternDestroy(pattern);
 	ckfree((char *)fontPtr);
 	return NULL;
     }
@@ -261,6 +259,44 @@ InitFont(
     fontPtr->font.fid = XLoadFont(Tk_Display(tkwin), "fixed");
     GetTkFontAttributes(ftFont, &fontPtr->font.fa);
     GetTkFontMetrics(ftFont, &fontPtr->font.fm);
+
+    /*
+     * Fontconfig can't report any information about the position or thickness
+     * of underlines or overstrikes. Thus, we use some defaults that are
+     * hacked around from backup defaults in tkUnixFont.c, which are in turn
+     * based on recommendations in the X manual. The comments from that file
+     * leading to these computations were:
+     *
+     *	    If the XA_UNDERLINE_POSITION property does not exist, the X manual
+     *	    recommends using half the descent.
+     *
+     *	    If the XA_UNDERLINE_THICKNESS property does not exist, the X
+     *	    manual recommends using the width of the stem on a capital letter.
+     *	    I don't know of a way to get the stem width of a letter, so guess
+     *	    and use 1/3 the width of a capital I.
+     *
+     * Note that nothing corresponding to *either* property is reported by
+     * Fontconfig at all. [Bug 1961455]
+     */
+
+    {
+	TkFont *fPtr = &fontPtr->font;
+	int iWidth;
+
+	fPtr->underlinePos = fPtr->fm.descent / 2;
+	Tk_MeasureChars((Tk_Font) fPtr, "I", 1, -1, 0, &iWidth);
+	fPtr->underlineHeight = iWidth / 3;
+	if (fPtr->underlineHeight == 0) {
+	    fPtr->underlineHeight = 1;
+	}
+	if (fPtr->underlineHeight + fPtr->underlinePos > fPtr->fm.descent) {
+	    fPtr->underlineHeight = fPtr->fm.descent - fPtr->underlinePos;
+	    if (fPtr->underlineHeight == 0) {
+		fPtr->underlinePos--;
+		fPtr->underlineHeight = 1;
+	    }
+	}
+    }
 
     return fontPtr;
 }
@@ -323,6 +359,7 @@ TkpGetNativeFont(
 
     fontPtr = InitFont(tkwin, pattern, NULL);
     if (!fontPtr) {
+	FcPatternDestroy(pattern);
 	return NULL;
     }
     return &fontPtr->font;
@@ -388,9 +425,25 @@ TkpGetFontFromAttributes(
 	FinishedWithFont(fontPtr);
     }
     fontPtr = InitFont(tkwin, pattern, fontPtr);
+
+    /*
+     * Hack to work around issues with weird issues with Xft/Xrender
+     * connection. For details, see comp.lang.tcl thread starting from
+     * <adcc99ed-c73e-4efc-bb5d-e57a57a051e8@l35g2000pra.googlegroups.com>
+     */
+
     if (!fontPtr) {
+	XftPatternAddBool(pattern, XFT_RENDER, FcFalse);
+	fontPtr = InitFont(tkwin, pattern, fontPtr);
+    }
+
+    if (!fontPtr) {
+	FcPatternDestroy(pattern);
 	return NULL;
     }
+
+    fontPtr->font.fa.underline = faPtr->underline;
+    fontPtr->font.fa.overstrike = faPtr->overstrike;
     return &fontPtr->font;
 }
 
@@ -658,7 +711,7 @@ Tk_DrawChars(
     UnixFtFont *fontPtr = (UnixFtFont *) tkfont;
     XGCValues values;
     XColor xcolor;
-    int clen, nspec;
+    int clen, nspec, xStart = x;
     XftGlyphFontSpec specs[NUM_SPEC];
     XGlyphInfo metrics;
 
@@ -698,7 +751,7 @@ Tk_DrawChars(
 	     * This should not happen, but it can.
 	     */
 
-	    return;
+	    goto doUnderlineStrikeout;
 	}
 	source += clen;
 	numBytes -= clen;
@@ -723,5 +776,18 @@ Tk_DrawChars(
     }
     if (nspec) {
 	XftDrawGlyphFontSpec(fontPtr->ftDraw, &fontPtr->color, specs, nspec);
+    }
+
+  doUnderlineStrikeout:
+    if (fontPtr->font.fa.underline != 0) {
+	XFillRectangle(display, drawable, gc, xStart,
+		y + fontPtr->font.underlinePos, (unsigned) (x - xStart),
+		(unsigned) fontPtr->font.underlineHeight);
+    }
+    if (fontPtr->font.fa.overstrike != 0) {
+	y -= fontPtr->font.fm.descent + (fontPtr->font.fm.ascent) / 10;
+	XFillRectangle(display, drawable, gc, xStart, y,
+		(unsigned) (x - xStart),
+		(unsigned) fontPtr->font.underlineHeight);
     }
 }

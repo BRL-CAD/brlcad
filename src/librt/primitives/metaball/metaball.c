@@ -208,9 +208,11 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_bradius = stp->st_aradius * 1.01;
 
     /* XXX magic numbers, increase if scalloping is observed. :(*/
-    nmb->initstep = minfstr / 2;
+    nmb->initstep = minfstr / 2.0;
     if (nmb->initstep < (stp->st_aradius / 200.0))
 	nmb->initstep = (stp->st_aradius / 200.0);
+    else if (nmb->initstep > (stp->st_aradius / 10.0))
+	nmb->initstep = (stp->st_aradius / 10.0);
     nmb->finalstep = /*stp->st_aradius * */minfstr / 1e5;
 
     /* generate a bounding box around the sphere...
@@ -331,7 +333,7 @@ rt_metaball_point_inside(const point_t *p, const struct rt_metaball_internal *mb
 }
 
 
-/* 
+/*
  * Solve the surface intersection of mb with an accuracy of finalstep given that
  * one of the two points (a and b) are inside and the other is outside.
  */
@@ -353,7 +355,7 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 
     /* should probably make a or b necessarily inside, to eliminate one point
      * computation? */
-    return rt_metaball_find_intersection(intersect, mb, (const point_t *)&mid, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside(midp, mb)) ?b:a , step/2.0, finalstep);
+    return rt_metaball_find_intersection(intersect, mb, midp, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside(midp, mb)) ?b:a , step/2.0, finalstep);
 }
 
 
@@ -363,62 +365,129 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 int
 rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    int stat=0, retval = 0, segsleft = abs(ap->a_onehit);
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
     struct seg *segp = NULL;
-    point_t p, inc, delta;
-    fastf_t step, distleft = (rp->r_max-rp->r_min);
+    int retval = 0, fhin = 1;
+    fastf_t step, distleft;
+    point_t p, inc, inco;
 
     step = mb->initstep;
+    distleft = (rp->r_max-rp->r_min) + step * 3.0;
 
-    VJOIN1(p, rp->r_pt, rp->r_min, rp->r_dir);
+    VMOVE(p, rp->r_pt);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
+    VMOVE(inco, inc);
 
-/* we hit, but not as fine-grained as we want. So back up one step,
- * cut the step size in half and start over... Note that once we're
- * happily inside, we do NOT change the step size back!
- */
-/* TODO: rework this crud to use the rt_metaball_point_intersect function. 
- * And do performance testing. or something.
- * */
+    /* walk back out of the solid */
+    while(rt_metaball_point_value((const point_t *)&p, mb) >= mb->threshold) {
+	fhin = -1;
+	distleft += step;
+	VSUB2(p, p, inc);
+    }
+
+    /* switching behavior to retain old code for performance and correctness
+     * comparisons. */
+#define SHOOTALGO 3
+#if SHOOTALGO == 2
+    /* we hit, but not as fine-grained as we want. So back up one step,
+     * cut the step size in half and start over...
+     */
+    {
+	int stat = 0, segsleft = abs(ap->a_onehit);
+	point_t delta;
+
 #define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
-#define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
-    while (distleft >= 0.0) {
-	distleft -= step;
-	VADD2(p, p, inc);
-	if (stat == 1) {
-	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
-		if (step<=mb->finalstep) {
-		    STEPIN(out);
-		    stat = 0;
-		    if (ap->a_onehit != 0 && segsleft <= 0)
-			return retval;
-		} else
-		    STEPBACK;
-	    }
-	} else
-	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
-		if (step<=mb->finalstep) {
-		    RT_GET_SEG(segp, ap->a_resource);
-		    segp->seg_stp = stp;
-		    STEPIN(in);
-		    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* this causes shelling */
-		    segp->seg_in.hit_surfno = 0;
-		    segp->seg_out.hit_surfno = 0;
-		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-		    if (segsleft == 0)	/* exit now if we're one-hit (like visual rendering) */
-			return retval;
-		    /* reset the ray-walk shtuff */
-		    stat = 1;
-		    VSUB2(p, p, inc);
-		    VSCALE(inc, rp->r_dir, step);
-		    step = mb->initstep;
-		} else
-		    STEPBACK;
-	    }
+#define STEPIN(x) { \
+    --segsleft; \
+    ++retval; \
+    VSUB2(delta, p, rp->r_pt); \
+    segp->seg_##x.hit_dist = fhin * MAGNITUDE(delta); \
+    segp->seg_##x.hit_surfno = 0; }
+	while (stat == 0 && distleft >= -0) {
+	    int in;
+
+	    distleft -= step;
+	    VADD2(p, p, inc);
+	    in = rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold;
+	    if (stat == 1)
+		if ( !in )
+		    if (step<=mb->finalstep) {
+			STEPIN(out)
+			VMOVE(inc, inco);
+			step = mb->initstep;
+			stat = 0;
+			if (ap->a_onehit != 0 || segsleft <= 0)
+			    return retval;
+		    } else
+			STEPBACK
+	    else
+		if ( in )
+		    if (step<=mb->finalstep) {
+			RT_GET_SEG(segp, ap->a_resource);
+			segp->seg_stp = stp;
+			STEPIN(in)
+			fhin = 1;
+			BU_LIST_INSERT(&(seghead->l), &(segp->l));
+			/* reset the ray-walk shtuff */
+			stat = 1;
+			VADD2(p, p, inc);	/* set p to a point inside */
+			VMOVE(inc, inco);
+			step = mb->initstep;
+		    } else
+			STEPBACK
+	}
     }
 #undef STEPBACK
 #undef STEPIN
+#elif SHOOTALGO == 3
+    {
+	int stat = 0, segsleft = abs(ap->a_onehit);
+	point_t lastpoint;
+
+	while (distleft >= 0.0 || stat == 1) {
+	    /* advance to the next point */
+	    distleft -= step;
+	    VMOVE(lastpoint, p);
+	    VADD2(p, p, inc);
+	    if (stat == 1) {
+		if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
+		    point_t intersect, delta;
+		    rt_metaball_find_intersection(&intersect, mb, (const point_t *)&lastpoint, (const point_t *)&p, step, mb->finalstep);
+		    VMOVE(segp->seg_out.hit_point, intersect);
+		    --segsleft;
+		    ++retval;
+		    VSUB2(delta, intersect, rp->r_pt);
+		    segp->seg_out.hit_dist = MAGNITUDE(delta);
+		    segp->seg_out.hit_surfno = 0;
+		    stat = 0;
+		    if (ap->a_onehit != 0 && segsleft <= 0)
+			return retval;
+		}
+	    } else {
+		if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
+		    point_t intersect, delta;
+		    rt_metaball_find_intersection(&intersect, mb, (const point_t *)lastpoint, (const point_t *)&p, step, mb->finalstep);
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
+		    --segsleft;
+		    ++retval;
+		    VMOVE(segp->seg_in.hit_point, intersect);
+		    VSUB2(delta, intersect, rp->r_pt);
+		    segp->seg_in.hit_dist = MAGNITUDE(delta);
+		    segp->seg_in.hit_surfno = 0;
+		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+
+		    stat = 1;
+		    step = mb->initstep;
+		}
+	    }
+	}
+    }
+
+#else
+# error "pick a valid algo."
+#endif
+
     return retval;
 }
 
@@ -498,6 +567,8 @@ void
 rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
+    vect_t work, pprime;
+    fastf_t r;
 
     if (ap) RT_CK_APPLICATION(ap);
     if (stp) RT_CK_SOLTAB(stp);
@@ -505,7 +576,27 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
     if (!uvp) return;
     if (!metaball) return;
 
-    bu_log("ERROR: rt_metaball_uv() is not implemented\n");
+    /* stuff stolen from sph */
+    VSUB2(work, hitp->hit_point, stp->st_center);
+    VSCALE(pprime, work, 1.0/MAGNITUDE(work));
+    /* Assert that pprime has unit length */
+
+    /* U is azimuth, atan() range: -pi to +pi */
+    uvp->uv_u = bn_atan2(pprime[Y], pprime[X]) * bn_inv2pi;
+    if (uvp->uv_u < 0)
+	uvp->uv_u += 1.0;
+    /*
+     * V is elevation, atan() range: -pi/2 to +pi/2, because sqrt()
+     * ensures that X parameter is always >0
+     */
+    uvp->uv_v = bn_atan2(pprime[Z],
+			 sqrt(pprime[X] * pprime[X] + pprime[Y] * pprime[Y])) *
+	bn_invpi + 0.5;
+
+    /* approximation: r / (circumference, 2 * pi * aradius) */
+    r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+    uvp->uv_du = uvp->uv_dv =
+	bn_inv2pi * r / stp->st_aradius;
     return;
 }
 
@@ -523,9 +614,14 @@ rt_metaball_free(register struct soltab *stp)
 
 
 int
-rt_metaball_class(void)
+rt_metaball_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    return RT_CLASSIFY_UNIMPLEMENTED;	/* unused */
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
+    return 0;
 }
 
 
@@ -558,7 +654,7 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
  * R T _ M E T A B A L L _ P L O T
  */
 int
-rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_metaball_internal *mb;
     struct wdb_metaballpt *mbpt;
@@ -638,7 +734,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
  * fastf_t X1 (start point)
  * fastf_t Y1
  * fastf_t Z1
- * fastf_t fldstr1 
+ * fastf_t fldstr1
  * fastf_t sweat1 (end point)
  * fastf_t X2 (start point)
  * ...
@@ -655,7 +751,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_METABALL)
-	return(-1);
+	return -1;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
     if (mb->metaball_ctrl_head.magic == 0) return -1;
@@ -693,7 +789,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * tab, and give parameter values.
  */
 int
-rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
+rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double UNUSED(mm2local))
 {
     int metaball_count = 0;
     char buf[BUFSIZ];
@@ -799,7 +895,7 @@ rt_metaball_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  * db get/g2asc
  */
 int
-rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr __attribute__((unused)))
+rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *UNUSED(attr))
 {
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)intern->idb_ptr;
     struct wdb_metaballpt *mbpt = NULL;
@@ -821,7 +917,7 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
  *
  * used for db put/asc2g
  */
-int 
+int
 rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_metaball_internal *mb;

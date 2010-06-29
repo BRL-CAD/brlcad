@@ -79,14 +79,14 @@ str_dbl(char *buf, double *Result)
 
     if (status == 0) {
 	/* if function failed return a 0 */
-	return(0);
+	return 0;
     } else {
 	if (sign == NEG)
 	    Value *= -1;
 	*Result = Value;
 
 	/* if function succeeds return position of *buf */
-	return(i);
+	return i;
     }
 }
 

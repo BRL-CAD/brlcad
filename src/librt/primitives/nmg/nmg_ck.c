@@ -598,7 +598,7 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 	    hpt = s->sa_p->max_pt;
 	    if (lpt[0] > hpt[0] || lpt[1] > hpt[1] ||
 		lpt[2] > hpt[2]) {
-		bu_log("Bnmg_vshell() ad min_pt/max_pt for shell(%8x)'s extent\n");
+		bu_log("Bnmg_vshell() ad min_pt/max_pt for shell(%8x)'s extent\n", s);
 		bu_log("Min_pt %g %g %g\n", lpt[0], lpt[1],
 		       lpt[2]);
 		bu_log("Max_pt %g %g %g\n", hpt[0], hpt[1],
@@ -1089,7 +1089,7 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
 	}
     }
 
-    return(count);
+    return count;
 }
 
 
@@ -1146,7 +1146,7 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
     bu_ptbl_free(&g_tbl);
 
-    return(count);
+    return count;
 }
 
 
@@ -1370,7 +1370,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 	    nmg_pr_fu_around_eu(eu_orig, tol);
 
 	    bu_log("nmg_check_radial: unclosed space\n");
-	    return(2);
+	    return 2;
 	}
 
 	eu1 = eur->eumate_p;
@@ -1379,7 +1379,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 	curr_orient = eu1->up.lu_p->up.fu_p->orientation;
 	eur = eu1->radial_p;
     } while (eur != eurstart);
-    return(0);
+    return 0;
 #endif
 }
 
@@ -1549,7 +1549,7 @@ nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
 	    }
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1572,9 +1572,9 @@ nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
     BN_CK_TOL(tol);
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	ret = nmg_ck_closed_surf(s, tol);
-	if (ret != 0) return(ret);
+	if (ret != 0) return ret;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1659,7 +1659,7 @@ struct v_ck_state {
 
 
 HIDDEN void
-nmg_ck_v_in_fus(long *vp, genptr_t state, int unused __attribute__((unused)))
+nmg_ck_v_in_fus(long *vp, genptr_t state, int UNUSED(unused))
 {
     register struct v_ck_state *sp = (struct v_ck_state *)state;
     register struct vertex *v = (struct vertex *)vp;

@@ -72,6 +72,7 @@ struct sizes fb_common_sizes[] = {
     {    0,	   0 }
 };
 
+
 /*
  *		       F B _ C O M M O N _ F I L E _ S I Z E
  *
@@ -87,10 +88,10 @@ struct sizes fb_common_sizes[] = {
  */
 int
 fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const char *filename, int pixel_size)
-    /* pointer to returned width */
-    /* pointer to returned height */
-    /* image file to stat */
-    /* bytes per pixel */
+/* pointer to returned width */
+/* pointer to returned height */
+/* image file to stat */
+/* bytes per pixel */
 {
     struct	stat	sbuf;
     unsigned long int	size;
@@ -102,27 +103,27 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
 	return 0;
     }
 
-    if ( filename == NULL || *filename == '\0' ) {
+    if (filename == NULL || *filename == '\0') {
 	return 0;
     }
 
     /* Skip over directory names, if any */
-    cp = strchr( filename, '/' );
-    if ( cp ) {
+    cp = strchr(filename, '/');
+    if (cp) {
 	cp++;			/* skip over slash */
     } else {
 	cp = filename;		/* no slash */
     }
 
-    if ( fb_common_name_size( widthp, heightp, cp ) )
+    if (fb_common_name_size(widthp, heightp, cp))
 	return 1;
 
-    if ( stat( filename, &sbuf ) < 0 )
+    if (stat(filename, &sbuf) < 0)
 	return	0;
 
     size = (unsigned long int)(sbuf.st_size / pixel_size);
 
-    return fb_common_image_size( widthp, heightp, size );
+    return fb_common_image_size(widthp, heightp, size);
 }
 
 
@@ -139,17 +140,17 @@ fb_common_file_size(unsigned long int *widthp, unsigned long int *heightp, const
 
 int
 fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const char *name)
-    /* pointer to returned width */
-    /* pointer to returned height */
-    /* name to parse */
+/* pointer to returned width */
+/* pointer to returned height */
+/* name to parse */
 {
     register const char *cp = name;
 
     /* File name may have several minus signs in it.  Try repeatedly */
-    while ( *cp )  {
-	cp = strchr( cp, '-' );		/* Find a minus sign */
-	if ( cp == NULL )  break;
-	if ( sscanf(cp, "-w%lu-n%lu", widthp, heightp ) == 2 )
+    while (*cp) {
+	cp = strchr(cp, '-');		/* Find a minus sign */
+	if (cp == NULL) break;
+	if (sscanf(cp, "-w%lu-n%lu", widthp, heightp) == 2)
 	    return 1;
 	cp++;				/* skip over the minus */
     }
@@ -171,20 +172,20 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
  *	1	width and height returned
  */
 int
-fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, register unsigned long int npixels)
-    /* pointer to returned width */
-    /* pointer to returned height */
-    /* Number of pixels */
+fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, unsigned long int npixels)
+/* pointer to returned width */
+/* pointer to returned height */
+/* Number of pixels */
 {
-    register struct	sizes	*sp;
-    long int		root;
+    struct sizes *sp;
+    unsigned long int root;
 
-    if ( npixels <= 0 )
+    if (npixels <= 0)
 	return	0;
 
     sp = fb_common_sizes;
-    while ( sp->width != 0 ) {
-	if ( npixels == sp->width * sp->height ) {
+    while (sp->width != 0) {
+	if (npixels == sp->width * sp->height) {
 	    *widthp = sp->width;
 	    *heightp = sp->height;
 	    return	1;
@@ -194,7 +195,7 @@ fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, regi
 
     /* If the size is a perfect square, then use that. */
     root = (long int)(sqrt((double)npixels)+0.999);
-    if ( root*root == npixels )  {
+    if (root*root == npixels) {
 	*widthp = root;
 	*heightp = root;
 	return	1;
@@ -203,6 +204,7 @@ fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, regi
     /* Nope, we are clueless. */
     return	0;
 }
+
 
 /*
  * Local Variables:

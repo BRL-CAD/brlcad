@@ -25,12 +25,12 @@
  * general process for adding geometry to an inmem database is to
  * either:
  *
- *   1) call wdb_export_external() providing an external
- *   representation of the geometry object and a flag marking it as
- *   in-memory (preferred), or
+ * 1) call wdb_export_external() providing an external representation
+ * of the geometry object and a flag marking it as in-memory
+ * (preferred), or
  *
- *   2) call db_diradd() and mark the directory entry as in-memory via
- *   a call to db_inmem() providing an external representation.
+ * 2) call db_diradd() and mark the directory entry as in-memory via a
+ * call to db_inmem() providing an external representation.
  *
  */
 
@@ -59,7 +59,7 @@ db_open_inmem(void)
     register int i;
 
     BU_GETSTRUCT(dbip, db_i);
-    dbip->dbi_eof = -1L;
+    dbip->dbi_eof = (off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
 
@@ -170,6 +170,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     ext->ext_buf = (genptr_t)NULL;
     ext->ext_nbytes = 0;
 }
+
 
 /** @} */
 

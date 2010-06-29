@@ -194,7 +194,7 @@ main(int argc, char **argv)
 	}
 
     }
-    return( 0 );
+    return 0;
 }
 
 int parse_args(int argc, char **argv)
@@ -248,7 +248,7 @@ int parse_args(int argc, char **argv)
 		    break;
 		default:
 		    fprintf(stderr, "anim_orient: unknown output option: %c\n", c);
-		    return(0);
+		    return 0;
 	    }
 	}
     }
@@ -288,11 +288,11 @@ int parse_args(int argc, char **argv)
 		    break;
 		default:
 		    fprintf(stderr, "anim_orient: unknown input option: %c\n", c);
-		    return(0);
+		    return 0;
 	    }
 	}
     }
-    return(1);
+    return 1;
 }
 
 /*

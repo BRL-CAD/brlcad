@@ -42,7 +42,7 @@ static char tracefile[512] = {0};
 
 /* release memory on application exit */
 static void
-_free_bu_bomb_failsafe()
+_free_bu_bomb_failsafe(void)
 {
     if (_bu_bomb_failsafe) {
 	free(_bu_bomb_failsafe);
@@ -52,7 +52,7 @@ _free_bu_bomb_failsafe()
 
 
 int
-bu_bomb_failsafe_init()
+bu_bomb_failsafe_init(void)
 {
     if (_bu_bomb_failsafe) {
 	return 1;

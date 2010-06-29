@@ -49,7 +49,7 @@ int vectorThreshold = 100000;
 
 
 HIDDEN int
-dm_validXType_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+dm_validXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls vls;
     Tcl_Obj *obj;
@@ -76,7 +76,7 @@ dm_validXType_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *int
 
 
 HIDDEN int
-dm_bestXType_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+dm_bestXType_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     Tcl_Obj *obj;
     const char *best_dm;

@@ -984,11 +984,15 @@ TkPostSubmenu(
 	 * attempt to match Motif behavior).
 	 *
 	 * The menu has to redrawn so that the entry can change relief.
+	 *
+	 * Set postedCascade early to ensure tear-off submenus work on
+	 * Windows. [Bug 873613]
 	 */
 
 	Tk_GetRootCoords(menuPtr->tkwin, &x, &y);
 	AdjustMenuCoords(menuPtr, mePtr, &x, &y);
 
+	menuPtr->postedCascade = mePtr;
 	subary[0] = mePtr->namePtr;
 	subary[1] = Tcl_NewStringObj("post", -1);
 	subary[2] = Tcl_NewIntObj(x);
@@ -1001,9 +1005,9 @@ TkPostSubmenu(
 	Tcl_DecrRefCount(subary[2]);
 	Tcl_DecrRefCount(subary[3]);
 	if (result != TCL_OK) {
+	    menuPtr->postedCascade = NULL;
 	    return result;
 	}
-	menuPtr->postedCascade = mePtr;
 	TkEventuallyRedrawMenu(menuPtr, mePtr);
     }
     return TCL_OK;

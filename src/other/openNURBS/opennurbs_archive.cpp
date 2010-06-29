@@ -15,6 +15,107 @@
 
 #include "opennurbs.h"
 
+class ON_ReadChunkHelper
+{
+public:
+  ON_ReadChunkHelper(ON_BinaryArchive&);
+  ~ON_ReadChunkHelper();
+
+  ON_BinaryArchive& m_binary_archive;
+  bool m_bReadSuccess;
+  ON__UINT32 m_chunk_tcode;
+  ON__INT64 m_chunk_value;
+
+private:
+  bool m_bCallEndRead3dmChunk;
+  // prohibit use - no implementation
+  ON_ReadChunkHelper();
+  ON_ReadChunkHelper(const ON_ReadChunkHelper&);
+  ON_ReadChunkHelper& operator=(const ON_ReadChunkHelper&);
+};
+
+ON_ReadChunkHelper::ON_ReadChunkHelper(ON_BinaryArchive& binary_archive)
+: m_binary_archive(binary_archive)
+, m_bReadSuccess(0)
+, m_chunk_tcode(0)
+, m_chunk_value(0)
+, m_bCallEndRead3dmChunk(0)
+{
+  m_bReadSuccess = m_binary_archive.BeginRead3dmBigChunk(&m_chunk_tcode,&m_chunk_value);
+  if ( m_bReadSuccess )
+    m_bCallEndRead3dmChunk = true;
+}
+
+ON_ReadChunkHelper::~ON_ReadChunkHelper()
+{
+  if ( m_bReadSuccess && !m_binary_archive.EndRead3dmChunk() )
+    m_bReadSuccess = false;
+}
+
+bool ON_IsUnsignedChunkTypecode( ON__UINT32 typecode )
+{
+  // returns tru if the chunk value should be treated as an unsigned int.
+  return ( 0 == (TCODE_SHORT & typecode)
+           || TCODE_RGB == typecode 
+           || TCODE_RGBDISPLAY == typecode
+           || TCODE_PROPERTIES_OPENNURBS_VERSION == typecode
+           || TCODE_OBJECT_RECORD_TYPE == typecode
+         );
+}
+
+bool ON_IsLongChunkTypecode(ON__UINT32 typecode)
+{
+  // NOTE: RenderXXXX plug-in used zero as a typecode in material userdata, sigh ...
+  //return (0 != typecode && 0 == (TCODE_SHORT & typecode));
+  return (0 == (TCODE_SHORT & typecode));
+}
+
+bool ON_IsShorChunkTypecode(ON__UINT32 typecode)
+{
+  return (0 != (TCODE_SHORT & typecode));
+}
+
+static
+bool DownSizeINT( ON__INT64 i64, ON__INT32* i32 )
+{
+  const static ON__INT64 i32max = 2147483647;
+  if ( i64 <= i32max && i64 >= (-i32max - 1) )
+  {
+    *i32 = (ON__INT32)i64;
+    return true;
+  }
+
+  ON_ERROR("i64 too big to convert to 4 byte signed int");
+  *i32 = 0;
+  return false;
+}
+
+static
+bool DownSizeUINT( ON__UINT64 u64, ON__UINT32* u32 )
+{
+  if ( u64 <= 0xFFFFFFFF )
+  {
+    *u32 = (ON__UINT32)u64;
+    return true;
+  }
+
+  ON_ERROR("u64 too big to convert to 4 byte unsigned int");
+  *u32 = 0;
+  return false;
+}
+
+static
+bool DownSizeChunkValue( ON__UINT32 typecode, ON__INT64 v64, ON__INT32* v32 )
+{
+  if ( 0 == v32 )
+    return true;
+  return ( ON_IsLongChunkTypecode(typecode) )
+         ? DownSizeUINT( (ON__UINT64)v64, (ON__UINT32*)v32 )
+         : DownSizeINT( v64, v32 );
+}
+
+
+
 struct ON__3dmV1LayerIndex
 {
   int m_layer_index;
@@ -26,7 +127,7 @@ struct ON__3dmV1LayerIndex
 ON_BinaryArchive::ON_BinaryArchive( ON::archive_mode mode ) 
                  : m_3dm_version(0), 
                    m_3dm_v1_layer_index(0), m_3dm_v1_material_index(0),
-                   m_3dm_v1_suppress_error_message(0),
+                   m_error_message_mask(0),
                    m_3dm_opennurbs_version(0),
                    m_3dm_start_section_offset(0),
                    m_active_table(ON_BinaryArchive::no_active_table),
@@ -162,6 +263,75 @@ bool ON_BinaryArchive::ToggleByteOrder(
   return rc;
 }
 
+bool ON_BinaryArchive::BigSeekFromStart( ON__UINT64 offset )
+{
+  // SeekFromStart() is a virutal function that
+  // any developer can implement.  Some implementations
+  // may use signed 4 byte int in critical places.
+  // BigSeekFromStart() will work correctly in
+  // this worst case situation.
+  return ( offset > 2147483632 )
+    ? ( SeekFromStart(2147483632) && BigSeekForward(offset - 2147483632) )
+    : SeekFromStart((size_t)offset);
+}
+
+
+
+bool ON_BinaryArchive::BigSeekForward( ON__UINT64 offset )
+{
+  // SeekFromCurrentPosition() is a virutal function that
+  // uses a signed 4 byte int in critical places.
+  // BigSeekForward() will work correctly when
+  // offset is larger than the maximum value of a signed
+  // 4 byte int.
+  while ( offset > 2147483632 )
+  {
+    if ( !SeekFromCurrentPosition(2147483632) )
+      return false;
+    offset -= 2147483632;
+  }
+  if ( offset > 0 )
+  {
+    int ioffset32 = (int)((ON__INT64)offset);
+    return SeekFromCurrentPosition(ioffset32);
+  }
+  return true;
+}
+
+
+bool ON_BinaryArchive::BigSeekBackward( ON__UINT64 offset )
+{
+  // SeekFromCurrentPosition() is a virutal function that
+  // uses a signed 4 byte int in critical places.
+  // BigSeekBackward() will work correctly when
+  // offset is larger than the maximum value of a signed
+  // 4 byte int.
+  while ( offset > 2147483632 )
+  {
+    if ( !SeekFromCurrentPosition(-2147483632) )
+      return false;
+    offset -= 2147483632;
+  }
+  if ( offset > 0 )
+  {
+    int ioffset32 = (int)((ON__INT64)offset);
+    return SeekFromCurrentPosition(-ioffset32);
+  }
+  return true;
+}
+
+
+bool ON_BinaryArchive::BigSeekFromCurrentPosition( ON__INT64 offset )
+{
+  // SeekFromCurrentPosition() is a virutal function that
+  // uses a signed 4 byte int in critical places.
+  // BigSeekFromCurrentPosition() will work correctly when
+  // offset is smaller than the minimum value of a signed
+  // 4 byte int or the maximum value of a signed 4 byte int.
+  return ( offset >= 0 ) 
+         ? BigSeekForward((ON__UINT64)offset)
+         : BigSeekBackward((ON__UINT64)(-offset));
+}
 
 bool
 ON_BinaryArchive::ReadMode() const
@@ -773,12 +943,15 @@ ON_BinaryArchive::ReadStringSize( // Read size of NULL terminated string
     else if ( ui32 > 5000 )
     {
       // make sure this is possible
-      const ON_3DM_CHUNK* curchunk = m_chunk.Last();
-      if ( curchunk )
+      const ON_3DM_BIG_CHUNK* curchunk = m_chunk.Last();
+      if ( 0 != curchunk && 0 == (TCODE_SHORT & curchunk->m_typecode) )
       {
-        if ( 0 == (TCODE_SHORT&curchunk->m_typecode) && ui32 > ((ON__UINT32)curchunk->m_value) )
+        if (    curchunk->m_big_value < 0 
+             || curchunk->m_big_value >= 0x0FFFFFFF // 268 million chars oughta be plenty
+             && ui32 > ((ON__UINT32)curchunk->m_big_value) 
+           )
         {
-          ON_ERROR("ON_BinaryArchive::ReadStringSize() length esceeds current chunk size");
+          ON_ERROR("ON_BinaryArchive::ReadStringSize() length exceeds current chunk size");
           rc = false;
         }
       }
@@ -1788,7 +1961,7 @@ ON_BinaryArchive::WriteInt32( // Write an array of 32 bit integers
 bool
 ON_BinaryArchive::ReadInt64( // Read an array of 64 bit integers
 		size_t count,            // number of 64 bit integers to read
-		ON__UINT64* p
+		ON__INT64* p
 		)
 {
   bool rc = ReadByte( count<<3, p );
@@ -1810,7 +1983,7 @@ ON_BinaryArchive::ReadInt64( // Read an array of 64 bit integers
 bool
 ON_BinaryArchive::WriteInt64( // Write an array of 64 bit integers
 		size_t count,	            // number of ints to write
-		const ON__UINT64* p    
+		const ON__INT64* p    
 		)
 {
   bool rc = true;
@@ -1896,15 +2069,14 @@ ON_BinaryArchive::ReadSize(size_t* sz)
 
 bool ON_BinaryArchive::WriteBigSize(size_t sz)
 {
-  // ALERT - this must change for 64 bit file
   ON__UINT64 u = (ON__UINT64)sz;
-  return WriteInt64(1,&u);;
+  return WriteInt64(1,(ON__INT64*)&u);;
 }
 
 bool ON_BinaryArchive::ReadBigSize( size_t* sz )
 {
   ON__UINT64 u;
-  bool rc = ReadInt64(1,&u);
+  bool rc = ReadInt64(1,(ON__INT64*)&u);
   if (rc)
     *sz = (size_t)u;
   return rc;
@@ -1912,15 +2084,14 @@ bool ON_BinaryArchive::ReadBigSize( size_t* sz )
 
 bool ON_BinaryArchive::WriteBigTime(time_t t)
 {
-  // ALERT - this must change for 64 bit file
   ON__UINT64 u = (ON__UINT64)t;
-  return WriteInt64(1,&u);
+  return WriteInt64(1,(ON__INT64*)&u);
 }
 
 bool ON_BinaryArchive::ReadBigTime( time_t* t )
 {
   ON__UINT64 u;
-  bool rc = ReadInt64(1,&u);
+  bool rc = ReadInt64(1,(ON__INT64*)&u);
   if (rc)
     *t = (time_t)u;
   return rc;
@@ -2766,10 +2937,17 @@ ON_BinaryArchive::WriteObject( const ON_Object& o )
 
 bool ON_BinaryArchive::WriteObjectUserData( const ON_Object& object )
 {
+  if ( m_3dm_version < 3 )
+  {
+    // no user data is saved in V1 and V2 files.
+    return true;
+  }
+
   // writes user data attached to object.
   bool rc = true;
   const ON_UserData* ud;
   ON_UUID userdata_classid;
+  
   for (ud = object.m_userdata_list; ud && rc; ud = ud->m_userdata_next) 
   {
     if ( !ud->Archive() )
@@ -2789,6 +2967,11 @@ bool ON_BinaryArchive::WriteObjectUserData( const ON_Object& object )
       continue;
     if ( cid == &ON_UserData::m_ON_Object_class_id )
       continue;
+
+    // The UserDataClassUuid() function is used instead of 
+    // calling cid->Uuid() so we get the value of the 
+    // plug-in's class id when the plug-in is not loaded
+    // and ud is ON_UnknownUserData.
     userdata_classid = ud->UserDataClassUuid();
     if ( 0 == ON_UuidCompare( userdata_classid, ON_nil_uuid ) )
       continue;
@@ -2798,33 +2981,70 @@ bool ON_BinaryArchive::WriteObjectUserData( const ON_Object& object )
       continue;
     if ( 0 == ON_UuidCompare( userdata_classid, ON_UnknownUserData::m_ON_Object_class_id.Uuid() ) )
       continue;
-    if ( ON_UuidIsNil( ud->m_application_uuid ) )
-    {
-      // As of version 200909190 - a non-nil application_uuid is 
-      // required in order for user data to be saved in a 
-      // 3dm archive.
-      if ( ud->IsUnknownUserData() )
-      {
-        continue;
-      }
-      ON_Error(__FILE__,__LINE__,"Not saving %s userdata - m_application_uuid is nil.",cid->ClassName());
-      continue; 
-    }
 
     if ( 3 == m_3dm_version )
     {
       // When saving a V3 archive and the user data is not
       // native V3 data, make sure the plug-in supports
       // writing V3 user data.
-      if ( m_plugin_id_list.BinarySearch( &ud->m_application_uuid, ON_UuidCompare ) < 0 )
+      if ( m_V3_plugin_id_list.BinarySearch( &ud->m_application_uuid, ON_UuidCompare ) < 0 )
         continue;
+    }
+
+    if ( ON_UuidIsNil( ud->m_application_uuid ) )
+    {
+      // As of version 200909190 - a non-nil application_uuid is 
+      // required in order for user data to be saved in a 
+      // 3dm archive.
+      ON_Error(__FILE__,__LINE__,"Not saving %s userdata - m_application_uuid is nil.",cid->ClassName());
+      continue; 
+    }
+
+    // See if we have unknown user data (goo) and make sure
+    // IsUnknownUserData() agrees with ON_UnknownUserData::Cast().
+    const ON_UnknownUserData* unknown_ud = ON_UnknownUserData::Cast(ud);
+    if ( 0 == unknown_ud )
+    {
+      if ( ud->IsUnknownUserData() )
+      {
+        ON_ERROR("ON_UnknownUserData::Cast(ud) is null and ud->IsUnknownUserData() is true.");
+        continue; // something's wrong
+      }
+    }
+    else
+    {
+      if ( !ud->IsUnknownUserData() )
+      {
+        ON_ERROR("ON_UnknownUserData::Cast(ud) is not null and ud->IsUnknownUserData() is false.");
+        continue; // something's wrong
+      }
+    }
+
+    if ( 0 != unknown_ud )
+    {
+      if ( unknown_ud->m_3dm_version <= 3 )
+        continue; // Unknown will not be resaved in V3 archives
+      if ( unknown_ud->m_3dm_version > 5 && unknown_ud->m_3dm_version < 50 )
+        continue;
+      if ( unknown_ud->m_3dm_opennurbs_version < 200701010 )
+        continue;
+      if ( unknown_ud->m_3dm_version >= 50 && m_3dm_version < 50 )
+      {
+        // Unknown userdata with 8 byte chunk lengths cannot be
+        // saved into a V4 file with 4 byte chunk lengths because
+        // the resulting chunk will be unreadable in V4.
+        // This is not an error condition.  It is a consequence
+        // of V4 IO code not being robust enough to handle
+        // 8 bytes chunk lengths.
+        continue;
+      }
     }
 
     // Each piece of user data is inside of 
     // a TCODE_OPENNURBS_CLASS_USERDATA chunk.
     rc = BeginWrite3dmChunk( TCODE_OPENNURBS_CLASS_USERDATA, 0 );
     if (rc) {
-      rc = Write3dmChunkVersion(2,1);
+      rc = Write3dmChunkVersion(2,2);
       // wrap user data header info in an TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk
       rc = BeginWrite3dmChunk( TCODE_OPENNURBS_CLASS_USERDATA_HEADER, 0 );
       if (rc) 
@@ -2837,6 +3057,16 @@ bool ON_BinaryArchive::WriteObjectUserData( const ON_Object& object )
         // added for version 2.1
         if ( rc ) rc = WriteUuid( ud->m_application_uuid );
 
+        // added for version 2.2 - 14, October 2009
+        if ( rc )
+        {
+          rc = WriteBool( unknown_ud ? true : false );
+          int ver = unknown_ud ? unknown_ud->m_3dm_version : m_3dm_version;
+          rc = WriteInt( ver );
+          ver = unknown_ud ? unknown_ud->m_3dm_opennurbs_version : m_3dm_opennurbs_version;
+          if (rc) rc = WriteInt( ver );
+        }
+
         if ( !EndWrite3dmChunk() )
           rc = false;
       }
@@ -2846,7 +3076,7 @@ bool ON_BinaryArchive::WriteObjectUserData( const ON_Object& object )
         rc = BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 0 );
         if ( rc ) 
         {
-          if ( ud->IsUnknownUserData() )
+          if ( 0 != unknown_ud )
           {
             // 22 January 2004 Dale Lear
             //   Disable crc checking when writing the
@@ -2908,45 +3138,83 @@ int ON_BinaryArchive::ReadObjectHelper( ON_Object** ppObject )
   //         3: unable to read object because it's UUID is not registered
   //            this could happen in cases where old code is attempting to read
   //            new objects.
-  unsigned int tcode;
-  int length;
+  ON__UINT32 tcode;
+  ON__INT64 length_TCODE_OPENNURBS_CLASS = 0;
+  ON__INT64 length_TCODE_OPENNURBS_CLASS_UUID = 0;
+  ON__INT64 length_TCODE_OPENNURBS_CLASS_DATA = 0;
   ON_UUID uuid;
   const ON_ClassId* pID = 0;
   ON_Object* pObject = *ppObject; // If not null, use input
   int rc = 0;
+  const ON__INT64 sizeof_chunk_header = (ON__INT64)(4 + SizeofChunkLength());
+  const ON__INT64 expected_length_TCODE_OPENNURBS_CLASS_UUID = 20;
 
   //bool bBogusUserData = false;
 
 
   // all ON_Objects written by WriteObject are in a TCODE_OPENNURBS_CLASS chunk
-  rc = BeginRead3dmChunk( &tcode, &length );
+  rc = BeginRead3dmBigChunk( &tcode, &length_TCODE_OPENNURBS_CLASS );
   if ( !rc )
     return 0;
 
-  if ( tcode != TCODE_OPENNURBS_CLASS ) {
+  // When a NULL ON_Object is written, the file has
+  // 
+  //  TCODE_OPENNURBS_CLASS, length = 20 + sizeof_chunk_header
+  //  TCODE_OPENNURBS_CLASS_UUID, length = 20
+  //    16 byte nil uuid
+  //    4 byte TCODE_OPENNURBS_CLASS_UUID crc
+  //
+  // When a non-NULL ON_Object is written, the file has
+  // 
+  //  TCODE_OPENNURBS_CLASS, length = 20 + 3*sizeof_chunk_header + length_DATA_chunk + length_USER_DATA_chunk(s)
+  //
+  //    TCODE_OPENNURBS_CLASS_UUID, length = 20
+  //      16 byte nil uuid
+  //      4 byte TCODE_OPENNURBS_CLASS_UUID crc
+  //
+  //    TCODE_OPENNURBS_CLASS_DATA, length_DATA >= 4
+  //      ...
+  //      4 byte TCODE_OPENNURBS_CLASS_DATA crc
+  //
+  //    Optional TCODE_OPENNURBS_CLASS_USERDATA chunks
+  //
+  //    TCODE_OPENNURBS_CLASS_END, chunk value = 0
+
+  if ( tcode != TCODE_OPENNURBS_CLASS ) 
+  {
     ON_ERROR("ON_BinaryArchive::ReadObject() didn't find TCODE_OPENNURBS_CLASS block.");
+    rc = 0;
+  }
+  else if ( length_TCODE_OPENNURBS_CLASS < expected_length_TCODE_OPENNURBS_CLASS_UUID + sizeof_chunk_header) 
+  {
+    ON_ERROR("ON_BinaryArchive::ReadObject() TCODE_OPENNURBS_CLASS chunk length too small.");
     rc = 0;
   }
   else 
   {
     // we break out of this loop if something bad happens
-    for (;;) {
+    for (;;) 
+    {
       // read class's UUID ///////////////////////////////////////////////////////////
-      rc = BeginRead3dmChunk( &tcode, &length );
+      rc = BeginRead3dmBigChunk( &tcode, &length_TCODE_OPENNURBS_CLASS_UUID );
       if ( !rc )
         break;
-      if ( tcode != TCODE_OPENNURBS_CLASS_UUID ) {
+      if ( tcode != TCODE_OPENNURBS_CLASS_UUID )
+      {
         ON_ERROR("ON_BinaryArchive::ReadObject() didn't find TCODE_OPENNURBS_CLASS_UUID block");
         rc = 0;
       }
-      else if ( length != 20 ) {
-        ON_ERROR("ON_BinaryArchive::ReadObject() TCODE_OPENNURBS_CLASS_UUID has size != 16+4");
+      else if ( expected_length_TCODE_OPENNURBS_CLASS_UUID != length_TCODE_OPENNURBS_CLASS_UUID )
+      {
+        ON_ERROR("ON_BinaryArchive::ReadObject() TCODE_OPENNURBS_CLASS_UUID has invalid length");
         rc = 0;
       }
-      else if ( !ReadUuid( uuid ) ) {
+      else if ( !ReadUuid( uuid ) )
+      {
         rc = 0;
       }
-      if ( !EndRead3dmChunk() ) {
+      if ( !EndRead3dmChunk() ) 
+      {
         rc = 0;
       }
       if ( !rc ) {
@@ -2990,12 +3258,17 @@ int ON_BinaryArchive::ReadObjectHelper( ON_Object** ppObject )
       ///////////////////////////////////////////////////////////////////////////////
 
       // read class's definitions   /////////////////////////////////////////////////
-      rc = BeginRead3dmChunk( &tcode, &length );
+      rc = BeginRead3dmBigChunk( &tcode, &length_TCODE_OPENNURBS_CLASS_DATA );
       if ( !rc )
         break;
       if ( tcode != TCODE_OPENNURBS_CLASS_DATA )
       {
         ON_ERROR("ON_BinaryArchive::ReadObject() didn't find TCODE_OPENNURBS_CLASS_DATA block");
+        rc = 0;
+      }
+      else if ( length_TCODE_OPENNURBS_CLASS_DATA <= 0  )
+      {
+        ON_ERROR("ON_BinaryArchive::ReadObject() TCODE_OPENNURBS_CLASS_DATA chunk length too small");
         rc = 0;
       }
       else 
@@ -3017,6 +3290,7 @@ int ON_BinaryArchive::ReadObjectHelper( ON_Object** ppObject )
           {
             ON_ERROR("ON_BinaryArchive::ReadObject() pObject->Read() failed.");
             delete pObject;
+            // don't break here - we still need to call end chunk.
           }
           else 
           {
@@ -3024,17 +3298,22 @@ int ON_BinaryArchive::ReadObjectHelper( ON_Object** ppObject )
           }
         }
       }
-      if ( !EndRead3dmChunk() ) {
+      if ( !EndRead3dmChunk() )
+      {
         rc = 0;
       }
 
-      // read user data  /////////////////////////////////////////////////
-      if (!ReadObjectUserData(*pObject))
-        rc = 0;
+      if ( rc && 0 != pObject )
+      {
+        // read user data  /////////////////////////////////////////////////
+        //   If TCODE_OPENNURBS_CLASS_USERDATA chunks exist, this reads them.
+        //   ReadObjectUserData() stops when it reads a TCODE_OPENNURBS_CLASS_END chunk.
+        if (!ReadObjectUserData(*pObject))
+          rc = 0;
+      }
 
-      break; // success
+      break; 
     }
-
   }
   if ( !EndRead3dmChunk() ) // TCODE_OPENNURBS_CLASS
     rc = 0;
@@ -3042,193 +3321,435 @@ int ON_BinaryArchive::ReadObjectHelper( ON_Object** ppObject )
   return rc;
 }
 
+static
+bool IsCoreUserData( const ON_UserData* ud )
+{
+  // Userdata with IO code we trust.
+  if ( 0 == ud )
+    return false;
+  if (    ud->m_application_uuid == ON_rhino4_id
+       || ud->m_application_uuid == ON_rhino5_id
+       || ud->m_application_uuid == ON_rhino_id
+       || ud->m_application_uuid == ON_opennurbs4_id
+       || ud->m_application_uuid == ON_opennurbs5_id
+       || ud->m_application_uuid == ON_opennurbs_id
+      )
+  {
+    return true;
+  }
+  return false;
+}
+
+bool ON_BinaryArchive::ReadObjectUserDataAnonymousChunk( 
+          const ON__UINT64 length_TCODE_ANONYMOUS_CHUNK,
+          const int archive_3dm_version,
+          const int archive_opennurbs_version,
+          ON_UserData* ud )
+{
+  // Reads the portion of the file containing the userdata into a buffer
+  // and lets the plug-in try to read from that.  If the plug-in fails,
+  // we press on because we cannot trust plug-ins to get IO code right.
+  bool rc = false;
+
+  if ( 0 == ud )
+    return false;
+
+  if ( ud->IsUnknownUserData()
+       || (archive_3dm_version == Archive3dmVersion() 
+           && archive_opennurbs_version == ArchiveOpenNURBSVersion() 
+           && IsCoreUserData(ud))
+     )
+  {
+    // assume this userdata's read function is robust.
+    ON_ReadChunkHelper ch(*this);
+    if (    !ch.m_bReadSuccess
+         || TCODE_ANONYMOUS_CHUNK != ch.m_chunk_tcode
+         || length_TCODE_ANONYMOUS_CHUNK != (ON__UINT64)ch.m_chunk_value
+       )
+    {
+      return false;
+    }
+    if ( ud->IsUnknownUserData() )
+    {
+      // 22 January 2004 Dale Lear:
+      //   Disable CRC checking while reading this chunk.  
+      //   (If the user data has nested chunks, the crc we get
+      //   by reading the thing as one large chunk will be wrong.)
+      m_chunk.Last()->m_do_crc16 = false;
+      m_chunk.Last()->m_do_crc32 = false;
+      m_bDoChunkCRC = false;
+    }
+    rc = ud->Read(*this) ? true : false;
+  }
+  else
+  {
+    // Untrusted plug-in userdata.
+    // Insulate file reading from possible bugs plug-in IO code by reading
+    // entire anonymous chunk into memory and letting the plug-in use
+    // the memory buffer archive.
+    unsigned char stack_buffer[2048];
+    const size_t sizeof_buffer = (size_t)(length_TCODE_ANONYMOUS_CHUNK + 4 + SizeofChunkLength());
+    void* freeme = 0;
+    void* buffer = (sizeof_buffer <= sizeof(stack_buffer))
+                 ? &stack_buffer[0]
+                 : (freeme = onmalloc(sizeof_buffer)); // generally, object userdata is small we almost never use heap
+    if ( 0 != buffer 
+         && sizeof_buffer == ReadBuffer(sizeof_buffer,buffer)
+       ) 
+    {
+      ON_Read3dmBufferArchive memory_archive(
+        sizeof_buffer,
+        buffer,
+        false,
+        archive_3dm_version,
+        archive_opennurbs_version
+        );
+
+      // The TCODE_ANONYMOUS_CHUNK wrapper has chunk lengths set 
+      // by whatever version wrote this file.  The information
+      // in the chunk has chunk lengths set by the plug-in that
+      // originally wrote the user data.  If the plug-in used
+      // worte to a version <= 5 archive and the user data has
+      // was read as goo and saved as goo in a version 50+
+      // archive, then we need to tweak the archive version
+      // when reading the chunk length of the TCODE_ANONYMOUS_CHUNK wrapper.
+      bool bTweakArchiveVersion = (memory_archive.SizeofChunkLength() != SizeofChunkLength());
+      if ( bTweakArchiveVersion )
+        memory_archive.SetArchive3dmVersion(Archive3dmVersion());
+      ON_ReadChunkHelper ch(memory_archive);
+      if ( bTweakArchiveVersion )
+        memory_archive.SetArchive3dmVersion(archive_3dm_version);
+
+      if (    !ch.m_bReadSuccess
+           || TCODE_ANONYMOUS_CHUNK != ch.m_chunk_tcode
+           || length_TCODE_ANONYMOUS_CHUNK != (ON__UINT64)ch.m_chunk_value
+         )
+        rc = false;
+      else
+        rc = ud->Read(memory_archive) ? true : false;
+    }
+    if ( freeme )
+      onfree(freeme);
+  }
+  return rc;
+}
+
+
+class CUserDataHeaderInfo
+{
+public:
+  CUserDataHeaderInfo();
+
+  void Initialize();
+
+  ON_UUID m_classid;
+  ON_UUID m_itemid;
+  ON_UUID m_appid;
+  int m_3dm_version;
+  int m_3dm_opennurbs_version;
+  int m_copycount;
+  bool m_bLastSavedAsGoo;
+  ON_Xform m_xform;
+};
+
+CUserDataHeaderInfo::CUserDataHeaderInfo()
+{
+  Initialize();
+}
+
+void CUserDataHeaderInfo::Initialize()
+{
+  memset(this,0,sizeof(*this));
+}
+
+static
+bool ReadObjectUserDataHeaderHelper( 
+          ON_BinaryArchive& binary_archive,
+          const int major_userdata_version,
+          const int minor_userdata_version,
+          CUserDataHeaderInfo& ud_header
+          )
+{
+  bool rc = true;
+  ON__UINT32 t = 0;
+  ON__INT64 length_TCODE_OPENNURBS_CLASS_USERDATA_HEADER = 0;
+
+  ud_header.Initialize();
+
+  if ( major_userdata_version == 2 )
+  {
+    // major_userdata_version 2 started wrapping the userdata header info 
+    // in a TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk
+    rc = binary_archive.BeginRead3dmBigChunk( &t, &length_TCODE_OPENNURBS_CLASS_USERDATA_HEADER );
+    if (!rc)
+      return false;
+    if ( t != TCODE_OPENNURBS_CLASS_USERDATA_HEADER )
+    {
+      ON_ERROR("version 2.0 TCODE_OPENNURBS_CLASS_USERDATA chunk is missing TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk.");
+      binary_archive.EndRead3dmChunk(); // end of mystery chunk
+      return false;
+    }
+  }
+  
+  if (rc) rc = binary_archive.ReadUuid( ud_header.m_classid );
+  if (rc) rc = binary_archive.ReadUuid( ud_header.m_itemid );
+  if (rc) rc = binary_archive.ReadInt( &ud_header.m_copycount );
+  if (rc) rc = binary_archive.ReadXform( ud_header.m_xform );
+  if ( major_userdata_version == 2 ) 
+  {
+    if ( minor_userdata_version >= 1 )
+    {
+      if (rc) rc = binary_archive.ReadUuid( ud_header.m_appid );
+      if ( minor_userdata_version >= 2 )
+      {
+        // bLastSavedAsGoo is true if the user data was saved
+        // into the file by ON_UnknownUserData.
+        if (rc) rc = binary_archive.ReadBool( &ud_header.m_bLastSavedAsGoo ); 
+        if (rc) rc = binary_archive.ReadInt( &ud_header.m_3dm_version );
+        if (rc) rc = binary_archive.ReadInt( &ud_header.m_3dm_opennurbs_version );
+      }
+    }
+    if ( !binary_archive.EndRead3dmChunk() ) // end of TCODE_OPENNURBS_CLASS_USERDATA_HEADER
+      rc = 0;
+  }
+
+  if (!rc)
+  {
+    ON_ERROR("Unable to read user data header information.");
+    return false;
+  }
+
+  if ( 0 == ud_header.m_3dm_version || 0 == ud_header.m_3dm_opennurbs_version )
+  {
+    // The userdata was saved in in an archive before
+    // the 3dm_version and 3dm_opennurbs_version were saved in
+    // userdata headers.  This means it has to be userdata
+    // with 4 byte chunk lengths.  If the archive we are
+    // reading was written with a newer version of opennurbs
+    // that does save the 3dm version info, then this unknown
+    // userdata was that has persisted through multiple read/write 
+    // cycles and we cannot tell it's original version. So we
+    // will default to a maximum of 5 and 200910180 - the 
+    // 3dm versions just before we started saving 3dm 
+    // version info n userdata headers.
+    if ( binary_archive.Archive3dmVersion() < 50 )
+    {
+     ud_header.m_3dm_version = binary_archive.Archive3dmVersion();
+    }
+    else
+    {
+      // All Archive3dmVersion() >= 50 have userdata_3dm_version info,
+      // so this userdata had to be saved as goo from a version 5 or
+      // earlier archive.
+      ud_header.m_bLastSavedAsGoo = true;
+      ud_header.m_3dm_version = 5;
+    }
+    ud_header.m_3dm_opennurbs_version = binary_archive.ArchiveOpenNURBSVersion();
+    if ( ud_header.m_3dm_opennurbs_version >= 200910190 )
+    {
+      ud_header.m_3dm_opennurbs_version = 200910180;
+      ud_header.m_bLastSavedAsGoo = true;
+    }
+  }
+
+  return rc;
+}
+
 bool ON_BinaryArchive::ReadObjectUserData( ON_Object& object )
 {
-  bool bBogusUserData = false;
-  unsigned int tcode;
-  int length;
   bool rc = true;
   while(rc) 
   {
-    rc = BeginRead3dmChunk( &tcode, &length );
-    if ( !rc )
-      break;
-
-    if ( tcode == TCODE_OPENNURBS_CLASS_USERDATA ) 
+    ON_ReadChunkHelper ch(*this);
+    if ( !ch.m_bReadSuccess )
     {
-      int major_userdata_version = 0;
-      int minor_userdata_version = 0;
-      unsigned int t;
-      int v;
-      rc = Read3dmChunkVersion( &major_userdata_version, &minor_userdata_version );
-      if ( rc && (major_userdata_version == 1 || major_userdata_version == 2) ) 
+      rc = false;
+      break;
+    }
+
+    if ( TCODE_OPENNURBS_CLASS_END == ch.m_chunk_tcode )
+    {
+      // A short TCODE_OPENNURBS_CLASS_END chunk marks the end of the opennurbs class
+      break; // done
+    }
+
+    if ( TCODE_OPENNURBS_CLASS_USERDATA != ch.m_chunk_tcode )
+    {
+      // skip new chunk type added by later version
+      continue;
+    }
+
+    if ( ch.m_chunk_value < (ON__INT64)(8 + 4 * SizeofChunkLength()) )
+    {
+      ON_ERROR("TCODE_OPENNURBS_CLASS_USERDATA chunk is too short");
+      continue;
+    }
+
+    // Read userdata header information
+    int major_userdata_version = 0;
+    int minor_userdata_version = 0;
+    rc = Read3dmChunkVersion( &major_userdata_version, &minor_userdata_version );
+    if ( !rc )
+    {
+      ON_ERROR("Unable to read TCODE_OPENNURBS_CLASS_USERDATA chunk version numbers");
+      break;
+    }
+
+    if ( major_userdata_version < 1 || major_userdata_version > 2 )
+    {
+      // unsupported version - too old or added in new version
+      continue;
+    }
+
+    CUserDataHeaderInfo ud_header;
+    rc = ReadObjectUserDataHeaderHelper(*this,major_userdata_version,minor_userdata_version,ud_header);
+    if (!rc)
+    {
+      ON_ERROR("Unable to read user data header information.");
+      break;
+    }
+
+    // we should be ready to read a TCODE_ANONYMOUS_CHUNK containing userdata
+    ON__INT64 length_TCODE_ANONYMOUS_CHUNK = 0;
+    for(;;)
+    {
+      ON__UINT32 t = 0;
+      rc = PeekAt3dmBigChunkType( &t, &length_TCODE_ANONYMOUS_CHUNK );
+      if (!rc)
+        break;
+      if ( t != TCODE_ANONYMOUS_CHUNK )
       {
-        ON_UUID userdata_classid = ON_nil_uuid;
-        ON_UUID userdata_itemid = ON_nil_uuid;
-        ON_UUID userdata_appid = ON_nil_uuid;
-        int userdata_copycount = 0;
-        ON_Xform userdata_xform(0);
-        if ( major_userdata_version == 2 )
+        ON_ERROR("Reading object user data - unable to find TCODE_ANONYMOUS_CHUNK");
+        rc = false;
+        break;
+      }
+      if ( length_TCODE_ANONYMOUS_CHUNK < 4 )
+      {
+        ON_ERROR("Reading object user data - length of TCODE_ANONYMOUS_CHUNK < 4");
+        rc = false;
+        break;
+      }
+      break;
+    }
+    if (!rc)
+    {
+      break;
+    }
+
+    // attempt to get an instance of the userdata class that saved this information
+    ON_UserData* ud = 0;
+    for(;;)
+    {
+      const ON_ClassId* udId = ON_ClassId::ClassId( ud_header.m_classid );
+      if ( 0 == udId ) 
+      {
+        // The application that created this userdata is not active
+        if ( !ON_UuidIsNil(ud_header.m_appid) )
         {
-          rc = BeginRead3dmChunk( &t, &v );
-          if ( t != TCODE_OPENNURBS_CLASS_USERDATA_HEADER ) {
-            ON_ERROR("version 2.0 TCODE_OPENNURBS_CLASS_USERDATA chunk is missing TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk.");
-            rc = 0;
-            EndRead3dmChunk();
-          }
-        }
-        
-        if (rc) 
-        {
-          if (rc) rc = ReadUuid( userdata_classid );
-          if (rc) rc = ReadUuid( userdata_itemid );
-          if (rc) rc = ReadInt( &userdata_copycount );
-          if (rc) rc = ReadXform( userdata_xform );
-          if ( major_userdata_version == 2 ) 
+          // see if we can load the application
+          if ( 1 == LoadUserDataApplication(ud_header.m_appid) )
           {
-            if ( minor_userdata_version >= 1 )
-            {
-              if (rc) rc = ReadUuid( userdata_appid );
-            }
-            if ( !EndRead3dmChunk() ) // end of TCODE_OPENNURBS_CLASS_USERDATA_HEADER
-              rc = 0;
+            // try again
+            udId = ON_ClassId::ClassId( ud_header.m_classid );
           }
         }
 
-        if (rc) 
+        if ( 0 == udId )
         {
-          rc = BeginRead3dmChunk( &t, &v );
-          if (rc) {
-            if ( TCODE_ANONYMOUS_CHUNK == t )
-            {
-              const ON_ClassId* udId = ON_ClassId::ClassId( userdata_classid );
-
-              if ( !udId && v >= 4 ) 
-              {
-                // The application that created this userdata is not active
-                if ( !ON_UuidIsNil(userdata_appid) )
-                {
-                  // see if we can load the application
-                  if ( 1 == LoadUserDataApplication(userdata_appid) )
-                  {
-                    // try again
-                    udId = ON_ClassId::ClassId( userdata_classid );
-                  }
-                }
-
-                if ( !udId )
-                {
-                  // The application that created this user data is
-                  // not available.  This information will be stored
-                  // in an ON_UnknownUserData class so that it can
-                  // persist.
-                  udId = &ON_UnknownUserData::m_ON_UnknownUserData_class_id;
-                }
-
-              }
-
-              if ( !udId)
-              {
-                rc = 0;
-              }
-              else 
-              {
-                ON_Object* tmp = udId->Create();
-                if (tmp) 
-                {
-                  ON_UserData* ud = ON_UserData::Cast(tmp);
-                  if ( ud ) 
-                  {
-                    if ( ON_UuidIsNil(userdata_appid) )
-                    {
-                      switch( Archive3dmVersion())
-                      {
-                      case 2:
-                        // V2 archives do not contain app ids.
-                        // This id flags the userdata as being
-                        // read from a V3 archive.
-                        userdata_appid = ON_v2_userdata_id;
-                        break;
-                      case 3:
-                        // V3 archives do not contain app ids.
-                        // This id flags the userdata as being
-                        // read from a V3 archive.
-                        userdata_appid = ON_v3_userdata_id;
-                        break;
-                      case 4:
-                        if ( ArchiveOpenNURBSVersion() < 200909190 )
-                        {
-                          // V4 archives before version 200909190
-                          // did not require user data application ids.
-                          userdata_appid = ON_v4_userdata_id;
-                        }
-                        break;
-                      }
-                    }
-                    if ( ON_UuidIsNil(ud->m_application_uuid) )
-                      ud->m_application_uuid = userdata_appid;
-                    ud->m_userdata_uuid = userdata_itemid;
-                    ud->m_userdata_copycount = userdata_copycount;
-                    ud->m_userdata_xform = userdata_xform;
-                    if ( ud->IsUnknownUserData() ) 
-                    {
-                      ON_UnknownUserData* uud = ON_UnknownUserData::Cast(ud);
-                      if ( uud ) {
-                        uud->m_sizeof_buffer = v;
-                        uud->m_unknownclass_uuid = userdata_classid;
-                        // 22 January 2004 Dale Lear:
-                        //   Disable CRC checking while reading this chunk.  
-                        //   (If the user data has nested chunks, the crc we get
-                        //   by reading the thing as one large chunk will be wrong.)
-                        m_chunk.Last()->m_do_crc16 = false;
-                        m_chunk.Last()->m_do_crc32 = false;
-                        m_bDoChunkCRC = false;
-                      }
-                    }
-                    ud->m_userdata_owner = &object; // so reading code can look at owner
-                    rc = ud->Read( *this )?true:false;
-                    ud->m_userdata_owner = 0;
-                    if (rc) {
-                      if ( !object.AttachUserData( ud ) )
-                        delete ud;
-                    }
-                  }
-                  else {
-                    delete tmp;
-                    rc = 0;
-                  }
-                }
-                else
-                  rc = 0;
-              }
-            }
-            else
-              rc = 0;
-            if ( !EndRead3dmChunk() ) // end of TCODE_ANONYMOUS_CHUNK that's wrapped around user data
-              rc = 0;
-          }
+          // The application that created this user data is
+          // not available.  This information will be stored
+          // in an ON_UnknownUserData class so that it can
+          // persist.
+          udId = &ON_UnknownUserData::m_ON_UnknownUserData_class_id;
         }
       }
-    }
 
-    if ( 0 == rc )
-    {
-      // BOGUS USER DATA - SEE IF WE CAN JUST SKIP IT
-      ON_ERROR("Falied to read bogus user data -- attempting to continue");
-      bBogusUserData = true;
-      rc = 1;
-    }
+      ON_Object* tmp = udId->Create();
+      ud = ON_UserData::Cast(tmp);
+      if ( 0 == ud )
+      {
+        ON_ERROR("Reading object user data - unable to create userdata class");
+        if ( tmp )
+          delete tmp;
+        tmp = 0;
+        break;
+      }
+      tmp = 0;
 
-    if (!EndRead3dmChunk())
-    {
-      rc = 0;
       break;
     }
-    if ( tcode == TCODE_OPENNURBS_CLASS_END )
-      break; // done
-    if ( bBogusUserData )
-      break; // done
+
+    if ( 0 == ud )
+    {
+      // no luck on this one 
+      // One reason can be that the plug-in userdata class has something wrong with 
+      // its ON_OBJECT_DECLARE/ON_OBJECT_IMPLEMENT stuff.
+      ON_ERROR("Unable to create object user data class. Flawed class id information.");
+      continue; // keep trying
+    }
+
+    if ( ON_UuidIsNil(ud->m_application_uuid) )
+    {
+      if ( ON_UuidIsNil(ud_header.m_appid) )
+      {
+        switch( Archive3dmVersion())
+        {
+        case 2:
+          // V2 archives do not contain app ids.
+          // This id flags the userdata as being read from a V3 archive.
+          ud_header.m_appid = ON_v2_userdata_id;
+          break;
+        case 3:
+          // V3 archives do not contain app ids.
+          // This id flags the userdata as being
+          // read from a V3 archive.
+          ud_header.m_appid = ON_v3_userdata_id;
+          break;
+        case 4:
+          if ( ArchiveOpenNURBSVersion() < 200909190 )
+          {
+            // V4 archives before version 200909190
+            // did not require user data application ids.
+            ud_header.m_appid = ON_v4_userdata_id;
+          }
+          break;
+        }
+      }
+      ud->m_application_uuid = ud_header.m_appid;
+    }
+    ud->m_userdata_uuid = ud_header.m_itemid;
+    ud->m_userdata_copycount = ud_header.m_copycount;
+    ud->m_userdata_xform = ud_header.m_xform;
+    if ( ud->IsUnknownUserData() ) 
+    {
+      ON_UnknownUserData* uud = ON_UnknownUserData::Cast(ud);
+      if ( uud ) 
+      {
+        uud->m_sizeof_buffer = (int)length_TCODE_ANONYMOUS_CHUNK;
+        uud->m_unknownclass_uuid = ud_header.m_classid;
+        uud->m_3dm_version = ud_header.m_3dm_version;
+        uud->m_3dm_opennurbs_version = ud_header.m_3dm_opennurbs_version;
+      }
+    }
+    ud->m_userdata_owner = &object; // so reading code can look at owner
+    bool bReadUserData = ReadObjectUserDataAnonymousChunk(
+              length_TCODE_ANONYMOUS_CHUNK,
+              ud_header.m_3dm_version,
+              ud_header.m_3dm_opennurbs_version,
+              ud
+              );
+    ud->m_userdata_owner = 0;
+    if (bReadUserData) 
+    {
+      if ( !object.AttachUserData( ud ) )
+        delete ud;
+    }
+    else
+    {
+      delete ud;
+    }    
   }
+
   return rc;
 }
 
@@ -3279,12 +3800,34 @@ size_t ON_BinaryArchive::ArchiveStartOffset() const
 bool 
 ON_BinaryArchive::BeginWrite3dmChunk( unsigned int typecode, int value )
 {
+  ON__INT64 value64 = 0;
+  if ( 0 != value )
+  {
+    if ( ON_IsUnsignedChunkTypecode(typecode) )
+    {
+      // treat value parameter as an unsigned int
+      ON__UINT32 u32 = (ON__UINT32)value;
+      ON__UINT64 u64 = u32;
+      value64 = (ON__INT64)u64;
+    }
+    else
+    {
+      // treat value paramter is a signed int
+      value64 = value;
+    }
+  }
+  return BeginWrite3dmBigChunk(typecode,value);
+}
+
+bool 
+ON_BinaryArchive::BeginWrite3dmBigChunk( ON__UINT32 typecode, ON__INT64 value64 )
+{
   m_bDoChunkCRC = false; // no CRC on chunks because length is written twice.
-  bool rc = WriteInt( typecode );
+  bool rc = WriteInt32( 1, (ON__INT32*)&typecode );
   if (rc)
-    rc = WriteInt( value );
+    rc = WriteChunkValue( typecode, value64 );
   if (rc)
-    rc = PushChunk( typecode, value );
+    rc = PushBigChunk( typecode, value64 );
   return rc;
 }
 
@@ -3330,11 +3873,11 @@ ON_BinaryArchive::BeginWrite3dmChunk(
 bool 
 ON_BinaryArchive::EndWrite3dmChunk()
 {
-  int length = 0;
   bool rc = false;
-  ON_3DM_CHUNK* c = m_chunk.Last();
+  ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c ) {
-    if ( c->m_do_length ) {
+    if ( c->m_bLongChunk ) 
+    {
       if ( c->m_do_crc16 ) 
       {
         // write 16 bit CRC
@@ -3361,25 +3904,25 @@ ON_BinaryArchive::EndWrite3dmChunk()
       // write length
       m_bDoChunkCRC = 0;
       const size_t offset = CurrentPosition();
-      length = (int)(offset - c->m_offset);
-      if ( length < 0 ) 
+      if ( offset < c->m_big_offset ) 
       {
         ON_ERROR("ON_BinaryArchive::EndWrite3dmChunk() - chunk length < 0");
         rc = false;
       }
       else 
       {
-        if ( !SeekFromCurrentPosition( -length-4 ) ) 
+        ON__UINT64 length = (offset - c->m_big_offset);
+        if ( !BigSeekBackward( length + SizeofChunkLength() ) ) 
         {
           rc = false;
         }
         else 
         {
-          if ( !WriteInt( length ) )
+          if ( !WriteChunkLength( length ) )
           {
             rc = false;
           }
-          if ( !SeekFromCurrentPosition( length ) ) 
+          if ( !BigSeekForward( length ) ) 
           {
             rc = false;
           }
@@ -3438,19 +3981,50 @@ bool ON_BinaryArchive::Write3dmGoo( const ON_3dmGoo& goo )
 
 bool ON_BinaryArchive::PeekAt3dmChunkType( unsigned int* typecode, int* value )
 {
+  // does not change file position
+  bool rc;
+  unsigned int tc = 0;
+  ON__INT64 i64 = 0;
+  rc = PeekAt3dmBigChunkType(&tc,&i64);
+  if ( rc )
+  {
+    if ( 0 != typecode )
+      *typecode = tc;
+    if ( 0 != value )
+    {
+      ON__INT32 i32 = 0;
+      if ( ON_IsUnsignedChunkTypecode(tc) )
+        rc = DownSizeUINT((ON__UINT64)i64,(ON__UINT32*)&i32);
+      else
+        rc = DownSizeINT(i64,&i32);
+      *value = i32;
+    }
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::PeekAt3dmBigChunkType( 
+      unsigned int* typecode,
+      ON__INT64* big_value
+      )
+{
+  // does not change file position
+
   // 10 January 2005 Dale Lear
   //     Do not let the "peeking" affect the CRC.
   bool bDoChunkCRC = m_bDoChunkCRC;
   m_bDoChunkCRC = false;
 
-  const size_t pos0 = CurrentPosition();
-  int t = 0, v = 0;
-  bool rc = ReadInt( &t );
+  const ON__UINT64 pos0 = CurrentPosition();
+  ON__UINT32 t = 0;
+  ON__INT64 v = 0;
+  bool rc = ReadChunkTypecode( &t );
   if (rc) 
-    rc = ReadInt( &v );
-  const size_t pos1 = CurrentPosition();
-  int delta_pos = (int)(pos1-pos0);
-  if ( !SeekFromCurrentPosition( -delta_pos ) )
+  {
+    rc = ReadChunkValue( t, &v );
+  }
+  const ON__UINT64 pos1 = CurrentPosition();
+  if ( pos1 > pos0 && !BigSeekBackward( pos1-pos0 ) )
   {
     rc = false;
   }
@@ -3459,11 +4033,12 @@ bool ON_BinaryArchive::PeekAt3dmChunkType( unsigned int* typecode, int* value )
 
   if ( typecode )
     *typecode = t;
-  if ( value )
-    *value = v;
+  if ( big_value )
+    *big_value = v;
 
   return rc;
 }
+
 
 bool ON_BinaryArchive::Seek3dmChunkFromStart( 
       // beginning at the start of the active chunk, search portion of
@@ -3477,28 +4052,27 @@ bool ON_BinaryArchive::Seek3dmChunkFromStart(
   bool rc = false;
   if ( ReadMode() ) 
   {
-    const size_t pos0 = CurrentPosition();
-    const ON_3DM_CHUNK* c = m_chunk.Last();
+    const ON__UINT64 pos0 = CurrentPosition();
+    const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
     if ( c ) 
     {
       // set archive position to the beginning of this chunk
-      if ( 0 != (c->m_typecode | TCODE_SHORT) ) 
+      if ( !ON_IsLongChunkTypecode(c->m_typecode) ) 
       {
-        ON_ERROR("ON_BinaryArchive::Seek3dmChunkFromStart() called with a short active chunk");
+        ON_ERROR("ON_BinaryArchive::Seek3dmChunkFromStart() - current chunk is not a long chunk");
         return false;
       }
-      if ( c->m_value < 0 ) 
+      if ( c->m_big_value < 0 ) 
       {
         ON_ERROR("ON_BinaryArchive::Seek3dmChunkFromStart() called with an active chunk that has m_value < 0");
         return false;
       }
-      if ( pos0 < c->m_offset || pos0 > c->m_offset + ((size_t)c->m_value) ) 
+      if ( pos0 < c->m_big_offset || pos0 > c->m_big_offset + c->Length() ) 
       {
         ON_ERROR("ON_BinaryArchive::Seek3dmChunkFromStart() called with out of bounds current position");
         return false;
       }
-      int delta = (int)(pos0 - c->m_offset); // pos0 > c->m_offset, so this size_t subtraction is ok
-      rc = SeekFromCurrentPosition( -delta );
+      rc = BigSeekBackward( pos0 - c->m_big_offset ); // pos0 >= c->m_offset, so this size_t subtraction is ok
     }
     else 
     {
@@ -3533,8 +4107,8 @@ bool ON_BinaryArchive::Seek3dmChunkFromStart(
         if ( start_offset != m_3dm_start_section_offset )
           m_3dm_start_section_offset = start_offset;
         unsigned int t=0;
-        int v=-1;
-        rc = PeekAt3dmChunkType(&t,&v);
+        ON__INT64 v=-1;
+        rc = PeekAt3dmBigChunkType(&t,&v);
         if (rc && (t != 1 || v < 0) )
           rc = false;
       }
@@ -3547,10 +4121,17 @@ bool ON_BinaryArchive::Seek3dmChunkFromStart(
 
     if (!rc) 
     {
-      SeekFromStart(pos0);
+      BigSeekFromStart(pos0);
     }
   }
   return rc;
+}
+
+ON__UINT64 ON_3DM_BIG_CHUNK::Length() const
+{
+  return (ON_IsLongChunkTypecode(m_typecode) && m_big_value >= 0 )
+    ? ((ON__UINT64)m_big_value)
+    : 0;
 }
 
 bool ON_BinaryArchive::Seek3dmChunkFromCurrentPosition( 
@@ -3565,13 +4146,13 @@ bool ON_BinaryArchive::Seek3dmChunkFromCurrentPosition(
   bool rc = false;
   if ( ReadMode() ) 
   {
-    const ON_3DM_CHUNK* c = m_chunk.Last();
-    const size_t pos1 = c ? c->m_offset + ((size_t)c->m_value) : 0;
+    const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+    const ON__UINT64 pos1 = c ? c->m_big_offset + c->Length() : 0;
     const size_t pos_start = CurrentPosition();
     size_t pos_prev = 0;
     size_t pos = 0;
     unsigned int t;
-    int v;
+    ON__INT64 v64;
     bool bFirstTime = true;
     while(pos > pos_prev || bFirstTime) 
     {
@@ -3581,7 +4162,7 @@ bool ON_BinaryArchive::Seek3dmChunkFromCurrentPosition(
       if ( pos1 && pos > pos1 )
         break;
       t = !typecode;
-      if ( !PeekAt3dmChunkType( &t, 0 ) )
+      if ( !PeekAt3dmBigChunkType( &t, 0 ) )
         break;
       if ( t == typecode ) 
       {
@@ -3593,11 +4174,11 @@ bool ON_BinaryArchive::Seek3dmChunkFromCurrentPosition(
         // zero is not a valid typecode - file is corrupt at or before this position
         break;
       }
-      if ( !BeginRead3dmChunk( &t, &v ) )
+      if ( !BeginRead3dmBigChunk( &t, &v64 ) )
         break;
       if ( !EndRead3dmChunk() )
         break;
-      if ( TCODE_ENDOFTABLE == t && 0 != v )
+      if ( TCODE_ENDOFTABLE == t && 0 != v64 )
       {
         // TCODE_ENDOFTABLE chunks always have value = 0 - file is corrupt at or before this position
         break;
@@ -3610,63 +4191,92 @@ bool ON_BinaryArchive::Seek3dmChunkFromCurrentPosition(
   }
   return rc;
 }
-  
+
 bool ON_BinaryArchive::BeginRead3dmChunk( unsigned int* typecode, int* value )
 {
-  int t = 0, v = 0;
+  ON__UINT32 tc = 0;
+  ON__INT64 v64 = 0;
+  bool rc = BeginRead3dmBigChunk(&tc,&v64);
+  if (rc)
+  {
+    if ( 0 != typecode )
+      *typecode = tc;
+    rc = DownSizeChunkValue(tc,v64,value);
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::BeginRead3dmBigChunk( unsigned int* typecode, ON__INT64* value )
+{
+  ON__UINT32 t = 0;
+  ON__INT64 v = 0;
   m_bDoChunkCRC = false; // no CRC on chunk headers because length is written twice
-  m_3dm_v1_suppress_error_message |= 0x0001; // disable v1 ReadByte() error message at EOF
-  bool rc = ReadInt( &t );
-  m_3dm_v1_suppress_error_message &= 0xFFFE; // enable v1 ReadByte() error message at EOF
-  if (rc) {
-    if ( t == TCODE_ENDOFFILE ) {
-      // either this chunk is a bona fide end of file mark or it's "goo" that
-      // Rhino 1.0 or the pre-February 2000 Rhino 1.1 saved and wrote.
-      int isizeof_file = 0;
-      size_t sizeof_file = 0;
+  const unsigned int saved_error_message_mask = m_error_message_mask;
+  m_error_message_mask |= 0x0001; // disable ReadByte() error message at EOF
+  bool rc = ReadChunkTypecode( &t );
+  m_error_message_mask = saved_error_message_mask;
+  if (rc) 
+  {
+    if ( t == TCODE_ENDOFFILE ) 
+    {
+      // Either this chunk is a bona fide end of file mark, or it's "goo" 
+      // that Rhino 1.0 or the pre-February 2000 Rhino 1.1 saved and wrote.
+      ON__UINT64 sizeof_file = 0;
       if ( rc )
-        rc = ReadInt( &v );
-      if ( rc && v >= 4 ) {
-        rc = ReadInt( &isizeof_file );
-        sizeof_file = isizeof_file;
-        if ( v > 4 ) 
+        rc = ReadChunkValue( t, &v );
+      if ( rc && v >= 0 && ((ON__UINT64)v) >= SizeofChunkLength() ) 
+      {
+        ON__UINT64 EOF_chunk_length = (ON__UINT64)v;
+        ON__UINT64 pos0 = CurrentPosition();
+        rc = ReadEOFSizeOfFile( &sizeof_file );
+        ON__UINT64 pos1 = CurrentPosition();
+        if ( pos0 > 0 && pos1 > pos0 )
         {
-          rc = SeekFromCurrentPosition( v - 4 ); // skip over additional end mark info added after this
-                         // code was written
+          if ( !BigSeekBackward(pos1-pos0) )
+            rc = false;
         }
         if ( rc ) 
         {
-          size_t current_pos = CurrentPosition(); 
-          if ( !AtEnd() ) {
-            // Rhino v1 reads chunks with unknown typecodes as a block of "goo"
-            // and then saves them back into file.  This way new objects can
-            // pass through old versions.  When this happens to a eof marker,
-            // we get TCODE_ENDOFFILE chunks in the middle of a file.
-            // This can only happen in m_3dm_version = 1 files.
-            t = TCODE_ENDOFFILE_GOO;
-          }
-          else if ( m_3dm_version != 1 ) {
-            // check that current position matches saved file size
-            if ( current_pos != sizeof_file ) {
-              ON_ERROR("ON_BinaryArchive::BeginRead3dmChunk() - Rogue eof marker in v2 file.\n");
+          if ( BigSeekForward( EOF_chunk_length ) )
+          {
+            ON__UINT64 pos2 = CurrentPosition(); 
+            if ( m_3dm_version <= 1 )
+            {
+              if ( !AtEnd() ) 
+              {
+                // Rhino v1 reads chunks with unknown typecodes as a block of "goo"
+                // and then saves them back into file.  When this happens to an
+                // eof marker, we get TCODE_ENDOFFILE chunks in the middle of a file.
+                // This can only happen in m_3dm_version = 1 files.
+                t = TCODE_ENDOFFILE_GOO;
+              }
             }
+            else
+            {
+              // check that current position matches saved file size
+              if ( pos2 != sizeof_file ) {
+                ON_ERROR("ON_BinaryArchive::BeginRead3dmChunk() - Rogue eof marker in v2 file.\n");
+              }
+            }
+            rc = BigSeekBackward( EOF_chunk_length );
           }
-          rc = SeekFromCurrentPosition( -v );
-          if ( rc )
-            rc = PushChunk( t, v );
         }
+        if ( rc )
+          rc = PushBigChunk( t, v );
       }
-      else {
+      else 
+      {
         ON_ERROR( "ON_BinaryArchive::BeginRead3dmChunk() - file is damaged." );
         rc = false;
         t = 0; // ?? file is trashed ??
       }
     }
-    else {
+    else 
+    {
       if ( rc )
-        rc = ReadInt( &v );
+        rc = ReadChunkValue( t, &v );
       if ( rc )
-        rc = PushChunk( t, v );
+        rc = PushBigChunk( t, v );
     }
   }
   if ( typecode )
@@ -3705,8 +4315,8 @@ ON_BinaryArchive::BeginRead3dmChunk(
     *major_version = 0;
     *minor_version = 0;
     unsigned int tcode = 0;
-    int value = 0;
-    rc = PeekAt3dmChunkType(&tcode,&value);
+    ON__INT64 value = 0;
+    rc = PeekAt3dmBigChunkType(&tcode,&value);
     if ( expected_tcode != tcode )
     {
       ON_ERROR("ON_BinaryArchive::BeginRead3dmChunk - unexpected tcode");
@@ -3721,7 +4331,7 @@ ON_BinaryArchive::BeginRead3dmChunk(
     {
       tcode = 0;
       value = 0;
-      rc = BeginRead3dmChunk(&tcode,&value);
+      rc = BeginRead3dmBigChunk(&tcode,&value);
       if (rc)
       {
         if ( expected_tcode != tcode || value < 8 )
@@ -3763,24 +4373,24 @@ bool ON_BinaryArchive::EndRead3dmChunk()
 {
   //int length = 0;
   bool rc = false;
-  ON_3DM_CHUNK* c = m_chunk.Last();
+  ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c ) 
   {
-    size_t file_offset = CurrentPosition();
-    size_t end_offset = c->m_offset;
-    if ( c->m_do_length )
+    ON__UINT64 file_offset = CurrentPosition();
+    ON__UINT64 end_offset = c->m_big_offset;
+    if ( c->m_bLongChunk )
     {
-      if ( c->m_value < 0 )
+      if ( c->m_big_value < 0 )
       {
         ON_ERROR("ON_BinaryArchive::EndRead3dmChunk - negative chunk length");
       }
       else
       {
-        end_offset += ((size_t)c->m_value);
+        end_offset += ((ON__UINT64)c->m_big_value);
       }
     }
 
-    if ( c->m_do_length ) 
+    if ( c->m_bLongChunk ) 
     {
       if ( c->m_do_crc16 ) 
       {
@@ -3841,26 +4451,25 @@ bool ON_BinaryArchive::EndRead3dmChunk()
     }
 
     // check length and seek to end of chunk if things are amiss
-    if ( file_offset < c->m_offset ) 
+    if ( file_offset < c->m_big_offset ) 
     {
       ON_ERROR("ON_BinaryArchive::EndRead3dmChunk: current position before start of current chunk.");
-      if ( !SeekFromStart( end_offset ) )
+      if ( !BigSeekFromStart( end_offset ) )
         rc = false;
     }
     else if ( file_offset > end_offset ) 
     {
       ON_ERROR("ON_BinaryArchive::EndRead3dmChunk: current position after end of current chunk.");
-      if ( !SeekFromStart( end_offset ) )
+      if ( !BigSeekFromStart( end_offset ) )
         rc = false;
     }
     else if ( file_offset != end_offset ) 
     {
       // partially read chunk - happens when chunks are skipped or old code
       // reads a new minor version of a chunk whnich has added information.
-      if ( file_offset != c->m_offset ) 
+      if ( file_offset != c->m_big_offset ) 
       {
-        if ( m_3dm_version != 1 
-             || (m_3dm_v1_suppress_error_message&0x02) == 0 ) 
+        if ( m_3dm_version != 1 || (m_error_message_mask&0x02) == 0 ) 
         {
           // when reading v1 files, there are some situations where
           // it is reasonable to attempt to read 4 bytes at the end
@@ -3886,11 +4495,21 @@ bool ON_BinaryArchive::EndRead3dmChunk()
           }
         }
       }
-      int delta =  (end_offset >= file_offset) 
-                ?  ((int)(end_offset-file_offset)) 
-                : -((int)(file_offset-end_offset));
-      if ( !SeekFromCurrentPosition( delta ) )
-        rc = false;
+      //int delta =  (end_offset >= file_offset) 
+      //          ?  ((int)(end_offset-file_offset)) 
+      //          : -((int)(file_offset-end_offset));
+      //if ( !SeekFromCurrentPosition( delta ) )
+      //  rc = false;
+      if ( end_offset > file_offset )
+      {
+        if ( !BigSeekForward(end_offset - file_offset) )
+          rc = false;
+      }
+      else if ( end_offset < file_offset )
+      {
+        if ( !BigSeekBackward(file_offset - end_offset) )
+          rc = false;
+      }
     }
 
     m_chunk.Remove();
@@ -4082,10 +4701,10 @@ int ON_BinaryArchive::BeginReadDictionaryEntry(
         )
 {
   unsigned int tcode = 0;
-  int value = 0;
+  ON__INT64 chunk_length = 0;
   int chunk_count = m_chunk.Count();
   int rc = ( chunk_count > 0 && TCODE_DICTIONARY == m_chunk[chunk_count-1].m_typecode )
-          ? (BeginRead3dmChunk(&tcode,&value)?1:0)
+          ? (BeginRead3dmBigChunk(&tcode,&chunk_length)?1:0)
           : 0;
   if ( de_type )
     *de_type = 0;
@@ -4147,14 +4766,17 @@ bool ON_BinaryArchive::Read3dmGoo( ON_3dmGoo& goo )
   }
   goo.m_typecode = 0;
   goo.m_value = 0;
-  ON_3DM_CHUNK* c = m_chunk.Last();
+  ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if (c) 
   {
     goo.m_typecode = c->m_typecode;
-    goo.m_value = c->m_value;
-    if ( 0 == (goo.m_typecode & TCODE_SHORT) && goo.m_value > 0 ) 
+    if ( c->m_bLongChunk )
+      rc = DownSizeUINT(c->Length(),(ON__UINT32*)&goo.m_value);
+    else
+      rc = DownSizeINT(c->m_big_value,&goo.m_value);
+    if ( rc && c->m_bLongChunk && c->m_big_value > 0 ) 
     {
-      if ( CurrentPosition() == c->m_offset )
+      if ( CurrentPosition() == c->m_big_offset )
       {
         // read the rest of this chunk into the goo.m_goo buffer.
         // 23 January 2004 Dale Lear:
@@ -4165,20 +4787,168 @@ bool ON_BinaryArchive::Read3dmGoo( ON_3dmGoo& goo )
         c->m_do_crc16 = 0;
         c->m_do_crc32 = 0;
         m_bDoChunkCRC = false;
-        goo.m_goo = (unsigned char*)onmalloc( goo.m_value );
-        rc = ReadByte( goo.m_value, goo.m_goo );
+        size_t sizeof_goo = (size_t)c->Length();
+        goo.m_goo = (unsigned char*)onmalloc( sizeof_goo );
+        rc = ReadByte( sizeof_goo, goo.m_goo );
       }
     }
   }
   return rc;
 }
 
-bool ON_BinaryArchive::PushChunk( unsigned int typecode, int value )
+bool ON_BinaryArchive::WriteChunkTypecode( ON__UINT32 typecode )
 {
-  ON_3DM_CHUNK c;
+  return WriteInt32(1,(ON__INT32*)&typecode);
+}
+
+bool ON_BinaryArchive::ReadChunkTypecode( ON__UINT32* typecode )
+{
+  ON__UINT32 tc = 0;
+  bool rc = ReadInt32(1,(ON__INT32*)&tc);
+  if (rc && typecode )
+    *typecode = tc;
+  return rc;
+}
+
+bool ON_BinaryArchive::WriteChunkValue( ON__UINT32 typecode, ON__INT64 big_value )
+{
+  bool rc;
+  if ( 8 == SizeofChunkLength() )
+  {
+    rc = WriteInt64(1,&big_value);
+  }
+  else if ( ON_IsUnsignedChunkTypecode(typecode) )
+  {
+    // treat big_value as an unsigned int
+    ON__UINT32 u32 = 0;
+    rc = DownSizeUINT((ON__UINT64)big_value,&u32);
+    if ( !WriteInt32(1,(ON__INT32*)&u32) )
+      rc = false;
+  }
+  else
+  {
+    // treat big_value as a signed int
+    ON__INT32 v32 = 0;
+    rc = DownSizeINT(big_value,&v32);
+    if ( !WriteInt32(1,&v32) )
+      rc = false;
+  }
+  return rc;
+}
+
+
+bool ON_BinaryArchive::WriteChunkLength( ON__UINT64 length )
+{
+  bool rc;
+  if ( 8 == SizeofChunkLength() )
+  {
+    rc = WriteInt64(1,(ON__INT64*)&length);
+  }
+  else
+  {
+    ON__UINT32 u32 = 0;
+    rc = DownSizeUINT(length,&u32);
+    if ( !WriteInt32(1,(ON__INT32*)&u32) )
+      rc = false;
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::ReadEOFSizeOfFile( ON__UINT64* sizeof_file )
+{
+  bool rc;
+  ON__INT64 u64 = 0;
+  if ( 8 == SizeofChunkLength() )
+  {
+    // file has a 8 byte file size
+    rc = ReadInt64(1,(ON__INT64*)&u64);
+  }
+  else
+  {
+    // file has a 4 byte file size
+    ON__UINT32 u32 = 0;
+    rc = ReadInt32(1,(ON__INT32*)&u32);
+    if ( rc )
+      u64 = u32;
+  }
+  if ( rc && 0 != sizeof_file )
+    *sizeof_file = u64;
+  return rc;
+}
+
+bool ON_BinaryArchive::WriteEOFSizeOfFile( ON__UINT64 sizeof_file )
+{
+  bool rc;
+  if ( 8 == SizeofChunkLength() )
+  {
+    // file has a 8 byte file size
+    rc = WriteInt64(1,(ON__INT64*)&sizeof_file);
+  }
+  else
+  {
+    // file has a 4 byte file size
+    ON__UINT32 u32=0;
+    DownSizeUINT(sizeof_file,&u32);
+    rc = WriteInt32(1,(ON__INT32*)&u32);
+  }
+  return rc;
+}
+
+bool ON_BinaryArchive::ReadChunkValue( ON__UINT32 typecode, ON__INT64* value64 )
+{
+  bool rc;
+  ON__INT64 i64 = 0;
+  if ( 8 == SizeofChunkLength() )
+  {
+    // file has a 8 byte chunk value
+    rc = ReadInt64(1,&i64);
+  }
+  else
+  {
+    // file has a 4 byte chunk value
+    if ( ON_IsUnsignedChunkTypecode(typecode) )
+    {
+      // This Mickey Mouse is here to convince all compilers 
+      // that when we read a 4 byte value with the high bit set, 
+      // the resulting i64 value is positive. I.e.,
+      // 0xFFFFFFFF is converted to 0x00000000FFFFFFFF
+      ON__UINT32 u32 = 0;
+      ON__UINT64 u64 = 0;
+      rc = ReadInt32(1,(ON__INT32*)&u32);
+      if ( rc )
+        u64 = u32;
+      i64 = (ON__INT64)u64;
+    }
+    else
+    {
+      // If we read a 4 byte value with the high bit set,
+      // the resulting i64 value is negative. I.e.,
+      // -1 is converted to -1 (0xFFFFFFFF to 0xFFFFFFFFFFFFFFFF)
+      ON__INT32 i32 = 0;
+      rc = ReadInt32(1,&i32);
+      i64 = i32;
+    }
+  }
+  if ( rc && 0 != value64 )
+    *value64 = i64;
+  return rc;
+}
+
+size_t ON_BinaryArchive::SizeofChunkLength() const
+{
+  // Version 1 - 4 and early version 5 files had
+  // 4 byte chunk lengths.  In October of 2009,
+  // 8 byte chunk lengths were phased in for V5
+  // files.
+  return (m_3dm_version < 50) ? 4 : 8;
+}
+
+bool ON_BinaryArchive::PushBigChunk( ON__UINT32 typecode, ON__INT64 big_value )
+{
+  ON_3DM_BIG_CHUNK c;
   memset(&c,0,sizeof(c));
-  c.m_typecode = typecode;
-  c.m_value    = value;
+  c.m_typecode  = typecode;
+  c.m_big_value = big_value;
 
   // | and & are BITOPS - do NOT change to || and &&
   //
@@ -4231,13 +5001,15 @@ bool ON_BinaryArchive::PushChunk( unsigned int typecode, int value )
 
       }
     }
-    c.m_do_length = 1;
+    c.m_bLongChunk = 1;
   }
-  c.m_offset = CurrentPosition();
+  c.m_big_offset = CurrentPosition();
   m_bDoChunkCRC = c.m_do_crc16 || c.m_do_crc32;
+  
   if ( m_chunk.Capacity() == 0 )
     m_chunk.Reserve(128);
   m_chunk.Append( c );
+
   return true;
 }
 
@@ -4279,9 +5051,23 @@ bool ON_BinaryArchive::SaveUserData() const
 
 bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformation )
 {
+  // 2009 November 6 
+  // Default 3dm files now have 8 byte chunk lengths.
+  // 3dm archive version numbers >= 50 indicate the file has 8 byte chunk lengths.
+  // Rather than change the hundreds of places in Rhino that use 5,6,7,...,
+  // the "version *= 10" line handles it.
+  if ( version >= 5 && version < 50 )
+    version *= 10;
+  if ( version >= 5 && 0 != (version % 10) )
+  {
+    ON_ERROR("3dm archive version must be 2,3,4,5,50,60,...");
+    return false;
+  }
+
   m_bad_CRC_count = 0;
   m_3dm_version = 0;
   m_3dm_opennurbs_version = ON::Version();
+  m_3dm_version = version;
 
   char sVersion[64];
   memset( sVersion, 0, sizeof(sVersion) );
@@ -4298,7 +5084,7 @@ bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformati
   }
   bool rc = WriteByte( 32, sVersion );
   if ( rc )
-    rc = BeginWrite3dmChunk( TCODE_COMMENTBLOCK, 0 );
+    rc = BeginWrite3dmBigChunk( TCODE_COMMENTBLOCK, 0 );
   if ( rc ) {
     if ( sInformation && sInformation[0] ) {
       rc = WriteByte( strlen(sInformation), sInformation );
@@ -4323,7 +5109,6 @@ bool ON_BinaryArchive::Write3dmStartSection( int version, const char* sInformati
     if ( !EndWrite3dmChunk() ) // need to call EndWrite3dmChunk() even if a WriteByte() has failed
       rc = false;
   }
-  m_3dm_version = version;
   return rc;
 }
 
@@ -4344,7 +5129,7 @@ bool ON_BinaryArchive::Read3dmStartSection( int* version, ON_String& s )
   m_3dm_opennurbs_version = 0;
 
   unsigned int typecode = 0;
-  int length = -1;
+  ON__INT64 length = -1;
   int ver = m_3dm_version;
   if ( version )
     *version = m_3dm_version;
@@ -4406,21 +5191,31 @@ bool ON_BinaryArchive::Read3dmStartSection( int* version, ON_String& s )
       }
     }
     if ( rc ) {
-      rc = BeginRead3dmChunk( &typecode, &length );
+      rc = BeginRead3dmBigChunk( &typecode, &length );
       if ( rc ) {
         if ( typecode != 1 ) {
           rc = false; // it's not a .3DM file
         }
-        else if ( length > 0 ) {
-          s.ReserveArray( length+1 );
-          s.SetLength( length );
-          s[length] = 0;
-          ReadByte( length, s.Array() );
-          while ( length > 0 && s[length-1] == 0 || s[length-1] == 26 ) {
-            s[length-1] = 0;
-            length--;
+        else if ( length > 0 ) 
+        {
+          if ( length > 0x00FFFFFF )
+          {
+            ON_ERROR("ON_BinaryArchive::Read3dmStartSection - start section string is unreasonably long.");
+            rc = false;
           }
-          s.SetLength(length);
+          else 
+          {
+            int slen = (int)length;
+            s.ReserveArray( slen+1 );
+            s.SetLength( slen );
+            s[slen] = 0;
+            ReadByte( slen, s.Array() );
+            while ( slen > 0 && s[slen-1] == 0 || s[slen-1] == 26 ) {
+              s[slen-1] = 0;
+              slen--;
+            }
+            s.SetLength(slen);
+          }
         }
       }
       if ( !EndRead3dmChunk() )
@@ -4441,13 +5236,13 @@ bool ON_BinaryArchive::Read3dmStartSection( int* version, ON_String& s )
         // detects these files.
         {
 
-          const size_t pos1 = CurrentPosition();
+          const ON__UINT64 pos1 = CurrentPosition();
           //int v1_fluff_chunk_count = 0;
           bool bCheckChunks = true;
 
           //////////
           while(bCheckChunks) {
-            if ( !PeekAt3dmChunkType(&typecode,&length) )
+            if ( !PeekAt3dmBigChunkType(&typecode,&length) )
               break;
             switch(typecode)
             {
@@ -4463,7 +5258,7 @@ bool ON_BinaryArchive::Read3dmStartSection( int* version, ON_String& s )
               case TCODE_NAMED_CPLANE:
               case TCODE_NAMED_VIEW:
                 // skip potential v1 fluff
-                bCheckChunks = BeginRead3dmChunk( &typecode, &length );
+                bCheckChunks = BeginRead3dmBigChunk( &typecode, &length );
                 if ( bCheckChunks )
                   bCheckChunks = EndRead3dmChunk();
                 break;
@@ -4492,11 +5287,10 @@ bool ON_BinaryArchive::Read3dmStartSection( int* version, ON_String& s )
 
           if ( m_3dm_version == 1 ) {
             // move archive pointer back to 
-            size_t pos2 = CurrentPosition();
+            ON__UINT64 pos2 = CurrentPosition();
             if ( pos2 > pos1 ) 
             {
-              int delta = (int)(pos2-pos1);
-              SeekFromCurrentPosition( -delta );
+              BigSeekBackward(pos2 - pos1);
             }
           }
         }
@@ -4610,13 +5404,16 @@ bool ON_BinaryArchive::Read3dmProperties( ON_3dmProperties& prop )
   bool bDone = false;
   bool bRewindFilePointer = false;
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode;
+  ON__INT64 big_value;
   int version = 0;
 
   if ( m_3dm_version != 1 ) {
-    for(;;) {
-      rc = BeginRead3dmChunk( &tcode, &value );
+    for(;;) 
+    {
+      tcode = 0;
+      big_value = 0;
+      rc = BeginRead3dmBigChunk( &tcode, &big_value );
       if ( !rc ) {
         bRewindFilePointer = true;
         break;
@@ -4641,8 +5438,11 @@ bool ON_BinaryArchive::Read3dmProperties( ON_3dmProperties& prop )
     // version 1 file
     rc = SeekFromStart(32)?true:false;
     bRewindFilePointer = true;
-    for(;;) {
-      rc = BeginRead3dmChunk( &tcode, &value );
+    for(;;) 
+    {
+      tcode = 0;
+      big_value = 0;
+      rc = BeginRead3dmBigChunk( &tcode, &big_value );
       if ( !rc ) {
         rc = true; // assume we are at the end of the file
         bRewindFilePointer = true;
@@ -4652,19 +5452,26 @@ bool ON_BinaryArchive::Read3dmProperties( ON_3dmProperties& prop )
       switch ( tcode ) {
 
       case 1: // comments section has application name
-        if ( value > 1 ) {
+        if ( big_value > 1000000 )
+        {
+          ON_ERROR("Comment length > 1000000");
+        }
+        else if ( big_value > 1 )
+        {
+          int slen = (int)big_value;
           int i;
           char* name = 0;
           ON_String s;
-          s.ReserveArray( value+1 );
-          s.SetLength( value );
-          s[value] = 0;
-          ReadByte( value, s.Array() );
-          while ( value > 0 && s[value-1] == 0 || s[value-1] == 26 ) {
-            s[value-1] = 0;
-            value--;
+          s.ReserveArray( slen+1 );
+          s.SetLength( slen );
+          s[slen] = 0;
+          ReadByte( slen, s.Array() );
+          while ( slen > 0 && (s[slen-1] == 0 || s[slen-1] == 26) ) 
+          {
+            s[slen-1] = 0;
+            slen--;
           }
-          s.SetLength(value);
+          s.SetLength(slen);
           name = s.Array();
           if ( name ) {
             while(*name) {
@@ -4686,7 +5493,8 @@ bool ON_BinaryArchive::Read3dmProperties( ON_3dmProperties& prop )
                 break;
               }
             }
-            if ( *name ) {
+            if ( *name )
+            {
               char* details = 0;
               if ( !on_strnicmp(name,"Rhinoceros",10) ) {
                 prop.m_Application.m_application_URL = "http://www.rhino3d.com";
@@ -4731,7 +5539,8 @@ bool ON_BinaryArchive::Read3dmProperties( ON_3dmProperties& prop )
             s = 0;
           }
           if (rc) rc = ReadTime( prop.m_RevisionHistory.m_create_time );
-          if (rc) rc = ReadInt(&value); // 0 in 1.x files
+          int i32 = 0;
+          if (rc) rc = ReadInt(&i32); // 0 in 1.x files
           if (rc) rc = ReadInt(&slength);
           if ( rc && slength > 0 ) 
           {
@@ -4745,7 +5554,7 @@ bool ON_BinaryArchive::Read3dmProperties( ON_3dmProperties& prop )
             s = 0;
           }
           if (rc) rc = ReadTime( prop.m_RevisionHistory.m_last_edit_time );
-          if (rc) rc = ReadInt(&value); // 0 in 1.x files
+          if (rc) rc = ReadInt(&i32); // 0 in 1.x files
           if (rc) rc = ReadInt( &prop.m_RevisionHistory.m_revision_count );
         }
         break;
@@ -4822,12 +5631,14 @@ bool ON_BinaryArchive::Read3dmProperties( ON_3dmProperties& prop )
   }
 
   if ( bRewindFilePointer ) {
-    // reposition file pointer
-    const size_t pos1 = CurrentPosition();
+    // reposition file pointer to pos0
+    const ON__UINT64 pos1 = CurrentPosition();
     if ( pos0 != pos1 ) 
     {
-      int delta = (pos1 >= pos0) ? -((int)(pos1-pos0)) : ((int)(pos0-pos1));
-      SeekFromCurrentPosition( delta );
+      if (pos1 > pos0)
+        BigSeekBackward(pos1-pos0);
+      else if ( pos1 < pos0 )
+        BigSeekForward(pos0-pos1);
     }
   }
 
@@ -4859,25 +5670,25 @@ bool ON_BinaryArchive::Write3dmSettings(
       // V3 user data.  If a plug-in id is not in this list,
       // the user data will not be saved in the V3 archive.
       int i, count = settings.m_plugin_list.Count();
-      m_plugin_id_list.SetCount(0);
-      m_plugin_id_list.SetCapacity( count+5 );
+      m_V3_plugin_id_list.SetCount(0);
+      m_V3_plugin_id_list.SetCapacity( count+5 );
       for ( i = 0; i < count; i++ )
       {
         const ON_UUID& pid = settings.m_plugin_list[i].m_plugin_id;
         if ( !ON_UuidIsNil(pid) )
-          m_plugin_id_list.Append(pid);
+          m_V3_plugin_id_list.Append(pid);
       }
 
       // These ids insure V3, V4 and V5 core user data will round trip
       // through SaveAs V3 and SaveAs V4
-      m_plugin_id_list.Append( ON_v3_userdata_id );
-      m_plugin_id_list.Append( ON_v4_userdata_id );
-      m_plugin_id_list.Append( ON_opennurbs4_id );
-      m_plugin_id_list.Append( ON_opennurbs5_id );
-      m_plugin_id_list.Append( ON_rhino3_id );
-      m_plugin_id_list.Append( ON_rhino4_id );
-      m_plugin_id_list.Append( ON_rhino5_id );
-      m_plugin_id_list.HeapSort( ON_UuidCompare );
+      m_V3_plugin_id_list.Append( ON_v3_userdata_id );
+      m_V3_plugin_id_list.Append( ON_v4_userdata_id );
+      m_V3_plugin_id_list.Append( ON_opennurbs4_id );
+      m_V3_plugin_id_list.Append( ON_opennurbs5_id );
+      m_V3_plugin_id_list.Append( ON_rhino3_id );
+      m_V3_plugin_id_list.Append( ON_rhino4_id );
+      m_V3_plugin_id_list.Append( ON_rhino5_id );
+      m_V3_plugin_id_list.HeapSort( ON_UuidCompare );
     }
   }
   return rc;
@@ -4886,8 +5697,8 @@ bool ON_BinaryArchive::Write3dmSettings(
 bool ON_BinaryArchive::Read3dmSettings( ON_3dmSettings& settings )
 {
   bool rc = false;
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode;
+  ON__INT64 big_value;
 
   if ( m_3dm_version == 1 ) {
     // read legacy v 1 info that is scattered around the file
@@ -4895,8 +5706,11 @@ bool ON_BinaryArchive::Read3dmSettings( ON_3dmSettings& settings )
   }
   else {
     rc = true;
-    while(rc) {
-      rc = BeginRead3dmChunk( &tcode, &value );
+    while(rc) 
+    {
+      tcode = 0;
+      big_value = 0;
+      rc = BeginRead3dmBigChunk( &tcode, &big_value );
       if ( !rc )
         break;
       if ( tcode == TCODE_SETTINGS_TABLE ) {
@@ -4976,8 +5790,8 @@ bool ON_BinaryArchive::EndWrite3dmTable( unsigned int typecode )
     ON_ERROR("ON_BinaryArchive::EndWrite3dmTable() m_chunk.Count() != 1");
     return false;
   }
-  const ON_3DM_CHUNK* c = m_chunk.Last();
-  if ( c->m_typecode != typecode ) {
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+  if ( 0 == c || c->m_typecode != typecode ) {
     ON_ERROR("ON_BinaryArchive::EndWrite3dmTable() m_chunk.Last()->typecode != typecode");
     return false;
   }
@@ -5010,18 +5824,26 @@ bool ON_BinaryArchive::BeginRead3dmTable( unsigned int typecode )
     return false;
   }
 
-  if ( m_3dm_version == 1 ) {
+  if ( m_3dm_version <= 1 ) 
+  {
+    if ( TCODE_USER_TABLE == typecode )
+      return false; // no user tables in V1 files
+
     // version 1 files had can have chunks in any order.  To read a "table",
     // you have to go through the entire list of chunks looking for those
     // that belong to a particular table.
     rc = SeekFromStart(32)?true:false;
     m_active_table = tt;
   }
-  else {
+  else 
+  {
+    if ( TCODE_USER_TABLE == typecode && m_3dm_version <= 2 )
+      return false; // no user tables in V2 files
+
     bool bReadTable = true;
-    unsigned int tcode = !typecode;
-    int value = 0;
-    rc = PeekAt3dmChunkType( &tcode, &value );
+    ON__UINT32 tcode = !typecode;
+    ON__INT64 big_value = 0;
+    rc = PeekAt3dmBigChunkType( &tcode, &big_value );
     if ( rc ) {
       if ( tcode != typecode ) 
       {
@@ -5109,8 +5931,8 @@ bool ON_BinaryArchive::BeginRead3dmTable( unsigned int typecode )
             // an ON_ERROR alert about something we can work around
             // and has been fixed in V4.
             tcode = 0;
-            value = 0;
-            if ( BeginRead3dmChunk( &tcode, &value ) )
+            big_value = 0;
+            if ( BeginRead3dmBigChunk( &tcode, &big_value ) )
             {
               if ( TCODE_HATCHPATTERN_TABLE == tcode )
               {
@@ -5124,8 +5946,8 @@ bool ON_BinaryArchive::BeginRead3dmTable( unsigned int typecode )
               else if ( !bSeekFromStart )
               {
                 tcode = 0;
-                value = 0;
-                PeekAt3dmChunkType( &tcode, &value );
+                big_value = 0;
+                PeekAt3dmBigChunkType( &tcode, &big_value );
                 if ( tcode != typecode )
                   bSeekFromStart = true;
               }
@@ -5141,8 +5963,8 @@ bool ON_BinaryArchive::BeginRead3dmTable( unsigned int typecode )
       }
       if ( rc && bReadTable ) {
         tcode = !typecode;
-        value = 0;
-        rc = BeginRead3dmChunk( &tcode, &value );
+        big_value = 0;
+        rc = BeginRead3dmBigChunk( &tcode, &big_value );
         if ( rc && tcode != typecode ) {
           ON_ERROR("ON_BinaryArchive::BeginRead3dmTable() - corrupt table - skipping");
           rc = false;
@@ -5158,49 +5980,36 @@ bool ON_BinaryArchive::BeginRead3dmTable( unsigned int typecode )
   return rc;
 }
 
-static
-bool EmergencyFindTable_UuidHelper( const unsigned char* buffer,
-                                   const unsigned int tcode,
-                                   const ON_UUID* class_uuid
-                                   )
-{
-  unsigned int u;
-  ON__UINT32 c, cc;
-  ON_UUID uuid;
-  memcpy(&u,buffer,4);
-  if ( tcode != u )
-    return false;
-  buffer += 4;
-  memcpy(&u,buffer,4);
-  if ( 20 != u )
-    return false;
-  buffer += 4;
-  memcpy(&uuid.Data1,buffer,4);
-  buffer += 4;
-  memcpy(&uuid.Data2,buffer,2);
-  buffer += 2;
-  memcpy(&uuid.Data3,buffer,2);
-  buffer += 2;
-  memcpy(&uuid.Data4,buffer,8);
-  buffer += 8;
-
-  if( 0 != class_uuid && uuid != *class_uuid )
-  {
-    return false;
-  }
-
-  memcpy(&c,buffer,4);
-  cc = ON_CRC32(0,4,&uuid.Data1);
-  cc = ON_CRC32(cc,2,&uuid.Data2);
-  cc = ON_CRC32(cc,2,&uuid.Data3);
-  cc = ON_CRC32(cc,8,&uuid.Data4[0]);
-  if ( c != cc )
-    return false;
-
-  return true;
-}
 
 int ON_BinaryArchive::GetCurrentChunk(ON_3DM_CHUNK& chunk) const
+{
+  ON_3DM_BIG_CHUNK big_chunk;
+  memset(&chunk,0,sizeof(ON_3DM_CHUNK));
+  memset(&big_chunk,0,sizeof(big_chunk));
+  int rc = GetCurrentChunk(big_chunk);
+  if ( rc > 0 )
+  {
+    chunk.m_offset = (size_t)big_chunk.m_big_offset;
+    chunk.m_typecode = big_chunk.m_typecode;
+
+    ON__INT32 i32 = 0;
+    if ( ON_IsLongChunkTypecode( big_chunk.m_typecode ) )
+      DownSizeUINT( (ON__UINT64)big_chunk.m_big_value, (ON__UINT32*)&i32 );
+    else
+      DownSizeINT( big_chunk.m_big_value, &i32 );
+    chunk.m_value = i32;
+
+    chunk.m_do_length = big_chunk.m_bLongChunk ? 1 : 0;
+    chunk.m_do_crc16 = big_chunk.m_do_crc16 ? 1 : 0;
+    chunk.m_do_crc32 = big_chunk.m_do_crc32 ? 1 : 0;
+    chunk.m_crc16 = big_chunk.m_crc16;
+    chunk.m_crc32 = big_chunk.m_crc32;
+  }
+  return rc;
+}
+
+
+int ON_BinaryArchive::GetCurrentChunk(ON_3DM_BIG_CHUNK& chunk) const
 {
   int rc = m_chunk.Count();
   if ( rc > 0 )
@@ -5209,117 +6018,388 @@ int ON_BinaryArchive::GetCurrentChunk(ON_3DM_CHUNK& chunk) const
   }
   else
   {
-    memset(&chunk,0,sizeof(ON_3DM_CHUNK));
+    memset(&chunk,0,sizeof(ON_3DM_BIG_CHUNK));
   }
   return rc;
 }
 
 static
-bool EmergencyFindTable( ON_BinaryArchive& binary_archive, 
-                  size_t filelength,
-                  const unsigned int tcode_table,
-                  const unsigned int tcode_record,
-                  const ON_UUID class_uuid,
-                  const int min_length_data
-                  )
+const unsigned char*  BufferToUINT16(
+          bool bReverseByteOrder, 
+          const unsigned char* buffer,
+          const unsigned char* buffer_max,
+          ON__UINT16* u16 )
+{
+  if ( buffer >= buffer_max || buffer_max - buffer < 2 )
+    return 0;
+  if ( u16 )
+  {
+    unsigned char* dst = (unsigned char*)u16;
+    if ( bReverseByteOrder )
+    {
+      dst[0] = buffer[1];
+      dst[1] = buffer[0];
+    }
+    else
+    {
+      dst[0] = buffer[0];
+      dst[1] = buffer[1];
+    }
+  }
+  return buffer+2;
+}
+
+static
+const unsigned char* BufferToUINT32(
+          bool bReverseByteOrder,
+          const unsigned char* buffer, 
+          const unsigned char* buffer_end,
+          ON__UINT32* u32 )
+{
+  if ( buffer >= buffer_end || buffer_end - buffer < 4 )
+    return 0;
+  if ( u32 )
+  {
+    unsigned char* dst = (unsigned char*)u32;
+    if ( bReverseByteOrder )
+    {
+      dst[0] = buffer[3];
+      dst[1] = buffer[2];
+      dst[2] = buffer[1];
+      dst[3] = buffer[0];
+    }
+    else
+    {
+      dst[0] = buffer[0];
+      dst[1] = buffer[1];
+      dst[2] = buffer[2];
+      dst[3] = buffer[3];
+    }
+  }
+  return buffer+4;
+}
+
+static
+const unsigned char* BufferToINT64(
+          bool bReverseByteOrder, 
+          const unsigned char* buffer, 
+          const unsigned char* buffer_end,
+          ON__INT64* i64 )
+{
+  if ( buffer >= buffer_end || buffer_end - buffer < 8 )
+    return 0;
+  if ( i64 )
+  {
+    unsigned char* dst = (unsigned char*)i64;
+    if ( bReverseByteOrder )
+    {
+      dst[0] = buffer[7];
+      dst[1] = buffer[6];
+      dst[2] = buffer[5];
+      dst[3] = buffer[4];
+      dst[4] = buffer[3];
+      dst[5] = buffer[2];
+      dst[6] = buffer[1];
+      dst[7] = buffer[0];
+    }
+    else
+    {
+      dst[0] = buffer[0];
+      dst[1] = buffer[1];
+      dst[2] = buffer[2];
+      dst[3] = buffer[3];
+      dst[4] = buffer[4];
+      dst[5] = buffer[5];
+      dst[6] = buffer[6];
+      dst[7] = buffer[7];
+    }
+  }
+  return buffer+8;
+}
+
+static
+const unsigned char* BufferValidateTcode( 
+          bool bReverseByteOrder,
+          const unsigned char* buffer, 
+          const unsigned char* buffer_end,
+          ON__UINT32 expected_tcode )
+{
+  ON__UINT32 tc = expected_tcode ? 0 : 1;
+  buffer = BufferToUINT32(bReverseByteOrder,buffer,buffer_end,&tc);
+  return ( 0 != buffer && tc == expected_tcode ) ? buffer : 0;
+}
+
+static 
+const unsigned char* BufferToChunkValue( 
+          bool bReverseByteOrder,
+          size_t sizeof_chunk_value, 
+          const unsigned char* buffer, 
+          const unsigned char* buffer_end,
+          ON__INT64* chunk_value )
+{
+  if ( 8 == sizeof_chunk_value )
+  {
+    buffer = BufferToINT64(bReverseByteOrder,buffer,buffer_end,chunk_value);
+  }
+  else
+  {
+    ON__UINT32 u32;
+    ON__UINT64 u64;
+    buffer = BufferToUINT32(bReverseByteOrder,buffer,buffer_end,&u32);
+    if ( buffer && chunk_value )
+    {
+      // this u64 = u32 is here so 4 byte unsigned ints with the high
+      // bit set are converted to positive 8 bytes ints.
+      u64 = u32; 
+      *chunk_value = (ON__INT64)u64;
+    }
+  }
+  return buffer;
+}
+
+static 
+const unsigned char* BufferToUuid(
+          bool bReverseByteOrder, 
+          const unsigned char* buffer,
+          const unsigned char* buffer_end,
+          ON_UUID& uuid )
+{
+  ON__UINT32 data1=0;
+  ON__UINT16 data2=0, data3=0;
+  if ( buffer >= buffer_end || buffer_end - buffer < 16 )
+    return 0;
+  buffer = BufferToUINT32(bReverseByteOrder,buffer,buffer_end,&data1);
+  if (buffer)
+    buffer = BufferToUINT16(bReverseByteOrder,buffer,buffer_end,&data2);
+  if (buffer)
+    buffer = BufferToUINT16(bReverseByteOrder,buffer,buffer_end,&data3);
+  if (buffer)
+  {
+    if ( buffer >= buffer_end || buffer_end - buffer < 8 )
+      buffer = 0;
+    else
+    {
+      uuid.Data1 = data1;
+      uuid.Data2 = data2;
+      uuid.Data3 = data3;
+      memcpy(&uuid.Data4,buffer,8);
+      buffer += 8;
+    }
+  }
+  return buffer;
+}
+
+static
+const unsigned char* EmergencyFindTable_UuidHelper( 
+          bool bReverseByteOrder,
+          size_t sizeof_chunk_value, 
+          const unsigned char* buffer,
+          const unsigned char* buffer_end,
+          const ON__UINT32 expected_tcode,
+          const ON_UUID* expected_uuid
+          )
+{
+  ON__INT64 chunk_value;
+  ON__UINT32 c, cc;
+  ON_UUID uuid;
+
+  // make sure the value at the start of the buffer = expected_tcode.
+  buffer = BufferValidateTcode(bReverseByteOrder,buffer,buffer_end,expected_tcode);
+  if ( 0 == buffer )
+    return 0;
+
+  // get length of this chunk containing the uuid
+  chunk_value = -1;
+  buffer = BufferToChunkValue( bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,&chunk_value );
+  if ( 0 == buffer || chunk_value < 0 )
+    return 0;
+
+  // determine how long the chunk is supposed to be and validate the length.
+  //
+  // The "16+4+sizeof_chunk_value+21+4+4" in the bLookForUserTableRecordHeader
+  // breaks down as:
+  //  16                       sizeof(uuid)
+  //  +4                     + sizeof(TCODE_USER_TABLE_RECORD_HEADER chunk typecode)
+  //  +sizeof_chunk_value    + sizeof(TCODE_USER_TABLE_RECORD_HEADER chunk length)
+  //  +21                    + major ver, minor ver, bool, archive ver, 3dm ver
+  //  +4                     + sizeof(TCODE_USER_TABLE_RECORD_HEADER chunk crc)
+  //  +4                     + sizeof(TCODE_USER_TABLE_UUID chunk crc)
+  const bool bLookForUserTableRecordHeader = (TCODE_USER_TABLE_UUID == expected_tcode
+                                              && ((ON__UINT64)chunk_value) >= (16+4+sizeof_chunk_value+21+4+4)
+                                             );
+  if ( !bLookForUserTableRecordHeader && 20 != chunk_value )
+    return 0;
+  buffer = BufferToUuid(bReverseByteOrder,buffer,buffer_end,uuid);
+  if ( 0 == buffer )
+    return 0;
+  if( 0 != expected_uuid && uuid != *expected_uuid )
+    return 0;
+  
+  if ( bLookForUserTableRecordHeader )
+  {
+    // make sure there is a TCODE_USER_TABLE_RECORD_HEADER chunk and skip over it.
+    buffer = BufferValidateTcode(bReverseByteOrder,buffer,buffer_end,TCODE_USER_TABLE_RECORD_HEADER);
+    if ( 0 == buffer )
+      return 0;
+    // get length of the TCODE_USER_TABLE_RECORD_HEADER chunk
+    ON__INT64 header_length = -1;
+    buffer = BufferToChunkValue( bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,&header_length );
+    if ( 0 == buffer )
+      return 0;
+    if ( header_length < 25 )
+      return 0;
+    if ( buffer >= buffer_end || buffer_end - buffer < header_length )
+      return 0;
+    buffer += header_length;
+  }
+
+  buffer = BufferToUINT32(bReverseByteOrder,buffer,buffer_end,&c);
+  if ( 0 == buffer )
+    return 0;
+  cc = ON_CRC32(0,4,&uuid.Data1);
+  cc = ON_CRC32(cc,2,&uuid.Data2);
+  cc = ON_CRC32(cc,2,&uuid.Data3);
+  cc = ON_CRC32(cc,8,&uuid.Data4[0]);
+  if ( c != cc )
+    return 0;
+
+  return buffer;
+}
+
+
+bool ON_BinaryArchive::FindMisplacedTable( 
+        ON__UINT64 filelength,
+        const ON__UINT32 table_tcode,
+        const ON__UINT32 table_record_tcode,
+        const ON_UUID class_uuid,
+        const ON__UINT64 min_length_data
+        )
 {
   bool rc = false;
-
-  /*
-  if ( m_3dm_version < 2    || 
-       0 != m_chunk.Count() || 
-       no_active_table != m_active_table )
-  {
-    return false;
-  }
-  */
-  
-  unsigned char buffer[68];
-  int bufpos;
-  const size_t pos0 = binary_archive.CurrentPosition();
+  unsigned char buffer2048[2048];
+  const ON__UINT64 pos0 = CurrentPosition();
   if ( pos0 < 0 || (filelength > 0 && pos0 >= filelength) )
     return false;
 
-  unsigned int tcode;
-  int length_table;
-  int length_record;
-  int length_on_class;
-  int length_data;
+  ON__UINT32 tcode;
+  ON__INT64 i64;
 
-  const bool bObjectTable = ( TCODE_OBJECT_RECORD == tcode_record && TCODE_OBJECT_TABLE == tcode_table );
-  const bool bUserTable = ( TCODE_USER_RECORD == tcode_record && TCODE_USER_TABLE == tcode_table );
+  const bool bReverseByteOrder = (ON::big_endian == Endian());
+  const size_t sizeof_chunk_typecode = 4;
+  const size_t sizeof_chunk_value = SizeofChunkLength();
+  const size_t sizeof_chunk_header = sizeof_chunk_typecode + sizeof_chunk_value;
+  size_t length_of_user_uuid_and_header = 0;
+  const bool bFindObjectTable    = (  TCODE_OBJECT_TABLE == table_tcode
+                                   && TCODE_OBJECT_RECORD == table_record_tcode );
+  const bool bFindUserTable    = (    TCODE_USER_TABLE == table_tcode
+                                   && TCODE_USER_RECORD == table_record_tcode );
 
-  binary_archive.SeekFromStart(0);
-  size_t pos1 = binary_archive.CurrentPosition();
-  size_t pos;
-  size_t empty_table_pos = 0; // position of first empty table candidate
-  int    empty_table_status = 0; // 1 = found a candidate for an empty table
-                                 // 2 = found 2 or more candidates
-
-  for(;;)
+  if ( TCODE_USER_TABLE == table_tcode && !bFindUserTable )
+    return false;
+  if ( TCODE_OBJECT_TABLE == table_tcode && !bFindObjectTable )
+    return false;
+  if ( bFindUserTable && ON_UuidIsNil(class_uuid) )
   {
-    // 
+    // must provide plug-in id when searching for user tables
+    ON_ERROR("ON_BinaryArchive::FindMisplacedTable - must provide plug-in id when searching for user tables");
+    return false;
+  }
+
+  if ( !SeekFromStart(0) )
+    return false;
+
+  ON__UINT64 pos1 = CurrentPosition();
+  ON__UINT64 pos;
+  ON__UINT64 empty_table_pos = 0;    // position of first empty table candidate
+  int        empty_table_status = 0; // 1 = found a candidate for an empty table
+                                     // 2 = found 2 or more candidates
+
+  const size_t sizeof_buffer2048 = sizeof(buffer2048);
+  bool bAtEOF = false;
+
+  while(!bAtEOF)
+  {
+    pos = CurrentPosition();
+    if ( pos < pos1 )
     {
-      pos = binary_archive.CurrentPosition();
-      if ( pos < pos1 )
-      {
+      break;
+    }
+    else if ( pos > pos1 )
+    {
+      if ( !BigSeekBackward(pos - pos1) )
         break;
-      }
-      else if ( pos > pos1 )
-      {
-        int delta = (int)(pos - pos1);
-        if ( !binary_archive.SeekFromCurrentPosition(-delta) )
-          break;
-        if ( pos1 != binary_archive.CurrentPosition() )
-          break;
-      }
+      if ( pos1 != CurrentPosition() )
+        break;
     }
 
-    buffer[0] = 0;
-    buffer[1] = 0;
-    buffer[2] = 0;
-    buffer[3] = 0;
-    buffer[48] = 0;
-    buffer[49] = 0;
-    buffer[50] = 0;
-    buffer[51] = 0;
-    if (!binary_archive.ReadByte(68,buffer))
+    memset(buffer2048,0,sizeof_buffer2048);
+    // Depending on the table and the version of the file, less than 
+    // sizeof_buffer128 bytes may be read.  Setting bit 0x04 of
+    // m_error_message_mask disables calls to ON_Error when we
+    // attempt to read beyond the end of file.
+    const unsigned int saved_error_message_mask = m_error_message_mask;
+    m_error_message_mask |= 0x04;
+    const size_t sizeof_read = Read(sizeof_buffer2048,buffer2048);
+    m_error_message_mask = saved_error_message_mask;
+    if ( sizeof_read < sizeof_buffer2048 )
+    {
+      // we need to parse what was read, but there's nothing after this.
+      bAtEOF = true;
+    }
+    if ( sizeof_read < 2*sizeof_chunk_header || sizeof_read > sizeof_buffer2048 )
       break;
+    const unsigned char* buffer_end = (&buffer2048[0]) + sizeof_read;
+    const unsigned char* buffer = buffer2048;
 
     pos1++;
 
-    bufpos = 0;
-    memcpy(&tcode,&buffer[bufpos],4);
-    bufpos += 4;
-    if ( tcode_table != tcode )
+    // "read" 4 byte tcode
+    tcode = !table_tcode;
+    buffer = BufferToUINT32(bReverseByteOrder,buffer,buffer_end,&tcode);
+    if ( 0 == buffer )
+      break;
+
+    if ( table_tcode != tcode )
     {
-      // this for loop looks through the buffer we just
+      // This for loop looks through the buffer we just
       // read to reduce the amount of times we seek backwards
       // and re-read.
-      int i;
-      for ( i = 1; i <= 64; i++ )
+      for ( size_t i = 1; i <= sizeof_read - sizeof_chunk_typecode; i++ )
       {
-        memcpy(&tcode,&buffer[i],4);
-        if ( tcode_table == tcode )
+        tcode = !table_tcode;
+        buffer = BufferToUINT32(bReverseByteOrder,&buffer2048[i],buffer_end,&tcode);
+        if ( 0 == buffer || table_tcode == tcode )
         {
+          if ( bAtEOF && sizeof_read > 0 && 0 != buffer && table_tcode == tcode )
+          {
+            // this table starts within sizeof_buffer2048 bytes of the eof.
+            bAtEOF = false;
+          }
           break;
-        } 
+        }
         pos1++;
       }
-      continue;
+      continue; // start again with archive positioned at the tcode we want
     }
-    memcpy(&length_table,&buffer[bufpos],4);
-    bufpos += 4;
-    if ( length_table < 60+min_length_data )
+
+    // "read" 4 or 8 byte chunk value
+    i64 = -1;
+    buffer = BufferToChunkValue(bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,&i64);
+    if ( 0 == buffer || i64 <= 0 )
+      continue;
+    const ON__UINT64 length_of_table = (ON__UINT64)i64;
+
+    if ( length_of_table < 2*sizeof_chunk_header + 4 + min_length_data )
     {
-      if ( 8 == length_table && 2 != empty_table_status )
+      if ( sizeof_chunk_header == length_of_table && 2 != empty_table_status )
       {
-        // see if we have the signature of an empty table
-        memcpy(&tcode,&buffer[bufpos],4);
-        if ( TCODE_ENDOFTABLE == tcode )
+        // see if we are at a TCODE_ENDOFTABLE chunk
+        buffer = BufferValidateTcode(bReverseByteOrder,buffer,buffer_end,TCODE_ENDOFTABLE);
+        if ( 0 != buffer )
         {
-          memcpy(&length_record,&buffer[bufpos+4],4);
-          if ( 0 == length_record )
+          i64 = -1;
+          buffer = BufferToChunkValue(bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,&i64);
+          if ( 0 == i64 )
           {
             if ( 0 == empty_table_status )
             {
@@ -5328,6 +6408,7 @@ bool EmergencyFindTable( ON_BinaryArchive& binary_archive,
             }
             else
             {
+              // found 2 or more candidates for the end of table chunk
               empty_table_status = 2;
             }
           }
@@ -5336,88 +6417,100 @@ bool EmergencyFindTable( ON_BinaryArchive& binary_archive,
       continue;
     }
 
-    if ( bUserTable )
+    if ( bFindUserTable )
     {
-      if ( !EmergencyFindTable_UuidHelper(&buffer[bufpos],TCODE_USER_TABLE_UUID,NULL) )
+      // We found TCODE_USER_TABLE + chunk length.  If it is a user table,
+      // there should be a TCODE_USER_TABLE_UUID chunk with a crc.
+      const unsigned char* buffer0 = buffer;
+      buffer = EmergencyFindTable_UuidHelper(bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,TCODE_USER_TABLE_UUID,&class_uuid);
+      if ( 0 == buffer || buffer <= buffer0 )
         continue;
-      bufpos += 28;
+
+      length_of_user_uuid_and_header = buffer - buffer0;
+      // At this point we should be postioned at the table_record_tcode = TCODE_USER_RECORD chunk
     }
 
-    memcpy(&tcode,&buffer[bufpos],4);
-    bufpos += 4;
-    if ( tcode_record != tcode )
+    // see if the start of the buffer contains the 4 byte typecode value = table_record_tcode.
+    buffer = BufferValidateTcode(bReverseByteOrder,buffer,buffer_end,table_record_tcode);
+    if ( 0 == buffer )
       continue;
-    memcpy(&length_record,&buffer[bufpos],4);
-    bufpos += 4;
+    i64 = -1;
+    buffer = BufferToChunkValue( bReverseByteOrder, sizeof_chunk_value,buffer,buffer_end,&i64);
+    if ( 0 == buffer || i64 <= 0 )
+      continue;
+    const ON__UINT64 length_of_record = (ON__UINT64)i64;
 
-    if ( bUserTable )
+
+    if ( bFindUserTable )
     {
-      // Valid user tables look like
-      //
-      // TCODE_USER_TABLE (4 bytes)
-      // length_table (4 bytes)
-      //
-      //   TCODE_USER_TABLE_UUID (4 bytes)
-      //   20 (4 bytes)
-      //   uuid of plug-in that owns this user table (16 bytes)
-      //
-      //   TCODE_USER_RECORD (4 bytes)
-      //   length_record (4 bytes)
-      //   ...
-      //
-      //   TCODE_ENDOF_TALBLE (4 bytes)
-      //   0 (4 bytes)
-      if ( length_record < 0 || length_record+44 != length_table )
+      ON__UINT64 expected_length_of_table = length_of_user_uuid_and_header 
+                                          + sizeof_chunk_header
+                                          + length_of_record;
+      if ( expected_length_of_table != length_of_table )
         continue;
     }
     else
     {
-      if ( length_record < 44+min_length_data || length_record+16 > length_table)
+      if ( length_of_record < 4*sizeof_chunk_header + 20 + min_length_data )
+        continue;
+      if ( length_of_record + 2*sizeof_chunk_header > length_of_table)
         continue;
 
-      if (bObjectTable)
+      if (bFindObjectTable)
       {
-        memcpy(&tcode,&buffer[bufpos],4);
-        bufpos += 4;
-        if ( TCODE_OBJECT_RECORD_TYPE != tcode )
+        buffer = BufferValidateTcode(bReverseByteOrder,buffer,buffer_end,TCODE_OBJECT_RECORD_TYPE);
+        if ( 0 == buffer )
           continue;
-        // The next 4 byt in is a bitfield used to filter reading of objects
-        // it's not worth checking its value here.
-        memcpy(&tcode,&buffer[bufpos],4);
-        bufpos += 4;
+        // The TCODE_OBJECT_RECORD_TYPE is a shot chunk whose value is a bitfield 
+        // used to filter reading of objects.  Checking the value will not help
+        // validate the record, but we need to skip over it.
+        buffer = BufferToChunkValue(bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,0);
+        if ( 0 == buffer )
+          continue;
       }
 
-      memcpy(&tcode,&buffer[bufpos],4);
-      bufpos += 4;
-      if ( TCODE_OPENNURBS_CLASS != tcode )
-        continue;
-      memcpy(&length_on_class,&buffer[bufpos],4);
-      bufpos += 4;
-      if ( length_on_class < 36+min_length_data || length_on_class+8 > length_record)
+      buffer = BufferValidateTcode(bReverseByteOrder,buffer,buffer_end,TCODE_OPENNURBS_CLASS);
+      if ( 0 == buffer )
         continue;
 
-      if ( !EmergencyFindTable_UuidHelper( 
-                &buffer[bufpos],
-                TCODE_OPENNURBS_CLASS_UUID,
-                (ON_UuidIsNil(class_uuid) ? NULL : &class_uuid)
-                ))
-      {
+      i64 = -1;
+      buffer = BufferToChunkValue( bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,&i64);
+      if ( 0 == buffer || i64 <= 0 )
         continue;
-      }
-      bufpos += 28;
+      const ON__UINT64 length_of_on_class = (ON__UINT64)i64;
 
-      memcpy(&tcode,&buffer[bufpos],4);
-      bufpos += 4;
-      if ( TCODE_OPENNURBS_CLASS_DATA != tcode )
+      if ( length_of_on_class < 3*sizeof_chunk_header + 20 + min_length_data )
         continue;
-      memcpy(&length_data,&buffer[bufpos],4);
-      bufpos += 4;
-      if ( length_data < min_length_data || length_data+36 > length_on_class)
+
+      if ( length_of_on_class + sizeof_chunk_header + 4 > length_of_record)
+        continue;
+
+      const unsigned char* buffer0 = buffer;
+      buffer = EmergencyFindTable_UuidHelper(bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,TCODE_OPENNURBS_CLASS_UUID,(ON_UuidIsNil(class_uuid) ? NULL : &class_uuid));
+      if ( 0 == buffer || buffer <= buffer0)
+        continue;
+      const size_t length_of_uuid_chunk = buffer-buffer0;
+
+      buffer = BufferValidateTcode(bReverseByteOrder,buffer,buffer_end,TCODE_OPENNURBS_CLASS_DATA);
+      if ( 0 == buffer )
+        continue;
+
+      i64 = -1;
+      buffer = BufferToChunkValue( bReverseByteOrder,sizeof_chunk_value,buffer,buffer_end,&i64);
+      if ( 0 == buffer || i64 < 0 )
+        continue;
+      const ON__UINT64 length_of_data = (ON__UINT64)i64;
+
+      if ( length_of_data < min_length_data )
+        continue;
+      if ( length_of_data + length_of_uuid_chunk + 2*sizeof_chunk_header > length_of_on_class)
         continue;
     }
 
-    binary_archive.SeekFromCurrentPosition(-68);
-    pos = binary_archive.CurrentPosition();
+    // position archive at point where the table tcode was read
+    if ( !BigSeekBackward(sizeof_read) )
+      break;
+    pos = CurrentPosition();
     if ( pos+1 == pos1)
       rc = true;
     break;
@@ -5430,12 +6523,12 @@ bool EmergencyFindTable( ON_BinaryArchive& binary_archive,
     {
       // we found one candidate for an empty table.
       // This is reasonable for materials, bitmaps, and the like.
-      rc = binary_archive.SeekFromStart(empty_table_pos);
+      rc = BigSeekFromStart(empty_table_pos);
     }
     else
     {
       // nothing in this file.
-      binary_archive.SeekFromStart(pos0);
+      BigSeekFromStart(pos0);
     }
   }
   return rc;
@@ -5448,7 +6541,7 @@ bool ON_BinaryArchive::FindTableInDamagedArchive(
                 const int min_length_data
                 )
 {
-  bool rc = EmergencyFindTable( *this,
+  bool rc = FindMisplacedTable(
                   0,
                   tcode_table,
                   tcode_record,
@@ -5539,8 +6632,8 @@ bool ON_BinaryArchive::EndRead3dmTable( unsigned int typecode )
         ON_ERROR("ON_BinaryArchive::EndRead3dmTable() v2 file m_chunk.Count() != 1");
         return false;
       }
-      const ON_3DM_CHUNK* c = m_chunk.Last();
-      if ( c->m_typecode != typecode ) 
+      const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+      if ( 0 == c || c->m_typecode != typecode ) 
       {
         ON_ERROR("ON_BinaryArchive::EndRead3dmTable() m_chunk.Last()->typecode != typecode");
         return false;
@@ -5565,17 +6658,21 @@ bool ON_BinaryArchive::EndWrite3dmBitmapTable()
 bool ON_BinaryArchive::Write3dmBitmap( const ON_Bitmap& bitmap )
 {
   bool rc = false;
-  if ( m_3dm_version != 1 ) {
-    const ON_3DM_CHUNK* c = m_chunk.Last();
-    if ( c && c->m_typecode == TCODE_BITMAP_TABLE ) {
+  if ( m_3dm_version != 1 ) 
+  {
+    const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+    if ( c && c->m_typecode == TCODE_BITMAP_TABLE ) 
+    {
       rc = BeginWrite3dmChunk( TCODE_BITMAP_RECORD, 0 );
-      if ( rc ) {
+      if ( rc ) 
+      {
         rc = WriteObject( bitmap );
         if ( !EndWrite3dmChunk() )
           rc = false;
       }
     }
-    else {
+    else 
+    {
       ON_ERROR("ON_BinaryArchive::Write3dmBitmap() must be called in BeginWrite3dmBitmapTable() block");
       rc = false;
     }
@@ -5593,8 +6690,8 @@ bool ON_BinaryArchive::BeginRead3dmBitmapTable()
     //    layer and object tables in damaged files.  I'm
     //    adding it to the other BeginRead3dm...Table()
     //    functions when it makes sense.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_BITMAP_TABLE, TCODE_BITMAP_RECORD,
                 ON_nil_uuid, // multiple types of opennurbs objects in bitmap tables
                 40 
@@ -5622,19 +6719,23 @@ int ON_BinaryArchive::Read3dmBitmap(  // returns 0 at end of bitmap table
   ON_Bitmap* bitmap = 0;
   int rc = 0;
   if ( m_3dm_version != 1 ) {
-    unsigned int tcode = 0;
-    int value;
-    if ( BeginRead3dmChunk( &tcode, &value ) ) {
-      if ( tcode == TCODE_BITMAP_RECORD ) {
+    ON__UINT32 tcode = 0;
+    ON__INT64 big_value = 0;
+    if ( BeginRead3dmBigChunk( &tcode, &big_value ) ) 
+    {
+      if ( tcode == TCODE_BITMAP_RECORD ) 
+      {
         ON_Object* p = 0;
-        if ( ReadObject( &p ) ) {
+        if ( ReadObject( &p ) ) 
+        {
           bitmap = ON_Bitmap::Cast(p);
           if ( !bitmap )
             delete p;
           else
             rc = 1;
         }
-        if (!bitmap) {
+        if (!bitmap) 
+        {
           ON_ERROR("ON_BinaryArchive::Read3dmBitmap() - corrupt bitmap table");
         }
         if ( ppBitmap )
@@ -5642,7 +6743,8 @@ int ON_BinaryArchive::Read3dmBitmap(  // returns 0 at end of bitmap table
         else if ( bitmap )
           delete bitmap;          
       }
-      else if ( tcode != TCODE_ENDOFTABLE ) {
+      else if ( tcode != TCODE_ENDOFTABLE )
+      {
         ON_ERROR("ON_BinaryArchive::Read3dmBitmap() - corrupt bitmap table");
       }
       EndRead3dmChunk();
@@ -5732,7 +6834,7 @@ bool ON_BinaryArchive::Write3dmLayer( const ON_Layer&  layer )
   }
   else {
     // version 2+
-    const ON_3DM_CHUNK* c = m_chunk.Last();
+    const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
     if ( c && c->m_typecode == TCODE_LAYER_TABLE ) {
       rc = BeginWrite3dmChunk( TCODE_LAYER_RECORD, 0 );
       if ( rc ) {
@@ -5776,8 +6878,8 @@ bool ON_BinaryArchive::BeginRead3dmLayerTable()
     // 8 October 2004 Dale Lear
     //    This fall back is slow but it will find
     //    layer tables in files that have been damaged.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_LAYER_TABLE, TCODE_LAYER_RECORD,
                 ON_Layer::m_ON_Layer_class_id.Uuid(),
                 30
@@ -5839,11 +6941,13 @@ bool ON_BinaryArchive::Read3dmV1Layer( ON_Layer*& layer )
 {
   ON_String s;
   bool rc = 0;
-  unsigned int tcode;
-  int value;
-  for (;;) {
-    tcode = !TCODE_LAYER;
-    if (!BeginRead3dmChunk(&tcode,&value))
+  ON__UINT32 tcode;
+  ON__INT64 big_value;
+  for (;;) 
+  {
+    tcode = 0;
+    big_value = 0;
+    if (!BeginRead3dmBigChunk(&tcode,&big_value))
       break; // assume we are at the end of the file
     if ( tcode == TCODE_LAYER ) {
       layer = new ON_Layer();
@@ -5856,25 +6960,41 @@ bool ON_BinaryArchive::Read3dmV1Layer( ON_Layer*& layer )
   }
   if ( layer ) {
     rc = false;
-    for (;;) {
-      if (!BeginRead3dmChunk(&tcode,&value))
+    for (;;) 
+    {
+      tcode = 0;
+      big_value = 0;
+      if (!BeginRead3dmBigChunk(&tcode,&big_value))
         break;
-      switch(tcode) {
+      switch(tcode) 
+      {
       case TCODE_LAYERNAME:
         {
-          value = 0;
-          ReadInt(&value);
-          s.SetLength(value);
-          if ( ReadByte( s.Length(), s.Array() ) ) {
-            layer->SetLayerName(s);
+          int slen = 0;
+          ReadInt(&slen);
+          if ( slen < 0 || slen > 10000 )
+          {
+            ON_ERROR("ON_BinaryArchive::Read3dmV1Layer() - invalid layer name length");
+          }
+          else
+          {
+            s.SetLength(slen);
+            if ( ReadByte( s.Length(), s.Array() ) ) 
+            {
+              layer->SetLayerName(s);
+            }
           }
         }
         break;
       case TCODE_RGB:
-        layer->SetColor( ON_Color(value) );
+        {
+          ON__UINT64 rgb64 = (ON__UINT64)big_value;
+          ON__UINT32 rgb32 = (ON__UINT32)rgb64;
+          layer->SetColor( ON_Color((ON__UINT32)rgb32) );
+        }
         break;
       case TCODE_LAYERSTATE:
-        switch (value) 
+        switch (big_value) 
         {
         case 1: // hidden
           layer->SetVisible(false);
@@ -5945,8 +7065,8 @@ int ON_BinaryArchive::Read3dmLayer( ON_Layer** ppLayer )
   if ( m_active_table != layer_table ) {
     ON_ERROR("ON_BinaryArchive::BeginRead3dmLayerTable() - m_active_table != no_active_table");
   }
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode;
+  ON__INT64 big_value;
   ON_Layer* layer = NULL;
   // returns 0 at end of layer table
   if ( m_3dm_version == 1 ) {
@@ -5955,7 +7075,8 @@ int ON_BinaryArchive::Read3dmLayer( ON_Layer** ppLayer )
   else {
     // version 2+
     tcode = 0;
-    if ( BeginRead3dmChunk( &tcode, &value ) ) {
+    big_value = 0;
+    if ( BeginRead3dmBigChunk( &tcode, &big_value ) ) {
       if ( tcode == TCODE_LAYER_RECORD ) {
         ON_Object* p = 0;
         if ( ReadObject( &p ) ) {
@@ -6023,7 +7144,7 @@ bool ON_BinaryArchive::Write3dmGroup( const ON_Group&  group )
     ON_ERROR("ON_BinaryArchive::Write3dmGroup() - m_active_table != group_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_GROUP_TABLE ) {
     rc = BeginWrite3dmChunk( TCODE_GROUP_RECORD, 0 );
     if ( rc ) {
@@ -6062,8 +7183,8 @@ bool ON_BinaryArchive::BeginRead3dmGroupTable()
     //    layer and object tables in damaged files.  I'm
     //    adding it to the other BeginRead3dm...Table()
     //    functions when it makes sense.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_GROUP_TABLE, TCODE_GROUP_RECORD,
                 ON_Group::m_ON_Group_class_id.Uuid(),
                 20 
@@ -6093,11 +7214,11 @@ int ON_BinaryArchive::Read3dmGroup( ON_Group** ppGroup )
     return 0;
   }
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_Group* group = NULL;
-  tcode = 0;
-  if ( BeginRead3dmChunk( &tcode, &value ) ) {
+  if ( BeginRead3dmBigChunk( &tcode, &big_value ) ) 
+  {
     if ( tcode == TCODE_GROUP_RECORD ) {
       ON_Object* p = 0;
       if ( ReadObject( &p ) ) {
@@ -6149,7 +7270,7 @@ bool ON_BinaryArchive::Write3dmFont( const ON_Font&  font )
     ON_ERROR("ON_BinaryArchive::Write3dmFont() - m_active_table != font_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_FONT_TABLE ) {
     rc = BeginWrite3dmChunk( TCODE_FONT_RECORD, 0 );
     if ( rc ) {
@@ -6187,9 +7308,9 @@ bool ON_BinaryArchive::BeginRead3dmFontTable()
     //    This fall back is slow but it has been finding
     //    layer and object tables in damaged files.  I'm
     //    adding it to the other BeginRead3dm...Table()
-    //    functions when it makes sense.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    //    functions FindMisplacedTable it makes sense.
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_FONT_TABLE, TCODE_FONT_RECORD,
                 ON_Font::m_ON_Font_class_id.Uuid(),
                 30 
@@ -6219,11 +7340,11 @@ int ON_BinaryArchive::Read3dmFont( ON_Font** ppFont )
     return 0;
   }
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_Font* font = NULL;
-  tcode = 0;
-  if ( BeginRead3dmChunk( &tcode, &value ) ) {
+  if ( BeginRead3dmBigChunk( &tcode, &big_value ) ) 
+  {
     if ( tcode == TCODE_FONT_RECORD ) {
       ON_Object* p = 0;
       if ( ReadObject( &p ) ) {
@@ -6275,7 +7396,7 @@ bool ON_BinaryArchive::Write3dmDimStyle( const ON_DimStyle&  dimstyle )
     ON_ERROR("ON_BinaryArchive::Write3dmDimStyle() - m_active_table != dimstyle_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_DIMSTYLE_TABLE ) {
     rc = BeginWrite3dmChunk( TCODE_DIMSTYLE_RECORD, 0 );
     if ( rc ) {
@@ -6314,8 +7435,8 @@ bool ON_BinaryArchive::BeginRead3dmDimStyleTable()
     //    layer and object tables in damaged files.  I'm
     //    adding it to the other BeginRead3dm...Table()
     //    functions when it makes sense.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_DIMSTYLE_TABLE, TCODE_DIMSTYLE_RECORD,
                 ON_DimStyle::m_ON_DimStyle_class_id.Uuid(),
                 30 
@@ -6345,11 +7466,12 @@ int ON_BinaryArchive::Read3dmDimStyle( ON_DimStyle** ppDimStyle )
     return 0;
   }
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_DimStyle* dimstyle = NULL;
   tcode = 0;
-  if ( BeginRead3dmChunk( &tcode, &value ) ) {
+  if ( BeginRead3dmBigChunk( &tcode, &big_value ) ) 
+  {
     if ( tcode == TCODE_DIMSTYLE_RECORD ) {
       ON_Object* p = 0;
       if ( ReadObject( &p ) ) {
@@ -6401,7 +7523,7 @@ bool ON_BinaryArchive::Write3dmHatchPattern( const ON_HatchPattern&  pattern )
     ON_ERROR("ON_BinaryArchive::Write3dmHatchPattern() - m_active_table != hatchpattern_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_HATCHPATTERN_TABLE ) 
   {
     rc = BeginWrite3dmChunk( TCODE_HATCHPATTERN_RECORD, 0 );
@@ -6461,8 +7583,8 @@ bool ON_BinaryArchive::BeginRead3dmHatchPatternTable()
     //    adding it to the other BeginRead3dm...Table()
     //    functions when it makes sense.
     //    It only works on files with ver
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_HATCHPATTERN_TABLE, TCODE_HATCHPATTERN_RECORD,
                 ON_HatchPattern::m_ON_HatchPattern_class_id.Uuid(),
                 30 
@@ -6495,11 +7617,10 @@ int ON_BinaryArchive::Read3dmHatchPattern( ON_HatchPattern** ppPattern )
     return 0;
   }
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_HatchPattern* pPat = NULL;
-  tcode = 0;
-  if( BeginRead3dmChunk( &tcode, &value)) 
+  if( BeginRead3dmBigChunk( &tcode, &big_value)) 
   {
     if ( tcode == TCODE_HATCHPATTERN_RECORD ) 
     {
@@ -6577,7 +7698,7 @@ bool ON_BinaryArchive::Write3dmLinetype( const ON_Linetype&  linetype )
     ON_ERROR("ON_BinaryArchive::Write3dmLinetype() - m_active_table != linetype_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_LINETYPE_TABLE ) 
   {
     rc = BeginWrite3dmChunk( TCODE_LINETYPE_RECORD, 0 );
@@ -6621,8 +7742,8 @@ bool ON_BinaryArchive::BeginRead3dmLinetypeTable()
       //    layer and object tables in damaged files.  I'm
       //    adding it to the other BeginRead3dm...Table()
       //    functions when it makes sense.
-      rc = EmergencyFindTable( 
-                  *this, 0,
+      rc = FindMisplacedTable( 
+                  0,
                   TCODE_LINETYPE_TABLE, TCODE_LINETYPE_RECORD,
                   ON_Linetype::m_ON_Linetype_class_id.Uuid(),
                   20 
@@ -6652,12 +7773,11 @@ int ON_BinaryArchive::Read3dmLinetype( ON_Linetype** ppLinetype )
     ON_ERROR("ON_BinaryArchive::BeginRead3dmLinetypeTable() - m_active_table != linetype_table");
   }
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_Linetype* linetype = NULL;
-  tcode = 0;
   int rc = -1;
-  if( BeginRead3dmChunk( &tcode, &value)) 
+  if( BeginRead3dmBigChunk( &tcode, &big_value)) 
   {
     if ( tcode == TCODE_LINETYPE_RECORD ) 
     {
@@ -6730,7 +7850,7 @@ bool ON_BinaryArchive::Write3dmInstanceDefinition( const ON_InstanceDefinition& 
     ON_ERROR("ON_BinaryArchive::Write3dmInstanceDefinition() - m_active_table != instance_definition_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_INSTANCE_DEFINITION_TABLE ) {
     rc = BeginWrite3dmChunk( TCODE_INSTANCE_DEFINITION_RECORD, 0 );
     if ( rc ) {
@@ -6769,8 +7889,8 @@ bool ON_BinaryArchive::BeginRead3dmInstanceDefinitionTable()
     //    layer and object tables in damaged files.  I'm
     //    adding it to the other BeginRead3dm...Table()
     //    functions when it makes sense.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_INSTANCE_DEFINITION_TABLE, TCODE_INSTANCE_DEFINITION_RECORD,
                 ON_InstanceDefinition::m_ON_InstanceDefinition_class_id.Uuid(),
                 30 
@@ -6802,11 +7922,11 @@ int ON_BinaryArchive::Read3dmInstanceDefinition( ON_InstanceDefinition** ppInsta
     return 0;
   }
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_InstanceDefinition* idef = NULL;
-  tcode = 0;
-  if ( BeginRead3dmChunk( &tcode, &value ) ) {
+  if ( BeginRead3dmBigChunk( &tcode, &big_value ) ) 
+  {
     if ( tcode == TCODE_INSTANCE_DEFINITION_RECORD ) {
       ON_Object* p = 0;
       if ( ReadObject( &p ) ) {
@@ -6859,7 +7979,7 @@ bool ON_BinaryArchive::Write3dmTextureMapping( const ON_TextureMapping& texture_
     ON_ERROR("ON_BinaryArchive::Write3dmTextureMapping() - m_active_table != texture_mapping_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( !c || c->m_typecode != TCODE_TEXTURE_MAPPING_TABLE )
   {
     ON_ERROR("ON_BinaryArchive::Write3dmTextureMapping() - active chunk typecode != TCODE_TEXTURE_MAPPING_TABLE");
@@ -6903,8 +8023,8 @@ bool ON_BinaryArchive::BeginRead3dmTextureMappingTable()
     //    the start of the layer table.  I'm adding it
     //    to texture_mapping tables now because I have a good
     //    test file.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_TEXTURE_MAPPING_TABLE, TCODE_TEXTURE_MAPPING_RECORD,
                 ON_TextureMapping::m_ON_TextureMapping_class_id.Uuid(),
                 sizeof(ON_TextureMapping)
@@ -6924,8 +8044,8 @@ int ON_BinaryArchive::Read3dmTextureMapping( ON_TextureMapping** ppTextureMappin
     return 0;
   *ppTextureMapping = 0;
   ON_TextureMapping* texture_mapping = NULL;
-  unsigned int tcode = 0;
-  int value = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   if ( m_3dm_version < 4 || m_3dm_opennurbs_version < 200511110 ) 
   {
     // no texture mapping table until version 200511110 of v4 files
@@ -6933,7 +8053,7 @@ int ON_BinaryArchive::Read3dmTextureMapping( ON_TextureMapping** ppTextureMappin
   }
 
   rc = -1;
-  if ( BeginRead3dmChunk( &tcode, &value ) )
+  if ( BeginRead3dmBigChunk( &tcode, &big_value ) )
   {
     if ( tcode == TCODE_TEXTURE_MAPPING_RECORD ) 
     {
@@ -7005,7 +8125,7 @@ bool ON_BinaryArchive::Write3dmHistoryRecord( const ON_HistoryRecord& history_re
     ON_ERROR("ON_BinaryArchive::Write3dmHistoryRecord() - m_active_table != history_record_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( !c || c->m_typecode != TCODE_HISTORYRECORD_TABLE )
   {
     ON_ERROR("ON_BinaryArchive::Write3dmHistoryRecord() - active chunk typecode != TCODE_HISTORYRECORD_TABLE");
@@ -7049,8 +8169,8 @@ bool ON_BinaryArchive::BeginRead3dmHistoryRecordTable()
     //    the start of the layer table.  I'm adding it
     //    to history_record tables now because I have a good
     //    test file.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_HISTORYRECORD_TABLE, TCODE_HISTORYRECORD_RECORD,
                 ON_HistoryRecord::m_ON_HistoryRecord_class_id.Uuid(),
                 sizeof(ON_HistoryRecord)
@@ -7067,8 +8187,8 @@ int ON_BinaryArchive::Read3dmHistoryRecord( ON_HistoryRecord*& history_record )
 {
   int rc = 0;
   history_record = 0;
-  unsigned int tcode = 0;
-  int value = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   if ( m_3dm_version < 4 || m_3dm_opennurbs_version < 200601180 ) 
   {
     // no history record table until version 200601180 of v4 files
@@ -7076,7 +8196,7 @@ int ON_BinaryArchive::Read3dmHistoryRecord( ON_HistoryRecord*& history_record )
   }
 
   rc = -1;
-  if ( BeginRead3dmChunk( &tcode, &value ) )
+  if ( BeginRead3dmBigChunk( &tcode, &big_value ) )
   {
     if ( tcode == TCODE_HISTORYRECORD_RECORD ) 
     {
@@ -7148,7 +8268,7 @@ bool ON_BinaryArchive::Write3dmMaterial( const ON_Material& material )
     ON_ERROR("ON_BinaryArchive::Write3dmMaterial() - m_active_table != material_table");
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( !c || c->m_typecode != TCODE_MATERIAL_TABLE )
   {
     ON_ERROR("ON_BinaryArchive::Write3dmMaterial() - active chunk typecode != TCODE_MATERIAL_TABLE");
@@ -7188,8 +8308,8 @@ bool ON_BinaryArchive::BeginRead3dmMaterialTable()
     //    the start of the layer table.  I'm adding it
     //    to material tables now because I have a good
     //    test file.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_MATERIAL_TABLE, TCODE_MATERIAL_RECORD,
                 ON_Material::m_ON_Material_class_id.Uuid(),
                 114
@@ -7250,11 +8370,14 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
   }
 
   bool rc = false;
-  unsigned int tcode, u;
-  int value;
+  unsigned int u;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_Color c;
   bHaveMat = false;
   bool bEndRead3dmChunk_rc;
+
+  const unsigned int saved_error_message_mask = m_error_message_mask;
 
   int xdata_layer_index = -1;
 
@@ -7271,10 +8394,14 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
     material->m_ambient.SetRGB(0,0,0);
   }
 
-  for (;;) {
+  for (;;) 
+  {
+    m_error_message_mask = saved_error_message_mask;
+
     if ( end_mark_tcode != TCODE_ENDOFTABLE ) {
-      tcode = !end_mark_tcode;
-      if ( !PeekAt3dmChunkType(&tcode,&value) ) {
+      tcode = 0;
+      big_value = 0;
+      if ( !PeekAt3dmBigChunkType(&tcode,&big_value) ) {
         break; // should not happen
       }
       if ( tcode == end_mark_tcode ) {
@@ -7282,7 +8409,9 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
         break; // done reading attributes
       }
     }
-    if ( !BeginRead3dmChunk(&tcode,&value) )
+    tcode = 0;
+    big_value = 0;
+    if ( !BeginRead3dmBigChunk(&tcode,&big_value) )
       break;
     if ( tcode == end_mark_tcode ) {
       rc = EndRead3dmChunk();
@@ -7299,14 +8428,22 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
       
     case TCODE_LAYERREF:
       if (    attributes 
-           && (-1 == xdata_layer_index || attributes->m_layer_index != xdata_layer_index) )
-        attributes->m_layer_index = value;
+           && (-1 == xdata_layer_index || attributes->m_layer_index != xdata_layer_index) 
+           && (big_value >= 0 && big_value < 0x7FFFFFFF)
+         )
+      {
+        attributes->m_layer_index = (int)big_value;
+      }
       break;
       
     case TCODE_RGB:
-      if ( value != 0xFFFFFF ) {
-        if ( material ) {
-          u = (unsigned int)value;
+      if ( big_value != 0xFFFFFF ) 
+      {
+        if ( material ) 
+        {
+          ON__UINT64 rgb64 = (ON__UINT64)big_value;
+          ON__UINT32 rgb32 = (ON__UINT32)rgb64;
+          u = rgb32;
           c.SetRGB( u%256,(u>>8)%256,(u>>16)%256 );
           material->SetDiffuse(c);
           material->SetShine((u >> 24)/100.0*ON_Material::MaxShine());
@@ -7316,16 +8453,20 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
       break;		
       
     case TCODE_RGBDISPLAY:
-      if ( attributes ) {
-        u = (unsigned int)value;
+      if ( attributes ) 
+      {
+          ON__UINT64 rgb64 = (ON__UINT64)big_value;
+          ON__UINT32 rgb32 = (ON__UINT32)rgb64;
+          u = rgb32;
         attributes->m_color.SetRGB( u%256,(u>>8)%256,(u>>16)%256 );
       }
       break;
       
     case TCODE_TRANSPARENCY:
-      if ( value > 0 && value <= 255 ) {
+      if ( big_value > 0 && big_value <= 255 ) 
+      {
         if ( material )
-          material->SetTransparency(value/255.0);
+          material->SetTransparency(big_value/255.0);
         bHaveMat = true;
       }
       break;				
@@ -7470,15 +8611,15 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
         }
         else 
         {
-          m_3dm_v1_suppress_error_message |= 0x0002; // disable v1 EndRead3dmChunk() partially read chunk warning
+          m_error_message_mask |= 0x0002; // disable v1 EndRead3dmChunk() partially read chunk warning
         }
         // call to EndRead3dmChunk() will skip unread junk
       }
       break;
       
     case TCODE_DISP_CPLINES:
-      if ( value > 0 && attributes )
-        attributes->m_wire_density = value;
+      if ( big_value > 0 && big_value <= 0x7FFFFFFF && attributes )
+        attributes->m_wire_density = (int)big_value;
       break;
 
     case TCODE_RENDER_MATERIAL_ID:
@@ -7500,15 +8641,16 @@ bool ON_BinaryArchive::Read3dmV1AttributesOrMaterial(
       
     default:
       // obsolete attributes from v1
-      m_3dm_v1_suppress_error_message |= 0x0002; // disable v1 EndRead3dmChunk() partially read chunk warning
+      m_error_message_mask |= 0x02; // disable v1 EndRead3dmChunk() partially read chunk warning
       break;
     }
 
     bEndRead3dmChunk_rc = EndRead3dmChunk();
-    m_3dm_v1_suppress_error_message &= 0xFFFD; // enable v1 EndRead3dmChunk() partially read chunk warning
     if ( !bEndRead3dmChunk_rc )
       break;
   }
+
+  m_error_message_mask = saved_error_message_mask;
 
   if ( bHaveMat ) {
     if ( attributes )
@@ -7531,19 +8673,19 @@ int ON_BinaryArchive::Read3dmV1Material( ON_Material** ppMaterial )
   //          1: success
 
   ON_Material material;
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_BOOL32 bHaveMat;
   bool bEndReadChunk_rc;
   // reads NURBS, point, and mesh objects
-  
+
   while( 0 == rc )
   {
     bHaveMat = false;
     rc = 0;
     tcode = 0;
-    value = 0;
-    if ( !BeginRead3dmChunk(&tcode,&value) ) 
+    big_value = 0;
+    if ( !BeginRead3dmBigChunk(&tcode,&big_value) ) 
     {
       // assume we are at the end of the file
       break;
@@ -7554,11 +8696,11 @@ int ON_BinaryArchive::Read3dmV1Material( ON_Material** ppMaterial )
     case TCODE_RH_POINT:
       // v1 3d point
       {
-        ON_3DM_CHUNK* point_chunk = m_chunk.Last();
-        size_t pos0 = 0;
+        ON_3DM_BIG_CHUNK* point_chunk = m_chunk.Last();
+        ON__UINT64 pos0 = 0;
         if (    0 != point_chunk 
              && TCODE_RH_POINT == point_chunk->m_typecode 
-             && 0 == point_chunk->m_value )
+             && 0 == point_chunk->m_big_value )
         {
           // Some V1 files have TCODE_RH_POINT chunks with length=0.
           // (It appears that points with arrow xdata have this problem.)
@@ -7583,13 +8725,13 @@ int ON_BinaryArchive::Read3dmV1Material( ON_Material** ppMaterial )
              && 0 != point_chunk 
              && point_chunk == m_chunk.Last()
              && TCODE_RH_POINT == point_chunk->m_typecode 
-             && 0 == point_chunk->m_value )
+             && 0 == point_chunk->m_big_value )
         {
           // set the chunk length so that reading can continue.
-          size_t pos1 = CurrentPosition();
-          int chunk_length = (pos1 > pos0) ? ((int)(pos1 - pos0)) : 0;
-          if ( chunk_length >= 32 )
-            point_chunk->m_value = chunk_length;
+          ON__UINT64 pos1 = CurrentPosition();
+          ON__UINT64 chunk_length = (pos1 > pos0) ? (pos1 - pos0) : 0;
+          if ( chunk_length >= 32 && chunk_length < 0x0FFFFFFF )
+            point_chunk->m_big_value = (ON__INT64)chunk_length;
         }
       }
       break;
@@ -7597,14 +8739,14 @@ int ON_BinaryArchive::Read3dmV1Material( ON_Material** ppMaterial )
     case TCODE_MESH_OBJECT:
       // v1 mesh
       {
-        unsigned int tc;
-        int i;
-        if ( !PeekAt3dmChunkType( &tc, &i ) )
+        ON__UINT32 tc = 0;
+        ON__INT64 i64 = 0;
+        if ( !PeekAt3dmBigChunkType( &tc, &i64 ) )
           break;
         if ( tc != TCODE_COMPRESSED_MESH_GEOMETRY )
           break;
         // skip over the TCODE_COMPRESSED_MESH_GEOMETRY chunk
-        if ( !BeginRead3dmChunk(&tc,&i) )
+        if ( !BeginRead3dmBigChunk(&tc,&i64) )
           break;
         if ( !EndRead3dmChunk() )
           break;
@@ -7639,14 +8781,14 @@ int ON_BinaryArchive::Read3dmV1Material( ON_Material** ppMaterial )
     case TCODE_RHINOIO_OBJECT_BREP:
       // old Rhino I/O toolkit nurbs curve, surface, and breps
       {
-        unsigned int tc;
-        int i;
-        if ( !PeekAt3dmChunkType( &tc, &i ) )
+        ON__UINT32 tc = 0;
+        ON__INT64 i64 = 0;
+        if ( !PeekAt3dmBigChunkType( &tc, &i64 ) )
           break;
         if ( tc != TCODE_RHINOIO_OBJECT_DATA )
           break;
         // skip over the TCODE_RHINOIO_OBJECT_DATA chunk
-        if ( !BeginRead3dmChunk(&tc,&i) )
+        if ( !BeginRead3dmBigChunk(&tc,&i64) )
           break;
         if ( !EndRead3dmChunk() )
           break;
@@ -7657,9 +8799,10 @@ int ON_BinaryArchive::Read3dmV1Material( ON_Material** ppMaterial )
       break;
     }
 
-    m_3dm_v1_suppress_error_message |= 0x0002; // disable v1 EndRead3dmChunk() partially read chunk warning
+    const unsigned int saved_error_message_mask = m_error_message_mask;
+    m_error_message_mask |= 0x02; // disable v1 EndRead3dmChunk() partially read chunk warning
     bEndReadChunk_rc = EndRead3dmChunk();
-    m_3dm_v1_suppress_error_message &= 0xFFFD; // enable v1 EndRead3dmChunk() partially read chunk warning
+    m_error_message_mask = saved_error_message_mask; // enable v1 EndRead3dmChunk() partially read chunk warning
     if (!bEndReadChunk_rc ) 
     {
       rc = -1;
@@ -7685,8 +8828,8 @@ int ON_BinaryArchive::Read3dmMaterial( ON_Material** ppMaterial )
     return 0;
   *ppMaterial = 0;
   ON_Material* material = NULL;
-  unsigned int tcode = 0;
-  int value = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   if ( m_3dm_version == 1 ) 
   {
     rc = ON_BinaryArchive::Read3dmV1Material( ppMaterial );
@@ -7695,7 +8838,7 @@ int ON_BinaryArchive::Read3dmMaterial( ON_Material** ppMaterial )
   {
     // version 2+
     rc = -1;
-    if ( BeginRead3dmChunk( &tcode, &value ) )
+    if ( BeginRead3dmBigChunk( &tcode, &big_value ) )
     {
       if ( tcode == TCODE_MATERIAL_RECORD ) 
       {
@@ -7750,7 +8893,7 @@ bool ON_BinaryArchive::Write3dmLight( const ON_Light& light,  const ON_3dmObject
   if ( m_active_table != light_table ) {
     ON_ERROR("ON_BinaryArchive::Write3dmLight() - m_active_table != light_table");
   }
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_LIGHT_TABLE ) {
     rc = BeginWrite3dmChunk( TCODE_LIGHT_RECORD, 0 );
     if (rc) {
@@ -7834,8 +8977,8 @@ bool ON_BinaryArchive::BeginRead3dmLightTable()
     //    layer and object tables in damaged files.  I'm
     //    adding it to the other BeginRead3dm...Table()
     //    functions when it makes sense.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_LIGHT_TABLE, TCODE_LIGHT_RECORD,
                 ON_Light::m_ON_Light_class_id.Uuid(),
                 30 
@@ -7865,13 +9008,13 @@ int ON_BinaryArchive::Read3dmV1Light(  // returns 0 at end of light table
     return false;
   }
   ON_BOOL32 rc = false;
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
 
   // find TCODE_RH_SPOTLIGHT chunk
   for(;;)
   {
-    if ( !BeginRead3dmChunk(&tcode,&value) )
+    if ( !BeginRead3dmBigChunk(&tcode,&big_value) )
       break; // assume we are at the end of the file
     if ( tcode == TCODE_RH_SPOTLIGHT ) {
       rc = 1;
@@ -7953,9 +9096,9 @@ int ON_BinaryArchive::Read3dmLight( ON_Light** ppLight, ON_3dmObjectAttributes* 
   }
   else {
     ON_Light* light = NULL;
-    unsigned int tcode = 0;
-    int value = 0;
-    if ( BeginRead3dmChunk( &tcode, &value ) ) {
+    ON__UINT32 tcode = 0;
+    ON__INT64 big_value = 0;
+    if ( BeginRead3dmBigChunk( &tcode, &big_value ) ) {
       if ( tcode == TCODE_LIGHT_RECORD ) {
         ON_Object* p = 0;
         if ( ReadObject( &p ) ) {
@@ -7980,7 +9123,9 @@ int ON_BinaryArchive::Read3dmLight( ON_Light** ppLight, ON_3dmObjectAttributes* 
 
       while(rc==1) 
       {
-        if (!BeginRead3dmChunk( &tcode, &value )) 
+        tcode = 0;
+        big_value = 0;
+        if (!BeginRead3dmBigChunk( &tcode, &big_value )) 
         {
           rc = -1;
           break;
@@ -8054,7 +9199,7 @@ bool ON_BinaryArchive::Write3dmObject(
     }
   }
 
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_OBJECT_TABLE ) 
   {
     Flush();
@@ -8149,8 +9294,8 @@ bool ON_BinaryArchive::BeginRead3dmObjectTable()
     // 8 October 2004 Dale Lear
     //    This fall back is slow but it will find
     //    object tables in files that have been damaged.
-    rc = EmergencyFindTable( 
-                *this, 0,
+    rc = FindMisplacedTable( 
+                0,
                 TCODE_OBJECT_TABLE, TCODE_OBJECT_RECORD,
                 ON_nil_uuid,
                 26 // ON_Point data is 3 doubles + 2 byte version number
@@ -8169,12 +9314,12 @@ bool ON_BinaryArchive::ReadV1_TCODE_RH_POINT(
   ON_3dmObjectAttributes* pAttributes
   )
 {
-  size_t pos0 = 0;
-  ON_3DM_CHUNK* point_chunk = m_chunk.Last();
+  ON__UINT64 pos0 = 0;
+  ON_3DM_BIG_CHUNK* point_chunk = m_chunk.Last();
 
   if (    0 != point_chunk 
        && TCODE_RH_POINT == point_chunk->m_typecode 
-       && 0 == point_chunk->m_value )
+       && 0 == point_chunk->m_big_value )
   {
     // Some early V1 files have TCODE_RH_POINT chunks with arrow xdata
     // attached have a length set to zero.
@@ -8231,15 +9376,15 @@ bool ON_BinaryArchive::ReadV1_TCODE_RH_POINT(
   // carefully test for the V1 zero length chunk bug
   if ( rc && pos0 > 0 && 0 != point_chunk && point_chunk == m_chunk.Last() )
   {
-    if ( TCODE_RH_POINT == point_chunk->m_typecode && 0 == point_chunk->m_value )
+    if ( TCODE_RH_POINT == point_chunk->m_typecode && 0 == point_chunk->m_big_value )
     {
       // This TCODE_RH_POINT chunk has the zero length chunk bug
       // that was in some V1 files. 
       // Fill in the correct chunk length so that reading can continue.
-      size_t pos1 = CurrentPosition();
-      int chunk_length = (pos1 > pos0) ? ((int)(pos1 - pos0)) : 0;
-      if ( chunk_length >= 32 )
-        point_chunk->m_value = chunk_length;
+      ON__UINT64 pos1 = CurrentPosition();
+      ON__UINT64 chunk_length = (pos1 > pos0) ? (pos1 - pos0) : 0;
+      if ( chunk_length >= 32 && chunk_length < 0x0FFFFFFF )
+        point_chunk->m_big_value = (ON__INT64)chunk_length;
     }
   }
 
@@ -8815,9 +9960,10 @@ bool ON_BinaryArchive::ReadV1_TCODE_MESH_OBJECT(
   ON_Mesh* mesh = 0;
   bool rc = false;
   // read v1 mesh
-  unsigned int tcode;
-  int i, value;
-  if ( !BeginRead3dmChunk(&tcode,&value) )
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int i;
+  if ( !BeginRead3dmBigChunk(&tcode,&big_value) )
     return false;
   
   if ( tcode == TCODE_COMPRESSED_MESH_GEOMETRY ) for(;;) 
@@ -8959,11 +10105,11 @@ static bool BeginRead3dmLEGACYSTUFF( ON_BinaryArchive& file, unsigned int stuff_
 {
   // begins reading stuff chunk
   bool rc = false;
-  unsigned int tcode;
-  int value;
-  tcode = !stuff_tcode;
-  for (;;) {
-    if ( !file.BeginRead3dmChunk(&tcode,&value) )
+  ON__UINT32 tcode = !stuff_tcode;
+  ON__INT64 big_value = 0;
+  for (;;) 
+  {
+    if ( !file.BeginRead3dmBigChunk(&tcode,&big_value) )
       break;
     if ( tcode == stuff_tcode ) {
       rc = true;
@@ -9304,8 +10450,9 @@ ON_Curve* ReadV1_TCODE_LEGACY_CRVSTUFF( ON_BinaryArchive& file )
   ON_PolyCurve* polycurve = 0;
   ON_NurbsCurve* segment = 0;
   ON_BOOL32 rc = false;
-  unsigned int tcode;
-  int value, i;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int i;
   ON_BOOL32 bIsPolyline = false;
   ON_BoundingBox bbox;
 
@@ -9329,9 +10476,11 @@ ON_Curve* ReadV1_TCODE_LEGACY_CRVSTUFF( ON_BinaryArchive& file )
     segment_count = s;
     for ( i = 0; i < segment_count; i++ ) {
       segment = 0;
-      if ( !file.BeginRead3dmChunk( &tcode, &value ) )
+      tcode = 0;
+      big_value = 0;
+      if ( !file.BeginRead3dmBigChunk( &tcode, &big_value ) )
         break;
-      if ( tcode == TCODE_LEGACY_SPL && value > 0 ) {
+      if ( tcode == TCODE_LEGACY_SPL && big_value > 0 ) {
         ReadV1_TCODE_LEGACY_SPL(file,segment);
       }
       if ( !file.EndRead3dmChunk() ) {
@@ -9786,13 +10935,13 @@ bool ON_BinaryArchive::ReadV1_TCODE_LEGACY_CRV(
 {
   ON_Curve* curve = NULL;
   bool rc = false;
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   ON_BOOL32 bHaveMat = false;
 
   Read3dmV1AttributesOrMaterial(pAttributes,NULL,bHaveMat,TCODE_LEGACY_CRVSTUFF);
 
-  if ( !BeginRead3dmChunk( &tcode, &value ) )
+  if ( !BeginRead3dmBigChunk( &tcode, &big_value ) )
     return false;
   if ( tcode == TCODE_LEGACY_CRVSTUFF )
     curve = ReadV1_TCODE_LEGACY_CRVSTUFF(*this);
@@ -9873,9 +11022,10 @@ ON_NurbsCurve* ReadV1_RHINOIO_NURBS_CURVE_OBJECT_DATA( ON_BinaryArchive& file )
   // old RhinoIO toolkit.
   ON_NurbsCurve* curve = 0;
   ON_BOOL32 rc = false;
-  unsigned int tcode;
-  int value, version, dim, is_rat, order, cv_count, flag, i;
-  if ( !file.BeginRead3dmChunk( &tcode, &value ) )
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int version, dim, is_rat, order, cv_count, flag, i;
+  if ( !file.BeginRead3dmBigChunk( &tcode, &big_value ) )
     return NULL;
   if ( tcode == TCODE_RHINOIO_OBJECT_DATA ) for (;;) {
     if ( !file.ReadInt(&version) )
@@ -9932,10 +11082,11 @@ ON_NurbsSurface* ReadV1_RHINOIO_NURBS_SURFACE_OBJECT_DATA( ON_BinaryArchive& fil
   // old RhinoIO toolkit.
   bool rc = false;
   ON_NurbsSurface* surface = 0;
-  unsigned int tcode;
-  int value, version, dim, is_rat, order[2], cv_count[2], flag, i, j;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int version, dim, is_rat, order[2], cv_count[2], flag, i, j;
 
-  if ( !file.BeginRead3dmChunk( &tcode, &value ) )
+  if ( !file.BeginRead3dmBigChunk( &tcode, &big_value ) )
     return NULL;
   if ( tcode == TCODE_RHINOIO_OBJECT_DATA ) for (;;) {
     if ( !file.ReadInt(&version) )
@@ -10046,8 +11197,8 @@ ON_Curve* ReadV1_RHINOIO_BREP_CURVE( ON_BinaryArchive& file )
   ON_PolyCurve* pcurve = NULL;
   ON_NurbsCurve* nurbs_curve = NULL;
   int segment_index, segment_count = 0;
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   
   if ( !file.ReadInt(&segment_count) )
     return NULL;
@@ -10055,7 +11206,7 @@ ON_Curve* ReadV1_RHINOIO_BREP_CURVE( ON_BinaryArchive& file )
     return NULL;
 
   for ( segment_index = 0; segment_index < segment_count; segment_index++ ) {
-    if ( !file.BeginRead3dmChunk(&tcode,&value) )
+    if ( !file.BeginRead3dmBigChunk(&tcode,&big_value) )
       break;
     if ( tcode == TCODE_RHINOIO_OBJECT_NURBS_CURVE ) {
       nurbs_curve = ReadV1_RHINOIO_NURBS_CURVE_OBJECT_DATA( file );
@@ -10101,9 +11252,9 @@ bool ON_BinaryArchive::ReadV1_TCODE_RHINOIO_OBJECT_BREP(
   ON_BOOL32 bHaveMat = false;
   bool rc = false;
   ON_Brep* brep = 0;
-  unsigned int tcode;
-  int value;
-  if ( !BeginRead3dmChunk( &tcode, &value ) )
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  if ( !BeginRead3dmBigChunk( &tcode, &big_value ) )
     return false;
   if ( tcode == TCODE_RHINOIO_OBJECT_DATA ) for (;;) {
     int version = -1;
@@ -10160,7 +11311,9 @@ bool ON_BinaryArchive::ReadV1_TCODE_RHINOIO_OBJECT_BREP(
     brep->m_S.Reserve(sz);
     for ( i = 0; i < sz; i++ ) {
       ON_NurbsSurface* surface = 0;
-      if ( !BeginRead3dmChunk(&tcode,&value) )
+      tcode = 0;
+      big_value = 0;
+      if ( !BeginRead3dmBigChunk(&tcode,&big_value) )
         break;
       if ( tcode == TCODE_RHINOIO_OBJECT_NURBS_SURFACE ) {
         surface = ReadV1_RHINOIO_NURBS_SURFACE_OBJECT_DATA( *this );
@@ -10314,14 +11467,14 @@ ON_BinaryArchive::Read3dmV1Object(
   //          1: success
   //          2: skipped filtered objects
 
-  unsigned int tcode;
-  int value;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
   // reads NURBS, point, and mesh objects
   for(;;)
   {
     tcode = 0;
-    value = 0;
-    if ( !BeginRead3dmChunk(&tcode,&value) ) {
+    big_value = 0;
+    if ( !BeginRead3dmBigChunk(&tcode,&big_value) ) {
       rc = 0; // at the end of the file
       break;
     }
@@ -10485,17 +11638,23 @@ ON_BinaryArchive::Read3dmObject(
   if ( m_3dm_version == 1 ) {
     rc = Read3dmV1Object(ppObject,pAttributes,object_filter);
   }
-  else {
-    unsigned int tcode;
-    int value;
-    if ( BeginRead3dmChunk( &tcode, &value ) ) {
-      if ( tcode == TCODE_OBJECT_RECORD ) {
-        if (BeginRead3dmChunk( &tcode, &value )) {
+  else 
+  {
+    ON__UINT32 tcode = 0;
+    ON__INT64 length_TCODE_OBJECT_RECORD = 0;
+    ON__INT64 value_TCODE_OBJECT_RECORD_TYPE = 0;
+    ON__INT64 length_TCODE_OBJECT_RECORD_ATTRIBUTES = 0;
+    if ( BeginRead3dmBigChunk( &tcode, &length_TCODE_OBJECT_RECORD ) ) 
+    {
+      if ( tcode == TCODE_OBJECT_RECORD ) 
+      {
+        if (BeginRead3dmBigChunk( &tcode, &value_TCODE_OBJECT_RECORD_TYPE )) 
+        {
           if ( tcode != TCODE_OBJECT_RECORD_TYPE ) {
             rc = -1;
             ON_ERROR("ON_BinaryArchive::Read3dmObject() - missing TCODE_OBJECT_RECORD_TYPE chunk.");
           }
-          else if ( value && 0 == (value|object_filter) )
+          else if ( 0 != value_TCODE_OBJECT_RECORD_TYPE && 0 == (value_TCODE_OBJECT_RECORD_TYPE | object_filter) )
             rc = 2; // skip reading this object
           else
             rc = 1; // need to read this object
@@ -10528,7 +11687,8 @@ ON_BinaryArchive::Read3dmObject(
 
       while(rc==1)
       {
-        if (!BeginRead3dmChunk( &tcode, &value )) {
+        tcode = 0;
+        if (!BeginRead3dmBigChunk( &tcode, &length_TCODE_OBJECT_RECORD_ATTRIBUTES )) {
           rc = -1;
           break;
         }
@@ -10586,21 +11746,67 @@ bool ON_BinaryArchive::EndRead3dmObjectTable()
   return rc;
 }
 
-
 bool ON_BinaryArchive::BeginWrite3dmUserTable( const ON_UUID& usertable_uuid )
+{
+  return BeginWrite3dmUserTable(usertable_uuid, false, 0, 0 );
+}
+
+bool ON_BinaryArchive::BeginWrite3dmUserTable(
+    const ON_UUID& plugin_id,
+    bool bSavingGoo,
+    int goo_3dm_version,
+    int goo_opennurbs_version
+    )
 {
   if ( m_active_table != no_active_table ) {
     ON_ERROR("ON_BinaryArchive::BeginWrite3dmUserTable() - m_active_table != no_active_table");
   }
-  if ( !ON_UuidCompare( &ON_nil_uuid, &usertable_uuid ) ) {
+  if ( !ON_UuidCompare( &ON_nil_uuid, &plugin_id ) ) {
     ON_ERROR("ON_BinaryArchive::BeginWrite3dmUserTable() - nil usertable_uuid not permitted.");
     return false;
   }
+  if ( bSavingGoo )
+  {
+    if ( goo_3dm_version <= 3 )
+      return false;
+    if ( goo_opennurbs_version < 200601010 )
+      return false;
+    if ( goo_3dm_version >= 50 && Archive3dmVersion() < 50 )
+    {
+      // goo with 8 byte chunk lengths cannot be saved 
+      // in files expecting 4 byte chunk lengths.
+      return false;
+    }
+  }
+  else
+  {
+    goo_3dm_version = Archive3dmVersion();
+    goo_opennurbs_version = ArchiveOpenNURBSVersion();
+  }
+
   bool rc = BeginWrite3dmTable( TCODE_USER_TABLE);
   if (rc) {
     rc = BeginWrite3dmChunk( TCODE_USER_TABLE_UUID, 0 );
-    if (rc) {
-      rc = WriteUuid( usertable_uuid );
+    if (rc)
+    {
+      rc = WriteUuid( plugin_id );
+      if (rc)
+      {
+        // The TCODE_USER_TABLE_RECORD_HEADER chunk was added in 
+        // version 200910190 to contain the archive and opennurbs
+        // version the plug-in used when writing the file.
+        // This information is needed so "goo" can be correctly
+        // read.
+        rc = BeginWrite3dmChunk( TCODE_USER_TABLE_RECORD_HEADER, 1, 0 );
+        if ( rc )
+        {
+          if (rc) rc = WriteBool(bSavingGoo);
+          if (rc) rc = WriteInt(goo_3dm_version);
+          if (rc) rc = WriteInt(goo_opennurbs_version);
+          if ( !EndWrite3dmChunk() )
+            rc = false;
+        }
+      }
       if ( !EndWrite3dmChunk() )
         rc = false;
     }
@@ -10614,10 +11820,39 @@ bool ON_BinaryArchive::BeginWrite3dmUserTable( const ON_UUID& usertable_uuid )
   return rc;
 }
 
+bool ON_BinaryArchive::Write3dmAnonymousUserTableRecord( 
+    const ON_UUID& plugin_id,
+    int goo_3dm_version,
+    int goo_opennurbs_version,
+    const ON_3dmGoo& goo
+    )
+{
+  if ( ON_UuidIsNil(plugin_id) )
+    return false;
+  if ( goo_3dm_version <= 3 )
+    return false;
+  if (goo_opennurbs_version < 200000000 )
+    return false;
+  if ( goo.m_typecode != TCODE_USER_RECORD )
+    return false;
+  if ( 0 == goo.m_value )
+    return false;
+  if ( 0 == goo.m_goo )
+    return false;
+  bool bSavingGoo = true;
+  if ( !BeginWrite3dmUserTable( plugin_id, bSavingGoo, goo_3dm_version, goo_opennurbs_version ) )
+    return false;
+  bool rc = WriteByte( goo.m_value, goo.m_goo );
+  if ( !EndWrite3dmUserTable() )
+    rc = false;
+  return rc;
+}
+
+
 bool ON_BinaryArchive::Write3dmAnonymousUserTable( const ON_3dmGoo& goo )
 {
   bool rc = false;
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( !c || c->m_typecode != TCODE_USER_RECORD ) {
     ON_ERROR("ON_BinaryArchive::Write3dmAnonymousUserTable() - active chunk not a TCODE_USER_RECORD.");
     rc = false;
@@ -10636,7 +11871,7 @@ bool ON_BinaryArchive::Write3dmAnonymousUserTable( const ON_3dmGoo& goo )
 bool ON_BinaryArchive::EndWrite3dmUserTable()
 {
   bool rc = false;
-  const ON_3DM_CHUNK* c = m_chunk.Last();
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
   if ( c && c->m_typecode == TCODE_USER_RECORD ) {
     rc = EndWrite3dmChunk();
   }
@@ -10651,8 +11886,32 @@ bool ON_BinaryArchive::EndWrite3dmUserTable()
 
 bool ON_BinaryArchive::BeginRead3dmUserTable( ON_UUID& usertable_uuid )
 {
+  // OBSOLETE - use the  BeginRead3dmUserTable() with more arguments
+  bool bGoo = false;
+  int archive_3dm_version = 0;
+  int archive_opennurbs_version = 0;
+  bool rc = BeginRead3dmUserTable( usertable_uuid, &bGoo, &archive_3dm_version, &archive_opennurbs_version );
+  return rc;
+}
+
+bool ON_BinaryArchive::BeginRead3dmUserTable(
+    ON_UUID& plugin_id,
+    bool* bLastSavedAsGoo,
+    int* archive_3dm_version,
+    int* archive_opennurbs_version
+    )
+{
+  bool bReadArchiveInfo = false;
+  if ( bLastSavedAsGoo )
+    *bLastSavedAsGoo = false;
+  if ( archive_3dm_version )
+    *archive_3dm_version = 0;
+  if ( archive_opennurbs_version )
+    *archive_opennurbs_version = 0;
+
   if ( m_3dm_version == 1 )
     return false;
+
   bool rc = BeginRead3dmTable( TCODE_USER_TABLE );
 
   // Do not add calls to EmergencyFindTable() here.
@@ -10663,24 +11922,78 @@ bool ON_BinaryArchive::BeginRead3dmUserTable( ON_UUID& usertable_uuid )
   if ( rc ) 
   {
     // read table id
-    unsigned int tcode = !TCODE_USER_TABLE_UUID;
-    int value = 0;
-    if (rc) rc = BeginRead3dmChunk( &tcode, &value );
-    if (rc) {
-      if ( tcode != TCODE_USER_TABLE_UUID ) {
+    ON__UINT32 tcode = 0;
+    ON__INT64 big_value = 0;
+    if (rc) rc = BeginRead3dmBigChunk( &tcode, &big_value );
+    if (rc)
+    {
+      if ( tcode != TCODE_USER_TABLE_UUID ) 
+      {
         ON_ERROR("ON_BinaryArchive::BeginRead3dmUserTable() - missing user table UUID");
         rc = false;
       }
-      else {
-        rc = ReadUuid( usertable_uuid );
+      else 
+      {
+        rc = ReadUuid( plugin_id );
+
+        // Version 200910190 of OpenNURBS began writing a TCODE_USER_TABLE_RECORD_HEADER
+        // section immediately after the uuid.  This was possible because the uuid
+        // was wrapped in a TCODE_USER_TABLE_UUID chunk.  The TCODE_USER_TABLE_RECORD_HEADER
+        // contains information that let's us determine what version of Rhino and
+        // opennurbs wrote the user table.  We need to know this because "goo"
+        // can have chunks with 4 byte lengths embedded in a file with 8 byte
+        // chunk lengths.  If this information is missing, then we know the "goo"
+        // must have 4 byte chunk lengths and we assume it is from a V4 file.
+        //
+        // 37 + SizeofChunkLength() = 
+        //      16 bytes of uuid
+        //    + 4 bytes of TCODE_USER_TABLE_RECORD_HEADER typecode
+        //    + SizeofChunkLength() TCODE_USER_TABLE_RECORD_HEADER chunk length
+        //    + 1 byte of bSlastSavedAsGoo bool
+        //    + 4 bytes of archive_3dm_version
+        //    + 4 bytes of archive_opennurbs_version
+        //    + 4 bytes of TCODE_USER_TABLE_RECORD_HEADER chunk crc
+        //    + 4 bytes of TCODE_USER_TABLE_UUID chunk crc
+        const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+        if ( rc 
+             && ArchiveOpenNURBSVersion() >= 200910190 
+             && 0 != c
+             && TCODE_USER_TABLE_UUID == c->m_typecode
+             && c->Length() >= 45 + SizeofChunkLength()
+           )
+        {
+          int major_chunk_version = 0;
+          int minor_chunk_version = 0;
+          rc = BeginRead3dmChunk(TCODE_USER_TABLE_RECORD_HEADER,&major_chunk_version,&minor_chunk_version);
+          if (rc)
+          {
+            bReadArchiveInfo = true;
+            bool b = true;
+            int arch_ver = 0;
+            int on_ver = 0;
+            rc = ReadBool(&b);
+            if ( rc && bLastSavedAsGoo )
+              *bLastSavedAsGoo = b;
+            if (rc)
+              rc = ReadInt(&arch_ver);
+            if (rc && archive_3dm_version)
+              *archive_3dm_version = arch_ver;
+            if (rc)
+              rc = ReadInt(&on_ver);
+            if (rc && archive_opennurbs_version)
+              *archive_opennurbs_version = on_ver;
+            if ( !EndRead3dmChunk() )
+              rc = false;
+          }
+        }
       }
       if ( !EndRead3dmChunk() )
         rc = false;
     }
 
-    tcode = !TCODE_USER_RECORD;
-    value = 0;
-    if (rc) rc = BeginRead3dmChunk( &tcode, &value );
+    tcode = 0;
+    big_value = 0;
+    if (rc) rc = BeginRead3dmBigChunk( &tcode, &big_value );
     if (rc) {
       if ( tcode != TCODE_USER_RECORD ) {
         ON_ERROR("ON_BinaryArchive::BeginRead3dmUserTable() - missing user table TCODE_USER_RECORD chunk.");
@@ -10691,12 +12004,59 @@ bool ON_BinaryArchive::BeginRead3dmUserTable( ON_UUID& usertable_uuid )
 
     if (!rc)
       EndRead3dmTable(TCODE_USER_TABLE);
+
+    if ( rc && !bReadArchiveInfo )
+    {
+      // If the file we are reading is V4 or an early V5 file, then use the 
+      // version numbers from the file.  Otherwise, assume the goo is from
+      // an early V5 file.  All we know for sure is that the chunk lengths
+      // in the user table are 4 bytes.
+      if ( Archive3dmVersion() < 50 )
+      {
+        if (archive_3dm_version)
+          *archive_3dm_version = Archive3dmVersion();
+        if (archive_opennurbs_version)
+          *archive_opennurbs_version = ArchiveOpenNURBSVersion();
+      }
+      else
+      {
+        if (archive_3dm_version) 
+          *archive_3dm_version = 5;
+        if (archive_opennurbs_version) 
+          *archive_opennurbs_version = 200910180;
+      }
+    }
   }
+
+
   return rc;
 }
 
 bool ON_BinaryArchive::Read3dmAnonymousUserTable( ON_3dmGoo& goo )
 {
+  return Read3dmAnonymousUserTable(0,0,goo);
+}
+
+bool ON_BinaryArchive::Read3dmAnonymousUserTable( 
+    int archive_3dm_version,
+    int archive_opennurbs_version,
+    ON_3dmGoo& goo
+    )
+{
+  if ( 0 == archive_3dm_version )
+  {
+    if ( Archive3dmVersion() < 50 )
+    {
+      archive_3dm_version = Archive3dmVersion();
+      archive_opennurbs_version = ArchiveOpenNURBSVersion();
+    }
+    else
+    {
+      // recent version with 4 byte chunk lengths.
+      archive_3dm_version = 5;
+      archive_opennurbs_version = 200910190;
+    }
+  }
   bool rc = Read3dmGoo( goo );
   if (rc && goo.m_typecode != TCODE_USER_RECORD ) {
     ON_ERROR("ON_BinaryArchive::Read3dmAnonymousUserTable() do not read a TCODE_USER_RECORD chunk.");
@@ -10711,8 +12071,8 @@ bool ON_BinaryArchive::EndRead3dmUserTable()
     ON_ERROR("ON_BinaryArchive::EndRead3dmUserTable() m_chunk.Count() != 2");
     return false;
   }
-  const ON_3DM_CHUNK* c = m_chunk.Last();
-  if ( c->m_typecode != TCODE_USER_RECORD ) {
+  const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+  if ( 0 == c || c->m_typecode != TCODE_USER_RECORD ) {
     ON_ERROR("ON_BinaryArchive::EndRead3dmTable() m_chunk.Last()->typecode != TCODE_USER_RECORD");
     return false;
   }
@@ -10720,9 +12080,9 @@ bool ON_BinaryArchive::EndRead3dmUserTable()
 
   if (rc) {
     // end of table chunk
-    unsigned int tcode = !TCODE_ENDOFTABLE;
-    int value = 1;
-    rc = BeginRead3dmChunk( &tcode, &value );
+    unsigned int tcode = 0;
+    ON__INT64 big_value = -1;
+    rc = BeginRead3dmBigChunk( &tcode, &big_value );
     if ( rc ) {
       if ( tcode != TCODE_ENDOFTABLE ) {
         ON_ERROR("ON_BinaryArchive::EndRead3dmTable() missing TCODE_ENDOFTABLE marker.");
@@ -10744,14 +12104,16 @@ bool ON_BinaryArchive::Write3dmEndMark()
     ON_ERROR( "ON_BinaryArchive::WriteEndMark() called with unfinished chunks.\n" );
     return false;
   }
-  size_t length = CurrentPosition(); // since no chunks are unfinished, everything
+  ON__UINT64 length = CurrentPosition(); // since no chunks are unfinished, everything
                                   // has been committed to disk in either
                                   // write mode.
   bool rc = BeginWrite3dmChunk( TCODE_ENDOFFILE, 0 );
   if ( rc ) 
   {    
-    unsigned int ilength = (unsigned int)(length+12);
-    rc = WriteInt( ilength );
+    size_t sizeof_chunk_length = SizeofChunkLength();
+    size_t sizeoffile_length = (8==SizeofChunkLength()) ? 8 : 4;
+    length += (4 + sizeof_chunk_length + sizeoffile_length );
+    rc = WriteEOFSizeOfFile(length);
     if ( !EndWrite3dmChunk() )
       rc = false;
   }
@@ -10763,21 +12125,26 @@ bool ON_BinaryArchive::Write3dmEndMark()
 bool ON_BinaryArchive::Read3dmEndMark( size_t* file_length )
 {
   unsigned int tcode=0;
-  int value=0;
+  ON__INT64 value=0;
   if ( file_length )
     *file_length = 0;
-  m_3dm_v1_suppress_error_message |= 0x0001; // disable v1 ReadByte() error message at EOF
-  bool rc = PeekAt3dmChunkType(&tcode,&value);
-  m_3dm_v1_suppress_error_message &= 0xFFFE; // enable v1 ReadByte() error message at EOF
+
+  const unsigned int saved_error_message_mask = m_error_message_mask;
+  m_error_message_mask |= 0x0001; // disable v1 ReadByte() error message at EOF
+  bool rc = PeekAt3dmBigChunkType(&tcode,&value);
+  m_error_message_mask = saved_error_message_mask;
+
   if (rc)
   {
-    if ( tcode == TCODE_ENDOFFILE ) {
-      rc = BeginRead3dmChunk(&tcode,&value);
-      if (rc) {
-        unsigned int i = 0;
-        rc = ReadInt(&i);
+    if ( tcode == TCODE_ENDOFFILE ) 
+    {
+      rc = BeginRead3dmBigChunk(&tcode,&value);
+      if ( rc && value > 0 && ((ON__UINT64)value) >= SizeofChunkLength() )
+      {
+        ON__UINT64 u64 = 0;
+        rc = ReadEOFSizeOfFile( &u64 );
         if ( rc && file_length )
-          *file_length = i;
+          *file_length = (size_t)u64;
         if ( !EndRead3dmChunk() )
           rc = false;
       }
@@ -10805,7 +12172,7 @@ ON_BinaryArchive::Mode() const
 void ON_BinaryArchive::UpdateCRC( size_t count, const void* p )
 {
   if ( m_bDoChunkCRC ) {
-    ON_3DM_CHUNK* c = m_chunk.Last();
+    ON_3DM_BIG_CHUNK* c = m_chunk.Last();
     if (c) {
       if ( c->m_do_crc16 )
         c->m_crc16 = ON_CRC16( c->m_crc16, count, p ); // version 1 files had 16 bit CRC
@@ -10819,6 +12186,38 @@ int ON_BinaryArchive::BadCRCCount() const
 {
   return m_bad_CRC_count;
 }
+
+unsigned int ON_BinaryArchive::ErrorMessageMask() const
+{
+  return m_error_message_mask;
+}
+
+bool ON_BinaryArchive::MaskReadError( ON__UINT64 sizeof_request, ON__UINT64 sizeof_read ) const
+{
+  if ( sizeof_request == sizeof_read )
+    return true; // no error
+  if ( sizeof_request > sizeof_read )
+    return false; // something is seriously wrong
+  if ( 0 != (0x04 & m_error_message_mask) && 0 <= sizeof_request )
+    return true;
+  if ( 0 != (0x01 & m_error_message_mask) && 4 == sizeof_request && 0 == sizeof_read )
+    return true;
+  return false; // parial read not permitted at this time.
+}
+
+ON__UINT64 ON_BinaryArchive::ReadBuffer( ON__UINT64 sizeof_buffer, void* buffer )
+{
+  // Expert user function to load a buffer with up to sizeof_buffer
+  // bytes but tolerate encountering the end of the file.
+  if ( 0 == buffer )
+    return 0;
+  unsigned int saved_error_mask = m_error_message_mask;
+  m_error_message_mask |= 0x04; // tell Read to tolerate hitting the end of the file
+  ON__UINT64 sizeof_read = Read((size_t)sizeof_buffer,buffer);
+  m_error_message_mask = saved_error_mask;
+  return sizeof_read;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -10860,12 +12259,12 @@ ON_BinaryArchive::ReadByte( size_t count, void* p )
 
 #if defined(ON_DEBUG)
       {
-        // this is slow, but it really helps find bugs in IO code
-        const ON_3DM_CHUNK* c = m_chunk.Last();
-        if ( c && 0 == (c->m_typecode & TCODE_SHORT)  )
+        // this is slow (becuase of the call to CurrentPosition(), but it really helps find bugs in IO code
+        const ON_3DM_BIG_CHUNK* c = m_chunk.Last();
+        if ( c )
         {
-          size_t file_offset = CurrentPosition();
-          if ( file_offset < c->m_offset || c->m_offset + ((size_t)c->m_value) < file_offset + count )
+          ON__UINT64 file_offset = CurrentPosition();
+          if ( file_offset < c->m_big_offset || c->m_big_offset + c->Length() < file_offset + count )
           {
             ON_ERROR("ON_BinaryArchive::ReadByte will read past end of the chunk");
           }
@@ -10873,29 +12272,38 @@ ON_BinaryArchive::ReadByte( size_t count, void* p )
       }
 #endif
 
-      size_t readcount = (size_t)Read( count, p );
-      if ( readcount == count ) {
+      size_t readcount = Read( count, p );
+      if ( readcount == count ) 
+      {
         UpdateCRC( count, p );
         rc = true;  
       }
-      else {
-        if (   readcount != 0 
-            || count != 4
-            || m_3dm_version != 1 
-            || (m_3dm_v1_suppress_error_message&0x01) == 0 ) {
-          // when reading v1 files, there are some situations where
-          // it is reasonable to attempt to read 4 bytes at the end
-          // of a file.  The above test prevents making a call
-          // to ON_ERROR() in these situations.
+      else 
+      {
+        // see if this is an error condition
+        for(;;)
+        {
+          if ( 0 != (m_error_message_mask&0x01)
+               && 0 == readcount && 4 == count 
+             )
+          {
+            // when reading v1 files, there are some situations where
+            // it is reasonable to attempt to read 4 bytes at the end
+            // of a file.
+            break;
+          }
           ON_ERROR("ON_BinaryArchive::ReadByte() Read() failed.");
+          break;
         }
       }
     }
-    else {
+    else 
+    {
       ON_ERROR("ON_BinaryArchive::ReadByte() NULL file or buffer.");
     }
   }
-  else {
+  else 
+  {
     rc = true;
   }
   return rc;
@@ -10940,10 +12348,20 @@ bool
 ON_BinaryArchive::SetArchive3dmVersion(int v)
 {
   bool rc = false;
-  if ( v >= 1 && v <= 5 )
+  // valid versions are 1,2,3,4,5,50,60,70,...
+  // 1 - 4 correspond to Rhino V1 - V4.
+  // 5 was used for early V5 betas with 4 byte chunk lengths
+  // 50 is used for V5 files with 8 bytes chunk lengths.
+  // 60, 70, ... will be used for Rhino V6, V7, etc.
+  if ( (v >= 1 && v <= 5) || ( v >= 50 && 0 == (v % 10) ) )
   {
     m_3dm_version = v;
     rc = true;
+  }
+  else 
+  {
+    m_3dm_version = 0;
+    ON_ERROR("ON_BinaryArchive::SetArchive3dmVersion - invalid version");
   }
   return rc;
 }
@@ -11038,9 +12456,25 @@ bool ON_BinaryFile::Flush()
 size_t ON_BinaryFile::CurrentPosition() const
 {
   size_t offset = 0;
-  if ( m_fp ) 
+
+  if ( 0 != m_fp ) 
   {
+
+#if defined(ON_COMPILER_MSC)
+    // use an ftell() that supports file offsets > 2GB
+    ON__INT64 offset64 = _ftelli64(m_fp);
+    if ( offset64 < 0 )
+    {
+      ON_ERROR("ON_BinaryFile::CurrentPosition() - _ftelli64() failed");
+    }
+    else
+    {
+      offset = (size_t)((ON__UINT64)offset64);
+    }
+#else
     offset = ftell(m_fp);
+#endif
+
     if ( m_memory_buffer && m_memory_buffer_size > 0 ) 
     {
       offset += m_memory_buffer_ptr;
@@ -11050,6 +12484,7 @@ size_t ON_BinaryFile::CurrentPosition() const
   {
     ON_ERROR("ON_BinaryFile::CurrentPosition() NULL file.");
   }
+
   return offset;
 }
 
@@ -11409,6 +12844,30 @@ void Dump3dmChunk_ErrorReportHelper( size_t offset, const char* msg, ON_TextLog&
   int ioffset = (int)offset;
   dump.Print("** ERROR near offset %d ** %s\n",ioffset,msg);
 }
+static
+bool DumpChunk_PrintHeaderInfo( size_t offset0, ON__UINT32 typecode, ON__INT64 big_value, ON_TextLog& dump)
+{
+  bool bShortChunk = (0 != (typecode & TCODE_SHORT));
+  const char* typecode_name = ON_BinaryArchive::TypecodeName(typecode);
+  if ( 0 == typecode_name )
+    typecode_name = "unknown tcode";
+  if ( bShortChunk )
+  {
+    dump.Print("%6d: %08X %s: value = %I64d (%016I64X)\n", offset0, typecode, typecode_name, big_value, big_value );
+  }
+  else 
+  {
+    // long chunk value = length of chunk data
+    if ( big_value < 0 ) 
+    {
+      Dump3dmChunk_ErrorReportHelper(offset0,"BeginRead3dmChunk() returned length < 0.",dump);
+      return false;
+    }
+    dump.Print("%6d: %08X %s: length = %I64d bytes\n", offset0, typecode, typecode_name, big_value );
+  }
+  return true;
+}
+
 #define CASEtcode2string(tc) case tc: s = #tc ; break
 
 const char* ON_BinaryArchive::TypecodeName( unsigned int tcode )
@@ -11510,6 +12969,7 @@ const char* ON_BinaryArchive::TypecodeName( unsigned int tcode )
   CASEtcode2string(TCODE_OBJECT_RECORD_HISTORY_DATA);
   CASEtcode2string(TCODE_LIGHT_RECORD_END);
   CASEtcode2string(TCODE_USER_TABLE_UUID);
+  CASEtcode2string(TCODE_USER_TABLE_RECORD_HEADER);
   CASEtcode2string(TCODE_USER_RECORD);
   CASEtcode2string(TCODE_GROUP_TABLE);
   CASEtcode2string(TCODE_GROUP_RECORD);
@@ -11744,8 +13204,37 @@ char* ON_BinaryArchive::ON_TypecodeParse( unsigned int tcode, char* typecode_nam
   return typecode_name;
 }
 
+static
+bool Dump3dmChunk_EndReadChunkHelper( ON_BinaryArchive& file, size_t offset0, ON__UINT32 tcode, ON__INT64 big_value, ON_TextLog& dump )
+{
+  const bool bShortChunk = (0 != (tcode & TCODE_SHORT));
+  const size_t offset1 = file.CurrentPosition();
+  bool rc = file.EndRead3dmChunk();
+  if ( !rc ) 
+  {
+    Dump3dmChunk_ErrorReportHelper(offset1,"EndRead3dmChunk() failed.",dump);
+  }
+  else if (!bShortChunk) 
+  {
+    // The crc is read or skipped by the EndRead3dmChunk() call.
+    // "extra" is the number of bytes we did not parse in the dump.
+    ON__INT64 sizeof_crc = (0 != (TCODE_CRC & tcode)) ? 4 : 0;
+    ON__INT64 sizeof_chunk_header = 4+file.SizeofChunkLength();
+    ON__INT64 delta =  (offset1 > offset0)
+              ?  ((ON__INT64)(offset1 - offset0))
+              : -((ON__INT64)(offset0 - offset1));
+    const ON__INT64 extra = big_value - (delta+sizeof_crc-sizeof_chunk_header);
+    if ( extra < 0 ) 
+    {
+      Dump3dmChunk_ErrorReportHelper(offset0,"Read beyond end of chunk.",dump);
+      rc = false;
+    }
+  }
+  return rc;
+}
+
 static 
-bool Dump3dmChunk_UserDataHelper( size_t offset, ON_BinaryArchive& file, 
+bool Dump3dmChunk_UserDataHeaderHelper( size_t offset, ON_BinaryArchive& file, 
                                  int major_userdata_version, int minor_userdata_version, 
                                  ON_TextLog& dump )
 {
@@ -11755,13 +13244,58 @@ bool Dump3dmChunk_UserDataHelper( size_t offset, ON_BinaryArchive& file,
   ON_UUID userdata_classid = ON_nil_uuid;
   ON_UUID userdata_itemid = ON_nil_uuid;
   ON_UUID userdata_appid = ON_nil_uuid;  // id of plug-in that owns the user data
-  bool rc = file.ReadUuid( userdata_classid );
-  if ( !rc ) 
+  int userdata_copycount = -1;
+  ON_Xform userdata_xform;
+  bool bLastSavedAsGoo = false;
+  int ud_archive_3dm_version = 0;
+  int ud_archive_opennurbs_version = 0;
+
+  bool rc = false;
+  bool bCallEndRead3dmChunk = false;
+
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  const size_t offset0 = file.CurrentPosition();
+
+  for(;;)
   {
-     Dump3dmChunk_ErrorReportHelper(offset,"ReadUuid() failed to read the user data class id.",dump);
-  }
-  else 
-  {
+    if ( 2 == major_userdata_version )
+    {
+      rc = file.PeekAt3dmBigChunkType(&tcode,&big_value);
+      if ( !rc )
+      {
+        Dump3dmChunk_ErrorReportHelper(offset,"Unable to find the TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk header in a TCODE_OPENNURBS_CLASS_USERDATA chunk.",dump);
+        break;
+      }
+      if ( TCODE_OPENNURBS_CLASS_USERDATA_HEADER != tcode )
+      {
+        Dump3dmChunk_ErrorReportHelper(offset,"Unable to find the TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk header in a TCODE_OPENNURBS_CLASS_USERDATA chunk.",dump);
+        rc = false;
+        break;
+      }
+      rc = file.BeginRead3dmBigChunk(&tcode,&big_value); 
+      if ( !rc )
+      {
+        Dump3dmChunk_ErrorReportHelper(offset,"Unable to read the TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk header in a TCODE_OPENNURBS_CLASS_USERDATA chunk.",dump);
+        break;
+      }
+      if ( TCODE_OPENNURBS_CLASS_USERDATA_HEADER != tcode )
+      {
+        Dump3dmChunk_ErrorReportHelper(offset,"Missing TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk header in a TCODE_OPENNURBS_CLASS_USERDATA chunk.",dump);
+        Dump3dmChunk_EndReadChunkHelper(file,offset0,tcode,big_value,dump);
+        rc = false;
+        break;
+      }
+      bCallEndRead3dmChunk = true;
+    }
+
+    rc = file.ReadUuid( userdata_classid );
+    if ( !rc ) 
+    {
+      Dump3dmChunk_ErrorReportHelper(offset,"ReadUuid() failed to read the user data class id.",dump);
+      break;
+    }
+
     dump.Print("UserData class id = ");
     dump.Print( userdata_classid );
     const ON_ClassId* pUserDataClassId = ON_ClassId::ClassId(userdata_classid);
@@ -11779,44 +13313,80 @@ bool Dump3dmChunk_UserDataHelper( size_t offset, ON_BinaryArchive& file,
     if ( !rc ) 
     {
        Dump3dmChunk_ErrorReportHelper(offset,"ReadUuid() failed to read the user data item id.",dump);
+       break;
     }
-    else 
-    {
-      dump.Print("UserData item id = ");
-      dump.Print( userdata_itemid );
-      dump.Print("\n");
+    dump.Print("UserData item id = ");
+    dump.Print( userdata_itemid );
+    dump.Print("\n");
 
-      int userdata_copycount = -1;
-      rc = file.ReadInt( &userdata_copycount );
-      if ( !rc )
+    rc = file.ReadInt( &userdata_copycount );
+    if ( !rc )
+    {
+      Dump3dmChunk_ErrorReportHelper(offset,"ReadInt() failed to read the user data copy count.",dump);
+      break;
+    }
+    dump.Print("UserData copy count = %d\n",userdata_copycount);
+
+    rc = file.ReadXform( userdata_xform );
+    if ( !rc )
+    {
+      Dump3dmChunk_ErrorReportHelper(offset,"ReadXform() failed to read the user data xform.",dump);
+      break;
+    }
+
+    if ( 2 != major_userdata_version )
+      break;
+    if ( minor_userdata_version < 1 )
+      break;
+    rc = file.ReadUuid( userdata_appid );
+    if ( !rc)
+    {
+      Dump3dmChunk_ErrorReportHelper(offset,"ReadUuid() failed to read the user data app plug-in id.",dump);
+      break;
+    }
+    dump.Print("UserData app plug-in id = ");
+    dump.Print( userdata_appid );
+    dump.Print("\n");
+    if ( minor_userdata_version < 2 )
+      break;
+    rc = file.ReadBool(&bLastSavedAsGoo);
+    if (!rc)
+    {
+      Dump3dmChunk_ErrorReportHelper(offset,"ReadBool() failed to read the user data header bSavedAsGoo value.",dump);
+      break;
+    }
+    rc = file.ReadInt( &ud_archive_3dm_version );
+    if (!rc)
+    {
+      Dump3dmChunk_ErrorReportHelper(offset,"ReadBool() failed to read the user data header bSavedAsGoo value.",dump);
+      break;
+    }
+    rc = file.ReadInt( &ud_archive_opennurbs_version );
+    if (!rc)
+    {
+      Dump3dmChunk_ErrorReportHelper(offset,"ReadBool() failed to read the user data header bSavedAsGoo value.",dump);
+      break;
+    }
+    if ( bLastSavedAsGoo )
+      dump.Print("Userdata originally written by opennurbs %d in 3dm version %d and saved as goo in this file.\n",ud_archive_opennurbs_version,ud_archive_3dm_version);
+    else
+      dump.Print("Userdata written by opennurbs %d in 3dm version %d.\n",ud_archive_opennurbs_version,ud_archive_3dm_version);
+
+    break;
+  }
+
+  if ( bCallEndRead3dmChunk )
+  {
+    if (!Dump3dmChunk_EndReadChunkHelper(file,offset0,tcode,big_value,dump))
+    {
+      if (rc)
       {
-        Dump3dmChunk_ErrorReportHelper(offset,"ReadInt() failed to read the user data copy count.",dump);
+        Dump3dmChunk_ErrorReportHelper(offset,"EndRead3dmChunk() failed to close the TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk.",dump);
       }
-      else
-      {
-        ON_Xform userdata_xform;
-        rc = file.ReadXform( userdata_xform );
-        if ( !rc )
-        {
-          Dump3dmChunk_ErrorReportHelper(offset,"ReadXform() failed to read the user data xform.",dump);
-        }
-        else if ( 2 == major_userdata_version && 1 <= minor_userdata_version )
-        {
-          rc = file.ReadUuid( userdata_appid );
-          if ( !rc)
-          {
-            Dump3dmChunk_ErrorReportHelper(offset,"ReadUuid() failed to read the user data app plug-in id.",dump);
-          }
-          else
-          {
-            dump.Print("UserData app plug-in id = ");
-            dump.Print( userdata_appid );
-            dump.Print("\n");
-          }
-        }
-      }
+      rc = false;
     }
   }
+
   return rc;
 }
 
@@ -11825,18 +13395,18 @@ unsigned int
 ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
 {
   //ON_BinaryArchive& file = *this;
-  ON_BOOL32 bShortChunk = false;
+  bool bShortChunk = false;
   const size_t offset0 = CurrentPosition();
   unsigned int typecode = 0;
-  int value;
-  ON_BOOL32 rc = BeginRead3dmChunk( &typecode, &value );
+  ON__INT64 big_value;
+  bool rc = BeginRead3dmBigChunk( &typecode, &big_value );
   if (!rc) 
   {
     Dump3dmChunk_ErrorReportHelper(offset0,"BeginRead3dmChunk() failed.",dump);
   }
   else 
   {
-    if ( !typecode ) 
+    if ( 0 == typecode ) 
     {
       Dump3dmChunk_ErrorReportHelper(offset0,"BeginRead3dmChunk() returned typecode = 0.",dump);
       EndRead3dmChunk();
@@ -11848,24 +13418,30 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
         dump.Print("\n");
       }
 
+      ////bShortChunk = (0 != (typecode & TCODE_SHORT));
+      ////const char* typecode_name = ON_BinaryArchive::TypecodeName(typecode);
+      ////if ( 0 == typecode_name )
+      ////  typecode_name = "unknown tcode";
+      ////if ( bShortChunk )
+      ////{
+      ////  dump.Print("%6d: %08X %s: value = %I64d (%016I64X)\n", offset0, typecode, typecode_name, big_value, big_value );
+      ////}
+      ////else 
+      ////{
+      ////  // long chunk value = length of chunk data
+      ////  if ( big_value < 0 ) 
+      ////  {
+      ////    Dump3dmChunk_ErrorReportHelper(offset0,"BeginRead3dmChunk() returned length < 0.",dump);
+      ////    EndRead3dmChunk();
+      ////    return 0;
+      ////  }
+      ////  dump.Print("%6d: %08X %s: length = %I64d bytes\n", offset0, typecode, typecode_name, big_value );
+      ////}
       bShortChunk = (0 != (typecode & TCODE_SHORT));
-      const char* typecode_name = ON_BinaryArchive::TypecodeName(typecode);
-      if ( 0 == typecode_name )
-        typecode_name = "unknown tcode";
-      if ( bShortChunk )
+      if ( !DumpChunk_PrintHeaderInfo(offset0,typecode,big_value,dump) )
       {
-        dump.Print("%6d: %08X %s: value = %d (%08X)\n", offset0, typecode, typecode_name, value, value );
-      }
-      else 
-      {
-        // long chunk value = length of chunk data
-        if ( value < 0 ) 
-        {
-          Dump3dmChunk_ErrorReportHelper(offset0,"BeginRead3dmChunk() returned length < 0.",dump);
-          EndRead3dmChunk();
-          return 0;
-        }
-        dump.Print("%6d: %08X %s: length = %d bytes\n", offset0, typecode, typecode_name, value );
+        EndRead3dmChunk();
+        return 0;
       }
 
       int major_userdata_version = -1;
@@ -11899,6 +13475,16 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
             }
           }
           dump.PopIndent();
+        }
+        break;
+
+      case TCODE_PROPERTIES_OPENNURBS_VERSION:
+        {
+          dump.PushIndent();
+          dump.Print("Version of opennurbs that wrote this file: %I64d\n",big_value);
+          dump.PopIndent();           
+          if ( 0 == m_3dm_opennurbs_version && big_value > 0 && big_value <= 299999999 )
+            ON_SetBinaryArchiveOpenNURBSVersion(*this,(ON__INT32)big_value);
         }
         break;
 
@@ -12012,7 +13598,7 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_OBJECT_RECORD_ATTRIBUTES:
         {
           dump.PushIndent();
-          if ( value < 48 )
+          if ( big_value < 48 )
           {
             Dump3dmChunk_ErrorReportHelper(offset0,"Length of chunk is too small.  Should be >= 48.",dump);
           }
@@ -12101,33 +13687,20 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
               switch ( major_userdata_version )
               {
               case 1:
+              case 2:
                 {
                   // version 1 user data header information was not wrapped
                   // in a chunk.
-                  if ( Dump3dmChunk_UserDataHelper( userdata_header_offset, *this, 
-                                                    major_userdata_version, minor_userdata_version,
-                                                    dump ) )
-                  {
-                    // a TCODE_ANONYMOUS_CHUNK contains user data goo
-                    int anon_typecode =  Dump3dmChunk( dump, recursion_depth+1 );
-                    if ( TCODE_ANONYMOUS_CHUNK != anon_typecode )
-                    {
-                      Dump3dmChunk_ErrorReportHelper( offset0,"Userdata Expected a TCODE_ANONYMOUS_CHUNK chunk.",dump);
-                    }
-                  }
-                }
-                break;
-              case 2:
-                {
+                  //
                   // version 2 user data header information is wrapped
                   // in a TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk.
-                  unsigned int userdata_header_typecode = Dump3dmChunk( dump, recursion_depth+1 );
-                  if ( TCODE_OPENNURBS_CLASS_USERDATA_HEADER != userdata_header_typecode )
+                  if ( Dump3dmChunk_UserDataHeaderHelper( 
+                                  userdata_header_offset, *this, 
+                                  major_userdata_version, minor_userdata_version,
+                                  dump ) 
+                     )
                   {
-                    Dump3dmChunk_ErrorReportHelper(userdata_header_offset,"Expected a TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk.",dump);
-                  }
-                  else
-                  {
+                    // a TCODE_ANONYMOUS_CHUNK contains user data goo
                     int anon_typecode =  Dump3dmChunk( dump, recursion_depth+1 );
                     if ( TCODE_ANONYMOUS_CHUNK != anon_typecode )
                     {
@@ -12194,10 +13767,8 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
 
       case TCODE_OPENNURBS_CLASS_USERDATA_HEADER:
         {
-          if ( !Dump3dmChunk_UserDataHelper( offset0, *this, 0,0, dump ) )
-          {
-            Dump3dmChunk_ErrorReportHelper(offset0,"Unable to read userdata header.",dump);
-          }
+          // we should never get here because this chunk is parsed in the TCODE_OPENNURBS_CLASS_USERDATA case above.
+          Dump3dmChunk_ErrorReportHelper(offset0,"Encountered TCODE_OPENNURBS_CLASS_USERDATA_HEADER chunk outside a TCODE_OPENNURBS_CLASS_USERDATA chunk.",dump);
         }
         break;
 
@@ -12205,15 +13776,16 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
       case TCODE_ENDOFFILE_GOO:
         {
           dump.PushIndent();
-          if ( value < 4 ) {
+          if ( big_value < 4 ) {
             Dump3dmChunk_ErrorReportHelper(offset0,"TCODE_ENDOFFILE chunk withlength < 4.",dump);
           }
           else {
-            int sizeof_file = 0;
-            ReadInt(&sizeof_file);
-            dump.Print("current position = %d  stored size = %d\n",
+            ON__UINT64 sizeof_file = 0;
+            ReadEOFSizeOfFile(&sizeof_file);
+            dump.Print("current position = %d  stored size = %I64u\n",
                        CurrentPosition(), 
-                       sizeof_file);
+                       sizeof_file
+                       );
           }
           dump.PopIndent();
         }
@@ -12230,10 +13802,10 @@ ON_BinaryArchive::Dump3dmChunk( ON_TextLog& dump, int recursion_depth )
     }
     else if (!bShortChunk) 
     {
-      int delta =  (offset1 > offset0)
-                ?  ((int)(offset1 - offset0))
-                : -((int)(offset0 - offset1));
-      const int extra = value - (delta-8);
+      ON__INT64 delta =  (offset1 > offset0)
+                ?  ((ON__INT64)(offset1 - offset0))
+                : -((ON__INT64)(offset0 - offset1));
+      const ON__INT64 extra = big_value - (delta-4-SizeofChunkLength());
       if ( extra < 0 ) 
       {
         Dump3dmChunk_ErrorReportHelper(offset0,"Read beyond end of chunk.",dump);

@@ -366,7 +366,9 @@ bool ON_IsValidFloat( float x );
 // function to return true.
 
 #if defined(_GNU_SOURCE)
-#define ON_IS_FINITE(x) (finite(x)?true:false)
+#define ON_IS_FINITE(x) (isfinite(x)?true:false)
+// If your compiler does not have "isfinite()", try using "finite()".
+//#define ON_IS_FINITE(x) (finite(x)?true:false)
 #else
 #define ON_IS_FINITE(x) (_finite(x)?true:false)
 #endif
@@ -553,6 +555,52 @@ ON_BOOL32 ON_IsValidPointList(
         int,  // stride
         const double*
         );
+
+/*
+Description:
+  Determine if a list of points is planar.
+Parameters:
+  bRational - [in]
+    false if the points are euclidean (x,y,z)
+    true if the points are homogeneous rational (x,y,z,w)
+  point_count - [in]
+    number of points
+  point_stride - [in]
+    number of doubles between point x coordinates
+    first point's x coordinate = points[0],
+    second point's x coordinate = points[point_stride],...
+  points - [in]
+    point coordinates (3d or 4d homogeneous rational)
+  boxMin - [in]
+  boxMax - [in]
+    optional 3d bounding box - pass nulls if not readily available
+  tolerance - [in] >= 0.0
+  plane_equation0 - [in]
+    If you want to test for planarity in a specific plane,
+    pass the plane equation in here.  If you want to find
+    a plane containing the points, pass null here.
+  plane_equation - [out]
+    If this point is not null, then the equation of the plane
+    containing the points is retuened here.
+Returns:
+  0 - points are not coplanar to the specified tolerance
+  1 - points are coplanar to the specified tolerance
+  2 - points are colinear to the specified tolerance
+      (in this case, plane_equation is not a unique answer)
+  3 - points are coincident to the specified tolerance
+      (in this case, plane_equation is not a unique answer)
+*/
+ON_DECL
+int ON_IsPointListPlanar(
+    bool bRational,
+    int count,
+    int stride,
+    const double* points,
+    const double* boxMin,
+    const double* boxMax,
+    double tolerance,
+    ON_PlaneEquation* plane_equation
+    );
 
 ON_DECL
 ON_BOOL32 ON_IsValidPointGrid(
@@ -980,10 +1028,10 @@ Parameters:
   x - [out]
   y - [out]
 Returns:
-  The rank of the problem.  
-    2 = A and B are nonzero and not parallel
-    1 = A and B are (nearly) parallel
-    0 = A and B are (nearly) zero
+  1 - The rank of the problem is 2.  The decomposition is unique.
+	0 - The rank less than 2.  Either there is no solution or there
+			are infinitely many solutions.
+
 See Also:
   ON_Solve2x2
 */
@@ -1141,6 +1189,50 @@ ON_3dVector ON_NormalCurvature(
         const ON_3dVector&, // surface unit normal
         const ON_3dVector&  // unit tangent direction
         );
+
+/*
+Description:
+  Determing if two curvatrues are different enough
+  to qualify as a curvature discontinuity.
+Parameters:
+  Km - [in]
+  Kp - [in]
+    Km and Kp should be curvatures evaluated at the same
+    parameters using limits from below (minus) and above (plus).
+    The assumption is that you have already compared the
+    tangents and consider to curve to be G1 at the point
+    in question.
+  cos_angle_tolerance - [in]
+      Used to decide if Km and Kp are parallel.
+      If Km o Kp <= cos_angle_tolerance*|Km|*|Kp|,
+      then true is returned because Km and Kp are considered
+      not parallel.  Use something like cos(angle tolerance)
+      for this parameter.
+  curvature_tolerance - [in] (ignored if < 0.0)
+    If curvature_tolerance >= 0 and (Kp-Km).Length() <= curvature_tolerance,
+    then false is returned.
+  zero_curvature - [in] (ignored if < 2^-110 = 7.7037197787136e-34)
+    If |K| <= zero_curvature, then K is treated as zero.
+  radius_tolerance - [in] (ignored if < 0.0)
+    If the unit directions of Km and Kp agree to 3 decimal places
+    and the difference between the radii of curvature are
+    <= radius_tolerance, then false is returned.
+Returns:
+  False if the curvatures should be considered G2.
+  True if the curvatures are different enough that the curve should be
+  considered not G2.  
+  In addition to the tests described under the curvature_tolerance and 
+  radius_tolerance checks, other hurestic tests are used.
+*/
+ON_DECL
+bool ON_IsCurvatureDiscontinuity( 
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance,
+  double zero_curvature,
+  double radius_tolerance
+  );
 
 /*
 Description:
@@ -1850,6 +1942,7 @@ ON_DECL int ON_Min(int a, int b);
 // when there is any possibility that x is invalid or
 // fabs(x)>2147483647. Use floor(x+0.5) instead.
 ON_DECL int ON_Round(double x);
+
 
 /*
 Description:

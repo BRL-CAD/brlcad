@@ -1,22 +1,49 @@
+wfobj_dir = wfobj
+
+#if WITH_PARSERS
+#WFOBJ = ${wfobj_dir}
+#WFOBJLIB=wvobj/libwfobj_nil.la
+#else
+WFOBJ = 
+WFOBJLIB = 
+#endif
+
+SUBDIRS = \
+	${WFOBJ}
+
+DIST_SUBDIRS = \
+	${WFOBJ}
 
 lib_LTLIBRARIES = libgcv.la
 noinst_LTLIBRARIES = libgcv_nil.la
 
-libgcv_nil_la_SOURCES = \
-	region_end.c \
-	region_start_mc.c
-
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-libgcv_la_SOURCES =
-libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
-libgcv_la_LIBADD = \
-	libgcv_nil.la \
-	${GCV_LIBS}
+libgcv_nil_la_SOURCES = \
+	region_end.c \
+	region_end_mc.c
 
 EXTRA_DIST = \
-        CMakeLists.txt \
-	NOTES
+	CMakeLists.txt \
+	NOTES \
+	wfobj/Makefile.in \
+	wfobj/Makefile.am \
+	wfobj/obj_grammar.y \
+	wfobj/obj_grammar.yy \
+	wfobj/obj_parser.cc \
+	wfobj/obj_parser.h \
+	wfobj/obj_parser_state.h \
+	wfobj/obj_rules.l \
+	wfobj/obj_rules.ll
+
+CLEANFILES = wfobj/Makefile
+
+libgcv_la_SOURCES =
+libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS} 
+libgcv_la_LIBADD = \
+	libgcv_nil.la \
+	${WFOBJLIB} \
+	${GCV_LIBS}
 
 AM_CFLAGS = ${STRICT_FLAGS}
 

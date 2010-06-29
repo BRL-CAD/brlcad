@@ -33,20 +33,20 @@
 #include "fb.h"
 
 
-#define	IBUFSIZE 3*2048		/* Max read size in rgb pixels */
+#define IBUFSIZE 3*2048		/* Max read size in rgb pixels */
 unsigned char ibuf[IBUFSIZE];	/* Input buffer */
 
-long	bin_r[256];		/* Histogram bins */
-long	bin_g[256];
-long	bin_b[256];
-int	verbose = 0;
+long bin_r[256];		/* Histogram bins */
+long bin_g[256];
+long bin_b[256];
+int verbose = 0;
 
-FBIO	*fbp;
+FBIO *fbp;
 
-static long	max;
-static double	scalefactor;
-static unsigned char	line[512*3];
-static FILE	*fp;
+static long max;
+static double scalefactor;
+static unsigned char line[512*3];
+static FILE *fp;
 
 
 int
@@ -55,16 +55,16 @@ main(int argc, char **argv)
     int i;
 
     /* check for verbose flag */
-    if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
+    if (argc > 1 && strcmp(argv[1], "-v") == 0) {
 	verbose++;
 	argv++;
 	argc--;
     }
 
     /* look for optional input file */
-    if ( argc > 1 ) {
-	if ( (fp = fopen(argv[1], "r")) == 0 ) {
-	    bu_exit(1, "pixhist: can't open \"%s\"\n", argv[1] );
+    if (argc > 1) {
+	if ((fp = fopen(argv[1], "r")) == 0) {
+	    bu_exit(1, "pixhist: can't open \"%s\"\n", argv[1]);
 	}
 	argv++;
 	argc--;
@@ -72,16 +72,16 @@ main(int argc, char **argv)
 	fp = stdin;
 
     /* check usage */
-    if ( argc > 1 || isatty(fileno(fp)) ) {
-	bu_exit( 1, "usage: pixhist [-v] [file.pix]\n" );
+    if (argc > 1 || isatty(fileno(fp))) {
+	bu_exit(1, "usage: pixhist [-v] [file.pix]\n");
     }
 
-    while ( (i = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
+    while ((i = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0) {
 	unsigned char *bp;
 	int j;
 
 	bp = &ibuf[0];
-	for ( j = i/3; j > 0; j-- )  {
+	for (j = i/3; j > 0; j--) {
 	    bin_r[ *bp++ ]++;
 	    bin_g[ *bp++ ]++;
 	    bin_b[ *bp++ ]++;
@@ -90,53 +90,54 @@ main(int argc, char **argv)
 
     /* find max */
     max = 1;
-    for ( i = 0; i < 256; i++ ) {
-	if ( bin_r[i] > max ) max = bin_r[i];
-	if ( bin_g[i] > max ) max = bin_g[i];
-	if ( bin_b[i] > max ) max = bin_b[i];
+    for (i = 0; i < 256; i++) {
+	if (bin_r[i] > max) max = bin_r[i];
+	if (bin_g[i] > max) max = bin_g[i];
+	if (bin_b[i] > max) max = bin_b[i];
     }
     scalefactor = 511.0 / ((double)max);
 
     /* Display the max? */
-    bu_log("Max bin count=%ld.  %g count/pixel\n", max, scalefactor );
+    bu_log("Max bin count=%ld.  %g count/pixel\n", max, scalefactor);
 
-    if ( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
+    if ((fbp = fb_open(NULL, 512, 512)) == NULL) {
 	bu_exit(12, "fb_open failed\n");
     }
 
     /* Display them */
-    for ( i = 0; i < 256; i++ ) {
+    for (i = 0; i < 256; i++) {
 	int j;
 	int level;
 	long npix;
 
 	level = (int)((double)bin_r[i]*scalefactor);
-	if ( level > 511 )  level = 511;
-	for ( j = 0; j < level; j++ )  line[j*3+RED] = 255;
-	for (; j < 512; j++ )  line[j*3+RED] = 0;
+	if (level > 511) level = 511;
+	for (j = 0; j < level; j++) line[j*3+RED] = 255;
+	for (; j < 512; j++) line[j*3+RED] = 0;
 	npix = level;
 
 	level = (int)((double)bin_g[i]*scalefactor);
-	if ( level > 511 )  level = 511;
-	for ( j = 0; j < level; j++ )  line[j*3+GRN] = 255;
-	for (; j < 512; j++ )  line[j*3+GRN] = 0;
-	if ( level > npix )  npix = level;
+	if (level > 511) level = 511;
+	for (j = 0; j < level; j++) line[j*3+GRN] = 255;
+	for (; j < 512; j++) line[j*3+GRN] = 0;
+	if (level > npix) npix = level;
 
 	level = (int)((double)bin_b[i]*scalefactor);
-	if ( level > 511 )  level = 511;
-	for ( j = 0; j < level; j++ )  line[j*3+BLU] = 255;
-	for (; j < 512; j++ )  line[j*3+BLU] = 0;
-	if ( level > npix )  npix = level;
+	if (level > 511) level = 511;
+	for (j = 0; j < level; j++) line[j*3+BLU] = 255;
+	for (; j < 512; j++) line[j*3+BLU] = 0;
+	if (level > npix) npix = level;
 
-	fb_write( fbp, 0, 2*i, line, npix );
-	fb_write( fbp, 0, 2*i+1, line, npix );
-	if ( verbose )
-	    bu_log( "%3d: %10ld %10ld %10ld  (%ld)\n",
-		    i, bin_r[i], bin_g[i], bin_b[i], npix );
+	fb_write(fbp, 0, 2*i, line, npix);
+	fb_write(fbp, 0, 2*i+1, line, npix);
+	if (verbose)
+	    bu_log("%3d: %10ld %10ld %10ld (%ld)\n",
+		   i, bin_r[i], bin_g[i], bin_b[i], npix);
     }
-    fb_close( fbp );
+    fb_close(fbp);
     return 0;
 }
+
 
 /*
  * Local Variables:

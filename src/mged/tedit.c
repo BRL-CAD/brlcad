@@ -48,17 +48,21 @@
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 #define V4BASE2LOCAL(_pt)	(_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local
 
+extern int classic_mged;
+
 /* editors to test, in order of discovery preference (EDITOR overrides) */
 #define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad"
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
-#define EMACS_EDITOR "/usr/bin/emacs"
-#define VIM_EDITOR "/usr/bin/vim"
-#define VI_EDITOR "/usr/bin/vi"
-#define ED_EDITOR "/bin/ed"
+#define EMACS_EDITOR "emacs"
+#define VIM_EDITOR "vim"
+#define VI_EDITOR "vi"
+#define ED_EDITOR "ed"
 
 /* used to invoke the above editor if X11 is in use */
-#define XTERM_BINARY "/usr/X11R6/bin/xterm"
+#define XTERM_COMMAND "xterm"
 
+/* Can the mac terminal be used to launch applications?  Doesn't seem like it
+ * in initial trials, but maybe there's some trick? */
 #define MAC_BINARY "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
 
 extern struct rt_db_internal es_int;
@@ -109,7 +113,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     (void)fclose(fp);
 
-    if (/*editit(tmpfil)*/0) {
+    if (editit(argv[0], tmpfil)) {
 	if (readsolid()) {
 	    (void)unlink(tmpfil);
 	    return TCL_ERROR;
@@ -181,7 +185,7 @@ writesolid(void)
 	default:
 	    Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    (void)fclose(fp);
-	    return(1);
+	    return 1;
 	case ID_TOR:
 	    tor = (struct rt_tor_internal *)es_int.idb_ptr;
 	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->v), eol);
@@ -296,7 +300,7 @@ writesolid(void)
     }
 
     (void)fclose(fp);
-    return(0);
+    return 0;
 }
 
 
@@ -308,7 +312,7 @@ Get_next_line(FILE *fp)
     size_t len;
 
     if (bu_fgets(line, sizeof(line), fp) == NULL)
-	return((char *)NULL);
+	return (char *)NULL;
 
     len = strlen(line);
 
@@ -316,9 +320,9 @@ Get_next_line(FILE *fp)
     while (i<len && line[i++] != ':');
 
     if (i == len || line[i] == '\0')
-	return((char *)NULL);
+	return (char *)NULL;
 
-    return(&line[i]);
+    return &line[i];
 }
 
 
@@ -861,16 +865,10 @@ readsolid(void)
     }
 
     (void)fclose(fp);
-    return(ret_val);
+    return ret_val;
 }
 
 
-/* BUGS -- right now we only check at compile time whether or not to
- * pop up an X window to display into (for editors that do not open
- * their own window like vi or jove).  If we have X support, we
- * automatically use xterm (regardless of whether the user is running
- * mged in console mode!)
- */
 int
 get_editor_string(struct bu_vls *editstring)
 {
@@ -878,11 +876,14 @@ get_editor_string(struct bu_vls *editstring)
     int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
     int stat = 0;
+    int count = 0;
+    const char *os = (char *)NULL;
     const char *terminal = (char *)NULL;
     const char *terminal_opt = (char *)NULL;
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
-    
+
+    os = Tcl_GetVar(interp, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
     editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
     if (!editor || editor[0] == '\0')
 	editor = Tcl_GetVar(interp, "EDITOR", TCL_GLOBAL_ONLY);
@@ -892,11 +893,11 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try windows */
     if (!editor || editor[0] == '\0') {
-#ifdef DM_WGL
-	editor = WIN_EDITOR;
-#else
-	editor = (char *)NULL;
-#endif
+	if (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT")) {
+    	    editor = WIN_EDITOR;
+	} else {
+    	    editor = (char *)NULL;
+	}
     }
 
     /* still unset? try mac os x */
@@ -908,55 +909,142 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try emacs */
     if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(EMACS_EDITOR)) {
-	    editor = EMACS_EDITOR;
-	}
+	editor = bu_which(EMACS_EDITOR);
     }
 
     /* still unset? try vim */
     if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(VIM_EDITOR)) {
-	    editor = VIM_EDITOR;
-	}
+	editor = bu_which(VIM_EDITOR);
     }
 
     /* still unset? try vi */
     if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(VI_EDITOR)) {
-	    editor = VI_EDITOR;
-	}
+	editor = bu_which(VI_EDITOR);
     }
 
     /* still unset? try ed */
     if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(ED_EDITOR)) {
-	    editor = ED_EDITOR;
-	}
+       	editor = bu_which(ED_EDITOR);
     }
 
     /* still unset? default to jove */
     if (!editor || editor[0] == '\0') {
-	const char *binpath = bu_brlcad_root("bin", 1);
+	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = "jove";
-	if (binpath) {
-	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+	if (jovepath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
 	    editor = buffer;
 	}
     }
 
-#  if defined(DM_X) || defined(DM_OGL)
-    /* if we have x support and aren't using the default
-     * Mac editor, pop open the editor in an xterm.  
-     * Otherwise, use whatever the user gave.
-     */
-    if (editor != MAC_EDITOR) {
-    	terminal = XTERM_BINARY;
-    	terminal_opt = "-e";
-    }
-#  endif /* DM_X || DM_OGL */
+    /* There are two possible situations for MGED - in classic mode
+     * the assumption is made that the command window is a controlling
+     * terminal, and an editor should be launched that will utilize
+     * that controlling window. Otherwise, some editor settings will
+     * need a terminal supplied via an xterm and some will not. */
 
-    bu_vls_sprintf(editstring, "%s %s %s %s", terminal, terminal_opt, editor, editor_opt); 
+
+    /* If we're in classic mode on Windows, go with jove */
+    if (classic_mged && (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT"))) {
+	const char *jovepath = bu_brlcad_root("bin/jove", 1);
+	editor = "jove";
+	if (jovepath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
+	    editor = buffer;
+	}
+    }
+
+    if (classic_mged) {
+	/* In this situation, make sure we're using an editor that will
+	 * work within the mged terminal (i.e. no launching a separate
+	 * gui, regardless of EDITOR settings. In this situation, emacs
+	 * will be invoked with the -nw option.
+	 * 
+	 * Standard:  emacs, vim, vi, ed, jove
+	 * Windows: jove
+	 *
+	 * terminal and terminal_opt remain unset
+	 */
+
+	/* Test for any of the editor conditions that will require intervention.
+	 * Unfortunately, because we can't be certain that a user supplied EDITOR
+	 * will work in console mode, if it's not one of the known good cases
+	 * we have to attempt to set one of the known working editor configs. 
+	 * Hence, check for known working AND known not-working up front - need
+	 * to satisfy both that there IS a working config already and that one
+	 * of the non-working configs isn't set.*/
+	count += (!strcmp(editor, bu_which(EMACS_EDITOR)) && (!editor_opt || editor_opt[0] == '\0'));
+	count += !(strcmp(editor, bu_which(VIM_EDITOR)));
+	count += !(strcmp(editor, bu_which(VI_EDITOR)));
+	count += !(strcmp(editor, bu_which(ED_EDITOR)));
+	count += !(strcmp(editor, "jove"));
+	count += !(!(!(strcmp(editor, MAC_EDITOR))));
+	if (count > 0) {
+	    /* start with emacs... */ 
+	    editor = bu_which(EMACS_EDITOR);
+	    /* if emacs is found, set editor_opt */
+	    if (!strcmp(editor, bu_which(EMACS_EDITOR))) {
+		editor_opt = "-nw";
+	    }
+	    if (!editor || editor[0] == '\0') {
+		editor = bu_which(VIM_EDITOR);
+	    }
+	    if (!editor || editor[0] == '\0') {
+		editor = bu_which(VI_EDITOR);
+	    }
+	    if (!editor || editor[0] == '\0') {
+		editor = bu_which(ED_EDITOR);
+	    }
+	    if (!editor || editor[0] == '\0') {
+		const char *binpath = bu_brlcad_root("bin", 1);
+		editor = "jove";
+		if (binpath) {
+		    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+		    editor = buffer;
+		}
+	    }
+	}
+    	
+	bu_vls_sprintf(editstring, "%s %s %s %s", terminal, terminal_opt, editor, editor_opt); 
+    } else { 
+    	/* Spell out in which situations we need a terminal.
+	 */
+    	if (!strcmp(os, "Darwin")) {
+    	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
+	     * we figure out how to use Mac terminal, use X11 xterm */
+    	    if (editor != MAC_EDITOR) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	}
 	
+    	/* For now, assume there aren't any situations where Windows will use a terminal */
+	
+    	/* If it's not mac, and it's not Windows, assume Emacs has X11 support.  Is there
+	 * a way to test? */
+    	if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT")) {
+    	    if (!strcmp(editor, "vim")) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	    if (!strcmp(editor, "vi")) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	    if (!strcmp(editor, "ed")) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	    if (!strcmp(editor, "jove")) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	}
+	
+    	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
+
+    	bu_vls_sprintf(editstring, "%s %s %s %s", terminal, terminal_opt, editor, editor_opt); 
+    }	
     return 1;
 }
 

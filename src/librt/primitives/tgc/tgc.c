@@ -122,7 +122,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * the solid is a TGC.
      */
     if (rt_rec_prep(stp, ip, rtip) == 0)
-	return(0);		/* OK */
+	return 0;		/* OK */
 
     /* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
     mag_h = sqrt(MAGSQ(tip->h));
@@ -135,19 +135,19 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)) {
 	bu_log("tgc(%s):  zero length H vector\n", stp->st_name);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Validate that figure is not two-dimensional */
     if (NEAR_ZERO(mag_a, RT_LEN_TOL) &&
 	NEAR_ZERO(mag_c, RT_LEN_TOL)) {
 	bu_log("tgc(%s):  vectors A, C zero length\n", stp->st_name);
-	return (1);
+	return 1;
     }
     if (NEAR_ZERO(mag_b, RT_LEN_TOL) &&
 	NEAR_ZERO(mag_d, RT_LEN_TOL)) {
 	bu_log("tgc(%s):  vectors B, D zero length\n", stp->st_name);
-	return (1);
+	return 1;
     }
 
     /* Validate that both ends are not degenerate */
@@ -155,7 +155,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	/* AB end is degenerate */
 	if (prod_cd <= SMALL) {
 	    bu_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
-	    return(1);		/* BAD */
+	    return 1;		/* BAD */
 	}
 	/* Exchange ends, so that in solids with one degenerate end,
 	 * the CD end always is always the degenerate one
@@ -173,7 +173,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     f = VDOT(tip->h, work) / (prod_ab*mag_h);
     if (NEAR_ZERO(f, RT_DOT_TOL)) {
 	bu_log("tgc(%s):  H lies in A-B plane\n", stp->st_name);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     if (prod_ab > SMALL) {
@@ -184,7 +184,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		   stp->st_name, f);
 	    bu_log("tgc: dot=%g / a*b=%g\n",
 		   VDOT(tip->a, tip->b),  prod_ab);
-	    return(1);		/* BAD */
+	    return 1;		/* BAD */
 	}
     }
     if (prod_cd > SMALL) {
@@ -195,7 +195,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 		   stp->st_name, f);
 	    bu_log("tgc: dot=%g / c*d=%g\n",
 		   VDOT(tip->c, tip->d), prod_cd);
-	    return(1);		/* BAD */
+	    return 1;		/* BAD */
 	}
     }
 
@@ -205,7 +205,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	if (! NEAR_ZERO(f, RT_DOT_TOL)) {
 	    bu_log("tgc(%s):  A not parallel to C, f=%g\n",
 		   stp->st_name, f);
-	    return(1);		/* BAD */
+	    return 1;		/* BAD */
 	}
     }
 
@@ -215,7 +215,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	if (! NEAR_ZERO(f, RT_DOT_TOL)) {
 	    bu_log("tgc(%s):  B not parallel to D, f=%g\n",
 		   stp->st_name, f);
-	    return(1);		/* BAD */
+	    return 1;		/* BAD */
 	}
     }
 
@@ -325,7 +325,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_aradius = f;
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
     }
-    return (0);
+    return 0;
 }
 
 
@@ -538,7 +538,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      */
     t_scale = MAGNITUDE(dprime);
     if (NEAR_ZERO(t_scale, SMALL_FASTF)) {
-	bu_log("tgc(%s) dprime=(%g, %g, %g), t_scale=%e, miss.\n",
+	bu_log("tgc(%s) dprime=(%g, %g, %g), t_scale=%e, miss.\n", stp->st_dp->d_namep,
 	       V3ARGS(dprime), t_scale);
 	return 0;
     }
@@ -849,7 +849,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    bu_log("\t%g", k[i]*t_scale);
 	}
 	bu_log("\n");
-	return(0);			/* No hit */
+	return 0;			/* No hit */
     }
 
     intersect = 0;
@@ -884,7 +884,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
 
-    return(intersect);
+    return intersect;
 }
 
 
@@ -1521,7 +1521,7 @@ rt_tgc_free(struct soltab *stp)
 int
 rt_tgc_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -1545,7 +1545,7 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_tgc_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1568,7 +1568,7 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT4X3VEC(tip->c, mat, &vec[4*3]);
     MAT4X3VEC(tip->d, mat, &vec[5*3]);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1584,7 +1584,7 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_TGC && ip->idb_type != ID_REC) return(-1);
+    if (ip->idb_type != ID_TGC && ip->idb_type != ID_REC) return -1;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -1604,7 +1604,7 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&rec->s.s_values[12], tip->c, local2mm);
     VSCALE(&rec->s.s_values[15], tip->d, local2mm);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1646,7 +1646,7 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT4X3VEC(tip->c, mat, &vec[4*3]);
     MAT4X3VEC(tip->d, mat, &vec[5*3]);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1662,7 +1662,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_TGC && ip->idb_type != ID_REC) return(-1);
+    if (ip->idb_type != ID_TGC && ip->idb_type != ID_REC) return -1;
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -1681,7 +1681,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 3*6);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1791,7 +1791,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
  * R T _ T G C _ P L O T
  */
 int
-rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_tgc_internal *tip;
     register int i;
@@ -1825,7 +1825,7 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1991,10 +1991,10 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     if (NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF) && (NEAR_ZERO(c, SMALL_FASTF) || NEAR_ZERO(d, SMALL_FASTF))) {
 	bu_log("Illegal TGC a, b, and c or d less than tolerance\n");
-	return(-1);
+	return -1;
     } else if (NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF) && (NEAR_ZERO(a, SMALL_FASTF) || NEAR_ZERO(b, SMALL_FASTF))) {
 	bu_log("Illegal TGC c, d, and a or b less than tolerance\n");
-	return(-1);
+	return -1;
     }
 
     if (a > 0.0) {
@@ -2465,7 +2465,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if (nmg_calc_face_g(fu)) {
 	    bu_log("rt_tess_tgc: failed to calculate plane equation\n");
 	    nmg_pr_fu_briefly(fu, "");
-	    return(-1);
+	    return -1;
 	}
     }
 
@@ -2582,7 +2582,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
     bu_ptbl_free(&faces);
 
-    return(0);
+    return 0;
 }
 
 
@@ -2760,7 +2760,7 @@ rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     nmg_je(bot_eu, eu);
     nmg_region_a(*r, tol);
 
-    return(0);
+    return 0;
 }
 
 
@@ -3059,7 +3059,7 @@ rt_tgc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

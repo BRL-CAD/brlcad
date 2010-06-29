@@ -1,0 +1,774 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <!-- vi:set sw=2: -->
+  <!--
+  Copyright (C) 1996-2002  Brian Paul and Ben Bederson
+  Copyright (C) 2005-2009  Greg Couch
+  See the LICENSE file for copyright details.
+  -->
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Togl Tcl API</title>
+  </head>
+
+  <body>
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
+      NavigationBar();
+    </script>
+
+    <h1 align="center">Togl Tcl API</h1>
+
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#tclfuncs">Togl Tcl command</a>
+      <li><a href="#toglfuncs">Togl widget commands</a>
+      <ul>
+	<li><a href="#configuration">Configuration Commands</a>
+	<li><a href="#extensions">Extensions Command</a>
+	<li><a href="#rendering">Rendering Commands</a>
+	<li><a href="#image">Image Commands</a>
+	<li><a href="#font">Font Commands</a>
+	<li><a href="#overlay">Overlay Commands</a>
+	<li><a href="#stereo cmds">OpenGL (Stereo) Commands</a>
+      </ul>
+      <li><a href="#options">Togl configuration options</a>
+      <ul>
+	<li><a href="#drawing">Drawing callbacks</a>
+	<li><a href="#geometry">Geometry Options</a>
+	<li><a href="#timer">Timer Options</a>
+	<li><a href="#stereo options">Stereo Options</a>
+	<li><a href="#miscellaneous">Miscellaneous Options</a>
+	<li><a href="#pixelformat">Pixel Format Options</a>
+      </ul>
+    </ul>
+
+    <hr>
+
+    <h2><a name="tclfuncs">Togl Tcl command</a></h2>
+
+    <p>
+    The togl command creates a new Tk widget, a Tcl command,
+    whose name is <var>pathName</var>.
+    This command may be used to invoke various operations on the widget.
+    <blockquote>
+      <code>togl <var>pathName</var> [<a href="#options">options</a>]</code>
+    </blockquote>
+    If no options are given, a 400 by 400 pixel RGB window is created.
+    This command may be used to invoke various operations on the widget.
+
+    <h2><a name="toglfuncs">Togl widget commands</a></h2>
+
+    The following commands are possible for an existing togl widget:
+
+    <h3><a name="configuration">Configuration commands</a></h3>
+
+    <dl>
+      <dt><code><var>pathName</var> cget <var>-option</var></code>
+      <dd>
+      Return current value of given configuration option.
+    </dl>
+
+    <dl>
+      <dt>
+      <code><var>pathName</var> configure</code><br>
+      <code><var>pathName</var> configure <var>-option</var></code>
+      <dd>
+      If no <var>option</var> is given,
+      then return information about
+      all configuration <a href="#options">options</a>.
+      Otherwise,
+      return configuration information for given <var>option</var>.
+      All configuration information consists of five values:
+      the configuration option name,
+      the option database name,
+      the option database class,
+      the default value,
+      and the current value.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> configure <var>-option</var> <var>value</var></code>
+      <dd>
+      Reconfigure a Togl widget.
+      <var>option</var> may be any one of the options listed below.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> contexttag</code>
+      <dd>
+      Returns an integer that represents the context tag.
+      All Togl widgets with the same context tag share display lists.
+    </dl>
+
+    <h3><a name="extensions">Extensions command</a></h3>
+
+    <dl>
+      <dt><code><var>pathName</var> extensions</code>
+      <dd>
+      Returns a list of OpenGL extensions available.  For example:
+      <blockquote><pre><code>
+if {[lsearch [<i>pathName</i> extensions] GL_EXT_bgra] != -1]} {
+    ....
+}
+</code></pre></blockquote>
+      would check if the GL_EXT_bgra extension were supported.
+    </dl>
+
+    <h3><a name="rendering">Rendering commands</a></h3>
+
+    <dl>
+      <dt><code><var>pathName</var> postredisplay</code>
+      <dd>
+      Cause the displaycommand callback to be called
+      the next time the event loop is idle.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> render</code>
+      <dd>
+      Causes the displaycommand callback to be called for <var>pathName</var>.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> swapbuffers</code>
+      <dd>
+      Causes front/back buffers to be swapped if in double buffer mode.
+      And flushs the OpenGL command buffer if in single buffer mode.
+      (So this is appropriate to call after every frame is drawn.)
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> makecurrent</code>
+      <dd>
+      Make the widget specified by <var>pathName</var> and its OpenGL context
+      the current ones.
+      This is implicitly called before any callback command is invoked.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> copycontextto <var>toPathName</var> <var>mask</var></code>
+      <dd>
+      Copy a subset of the OpenGL context state from <var>pathName</var> to
+      <var>toPathName</var> according the given mask.
+      The mask is an integer corresponding to the same values as
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glPushAttrib.xml">
+	glPushAttrib</a>.
+    </dl>
+
+    <h3><a name="image">Image commands</a></h3>
+
+    <dl>
+      <dt><code><var>pathName</var> takephoto <var>imagename</var></code>
+      <dd>
+      Copy the contents of the togl window into the given Tk photo image.
+      Transparency values are copied and should be fully opaque for windows
+      without alpha bitplanes.
+    </dl>
+
+    <h3><a name="font">Font commands</a></h3>
+
+    <p>
+    These functions provide an interface to the simple bitmap font capabilities
+    that every OpenGL implementation provides.
+    Better font support is found in other packages, <i>e.g.</i>,
+    <a href="http://www.tcl3d.org/">Tcl3D</a>
+    or with different <a href="capi.html#font">C APIs</a>.
+
+    <dl>
+      <dt><code><var>pathName</var> loadbitmapfont <var>font</var></code>
+      <dd>
+      <var>font</var> can be any of font descriptions listed in the Tk
+      <a href="http://www.tcl.tk/man/tcl8.4/TkCmd/font.htm#M13">font</a> command.
+      It returns a togl font object.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> unloadbitmapfont <var>toglfont</var></code>
+      <dd>
+      Releases the OpenGL resources needed by the <var>toglfont</var>.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> write <var>toglfont</var> [-pos <var>xyzw</var>] [-color <var>rgba</var>] <var>string</var></code>
+      <dd>
+      Write the given <var>string</var> in the given <var>toglfont</var>,
+      optionally at a particular position, <var>xyzw</var>
+      and color, <var>rgba</var>.
+      <var>xyzw</var> is either a 2, 3, or 4 element list of numbers.
+      <var>rgba</var> is either a 3 or 4 element list of numbers.
+    </dl>
+
+    <h3><a name="overlay">Overlay Commands</a></h3>
+
+    <dl>
+      <dt><code><var>pathName</var> uselayer <var>layer</var></code>
+      <dd>
+      This is a variation on the <code>makecurrent</code> command
+      that makes the overlay OpenGL context current
+      if <var>layer</var> is 2
+      and makes the normal OpenGL context current
+      if <var>layer</var> is 1.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> showoverlay</code>
+      <dd>
+      Turn on drawing in the overlay planes.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> hideoverlay</code>
+      <dd>
+      Turn off drawing in the overlay planes.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> postredisplayoverlay</code>
+      <dd>
+      Cause the overlay OpenGL context to be redrawn the next time
+      the Tcl event loop is idle.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> renderoverlay</code>
+      <dd>
+      Causes the overlaydisplaycommand callback to be called for <var>pathName</var>.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> existsoverlay</code>
+      <dd>
+      Return true if togl widget has overlay planes.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> ismappedoverlay</code>
+      <dd>
+      Return true if overlay planes are shown.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> getoverlaytransparentvalue</code>
+      <dd>
+      Return overlay plane's transparent pixel value.
+    </dl>
+
+    <h3><a name="stereo cmds">OpenGL (Stereo) Commands</a></h3>
+    These commands exist to support stereo rendering.
+    Just replace select OpenGL calls with the Togl versions
+    and stereo rendering will magically work.  And don't forget
+    to update the <a href="#stereo options">stereo options</a>.
+
+    <dl>
+      <dt><code><var>pathName</var> drawbuffer <var>mode</var></code>
+      <dd>
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glDrawBuffer.xml">
+	glDrawBuffer</a>.
+      The mode is an integer.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> clear <var>mask</var></code>
+      <dd>
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glClear.xml">
+	glClear</a>.
+      The mask is an integer.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> frustum <var>left right bottom top near far</var></code>
+      <dd>
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFrustum.xml">
+	glFrustum</a>.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> ortho <var>left right bottom top near far</var></code>
+      <dd>
+      Replaces calls to
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glOrtho.xml">
+	glOrtho</a>.
+    </dl>
+
+    <dl>
+      <dt><code><var>pathName</var> numeyes</code>
+      <dd>
+      Returns numbers of eyes &mdash; basically,
+      2 for stereo views and 1 for all others,
+      except some stereo views only need one eye from OpenGL.
+    </dl>
+
+    <h2><a name="options">Togl configuration options</a></h2>
+
+    Togl's configuration options can be separated into several categories:
+    geometry, pixel format, and other.
+    The pixel format related options can only be set at widget creation time.
+    The other options can be changed dynamically
+    by the <code><var>pathName</var> configure</code> command (see above).
+
+    <h3><a name="drawing">Drawing callbacks</a></h3>
+
+    <table border="0">
+      <thead>
+	<tr valign="top">
+	  <th>Option</th>
+	  <th>Default</th>
+	  <th>Comments</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr valign="top">
+	  <td><code>-createcommand</code></td>
+	  <td align="center">{}</td>
+	  <td>
+	    Can be abbreviated <code>-create</code>.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-displaycommand</code></td>
+	  <td align="center">{}</td>
+	  <td>
+	    Can be abbreviated <code>-display</code>.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-reshapecommand</code></td>
+	  <td align="center">{}</td>
+	  <td>
+	    Can be abbreviated <code>-reshape</code>.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-destroycommand</code></td>
+	  <td align="center">{}</td>
+	  <td>
+	    Can be abbreviated <code>-destroy</code>.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-overlaydisplaycommand</code></td>
+	  <td align="center">{}</td>
+	  <td>
+	    Can be abbreviated <code>-overlaydisplay</code>.
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+
+    <h3><a name="geometry">Geometry Options</a></h3>
+
+    <table border="0">
+      <thead>
+	<tr valign="top">
+	  <th>Option</th>
+	  <th>Default</th>
+	  <th>Comments</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr valign="top">
+	  <td><code>-width</code></td>
+	  <td align="center">400</td>
+	  <td>
+	    Set width of widget in pixels.
+	    It may have any of the forms accepted by <b>Tk_GetPixels</b>.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-height</code></td>
+	  <td align="center">400</td>
+	  <td>
+	    Set height of widget in pixels.
+	    It may have any of the forms accepted by <b>Tk_GetPixels</b>(3).
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-setgrid</code></td>
+	  <td align="center">0</td>
+	  <td>
+	    Turn on gridded geometry management for togl widget's toplevel
+	    window and specify the geometry of the grid.
+	    See the manual pages for Tk's <b>wm</b>(n) and <b>Tk_SetGrid</b>(3)
+	    for more information.
+	    Unlike the <b>text</b> widget,
+	    the same value is used for both width and height increments.
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+
+    <h3><a name="timer">Timer Options</a></h3>
+
+    <table>
+      <thead>
+	<tr valign="top">
+	  <th>Option</th>
+	  <th>Default</th>
+	  <th>Comments</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr valign="top">
+	  <td><code>-time</code></td>
+	  <td align="center">1</td>
+	  <td>
+	    Specifies the interval, in milliseconds, for
+	    calling the timer callback function which
+	    was registered with -timercommand.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-timercommand</code></td>
+	  <td align="center">{}</td>
+	  <td>
+	    Can be abbreviated <code>-timer</code>.
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+
+    <h3><a name="stereo options">Stereo Options</a></h3>
+
+    <table>
+      <thead>
+	<tr valign="top">
+	  <th>Option</th>
+	  <th>Default</th>
+	  <th>Comments</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr valign="top">
+	  <td><code>-eyeseparation</code></td>
+	  <td align="center">2.0</td>
+	  <td>
+	    Set the distance between the eyes in viewing coordinates.
+	  </td>
+	</tr>
+
+	<tr valign="top">
+	  <td><code>-convergence</code></td>
+	  <td align="center">30.0</td>
+	  <td>
+	    Set the distance to the screen from the eye in viewing coordinates
+	    (the distance at which the eyes converge).
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+
+    <blockquote>
+      You'd think these values would be given in physical units,
+      but there's no single right way to convert to viewing coordinates
+      from physical units.
+      So if you're willing to use Tk's idea of the horizontal size of a
+      window in millimeters (not always correct),
+      you could convert the average eye separation of 63 mm
+      to your viewing coordinates, and use that value as the eye separation.
+    </blockquote>
+
+    <h3><a name="miscellaneous">Miscellaneous Options</a></h3>
+
+    <table>
+      <thead>
+	<tr valign="top">
+	  <th>Option</th>
+	  <th>Default</th>
+	  <th>Comments</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr valign="top">
+	  <td><code>-cursor</code></td>
+	  <td align="center">""</td>
+	  <td>
+	    Set the cursor in the widget window.
+	  </td>
+	</tr>
+
+	<tr valign="top">
+	  <td><code>-swapinterval</code></td>
+	  <td align="center">1</td>
+	  <td>
+	    Set the minimum swap interval measure in video frame periods.
+	    The default is 1 for for non-tearing artifacts
+	    when swapping buffers.
+	    Use a value of 0 when benchmarking frame rates.
+	  </td>
+	</tr>
+
+	<tr valign="top">
+	  <td><code>-ident</code></td>
+	  <td align="center">""</td>
+	  <td>
+	    A user identification string.  This is used match widgets
+	    for the <code>-sharecontext</code>
+	    and the <code>-sharelist</code> options (see below).
+	    This is also useful in your callback functions
+	    to determine which Togl widget is the caller.
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+
+    <h3><a name="pixelformat">Pixel Format Options</a></h3>
+
+    The following options can only be given when the togl widget is created
+    &mdash; that is, unlike other options,
+    the togl widget can not be reconfigured with different values
+    for the following options after it is created.
+
+    <table border="0">
+      <thead>
+	<tr valign="top">
+	  <th>Option</th>
+	  <th>Default</th>
+	  <th>Comments</th>
+	</tr>
+      </thead>
+      <tbody>
+	<tr valign="top">
+	  <td><code>-rgba</code></td>
+	  <td align="center">true</td>
+	  <td>If true, use RGB(A) mode, otherwise use Color Index mode.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-redsize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in red component.</td>
+	</tr>
+	<tr valign="top">
+	  <td nowrap="nowrap"><code>-greensize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in green component.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-bluesize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in blue component.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-alpha</code></td>
+	  <td align="center">1</td>
+	  <td>
+	    If true and <code>-rgba</code> is true, request an alpha channel.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-alphasize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in alpha component.</td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-double</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, request a double-buffered window, otherwise
+	    request a single-buffered window.
+	  </td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-depth</code></td>
+	  <td align="center">false</td>
+	  <td>If true, request a depth buffer.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-depthsize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in depth buffer.</td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-accum</code></td>
+	  <td align="center">false</td>
+	  <td>If true, request an accumulation buffer.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-accumredsize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in accumulation buffer red component.</td>
+	</tr>
+	<tr valign="top">
+	  <td nowrap="nowrap"><code>-accumgreensize</code></td>
+	  <td align="center">1</td>
+	  <td>
+	    Minimum number of bits in accumulation buffer green component.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-accumbluesize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in accumulation buffer blue component.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-accumalphasize</code></td>
+	  <td align="center">1</td>
+	  <td>
+	    Minimum number of bits in accumulation buffer alpha component.
+	  </td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-stencil</code></td>
+	  <td align="center">false</td>
+	  <td>If true, request a stencil buffer.</td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-stencilsize</code></td>
+	  <td align="center">1</td>
+	  <td>Minimum number of bits in stencil component.</td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-auxbuffers</code></td>
+	  <td align="center">0</td>
+	  <td>Desired number of auxiliary buffers.</td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-privatecmap</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    Only applicable in color index mode.
+	    If false, use a shared read-only colormap.
+	    If true, use a private read/write colormap.
+	  </td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-overlay</code></td>
+	  <td align="center">false</td>
+	  <td>If true, request overlay planes.</td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-stereo</code></td>
+	  <td align="center">mode</td>
+	  <td>
+	    See the <a href="stereo.html">stereo</a> information
+	    for details about the various modes.
+	    Stereo parameters are changed with the
+	    <a href="#stereo options">stereo options</a>.
+	    <p>
+	    When using a non-native stereo mode, the OpenGL
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glDrawBuffer.xml">
+	      glDrawBuffer</a>,
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glClear.xml">
+	      glClear</a>,
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFrustum.xml">
+	      glFrustum</a>, and
+	    <a href="http://www.opengl.org/sdk/docs/man/xhtml/glOrtho.xml">
+	      glOrtho</a> calls
+	    must be replaced with the Togl
+	    <a href="#stereo cmds">Tcl</a> or
+	    <a href="capi.html#stereo">C</a> versions.
+	  </td>
+	</tr>
+
+	<tr><td colspan="3" height="0">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-pbuffer</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, request off-screen framebuffer memory for the graphics.
+	    The resulting togl widget should not be managed.
+	  </td>
+	</tr>
+	<tr>
+	  <td><code>-largestpbuffer</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, when asking for a pbuffer of a given size
+	    and there isn't enough framebuffer memory available,
+	    fallback to the largest size available.
+	  </td>
+	</tr>
+
+	<tr><td colspan="3" height="0">&nbsp;</td></tr>
+	<tr valign="top">
+	  <td><code>-multisample</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, request an multisampled rendering context.
+	  </td>
+	</tr>
+
+	<!--
+	<tr valign="top">
+	  <td><code>-fullscreen</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If true, request an multisampled rendering context.
+	    <em>Requires Tcl/Tk 8.5 or newer on UNIX and Microsoft Windows platforms.</em>
+	  </td>
+	</tr>
+	-->
+
+	<tr valign="top">
+	  <td><code>-indirect</code></td>
+	  <td align="center">false</td>
+	  <td>
+	    If present, request an indirect rendering context.
+	    A direct rendering context is normally requested.
+	    <em>Only significant on Unix/X11.</em>
+	  </td>
+	</tr>
+
+	<tr valign="top">
+	  <td><code>-sharelist</code></td>
+	  <td align="center">""</td>
+	  <td>
+	    Togl identification string or window path name
+	    of an existing Togl widget with which to share display lists.
+	    If it is not possible to share display lists
+	    between the two togl widgets
+	    (depends on the graphics driver and the particular formats),
+	    it fails.
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-sharecontext</code></td>
+	  <td align="center">""</td>
+	  <td>
+	    Togl identification string or window path name
+	    of an existing Togl widget with which to share the OpenGL context.
+	    <i>Note:  all other pixel format options are ignored.</i>
+	  </td>
+	</tr>
+	<tr valign="top">
+	  <td><code>-pixelformat</code></td>
+	  <td align="center">0</td>
+	  <td>
+	    Set the pixel format to the (platform-dependent) given value.
+	    This is a backdoor into choosing a particular pixel format
+	    that was determined by other means.
+	  </td>
+	</tr>
+      </tbody>
+    </table>
+
+    <hr>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
+    </a>
+  </body>
+</html>

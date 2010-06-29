@@ -83,7 +83,7 @@ typedef struct TkPostscriptInfo {
 				 * pre-pass that collects font information, so
 				 * the Postscript generated isn't relevant. */
     int prolog;			/* Non-zero means output should contain the
-				 * file prolog.ps in the header. */
+				 * prolog definitions in the header. */
 } TkPostscriptInfo;
 
 /*

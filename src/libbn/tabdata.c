@@ -128,7 +128,7 @@ bn_table_make_uniform(int num, double first, double last)
     }
     tabp->x[num] = last;
 
-    return( tabp );
+    return tabp;
 }
 
 /*
@@ -927,7 +927,7 @@ bn_table_read(const char *filename)
 	/* XXX assumes fastf_t == double */
 	ret = fscanf( fp, "%lf", &tabp->x[j] );
 	if (ret != 1) {
-	    bu_log("bn_table_read(&s) READ FAILURE. Abort\n", filename);
+	    bu_log("bn_table_read(%s) READ FAILURE. Abort\n", filename);
 	    break;
 	}
     }

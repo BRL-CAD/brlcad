@@ -102,9 +102,15 @@ FileForRedirect(
         }
 	file = TclpMakeFile(chan, writing ? TCL_WRITABLE : TCL_READABLE);
         if (file == NULL) {
-	    Tcl_AppendResult(interp, "channel \"", Tcl_GetChannelName(chan),
-		    "\" wasn't opened for ",
-		    ((writing) ? "writing" : "reading"), NULL);
+	    Tcl_Obj* msg;
+	    Tcl_GetChannelError(chan, &msg);
+	    if (msg) {
+		Tcl_SetObjResult (interp, msg);
+	    } else {
+		Tcl_AppendResult(interp, "channel \"", Tcl_GetChannelName(chan),
+				 "\" wasn't opened for ",
+				 ((writing) ? "writing" : "reading"), NULL);
+	    }
             return NULL;
         }
 	*releasePtr = 1;

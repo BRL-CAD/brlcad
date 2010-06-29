@@ -587,7 +587,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	prj_print(rp, (char *)prj_sp );
     }
 
-    return(1);
+    return 1;
 }
 
 /**

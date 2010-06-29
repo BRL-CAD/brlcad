@@ -24,6 +24,7 @@ articlesDOCBOOK_EN_IMAGES = \
 	articles/en/images/ebm_primitive_fig01.png \
 	articles/en/images/ebm_primitive_fig02.png \
 	articles/en/images/ebm_primitive_fig03.png \
+	articles/en/images/mgedrc_fig01.png \
 	articles/en/images/mgedrc_fig02.png \
 	articles/en/images/mgedrc_fig03.png \
 	articles/en/images/nirt_fig01.png \

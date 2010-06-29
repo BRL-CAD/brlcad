@@ -49,34 +49,62 @@
 
 #include "./fbserv.h"
 
+HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
+
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 
-void set_port(void);
+/*
+ * C O M M _ E R R O R
+ *
+ * Communication error.  An error occured on the PKG link.
+ */
+HIDDEN void
+communications_error(char *str)
+{
+    bu_log(str);
+}
 
-#ifdef LOCAL_STATIC
-#  undef LOCAL_STATIC
-#endif
-#define LOCAL_STATIC static
 
-LOCAL_STATIC void drop_client(int sub);
-#if defined(_WIN32) && !defined(__CYGWIN__)
-LOCAL_STATIC void new_client(struct pkg_conn *pcp, Tcl_Channel chan);
-LOCAL_STATIC void new_client_handler(ClientData clientData, Tcl_Channel chan, char *host, int port);
-#else
-LOCAL_STATIC void new_client(struct pkg_conn *pcp);
-LOCAL_STATIC void new_client_handler(ClientData clientData, int mask);
+HIDDEN void
+fbserv_setup_socket(int fd)
+{
+    int on = 1;
+
+#if defined(SO_KEEPALIVE)
+    if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
+	bu_log("setsockopt (SO_KEEPALIVE): %m\n");
+    }
 #endif
-LOCAL_STATIC void existing_client_handler(ClientData clientData, int mask);
-LOCAL_STATIC void comm_error(char *str);
-LOCAL_STATIC void setup_socket(int fd);
+#if defined(SO_RCVBUF)
+    /* try to set our buffers up larger */
+    {
+	int m = -1, n = -1;
+	int val;
+	int size;
+
+	for (size = 256; size > 16; size /= 2) {
+	    val = size * 1024;
+	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
+			   (char *)&val, sizeof(val));
+	    val = size * 1024;
+	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
+			   (char *)&val, sizeof(val));
+	    if (m >= 0 && n >= 0) break;
+	}
+
+	if (m < 0 || n < 0)
+	    bu_log("fbserv_setup_socket: setsockopt() SO_RCVBUF/SO_SNDBUF failed: %m\n");
+    }
+#endif
+}
 
 
 /*
  * D R O P _ C L I E N T
  */
-LOCAL_STATIC void
-drop_client(int sub)
+HIDDEN void
+fbserv_drop_client(int sub)
 {
     if (clients[sub].c_pkg != PKC_NULL) {
 	pkg_close(clients[sub].c_pkg);
@@ -95,308 +123,11 @@ drop_client(int sub)
 }
 
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-LOCAL_STATIC void
-new_client(struct pkg_conn *pcp,
-	   Tcl_Channel chan)
-	   
-{
-    int i;
-
-    if (pcp == PKC_ERROR)
-	return;
-
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	if (clients[i].c_fd != 0)
-	    continue;
-
-	/* Found an available slot */
-	clients[i].c_pkg = pcp;
-	clients[i].c_fd = pcp->pkc_fd;
-	setup_socket(pcp->pkc_fd);
-
-	clients[i].c_chan = chan;
-	clients[i].c_handler = existing_client_handler;
-	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE,
-				 clients[i].c_handler,
-				 (ClientData)clients[i].c_fd);
-
-	return;
-    }
-
-    bu_log("new_client: too many clients\n");
-    pkg_close(pcp);
-}
-
-
-/*
- * S E T _ P O R T
- */
-void
-set_port(void)
-{
-    int i;
-    int save_port;
-    int port;
-    char hostname[32];
-
-    /* Check to see if previously active --- if so then deactivate */
-    if (netchan != NULL) {
-	/* first drop all clients */
-	for (i = 0; i < MAX_CLIENTS; ++i)
-	    drop_client(i);
-
-	Tcl_DeleteChannelHandler(netchan,
-				 new_client_handler,
-				 (ClientData)netfd);
-
-	Tcl_Close(dmp->dm_interp, netchan);
-	netchan = NULL;
-
-	closesocket(netfd);
-	netfd = -1;
-    }
-
-    if (!mged_variables->mv_listen)
-	return;
-
-    if (!mged_variables->mv_fb) {
-	mged_variables->mv_listen = 0;
-	return;
-    }
-
-    /*XXX hardwired for now */
-    sprintf(hostname, "localhost");
-
-#define MAX_PORT_TRIES 100
-
-    save_port = mged_variables->mv_port;
-
-    if (mged_variables->mv_port < 0)
-	port = 5559;
-    else if (mged_variables->mv_port < 1024)
-	port = mged_variables->mv_port + 5559;
-    else
-	port = mged_variables->mv_port;
-
-    /* Try a reasonable number of times to hang a listen */
-    for (i = 0; i < MAX_PORT_TRIES; ++i) {
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-	netchan = Tcl_OpenTcpServer(dmp->dm_interp, port, hostname, new_client_handler, (ClientData)curr_dm_list);
-
-	if (netchan == NULL)
-	    ++port;
-	else
-	    break;
-    }
-
-    if (netchan == NULL) {
-	mged_variables->mv_port = save_port;
-	mged_variables->mv_listen = 0;
-	bu_log("set_port: failed to hang a listen on ports %d - %d\n",
-	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-    } else {
-	mged_variables->mv_port = port;
-	Tcl_GetChannelHandle(netchan, TCL_READABLE, (ClientData *)&netfd);
-    }
-}
-
-
-static struct pkg_conn *
-fbserv_makeconn(int fd,
-		const struct pkg_switch *switchp)
-{
-    struct pkg_conn *pc;
-#ifdef HAVE_WINSOCK_H
-    WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
-    WSADATA wsaData;
-#endif
-
-    if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
-	comm_error("fbserv_makeconn: malloc failure\n");
-	return(PKC_ERROR);
-    }
-
-#ifdef HAVE_WINSOCK_H
-    wVersionRequested = MAKEWORD(1, 1);
-    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
-	comm_error("fbserv_makeconn:  could not find a usable WinSock DLL\n");
-	return(PKC_ERROR);
-    }
-#endif
-
-    memset((char *)pc, 0, sizeof(struct pkg_conn));
-    pc->pkc_magic = PKG_MAGIC;
-    pc->pkc_fd = fd;
-    pc->pkc_switch = switchp;
-    pc->pkc_errlog = 0;
-    pc->pkc_left = -1;
-    pc->pkc_buf = (char *)0;
-    pc->pkc_curpos = (char *)0;
-    pc->pkc_strpos = 0;
-    pc->pkc_incur = pc->pkc_inend = 0;
-
-    return pc;
-}
-
-
-LOCAL_STATIC void
-new_client_handler(ClientData clientData,
-		   Tcl_Channel chan,
-		   char *host,
-		   int port)
-{
-    struct dm_list *dlp = (struct dm_list *)clientData;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
-    int fd;
-
-    if (dlp == NULL)
-	return;
-
-    /* save */
-    scdlp = curr_dm_list;
-
-    curr_dm_list = dlp;
-
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
-	new_client(fbserv_makeconn(fd, pkg_switch), chan);
-
-    /* restore */
-    curr_dm_list = scdlp;
-}
-
-
-#else /* defined(_WIN32) && !defined(__CYGWIN__) */
-
-
-/*
- * N E W _ C L I E N T
- */
-LOCAL_STATIC void
-new_client(struct pkg_conn *pcp)
-{
-    int i;
-
-    if (pcp == PKC_ERROR)
-	return;
-
-    for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	if (clients[i].c_fd != 0)
-	    continue;
-
-	/* Found an available slot */
-	clients[i].c_pkg = pcp;
-	clients[i].c_fd = pcp->pkc_fd;
-	setup_socket(pcp->pkc_fd);
-
-	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
-			      existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
-
-	return;
-    }
-
-    bu_log("new_client: too many clients\n");
-    pkg_close(pcp);
-}
-
-
-/*
- * S E T _ P O R T
- */
-void
-set_port(void)
-{
-    int i;
-    int save_port;
-    char portname[32];
-
-    /* Check to see if previously active --- if so then deactivate */
-    if (netfd >= 0) {
-	/* first drop all clients */
-	for (i = 0; i < MAX_CLIENTS; ++i)
-	    drop_client(i);
-
-	Tcl_DeleteFileHandler(netfd);
-	close(netfd);
-	netfd = -1;
-    }
-
-    if (!mged_variables->mv_listen)
-	return;
-
-    if (!mged_variables->mv_fb) {
-	mged_variables->mv_listen = 0;
-	return;
-    }
-
-#define MAX_PORT_TRIES 100
-
-    save_port = mged_variables->mv_port;
-    if (mged_variables->mv_port < 0)
-	mged_variables->mv_port = 0;
-
-    /* Try a reasonable number of times to hang a listen */
-    for (i = 0; i < MAX_PORT_TRIES; ++i) {
-	if (mged_variables->mv_port < 1024)
-	    sprintf(portname, "%d", mged_variables->mv_port + 5559);
-	else
-	    sprintf(portname, "%d", mged_variables->mv_port);
-
-	/*
-	 * Hang an unending listen for PKG connections
-	 */
-	if ((netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0)
-	    ++mged_variables->mv_port;
-	else
-	    break;
-    }
-
-    if (netfd < 0) {
-	mged_variables->mv_port = save_port;
-	mged_variables->mv_listen = 0;
-	bu_log("set_port: failed to hang a listen on ports %d - %d\n",
-	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
-    } else
-	Tcl_CreateFileHandler(netfd, TCL_READABLE,
-			      new_client_handler, (ClientData)(size_t)netfd);
-}
-
-
-/*
- * Accept any new client connections.
- */
-LOCAL_STATIC void
-new_client_handler(ClientData clientData, int mask)
-{
-    int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-    struct dm_list *dlp;
-    struct dm_list *scdlp;  /* save current dm_list pointer */
-
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (fd == dlp->dml_netfd)
-	    goto found;
-
-    return;
-
- found:
-    /* save */
-    scdlp = curr_dm_list;
-
-    curr_dm_list = dlp;
-    new_client(pkg_getclient(fd, pkg_switch, comm_error, 0));
-
-    /* restore */
-    curr_dm_list = scdlp;
-}
-#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
-
 /*
  * Process arrivals from existing clients.
  */
-LOCAL_STATIC void
-existing_client_handler(ClientData clientData, int mask)
+HIDDEN void
+fbserv_existing_client_handler(ClientData clientData, int UNUSED(mask))
 {
     int i;
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
@@ -432,7 +163,7 @@ existing_client_handler(ClientData clientData, int mask)
 
 	if (pkg_suckin(clients[i].c_pkg) <= 0) {
 	    /* Probably EOF */
-	    drop_client(i);
+	    fbserv_drop_client(i);
 
 	    continue;
 	}
@@ -449,57 +180,311 @@ existing_client_handler(ClientData clientData, int mask)
 }
 
 
-LOCAL_STATIC void
-setup_socket(int fd)
+#if defined(_WIN32) && !defined(__CYGWIN__)
+HIDDEN void
+fbserv_new_client(struct pkg_conn *pcp,
+		  Tcl_Channel chan)
+	   
 {
-    int on = 1;
+    int i;
 
-#if defined(SO_KEEPALIVE)
-    if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
-	bu_log("setsockopt (SO_KEEPALIVE): %m\n");
+    if (pcp == PKC_ERROR)
+	return;
+
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	ClientData fd;
+	if (clients[i].c_fd != 0)
+	    continue;
+
+	/* Found an available slot */
+	clients[i].c_pkg = pcp;
+	clients[i].c_fd = pcp->pkc_fd;
+	fbserv_setup_socket(pcp->pkc_fd);
+
+	clients[i].c_chan = chan;
+	clients[i].c_handler = fbserv_existing_client_handler;
+	fd = (ClientData)clients[i].c_fd;
+	Tcl_CreateChannelHandler(clients[i].c_chan, TCL_READABLE, clients[i].c_handler, fd);
+
+	return;
     }
-#endif
-#if defined(SO_RCVBUF)
-    /* try to set our buffers up larger */
-    {
-	int m = -1, n = -1;
-	int val;
-	int size;
 
-	for (size = 256; size > 16; size /= 2) {
-	    val = size * 1024;
-	    m = setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
-			   (char *)&val, sizeof(val));
-	    val = size * 1024;
-	    n = setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
-			   (char *)&val, sizeof(val));
-	    if (m >= 0 && n >= 0) break;
-	}
+    bu_log("fbserv_new_client: too many clients\n");
+    pkg_close(pcp);
+}
 
-	if (m < 0 || n < 0)
-	    bu_log("setup_socket: setsockopt() SO_RCVBUF/SO_SNDBUF failed: %m\n");
-    }
-#endif
+
+HIDDEN void
+fbserv_new_client_handler(ClientData clientData,
+			  Tcl_Channel chan,
+			  char *host,
+			  int port)
+{
+    struct dm_list *dlp = (struct dm_list *)clientData;
+    struct dm_list *scdlp;  /* save current dm_list pointer */
+    int fd;
+
+    if (dlp == NULL)
+	return;
+
+    /* save */
+    scdlp = curr_dm_list;
+
+    curr_dm_list = dlp;
+
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
+	fbserv_new_client(fbserv_makeconn(fd, pkg_switch), chan);
+
+    /* restore */
+    curr_dm_list = scdlp;
 }
 
 
 /*
- * C O M M _ E R R O R
- *
- * Communication error.  An error occured on the PKG link.
+ * S E T _ P O R T
  */
-LOCAL_STATIC void
-comm_error(char *str)
+void
+fbserv_set_port(void)
 {
-    bu_log(str);
+    int i;
+    int save_port;
+    int port;
+    char hostname[32];
+
+    /* Check to see if previously active --- if so then deactivate */
+    if (netchan != NULL) {
+	ClientData fd;
+
+	/* first drop all clients */
+	for (i = 0; i < MAX_CLIENTS; ++i)
+	    fbserv_drop_client(i);
+
+	fd = (ClientData)netfd;
+	Tcl_DeleteChannelHandler(netchan, fbserv_new_client_handler, fd);
+
+	Tcl_Close(dmp->dm_interp, netchan);
+	netchan = NULL;
+
+	closesocket(netfd);
+	netfd = -1;
+    }
+
+    if (!mged_variables->mv_listen)
+	return;
+
+    if (!mged_variables->mv_fb) {
+	mged_variables->mv_listen = 0;
+	return;
+    }
+
+    /*XXX hardwired for now */
+    sprintf(hostname, "localhost");
+
+#define MAX_PORT_TRIES 100
+
+    save_port = mged_variables->mv_port;
+
+    if (mged_variables->mv_port < 0)
+	port = 5559;
+    else if (mged_variables->mv_port < 1024)
+	port = mged_variables->mv_port + 5559;
+    else
+	port = mged_variables->mv_port;
+
+    /* Try a reasonable number of times to hang a listen */
+    for (i = 0; i < MAX_PORT_TRIES; ++i) {
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+	netchan = Tcl_OpenTcpServer(dmp->dm_interp, port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+
+	if (netchan == NULL)
+	    ++port;
+	else
+	    break;
+    }
+
+    if (netchan == NULL) {
+	mged_variables->mv_port = save_port;
+	mged_variables->mv_listen = 0;
+	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
+	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+    } else {
+	mged_variables->mv_port = port;
+	Tcl_GetChannelHandle(netchan, TCL_READABLE, (ClientData *)&netfd);
+    }
 }
+
+
+HIDDEN struct pkg_conn *
+fbserv_makeconn(int fd,
+		const struct pkg_switch *switchp)
+{
+    struct pkg_conn *pc;
+#ifdef HAVE_WINSOCK_H
+    WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
+    WSADATA wsaData;
+#endif
+
+    if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
+	communications_error("fbserv_makeconn: malloc failure\n");
+	return PKC_ERROR;
+    }
+
+#ifdef HAVE_WINSOCK_H
+    wVersionRequested = MAKEWORD(1, 1);
+    if (WSAStartup(wVersionRequested, &wsaData) != 0) {
+	communications_error("fbserv_makeconn:  could not find a usable WinSock DLL\n");
+	return PKC_ERROR;
+    }
+#endif
+
+    memset((char *)pc, 0, sizeof(struct pkg_conn));
+    pc->pkc_magic = PKG_MAGIC;
+    pc->pkc_fd = fd;
+    pc->pkc_switch = switchp;
+    pc->pkc_errlog = 0;
+    pc->pkc_left = -1;
+    pc->pkc_buf = (char *)0;
+    pc->pkc_curpos = (char *)0;
+    pc->pkc_strpos = 0;
+    pc->pkc_incur = pc->pkc_inend = 0;
+
+    return pc;
+}
+
+
+#else /* defined(_WIN32) && !defined(__CYGWIN__) */
+
+
+/*
+ * N E W _ C L I E N T
+ */
+HIDDEN void
+fbserv_new_client(struct pkg_conn *pcp)
+{
+    int i;
+
+    if (pcp == PKC_ERROR)
+	return;
+
+    for (i = MAX_CLIENTS-1; i >= 0; i--) {
+	if (clients[i].c_fd != 0)
+	    continue;
+
+	/* Found an available slot */
+	clients[i].c_pkg = pcp;
+	clients[i].c_fd = pcp->pkc_fd;
+	fbserv_setup_socket(pcp->pkc_fd);
+
+	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
+			      fbserv_existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
+
+	return;
+    }
+
+    bu_log("fbserv_new_client: too many clients\n");
+    pkg_close(pcp);
+}
+
+
+/*
+ * Accept any new client connections.
+ */
+HIDDEN void
+fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
+{
+    uintptr_t datafd = (uintptr_t)clientData;
+    int fd = (int)((int32_t)datafd & 0xFFFF);	/* fd's will be small */
+    struct dm_list *dlp;
+    struct dm_list *scdlp;  /* save current dm_list pointer */
+
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+	if (fd == dlp->dml_netfd)
+	    goto found;
+
+    return;
+
+ found:
+    /* save */
+    scdlp = curr_dm_list;
+
+    curr_dm_list = dlp;
+    fbserv_new_client(pkg_getclient(fd, pkg_switch, communications_error, 0));
+
+    /* restore */
+    curr_dm_list = scdlp;
+}
+
+
+/*
+ * S E T _ P O R T
+ */
+void
+fbserv_set_port(void)
+{
+    int i;
+    int save_port;
+    char portname[32];
+
+    /* Check to see if previously active --- if so then deactivate */
+    if (netfd >= 0) {
+	/* first drop all clients */
+	for (i = 0; i < MAX_CLIENTS; ++i)
+	    fbserv_drop_client(i);
+
+	Tcl_DeleteFileHandler(netfd);
+	close(netfd);
+	netfd = -1;
+    }
+
+    if (!mged_variables->mv_listen)
+	return;
+
+    if (!mged_variables->mv_fb) {
+	mged_variables->mv_listen = 0;
+	return;
+    }
+
+#define MAX_PORT_TRIES 100
+
+    save_port = mged_variables->mv_port;
+    if (mged_variables->mv_port < 0)
+	mged_variables->mv_port = 0;
+
+    /* Try a reasonable number of times to hang a listen */
+    for (i = 0; i < MAX_PORT_TRIES; ++i) {
+	if (mged_variables->mv_port < 1024)
+	    sprintf(portname, "%d", mged_variables->mv_port + 5559);
+	else
+	    sprintf(portname, "%d", mged_variables->mv_port);
+
+	/*
+	 * Hang an unending listen for PKG connections
+	 */
+	if ((netfd = pkg_permserver(portname, 0, 0, communications_error)) < 0)
+	    ++mged_variables->mv_port;
+	else
+	    break;
+    }
+
+    if (netfd < 0) {
+	mged_variables->mv_port = save_port;
+	mged_variables->mv_listen = 0;
+	bu_log("fbserv_set_port: failed to hang a listen on ports %d - %d\n",
+	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
+    } else
+	Tcl_CreateFileHandler(netfd, TCL_READABLE,
+			      fbserv_new_client_handler, (ClientData)(size_t)netfd);
+}
+#endif  /* if defined(_WIN32) && !defined(__CYGWIN__) */
 
 
 /*
  * This is where we go for message types we don't understand.
  */
 void
-pkgfoo(struct pkg_conn *pcp, char *buf)
+rfbunknown(struct pkg_conn *pcp, char *buf)
 {
     bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
     (void)free(buf);
@@ -523,7 +508,7 @@ rfbopen(struct pkg_conn *pcp, char *buf)
 
     want = 5*NET_LONG_LEN;
     if (pkg_send(MSG_RETURN, rbuf, want, pcp) != want)
-	comm_error("pkg_send fb_open reply\n");
+	communications_error("pkg_send fb_open reply\n");
 
     if (buf)
 	(void)free(buf);
@@ -560,7 +545,7 @@ rfbfree(struct pkg_conn *pcp, char *buf)
 
     /* Don't really free framebuffer */
     if (pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp) != NET_LONG_LEN)
-	comm_error("pkg_send fb_free reply\n");
+	communications_error("pkg_send fb_free reply\n");
 
     if (buf)
 	(void)free(buf);
@@ -588,14 +573,15 @@ rfbclear(struct pkg_conn *pcp, char *buf)
 void
 rfbread(struct pkg_conn *pcp, char *buf)
 {
-    int x, y, num;
+    int x, y;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
-    num = pkg_glong(&buf[2*NET_LONG_LEN]);
+    num = (size_t)pkg_glong(&buf[2*NET_LONG_LEN]);
 
     if (num*sizeof(RGBpixel) > buflen) {
 	if (scanbuf != NULL)
@@ -649,10 +635,10 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
     int xmin, ymin;
     int width, height;
-    int num;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -995,6 +981,7 @@ rfbflush(struct pkg_conn *pcp, char *buf)
 void
 rfbpoll(struct pkg_conn *pcp, char *buf)
 {
+    if (!pcp) return;
     (void)fb_poll(fbp);
     if (buf) (void)free(buf);
 }

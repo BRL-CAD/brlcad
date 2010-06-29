@@ -116,7 +116,36 @@ an error will be signaled and later thrown by the command which
 performed the read (usually \fBgets\fR or \fBread\fR). However,
 returning fewer bytes than requested is acceptable.
 .PP
-If the subcommand throws an error, the command which caused its
+Note that returning nothing (0 bytes) is a signal to the higher layers
+that \fBEOF\fR has been reached on the channel. To signal that the
+channel is out of data right now, but has not yet reached \fBEOF\fR,
+it is necessary to throw the error "EAGAIN", i.e. to either
+.PP
+.CS
+return -code error EAGAIN
+.CE
+or
+.CS
+error EAGAIN
+.CE
+.PP
+For extensibility any error whose value is a negative integer number
+will cause the higher layers to set the C-level variable "\fBerrno\fR"
+to the absolute value of this number, signaling a system error. This
+means that both
+.PP
+.CS
+return -code error -11
+.CE
+and
+.CS
+error -11
+.CE
+.PP
+are equivalent to the examples above, using the more readable string "EAGAIN".
+No other error value has such a mapping to a symbolic string.
+.PP
+If the subcommand throws any other error, the command which caused its
 invocation (usually \fBgets\fR, or \fBread\fR) will appear to have
 thrown this error. Any exception beyond \fIerror\fR, (e.g.
 \fIbreak\fR, etc.) is treated as and converted to an error.

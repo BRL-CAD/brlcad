@@ -26,15 +26,21 @@
 #ifndef SEEN_MGED_DM_H
 #define SEEN_MGED_DM_H
 
+#include "common.h"
+
 #include "dm.h"	/* struct dm */
-#include "./menu.h" /* struct menu_item */
-#include "./scroll.h" /* struct scroll_item */
+#include "dm_xvars.h"
+
 #include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-#ifdef HAVE_TK
-#  include <tk.h>
+#include "./menu.h" /* struct menu_item */
+#include "./scroll.h" /* struct scroll_item */
+
+
+#ifndef COMMA
+#  define COMMA ','
 #endif
 
 #define MGED_DISPLAY_VAR "mged_display"
@@ -463,7 +469,6 @@ struct dm_list {
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner
 #define am_mode curr_dm_list->dml_am_mode
-#define ndrawn curr_dm_list->dml_ndrawn
 #define perspective_angle curr_dm_list->dml_perspective_angle
 #define zclip_ptr curr_dm_list->dml_zclip_ptr
 

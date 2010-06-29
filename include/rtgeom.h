@@ -593,6 +593,11 @@ struct rt_bot_internal
 				 */
 };
 
+struct rt_bot_list {
+    struct bu_list l;
+    struct rt_bot_internal *bot;
+};
+
 /* orientationss for BOT */
 #define	RT_BOT_UNORIENTED		1	/**< @brief  unoriented triangles */
 #define RT_BOT_CCW			2	/**< @brief  oriented counter-clockwise */

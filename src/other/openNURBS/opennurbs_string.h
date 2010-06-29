@@ -137,14 +137,6 @@ public:
 //
 // ON_wString is a wide char (a.k.a double byte or unicode) string
 //
-// If an MFC CString is a char string, then ON_String can safely
-// be cast as an MFC Ctring.
-//
-// If an MFC CString is a wide char string, then ON_wString can safely
-// be cast as an MFC Ctring.
-//
-// No support is provided for Microsoft's "multibyte" (variable number
-// of bytes per character) strings.
 
 class ON_String;  // char (a.k.a single byte or ascii) string
 class ON_wString; // wide character (a.k.a double byte or unicode) string
@@ -153,14 +145,6 @@ class ON_wString; // wide character (a.k.a double byte or unicode) string
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
-
-struct ON_aStringHeader
-{
-	int   ref_count;       // reference count (>=0 or -1 for empty string)
-	int   string_length;   // does not include NULL terminator
-	int   string_capacity; // does not include NULL terminator
-  char* string_array() {return (char*)(this+1);}
-};
 
 class ON_CLASS ON_String
 {
@@ -192,6 +176,26 @@ public:
   void Create();
   void Destroy(); // releases any memory and initializes to default empty string
   void EmergencyDestroy();
+
+  /*
+  Description:
+    Enables reference counting.  I limited cases, this is useful 
+    for large strings or strings that are frequently passed around.
+    Reference counted strings must be carefully managed in
+    when multi-threading is used.
+  Parameters:
+    If EnableReferenceCounting()
+    is not called, then the string will not be referanceThe default is to not use
+    reference counted strings.
+  */
+  void EnableReferenceCounting( bool bEnable );
+
+  /*
+  Returns:
+    True if the string is reference counted.
+  */
+  bool IsReferenceCounted() const;
+
 
   // Attributes & Operations
 	// as an array of characters
@@ -358,11 +362,10 @@ public:
 
 protected:
 	char* m_s; // pointer to ref counted string array
-              // m_s - 12 bytes points at the strings
-              // ON_aStringHeader
+             // m_s - 12 bytes points at the string's ON_aStringHeader
 
 	// implementation helpers
-	ON_aStringHeader* Header() const;
+	struct ON_aStringHeader* Header() const;
 	void CreateArray(int);
   void CopyArray();
   void CopyToArray( const ON_String& );
@@ -384,14 +387,6 @@ protected:
 //
 // ON_wString
 //
-
-struct ON_wStringHeader
-{
-	int    ref_count;       // reference count (>=0 or -1 for empty string)
-	int    string_length;   // does not include any terminators
-	int    string_capacity; // does not include any terminators
-	wchar_t* string_array() {return (wchar_t*)(this+1);}
-};
 
 class ON_CLASS ON_wString
 {
@@ -424,6 +419,25 @@ public:
   void Create();
   void Destroy(); // releases any memory and initializes to default empty string
   void EmergencyDestroy();
+
+  /*
+  Description:
+    Enables reference counting.  I limited cases, this is useful 
+    for large strings or strings that are frequently passed around.
+    Reference counted strings must be carefully managed in
+    when multi-threading is used.
+  Parameters:
+    If EnableReferenceCounting()
+    is not called, then the string will not be referanceThe default is to not use
+    reference counted strings.
+  */
+  void EnableReferenceCounting( bool bEnable );
+
+  /*
+  Returns:
+    True if the string is reference counted.
+  */
+  bool IsReferenceCounted() const;
 
 // Attributes & Operations
 	// as an array of characters
@@ -651,11 +665,10 @@ public:
 
 protected:
 	wchar_t* m_s; // pointer to ref counted string array
-              // m_s - 12 bytes points at the strings
-              // ON_wStringHeader
+                // m_s - 12 bytes points at the string's ON_wStringHeader
 
 	// implementation helpers
-	ON_wStringHeader* Header() const;
+	struct ON_wStringHeader* Header() const;
 	void CreateArray(int);
   void CopyArray();
   void CopyToArray( const ON_wString& );

@@ -42,14 +42,14 @@ char *filename = "(stdin)";
 
 void shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor), usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor);
 
-/*	R E A D _ I M A G E
+/* R E A D _ I M A G E
  *
- *	read image into memory
+ * read image into memory
  */
 UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 {
     int total_bytes, in_bytes;
-    int	count = 0;
+    int count = 0;
 
     if (!buffer &&
 	(buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
@@ -69,15 +69,16 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 	bu_exit (-1, NULL);
     }
 
-    return(buffer);
+    return buffer;
 }
 
-/*	W R I T E _ I M A G E
+
+/* W R I T E _ I M A G E
  */
 void write_image(int Width, int Height, unsigned char *buffer)
 {
-    int	count = 0;
-    int	out_bytes, total_bytes;
+    int count = 0;
+    int out_bytes, total_bytes;
 
     total_bytes = Width * Height * 3;
     out_bytes = 0;
@@ -92,7 +93,8 @@ void write_image(int Width, int Height, unsigned char *buffer)
     }
 }
 
-/*	S H R I N K _ I M A G E
+
+/* S H R I N K _ I M A G E
  */
 void
 shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
@@ -131,8 +133,9 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 	}
 }
 
+
 /*
- *	Undersample image pixels
+ * Undersample image pixels
  */
 void
 usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
@@ -163,7 +166,7 @@ int factor = 2;
 int method = METH_BOXCAR;
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void usage(void)
 {
@@ -175,11 +178,11 @@ void usage(void)
 
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 void parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
 
     if (!(progname = strrchr(*av, '/')))
 	progname = *av;
@@ -209,7 +212,7 @@ void parse_args(int ac, char **av)
 	}
 
     if (bu_optind >= ac) {
-	if (isatty(fileno(stdout)) )
+	if (isatty(fileno(stdout)))
 	    usage();
     }
     if (bu_optind < ac) {
@@ -226,10 +229,10 @@ void parse_args(int ac, char **av)
 
 
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char **av)
 {
@@ -246,11 +249,11 @@ int main(int ac, char **av)
 	case METH_BOXCAR : shrink_image(scanlen, width, height, buffer, factor); break;
 	case METH_UNDERSAMPLE : usample_image(scanlen, width, height, buffer, factor);
 	    break;
-	default: return(-1);
+	default: return -1;
     }
 
     write_image(width/factor, height/factor, buffer);
-    return(0);
+    return 0;
 }
 
 

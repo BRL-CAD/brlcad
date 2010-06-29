@@ -45,13 +45,13 @@ int dither = 0;
 /* Description of header for files containing raster images */
 struct rasterfile {
     long ras_magic;	/* magic number */
-    int	 ras_width;	/* width (pixels) of image */
-    int	 ras_height;	/* height (pixels) of image */
-    int	 ras_depth;	/* depth (1, 8, or 24 bits) of pixel */
-    int	 ras_length;	/* length (bytes) of image */
-    int	 ras_type;	/* type of file; see RT_* below */
-    int	 ras_maptype;	/* type of colormap; see RMT_* below */
-    int	 ras_maplength;	/* length (bytes) of following map */
+    int ras_width;	/* width (pixels) of image */
+    int ras_height;	/* height (pixels) of image */
+    int ras_depth;	/* depth (1, 8, or 24 bits) of pixel */
+    int ras_length;	/* length (bytes) of image */
+    int ras_type;	/* type of file; see RT_* below */
+    int ras_maptype;	/* type of colormap; see RMT_* below */
+    int ras_maplength;	/* length (bytes) of following map */
     /* color map follows for ras_maplength bytes, followed by image */
 } ras = {
     0x59a66a95,	/* Magic Number */
@@ -64,86 +64,87 @@ struct rasterfile {
     MAPSIZE*3	/* length (bytes) of RGB colormap */
 };
 
+
 /* The Sun Rasterfile Colormap
  * This colormap has a 6x6x6 color cube, plus 10 extra values for each of
  * the primary colors and the grey levels
  */
 unsigned char redmap[MAPSIZE] =
-{ 0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
-  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
-  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
-  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-  204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,
-  102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,204,255,
-  0, 51,102,153,204,255,  0, 51,102,153,204,255,  0, 51,102,153,
-  204,255,  0, 51,102,153,204,255, 17, 34, 68, 85,119,136,170,187,
-  221,238,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-  0,  0,  0,  0,  0,  0, 17, 34, 68, 85,119,136,170,187,221,238 };
+{ 0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153,
+  204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51,
+  102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,
+  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153,
+  204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51,
+  102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,
+  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153,
+  204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51,
+  102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,
+  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153,
+  204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51,
+  102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,
+  0, 51, 102, 153, 204, 255,  0, 51, 102, 153, 204, 255,  0, 51, 102, 153,
+  204, 255,  0, 51, 102, 153, 204, 255, 17, 34, 68, 85, 119, 136, 170, 187,
+  221, 238,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  0,  0,  0,  0,  0,  0, 17, 34, 68, 85, 119, 136, 170, 187, 221, 238 };
 
 unsigned char grnmap[MAPSIZE] =
-{ 0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,102,102,102,102,
-  102,102,153,153,153,153,153,153,204,204,204,204,204,204,255,255,
-  255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
-  102,102,102,102,102,102,153,153,153,153,153,153,204,204,204,204,
-  204,204,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51,
-  51, 51, 51, 51,102,102,102,102,102,102,153,153,153,153,153,153,
-  204,204,204,204,204,204,255,255,255,255,255,255,  0,  0,  0,  0,
-  0,  0, 51, 51, 51, 51, 51, 51,102,102,102,102,102,102,153,153,
-  153,153,153,153,204,204,204,204,204,204,255,255,255,255,255,255,
-  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,102,102,102,102,
-  102,102,153,153,153,153,153,153,204,204,204,204,204,204,255,255,
-  255,255,255,255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
-  102,102,102,102,102,102,153,153,153,153,153,153,204,204,204,204,
-  204,204,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,
-  0,  0, 17, 34, 68, 85,119,136,170,187,221,238,  0,  0,  0,  0,
-  0,  0,  0,  0,  0,  0, 17, 34, 68, 85,119,136,170,187,221,238 };
+{ 0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51, 102, 102, 102, 102,
+  102, 102, 153, 153, 153, 153, 153, 153, 204, 204, 204, 204, 204, 204, 255, 255,
+  255, 255, 255, 255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
+  102, 102, 102, 102, 102, 102, 153, 153, 153, 153, 153, 153, 204, 204, 204, 204,
+  204, 204, 255, 255, 255, 255, 255, 255,  0,  0,  0,  0,  0,  0, 51, 51,
+  51, 51, 51, 51, 102, 102, 102, 102, 102, 102, 153, 153, 153, 153, 153, 153,
+  204, 204, 204, 204, 204, 204, 255, 255, 255, 255, 255, 255,  0,  0,  0,  0,
+  0,  0, 51, 51, 51, 51, 51, 51, 102, 102, 102, 102, 102, 102, 153, 153,
+  153, 153, 153, 153, 204, 204, 204, 204, 204, 204, 255, 255, 255, 255, 255, 255,
+  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51, 102, 102, 102, 102,
+  102, 102, 153, 153, 153, 153, 153, 153, 204, 204, 204, 204, 204, 204, 255, 255,
+  255, 255, 255, 255,  0,  0,  0,  0,  0,  0, 51, 51, 51, 51, 51, 51,
+  102, 102, 102, 102, 102, 102, 153, 153, 153, 153, 153, 153, 204, 204, 204, 204,
+  204, 204, 255, 255, 255, 255, 255, 255,  0,  0,  0,  0,  0,  0,  0,  0,
+  0,  0, 17, 34, 68, 85, 119, 136, 170, 187, 221, 238,  0,  0,  0,  0,
+  0,  0,  0,  0,  0,  0, 17, 34, 68, 85, 119, 136, 170, 187, 221, 238 };
 
 unsigned char blumap[MAPSIZE] =
 { 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
   51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51, 51,
-  51, 51, 51, 51, 51, 51, 51, 51,102,102,102,102,102,102,102,102,
-  102,102,102,102,102,102,102,102,102,102,102,102,102,102,102,102,
-  102,102,102,102,102,102,102,102,102,102,102,102,153,153,153,153,
-  153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,
-  153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,153,
-  204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,
-  204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,204,
-  204,204,204,204,255,255,255,255,255,255,255,255,255,255,255,255,
-  255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
-  255,255,255,255,255,255,255,255,  0,  0,  0,  0,  0,  0,  0,  0,
+  51, 51, 51, 51, 51, 51, 51, 51, 102, 102, 102, 102, 102, 102, 102, 102,
+  102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102,
+  102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 153, 153, 153, 153,
+  153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153,
+  153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153, 153,
+  204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204,
+  204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204, 204,
+  204, 204, 204, 204, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,  0,  0,  0,  0,  0,  0,  0,  0,
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 17, 34, 68, 85,
-  119,136,170,187,221,238, 17, 34, 68, 85,119,136,170,187,221,238 };
+  119, 136, 170, 187, 221, 238, 17, 34, 68, 85, 119, 136, 170, 187, 221, 238 };
 
 
 /* indicies of the primary colors and grey values in the color map */
 static unsigned char rvec[16] = { 0, 216, 217, 1, 218, 219, 2, 220, 221,
 				  3, 222, 223, 4, 224, 225, 5};
-static unsigned char gvec[16] = {  0, 226, 227,  6, 228, 229, 12, 230,
-				   231,  18, 232, 233, 24, 234, 235, 30};
-static unsigned char bvec[16] = {  0, 236, 237,  36, 238, 239,  72, 240,
-				   241, 108, 242, 243, 144, 244, 245, 180 };
-static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250,
-				   251, 129, 252, 253, 172, 254, 255, 215};
+static unsigned char gvec[16] = { 0, 226, 227,  6, 228, 229, 12, 230,
+				  231,  18, 232, 233, 24, 234, 235, 30};
+static unsigned char bvec[16] = { 0, 236, 237,  36, 238, 239,  72, 240,
+				  241, 108, 242, 243, 144, 244, 245, 180 };
+static unsigned char nvec[16] = { 0, 246, 247,  43, 248, 249,  86, 250,
+				  251, 129, 252, 253, 172, 254, 255, 215};
 
-#define MAG1	51.0	/* magnitude of dither noise in color cube */
-#define MAG2	8.0	/* magnitude of dither noise along primaries*/
+#define MAG1 51.0	/* magnitude of dither noise in color cube */
+#define MAG2 8.0	/* magnitude of dither noise along primaries*/
 
 #define DITHER(d, v, noise, mag) { \
-	if ( (d = v + noise * mag) > 255) d=255; \
+	if ((d = v + noise * mag) > 255) d=255; \
 	else if (d < 0) d = 0; }
 
 static double table[10] = {0.0, 0.1, -0.4, 0.2, -0.3, 0.3, -0.2, 0.4, -0.1, 0.5};
 double *noise_ptr = table;
 double *end_table = &table[10];
-#define NOISE() (noise_ptr < end_table ? *noise_ptr++ : *(noise_ptr=table) )
+#define NOISE() (noise_ptr < end_table ? *noise_ptr++ : *(noise_ptr=table))
 
 /* convert 24 bit pixel into appropriate 8 bit pixel */
 #define DITHERMAP(red, green, blue, i) {\
@@ -157,7 +158,7 @@ double *end_table = &table[10];
 			DITHER(_r, red, dr, MAG2); \
 			DITHER(_g, green, dg, MAG2); \
 			DITHER(_b, blue, db, MAG2); \
-			i = nvec[ ( (_r+_g+_b)/3) >> 4]; \
+			i = nvec[ ((_r+_g+_b)/3) >> 4]; \
 		} else if (_r == 0) { \
  			/* all blue */ \
 			DITHER(_r, red, dr, MAG2); \
@@ -187,20 +188,23 @@ double *end_table = &table[10];
 	} \
 }
 
+
 #define REMAPIXEL(red, green, blue, i) {\
 	unsigned char _r, _g, _b; \
 	_r = ((int)red+26)/51; _g = ((int)green+26)/51; _b = ((int)blue+26)/51; \
 	if (_r == _g) { \
-	    if (_r == _b) i = nvec[ ( ((int)red+(int)green+(int)blue) /3) >> 4]; /* grey */ \
-	    else if (_r == 0)  i = bvec[blue/16];	   /* all blue */ \
+	    if (_r == _b) i = nvec[ (((int)red+(int)green+(int)blue) /3) >> 4]; /* grey */ \
+	    else if (_r == 0) i = bvec[blue/16];	   /* all blue */ \
 	    else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* cube # */ \
 	} \
 	else if (_g == _b && _g == 0) i = rvec[red/16];   /* all red */ \
 	else if (_r == _b && _r == 0) i = gvec[green/16]; /* all green */ \
 	else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* color cube # */ \
 }
+
+
 /*
- *   D O I T --- convert stdin pix file to stdout rasterfile
+ * D O I T --- convert stdin pix file to stdout rasterfile
  */
 void doit(void)
 {
@@ -208,8 +212,8 @@ void doit(void)
     unsigned char *pix, *rast;
     unsigned char red, green, blue;
 
-    if ( ((ras.ras_width/2)*2) != ras.ras_width ) {
-	(void)fprintf(stderr, "%s: Cannot handle odd x dimension\n",progname);
+    if (((ras.ras_width/2)*2) != ras.ras_width) {
+	(void)fprintf(stderr, "%s: Cannot handle odd x dimension\n", progname);
 	bu_exit (1, NULL);
     }
 
@@ -217,13 +221,13 @@ void doit(void)
     /* allocate buffer for the pix file */
     if ((pix=(unsigned char *)malloc(i*3)) == (unsigned char *)NULL) {
 	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pix file\n",
-		      progname, ras.ras_width, ras.ras_height );
+		      progname, ras.ras_width, ras.ras_height);
 	bu_exit (1, NULL);
     }
 
     if ((rast=(unsigned char *)malloc(i)) == (unsigned char *)NULL) {
 	(void)fprintf(stderr, "%s: cannot get memory for a %d x %d pixrect\n",
-		      progname, ras.ras_width, ras.ras_height );
+		      progname, ras.ras_width, ras.ras_height);
 	bu_exit (1, NULL);
     }
 
@@ -250,8 +254,7 @@ void doit(void)
 		blue = pix[2 + (cx + cy * ras.ras_width)*3];
 		DITHERMAP(red, green, blue, rast[cx + cy * ras.ras_width]);
 	    }
-    }
-    else {
+    } else {
 	for (cy=0; cy < ras.ras_height; cy++)
 	    for (cx=0; cx < ras.ras_width; cx++) {
 		red = pix[(cx + cy * ras.ras_width)*3];
@@ -262,7 +265,7 @@ void doit(void)
     }
 
     /* now that we have the 8 bit pixels,
-     *  we don't need the 24 bit pixels
+     * we don't need the 24 bit pixels
      */
     free(pix);
 
@@ -299,6 +302,7 @@ void doit(void)
     free(rast);
 }
 
+
 void usage(void)
 {
 
@@ -307,15 +311,16 @@ void usage(void)
     bu_exit (1, NULL);
 }
 
+
 /*
- *   M A I N
+ * M A I N
  *
- *   Perform miscelaneous tasks such as argument parsing and
- *   I/O setup and then call "doit" to perform the task at hand
+ * Perform miscelaneous tasks such as argument parsing and
+ * I/O setup and then call "doit" to perform the task at hand
  */
 int main(int ac, char **av)
 {
-    int	c, optlen;
+    int c, optlen;
 
     progname = *av;
     if (isatty(fileno(stdin))) usage();
@@ -331,7 +336,7 @@ int main(int ac, char **av)
 
     /* get all the option flags from the command line
      */
-    while ((c=bu_getopt(ac,av,options)) != EOF)
+    while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
 	    case 'd'    : dither = !dither; break;
 	    case 'w'    : ras.ras_width = atoi(bu_optarg); break;
@@ -344,8 +349,9 @@ int main(int ac, char **av)
     if (bu_optind < ac) usage();
 
     doit();
-    return (0);
+    return 0;
 }
+
 
 /*
  * Local Variables:

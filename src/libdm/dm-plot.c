@@ -52,8 +52,8 @@
 
 /* Display Manager package interface */
 
-#define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*plot_open(Tcl_Interp *interp, int argc, char **argv);
+#define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
+struct dm *plot_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(plot)
 
@@ -119,11 +119,12 @@ struct dm dm_plot = {
     0				/* Tcl interpreter */
 };
 
+
 struct plot_vars head_plot_vars;
 static mat_t plotmat;
 
 /*
- *			P L O T _ O P E N
+ * P L O T _ O P E N
  *
  * Fire up the display manager, and the display processor.
  *
@@ -131,9 +132,9 @@ static mat_t plotmat;
 struct dm *
 plot_open(Tcl_Interp *interp, int argc, char **argv)
 {
-    static int	count = 0;
-    struct dm	*dmp;
-    Tcl_Obj		*obj;
+    static int count = 0;
+    struct dm *dmp;
+    Tcl_Obj *obj;
 
     BU_GETSTRUCT(dmp, dm);
     if (dmp == DM_NULL)
@@ -206,9 +207,9 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 
     if (argv[0][0] == '|') {
 	bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, &argv[0][1]);
-	while ( (++argv)[0] != (char *)0 ) {
-	    bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, " " );
-	    bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, argv[0] );
+	while ((++argv)[0] != (char *)0) {
+	    bu_vls_strcat(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, " ");
+	    bu_vls_strcat(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, argv[0]);
 	}
 
 	((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe = 1;
@@ -218,8 +219,8 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 
     if (((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe) {
 	if ((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
-	     popen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "w")) == NULL) {
-	    perror( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
+	     popen(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "w")) == NULL) {
+	    perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
 	    (void)plot_close(dmp);
 	    Tcl_SetObjResult(interp, obj);
 	    return DM_NULL;
@@ -230,7 +231,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
 			       "\n", (char *)NULL);
     } else {
 	if ((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
-	     fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "wb" )) == NULL) {
+	     fopen(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "wb")) == NULL) {
 	    perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
 	    (void)plot_close(dmp);
 	    Tcl_SetObjResult(interp, obj);
@@ -258,14 +259,18 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
     return dmp;
 }
 
+
 /*
- *  			P L O T _ C L O S E
+ * P L O T _ C L O S E
  *
- *  Gracefully release the display.
+ * Gracefully release the display.
  */
 HIDDEN int
 plot_close(struct dm *dmp)
 {
+    if (!dmp)
+	return TCL_ERROR;
+
     (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 
     if (((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe)
@@ -276,28 +281,37 @@ plot_close(struct dm *dmp)
     bu_vls_free(&dmp->dm_pathName);
     bu_free((genptr_t)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
     bu_free((genptr_t)dmp, "plot_close: dmp");
+
     return TCL_OK;
 }
 
+
 /*
- *			P L O T _ P R O L O G
+ * P L O T _ P R O L O G
  *
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
 plot_drawBegin(struct dm *dmp)
 {
+    if (!dmp)
+	return TCL_ERROR;
+
     /* We expect the screen to be blank so far, from last frame flush */
 
     return TCL_OK;
 }
 
+
 /*
- *			P L O T _ E P I L O G
+ * P L O T _ E P I L O G
  */
 HIDDEN int
 plot_drawEnd(struct dm *dmp)
 {
+    if (!dmp)
+	return TCL_ERROR;
+
     pl_flush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* BRL-specific command */
     pl_erase(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* forces drawing */
     (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
@@ -305,16 +319,20 @@ plot_drawEnd(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *  			P L O T _ L O A D M A T R I X
+ * P L O T _ L O A D M A T R I X
  *
- *  Load a new transformation matrix.  This will be followed by
- *  many calls to plot_draw().
+ * Load a new transformation matrix.  This will be followed by
+ * many calls to plot_draw().
  */
 HIDDEN int
 plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
-    Tcl_Obj	*obj;
+    Tcl_Obj *obj;
+
+    if (!dmp)
+	return TCL_ERROR;
 
     obj = Tcl_GetObjResult(dmp->dm_interp);
     if (Tcl_IsShared(obj))
@@ -342,25 +360,26 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     return TCL_OK;
 }
 
+
 /*
- *  			P L O T _ O B J E C T
+ * P L O T _ O B J E C T
  *
- *  Set up for an object, transformed as indicated, and with an
- *  object center as specified.  The ratio of object to screen size
- *  is passed in as a convienience.
+ * Set up for an object, transformed as indicated, and with an
+ * object center as specified.  The ratio of object to screen size
+ * is passed in as a convienience.
  *
- *  Returns 0 if object could be drawn, !0 if object was omitted.
+ * Returns 0 if object could be drawn, !0 if object was omitted.
  */
 HIDDEN int
 plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
-    static vect_t			last;
-    struct bn_vlist	*tvp;
-    point_t		*pt_prev=NULL;
-    fastf_t		dist_prev=1.0;
-    fastf_t		dist;
-    fastf_t				delta;
-    int				useful = 0;
+    static vect_t last;
+    struct bn_vlist *tvp;
+    point_t *pt_prev=NULL;
+    fastf_t dist_prev=1.0;
+    fastf_t dist;
+    fastf_t delta;
+    int useful = 0;
 
     if (((struct plot_vars *)dmp->dm_vars.priv_vars)->floating) {
 	rt_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, &vp->l);
@@ -379,12 +398,12 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	delta = SQRT_SMALL_FASTF;
 
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	int	i;
-	int	nused = tvp->nused;
-	int	*cmd = tvp->cmd;
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
-	    static vect_t	start, fin;
+	    static vect_t start, fin;
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
@@ -396,7 +415,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT( *pt, &plotmat[12] ) + plotmat[15];
+			dist = VDOT(*pt, &plotmat[12]) + plotmat[15];
 			if (dist <= 0.0) {
 			    pt_prev = pt;
 			    dist_prev = dist;
@@ -417,7 +436,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT( *pt, &plotmat[12] ) + plotmat[15];
+			dist = VDOT(*pt, &plotmat[12]) + plotmat[15];
 			if (dist <= 0.0) {
 			    if (dist_prev <= 0.0) {
 				/* nothing to plot */
@@ -430,7 +449,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				point_t tmp_pt;
 
 				/* clip this end */
-				VSUB2( diff, *pt, *pt_prev );
+				VSUB2(diff, *pt, *pt_prev);
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(fin, plotmat, tmp_pt);
@@ -442,19 +461,19 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				point_t tmp_pt;
 
 				/* clip other end */
-				VSUB2( diff, *pt, *pt_prev );
-				alpha = (-dist_prev + delta) / ( dist - dist_prev );
-				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-				MAT4X3PNT( last, plotmat, tmp_pt );
-				MAT4X3PNT( fin, plotmat, *pt );
+				VSUB2(diff, *pt, *pt_prev);
+				alpha = (-dist_prev + delta) / (dist - dist_prev);
+				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				MAT4X3PNT(last, plotmat, tmp_pt);
+				MAT4X3PNT(fin, plotmat, *pt);
 			    } else {
-				MAT4X3PNT( fin, plotmat, *pt );
+				MAT4X3PNT(fin, plotmat, *pt);
 			    }
 			}
 		    } else
-			MAT4X3PNT( fin, plotmat, *pt );
-		    VMOVE( start, last );
-		    VMOVE( last, fin );
+			MAT4X3PNT(fin, plotmat, *pt);
+		    VMOVE(start, last);
+		    VMOVE(last, fin);
 		    break;
 	    }
 	    if (vclip(start, fin, dmp->dm_clipmin, dmp->dm_clipmax) == 0)
@@ -485,30 +504,32 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
     return TCL_ERROR;
 }
 
+
 /*
- *  P L O T _ D R A W
+ * P L O T _ D R A W
  */
 HIDDEN int
 plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
 {
-     struct bn_vlist *vp;
-     if (!callback_function) {
-         if (data) {
-             vp = (struct bn_vlist *)data;
-	     plot_drawVList(dmp,vp);
-         }
-     } else {
-         if (!data) {
-             return TCL_ERROR;
-         } else {
-             vp = callback_function(data);
-         }
-     }
-     return TCL_OK;
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    plot_drawVList(dmp, vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
+    return TCL_OK;
 }
-	
+
+
 /*
- *			P L O T _ N O R M A L
+ * P L O T _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
@@ -517,21 +538,28 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *))
 HIDDEN int
 plot_normal(struct dm *dmp)
 {
+    if (!dmp)
+	return TCL_ERROR;
+
     return TCL_OK;
 }
 
 
 /*
- *			P L O T _ P U T S
+ * P L O T _ P U T S
  *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
 HIDDEN int
-plot_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+plot_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
-    int	sx, sy;
+    int sx, sy;
+
+    if (!dmp || !str || size < 0) {
+	return TCL_ERROR;
+    }
 
     sx = x * 2047;
     sy = y + 2047;
@@ -541,37 +569,52 @@ plot_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int
     return TCL_OK;
 }
 
+
 /*
- *			P L O T _ 2 D _ G O T O
+ * P L O T _ 2 D _ G O T O
  *
  */
 HIDDEN int
-plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
+plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
-    int	sx1, sy1;
-    int	sx2, sy2;
+    int sx1, sy1;
+    int sx2, sy2;
 
-    sx1 = x1 * 2047;
-    sx2 = x2 * 2047;
-    sy1 = y1 + 2047;
-    sy2 = y2 + 2047;
+    sx1 = xpos1 * 2047;
+    sx2 = xpos2 * 2047;
+    sy1 = ypos1 + 2047;
+    sy2 = ypos2 + 2047;
     pl_move(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx1, sy1);
     pl_cont(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx2, sy2);
 
     return TCL_OK;
 }
 
+
 HIDDEN int
 plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
+    if (!dmp)
+	return TCL_ERROR;
+
+    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+	/* nothing to do for a singular point */
+	return TCL_OK;
+    }
+
     return TCL_OK;
 }
+
 
 HIDDEN int
 plot_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 {
+    if (!dmp || npoints < 0 || !points)
+	return TCL_ERROR;
+
     return TCL_OK;
 }
+
 
 HIDDEN int
 plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
@@ -583,12 +626,22 @@ plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 HIDDEN int
 plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
+    if (!dmp) {
+	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
+	return TCL_ERROR;
+    }
+
     pl_color(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, (int)r, (int)g, (int)b);
     return TCL_OK;
 }
 HIDDEN int
 plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
+    if (!dmp) {
+	bu_log("WARNING: Null display (r/g/b==%d/%d/%d)\n", r, g, b);
+	return TCL_ERROR;
+    }
+
     return TCL_OK;
 }
 
@@ -607,11 +660,12 @@ plot_setLineAttr(struct dm *dmp, int width, int style)
     return TCL_OK;
 }
 
+
 /* ARGSUSED */
 HIDDEN int
 plot_debug(struct dm *dmp, int lvl)
 {
-    Tcl_Obj	*obj;
+    Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(dmp->dm_interp);
     if (Tcl_IsShared(obj))
@@ -624,6 +678,7 @@ plot_debug(struct dm *dmp, int lvl)
     Tcl_SetObjResult(dmp->dm_interp, obj);
     return TCL_OK;
 }
+
 
 HIDDEN int
 plot_setWinBounds(struct dm *dmp, int *w)
@@ -644,6 +699,7 @@ plot_setWinBounds(struct dm *dmp, int *w)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

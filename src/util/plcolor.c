@@ -38,26 +38,27 @@ static const char usage[] = "Usage: plcolor r g b\n";
 int
 main(int argc, char **argv)
 {
-    int	c;
-    int	r, g, b;
+    int c;
+    int r, g, b;
 
-    if ( argc != 4 || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", usage );
+    if (argc != 4 || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
-    if ( !isatty(fileno(stdin)) ) {
+    if (!isatty(fileno(stdin))) {
 	/* Permit use in a pipeline -- copy input to output first */
-	while ( (c = getchar()) != EOF )
-	    putchar( c );
+	while ((c = getchar()) != EOF)
+	    putchar(c);
     }
 
-    r = atoi( argv[1] );
-    g = atoi( argv[2] );
-    b = atoi( argv[3] );
+    r = atoi(argv[1]);
+    g = atoi(argv[2]);
+    b = atoi(argv[3]);
 
-    pl_color( stdout, r, g, b );
+    pl_color(stdout, r, g, b);
     return 0;
 }
+
 
 /*
  * Local Variables:

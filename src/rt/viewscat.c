@@ -128,7 +128,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
 #ifdef SAR
     sar_init(ap, file, obj, minus_o);
 #endif
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 /* beginning of a frame */
@@ -231,7 +231,7 @@ radhit( struct application *ap, struct partition *PartHeadp )
 	if ( pp->pt_outhit->hit_dist >= 0.0 )  break;
     if ( pp == PartHeadp )  {
 	bu_log("radhit:  no hit out front?\n");
-	return(0);
+	return 0;
     }
 
     if (R_DEBUG&RDEBUG_HITS)  {
@@ -241,12 +241,12 @@ radhit( struct application *ap, struct partition *PartHeadp )
     hitp = pp->pt_inhit;
     if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("radhit:  entry beyond infinity\n");
-	return(1);
+	return 1;
     }
     /* Check to see if eye is "inside" the solid */
     if ( hitp->hit_dist < 0 )  {
 	/* XXX */
-	return(0);
+	return 0;
     }
 
     if (R_DEBUG&RDEBUG_HITS)  {
@@ -319,13 +319,13 @@ radhit( struct application *ap, struct partition *PartHeadp )
 #endif
     }
 
-    return(depth+1);	/* report hit to main routine */
+    return depth+1;	/* report hit to main routine */
 }
 
 
 static int
 radmiss()  {
-    return(0);
+    return 0;
 }
 
 /*********** Eye Visibility Routines ************/
@@ -346,19 +346,19 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 	if ( pp->pt_outhit->hit_dist > 0 )  break;
     if ( pp == PartHeadp )  {
 	bu_log("hiteye:  no hit out front?\n");
-	return(1);
+	return 1;
     }
     hitp = pp->pt_inhit;
     if ( hitp->hit_dist >= INFINITY )  {
 	bu_log("hiteye:  entry beyond infinity\n");
-	return(1);
+	return 1;
     }
     /* The current ray segment exits "in front" of me,
      * find out where it went in.
      * Check to see if eye is "inside" of the solid.
      */
     if ( hitp->hit_dist < -1.0e-10 )  {
-	return(0);
+	return 0;
     }
 
     if ( ap->a_resource == RESOURCE_NULL)
@@ -368,9 +368,9 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 
     VSUB2( work, firstray[cpu_num].r_pt, ap->a_ray.r_pt );
     if ( hitp->hit_dist * hitp->hit_dist > MAGSQ(work) )
-	return(1);
+	return 1;
     else
-	return(0);
+	return 0;
 }
 
 /*
@@ -380,7 +380,7 @@ hiteye( struct application *ap, struct partition *PartHeadp )
 static int
 hittrue( struct application *ap, struct partition *PartHeadp )
 {
-    return(1);
+    return 1;
 }
 
 /*
@@ -409,7 +409,7 @@ isvisible( struct application *ap, struct hit *hitp, const vect_t norm )
     VSUB2( rdir, firstray[cpu_num].r_pt, hitp->hit_point );
     VUNITIZE( rdir );
     if ( VDOT(rdir, norm) < 0 )
-	return( 0 );	/* backfacing */
+	return 0;	/* backfacing */
 
     sub_ap = *ap;	/* struct copy */
     sub_ap.a_level = ap->a_level+1;
@@ -424,7 +424,7 @@ isvisible( struct application *ap, struct hit *hitp, const vect_t norm )
     VADD2( sub_ap.a_ray.r_pt, hitp->hit_point, rdir );
     VMOVE( sub_ap.a_ray.r_dir, rdir );
 
-    return( rt_shootray( &sub_ap ) );
+    return rt_shootray( &sub_ap );
 }
 
 void application_init () {}

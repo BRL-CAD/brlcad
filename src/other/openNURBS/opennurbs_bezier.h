@@ -144,11 +144,6 @@ public:
   ON_Interval m_domain[2];
 };
 
-typedef bool (*ON__m__GetLocalClosestPointOnBezierCurve)(const class ON_BezierCurve*,ON_3dPoint,double,double*,const ON_Interval*);
-typedef bool (*ON__m__GetLocalBezierCurveCurveIntersection)(const class ON_BezierCurve*,const class ON_BezierCurve*,double*,const ON_Interval*,const ON_Interval*);
-typedef bool (*ON__m__GetLocalBezierCurveSurfaceIntersection)(const class ON_BezierCurve*,const class ON_BezierSurface*,double*,const ON_Interval*,const ON_Interval*,const ON_Interval*);
-typedef bool (*ON__m__GetBezierCurveTightBoundingBox)(const class ON_BezierCurve*,ON_BoundingBox*,bool,const ON_Xform*);
-
 class ON_CLASS ON_BezierCurve
 {
 public:
@@ -1196,18 +1191,8 @@ public:
   // not be an issue.
   int m_reserved_ON_BezierCurve;
 #endif
-
-public:
-  static ON__m__GetLocalClosestPointOnBezierCurve m__GetLocalClosestPointOnBezierCurve;
-  static ON__m__GetLocalBezierCurveSurfaceIntersection m__GetLocalBezierCurveSurfaceIntersection;
-  static ON__m__GetLocalBezierCurveCurveIntersection m__GetLocalBezierCurveCurveIntersection;
-  static ON__m__GetBezierCurveTightBoundingBox m__GetBezierCurveTightBoundingBox;
 };
 
-
-
-
-typedef bool (*ON__m__GetClosestPointOnBezierSurface)(const class ON_BezierSurface*,ON_3dPoint,double,double,double*,double*,const ON_Interval*,const ON_Interval*);
 
 class ON_CLASS ON_BezierSurface
 {
@@ -1598,10 +1583,6 @@ public:
   // not be an issue.
   int m_reserved_ON_BezierSurface;
 #endif
-
-
-public:
-  static ON__m__GetClosestPointOnBezierSurface m__GetClosestPointOnBezierSurface;
 };
 
 

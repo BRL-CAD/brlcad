@@ -23,9 +23,9 @@
  * If the image being pasted does not fit within the destination file
  * then the excess is discarded.
  *
- *  Author -
- *	Christopher T. Johnson
- *	September 12, 1992
+ * Author -
+ * Christopher T. Johnson
+ * September 12, 1992
  *
  * This software is Copyright (C) 1992 by Paladin Software.
  * All rights reserved.
@@ -42,24 +42,24 @@
 #include "bn.h"
 
 
-static long int	org_width = 512L;	/* Default file sizes 512x512 */
-static long int	org_height = 512L;
-static long int	paste_width = 512L;
-static long int	paste_height = 512L;
-static long int	base_x = 0L;		/* Default to lower left corner */
-static long int	base_y = 0L;
-static int	Verbose = 0;
+static long int org_width = 512L;	/* Default file sizes 512x512 */
+static long int org_height = 512L;
+static long int paste_width = 512L;
+static long int paste_height = 512L;
+static long int base_x = 0L;		/* Default to lower left corner */
+static long int base_y = 0L;
+static int Verbose = 0;
 
-static char	stdiobuf[4*1024*1024] = {0};
-static FILE	*orig = (FILE *)NULL;
-static FILE	*paste = (FILE *)NULL;
-static char	*orig_name = (char *)NULL;
-static char	*paste_name = (char *)NULL;
-static int	paste_autosize = 0;
-static int	orig_autosize = 0;
-static int	paste_isfile = 0;
-static int	orig_isfile = 0;
-static long int	num_bytes = 3L;
+static char stdiobuf[4*1024*1024] = {0};
+static FILE *orig = (FILE *)NULL;
+static FILE *paste = (FILE *)NULL;
+static char *orig_name = (char *)NULL;
+static char *paste_name = (char *)NULL;
+static int paste_autosize = 0;
+static int orig_autosize = 0;
+static int paste_isfile = 0;
+static int orig_isfile = 0;
+static long int num_bytes = 3L;
 
 static char usage[] = "\
 pixpaste: Copyright (C) 1992 Paladin Software\n\
@@ -75,7 +75,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:" )) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:")) != EOF) {
 	switch (c) {
 	    case 'v':
 		Verbose = 1;
@@ -128,38 +128,38 @@ get_args(int argc, char **argv)
 		num_bytes = atol(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
-    if (bu_optind >= argc ) {
-	return(0);
+    if (bu_optind >= argc) {
+	return 0;
     } else {
 	orig_name = argv[bu_optind];
 	if (strcmp(orig_name, "-") == 0) {
-	    if (isatty(fileno(stdin))) return(0);
+	    if (isatty(fileno(stdin))) return 0;
 	    orig = stdin;
 	} else {
-	    if ((orig = fopen(orig_name, "r")) == NULL ) {
+	    if ((orig = fopen(orig_name, "r")) == NULL) {
 		perror(orig_name);
 		(void)fprintf(stderr,
 			      "pixpaste: cannot open \"%s\" for reading\n",
 			      orig_name);
-		return(0);
+		return 0;
 	    }
 	    orig_isfile = 1;
 	}
     }
-    if (++bu_optind >= argc ) {
-	return(0);
+    if (++bu_optind >= argc) {
+	return 0;
     } else {
 	paste_name = argv[bu_optind];
 	if (strcmp(paste_name, "-") == 0) {
-	    if (isatty(fileno(stdin))) return(0);
+	    if (isatty(fileno(stdin))) return 0;
 	    paste = stdin;
 	    if (!orig_isfile) {
 		(void)fprintf(stderr,
 			      "pixpaste: The original file and paste file cannot both be stdin!.\n");
-		return(0);
+		return 0;
 	    }
 	} else {
 	    if ((paste = fopen(paste_name, "r")) == NULL) {
@@ -167,12 +167,12 @@ get_args(int argc, char **argv)
 		(void)fprintf(stderr,
 			      "pixpaste: cannot open \"%s\" for reading",
 			      paste_name);
-		return(0);
+		return 0;
 	    }
 	    paste_isfile=1;
 	}
     }
-    return(1);	/* OK */
+    return 1;	/* OK */
 }
 
 
@@ -210,7 +210,7 @@ main(int argc, char **argv)
 	}
     }
 
-    (void) setvbuf(orig, stdiobuf, _IOFBF, sizeof(stdiobuf) );
+    (void) setvbuf(orig, stdiobuf, _IOFBF, sizeof(stdiobuf));
 
 /*
  * Spew some interesting info at the people...
@@ -237,7 +237,7 @@ main(int argc, char **argv)
     if (base_x + paste_width < 0 ||
 	base_x >= org_width ||
 	base_y + paste_height < 0 ||
-	base_y >= org_height ) {
+	base_y >= org_height) {
 	if (Verbose) {
 	    (void)fprintf(stderr, "\
 pixpaste: No overlap between paste and original image\n\
@@ -348,8 +348,9 @@ pixpaste: new image == original image.\n");
 	}
 	row++;
     }
-    return(0);
+    return 0;
 }
+
 
 /*
  * Local Variables:

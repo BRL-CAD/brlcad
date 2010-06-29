@@ -35,7 +35,7 @@ foreach i {open save} {
     pack $f -fill x -padx 1c -pady 3
 }
 
-if {$tcl_platform(platform) eq "unix"} {
+if {[tk windowingsystem] eq "x11"} {
     checkbutton $w.strict -text "Use Motif Style Dialog" \
 	-variable tk_strictMotif -onvalue 1 -offvalue 0
     pack $w.strict -anchor c

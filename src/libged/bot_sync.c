@@ -30,7 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "rtgeom.h"
+#include "raytrace.h"
 
 #include "./ged_private.h"
 
@@ -66,6 +66,7 @@ ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	    rt_db_free_internal(&intern);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
 	    continue;
 	}
@@ -78,6 +79,7 @@ ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

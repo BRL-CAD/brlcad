@@ -339,8 +339,6 @@ DM_EXPORT BU_EXTERN(fastf_t dm_wrap,
 		    (fastf_t f));
 DM_EXPORT BU_EXTERN(void Nu_void,
 		    ());
-DM_EXPORT BU_EXTERN(struct dm *Nu_open,
-		    ());
 DM_EXPORT BU_EXTERN(int Nu_int0,
 		    ());
 DM_EXPORT BU_EXTERN(unsigned Nu_unsign,
@@ -398,8 +396,7 @@ DM_EXPORT BU_EXTERN(int dm_draw_labels,
 /* rect.c */
 DM_EXPORT BU_EXTERN(void dm_draw_rect,
 		    (struct dm *dmp,
-		     struct ged_rect_state *grsp,
-		     struct ged_view *gvp));
+		     struct ged_rect_state *grsp));
 
 /* scale.c */
 DM_EXPORT BU_EXTERN(void dm_draw_scale,

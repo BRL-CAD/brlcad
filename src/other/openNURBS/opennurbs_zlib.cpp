@@ -15,7 +15,6 @@
 
 #include "opennurbs.h"
 
-
 bool ON_BinaryArchive::WriteCompressedBuffer(
         size_t sizeof__inbuffer,  // sizeof uncompressed input data
         const void* inbuffer  // uncompressed input data
@@ -334,9 +333,9 @@ bool ON_BinaryArchive::ReadInflate(
   // read compressed buffer from 3dm archive
   bool bValidCompressedBuffer = false;
   {
-    unsigned int tcode = 0;
-    unsigned int value = 0; // value must be unsigned
-    rc = BeginRead3dmChunk(&tcode,(int*)(&value) );
+    ON__UINT32 tcode = 0;
+    ON__INT64  big_value = 0;
+    rc = BeginRead3dmBigChunk(&tcode,&big_value );
     if (!rc)
     {
       if ( 0 != out___buffer && sizeof___outbuffer > 0 )
@@ -344,12 +343,12 @@ bool ON_BinaryArchive::ReadInflate(
       return false;
     }
     if (   tcode == TCODE_ANONYMOUS_CHUNK 
-        && value > 4 
+        && big_value > 4 
         && sizeof___outbuffer > 0 
         && 0 != out___buffer )
     {
       // read compressed buffer from the archive
-      sizeof__inbuffer = value-4; // the last 4 bytes in this chunk are a 32 bit crc
+      sizeof__inbuffer = (size_t)(big_value-4); // the last 4 bytes in this chunk are a 32 bit crc
       in___buffer = onmalloc(sizeof__inbuffer);
       if ( !in___buffer )
       {

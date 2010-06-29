@@ -170,7 +170,7 @@ test clipboard-6.2 {Tk_ClipboardAppend procedure} unix {
     set result [dobg {clipboard get TEST}]
     cleanupbg
     set result
-} {0x10}
+} {0x10 }
 test clipboard-6.3 {Tk_ClipboardAppend procedure} {
     clipboard clear
     clipboard append -f INTEGER -t TEST "16"

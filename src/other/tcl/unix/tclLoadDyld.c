@@ -198,7 +198,7 @@ TclpDlopen(
     if (tclMacOSXDarwinRelease >= 8)
 #endif
     {
-	dlHandle = dlopen(nativePath, RTLD_NOW | RTLD_LOCAL);
+	dlHandle = dlopen(nativePath, RTLD_NOW | RTLD_GLOBAL);
 	if (!dlHandle) {
 	    /*
 	     * Let the OS loader examine the binary search path for whatever
@@ -208,7 +208,7 @@ TclpDlopen(
 
 	    fileName = Tcl_GetString(pathPtr);
 	    nativeFileName = Tcl_UtfToExternalDString(NULL, fileName, -1, &ds);
-	    dlHandle = dlopen(nativeFileName, RTLD_NOW | RTLD_LOCAL);
+	    dlHandle = dlopen(nativeFileName, RTLD_NOW | RTLD_GLOBAL);
 	}
 	if (dlHandle) {
 	    TclLoadDbgMsg("dlopen() successful");

@@ -346,6 +346,7 @@ void
 bu_semaphore_acquire(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
+    i = i; /* quellage */
     return;					/* No support on this hardware */
 #else
     if (bu_semaphores == NULL) {
@@ -415,6 +416,7 @@ void
 bu_semaphore_release(unsigned int i)
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
+    i = i; /* quellage */
     return;					/* No support on this hardware */
 #else
     if (bu_semaphores == NULL) {

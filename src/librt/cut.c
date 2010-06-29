@@ -765,18 +765,18 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 		if (upper_or_lower[max_empty_dir]) {
 		    where = max[max_empty_dir] + rtip->rti_tol.dist;
 		    if (where >= cutp->bn.bn_max[max_empty_dir]) {
-			return(num_splits);
+			return num_splits;
 		    }
 		} else {
 		    where = min[max_empty_dir] - rtip->rti_tol.dist;
 		    if (where <= cutp->bn.bn_min[max_empty_dir]) {
-			return(num_splits);
+			return num_splits;
 		    }
 		}
 		if (where - cutp->bn.bn_min[max_empty_dir] < 2.0 ||
 		    cutp->bn.bn_max[max_empty_dir] - where < 2.0) {
 		    /* will make a box too small */
-		    return(num_splits);
+		    return num_splits;
 		}
 		if (rt_ct_box(rtip, cutp, max_empty_dir, where, 1)) {
 		    num_splits++;
@@ -787,7 +787,7 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 	    break;
     }
 
-    return(num_splits);
+    return num_splits;
 }
 
 
@@ -1033,7 +1033,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
     cutp->bn.bn_list[cutp->bn.bn_len++] = stp;
 }
 
-
+#ifdef NEW_WAY
 /**
  * R T _ C T _ P L A N
  *
@@ -1057,7 +1057,7 @@ rt_ct_plan(struct rt_i *rtip, union cutter *cutp)
 
     RT_CK_RTI(rtip);
     for (axis = X; axis <= Z; axis++) {
-#if 0
+#ifdef NEW_WAY
 	/* New way */
 	status[axis] = rt_ct_assess(
 	    cutp, axis, &where[axis], &offcenter[axis]);
@@ -1079,10 +1079,10 @@ rt_ct_plan(struct rt_i *rtip, union cutter *cutp)
 	    bestoff = offcenter[axis];
 	}
 
-	if (best < 0)  return(-1);	/* No cut is possible */
+	if (best < 0)  return -1;	/* No cut is possible */
 
 	if (rt_ct_box(rtip, cutp, best, where[best], 0) > 0)
-	    return(0);		/* OK */
+	    return 0;		/* OK */
 
 	/*
 	 * This cut failed to reduce complexity on either side.  Mark
@@ -1115,7 +1115,7 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
     register double middle;		/* midpoint */
     register double left, right;
 
-    if (cutp->bn.bn_len <= 1)  return(0);		/* Forget it */
+    if (cutp->bn.bn_len <= 1)  return 0;		/* Forget it */
 
     /*
      * In absolute terms, each box must be at least 1mm wide after
@@ -1123,7 +1123,7 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
      * twice that.
      */
     if ((right=cutp->bn.bn_max[axis])-(left=cutp->bn.bn_min[axis]) <= 2.0)
-	return(0);
+	return 0;
 
     /*
      * Split distance between min and max in half.  Find the closest
@@ -1165,17 +1165,18 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
 	}
     }
     if (offcenter >= INFINITY)
-	return(0);	/* no candidates? */
+	return 0;	/* no candidates? */
     if (where <= left || where >= right)
-	return(0);	/* not reasonable */
+	return 0;	/* not reasonable */
 
     if (where - left <= 1.0 || right - where <= 1.0)
-	return(0);	/* cut will be too small */
+	return 0;	/* cut will be too small */
 
     *where_p = where;
     *offcenter_p = offcenter;
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
+#endif
 
 #define PIECE_BLOCK 512
 
@@ -1391,7 +1392,7 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
 	}
 	rt_ct_free(rtip, rhs);
 	rt_ct_free(rtip, lhs);
-	return(0);		/* fail */
+	return 0;		/* fail */
     }
 
     /* Success, convert callers box node into a cut node */
@@ -1402,7 +1403,7 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
     cutp->cn.cn_point = where;
     cutp->cn.cn_l = lhs;
     cutp->cn.cn_r = rhs;
-    return(1);			/* success */
+    return 1;			/* success */
 }
 
 
@@ -1431,7 +1432,7 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 	VPRINT(" sol max", stp->st_max);
     }
     /* Ignore "dead" solids in the list.  (They failed prep) */
-    if (stp->st_aradius <= 0)  return(0);
+    if (stp->st_aradius <= 0)  return 0;
 
     /* Only check RPP on finite solids */
     if (stp->st_aradius < INFINITY) {
@@ -1443,19 +1444,19 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 	goto fail;
 
     /* RPP overlaps, invoke per-solid method for detailed check */
-    if (rt_functab[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == RT_CLASSIFY_OUTSIDE)
+    if (rt_functab[stp->st_id].ft_classify(stp, min, max, &rtip->rti_tol) == BN_CLASSIFY_OUTSIDE)
 	goto fail;
 
     if (RT_G_DEBUG&DEBUG_BOXING)
 	bu_log("rt_ck_overlap:  TRUE\n");
 
-    return(1);
+    return 1;
 
  fail:
     if (RT_G_DEBUG&DEBUG_BOXING)
 	bu_log("rt_ck_overlap:  FALSE\n");
 
-    return(0);
+    return 0;
 }
 
 
@@ -1625,7 +1626,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 
     /* In absolute terms, each box must be at least 1mm wide after cut. */
     if ((right=cutp->bn.bn_max[axis])-(left=cutp->bn.bn_min[axis]) < 2.0)
-	return(0);
+	return 0;
 
     /*
      * Split distance between min and max in half.  Find the closest
@@ -1707,15 +1708,15 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
     }
 
     if (where <= left || where >= right)
-	return(0);	/* not reasonable */
+	return 0;	/* not reasonable */
 
     if (where - left <= 1.0 || right - where <= 1.0)
-	return(0);	/* cut will be too small */
+	return 0;	/* cut will be too small */
 
     /* We are going to cut */
     *where_p = where;
     *offcenter_p = offcenter;
-    return(1);
+    return 1;
 }
 
 
@@ -1753,7 +1754,7 @@ rt_ct_get(struct rt_i *rtip)
     bu_semaphore_release(RT_SEM_MODEL);
 
     cutp->cut_forw = CUTTER_NULL;
-    return(cutp);
+    return cutp;
 }
 
 

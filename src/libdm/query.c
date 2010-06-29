@@ -47,8 +47,8 @@ dm_validXType(char *dpy_string, char *name)
 	return 1;
 #else
 	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_WGL */
 	return 0;
+#endif /* DM_WGL */
     }
 
     if (strcmp(name, "rtgl")==0) {
@@ -165,8 +165,6 @@ dm_bestXType(char *dpy_string)
 #ifdef DM_TK
     return "tk";
 #endif
-
-    return NULL;
 }
 
 /*

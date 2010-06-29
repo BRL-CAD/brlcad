@@ -36,32 +36,32 @@
 #include "bu.h"
 
 
-#define		BUF_LEN		128
-#define		OPT_STRING	"n:r:?"
-#define		RAY_COLOR	"255 255 0"
-#define		print_usage()	bu_exit(1, "Usage: 'show-shot [-n name] [-r radius]'\n")
+#define BUF_LEN 128
+#define OPT_STRING "n:r:?"
+#define RAY_COLOR "255 255 0"
+#define print_usage() bu_exit(1, "Usage: 'show-shot [-n name] [-r radius]'\n")
 
 int
 main (int argc, char **argv)
 {
-    char	buf[BUF_LEN];	/* Contents of current input line */
-    char	*bp;		/* Pointer into buf */
-    char	*nlp;		/* Location of newline in buf */
-    char	rname[BUF_LEN];	/* Name of current region */
-    char	rayname[BUF_LEN];	/* Name of ray */
-    fastf_t	ray_radius = 1.0;	/* Thickness of the RCC */
-    point_t	entryp;		/* Ray's entry into current region */
-    point_t	exitp;		/* Ray's exit from current region */
-    point_t	first_entryp;	/* Ray's entry into the entire geometry */
-    int		i;		/* Index into rname */
-    int		line_nm = 0;	/* Number of current line of input */
-    int		opt;		/* Command-line option returned by bu_getopt */
-    int		pid;		/* Process ID for unique group name */
+    char buf[BUF_LEN];		/* Contents of current input line */
+    char *bp;			/* Pointer into buf */
+    char *nlp;			/* Location of newline in buf */
+    char rname[BUF_LEN];	/* Name of current region */
+    char rayname[BUF_LEN];	/* Name of ray */
+    fastf_t ray_radius = 1.0;	/* Thickness of the RCC */
+    point_t entryp;		/* Ray's entry into current region */
+    point_t exitp;		/* Ray's exit from current region */
+    point_t first_entryp;	/* Ray's entry into the entire geometry */
+    int i;			/* Index into rname */
+    int line_nm = 0;		/* Number of current line of input */
+    int opt;			/* Command-line option returned by bu_getopt */
+    int pid;			/* Process ID for unique group name */
 
     extern char *bu_optarg;
-    extern int  bu_optind, bu_opterr;
+    extern int bu_optind, bu_opterr;
 
-    int         bu_getopt(int, char *const *, const char *);
+    int bu_getopt(int, char *const *, const char *);
 
     pid = bu_process_id();
 
@@ -145,6 +145,7 @@ main (int argc, char **argv)
     printf("g %s %s.r\n", rayname, rayname);
     fprintf(stderr, "Group is '%s'\n", rayname);
 }
+
 
 /*
  * Local Variables:

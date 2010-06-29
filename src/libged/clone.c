@@ -75,7 +75,7 @@ struct ged_clone_state {
     struct ged		*gedp;
     struct directory	*src;		/* Source object */
     int			incr;		/* Amount to increment between copies */
-    int			n_copies;	/* Number of copies to make */
+    size_t		n_copies;	/* Number of copies to make */
     hvect_t		trans;		/* Translation between copies */
     hvect_t		rot;		/* Rotation between copies */
     hvect_t		rpnt;		/* Point to rotate about (default 0 0 0) */
@@ -205,7 +205,7 @@ is_in_list(struct nametbl l, char *name)
  * state->incr is used for each number level increase.
  */
 static struct bu_vls *
-clone_get_name(struct directory *dp, struct ged_clone_state *state, int iter)
+clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 {
     struct bu_vls *newname;
     char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFSIZE] = {0};
@@ -215,7 +215,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, int iter)
 
     /* Ugh. This needs much repair/cleanup. */
     if ( state->updpos == 0 ) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, &suffix2); /* CLONE_BUFSIZE */
+	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
 	snprintf(suffix, CLONE_BUFSIZE, "%s%s", suffix, suffix2);
     } else if ( state->updpos == 1 ) {
 	int num2 = 0;
@@ -263,7 +263,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 {
     struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j;
+    size_t i, j;
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
@@ -285,7 +285,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 
 	/* add the object to the directory */
 	dp = db_diradd(dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
-	if ((dp == DIR_NULL) || (db_alloc(dbip, dp, proto->d_len) < 0)) {
+	if ((dp == DIR_NULL) || db_alloc(dbip, dp, proto->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "Database alloc error, aborting\n");
 	    return;
 	}
@@ -307,15 +307,15 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 		    rp->s.s_values[j] = -rp->s.s_values[j];
 	    }
 	    /* translate */
-	    if (state->trans[W])
+	    if (!NEAR_ZERO(state->trans[W], SMALL_FASTF))
 		/* assumes primitive's first parameter is it's position */
 		VADD2(rp->s.s_values, rp->s.s_values, state->trans);
 	    /* rotate */
-	    if (state->rot[W]) {
+	    if (!NEAR_ZERO(state->rot[W], SMALL_FASTF)) {
 		mat_t r;
 		vect_t vec, ovec;
 
-		if (state->rpnt[W])
+		if (!NEAR_ZERO(state->rpnt[W], SMALL_FASTF))
 		    VSUB2(rp->s.s_values, rp->s.s_values, state->rpnt);
 		MAT_IDN(r);
 		bn_mat_angles(r, state->rot[X], state->rot[Y], state->rot[Z]);
@@ -324,14 +324,14 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 		    MAT4X3VEC(ovec, r, vec);
 		    VMOVE(rp->s.s_values+j, ovec);
 		}
-		if (state->rpnt[W])
+		if (!NEAR_ZERO(state->rpnt[W], SMALL_FASTF))
 		    VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
 	    }
 	} else
 	    bu_vls_printf(&state->gedp->ged_result_str, "mods not available on %s\n", proto->d_namep);
 
 	/* write the object to disk */
-	if (db_put(dbip, dp, rp, 0, dp->d_len) < 0) {
+	if (db_put(dbip, dp, rp, 0, dp->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
 	    return;
 	}
@@ -349,7 +349,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 static void
 copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, int idx)
 {
-    int i;
+    size_t i;
     mat_t matrix;
 
     MAT_IDN(matrix);
@@ -361,15 +361,15 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
     }
 
     /* translate */
-    if (state->trans[W])
+    if (!NEAR_ZERO(state->trans[W], SMALL_FASTF))
 	MAT_DELTAS_ADD_VEC(matrix, state->trans);
 
     /* rotation */
-    if (state->rot[W]) {
+    if (!NEAR_ZERO(state->rot[W], SMALL_FASTF)) {
     	mat_t m2, t;
 
 	bn_mat_angles(m2, state->rot[X], state->rot[Y], state->rot[Z]);
-	if (state->rpnt[W]) {
+	if (!NEAR_ZERO(state->rpnt[W], SMALL_FASTF)) {
 	    mat_t m3;
 
 	    bn_mat_xform_about_pt(m3, m2, state->rpnt);
@@ -474,10 +474,10 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 {
     struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
-    int i, j;
+    size_t i, j;
 
     /* make n copies */
-    for (i = 0; i < state->n_copies; i++) {
+    for (i = 0; i < (size_t)state->n_copies; i++) {
 
 	/* get a v4 in-memory reference to the object being copied */
 	if ((rp = db_getmrec(dbip, proto)) == (union record *)0) {
@@ -511,21 +511,23 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
 	/* add the object to the directory */
 	dp = db_diradd(dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
-	if ((dp == NULL) || (db_alloc(dbip, dp, proto->d_len) < 0)) {
+	if ((dp == NULL) || db_alloc(dbip, dp, proto->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "Database alloc error, aborting\n");
 	    return NULL;
 	}
 
 	for (j = 1; j < proto->d_len; j++) {
+	    struct bu_vls *vp;
 	    if (!is_in_list(obj_list, rp[j].M.m_instname)) {
 		bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
-	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i]);
+	    vp = &obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i];
+	    snprintf(rp[j].M.m_instname, NAMESIZE, "%s", bu_vls_addr(vp));
 	}
 
 	/* write the object to disk */
-	if (db_put(dbip, dp, rp, 0, dp->d_len) < 0) {
+	if (db_put(dbip, dp, rp, 0, dp->d_len)) {
 	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
 	    return NULL;
 	}
@@ -542,7 +544,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
  * DESTRUCTIVE RECURSIVE
  */
 static int
-copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, int idx)
+copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, size_t idx)
 {
     char *buf;
     switch (tree->tr_op) {
@@ -574,11 +576,11 @@ copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, int idx)
  * make n copies of a v5 combination.
  */
 static struct directory *
-copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, int idx)
+copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, size_t idx)
 {
     struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
-    int i;
+    size_t i;
 
     /* sanity */
     if (!proto) {
@@ -614,7 +616,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+	    if ((dp=db_diradd(dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
 		bu_vls_printf(&state->gedp->ged_result_str, "An error has occured while adding a new object to the database.");
 		return NULL;
 	    }
@@ -682,13 +684,13 @@ copy_comb(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 static struct directory *
 copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *state)
 {
-    int i;
-    union record   *rp = (union record *)NULL;
+    size_t i;
+    union record *rp = (union record *)NULL;
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
 
-    struct bu_vls *copyname;
-    struct bu_vls *nextname;
+    struct bu_vls *copyname = NULL;
+    struct bu_vls *nextname = NULL;
 
     /* get the name of what the object "should" get cloned to */
     copyname = clone_get_name(dp, state, 0);
@@ -765,7 +767,6 @@ static struct directory *
 deep_copy_object(struct resource *resp, struct ged_clone_state *state)
 {
     struct directory *copy = (struct directory *)NULL;
-    struct nametbl *curr = (struct nametbl *)NULL;
     int i, j;
 
     init_list(&obj_list, state->n_copies);

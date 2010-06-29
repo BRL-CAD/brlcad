@@ -69,7 +69,11 @@ if {[tk windowingsystem] eq "aqua"} {
 if {[info exists env(ARCHER_HOME)]} {
     set dir [file normalize $env(ARCHER_HOME)]
 } else {
-    set dir [file normalize [file join [file dir $argv0] ..]]
+    if {[info exists argv0]} {
+	set dir [file normalize [file join [file dir $argv0] ..]]
+    } else {
+	set dir [file normalize [pwd]]
+    }
 }
 set env(ARCHER_HOME) $dir
 
@@ -83,6 +87,10 @@ set env(ARCHER_HOME) $dir
 #	set inheritFromToplevel 0
 #    }
 #}
+
+if {$tcl_platform(platform) == "windows"} {
+    lappend auto_path ${env(ARCHER_HOME)}/bin/Tkhtml3.0
+}
 
 # load archer guts
 if { [catch {package require Archer 1.0} _initialized] } {
@@ -262,7 +270,7 @@ proc main {} {
 	wm protocol . WM_DELETE_WINDOW [list exitArcher $::ArcherCore::application]
     }
 
-    if {$argv != ""} {
+    if {[info exists argv] && $argv != ""} {
 	set target [lindex $argv 0]
 	set ext [file extension $target]
 	$::ArcherCore::application Load $target

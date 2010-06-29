@@ -307,8 +307,14 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # tkhtml3
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
 
-# tkimg
-BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
+# togl
+BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
+
+# tkpng 
+BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
+
+# tktable
+BC_ARG_ENABLE([build_tktable], [tktable-build], [Build the included tktable], [yes])
 
 # force enable/disable building of tnt
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
@@ -369,6 +375,9 @@ BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11 (optional)], [auto
 
 # use opengl
 BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL (optional)], [no])
+
+# use Apple opengl
+BC_ARG_WITH([with_agl], [agl], [Specify use of or path to Apple OpenGL (optional)], [no])
 
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
@@ -504,10 +513,16 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 # aliases to force building tkhtml3 (help uses tkhtml3-build)
 BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
 
-# aliases to force building tkimg (help uses tkimg-build)
-BC_ARG_ALIAS([build_tkimg], [tkimg])
-BC_ARG_ALIAS([build_tkimg], [libtkimg])
-BC_ARG_ALIAS([build_tkimg], [libtkimg-build])
+# aliases to force building tktable (help uses tktable-build)
+BC_ARG_ALIAS([build_tktable], [tktable])
+
+# aliases to force building togl (help uses togl-build)
+BC_ARG_ALIAS([build_togl], [togl])
+
+# aliases to force building tkpng(help uses tkpng-build)
+BC_ARG_ALIAS([build_tkpng], [tkpng])
+BC_ARG_ALIAS([build_tkpng], [libtkpng])
+BC_ARG_ALIAS([build_tkpng], [libtkpng-build])
 
 # aliases to force building termlib (help uses termlib-build)
 BC_ARG_ALIAS([build_termlib], [termlib])
@@ -599,6 +614,9 @@ BC_ARG_WITH_ALIAS([with_x11], [x])
 # with opengl aliases (help uses ogl)
 BC_ARG_WITH_ALIAS([with_opengl], [opengl])
 
+# with agl aliases (help uses agl)
+BC_ARG_WITH_ALIAS([with_agl], [agl])
+
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
 
@@ -670,8 +688,11 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkhtml3" = "xno" ; then
 		bc_build_tkhtml3="$set_everything"
 	fi
-	if test "x$bc_build_tkimg_set" = "xno" ; then
-		bc_build_tkimg="$set_everything"
+	if test "x$bc_build_tkpng_set" = "xno" ; then
+		bc_build_tkpng="$set_everything"
+	fi
+	if test "x$bc_build_tktable" = "xno" ; then
+		bc_build_tktable="$set_everything"
 	fi
 	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
@@ -800,8 +821,14 @@ AC_MSG_RESULT($bc_build_iwidgets)
 AC_MSG_CHECKING(whether to build the tkhtml3 library)
 AC_MSG_RESULT($bc_build_tkhtml3)
 
-AC_MSG_CHECKING(whether to build the tkImg library)
-AC_MSG_RESULT($bc_build_tkimg)
+AC_MSG_CHECKING(whether to build the tktable library)
+AC_MSG_RESULT($bc_build_tktable)
+
+AC_MSG_CHECKING(whether to build the togl library)
+AC_MSG_RESULT($bc_build_togl)
+
+AC_MSG_CHECKING(whether to build the tkpng library)
+AC_MSG_RESULT($bc_build_tkpng)
 
 AC_MSG_CHECKING(whether to build the termlib library)
 AC_MSG_RESULT($bc_build_termlib)
@@ -850,6 +877,9 @@ AC_MSG_RESULT($bc_with_x11)
 
 AC_MSG_CHECKING(whether to compile the OpenGL interfaces)
 AC_MSG_RESULT($bc_with_opengl)
+
+AC_MSG_CHECKING(whether to compile the AGL interfaces)
+AC_MSG_RESULT($bc_with_agl)
 
 AC_MSG_CHECKING(whether to compile the WindowsGL interfaces)
 AC_MSG_RESULT($bc_with_wgl)
@@ -1159,7 +1189,6 @@ if test "x$bc_with_x11" != "xno" ; then
     fi
 
     dnl find X11 libraries.  sets X_CFLAGS, X_LIBS, and X_EXTRA_LIBS
-    BC_SEARCH_DIRECTORY([/usr/X11], [X11])
     AC_PATH_XTRA
     AC_CHECK_HEADERS([X11/Xlib.h])
 
@@ -1287,6 +1316,8 @@ AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-lt
 dnl check if libtk library links
 tk_link_works=no
 LIBTK=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
     [AC_CHECK_LIB(tk86, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk86",
 	[AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
@@ -1300,6 +1331,7 @@ AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if libtkstub library links
 tkstub_link_works=no
@@ -1324,6 +1356,8 @@ LIBS="$PRELIBS"
 dnl check if libitcl library links
 itcl_link_works=no
 LIBITCL=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
     [AC_CHECK_LIB(itcl34, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl34",
 	[AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
@@ -1337,10 +1371,13 @@ AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTKSTUB $LIBTCLSTUB"
 AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
     [AC_CHECK_LIB(itk34, Itk_Init, itk_link_works=yes ; LIBITK="-litk34",
 	[AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
@@ -1354,6 +1391,7 @@ AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if a socket library links
 socket_link_works=no
@@ -1440,6 +1478,27 @@ if test "x$bc_with_opengl" != "xno" ; then
 	fi
     fi
 fi
+
+dnl check if the Apple OpenGL framework is available
+FRAMEWORK_OPENGL=""
+if test "xbc_with_agl" != "xno" ; then
+    AC_MSG_CHECKING([whether -framework OpenGL is available])
+    framework_opengl=no
+    PRELIBS="$LIBS"
+    LIBS="$LIBS -framework OpenGL"
+    AC_TRY_LINK([#include <OpenGL/OpenGL.h>], [
+    GLboolean values;
+    void (*func)() = glBegin;
+    if (GL_FALSE) {
+        func(GL_POINTS);
+        glGetBooleanv(GL_DEPTH_TEST, &values);
+        glEnd();
+    }
+    ], [framework_opengl=yes ; FRAMEWORK_OPENGL="-framework OpenGL"])
+    LIBS="$PRELIBS"
+    AC_MSG_RESULT($framework_opengl)
+fi
+AC_SUBST(FRAMEWORK_OPENGL)
 
 dnl check if the Windows WGL graphics library links
 wgl_link_works=no
@@ -1630,7 +1689,17 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
     fi
     CPPFLAGS="$PRECPPFLAGS"
 fi # bc_with_opengl
-GL_CPPFLAGS="$GL_H_CPPFLAGS $GLX_H_CPPFLAGS"
+
+AGL_CPPFLAGS=""
+if test "x$bc_with_agl" != "xno"; then
+    # Apple OpenGL is a bit different - the GL_CPPFLAGS need to contain
+    # the call to the OpenGL framework.
+    GL_H_CPPFLAGS=
+    GLX_H_CPPFLAGS=
+    AGL_CPPFLAGS="-framework OpenGL"
+fi
+
+GL_CPPFLAGS="$GL_H_CPPFLAGS $GLX_H_CPPFLAGS $AGL_CPPFLAGS"
 AC_SUBST(GL_CPPFLAGS)
 
 
@@ -1830,7 +1899,6 @@ AC_CHECK_TYPE([uintptr_t],
 	test -z "$ac_type" && break
     done])
 
-
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
@@ -1909,6 +1977,14 @@ dnl     AC_SUBST(SSE)
 		AC_MSG_RESULT(yes)
 	fi
 
+	dnl -arch x86_64 must come before -64 or osX.5+ gets ... confused.
+	if test "x$found_64bit_flag" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-arch x86_64], [64_flag])
+		if test "x$bc_64_flag_works" = "xyes" ; then
+			found_64bit_flag=yes
+		fi
+	fi
+
 	if test "x$found_64bit_flag" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-64], [64_flag])
 		if test "x$bc_64_flag_works" = "xyes" ; then
@@ -1974,7 +2050,7 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-g3 -gstabs+], [debug_flag])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
@@ -2037,6 +2113,13 @@ if test "x$bc_use_optimized" != "xno" ; then
 fi
 
 dnl verbose warning flags (if yes or auto)
+BC_COMPILER_AND_LINKER_RECOGNIZES([-w], [nowarn], [nokeep])
+if test "x$bc_nowarn_works" = "xyes" ; then
+	NOWARN="-w"
+else
+	NOWARN=""
+fi
+AC_SUBST(NOWARN)
 if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
 	# XXX also of interest
@@ -2047,6 +2130,8 @@ if test "x$bc_build_warnings" != "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
 		sleep 1
 	fi
+else
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-w], [nowarn])
 fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
@@ -2258,6 +2343,22 @@ else
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 5
 fi
+#if test "x$build_parsers" = "xyes" ; then
+     # test for modern features in lex
+     #echo "%option reentrant bison-bridge" >> lex.l
+     #echo "%%" >> lex.l
+     #$LEX lex.l > /dev/null 2>&1
+     #ret=$?
+     #rm -f lex.l
+     #if test "x${ret}" != "x0" ; then
+	#build_parsers=no
+	#AC_MSG_WARN([The LEX-style scanner found does not support features required by])
+	#AC_MSG_WARN([BRL-CAD's LEX code.  Various MGED commands and geometry conversion])
+	#AC_MSG_WARN([routines will be disabled.])
+	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
+     #fi
+#fi
+	
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
     AC_MSG_RESULT(yes)
@@ -2272,7 +2373,6 @@ else
     fi
     bc_build_step="no"
 fi
-
 
 dnl *** libpng ***
 png_works=no
@@ -3080,28 +3180,60 @@ else
 fi
 AC_SUBST(TKHTML3)
 
+dnl *** togl ***
+dnl figure out whether we need to build togl
+TOGL_VERSION="2.1"
+AC_SUBST(TOGL_VERSION)
+TOGL_CPPFLAGS=""
+AC_MSG_CHECKING(whether to build togl)
+if test ! "x$bc_build_togl" = "xno" ; then
+    build_brlcad_togl=yes
+    TOGL_CPPFLAGS='-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl'
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_togl=no
+    TOGL=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(TOGL_CPPFLAGS)
 
-dnl *** tkImg ***
-dnl figure out whether we need to build tkImg
-TKIMG_VERSION="1.3"
+dnl *** tktable ***
+dnl figure out whether we need to build tktable
+TKTABLE_VERSION="2.10"
+AC_SUBST(TKTABLE_VERSION)
+AC_MSG_CHECKING(whether to build tktable)
+if test ! "x$bc_build_tktable" = "xno" ; then
+    build_brlcad_tktable=yes
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_tktable=no
+    TKTABLE=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(TKTABLE)
+
+
+dnl *** tkpng ***
+dnl figure out whether we need to build tkpng 
+TKPNG_VERSION="0.9"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
-	 TKIMG_VERSION="`echo ${TKIMG_VERSION} | tr -d .`"
+	 TKPNG_VERSION="`echo ${TKPNG_VERSION} | tr -d .`"
 	 ;;
 esac
-AC_SUBST(TKIMG_VERSION)
-AC_MSG_CHECKING(whether to build tkimg)
-if test ! "x$bc_build_tkimg" = "xno" ; then
-    build_brlcad_tkimg=yes
-    TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
+AC_SUBST(TKPNG_VERSION)
+AC_MSG_CHECKING(whether to build tkpng)
+if test ! "x$bc_build_tkpng" = "xno" ; then
+    build_brlcad_tkpng=yes
+    TKPNG='${top_builddir}/src/other/tkpng/tkpng${TKPNG_VERSION}.la'
     AC_MSG_RESULT(yes)
 else
-    build_brlcad_tkimg=no
-    TKIMG=""
+    build_brlcad_tkpng=no
+    TKPNG=""
     AC_MSG_RESULT(no)
 fi
-AC_SUBST(TKIMG)
+AC_SUBST(TKPNG)
 
 
 dnl *** TNT ***
@@ -3248,6 +3380,7 @@ TERMLIB_CPPFLAGS=""
 if test "x$build_brlcad_termlib" = "xyes" ; then
     TERMLIB='${top_builddir}/src/other/libtermlib/libtermlib.la'
     TERMLIB_CPPFLAGS='-I${top_srcdir}/src/other/libtermlib'
+    AC_DEFINE(HAVE_TERMCAP_H, 1, [Define to 1 if you have the <termcap.h> header file.])
     AC_MSG_RESULT(yes)
 else
     TERMLIB="$LIBTERMLIB"
@@ -3305,6 +3438,11 @@ dnl *** libgl ***
 AC_MSG_CHECKING(for OpenGL library availability)
 AC_MSG_RESULT($gl_link_works)
 AC_SUBST(LIBGL)
+
+dnl *** Apple OpenGL ***
+AC_MSG_CHECKING(for Apple OpenGL framework availability)
+AC_MSG_RESULT($framework_opengl)
+AC_SUBST(FRAMEWORK_AGL)
 
 dnl *** libopengl32 ***
 AC_MSG_CHECKING(for WindowsGL library availability)
@@ -3531,6 +3669,51 @@ fi # bc_with_opengl
 AC_MSG_CHECKING(whether to build against OpenGL)
 AC_MSG_RESULT($build_against_opengl)
 
+dnl *** Apple OpenGL interface compilation ***
+build_against_agl="no"
+if test "x$bc_with_agl" != "xno" ; then
+    AC_MSG_CHECKING(for Apple OpenGL functionality)
+    agl_works=no
+    PRELIBS="$LIBS"
+    PRECPPFLAGS="$CPPFLAGS"
+    PRELDFLAGS="$LDFLAGS"
+    LIBS="$LIBS $LIBGL"
+    CPPFLAGS="$CPPFLAGS $GL_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $FRAMEWORK_OPENGL"
+    AC_TRY_RUN([
+#include <OpenGL/OpenGL.h>
+main(int argc, char *argv[]) {
+    GLboolean values;
+    void (*func)() = glBegin;
+    if (GL_FALSE || argc > 1) {
+	func(GL_POINTS);
+	glGetBooleanv(GL_DEPTH_TEST, &values);
+	glEnd();
+    }
+    return 0;
+}
+    ], [agl_works=yes])
+    LIBS="$PRELIBS"
+    CPPFLAGS="$PRECPPFLAGS"
+    LDFLAGS="$PRELDFLAGS"
+    AC_MSG_RESULT($agl_works)
+
+    dnl figure out whether we need to build against opengl
+    if test "x$agl_works" = "xyes" ; then
+	build_against_agl="yes"
+    else
+	if test "x$bc_with_agl" = "xyes" ; then
+	    AC_MSG_NOTICE([Apple OpenGL was requested, but no system OpenGL libraries were found])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --without-agl])
+	    AC_MSG_ERROR([*** Using Apple OpenGL was requested, yet no system OpenGL was found ***])
+	else
+	    AC_MSG_NOTICE([OpenGL does not appear to be functionally available])
+	fi
+    fi
+fi # bc_with_agl
+AC_MSG_CHECKING(whether to build against Apple OpenGL)
+AC_MSG_RESULT($build_against_agl)
 
 dnl *** WindowsGL interface compilation ***
 build_against_wgl="no"
@@ -3689,7 +3872,9 @@ AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
-AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
+AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
+AM_CONDITIONAL(BUILD_TOGL, [test "x$build_brlcad_togl" = "xyes"])
+AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
@@ -3790,6 +3975,7 @@ CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 DM='${top_builddir}/src/libdm/libdm.la'
 FB='${top_builddir}/src/libfb/libfb.la'
 FFT='${top_builddir}/src/libfft/libfft.la'
+ICV='${top_builddir}/src/libicv/libicv.la'
 GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
@@ -3797,10 +3983,12 @@ OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
 PC='${top_builddir}/src/libpc/libpc.la'
 PKG='${top_builddir}/src/libpkg/libpkg.la'
+RENDER='${top_builddir}/src/adrt/librender.la'
 RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
 TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
+TIE='${top_builddir}/src/adrt/libtie.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
@@ -3826,6 +4014,7 @@ ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -3854,6 +4043,7 @@ AC_SUBST(CURSOR)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
+AC_SUBST(ICV)
 AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
@@ -3861,10 +4051,12 @@ AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
 AC_SUBST(PC)
+AC_SUBST(RENDER)
 AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
 AC_SUBST(TERMIO)
+AC_SUBST(TIE)
 AC_SUBST(WDB)
 AC_SUBST(BRLCAD)
 
@@ -3887,6 +4079,7 @@ AC_SUBST(CURSOR_LIBS)
 AC_SUBST(DM_LIBS)
 AC_SUBST(FB_LIBS)
 AC_SUBST(FFT_LIBS)
+AC_SUBST(ICV_LIBS)
 AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
@@ -3929,6 +4122,9 @@ dnl configure Tcl
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
     ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
+    if test "x$bc_build_64bit" = "xyes" ; then
+	ac_configure_args="$ac_configure_args --enable-64bit"
+    fi
     AC_CONFIG_SUBDIRS([src/other/tcl/unix])
     TCL_PATH="`echo ${TCL_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
@@ -3957,7 +4153,30 @@ fi
 dnl configure tkhtml3
 if test "x$build_brlcad_tkhtml3" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+    # this is a hack to all tkhtml3 to see when the tk headers are in odd 
+    # places. it seems to ignore the CPPFLAGS in it's configure phase.
+    if test ! "x$TKINCDIR" = "x" ; then
+	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+    fi
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
+fi
+
+dnl configure togl
+if test "x$build_brlcad_togl" = "xyes" ; then
+    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+    if test ! "x$TKINCDIR" = "x" ; then
+	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+    fi
+    AC_CONFIG_SUBDIRS([src/other/togl])
+fi
+
+dnl configure tktable
+if test "x$build_brlcad_tktable" = "xyes" ; then
+    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+    if test ! "x$TKINCDIR" = "x" ; then
+	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+    fi
+    AC_CONFIG_SUBDIRS([src/other/tktable])
 fi
 
 AC_CONFIG_FILES([
@@ -4010,6 +4229,7 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libfft.pc
 	misc/pkgconfig/libged.pc
 	misc/pkgconfig/libgcv.pc
+	misc/pkgconfig/libicv.pc
 	misc/pkgconfig/libmultispectral.pc
 	misc/pkgconfig/liboptical.pc
 	misc/pkgconfig/libpc.pc
@@ -4072,7 +4292,9 @@ AC_CONFIG_FILES([
 	src/libfb/Makefile
 	src/libfft/Makefile
 	src/libgcv/Makefile
+	src/libgcv/wfobj/Makefile
 	src/libged/Makefile
+	src/libicv/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
@@ -4126,11 +4348,7 @@ AC_CONFIG_FILES([
 	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
-	src/other/tkimg/Makefile
-	src/other/tkimg/base/Makefile
-	src/other/tkimg/png/Makefile
-	src/other/tkimg/pngtcl/Makefile
-	src/other/tkimg/zlibtcl/Makefile
+	src/other/tkpng/Makefile
 	src/other/tnt/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
@@ -4147,6 +4365,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
 	src/tclscripts/archer/images/Themes/Windows/Makefile
 	src/tclscripts/geometree/Makefile
+	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile
 	src/tclscripts/nirt/Makefile
@@ -4261,7 +4480,7 @@ AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
 AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
-AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
+AC_MSG_RESULT([Build tkpng ..........................: $build_brlcad_tkpng])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
@@ -4270,7 +4489,7 @@ AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
-AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
+AC_MSG_RESULT([Build TOGL............................: $build_brlcad_togl])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])

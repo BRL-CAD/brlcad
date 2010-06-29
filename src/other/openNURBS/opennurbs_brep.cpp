@@ -3322,33 +3322,36 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
     P1 = pC1->PointAt( trim1_domain[0] ); // start of next 2d trim
     if ( !(P0-P1).IsTiny() )
     {
-	// **** Let Trims Cross a Seam ****
-	// First lets see if this is a closed surface, if so check to see if trim endpoints
-	// lie on seam, if so check the closeness of the endpoints in 3D.
-	if (surf->IsClosed(0) || surf->IsClosed(0)) {
-	    if (surf->IsAtSeam(P0.x,P0.y) && surf->IsAtSeam(P1.x,P1.y)) {
-		ON_3dPoint p0 = surf->PointAt(P0.x,P0.y);
-		ON_3dPoint p1 = surf->PointAt(P1.x,P1.y);
-		if ((p0-p1).IsTiny()) {
-		    if ( text_log )
-		    {
-		      text_log->Print("Face[%d]-Loop[%d] Crosses Seam:\n",loop.m_fi,loop.m_loop_index);
-		      text_log->PushIndent();
-		      text_log->Print("Trim[%d] ends at at 2d[%f %f], 3D[%f %f %f]\n",loop.m_ti[lti],P0.x,P0.y,p0.x,p0.y,p0.z);
-		      text_log->Print("Trim[%d] starts at at 2d[%f %f], 3D[%f %f %f]\n",loop.m_ti[lti],P1.x,P1.y,p1.x,p1.y,p1.z);
-		      text_log->PopIndent();
-		    }
-		    break;
-		}
-	    }
-	}
+       // **** Let Trims Cross a Seam ****
+       // First lets see if this is a closed surface, if so check to see if trim endpoints
+       // lie on seam, if so check the closeness of the endpoints in 3D.
+       if (surf->IsClosed(0) || surf->IsClosed(1)) {
+           if (surf->IsAtSeam(P0.x,P0.y) && surf->IsAtSeam(P1.x,P1.y)) {
+               ON_3dPoint p0 = surf->PointAt(P0.x,P0.y);
+               ON_3dPoint p1 = surf->PointAt(P1.x,P1.y);
+               if ((p0-p1).IsTiny()) {
+#if 0
+                   if ( text_log )
+                   {
+                     text_log->Print("Face[%d]-Loop[%d] Crosses Seam:\n",loop.m_fi,loop.m_loop_index);
+                     text_log->PushIndent();
+                     text_log->Print("Trim[%d] ends at at 2d[%f %f], 3D[%f %f %f]\n",loop.m_ti[lti],P0.x,P0.y,p0.x,p0.y,p0.z);
+                     text_log->Print("Trim[%d] starts at at 2d[%f %f], 3D[%f %f %f]\n",loop.m_ti[lti],P1.x,P1.y,p1.x,p1.y,p1.z);
+                     text_log->PopIndent();
+                   }
+#endif
+                   break;
+               }
+           }
+       }
+
       // 16 September 2003 Dale Lear - RR 11319
       //    Added relative tol check so cases with huge
       //    coordinate values that agreed to 10 places
       //    didn't get flagged as bad.
       //double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
       //double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
-      // 
+      //
       // Oct 12 2009 Rather than using the above check, BRL-CAD uses
       // relative uv size
       double xtol = (urange) * trim0.m_tolerance[0];
@@ -4507,6 +4510,7 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
   // to test tolerances.  Most of these tests are duplicates 
   // of ones in ON_Brep::IsValidTrim, which is called by 
   // ON_Brep::IsValidLoop, which is called by ON_Brep::IsValidFace.
+  int seam_trim_count = 0;
   for ( ti = 0; ti < trim_count; ti++ )
   {
     const ON_BrepTrim& trim = m_T[ti];
@@ -4729,6 +4733,27 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
         return false;
 
     }
+
+    if ( ON_BrepTrim::seam == trim.m_type )
+    {
+      // trim must be on a surface edge
+      switch ( trim.m_iso )
+      {
+      case ON_Surface::S_iso:
+        break;
+      case ON_Surface::E_iso:
+        break;
+      case ON_Surface::N_iso:
+        break;
+      case ON_Surface::W_iso:
+        break;
+      default:
+        if ( text_log )
+          text_log->Print("ON_Brep.m_T[%d].m_type = ON_BrepTrim::seam but m_iso is not N/E/W/S_iso.\n",ti);
+        return false;
+      }
+      seam_trim_count++;
+    }
   }
 
   // check loop m_pboxes
@@ -4903,6 +4928,106 @@ ON_Brep::IsValid( ON_TextLog* text_log ) const
         return false;                
       }
     }
+  }
+
+  // make sure seam trims are properly matched.
+  for ( ti = 0; seam_trim_count > 0 && ti < trim_count; ti++ )
+  {
+    const ON_BrepTrim& trim = m_T[ti];
+    if ( trim.m_trim_index == -1 )
+      continue;
+    if ( ON_BrepTrim::seam != trim.m_type )
+      continue;
+    seam_trim_count--;
+    if ( trim.m_ei < 0 || trim.m_ei >= edge_count )
+    {
+      if ( text_log )
+      {
+        text_log->Print("ON_Brep.m_T[%d] is a seam trim with an invalid m_ei.\n",ti);
+        return false;
+      }
+    }
+
+    const ON_BrepEdge& edge = m_E[trim.m_ei];
+    int trim1_index = -1;
+    for ( int eti = 0; eti < edge.m_ti.Count(); eti++ )
+    {
+      const int ti1 = edge.m_ti[eti];
+      if ( ti1 == ti 
+           || ti < 0
+           || ti >= trim_count 
+         )
+      {
+        continue;
+      }
+      const ON_BrepTrim& trim1 = m_T[ti1];
+      if ( trim1.m_trim_index == -1 )
+        continue;
+      if ( ON_BrepTrim::seam != trim1.m_type )
+        continue;
+      if ( trim1.m_li != trim.m_li )
+        continue;
+      if ( -1 == trim1_index )
+      {
+        trim1_index = ti1;
+        continue;
+      }
+      text_log->Print("ON_Brep.m_T[%d,%d,%d] are three seam trims with the same edge in the same loop.\n",ti,trim1_index,ti1);
+      return false;
+    }
+
+    if ( trim1_index < 0 || trim1_index >= trim_count )
+    {
+      text_log->Print("ON_Brep.m_T[%d] is a seam trim with no matching seam trim in the same loop.\n",ti);
+      return false;
+    }
+
+    // previous validation step insures trim.m_iso = N/S/E/W_iso
+    switch(trim.m_iso)
+    {
+    case ON_Surface::S_iso:
+      if ( ON_Surface::N_iso != m_T[trim1_index].m_iso )
+      {
+        if (text_log )
+          text_log->Print("Seam trim ON_Brep.m_T[%d].m_iso = S_iso but matching seam ON_Brep.m_T[%d].m_iso != N_iso.\n",ti,trim1_index);
+        return false;
+      }
+      break;
+
+    case ON_Surface::E_iso:
+      if ( ON_Surface::W_iso != m_T[trim1_index].m_iso )
+      {
+        if (text_log )
+          text_log->Print("Seam trim ON_Brep.m_T[%d].m_iso = E_iso but matching seam ON_Brep.m_T[%d].m_iso != W_iso.\n",ti,trim1_index);
+        return false;
+      }
+      break;
+
+    case ON_Surface::N_iso:
+      if ( ON_Surface::S_iso != m_T[trim1_index].m_iso )
+      {
+        if (text_log )
+          text_log->Print("Seam trim ON_Brep.m_T[%d].m_iso = N_iso but matching seam ON_Brep.m_T[%d].m_iso != S_iso.\n",ti,trim1_index);
+        return false;
+      }
+      break;
+
+    case ON_Surface::W_iso:
+      if ( ON_Surface::E_iso != m_T[trim1_index].m_iso )
+      {
+        if (text_log )
+          text_log->Print("Seam trim ON_Brep.m_T[%d].m_iso = W_iso but matching seam ON_Brep.m_T[%d].m_iso != E_iso.\n",ti,trim1_index);
+        return false;
+      }
+      break;
+
+    case ON_Surface::not_iso:
+    case ON_Surface::x_iso:
+    case ON_Surface::y_iso:
+    case ON_Surface::iso_count:
+      break; // keep gcc quiet
+    }
+
   }
 
   return true;
@@ -6027,9 +6152,15 @@ ON_Brep::LoopIsSurfaceBoundary( int loop_index ) const
     const int trim_count = loop.m_ti.Count();
     if ( trim_count > 0 ) {
       bTrivialLoop = true;
-      int ti;
-      for ( ti = 0; ti < trim_count && bTrivialLoop; ti++ ) {
-        const ON_BrepTrim& trim = m_T[loop.m_ti[ti]];
+      for ( int lti = 0; lti < trim_count && bTrivialLoop; lti++ ) 
+      {
+        int ti = loop.m_ti[lti];
+        if ( ti < 0 || ti >= m_T.Count() )
+        {
+          ON_ERROR("Bogus trim index in loop.m_ti[]");
+          return false;
+        }
+        const ON_BrepTrim& trim = m_T[ti];
         if ( trim.m_iso == ON_Surface::W_iso )
           continue;
         if ( trim.m_iso == ON_Surface::S_iso )
@@ -8787,6 +8918,38 @@ bool ON_Brep::CullUnusedVertices()
     const int tcount = m_T.Count();
     const int ecount = m_E.Count();
     int vi, ei, ti, mi, j;
+
+    if ( tcount > 0 )
+    {
+      // 11 Nov 2009 Dale Lear
+      //  I added this code to fix bugs 55879 and 56191.
+      for ( ti = 0; ti < tcount; ti++ )
+      {
+        const ON_BrepTrim& trim = m_T[ti];
+        if ( -1 == trim.m_trim_index )
+          continue;
+        vi = trim.m_vi[0];
+        if ( vi >= 0 && vi < vcount && -1 == m_V[vi].m_vertex_index )
+        {
+          // undelete this vertex
+          // This error happens when the ON_Brep is invalid to begin with.
+          // However, in order to prevent crashes, we have to refuse to delete
+          // the vertex.  See bugs 55879 and 56191.
+          ON_ERROR("ON_Brep::CullUnusedVertices() - deleted vertex referenced by trim.m_vi[0]");
+          m_V[vi].m_vertex_index = vi;
+        }
+        vi = trim.m_vi[1];
+        if ( vi >= 0 && vi < vcount && -1 == m_V[vi].m_vertex_index )
+        {
+          // undelete this vertex
+          // This error happens when the ON_Brep is invalid to begin with.
+          // However, in order to prevent crashes, we have to refuse to delete
+          // the vertex.  See bugs 55879 and 56191.
+          ON_ERROR("ON_Brep::CullUnusedVertices() - deleted vertex referenced by trim.m_vi[1]");
+          m_V[vi].m_vertex_index = vi;
+        }
+      }
+    }
 
     mi = 0;
     for ( vi = 0; vi < vcount; vi++ ) {
@@ -11994,71 +12157,8 @@ void ON_BrepFace::DestroyRuntimeCache( bool bDelete )
   m_bbox.Destroy();
 }
 
-bool ON_Brep::IsPointInside(
-        ON_3dPoint P, 
-        double tolerance,
-        bool bStrictlyInside
-        ) const
-{
-  bool rc = false;
-  if ( 0 != ON_Brep::m__IsPointInsideHelper )
-  {
-    // When opennurbs is used with Rhino, this
-    // function calls a static IsPointInsideHelper()
-    // function in the core Rhino code.
-    rc = ON_Brep::m__IsPointInsideHelper(*this,P,tolerance,bStrictlyInside);
-  }
-  return rc;
-}
 
-
-bool ON_Brep::AreaMassProperties(
-  ON_MassProperties& mp,
-  bool bArea,
-  bool bFirstMoments,
-  bool bSecondMoments,
-  bool bProductMoments,
-  double rel_tol,
-  double abs_tol
-  ) const
-{
-  bool rc = false;
-  // The _MassPropertiesBrep() function is provided by the Rhino SDK.
-  if ( 0 != ON_Brep::m__MassProperties )
-  {
-    int mprc = ON_Brep::m__MassProperties( 
-            *this, NULL, 2, ON_UNSET_POINT, mp, 
-            bArea, bFirstMoments, bSecondMoments, bProductMoments, 
-            rel_tol, abs_tol );
-    rc = (mprc != 0);
-  }
-  return rc;
-}
-
-bool ON_Brep::VolumeMassProperties(
-  ON_MassProperties& mp, 
-  bool bVolume,
-  bool bFirstMoments,
-  bool bSecondMoments,
-  bool bProductMoments,
-  ON_3dPoint base_point,
-  double rel_tol,
-  double abs_tol
-  ) const
-{
-  bool rc = false;
-  // The _MassPropertiesBrep() function is provided by the Rhino SDK.
-  if ( 0 != ON_Brep::m__MassProperties )
-  {
-    int mprc = ON_Brep::m__MassProperties( 
-            *this, NULL, 3, base_point, mp, 
-            bVolume, bFirstMoments, bSecondMoments, bProductMoments, 
-            rel_tol, abs_tol );
-    rc = (mprc != 0);
-  }
-  return rc;
-}
-
+/*
 bool ON_Surface::AreaMassProperties(
   ON_MassProperties& mp,
   bool bArea,
@@ -12105,54 +12205,8 @@ bool ON_Surface::VolumeMassProperties(
   }
   return rc;
 }
+*/
 
-bool ON_Curve::LengthMassProperties(
-  ON_MassProperties& mp,
-  bool bLength,
-  bool bFirstMoments,
-  bool bSecondMoments,
-  bool bProductMoments,
-  double rel_tol,
-  double abs_tol
-  ) const
-{
-  bool rc = false;
-  // The _MassPropertiesSurface() function is provided by the Rhino SDK.
-  if ( 0 != _MassPropertiesCurve )
-  {
-    int mprc = _MassPropertiesCurve( 
-            *this, NULL, 1, ON_UNSET_POINT, ON_UNSET_POINT, mp, 
-            bLength, bFirstMoments, bSecondMoments, bProductMoments, 
-            rel_tol, abs_tol );
-    rc = (mprc != 0);
-  }
-  return rc;
-}
-
-bool ON_Curve::AreaMassProperties(
-    ON_3dPoint base_point,
-    ON_3dVector plane_normal,
-    ON_MassProperties& mp, 
-    bool bArea,
-    bool bFirstMoments,
-    bool bSecondMoments,
-    bool bProductMoments,
-    double rel_tol,
-    double abs_tol
-    ) const
-{
-  bool rc = false;
-  // The _MassPropertiesSurface() function is provided by the Rhino SDK.
-  if ( 0 != _MassPropertiesCurve )
-  {
-    int mprc = _MassPropertiesCurve( 
-            *this, NULL, 2, base_point,plane_normal, mp, 
-            bArea, bFirstMoments, bSecondMoments, bProductMoments, 
-            rel_tol, abs_tol );
-    rc = (mprc != 0);
-  }
-  return rc;
-}
 
 int ON_BrepLoop::Dimension() const
 {

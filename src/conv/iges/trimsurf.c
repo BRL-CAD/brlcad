@@ -68,7 +68,7 @@ Get_nurb_surf( entityno, m )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return( (struct face_g_snurb *)NULL );
+	return (struct face_g_snurb *)NULL;
     }
 
     Readrec( dir[entityno]->param );
@@ -76,7 +76,7 @@ Get_nurb_surf( entityno, m )
     if ( entity_type != 128 )
     {
 	bu_log( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
-	return( (struct face_g_snurb *)NULL );
+	return (struct face_g_snurb *)NULL;
     }
     Readint( &i, "" );
     n_cols = i+1;
@@ -198,7 +198,7 @@ Get_nurb_surf( entityno, m )
     Readdbl( &a, "" );
     Readdbl( &a, "" );
 
-    return( srf );
+    return srf;
 }
 
 void
@@ -253,7 +253,7 @@ Get_cnurb( entity_no )
     {
 	bu_log( "Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entity_no]->direct, dir[entity_no]->name );
-	return( (struct edge_g_cnurb *)NULL );
+	return (struct edge_g_cnurb *)NULL;
     }
 
     Readrec( dir[entity_no]->param );
@@ -262,7 +262,7 @@ Get_cnurb( entity_no )
     if ( entity_type != 126 )
     {
 	bu_log( "Get_cnurb: Was expecting spline curve, got type %d\n", entity_type );
-	return( (struct edge_g_cnurb *)NULL );
+	return (struct edge_g_cnurb *)NULL;
     }
 
     Readint( &i, "" );
@@ -335,7 +335,7 @@ Get_cnurb( entity_no )
 	crv->ctl_points[i*ncoords] = pt2[X];
 	crv->ctl_points[i*ncoords+1] = pt2[Y];
     }
-    return( crv );
+    return crv;
 }
 
 void
@@ -595,7 +595,7 @@ Make_trim_loop( entity_no, orientation, srf, fu )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entity_no]->direct, dir[entity_no]->name );
-	return( (struct loopuse *)NULL );
+	return (struct loopuse *)NULL;
     }
 
     Readrec( dir[entity_no]->param );
@@ -771,7 +771,7 @@ Make_trim_loop( entity_no, orientation, srf, fu )
 	    bu_log( "Curves of type %d are not yet handled for trimmed surfaces\n", entity_type );
 	    break;
     }
-    return( lu );
+    return lu;
 }
 
 struct loopuse *
@@ -795,7 +795,7 @@ Make_loop( entity_no, orientation, on_surf_de, srf, fu )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entity_no]->direct, dir[entity_no]->name );
-	return(0);
+	return 0;
     }
 
     Readrec( dir[entity_no]->param );
@@ -803,7 +803,7 @@ Make_loop( entity_no, orientation, on_surf_de, srf, fu )
     if ( entity_type != 142 )
     {
 	bu_log( "Expected Curve on a Parametric Surface, found %s\n", iges_type( entity_type ) );
-	return( 0 );
+	return 0;
     }
     Readint( &i, "" );
     Readint( &surf_de, "" );
@@ -815,7 +815,7 @@ Make_loop( entity_no, orientation, on_surf_de, srf, fu )
 
     lu = Make_trim_loop( (param_curve_de-1)/2, orientation, srf, fu );
 
-    return( lu );
+    return lu;
 }
 
 struct loopuse *
@@ -940,7 +940,7 @@ Make_default_loop( srf, fu )
 	edge_no++;
     }
 
-    return( lu );
+    return lu;
 }
 
 void
@@ -1001,7 +1001,7 @@ trim_surf( entityno, s )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
     Readrec( dir[entityno]->param );
@@ -1009,7 +1009,7 @@ trim_surf( entityno, s )
     if ( entity_type != 144 )
     {
 	bu_log( "Expected Trimmed Surface Entity found type %d\n" );
-	return( (struct faceuse *)NULL );
+	return (struct faceuse *)NULL;
     }
     Readint( &surf_de, "" );
     Readint( &has_outer_boundary, "" );
@@ -1026,7 +1026,7 @@ trim_surf( entityno, s )
     {
 	if ( inner_loop_count )
 	    bu_free( (char *)inner_loop, "trim_surf: inner_loop" );
-	return( (struct faceuse *)NULL );
+	return (struct faceuse *)NULL;
     }
 
     /* Make a face (with a loop to be destroted later)
@@ -1123,7 +1123,7 @@ trim_surf( entityno, s )
 
     NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 
-    return( fu );
+    return fu;
 }
 
 int
@@ -1158,12 +1158,12 @@ uv_in_fu( u, v, fu )
     if ( ot_sames == 0 || ot_opps == ot_sames )
     {
 	/* not a hit */
-	return( 0 );
+	return 0;
     }
     else
     {
 	/* this is a hit */
-	return( 1 );
+	return 1;
     }
 }
 
@@ -1341,7 +1341,7 @@ Find_uv_in_fu( u_in, v_in, fu )
     f = fu->f_p;
 
     if ( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
-	return( 1 );
+	return 1;
 
     fg = f->g.snurb_p;
 
@@ -1358,7 +1358,7 @@ Find_uv_in_fu( u_in, v_in, fu )
     {
 	*u_in = u;
 	*v_in = v;
-	return( 0 );
+	return 0;
     }
 
     /* no luck, try a few points along the diagonals of the UV plane */
@@ -1371,7 +1371,7 @@ Find_uv_in_fu( u_in, v_in, fu )
 	{
 	    *u_in = u;
 	    *v_in = v;
-	    return( 0 );
+	    return 0;
 	}
     }
 
@@ -1385,7 +1385,7 @@ Find_uv_in_fu( u_in, v_in, fu )
 	{
 	    *u_in = u;
 	    *v_in = v;
-	    return( 0 );
+	    return 0;
 	}
     }
 
@@ -1421,12 +1421,12 @@ Find_uv_in_fu( u_in, v_in, fu )
 	    {
 		*u_in = u;
 		*v_in = v;
-		return( 0 );
+		return 0;
 	    }
 	}
     }
 
-    return( 1 );
+    return 1;
 }
 
 /* find an xyz pt that s actually in the face
@@ -1449,12 +1449,12 @@ Find_pt_in_fu( fu, pt, norm, hit_list )
     f = fu->f_p;
 
     if ( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
-	return( 1 );
+	return 1;
 
     fg = f->g.snurb_p;
 
     if ( Find_uv_in_fu( &u, &v, fu ) )
-	return( 1 );
+	return 1;
 
     /* calculate actual hit point (x y z) */
     rt_nurb_s_eval( fg, u, v, homo_hit );
@@ -1475,7 +1475,7 @@ Find_pt_in_fu( fu, pt, norm, hit_list )
     if ( f->flip )
 	VREVERSE( norm, norm )
 
-	    return( 0 );
+	    return 0;
 }
 
 void

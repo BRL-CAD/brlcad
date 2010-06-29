@@ -181,12 +181,12 @@ ged_basename_without_suffix(const char *p1, const char *suff)
     /* early out */
     while (p1>p2 && p3>suff) {
 	if (*--p3 != *--p1)
-	    return(p2);
+	    return p2;
     }
 
     /* stash and return filename, sans suffix */
     bu_strlcpy( buf, p2, p1-p2+1 );
-    return(buf);
+    return buf;
 }
 
 

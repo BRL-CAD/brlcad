@@ -33,7 +33,7 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
     int regionid, air, mat, los;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    static const char *usage = "combname Regionflag regionid air los GIFTmater";
+    static const char *usage = "combname region_flag region_id air los material_id";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -48,7 +48,7 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 6 || 7 < argc) {
+    if (argc != 7) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -56,11 +56,20 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
     GED_CHECK_COMB(gedp, dp, GED_ERROR);
 
-    if (sscanf(argv[3], "%d", &regionid) != 1 ||
-	sscanf(argv[4], "%d", &air) != 1 ||
-	sscanf(argv[5], "%d", &los) != 1 ||
-	sscanf(argv[6], "%d", &mat) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad rid, air, los or material");
+    if (sscanf(argv[3], "%d", &regionid) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Bad region identifier");
+	return GED_ERROR;
+    }
+    if (sscanf(argv[4], "%d", &air) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Bad air code");
+	return GED_ERROR;
+    }
+    if (sscanf(argv[5], "%d", &los) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Bad los line-of-sight equivalence factor");
+	return GED_ERROR;
+    }
+    if (sscanf(argv[6], "%d", &mat) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Bad material identifier");
 	return GED_ERROR;
     }
 
@@ -68,10 +77,11 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    if (argv[2][0] == 'R')
+    if (argv[2][0] == 'R' || atoi(argv[2]))
 	comb->region_flag = 1;
     else
 	comb->region_flag = 0;
+
     comb->region_id = regionid;
     comb->aircode = air;
     comb->los = los;

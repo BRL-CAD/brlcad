@@ -146,7 +146,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 
     if (snames == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Error executing ged_skewer_solids: ");
-	return (GED_ERROR);
+	return GED_ERROR;
     }
 
     for (i = 0; snames[i] != 0; ++i)
@@ -168,7 +168,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 static int
 ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
 {
-    return (1);
+    return 1;
 }
 
 /*
@@ -216,7 +216,7 @@ ged_rpt_miss(struct application *ap)
 {
     ap->a_uptr = NULL;
 
-    return (0);
+    return 0;
 }
 
 /*
@@ -245,7 +245,7 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
 
     if (argc <= 0) {
 	bu_vls_printf(&gedp->ged_result_str, "skewer_solids argc<=0\n");
-	return ((char **) 0);
+	return (char **) 0;
     }
 
     /* .inmem rt_gettrees .rt -i -u [who] */
@@ -256,7 +256,7 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
 	bu_vls_printf(&gedp->ged_result_str, "rt_gettrees() failed\n");
 	rt_clean(rtip);
 	bu_free((genptr_t)rtip, "struct rt_i");
-	return ((char **) 0);
+	return (char **) 0;
     }
 
     /* .rt prep 1 */
@@ -289,7 +289,7 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
     rt_clean(rtip);
     bu_free((genptr_t)rtip, "struct rt_i");
 
-    return ((char **) ap.a_uptr);
+    return (char **) ap.a_uptr;
 }
 
 

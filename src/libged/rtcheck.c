@@ -447,7 +447,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 	close(rtcop->fd);
 
 	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify();
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
 	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
 	return;
@@ -517,7 +517,7 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 void
 ged_rtcheck_output_handler(ClientData clientData, int mask)
 {
-    int count;
+    DWORD count;
     char line[RT_MAXLINE];
     struct ged_rtcheck_output *rtcop = (struct ged_rtcheck_output *)clientData;
 
@@ -530,8 +530,8 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 				 (ClientData)rtcop);
 	Tcl_Close(rtcop->interp, rtcop->chan);
 
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify();
+	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
 
 	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
 

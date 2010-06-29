@@ -58,7 +58,7 @@ torus( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[entityno]->param );
     Readint( &sol_num, "" );
@@ -75,7 +75,7 @@ torus( entityno )
     {
 	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
 
@@ -92,7 +92,7 @@ torus( entityno )
 
     mk_tor(fdout, dir[entityno]->name, center, hdir, rad, rad2);
 
-    return( 1 );
+    return 1;
 }
 
 /*

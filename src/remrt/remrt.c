@@ -455,7 +455,7 @@ stamp(void)
 	     tmp->tm_mon+1, tmp->tm_mday,
 	     tmp->tm_hour, tmp->tm_min, tmp->tm_sec );
 
-    return(buf);
+    return buf;
 }
 
 /*
@@ -473,24 +473,24 @@ state_to_string(int state)
 	case SRST_UNUSED:
 	    return "[unused]";
 	case SRST_NEW:
-	    return("..New..");
+	    return "..New..";
 	case SRST_VERSOK:
-	    return("Vers_OK");
+	    return "Vers_OK";
 	case SRST_DOING_DIRBUILD:
-	    return("DoDirbld");
+	    return "DoDirbld";
 	case SRST_NEED_TREE:
-	    return("NeedTree");
+	    return "NeedTree";
 	case SRST_READY:
-	    return(" Ready");
+	    return " Ready";
 	case SRST_RESTART:
-	    return("Restart");
+	    return "Restart";
 	case SRST_CLOSING:
-	    return("Closing");
+	    return "Closing";
 	case SRST_DOING_GETTREES:
-	    return("GetTrees");
+	    return "GetTrees";
     }
     sprintf(buf, "UNKNOWN_x%x", state);
-    return(buf);
+    return buf;
 }
 
 /*
@@ -641,7 +641,7 @@ main(int argc, char **argv)
 	do_work(1);		/* auto start servers */
 	bu_log("%s Task accomplished\n", stamp() );
     }
-    return(0);			/* bu_exit(0, NULL); */
+    return 0;			/* bu_exit(0, NULL; */
 }
 
 /*
@@ -1024,9 +1024,9 @@ is_night( struct timeval *tv )
     tp = localtime( &sec );
 
     /* Sunday(0) and Saturday(6) are "night" */
-    if ( tp->tm_wday == 0 || tp->tm_wday == 6 )  return(1);
-    if ( tp->tm_hour < 8 || tp->tm_hour >= 18 )  return(1);
-    return(0);
+    if ( tp->tm_wday == 0 || tp->tm_wday == 6 )  return 1;
+    if ( tp->tm_hour < 8 || tp->tm_hour >= 18 )  return 1;
+    return 0;
 }
 
 /*
@@ -1047,10 +1047,10 @@ is_hackers_night( struct timeval *tv )
     tp = localtime( &sec );
 
     /* Sunday(0) and Saturday(6) are "night" */
-    if ( tp->tm_wday == 0 || tp->tm_wday == 6 )  return(1);
+    if ( tp->tm_wday == 0 || tp->tm_wday == 6 )  return 1;
     /* Hacking tends to run from 1300 to midnight, and on to 0400 */
-    if ( tp->tm_hour >= 4 && tp->tm_hour <= 12 )  return(1);
-    return(0);
+    if ( tp->tm_hour >= 4 && tp->tm_hour <= 12 )  return 1;
+    return 0;
 }
 
 /*
@@ -1205,7 +1205,7 @@ string2int(char *str)
 	cnt = sscanf( str, "%d", &ret );
     if ( cnt != 1 )
 	bu_log("string2int(%s) = %d?\n", str, ret );
-    return(ret);
+    return ret;
 }
 
 /*
@@ -1220,18 +1220,18 @@ get_server_by_name(char *str)
     if ( isdigit( *str ) )  {
 	int	i;
 	i = atoi( str );
-	if ( i < 0 || i >= MAXSERVERS )  return( SERVERS_NULL );
-	return( &servers[i] );
+	if ( i < 0 || i >= MAXSERVERS )  return SERVERS_NULL;
+	return &servers[i];
     }
 
     if ( (ihp = host_lookup_by_name( str, 0 )) == IHOST_NULL )
-	return( SERVERS_NULL );
+	return SERVERS_NULL;
 
     for ( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 	if ( sp->sr_pc == PKC_NULL )  continue;
-	if ( sp->sr_host == ihp )  return(sp);
+	if ( sp->sr_host == ihp )  return sp;
     }
-    return( SERVERS_NULL );
+    return SERVERS_NULL;
 }
 
 /*
@@ -1394,7 +1394,7 @@ scan_frame_for_finished_pixels(struct frame *fr)
 	   fr->fr_filename );
     if ( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
 	perror( fr->fr_filename );
-	return(-1);
+	return -1;
     }
 
     pno = 0;
@@ -1477,16 +1477,16 @@ create_outputfilename( struct frame *fr )
 	if ( (fd = creat( fr->fr_filename, 0644 )) < 0 )  {
 	    /* Unable to create new file */
 	    perror( fr->fr_filename );
-	    return( -1 );		/* skip this frame */
+	    return -1;		/* skip this frame */
 	}
 	(void)close(fd);
-	return(0);			/* OK */
+	return 0;			/* OK */
     }
     /* The file exists */
     if (!bu_file_writable(fr->fr_filename)) {
 	/* File exists, and is not read/writable.  skip this frame */
 	perror( fr->fr_filename );
-	return( -1 );			/* skip this frame */
+	return -1;			/* skip this frame */
     }
     /* The file exists and is writable */
     if ( stat( fr->fr_filename, &sb ) >= 0 && sb.st_size > 0 )  {
@@ -1496,7 +1496,7 @@ create_outputfilename( struct frame *fr )
 	if ( scan_frame_for_finished_pixels( fr ) < 0 )
 	    return -1;
     }
-    return(0);				/* OK */
+    return 0;				/* OK */
 }
 
 /*
@@ -1617,16 +1617,16 @@ this_frame_done(struct frame *fr)
     CHECK_FRAME(fr);
 
     if ( BU_LIST_NON_EMPTY( &fr->fr_todo ) )
-	return(1);		/* more work still to be sent */
+	return 1;		/* more work still to be sent */
 
     for ( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 	if ( sp->sr_pc == PKC_NULL )  continue;
 	for ( BU_LIST_FOR( lp, list, &sp->sr_work ) )  {
 	    if ( fr != lp->li_frame )  continue;
-	    return(0);		/* nope, still more work */
+	    return 0;		/* nope, still more work */
 	}
     }
-    return(1);			/* All done */
+    return 1;			/* All done */
 }
 
 /*
@@ -1646,9 +1646,9 @@ all_servers_idle(void)
 	if ( sp->sr_state != SRST_READY &&
 	     sp->sr_state != SRST_NEED_TREE )  continue;
 	if ( BU_LIST_IS_EMPTY( &sp->sr_work ) )  continue;
-	return(0);		/* nope, still more work */
+	return 0;		/* nope, still more work */
     }
-    return(1);			/* All done */
+    return 1;			/* All done */
 }
 
 /*
@@ -1670,13 +1670,13 @@ all_done(void)
 	CHECK_FRAME(fr);
 	if ( BU_LIST_IS_EMPTY( &fr->fr_todo ) )
 	    continue;
-	return(0);		/* nope, still more work */
+	return 0;		/* nope, still more work */
     }
 
     if ( all_servers_idle() )
-	return(1);		/* All done */
+	return 1;		/* All done */
 
-    return(0);			/* nope, still more work */
+    return 0;			/* nope, still more work */
 }
 
 /*
@@ -1887,10 +1887,10 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
     int			lump;
     int			maxlump;
 
-    if ( sp->sr_pc == PKC_NULL )  return(0);
+    if ( sp->sr_pc == PKC_NULL )  return 0;
 
     if ( sp->sr_state != SRST_READY && sp->sr_state != SRST_NEED_TREE )
-	return(0);	/* not running yet */
+	return 0;	/* not running yet */
 
     CHECK_FRAME(fr);
 
@@ -1900,7 +1900,7 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 	bu_log("task_server: fr %d: null filename!\n",
 	       fr->fr_number);
 	destroy_frame( fr );	/* will dequeue */
-	return(-1);		/* restart scan */
+	return -1;		/* restart scan */
     }
 
     /*
@@ -1918,17 +1918,17 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 	 tvdiff( nowp, &sp->sr_sendtime ) > TARDY_SERVER_INTERVAL )  {
 	bu_log("%s %s: *TARDY*\n", stamp(), sp->sr_host->ht_name);
 	drop_server( sp, "tardy" );
-	return(0);	/* not worth giving another assignment */
+	return 0;	/* not worth giving another assignment */
     }
 
     if ( server_q_len(sp) >= N_SERVER_ASSIGNMENTS )
-	return(0);	/* plenty busy */
+	return 0;	/* plenty busy */
 
     if ( BU_LIST_IS_EMPTY( &fr->fr_todo ) )  {
 	/*  No more work to assign in this frame,
 	 *  on next pass, caller should advance to next frame.
 	 */
-	return(1);	/* need more work */
+	return 1;	/* need more work */
     }
 
     /*
@@ -2026,8 +2026,8 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 
     /* See if server will need more assignments */
     if ( server_q_len(sp) < N_SERVER_ASSIGNMENTS )
-	return(1);
-    return(0);
+	return 1;
+    return 0;
 }
 
 /*
@@ -2045,7 +2045,7 @@ server_q_len( struct servers *sp )
     for ( BU_LIST_FOR( lp, list, &sp->sr_work ) )  {
 	count++;
     }
-    return(count);
+    return count;
 }
 
 /*
@@ -2091,12 +2091,12 @@ read_matrix(FILE *fp, struct frame *fr)
     if ( feof(fp) ) {
     eof:
 	bu_log("read_matrix: EOF on old style frame file.\n");
-	return(-1);
+	return -1;
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
  out:
     bu_log("read_matrix:  unable to parse old style entry\n");
-    return(-1);
+    return -1;
 }
 
 /*
@@ -2619,14 +2619,14 @@ init_fb(char *name)
 	yy <<= 1;
     if ( (fbp = fb_open( name?name:framebuffer, xx, yy )) == FBIO_NULL )  {
 	bu_log("fb_open %d,%d failed\n", xx, yy);
-	return(-1);
+	return -1;
     }
     /* New way:  center, zoom */
     fb_view( fbp, xx/2, yy/2,
 	     fb_getwidth(fbp)/xx, fb_getheight(fbp)/yy );
 
     cur_fbwidth = 0;
-    return(0);
+    return 0;
 }
 
 /*
@@ -3364,10 +3364,10 @@ cd_allocate(int argc, char **argv)
 	work_allocate_method = OPT_LOAD;
     } else {
 	bu_log("%s Bad allocateby type '%s'\n", stamp(), argv[1]);
-	return( -1 );
+	return -1;
     }
 
-    return( 0 );
+    return 0;
 }
 
 int

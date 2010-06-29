@@ -28,6 +28,10 @@
  * THESE ROUTINES ARE ALL MARKED STATIC AS THEY ARE EXPERIMENTAL AND
  * NOT YET INTENDED TO BE USED.  ASK A BRL-CAD DEVELOPER IF YOU NEED
  * SOMETHING IN HERE WHAT IT WILL TAKE TO ENABLE THE ROUTINE.
+ *
+ * NOTE: THIS FILE SHOULD BE ENABLED FOR COMPILATION SO THAT IT CAN
+ * CONTINUE TO BE MAINTAINED UNTIL MIGRATION TO LIBNMG.
+ *
  */
 /** @} */
 
@@ -157,7 +161,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	FREE_VERTEX(v[i]);
     }
     bu_free((char *)v, "vertex array");
-    return(s);
+    return s;
 }
 
 

@@ -106,7 +106,7 @@ bu_cv_cookie(const char *in)			/* input format */
     }
     p++;
 
-    if (!*p) return (result);
+    if (!*p) return result;
     if (*p == 'N') {
 	result |= CV_NORMAL;
     } else if (*p == 'C') {
@@ -116,7 +116,7 @@ bu_cv_cookie(const char *in)			/* input format */
     } else {
 	return 0;
     }
-    return (result);
+    return result;
 }
 
 
@@ -260,7 +260,7 @@ cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
     int incookie, outcookie;
     incookie = bu_cv_cookie(infmt);
     outcookie = bu_cv_cookie(outfmt);
-    return (bu_cv_w_cookie(out, outcookie, size, in, incookie, count));
+    return bu_cv_w_cookie(out, outcookie, size, in, incookie, count);
 }
 
 
@@ -354,7 +354,7 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, size_t 
 	 */
 	in = ((char *)in) + 2;
     }
-    return (count);
+    return count;
 }
 
 
@@ -372,7 +372,7 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
 	    ((unsigned char *)in)[1];
 	in = ((char *)in) + 2;
     }
-    return (count);
+    return count;
 }
 
 
@@ -394,7 +394,7 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, size_t c
 	in = ((char *)in) + 4;
     }
 
-    return (count);
+    return count;
 }
 
 
@@ -414,7 +414,7 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
 	    ((unsigned char *)in)[3];
 	in = ((char *)in) + 4;
     }
-    return (count);
+    return count;
 }
 
 
@@ -433,7 +433,7 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, size_t count)
 	*cp++ = (val = *in++)>>8;
 	*cp++ = val;
     }
-    return (count);
+    return count;
 }
 
 
@@ -452,7 +452,7 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, size_t 
 	*cp++ = (val = *in++)>>8;
 	*cp++ = val;
     }
-    return (count);
+    return count;
 }
 
 
@@ -473,7 +473,7 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, size_t count)
 	*cp++ = val>> 8;
 	*cp++ = val;
     }
-    return (count);
+    return count;
 }
 
 
@@ -496,7 +496,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t c
 	*cp++ = val>> 8;
 	*cp++ = val;
     }
-    return (count);
+    return count;
 }
 
 
@@ -566,7 +566,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	     * This is the simplest case, binary copy and out.
 	     */
 	    memmove((genptr_t)out, (genptr_t)in, (size_t)number_done * outsize);
-	    return (number_done);
+	    return number_done;
 
 	    /*
 	     * Well it's still the same format but the conversion are
@@ -579,16 +579,16 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    /* net format */
 	    switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 		case CV_SIGNED_MASK | CV_16:
-		    return (	bu_cv_ntohss((signed short *)out, size, in, count));
+		    return bu_cv_ntohss((signed short *)out, size, in, count);
 		case CV_16:
-		    return (bu_cv_ntohus((unsigned short *)out, size, in, count));
+		    return bu_cv_ntohus((unsigned short *)out, size, in, count);
 		case CV_SIGNED_MASK | CV_32:
-		    return (bu_cv_ntohsl((signed long *)out, size, in, count));
+		    return bu_cv_ntohsl((signed long *)out, size, in, count);
 		case CV_32:
-		    return (bu_cv_ntohul((unsigned long *)out, size, in, count));
+		    return bu_cv_ntohul((unsigned long *)out, size, in, count);
 		case CV_D:
 		    (void) ntohd((unsigned char *)out, (unsigned char *)in, count);
-		    return (count);
+		    return count;
 	    }
 
 	    /*
@@ -599,16 +599,16 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	} else {
 	    switch (incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 		case CV_SIGNED_MASK | CV_16:
-		    return (	bu_cv_htonss(out, size, (short *)in, count));
+		    return bu_cv_htonss(out, size, (short *)in, count);
 		case CV_16:
-		    return (bu_cv_htonus(out, size, (unsigned short *)in, count));
+		    return bu_cv_htonus(out, size, (unsigned short *)in, count);
 		case CV_SIGNED_MASK | CV_32:
-		    return (bu_cv_htonsl(out, size, (long *)in, count));
+		    return bu_cv_htonsl(out, size, (long *)in, count);
 		case CV_32:
-		    return (bu_cv_htonul(out, size, (unsigned long *)in, count));
+		    return bu_cv_htonul(out, size, (unsigned long *)in, count);
 		case CV_D:
 		    (void) htond((unsigned char *)out, (unsigned char *)in, count);
-		    return (count);
+		    return count;
 	    }
 	}
     }
@@ -903,7 +903,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     bu_free(t1, "vert.c: t1");
     bu_free(t2, "vert.c: t2");
     bu_free(t3, "vert.c: t3");
-    return (number_done);
+    return number_done;
 }
 
 /** @} */

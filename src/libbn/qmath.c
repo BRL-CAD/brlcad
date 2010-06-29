@@ -176,7 +176,7 @@ quat_distance(const fastf_t *q1, const fastf_t *q2)
     quat_t	qtemp;
 
     QSUB2( qtemp, q1, q2 );
-    return( QMAGNITUDE( qtemp ) );
+    return QMAGNITUDE( qtemp );
 }
 
 /**

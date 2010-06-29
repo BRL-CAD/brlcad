@@ -93,6 +93,34 @@ struct ON_3DM_CHUNK
   ON__UINT32 m_crc32;
 };
 
+struct ON_3DM_BIG_CHUNK
+{
+  ON__UINT64 m_big_offset; // In read or write_using_fseek mode, this is the
+                           // file position of first byte after chunk's length.
+                           // In write_using_buffer mode, this of the m_buffer[]
+                           // position of first byte after chunk's length.
+
+  ON__UINT64 Length() const; // 0 for short chunks
+
+  ON__INT64 m_big_value;
+  ON__UINT32 m_typecode;
+
+  ON__UINT8 m_bLongChunk; // true if chunk is a long chunk and m_big_value is a length.
+  ON__UINT8 m_reserved1;
+  ON__UINT8 m_reserved2;
+  ON__UINT8 m_reserved3;
+
+  // CRC settings
+  ON__UINT8 m_do_crc16; // true (1) if we are calculating 16 bit CRC
+  ON__UINT8 m_do_crc32; // true (1) if we are calculating 32 bit CRC
+  ON__UINT16 m_crc16; // current 16 bit CRC value
+  ON__UINT32 m_crc32; // current 32 bit CRC value
+};
+
+bool ON_IsLongChunkTypecode(ON__UINT32 typecode);
+
+bool ON_IsShortChunkTypecode(ON__UINT32 typecode);
+
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
 // handles templates and DLLs.  See Microsoft's knowledge base 
@@ -100,6 +128,7 @@ struct ON_3DM_CHUNK
 #pragma warning( push )
 #pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3DM_CHUNK>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_3DM_BIG_CHUNK>;
 #pragma warning( pop )
 #endif
 
@@ -138,6 +167,11 @@ public:
                 ) = 0;
   virtual 
   bool AtEnd() const = 0; // true if at end of file
+
+  bool BigSeekFromStart( ON__UINT64 offset );
+  bool BigSeekForward( ON__UINT64 offset );
+  bool BigSeekBackward( ON__UINT64 offset );
+  bool BigSeekFromCurrentPosition( ON__INT64 offset );
 
   /*
   Description:
@@ -178,6 +212,18 @@ public:
   bool ReadByte( size_t, void* ); // must fail if mode is not read or readwrite
 
   bool WriteByte( size_t, const void* ); // must fail if mode is not write or readwrite
+
+  /*
+  Description:
+    Expert user function that uses Read() to load a buffer.
+  Paramters:
+    sizeof_buffer - [in] number of bytes to attempt to read.
+    buffer - [out] read bytes are stored in this buffer
+  Returns:
+    Number of bytes actually read, which may be less than
+    sizeof_buffer if the end of file is encountered.
+  */
+  ON__UINT64 ReadBuffer( ON__UINT64 sizeof_buffer, void* buffer );
 
   /*
   Description:
@@ -1067,25 +1113,142 @@ public:
   ///////////////////////////////////////////////////////////////////
   // Step 17: OPTIONAL - Write/Read 0 or more user tables
   //
+
+  /*
+  Description:
+    Write the user table header information that must precede
+    the user table information written by a plug-in.
+  Parameters:
+    plugin_id - [in]
+    bSavingGoo - [in]
+      Set to false if a plug-in will be used to write
+      the user table.  Set to true if a user table written by
+      a missing plug-in is being resaved. In this case,
+      goo_3dm_version and goo_opennurbs_version must also be
+      set.  In practice, you should use Write3dmAnonymousUserTableRecord()
+      to handle writing "goo" and use this function only when
+      the plug-in in present.
+    goo_3dm_version - [in]
+      If bSavingGoo is false, this parameter must be zero and
+      ON_BinaryArchive::Archive3dmVersion() will be used.
+      If bSavingGoo is true, this parameter must be the version of 
+      the 3dm archive (1,2,3,4,5,50,...) the plug-in code used to 
+      write the user table.
+    goo_opennurbs_version - [in]
+      If bSavingGoo is false, this parameter must be zero and
+      ON_BinaryArchive::ArchiveOpenNURBSVersion() will be used.
+      If bSavingGoo is true, this parameter must be the version
+      of the opennurbs (YYYYMMDDN) the plug-in code used to 
+      write the user table.
+  Returns:
+    True if the the user information can be written.
+    False if user informtion should not be written.
+  */
   bool BeginWrite3dmUserTable(
-    const ON_UUID& // user table id, (e.g., a plugin id) - cannot be nil
+    const ON_UUID& plugin_id,
+    bool bSavingGoo,
+    int goo_3dm_version,
+    int goo_opennurbs_version
     );
-  // Use Write3dmAnonymousUserTable() to put back what Read3dmAnonymousUserTable() read.
-  // (Generally a plugin or some other app will be called to write
-  //  it's information to the archive.)
-  bool Write3dmAnonymousUserTable( const ON_3dmGoo& );
+
   bool EndWrite3dmUserTable();
 
-  // BeginRead3dmUserTable returns false when there are no more user tables
-  bool BeginRead3dmUserTable(
-    ON_UUID& // user table id returned here 
-             //  - simply call EndRead3dmUserTable() to skip this information
+  /*
+  Description:
+    If Read3dmAnaonymousUserTable() was used to read ON_3dmGoo because a 
+    plug-in was not present, then use Write3dmAnonymousUserTableRecord()
+    to put than information back into the archive.
+    Write3dmAnonymousUserTableRecord() writes the entire record.
+    Do NOT call BeginWrite3dmUserTable() / EndWrite3dmUserTable() when
+    using Write3dmAnonymousUserTableRecord().
+  Parameters:
+    plugin_id - [in]
+    goo_version - [in]
+      The version of the archive (1,2,3,4,5,50,...) that was used when
+      the plug-in wrote the user table.
+    goo_opennurbs_version - [in]
+      The version of opennurbs ( YYYMMDDN ) that was used when the 
+      plug-in wrote the user table.
+    goo - [in]
+  Returns:
+    True if the goo was written or skipped because it could not be robustly
+    saved.  False if a catastrophic IO error occured.
+  */
+  bool Write3dmAnonymousUserTableRecord( 
+    const ON_UUID& plugin_id,
+    int goo_3dm_version,
+    int goo_opennurbs_version,
+    const ON_3dmGoo& goo
     );
-  // Use Read3dmAnonymousUserTableRecord() if you don't know how to decipher 
-  // the contents of a user table but you need to rewrite it for some reason.
-  // If you simple want to skip over the table, just call EndRead3dmUserTable().
-  bool Read3dmAnonymousUserTable( ON_3dmGoo& );
+
+  // OBSOLETE - use BeginWrite3dmUserTable(plugin_id, bSavingGoo, 3dm_version, opennurbs_version )
+#if defined(ON_COMPILER_MSC)
+  __declspec(deprecated)
+#endif
+  bool BeginWrite3dmUserTable( const ON_UUID& );
+
+  // OBSOLETE - use Write3dmAnonymousUserTableRecord(plugin_id, ..., goo)
+#if defined(ON_COMPILER_MSC)
+  __declspec(deprecated)
+#endif
+  bool Write3dmAnonymousUserTable( const ON_3dmGoo& );
+
+  /*
+  Parameters:
+    plugin_id - [out] 
+      id of plug-in that wrote the user table
+    bLastSavedAsGoo - [out] 
+      True if this table was saved into this archive as goo because
+      the plug-in was not present at the time of the save.
+    archive_3dm_version - [out]
+      Version of the archive the plug-in wrote to.  When bLastSavedAsGoo
+      is true, this number can be different from Archive3dmVersion().
+    archive_opennurbs_version - [out]
+      Version of opennurbs the plug-in used to write the archive.  
+      When bLastSavedAsGoo is true, this number can be different 
+      from ArchiveOpenNURBSVersion().     
+  Returns:
+    False when there are no more user tables or an IO error occurs.
+  */
+  bool BeginRead3dmUserTable(
+    ON_UUID& plugin_id,
+    bool* bLastSavedAsGoo,
+    int* archive_3dm_version,
+    int* archive_opennurbs_version
+    );
+
+  /*
+  Description:
+    If the plug-in that wrote the user table is not present and you need
+    to read and resave the user table, then use Read3dmAnonymousUserTable()
+    to load the information into "goo".
+    If you do not need to resave the information, then simply call EndRead3dmUserTable()
+    to skip over this table.
+  */
+  bool Read3dmAnonymousUserTable( 
+    int archive_3dm_version,
+    int archive_opennurbs_version,
+    ON_3dmGoo& goo
+    );
+
   bool EndRead3dmUserTable();
+
+  // OBSOLETE - use BeginRead3dmUserTable( plugin_id, bLastSavedAsGoo, archive_3dm_version, ... )
+#if defined(ON_COMPILER_MSC)
+  __declspec(deprecated) 
+#endif
+  bool BeginRead3dmUserTable(
+    ON_UUID&
+    );
+
+  // OBSOLETE - use Read3dmAnonymousUserTable( archive_3dm_version, archive_opennurbs_version, goo )
+#if defined(ON_COMPILER_MSC)
+  __declspec(deprecated)
+#endif
+  bool Read3dmAnonymousUserTable( ON_3dmGoo& );
+
+
+
 
   ///////////////////////////////////////////////////////////////////
   // Step 18: REQUIRED when writing / OPTIONAL when reading
@@ -1128,7 +1291,7 @@ public:
   // you must call EndWrite/ReadChunk() or cease using the archive.
 
   // Description:
-  //   Writes a chunk header containing 4 byte typecode and 4 byte value.
+  //   Writes a chunk header containing 4 byte typecode and value.
   //
   // Parameters:
   //   typecode - [in] a TCODE_* number from opennurbs_3dm.h
@@ -1142,6 +1305,11 @@ public:
   bool BeginWrite3dmChunk(
         unsigned int, // typecode
         int // value
+        );
+
+  bool BeginWrite3dmBigChunk(
+        ON__UINT32 typecode,
+        ON__INT64 value
         );
 
   /*
@@ -1169,11 +1337,20 @@ public:
 
   bool Write3dmGoo( const ON_3dmGoo& ); // call to write "goo"
 
-  // When the end of the 3dm file is reached, BeginReadChunk() will
-  // return true with a typecode of TCODE_ENDOFFILE.
+  // OBSOLETE - Use BeginRead3dmBigChunk()
+#if defined(ON_COMPILER_MSC)
+  __declspec(deprecated)
+#endif
   bool BeginRead3dmChunk(
         unsigned int*,   // typecode from opennurbs_3dm.h
         int*             // value
+        );
+
+  // When the end of the 3dm file is reached, BeginReadChunk() will
+  // return true with a typecode of TCODE_ENDOFFILE.
+  bool BeginRead3dmBigChunk(
+        unsigned int*,   // typecode from opennurbs_3dm.h
+        ON__INT64*       // value
         );
   /*
   Description:
@@ -1299,10 +1476,20 @@ public:
 
   bool Read3dmGoo( ON_3dmGoo& ); // Call to read "goo"
 
+  // OBSOLETE - Use PeekAt3dmBigChunkType()
+#if defined(ON_COMPILER_MSC)
+  __declspec(deprecated)
+#endif
   bool PeekAt3dmChunkType( // does not change file position
         unsigned int*,   // typecode from opennurbs_3dm.h
         int*             // value
         );
+
+  bool PeekAt3dmBigChunkType( // does not change file position
+        ON__UINT32* typecode,
+        ON__INT64* big_value
+        );
+
   bool Seek3dmChunkFromStart( 
         // beginning at the start of the active chunk, search portion of
         // archive included in active chunk for the start of a subchunk 
@@ -1370,7 +1557,8 @@ public:
     2     a version 2 3dm archive is being read/written
     3     a version 3 3dm archive is being read/written
     4     a version 4 3dm archive is being read/written
-    5     a version 5 3dm archive is being read/written
+    5     an old version 5 3dm archive is being read
+    50    a version 5 3dm archive is being read/written
   See Also:
     ON_BinaryArchive::ArchiveOpenNURBSVersion
   */
@@ -1447,6 +1635,7 @@ public:
     chunk.
   */
   int GetCurrentChunk(ON_3DM_CHUNK& chunk) const;
+  int GetCurrentChunk(ON_3DM_BIG_CHUNK& big_chunk) const;
 
   /*
   Description:
@@ -1540,6 +1729,10 @@ protected:
 
 private:
   // 16 bit integer IO
+  bool WriteInt8( size_t, const ON__INT8* );
+  bool ReadInt8( size_t, ON__INT8* );
+
+  // 16 bit integer IO
   bool WriteInt16( size_t, const ON__INT16* );
   bool ReadInt16( size_t, ON__INT16* );
 
@@ -1548,8 +1741,8 @@ private:
   bool ReadInt32( size_t, ON__INT32* );
 
   // 64 bit integer IO
-  bool WriteInt64( size_t, const ON__UINT64* );
-  bool ReadInt64(  size_t, ON__UINT64* );
+  bool WriteInt64( size_t, const ON__INT64* );
+  bool ReadInt64(  size_t, ON__INT64* );
 
   bool BeginWrite3dmTable( 
     unsigned int // tcode
@@ -1614,14 +1807,41 @@ private:
   int m_3dm_v1_layer_index;
   int m_3dm_v1_material_index;
 
-  // * V1 files do not have a table structure and are read using
-  //   multiple passes and there are valid situations where a 
-  //   read is attempted at the end of a file.  During those 
-  //   situations, the following flag has bit 0x01 set.
+  // The bits in m_error_message_mask are used to mask errors
+  // when we know we are doing something that may generate an
+  // error.
   //
-  // * Some v1 files do not have an end mark.  When reading
-  //   these v1 files the following flag has bit 0x02 set.
-  unsigned int m_3dm_v1_suppress_error_message;
+  // bit 0x00000001
+  //   V1 files do not have a table structure and are read using
+  //   multiple passes and there are valid situations where a 
+  //   4 byte read is attempted at the end of a file.
+  //
+  // bit 0x00000002
+  //   Some v1 files do not have an end mark.  When reading
+  //   these v1 files bit 0x02 is set.
+  //
+  // bit 0x00000004
+  //   Requested read may go beyond end of file.
+  //   One situation where this happens is when a table is not at the 
+  //   expected location in a file, 
+
+  unsigned int m_error_message_mask;
+protected:
+  unsigned int ErrorMessageMask() const;
+  /*
+  Paramters:
+    sizeof_request - [in] 
+      value of count parameter passed to virtual Read() function.
+    sizeof_read - [in]
+      number of bytes actually read by the virtual Read() function.
+  Returns:
+    True if a call to Read() is permitted to ask for more bytes
+    than are left in the file.  This value varies as the file
+    is read and must be checked at each failure.
+  */
+  bool MaskReadError( ON__UINT64 sizeof_request, ON__UINT64 sizeof_read ) const;
+private:
+
 
   // When a 3DM archive is read, m_3dm_opennurbs_version records the version of
   // OpenNURBS used to create the archive.  Otherwise, m_3dm_opennurbs_version
@@ -1646,14 +1866,36 @@ private:
 
   table_type TableTypeFromTypecode( unsigned int ); // table type from tcode
 
-
-  ON_SimpleArray<ON_3DM_CHUNK> m_chunk;
+  ON_SimpleArray<ON_3DM_BIG_CHUNK> m_chunk;
 
   // stack of chunks
-  bool PushChunk( 
-        unsigned int, // typecode
-        int          // value
+  bool PushBigChunk( ON__UINT32 typecode, ON__INT64 value );
+
+  bool WriteChunkTypecode( ON__UINT32 );
+  bool ReadChunkTypecode( ON__UINT32* );
+  bool WriteChunkValue( ON__UINT32 typecode, ON__INT64 );
+  bool WriteChunkLength( ON__UINT64 );
+  bool ReadChunkValue( ON__UINT32 typecode, ON__INT64* value64 );
+  bool FindMisplacedTable( 
+        ON__UINT64 filelength,
+        const ON__UINT32 table_tocde,
+        const ON__UINT32 table_record_record,
+        const ON_UUID class_uuid,
+        const ON__UINT64 min_length_data
         );
+
+  bool ReadObjectUserDataAnonymousChunk(
+          const ON__UINT64 length_TCODE_ANONYMOUS_CHUNK,
+          const int archive_3dm_version,
+          const int archive_opennurbs_version,
+          class ON_UserData* ud );
+
+public:
+  size_t SizeofChunkLength() const;
+
+private:
+  bool WriteEOFSizeOfFile( ON__UINT64 );
+  bool ReadEOFSizeOfFile( ON__UINT64* );
 
   bool m_bDoChunkCRC; // true if active chunk crc status should be checked
                       // and updated.
@@ -1702,7 +1944,7 @@ private:
   // ids of plug-ins that support saving older (V3) versions
   // of user data.  This information is filled in from the
   // list of plug-ins passed in whenteh settings are saved.
-  ON_SimpleArray< ON_UUID > m_plugin_id_list;
+  ON_SimpleArray< ON_UUID > m_V3_plugin_id_list;
 
   struct ON__3dmV1LayerIndex* m_V1_layer_list;
 
@@ -1792,7 +2034,8 @@ class ON_CLASS ON_Read3dmBufferArchive : public ON_BinaryArchive
 public:
 
   /*
-  Construct an ON_BinaryArchive for reading information from a memory buffer.
+  Description:
+    Construct an ON_BinaryArchive for reading information from a memory buffer.
   Parameters:
     sizeof_buffer - [in] size of buffer in bytes (>0)
     buffer - [in] memory buffer containing binary archive

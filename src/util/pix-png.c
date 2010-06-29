@@ -52,8 +52,6 @@
 static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
 static char *file_name = (char *)NULL;
-static FILE *infp = (FILE *)NULL;
-static FILE *outfp = (FILE *)NULL;
 
 
 /**
@@ -64,7 +62,7 @@ double out_gamma = -1.0;
 
 
 int
-get_args(int argc, char **argv, long *width, long *height)
+get_args(int argc, char **argv, long *width, long *height, FILE **infp, FILE **outfp)
 {
     int c;
 
@@ -90,8 +88,8 @@ get_args(int argc, char **argv, long *width, long *height)
 		autosize = 0;
 		break;
 	    case 'o': {
-		outfp = fopen(bu_optarg, "w+");
-		if (outfp == (FILE *)NULL) {
+		*outfp = fopen(bu_optarg, "wb+");
+		if (*outfp == (FILE *)NULL) {
 		    bu_exit(1, "%s: cannot open \"%s\" for writing\n", bu_getprogname(), bu_optarg);
 		}
 		break;
@@ -109,18 +107,18 @@ get_args(int argc, char **argv, long *width, long *height)
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
-	if ((infp = fopen(file_name, "r")) == NULL) {
+	if ((*infp = fopen(file_name, "rb")) == NULL) {
 	    perror(file_name);
 	    bu_exit(1, "%s: cannot open \"%s\" for reading\n", bu_getprogname(), file_name);
 	}
 	fileinput++;
     }
 
-    if (isatty(fileno(infp))) {
+    if (isatty(fileno(*infp))) {
 	bu_log("ERROR: %s will not read pix data from a tty\n", bu_getprogname());
 	return 0; /* usage */
     }
-    if (isatty(fileno(outfp))) {
+    if (isatty(fileno(*outfp))) {
 	bu_log("ERROR: %s will not write png data to a tty\n", bu_getprogname());
 	return 0; /* usage */
     }
@@ -187,6 +185,9 @@ main(int argc, char *argv[])
     unsigned char **rows;
     struct stat sb;
 
+    FILE *infp = (FILE *)NULL;
+    FILE *outfp = (FILE *)NULL;
+
     long int file_width = 512L; /* default input width */
     long int file_height = 512L; /* default input height */
 
@@ -202,7 +203,7 @@ main(int argc, char *argv[])
     infp = stdin;
     outfp = stdout;
 
-    if (!get_args(argc, argv, &file_width, &file_height)) {
+    if (!get_args(argc, argv, &file_width, &file_height, &infp, &outfp)) {
 	bu_exit(1, "%s\n", usage);
     }
 
@@ -264,6 +265,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

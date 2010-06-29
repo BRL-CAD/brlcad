@@ -584,7 +584,7 @@ TkMacOSXGetStringObjFromCFString(
 	CFIndex len;
 
 	if (CFStringGetBytes(str, all, kCFStringEncodingUTF8, 0, false, NULL,
-		0, &len) > 0) {
+		0, &len) > 0 && len < INT_MAX) {
 	    obj = Tcl_NewObj();
 	    Tcl_SetObjLength(obj, len);
 	    CFStringGetBytes(str, all, kCFStringEncodingUTF8, 0, false,

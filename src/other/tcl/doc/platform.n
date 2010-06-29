@@ -7,14 +7,14 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH "platform" n 1.0.3 platform "Tcl Bundled Packages"
+.TH "platform" n 1.0.4 platform "Tcl Bundled Packages"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 platform \- System identification support code and utilities
 .SH SYNOPSIS
 .nf
-\fBpackage require platform ?1.0.3?\fR
+\fBpackage require platform ?1.0.4?\fR
 .sp
 \fBplatform::generic\fR
 \fBplatform::identify\fR

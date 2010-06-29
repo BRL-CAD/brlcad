@@ -40,26 +40,26 @@
 #include "rle.h"
 
 
-static rle_hdr	outrle;
-#define		outfp		outrle.rle_file
-static char			comment[128];
+static rle_hdr outrle;
+#define outfp outrle.rle_file
+static char comment[128];
 #if HAVE_GETHOSTNAME
-static char			host[128];
+static char host[128];
 #endif
-static rle_pixel		**rows;
-static time_t			now;
-static char			*who;
-extern char			*getenv(const char *);
+static rle_pixel **rows;
+static time_t now;
+static char *who;
+extern char *getenv(const char *);
 
-static FILE	*infp;
-static char	*infile;
+static FILE *infp;
+static char *infile;
 
-static int	background[3];
+static int background[3];
 
-static int	file_width = 512;
-static int	file_height = 512;
+static int file_width = 512;
+static int file_height = 512;
 
-static char	usage[] = "\
+static char usage[] = "\
 Usage: pix-rle [-h] [-s squarefilesize]  [-C r/g/b]\n\
 	[-w file_width] [-n file_height] [file.pix] [file.rle]\n\
 \n\
@@ -68,15 +68,15 @@ and the .rle file is written to stdout\n";
 
 
 /*
- *			G E T _ A R G S
+ * G E T _ A R G S
  */
 static int
 get_args(int argc, char **argv)
 {
-    int	c;
+    int c;
 
-    while ( (c = bu_getopt( argc, argv, "hs:w:n:C:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "hs:w:n:C:")) != EOF) {
+	switch (c) {
 	    case 'h':
 		/* high-res */
 		file_height = file_width = 1024;
@@ -92,68 +92,69 @@ get_args(int argc, char **argv)
 		file_height = atoi(bu_optarg);
 		break;
 	    case 'C':
-	    {
-		char *cp = bu_optarg;
-		int *conp = background;
+		{
+		    char *cp = bu_optarg;
+		    int *conp = background;
 
-		/* premature null => atoi gives zeros */
-		for ( c=0; c < 3; c++ )  {
-		    *conp++ = atoi(cp);
-		    while ( *cp && *cp++ != '/' )
-			;
+		    /* premature null => atoi gives zeros */
+		    for (c=0; c < 3; c++) {
+			*conp++ = atoi(cp);
+			while (*cp && *cp++ != '/')
+			    ;
+		    }
 		}
-	    }
-	    break;
+		break;
 	    default:
 	    case '?':
-		return	0;
+		return 0;
 	}
     }
-    if ( argv[bu_optind] != NULL )  {
-	if ( (infp = fopen( (infile=argv[bu_optind]), "r" )) == NULL )  {
+    if (argv[bu_optind] != NULL) {
+	if ((infp = fopen((infile=argv[bu_optind]), "r")) == NULL) {
 	    perror(infile);
-	    return	0;
+	    return 0;
 	}
 	bu_optind++;
     } else {
 	infile = "-";
     }
-    if ( argv[bu_optind] != NULL )  {
+    if (argv[bu_optind] != NULL) {
 	if (bu_file_exists(argv[bu_optind])) {
-	    (void) fprintf( stderr,
-			    "\"%s\" already exists.\n",
-			    argv[bu_optind] );
-	    bu_exit ( 1, NULL );
+	    (void) fprintf(stderr,
+			   "\"%s\" already exists.\n",
+			   argv[bu_optind]);
+	    bu_exit (1, NULL);
 	}
-	if ( (outfp = fopen( argv[bu_optind], "w" )) == NULL )  {
+	if ((outfp = fopen(argv[bu_optind], "w")) == NULL) {
 	    perror(argv[bu_optind]);
-	    return	0;
+	    return 0;
 	}
     }
-    if ( argc > ++bu_optind )
-	(void) fprintf( stderr, "pix-rle: Excess arguments ignored\n" );
+    if (argc > ++bu_optind)
+	(void) fprintf(stderr, "pix-rle: Excess arguments ignored\n");
 
-    if ( isatty(fileno(infp)) || isatty(fileno(outfp)) )
+    if (isatty(fileno(infp)) || isatty(fileno(outfp)))
 	return 0;
-    return	1;
+    return 1;
 }
 
+
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
 {
     RGBpixel *scan_buf;
-    int	y;
+    int y;
 
     infp = stdin;
     outfp = stdout;
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
-    scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * file_width );
+    scan_buf = (RGBpixel *)malloc(sizeof(RGBpixel) * file_width);
 
     outrle.ncolors = 3;
     RLE_SET_BIT(outrle, RLE_RED);
@@ -171,60 +172,61 @@ main(int argc, char **argv)
     outrle.comments = (const char **)0;
 
     /* Add comments to the header file, since we have one */
-    snprintf( comment, 128, "converted_from=%s", infile );
-    rle_putcom( strdup(comment), &outrle );
+    snprintf(comment, 128, "converted_from=%s", infile);
+    rle_putcom(strdup(comment), &outrle);
     now = time(0);
-    sprintf( comment, "converted_date=%24.24s", ctime(&now) );
-    rle_putcom( strdup(comment), &outrle );
-    if ( (who = getenv("USER")) != (char *)0 ) {
-	snprintf( comment, 128, "converted_by=%s", who);
-	rle_putcom( strdup(comment), &outrle );
+    sprintf(comment, "converted_date=%24.24s", ctime(&now));
+    rle_putcom(strdup(comment), &outrle);
+    if ((who = getenv("USER")) != (char *)0) {
+	snprintf(comment, 128, "converted_by=%s", who);
+	rle_putcom(strdup(comment), &outrle);
     } else {
-	if ( (who = getenv("LOGNAME")) != (char *)0 ) {
-	    snprintf( comment, 128, "converted_by=%s", who);
-	    rle_putcom( strdup(comment), &outrle );
+	if ((who = getenv("LOGNAME")) != (char *)0) {
+	    snprintf(comment, 128, "converted_by=%s", who);
+	    rle_putcom(strdup(comment), &outrle);
 	}
     }
 #ifdef HAVE_GETHOSTNAME
-    gethostname( host, sizeof(host) );
-    snprintf( comment, 128, "converted_host=%s", host);
-    rle_putcom( strdup(comment), &outrle );
+    gethostname(host, sizeof(host));
+    snprintf(comment, 128, "converted_host=%s", host);
+    rle_putcom(strdup(comment), &outrle);
 #endif
 
-    rle_put_setup( &outrle );
-    rle_row_alloc( &outrle, &rows );
+    rle_put_setup(&outrle);
+    rle_row_alloc(&outrle, &rows);
 
     /* Read image a scanline at a time, and encode it */
-    for ( y = 0; y < file_height; y++ )  {
-	if ( fread( (char *)scan_buf, sizeof(RGBpixel), (size_t)file_width, infp ) != file_width)  {
-	    (void) fprintf(	stderr,
-				"pix-rle: read of %d pixels on line %d failed!\n",
-				file_width, y );
+    for (y = 0; y < file_height; y++) {
+	if (fread((char *)scan_buf, sizeof(RGBpixel), (size_t)file_width, infp) != file_width) {
+	    (void) fprintf(stderr,
+			   "pix-rle: read of %d pixels on line %d failed!\n",
+			   file_width, y);
 	    bu_exit (1, NULL);
 	}
 
 	/* Grumble, convert to Utah layout */
 	{
-	    unsigned char	*pp = (unsigned char *)scan_buf;
-	    rle_pixel	*rp = rows[0];
-	    rle_pixel	*gp = rows[1];
-	    rle_pixel	*bp = rows[2];
-	    int		i;
+	    unsigned char *pp = (unsigned char *)scan_buf;
+	    rle_pixel *rp = rows[0];
+	    rle_pixel *gp = rows[1];
+	    rle_pixel *bp = rows[2];
+	    int i;
 
-	    for ( i=0; i<file_width; i++ )  {
+	    for (i=0; i<file_width; i++) {
 		*rp++ = *pp++;
 		*gp++ = *pp++;
 		*bp++ = *pp++;
 	    }
 	}
-	rle_putrow( rows, file_width, &outrle );
+	rle_putrow(rows, file_width, &outrle);
     }
-    rle_puteof( &outrle );
+    rle_puteof(&outrle);
 
-    fclose( infp );
-    fclose( outfp );
+    fclose(infp);
+    fclose(outfp);
     bu_exit (0, NULL);
 }
+
 
 /*
  * Local Variables:

@@ -62,65 +62,60 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_init( &v );
+    bu_vls_init(&v);
 
-    bu_vls_strcat( &v, "draw" );
+    bu_vls_strcat(&v, "draw");
     lim = 1;
 
-    for ( j=1; j<argc; j++)
-    {
-	item = atoi( argv[j] );
-	if ( item < 1 )
+    for (j=1; j<argc; j++) {
+	item = atoi(argv[j]);
+	if (item < 1)
 	    continue;
 
 	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
 	    struct rt_db_internal intern;
 	    struct rt_comb_internal *comb;
 
-	    if ( !(dp->d_flags & DIR_REGION) )
+	    if (!(dp->d_flags & DIR_REGION))
 		continue;
 
 	    bu_vls_printf(&gedp->ged_result_str, "%s: looking at %s\n", argv[0], dp->d_namep);
 
-	    if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 ) {
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    if ( comb->region_id != 0 ||
-		 comb->aircode != item )
+	    if (comb->region_id != 0 ||
+		comb->aircode != item)
 	    {
 		intern.idb_meth->ft_ifree(&intern);
 		continue;
 	    }
 	    intern.idb_meth->ft_ifree(&intern);
 
-	    bu_vls_strcat( &v, " " );
-	    bu_vls_strcat( &v, dp->d_namep );
+	    bu_vls_strcat(&v, " ");
+	    bu_vls_strcat(&v, dp->d_namep);
 	    lim++;
 	} FOR_ALL_DIRECTORY_END;
     }
 
-    if ( lim > 1 )
-    {
+    if (lim > 1) {
 	int retval;
 	char **new_argv;
 
-	new_argv = (char **)bu_calloc( lim+1, sizeof( char *), "ged_eac: new_argv" );
-	new_argc = bu_argv_from_string( new_argv, lim, bu_vls_addr( &v ) );
-	retval = ged_draw( gedp, new_argc, (const char **)new_argv );
-	bu_free( (genptr_t)new_argv, "ged_eac: new_argv" );
-	bu_vls_free( &v );
+	new_argv = (char **)bu_calloc(lim+1, sizeof(char *), "ged_eac: new_argv");
+	new_argc = bu_argv_from_string(new_argv, lim, bu_vls_addr(&v));
+	retval = ged_draw(gedp, new_argc, (const char **)new_argv);
+	bu_free((genptr_t)new_argv, "ged_eac: new_argv");
+	bu_vls_free(&v);
 	return retval;
     }
-    else
-    {
-	bu_vls_free( &v );
-	return TCL_OK;
-    }
 
+    bu_vls_free(&v);
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

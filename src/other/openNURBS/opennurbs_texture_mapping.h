@@ -448,6 +448,29 @@ public:
     ON_3dPoint* T
     ) const;
 
+  int EvaluateMeshMapping( 
+    const ON_3dPoint& P,
+    const ON_3dVector& N,
+    const ON_Mesh* mesh,
+    ON_3dPoint* T
+    ) const;
+
+  int EvaluateSurfaceMapping( 
+    const ON_3dPoint& P,
+    const ON_3dVector& N,
+    const ON_Surface* srf,
+    ON_3dPoint* T
+    ) const;
+
+  int EvaluateBrepMapping( 
+    const ON_3dPoint& P,
+    const ON_3dVector& N,
+    const ON_Brep* brep,
+    ON_3dPoint* T
+    ) const;
+
+  static void SetAdvancedBrepMappingToolFunctions(TEXMAP_INTERSECT_LINE_SURFACE, TEXMAP_BREP_FACE_CLOSEST_POINT);
+
   /*
   Description:
     Quickly check to see if a mesh or tag has texture coordinates

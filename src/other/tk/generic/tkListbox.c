@@ -1343,8 +1343,6 @@ ListboxYviewSubCmd(
     } else {
 	type = Tk_GetScrollInfoObj(interp, objc, objv, &fraction, &count);
 	switch (type) {
-	case TK_SCROLL_ERROR:
-	    return TCL_ERROR;
 	case TK_SCROLL_MOVETO:
 	    index = (int) (listPtr->nElements*fraction + 0.5);
 	    break;
@@ -1358,6 +1356,9 @@ ListboxYviewSubCmd(
 	case TK_SCROLL_UNITS:
 	    index = listPtr->topIndex + count;
 	    break;
+	case TK_SCROLL_ERROR:
+	default:
+	    return TCL_ERROR;
 	}
 	ChangeListboxView(listPtr, index);
     }

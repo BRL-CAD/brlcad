@@ -231,7 +231,7 @@ nmg_pr_fg(const unsigned long *magic, char *h)
 	    for (i=0; i<fgs->s_size[0]; i++) {
 		bu_log("%s  ", h);
 		for (j=0; j<fgs->s_size[1]; j++) {
-		    bu_log(" (", h);
+		    bu_log(" (%s ", h);
 		    for (k=0; k<ncoords; k++)
 			bu_log("%f ", fgs->ctl_points[l+k]);
 		    bu_log(")");
@@ -775,7 +775,8 @@ nmg_pr_vu_briefly(const struct vertexuse *vu, char *h)
     NMG_CK_VERTEXUSE(vu);
     NMG_CK_VERTEX(vu->v_p);
 
-    if ((vg = vu->v_p->vg_p)) {
+    vg = vu->v_p->vg_p;
+    if (vg) {
 	NMG_CK_VERTEX_G(vg);
 	bu_log("%sVERTEXUSE %8x, v=x%x, %f %f %f\n", h, vu, vu->v_p,
 	       V3ARGS(vg->coord));
@@ -803,7 +804,7 @@ nmg_pr_vua(const unsigned long *magic_p, char *h)
 
     switch (*magic_p) {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-	    bu_log("%s N=(%g, %g, %g, %g)\n", h,
+	    bu_log("%s N=(%g, %g, %g)\n", h,
 		   V3ARGS(((struct vertexuse_a_plane *)magic_p)->N));
 	    break;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
@@ -938,7 +939,7 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
  * Does not mind wire edges.
  */
 void
-nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol __attribute__((unused)))
+nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *UNUSED(tol))
 {
     const struct loopuse *lu;
     const struct faceuse *fu;

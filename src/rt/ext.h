@@ -78,14 +78,14 @@ extern fastf_t		cell_height;		/* model space grid cell height */
 extern int		cell_newsize;		/* new grid cell size (for worker) */
 extern point_t		eye_model;		/* model-space location of eye */
 extern fastf_t		eye_backoff;		/* dist from eye to center */
-extern int		width;			/* # of pixels in X */
-extern int		height;			/* # of lines in Y */
+extern size_t		width;			/* # of pixels in X */
+extern size_t		height;			/* # of lines in Y */
 extern mat_t		Viewrotscale;
 extern fastf_t		viewsize;
 extern char		*scanbuf;		/* pixels for REMRT */
 extern int		incr_mode;		/* !0 for incremental resolution */
 extern int		incr_level;		/* current incremental level */
-extern int		incr_nlevel;		/* number of levels */
+extern size_t		incr_nlevel;		/* number of levels */
 extern int		npsw;			/* number of worker PSWs to run */
 extern struct resource	resource[];		/* memory resources */
 extern int		fullfloat_mode;

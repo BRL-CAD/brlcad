@@ -45,8 +45,8 @@
 
 
 struct _ged_rt_client_data {
-    struct ged_run_rt 	*rrtp;
-    struct ged	       	*gedp;
+    struct ged_run_rt *rrtp;
+    struct ged *gedp;
 };
 
 
@@ -55,6 +55,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
     char **vp;
     int i;
+    int units_supplied = 0;
     char pstring[32];
     static const char *usage = "options";
 
@@ -93,13 +94,23 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i=1; i < argc; i++) {
-	if (argv[i][0] == '-' && argv[i][1] == '-' &&
-	    argv[i][2] == '\0') {
+	if (argv[i][0] == '-' && argv[i][1] == 'u' &&
+	    strcmp(argv[1], "-u") == 0) {
+	    units_supplied=1;
+	} else if (argv[i][0] == '-' && argv[i][1] == '-' &&
+		   argv[i][2] == '\0') {
 	    ++i;
 	    break;
 	}
 	*vp++ = (char *)argv[i];
     }
+
+    /* default to local units when not specified on command line */
+    if (!units_supplied) {
+    	*vp++ = "-u";
+    	*vp++ = "model";
+    }
+
     /* XXX why is this different for win32 only? */
 #ifdef _WIN32
     {
@@ -144,8 +155,8 @@ _ged_run_rt(struct ged *gedp)
     int i;
     FILE *fp_in;
 #ifndef _WIN32
-    int	pipe_in[2];
-    int	pipe_err[2];
+    int pipe_in[2];
+    int pipe_err[2];
 #else
     HANDLE pipe_in[2], pipe_inDup;
     HANDLE pipe_err[2], pipe_errDup;
@@ -222,14 +233,14 @@ _ged_run_rt(struct ged *gedp)
     sa.lpSecurityDescriptor = NULL;
 
     /* Create a pipe for the child process's STDOUT. */
-    CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
+    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
 
     /* Create noninheritable read handle and close the inheritable read handle. */
-    DuplicateHandle( GetCurrentProcess(), pipe_err[0],
-		     GetCurrentProcess(),  &pipe_errDup ,
-		     0,  FALSE,
-		     DUPLICATE_SAME_ACCESS );
-    CloseHandle( pipe_err[0] );
+    DuplicateHandle(GetCurrentProcess(), pipe_err[0],
+		    GetCurrentProcess(),  &pipe_errDup ,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
+    CloseHandle(pipe_err[0]);
 
     /* Create a pipe for the child process's STDIN. */
     CreatePipe(&pipe_in[0], &pipe_in[1], &sa, 0);
@@ -238,7 +249,7 @@ _ged_run_rt(struct ged *gedp)
     DuplicateHandle(GetCurrentProcess(), pipe_in[1],
 		    GetCurrentProcess(), &pipe_inDup,
 		    0, FALSE,                  /* not inherited */
-		    DUPLICATE_SAME_ACCESS );
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_in[1]);
 
 
@@ -266,7 +277,7 @@ _ged_run_rt(struct ged *gedp)
     CloseHandle(pipe_err[1]);
 
     /* As parent, send view information down pipe */
-    fp_in = _fdopen( _open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb" );
+    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model);
@@ -295,22 +306,23 @@ _ged_run_rt(struct ged *gedp)
 #endif
 }
 
+
 void
 _ged_rt_write(struct ged *gedp,
-	     FILE	*fp,
-	     vect_t	eye_model)
+	      FILE *fp,
+	      vect_t eye_model)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    int	i;
-    quat_t		quat;
+    int i;
+    quat_t quat;
     struct solid *sp;
 
     (void)fprintf(fp, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);
-    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation );
+    quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
     (void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
     (void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
-		  eye_model[X], eye_model[Y], eye_model[Z] );
+		  eye_model[X], eye_model[Y], eye_model[Z]);
 
     (void)fprintf(fp, "start 0; clean;\n");
 
@@ -332,7 +344,7 @@ _ged_rt_write(struct ged *gedp,
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
+	    for (i=0; i<sp->s_fullpath.fp_len; i++) {
 		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
 		    struct animate *anp;
 		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
@@ -364,11 +376,15 @@ _ged_rt_write(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
+_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
-    int count;
+#ifndef _WIN32
+    int count = 0;
+#else
+    DWORD count = 0;
+#endif
     int read_failed = 0;
     char line[RT_MAXLINE+1] = {0};
 
@@ -402,12 +418,12 @@ _ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
     }
 
     if (read_failed) {
-	int retcode = 0;
 	int aborted;
 
 	/* was it aborted? */
 #ifndef _WIN32
 	int rpid;
+	int retcode = 0;
 
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
@@ -417,6 +433,7 @@ _ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 
 	aborted = run_rtp->aborted;
 #else
+	DWORD retcode = 0;
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
@@ -426,16 +443,16 @@ _ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 	 * either EOF has been sent or there was a read error.
 	 * there is no need to block indefinately
 	 */
-	WaitForSingleObject( run_rtp->hProcess, 120 );
+	WaitForSingleObject(run_rtp->hProcess, 120);
 	/* !!! need to observe implications of being non-infinate
-	 *	WaitForSingleObject( run_rtp->hProcess, INFINITE );
+	 * WaitForSingleObject(run_rtp->hProcess, INFINITE);
 	 */
 
 	if (GetLastError() == ERROR_PROCESS_ABORTED) {
 	    run_rtp->aborted = 1;
 	}
 
-	GetExitCodeProcess( run_rtp->hProcess, &retcode );
+	GetExitCodeProcess(run_rtp->hProcess, &retcode);
 	/* may be useful to try pr_wait_status() here */
 
 	aborted = run_rtp->aborted;
@@ -448,8 +465,8 @@ _ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 	else
 	    bu_log("Raytrace complete.\n");
 
-	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    drcdp->gedp->ged_gdp->gd_rtCmdNotify();
+	if (drcdp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    drcdp->gedp->ged_gdp->gd_rtCmdNotify(aborted);
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
@@ -477,9 +494,9 @@ _ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
  * Build a command line vector of the tops of all objects in view.
  */
 int
-ged_build_tops(struct ged	*gedp,
-	       char		**start,
-	       char	**end)
+ged_build_tops(struct ged *gedp,
+	       char **start,
+	       char **end)
 {
     struct ged_display_list *gdlp;
     char **vp = start;
@@ -490,7 +507,7 @@ ged_build_tops(struct ged	*gedp,
 
 	if (vp < end)
 	    *vp++ = bu_vls_addr(&gdlp->gdl_path);
-	else  {
+	else {
 	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;
 	}
@@ -503,7 +520,7 @@ ged_build_tops(struct ged	*gedp,
 
 void
 _ged_rt_set_eye_model(struct ged *gedp,
-		     vect_t eye_model)
+		      vect_t eye_model)
 {
     if (gedp->ged_gvp->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {
 	vect_t temp;
@@ -516,9 +533,9 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	struct ged_display_list *next_gdlp;
 	struct solid *sp;
 	int i;
-	vect_t  direction;
-	vect_t  extremum[2];
-	vect_t  minus, plus;    /* vers of this solid's bounding box */
+	vect_t direction;
+	vect_t extremum[2];
+	vect_t minus, plus;    /* vers of this solid's bounding box */
 
 	VSET(eye_model, -gedp->ged_gvp->gv_center[MDX],
 	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
@@ -536,11 +553,11 @@ _ged_rt_set_eye_model(struct ged *gedp,
 		minus[X] = sp->s_center[X] - sp->s_size;
 		minus[Y] = sp->s_center[Y] - sp->s_size;
 		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN( extremum[0], minus );
+		VMIN(extremum[0], minus);
 		plus[X] = sp->s_center[X] + sp->s_size;
 		plus[Y] = sp->s_center[Y] + sp->s_size;
 		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX( extremum[1], plus );
+		VMAX(extremum[1], plus);
 	    }
 
 	    gdlp = next_gdlp;
@@ -556,7 +573,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	    (eye_model[Y] <= extremum[1][Y]) &&
 	    (eye_model[Z] >= extremum[0][Z]) &&
 	    (eye_model[Z] <= extremum[1][Z])) {
-	    double  t_in;
+	    double t_in;
 	    vect_t diag;
 
 	    VSUB2(diag, extremum[1], extremum[0]);

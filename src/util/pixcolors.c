@@ -24,7 +24,7 @@
  * standard output.
  *
  * Options
- * v	list colors
+ * v list colors
  *
  */
 
@@ -53,7 +53,7 @@ unsigned char pixbuf[BUFSIZ*3];
 unsigned char vals[1L << (24-3)];
 
 /*
- *	D O I T --- Main function of program
+ * D O I T --- Main function of program
  */
 void doit(FILE *fd)
 {
@@ -70,8 +70,8 @@ void doit(FILE *fd)
 		(pixbuf[i+1] << 8) +
 		(pixbuf[i+2] << 16);
 
-	    if ( ! ( vals[k=(pixel >> 3)] &
-		     (mask=(1 << (pixel & 0x07))) ) ) {
+	    if (! (vals[k=(pixel >> 3)] &
+		   (mask=(1 << (pixel & 0x07))))) {
 		vals[k] |= (unsigned char)mask;
 		++count;
 	    }
@@ -80,12 +80,13 @@ void doit(FILE *fd)
     (void) printf("%lu\n", count);
     if (verbose)
 	for (i=0; i < 1<<24; ++i)
-	    if ( (vals[i>>3] & (1<<(i & 0x07))) )
+	    if ((vals[i>>3] & (1<<(i & 0x07))))
 		(void) printf("%3d %3d %3d\n",
 			      i & 0x0ff,
 			      (i >> 8) & 0x0ff,
 			      (i >> 16) & 0x0ff);
 }
+
 
 void usage(void)
 {
@@ -93,15 +94,16 @@ void usage(void)
     bu_exit (1, NULL);
 }
 
+
 /*
- *	M A I N
+ * M A I N
  *
- *	Perform miscelaneous tasks such as argument parsing and
- *	I/O setup and then call "doit" to perform the task at hand
+ * Perform miscelaneous tasks such as argument parsing and
+ * I/O setup and then call "doit" to perform the task at hand
  */
 int main(int ac, char **av)
 {
-    int  c, isatty(int);
+    int c, isatty(int);
     progname = *av;
 
     /* Get # of options & turn all the option flags off
@@ -113,14 +115,14 @@ int main(int ac, char **av)
     /* get all the option flags from the command line
      */
     while ((c=bu_getopt(ac, av, options)) != EOF) {
-	if ( c == 'v' ) verbose = ! verbose;
+	if (c == 'v') verbose = ! verbose;
 	else usage();
     }
 
 
     if (bu_optind < ac-1) {
 	usage();
-    } else if (bu_optind == ac-1 ) {
+    } else if (bu_optind == ac-1) {
 	FILE *fd;
 	if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
 	    perror(av[bu_optind]);
@@ -131,8 +133,9 @@ int main(int ac, char **av)
 	doit(stdin);
     }
 
-    return(0);
+    return 0;
 }
+
 
 /*
  * Local Variables:

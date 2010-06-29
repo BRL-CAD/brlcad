@@ -545,7 +545,7 @@ emuves_com(int argc, char **argv)
     bu_ptbl_free(tbl);
     bu_free((char *)tbl, "tbl returned by wdb_get_by_attr");
     bu_free((char *)objs, "emuves_com objs");
-    return(ret);
+    return ret;
 }
 
 
@@ -2784,7 +2784,7 @@ path_parse (char *path)
     }
     result[nm_constituents] = 0;
 
-    return(result);
+    return result;
 }
 
 

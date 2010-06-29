@@ -71,8 +71,12 @@ void ON_Brep::RebuildTrimsForV2(
       loop_trim.Append(trim);
       uv0 = trim->PointAtStart();
       pt.Append( face_srf->PointAt(uv0.x,uv0.y) );
-      face.GetNurbFormParameterFromSurfaceParameter(uv0.x, uv0.y, &uv0.x, &uv0.y);
-
+      double xx,yy;
+      if ( face.GetNurbFormParameterFromSurfaceParameter(uv0.x, uv0.y, &xx, &yy) ) // Oct 29, 2009 Dale Lear added test for function failing 
+      {
+        uv0.x = xx;
+        uv0.y = yy;
+      }
 
       // 17 October 2006 Chuck
       //    Fixed this to use the N0 test so we don't

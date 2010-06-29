@@ -55,12 +55,12 @@ libfb \- multiple device, generic frame buffer library
 .B int "fb_read(fbp, x, y, addr, count)"
 .B FBIO *fbp;
 .B RGBpixel *addr;
-.B long count;
+.B size_t count;
 .PP
 .B int "fb_write(fbp, x, y, addr, count)"
 .B FBIO *fbp;
 .B RGBpixel *addr;
-.B long count;
+.B size_t count;
 .PP
 .B int fb_rmap(fbp, cmap)
 .B FBIO *fbp;

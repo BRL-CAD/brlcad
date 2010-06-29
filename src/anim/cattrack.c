@@ -63,7 +63,7 @@ fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
     arg = a*s - sinh(a*c);
     asinh_arg = log(arg + sqrt(arg*arg + 1.0));
 
-    return(asinh_arg/a + c);
+    return asinh_arg/a + c;
 }
 
 /* HYPER_GET_S - calculate the arclength parameter of a caternary
@@ -89,7 +89,7 @@ fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
     } else {
 	z = b;
     }
-    return(z);
+    return z;
 }
 
 /* HYPER_GET_ANG - calculate angle corresponding to the slope of
@@ -101,7 +101,7 @@ fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
     fastf_t slope;
 
     slope = sinh(a*(x-c));
-    return( atan2(slope, 1.0));
+    return atan2(slope, 1.0);
 }
 
 /* GET_CURVE - Find the constants a, b, and c such that the curve
@@ -194,7 +194,7 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
     last_c = *pc;
     *pth0 = theta_zero;
     *pth1 = theta_one;
-    return(status);
+    return status;
 
 }
 
@@ -240,7 +240,7 @@ int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *
     }
     *pb = p_zero[Z] - cosh( (*pa)*(p_zero[X]-(*pc)) )/(*pa);
 
-    return(status);
+    return status;
 
 }
 
@@ -260,13 +260,13 @@ fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s)
     fprime = sarg0 - sarg1 - arg0*cosh(arg0) + arg1*cosh(arg1);
 
     if (fabs(fprime) > VDIVIDE_TOL)
-	return(f/fprime);
+	return f/fprime;
     else if ((a*a) > VDIVIDE_TOL)
 	return(f/(a*a));
     else if (fabs(a) > VDIVIDE_TOL)
-	return(f/a);
+	return f/a;
     else
-	return(f);
+	return f;
 }
 
 /* find Newtonian adjustment for c, assuming 'a' fixed*/
@@ -281,11 +281,11 @@ fastf_t gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z)
     gprime = a*(sinh(arg0) - sinh(arg1));
 
     if (fabs(gprime) > VDIVIDE_TOL)
-	return(g/gprime);
+	return g/gprime;
     else if (fabs(a) > VDIVIDE_TOL)
-	return(g/a);
+	return g/a;
     else
-	return(g);
+	return g;
 }
 
 

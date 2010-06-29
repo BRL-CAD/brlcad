@@ -36,8 +36,8 @@
 int
 ged_copymat(struct ged *gedp, int argc, const char *argv[])
 {
-    char			*child;
-    char			*parent;
+    char			*child = NULL;
+    char			*parent = NULL;
     struct bu_vls		pvls;
     int				i;
     int				sep;
@@ -71,13 +71,14 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     /*
      *	Ensure that each argument contains exactly one slash
      */
-    for (i = 1; i <= 2; ++i)
+    for (i = 1; i <= 2; ++i) {
 	if (((child = strchr(argv[i], '/')) == NULL)
 	    || (strchr(++child, '/') != NULL))
 	{
 	    bu_vls_printf(&gedp->ged_result_str, "%s: bad arc: '%s'\n", argv[0], argv[i]);
 	    return GED_ERROR;
 	}
+    }
 
     BU_GETSTRUCT(anp, animate);
     anp->magic = ANIMATE_MAGIC;
@@ -87,8 +88,8 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
     db_full_path_init(&anp->an_path);
-    if (db_follow_path_for_state(&ts, &(anp->an_path), argv[1], LOOKUP_NOISY)
-	< 0 )
+    if (child == NULL
+	|| db_follow_path_for_state(&ts, &(anp->an_path), argv[1], LOOKUP_NOISY) < 0)
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
 	return GED_ERROR;
@@ -120,8 +121,8 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *) intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    if ((tp = db_find_named_leaf(comb->tree, child)) == TREE_NULL)
-    {
+    tp = db_find_named_leaf(comb->tree, child);
+    if (tp == TREE_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: unable to find instance of '%s' in combination '%s'\n",
 		      argv[0], child, dp->d_namep);
 	status = GED_ERROR;
@@ -159,8 +160,6 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     if (status == GED_ERROR)
 	rt_db_free_internal(&intern);
     return status;
-
-    return GED_OK;
 }
 
 /*

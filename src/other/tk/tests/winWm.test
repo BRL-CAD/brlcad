@@ -370,8 +370,57 @@ test winWm-8.2 {Tk_WmCmd procedure, "iconphoto" option} win {
     image delete blank16 blank32
 } {}
 
+test winWm-9.0 "Bug #2799589 - delayed activation of destroyed window" -constraints win -setup {
+    proc winwm90click {w} {
+        if {![winfo ismapped $w]} { update }
+        event generate $w <Enter>
+        focus -force $w
+        event generate $w <ButtonPress-1> -x 5 -y 5
+        event generate $w <ButtonRelease-1> -x 5 -y 5
+    }
+    proc winwm90proc3 {} {
+        global winwm90done winwm90check
+        set w .sd
+        toplevel $w
+        pack [button $w.b -text "OK" -command {set winwm90check 1}]
+        bind $w.b <Map> {after idle {winwm90click %W}}
+        update idletasks
+        tkwait visibility $w
+        grab $w
+        tkwait variable winwm90check
+        grab release $w
+        destroy $w
+        after idle {set winwm90done ok}
+    }
+    proc winwm90proc2 {w} { winwm90proc3; destroy $w }
+    proc winwm90proc1 {w} {
+        toplevel $w
+        pack [button $w.b -text "Do dialog" -command [list winwm90proc2 $w]]
+        bind $w.b <Map> {bind %W <Map> {}; after idle {winwm90click %W}}
+    }
+    destroy .t
+    global winwm90done
+    set winwm90done wait
+    toplevel .t
+} -body {    
+    pack [button .t.b -text "Show" -command {winwm90proc1 .tx}]
+    bind .t.b <Map> {bind %W <Map> {}; after idle {winwm90click %W}}
+    after 5000 {set winwm90done timeout}
+    vwait winwm90done
+    set winwm90done
+} -cleanup {
+    foreach cmd {proc1 proc2 proc3 click} {
+        rename winwm90$cmd {}
+    }
+    destroy .tx .t .sd
+} -result {ok}
+
 destroy .t
 
 # cleanup
 cleanupTests
 return
+
+# Local variables:
+# mode: tcl
+# End:

@@ -83,26 +83,20 @@ static char *usage="Usage:\n\
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
  */
-static int
-a_overlap( ap, pp, reg1, reg2, pheadp )
-    struct application     *ap;
-    struct partition       *pp;
-    struct region                   *reg1;
-    struct region                   *reg2;
-    struct partition                *pheadp;
+HIDDEN int
+a_overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(pheadp))
 {
-    return( 1 );
+    return 1;
 }
 
 
-static int
-miss( ap )
-    struct application *ap;
+HIDDEN int
+miss( struct application *UNUSED(ap))
 {
-    return(0);
+    return 0;
 }
 
-static void
+HIDDEN void
 Add_face( int face[3] )
 {
     long i;
@@ -134,7 +128,7 @@ Add_face( int face[3] )
     num_faces++;
 }
 
-static int
+HIDDEN int
 hit( struct application *ap, struct partition *part, struct seg *seg )
 {
     struct partition *p;

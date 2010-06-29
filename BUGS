@@ -15,14 +15,35 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Creating an 'extrude' via MGED gui crashes MGED.
+
+* edcomb command seems to be busted similar to red, doesn't seem to do
+  anything.
+
+* gqa manpage has the wrong indentation on the options write-up.
+
+* Detailed BoT model ray trace image had incorrect background pixel
+  values in framebuffer, off slightly by one.
+
+* /dev/oglb 'copy mode' fails to refresh the framebuffer
+
+* X display manager (and probably others) will lock up mged if you Z/B
+  while the wireframe is being actively drawn (in X_drawVList()).
+  reproducible by cloning havoc a dozen or more times, getting
+  sub-1sec fps, Z/B after rotating wireframe but before update
+  finishes drawing.
+
+* rtedge help shows redirection to a file working, but it does not
+  seem to work (zero-file results).
+
+* report of rt aborting randomly on 64-bit with camo shader.
+
 * mged raytrace fails with simple "raytrace failed" message when using
   rt, nirt, etc on Windows after modifying a region.  See sf bug
   report 2954404.
 
 * mged rrt command is not respecting the view size, just does
   something similar to autoview but even gets az/el wrong too.
-
-* reported that fbclear is not working on Windows build in mged.
 
 * Windows mged build is not generating tclIndex files with all
   entries.  notably the pattern_gui.tcl file is not getting included
@@ -52,11 +73,34 @@ Recent Bugs
   mged -c moss.g "tops ; title"
   mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
 
+  Note that this is consistent with doing the same thing on the MGED
+  Command Window's command prompt - if the above is a bug it is 
+  apparently not restricted to command/classic mode.
+
+  Further investigation suggests that this is a consequence of
+  Tcl treating multiple commands in a single " " block as one command,
+  insofar as capturing the output is concerned.  It probably relates
+  to situations where Tcl_SetResult is called where (in this case)
+  Tcl_AppendResult would have been better, but it is not clear whether
+  changing this result setting approach would cause other breakage.
+
 * kill command in archer deletes object but then reports a failure and
   mouse is stuck in a busy state.
 
 * mged rotation halts after a few events and after zooming in/out at
   least once (Mac OS X 10.5)
+  More info:  This problem appears to be specific to a particular
+  X11 version or versions - it has been observed with 
+  xorg-server-1.4.2-apple33 on 10.5.  It does not occur with the
+  community XQuartz 2.5.0 (xorg-server 1.7.6), nor does it occur
+  when Tk 8.5.8 is compiled to use the Aqua backend. At least one other
+  (possibly earlier) verison of X11 from Apple on a 10.5 Mac did not
+  exhibit bad rotate behavior. The problem is not specifically the 
+  zooming action - rather, the zoom triggers
+  a Tk focus call on the display manager window (rather than the 
+  Tk parent window) and the problem manifests when focus is on the
+  display manager window.  mged classic mode, where there is no
+  parent window, exhibits the bad rotate behavior immediately.
 
 * rtedge fills in nearly entire faces of an object when executing on a
   model that is in perspective mode. Effects really bad on small sized
@@ -75,9 +119,6 @@ Recent Bugs
   depending on whether you shoot from the front or back can result in
   bogus lists visiable with nirt in mged, entirely missing the bot, or
   mismatched entry/exit/overlap segments.
-
-* coil -S ... generates bad pipes with values previously known to
-  work (see man page for one example).
 
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
@@ -166,9 +207,6 @@ Recent Bugs
 * rt is consuming 100% CPU in fb_close() on a lingering ogl
   framebuffer waiting to close.  needs to sleep or select for a while.
 
-* /dev/ogl framebuffer is not refreshing/updating on mac os x,
-  resulting in the window remaining blank until you give expose events
-
 * report of mged being locked up on startup taking full cpu, works
   fine with with -c with X dm.
 
@@ -176,9 +214,6 @@ Recent Bugs
   _font" doesn't exist on Linux.
 
 * mged tab-completion doesn't work if the object names have spaces
-
-* OpenGL display manager doesn't refresh automatically when the
-  context is invalidated (on Mac OS X) any more
 
 * Open dialog in MGED seems rather busted for scrolling and selection
   (seems to be Mac OS X specific)
@@ -293,8 +328,6 @@ Recent Bugs
 * constrained axis translation bindings on OS X don't work
     object/matrix edit
     shift-alt mouse (left/mid/right for x/y/z respectively) should work
-
-* mged documentation doesn't open on OS X
 
 * the findfont directive in gv postscript is reporting font not found
 

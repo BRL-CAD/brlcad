@@ -1695,10 +1695,10 @@ ON_BOOL32 ON_ClippingPlaneSurface::Read( ON_BinaryArchive& file )
     rc =  ( 1 == major_version );
     if (!rc) break;
 
-    unsigned int tcode = 0;
-    int len = 0;
+    ON__UINT32 tcode = 0;
+    ON__INT64 big_value = 0;
 
-    rc = file.BeginRead3dmChunk(&tcode,&len)?true:false;
+    rc = file.BeginRead3dmBigChunk(&tcode,&big_value)?true:false;
     if (rc)
     {
       rc = (TCODE_ANONYMOUS_CHUNK == tcode);

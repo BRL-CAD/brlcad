@@ -53,6 +53,10 @@ public:
 private:
   void Destroy();
   unsigned int* m_ref_count; // reference counts used to avoid expensive object copying
+
+public:
+  int m_usertable_3dm_version ;
+  int m_usertable_opennurbs_version;
 };
 
 /*

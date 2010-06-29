@@ -16,6 +16,10 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
+.xml.5:
+	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
+
 .xml.nged:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
@@ -35,6 +39,7 @@ include $(srcdir)/lessons/es/Makefile.am
 include $(srcdir)/specifications/en/Makefile.am
 include $(srcdir)/system/man1/en/Makefile.am
 include $(srcdir)/system/man3/en/Makefile.am
+include $(srcdir)/system/man5/en/Makefile.am
 include $(srcdir)/system/mann/en/Makefile.am
 
 if BUILD_DOCS
@@ -52,6 +57,8 @@ BUILT_SOURCES = \
 	$(BUILTMAN_ENPDF) \
 	$(BUILTMAN3_ENHTML) \
 	$(BUILTMAN3_ENPDF) \
+	$(BUILTMAN5_ENHTML) \
+	$(BUILTMAN5_ENPDF) \
 	$(BUILTMANN_ENHTML) \
 	$(BUILTMANN_ENPDF) \
 	$(BUILTLESSONS_ESHTML) \
@@ -60,6 +67,7 @@ BUILT_SOURCES = \
 BUILTMAN_EN_SOURCES = \
 	${man1DOCBOOK_EN:xml=1}  \
 	${man3DOCBOOK_EN:xml=3}  \
+	${man5DOCBOOK_EN:xml=5}  \
 	${mannDOCBOOK_EN:xml=nged}
 
 man_MANS = \
@@ -86,9 +94,10 @@ EXTRA_DIST = \
 	${lessonsDOCBOOK_ES_IMAGES} \
 	${lessonsDOCBOOK_ES} \
 	${man1DOCBOOK_EN} \
-	${man1INTRO_EN} \
 	${man3DOCBOOK_EN} \
+	${man5DOCBOOK_EN} \
 	${mannDOCBOOK_EN} \
+	${mannINTRO_EN} \
 	${specificationsDOCBOOK_EN} \
 	README \
 	articles/en/Makefile.am \
@@ -108,6 +117,7 @@ EXTRA_DIST = \
 	system/man1/mged_cmd_template.xml \
 	system/man3/en/Makefile.am \
 	system/man3/mged_cmd_template.xml \
+	system/man5/en/Makefile.am \
 	system/mann/en/Makefile.am
 
 include $(top_srcdir)/misc/Makefile.defs

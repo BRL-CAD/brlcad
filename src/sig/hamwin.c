@@ -23,10 +23,6 @@
  *  Precomputes the window function.
  */
 
-/*
- * $Id$
- */
-
 #include "common.h"
 
 #include <stdio.h>
@@ -104,7 +100,7 @@ init_hamwintab(int size)
 	}
 	if ( (hamwintab = (double *)malloc(size*sizeof(double))) == NULL ) {
 	    fprintf( stderr, "coswin: couldn't malloc space for %d elements\n", size );
-	    return( 0 );
+	    return 0;
 	}
 	maxinitlen = size;
     }
@@ -123,7 +119,7 @@ init_hamwintab(int size)
      * Mark size and return success.
      */
     _init_length = size;
-    return( 1 );
+    return 1;
 }
 
 /*

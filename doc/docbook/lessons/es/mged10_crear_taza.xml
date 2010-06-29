@@ -1,0 +1,418 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Crear una taza</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>
+	  Aprobado para su publicación. Su distribución es ilimitada.
+	</para>
+   </legalnotice>
+  </articleinfo>
+
+    <para id="creating_mug_overviewlist">
+      En este tutorial usted aprenderá a:
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Crear el cilindro externo utilizando el comando in.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	  	Crear el cilindro interno para generar el vacío en la figura 
+	        cilíndrica más grande.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Crear el asa de su taza.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear una combinación para producir el cuerpo de su taza.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear una combinación para unir el asa al cuerpo de la taza.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear una región para combinar las figuras con igual material y 
+	    color.
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </para>
+    
+    <para id="creating_mug_intro1">
+      En este tutorial usted continuará su trabajo de creación de objetos de 
+      la vida real, en este caso, la forma básica del cuerpo de una taza de 
+      café. En los próximos tutoriales, perfeccionará el cuerpo para que sea 
+      más realista.
+    </para>
+    
+    <sect1 id="mug_new_db">
+      <title>Crear una nueva base de datos</title>
+      <para>
+	Cree una nueva base de datos y llamela mug.g. Vuelva al menú File 
+	(Archivo) y seleccione Preferences (Preferencias) a continuación, 
+	Units (Unidades) y finalmente Inches (Pulgadas). Esto creará su cuerpo 
+	usando pulgadas como unidad de medida. (Nota: También puede hacer esto 
+	escribiendo "units in" en la ventana de comandos del sistema.)
+      </para>
+    </sect1>
+    
+    <sect1 id="mug_outside_cyl">
+      <title>Creando el cilindro externo utilizando el comando in</title>
+      <para>
+	Para comenzar a hacer el cuerpo de la taza, usted necesitará crear el 
+	cilindro externo. Para esto tipee lo siguiente en el prompt de 
+	<application>MGED</application>:
+	
+	<command>in bodyout.s rcc</command>
+      </para>
+      
+      <para>
+	El diagrama de este comando es:
+      </para>
+      <informaltable>
+	<tgroup cols='3'>
+	  <tbody>
+	    <row>
+	      <entry>in</entry>
+	      <entry>bodyout.s</entry>
+	      <entry>rcc</entry>
+	    </row>
+	    <row>
+	      <entry>Crear una figura</entry>
+	      <entry>Llamarla bodyout.s</entry>
+	      <entry>La figura es un cilindro circular</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      
+      <para>
+	<application>MGED</application> le pedirá los siguientes datos sobre 
+	del cilindro que usted desea crear. Tipee los valores dados en negrita. 
+	Asegúrese de dejar espacios entre los valores de las variables.
+
+	<command>Enter X, Y, Z of vertex: 0 0 0[Enter]</command>
+	
+	<command>Enter X, Y, Z of height (H) vector: 0 0 3.5[Enter]</command>
+	
+	<command>Enter radius: 1.75[Enter]</command>
+      </para>
+      
+      <para>
+	Note que el formato de una sola línea para darle todos estos datos al 
+	programa sería:
+
+	<command>in bodyout.s rcc 0 0 0 0 0 3.5 1.75[Enter]</command>
+      </para>
+      
+      <para>
+	El diagrama de este comando es:
+      </para>
+      <informaltable>
+	<tgroup cols='6'>
+	  <tbody>
+	    <row>
+	      <entry>in</entry>
+	      <entry>bodyout.s</entry>
+	      <entry>rcc</entry>
+	      <entry>0 0 0</entry>
+	      <entry>0 0 3.5</entry>
+	      <entry>1.75</entry>
+	    </row>
+	    <row>
+	      <entry>Crear una figura</entry>
+	      <entry>Llamarla bodyout.s</entry>
+	      <entry>La figura es un cilindro circular</entry>
+	      <entry>La x, y, y z de los vértices es 0 0 0</entry>
+	      <entry>La x, y, y z del vector de altura es 0 0 3.5</entry>
+	      <entry>El radio es de 1.75</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      <para>
+	La figura del cilindro, en forma de malla de alambre, aparecerá en la 
+	ventana gráfica.
+      </para>
+    </sect1>
+
+    <sect1 id="mug_inside_cyl">
+      <title>Creando el cilindro interno</title>
+      <para>
+
+	Utilizando este mismo método, escriba la información del cilindro 
+	circular interno. Este cilindro se utiliza para vaciar el exterior 
+	cilindro. Siempre que vaya a crear un agujero en la superficie de 
+	un objeto, asegúrese de que la forma creada para hacer el agujero 
+	sobresalga de la superficie. De esta forma estará seguro de no dejar 
+	una capa delgada de material donde las dos superficies se unen.
+
+	<command>in bodyin.s rcc 0 0 0.25 0 0 3.5 1.5[Enter]</command>
+      </para>
+      
+      <para>
+	El diagrama de este comando es:
+      </para>
+      <informaltable>
+	<tgroup cols='6'>
+	  <tbody>
+	    <row>
+	      <entry>in</entry>
+	      <entry>bodyin.s</entry>
+	      <entry>rcc</entry>
+	      <entry>0 0 0.25</entry>
+	      <entry>0 0 3.5</entry>
+	      <entry>1.5</entry>
+	    </row>
+	    <row>
+	      <entry>Crear una figura</entry>
+	      <entry>Llamarla bodyin.s</entry>
+	      <entry>la figura es un cilindro circular</entry>
+	      <entry>La x, y, y z del vértice es 0, 0, y 0.25</entry>
+	      <entry>La x, y, y z del vector de altura 0, 0, y 3.5</entry>
+	      <entry>el radio es de 1.5</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      <para>
+	El segundo cilindro, en el interior del primer cilindro, deberá 
+	aparecer ahora en la ventana gráfica.
+      </para>
+    </sect1>
+    
+    <sect1 id="mug_handle">
+      <title>Creando el asa</title>
+      <para>
+	Ahora tendrá que introducir algunos datos sobre el cuerpo del asa. El 
+	tipo de forma para el asa es un toro elíptico. En la ventana de comandos 
+	del sistema, escriba:
+	
+	<command>in handle.s eto 0 2.5 1.75 1 0 0[Enter]</command>
+      </para>
+      
+      <para>
+	El diagrama de este comando es:
+      </para>
+      <informaltable>
+	<tgroup cols='5'>
+	  <tbody>
+	    <row>
+	      <entry>in</entry>
+	      <entry>handle.s</entry>
+	      <entry>eto</entry>
+	      <entry>0 2.5 1.75</entry>
+	      <entry>1 0 0</entry>
+	    </row>
+	    <row>
+	      <entry>Crear una figura</entry>
+	      <entry>Llamarla handle.s</entry>
+	      <entry>La figura es un toro elíptico</entry>
+	      <entry>La x, y, y z del vértice es 0, 2.5, y 1.75</entry>
+	      <entry>La x, y, y z del vector normal es 1, 0, y 0</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      
+      <para>
+	El programa le pedirá lo siguientes datos de la figura a crear. Tipee 
+	los valores mostrados en negrita.
+
+	<command>Enter X, Y, Z, of vector C: .6 0 0[Enter]</command>
+	
+	<command>Enter radius of revolution, r: 1.45[Enter]</command>
+	
+	<command>Enter elliptical semi-minor axis, d: 0.2[Enter]</command>
+      </para>
+      
+      <para>
+	La figura de una rosquilla debe aparecer en el lado derecho del cuerpo. 
+	Si usted mira atentamente, podrá ver que alrededor de un tercio del 
+	toro elíptico corta el cuerpo.
+      </para>
+    </sect1>
+    
+    <sect1 id="mug_comb1">
+      <title>Creando la combinación Bodyout.s-Bodyin.s</title>
+      <para>
+	El próximo paso será combinar los dos cilindros en el cuerpo de la 
+	taza. Para hacer esto tipee:
+	
+	<command>comb body.c u bodyout.s - bodyin.s[Enter]</command>
+      </para>
+      
+      <para>
+	Le ha dicho al programa que cree la combinación body.c a partir de la 
+	unión de bodyout.s menos bodyin.s.
+      </para>
+      <informaltable>
+	<tgroup cols='6'>
+	  <tbody>
+	    <row>
+	      <entry>comb</entry>
+	      <entry>body.c</entry>
+	      <entry>u</entry>
+	      <entry>bodyout.s</entry>
+	      <entry>-</entry>
+	      <entry>bodyin.s</entry>
+	    </row>
+	    <row>
+	      <entry>Crear una combinación</entry>
+	      <entry>Llamarla body.c</entry>
+	      <entry>Crear la unión de...</entry>
+	      <entry>el cilindro bodyout.s...</entry>
+	      <entry>y substraerle...</entry>
+	      <entry>el cilindro bodyin.s</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      
+    </sect1>
+    
+    <sect1 id="mug_comb2">
+      <title>Creando la combinación Handle.s - Bodyout.s</title>
+      <para>
+	Para combinar el asa con la parte externa del cilindro tipee:
+	
+	<command>comb handle.c u handle.s - bodyout.s[Enter]</command>
+      </para>
+      <informaltable>
+	<tgroup cols='6'>
+	  <tbody>
+	    <row>
+	      <entry>comb</entry>
+	      <entry>handle.c</entry>
+	      <entry>u</entry>
+	      <entry>handle.s</entry>
+	      <entry>-</entry>
+	      <entry>bodyout.s</entry>
+	    </row>
+	    <row>
+	      <entry>Crear una combinación</entry>
+	      <entry>Llamarla handle.c</entry>
+	      <entry>Crear la unión de...</entry>
+	      <entry>el toro handle.s...</entry>
+	      <entry>y substraerle...</entry>
+	      <entry>el cilindro bodyout.s</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+    </sect1>
+    
+    <sect1 id="mug_region">
+      <title>Creando la región Mug.r</title>
+      
+      <para>
+	El último paso en la creación de la taza es crear una región a partir 
+	de las combinaciones. Tipee:
+	
+	<command>r mug.r u body.c u handle.c[Enter]</command>
+      </para>
+      <informaltable>
+	<tgroup cols='6'>
+	  <tbody>
+	    <row>
+	      <entry>r</entry>
+	      <entry>mug.r</entry>
+	      <entry>u</entry>
+	      <entry>body.c</entry>
+	      <entry>u</entry>
+	      <entry>handle.c</entry>
+	    </row>
+	    <row>
+	      <entry>Crear una región de figuras del mismo material y color</entry>
+	      <entry>Llamarlo mug.r</entry>
+	      <entry>Crear la unión de...</entry>
+	      <entry>la combinación body.c...</entry>
+	      <entry>y unirla con...</entry>
+	      <entry>la combinación handle.c</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      
+      <para>
+	Si realizó estos pasos correctamente, el programa responderá algo 
+	similar a:
+      </para>
+      
+      <literallayout>
+   Defaulting item number to 1002
+
+   Creating region id=1001, air=0, GIFTmaterial=1, los=100
+      </literallayout>
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged10_mug_wireframe.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Vista en marco de alambre de la taza
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      <para>
+	Ahora debe tener la región mug.r como una combinación de formas que 
+	contienen el mismo material y color. Usted puede asignar el color y el 
+	material en este momento, pero deberá trabajar más sobre el diseño para 
+	hacerlo más realista. Por ahora, revise lo que apredió en este tutorial.
+	Cuando esté listo para trabajar de nuevo, puede seguir perfeccionando su 
+	diseño en el próximo tutorial.
+      </para>
+      
+    </sect1>
+    
+    <sect1 id="mug_review">
+      <title>Repasemos...</title>
+      <para>
+	En este tutorial usted aprendió a:
+	<itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Crear el cilindro externo utilizando el comando in.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	  	Crear el cilindro interno para generar el vacío en la figura 
+	        cilíndrica más grande.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Crear el asa de su taza.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear una combinación para producir el cuerpo de su taza.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear una combinación para unir el asa al cuerpo de la taza.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear una región para combinar las figuras con igual material y 
+	    color.
+	  </para>
+	</listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

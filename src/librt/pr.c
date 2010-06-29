@@ -538,7 +538,7 @@ rt_pr_tree_str(const union tree *tree)
     else if ( tree->tr_op == OP_DB_LEAF )
 	return bu_strdup(tree->tr_l.tl_name);
     else if ( tree->tr_op == OP_REGION )
-	return( db_path_to_string( &tree->tr_c.tc_ctsp->cts_p ) );
+	return db_path_to_string( &tree->tr_c.tc_ctsp->cts_p );
     else if ( tree->tr_op == OP_SOLID )  {
 	RT_CK_SOLTAB(tree->tr_a.tu_stp);
 	return bu_strdup(tree->tr_a.tu_stp->st_dp->d_namep);
@@ -764,7 +764,7 @@ rt_pr_tol(const struct bn_tol *tol)
 void
 rt_pr_uvcoord(const struct uvcoord *uvp)
 {
-    bu_log("%8.8x u, v=(%g, %g), du, dv=(%g, %g)\n",
+    bu_log("u, v=(%g, %g), du, dv=(%g, %g)\n",
 	   INTCLAMP(uvp->uv_u), INTCLAMP(uvp->uv_v),
 	   INTCLAMP(uvp->uv_du), INTCLAMP(uvp->uv_dv) );
 }

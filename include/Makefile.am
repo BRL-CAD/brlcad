@@ -12,6 +12,7 @@ brlcadinclude_required = \
 	config_win.h \
 	ged.h \
 	magic.h \
+	pstdint.h \
 	raytrace.h \
 	rtfunc.h \
 	rtgeom.h \
@@ -84,7 +85,6 @@ noinst_HEADERS = \
 	sysv.h
 
 EXTRA_DIST = \
-	on_nurb.h \
 	sed4
 
 if ONLY_BENCHMARK

@@ -1124,53 +1124,11 @@ MODULE_SCOPE int	TkDeadAppCmd(ClientData clientData,
 MODULE_SCOPE int	TkCanvasGetCoordObj(Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tcl_Obj *obj,
 			    double *doublePtr);
-MODULE_SCOPE int	TkCanvasDashParseProc(ClientData clientData,
-			    Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *value, char *widgRec, int offset);
-MODULE_SCOPE char *	TkCanvasDashPrintProc(ClientData clientData,
-			    Tk_Window tkwin, char *widgRec, int offset,
-			    Tcl_FreeProc **freeProcPtr);
 MODULE_SCOPE int	TkGetDoublePixels(Tcl_Interp *interp, Tk_Window tkwin,
 			    const char *string, double *doublePtr);
-MODULE_SCOPE int	TkOffsetParseProc(ClientData clientData,
-			    Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *value, char *widgRec, int offset);
-MODULE_SCOPE char *	TkOffsetPrintProc(ClientData clientData,
-			    Tk_Window tkwin, char *widgRec, int offset,
-			    Tcl_FreeProc **freeProcPtr);
-MODULE_SCOPE int	TkOrientParseProc(ClientData clientData,
-			    Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *value, char *widgRec, int offset);
-MODULE_SCOPE char *	TkOrientPrintProc(ClientData clientData,
-			    Tk_Window tkwin, char *widgRec, int offset,
-			    Tcl_FreeProc **freeProcPtr);
-MODULE_SCOPE int	TkPixelParseProc(ClientData clientData,
-			    Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *value, char *widgRec, int offset);
-MODULE_SCOPE char *	TkPixelPrintProc(ClientData clientData,
-			    Tk_Window tkwin, char *widgRec, int offset,
-			    Tcl_FreeProc **freeProcPtr);
 MODULE_SCOPE int	TkPostscriptImage(Tcl_Interp *interp, Tk_Window tkwin,
 			    Tk_PostscriptInfo psInfo, XImage *ximage,
 			    int x, int y, int width, int height);
-MODULE_SCOPE int	TkSmoothParseProc(ClientData clientData,
-			    Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *value, char *recordPtr, int offset);
-MODULE_SCOPE char *	TkSmoothPrintProc(ClientData clientData,
-			    Tk_Window tkwin, char *recordPtr, int offset,
-			    Tcl_FreeProc **freeProcPtr);
-MODULE_SCOPE int	TkStateParseProc(ClientData clientData,
-			    Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *value, char *widgRec, int offset);
-MODULE_SCOPE char *	TkStatePrintProc(ClientData clientData,
-			    Tk_Window tkwin, char *widgRec, int offset,
-			    Tcl_FreeProc **freeProcPtr);
-MODULE_SCOPE int	TkTileParseProc(ClientData clientData,
-			    Tcl_Interp *interp, Tk_Window tkwin,
-			    const char *value, char *widgRec, int offset);
-MODULE_SCOPE char *	TkTilePrintProc(ClientData clientData, Tk_Window tkwin,
-			    char *widgRec, int offset,
-			    Tcl_FreeProc **freeProcPtr);
 MODULE_SCOPE void       TkMapTopFrame(Tk_Window tkwin);
 MODULE_SCOPE XEvent *	TkpGetBindingXEvent(Tcl_Interp *interp);
 MODULE_SCOPE void	TkCreateExitHandler(Tcl_ExitProc *proc,
@@ -1218,7 +1176,7 @@ MODULE_SCOPE int	TkUnsupported1ObjCmd(ClientData clientData,
 #define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKINT */
-
+
 /*
  * Local Variables:
  * mode: c

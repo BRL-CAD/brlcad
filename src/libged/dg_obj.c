@@ -313,7 +313,7 @@ dgo_open_cmd(char		*oname,
  *	  dgo_open [name rt_wdb]
  */
 static int
-dgo_open_tcl(ClientData	clientData __attribute__((unused)),
+dgo_open_tcl(ClientData	UNUSED(clientData),
 	     Tcl_Interp	*interp,
 	     int	argc,
 	     char	*argv[])
@@ -391,7 +391,7 @@ dgo_headSolid_tcl(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%llu", (size_t)(&dgop->dgo_headSolid));
+    bu_vls_printf(&vls, "%p", (void *)(&dgop->dgo_headSolid));
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -853,11 +853,7 @@ dgo_how_cmd(struct dg_obj	*dgop,
  *        procname how obj
  */
 static int
-dgo_how_tcl(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int     argc;
-    char    *argv[];
+dgo_how_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
 
@@ -1606,7 +1602,7 @@ dgo_wait_status(Tcl_Interp *interp, int status)
 
 #ifndef _WIN32
 static void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
     int value;
     struct solid *sp;
@@ -1648,7 +1644,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused
 }
 
 static void
-dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char line[RT_MAXLINE] = {0};
@@ -1685,7 +1681,7 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused
 #else
 
 void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
     int value;
     struct solid *sp;
@@ -1726,9 +1722,9 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused
 }
 
 void
-dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 {
-    int count;
+    DWORD count;
     char line[RT_MAXLINE];
     struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
 
@@ -2619,9 +2615,9 @@ dgo__tcl(ClientData	clientData,
 /****************** Utility Routines ********************/
 
 static union tree *
-dgo_wireframe_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp __attribute__((unused)), union tree *curtree, genptr_t client_data __attribute__((unused)))
+dgo_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
 {
-    return (curtree);
+    return curtree;
 }
 
 /*
@@ -2664,7 +2660,7 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 			      tsp->ts_tol) < 0) {
 	Tcl_AppendResult(dgcdp->interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 			 ": plot failure\n", (char *)NULL);
-	return (TREE_NULL);		/* ERROR */
+	return TREE_NULL;		/* ERROR */
     }
 
     /*
@@ -2694,7 +2690,7 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
 
-    return (curtree);
+    return curtree;
 }
 
 /*
@@ -2737,7 +2733,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     RT_CK_COMB(combp);
     tp = combp->tree;
     if (!tp)
-	return(-1);
+	return -1;
     RT_CK_TREE(tp);
     if (tp->tr_l.tl_op != OP_DB_LEAF)
 	return 0;	/* proceed as usual */
@@ -2968,7 +2964,7 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
     RT_CHECK_DBI(dgop->dgo_wdbp->dbip);
 
     if (argc <= 0)
-	return(-1);	/* FAIL */
+	return -1;	/* FAIL */
 
     /* options are already parsed into _dgcdp */
     if (_dgcdp != (struct dg_client_data *)0) {
@@ -3125,7 +3121,7 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 	default:
 	    Tcl_AppendResult(interp, "ERROR, bad kind\n", (char *)NULL);
 	    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
-	    return(-1);
+	    return -1;
 	case 1:		/* Wireframes */
 	    /*
 	     * If asking for wireframe and in shaded_mode and no shaded mode override,
@@ -3180,7 +3176,7 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 	case 2:		/* Big-E */
 	    Tcl_AppendResult(interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
 	    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
-	    return (-1);
+	    return -1;
 	case 3:
 	    {
 		/* NMG */
@@ -3218,9 +3214,9 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
     bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 
     if (ret < 0)
-	return (-1);
+	return -1;
 
-    return (0);	/* OK */
+    return 0;	/* OK */
 }
 
 
@@ -3276,7 +3272,7 @@ dgo_invent_solid(struct dg_obj	*dgop,
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    Tcl_AppendResult(interp, "dgo_invent_solid(", name,
 			     ") would clobber existing database entry, ignored\n", (char *)NULL);
-	    return (-1);
+	    return -1;
 	}
 
 	/*
@@ -3329,7 +3325,7 @@ dgo_invent_solid(struct dg_obj	*dgop,
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
 
-    return (0);		/* OK */
+    return 0;		/* OK */
 }
 
 /**
@@ -3906,7 +3902,7 @@ dgo_rt_write(struct dg_obj	*dgop,
 
 #ifndef _WIN32
 static void
-dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
@@ -3994,11 +3990,11 @@ dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 
 #else
 static void
-dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
+dgo_rt_output_handler(ClientData clientData, int UNUSED(mask))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
-    int count;
+    DWORD count;
     char line[10240+1] = {0};
 
     if (drcdp == (struct dg_rt_client_data *)NULL ||
@@ -4013,7 +4009,7 @@ dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
     if (Tcl_Eof(run_rtp->chan) ||
 	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
 	int aborted;
-	int retcode;
+	DWORD retcode;
 
 	Tcl_DeleteChannelHandler(run_rtp->chan,
 				 dgo_rt_output_handler,
@@ -4530,10 +4526,10 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 }
 
 static union tree *
-dgo_bot_check_region_end(struct db_tree_state *tsp __attribute__((unused)),
-			 const struct db_full_path *pathp __attribute__((unused)),
+dgo_bot_check_region_end(struct db_tree_state *UNUSED(tsp),
+			 const struct db_full_path *UNUSED(pathp),
 			 union tree *curtree,
-			 genptr_t client_data __attribute__((unused)))
+			 genptr_t UNUSED(client_data))
 {
     return curtree;
 }

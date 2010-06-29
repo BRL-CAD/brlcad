@@ -142,7 +142,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, tcl_parse_tab, (char *)tcl_sp ) < 0 )
-	return(-1);
+	return -1;
 
 #if 0
     tcl_sp->tcl_mp = bu_open_mapped_file(bu_vls_addr(tcl_sp->tcl_file),
@@ -174,7 +174,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	bn_mat_print( "m_to_sh", tcl_sp->tcl_m_to_r );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -312,7 +312,7 @@ tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*

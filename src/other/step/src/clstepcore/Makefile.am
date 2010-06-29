@@ -1,6 +1,12 @@
 lib_LTLIBRARIES = libstepcore.la
 noinst_LTLIBRARIES = libstepcore_nil.la
 
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src/cldai \
+	-I$(top_srcdir)/src/cleditor \
+	-I$(top_srcdir)/src/clutils \
+	${NOWARN}
+
 libstepcore_nil_la_SOURCES = \
 	sdaiApplication_instance.cc \
 	STEPcomplex.cc \
@@ -54,10 +60,6 @@ noinst_HEADERS = \
 	STEPundefined.h
 
 libstepcore_nil_la_LDFLAGS = -avoid-version -Wc,${FEXCEPTIONS}
-libstepcore_nil_la_CXXFLAGS = \
-	-I$(top_srcdir)/src/cldai \
-	-I$(top_srcdir)/src/cleditor \
-	-I$(top_srcdir)/src/clutils
 
 libstepcore_la_SOURCES = 
 libstepcore_la_LDFLAGS = -Wc,${FEXCEPTIONS} -version-info 19:1

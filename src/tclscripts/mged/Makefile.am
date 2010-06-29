@@ -74,6 +74,7 @@ scripties = \
 	ray.tcl \
 	raypick.tcl \
 	reid.tcl \
+	remap_mater.tcl \
 	remat.tcl \
 	rt.tcl \
 	rt_script.tcl \
@@ -130,7 +131,8 @@ dist_tcl_DATA = \
 	l_i1_v1_s8.gif \
 	l_i1_v1_s9.gif \
 	mike-dedication.txt \
-	mike-tux.ppm
+	mike-tux.ppm \
+	mike-tux.png
 
 tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
@@ -143,6 +145,7 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
+	rrmb.tcl \
 	$(tcl_SCRIPTS)
 
 # CLEANFILES = $(BUILT_SOURCES)

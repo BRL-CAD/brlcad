@@ -169,7 +169,7 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
     /* If no "-p port", port comes from 1st extra */
@@ -182,9 +182,9 @@ get_args(int argc, char **argv)
 	framebuffer = argv[bu_optind++];
     }
     if ( argc > bu_optind )
-	return(0);	/* print usage */
+	return 0;	/* print usage */
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 /*

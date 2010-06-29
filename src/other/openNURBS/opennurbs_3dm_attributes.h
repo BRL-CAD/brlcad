@@ -162,6 +162,7 @@ public:
     on parent_attributes are copied.
   Parameters:
     parent_attributes - [in]
+    parent_layer - [in]
     control_limits - [in]
       The bits in control_limits determine which attributes may
       may be copied.
@@ -171,10 +172,11 @@ public:
                 8: plot color
             0x10: plot weight
             0x20: linetype
+            0x40: display order
 
   Returns:
      The bits in the returned integer indicate which attributes were
-     actuall modified.
+     actually modified.
 
                 1: visibility
                 2: color
@@ -182,9 +184,19 @@ public:
                 8: plot color
             0x10: plot weight
             0x20: linetype
+            0x40: display order
   */
+#if defined(ON_COMPILER_MSC)
+  __declspec(deprecated) 
+#endif
   unsigned int ApplyParentalControl( 
          const ON_3dmObjectAttributes& parent_attributes,
+         unsigned int control_limits = 0xFFFFFFFF
+         );
+
+  unsigned int ApplyParentalControl( 
+         const ON_3dmObjectAttributes& parent_attributes,
+         const ON_Layer& parent_layer,
          unsigned int control_limits = 0xFFFFFFFF
          );
 
@@ -266,6 +278,13 @@ public:
   // If ON::plot_color_from_object == PlotColorSource(), then m_color is the object's
   // display color.
   ON_Color      m_plot_color;
+
+  // Display order used to force objects to be drawn on top or behind each other
+  // 0  = draw object in standard depth buffered order
+  // <0 = draw object behind "normal" draw order objects
+  // >0 = draw object on top of "noraml" draw order objects
+  // Larger number draws on top of smaller number.
+  int m_display_order;
 
   // Plot weight in millimeters.
   //   =0.0 means use the default width

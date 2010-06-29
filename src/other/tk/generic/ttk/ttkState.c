@@ -27,6 +27,13 @@ static const char *stateNames[] =
     "alternate",	/* Widget-specific alternate display style */
     "invalid",		/* Bad value */
     "readonly",		/* Editing/modification disabled */
+    "hover",		/* Mouse cursor is over widget */
+    "reserved1",	/* Reserved for future extension */
+    "reserved2",	/* Reserved for future extension */
+    "reserved3",	/* Reserved for future extension */
+    "user3",		/* User-definable state */
+    "user2",		/* User-definable state */
+    "user1",		/* User-definable state */
     NULL
 };
 

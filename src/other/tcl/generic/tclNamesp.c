@@ -2415,7 +2415,8 @@ Tcl_FindCommand(
      */
 
     cmdPtr = NULL;
-    if (cxtNsPtr->commandPathLength!=0 && strncmp(name, "::", 2)) {
+    if (cxtNsPtr->commandPathLength!=0 && strncmp(name, "::", 2)
+	    && !(flags & TCL_NAMESPACE_ONLY)) {
 	int i;
 	Namespace *pathNsPtr, *realNsPtr, *dummyNsPtr;
 

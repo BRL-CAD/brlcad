@@ -15,13 +15,6 @@
 
 #include "opennurbs.h"
 
-ON__m__GetLocalClosestPointOnBezierCurve   ON_BezierCurve::m__GetLocalClosestPointOnBezierCurve = 0;
-ON__m__GetLocalBezierCurveSurfaceIntersection ON_BezierCurve::m__GetLocalBezierCurveSurfaceIntersection = 0;
-ON__m__GetLocalBezierCurveCurveIntersection ON_BezierCurve::m__GetLocalBezierCurveCurveIntersection = 0;
-ON__m__GetBezierCurveTightBoundingBox ON_BezierCurve::m__GetBezierCurveTightBoundingBox = 0;
-
-ON__m__GetClosestPointOnBezierSurface ON_BezierSurface::m__GetClosestPointOnBezierSurface = 0;
-
 int ON_ArcCurve::IntersectSelf( 
         ON_SimpleArray<ON_X_EVENT>& x,
         double intersection_tolerance,
@@ -57,6 +50,7 @@ int ON_Line::IntersectSurface(
           const ON_Interval* surfaceB_vdomain
           ) const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
@@ -67,21 +61,25 @@ int ON_Line::IntersectSurface(
 
 double ON_PlaneEquation::MinimumValueAt(const ON_SurfaceLeafBox& srfleafbox) const
 {
+  // The working function is part of the Rhino SDK.
   return 0.0;
 }
 
 double ON_PlaneEquation::MaximumValueAt(const ON_SurfaceLeafBox& srfleafbox) const
 {
+  // The working function is part of the Rhino SDK.
   return 0.0;
 }
 
 double ON_PlaneEquation::MinimumValueAt(const class ON_CurveLeafBox& crvleafbox) const
 {
+  // The working function is part of the Rhino SDK.
   return 0.0;
 }
 
 double ON_PlaneEquation::MaximumValueAt(const class ON_CurveLeafBox& crvleafbox) const
 {
+  // The working function is part of the Rhino SDK.
   return 0.0;
 }
 
@@ -95,6 +93,7 @@ int ON_BezierCurve::IntersectSelf(
         double intersection_tolerance
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
@@ -107,6 +106,7 @@ int ON_BezierCurve::IntersectCurve(
         const ON_Interval* bezierB_domain
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
@@ -120,6 +120,7 @@ int ON_BezierCurve::IntersectSurface(
           const ON_Interval* bezsrfB_vdomain
           ) const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
@@ -130,6 +131,7 @@ bool ON_BezierCurve::GetLocalClosestPoint(
         const ON_Interval* sub_domain
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
@@ -140,6 +142,7 @@ bool ON_BezierCurve::GetClosestPoint(
         const ON_Interval* sub_domain
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
@@ -153,6 +156,7 @@ bool ON_BezierCurve::GetLocalCurveIntersection(
         const ON_Interval* other_domain
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
@@ -170,6 +174,7 @@ bool ON_BezierCurve::GetLocalSurfaceIntersection(
           const ON_Interval* vdomain
           ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
@@ -189,6 +194,7 @@ bool ON_BezierSurface::GetLocalClosestPoint(
         const ON_Interval* sub_domain1
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
@@ -201,6 +207,7 @@ bool ON_BezierSurface::GetClosestPoint(
         const ON_Interval* sub_domain1
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
@@ -222,6 +229,7 @@ bool ON_X_EVENT::IsValid(ON_TextLog* text_log,
                           const ON_Interval* surfaceB_domain1
                           ) const
 {
+  // The working function is part of the Rhino SDK.
   return true;
 }
 
@@ -232,6 +240,7 @@ void ON_X_EVENT::CopyEventPart(
       int j 
       )
 {
+  // The working function is part of the Rhino SDK.
 }
 
 bool ON_X_EVENT::IsValidList(
@@ -249,6 +258,7 @@ bool ON_X_EVENT::IsValidList(
         const class ON_Interval* surfaceB_domain1
         )
 {
+  // The working function is part of the Rhino SDK.
   return true;
 }
 
@@ -259,122 +269,217 @@ int ON_X_EVENT::CleanList(
         ON_X_EVENT* xevent
         )
 {
+  // The working function is part of the Rhino SDK.
   return xevent_count;
 }
 
 bool ON_X_EVENT::IsValidCurveCurveOverlap( 
-          ON_Interval curveA_domain,
-          int sample_count,
-          double overlap_tolerance,
-          const class ON_CurveTreeNode* cnodeA, 
-          const class ON_CurveTreeNode* cnodeB,
-          const ON_Interval* curveB_domain
+          ON_Interval,
+          int,
+          double,
+          const class ON_CurveTreeNode*, 
+          const class ON_CurveTreeNode*,
+          const ON_Interval*
           )
 {
+  // The working function is part of the Rhino SDK.
   return true;
 }
 
 bool ON_X_EVENT::IsValidCurveSurfaceOverlap( 
-                      ON_Interval curveA_domain,
-                      int sample_count,
-                      double overlap_tolerance,
-                      const class ON_CurveTreeNode* cnodeA, 
-                      const class ON_SurfaceTreeNode* snodeB,
-                      const ON_Interval* surfaceB_udomain,
-                      const ON_Interval* surfaceB_vdomain
+                      ON_Interval,
+                      int,
+                      double,
+                      const class ON_CurveTreeNode*, 
+                      const class ON_SurfaceTreeNode*,
+                      const ON_Interval*,
+                      const ON_Interval*
                       )
 {
+  // The working function is part of the Rhino SDK.
   return true;
 }
 
 bool ON_X_EVENT::IsValidCurvePlaneOverlap( 
-          ON_Interval curveA_domain,
-          int sample_count,
-          double endpoint_tolerance,
-          double overlap_tolerance,
-          const class ON_CurveTreeNode* cnodeA,
-          const ON_PlaneEquation* plane_equation
+          ON_Interval,
+          int,
+          double,
+          double,
+          const class ON_CurveTreeNode*,
+          const ON_PlaneEquation*
           )
 {
+  // The working function is part of the Rhino SDK.
   return true;
 }
 
-
-////////////////////////////////////////////////////////////////
-//
-// Basic ON_Curve functions
-//
-
 ON_CurveTree* ON_Curve::CreateCurveTree() const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
 bool ON_Curve::GetClosestPoint( 
-        const ON_3dPoint& test_point,
-        double* t,       // parameter of local closest point returned here
-        double maximum_distance,
-        const ON_Interval* sub_domain
+        const ON_3dPoint&,
+        double*,
+        double,
+        const ON_Interval*
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
 bool ON_Curve::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform
+		ON_BoundingBox&, 
+    int,
+		const ON_Xform*
     ) const
 {
+  // The working function is part of the Rhino SDK.
   return false;
 }
 
 int ON_Curve::IntersectSelf( 
-        ON_SimpleArray<ON_X_EVENT>& x,
-        double intersection_tolerance,
-        const ON_Interval* curve_domain
+        ON_SimpleArray<ON_X_EVENT>&,
+        double,
+        const ON_Interval*
         ) const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
 int ON_Curve::IntersectCurve( 
-          const ON_Curve* curveB,
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance,
-          double overlap_tolerance,
-          const ON_Interval* curveA_domain,
-          const ON_Interval* curveB_domain
+          const ON_Curve*,
+          ON_SimpleArray<ON_X_EVENT>&,
+          double,
+          double,
+          const ON_Interval*,
+          const ON_Interval*
           ) const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
 int ON_Curve::IntersectSurface( 
-          const ON_Surface* surfaceB,
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance,
-          double overlap_tolerance,
-          const ON_Interval* curveA_domain,
-          const ON_Interval* surfaceB_udomain,
-          const ON_Interval* surfaceB_vdomain
+          const ON_Surface*,
+          ON_SimpleArray<ON_X_EVENT>&,
+          double,
+          double,
+          const ON_Interval*,
+          const ON_Interval*,
+          const ON_Interval*
           ) const
 {
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 
 int ON_Surface::IntersectSurface( 
-        const ON_Surface* surfaceB,
-        ON_ClassArray<ON_SSX_EVENT>& x,
-        double intersection_tolerance,
-        double overlap_tolerance,
-        double fitting_tolerance,
-        const ON_Interval* surfaceA_udomain,
-        const ON_Interval* surfaceA_vdomain,
-        const ON_Interval* surfaceB_udomain,
-        const ON_Interval* surfaceB_vdomain
+        const ON_Surface*,
+        ON_ClassArray<ON_SSX_EVENT>&,
+        double,
+        double,
+        double,
+        const ON_Interval*,
+        const ON_Interval*,
+        const ON_Interval*,
+        const ON_Interval*
         ) const
 {
+  // The working function is part of the Rhino SDK.
+  return 0;
+}
+
+ON_SurfaceTree* ON_Surface::CreateSurfaceTree() const
+{
+  // The working function is part of the Rhino SDK.
+  return 0;
+}
+
+class ON_NurbsSurface* ON_Surface::CreateCubicLoft(
+    int,
+    const ON_Curve* const*,
+    double,
+    int,
+    ON::cubic_loft_end_condition,
+    ON::cubic_loft_end_condition,
+    class ON_NurbsSurface*
+    )
+{
+  // The working function is part of the Rhino SDK.
+  return 0;
+}
+
+bool ON_Surface::AreaMassProperties(
+  ON_MassProperties&,
+  bool,
+  bool,
+  bool,
+  bool,
+  double,
+  double
+  ) const
+{
+  // The working function is part of the Rhino SDK.
+  return false;
+}
+
+bool ON_Surface::VolumeMassProperties(
+  ON_MassProperties&, 
+  bool,
+  bool,
+  bool,
+  bool,
+  ON_3dPoint,
+  double,
+  double
+  ) const
+{
+  // The working function is part of the Rhino SDK.
+  return false;
+}
+
+bool ON_Curve::LengthMassProperties(
+  ON_MassProperties&,
+  bool,
+  bool,
+  bool,
+  bool,
+  double,
+  double
+  ) const
+{
+  // The working function is part of the Rhino SDK.
+  return false;
+}
+
+bool ON_Curve::AreaMassProperties(
+    ON_3dPoint,
+    ON_3dVector,
+    ON_MassProperties&, 
+    bool,
+    bool,
+    bool,
+    bool,
+    double,
+    double
+    ) const
+{
+  // The working function is part of the Rhino SDK.
+  return false;
+}
+
+ON_PolylineCurve* ON_Curve::MeshCurve(
+    ON_MeshCurveParameters&,
+    ON_PolylineCurve*,
+    bool,
+    const ON_Interval*
+    )
+{
+  // The working function is part of the Rhino SDK.
   return 0;
 }
 

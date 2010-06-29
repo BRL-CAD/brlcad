@@ -3458,7 +3458,7 @@ Tcl_LsortObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *CONST objv[])	/* Argument values. */
 {
-    int i, j, index, unique, indices, length, nocase = 0, sortMode, indexc;
+    int i, j, index, indices, length, nocase = 0, sortMode, indexc;
     Tcl_Obj *resultPtr, *cmdPtr, **listObjPtrs, *listObj, *indexPtr;
     SortElement *elementArray, *elementPtr;
     SortInfo sortInfo;		/* Information about this sort that needs to
@@ -3497,11 +3497,13 @@ Tcl_LsortObjCmd(
     sortInfo.interp = interp;
     sortInfo.resultCode = TCL_OK;    
     cmdPtr = NULL;
-    unique = 0;
     indices = 0;
     for (i = 1; i < objc-1; i++) {
 	if (Tcl_GetIndexFromObj(interp, objv[i], switches, "option", 0,
 		&index) != TCL_OK) {
+	    if (sortInfo.indexc > 1) {
+		ckfree((char *) sortInfo.indexv);
+	    }
 	    return TCL_ERROR;
 	}
 	switch ((enum Lsort_Switches) index) {
@@ -3593,7 +3595,6 @@ Tcl_LsortObjCmd(
 	    sortInfo.sortMode = SORTMODE_REAL;
 	    break;
 	case LSORT_UNIQUE:
-	    unique = 1;
 	    sortInfo.unique = 1;
 	    break;
 	case LSORT_INDICES:

@@ -76,6 +76,11 @@ ON_DECL
 void    ON_EnableDebugBreak( int bEnableDebugBreak );
 
 ON_DECL
+int ON_GetDebugBreakOnFirstError(void);
+ON_DECL
+void ON_EnableDebugBreakOnFirstError( int bEnableDebugBreak );
+
+ON_DECL
 int     ON_GetDebugErrorMessage(void);
 ON_DECL
 void    ON_EnableDebugErrorMessage( int bEnableDebugErrorMessage );

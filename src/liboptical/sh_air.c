@@ -62,10 +62,10 @@ static void dpm_hook(register const struct bu_structparse *sdp, register const c
 struct bu_structparse air_parse[] = {
     {"%f",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook },
     {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",  1, "s",			SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
+    {"%f",  1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "delta",		SHDR_O(delta),		bu_mm_cvt },
-    {"%f",  1, "d",			SHDR_O(delta),		bu_mm_cvt },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%f",  1, "d",		SHDR_O(delta),		bu_mm_cvt },
+    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), airtest_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), air_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), emist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), tmist_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
@@ -138,11 +138,11 @@ air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm) );
     if (bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
-	return(-1);
+	return -1;
 
     if (rdebug&RDEBUG_SHADE) air_print(rp, (char *)air_sp);
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -189,7 +189,7 @@ airtest_render(struct application *ap, struct partition *pp, struct shadework *s
 	       pp->pt_outhit->hit_dist);
     }
 
-    return(1);
+    return 1;
 }
 /*
  *	A I R _ R E N D E R
@@ -252,7 +252,7 @@ air_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	bu_log("air o dist:%gmm tau:%g transmit:%g\n",
 	       dist, tau, swp->sw_transmit);
 
-    return(1);
+    return 1;
 }
 
 int
@@ -353,7 +353,7 @@ tmist_render(struct application *ap, struct partition *pp, struct shadework *swp
     if (rdebug&RDEBUG_SHADE)
 	bu_log("tmist transmit = %g\n", swp->sw_transmit);
 
-    return(1);
+    return 1;
 }
 /*
  *	E M I S T _ R E N D E R
@@ -424,7 +424,7 @@ emist_render(struct application *ap, struct partition *pp, struct shadework *swp
     if (rdebug&RDEBUG_SHADE)
 	bu_log("emist transmit = %g\n", swp->sw_transmit);
 
-    return(1);
+    return 1;
 }
 /*
  *	F B M _ E M I S T _ R E N D E R
@@ -494,7 +494,7 @@ emist_fbm_render(struct application *ap, struct partition *pp, struct shadework 
     }
 
 
-    return(1);
+    return 1;
 }
 
 /*

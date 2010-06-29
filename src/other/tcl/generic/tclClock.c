@@ -256,6 +256,15 @@ TclClockInit(
     int i;
 
     /*
+     * Safe interps get [::clock] as alias to a master, so do not need their
+     * own copies of the support routines.
+     */
+
+    if (Tcl_IsSafe(interp)) {
+	return;
+    }
+
+    /*
      * Create the client data, which is a refcounted literal pool.
      */
 

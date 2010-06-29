@@ -1,0 +1,652 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <!-- vi:set sw=2: -->
+  <!--
+  Copyright (C) 1996-2002  Brian Paul and Ben Bederson
+  Copyright (C) 2005-2009  Greg Couch
+  See the LICENSE file for copyright details.
+  -->
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Togl C API</title>
+  </head>
+
+  <body>
+    <script type="text/javascript" src="header.js"></script>
+    <script type="text/javascript">
+      NavigationBar();
+    </script>
+
+    <h1 align="center">Togl C API</h1>
+
+    <h2>Contents</h2>
+    <ul>
+      <li><a href="#compile">Compiling and linking C Togl Functions</a>
+      <li><a href="#setup">Setup and Initialization Functions</a>
+      <ul>
+	<li><code>Togl_Init</code>,
+	<code>Togl_InitStubs</code>
+      </ul>
+      <li><a href="#drawing">Drawing-related Commands</a>
+      <ul>
+	<li><code>Togl_PostRedisplay</code>,
+	<code>Togl_SwapBuffers</code>,
+	<code>Togl_MakeCurrent</code>,
+	<code>Togl_SwapInterval</code>
+	<code>Togl_CopyContext</code>
+      </ul>
+      <li><a href="#query">Query Functions</a>
+      <ul>
+	<li><code>Togl_Ident</code>,
+	<code>Togl_Width</code>,
+	<code>Togl_Height</code>,
+	<code>Togl_Interp</code>,
+	<code>Togl_TkWin</code>,
+	<code>Togl_GetProcAddr</code>,
+	<code>Togl_ContextTag</code>
+	<code>Togl_UpdatePending</code>
+	<code>Togl_HasRGBA</code>
+	<code>Togl_IsDoubleBuffered</code>
+	<code>Togl_HasDepthBuffer</code>
+	<code>Togl_HasAccumulationBuffer</code>
+	<code>Togl_HasDestinationAlpha</code>
+	<code>Togl_HasStencilBuffer</code>
+	<code>Togl_StereoMode</code>
+	<code>Togl_HasMultisample</code>
+      </ul>
+      <li><a href="#index">Color Index Mode Functions</a>
+      <ul>
+	<li><code>Togl_AllocColor</code>,
+	<code>Togl_FreeColor</code>,
+	<code>Togl_SetColor</code>
+      </ul>
+      <li><a href="#font">Font Functions</a>
+      <ul>
+	<li><code>Togl_LoadBitmapFont</code>,
+	<code>Togl_UnloadBitmapFont</code>,
+	<code>Togl_WriteObj</code>,
+	<code>Togl_WriteChars</code>
+      </ul>
+      <li><a href="#client">Client Data Functions</a>
+      <ul>
+	<li><code>Togl_SetClientData</code>,
+	<code>Togl_GetClientData</code>
+      </ul>
+      <li><a href="#overlay">Overlay Functions</a>
+      <ul>
+	<li><code>Togl_UseLayer</code>,
+	<code>Togl_ShowOverlay</code>,
+	<code>Togl_HideOverlay</code>,
+	<code>Togl_PostOveralyRedisplay</code>,
+	<code>Togl_ExistsOverlay</code>,
+	<code>Togl_GetOverlayTransparentValue</code>,
+	<code>Togl_IsMappedOverlay</code>,
+	<code>Togl_AllocColorOverlay</code>,
+	<code>Togl_FreeColorOverlay</code>
+      </ul>
+      <li><a href="#stereo">Stereo Functions</a>
+      <ul>
+	<li><code>Togl_Drawbuffer</code>,
+	<li><code>Togl_Clear</code>
+	<li><code>Togl_Frustum</code>
+	<li><code>Togl_Ortho</code>
+	<li><code>Togl_NumEyes</code>
+      </ul>
+      <li><a href="#image">Image Functions</a>
+      <ul>
+	<li><code>Togl_TakePhoto</code>
+      </ul>
+      <li><a href="#convert">Conversion Functions</a>
+      <ul>
+	<li><code>Togl_GetToglFromObj</code>,
+	<li><code>Togl_GetToglFromName</code>
+      </ul>
+    </ul>
+
+    <hr>
+
+    <h2><a name="compile">Compiling and linking C Togl Functions</a></h2>
+
+    <p>
+    All Togl functions are found in the Togl header file.
+
+    <blockquote>
+      <code>
+	#include "togl.h"
+      </code>
+    </blockquote>
+
+    <p>
+    For portability, you should include the <code>togl.h</code> header
+    before any other OpenGL headers
+    so it will compile on Microsoft Windows.
+
+    <p>
+    Before calling any Togl functions, you need to initialize it.
+    Regardless if you're using stubs (by defining <code>USE_TOGL_STUBS</code>)
+    or not, the following code will properly initialize togl:
+
+    <blockquote><pre>
+if (Tcl_InitStubs(interp, "8.1", 0) == NULL
+|| Togl_InitStubs(interp, "2.0", 0) == NULL) {
+    /* fail */
+}
+</pre></blockquote>
+
+    <p>
+    If you are using a prebuilt binary distribution,
+    you should be sure to define <code>USE_TOGL_STUBS</code> beforehand.
+
+    <p>
+    See the source for the demo programs in the Togl source distribution
+    for working examples.
+
+    <h3>Linking</h3>
+
+    <p>
+    If you are using a prebuilt binary,
+    be sure to link against the stub library.
+    On Microsoft Windows,
+    link against <code>Toglstub21.lib opengl32.lib user32.lib gdi32.lib</code>,
+    on Mac OS X,
+    link against <code>-lToglstub2.1 -framework OpenGL</code>,
+    on other platforms,
+    link against <code>-lToglstub2.1 -lGLU -lGL -lm</code>.
+
+    <p>
+    If building your own Togl package,
+    you can use the stubs interface or link in the Tcl and Tk libraries as well.
+    If using the stubs interface, link as shown above.
+    Otherwise:
+    on Microsoft Windows,
+    link against <code>Togl21.lib tk84.lib tcl84.lib opengl32.lib user32.lib gdi32.lib</code>,
+    on Mac OS X,
+    link against <code>-lTogl2.1 -framework Tk -framework Tcl -framework OpenGL</code>,
+    on other platforms,
+    link against <code>-lTogl2.1 -ltk8.4 -ltcl8.4 -lGLU -lGL -lm</code>.
+
+    <h2><a name="setup">Setup and Initialization Functions</a></h2>
+
+    <dl>
+      <dt><code>int Togl_Init(Tcl_Interp *interp)</code>
+      <dd>
+      Initializes the Togl module.  This is typically called from the
+      Tk_Main() function
+      or other Tcl package initialization function that is directly linked
+      to the Togl (shared) library.
+      It is also indirectly called via
+      Tcl's <code>package require Togl</code> command.
+      If successful, the return value is TCL_OK.
+    </dl>
+
+    <dl>
+      <dt>
+      <code>const char *Togl_InitStubs(Tcl_Interp *interp, const char *version, int exact)</code>
+      <dd>
+      Loads the Togl package into the given <code>interp</code>reter
+      and initializes it.
+      <code>version</code> should be <code>"2.0"</code> or higher.
+      This is typically called from C/C++ code that accesses Togl's C API
+      and has installed Togl into the standard TCL hierarchy.
+      See the Tcl InitStubs(3) or the Tk TkInitStubs(3) manual pages for
+      more information.
+    </dl>
+
+    <h2><a name="drawing">Drawing-related Commands</a></h2>
+
+    <dl>
+      <dt><code>void Togl_PostRedisplay(Togl *togl)</code>
+      <dd>
+      Signals that the widget should be redrawn.  When Tk is next idle,
+      the <code>displaycommand</code> callback will be invoked.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_SwapBuffers(const Togl *togl)</code>
+      <dd>
+      Swaps the front and back color buffers for a double-buffered widget.
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFlush.xml">
+	glFlush</a> is executed if the window is single-buffered.  So this call
+      works for both single- and double-buffered contexts.  This is
+      typically called in the <code>displaycommand</code> callback function.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_MakeCurrent(const Togl *togl)</code>
+      <dd>
+      Sets the current rendering context to the given widget.  This is done
+      automatically before any Togl callback functions is called.  So the
+      call is only needed if you have multiple widgets with separate OpenGL
+      contexts.  If the argument is NULL, then the rendering context is cleared
+      and subsequent OpenGL commands will fail.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_SwapInterval(const Togl *togl, int interval)</code>
+      <dd>
+      Returns True if successful.
+      Attempts to change the maximum refresh rate
+      by setting the minimum number of cycles between successive swap buffers.
+      For benchmarking purposes, you should set the swap interval to 0.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_CopyContext(const Togl *from, const Togl *to, unsigned int mask)</code>
+      <dd>
+      Copy a subset of the OpenGL context state from from one context
+      to another using the mask parameter who values are the same as
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glPushAttrib.xml">
+	glPushAttrib</a>.
+      The return value is TCL_OK if the context was copied.
+    </dl>
+
+    <h2><a name="query">Query Functions</a></h2>
+
+    <dl>
+      <dt><code>char *Togl_Ident(const Togl *togl)</code>
+      <dd>
+      Returns a pointer to the identification string associated with a Togl
+      widget or NULL if there's no identifier string.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_Width(const Togl *togl)</code>
+      <dd>
+      Returns the width of the given Togl widget.  Typically called in the
+      <code>reshapecommand</code> callback function.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_Height(const Togl *togl)</code>
+      <dd>
+      Returns the height of the given Togl widget.  Typically called in the
+      <code>reshapecommand</code> callback function.
+    </dl>
+
+    <dl>
+      <dt><code>Tcl_Interp *Togl_Interp(const Togl *togl)</code>
+      <dd>
+      Returns the Tcl interpreter associated with the given Togl widget.
+    </dl>
+    <dl>
+      <dt>
+      <code>Tk_Window Togl_TkWin(const Togl *togl)</code>
+      <dd>
+      Returns the Tk window associated with the given Togl widget.
+    </dl>
+
+    <dl>
+      <dt><code>Togl_FuncPtr Togl_GetProcAddr(const char *funcname)</code>
+      <dd>
+      Platform-independent way to get OpenGL function pointers from a
+      function name.
+      Note that in Microsoft Windows (WGL) versions that
+      "the extension function addresses are unique for each pixel format.
+      All rendering contexts of a given pixel format
+      share the same extension function addresses."
+      And on *nix (GLX/X11) platforms, 
+      "the function pointers returned are context independent"
+      (Linux ABI documentation).
+      The Mac OS X (AGL) platform acts like a *nix platform.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_ContextTag(const Togl *t)</code>
+      <dd>
+      Returns an integer that represents the context tag.
+      All Togl widgets with the same context tag share display lists.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_UpdatePending(const Togl *t)</code>
+      <dd>
+      Returns True if the window should be redrawn.  See Togl_PostRedisplay.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasRGBA(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a RBGA color buffer.
+      False means that the widget is using a color index buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_IsDoubleBuffered(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget is double buffered.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasDepthBuffer(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget is has a depth buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasAccumulationBuffer(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has an accumulation buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasDestinationAlpha(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a destination alpha buffer.
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasStencilBuffer(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a stencil buffer.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_StereoMode(const Togl *t)</code>
+      <dd>
+      Return current stereo mode.  See ??
+    </dl>
+
+    <dl>
+      <dt><code>Bool Togl_HasMultisample(const Togl *t)</code>
+      <dd>
+      Return True if Togl widget has a multisample buffer.
+    </dl>
+
+    <h2><a name="index">Color Index Mode Functions</a></h2>
+
+    <p>
+    These functions are only used for color index mode.
+
+    <dl>
+      <dt><code>unsigned long Togl_AllocColor(Togl *togl, float red, float green, float blue)</code>
+      <dd>
+      Allocate a color from a read-only colormap.  Given a color specified
+      by red, green, and blue return a colormap index (aka pixel value)
+      whose entry most closely matches the red, green, blue color.  Red,
+      green, and blue are values in [0,1].  This function is only used in
+      color index mode when the <code>-privatecmap</code> option is false.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_FreeColor(Togl *togl, unsigned long index)</code>
+      <dd>
+      Free a color in a read-only colormap.  Index is a value which was
+      returned by the Togl_AllocColor() function.  This function is only
+      used in color index mode when the <code>-privatecmap</code> option
+      is false.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_SetColor(Togl *togl,
+	int index, float red, float green, float blue)</code>
+      <dd>
+      Load the colormap entry specified by index with the given red, green
+      and blue values.  Red, green, and blue are values in [0,1].  This
+      function is only used in color index mode when the
+      <code>-privatecmap</code> option is true.
+    </dl>
+
+
+    <h2><a name="font">Font Functions</a></h2>
+
+    <p>
+    These functions provide an interface to the simple bitmap font capabilities
+    that every OpenGL implementation provides.
+    Better font support is found in other C APIs, <i>e.g.</i>,
+    <a href="http://quesoglc.sourceforge.net/">QuesoGLC</a>
+    or <a href="http://sourceforge.net/projects/ftgl">FTGL</a>.
+
+    <dl>
+      <dt><code>Tcl_Obj *Togl_LoadBitmapFont(Togl *togl,
+	const char *fontname)</code>
+      <dd>
+      Load the named font as a set of
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glBitmap.xml">
+	glBitmap</a> display lists.
+      <var>fontname</var> may be any of the font description styles
+      accepted by the Tk font command.
+      For maximum portability, one of the standard Tk fonts,
+      <b>Courier</b>, <b>Times</b>, and <b>Helvetica</b>, should be used.
+      Unicode fonts are treated as if they have only have an 8-bit index
+      (so poorly).
+      If successful, a Togl BitmapFont object is returned.
+      NULL is returned on failure.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_UnloadBitmapFont(Togl *togl, Tcl_Obj *toglfont)
+      </code>
+      <dd>
+      Destroys the bitmap display lists created by by Togl_LoadBitmapFont().
+      If successful, the return value is TCL_OK.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_WriteChars(const Togl *togl, const Tcl_Obj *toglfont, const char *string, int length)
+      </code>
+      Draw the given <em>string</em>.
+      If the given <em>length</em> is zero, then it is computed using strlen.
+      Returns the length of the drawn string.
+      <dd>
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_WriteObj(const Togl *togl, const Tcl_Obj *toglfont, Tcl_Obj *obj)
+      </code>
+      <dd>
+      Tcl_Obj interface to <code>Tcl_WriteChars</code>.
+    </dl>
+
+    <h2><a name="client">Client Data Functions</a></h2>
+
+    <p>
+    Each Togl structure has a pointer to an arbitrary client data structure.
+
+    <dl>
+      <dt><code>void Togl_SetClientData(Togl *togl, ClientData clientData)</code>
+      <dd>
+      Set the Togl widget's client data pointer to <em>clientData</em>.
+    </dl>
+
+    <dl>
+      <dt><code>ClientData Togl_GetClientData(const Togl *togl)</code>
+      <dd>
+      Return the Togl widget's client data pointer.
+    </dl>
+
+
+    <h2><a name="overlay">Overlay Functions</a></h2>
+
+    <p>
+    These functions are modeled after GLUT's overlay sub-API.
+
+    <dl>
+      <dt><code>void Togl_UseLayer(Togl *togl, int layer)</code>
+      <dd>
+      Select the layer into which subsequent OpenGL rendering will be
+      directed.  <em>layer</em> may be either <em>TOGL_OVERLAY</em> or
+      <em>TOGL_NORMAL</em>.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_ShowOverlay(Togl *togl)</code>
+      <dd>
+      Display the overlay planes, if any.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_HideOverlay(Togl *togl)</code>
+      <dd>
+      Hide the overlay planes, if any.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_PostOverlayRedisplay(Togl *togl)</code>
+      <dd>
+      Signal that the overlay planes should be redraw.  
+      When Tk is next idle,
+      the <code>overlaydisplaycommand</code> callback will be invoked.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_ExistsOverlay(Togl *togl)</code>
+      <dd>
+      Returns 1 if overlay planes exist, 0 otherwise.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_GetOverlayTransparentValue(const Togl *togl)</code>
+      <dd>
+      Returns the color index of the overlay's transparent pixel value.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_IsMappedOverlay(const Togl *togl)</code>
+      <dd>
+      Returns 1 if the overlay planes are currently displayed, 0 otherwise.
+    </dl>
+
+    <dl>
+      <dt><code>unsigned long Togl_AllocColorOverlay(const Togl *togl,
+	float red, float green, float blue)</code>
+      <dd>
+      Allocate a color in the overlay planes.  Red, green, and blue are
+      values in [0,1].  Return the color index or -1 if the allocation
+      fails.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_FreeColorOverlay(const Togl *togl, unsigned long index)</code>
+      <dd>
+      Free a color which was allocated with Togl_AllocColorOverlay().
+    </dl>
+
+    <h2><a name="stereo">Stereo Functions</a></h2>
+
+    <p>
+    Togl abstracts part of the stereo drawing process to seamlessly
+    support quad-buffered stereo as well as various alternative stereo
+    formats.  The stereo viewing parameters, <code>eyeseparation</code>
+    and <code>convergence</code> need to be set with the Togl's
+    <a href="tclapi.html#stereo options">stereo options</a>.
+
+    <dl>
+      <dt><code>void Togl_DrawBuffer(Togl *togl, GLenum mode)</code>
+      <dd>
+      Switch to OpenGL draw buffer.
+      Should be one of GL_BACK_LEFT, GL_BACK_RIGHT, GL_FRONT_LEFT, or
+      GL_FRONT_RIGHT.
+      It is not possible to draw in the left and right buffers at the same
+      time in the alternate stereo modes.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_Clear(const Togl *togl, GLbitfield mask)</code>
+      <dd>
+      Replacement for OpenGL's
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glClear.xml">
+	glClear</a> that takes into account the alternate stereo mode.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_Frustum(const Togl *togl, GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far)</code>
+      <dd>
+      Replacement for OpenGL's
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glFrustum.xml">
+	glFrustum</a> that takes into account the alternate stereo mode.
+    </dl>
+
+    <dl>
+      <dt><code>void Togl_Ortho(const Togl *togl, GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat near, GLfloat far)</code>
+      <dd>
+      Replacement for OpenGL's
+      <a href="http://www.opengl.org/sdk/docs/man/xhtml/glOrtho.xml">
+	glOrtho</a> that takes into account the alternate stereo mode.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_NumEyes(const Togl *togl)</code>
+      <dd>
+    </dl>
+
+    <h3>Stereo Example</h3>
+
+    <p>
+    This code works for quad-buffered stereo,
+    as well as the other stereo modes.
+
+    <blockquote><pre>
+if (Togl_NumEyes(togl) == 1) {
+    Togl_DrawBuffer(togl, GL_BACK);
+    Togl_Clear(togl);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    Togl_Frustum(togl, left, right, bottom, top, near, far);
+    glMatrixMode(GL_MODELVIEW);
+    <b><i>draw image</i></b>
+} else {
+    Togl_DrawBuffer(togl, GL_BACK_LEFT);
+    Togl_Clear(togl);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    Togl_Frustum(togl, left, right, bottom, top, near, far);
+    glMatrixMode(GL_MODELVIEW);
+    <b><i>draw left-eye image</i></b>
+    Togl_DrawBuffer(togl, GL_BACK_RIGHT);
+    Togl_Clear(togl);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    Togl_Frustum(togl, left, right, bottom, top, near, far);
+    glMatrixMode(GL_MODELVIEW);
+    <b><i>draw right-eye image</i></b>
+}
+Togl_SwapBuffers(togl);
+</pre></blockquote>
+
+    <h2><a name="image">Image Functions</a></h2>
+
+    <p>
+    <!--description-->
+
+    <dl>
+      <dt><code>int Togl_TakePhoto(Togl *togl, Tk_PhotoHandle photo)</code>
+      <dd>
+      Take a photo image of the current Togl window and place it in the
+      given <code>photo</code> object.
+      If the window is partially obscured,
+      either by other windows or by the edges of the display,
+      the results are undefined in the obscured region. 
+      If successful, the return value is TCL_OK.
+    </dl>
+
+    <h2><a name="convert">Conversion Functions</a></h2>
+
+    <p>
+    These functions aid the programmer when writing Togl callback functions.
+
+    <dl>
+      <dt><code>int Togl_GetToglFromObj(Tcl_Interp *interp, Tcl_Obj *obj, Togl **toglPtr)</code>
+      <dd>
+      Attempt to return a Togl structure "toglPtr" from the Tcl object "obj".
+      If successful, the return value is TCL_OK.
+    </dl>
+
+    <dl>
+      <dt><code>int Togl_GetToglFromName(Tcl_Interp *interp, const char *cmdName, Togl **toglPtr)</code>
+      <dd>
+      Attempt to return a Togl structure "toglPtr" from the Tcl command name "cmdName".
+      If successful, the return value is TCL_OK.
+    </dl>
+
+    <hr>
+    <a href="http://sourceforge.net/projects/togl">
+      <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=519&amp;type=13" width="120" height="30" border="0" alt="Get Togl at SourceForge.net. Fast, secure and Free Open Source software downloads">
+    </a>
+    <a href="http://validator.w3.org/check?uri=referer">
+      <img src="http://www.w3.org/Icons/valid-html401-blue"
+      alt="Valid HTML 4.01 Transitional" height="31" width="88" border="0">
+    </a>
+  </body>
+</html>

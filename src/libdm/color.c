@@ -26,12 +26,15 @@
 #ifdef DM_X
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #endif
 
 #include "bu.h"
+
+#include "dm_xvars.h"
 
 
 /* Return the allocated pixel value that most closely represents
@@ -44,7 +47,7 @@ X_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int
 {
     fastf_t f;
     int rf, gf, bf;
-    int index;
+    int idx;
 
     if (r == 0 && g == 0 && b == 0)
 	return pixels[0];
@@ -54,20 +57,20 @@ X_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int
     gf = g * f;
     bf = b * f;
 
-    index = rf * cd * cd + gf * cd + bf;
+    idx = rf * cd * cd + gf * cd + bf;
 
-    if (index == 0) {
+    if (idx == 0) {
 	if (r != 0)
-	    index = cd * cd;
+	    idx = cd * cd;
 
 	if (g != 0)
-	    index += cd;
+	    idx += cd;
 
 	if (b != 0)
-	    index += 1;
+	    idx += 1;
     }
 
-    return pixels[index];
+    return pixels[idx];
 }
 
 /*
@@ -81,7 +84,7 @@ _X_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int sto
     XColor *colors;
 
     ncolors = hi - low;
-    colors = (XColor *)bu_malloc(sizeof(XColor) * ncolors, "dm_load_cmap: colors");
+    colors = (XColor *)bu_calloc(ncolors, sizeof(XColor), "dm_load_cmap: colors");
 
     for (i = low; i < hi; ++i)
 	colors[i].pixel = i;
@@ -111,6 +114,8 @@ X_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, in
     int i;
     int r, g, b;
     int incr;  /* increment */
+
+    INIT_XCOLOR(&color);
 
     /*
      * Copy default colors below cmap_base to private colormap to help

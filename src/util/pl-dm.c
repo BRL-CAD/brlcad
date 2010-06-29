@@ -51,6 +51,7 @@ struct cmdtab {
     int (*ct_func)();
 };
 
+
 #define MAXARGS 9000
 #define MOUSE_MODE_IDLE 0
 #define MOUSE_MODE_ROTATE 1
@@ -78,6 +79,7 @@ struct plot_list{
     struct bu_vls pl_name;
     struct bn_vlblock *pl_vbp;
 };
+
 
 struct plot_list HeadPlot;
 
@@ -150,18 +152,17 @@ get_args(int argc, char **argv)
 		}
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
-
 
 
 /*
@@ -672,6 +673,7 @@ cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * Do display manager specific commands.
  */
@@ -693,6 +695,7 @@ cmd_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_ERROR;
 }
+
 
 /*
  * Clear the screen.
@@ -718,6 +721,7 @@ cmd_clear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     refresh();
     return TCL_OK;
 }
+
 
 /*
  * Close the specified plots.
@@ -754,6 +758,7 @@ cmd_closepl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * Draw the specified plots.
  */
@@ -786,6 +791,7 @@ cmd_draw(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * Erase the specified plots.
  */
@@ -817,6 +823,7 @@ cmd_erase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     refresh();
     return TCL_OK;
 }
+
 
 /*
  * Print a list of the load plot objects.
@@ -857,11 +864,12 @@ cmd_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
  * F _ Z O O M
  *
  * A scale factor of 2 will increase the view size by a factor of 2,
- *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
+ * (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
 static int
 cmd_zoom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -887,6 +895,7 @@ cmd_zoom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return status;
 }
 
+
 static int
 cmd_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -896,6 +905,7 @@ cmd_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 /*
  * S L E W V I E W
@@ -929,6 +939,7 @@ cmd_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return status;
 }
+
 
 /* set view using azimuth, elevation and twist angles */
 static int
@@ -989,6 +1000,7 @@ cmd_aetview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     refresh();
     return TCL_OK;
 }
+
 
 /*
  * Exit.
@@ -1182,6 +1194,7 @@ main(int argc, char *argv[])
 
     bu_exit (0, NULL);
 }
+
 
 /*
  * Local Variables:

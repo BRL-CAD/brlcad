@@ -188,7 +188,6 @@ set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
 set mged_help_data(lookat)	$helplib_data(vo_lookat)
 set mged_help_data(ls)		$helplib_data(wdb_ls)
-set mged_help_data(lscon)	{{} {list all constraint objects in the database}}
 set mged_help_data(lm)          {{[-l] value [value value...]} {list all regions that have a MUVES_Component attribute with any of the listed values}}
 set mged_help_data(lt)		$helplib_data(wdb_lt)
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}

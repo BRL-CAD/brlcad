@@ -286,7 +286,7 @@ main(int argc, char **argv)
 	}
     }
     fb_close(fbp);
-    return(0);
+    return 0;
 }
 /* getcode - Get a LWZ "code"
  *
@@ -334,7 +334,7 @@ getcode(FILE *inp)
  */
 	if (--count <= 0) {
 	    count = (unsigned char) getc(inp);
-	    if (count == 0) return(-1);
+	    if (count == 0) return -1;
 	}
 /*
  * stuff another byte into last bits.
@@ -349,7 +349,7 @@ getcode(FILE *inp)
  */
     bitsleft -= Bits;
     lastbits = lastbits >> Bits;
-    return(code);
+    return code;
 }
 
 /* getByte	get a byte from the input stream decompressing as we go.
@@ -418,10 +418,10 @@ int getByte(FILE *inp)
 	do {
 	    firstcode=oldcode=getcode(inp);
 	} while (firstcode == clear_code);
-	return(firstcode);
+	return firstcode;
     }
 
-    if (sp > stack) return(*--sp);
+    if (sp > stack) return *--sp;
 
     while ((code=getcode(inp)) >= 0) {
 	if (code == clear_code) {
@@ -434,9 +434,9 @@ int getByte(FILE *inp)
 	    next_ent = clear_code+2;
 	    sp=stack;
 	    firstcode=oldcode=getcode(inp);
-	    return(firstcode);
+	    return firstcode;
 	} else if (code == end_code) {
-	    return (-1);
+	    return -1;
 	}
 
 	incode = code;
@@ -466,9 +466,9 @@ int getByte(FILE *inp)
 
 	oldcode = incode;
 
-	if (sp >stack) return(*--sp);
+	if (sp >stack) return *--sp;
     }
-    return(code);
+    return code;
 }
 void
 usage(char **argv)

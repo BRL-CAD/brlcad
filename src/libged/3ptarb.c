@@ -92,7 +92,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     /* read the three points */
     prompts = &p_arb3pt[0];
     if (argc < 11) {
-	bu_vls_printf(&gedp->ged_result_str, prompts[argc-2]);
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompts[argc-2]);
 	return GED_MORE;
     }
 
@@ -255,7 +255,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1( aip->pt[i+4], aip->pt[i], thick, norm );
     }
 
-    GED_DB_DIRADD(gedp, dp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
 
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 

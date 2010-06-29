@@ -273,27 +273,27 @@ int Refract(vect_t I, vect_t N, fastf_t n1, fastf_t n2) {
     if (radicand < 0) {
 	/* Total Internal Reflection */
 	I[0] = I[1] = I[2] = 0;
-	return(0);
+	return 0;
     }
     c2 = sqrt(radicand);
 
     VSCALE(r, I, n);
     VSCALE(t, N, n*c1-c2);
     VADD2(I, r, t);
-    return(1);
+    return 1;
 }
 
 
 int CheckMaterial(char *cmp, char *MS) {
-    int i;
+    size_t i;
 
     if (MS) {
 	for (i = 0; i < strlen(cmp) && i < strlen(MS); i++)
 	    if (MS[i] != cmp[i])
-		return(0);
-	return(1);
+		return 0;
+	return 1;
     } else {
-	return(0);
+	return 0;
     }
 }
 
@@ -426,7 +426,7 @@ int HitRef(struct application *ap, struct partition *PartHeadp, struct seg *fini
     }
 
     ap->a_onehit = 0;
-    return(1);
+    return 1;
 }
 
 
@@ -770,13 +770,13 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     (*(vect_t*)ap->a_purpose)[1] += C1[1] + C2[1];
     (*(vect_t*)ap->a_purpose)[2] += C1[2] + C2[2];
 
-    return(1);
+    return 1;
 }
 
 
 int ICMiss(struct application *ap) {
     /* Set to Background/Ambient Color later */
-    return(0);
+    return 0;
 }
 
 
@@ -895,7 +895,7 @@ void alarmhandler(int sig) {
     t = time(NULL) - starttime;
     p = (float)ICSize/PMap[PM_GLOBAL]->MaxPhotons + .015;
     tl = (float)t*1.0/p - t;
-    bu_log("    Irradiance Cache Progress: %d%%. Approximate time left: ",
+    bu_log("    Irradiance Cache Progress: %d%%  Approximate time left: %d%d",
 	   (int)(100.0*p), (1.0/p-1.0)*(float)t, (float)t*1.0/p);
 #define BAH(s, w) if (tl > (s)) { float d = floor(tl / (float)(s)); \
     tl -= d * (s); bu_log("%d "w, (int)d, d>1?"s":""); }
@@ -980,10 +980,10 @@ int LoadFile(char *pmfile) {
 	PMap[PM_CAUSTIC]->StoredPhotons = PMap[PM_CAUSTIC]->MaxPhotons;
 	BuildTree(Emit[PM_CAUSTIC], PMap[PM_CAUSTIC]->StoredPhotons, PMap[PM_CAUSTIC]->Root);
 	fclose(FH);
-	return(1);
+	return 1;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1361,12 +1361,12 @@ fastf_t Dist(point_t a, point_t b) {
 
 
 fastf_t GaussFilter(fastf_t dist, fastf_t rad) {
-    return(0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953))));
+    return 0.918 * (1.0 - (1.0 - exp(-1.953*dist*dist/(2.0*rad*rad)))/(1.0 - exp(-1.953)));
 }
 
 
 fastf_t ConeFilter(fastf_t dist, fastf_t rad) {
-    return(1.0 - dist/rad);
+    return 1.0 - dist/rad;
 }
 
 

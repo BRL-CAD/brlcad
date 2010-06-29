@@ -224,14 +224,14 @@ static int	bot=0;
 static int
 a_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
-    return( 1 );
+    return 1;
 }
 
 
 static int
 miss(struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -465,7 +465,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 
     NMG_FREE_HITLIST( &rd.rd_miss, ap );
 
-    return( ret );
+    return ret;
 }
 
 static int
@@ -766,7 +766,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs
 	    bu_ptbl_zero( &verts, (long *)hit2_v );
     }
 
-    return( 1 );
+    return 1;
 }
 
 static void
@@ -1183,7 +1183,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs
     VSUB2( diff, hit_pt, ref_data->mid_pt );
     dist = MAGNITUDE( diff );
     if ( dist <= use_tolerance || dist > 1.4142 * cell_size )
-	return( 0 );
+	return 0;
 
     if ( fd_plot )
     {
@@ -1326,7 +1326,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs
 	nmg_calc_face_g( fu );
     }
 
-    return( 1 );
+    return 1;
 }
 
 static int
@@ -1495,7 +1495,7 @@ refine_edges(struct shell *s)
     bu_ptbl_free( cur );
     bu_ptbl_free( next );
 
-    return( breaks );
+    return breaks;
 }
 
 static void
@@ -1696,7 +1696,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     part_len = last_pp->pt_outhit->hit_dist - first_pp->pt_inhit->hit_dist;
     if ( NEAR_ZERO( part_len, tol.dist ) )
-	return( 0 );
+	return 0;
 
     lpart = GET_PART;
     lpart->in = GET_END;
@@ -1743,7 +1743,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    BU_LIST_INSERT( &xy_parts[ap->a_user].l, &lpart->l )
 		break;
     }
-    return( 1 );
+    return 1;
 }
 
 int

@@ -151,7 +151,7 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
  * R T _ R E V O L V E _ B R E P
  */
 extern "C" void
-rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol __attribute__((unused)))
+rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
     RT_INIT_DB_INTERNAL(tmp_internal);

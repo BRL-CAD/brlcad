@@ -103,7 +103,7 @@ double radians(double a)
 
     b = a * PI / 180.;
 
-    return(b);
+    return b;
 
 }
 

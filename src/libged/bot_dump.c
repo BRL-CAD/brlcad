@@ -73,6 +73,7 @@ struct _ged_obj_material {
     fastf_t a;
 };
 
+static int using_dbot_dump;
 struct bu_list HeadObjMaterials;
 struct bu_vls obj_materials_file;
 FILE *obj_materials_fp;
@@ -97,10 +98,7 @@ static int curr_lump_id;
 static int curr_shell_id;
 static int curr_face_id;
 static int curr_loop_id;
-static int curr_coedge_id;
 static int curr_edge_id;
-static int curr_vertex_id;
-static int curr_point_id;
 
 /* Byte swaps a four byte value */
 static void
@@ -122,7 +120,7 @@ ged_get_obj_material(int red, int green, int blue, fastf_t transparency)
 	if (gomp->r == red &&
 	    gomp->g == green &&
 	    gomp->b == blue &&
-	    gomp->a == transparency) {
+	    NEAR_ZERO(gomp->a - transparency, SMALL_FASTF)) {
 	    return gomp;
 	}
     }
@@ -138,11 +136,11 @@ ged_get_obj_material(int red, int green, int blue, fastf_t transparency)
 
     /* Write out newmtl to mtl file */
     fprintf(obj_materials_fp, "newmtl %s\n", bu_vls_addr(&gomp->name));
-    fprintf(obj_materials_fp, "Kd %lf %lf %lf\n",
+    fprintf(obj_materials_fp, "Kd %f %f %f\n",
 	    (fastf_t)gomp->r / 255.0,
 	    (fastf_t)gomp->g / 255.0,
 	    (fastf_t)gomp->b / 255.0);
-    fprintf(obj_materials_fp, "d %lf\n", gomp->a);
+    fprintf(obj_materials_fp, "d %f\n", gomp->a);
     fprintf(obj_materials_fp, "illum 1\n");
 
     return gomp;
@@ -160,7 +158,7 @@ ged_free_obj_materials() {
 }
 
 static void
-write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
+write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 {
     int i, j;
     fastf_t *vertices;
@@ -179,7 +177,6 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
     int last_loop;
     int num_vertices = bot->num_vertices;
     int num_faces = bot->num_faces;
-    int num_edges = num_faces*3;
 
     vertices = bot->vertices;
     faces = bot->faces;
@@ -413,11 +410,13 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     int i,vi;
     struct _ged_obj_material *gomp;
 
-    gomp = ged_get_obj_material(curr_obj_red,
-				curr_obj_green,
-				curr_obj_blue,
-				curr_obj_alpha);
-    fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
+    if (using_dbot_dump) {
+	gomp = ged_get_obj_material(curr_obj_red,
+				    curr_obj_green,
+				    curr_obj_blue,
+				    curr_obj_alpha);
+	fprintf(fp, "usemtl %s\n", bu_vls_addr(&gomp->name));
+    }
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -448,7 +447,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
 	    }
 	    VUNITIZE(norm);
 	    
-	    fprintf(fp, "vn %lf %lf %lf\n", V3ARGS(norm));
+	    fprintf(fp, "vn %f %f %f\n", V3ARGS(norm));
 	}
     }
 
@@ -502,11 +501,11 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 	}
 	VUNITIZE(norm);
 
-	fprintf(fp, "  facet normal %lf %lf %lf\n", V3ARGS(norm));
+	fprintf(fp, "  facet normal %f %f %f\n", V3ARGS(norm));
 	fprintf(fp, "    outer loop\n");
-	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS_SCALE(A));
-	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS_SCALE(B));
-	fprintf(fp, "      vertex %lf %lf %lf\n", V3ARGS_SCALE(C));
+	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(A));
+	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(B));
+	fprintf(fp, "      vertex %f %f %f\n", V3ARGS_SCALE(C));
 	fprintf(fp, "    endloop\n");
 	fprintf(fp, "  endfacet\n");
     }
@@ -514,11 +513,12 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 }
 
 static void
-write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
+write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 {
     unsigned long num_vertices;
     fastf_t *vertices;
-    int num_faces, *faces;
+    size_t num_faces;
+    int *faces;
     point_t A;
     point_t B;
     point_t C;
@@ -533,7 +533,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
     faces = bot->faces;
 
     /* Write out the vertex data for each triangle */
-    for (i = 0; i < num_faces; i++) {
+    for (i = 0; (size_t)i < num_faces; i++) {
 	float flts[12];
 	float *flt_ptr;
 	unsigned char vert_buffer[50];
@@ -716,6 +716,8 @@ ged_bot_dump_leaf(struct db_tree_state	*tsp,
     struct rt_bot_internal *bot;
     struct _ged_bot_dump_client_data *gbdcdp = (struct _ged_bot_dump_client_data *)client_data;
 
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     /* Indicate success by returning something other than TREE_NULL */
     RT_GET_TREE(curtree, tsp->ts_resp);
     curtree->magic = RT_TREE_MAGIC;
@@ -796,7 +798,8 @@ ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		}
 		break;
 	    case 'u':
-		if ((cfactor = bu_units_conversion(bu_optarg)) == 0.0)
+		cfactor = bu_units_conversion(bu_optarg);
+		if (NEAR_ZERO(cfactor, SMALL_FASTF))
 		    cfactor = 1.0;
 		else
 		    cfactor = 1.0 / cfactor;
@@ -835,6 +838,8 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, usage, argv[0]);
 	return GED_HELP;
     }
+
+    using_dbot_dump = 0;
 
     if (ged_bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
 	return GED_ERROR;
@@ -1226,7 +1231,7 @@ write_data_obj(struct ged *gedp, FILE *fp)
 }
 
 static int
-ged_data_dump(struct ged *gedp, FILE *fp, int fd, const char *file_ext)
+ged_data_dump(struct ged *gedp, FILE *fp)
 {
     switch (output_type) {
     case OTYPE_DXF:
@@ -1296,6 +1301,8 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, usage, argv[0]);
 	return GED_HELP;
     }
+
+    using_dbot_dump = 1;
 
     if (ged_bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
 	return GED_ERROR;
@@ -1507,7 +1514,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    ged_data_dump(gedp, fp, fd, file_ext);
+    ged_data_dump(gedp, fp);
 
     if (output_file) {
 	if (binary && output_type == OTYPE_STL) {

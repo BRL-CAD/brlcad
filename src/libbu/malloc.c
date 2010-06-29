@@ -168,11 +168,13 @@ _bu_memdebug_check(register genptr_t ptr, const char *str)
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    bu_bomb("_bu_memdebug_check() memory corruption\n");
 	}
-	return (mp);		/* OK */
+	return mp;		/* OK */
     }
     return MEMDEBUG_NULL;
 }
 
+
+extern int bu_bomb_failsafe_init();
 
 /**
  * _ B U _ A L L O C
@@ -193,7 +195,6 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
     register genptr_t ptr = 0;
     register size_t size = cnt * sz;
 
-    extern int bu_bomb_failsafe_init();
     static int failsafe_init = 0;
 
     /* bu_bomb hook to recover from memory problems */
@@ -277,7 +278,7 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     bu_n_malloc++;
-    return (ptr);
+    return ptr;
 }
 
 
@@ -444,7 +445,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     bu_n_realloc++;
-    return (ptr);
+    return ptr;
 }
 
 
@@ -526,7 +527,7 @@ int
 bu_malloc_len_roundup(register int nbytes)
 {
 #if !defined(HAVE_CALTECH_MALLOC)
-    return (nbytes);
+    return nbytes;
 #else
     static int pagesz;
     register int n;
@@ -540,13 +541,13 @@ bu_malloc_len_roundup(register int nbytes)
 			sizeof(unsigned int))
     n = pagesz - OVERHEAD;
     if (nbytes <= n)
-	return (n);
+	return n;
     amt = pagesz;
 
     while (nbytes > amt + n) {
 	amt <<= 1;
     }
-    return (amt-OVERHEAD-sizeof(int));
+    return amt-OVERHEAD-sizeof(int);
 #endif
 }
 

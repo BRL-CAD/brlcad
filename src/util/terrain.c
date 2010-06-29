@@ -22,18 +22,18 @@
  * generate pseudo-terrain
  *
  * Options
- * w	number of postings in X direction
- * n	number of postings in Y direction
- * s	number of postings in X,Y direction
- * L	Noise Lacunarity
- * H	Noise H value
- * O	Noise Octaves
- * S	Noise Scale
- * V	Noise Vector scale (affine scale)
- * D	Noise Delta
- * f	noise function (f=fbm t=turb T=1.0-turb)
- * c	toggle host-net conversion
- * o	offset
+ * w number of postings in X direction
+ * n number of postings in Y direction
+ * s number of postings in X, Y direction
+ * L Noise Lacunarity
+ * H Noise H value
+ * O Noise Octaves
+ * S Noise Scale
+ * V Noise Vector scale (affine scale)
+ * D Noise Delta
+ * f noise function (f=fbm t=turb T=1.0-turb)
+ * c toggle host-net conversion
+ * o offset
  */
 
 #include "common.h"
@@ -77,8 +77,9 @@ xform(point_t t, point_t pt)
     t[Z] = fbm_delta[Z] + pt[Z] * fbm_vscale[Z];
 }
 
+
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void
 usage(char *s)
@@ -89,13 +90,13 @@ usage(char *s)
 		   progname,
 		   "\t-w #\t\tnumber of postings in X direction\n\
 \t-n #\t\tnumber of postings in Y direction\n\
-\t-s #\t\tnumber of postings in X,Y direction\n\
+\t-s #\t\tnumber of postings in X, Y direction\n\
 \t-L #\t\tNoise Lacunarity\n\
 \t-H #\t\tNoise H value\n\
 \t-O #\t\tNoise Octaves\n\
 \t-S #\t\tNoise Scale\n\
-\t-V #,#,#\tNoise Vector scale (affine scale)\n\
-\t-D #,#,#\tNoise Delta\n\
+\t-V #, #, #\tNoise Vector scale (affine scale)\n\
+\t-D #, #, #\tNoise Delta\n\
 \t-f func\t\tNoise function:\n\
 \t\t\t\tf:fbm t:turb T:1.0-turb m:multi r:ridged");
 
@@ -105,9 +106,9 @@ usage(char *s)
 
 /***********************************************************************
  *
- *	func_fbm
+ * func_fbm
  *
- *	Fractional Brownian motion noise
+ * Fractional Brownian motion noise
  */
 void
 func_fbm(unsigned short *buf)
@@ -138,9 +139,9 @@ func_fbm(unsigned short *buf)
 }
 /***********************************************************************
  *
- *	func_turb
+ * func_turb
  *
- *	Turbulence noise
+ * Turbulence noise
  */
 void
 func_turb(unsigned short *buf)
@@ -171,11 +172,12 @@ func_turb(unsigned short *buf)
     }
 }
 
+
 /***********************************************************************
  *
- *	func_turb_up
+ * func_turb_up
  *
- *	Upside-down turbulence noise
+ * Upside-down turbulence noise
  */
 void
 func_turb_up(short *buf)
@@ -210,9 +212,9 @@ func_turb_up(short *buf)
 
 /***********************************************************************
  *
- *	func_multi
+ * func_multi
  *
- *	Multi-fractal
+ * Multi-fractal
  */
 void
 func_multi(short *buf)
@@ -257,9 +259,9 @@ func_multi(short *buf)
 }
 /***********************************************************************
  *
- *	func_ridged
+ * func_ridged
  *
- *	Ridged multi-fractal
+ * Ridged multi-fractal
  */
 void
 func_ridged(unsigned short *buf)
@@ -298,6 +300,7 @@ func_ridged(unsigned short *buf)
     }
 }
 
+
 #define PSCALE(_p, _s) _p[0] *= _s; _p[1] *= _s; _p[2] *= _s
 #define PCOPY(_d, _s) _d[0] = _s[0]; _d[1] = _s[1]; _d[2] = _s[2]
 double
@@ -323,6 +326,7 @@ fiord(point_t point, double h, double lacunarity, double octaves, double offset)
 
     return result;
 }
+
 
 double
 ice(point_t point, double h, double lacunarity, double octaves, double offset)
@@ -360,6 +364,7 @@ ice(point_t point, double h, double lacunarity, double octaves, double offset)
 
     return 1.0 - result;
 }
+
 
 double
 lunar2(point_t point, double h, double lacunarity, double octaves, double offset)
@@ -463,11 +468,12 @@ lee(point_t point, double h, double lacunarity, double octaves, double offset)
     return 1.2 - result;
 }
 
+
 /***********************************************************************
  *
- *	func_lee
+ * func_lee
  *
- *	Ridged multi-fractal
+ * Ridged multi-fractal
  */
 void
 func_lee(unsigned short *buf)
@@ -510,9 +516,9 @@ func_lee(unsigned short *buf)
 
 /***********************************************************************
  *
- *	func_lee
+ * func_lee
  *
- *	Ridged multi-fractal
+ * Ridged multi-fractal
  */
 void
 func_lunar(unsigned short *buf)
@@ -564,16 +570,16 @@ func_lunar(unsigned short *buf)
 void (*terrain_func)() = func_fbm;
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int
 parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
     char *strrchr(const char *, int);
     double v;
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -593,20 +599,20 @@ parse_args(int ac, char **av)
 	    case 'q' : quiet = !quiet; break;
 	    case 's': if ((c=atoi(bu_optarg)) > 0) xdim = ydim = c;
 		break;
-	    case 'L': if ((v=atof(bu_optarg)) >  0.0) fbm_lacunarity = v;
+	    case 'L': if ((v=atof(bu_optarg)) > 0.0) fbm_lacunarity = v;
 		break;
-	    case 'H': if ((v=atof(bu_optarg)) >  0.0) fbm_h = v;
+	    case 'H': if ((v=atof(bu_optarg)) > 0.0) fbm_h = v;
 		break;
-	    case 'O': if ((v=atof(bu_optarg)) >  0.0) fbm_octaves = v;
-		break;
-
-	    case 'S': if ((v=atof(bu_optarg)) >  0.0) { VSETALL(fbm_vscale, v); }
+	    case 'O': if ((v=atof(bu_optarg)) > 0.0) fbm_octaves = v;
 		break;
 
-	    case 'V': sscanf(bu_optarg, "%lg,%lg,%lg",
+	    case 'S': if ((v=atof(bu_optarg)) > 0.0) { VSETALL(fbm_vscale, v); }
+		break;
+
+	    case 'V': sscanf(bu_optarg, "%lg, %lg, %lg",
 			     &fbm_vscale[0], &fbm_vscale[1], &fbm_vscale[2]);
 		break;
-	    case 'D': sscanf(bu_optarg, "%lg,%lg,%lg",
+	    case 'D': sscanf(bu_optarg, "%lg, %lg, %lg",
 			     &fbm_delta[0], &fbm_delta[1], &fbm_delta[2]);
 		break;
 	    case 'o': fbm_offset = atof(bu_optarg);
@@ -640,14 +646,15 @@ parse_args(int ac, char **av)
 	    default		: usage("Bad or help flag specified\n"); break;
 	}
 
-    return(bu_optind);
+    return bu_optind;
 }
 
+
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments, then
- *	produce the noise field selected.  Write out binary in network order.
+ * Call parse_args to handle command line arguments, then
+ * produce the noise field selected.  Write out binary in network order.
  */
 int
 main(int ac, char **av)
@@ -683,7 +690,7 @@ main(int ac, char **av)
 
 	out_cookie = bu_cv_cookie("nus");
 
-	if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
+	if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
 	    if (debug) bu_log("converting to network order\n");
 	    bu_cv_w_cookie(buf, out_cookie, count*sizeof(*buf),
 			   buf, in_cookie, count);

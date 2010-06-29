@@ -86,7 +86,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
     size_t	addr;
 
     if ( size == 0 )
-	return( 0L );	/* fail */
+	return 0L;	/* fail */
 
     for ( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
 	if ( curp->m_size >= size )
@@ -94,10 +94,10 @@ rt_memalloc(struct mem_map **pp, register size_t size)
     }
 
     if ( curp == MAP_NULL )
-	return(0L);		/* No more space */
+	return 0L;		/* No more space */
 
-    addr = curp->m_addr;
-    curp->m_addr += size;
+    addr = (size_t)curp->m_addr;
+    curp->m_addr += (off_t)size;
 
     /* If the element size goes to zero, put it on the freelist */
 
@@ -110,7 +110,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
 	rt_mem_freemap = curp;			/* Make it the start */
     }
 
-    return( addr );
+    return addr;
 }
 
 /*
@@ -173,7 +173,7 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
  *	Free space can be split
  */
 size_t
-rt_memget(struct mem_map **pp, register size_t size, size_t place)
+rt_memget(struct mem_map **pp, register size_t size, off_t place)
 {
     register struct mem_map *prevp, *curp;
     size_t addr;
@@ -197,10 +197,10 @@ rt_memget(struct mem_map **pp, register size_t size, size_t place)
     }
 
     if ( curp == MAP_NULL )
-	return(0L);		/* No space here */
+	return 0L;		/* No space here */
 
-    addr = curp->m_addr;
-    curp->m_addr += size;
+    addr = (size_t)curp->m_addr;
+    curp->m_addr += (off_t)size;
 
     /* If the element size goes to zero, put it on the freelist */
     if ( (curp->m_size -= size) == 0 )  {
@@ -211,7 +211,7 @@ rt_memget(struct mem_map **pp, register size_t size, size_t place)
 	curp->m_nxtp = rt_mem_freemap;		/* Link it in */
 	rt_mem_freemap = curp;			/* Make it the start */
     }
-    return( addr );
+    return addr;
 }
 
 /*
@@ -243,7 +243,7 @@ rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
 	 * could begin earlier but be long enough to satisfy this
 	 * request.
 	 */
-	if ( curp->m_addr == place && curp->m_size >= size )  {
+	if ( curp->m_addr == (off_t)place && curp->m_size >= size )  {
 	    size = curp->m_size;
 	    /* put this element on the freelist */
 	    if ( prevp )
@@ -272,12 +272,12 @@ rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
  *	or changing addresses.  Other wrap-around conditions are flagged.
  */
 void
-rt_memfree(struct mem_map **pp, size_t size, size_t addr)
+rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 {
     register int type = 0;
     register struct mem_map *prevp = MAP_NULL;
     register struct mem_map *curp;
-    size_t il;
+    off_t il;
     struct mem_map *tmap;
 
     if ( size == 0 )
@@ -291,15 +291,17 @@ rt_memfree(struct mem_map **pp, size_t size, size_t addr)
     /* Make up the `type' variable */
 
     if ( prevp )  {
-	if ( (size_t)(il=prevp->m_addr+prevp->m_size) > (size_t)addr )
+	il = prevp->m_addr + (off_t)prevp->m_size;
+	if ( il > addr )
 	    type |= M_BOVFL;
-	if ( il == (size_t)addr )
+	if ( il == addr )
 	    type |= M_BMTCH;
     }
     if ( curp )  {
-	if ( (size_t)(il=addr+size) > (size_t)curp->m_addr )
+	il = addr + (off_t)size;
+	if ( il > curp->m_addr )
 	    type |= M_TOVFL;
-	if ( (size_t)il == (size_t)curp->m_addr )
+	if ( il == curp->m_addr )
 	    type |= M_TMTCH;
     }
 
@@ -336,7 +338,7 @@ rt_memfree(struct mem_map **pp, size_t size, size_t addr)
 
 	case M_TMTCH:		/* Expand top element downward */
 	    curp->m_size += size;
-	    curp->m_addr -= size;
+	    curp->m_addr -= (off_t)size;
 	    break;
 
 	default:		/* No matches; allocate and insert */

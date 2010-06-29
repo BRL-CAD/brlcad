@@ -1,0 +1,567 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Ubicar figuras en espacios 3-D</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" 
+xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
+   </legalnotice>
+  </articleinfo>
+
+    <para id="placing_shapes_in_3d_overviewlist">
+      En este tutorial usted aprenderá a:
+      
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Crear, editar y ubicar figuras en espacios 3-D.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear customizaciones de color utilizando el editor de 
+	    combinaciones (Combination Editor).
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Identificar los atributos del corrector de sombras.</para>
+	</listitem>
+	<listitem>
+	  <para>Comprender cómo se crean los colores RGB.</para>
+	</listitem>
+      </itemizedlist>
+
+    </para>
+
+    <para id="placing_shapes_in_3d_intro1"> 
+      En los tutoriales anteriores ha creado y editado formas. También ha 
+      colocado objetos en el espacio tridimensional. En este tutorial se 
+      ofrece una práctica más avanzada en la creación y edición de formas 
+      y su colocación en el espacio 3-D.
+    </para>
+
+    <para id="placing_shapes_in_3d_intro2">
+      El diseño que usted hará en este tutorial es una simple vela en un 
+      candelabro apoyado sobre una mesa (como se muestra en la figura 
+      siguiente). En los próximos tutoriales, agregará decoración e 
+      iluminación para hacer el diseño más realista.
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_design.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño de un candelabro
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+    </para>
+
+    <para id="placing_shapes_in_3d_intro3">
+      Comience creando una nueva base de datos llamada candle.g. Titule su 
+      base de datos Candle Tutorial.
+    </para>
+
+    <sect1 id="candle_create_tabletop">
+      <title>Crear una mesa</title>
+      <para>
+	Cree un arb8 desde el GUI. Nombre a la figura arb8.s. En el menú View 
+	(Vista) seleccione la opción Front (Frente).
+      </para>
+      <para>
+	Diríjase a la opción Editar de la barra de menús. El arb8 necesita ser 
+	más grande, para lo que deberá ir al menú Edit (Edición), y 
+	seleccionar Scale (Escala). Para hacer más grande arb8 coloque el 
+	puntero del mouse en la parte media superior de la pantalla y haga 
+	clic en el botón del medio hasta que los lados del arb8 toquen cada 
+	lado de la pantalla. Utilice la tecla SHIFT y el botón izquierdo del 
+	mouse para arrastrar el arb a su posición, de ser necesario.
+      </para>
+      <para>
+	En el menú Edit (Edición), seleccione Move Faces (Mover caras) y luego 
+	Move face 4378 (Mover Cara 4378). Coloque el puntero del mouse en la 
+	mitad inferior de la pantalla y haga clic con el botón del medio hasta 
+	que el arb8 sea aproximadamente del grosor de una mesa. Volver a Edit 
+	(Edición) para aceptar los cambios, y luego usar el SHIFT y cualquier 
+	botón del mouse para posicionar la mesa hasta que se vea similar a la 
+	siguiente imagen:
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_wireframe_front.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en malla de alambre para la 
+	      representación de una mesa en la vista frontal
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Hacer una región de la mesa mediante la ventana de comandos
+	
+	<command>r table1.r u arb8.s[Enter]</command>
+      </para>
+    </sect1>
+
+    <sect1 id="candle_create_base">
+      <title>Crear la base del candelabro</title>
+      <para>
+	Cree un eto y nómbrelo eto1.s. Para crear la parte superior de la 
+	base del candelabro, necesitará rotar el eto 180'0. Tipee en la 
+	ventana de comandos:
+	
+	<command>rot 0 180 0[Enter]</command>
+
+	Esto le dice a <application>MGED</application> que gire la forma 
+	180'0 a lo largo del eje y. A continuación, seleccione Scale 
+	(Escala) y reduzca un poco el tamaño predeterminado de su eto. 
+	Coloque el eto sobre la mesa con el botón izquierdo del ratón y la 
+	tecla SHIFT.
+
+      </para>
+
+      <para>
+
+	Vea su diseño desde diferentes ángulos para asegurarse de que el eto 
+	se sitúa en el centro de la mesa. Haga clic en Aceptar cuando esté 
+	satisfecho con su tamaño y posición. Su base debe ser similar a la que 
+	se muestra en la siguiente imagen:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_wireframe_front.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en malla de alambre para la representación 
+	      de la mesa y el primer eto
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      </para>
+
+      <para>
+	A continuación, cree la base del candelabro con un cilindro circular 
+	recto (rcc). Nombre a la figura rcc1.s.
+      </para>
+      <para>
+	En el menú Edit (Edición). Además de los comandos estándar, se le 
+	presentará un menú de trece formas específicas de edición de esta forma.
+	<informaltable>
+	  <tgroup cols='2'>
+	    <tbody>
+	      <row>
+		<entry>
+		  <literallayout>
+Set H
+Set H (Move V)
+Set A
+Set B
+Set c
+Set d
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+Set A,B
+Set C,D
+Set A,B,C,D
+Rotate H
+Rotate AxB
+Move End H(rt)
+Move End H
+		  </literallayout>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+
+      <para>
+	Escale la forma hasta que sea ligeramente más grande en diámetro que 
+	la parte superior de la eto1.s (se puede comprobar esto cambiando a 
+	una vista superior). Vuelva a Edit (Edición) y seleccione Set H. 
+	Reduzca la altura de la forma hasta que el ccr sea cerca de dos veces 
+	más alto que la eto1.s. Coloque el cilindro en la base del soporte del 
+	candelabro. Compruebe la colocación del rcc desde la parte superior, 
+	izquierda y frontal para asegurarse de que está centrado en el eto. 
+	Asegúrese de que la parte superior del rcc no toque totalmente la mesa. 
+	Acepte los cambios. Cuando esté terminado, su diseño debe tener el 
+	siguiente aspecto:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en malla de alambre para la representación 
+	      de la mesa y el primer eto y el primer rcc
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+
+      <para>
+	Para finalizar la base de la vela cree otro eto y nómbrelo eto2.s. 
+	Edite esta forma como lo hizo con el eto anterior y colóquelo sobre el 
+	rcc, como se muestra en la siguiente imagen. Acepte los cambios cuando 
+	haya terminado. Su candelabro ya debería tener este aspecto:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_base_front.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en malla de alambre para la 
+	      representación de la mesa y el candelabro
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Cree una región con las tres figuras de la base. Nómbrela base1.r. 
+	La expresión booleana debería ser:
+	
+	<command>r base1.r u eto1.s u rcc1.s u eto2.s</command>
+	
+	Note que podría haber sido escrita también de la siguiente forma:
+	
+	<command>r base1.r u eto1.s u eto2.s u rcc1.s</command>
+	
+	pero la primera expresión es preferible ya que es más coherente con el 
+	orden del ejemplo siguiente.
+	En un momento querremos quitar parte de eto2.s. Si colocamos a eto2.s 
+	al final de la lista, podemos realizar esta eliminación sencillamente.
+      </para>
+    </sect1>
+
+    <sect1 id="candle_create_candle">
+      <title>Crear la vela</title>
+      <para>
+	
+	Cree un rcc y nómbrelo rcc2.s. Modifique la forma como lo hizo con el 
+	anterior rcc. 
+	Cuando haya terminado, debería verse similar a la siguiente ilustración.
+	(Nota: Después de haber aceptado los cambios, usted puede llevar tanto 
+	la mesa como vela a la ventana gráfica, utilizando la tecla SHIFT y el 
+	botón izquierdo del mouse para mover la vista del diseño.)
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_tabletop_base_candle_front.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en malla de alambre para la representación 
+	      de la mesa, el candelabro y la vela
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Cree una región del candelabro. La expresión booleana debería ser:
+	
+	<command>r candle1.r u rcc2.s</command>
+	
+	Ahora haremos un corte cilíndrico en la base del candelabro. Para esto 
+	utilice el cilindro del candelabro de la siguiente manera:
+	
+	<command>r base1.r - rcc2.s</command>
+	
+	Anteriormente habíamos dicho que íbamos a necesitar remover un poco de 
+	material del eto2.s. Ahora ya lo hemos hecho.
+      </para>
+    </sect1>
+
+    <sect1 id="candle_create_flame">
+      <title>Crear la llama de la vela</title>
+
+      <para>
+	Cree una partícula (part) y nómbrela part1.s. Edite y posicione la 
+	figura hasta que su diseño se vea como el siguiente:
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_complete_front.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Diseño en malla de alambre del candelabro completo
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+	Haga de la llama una región tipeando en el prompt de la ventana de 
+	comandos:
+	
+	<command>r flame1.r u part1.s[Enter]</command>
+      </para>
+    </sect1>
+    
+    <sect1 id="candle_create_combination">
+      <title>Hacer una combinación del candelabro, la vela y la llama</title>
+
+      <para>
+	Para hacer una combinación con las partes del candelabro, tipee en el 
+	prompt de la ventana de comandos:
+	
+	<command>comb candle1.c u base1.r u candle1.r u flame1.r[Enter]</command>
+      </para>
+    </sect1>
+
+    <sect1 id="candle_check_data_tree">
+      <title>Controlar el árbol de datos</title>
+      <para>
+	Ahora que usted ha hecho una serie de regiones y una combinación, sería 
+	un buen momento para revisar su árbol de datos y asegurarse de que está 
+	de acuerdo con el siguiente árbol. 
+	Si detecta algún error en cualquiera de las partes del árbol, puede 
+	solucionarlo desde la caja Boolean Expression (Expression booleana) del 
+	editor de combinaciones (ver tutorial 5).
+	En la línea de comandos tipee:
+	
+	<command>tree candle1.c[Enter]</command>
+	
+	Su expresión booleana debería ser:
+	
+	<literallayout>
+   candle1.c/
+	
+   u base1.r/R
+
+   u eto1.s
+
+   u rcc1.s
+
+   u eto2.s
+
+   - rcc2.s
+
+   u candle1.r/R
+
+   u rcc2.s
+
+   u flame1.r/R
+
+   u part1.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="candle_assign_mater_prop">
+      <title>
+	Asignar propiedades de los materiales a los elementos del diseño
+      </title>
+      <para>
+	Para asignar las propiedades del material a su diseño, vaya al menú 
+	Edit (Edición) y seleccione Combination Editor (Editor de 
+	Combinaciones). Asignar las siguientes propiedades de material a 
+	cada uno de los elementos:
+	
+	<informaltable frame="all">
+	  <tgroup cols='4'>
+	    <thead>
+	      <row>
+		<entry>Element</entry>
+		<entry>Shader</entry>
+		<entry>Color(s)</entry>
+		<entry>Other</entry>
+	      </row>
+	    </thead>
+	    <tbody>
+	      <row>
+		<entry>Tabletop</entry>
+		<entry>Checker</entry>
+		<entry>Red (255 0 0); White (255 255 255)</entry>
+		<entry>Scale (10)</entry>
+	      </row>
+	      <row>
+		<entry>Candle Base</entry>
+		<entry>Plastic</entry>
+		<entry>Medium Gray (128 130 144)</entry>
+		<entry></entry>
+	      </row>
+	      <row>
+		<entry>Candle</entry>
+		<entry>Plastic</entry>
+		<entry>Light Blue (0 166 255)</entry>
+		<entry></entry>
+	      </row>
+	      <row>
+		<entry>Flame</entry>
+		<entry>Plastic</entry>
+		<entry>Light Yellow (255 255 190)</entry>
+		<entry></entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Observe que el corrector de sombreado de la mesa incluye dos valores de color
+	y un valor de escala. Tipee los valores de rojo, blanco y de escala en las 
+	cajas de texto, de la siguiente manera:
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_comb_ed_checker.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Ventana del editor de combinaciones, 
+	      sección del corrector de sombreado
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Para el resto de los elementos del diseño, utilice el Color Tool 
+	(Herramienta de color) para hacer visibles los colores o simplemente 
+	escriba en el cuadro de texto de Color, recordando dejar un espacio 
+	entre cada conjunto de números.
+      </para>
+
+      
+      <para>
+	Nota:
+	Como se ha dicho, un color se compone de tres números, que van
+	de 0 a 255. El primer número representa la cantidad de rojo, el
+	segundo la cantidad de verde, y el tercero la cantidad de azul 
+	utilizado para hacer el color. El color 0 0 0 es el negro, y 
+	el 255 255 255 es el blanco. Este método de crear los colores es 
+	diferente de los colores utilizados en la mezcla de pigmentos de 
+	pintura, ya que en esos casos se tratabaja con la luz. Si bien puede 
+	parecer extraño al principio, la mayoría de los usuarios de las 
+	aplicaciones de <application>MGED</application> usuarios se convierten
+	rápidamente en expertos en la creación de colores RGB.
+       </para>
+      
+    </sect1>
+
+    <sect1 id="candle_raytrace">
+      <title>Hacer el trazado de rayos de su diseño (Raytrace)</title>
+      
+      <para>
+	Antes de hacer el Raytrace, cambie la vista a az35, el25 para tener 
+	una visión mejor del diseño terminado y luego quite el diseño anterior 
+	con el comando Blast tipeando lo siguiente en el prompt de la ventana 
+	de comandos:
+	
+	<command>B table1.r candle1.c[Enter]</command>
+	
+	Este comando le dice al programa <application>MGED</application> que:
+	<informaltable>
+	  <tgroup cols='3'>
+	    <tbody>
+	      <row>
+		<entry>B</entry>
+		<entry>table1.r</entry>
+		<entry>candle1.c</entry>
+	      </row>
+	      <row>
+		<entry>Despeje la ventana gráfica</entry>
+		<entry>Dibuje la región llamada table1.r</entry>
+		<entry>Dibuje la combinación llamada candle1.c</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Para proporcionar más luz a su diseño, use un fondo de color blanco.
+	La imagen de su vela debería ser similar a la siguiente:
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" 
+fileref="../../lessons/es/images/mged13_candle_raytraced_overlay.png" 
+format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Trazado de rayos del candelabro en forma superpuesta
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="placing_shapes_in_3d_review">
+      <title>Repasemos...</title>
+      <para>
+	
+	En este tutorial usted aprendió a:
+      
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Crear, editar y ubicar figuras en espacios 3-D.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Crear customizaciones de color utilizando el editor de 
+	    combinaciones (Combination Editor).
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>Identificar los atributos del corrector de sombras.</para>
+	</listitem>
+	<listitem>
+	  <para>Comprender cómo se crean los colores RGB.</para>
+	</listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

@@ -206,7 +206,7 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 	}
 	else {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot determine length of operand name: %s, aborting\n", name);
-	    return (0);
+	    return 0;
 	}
     } else
 	name_len = (int)strlen( name );
@@ -218,7 +218,7 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     tok->type = GED_TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);
-    return (name_len);
+    return name_len;
 }
 
 HIDDEN void
@@ -343,7 +343,7 @@ ged_eval_bool(struct bu_list *hp)
 	final_tree = tok->tp;
 	BU_LIST_DEQUEUE(&tok->l);
 	bu_free((char *)tok, "tok");
-	return(final_tree);
+	return final_tree;
     }
 
     return (union tree *)NULL;
@@ -420,10 +420,10 @@ ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct d
 
     if (errors) {
 	bu_vls_printf(&gedp->ged_result_str, "\t---------aborting!\n");
-	return( 1 );
+	return 1;
     }
 
-    return( 0 );
+    return 0;
 }
 
 int
@@ -682,13 +682,13 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;
 
-	GED_DB_DIRADD(gedp, dp, comb_name, -1L, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, comb_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type, GED_ERROR);
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     } else {
 	db_delete(gedp->ged_wdbp->dbip, dp);
 
 	dp->d_len = 0;
-	dp->d_un.file_offset = -1;
+	dp->d_un.file_offset = (off_t)-1;
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = final_tree;
 

@@ -97,9 +97,9 @@ rt_read_cmd(register FILE *fp)
     } while ( c != '\0' );
     if ( curpos <= 1 )  {
 	bu_free( buf, "rt_read_cmd command buffer (EOF)" );
-	return( (char *)0 );		/* EOF */
+	return (char *)0;		/* EOF */
     }
-    return( buf );				/* OK */
+    return buf;				/* OK */
 }
 
 #define MAXWORDS	4096	/* Max # of args per command */
@@ -147,7 +147,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 
     nwords = bu_argv_from_string( cmd_args, MAXWORDS, lp );
     if ( nwords <= 0 )
-	return(0);	/* No command to process */
+	return 0;	/* No command to process */
 
 
     for (; tp->ct_cmd != (char *)0; tp++ )  {
@@ -163,11 +163,11 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 	bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
 	       tp->ct_cmd, tp->ct_parms, tp->ct_comment );
 	bu_free(lp, "rt_do_cmd lp");
-	return(-1);		/* ERROR */
+	return -1;		/* ERROR */
     }
     bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
     bu_free(lp, "rt_do_cmd lp");
-    return(-1);			/* ERROR */
+    return -1;			/* ERROR */
 }
 
 /*

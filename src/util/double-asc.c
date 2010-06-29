@@ -136,7 +136,7 @@ get_args(int argc, char **argv)
 	print_usage();
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

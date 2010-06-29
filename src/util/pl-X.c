@@ -37,14 +37,14 @@
 #include "bu.h"
 
 
-#define	TBAD	0	/* no such command */
+#define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */
-#define	TIEEE	3	/* IEEE 64-bit floating */
-#define	TCHAR	4	/* unsigned chars */
-#define	TSTRING	5	/* linefeed terminated string */
+#define TIEEE	3	/* IEEE 64-bit floating */
+#define TCHAR	4	/* unsigned chars */
+#define TSTRING	5	/* linefeed terminated string */
 
-#define	FONT	"fixed"
+#define FONT "fixed"
 
 XWMHints xwmh = {
     (InputHint|StateHint),		/* flags */
@@ -57,10 +57,11 @@ XWMHints xwmh = {
     0				/* Window group */
 };
 
+
 struct uplot {
-    int	targ;	/* type of args */
-    int	narg;	/* number or args */
-    char	*desc;	/* description */
+    int targ;	/* type of args */
+    int narg;	/* number or args */
+    char *desc;	/* description */
 };
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
@@ -124,66 +125,69 @@ struct uplot letters[] = {
     /*z*/	{ 0, 0, 0 }
 };
 
-int	verbose;
-double	cx, cy, cz;		/* current x, y, z, point */
-double	arg[6];			/* parsed plot command arguments */
-double	sp[6];			/* space command */
-char	strarg[512];		/* string buffer */
-int	width, height;
+
+int verbose;
+double cx, cy, cz;		/* current x, y, z, point */
+double arg[6];			/* parsed plot command arguments */
+double sp[6];			/* space command */
+char strarg[512];		/* string buffer */
+int width, height;
 
 
-Display	*dpy;
-Window	win;
-GC	gc;
+Display *dpy;
+Window win;
+GC gc;
 XFontStruct *fontstruct;
 
 
 void
 getstring(void)
 {
-    int	c;
-    char	*cp;
+    int c;
+    char *cp;
 
     cp = strarg;
-    while ( (c = getchar()) != '\n' && c != '\r' && c != EOF )
+    while ((c = getchar()) != '\n' && c != '\r' && c != EOF)
 	*cp++ = c;
     *cp = 0;
 }
 
+
 long
 getshort(void)
 {
-    long	v, w;
+    long v, w;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if ( v <= 0x7FFF )  return(v);
+    if (v <= 0x7FFF) return v;
     w = -1;
     w &= ~0x7FFF;
-    return( w | v );
+    return w | v;
 }
+
 
 double
 getieee(void)
 {
-    unsigned char	in[8];
-    double		d;
+    unsigned char in[8];
+    double d;
 
-    fread( in, 8, 1, stdin );
-    ntohd( (unsigned char *)&d, in, 1 );
-    return	d;
+    fread(in, 8, 1, stdin);
+    ntohd((unsigned char *)&d, in, 1);
+    return d;
 }
 
 
 void
 getargs(struct uplot *up)
 {
-    int	i;
+    int i;
 
-    for ( i = 0; i < up->narg; i++ ) {
-	switch ( up->targ ) {
+    for (i = 0; i < up->narg; i++) {
+	switch (up->targ) {
 	    case TSHORT:
 		arg[i] = getshort();
 		break;
@@ -204,22 +208,23 @@ getargs(struct uplot *up)
     }
 }
 
+
 void
 draw(double x1, double y1, double z1, double x2, double y2, double z2)
     /* from point */
     /* to point */
 {
-    int	sx1, sy1, sx2, sy2;
+    int sx1, sy1, sx2, sy2;
 
     sx1 = (x1 - sp[0]) / (sp[3] - sp[0]) * width;
     sy1 = height - (y1 - sp[1]) / (sp[4] - sp[1]) * height;
     sx2 = (x2 - sp[0]) / (sp[3] - sp[0]) * width;
     sy2 = height - (y2 - sp[1]) / (sp[4] - sp[1]) * height;
 
-    if ( sx1 == sx2 && sy1 == sy2 )
-	XDrawPoint( dpy, win, gc, sx1, sy1 );
+    if (sx1 == sx2 && sy1 == sy2)
+	XDrawPoint(dpy, win, gc, sx1, sy1);
     else
-	XDrawLine( dpy, win, gc, sx1, sy1, sx2, sy2 );
+	XDrawLine(dpy, win, gc, sx1, sy1, sx2, sy2);
 
     cx = x2;
     cy = y2;
@@ -230,51 +235,51 @@ draw(double x1, double y1, double z1, double x2, double y2, double z2)
 void
 label(double x, double y, char *str)
 {
-    int	sx, sy;
+    int sx, sy;
 
     sx = (x - sp[0]) / (sp[3] - sp[0]) * width;
     sy = height - (y - sp[1]) / (sp[4] - sp[1]) * height;
 
-    XDrawString( dpy, win, gc, sx, sy, str, strlen(str) );
+    XDrawString(dpy, win, gc, sx, sy, str, strlen(str));
 }
 
 
 void
 xsetup(int argc, char **argv)
 {
-    char	hostname[81];
-    char	display[81];
-    char	*envp;
-    unsigned long	bd, bg, fg, bw;
+    char hostname[81];
+    char display[81];
+    char *envp;
+    unsigned long bd, bg, fg, bw;
     XSizeHints xsh;
-    XEvent	event;
+    XEvent event;
     XGCValues gcv;
 
     width = height = 512;
 
-    if ( (envp = getenv("DISPLAY")) == NULL ) {
+    if ((envp = getenv("DISPLAY")) == NULL) {
 	/* Env not set, use local host */
-	gethostname( hostname, 80 );
-	snprintf( display, 81, "%s:0", hostname );
+	gethostname(hostname, 80);
+	snprintf(display, 81, "%s:0", hostname);
 	envp = display;
     }
 
     /* Open the display - XXX see what NULL does now */
-    if ( (dpy = XOpenDisplay( envp )) == NULL ) {
+    if ((dpy = XOpenDisplay(envp)) == NULL) {
 	bu_exit(2, "pl-X: Can't open X display\n");
     }
 
     /* Load the font to use */
-    if ( (fontstruct = XLoadQueryFont(dpy, FONT)) == NULL ) {
-	bu_exit(4, "pl-X: Can't open font\n" );
+    if ((fontstruct = XLoadQueryFont(dpy, FONT)) == NULL) {
+	bu_exit(4, "pl-X: Can't open font\n");
     }
 
     /* Select border, background, foreground colors,
      * and border width.
      */
-    bd = WhitePixel( dpy, DefaultScreen(dpy) );
-    bg = BlackPixel( dpy, DefaultScreen(dpy) );
-    fg = WhitePixel( dpy, DefaultScreen(dpy) );
+    bd = WhitePixel(dpy, DefaultScreen(dpy));
+    bg = BlackPixel(dpy, DefaultScreen(dpy));
+    fg = WhitePixel(dpy, DefaultScreen(dpy));
     bw = 1;
 
     /* Fill in XSizeHints struct to inform window
@@ -285,36 +290,36 @@ xsetup(int argc, char **argv)
     xsh.width = width + 10;
     xsh.x = xsh.y = 0;
 
-    win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
-			       xsh.x, xsh.y, xsh.width, xsh.height,
-			       bw, bd, bg );
-    if ( win == 0 ) {
-	bu_exit(3, "pl-X: Can't create window\n" );
+    win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy),
+			      xsh.x, xsh.y, xsh.width, xsh.height,
+			      bw, bd, bg);
+    if (win == 0) {
+	bu_exit(3, "pl-X: Can't create window\n");
     }
 
     /* Set standard properties for Window Managers */
-    XSetStandardProperties( dpy, win, "Unix Plot", "Unix Plot", None, argv, argc, &xsh );
-    XSetWMHints( dpy, win, &xwmh );
+    XSetStandardProperties(dpy, win, "Unix Plot", "Unix Plot", None, argv, argc, &xsh);
+    XSetWMHints(dpy, win, &xwmh);
 
     /* Create a Graphics Context for drawing */
     gcv.font = fontstruct->fid;
     gcv.foreground = fg;
     gcv.background = bg;
-    gc = XCreateGC( dpy, win, (GCFont|GCForeground|GCBackground), &gcv );
+    gc = XCreateGC(dpy, win, (GCFont|GCForeground|GCBackground), &gcv);
 
-    XSelectInput( dpy, win, ExposureMask | ButtonPressMask | KeyPressMask);
-    XMapWindow( dpy, win ); /* show the window */
+    XSelectInput(dpy, win, ExposureMask | ButtonPressMask | KeyPressMask);
+    XMapWindow(dpy, win); /* show the window */
 
-    while ( 1 ) {
-	XNextEvent( dpy, &event );
-	if ( event.type == Expose && event.xexpose.count == 0 ) {
+    while (1) {
+	XNextEvent(dpy, &event);
+	if (event.type == Expose && event.xexpose.count == 0) {
 	    XWindowAttributes xwa;
 
 	    /* remove other exposure events */
-	    while ( XCheckTypedEvent(dpy, Expose, &event) )
+	    while (XCheckTypedEvent(dpy, Expose, &event))
 		;
 
-	    if ( XGetWindowAttributes( dpy, win, &xwa ) == 0 )
+	    if (XGetWindowAttributes(dpy, win, &xwa) == 0)
 		break;
 
 	    width = xwa.width;
@@ -331,13 +336,13 @@ xsetup(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int	c;
-    struct	uplot *up;
+    int c;
+    struct uplot *up;
     int erase = 0;
     int waiting = 1;
 
-    while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-v") == 0 ) {
+    while (argc > 1) {
+	if (strcmp(argv[1], "-v") == 0) {
 	    verbose++;
 	} else
 	    break;
@@ -345,38 +350,38 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
-    if ( isatty(fileno(stdin)) ) {
+    if (isatty(fileno(stdin))) {
 	bu_exit(1, "Usage: pl-X [-v] < unix_plot\n");
     }
-    xsetup( argc, argv );
+    xsetup(argc, argv);
 
-    while ( (c = getchar()) != EOF ) {
+    while ((c = getchar()) != EOF) {
 	/* look it up */
 
 	if (c == '\n' || c == '\r') {
 	    /* ignore blank lines */
 	    continue;
-	} else if ( c < 'A' || c > 'z' ) {
+	} else if (c < 'A' || c > 'z') {
 	    up = &uerror;
 	} else {
 	    up = &letters[ c - 'A' ];
 	}
 
-	if ( up->targ == TBAD ) {
-	    bu_log("Bad command '%c' (0x%02x)\n", c, c );
+	if (up->targ == TBAD) {
+	    bu_log("Bad command '%c' (0x%02x)\n", c, c);
 	    continue;
 	}
 
 	/* was the previous command an erase? */
 	if (erase) {
-	    XClearWindow( dpy, win );
+	    XClearWindow(dpy, win);
 	    erase = 0;
 	}
 
-	if ( up->narg > 0 )
-	    getargs( up );
+	if (up->narg > 0)
+	    getargs(up);
 
-	switch ( c ) {
+	switch (c) {
 	    case 's':
 	    case 'w':
 		sp[0] = arg[0];
@@ -409,33 +414,33 @@ main(int argc, char **argv)
 		break;
 	    case 'n':
 	    case 'q':
-		draw( cx, cy, cz, arg[0], arg[1], 0.0 );
+		draw(cx, cy, cz, arg[0], arg[1], 0.0);
 		break;
 	    case 'N':
 	    case 'Q':
-		draw( cx, cy, cz, arg[0], arg[1], arg[2] );
+		draw(cx, cy, cz, arg[0], arg[1], arg[2]);
 		break;
 	    case 'l':
 	    case 'v':
-		draw( arg[0], arg[1], 0.0, arg[2], arg[3], 0.0 );
+		draw(arg[0], arg[1], 0.0, arg[2], arg[3], 0.0);
 		break;
 	    case 'L':
 	    case 'V':
-		draw( arg[0], arg[1], arg[2], arg[3], arg[4], arg[5] );
+		draw(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]);
 		break;
 	    case 'p':
 	    case 'x':
-		draw( arg[0], arg[1], 0.0, arg[0], arg[1], 0.0 );
+		draw(arg[0], arg[1], 0.0, arg[0], arg[1], 0.0);
 		break;
 	    case 'P':
 	    case 'X':
-		draw( arg[0], arg[1], arg[2], arg[0], arg[1], arg[2] );
+		draw(arg[0], arg[1], arg[2], arg[0], arg[1], arg[2]);
 		break;
 	    case 't':
-		label( cx, cy, strarg );
+		label(cx, cy, strarg);
 		break;
 	    case 'F':
-		XFlush( dpy );
+		XFlush(dpy);
 		break;
 	    case 'e':
 		/* erase might be the last command in the file
@@ -448,7 +453,7 @@ main(int argc, char **argv)
 	}
 
 	if (verbose) {
-	    printf( "%s\n", up->desc );
+	    printf("%s\n", up->desc);
 	}
     }
     XFlush(dpy);
@@ -456,7 +461,7 @@ main(int argc, char **argv)
     printf("Press any key to quit...\n");
     do {
 	XEvent event;
-	XNextEvent( dpy, &event );
+	XNextEvent(dpy, &event);
 	switch (event.type) {
 	    case ButtonPress:
 	    case ButtonRelease:
@@ -479,6 +484,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

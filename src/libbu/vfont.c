@@ -44,8 +44,8 @@ _vax_gshort(unsigned char *msgp)
     register int i;
 
     if ((i = (p[1] << 8) | p[0]) & 0x8000)
-	return (i | ~0xFFFF);	/* Sign extend */
-    return (i);
+	return i | ~0xFFFF;	/* Sign extend */
+    return i;
 }
 
 
@@ -70,7 +70,7 @@ vfont_get(char *font)
 	if ((fp = fopen(fname, "rb")) == NULL) {
 	    snprintf(fname, FONTNAMESZ, "%s/%s", FONTDIR2, font);
 	    if ((fp = fopen(fname, "rb")) == NULL) {
-		return (VFONT_NULL);
+		return VFONT_NULL;
 	    }
 	}
     }
@@ -78,7 +78,7 @@ vfont_get(char *font)
 	fread((char *)dispatch, sizeof(dispatch), 1, fp) != 1) {
 	fprintf(stderr, "vfont_get(%s):  header read error\n", fname);
 	fclose(fp);
-	return (VFONT_NULL);
+	return VFONT_NULL;
     }
     magic = _vax_gshort(&header[0*2]) & 0xFFFF;
     size = _vax_gshort(&header[1*2]) & 0xFFFF;	/* unsigned short */
@@ -87,7 +87,7 @@ vfont_get(char *font)
 	fprintf(stderr, "vfont_get(%s):  bad magic number 0%o\n",
 		fname, magic);
 	fclose(fp);
-	return (VFONT_NULL);
+	return VFONT_NULL;
     }
 
     /* Read in the bit maps */
@@ -98,7 +98,7 @@ vfont_get(char *font)
 	fclose(fp);
 	bu_free(vfp->vf_bits, "vfont bits");
 	bu_free((char *)vfp, "vfont");
-	return (VFONT_NULL);
+	return VFONT_NULL;
     }
 
     /*
@@ -122,7 +122,7 @@ vfont_get(char *font)
 	vdp->vd_width = _vax_gshort(&cp[8]);
     }
     fclose(fp);
-    return (vfp);
+    return vfp;
 }
 
 

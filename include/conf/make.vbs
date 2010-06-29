@@ -37,8 +37,12 @@
 ' Update the version info files in include/conf/
 '
 ' Optional args:
-'   BrlcadDllRcDefines: create a header file containing the BRL-CAD version
-'                       numbers as defines to be used in brlcad.rc
+'   BrlcadDefines=<file name>: create a header file containing the BRL-CAD
+'                              version numbers as defines to be used e.g. in a
+'                              MSVC resource file
+'   BrlcadConfig=<file name> : create a BRL-CAD configuration batch script for
+'                              determining compilation characteristics of a
+'                              given install
 '
 '''
 
@@ -85,8 +89,9 @@ fileStream.Close
 
 
 ' PATH
-fileName = scriptPath + "\PATH"
-myValue  = """" + Replace(wshEnvironment("ProgramFiles") + "\BRL-CAD", "\", "/") + """"
+fileName   = scriptPath + "\PATH"
+prefixPath = wshEnvironment("ProgramFiles") + "\BRL-CAD"
+myValue    = """" + Replace(prefixPath, "\", "\\") + """"
 
 Set fileStream = fileSystem.CreateTextFile(fileName, True)
 fileStream.WriteLine(myValue)
@@ -102,43 +107,68 @@ fileStream.WriteLine(myValue)
 fileStream.Close
 
 
+' gather version information
+majorFileName     = scriptPath + "\MAJOR"
+majorVersionValue = "0"
+minorFileName     = scriptPath + "\MINOR"
+minorVersionValue = "0"
+patchFileName     = scriptPath + "\PATCH"
+patchVersionValue = "0"
+
+If fileSystem.FileExists(majorFileName) Then
+    Set fileStream    = fileSystem.OpenTextFile(majorFileName)
+    majorVersionValue = fileStream.ReadLine
+    fileStream.Close
+End If
+
+If fileSystem.FileExists(minorFileName) Then
+    Set fileStream    = fileSystem.OpenTextFile(minorFileName)
+    minorVersionValue = fileStream.ReadLine
+    fileStream.Close
+End If
+
+If fileSystem.FileExists(patchFileName) Then
+    Set fileStream    = fileSystem.OpenTextFile(patchFileName)
+    patchVersionValue = fileStream.ReadLine
+    fileStream.Close
+End If
+
+
 ' optional features
 Set commandLineArguments = WScript.Arguments
 
 For i = 0 to commandLineArguments.Count - 1
-    ' ../../misc/win32-msvc/dll/brlcadrc_defines.h
-    If commandLineArguments.Item(i) = "BrlcadDllRcDefines" Then
-        fileName = scriptPath + "\..\..\misc\win32-msvc\dll\brlcadrc_defines.h"
-        majorFileName = scriptPath + "\MAJOR"
-        myMajorValue  = "0"
-        minorFileName = scriptPath + "\MINOR"
-        myMinorValue  = "0"
-        patchFileName = scriptPath + "\PATCH"
-        myPatchValue  = "0"
+    argumentSize      = Len(commandLineArguments.Item(i))
+    seperatorPosition = InStr(commandLineArguments.Item(i), "=")
 
-        If fileSystem.FileExists(majorFileName) Then
-            Set fileStream = fileSystem.OpenTextFile(majorFileName)
-            myMajorValue   = fileStream.ReadLine
+    If seperatorPosition > 0 And seperatorPosition < argumentSize Then
+        commandKey = Left(commandLineArguments.Item(i), seperatorPosition - 1)
+        fileName   = Right(commandLineArguments.Item(i), argumentSize - seperatorPosition)
+
+        If commandKey = "BrlcadDefines" Then
+            Set fileStream = fileSystem.CreateTextFile(fileName, True)
+            fileStream.WriteLine("#define BRLCAD_DLL_RC_MAJOR " + majorVersionValue)
+            fileStream.WriteLine("#define BRLCAD_DLL_RC_MINOR " + minorVersionValue)
+            fileStream.WriteLine("#define BRLCAD_DLL_RC_PATCH " + patchVersionValue)
             fileStream.Close
-        End If
+        ElseIf commandKey = "BrlcadConfig" Then
+            templateFileName = scriptPath + "\BrlcadConfig.tmpl"
 
-        If fileSystem.FileExists(minorFileName) Then
-            Set fileStream = fileSystem.OpenTextFile(minorFileName)
-            myMinorValue   = fileStream.ReadLine
-            fileStream.Close
-        End If
+            If fileSystem.FileExists(templateFileName) Then
+                Set templateFileStream = fileSystem.OpenTextFile(templateFileName)
+                brlcadConfigString               = templateFileStream.ReadAll
+                templateFileStream.Close
 
-        If fileSystem.FileExists(patchFileName) Then
-            Set fileStream = fileSystem.OpenTextFile(patchFileName)
-            myPatchValue   = fileStream.ReadLine
-            fileStream.Close
-        End If
+                brlcadConfigString = Replace(brlcadConfigString, "__VERSION__", majorVersionValue + "." + minorVersionValue + "." + patchVersionValue)
+                brlcadConfigString = Replace(brlcadConfigString, "__PREFIX__", prefixPath)
+                brlcadConfigString = Replace(brlcadConfigString, "__LIBDIR__", prefixPath + "\lib")
+                brlcadConfigString = Replace(brlcadConfigString, "__INCLUDEDIR__", prefixPath + "\include")
 
-        Set fileStream = fileSystem.CreateTextFile(fileName, True)
-        fileStream.WriteLine("#define BRLCAD_DLL_RC_MAJOR " + myMajorValue)
-        fileStream.WriteLine("#define BRLCAD_DLL_RC_MINOR " + myMinorValue)
-        fileStream.WriteLine("#define BRLCAD_DLL_RC_PATCH " + myPatchValue)
-        fileStream.Close
+                Set brlcadConfigFileStream = fileSystem.CreateTextFile(fileName, True)
+                brlcadConfigFileStream.Write(brlcadConfigString)
+                brlcadConfigFileStream.Close
+            End If
+        End If
     End If
 Next
 

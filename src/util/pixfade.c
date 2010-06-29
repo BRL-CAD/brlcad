@@ -19,27 +19,27 @@
  */
 /** @file pixfade.c
  *
- *  Fade a pixture
+ * Fade a pixture
  *
  * pixfade will darken a pix by a certen percentage or do an integer
  * max pixel value.  It runs in two modes, truncate which will cut any
  * channel greater than param to param, and scale which will change
  * a channel to param percent of its orignal value (limited by 0-255)
  *
- *  entry:
+ * entry:
  *	-m	integer max value
  *	-f	fraction to fade
  *	-p	percentage of fade (fraction = percentage/100)
  *	file	a pixture file.
  *	<stdin>	a pixture file if file is not given.
  *
- *  Exit:
+ * Exit:
  *	<stdout>	the faded pixture.
  *
- *  Calls:
+ * Calls:
  *	get_args
  *
- *  Method:
+ * Method:
  *	straight-forward.
  *
  */
@@ -54,9 +54,9 @@
 #include "bu.h"
 #include "bn.h"
 
-int	max = 255;
-double	multiplier = 1.0;
-FILE	*inp;
+int max = 255;
+double multiplier = 1.0;
+FILE *inp;
 
 static char usage[] = "\
 Usage: pixfade [-m max] [-p percent] [-f fraction] [pix-file]\n";
@@ -66,8 +66,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "m:p:f:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "m:p:f:")) != EOF) {
+	switch (c) {
 	    case 'm':
 		max = atoi(bu_optarg);
 		if ((max < 0) || (max > 255)) {
@@ -91,59 +91,60 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )  {
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) {
 	    fprintf(stderr, "pixfade: stdin is a tty\n");
-	    return(0);
+	    return 0;
 	}
 	inp = stdin;
     } else {
-	if ( (inp = fopen(argv[bu_optind], "r")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "pixfade: cannot open \"%s\" for reading\n",
-			   argv[bu_optind] );
-	    return(0);
+	if ((inp = fopen(argv[bu_optind], "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "pixfade: cannot open \"%s\" for reading\n",
+			  argv[bu_optind]);
+	    return 0;
 	}
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "pixfade: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "pixfade: excess argument(s) ignored\n");
 
-    if ( isatty(fileno(stdout)) )  {
+    if (isatty(fileno(stdout))) {
 	fprintf(stderr, "pixfade: stdout is a tty\n");
-	return(0);
+	return 0;
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
 {
-    float	*randp;
+    float *randp;
     struct color_rec {
 	unsigned char red, green, blue;
     } cur_color;
 
-    bn_rand_init( randp, 0);
+    bn_rand_init(randp, 0);
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
 /* fprintf(stderr, "pixfade: max = %d, multiplier = %f\n", max, multiplier); */
 
 
-    for (;;)  {
-	double	t;
+    for (;;) {
+	double t;
 
-	if ( fread(&cur_color, 1, 3, inp) != 3 )  break;
-	if ( feof(inp) )  break;
+	if (fread(&cur_color, 1, 3, inp) != 3) break;
+	if (feof(inp)) break;
 
 	t = cur_color.red * multiplier + bn_rand_half(randp);
 	if (t > max)
@@ -167,6 +168,7 @@ main(int argc, char **argv)
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -100,7 +100,7 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
@@ -111,20 +111,20 @@ get_args(int argc, char **argv)
 	    (void)fprintf(stderr,
 			  "bwscale: cannot open \"%s\" for reading\n",
 			  file_name);
-	    return(0);
+	    return 0;
 	}
 	inx = atoi(argv[bu_optind++]);
 	iny = atoi(argv[bu_optind++]);
 	outx = atoi(argv[bu_optind++]);
 	outy = atoi(argv[bu_optind++]);
-	return(1);
+	return 1;
     }
     if ((bu_optind >= argc) ||
 	(argv[bu_optind][0] == '-' && argv[bu_optind][1] == '\n')) {
 
 	/* input presumably from standard input */
 	if (isatty(fileno(stdin))) {
-	    return(0);
+	    return 0;
 	}
 	file_name = "-";
 	buffp = stdin;
@@ -134,14 +134,14 @@ get_args(int argc, char **argv)
 	    (void)fprintf(stderr,
 			  "bwscale: cannot open \"%s\" for reading\n",
 			  file_name);
-	    return(0);
+	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
 	(void)fprintf(stderr, "bwscale: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -312,7 +312,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
     pylen = (double)iy / (double)oy;
     if ((pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0)) {
 	fprintf(stderr, "bwscale: can't stretch one way and compress another!\n");
-	return(-1);
+	return -1;
     }
     if (pxlen < 1.0 || pylen < 1.0) {
 	/* scale up */
@@ -323,7 +323,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    /* bilinear interpolate */
 	    binterp(ofp, ix, iy, ox, oy);
 	}
-	return(0);
+	return 0;
     }
 
     /* for each output pixel */
@@ -372,7 +372,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	}
 	(void) fwrite(outbuf, 1, ox, ofp);
     }
-    return(1);
+    return 1;
 }
 
 
@@ -403,7 +403,7 @@ main(int argc, char **argv)
 
     bu_free(outbuf, (const char *)buffer);
     bu_free(buffer, (const char *)buffer);
-    return(0);
+    return 0;
 }
 
 

@@ -266,3 +266,14 @@ ON__UINT32 ON_RandomNumberGenerator::RandomNumber()
 {
   return on_random_number(&m_rand_context);
 }
+
+double ON_RandomNumberGenerator::RandomDouble()
+{
+  return ((double)on_random_number(&m_rand_context))/4294967295.0;
+}
+
+double ON_RandomNumberGenerator::RandomDouble(double t0, double t1)
+{
+  const double s = ((double)on_random_number(&m_rand_context))/4294967295.0;
+  return ((1.0-s)*t0 + s*t1);
+}

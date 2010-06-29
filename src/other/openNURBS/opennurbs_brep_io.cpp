@@ -350,12 +350,13 @@ ON_BOOL32 ON_BrepFace::Read( ON_BinaryArchive& file )
 ON_BOOL32 ON_BrepVertexArray::Read( ON_BinaryArchive& file )
 {
   Empty();
-  unsigned int tcode = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 length_TCODE_ANONYMOUS_CHUNK = 0;
   int count = 0;
   int i;
   int major_version = 0;
   int minor_version = 0;
-  ON_BOOL32 rc = file.BeginRead3dmChunk( &tcode, &i );
+  bool rc = file.BeginRead3dmBigChunk( &tcode, &length_TCODE_ANONYMOUS_CHUNK );
   if (rc) {
     if (tcode != TCODE_ANONYMOUS_CHUNK)
       rc = false;
@@ -366,7 +367,7 @@ ON_BOOL32 ON_BrepVertexArray::Read( ON_BinaryArchive& file )
         SetCapacity(count);
         for ( i = 0; i < count && rc ; i++ ) {
           ON_BrepVertex& vertex = AppendNew();
-          rc = vertex.Read(file);
+          rc = vertex.Read(file)?true:false;
         }    
       }
       else {
@@ -399,12 +400,13 @@ ON_BOOL32 ON_BrepVertexArray::Write( ON_BinaryArchive& file ) const
 ON_BOOL32 ON_BrepEdgeArray::Read( ON_BinaryArchive& file )
 {
   Empty();
-  unsigned int tcode = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 length_TCODE_ANONYMOUS_CHUNK = 0;
   int count = 0;
   int i;
   int major_version = 0;
   int minor_version = 0;
-  ON_BOOL32 rc = file.BeginRead3dmChunk( &tcode, &i );
+  bool rc = file.BeginRead3dmBigChunk( &tcode, &length_TCODE_ANONYMOUS_CHUNK );
   if (rc) {
     if (tcode != TCODE_ANONYMOUS_CHUNK)
       rc = false;
@@ -415,7 +417,7 @@ ON_BOOL32 ON_BrepEdgeArray::Read( ON_BinaryArchive& file )
         SetCapacity(count);
         for ( i = 0; i < count && rc ; i++ ) {
           ON_BrepEdge& edge = AppendNew();
-          rc = edge.Read(file);
+          rc = edge.Read(file) ? true : false;
         }    
       }
       else {
@@ -448,12 +450,13 @@ ON_BOOL32 ON_BrepEdgeArray::Write( ON_BinaryArchive& file ) const
 ON_BOOL32 ON_BrepTrimArray::Read( ON_BinaryArchive& file )
 {
   Empty();
-  unsigned int tcode = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 length_TCODE_ANONYMOUS_CHUNK = 0;
   int count = 0;
   int i;
   int major_version = 0;
   int minor_version = 0;
-  ON_BOOL32 rc = file.BeginRead3dmChunk( &tcode, &i );
+  bool rc = file.BeginRead3dmBigChunk( &tcode, &length_TCODE_ANONYMOUS_CHUNK );
   if (rc) {
     if (tcode != TCODE_ANONYMOUS_CHUNK)
       rc = false;
@@ -464,7 +467,7 @@ ON_BOOL32 ON_BrepTrimArray::Read( ON_BinaryArchive& file )
         SetCapacity(count);
         for ( i = 0; i < count && rc ; i++ ) {
           ON_BrepTrim& trim = AppendNew();
-          rc = trim.Read(file);
+          rc = trim.Read(file)?true:false;
         }    
       }
       else {
@@ -497,12 +500,13 @@ ON_BOOL32 ON_BrepTrimArray::Write( ON_BinaryArchive& file ) const
 ON_BOOL32 ON_BrepLoopArray::Read( ON_BinaryArchive& file )
 {
   Empty();
-  unsigned int tcode = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 length_TCODE_ANONYMOUS_CHUNK = 0;
   int count = 0;
   int i;
   int major_version = 0;
   int minor_version = 0;
-  ON_BOOL32 rc = file.BeginRead3dmChunk( &tcode, &i );
+  bool rc = file.BeginRead3dmBigChunk( &tcode, &length_TCODE_ANONYMOUS_CHUNK );
   if (rc) {
     if (tcode != TCODE_ANONYMOUS_CHUNK)
       rc = false;
@@ -513,7 +517,7 @@ ON_BOOL32 ON_BrepLoopArray::Read( ON_BinaryArchive& file )
         SetCapacity(count);
         for ( i = 0; i < count && rc ; i++ ) {
           ON_BrepLoop& loop = AppendNew();
-          rc = loop.Read(file);
+          rc = loop.Read(file) ? true : false;
         }    
       }
       else {
@@ -546,12 +550,13 @@ ON_BOOL32 ON_BrepLoopArray::Write( ON_BinaryArchive& file ) const
 ON_BOOL32 ON_BrepFaceArray::Read( ON_BinaryArchive& file )
 {
   Empty();
-  unsigned int tcode = 0;
+  ON__UINT32 tcode = 0;
+  ON__INT64 length_TCODE_ANONYMOUS_CHUNK = 0;
   int count = 0;
   int i;
   int major_version = 0;
   int minor_version = 0;
-  ON_BOOL32 rc = file.BeginRead3dmChunk( &tcode, &i );
+  bool rc = file.BeginRead3dmBigChunk( &tcode, &length_TCODE_ANONYMOUS_CHUNK );
   if (rc) {
     if (tcode != TCODE_ANONYMOUS_CHUNK)
       rc = false;
@@ -564,7 +569,7 @@ ON_BOOL32 ON_BrepFaceArray::Read( ON_BinaryArchive& file )
         for ( i = 0; i < count && rc ; i++ ) 
         {
           ON_BrepFace& face = AppendNew();
-          rc = face.Read(file);
+          rc = face.Read(file)?true:false;
         }    
 
         if ( minor_version >= 1 )
@@ -876,14 +881,17 @@ ON_BOOL32 ON_Brep::Read( ON_BinaryArchive& file )
       // added for chunk version 3.1
 
       ON_Object* obj;
-      unsigned int tcode;
-      int value, fi;
+      ON__UINT32 tcode = 0;
+      ON__INT64 length_TCODE_ANONYMOUS_CHUNK = 0;
+      int fi;
       unsigned char b;
 
       const int face_count = m_F.Count();
 
       // read render meshes
-      rc = file.BeginRead3dmChunk( &tcode, &value );
+      tcode = 0;
+      length_TCODE_ANONYMOUS_CHUNK = 0;
+      rc = file.BeginRead3dmBigChunk( &tcode, &length_TCODE_ANONYMOUS_CHUNK );
       if ( rc )
       {
         if ( tcode != TCODE_ANONYMOUS_CHUNK )
@@ -895,10 +903,14 @@ ON_BOOL32 ON_Brep::Read( ON_BinaryArchive& file )
             rc = file.ReadChar(&b);
             if (rc && b) 
             {
+              obj = 0;
               rc = file.ReadObject(&obj);
-              m_F[fi].m_render_mesh = ON_Mesh::Cast(obj);
-              if ( !m_F[fi].m_render_mesh )
-                delete obj;
+              if ( 0 != obj )
+              {
+                m_F[fi].m_render_mesh = ON_Mesh::Cast(obj);
+                if ( !m_F[fi].m_render_mesh )
+                  delete obj;
+              }
             }
           }
         }
@@ -906,28 +918,33 @@ ON_BOOL32 ON_Brep::Read( ON_BinaryArchive& file )
           rc = false;
       }
 
-      // read analysis meshes
-      rc = file.BeginRead3dmChunk( &tcode, &value );
-      if ( rc )
+      if (rc)
       {
-        if ( tcode != TCODE_ANONYMOUS_CHUNK )
-          rc = false;
-        else
+        // read analysis meshes
+        tcode = 0;
+        length_TCODE_ANONYMOUS_CHUNK = 0;
+        rc = file.BeginRead3dmBigChunk( &tcode, &length_TCODE_ANONYMOUS_CHUNK );
+        if ( rc )
         {
-          for ( fi = 0; rc && fi < face_count; fi++ ) 
+          if ( tcode != TCODE_ANONYMOUS_CHUNK )
+            rc = false;
+          else
           {
-            rc = file.ReadChar(&b);
-            if (rc && b) 
+            for ( fi = 0; rc && fi < face_count; fi++ ) 
             {
-              rc = file.ReadObject(&obj);
-              m_F[fi].m_analysis_mesh = ON_Mesh::Cast(obj);
-              if ( !m_F[fi].m_analysis_mesh )
-                delete obj;
+              rc = file.ReadChar(&b);
+              if (rc && b) 
+              {
+                rc = file.ReadObject(&obj);
+                m_F[fi].m_analysis_mesh = ON_Mesh::Cast(obj);
+                if ( !m_F[fi].m_analysis_mesh )
+                  delete obj;
+              }
             }
           }
+          if ( !file.EndRead3dmChunk() )
+            rc = false;
         }
-        if ( !file.EndRead3dmChunk() )
-          rc = false;
       }
     }
 

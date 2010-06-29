@@ -582,8 +582,11 @@ file:
 In emacs, the the 'indent-region' command (bound to C-M-\ by default)
 does a good job of making the needed changes to conform to this
 convention.  Vi can be configured to respect the ex: modeline by
-adding 'set modeline=1' to your .vimrc configuration file.  The
-exTabSettings project in MSVC will make it conform as well.
+adding 'set modeline=1' to your .vimrc configuration file.  Microsoft
+Visual Studio should have tabs size set to 8 and indent size set to 4
+with tabs kept under Tools -> Options -> Text Editor -> C/C++ -> Tabs.
+The exTabSettings project will also make MSVC conform by reading our
+file footers.
 
 A similar block can be used on source and script files in other
 languages (such as Tcl, Shell, Perl, etc).  See the local variable
@@ -1176,6 +1179,9 @@ Source or binary release:
 
       T2 package maintainer
       http://t2-project.org/packages/brlcad.html
+
+      OpenSUSE package maintainer
+      https://build.opensuse.org/package/users?package=brlcad&project=Education
 
 Linux binary release:
 

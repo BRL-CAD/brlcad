@@ -308,7 +308,7 @@ find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t pt)
 		nearest = ps;
 	    }
 	}
-    return(nearest);
+    return nearest;
 }
 
 
@@ -335,7 +335,7 @@ add_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t n
 	    new->pp_bendradius = 40.0;
 	    VMOVE(new->pp_coord, new_pt);
 	    BU_LIST_INSERT(&pipe->pipe_segs_head, &new->l);
-	    return(new);
+	    return new;
 	}
     }
 
@@ -356,9 +356,9 @@ add_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t n
 			/* won't work here, so refuse to do it */
 			BU_LIST_DEQUEUE(&new->l);
 			bu_free((genptr_t)new, "add_pipept: new ");
-			return(pp);
+			return pp;
 		    } else
-			return(new);
+			return new;
 }
 
 
@@ -433,7 +433,7 @@ del_pipept(struct wdb_pipept *ps)
 
     if (!prev && !next) {
 	Tcl_AppendResult(interp, "Cannot delete last point in pipe\n", (char *)NULL);
-	return(ps);
+	return ps;
     }
 
     BU_LIST_DEQUEUE(&ps->l);
@@ -447,14 +447,14 @@ del_pipept(struct wdb_pipept *ps)
 			else
 			    BU_LIST_INSERT(&head->l, &ps->l)
 
-				return(ps);
+				return ps;
     } else
 	bu_free((genptr_t)ps, "del_pipept: ps");
 
     if (prev)
-	return(prev);
+	return prev;
     else
-	return(next);
+	return next;
 
 }
 

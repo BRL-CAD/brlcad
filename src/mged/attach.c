@@ -99,10 +99,8 @@ extern int Glx_dm_init();
 extern int Pex_dm_init();
 #endif /* DM_PEX */
 
-extern void set_port(void);		/* defined in fbserv.c */
+extern void fbserv_set_port(void);		/* defined in fbserv.c */
 extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
-extern void predictor_init(void);	/* defined in predictor.c */
-extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
 
 extern struct _color_scheme default_color_scheme;
 
@@ -226,7 +224,7 @@ release(char *name, int need_close)
 	if (mged_variables->mv_listen) {
 	    /* drop all clients */
 	    mged_variables->mv_listen = 0;
-	    set_port();
+	    fbserv_set_port();
 	}
 
 	/* release framebuffer resources */
@@ -267,14 +265,14 @@ release(char *name, int need_close)
 
 
 int
-f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_release(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help release");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -299,44 +297,44 @@ f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 
-void
-print_valid_dm(void)
+static void
+print_valid_dm(Tcl_Interp *interpreter)
 {
     int i = 0;
-    Tcl_AppendResult(interp, "\tThe following display manager types are valid: ", (char *)NULL);
+    Tcl_AppendResult(interpreter, "\tThe following display manager types are valid: ", (char *)NULL);
 #ifdef DM_X
-    Tcl_AppendResult(interp, "X  ", (char *)NULL);
+    Tcl_AppendResult(interpreter, "X  ", (char *)NULL);
     i++;
 #endif /* DM_X */
 #ifdef DM_TK
-    Tcl_AppendResult(interp, "tk  ", (char *)NULL);
+    Tcl_AppendResult(interpreter, "tk  ", (char *)NULL);
     i++;
 #endif /* DM_TK */
 #ifdef DM_WGL
-    Tcl_AppendResult(interp, "wgl  ", (char *)NULL);
+    Tcl_AppendResult(interpreter, "wgl  ", (char *)NULL);
     i++;
 #endif /* DM_WGL */
 #ifdef DM_OGL
-    Tcl_AppendResult(interp, "ogl  ", (char *)NULL);
+    Tcl_AppendResult(interpreter, "ogl  ", (char *)NULL);
     i++;
 #endif /* DM_OGL */
 #ifdef DM_RTGL
-    Tcl_AppendResult(interp, "rtgl  ", (char *)NULL);
+    Tcl_AppendResult(interpreter, "rtgl  ", (char *)NULL);
     i++;
 #endif /* DM_RTGL */
 #ifdef DM_GLX
-    Tcl_AppendResult(interp, "glx", (char *)NULL);
+    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
     i++;
 #endif /* DM_GLX */
     if (i==0) {
-	Tcl_AppendResult(interp, "NONE AVAILABLE", (char *)NULL);
+	Tcl_AppendResult(interpreter, "NONE AVAILABLE", (char *)NULL);
     }
-    Tcl_AppendResult(interp, "\n", (char *)NULL);
+    Tcl_AppendResult(interpreter, "\n", (char *)NULL);
 }
 
 
 int
-f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char **argv)
 {
     struct w_dm *wp;
 
@@ -345,9 +343,9 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help attach");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	print_valid_dm();
+	print_valid_dm(interpreter);
 	return TCL_ERROR;
     }
 
@@ -362,8 +360,8 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 	    break;
 
     if (wp->type == -1) {
-	Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
-	print_valid_dm();
+	Tcl_AppendResult(interpreter, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
+	print_valid_dm(interpreter);
 	return TCL_ERROR;
     }
 
@@ -374,6 +372,8 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 int
 gui_setup(char *dstr)
 {
+    Tk_GenericProc *handler = doEvent;
+
     /* initialize only once */
     if (tkwin != NULL)
 	return TCL_OK;
@@ -436,7 +436,7 @@ gui_setup(char *dstr)
     }
 
     /* create the event handler */
-    Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+    Tk_CreateGenericHandler(handler, (ClientData)NULL);
 
     Tcl_Eval(interp, "wm withdraw .");
     Tcl_Eval(interp, "tk appname mged");
@@ -619,7 +619,7 @@ get_attached(void)
  * Run a display manager specific command(s).
  */
 int
-f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
 
     if (argc < 2) {
@@ -627,7 +627,7 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help dm");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -638,45 +638,45 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    
     	    bu_vls_init(&vls);
     	    bu_vls_printf(&vls, "help dm");
-    	    Tcl_Eval(interp, bu_vls_addr(&vls));
+    	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
     	    bu_vls_free(&vls);
     	    return TCL_ERROR;
     	}
 #ifdef DM_X
     	if (!strcmp(argv[argc-1], "X")) {
-    	    Tcl_AppendResult(interp, "X", (char *)NULL);
+    	    Tcl_AppendResult(interpreter, "X", (char *)NULL);
     	}
 #endif /* DM_X */
 #ifdef DM_TK
     	if (!strcmp(argv[argc-1], "tk")) {
-    	    Tcl_AppendResult(interp, "tk", (char *)NULL);
+    	    Tcl_AppendResult(interpreter, "tk", (char *)NULL);
     	}
 #endif /* DM_TK */
 #ifdef DM_WGL
     	if (!strcmp(argv[argc-1], "wgl")) {
-	    Tcl_AppendResult(interp, "wgl", (char *)NULL);
+	    Tcl_AppendResult(interpreter, "wgl", (char *)NULL);
 	}
 #endif /* DM_WGL */
 #ifdef DM_OGL
     	if (!strcmp(argv[argc-1], "ogl")) {
-	    Tcl_AppendResult(interp, "ogl", (char *)NULL);
+	    Tcl_AppendResult(interpreter, "ogl", (char *)NULL);
 	}
 #endif /* DM_OGL */
 #ifdef DM_RTGL
     	if (!strcmp(argv[argc-1], "rtgl")) {
-	    Tcl_AppendResult(interp, "rtgl", (char *)NULL);
+	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
 	}
 #endif /* DM_RTGL */
 #ifdef DM_GLX
     	if (!strcmp(argv[argc-1], "glx")) {
-	    Tcl_AppendResult(interp, "glx", (char *)NULL);
+	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
 	}
 #endif /* DM_GLX */
 	return TCL_OK;
     }       
     
     if (!cmd_hook) {
-	Tcl_AppendResult(interp, "The '", dmp->dm_name,
+	Tcl_AppendResult(interpreter, "The '", dmp->dm_name,
 			 "' display manager does not support local commands.\n",
 			 (char *)NULL);
 	return TCL_ERROR;
@@ -697,7 +697,7 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 is_dm_null(void)
 {
-    return(curr_dm_list == &head_dm_list);
+    return curr_dm_list == &head_dm_list;
 }
 
 
@@ -781,22 +781,22 @@ mged_link_vars(struct dm_list *p)
 
 
 int
-f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, char **argv)
 {
     struct dm_list *dlp;
 
-    if (argc != 1) {
+    if (argc != 1 || !argv) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel get_dm_list");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(interpreter, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	Tcl_AppendElement(interp, bu_vls_addr(&dlp->dml_dmp->dm_pathName));
+	Tcl_AppendElement(interpreter, bu_vls_addr(&dlp->dml_dmp->dm_pathName));
 
     return TCL_OK;
 }

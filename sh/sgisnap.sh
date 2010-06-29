@@ -48,6 +48,11 @@
 #                                                               #
 #################################################################
 
+echo "************************************************************"
+echo "DEPRECATION WARNING: This script is deprecated and may be"
+echo "                     removed in a future release of BRL-CAD."
+echo "************************************************************"
+
 FB_FILE=/dev/sgif       # Full screen
 export FB_FILE
 FB2=/dev/sgift          # Full screen, 30 hz

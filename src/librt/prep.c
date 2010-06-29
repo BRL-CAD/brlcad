@@ -523,7 +523,7 @@ rt_vlist_solid(
 
     if (rt_db_get_internal(&intern, stp->st_dp, rtip->rti_dbip, stp->st_matp, resp) < 0) {
 	bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n", stp->st_name);
-	return(-1);			/* FAIL */
+	return -1;			/* FAIL */
     }
     RT_CK_DB_INTERNAL(&intern);
 
@@ -534,7 +534,7 @@ rt_vlist_solid(
     if (ret < 0) {
 	bu_log("rt_vlist_solid(%s): ft_plot() failure\n", stp->st_name);
 	rt_db_free_internal(&intern);
-	return(-2);
+	return -2;
     }
     rt_db_free_internal(&intern);
 
@@ -571,13 +571,13 @@ rt_plot_solid(
     if (rt_vlist_solid(&vhead, rtip, stp, resp) < 0) {
 	bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
 	       stp->st_name);
-	return(-1);			/* FAIL */
+	return -1;			/* FAIL */
     }
 
     if (BU_LIST_IS_EMPTY(&vhead)) {
 	bu_log("rt_plot_solid(%s): no vectors to plot?\n",
 	       stp->st_name);
-	return(-3);		/* FAIL */
+	return -3;		/* FAIL */
     }
 
     /* Take color from one region */
@@ -591,7 +591,7 @@ rt_plot_solid(
     rt_vlist_to_uplot(fp, &vhead);
 
     RT_FREE_VLIST(&vhead);
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -627,7 +627,7 @@ rt_init_resource(struct resource *resp,
 	BU_ASSERT_LONG(cpu_num, >=, 0);
 	if (rtip != NULL && rtip->rti_treetop) {
 	    /* this is a submodel */
-	    BU_ASSERT_LONG(cpu_num, <, rtip->rti_resources.blen);
+	    BU_ASSERT_LONG(cpu_num, <, (long)rtip->rti_resources.blen);
 	} else {
 	    BU_ASSERT_LONG(cpu_num, <, MAX_PSW);
 	}
@@ -898,7 +898,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 	}
     }
 
-    return(solidbits);
+    return solidbits;
 }
 
 
@@ -1113,7 +1113,7 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
 	bu_free((char *)delregp->attr_values, "delregp->attr_values");
     }
     bu_free((char *)delregp, "struct region");
-    return(0);
+    return 0;
 }
 
 
@@ -1295,7 +1295,7 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 	bu_avs_free(&avs);
     }
 
-    return(region_count);
+    return region_count;
 }
 
 
@@ -1388,7 +1388,7 @@ rt_find_paths(struct db_i *dbip,
 
     if (start == end) {
 	bu_ptbl_ins(paths, (long *)path);
-	return(0);
+	return 0;
     }
 
     if (!(start->d_flags & DIR_COMB) || (start->d_flags & DIR_REGION)) {
@@ -1396,20 +1396,20 @@ rt_find_paths(struct db_i *dbip,
 	       start->d_namep, end->d_namep);
 	db_free_full_path(path);
 	bu_free((char *)path, "path");
-	return(1);
+	return 1;
     }
 
     if (rt_db_get_internal(&intern, start, dbip, NULL, resp) < 0) {
 	db_free_full_path(path);
 	bu_free((char *)path, "path");
-	return(1);
+	return 1;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     rt_find_path(dbip, comb->tree, end, paths, &path, resp);
     rt_db_free_internal(&intern);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1437,13 +1437,13 @@ obj_in_path(const char *path, const char *obj)
 	    ptr += obj_len;
 	    if (*ptr == '\0' || *ptr == '/') {
 		/* found object in path */
-		return(1);
+		return 1;
 	    }
 	} else if (*(ptr-1) == '/') {
 	    ptr += obj_len;
 	    if (*ptr == '\0' || *ptr == '/') {
 		/* found object in path */
-		return(1);
+		return 1;
 	    }
 	} else {
 	    ptr++;
@@ -1452,7 +1452,7 @@ obj_in_path(const char *path, const char *obj)
 	ptr = strstr(ptr, obj);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1460,7 +1460,7 @@ HIDDEN int
 unprep_reg_start(struct db_tree_state *tsp,
 		 const struct db_full_path *pathp,
 		 const struct rt_comb_internal *comb,
-		 genptr_t client_data __attribute__((unused)))
+		 genptr_t UNUSED(client_data))
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -1472,9 +1472,9 @@ unprep_reg_start(struct db_tree_state *tsp,
     /* Ignore "air" regions unless wanted */
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
 	tsp->ts_rtip->rti_air_discards++;
-	return(-1);	/* drop this region */
+	return -1;	/* drop this region */
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1482,7 +1482,7 @@ HIDDEN union tree *
 unprep_reg_end(struct db_tree_state *tsp,
 	       const struct db_full_path *pathp,
 	       union tree *tree,
-	       genptr_t client_data __attribute__((unused)))
+	       genptr_t UNUSED(client_data))
 {
     if (tsp) {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -1491,7 +1491,7 @@ unprep_reg_end(struct db_tree_state *tsp,
     if (pathp) RT_CK_FULL_PATH(pathp);
     if (tree) RT_CK_TREE(tree);
 
-    return((union tree *)NULL);
+    return (union tree *)NULL;
 }
 
 
@@ -1499,7 +1499,7 @@ HIDDEN union tree *
 unprep_leaf(struct db_tree_state *tsp,
 	    const struct db_full_path *pathp,
 	    struct rt_db_internal *ip,
-	    genptr_t client_data __attribute__((unused)))
+	    genptr_t UNUSED(client_data))
 {
     register struct soltab *stp;
     struct directory *dp;
@@ -1568,13 +1568,13 @@ unprep_leaf(struct db_tree_state *tsp,
 		    rtip->rti_Solids[bit] = (struct soltab *)NULL;
 		}
 		rt_free_soltab(stp);
-		return((union tree *)NULL);
+		return (union tree *)NULL;
 	    }
 	}
     }
 
     bu_log("ERROR: internal failure unprepping [%s]\n", dp->d_namep);
-    return((union tree *)NULL);
+    return (union tree *)NULL;
 }
 
 
@@ -1605,7 +1605,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 		db_free_full_path(path);
 	    }
 	    bu_ptbl_free(&objs->paths);
-	    return(1);
+	    return 1;
 	}
 	for (j=0; j<objs->nunprepped; j++) {
 	    end = db_lookup(rtip->rti_dbip, objs->unprepped[j], 1);
@@ -1615,7 +1615,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 		    db_free_full_path(path);
 		}
 		bu_ptbl_free(&objs->paths);
-		return(1);
+		return 1;
 	    }
 	    rt_find_paths(rtip->rti_dbip, start, end, &objs->paths, resp);
 	}
@@ -1662,7 +1662,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	    }
 	    bu_ptbl_free(&objs->paths);
 	    bu_ptbl_free(&unprep_regions);
-	    return(1);
+	    return 1;
 	}
 	db_free_full_path(&another_path);
 
@@ -1685,7 +1685,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	    }
 	    bu_ptbl_free(&objs->paths);
 	    bu_ptbl_free(&unprep_regions);
-	    return(1);
+	    return 1;
 	}
 
 	db_free_db_tree_state(tree_state);
@@ -1770,7 +1770,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1804,7 +1804,7 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
     rtip->rti_add_to_new_solids_list = 1;
     bu_ptbl_init(&rtip->rti_new_solids, 128, "rti_new_solids");
     if (rt_gettrees(rtip, BU_PTBL_LEN(&(objs->paths)), (const char **)argv, 1)) {
-	return(1);
+	return 1;
     }
     rtip->rti_add_to_new_solids_list = 0;
 
@@ -1893,7 +1893,7 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	rt_res_pieces_init(&rt_uniresource, rtip);
     }
 
-    return(0);
+    return 0;
 }
 
 

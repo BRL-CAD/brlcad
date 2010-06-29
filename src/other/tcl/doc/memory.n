@@ -41,10 +41,17 @@ number of calls to \fBckalloc\fR not met by a corresponding call
 to \fBckfree\fR), the current bytes allocated, and the maximum number
 of packets and bytes allocated.
 .TP
-\fB memory init \fR[\fBon\fR|\fBoff\fR]
+\fBmemory init \fR[\fBon\fR|\fBoff\fR]
 .
 Turn on or off the pre-initialization of all allocated memory
-with bogus bytes.  Useful for detecting the use of uninitialized values.
+with bogus bytes.  Useful for detecting the use of uninitialized
+values.
+.TP
+\fBmemory objs \fIfile\fR
+.
+Causes a list of all allocated Tcl_Obj values to be written to the specified
+\fIfile\fR immediately, together with where they were allocated.  Useful for
+checking for leaks of values.
 .TP
 \fBmemory onexit\fR \fIfile\fR
 .
@@ -69,9 +76,11 @@ to \fBckalloc\fR causes a line of trace information to be written to
 address returned, the amount of memory allocated, and the C filename
 and line number of the code performing the allocation.  For example:
 .RS
+.PP
 .CS
 ckalloc 40e478 98 tclProc.c 1406
 .CE
+.PP
 Calls to \fBckfree\fR are traced in the same manner.
 .RE
 .TP

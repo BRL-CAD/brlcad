@@ -19,9 +19,9 @@
  */
 /** @file pixfilter.c
  *
- *  Filters a color pix file with an arbitrary 3x3 kernel.
- *  Leaves the outer rows untouched.
- *  Allows an alternate divisor and offset to be given.
+ * Filters a color pix file with an arbitrary 3x3 kernel.
+ * Leaves the outer rows untouched.
+ * Allows an alternate divisor and offset to be given.
  *
  */
 
@@ -34,18 +34,18 @@
 #include "bu.h"
 
 
-#define MAXLINE		(8*1024)
-#define DEFAULT_WIDTH	512
-unsigned char	line1[3*MAXLINE], line2[3*MAXLINE], line3[3*MAXLINE], obuf[3*MAXLINE];
-unsigned char	*top, *middle, *bottom, *temp;
+#define MAXLINE (8*1024)
+#define DEFAULT_WIDTH 512
+unsigned char line1[3*MAXLINE], line2[3*MAXLINE], line3[3*MAXLINE], obuf[3*MAXLINE];
+unsigned char *top, *middle, *bottom, *temp;
 
 /* The filter kernels */
-struct	kernels {
-    char	*name;
-    char	*uname;		/* What is needed to recognize it */
-    int	kern[9];
-    int	kerndiv;	/* Divisor for kernel */
-    int	kernoffset;	/* To be added to result */
+struct kernels {
+    char *name;
+    char *uname;		/* What is needed to recognize it */
+    int kern[9];
+    int kerndiv;	/* Divisor for kernel */
+    int kernoffset;	/* To be added to result */
 } kernel[] = {
     { "Low Pass", "lo", {3, 5, 3, 5, 10, 5, 3, 5, 3}, 42, 0 },
     { "Laplacian", "la", {-1, -1, -1, -1, 8, -1, -1, -1, -1}, 16, 128 },
@@ -56,21 +56,22 @@ struct	kernels {
     { NULL, NULL, {0, 0, 0, 0, 0, 0, 0, 0, 0}, 0, 0 },
 };
 
-int	*kern;
-int	kerndiv;
-int	kernoffset;
-int	width = DEFAULT_WIDTH;
-int	height = DEFAULT_WIDTH;
-int	verbose = 0;
-int	dflag = 0;	/* Different divisor specified */
-int	oflag = 0;	/* Different offset specified */
+
+int *kern;
+int kerndiv;
+int kernoffset;
+int width = DEFAULT_WIDTH;
+int height = DEFAULT_WIDTH;
+int verbose = 0;
+int dflag = 0;	/* Different divisor specified */
+int oflag = 0;	/* Different offset specified */
 
 char *file_name;
 FILE *infp;
 
-void	select_filter(char *str), dousage(void);
+void select_filter(char *str), dousage(void);
 
-char	usage[] = "\
+char usage[] = "\
 Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
 
@@ -79,8 +80,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:")) != EOF) {
+	switch (c) {
 	    case 'v':
 		verbose++;
 		break;
@@ -105,52 +106,53 @@ get_args(int argc, char **argv)
 		width = height = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )
-	    return(0);
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
+	    return 0;
 	file_name = "-";
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ( (infp = fopen(file_name, "r")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "pixfilter: cannot open \"%s\" for reading\n",
-			   file_name );
-	    return(0);
+	if ((infp = fopen(file_name, "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "pixfilter: cannot open \"%s\" for reading\n",
+			  file_name);
+	    return 0;
 	}
     }
 
-    if ( isatty(fileno(stdout)) )
-	return(0);
+    if (isatty(fileno(stdout)))
+	return 0;
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "pixfilter: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "pixfilter: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
 {
-    int	x, y, color;
-    int	value, r1, r2, r3;
-    int	max, min;
+    int x, y, color;
+    int value, r1, r2, r3;
+    int max, min;
 
     /* Select Default Filter (low pass) */
-    select_filter( "low" );
+    select_filter("low");
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	dousage();
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
-    if ( width > MAXLINE )  {
+    if (width > MAXLINE) {
 	fprintf(stderr, "pixfilter:  limited to scanlines of %d\n", MAXLINE);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     /*
@@ -160,45 +162,45 @@ main(int argc, char **argv)
     bottom = &line1[0];
     middle = &line2[0];
     top    = &line3[0];
-    fread( bottom, sizeof( char ), 3*width, infp );
-    fread( middle, sizeof( char ), 3*width, infp );
-    fwrite( bottom, sizeof( char ), 3*width, stdout );
+    fread(bottom, sizeof(char), 3*width, infp);
+    fread(middle, sizeof(char), 3*width, infp);
+    fwrite(bottom, sizeof(char), 3*width, stdout);
 
     if (verbose) {
-	for ( x = 0; x < 11; x++ )
+	for (x = 0; x < 11; x++)
 	    fprintf(stderr, "kern[%d] = %d\n", x, kern[x]);
     }
 
     max = 0;
     min = 255;
 
-    for ( y = 1; y < height-1; y++ ) {
+    for (y = 1; y < height-1; y++) {
 	/* read in top line */
-	fread( top, sizeof( char ), 3*width, infp );
-	for ( color = 0; color < 3; color++ ) {
+	fread(top, sizeof(char), 3*width, infp);
+	for (color = 0; color < 3; color++) {
 	    obuf[0+color] = middle[0+color];
 	    /* Filter a line */
-	    for ( x = 3+color; x < 3*(width-1); x += 3 ) {
+	    for (x = 3+color; x < 3*(width-1); x += 3) {
 		r1 = top[x-3] * kern[0] + top[x] * kern[1] + top[x+3] * kern[2];
 		r2 = middle[x-3] * kern[3] + middle[x] * kern[4] + middle[x+3] * kern[5];
 		r3 = bottom[x-3] * kern[6] + bottom[x] * kern[7] + bottom[x+3] * kern[8];
 		value = (r1+r2+r3) / kerndiv + kernoffset;
-		if ( value > max ) max = value;
-		if ( value < min ) min = value;
-		if ( verbose && (value > 255 || value < 0) ) {
+		if (value > max) max = value;
+		if (value < min) min = value;
+		if (verbose && (value > 255 || value < 0)) {
 		    fprintf(stderr, "Value %d\n", value);
 		    fprintf(stderr, "r1=%d, r2=%d, r3=%d\n", r1, r2, r3);
 		}
-		if ( value < 0 )
+		if (value < 0)
 		    obuf[x] = 0;
-		else if ( value > 255 )
+		else if (value > 255)
 		    obuf[x] = 255;
 		else
 		    obuf[x] = value;
 	    }
 	    obuf[3*(width-1)+color] = middle[3*(width-1)+color];
 	}
-	fwrite( obuf, sizeof( char ), 3*width, stdout );
+	fwrite(obuf, sizeof(char), 3*width, stdout);
 	/* Adjust row pointers */
 	temp = bottom;
 	bottom = middle;
@@ -206,60 +208,63 @@ main(int argc, char **argv)
 	top = temp;
     }
     /* write out last line untouched */
-    fwrite( top, sizeof( char ), 3*width, stdout );
+    fwrite(top, sizeof(char), 3*width, stdout);
 
     /* Give advise on scaling factors */
-    if ( verbose )
-	fprintf( stderr, "Max = %d,  Min = %d\n", max, min );
+    if (verbose)
+	fprintf(stderr, "Max = %d,  Min = %d\n", max, min);
 
-    bu_exit ( 0, NULL );
+    bu_exit (0, NULL);
 }
 
+
 /*
- *	S E L E C T _ F I L T E R
+ * S E L E C T _ F I L T E R
  *
  * Looks at the command line string and selects a filter based
- *  on it.
+ * on it.
  */
 void
 select_filter(char *str)
 {
-    int	i;
+    int i;
 
     i = 0;
-    while ( kernel[i].name != NULL ) {
-	if ( strncmp( str, kernel[i].uname, strlen( kernel[i].uname ) ) == 0 )
+    while (kernel[i].name != NULL) {
+	if (strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
 	    break;
 	i++;
     }
 
-    if ( kernel[i].name == NULL ) {
+    if (kernel[i].name == NULL) {
 	/* No match, output list and exit */
-	fprintf( stderr, "Unrecognized filter type \"%s\"\n", str );
+	fprintf(stderr, "Unrecognized filter type \"%s\"\n", str);
 	dousage();
-	bu_exit ( 3, NULL );
+	bu_exit (3, NULL);
     }
 
     /* Have a match, set up that kernel */
     kern = &kernel[i].kern[0];
-    if ( dflag == 0 )
+    if (dflag == 0)
 	kerndiv = kernel[i].kerndiv;
-    if ( oflag == 0 )
+    if (oflag == 0)
 	kernoffset = kernel[i].kernoffset;
 }
+
 
 void
 dousage(void)
 {
-    int	i;
+    int i;
 
-    fputs( usage, stderr );
+    fputs(usage, stderr);
     i = 0;
-    while ( kernel[i].name != NULL ) {
-	fprintf( stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name );
+    while (kernel[i].name != NULL) {
+	fprintf(stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name);
 	i++;
     }
 }
+
 
 /*
  * Local Variables:

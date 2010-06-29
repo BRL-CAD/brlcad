@@ -19,17 +19,17 @@
  */
 /** @file pix-yuv.c
  *
- *  Convert a .pix file to a .YUV file, i.e. in CCIR-601 format.
- *  Only the active pixels are recorded in the file, as in
- *  the .YUV files used with an Abekas A60 D-1 video disk recorder.
+ * Convert a .pix file to a .YUV file, i.e. in CCIR-601 format.
+ * Only the active pixels are recorded in the file, as in
+ * the .YUV files used with an Abekas A60 D-1 video disk recorder.
  *
- *  Because .pix is first quadrant and .yuv is fourth quadrant,
- *  the entire image is processed in memory.
+ * Because .pix is first quadrant and .yuv is fourth quadrant,
+ * the entire image is processed in memory.
  *
- *  It is not clear that this tool is useful on image sizes other
- *  than the default of 720 x 485.
+ * It is not clear that this tool is useful on image sizes other
+ * than the default of 720 x 485.
  *
- *  The code was liberally borrowed from libfb/if_ab.c
+ * The code was liberally borrowed from libfb/if_ab.c
  *
  */
 
@@ -43,17 +43,17 @@
 #include "bn.h"
 
 
-static char	*file_name;
-static int	infd;
+static char *file_name;
+static int infd;
 
-static int	fileinput = 0;		/* file or pipe on input? */
-static int	autosize = 0;		/* !0 to autosize input */
+static int fileinput = 0;		/* file or pipe on input? */
+static int autosize = 0;		/* !0 to autosize input */
 
-static long int	file_width = 720L;	/* default input width */
-static long int	file_height = 485L;	/* default input height */
+static long int file_width = 720L;	/* default input width */
+static long int file_height = 485L;	/* default input height */
 
-void		ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
-void		ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
+void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len);
+void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
 static char usage[] = "\
 Usage: pix-yuv [-h] [-a]\n\
@@ -64,8 +64,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != EOF) {
+	switch (c) {
 	    case 'a':
 		autosize = 1;
 		break;
@@ -89,52 +89,53 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )
-	    return(0);
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
+	    return 0;
 	file_name = "-";
 	infd = fileno(stdin);
     } else {
 	file_name = argv[bu_optind];
-	if ( (infd = open(file_name, 0)) < 0 )  {
+	if ((infd = open(file_name, 0)) < 0) {
 	    perror(file_name);
-	    (void)fprintf( stderr,
-			   "pix-yuv: cannot open \"%s\" for reading\n",
-			   file_name );
-	    return(0);
+	    (void)fprintf(stderr,
+			  "pix-yuv: cannot open \"%s\" for reading\n",
+			  file_name);
+	    return 0;
 	}
 	fileinput++;
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "pix-yuv: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "pix-yuv: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
+
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
 {
-    unsigned char	*inbuf;
-    unsigned char	*outbuf;
-    long int	y;
+    unsigned char *inbuf;
+    unsigned char *outbuf;
+    long int y;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     /* autosize input? */
-    if ( fileinput && autosize ) {
-	unsigned long int	w, h;
-	if ( fb_common_file_size(&w, &h, file_name, 3) ) {
+    if (fileinput && autosize) {
+	unsigned long int w, h;
+	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = (long)w;
 	    file_height = (long)h;
 	} else {
@@ -143,23 +144,23 @@ main(int argc, char **argv)
     }
 
     /* Allocate full size buffers for input and output */
-    inbuf = bu_malloc( 3*file_width*file_height+8, "inbuf" );
-    outbuf = bu_malloc( 2*file_width*file_height+8, "outbuf" );
+    inbuf = bu_malloc(3*file_width*file_height+8, "inbuf");
+    outbuf = bu_malloc(2*file_width*file_height+8, "outbuf");
 
-    if ( bu_mread( infd, inbuf, 3*file_width*file_height ) < 3*file_width*file_height )  {
+    if (bu_mread(infd, inbuf, 3*file_width*file_height) < 3*file_width*file_height) {
 	perror("READ ERROR");
 	fprintf(stderr, "pix-yuv: short input file, aborting\n");
 	bu_exit (1, NULL);
     }
 
-    for ( y = 0; y < file_height; y++ )  {
+    for (y = 0; y < file_height; y++) {
 	ab_rgb_to_yuv(
 	    &outbuf[(file_height-1-y)*file_width*2],
 	    &inbuf[y*file_width*3],
-	    file_width );
+	    file_width);
     }
 
-    if ( write( 1, outbuf, 2*file_width*file_height ) < 2*file_width*file_height )  {
+    if (write(1, outbuf, 2*file_width*file_height) < 2*file_width*file_height) {
 	perror("stdout");
 	fprintf(stderr, "pix-yuv: output write error, aborting\n");
 	bu_exit (2, NULL);
@@ -172,55 +173,55 @@ main(int argc, char **argv)
 
 /*************************************************************************
  *************************************************************************
- *  Herein lies the conversion between YUV and RGB
+ * Herein lies the conversion between YUV and RGB
  *************************************************************************
  *************************************************************************
  */
-/*  A 4:2:2 framestore uses 2 bytes per pixel.  The even pixels (from 0)
- *  hold Cb and Y, the odd pixels Cr and Y.  Thus a scan line has:
- *      Cb Y Cr Y Cb Y Cr Y ...
- *  If we are at an even pixel, we use the Cr value following it.  If
- *  we are at an odd pixel, we use the Cb value following it.
+/* A 4:2:2 framestore uses 2 bytes per pixel.  The even pixels (from 0)
+ * hold Cb and Y, the odd pixels Cr and Y.  Thus a scan line has:
+ * Cb Y Cr Y Cb Y Cr Y ...
+ * If we are at an even pixel, we use the Cr value following it.  If
+ * we are at an odd pixel, we use the Cb value following it.
  *
- *  Y:       0 .. 219 range, offset by 16   [16 .. 235]
- *  U, V: -112 .. +112 range, offset by 128 [16 .. 240]
+ * Y:       0 .. 219 range, offset by 16   [16 .. 235]
+ * U, V: -112 .. +112 range, offset by 128 [16 .. 240]
  */
 
-#define	V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
-#define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
-#define	CLIP(out, in)		{ int t; \
-		if ( (t = (in)) < 0 )  (out) = 0; \
-		else if ( t >= 255 )  (out) = 255; \
+#define V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
+#define floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
+#define CLIP(out, in) { int t; \
+		if ((t = (in)) < 0)  (out) = 0; \
+		else if (t >= 255)  (out) = 255; \
 		else (out) = t; }
 
-#define	LINE_LENGTH	720
-#define	FRAME_LENGTH	486
+#define LINE_LENGTH 720
+#define FRAME_LENGTH 486
 
-static double	y_weights[] = {  0.299,   0.587,   0.114 };
-static double	u_weights[] = { -0.1686, -0.3311,  0.4997 };
-static double	v_weights[] = {  0.4998, -0.4185, -0.0813 };
+static double y_weights[] = {  0.299,   0.587,   0.114 };
+static double u_weights[] = { -0.1686, -0.3311,  0.4997 };
+static double v_weights[] = {  0.4998, -0.4185, -0.0813 };
 
-static double	y_filter[] = { -0.05674, 0.01883, 1.07582, 0.01883, -0.05674 };
-static double	u_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
-static double	v_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
+static double y_filter[] = { -0.05674, 0.01883, 1.07582, 0.01883, -0.05674 };
+static double u_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
+static double v_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
 
 /* XXX should be dynamically allocated.  Make 4X default size */
-static double	ybuf[724*4];
-static double	ubuf[724*4];
-static double	vbuf[724*4];
+static double ybuf[724*4];
+static double ubuf[724*4];
+static double vbuf[724*4];
 
 /* RGB to YUV */
 void
 ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 {
     unsigned char *cp;
-    double	*yp, *up, *vp;
-    long int	i;
-    static int	first=1;
+    double *yp, *up, *vp;
+    long int i;
+    static int first=1;
 
-    if (first)  {
+    if (first) {
 	/* SETUP */
-	for ( i = 0; i < 5; i++ ) {
+	for (i = 0; i < 5; i++) {
 	    y_filter[i] *= 219.0/255.0;
 	    u_filter[i] *= 224.0/255.0;
 	    v_filter[i] *= 224.0/255.0;
@@ -233,10 +234,10 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
     up = &ubuf[2];
     vp = &vbuf[2];
     cp = rgb_buf;
-    for ( i = len; i; i-- ) {
-	*yp++ = VDOT( y_weights, cp );
-	*up++ = VDOT( u_weights, cp );
-	*vp++ = VDOT( v_weights, cp );
+    for (i = len; i; i--) {
+	*yp++ = VDOT(y_weights, cp);
+	*up++ = VDOT(u_weights, cp);
+	*vp++ = VDOT(v_weights, cp);
 	cp += 3;
     }
 
@@ -245,7 +246,7 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
     up = ubuf;
     vp = vbuf;
     cp = yuv_buf;
-    for ( i = len/2; i; i-- ) {
+    for (i = len/2; i; i--) {
 	*cp++ = V5DOT(u_filter, up) + 128.0;	/* u */
 	*cp++ = V5DOT(y_filter, yp) + 16.0;	/* y */
 	*cp++ = V5DOT(v_filter, vp) + 128.0;	/* v */
@@ -257,44 +258,45 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
     }
 }
 
+
 /* YUV to RGB */
 void
 ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len)
 {
     unsigned char *rgbp;
     unsigned char *yuvp;
-    double	y;
-    double	u = 0.0;
-    double	v;
-    long int	pixel;
-    int		last;
+    double y;
+    double u = 0.0;
+    double v;
+    long int pixel;
+    int last;
 
-    /* Input stream looks like:  uy  vy  uy  vy  */
+    /* Input stream looks like:  uy vy uy vy */
 
     rgbp = rgb_buf;
     yuvp = yuv_buf;
     last = len/2;
-    for ( pixel = last; pixel; pixel-- ) {
+    for (pixel = last; pixel; pixel--) {
 	/* even pixel, get y and next v */
-	if ( pixel == last ) {
+	if (pixel == last) {
 	    u = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 	}
 	y = ((double)(((int)*yuvp++) - 16)) * (255.0/219.0);
 	v = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 
-	CLIP( *rgbp++, y + 1.4026 * v);			/* R */
-	CLIP( *rgbp++, y - 0.3444 * u - 0.7144 * v);	/* G */
-	CLIP( *rgbp++, y + 1.7730 * u);			/* B */
+	CLIP(*rgbp++, y + 1.4026 * v);			/* R */
+	CLIP(*rgbp++, y - 0.3444 * u - 0.7144 * v);	/* G */
+	CLIP(*rgbp++, y + 1.7730 * u);			/* B */
 
 	/* odd pixel, got v already, get y and next u */
 	y = ((double)(((int)*yuvp++) - 16)) * (255.0/219.0);
-	if ( pixel != 1 ) {
+	if (pixel != 1) {
 	    u = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 	}
 
-	CLIP( *rgbp++, y + 1.4026 * v);			/* R */
-	CLIP( *rgbp++, y - 0.3444 * u - 0.7144 * v);	/* G */
-	CLIP( *rgbp++, y + 1.7730 * u);			/* B */
+	CLIP(*rgbp++, y + 1.4026 * v);			/* R */
+	CLIP(*rgbp++, y - 0.3444 * u - 0.7144 * v);	/* G */
+	CLIP(*rgbp++, y + 1.7730 * u);			/* B */
     }
 }
 

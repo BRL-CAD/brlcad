@@ -56,8 +56,6 @@
 # Example:
 #          ./linkroot.sh /usr/brlcad /usr/brlcad/rel-7.10.0
 #
-# Author: Christopher Sean Morrison
-#
 ######################################################################
 
 THIS="$0"

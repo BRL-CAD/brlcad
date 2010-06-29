@@ -116,7 +116,7 @@ create_chan(char *num, int len, char *itag)
     int n;
 
     n = atoi(num);
-    if (n < 0)  return(-1);
+    if (n < 0)  return -1;
 
     if (n >= max_chans) {
 	int prev = max_chans;
@@ -151,7 +151,7 @@ create_chan(char *num, int len, char *itag)
     chan[n].c_ilen = len;
     chan[n].c_itag = bu_strdup(itag);
     chan[n].c_ival = (fastf_t *)bu_malloc(len * sizeof(fastf_t), "c_ival");
-    return(n);
+    return n;
 }
 
 
@@ -178,7 +178,7 @@ cm_file(int argc, char **argv)
     file = argv[1];
     if ((fp = fopen(file, "r")) == NULL) {
 	perror(file);
-	return(0);
+	return 0;
     }
 
     /* First step, count number of lines in file */
@@ -280,8 +280,8 @@ cm_file(int argc, char **argv)
     bu_vls_free(&buf);
 
     if (errors)
-	return(-1);	/* abort */
-    return(0);
+	return -1;	/* abort */
+    return 0;
 }
 
 
@@ -330,7 +330,7 @@ cm_idump(int argc, char **argv)
 	    pr_ichan(atoi(argv[i]));
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -383,11 +383,11 @@ cm_times(int argc, char **argv)
 
     if (a >= b) {
 	bu_log("times:  %g >= %g\n", a, b);
-	return(0);
+	return 0;
     }
     if (o_len > 0) {
 	bu_log("times:  already specified\n");
-	return(0);	/* ignore */
+	return 0;	/* ignore */
     }
     o_len = ((b-a) * fps) + 0.999;
     o_len++;	/* one final step to reach endpoint */
@@ -400,7 +400,7 @@ cm_times(int argc, char **argv)
 	o_time[i] = a + ((double)i)/fps;
 
 
-    return(0);
+    return 0;
 }
 
 
@@ -459,7 +459,7 @@ cm_interp(int argc, char **argv)
 	    }
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -926,11 +926,11 @@ spline(struct chan *chp, fastf_t *times)
     }
     bu_free((char *)diag, "diag");
     bu_free((char *)rrr, "rrr");
-    return(1);
+    return 1;
  bad:
     if (diag) bu_free((char *)diag, "diag");
     if (rrr) bu_free((char *)rrr, "rrr");
-    return(0);
+    return 0;
 }
 
 
@@ -1064,7 +1064,7 @@ cm_rate(int argc, char **argv)
     chp->c_itime[0] = chp->c_itime[1] = 0;
     chp->c_ival[0] = atof(argv[2]);
     chp->c_ival[1] = atof(argv[3]);
-    return(0);
+    return 0;
 }
 
 
@@ -1090,7 +1090,7 @@ cm_accel(int argc, char **argv)
     chp->c_itime[0] = chp->c_itime[1] = 0;
     chp->c_ival[0] = atof(argv[2]);
     chp->c_ival[1] = atof(argv[3]);
-    return(0);
+    return 0;
 }
 
 
@@ -1142,10 +1142,10 @@ get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 HIDDEN int cm_help(int argc, char **argv);

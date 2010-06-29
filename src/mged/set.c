@@ -37,7 +37,7 @@
 
 extern void predictor_hook(void);
 
-extern void set_port(void);
+extern void fbserv_set_port(void);
 
 extern void set_perspective(void);
 
@@ -110,8 +110,8 @@ struct bu_structparse mged_vparse[] = {
     {"%d",  1, "context",		MV_O(mv_context),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "dlist",		MV_O(mv_dlist),		set_dlist },
     {"%d",  1, "use_air",		MV_O(mv_use_air),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "listen",		MV_O(mv_listen),		set_port },
-    {"%d",  1, "port",		MV_O(mv_port),		set_port },
+    {"%d",  1, "listen",		MV_O(mv_listen),		fbserv_set_port },
+    {"%d",  1, "port",		MV_O(mv_port),		fbserv_set_port },
     {"%d",  1, "fb",		MV_O(mv_fb),		set_dirty_flag },
     {"%d",  1, "fb_all",		MV_O(mv_fb_all),		set_dirty_flag },
     {"%d",  1, "fb_overlay",	MV_O(mv_fb_overlay),	set_dirty_flag },

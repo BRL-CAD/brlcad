@@ -61,7 +61,7 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 
     if ( srf == (struct face_g_snurb *)0 )  {
 	bu_log("nurb_s_bound:  NULL surface\n");
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
 
     p_ptr = srf->ctl_points;
@@ -84,7 +84,7 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 	}
 	p_ptr += coords;
     }
-    return(0);	/* OK */
+    return 0;	/* OK */
 }
 
 
@@ -102,7 +102,7 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
 
     if ( crv == (struct edge_g_cnurb *)0 )  {
 	bu_log("nurb_c_bound:  NULL surface\n");
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
 
     p_ptr = crv->ctl_points;
@@ -124,7 +124,7 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
 	}
 	p_ptr += coords;
     }
-    return(0);	/* OK */
+    return 0;	/* OK */
 }
 
 
@@ -148,10 +148,10 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
 	/* Sanity checking */
 	if ( !NEAR_ZERO( *mp, INFINITY ) )  {
 	    bu_log("nurb_s_check:  bad mesh found\n");
-	    return(-1);	/* BAD */
+	    return -1;	/* BAD */
 	}
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -174,10 +174,10 @@ rt_nurb_c_check(register struct edge_g_cnurb *crv)
 	/* Sanity checking */
 	if ( !NEAR_ZERO( *mp, INFINITY ) )  {
 	    bu_log("nurb_c_check:  bad mesh found\n");
-	    return(-1);	/* BAD */
+	    return -1;	/* BAD */
 	}
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

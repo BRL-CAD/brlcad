@@ -121,7 +121,7 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
     if (fabs(big_x*big_z) < VDIVIDE_TOL) {
 	/* this should be impossible*/
 	/* unable to calculate pitch*/
-	return(ERROR2);
+	return ERROR2;
     } else if (id_x && (!id_z))
 	angle[1]=atan2((viewrot[4] - cos_x*sin_z)/(sin_x*cos_z), -viewrot[6]/sin_x);
     else if ((!id_x) && (!id_z))
@@ -141,7 +141,7 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	previous[i] = angle[i];
     }
 
-    return(return_value);
+    return return_value;
 }
 
 
@@ -181,7 +181,7 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
     if (fabs(big_y*big_r) < VDIVIDE_TOL) {
 	/* this should not happen */
 	/* unable to calculate pitch*/
-	return(ERROR2);
+	return ERROR2;
     } else if ((!id_y) && id_r)
 	angle[1] = atan2(-(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r), viewrot[9]/sin_r);
     else if (id_y && (!id_r))
@@ -200,7 +200,7 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
 	prev_angle[i] = angle[i];
     }
 
-    return(return_value);
+    return return_value;
 }
 
 
@@ -253,7 +253,7 @@ anim_mat2quat(quat_t quat, const mat_t viewrot)
 	prev_quat[i] = quat[i];
     }
 
-    return(1);
+    return 1;
 }
 
 
@@ -736,7 +736,7 @@ anim_steer_mat(mat_t mat, vect_t point, int end)
     anim_dirn2mat(mat, dir, norm); /* create basic rotation matrix */
     VSET(norm, mat[1], mat[5], 0.0); /* save for next time */
     VMOVE(point, p2); /* for main's purposes, the current point is p2 */
-    return(1); /* return signal go ahead and print */
+    return 1; /* return signal go ahead and print */
 
 }
 

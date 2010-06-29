@@ -557,6 +557,7 @@ proc do_fbclear { id } {
     global mged_gui
     global rt_control
     global ::tk::Priv
+    global tcl_platform
 
     if {$rt_control($id,cooked_dest) == ""} {
 	return
@@ -578,7 +579,11 @@ proc do_fbclear { id } {
 	set blue 0
     }
 
-    set fbclear [bu_brlcad_root "bin/fbclear"]
+    if {$tcl_platform(platform) == "windows"} {
+	set fbclear [bu_brlcad_root "bin/fbclear.exe"]
+    } else {
+	set fbclear [bu_brlcad_root "bin/fbclear"]
+    }
     set result [catch { exec $fbclear -F $rt_control($id,cooked_dest)\
 			    $red $green $blue & } rt_error]
 

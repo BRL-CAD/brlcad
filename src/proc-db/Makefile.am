@@ -108,13 +108,13 @@ noinst_HEADERS = \
 	brepintersect.h \
 	mkbuilding.h \
 	surfaceintersect.h \
-	ducks.h \
-	patches.h \
 	tea.h \
 	vegitation.h
 
 EXTRA_DIST = \
-	sgi.sh
+	metaballs.pl \
+	sgi.sh \
+	spiral.pl
 
 DEPENDS = src/libwdb
 

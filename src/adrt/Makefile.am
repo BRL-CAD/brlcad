@@ -86,36 +86,47 @@ tieinclude_HEADERS = \
 	adrt.h  \
 	adrt_struct.h \
 	librender/camera.h \
-	librender/component.h \
-	librender/cut.h \
-	librender/depth.h \
-	librender/flat.h \
-	librender/flos.h \
-	librender/grid.h \
-	librender/hit.h \
-	librender/normal.h \
-	librender/path.h \
-	librender/phong.h \
 	librender/render.h \
 	librender/render_internal.h \
 	librender/render_util.h \
-	librender/spall.h \
-	librender/surfel.h \
 	librender/texture.h \
 	librender/texture_internal.h \
-	libtie/tie.h \
-	libtie/tie_define.h \
-	libtie/tie_kdtree.h \
-	libtie/tie_struct.h
+	libtie/tie.h
 
 noinst_HEADERS = \
 	load.h \
+	tienet.h \
 	master/compnet.h \
 	master/dispatcher.h \
 	master/tienet_master.h \
 	master/master.h \
 	slave/slave.h \
 	slave/tienet_slave.h
+
+pkglibdir = $(libdir)/isst
+
+if BUILD_TOGL
+pkglib_LTLIBRARIES = issttcltk.la
+
+issttcltk_la_SOURCES = isst_tcltk.c
+
+issttcltk_la_DEPENDENCIES = libtie.la librender.la
+
+issttcltk_la_LIBADD = ${TIE} ${RENDER} ${TCL} ${TK} -L$(top_builddir)/src/other/togl -lToglstub2.1
+issttcltk_la_CFLAGS = -I$(top_srcdir)/src/adrt/libtie -I$(top_srcdir)/src/adrt/librender  -DTIE_PRECISION=0 ${TCL_CPPFLAGS} ${TK_CPPFLAGS} -I$(top_srcdir)/src/other/togl -I$(top_builddir)/src/other/togl ${GL_CPPFLAGS}
+issttcltk_la_LDFLAGS = -module -shrext .plugin
+
+pkgIndex.tcl:
+	@echo 'package ifneeded isst 0.1 [list load [file join $(pkglibdir) issttcltk.plugin] isst]' > pkgIndex.tcl
+
+issttcltkscriptdir = $(pkglibdir)
+
+issttcltkscript_SCRIPTS = pkgIndex.tcl
+endif
+
+EXTRA_DIST = \
+	isst.tcl \
+	isst.h
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:

@@ -48,7 +48,7 @@ to invoke whenever the menu is torn off.  The actual command will
 consist of the value of this option, followed by a space, followed
 by the name of the menu window, followed by a space, followed by
 the name of the name of the torn off menu window.  For example, if
-the option's is
+the option's value is
 .QW "\fBa b\fR"
 and menu \fB.x.y\fR is torn off to
 create a new menu \fB.x.tearoff1\fR, then the command

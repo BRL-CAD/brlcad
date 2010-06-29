@@ -19,10 +19,10 @@
  */
 /** @file xyz-pl.c
  *
- *  Program to take input with up to 3 white-space separated columns,
- *  expressed as
- *	x y z
- *  and produce a 3-D UNIX-plot file of the resulting space curve.
+ * Program to take input with up to 3 white-space separated columns,
+ * expressed as
+ * x y z
+ * and produce a 3-D UNIX-plot file of the resulting space curve.
  *
  */
 
@@ -41,16 +41,16 @@ main(int argc, char *argv[])
     double xyz[3] = {0.0, 0.0, 0.0};
     char buf[2048] = {0};
 
-    int	i;
+    int i;
     int debug = 0;
-    int	first = 1;
+    int first = 1;
 
     for (;;) {
 	xyz[0] = xyz[1] = xyz[2] = 0.0;
 
 	buf[0] = '\0';
 	bu_fgets(buf, sizeof(buf), stdin);
-	if (feof(stdin))  break;
+	if (feof(stdin)) break;
 	i = sscanf(buf, "%lf %lf %lf",
 		   &xyz[0], &xyz[1], &xyz[2]);
 	if (debug) {
@@ -70,6 +70,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

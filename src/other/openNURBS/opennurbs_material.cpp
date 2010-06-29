@@ -42,8 +42,10 @@ void ON_Material::Default()
   m_diffuse.SetRGB( 128, 128, 128 );
   m_emission.SetRGB( 0, 0, 0 );
   m_specular.SetRGB( 255, 255, 255 );
-  m_reflection = m_specular;
-  m_transparent = m_diffuse;
+  //m_reflection = m_specular;
+  //m_transparent = m_diffuse;
+  m_reflection.SetRGB( 255, 255, 255 );
+  m_transparent.SetRGB( 255, 255, 255 );
 
   m_index_of_refraction = 1.0;
   m_reflectivity = 0.0;
@@ -340,6 +342,20 @@ ON_BOOL32 ON_Material::Read( ON_BinaryArchive& file )
           if ( rc ) rc = file.ReadColor( m_specular );
           if ( rc ) rc = file.ReadColor( m_reflection );
           if ( rc ) rc = file.ReadColor( m_transparent );
+
+          if ( rc 
+               && file.ArchiveOpenNURBSVersion() < 200912010 
+               && 128 == m_transparent.Red() 
+               && 128 == m_transparent.Green()
+               && 128 == m_transparent.Blue()
+               )
+          {
+            // Prior to 1 Dec 2009 the ON_Material::Defaults() set
+            // m_transparent to 128,128,128.  This was the wrong
+            // value for the default.  This "hack" is here to 
+            // make it appear that the default was always white.
+            m_transparent = m_diffuse;
+          }
 
           if ( rc ) rc = file.ReadDouble( &m_index_of_refraction );
           if ( rc ) rc = file.ReadDouble( &m_reflectivity );
@@ -807,25 +823,24 @@ int ON_Material::Compare( const ON_Material& other ) const
   return rc;  
 }
 
-
 ON_Color ON_Material::Ambient() const
 {
-  return m_ambient;
+  return m_ambient & 0x00FFFFFF;
 }
 
 ON_Color ON_Material::Diffuse( ) const
 {
-  return m_diffuse;
+  return m_diffuse & 0x00FFFFFF;
 }
 
 ON_Color ON_Material::Emission( ) const
 {
-  return m_emission;
+  return m_emission & 0x00FFFFFF;
 }
 
 ON_Color ON_Material::Specular() const
 {
-  return m_specular;
+  return m_specular & 0x00FFFFFF;
 }
 
 void ON_Material::SetAmbient( ON_Color  c )
@@ -2157,101 +2172,28 @@ int ON_TextureMapping::EvaluateBoxMapping(
   return side0;
 }
 
-class CBrepFaceMappingData
+int ON_TextureMapping::EvaluateMeshMapping(const ON_3dPoint& P, const ON_3dVector& N, const ON_Mesh* mesh, ON_3dPoint* T) const
 {
-public:
-	void Set(const ON_Mesh& mesh)
-	{
-		m_srf_domain[0] = mesh.m_srf_domain[0];
-		m_srf_domain[1] = mesh.m_srf_domain[1];
-		m_packed_tex_domain[0] = mesh.m_packed_tex_domain[0];
-		m_packed_tex_domain[1] = mesh.m_packed_tex_domain[1];
-		m_packed_tex_rotate = mesh.m_packed_tex_rotate;
-	}
-	ON_Interval m_srf_domain[2];
-	ON_Interval m_packed_tex_domain[2];
-	bool m_packed_tex_rotate;
-};
+  return 0;
+}
 
-class CBrepMappingData
+int ON_TextureMapping::EvaluateSurfaceMapping( 
+  const ON_3dPoint& P,
+  const ON_3dVector& N,
+  const ON_Surface* srf,
+  ON_3dPoint* T
+  ) const
 {
-public:
-	CBrepMappingData(ON__UINT32 brepDataCRC = 0, ON_UUID brepModelObjectId = ON_nil_uuid) { m_brepDataCRC = brepDataCRC; m_brepModelObjectId = brepModelObjectId; }
+  return 0;
+}
 
-	static int Compare(const CBrepMappingData * pA, const CBrepMappingData * pB)
-	{
-		if (pA->m_brepDataCRC < pB->m_brepDataCRC)
-		{
-			return -1;
-		}
-		if (pA->m_brepDataCRC > pB->m_brepDataCRC)
-		{
-			return 1;
-		}
-		return ON_UuidCompare(pA->m_brepModelObjectId, pB->m_brepModelObjectId);
-	}
-
-	ON_SimpleArray<CBrepFaceMappingData> m_faceData;
-	ON__UINT32 m_brepDataCRC;
-	ON_UUID m_brepModelObjectId;
-};
-
-class CBrepMappingDataCache
+void ON_TextureMapping::SetAdvancedBrepMappingToolFunctions(TEXMAP_INTERSECT_LINE_SURFACE pFnILS, TEXMAP_BREP_FACE_CLOSEST_POINT pFnBFCP)
 {
-public:
-	CBrepMappingDataCache() {}
-	~CBrepMappingDataCache() {}
+}
 
-	bool GetBrepFaceMappingData(const ON_Brep * pBrep, int face, CBrepFaceMappingData & brepFaceMappingDataOut);
-protected:
-
-	ON_ClassArray<CBrepMappingData> m_aDataBlocks[0x20];
-};
-
-bool CBrepMappingDataCache::GetBrepFaceMappingData(const ON_Brep * pBrep, int face, CBrepFaceMappingData & brepFaceMappingDataOut)
+int ON_TextureMapping::EvaluateBrepMapping( const ON_3dPoint& P, const ON_3dVector& N, const ON_Brep* brep,	ON_3dPoint* T) const
 {
-	if (NULL == pBrep || face < 0)
-		return false;
-
-	const ON_UUID brepModelObjectId = pBrep->ModelObjectId();
-	const ON__UINT32 brepDataCRC = pBrep->DataCRC(123456789);
-	const unsigned int blockIndex = (brepDataCRC & 0x1F);
-	CBrepMappingData brepMappingData(brepDataCRC, brepModelObjectId);
-	const int brepMappingDataIndex = m_aDataBlocks[blockIndex].BinarySearch(&brepMappingData, CBrepMappingData::Compare);
-
-	if (0 <= brepMappingDataIndex)
-	{
-		const CBrepMappingData & brepMappingData = m_aDataBlocks[blockIndex][brepMappingDataIndex];
-		if (brepMappingData.m_faceData.Count() <= face)
-			return false;
-
-		brepFaceMappingDataOut = brepMappingData.m_faceData[face];
-
-		return true;
-	}
-
-	ON_SimpleArray<ON_Mesh*> brepMeshList;
-	ON_MeshParameters meshParams;
-	meshParams.JaggedAndFasterMeshParameters();
-	const int iResult = pBrep->CreateMesh(meshParams, brepMeshList);
-
-	for (int i = 0; i < brepMeshList.Count(); i++)
-	{
-		CBrepFaceMappingData brepFaceMappingData;
-		if (NULL != brepMeshList[i])
-		{
-			brepFaceMappingData.Set(*(brepMeshList[i]));
-			delete brepMeshList[i];
-		}
-		brepMappingData.m_faceData.Append(brepFaceMappingData);
-
-		if (i == face)
-			brepFaceMappingDataOut = brepFaceMappingData;
-	}
-
-	m_aDataBlocks[blockIndex].Append(brepMappingData);
-
-	return (iResult > face);
+	return 0;
 }
 
 int ON_TextureMapping::Evaluate(
@@ -2302,13 +2244,13 @@ int ON_TextureMapping::Evaluate(
 		rc = EvaluateBoxMapping(P,N,T);
 		break;
 	case mesh_mapping_primitive:
-		rc = 0;
+		rc = EvaluateMeshMapping(P,N,ON_Mesh::Cast(m_mapping_primitive),T);
 		break;
 	case srf_mapping_primitive:
-		rc = 0;
+		rc = EvaluateSurfaceMapping(P,N,ON_Surface::Cast(m_mapping_primitive),T);
 		break;
 	case brep_mapping_primitive:
-		rc = 0;
+		rc = EvaluateBrepMapping(P,N,ON_Brep::Cast(m_mapping_primitive),T);
 		break;
 	default:
 		rc = EvaluatePlaneMapping(P,N,T);
@@ -2887,6 +2829,17 @@ public:
 
   bool m_bHasCachedTextures;  
   ON_SimpleArray< ON_TextureCoordinates* > m_TC;
+
+  // m_vuse[] is an array of length = original number of 
+  // vertices in m_mesh and m_vuse[vi] = number of faces 
+  // that reference vertex vi. If this vertex needs to be
+  // split, vuse[vi] is decremented.  The ultimate goal
+  // is to split a few times as needed so we don't
+  // bloat the mesh with repeated calls to changing
+  // texture maps. m_vuse[] is set the first time
+  // DupVertex() is called.
+  int m_vuse_count;
+  ON_SimpleArray< unsigned int > m_vuse;
 private:
   // no implementation
   ON__CChangeTextureCoordinateHelper(const ON__CChangeTextureCoordinateHelper&);
@@ -2920,8 +2873,11 @@ void ON__CChangeTextureCoordinateHelper::ChangeTextureCoordinate(int* Fvi, int f
 
 
 ON__CChangeTextureCoordinateHelper::ON__CChangeTextureCoordinateHelper( 
-                          ON_Mesh& mesh, int newvcnt, float*& mesh_T ) 
-                               : m_mesh(mesh)
+    ON_Mesh& mesh,
+    int newvcnt,
+    float*& mesh_T ) 
+: m_mesh(mesh)
+, m_vuse_count(0)
 {
   // adding vertices invalidates this cached information.
   m_mesh.DestroyTopology();
@@ -2991,6 +2947,48 @@ ON__CChangeTextureCoordinateHelper::ON__CChangeTextureCoordinateHelper(
 
 int ON__CChangeTextureCoordinateHelper::DupVertex(int vi)
 {
+  if ( 0 == m_vuse_count )
+  {
+    // m_vuse[] is an array of length = original number of 
+    // vertices in m_mesh and m_vuse[vi] = number of faces 
+    // that reference vertex vi. If this vertex needs to be
+    // split, vuse[vi] is decremented.  The ultimate goal
+    // is to split a few times as needed so we don't
+    // bloat the mesh with repeated calls to changing
+    // texture maps. m_vuse[] is set the first time
+    // DupVertex() is called.
+    m_vuse_count = m_mesh.m_V.Count();
+    m_vuse.Reserve(m_vuse_count);
+    m_vuse.SetCount(m_vuse_count);
+    m_vuse.Zero();
+    for ( int fi = 0; fi < m_mesh.m_F.Count(); fi++ )
+    {
+      const int* Fvi = m_mesh.m_F[fi].vi;
+      int i = Fvi[0];
+      if ( i >= 0 && i < m_vuse_count )
+        m_vuse[i]++;
+      i = Fvi[1];
+      if ( i >= 0 && i < m_vuse_count )
+        m_vuse[i]++;
+      i = Fvi[2];
+      if ( i >= 0 && i < m_vuse_count )
+        m_vuse[i]++;
+      i = Fvi[3];
+      if ( Fvi[2] != i && i >= 0 && i < m_vuse_count )
+        m_vuse[i]++;
+    }
+  }
+
+  if ( vi >= 0 && vi < m_vuse_count )
+  {
+    if ( m_vuse[vi] <= 1 )
+      return vi; // only one face uses this vertex - no need to dup the vertex
+
+    // otherwise we will duplicate this vertex, reducing its use count by 1.
+    m_vuse[vi]--;
+  }
+
+
   m_mesh.m_V.AppendNew();
   *m_mesh.m_V.Last() = m_mesh.m_V[vi];
   if ( m_bHasVertexTextures )

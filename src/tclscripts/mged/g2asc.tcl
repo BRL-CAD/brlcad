@@ -29,6 +29,7 @@
 proc init_g2asc { id } {
     global mged_gui
     global ::tk::Priv
+    global tcl_platform
 
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
@@ -60,7 +61,11 @@ to put the acsii converted database."}} OK Cancel]
 		}
 	    }
 
-	    set g2asc [bu_brlcad_root "bin/g2asc"]
+	    if {$tcl_platform(platform) == "windows"} {
+		set g2asc [bu_brlcad_root "bin/g2asc.exe"]
+	    } else {
+		set g2asc [bu_brlcad_root "bin/g2asc"]
+	    }
 	    catch {exec $g2asc $db_name $ascii_filename} msg
 	}
     } else {

@@ -25,6 +25,8 @@
  *
  */
 
+#include "common.h"
+
 #ifdef HAVE_UNISTD_H
 #   include <unistd.h>
 #endif
@@ -35,24 +37,34 @@ int
 ged_edmater(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    int i;
+    int i, c;
     int status;
     const char **av;
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
-    const char *editstring;
+    const char *editstring = NULL;
     
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    bu_optind = 1;
     /* First, grab the editstring off of the argv list */
-    editstring = argv[0];
-    argc--;
-    argv++;
-		
-    
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != EOF) {
+	switch (c) {
+	    case 'E' :
+	    	editstring = bu_optarg;
+		break;
+	    default :
+		break;
+	}
+    }
+
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
+
+
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -69,12 +81,12 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
     av[0] = "wmater";
     av[1] = tmpfil;
-    for(i = 2; i < argc + 1; ++i)
+    for (i = 2; i < argc + 1; ++i)
 	av[i] = argv[i-1];
 
     av[i] = NULL;
 
-    if (ged_wmater(gedp, argc + 1, av) == TCL_ERROR) {
+    if (ged_wmater(gedp, argc, av) == TCL_ERROR) {
 	(void)unlink(tmpfil);
 	bu_free((genptr_t)av, "f_edmater: av");
 	return TCL_ERROR;

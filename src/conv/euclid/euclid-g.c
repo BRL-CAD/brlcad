@@ -602,7 +602,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     {
 	nmg_km( m );
 	m = (struct model *)NULL;
-	return( cur_id );
+	return cur_id;
     }
 
     /* kill cracks */
@@ -618,7 +618,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if ( !m )
-	return( cur_id );
+	return cur_id;
 
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 	bu_prmem( "Before assoc face geom:\n" );
@@ -664,14 +664,14 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if ( !m )
-	return( cur_id );
+	return cur_id;
 
     /* kill zero length edgeuses */
     if ( nmg_kill_zero_length_edgeuses( m ) )
     {
 	nmg_km( m );
 	m = (struct model *)NULL;
-	return( cur_id );
+	return cur_id;
     }
 #endif
 
@@ -713,7 +713,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if ( !m )
-	return( cur_id );
+	return cur_id;
 
     if ( debug )
 	bu_log( "nmg_s_split_touchingloops( %x )\n", s );
@@ -732,7 +732,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if ( !m )
-	return( cur_id );
+	return cur_id;
 
     /* verify face plane calculations */
     if ( debug )
@@ -1034,7 +1034,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 
     nmg_km(m);				/* Safe to kill model now. */
 
-    return(cur_id);
+    return cur_id;
 }
 
 
@@ -1112,7 +1112,7 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
 		*ni -= increment;
 	    }
 
-    return(facet_type);
+    return facet_type;
 }
 
 /*
@@ -1139,9 +1139,9 @@ find_vert(struct vlist *vert, int nv, fastf_t x, fastf_t y, fastf_t z)
 	}
     }
     if (!found)
-	return( -1 );
+	return -1;
     else
-	return( i );
+	return i;
 }
 
 /*
@@ -1163,7 +1163,7 @@ store_vert(struct vlist *vert, int *nv, fastf_t x, fastf_t y, fastf_t z)
 	bu_exit(1, "read_euclid_face: no more vertex room\n");
     }
 
-    return(*nv - 1);
+    return *nv - 1;
 }
 
 /*

@@ -52,8 +52,7 @@ _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void
     tree = root->rbn_tree;
     RB_CKORDER(tree, order_nm);
 
-    while (1)
-    {
+    while (1) {
 	if (root == rb_null(root->rbn_tree))
 	    break;
 	if ((result = (*order)(data, rb_data(root, order_nm))) == 0)
@@ -65,7 +64,7 @@ _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void
 	BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     }
     rb_current(tree) = root;
-    return (root);
+    return root;
 }
 
 
@@ -81,10 +80,11 @@ void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
     compare = rb_order_func(tree, order);
     node = _rb_search(rb_root(tree, order), order, compare, data);
     if (node == rb_null(tree))
-	return (NULL);
+	return NULL;
     else
-	return (rb_data(node, order));
+	return rb_data(node, order);
 }
+
 
 /** @} */
 
