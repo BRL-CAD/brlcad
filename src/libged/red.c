@@ -416,6 +416,10 @@ for (i=0; i<node_count; i++) {
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
     }
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_COMBINATION;
+    intern.idb_meth = &rt_functab[ID_COMBINATION];
+    intern.idb_ptr = (genptr_t)comb;
     comb->tree = tp;
    
     printf("update attempt: %d\n", rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource));
@@ -1090,10 +1094,6 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    if (check_comb(gedp, tmp_comb, tmp_dp) < 0) {
 		/* Do some quick checking on the edited file */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
-		if (comb)
-		    intern.idb_meth->ft_ifree(&intern);
-		(void)unlink(_ged_tmpfil);
-		return GED_ERROR;
 	    }
 #if 0
 	    if (tmp_comb) {
