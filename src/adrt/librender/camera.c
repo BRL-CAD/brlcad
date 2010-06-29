@@ -680,6 +680,7 @@ render_shader_load_plugin(const char *filename) {
 int
 render_shader_unload_plugin(render_t *r, const char *name)
 {
+#ifdef HAVE_DLFCN_H
     struct render_shader_s *t, *s = shaders, *meh;
     if(!strncmp(s->name, name, 8)) {
 	t = s->next;
@@ -715,6 +716,9 @@ LOADED:
     }
 
     bu_log("Could not find shader \"%s\"\n", name);
+#else
+	bu_log("No plugin support.\n");
+#endif
     return -1;
 }
 
