@@ -920,7 +920,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		/* it worked - kill the original and put the updated copy in its place if a pre-existing
 		 * comb was being edited - otherwise everything is already fine.*/
-		if (strcmp(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
+/*		if (strcmp(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
 		    av[0] = "kill";
 		    av[1] = bu_vls_addr(&comb_name);
 		    av[2] = NULL;
@@ -929,7 +929,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    av[1] = bu_vls_addr(&temp_name);
 		    av[2] = bu_vls_addr(&comb_name);
 		    (void)ged_move(gedp, 3, (const char **)av);
-		} 
+		} */
 	    }
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Because the database is READ-ONLY no changes were made.\n", *argv);
