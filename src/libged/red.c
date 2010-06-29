@@ -36,6 +36,7 @@
 
 
 char _ged_tmpfil[MAXPATHLEN] = {0};
+const char _ged_tmpcomb[16] = { 'g', 'e', 'd', '_', 't', 'm', 'p', '.', 'a', 'X', 'X', 'X', 'X', 'X', '\0' };
 char _delims[] = " \t/";	/* allowable delimiters */
 
 
@@ -885,6 +886,45 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 }
 
 
+static const char *
+mktemp_comb(struct ged *gedp, const char *str)
+{
+    /* Make a temporary name for a combination
+       a template name is expected as in "mk_temp()" with
+       5 trailing X's */
+
+    int counter, done;
+    char *ptr;
+    static char name[NAMESIZE] = {0};
+
+    if (gedp->ged_wdbp->dbip == DBI_NULL)
+	return NULL;
+
+    /* leave room for 5 digits */
+    bu_strlcpy(name, str, NAMESIZE - 5);
+    
+    ptr = name;
+    while (*ptr != '\0')
+	ptr++;
+
+    while (*(--ptr) == 'X')
+	;
+    ptr++;
+
+    counter = 1;
+    done = 0;
+    while (!done && counter < 99999) {
+	sprintf(ptr, "%d", counter);
+	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) == DIR_NULL)
+	    done = 1;
+	else
+	    counter++;
+    }
+
+    return name;
+}
+
+
 const char *
 _ged_save_comb(struct ged *gedp, struct directory *dpold)
 {
@@ -894,7 +934,7 @@ _ged_save_comb(struct ged *gedp, struct directory *dpold)
     struct rt_db_internal intern;
 
     /* Make a new name */
-    const char *name = (const char *)NULL; /*mktemp_comb(gedp, _ged_tmpcomb);*/
+    const char *name = mktemp_comb(gedp, _ged_tmpcomb);
 
     if (rt_db_get_internal(&intern, dpold, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
