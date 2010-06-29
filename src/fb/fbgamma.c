@@ -192,7 +192,7 @@ main(int argc, char **argv)
 
     fb_wmap( fbp, &cm );
     fb_close( fbp );
-    return(0);
+    return 0;
 }
 
 void

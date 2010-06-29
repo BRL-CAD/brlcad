@@ -44,6 +44,7 @@
 #include "db5.h"
 #include "nmg.h"
 #include "pc.h"
+#include "rtgeom.h"
 
 __BEGIN_DECLS
 
@@ -738,7 +739,7 @@ union cutter  {
 struct mem_map {
     struct mem_map *m_nxtp;	/**< @brief Linking pointer to next element */
     size_t m_size;		/**< @brief Size of this free element */
-    size_t m_addr;	/**< @brief Address of start of this element */
+    off_t m_addr;		/**< @brief Address of start of this element */
 };
 #define MAP_NULL	((struct mem_map *) 0)
 
@@ -778,7 +779,7 @@ struct db_i  {
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
     struct directory *		dbi_Head[RT_DBNHASH];
     FILE *			dbi_fp;		/**< @brief standard file pointer */
-    size_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
+    off_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
     size_t			dbi_nrec;	/**< @brief # records after db_scan() */
     int				dbi_uses;	/**< @brief # of uses of this struct */
     struct mem_map *		dbi_freep;	/**< @brief map of free granules */
@@ -802,7 +803,7 @@ struct db_i  {
  * One of these structures is allocated in memory to represent each
  * named object in the database.
  *
- * Note that a d_addr of RT_DIR_PHONY_ADDR ((size_t)-1) means that database
+ * Note that a d_addr of RT_DIR_PHONY_ADDR ((off_t)-1) means that database
  * storage has not been allocated yet.
  *
  * Note that there is special handling for RT_DIR_INMEM "in memory"
@@ -827,7 +828,7 @@ struct directory  {
     unsigned long	d_magic;		/**< @brief Magic number */
     char *		d_namep;		/**< @brief pointer to name string */
     union {
-	size_t		file_offset;		/**< @brief disk address in obj file */
+	off_t		file_offset;		/**< @brief disk address in obj file */
 	genptr_t	ptr;			/**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory *	d_forw;			/**< @brief link to next dir entry */
@@ -845,7 +846,7 @@ struct directory  {
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
-#define RT_DIR_PHONY_ADDR	((size_t)-1)	/**< @brief Special marker for d_addr field */
+#define RT_DIR_PHONY_ADDR	((off_t)-1)	/**< @brief Special marker for d_addr field */
 
 /* flags for db_diradd() and friends */
 #define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
@@ -1559,7 +1560,7 @@ struct application  {
     int			a_flag;		/**< @brief  application-specific flag */
     int			a_zero2;	/**< @brief  must be zero (sanity check) */
 };
-#define RT_AFN_NULL	((int (*)())0)
+#define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_AP_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
@@ -1894,15 +1895,7 @@ struct rt_functab {
     void (*ft_curve) BU_ARGS((struct curvature * /**< @brief cvp*/,
 			      struct hit * /**< @brief hitp*/,
 			      struct soltab * /**< @brief stp*/));
-#if 1
-    /*XXX temporarily changing signature to what's actually being used by the funtions */
-    int (*ft_classify) BU_ARGS(());
-#else
-    int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/,
-				const vect_t /*min*/,
-				const vect_t /*max*/,
-				const struct bn_tol * /*tol*/));
-#endif
+    int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/));
     void (*ft_free) BU_ARGS((struct soltab * /*stp*/));
     int (*ft_plot) BU_ARGS((struct bu_list * /*vhead*/,
 			    struct rt_db_internal * /*ip*/,
@@ -1968,10 +1961,6 @@ RT_EXPORT extern const struct rt_functab rt_functab[];
 
 #define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
-#define RT_CLASSIFY_UNIMPLEMENTED	BN_CLASSIFY_UNIMPLEMENTED
-#define RT_CLASSIFY_INSIDE		BN_CLASSIFY_INSIDE
-#define RT_CLASSIFY_OVERLAPPING		BN_CLASSIFY_OVERLAPPING
-#define RT_CLASSIFY_OUTSIDE		BN_CLASSIFY_OUTSIDE
 
 /**
  * R T _ S H O O T R A Y _ S T A T U S
@@ -2797,8 +2786,7 @@ RT_EXPORT BU_EXTERN(int db5_get_attributes,
 		     const struct directory *dp));
 
 /* db_comb.c */
-RT_EXPORT BU_EXTERN(int db_tree_nleaves,
-		    (const union tree *tp));
+RT_EXPORT BU_EXTERN(size_t db_tree_nleaves, (const union tree *tp));
 RT_EXPORT BU_EXTERN(struct rt_tree_array *db_flatten_tree,
 		    (struct rt_tree_array	*rt_tree_array,
 		     union tree			*tp,
@@ -2853,12 +2841,12 @@ RT_EXPORT BU_EXTERN(int db_ck_v4gift_tree,
 		    (const union tree *tp));
 RT_EXPORT BU_EXTERN(union tree *db_mkbool_tree,
 		    (struct rt_tree_array *rt_tree_array,
-		     int		howfar,
+		     size_t		howfar,
 		     struct resource	*resp));
 RT_EXPORT BU_EXTERN(union tree *db_mkgift_tree,
-		    (struct rt_tree_array	*trees,
-		     int			subtreecount,
-		     struct resource		*resp));
+		    (struct rt_tree_array *trees,
+		     size_t subtreecount,
+		     struct resource *resp));
 RT_EXPORT BU_EXTERN(int rt_comb_get_color,
 		    (unsigned char rgb[3], const struct rt_comb_internal *comb));
 
@@ -2887,7 +2875,7 @@ RT_EXPORT BU_EXTERN(int db_write,
 		    (struct db_i	*dbip,
 		     const genptr_t	addr,
 		     size_t		count,
-		     size_t		offset));
+		     off_t		offset));
 RT_EXPORT BU_EXTERN(int db_fwrite_external,
 		    (FILE			*fp,
 		     const char		*name,
@@ -2902,14 +2890,14 @@ RT_EXPORT BU_EXTERN(int db_get,
 		    (const struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
-		     int offset,
-		     int len));
+		     off_t offset,
+		     size_t len));
 /* put several records into db */
-RT_EXPORT BU_EXTERN(size_t db_put,
+RT_EXPORT BU_EXTERN(int db_put,
 		    (struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
-		     size_t offset, size_t len));
+		     off_t offset, size_t len));
 
 RT_EXPORT BU_EXTERN(int db_get_external,
 		    (struct bu_external *ep,
@@ -2930,7 +2918,7 @@ RT_EXPORT BU_EXTERN(int db_scan,
 		    (struct db_i *,
 		     int (*handler)BU_ARGS((struct db_i *,
 					    const char *name,
-					    size_t addr,
+					    off_t addr,
 					    size_t nrec,
 					    int flags,
 					    genptr_t client_data)),
@@ -2958,7 +2946,7 @@ RT_EXPORT BU_EXTERN(int db_dirbuild,
 RT_EXPORT BU_EXTERN(struct directory *db5_diradd,
 		    (struct db_i *dbip,
 		     const struct db5_raw_internal *rip,
-		     size_t laddr,
+		     off_t laddr,
 		     genptr_t client_data));
 RT_EXPORT BU_EXTERN(int db_get_version,
 		    (struct db_i *dbip));
@@ -2966,7 +2954,7 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 		    (struct db_i *dbip,
 		     void (*handler)(struct db_i *,
 				     const struct db5_raw_internal *,
-				     size_t addr,
+				     off_t addr,
 				     genptr_t client_data),
 		     genptr_t client_data));
 
@@ -3019,14 +3007,14 @@ RT_EXPORT BU_EXTERN(struct bu_ptbl *db_lookup_by_attr,
 RT_EXPORT BU_EXTERN(struct directory *db_diradd,
 		    (struct db_i *,
 		     const char *name,
-		     size_t laddr,
+		     off_t laddr,
 		     size_t len,
 		     int flags,
 		     genptr_t ptr));
 RT_EXPORT BU_EXTERN(struct directory *db_diradd5,
 		    (struct db_i *dbip,
 		     const char *name,
-		     size_t				laddr,
+		     off_t				laddr,
 		     unsigned char			major_type,
 		     unsigned char 			minor_type,
 		     unsigned char			name_hidden,
@@ -3072,7 +3060,7 @@ RT_EXPORT BU_EXTERN(int db_flags_raw_internal,
 /* db_alloc.c */
 
 /* allocate "count" granules */
-RT_EXPORT BU_EXTERN(size_t db_alloc,
+RT_EXPORT BU_EXTERN(int db_alloc,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t count));
@@ -3082,11 +3070,11 @@ RT_EXPORT BU_EXTERN(int db_delrec,
 		     struct directory *dp,
 		     int recnum));
 /* delete all granules assigned dp */
-RT_EXPORT BU_EXTERN(size_t db_delete,
+RT_EXPORT BU_EXTERN(int db_delete,
 		    (struct db_i *,
 		     struct directory *dp));
 /* write FREE records from 'start' */
-RT_EXPORT BU_EXTERN(size_t db_zapper,
+RT_EXPORT BU_EXTERN(int db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t start));
@@ -3319,7 +3307,6 @@ RT_EXPORT BU_EXTERN(int rt_arb_3face_intersect,
 		     const plane_t		planes[6],
 		     int			type,		/* 4..8 */
 		     int			loc));
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_arb_calc_planes,
 		    (struct bu_vls		*error_msg_ret,
 		     struct rt_arb_internal	*arb,
@@ -3345,7 +3332,6 @@ RT_EXPORT BU_EXTERN(int rt_arb_edit,
 		     vect_t			pos_model,
 		     plane_t			planes[6],
 		     const struct bn_tol	*tol));
-#endif
 
 RT_EXPORT extern const int rt_arb_faces[5][24];
 RT_EXPORT extern short earb8[12][18];
@@ -3413,8 +3399,6 @@ RT_EXPORT BU_EXTERN(int rt_mk_parabola,
 		     fastf_t b,
 		     fastf_t dtol,
 		     fastf_t ntol));
-RT_EXPORT BU_EXTERN(struct rt_pt_node *rt_ptalloc,
-		    ());
 
 /* memalloc.c -- non PARALLEL routines */
 RT_EXPORT BU_EXTERN(size_t rt_memalloc,
@@ -3426,11 +3410,11 @@ RT_EXPORT BU_EXTERN(struct mem_map * rt_memalloc_nosplit,
 RT_EXPORT BU_EXTERN(size_t rt_memget,
 		    (struct mem_map **pp,
 		     size_t size,
-		     size_t place));
+		     off_t place));
 RT_EXPORT BU_EXTERN(void rt_memfree,
 		    (struct mem_map **pp,
 		     size_t size,
-		     size_t addr));
+		     off_t addr));
 RT_EXPORT BU_EXTERN(void rt_mempurge,
 		    (struct mem_map **pp));
 RT_EXPORT BU_EXTERN(void rt_memprint,
@@ -3685,7 +3669,6 @@ RT_EXPORT BU_EXTERN(void rt_label_vlist_verts,
 		     double sz,
 		     double mm2local));
 
-#ifdef __RTGEOM_H__
 /* sketch.c */
 RT_EXPORT BU_EXTERN(int curve_to_vlist,
 		    (struct bu_list		*vhead,
@@ -3720,7 +3703,6 @@ RT_EXPORT BU_EXTERN(struct rt_sketch_internal *rt_copy_sketch,
 RT_EXPORT BU_EXTERN(int curve_to_tcl_list,
 		    (struct bu_vls *vls,
 		     struct curve *crv));
-#endif
 
 /* htbl.c */
 RT_EXPORT BU_EXTERN(void rt_htbl_init,
@@ -4597,7 +4579,6 @@ RT_EXPORT BU_EXTERN(int nmg_break_edges,
 RT_EXPORT BU_EXTERN(int nmg_lu_is_convex,
 		    (struct loopuse *lu,
 		     const struct bn_tol *tol));
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int nmg_to_arb,
 		    (const struct model *m,
 		     struct rt_arb_internal *arb_int));
@@ -4612,7 +4593,6 @@ RT_EXPORT BU_EXTERN(int nmg_to_poly,
 RT_EXPORT BU_EXTERN(struct rt_bot_internal *nmg_bot,
 		    (struct shell *s,
 		     const struct bn_tol *tol));
-#endif /* __NMG_H__ */
 
 RT_EXPORT BU_EXTERN(int nmg_simplify_shell_edges,
 		    (struct shell *s,
@@ -4639,7 +4619,6 @@ RT_EXPORT BU_EXTERN(int rt_bot_plot_poly,
 		     struct rt_db_internal	*ip,
 		     const struct rt_tess_tol *ttol,
 		     const struct bn_tol	*tol));
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 		    (const struct rt_bot_internal *bot,
 		     const point_t	pt2,
@@ -4665,8 +4644,12 @@ RT_EXPORT BU_EXTERN(int rt_bot_flip,
 		    (struct rt_bot_internal *bot));
 RT_EXPORT BU_EXTERN(int rt_bot_sync,
 		    (struct rt_bot_internal *bot));
+RT_EXPORT BU_EXTERN(struct rt_bot_list * rt_bot_split,
+		    (struct rt_bot_internal *bot));
+RT_EXPORT BU_EXTERN(void rt_bot_list_free,
+		    (struct rt_bot_list *headRblp,
+		     int fbflag));
 
-#endif
 RT_EXPORT BU_EXTERN(int rt_bot_same_orientation,
 		    (const int *a,
 		     const int *b));
@@ -5829,7 +5812,6 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 /* defined in bot.c */
 RT_EXPORT extern int rt_bot_minpieces;
 RT_EXPORT extern int rt_bot_tri_per_piece;
-#ifdef __RTGEOM_H__
 RT_EXPORT BU_EXTERN(int rt_bot_sort_faces,
 		    (struct rt_bot_internal *bot,
 		     int tris_per_piece));
@@ -5838,7 +5820,45 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t max_chord_error,
 		     fastf_t max_normal_error,
 		     fastf_t min_edge_length));
-#endif
+
+/*
+ *  Utility functions for standard attributes
+ */
+
+/**
+ * D B 5  _ A P P L Y _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "senior" to other values
+ * and other values will be updated to match the attributes.
+ *
+ * @file: db5_types.c
+ */
+
+RT_EXPORT BU_EXTERN(size_t db5_apply_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+
+
+/**
+ * D B 5  _ U P D A T E _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "junior" to other values
+ * and attributes will be updated to reflect those values.
+ *
+ * @file: db5_types.c
+ */
+
+RT_EXPORT BU_EXTERN(size_t db5_update_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
 
 
 /*

@@ -397,7 +397,7 @@ ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_di
 		bu_exit(EXIT_SUCCESS, NULL);
 	}
     }
-    return(bu_optind);
+    return bu_optind;
 }
 
 

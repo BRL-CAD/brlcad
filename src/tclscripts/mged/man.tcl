@@ -20,6 +20,8 @@
 
 package require Tkhtml 3.0
 
+encoding system utf-8
+
 proc handle_select { w y } {
     set curr_sel [$w curselection]
     if { $curr_sel != "" } {
@@ -98,7 +100,7 @@ proc man {cmdname} {
 	grid .man.top.l .man.top.s -sticky nsew -in .man.top.listing
 	grid columnconfigure .man.top.listing 0 -weight 0
 	grid rowconfigure .man.top.listing 0 -weight 1
-	set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en/"] *.html ]
+	set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en"] *.html ]
 	set cmds [list ]
 	foreach cmdfile $cmdfiles {
 	   regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix 

@@ -75,7 +75,7 @@ sol_comp_name(void *v1, void *v2)
     BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
     BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    return(strcmp(s1->name, s2->name));
+    return strcmp(s1->name, s2->name);
 }
 
 
@@ -94,11 +94,11 @@ sol_comp_dist(void *v1, void *v2)
     BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (s1->dist > s2->dist)
-	return (1);
+	return 1;
     else if (s1->dist == s2->dist)
-	return (0);
+	return 0;
     else /* (s1->dist < s2->dist) */
-	return (-1);
+	return -1;
 }
 
 
@@ -117,7 +117,7 @@ mk_solid(char *name, fastf_t dist)
 	bu_malloc(strlen(name)+1, "solid name");
     bu_strlcpy(sp->name, name, strlen(name)+1);
     sp->dist = dist;
-    return (sp);
+    return sp;
 }
 
 
@@ -169,7 +169,7 @@ print_solid(void *vp)
 static int
 no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
 {
-    return (1);
+    return 1;
 }
 
 
@@ -394,7 +394,7 @@ rpt_miss(struct application *ap)
 {
     ap->a_uptr = NULL;
 
-    return (0);
+    return 0;
 }
 
 
@@ -423,7 +423,7 @@ char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *r
 
     if (argc <= 0) {
 	Tcl_AppendResult(interp, "skewer_solids argc<=0\n", (char *)NULL);
-	return ((char **) 0);
+	return (char **) 0;
     }
 
     /* .inmem rt_gettrees .rt -i -u [who] */
@@ -434,7 +434,7 @@ char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *r
 	Tcl_AppendResult(interp, "rt_gettrees() failed\n", (char *)NULL);
 	rt_clean(rtip);
 	bu_free((genptr_t)rtip, "struct rt_i");
-	return ((char **) 0);
+	return (char **) 0;
     }
 
     /* .rt prep 1 */
@@ -467,7 +467,7 @@ char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *r
     rt_clean(rtip);
     bu_free((genptr_t)rtip, "struct rt_i");
 
-    return ((char **) ap.a_uptr);
+    return (char **) ap.a_uptr;
 }
 
 

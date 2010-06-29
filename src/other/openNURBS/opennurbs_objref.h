@@ -87,6 +87,9 @@ public:
   //     identifies a vertex on the mesh object.
   //
   int m_t_type;
+private:
+  int m_reserved; // for future use to record snap info.
+public:
   double m_t[4];
   ON_Interval m_s[3]; // curve/surface/cage domains
   ON_COMPONENT_INDEX m_t_ci; // Not necesarily the same as m_component_index

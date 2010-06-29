@@ -185,7 +185,7 @@ writesolid(void)
 	default:
 	    Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
 	    (void)fclose(fp);
-	    return(1);
+	    return 1;
 	case ID_TOR:
 	    tor = (struct rt_tor_internal *)es_int.idb_ptr;
 	    (void)fprintf(fp, "Vertex: %.9f %.9f %.9f%s", V3BASE2LOCAL(tor->v), eol);
@@ -300,7 +300,7 @@ writesolid(void)
     }
 
     (void)fclose(fp);
-    return(0);
+    return 0;
 }
 
 
@@ -312,7 +312,7 @@ Get_next_line(FILE *fp)
     size_t len;
 
     if (bu_fgets(line, sizeof(line), fp) == NULL)
-	return((char *)NULL);
+	return (char *)NULL;
 
     len = strlen(line);
 
@@ -320,9 +320,9 @@ Get_next_line(FILE *fp)
     while (i<len && line[i++] != ':');
 
     if (i == len || line[i] == '\0')
-	return((char *)NULL);
+	return (char *)NULL;
 
-    return(&line[i]);
+    return &line[i];
 }
 
 
@@ -865,7 +865,7 @@ readsolid(void)
     }
 
     (void)fclose(fp);
-    return(ret_val);
+    return ret_val;
 }
 
 
@@ -929,10 +929,10 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? default to jove */
     if (!editor || editor[0] == '\0') {
-	const char *binpath = bu_brlcad_root("bin", 1);
+	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = "jove";
-	if (binpath) {
-	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+	if (jovepath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
 	    editor = buffer;
 	}
     }
@@ -946,10 +946,10 @@ get_editor_string(struct bu_vls *editstring)
 
     /* If we're in classic mode on Windows, go with jove */
     if (classic_mged && (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT"))) {
-	const char *binpath = bu_brlcad_root("bin", 1);
+	const char *jovepath = bu_brlcad_root("bin/jove", 1);
 	editor = "jove";
-	if (binpath) {
-	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+	if (jovepath) {
+	    snprintf(buffer, RT_MAXLINE, "%s", jovepath);
 	    editor = buffer;
 	}
     }

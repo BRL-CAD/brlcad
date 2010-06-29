@@ -186,7 +186,7 @@ Apop()
 	jtop--;
     }
 
-    return(ptr);
+    return ptr;
 }
 
 /* Free the memory associated with the stack */
@@ -256,7 +256,7 @@ Spop()
 	sjtop--;
     }
 
-    return(ptr);
+    return ptr;
 }
 
 /* free memory associated with the stack, but not the pointed to nodes */

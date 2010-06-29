@@ -103,7 +103,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
     output_is_binary = 0;		/* output is printable ascii */
 
-    return(0);		/* No framebuffer needed */
+    return 0;		/* No framebuffer needed */
 }
 
 /*
@@ -150,7 +150,7 @@ view_2init(struct application *ap)
 int
 raymiss(register struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 /*
@@ -179,7 +179,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     vect_t			normal;
 
     if ( pp == PartHeadp )
-	return(0);		/* nothing was actually hit?? */
+	return 0;		/* nothing was actually hit?? */
 
     if ( jitter & JITTER_CELL )  {
 	/*
@@ -209,7 +209,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     fprintf( outfp, "%g %g %g\n",
 	     hv[0], hv[1], dot );
 
-    return(0);
+    return 0;
 }
 
 /*

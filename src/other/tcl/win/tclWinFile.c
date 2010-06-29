@@ -2552,6 +2552,7 @@ TclpObjNormalizePath(
     char *lastValidPathEnd = NULL;
     Tcl_DString dsNorm;		/* This will hold the normalized string. */
     char *path, *currentPathEndPosition;
+    Tcl_Obj *temp = NULL;
 
     Tcl_DStringInit(&dsNorm);
     path = Tcl_GetString(pathPtr);
@@ -2709,7 +2710,6 @@ TclpObjNormalizePath(
 	 * We're on WinNT (or 2000 or XP; something with an NT core).
 	 */
 
-	Tcl_Obj *temp = NULL;
 	int isDrive = 1;
 	Tcl_DString ds;
 
@@ -2981,6 +2981,15 @@ TclpObjNormalizePath(
 	Tcl_DStringFree(&dsTemp);
     }
     Tcl_DStringFree(&dsNorm);
+
+    /*
+     * This must be done after we are totally finished with 'path' as we are
+     * sharing the same underlying string.
+     */
+
+    if (temp != NULL) {
+	Tcl_DecrRefCount(temp);
+    }
     return nextCheckpoint;
 }
 

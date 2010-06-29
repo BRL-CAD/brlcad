@@ -53,10 +53,11 @@ typedef struct render_camera_s
     uint8_t type;
     TIE_3 pos;
     TIE_3 focus;
-    tfloat tilt;
-    tfloat fov;
-    tfloat aspect;
-    tfloat dof;
+    fastf_t tilt;
+    fastf_t fov;
+    fastf_t gridsize;
+    fastf_t aspect;
+    fastf_t dof;
     uint8_t thread_num;
     uint16_t view_num;
     render_camera_view_t *view_list;
@@ -85,14 +86,22 @@ typedef struct render_camera_thread_data_s
     camera_tile_t *tile;
     void *res_buf;
     unsigned int *scanline;
+#ifdef HAVE_PTHREAD_H
     pthread_mutex_t mut;
+#endif
 } render_camera_thread_data_t;
 
 
-void render_camera_init(render_camera_t *camera, int threads);
-void render_camera_free(render_camera_t *camera);
-void render_camera_prep(render_camera_t *camera);
-void render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result);
+BU_EXPORT BU_EXTERN(void render_camera_init, (render_camera_t *camera, int threads));
+BU_EXPORT BU_EXTERN(void render_camera_free, (render_camera_t *camera));
+BU_EXPORT BU_EXTERN(void render_camera_prep, (render_camera_t *camera));
+BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, tie_t *tie, camera_tile_t *tile, tienet_buffer_t *result));
+
+BU_EXPORT BU_EXTERN(int render_shader_init, (render_t *, const char *name, const char *buf));
+BU_EXPORT BU_EXTERN(const char *render_shader_load_plugin, (const char *filename));
+/* r is passed in so something ... sane(?) can be done if the shader being
+ * unloaded is in use. */
+BU_EXPORT BU_EXTERN(int render_shader_unload_plugin, (render_t *r, const char *name));
 
 #endif
 

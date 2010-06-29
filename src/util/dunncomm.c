@@ -200,7 +200,7 @@ goodstatus(void)
     select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
     if (FD_ISSET(fd, &readfds) ==0) {
 	printf("\007dunnsnap: status request timed out\n");
-	return(0);
+	return 0;
     }
 
     readval = bu_mread(fd, status, 4);
@@ -358,12 +358,12 @@ dunnsend(char color, int val)
 
     if (val < 0 || val > 255) {
 	printf("dunncolor: bad value %d\n", val);
-	return(-1);
+	return -1;
     }
 
     if (!ready(5)) {
 	printf("dunncolor: dunnsend(), camera not ready\n");
-	return(-1);
+	return -1;
     }
 
     if (polaroid)
@@ -384,7 +384,7 @@ dunnsend(char color, int val)
     digit = (val%10 + 0x30)&0x7f;
     write(fd, &digit, 1);
     hangten();
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 

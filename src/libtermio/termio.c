@@ -120,9 +120,9 @@ static struct sgttyb save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 
 #include "libtermio.h"
 
+
 static int fileStatus[FOPEN_MAX];
-void prnt_Tio();
-static void copy_Tio();
+
 
 /* c l r _ C b r e a k ()
    Clear CBREAK mode, for file descriptor 'fd'.
@@ -375,6 +375,23 @@ get_O_Speed(int fd)
 #endif
 }
 
+/* c o p y _ T i o ()						*/
+static void
+copy_Tio(to, from)
+#ifdef BSD
+    struct sgttyb *to, *from;
+#endif
+#ifdef SYSV
+    struct termio *to, *from;
+#endif
+#ifdef HAVE_TERMIOS_H
+    struct termios *to, *from;
+#endif
+{
+    (void)memcpy((char *) to, (char *) from, sizeof(*from));
+    return;
+}
+
 /* s a v e _ T t y ()
    Get and save terminal parameters, 'fd'.
 */
@@ -445,23 +462,6 @@ set_O_NDELAY(int fd)
     return fcntl(fd, F_SETFL, FNDELAY);
 #endif
 #endif
-}
-
-/* c o p y _ T i o ()						*/
-static void
-copy_Tio(to, from)
-#ifdef BSD
-    struct sgttyb *to, *from;
-#endif
-#ifdef SYSV
-    struct termio *to, *from;
-#endif
-#ifdef HAVE_TERMIOS_H
-    struct termios *to, *from;
-#endif
-{
-    (void)memcpy((char *) to, (char *) from, sizeof(*from));
-    return;
 }
 
 /* p r n t _ T i o ()						*/

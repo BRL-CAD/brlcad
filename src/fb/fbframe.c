@@ -105,7 +105,7 @@ main(int argc, char **argv)
     len = (xsize > ysize) ? xsize : ysize;
     if ( (line = (unsigned char *)malloc(len*sizeof(RGBpixel))) == RGBPIXEL_NULL )  {
 	fprintf(stderr, "fbframe:  malloc failure\n");
-	return(1);
+	return 1;
     }
 
 #define FLOOD(col)	{ for ( x=len-1; x >= 0; x-- ) {COPYRGB(&line[3*x], col);} }
@@ -126,7 +126,7 @@ main(int argc, char **argv)
     fb_writerect( fbp, 0, 1, 1, ysize-1, line );
 
     fb_close( fbp );
-    return(0);
+    return 0;
 }
 
 /*

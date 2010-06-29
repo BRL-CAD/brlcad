@@ -83,21 +83,21 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
 int
 mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 {
-    struct rt_pipe_internal *pipe;
+    struct rt_pipe_internal *pipep;
 
     if ( rt_pipe_ck( headp ) )
     {
 	bu_log( "mk_pipe: BAD PIPE SOLID (%s)\n", name );
-	return( 1 );
+	return 1;
     }
 
-    BU_GETSTRUCT( pipe, rt_pipe_internal );
-    pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    BU_LIST_INIT( &pipe->pipe_segs_head );
+    BU_GETSTRUCT( pipep, rt_pipe_internal );
+    pipep->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    BU_LIST_INIT( &pipep->pipe_segs_head );
     /* linked list from caller */
-    BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, headp );
+    BU_LIST_APPEND_LIST( &pipep->pipe_segs_head, headp );
 
-    return wdb_export( fp, name, (genptr_t)pipe, ID_PIPE, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)pipep, ID_PIPE, mk_conv2mm );
 }
 
 /*

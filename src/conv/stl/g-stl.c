@@ -334,7 +334,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:bMm:n:o:r:vx:D:P:X:i")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:i")) != EOF) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -347,7 +347,7 @@ main(int argc, char *argv[])
 		ttol.norm = atof(bu_optarg);
 		ttol.rel = 0.0;
 		break;
-	    case 'M':
+	    case '8':
 		use_mc = 1;
 		break;
 	    case 'o':		/* Output file name. */

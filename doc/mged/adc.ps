@@ -1,0 +1,92 @@
+%!PS-Adobe-1.0
+%begin(plot)
+%%DocumentFonts:  Courier
+%%Title: adc.ps
+%%Creator: MGED dm-ps.c
+%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX
+%%EndComments
+
+4 setlinewidth
+
+% Sizes, made functions to avoid scaling if not needed
+/FntH /Courier findfont 80 scalefont def
+/DFntL { /FntL /Courier findfont 73.4 scalefont def } def
+/DFntM { /FntM /Courier findfont 50.2 scalefont def } def
+/DFntS { /FntS /Courier findfont 44 scalefont def } def
+
+% line styles
+/NV { [] 0 setdash } def	% normal vectors
+/DV { [8] 0 setdash } def	% dotted vectors
+/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors
+/SDV { [32 8] 0 setdash } def	% short-dash vectors
+/LDV { [64 8] 0 setdash } def	% long-dash vectors
+
+/NEWPG {
+	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)
+} def
+
+FntH  setfont
+NEWPG
+NV newpath 2048 2048 moveto 2049 2049 lineto stroke
+NV newpath 1379 1323 moveto 1469 1363 lineto stroke
+newpath 1469 1363 moveto 1529 1444 lineto stroke
+newpath 1529 1444 moveto 1550 1555 lineto stroke
+newpath 1550 1555 moveto 1529 1679 lineto stroke
+newpath 1529 1679 moveto 1469 1795 lineto stroke
+newpath 1469 1795 moveto 1379 1888 lineto stroke
+newpath 1379 1888 moveto 1273 1943 lineto stroke
+newpath 1273 1943 moveto 1168 1951 lineto stroke
+newpath 1168 1951 moveto 1078 1911 lineto stroke
+newpath 1078 1911 moveto 1018 1830 lineto stroke
+newpath 1018 1830 moveto 997 1719 lineto stroke
+newpath 997 1719 moveto 1018 1596 lineto stroke
+newpath 1018 1596 moveto 1078 1479 lineto stroke
+newpath 1078 1479 moveto 1168 1386 lineto stroke
+newpath 1168 1386 moveto 1273 1331 lineto stroke
+newpath 1273 1331 moveto 1379 1323 lineto stroke
+newpath 2259 1477 moveto 2438 1556 lineto stroke
+newpath 2438 1556 moveto 2558 1719 lineto stroke
+newpath 2558 1719 moveto 2600 1941 lineto stroke
+newpath 2600 1941 moveto 2558 2187 lineto stroke
+newpath 2558 2187 moveto 2438 2421 lineto stroke
+newpath 2438 2421 moveto 2259 2607 lineto stroke
+newpath 2259 2607 moveto 2048 2716 lineto stroke
+newpath 2048 2716 moveto 1836 2732 lineto stroke
+newpath 1836 2732 moveto 1657 2652 lineto stroke
+newpath 1657 2652 moveto 1537 2489 lineto stroke
+newpath 1537 2489 moveto 1495 2268 lineto stroke
+newpath 1495 2268 moveto 1537 2021 lineto stroke
+newpath 1537 2021 moveto 1657 1787 lineto stroke
+newpath 1657 1787 moveto 1836 1602 lineto stroke
+newpath 1836 1602 moveto 2047 1493 lineto stroke
+newpath 2047 1493 moveto 2259 1477 lineto stroke
+newpath 1469 1363 moveto 2438 1556 lineto stroke
+newpath 1469 1795 moveto 2438 2421 lineto stroke
+newpath 1078 1911 moveto 1657 2652 lineto stroke
+newpath 1078 1479 moveto 1657 1787 lineto stroke
+NV newpath 0 1779 moveto 4095 1779 lineto stroke
+NV newpath 1464 4095 moveto 1464 0 lineto stroke
+NV newpath 0 818 moveto 4095 3506 lineto stroke
+NV newpath 0 4009 moveto 2631 0 lineto stroke
+DDV newpath 0 210 moveto 3623 4095 lineto stroke
+DDV newpath 0 3144 moveto 3371 0 lineto stroke
+NV newpath 2462 2410 moveto 2440 2443 lineto stroke
+NV newpath 833 2777 moveto 800 2755 lineto stroke
+NV newpath 466 1148 moveto 488 1115 lineto stroke
+NV newpath 2095 781 moveto 2128 803 lineto stroke
+NV newpath 0 0 moveto 4095 0 lineto stroke
+NV newpath 4095 0 moveto 4095 4095 lineto stroke
+NV newpath 4095 4095 moveto 0 4095 lineto stroke
+NV newpath 0 4095 moveto 0 0 lineto stroke
+NV newpath 0 218 moveto 4095 218 lineto stroke
+DFntM (VIEWING) 115 3968 moveto show
+NV newpath 798 3893 moveto 0 3893 lineto stroke
+NV newpath 798 3893 moveto 798 4095 lineto stroke
+NV newpath 798 3908 moveto 0 3908 lineto stroke
+DFntS ((BUTTON MENU)) 115 3848 moveto show
+NV newpath 798 3788 moveto 0 3788 lineto stroke
+NV newpath 798 3907 moveto 798 3788 lineto stroke
+DFntM ( cent=(0.582, 0.408, -1.524), sz=121.350 MILLIMETERS, ang=(0.00, 0.00, 0.00)) 0 128 moveto show
+DFntM ( curs:  a1=33.3,  a2=47.0,  dst=35.002,  cent=(-17.310, -7.973)) 0 38 moveto show
+% showpage	% uncomment to use raw file
+%end(plot)

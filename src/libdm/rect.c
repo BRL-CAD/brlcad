@@ -47,9 +47,9 @@ dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp)
 
     /* draw rectangle */
     DM_SET_FGCOLOR(dmp,
-		   grsp->grs_color[0],
-		   grsp->grs_color[1],
-		   grsp->grs_color[2], 1, 1.0);
+		   (unsigned char)grsp->grs_color[0],
+		   (unsigned char)grsp->grs_color[1],
+		   (unsigned char)grsp->grs_color[2], 1, 1.0);
     DM_SET_LINE_ATTR(dmp, grsp->grs_line_width, grsp->grs_line_style);
 
     DM_DRAW_LINE_2D(dmp,

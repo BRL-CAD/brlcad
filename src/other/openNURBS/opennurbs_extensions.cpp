@@ -362,7 +362,10 @@ ONX_Model_Object& ONX_Model_Object::operator=(const ONX_Model_Object& src)
 ////////////////////////////////////////////////////////////////////////
 
 
-ONX_Model_UserData::ONX_Model_UserData() : m_uuid(ON_nil_uuid)
+ONX_Model_UserData::ONX_Model_UserData() 
+: m_uuid(ON_nil_uuid)
+, m_usertable_3dm_version(0)
+, m_usertable_opennurbs_version(0)
 {
 }
 
@@ -371,9 +374,10 @@ ONX_Model_UserData::~ONX_Model_UserData()
 }
 
 ONX_Model_UserData::ONX_Model_UserData(const ONX_Model_UserData& src) 
-             : m_uuid(src.m_uuid),
-               m_goo(m_goo)
-               
+: m_uuid(src.m_uuid)
+, m_goo(src.m_goo)
+, m_usertable_3dm_version(src.m_usertable_3dm_version)
+, m_usertable_opennurbs_version(src.m_usertable_opennurbs_version)
 {
 }
 
@@ -381,8 +385,10 @@ ONX_Model_UserData& ONX_Model_UserData::operator=(const ONX_Model_UserData& src)
 {
   if ( this != &src )
   {
-    m_goo = src.m_goo;
     m_uuid = src.m_uuid;
+    m_goo = src.m_goo;
+    m_usertable_3dm_version = src.m_usertable_3dm_version;
+    m_usertable_opennurbs_version = src.m_usertable_opennurbs_version;
   }
   return *this;
 }
@@ -824,7 +830,15 @@ void ONX_Model_Object::Dump( ON_TextLog& dump ) const
   if ( pGeometry ) 
   {
     // m_object is some type of geometric object
-    if ( ON_Brep::Cast(m_object) ) 
+    if ( ON_Extrusion::Cast(m_object) ) 
+    {
+      // m_object is derived from ON_Extrusion
+      //  Note: 
+      //   ON_Extrusion::BrepForm() will return a brep form
+      //   if you don't want to explicitly handle extrusions. 
+      const ON_Extrusion* extrusion = ON_Extrusion::Cast(m_object);
+    }
+    else if ( ON_Brep::Cast(m_object) ) 
     {
       // m_object is derived from ON_Brep
       const ON_Brep* brep = ON_Brep::Cast(m_object);
@@ -2883,13 +2897,43 @@ bool ONX_Model::Read(
   // you can store anything you want in a user table.
   for(count=0;true;count++)
   {
-    ON_UUID uuid;
-    if ( !archive.BeginRead3dmUserTable( uuid ) )
-      break; // no more user tables in the archive
+    {
+      ON__UINT32 tcode = 0;
+      ON__INT64 big_value = 0;
+      if ( !archive.PeekAt3dmBigChunkType(&tcode,&big_value) )
+        break;
+      if ( TCODE_USER_TABLE != tcode )
+        break;
+    }
+    ON_UUID plugin_id = ON_nil_uuid;
+    bool bGoo = false;
+    int usertable_3dm_version = 0;
+    int usertable_opennurbs_version = 0;
+    if ( !archive.BeginRead3dmUserTable( plugin_id, &bGoo, &usertable_3dm_version, &usertable_opennurbs_version ) )
+    {
+      // attempt to skip bogus user table
+      const ON__UINT64 pos0 = archive.CurrentPosition();
+      ON__UINT32 tcode = 0;
+      ON__INT64 big_value = 0;
+      if  ( !archive.BeginRead3dmBigChunk(&tcode,&big_value) )
+        break;
+      if ( !archive.EndRead3dmChunk() )
+        break;
+      const ON__UINT64 pos1 = archive.CurrentPosition();
+      if (pos1 <= pos0)
+        break;
+      if ( TCODE_USER_TABLE != tcode )
+        break;
+
+      continue; // skip this bogus user table
+    }
 
     ONX_Model_UserData& ud = m_userdata_table.AppendNew();
-    ud.m_uuid = uuid;
-    if ( !archive.Read3dmAnonymousUserTable( ud.m_goo ) )
+    ud.m_uuid = plugin_id;
+    ud.m_usertable_3dm_version = usertable_3dm_version;
+    ud.m_usertable_opennurbs_version = usertable_opennurbs_version;
+
+    if ( !archive.Read3dmAnonymousUserTable( usertable_3dm_version, usertable_opennurbs_version, ud.m_goo ) )
     {
       if ( error_log) error_log->Print("ERROR: User data table entry %d is corrupt. (ON_BinaryArchive::Read3dmAnonymousUserTable() is false.)\n",count);
       break;
@@ -3383,22 +3427,13 @@ bool ONX_Model::Write(
     const ONX_Model_UserData& ud = m_userdata_table[i];
     if ( ON_UuidIsNotNil(ud.m_uuid) )
     {
-      ok = archive.BeginWrite3dmUserTable(ud.m_uuid);
-      if ( !ok )
+      if ( !archive.Write3dmAnonymousUserTableRecord(
+        ud.m_uuid,
+        ud.m_usertable_3dm_version,
+        ud.m_usertable_opennurbs_version,ud.m_goo
+        ) )
       {
-        // make sure m_settings is valid
-        if ( error_log) error_log->Print("ONX_Model::Write archive.BeginWrite3dmUserTable(m_userdata_table[%d].m_uuid) failed.\n",i);
-        return false;
-      }
-      ok = archive.Write3dmAnonymousUserTable(ud.m_goo);
-      if ( !ok )
-      {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.Write3dmAnonymousUserTable(m_userdata_table[%d].m_goo) failed.\n",i);
-      }
-      if ( !archive.EndWrite3dmUserTable() )
-      {
-        if ( error_log) error_log->Print("ONX_Model::Write archive.EndWrite3dmUserTable() failed on m_userdata_table[&d].\n",i);
-        ok = false;
+        continue;
       }
     }
   }

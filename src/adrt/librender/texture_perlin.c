@@ -93,7 +93,7 @@ tfloat texture_perlin_noise3(texture_perlin_t *P, TIE_3 V, tfloat Size, int Dept
 	VSCALE(V.v,  V.v,  Size);
     }
 
-    return(sum);
+    return sum;
 }
 
 
@@ -152,7 +152,7 @@ tfloat texture_perlin_omega(texture_perlin_t *P, TIE_3 V) {
 
     d = LERP(sy, a, b);
 
-    return( LERP(sz, c, d) );
+    return LERP(sz, c, d);
 }
 
 /*

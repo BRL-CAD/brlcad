@@ -631,7 +631,7 @@ int parseArguments(int argc, char **argv)
 
     bu_free(progname, "progname");
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 

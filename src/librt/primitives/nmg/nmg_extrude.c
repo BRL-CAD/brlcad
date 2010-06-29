@@ -69,7 +69,7 @@ verts_in_nmg_loop(struct loopuse *lu)
 	cnt++;
     } else
 	bu_bomb("verts_in_nmg_loop: bad loopuse\n");
-    return(cnt);
+    return cnt;
 }
 
 
@@ -87,7 +87,7 @@ verts_in_nmg_face(struct faceuse *fu)
     cnt = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 	cnt += verts_in_nmg_loop(lu);
-    return(cnt);
+    return cnt;
 }
 
 
@@ -238,7 +238,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 	    continue;
 	if (BU_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC) {
 	    bu_log("nmg_extrude_face: Original face and dup face don't match up!!\n");
-	    return(-1);
+	    return -1;
 	}
 	for (BU_LIST_FOR2(eu, eu2, edgeuse, &lu->down_hd, &lu2->down_hd)) {
 	    struct vertex *vertlist[4];
@@ -253,7 +253,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 	    outfaces[face_count] = nmg_cface(fu->s_p, vertlist, 4);
 	    if (nmg_calc_face_g(outfaces[face_count])) {
 		bu_log("nmg_extrude_face: failed to calculate plane eqn\n");
-		return(-1);
+		return -1;
 	    }
 	    face_count++;
 	}
@@ -264,7 +264,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 
     bu_free((char *)outfaces, "nmg_extrude_face: outfaces");
 
-    return(0);
+    return 0;
 }
 
 
@@ -289,9 +289,9 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 	NMG_CK_VERTEXUSE(vu);
 
 	if (vu->v_p == v)
-	    return(vu);
+	    return vu;
 	else
-	    return((struct vertexuse *)NULL);
+	    return (struct vertexuse *)NULL;
     }
 
     ret_vu = (struct vertexuse *)NULL;
@@ -304,7 +304,7 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
 	}
     }
 
-    return(ret_vu);
+    return ret_vu;
 }
 
 
@@ -970,7 +970,7 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
 
 	(void)nmg_kr(new_r);
     }
-    return(is);
+    return is;
 }
 
 
@@ -1208,7 +1208,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 
     if (NEAR_ZERO(dist, tol->dist)) {
 	bu_log("nmg_extrude_shell: Cannot extrude a distance less than tolerance distance\n");
-	return(s);
+	return s;
     }
 
     along_normal = normal_ward;
@@ -1364,9 +1364,9 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
     nmg_kr(new_r);
 
     if (failed)
-	return((struct shell *)NULL);
+	return (struct shell *)NULL;
     else
-	return(s_tmp);
+	return s_tmp;
 }
 
 

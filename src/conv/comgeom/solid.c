@@ -94,7 +94,7 @@ getsoldata(double *dp, int num, int solid_num)
 	    if ( get_line( scard, sizeof(scard), "solid continuation card" ) == EOF )  {
 		printf("too few cards for solid %d\n",
 		       solid_num);
-		return(-1);
+		return -1;
 	    }
 	    /* continuation card
 	     * solid type should be blank
@@ -103,7 +103,7 @@ getsoldata(double *dp, int num, int solid_num)
 		 (version==4 && scard[3] != ' ' ) )  {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
-		return(-1);
+		return -1;
 	    }
 	}
 
@@ -117,7 +117,7 @@ getsoldata(double *dp, int num, int solid_num)
 	}
 	num -= j;
     }
-    return(0);
+    return 0;
 }
 
 /*
@@ -143,7 +143,7 @@ getxsoldata(double *dp, int num, int solid_num)
 	if ( get_line( scard, sizeof(scard), "x solid card" ) == EOF )  {
 	    printf("too few cards for solid %d\n",
 		   solid_num);
-	    return(-1);
+	    return -1;
 	}
 	if ( cd != 1 )  {
 	    /* continuation card
@@ -153,7 +153,7 @@ getxsoldata(double *dp, int num, int solid_num)
 		 (version==4 && scard[3] != ' ' ) )  {
 		printf("solid %d (continuation) card %d non-blank\n",
 		       solid_num, cd);
-		return(-1);
+		return -1;
 	    }
 	}
 
@@ -167,7 +167,7 @@ getxsoldata(double *dp, int num, int solid_num)
 	}
 	num -= j;
     }
-    return(0);
+    return 0;
 }
 
 /*
@@ -211,7 +211,7 @@ getsolid(void)
 
     if ( (i = get_line( scard, sizeof(scard), "solid card" )) == EOF )  {
 	printf("getsolid: unexpected EOF\n");
-	return( 1 );
+	return 1;
     }
 
     switch ( version )  {
@@ -251,7 +251,7 @@ getsolid(void)
 	if ( (i = getint( scard, 0, 5 )) != sol_work )  {
 	    printf("expected solid card %d, got %d, abort\n",
 		   sol_work, i );
-	    return(1);
+	    return 1;
 	}
     }
 
@@ -278,7 +278,7 @@ getsolid(void)
     if ( strcmp( solid_type, "end" ) == 0 )  {
 	/* DoE/MORSE version 1 format */
 	bu_free( name, "name" );
-	return(1);		/* END */
+	return 1;		/* END */
     }
 
     if ( strcmp( solid_type, "ars" ) == 0 )  {
@@ -300,7 +300,7 @@ getsolid(void)
 	    if ( getxsoldata( curve[i], pts_per_curve*3, sol_work ) < 0 )  {
 		printf("ARS %d: getxsoldata failed, curve %d\n",
 		       sol_work, i);
-		return(-1);
+		return -1;
 	    }
 	}
 	if ( (ret = mk_ars( outfp, name, ncurves, pts_per_curve, curve )) < 0 )  {
@@ -313,24 +313,24 @@ getsolid(void)
 	}
 	bu_free( (char *)curve, "curve" );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "rpp" ) == 0 )  {
 	double	min[3], max[3];
 
 	if ( getsoldata( dd, 2*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	VSET( min, dd[0], dd[2], dd[4] );
 	VSET( max, dd[1], dd[3], dd[5] );
 	ret = mk_rpp( outfp, name, min, max );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "box" ) == 0 )  {
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	VMOVE( T(0), D(0) );
 	VADD2( T(1), D(0), D(2) );
 	VADD3( T(2), D(0), D(2), D(1) );
@@ -342,14 +342,14 @@ getsolid(void)
 	VADD3( T(7), D(0), D(3), D(1) );
 	ret = mk_arb8( outfp, name, &tmp[0][X] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "raw" ) == 0 ||
 	 strcmp( solid_type, "wed" ) == 0		/* DoE name */
 	)  {
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	VMOVE( T(0), D(0) );
 	VADD2( T(1), D(0), D(2) );
 	VMOVE( T(2), T(1) );
@@ -361,7 +361,7 @@ getsolid(void)
 	VADD3( T(7), D(0), D(3), D(1) );
 	ret = mk_arb8( outfp, name, &tmp[0][X] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "rvw" ) == 0 )  {
@@ -372,7 +372,7 @@ getsolid(void)
 	vect_t	a, b, c;
 
 	if ( getsoldata( dd, 1*3+4, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	a2 = dd[3];		/* XY side length */
 	theta = dd[4];
 	phi = dd[5];
@@ -397,13 +397,13 @@ getsolid(void)
 	VADD2( T(7), T(3), c );
 	ret = mk_arb8( outfp, name, &tmp[0][X] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "arw" ) == 0) {
 	/* ARbitrary Wedge --- ERIM */
 	if ( getsoldata( dd, 4*3, sol_work ) < 0)
-	    return(-1);
+	    return -1;
 	VMOVE( T(0), D(0) );
 	VADD2( T(1), D(0), D(2) );
 	VADD3( T(2), D(0), D(2), D(3) );
@@ -416,102 +416,102 @@ getsolid(void)
 	VMOVE( T(7), T(6) );
 	ret = mk_arb8( outfp, name, &tmp[0][X]);
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "arb8" ) == 0 )  {
 	if ( getsoldata( dd, 8*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_arb8( outfp, name, dd );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "arb7" ) == 0 )  {
 	if ( getsoldata( dd, 7*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	VMOVE( D(7), D(4) );
 	ret = mk_arb8( outfp, name, dd );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "arb6" ) == 0 )  {
 	if ( getsoldata( dd, 6*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	/* Note that the ordering is important, as data is in D(4), D(5) */
 	VMOVE( D(7), D(5) );
 	VMOVE( D(6), D(5) );
 	VMOVE( D(5), D(4) );
 	ret = mk_arb8( outfp, name, dd );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "arb5" ) == 0 )  {
 	if ( getsoldata( dd, 5*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	VMOVE( D(5), D(4) );
 	VMOVE( D(6), D(4) );
 	VMOVE( D(7), D(4) );
 	ret = mk_arb8( outfp, name, dd );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "arb4" ) == 0 )  {
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_arb4( outfp, name, dd );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "rcc" ) == 0 )  {
 	/* V, H, r */
 	if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_rcc( outfp, name, D(0), D(1), dd[6] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "rec" ) == 0 )  {
 	/* V, H, A, B */
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_tgc( outfp, name, D(0), D(1),
 		      D(2), D(3), D(2), D(3) );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "trc" ) == 0 )  {
 	/* V, H, r1, r2 */
 	if ( getsoldata( dd, 2*3+2, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_trc_h( outfp, name, D(0), D(1), dd[6], dd[7] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "tec" ) == 0 )  {
 	/* V, H, A, B, p */
 	if ( getsoldata( dd, 4*3+1, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	r1 = 1.0/dd[12];	/* P */
 	VSCALE( D(4), D(2), r1 );
 	VSCALE( D(5), D(3), r1 );
 	ret = mk_tgc( outfp, name, D(0), D(1),
 		      D(2), D(3), D(4), D(5) );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "tgc" ) == 0 )  {
 	/* V, H, A, B, r1, r2 */
 	if ( getsoldata( dd, 4*3+2, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	r1 = dd[12] / MAGNITUDE( D(2) );	/* A/|A| * C */
 	r2 = dd[13] / MAGNITUDE( D(3) );	/* B/|B| * D */
 	VSCALE( D(4), D(2), r1 );
@@ -519,16 +519,16 @@ getsolid(void)
 	ret = mk_tgc( outfp, name, D(0), D(1),
 		      D(2), D(3), D(4), D(5) );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "sph" ) == 0 )  {
 	/* V, radius */
 	if ( getsoldata( dd, 1*3+1, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_sph( outfp, name, D(0), dd[3] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strncmp( solid_type, "wir", 3 ) == 0 )  {
@@ -548,7 +548,7 @@ getsolid(void)
 	pts = ( double *)bu_malloc(num * sizeof( double), "pts" );
 
 	if ( getsoldata( pts, num, sol_work ) < 0 )  {
-	    return(-1);
+	    return -1;
 	}
 	dia = pts[num-1] * 2.0;	/* radius X 2.0 == diameter */
 
@@ -569,60 +569,60 @@ getsolid(void)
 	}
 
 	if ( mk_pipe( outfp, name, &head ) < 0 )
-	    return(-1);
+	    return -1;
 	mk_pipe_free( &head );
 	bu_free( name, "name" );
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     if ( strcmp( solid_type, "rpc" ) == 0 )  {
 	/* V, H, B, r */
 	if ( getsoldata( dd, 3*3+1, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_rpc( outfp, name, D(0), D(1),
 		      D(2), dd[9] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "rhc" ) == 0 )  {
 	/* V, H, B, r, c */
 	if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_rhc( outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "epa" ) == 0 )  {
 	/* V, H, Au, r1, r2 */
 	if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_epa( outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "ehy" ) == 0 )  {
 	/* V, H, Au, r1, r2, c */
 	if ( getsoldata( dd, 3*3+3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_ehy( outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10], dd[11] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "eto" ) == 0 )  {
 	/* V, N, C, r, rd */
 	if ( getsoldata( dd, 3*3+2, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_eto( outfp, name, D(0), D(1),
 		      D(2), dd[9], dd[10] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
 
@@ -637,7 +637,7 @@ getsolid(void)
 	 * ELL1 format is V, A, r
 	 */
 	if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	VADD2SCALE( v, D(0), D(1), 0.5 ); /* V is midpoint */
 
 	VSUB2( work, D(1), D(0) );	/* work holds F2 -  F1 */
@@ -656,7 +656,7 @@ getsolid(void)
 	/* V, A, r */
 	/* GIFT4 name is "ell1", GIFT5 name is "ell" */
 	if ( getsoldata( dd, 2*3+1, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 
     ell1:
 	r1 = dd[6];		/* R */
@@ -675,34 +675,34 @@ getsolid(void)
 	/* Now we have V, A, B, C */
 	ret = mk_ell( outfp, name, D(0), D(1), D(2), D(3) );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "ellg" ) == 0 )  {
 	/* V, A, B, C */
 	if ( getsoldata( dd, 4*3, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_ell( outfp, name, D(0), D(1), D(2), D(3) );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "tor" ) == 0 )  {
 	/* V, N, r1, r2 */
 	if ( getsoldata( dd, 2*3+2, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_tor( outfp, name, D(0), D(1), dd[6], dd[7] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "haf" ) == 0 )  {
 	/* N, d */
 	if ( getsoldata( dd, 1*3+1, sol_work ) < 0 )
-	    return(-1);
+	    return -1;
 	ret = mk_half( outfp, name, D(0), -dd[3] );
 	bu_free( name, "name" );
-	return(ret);
+	return ret;
     }
 
     if ( strcmp( solid_type, "arbn" ) == 0 )  {
@@ -715,7 +715,7 @@ getsolid(void)
      *  or that solid is not currently supported.
      */
     printf("getsolid:  no support for solid type '%s'\n", solid_type );
-    return(-1);
+    return -1;
 }
 
 int
@@ -762,7 +762,7 @@ read_arbn(char *name)
 	if (npe>0) eat( (npe+5)/6 );	/* vertex pt index numbers */
 	if (neq>0) eat( neq );		/* plane eqns? */
 	if (nae>0) eat( (nae+1)/2 );	/* az el & vertex index? */
-	return(-1);
+	return -1;
     }
 
     /* Allocate storage for plane equations */
@@ -784,7 +784,7 @@ read_arbn(char *name)
 	if ( get_line( scard, sizeof(scard), "arbn vertex point indices" ) == EOF )  {
 	    printf("too few cards for arbn %d\n",
 		   sol_work);
-	    return(-1);
+	    return -1;
 	}
 	for ( j=0; j<6; j++ )  {
 	    int	q, r, s;
@@ -836,7 +836,7 @@ read_arbn(char *name)
 	if ( get_line( scard, sizeof(scard), "arbn plane equation card" ) == EOF )  {
 	    printf("too few cards for arbn %d\n",
 		   sol_work);
-	    return(-1);
+	    return -1;
 	}
 	eqn[cur_eq][X] = getdouble( scard, 10+0*10, 10 );
 	eqn[cur_eq][Y] = getdouble( scard, 10+1*10, 10 );
@@ -858,7 +858,7 @@ read_arbn(char *name)
 	if ( get_line( scard, sizeof(scard), "arbn az/el card" ) == EOF )  {
 	    printf("too few cards for arbn %d\n",
 		   sol_work);
-	    return(-1);
+	    return -1;
 	}
 	for ( j=0; j<2; j++ )  {
 	    double	az, el;
@@ -887,7 +887,7 @@ read_arbn(char *name)
     }
     if ( nface != cur_eq )  {
 	printf("arbn expected %d faces, got %d\n", nface, cur_eq);
-	return(-1);
+	return -1;
     }
 
     /* Average all given points together to find centroid */
@@ -915,7 +915,7 @@ read_arbn(char *name)
 	} else {
 	    /* Centroid lies on this face */
 	    printf("arbn centroid lies on face\n");
-	    return(-1);
+	    return -1;
 	}
 
     }
@@ -998,7 +998,7 @@ read_arbn(char *name)
     for ( i=0; i<nface; i++ )  {
 	if ( used[i] != 0 )  continue;	/* face was used */
 	printf("arbn face %d unused, solid is not convex\n", i);
-	return(-1);
+	return -1;
     }
 
     /* Write out the solid ! */
@@ -1009,7 +1009,7 @@ read_arbn(char *name)
     if ( eqn )  bu_free( (char *)eqn, "eqn" );
     if ( used )  bu_free( (char *)used, "used" );
 
-    return(i);
+    return i;
 }
 
 /*

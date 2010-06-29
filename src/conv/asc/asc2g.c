@@ -96,7 +96,7 @@ nxt_spc(char *cp)
     if (*cp != '\0') {
 	cp++;
     }
-    return(cp);
+    return cp;
 }
 
 
@@ -107,7 +107,7 @@ ngran(int nfloat)
     /* Round up */
     gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
     gran = (gran * sizeof(float)) / sizeof(union record);
-    return(gran);
+    return gran;
 }
 
 
@@ -124,9 +124,9 @@ incr_ars_pt(void)
     }
 
     if (ars_curve >= ars_ncurves)
-	return(2);
+	return 2;
 
-    return(ret);
+    return ret;
 }
 
 
@@ -870,8 +870,8 @@ combbld(void)
 	abort();
     }
 
-    if (buf[0] == '\0')  return(0);
-    return(1);
+    if (buf[0] == '\0')  return 0;
+    return 1;
 }
 
 

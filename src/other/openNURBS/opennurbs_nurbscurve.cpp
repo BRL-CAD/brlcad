@@ -1310,6 +1310,95 @@ ON_NurbsCurve::IsPeriodic() const
   return bIsPeriodic;
 }
 
+
+bool ON_IsCurvatureDiscontinuity( 
+  const ON_3dVector Km, 
+  const ON_3dVector Kp,
+  double cos_angle_tolerance,
+  double curvature_tolerance,
+  double zero_curvature,
+  double radius_tolerance
+  )
+{
+  const double d = (Km-Kp).Length();
+  if ( d <= curvature_tolerance )
+    return false;
+
+  // If the scalar curvature is <= zero_curvature,
+  // then K is small enough that we assume it is zero.
+  // The primary reason for doing this is to prevent
+  // reporting a curvature discontinuity when one
+  // or both of the curvatures is small1.0e-300 and 1.0e-200
+  if ( !(zero_curvature > 7.7037197787136e-34) )
+    zero_curvature = 7.7037197787136e-34;
+  double km = Km.Length();
+  double kp = Kp.Length();
+  if ( km <= zero_curvature )
+    km = 0.0;
+  if ( kp <= zero_curvature )
+  {
+    kp = 0.0;
+    if ( 0.0 == km )
+    {
+      // both curvatures are "zero"
+      return false;
+    }
+  }
+
+  if ( 0.0 == km || 0.0 == kp )
+  {
+    // one side is flat and the other is curved.
+    return true;
+  }
+
+  if ( 0.0 == curvature_tolerance )
+  {
+    // User is asking for exact match.
+    return true;
+  }
+
+  // At this point we know km > 0 and kp > 0.
+
+  // 2 March 2010 Dale Lear
+  //   I'm adding the code below this comment so curvature discontinuities
+  //   that are the result of loss of precision in evaluating Km and Kp
+  //   are ignored.  These are hurestics from this point on
+  //   because I cannot change the tolerance value used in legacy
+  //   code.  This change is motivated by the rail curve in bug 61851.
+  //   The rail is G2 and the 1.0e-3 is what is required
+  //   to get this function to report the curve is G2.
+
+
+  const double KmoKp = Kp*Km;
+  if ( KmoKp < km*kp*cos_angle_tolerance )
+    return true; // Km and Kp are not parallel
+
+  const double relative_tolerance = 1.0e-3;
+
+  // At this point we assume Km and Kp are parallel, km > 0 and kp > 0,
+  // and focus on deciding if km and kp should be considered equal.
+
+  const double rm = (km > 0.0) ? 1.0/km : 0.0;
+  const double rp = (kp > 0.0) ? 1.0/kp : 0.0;
+  if ( !(radius_tolerance >= 0.0) )
+    radius_tolerance = (rm+rp)*relative_tolerance;
+  if ( fabs(rm-rp) > radius_tolerance )
+  {
+    // radii do not agree
+    return true;
+  }
+
+  const double k_reltol = (km+kp)*relative_tolerance;
+  if ( d > k_reltol )
+  {
+    // curvature vectors not agree to 3 decimal places.
+    return true;
+  }
+
+  return false; // treat Km and Kp as equal curvatures.
+}
+
+
 bool ON_NurbsCurve::GetNextDiscontinuity( 
                 ON::continuity c,
                 double t0,
@@ -1479,9 +1568,17 @@ bool ON_NurbsCurve::GetNextDiscontinuity(
         }
         else if ( bTestKappa )
         {
-          d = (Km-Kp).Length();
-          if ( d > curvature_tolerance )
+          if ( ON_IsCurvatureDiscontinuity( Km, Kp, 
+                                            cos_angle_tolerance,
+                                            curvature_tolerance, 
+                                            ON_UNSET_VALUE, 
+                                            ON_UNSET_VALUE )
+             )
           {
+            // NOTE:
+            //   The test to enter this scope must exactly match
+            //   the one used in ON_PolyCurve::GetNextDiscontinuity()
+            //   and  ON_Curve::GetNextDiscontinuity().
             *dtype = 2;
             *t = m_knot[ki];
             return true;

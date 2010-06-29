@@ -68,6 +68,14 @@ typedef unsigned int fpu_control_t __attribute__ ((__mode__ (__HI__)));
 #if defined(__sun) && defined(__i386) && !defined(__GNUC__)
 #include <sunmath.h>
 #endif
+
+/*
+ * MIPS floating-point units need special settings in control registers
+ * to use gradual underflow as we expect.
+ */
+#if defined(__mips)
+#include <sys/fpu.h>
+#endif
 /*
  * HP's PA_RISC architecture uses 7ff4000000000000 to represent a quiet NaN.
  * Everyone else uses 7ff8000000000000. (Why, HP, why?)
@@ -2156,6 +2164,14 @@ TclInitDoubleConversion(void)
 	double dv;
 	Tcl_WideUInt iv;
     } bitwhack;
+#endif
+
+#if defined(__mips)
+    union fpc_csr mipsCR;
+
+    mipsCR.fc_word = get_fpc_csr();
+    mipsCR.fc_struct.flush = 0;
+    set_fpc_csr(mipsCR.fc_word);
 #endif
 
     /*

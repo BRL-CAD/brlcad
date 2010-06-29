@@ -926,6 +926,10 @@ BN_EXPORT BU_EXTERN(int bn_3pts_distinct,
 		     const point_t b,
 		     const point_t c,
 		     const struct bn_tol *tol));
+BN_EXPORT BU_EXTERN(int bn_npts_distinct,
+		    (const int npts,
+		     const point_t *pts,
+		     const struct bn_tol *tol));
 BN_EXPORT BU_EXTERN(int bn_mk_plane_3pts,
 		    (plane_t plane,
 		     const point_t a,
@@ -1043,8 +1047,8 @@ BN_EXPORT BU_EXTERN(int bn_hlf_class,
 		     const struct bn_tol *tol));
 
 #define BN_CLASSIFY_UNIMPLEMENTED 0x0000
-#define BN_CLASSIFY_OVERLAPPING   0x0002
 #define BN_CLASSIFY_INSIDE        0x0001
+#define BN_CLASSIFY_OVERLAPPING   0x0002
 #define BN_CLASSIFY_OUTSIDE       0x0003
 
 BN_EXPORT BU_EXTERN(int bn_isect_planes,
@@ -1294,8 +1298,8 @@ BN_EXPORT extern void bn_mathtab_constant();
  *
  */
 
-extern double bn_randmt();
-extern void bn_randmt_seed(unsigned long seed);
+BN_EXPORT BU_EXTERN(double bn_randmt, ());
+BN_EXPORT BU_EXTERN(void bn_randmt_seed, (unsigned long seed));
 
 
 /*----------------------------------------------------------------------*/
@@ -1842,7 +1846,7 @@ BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
  * head.
  *
  * To visit all the elements in the vlist:
- *	for (BU_LIST_FOR(vp, rt_vlist, hp)) {
+ *	for (BU_LIST_FOR(vp, bn_vlist, hp)) {
  *		register int	i;
  *		register int	nused = vp->nused;
  *		register int	*cmd = vp->cmd;

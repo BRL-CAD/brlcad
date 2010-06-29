@@ -49,7 +49,7 @@ Make_planar_face( s, entityno, face_orient )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
     Readrec( dir[entityno]->param );
@@ -200,7 +200,7 @@ Make_planar_face( s, entityno, face_orient )
  err:
     bu_free( (char *)edge_list, "Make_face (edge_list)" );
     bu_free( (char *)verts, "Make_face (vertexlist)" );
-    return( fu );
+    return fu;
 }
 
 /*

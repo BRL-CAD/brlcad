@@ -78,17 +78,17 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind >= argc )
-	return(0);		/* missing positional arg */
+	return 0;		/* missing positional arg */
     vsize = atoi( argv[bu_optind++] );
 
     if ( bu_optind >= argc )  {
 	if ( isatty(fileno(stdin)) )
-	    return(0);
+	    return 0;
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
@@ -97,7 +97,7 @@ get_args(int argc, char **argv)
     if ( argc > ++bu_optind )
 	(void)fprintf( stderr, "spm-fb: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 /*

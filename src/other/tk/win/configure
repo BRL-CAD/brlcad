@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT AR RANLIB RC SET_MAKE TCL_THREADS CYGPATH CELIB_DIR DL_LIBS CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING CPP EGREP MAN2TCLFLAGS CFLAGS_DEFAULT LDFLAGS_DEFAULT TCL_VERSION TCL_BIN_DIR TCL_SRC_DIR TCL_LIB_FILE TCL_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_DEFS BUILD_TCLSH TCLSH_PROG TK_WIN_VERSION MACHINE TK_VERSION TK_MAJOR_VERSION TK_MINOR_VERSION TK_PATCH_LEVEL TK_DBGX TK_LIB_FILE TK_DLL_FILE TK_STUB_LIB_FILE TK_STUB_LIB_FLAG TK_BUILD_STUB_LIB_SPEC TK_SRC_DIR TK_BIN_DIR TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_LEVEL TCL_DBGX CFG_TK_SHARED_LIB_SUFFIX CFG_TK_UNSHARED_LIB_SUFFIX CFG_TK_EXPORT_FILE_SUFFIX TK_SHARED_BUILD DEPARG EXTRA_CFLAGS STLIB_LD SHLIB_LD SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX CC_OBJNAME CC_EXENAME LDFLAGS_DEBUG LDFLAGS_OPTIMIZE LDFLAGS_CONSOLE LDFLAGS_WINDOW RC_OUT RC_TYPE RC_INCLUDE RC_DEFINE RC_DEFINES TK_RES RES LIBS_GUI DLLSUFFIX LIBPREFIX LIBSUFFIX EXESUFFIX LIBRARIES MAKE_LIB POST_MAKE_LIB MAKE_DLL MAKE_EXE TK_LIB_FLAG TK_LIB_SPEC TK_BUILD_LIB_SPEC TK_STUB_LIB_SPEC TK_STUB_LIB_PATH TK_BUILD_STUB_LIB_PATH TK_CC_SEARCH_FLAGS TK_LD_SEARCH_FLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP AR RANLIB RC SET_MAKE TCL_THREADS CYGPATH CELIB_DIR DL_LIBS CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING MAN2TCLFLAGS CFLAGS_DEFAULT LDFLAGS_DEFAULT TCL_VERSION TCL_BIN_DIR TCL_SRC_DIR TCL_LIB_FILE TCL_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_DEFS BUILD_TCLSH TCLSH_PROG TK_WIN_VERSION MACHINE TK_VERSION TK_MAJOR_VERSION TK_MINOR_VERSION TK_PATCH_LEVEL TK_DBGX TK_LIB_FILE TK_DLL_FILE TK_STUB_LIB_FILE TK_STUB_LIB_FLAG TK_BUILD_STUB_LIB_SPEC TK_SRC_DIR TK_BIN_DIR TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_LEVEL TCL_DBGX CFG_TK_SHARED_LIB_SUFFIX CFG_TK_UNSHARED_LIB_SUFFIX CFG_TK_EXPORT_FILE_SUFFIX TK_SHARED_BUILD DEPARG EXTRA_CFLAGS STLIB_LD SHLIB_LD SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX CC_OBJNAME CC_EXENAME LDFLAGS_DEBUG LDFLAGS_OPTIMIZE LDFLAGS_CONSOLE LDFLAGS_WINDOW RC_OUT RC_TYPE RC_INCLUDE RC_DEFINE RC_DEFINES TK_RES RES LIBS_GUI DLLSUFFIX LIBPREFIX LIBSUFFIX EXESUFFIX LIBRARIES MAKE_LIB POST_MAKE_LIB MAKE_DLL MAKE_EXE TK_LIB_FLAG TK_LIB_SPEC TK_BUILD_LIB_SPEC TK_STUB_LIB_SPEC TK_STUB_LIB_PATH TK_BUILD_STUB_LIB_PATH TK_CC_SEARCH_FLAGS TK_LD_SEARCH_FLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1309,7 +1309,7 @@ SHELL=/bin/sh
 TK_VERSION=8.5
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".6"
+TK_PATCH_LEVEL=".8"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -2266,203 +2266,25 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-# To properly support cross-compilation, one would
-# need to use these tool checks instead of
-# the ones below and reconfigure with
-# autoconf 2.50. You can also just set
-# the CC, AR, RANLIB, and RC environment
-# variables if you want to cross compile.
-#AC_CHECK_TOOL(AR, ar)
-#AC_CHECK_TOOL(RANLIB, ranlib)
-#AC_CHECK_TOOL(RC, windres)
-
-if test "${GCC}" = "yes" ; then
-    # Extract the first word of "ar", so it can be a program name with args.
-set dummy ar; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_AR+set}" = set; then
+echo "$as_me:$LINENO: checking for inline" >&5
+echo $ECHO_N "checking for inline... $ECHO_C" >&6
+if test "${ac_cv_c_inline+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$AR"; then
-  ac_cv_prog_AR="$AR" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_AR="ar"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-AR=$ac_cv_prog_AR
-if test -n "$AR"; then
-  echo "$as_me:$LINENO: result: $AR" >&5
-echo "${ECHO_T}$AR" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-    # Extract the first word of "ranlib", so it can be a program name with args.
-set dummy ranlib; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_RANLIB+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$RANLIB"; then
-  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RANLIB="ranlib"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-RANLIB=$ac_cv_prog_RANLIB
-if test -n "$RANLIB"; then
-  echo "$as_me:$LINENO: result: $RANLIB" >&5
-echo "${ECHO_T}$RANLIB" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-    # Extract the first word of "windres", so it can be a program name with args.
-set dummy windres; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_RC+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$RC"; then
-  ac_cv_prog_RC="$RC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_RC="windres"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-RC=$ac_cv_prog_RC
-if test -n "$RC"; then
-  echo "$as_me:$LINENO: result: $RC" >&5
-echo "${ECHO_T}$RC" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-
-    if test "${AR}" = "" ; then
-	{ { echo "$as_me:$LINENO: error: Required archive tool 'ar' not found on PATH." >&5
-echo "$as_me: error: Required archive tool 'ar' not found on PATH." >&2;}
-   { (exit 1); exit 1; }; }
-    fi
-    if test "${RANLIB}" = "" ; then
-	{ { echo "$as_me:$LINENO: error: Required archive index tool 'ranlib' not found on PATH." >&5
-echo "$as_me: error: Required archive index tool 'ranlib' not found on PATH." >&2;}
-   { (exit 1); exit 1; }; }
-    fi
-    if test "${RC}" = "" ; then
-	{ { echo "$as_me:$LINENO: error: Required resource tool 'windres' not found on PATH." >&5
-echo "$as_me: error: Required resource tool 'windres' not found on PATH." >&2;}
-   { (exit 1); exit 1; }; }
-    fi
-fi
-
-#--------------------------------------------------------------------
-# Checks to see if the make progeam sets the $MAKE variable.
-#--------------------------------------------------------------------
-
-echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
-echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
-set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,:./+-,___p_,'`
-if eval "test \"\${ac_cv_prog_make_${ac_make}_set+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.make <<\_ACEOF
-all:
-	@echo 'ac_maketemp="$(MAKE)"'
-_ACEOF
-# GNU make sometimes prints "make[1]: Entering...", which would confuse us.
-eval `${MAKE-make} -f conftest.make 2>/dev/null | grep temp=`
-if test -n "$ac_maketemp"; then
-  eval ac_cv_prog_make_${ac_make}_set=yes
-else
-  eval ac_cv_prog_make_${ac_make}_set=no
-fi
-rm -f conftest.make
-fi
-if eval "test \"`echo '$ac_cv_prog_make_'${ac_make}_set`\" = yes"; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-  SET_MAKE=
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-  SET_MAKE="MAKE=${MAKE-make}"
-fi
-
-
-#--------------------------------------------------------------------
-# Perform additinal compiler tests.
-#--------------------------------------------------------------------
-
-
-echo "$as_me:$LINENO: checking for Cygwin version of gcc" >&5
-echo $ECHO_N "checking for Cygwin version of gcc... $ECHO_C" >&6
-if test "${ac_cv_cygwin+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-cat >conftest.$ac_ext <<_ACEOF
+  ac_cv_c_inline=no
+for ac_kw in inline __inline__ __inline; do
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
-#ifdef __CYGWIN__
-#error cygwin
+#ifndef __cplusplus
+typedef int foo_t;
+static $ac_kw foo_t static_foo () {return 0; }
+$ac_kw foo_t foo () {return 0; }
 #endif
 
-int
-main ()
-{
-
-  ;
-  return 0;
-}
 _ACEOF
 rm -f conftest.$ac_objext
 if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
@@ -2486,612 +2308,34 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_cygwin=no
+  ac_cv_c_inline=$ac_kw; break
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_cygwin=yes
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-
-fi
-echo "$as_me:$LINENO: result: $ac_cv_cygwin" >&5
-echo "${ECHO_T}$ac_cv_cygwin" >&6
-if test "$ac_cv_cygwin" = "yes" ; then
-    { { echo "$as_me:$LINENO: error: Compiling under Cygwin is not currently supported.
-A maintainer for the Cygwin port of Tcl/Tk is needed. See the README
-file for information about building with Mingw." >&5
-echo "$as_me: error: Compiling under Cygwin is not currently supported.
-A maintainer for the Cygwin port of Tcl/Tk is needed. See the README
-file for information about building with Mingw." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-#--------------------------------------------------------------------
-# Determines the correct binary file extension (.o, .obj, .exe etc.)
-#--------------------------------------------------------------------
-
-
-
-
-#--------------------------------------------------------------------
-# Check whether --enable-threads or --disable-threads was given.
-#--------------------------------------------------------------------
-
-
-    echo "$as_me:$LINENO: checking for building with threads" >&5
-echo $ECHO_N "checking for building with threads... $ECHO_C" >&6
-    # Check whether --enable-threads or --disable-threads was given.
-if test "${enable_threads+set}" = set; then
-  enableval="$enable_threads"
-  tcl_ok=$enableval
-else
-  tcl_ok=no
-fi;
-
-    if test "$tcl_ok" = "yes"; then
-	echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	TCL_THREADS=1
-	cat >>confdefs.h <<\_ACEOF
-#define TCL_THREADS 1
-_ACEOF
-
-	# USE_THREAD_ALLOC tells us to try the special thread-based
-	# allocator that significantly reduces lock contention
-	cat >>confdefs.h <<\_ACEOF
-#define USE_THREAD_ALLOC 1
-_ACEOF
-
-    else
-	TCL_THREADS=0
-	echo "$as_me:$LINENO: result: no (default)" >&5
-echo "${ECHO_T}no (default)" >&6
-    fi
-
-
-
-#--------------------------------------------------------------------
-# The statements below define a collection of symbols related to
-# building libtk as a shared library instead of a static library.
-#--------------------------------------------------------------------
-
-
-    echo "$as_me:$LINENO: checking how to build libraries" >&5
-echo $ECHO_N "checking how to build libraries... $ECHO_C" >&6
-    # Check whether --enable-shared or --disable-shared was given.
-if test "${enable_shared+set}" = set; then
-  enableval="$enable_shared"
-  tcl_ok=$enableval
-else
-  tcl_ok=yes
-fi;
-
-    if test "${enable_shared+set}" = set; then
-	enableval="$enable_shared"
-	tcl_ok=$enableval
-    else
-	tcl_ok=yes
-    fi
-
-    if test "$tcl_ok" = "yes" ; then
-	echo "$as_me:$LINENO: result: shared" >&5
-echo "${ECHO_T}shared" >&6
-	SHARED_BUILD=1
-    else
-	echo "$as_me:$LINENO: result: static" >&5
-echo "${ECHO_T}static" >&6
-	SHARED_BUILD=0
-	cat >>confdefs.h <<\_ACEOF
-#define STATIC_BUILD 1
-_ACEOF
-
-    fi
-
-
-#--------------------------------------------------------------------
-# The statements below define a collection of compile flags.  This
-# macro depends on the value of SHARED_BUILD, and should be called
-# after SC_ENABLE_SHARED checks the configure switches.
-#--------------------------------------------------------------------
-
-
-
-    # Step 0: Enable 64 bit support?
-
-    echo "$as_me:$LINENO: checking if 64bit support is requested" >&5
-echo $ECHO_N "checking if 64bit support is requested... $ECHO_C" >&6
-    # Check whether --enable-64bit or --disable-64bit was given.
-if test "${enable_64bit+set}" = set; then
-  enableval="$enable_64bit"
-  do64bit=$enableval
-else
-  do64bit=no
-fi;
-    echo "$as_me:$LINENO: result: $do64bit" >&5
-echo "${ECHO_T}$do64bit" >&6
-
-    # Cross-compiling options for Windows/CE builds
-
-    echo "$as_me:$LINENO: checking if Windows/CE build is requested" >&5
-echo $ECHO_N "checking if Windows/CE build is requested... $ECHO_C" >&6
-    # Check whether --enable-wince or --disable-wince was given.
-if test "${enable_wince+set}" = set; then
-  enableval="$enable_wince"
-  doWince=$enableval
-else
-  doWince=no
-fi;
-    echo "$as_me:$LINENO: result: $doWince" >&5
-echo "${ECHO_T}$doWince" >&6
-
-    echo "$as_me:$LINENO: checking for Windows/CE celib directory" >&5
-echo $ECHO_N "checking for Windows/CE celib directory... $ECHO_C" >&6
-
-# Check whether --with-celib or --without-celib was given.
-if test "${with_celib+set}" = set; then
-  withval="$with_celib"
-  CELIB_DIR=$withval
-else
-  CELIB_DIR=NO_CELIB
-fi;
-    echo "$as_me:$LINENO: result: $CELIB_DIR" >&5
-echo "${ECHO_T}$CELIB_DIR" >&6
-
-    # Set some defaults (may get changed below)
-    EXTRA_CFLAGS=""
-
-    # Extract the first word of "cygpath", so it can be a program name with args.
-set dummy cygpath; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_CYGPATH+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$CYGPATH"; then
-  ac_cv_prog_CYGPATH="$CYGPATH" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_CYGPATH="cygpath -w"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
 done
 
-  test -z "$ac_cv_prog_CYGPATH" && ac_cv_prog_CYGPATH="echo"
 fi
-fi
-CYGPATH=$ac_cv_prog_CYGPATH
-if test -n "$CYGPATH"; then
-  echo "$as_me:$LINENO: result: $CYGPATH" >&5
-echo "${ECHO_T}$CYGPATH" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
+echo "$as_me:$LINENO: result: $ac_cv_c_inline" >&5
+echo "${ECHO_T}$ac_cv_c_inline" >&6
 
 
-    SHLIB_SUFFIX=".dll"
-
-    # Check for a bug in gcc's windres that causes the
-    # compile to fail when a Windows native path is
-    # passed into windres. The mingw toolchain requires
-    # Windows native paths while Cygwin should work
-    # with both. Avoid the bug by passing a POSIX
-    # path when using the Cygwin toolchain.
-
-    if test "$GCC" = "yes" && test "$CYGPATH" != "echo" ; then
-	conftest=/tmp/conftest.rc
-	echo "STRINGTABLE BEGIN" > $conftest
-	echo "101 \"name\"" >> $conftest
-	echo "END" >> $conftest
-
-	echo "$as_me:$LINENO: checking for Windows native path bug in windres" >&5
-echo $ECHO_N "checking for Windows native path bug in windres... $ECHO_C" >&6
-	cyg_conftest=`$CYGPATH $conftest`
-	if { ac_try='$RC -o conftest.res.o $cyg_conftest'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } ; then
-	    echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-	else
-	    echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-	    CYGPATH=echo
-	fi
-	conftest=
-	cyg_conftest=
-    fi
-
-    if test "$CYGPATH" = "echo" || test "$ac_cv_cygwin" = "yes"; then
-        DEPARG='"$<"'
-    else
-        DEPARG='"$(shell $(CYGPATH) $<)"'
-    fi
-
-    # set various compiler flags depending on whether we are using gcc or cl
-
-    echo "$as_me:$LINENO: checking compiler flags" >&5
-echo $ECHO_N "checking compiler flags... $ECHO_C" >&6
-    if test "${GCC}" = "yes" ; then
-	if test "$do64bit" != "no" ; then
-	    { echo "$as_me:$LINENO: WARNING: 64bit mode not supported with GCC on Windows" >&5
-echo "$as_me: WARNING: 64bit mode not supported with GCC on Windows" >&2;}
-	fi
-	SHLIB_LD=""
-	SHLIB_LD_LIBS=""
-	LIBS="-lws2_32"
-	# mingw needs to link ole32 and oleaut32 for [send], but MSVC doesn't
-	LIBS_GUI="-lgdi32 -lcomdlg32 -limm32 -lcomctl32 -lshell32 -luuid -lole32 -loleaut32"
-	STLIB_LD='${AR} cr'
-	RC_OUT=-o
-	RC_TYPE=
-	RC_INCLUDE=--include
-	RC_DEFINE=--define
-	RES=res.o
-	MAKE_LIB="\${STLIB_LD} \$@"
-	POST_MAKE_LIB="\${RANLIB} \$@"
-	MAKE_EXE="\${CC} -o \$@"
-	LIBPREFIX="lib"
-
-	#if test "$ac_cv_cygwin" = "yes"; then
-	#    extra_cflags="-mno-cygwin"
-	#    extra_ldflags="-mno-cygwin"
-	#else
-	#    extra_cflags=""
-	#    extra_ldflags=""
-	#fi
-
-	if test "$ac_cv_cygwin" = "yes"; then
-	  touch ac$$.c
-	  if ${CC} -c -mwin32 ac$$.c >/dev/null 2>&1; then
-	    case "$extra_cflags" in
-	      *-mwin32*) ;;
-	      *) extra_cflags="-mwin32 $extra_cflags" ;;
-	    esac
-	    case "$extra_ldflags" in
-	      *-mwin32*) ;;
-	      *) extra_ldflags="-mwin32 $extra_ldflags" ;;
-	    esac
-	  fi
-	  rm -f ac$$.o ac$$.c
-	else
-	  extra_cflags=''
-	  extra_ldflags=''
-	fi
-
-	if test "${SHARED_BUILD}" = "0" ; then
-	    # static
-            echo "$as_me:$LINENO: result: using static flags" >&5
-echo "${ECHO_T}using static flags" >&6
-	    runtime=
-	    MAKE_DLL="echo "
-	    LIBSUFFIX="s\${DBGX}.a"
-	    LIBFLAGSUFFIX="s\${DBGX}"
-	    LIBRARIES="\${STATIC_LIBRARIES}"
-	    EXESUFFIX="s\${DBGX}.exe"
-	else
-	    # dynamic
-            echo "$as_me:$LINENO: result: using shared flags" >&5
-echo "${ECHO_T}using shared flags" >&6
-
-	    # ad-hoc check to see if CC supports -shared.
-	    if "${CC}" -shared 2>&1 | egrep ': -shared not supported' >/dev/null; then
-		{ { echo "$as_me:$LINENO: error: ${CC} does not support the -shared option.
-                You will need to upgrade to a newer version of the toolchain." >&5
-echo "$as_me: error: ${CC} does not support the -shared option.
-                You will need to upgrade to a newer version of the toolchain." >&2;}
-   { (exit 1); exit 1; }; }
-	    fi
-
-	    runtime=
-	    # Link with gcc since ld does not link to default libs like
-	    # -luser32 and -lmsvcrt by default. Make sure CFLAGS is
-	    # included so -mno-cygwin passed the correct libs to the linker.
-	    SHLIB_LD='${CC} -shared ${CFLAGS}'
-	    SHLIB_LD_LIBS='${LIBS}'
-	    # Add SHLIB_LD_LIBS to the Make rule, not here.
-	    MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -o \$@ ${extra_ldflags} \
-	        -Wl,--out-implib,\$(patsubst %.dll,lib%.a,\$@)"
-
-	    LIBSUFFIX="\${DBGX}.a"
-	    LIBFLAGSUFFIX="\${DBGX}"
-	    EXESUFFIX="\${DBGX}.exe"
-	    LIBRARIES="\${SHARED_LIBRARIES}"
-	fi
-	# DLLSUFFIX is separate because it is the building block for
-	# users of tclConfig.sh that may build shared or static.
-	DLLSUFFIX="\${DBGX}.dll"
-	SHLIB_SUFFIX=.dll
-
-	EXTRA_CFLAGS="${extra_cflags}"
-
-	CFLAGS_DEBUG=-g
-	CFLAGS_OPTIMIZE="-O2 -fomit-frame-pointer"
-	CFLAGS_WARNING="-Wall"
-	LDFLAGS_DEBUG=
-	LDFLAGS_OPTIMIZE=
-
-	# Specify the CC output file names based on the target name
-	CC_OBJNAME="-o \$@"
-	CC_EXENAME="-o \$@"
-
-	# Specify linker flags depending on the type of app being
-	# built -- Console vs. Window.
-	#
-	# ORIGINAL COMMENT:
-	# We need to pass -e _WinMain@16 so that ld will use
-	# WinMain() instead of main() as the entry point. We can't
-	# use autoconf to check for this case since it would need
-	# to run an executable and that does not work when
-	# cross compiling. Remove this -e workaround once we
-	# require a gcc that does not have this bug.
-	#
-	# MK NOTE: Tk should use a different mechanism. This causes
-	# interesting problems, such as wish dying at startup.
-	#LDFLAGS_WINDOW="-mwindows -e _WinMain@16 ${extra_ldflags}"
-	LDFLAGS_CONSOLE="-mconsole ${extra_ldflags}"
-	LDFLAGS_WINDOW="-mwindows ${extra_ldflags}"
-
-	# gcc under Windows supports only 32bit builds
-	MACHINE="X86"
-    else
-	if test "${SHARED_BUILD}" = "0" ; then
-	    # static
-            echo "$as_me:$LINENO: result: using static flags" >&5
-echo "${ECHO_T}using static flags" >&6
-	    runtime=-MT
-	    MAKE_DLL="echo "
-	    LIBSUFFIX="s\${DBGX}.lib"
-	    LIBFLAGSUFFIX="s\${DBGX}"
-	    LIBRARIES="\${STATIC_LIBRARIES}"
-	    EXESUFFIX="s\${DBGX}.exe"
-	    SHLIB_LD_LIBS=""
-	else
-	    # dynamic
-            echo "$as_me:$LINENO: result: using shared flags" >&5
-echo "${ECHO_T}using shared flags" >&6
-	    runtime=-MD
-	    # Add SHLIB_LD_LIBS to the Make rule, not here.
-	    MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -out:\$@"
-	    LIBSUFFIX="\${DBGX}.lib"
-	    LIBFLAGSUFFIX="\${DBGX}"
-	    EXESUFFIX="\${DBGX}.exe"
-	    LIBRARIES="\${SHARED_LIBRARIES}"
-	    SHLIB_LD_LIBS='${LIBS}'
-	fi
-	# DLLSUFFIX is separate because it is the building block for
-	# users of tclConfig.sh that may build shared or static.
-	DLLSUFFIX="\${DBGX}.dll"
-
- 	# This is a 2-stage check to make sure we have the 64-bit SDK
- 	# We have to know where the SDK is installed.
-	# This magic is based on MS Platform SDK for Win2003 SP1 - hobbs
-	# MACHINE is IX86 for LINK, but this is used by the manifest,
-	# which requires x86|amd64|ia64.
-	MACHINE="X86"
-	if test "$do64bit" != "no" ; then
-	    if test "x${MSSDK}x" = "xx" ; then
-		MSSDK="C:/Progra~1/Microsoft Platform SDK"
-	    fi
-	    MSSDK=`echo "$MSSDK" | sed -e 's!\\\!/!g'`
-	    PATH64=""
-	    case "$do64bit" in
-	      amd64|x64|yes)
-		MACHINE="AMD64" ; # assume AMD64 as default 64-bit build
-		PATH64="${MSSDK}/Bin/Win64/x86/AMD64"
-		;;
-	      ia64)
-		MACHINE="IA64"
-		PATH64="${MSSDK}/Bin/Win64"
-		;;
-	    esac
-	    if test ! -d "${PATH64}" ; then
-		{ echo "$as_me:$LINENO: WARNING: Could not find 64-bit $MACHINE SDK to enable 64bit mode" >&5
-echo "$as_me: WARNING: Could not find 64-bit $MACHINE SDK to enable 64bit mode" >&2;}
-		{ echo "$as_me:$LINENO: WARNING: Ensure latest Platform SDK is installed" >&5
-echo "$as_me: WARNING: Ensure latest Platform SDK is installed" >&2;}
-		do64bit="no"
-	    else
-		echo "$as_me:$LINENO: result:    Using 64-bit $MACHINE mode" >&5
-echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
-	    fi
-	fi
-
-	LIBS="user32.lib advapi32.lib ws2_32.lib"
-	if test "$do64bit" != "no" ; then
-	    # The space-based-path will work for the Makefile, but will
-	    # not work if AC_TRY_COMPILE is called.  TEA has the
-	    # TEA_PATH_NOSPACE to avoid this issue.
-	    CC="\"${PATH64}/cl.exe\" -I\"${MSSDK}/Include\" \
-		-I\"${MSSDK}/Include/crt\" -I\"${MSSDK}/Include/crt/sys\""
-	    RC="\"${MSSDK}/bin/rc.exe\""
-	    CFLAGS_DEBUG="-nologo -Zi -Od ${runtime}d"
-	    # Do not use -O2 for Win64 - this has proved buggy in code gen.
-	    CFLAGS_OPTIMIZE="-nologo -O1 ${runtime}"
-	    lflags="-nologo -MACHINE:${MACHINE} -LIBPATH:\"${MSSDK}/Lib/${MACHINE}\""
-	    LINKBIN="\"${PATH64}/link.exe\""
-	    # Avoid 'unresolved external symbol __security_cookie' errors.
-	    # c.f. http://support.microsoft.com/?id=894573
-	    LIBS="$LIBS bufferoverflowU.lib"
-	else
-	    RC="rc"
-	    # -Od - no optimization
-	    # -WX - warnings as errors
-	    CFLAGS_DEBUG="-nologo -Z7 -Od -WX ${runtime}d"
-	    # -O2 - create fast code (/Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy)
-	    CFLAGS_OPTIMIZE="-nologo -O2 ${runtime}"
-	    lflags="-nologo"
-	    LINKBIN="link"
-	fi
-
-	if test "$doWince" != "no" ; then
-	    # Set defaults for common evc4/PPC2003 setup
-	    # Currently Tcl requires 300+, possibly 420+ for sockets
-	    CEVERSION=420; 		# could be 211 300 301 400 420 ...
-	    TARGETCPU=ARMV4;	# could be ARMV4 ARM MIPS SH3 X86 ...
-	    ARCH=ARM;		# could be ARM MIPS X86EM ...
-	    PLATFORM="Pocket PC 2003"; # or "Pocket PC 2002"
-	    if test "$doWince" != "yes"; then
-		# If !yes then the user specified something
-		# Reset ARCH to allow user to skip specifying it
-		ARCH=
-		eval `echo $doWince | awk -F "," '{ \
-	if (length($1)) { printf "CEVERSION=\"%s\"\n", $1; \
-	if ($1 < 400)	  { printf "PLATFORM=\"Pocket PC 2002\"\n" } }; \
-	if (length($2)) { printf "TARGETCPU=\"%s\"\n", toupper($2) }; \
-	if (length($3)) { printf "ARCH=\"%s\"\n", toupper($3) }; \
-	if (length($4)) { printf "PLATFORM=\"%s\"\n", $4 }; \
-		}'`
-		if test "x${ARCH}" = "x" ; then
-		    ARCH=$TARGETCPU;
-		fi
-	    fi
-	    OSVERSION=WCE$CEVERSION;
-	    if test "x${WCEROOT}" = "x" ; then
-		WCEROOT="C:/Program Files/Microsoft eMbedded C++ 4.0"
-		if test ! -d "${WCEROOT}" ; then
-		    WCEROOT="C:/Program Files/Microsoft eMbedded Tools"
-		fi
-	    fi
-	    if test "x${SDKROOT}" = "x" ; then
-		SDKROOT="C:/Program Files/Windows CE Tools"
-		if test ! -d "${SDKROOT}" ; then
-		    SDKROOT="C:/Windows CE Tools"
-		fi
-	    fi
-	    # The space-based-path will work for the Makefile, but will
-	    # not work if AC_TRY_COMPILE is called.
-	    WCEROOT=`echo "$WCEROOT" | sed -e 's!\\\!/!g'`
-	    SDKROOT=`echo "$SDKROOT" | sed -e 's!\\\!/!g'`
-	    CELIB_DIR=`echo "$CELIB_DIR" | sed -e 's!\\\!/!g'`
-	    if test ! -d "${CELIB_DIR}/inc"; then
-		{ { echo "$as_me:$LINENO: error: Invalid celib directory \"${CELIB_DIR}\"" >&5
-echo "$as_me: error: Invalid celib directory \"${CELIB_DIR}\"" >&2;}
-   { (exit 1); exit 1; }; }
-	    fi
-	    if test ! -d "${SDKROOT}/${OSVERSION}/${PLATFORM}/Lib/${TARGETCPU}"\
-		-o ! -d "${WCEROOT}/EVC/${OSVERSION}/bin"; then
-		{ { echo "$as_me:$LINENO: error: could not find PocketPC SDK or target compiler to enable WinCE mode $CEVERSION,$TARGETCPU,$ARCH,$PLATFORM" >&5
-echo "$as_me: error: could not find PocketPC SDK or target compiler to enable WinCE mode $CEVERSION,$TARGETCPU,$ARCH,$PLATFORM" >&2;}
-   { (exit 1); exit 1; }; }
-	    else
-		CEINCLUDE="${SDKROOT}/${OSVERSION}/${PLATFORM}/include"
-		if test -d "${CEINCLUDE}/${TARGETCPU}" ; then
-		    CEINCLUDE="${CEINCLUDE}/${TARGETCPU}"
-		fi
-		CELIBPATH="${SDKROOT}/${OSVERSION}/${PLATFORM}/Lib/${TARGETCPU}"
-	    fi
-	fi
-
-	if test "$doWince" != "no" ; then
-	    CEBINROOT="${WCEROOT}/EVC/${OSVERSION}/bin"
-	    if test "${TARGETCPU}" = "X86"; then
-		CC="${CEBINROOT}/cl.exe"
-	    else
-		CC="${CEBINROOT}/cl${ARCH}.exe"
-	    fi
-	    CC="\"${CC}\" -I\"${CELIB_DIR}/inc\" -I\"${CEINCLUDE}\""
-	    RC="\"${WCEROOT}/Common/EVC/bin/rc.exe\""
-	    arch=`echo ${ARCH} | awk '{print tolower($0)}'`
-	    defs="${ARCH} _${ARCH}_ ${arch} PALM_SIZE _MT _DLL _WINDOWS"
-	    for i in $defs ; do
-		cat >>confdefs.h <<_ACEOF
-#define $i 1
+case $ac_cv_c_inline in
+  inline | yes) ;;
+  *)
+    case $ac_cv_c_inline in
+      no) ac_val=;;
+      *) ac_val=$ac_cv_c_inline;;
+    esac
+    cat >>confdefs.h <<_ACEOF
+#ifndef __cplusplus
+#define inline $ac_val
+#endif
 _ACEOF
-
-	    done
-#	    if test "${ARCH}" = "X86EM"; then
-#		AC_DEFINE_UNQUOTED(_WIN32_WCE_EMULATION)
-#	    fi
-	    cat >>confdefs.h <<_ACEOF
-#define _WIN32_WCE $CEVERSION
-_ACEOF
-
-	    cat >>confdefs.h <<_ACEOF
-#define UNDER_CE $CEVERSION
-_ACEOF
-
-	    CFLAGS_DEBUG="-nologo -Zi -Od"
-	    CFLAGS_OPTIMIZE="-nologo -O2"
-	    lversion=`echo ${CEVERSION} | sed -e 's/\(.\)\(..\)/\1\.\2/'`
-	    lflags="-nodefaultlib -MACHINE:${ARCH} -LIBPATH:\"${CELIBPATH}\" -subsystem:windowsce,${lversion} -nologo"
-	    LINKBIN="\"${CEBINROOT}/link.exe\""
-
-	    if test "${CEVERSION}" -lt 400 ; then
-		LIBS="coredll.lib corelibc.lib winsock.lib"
-	    else
-		LIBS="coredll.lib corelibc.lib ws2.lib"
-	    fi
-	    # celib currently stuck at wce300 status
-	    #LIBS="$LIBS \${CELIB_DIR}/wince-${ARCH}-pocket-${OSVERSION}-release/celib.lib"
-	    LIBS="$LIBS \"\${CELIB_DIR}/wince-${ARCH}-pocket-wce300-release/celib.lib\""
-	    LIBS_GUI="commctrl.lib commdlg.lib"
-	else
-	    LIBS_GUI="gdi32.lib comdlg32.lib imm32.lib comctl32.lib shell32.lib uuid.lib"
-	fi
-
-	SHLIB_LD="${LINKBIN} -dll -incremental:no ${lflags}"
-	# link -lib only works when -lib is the first arg
-	STLIB_LD="${LINKBIN} -lib ${lflags}"
-	RC_OUT=-fo
-	RC_TYPE=-r
-	RC_INCLUDE=-i
-	RC_DEFINE=-d
-	RES=res
-	MAKE_LIB="\${STLIB_LD} -out:\$@"
-	POST_MAKE_LIB=
-	MAKE_EXE="\${CC} -Fe\$@"
-	LIBPREFIX=""
-
-	EXTRA_CFLAGS=""
-	CFLAGS_WARNING="-W3"
-	LDFLAGS_DEBUG="-debug:full"
-	LDFLAGS_OPTIMIZE="-release"
-
-	# Specify the CC output file names based on the target name
-	CC_OBJNAME="-Fo\$@"
-	CC_EXENAME="-Fe\"\$(shell \$(CYGPATH) '\$@')\""
-
-	# Specify linker flags depending on the type of app being
-	# built -- Console vs. Window.
-	if test "$doWince" != "no" -a "${TARGETCPU}" != "X86"; then
-	    LDFLAGS_CONSOLE="-link ${lflags}"
-	    LDFLAGS_WINDOW=${LDFLAGS_CONSOLE}
-	else
-	    LDFLAGS_CONSOLE="-link -subsystem:console ${lflags}"
-	    LDFLAGS_WINDOW="-link -subsystem:windows ${lflags}"
-	fi
-    fi
-
-    if test "$do64bit" != "no" ; then
-	cat >>confdefs.h <<\_ACEOF
-#define TCL_CFG_DO64BIT 1
-_ACEOF
-
-    fi
-
-    # DL_LIBS is empty, but then we match the Unix version
-
-
-
-
-
-
-#--------------------------------------------------------------------
-# man2tcl needs this so that it can use errno.h
-#--------------------------------------------------------------------
+    ;;
+esac
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -3509,6 +2753,333 @@ _ACEOF
 
 fi
 
+
+# To properly support cross-compilation, one would
+# need to use these tool checks instead of
+# the ones below and reconfigure with
+# autoconf 2.50. You can also just set
+# the CC, AR, RANLIB, and RC environment
+# variables if you want to cross compile.
+
+if test "${GCC}" = "yes" ; then
+    # Extract the first word of "ar", so it can be a program name with args.
+set dummy ar; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_AR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$AR"; then
+  ac_cv_prog_AR="$AR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_AR="ar"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+AR=$ac_cv_prog_AR
+if test -n "$AR"; then
+  echo "$as_me:$LINENO: result: $AR" >&5
+echo "${ECHO_T}$AR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+    # Extract the first word of "ranlib", so it can be a program name with args.
+set dummy ranlib; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_RANLIB+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$RANLIB"; then
+  ac_cv_prog_RANLIB="$RANLIB" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RANLIB="ranlib"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+RANLIB=$ac_cv_prog_RANLIB
+if test -n "$RANLIB"; then
+  echo "$as_me:$LINENO: result: $RANLIB" >&5
+echo "${ECHO_T}$RANLIB" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+    # Extract the first word of "windres", so it can be a program name with args.
+set dummy windres; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_RC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$RC"; then
+  ac_cv_prog_RC="$RC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_RC="windres"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+RC=$ac_cv_prog_RC
+if test -n "$RC"; then
+  echo "$as_me:$LINENO: result: $RC" >&5
+echo "${ECHO_T}$RC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+    if test "${AR}" = "" ; then
+	{ { echo "$as_me:$LINENO: error: Required archive tool 'ar' not found on PATH." >&5
+echo "$as_me: error: Required archive tool 'ar' not found on PATH." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+    if test "${RANLIB}" = "" ; then
+	{ { echo "$as_me:$LINENO: error: Required archive index tool 'ranlib' not found on PATH." >&5
+echo "$as_me: error: Required archive index tool 'ranlib' not found on PATH." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+    if test "${RC}" = "" ; then
+	{ { echo "$as_me:$LINENO: error: Required resource tool 'windres' not found on PATH." >&5
+echo "$as_me: error: Required resource tool 'windres' not found on PATH." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+fi
+
+#--------------------------------------------------------------------
+# Checks to see if the make progeam sets the $MAKE variable.
+#--------------------------------------------------------------------
+
+echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
+echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
+set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,:./+-,___p_,'`
+if eval "test \"\${ac_cv_prog_make_${ac_make}_set+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.make <<\_ACEOF
+all:
+	@echo 'ac_maketemp="$(MAKE)"'
+_ACEOF
+# GNU make sometimes prints "make[1]: Entering...", which would confuse us.
+eval `${MAKE-make} -f conftest.make 2>/dev/null | grep temp=`
+if test -n "$ac_maketemp"; then
+  eval ac_cv_prog_make_${ac_make}_set=yes
+else
+  eval ac_cv_prog_make_${ac_make}_set=no
+fi
+rm -f conftest.make
+fi
+if eval "test \"`echo '$ac_cv_prog_make_'${ac_make}_set`\" = yes"; then
+  echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  SET_MAKE=
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+  SET_MAKE="MAKE=${MAKE-make}"
+fi
+
+
+#--------------------------------------------------------------------
+# Perform additinal compiler tests.
+#--------------------------------------------------------------------
+
+
+echo "$as_me:$LINENO: checking for Cygwin version of gcc" >&5
+echo $ECHO_N "checking for Cygwin version of gcc... $ECHO_C" >&6
+if test "${ac_cv_cygwin+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#ifdef __CYGWIN__
+#error cygwin
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_cygwin=no
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_cygwin=yes
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_cygwin" >&5
+echo "${ECHO_T}$ac_cv_cygwin" >&6
+if test "$ac_cv_cygwin" = "yes" ; then
+    { { echo "$as_me:$LINENO: error: Compiling under Cygwin is not currently supported.
+A maintainer for the Cygwin port of Tcl/Tk is needed. See the README
+file for information about building with Mingw." >&5
+echo "$as_me: error: Compiling under Cygwin is not currently supported.
+A maintainer for the Cygwin port of Tcl/Tk is needed. See the README
+file for information about building with Mingw." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+#--------------------------------------------------------------------
+# Determines the correct binary file extension (.o, .obj, .exe etc.)
+#--------------------------------------------------------------------
+
+
+
+
+#--------------------------------------------------------------------
+# Check whether --enable-threads or --disable-threads was given.
+#--------------------------------------------------------------------
+
+
+    echo "$as_me:$LINENO: checking for building with threads" >&5
+echo $ECHO_N "checking for building with threads... $ECHO_C" >&6
+    # Check whether --enable-threads or --disable-threads was given.
+if test "${enable_threads+set}" = set; then
+  enableval="$enable_threads"
+  tcl_ok=$enableval
+else
+  tcl_ok=no
+fi;
+
+    if test "$tcl_ok" = "yes"; then
+	echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	TCL_THREADS=1
+	cat >>confdefs.h <<\_ACEOF
+#define TCL_THREADS 1
+_ACEOF
+
+	# USE_THREAD_ALLOC tells us to try the special thread-based
+	# allocator that significantly reduces lock contention
+	cat >>confdefs.h <<\_ACEOF
+#define USE_THREAD_ALLOC 1
+_ACEOF
+
+    else
+	TCL_THREADS=0
+	echo "$as_me:$LINENO: result: no (default)" >&5
+echo "${ECHO_T}no (default)" >&6
+    fi
+
+
+
+#--------------------------------------------------------------------
+# The statements below define a collection of symbols related to
+# building libtk as a shared library instead of a static library.
+#--------------------------------------------------------------------
+
+
+    echo "$as_me:$LINENO: checking how to build libraries" >&5
+echo $ECHO_N "checking how to build libraries... $ECHO_C" >&6
+    # Check whether --enable-shared or --disable-shared was given.
+if test "${enable_shared+set}" = set; then
+  enableval="$enable_shared"
+  tcl_ok=$enableval
+else
+  tcl_ok=yes
+fi;
+
+    if test "${enable_shared+set}" = set; then
+	enableval="$enable_shared"
+	tcl_ok=$enableval
+    else
+	tcl_ok=yes
+    fi
+
+    if test "$tcl_ok" = "yes" ; then
+	echo "$as_me:$LINENO: result: shared" >&5
+echo "${ECHO_T}shared" >&6
+	SHARED_BUILD=1
+    else
+	echo "$as_me:$LINENO: result: static" >&5
+echo "${ECHO_T}static" >&6
+	SHARED_BUILD=0
+	cat >>confdefs.h <<\_ACEOF
+#define STATIC_BUILD 1
+_ACEOF
+
+    fi
+
+
+#--------------------------------------------------------------------
+# The statements below define a collection of compile flags.  This
+# macro depends on the value of SHARED_BUILD, and should be called
+# after SC_ENABLE_SHARED checks the configure switches.
+#--------------------------------------------------------------------
+
 # On IRIX 5.3, sys/types and inttypes.h are conflicting.
 
 
@@ -3580,6 +3151,570 @@ fi
 
 done
 
+
+
+
+    # Step 0: Enable 64 bit support?
+
+    echo "$as_me:$LINENO: checking if 64bit support is requested" >&5
+echo $ECHO_N "checking if 64bit support is requested... $ECHO_C" >&6
+    # Check whether --enable-64bit or --disable-64bit was given.
+if test "${enable_64bit+set}" = set; then
+  enableval="$enable_64bit"
+  do64bit=$enableval
+else
+  do64bit=no
+fi;
+    echo "$as_me:$LINENO: result: $do64bit" >&5
+echo "${ECHO_T}$do64bit" >&6
+
+    # Cross-compiling options for Windows/CE builds
+
+    echo "$as_me:$LINENO: checking if Windows/CE build is requested" >&5
+echo $ECHO_N "checking if Windows/CE build is requested... $ECHO_C" >&6
+    # Check whether --enable-wince or --disable-wince was given.
+if test "${enable_wince+set}" = set; then
+  enableval="$enable_wince"
+  doWince=$enableval
+else
+  doWince=no
+fi;
+    echo "$as_me:$LINENO: result: $doWince" >&5
+echo "${ECHO_T}$doWince" >&6
+
+    echo "$as_me:$LINENO: checking for Windows/CE celib directory" >&5
+echo $ECHO_N "checking for Windows/CE celib directory... $ECHO_C" >&6
+
+# Check whether --with-celib or --without-celib was given.
+if test "${with_celib+set}" = set; then
+  withval="$with_celib"
+  CELIB_DIR=$withval
+else
+  CELIB_DIR=NO_CELIB
+fi;
+    echo "$as_me:$LINENO: result: $CELIB_DIR" >&5
+echo "${ECHO_T}$CELIB_DIR" >&6
+
+    # Set some defaults (may get changed below)
+    EXTRA_CFLAGS=""
+
+    # Extract the first word of "cygpath", so it can be a program name with args.
+set dummy cygpath; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_CYGPATH+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$CYGPATH"; then
+  ac_cv_prog_CYGPATH="$CYGPATH" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_CYGPATH="cygpath -w"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_CYGPATH" && ac_cv_prog_CYGPATH="echo"
+fi
+fi
+CYGPATH=$ac_cv_prog_CYGPATH
+if test -n "$CYGPATH"; then
+  echo "$as_me:$LINENO: result: $CYGPATH" >&5
+echo "${ECHO_T}$CYGPATH" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+    SHLIB_SUFFIX=".dll"
+
+    # Check for a bug in gcc's windres that causes the
+    # compile to fail when a Windows native path is
+    # passed into windres. The mingw toolchain requires
+    # Windows native paths while Cygwin should work
+    # with both. Avoid the bug by passing a POSIX
+    # path when using the Cygwin toolchain.
+
+    if test "$GCC" = "yes" && test "$CYGPATH" != "echo" ; then
+	conftest=/tmp/conftest.rc
+	echo "STRINGTABLE BEGIN" > $conftest
+	echo "101 \"name\"" >> $conftest
+	echo "END" >> $conftest
+
+	echo "$as_me:$LINENO: checking for Windows native path bug in windres" >&5
+echo $ECHO_N "checking for Windows native path bug in windres... $ECHO_C" >&6
+	cyg_conftest=`$CYGPATH $conftest`
+	if { ac_try='$RC -o conftest.res.o $cyg_conftest'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } ; then
+	    echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+	else
+	    echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+	    CYGPATH=echo
+	fi
+	conftest=
+	cyg_conftest=
+    fi
+
+    if test "$CYGPATH" = "echo" || test "$ac_cv_cygwin" = "yes"; then
+        DEPARG='"$<"'
+    else
+        DEPARG='"$(shell $(CYGPATH) $<)"'
+    fi
+
+    # set various compiler flags depending on whether we are using gcc or cl
+
+    echo "$as_me:$LINENO: checking compiler flags" >&5
+echo $ECHO_N "checking compiler flags... $ECHO_C" >&6
+    if test "${GCC}" = "yes" ; then
+	if test "$do64bit" != "no" ; then
+	    { echo "$as_me:$LINENO: WARNING: 64bit mode not supported with GCC on Windows" >&5
+echo "$as_me: WARNING: 64bit mode not supported with GCC on Windows" >&2;}
+	fi
+	SHLIB_LD=""
+	SHLIB_LD_LIBS=""
+	LIBS="-lws2_32"
+	# mingw needs to link ole32 and oleaut32 for [send], but MSVC doesn't
+	LIBS_GUI="-lgdi32 -lcomdlg32 -limm32 -lcomctl32 -lshell32 -luuid -lole32 -loleaut32"
+	STLIB_LD='${AR} cr'
+	RC_OUT=-o
+	RC_TYPE=
+	RC_INCLUDE=--include
+	RC_DEFINE=--define
+	RES=res.o
+	MAKE_LIB="\${STLIB_LD} \$@"
+	POST_MAKE_LIB="\${RANLIB} \$@"
+	MAKE_EXE="\${CC} -o \$@"
+	LIBPREFIX="lib"
+
+	#if test "$ac_cv_cygwin" = "yes"; then
+	#    extra_cflags="-mno-cygwin"
+	#    extra_ldflags="-mno-cygwin"
+	#else
+	#    extra_cflags=""
+	#    extra_ldflags=""
+	#fi
+
+	if test "$ac_cv_cygwin" = "yes"; then
+	  touch ac$$.c
+	  if ${CC} -c -mwin32 ac$$.c >/dev/null 2>&1; then
+	    case "$extra_cflags" in
+	      *-mwin32*) ;;
+	      *) extra_cflags="-mwin32 $extra_cflags" ;;
+	    esac
+	    case "$extra_ldflags" in
+	      *-mwin32*) ;;
+	      *) extra_ldflags="-mwin32 $extra_ldflags" ;;
+	    esac
+	  fi
+	  rm -f ac$$.o ac$$.c
+	else
+	  extra_cflags=''
+	  extra_ldflags=''
+	fi
+
+	if test "${SHARED_BUILD}" = "0" ; then
+	    # static
+            echo "$as_me:$LINENO: result: using static flags" >&5
+echo "${ECHO_T}using static flags" >&6
+	    runtime=
+	    MAKE_DLL="echo "
+	    LIBSUFFIX="s\${DBGX}.a"
+	    LIBFLAGSUFFIX="s\${DBGX}"
+	    LIBRARIES="\${STATIC_LIBRARIES}"
+	    EXESUFFIX="s\${DBGX}.exe"
+	else
+	    # dynamic
+            echo "$as_me:$LINENO: result: using shared flags" >&5
+echo "${ECHO_T}using shared flags" >&6
+
+	    # ad-hoc check to see if CC supports -shared.
+	    if "${CC}" -shared 2>&1 | egrep ': -shared not supported' >/dev/null; then
+		{ { echo "$as_me:$LINENO: error: ${CC} does not support the -shared option.
+                You will need to upgrade to a newer version of the toolchain." >&5
+echo "$as_me: error: ${CC} does not support the -shared option.
+                You will need to upgrade to a newer version of the toolchain." >&2;}
+   { (exit 1); exit 1; }; }
+	    fi
+
+	    runtime=
+	    # Link with gcc since ld does not link to default libs like
+	    # -luser32 and -lmsvcrt by default. Make sure CFLAGS is
+	    # included so -mno-cygwin passed the correct libs to the linker.
+	    SHLIB_LD='${CC} -shared ${CFLAGS}'
+	    SHLIB_LD_LIBS='${LIBS}'
+	    # Add SHLIB_LD_LIBS to the Make rule, not here.
+	    MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -o \$@ ${extra_ldflags} \
+	        -Wl,--out-implib,\$(patsubst %.dll,lib%.a,\$@)"
+
+	    LIBSUFFIX="\${DBGX}.a"
+	    LIBFLAGSUFFIX="\${DBGX}"
+	    EXESUFFIX="\${DBGX}.exe"
+	    LIBRARIES="\${SHARED_LIBRARIES}"
+	fi
+	# DLLSUFFIX is separate because it is the building block for
+	# users of tclConfig.sh that may build shared or static.
+	DLLSUFFIX="\${DBGX}.dll"
+	SHLIB_SUFFIX=.dll
+
+	EXTRA_CFLAGS="${extra_cflags}"
+
+	CFLAGS_DEBUG=-g
+	CFLAGS_OPTIMIZE="-O2 -fomit-frame-pointer"
+	CFLAGS_WARNING="-Wall"
+	LDFLAGS_DEBUG=
+	LDFLAGS_OPTIMIZE=
+
+	# Specify the CC output file names based on the target name
+	CC_OBJNAME="-o \$@"
+	CC_EXENAME="-o \$@"
+
+	# Specify linker flags depending on the type of app being
+	# built -- Console vs. Window.
+	#
+	# ORIGINAL COMMENT:
+	# We need to pass -e _WinMain@16 so that ld will use
+	# WinMain() instead of main() as the entry point. We can't
+	# use autoconf to check for this case since it would need
+	# to run an executable and that does not work when
+	# cross compiling. Remove this -e workaround once we
+	# require a gcc that does not have this bug.
+	#
+	# MK NOTE: Tk should use a different mechanism. This causes
+	# interesting problems, such as wish dying at startup.
+	#LDFLAGS_WINDOW="-mwindows -e _WinMain@16 ${extra_ldflags}"
+	LDFLAGS_CONSOLE="-mconsole ${extra_ldflags}"
+	LDFLAGS_WINDOW="-mwindows ${extra_ldflags}"
+
+	# gcc under Windows supports only 32bit builds
+	MACHINE="X86"
+    else
+	if test "${SHARED_BUILD}" = "0" ; then
+	    # static
+            echo "$as_me:$LINENO: result: using static flags" >&5
+echo "${ECHO_T}using static flags" >&6
+	    runtime=-MT
+	    MAKE_DLL="echo "
+	    LIBSUFFIX="s\${DBGX}.lib"
+	    LIBFLAGSUFFIX="s\${DBGX}"
+	    LIBRARIES="\${STATIC_LIBRARIES}"
+	    EXESUFFIX="s\${DBGX}.exe"
+	    SHLIB_LD_LIBS=""
+	else
+	    # dynamic
+            echo "$as_me:$LINENO: result: using shared flags" >&5
+echo "${ECHO_T}using shared flags" >&6
+	    runtime=-MD
+	    # Add SHLIB_LD_LIBS to the Make rule, not here.
+	    MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -out:\$@"
+	    LIBSUFFIX="\${DBGX}.lib"
+	    LIBFLAGSUFFIX="\${DBGX}"
+	    EXESUFFIX="\${DBGX}.exe"
+	    LIBRARIES="\${SHARED_LIBRARIES}"
+	    SHLIB_LD_LIBS='${LIBS}'
+	fi
+	# DLLSUFFIX is separate because it is the building block for
+	# users of tclConfig.sh that may build shared or static.
+	DLLSUFFIX="\${DBGX}.dll"
+
+ 	# This is a 2-stage check to make sure we have the 64-bit SDK
+ 	# We have to know where the SDK is installed.
+	# This magic is based on MS Platform SDK for Win2003 SP1 - hobbs
+	# MACHINE is IX86 for LINK, but this is used by the manifest,
+	# which requires x86|amd64|ia64.
+	MACHINE="X86"
+	if test "$do64bit" != "no" ; then
+	    if test "x${MSSDK}x" = "xx" ; then
+		MSSDK="C:/Progra~1/Microsoft Platform SDK"
+	    fi
+	    MSSDK=`echo "$MSSDK" | sed -e 's!\\\!/!g'`
+	    PATH64=""
+	    case "$do64bit" in
+	      amd64|x64|yes)
+		MACHINE="AMD64" ; # assume AMD64 as default 64-bit build
+		PATH64="${MSSDK}/Bin/Win64/x86/AMD64"
+		;;
+	      ia64)
+		MACHINE="IA64"
+		PATH64="${MSSDK}/Bin/Win64"
+		;;
+	    esac
+	    if test ! -d "${PATH64}" ; then
+		{ echo "$as_me:$LINENO: WARNING: Could not find 64-bit $MACHINE SDK to enable 64bit mode" >&5
+echo "$as_me: WARNING: Could not find 64-bit $MACHINE SDK to enable 64bit mode" >&2;}
+		{ echo "$as_me:$LINENO: WARNING: Ensure latest Platform SDK is installed" >&5
+echo "$as_me: WARNING: Ensure latest Platform SDK is installed" >&2;}
+		do64bit="no"
+	    else
+		echo "$as_me:$LINENO: result:    Using 64-bit $MACHINE mode" >&5
+echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
+	    fi
+	fi
+
+	LIBS="user32.lib advapi32.lib ws2_32.lib"
+	if test "$do64bit" != "no" ; then
+	    # The space-based-path will work for the Makefile, but will
+	    # not work if AC_TRY_COMPILE is called.  TEA has the
+	    # TEA_PATH_NOSPACE to avoid this issue.
+	    # Check if _WIN64 is already recognized, and if so we don't
+	    # need to modify CC.
+	    echo "$as_me:$LINENO: checking whether _WIN64 is declared" >&5
+echo $ECHO_N "checking whether _WIN64 is declared... $ECHO_C" >&6
+if test "${ac_cv_have_decl__WIN64+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+#ifndef _WIN64
+  char *p = (char *) _WIN64;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_have_decl__WIN64=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_have_decl__WIN64=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_have_decl__WIN64" >&5
+echo "${ECHO_T}$ac_cv_have_decl__WIN64" >&6
+if test $ac_cv_have_decl__WIN64 = yes; then
+  :
+else
+  CC="\"${PATH64}/cl.exe\" -I\"${MSSDK}/Include\" \
+			 -I\"${MSSDK}/Include/crt\" \
+			 -I\"${MSSDK}/Include/crt/sys\""
+fi
+
+	    RC="\"${MSSDK}/bin/rc.exe\""
+	    CFLAGS_DEBUG="-nologo -Zi -Od ${runtime}d"
+	    # Do not use -O2 for Win64 - this has proved buggy in code gen.
+	    CFLAGS_OPTIMIZE="-nologo -O1 ${runtime}"
+	    lflags="-nologo -MACHINE:${MACHINE} -LIBPATH:\"${MSSDK}/Lib/${MACHINE}\""
+	    LINKBIN="\"${PATH64}/link.exe\""
+	    # Avoid 'unresolved external symbol __security_cookie' errors.
+	    # c.f. http://support.microsoft.com/?id=894573
+	    LIBS="$LIBS bufferoverflowU.lib"
+	else
+	    RC="rc"
+	    # -Od - no optimization
+	    # -WX - warnings as errors
+	    CFLAGS_DEBUG="-nologo -Z7 -Od -WX ${runtime}d"
+	    # -O2 - create fast code (/Og /Oi /Ot /Oy /Ob2 /Gs /GF /Gy)
+	    CFLAGS_OPTIMIZE="-nologo -O2 ${runtime}"
+	    lflags="-nologo"
+	    LINKBIN="link"
+	fi
+
+	if test "$doWince" != "no" ; then
+	    # Set defaults for common evc4/PPC2003 setup
+	    # Currently Tcl requires 300+, possibly 420+ for sockets
+	    CEVERSION=420; 		# could be 211 300 301 400 420 ...
+	    TARGETCPU=ARMV4;	# could be ARMV4 ARM MIPS SH3 X86 ...
+	    ARCH=ARM;		# could be ARM MIPS X86EM ...
+	    PLATFORM="Pocket PC 2003"; # or "Pocket PC 2002"
+	    if test "$doWince" != "yes"; then
+		# If !yes then the user specified something
+		# Reset ARCH to allow user to skip specifying it
+		ARCH=
+		eval `echo $doWince | awk -F "," '{ \
+	if (length($1)) { printf "CEVERSION=\"%s\"\n", $1; \
+	if ($1 < 400)	  { printf "PLATFORM=\"Pocket PC 2002\"\n" } }; \
+	if (length($2)) { printf "TARGETCPU=\"%s\"\n", toupper($2) }; \
+	if (length($3)) { printf "ARCH=\"%s\"\n", toupper($3) }; \
+	if (length($4)) { printf "PLATFORM=\"%s\"\n", $4 }; \
+		}'`
+		if test "x${ARCH}" = "x" ; then
+		    ARCH=$TARGETCPU;
+		fi
+	    fi
+	    OSVERSION=WCE$CEVERSION;
+	    if test "x${WCEROOT}" = "x" ; then
+		WCEROOT="C:/Program Files/Microsoft eMbedded C++ 4.0"
+		if test ! -d "${WCEROOT}" ; then
+		    WCEROOT="C:/Program Files/Microsoft eMbedded Tools"
+		fi
+	    fi
+	    if test "x${SDKROOT}" = "x" ; then
+		SDKROOT="C:/Program Files/Windows CE Tools"
+		if test ! -d "${SDKROOT}" ; then
+		    SDKROOT="C:/Windows CE Tools"
+		fi
+	    fi
+	    # The space-based-path will work for the Makefile, but will
+	    # not work if AC_TRY_COMPILE is called.
+	    WCEROOT=`echo "$WCEROOT" | sed -e 's!\\\!/!g'`
+	    SDKROOT=`echo "$SDKROOT" | sed -e 's!\\\!/!g'`
+	    CELIB_DIR=`echo "$CELIB_DIR" | sed -e 's!\\\!/!g'`
+	    if test ! -d "${CELIB_DIR}/inc"; then
+		{ { echo "$as_me:$LINENO: error: Invalid celib directory \"${CELIB_DIR}\"" >&5
+echo "$as_me: error: Invalid celib directory \"${CELIB_DIR}\"" >&2;}
+   { (exit 1); exit 1; }; }
+	    fi
+	    if test ! -d "${SDKROOT}/${OSVERSION}/${PLATFORM}/Lib/${TARGETCPU}"\
+		-o ! -d "${WCEROOT}/EVC/${OSVERSION}/bin"; then
+		{ { echo "$as_me:$LINENO: error: could not find PocketPC SDK or target compiler to enable WinCE mode $CEVERSION,$TARGETCPU,$ARCH,$PLATFORM" >&5
+echo "$as_me: error: could not find PocketPC SDK or target compiler to enable WinCE mode $CEVERSION,$TARGETCPU,$ARCH,$PLATFORM" >&2;}
+   { (exit 1); exit 1; }; }
+	    else
+		CEINCLUDE="${SDKROOT}/${OSVERSION}/${PLATFORM}/include"
+		if test -d "${CEINCLUDE}/${TARGETCPU}" ; then
+		    CEINCLUDE="${CEINCLUDE}/${TARGETCPU}"
+		fi
+		CELIBPATH="${SDKROOT}/${OSVERSION}/${PLATFORM}/Lib/${TARGETCPU}"
+	    fi
+	fi
+
+	if test "$doWince" != "no" ; then
+	    CEBINROOT="${WCEROOT}/EVC/${OSVERSION}/bin"
+	    if test "${TARGETCPU}" = "X86"; then
+		CC="${CEBINROOT}/cl.exe"
+	    else
+		CC="${CEBINROOT}/cl${ARCH}.exe"
+	    fi
+	    CC="\"${CC}\" -I\"${CELIB_DIR}/inc\" -I\"${CEINCLUDE}\""
+	    RC="\"${WCEROOT}/Common/EVC/bin/rc.exe\""
+	    arch=`echo ${ARCH} | awk '{print tolower($0)}'`
+	    defs="${ARCH} _${ARCH}_ ${arch} PALM_SIZE _MT _DLL _WINDOWS"
+	    for i in $defs ; do
+		cat >>confdefs.h <<_ACEOF
+#define $i 1
+_ACEOF
+
+	    done
+#	    if test "${ARCH}" = "X86EM"; then
+#		AC_DEFINE_UNQUOTED(_WIN32_WCE_EMULATION)
+#	    fi
+	    cat >>confdefs.h <<_ACEOF
+#define _WIN32_WCE $CEVERSION
+_ACEOF
+
+	    cat >>confdefs.h <<_ACEOF
+#define UNDER_CE $CEVERSION
+_ACEOF
+
+	    CFLAGS_DEBUG="-nologo -Zi -Od"
+	    CFLAGS_OPTIMIZE="-nologo -O2"
+	    lversion=`echo ${CEVERSION} | sed -e 's/\(.\)\(..\)/\1\.\2/'`
+	    lflags="-nodefaultlib -MACHINE:${ARCH} -LIBPATH:\"${CELIBPATH}\" -subsystem:windowsce,${lversion} -nologo"
+	    LINKBIN="\"${CEBINROOT}/link.exe\""
+
+	    if test "${CEVERSION}" -lt 400 ; then
+		LIBS="coredll.lib corelibc.lib winsock.lib"
+	    else
+		LIBS="coredll.lib corelibc.lib ws2.lib"
+	    fi
+	    # celib currently stuck at wce300 status
+	    #LIBS="$LIBS \${CELIB_DIR}/wince-${ARCH}-pocket-${OSVERSION}-release/celib.lib"
+	    LIBS="$LIBS \"\${CELIB_DIR}/wince-${ARCH}-pocket-wce300-release/celib.lib\""
+	    LIBS_GUI="commctrl.lib commdlg.lib"
+	else
+	    LIBS_GUI="gdi32.lib comdlg32.lib imm32.lib comctl32.lib shell32.lib uuid.lib"
+	fi
+
+	SHLIB_LD="${LINKBIN} -dll -incremental:no ${lflags}"
+	# link -lib only works when -lib is the first arg
+	STLIB_LD="${LINKBIN} -lib ${lflags}"
+	RC_OUT=-fo
+	RC_TYPE=-r
+	RC_INCLUDE=-i
+	RC_DEFINE=-d
+	RES=res
+	MAKE_LIB="\${STLIB_LD} -out:\$@"
+	POST_MAKE_LIB=
+	MAKE_EXE="\${CC} -Fe\$@"
+	LIBPREFIX=""
+
+	CFLAGS_DEBUG="${CFLAGS_DEBUG} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE"
+	CFLAGS_OPTIMIZE="${CFLAGS_OPTIMIZE} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE"
+
+	EXTRA_CFLAGS=""
+	CFLAGS_WARNING="-W3"
+	LDFLAGS_DEBUG="-debug:full"
+	LDFLAGS_OPTIMIZE="-release"
+
+	# Specify the CC output file names based on the target name
+	CC_OBJNAME="-Fo\$@"
+	CC_EXENAME="-Fe\"\$(shell \$(CYGPATH) '\$@')\""
+
+	# Specify linker flags depending on the type of app being
+	# built -- Console vs. Window.
+	if test "$doWince" != "no" -a "${TARGETCPU}" != "X86"; then
+	    LDFLAGS_CONSOLE="-link ${lflags}"
+	    LDFLAGS_WINDOW=${LDFLAGS_CONSOLE}
+	else
+	    LDFLAGS_CONSOLE="-link -subsystem:console ${lflags}"
+	    LDFLAGS_WINDOW="-link -subsystem:windows ${lflags}"
+	fi
+    fi
+
+    if test "$do64bit" != "no" ; then
+	cat >>confdefs.h <<\_ACEOF
+#define TCL_CFG_DO64BIT 1
+_ACEOF
+
+    fi
+
+    # DL_LIBS is empty, but then we match the Unix version
+
+
+
+
+
+
+#--------------------------------------------------------------------
+# man2tcl needs this so that it can use errno.h
+#--------------------------------------------------------------------
 
 if test "${ac_cv_header_errno_h+set}" = set; then
   echo "$as_me:$LINENO: checking for errno.h" >&5
@@ -4798,6 +4933,8 @@ s,@CPPFLAGS@,$CPPFLAGS,;t t
 s,@ac_ct_CC@,$ac_ct_CC,;t t
 s,@EXEEXT@,$EXEEXT,;t t
 s,@OBJEXT@,$OBJEXT,;t t
+s,@CPP@,$CPP,;t t
+s,@EGREP@,$EGREP,;t t
 s,@AR@,$AR,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@RC@,$RC,;t t
@@ -4809,8 +4946,6 @@ s,@DL_LIBS@,$DL_LIBS,;t t
 s,@CFLAGS_DEBUG@,$CFLAGS_DEBUG,;t t
 s,@CFLAGS_OPTIMIZE@,$CFLAGS_OPTIMIZE,;t t
 s,@CFLAGS_WARNING@,$CFLAGS_WARNING,;t t
-s,@CPP@,$CPP,;t t
-s,@EGREP@,$EGREP,;t t
 s,@MAN2TCLFLAGS@,$MAN2TCLFLAGS,;t t
 s,@CFLAGS_DEFAULT@,$CFLAGS_DEFAULT,;t t
 s,@LDFLAGS_DEFAULT@,$LDFLAGS_DEFAULT,;t t

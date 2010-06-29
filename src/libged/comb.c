@@ -127,8 +127,8 @@ _ged_combadd(struct ged			*gedp,
     struct rt_comb_internal *comb;
     union tree *tp;
     struct rt_tree_array *tree_list;
-    int node_count;
-    int actual_count;
+    size_t node_count;
+    size_t actual_count;
 
     /*
      * Check to see if we have to create a new combination
@@ -206,15 +206,12 @@ _ged_combadd(struct ged			*gedp,
 
     /* make space for an extra leaf */
     node_count = db_tree_nleaves( comb->tree ) + 1;
-    tree_list = (struct rt_tree_array *)bu_calloc( node_count,
-						   sizeof( struct rt_tree_array ), "tree list" );
+    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof( struct rt_tree_array ), "tree list");
 
     /* flatten tree */
     if (comb->tree) {
-	actual_count = 1 + (struct rt_tree_array *)db_flatten_tree(
-	    tree_list, comb->tree, OP_UNION, 1, &rt_uniresource )
-	    - tree_list;
-	BU_ASSERT_LONG( actual_count, ==, node_count );
+	actual_count = 1 + (struct rt_tree_array *)db_flatten_tree(tree_list, comb->tree, OP_UNION, 1, &rt_uniresource) - tree_list;
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	comb->tree = TREE_NULL;
     }
 
@@ -249,7 +246,7 @@ _ged_combadd(struct ged			*gedp,
 
     bu_free((char *)tree_list, "combadd: tree_list");
 
-    return (dp);
+    return dp;
 }
 
 

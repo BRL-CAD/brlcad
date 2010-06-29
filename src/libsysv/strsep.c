@@ -62,7 +62,7 @@ strsep(register char **stringp, register const char *delim)
     char *tok;
 
     if ((s = *stringp) == NULL)
-	return (NULL);
+	return NULL;
     for (tok = s;;) {
 	c = *s++;
 	spanp = delim;
@@ -73,7 +73,7 @@ strsep(register char **stringp, register const char *delim)
 		else
 		    s[-1] = 0;
 		*stringp = s;
-		return (tok);
+		return tok;
 	    }
 	} while (sc != 0);
     }

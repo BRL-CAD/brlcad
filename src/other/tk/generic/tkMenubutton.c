@@ -108,7 +108,7 @@ static const Tk_OptionSpec optionSpecs[] = {
 	DEF_MENUBUTTON_INDICATOR, -1, Tk_Offset(TkMenuButton, indicatorOn),
 	0, 0, 0},
     {TK_OPTION_JUSTIFY, "-justify", "justify", "Justify",
-	DEF_BUTTON_JUSTIFY, -1, Tk_Offset(TkMenuButton, justify), 0, 0, 0},
+	DEF_MENUBUTTON_JUSTIFY, -1, Tk_Offset(TkMenuButton, justify), 0, 0, 0},
     {TK_OPTION_STRING, "-menu", "menu", "Menu",
 	DEF_MENUBUTTON_MENU, -1, Tk_Offset(TkMenuButton, menuName),
 	TK_OPTION_NULL_OK, 0, 0},

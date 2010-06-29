@@ -397,7 +397,6 @@ void writeRingModeBox
         thickness[i5] = form.thickness * IntavalUnitInMm;
 
     bu_bitv* faceMode = bu_bitv_new(num_faces);
-    bu_bitv_clear(faceMode);
 
     sprintf(name, "s%d.pbot", ++bot_counter);
 
@@ -453,7 +452,6 @@ void writePlateBot
         thickness[i] = form.thickness * IntavalUnitInMm;
 
     bu_bitv* faceMode = bu_bitv_new(form.bot.num_faces);
-    bu_bitv_clear(faceMode);
 
     sprintf(name, "s%d.pbot", ++bot_counter);
 

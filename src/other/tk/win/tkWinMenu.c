@@ -35,9 +35,6 @@
 #define ALIGN_BITMAP_TOP	0x00000004
 #define ALIGN_BITMAP_BOTTOM	0x00000008
 
-#ifndef TPM_NOANIMATION
-#define TPM_NOANIMATION 0x4000L
-#endif
 
 /*
  * Platform-specific menu flags:
@@ -52,6 +49,10 @@
 
 #define MENU_SYSTEM_MENU		MENU_PLATFORM_FLAG1
 #define MENU_RECONFIGURE_PENDING	MENU_PLATFORM_FLAG2
+
+#ifndef WM_UNINITMENUPOPUP
+#define WM_UNINITMENUPOPUP              0x0125
+#endif
 
 static int indicatorDimensions[2];
 				/* The dimensions of the indicator space in a
@@ -715,12 +716,11 @@ TkpPostMenu(
     int x, int y)
 {
     HMENU winMenuHdl = (HMENU) menuPtr->platformData;
-    int i, result, flags;
+    int result, flags;
     RECT noGoawayRect;
     POINT point;
     Tk_Window parentWindow = Tk_Parent(menuPtr->tkwin);
     int oldServiceMode = Tcl_GetServiceMode();
-    TkMenuEntry *mePtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -780,18 +780,6 @@ TkpPostMenu(
 	    flags |= TPM_RIGHTBUTTON;
 	} else {
 	    flags |= TPM_LEFTBUTTON;
-	}
-    }
-
-    /*
-     * Disable menu animation if an image is present, as clipping isn't
-     * handled correctly with temp DCs.  [Bug 1329198]
-     */
-    for (i = 0; i < menuPtr->numEntries; i++) {
-	mePtr = menuPtr->entries[i];
-	if (mePtr->image != NULL) {
-	    flags |= TPM_NOANIMATION;
-	    break;
 	}
     }
 
@@ -1008,6 +996,19 @@ TkWinHandleMenuEvent(
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     switch (*pMessage) {
+    case WM_UNINITMENUPOPUP:
+	hashEntryPtr = Tcl_FindHashEntry(&tsdPtr->winMenuTable,
+		(char *) *pwParam);
+	if (hashEntryPtr != NULL) {
+	    menuPtr = (TkMenu *) Tcl_GetHashValue(hashEntryPtr);
+	    if ((menuPtr->menuRefPtr != NULL)
+		    && (menuPtr->menuRefPtr->parentEntryPtr != NULL)) {
+		TkPostSubmenu(menuPtr->interp,
+			menuPtr->menuRefPtr->parentEntryPtr->menuPtr, NULL);
+	    }
+	}
+	break;
+
     case WM_INITMENU:
 	TkMenuInit();
 	hashEntryPtr = Tcl_FindHashEntry(&tsdPtr->winMenuTable,
@@ -1791,8 +1792,7 @@ DrawMenuEntryArrow(
     COLORREF oldBgColor;
     RECT rect;
 
-    if (!drawArrow || (mePtr->type != CASCADE_ENTRY)
-	    || (mePtr->state != ENTRY_DISABLED)) {
+    if (!drawArrow || (mePtr->type != CASCADE_ENTRY)) {
 	return;
     }
 
@@ -1811,7 +1811,8 @@ DrawMenuEntryArrow(
 	gc->background = activeBgColor->pixel;
     }
 
-    gc->foreground = GetSysColor(COLOR_GRAYTEXT);
+    gc->foreground = GetSysColor((mePtr->state == ENTRY_DISABLED) ?
+	    COLOR_GRAYTEXT : COLOR_MENUTEXT);
 
     rect.top = y + GetSystemMetrics(SM_CYBORDER);
     rect.bottom = y + height - GetSystemMetrics(SM_CYBORDER);
@@ -1997,14 +1998,15 @@ TkWinMenuKeyObjCmd(
 	    virtualKey = XKeysymToKeycode(winPtr->display, keySym);
 	    scanCode = MapVirtualKey(virtualKey, 0);
 	    if (0 != scanCode) {
+		XKeyEvent xkey = eventPtr->xkey;
 		CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
 			WM_SYSKEYDOWN, virtualKey,
 			(int) ((scanCode << 16) | (1 << 29)));
-		if (eventPtr->xkey.nbytes > 0) {
-		    for (i = 0; i < eventPtr->xkey.nbytes; i++) {
+		if (xkey.nbytes > 0) {
+		    for (i = 0; i < xkey.nbytes; i++) {
 			CallWindowProc(DefWindowProc,
 				Tk_GetHWND(Tk_WindowId(tkwin)), WM_SYSCHAR,
-				eventPtr->xkey.trans_chars[i],
+				xkey.trans_chars[i],
 				(int) ((scanCode << 16) | (1 << 29)));
 		    }
 		}
@@ -2429,7 +2431,7 @@ TkpConfigureMenuEntry(
 void
 TkpDrawMenuEntry(
     TkMenuEntry *mePtr,		/* The entry to draw */
-    Drawable d,			/* What to draw into */
+    Drawable menuDrawable,	/* Menu to draw into */
     Tk_Font tkfont,		/* Precalculated font for menu */
     const Tk_FontMetrics *menuMetricsPtr,
 				/* Precalculated metrics for menu */
@@ -2448,8 +2450,38 @@ TkpDrawMenuEntry(
     const Tk_FontMetrics *fmPtr;
     Tk_FontMetrics entryMetrics;
     int padY = (menuPtr->menuType == MENUBAR) ? 3 : 0;
-    int adjustedY = y + padY;
+    int adjustedX, adjustedY;
     int adjustedHeight = height - 2 * padY;
+    TkWinDrawable memWinDraw;
+    TkWinDCState dcState;
+    HBITMAP oldBitmap;
+    Drawable d;
+    HDC memDc, menuDc;
+
+    /*
+     * If the menu entry includes an image then draw the entry into a
+     * compatible bitmap first.  This avoids problems with clipping on
+     * animated menus.  [Bug 1329198]
+     */
+
+    if (mePtr->image != NULL) {
+	menuDc = TkWinGetDrawableDC(menuPtr->display, menuDrawable, &dcState);
+
+	memDc = CreateCompatibleDC(menuDc);
+	oldBitmap = SelectObject(memDc,
+    			CreateCompatibleBitmap(menuDc, width, height) );
+
+	memWinDraw.type = TWD_WINDC;
+	memWinDraw.winDC.hdc = memDc;
+	d = (Drawable)&memWinDraw;
+	adjustedX = 0;
+	adjustedY = padY;
+
+    } else {
+	d = menuDrawable;
+	adjustedX = x;
+	adjustedY = y + padY;
+    }
 
     /*
      * Choose the gc for drawing the foreground part of the entry.
@@ -2521,25 +2553,38 @@ TkpDrawMenuEntry(
      */
 
     DrawMenuEntryBackground(menuPtr, mePtr, d, activeBorder,
-	    bgBorder, x, y, width, height);
+	    bgBorder, adjustedX, adjustedY-padY, width, height);
 
     if (mePtr->type == SEPARATOR_ENTRY) {
 	DrawMenuSeparator(menuPtr, mePtr, d, gc, tkfont,
-		fmPtr, x, adjustedY, width, adjustedHeight);
+		fmPtr, adjustedX, adjustedY, width, adjustedHeight);
     } else if (mePtr->type == TEAROFF_ENTRY) {
-	DrawTearoffEntry(menuPtr, mePtr, d, gc, tkfont, fmPtr, x, adjustedY,
-		width, adjustedHeight);
+	DrawTearoffEntry(menuPtr, mePtr, d, gc, tkfont, fmPtr,
+		adjustedX, adjustedY, width, adjustedHeight);
     } else {
-	DrawMenuEntryLabel(menuPtr, mePtr, d, gc, tkfont, fmPtr, x, adjustedY,
-		width, adjustedHeight);
+	DrawMenuEntryLabel(menuPtr, mePtr, d, gc, tkfont, fmPtr,
+		adjustedX, adjustedY, width, adjustedHeight);
 	DrawMenuEntryAccelerator(menuPtr, mePtr, d, gc, tkfont, fmPtr,
-		activeBorder, x, adjustedY, width, adjustedHeight);
+		activeBorder, adjustedX, adjustedY, width, adjustedHeight);
 	DrawMenuEntryArrow(menuPtr, mePtr, d, gc,
-		activeBorder, x, adjustedY, width, adjustedHeight, drawArrow);
+		activeBorder, adjustedX, adjustedY, width, adjustedHeight,
+		drawArrow);
 	if (!mePtr->hideMargin) {
 	    DrawMenuEntryIndicator(menuPtr, mePtr, d, gc, indicatorGC, tkfont,
-		    fmPtr, x, adjustedY, width, adjustedHeight);
+		    fmPtr, adjustedX, adjustedY, width, adjustedHeight);
 	}
+    }
+    
+    /*
+     * Copy the entry contents from the temporary bitmap to the menu.
+     */
+
+    if (mePtr->image != NULL) {
+	BitBlt(menuDc, x, y, width, height, memDc, 0, 0, SRCCOPY);
+	DeleteObject(SelectObject(memDc, oldBitmap));
+	DeleteDC(memDc);
+
+	TkWinReleaseDrawableDC(menuDrawable, menuDc, &dcState);
     }
 }
 

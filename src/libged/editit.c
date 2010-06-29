@@ -26,7 +26,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -42,8 +42,11 @@
 int
 _ged_editit(char *editstring, const char *filename)
 {
-    int pid = 0;
+#ifdef HAVE_UNISTD_H
     int xpid = 0;
+    int stat = 0;
+#endif
+    int pid = 0;
     char **avtmp;
     const char *terminal = (char *)NULL;
     const char *terminal_opt = (char *)NULL;
@@ -51,7 +54,6 @@ _ged_editit(char *editstring, const char *filename)
     const char *editor_opt = (char *)NULL;
     const char *file = (const char *)filename;
 
-    int stat = 0;
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)();
     void (*s3)();
@@ -61,8 +63,8 @@ _ged_editit(char *editstring, const char *filename)
 
     avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
     bu_argv_from_string(avtmp, 4, editstring);
-    
-    
+
+
     if (avtmp[0]) terminal = avtmp[0];
     if (avtmp[1]) terminal_opt = avtmp[1];
     if (avtmp[2]) editor = avtmp[2];
@@ -95,7 +97,7 @@ _ged_editit(char *editstring, const char *filename)
 #ifdef HAVE_UNISTD_H
     if ((pid = fork()) < 0) {
 	perror("fork");
-	return (0);
+	return 0;
     }
 #endif
 
@@ -126,10 +128,10 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    if (!strcmp(terminal,"(null)") && !strcmp(editor_opt, "(null)")) {
+	    if (!strcmp(terminal, "(null)") && !strcmp(editor_opt, "(null)")) {
     		(void)execlp(editor, editor, file, NULL);
 	    }
-	    if (!strcmp(terminal,"(null)") && strcmp(editor_opt, "(null)")) {
+	    if (!strcmp(terminal, "(null)") && strcmp(editor_opt, "(null)")) {
 		(void)execlp(editor, editor, editor_opt, file, NULL);
 	    }
 	    (void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
@@ -158,6 +160,7 @@ _ged_editit(char *editstring, const char *filename)
     return 1;
 }
 
+
 int
 ged_editit(struct ged *gedp, int argc, const char *argv[])
 {
@@ -174,7 +177,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
 
     return _ged_editit((char *)argv[2], argv[4]);
 }
-    
+
 
 /*
  * Local Variables:

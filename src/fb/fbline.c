@@ -118,12 +118,12 @@ get_args(int argc, char **argv)
 		pixcolor[BLU] = atoi( bu_optarg );
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind+4 > argc )
-	return(0);		/* BAD */
+	return 0;		/* BAD */
     fbx1 = atoi( argv[bu_optind++]);
     fby1 = atoi( argv[bu_optind++]);
     fbx2 = atoi( argv[bu_optind++]);
@@ -132,7 +132,7 @@ get_args(int argc, char **argv)
     if ( argc > bu_optind )
 	(void)fprintf( stderr, "fbline: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 /*

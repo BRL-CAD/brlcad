@@ -238,13 +238,13 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Check for |H| > 0, |B| > 0, |R| > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
 	|| NEAR_ZERO(mag_r, RT_LEN_TOL)) {
-	return(1);		/* BAD, too small */
+	return 1;		/* BAD, too small */
     }
 
     /* Check for B.H == 0 */
     f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /*
@@ -303,7 +303,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -460,7 +460,7 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     if (hitp != &hits[2])
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
@@ -481,7 +481,7 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	segp->seg_out = hits[0];	/* struct copy */
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -623,7 +623,7 @@ rt_rpc_free(struct soltab *stp)
 int
 rt_rpc_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -631,7 +631,7 @@ rt_rpc_class(void)
  * R T _ R P C _ P L O T
  */
 int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;
@@ -657,14 +657,14 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	|| NEAR_ZERO(rh, RT_LEN_TOL)) {
 	bu_log("rt_rpc_plot():  zero length H, B, or rh\n");
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Check for B.H == 0 */
     f = VDOT(xip->rpc_B, xip->rpc_H) / (b * h);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
 	bu_log("rt_rpc_plot(): B not perpendicular to H, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
 
     /* make unit vectors in B, H, and BxH directions */
@@ -718,8 +718,8 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 #if 1
     /* initial parabola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -749,8 +749,8 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 #else
     /* initial parabola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0,   0, -b);
     VSET(pts->next->p, 0,  rh,  0);
@@ -809,7 +809,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     bu_free((char *)front, "fastf_t");
     bu_free((char *)back,  "fastf_t");
 
-    return(0);
+    return 0;
 }
 
 
@@ -829,7 +829,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_parab;
-    struct rt_pt_node *new, *rt_ptalloc(void);
+    struct rt_pt_node *new;
 
 #define RPC_TOL .0001
     /* endpoints of segment approximating parabola */
@@ -860,7 +860,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	new = rt_ptalloc();
+	new = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	VMOVE(new->p, mpt);
 	new->next = pts->next;
 	pts->next = new;
@@ -872,20 +872,7 @@ rt_mk_parabola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf
 	n += rt_mk_parabola(new, r, b, dtol, ntol);
     } else
 	n  = 0;
-    return(n);
-}
-
-
-/*
- * R T _ P T A L L O C
- */
-struct rt_pt_node *
-rt_ptalloc(void)
-{
-    struct rt_pt_node *mem;
-
-    mem = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    return(mem);
+    return n;
 }
 
 
@@ -930,14 +917,14 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
 	|| NEAR_ZERO(rh, RT_LEN_TOL)) {
 	bu_log("rt_rpc_tess():  zero length H, B, or rh\n");
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Check for B.H == 0 */
     f = VDOT(xip->rpc_B, xip->rpc_H) / (b * h);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
 	bu_log("rt_rpc_tess(): B not perpendicular to H, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
 
     /* make unit vectors in B, H, and BxH directions */
@@ -990,8 +977,8 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	ntol = bn_pi;
 
     /* initial parabola approximation is a single segment */
-    pts = rt_ptalloc();
-    pts->next = rt_ptalloc();
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
     VSET(pts->p,       0, -rh, 0);
     VSET(pts->next->p, 0,  rh, 0);
@@ -1094,7 +1081,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    bu_free((char*)vtemp, "vertex *");
 	    bu_free((char*)outfaceuses, "faceuse *");
 
-	    return(-1);		/* FAIL */
+	    return -1;		/* FAIL */
 	}
     }
 
@@ -1155,7 +1142,7 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char*)vtemp, "vertex *");
     bu_free((char*)outfaceuses, "faceuse *");
 
-    return(0);
+    return 0;
 }
 
 
@@ -1178,7 +1165,7 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_rpc_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1199,10 +1186,10 @@ rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->rpc_r <= SMALL_FASTF) {
 	bu_log("rt_rpc_import4: r is zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_rpc_import4: ip->idp_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1221,7 +1208,7 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_RPC) return(-1);
+    if (ip->idb_type != ID_RPC) return -1;
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -1238,13 +1225,13 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
 	bu_log("rt_rpc_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h);
     if (!NEAR_ZERO(f, RT_DOT_TOL)) {
 	bu_log("rt_rpc_export4: B and H are not perpendicular! (dot = %g)\n", f);
-	return(-1);
+	return -1;
     }
 
     /* Warning:  type conversion */
@@ -1253,7 +1240,7 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&rpc->s.s_values[2*3], xip->rpc_B, local2mm);
     rpc->s.s_values[3*3] = xip->rpc_r * local2mm;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1296,10 +1283,10 @@ rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->rpc_r <= SMALL_FASTF) {
 	bu_log("rt_rpc_import4: r is zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_rpc_import4: ip->idp_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1318,7 +1305,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_RPC) return(-1);
+    if (ip->idb_type != ID_RPC) return -1;
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -1331,13 +1318,13 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
 	bu_log("rt_rpc_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h);
     if (!NEAR_ZERO(f, RT_DOT_TOL)) {
 	bu_log("rt_rpc_export4: B and H are not perpendicular! (dot = %g)\n", f);
-	return(-1);
+	return -1;
     }
 
     /* scale 'em into local buffer */
@@ -1349,7 +1336,7 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 10);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1396,7 +1383,7 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     sprintf(buf, "\tr=%g\n", INTCLAMP(xip->rpc_r * mm2local));
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1431,7 +1418,7 @@ rt_rpc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

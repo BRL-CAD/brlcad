@@ -539,7 +539,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
 	       status, ap->a_return);
     }
-    return( ap->a_return );
+    return ap->a_return;
 }
 
 /*

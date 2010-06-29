@@ -122,7 +122,7 @@ main(int argc, char **argv)
     }
     if ( scanbuf == RGBPIXEL_NULL )  {
 	fprintf(stderr, " rle-fb:  unable to malloc pixel buffer\n");
-	return(1);
+	return 1;
     }
 
     lines_per_buffer = pixels_per_buffer / width;	/* # of full scanlines in buffer */
@@ -215,7 +215,7 @@ main(int argc, char **argv)
 	if ( page_fault == 0 )  {
 	    /* Write out the residue, a short buffer */
 	    if ( fb_write( fbp, 0, start_y, scanbuf, (y-start_y)*width ) == -1 )
-		return(1);
+		return 1;
 	}
     } /* end block */
 #else

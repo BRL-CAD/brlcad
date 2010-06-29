@@ -15,9 +15,9 @@
 package require Tcl 8.5	;# Guard against [source] in an 8.4- interp
 			;# before using 8.5 [package] features.
 # Insist on running with compatible version of Tcl
-package require Tcl 8.5.0-8.6
+package require Tcl 8.5.0
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.5.6
+package require -exact Tk  8.5.8
 
 # Create a ::tk namespace
 namespace eval ::tk {
@@ -357,12 +357,12 @@ if {![llength [info command tk_chooseDirectory]]} {
 
 switch -exact -- [tk windowingsystem] {
     "x11" {
-	event add <<Cut>> <Control-Key-x> <Key-F20> 
-	event add <<Copy>> <Control-Key-c> <Key-F16>
-	event add <<Paste>> <Control-Key-v> <Key-F18>
+	event add <<Cut>> <Control-Key-x> <Key-F20> <Control-Lock-Key-X>
+	event add <<Copy>> <Control-Key-c> <Key-F16> <Control-Lock-Key-C>
+	event add <<Paste>> <Control-Key-v> <Key-F18> <Control-Lock-Key-V>
 	event add <<PasteSelection>> <ButtonRelease-2>
-	event add <<Undo>> <Control-Key-z>
-	event add <<Redo>> <Control-Key-Z>
+	event add <<Undo>> <Control-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>> <Control-Key-Z> <Control-Lock-Key-z>
 	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym
 	# that is returned when the user presses <Shift-Tab>.  In order for
 	# tab traversal to work, we have to add these keysyms to the 
@@ -380,21 +380,24 @@ switch -exact -- [tk windowingsystem] {
 	set ::tk::AlwaysShowSelection 1
     }
     "win32" {
-	event add <<Cut>> <Control-Key-x> <Shift-Key-Delete>
-	event add <<Copy>> <Control-Key-c> <Control-Key-Insert>
-	event add <<Paste>> <Control-Key-v> <Shift-Key-Insert>
+	event add <<Cut>> <Control-Key-x> <Shift-Key-Delete> \
+	    <Control-Lock-Key-X>
+	event add <<Copy>> <Control-Key-c> <Control-Key-Insert> \
+	    <Control-Lock-Key-C>
+	event add <<Paste>> <Control-Key-v> <Shift-Key-Insert> \
+	    <Control-Lock-Key-V>
 	event add <<PasteSelection>> <ButtonRelease-2>
-  	event add <<Undo>> <Control-Key-z>
-	event add <<Redo>> <Control-Key-y>
+  	event add <<Undo>> <Control-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>> <Control-Key-y> <Control-Lock-Key-Y>
     }
     "aqua" {
-	event add <<Cut>> <Command-Key-x> <Key-F2> 
-	event add <<Copy>> <Command-Key-c> <Key-F3>
-	event add <<Paste>> <Command-Key-v> <Key-F4>
+	event add <<Cut>> <Command-Key-x> <Key-F2> <Control-Lock-Key-X>
+	event add <<Copy>> <Command-Key-c> <Key-F3> <Control-Lock-Key-C>
+	event add <<Paste>> <Command-Key-v> <Key-F4> <Control-Lock-Key-V>
 	event add <<PasteSelection>> <ButtonRelease-2>
 	event add <<Clear>> <Clear>
-  	event add <<Undo>> <Command-Key-z>
-	event add <<Redo>> <Command-Key-y>
+  	event add <<Undo>> <Command-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>> <Command-Key-y> <Control-Lock-Key-Y>
     }
 }
 # ----------------------------------------------------------------------

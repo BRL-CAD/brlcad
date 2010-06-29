@@ -27,7 +27,6 @@ public:
 
   static const ON_Color UnsetColor; // 0xFFFFFFFF
 
-
   // Default is black
 	ON_Color();
 

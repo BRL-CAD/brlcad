@@ -99,7 +99,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 	b2 = ((k3 - mu) *
 	      rt_nurb_basis_eval( knts, interval + 1, order - 1, mu)) / den;
 
-    return (b1 + b2);
+    return b1 + b2;
 }
 /** @} */
 

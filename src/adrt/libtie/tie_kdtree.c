@@ -22,7 +22,7 @@
  *
  */
 
-#include "tie_kdtree.h"
+#include "tie.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -192,6 +192,7 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int t
 {
     tie_geom_t *g;
     TIE_3 min, max;
+    vect_t edge;
     unsigned int i;
 
 
@@ -215,12 +216,13 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int t
 
 /* Get Bounding Box of Triangle */
 	    MATH_BBOX(min, max, tri_list[i].data[0], tri_list[i].data[1], tri_list[i].data[2]);
-/*printf("min: [%g, %g, %g], max: [%g, %g, %g]\n", min.v[0], min.v[1], min.v[2], max.v[0], max.v[1], max.v[2]); */
 /* Check to see if defines a new Max or Min point */
 	    MATH_VEC_MIN(tie->min, min);
 	    MATH_VEC_MAX(tie->max, max);
-/* printf("Box: [%g, %g, %g] [%g, %g, %g]\n", tie->min.v[0], tie->min.v[1], tie->min.v[2], tie->max.v[0], tie->max.v[1], tie->max.v[2]);*/
 	}
+	VADD2SCALE(tie->mid, tie->min.v, tie->max.v, 0.5);
+	VSUB2(edge, tie->max.v, tie->mid);
+	tie->radius = MAGNITUDE(edge);
 
 	((tie_geom_t *)(tie->kdtree->data))->tri_num = tri_num;
     }
@@ -526,7 +528,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
 
 	    for (k = 0; k < slice_num; k++) {
 /*      printf("slice[%d][%d]: %d < %d\n", d, k, slice[d][k], (int)(MIN_DENSITY * (tfloat)smax[d])); */
-		if (slice[d][k] < (int)(MIN_DENSITY * (tfloat)smax[d])) {
+		if (slice[d][k] < (unsigned int)(MIN_DENSITY * (tfloat)smax[d])) {
 		    if (!active) {
 			active = 1;
 			beg = k;
@@ -765,7 +767,7 @@ static void tie_kdtree_build(tie_t *tie, tie_kdtree_t *node, unsigned int depth,
  **************** EXPORTED FUNCTIONS *************************
  *************************************************************/
 
-TIE_FUNC(void tie_kdtree_free, tie_t *tie)
+void TIE_VAL(tie_kdtree_free)(tie_t *tie)
 {
 /* Free KDTREE Nodes */
 /* prevent tie from crashing when a tie_free() is called right after a tie_init() */
@@ -774,7 +776,7 @@ TIE_FUNC(void tie_kdtree_free, tie_t *tie)
     bu_free(tie->kdtree, "kdtree");
 }
 
-TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
+uint32_t TIE_VAL(tie_kdtree_cache_free)(tie_t *tie, void **cache)
 {
     uint32_t size, mem;
 
@@ -783,7 +785,7 @@ TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
  * Prevent tie from crashing when a tie_free() is called right after a tie_init()
  */
     if (!tie->kdtree)
-	return(0);
+	return 0;
 
     *cache = NULL;
     size = 0;
@@ -804,10 +806,10 @@ TIE_FUNC(uint32_t tie_kdtree_cache_free, tie_t *tie, void **cache)
     bu_free(tie->kdtree, "kdtree");
     tie->kdtree = NULL;
 
-    return(size);
+    return size;
 }
 
-TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
+void TIE_VAL(tie_kdtree_cache_load)(tie_t *tie, void *cache, uint32_t size)
 {
     tie_kdtree_t *node = 0, *temp_node = 0, *stack[64];
     tie_geom_t *geom = 0;
@@ -894,7 +896,7 @@ TIE_FUNC(void tie_kdtree_cache_load, tie_t *tie, void *cache, uint32_t size)
     }
 }
 
-TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
+void TIE_VAL(tie_kdtree_prep)(tie_t *tie)
 {
     TIE_3 delta;
     int already_built;
@@ -926,7 +928,7 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
     VSUB2(delta.v,  tie->max.v,  tie->min.v);
     MATH_MAX3(TIE_PREC, delta.v[0], delta.v[1], delta.v[2]);
 #if TIE_PRECISION == TIE_PRECISION_SINGLE
-    TIE_PREC *= 0.000000001;
+    TIE_PREC *= (float)0.000000001;
 #else
     TIE_PREC *= 0.000000000001;
 #endif

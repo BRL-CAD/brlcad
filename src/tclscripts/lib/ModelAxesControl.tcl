@@ -123,7 +123,8 @@
 	return
     }
 
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
+    if {[catch {$itk_option(-mged) isa Mged} result] ||
+	[catch {$itk_option(-mged) isa cadwidgets::Ged} result]} {
 	error "The model axes control panel, $this, is not associated with an Mged object"
     }
 
@@ -479,7 +480,8 @@
 	$itk_component(tabs) pageconfigure Ticks -state disabled
     }
 
-    $itk_option(-mged) setModelAxesTickEnable $tickEnable
+    $itk_option(-mged) configure -modelAxesTickEnable
+#    $itk_option(-mged) setModelAxesTickEnable $tickEnable
 }
 
 ::itcl::body ModelAxesControl::setSizeCB {size} {
@@ -571,7 +573,8 @@
 		[string is double $y] &&
 		[string is double $z]} {
 
-		$itk_option(-mged) setModelAxesPosition $pos
+		$itk_option(-mged) configure -modelAxesPosition $pos
+#		$itk_option(-mged) setModelAxesPosition $pos
 		return true
 	    } else {
 		if {![string is double $x] && \
@@ -666,7 +669,8 @@
 	1 {
 	    if {[string is double $ti]} {
 		if {0 < $ti} {
-		    $itk_option(-mged) setModelAxesTickInterval $ti
+		    $itk_option(-mged) configure -modelAxesTickInterval $ti
+#		    $itk_option(-mged) setModelAxesTickInterval $ti
 		    return true
 		}
 
@@ -693,7 +697,8 @@
 	return
     }
 
-    $itk_option(-mged) setModelAxesTicksPerMajor $ticksPerMajor
+    $itk_option(-mged) configure -modelAxesTicksPerMajor $ticksPerMajor
+#    $itk_option(-mged) setModelAxesTicksPerMajor $ticksPerMajor
 }
 
 ::itcl::body ModelAxesControl::setTickThresholdCB {threshold} {
@@ -751,8 +756,10 @@
     }
 
     #eval set axesPosition [$itk_option(-mged) center]
-    set axesPosition [$itk_option(-mged) setModelAxesPosition]
-    set axesLineWidth [lindex [$itk_option(-mged) configure -modelAxesLineWidth] 4]
+#    set axesPosition [$itk_option(-mged) setModelAxesPosition]
+#    set axesLineWidth [lindex [$itk_option(-mged) configure -modelAxesLineWidth] 4]
+    set axesPosition [$itk_option(-mged) cget -modelAxesPosition]
+    set axesLineWidth [$itk_option(-mged) cget -modelAxesLineWidth]
     if {$axesLineWidth == 0} {
 	set axesLineWidth 1
     }
@@ -762,12 +769,19 @@
     #set tickColor "Yellow"
     #set majorTickColor "Red"
 
-    set tickEnable [$itk_option(-mged) setModelAxesTickEnable]
-    set tickInterval [$itk_option(-mged) setModelAxesTickInterval]
-    set ticksPerMajor [$itk_option(-mged) setModelAxesTicksPerMajor]
-    set tickThreshold [lindex [$itk_option(-mged) configure -modelAxesTickThreshold] 4]
-    set tickLength [lindex [$itk_option(-mged) configure -modelAxesTickLength] 4]
-    set majorTickLength [lindex [$itk_option(-mged) configure -modelAxesTickMajorLength] 4]
+#    set tickEnable [$itk_option(-mged) setModelAxesTickEnable]
+#    set tickInterval [$itk_option(-mged) setModelAxesTickInterval]
+#    set ticksPerMajor [$itk_option(-mged) setModelAxesTicksPerMajor]
+#    set tickThreshold [lindex [$itk_option(-mged) configure -modelAxesTickThreshold] 4]
+#    set tickLength [lindex [$itk_option(-mged) configure -modelAxesTickLength] 4]
+#    set majorTickLength [lindex [$itk_option(-mged) configure -modelAxesTickMajorLength] 4]
+
+    set tickEnable [$itk_option(-mged) cget -modelAxesTickEnable]
+    set tickInterval [$itk_option(-mged) cget -modelAxesTickInterval]
+    set ticksPerMajor [$itk_option(-mged) cget -modelAxesTicksPerMajor]
+    set tickThreshold [$itk_option(-mged) cget -modelAxesTickThreshold]
+    set tickLength [$itk_option(-mged) cget -modelAxesTickLength]
+    set majorTickLength [$itk_option(-mged) cget -modelAxesTickMajorLength]
 
     $itk_component(tickIntervalL) configure -text "Tick Interval ($units):"
 }

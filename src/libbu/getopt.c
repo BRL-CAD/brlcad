@@ -36,7 +36,7 @@
     fputs(s, stderr); \
     fputc(bu_optopt, stderr); \
     fputc('\n', stderr); \
-} return (BADCH);
+} return BADCH;
 
 
 int
@@ -50,16 +50,19 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	if (bu_optind >= nargc || *(place = nargv[bu_optind]) != '-' ||
 	    !*++place) {
 	    place = EMSG;
-	    return (EOF);
+	    return EOF;
 	}
 	if (*place == '-') {
 	    /* found "--" */
 	    place = EMSG;
 	    ++bu_optind;
-	    return (EOF);
+	    return EOF;
 	}
-    }				/* option letter okay? */
-    if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, bu_optopt))) {
+    } /* option letter okay? */
+
+    bu_optopt = (int)*place++;
+    oli = strchr(ostr, bu_optopt);
+    if (bu_optopt == (int)':' || !oli) {
 	++bu_optind;
 	place = EMSG;
 	tell(": illegal option -- ");
@@ -84,7 +87,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	place = EMSG;
 	++bu_optind;
     }
-    return (bu_optopt);			/* dump back option letter */
+    return bu_optopt;			/* dump back option letter */
 }
 
 /*

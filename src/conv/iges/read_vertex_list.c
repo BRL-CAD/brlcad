@@ -41,7 +41,7 @@ Read_vertex_list( vert_de )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return( (struct iges_vertex_list *)NULL );
+	return (struct iges_vertex_list *)NULL;
     }
 
     Readrec( dir[entityno]->param );
@@ -50,7 +50,7 @@ Read_vertex_list( vert_de )
     {
 	/* this is not an vertex list entity */
 	bu_log( "Read_vertex_list: entity at DE %d is not an vertex list entity\n", vert_de );
-	return( (struct iges_vertex_list *)NULL );
+	return (struct iges_vertex_list *)NULL;
     }
 
     vertex_list = (struct iges_vertex_list *)bu_malloc( sizeof( struct iges_vertex_list )  ,
@@ -70,7 +70,7 @@ Read_vertex_list( vert_de )
 	vertex_list->i_verts[i].v = (struct vertex *)NULL;
     }
 
-    return( vertex_list );
+    return vertex_list;
 }
 
 /*

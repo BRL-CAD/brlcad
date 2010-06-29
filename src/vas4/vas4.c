@@ -82,14 +82,14 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind >= argc )
-	return(0);
+	return 0;
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 /*
@@ -503,10 +503,10 @@ search_frame(int frame)
     vas_putc(C_ENTER);
     reply = vas_getc();
     if ( reply == 'L' )
-	return(0);	/* OK */
+	return 0;	/* OK */
     /* 'K' is expected failure code */
     vas_response(reply);
-    return(-1);		/* fail */
+    return -1;		/* fail */
 }
 
 /*
@@ -520,7 +520,7 @@ int
 reset_tape_time(void)
 {
     vas_putc(C_RESET_TAPETIME);
-    return(0);
+    return 0;
 }
 
 /*
@@ -540,9 +540,9 @@ time0(void)
     vas_putc(C_SEARCH);
     reply = vas_getc();
     if ( reply == 'L' )
-	return(0);	/* OK */
+	return 0;	/* OK */
     vas_response(reply);
-    return(-1);		/* fail */
+    return -1;		/* fail */
 }
 
 /*
@@ -560,8 +560,8 @@ get_vas_status(void)
     vas_rawputc(C_ACTIVITY);
     reply = vas_getc();		/* Needs timeout */
     if (debug) vas_response(reply);
-    if ( reply < 0x60 || reply > 0x78 )  return(-1);
-    return(reply);
+    if ( reply < 0x60 || reply > 0x78 )  return -1;
+    return reply;
 }
 
 /*
@@ -588,25 +588,25 @@ get_vtr_status(int chatter)
 
     if ( buf[0] != 'V' )  {
 	fprintf(stderr, "Link to VTR is not working\n");
-	return(-1);
+	return -1;
     }
     if ( buf[1] != 'R' )  {
 	if ( buf[1] == 'L' )  {
 	    fprintf(stderr, "VTR is in Local mode, can not be program controlled\n");
-	    return(-1);
+	    return -1;
 	}
 	fprintf(stderr, "VTR is in unknown mode\n");
-	return(-1);
+	return -1;
     }
     if ( buf[2] == 'R' )  {
 	if (chatter) fprintf(stderr, "VTR is online and ready to roll\n");
-	return(1);	/* very OK */
+	return 1;	/* very OK */
     } else if (  buf[2] == 'N' )  {
 	if (chatter) fprintf(stderr, "VTR is online and stopped\n");
-	return(0);	/* OK */
+	return 0;	/* OK */
     } else {
 	fprintf(stderr, "VTR is online and has unknown ready status\n");
-	return(-1);
+	return -1;
     }
     /* [3] is S for stop, P for play,
      *   L for shuttle var speed, W for slow speed */
@@ -634,11 +634,11 @@ get_frame_code(void)
     frame[6] = '\0';
     if ( status != 'C' && status != '<' )  {
 	fprintf(stderr, "get_frame_code:  unable to acquire\n");
-	return(-1);
+	return -1;
     }
     fprintf(stderr, "Scene %s, Frame %s\n", scene, frame);
     /* May want to do something more here */
-    return(0);
+    return 0;
 }
 
 void
@@ -691,7 +691,7 @@ str2frames(char *str)
 	    fprintf(stderr, "str2frames:  suffix '%s' unknown\n", str);
 	    break;
     }
-    return(num);
+    return num;
 }
 
 /*

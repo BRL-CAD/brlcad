@@ -202,7 +202,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * is an ELL.
      */
     if (rt_sph_prep(stp, ip, rtip) == 0) {
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     /* Validate that |A| > 0, |B| > 0, |C| > 0 */
@@ -213,7 +213,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist) {
 	bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 	       stp->st_name, magsq_a, magsq_b, magsq_c);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Create unit length versions of A, B, C */
@@ -228,17 +228,17 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("ell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("ell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("ell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Solid is OK, compute constant terms now */
@@ -315,7 +315,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = ell->ell_V[Z] - f;	/* V.P +/- f */
     stp->st_max[Z] = ell->ell_V[Z] + f;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -368,7 +368,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     dd = VDOT(dprime, dprime);
 
     if ((root = dp*dp - dd * (VDOT(pprime, pprime)-1.0)) < 0)
-	return(0);		/* No hit */
+	return 0;		/* No hit */
     root = sqrt(root);
 
     RT_GET_SEG(segp, ap->a_resource);
@@ -385,7 +385,7 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     segp->seg_in.hit_surfno = 0;
     segp->seg_out.hit_surfno = 0;
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -572,7 +572,7 @@ rt_ell_free(register struct soltab *stp)
 int
 rt_ell_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -625,7 +625,7 @@ rt_ell_16pts(fastf_t *ov,
  * R T _ E L L _ P L O T
  */
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     register int i;
     struct rt_ell_internal *eip;
@@ -656,7 +656,7 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     for (i=0; i<16; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -766,7 +766,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     magsq_c = MAGSQ(state.eip->c);
     if (magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist) {
 	bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Create unit length versions of A, B, C */
@@ -781,17 +781,17 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, tol->dist)) {
 	bu_log("ell():  A not perpendicular to B, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
 	bu_log("ell():  B not perpendicular to C, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
 	bu_log("ell():  A not perpendicular to C, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
 
     {
@@ -1070,7 +1070,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
     bu_free((char *)strips, "strips[]");
-    return(0);
+    return 0;
  fail:
     /* Release memory */
     /* All strips have vertices and normals */
@@ -1084,7 +1084,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
     bu_free((char *)strips, "strips[]");
-    return(-1);
+    return -1;
 }
 
 
@@ -1108,7 +1108,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_ell_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1129,7 +1129,7 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT4X3VEC(eip->b, mat, &vec[2*3]);
     MAT4X3VEC(eip->c, mat, &vec[3*3]);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1145,7 +1145,7 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ELL && ip->idb_type != ID_SPH) return(-1);
+    if (ip->idb_type != ID_ELL && ip->idb_type != ID_SPH) return -1;
     tip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(tip);
 
@@ -1163,7 +1163,7 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(&rec->s.s_values[6], tip->b, local2mm);
     VSCALE(&rec->s.s_values[9], tip->c, local2mm);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1225,7 +1225,7 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ELL && ip->idb_type != ID_SPH) return(-1);
+    if (ip->idb_type != ID_ELL && ip->idb_type != ID_SPH) return -1;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
@@ -1297,7 +1297,7 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(mag_c * mm2local));
     bu_vls_strcat(str, buf);
 
-    if (!verbose) return(0);
+    if (!verbose) return 0;
 
     VSCALE(unitv, tip->a, 1/mag_a);
     rt_find_fallback_angle(angles, unitv);
@@ -1311,7 +1311,7 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     rt_find_fallback_angle(angles, unitv);
     rt_pr_fallback_angle(str, "\tC", angles);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1383,7 +1383,7 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     magsq_c = MAGSQ(eip->c);
     if (magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist) {
 	bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Create unit length versions of A, B, C */
@@ -1398,17 +1398,17 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, tol->dist)) {
 	bu_log("ell():  A not perpendicular to B, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
 	bu_log("ell():  B not perpendicular to C, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
 	bu_log("ell():  A not perpendicular to C, f=%f\n", f);
-	return(-3);		/* BAD */
+	return -3;		/* BAD */
     }
 
     {
@@ -1648,7 +1648,7 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
     struct rt_ell_internal *eip;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
 
-    if (!pcs) return (0);
+    if (!pcs) return 0;
 
 #if 0
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
@@ -1670,7 +1670,7 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
     pcs->ps[3].ptype = pc_value;
     pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
 #endif
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

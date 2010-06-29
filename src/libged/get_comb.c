@@ -40,9 +40,9 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal	intern;
     struct rt_comb_internal *comb;
     struct rt_tree_array	*rt_tree_array;
-    int i;
-    int node_count;
-    int actual_count;
+    size_t i;
+    size_t node_count;
+    size_t actual_count;
     struct bu_vls vls;
     static const char *usage = "comb";
 
@@ -99,7 +99,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 								   OP_UNION,
 								   1,
 								   &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_LONG(actual_count, ==, node_count);
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    rt_tree_array = (struct rt_tree_array *)NULL;

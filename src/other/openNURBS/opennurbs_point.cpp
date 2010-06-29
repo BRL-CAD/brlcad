@@ -6220,6 +6220,278 @@ double ON_PlaneEquation::MaximumValueAt(const ON_BoundingBox& bbox) const
   return (xx + yy + zz + d);
 }
 
+
+double ON_PlaneEquation::MaximumAbsoluteValueAt(
+  bool bRational,
+  int point_count,
+  int point_stride,
+  const double* points,
+  double stop_value
+  ) const
+{
+  double value, max_value, w;
+
+  if (    point_count < 1 
+       || point_stride < (bRational?4:3) 
+       || 0 == points
+       )
+  {
+    return ON_UNSET_VALUE;
+  }
+
+  if ( ON_IsValid(stop_value) )
+  {
+    if ( bRational )
+    {
+      w = points[3];
+      w = (0.0 != w) ? 1.0/w : 1.0;
+      max_value = fabs(x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3]);
+      if ( max_value > stop_value )
+        return max_value;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        w = points[3];
+        w = (0.0 != w) ? 1.0/w : 1.0;
+        value = fabs(x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3]);
+        if ( value > max_value )
+        {
+          if ( (max_value = value) > stop_value )
+            return max_value;
+        }
+      }
+    }
+    else
+    {
+      max_value = fabs(x*points[0]+y*points[1]+z*points[2]+d);
+      if ( max_value > stop_value )
+        return max_value;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        value = fabs(x*points[0]+y*points[1]+z*points[2]+d);
+        if ( value > max_value )
+        {
+          if ( (max_value = value) > stop_value )
+            return max_value;
+        }
+      }
+    }
+  }
+  else
+  {
+    if ( bRational )
+    {
+      w = points[3];
+      w = (0.0 != w) ? 1.0/w : 1.0;
+      max_value = fabs(x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3]);
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        w = points[3];
+        w = (0.0 != w) ? 1.0/w : 1.0;
+        value = fabs(x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3]);
+        if ( value > max_value )
+          max_value = value;
+      }
+    }
+    else
+    {
+      max_value = fabs(x*points[0]+y*points[1]+z*points[2]+d);
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        value = fabs(x*points[0]+y*points[1]+z*points[2]+d);
+        if ( value > max_value )
+          max_value = value;
+      }
+    }
+  }
+
+  return max_value;
+}
+
+double ON_PlaneEquation::MaximumValueAt(
+  bool bRational,
+  int point_count,
+  int point_stride,
+  const double* points,
+  double stop_value
+  ) const
+{
+  double value, max_value, w;
+
+  if (    point_count < 1 
+       || point_stride < (bRational?4:3) 
+       || 0 == points
+       )
+  {
+    return ON_UNSET_VALUE;
+  }
+
+  if ( ON_IsValid(stop_value) )
+  {
+    if ( bRational )
+    {
+      w = points[3];
+      w = (0.0 != w) ? 1.0/w : 1.0;
+      max_value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+      if ( max_value > stop_value )
+        return max_value;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        w = points[3];
+        w = (0.0 != w) ? 1.0/w : 1.0;
+        value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+        if ( value > max_value )
+        {
+          if ( (max_value = value) > stop_value )
+            return max_value;
+        }
+      }
+    }
+    else
+    {
+      max_value = x*points[0]+y*points[1]+z*points[2]+d;
+      if ( max_value > stop_value )
+        return max_value;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        value = x*points[0]+y*points[1]+z*points[2]+d;
+        if ( value > max_value )
+        {
+          if ( (max_value = value) > stop_value )
+            return max_value;
+        }
+      }
+    }
+  }
+  else
+  {
+    if ( bRational )
+    {
+      w = points[3];
+      w = (0.0 != w) ? 1.0/w : 1.0;
+      max_value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        w = points[3];
+        w = (0.0 != w) ? 1.0/w : 1.0;
+        value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+        if ( value > max_value )
+          max_value = value;
+      }
+    }
+    else
+    {
+      max_value = x*points[0]+y*points[1]+z*points[2]+d;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        value = x*points[0]+y*points[1]+z*points[2]+d;
+        if ( value > max_value )
+          max_value = value;
+      }
+    }
+  }
+
+  return max_value;
+}
+
+double ON_PlaneEquation::MinimumValueAt(
+  bool bRational,
+  int point_count,
+  int point_stride,
+  const double* points,
+  double stop_value
+  ) const
+{
+  double value, min_value, w;
+
+  if (    point_count < 1 
+       || point_stride < (bRational?4:3) 
+       || 0 == points
+       )
+  {
+    return ON_UNSET_VALUE;
+  }
+
+  if ( ON_IsValid(stop_value) )
+  {
+    if ( bRational )
+    {
+      w = points[3];
+      w = (0.0 != w) ? 1.0/w : 1.0;
+      min_value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+      if ( min_value < stop_value )
+        return min_value;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        w = points[3];
+        w = (0.0 != w) ? 1.0/w : 1.0;
+        value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+        if ( value < min_value )
+        {
+          if ( (min_value = value) < stop_value )
+            return min_value;
+        }
+      }
+    }
+    else
+    {
+      min_value = x*points[0]+y*points[1]+z*points[2]+d;
+      if ( min_value < stop_value )
+        return min_value;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        value = x*points[0]+y*points[1]+z*points[2]+d;
+        if ( value < min_value )
+        {
+          if ( (min_value = value) < stop_value )
+            return min_value;
+        }
+      }
+    }
+  }
+  else
+  {
+    if ( bRational )
+    {
+      w = points[3];
+      w = (0.0 != w) ? 1.0/w : 1.0;
+      min_value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        w = points[3];
+        w = (0.0 != w) ? 1.0/w : 1.0;
+        value = x*w*points[0]+y*w*points[1]+z*w*points[2]+points[3];
+        if ( value < min_value )
+          min_value = value;
+      }
+    }
+    else
+    {
+      min_value = x*points[0]+y*points[1]+z*points[2]+d;
+      for(point_count--; point_count--; /*empty iterator*/ )
+      {
+        points += point_stride;
+        value = x*points[0]+y*points[1]+z*points[2]+d;
+        if ( value < min_value )
+          min_value = value;
+      }
+    }
+  }
+
+  return min_value;
+}
+
+
 bool ON_PlaneEquation::IsNearerThan( 
         const ON_BezierCurve& bezcrv,
         double s0,

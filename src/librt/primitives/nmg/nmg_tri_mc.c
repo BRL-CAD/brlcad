@@ -24,6 +24,21 @@
  * Triangulate the faces of a polygonal NMG using the marching cubes
  * algorithm.
  *
+ *
+ * Vertex and edge indices (note that it seems rotated 90 degrees from the stuff
+ * you see on the sources. They used OpenGL coordinates, we use BRL-CAD.)
+ *              4
+ *        4-----------5
+ *      8/|         9/|
+ *      / |   0     / |
+ *     0-----------1  |5
+ *     |  |7       |  |
+ *     |  |   6   1|  |
+ *    3|  7--------|--6
+ *     | /         | /
+ *     |/11        |/10
+ *     3-----------2
+ *          2
  */
 /** @} */
 
@@ -529,48 +544,27 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 }
 
 static int
-rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fastf_t step, const struct bn_tol *tol)
+rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t b, fastf_t step, const struct bn_tol *tol)
 {
-    struct whack sw[MAX_INTERSECTS], nw[MAX_INTERSECTS], se[MAX_INTERSECTS], ne[MAX_INTERSECTS];
-    struct whack *swp = sw, *nwp = nw, *sep = se, *nep = ne;
-    int i, insw=0, inse=0, innw=0, inne=0, count=0;
+    int i, in[4] = { 0, 0, 0, 0}, count=0;
     fastf_t last_b = -VOODOO;
-    fastf_t b;
 
-    for(i=0;i<MAX_INTERSECTS;i++) {
-	sw[i].in = 0; VSETALL(sw[i].hit, VOODOO);
-	se[i].in = 0; VSETALL(se[i].hit, VOODOO);
-	nw[i].in = 0; VSETALL(nw[i].hit, VOODOO);
-	ne[i].in = 0; VSETALL(ne[i].hit, VOODOO);
-    }
-
-    b = bin(a->a_rt_i->mdl_min[Z] - tol->dist - step, step);
-    VSET(a->a_ray.r_dir, 0, 0, 1);
-    a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, b); rt_shootray(a);
-    a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, b); rt_shootray(a);
-    a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, b); rt_shootray(a);
-    a->a_uptr = nep; VSET(a->a_ray.r_pt, x+step, y+step, b); rt_shootray(a);
-    b = +INFINITY;
-
-    while(swp->in>0 || sep->in>0 || nwp->in>0 || nep->in>0) {
+    while(primp[0]->in>0 || primp[1]->in>0 || primp[2]->in>0 || primp[3]->in>0) {
 	unsigned char pv;
 	point_t edges[12];
 	struct whack muh[MAX_INTERSECTS];
 	point_t p[8];
 
 	a->a_uptr = muh;
-	if((insw|inse|innw|inne) == 0) {
+	if((in[0]|in[1]|in[2]|in[3]) == 0) {
 	    b = +INFINITY;
 	    /* figure out the first hit distance and bin it */
-	    if(swp->in>0 && swp->hit[Z] < b) b = swp->hit[Z];
-	    if(sep->in>0 && sep->hit[Z] < b) b = sep->hit[Z];
-	    if(nwp->in>0 && nwp->hit[Z] < b) b = nwp->hit[Z];
-	    if(nep->in>0 && nep->hit[Z] < b) b = nep->hit[Z];
+	    for(i=0;i<4;i++)
+		if(primp[i]->in>0 && primp[i]->hit[Z] < b) b = primp[i]->hit[Z];
 	    b = bin(b, step);
 	} else { /* iff we know we're intersecting the surface, walk slow. */
-	    if(NEAR_ZERO(last_b+VOODOO, tol->dist)) {
+	    if(NEAR_ZERO(last_b+VOODOO, tol->dist))
 		bu_log("teh fux? lastb = %g\n", last_b);
-	    }
 	    b = last_b + step;
 	}
 
@@ -579,33 +573,33 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
 	/* build the point vector */
 	pv = 0;
-	if(insw && swp->hit[Z] > b+step) pv |= 0x09;
-	if(inse && sep->hit[Z] > b+step) pv |= 0x06;
-	if(innw && nwp->hit[Z] > b+step) pv |= 0x90;
-	if(inne && nep->hit[Z] > b+step) pv |= 0x60;
+	if(in[0] && primp[0]->hit[Z] > b+step) pv |= 0x09;
+	if(in[1] && primp[1]->hit[Z] > b+step) pv |= 0x06;
+	if(in[2] && primp[2]->hit[Z] > b+step) pv |= 0x90;
+	if(in[3] && primp[3]->hit[Z] > b+step) pv |= 0x60;
 
-#define MEH(C,I,O) \
-	if(C##p[1].in > 0 && C##p[1].hit[Z] < b+step+tol->dist) C##p+=2; \
-	if(C##p->hit[Z] < b+step+tol->dist) {  \
-	    if(C##p->in==1) { in##C=1; pv |= 1<<I;} \
-	    if(C##p->in==2) { in##C=0; pv |= 1<<O;} \
-	} else pv |= in##C<<I | in##C<<O;
+#define MEH(A,I,O) \
+	if(primp[A][1].in > 0 && primp[A][1].hit[Z] < b+step+tol->dist) primp[A]+=2; \
+	if(primp[A]->hit[Z] < b+step+tol->dist) {  \
+	    if(primp[A]->in==1) { in[A]=1; pv |= 1<<I;} \
+	    if(primp[A]->in==2) { in[A]=0; pv |= 1<<O;} \
+	} else pv |= in[A]<<I | in[A]<<O;
 
 	/*  p   t  b */
-	MEH(sw, 0, 3);
-	MEH(se, 1, 2);
-	MEH(nw, 4, 7);
-	MEH(ne, 5, 6);
+	MEH(0, 0, 3);
+	MEH(1, 1, 2);
+	MEH(2, 4, 7);
+	MEH(3, 5, 6);
 #undef MEH
 
 #define MUH(a,l) if(bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) { VMOVE(edges[a], l->hit); l++; } /* we already have ray intersect data for these. */
 	for(i=0;i<12;i++)
 	    VSETALL(edges[i], VOODOO);
 
-	MUH(1 ,sep);
-	MUH(3 ,swp);
-	MUH(5 ,nep);
-	MUH(7 ,nwp);
+	MUH(1 ,primp[1]);
+	MUH(3 ,primp[0]);
+	MUH(5 ,primp[3]);
+	MUH(7 ,primp[2]);
 #undef MUH
 
 	if(marching_cubes_use_midpoint) {
@@ -660,10 +654,12 @@ int
 nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct application a;
-    fastf_t x,y, endx, endy;
+    fastf_t x, y, z, endx, endy;
     fastf_t step = 0.0;
     int ncpu;
     int count = 0;
+    struct whack prim[4][MAX_INTERSECTS];
+    struct whack *primp[4];
 
     RT_APPLICATION_INIT(&a);
     a.a_rt_i = rtip;
@@ -689,8 +685,41 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
     /* TODO: throw "ncpu" threads here? */
     for(; x<endx; x+=step) {
 	y=bin(a.a_rt_i->mdl_min[Y], step) - step;
-	for(; y<endy; y+=step)
-	    count += rt_nmg_mc_pew(s,&a,x,y,step, tol);
+	for(; y<endy; y+=step) {
+	    int i, j;
+
+	    for(i=0;i<4;i++)
+		primp[i] = prim[i];
+
+	    for(i=0;i<4;i++)
+		for(j=0;j<MAX_INTERSECTS-1;j++) {
+		    prim[i][j].in = 0; 
+		    VSETALL(prim[i][j].hit, VOODOO);
+		}
+
+	    z = bin(a.a_rt_i->mdl_min[Z] - tol->dist - step, step);
+
+	    VSET(a.a_ray.r_dir, 0, 0, 1);
+	    a.a_uptr = primp[0]; 
+	    VSET(a.a_ray.r_pt, x, y, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[1]; 
+	    VSET(a.a_ray.r_pt, x+step, y, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[2]; 
+	    VSET(a.a_ray.r_pt, x, y+step, z); 
+	    rt_shootray(&a);
+
+	    a.a_uptr = primp[3]; 
+	    VSET(a.a_ray.r_pt, x+step, y+step, z); 
+	    rt_shootray(&a);
+
+	    z = +INFINITY;
+
+	    count += rt_nmg_mc_pew(s, primp, &a, x, y, z, step, tol);
+	}
     }
     /* free the rt stuff we don't need anymore */
 

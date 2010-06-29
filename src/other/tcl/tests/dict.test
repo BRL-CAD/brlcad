@@ -18,6 +18,17 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 # Used for constraining memory leak tests
 testConstraint memory [llength [info commands memory]]
+if {[testConstraint memory]} {
+    proc memtest script {
+	set end [lindex [split [memory info] \n] 3 3]
+	for {set i 0} {$i < 5} {incr i} {
+	    uplevel 1 $script
+	    set tmp $end
+	    set end [lindex [split [memory info] \n] 3 3]
+	}
+	expr {$end - $tmp}
+    }
+}
 
 # Procedure to help check the contents of a dictionary.  Note that we
 # can't just compare the string version because the order of the
@@ -819,10 +830,6 @@ test dict-19.1 {memory bug} -setup {
     rename xxx {}
 } -result [dict create c d a b]
 test dict-19.2 {dict: testing for leaks} -setup {
-    proc getbytes {} {
-        set lines [split [memory info] "\n"]
-        lindex [lindex $lines 3] 3
-    }
     # This test is made to stress object reference management
     proc stress {} {
         # A shared invalid dictinary
@@ -927,17 +934,20 @@ test dict-19.2 {dict: testing for leaks} -setup {
         unset bepa
     }
 } -constraints memory -body {
-    set end [getbytes]
-    for {set i 0} {$i < 5} {incr i} {
-        stress
-        set tmp $end
-        set end [getbytes]
+    memtest {
+	stress
     }
-    expr {$end - $tmp}
 } -cleanup {
-    unset -nocomplain end i tmp
-    rename getbytes {}
     rename stress {}
+} -result 0
+test dict-19.3 {testing for leaks - Bug 2874678} -constraints memory -body {
+    set d aDictVar; # Force interpreted [dict incr]
+    memtest {
+	dict incr $d aKey 0
+	unset $d
+    }
+} -cleanup {
+    unset d
 } -result 0
 
 test dict-20.1 {dict merge command} {

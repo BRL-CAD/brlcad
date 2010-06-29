@@ -266,7 +266,6 @@ struct tagON_3dex
 
 typedef struct tagON_3dex ON_3dex;
 
-
 union ON_U
 {
   char      b[8]; // 8 bytes
@@ -915,7 +914,8 @@ public:
     cage_object          = 0x08000000, // some type of ON_NurbsCage
     phantom_object       = 0x10000000,
     clipplane_object     = 0x20000000,
-    beam_object          = 0x40000000,
+    beam_object          = 0x40000000, // obsolete - use extrusion_object
+    extrusion_object     = 0x40000000, // some type of ON_Extrusion
     
     any_object           = 0xFFFFFFFF
 
@@ -996,6 +996,37 @@ public:
     ctPolyline,
   };
 
+
+  //// surface_loft_end_condition //////////////////////////////////////////////
+  //
+  // End condition paramter values for  ON_Curve::CreateCubicLoft() and
+  // ON_Surface::CreateCubicLoft().
+  enum cubic_loft_end_condition
+  {
+    cubic_loft_ec_quadratic      = 0,
+    cubic_loft_ec_linear         = 1,
+    cubic_loft_ec_cubic          = 2,
+    cubic_loft_ec_natural        = 3,
+    cubic_loft_ec_unit_tangent   = 4,
+    cubic_loft_ec_1st_derivative = 5,
+    cubic_loft_ec_2nd_derivative = 6,
+    cubic_loft_ec_free_cv        = 7
+  };
+
+  /*
+  Description:
+    Convert an integer to cubic_loft_end_condition enum.
+  Parameters:
+    i - [in]
+  Returns:
+    corresponding cubic_loft_end_condition enum value.
+  Remarks:
+    If i does not correspond to a cubic_loft_end_condition
+    enum value, then cubic_loft_ec_quadratic is returned.
+  */
+  static 
+  cubic_loft_end_condition CubicLoftEndCondition(int i); 
+
 private:
   // prohibit instantiaion
   //ON();             // no implementation
@@ -1034,6 +1065,8 @@ public:
     polycurve_segment  =  31,
     pointcloud_point   =  41,
     group_member       =  51,
+    extrusion_bottom_profile = 61,
+    extrusion_top_profile    = 62,
     dim_linear_point   = 100,
     dim_radial_point   = 101,
     dim_angular_point  = 102,
@@ -1136,6 +1169,13 @@ public:
 
   /*
   Returns:
+    True if m_type = extrusion_bottom_profile or extrusion_top_profile
+    and m_index >= 0.
+  */
+  bool IsExtrusionProfileComponentIndex() const;
+
+  /*
+  Returns:
     True if m_type = pointcloud_point and m_index >= 0.
   */
   bool IsPointCloudComponentIndex() const;
@@ -1165,6 +1205,10 @@ public:
     mesh_face          ON_Mesh.m_F[] array index
     idef_part          ON_InstanceDefinition.m_object_uuid[] array index
     polycurve_segment  ON_PolyCurve::m_segment[] array index
+    extrusion_bottom_profile 
+    extrusion_top_profile 
+                       Use ON_Extrusion::Bottom/TopProfile(index)
+                       to get a 3d profile curve.
     dim_linear_point   ON_LinearDimension2::POINT_INDEX
     dim_radial_point   ON_RadialDimension2::POINT_INDEX
     dim_angular_point  ON_AngularDimension2::POINT_INDEX

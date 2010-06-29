@@ -39,7 +39,7 @@
 
 void
 dm_draw_data_axes(struct dm *dmp,
-		  fastf_t viewSize __attribute__((unused)), /* in mm */
+		  fastf_t UNUSED(viewSize), /* in mm */
 		  struct ged_data_axes_state *gdasp)
 {
     int i, j;

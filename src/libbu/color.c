@@ -133,7 +133,7 @@ int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
     {
 	bu_log("bu_hsv_to_rgb: Illegal HSV (%g, %g, %g)\n",
 	       V3ARGS(hsv));
-	return (0);
+	return 0;
     }
 
     /* so hue == ACHROMATIC (or is ignored)	*/
@@ -166,7 +166,7 @@ int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
     rgb[GRN] = float_rgb[GRN] * 255;
     rgb[BLU] = float_rgb[BLU] * 255;
 
-    return (1);
+    return 1;
 }
 
 

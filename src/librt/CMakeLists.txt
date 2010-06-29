@@ -212,6 +212,8 @@ set(LIBRT_SOURCES
 
 set(IGNORED_SOURCES
     brep_test.cpp
+    columnparse.c
+    namegen.c
     nurb_example.c
     prcomb.c
     primitives/xxx/xxx.c

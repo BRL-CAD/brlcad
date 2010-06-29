@@ -245,13 +245,11 @@ proc CreateGUI {} {
     tkwait window $dlg
 }
 
-if {!$tcl_interactive} {
-    if {![winfo exists .knightstour]} {
-        if {![info exists widgetDemo]} { wm withdraw . }
-        set r [catch [linsert $argv 0 CreateGUI] err]
-        if {$r} {
-            tk_messageBox -icon error -title "Error" -message $err
-        }
-        if {![info exists widgetDemo]} { exit $r }
+if {![winfo exists .knightstour]} {
+    if {![info exists widgetDemo]} { wm withdraw . }
+    set r [catch [linsert $argv 0 CreateGUI] err]
+    if {$r} {
+	tk_messageBox -icon error -title "Error" -message $err
     }
+    if {![info exists widgetDemo]} { exit $r }
 }

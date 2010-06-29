@@ -8,7 +8,6 @@ Files Added:
 BRL_CAD_changes.txt - this file
 CmakeLists.txt - supports building openNURBS using CMake
 Makefile.am - supports building openNURBS using GNU Autotools
-faq.txt - adds some basic information from the openNURBS website
 license.txt - include a copy of the license information with the source code
 
 
@@ -23,22 +22,6 @@ zlib - BRL-CAD uses either the system zlib or its own external copy - don't
 
 Annotated list of other differences between BRL-CAD openNURBS and vanilla tarball as of 
 revision 37009
-
-
-
-######################################################################################
-### Attempt at porting forward the change from r32977, relating to pointer casting ###
-######################################################################################
-
-Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_array_defs.h opennurbs_minimalchanges/opennurbs_array_defs.h Page 1
-
-1065c1065,1067
-<   return found ? ((int)((((ON__UINT_PTR)found) - ((ON__UINT_PTR)m_a))/sizeof(T))) : -1;
----
->   // (``Erik used size_t instead of unsigned int in previous version - swap size_t for int for now
->   // in this version as well - need to evaluate impact of ON__UINT_PTR if any...)
->   return found ? ((size_t)((((ON__UINT_PTR)found) - ((ON__UINT_PTR)m_a))/sizeof(T))) : -1;
-
 
 
 ##########################################################################################

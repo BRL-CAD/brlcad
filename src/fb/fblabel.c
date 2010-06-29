@@ -137,12 +137,12 @@ get_args(int argc, char **argv)
 		pixcolor[BLU] = atoi( bu_optarg );
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind+3 > argc )
-	return(0);
+	return 0;
     xpos = atoi( argv[bu_optind++]);
     ypos = atoi( argv[bu_optind++]);
     textstring = argv[bu_optind++];
@@ -151,7 +151,7 @@ get_args(int argc, char **argv)
     if ( argc > bu_optind )
 	(void)fprintf( stderr, "fblabel: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

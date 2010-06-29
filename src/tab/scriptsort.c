@@ -171,7 +171,7 @@ struct frame *getframe(FILE *in)
     if (verbose) {
 	fprintf(stderr, "scriptsort: Frame %d(%d)\n", new->number, new->tp);
     }
-    return(new);
+    return new;
 }
 
 #ifdef never
@@ -408,10 +408,10 @@ int get_args (int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 /*

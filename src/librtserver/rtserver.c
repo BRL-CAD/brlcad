@@ -1080,7 +1080,7 @@ JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_r
     
     if ( len < 2 ) {
 	bu_log( "wrong number of args\n" );
-	return( (jint) 1 );
+	return (jint) 1;
     }
 
     /* get the aruments from the JAVA args object array */
@@ -1109,18 +1109,18 @@ JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_r
     bu_free( (char *)obj_list, "obj_list" );
     bu_free( (char *)jobj_name, "jobj_name" );
 
-    return( ret );
+    return ret;
 
 }
 
 JNIEXPORT jstring JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getDbTitle(JNIEnv *env, jobject obj)
 {
-    return( (*env)->NewStringUTF(env, title) );
+    return (*env)->NewStringUTF(env, title);
 }
 
 JNIEXPORT jstring JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getLibraryVersion(JNIEnv *env, jobject obj)
 {
-    return( (*env)->NewStringUTF(env, rt_version()) );
+    return (*env)->NewStringUTF(env, rt_version());
 }
 
 JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_openSession(JNIEnv *env, jobject obj)
@@ -1142,7 +1142,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
 
     if ( sessionId < 0 || sessionId >= num_geometries ) {
 	fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     min_pt = rts_geometry[sessionId]->rts_mdl_min;
@@ -1152,7 +1152,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
     if ( (boundingBox_class=(*env)->FindClass( env, "org/brlcad/numerics/BoundingBox" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find BoundingBox class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the BoundingBox constructor id */
@@ -1160,14 +1160,14 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
 							  "(Lorg/brlcad/numerics/Point;Lorg/brlcad/numerics/Point;)V" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the Point class */
     if ( (point_class=(*env)->FindClass( env, "org/brlcad/numerics/Point" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the Point constructor id */
@@ -1175,7 +1175,7 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
 						    "(DDD)V" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find BoundingBox constructor method id\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* create the points of Bounding Box */
@@ -1183,13 +1183,13 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while creating minimum point for BoundingBox\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     point2 = (*env)->NewObject( env, point_class, point_constructor_id, max_pt[X], max_pt[Y], max_pt[Z] );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while creating maximum point for BoundingBox\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* create the BoundingBox */
@@ -1197,10 +1197,10 @@ JNIEXPORT jobject JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrappe
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while creating BoundingBox\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
-    return( bb );
+    return bb;
 }
 
 /* JAVA shootRay method
@@ -1234,98 +1234,98 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
     if ( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fid = (*env)->GetFieldID( env, point_class, "x", "D" );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ap->a_ray.r_pt[X] = (jdouble)(*env)->GetDoubleField( env, jstart_pt, fid );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fid = (*env)->GetFieldID( env, point_class, "y", "D" );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ap->a_ray.r_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fid );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fid = (*env)->GetFieldID( env, point_class, "z", "D" );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ap->a_ray.r_pt[Z] = (*env)->GetDoubleField( env, jstart_pt, fid );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* extract direction vector */
     if ( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Vector3 class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fid = (*env)->GetFieldID( env, vect_class, "x", "D" );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x-fid of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ap->a_ray.r_dir[X] = (*env)->GetDoubleField( env, jdir, fid );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fid = (*env)->GetFieldID( env, vect_class, "y", "D" );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y-fid of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ap->a_ray.r_dir[Y] = (*env)->GetDoubleField( env, jdir, fid );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fid = (*env)->GetFieldID( env, vect_class, "z", "D" );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z-fid of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ap->a_ray.r_dir[Z] = (*env)->GetDoubleField( env, jdir, fid );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     /* set the desired onehit flag */
@@ -1356,20 +1356,20 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_shootRay( JNIEnv *env, j
 	fprintf( stderr, "Exception thrown while creating byte array\n" );
 	(*env)->ExceptionDescribe(env);
         FINISH_APPLICATION(ap);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_getBuffer(vlb) );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while setting byte array contents\n" );
 	(*env)->ExceptionDescribe(env);
         FINISH_APPLICATION(ap);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     FINISH_APPLICATION(ap);
 
     /* return JAVA result */
-    return( array );
+    return array;
 }
 
 /* routine to shoot a list of rays 
@@ -1402,75 +1402,75 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     if ( (rayClass=(*env)->FindClass( env, "org/brlcad/numerics/Ray" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Ray class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     fidStart = (*env)->GetFieldID( env, rayClass, "start", "Lorg/brlcad/numerics/Point;" );
     if ( fidStart == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     fidDirection = (*env)->GetFieldID( env, rayClass, "direction", "Lorg/brlcad/numerics/Vector3;" );
     if ( fidDirection == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting fid of ray direction vector\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     if ( (pointClass=(*env)->FindClass( env, "org/brlcad/numerics/Point" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     if ( (vector3Class=(*env)->FindClass( env, "org/brlcad/numerics/Vector3" ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Vector3 class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidpx = (*env)->GetFieldID( env, pointClass, "x", "D" );
     if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidpy = (*env)->GetFieldID( env, pointClass, "y", "D" );
     if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidpz = (*env)->GetFieldID( env, pointClass, "z", "D" );
     if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidvx = (*env)->GetFieldID( env, vector3Class, "x", "D" );
     if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x-fid of ray start vector3\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidvy = (*env)->GetFieldID( env, vector3Class, "y", "D" );
     if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y-fid of ray start vector3\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidvz = (*env)->GetFieldID( env, vector3Class, "z", "D" );
     if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z-fid of ray start vector3\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     /* set up our own application structure */
@@ -1496,63 +1496,63 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting ray #%d from array\n", rayIndex );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         start = (*env)->GetObjectField(env, ray, fidStart);
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting ray start point\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         direction = (*env)->GetObjectField(env, ray, fidDirection);
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting ray direction vector\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         ap->a_ray.r_pt[X] = (jdouble)(*env)->GetDoubleField( env, start, fidpx );
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         ap->a_ray.r_pt[Y] = (jdouble)(*env)->GetDoubleField( env, start, fidpy );
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         ap->a_ray.r_pt[Z] = (jdouble)(*env)->GetDoubleField( env, start, fidpz );
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         ap->a_ray.r_dir[X] = (jdouble)(*env)->GetDoubleField( env, direction, fidvx );
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         ap->a_ray.r_dir[Y] = (jdouble)(*env)->GetDoubleField( env, direction, fidvy );
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         ap->a_ray.r_dir[Z] = (jdouble)(*env)->GetDoubleField( env, direction, fidvz );
         if ( (*env)->ExceptionOccurred(env) ) {
             fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
             (*env)->ExceptionDescribe(env);
-            return( (jobject)NULL );
+            return (jobject)NULL;
         }
         
         /* write this ray info to the byte array */
@@ -1572,20 +1572,20 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 	fprintf( stderr, "Exception thrown while creating byte array\n" );
 	(*env)->ExceptionDescribe(env);
         FINISH_APPLICATION(ap);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_getBuffer(vlb) );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while setting byte array contents\n" );
 	(*env)->ExceptionDescribe(env);
         FINISH_APPLICATION(ap);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     FINISH_APPLICATION(ap);
     
     /* return JAVA result */
-    return( array );
+    return array;
 }
 
 /* routine to shoot a grid of rays 
@@ -1626,98 +1626,98 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     if ( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Point class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidpx = (*env)->GetFieldID( env, point_class, "x", "D" );
     if ( fidpx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     base_pt[X] = (jdouble)(*env)->GetDoubleField( env, jstart_pt, fidpx );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidpy = (*env)->GetFieldID( env, point_class, "y", "D" );
     if ( fidpy == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     base_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fidpy );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidpz = (*env)->GetFieldID( env, point_class, "z", "D" );
     if ( fidpz == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     base_pt[Z] = (*env)->GetDoubleField( env, jstart_pt, fidpz );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* extract direction vector for the rays */
     if ( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
 	fprintf( stderr, "Failed to find Vector3 class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidvx = (*env)->GetFieldID( env, vect_class, "x", "D" );
     if ( fidvx == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x-fid of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ray_dir[X] = (*env)->GetDoubleField( env, jdir, fidvx );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidvy = (*env)->GetFieldID( env, vect_class, "y", "D" );
     if ( fidvy == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y-fid of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ray_dir[Y] = (*env)->GetDoubleField( env, jdir, fidvy );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     fidvz = (*env)->GetFieldID( env, vect_class, "z", "D" );
     if ( fidvz == 0 && (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z-fid of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     ray_dir[Z] = (*env)->GetDoubleField( env, jdir, fidvz );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* extract row difference vector (the vector distance from one row to the next) */
@@ -1725,21 +1725,21 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x coord of row difference vector\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     row_dir[Y] = (*env)->GetDoubleField( env, jrow_diff, fidvy );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y coord of row difference vector\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     row_dir[Z] = (*env)->GetDoubleField( env, jrow_diff, fidvz );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting z coord of row difference vector\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* extract the column difference vector (the vector distance from column to the next) */
@@ -1747,14 +1747,14 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting x coord of column difference vector\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     col_dir[Y] = (*env)->GetDoubleField( env, jcol_diff, fidvy );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while getting y coord of column difference vector\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     col_dir[Z] = (*env)->GetDoubleField( env, jcol_diff, fidvz );
@@ -1762,17 +1762,17 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 	fprintf( stderr, "Exception thrown while getting z coord of column difference vector\n" );
 	(*env)->ExceptionDescribe(env);
 	(*env)->ExceptionClear(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* throw an exception if we are asked to build an impossible array */
     if ( num_rows < 1 || num_cols < 1 ) {
 	jclass rtServerUsageException = (*env)->FindClass( env, "mil/army/muves/geometryservice/GeometryServiceException" );
 	if ( rtServerUsageException == 0 ) {
-	    return( (jobject)NULL );
+	    return (jobject)NULL;
 	}
 	(*env)->ThrowNew( env, rtServerUsageException, "neither rows nor columns can be less than 1" );
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     
     /* set up our own application structure */
@@ -1816,20 +1816,20 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
 	fprintf( stderr, "Exception thrown while creating byte array\n" );
 	(*env)->ExceptionDescribe(env);
         FINISH_APPLICATION(ap);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
     (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_getBuffer(vlb) );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while setting byte array contents\n" );
 	(*env)->ExceptionDescribe(env);
         FINISH_APPLICATION(ap);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     FINISH_APPLICATION(ap);
     
     /* return JAVA result */
-    return( array );
+    return array;
 }
     
    
@@ -1865,14 +1865,14 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 
     if ( sessionId < 0 || sessionId >= num_geometries ) {
 	fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA ItemTree class */
     if ( (itemTree_class=(*env)->FindClass( env, "mil/army/muves/geometryservice/datatypes/ItemTree" )) == NULL ) {
 	fprintf( stderr, "Failed to find ItemTree class\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA method id for the ItemTree class constructor */
@@ -1880,7 +1880,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 						       "(Ljava/lang/String;)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree constructor\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA method id for the ItemTree addSubcomponent method */
@@ -1888,7 +1888,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 							"(Lmil/army/muves/geometryservice/datatypes/ItemTree;)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree addSubComponent method\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA method id for the ItemTree setMuvesComponentName method */
@@ -1896,7 +1896,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 							"(Ljava/lang/String;)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree setMuvesComponentName method\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA method id for the ItemTree setIdentNumber method */
@@ -1904,7 +1904,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 							  "(I)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree setIdentNumber method\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA method id for the ItemTree setLos method */
@@ -1912,7 +1912,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 						  "(I)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree setLos method\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA method id for the ItemTree setMaterialName method */
@@ -1920,7 +1920,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 							   "(Ljava/lang/String;)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree setMaterialName method\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* get the JAVA method id for the ItemTree setUseCount method */
@@ -1928,7 +1928,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 						       "(I)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree setUseCount method\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* create root node for ItemTree return */
@@ -1939,7 +1939,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while creating the ItemTree root node\n" );
 	(*env)->ExceptionDescribe(env);
-	return( (jobject)NULL );
+	return (jobject)NULL;
     }
 
     /* traverse the model trees for this sessionid */
@@ -1958,7 +1958,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
     }
 
 
-    return( rootNode );
+    return rootNode;
 }
 
 /* Get the list of region names in this geometry

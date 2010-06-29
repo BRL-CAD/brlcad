@@ -2006,6 +2006,14 @@ Tcl_GetChannelHandle(
     int result;
 
     chanPtr = ((Channel *) chan)->state->bottomChanPtr;
+    if (!chanPtr->typePtr->getHandleProc) {
+	Tcl_Obj* err;
+	TclNewLiteralStringObj(err, "channel \"");
+	Tcl_AppendToObj(err, Tcl_GetChannelName(chan), -1);
+	Tcl_AppendToObj(err, "\" does not support OS handles", -1);
+	Tcl_SetChannelError (chan,err);
+	return TCL_ERROR;
+    }
     result = (chanPtr->typePtr->getHandleProc)(chanPtr->instanceData,
 	    direction, &handle);
     if (handlePtr) {
@@ -2306,8 +2314,12 @@ FlushChannel(
 	 */
 
 	toWrite = BytesLeft(bufPtr);
-	written = (chanPtr->typePtr->outputProc)(chanPtr->instanceData,
+	if (toWrite == 0) {
+	    written = 0;
+	} else {
+	    written = (chanPtr->typePtr->outputProc)(chanPtr->instanceData,
 		RemovePoint(bufPtr), toWrite, &errorCode);
+	}
 
 	/*
 	 * If the write failed completely attempt to start the asynchronous
@@ -2910,6 +2922,7 @@ Tcl_Close(
     ChannelState *statePtr;	/* State of real IO channel. */
     int result;			/* Of calling FlushChannel. */
     int flushcode;
+    int stickyError;
 
     if (chan == NULL) {
 	return TCL_OK;
@@ -2951,10 +2964,14 @@ Tcl_Close(
      * iso2022, the terminated escape sequence must write to the buffer.
      */
 
+    stickyError = 0;
+
     if ((statePtr->encoding != NULL) && (statePtr->curOutPtr != NULL)
 	    && (CheckChannelErrors(statePtr, TCL_WRITABLE) == 0)) {
 	statePtr->outputEncodingFlags |= TCL_ENCODING_END;
-	WriteChars(chanPtr, "", 0);
+	if (WriteChars(chanPtr, "", 0) < 0) {
+	    stickyError = Tcl_GetErrno();
+	}
 
 	/*
 	 * TIP #219, Tcl Channel Reflection API.
@@ -3033,6 +3050,14 @@ Tcl_Close(
 	result = EINVAL;
     }
 
+    if (stickyError != 0) {
+	Tcl_SetErrno(stickyError);
+	if (interp != NULL) {
+	    Tcl_SetObjResult(interp,
+			     Tcl_NewStringObj(Tcl_PosixError(interp), -1));
+	}
+	flushcode = -1;
+    }
     if ((flushcode != 0) || (result != 0)) {
 	return TCL_ERROR;
     }
@@ -4605,7 +4630,7 @@ FilterInputBytes(
 				/* State info for channel */
     ChannelBuffer *bufPtr;
     char *raw, *rawStart, *dst;
-    int offset, toRead, dstNeeded, spaceLeft, result, rawLen, length;
+    int offset, toRead, dstNeeded, spaceLeft, result, rawLen;
     Tcl_Obj *objPtr;
 #define ENCODING_LINESIZE 20	/* Lower bound on how many bytes to convert at
 				 * a time. Since we don't know a priori how
@@ -4671,15 +4696,19 @@ FilterInputBytes(
     if (toRead > rawLen) {
 	toRead = rawLen;
     }
-    dstNeeded = toRead * TCL_UTF_MAX + 1;
-    spaceLeft = objPtr->length - offset - TCL_UTF_MAX - 1;
+    dstNeeded = toRead * TCL_UTF_MAX;
+    spaceLeft = objPtr->length - offset;
     if (dstNeeded > spaceLeft) {
-	length = offset * 2;
-	if (offset < dstNeeded) {
+	int length = offset + ((offset < dstNeeded) ? dstNeeded : offset);
+
+	if (Tcl_AttemptSetObjLength(objPtr, length) == 0) {
 	    length = offset + dstNeeded;
+	    if (Tcl_AttemptSetObjLength(objPtr, length) == 0) {
+		dstNeeded = TCL_UTF_MAX - 1 + toRead;
+		length = offset + dstNeeded;
+		Tcl_SetObjLength(objPtr, length);
+	    }
 	}
-	length += TCL_UTF_MAX + 1;
-	Tcl_SetObjLength(objPtr, length);
 	spaceLeft = length - offset;
 	dst = objPtr->bytes + offset;
 	*gsPtr->dstPtr = dst;
@@ -4687,7 +4716,7 @@ FilterInputBytes(
     gsPtr->state = statePtr->inputEncodingState;
     result = Tcl_ExternalToUtf(NULL, gsPtr->encoding, raw, rawLen,
 	    statePtr->inputEncodingFlags, &statePtr->inputEncodingState,
-	    dst, spaceLeft, &gsPtr->rawRead, &gsPtr->bytesWrote,
+	    dst, spaceLeft+1, &gsPtr->rawRead, &gsPtr->bytesWrote,
 	    &gsPtr->charsWrote);
 
     /*
@@ -5411,6 +5440,8 @@ ReadBytes(
  *	'charsToRead' can safely be a very large number because space is only
  *	allocated to hold data read from the channel as needed.
  *
+ *	'charsToRead' may *not* be 0.
+ *
  * Results:
  *	The return value is the number of characters appended to the object,
  *	*offsetPtr is filled with the number of bytes that were appended, and
@@ -5448,15 +5479,12 @@ ReadChars(
 				 * UTF-8. On output, contains another guess
 				 * based on the data seen so far. */
 {
-    int toRead, factor, offset, spaceLeft, length, srcLen, dstNeeded;
+    int toRead, factor, offset, spaceLeft, srcLen, dstNeeded;
     int srcRead, dstWrote, numChars, dstRead;
     ChannelBuffer *bufPtr;
     char *src, *dst;
     Tcl_EncodingState oldState;
     int encEndFlagSuppressed = 0;
-    static int mflag = 0;
-    static int maxint = 2147483647;
-
 
     factor = *factorPtr;
     offset = *offsetPtr;
@@ -5476,8 +5504,8 @@ ReadChars(
      * how many characters were produced by the previous pass.
      */
 
-    dstNeeded = toRead * factor / UTF_EXPANSION_FACTOR;
-    spaceLeft = objPtr->length - offset - TCL_UTF_MAX - 1;
+    dstNeeded = TCL_UTF_MAX - 1 + toRead * factor / UTF_EXPANSION_FACTOR;
+    spaceLeft = objPtr->length - offset;
 
     if (dstNeeded > spaceLeft) {
 	/*
@@ -5486,25 +5514,17 @@ ReadChars(
 	 * larger.
 	 */
 
-        if (mflag) {
-	   mflag = 0;
-	   return -1;
-	}
+	int length = offset + ((offset < dstNeeded) ? dstNeeded : offset);
 
-	length = offset * 2;
-	if (offset < dstNeeded) {
+	if (Tcl_AttemptSetObjLength(objPtr, length) == 0) {
 	    length = offset + dstNeeded;
+	    if (Tcl_AttemptSetObjLength(objPtr, length) == 0) {
+		dstNeeded = TCL_UTF_MAX - 1 + toRead;
+		length = offset + dstNeeded;
+		Tcl_SetObjLength(objPtr, length);
+	    }
 	}
-
-	if (length < 0) {
-	  length = maxint;
-	  mflag = 1;
-	  spaceLeft = length - offset;
-	} else {
-	  spaceLeft = length - offset;
-	  length += TCL_UTF_MAX + 1;
-	}
-	Tcl_SetObjLength(objPtr, length);
+	spaceLeft = length - offset;
     }
     if (toRead == srcLen) {
 	/*
@@ -5596,7 +5616,7 @@ ReadChars(
 
     Tcl_ExternalToUtf(NULL, statePtr->encoding, src, srcLen,
 	    statePtr->inputEncodingFlags, &statePtr->inputEncodingState, dst,
-	    dstNeeded + TCL_UTF_MAX, &srcRead, &dstWrote, &numChars);
+	    dstNeeded + 1, &srcRead, &dstWrote, &numChars);
 
     if (encEndFlagSuppressed) {
 	statePtr->inputEncodingFlags |= TCL_ENCODING_END;
@@ -8706,14 +8726,17 @@ CopyData(
 	    sizeb = DoWriteChars(outStatePtr->topChanPtr, buffer, sizeb);
 	}
 
-	if (inBinary || sameEncoding) {
-	    /*
-	     * Both read and write counted bytes.
-	     */
-
-	    size = sizeb;
-	} /* else: Read counted characters, write counted bytes, i.e.
-	   * size != sizeb */
+	/*
+	 * [Bug 2895565]. At this point 'size' still contains the number of
+	 * bytes or characters which have been read. We keep this to later to
+	 * update the totals and toRead information, see marker (UP) below. We
+	 * must not overwrite it with 'sizeb', which is the number of written
+	 * bytes or characters, and both EOL translation and encoding
+	 * conversion may have changed this number unpredictably in relation
+	 * to 'size' (It can be smaller or larger, in the latter case able to
+	 * drive toRead below -1, causing infinite looping). Completely
+	 * unsuitable for updating totals and toRead.
+	 */
 
 	if (sizeb < 0) {
 	writeError:
@@ -8735,7 +8758,7 @@ CopyData(
 	}
 
 	/*
-	 * Update the current byte count. Do it now so the count is valid
+	 * (UP) Update the current byte count. Do it now so the count is valid
 	 * before a return or break takes us out of the loop. The invariant at
 	 * the top of the loop should be that csPtr->toRead holds the number
 	 * of bytes left to copy.

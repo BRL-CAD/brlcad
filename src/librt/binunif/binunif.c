@@ -57,8 +57,8 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 {
     struct stat st;
     unsigned int major_type=DB5_MAJORTYPE_BINARY_UNIF;
-    size_t num_items=-1;
-    size_t obj_length=-1;
+    size_t num_items=(size_t)-1;
+    size_t obj_length=(size_t)-1;
     size_t item_length=0;
     struct bu_mapped_file *bu_fd;
     struct rt_binunif_internal *bip;
@@ -96,7 +96,8 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
 
     /* maybe only a partial file read */
-    if (max_count > 0 && max_count < num_items) {
+    /* FIXME: casting -1 to size_t is probably not portable */
+    if (max_count != (size_t)-1 && max_count < num_items) {
 	num_items = max_count;
     }
 
@@ -148,7 +149,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
 
     /* add this (phony until written) object to the directory */
-    if ((dp=db_diradd5(wdbp->dbip, obj_name, -1, major_type,
+    if ((dp=db_diradd5(wdbp->dbip, obj_name, RT_DIR_PHONY_ADDR, major_type,
 		       minor_type, 0, 0, NULL)) == DIR_NULL) {
 	bu_log("Error while attemptimg to add new name (%s) to the database",
 	       obj_name);

@@ -82,7 +82,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 	    bu_log("\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
 		   V3ARGS(ap), V3ARGS(bp), V3ARGS(cp));
 	}
-	return(0);			/* BAD */
+	return 0;			/* BAD */
     }
 
     if ((bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && vertex_normals) {
@@ -110,7 +110,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     bot->bot_facelist = (genptr_t)trip;
-    return(3);				/* OK */
+    return 3;				/* OK */
 }
 
 
@@ -235,10 +235,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
  * stp->st_specific for use by bot_shot().
  */
 int
-XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
-    struct soltab *stp;
-    struct rt_bot_internal *bot_ip;
-    struct rt_i *rtip;
+XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
 {
     register struct bot_specific *bot;
     const struct bn_tol *tol = &rtip->rti_tol;
@@ -332,7 +329,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
 
     if (bot->bot_facelist == (XGLUE(tri_specific_, TRI_TYPE) *)0) {
 	bu_log("bot(%s):  no faces\n", stp->st_name);
-	return(-1);             /* BAD */
+	return -1;             /* BAD */
     }
 
     bot->bot_ntri = ntri;
@@ -461,7 +458,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 	}
     }
     /* Every hit turns into two, and makes a seg.  No leftovers */
-    return(nhits*2);
+    return nhits*2;
 }
 
 
@@ -500,7 +497,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	BOT_UNORIENTED_NORM(&segp->seg_out, OUT);
 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	return(1);
+	return 1;
     }
 
     /* Remove duplicate hits */
@@ -520,7 +517,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 
 
     if (nhits == 1)
-	return(0);
+	return 0;
 
     if (nhits&1 && removed) {
 	/* If we have an odd number of hits and have removed a
@@ -565,7 +562,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	}
 	nhits--;
     }
-    return(nhits);
+    return nhits;
 }
 
 
@@ -605,7 +602,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
 	/* Every hit turns into two, and makes a seg.  No leftovers */
-	return(nhits*2);
+	return nhits*2;
     }
 
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
@@ -1019,7 +1016,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
 
-    return(nhits);			/* HIT */
+    return nhits;			/* HIT */
 }
 
 
@@ -1116,7 +1113,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
 	hp++;
     }
     if (nhits == 0)
-	return(0);		/* MISS */
+	return 0;		/* MISS */
 
     /* Sort hits, Near to Far */
     rt_hitsort(hits, nhits);
@@ -1294,11 +1291,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-XGLUE(rt_bot_norm_, TRI_TYPE)(bot, hitp, stp, rp)
-    struct bot_specific *bot;
-    register struct hit *hitp;
-    struct soltab *stp;
-    register struct xray *rp;
+XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t old_norm;
     XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
@@ -1362,8 +1355,7 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(bot, hitp, stp, rp)
  * R T _ B O T _ F R E E
  */
 void
-XGLUE(rt_bot_free_, TRI_TYPE)(bot)
-    register struct bot_specific *bot;
+XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 {
     register XGLUE(tri_specific_, TRI_TYPE) *tri, *ptr;
 

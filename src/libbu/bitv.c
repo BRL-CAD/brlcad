@@ -75,7 +75,7 @@ floor_ilog2(register unsigned int x)
 inline unsigned int
 bu_bitv_shift()
 {
-    return (floor_ilog2(sizeof(bitv_t)*8));
+    return floor_ilog2(sizeof(bitv_t)*8);
 }
 
 
@@ -89,10 +89,12 @@ bu_bitv_new(unsigned int nbits)
     bv_bytes = BU_BITS2BYTES(nbits);
     total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
 
-    bv = (struct bu_bitv *)bu_malloc((size_t)total_bytes, "struct bu_bitv");
+    /* get zero'd memory, otherwise need to call BU_BITV_ZEROALL */
+    bv = (struct bu_bitv *)bu_calloc(1, (size_t)total_bytes, "struct bu_bitv");
     BU_LIST_INIT(&bv->l);
     bv->l.magic = BU_BITV_MAGIC;
     bv->nbits = bv_bytes * 8;
+
     return bv;
 }
 
@@ -253,7 +255,7 @@ bu_hex_to_bitv(const char *str)
     if (len < 2 || len % 2) {
 	/* Must be two digits per byte */
 	bu_log("ERROR: bitv length is not a multiple of two.\nIllegal hex bitv: [%s]\n", str_start);
-	return ((struct bu_bitv *)NULL);
+	return (struct bu_bitv *)NULL;
     }
 
     bytes = len / 2; /* two hex digits per byte */
@@ -267,7 +269,6 @@ bu_hex_to_bitv(const char *str)
     }
 
     bv = bu_bitv_new(len * 4); /* 4 bits per hex digit */
-    bu_bitv_clear(bv);
 
     str = str_start;
     while (word_count--) {
@@ -285,7 +286,7 @@ bu_hex_to_bitv(const char *str)
 	chunksize = (unsigned int)BVS;
     }
 
-    return (bv);
+    return bv;
 }
 
 
@@ -295,10 +296,9 @@ bu_bitv_dup(register const struct bu_bitv *bv)
     struct bu_bitv *bv2;
 
     bv2 = bu_bitv_new(bv->nbits);
-    bu_bitv_clear(bv2);
     bu_bitv_or(bv2, bv);
 
-    return (bv2);
+    return bv2;
 }
 
 

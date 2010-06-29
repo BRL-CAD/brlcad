@@ -106,7 +106,7 @@ int parse_args(int ac, char *av[])
 	}
     }
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 

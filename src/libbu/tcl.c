@@ -576,7 +576,7 @@ bu_tcl_shader_to_key_val(ClientData clientData,
 
     if (bu_shader_to_tcl_list(argv[1], &vls)) {
 	bu_vls_free(&vls);
-	return (TCL_ERROR);
+	return TCL_ERROR;
     }
 
     Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);

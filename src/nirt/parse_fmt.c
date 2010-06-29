@@ -539,7 +539,7 @@ fopenrc(void)
 	    fPtr = fopen(rc_file_name, "rb");
 	}
     }
-    return (fPtr);
+    return fPtr;
 }
 
 int
@@ -631,7 +631,7 @@ check_conv_spec(outitem *oip)
 		break;
 	}
     }
-    return (warnings);
+    return warnings;
 }
 
 

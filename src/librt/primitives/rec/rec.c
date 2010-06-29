@@ -205,33 +205,33 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Check for |H| > 0, |A| > 0, |B| > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_a, RT_LEN_TOL)
 	|| NEAR_ZERO(mag_b, RT_LEN_TOL)) {
-	return(1);		/* BAD, too small */
+	return 1;		/* BAD, too small */
     }
 
     /* Make sure that A == C, B == D */
     VSUB2(work, tip->a, tip->c);
     f = MAGNITUDE(work);
     if (! NEAR_ZERO(f, RT_LEN_TOL)) {
-	return(1);		/* BAD, !cylinder */
+	return 1;		/* BAD, !cylinder */
     }
     VSUB2(work, tip->b, tip->d);
     f = MAGNITUDE(work);
     if (! NEAR_ZERO(f, RT_LEN_TOL)) {
-	return(1);		/* BAD, !cylinder */
+	return 1;		/* BAD, !cylinder */
     }
 
     /* Check for A.B == 0, H.A == 0 and H.B == 0 */
     f = VDOT(tip->a, tip->b) / (mag_a * mag_b);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(tip->h, tip->a) / (mag_h * mag_a);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
     f = VDOT(tip->h, tip->b) / (mag_h * mag_b);
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /*
@@ -363,7 +363,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_aradius = f;
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -850,7 +850,7 @@ rt_rec_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -870,7 +870,7 @@ rt_rec_free(struct soltab *stp)
 int
 rt_rec_class(void)
 {
-    return(0);
+    return 0;
 }
 
 

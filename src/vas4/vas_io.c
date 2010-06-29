@@ -169,11 +169,11 @@ vas_rawputc(char c)
     got = write(vas_fd, &c, 1);
     if (got != 1)  {
 	perror("VAS Write");
-	return(got);
+	return got;
 	/* Error recovery?? */
     }
     if (debug) fprintf(stderr, "vas_rawputc 0%o '%c'\n", c, c);
-    return(got);
+    return got;
 }
 
 /*
@@ -195,7 +195,7 @@ vas_putc(char c)
 	got = write(vas_fd, &c, 1);
 	if (got < 1)  {
 	    perror("VAS Write");
-	    return(got);
+	    return got;
 	    /* Error recovery?? */
 	}
 	if (debug) fprintf(stderr, "vas_putc 0%o '%c'\n", c, c);
@@ -203,10 +203,10 @@ vas_putc(char c)
     reread:
 	reply=vas_getc();
 	if ( reply == 006 )
-	    return(got);		/* ACK */
+	    return got;		/* ACK */
 	if ( reply >= 0x60 && reply <= 0x78 )  {
 	    vas_response(reply);
-	    return(got);
+	    return got;
 	}
 	if ( reply == 007 )  {
 	    if (count>4) fprintf(stderr, "retry\n");
@@ -218,7 +218,7 @@ vas_putc(char c)
 	goto reread;		/* See if ACK is buffered up */
     }
     fprintf(stderr, "vas4:  unable to perform cmd %c after retries\n", c);
-    return(-1);
+    return -1;
 }
 
 /*
@@ -262,12 +262,12 @@ vas_getc(void)
 
     if (readval > 0)  {
 	if (debug)fprintf(stderr, "vas_getc: 0%o %c\n", c&0377, c&0377);
-	return(c & 0377);
+	return c & 0377;
     }
     if (readval < 0) {
 	perror("READ ERROR");
     }
-    return(EOF);
+    return EOF;
 }
 
 /*
@@ -300,10 +300,10 @@ vas_await(int c, int sec)
     for (count=0; count<20; count++)  {
 	reply = vas_getc();
 	if (debug) vas_response(reply);
-	if ( reply == c )  return(0);	/* OK */
+	if ( reply == c )  return 0;	/* OK */
 	if (!debug) vas_response(reply);
     }
-    return(-1);			/* BAD:  too many bad chars */
+    return -1;			/* BAD:  too many bad chars */
 }
 
 /*

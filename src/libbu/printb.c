@@ -36,7 +36,8 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 	bu_vls_printf(vls, "%s=0%lo <", s, v);
     else
 	bu_vls_printf(vls, "%s=x%lx <", s, v);
-    while ((i = *bits++)) {
+    i = *bits++;
+    while (i) {
 	if (v & (1L << (i-1))) {
 	    if (any)
 		bu_vls_strcat(vls, ",");
@@ -46,6 +47,7 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 	} else
 	    for (; *bits > 32; bits++)
 				   ;
+	i = *bits++;
     }
     bu_vls_strcat(vls, ">");
 }

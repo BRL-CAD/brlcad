@@ -62,7 +62,7 @@ Axis2Placement3D::~Axis2Placement3D() {
   END_LOCAL;
  d1 := NVL(normalise(axis), dummy_gri || direction([0.0,0.0,1.0]));
  d2 := first_proj_axis(d1, ref_direction);
- RETURN([d2, normalise(cross_product(d1,d2)).orientation, d1]);
+ RETURN [d2, normalise(cross_product(d1,d2)).orientation, d1];
 
 END_FUNCTION;
 /////////

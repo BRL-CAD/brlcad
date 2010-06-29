@@ -86,6 +86,7 @@ optical_shader_init(struct mfuncs	**headp)
     MFUNCS( tthrm_mfuncs );
     MFUNCS( flat_mfuncs );
     MFUNCS( bbd_mfuncs );
+    MFUNCS( toon_mfuncs );
 }
 
 /*

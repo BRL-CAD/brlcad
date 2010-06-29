@@ -140,7 +140,7 @@ void FindLoops(ON_Brep **b) {
  * R T _ S K E T C H _ B R E P
  */
 extern "C" void
-rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol __attribute__((unused)))
+rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_sketch_internal *eip;
 

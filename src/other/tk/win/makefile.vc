@@ -897,7 +897,7 @@ install-binaries:
 !if !$(STATIC_BUILD)
 	@echo creating package index
 	@type << > $(OUT_DIR)\pkgIndex.tcl
-if {[catch {package present Tcl 8.5.0-8.6}]} { return }
+if {[catch {package present Tcl 8.5.0}]} { return }
 package ifneeded Tk $(TK_PATCH_LEVEL) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk]
 <<
 	@$(CPY) $(OUT_DIR)\pkgIndex.tcl "$(SCRIPT_INSTALL_DIR)\"

@@ -256,7 +256,7 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
     bu_vls_free(&attr_vls);
 
-    return(HIT);
+    return HIT;
 }
 
 
@@ -265,7 +265,7 @@ if_miss(void)
 {
     report(FMT_RAY);
     report(FMT_MISS);
-    return (MISS);
+    return MISS;
 }
 
 
@@ -304,7 +304,7 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1, st
     ovlp_list.forw = new_ovlp;
 
     /* Match current BRL-CAD default behavior */
-    return(rt_defoverlap (ap, pp, reg1, reg2, InputHdp));
+    return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
 }
 
 
@@ -335,7 +335,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     else if (obliquity > 270 && obliquity <= 360)
 	obliquity = 360 - obliquity;
 
-    return (obliquity);
+    return obliquity;
 }
 
 
@@ -351,7 +351,7 @@ find_ovlp(struct partition *pp)
 	     && (op->in_dist <= pp->pt_outhit->hit_dist)))
 	    break;
     }
-    return ((op == &ovlp_list) ? OVERLAP_NULL : op);
+    return (op == &ovlp_list) ? OVERLAP_NULL : op;
 }
 
 

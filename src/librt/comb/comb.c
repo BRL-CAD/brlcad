@@ -249,7 +249,7 @@ int
 rt_comb_export5(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
-    double local2mm __attribute__((unused)),
+    double UNUSED(local2mm),
     const struct db_i *dbip,
     struct resource *resp)
 {
@@ -1083,7 +1083,7 @@ rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
  * rt_functab[ID_COMBINATION].ft_make().
  */
 void
-rt_comb_make(const struct rt_functab *ftp __attribute__((unused)), struct rt_db_internal *intern)
+rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern)
 {
     struct rt_comb_internal *comb;
 

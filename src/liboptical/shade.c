@@ -367,7 +367,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 	bu_log("\n");
     }
 
-    return(1);
+    return 1;
 }
 
 /*

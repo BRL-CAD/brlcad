@@ -23,12 +23,14 @@ class ON_CLASS ON_DimStyle : public ON_Object
 public:
   enum eArrowType
   {
-    solidtriangle = 0,
+    solidtriangle = 0,    // 2:1
     dot = 1,
     tick = 2,
-    shorttriangle = 3,
+    shorttriangle = 3,    // 1:1
     arrow = 4,
     rectangle = 5,
+    longtriangle = 6,     // 4:1
+    longertriangle = 7,   // 6:1
   };
 
   ON_DimStyle();
@@ -264,6 +266,22 @@ public:
     fn_tolerance_lower_value       = 57,
     fn_tolerance_height_scale      = 58,
     fn_baseline_spacing            = 59,
+
+  // Added for v5 - 12/15/09 LW    
+  // version 1.7
+    fn_draw_mask                   = 60,
+    fn_mask_color_source           = 61,
+    fn_mask_color                  = 62,
+    fn_mask_border                 = 63,
+
+  // Added for v5 - 12/17/09 LW    
+  // version 1.8
+    fn_dimscale                    = 64,
+    fn_dimscale_source             = 65,
+
+    //When fields are added to ON_DimStyleExtra,
+    //   enum { eFieldCount = 64 }; in opennurbs_dimstyle.cpp
+    // needs to be changed.
     fn_really_last                 = 0xFFFF
   };
 
@@ -338,6 +356,31 @@ public:
   
   void SetBaselineSpacing( double spacing = false);
 
+    // Determines whether or not to draw a Text Mask
+  bool DrawTextMask() const;
+  void SetDrawTextMask(bool bDraw);
+
+  // Determines where to get the color to draw a Text Mask
+  // 0: Use background color of the viewport.  Initially, gradient backgrounds will not be supported
+  // 1: Use the ON_Color returned by MaskColor()
+  int MaskColorSource() const;
+  void SetMaskColorSource(int source);
+
+  ON_Color MaskColor() const;  // Only works right if MaskColorSource returns 1.
+                               // Does not return viewport background color
+  void SetMaskColor(ON_Color color);
+
+  // Per DimStyle DimScale
+  void SetDimScaleSource(int source);
+  int DimScaleSource() const;          // 0: Global DimScale, 1: DimStyle DimScale
+  void SetDimScale(double scale);
+  double DimScale() const;
+
+  // Offset for the border around text to the rectangle used to draw the mask
+  // This number * CRhinoAnnotation::TextHeight() for the text is the offset 
+  // on each side of the tight rectangle around the text characters to the mask rectangle.
+  double MaskOffsetFactor() const;
+
   void Scale( double scale);
 
   // Defaults for values stored in Userdata extension
@@ -347,6 +390,8 @@ public:
   static double DefaultToleranceLowerValue();
   static double DefaultToleranceHeightScale();
   static double DefaultBaselineSpacing();
+
+  bool CompareFields(const ON_DimStyle& other) const;
 
 public:
   ON_wString m_dimstyle_name;   // String name of the style

@@ -87,8 +87,8 @@ static struct mem_header *allocHead = NULL;  /* List of allocated structures */
 
 static int total_mallocs = 0;
 static int total_frees = 0;
-static int current_bytes_malloced = 0;
-static int maximum_bytes_malloced = 0;
+static size_t current_bytes_malloced = 0;
+static size_t maximum_bytes_malloced = 0;
 static int current_malloc_packets = 0;
 static int maximum_malloc_packets = 0;
 static int break_on_malloc = 0;
@@ -175,11 +175,11 @@ TclDumpMemoryInfo(
 	    total_frees);
     fprintf(outFile,"current packets allocated %10d\n",
 	    current_malloc_packets);
-    fprintf(outFile,"current bytes allocated   %10d\n",
+    fprintf(outFile,"current bytes allocated   %10lu\n",
 	    current_bytes_malloced);
     fprintf(outFile,"maximum packets allocated %10d\n",
 	    maximum_malloc_packets);
-    fprintf(outFile,"maximum bytes allocated   %10d\n",
+    fprintf(outFile,"maximum bytes allocated   %10lu\n",
 	    maximum_bytes_malloced);
 }
 
@@ -376,14 +376,17 @@ Tcl_DbCkalloc(
     CONST char *file,
     int line)
 {
-    struct mem_header *result;
+    struct mem_header *result = NULL;
 
     if (validate_memory) {
 	Tcl_ValidateAllMemory(file, line);
     }
 
-    result = (struct mem_header *) TclpAlloc((unsigned)size +
-	    sizeof(struct mem_header) + HIGH_GUARD_SIZE);
+    /* Don't let size argument to TclpAlloc overflow */
+    if (size <= UINT_MAX - HIGH_GUARD_SIZE -sizeof(struct mem_header)) {
+	result = (struct mem_header *) TclpAlloc((unsigned)size +
+		sizeof(struct mem_header) + HIGH_GUARD_SIZE);
+    }
     if (result == NULL) {
 	fflush(stdout);
 	TclDumpMemoryInfo(stderr);
@@ -467,14 +470,17 @@ Tcl_AttemptDbCkalloc(
     CONST char *file,
     int line)
 {
-    struct mem_header *result;
+    struct mem_header *result = NULL;
 
     if (validate_memory) {
 	Tcl_ValidateAllMemory(file, line);
     }
 
-    result = (struct mem_header *) TclpAlloc((unsigned)size +
-	    sizeof(struct mem_header) + HIGH_GUARD_SIZE);
+    /* Don't let size argument to TclpAlloc overflow */
+    if (size <= UINT_MAX - HIGH_GUARD_SIZE - sizeof(struct mem_header)) {
+	result = (struct mem_header *) TclpAlloc((unsigned)size +
+		sizeof(struct mem_header) + HIGH_GUARD_SIZE);
+    }
     if (result == NULL) {
 	fflush(stdout);
 	TclDumpMemoryInfo(stderr);
@@ -805,6 +811,7 @@ MemoryCmd(
     CONST char *argv[])
 {
     CONST char *fileName;
+    FILE *fileP;
     Tcl_DString buffer;
     int result;
 
@@ -843,7 +850,7 @@ MemoryCmd(
     }
     if (strcmp(argv[1],"info") == 0) {
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-		"%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10d\n",
+		"%-25s %10d\n%-25s %10d\n%-25s %10d\n%-25s %10lu\n%-25s %10d\n%-25s %10lu\n",
 		"total mallocs", total_mallocs, "total frees", total_frees,
 		"current packets allocated", current_malloc_packets,
 		"current bytes allocated", current_bytes_malloced,
@@ -856,6 +863,26 @@ MemoryCmd(
 	    goto bad_suboption;
 	}
 	init_malloced_bodies = (strcmp(argv[2],"on") == 0);
+	return TCL_OK;
+    }
+    if (strcmp(argv[1],"objs") == 0) {
+	if (argc != 3) {
+	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+		    " objs file\"", NULL);
+	    return TCL_ERROR;
+	}
+	fileName = Tcl_TranslateFileName(interp, argv[2], &buffer);
+	if (fileName == NULL) {
+	    return TCL_ERROR;
+	}
+	fileP = fopen(fileName, "w");
+	if (fileP == NULL) {
+	    Tcl_AppendResult(interp, "cannot open output file", NULL);
+	    return TCL_ERROR;
+	}
+	TclDbDumpActiveObjects(fileP);
+	fclose(fileP);
+	Tcl_DStringFree(&buffer);
 	return TCL_OK;
     }
     if (strcmp(argv[1],"onexit") == 0) {

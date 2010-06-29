@@ -241,6 +241,8 @@ static const unsigned CoreEventMask
     | FocusChangeMask
     | VirtualEventMask
     | ActivateMask
+    | EnterWindowMask
+    | LeaveWindowMask
     ;
 
 static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
@@ -307,6 +309,14 @@ static void CoreEventProc(ClientData clientData, XEvent *eventPtr)
 	    break;
 	case DeactivateNotify:
 	    corePtr->state |= TTK_STATE_BACKGROUND;
+	    TtkRedisplayWidget(corePtr);
+	    break;
+	case LeaveNotify:
+	    corePtr->state &= ~TTK_STATE_HOVER;
+	    TtkRedisplayWidget(corePtr);
+	    break;
+	case EnterNotify:
+	    corePtr->state |= TTK_STATE_HOVER;
 	    TtkRedisplayWidget(corePtr);
 	    break;
 	case VirtualEvent:

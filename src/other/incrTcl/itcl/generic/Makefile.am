@@ -17,7 +17,8 @@ endif # TCL_8_4_HEADERS
 
 AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
-	${compat_cppflags}
+	${compat_cppflags} \
+	${NOWARN}
 
 libitclstub_la_SOURCES = itclStubLib.c
 libitclstub@ITCL_VERSION@_la_SOURCES = $(libitclstub_la_SOURCES)

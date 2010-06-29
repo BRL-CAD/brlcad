@@ -236,7 +236,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	    *cp = '\0';
 	    if (i >= 16 ) {
 		bu_log( "sh_stk_setup: max levels exceeded\n" );
-		return( 0 );
+		return 0;
 	    }
 	    /* add one */
 	    if (sh_stk_dosetup(start, rp, &sp->udata[i],
@@ -255,7 +255,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     if (start != cp ) {
 	if (i >= 16 ) {
 	    bu_log( "sh_stk_setup: max levels exceeded\n" );
-	    return( 0 );
+	    return 0;
 	}
 	/* add one */
 	if (sh_stk_dosetup(start, rp, &sp->udata[i], (char **)&sp->mfuncs[i],
@@ -272,7 +272,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     memcpy((char *)mfp, (char *)rp->reg_mfuncs, sizeof(*mfp));
     mfp->mf_inputs = inputs;
     rp->reg_mfuncs = (genptr_t)mfp;
-    return( 1 );
+    return 1;
 }
 
 /*
@@ -310,7 +310,7 @@ sh_stk_render(struct application *ap, struct partition *pp, struct shadework *sw
 	if ( ! ret_status ) return ret_status;
 
     }
-    return(1);
+    return 1;
 }
 
 /*

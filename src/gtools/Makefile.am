@@ -3,7 +3,8 @@ SUBDIRS = beset
 bin_PROGRAMS = \
 	g_diff \
 	g_lint \
-	g_qa
+	g_qa \
+	remapid
 
 noinst_PROGRAMS = \
 	g_transfer
@@ -22,9 +23,13 @@ g_lint_LDADD = ${RT}
 g_qa_SOURCES = g_qa.c
 g_qa_LDADD = ${RT} ${GED}
 
+remapid_SOURCES = remapid.c
+remapid_LDADD = ${RT} ${BU}
+
 man_MANS = \
 	g_diff.1 \
-	g_lint.1
+	g_lint.1 \
+	remapid.1
 
 EXTRA_DIST = $(man_MANS)
 
@@ -37,5 +42,6 @@ FAST_OBJECTS = \
 	$(g_diff_OBJECTS) \
 	$(g_lint_OBJECTS) \
 	$(g_qa_OBJECTS) \
+	$(remapid_OBJECTS) \
 	$(noinst_PROGRAMS) \
 	$(bin_PROGRAMS)

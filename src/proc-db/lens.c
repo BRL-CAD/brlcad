@@ -255,7 +255,7 @@ int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fas
 		bu_exit(EXIT_SUCCESS, NULL);
 	}
     }
-    return(bu_optind);
+    return bu_optind;
 }
 
 

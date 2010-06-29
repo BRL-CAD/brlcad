@@ -673,6 +673,7 @@ static struct go_cmdtab go_cmds[] = {
     {"color",	(char *)0, MAXARGS, go_pass_through_func, ged_color},
     {"comb",	(char *)0, MAXARGS, go_pass_through_func, ged_comb},
     {"comb_color",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_color},
+    {"combmem",	(char *)0, MAXARGS, go_pass_through_func, ged_combmem},
     {"configure",	"vname", MAXARGS, go_configure, GED_FUNC_PTR_NULL},
     {"constrain_rmode",	"x|y|z x y", MAXARGS, go_constrain_rmode, GED_FUNC_PTR_NULL},
     {"constrain_tmode",	"x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
@@ -788,7 +789,7 @@ static struct go_cmdtab go_cmds[] = {
     {"mouse_trans",	"x y", MAXARGS, go_mouse_trans, GED_FUNC_PTR_NULL},
     {"mv",	(char *)0, MAXARGS, go_pass_through_func, ged_move},
     {"mvall",	(char *)0, MAXARGS, go_pass_through_func, ged_move_all},
-    {"new_view",	"type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
+    {"new_view",	"vname type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
     {"nirt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_nirt},
     {"nmg_collapse",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_collapse},
     {"nmg_simplify",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_simplify},
@@ -905,7 +906,7 @@ static struct go_cmdtab go_cmds[] = {
     {"vdraw",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_vdraw},
     {"version",	(char *)0, MAXARGS, go_pass_through_func, ged_version},
     {"view",	"quat|ypr|aet|center|eye|size [args]", 3, go_view_func, ged_view},
-    {"view_axes",	"???", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
+    {"view_axes",	"vname [args]", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
     {"view_win_size",	"[s] | [x y]", 4, go_view_win_size, GED_FUNC_PTR_NULL},
     {"view2model",	"vname", 2, go_view_func, ged_view2model},
     {"viewdir",	"[-i]", 3, go_view_func, ged_viewdir},
@@ -980,7 +981,7 @@ go_cmd(ClientData clientData,
     register struct go_cmdtab *ctp;
     struct ged_obj *gop = (struct ged_obj *)clientData;
     Tcl_DString ds;
-    int ret;
+    int ret = GED_ERROR;
 
     Tcl_DStringInit(&ds);
 
@@ -1447,7 +1448,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_enabled") == 0) {
+    if (strcmp(argv[2], "tick_enable") == 0) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
 	    return BRLCAD_OK;
@@ -2062,7 +2063,8 @@ go_copy(struct ged *gedp,
     bu_vls_init(&from_vls);
     bu_vls_init(&to_vls);
 
-    if ((cp = strchr(argv[1], ':'))) {
+    cp = strchr(argv[1], ':');
+    if (cp) {
 	bu_vls_strncpy(&db_vls, argv[1], cp-argv[1]);
 	bu_vls_strcpy(&from_vls, cp+1);
 
@@ -2085,7 +2087,8 @@ go_copy(struct ged *gedp,
 	from_gedp = gedp;
     }
 
-    if ((cp = strchr(argv[2], ':'))) {
+    cp = strchr(argv[2], ':');
+    if (cp) {
 	bu_vls_trunc(&db_vls, 0);
 	bu_vls_strncpy(&db_vls, argv[2], cp-argv[2]);
 	bu_vls_strcpy(&to_vls, cp+1);
@@ -3464,6 +3467,9 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Enter> {focus %V; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &gdvp->gdv_dmp->dm_pathName);
     bu_vls_printf(&bindings, "bind %V <Expose> {%V refresh %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
@@ -3558,43 +3564,31 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-1> {%V scale_mode %V %%x %%y; break}; ",
-		  &gdvp->gdv_dmp->dm_pathName,
-		  &go_current_gop->go_name,
-		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-2> {%V scale_mode %V %%x %%y; break}; ",
-		  &gdvp->gdv_dmp->dm_pathName,
-		  &go_current_gop->go_name,
-		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <Alt-Control-Shift-ButtonPress-3> {%V scale_mode %V %%x %%y; break}; ",
-		  &gdvp->gdv_dmp->dm_pathName,
-		  &go_current_gop->go_name,
-		  &gdvp->gdv_name);
 
     /* Constrained Rotate Mode */
-    bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-1> {%V constrain_rmode %V x %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Control-Lock-ButtonPress-1> {%V constrain_rmode %V x %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-2> {%V constrain_rmode %V y %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Control-Lock-ButtonPress-2> {%V constrain_rmode %V y %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <Alt-Control-ButtonPress-3> {%V constrain_rmode %V z %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Control-Lock-ButtonPress-3> {%V constrain_rmode %V z %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
 
     /* Constrained Translate Mode */
-    bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-1> {%V constrain_tmode %V x %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Shift-Lock-ButtonPress-1> {%V constrain_tmode %V x %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-2> {%V constrain_tmode %V y %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Shift-Lock-ButtonPress-2> {%V constrain_tmode %V y %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <Alt-Shift-ButtonPress-3> {%V constrain_tmode %V z %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Shift-Lock-ButtonPress-3> {%V constrain_tmode %V z %%x %%y; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
@@ -3612,6 +3606,10 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V F {%V aet %V 0 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V R {%V aet %V 180 0; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
@@ -3624,11 +3622,39 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V L {%V aet %V 90 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V t {%V aet %V 0 90; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V T {%V aet %V 0 90; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
     bu_vls_printf(&bindings, "bind %V b {%V aet %V 0 270; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V B {%V aet %V 0 270; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V + {%V zoom %V 2.0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V = {%V zoom %V 2.0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V _ {%V zoom %V 0.5; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V - {%V zoom %V 0.5; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
@@ -4257,7 +4283,7 @@ go_mouse_constrain_rot(struct ged *gedp,
 {
     int ret;
     int ac;
-    char *av[3];
+    char *av[4];
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
@@ -4326,18 +4352,19 @@ go_mouse_constrain_rot(struct ged *gedp,
     bu_vls_init(&rot_vls);
     switch (argv[2][0]) {
 	case 'x':
-	    bu_vls_printf(&rot_vls, "%lf 0 0", sf);
+	    bu_vls_printf(&rot_vls, "%lf 0 0", -sf);
 	case 'y':
-	    bu_vls_printf(&rot_vls, "0 %lf 0", sf);
+	    bu_vls_printf(&rot_vls, "0 %lf 0", -sf);
 	case 'z':
-	    bu_vls_printf(&rot_vls, "0 0 %lf", sf);
+	    bu_vls_printf(&rot_vls, "0 0 %lf", -sf);
     }
 
     gedp->ged_gvp = gdvp->gdv_view;
-    ac = 2;
+    ac = 3;
     av[0] = "rot";
-    av[1] = bu_vls_addr(&rot_vls);
-    av[2] = (char *)0;
+    av[1] = "-m";
+    av[2] = bu_vls_addr(&rot_vls);
+    av[3] = (char *)0;
 
     ret = ged_rot(gedp, ac, (const char **)av);
     bu_vls_free(&rot_vls);
@@ -4358,7 +4385,7 @@ go_mouse_constrain_trans(struct ged *gedp,
 {
     int ret;
     int ac;
-    char *av[3];
+    char *av[4];
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
@@ -4429,18 +4456,19 @@ go_mouse_constrain_trans(struct ged *gedp,
     bu_vls_init(&tran_vls);
     switch (argv[2][0]) {
 	case 'x':
-	    bu_vls_printf(&tran_vls, "%lf 0 0", sf);
+	    bu_vls_printf(&tran_vls, "%lf 0 0", -sf);
 	case 'y':
-	    bu_vls_printf(&tran_vls, "0 %lf 0", sf);
+	    bu_vls_printf(&tran_vls, "0 %lf 0", -sf);
 	case 'z':
-	    bu_vls_printf(&tran_vls, "0 0 %lf", sf);
+	    bu_vls_printf(&tran_vls, "0 0 %lf", -sf);
     }
 
     gedp->ged_gvp = gdvp->gdv_view;
-    ac = 2;
+    ac = 3;
     av[0] = "tra";
-    av[1] = bu_vls_addr(&tran_vls);
-    av[2] = (char *)0;
+    av[1] = "-m";
+    av[2] = bu_vls_addr(&tran_vls);
+    av[3] = (char *)0;
 
     ret = ged_tra(gedp, ac, (const char **)av);
     bu_vls_free(&tran_vls);
@@ -5876,7 +5904,8 @@ go_new_view(struct ged *gedp,
 	    av[i+newargs] = (char *)argv[i];
 	av[i+newargs] = (char *)NULL;
 
-	if ((new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av)) == DM_NULL) {
+	new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av);
+	if (new_gdvp->gdv_dmp == DM_NULL) {
 	    bu_free((genptr_t)new_gdvp->gdv_view, "ged_view");
 	    bu_free((genptr_t)new_gdvp, "ged_dm_view");
 	    bu_free((genptr_t)av, "go_new_view: av");
@@ -6150,19 +6179,20 @@ go_png(struct ged *gedp,
        const char *usage,
        int maxargs)
 {
-    struct ged_dm_view *gdvp;
-    FILE *fp;
     png_structp png_p;
     png_infop info_p;
-    unsigned char **rows;
-    unsigned char *idata;
-    unsigned char *irow;
-    int bytes_per_pixel;
+
+    unsigned char *dbyte0 = NULL, *dbyte1 = NULL, *dbyte2 = NULL, *dbyte3 = NULL;
+    struct ged_dm_view *gdvp = NULL;
+    FILE *fp = NULL;
+    unsigned char **rows = NULL;
+    unsigned char *idata = NULL;
+    unsigned char *irow = NULL;
+    int bytes_per_pixel = 0;
     int bits_per_channel = 8;  /* bits per color channel */
-    int i, j, k;
-    unsigned char *dbyte0, *dbyte1, *dbyte2, *dbyte3;
-    int width;
-    int height;
+    int i = 0, j = 0, k = 0;
+    int width = 0;
+    int height = 0;
     int found_valid_dm = 0;
 
     /* initialize result */
@@ -8136,31 +8166,7 @@ go_close_fbs(struct ged_dm_view *gdvp)
 	return TCL_OK;
 
     fb_flush(gdvp->gdv_fbs.fbs_fbp);
-
-    switch (gdvp->gdv_dmp->dm_type) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    X24_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_TK
-/* XXX TJM: not ready yet
-   case DM_TYPE_TK:
-   tk_close_existing(gdvp->gdv_fbs.fbs_fbp);
-   break;
-*/
-#endif
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    ogl_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-    }
+    fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
 
     /* free framebuffer memory */
     if (gdvp->gdv_fbs.fbs_fbp->if_pbase != PIXEL_NULL)

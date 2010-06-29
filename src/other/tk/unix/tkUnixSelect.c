@@ -93,7 +93,9 @@ static TkSelRetrievalInfo *pendingRetrievals = NULL;
 static void		ConvertSelection(TkWindow *winPtr,
 			    XSelectionRequestEvent *eventPtr);
 static void		IncrTimeoutProc(ClientData clientData);
-static void		SelCvtFromX(long *propPtr, int numValues, Atom type,
+static void		SelCvtFromX32(long *propPtr, int numValues, Atom type,
+			    Tk_Window tkwin, Tcl_DString *dsPtr);
+static void		SelCvtFromX8(char *propPtr, int numValues, Atom type,
 			    Tk_Window tkwin, Tcl_DString *dsPtr);
 static long *		SelCvtToX(char *string, Atom type, Tk_Window tkwin,
 			    int *numLongsPtr);
@@ -672,19 +674,23 @@ TkSelEventProc(
 	} else {
 	    Tcl_DString ds;
 
-	    if (format != 32) {
+	    if (format != 32 && format != 8) {
 		char buf[64 + TCL_INTEGER_SPACE];
 
-		sprintf(buf,
-			"bad format for selection: wanted \"32\", got \"%d\"",
-			format);
+		sprintf(buf, "bad format for selection: wanted \"32\" or "
+			"\"8\", got \"%d\"", format);
 		Tcl_SetResult(retrPtr->interp, buf, TCL_VOLATILE);
 		retrPtr->result = TCL_ERROR;
 		return;
 	    }
 	    Tcl_DStringInit(&ds);
-	    SelCvtFromX((long *) propInfo, (int) numItems, type,
-		    (Tk_Window) winPtr, &ds);
+	    if (format == 32) {
+		SelCvtFromX32((long *) propInfo, (int) numItems, type,
+			(Tk_Window) winPtr, &ds);
+	    } else {
+		SelCvtFromX8((char *) propInfo, (int) numItems, type,
+			(Tk_Window) winPtr, &ds);
+	    }
 	    interp = retrPtr->interp;
 	    Tcl_Preserve((ClientData) interp);
 	    retrPtr->result = (*retrPtr->proc)(retrPtr->clientData,
@@ -1251,19 +1257,23 @@ SelRcvIncrProc(
     } else {
 	Tcl_DString ds;
 
-	if (format != 32) {
+	if (format != 32 && format != 8) {
 	    char buf[64 + TCL_INTEGER_SPACE];
 
-	    sprintf(buf,
-		    "bad format for selection: wanted \"32\", got \"%d\"",
-		    format);
+	    sprintf(buf, "bad format for selection: wanted \"32\" or "
+		    "\"8\", got \"%d\"", format);
 	    Tcl_SetResult(retrPtr->interp, buf, TCL_VOLATILE);
 	    retrPtr->result = TCL_ERROR;
 	    goto done;
 	}
 	Tcl_DStringInit(&ds);
-	SelCvtFromX((long *) propInfo, (int) numItems, type,
-		(Tk_Window) retrPtr->winPtr, &ds);
+	if (format == 32) {
+	    SelCvtFromX32((long *) propInfo, (int) numItems, type,
+		    (Tk_Window) retrPtr->winPtr, &ds);
+	} else {
+	    SelCvtFromX8((char *) propInfo, (int) numItems, type,
+		    (Tk_Window) retrPtr->winPtr, &ds);
+	}
 	interp = retrPtr->interp;
 	Tcl_Preserve((ClientData) interp);
 	result = (*retrPtr->proc)(retrPtr->clientData, interp,
@@ -1447,12 +1457,12 @@ SelCvtToX(
 /*
  *----------------------------------------------------------------------
  *
- * SelCvtFromX --
+ * SelCvtFromX32, SelCvtFromX8 --
  *
- *	Given an X property value, formatted as a collection of 32-bit values
- *	according to "type" and the ICCCM conventions, convert the value to a
- *	string suitable for manipulation by Tcl. This function is the inverse
- *	of SelCvtToX.
+ *	Given an X property value, formatted as a collection of 32-bit or
+ *	8-bit values according to "type" and the ICCCM conventions, convert
+ *	the value to a string suitable for manipulation by Tcl. These
+ *	functions are the inverse of SelCvtToX.
  *
  * Results:
  *	The return value (stored in a Tcl_DString) is the string equivalent of
@@ -1465,7 +1475,7 @@ SelCvtToX(
  */
 
 static void
-SelCvtFromX(
+SelCvtFromX32(
     register long *propPtr,	/* Property value from X. */
     int numValues,		/* Number of 32-bit values in property. */
     Atom type,			/* Type of property Should not be XA_STRING
@@ -1494,6 +1504,32 @@ SelCvtFromX(
 	    Tcl_DStringAppendElement(dsPtr, buf);
 	}
     }
+    Tcl_DStringAppend(dsPtr, " ", 1);
+}
+
+static void
+SelCvtFromX8(
+    register char *propPtr,	/* Property value from X. */
+    int numValues,		/* Number of 8-bit values in property. */
+    Atom type,			/* Type of property Should not be XA_STRING
+				 * (if so, don't bother calling this function
+				 * at all). */
+    Tk_Window tkwin,		/* Window to use for atom conversion. */
+    Tcl_DString *dsPtr)		/* Where to store the converted string. */
+{
+    /*
+     * Convert each long in the property to a string value, which is a
+     * hexadecimal string. We build the list in a Tcl_DString because this is
+     * easier than trying to get the quoting correct ourselves.
+     */
+
+    for ( ; numValues > 0; propPtr++, numValues--) {
+	char buf[12];
+
+	sprintf(buf, "0x%x", (unsigned char) *propPtr);
+	Tcl_DStringAppendElement(dsPtr, buf);
+    }
+    Tcl_DStringAppend(dsPtr, " ", 1);
 }
 
 /*

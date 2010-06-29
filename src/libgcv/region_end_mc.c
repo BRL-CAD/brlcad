@@ -50,7 +50,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int empty_region = 0;
     int empty_model = 0;
     int NMG_debug_state = 0;
-    int count = 0, removed = 0;
+    int count = 0;
 
     void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
@@ -110,8 +110,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	return TREE_NULL;
     }
 
-    nmg_mark_edges_real(&s->l.magic);
-    nmg_region_a(r, tsp->ts_tol);
+    /*
+    bu_log("Target is shot, %d triangles seen.\n", count);
+
+    bu_log("Fusing\n"); fflush(stdout);
+    nmg_model_fuse(m, tsp->ts_tol);
+    bu_log("Done\n"); fflush(stdout);
+    */
 
     /* Kill cracks */
     while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
@@ -124,6 +129,9 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		break;
 	    }
 	}
+	/*
+	nmg_shell_coplanar_face_merge(s, tsp->ts_tol, 42);
+	*/
 	s = next_s;
     }
     if (empty_region)
@@ -160,17 +168,12 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 	return _gcv_cleanup(NMG_debug_state, tp);
     } else {
-
 	/* Write the region out */
 	write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     nmg_kr(r);
-
-    bu_log("Fusing vertices: %d eliminated\n", nmg_model_vertex_fuse(m, tsp->ts_tol));
-    removed = nmg_edge_collapse(m, tsp->ts_tol, tsp->ts_ttol->abs, tsp->ts_ttol->norm);
-    bu_log("decimate reduced %d faces to %d in %s\n", count, count - removed, db_path_to_string(pathp));
 
     return _gcv_cleanup(NMG_debug_state, tp);
 }

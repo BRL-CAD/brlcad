@@ -23,27 +23,42 @@
  *
  */
 
-#include <pthread.h>
+#include "common.h"
+
+#ifdef HAVE_PTHREAD_H
+# include <pthread.h>
+pthread_t *render_tlist;
+#endif
+
+#ifdef HAVE_DLFCN_H
+# include <dlfcn.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <time.h>
 
 #include "bio.h"
 #include "bu.h"
 
-#include "component.h"
-#include "cut.h"
 #include "camera.h"
 
-pthread_t *render_tlist;
+struct render_shader_s {
+	char *name;
+	void (*init)(render_t *, char *);
+	void *dlh;	/* dynamic library handle */
+	struct render_shader_s *next;
+};
+
+static struct render_shader_s *shaders = NULL;
 
 void* render_camera_render_thread(void *ptr);
 static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
 
+static struct render_shader_s *render_shader_register (const char *name, void (*init)(render_t *, char *));
 
 void
 render_camera_init(render_camera_t *camera, int threads)
@@ -56,13 +71,19 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->tilt = 0;
 
     /* The camera will use a thread for every cpu the machine has. */
-    camera->thread_num = threads ? threads : bu_avail_cpus();
-/* printf("threads: %d\n", camera->thread_num); */
+    camera->thread_num =
+#ifdef HAVE_PTHREAD_H
+	threads ? threads : bu_avail_cpus();
+#else
+    1;
+#endif
+    /* printf("threads: %d\n", camera->thread_num); */
 
     /* Initialize camera to rendering surface normals */
     render_normal_init(&camera->render, NULL);
     camera->rm = RENDER_METHOD_PHONG;
 
+#ifdef HAVE_PTHREAD_H
     render_tlist = NULL;
     if (camera->thread_num > 1) {
 	bu_log("Allocating thread memory\n");
@@ -72,14 +93,33 @@ render_camera_init(render_camera_t *camera, int threads)
 	    camera->thread_num = 1;
 	}
     }
+#endif
+
+    if(shaders == NULL) {
+#define REGISTER(x) render_shader_register(#x, render_##x##_init);
+	REGISTER(component);
+	REGISTER(cut);
+	REGISTER(depth);
+	REGISTER(flat);
+	REGISTER(flos);
+	REGISTER(grid);
+	REGISTER(normal);
+	REGISTER(path);
+	REGISTER(phong);
+	REGISTER(spall);
+	REGISTER(surfel);
+#undef REGISTER
+    }
 }
 
 
 void
 render_camera_free(render_camera_t *camera)
 {
+#ifdef HAVE_PTHREAD_H
     if (camera->thread_num > 1)
 	bu_free(render_tlist, "render_tlist");
+#endif
 }
 
 
@@ -88,7 +128,6 @@ render_camera_prep_ortho(render_camera_t *camera)
 {
     TIE_3 look, up, side, temp;
     tfloat angle, s, c;
-
 
     /* Generate standard up vector */
     up.v[0] = 0;
@@ -122,21 +161,21 @@ render_camera_prep_ortho(render_camera_t *camera)
     /* look direction */
     camera->view_list[0].top_l = look;
 
-    /* fov is milimeters along the horizontal axis to display */
+    /* gridsize is milimeters along the horizontal axis to display */
     /* left (side) */
-    VSCALE(temp.v,  side.v,  (camera->aspect * camera->fov * 0.5));
+    VSCALE(temp.v,  side.v,  (camera->aspect * camera->gridsize * 0.5));
     VADD2(camera->view_list[0].pos.v,  camera->pos.v,  temp.v);
     /* and (up) */
-    VSCALE(temp.v,  up.v,  (camera->fov * 0.5));
+    VSCALE(temp.v,  up.v,  (camera->gridsize * 0.5));
     VADD2(camera->view_list[0].pos.v,  camera->view_list[0].pos.v,  temp.v);
 
     /* compute step vectors for camera position */
 
     /* X */
-    VSCALE(camera->view_list[0].step_x.v,  side.v,  (-camera->fov * camera->aspect / (tfloat)camera->w));
+    VSCALE(camera->view_list[0].step_x.v,  side.v,  (-camera->gridsize * camera->aspect / (tfloat)camera->w));
 
     /* Y */
-    VSCALE(camera->view_list[0].step_y.v,  up.v,  (-camera->fov / (tfloat)camera->h));
+    VSCALE(camera->view_list[0].step_y.v,  up.v,  (-camera->gridsize / (tfloat)camera->h));
 }
 
 static void
@@ -414,18 +453,24 @@ void
     while (1)
     {
 	/* Determine if this scanline should be computed by this thread */
+#ifdef HAVE_PTHREAD_H
 	pthread_mutex_lock(&td->mut);
+#endif
 	if (*td->scanline == td->tile->size_y)
 	{
+#ifdef HAVE_PTHREAD_H
 	    pthread_mutex_unlock(&td->mut);
-	    return(0);
+#endif
+	    return 0;
 	}
 	else
 	{
 	    scanline = *td->scanline;
 	    (*td->scanline)++;
 	}
+#ifdef HAVE_PTHREAD_H
 	pthread_mutex_unlock(&td->mut);
+#endif
 
 	v_scanline = scanline + td->tile->orig_y;
 	if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24)
@@ -537,7 +582,7 @@ void
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -570,6 +615,8 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
     td.res_buf = &((char *)result->data)[result->ind];
     scanline = 0;
     td.scanline = &scanline;
+
+#ifdef HAVE_PTHREAD_H
     pthread_mutex_init(&td.mut, 0);
 
     /* Launch Render threads */
@@ -579,14 +626,112 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
 	    pthread_create(&render_tlist[i], NULL, render_camera_render_thread, &td);
 	for (i = 0; i < camera->thread_num; i++)
 	    pthread_join(render_tlist[i], NULL);
-    } else {
+    } else
+#endif
 	render_camera_render_thread(&td);
-    }
 
     result->ind = ind;
+#ifdef HAVE_PTHREAD_H
     pthread_mutex_destroy(&td.mut);
+#endif
 
     return;
+}
+
+struct render_shader_s *
+render_shader_register(const char *name, void (*init)(render_t *, char *))
+{
+	struct render_shader_s *shader = (struct render_shader_s *)bu_malloc(sizeof(struct render_shader_s), "shader");
+	if(shader == NULL)
+		return NULL;
+	/* should probably search shader list for dups */
+	shader->name = name;
+	shader->init = init;
+	shader->next = shaders;
+	shader->dlh = NULL;
+	shaders = shader;
+	return shader;
+}
+
+const char *
+render_shader_load_plugin(const char *filename) {
+#ifdef HAVE_DLFCN_H
+    void *lh;	/* library handle */
+    void (*init)(render_t *, char *);
+    char *name;
+    struct render_shader_s *s;
+
+
+    lh = dlopen(filename, RTLD_LOCAL);
+    if(lh == NULL) { bu_log("Faulty plugin %s: file not found\n", filename); perror(""); return NULL; }
+    name = dlsym(lh, "name");
+    if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return NULL; }
+    init = dlsym(lh, "init");
+    if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return NULL; }
+    s = render_shader_register(name, init);
+    s->dlh = lh;
+    return s->name;
+#else
+    bu_log("No plugin support.\n");
+    return NULL;
+#endif
+}
+
+int
+render_shader_unload_plugin(render_t *r, const char *name)
+{
+    struct render_shader_s *t, *s = shaders, *meh;
+    if(!strncmp(s->name, name, 8)) {
+	t = s->next;
+	if(r && r->shader && !strncmp(r->shader, name, 8)) {
+	    meh = s->next;
+	    while( meh ) {
+		if(render_shader_init(r, meh->name, NULL) != -1)
+		    goto LOADED;
+		meh = meh->next;
+	    }
+	    bu_exit(-1, "Unable to find suitable shader\n");
+	}
+LOADED:
+
+	if(s->dlh)
+	    dlclose(s->dlh);
+	bu_free(s, "unload first shader");
+	shaders = t; 
+	return 0;
+    }
+
+    while(s->next) {
+	if(!strncmp(s->next->name, name, 8)) {
+	    if(r)
+		render_shader_init(r, s->name, NULL);
+	    if(s->next->dlh)
+		dlclose(s->next->dlh);
+	    t = s->next;
+	    s->next = s->next->next;
+	    bu_free(t, "unload shader");
+	    return 0;
+	}
+    }
+
+    bu_log("Could not find shader \"%s\"\n", name);
+    return -1;
+}
+
+int
+render_shader_init(render_t *r, const char *name, const char *buf)
+{
+    struct render_shader_s *s = shaders;
+    while(s) {
+	if(!strncmp(s->name, name, 8)) {
+	    s->init(r, buf);
+	    r->shader = s->name;
+	    return 0;
+	}
+	s = s->next;
+    }
+    bu_log("Shader \"%s\" not found\n", name);
+    return -1;
 }
 
 /*

@@ -21,34 +21,29 @@
  *
  */
 
-#include "component.h"
-#include "hit.h"
-#include "adrt.h"
-#include "adrt_struct.h"
 #include <stdio.h>
 
+#include "adrt.h"
+#include "adrt_struct.h"
 
 void
-render_component_init(render_t *render, char *usr) {
-    render->work = render_component_work;
-    render->free = render_component_free;
-    return;
-}
-
-void
-render_component_free(render_t *render) {
+render_component_free(render_t *render)
+{
     return;
 }
 
 static void *
-component_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+component_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
+{
     adrt_mesh_t *mesh = (adrt_mesh_t *)(tri->ptr);
 
     ray->depth++;
     return (mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) ? mesh : NULL;
 }
 
-void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     tie_id_t id;
     adrt_mesh_t *mesh;
     TIE_3 vec;
@@ -70,6 +65,13 @@ void render_component_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *
 	pixel->v[1] += 0.2;
 	pixel->v[2] += 0.2;
     }
+}
+
+int
+render_component_init(render_t *render, char *usr) {
+    render->work = render_component_work;
+    render->free = render_component_free;
+    return 0;
 }
 
 /*

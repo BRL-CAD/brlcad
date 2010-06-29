@@ -16,8 +16,6 @@
 #if !defined(OPENNURBS_REVSURFACE_INC_)
 #define OPENNURBS_REVSURFACE_INC_
 
-typedef ON_Mesh* (*ON_MeshRevSurface)( const ON_RevSurface&, const ON_MeshParameters&, ON_Mesh* );
-
 // surface of revolution
 class ON_CLASS ON_RevSurface : public ON_Surface
 {
@@ -576,9 +574,6 @@ public:
         double surface_s, double surface_t,
         double* nurbs_s,  double* nurbs_t
         ) const;
-
-public:
-  static ON_MeshRevSurface _MeshRevSurface;
 };
 
 #endif

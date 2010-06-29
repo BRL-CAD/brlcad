@@ -275,7 +275,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_max[Y] = pip->part_V[Y] + pip->part_vrad;
 	stp->st_min[Z] = pip->part_V[Z] - pip->part_vrad;
 	stp->st_max[Z] = pip->part_V[Z] + pip->part_vrad;
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     /* Compute some essential terms */
@@ -389,7 +389,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -470,12 +470,12 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    /* ray origin is outside of sphere */
 	    if (b < 0) {
 		/* ray direction is away from sphere */
-		return(0);		/* No hit */
+		return 0;		/* No hit */
 	    }
 	    root = b*b - magsq_ov + vrad_sq;
 	    if (root <= 0) {
 		/* no real roots */
-		return(0);		/* No hit */
+		return 0;		/* No hit */
 	    }
 	} else {
 	    root = b*b - magsq_ov + vrad_sq;
@@ -493,7 +493,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	segp->seg_out.hit_dist = b + root;
 	segp->seg_out.hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	return(2);			/* HIT */
+	return 2;			/* HIT */
     }
 
     /* Transform ray to coordinate system of unit cone at origin */
@@ -686,7 +686,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
  out:
     if (hitp == &hits[0])
-	return(0);	/* MISS */
+	return 0;	/* MISS */
     if (hitp == &hits[1]) {
 	/* Only one hit, make it a 0-thickness segment */
 	hits[1] = hits[0];		/* struct copy */
@@ -723,7 +723,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	segp->seg_out = hits[0];	/* struct copy */
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -890,7 +890,7 @@ rt_part_free(register struct soltab *stp)
 int
 rt_part_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -909,25 +909,25 @@ rt_part_class(void)
 HIDDEN void
 rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fastf_t *b, fastf_t *h)
 {
-    register float cos45 = 0.707107;
+    /* M_SQRT1_2 is cos45 */
 
     /* This is the top of the dome */
     VADD2(ov[12], v, h);
 
     VADD2(ov[0], v, a);
-    VJOIN2(ov[1], v, cos45, a, cos45, b);
+    VJOIN2(ov[1], v, M_SQRT1_2, a, M_SQRT1_2, b);
     VADD2(ov[2], v, b);
-    VJOIN2(ov[3], v, -cos45, a, cos45, b);
+    VJOIN2(ov[3], v, -M_SQRT1_2, a, M_SQRT1_2, b);
     VSUB2(ov[4], v, a);
-    VJOIN2(ov[5], v, -cos45, a, -cos45, b);
+    VJOIN2(ov[5], v, -M_SQRT1_2, a, -M_SQRT1_2, b);
     VSUB2(ov[6], v, b);
-    VJOIN2(ov[7], v, cos45, a, -cos45, b);
+    VJOIN2(ov[7], v, M_SQRT1_2, a, -M_SQRT1_2, b);
 
-    VJOIN2(ov[8], v, cos45, a, cos45, h);
-    VJOIN2(ov[10], v, -cos45, a, cos45, h);
+    VJOIN2(ov[8], v, M_SQRT1_2, a, M_SQRT1_2, h);
+    VJOIN2(ov[10], v, -M_SQRT1_2, a, M_SQRT1_2, h);
 
-    VJOIN2(ov[9], v, cos45, b, cos45, h);
-    VJOIN2(ov[11], v, -cos45, b, cos45, h);
+    VJOIN2(ov[9], v, M_SQRT1_2, b, M_SQRT1_2, h);
+    VJOIN2(ov[11], v, -M_SQRT1_2, b, M_SQRT1_2, h);
     /* Obviously, this could be optimized quite a lot more */
 }
 
@@ -936,7 +936,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
  * R T _ P A R T _ P L O T
  */
 int
-rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
+rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_part_internal *pip;
     point_t tail;
@@ -976,7 +976,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	for (i=0; i<16; i++) {
 	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
 	}
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     VMOVE(Hunit, pip->part_H);
@@ -1037,7 +1037,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     RT_ADD_VLIST(vhead, vhemi[6], BN_VLIST_LINE_MOVE);
     RT_ADD_VLIST(vhead, hhemi[6], BN_VLIST_LINE_DRAW);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1102,7 +1102,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     RT_PART_CK_MAGIC(pip);
 
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE)
-	return(-1);
+	return -1;
     /* For now, concentrate on the most important kind. */
 
     VADD2(hcenter, pip->part_V, pip->part_H);
@@ -1430,7 +1430,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
     bu_free((char *)strips, "strips[]");
-    return(0);
+    return 0;
  fail:
     /* Release memory */
     /* All strips have vertices and normals */
@@ -1444,7 +1444,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	bu_free((char *)strips[i].fu, "strip faceuse[]");
     }
     bu_free((char *)strips, "strips[]");
-    return(-1);
+    return -1;
 }
 
 
@@ -1469,7 +1469,7 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     /* Check record type */
     if (rp->u_id != DBID_PARTICLE) {
 	bu_log("rt_part_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     /* Convert from database to internal format */
@@ -1494,13 +1494,13 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	bu_log("unable to import particle, negative v radius\n");
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
-	return(-2);
+	return -2;
     }
     if ((part->part_hrad = hrad / mat[15]) < 0) {
 	bu_log("unable to import particle, negative h radius\n");
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
-	return(-3);
+	return -3;
     }
 
     if (part->part_vrad > part->part_hrad) {
@@ -1514,7 +1514,7 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	bu_log("unable to import particle, negative radius\n");
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
-	return(-4);
+	return -4;
     }
 
     if (MAGSQ(part->part_H) * 1000000 < maxrad * maxrad) {
@@ -1522,18 +1522,18 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	part->part_vrad = part->part_hrad = maxrad;
 	VSETALL(part->part_H, 0);		/* sanity */
 	part->part_type = RT_PARTICLE_TYPE_SPHERE;
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     if ((maxrad - minrad) / maxrad < 0.001) {
 	/* radii are nearly equal, particle is a cylinder (lozenge) */
 	part->part_vrad = part->part_hrad = maxrad;
 	part->part_type = RT_PARTICLE_TYPE_CYLINDER;
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     part->part_type = RT_PARTICLE_TYPE_CONE;
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1553,7 +1553,7 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_PARTICLE) return(-1);
+    if (ip->idb_type != ID_PARTICLE) return -1;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -1575,7 +1575,7 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     htond(rec->part.p_vrad, (unsigned char *)&vrad, 1);
     htond(rec->part.p_hrad, (unsigned char *)&hrad, 1);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1615,13 +1615,13 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
 	bu_log("unable to import particle, negative v radius\n");
-	return(-2);
+	return -2;
     }
     if ((part->part_hrad = vec[2*3+1] / mat[15]) < 0) {
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
 	bu_log("unable to import particle, negative h radius\n");
-	return(-3);
+	return -3;
     }
 
     if (part->part_vrad > part->part_hrad) {
@@ -1635,7 +1635,7 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	bu_free(ip->idb_ptr, "rt_part_internal");
 	ip->idb_ptr=NULL;
 	bu_log("unable to import particle, negative radius\n");
-	return(-4);
+	return -4;
     }
 
     if (MAGSQ(part->part_H) * 1000000 < maxrad * maxrad) {
@@ -1643,18 +1643,18 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	part->part_vrad = part->part_hrad = maxrad;
 	VSETALL(part->part_H, 0);		/* sanity */
 	part->part_type = RT_PARTICLE_TYPE_SPHERE;
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     if ((maxrad - minrad) / maxrad < 0.001) {
 	/* radii are nearly equal, particle is a cylinder (lozenge) */
 	part->part_vrad = part->part_hrad = maxrad;
 	part->part_type = RT_PARTICLE_TYPE_CYLINDER;
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     part->part_type = RT_PARTICLE_TYPE_CONE;
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1670,7 +1670,7 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_PARTICLE) return(-1);
+    if (ip->idb_type != ID_PARTICLE) return -1;
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
@@ -1689,7 +1689,7 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 8);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1765,9 +1765,9 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	    break;
 	default:
 	    bu_vls_strcat(str, "Unknown particle type\n");
-	    return(-1);
+	    return -1;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1796,7 +1796,7 @@ rt_part_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

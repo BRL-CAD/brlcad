@@ -87,7 +87,7 @@ Pop()
 	jtop--;
     }
 
-    return(ptr);
+    return ptr;
 }
 
 void

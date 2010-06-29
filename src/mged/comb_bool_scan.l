@@ -34,26 +34,26 @@ white		[ \t\n]+
 %%
 
 {open}		{
-		    return (TKN_LPAREN);
+		    return TKN_LPAREN;
 		}
 {close}		{
-		    return (TKN_RPAREN);
+		    return TKN_RPAREN;
 		}
 {vanilla}+	{
 		    if ((*yytext == *bool_op_lexeme[OPN_UNION])
 		     && (strcmp(yytext, bool_op_lexeme[OPN_UNION]) == 0))
-			return (TKN_UNION);
+			return TKN_UNION;
 		    if ((*yytext == *bool_op_lexeme[OPN_INTERSECTION])
 		     && (strcmp(yytext, bool_op_lexeme[OPN_INTERSECTION]) == 0))
-			return (TKN_INTERSECTION);
+			return TKN_INTERSECTION;
 		    if ((*yytext == *bool_op_lexeme[OPN_DIFFERENCE])
 		     && (strcmp(yytext, bool_op_lexeme[OPN_DIFFERENCE]) == 0))
-			return (TKN_DIFFERENCE);
+			return TKN_DIFFERENCE;
 		    else
 		    {
 			talloc(yylval.val_string, char, yyleng + 1);
 			sprintf(yylval.val_string, yytext);
-			return (TKN_OBJECT);
+			return TKN_OBJECT;
 		    }
 		}
 {white}		;

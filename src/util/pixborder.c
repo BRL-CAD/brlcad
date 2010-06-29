@@ -91,15 +91,15 @@ static int read_hsv (fastf_t *hsvp, char *buf)
     double tmp[3];
 
     if (sscanf(buf, "%lf %lf %lf", tmp, tmp + 1, tmp + 2) != 3)
-	return (0);
+	return 0;
     if ((tmp[HUE] < 0.0) || (tmp[HUE] > 360.0)
 	|| (tmp[SAT] < 0.0) || (tmp[SAT] > 1.0)
 	|| (tmp[VAL] < 0.0) || (tmp[VAL] > 1.0))
-	return (0);
+	return 0;
     if (tmp[SAT] == 0.0)
 	tmp[HUE] = ACHROMATIC;
     VMOVE(hsvp, tmp);
-    return (1);
+    return 1;
 }
 
 
@@ -109,12 +109,12 @@ static int read_hsv (fastf_t *hsvp, char *buf)
 static int read_row (unsigned char *rp, long int width, FILE *infp)
 {
     if (fread(rp + 3, 3, width, infp) != width)
-	return (0);
+	return 0;
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
     *(rp + 3 * (width + 1) + RED) =
 	*(rp + 3 * (width + 1) + GRN) =
 	*(rp + 3 * (width + 1) + BLU) = 0;
-    return (1);
+    return 1;
 }
 
 
@@ -215,7 +215,7 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 	} else {
 	    (void) fprintf(stderr, "Illegal HSV (%g, %g, %g)\n",
 			   V3ARGS(hsv));
-	    return (0);
+	    return 0;
 	}
     } else {
 	if (hue == 360.0)
@@ -244,7 +244,7 @@ int hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
     rgb[GRN] = float_rgb[GRN] * 255;
     rgb[BLU] = float_rgb[BLU] * 255;
 
-    return (1);
+    return 1;
 }
 
 
@@ -329,32 +329,32 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
      * Ensure that this pixel is in a region of interest
      */
     if (! is_interior(pix_rgb))
-	return (0);
+	return 0;
 
     /*
      * Check its left and right neighbors
      */
     VMOVE(pix_rgb, trp + (col_nm + 0) * 3);
     if (is_exterior(pix_rgb))
-	return (1);
+	return 1;
     VMOVE(pix_rgb, trp + (col_nm + 2) * 3);
     if (is_exterior(pix_rgb))
-	return (1);
+	return 1;
 
     /*
      * Check its upper and lower neighbors
      */
     VMOVE(pix_rgb, nrp + (col_nm + 1) * 3);
     if (is_exterior(pix_rgb))
-	return (1);
+	return 1;
     VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
     if (is_exterior(pix_rgb))
-	return (1);
+	return 1;
 
     /*
      * All four of its neighbors are also in the region
      */
-    return (0);
+    return 0;
 }
 
 
@@ -374,13 +374,13 @@ get_args (int argc, char **argv)
 	    case 'b':
 		if (! bu_str_to_rgb(bu_optarg, border_rgb)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		break;
 	    case 'e':
 		if (! bu_str_to_rgb(bu_optarg, exterior_rgb)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		rgb_to_hsv(exterior_rgb, exterior_hsv);
 		colors_specified |= COLORS_EXTERIOR;
@@ -392,7 +392,7 @@ get_args (int argc, char **argv)
 	    case 'i':
 		if (! bu_str_to_rgb(bu_optarg, interior_rgb)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		rgb_to_hsv(interior_rgb, interior_hsv);
 		colors_specified |= COLORS_INTERIOR;
@@ -408,7 +408,7 @@ get_args (int argc, char **argv)
 	    case 't':
 		if (! bu_str_to_rgb(bu_optarg, rgb_tol)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		tol_using_rgb = 1;
 		break;
@@ -425,14 +425,14 @@ get_args (int argc, char **argv)
 	    case 'B':
 		if (! read_hsv(border_hsv, bu_optarg)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		hsv_to_rgb(border_hsv, border_rgb);
 		break;
 	    case 'E':
 		if (! read_hsv(exterior_hsv, bu_optarg)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		hsv_to_rgb(exterior_hsv, exterior_rgb);
 		colors_specified |= COLORS_EXTERIOR;
@@ -440,7 +440,7 @@ get_args (int argc, char **argv)
 	    case 'I':
 		if (! read_hsv(interior_hsv, bu_optarg)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		hsv_to_rgb(interior_hsv, interior_rgb);
 		colors_specified |= COLORS_INTERIOR;
@@ -448,7 +448,7 @@ get_args (int argc, char **argv)
 	    case 'T':
 		if (! read_hsv(hsv_tol, bu_optarg)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
-		    return (0);
+		    return 0;
 		}
 		tol_using_rgb = 0;
 		break;
@@ -462,13 +462,13 @@ get_args (int argc, char **argv)
 		(void) fputs(usage, stderr);
 		bu_exit (0, NULL);
 	    default:
-		return (0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
 	file_name = "stdin";
 	infp = stdin;
     } else {
@@ -476,7 +476,7 @@ get_args (int argc, char **argv)
 	if ((infp = fopen(file_name, "r")) == NULL) {
 	    perror(file_name);
 	    (void) fprintf(stderr, "Cannot open file '%s'\n", file_name);
-	    return (0);
+	    return 0;
 	}
 	++fileinput;
     }
@@ -492,7 +492,7 @@ get_args (int argc, char **argv)
 	bottom_edge = 0;
     if (top_edge == -1)
 	top_edge = file_height - 1;
-    return (1);
+    return 1;
 }
 
 

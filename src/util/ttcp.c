@@ -138,15 +138,15 @@ mread(int fd,
 	nread = read(fd, bufp, n-count);
 	if (nread < 0) {
 	    perror("ttcp_mread");
-	    return(-1);
+	    return -1;
 	}
 	if (nread == 0)
-	    return((int)count);
+	    return (int)count;
 	count += (unsigned)nread;
 	bufp += nread;
     } while (count < n);
 
-    return((int)count);
+    return (int)count;
 }
 
 
@@ -235,7 +235,7 @@ read_timer(char *str, int len)
 	    cput, realt,
 	    cput/realt*100);
     strncpy(str, line, len);
-    return(cput);
+    return cput;
 #else
     /* BSD */
     struct timeval timedol;
@@ -259,7 +259,7 @@ read_timer(char *str, int len)
     tvsub(&td, &tend, &tstart);
     cput = td.tv_sec + ((double)td.tv_usec) / 1000000;
     if (cput < 0.00001) cput = 0.00001;
-    return(cput);
+    return cput;
 #endif
 }
 
@@ -436,7 +436,7 @@ Nread(int fd, char *buf, int count)
 	else
 	    cnt = read(fd, buf, count);
     }
-    return(cnt);
+    return cnt;
 }
 
 
@@ -448,7 +448,7 @@ delay(int us)
     tv.tv_sec = 0;
     tv.tv_usec = us;
     (void)select(1, (fd_set *)0, (fd_set *)0, (fd_set *)0, &tv);
-    return(1);
+    return 1;
 }
 
 
@@ -472,7 +472,7 @@ Nwrite(int fd, char *buf, int count)
     } else {
 	cnt = write(fd, buf, count);
     }
-    return(cnt);
+    return cnt;
 }
 
 

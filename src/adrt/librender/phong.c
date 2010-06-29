@@ -25,24 +25,17 @@
 
 #include "vmath.h"
 
-#include "phong.h"
-#include "hit.h"
 #include "adrt_struct.h"
 
 void
-render_phong_init(render_t *render, char *usr) {
-    render->work = render_phong_work;
-    render->free = render_phong_free;
+render_phong_free(render_t *render)
+{
     return;
 }
 
 void
-render_phong_free(render_t *render) {
-    return;
-}
-
-void
-render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     tie_id_t		id;
     adrt_mesh_t		*mesh;
 
@@ -59,6 +52,14 @@ render_phong_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
 	VSCALE((*pixel).v, (*pixel).v, VDOT( vec.v,  id.norm.v));
     }
     return;
+}
+
+int
+render_phong_init(render_t *render, char *usr)
+{
+    render->work = render_phong_work;
+    render->free = render_phong_free;
+    return 0;
 }
 
 /*

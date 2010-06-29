@@ -114,7 +114,7 @@ mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t 
     VSET( pt8[6], min[X], max[Y], max[Z] );
     VSET( pt8[7], min[X], min[Y], max[Z] );
 
-    return( mk_arb8( wdbp, name, &pt8[0][X] ) );
+    return mk_arb8( wdbp, name, &pt8[0][X] );
 }
 
 
@@ -164,7 +164,7 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
     VADD2(pts[6], pts[5], yvec);	/* seventh vertex */
     VADD2(pts[7], pts[4], yvec);	/* eighth vertex */
 
-    return( mk_arb8(wdbp, name, &pts[0][X]) );
+    return mk_arb8(wdbp, name, &pts[0][X]);
 }
 
 
@@ -189,7 +189,7 @@ mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     VMOVE( pt8[6], &pts[3*3] );
     VMOVE( pt8[7], &pts[3*3] );
 
-    return( mk_arb8( wdbp, name, &pt8[0][X] ) );
+    return mk_arb8( wdbp, name, &pt8[0][X] );
 }
 
 /*
@@ -212,7 +212,7 @@ mk_arb5(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     VMOVE( pt8[6], &pts[4*3] );
     VMOVE( pt8[7], &pts[4*3] );
 
-    return( mk_arb8( wdbp, name, &pt8[0][X] ) );
+    return mk_arb8( wdbp, name, &pt8[0][X] );
 }
 
 
@@ -237,7 +237,7 @@ mk_arb6(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     VMOVE( pt8[6], &pts[5*3] );
     VMOVE( pt8[7], &pts[5*3] );
 
-    return( mk_arb8( wdbp, name, &pt8[0][X] ));
+    return mk_arb8( wdbp, name, &pt8[0][X] );
 }
 
 /*
@@ -260,7 +260,7 @@ mk_arb7(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     VMOVE( pt8[6], &pts[6*3] );
     VMOVE( pt8[7], &pts[4*3] ); /* Shared with point 5, per g_arb.c*/
 
-    return( mk_arb8( wdbp, name, &pt8[0][X] ));
+    return mk_arb8( wdbp, name, &pt8[0][X] );
 }
 
 /*
@@ -494,7 +494,7 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
     VSCALE(cvec, a, rad2);
     VSCALE(dvec, b, rad2);
 
-    return( mk_tgc(wdbp, name, base, hgtv, avec, bvec, cvec, dvec) );
+    return mk_tgc(wdbp, name, base, hgtv, avec, bvec, cvec, dvec);
 }
 
 
@@ -539,7 +539,7 @@ mk_trc_top(struct rt_wdb *wdbp, const char *name, const fastf_t *ibase, const fa
     vect_t	height;
 
     VSUB2( height, itop, ibase );
-    return( mk_trc_h( wdbp, name, ibase, height, radbase, radtop ) );
+    return mk_trc_h( wdbp, name, ibase, height, radbase, radtop );
 }
 
 /*
@@ -754,7 +754,7 @@ mk_binunif(
     struct rt_binunif_internal *binunif;
     unsigned int minor_type = 0;
     int from_file = 0;
-    int bytes = 0;
+    size_t bytes = 0;
     int nosign = 0;
 
     switch (data_type) {

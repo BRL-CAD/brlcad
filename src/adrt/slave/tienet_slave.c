@@ -35,6 +35,7 @@
 #include "bio.h"
 #include "tie.h"
 #include "adrt.h"
+#include "tienet.h"
 
 #include "tienet_slave.h"
 

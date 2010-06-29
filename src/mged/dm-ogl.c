@@ -205,7 +205,7 @@ Ogl_dm(int argc,
 				     Ogl_vparse,
 				     argv[1],
 				     (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars,
-				     ', ');
+				     COMMA);
 	} else {
 	    struct bu_vls tmp_vls;
 

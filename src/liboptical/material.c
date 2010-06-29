@@ -214,8 +214,11 @@ mlib_setup(struct mfuncs **headp,
 	   register struct region *rp,
 	   struct rt_i *rtip)
 {
-    register const struct mfuncs *mfp;
-    register struct mfuncs *mfp_new = NULL;
+#ifdef HAVE_DLOPEN
+    struct mfuncs *mfp_new = NULL;
+#endif
+
+    const struct mfuncs *mfp;
     int		ret;
     struct bu_vls	param;
     const char	*material;
@@ -226,7 +229,7 @@ mlib_setup(struct mfuncs **headp,
 
     if (rp->reg_mfuncs != (char *)0) {
 	bu_log("mlib_setup:  region %s already setup\n", rp->reg_name);
-	return(-1);
+	return -1;
     }
     bu_vls_init(&param);
     material = rp->reg_mater.ma_shader;
@@ -285,7 +288,7 @@ mlib_setup(struct mfuncs **headp,
 	goto retry;
     }
     bu_vls_free(&param);
-    return(-1);
+    return -1;
  found:
     rp->reg_mfuncs = (char *)mfp;
     rp->reg_udata = (char *)0;
@@ -306,7 +309,7 @@ mlib_setup(struct mfuncs **headp,
 	bu_log("mlib_setup(%s) error recovery failed.\n", rp->reg_name);
     }
     bu_vls_free(&param);
-    return(ret);		/* Good or bad, as mf_setup says */
+    return ret;		/* Good or bad, as mf_setup says */
 }
 
 

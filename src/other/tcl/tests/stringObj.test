@@ -160,6 +160,12 @@ test stringObj-6.8 {Tcl_AppendStringsToObj procedure, object totally empty} test
     teststringobj appendstrings 1 {}
     list [teststringobj length2 1] [teststringobj get 1]
 } {0 {}}
+test stringObj-6.9 {Tcl_AppendStringToObj, pure unicode} {
+    testobj freeallvars
+    teststringobj set2 1 [string replace abc 1 1 d]
+    teststringobj appendstrings 1 foo bar soom
+    teststringobj get 1
+} adcfoobarsoom
 
 test stringObj-7.1 {SetStringFromAny procedure} testobj {
     testobj freeallvars
@@ -427,6 +433,39 @@ test stringObj-14.1 {Tcl_SetObjLength on pure unicode object} testobj {
     teststringobj append 1 bar -1
     teststringobj get 1
 } {bar}
+
+test stringObj-15.1 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself 1 0
+} foofoo
+test stringObj-15.2 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself 1 1
+} foooo
+test stringObj-15.3 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself 1 2
+} fooo
+test stringObj-15.4 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself 1 3
+} foo
+test stringObj-15.5 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself2 1 0
+} foofoo
+test stringObj-15.6 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself2 1 1
+} foooo
+test stringObj-15.7 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself2 1 2
+} fooo
+test stringObj-15.8 {Tcl_Append*ToObj: self appends} {
+    teststringobj set 1 foo
+    teststringobj appendself2 1 3
+} foo
 
 if {[testConstraint testobj]} {
     testobj freeallvars

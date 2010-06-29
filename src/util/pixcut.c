@@ -136,17 +136,17 @@ get_args(int argc, char **argv)
 		num_bytes = atol(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
     if (bu_optind >= argc) {
-	if (isatty(fileno(stdin))) return(0);
+	if (isatty(fileno(stdin))) return 0;
 	in_name = "-";
 	input = stdin;
     } else {
 	in_name = argv[bu_optind];
 	if (strcmp(in_name, "-") == 0) {
-	    if (isatty(fileno(stdin))) return(0);
+	    if (isatty(fileno(stdin))) return 0;
 	    input = stdin;
 	} else {
 	    if ((input = fopen(in_name, "r")) == NULL) {
@@ -154,7 +154,7 @@ get_args(int argc, char **argv)
 		(void)fprintf(stderr,
 			      "pixcut: cannot open \"%s\" for reading\n",
 			      in_name);
-		return(0);
+		return 0;
 	    }
 	    isfile = 1;
 	}
@@ -162,7 +162,7 @@ get_args(int argc, char **argv)
     if (argc > ++bu_optind) {
 	(void)fprintf(stderr, "pixcut: excess argument(s) ignored\n");
     }
-    return(1);	/* OK */
+    return 1;	/* OK */
 }
 
 
@@ -364,7 +364,7 @@ main(int argc, char **argv)
 	}
 	row++;
     }
-    return(0);
+    return 0;
 }
 
 

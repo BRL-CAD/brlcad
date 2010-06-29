@@ -18,8 +18,6 @@
 
 class ON_SumSurface;
 
-typedef ON_Mesh* (*ON_MeshSumSurface)( const ON_SumSurface&, const ON_MeshParameters&, ON_Mesh* );
-
 // surface of revolution
 class ON_CLASS ON_SumSurface : public ON_Surface
 {
@@ -517,9 +515,6 @@ public:
          ON_Surface*& west_or_south_side,
          ON_Surface*& east_or_north_side
          ) const;
-
-public:
-  static ON_MeshSumSurface _MeshSumSurface;
 };
 
 #endif

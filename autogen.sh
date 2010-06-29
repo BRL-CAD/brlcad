@@ -74,6 +74,7 @@
 #
 # Patches:
 #   Sebastian Pipping <sebastian@pipping.org>
+#   Tom Browder <tbrowder2@users.sourceforge.net>
 #
 ######################################################################
 
@@ -327,11 +328,14 @@ done
 
 # sanity check before recursions potentially begin
 if [ ! -f "$AUTOGEN_SH" ] ; then
-    echo "INTERNAL ERROR: $AUTOGEN_SH does not exist"
-    if [ ! "x$0" = "x$AUTOGEN_SH" ] ; then
-	echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != $AUTOGEN_SH"
+    if test -f ./autogen.sh ; then
+	PATH_TO_AUTOGEN="."
+	NAME_OF_AUTOGEN="autogen.sh"
+	AUTOGEN_SH="$PATH_TO_AUTOGEN/$NAME_OF_AUTOGEN"
+    else
+	echo "INTERNAL ERROR: $AUTOGEN_SH does not exist"
+	exit 1
     fi
-    exit 1
 fi
 
 # force locale setting to C so things like date output as expected
@@ -339,7 +343,7 @@ LC_ALL=C
 
 # commands that this script expects
 for __cmd in echo head tail pwd ; do
-    echo "test" | $__cmd > /dev/null 2>&1
+    echo "test" > /dev/null 2>&1 | $__cmd > /dev/null 2>&1
     if [ $? != 0 ] ; then
 	echo "INTERNAL ERROR: '${__cmd}' command is required"
 	exit 2
@@ -1022,7 +1026,7 @@ initialize ( ) {
 	    $ECHO "coding standards were not found.  The files were automatically added"
 	    $ECHO "for you since you do not have a 'foreign' declaration specified."
 	    $ECHO
-	    $ECHO "Considered adding 'foreign' to AM_INIT_AUTOMAKE in `basename \"$CONFIGURE\"`"
+	    $ECHO "Consider adding 'foreign' to AM_INIT_AUTOMAKE in `basename \"$CONFIGURE\"`"
 	    if test -f "`dirname \"$CONFIGURE\"/Makefile.am`" ; then
 		$ECHO "or to AUTOMAKE_OPTIONS in your top-level Makefile.am file."
 	    fi
@@ -1047,7 +1051,7 @@ initialize ( ) {
     for dir in m4 ; do
 	if [ -d $dir ] ; then
 	    $VERBOSE_ECHO "Found extra aclocal search directory: $dir"
-	    SEARCH_DIRS="$SEARCH_DIRS -I $dir"
+	    SEARCH_DIRS="$SEARCH_DIRS -I `pwd`/$dir"
 	fi
     done
 
@@ -1579,6 +1583,8 @@ else
     $ECHO "  make"
 fi
 
+# finish up where we started
+cd "$START_PATH"
 
 # Local Variables:
 # mode: sh

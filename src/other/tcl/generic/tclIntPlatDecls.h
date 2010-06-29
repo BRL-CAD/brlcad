@@ -100,12 +100,12 @@ EXTERN Tcl_DirEntry *	TclpReaddir (DIR * dir);
 #ifndef TclpLocaltime_unix_TCL_DECLARED
 #define TclpLocaltime_unix_TCL_DECLARED
 /* 11 */
-EXTERN struct tm *	TclpLocaltime_unix (CONST time_t * _clock);
+EXTERN struct tm *	TclpLocaltime_unix (CONST time_t * clock);
 #endif
 #ifndef TclpGmtime_unix_TCL_DECLARED
 #define TclpGmtime_unix_TCL_DECLARED
 /* 12 */
-EXTERN struct tm *	TclpGmtime_unix (CONST time_t * _clock);
+EXTERN struct tm *	TclpGmtime_unix (CONST time_t * clock);
 #endif
 #ifndef TclpInetNtoa_TCL_DECLARED
 #define TclpInetNtoa_TCL_DECLARED
@@ -320,12 +320,12 @@ EXTERN Tcl_DirEntry *	TclpReaddir (DIR * dir);
 #ifndef TclpLocaltime_unix_TCL_DECLARED
 #define TclpLocaltime_unix_TCL_DECLARED
 /* 11 */
-EXTERN struct tm *	TclpLocaltime_unix (CONST time_t * _clock);
+EXTERN struct tm *	TclpLocaltime_unix (CONST time_t * clock);
 #endif
 #ifndef TclpGmtime_unix_TCL_DECLARED
 #define TclpGmtime_unix_TCL_DECLARED
 /* 12 */
-EXTERN struct tm *	TclpGmtime_unix (CONST time_t * _clock);
+EXTERN struct tm *	TclpGmtime_unix (CONST time_t * clock);
 #endif
 #ifndef TclpInetNtoa_TCL_DECLARED
 #define TclpInetNtoa_TCL_DECLARED
@@ -368,6 +368,12 @@ EXTERN int		TclMacOSXMatchType (Tcl_Interp * interp,
 				Tcl_StatBuf * statBufPtr, 
 				Tcl_GlobTypeData * types);
 #endif
+#ifndef TclMacOSXNotifierAddRunLoopMode_TCL_DECLARED
+#define TclMacOSXNotifierAddRunLoopMode_TCL_DECLARED
+/* 19 */
+EXTERN void		TclMacOSXNotifierAddRunLoopMode (
+				CONST void * runLoopMode);
+#endif
 #endif /* MACOSX */
 
 typedef struct TclIntPlatStubs {
@@ -386,8 +392,8 @@ typedef struct TclIntPlatStubs {
     int (*tclUnixWaitForFile) (int fd, int mask, int timeout); /* 8 */
     TclFile (*tclpCreateTempFile) (CONST char * contents); /* 9 */
     Tcl_DirEntry * (*tclpReaddir) (DIR * dir); /* 10 */
-    struct tm * (*tclpLocaltime_unix) (CONST time_t * _clock); /* 11 */
-    struct tm * (*tclpGmtime_unix) (CONST time_t * _clock); /* 12 */
+    struct tm * (*tclpLocaltime_unix) (CONST time_t * clock); /* 11 */
+    struct tm * (*tclpGmtime_unix) (CONST time_t * clock); /* 12 */
     char * (*tclpInetNtoa) (struct in_addr addr); /* 13 */
     int (*tclUnixCopyFile) (CONST char * src, CONST char * dst, CONST Tcl_StatBuf * statBufPtr, int dontCopyAtts); /* 14 */
 #endif /* UNIX */
@@ -435,14 +441,15 @@ typedef struct TclIntPlatStubs {
     int (*tclUnixWaitForFile) (int fd, int mask, int timeout); /* 8 */
     TclFile (*tclpCreateTempFile) (CONST char * contents); /* 9 */
     Tcl_DirEntry * (*tclpReaddir) (DIR * dir); /* 10 */
-    struct tm * (*tclpLocaltime_unix) (CONST time_t * _clock); /* 11 */
-    struct tm * (*tclpGmtime_unix) (CONST time_t * _clock); /* 12 */
+    struct tm * (*tclpLocaltime_unix) (CONST time_t * clock); /* 11 */
+    struct tm * (*tclpGmtime_unix) (CONST time_t * clock); /* 12 */
     char * (*tclpInetNtoa) (struct in_addr addr); /* 13 */
     int (*tclUnixCopyFile) (CONST char * src, CONST char * dst, CONST Tcl_StatBuf * statBufPtr, int dontCopyAtts); /* 14 */
     int (*tclMacOSXGetFileAttribute) (Tcl_Interp * interp, int objIndex, Tcl_Obj * fileName, Tcl_Obj ** attributePtrPtr); /* 15 */
     int (*tclMacOSXSetFileAttribute) (Tcl_Interp * interp, int objIndex, Tcl_Obj * fileName, Tcl_Obj * attributePtr); /* 16 */
     int (*tclMacOSXCopyFileAttributes) (CONST char * src, CONST char * dst, CONST Tcl_StatBuf * statBufPtr); /* 17 */
     int (*tclMacOSXMatchType) (Tcl_Interp * interp, CONST char * pathName, CONST char * fileName, Tcl_StatBuf * statBufPtr, Tcl_GlobTypeData * types); /* 18 */
+    void (*tclMacOSXNotifierAddRunLoopMode) (CONST void * runLoopMode); /* 19 */
 #endif /* MACOSX */
 } TclIntPlatStubs;
 
@@ -696,6 +703,10 @@ extern TclIntPlatStubs *tclIntPlatStubsPtr;
 #ifndef TclMacOSXMatchType
 #define TclMacOSXMatchType \
 	(tclIntPlatStubsPtr->tclMacOSXMatchType) /* 18 */
+#endif
+#ifndef TclMacOSXNotifierAddRunLoopMode
+#define TclMacOSXNotifierAddRunLoopMode \
+	(tclIntPlatStubsPtr->tclMacOSXNotifierAddRunLoopMode) /* 19 */
 #endif
 #endif /* MACOSX */
 

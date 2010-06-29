@@ -408,7 +408,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	    NMG_CP_MANIFOLD(tbl, fu_p, fu_p->fumate_p);
     }
 
-    return(tbl);
+    return tbl;
 }
 
 
@@ -445,7 +445,7 @@ nmg_manifolds(struct model *m)
 	}
     }
 
-    return(tbl);
+    return tbl;
 }
 
 

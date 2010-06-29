@@ -770,6 +770,22 @@ ON_Surface::IsSingular(int side) const
   return false;
 }
 
+bool ON_Surface::IsSolid() const
+{
+  const bool bIsClosed0 = ( IsClosed(0) || ( IsSingular(1) && IsSingular(3) ) );
+  const bool bIsClosed1 = ( IsClosed(1) || ( IsSingular(0) && IsSingular(2) ) );
+
+  if ( bIsClosed0 && bIsClosed1 )
+    return true;
+
+  const ON_Extrusion* extrusion = ON_Extrusion::Cast(this);
+  if ( 0 != extrusion && extrusion->IsSolid() )
+    return true;
+
+  return false;
+}
+
+
 bool 
 ON_Surface::IsAtSingularity(double s, double t,
                             bool bExact //true by default
@@ -2221,11 +2237,13 @@ ON_BOOL32 ON_SurfaceArray::Read( ON_BinaryArchive& file )
 {
   int major_version = 0;
   int minor_version = 0;
-  unsigned int tcode;
-  int i, flag;
+  ON__UINT32 tcode = 0;
+  ON__INT64 big_value = 0;
+  int flag;
   Destroy();
-  ON_BOOL32 rc = file.BeginRead3dmChunk( &tcode, &i );
-  if (rc) {
+  ON_BOOL32 rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
+  if (rc) 
+  {
     rc = ( tcode == TCODE_ANONYMOUS_CHUNK );
     if (rc) rc = file.Read3dmChunkVersion(&major_version,&minor_version);
     if (rc && major_version == 1) {
@@ -2310,11 +2328,3 @@ const ON_SurfaceTree* ON_Surface::SurfaceTree() const
 
 
 
-#if !defined(OPENNURBS_PLUS_INC_)
-
-ON_SurfaceTree* ON_Surface::CreateSurfaceTree() const
-{
-  return 0;
-}
-
-#endif

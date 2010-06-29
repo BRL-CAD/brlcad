@@ -51,6 +51,7 @@ bu_fchmod(FILE *fp,
 #ifdef HAVE_FCHMOD
     return fchmod(fileno(fp), (mode_t)pmode);
 #else
+    pmode = pmode; /* quellage */
     return -1; /* probably Windows, fchmod unavailable and chmod insecure */
 #endif
 }

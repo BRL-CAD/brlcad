@@ -153,7 +153,7 @@ main(int argc, char **argv)
 
     if (!(stream = fopen(*(argv+bu_optind), "rb"))) {
 	fprintf(stderr, "Track: Could not open file %s.\n", *(argv+bu_optind));
-	return(0);
+	return 0;
     }
     num_wheels = -1;
     if (one_radius) {
@@ -204,7 +204,7 @@ main(int argc, char **argv)
     if (get_circumf&& (!read_wheels)) {
 	track_prep();
 	printf("%.10g\n", tracklen);
-	return(0);
+	return 0;
     }
 
 
@@ -213,7 +213,7 @@ main(int argc, char **argv)
 	scanf("%*f");/*time*/
 	val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos + 2);
 	if (val < 3)
-	    return(0);
+	    return 0;
 	go = anim_steer_mat(mat_x, cent_pos, 0);
 	last_steer = 0;
     } else {
@@ -353,7 +353,7 @@ main(int argc, char **argv)
     }
     bu_free(x, "x all");
     bu_free(wh, "wh wheel");
-    return( 0 );
+    return 0;
 }
 
 #define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"
@@ -448,7 +448,7 @@ int get_args(int argc, char **argv)
 			break;
 		    default:
 			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
-			return(0);
+			return 0;
 		}
 		bu_optind += 1;
 		break;
@@ -477,7 +477,7 @@ int get_args(int argc, char **argv)
 			break;
 		    default:
 			fprintf(stderr, "Unknown option: -l%c\n", *bu_optarg);
-			return(0);
+			return 0;
 		}
 		break;
 	    case 'a':
@@ -485,10 +485,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 /* TRACK_PREP - Calculate the geometry of the track. Wheel positions and
@@ -562,7 +562,7 @@ int track_prep(void)
     if (len_mode==TRACK_MIN) {
 	tracklen = linearlen + x[0].t.len;
 	curve_a = 0.0;
-	return(0); /* early return */
+	return 0; /* early return */
     }
 
     if (len_mode==TRACK_ELASTIC) {
@@ -578,7 +578,7 @@ int track_prep(void)
 	    hyperlen = tracklen - linearlen;
 	}
 	else {
-	    return(-1);/*bad, track is too short*/
+	    return -1;/*bad, track is too short*/
 	}
     }
 
@@ -603,7 +603,7 @@ int track_prep(void)
     if (x[NW-1].w.arc<0.0)
 	x[NW-1].w.arc += 2.0*M_PI;
 
-    return(0); /*good*/
+    return 0; /*good*/
 }
 
 /* GET_LINK - Find the position and angle of a link which is a given
@@ -628,7 +628,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
-	    return(2*i);
+	    return 2*i;
 	}
 	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
 	    *angle_p = dist/x[i].w.rad;
@@ -637,7 +637,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    pos[Y] = x[i].w.pos[Y];
 	    pos[Z] = x[i].w.pos[Z] + x[i].w.rad*sin(*angle_p);
 	    *angle_p -= M_PI_2; /*angle of clockwise tangent to circle*/
-	    return(2*i+1);
+	    return 2*i+1;
 	}
     }
 

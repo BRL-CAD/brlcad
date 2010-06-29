@@ -216,8 +216,8 @@ nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
 
 libopenNURBS_nil_la_SOURCES = $(ON_SRC)
-libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS}
-libopenNURBS_nil_la_CXXFLAGS = -Wall ${LIBZ_CPPFLAGS}
+libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS} ${NOWARN}
+libopenNURBS_nil_la_CXXFLAGS = ${LIBZ_CPPFLAGS} ${NOWARN}
 libopenNURBS_nil_la_LIBADD = ${LIBZ}
 
 libopenNURBS_la_SOURCES =

@@ -212,7 +212,7 @@ foreach mode $modes {
     } ""
 
     set fileName $tmpFile
-    set fileDir [pwd]
+    set fileDir [tcltest::temporaryDirectory]
     set pathName [file join $fileDir $fileName]
 
     test filebox-2.2-$mode "tk_getOpenFile command" nonUnixUserInteraction {
@@ -226,6 +226,7 @@ foreach mode $modes {
 		-parent $parent -initialdir $fileDir]
     } $pathName
     test filebox-2.4-$mode "tk_getOpenFile command" nonUnixUserInteraction {
+        cd $fileDir
         ToPressButton $parent ok
         set choice [tk_getOpenFile -title "Enter \"$fileName\" and press Ok" \
 		-parent $parent -initialdir . -initialfile $fileName]

@@ -117,7 +117,7 @@ static int find_bool_tree_rewrite (struct bool_tree_node *rp)
 	    bu_exit (1, "Reached %s:%d.  This shouldn't happen\n", __FILE__, __LINE__);
     }
 
-    return (rule_nm);
+    return rule_nm;
 }
 
 
@@ -135,7 +135,7 @@ static struct bool_tree_node *dup_bool_tree (struct bool_tree_node *rp)
     BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     if (bt_is_leaf(rp))
-	return (rp);
+	return rp;
     else
 	return (bt_create_internal(bt_opn(rp),
 				   dup_bool_tree(bt_opd(rp, BT_LEFT)),
@@ -233,7 +233,7 @@ static int convert_one_node (struct bool_tree_node *rp)
     for (nm_rewrites = 0; rule_nm = find_bool_tree_rewrite(rp); ++nm_rewrites)
 	do_bool_tree_rewrite(rp, rule_nm);
 
-    return (nm_rewrites);
+    return nm_rewrites;
 }
 
 
@@ -254,13 +254,13 @@ static int _cvt_to_gift_bool (struct bool_tree_node *rp)
     BU_CKMAG(rp, BOOL_TREE_NODE_MAGIC, "Boolean tree node");
 
     if (bt_is_leaf(rp))
-	return (0);
+	return 0;
 
     nm_rewrites = convert_one_node(rp);
     nm_rewrites += _cvt_to_gift_bool(bt_opd(rp, BT_LEFT));
     nm_rewrites += _cvt_to_gift_bool(bt_opd(rp, BT_RIGHT));
 
-    return (nm_rewrites);
+    return nm_rewrites;
 }
 
 
@@ -289,7 +289,7 @@ int cvt_to_gift_bool (struct bool_tree_node *rp)
 #endif
     }
 
-    return (cnr);
+    return cnr;
 }
 
 

@@ -1802,6 +1802,7 @@ ON::object_type ON::ObjectType(int i)
   case meshface_object:      ot = meshface_object; break;
   case cage_object:          ot = cage_object; break;
   case phantom_object:       ot = phantom_object; break;
+  case extrusion_object:     ot = extrusion_object; break;
 
   default: ot = unknown_object_type; break;
   }
@@ -1862,6 +1863,44 @@ ON::osnap_mode ON::OSnapMode(int i)
     break;
   };
   return osm;
+}
+
+
+ON::cubic_loft_end_condition ON::CubicLoftEndCondition(int i)
+{
+  ON::cubic_loft_end_condition e;
+  switch(i)
+  {
+  case cubic_loft_ec_quadratic:
+    e = ON::cubic_loft_ec_quadratic;
+    break;
+  case cubic_loft_ec_linear:
+    e = ON::cubic_loft_ec_linear;
+    break;
+  case cubic_loft_ec_cubic:
+    e = ON::cubic_loft_ec_cubic;
+    break;
+  case cubic_loft_ec_natural:
+    e = ON::cubic_loft_ec_natural;
+    break;
+  case cubic_loft_ec_unit_tangent:
+    e = ON::cubic_loft_ec_unit_tangent;
+    break;
+  case cubic_loft_ec_1st_derivative:
+    e = ON::cubic_loft_ec_1st_derivative;
+    break;
+  case cubic_loft_ec_2nd_derivative:
+    e = ON::cubic_loft_ec_2nd_derivative;
+    break;
+  case cubic_loft_ec_free_cv:
+    e = ON::cubic_loft_ec_free_cv;
+    break;
+  default:
+    ON_ERROR("ON::CubicLoftEndCondition(i) value of i is not valid.");
+    e = ON::cubic_loft_ec_quadratic;
+    break;
+  }
+  return e;
 }
 
 

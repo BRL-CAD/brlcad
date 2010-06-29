@@ -15,6 +15,180 @@
 
 #include "opennurbs.h"
 
+// Added for v5 - 12-10-2009 LW
+ON_OBJECT_IMPLEMENT(ON_TextExtra,ON_UserData,"D90490A5-DB86-49f8-BDA1-9080B1F4E976");
+
+ON_TextExtra::ON_TextExtra()
+{
+  m_userdata_uuid = ON_TextExtra::m_ON_TextExtra_class_id.Uuid();
+  m_application_uuid = ON_opennurbs5_id; // opennurbs.dll reads/writes this userdata
+                                         // The id must be the version 5 id because
+                                         // V6 SaveAs V5 needs to work, but SaveAs
+                                         // V4 should not write this userdata.
+  m_userdata_copycount = 1;
+  SetDefaults();
+}
+
+ON_TextExtra::~ON_TextExtra()
+{
+}
+
+ON_TextExtra* ON_TextExtra::TextExtension(ON_TextEntity2* pText, bool bCreate)
+{
+  ON_TextExtra* pExtra = 0;
+  if(pText)
+  {
+    pExtra = ON_TextExtra::Cast(pText->GetUserData(ON_TextExtra::m_ON_TextExtra_class_id.Uuid()));
+    if(pExtra == 0 && bCreate)
+    {
+      pExtra = new ON_TextExtra;
+      if(pExtra)
+      {
+        if(!pText->AttachUserData(pExtra))
+        {
+          delete pExtra;
+          pExtra = 0;
+        }
+      }
+    }
+  }
+  return pExtra;
+}
+
+const
+ON_TextExtra* ON_TextExtra::TextExtension(const ON_TextEntity2* pText, bool bCreate)
+{
+  return TextExtension((ON_TextEntity2*)pText, bCreate);
+}
+
+void ON_TextExtra::SetDefaults()
+{
+  m_partent_uuid = ON_nil_uuid;
+  
+  m_color_source = 0;
+  m_mask_color = 0;
+  m_border_offset = 0.1;
+}
+
+void ON_TextExtra::Dump( ON_TextLog& text_log ) const
+{
+  // do nothing
+}
+
+unsigned int ON_TextExtra::SizeOf() const
+{
+  unsigned int sz = ON_UserData::SizeOf();
+  sz += sizeof(*this) - sizeof(ON_UserData);
+  return sz;
+}
+
+ON_BOOL32 ON_TextExtra::Write(ON_BinaryArchive& archive) const
+{
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+
+  if(rc) rc = archive.WriteUuid(m_partent_uuid);
+  if(rc) rc = archive.WriteBool(m_bDrawMask);
+  if(rc) rc = archive.WriteInt(m_color_source);
+  if(rc) rc = archive.WriteColor(m_mask_color);
+  if(rc) rc = archive.WriteDouble(m_border_offset);
+
+  if(!archive.EndWrite3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+ON_BOOL32 ON_TextExtra::Read(ON_BinaryArchive& archive)
+{
+  int major_version = 1;
+  int minor_version = 0;
+  bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+  if(!rc)
+    return false;
+  if(major_version != 1)
+    return false;
+
+  if(rc) rc = archive.ReadUuid(m_partent_uuid);
+  if(rc) rc = archive.ReadBool(&m_bDrawMask);
+  if(rc) rc = archive.ReadInt(&m_color_source);
+  if(rc) rc = archive.ReadColor(m_mask_color);
+  if(rc) rc = archive.ReadDouble(&m_border_offset);
+
+  if ( !archive.EndRead3dmChunk() )
+    rc = false;
+
+  return rc;
+}
+
+ON_BOOL32 ON_TextExtra::GetDescription( ON_wString& description)
+{
+  description.Format( "Userdata extension of ON_TextEntity");
+  return true;
+}
+
+ON_BOOL32 ON_TextExtra::Archive() const
+{
+  // true to write to file
+  return true;
+}
+
+
+ON_UUID ON_TextExtra::ParentUUID() const
+{
+  return m_partent_uuid;
+}
+
+void ON_TextExtra::SetParentUUID( ON_UUID partent_uuid)
+{
+  m_partent_uuid = partent_uuid;
+}
+
+bool ON_TextExtra::DrawTextMask() const
+{
+  return m_bDrawMask;
+}
+
+void ON_TextExtra::SetDrawTextMask(bool bDraw)
+{
+  m_bDrawMask = bDraw;
+}
+
+int ON_TextExtra::MaskColorSource() const
+{
+  return m_color_source;
+}
+
+void ON_TextExtra::SetMaskColorSource(int source)
+{
+  if(source == 1)
+    m_color_source = 1;
+  else
+    m_color_source = 0;
+}
+
+ON_Color ON_TextExtra::MaskColor() const
+{
+  return m_mask_color;
+}
+
+void ON_TextExtra::SetMaskColor(ON_Color color)
+{
+  m_mask_color = color;
+}
+
+double ON_TextExtra::MaskOffsetFactor() const
+{
+  return m_border_offset;
+}
+
+void ON_TextExtra::SetMaskOffsetFactor(double offset)
+{
+  m_border_offset = offset;
+}
+
+//--------------------
+
+
 
 // Added for v5 - 4-20-07 LW
 ON_OBJECT_IMPLEMENT(ON_DimensionExtra,ON_UserData,"8AD5B9FC-0D5C-47fb-ADFD-74C28B6F661E");
@@ -32,6 +206,34 @@ ON_DimensionExtra::ON_DimensionExtra()
 
 ON_DimensionExtra::~ON_DimensionExtra()
 {
+}
+
+ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(ON_LinearDimension2* pDim, bool bCreate)
+{
+  ON_DimensionExtra* pExtra = 0;
+  if(pDim)
+  {
+    pExtra = ON_DimensionExtra::Cast(pDim->GetUserData(ON_DimensionExtra::m_ON_DimensionExtra_class_id.Uuid()));
+    if(pExtra == 0 && bCreate)
+    {
+      pExtra = new ON_DimensionExtra;
+      if( pExtra)
+      {
+        if(!pDim->AttachUserData(pExtra))
+        {
+          delete pExtra;
+          pExtra = 0;
+        }
+      }
+    }
+  }
+  return pExtra;
+}
+
+const
+ON_DimensionExtra* ON_DimensionExtra::DimensionExtension(const ON_LinearDimension2* pDim, bool bCreate)
+{
+  return DimensionExtension((ON_LinearDimension2*)pDim, bCreate);
 }
 
 void ON_DimensionExtra::SetDefaults()
@@ -56,7 +258,7 @@ unsigned int ON_DimensionExtra::SizeOf() const
 
 ON_BOOL32 ON_DimensionExtra::Write(ON_BinaryArchive& archive) const
 {
-  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,0,0);
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
 
   if(rc) rc = archive.WriteUuid( m_partent_uuid);
   if(rc) rc = archive.WriteInt( m_arrow_position);
@@ -80,12 +282,12 @@ ON_BOOL32 ON_DimensionExtra::Write(ON_BinaryArchive& archive) const
 
 ON_BOOL32 ON_DimensionExtra::Read(ON_BinaryArchive& archive)
 {
-  int major_version = 0;
+  int major_version = 1;
   int minor_version = 0;
   bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
   if(!rc)
     return false;
-  if(major_version != 0)
+  if(major_version != 1)
     return false;
 
   if(rc) rc = archive.ReadUuid(m_partent_uuid);
@@ -111,7 +313,7 @@ ON_BOOL32 ON_DimensionExtra::GetDescription( ON_wString& description)
 ON_BOOL32 ON_DimensionExtra::Archive() const
 {
   // true to write to file
-  return false;
+  return true;
 }
 
 
@@ -1281,14 +1483,14 @@ unsigned int ON_Annotation2::Justification()
 //----- ON_LinearDimension2 ------------------------------------------
 ON_LinearDimension2::ON_LinearDimension2()
 {
-  ON_DimensionExtra* pDE = new ON_DimensionExtra;
-  if( pDE)
-  {
-    if( !AttachUserData( pDE))
-      delete pDE;
-    else
-      pDE->SetDefaults();
-  }
+  //ON_DimensionExtra* pDE = new ON_DimensionExtra;
+  //if( pDE)
+  //{
+  //  if( !AttachUserData( pDE))
+  //    delete pDE;
+  //  else
+  //    pDE->SetDefaults();
+  //}
 
   m_type = ON::dtDimLinear;
   m_textdisplaymode = ON::dtAboveLine;
@@ -1928,12 +2130,12 @@ int ON_LinearDimension2::GetDimensionLineSegments(
       : ext1_pt_index;
   const double x0 = m_points[i].x;
   const double x1 = m_points[(ext0_pt_index==i) ? ext1_pt_index : ext0_pt_index].x;
-  x[0] = x0;  // left end of dimension line
-  x[1] = x1;
-  x[2] = x0;
-  x[3] = x1;  // right end of dimension line
-  x[4] = x0;
-  x[5] = x1;
+  x[0] = x0;  // left  end of first dimension line
+  x[1] = x1;  // right end of first dimension line
+  x[2] = x0;  // left  end of second dimension line
+  x[3] = x1;  // right end of second dimension line
+  x[4] = x0;  // tip of first arrow
+  x[5] = x1;  // tip of second arrow
 
   if ( 0 == gdi_height_of_I )
   {
@@ -1947,7 +2149,6 @@ int ON_LinearDimension2::GetDimensionLineSegments(
   }
 
   double t;
-
 
   ON::eTextDisplayMode textdisplay = ON::TextDisplayMode(dimstyle.TextAlignment());
   if ( ON::dtHorizontal == textdisplay && !vp )
@@ -1965,9 +2166,18 @@ int ON_LinearDimension2::GetDimensionLineSegments(
                                    : (2.0*arrowwidth + tailwidth);
   const double dimextension        = dimscale*dimstyle.DimExtension();
 
-  if ( dimwidth < mindimwidth )
+  int ForceArrows = 0;
+  const ON_DimensionExtra* pDE = ON_DimensionExtra::DimensionExtension(this,false);
+  if( pDE)
+    ForceArrows = pDE->ArrowPosition();
+
+  if(ForceArrows == 1)  // force inside
   {
-    // arrowheads have to be "outside"
+    rc = 1;
+  }
+  else if(ForceArrows == -1 ||        // force outside
+          dimwidth < mindimwidth )    // arrowheads have to be "outside" - they won't fit inside even without text
+  {
     t = arrowwidth + tailwidth;
     x[0] = x0;
     x[1] = x0-t;
@@ -1983,12 +2193,13 @@ int ON_LinearDimension2::GetDimensionLineSegments(
     bInside = false;
     rc = 2;
   }
+  // Horizontal text or Userpositioned text
   else if ( (ON::dtHorizontal == textdisplay && vp) || m_userpositionedtext )
   {
     // use projected rectangle to clip dimension line
     double xx0, xx1, xx, y0, y1, t;
     ON_3dPoint P, R;
-    ON_2dPoint corners[4];
+    ON_2dPoint corners[4];  // corners of text rect in plane coords
     ON_Line ray;
 
     ON_3dVector vp_zaxis = (ON::dtHorizontal == textdisplay && vp)
@@ -2017,14 +2228,18 @@ int ON_LinearDimension2::GetDimensionLineSegments(
     P = ( ON_Intersect(ray,m_plane,&t) ) ? ray.PointAt(t) : ray.from;
     m_plane.ClosestPointTo(P,&corners[3].x,&corners[3].y);
 
+    // Test if text rect intersects dimension line
     xx0 = xx1 = ON_UNSET_VALUE;
     for ( i = 0; i < 4; i++ )
     {
-      y0 = corners[i].y       - m_points[1].y;
-      y1 = corners[(i+1)%4].y - m_points[1].y;
+      y0 = corners[i].y       - m_points[1].y;    // vertical dist from corner to dimension line
+      y1 = corners[(i+1)%4].y - m_points[1].y;    // vertical dist from next corner to dimension line
+      // if they're both above or both below, no intersection of this segment
       if ( (y0 > 0.0 && y1 > 0.0) || (y0 < 0.0 && y1 < 0.0) || y0 == y1 )
         continue;
 
+      // segment intersects dimension line.
+      // find x-coord of intersection
       t = y0/(y0-y1);
       xx = (1.0-t)*corners[i].x + t*corners[(i+1)%4].x;
       if ( ON_UNSET_VALUE == xx0 )
@@ -2041,42 +2256,64 @@ int ON_LinearDimension2::GetDimensionLineSegments(
       }
     }
 
-    // xx0 is left edge of text rect
-    // xx1 is right edge of text rect
-    t = arrowwidth + tailwidth;
-    if ( x0 + t <= xx0 && xx0 < xx1 && xx1 <= x1 - t )
+    // Nov 4 2009 - Lowell - Added test for no intersection of text with dimension line rr33003
+    // Important for user positioned text that's moved out of the way of the dimension line
+    if(xx0 != ON_UNSET_VALUE && xx1 != ON_UNSET_VALUE)
     {
-      // clip line, 2 segments arrows inside
+      // xx0 is left edge of text rect
+      // xx1 is right edge of text rect
+      t = arrowwidth + tailwidth;
+      if ( x0 + t <= xx0 && xx0 < xx1 && xx1 <= x1 - t )
+      {
+        // clip line, 2 segments arrows inside
+        x[0] = x0;
+        x[1] = xx0;
+        x[2] = xx1;
+        x[3] = x1;
+        x[4] = x0;
+        x[5] = x1;
+        if( dimextension != 0.0)
+        {
+          x[0] -= dimextension;
+          x[3] += dimextension;
+        }
+        rc = 2;
+      }
+      else  // 2 segments, put the arrows outside the extension lines
+      {
+        x[0] = x0;
+        x[1] = x0 - t;
+        x[2] = x1 + t;
+        x[3] = x1;
+        x[4] = x0;
+        x[5] = x1;
+        if( dimextension != 0.0)
+        {
+          x[0] += dimextension;
+          x[3] -= dimextension;
+        }
+        bInside = false;
+        rc = 2;
+      }
+    }
+    else
+    {
+      // 1 segment, arrows inside
       x[0] = x0;
-      x[1] = xx0;
-      x[2] = xx1;
+      x[1] = x1;
+      x[2] = x0;
       x[3] = x1;
       x[4] = x0;
       x[5] = x1;
       if( dimextension != 0.0)
       {
         x[0] -= dimextension;
-        x[3] += dimextension;
+        x[1] += dimextension;
       }
-      rc = 2;
-    }
-    else  // 2 segments, put the arrows outside the extension lines
-    {
-      x[0] = x0;
-      x[1] = x0 - t;
-      x[2] = x1 + t;
-      x[3] = x1;
-      x[4] = x0;
-      x[5] = x1;
-      if( dimextension != 0.0)
-      {
-        x[0] += dimextension;
-        x[3] -= dimextension;
-      }
-      bInside = false;
-      rc = 2;
+      rc = 1;
     }
   }
+  // Above line text
   else if ( ON::dtAboveLine == textdisplay || m_userpositionedtext )
   {
     // 1 segment, arrows inside
@@ -2093,6 +2330,7 @@ int ON_LinearDimension2::GetDimensionLineSegments(
     }
     rc = 1;
   }
+  // In line text
   else if ( ON::dtInLine == textdisplay )
   {
     // 2 segments, arrows inside
@@ -2142,7 +2380,7 @@ ON_BOOL32 ON_RadialDimension2::IsValid( ON_TextLog* text_log ) const
   {
     if ( text_log )
     {
-      text_log->Print("ON_AngularDimension2 - m_type !=  ON::dtDimRadius or ON::dtDimDiameter\n");
+      text_log->Print("ON_RadialDimension2 - m_type !=  ON::dtDimRadius or ON::dtDimDiameter\n");
     }
     return false;
   }
@@ -2519,6 +2757,176 @@ bool ON_RadialDimension2::CreateFromV2(
 }
 
 
+//----- ON_AngularDimension2Extra -----------------------------------------
+// Additions to ON_AngularDimension2 class
+
+class ON_AngularDimension2Extra : public ON_UserData
+{
+  ON_OBJECT_DECLARE(ON_AngularDimension2Extra);
+public:
+  static ON_AngularDimension2Extra* AngularDimensionExtra(ON_AngularDimension2* pDim/*, bool bCreate*/);
+  static const ON_AngularDimension2Extra* AngularDimensionExtra(const ON_AngularDimension2* pDim/*, bool bCreate*/);
+
+  ON_AngularDimension2Extra();
+  ~ON_AngularDimension2Extra();
+
+  // override virtual ON_Object::Dump function
+  void Dump( ON_TextLog& text_log ) const;
+
+  // override virtual ON_Object::SizeOf function
+  unsigned int SizeOf() const;
+
+  // override virtual ON_Object::Write function
+  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
+
+  // override virtual ON_Object::Read function
+  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
+
+  // override virtual ON_UserData::GetDescription function
+  ON_BOOL32 GetDescription( ON_wString& description );
+
+  // override virtual ON_UserData::Archive function
+  ON_BOOL32 Archive() const; 
+
+  // Scale all of the length values
+  void Scale( double scale);
+
+  // 
+  double DimpointOffset(int index) const;
+  void SetDimpointOffset(int index, double offset);
+
+  // offsets from apex of dimension to point from which extension lines start
+  // if these are < 0.0, they are ignored
+  // Extension lines are drawn from theses points to the Arrow tip points
+  // subject to dimexe & dimexo & dimse1 & dimse2
+  double m_dimpoint_offset[2];
+};
+
+ON_OBJECT_IMPLEMENT(ON_AngularDimension2Extra,ON_UserData,"A68B151F-C778-4a6e-BCB4-23DDD1835677");
+
+ON_AngularDimension2Extra* ON_AngularDimension2Extra::AngularDimensionExtra(ON_AngularDimension2* pDim)
+{
+  ON_AngularDimension2Extra* pExtra = 0;
+  if(pDim)
+  {
+    pExtra = ON_AngularDimension2Extra::Cast(pDim->GetUserData(ON_AngularDimension2Extra::m_ON_AngularDimension2Extra_class_id.Uuid()));
+    if(pExtra == 0)
+    {
+      pExtra = new ON_AngularDimension2Extra;
+      if( pExtra)
+      {
+        if(!pDim->AttachUserData(pExtra))
+        {
+          delete pExtra;
+          pExtra = 0;
+        }
+      }
+    }
+  }
+  return pExtra;
+}
+
+const ON_AngularDimension2Extra* ON_AngularDimension2Extra::AngularDimensionExtra(const ON_AngularDimension2* pDim)
+{
+  return AngularDimensionExtra((ON_AngularDimension2*)pDim);
+}
+
+ON_AngularDimension2Extra::ON_AngularDimension2Extra()
+{
+  m_userdata_uuid = ON_AngularDimension2Extra::m_ON_AngularDimension2Extra_class_id.Uuid();
+  m_application_uuid = ON_opennurbs5_id; // opennurbs.dll reads/writes this userdata
+                                         // The id must be the version 5 id because
+                                         // V6 SaveAs V5 needs to work, but SaveAs
+                                         // V4 should not write this userdata.
+  m_userdata_copycount = 1;
+
+  m_dimpoint_offset[0] = 0;
+  m_dimpoint_offset[1] = 0;
+}
+
+ON_AngularDimension2Extra::~ON_AngularDimension2Extra()
+{
+}
+
+void ON_AngularDimension2Extra::Dump( ON_TextLog& text_log ) const
+{
+  // do nothing
+}
+
+unsigned int ON_AngularDimension2Extra::SizeOf() const
+{
+  unsigned int sz = ON_UserData::SizeOf();
+  sz += sizeof(*this) - sizeof(ON_UserData);
+  return sz;
+}
+
+ON_BOOL32 ON_AngularDimension2Extra::Write(ON_BinaryArchive& archive) const
+{
+  int major_version = 1;
+  int minor_version = 0;
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,major_version,minor_version);
+
+  if(rc) rc = archive.WriteDouble(m_dimpoint_offset[0]);
+  if(rc) rc = archive.WriteDouble(m_dimpoint_offset[1]);
+
+  if(!archive.EndWrite3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+ON_BOOL32 ON_AngularDimension2Extra::Read(ON_BinaryArchive& archive)
+{
+  int major_version = 1;
+  int minor_version = 0;
+  bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+  if(major_version != 1)
+    rc = false;
+
+  if(rc) rc = archive.ReadDouble(&m_dimpoint_offset[0]);
+  if(rc) rc = archive.ReadDouble(&m_dimpoint_offset[1]);
+
+  if ( !archive.EndRead3dmChunk() )
+    rc = false;
+
+  return rc;
+}
+
+ON_BOOL32 ON_AngularDimension2Extra::GetDescription( ON_wString& description)
+{
+  description.Format( "Userdata extension of ON_AngularDimension2");
+  return true;
+}
+
+ON_BOOL32 ON_AngularDimension2Extra::Archive() const
+{
+  // true to write to file
+  return true;
+}
+
+void ON_AngularDimension2Extra::Scale(double scale)
+{
+  if( ON_IsValid(scale) && scale > ON_SQRT_EPSILON)
+  {
+    m_dimpoint_offset[0] *= scale;
+    m_dimpoint_offset[1] *= scale;
+  }
+}
+
+double ON_AngularDimension2Extra::DimpointOffset(int index) const
+{
+  if(index == 0)
+    return m_dimpoint_offset[0];
+  if(index == 1)
+    return m_dimpoint_offset[1];
+  return -1;
+}
+void ON_AngularDimension2Extra::SetDimpointOffset(int index, double offset)
+{
+  if(index >= 0 && index <= 1)
+    m_dimpoint_offset[index] = offset;
+}
+
 //----- ON_AngularDimension2 -----------------------------------------
 ON_AngularDimension2::ON_AngularDimension2() : m_angle(0.0), m_radius(1.0)
 {
@@ -2528,6 +2936,14 @@ ON_AngularDimension2::ON_AngularDimension2() : m_angle(0.0), m_radius(1.0)
   m_points.Reserve(ON_AngularDimension2::dim_pt_count);
   m_points.SetCount(ON_AngularDimension2::dim_pt_count);
   m_points.Zero();
+
+  // Add this userdata to every angular dimension
+//  ON_AngularDimension2Extra* pDE = ON_AngularDimension2Extra::AngularDimensionExtra(this, true);
+//  if(pDE)
+//  {
+//    pDE->SetDimpointOffset(0, -1);
+//    pDE->SetDimpointOffset(1, -1);
+//  }
 }
 
 ON_AngularDimension2::~ON_AngularDimension2()
@@ -2616,7 +3032,7 @@ ON_BOOL32 ON_AngularDimension2::IsValid( ON_TextLog* text_log ) const
     a1 += 2.0*ON_PI;
   while ( a2 <= a1 )
     a2 += 2.0*ON_PI;
-  while ( a3 <= a1 )
+  while ( a3 < a1 )  // Oct 23 2009 LW changed from a3 <= a1 to allow point at end of arc rr53634
     a3 += 2.0*ON_PI;
 
   if ( fabs(m_angle - (a2-a1)) > ON_ZERO_TOLERANCE + m_angle*ON_SQRT_EPSILON )
@@ -2639,7 +3055,7 @@ ON_BOOL32 ON_AngularDimension2::IsValid( ON_TextLog* text_log ) const
   }
   
 
-  if ( a3 >= a2 )
+  if ( a3 > a2 )  // Oct 23 2009 LW changed from a3 >= a2 to allow point at end of arc rr53634
   {
     if ( text_log )
     {
@@ -2760,6 +3176,30 @@ ON_2dPoint ON_AngularDimension2::Dim2dPoint( int point_index ) const
       case arcmid_pt:
         p2.x = m_radius*cos(0.5*m_angle);
         p2.y = m_radius*sin(0.5*m_angle);
+        break;
+      case extension0_pt:
+        {
+          p2 = m_points[start_pt_index];
+          double dp0 = DimpointOffset(0);
+          if(dp0 >= 0)
+          {
+            ON_2dVector v2 = (ON_2dVector)p2;
+            v2.Unitize();
+            p2 = (ON_2dPoint)v2 * dp0;
+          }
+        }
+        break;
+      case extension1_pt:
+        {
+          p2 = m_points[end_pt_index];
+          double dp1 = DimpointOffset(1);
+          if(dp1 >= 0)
+          {
+            ON_2dVector v2 = (ON_2dVector)p2;
+            v2.Unitize();
+            p2 = (ON_2dPoint)v2 * dp1;
+          }
+        }
         break;
       default:
         p2.x = p2.y = ON_UNSET_VALUE;
@@ -3033,7 +3473,7 @@ bool ON_AngularDimension2::GetArc( ON_Arc& arc ) const
       && 4 == m_points.Count()
       )
   {
-    ON_3dVector X = m_plane.PointAt( m_points[1].x, m_points[1].y ) - m_plane.origin;
+    ON_3dVector X = m_plane.PointAt( m_points[start_pt_index].x, m_points[start_pt_index].y ) - m_plane.origin;
     if ( fabs(X.Length()-1.0) <= ON_SQRT_EPSILON || X.Unitize() )
     {
       if ( fabs(X*m_plane.zaxis) <= ON_SQRT_EPSILON )
@@ -3055,6 +3495,54 @@ bool ON_AngularDimension2::GetArc( ON_Arc& arc ) const
 
   return rc;
 }
+
+bool ON_AngularDimension2::GetExtensionLines(ON_Line extensions[2]) const
+{
+  bool rc = false;
+
+  if ( ON_IsValid(m_radius) && m_radius > ON_SQRT_EPSILON
+      && ON_IsValid(m_angle) && m_angle > 0.0 && m_angle <= 2.0*ON_PI
+      && m_plane.origin.IsValid() 
+      && m_plane.xaxis.IsValid() 
+      && m_plane.yaxis.IsValid() 
+      && m_plane.zaxis.IsValid()
+      && fabs( m_plane.zaxis.Length() - 1.0 ) <= ON_SQRT_EPSILON
+      && 4 == m_points.Count()
+      )
+  {
+    const ON_AngularDimension2Extra* pDE = ON_AngularDimension2Extra::AngularDimensionExtra(this);
+    if(pDE != 0)
+    {
+      double exoffset0 = pDE->DimpointOffset(0);
+      double exoffset1 = pDE->DimpointOffset(1);
+      ON_3dPoint e00, e01, e10, e11;
+      e00 = m_plane.PointAt(m_points[start_pt_index].x, m_points[start_pt_index].y);
+      e10 = m_plane.PointAt(m_points[end_pt_index].x, m_points[end_pt_index].y);
+      ON_3dVector X = e00 - m_plane.origin;
+      ON_3dVector Y = e10 - m_plane.origin;
+      if((fabs(X.Length()-1.0) <= ON_SQRT_EPSILON || X.Unitize()) &&
+         (fabs(Y.Length()-1.0) <= ON_SQRT_EPSILON || Y.Unitize()))
+      {
+        if((fabs(X*m_plane.zaxis) <= ON_SQRT_EPSILON) &&
+           (fabs(Y*m_plane.zaxis) <= ON_SQRT_EPSILON))
+        {
+          e00 = m_plane.origin + X * exoffset0;
+          e10 = m_plane.origin + Y * exoffset1;
+          e01 = m_plane.origin + X * m_radius;
+          e11 = m_plane.origin + Y * m_radius;
+
+          extensions[0].from = e00;
+          extensions[0].to   = e01;
+          extensions[1].from = e10;
+          extensions[1].to   = e11;
+          rc = true;
+        }
+      }
+    }
+  }
+  return rc;
+}
+
 
 bool ON_AngularDimension2::CreateFromPoints( 
             const ON_3dPoint& pc, 
@@ -3111,6 +3599,15 @@ bool ON_AngularDimension2::CreateFromPoints(
 
   SetAngle( a1);
   SetRadius( ON_2dVector( pa).Length());
+
+  ON_AngularDimension2Extra* pDE = ON_AngularDimension2Extra::AngularDimensionExtra(this);
+  if(pDE != 0)
+  {
+    double os = ((ON_2dVector)pp0).Length();
+    pDE->SetDimpointOffset(0, os);
+    os = ((ON_2dVector)pp1).Length();
+    pDE->SetDimpointOffset(1, os);
+  }
 
   ReservePoints( 4);
   SetPlane( plane);
@@ -3571,6 +4068,20 @@ int ON_AngularDimension2::GetDimensionArcSegments(
   }
 
   return rc;
+}
+
+double ON_AngularDimension2::DimpointOffset(int index) const
+{
+  const ON_AngularDimension2Extra* pDE = ON_AngularDimension2Extra::AngularDimensionExtra(this);
+  if(pDE != 0)
+    return pDE->DimpointOffset(index);
+  return -1.0;
+}
+void ON_AngularDimension2::SetDimpointOffset(int index, double offset)
+{
+  ON_AngularDimension2Extra* pDE = ON_AngularDimension2Extra::AngularDimensionExtra(this);
+  if(pDE != 0)
+    pDE->SetDimpointOffset(index, offset);
 }
 
 
@@ -4280,6 +4791,70 @@ unsigned int ON_TextEntity2::Justification()
   return m_justification;
 }
 
+bool ON_TextEntity2::DrawTextMask() const
+{
+  const ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, false);
+  if(pTE)
+    return pTE->DrawTextMask();
+  else
+    return false;
+}
+
+void ON_TextEntity2::SetDrawTextMask(bool bDraw)
+{
+  ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, true);
+  if(pTE)
+    pTE->SetDrawTextMask(bDraw);
+}
+
+int ON_TextEntity2::MaskColorSource() const
+{
+  const ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, false);
+  if(pTE)
+    return pTE->MaskColorSource();
+  else
+    return 0;
+}
+
+void ON_TextEntity2::SetMaskColorSource(int source)
+{
+  ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, true);
+  if(pTE)
+    pTE->SetMaskColorSource(source);
+}
+
+ON_Color ON_TextEntity2::MaskColor() const
+{
+  const ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, false);
+  if(pTE)
+    return pTE->MaskColor();
+  else
+    return 0;
+}
+
+void ON_TextEntity2::SetMaskColor(ON_Color color)
+{
+  ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, true);
+  if(pTE)
+    pTE->SetMaskColor(color);
+}
+
+double ON_TextEntity2::MaskOffsetFactor() const
+{
+  const ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, false);
+  if(pTE)
+    return pTE->MaskOffsetFactor();
+  else
+    return 0;
+}
+
+void ON_TextEntity2::SetMaskOffsetFactor(double offset)
+{
+  ON_TextExtra* pTE = ON_TextExtra::TextExtension(this, true);
+  if(pTE)
+    pTE->SetMaskOffsetFactor(offset);
+}
+
 
 
 
@@ -4866,14 +5441,40 @@ bool ON_TextDot::AlwaysOnTop() const
 void ON_TextDot::SetTransparent(bool bTransparent)
 {
   if(bTransparent)
-    m_display |= 1;
+    m_display |= 2;
   else
-    m_display &= (~1);
+    m_display &= (~2);
 }
 
 bool ON_TextDot::Transparent() const
 {
   return (m_display & 2) == 2;
+}
+
+void ON_TextDot::SetBold(bool bBold)
+{
+  if(bBold)
+    m_display |= 4;
+  else
+    m_display &= (~4);
+}
+
+bool ON_TextDot::Bold() const
+{
+  return (m_display & 4) == 4;
+}
+
+void ON_TextDot::SetItalic(bool bItalic)
+{
+  if(bItalic)
+    m_display |= 8;
+  else
+    m_display &= (~8);
+}
+
+bool ON_TextDot::Italic() const
+{
+  return (m_display & 8) == 8;
 }
 
 

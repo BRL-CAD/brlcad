@@ -41,7 +41,7 @@
 .SH NAME
 g-stl \- Stereolithography Translator (BRL-CAD to STL)
 .SH SYNOPSIS
-.B g-stl [-b][-v][-i][-M] [-xX lvl]
+.B g-stl [-b][-v][-i][-8] [-xX lvl]
 [-D calculation_tolerance ]
 [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o STL_file | -m directory_name] database.g object(s)
 .SH DESCRIPTION
@@ -81,7 +81,7 @@ In the case of ASCII output, the region name is specified
 on the "solid" line of the STL file. In the case of binary output, all the regions are output
 as a single STL part.
 The
-.I -M
+.I -8
 option tells the facetizer to use the marching cubes algorithm.
 The
 .I -o

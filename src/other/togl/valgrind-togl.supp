@@ -1,0 +1,65 @@
+#
+# This is a valgrind suppression file that should be used when using valgrind.
+#
+#  Here's an example of running valgrind:
+#
+#	env TCLLIBPATH=l. valgrind --tool=memcheck \
+#		--suppressions=valgrind-togl.supp wish8.4 gears.tcl
+
+# all tool names: Addrcheck,Memcheck,cachegrind,helgrind,massif
+
+{
+	ioctl1
+	Memcheck:Param
+	ioctl(generic)
+	fun:ioctl
+	obj:/usr/lib/libGL.so*
+}
+
+{
+	ioctl2
+	Memcheck:Param
+	ioctl(generic)
+	fun:ioctl
+	obj:/usr/lib/libGLcore.so*
+}
+
+{
+	cond1
+	Memcheck:Cond
+	obj:/usr/lib/libGLcore.so*
+}
+
+{
+	cond2
+	Memcheck:Cond
+	fun:_nv0*gl
+	obj:/usr/lib/libGLcore.so*
+}
+
+{
+	strcat1
+	Memcheck:Cond
+	fun:strcat
+	obj:/usr/lib/libGLcore.so*
+}
+
+{
+	uninit4
+	Memcheck:Value4
+	obj:/usr/lib/libGLcore.so*
+}
+
+{
+	invalidRead4
+	Memcheck:Addr4
+	obj:/usr/lib/libGLcore.so*
+}
+
+
+{
+	uninit16
+	Memcheck:Value16
+	obj:/usr/lib/libGLcore.so*
+}
+

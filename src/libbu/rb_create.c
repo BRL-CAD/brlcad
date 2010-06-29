@@ -93,7 +93,7 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
 	(rb_null(tree)->rbn_package)[order] = BU_RB_PKG_NULL;
     }
 
-    return (tree);
+    return tree;
 }
 
 
@@ -105,7 +105,7 @@ bu_rb_create1(char *description, int (*order_func) (/* ??? */))
     ofp = (int (**)())
 	bu_malloc(sizeof(int (*)()), "red-black function table");
     *ofp = order_func;
-    return (bu_rb_create(description, 1, ofp));
+    return bu_rb_create(description, 1, ofp);
 }
 
 /*

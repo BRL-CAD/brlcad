@@ -1,0 +1,50 @@
+% This is the main document for running through latex,
+% but it just gets things set up, and includes all the pieces.
+% Mike Muuss, 5-Sept-1988
+
+% latex all.tex
+% texsun all.dvi
+% dviimp all.dvi
+% dvialw all.dvi
+
+\documentclass[twoside]{report}
+\pagestyle{headings}
+
+\usepackage{graphics}
+
+% ---------------------------------------------------------------------------
+
+\begin{document}                        % End of preamble and beginning of text.
+
+%\include{macros}			% Macros for PostScript, figures, etc.
+
+\hyphenation{non-smooth}
+
+% ---------------------------------------------------------------------------
+% The actual text
+%
+% Note:  The brain-damaged \include directive adds ".tex" to the argument!
+% ---------------------------------------------------------------------------
+
+\include{a}
+\include{b}
+\include{c}
+\include{d}
+\include{e}
+\include{f}	% tutorials: states & viewing
+\include{g}	% tutorials: solid edit
+\include{h}	% tutorials: obj edit
+
+\include{j}
+\include{k}
+\include{l}
+\include{m}
+
+% ---------------------------------------------------------------------------
+% This must go after the text, to be properly page numbered
+% ---------------------------------------------------------------------------
+
+\bibliography{../tex}
+\bibliographystyle{alpha}
+
+\end{document}

@@ -1012,20 +1012,20 @@ test info-25.1 {info frame, regular proc} {
 rename bar {}
 
 # -------------------------------------------------------------------------
-
-test info-30.0 {bs+nl in literal words} knownBug {
+# More info-30.x test cases at the end of the file.
+test info-30.0 {bs+nl in literal words} {
     if {1} {
 	set res \
-	    [reduce [info frame 0]]
+	    [reduce [info frame 0]];# 1019
     }
     set res
-    # This is reporting line 3 instead of the correct 4 because the
+    # This was reporting line 3 instead of the correct 4 because the
     # bs+nl combination is subst by the parser before the 'if'
-    # command, and the the bcc sees the word. To fix record the
-    # offsets of all bs+nl sequences in literal words, then use the
-    # information in the bcc to bump line numbers when parsing over
-    # the location. Also affected: testcases 22.8 and 23.6.
-} {type eval line 4 cmd {info frame 0} proc ::tcltest::RunTest}
+    # command, and the bcc, see the word. Fixed by recording the
+    # offsets of all bs+nl sequences in literal words, then using the
+    # information in the bcc and other places to bump line numbers when
+    # parsing over the location. Also affected: testcases 22.8 and 23.6.
+} {type source line 1019 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
 
 # -------------------------------------------------------------------------
 # See 24.0 - 24.5 for similar situations, using literal scripts.
@@ -1034,7 +1034,7 @@ set body {set flag 0
     set a c
     set res [info frame 0]} ;# line 3!
 
-test info-31.0 {ns eval, script in variable} {
+test info-31.0 {ns eval, script in variable} {set res {}
     namespace eval foo $body
     set res
 } {type eval line 3 cmd {info frame 0} level 0}
@@ -1409,6 +1409,297 @@ test info-38.6 {location information for uplevel, ppl, proc-proc-literal} -match
 * {type source line 1339 file info.test cmd {uplevel 1 $script} proc ::control}
 * {type source line 1343 file info.test cmd control proc ::datal level 1}
 * {type source line 1406 file info.test cmd datal proc ::tcltest::RunTest}}
+
+# -------------------------------------------------------------------------
+# literal sharing
+
+test info-39.0 {location information not confused by literal sharing} -body {
+    namespace eval ::foo {}
+    proc ::foo::bar {} {
+	lappend res {}
+	lappend res [reduce [eval {info frame 0}]]
+	lappend res [reduce [eval {info frame 0}]]
+	return $res
+    }
+    set res [::foo::bar]
+    namespace delete ::foo
+    join $res \n
+} -result {
+type source line 1420 file info.test cmd {info frame 0} proc ::foo::bar level 0
+type source line 1421 file info.test cmd {info frame 0} proc ::foo::bar level 0}
+
+# -------------------------------------------------------------------------
+# Additional tests for info-30.*, handling of continuation lines (bs+nl sequences).
+
+test info-30.1 {bs+nl in literal words, procedure body, compiled} {
+    proc abra {} {
+	if {1} \
+	    {
+		return \
+		    [reduce [info frame 0]];# line 1439
+	    }
+    }
+    set res [abra]
+    rename abra {}
+    set res
+} {type source line 1439 file info.test cmd {info frame 0} proc ::abra level 0}
+
+test info-30.2 {bs+nl in literal words, namespace script} {
+    namespace eval xxx {
+	set res \
+	    [reduce [info frame 0]];# line 1450
+    }
+    set res
+} {type source line 1450 file info.test cmd {info frame 0} level 0}
+
+test info-30.3 {bs+nl in literal words, namespace multi-word script} {
+    namespace eval xxx set res \
+	[list [reduce [info frame 0]]];# line 1457
+    set res
+} {type source line 1457 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.4 {bs+nl in literal words, eval script} {
+    eval {
+	set ::res \
+	    [reduce [info frame 0]];# line 1464
+    }
+    set res
+} {type source line 1464 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.5 {bs+nl in literal words, eval script, with nested words} {
+    eval {
+	if {1} \
+	    {
+		set ::res \
+		    [reduce [info frame 0]];# line 1474
+	    }
+    }
+    set res
+} {type source line 1474 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.6 {bs+nl in computed word} {
+    set res "\
+[reduce [info frame 0]]";# line 1482
+} { type source line 1482 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.7 {bs+nl in computed word, in proc} {
+    proc abra {} {
+	return "\
+[reduce [info frame 0]]";# line 1488
+    }
+    set res [abra]
+    rename abra {}
+    set res
+} { type source line 1488 file info.test cmd {info frame 0} proc ::abra level 0}
+
+test info-30.8 {bs+nl in computed word, nested eval} {
+    eval {
+	set \
+	    res "\
+[reduce [info frame 0]]";# line 1499
+}
+} { type source line 1499 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.9 {bs+nl in computed word, nested eval} {
+    eval {
+	set \
+	    res "\
+[reduce \
+     [info frame 0]]";# line 1508
+}
+} { type source line 1508 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.10 {bs+nl in computed word, key to array} {
+    set tmp([set \
+	    res "\
+[reduce \
+     [info frame 0]]"]) x ; #1516
+    unset tmp
+    set res
+} { type source line 1516 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.11 {bs+nl in subst arguments, no true counting} {
+    subst {[set \
+	    res "\
+[reduce \
+     [info frame 0]]"]}
+} { type eval line 1 cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.12 {bs+nl in computed word, nested eval} {
+    eval {
+	set \
+	    res "\
+[set x {}] \
+[reduce \
+     [info frame 0]]";# line 1534
+}
+} {   type source line 1534 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.13 {bs+nl in literal words, uplevel script, with nested words} {
+    uplevel #0 {
+	if {1} \
+	    {
+		set ::res \
+		    [reduce [info frame 0]];# line 1543
+	    }
+    }
+    set res
+} {type source line 1543 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.14 {bs+nl, literal word, uplevel through proc} {
+    proc abra {script} {
+	uplevel 1 $script
+    }
+    set res [abra {
+	return "\
+[reduce [info frame 0]]";# line 1555
+    }]
+    rename abra {}
+    set res
+} { type source line 1555 file info.test cmd {info frame 0} proc ::abra}
+
+test info-30.15 {bs+nl in literal words, nested proc body, compiled} {
+    proc a {} {
+	proc b {} {
+	    if {1} \
+		{
+		    return \
+			[reduce [info frame 0]];# line 1567
+		}
+	}
+    }
+    a ; set res [b]
+    rename a {}
+    rename b {}
+    set res
+} {type source line 1567 file info.test cmd {info frame 0} proc ::b level 0}
+
+test info-30.16 {bs+nl in multi-body switch, compiled} {
+    proc a {value} {
+	switch -regexp -- $value \
+	    ^key     { info frame 0; # 1580 } \
+	    \t###    { info frame 0; # 1581 } \
+	    {[0-9]*} { info frame 0; # 1582 }
+    }
+    set res {}
+    lappend res [reduce [a {key   }]]
+    lappend res [reduce [a {1alpha}]]
+    set res "\n[join $res \n]"
+} {
+type source line 1580 file info.test cmd {info frame 0} proc ::a level 0
+type source line 1582 file info.test cmd {info frame 0} proc ::a level 0}
+
+test info-30.17 {bs+nl in multi-body switch, direct} {
+    switch -regexp -- {key    } \
+	^key     { reduce [info frame 0] ;# 1594 } \
+        \t###    { } \
+        {[0-9]*} { }
+} {type source line 1594 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.18 {bs+nl, literal word, uplevel through proc, appended, loss of primary tracking data} {
+    proc abra {script} {
+	append script "\n# end of script"
+	uplevel 1 $script
+    }
+    set res [abra {
+	return "\
+[reduce [info frame 0]]";# line 1606, still line of 3 appended script
+    }]
+    rename abra {}
+    set res
+} { type eval line 3 cmd {info frame 0} proc ::abra}
+# { type source line 1606 file info.test cmd {info frame 0} proc ::abra}
+
+test info-30.19 {bs+nl in single-body switch, compiled} {
+    proc a {value} {
+	switch -regexp -- $value {
+	    ^key     { reduce \
+			   [info frame 0] }
+	    \t       { reduce \
+			   [info frame 0] }
+	    {[0-9]*} { reduce \
+			   [info frame 0] }
+	}
+    }
+    set res {}
+    lappend res [a {key   }]
+    lappend res [a {1alpha}]
+    set res "\n[join $res \n]"
+} {
+type source line 1617 file info.test cmd {info frame 0} proc ::a level 0
+type source line 1621 file info.test cmd {info frame 0} proc ::a level 0}
+
+test info-30.20 {bs+nl in single-body switch, direct} {
+    switch -regexp -- {key    } { \
+
+	^key     { reduce \
+		       [info frame 0] }
+	\t###    { }
+        {[0-9]*} { }
+    }
+} {type source line 1636 file info.test cmd {info frame 0} proc ::tcltest::RunTest}
+
+test info-30.21 {bs+nl in if, full compiled} {
+    proc a {value} {
+	if {$value} \
+	    {info frame 0} \
+	    {info frame 0}
+    }
+    set res {}
+    lappend res [reduce [a 1]]
+    lappend res [reduce [a 0]]
+    set res "\n[join $res \n]"
+} {
+type source line 1645 file info.test cmd {info frame 0} proc ::a level 0
+type source line 1646 file info.test cmd {info frame 0} proc ::a level 0}
+
+test info-30.22 {bs+nl in computed word, key to array, compiled} {
+    proc a {} {
+	set tmp([set \
+		     res "\
+[reduce \
+     [info frame 0]]"]) x ; #1661
+    unset tmp
+    set res
+    }
+    set res [a]
+    rename a {}
+    set res
+} { type source line 1661 file info.test cmd {info frame 0} proc ::a level 0}
+
+test info-30.23 {bs+nl in multi-body switch, full compiled} {
+    proc a {value} {
+	switch -exact -- $value \
+	    key     { info frame 0; # 1673 } \
+	    xxx     { info frame 0; # 1674 } \
+	    000     { info frame 0; # 1675 }
+    }
+    set res {}
+    lappend res [reduce [a key]]
+    lappend res [reduce [a 000]]
+    set res "\n[join $res \n]"
+} {
+type source line 1673 file info.test cmd {info frame 0} proc ::a level 0
+type source line 1675 file info.test cmd {info frame 0} proc ::a level 0}
+
+test info-30.24 {bs+nl in single-body switch, full compiled} {
+    proc a {value} {
+	switch -exact -- $value {
+	    key { reduce \
+		      [info frame 0] }
+	    xxx { reduce \
+		      [info frame 0] }
+	    000 { reduce \
+		      [info frame 0] }
+	}
+    }
+    set res {}
+    lappend res [a key]
+    lappend res [a 000]
+    set res "\n[join $res \n]"
+} {
+type source line 1689 file info.test cmd {info frame 0} proc ::a level 0
+type source line 1693 file info.test cmd {info frame 0} proc ::a level 0}
 
 # -------------------------------------------------------------------------
 

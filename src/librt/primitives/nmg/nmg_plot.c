@@ -1795,7 +1795,7 @@ show_broken_m(struct bn_vlblock *vbp, const struct model *m, int fancy)
 static int stepalong = 0;
 
 void
-nmg_plot_sigstepalong(int i __attribute__((unused)))
+nmg_plot_sigstepalong(int UNUSED(i))
 {
     stepalong=1;
 }
@@ -1877,7 +1877,7 @@ nmg_show_broken_classifier_stuff(unsigned long *p, long int **classlist, int all
 	    show_broken_vu(vbp, (struct vertexuse *)p);
 	    break;
 	default:
-	    bu_log("Unknown magic number %ld %0lx %llu %p\n", *p, *p, (unsigned long long)((size_t)p), (void *)p);
+	    bu_log("Unknown magic number %ld %0lx %zu %p\n", *p, *p, (size_t)p, (void *)p);
 	    break;
     }
 
@@ -1887,7 +1887,7 @@ nmg_show_broken_classifier_stuff(unsigned long *p, long int **classlist, int all
      * will remain, undisturbed, for further use.
      */
     if (nmg_vlblock_anim_upcall) {
-	void (*cur_sigint)();
+	void (*cur_sigint)(int);
 
 	if (!a_string) {
 	    (*nmg_vlblock_anim_upcall)(vbp,
@@ -2322,7 +2322,7 @@ nmg_snurb_to_vlist(struct bu_list *vhead, const struct face_g_snurb *fg, int n_i
     bu_free((char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
     bu_free((char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
 
-    return(0);
+    return 0;
 }
 
 
@@ -2354,6 +2354,8 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
     const struct edge_g_cnurb *c;
     int coords;
 
+    memset(&n, 0, sizeof(struct edge_g_cnurb));
+
     BU_CK_LIST_HEAD(vhead);
     NMG_CK_EDGEUSE(eu);
     eg = eu->g.cnurb_p;
@@ -2374,8 +2376,8 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 	/* linear cnurb on snurb face -- cnurb ctl pts are UV */
 	n.order = 2;
 	n.l.magic = RT_CNURB_MAGIC;
-	rt_nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
 	n.c_size = 2;
+	rt_nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
 	n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);
 	n.ctl_points = (fastf_t *)bu_malloc(
 	    sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(n.pt_type) *

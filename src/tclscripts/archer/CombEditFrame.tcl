@@ -50,10 +50,28 @@
 	variable mShader ""
 	#	variable mMaterial ""
 	variable mInherit ""
+	variable mMemberData ""
+	variable mMemberDataRotAet ""
+	variable mMemberDataRotXyz ""
+	variable mMemberDataRotArb ""
+	variable mMemberDataTra ""
+	variable mMemberDataSca ""
+	variable mMemberHeadings {Op Name Az El Tw Tx Ty Tz Sa Sx Sy Sz Kx Ky Kz}
+	variable mMemberHeadingsRotAet {Op Name Az El Tw Kx Ky Kz}
+	variable mMemberHeadingsRotXyz {Op Name Rx Ry Rz Kx Ky Kz}
+	variable mMemberHeadingsRotArb {Op Name Px Py Pz Dx Dy Dz Ang}
+	variable mMemberHeadingsTra {Op Name Tx Ty Tz}
+	variable mMemberHeadingsSca {Op Name Sa Sx Sy Sz Kx Ky Kz}
+	variable mMemberDataOrder {RotAet RotXyz RotArb Tra Sca}
 
 	method buildGeneralGUI {}
 	method buildShaderGUI {}
 	method buildTreeGUI {}
+	method buildMembersGUI {}
+	method clearMemberData {}
+	method initMemberData {}
+
+	method applyMemberData {}
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -76,7 +94,8 @@
 
     buildGeneralGUI
     buildShaderGUI
-    buildTreeGUI
+#    buildTreeGUI
+    buildMembersGUI
 
     pack $itk_component(tabs) -expand yes -fill both
 
@@ -159,10 +178,12 @@
     } else {
 	set tree ""
     }
-    $itk_component(combTreeT) delete 1.0 end
-    $itk_component(combTreeT) insert end $tree
+#    $itk_component(combTreeT) delete 1.0 end
+#    $itk_component(combTreeT) insert end $tree
 
     GeometryEditFrame::initGeometry $gdata
+
+    initMemberData
 }
 
 ::itcl::body CombEditFrame::updateGeometry {} {
@@ -218,7 +239,7 @@
 	lappend _attrs inherit $mInherit
     }
 
-    lappend _attrs tree [ArcherCore::packTree [$itk_component(combTreeT) get 1.0 end]]
+#    lappend _attrs tree [ArcherCore::packTree [$itk_component(combTreeT) get 1.0 end]]
 
     if {[catch {eval $itk_option(-mged) adjust $itk_option(-geometryObject) $_attrs}]} {
 	return
@@ -483,6 +504,190 @@
     $itk_component(tabs) add $itk_component(combTreeF) -text "Tree"
 }
 
+::itcl::body CombEditFrame::buildMembersGUI {} {
+    clearMemberData
+
+    itk_component add combMembersTabs {
+	::ttk::notebook $itk_component(tabs).memberstabs
+    } {}
+
+    set tlist {RotAet 8 "Rot (AET)" RotXyz 8 "Rot (XYZ)" RotArb 9 "Rot (Arbitrary)" Tra 5 Translation Sca 9 Scale}
+    foreach {tname cols text} $tlist {
+	# Create table
+	itk_component add combMembers$tname\F {
+	    ::ttk::notebook $itk_component(tabs).members$tname\F
+	} {}
+	itk_component add combMembers$tname {
+	    ::table $itk_component(combMembers$tname\F).members$tname \
+		-height 0 \
+		-maxheight 2000 \
+		-width 0 \
+		-rows 100000 \
+		-cols $cols \
+		-titlerows 1 \
+		-variable [::itcl::scope mMemberData$tname]
+	} {}
+
+	# Create scrollbars
+	itk_component add tableHScroll$tname {
+	    ::ttk::scrollbar $itk_component(combMembers$tname\F).tableHScroll \
+		-orient horizontal
+	} {}
+
+	itk_component add tableVScroll$tname {
+	    ::ttk::scrollbar $itk_component(combMembers$tname\F).tableVScroll \
+		-orient vertical
+	} {}
+
+	# Hook up scrollbars
+	$itk_component(combMembers$tname) configure -xscrollcommand "$itk_component(tableHScroll$tname) set"
+	$itk_component(combMembers$tname) configure -yscrollcommand "$itk_component(tableVScroll$tname) set"
+	$itk_component(tableHScroll$tname) configure -command "$itk_component(combMembers$tname) xview"
+	$itk_component(tableVScroll$tname) configure -command "$itk_component(combMembers$tname) yview"
+
+	grid $itk_component(combMembers$tname) $itk_component(tableVScroll$tname) -sticky nsew
+	grid $itk_component(tableHScroll$tname) - -sticky nsew
+
+	grid columnconfigure $itk_component(combMembers$tname\F) 0 -weight 1
+	grid rowconfigure $itk_component(combMembers$tname\F) 0 -weight 1
+
+	$itk_component(combMembersTabs) add $itk_component(combMembers$tname\F) -text $text
+    }
+
+    grid columnconfigure $itk_component(combMembersTabs) 0 -weight 1
+    grid rowconfigure $itk_component(combMembersTabs) 0 -weight 1
+
+    $itk_component(tabs) add $itk_component(combMembersTabs) -text "Members"
+
+    set parent [childsite lower]
+    itk_component add combApplyB {
+	::ttk::button $parent.applyB \
+	    -text "Apply" \
+	    -command [::itcl::code $this applyMemberData]
+    } {}
+    itk_component add combResetB {
+	::ttk::button $parent.resetB \
+	    -text "Reset" \
+	    -command [::itcl::code $this initMemberData]
+    } {}
+    grid x $itk_component(combApplyB) $itk_component(combResetB) x -sticky nsew
+    grid columnconfigure $parent 0 -weight 1
+    grid columnconfigure $parent 3 -weight 1
+    grid rowconfigure $parent 1 -weight 1
+}
+
+::itcl::body CombEditFrame::clearMemberData {} {
+    unset mMemberDataRotAet
+    unset mMemberDataRotXyz
+    unset mMemberDataRotArb
+    unset mMemberDataTra
+    unset mMemberDataSca
+#    unset mMemberData
+
+    set col 0
+    foreach heading $mMemberHeadingsRotAet {
+	set mMemberDataRotAet(0,$col) $heading
+	incr col
+    }
+    set col 0
+    foreach heading $mMemberHeadingsRotXyz {
+	set mMemberDataRotXyz(0,$col) $heading
+	incr col
+    }
+    set col 0
+    foreach heading $mMemberHeadingsRotArb {
+	set mMemberDataRotArb(0,$col) $heading
+	incr col
+    }
+    set col 0
+    foreach heading $mMemberHeadingsTra {
+	set mMemberDataTra(0,$col) $heading
+	incr col
+    }
+    set col 0
+    foreach heading $mMemberHeadingsSca {
+	set mMemberDataSca(0,$col) $heading
+	incr col
+    }
+#    set col 0
+#    foreach heading $mMemberHeadings {
+#	set mMemberData(0,$col) $heading
+#	incr col
+#    }
+}
+
+::itcl::body CombEditFrame::initMemberData {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    clearMemberData
+
+    foreach {dname dtype} {RotAet 2 RotXyz 3 RotArb 4 Tra 5 Sca 6} {
+	set mdata [$itk_option(-mged) combmem -i $dtype $itk_option(-geometryObject)]
+
+	set i 1
+	foreach row [split $mdata "\n"] {
+	    set j 0
+	    foreach col $row {
+		set mMemberData$dname\($i,$j) $col
+		incr j
+	    }
+
+	    incr i
+	}
+    }
+
+#    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
+#    set i 1
+#    foreach row [split $mdata "\n"] {
+#	set j 0
+#	foreach col $row {
+#	    set mMemberData($i,$j) $col
+#	    incr j
+#	}
+#
+#	incr i
+#    }
+}
+
+::itcl::body CombEditFrame::applyMemberData {} {
+    set dtype [$itk_component(combMembersTabs) index current]
+    set dname [lindex $mMemberDataOrder $dtype]
+    incr dtype 2
+
+    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
+    set row ""
+    foreach index [lsort -dictionary [array names mMemberData$dname]] {
+	if {$index == "active"} {
+	    continue
+	}
+
+	set ipair [regsub {,} $index " "]
+	set new_row [lindex $ipair 0]
+	set col [lindex $ipair 1]
+
+	if {$row != $new_row} {
+	    set row $new_row
+	}
+
+	# Skip headings
+	if {$row} {
+	    lappend curr_mdata($row) [subst $[subst mMemberData$dname\($index)]]
+	}
+    }
+
+    set _mdata ""
+    foreach index [lsort -dictionary [array names curr_mdata]] {
+	append _mdata $curr_mdata($index)
+	append _mdata "\n"
+    }
+
+    catch {eval $itk_option(-mged) combmem -r $dtype $itk_option(-geometryObject) [regsub -all {\n} $_mdata " "]}
+    GeometryEditFrame::updateGeometry
+}
+
 ::itcl::body CombEditFrame::updateGeometryIfMod {} {
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
@@ -543,12 +748,44 @@
 	set _mInherit ""
     }
 
-    set tree [string trim [$itk_component(combTreeT) get 1.0 end]]
-    if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
-	set _tree [string trim [ArcherCore::unpackTree $_tree]]
-    } else {
-	set _tree ""
-    }
+#    set tree [string trim [$itk_component(combTreeT) get 1.0 end]]
+#    if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
+#	set _tree [string trim [ArcherCore::unpackTree $_tree]]
+#    } else {
+#	set _tree ""
+#    }
+
+#    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
+#    set row ""
+#    foreach index [lsort -dictionary [array names mMemberData]] {
+#	if {$index == "active"} {
+#	    continue
+#	}
+#
+#	set ipair [regsub {,} $index " "]
+#	set new_row [lindex $ipair 0]
+#	set col [lindex $ipair 1]
+#
+#	if {$row != $new_row} {
+#	    set row $new_row
+#	}
+#
+#	# Skip headings
+#	if {$row} {
+#	    lappend curr_mdata($row) $mMemberData($index)
+#	}
+#    }
+#
+#    set _mdata ""
+#    foreach index [lsort -dictionary [array names curr_mdata]] {
+#	append _mdata $curr_mdata($index)
+#	append _mdata "\n"
+#    }
+#
+#    if {$_mdata != $mdata} {
+#	set ret [catch {eval $itk_option(-mged) combmem $itk_option(-geometryObject) [regsub -all {\n} $_mdata " "]}]
+#    }
+#    set ret [catch {eval $itk_option(-mged) combmem -r $itk_option(-geometryObject) [regsub -all {\n} $_mdata " "]}]
 
     # Temporarily adjust mInherit
     if {$mInherit == "no"} {
@@ -563,8 +800,7 @@
 	$_mGift != $mGift ||
 	$_mRgb != $mRgb ||
 	$_mShader != $mShader ||
-	$_mInherit != $mInherit ||
-	$_tree != $tree} {
+	$_mInherit != $mInherit} {
 	updateGeometry
     }
 

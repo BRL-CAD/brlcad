@@ -239,7 +239,7 @@ make_bond(int sp1, int sp2)
     mk_lcomb(outfp, nm1, &reg_head, 1, matname, matparm, rgb, 0);
     (void)mk_addmember(nm1, &head.l, NULL, WMOP_UNION);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 /*

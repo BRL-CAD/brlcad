@@ -27,6 +27,25 @@ struct DBLBLK
   struct DBLBLK *next;
 };
 
+double const * const * ON_Matrix::ThisM() const
+{
+  // When the "expert" constructor Create(row_count,col_count,user_memory,...)
+  // is used, m_rowmem[] is empty and m = user_memory;
+  // When any other constructor is used, m_rowmem[] is the 0-based
+  // row memory.
+  return (m_row_count == m_rowmem.Count()) ? m_rowmem.Array() : m;
+}
+
+double * * ON_Matrix::ThisM()
+{
+  // When the "expert" constructor Create(row_count,col_count,user_memory,...)
+  // is used, m_rowmem[] is empty and m = user_memory;
+  // When any other constructor is used, m_rowmem[] is the 0-based
+  // row memory.
+  return (m_row_count == m_rowmem.Count()) ? m_rowmem.Array() : m;
+}
+
+
 double* ON_Matrix::operator[](int i)
 {
   return m[i];
@@ -37,58 +56,91 @@ const double* ON_Matrix::operator[](int i) const
   return m[i];
 }
 
-ON_Matrix::ON_Matrix() : m(0), m_row_count(0), m_col_count(0)
+ON_Matrix::ON_Matrix()
+: m(0)
+, m_row_count(0)
+, m_col_count(0)
+, m_Mmem(0)
+, m_row_offset(0)
+, m_col_offset(0)
+, m_cmem(0)
 {
-  m_reserved1 = 0;
-  m_reserved2 = 0;
-  m_reserved3 = 0;
-  m_cmem = 0;
 }
 
 ON_Matrix::ON_Matrix( int row_size, int col_size ) 
-                   : m(0), m_row_count(0), m_col_count(0)
+: m(0)
+, m_row_count(0)
+, m_col_count(0)
+, m_Mmem(0)
+, m_row_offset(0)
+, m_col_offset(0)
+, m_cmem(0)
 {
-  m_reserved1 = 0;
-  m_reserved2 = 0;
-  m_reserved3 = 0;
-  m_cmem = 0;
   Create(row_size,col_size);
 }
 
 ON_Matrix::ON_Matrix( int row0, int row1, int col0, int col1 ) 
-                   : m(0), m_row_count(0), m_col_count(0)
+: m(0)
+, m_row_count(0)
+, m_col_count(0)
+, m_Mmem(0)
+, m_row_offset(0)
+, m_col_offset(0)
+, m_cmem(0)
 {
-  m_reserved1 = 0;
-  m_reserved2 = 0;
-  m_reserved3 = 0;
-  m_cmem = 0;
   Create(row0,row1,col0,col1);
 }
 
 ON_Matrix::ON_Matrix( const ON_Xform& x ) 
-                   : m(0), m_row_count(0), m_col_count(0)
+: m(0)
+, m_row_count(0)
+, m_col_count(0)
+, m_Mmem(0)
+, m_row_offset(0)
+, m_col_offset(0)
+, m_cmem(0)
 {
-  m_reserved1 = 0;
-  m_reserved2 = 0;
-  m_reserved3 = 0;
-  m_cmem = 0;
   *this = x;
 }
 
 ON_Matrix::ON_Matrix( const ON_Matrix& src )
+: m(0)
+, m_row_count(0)
+, m_col_count(0)
+, m_Mmem(0)
+, m_row_offset(0)
+, m_col_offset(0)
+, m_cmem(0)
 {
-  m_reserved1 = 0;
-  m_reserved2 = 0;
-  m_reserved3 = 0;
-  m_cmem = 0;
   *this = src;
+}
+
+ON_Matrix::ON_Matrix(
+  int row_count,
+  int col_count,
+  double** M,
+  bool bDestructorFreeM
+  )
+: m(0)
+, m_row_count(0)
+, m_col_count(0)
+, m_Mmem(0)
+, m_row_offset(0)
+, m_col_offset(0)
+, m_cmem(0)
+{
+  Create(row_count,col_count,M,bDestructorFreeM);
 }
 
 ON_Matrix::~ON_Matrix()
 {
-  m_reserved1 = 0;
-  m_reserved2 = 0;
-  m_reserved3 = 0;
+  if ( 0 != m_Mmem )
+  {
+    onfree(m_Mmem);
+    m_Mmem = 0;
+  }
+  m_row_offset = 0;
+  m_col_offset = 0;
   struct DBLBLK* p = (struct DBLBLK*)m_cmem;
   m_cmem = 0;
   while(0 != p)
@@ -125,10 +177,10 @@ bool ON_Matrix::Create( int row_count, int col_count)
   Destroy();
   if ( row_count > 0 && col_count > 0 ) 
   {
-    m_row.Reserve(row_count);
-    if ( 0 != m_row.Array() )
+    m_rowmem.Reserve(row_count);
+    if ( 0 != m_rowmem.Array() )
     {
-      m_row.SetCount(row_count);
+      m_rowmem.SetCount(row_count);
       // In general, allocate coefficient memory in chunks 
       // of <= max_dblblk_size bytes.  The value of max_dblblk_size
       // is tuned to maximize speed on calculations involving
@@ -151,7 +203,7 @@ bool ON_Matrix::Create( int row_count, int col_count)
         rows_per_block = row_count;
 
       int j, i = row_count; 
-      m = m_row.Array();
+      m = m_rowmem.Array();
       double** row = m;
       for ( i = row_count; i > 0; i -= rows_per_block )
       {
@@ -175,26 +227,6 @@ bool ON_Matrix::Create( int row_count, int col_count)
       m_row_count = row_count;
       m_col_count = col_count;
       b = true;
-
-      /* old coefficient memory used ON_SimpleArray<double>
-      m_a.Reserve(row_count*col_count);
-      if( 0 != m_a.Array() )
-      {
-        m_a.SetCount(row_count*col_count);
-        m = m_row.Array();
-        m[0] = m_a.Array();
-        int i;
-        for ( i = 1; i < row_count; i++ )
-          m[i] = m[i-1]+col_count;
-        m_row_count = row_count;
-        m_col_count = col_count;
-        b = true;
-      }
-      else
-      {
-        m_row.Destroy();
-      }
-      */
     }
   }
   return b;
@@ -211,11 +243,16 @@ bool ON_Matrix::Create( // E.g., Create(1,5,1,7) creates a 5x7 sized matrix that
    )
 {
   bool b = false;
-  if ( ri1 > ri0 && ci1 > ci0 ) {
+  if ( ri1 > ri0 && ci1 > ci0 ) 
+  {
     // juggle m[] pointers so that m[ri0+i][ci0+j] = m_row[i][j];
     b = Create( ri1-ri0, ci1-ci0 );
-    if (b) {
-      if ( ci0 != 0 ) {
+    if (b)
+    {
+      m_row_offset = ri0; // this is the only line of code where m_row_offset should be set to a non-zero value
+      m_col_offset = ci0; // this is the only line of code where m_col_offset should be set to a non-zero value
+      if ( ci0 != 0 )
+      {
         int i;
         for ( i = 0; i < m_row_count; i++ ) {
           m[i] -= ci0;
@@ -228,16 +265,40 @@ bool ON_Matrix::Create( // E.g., Create(1,5,1,7) creates a 5x7 sized matrix that
   return b;
 }
 
+bool ON_Matrix::Create(
+  int row_count,
+  int col_count,
+  double** M,
+  bool bDestructorFreeM
+  )
+{
+  Destroy();
+  if ( row_count < 1 || col_count < 1 || 0 == M )
+    return false;
+  m = M;
+  m_row_count = row_count;
+  m_col_count = col_count;
+  if ( bDestructorFreeM )
+    m_Mmem = M;
+  return true;
+}
+
+
 void ON_Matrix::Destroy()
 {
   m = 0;
   m_row_count = 0;
   m_col_count = 0;
-  m_row.SetCount(0);
-
-  m_reserved1 = 0;
-	m_reserved2 = 0;
-	m_reserved3 = 0;
+  m_rowmem.SetCount(0);
+  if ( 0 != m_Mmem )
+  {
+    // pointer passed to Create( row_count, col_count, M, bDestructorFreeM )
+    // when bDestructorFreeM = true.
+    onfree(m_Mmem);
+    m_Mmem = 0;
+  }
+	m_row_offset = 0;
+	m_col_offset = 0;
   struct DBLBLK* cmem = (struct DBLBLK*)m_cmem;
   m_cmem = 0;
   while( 0 != cmem )
@@ -246,7 +307,6 @@ void ON_Matrix::Destroy()
     onfree(cmem);
     cmem = next_cmem;
   }
-  //m_a.SetCount(0);
 }
 
 void ON_Matrix::EmergencyDestroy()
@@ -255,28 +315,35 @@ void ON_Matrix::EmergencyDestroy()
   m = 0;
   m_row_count = 0;
   m_col_count = 0;
-  m_row.EmergencyDestroy();
-
-	m_reserved1 = 0;
-	m_reserved2 = 0;
-	m_reserved3 = 0;
+  m_rowmem.EmergencyDestroy();
+	m_Mmem = 0;
+	m_row_offset = 0;
+	m_col_offset = 0;
   m_cmem = 0;
-  //m_a.EmergencyDestroy();
 }
 
 ON_Matrix& ON_Matrix::operator=(const ON_Matrix& src)
 {
-  if ( this != &src ) {
-    Destroy();
-    if ( Create( src.RowCount(), src.ColCount() ) ) {
-      const int sizeof_row = m_col_count*sizeof(m[0][0]);
+  if ( this != &src ) 
+  {
+    if ( src.m_row_count != m_row_count || src.m_col_count != m_col_count || 0 == m )
+    {
+      Destroy();
+      Create( src.RowCount(), src.ColCount() );
+    }
+    if (src.m_row_count == m_row_count && src.m_col_count == m_col_count && 0 != m )
+    {
       int i;
       // src rows may be permuted - copy row by row
-      double** m_dest = m_row.Array();
-      double*const* m_src = src.m_row.Array();
-      for ( i = 0; i < m_row_count; i++ ) {
+      double** m_dest = ThisM();
+      double const*const* m_src = src.ThisM();
+      const int sizeof_row = m_col_count*sizeof(m_dest[0][0]);
+      for ( i = 0; i < m_row_count; i++ ) 
+      {
         memcpy( m_dest[i], m_src[i], sizeof_row );
       }
+      m_row_offset = src.m_row_offset;
+      m_col_offset = src.m_col_offset;
     }
   }
   return *this;
@@ -284,9 +351,23 @@ ON_Matrix& ON_Matrix::operator=(const ON_Matrix& src)
 
 ON_Matrix& ON_Matrix::operator=(const ON_Xform& src)
 {
-  Destroy();
-  if ( Create( 4, 4 ) ) {
-    memcpy( m[0], &src.m_xform[0][0], 16*sizeof(m[0][0]) );
+  m_row_offset = 0;
+  m_col_offset = 0;
+  if ( 4 != m_row_count || 4 != m_col_count || 0 == m )
+  {
+    Destroy();
+    Create( 4, 4 );
+  }
+  if ( 4 == m_row_count && 4 == m_col_count && 0 != m )
+  {
+    double** this_m = ThisM();
+    if ( this_m )
+    {
+      memcpy( this_m[0], &src.m_xform[0][0], 4*sizeof(this_m[0][0]) );
+      memcpy( this_m[1], &src.m_xform[1][0], 4*sizeof(this_m[0][0]) );
+      memcpy( this_m[2], &src.m_xform[2][0], 4*sizeof(this_m[0][0]) );
+      memcpy( this_m[3], &src.m_xform[3][0], 4*sizeof(this_m[0][0]) );
+    }
   }
   return *this;
 }
@@ -298,20 +379,38 @@ bool ON_Matrix::Transpose()
   double t;
   const int row_count = RowCount();
   const int col_count = ColCount();
-  if ( row_count > 0 && col_count > 0 ) {
-    rc = true;
-    double** this_m = m_row.Array();
-    if ( row_count == col_count ) {
-      for ( i = 0; i < row_count; i++ ) for ( j = i+1; j < row_count; j++ ) {
+  if ( row_count > 0 && col_count > 0 ) 
+  {
+    double** this_m = ThisM();
+    if ( row_count == col_count )
+    {
+      rc = true;
+      for ( i = 0; i < row_count; i++ ) for ( j = i+1; j < row_count; j++ )
+      {
         t = this_m[i][j]; this_m[i][j] = this_m[j][i]; this_m[j][i] = t;
       }
     }
-    else {
+    else if ( this_m == m_rowmem.Array() )
+    {
       ON_Matrix A(*this);
-      Create(col_count,row_count);
-		this_m = m_row.Array();
-      for ( i = 0; i < row_count; i++ ) for ( j = 0; j < col_count; j++ ) {
-        this_m[j][i] = A.m[i][j];
+      rc = Create(col_count,row_count) 
+           && m_row_count == A.ColCount()
+           && m_col_count == A.RowCount();
+      if (rc)
+      {
+        double const*const* Am = A.ThisM();
+  		  this_m = ThisM(); // Create allocates new memory
+        for ( i = 0; i < row_count; i++ ) for ( j = 0; j < col_count; j++ ) 
+        {
+          this_m[j][i] = Am[i][j];
+        }
+        m_row_offset = A.m_col_offset;
+        m_col_offset = A.m_row_offset;
+      }
+      else
+      {
+        // attempt to put values back
+        *this = A;
       }
     }
   }
@@ -321,9 +420,13 @@ bool ON_Matrix::Transpose()
 bool ON_Matrix::SwapRows( int row0, int row1 )
 {
   bool b = false;
-  if ( m && 0 <= row0 && row0 < m_row_count && 0 <= row1 && row1 < m_row_count ) {
-    if ( row0 != row1 ) {
-      double** this_m = m_row.Array();
+  double** this_m = ThisM();
+  row0 -= m_row_offset;
+  row1 -= m_row_offset;
+  if ( this_m && 0 <= row0 && row0 < m_row_count && 0 <= row1 && row1 < m_row_count )
+  {
+    if ( row0 != row1 )
+    {
       double* tmp = this_m[row0]; this_m[row0] = this_m[row1]; this_m[row1] = tmp;
     }
     b = true;
@@ -336,10 +439,15 @@ bool ON_Matrix::SwapCols( int col0, int col1 )
   bool b = false;
   int i;
   double t;
-  if ( m && 0 <= col0 && col0 < m_col_count && 0 <= col1 && col1 < m_col_count ) {
-    if ( col0 != col1 ) {
-      double** this_m = m_row.Array();
-      for ( i = 0; i < m_row_count; i++ ) {
+  double** this_m = ThisM();
+  col0 -= m_col_offset;
+  col1 -= m_col_offset;
+  if ( this_m && 0 <= col0 && col0 < m_col_count && 0 <= col1 && col1 < m_col_count ) 
+  {
+    if ( col0 != col1 ) 
+    {
+      for ( i = 0; i < m_row_count; i++ )
+      {
         t = this_m[i][col0]; this_m[i][col0] = this_m[i][col1]; this_m[i][col1] = t;
       }
     }
@@ -350,19 +458,26 @@ bool ON_Matrix::SwapCols( int col0, int col1 )
 
 void ON_Matrix::RowScale( int dest_row, double s )
 {
-  ON_ArrayScale( m_col_count, s, m_row[dest_row], m_row[dest_row] );
+  double** this_m = ThisM();
+  dest_row -= m_row_offset;
+  ON_ArrayScale( m_col_count, s, this_m[dest_row], this_m[dest_row] );
 }
 
 void ON_Matrix::RowOp( int dest_row, double s, int src_row )
 {
-  ON_Array_aA_plus_B( m_col_count, s, m_row[src_row], m_row[dest_row], m_row[dest_row] );
+  double** this_m = ThisM();
+  dest_row -= m_row_offset;
+  src_row -= m_row_offset;
+  ON_Array_aA_plus_B( m_col_count, s, this_m[src_row], this_m[dest_row], this_m[dest_row] );
 }
 
 void ON_Matrix::ColScale( int dest_col, double s )
 {
   int i;
-  double** this_m = m_row.Array();
-  for ( i = 0; i < m_row_count; i++ ) {
+  double** this_m = ThisM();
+  dest_col -= m_col_offset;
+  for ( i = 0; i < m_row_count; i++ ) 
+  {
     this_m[i][dest_col] *= s;
   }
 }
@@ -370,8 +485,11 @@ void ON_Matrix::ColScale( int dest_col, double s )
 void ON_Matrix::ColOp( int dest_col, double s, int src_col )
 {
   int i;
-  double** this_m = m_row.Array();
-  for ( i = 0; i < m_row_count; i++ ) {
+  double** this_m = ThisM();
+  dest_col -= m_col_offset;
+  src_col  -= m_col_offset;
+  for ( i = 0; i < m_row_count; i++ ) 
+  {
     this_m[i][dest_col] += s*this_m[i][src_col];
   }
 }
@@ -386,7 +504,7 @@ ON_Matrix::RowReduce(
   double x, piv, det;
   int i, k, ix, rank;
 
-  double** this_m = m_row.Array();
+  double** this_m = ThisM();
   piv = det = 1.0;
   rank = 0;
   const int n = m_row_count <= m_col_count ? m_row_count : m_col_count;
@@ -445,7 +563,7 @@ ON_Matrix::RowReduce(
   double x, piv;
   int i, k, ix, rank;
 
-  double** this_m = m_row.Array();
+  double** this_m = ThisM();
   piv = 0.0;
   rank = 0;
   const int n = m_row_count <= m_col_count ? m_row_count : m_col_count;
@@ -503,7 +621,7 @@ ON_Matrix::RowReduce(
   double x, piv;
   int i, k, ix, rank;
 
-  double** this_m = m_row.Array();
+  double** this_m = ThisM();
   piv = 0.0;
   rank = 0;
   const int n = m_row_count <= m_col_count ? m_row_count : m_col_count;
@@ -565,7 +683,7 @@ ON_Matrix::RowReduce(
   double x, piv;
   int i, k, ix, rank, pti;
 
-  double** this_m = m_row.Array();
+  double** this_m = ThisM();
   piv = 0.0;
   rank = 0;
   const int n = m_row_count <= m_col_count ? m_row_count : m_col_count;
@@ -653,7 +771,7 @@ ON_Matrix::BackSolve(
   }
 
   // backsolve
-  double*const* this_m = m_row.Array();
+  double const*const* this_m = ThisM();
   const int n = m_col_count-1;
   if ( X != B )
     X[n] = B[n];
@@ -686,7 +804,7 @@ ON_Matrix::BackSolve(
   }
 
   // backsolve
-  double*const* this_m = m_row.Array();
+  double const*const* this_m = ThisM();
   if ( X != B )
   {
     X[m_col_count-1] = B[m_col_count-1];
@@ -744,7 +862,7 @@ ON_Matrix::BackSolve(
   }
 
   // backsolve
-  double*const* this_m = m_row.Array();
+  double const*const* this_m = ThisM();
   if ( Xpt != Bpt )
   {
     Xi = Xpt + (m_col_count-1)*Xpt_stride;
@@ -798,8 +916,9 @@ void ON_Matrix::SetDiagonal( double d)
   const int n = MinCount();
   int i;
   Zero();
-  double** this_m = m_row.Array();
-  for ( i = 0; i < n; i++ ) {
+  double** this_m = ThisM();
+  for ( i = 0; i < n; i++ ) 
+  {
     this_m[i][i] = d;
   }
 }
@@ -807,11 +926,13 @@ void ON_Matrix::SetDiagonal( double d)
 void ON_Matrix::SetDiagonal( const double* d )
 {
   Zero();
-  if (d) {
-    double** this_m = m_row.Array();
+  if (d) 
+  {
+    double** this_m = ThisM();
     const int n = MinCount();
     int i;
-    for ( i = 0; i < n; i++ ) {
+    for ( i = 0; i < n; i++ )
+    {
       this_m[i][i] = *d++;
     }
   }
@@ -833,7 +954,7 @@ bool ON_Matrix::IsValid() const
 {
   if ( m_row_count < 1 || m_col_count < 1 )
     return false;
-  if ( !m )
+  if ( 0 == m )
     return false;
   return true;
 }
@@ -847,7 +968,7 @@ bool ON_Matrix::IsRowOrthoganal() const
 {
   double d0, d1, d;
   int i0, i1, j;
-  double*const* this_m = m_row.Array();
+  double const*const* this_m = ThisM();
   bool rc = ( m_row_count <= m_col_count && m_row_count > 0 );
   for ( i0 = 0; i0 < m_row_count && rc; i0++ ) for ( i1 = i0+1; i1 < m_row_count && rc; i1++ ) {
     d0 = d1 = d = 0.0;
@@ -868,7 +989,7 @@ bool ON_Matrix::IsRowOrthoNormal() const
   int i, j;
   bool rc = IsRowOrthoganal();
   if ( rc ) {
-    double*const* this_m = m_row.Array();
+    double const*const* this_m = ThisM();
     for ( i = 0; i < m_row_count; i++ ) {
       d = 0.0;
       for ( j = 0; j < m_col_count; j++ ) {
@@ -886,7 +1007,7 @@ bool ON_Matrix::IsColOrthoganal() const
   double d0, d1, d;
   int i, j0, j1;
   bool rc = ( m_col_count <= m_row_count && m_col_count > 0 );
-  double*const* this_m = m_row.Array();
+  double const*const* this_m = ThisM();
   for ( j0 = 0; j0 < m_col_count && rc; j0++ ) for ( j1 = j0+1; j1 < m_col_count && rc; j1++ ) {
     d0 = d1 = d = 0.0;
     for ( i = 0; i < m_row_count; i++ ) {
@@ -905,7 +1026,7 @@ bool ON_Matrix::IsColOrthoNormal() const
   double d;
   int i, j;
   bool rc = IsColOrthoganal();
-  double*const* this_m = m_row.Array();
+  double const*const* this_m = ThisM();
   if ( rc ) {
     for ( j = 0; j < m_col_count; j++ ) {
       d = 0.0;
@@ -935,7 +1056,7 @@ bool ON_Matrix::Invert( double zero_tolerance )
   I.SetDiagonal(1.0);
   rank = 0;
 
-  double** this_m = m_row.Array();
+  double** this_m = ThisM();
 
   for ( k = 0; k < n; k++ ) {
     // find largest value in sub matrix
@@ -1007,9 +1128,9 @@ bool ON_Matrix::Multiply( const ON_Matrix& a, const ON_Matrix& b )
   }
   Create( a.RowCount(), b.ColCount() );
   mult_count = a.ColCount();
-  double*const* am = a.m_row.Array();
-  double*const* bm = b.m_row.Array();
-  double** this_m = m_row.Array();
+  double const*const* am = a.ThisM();
+  double const*const* bm = b.ThisM();
+  double** this_m = ThisM();
   for ( i = 0; i < m_row_count; i++ ) for ( j = 0; j < m_col_count; j++ ) {
     x = 0.0;
     for (k = 0; k < mult_count; k++ ) {
@@ -1032,9 +1153,9 @@ bool ON_Matrix::Add( const ON_Matrix& a, const ON_Matrix& b )
   if ( this != &a && this != &b ) {
     Create( a.RowCount(), b.ColCount() );
   }
-  double*const* am = a.m_row.Array();
-  double*const* bm = b.m_row.Array();
-  double** this_m = m_row.Array();
+  double const*const* am = a.ThisM();
+  double const*const* bm = b.ThisM();
+  double** this_m = ThisM();
   for ( i = 0; i < m_row_count; i++ ) for ( j = 0; j < m_col_count; j++ ) {
     this_m[i][j] = am[i][j] + bm[i][j];
   }
@@ -1212,4 +1333,95 @@ int ON_RowReduce( int row_count,
   // the B = inverse of the input A.  If A was not nice,
   // B is also trash.
   return M;
+}
+
+
+int ON_InvertSVDW(
+  int count, 
+  const double* W,
+  double*& invW
+  )
+{
+  double w, maxw;
+  int i;
+
+  if ( 0 == W || count <= 0 )
+    return -1;
+
+  if ( 0 == invW )
+  {
+    invW = (double*)onmalloc(count*sizeof(invW[0]));
+  }
+  maxw = fabs(W[0]);
+  for (i = 1; i < count; i++) {
+    w = fabs(W[i]);
+    if (w > maxw) maxw = w;
+  }
+  if (maxw == 0.0)
+  {
+    if ( W != invW )
+      memset(invW,0,count*sizeof(invW[0]));
+    return 0;
+  }
+
+  i = 0;
+  maxw *= ON_SQRT_EPSILON;
+  while (count--) 
+  {
+    if (fabs(W[count]) > maxw) 
+    {
+      i++;
+      invW[count] = 1.0/W[count];
+    }
+    else
+      invW[count] = 0.0;
+  }
+  return i; // number of nonzero terms in invW[]
+}
+
+bool ON_SolveSVD(
+  int row_count,
+  int col_count,
+  double const * const * U,
+  const double* invW,
+  double const * const * V,
+  const double* B,
+  double*& X
+  )  
+{
+  int i, j;
+  double *Y;
+  const double* p0;
+  double workY[128], x;
+
+  if ( row_count < 1 || col_count < 1 || 0 == U || 0 == invW || 0 == V || 0 == B)
+    return false;
+
+  if ( 0 == X )
+    X = (double*)onmalloc(col_count*sizeof(X[0]));
+  Y = (col_count > 128)
+    ? ( (double*)onmalloc(col_count*sizeof(*Y)) )
+    : workY;
+  for (i = 0; i < col_count; i++)
+  {
+    double y = 0.0;
+    for (j = 0; j < row_count; j++)
+      y += U[j][i] * *B++;
+    B -= row_count;
+    Y[i] = invW[i] * y;
+  }
+  for (i = 0; i < col_count; i++)
+  {
+    p0 = V[i];
+    j = col_count;
+    x = 0.0;
+    while (j--)
+      x += *p0++ * *Y++;
+    Y -= col_count;
+    X[i] = x;
+  }
+  if (Y != workY) 
+    onfree(Y);
+
+  return true;
 }

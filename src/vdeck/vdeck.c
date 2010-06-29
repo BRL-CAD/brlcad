@@ -216,7 +216,7 @@ sortFunc(const void *a, const void *b)
     const char **lhs = (const char **)a;
     const char **rhs = (const char **)b;
 
-    return( strcmp( *lhs, *rhs ) );
+    return strcmp( *lhs, *rhs );
 }
 
 
@@ -715,7 +715,7 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
     curtree->tr_a.tu_stp = stp;
     curtree->tr_a.tu_regionp = (struct region *)0;
 
-    return(curtree);
+    return curtree;
 }
 
 
@@ -1385,7 +1385,7 @@ shell(char *args[])
     argv[3] = 0;
     if ( (pid = fork()) == -1 ) {
 	perror( "shell()" );
-	return( -1 );
+	return -1;
     } else	if ( pid == 0 ) {
 	/*
 	 * CHILD process - execs a shell command
@@ -1404,7 +1404,7 @@ shell(char *args[])
 		break;
 	    }
 	} while ( ret != pid );
-    return( 0 );
+    return 0;
 }
 
 
@@ -1584,7 +1584,7 @@ delete(char *args[])
 			    args[i]
 		);
     }
-    return( curr_ct );
+    return curr_ct;
 }
 
 
@@ -1808,7 +1808,7 @@ getarg( char *str )
 	*str = getchar();
 	if ( (int)(*str) == ' ' ) {
 	    *str = '\0';
-	    return( 1 );
+	    return 1;
 	}
 	else
 	    ++str;

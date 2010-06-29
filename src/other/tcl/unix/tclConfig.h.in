@@ -443,6 +443,9 @@
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN
 
+/* Are Darwin SUSv3 extensions available? */
+#undef _DARWIN_C_SOURCE
+
 /* Add the _ISOC99_SOURCE flag when building */
 #undef _ISOC99_SOURCE
 

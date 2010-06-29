@@ -260,7 +260,7 @@ nmg_mm(void)
 	bu_log("nmg_mm() returns model 0x%p\n", m);
     }
 
-    return(m);
+    return m;
 }
 
 
@@ -299,7 +299,7 @@ nmg_mmr(void)
 	bu_log("nmg_mmr() returns model 0x%p with region 0x%p\n", m, r);
     }
 
-    return(m);
+    return m;
 }
 
 
@@ -341,7 +341,7 @@ nmg_mrsv(struct model *m)
 	bu_log("nmg_mrsv(m=0x%p) returns r=0x%p\n", m, r);
     }
 
-    return(r);
+    return r;
 }
 
 
@@ -388,7 +388,7 @@ nmg_mvu(struct vertex *v, unsigned long *upptr, struct model *m)
 	bu_log("nmg_mvu(v=0x%p, up=0x%p) returns vu=0x%p\n",
 	       v, upptr, vu);
     }
-    return(vu);
+    return vu;
 }
 
 
@@ -421,7 +421,7 @@ nmg_mvvu(unsigned long *upptr, struct model *m)
 	bu_log("nmg_mvvu(upptr=0x%p, m=0x%p) returns vu=0x%p\n", upptr, m, ret_vu);
     }
 
-    return(ret_vu);
+    return ret_vu;
 }
 
 
@@ -468,7 +468,7 @@ nmg_msv(struct nmgregion *r)
 	bu_log("nmg_msv(r=0x%p) returns s=0x%p, vu=0x%p\n", r, s, s->vu_p);
     }
 
-    return(s);
+    return s;
 }
 
 
@@ -551,7 +551,7 @@ nmg_mf(struct loopuse *lu1)
 	bu_log("nmg_mf(lu1=0x%p) returns fu=0x%p\n", lu1, fu1);
     }
 
-    return(fu1);
+    return fu1;
 }
 
 
@@ -646,7 +646,8 @@ nmg_mlv(unsigned long *magic, struct vertex *v, int orientation)
 
 	/* Second, build the vertices */
 	/* This "if" degenerates to the "else" clause if no stealing */
-	if ((vu1 = s->vu_p)) {
+	vu1 = s->vu_p;
+	if (vu1) {
 	    /* Use shell's lone vertex */
 	    s->vu_p = (struct vertexuse *)NULL;
 	    vu1->up.lu_p = lu1;
@@ -691,7 +692,7 @@ nmg_mlv(unsigned long *magic, struct vertex *v, int orientation)
 	       magic, v, nmg_orientation(orientation),
 	       lu1, vu1);
     }
-    return(lu1);
+    return lu1;
 }
 
 
@@ -804,7 +805,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
 	bu_log("nmg_me(v1=0x%p, v2=0x%p, s=0x%p) returns eu=0x%p\n", v1, v2, s, eu1);
     }
 
-    return(eu1);
+    return eu1;
 }
 
 
@@ -929,7 +930,7 @@ nmg_meonvu(struct vertexuse *vu)
 	bu_log("nmg_meonvu(vu=0x%p) returns eu=0x%p\n", vu, eu1);
     }
 
-    return(eu1);
+    return eu1;
 }
 
 
@@ -1070,7 +1071,7 @@ nmg_ml(struct shell *s)
 	bu_log("nmg_ml(s=0x%p) returns lu=0x%p\n", s, lu1);
     }
 
-    return(lu1);
+    return lu1;
 }
 
 
@@ -1533,7 +1534,7 @@ nmg_keu(register struct edgeuse *eu1)
 	if (BU_LIST_IS_EMPTY(&lu1->down_hd)) ret = 1;
     } else if (*eu1->up.magic_p == NMG_SHELL_MAGIC) {
 	if (eu1->up.s_p != eu2->up.s_p) {
-	    bu_bomb("nmg_keu() edguses don't share parent shell\n");
+	    bu_bomb("nmg_keu() edgeuses don't share parent shell\n");
 	}
 
 	/* unlink edgeuses from the parent shell */
@@ -1704,7 +1705,8 @@ nmg_vertex_gv(struct vertex *v, const fastf_t *pt)
 
     NMG_CK_VERTEX(v);
 
-    if ((vg = v->vg_p)) {
+    vg = v->vg_p;
+    if (vg) {
 	NMG_CK_VERTEX_G(v->vg_p);
     } else {
 	m = nmg_find_model(
@@ -1849,7 +1851,8 @@ nmg_edge_g(struct edgeuse *eu)
     if (eu->vu_p->v_p == eu->eumate_p->vu_p->v_p)
 	bu_bomb("nmg_edge_g(): Warning - edge runs from+to same vertex, 0 len!\n");
 
-    if ((eg_p = eu->g.lseg_p)) {
+    eg_p = eu->g.lseg_p;
+    if (eg_p) {
 	NMG_CK_EDGE_G_LSEG(eg_p);
 	bu_bomb("nmg_edge_g() geometry already assigned\n");
     }
@@ -2209,7 +2212,8 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
     lu = l->lu_p;
     NMG_CK_LOOPUSE(lu);
 
-    if ((lg = l->lg_p)) {
+    lg = l->lg_p;
+    if (lg) {
 	NMG_CK_LOOP_G(lg);
     } else {
 	m = nmg_find_model(lu->up.magic_p);
@@ -2710,7 +2714,7 @@ nmg_demote_lu(struct loopuse *lu1)
 	bu_log("nmg_demote_lu(lu=0x%p) returns %d\n", lu1, ret_val);
     }
 
-    return(ret_val);
+    return ret_val;
 }
 
 
@@ -2754,7 +2758,7 @@ nmg_demote_eu(struct edgeuse *eu)
 	bu_log("nmg_demote_eu(eu=0x%p) returns %d\n", eu, ret_val);
     }
 
-    return(ret_val);
+    return ret_val;
 }
 
 

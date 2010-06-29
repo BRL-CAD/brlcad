@@ -472,6 +472,9 @@ EmbImageDeleteProc(
 
     Tk_FreeConfigOptions((char *) &eiPtr->body.ei, eiPtr->body.ei.optionTable,
 	    NULL);
+    if (eiPtr->body.ei.name) {
+	ckfree(eiPtr->body.ei.name);
+    }
     ckfree((char *) eiPtr);
     return 0;
 }

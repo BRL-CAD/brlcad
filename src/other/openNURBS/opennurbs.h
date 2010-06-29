@@ -128,7 +128,6 @@
 
 #include "opennurbs_extensions.h"
 
-
 #endif
 
 #endif

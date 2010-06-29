@@ -88,6 +88,10 @@ set env(ARCHER_HOME) $dir
 #    }
 #}
 
+if {$tcl_platform(platform) == "windows"} {
+    lappend auto_path ${env(ARCHER_HOME)}/bin/Tkhtml3.0
+}
+
 # load archer guts
 if { [catch {package require Archer 1.0} _initialized] } {
     puts "$_initialized"

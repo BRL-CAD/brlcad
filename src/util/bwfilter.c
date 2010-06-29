@@ -106,13 +106,13 @@ get_args(int argc, char **argv)
 		width = height = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
 	file_name = "-";
 	infp = stdin;
     } else {
@@ -121,17 +121,17 @@ get_args(int argc, char **argv)
 	    (void)fprintf(stderr,
 			  "bwfilter: cannot open \"%s\" for reading\n",
 			  file_name);
-	    return(0);
+	    return 0;
 	}
     }
 
     if (isatty(fileno(stdout)))
-	return(0);
+	return 0;
 
     if (argc > ++bu_optind)
 	(void)fprintf(stderr, "bwfilter: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

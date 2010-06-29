@@ -231,7 +231,7 @@ ipu_remote(struct dsreq *dsp)
 
 int ipu_ready(struct dsreq *dsp)
 {
-    return(testunitready00(dsp));
+    return testunitready00(dsp);
 }
 
 
@@ -1393,7 +1393,7 @@ int parse_args(ac, av)
 	    default		: fprintf(stderr, "Bad or help flag specified '%c'\n", c); break;
 	}
     }
-    return(bu_optind);
+    return bu_optind;
 }
 
 /*

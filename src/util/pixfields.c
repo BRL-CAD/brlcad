@@ -69,39 +69,39 @@ get_args(int argc, char **argv)
 		width = height = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc + 1) {
 	(void) fprintf(stderr,
 		       "pixfields: must supply two file names\n");
-	return(0);
+	return 0;
     } else {
 
 	if ((fldonefp = fopen(argv[bu_optind], "r")) == NULL) {
 	    (void)fprintf(stderr,
 			  "pixfields: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
-	    return(0);
+	    return 0;
 	}
 
 	if ((fldtwofp = fopen(argv[++bu_optind], "r")) == NULL) {
 	    (void)fprintf(stderr,
 			  "pixfields: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
-	    return(0);
+	    return 0;
 	}
 
     }
 
     if (isatty(fileno(stdout)))
-	return(0);
+	return 0;
 
     if (argc > ++bu_optind)
 	(void)fprintf(stderr, "pixfields: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

@@ -676,18 +676,6 @@ ON_BoundingBox ON_BezierCurve::BoundingBox() const
   return bbox;
 }
 
-bool ON_BezierCurve::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform
-    ) const
-{
-  return m__GetBezierCurveTightBoundingBox 
-        ? m__GetBezierCurveTightBoundingBox(this,&tight_bbox,bGrowBox?true:false,xform) 
-        : false;
-}
-
-
 bool ON_WorldBBoxIsInTightBBox( 
                     const ON_BoundingBox& tight_bbox, 
                     const ON_BoundingBox& world_bbox,

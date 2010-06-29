@@ -28,10 +28,6 @@
  * For 1/3 octave filters y = 2^(1/6) - 2^(-1/6).
  */
 
-/*
- * $Id$
- */
-
 #include "common.h"
 
 #include <stdio.h>
@@ -73,7 +69,7 @@ butter(double w)
 
     cdiv( &h, &num, &denom );
 /*	printf( "(%f, %f)\n", h.re, h.im );*/
-    return( hypot( h.re, h.im ) );
+    return hypot( h.re, h.im );
 }
 
 /*

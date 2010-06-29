@@ -39,16 +39,16 @@ void ged_splitGDL(struct ged *gedp, struct ged_display_list *gdlp, struct db_ful
  * Erase objects from the display.
  *
  * Usage:
- *        erase object(s)
+ * erase object(s)
  *
  */
 int
 ged_erase(struct ged *gedp, int argc, const char *argv[])
 {
     int i;
-    int	flag_A_attr=0;
-    int	flag_o_nonunique=1;
-    int	last_opt=0;
+    int flag_A_attr=0;
+    int flag_o_nonunique=1;
+    int last_opt=0;
     struct bu_vls vls;
     static const char *usage = "<objects(s)> | <-o -A attribute name/value pairs>";
 
@@ -71,13 +71,21 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
     /* check args for "-A" (attributes) and "-o" */
     bu_vls_init(&vls);
-    for ( i=0; i<argc; i++ ) {
+    for (i=0; i<argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 
-	if ( *argv[i] != '-' ) break;
-	if ( (ptr_A=strchr(argv[i], 'A' )) ) flag_A_attr = 1;
-	if ( (ptr_o=strchr(argv[i], 'o' )) ) flag_o_nonunique = 2;
+	if (*argv[i] != '-')
+	    break;
+
+	ptr_A=strchr(argv[i], 'A');
+	if (ptr_A)
+	    flag_A_attr = 1;
+
+	ptr_o=strchr(argv[i], 'o');
+	if (ptr_o)
+	    flag_o_nonunique = 2;
+
 	last_opt = i;
 
 	if (!ptr_A && !ptr_o) {
@@ -86,13 +94,13 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 #else
 	    /*XXX Use this section when we have more options (i.e. ones other than -A or -o) */
-	    bu_vls_putc( &vls, ' ' );
-	    bu_vls_strcat( &vls, argv[i] );
+	    bu_vls_putc(&vls, ' ');
+	    bu_vls_strcat(&vls, argv[i]);
  	    continue;
 #endif
 	}
 
-	if (strlen( argv[i] ) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
+	if (strlen(argv[i]) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
 	    /* argv[i] is just a "-A" or "-o" */
 	    continue;
 	}
@@ -104,18 +112,18 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	/*XXX Use this section when we have more options (i.e. ones other than -A or -o) */
 
 	/* copy args other than "-A" or "-o" */
-	bu_vls_putc( &vls, ' ' );
+	bu_vls_putc(&vls, ' ');
 	c = (char *)argv[i];
-	while ( *c != '\0' ) {
+	while (*c != '\0') {
 	    if (*c != 'A' && *c != 'o') {
-		bu_vls_putc( &vls, *c );
+		bu_vls_putc(&vls, *c);
 	    }
 	    c++;
 	}
 #endif
     }
 
-    if ( flag_A_attr ) {
+    if (flag_A_attr) {
 	/* args are attribute name/value pairs */
 	struct bu_attribute_value_set avs;
 	int max_count=0;
@@ -125,54 +133,54 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	struct bu_ptbl *tbl;
 
 	remaining_args = argc - last_opt - 1;
-	if ( remaining_args < 2 || remaining_args%2 ) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n" );
-	    bu_vls_free( &vls );
+	if (remaining_args < 2 || remaining_args%2) {
+	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
+	    bu_vls_free(&vls);
 	    return GED_ERROR;
 	}
 
-	bu_avs_init( &avs, (argc - last_opt)/2, "ged_erase avs" );
+	bu_avs_init(&avs, (argc - last_opt)/2, "ged_erase avs");
 	i = 0;
-	while ( i < argc ) {
-	    if ( *argv[i] == '-' ) {
+	while (i < argc) {
+	    if (*argv[i] == '-') {
 		i++;
 		continue;
 	    }
 
 	    /* this is a name/value pair */
-	    if ( flag_o_nonunique == 2 ) {
-		bu_avs_add_nonunique( &avs, argv[i], argv[i+1] );
+	    if (flag_o_nonunique == 2) {
+		bu_avs_add_nonunique(&avs, argv[i], argv[i+1]);
 	    } else {
-		bu_avs_add( &avs, argv[i], argv[i+1] );
+		bu_avs_add(&avs, argv[i], argv[i+1]);
 	    }
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr( gedp->ged_wdbp->dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique );
-	bu_avs_free( &avs );
-	if ( !tbl ) {
-	    bu_log( "Error: db_lookup_by_attr() failed!!\n" );
-	    bu_vls_free( &vls );
+	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique);
+	bu_avs_free(&avs);
+	if (!tbl) {
+	    bu_log("Error: db_lookup_by_attr() failed!!\n");
+	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
-	if ( BU_PTBL_LEN( tbl ) < 1 ) {
+	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
-	    bu_vls_free( &vls );
+	    bu_vls_free(&vls);
 	    return TCL_OK;
 	}
-	for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
+	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
 
-	    dp = (struct directory *)BU_PTBL_GET( tbl, i );
-	    bu_vls_putc( &vls, ' ' );
-	    bu_vls_strcat( &vls, dp->d_namep );
+	    dp = (struct directory *)BU_PTBL_GET(tbl, i);
+	    bu_vls_putc(&vls, ' ');
+	    bu_vls_strcat(&vls, dp->d_namep);
 	}
 
-	max_count = BU_PTBL_LEN( tbl ) + last_opt + 1;
-	bu_ptbl_free( tbl );
-	bu_free( (char *)tbl, "ged_erase ptbl" );
-	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "ged_erase new_argv" );
-	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
+	max_count = BU_PTBL_LEN(tbl) + last_opt + 1;
+	bu_ptbl_free(tbl);
+	bu_free((char *)tbl, "ged_erase ptbl");
+	new_argv = (char **)bu_calloc(max_count+1, sizeof(char *), "ged_erase new_argv");
+	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
 	for (i = 0; i < new_argc; ++i) {
 	    /* Skip any options */
@@ -191,9 +199,9 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 
 void
-ged_splitGDL(struct ged			*gedp,
-	     struct ged_display_list	*gdlp,
-	     struct db_full_path	*path)
+ged_splitGDL(struct ged *gedp,
+	     struct ged_display_list *gdlp,
+	     struct db_full_path *path)
 {
     struct solid *sp;
     struct solid *nsp;
@@ -241,6 +249,7 @@ ged_splitGDL(struct ged			*gedp,
 	++path->fp_len;
     }
 }
+
 
 /*
  * Erase/remove the display list item from headDisplay if path matches the list item's path.
@@ -333,10 +342,11 @@ ged_erasePathFromDisplay(struct ged *gedp,
 	db_free_full_path(&subpath);
 }
 
+
 HIDDEN void
 eraseAllSubpathsFromSolidList(struct ged_display_list *gdlp,
-				  struct db_full_path *subpath,
-				  const int skip_first)
+			      struct db_full_path *subpath,
+			      const int skip_first)
 {
     struct solid *sp;
     struct solid *nsp;
@@ -352,6 +362,7 @@ eraseAllSubpathsFromSolidList(struct ged_display_list *gdlp,
     }
 }
 
+
 /*
  * Erase/remove display list item from headDisplay if name is found anywhere along item's path with
  * the exception that the first path element is skipped if skip_first is true.
@@ -361,8 +372,8 @@ eraseAllSubpathsFromSolidList(struct ged_display_list *gdlp,
  */
 void
 _ged_eraseAllNamesFromDisplay(struct ged *gedp,
-			     const char *name,
-			     const int skip_first)
+			      const char *name,
+			      const int skip_first)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -413,13 +424,14 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
     }
 }
 
+
 /*
  * Erase/remove display list item from headDisplay if path is a subset of item's path.
  */
 void
 _ged_eraseAllPathsFromDisplay(struct ged *gedp,
-			     const char *path,
-			     const int skip_first)
+			      const char *path,
+			      const int skip_first)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -447,9 +459,10 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
     }
 }
 
+
 void
 _ged_freeDisplayListItem (struct ged *gedp,
-			 struct ged_display_list *gdlp)
+			  struct ged_display_list *gdlp)
 {
     struct solid *sp;
     struct directory *dp;
@@ -473,6 +486,7 @@ _ged_freeDisplayListItem (struct ged *gedp,
     bu_vls_free(&gdlp->gdl_path);
     free((void *)gdlp);
 }
+
 
 /*
  * Local Variables:

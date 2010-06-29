@@ -215,12 +215,16 @@ ON_PolyCurve::SwapCoordinates( int i, int j )
 
 ON_BOOL32 ON_PolyCurve::IsValid( ON_TextLog* text_log ) const
 {
+  return IsValid(false,text_log);
+}
+
+bool ON_PolyCurve::IsValid( bool bAllowGaps, ON_TextLog* text_log ) const
+{
   const int count = Count();
   const int dim = Dimension();
-  double s0, s1;
   ON_3dPoint p0, p1;
   int segment_index;
-  ON_BOOL32 rc = (count>0 && dim>0) ? true : false;
+  bool rc = (count>0 && dim>0) ? true : false;
   if ( !rc )
   {
     if ( text_log )
@@ -237,78 +241,67 @@ ON_BOOL32 ON_PolyCurve::IsValid( ON_TextLog* text_log ) const
 
   for ( segment_index = 0; segment_index < count && rc; segment_index++ ) 
   {
-    rc = m_segment[segment_index]->IsValid( text_log );
+    if ( 0 == m_segment[segment_index] )
+    {
+      if ( text_log )
+      {
+        text_log->Print("Polycurve segment[%d] is null.\n",segment_index);
+      }
+      rc = false;
+      break;
+    }
+
+    rc = m_segment[segment_index]->IsValid( text_log ) ? true : false;
     if ( !rc )
     {
       if ( text_log )
       {
         text_log->Print("Polycurve segment[%d] is not valid.\n",segment_index);
       }
+      break;
     }
-    if ( rc ) 
+
+    int seg_dim = m_segment[segment_index]->Dimension();
+    if ( seg_dim != dim )
     {
-      int seg_dim = m_segment[segment_index]->Dimension();
-      if ( seg_dim != dim )
-      {
-        if ( text_log )
-          text_log->Print("Polycurve segment[%d]->Dimension()=%d (should be %d).\n",segment_index,seg_dim,dim);
-        rc = false; // all segments must have same dimension
-      }
+      if ( text_log )
+        text_log->Print("Polycurve segment[%d]->Dimension()=%d (should be %d).\n",segment_index,seg_dim,dim);
+      rc = false; // all segments must have same dimension
+      break;
+    }
 
-      if ( rc && m_t[segment_index] >= m_t[segment_index+1] )
-      {
-        if ( text_log )
-          text_log->Print("Polycurve m_t[%d]=%g and m_t[%d]=%g (should be increasing)\n",
-                           segment_index,   m_t[segment_index],
-                           segment_index+1, m_t[segment_index+1]);
-        rc = false; // segment domain must be non-empty
-      }
+    if ( rc && m_t[segment_index] >= m_t[segment_index+1] )
+    {
+      if ( text_log )
+        text_log->Print("Polycurve m_t[%d]=%g and m_t[%d]=%g (should be increasing)\n",
+                         segment_index,   m_t[segment_index],
+                         segment_index+1, m_t[segment_index+1]);
+      rc = false; // segment domain must be non-empty
+      break;
+    }
 
-      if ( rc && count > 1 && m_segment[segment_index]->IsClosed() ) 
-      {
-        if ( text_log )
-          text_log->Print("Polycurve segment[%d] is closed (%d segments).\n",segment_index,count);
-        rc = false; // closed segments not permitted in multi segment curve
-      }
+    if ( rc && count > 1 && !bAllowGaps && m_segment[segment_index]->IsClosed() ) 
+    {
+      if ( text_log )
+        text_log->Print("Polycurve segment[%d] is closed (%d segments).\n",segment_index,count);
+      rc = false; // closed segments not permitted in multi segment curve
+      break;
+    }
+  }
 
-      if ( rc && segment_index > 0)
-      {
-        // check that segments are contiguous
-        if ( rc )
-        {
-          s0 =  m_segment[segment_index-1]->Domain().Max();
-          rc = m_segment[segment_index-1]->EvPoint(s0,p0);
-        }
-        if ( rc )
-        {
-          s1 = m_segment[segment_index]->Domain().Min();
-          rc = m_segment[segment_index]->EvPoint(s1,p1);
-        }
-        if ( rc ) 
-        {
-          if ( ON_ComparePoint( 3, false, &p0.x, &p1.x ) )
-          {
-            // To fix RR 13325 I allow a little more leeway for arcs.
-            double d = p0.DistanceTo(p1);
-            const ON_ArcCurve* arc0 = ON_ArcCurve::Cast(m_segment[segment_index-1]);
-            const ON_ArcCurve* arc1 = ON_ArcCurve::Cast(m_segment[segment_index]);
-            double tol = (arc0 || arc1) ? ON_ZERO_TOLERANCE : 0.0;
-            double tol0 = arc0  ? ( arc0->m_arc.radius*arc0->m_arc.AngleRadians()*1.0e-10 ) : 0.0;
-            double tol1 = arc1  ? ( arc1->m_arc.radius*arc1->m_arc.AngleRadians()*1.0e-10 ) : 0.0;
-            if ( tol < tol0 ) 
-              tol = tol0;
-            if ( tol < tol1 ) 
-              tol = tol1;
-            if ( d > tol )
-            {
-              if ( text_log )
-                text_log->Print("Polycurve end of segment[%d] != start of segment[%d] (distance=%g)\n",
-                                segment_index-1, segment_index, d );
-              rc = false; // not contiguous
-            }
-          }
-        }
-      }
+  if (rc && !bAllowGaps )
+  {
+    // check for gaps
+    segment_index = HasGap();
+    if ( segment_index > 0 )
+    {
+      p0 = m_segment[segment_index-1]->PointAtEnd();
+      p1 = m_segment[segment_index]->PointAtStart();
+      double d = p0.DistanceTo(p1);
+      if ( text_log )
+        text_log->Print("Polycurve end of segment[%d] != start of segment[%d] (distance=%g)\n",
+                        segment_index-1, segment_index, d );
+      rc = false; // not contiguous
     }
   }
 
@@ -988,7 +981,7 @@ ON_PolyCurve::IsClosed() const
 
 int ON_PolyCurve::HasGap() const
 {
-  int count = Count();
+  const int count = m_segment.Count();
 
   if ( count > 1 )
   {
@@ -1000,17 +993,37 @@ int ON_PolyCurve::HasGap() const
     {
       c0 = c1;
       c1 = m_segment[i];
+      if ( 0 == c0 || 0 == c1 )
+        return i; // "gap"
       P0 = c0->PointAtEnd();
       P1 = c1->PointAtStart();
       // Note:  The point compare test should be the same
       //        as the one used in ON_Curve::IsClosed().
       //
-      if ( ON_ComparePoint( 3, 0, &P0.x, &P1.x ) )
-        return i;
+      if ( ON_ComparePoint( 3, false, &P0.x, &P1.x ) )
+      {
+        // To fix RR 13325 I allow a little more leeway for arcs.
+        const ON_ArcCurve* arc0 = ON_ArcCurve::Cast(m_segment[i-1]);
+        const ON_ArcCurve* arc1 = ON_ArcCurve::Cast(m_segment[i]);
+        if ( 0 == arc0 && 0 == arc1 )
+          return i; // gap
+        double tol = ON_ZERO_TOLERANCE;
+        const double tol0 = arc0  ? ( arc0->m_arc.radius*arc0->m_arc.AngleRadians()*1.0e-10 ) : 0.0;
+        const double tol1 = arc1  ? ( arc1->m_arc.radius*arc1->m_arc.AngleRadians()*1.0e-10 ) : 0.0;
+        if ( tol < tol0 ) 
+          tol = tol0;
+        if ( tol < tol1 ) 
+          tol = tol1;
+        const double d = P0.DistanceTo(P1);
+        if ( d > tol )
+        {
+          return i; // gap
+        }
+      }
     }
   }
 
-  return 0;
+  return 0; // no gaps
 }
 
 
@@ -1289,8 +1302,16 @@ bool ON_PolyCurve::GetNextDiscontinuity(
             if ( dtype )
               *dtype = 1;
           }
-          else if ( (Km-Kp).Length() > curvature_tolerance )
+          else if ( ON_IsCurvatureDiscontinuity( Km, Kp, 
+                                            cos_angle_tolerance,
+                                            curvature_tolerance, 
+                                            ON_UNSET_VALUE, 
+                                            ON_UNSET_VALUE )
+                  )
           {
+            // NOTE:
+            //   The test to enter this scope must exactly match
+            //   the one used in ON_NurbsCurve::GetNextDiscontinuity().
             rc = true;
             if ( dtype )
               *dtype = 2;
@@ -2990,6 +3011,82 @@ void Flatten( ON_PolyCurve* poly, ON_Interval pdom, ON_SimpleArray<double>& new_
 			t0 = t1;
 		}
 } 
+
+bool ON_PolyCurve::HasSynchronizedSegmentDomains() const
+{
+  double t0, t1;
+  int i, count = m_segment.Count();
+  const ON_Curve* const * c = m_segment.Array();
+  if ( count < 1 || 0 == c )
+    return false;
+  if ( count != m_t.Count()+1 )
+    return false;
+  const double* t = m_t.Array();
+  if ( 0 == t )
+    return false;
+
+  for ( i = 0; i < count; i++ )
+  {
+    t0 = -ON_UNSET_VALUE;
+    t1 = ON_UNSET_VALUE;
+    if ( 0 != c[i] 
+         && c[i]->GetDomain(&t0,&t1) 
+         && t0 == t[i]
+         && t1 == t[i+1]
+         )
+     {
+       continue;
+     }
+     return false;
+  }
+
+  return true;  
+}
+
+/* 
+Description:
+  Sets the domain of the curve int the m_segment[] array to exactly
+  match the domain defined in the m_t[] array.  This is not required,
+  but can simplify some coding situations.
+Returns:
+  True if at least one segment was reparameterized. False if no
+  changes were made.
+*/
+bool ON_PolyCurve::SynchronizeSegmentDomains()
+{
+  double t0, t1;
+  int i, count = m_segment.Count();
+  ON_Curve** c = m_segment.Array();
+  if ( count < 1 || 0 == c )
+    return false;
+  if ( count != m_t.Count()+1 )
+    return false;
+  const double* t = m_t.Array();
+  if ( 0 == t )
+    return false;
+
+  bool rc = false;
+  for ( i = 0; i < count; i++ )
+  {
+    if ( !c[i] )
+      continue;
+    t0 = -ON_UNSET_VALUE;
+    t1 = ON_UNSET_VALUE;
+    if ( c[i]->GetDomain(&t0,&t1) 
+         && t0 == t[i]
+         && t1 == t[i+1]
+         )
+     {
+       continue;
+     }
+     if ( t0 < t1 && c[i]->SetDomain(t[i],t[i+1]) )
+     {
+       rc = true; // indicates a change was made
+     }
+  }
+  return rc;
+}
+
 
 
 bool ON_PolyCurve::RemoveNestingEx( )

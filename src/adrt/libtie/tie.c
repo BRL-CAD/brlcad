@@ -24,13 +24,12 @@
 
 #include "common.h"
 
-#include "tie.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "tie.h"
 #include "bio.h"
-#include "tie_struct.h"
 
 #include "bu.h"
 
@@ -40,6 +39,11 @@
 
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
+#endif
+
+#ifdef _WIN32
+# undef near
+# undef far
 #endif
 
 #define TIE_DEGENERATE_THRESHOLD 0.0001
@@ -117,7 +121,7 @@ static void tie_tri_prep(tie_t *tie)
  * @param kdmethod Either TIE_KDTREE_FAST or TIE_KDTREE_OPTIMAL
  * @return void
  */
-TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
+void TIE_VAL(tie_init)(tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
 {
     tie->kdtree = NULL;
     tie->kdmethod = kdmethod;
@@ -138,7 +142,7 @@ TIE_FUNC(void tie_init, tie_t *tie, unsigned int tri_num, unsigned int kdmethod)
  * @param tie pointer to a struct tie_t
  * @return void
  */
-TIE_FUNC(void tie_free, tie_t *tie)
+void TIE_VAL(tie_free)(tie_t *tie)
 {
     unsigned int i;
 
@@ -160,7 +164,7 @@ TIE_FUNC(void tie_free, tie_t *tie)
  * @param tie pointer to a struct tie_t which now has all the triangles in it
  * @return void
  */
-TIE_FUNC(void tie_prep, tie_t *tie)
+void TIE_VAL(tie_prep)(tie_t *tie)
 {
 /* Build the kd-tree */
     tie_kdtree_prep (tie);
@@ -192,7 +196,7 @@ TIE_FUNC(void tie_prep, tie_t *tie)
  * @retval 0 ray did not hit anything, or ray was propagated through the geometry completely.
  * @retval !0 the value returned from the last invokation of hitfunc()
  */
-TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr)
+void* TIE_VAL(tie_work)(tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfunc)(tie_ray_t*, tie_id_t*, tie_tri_t*, void *ptr), void *ptr)
 {
     tie_stack_t stack[40];
     tie_id_t t, id_list[256];
@@ -208,7 +212,7 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
 /*ErPLog( "ray: %f %f %f %f %f %f\n", ray->pos.v[0], ray->pos.v[1], ray->pos.v[2], ray->dir.v[0], ray->dir.v[1], ray->dir.v[2] );*/
 
     if (!tie->kdtree)
-	return (NULL);
+	return NULL;
 
     ray->kdtree_depth = 0;
 
@@ -378,12 +382,12 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
 
 	    if (result) {
 		*id = id_list[i];
-		return (result);
+		return result;
 	    }
 	}
     } while (stack_ind >= 0);
 
-    return (NULL);
+    return NULL;
 }
 
 
@@ -405,7 +409,7 @@ TIE_FUNC(void* tie_work, tie_t *tie, tie_ray_t *ray, tie_id_t *id, void *(*hitfu
  * address of plist.
  * @return void
  */
-TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride)
+void TIE_VAL(tie_push)(tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride)
 {
     unsigned int i;
 

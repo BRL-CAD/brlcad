@@ -109,7 +109,7 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
@@ -120,21 +120,21 @@ get_args(int argc, char **argv)
     }
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
 	file_name = "-";
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((ifp = fopen(file_name, "r")) == NULL) {
 	    bu_log("pixrot: cannot open \"%s\" for reading\n", file_name);
-	    return(0);
+	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
 	bu_log("pixrot: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

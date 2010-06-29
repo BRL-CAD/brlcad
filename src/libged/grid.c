@@ -35,41 +35,124 @@
 #include "./ged_private.h"
 
 
-static void ged_grid_vls_print(struct ged *gedp);
-#if 0
-static void ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my);
-#endif
-static void ged_grid_vsnap(struct ged *gedp);
+void
+ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
+{
+    int nh, nv;		/* whole grid units */
+    point_t view_pt;
+    point_t view_grid_anchor;
+    fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
+    fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
+    fastf_t sf;
+    fastf_t inv_sf;
 
-static char ged_grid_syntax[] = "\
- grid vname color [r g b]	set or get the color\n\
- grid vname draw [0|1]		set or get the draw parameter\n\
- grid vname help		prints this help message\n\
- grid vname mrh [ival]		set or get the major resolution (horizontal)\n\
- grid vname mrv [ival]		set or get the major resolution (vertical)\n\
- grid vname rh [fval]		set or get the resolution (horizontal)\n\
- grid vname rv [fval]		set or get the resolution (vertical)\n\
- grid vname snap [0|1]		set or get the snap parameter\n\
- grid vname vars		print a list of all variables (i.e. var = val)\n\
- grid vname vsnap		snaps the view center to the nearest grid point\n\
-";
+    if (gedp->ged_gvp == GED_VIEW_NULL)
+	return;
+
+    if (NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_h, (fastf_t)SMALL_FASTF) ||
+	NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_v, (fastf_t)SMALL_FASTF))
+	return;
+
+    sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
+    inv_sf = 1 / sf;
+
+    VSET(view_pt, *vx, *vy, 0.0);
+    VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
+
+    MAT4X3PNT(view_grid_anchor, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_grid.ggs_anchor);
+    VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
+
+    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / (gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / (gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    nh = grid_units_h;
+    nv = grid_units_v;
+
+    grid_units_h -= nh;		/* now contains only the fraction part */
+    grid_units_v -= nv;		/* now contains only the fraction part */
+
+    if (grid_units_h <= -0.5)
+	*vx = view_grid_anchor[X] - ((nh - 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    else if (0.5 <= grid_units_h)
+	*vx = view_grid_anchor[X] - ((nh + 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    else
+	*vx = view_grid_anchor[X] - (nh * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+
+    if (grid_units_v <= -0.5)
+	*vy = view_grid_anchor[Y] - ((nv - 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    else if (0.5 <= grid_units_v)
+	*vy = view_grid_anchor[Y] - ((nv + 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    else
+	*vy = view_grid_anchor[Y] - (nv * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+
+    *vx *= inv_sf;
+    *vy *= inv_sf;
+}
+
+
+HIDDEN void
+grid_vsnap(struct ged *gedp)
+{
+    point_t view_pt;
+    point_t model_pt;
+
+    MAT_DELTAS_GET_NEG(model_pt, gedp->ged_gvp->gv_center);
+    MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
+    ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
+    MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_pt);
+    ged_view_update(gedp->ged_gvp);
+}
+
+
+HIDDEN void
+grid_vls_print(struct ged *gedp)
+{
+    bu_vls_printf(&gedp->ged_result_str, "anchor = %g %g %g\n",
+		  gedp->ged_gvp->gv_grid.ggs_anchor[0] * gedp->ged_wdbp->dbip->dbi_base2local,
+		  gedp->ged_gvp->gv_grid.ggs_anchor[1] * gedp->ged_wdbp->dbip->dbi_base2local,
+		  gedp->ged_gvp->gv_grid.ggs_anchor[2] * gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(&gedp->ged_result_str, "color = %d %d %d\n",
+		  gedp->ged_gvp->gv_grid.ggs_color[0],
+		  gedp->ged_gvp->gv_grid.ggs_color[1],
+		  gedp->ged_gvp->gv_grid.ggs_color[2]);
+    bu_vls_printf(&gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_grid.ggs_draw);
+    bu_vls_printf(&gedp->ged_result_str, "mrh = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_h);
+    bu_vls_printf(&gedp->ged_result_str, "mrv = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_v);
+    bu_vls_printf(&gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(&gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(&gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_grid.ggs_snap);
+}
+
+
+HIDDEN void
+grid_usage(struct ged *gedp, const char *argv0)
+{
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s\n", argv0);
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname color [r g b]	set or get the color\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname draw [0|1]		set or get the draw parameter\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname help		prints this help message\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname mrh [ival]		set or get the major resolution (horizontal)\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname mrv [ival]		set or get the major resolution (vertical)\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname rh [fval]		set or get the resolution (horizontal)\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname rv [fval]		set or get the resolution (vertical)\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname snap [0|1]		set or get the snap parameter\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname vars		print a list of all variables (i.e. var = val)\n");
+    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname vsnap		snaps the view center to the nearest grid point\n");
+}
 
 
 /*
  * Note - this needs to be rewritten to accept keyword/value pairs so
- *        that multiple attributes can be set with a single command call.
+ * that multiple attributes can be set with a single command call.
  */
 int
-ged_grid(struct ged	*gedp,
-	 int		argc,
-	 const char	*argv[])
+ged_grid(struct ged *gedp, int argc, const char *argv[])
 {
     char *command;
     char *parameter;
     char **argp = (char **)argv;
     point_t user_pt;		/* Value(s) provided by user */
     int i;
-    static const char *usage = ged_grid_syntax;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -79,12 +162,12 @@ ged_grid(struct ged	*gedp,
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	grid_usage(gedp, argv[0]);
 	return GED_OK;
     }
 
     if (argc < 2 || 5 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	grid_usage(gedp, argv[0]);
 	return GED_ERROR;
     }
 
@@ -95,7 +178,7 @@ ged_grid(struct ged	*gedp,
 
     for (i = 0; i < argc; ++i)
 	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    grid_usage(gedp, argv[0]);
 	    return GED_ERROR;
 	}
 
@@ -120,7 +203,7 @@ ged_grid(struct ged	*gedp,
 
     if (strcmp(parameter, "vsnap") == 0) {
 	if (argc == 0) {
-	    ged_grid_vsnap(gedp);
+	    grid_vsnap(gedp);
 	    return GED_OK;
 	}
 
@@ -244,105 +327,19 @@ ged_grid(struct ged	*gedp,
     }
 
     if (strcmp(parameter, "vars") == 0) {
-	ged_grid_vls_print(gedp);
+	grid_vls_print(gedp);
 	return GED_OK;
     }
 
     if (strcmp(parameter, "help") == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", command, usage);
+	grid_usage(gedp, argv[0]);
 	return GED_HELP;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\nUsage: %s %s\n",
-		  command, parameter, command, usage);
+    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\n", command);
+    grid_usage(gedp, argv[0]);
+
     return GED_ERROR;
-}
-
-static void
-ged_grid_vls_print(struct ged *gedp)
-{
-    bu_vls_printf(&gedp->ged_result_str, "anchor = %g %g %g\n",
-		  gedp->ged_gvp->gv_grid.ggs_anchor[0] * gedp->ged_wdbp->dbip->dbi_base2local,
-		  gedp->ged_gvp->gv_grid.ggs_anchor[1] * gedp->ged_wdbp->dbip->dbi_base2local,
-		  gedp->ged_gvp->gv_grid.ggs_anchor[2] * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(&gedp->ged_result_str, "color = %d %d %d\n",
-		  gedp->ged_gvp->gv_grid.ggs_color[0],
-		  gedp->ged_gvp->gv_grid.ggs_color[1],
-		  gedp->ged_gvp->gv_grid.ggs_color[2]);
-    bu_vls_printf(&gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_grid.ggs_draw);
-    bu_vls_printf(&gedp->ged_result_str, "mrh = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_h);
-    bu_vls_printf(&gedp->ged_result_str, "mrv = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_v);
-    bu_vls_printf(&gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(&gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(&gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_grid.ggs_snap);
-}
-
-void
-ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy)
-{
-    int nh, nv;		/* whole grid units */
-    point_t view_pt;
-    point_t view_grid_anchor;
-    fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
-    fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
-    fastf_t sf;
-    fastf_t inv_sf;
-    fastf_t local2base = 1.0 / gedp->ged_wdbp->dbip->dbi_base2local;
-
-    if (gedp->ged_gvp == GED_VIEW_NULL)
-	return;
-
-    if (NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_h, (fastf_t)SMALL_FASTF) ||
-	NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_v, (fastf_t)SMALL_FASTF))
-	return;
-
-    sf = gedp->ged_gvp->gv_scale*gedp->ged_wdbp->dbip->dbi_base2local;
-    inv_sf = 1 / sf;
-
-    VSET(view_pt, *vx, *vy, 0.0);
-    VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
-
-    MAT4X3PNT(view_grid_anchor, gedp->ged_gvp->gv_model2view, gedp->ged_gvp->gv_grid.ggs_anchor);
-    VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
-
-    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / (gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / (gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    nh = grid_units_h;
-    nv = grid_units_v;
-
-    grid_units_h -= nh;		/* now contains only the fraction part */
-    grid_units_v -= nv;		/* now contains only the fraction part */
-
-    if (grid_units_h <= -0.5)
-	*vx = view_grid_anchor[X] - ((nh - 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    else if (0.5 <= grid_units_h)
-	*vx = view_grid_anchor[X] - ((nh + 1) * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    else
-	*vx = view_grid_anchor[X] - (nh * gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-
-    if (grid_units_v <= -0.5)
-	*vy = view_grid_anchor[Y] - ((nv - 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    else if (0.5 <= grid_units_v)
-	*vy = view_grid_anchor[Y] - ((nv + 1) * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    else
-	*vy = view_grid_anchor[Y] - (nv  * gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-
-    *vx *= inv_sf;
-    *vy *= inv_sf;
-}
-
-static void
-ged_grid_vsnap(struct ged *gedp)
-{
-    point_t view_pt;
-    point_t model_pt;
-
-    MAT_DELTAS_GET_NEG(model_pt, gedp->ged_gvp->gv_center);
-    MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
-    MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_pt);
-    ged_view_update(gedp->ged_gvp);
 }
 
 

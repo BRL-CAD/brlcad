@@ -86,7 +86,7 @@ dist_default(void)
 	}
 	first_time = 0;
     }
-    return(g_max);
+    return g_max;
 }
 
 /*

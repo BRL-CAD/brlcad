@@ -51,7 +51,7 @@ static int check_syntax (char cmd, int needed, int got, int line)
     if (got < needed) {
 	bu_exit(1, "Too few arguments for '%c' command on line %d\n", cmd, line);
     }
-    return (1);
+    return 1;
 }
 
 

@@ -35,11 +35,15 @@
 /* !!! this should not be here, should fix the build system settings */
 #define __STDC__ 1
 
-/*  4244 conversion from type 1 to type 2
- *  4305 truncation
- *  4018 signed/unsigned mismatch
+/* 4127 conditional expression is constant
+ * 4244 conversion from type 1 to type 2
+ * 4305 truncation
+ * 4312 type cast: conversion from type1 to type2 of greater size
+ * 4018 signed/unsigned mismatch
+ * 4996 deprecation warning on non-secure functions
  */
-#pragma warning( disable : 4244 4305 4018)
+#pragma warning( disable : 4127 4244 4312 4996 )
+/* #pragma warning( disable : 4244 4305 4018) */
 
 /*
  * Ensure that Project Settings / Project Options includes
@@ -48,6 +52,10 @@
 # if !__STDC__
 #	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
 # endif
+
+/* include standard c99 types via compatibility header */
+#include "pstdint.h"
+
 
 #ifndef EXPAND_IN_STRING
 #  define EXPAND_IN_STRING(x) EXPAND_IN_STRING_INTERN(x)
@@ -158,11 +166,6 @@
 
 #define SHARED_PTR_BOOST	1
 
-/* we need the function pointer of this */
-static int isblank(int c) {
-    return ((c == ' ') || (c == '\t')) ? 1 : 0;
-}
-
 /*
  * Signal handling
  */
@@ -258,9 +261,6 @@ typedef unsigned int uid_t;
 #define W_OK 2
 #define X_OK 1
 #define F_OK 0
-
-#undef DELETE
-#undef complex
 
 /*
  * faking it

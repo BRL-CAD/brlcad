@@ -84,7 +84,7 @@ int parse_args(int ac, char **av)
 	    default		: usage("Bad or help flag specified\n"); break;
 	}
 
-    return(bu_optind);
+    return bu_optind;
 }
 /*
  * M A I N
@@ -136,7 +136,7 @@ int main(int ac, char **av)
 
 	fwrite(obuf, 3, pixels, stdout);
     }
-    return(0);
+    return 0;
 }
 
 

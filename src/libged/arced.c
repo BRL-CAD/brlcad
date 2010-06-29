@@ -63,7 +63,8 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "arced: bad path specification '%s'", argv[1]);
 	return GED_ERROR;
     }
-    if (!(anp = db_parse_1anim(gedp->ged_wdbp->dbip, argc, (const char **)argv))) {
+    anp = db_parse_1anim(gedp->ged_wdbp->dbip, argc, (const char **)argv);
+    if (!anp) {
 	bu_vls_printf(&gedp->ged_result_str, "arced: unable to parse command");
 	return GED_ERROR;
     }

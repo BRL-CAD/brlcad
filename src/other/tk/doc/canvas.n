@@ -1790,6 +1790,7 @@ The following standard options are supported by window items:
 The following extra options are supported for window items:
 .TP
 \fB\-anchor \fIanchorPos\fR
+.
 \fIAnchorPos\fR tells how to position the window relative to the
 positioning point for the item;  it may have any of the forms
 accepted by \fBTk_GetAnchor\fR.  For example, if \fIanchorPos\fR
@@ -1799,20 +1800,23 @@ its top center point is at the positioning point.
 This option defaults to \fBcenter\fR.
 .TP
 \fB\-height \fIpixels\fR
+.
 Specifies the height to assign to the item's window.
 \fIPixels\fR may have any of the
 forms described in the \fBCOORDINATES\fR section above.
-If this option is not specified, or if it is specified as an empty
-string, then the window is given whatever height it requests internally.
+If this option is not specified, or if it is specified as zero,
+then the window is given whatever height it requests internally.
 .TP
 \fB\-width \fIpixels\fR
+.
 Specifies the width to assign to the item's window.
 \fIPixels\fR may have any of the
 forms described in the \fBCOORDINATES\fR section above.
-If this option is not specified, or if it is specified as an empty
-string, then the window is given whatever width it requests internally.
+If this option is not specified, or if it is specified as zero,
+then the window is given whatever width it requests internally.
 .TP
 \fB\-window \fIpathName\fR
+.
 Specifies the window to associate with this item.
 The window specified by \fIpathName\fR must either be a child of
 the canvas widget or a child of some ancestor of the canvas widget.

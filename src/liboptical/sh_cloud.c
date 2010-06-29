@@ -105,7 +105,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
     /* Compute max possible summation */
     k =  NUMSINES * 2 * NUMSINES;
 
-    return( t1 * t2 / k );
+    return t1 * t2 / k;
 }
 
 /*
@@ -123,9 +123,9 @@ cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     cp->cl_thresh = 0.35;
     cp->cl_range = 0.3;
     if (bu_struct_parse( matparm, cloud_parse, (char *)cp ) < 0 )
-	return(-1);
+	return -1;
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -182,7 +182,7 @@ cloud_render(struct application *ap, struct partition *pp, struct shadework *swp
     swp->sw_color[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
     swp->sw_color[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
     swp->sw_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
-    return(1);
+    return 1;
 }
 
 /*

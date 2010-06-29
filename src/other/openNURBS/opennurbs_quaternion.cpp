@@ -59,6 +59,52 @@ ON_Quaternion ON_Quaternion::Rotation(double angle, const ON_3dVector& axis)
   return ON_Quaternion(cos(0.5*angle),s*axis.x,s*axis.y,s*axis.z);
 }
 
+ON_Quaternion ON_Quaternion::Exp(ON_Quaternion q)
+{
+  // Added 8 Jan 2010 - not tested yet
+  double v = ((const ON_3dVector*)&q.b)->Length();
+  if ( !(v > ON_DBL_MIN) )
+    v = 0.0;
+  double ea = exp(q.a);
+  double z = (v > 0.0) ? ea*sin(v)/v : 0.0;
+  return ON_Quaternion( ea*cos(v), z*q.b, z*q.c, z*q.d );
+}
+
+ON_Quaternion ON_Quaternion::Log(ON_Quaternion q)
+{
+  // Added 8 Jan 2010 - not tested yet
+  double lenq = q.Length();
+  double v = ((const ON_3dVector*)&q.b)->Length();
+  if ( !(v > ON_DBL_MIN) )
+    v = 0.0;
+  double z = (v > 0.0) ? acos(q.a/lenq)/v : 0.0;
+  return ON_Quaternion(log(lenq), z*q.b, z*q.c, z*q.d );
+}
+
+ON_Quaternion ON_Quaternion::Pow(ON_Quaternion q,double t)
+{
+  // Added 8 Jan 2010 - not tested yet
+  return ON_Quaternion::Exp( t * ON_Quaternion::Log(q) );
+}
+
+ON_Quaternion ON_Quaternion::Slerp(ON_Quaternion q0, ON_Quaternion q1, double t)
+{
+  // Added 8 Jan 2010 - not tested yet
+  ON_Quaternion q;
+  if ( t <= 0.5 )
+  {
+    q = q0.Inverse()*q1;
+    q = q0*ON_Quaternion::Pow(q,t);
+  }
+  else
+  {
+    q = q1.Inverse()*q0;
+    q = q1*ON_Quaternion::Pow(q,1.0-t);
+  }
+  return q;
+}
+
+
 void ON_Quaternion::Set(double qa, double qb, double qc, double qd)
 {
   a = qa;
@@ -188,6 +234,18 @@ ON_Quaternion ON_Quaternion::Rotation(const ON_Plane& plane0, const ON_Plane& pl
   return q;
 }
 
+bool ON_Quaternion::GetRotation(ON_Xform& xform) const
+{
+  ON_Plane plane;
+  bool rc = GetRotation(plane);
+  if (rc)
+    xform.Rotation(ON_Plane::World_xy,plane);
+  else if (IsZero())
+    xform.Zero();
+  else
+    xform.Identity();
+  return rc;
+}
 
 bool ON_Quaternion::GetRotation(ON_Plane& plane) const
 {
@@ -224,7 +282,7 @@ bool ON_Quaternion::GetRotation(double& angle, ON_3dVector& axis) const
 
 ON_3dVector ON_Quaternion::Vector() const
 {
-  return ON_3dVector(a,b,c);
+  return ON_3dVector(b,c,d);
 }
 
 double ON_Quaternion::Scalar() const
@@ -244,7 +302,7 @@ bool ON_Quaternion::IsScalar() const
 
 bool ON_Quaternion::IsVector() const
 {
-  return (0.0 == a && (0.0 != b || 0.0 != c || 0.0 != c));
+  return (0.0 == a && (0.0 != b || 0.0 != c || 0.0 != d));
 }
 
 bool ON_Quaternion::IsValid() const
@@ -280,19 +338,19 @@ bool ON_Quaternion::Invert()
 
 ON_3dVector ON_Quaternion::Rotate(ON_3dVector v) const
 {
-  // returns Inverse(q)*(0,v.x,v.y,v.z)*q
-  double x = a*a+b*b+c*c+d*d;
+  // returns q*(0,v.x,v.y,v.z)*Inverse(q)
+  double x = a*a + b*b + c*c + d*d;
   x = ( x > ON_DBL_MIN ) ? 1.0/x : 0.0;
   const ON_Quaternion qinv(a*x,-b*x,-c*x,-d*x);
 
-  const ON_Quaternion vq( -v.x*b - v.y*c - v.z*d,
-                           v.x*a + v.y*d - v.z*c,
-                          -v.x*d + v.y*a + v.z*b,
-                           v.x*c - v.y*b + v.z*a);
+  const ON_Quaternion qv( -b*v.x - c*v.y - d*v.z,
+                           a*v.x + c*v.z - d*v.y,
+                           a*v.y - b*v.z + d*v.x,
+                           a*v.z + b*v.y - c*v.x);
 
-  v.x = qinv.a*vq.b + qinv.b*vq.a + qinv.c*vq.d - qinv.d*vq.c;
-  v.y = qinv.a*vq.c - qinv.b*vq.d + qinv.c*vq.a + qinv.d*vq.b;
-  v.z = qinv.a*vq.d + qinv.b*vq.c - qinv.c*vq.b + qinv.d*vq.a;
+  v.x = qv.a*qinv.b + qv.b*qinv.a + qv.c*qinv.d - qv.d*qinv.c;
+  v.y = qv.a*qinv.c - qv.b*qinv.d + qv.c*qinv.a + qv.d*qinv.b;
+  v.z = qv.a*qinv.d + qv.b*qinv.c - qv.c*qinv.b + qv.d*qinv.a;
   return v;
 }
 
@@ -395,6 +453,17 @@ bool ON_Quaternion::Unitize()
 
 
 ON_Quaternion::ON_Quaternion(double qa, double qb, double qc, double qd) : a(qa),b(qb),c(qc),d(qd) {}
+
+ON_Quaternion::ON_Quaternion(const ON_3dVector& v) : a(0.0),b(v.x),c(v.y),d(v.z) {}
+
+ON_Quaternion& ON_Quaternion::operator=(const ON_3dVector& v)
+{
+  a = 0.0;
+  b = v.x;
+  c = v.y;
+  d = v.z;
+  return *this;
+}
 
 ON_Quaternion ON_Quaternion::operator*(int x) const
 {

@@ -64,7 +64,7 @@ cm_vsize( argc, argv )
     char	**argv;
 {
     viewsize = atof( argv[1] );
-    return(0);
+    return 0;
 }
 
 int
@@ -76,7 +76,7 @@ cm_eyept( argc, argv )
 
     for ( i=0; i<3; i++ )
 	eye_model[i] = atof( argv[i+1] );
-    return(0);
+    return 0;
 }
 
 int
@@ -89,7 +89,7 @@ cm_lookat_pt( argc, argv )
     int	yflip = 0;
 
     if ( argc < 4 )
-	return(-1);
+	return -1;
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
@@ -102,7 +102,7 @@ cm_lookat_pt( argc, argv )
     VSUB2( dir, pt, eye_model );
     VUNITIZE( dir );
     bn_mat_lookat( Viewrotscale, dir, yflip );
-    return(0);
+    return 0;
 }
 
 int
@@ -114,7 +114,7 @@ cm_vrot( argc, argv )
 
     for ( i=0; i<16; i++ )
 	Viewrotscale[i] = atof( argv[i+1] );
-    return(0);
+    return 0;
 }
 
 int
@@ -128,7 +128,7 @@ cm_orientation( argc, argv )
     for ( i=0; i<4; i++ )
 	quat[i] = atof( argv[i+1] );
     quat_quat2mat( Viewrotscale, quat );
-    return(0);
+    return 0;
 }
 
 /*
@@ -158,7 +158,7 @@ cm_end( argc, argv )
 	   V3ARGS(eye_model),
 	   V4ARGS(orient) );
 
-    return(0);
+    return 0;
 }
 
 int
@@ -167,7 +167,7 @@ cm_tree( argc, argv )
     const char	**argv;
 {
     /* No-op */
-    return(0);
+    return 0;
 }
 
 int
@@ -176,7 +176,7 @@ cm_multiview( argc, argv )
     char	**argv;
 {
     bu_exit(EXIT_FAILURE, "cm_multiview: not supported\n");
-    return( 0 );	/* for the compilers */
+    return 0;	/* for the compilers */
 }
 
 /*
@@ -192,7 +192,7 @@ cm_anim( argc, argv )
     char	**argv;
 {
     /* No-op */
-    return(0);
+    return 0;
 }
 
 /*
@@ -206,7 +206,7 @@ cm_clean( argc, argv )
     char	**argv;
 {
     /* No-op */
-    return(0);
+    return 0;
 }
 
 /*
@@ -220,7 +220,7 @@ cm_set( argc, argv )
     char	**argv;
 {
     /* No-op */
-    return(0);
+    return 0;
 }
 
 /*
@@ -232,7 +232,7 @@ cm_ae( argc, argv )
     char	**argv;
 {
     bu_exit(EXIT_FAILURE, "cm_ae: Unable to compute model min/max RPP\n");
-    return(0);
+    return 0;
 }
 
 /*
@@ -244,7 +244,7 @@ cm_opt( argc, argv )
     char	**argv;
 {
     /* No-op */
-    return(0);
+    return 0;
 }
 
 /*

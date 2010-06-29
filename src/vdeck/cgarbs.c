@@ -134,9 +134,9 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
 	    (void) fprintf( stderr,
 			    "cgarbs: bad number of unique vectors (%d)\n",
 			    numuniq );
-	    return(0);
+	    return 0;
     }
-    return( numuniq );
+    return numuniq;
 }
 
 /*
@@ -225,7 +225,7 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 		    break;
 		default:
 		    (void) fprintf( stderr, "redoarb: bad arb7\n" );
-		    return( 0 );
+		    return 0;
 	    }
 	    break;
 	    /* end of ARB7 case */
@@ -267,7 +267,7 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 		    break;
 		default:
 		    (void) fprintf( stderr, "redoarb: bad arb6\n");
-		    return( 0 );
+		    return 0;
 	    }
 	    break;
 	    /* end of ARB6 case */
@@ -297,7 +297,7 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 		    break;
 		default:
 		    (void) fprintf( stderr, "redoarb: bad arb5\n" );
-		    return( 0 );
+		    return 0;
 	    }
 	    break;
 	    /* end of ARB5 case */
@@ -310,9 +310,9 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
 	default:
 	    (void) fprintf( stderr,
 			    "redoarb: unknown arb type (%d)\n", cgtype );
-	    return( 0 );
+	    return 0;
     }
-    return( 1 );
+    return 1;
 }
 
 /*

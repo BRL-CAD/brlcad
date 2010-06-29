@@ -49,6 +49,13 @@
 #include "rtprivate.h"
 #include "brlcad_version.h"
 
+
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file.  if the compile breaks here, it means
+ * that spaces got inserted incorrectly.
+ */
+#define COMMA ','
+
 #define GETOPT_STR ".:,:@:a:c:e:f:g:n:p:q:s:v:w:x:A:BC:D:E:F:G:H:J:K:MP:V:WX:!:"
 
 
@@ -59,8 +66,8 @@ mat_t		model2view;
 
 struct application ap;
 
-int		width = 0;		/* # of pixels in X */
-int		height = 0;		/* # of lines in Y */
+size_t		width = 0;		/* # of pixels in X */
+size_t		height = 0;		/* # of lines in Y */
 
 double		azimuth = 0.0, elevation = 0.0;
 
@@ -472,7 +479,7 @@ int main(int argc, char **argv)
     if ( fbp != FBIO_NULL )
 	fb_close(fbp);
 
-    return(0);
+    return 0;
 }
 
 
@@ -502,7 +509,7 @@ int get_args( int argc, register char **argv )
 	    case '.':
 		nu_gfactor = (double)atof( bu_optarg );
 		break;
-	    case ',':
+	    case COMMA:
 		space_partition = atoi(bu_optarg);
 		break;
 	    case '@':
@@ -667,11 +674,11 @@ int get_args( int argc, register char **argv )
 	    break;
 	    default:		/* '?' */
 		fprintf(stderr, "unknown option %c\n", c);
-		return(0);	/* BAD */
+		return 0;	/* BAD */
 	}
     }
 
-    return(1);			/* OK */
+    return 1;			/* OK */
 }
 
 
@@ -688,10 +695,10 @@ int cm_start( int argc, char **argv)
 
     frame = atoi(argv[1]);
     if ( finalframe >= 0 && frame > finalframe )
-	return(-1);	/* Indicate EOF -- user declared a halt */
+	return -1;	/* Indicate EOF -- user declared a halt */
     if ( frame >= desiredframe )  {
 	curframe = frame;
-	return(0);
+	return 0;
     }
 
     /* Skip over unwanted frames -- find next frame start */
@@ -707,20 +714,20 @@ int cm_start( int argc, char **argv)
 	bu_free( buf, "rt_read_cmd command buffer (skipping frames)" );
 	buf = (char *)0;
 	if ( finalframe >= 0 && frame > finalframe )
-	    return(-1);			/* "EOF" */
+	    return -1;			/* "EOF" */
 	if ( frame >= desiredframe )  {
 	    curframe = frame;
-	    return(0);
+	    return 0;
 	}
     }
-    return(-1);		/* EOF */
+    return -1;		/* EOF */
 }
 
 int cm_vsize( int argc, char **argv)
 {
     if (argc < 1) return -1;
     viewsize = atof( argv[1] );
-    return(0);
+    return 0;
 }
 
 int cm_eyept(int argc, char **argv)
@@ -730,7 +737,7 @@ int cm_eyept(int argc, char **argv)
     if (argc < 1) return -1;
     for ( i=0; i<3; i++ )
 	eye_model[i] = atof( argv[i+1] );
-    return(0);
+    return 0;
 }
 
 int cm_lookat_pt(int argc, char **argv)
@@ -741,7 +748,7 @@ int cm_lookat_pt(int argc, char **argv)
     quat_t quat;
 
     if ( argc < 4 )
-	return(-1);
+	return -1;
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
@@ -762,7 +769,7 @@ int cm_lookat_pt(int argc, char **argv)
 	bn_mat_lookat( Viewrotscale, dir, yflip );
     }
 
-    return(0);
+    return 0;
 }
 
 int cm_vrot( int argc, char **argv)
@@ -773,7 +780,7 @@ int cm_vrot( int argc, char **argv)
 
     for ( i=0; i<16; i++ )
 	Viewrotscale[i] = atof( argv[i+1] );
-    return(0);
+    return 0;
 }
 
 int cm_orientation(int argc, char **argv)
@@ -785,7 +792,7 @@ int cm_orientation(int argc, char **argv)
     for ( i=0; i<4; i++ )
 	quat[i] = atof( argv[i+1] );
     quat_quat2mat( Viewrotscale, quat );
-    return(0);
+    return 0;
 }
 
 int cm_end(int argc, char **argv)
@@ -802,8 +809,8 @@ int cm_end(int argc, char **argv)
     if ( Viewrotscale[15] <= 0.0 )
 	do_ae( azimuth, elevation );
 
-    if ( do_frame( curframe ) < 0 )  return(-1);
-    return(0);
+    if ( do_frame( curframe ) < 0 )  return -1;
+    return 0;
 }
 
 int cm_tree( int argc, const char **argv)
@@ -813,7 +820,7 @@ int cm_tree( int argc, const char **argv)
 
     if ( argc <= 1 )  {
 	def_tree( rtip );		/* Load the default trees */
-	return(0);
+	return 0;
     }
     bu_vls_init( &times );
 
@@ -825,7 +832,7 @@ int cm_tree( int argc, const char **argv)
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("GETTREE: %s\n", bu_vls_addr(&times) );
     bu_vls_free( &times );
-    return(0);
+    return 0;
 }
 
 int cm_multiview( int argc, char **argv)
@@ -852,7 +859,7 @@ int cm_multiview( int argc, char **argv)
 	do_ae( (double)a[i], (double)e[i] );
 	(void)do_frame( curframe++ );
     }
-    return(-1);	/* end RT by returning an error */
+    return -1;	/* end RT by returning an error */
 }
 
 /*
@@ -867,9 +874,9 @@ int cm_anim(int argc, const char **argv)
     if (argc < 1 || !argv) return -1;
     if ( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
 	bu_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
-    return(0);
+    return 0;
 }
 
 /*
@@ -886,7 +893,7 @@ int cm_clean(int argc, char **argv)
 
     rt_clean( ap.a_rt_i );
 
-    return(0);
+    return 0;
 }
 
 /*
@@ -901,16 +908,16 @@ int cm_set(int argc, char **argv)
     if ( argc <= 1 ) {
 	bu_struct_print( "Generic and Application-Specific Parameter Values",
 			 set_parse, (char *)0 );
-	return(0);
+	return 0;
     }
     bu_vls_init( &str );
     bu_vls_from_argv( &str, argc-1, (const char **)argv+1 );
     if ( bu_struct_parse( &str, set_parse, (char *)0 ) < 0 )  {
 	bu_vls_free( &str );
-	return(-1);
+	return -1;
     }
     bu_vls_free( &str );
-    return(0);
+    return 0;
 }
 
 /*
@@ -923,7 +930,7 @@ int cm_ae( int argc, char **argv)
     elevation = atof(argv[2]);
     do_ae(azimuth, elevation);
 
-    return(0);
+    return 0;
 }
 
 /*
@@ -935,10 +942,10 @@ int cm_opt(int argc, char **argv)
 
     if ( get_args( argc, argv ) <= 0 ) {
 	bu_optind = old_bu_optind;
-	return(-1);
+	return -1;
     }
     bu_optind = old_bu_optind;
-    return(0);
+    return 0;
 }
 
 
@@ -1234,8 +1241,8 @@ do_frame(int framenumber)
 	/* Ordinary case for creating output file */
 	if ( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )  {
 	    perror( framename );
-	    if ( matflag )  return(0);	/* OK */
-	    return(-1);			/* Bad */
+	    if ( matflag )  return 0;	/* OK */
+	    return -1;			/* Bad */
 	}
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
 	    bu_log("Output file is '%s' %dx%d pixels\n",
@@ -1323,7 +1330,7 @@ do_frame(int framenumber)
     bu_log("\n");
     bu_free(pixmap, "pixmap allocate");
     pixmap = (unsigned char *)NULL;
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 /*
@@ -1971,12 +1978,12 @@ static int hit_nothing(register struct application *ap)
 	VMOVE( ap->a_color, u.sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	ap->a_uptr = (genptr_t)&env_region;
-	return(1);
+	return 1;
     }
 
     ap->a_user = 0;		/* Signal view_pixel:  MISS */
     VMOVE( ap->a_color, background );	/* In case someone looks */
-    return(0);
+    return 0;
 }
 
 /*
@@ -2012,7 +2019,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
     if ( pp == PartHeadp )  {
 	bu_log("colorview:  no hit out front?\n");
-	return(0);
+	return 0;
     }
 
 
@@ -2092,7 +2099,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 
  out:
     RT_CK_REGION(ap->a_uptr);
-    return(1);
+    return 1;
 }
 
 

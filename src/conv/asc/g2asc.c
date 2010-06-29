@@ -88,7 +88,7 @@ tclify_name( const char *name )
     size_t max_len=2*strlen( name ) + 1;
 
     if ( max_len < 2 ) {
-	return( (char *)NULL );
+	return (char *)NULL;
     }
 
     if ( max_len > tclified_name_buffer_len ) {
@@ -106,13 +106,13 @@ tclify_name( const char *name )
     }
     *dest = '\0';
 
-    return( tclified_name );
+    return tclified_name;
 }
 
 int
 main(int argc, char **argv)
 {
-    int i;
+    unsigned i;
 
     if (argc != 3) {
 	bu_exit(1, "%s", usage);
@@ -307,8 +307,6 @@ main(int argc, char **argv)
 	    }
 	    avs = &intern.idb_avs;
 	    if ( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
-		int i;
-
 		fprintf( ofp, "attr set {%s}", tclify_name( dp->d_namep ) );
 		for ( i=0; i<avs->count; i++ ) {
 		    if (strlen(avs->avp[i].name) <= 0) {
@@ -1132,9 +1130,9 @@ char *name(char *str)
 	/* Null input name */
 	(void)fprintf(stderr,
 		      "g2asc:  NULL object name converted to -=NULL=-\n");
-	return("-=NULL=-");
+	return "-=NULL=-";
     }
-    return(buf);
+    return buf;
 }
 
 /*
@@ -1173,9 +1171,9 @@ char *strchop(char *str, int len)
 	/* Null input name */
 	(void)fprintf(stderr,
 		      "g2asc:  NULL string converted to -=STRING=-\n");
-	return("-=STRING=-");
+	return "-=STRING=-";
     }
-    return(buf);
+    return buf;
 }
 
 void

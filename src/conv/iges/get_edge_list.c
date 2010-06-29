@@ -35,10 +35,10 @@ Get_edge_list( edge )
 	if ( edge_root != NULL )
 	{
 	    edge_root->next = NULL;
-	    return( edge_root );
+	    return edge_root;
 	}
 	else
-	    return( (struct iges_edge_list *)NULL );
+	    return (struct iges_edge_list *)NULL;
     }
     else
     {
@@ -48,13 +48,13 @@ Get_edge_list( edge )
     }
 
     if ( e_list->edge_de == edge->edge_de )
-	return( e_list );
+	return e_list;
 
     e_list->next = Read_edge_list( edge );
     if ( e_list->next == NULL )
-	return( (struct iges_edge_list *)NULL );
+	return (struct iges_edge_list *)NULL;
     else
-	return( e_list->next );
+	return e_list->next;
 
 }
 

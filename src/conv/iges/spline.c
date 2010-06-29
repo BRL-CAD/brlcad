@@ -57,7 +57,7 @@ spline( entityno, b_patch )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
     Readrec( dir[entityno]->param );
@@ -175,7 +175,7 @@ spline( entityno, b_patch )
 	}
     }
 
-    return( 1 );
+    return 1;
 }
 
 /*

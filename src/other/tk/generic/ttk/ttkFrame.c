@@ -535,6 +535,9 @@ static void LabelframeCleanup(void *recordPtr)
 {
     Labelframe *lframe = recordPtr;
     Ttk_DeleteManager(lframe->label.mgr);
+    if (lframe->label.labelLayout) {
+	Ttk_FreeLayout(lframe->label.labelLayout);
+    }
 }
 
 /* RaiseLabelWidget --

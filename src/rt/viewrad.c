@@ -119,7 +119,7 @@ int view_init(register struct application *ap,
     ap->a_miss = radmiss;
     ap->a_onehit = 1;
 
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 /*
@@ -148,7 +148,7 @@ writephysrec(FILE *fp)
     fwrite(&length, sizeof(length), 1, fp);
     if (fwrite(physrec, sizeof(physrec), 1, fp) != 1) {
 	bu_log("writephysrec: error writing physical record\n");
-	return(0);
+	return 0;
     }
     fwrite(&length, sizeof(length), 1, fp);
 
@@ -159,7 +159,7 @@ writephysrec(FILE *fp)
     totbuf += buf;
     /*fprintf(stderr, "PREC %d, buf = %d, totbuf = %d\n", precnum, buf, totbuf);*/
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -172,7 +172,7 @@ writerec(union radrec *rp, FILE *fp)
 {
     if (precindex >= 256) {
 	if (writephysrec(fp) == 0)
-	    return(0);
+	    return 0;
     }
     memcpy(&physrec[precindex*sizeof(*rp)], rp, sizeof(*rp));
 
@@ -181,9 +181,9 @@ writerec(union radrec *rp, FILE *fp)
 
     if (precindex >= 256) {
 	if (writephysrec(fp) == 0)
-	    return(0);
+	    return 0;
     }
-    return(1);
+    return 1;
 }
 
 /* beginning of a frame */
@@ -270,7 +270,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	if (pp->pt_outhit->hit_dist >= 0.0)  break;
     if (pp == PartHeadp) {
 	bu_log("radhit:  no hit out front?\n");
-	return(0);
+	return 0;
     }
 
     if (R_DEBUG&RDEBUG_HITS) {
@@ -280,7 +280,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
     hitp = pp->pt_inhit;
     if (hitp->hit_dist >= INFINITY) {
 	bu_log("radhit:  entry beyond infinity\n");
-	return(1);
+	return 1;
     }
     /* Check to see if eye is "inside" the solid */
     if (hitp->hit_dist < 0) {
@@ -288,7 +288,7 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	bu_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist);
 	for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)
 	    rt_pr_pt(ap->a_rt_i, pp);
-	return(0);
+	return 0;
     }
 
     rayp = &rayinfo[ ap->a_level ];
@@ -346,13 +346,13 @@ radhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	/* We're the 1st ray, output the raylist */
 	dumpall(ap, depth+1);
     }
-    return(depth+1);	/* report hit to main routine */
+    return depth+1;	/* report hit to main routine */
 }
 
 static int
 radmiss(struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 /*********** Eye Visibility Routines ************/
@@ -371,12 +371,12 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	if (pp->pt_outhit->hit_dist > 0)  break;
     if (pp == PartHeadp) {
 	bu_log("hiteye:  no hit out front?\n");
-	return(1);
+	return 1;
     }
     hitp = pp->pt_inhit;
     if (hitp->hit_dist >= INFINITY) {
 	bu_log("hiteye:  entry beyond infinity\n");
-	return(1);
+	return 1;
     }
     /* The current ray segment exits "in front" of me, find out where
      * it went in.  Check to see if eye is "inside" of the solid.
@@ -391,14 +391,14 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 	    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)
 		rt_pr_pt(ap->a_rt_i, pp);
 	}
-	return(0);
+	return 0;
     }
 
     VSUB2(work, firstray.r_pt, ap->a_ray.r_pt);
     if (hitp->hit_dist * hitp->hit_dist > MAGSQ(work))
-	return(1);
+	return 1;
     else
-	return(0);
+	return 0;
 }
 
 /*
@@ -408,7 +408,7 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
 static int
 hittrue(struct application *ap)
 {
-    return(1);
+    return 1;
 }
 
 /*
@@ -430,7 +430,7 @@ isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm)
     VSUB2(rdir, firstray.r_pt, hitp->hit_point);
     VUNITIZE(rdir);
     if (VDOT(rdir, norm) < 0)
-	return(0);	/* backfacing */
+	return 0;	/* backfacing */
 
     sub_ap = *ap;	/* struct copy */
     sub_ap.a_level = ap->a_level+1;
@@ -444,7 +444,7 @@ isvisible(struct application *ap, struct hit *hitp, const fastf_t *norm)
     VADD2(sub_ap.a_ray.r_pt, hitp->hit_point, rdir);
     VMOVE(sub_ap.a_ray.r_dir, rdir);
 
-    return(rt_shootray(&sub_ap));
+    return rt_shootray(&sub_ap);
 }
 
 /************** Output Routines ***************/

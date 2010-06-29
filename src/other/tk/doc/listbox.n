@@ -29,7 +29,7 @@ Specifies the style in which to draw the active element.  This must be
 one of \fBdotbox\fR (show a focus ring around the active element),
 \fBnone\fR (no special indication of active element) or
 \fBunderline\fR (underline the active element).
-The default is \fBunderline\fR.
+The default is \fBunderline\fR on Windows, and \fBdotbox\fR elsewhere.
 .OP \-height height Height
 Specifies the desired height for the window, in lines.
 If zero or less, then the desired height for the window is made just

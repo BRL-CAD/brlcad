@@ -59,7 +59,7 @@ cyl( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[entityno]->param );
     Readint( &sol_num, "" );
@@ -79,12 +79,12 @@ cyl( entityno )
 	if ( radius == 0.0 )
 	{
 	    bu_log( "\tradius of cylinder is zero!!!\n" );
-	    return( 0 );
+	    return 0;
 	}
 	if ( scale_height == 0.0 )
 	{
 	    bu_log( "\theight of cylinder is zero!!!\n" );
-	    return( 0 );
+	    return 0;
 	}
 
 	if ( radius < 0.0 )
@@ -123,9 +123,9 @@ cyl( entityno )
     if ( mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0 )  {
 	bu_log("Unable to write entity D%07d (%s)\n" ,
 	       dir[entityno]->direct, dir[entityno]->name );
-	return( 0 );
+	return 0;
     }
-    return( 1 );
+    return 1;
 
 }
 

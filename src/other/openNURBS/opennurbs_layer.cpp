@@ -1042,12 +1042,13 @@ ON_Color ON_Layer::PlotColor( const ON_UUID& viewport_id ) const
   if ( m__runtime_flags )
   {
     // no per viewport settings
-    return m_plot_color;
+    // 2-Nov-2009 Dale Fugier, modified to call default PlotColor()
+    return PlotColor();
   }
   ON__LayerPerViewSettings* vp_settings = ON__LayerExtensions::ViewportSettings( *this, viewport_id, false );
   return (vp_settings && vp_settings->m_plot_color != ON_UNSET_COLOR)
          ? vp_settings->m_plot_color
-         : m_plot_color;
+         : PlotColor(); // 2-Nov-2009 Dale Fugier, modified to call default PlotColor()
 }
 
 void ON_Layer::SetPlotWeight( double plot_weight_mm, const ON_UUID& viewport_id )

@@ -148,7 +148,7 @@ bad_triangle( int v[3], fastf_t *vertices )
     int i;
 
     if ( v[0] == v[1] || v[1] == v[2] || v[0] == v[2] )
-	return( 1 );
+	return 1;
 
     dist = 0;
     for ( i=0; i<3; i++ ) {
@@ -157,7 +157,7 @@ bad_triangle( int v[3], fastf_t *vertices )
     }
     dist = sqrt( dist );
     if ( dist < local_tol ) {
-	return( 1 );
+	return 1;
     }
 
     dist = 0;
@@ -167,7 +167,7 @@ bad_triangle( int v[3], fastf_t *vertices )
     }
     dist = sqrt( dist );
     if ( dist < local_tol ) {
-	return( 1 );
+	return 1;
     }
 
     dist = 0;
@@ -177,10 +177,10 @@ bad_triangle( int v[3], fastf_t *vertices )
     }
     dist = sqrt( dist );
     if ( dist < local_tol ) {
-	return( 1 );
+	return 1;
     }
 
-    return( 0 );
+    return 0;
 }
 
 
@@ -511,7 +511,7 @@ Part_import( int id_start )
     curr_tri = 0;
     part_tris = NULL;
 
-    return( part );
+    return part;
 }
 
 struct obj_info *
@@ -595,7 +595,7 @@ Assembly_import( int id_start )
 	}
     }
 
-    return( this_assem );
+    return this_assem;
 }
 
 int
@@ -720,7 +720,7 @@ main( int argc, char *argv[] )
 	bu_log( "\ttheir names remain as part numbers.\n" );
     }
 
-    return( 0 );
+    return 0;
 }
 
 /*

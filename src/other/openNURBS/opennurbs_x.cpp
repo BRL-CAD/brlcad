@@ -820,7 +820,7 @@ bool ON_SSX_EVENT::IsValid(
       return false;
 
     A = surfaceA->PointAt( m_pointA.x, m_pointA.y );
-    B = surfaceA->PointAt( m_pointB.x, m_pointB.y );
+    B = surfaceB->PointAt( m_pointB.x, m_pointB.y );
     dist = A.DistanceTo(m_point3d);
     if(dist>xtol)
     {

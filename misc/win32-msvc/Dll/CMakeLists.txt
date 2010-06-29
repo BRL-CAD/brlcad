@@ -76,6 +76,13 @@ set(BRLCAD_HEADERS
     ../../../include/wdb.h
 )
 
+if(MSVC)
+    set(BRLCAD_HEADERS
+        ${BRLCAD_HEADERS}
+        ../../../include/pstdint.h
+    )
+endif(MSVC)
+
 set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/Arb8.cpp
     ../../../../rt^3/src/coreInterface/Combination.cpp
@@ -86,8 +93,12 @@ set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/EllipticalTorus.cpp
     ../../../../rt^3/src/coreInterface/FileDatabase.cpp
     ../../../../rt^3/src/coreInterface/Halfspace.cpp
+    ../../../../rt^3/src/coreInterface/HyperbolicCylinder.cpp
+    ../../../../rt^3/src/coreInterface/Hyperboloid.cpp
     ../../../../rt^3/src/coreInterface/MemoryDatabase.cpp
     ../../../../rt^3/src/coreInterface/Object.cpp
+    ../../../../rt^3/src/coreInterface/ParabolicCylinder.cpp
+    ../../../../rt^3/src/coreInterface/Paraboloid.cpp
     ../../../../rt^3/src/coreInterface/Particle.cpp
     ../../../../rt^3/src/coreInterface/Torus.cpp
     ../../../../rt^3/src/coreInterface/Unknown.cpp

@@ -90,7 +90,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	npsw = 1;
     }
 
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 /*
@@ -103,7 +103,7 @@ void
 view_2init(struct application *ap)
 {
     extern double	cell_width;
-    extern int	width;
+    extern size_t width;
 
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
@@ -208,7 +208,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 	goto more;
     }
 
-    return(1);	/* report hit to main routine */
+    return 1;	/* report hit to main routine */
 }
 
 /*
@@ -219,7 +219,7 @@ rayhit(register struct application *ap, struct partition *PartHeadp, struct seg 
 int
 raymiss(register struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 void application_init (void) {}

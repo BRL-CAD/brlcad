@@ -74,6 +74,8 @@ bool ON_3dmObjectAttributes::operator==(const ON_3dmObjectAttributes& other) con
     return false;
   if ( m_plot_color != other.m_plot_color )
     return false;
+  if ( m_display_order != other.m_display_order )
+    return false;
   if ( m_object_decoration != other.m_object_decoration )
     return false;
   if ( m_wire_density != other.m_wire_density )
@@ -151,6 +153,7 @@ void ON_3dmObjectAttributes::Default()
   m_linetype_index = -1; // continuous
   m_color = ON_Color(0,0,0);
   m_plot_color = ON_Color(0,0,0); // Do not change to ON_UNSET_COLOR
+  m_display_order = 0;
   m_plot_weight_mm = 0.0;
   m_object_decoration = ON::no_object_decoration;
   m_wire_density = 1;
@@ -352,16 +355,29 @@ bool ON_3dmObjectAttributes::ReadV5Helper( ON_BinaryArchive& file )
     if ( minor_version <= 0 )
       break;
 
-    // Add new item reading above this code, and increment the "21"
+    // 28 Nov. 2009 - S. Baer
+    // Added m_display_order to version 2.1 files
+    if ( 22 == itemid )
+    {
+      rc = file.ReadInt(&m_display_order);
+      if (!rc) break;
+      rc = file.ReadChar(&itemid);
+      if ( !rc || 0 == itemid ) break;
+    }
+
+    if ( minor_version <= 1 )
+      break;
+
+    // Add new item reading above this code, and increment the "22"
     // in the following if statement to an appropriate value, and
     // update the comment.  Be sure to test reading of old and
     // new files by old and new code, before checking in your
     // changes.
     //
-    if ( itemid > 21 )
+    if ( itemid > 22 )
     {
       // we are reading file written with code newer
-      // than this code (minor_version > 0)
+      // than this code (minor_version > 1)
       itemid = 0;
     }
 
@@ -525,7 +541,9 @@ ON_BOOL32 ON_3dmObjectAttributes::Read( ON_BinaryArchive& file )
 bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
 {
   unsigned char c;
-  bool rc = file.Write3dmChunkVersion(2,0);
+  // 29 Nov. 2009 S. Baer
+  // Chunk version updated to 2.1 in order to support m_display_order
+  bool rc = file.Write3dmChunkVersion(2,1);
   while(rc)
   {
     if (!rc) break;
@@ -707,6 +725,18 @@ bool ON_3dmObjectAttributes::WriteV5Helper( ON_BinaryArchive& file ) const
       rc = file.WriteChar(c);
       if (!rc) break;
       rc = file.WriteArray(m_dmref);
+      if (!rc) break;
+    }
+
+    // 29 Nov. 2009 - S. Baer
+    // Only write m_display_order if it's value!=0
+    // m_display_order is written to version 2.1 files
+    if ( 0 != m_display_order )
+    {
+      c = 22;
+      rc = file.WriteChar(c);
+      if (!rc) break;
+      rc = file.WriteInt(m_display_order);
       if (!rc) break;
     }
 
@@ -955,6 +985,18 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
         unsigned int control_limits
         )
 {
+  ON_ERROR("Do not use deprecated version of ON_3dmObjectAttributes::ApplyParentalControl()");
+  ON_Layer bogus_layer;
+  bogus_layer.m_layer_index = -1;
+  return ApplyParentalControl(parents_attributes,bogus_layer,control_limits);
+}
+
+unsigned int ON_3dmObjectAttributes::ApplyParentalControl( 
+        const ON_3dmObjectAttributes& parents_attributes,
+        const ON_Layer& parent_layer,
+        unsigned int control_limits
+        )
+{
   unsigned int rc = 0;
 
   if ( m_bVisible && !parents_attributes.m_bVisible )
@@ -973,7 +1015,16 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x02;
       m_color_source = parents_attributes.m_color_source;
       m_color        = parents_attributes.m_color;
-      m_layer_index = parents_attributes.m_layer_index;
+      // 2010 March 10 Dale Lear
+      //   Changing the layer index is wrong!
+      //   Color by parent means COLOR and not LAYER
+      // WRONG! // m_layer_index = parents_attributes.m_layer_index;
+      if ( ON::color_from_layer == m_color_source && parent_layer.m_layer_index >= 0 )
+      {
+        // this object will use the parent layer's color
+        m_color_source = ON::color_from_object;
+        m_color = parent_layer.m_color;
+      }
     }
   }
 
@@ -984,7 +1035,16 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x04;
       m_material_source = parents_attributes.m_material_source;
       m_material_index  = parents_attributes.m_material_index;
-      m_layer_index = parents_attributes.m_layer_index;
+      // 2010 March 10 Dale Lear
+      //   Changing the layer index is wrong!
+      //   Material by parent means MATERIAL and not LAYER
+      // WRONG! // m_layer_index = parents_attributes.m_layer_index;
+      if ( ON::material_from_layer == m_material_source && parent_layer.m_layer_index >= 0 )
+      {
+        // this object will use the parent layer's material
+        m_material_source = ON::material_from_object;
+        m_material_index = parent_layer.m_material_index;
+      }
     }
   }
 
@@ -995,6 +1055,12 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x08;
       m_plot_color_source = parents_attributes.m_plot_color_source;
       m_plot_color        = parents_attributes.m_plot_color;
+      if ( ON::plot_color_from_layer == m_plot_color_source && parent_layer.m_layer_index >= 0 )
+      {
+        // this object will use the parent layer's plot color
+        m_plot_color_source = ON::plot_color_from_object;
+        m_plot_color        = parent_layer.m_plot_color;
+      }
     }
   }
 
@@ -1005,6 +1071,12 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x10;
       m_plot_weight_source = parents_attributes.m_plot_weight_source;
       m_plot_weight_mm     = parents_attributes.m_plot_weight_mm;
+      if ( ON::plot_weight_from_layer == m_plot_weight_source && parent_layer.m_layer_index >= 0 )
+      {
+        // this object will use the parent layer's plot weight
+        m_plot_weight_source = ON::plot_weight_from_object;
+        m_plot_weight_mm     = parent_layer.m_plot_weight_mm;
+      }
     }
   }
 
@@ -1015,7 +1087,19 @@ unsigned int ON_3dmObjectAttributes::ApplyParentalControl(
       rc |= 0x20;
       m_linetype_source = parents_attributes.m_linetype_source;
       m_linetype_index  = parents_attributes.m_linetype_index;
+      if ( ON::linetype_from_layer == m_linetype_source && parent_layer.m_layer_index >= 0 )
+      {
+        // this object will use the parent layer's line type
+        m_linetype_source = ON::linetype_from_object;
+        m_linetype_index  = parent_layer.m_linetype_index;
+      }
     }
+  }
+  
+  if ( 0 != (0x40 & control_limits) )
+  {
+    rc |= 0x40;
+    m_display_order = parents_attributes.m_display_order;
   }
 
   return rc;

@@ -195,14 +195,14 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( argc > ++bu_optind )
 	(void)fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 int
@@ -280,7 +280,7 @@ main(int argc, char **argv)
 	    break;
     }
     fb_close(fbp);
-    return(0);
+    return 0;
 }
 
 /*

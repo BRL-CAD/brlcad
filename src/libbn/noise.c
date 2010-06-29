@@ -537,7 +537,7 @@ find_spec_wgt(double h, double l, double o)
 
     bu_semaphore_release(BU_SEM_BN_NOISE);
 
-    return (ep);
+    return ep;
 }
 /**
  * @brief
@@ -604,7 +604,7 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 	value += noise_remainder * bn_noise_perlin(pt) * spec_wgts[i];
     }
 
-    return(value);
+    return value;
 
 } /* bn_noise_fbm() */
 
@@ -700,7 +700,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 	value += noise_remainder * bn_noise_perlin(pt) * pow(frequency, -h_val);
     }
 #endif
-    return(value);
+    return value;
 
 } /* bn_noise_turb() */
 

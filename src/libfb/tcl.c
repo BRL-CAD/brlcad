@@ -21,7 +21,7 @@
 /** @{ */
 /** @file ./libfb/tcl.c
  *
- *  LIBFB's Tcl interface.
+ * LIBFB's Tcl interface.
  *
  */
 /** @} */
@@ -43,27 +43,28 @@
 #include "brlcad_version.h"
 
 
-#define FB_TCL_CKMAG(_ptr, _magic, _str) { \
-	struct bu_vls _fb_vls; \
-\
-	if (!(_ptr)) { \
-		bu_vls_init(&_fb_vls); \
-		bu_vls_printf(&_fb_vls, "ERROR: null %s ptr, file %s, line %d\n", \
-			_str, __FILE__, __LINE__ ); \
-		Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
-		bu_vls_free(&_fb_vls); \
-\
-		return TCL_ERROR; \
-	} else if (*((long *)(_ptr)) != (_magic)) { \
-		bu_vls_init(&_fb_vls); \
-		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr %p, s/b x%x, was x%lx, file %s, line %d\n", \
-		_str, (void *)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
-		Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
-		bu_vls_free(&_fb_vls); \
-\
-		return TCL_ERROR; \
-	} \
-}
+#define FB_TCL_CKMAG(_ptr, _magic, _str) {				\
+	struct bu_vls _fb_vls;						\
+									\
+	if (!(_ptr)) {							\
+	    bu_vls_init(&_fb_vls);					\
+	    bu_vls_printf(&_fb_vls, "ERROR: null %s ptr, file %s, line %d\n", \
+			  _str, __FILE__, __LINE__);			\
+	    Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
+	    bu_vls_free(&_fb_vls);					\
+									\
+	    return TCL_ERROR;						\
+	} else if (*((long *)(_ptr)) != (_magic)) {			\
+	    bu_vls_init(&_fb_vls);					\
+	    bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr %p, s/b x%x, was x%lx, file %s, line %d\n", \
+			  _str, (void *)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
+	    Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
+	    bu_vls_free(&_fb_vls);					\
+									\
+	    return TCL_ERROR;						\
+	}								\
+    }
+
 
 #define FB_TCL_CK_FBIO(_p) FB_TCL_CKMAG(_p, FB_MAGIC, "FBIO")
 
@@ -73,7 +74,6 @@ extern int Fbo_Init(Tcl_Interp *interp);
 /* XXX -- At some point these routines should be moved to FBIO */
 #ifdef IF_WGL
 extern int wgl_open_existing();
-extern int wgl_close_existing();
 extern FBIO wgl_interface;
 extern void wgl_configureWindow();
 extern int wgl_refresh();
@@ -82,7 +82,6 @@ static const char *wgl_device_name = "/dev/wgl";
 
 #ifdef IF_OGL
 extern int ogl_open_existing();
-extern int ogl_close_existing();
 extern FBIO ogl_interface;
 extern void ogl_configureWindow();
 extern int ogl_refresh();
@@ -93,7 +92,6 @@ static const char *ogl_device_name = "/dev/ogl";
 extern void X24_configureWindow();
 extern int X24_refresh();
 extern int X24_open_existing();
-extern int X24_close_existing();
 extern FBIO X24_interface;
 static const char *X_device_name = "/dev/X";
 #endif
@@ -104,7 +102,6 @@ static const char *X_device_name = "/dev/X";
 extern void tk_configureWindow();
 extern int tk_refresh();
 extern int tk_open_existing();
-extern int tk_close_existing();
 extern FBIO tk_interface;
 #endif
 static const char *tk_device_name = "/dev/tk";
@@ -123,7 +120,7 @@ static struct bu_cmdtab cmdtab[] = {
 
 
 int
-fb_cmd_open_existing(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_open_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     register FBIO *ifp;
     struct bu_vls vls;
@@ -243,19 +240,19 @@ fb_cmd_open_existing(ClientData clientData __attribute__((unused)), Tcl_Interp *
     bu_vls_printf(&vls, "fb_open_existing: supports only the following device types\n");
 #ifdef IF_X
     bu_vls_strcat(&vls, X_device_name);
-    bu_vls_strcat( &vls, "\n" );
+    bu_vls_strcat(&vls, "\n");
 #endif  /* IF_X */
 #ifdef IF_WGL
     bu_vls_strcat(&vls, wgl_device_name);
-    bu_vls_strcat( &vls, "\n" );
+    bu_vls_strcat(&vls, "\n");
 #endif  /* IF_WGL */
 #ifdef IF_OGL
     bu_vls_strcat(&vls, ogl_device_name);
-    bu_vls_strcat( &vls, "\n" );
+    bu_vls_strcat(&vls, "\n");
 #endif  /* IF_OGL */
 #ifdef IF_TK
     bu_vls_strcat(&vls, tk_device_name);
-    bu_vls_strcat( &vls, "\n" );
+    bu_vls_strcat(&vls, "\n");
 #endif  /* IF_TK */
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -265,7 +262,7 @@ fb_cmd_open_existing(ClientData clientData __attribute__((unused)), Tcl_Interp *
 
 
 int
-fb_cmd_close_existing(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_close_existing(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     FBIO *ifp;
 
@@ -312,6 +309,7 @@ fb_configureWindow(FBIO *ifp, int width, int height)
 #endif  /* IF_TK */
 }
 
+
 int
 fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 {
@@ -334,19 +332,19 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 
 #ifdef IF_X
     status = -1;
-    if (!strncmp(ifp->if_name, X_device_name, strlen( X_device_name))) {
+    if (!strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
 	status = X24_refresh(ifp, x, y, w, h);
     }
 #endif /* IF_X */
 #ifdef IF_WGL
     status = -1;
-    if (!strncmp(ifp->if_name, wgl_device_name, strlen( wgl_device_name))) {
+    if (!strncmp(ifp->if_name, wgl_device_name, strlen(wgl_device_name))) {
 	status = wgl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_WGL */
 #ifdef IF_OGL
     status = -1;
-    if (!strncmp(ifp->if_name, ogl_device_name, strlen( ogl_device_name))) {
+    if (!strncmp(ifp->if_name, ogl_device_name, strlen(ogl_device_name))) {
 	status = ogl_refresh(ifp, x, y, w, h);
     }
 #endif  /* IF_OGL */
@@ -354,7 +352,7 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
 #if 0
 /* XXX TJM implement tk_refresh */
     status = -1;
-    if (!strncmp(ifp->if_name, tk_device_name, strlen( tk_device_name))) {
+    if (!strncmp(ifp->if_name, tk_device_name, strlen(tk_device_name))) {
 	status = tk_refresh(ifp, x, y, w, h);
     }
 #endif
@@ -373,7 +371,7 @@ fb_refresh(FBIO *ifp, int x, int y, int w, int h)
  * Hook function wrapper to the fb_common_file_size Tcl command
  */
 int
-fb_cmd_common_file_size(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
+fb_cmd_common_file_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     unsigned long int width, height;
     int pixel_size = 3;
@@ -389,11 +387,11 @@ fb_cmd_common_file_size(ClientData clientData __attribute__((unused)), Tcl_Inter
 
     if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
 	struct bu_vls vls;
-	bu_vls_init( &vls );
-	bu_vls_printf( &vls, "%lu %lu", width, height );
-	Tcl_SetObjResult( interp,
-			  Tcl_NewStringObj(bu_vls_addr( &vls ), bu_vls_strlen(&vls)) );
-	bu_vls_free( &vls );
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%lu %lu", width, height);
+	Tcl_SetObjResult(interp,
+			 Tcl_NewStringObj(bu_vls_addr(&vls), bu_vls_strlen(&vls)));
+	bu_vls_free(&vls);
 	return TCL_OK;
     }
 
@@ -404,12 +402,12 @@ fb_cmd_common_file_size(ClientData clientData __attribute__((unused)), Tcl_Inter
 
 
 /*
- *			F B _ I N I T
+ * F B _ I N I T
  *
- *  Allows LIBFB to be dynamically loade to a vanilla tclsh/wish with
- *  "load /usr/brlcad/lib/libfb.so"
+ * Allows LIBFB to be dynamically loade to a vanilla tclsh/wish with
+ * "load /usr/brlcad/lib/libfb.so"
  *
- *  The name of this function is specified by TCL.
+ * The name of this function is specified by TCL.
  */
 int
 Fb_Init(Tcl_Interp *interp)

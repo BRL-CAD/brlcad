@@ -106,7 +106,7 @@ getlong(char *msgp)
     u = *p++; u <<= 8;
     u |= *p++; u <<= 8;
     u |= *p++; u <<= 8;
-    return (u | *p);
+    return u | *p;
 }
 
 
@@ -137,13 +137,13 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
 	file_name = "-";
 	fp = stdin;
     } else {
@@ -152,14 +152,14 @@ get_args(int argc, char **argv)
 	    (void)fprintf(stderr,
 			  "sun-pix: cannot open \"%s\" for reading\n",
 			  file_name);
-	    return(0);
+	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
 	(void)fprintf(stderr, "sun-pix: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -213,10 +213,10 @@ decoderead(unsigned char *buf, int size, int length, FILE *fp)
 	    --repeat;
 	} else {
 	    lastchar = getc(fp);
-	    if (lastchar < 0) return(number_read);
+	    if (lastchar < 0) return number_read;
 	    if (lastchar == ESCAPE) {
 		repeat = getc(fp);
-		if (repeat <0) return(number_read);
+		if (repeat <0) return number_read;
 		if (repeat == 0) {
 		    *buf = ESCAPE;
 		    ++buf;
@@ -225,7 +225,7 @@ decoderead(unsigned char *buf, int size, int length, FILE *fp)
 		    --repeat;
 		} else {
 		    lastchar = getc(fp);
-		    if (lastchar < 0) return(number_read);
+		    if (lastchar < 0) return number_read;
 		}
 	    } else {
 		*buf = lastchar;
@@ -235,7 +235,7 @@ decoderead(unsigned char *buf, int size, int length, FILE *fp)
 	    }
 	}
     }
-    return(number_read);
+    return number_read;
 }
 
 

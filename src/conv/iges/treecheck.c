@@ -48,9 +48,9 @@ Treecheck( root )
 
 	if ( ptr->op == Intersect || ptr->op == Subtract )
 	    if ( ptr->right->op == Union )	/* Not a legal BRL-CAD tree */
-		return( 0 );
+		return 0;
 	if ( ptr->parent == NULL )
-	    return( 1 );
+	    return 1;
 
 	if ( ptr != ptr->parent->right )
 	    ptr = ptr->parent->right;

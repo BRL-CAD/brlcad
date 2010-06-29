@@ -959,7 +959,7 @@ Tcl_ScanObjCmd(
 		if (Tcl_GetDoubleFromObj(NULL, objPtr, &dvalue) != TCL_OK) {
 #ifdef ACCEPT_NAN
 		    if (objPtr->typePtr == &tclDoubleType) {
-			dValue = objPtr->internalRep.doubleValue;
+			dvalue = objPtr->internalRep.doubleValue;
 		    } else
 #endif
 		    {

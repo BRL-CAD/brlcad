@@ -133,12 +133,12 @@ bn_atan2(double y, double x)
     if (x > -1.0e-20 && x < 1.0e-20) {
 	/* X is equal to zero, check Y */
 	if (y < -1.0e-20)
-	    return(-3.14159265358979323/2);
+	    return -3.14159265358979323/2;
 	if (y > 1.0e-20)
-	    return(3.14159265358979323/2);
-	return(0.0);
+	    return 3.14159265358979323/2;
+	return 0.0;
     }
-    return(atan2(y, x));
+    return atan2(y, x);
 }
 
 
@@ -1226,7 +1226,7 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
 int
 bn_mat_is_identity(const mat_t m)
 {
-    return (! memcmp(m, bn_mat_identity, sizeof(mat_t)));
+    return ! memcmp(m, bn_mat_identity, sizeof(mat_t));
 }
 
 
@@ -1381,7 +1381,7 @@ bn_mat_det3(const mat_t m)
 	-m[1] * (m[4]*m[10] - m[6]*m[8])
 	+m[2] * (m[4]*m[9] - m[5]*m[8]);
 
-    return(sum);
+    return sum;
 }
 
 
@@ -1414,7 +1414,7 @@ bn_mat_determinant(const mat_t m)
 
     sum = m[0]*det[0] - m[1]*det[1] + m[2]*det[2] - m[3]*det[3];
 
-    return(sum);
+    return sum;
 
 }
 

@@ -563,6 +563,10 @@ test format-19.2 {Bug 1867855} {
     format %llx 0
 } 0
 
+test format-19.3 {Bug 2830354} {
+    string length [format %340f 0]
+} 340
+
 # cleanup
 catch {unset a}
 catch {unset b}

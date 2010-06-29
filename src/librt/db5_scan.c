@@ -42,22 +42,22 @@
  * D B 5 _ S C A N
  *
  * Returns -
- *	 0 Success
- *	-1 Fatal Error
+ * 0 Success
+ * -1 Fatal Error
  */
 int
 db5_scan(
     struct db_i *dbip,
-    void		(*handler)(struct db_i *,
-				   const struct db5_raw_internal *,
-				   size_t addr, genptr_t client_data),
+    void (*handler)(struct db_i *,
+		    const struct db5_raw_internal *,
+		    off_t addr, genptr_t client_data),
     genptr_t client_data)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
     int got;
     size_t nrec;
-    size_t addr;
+    off_t addr;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(x%x, x%x)\n", dbip, handler);
@@ -68,28 +68,28 @@ db5_scan(
     /* Fast-path when file is already memory-mapped */
     if (dbip->dbi_mf) {
 	const unsigned char *cp = (const unsigned char *)dbip->dbi_inmem;
-	size_t eof;
+	off_t eof;
 
 	BU_CK_MAPPED_FILE(dbip->dbi_mf);
-	eof = dbip->dbi_mf->buflen;
+	eof = (off_t)dbip->dbi_mf->buflen;
 
 	if (db5_header_is_valid(cp) == 0) {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
 	cp += sizeof(header);
-	addr = sizeof(header);
+	addr = (off_t)sizeof(header);
 	while (addr < eof) {
 	    if ((cp = db5_get_raw_internal_ptr(&raw, cp)) == NULL) {
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
-	    addr += raw.object_length;
+	    addr += (off_t)raw.object_length;
 	}
 	dbip->dbi_eof = addr;
-	BU_ASSERT_LONG(dbip->dbi_eof, ==, (size_t)dbip->dbi_mf->buflen);
-    }  else  {
+	BU_ASSERT_LONG(dbip->dbi_eof, ==, (off_t)dbip->dbi_mf->buflen);
+    } else {
 	/* In a totally portable way, read the database with stdio */
 	rewind(dbip->dbi_fp);
 	if (fread(header, sizeof header, 1, dbip->dbi_fp) != 1  ||
@@ -100,7 +100,7 @@ db5_scan(
 	for (;;) {
 	    addr = ftell(dbip->dbi_fp);
 	    if ((got = db5_get_raw_internal_fp(&raw, dbip->dbi_fp)) < 0) {
-		if (got == -1)  break;		/* EOF */
+		if (got == -1) break;		/* EOF */
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
@@ -127,7 +127,7 @@ struct directory *
 db_diradd5(
     struct db_i *dbip,
     const char *name,
-    size_t laddr,
+    off_t laddr,
     unsigned char major_type,
     unsigned char minor_type,
     unsigned char name_hidden,
@@ -157,7 +157,7 @@ db_diradd5(
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     bu_vls_free(&local);
     dp->d_un.ptr = NULL;
-    dp->d_un.file_offset = laddr;
+    dp->d_addr = laddr;
     dp->d_major_type = major_type;
     dp->d_minor_type = minor_type;
     switch (major_type) {
@@ -165,7 +165,7 @@ db_diradd5(
 	    if (minor_type == ID_COMBINATION) {
 
 		dp->d_flags = DIR_COMB;
-		if (!avs || avs->count == 0)  break;
+		if (!avs || avs->count == 0) break;
 		/*
 		 *  check for the "region=" attribute.
 		 */
@@ -193,14 +193,14 @@ db_diradd5(
     dp->d_forw = *headp;
     *headp = dp;
 
-    return(dp);
+    return dp;
 }
 
 
 struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
-	   size_t laddr,
+	   off_t laddr,
 	   genptr_t client_data)
 {
     struct directory **headp;
@@ -229,7 +229,7 @@ db5_diradd(struct db_i *dbip,
     BU_LIST_INIT(&dp->d_use_hd);
     RT_DIR_SET_NAMEP(dp, bu_vls_addr(&local));	/* sets d_namep */
     bu_vls_free(&local);
-    dp->d_un.file_offset = laddr;
+    dp->d_addr = laddr;
     dp->d_major_type = rip->major_type;
     dp->d_minor_type = rip->minor_type;
     switch (rip->major_type) {
@@ -240,7 +240,7 @@ db5_diradd(struct db_i *dbip,
 		bu_avs_init_empty(&avs);
 
 		dp->d_flags = DIR_COMB;
-		if (rip->attributes.ext_nbytes == 0)  break;
+		if (rip->attributes.ext_nbytes == 0) break;
 		/*
 		 *  Crack open the attributes to
 		 *  check for the "region=" attribute.
@@ -275,7 +275,7 @@ db5_diradd(struct db_i *dbip,
     dp->d_forw = *headp;
     *headp = dp;
 
-    return(dp);
+    return dp;
 }
 
 
@@ -288,12 +288,12 @@ HIDDEN void
 db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
-    size_t laddr,
+    off_t laddr,
     genptr_t client_data)	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);
 
-    if (rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT)  return;
+    if (rip->h_dli == DB5HDR_HFLAGS_DLI_HEADER_OBJECT) return;
     if (rip->h_dli == DB5HDR_HFLAGS_DLI_FREE_STORAGE) {
 	/* Record available free storage */
 	rt_memfree(&(dbip->dbi_freep), rip->object_length, laddr);
@@ -301,7 +301,7 @@ db5_diradd_handler(
     }
 
     /* If somehow it doesn't have a name, ignore it */
-    if (rip->name.ext_buf == NULL)  return;
+    if (rip->name.ext_buf == NULL) return;
 
     if (RT_G_DEBUG&DEBUG_DB) {
 	bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
@@ -327,8 +327,8 @@ db5_diradd_handler(
  * Called from rt_dirbuild(), and g_submodel.c
  *
  * Returns -
- *	 0 OK
- *	-1 failure
+ * 0 OK
+ * -1 failure
  */
 int
 db_dirbuild(struct db_i *dbip)
@@ -427,7 +427,7 @@ db_dirbuild(struct db_i *dbip)
     /* Make a very simple check for a v4 database */
     if (header[0] == 'I') {
 	dbip->dbi_version = 4;
-	if (db_scan(dbip, (int (*)())db_diradd, 1, NULL) < 0) {
+	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
 	    dbip->dbi_version = 0;
 	    return -1;
 	}
@@ -467,8 +467,9 @@ db_get_version(struct db_i *dbip)
 	return 4;
     }
 
-    return(-1);
+    return -1;
 }
+
 
 /** @} */
 /*

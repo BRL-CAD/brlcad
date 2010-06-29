@@ -113,7 +113,7 @@ sh_null_render( struct application *ap, struct partition *pp, struct shadework *
      */
     (void)rr_render(ap, pp, swp);
 
-    return(1);
+    return 1;
 }
 
 

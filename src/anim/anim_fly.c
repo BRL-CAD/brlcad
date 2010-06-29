@@ -168,7 +168,7 @@ main(int argc, char **argv)
 	}
     }
     bu_free(points, "points");
-    return( 0 );
+    return 0;
 }
 
 void
@@ -248,7 +248,7 @@ fastf_t bank(fastf_t *acc, fastf_t *vel)
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t) */
 fastf_t f_prm_0(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
 {
-    return  -(3.0*x0 - 4.0*x1 + x2)/(2*h);
+    return -(3.0*x0 - 4.0*x1 + x2)/(2*h);
 }
 
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t+h) */
@@ -299,10 +299,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 

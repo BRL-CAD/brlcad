@@ -83,13 +83,13 @@ get_args(int argc, char *argv[], long *width, long *height)
 	    case '?':
 	    case 'h':
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
@@ -110,7 +110,7 @@ get_args(int argc, char *argv[], long *width, long *height)
     if (argc > ++bu_optind)
 	bu_log("%s: excess argument(s) ignored\n", bu_getprogname());
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

@@ -323,7 +323,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, gauss_parse_tab, (char *)gauss_sp ) < 0 )
-	return(-1);
+	return -1;
 
     /* We have to pick up the parameters for the gaussian puff now.
      * They won't be available later.  So what we do is sneak a peak
@@ -356,7 +356,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	bn_mat_print( "m_to_sh", gauss_sp->gauss_m_to_sh );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -571,7 +571,7 @@ gauss_render(struct application *ap, struct partition *pp, struct shadework *swp
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*

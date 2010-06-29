@@ -1,0 +1,484 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Asignación de propiedades de los materiales y trazado de rayos 
+	   (Raytracing) en <application>MGED</application></title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Aprobado para su publicación. Su distribución es ilimitada.</para>
+   </legalnotice>
+  </articleinfo>
+ 
+    <para id="assigning_material_properties_and_raytracing_overviewlist">
+      En este tutorial usted aprenderá a:
+      
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Llamar figuras primitivas creadas anteriormente.</para>
+	</listitem>
+	<listitem>
+	  <para>Crear una región de dos figuras primitivas.</para>
+	</listitem>
+	<listitem>
+	  <para>Asignar propiedades de los materiales a sus figuras primitivas 
+		desde la ventana de comandos.</para>
+	</listitem>
+	<listitem>
+	  <para>Limpiar su ventana gráfica y dibujar una nueva región.</para>
+	</listitem>
+	<listitem>
+	  <para>Generar el Raytrace de si diseño desde la interfaz gráfica.</para>
+	</listitem>
+	<listitem>
+	  <para>Utilizar la interfaz gráfica para cambiar capas de la ventana 
+		gráfica.</para>
+	</listitem>
+	<listitem>
+	  <para>Limpiar la ventana gráfica luego de hacer el trazado de rayos 
+		de su modelo.</para>
+	</listitem>
+      </itemizedlist>
+    </para>
+
+    <sect1 id="assigning_material_properties_and_raytracing_opendb">
+      <title>Abrir una base de datos</title>
+      
+      <para>
+	Para llamar a una figura primitiva creada en el tutorial anterior, 
+	inicie <application>MGED</application> e ingrese al menú File (Archivo) 
+	seleccionando la opción Open (Abrir). Un panel de control aparecerá con
+	una lista de carpetas y archivos. Selecciones shapes.g y luego Open 
+	(Abrir). Un nuevo cuadro se mostrará en pantalla, en el que deberá
+	cliquear OK.
+      </para>
+      
+      <para>
+	Dos ventanas se abrirán en su pantalla.
+	En el prompt de <application>MGED</application> de la ventana de 
+	comandos tipee:
+	
+	<command>draw sph2.s rcc2.s[Enter]</command>
+      </para>
+    </sect1>
+    
+    <sect1 id="create_region">
+      <title>Crear una región</title>
+      
+      <para>
+	Antes de que pueda hacer el trazado de rayos de su diseño, usted tiene 
+	que hacer una región de las dos formas. Una región es un objeto que 
+	tiene propiedades de un material uniforme. La mayoría de las 
+	aplicaciones que utilizan los modelos de <application>BRL-CAD
+	</application> consideraran a las regiones como los componentes básicos 
+	del modelo. Las regiones se construyen utilizando las operaciones 
+	booleanas básicas de unión, intersección y substracción, que se 
+	mostrarán en el próximo capítulo.
+      </para>
+      
+      <para>
+	En el promp de <application>MGED</application> tipee:
+	
+	<command>
+	  r shRaytrace Control Panelapes2.r u sph2.s u rcc2.s[Enter]
+	</command>
+	
+      </para>
+      
+	<para>
+	  Nota:
+	  Asegúrese de haber ingresado correctamente el comando antes de 
+	  presionar ENTER. 
+	  Los espacios, o la falta de los mismos, son importantes.
+	</para>
+      
+      <para>
+	Este comando le dice a <application>MGED</application> que:
+	
+	<informaltable>
+	  <tgroup cols='6'>
+	    <tbody>
+	      <row>
+		<entry>r</entry>
+		<entry>shapes2.r</entry>
+		<entry>u</entry>
+		<entry>sph2.s</entry>
+		<entry>u</entry>
+		<entry>rcc2.s</entry>
+	      </row>
+	      <row>
+		<entry>Cree una región</entry>
+		<entry>La llame shapes2.r</entry>
+		<entry>Añada el volumen de la forma</entry>
+		<entry>sph2.s</entry>
+		<entry>Añada el volumen de la forma</entry>
+		<entry>rcc2.s</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+    </sect1>
+    
+    <sect1 id="assign_material_prop">
+      <title>Asignar propiedad de la materia a una región</title>
+
+      <para>
+	Ahora tipee:
+	
+	<command>mater shapes2.r[Enter]</command>
+	
+	<application>MGED</application> responderá con:
+	
+      </para>
+      <literallayout>
+   shader=
+   
+   Shader? ('del' to delete, CR to skip)
+
+      </literallayout>
+      
+      <para>
+	Que significa: Tipo de sombra ('del' para borrar, CR para saltear)
+
+
+	Tipee entonces:
+	
+	<command>plastic[Enter]</command>
+	
+	<application>MGED</application> le preguntará:
+	
+      </para>
+      <literallayout>
+   Color = (no color specified)
+
+   Color R G B (0..255)? ('del' to delete, CR to skip)
+      </literallayout>
+
+      <para>
+	Tipee:
+     
+	<command>0 255 0[Enter]</command>
+	
+	Eso le asignará a la región el color gris claro. 
+
+	<application>MGED</application> preguntará entonces:
+      </para>
+
+      <literallayout>
+   Inherit = 0 lower nodes (towards leaves) override
+
+   Inheritance (0/1)? (CR to skip)
+      </literallayout>
+
+      <para>
+	Tipee:
+	
+	<command>0[Enter]</command>
+	
+	Cuando complete esta seguidilla de comandos, en su ventana gráfica 
+	aparecerá algo como el siguiente ejemplo:
+      </para>
+      
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged04_commandwindow.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     La pantalla de la ventana de comandos 
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+ 
+      <para>
+	Una versión de una sola línea de estos comandos podría ser:
+	
+	<command>mater shapes2.r plastic 0 255 0 0[Enter]</command>
+	
+	Este comando dice que:
+      </para>
+      
+      <informaltable>
+	<tgroup cols='5'>
+	  <tbody>
+	    <row>
+	      <entry>mater</entry>
+	      <entry>shapes2.r</entry>
+	      <entry>plastic</entry>
+	      <entry>0 255 0</entry>
+	      <entry>0</entry>
+	    </row>
+	    <row>
+	      <entry>Asigne propiedades de la materia a...</entry>
+	      <entry>la región llamada shapes2.r</entry>
+	      <entry>Crear una región de plástico</entry>
+	      <entry>Con el color gris claro</entry>
+	      <entry>No heredando los colores del tipo de material</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+    </sect1>
+    
+    <sect1 id="clear_window_new_region">
+      <title>Limpiar la ventana gráfica y dibujar una nueva región</title>
+
+      <para>
+	Una forma sencilla de limpiar su ventana gráfica y dibujar la nueva 
+	región al mismo tiempo es tipeando en el prompt de <application>MGED
+	</application>:
+	
+	<command>B shapes2.r[Enter]</command>
+	
+	Este comando le dice a <application>MGED</application>:
+      </para>
+      
+      <informaltable>
+	<tgroup cols='2'>
+	  <tbody>
+	    <row>
+	      <entry>B</entry>
+	      <entry>shapes2.r</entry>
+	    </row>
+	    <row>
+	      <entry>
+		La B es de Blast (ráfaga) y su función es despejar la ventana 
+		gráfica y redibujar el diseño.
+	      </entry>
+	      <entry>La región llamada shapes2.r</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      
+      <para>
+	El comando Blast es la forma corta de combinar los comandos Z y draw.
+      </para>
+    </sect1>
+    
+    <sect1 id="raytrace_model">
+      <title>Crear el  trazado de rayos (Raytrace) de su modelo</title>
+      
+      <para>
+	En el menú File (Archivo) seleccione la opción Raytrace.
+	Aparecerá un cuadro de diálogo llamado Raytrace Control Panel (Panel de 
+	control de Raytrace). En la parte superior están los menús de 
+	Framebuffer y Objets (Objetos). Seleccione Framebuffer. Un menú 	
+	desplegable le dará seis opciones: Active, All, Rectangle Area, 
+	Overlay, Interlay, y Underlay (en orden: Activo, Todo, Área 
+	rectangular, Traer al frente, Combinar capas, y Llevar al fondo).
+	Con Overlay y Underlay, la capa que se envía hacia al frente o al fondo
+	es la de framebuffer.
+	Asegúrese de que las opciones Active (Activo), All (Todo) y Underlay 	
+	(Llevar al fondo) estén activas (se evidencia con la presencia de un 
+	indicador rojo a la izquierda de cada elección). Seleccione OK.
+
+      </para>
+      
+	<para>
+	  Nota: 
+	  Cuando selecciona Raytrace desde esta ventana de diálogo, se inicia 
+	  una programa auxiliar (RT) de los paquetes de <application>BRL-CAD
+	  </application>. El programa sólo crea el trazado de rayos de los 
+	  objetos que se han dibujado en la ventana gráfica. Usted puede tener 
+	  muchas formas, regiones, o combinaciones de ellas en una base de 	
+	  datos, pero si no están dibujados en ese momento en la ventana 
+	  gráfica, el trazador de rayos las ignorará.
+	</para>
+      
+      <para>
+	Cambie el color de fondo producido por el trazador de rayos mediante la 
+	opción Background Color (Color de fondo) en el Panel de Control de 
+	Raytrace. Un menú desplegable aparecerá con algunas opciones 
+	predefinidas de color, más una herramienta de color. Seleccione el 
+	color blanco. El botón de selección debería aparecer ahora en blanco, 
+	en concordancia con su selección.
+      </para>
+      
+      <para>
+	Seleccione Raytrace. La ventana gráfica debe empezar a cambiar, y pronto 
+	verá su diseño en tonos verdes, con la malla superpuesta en el diseño, 
+	como se muestra en el ejemplo siguiente:
+      </para>
+      
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged04_raytracedshapes.png" format="PNG">
+	    </imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     Figuras con trazado de rayos
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      
+      <para>
+	Como hemos visto, puede especificar el color de fondo con el que se 
+	hará el trazado de rayos.
+      </para>
+      
+      <para>
+	También puede rellenar el framebuffer entero con el color de fondo. 
+	Para hacer esto, seleccione el color deseado y luego haga clic en el 
+	botón fbclear (despejar framebuffer) situado en la parte inferior del 
+	panel de control de Raytrace.
+
+      </para>
+    </sect1>
+
+    <sect1 id="layers_graphics_window">
+      <title>Cambiando capas de la ventana gráfica</title>
+      
+      <para>
+	La ventana gráfica de <application> MGED </application> se utiliza para 
+	mostrar los diferentes tipos de información gráfica: mallas 3D y pixels 
+	en 2D (o imágenes).
+	Conceptualmente, cada tipo de datos ocupa una capa diferente en la 	
+	pantalla.
+	Las mallas en 3D ocupan la capa de mallas (Raytrace), mientras que el 2D 
+	píxeles (imágenes) ocupan la capa de framebuffer. Estas capas pueden 
+	pensarse como transparencias, y el orden en que se apilan y se muestran 
+	puede ser modificado.
+      </para>
+      
+      <para>
+	Como se mencionó anteriormente, hay un menú de Framebuffer en el panel 
+	de control de Raytrace. En la parte superior de este menú hay un botón 
+	de control etiquetado como activo. Éste modifica la pantalla con la capa de 	    framebuffer a activada o desactivada. 
+	Cerca de la parte inferior del mismo menú hay tres botones de opción: 
+	Overlay, Interlay y Underlay. Cuando se selecciona el modo Underlay, se 
+	muestran los datos de píxeles debajo o detrás de los datos vectoriales. Por 
+	el contrario, cuando el modo Overlay está seleccionado, los datos de píxeles 
+	están en frente de los datos vectoriales. El modo interlay es similar al 
+	Overlay. La sutil diferencia es una tema avanzado que no se incluirá en este 
+	toturial.
+      </para>
+      
+      <informaltable frame="none">
+	<tgroup cols='2'>
+	  <tbody>
+	    <row>
+	      <entry><inlinegraphic fileref="../../lessons/es/images/mged04_raytracedshapes.png" />
+	      </entry>
+	      <entry><inlinegraphic fileref="../../lessons/es/images/mged04_fb_overlay_mode.png" />
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Framebuffer en modo Underlay</entry>
+	      <entry>Framebuffer en modo Overlay</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      
+      <para>
+	Para ver cómo funciona, vaya al menú de Framebuffer y seleccione la 
+	opción Overlay.
+	Observe que la representación de malla desaparece. ¿A dónde va? Si
+	contestara "detrás de la visualización de Framebuffer", sería una 
+	respuesta correcta. Para ver la geometría del modelo, usted tendría 
+	que inactivar el framebuffer o seleccionar el modo Underlay.
+      </para>
+      
+      <para>
+	La malla tiene un punto amarillo en el centro que marca el centro de 
+	la vista (Ver tutorial 2). Esto le permite determinar si el uso de este 
+	dispositivo está en modo Overlay o Underlay. Si usted puede ver el 
+	punto de color amarillo, el uso de este dispositivo está en modo 
+	Underlay. Si le ha dicho a <application> MGED </application> que 
+	extraiga algunas figuras, pero la ventana gráfica se ve en blanco, 
+	probablemente esté visualizando un framebuffer blanco que enmascara la 
+	capa de mallas.
+      </para>
+      
+      <para>
+	Tenga en cuenta que puede cambiar la vista sobre la malla, pero la 
+	vista en el uso de framebuffer no se actualiza automáticamente para que 
+	coincidan. No es posible la manipulación directa de la vista en el 
+	framebuffer. Usted debe realizar nuevamente el trazado de rayos con el 	
+	fin de actualizar la imagen de framebuffer.
+      </para>
+    </sect1>
+    
+    <sect1 id="clear_graphics_window">
+      <title>Despejar la ventana gráfica</title>
+      
+      <para>
+	Para borrar por completo la ventana de gráficos, usted puede hacerlo 
+	tanto desde la capa de mallas, como en el framebuffer. Recuerde que 
+	usted puede limpiar la capa de malla con el comando Z. Para la capa de 
+	framebuffer, existe el botón fbclear en el panel de control de Raytrace.
+      </para>
+      
+      <para>
+	En algunos casos, puede que prefiera para desactivar el framebuffer en 
+	lugar de borrarlo. Cuando el uso de este dispositivo está inactivo, 
+	<application> MGED </application> se ejecuta más rápido porque
+	que no tiene que volver a dibujar el framebuffer cada vez que se 
+	actualiza lo expuesto. Se puede activar y desactivar el framebuffer 
+	alternadamente con el ítem de activación de framebuffer del Panel de 
+	control de Raytrace.
+      </para>
+      
+	<para>
+	  Nota:
+	  Tenga en cuenta que en la versión de <application>BRL-CAD
+	  </application> 5.1 y posteriores, al desactivar el framebuffer no se 
+	  destruye la imagen que contiene, sino que al reactivar la opción, se 
+	  recupera la misma imagen.
+	  Sin embargo, en las versiones anteriores del paquete, el contenido 	
+	  del framebuffer se pierde al desactivarlo.
+	</para>
+
+    </sect1>
+    
+    <sect1 id="assigning_material_properties_and_raytracing_review">
+      <title>Revisión</title>
+      
+      <para>
+	En este tutorial usted aprendió a:
+	
+	<itemizedlist mark='bullet'>
+	  <listitem>
+	    <para>Llamar figuras primitivas creadas anteriormente.</para>
+	</listitem>
+	<listitem>
+	  <para>Crear una región de dos figuras primitivas.</para>
+	</listitem>
+	<listitem>
+	  <para>Asignar propiedades de los materiales a sus figuras primitivas 
+		desde la ventana de comandos.</para>
+	</listitem>
+	<listitem>
+	  <para>Limpiar su ventana gráfica y dibujar una nueva región.</para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Generar el Raytrace de si diseño desde la interfaz gráfica.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Utilizar la interfaz gráfica para cambiar capas de la ventana 
+	    gráfica.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Limpiar la ventana gráfica luego de hacer el trazado de rayos de su 
+	    modelo.</para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

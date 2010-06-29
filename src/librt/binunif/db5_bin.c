@@ -69,33 +69,33 @@ static const int binu_sizes[]={
  * XXX these are the interface routines needed for table.c
  */
 int
-rt_bin_unif_export5(struct bu_external *ep __attribute__((unused)),
-		    const struct rt_db_internal *ip __attribute__((unused)),
-		    double local2mm __attribute__((unused)),
-		    const struct db_i *dbip __attribute__((unused)),
-		    struct resource *resp __attribute__((unused)))
+rt_bin_unif_export5(struct bu_external *UNUSED(ep),
+		    const struct rt_db_internal *UNUSED(ip),
+		    double UNUSED(local2mm),
+		    const struct db_i *UNUSED(dbip),
+		    struct resource *UNUSED(resp))
 {
     bu_log("rt_bin_unif_export5() not implemented\n");
     return -1;
 }
 
 int
-rt_bin_unif_import5(struct rt_db_internal *ip __attribute__((unused)),
-		    const struct bu_external *ep __attribute__((unused)),
-		    const mat_t mat __attribute__((unused)),
-		    const struct db_i *dbip __attribute__((unused)),
-		    struct resource *resp __attribute__((unused)))
+rt_bin_unif_import5(struct rt_db_internal *UNUSED(ip),
+		    const struct bu_external *UNUSED(ep),
+		    const mat_t UNUSED(mat),
+		    const struct db_i *UNUSED(dbip),
+		    struct resource *UNUSED(resp))
 {
     bu_log("rt_bin_unif_import5() not implemented\n");
     return -1;
 }
 
 int
-rt_bin_mime_import5(struct rt_db_internal * ip __attribute__((unused)),
-		    const struct bu_external *ep __attribute__((unused)),
-		    const mat_t mat __attribute__((unused)),
-		    const struct db_i *dbip __attribute__((unused)),
-		    struct resource *resp __attribute__((unused)))
+rt_bin_mime_import5(struct rt_db_internal * UNUSED(ip),
+		    const struct bu_external *UNUSED(ep),
+		    const mat_t UNUSED(mat),
+		    const struct db_i *UNUSED(dbip),
+		    struct resource *UNUSED(resp))
 {
     bu_log("rt_bin_mime_import5() not implemented\n");
     return -1;
@@ -110,7 +110,7 @@ rt_bin_mime_import5(struct rt_db_internal * ip __attribute__((unused)),
 int
 rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 			      const struct bu_external *ep,
-			      const mat_t mat __attribute__((unused)),
+			      const mat_t UNUSED(mat),
 			      const struct db_i *dbip,
 			      struct resource *resp,
 			      int minor_type)
@@ -181,8 +181,8 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 				   ep->ext_nbytes,
 				   ep->ext_buf, in_cookie, bip->count);
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %llu, did %d",
-			   __FILE__, __LINE__, (unsigned long long)bip->count, gotten);
+		    bu_log("%s:%d: Tried to convert %zu, did %d",
+			   __FILE__, __LINE__, bip->count, gotten);
 		    bu_bomb("\n");
 		}
 	    } else
@@ -235,7 +235,7 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
 int
 rt_binunif_export5( struct bu_external		*ep,
 		    const struct rt_db_internal	*ip,
-		    double			local2mm __attribute__((unused)), /* we ignore */
+		    double			UNUSED(local2mm), /* we ignore */
 		    const struct db_i		*dbip,
 		    struct resource		*resp)
 {
@@ -292,7 +292,7 @@ rt_binunif_export5( struct bu_external		*ep,
 				   bip->count);
 
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %llu, did %d",
+		    bu_log("%s:%d: Tried to convert %zu, did %d",
 			   __FILE__, __LINE__, bip->count, gotten);
 		    bu_bomb("\n");
 		}
@@ -330,10 +330,10 @@ rt_binunif_export5( struct bu_external		*ep,
  * tab, and give parameter values.
  */
 int
-rt_binunif_describe( struct bu_vls		*str,
-		     const struct rt_db_internal	*ip,
-		     int				verbose __attribute__((unused)),
-		     double			mm2local __attribute__((unused)))
+rt_binunif_describe( struct bu_vls *str,
+		     const struct rt_db_internal *ip,
+		     int UNUSED(verbose),
+		     double UNUSED(mm2local))
 {
     register struct rt_binunif_internal	*bip;
     char					buf[256];
@@ -377,10 +377,10 @@ rt_binunif_describe( struct bu_vls		*str,
 	    bu_vls_strcat( str, "unsigned 64-bit ints\n"); break;
 	default:
 	    bu_log("%s:%d: This shouldn't happen", __FILE__, __LINE__);
-	    return(1);
+	    return 1;
     }
 
-    return(0);
+    return 0;
 }
 
 /**

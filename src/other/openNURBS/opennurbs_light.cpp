@@ -291,6 +291,15 @@ ON_BOOL32 ON_Light::GetBBox( // returns true if successful
     points.Append(m_location+m_length);
     points.Append(m_location+m_width);
     points.Append(m_location+m_width+m_length);
+    {
+      // include target and direction marker to avoid display clipping
+      ON_3dPoint center(m_location+(m_width+m_length)*0.5);
+      points.Append(center+m_direction);
+      ON_3dVector marker(m_direction); 
+      marker.Unitize();
+      marker *= (m_width+m_length).Length()/12.0; // from GetRectangularLightSegments
+      points.Append(center+marker);
+    }
     break;
 
   default:

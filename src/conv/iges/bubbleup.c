@@ -118,7 +118,7 @@ Bubbleup( root )
 	}
 
 	if ( ptr == root ) /* entire tree has been looked at */
-	    return( retval );
+	    return retval;
 
 	if ( ptr != ptr->parent->right ) /* we must be at the left node */
 	    ptr = ptr->parent->right; /* so push the right node */

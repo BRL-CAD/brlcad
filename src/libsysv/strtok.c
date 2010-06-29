@@ -35,7 +35,7 @@ strtok(char *s, register const char *delim)
     char *tok;
     register const char *dscan;
     if (s == (char*)0 && scanpoint == (char*)0)
-	return((char*)0);
+	return (char*)0;
     if (s != (char*)0)
 	scan = s;
     else
@@ -53,7 +53,7 @@ strtok(char *s, register const char *delim)
     }
     if (*scan == '\0') {
 	scanpoint = (char*)0;
-	return((char*)0);
+	return (char*)0;
     }
 
     tok = scan;
@@ -66,7 +66,7 @@ strtok(char *s, register const char *delim)
 	    if (*scan == *dscan++) {
 		scanpoint = scan+1;
 		*scan = '\0';
-		return(tok);
+		return tok;
 	    }
     }
 
@@ -74,7 +74,7 @@ strtok(char *s, register const char *delim)
      * Reached end of string.
      */
     scanpoint = (char*)0;
-    return(tok);
+    return tok;
 }
 
 #endif

@@ -208,16 +208,16 @@ get_args(int argc, char *argv[])
 		onebuffer++;
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -773,7 +773,7 @@ process_input()
 
     getmatrix(d_rot);
     newview(g_rot, d_rot, d_tran, d_scal, viewmat);
-    return(done);
+    return done;
 }
 
 

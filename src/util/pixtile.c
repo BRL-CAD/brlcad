@@ -84,20 +84,20 @@ get_args(int argc, char **argv)
 		framenumber = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);	/* Bad */
+		return 0;	/* Bad */
 	}
     }
 
     if (isatty(fileno(stdout))) {
-	return(0);	/* Bad */
+	return 0;	/* Bad */
     }
 
     if (bu_optind >= argc) {
 	fprintf(stderr, "pixtile: basename or filename(s) missing\n");
-	return(0);	/* Bad */
+	return 0;	/* Bad */
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

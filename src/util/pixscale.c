@@ -102,7 +102,7 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
@@ -111,31 +111,31 @@ get_args(int argc, char **argv)
 	file_name = argv[bu_optind++];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
-	    return(0);
+	    return 0;
 	}
 	inx = atoi(argv[bu_optind++]);
 	iny = atoi(argv[bu_optind++]);
 	outx = atoi(argv[bu_optind++]);
 	outy = atoi(argv[bu_optind++]);
-	return(1);
+	return 1;
     }
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
 	file_name = "-";
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
 	    bu_log("pixscale: cannot open \"%s\" for reading\n", file_name);
-	    return(0);
+	    return 0;
 	}
     }
 
     if (argc > ++bu_optind)
 	bu_log("pixscale: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -173,7 +173,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	pylen = (double)iy / (double)oy;
     if ((pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0)) {
 	bu_log("pixscale: can't stretch one way and compress another!\n");
-	return(-1);
+	return -1;
     }
     if (pxlen < 1.0 || pylen < 1.0) {
 	if (rflag) {
@@ -183,7 +183,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    /* bilinear interpolate */
 	    binterp(ofp, ix, iy, ox, oy);
 	}
-	return(0);
+	return 0;
     }
 
     /* for each output pixel */
@@ -234,7 +234,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	}
 	fwrite(outbuf, 3, ox, ofp);
     }
-    return(1);
+    return 1;
 }
 
 
@@ -263,7 +263,7 @@ main(int argc, char **argv)
     i = scale(stdout, inx, iny, outx, outy);
     bu_free(outbuf, "outbuf");
     bu_free(buffer, "buffer");
-    return(0);
+    return 0;
 }
 
 

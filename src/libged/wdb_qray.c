@@ -49,7 +49,7 @@ static struct dg_qray_color def_qray_overlap_color = { 255, 255, 255 };
 
 static struct dg_qray_fmt_data def_qray_fmt_data[] = {
     {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
-    {'h', "\"    Region Name               Entry (x y z)              LOS  Obliq_in\\n\""},
+    {'h', "\"    Region Name               Entry (x y z) LOS  Obliq_in\\n\""},
     {'p', "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\n\" reg_name x_in y_in z_in los obliq_in"},
     {'f', "\"\""},
     {'m', "\"You missed the target\\n\""},
@@ -57,6 +57,7 @@ static struct dg_qray_fmt_data def_qray_fmt_data[] = {
     {'g', "\"\""},
     {(char)0, (char *)NULL}
 };
+
 
 static char qray_syntax[] = "\
  qray vars			print a list of all variables (i.e. var = val)\n\
@@ -73,8 +74,8 @@ static char qray_syntax[] = "\
 ";
 
 static void
-qray_print_fmts(struct dg_obj	*dgop,
-		Tcl_Interp	*interp)
+qray_print_fmts(struct dg_obj *dgop,
+		Tcl_Interp *interp)
 {
     int i;
 
@@ -83,9 +84,10 @@ qray_print_fmts(struct dg_obj	*dgop,
 			 "\n", (char *)NULL);
 }
 
+
 static void
-qray_print_vars(struct dg_obj	*dgop,
-		Tcl_Interp	*interp)
+qray_print_vars(struct dg_obj *dgop,
+		Tcl_Interp *interp)
 {
     struct bu_vls vls;
 
@@ -108,9 +110,10 @@ qray_print_vars(struct dg_obj	*dgop,
     qray_print_fmts(dgop, interp);
 }
 
+
 static int
-qray_get_fmt_index(struct dg_obj	*dgop,
-		   char			c)
+qray_get_fmt_index(struct dg_obj *dgop,
+		   char c)
 {
     int i;
 
@@ -121,11 +124,12 @@ qray_get_fmt_index(struct dg_obj	*dgop,
     return -1;
 }
 
+
 int
-dgo_qray_cmd(struct dg_obj	*dgop,
-	     Tcl_Interp		*interp,
-	     int			argc,
-	     char 		**argv)
+dgo_qray_cmd(struct dg_obj *dgop,
+	     Tcl_Interp *interp,
+	     int argc,
+	     char **argv)
 {
     struct bu_vls vls;
 
@@ -297,13 +301,18 @@ dgo_qray_cmd(struct dg_obj	*dgop,
 	    return TCL_OK;
 	} else if (argc == 5) {
 	    /* set value */
-	    int r, g, b;
+	    int r = 0, g = 0, b = 0;
 
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
+	    if (sscanf(argv[2], "%d", &r) != 1
+		|| sscanf(argv[3], "%d", &g) != 1
+		|| sscanf(argv[4], "%d", &b) != 1
+		|| r < 0
+		|| g < 0
+		|| b < 0
+		|| 255 < r
+		|| 255 < g
+		|| 255 < b)
+	    {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray oddcolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
@@ -336,13 +345,14 @@ dgo_qray_cmd(struct dg_obj	*dgop,
 	    return TCL_OK;
 	} else if (argc == 5) {
 	    /* set value */
-	    int r, g, b;
+	    int r = 0, g = 0, b = 0;
 
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
+	    if (sscanf(argv[2], "%d", &r) != 1
+		|| sscanf(argv[3], "%d", &g) != 1
+		|| sscanf(argv[4], "%d", &b) != 1
+		|| r < 0 || g < 0 || b < 0
+		|| 255 < r || 255 < g || 255 < b)
+	    {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray evencolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
@@ -375,13 +385,14 @@ dgo_qray_cmd(struct dg_obj	*dgop,
 	    return TCL_OK;
 	} else if (argc == 5) {
 	    /* set value */
-	    int r, g, b;
+	    int r = 0, g = 0, b = 0;
 
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
+	    if (sscanf(argv[2], "%d", &r) != 1
+		|| sscanf(argv[3], "%d", &g) != 1
+		|| sscanf(argv[4], "%d", &b) != 1
+		|| r < 0 || g < 0 || b < 0
+		|| 255 < r || 255 < g || 255 < b)
+	    {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray voidcolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
@@ -414,13 +425,14 @@ dgo_qray_cmd(struct dg_obj	*dgop,
 	    return TCL_OK;
 	} else if (argc == 5) {
 	    /* set value */
-	    int r, g, b;
+	    int r = 0, g = 0, b = 0;
 
-	    if (sscanf(argv[2], "%d", &r) != 1 ||
-		sscanf(argv[3], "%d", &g) != 1 ||
-		sscanf(argv[4], "%d", &b) != 1 ||
-		r < 0 || g < 0 || b < 0 ||
-		255 < r || 255 < g || 255 < b) {
+	    if (sscanf(argv[2], "%d", &r) != 1
+		|| sscanf(argv[3], "%d", &g) != 1
+		|| sscanf(argv[4], "%d", &b) != 1
+		|| r < 0 || g < 0 || b < 0
+		|| 255 < r || 255 < g || 255 < b)
+{
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "qray overlapcolor %s %s %s - bad value",
 			      argv[2], argv[3], argv[4]);
@@ -456,8 +468,9 @@ dgo_qray_cmd(struct dg_obj	*dgop,
     return TCL_ERROR;
 }
 
+
 void
-dgo_init_qray(struct dg_obj	*dgop)
+dgo_init_qray(struct dg_obj *dgop)
 {
     int i;
     int n = 0;
@@ -489,8 +502,9 @@ dgo_init_qray(struct dg_obj	*dgop)
     dgop->dgo_qray_fmts[i].type = (char)0;
 }
 
+
 void
-dgo_free_qray(struct dg_obj     *dgop)
+dgo_free_qray(struct dg_obj *dgop)
 {
     int i;
 
@@ -501,12 +515,13 @@ dgo_free_qray(struct dg_obj     *dgop)
     bu_free(dgop->dgo_qray_fmts, "dgo_free_qray");
 }
 
+
 void
-dgo_qray_data_to_vlist(struct dg_obj		*dgop,
-		       struct bn_vlblock	*vbp,
-		       struct dg_qray_dataList	*headp,
-		       vect_t			dir,
-		       int			do_overlaps)
+dgo_qray_data_to_vlist(struct dg_obj *dgop,
+		       struct bn_vlblock *vbp,
+		       struct dg_qray_dataList *headp,
+		       vect_t dir,
+		       int do_overlaps)
 {
     int i = 1;			/* start out odd */
     struct bu_list *vhead;
@@ -535,22 +550,23 @@ dgo_qray_data_to_vlist(struct dg_obj		*dgop,
 	VJOIN1(out_pt, in_pt, ndlp->los, dir);
 	VSCALE(in_pt, in_pt, dgop->dgo_wdbp->dbip->dbi_local2base);
 	VSCALE(out_pt, out_pt, dgop->dgo_wdbp->dbip->dbi_local2base);
-	RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vhead, out_pt, BN_VLIST_LINE_DRAW );
+	RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, out_pt, BN_VLIST_LINE_DRAW);
 
 	if (!do_overlaps && i > 1 && !VAPPROXEQUAL(last_out_pt, in_pt, SQRT_SMALL_FASTF)) {
 	    vhead = rt_vlblock_find(vbp,
 				    dgop->dgo_qray_void_color.r,
 				    dgop->dgo_qray_void_color.g,
 				    dgop->dgo_qray_void_color.b);
-	    RT_ADD_VLIST( vhead, last_out_pt, BN_VLIST_LINE_MOVE );
-	    RT_ADD_VLIST( vhead, in_pt, BN_VLIST_LINE_DRAW );
+	    RT_ADD_VLIST(vhead, last_out_pt, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, in_pt, BN_VLIST_LINE_DRAW);
 	}
 
 	VMOVE(last_out_pt, out_pt);
 	++i;
     }
 }
+
 
 /** @} */
 /*

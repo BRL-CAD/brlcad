@@ -205,7 +205,7 @@ Rtgl_dm(int argc,
 				     Rtgl_vparse,
 				     argv[1],
 				     (const char *)&((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars,
-				     ', ');
+				     COMMA);
 	} else {
 	    struct bu_vls tmp_vls;
 

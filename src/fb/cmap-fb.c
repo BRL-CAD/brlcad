@@ -130,7 +130,7 @@ nextsym(char *b, char *cp)
 	*b++ = *cp++;
 
     *b = '\0';
-    return( cp );
+    return cp;
 }
 
 /*
@@ -158,7 +158,7 @@ htoi(char *s)
 	    i += *s - '0';
 	s++;
     }
-    return( i );
+    return i;
 }
 
 /*

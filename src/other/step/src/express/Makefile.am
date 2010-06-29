@@ -1,8 +1,10 @@
 lib_LTLIBRARIES = libexpress.la
 noinst_LTLIBRARIES = libexpress_nil.la
 
-AM_CFLAGS = -I$(top_srcdir)/include
 AM_LFLAGS = -l
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	${NOWARN}
 
 bin_PROGRAMS = \
 	fedex \

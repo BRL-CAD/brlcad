@@ -152,16 +152,16 @@ get_args(int argc, char **argv)
 		}
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
-	    return(0);
+	    return 0;
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
