@@ -357,28 +357,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct rt_db_internal *intern
         } 
     }
 
-    printf("scanned tree:\n");
-
-    for (i=0; i<node_count; i++) {
-	char op;
-
-	switch (rt_tree_array[i].tl_op) {
-	    case OP_UNION:
-		op = 'u';
-		break;
-	    case OP_INTERSECT:
-		op = '+';
-		break;
-	    case OP_SUBTRACT:
-		op = '-';
-		break;
-	}
-	printf(" %c %s", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-	_ged_print_matrix(stdout, rt_tree_array[i].tl_tree->tr_l.tl_mat);
-	printf("\n");
-    }
-
-
     fclose(fp);
     bu_vls_free(&line);
     bu_vls_free(&tmpline);
@@ -518,7 +496,7 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     bu_vls_init(&spacer);
     bu_vls_sprintf(&spacer, "");
 
-    GED_DB_LOOKUP(gedp, dp, name, LOOKUP_QUIET, GED_ERROR);
+    dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
 
     if (comb)
 	RT_CK_COMB(comb);
@@ -548,7 +526,7 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	    for (j = 0; j < maxlength - strlen(standard_attributes[i]); j++) {
 		bu_vls_printf(&spacer, " ");
             }
-	    fprintf(fp, "%s%s= \n", standard_attributes[i], bu_vls_addr(&spacer));
+	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
         }
 	fprintf(fp, "Combination Tree:\n");
 	fclose(fp);
@@ -796,8 +774,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, GED_ERROR);
-    GED_CHECK_COMB(gedp, dp, GED_ERROR);
+
+    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
     bu_vls_init(&comb_name);
     bu_vls_init(&temp_name);
@@ -887,22 +865,32 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	     * the temporary copy of the comb - if that succeeds, the
 	     * result will be copied over the original comb */
 
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
-		bu_vls_free(&comb_name);
-		bu_vls_free(&temp_name);
-		return NULL;
+	    if (dp) {
+	        if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		    bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
+		    bu_vls_free(&comb_name);
+		    bu_vls_free(&temp_name);
+		    return NULL;
+	        }
+	    } else {
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		intern.idb_type = ID_COMBINATION;
+		intern.idb_meth = &rt_functab[ID_COMBINATION];
+		BU_GETSTRUCT((struct rt_comb_internal *)intern.idb_ptr, rt_comb_internal);
+		((struct rt_comb_internal *)intern.idb_ptr)->magic = RT_COMB_MAGIC;
+		((struct rt_comb_internal *)intern.idb_ptr)->tree = TREE_NULL;
 	    }
-
-	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dp->d_namep);
+ 
+	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, DIR_COMB, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+		bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		bu_vls_free(&comb_name);
 		bu_vls_free(&temp_name);
 		return NULL;
 	    }
 
 	    if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dp->d_namep);
+	 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		bu_vls_free(&comb_name);
 		bu_vls_free(&temp_name);
 		return NULL;
