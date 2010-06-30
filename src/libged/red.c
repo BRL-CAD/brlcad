@@ -36,9 +36,7 @@
 
 
 char _ged_tmpfil[MAXPATHLEN] = {0};
-const char _ged_tmpcomb[16] = { 'g', 'e', 'd', '_', 't', 'm', 'p', '.', 'a', 'X', 'X', 'X', 'X', 'X', '\0' };
 char _delims[] = " \t/";	/* allowable delimiters */
-
 
 static int
 get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
@@ -208,9 +206,8 @@ build_comb(struct ged *gedp, struct directory *dp)
 	            bu_vls_gets(&line, fp);
 		    scanning_tree = 1;
 	        }
- 	        printf("into tree checking: %s\n", bu_vls_addr(&line)); 
-
-	    	bu_vls_trimspace(&line);
+	  
+  	  	bu_vls_trimspace(&line);
 	    	if (bu_vls_strlen(&line) == 0) {
 		    /* blank line, continue */
 		    continue;
@@ -224,7 +221,6 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    	while (ptr) {
 		    space_cnt++;
 		    ptr = strtok((char *)NULL, _delims);
-	            printf("pointer: %p\n", ptr);
 	    	}
 	    	bu_free(tmpstr, "free tmpstr");
 		/* Handle the matrix portion of the input line, if it exists */
@@ -237,10 +233,8 @@ build_comb(struct ged *gedp, struct directory *dp)
 		    while (space_cnt < matrix_space) {
 			space_cnt++;
 			ptr = strtok((char *)NULL, _delims);
-			printf("pointer: %p\n", ptr);
 		    }
 		    matrix_pos = strtok((char *)NULL, _delims) - tmpstr;
-	            printf("position: %d\n", matrix_pos);
 		    bu_vls_strncpy(&matrix_line, bu_vls_addr(&line) + matrix_pos, bu_vls_addr(&line) + bu_vls_strlen(&line));
 		    /* If the matrix string has no alphabetical
 		     * characters, assume it really is a matrix and
@@ -255,7 +249,6 @@ build_comb(struct ged *gedp, struct directory *dp)
 		    } else {
 		        matrix_pos = 0;
 		    }
-	            printf("matrix string: %s\n", bu_vls_addr(&matrix_line));
 		    bu_free(tmpstr, "free tmpstr");
 	        } else {
 		    matrix = (matp_t)NULL;
@@ -263,7 +256,6 @@ build_comb(struct ged *gedp, struct directory *dp)
  
 	    	/* First non-white is the relation operator */
 	    	relation = bu_vls_addr(&line)[0];
- 	    	printf("relation: %c\n", relation); 
 	    	if (relation != '+' && relation != 'u' && relation != '-') {
 	            bu_vls_printf(&gedp->ged_result_str, " %c is not a legal combination tree operator\n", relation);
 	            fclose(fp);
@@ -282,11 +274,9 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    	bu_vls_nibble(&line, 2);
 	    	ptr = strpbrk(&(bu_vls_addr(&line))[0], _delims);
 	    	if (!ptr && bu_vls_strlen(&line) != 0) ptr = bu_vls_addr(&line) + bu_vls_strlen(&line);
-	    	printf("pointers: %p, %p\n", bu_vls_addr(&line), ptr);
 	    	bu_vls_trunc(&name_v5, 0);
 	    	if (ptr != NULL && (bu_vls_addr(&line) - ptr != 0)) {
 		    bu_vls_strncpy(&name_v5, bu_vls_addr(&line), ptr - bu_vls_addr(&line));
- 	            printf("name: %s\n", bu_vls_addr(&name_v5)); 
 	    	} else {
 		    bu_vls_printf(&gedp->ged_result_str, " operand name missing\n%s\n", bu_vls_addr(&line));
 		    fclose(fp);
@@ -300,15 +290,12 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    	}
 
 		/* Now that we know the name, handle the matrix if any */
-	        printf("position: %d\n", matrix_pos);
 		if (matrix_pos) {
 		    matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
 		    ptr = strtok(bu_vls_addr(&matrix_line), _delims);
-		    printf("%s\n", ptr);
 		    matrix[0] = atof(ptr);
 		    for (k=1; k<16; k++) {
 			ptr = strtok((char *)NULL, _delims);
-		        printf("%s\n", ptr);
 			if (!ptr) {
 			    bu_vls_printf(&gedp->ged_result_str, "build_comb: incomplete matrix for member %s. No changes made\n", bu_vls_addr(&name_v5));
 			    bu_free((char *)matrix, "red: matrix");
@@ -402,73 +389,6 @@ build_comb(struct ged *gedp, struct directory *dp)
 }
 
 
-int
-_ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp, size_t node_count, const char *old_name, const char *new_name, struct rt_tree_array *rt_tree_array, int tree_index)
-{
-    struct rt_db_internal intern;
-    union tree *final_tree;
-
-    if (tree_index)
-	final_tree = (union tree *)db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
-    else
-	final_tree = (union tree *)NULL;
-
-    RT_INIT_DB_INTERNAL(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_COMBINATION;
-    intern.idb_meth = &rt_functab[ID_COMBINATION];
-    intern.idb_ptr = (genptr_t)comb;
-    comb->tree = final_tree;
-
-    if (strcmp(new_name, old_name)) {
-	int flags;
-
-	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
-	else
-	    flags = DIR_COMB;
-
-	if (dp != DIR_NULL) {
-	    if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
-		bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Unable to delete directory entry for %s\n", old_name);
-		intern.idb_meth->ft_ifree(&intern);
-		return GED_ERROR;
-	    }
-	}
-
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
-	    intern.idb_meth->ft_ifree(&intern);
-	    return 1;
-	}
-    } else if (dp == DIR_NULL) {
-	int flags;
-
-	if (comb->region_flag)
-	    flags = DIR_COMB | DIR_REGION;
-	else
-	    flags = DIR_COMB;
-
-	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
-	    intern.idb_meth->ft_ifree(&intern);
-	    return GED_ERROR;
-	}
-    } else {
-	if (comb->region_flag)
-	    dp->d_flags |= DIR_REGION;
-	else
-	    dp->d_flags &= ~DIR_REGION;
-    }
-
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Unable to write new combination into database.\n");
-	return GED_ERROR;
-    }
-
-    return GED_OK;
-}
-
 HIDDEN int
 write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *name)
 {
@@ -514,7 +434,6 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	if (strlen(standard_attributes[i]) > maxlength) 
 	    maxlength = strlen(standard_attributes[i]);
     }
-    printf("maxlength: %d\n", maxlength);
 	
     if (!comb) {
   	bu_vls_trunc(&spacer, 0);
@@ -542,11 +461,9 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	}
     }
     node_count = db_tree_nleaves(comb->tree);
-    printf("node_count: %d\n", node_count);
     if (node_count > 0) {
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 0, &rt_uniresource) - rt_tree_array;
-	printf("actual_count: %d\n", actual_count);
 	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -565,7 +482,6 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
 	    if (strlen(avpp->name) > maxlength) 
 		maxlength = strlen(avpp->name);
         }
-	printf("maxlength: %d\n", maxlength);
   	bu_vls_trunc(&spacer, 0);
 	for (j = 0; j < maxlength - 4 + 1; j++) {
 	    bu_vls_printf(&spacer, " ");
@@ -631,100 +547,6 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     return GED_OK;
 }
 
-
-static const char *
-mktemp_comb(struct ged *gedp, const char *str)
-{
-    /* Make a temporary name for a combination
-       a template name is expected as in "mk_temp()" with
-       5 trailing X's */
-
-    int counter, done;
-    char *ptr;
-    static char name[NAMESIZE] = {0};
-
-    if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return NULL;
-
-    /* leave room for 5 digits */
-    bu_strlcpy(name, str, NAMESIZE - 5);
-    
-    ptr = name;
-    while (*ptr != '\0')
-	ptr++;
-
-    while (*(--ptr) == 'X')
-	;
-    ptr++;
-
-    counter = 1;
-    done = 0;
-    while (!done && counter < 99999) {
-	sprintf(ptr, "%d", counter);
-	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) == DIR_NULL)
-	    done = 1;
-	else
-	    counter++;
-    }
-
-    return name;
-}
-
-
-const char *
-_ged_save_comb(struct ged *gedp, struct directory *dpold)
-{
-    /* Save a combination under a temporory name */
-
-    struct directory *dp;
-    struct rt_db_internal intern;
-
-    /* Make a new name */
-    const char *name = mktemp_comb(gedp, _ged_tmpcomb);
-
-    if (rt_db_get_internal(&intern, dpold, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
-	return NULL;
-    }
-
-    if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
-	return NULL;
-    }
-
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
-	return NULL;
-    }
-
-    return name;
-}
-
-
-/* restore a combination that was created during "_ged_save_comb" */
-void
-_ged_restore_comb(struct ged *gedp, struct directory *dp, const char *oldname)
-{
-    const char *av[4];
-    char *name;
-
-    /* get rid of previous comb */
-    name = bu_strdup(dp->d_namep);
-
-    av[0] = "kill";
-    av[1] = name;
-    av[2] = NULL;
-    av[3] = NULL;
-    (void)ged_kill(gedp, 2, (const char **)av);
-
-    av[0] = "mv";
-    av[1] = oldname;
-    av[2] = name;
-
-    (void)ged_move(gedp, 3, (const char **)av);
-
-    bu_free(name, "bu_strdup'd name");
-}
 
 
 int
@@ -870,7 +692,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
 	    if (dp) {
 	        if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Database read error, aborting\n");
+		    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
 		    bu_vls_free(&comb_name);
 		    bu_vls_free(&temp_name);
 		    return NULL;
@@ -878,14 +700,14 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    
  
 		if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, DIR_COMB, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		    bu_vls_free(&comb_name);
 		    bu_vls_free(&temp_name);
 		    return NULL;
 		}
 
 		if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		    bu_vls_free(&comb_name);
 		    bu_vls_free(&temp_name);
 		    return NULL;
