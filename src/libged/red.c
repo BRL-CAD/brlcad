@@ -235,7 +235,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 			ptr = strtok((char *)NULL, _delims);
 		    }
 		    matrix_pos = strtok((char *)NULL, _delims) - tmpstr;
-		    bu_vls_strncpy(&matrix_line, bu_vls_addr(&line) + matrix_pos, bu_vls_addr(&line) + bu_vls_strlen(&line));
+		    bu_vls_strncpy(&matrix_line, bu_vls_addr(&line) + matrix_pos, bu_vls_strlen(&line) - matrix_pos);
 		    /* If the matrix string has no alphabetical
 		     * characters, assume it really is a matrix and
 		     * remove that portion of the string.  'eE'
@@ -243,7 +243,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 		     * a floating point number.
 		     */
 		    if (!strpbrk(bu_vls_addr(&matrix_line), "abcdfghijklmnopqrstuvwxyzABCDFGHIJKLMNOPQRSTUVWXYZ")) {
-		        bu_vls_strncpy(&tmpline, bu_vls_addr(&line), bu_vls_addr(&line) + bu_vls_strlen(&line) - matrix_pos);
+		        bu_vls_strncpy(&tmpline, bu_vls_addr(&line), matrix_pos);
 	                bu_vls_sprintf(&line, "%s", bu_vls_addr(&tmpline));
 	    	        bu_vls_trimspace(&line);
 		    } else {
@@ -272,7 +272,6 @@ build_comb(struct ged *gedp, struct directory *dp)
 
 	    	/* Next must be the member name */
 	    	bu_vls_nibble(&line, 2);
-	    	ptr = strpbrk(&(bu_vls_addr(&line))[0], _delims);
 	    	if (!ptr && bu_vls_strlen(&line) != 0) ptr = bu_vls_addr(&line) + bu_vls_strlen(&line);
 	    	bu_vls_trunc(&name_v5, 0);
 	    	if (ptr != NULL && (bu_vls_addr(&line) - ptr != 0)) {
