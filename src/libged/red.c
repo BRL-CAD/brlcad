@@ -471,11 +471,9 @@ write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *na
     }
 
     db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
-    bu_avs_print(&avs, "Initial");
     db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
     db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
     if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-        bu_avs_print(&avs, "After db5_apply_std_attributes followed by db5_update_std_attributes");
         db5_standardize_avs(&avs);
        	avpp = avs.avp;
         for (i=0; i < avs.count; i++, avpp++) {
