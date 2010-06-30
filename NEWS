@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-06-22  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
+* mged 'red' command no longer deletes custom attributes - Cliff Yapp
 * fixed pixhalve memory leak and corruption on exit - Sean Morrison
 * spanish translation for tutorial 9 - Jesica Giudice, Luciano Lamaita
 * Tcl/Tk updated from 8.5.6 to 8.5.8 - Cliff Yapp

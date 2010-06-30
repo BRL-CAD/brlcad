@@ -17,7 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix 'red' command.  doesn't apply changes.
+* NADA.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -26,8 +26,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * explore the g_qa/plot issue
 
 * release dm X get_color() memory
-
-* fix archer/libdm labels/axes to not use pointer printing
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -38,8 +36,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* investigate tessellation failures (Stryker, et al), possibily due to
-  recent tolerance checks.
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* fix archer/libdm labels/axes to not use pointer printing
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -52,9 +53,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* investigate tessellation failures (Stryker, et al), possibily due to
+  recent tolerance checks.
 
 * add support for a custom unit conversion factor to the units command
   (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
