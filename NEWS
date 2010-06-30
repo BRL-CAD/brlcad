@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-06-22  Release 7.16.10                                    ---
+--- 2010-06-30  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
 * mged 'red' command no longer deletes custom attributes - Cliff Yapp
