@@ -37,6 +37,22 @@
 #include "db5.h"
 #include "raytrace.h"
 
+/**
+ * Define standard attribute types in BRL-CAD
+ * geometry. (See the gattributes manual page)
+ *
+ */
+
+#define ATTR_REGION 0
+#define ATTR_REGION_ID 1
+#define ATTR_MATERIAL_ID 2
+#define ATTR_AIR 3
+#define ATTR_LOS 4
+#define ATTR_COLOR 5
+#define ATTR_SHADER 6
+#define ATTR_INHERIT 7
+
+
 struct db5_type {
     int major_code;
     int minor_code;
@@ -276,6 +292,16 @@ db5_is_standard_attribute(char *attrname) {
     return 0;    
 }
 
+
+/**
+ * D B 5  _ S T A N D A R D I Z E _ A T T R I B U T E
+ *
+ * Function for recognizing various versions of the DB5 standard
+ * attribute names that have been used - returns the attribute type
+ * of the supplied attribute name, or -1 if it is not a recognized
+ * variation of the standard attributes.
+ *
+ */
 size_t
 db5_standardize_attribute(char *attrname) {
     int i;
@@ -348,6 +374,16 @@ db5_standardize_attribute(char *attrname) {
 
 }
 
+/**
+ * D B 5  _ S T A N D A R D I Z E _ A V S
+ *
+ * Ensures that an attribute set containing one or more standard
+ * attributes, for every attribute type present one of the AV
+ * pairs conforms to modern naming conventions.  It will not remove
+ * other attributes of the same type, but will warn if they are found.
+ *
+ * @file: db5_types.c
+ */
 void
 db5_standardize_avs(struct bu_attribute_value_set *avs) {
     size_t i, attr_type, attr_val;
