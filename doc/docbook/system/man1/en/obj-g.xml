@@ -57,9 +57,21 @@
 <refsynopsisdiv id='objg_synopsis'>
   <cmdsynopsis>
     <command>obj-g</command>    
-    <arg choice='opt' rep='repeat'><replaceable>options ...</replaceable></arg>
-    <arg><replaceable>obj_filename</replaceable></arg>
-    <arg><replaceable>BRL-CAD_g_filename</replaceable></arg>
+    <arg choice='plain'>-u <replaceable>units_str</replaceable></arg>
+    <arg choice='plain'>-o <replaceable>open_bot_type</replaceable></arg>
+    <arg choice='opt'>-h <replaceable>plate_thickness</replaceable></arg>
+    <arg choice='opt'>-c</arg>
+    <arg choice='opt'>-i</arg>
+    <arg choice='opt'>-p</arg>
+    <arg choice='opt'>-d</arg>
+    <arg choice='opt' rep='repeat'>-v</arg>
+    <arg choice='opt'>-g <replaceable>grouping_option</replaceable></arg>
+    <arg choice='opt'>-m <replaceable>mode_option</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>distance_tolerance</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>rt_debug_flag</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>NMG_debug_flag</replaceable></arg>
+    <arg choice='plain'><replaceable>obj_filename</replaceable></arg>
+    <arg choice='plain'><replaceable>BRL-CAD_g_filename</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -76,22 +88,175 @@
 <refsect1 id='objg_options'>
   <title>OPTIONS:</title>
   <variablelist remap='TP'>
+
     <varlistentry>
-      <term><option>-c count</option></term>
+      <term><option>-u <replaceable>units_str</replaceable></option></term>
       <listitem>
 	<para>
-	  Option description.
+         Units of obj file where units_str can be any valid BRL-CAD
+         unit such as one of the following {m|cm|mm|ft|in} or specify
+         a conversion factor from obj file units to mm.
 	</para>
       </listitem>
     </varlistentry>
+
     <varlistentry>
-      <term><option>-d #</option></term>
+      <term><option>-o <replaceable>open_bot_type</replaceable></option></term>
       <listitem>
 	<para>
-	  Option description.
+         Type of bot to create when the primitive is not a closed
+         volume. open_bot_type can be {s|p|n} where ...
+         s = surface bot, p = plate bot, n = plate-nocos bot
 	</para>
       </listitem>
     </varlistentry>
+
+    <varlistentry>
+      <term><option>-h <replaceable>plate_thickness</replaceable></option></term>
+      <listitem>
+	<para>
+         Plate thickness in mm units of plate or plate-nocos bots
+         created when the bot is not a closed volume.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-c</option></term>
+      <listitem>
+	<para>
+         Continue processing on nmg-bomb. If this option is set and an
+         nmg-bomb occurs (i.e. fatal error during processing nmg or
+         bot-via-nmg) conversion will fall-back to outputing the
+         grouping to 'native-bot' and then continue processing the
+         next grouping. If this option is not set and an nmg-bomb
+         occurs then all processing will stop and the converter will
+         exit.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-i</option></term>
+      <listitem>
+	<para>
+         Ignore normals defined in the obj file when the conversion
+         mode is 'native-bots'.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-p</option></term>
+      <listitem>
+	<para>
+         Plot open edges when creating bots which are not a closed
+         volume. A plot/overlay (.pl) file will be created with the
+         same name as the bot primitive and be placed in the current
+         directory. If a plot file already exists, it will be
+         overwritten.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-d</option></term>
+      <listitem>
+	<para>
+         Output debug information to stderr stream. An extremely large
+         amount of information will be output. It is strongly
+         suggested strerr be piped to a file.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-v</option></term>
+      <listitem>
+	<para>
+         Output verbose user information to stderr stream. There are
+         different levels of verbose output where higher levels
+         increase the amount of output information. Each occurrence of
+         this option in the parameter list increases the level. A
+         large amount of information will be output so piping stderr
+         to a file is highly recommended.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-g <replaceable>grouping_option</replaceable></option></term>
+      <listitem>
+	<para>
+         Choose which face grouping, as defined in the obj file, to
+         use to create the BRL-CAD primitives. The grouping_option may
+         be one of {g|o|m|t|n} where ... g = group (default),
+         o = object, m = material, t = texture, n = none
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-m <replaceable>mode_option</replaceable></option></term>
+      <listitem>
+	<para>
+         Choose the conversion mode. The mode_option may be one of
+         {b|n|v} where ... b = bot 'native-bot', n = nmg,
+         v = bot-via-nmg (default)
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-t <replaceable>distance_tolerance</replaceable></option></term>
+      <listitem>
+	<para>
+         Maximum distance, in mm units, where two vertices are
+         considered the same. The default is 0.0005mm which matches
+         the raytracer default distance tolerance. Do not change this
+         value unless you also change the raytracer distance
+         tolerance.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-x <replaceable>rt_debug_flag</replaceable></option></term>
+      <listitem>
+	<para>
+         Specifies debug bits (see raytrace.h)
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-X <replaceable>NMG_debug_flag</replaceable></option></term>
+      <listitem>
+	<para>
+         Specifies debug bits for NMG's (see nmg.h)
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option><replaceable>obj_filename</replaceable></option></term>
+      <listitem>
+	<para>
+         The path and file name of the input WaveFront Object file.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option><replaceable>BRL-CAD_g_filename</replaceable></option></term>
+      <listitem>
+	<para>
+         The path and file name of the output BRL-CAD database file.
+         If this file already exists, it will be overwritten.
+	</para>
+      </listitem>
+    </varlistentry>
+
   </variablelist>
 </refsect1>
 
@@ -102,7 +267,22 @@
     to the BRL-CAD database <emphasis remap='I'>file.g</emphasis>.
   </para>
   <example>
-    <title>Example Title</title>
+    <title>Conversion</title>
+    <para>
+      <userinput>obj-g -u m -o s input.obj output.g</userinput>
+    </para>
+    <para>
+     Convert obj file 'input.obj' to BRL-CAD dot-G file 'output.g'.
+     All messages will be sent to the display. The obj file units are
+     set to meters, non-closed surfaces will be output as
+     surface-mode-bots. Closed surfaces will be output as
+     volume-mode-bots. BRL-CAD primitives will be created based on the
+     obj file group grouping. The conversion mode is bot-via-nmg. 
+    </para>
+  </example>
+
+  <example>
+    <title>Example2 Title</title>
     <para>
       <userinput>conversion line</userinput>
     </para>
