@@ -872,29 +872,39 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_free(&temp_name);
 		    return NULL;
 	        }
+	    
+ 
+		if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, DIR_COMB, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+		    bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		    bu_vls_free(&comb_name);
+		    bu_vls_free(&temp_name);
+		    return NULL;
+		}
+
+		if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		    bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
+		    bu_vls_free(&comb_name);
+		    bu_vls_free(&temp_name);
+		    return NULL;
+		}
 	    } else {
 		RT_INIT_DB_INTERNAL(&intern);
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_COMBINATION;
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
-		BU_GETSTRUCT((struct rt_comb_internal *)intern.idb_ptr, rt_comb_internal);
-		((struct rt_comb_internal *)intern.idb_ptr)->magic = RT_COMB_MAGIC;
-		((struct rt_comb_internal *)intern.idb_ptr)->tree = TREE_NULL;
-	    }
- 
-	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, DIR_COMB, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
-		bu_vls_free(&comb_name);
-		bu_vls_free(&temp_name);
-		return NULL;
+
+		GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, DIR_COMB, (genptr_t)&intern.idb_type, 0);
+
+		BU_GETSTRUCT(comb, rt_comb_internal);
+		intern.idb_ptr = (genptr_t)comb;
+		comb->magic = RT_COMB_MAGIC;
+		bu_vls_init(&comb->shader);
+		bu_vls_init(&comb->material);
+		comb->region_id = 0;  /* This makes a comb/group by default */
+		comb->tree = TREE_NULL;
+		GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
 	    }
 
-	    if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	 	bu_vls_printf(&gedp->ged_result_str, "_ged_save_comb: Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
-		bu_vls_free(&comb_name);
-		bu_vls_free(&temp_name);
-		return NULL;
-	    }
  
 	    GED_DB_GET_INTERNAL(gedp, &intern, tmp_dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
