@@ -392,7 +392,7 @@ build_comb(struct ged *gedp, struct directory *dp)
      * the attribute logic - this apparently must come after the rt_db_put_internal */
     GED_DB_GET_INTERNAL(gedp, &localintern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
-    db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip);
+    db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
     
     comb = (struct rt_comb_internal *)localintern.idb_ptr;
     db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
