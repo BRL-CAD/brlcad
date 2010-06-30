@@ -86,7 +86,7 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 }
 
 HIDDEN int
-build_comb(struct ged *gedp, struct directory *dp, struct rt_db_internal *internal)
+build_comb(struct ged *gedp, struct directory *dp)
 {
     /* Do some minor checking of the edited file */
     struct rt_comb_internal *comb;
@@ -100,10 +100,10 @@ build_comb(struct ged *gedp, struct directory *dp, struct rt_db_internal *intern
     char *ptr = (char *)NULL;
     union tree *tp;
     int tree_index=0;
-    struct rt_db_internal localintern;
+    struct rt_db_internal intern, localintern;
     struct rt_tree_array *rt_tree_array;
     matp_t matrix;
-    struct bu_attribute_value_set avs, avs2;
+    struct bu_attribute_value_set avs;
     struct bu_vls line;
     struct bu_vls matrix_line;
     struct bu_vls attr_vls;
@@ -114,7 +114,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct rt_db_internal *intern
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
 
-    comb = (struct rt_comb_internal *)internal->idb_ptr;
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb) {
 	RT_CK_COMB(comb);
@@ -381,7 +382,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct rt_db_internal *intern
     }
     comb->tree = tp;
 
-    if(rt_db_put_internal(dp, gedp->ged_wdbp->dbip, internal, &rt_uniresource) < 0) {
+    if(rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return -1;
@@ -781,7 +782,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&temp_name);
 
 
-    /* Now, sanity check to make sure a comb is in play, and either write out existing contents
+    /* Now, sanity check to make sure a comb is in instead of a solid, and either write out existing contents
      * for an existing comb or a blank template for a new comb */
     if (dp != DIR_NULL) {
 
@@ -863,7 +864,9 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	if (!gedp->ged_wdbp->dbip->dbi_read_only) {
 	    /* comb is to be changed.  All changes will first be made to
 	     * the temporary copy of the comb - if that succeeds, the
-	     * result will be copied over the original comb */
+	     * result will be copied over the original comb.  If we have an
+	     * existing comb copy its contents to the temporary, else create
+	     * a new empty comb from scratch. */
 
 	    if (dp) {
 	        if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -906,9 +909,8 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    }
 
  
-	    GED_DB_GET_INTERNAL(gedp, &intern, tmp_dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
-	    if (build_comb(gedp, tmp_dp, &intern) < 0) {
+	    if (build_comb(gedp, tmp_dp) < 0) {
 		/* Something went wrong - kill the temporary comb */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 
