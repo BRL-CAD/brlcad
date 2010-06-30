@@ -460,10 +460,10 @@ look_for ( ) {
 		    opts="-d -x"
 		    ;;
 		xexe*)
-		    opts="$opts -x"
+		    opts="$opts -f -r -x"
 		    ;;
 		xscr*)
-		    opts="$opts -x"
+		    opts="$opts -f -r -x"
 		    ;;
 	    esac
 	    look_for_failed=no
