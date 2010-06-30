@@ -22,7 +22,25 @@
  * This is a program to convert a WaveFront Object file to a BRL-CAD
  * database file.
  *
- * Example usage: obj-g -u m input.obj output.g
+ * Example usage: obj-g -u m -o s input.obj output.g
+ *
+ * Recommended Improvements (not already listed in function comments):
+ * - Support obj file texture vertices and materials
+ * - Optionally allow face grouping to be processed in parallel
+ * - Allow user to select which obj file face groupings to convert
+ * - Option to provide analysis of obj file edge lengths to help user
+ *   estimate a reasonable distance tolerance or help user determine
+ *   if the model should be re-tessellated in the source system using
+ *   a different tessellation tolerance.
+ * - The ability to parse the obj file group names with user
+ *   selectable delimiters(s), to recreate a group/assembly structure
+ *   in BRL-CAD. For example, group names which contain a '/' may
+ *   indicate a assembly structure. This capability could be extended
+ *   to create a group/assembly structure based on faces being
+ *   contained in multiple groups in the obj file. This would correct
+ *   the current behavior of when a face resides, for example, in two
+ *   groups, there will be two copies of the face in the resulting
+ *   model.
  */
 
 #include "common.h"
@@ -676,7 +694,6 @@ find_last_unique_vertex(struct ga_t *ga,   /* obj file global attributes */
 
     return num_vertex;
 }
-
 
 /*
  * T E S T _ F A C E
