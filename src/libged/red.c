@@ -51,6 +51,8 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 {
     char *ptr1;
 
+    if (!line) return 0;
+
     /* find the '=' */
     ptr1 = strchr(&line[0], '=');
     if (!ptr1)
@@ -59,12 +61,14 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
     /* Everything from the beginning to the = is the attribute name*/
     bu_vls_strncpy(attr, line, ptr1 - &line[0]);
     bu_vls_trimspace(attr);
+    if (bu_vls_strlen(attr) == 0) return 0;
 
     ++ptr1;
 	
     /* Grab the attribute value */
     bu_vls_strcpy(val, ptr1);
     bu_vls_trimspace(val);
+    if (bu_vls_strlen(val) == 0) return 0;
 
     return 1;
 }
@@ -167,9 +171,10 @@ build_comb(struct ged *gedp, struct directory *dp)
 		bu_vls_free(&name_v5);
 		return -1;
 	    } else {
-		get_attr_val_pair(bu_vls_addr(&line), &attr_vls, &val_vls);
-		if (strcmp(bu_vls_addr(&val_vls), "") && strcmp(bu_vls_addr(&attr_vls), "name")) 
-		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
+		if (get_attr_val_pair(bu_vls_addr(&line), &attr_vls, &val_vls)) {
+		    if (strcmp(bu_vls_addr(&val_vls), "") && strcmp(bu_vls_addr(&attr_vls), "name")) 
+		        (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
+		}
 	    }
             bu_vls_trunc(&line, 0);
 	    continue;
