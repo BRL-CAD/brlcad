@@ -81,7 +81,21 @@
     <command>obj-g</command> converts a Wavefront Object file to BRL-CAD's .g format.
   </para>
   <para>
-	Paragraph 2, if needed.
+   Only face elements are supported. Materials and textures associated
+   with face elements are unsupported. Faces associated with materials
+   and/or textures will convert but material properties and textures
+   are ignored. Face groupings convert to BRL-CAD primitives. Any
+   hierarchical structure (i.e. assembly structure) defined in the obj
+   file is not maintained in the conversion. If a face is a member of
+   more than one 'group' grouping, a copy of the face will exist in
+   each group in the resulting model. Primitives are named based on
+   the grouping names and have appended to each name a string which
+   guarantees uniqueness. This unique string includes the obj file
+   grouping index number, face type number {1-4}, internal conversion
+   mode {b='native-bot'|n='nmg'|v='bot-via-nmg'} and surface closure
+   status {o='open'|c='closed'|u='untested'}. Characters in the
+   original grouping name which may cause problems are replaced with
+   the underscore character.   
   </para>
 </refsect1>
 
@@ -106,7 +120,13 @@
 	<para>
          Type of bot to create when the primitive is not a closed
          volume. open_bot_type can be {s|p|n} where ...
-         s = surface bot, p = plate bot, n = plate-nocos bot
+         s = surface bot, p = plate bot, n = plate-nocos bot.
+         Generally use 'surface bot' if open surface thickness is
+         irrelevant or the purpose of the resulting model is strictly
+         visualization. Use 'plate bot' or 'plate-nocos bot' when open
+         surfaces must have a defined thickness. Note: An incorrect
+         plate thickness can create geometry overlaps. Use the '-h' 
+         option to define plate thickness.
 	</para>
       </listitem>
     </varlistentry>
@@ -116,7 +136,8 @@
       <listitem>
 	<para>
          Plate thickness in mm units of plate or plate-nocos bots
-         created when the bot is not a closed volume.
+         created when the bot is not a closed volume. This option is
+         ignored if the open_bot_type is 'surface bot'.
 	</para>
       </listitem>
     </varlistentry>
@@ -141,7 +162,9 @@
       <listitem>
 	<para>
          Ignore normals defined in the obj file when the conversion
-         mode is 'native-bots'.
+         mode is 'native-bots'. This option has no effect when the
+         conversion mode is 'nmg' or 'bot-via-nmg' since in these
+         modes provided normals are always ignored.
 	</para>
       </listitem>
     </varlistentry>
@@ -154,7 +177,9 @@
          volume. A plot/overlay (.pl) file will be created with the
          same name as the bot primitive and be placed in the current
          directory. If a plot file already exists, it will be
-         overwritten.
+         overwritten. Closed edges are closed but open edges are not
+         necessarily open. This is due to limitations of the
+         algorithm for identifying open edges.
 	</para>
       </listitem>
     </varlistentry>
@@ -179,7 +204,10 @@
          increase the amount of output information. Each occurrence of
          this option in the parameter list increases the level. A
          large amount of information will be output so piping stderr
-         to a file is highly recommended.
+         to a file is highly recommended. Verbose messages add warning
+         and detailed conversion status messages to the default status
+         and error messages. Verbose must be enabled for warning
+         messages to be reported.
 	</para>
       </listitem>
     </varlistentry>
@@ -191,7 +219,27 @@
          Choose which face grouping, as defined in the obj file, to
          use to create the BRL-CAD primitives. The grouping_option may
          be one of {g|o|m|t|n} where ... g = group (default),
-         o = object, m = material, t = texture, n = none
+         o = object, m = material, t = texture, n = none. Choose a
+         grouping option which will produce the appropriate primitives
+         for the intended use of the resulting model. Typically not
+         all groupings exist in every obj file. Do not choose 'none'
+         as the grouping option unless you have a specific need for no
+         grouping. Choosing 'none' for a large conversion will
+         significantly increase the time and system memory required
+         for a conversion to complete. Choosing a grouping which does
+         not exist in the obj file has the same effect as choosing
+         'none'. If you are unsure of which grouping to choose,
+         perform some trial conversions in the 'native-bot' conversion
+         mode using each of the grouping options. I may also be
+         helpful to enable level two verbose messages and pipe stderr
+         to a log file. At the beginning of the log file will be a
+         section called 'OBJ FILE CONTENTS' which lists how many and
+         the names of the groupings in the obj file. Note: It is
+         possible for a single grouping to produce up to four
+         primitives due to the four possible face types that can exist
+         in an obj file. The values of the index numbers appended to
+         the end of the primitive names will give an indication if
+         this has occurred.
 	</para>
       </listitem>
     </varlistentry>
@@ -202,7 +250,16 @@
 	<para>
          Choose the conversion mode. The mode_option may be one of
          {b|n|v} where ... b = bot 'native-bot', n = nmg,
-         v = bot-via-nmg (default)
+         v = bot-via-nmg (default). The 'bot-via-nmg' mode is the best
+         option for creating solids (i.e. volume-mode-bots). The
+         'native-bot' mode is best for a comparatively quick
+         conversion where creating solids is not the highest priority
+         and the faces provided in the obj file are known to be simple
+         and convex. The 'native-bot' mode will attempt to identify
+         surface closure (i.e. solids) but is not as robust as
+         'bot-via-nmg'. The 'native-bot' mode is the only choice if it
+         is desired to use normals from the obj file such as in cases
+         where the normals are smoothing normals.
 	</para>
       </listitem>
     </varlistentry>
@@ -263,8 +320,8 @@
 <refsect1 id='objg_examples'>
   <title>EXAMPLE</title>
   <para>
-    The following will convert the obj file <emphasis remap='I'>file.obj</emphasis>
-    to the BRL-CAD database <emphasis remap='I'>file.g</emphasis>.
+    The following will convert the obj file <emphasis remap='I'>input.obj</emphasis>
+    to the BRL-CAD database <emphasis remap='I'>output.g</emphasis>.
   </para>
   <example>
     <title>Conversion</title>
@@ -277,14 +334,24 @@
      set to meters, non-closed surfaces will be output as
      surface-mode-bots. Closed surfaces will be output as
      volume-mode-bots. BRL-CAD primitives will be created based on the
-     obj file group grouping. The conversion mode is bot-via-nmg. 
+     obj file 'group' grouping. The conversion mode is bot-via-nmg. 
     </para>
   </example>
 
   <example>
-    <title>Example2 Title</title>
+    <title>Conversion</title>
     <para>
-      <userinput>conversion line</userinput>
+      <userinput>obj-g -u m -o s -i -v -v -g o -m b input.obj output.g 2> output.log</userinput>
+    </para>
+    <para>
+     Convert obj file 'input.obj' to BRL-CAD dot-G file 'output.g'.
+     All stderr messages will be sent to the log file 'output.log'.
+     The obj file units are set to meters, non-closed surfaces will be
+     output as surface-mode-bots. Closed surfaces will be output as
+     volume-mode-bots. BRL-CAD primitives will be created based on the
+     obj file 'object' grouping. The conversion mode is 'native-bot'.
+     Any normals provided in the obj file are ignored. Verbose
+     messages are enabled and set to level two.
     </para>
   </example>
 
@@ -293,7 +360,10 @@
 <refsect1 id='objg_diagnostics'>
   <title>DIAGNOSTICS</title>
   <para>
-    Not much error checking yet - need to add.
+   Numerous warning and error conditions are possible, usually due to
+   invalid source geometry. Descriptive messages are printed on stderr
+   (file descriptor 2). Verbose messages must be enabled for warning
+   messages to be printed.
   </para>
 </refsect1>
 
