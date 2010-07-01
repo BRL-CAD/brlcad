@@ -5837,7 +5837,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
  * and other values will be updated to match the attributes.
  */
 RT_EXPORT BU_EXTERN(void db5_apply_std_attributes,
-                         (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
 
 
 /**

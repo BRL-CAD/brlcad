@@ -530,7 +530,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 
 void
-db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb)
+db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb)
 {
     size_t i;
     long attr_num_val;
