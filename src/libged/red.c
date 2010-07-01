@@ -397,7 +397,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 
 
 HIDDEN int
-write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *name)
+write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 {
     /* Writes the file for later editing */
     struct rt_tree_array *rt_tree_array;
