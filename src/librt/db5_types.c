@@ -61,6 +61,7 @@ struct db5_type {
     char *description;
 };
 
+
 /**
  * In order to support looking up Major_Types as well as (Major_Type,
  * Minor_Type) pairs, every Major_Type needs an entry with
@@ -120,8 +121,10 @@ static const struct db5_type type_table[] = {
     { DB5_MAJORTYPE_RESERVED, 0, 0, 0, 0 },
 };
 
+
 int
-db5_type_tag_from_major(char **tag, const int major) {
+db5_type_tag_from_major(char **tag, const int major)
+{
     register struct db5_type *tp;
 
     for (tp = (struct db5_type *) type_table;
@@ -135,8 +138,10 @@ db5_type_tag_from_major(char **tag, const int major) {
     return 1;
 }
 
+
 int
-db5_type_descrip_from_major(char **descrip, const int major) {
+db5_type_descrip_from_major(char **descrip, const int major)
+{
     register struct db5_type *tp;
 
     for (tp = (struct db5_type *) type_table;
@@ -150,8 +155,10 @@ db5_type_descrip_from_major(char **descrip, const int major) {
     return 1;
 }
 
+
 int
-db5_type_tag_from_codes(char **tag, const int major, const int minor) {
+db5_type_tag_from_codes(char **tag, const int major, const int minor)
+{
     register struct db5_type *tp;
     register int found_minors = 0;
 
@@ -170,9 +177,10 @@ db5_type_tag_from_codes(char **tag, const int major, const int minor) {
     return 1;
 }
 
+
 int
-db5_type_descrip_from_codes(char **descrip, const int major,
-			    const int minor) {
+db5_type_descrip_from_codes(char **descrip, const int major,const int minor)
+{
     register struct db5_type *tp;
     register int found_minors = 0;
 
@@ -191,10 +199,11 @@ db5_type_descrip_from_codes(char **descrip, const int major,
     return 1;
 }
 
-int
-db5_type_codes_from_tag(int *major, int *minor, const char *tag) {
-    register struct db5_type *tp;
 
+int
+db5_type_codes_from_tag(int *major, int *minor, const char *tag)
+{
+    register struct db5_type *tp;
 
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
@@ -208,10 +217,11 @@ db5_type_codes_from_tag(int *major, int *minor, const char *tag) {
     return 1;
 }
 
-int
-db5_type_codes_from_descrip(int *major, int *minor, const char *descrip) {
-    register struct db5_type *tp;
 
+int
+db5_type_codes_from_descrip(int *major, int *minor, const char *descrip)
+{
+    register struct db5_type *tp;
 
     for (tp = (struct db5_type *) type_table;
 	 tp->major_code != DB5_MAJORTYPE_RESERVED;
@@ -226,8 +236,10 @@ db5_type_codes_from_descrip(int *major, int *minor, const char *descrip) {
     return 1;
 }
 
+
 size_t
-db5_type_sizeof_h_binu(const int minor) {
+db5_type_sizeof_h_binu(const int minor)
+{
     switch (minor) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    return sizeof(float);
@@ -249,8 +261,10 @@ db5_type_sizeof_h_binu(const int minor) {
     return 0;
 }
 
+
 size_t
-db5_type_sizeof_n_binu(const int minor) {
+db5_type_sizeof_n_binu(const int minor)
+{
     switch (minor) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    return (size_t) SIZEOF_NETWORK_FLOAT;
@@ -272,8 +286,10 @@ db5_type_sizeof_n_binu(const int minor) {
     return 0;
 }
 
+
 size_t
-db5_is_standard_attribute(char *attrname) {
+db5_is_standard_attribute(const char *attrname)
+{
     size_t i;
     char *standard_attributes[8];
     standard_attributes[0] = "region";
@@ -294,7 +310,7 @@ db5_is_standard_attribute(char *attrname) {
 
 
 /**
- * D B 5  _ S T A N D A R D I Z E _ A T T R I B U T E
+ * D B 5 _ S T A N D A R D I Z E _ A T T R I B U T E
  *
  * Function for recognizing various versions of the DB5 standard
  * attribute names that have been used - returns the attribute type
@@ -303,7 +319,8 @@ db5_is_standard_attribute(char *attrname) {
  *
  */
 size_t
-db5_standardize_attribute(const char *attrname) {
+db5_standardize_attribute(const char *attrname)
+{
     size_t i;
     char *region_flag_names[2];
     char *region_id_names[4];
@@ -374,8 +391,9 @@ db5_standardize_attribute(const char *attrname) {
 
 }
 
+
 /**
- * D B 5  _ S T A N D A R D I Z E _ A V S
+ * D B 5 _ S T A N D A R D I Z E _ A V S
  *
  * Ensures that an attribute set containing one or more standard
  * attributes, for every attribute type present one of the AV
@@ -385,7 +403,8 @@ db5_standardize_attribute(const char *attrname) {
  * @file: db5_types.c
  */
 void
-db5_standardize_avs(struct bu_attribute_value_set *avs) {
+db5_standardize_avs(struct bu_attribute_value_set *avs)
+{
     size_t i, attr_type;
     struct bu_attribute_value_pair *avpp;
     int type_count[8], has_standard[8];
@@ -417,7 +436,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs) {
 		     * somewhere in the code.  Do "R" for all affirmative cases and
 		     * strip any non-affirmative cases out of the avs */
 		    if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") ||
-			!strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y") ) { 
+			!strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y")) { 
 			(void)bu_avs_remove(avs, avpp->name);
 			(void)bu_avs_add(avs, "region", "R"); 
 		    } else {
@@ -509,9 +528,10 @@ db5_standardize_avs(struct bu_attribute_value_set *avs) {
     }
 }
 
-void
-db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
 
+void
+db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb)
+{
     size_t i;
     long attr_num_val;
     int color[3];
@@ -529,7 +549,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	/* region flag */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "region"));
         if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "R") || !strcmp(bu_vls_addr(&newval), "1") || 
-	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y") ) {
+	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y")) {
 	    comb->region_flag = 1;
 	    dp->d_flags |= DIR_REGION;
 	} else {
@@ -572,7 +592,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	/* color */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "color"));
 	if (bu_avs_get(&avs, "color")) {
-	    if ( sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3 ) {
+	    if (sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3) {
 		for (i = 0; i < 3; i++) {       
 		    if (color[i] > 255) color[i] = 255;
 		    if (color[i] < 0) color[i] = 0;
@@ -591,7 +611,7 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
         /* inherit */	
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "inherit"));
 	if (!strcmp(bu_vls_addr(&newval), "Yes") || !strcmp(bu_vls_addr(&newval), "1") || 
-	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y") ) {
+	    !strcmp(bu_vls_addr(&newval), "Y") || !strcmp(bu_vls_addr(&newval), "y")) {
 	    comb->inherit = 1;
 	} else {
 	    comb->inherit = 0;
@@ -604,7 +624,8 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 
 void
-db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
+db5_update_std_attributes(struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb)
+{
     struct bu_attribute_value_set avs;
     struct bu_vls newval;
 
@@ -663,6 +684,7 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
     }
     bu_vls_free(&newval);
 }
+
 
 /** @} */
 /*
