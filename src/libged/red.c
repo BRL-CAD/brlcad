@@ -50,7 +50,6 @@ static int
 get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
 {
     char *ptr1;
-    size_t j;
 
     /* find the '=' */
     ptr1 = strchr(&line[0], '=');
@@ -99,7 +98,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     FILE *fp;
     size_t node_count=0;
     int nonsubs=0;
-    int i, j, k, ch;
+    int k;
     int scanning_tree, matrix_space, matrix_pos, space_cnt;
     char relation;
     char *tmpstr;
@@ -562,8 +561,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     int have_tmp_name = 0;
     struct directory *dp, *tmp_dp;
     struct rt_db_internal intern;
-    struct rt_comb_internal *comb, *tmp_comb;
-    size_t node_count;
+    struct rt_comb_internal *comb;
     static const char *usage = "comb";
     const char *editstring = NULL;
     const char *av[3];
@@ -700,7 +698,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
 		    bu_vls_free(&comb_name);
 		    bu_vls_free(&temp_name);
-		    return NULL;
+		    return GED_ERROR;
 	        }
 	    
  
@@ -708,14 +706,14 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		    bu_vls_free(&comb_name);
 		    bu_vls_free(&temp_name);
-		    return NULL;
+		    return GED_ERROR;
 		}
 
 		if (rt_db_put_internal(tmp_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		    bu_vls_free(&comb_name);
 		    bu_vls_free(&temp_name);
-		    return NULL;
+		    return GED_ERROR;
 		}
 	    } else {
 		RT_INIT_DB_INTERNAL(&intern);
