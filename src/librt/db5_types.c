@@ -274,7 +274,7 @@ db5_type_sizeof_n_binu(const int minor) {
 
 size_t
 db5_is_standard_attribute(char *attrname) {
-    int i;
+    size_t i;
     char *standard_attributes[8];
     standard_attributes[0] = "region";
     standard_attributes[1] = "region_id";
@@ -303,8 +303,8 @@ db5_is_standard_attribute(char *attrname) {
  *
  */
 size_t
-db5_standardize_attribute(char *attrname) {
-    int i;
+db5_standardize_attribute(const char *attrname) {
+    size_t i;
     char *region_flag_names[2];
     char *region_id_names[4];
     char *material_id_names[5];
@@ -386,7 +386,7 @@ db5_standardize_attribute(char *attrname) {
  */
 void
 db5_standardize_avs(struct bu_attribute_value_set *avs) {
-    size_t i, attr_type, attr_val;
+    size_t i, attr_type;
     struct bu_attribute_value_pair *avpp;
     int type_count[8], has_standard[8];
     avpp = avs->avp;
@@ -509,13 +509,13 @@ db5_standardize_avs(struct bu_attribute_value_set *avs) {
     }
 }
 
-size_t
+void
 db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
 
-    size_t i, j, attr_type, attr_num_val;
+    size_t i;
+    long attr_num_val;
     int color[3];
     struct bu_attribute_value_set avs;
-    struct bu_attribute_value_pair *avpp;
     struct bu_vls newval;
     bu_vls_init(&newval);
  
@@ -573,9 +573,9 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, "color"));
 	if (bu_avs_get(&avs, "color")) {
 	    if ( sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3 ) {
-		for (j = 0; j < 3; j++) {       
-		    if (comb->rgb[j] > 255) comb->rgb[j] = 255;
-		    if (comb->rgb[j] < 0) comb->rgb[j] = 0;
+		for (i = 0; i < 3; i++) {       
+		    if (color[i] > 255) color[i] = 255;
+		    if (color[i] < 0) color[i] = 0;
 		}
 		comb->rgb[0] = color[0];    
 		comb->rgb[1] = color[1];   
@@ -602,11 +602,10 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
     bu_vls_free(&newval);
 }
 
-size_t
+
+void
 db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb) {
-    size_t i, attr_type;
     struct bu_attribute_value_set avs;
-    struct bu_attribute_value_pair *avpp;
     struct bu_vls newval;
 
     RT_CK_COMB(comb);
@@ -643,10 +642,6 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_com
 	    (void)bu_avs_add_vls(&avs, "los", &newval); 
         } else {
 	    bu_avs_remove(&avs, "los");
-        }
-	for (i = 0; i < 3; i++) {
-	    if (comb->rgb[i] > 255) comb->rgb[i] = 255;
-	    if (comb->rgb[i] < 0) comb->rgb[i] = 0;
         }
         if (bu_avs_get(&avs, "color") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
 	    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
