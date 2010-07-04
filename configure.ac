@@ -691,6 +691,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
 	fi
+	if test "x$bc_build_togl" = "xno" ; then
+		bc_build_togl="$set_everything"
+	fi
 	if test "x$bc_build_tktable" = "xno" ; then
 		bc_build_tktable="$set_everything"
 	fi
@@ -3192,7 +3195,6 @@ if test ! "x$bc_build_togl" = "xno" ; then
     AC_MSG_RESULT(yes)
 else
     build_brlcad_togl=no
-    TOGL=""
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(TOGL_CPPFLAGS)
