@@ -171,7 +171,6 @@ EXTRA_DIST= \
 	terrain/terrain.vcproj \
 	tire/tire.vcproj \
 	tkpng/tkpng.vcproj \
-	tkimgpng/tkimgpng.vcproj \
 	tkstub/tkstub.vcproj \
 	torii/torii.vcproj \
 	tube/tube.vcproj \
