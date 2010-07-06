@@ -170,7 +170,7 @@ EXTRA_DIST= \
 	tea_nmg/tea_nmg.vcproj \
 	terrain/terrain.vcproj \
 	tire/tire.vcproj \
-	tkimg/tkimg.vcproj \
+	tkpng/tkpng.vcproj \
 	tkimgpng/tkimgpng.vcproj \
 	tkstub/tkstub.vcproj \
 	torii/torii.vcproj \
