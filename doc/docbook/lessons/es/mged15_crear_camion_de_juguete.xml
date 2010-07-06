@@ -42,7 +42,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 	  <para>
 	    Comprender las diferencias entre OK, Accept, Apply, Reset, 
 	    Cancel, y Dismiss. (OK, Aceptar, Aplicar, Restablecer, 
-	    Cancelar y Despedir)
+	    Cancelar y Salir)
 	  </para>
 	</listitem>
 	<listitem>
@@ -53,7 +53,7 @@ xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 	</listitem>
 	<listitem>
 	  <para>
-	    Probar los atributos de sombreado de camuflage (camo shader).
+	    Probar los atributos de sombreado de camuflaje (camo shader).
 	  </para>
 	</listitem>
       </itemizedlist>
@@ -156,14 +156,14 @@ format="PNG"></imagedata>
 
     <sect1 id="truck_hood_in_cmd">
       <title>
-	Utilizar el comando in para crear un rpp como frente de la cabina
+	Utilizar el comando inside para crear un rpp como frente de la cabina
       </title>
       <para>
 	Para hacer el capó del coche, deberá crear otra forma rpp utilizando 
-	el comando in. Este comando fue creado originalmente para ahuecar 
+	el comando inside. Este comando fue creado originalmente para ahuecar 
 	objetos como tanques de gasolina y cajas, sin embargo, puede ser 
 	utilizado para crear cualquier nueva forma que tiene alguna relación 
-	con otra faroma pre-existente. En este tutorial, se utilizará para 
+	con otra forma pre-existente. En este tutorial, se utilizará para 
 	cortar materiales por encima del capó y delante de la cabina. 
       </para>
       <para>
@@ -217,27 +217,27 @@ format="PNG"></imagedata>
       </para>
     	<para>
 	  En este ejemplo, cada espesor con valor negativo indica que caboff1.s 
-	  va a sobre salir de la cara que corresponde a cab1.s.
+	  va a sobresalir de la cara que corresponde a cab1.s.
 	</para>
   
 	<para>
 	  Nota:
 	  Tenga en cuenta que en las versiones de <application> BRL-CAD 
-	  </application> 6.0 en adelante  las caras de un rpp son numeradas en 
+	  </application> 6.0 en adelante las caras de un rpp son numeradas en 
 	  un orden diferente que en versiones anteriores. Así que, si va a 
 	  usar una versión anterior a 6.0, el siguiente orden es el que regirá 
-	  en el comando in:
+	  en el comando inside:
 
 	<command> 
-	  dentro caboff1.s cab1.s un 0,7 -. -. -. 1 1 .5 -. 1 [Enter] 
+	  inside caboff1.s cab1.s un 0,7 -. -. -. 1 1 .5 -. 1 [Enter] 
 	</command>
 
 	(El orden de las caras en este caso es frontal, posterior, derecha, 	
-	izquierda, inferior y superior; a diferencia del especificado para las 
-	versiones 6.0 y posteriores.)
+	izquierda, inferior y superior)
 
 	</para>
       <para>
+
 	Cuando está en modo Multipane, el diseño debería verse como la 
 	siguiente ilustración:
 	
@@ -272,14 +272,13 @@ format="PNG">
 	<command> make well1.s rcc [Enter] </command>
 
 	En el menú Edit (Edición), diríjase a Primitive Seletion (Selección 
-	de primitivos) y luego well1.s. Seleccione la vista izquierda, vuelva 
-	a Edit (Editar) y seleccione Scale (Escala). Reduzca el tamaño del 
-	rcc, hasta que su diámetro sea el indicado para la rueda. 
+	de primitivos) y luego seleccione well1.s. Aplique la vista izquierda, 		vuelva a Edit (Editar) y seleccione Scale (Escala). Reduzca el tamaño 
+	del rcc, hasta que su diámetro sea el indicado para la rueda. 
 	Regrese a Edit (Edición) y seleccione Rotate (Rotación). Como se ha 
 	dicho, un método sencillo para rotar el CCR es mediante el uso de la 
 	tecla CTRL y el botón izquierdo del mouse. Sin embargo, como sabemos 
 	que queremos voltear el objeto exactamente 90'0 a lo largo del eje x, 
-	una mejor opción es usar la línea de comandos. Tipee encontes:
+	una mejor opción es usar la línea de comandos. Tipee entonces:
 
 	<command> p 90 0 0 [Enter] </command>
 
@@ -312,7 +311,7 @@ format="PNG">
       <title>
 	    Comprender las diferencias entre OK, Accept, Apply, Reset, 
 	    Cancel, y Dismiss. (OK, Aceptar, Aplicar, Restablecer, 
-	    Cancelar y Despedir)
+	    Cancelar y Salir)
       </title>
       <para>
 	El entorno gráfico de <application> MGED </application> ofrece a los 
@@ -342,12 +341,12 @@ format="PNG">
 	que regrese los valores que han sido modificados, a aquellos valores 
 	existentes previamente a la apertura de la ventana de diálogo. El botón 
 	Reset no cerrará el cuadro de diálogo. Los botones Cancel (Cancelar) o 
-	Dissmis (Descartar) hace que no se tome en cuenta ningun cambio 
+	Dissmis (Salir) hace que no se tome en cuenta ningun cambio 
 	realizado en el cuadro de diálogo, dejando activos los últimos valores 
 	aceptados. Estos dos botones cierran el cuadro de diálogo al ser 
 	seleccionados.
       </para>
-    </sect1>
+    </Sect1>
 
     <sect1 id="truck_wheel_well_prim_edit_cpy">
       <title>
@@ -455,7 +454,7 @@ format="PNG">
 	</informaltable>
       </para>
       <para>
-	Antes de continuar, debería chequear su árbol de datos tipeando tree 
+	Antes de continuar, debería chequear su árbol de datos tipeando: tree 
 	cab1.c. El árbol debería ser:
 
 	<literallayout>
@@ -476,13 +475,13 @@ format="PNG">
 	que su base de datos se compone de la combinación cab1.c y las formas 
 	cab1.s, caboff1.s, well1.s y well2.s. A medida que cree objetos más 
 	complejos se acostumbrará a referirse a la lista de la base de datos 
-	para asegurarse de que esté compuesta por lo elementos que suted desea.
+	para asegurarse de que esté compuesta por lo elementos que usted desea.
       </para>
     </sect1>
 
     <sect1 id="truck_body_in_cmd">
       <title>
-	Crear un rpp para el cuerpo del camion utilizando el comando in
+	Crear un rpp para el cuerpo del camión utilizando el comando in
       </title>
       <para>
 	Para hacer el cuerpo del camión, tipee en el prompt de la línea de 
@@ -559,8 +558,8 @@ format="PNG">
 	Hacer una combinación con el cuerpo del camión y las cavidades
       </title>
       <para>
+
 	Cree una combinación con el cuerpo y ambas cavidades, nómbrela body1.c.
-	
 	El árbol de body1.c debería decir:
 	
 	<literallayout>
@@ -631,9 +630,9 @@ format="PNG">
 	</informaltable>
       </para>
       <para>
-	Cambie a la vista izquierda y luego editar la posición de la rueda. 
+	Cambie a la vista izquierda y luego edite la posición de la rueda. 
 	Para una correcta alineación de la rueda con el camión, deberá girar el 
-	neumático con la Tecla CTRL y cualquier botón del ratón. Escale y 
+	neumático con la tecla CTRL y cualquier botón del ratón. Escale y 
 	traslade la rueda a su posición y verifique la alineación desde varios 
 	puntos de vista distintos.
 	Acepte los cambios cuando haya terminado.
@@ -748,15 +747,15 @@ format="PNG">
       <title>La opción de apilado de sombreados (Stacker Option)</title>
       <para>
 	En los tutoriales anteriores, se aplicó color y sombreado a un objeto 
-	para hacerlo ver más realista. Sin embargo,a veces tendrá que aplicar 
-	dos o tres sombreados a un objeto para obtener el diseño que desee.
+	para hacerlo ver más realista. Sin embargo, a veces tendrá que aplicar 
+	dos o tres sombreados a un objeto hasta obtener el resultado deseado.
       </para>
       <para>
-	<application> MGED </application> ofrece tres categorías de sombreado: 
+	<application> MGED </ application> ofrece tres categorías de sombreado: 
 	pintura, plástico, y luz. Cualquier combinación de estos tres tipos de 
 	sombreados se puede aplicar a un mismo objeto utilizanso la opción del 
 	menú Stacker Option (Apilado).
-      </para>
+      </ Para>
       <para>
 	Hay tres sombreados de plástico: glass, mirror, y plastic (vidrio, 
 	espejo, y  plástico). El sombreado de plástico se utiliza para dar una 
@@ -771,9 +770,9 @@ format="PNG">
 	pintura de estuco).
       </para>
       <para>
-	Los sombreados de pigmento incluyen camo (camuflado), textura (color), 
+	Los sombreados de pigmento incluyen camo (camuflaje), textura (color), 
 	textura (negro/blanco), falsa estrella, nube, corrector, mapa de 
-	prueba, y proyección. Los sombreados de textura incluyen bump map, fbm 
+	prueba y proyección. Los sombreados de textura incluyen bump map, fbm 
 	bump y tur bump. Los sombreados de pintura se aplican normalmente 
 	primeros en el proceso de apilado y se utilizan en combinación con el 	
 	sombreado de plástico.
@@ -874,7 +873,7 @@ format="PNG">
     <sect1 id="truck_raytracing">
       <title>Generar el Raytrace del camión</title>
       <para>
-	El último paso en la creación de su camión es generar el Raytrace su 
+	El último paso en la creación de su camión es generar el Raytrace de su 
 	diseño. Cuando el trazador de rayos haya terminado, observe que la parte 
 	superior de uno de los laterales del camión queda muy oscuro. Esto es 
 	porque hay muy poca luz sobre ese lado. Al no haber especificado 
@@ -882,18 +881,18 @@ format="PNG">
 	le proporciona un conjunto de luces de forma predeterminada. Estos 
 	valores consisten en una luz tenue proveniente de la ubicación del 
 	espectador y un brillo situado a la izquierda y por debajo del mismo. 
-	Puesto que la luz principal no es realmente brillante un lado de la 
+	Puesto que la luz principal no es realmente brillante, un lado de la 
 	camioneta queda oscuro.
       </para>
       <para>
 	Hay un ajuste especial que puede hacer para mejorar el brillo general 
 	de la escena, ajustando la cantidad de luz ambiente, que es la luz que 
 	no viene de una fuente de luz en particular, sino que es una medida de 
-	luz presentes en toda la escena. Para ajustar la cantidad de la luz 
+	luz presente en toda la escena. Para ajustar la cantidad de la luz 
 	ambiental, haga clic en el botón Advanced Settings (Configuración 
 	avanzada) en el panel de control de Raytrace. Junto a la otras 
-	opciones preexistentes, tipee -A .9 y cliquee en Dissmis. Ahora
-	cuando genere el Raytrace, obtendrá una imagen mucho más iluminada.
+	opciones preexistentes, tipee -A .9. Ahora cuando genere el Raytrace, 
+	obtendrá una imagen mucho más iluminada.
       </para>
       <para>
 
@@ -951,7 +950,7 @@ fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png" />
 	  <para>
 	    Comprender las diferencias entre OK, Accept, Apply, Reset, 
 	    Cancel, y Dismiss. (OK, Aceptar, Aplicar, Restablecer, 
-	    Cancelar y Despedir)
+	    Cancelar y Salir)
 	  </para>
 	</listitem>
 	<listitem>
@@ -962,7 +961,7 @@ fileref="../../lessons/es/images/mged15_truck_ambient_lighting.png" />
 	</listitem>
 	<listitem>
 	  <para>
-	    Probar los atributos de sombreado de camuflage (camo shader).
+	    Probar los atributos de sombreado de camuflaje (camo shader).
 	  </para>
 	  </listitem>
 	</itemizedlist>
