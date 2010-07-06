@@ -346,7 +346,7 @@ format="PNG">
 	aceptados. Estos dos botones cierran el cuadro de diálogo al ser 
 	seleccionados.
       </para>
-    </Sect1>
+    </sect1>
 
     <sect1 id="truck_wheel_well_prim_edit_cpy">
       <title>
@@ -751,11 +751,11 @@ format="PNG">
 	dos o tres sombreados a un objeto hasta obtener el resultado deseado.
       </para>
       <para>
-	<application> MGED </ application> ofrece tres categorías de sombreado: 
+	<application> MGED </application> ofrece tres categorías de sombreado: 
 	pintura, plástico, y luz. Cualquier combinación de estos tres tipos de 
 	sombreados se puede aplicar a un mismo objeto utilizanso la opción del 
 	menú Stacker Option (Apilado).
-      </ Para>
+      </para>
       <para>
 	Hay tres sombreados de plástico: glass, mirror, y plastic (vidrio, 
 	espejo, y  plástico). El sombreado de plástico se utiliza para dar una 
