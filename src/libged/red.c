@@ -143,7 +143,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
 
     regcomp(&attr_regex, "([:blank:]?=[:blank:]?)", REG_EXTENDED);
-    regcomp(&combtree_regex, "Combination Tree:", REG_EXTENDED|REG_PEND);
+    regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
     regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED|REG_PEND);
 
     const char *float_string = "[+-]?[0-9]*\.?[0-9]?[[eE][+-]?[0-9]+]?";
@@ -156,8 +156,14 @@ build_comb(struct ged *gedp, struct directory *dp)
     currptr = (const char *)(tmpfile->buf);
     tmpfile->buflen = 
     result_locations = (regmatch_t *)bu_calloc(attr_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
-    ret = regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, REG_EXTENDED); 
+    ret = regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, 0); 
+    bu_vls_trunc(&regexresult, 0);
+    bu_vls_strncpy(&regexresult, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
+    printf("regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
+    bu_free(result_locations, "free regex results");
 
+    result_locations = (regmatch_t *)bu_calloc(combtree_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
+    ret = regexec(&combtree_regex, currptr, combtree_regex.re_nsub , result_locations, 0); 
     bu_vls_trunc(&regexresult, 0);
     bu_vls_strncpy(&regexresult, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
     printf("regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
@@ -175,7 +181,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_free(&regexresult);
     bu_close_mapped_file(tmpfile);
 #endif
-
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
 
