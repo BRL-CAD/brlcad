@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <regex.h>
 #include "bio.h"
 
 #include "db.h"
@@ -121,38 +122,58 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_vls name_v5;
 
 #if 0
-
     struct bu_mapped_file *tmpfile;
-    char *currptr;
+    const char *currptr;
+    struct bu_vls regex_string;
+    struct bu_vls regexresult;
+    int ret;
+    bu_vls_init(&regex_string);
+    bu_vls_init(&regexresult);
+
 
     tmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
     if (!tmpfile) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file %s\n", _ged_tmpfil);
 	return -1;
     }
-
+/*
     May be able to make use of the REG_PEND extension to do regex on the mapped file - update
     regext_t pointer re_endp based on results of previous regex runs... needs exploring.
-
+*/
     regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
-    regmatch_t *result_locations, *matrix_locations;
-    const char *attr_string = "([:blank:]?=[:blank:]?)"; /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment."
-    const char *combtree_string = "Combination Tree:";
-    const char *combtree_op_string = "[:blank:]?[+-u][:blank:]?"
-    const char *float_string = "[+-]?[0-9]*\.?[0-9]?[[eE][+-]?[0-9]+]?";
-    struct bu_vls matrix_string;
-    bu_vls_sprintf(&matrix_string, "[:blank:][%s[:blank:]+]{15}%s", float_string, float_string);
 
-    currptr = (const char *)tmpfile->buf;
-    regexec(&attr_regex, currptr, 1, result_locations, REG_EXTENDED); 
-    attr_start = currptr + result_locations[1].rm_so;
+    regcomp(&attr_regex, "([:blank:]?=[:blank:]?)", REG_EXTENDED);
+    regcomp(&combtree_regex, "Combination Tree:", REG_EXTENDED|REG_PEND);
+    regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED|REG_PEND);
+
+    const char *float_string = "[+-]?[0-9]*\.?[0-9]?[[eE][+-]?[0-9]+]?";
+    bu_vls_sprintf(&regex_string, "[:blank:][%s[:blank:]+]{15}%s", float_string, float_string);
+    regcomp(&matrix_entry, bu_vls_addr(&regex_string), REG_EXTENDED|REG_PEND);
+
+    regmatch_t *result_locations, *matrix_locations;
+        /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment." */
+
+    currptr = (const char *)(tmpfile->buf);
+    tmpfile->buflen = 
+    result_locations = (regmatch_t *)bu_calloc(attr_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
+    ret = regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, REG_EXTENDED); 
+
+    bu_vls_trunc(&regexresult, 0);
+    bu_vls_strncpy(&regexresult, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
+    printf("regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
+    printf("tmpfile: \n%s\n", currptr);
+
+/*    attr_start = currptr + result_locations[1].rm_so;
     currptr = currptr + result_locations[1].rm_eo;
     attr_regex.re_endp = currptr + buff_readahead_step; 
     regexec(&attr_regex, currptr, 1, result_locations, REG_EXTENDED|REG_PEND); 
     attr_end = currptr + result_locations[1].rm_eo;
     regexec(&attr_regex, currptr, 1, result_locations, REG_EXTENDED|REG_PEND); 
+*/
 
-
+    bu_vls_free(&regex_string);
+    bu_vls_free(&regexresult);
+    bu_close_mapped_file(tmpfile);
 #endif
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
