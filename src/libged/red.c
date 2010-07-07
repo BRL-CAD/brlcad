@@ -142,7 +142,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 */
     regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
 
-    regcomp(&attr_regex, "([:blank:]?=[:blank:]?)", REG_EXTENDED);
+    regcomp(&attr_regex, "(.*[:blank:]?=[:blank:]?.+)", REG_EXTENDED|REG_NEWLINE);
     regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
     regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED|REG_PEND);
 
@@ -181,6 +181,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_free(&regexresult);
     bu_close_mapped_file(tmpfile);
 #endif
+
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
 
