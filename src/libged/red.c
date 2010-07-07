@@ -120,6 +120,19 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_vls tmpline;    
     struct bu_vls name_v5;
 
+#if 0
+    regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
+    regmatch_t *result_locations, *matrix_locations;
+    const char *attr_string = "([:blank:]?=[:blank:]?)"; /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment."
+    const char *combtree_string = "Combination Tree:";
+    const char *combtree_op_string = "[:blank:]?[+-u][:blank:]?"
+    const char *float_string = "[+-]?[0-9]*\.?[0-9]?[[eE][+-]?[0-9]+]?";
+    struct bu_vls matrix_string;
+    bu_vls_sprintf(&matrix_string, "[:blank:][%s[:blank:]+]{15}%s", float_string, float_string);
+
+
+#endif
+
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
 
