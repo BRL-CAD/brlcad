@@ -121,6 +121,19 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_vls name_v5;
 
 #if 0
+
+    struct bu_mapped_file *tmpfile;
+    char *currptr;
+
+    tmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
+    if (!tmpfile) {
+	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file %s\n", _ged_tmpfil);
+	return -1;
+    }
+
+    May be able to make use of the REG_PEND extension to do regex on the mapped file - update
+    regext_t pointer re_endp based on results of previous regex runs... needs exploring.
+
     regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
     regmatch_t *result_locations, *matrix_locations;
     const char *attr_string = "([:blank:]?=[:blank:]?)"; /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment."
@@ -129,6 +142,15 @@ build_comb(struct ged *gedp, struct directory *dp)
     const char *float_string = "[+-]?[0-9]*\.?[0-9]?[[eE][+-]?[0-9]+]?";
     struct bu_vls matrix_string;
     bu_vls_sprintf(&matrix_string, "[:blank:][%s[:blank:]+]{15}%s", float_string, float_string);
+
+    currptr = (const char *)tmpfile->buf;
+    regexec(&attr_regex, currptr, 1, result_locations, REG_EXTENDED); 
+    attr_start = currptr + result_locations[1].rm_so;
+    currptr = currptr + result_locations[1].rm_eo;
+    attr_regex.re_endp = currptr + buff_readahead_step; 
+    regexec(&attr_regex, currptr, 1, result_locations, REG_EXTENDED|REG_PEND); 
+    attr_end = currptr + result_locations[1].rm_eo;
+    regexec(&attr_regex, currptr, 1, result_locations, REG_EXTENDED|REG_PEND); 
 
 
 #endif
