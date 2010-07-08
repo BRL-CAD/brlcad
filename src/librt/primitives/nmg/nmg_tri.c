@@ -818,7 +818,10 @@ poly_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	}
     }
 
-    bu_bomb("Didn't find trapezoid to close!\n");
+    if (!tp->bot)
+	bu_bomb("Didn't find trapezoid to close!\n");
+    else
+	return;
 
     /* Complete the trapezoid. */
  trap_found:
