@@ -146,10 +146,9 @@ build_comb(struct ged *gedp, struct directory *dp)
     regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
     regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED);
 
-    const char *float_string = "([+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?)";
-    bu_vls_sprintf(&regex_string, "([:blank:][%s[:blank:]+]{15}%s)", float_string, float_string);
-/*    regcomp(&matrix_entry, bu_vls_addr(&regex_string), REG_EXTENDED);*/
-    regcomp(&matrix_entry, float_string, REG_EXTENDED);
+    const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
+    bu_vls_sprintf(&regex_string, "[[:blank:]](%s[[:blank:]]+){15}(%s)", float_string, float_string);
+    regcomp(&matrix_entry, bu_vls_addr(&regex_string), REG_EXTENDED);
 
     regmatch_t *result_locations, *matrix_locations;
     /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment." */
