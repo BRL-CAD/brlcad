@@ -142,7 +142,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 */
     regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
 
-    regcomp(&attr_regex, "(.*[:blank:]?=[:blank:]?.+)", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&attr_regex, "(.+[[:blank:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
     regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED);
 
@@ -457,7 +457,6 @@ build_comb(struct ged *gedp, struct directory *dp)
 	comb->tree = NULL;
     }
     comb->tree = tp;
-
     if(rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
@@ -472,7 +471,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     
     comb = (struct rt_comb_internal *)localintern.idb_ptr;
     db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
-
     bu_avs_free(&avs);
     return node_count;
 }
