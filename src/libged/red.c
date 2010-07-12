@@ -121,7 +121,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_vls tmpline;    
     struct bu_vls name_v5;
 
-#if 0
     struct bu_mapped_file *tmpfile;
     const char *currptr;
     struct bu_vls regex_string;
@@ -130,14 +129,14 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_init(&regex_string);
     bu_vls_init(&regexresult);
 
-
+#if 0
     tmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
     if (!tmpfile) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file %s\n", _ged_tmpfil);
 	return -1;
     }
 /*
-    May be able to make use of the REG_PEND extension to do regex on the mapped file - update
+    May be able to make use of the REG_STARTEND extension to do regex on the mapped file - update
     regext_t pointer re_endp based on results of previous regex runs... needs exploring.
 */
     regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
@@ -163,7 +162,9 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_free(result_locations, "free regex results");
 
     result_locations = (regmatch_t *)bu_calloc(combtree_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
-    ret = regexec(&combtree_regex, currptr, combtree_regex.re_nsub , result_locations, 0); 
+    result_locations[0].rm_so = 10;
+    result_locations[0].rm_eo = 500;
+    ret = regexec(&combtree_regex, currptr, combtree_regex.re_nsub , result_locations, REG_STARTEND); 
     bu_vls_trunc(&regexresult, 0);
     bu_vls_strncpy(&regexresult, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
     printf("regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
@@ -181,7 +182,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_free(&regexresult);
     bu_close_mapped_file(tmpfile);
 #endif
-
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
 
