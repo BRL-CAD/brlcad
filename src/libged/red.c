@@ -121,6 +121,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_vls tmpline;    
     struct bu_vls name_v5;
 
+#if 0
     struct bu_mapped_file *tmpfile;
     const char *currptr;
     struct bu_vls regex_string;
@@ -129,7 +130,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_init(&regex_string);
     bu_vls_init(&regexresult);
 
-#if 0
     tmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
     if (!tmpfile) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file %s\n", _ged_tmpfil);
@@ -143,11 +143,12 @@ build_comb(struct ged *gedp, struct directory *dp)
 
     regcomp(&attr_regex, "(.*[:blank:]?=[:blank:]?.+)", REG_EXTENDED|REG_NEWLINE);
     regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
-    regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED|REG_PEND);
+    regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED);
 
-    const char *float_string = "[+-]?[0-9]*\.?[0-9]?[[eE][+-]?[0-9]+]?";
-    bu_vls_sprintf(&regex_string, "[:blank:][%s[:blank:]+]{15}%s", float_string, float_string);
-    regcomp(&matrix_entry, bu_vls_addr(&regex_string), REG_EXTENDED|REG_PEND);
+    const char *float_string = "([+-]?[0-9]+\.?[[0-9]+]?[[eE][+-]?[0-9]+]?)";
+    bu_vls_sprintf(&regex_string, "([:blank:][%s[:blank:]+]{15}%s)", float_string, float_string);
+/*    regcomp(&matrix_entry, bu_vls_addr(&regex_string), REG_EXTENDED);*/
+    regcomp(&matrix_entry, float_string, REG_EXTENDED);
 
     regmatch_t *result_locations, *matrix_locations;
         /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment." */
@@ -156,6 +157,13 @@ build_comb(struct ged *gedp, struct directory *dp)
     tmpfile->buflen = 
     result_locations = (regmatch_t *)bu_calloc(attr_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
     ret = regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, 0); 
+    bu_vls_trunc(&regexresult, 0);
+    bu_vls_strncpy(&regexresult, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
+    printf("regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
+    bu_free(result_locations, "free regex results");
+
+    result_locations = (regmatch_t *)bu_calloc(matrix_entry.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
+    ret = regexec(&matrix_entry, currptr, matrix_entry.re_nsub , result_locations, 0); 
     bu_vls_trunc(&regexresult, 0);
     bu_vls_strncpy(&regexresult, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
     printf("regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
@@ -181,7 +189,9 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_free(&regex_string);
     bu_vls_free(&regexresult);
     bu_close_mapped_file(tmpfile);
+
 #endif
+
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
 
