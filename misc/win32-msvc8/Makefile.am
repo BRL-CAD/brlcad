@@ -1,5 +1,6 @@
 
 EXTRA_DIST= \
+	3dm2g/3dm2g.vcproj \
 	adrt/adrt.vcproj \
 	asc2g/asc2g.vcproj \
 	asc2nmg/asc2nmg.vcproj \
@@ -170,6 +171,7 @@ EXTRA_DIST= \
 	tea_nmg/tea_nmg.vcproj \
 	terrain/terrain.vcproj \
 	tire/tire.vcproj \
+	tkhtml/tkhtml.vcproj \
 	tkpng/tkpng.vcproj \
 	tkstub/tkstub.vcproj \
 	torii/torii.vcproj \
