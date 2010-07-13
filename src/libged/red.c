@@ -124,10 +124,11 @@ build_comb(struct ged *gedp, struct directory *dp)
 #if 0
 
     struct bu_mapped_file *tmpfile;
-    const char *currptr;
+    const char *currptr; 
+    int attrstart, attrend, attrcumulative;
     struct bu_vls regex_string;
     struct bu_vls regexresult;
-    int ret;
+    int ret, combtagstart, combtagend;
     bu_vls_init(&regex_string);
     bu_vls_init(&regexresult);
 
@@ -140,28 +141,71 @@ build_comb(struct ged *gedp, struct directory *dp)
   May be able to make use of the REG_STARTEND extension to do regex on the mapped file - update
   regext_t pointer re_endp based on results of previous regex runs... needs exploring.
 */
-    regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
+    regex_t attr_regex, float_regex, combtree_regex, combtree_op_regex, matrix_entry;
 
     regcomp(&attr_regex, "(.+[[:blank:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
-    regcomp(&combtree_op_regex, "[:blank:]+[+-u][:blank:]+", REG_EXTENDED);
+    regcomp(&combtree_op_regex, "[[:blank:]]+[+-u][[:blank:]]+", REG_EXTENDED);
 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
+    bu_vls_sprintf(&regex_string, "(%s)", float_string);
+    regcomp(&float_regex, bu_vls_addr(&regex_string), REG_EXTENDED);
     bu_vls_sprintf(&regex_string, "[[:blank:]](%s[[:blank:]]+){15}(%s)", float_string, float_string);
     regcomp(&matrix_entry, bu_vls_addr(&regex_string), REG_EXTENDED);
 
-    regmatch_t *result_locations, *matrix_locations;
+    regmatch_t *result_locations;
     /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment." */
 
     currptr = (const char *)(tmpfile->buf);
-    tmpfile->buflen = 
-	result_locations = (regmatch_t *)bu_calloc(attr_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
-    ret = regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, 0); 
-    bu_vls_trunc(&regexresult, 0);
-    bu_vls_strncpy(&regexresult, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
-    printf("regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
-    bu_free(result_locations, "free regex results");
 
+    result_locations = (regmatch_t *)bu_calloc(attr_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
+
+    /* First thing, find the beginning of the tree definition.  Without that, file is invalid*/
+    ret = regexec(&combtree_regex, currptr, combtree_regex.re_nsub , result_locations, 0);
+    if (!ret) {
+	combtagstart = result_locations[0].rm_so;
+	combtagend = result_locations[0].rm_eo;
+	printf("combtagstart: %d combtagend: %d\n", combtagstart, combtagend);
+	attrcumulative = 0;
+    } else {
+	   bu_vls_printf(&gedp->ged_result_str, "cannot locate comb tree, aborting\n");
+	   bu_vls_free(&regex_string);
+	   bu_vls_free(&regexresult);
+	   bu_close_mapped_file(tmpfile);
+	   return -1;
+    }
+    while (combtagstart != 0 && attrcumulative < combtagstart - 1) {
+       /* If attributes are present, the first line must match the attr regex - mult-line attribute names are not supported. */
+       if (regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, 0)) {
+printf("arrgh\n");
+	   bu_vls_printf(&gedp->ged_result_str, "invalid attribute line\n");
+	   bu_vls_free(&regex_string);
+	   bu_vls_free(&regexresult);
+	   bu_close_mapped_file(tmpfile);
+	   return -1;
+       } else {
+	   /* If an attribute line is found, set the attr pointers and look for the next attribute, if any.  Multi-line attribute values 
+	    * are supported, but only if the line does not itself match the format for an attribute (i.e. no equal sign 
+	    * surrounded by spaces or tabs 
+            */ 
+	   attrstart = result_locations[0].rm_so;
+	   attrend = result_locations[0].rm_eo;
+	   attrcumulative += attrend;
+	   printf("attrstart: %d attrend: %d attrcumulative: %d \n", attrstart, attrend, attrcumulative);
+	   if (!regexec(&attr_regex, (const char *)(tmpfile->buf) + attrcumulative, attr_regex.re_nsub , result_locations, 0)) {
+		attrend += result_locations[0].rm_so - 1; 
+	   } 
+	   printf("attrstart: %d attrend: %d attrcumulative: %d \n", attrstart, attrend, attrcumulative);
+           bu_vls_trunc(&regexresult, 0);
+           bu_vls_strncpy(&regexresult, currptr + attrstart, attrend - attrstart);
+           printf("attr regexec: %d, regex result: %s\n", ret, bu_vls_addr(&regexresult));
+	   currptr = currptr + attrend;
+       }
+    }
+
+   bu_free(result_locations, "free regex results");
+
+   currptr = (const char *)(tmpfile->buf);
     result_locations = (regmatch_t *)bu_calloc(matrix_entry.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
     ret = regexec(&matrix_entry, currptr, matrix_entry.re_nsub , result_locations, 0); 
     while (!ret) {
@@ -456,6 +500,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	comb->tree = NULL;
     }
     comb->tree = tp;
+
     if(rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "build_comb: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
@@ -470,6 +515,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     
     comb = (struct rt_comb_internal *)localintern.idb_ptr;
     db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+
     bu_avs_free(&avs);
     return node_count;
 }
