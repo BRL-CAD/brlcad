@@ -40,6 +40,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
+  mode BoTs, 'brep' objects need the ability to have a thickness
+  described so you could automatically handle non-solid NURBS and
+  sheet-metal style geometry without requiring surface solidity.
+
 * fix archer/libdm labels/axes to not use pointer printing
 
 * annotation primitive.  specifically a means to create an object in
