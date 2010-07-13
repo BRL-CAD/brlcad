@@ -2417,7 +2417,7 @@ AC_MSG_CHECKING(whether to build the included portable network graphics library)
 PNG=""
 PNG_CPPFLAGS=""
 if test "x$build_brlcad_png" = "xyes" ; then
-    PNG='${top_builddir}/src/other/libpng/libpng.la'
+    PNG='${top_builddir}/src/other/libpng/libpng14.la'
     PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
     AC_MSG_RESULT(yes)
 else
@@ -4144,6 +4144,11 @@ if test "x$build_brlcad_tk" = "xyes" ; then
 fi
 AC_SUBST(TK_PATH)
 
+dnl configure libpng
+if test "x$build_brlcad_png" = "xyes" ; then
+   AC_CONFIG_SUBDIRS([src/other/libpng])
+fi
+
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
@@ -4265,7 +4270,6 @@ AC_CONFIG_FILES([
 	src/conv/Makefile
 	src/conv/iges/Makefile
 	src/conv/intaval/Makefile
-	src/conv/step/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/EndgameFramework/Makefile
@@ -4341,7 +4345,6 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/pkgIndex.tcl
 	src/other/jove/Makefile
 	src/other/jove/teach-jove
-	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
