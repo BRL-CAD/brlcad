@@ -76,7 +76,6 @@ EXTRA_DIST = \
 	contrib/pngminim/decoder/makefile \
 	contrib/pngminim/decoder/pngusr.h \
 	contrib/pngminim/encoder/README \
-	contrib/pngminim/encoder/dummy_inflate.c \
 	contrib/pngminim/encoder/gather.sh \
 	contrib/pngminim/encoder/makefile \
 	contrib/pngminim/encoder/pngusr.h \
@@ -96,6 +95,35 @@ EXTRA_DIST = \
 	contrib/pngminus/pnm2png.bat \
 	contrib/pngminus/pnm2png.c \
 	contrib/pngminus/pnm2png.sh \
+	contrib/pngsuite/README \
+	contrib/pngsuite/basn0g01.png \
+	contrib/pngsuite/basn0g02.png \
+	contrib/pngsuite/basn0g04.png \
+	contrib/pngsuite/basn0g08.png \
+	contrib/pngsuite/basn0g16.png \
+	contrib/pngsuite/basn2c08.png \
+	contrib/pngsuite/basn2c16.png \
+	contrib/pngsuite/basn3p01.png \
+	contrib/pngsuite/basn3p02.png \
+	contrib/pngsuite/basn3p04.png \
+	contrib/pngsuite/basn3p08.png \
+	contrib/pngsuite/basn4a08.png \
+	contrib/pngsuite/basn4a16.png \
+	contrib/pngsuite/basn6a08.png \
+	contrib/pngsuite/basn6a16.png \
+	contrib/pngsuite/ftbbn1g04.png \
+	contrib/pngsuite/ftbbn2c16.png \
+	contrib/pngsuite/ftbbn3p08.png \
+	contrib/pngsuite/ftbgn2c16.png \
+	contrib/pngsuite/ftbgn3p08.png \
+	contrib/pngsuite/ftbrn2c08.png \
+	contrib/pngsuite/ftbwn1g16.png \
+	contrib/pngsuite/ftbwn3p08.png \
+	contrib/pngsuite/ftbyn3p08.png \
+	contrib/pngsuite/ftp0n1g08.png \
+	contrib/pngsuite/ftp0n2c08.png \
+	contrib/pngsuite/ftp0n3p08.png \
+	contrib/pngsuite/ftp1n3p08.png \
 	contrib/visupng/PngFile.c \
 	contrib/visupng/PngFile.h \
 	contrib/visupng/README.txt \
