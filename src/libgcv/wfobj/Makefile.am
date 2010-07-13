@@ -28,9 +28,12 @@ BUILT_SOURCES = \
 	obj_grammar.h \
 	obj_grammar.c
 
+EXTRA_DIST = obj_parser.h.orig
+
 DISTCLEANFILES = $(BUILT_SOURCES)
 
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
-	$(libobj_nil_la_OBJECTS)
+	$(libobj_nil_la_OBJECTS) \
+	$(parse_OBJECTS)
