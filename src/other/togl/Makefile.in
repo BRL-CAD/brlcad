@@ -412,6 +412,8 @@ dist: dist-clean
 
 	(cd $(DIST_ROOT); $(COMPRESS);)
 
+distdir: dist
+
 bindist-clean:
 	rm -rf $(BINDIST_DIR) $(DIST_ROOT)/$(PKG_DIR)*
 

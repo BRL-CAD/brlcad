@@ -481,6 +481,8 @@ dist: dist-clean
 
 	(cd $(DIST_ROOT); $(COMPRESS);)
 
+distdir: dist
+
 .PHONY: all binaries clean depend distclean doc install libraries test
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
