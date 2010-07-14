@@ -126,6 +126,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_mapped_file *tmpfile;
     const char *currptr; 
     int attrstart, attrend, attrcumulative;
+    int op_start, op_end, name_start, name_end, matrix_start, matrix_end, treecumulative;
     struct bu_vls regex_string;
     struct bu_vls regexresult;
     int ret, combtagstart, combtagend;
@@ -141,20 +142,19 @@ build_comb(struct ged *gedp, struct directory *dp)
   May be able to make use of the REG_STARTEND extension to do regex on the mapped file - update
   regext_t pointer re_endp based on results of previous regex runs... needs exploring.
 */
-    regex_t attr_regex, float_regex, combtree_regex, combtree_op_regex, matrix_entry;
+    regex_t global_regex, attr_regex, combtree_regex, combtree_op_regex, matrix_entry, full_matrix;
 
     regcomp(&attr_regex, "(.+[[:blank:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
-    regcomp(&combtree_op_regex, "[[:blank:]]+[+-u][[:blank:]]+", REG_EXTENDED);
+    regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
-    bu_vls_sprintf(&regex_string, "(%s)", float_string);
-    regcomp(&float_regex, bu_vls_addr(&regex_string), REG_EXTENDED);
-    bu_vls_sprintf(&regex_string, "[[:blank:]](%s[[:blank:]]+){15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&regex_string, "(%s[[:blank:]]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&regex_string), REG_EXTENDED);
+    bu_vls_sprintf(&regex_string, "[[:blank:]](%s[[:blank:]]+){15}(%s)", float_string, float_string);
+    regcomp(&full_matrix, bu_vls_addr(&regex_string), REG_EXTENDED);
 
     regmatch_t *result_locations;
-    /* When doing attr hunting, read in next line and check for presence of an attr match - if not present and combtree_string is not present, append the new line to the previous line without the newline - else process the old line as is and begin anew with tne new one.  When a match + terminating case is found, pass the resulting line to get_attr_val_pair - easier than working with the regex results, for such a simple assignment." */
 
     currptr = (const char *)(tmpfile->buf);
 
@@ -213,6 +213,33 @@ printf("arrgh\n");
     }
    printf("\n\n\n");
    bu_free(result_locations, "free regex results");
+
+   /* Now, the comb tree */
+   result_locations = (regmatch_t *)bu_calloc(combtree_op_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
+   currptr = (const char *)(tmpfile->buf) + combtagend;
+   treecumulative = 0;
+   name_start = 0;
+   name_end = 0;
+   while (!ret && treecumulative < strlen((const char *)(tmpfile->buf))) {
+      ret = regexec(&combtree_op_regex, currptr + treecumulative, combtree_op_regex.re_nsub , result_locations, 0);
+      bu_vls_trunc(&regexresult, 0);
+      bu_vls_strncpy(&regexresult, currptr + treecumulative + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
+      printf("regexec: %d, op regex result: %s\n", ret, bu_vls_addr(&regexresult));
+      if (!ret) {
+	name_end = treecumulative + result_locations[0].rm_so;
+      if (name_end != result_locations[0].rm_so) {
+	 bu_vls_trunc(&regexresult, 0);
+         bu_vls_strncpy(&regexresult, currptr + name_start, name_end - name_start);
+         printf("regexec: %d, op regex result: %s\n", ret, bu_vls_addr(&regexresult));
+      } 
+      name_start = name_end + result_locations[0].rm_eo - 1;
+      treecumulative += result_locations[0].rm_eo;
+      } else {
+         bu_vls_sprintf(&regexresult, "%s", currptr + treecumulative);
+         printf("last string: %s\n", bu_vls_addr(&regexresult));
+     }
+
+   }
 
    currptr = (const char *)(tmpfile->buf);
     result_locations = (regmatch_t *)bu_calloc(matrix_entry.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
