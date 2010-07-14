@@ -436,10 +436,7 @@ starkit: starkit-clean
 #========================================================================
 
 TAR		= tar
-#COMPRESS	= $(TAR) cvf $(PKG_DIR).tar $(PKG_DIR); compress $(PKG_DIR).tar
-COMPRESS	= $(TAR) zcvf $(PKG_DIR).tar.gz $(PKG_DIR)
-DIST_ROOT	= /tmp/dist
-DIST_DIR	= $(DIST_ROOT)/$(PKG_DIR)
+DIST_DIR	= $(distdir)
 
 dist-clean:
 	rm -rf $(DIST_DIR) $(DIST_ROOT)/$(PKG_DIR).tar.*
@@ -478,8 +475,6 @@ dist: dist-clean
 
 	mkdir $(DIST_DIR)/win
 	cp -p $(srcdir)/win/makefile.vc $(DIST_DIR)/win/
-
-	(cd $(DIST_ROOT); $(COMPRESS);)
 
 distdir: dist
 
