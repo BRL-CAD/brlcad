@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* MGED doesn't initialize multipane view to the documented multipane
+  defaults if you just open a db with multipane already enabled.
+
 * Creating an 'extrude' via MGED gui crashes MGED.
 
 * edcomb command seems to be busted similar to red, doesn't seem to do
