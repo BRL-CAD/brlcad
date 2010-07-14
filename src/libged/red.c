@@ -174,7 +174,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	   bu_close_mapped_file(tmpfile);
 	   return -1;
     }
-    while (combtagstart != 0 && attrcumulative < combtagstart - 1) {
+    while (attrcumulative < combtagstart - 1) {
        /* If attributes are present, the first line must match the attr regex - mult-line attribute names are not supported. */
        if (regexec(&attr_regex, currptr, attr_regex.re_nsub , result_locations, 0)) {
 printf("arrgh\n");
@@ -193,7 +193,16 @@ printf("arrgh\n");
 	   attrcumulative += attrend;
 	   printf("attrstart: %d attrend: %d attrcumulative: %d \n", attrstart, attrend, attrcumulative);
 	   if (!regexec(&attr_regex, (const char *)(tmpfile->buf) + attrcumulative, attr_regex.re_nsub , result_locations, 0)) {
-		attrend += result_locations[0].rm_so - 1; 
+		if (attrcumulative + result_locations[0].rm_eo < combtagstart) {
+		    attrend += result_locations[0].rm_so - 1; 
+		    attrcumulative += result_locations[0].rm_so - 1;
+		} else {
+		    attrend = attrend + (combtagstart - attrcumulative);
+	  	    attrcumulative = combtagstart;
+		}
+	   } else {
+		attrend = attrend + (combtagstart - attrcumulative);
+		attrcumulative = combtagstart;
 	   } 
 	   printf("attrstart: %d attrend: %d attrcumulative: %d \n", attrstart, attrend, attrcumulative);
            bu_vls_trunc(&regexresult, 0);
@@ -202,7 +211,7 @@ printf("arrgh\n");
 	   currptr = currptr + attrend;
        }
     }
-
+   printf("\n\n\n");
    bu_free(result_locations, "free regex results");
 
    currptr = (const char *)(tmpfile->buf);
