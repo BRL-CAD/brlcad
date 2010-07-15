@@ -233,17 +233,35 @@ build_comb(struct ged *gedp, struct directory *dp)
 		floatcnt = 0;
 	        float_locations[0].rm_so = 0;
                 float_locations[0].rm_eo = name_end - name_start;
-		while (floatcnt < 16 && floatcnt != -1) {
+		while (floatcnt < 16 && floatcnt >= 0) {
 		    if (!regexec(&matrix_entry, currptr + name_start, matrix_entry.re_nsub, float_locations, REG_STARTEND))  {
 			floatcnt++;
 	        	float_locations[0].rm_so = float_locations[0].rm_eo;
 	        	float_locations[0].rm_eo = name_end;
 			printf("floatcnt: %d\n", floatcnt);
 		    } else {
-			floatcnt = -1;
+			floatcnt = -1 * floatcnt - 1;
 		    }
 		}
 		printf("floatcnt: %d\n", floatcnt);
+		if (floatcnt >= 16) {
+		    /* Possible matrix - use matrix regex to locate it */
+		    float_locations[0].rm_so = 0;
+		    float_locations[0].rm_eo = name_end - name_start;
+		    if (!regexec(&full_matrix, currptr + name_start, full_matrix.re_nsub, float_locations, REG_STARTEND))  {
+			bu_vls_trunc(&regexresult, 0);
+			bu_vls_strncpy(&regexresult, currptr + name_start + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
+			printf("Found Matrix!: regex result: %s\n", bu_vls_addr(&regexresult));
+			bu_vls_trunc(&regexresult, 0);
+			bu_vls_strncpy(&regexresult, currptr + name_start, float_locations[0].rm_so);
+			printf("Comb name sans Matrix: regex result: %s\n", bu_vls_addr(&regexresult));
+		    } else {
+			printf("Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
+		    }
+	        }
+		if (floatcnt < -1 && (floatcnt + 1) < -4) {
+		   printf("More than 4 floats found without a matrix present - possible invalid matrix?\n");
+		}
 	    } 
 	    name_start = name_end + result_locations[0].rm_eo - 1;
 	    treecumulative += result_locations[0].rm_eo;
@@ -266,6 +284,21 @@ build_comb(struct ged *gedp, struct directory *dp)
 		    }
 		}
 		printf("floatcnt: %d\n", floatcnt);
+		if (floatcnt >= 16) {
+		    /* Possible matrix - use matrix regex to locate it */
+		    float_locations[0].rm_so = 0;
+		    float_locations[0].rm_eo = name_end - name_start;
+		    if (!regexec(&full_matrix, currptr + name_start, full_matrix.re_nsub, float_locations, REG_STARTEND))  {
+			bu_vls_trunc(&regexresult, 0);
+			bu_vls_strncpy(&regexresult, currptr + name_start + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
+			printf("Found Matrix!: regex result: %s\n", bu_vls_addr(&regexresult));
+			bu_vls_trunc(&regexresult, 0);
+			bu_vls_strncpy(&regexresult, currptr + name_start, float_locations[0].rm_so);
+			printf("Comb name sans Matrix: regex result: %s\n", bu_vls_addr(&regexresult));
+		    } else {
+			printf("Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
+		    }
+	        }
 	    }
 	}
 
