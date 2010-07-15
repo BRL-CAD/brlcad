@@ -255,6 +255,8 @@ build_comb(struct ged *gedp, struct directory *dp)
 			bu_vls_trunc(&regexresult, 0);
 			bu_vls_strncpy(&regexresult, currptr + name_start, float_locations[0].rm_so);
 			printf("Comb name sans Matrix: regex result: %s\n", bu_vls_addr(&regexresult));
+			printf("distance from end: %d\n", name_end - name_start - float_locations[0].rm_eo - 1);
+			/* Need to check for non-whitespace in the distance-from-end zone */
 		    } else {
 			printf("Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
 		    }
@@ -295,6 +297,8 @@ build_comb(struct ged *gedp, struct directory *dp)
 			bu_vls_trunc(&regexresult, 0);
 			bu_vls_strncpy(&regexresult, currptr + name_start, float_locations[0].rm_so);
 			printf("Comb name sans Matrix: regex result: %s\n", bu_vls_addr(&regexresult));
+			printf("distance from end: %d\n", name_end - name_start - float_locations[0].rm_eo - 1);
+			/* Need to check for non-whitespace in the distance-from-end zone */
 		    } else {
 			printf("Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
 		    }
