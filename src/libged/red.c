@@ -139,8 +139,9 @@ build_comb(struct ged *gedp, struct directory *dp)
 	return -1;
     }
     
-    regex_t attr_regex, combtree_regex, combtree_op_regex, matrix_entry, full_matrix;
+    regex_t whitespace_regex, attr_regex, combtree_regex, combtree_op_regex, matrix_entry, full_matrix;
 
+    regcomp(&whitespace_regex, "([^[:blank:]])", REG_EXTENDED);
     regcomp(&attr_regex, "(.+[[:blank:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     regcomp(&combtree_regex, "(Combination Tree:)", REG_EXTENDED);
     regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
@@ -256,7 +257,13 @@ build_comb(struct ged *gedp, struct directory *dp)
 			bu_vls_strncpy(&regexresult, currptr + name_start, float_locations[0].rm_so);
 			printf("Comb name sans Matrix: regex result: %s\n", bu_vls_addr(&regexresult));
 			printf("distance from end: %d\n", name_end - name_start - float_locations[0].rm_eo - 1);
+			bu_vls_trunc(&regexresult, 0);
+			bu_vls_strncpy(&regexresult, currptr + name_start + float_locations[0].rm_eo, name_end - name_start - float_locations[0].rm_eo - 1);
+			printf("Remainder text: '%s'\n", bu_vls_addr(&regexresult));
 			/* Need to check for non-whitespace in the distance-from-end zone */
+		        if (regexec(&whitespace_regex, bu_vls_addr(&regexresult), whitespace_regex.re_nsub, float_locations, 0) == 0)  {
+			    printf("Saw something other than whitespace after matrix - error!\n");
+			}
 		    } else {
 			printf("Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
 		    }
