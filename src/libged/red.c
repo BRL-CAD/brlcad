@@ -195,6 +195,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_attribute_value_set avs;
     struct bu_vls attr_vls, val_vls;
     struct bu_vls name;
+    struct bu_vls line, tmpline, name_v5, matrix_line;
 
     /* Standard sanity checks */
     if (gedp->ged_wdbp->dbip == DBI_NULL)
@@ -386,7 +387,6 @@ build_comb(struct ged *gedp, struct directory *dp)
 	return -1;
     }
 #endif
-    struct bu_vls line, tmpline, name_v5, matrix_line;
     bu_vls_init(&line);
     bu_vls_init(&tmpline);
     bu_vls_init(&matrix_line);
