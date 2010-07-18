@@ -380,13 +380,14 @@ build_comb(struct ged *gedp, struct directory *dp)
     bu_vls_free(&current_substring);
     bu_close_mapped_file(tmpfile);
 
+#endif
 
     if ((fp=fopen(_ged_tmpfil, "r")) == NULL) {
 	perror("fopen");
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file for reading\n");
 	return -1;
     }
-#endif
+
     bu_vls_init(&line);
     bu_vls_init(&tmpline);
     bu_vls_init(&matrix_line);
