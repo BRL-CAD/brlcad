@@ -96,7 +96,7 @@ _ged_print_matrix(FILE *fp, matp_t matrix)
 }
 
 int
-_ged_find_matrix(const char *currptr, int strlength, matp_t *matrix, int *name_end) {
+_ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *matrix, int *name_end) {
  
     regex_t matrix_entry, full_matrix, whitespace_regex;
     regmatch_t *float_locations;
@@ -160,7 +160,7 @@ _ged_find_matrix(const char *currptr, int strlength, matp_t *matrix, int *name_e
 	    bu_vls_strncpy(&current_substring, currptr + tail_start, strlength - tail_start - 1);
 	    /* Need to check for non-whitespace in the distance-from-end zone */
 	    if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, float_locations, 0) == 0)  {
-		printf("Saw something other than whitespace after matrix - error!\n");
+	        bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
 		bu_free(float_locations, "free float_locations");
 		bu_vls_free(&current_substring);
 		regfree(&matrix_entry);
@@ -178,22 +178,20 @@ _ged_find_matrix(const char *currptr, int strlength, matp_t *matrix, int *name_e
 	} else {
 	    bu_free(float_locations, "free float_locations");
 	    bu_vls_free(&current_substring);
-	    printf("Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
+	    bu_vls_printf(&gedp->ged_result_str, "Yikes!  Found 16 or more float matches in a comb string but no valid matrix!!\n");
 	    regfree(&matrix_entry);
 	    regfree(&full_matrix);
 	    regfree(&whitespace_regex);
-	
 	    return -1;
 	}
     }
     if (floatcnt < -1 && (floatcnt + 1) < -4) {
 	bu_free(float_locations, "free float_locations");
 	bu_vls_free(&current_substring);
-	printf("More than 4 floats found without a matrix present - possible invalid matrix?\n");
+	bu_vls_printf(&gedp->ged_result_str, "More than 4 floats found without a matrix present - possible invalid matrix?\n");
 	regfree(&matrix_entry);
 	regfree(&full_matrix);
 	regfree(&whitespace_regex);
-	
 	return -1;
     }
     bu_free(float_locations, "free float_locations");
@@ -225,7 +223,15 @@ build_comb(struct ged *gedp, struct directory *dp)
     struct bu_vls attr_vls, val_vls;
     struct bu_vls name;
     struct bu_vls line, tmpline, name_v5, matrix_line;
-
+    struct bu_vls curr_op_vls, next_op_vls;
+    struct bu_mapped_file *tmpfile;
+    const char *currptr, floatptr; 
+    int attrstart, attrend, attrcumulative;
+    int op_start, op_end, name_start, name_end, treecumulative;
+    int ret, combtagstart, combtagend;
+    int floatcnt = 0;
+    const char *combtree_header = "-------------Combination Tree------------:\n";
+ 
     rt_tree_array = (struct rt_tree_array *)NULL;
  
     /* Standard sanity checks */
@@ -244,14 +250,6 @@ build_comb(struct ged *gedp, struct directory *dp)
     regmatch_t *result_locations;
     struct bu_vls current_substring;
 
-    struct bu_vls curr_op_vls, next_op_vls;
-    struct bu_mapped_file *tmpfile;
-    const char *currptr, floatptr; 
-    int attrstart, attrend, attrcumulative;
-    int op_start, op_end, name_start, name_end, treecumulative;
-    int ret, combtagstart, combtagend;
-    int floatcnt = 0;
-    const char *combtree_header = "-------------Combination Tree------------:\n";
     bu_vls_init(&current_substring);
 
     /* Map the temp file for reading */
@@ -349,6 +347,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 
     /* Now, the comb tree. First, count the number of operators - without at least one, the comb tree is empty
      * and we need to know how many there are before allocating rt_tree_array memory. */
+    currptr = (const char *)(tmpfile->buf) + combtagend;
     node_count = 0;
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
     if (!ret) {
@@ -392,7 +391,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    } 
 	    /* We have a string - now check for a matrix and build it if present 
 	     * Otherwise, set matrix to NULL */
-	    if (_ged_find_matrix(currptr, name_end, &matrix, &name_end)) {
+	    if (_ged_find_matrix(gedp, currptr, name_end, &matrix, &name_end)) {
 		matrix = (matp_t)NULL;
 	    }
 	    bu_vls_trunc(&current_substring, 0);
@@ -429,7 +428,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	/* Empty tree, ok as long as there is no garbage after the comb tree indicator */
 	bu_vls_sprintf(&current_substring, "%s", currptr);
 	if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, result_locations, 0) == 0)  {
-	    printf("Saw something other than comb tree entries after comb tree tag - error!\n");
+	    bu_vls_printf(&gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");
 	    bu_vls_free(&current_substring);
 	    return -1;
 	}
@@ -460,7 +459,7 @@ build_comb(struct ged *gedp, struct directory *dp)
   op = '-';
   break;
   default:
-  bu_vls_printf(&gedp->ged_result_str, "write_comb: Illegal op code in tree\n");
+  printf("write_comb: Illegal op code in tree\n");
   }
   printf(" %c %s\n", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
   bn_mat_print("in rt_tree_array", rt_tree_array[i].tl_tree->tr_l.tl_mat);
