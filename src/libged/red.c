@@ -101,7 +101,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     regex_t matrix_entry, full_matrix, whitespace_regex;
     regmatch_t *float_locations;
     struct bu_vls current_substring, matrix_substring;
-    int k, floatcnt, matrix_start, matrix_end, tail_start;
+    int floatcnt, tail_start;
     const char *floatptr; 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
     bu_vls_init(&current_substring);
@@ -206,30 +206,21 @@ HIDDEN int
 build_comb(struct ged *gedp, struct directory *dp)
 {
     struct rt_comb_internal *comb;
-    FILE *fp;
     size_t node_count=0;
     int nonsubs=0;
-    int k;
-    int scanning_tree, matrix_space, matrix_pos, space_cnt;
-    char relation;
-    char *tmpstr;
-    char *ptr = (char *)NULL;
     union tree *tp;
     int tree_index=0;
     struct rt_db_internal intern, localintern;
     struct rt_tree_array *rt_tree_array;
-    matp_t matrix;
+    const char *currptr; 
+    regex_t whitespace_regex, attr_regex, combtree_regex, combtree_op_regex;
+    regmatch_t *result_locations;
+    struct bu_vls current_substring, attr_vls, val_vls, curr_op_vls, next_op_vls;
+    struct bu_mapped_file *redtmpfile;
+    int attrstart, attrend, attrcumulative, name_start, name_end, treecumulative;
+    int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
-    struct bu_vls attr_vls, val_vls;
-    struct bu_vls name;
-    struct bu_vls line, tmpline, name_v5, matrix_line;
-    struct bu_vls curr_op_vls, next_op_vls;
-    struct bu_mapped_file *tmpfile;
-    const char *currptr, floatptr; 
-    int attrstart, attrend, attrcumulative;
-    int op_start, op_end, name_start, name_end, treecumulative;
-    int ret, combtagstart, combtagend;
-    int floatcnt = 0;
+    matp_t matrix;
     const char *combtree_header = "-------------Combination Tree------------:\n";
  
     rt_tree_array = (struct rt_tree_array *)NULL;
@@ -245,16 +236,11 @@ build_comb(struct ged *gedp, struct directory *dp)
 	RT_CK_COMB(comb);
 	RT_CK_DIR(dp);
     }
-
-    regex_t whitespace_regex, attr_regex, combtree_regex, combtree_op_regex, matrix_entry;
-    regmatch_t *result_locations;
-    struct bu_vls current_substring;
-
     bu_vls_init(&current_substring);
 
     /* Map the temp file for reading */
-    tmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
-    if (!tmpfile) {
+    redtmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
+    if (!redtmpfile) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file %s\n", _ged_tmpfil);
 	return -1;
     }
@@ -273,7 +259,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     /* First thing, find the beginning of the tree definition.  Without that, file is invalid.  Even an empty comb must
      * include this header.
      */
-    currptr = (const char *)(tmpfile->buf);
+    currptr = (const char *)(redtmpfile->buf);
     ret = regexec(&combtree_regex, currptr, combtree_regex.re_nsub , result_locations, 0);
     if (!ret) {
 	combtagstart = result_locations[0].rm_so;
@@ -283,15 +269,23 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR - multiple instances of comb tree header \"%s\" in temp file!", combtree_header);
 	    bu_vls_printf(&gedp->ged_result_str, "cannot locate comb tree, aborting\n");
 	    bu_vls_free(&current_substring);
+	    regfree(&whitespace_regex);
+	    regfree(&attr_regex);
+	    regfree(&combtree_regex);
+	    regfree(&combtree_op_regex);
 	    bu_free(result_locations, "free regex results array\n");
-	    bu_close_mapped_file(tmpfile);
+	    bu_close_mapped_file(redtmpfile);
 	    return -1;
 	}
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "cannot locate comb tree, aborting\n");
 	bu_vls_free(&current_substring);
+	regfree(&whitespace_regex);
+	regfree(&attr_regex);
+	regfree(&combtree_regex);
+	regfree(&combtree_op_regex);
 	bu_free(result_locations, "free regex results array\n");
-	bu_close_mapped_file(tmpfile);
+	bu_close_mapped_file(redtmpfile);
 	return -1;
     }
 
@@ -306,9 +300,13 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    bu_vls_free(&current_substring);
 	    bu_vls_free(&attr_vls);
 	    bu_vls_free(&val_vls);
+	    regfree(&whitespace_regex);
+	    regfree(&attr_regex);
+	    regfree(&combtree_regex);
+	    regfree(&combtree_op_regex);
 	    bu_avs_free(&avs);
 	    bu_free(result_locations, "free regex results array\n");
-	    bu_close_mapped_file(tmpfile);
+	    bu_close_mapped_file(redtmpfile);
 	    return -1;
 	} else {
 	    /* If an attribute line is found, set the attr pointers and look for the next attribute, if any.  Multi-line attribute values 
@@ -318,7 +316,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    attrstart = result_locations[0].rm_so;
 	    attrend = result_locations[0].rm_eo;
 	    attrcumulative += attrend;
-	    if (!regexec(&attr_regex, (const char *)(tmpfile->buf) + attrcumulative, attr_regex.re_nsub , result_locations, 0)) {
+	    if (!regexec(&attr_regex, (const char *)(redtmpfile->buf) + attrcumulative, attr_regex.re_nsub , result_locations, 0)) {
 		if (attrcumulative + result_locations[0].rm_eo < combtagstart) {
 		    attrend += result_locations[0].rm_so - 1; 
 		    attrcumulative += result_locations[0].rm_so - 1;
@@ -347,7 +345,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 
     /* Now, the comb tree. First, count the number of operators - without at least one, the comb tree is empty
      * and we need to know how many there are before allocating rt_tree_array memory. */
-    currptr = (const char *)(tmpfile->buf) + combtagend;
+    currptr = (const char *)(redtmpfile->buf) + combtagend;
     node_count = 0;
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
     if (!ret) {
@@ -357,7 +355,7 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    node_count++;
 	}
     }    
-    currptr = (const char *)(tmpfile->buf) + combtagend;
+    currptr = (const char *)(redtmpfile->buf) + combtagend;
     treecumulative = 0;
     name_start = 0;
     name_end = 0;
@@ -387,12 +385,40 @@ build_comb(struct ged *gedp, struct directory *dp)
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr, name_end);
 	    if (!bu_vls_strlen(&current_substring)) {
-		printf("Error out - zero length substring : currptr: %s, name_end: %d\n", currptr, name_end);
+		bu_vls_printf(&gedp->ged_result_str, "Zero length substring\n");
+		bu_vls_free(&current_substring);
+		bu_vls_free(&curr_op_vls);
+		bu_vls_free(&next_op_vls);
+		regfree(&whitespace_regex);
+		regfree(&attr_regex);
+		regfree(&combtree_regex);
+		regfree(&combtree_op_regex);
+		bu_avs_free(&avs);
+		bu_free(result_locations, "free regex results array\n");
+		bu_close_mapped_file(redtmpfile);
+
+		return GED_ERROR;
+
 	    } 
 	    /* We have a string - now check for a matrix and build it if present 
 	     * Otherwise, set matrix to NULL */
-	    if (_ged_find_matrix(gedp, currptr, name_end, &matrix, &name_end)) {
+	    gedret = _ged_find_matrix(gedp, currptr, name_end, &matrix, &name_end);
+	    if (gedret) {
 		matrix = (matp_t)NULL;
+		if (gedret == -1) {
+		    bu_vls_printf(&gedp->ged_result_str, "Problem parsing Matrix\n");
+		    bu_vls_free(&current_substring);
+		    bu_vls_free(&curr_op_vls);
+		    bu_vls_free(&next_op_vls);
+		    regfree(&whitespace_regex);
+		    regfree(&attr_regex);
+		    regfree(&combtree_regex);
+		    regfree(&combtree_op_regex);
+		    bu_avs_free(&avs);
+		    bu_free(result_locations, "free regex results array\n");
+		    bu_close_mapped_file(redtmpfile);
+		    return GED_ERROR;
+		}
 	    }
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr, name_end);
@@ -430,14 +456,28 @@ build_comb(struct ged *gedp, struct directory *dp)
 	if (regexec(&whitespace_regex, bu_vls_addr(&current_substring), whitespace_regex.re_nsub, result_locations, 0) == 0)  {
 	    bu_vls_printf(&gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");
 	    bu_vls_free(&current_substring);
-	    return -1;
+	    bu_vls_free(&curr_op_vls);
+	    bu_vls_free(&next_op_vls);
+	    regfree(&whitespace_regex);
+	    regfree(&attr_regex);
+	    regfree(&combtree_regex);
+	    regfree(&combtree_op_regex);
+	    bu_avs_free(&avs);
+	    bu_free(result_locations, "free regex results array\n");
+	    bu_close_mapped_file(redtmpfile);
+	    return GED_ERROR;
 	}
     }
-    bu_free(result_locations, "free regex results");
-
     bu_vls_free(&current_substring);
+    bu_vls_free(&curr_op_vls);
     bu_vls_free(&next_op_vls);
-    bu_close_mapped_file(tmpfile);
+    regfree(&whitespace_regex);
+    regfree(&attr_regex);
+    regfree(&combtree_regex);
+    regfree(&combtree_op_regex);
+
+    bu_free(result_locations, "free regex results array\n");
+    bu_close_mapped_file(redtmpfile);
 
 /* Debugging print stuff */
 /*
@@ -468,7 +508,8 @@ build_comb(struct ged *gedp, struct directory *dp)
 */
     if (nonsubs == 0 && node_count) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
-	return -1;
+	bu_avs_free(&avs);
+	return GED_ERROR;
     }
 
     if (tree_index)
