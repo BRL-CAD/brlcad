@@ -335,7 +335,7 @@ htmldefaultstyle.c: $(srcdir)/src/tkhtml.tcl  $(srcdir)/src/html.css \
 htmltokens.h: htmltokens.c
 
 cssprop.o: cssprop.h htmltokens.h
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/cssprop.c -o $@
+	$(COMPILE) -c -I. -I$(srcdir)/src $(top_builddir)/cssprop.c -o $@
 
 cssprop.h: $(srcdir)/src/cssprop.tcl
 	$(TCLSH) $?
