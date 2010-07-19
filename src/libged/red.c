@@ -109,7 +109,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
     bu_vls_sprintf(&current_substring, "[[:blank:]](%s[[:blank:]]+){15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&whitespace_regex, "([^[:blank:]])", REG_EXTENDED);
+    regcomp(&whitespace_regex, "([^[:blank:]\n])", REG_EXTENDED);
     
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
  
@@ -246,7 +246,7 @@ build_comb(struct ged *gedp, struct directory *dp)
     }
 
     /* Set up the regular expressions */
-    regcomp(&whitespace_regex, "([^[:blank:]])", REG_EXTENDED);
+    regcomp(&whitespace_regex, "([^[:blank:]\n])", REG_EXTENDED);
     regcomp(&attr_regex, "(.+[[:blank:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
     regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
@@ -361,10 +361,27 @@ build_comb(struct ged *gedp, struct directory *dp)
     name_end = 0;
     bu_vls_init(&curr_op_vls);
     bu_vls_init(&next_op_vls);
-    /* TODO:  may want to check for non-whitespace garbage between first operator and start of comb tree definition - should
-     * probably error out. Probably need to fix the whitespace regex to ignore new lines as well.*/
+
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
     if (!ret) {
+        /* Check for non-whitespace garbage between first operator and start of comb tree definition */
+	result_locations[0].rm_eo = result_locations[0].rm_so;
+	result_locations[0].rm_so = 0;
+	if (regexec(&whitespace_regex, currptr, whitespace_regex.re_nsub, result_locations, REG_STARTEND) == 0)  {
+	    bu_vls_printf(&gedp->ged_result_str, "Saw something other than comb tree entries after comb tree tag - error!\n");
+	    bu_vls_free(&current_substring);
+	    bu_vls_free(&curr_op_vls);
+	    bu_vls_free(&next_op_vls);
+	    regfree(&whitespace_regex);
+	    regfree(&attr_regex);
+	    regfree(&combtree_regex);
+	    regfree(&combtree_op_regex);
+	    bu_avs_free(&avs);
+	    bu_free(result_locations, "free regex results array\n");
+	    bu_close_mapped_file(redtmpfile);
+	    return GED_ERROR;
+	}
+        ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
 	bu_vls_trunc(&next_op_vls, 0);
 	bu_vls_strncpy(&next_op_vls, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
 	bu_vls_trimspace(&next_op_vls);
