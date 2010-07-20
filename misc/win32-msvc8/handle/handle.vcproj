@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="tire"
+	Name="handle"
 	ProjectGUID="{D4B7A4C2-1029-4273-8DA1-232668DD7B0F}"
 	>
 	<Platforms>
@@ -40,7 +40,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/tire.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/handle.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -55,7 +55,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/tire.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/handle.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -79,12 +79,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libged.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/tire.exe"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/handle.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/tire.pdb"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/handle.pdb"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -139,7 +139,7 @@
 			<Tool
 				Name="VCMIDLTool"
 				TargetEnvironment="3"
-				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/tire.tlb"
+				TypeLibraryName=".\$(PlatformName)\$(ConfigurationName)/handle.tlb"
 				HeaderFileName=""
 			/>
 			<Tool
@@ -154,7 +154,7 @@
 				EnableFunctionLevelLinking="true"
 				TreatWChar_tAsBuiltInType="false"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/tire.pch"
+				PrecompiledHeaderFile=".\$(PlatformName)\$(ConfigurationName)/handle.pch"
 				AssemblerListingLocation=".\$(PlatformName)\$(ConfigurationName)/"
 				ObjectFile=".\$(PlatformName)\$(ConfigurationName)/"
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
@@ -178,12 +178,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libbu.lib libbn.lib libsysv.lib librt.lib libwdb.lib tcl85.lib libged.lib"
-				OutputFile="$(PlatformName)\$(ConfigurationName)/tire.exe"
+				OutputFile="$(PlatformName)\$(ConfigurationName)/handle.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="../../../brlcadInstall$(PlatformName)/lib"
 				GenerateDebugInformation="false"
-				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/tire.pdb"
+				ProgramDatabaseFile=".\$(PlatformName)\$(ConfigurationName)/handle.pdb"
 				SubSystem="1"
 				TargetMachine="17"
 			/>
@@ -222,7 +222,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\shapes\tire.c"
+				RelativePath="..\..\..\src\shapes\handle.c"
 				>
 			</File>
 		</Filter>
