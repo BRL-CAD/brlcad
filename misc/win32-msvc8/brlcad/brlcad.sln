@@ -1469,6 +1469,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "clutter", "..\clutter\clutt
 		{333C38B9-BD2E-4D34-98DD-69E9B5E56ECB} = {333C38B9-BD2E-4D34-98DD-69E9B5E56ECB}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coil", "..\coil\coil.vcproj", "{B808DF2C-A716-42C9-B45D-E84E992A89C3}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{333C38B9-BD2E-4D34-98DD-69E9B5E56ECB} = {333C38B9-BD2E-4D34-98DD-69E9B5E56ECB}
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "contours", "..\contours\contours.vcproj", "{F40E65B1-8ACB-404F-844D-F8295FFB22AE}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
