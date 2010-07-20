@@ -105,9 +105,9 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     const char *floatptr; 
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
     bu_vls_init(&current_substring);
-    bu_vls_sprintf(&current_substring, "(%s[[:blank:]]+)", float_string);
+    bu_vls_sprintf(&current_substring, "(%s[[:blank:]\n]+)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
-    bu_vls_sprintf(&current_substring, "[[:blank:]](%s[[:blank:]]+){15}(%s)", float_string, float_string);
+    bu_vls_sprintf(&current_substring, "[[:blank:]\n](%s[[:blank:]\n]+){15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
     regcomp(&whitespace_regex, "([^[:blank:]\n])", REG_EXTENDED);
     
