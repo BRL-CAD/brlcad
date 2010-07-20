@@ -23,6 +23,7 @@ EXTRA_DIST= \
 	cell2fb/cell2fb.vcproj \
 	clutter/clutter.vcproj \
 	cmap2fb/cmap2fb.vcproj \
+	coil/coil.vcproj \
 	contours/contours.vcproj \
 	cy2g/cy2g.vcproj \
 	dbupgrade/dbupgrade.vcproj \
