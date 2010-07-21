@@ -5790,6 +5790,12 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_h_binu,
 RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 		    (const int minor));
 
+/* these two functions may not be appropriate to export, but windows requires the export notation. */
+RT_EXPORT BU_EXTERN(size_t db5_is_standard_attribute,
+		    (const char *attrname));
+RT_EXPORT BU_EXTERN(void db5_standardize_avs,
+		    (struct bu_attribute_value_set *avs));
+
 #endif
 
 /* defined in binary_obj.c */
