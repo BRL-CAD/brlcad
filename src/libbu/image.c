@@ -29,6 +29,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 /* c99 doesn't declare these */
