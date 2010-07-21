@@ -1694,7 +1694,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tube", "..\tube\tube.vcproj
 		{333C38B9-BD2E-4D34-98DD-69E9B5E56ECB} = {333C38B9-BD2E-4D34-98DD-69E9B5E56ECB}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vegitation", "..\vegitation\vegitation.vcproj", "{EAEF35E8-AA1A-43BC-B644-436BDF0AB0B4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vegetation", "..\vegetation\vegetation.vcproj", "{EAEF35E8-AA1A-43BC-B644-436BDF0AB0B4}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"

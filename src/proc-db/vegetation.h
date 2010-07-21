@@ -1,4 +1,4 @@
-/*                    V E G I T A T I O N . H
+/*                    V E G E T A T I O N . H
  * BRL-CAD
  *
  * Copyright (c) 1998-2010 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vegitation.h
+/** @file vegetation.h
  *
  * This is the header file to the program that generages geometry
  * that resembles or approximates a plant.  More specifically,
@@ -26,8 +26,8 @@
  * parameters such as growth and branching rates.
  *
  */
-#ifndef __VEGITATION_H__
-#define __VEGITATION_H__
+#ifndef __VEGETATION_H__
+#define __VEGETATION_H__
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define _CRT_RAND_S
@@ -179,7 +179,7 @@ typedef struct outputCounter {
 #define INIT_OUTPUTCOUNTER_T(_i) { (_i)->primitives=0; (_i)->combinations=0; BU_LIST_INIT(&((_i)->combination).l); sprintf((_i)->name, "XXX"); BU_LIST_INIT(&((_i)->region).l); snprintf((_i)->plantName, MAX_STRING_LENGTH, "plant.r"); }
 
 
-#endif /* __VEGITATION_H__ */
+#endif /* __VEGETATION_H__ */
 
 /*
  * Local Variables:

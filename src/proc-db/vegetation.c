@@ -1,4 +1,4 @@
-/*                    V E G I T A T I O N . C
+/*                    V E G E T A T I O N . C
  * BRL-CAD
  *
  * Copyright (c) 1998-2010 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vegitation.c
+/** @file vegetation.c
  *
  * This is for a program that generages geometry that resembles or
  * approximates a plant.  More specifically, the generator is geared
@@ -32,7 +32,7 @@
  *
  */
 
-#include "./vegitation.h"
+#include "./vegetation.h"
 
 static void ageStructure(structure_t *structure) {
     int i;
@@ -863,7 +863,7 @@ int main (int argc, char *argv[]) {
     double branchingRate = 0.1;  /* 0->1 probability to branch per iteration */
     long seed;
 
-    printf("Vegitation generator\n");
+    printf("Vegetation generator\n");
     printf("====================\n");
 
     if (argc > 1) {
@@ -892,11 +892,11 @@ int main (int argc, char *argv[]) {
 #else
     srand48(seed);
 #endif
-    printf("Vegitation seed is %ld\n", seed);
+    printf("Vegetation seed is %ld\n", seed);
 
-    fp=wdb_fopen("vegitation.g");
+    fp=wdb_fopen("vegetation.g");
 
-    mk_id_units(fp, "Vegitation", "mm");
+    mk_id_units(fp, "Vegetation", "mm");
 
     INIT_CHARACTERISTIC_T(&c);
     c.totalHeight = height;

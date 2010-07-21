@@ -37,7 +37,7 @@ bin_PROGRAMS = \
 	terrain \
 	torii \
 	tube \
-	vegitation \
+	vegetation \
 	wdb_example
 
 bottest_SOURCES = bottest.c
@@ -101,7 +101,7 @@ tea_nmg_SOURCES = tea_nmg.c
 terrain_SOURCES = terrain.c
 torii_SOURCES = torii.c
 tube_SOURCES = tube.c
-vegitation_SOURCES = vegitation.c
+vegetation_SOURCES = vegetation.c
 wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
@@ -109,7 +109,7 @@ noinst_HEADERS = \
 	mkbuilding.h \
 	surfaceintersect.h \
 	tea.h \
-	vegitation.h
+	vegetation.h
 
 EXTRA_DIST = \
 	metaballs.pl \
@@ -151,6 +151,6 @@ FAST_OBJECTS = \
 	$(terrain_OBJECTS) \
 	$(torii_OBJECTS) \
 	$(tube_OBJECTS) \
-	$(vegitation_OBJECTS) \
+	$(vegetation_OBJECTS) \
 	$(wdb_example_OBJECTS) \
 	$(bin_PROGRAMS)

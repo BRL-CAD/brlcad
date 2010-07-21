@@ -177,7 +177,7 @@ EXTRA_DIST= \
 	tkstub/tkstub.vcproj \
 	torii/torii.vcproj \
 	tube/tube.vcproj \
-	vegitation/vegitation.vcproj \
+	vegetation/vegetation.vcproj \
 	vg2g/vg2g.vcproj \
 	viewpoint2g/viewpoint2g.vcproj \
 	wdb_example/wdb_example.vcproj \
