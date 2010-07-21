@@ -58,6 +58,8 @@
 #include "dm.h"
 #include "dg.h"
 
+#include "ged.h"
+
 #ifdef DM_X
 #  ifdef WITH_TK
 #    include "tk.h"
