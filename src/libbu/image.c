@@ -294,6 +294,20 @@ bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 }
 
 int
+bu_image_save_writepixel(struct bu_image_file *bif, int x, int y, unsigned char *data)
+{
+    unsigned char *dst;
+
+    if( bif == NULL ) {
+	bu_log("ERROR: trying to write a line with a null bif\n");
+	return -1;
+    }
+    dst = bif->data + (bif->width*y+x)*bif->depth;
+    VMOVE(dst, data);
+    return 0;
+}
+
+int
 bu_image_save_close(struct bu_image_file *bif)
 {
     int r = 0;

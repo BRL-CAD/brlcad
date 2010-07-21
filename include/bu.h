@@ -6004,6 +6004,12 @@ BU_EXPORT BU_EXTERN(int bu_image_save_writeline,
 		     int y,
 		     unsigned char *data));
 
+BU_EXPORT BU_EXTERN(int bu_image_save_writepixel,
+		    (struct bu_image_file *bif,
+		     int x,
+		     int y,
+		     unsigned char *data));
+
 BU_EXPORT BU_EXTERN(int bu_image_save_close,
 		    (struct bu_image_file *bif));
 
