@@ -406,11 +406,12 @@ void
 db5_standardize_avs(struct bu_attribute_value_set *avs)
 {
     size_t i, attr_type;
+    struct bu_attribute_value_set avstmp;
     struct bu_attribute_value_pair *avpp;
-    int type_count[8], has_standard[8];
+    int has_standard[8];
+    bu_avs_init_empty(&avstmp);
     avpp = avs->avp;
     for (i=0; i < 8; i++) {
-	type_count[i] = 0;
         has_standard[i] = 0;
     }
     for (i=0; i < avs->count; i++, avpp++) {
@@ -429,103 +430,80 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	attr_type = db5_standardize_attribute(avpp->name);
         switch (attr_type) {
 	    case ATTR_REGION:
-		if (has_standard[ATTR_REGION] != 1 && strcmp(avpp->name, "region")) {
-		    bu_avs_remove(avs, avpp->name);
-		} else {
 		    /* In the case of regions, values like Yes and 1 are causing trouble
 		     * somewhere in the code.  Do "R" for all affirmative cases and
 		     * strip any non-affirmative cases out of the avs */
 		    if (!strcmp(avpp->value, "Yes") || !strcmp(avpp->value, "R") || !strcmp(avpp->value, "1") ||
 			!strcmp(avpp->value, "Y") || !strcmp(avpp->value, "y")) { 
-			(void)bu_avs_remove(avs, avpp->name);
-			(void)bu_avs_add(avs, "region", "R"); 
-		    } else {
-			(void)bu_avs_remove(avs, avpp->name);
-		    }	
-		}
+			(void)bu_avs_add(&avstmp, "region", "R"); 
+			has_standard[ATTR_REGION] = 1;
+		    }
 		break;
 	    case ATTR_REGION_ID:
-		if (type_count[ATTR_REGION_ID] == 0) {
-		    if (has_standard[ATTR_REGION_ID] != 1) {
-			(void)bu_avs_add(avs, "region_id", avpp->value);
-			if (strcmp(avpp->name, "region_id")) bu_avs_remove(avs, avpp->name);
-		    }
-		    type_count[ATTR_REGION_ID] = 1;
+		if (has_standard[ATTR_REGION_ID] != 1) {
+			(void)bu_avs_add(&avstmp, "region_id", bu_strdup(avpp->value));
+		        has_standard[ATTR_REGION_ID] = 1;
 		} else {
-		    bu_log("Warning - multiple region_id attributes detected\n");
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_MATERIAL_ID:
-		if (type_count[ATTR_MATERIAL_ID] == 0) {
-		    if (has_standard[ATTR_MATERIAL_ID] != 1) {
-			(void)bu_avs_add(avs, "material_id", avpp->value);
-			if (strcmp(avpp->name, "material_id")) bu_avs_remove(avs, avpp->name);
-		    }
-		    type_count[ATTR_MATERIAL_ID] = 1;
+		if (has_standard[ATTR_MATERIAL_ID] != 1) {
+		    (void)bu_avs_add(&avstmp, "material_id", bu_strdup(avpp->value));
+		    has_standard[ATTR_MATERIAL_ID] = 1;
 		} else {
-		    bu_log("Warning - multiple material_id attributes detected\n");
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_AIR:
-		if (type_count[ATTR_AIR] == 0) {
 		    if (has_standard[ATTR_AIR] != 1) {
-			(void)bu_avs_add(avs, "air", avpp->value);
-			if (strcmp(avpp->name, "air")) bu_avs_remove(avs, avpp->name);
-		    }
-		    type_count[ATTR_AIR] = 1;
+			(void)bu_avs_add(&avstmp, "air", bu_strdup(avpp->value));
+		    	has_standard[ATTR_AIR] = 1;
 		} else {
-		    bu_log("Warning - multiple air attributes detected\n");
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_LOS:
-		if (type_count[ATTR_LOS] == 0) {
 		    if (has_standard[ATTR_LOS] != 1) {
-			(void)bu_avs_add(avs, "los", avpp->value);
-			if (strcmp(avpp->name, "los")) bu_avs_remove(avs, avpp->name);
-		    }
-		    type_count[ATTR_LOS] = 1;
+			(void)bu_avs_add(&avstmp, "los", bu_strdup(avpp->value));
+		    has_standard[ATTR_LOS] = 1;
 		} else {
-		    bu_log("Warning - multiple los attributes detected\n");
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_COLOR:
-		if (type_count[ATTR_COLOR] == 0) {
 		    if (has_standard[ATTR_COLOR] != 1) {
-			(void)bu_avs_add(avs, "color", avpp->value);
-			if (strcmp(avpp->name, "color")) bu_avs_remove(avs, avpp->name);
-		    }
-		    type_count[ATTR_COLOR] = 1;
+			(void)bu_avs_add(&avstmp, "color", bu_strdup(avpp->value));
+		        has_standard[ATTR_COLOR] = 1;
 		} else {
-		    bu_log("Warning - multiple color attributes detected\n");
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_SHADER:
-		if (type_count[ATTR_SHADER] == 0) {
 		    if (has_standard[ATTR_SHADER] != 1) {
-			(void)bu_avs_add(avs, "oshader", avpp->value);
-			if (strcmp(avpp->name, "oshader")) bu_avs_remove(avs, avpp->name);
-		    }
-		    type_count[ATTR_SHADER] = 1;
+			(void)bu_avs_add(&avstmp, "oshader", bu_strdup(avpp->value));
+		    	has_standard[ATTR_SHADER] = 1;
 		} else {
-		    bu_log("Warning - multiple shader attributes detected\n");
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    case ATTR_INHERIT:
-		if (type_count[ATTR_INHERIT] == 0) {
 		    if (has_standard[ATTR_INHERIT] != 1) {
-			(void)bu_avs_add(avs, "inherit", avpp->value);
-			if (strcmp(avpp->name, "inherit")) bu_avs_remove(avs, avpp->name);
-		    }
-		    type_count[ATTR_INHERIT] = 1;
+			(void)bu_avs_add(&avstmp, "inherit", bu_strdup(avpp->value));
+		    has_standard[ATTR_INHERIT] = 1;
 		} else {
-		    bu_log("Warning - multiple inherit attributes detected\n");
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		}
 		break;
 	    default:
-		/* not a standard attribute, no action */
+		/* not a standard attribute, just copy it*/
+		    (void)bu_avs_add(&avstmp, bu_strdup(avpp->name), bu_strdup(avpp->value));
 		break;
 	}
     }
+    bu_avs_free(avs);
+    bu_avs_merge(avs,&avstmp);
+    bu_avs_free(&avstmp);
 }
 
 
