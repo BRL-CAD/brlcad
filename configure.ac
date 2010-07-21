@@ -80,11 +80,11 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-dnl minimum version of autoconf required.  should coincide with
-dnl setting in autogen.sh script.
+# minimum version of autoconf required.  should coincide with setting
+# in autogen.sh script.
 AC_PREREQ(2.52)
 
-dnl See HACKING for details on how to properly update the version
+# See HACKING for details on how to properly update the version
 define([MAJOR_VERSION], [patsubst(esyscmd([cat include/conf/MAJOR]), [
 ])])
 define([MINOR_VERSION], [patsubst(esyscmd([cat include/conf/MINOR]), [
@@ -103,10 +103,14 @@ AC_CONFIG_MACRO_DIR([m4])
 # keep track of cmd-line options for later
 BC_ARG0="$0"
 AC_SUBST(BC_ARG0)
-BC_ARGS="$*"
+if test "x$ac_configure_args" = "x" ; then
+    BC_ARGS="$*"
+else
+    BC_ARGS="$ac_configure_args"
+fi
 AC_SUBST(BC_ARGS)
 
-dnl just in case
+# just in case
 PACKAGE_NAME="BRL-CAD"
 AC_SUBST(PACKAGE_NAME)
 
