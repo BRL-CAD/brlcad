@@ -1,6 +1,7 @@
 
 SUBDIRS = \
 	archer \
+	botutility \
 	geometree \
 	hv3 \
 	lib \

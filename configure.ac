@@ -4246,6 +4246,7 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Makefile
 	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Utility/attrGroupsDisplayUtilityP/Makefile
+	src/archer/plugins/Utility/botUtilityP/Makefile
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/humanwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/Makefile
@@ -4359,6 +4360,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Themes/Crystal/Makefile
 	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
 	src/tclscripts/archer/images/Themes/Windows/Makefile
+	src/tclscripts/botutility/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile

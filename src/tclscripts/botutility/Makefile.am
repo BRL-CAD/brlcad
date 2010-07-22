@@ -1,44 +1,5 @@
-
-SUBDIRS = images
-
-this_dir = tclscripts/archer
+this_dir = tclscripts/botutility
 tcldir = $(BRLCAD_DATA)/$(this_dir)
-
-scripts = \
-	Arb4EditFrame.tcl \
-	Arb5EditFrame.tcl \
-	Arb6EditFrame.tcl \
-	Arb7EditFrame.tcl \
-	Arb8EditFrame.tcl \
-	Archer.tcl \
-	ArcherCore.tcl \
-	AttrGroupsDisplayUtility.tcl \
-	bgerror.tcl \
-	BotUtility.tcl \
-	CombEditFrame.tcl \
-	cursor.tcl \
-	EhyEditFrame.tcl \
-	EllEditFrame.tcl \
-	EpaEditFrame.tcl \
-	EtoEditFrame.tcl \
-	ExtrudeEditFrame.tcl \
-	GeometryEditFrame.tcl \
-	GripEditFrame.tcl \
-	HalfEditFrame.tcl \
-	HypEditFrame.tcl \
-	LoadArcherLibs.tcl \
-	PartEditFrame.tcl \
-	Plugin.tcl \
-	RhcEditFrame.tcl \
-	RpcEditFrame.tcl \
-	ShaderEdit.tcl \
-	SphereEditFrame.tcl \
-	SuperellEditFrame.tcl \
-	tabwindow.itk \
-	TgcEditFrame.tcl \
-	TorusEditFrame.tcl \
-	Utility.tcl \
-	Wizard.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
@@ -46,11 +7,9 @@ BUILT_SOURCES = \
 
 tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
-	$(scripts)
+	botutility.tcl
 
 EXTRA_DIST = $(tcl_SCRIPTS)
-
-# CLEANFILES = $(BUILT_SOURCES)
 
 pkgIndex.tcl:
 	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \
