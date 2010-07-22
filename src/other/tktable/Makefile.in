@@ -246,6 +246,12 @@ html:
 			> $$html; \
 	done
 
+uninstall-doc: 
+	@rm -rf $(DESTDIR)$(pkglibdir)/html;  
+	@rm -f $(DESTDIR)$(pkglibdir)/README.txt;  
+	@rm -f $(DESTDIR)$(pkglibdir)/license.txt;  
+	done
+
 # Piping to cat is necessary on Windows to see the output, and
 # harmless on Unix
 test: binaries libraries
@@ -486,7 +492,7 @@ check:
  
 installcheck: 
  
-uninstall: uninstall-binaries 
+uninstall: uninstall-binaries uninstall-doc
 	rm -f $(DESTDIR)$(pkglibdir)/pkgIndex.tcl;  
  
 distuninstallcheck:  
