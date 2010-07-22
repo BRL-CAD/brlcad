@@ -486,7 +486,7 @@ check:
  
 installcheck: 
  
-uninstall: uninstall-binaries uninstall-doc 
+uninstall: uninstall-binaries 
 	rm -f $(DESTDIR)$(pkglibdir)/pkgIndex.tcl;  
  
 distuninstallcheck:  
