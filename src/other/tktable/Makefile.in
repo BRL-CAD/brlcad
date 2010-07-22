@@ -478,6 +478,19 @@ dist: dist-clean
 
 distdir: dist
 
+#appease dvi-recursive rule from the top-level Makefile so this works as a SUBDIR 
+dvi: 
+ 
+#ditto for check, installcheck, uninstall, distuninstallcheck 
+check: 
+ 
+installcheck: 
+ 
+uninstall: uninstall-binaries uninstall-doc 
+        rm -f $(DESTDIR)$(pkglibdir)/pkgIndex.tcl;  
+ 
+distuninstallcheck:  
+
 .PHONY: all binaries clean depend distclean doc install libraries test
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
