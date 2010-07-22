@@ -250,7 +250,6 @@ uninstall-doc:
 	@rm -rf $(DESTDIR)$(pkglibdir)/html;  
 	@rm -f $(DESTDIR)$(pkglibdir)/README.txt;  
 	@rm -f $(DESTDIR)$(pkglibdir)/license.txt;  
-	done
 
 # Piping to cat is necessary on Windows to see the output, and
 # harmless on Unix
