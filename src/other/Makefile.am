@@ -75,15 +75,15 @@ else
 TKHTMLDIR=
 endif
 
-if BUILD_TOGL
-if WITH_TK
-TOGLDIR=togl
-else
-TOGLDIR=
-endif
-else
-TOGLDIR=
-endif
+#if BUILD_TOGL
+#if WITH_TK
+#TOGLDIR=togl
+#else
+#TOGLDIR=
+#endif
+#else
+#TOGLDIR=
+#endif
 
 if BUILD_TKPNG
 if WITH_TK
