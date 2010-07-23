@@ -52,6 +52,10 @@
 
 	method updateBgColor {_bg}
     }
+
+    private {
+	common instances 0
+    }
 }
 
 ## - constructor
@@ -64,6 +68,16 @@
 
     # process widget options
     eval itk_initialize $args
+
+    # load BotEditor class for first instance
+    if {$instances == 0} {
+	if {[catch {
+	    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
+	    source $script
+	} errMsg] > 0} {
+	    puts "Couldn't load \"botEditor.tcl\"\n$errMsg"
+	}
+    }
 
     # search for bots
     set bots {}
@@ -132,7 +146,7 @@
     set button [ttk::button $itk_interior.selectButton \
         -text {Edit Selected} \
 	-command "$this editSelected"]
-    
+
     # display select widgets
     grid $combo -row 0 -column 0 -sticky new -pady 5
     grid $button -row 0 -column 1 -padx 5
@@ -144,16 +158,12 @@
 #     Edit the bot named by the bot argument.
 #
 ::itcl::body BotUtility::editBot {bot} {
-    puts "editing $bot"
 
+    # create new editor instance
+    set editor [BotEditor .editor$instances]
+    incr instances
 
-    # load botutility script
-#    if {[catch {
-#	set script [file join [bu_brlcad_data "tclscripts"] botutility botutility.tcl]
-#	source $script
-#    } errMsg] > 0} {
-#	puts "Couldn't load \"botutility.tcl\"\n$errMsg"
-#    }
+    $editor load $bot
 }
 
 # editSelected
@@ -164,6 +174,10 @@
 #
 ::itcl::body BotUtility::editSelected {} {
     BotUtility::editBot $itk_option(-selectedbot)
+
+    # close the selection window
+    set mToplevel [winfo toplevel $itk_interior]
+    namespace eval :: "$mToplevel deactivate; ::itcl::delete object $mToplevel"
 }
 	
 # Local Variables:

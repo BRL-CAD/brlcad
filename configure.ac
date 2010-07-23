@@ -4360,7 +4360,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Themes/Crystal/Makefile
 	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
 	src/tclscripts/archer/images/Themes/Windows/Makefile
-	src/tclscripts/botutility/Makefile
+	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile

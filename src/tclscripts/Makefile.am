@@ -1,7 +1,7 @@
 
 SUBDIRS = \
 	archer \
-	botutility \
+	boteditor \
 	geometree \
 	hv3 \
 	lib \
