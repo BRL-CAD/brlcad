@@ -481,19 +481,22 @@ dist: dist-clean
 	mkdir $(DIST_DIR)/win
 	cp -p $(srcdir)/win/makefile.vc $(DIST_DIR)/win/
 
+	mkdir $(DIST_DIR)/mac
+	cp -p $(srcdir)/mac/mac* $(DIST_DIR)/mac/
+
 distdir: dist
 
 #appease dvi-recursive rule from the top-level Makefile so this works as a SUBDIR 
 dvi: 
- 
+
 #ditto for check, installcheck, uninstall, distuninstallcheck 
 check: 
- 
+
 installcheck: 
- 
+
 uninstall: uninstall-binaries uninstall-doc
 	rm -f $(DESTDIR)$(pkglibdir)/pkgIndex.tcl;  
- 
+
 distuninstallcheck:  
 
 .PHONY: all binaries clean depend distclean doc install libraries test
