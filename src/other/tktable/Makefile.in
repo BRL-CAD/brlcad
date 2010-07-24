@@ -448,7 +448,7 @@ dist-clean:
 
 dist: dist-clean
 	mkdir -p $(DIST_DIR)
-	cp -p $(srcdir)/README.* $(srcdir)/*.txt $(srcdir)/ChangeLog \
+	cp -p $(srcdir)/README.blt $(srcdir)/*.txt $(srcdir)/ChangeLog \
 		$(srcdir)/Makefile.in $(srcdir)/aclocal.m4 \
 		$(srcdir)/configure $(srcdir)/configure.in  $(DIST_DIR)/
 	chmod 664 $(DIST_DIR)/Makefile.in $(DIST_DIR)/aclocal.m4
