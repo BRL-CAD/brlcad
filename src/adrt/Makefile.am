@@ -125,8 +125,9 @@ pkglibdir = $(libdir)/isst
 #endif
 
 EXTRA_DIST = \
+	isst.h \
 	isst.tcl \
-	isst.h
+	isst_tcltk.c
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:
