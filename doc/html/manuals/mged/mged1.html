@@ -10,10 +10,10 @@ In BRL-CAD objects are constructed using a technique known as ``Combinatorial
 Solid Geometry'' or ``Constructive Solid Geometry'' or simply ``CSG''
 In the CSG approach to modeling
 This technique involves creating objects
-by combining primitive shapes together to form complex objects.&nbsp
-The primitive shapes are called ``solids''.&nbsp
-Each one occupies a volume of three dimensional space.&nbsp
-BRL-CAD currently has many primitive solid types.&nbsp
+by combining primitive shapes together to form complex objects.&nbsp;
+The primitive shapes are called ``solids''.&nbsp;
+Each one occupies a volume of three dimensional space.&nbsp;
+BRL-CAD currently has many primitive solid types.&nbsp;
 These include:
 <P>
 <center>
@@ -48,29 +48,29 @@ These include:
 <center><img src="prims.gif" alt="primitive solids"></center>
 <p>
 These primitives can be combined using boolean operators to create complex
-shapes.&nbsp The three boolean operations supported are union, difference
+shapes.&nbsp; The three boolean operations supported are union, difference
 (or subtraction), and
-intersection.&nbsp Any number of primitives may be combined to produce a shape.&nbsp
-The union (u) of two solids is defined as the volume in either of the solids.&nbsp
+intersection.&nbsp; Any number of primitives may be combined to produce a shape.&nbsp;
+The union (u) of two solids is defined as the volume in either of the solids.&nbsp;
 The difference (-) of two solids is the volume of the first solid which is not
-in the volume of the second solid.&nbsp The intersection (+) of two solids is
-the volume that is contained in both solids.&nbsp
+in the volume of the second solid.&nbsp; The intersection (+) of two solids is
+the volume that is contained in both solids.&nbsp;
 
 <center><img src="bool.gif" alt="boolean operations"></center>
 <p>
 
 The result of performing a set of boolean operations is a new
-shape.&nbsp
-In BRL-CAD this new shape is known as a ``<a href="brlcad_glossary.html#COMBINATION">combination</a>''.&nbsp
-This is frequently abbreviated as ``comb''.&nbsp
+shape.&nbsp;
+In BRL-CAD this new shape is known as a ``<a href="brlcad_glossary.html#COMBINATION">combination</a>''.&nbsp;
+This is frequently abbreviated as ``comb''.&nbsp;
 A ``comb'' can be further combined with other shapes
-to create still more complex shapes.&nbsp For example, the shape of a simple
+to create still more complex shapes.&nbsp; For example, the shape of a simple
 cup might be created by subtracting a cylinder from a slightly larger
-cylinder.&nbsp
+cylinder.&nbsp;
 From this ``comb'' shape, the shape of a mug
-could be created by adding a handle.&nbsp The handle might be
+could be created by adding a handle.&nbsp; The handle might be
 composed of an elliptical torus with the part of the torus that would
-be inside the cup removed.&nbsp
+be inside the cup removed.&nbsp;
 Logically this is:
 <p>
 <a name="cup.sh">
@@ -85,25 +85,25 @@ Mug = Cup <i>union</i> Handle
 </a></center>
 <p>
 
-In this way the shape of objects are built up from components.&nbsp
+In this way the shape of objects are built up from components.&nbsp;
 <p>
 When the desired shape of an object is attained,
-a special combination called a ``<a href="brlcad_glossary.html#REGION">region</a>'' is created.&nbsp
-A ``<a href="brlcad_glossary.html#REGION">region</a>'' represents an actual material component of the model.&nbsp
-It represents an item which is made from a homogeneous type of material.&nbsp
-In the example above two combinations are created:  Cup and Handle.&nbsp
+a special combination called a ``<a href="brlcad_glossary.html#REGION">region</a>'' is created.&nbsp;
+A ``<a href="brlcad_glossary.html#REGION">region</a>'' represents an actual material component of the model.&nbsp;
+It represents an item which is made from a homogeneous type of material.&nbsp;
+In the example above two combinations are created:  Cup and Handle.&nbsp;
 These two are brought together to form an object (Mug)
 which is made of a single
-material (such as ceramic or bone china).&nbsp
+material (such as ceramic or bone china).&nbsp;
 Material properties such as color, texture, transparency, reflectivity, etc.
 are assigned to regions.
 <p>
 
 The model is built up as a tree-like structure known as a <i><a
 href="brlcad_glossary.html#DAG">Directed Acyclic Graph</a></i> or
-<i>DAG</i>.&nbsp  It is permissible for a node to be referenced by different
-parts of the model.&nbsp In the mug example, the solid "Outside" is a part of
-two different combinations:  Cup and Handle.&nbsp In this example the graph of
+<i>DAG</i>.&nbsp;  It is permissible for a node to be referenced by different
+parts of the model.&nbsp; In the mug example, the solid "Outside" is a part of
+two different combinations:  Cup and Handle.&nbsp; In this example the graph of
 the mug object looks like this:
 
 <pre>
@@ -119,7 +119,7 @@ the mug object looks like this:
 </pre>
 
 It is possible to refer to combinations and regions multiple times as
-well.&nbsp For example, if a modeler were trying to create a cupboard
+well.&nbsp; For example, if a modeler were trying to create a cupboard
 containing three separate identical mugs, he might create a structure as
 follows:
 
@@ -139,8 +139,8 @@ Mugs (u)- Mug 2--Mug (u)	    Outside
 <p>
 
 Users familiar with other CAD software may prefer to think of the ``region''
-as a ``part''.&nbsp Combinations containing of ``regions'' may be thought of as
-``assemblies''.&nbsp
+as a ``part''.&nbsp; Combinations containing of ``regions'' may be thought of as
+``assemblies''.&nbsp;
 
 
 
@@ -148,13 +148,13 @@ as a ``part''.&nbsp Combinations containing of ``regions'' may be thought of as
 <p>
 All the geometry for a particular model or application
 is generally stored in a single file
-called a <i>database</i>.&nbsp Each database may contain many different objects.&nbsp
+called a <i>database</i>.&nbsp; Each database may contain many different objects.&nbsp;
 By convention, the files containing BRL-CAD
-geometry have an extention of ``.g''.&nbsp
+geometry have an extention of ``.g''.&nbsp;
 <p>
 Before starting mged the user should assure that the X-Windows <B>DISPLAY</B>
-environment variable has been properly set.&nbsp This indicates where applications
-should display the windows they create.&nbsp
+environment variable has been properly set.&nbsp; This indicates where applications
+should display the windows they create.&nbsp;
 <p>
 We use the following conventions for denoting text:
 <pre>
@@ -167,15 +167,15 @@ the user starts mged from the shell by giving the command:
 <pre>
    <tt>%</tt> <B><FONT color="#20a020">mged -c cup.g</FONT></B>
 </pre>
-The filename is required.&nbsp Unlike many programs which allow the user to create
-a new document or database in memory, mged always keeps everything on disk.&nbsp
-After each user command, the contents of the disk file are brought up to date.&nbsp
+The filename is required.&nbsp; Unlike many programs which allow the user to create
+a new document or database in memory, mged always keeps everything on disk.&nbsp;
+After each user command, the contents of the disk file are brought up to date.&nbsp;
 By doing this, the amount of work lost in the event of a system crash is
-minimized.&nbsp
+minimized.&nbsp;
 <p>
 When mged is started, it prints out the release number and date of
 compilation. When multiple versions of mged are installed on a machine, this
-allows the user to verify that the proper version is being started.&nbsp
+allows the user to verify that the proper version is being started.&nbsp;
 <p>
 If the file specified does not exist when mged is started,
 it will stop and ask if the user wishes to create a new database:
@@ -190,8 +190,8 @@ it will stop and ask if the user wishes to create a new database:
 </pre>
 
 At this point pressing the ``y'' key followed by a return will create the new
-database.&nbsp Any other (non-y) keys (followed by a return)
-will cause mged to quit without creating the database.&nbsp
+database.&nbsp; Any other (non-y) keys (followed by a return)
+will cause mged to quit without creating the database.&nbsp;
 
 <pre>
    <tt>%</tt> <B><FONT color="#20a020">mged -c cup.g</FONT></B><tt>
@@ -206,8 +206,8 @@ will cause mged to quit without creating the database.&nbsp
    attach (nu|X|ogl|glx)[nu]? </tt>
 </pre>
 <A name="#foobar">At</a> this point, mged is asking what type of geometry display window you
-would like.&nbsp The default is always ``nu'' for Null or ``no geometry display''.&nbsp
-If you are creating geometry, it is desireable to be able to see it.&nbsp
+would like.&nbsp; The default is always ``nu'' for Null or ``no geometry display''.&nbsp;
+If you are creating geometry, it is desireable to be able to see it.&nbsp;
 The common choices are:
 <center>
 <table border>
@@ -217,7 +217,7 @@ The common choices are:
 <tr><td align=center>glx</td><td>Iris gl under X Windows</td></tr>
 <tr><td align=center>ogl</td><td>OpenGL under X Windows</td></tr>
 </table></center>
-Enter one of the names listed followed by a return.&nbsp
+Enter one of the names listed followed by a return.&nbsp;
 <pre>
    <tt>%</tt> <B><FONT color="#20a020">mged -c cup.g</FONT></B><tt>
    BRL-CAD Release 4.5   Graphics Editor (MGED)
@@ -235,79 +235,80 @@ At this point you should have a window that looks something like this:
 <center><a href="faceplate.gif"><img src="faceplate_sm.gif" alt="faceplate"></a></center><br>
 When the MGED program has a display window or device attached, it
 displays a border around the region of the screen being used
-along with some ancillary status information.&nbsp Together, this
-information is termed the editor ``faceplate''.&nbsp
+along with some ancillary status information.&nbsp; Together, this
+information is termed the editor ``faceplate''.&nbsp;
 <p>
-In the upper left corner of the window is a small enclosed area
-which is used to display the current editor state;
-this is discussed further in the <a href="Editor States">Editor States</a> section, below.&nbsp
+In the upper left corner of the window is a small enclosed area which
+is used to display the current editor state.  The current editor state
+indicates whether objects are selected for editing and what modeling
+operations are allowed.&nbsp;
 <p>
 Underneath the state display is a zone in which three ``pop-up'' menus
-may appear.&nbsp
+may appear.&nbsp;
 The top menu is termed the ``button menu,'' as it
 contains menu items which duplicate many functions which
 were originally available via an external <a href="button box">button box</a>
-peripheral.&nbsp
+peripheral.&nbsp;
 Having these frequently used
 functions available on a pop-up menu
 can greatly decrease the number of times that the user needs to remove
 his hand from the pointing device (either mouse or tablet puck)
-to reach for the buttons.&nbsp
+to reach for the buttons.&nbsp;
 <p>
 Below is an example of the
-faceplate and first level menu.&nbsp
+faceplate and first level menu.&nbsp;
 <center><a href="faceplate_menu.gif"><img src="faceplate_menu_sm.gif" alt="faceplate with menu"></a></center>
 <p>
 The second menu is used primarily for the various editing states,
 at which time it contains all the editing operations which are generic
-across all objects (scaling, rotation, and translation).&nbsp
-The third menu contains selections for object-specific editing operations.&nbsp
-The choices on these menus are <a href="Edit Menus">detailed below</a>.&nbsp
+across all objects (scaling, rotation, and translation).&nbsp;
+The third menu contains selections for object-specific editing operations.&nbsp;
+The choices on these menus are <a href="Edit Menus">detailed below</a>.&nbsp;
 <p>
 Running across the entire bottom of the faceplate is a thin rectangular
-display area which holds two lines of text.&nbsp
+display area which holds two lines of text.&nbsp;
 The first line always contains a numeric display of the model-space
 coordinates of the center of the view and the current size of
 the viewing cube, both of which are displayed in the currently
-selected editing units.&nbsp
-The first line also contains the current rotation rates.&nbsp
+selected editing units.&nbsp;
+The first line also contains the current rotation rates.&nbsp;
 <p>
-The second line has several uses, depending on editor mode.&nbsp
+The second line has several uses, depending on editor mode.&nbsp;
 In various editing states this second line will
-contain certain path selection information.&nbsp
+contain certain path selection information.&nbsp;
 When the angle/distance cursor function is activated, the second
-line will be used to display the current settings of the cursor.&nbsp
+line will be used to display the current settings of the cursor.&nbsp;
 <p>
 All numeric interaction between
 the user and the editor are in terms of user-selected
-display units.&nbsp
+display units.&nbsp;
 The user may select from millimeters, centimeters, meters, inches, and
 feet, and the currently active display units are noted in the first
-display line.&nbsp
+display line.&nbsp;
 One important implementation detail is that all numeric values are stored
 in the database in millimeters. When MGED interacts with the user, it converts
 values from the database into the units selected by the user before displaying
-them.&nbsp Likewise, values that the user enters are converted to millimeters
-before being written to the databas.&nbsp
+them.&nbsp; Likewise, values that the user enters are converted to millimeters
+before being written to the databas.&nbsp;
 <p><a name="coord"><H2>The Screen Coordinate System</H2></a>
 <p>
 
 Objects drawn on the screen are clipped in X, Y, and Z, to the size
-indicated on the first status line.&nbsp
-This creates a conceptual ``viewing cube''.&nbsp Only objects inside this
-cube are visible.&nbsp
+indicated on the first status line.&nbsp;
+This creates a conceptual ``viewing cube''.&nbsp; Only objects inside this
+cube are visible.&nbsp;
 
 This feature allows objects within the cube to be seen, without cluttering
 the display with objects which are
 within view
-in X and Y, but quite far away in the Z direction.&nbsp
+in X and Y, but quite far away in the Z direction.&nbsp;
 This is especially usefull when the display is zoomed
-in on a small portion of the geometry.&nbsp
+in on a small portion of the geometry.&nbsp;
 On some displays Z axis clipping can be selectively enabled and disabled
-as a viewing aid.&nbsp
+as a viewing aid.&nbsp;
 <p>
 The MGED editor uses the standard right-handed
-screen coordinate system shown in the figure below.&nbsp
+screen coordinate system shown in the figure below.&nbsp;
 <p>
 <CENTER>
 <IMG SRC="coord-axes.gif" ALT="coord-axes"><br>
@@ -316,21 +317,21 @@ screen coordinate system shown in the figure below.&nbsp
 </CENTER>
 <p>
 The Z axis is perpendicular to the screen and the positive Z direction is
-out of the screen towards the viewer.&nbsp The directions of positive (+) and negative (-) axis
-rotations are also indicated.&nbsp For these rotations, the ``Right
+out of the screen towards the viewer.&nbsp; The directions of positive (+) and negative (-) axis
+rotations are also indicated.&nbsp; For these rotations, the ``Right
 Hand Rule'' applies:  Point the thumb of the right hand along the direction
 of +X axis and the other fingers will describe the sense of positive
-rotation.&nbsp
+rotation.&nbsp;
 
 
 <H2>Creating Geometry: The Cup</h2>
 <p>
 Let's look at the commands needed to build the
 <a href="mged.html#cup">cup geometry</a>
-described in the first section.&nbsp The following MGED editing session
-contains all the commands needed to create the mug.&nbsp
+described in the first section.&nbsp; The following MGED editing session
+contains all the commands needed to create the mug.&nbsp;
 
-Each command will be explained below.&nbsp
+Each command will be explained below.&nbsp;
 
 <pre>
    <tt>% </tt><B><FONT color="#20a020">newmged Mug.g</FONT></B><tt>
@@ -368,15 +369,15 @@ Each command will be explained below.&nbsp
 
 <p>
 The first step in preparing a new database is to provide a title which
-describes the contents of the database.&nbsp This is an important opportunity
-to describe the contents and purpose of the database.&nbsp Setting the title
-is done with the <a href="mged_cmds.html#title">title</a> command in MGED.&nbsp
+describes the contents of the database.&nbsp; This is an important opportunity
+to describe the contents and purpose of the database.&nbsp; Setting the title
+is done with the <a href="mged_cmds.html#title">title</a> command in MGED.&nbsp;
 <pre>
    <tt>mged> </tt><B><FONT color="#20a020">Title MGED Tutorial Geometry</FONT></B>
 </pre>
 <p>
-When the database is first created, the default editing units are set to millimeters.&nbsp
-For this example, we want to specify the dimensions of the object in inches.&nbsp
+When the database is first created, the default editing units are set to millimeters.&nbsp;
+For this example, we want to specify the dimensions of the object in inches.&nbsp;
 To arrange this, the <a href="mged_cmds.html#units">units</a> command
 <pre>
    <tt>mged> </tt><B><FONT color="#20a020">units in</FONT></B>
@@ -390,19 +391,19 @@ To arrange this, the <a href="mged_cmds.html#units">units</a> command
 
 
 <p>
-Now we can create our first solid.&nbsp There are two techniques for creating
-geometry in MGED.&nbsp The commands for these two techniques are
+Now we can create our first solid.&nbsp; There are two techniques for creating
+geometry in MGED.&nbsp; The commands for these two techniques are
 <a href="mged_cmds.html#make"><em>make</em></a>
-and <a href="mged_cmds.html#in"><em>in</em></a> (for ``insert'').&nbsp
+and <a href="mged_cmds.html#in"><em>in</em></a> (for ``insert'').&nbsp;
 For precision modeling the <em>in</em> command offers the greatest control
-over the definition of the solid.&nbsp This is the approach we will use.&nbsp
+over the definition of the solid.&nbsp; This is the approach we will use.&nbsp;
 
 <p>
 The ``in'' command can take all of it's arguments on the command line,
-or it will prompt you for any missing portions.&nbsp
+or it will prompt you for any missing portions.&nbsp;
 Remembering what parameters need to be specified for each solid can be
-difficult at best.&nbsp All that you really need to enter is the command
-name.&nbsp Mged will prompt you for the rest of the parameters.&nbsp
+difficult at best.&nbsp; All that you really need to enter is the command
+name.&nbsp; Mged will prompt you for the rest of the parameters.&nbsp;
 
 <p>
 In the first example
@@ -417,7 +418,7 @@ arguments (vertex, height vector, and radius):
 </tt></pre>
 
 <p> For the solid ``inside.s'' we specify all the parameters on the command
-line, so mged does not prompt us for additional arguments.&nbsp  In the case
+line, so mged does not prompt us for additional arguments.&nbsp;  In the case
 of the solid ``ring.s'' we specify some, but not all of the parameters, and
 mged prompts us for the missing ones:
 <pre>
@@ -447,9 +448,9 @@ everything else:
 
 <p> The three boolean operators supported are union, subtraction and
 intersection. These operations are denoted by the operators <em>u, -</em> and
-<em>+</em> respectively.&nbsp Mged uses these in a sort of prefix notation.&nbsp In
+<em>+</em> respectively.&nbsp; Mged uses these in a sort of prefix notation.&nbsp; In
 this notation the union operator has higher precedence than either subtraction
-or intersection.&nbsp Hence the following boolean sequence
+or intersection.&nbsp; Hence the following boolean sequence
 <pre>
 	(A union B) subtract C
 
@@ -458,28 +459,28 @@ is written as
 	u A - C u B - C
 </pre>
 <p>
-The <em>comb</em> command creates a boolean combination.&nbsp In our example
+The <em>comb</em> command creates a boolean combination.&nbsp; In our example
 we use this to create the shape of the outside of the cup called ``cup.s''
 Reading the command above that creates cup.c, we note that cup.c is formed
 from the <em>union</em> of the volume defined by the solid ``outside.s'' and
-the <em>subtraction</em> of the volume defined by the solid ``inside.s''.&nbsp
+the <em>subtraction</em> of the volume defined by the solid ``inside.s''.&nbsp;
 
 <p> The <a href="mged_cmds.html#r">r</a> command creates a
-``<a href="brlcad_glossary.html#REGION">region</a>''.&nbsp
+``<a href="brlcad_glossary.html#REGION">region</a>''.&nbsp;
 It is just like creating a
 <a href="brlcad_glossary.html#COMBINATION">combination</a>,
-but the results are a volume of one logical material type.&nbsp
+but the results are a volume of one logical material type.&nbsp;
 
 <p>
 Assigning material properties is done with the
 <em><a href="mged_cmds.html#mater">mater</a></em>
 or
 <em><a href="mged_cmds.html#shader">shader</a></em>
-command.&nbsp Here
+command.&nbsp; Here
 we define which <a href="brlcad_glossary.html#SHADER">shader</a> should be used when rendering the object, and the
-parameters for the shader.&nbsp The simplest shader is the ``<a href="shaders.html#plastic">plastic</a>'' shader
-which uses a Phong lighting model.&nbsp For our mug this will be fine.&nbsp
-We specify the plastic shader and set the color to a shade of green.&nbsp
+parameters for the shader.&nbsp; The simplest shader is the ``<a href="shaders.html#plastic">plastic</a>'' shader
+which uses a Phong lighting model.&nbsp; For our mug this will be fine.&nbsp;
+We specify the plastic shader and set the color to a shade of green.&nbsp;
 
 <pre>
 <tt>   mged> </tt><B><FONT color="#20a020">mater mug.r</FONT></B><tt>
@@ -492,17 +493,17 @@ We specify the plastic shader and set the color to a shade of green.&nbsp
 </tt>
 </pre>
 
-The Inheritance option should be left 0.&nbsp
-This option will be discussed later.&nbsp
+The Inheritance option should be left 0.&nbsp;
+This option will be discussed later.&nbsp;
 
 <p> Once we have created our geometry, it would be nice to look at the
-wireframe from a variety of angles.&nbsp By clicking on the button menu
-box a set of options is displayed.&nbsp
+wireframe from a variety of angles.&nbsp; By clicking on the button menu
+box a set of options is displayed.&nbsp;
 The buttons labeled "35,25", "Top", "Right", "Front", and "45,45" offer
-a set of standard views.&nbsp
+a set of standard views.&nbsp;
 
-<p> It is possible to raytrace the current view from within mged.&nbsp
-But to do so we need a place to display the image.&nbsp We start up a
+<p> It is possible to raytrace the current view from within mged.&nbsp;
+But to do so we need a place to display the image.&nbsp; We start up a
 framebuffer server (number 1) to accomodate this:
 
 <pre> <tt>
@@ -510,11 +511,11 @@ framebuffer server (number 1) to accomodate this:
 </pre>
 
 <p>This runs the ``fbserv'' program which will maintain a framebuffer window
-for us.&nbsp Now we are ready to raytrace an image.&nbsp First we'll clear the
+for us.&nbsp; Now we are ready to raytrace an image.&nbsp; First we'll clear the
 geometry window of all the primitives and combinations and regions we've
-created.&nbsp Then we display the region we want to raytrace with the
-``<a href="mged_cmds.html#e">draw</a>'' command.&nbsp
-Finally, we'll select a nice viewing angle of azimuth 35 elevation 25.&nbsp
+created.&nbsp; Then we display the region we want to raytrace with the
+``<a href="mged_cmds.html#e">draw</a>'' command.&nbsp;
+Finally, we'll select a nice viewing angle of azimuth 35 elevation 25.&nbsp;
 
 <pre>
 <tt>
@@ -523,8 +524,8 @@ Finally, we'll select a nice viewing angle of azimuth 35 elevation 25.&nbsp
    mged> </tt><B><FONT color="#20a020">ae 35 25</FONT></B>
 </pre>
 
-Now we are ready to raytrace an image.&nbsp The ``rt'' command starts the
-raytracer on the geometry.&nbsp We must tell it where we want the pixels displayed
+Now we are ready to raytrace an image.&nbsp; The ``rt'' command starts the
+raytracer on the geometry.&nbsp; We must tell it where we want the pixels displayed
 with the ``-F'' option, and the size of the image with the -s option:
 
 <pre>
@@ -580,16 +581,16 @@ Frame     0:   262144 rays   in       7.33 sec =   35746.50 rays/sec (wallclock)
 
 
 If all goes well, you will get an image of a green mug on a black
-background.&nbsp
+background.&nbsp;
 <br>
 <center><a href="mug_green.jpg"><img src="mug_green.gif" alt="green mug"></a></center>
 
 <p>
-Now let's improve on our basic cup.&nbsp
-The lip of this cup looks a little too squared off.&nbsp
-To fix this, we'll add a rounded top to the lip.&nbsp
+Now let's improve on our basic cup.&nbsp;
+The lip of this cup looks a little too squared off.&nbsp;
+To fix this, we'll add a rounded top to the lip.&nbsp;
 To do this we create a circular torus solid positioned
-at exactly the top of the cup.&nbsp  Then we can
+at exactly the top of the cup.&nbsp;  Then we can
 add it to the combination ``cup.c''.
 
 <pre><tt>
@@ -599,15 +600,15 @@ add it to the combination ``cup.c''.
 </pre>
 
 
-Now we have a unique condition.&nbsp The solid rim.s was added to the list
-of objects being displayed when it was created.&nbsp
-However, now it is also a part of mug.r (via cup.c).&nbsp
+Now we have a unique condition.&nbsp; The solid rim.s was added to the list
+of objects being displayed when it was created.&nbsp;
+However, now it is also a part of mug.r (via cup.c).&nbsp;
 <!-- XXX mged should update the display of combinations when they are changed too -->
 If we raytrace the current view we will have 2 copies of this
-solid.&nbsp
-The raytracer will complain that they overlap.&nbsp
+solid.&nbsp;
+The raytracer will complain that they overlap.&nbsp;
 The best way to fix this is to clear the display, redisplay the new,
-complete object, and then raytrace.&nbsp
+complete object, and then raytrace.&nbsp;
 The ``<a href="mged_cmds.html#Z">Z</a>'' comand clears all
 objects from the display.  Then we can redisplay the objects we want to raytrace
 with the ``<a href="mged_cmds.html#e">draw</a>'' command.
@@ -679,18 +680,18 @@ Now we are ready to raytrace again.
 <center><font size=+3>Under Construction</font></center>
 <a name="solidedit"><h2>Editing Solids</h2></a>
 <p>
-So far we've focused on creating primitive solids and combinations.&nbsp Now
-let's look at ways of altering and deleting things that already exist.&nbsp
-We'll continue with our example mug geometry.&nbsp  There are a number of
+So far we've focused on creating primitive solids and combinations.&nbsp; Now
+let's look at ways of altering and deleting things that already exist.&nbsp;
+We'll continue with our example mug geometry.&nbsp;  There are a number of
 changes that need to be made to make it more realistic.
 
 <ul>
 <li>
-The handle for the mug is a little awkward.&nbsp
+The handle for the mug is a little awkward.&nbsp;
 It sticks out too far from the
-side of the mug, and it is too wide.&nbsp
+side of the mug, and it is too wide.&nbsp;
 <li>
-The bottom is perfectly flat.&nbsp
+The bottom is perfectly flat.&nbsp;
 If this were a real cup, any imperfection in the table top would cause it
 to wobble.
 <li>
@@ -747,8 +748,8 @@ like:
 	       rim.s
 </pre>
 The text output of the boolean tree lines up the indentation of the operands
-with the operator.&nbsp So here, becaus outside.s and inside.s are indented
-together, they are the operands to the subtraction operator.&nbsp
+with the operator.&nbsp; So here, becaus outside.s and inside.s are indented
+together, they are the operands to the subtraction operator.&nbsp;
 The subtraction operator and rim.s are indented the same amount, so the
 result of the subtraction, and rim.s are the operands of the union operator.
 
@@ -772,16 +773,16 @@ result of the subtraction, and rim.s are the operands of the union operator.
 <a name="shaders1"><H2>An Introduction to Shaders</h2></a>
 <p>
 In the example above, we specified that the mug should be rendered with
-the ``plastic'' shader.&nbsp This implements a simple ``phong'' lighting model.
+the ``plastic'' shader.&nbsp; This implements a simple ``phong'' lighting model.
 The result can be altered by adjusting parameters that define how the shader
-operates.&nbsp These parameters are:
+operates.&nbsp; These parameters are:
 <center><table border=1>
 <tr><th align=left>Parameter</th>   <th>Abbrev</th><th>Type</th><th>Range</th><th>default</th></tr>
-<tr><th align=left>Shine</th>       <th>sh</th><td>int</td>  <td>4 ..&nbsp20</td><td>10</td></tr>
-<tr><th align=left>diffuse</th>     <th>di</th><td>float</td><td>0 ..&nbsp1</td><td>0.3</td></tr>
-<tr><th align=left>specular</th>    <th>sp</th><td>float</td><td>0 ..&nbsp1</td><td>0.7</td></tr>
-<tr><th align=left>transmission</th><th>tr</th><td>float</td><td>0 ..&nbsp1</td><td>0.0</td></tr>
-<tr><th align=left>reflection</th>  <th>re</th><td>float</td><td>0 ..&nbsp1</td><td>0.0</td></tr>
+<tr><th align=left>Shine</th>       <th>sh</th><td>int</td>  <td>4 ..&nbsp;20</td><td>10</td></tr>
+<tr><th align=left>diffuse</th>     <th>di</th><td>float</td><td>0 ..&nbsp;1</td><td>0.3</td></tr>
+<tr><th align=left>specular</th>    <th>sp</th><td>float</td><td>0 ..&nbsp;1</td><td>0.7</td></tr>
+<tr><th align=left>transmission</th><th>tr</th><td>float</td><td>0 ..&nbsp;1</td><td>0.0</td></tr>
+<tr><th align=left>reflection</th>  <th>re</th><td>float</td><td>0 ..&nbsp;1</td><td>0.0</td></tr>
 </table></center>
 
 
@@ -804,11 +805,11 @@ the plastic shader:
 
 
 
-<p> Sometimes it is useful to combine the effects of two shaders.&nbsp The
-``stack'' shader was created for this situation.&nbsp For example, we might want
-to apply a blotchy camoflage-like color pattern to the mug.&nbsp The ``camo''
+<p> Sometimes it is useful to combine the effects of two shaders.&nbsp; The
+``stack'' shader was created for this situation.&nbsp; For example, we might want
+to apply a blotchy camoflage-like color pattern to the mug.&nbsp; The ``camo''
 shader provides the color pattern, while the ``plastic'' shader provides the
-lighting model.&nbsp
+lighting model.&nbsp;
 
 <pre>
    <tt>mged> </tt><B><FONT color="#20a020">mater mug.r</FONT></B><tt>
@@ -823,12 +824,12 @@ color="#20a020">stack camo s=10;plastic</FONT></B><tt>
 </pre>
 
 The ``camo'' shader creates a color pattern using a procedural noise
-technique.&nbsp It computes a fBm value based upon the point being shaded.&nbsp To
+technique.&nbsp; It computes a fBm value based upon the point being shaded.&nbsp; To
 compute this value it needs to be able to map coordinates in model space
-into a noise space.&nbsp The most important parameter to specify is ``size''.&nbsp
+into a noise space.&nbsp; The most important parameter to specify is ``size''.&nbsp;
 This tells the shader what the spacing is (in millimeters) of grid points
-from the noise space.&nbsp It also gives us a rough bound on the size of the blobs
-of color it creates.&nbsp
+from the noise space.&nbsp; It also gives us a rough bound on the size of the blobs
+of color it creates.&nbsp;
 
 <center>
 <table border=1>
@@ -847,7 +848,7 @@ of color it creates.&nbsp
 </table></center>
 
 <p>This time we will raytrace the image with a grey background instead of
-black.&nbsp We specify this with the -C option:
+black.&nbsp; We specify this with the -C option:
 
 <pre>
 <tt>   mged> </tt><B><FONT color="#20a020">rt -F:1 -s 128 -C100/100/100</FONT></B>
@@ -855,18 +856,18 @@ black.&nbsp We specify this with the -C option:
 <a href="mug_camo.jpg"><img src="mug_camo.gif" alt="camoflage mug"></a>
 
 <p>
-Mged can save a shell script to raytrace the current view.&nbsp This is done with
-the ``saveview'' command.&nbsp
+Mged can save a shell script to raytrace the current view.&nbsp; This is done with
+the ``saveview'' command.&nbsp;
 
 <pre>
 <tt>   mged> </tt><B><FONT color="#20a020">saveview mug_camo</FONT></B>
 </pre>
 
 If we exit mged we will find a file called ``mug_camo'' in the current
-directory.&nbsp Running this script will start the ``rt'' program to create a file
-called mug_camo.pix.&nbsp If you do not specify the size of the image on the
-command line, it will default to a 512x512 image.&nbsp This file can be displayed
-in your framebuffer server window using the ``pix-fb'' command.&nbsp
+directory.&nbsp; Running this script will start the ``rt'' program to create a file
+called mug_camo.pix.&nbsp; If you do not specify the size of the image on the
+command line, it will default to a 512x512 image.&nbsp; This file can be displayed
+in your framebuffer server window using the ``pix-fb'' command.&nbsp;
 
 <pre>
 <tt>   % </tt><B><FONT color="#20a020">./mug_camo</FONT></B>
@@ -874,6 +875,6 @@ in your framebuffer server window using the ``pix-fb'' command.&nbsp
 </pre>
 
 <p>When you are done with the framebuffer, you can dismiss the window with
-the ``fbfree'' command.&nbsp
+the ``fbfree'' command.&nbsp;
 
 </BODY></HTML>

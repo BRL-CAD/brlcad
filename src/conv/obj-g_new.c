@@ -22,7 +22,25 @@
  * This is a program to convert a WaveFront Object file to a BRL-CAD
  * database file.
  *
- * Example usage: obj-g -u m input.obj output.g
+ * Example usage: obj-g -u m -o s input.obj output.g
+ *
+ * Recommended Improvements (not already listed in function comments):
+ * - Support obj file texture vertices and materials
+ * - Optionally allow face grouping to be processed in parallel
+ * - Allow user to select which obj file face groupings to convert
+ * - Option to provide analysis of obj file edge lengths to help user
+ *   estimate a reasonable distance tolerance or help user determine
+ *   if the model should be re-tessellated in the source system using
+ *   a different tessellation tolerance.
+ * - The ability to parse the obj file group names with user
+ *   selectable delimiters(s), to recreate a group/assembly structure
+ *   in BRL-CAD. For example, group names which contain a '/' may
+ *   indicate a assembly structure. This capability could be extended
+ *   to create a group/assembly structure based on faces being
+ *   contained in multiple groups in the obj file. This would correct
+ *   the current behavior of when a face resides, for example, in two
+ *   groups, there will be two copies of the face in the resulting
+ *   model.
  */
 
 #include "common.h"
@@ -43,26 +61,7 @@
 #include "wdb.h"
 #include "obj_parser.h"
 
-#if 0
-/* TODO: This logic needs to be reversed.  If the user-specified
- * grouping option cannot be fulfilled, the application should abort.
- * It should not try to continue under a different method than the one
- * they specified just because it can complete.
- *
- * Instead of -s to stop, perhaps a -c option to continue processing
- * on nmg bomb.
- */
-\n\
-        -s    Stop processing on nmg bomb. If this option is set and\n\
-              an nmg bomb occurs (i.e. fatal error during processing\n\
-              nmg or bot-via-nmg) all processing will stop and the\n\
-              converter will exit. If this option is not set, if an\n\
-              nmg bomb occurs, conversion will fall back to outputing\n\
-              the grouping to 'native-bot' and then continue\n\
-              processing the next grouping.\n\
-#endif
-
-static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-ipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
+static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-cipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
 \n\
         -u units_str           Units of obj file where units_str can\n\
                                be any valid BRL-CAD unit such as one\n\
@@ -80,6 +79,14 @@ static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-ipdv
         -h plate_thickness     Plate thickness in mm units of plate\n\
                                or plate-nocos bots created when the\n\
                                bot is not a closed volume.\n\
+\n\
+        -c    Continue processing on nmg-bomb. If this option is set\n\
+              and an nmg-bomb occurs (i.e. fatal error during\n\
+              processing nmg or bot-via-nmg) conversion will fall-back\n\
+              to outputing the grouping to 'native-bot' and then\n\
+              continue processing the next grouping. If this option is\n\
+              not set and an nmg-bomb occurs then all processing will\n\
+              stop and the converter will exit.\n\
 \n\
         -i    Ignore normals defined in the obj file when the\n\
               conversion mode is 'native-bots'.\n\
@@ -242,7 +249,7 @@ struct gfi_t {
     size_t num_vertex_fuse;           /* number of elements in vertex_fuse_map and vertex_fuse_flag arrays */
     size_t *texture_vertex_fuse_map;  /* same as vertex_fuse_map but for texture vertex */
     short int *texture_vertex_fuse_flag; /* same as vertex_fuse_flag but for texture vertex */
-    size_t texture_vertex_fuse_offset /* same as vertex_fuse_offset but for texture vertex */
+    size_t texture_vertex_fuse_offset;/* same as vertex_fuse_offset but for texture vertex */
     size_t num_texture_vertex_fuse;   /* same as num_vertex_fuse but for texture vertex */
 };
 
@@ -632,7 +639,18 @@ retest_grouping_faces(struct ga_t *ga,
     return failed_face_count;
 }
 
-
+/*
+ * F I N D _ L A S T _ U N I Q U E _ V E R T E X
+ *
+ * Returns the number of vertices in a face where the last vertex in
+ * the vertex list is not the same as the first vertex. Essentially
+ * this function finds the last unique vertex of the face. If the
+ * returned count is used to indicate the number of vertices in the
+ * face, the result is trailing vertices in the face which are
+ * identical to the first vertex will be removed. This function
+ * is a support function for the test_face function and allows some
+ * cases of zero length edges to be removed from a face.
+ */
 size_t
 find_last_unique_vertex(struct ga_t *ga,   /* obj file global attributes */
                         struct gfi_t *gfi, /* grouping face indices */
@@ -677,7 +695,6 @@ find_last_unique_vertex(struct ga_t *ga,   /* obj file global attributes */
     return num_vertex;
 }
 
-
 /*
  * T E S T _ F A C E
  *
@@ -692,13 +709,18 @@ find_last_unique_vertex(struct ga_t *ga,   /* obj file global attributes */
  * extensive test. Return codes for tests are below. Note: the stored
  * test result value is the return code plus one, since 0 in the
  * results list indicates an untested face and one indicates a valid
- * face.
+ * face. This function also removes trailing vertices from a face
+ * which are identical to the first vertex in the face resulting in
+ * zero length edges being removed when this condition occurs. 
  *
  * Returns:
  * 0 valid face
  * 1 degenerate, <3 vertices
  * 2 degenerate, duplicate vertex indexes
  * 3 degenerate, vertices too close
+ *
+ * Recommended function improvements:
+ * - Optionally remove all zero length edges from a face
  */
 int 
 test_face(struct ga_t *ga,
@@ -3019,18 +3041,20 @@ process_b_mode_option(struct ga_t *ga,
     return;
 }
 
-
 /*
  * P R O C E S S _ N V _ M O D E _ O P T I O N
  *
  * This function is executed from main when the user selects mode
  * option 'n' or 'v' from the command line. The 'n' indicates output
- * to nmg and 'v' indicates output to volume-mode-bot via nmg. If nmg
- * or volume-mode-bot creation fails, output will be attempted to
- * 'native bot'. If stop_on_nmg_bomb_flag is set to true, no primitive
- * will be output if an nmg bomb occurs. A return value of 0 indicates
- * no nmg bomb occured, a return of 1 indicates an nmg bomb occured
- * and stop_on_nmg_bomb_flag was set to true.
+ * to nmg and 'v' indicates output to volume-mode-bot via nmg. If
+ * during nmg or volume-mode-bot creation a 'no closure' condition is
+ * encountered, output of the grouping will be attempted to
+ * 'native bot'. If during nmg or volume-mode-bot creation an nmg-bomb
+ * occurs then no primitive will be output unless cont_on_nmg_bomb is
+ * set to true which will then cause output of the grouping to be
+ * attempted to 'native bot'. A return value of 0 indicates no
+ * nmg-bomb occured, a return of 1 indicates an nmg-bomb occured
+ * and cont_on_nmg_bomb_flag was set to false.
  */
 int
 process_nv_mode_option(struct ga_t *ga,
@@ -3048,12 +3072,12 @@ process_nv_mode_option(struct ga_t *ga,
                        int native_face_test_type,          /* output_to_bot (i.e. native) face_test_type 
                                                             * TEST_ALL, TEST_NUM_VERT
                                                             */
-                       int stop_on_nmg_bomb_flag)
+                       int cont_on_nmg_bomb_flag)
 {
     int ret = 0;
     ret = output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, nmg_output_mode, nmg_face_test_type);
 
-    if ((ret == 1) || ((ret == 2) && !stop_on_nmg_bomb_flag)) {
+    if ((ret == 1) || ((ret == 2) && cont_on_nmg_bomb_flag)) {
         (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
         (void)retest_grouping_faces(ga, gfi, conv_factor, native_face_test_type, tol);
         if (!test_closure(ga, gfi, conv_factor, plot_mode, native_face_test_type, tol)) {
@@ -3068,7 +3092,7 @@ process_nv_mode_option(struct ga_t *ga,
     /* convert output_to_nmg return code to process_nv_mode_option
      * return code
      */
-    if ((ret == 2) && stop_on_nmg_bomb_flag) {
+    if ((ret == 2) && !cont_on_nmg_bomb_flag) {
         ret = 1;
     } else {
         ret = 0;
@@ -3099,7 +3123,7 @@ main(int argc, char **argv)
     double dist_tmp = 0.0;
     struct bn_tol tol_struct;
     struct bn_tol *tol;
-    int stop_on_nmg_bomb_flag = 0;           /* default: if true, stop processing on nmg bomb */
+    int cont_on_nmg_bomb_flag = 0;           /* default: if true, continue processing on nmg-bomb */
     int stop_processing_flag = 0;
     int nmg_face_test_type = TEST_NUM_VERT;  /* default */
     int native_face_test_type = TEST_ALL;    /* default */
@@ -3139,10 +3163,10 @@ main(int argc, char **argv)
         bu_exit(1, usage, argv[0]);
     }
 
-    while ((c = bu_getopt(argc, argv, "spidx:X:vt:h:m:u:g:o:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:")) != EOF) {
         switch (c) {
-            case 's': /* stop processing on nmg bomb */
-                stop_on_nmg_bomb_flag = 1;
+            case 'c': /* continue processing on nmg bomb */
+                cont_on_nmg_bomb_flag = 1;
                 break;
             case 'p': /* create plot files for open edges */
                 plot_mode = PLOT_ON;
@@ -3343,17 +3367,17 @@ main(int argc, char **argv)
     }
 
     if (mode_option != 'b') {
-        if (stop_on_nmg_bomb_flag) {
-            bu_log("\tStop on nmg bomb enabled\n");
+        if (cont_on_nmg_bomb_flag) {
+            bu_log("\tContinue on nmg-bomb enabled\n");
         } else {
-            bu_log("\tStop on nmg bomb disabled\n");
+            bu_log("\tContinue on nmg-bomb disabled\n");
         }
     }
 
     if (plot_mode == PLOT_ON) {
-        bu_log("\tOpen edges plotted\n");
+        bu_log("\tPlot open edges enabled\n");
     } else {
-        bu_log("\tOpen edges NOT plotted\n");
+        bu_log("\tPlot open edges disabled\n");
     }
 
     if (verbose) {
@@ -3452,7 +3476,7 @@ main(int argc, char **argv)
                         case 'v':
                             stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									  tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									  nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
+									  nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
                             break;
                     }
 
@@ -3494,7 +3518,7 @@ main(int argc, char **argv)
                             case 'v':
                                 stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
+									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
                                 break;
                         }
 
@@ -3539,7 +3563,7 @@ main(int argc, char **argv)
                             case 'v':
                                 stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
+									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
                                 break;
                         }
 
@@ -3584,7 +3608,7 @@ main(int argc, char **argv)
                             case 'v':
                                 stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
+									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
                                 break;
                         }
 
@@ -3629,7 +3653,7 @@ main(int argc, char **argv)
                             case 'v':
                                 stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, stop_on_nmg_bomb_flag);
+									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
                                 break;
                         }
 

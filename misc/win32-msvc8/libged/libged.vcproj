@@ -378,6 +378,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\combmem.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\concat.c"
 				>
 			</File>

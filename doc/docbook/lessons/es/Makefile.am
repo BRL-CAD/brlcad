@@ -13,7 +13,8 @@ lessonsDOCBOOK_ES = \
 	lessons/es/mged12_taza_desde_gui.xml \
 	lessons/es/mged13_ubicar_figuras_en_3d.xml \
 	lessons/es/mged14_ubicar_figuras_en_3d_2.xml \
-	lessons/es/mged15_crear_camion_de_juguete.xml
+	lessons/es/mged15_crear_camion_de_juguete.xml \
+	lessons/es/mged16_mod_tech_struct.xml
 
 lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged01_commandwindow.png \
@@ -110,7 +111,19 @@ lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged15_truck_design.png \
 	lessons/es/images/mged15_truck_multipane_1stwheel.png \
 	lessons/es/images/mged15_truck_wheel_wells_wireframe.png \
-	lessons/es/images/mged15_truck_wheels.png
+	lessons/es/images/mged15_truck_wheels.png \
+	lessons/es/images/mged16_radio_casecut_raytrace.png \
+	lessons/es/images/mged16_radio_cut_raytrace.png \
+	lessons/es/images/mged16_radio_cut_wireframe.png \
+	lessons/es/images/mged16_radio_cutaways.png \
+	lessons/es/images/mged16_radio_default_components_props.png \
+	lessons/es/images/mged16_radio_new_design.png \
+	lessons/es/images/mged16_radio_structure_1.png \
+	lessons/es/images/mged16_radio_structure_2.png \
+	lessons/es/images/mged16_radio_structure_3.png \
+	lessons/es/images/mged16_radio_transparent.png \
+	lessons/es/images/mged16_radio_wireframe_circ_board.png \
+	lessons/es/images/mged16_radio_with_mater_props.png
 
 lessonsDOCBOOK_EShtmldir = $(BRLCAD_DATA)/html/lessons/es
 lessonsDOCBOOK_EShtml_DATA = \

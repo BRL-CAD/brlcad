@@ -52,7 +52,7 @@
  *
  * XXX Should we require a and b as inputs, for efficiency?
  */
-void
+int
 rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring)
 {
     register struct xray	*rayp = rp+1;
@@ -87,6 +87,7 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 	    rayp++;
 	}
     }
+    return count;
 }
 
 /*

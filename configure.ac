@@ -80,11 +80,11 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-dnl minimum version of autoconf required.  should coincide with
-dnl setting in autogen.sh script.
+# minimum version of autoconf required.  should coincide with setting
+# in autogen.sh script.
 AC_PREREQ(2.52)
 
-dnl See HACKING for details on how to properly update the version
+# See HACKING for details on how to properly update the version
 define([MAJOR_VERSION], [patsubst(esyscmd([cat include/conf/MAJOR]), [
 ])])
 define([MINOR_VERSION], [patsubst(esyscmd([cat include/conf/MINOR]), [
@@ -103,10 +103,14 @@ AC_CONFIG_MACRO_DIR([m4])
 # keep track of cmd-line options for later
 BC_ARG0="$0"
 AC_SUBST(BC_ARG0)
-BC_ARGS="$*"
+if test "x$ac_configure_args" = "x" ; then
+    BC_ARGS="$*"
+else
+    BC_ARGS="$ac_configure_args"
+fi
 AC_SUBST(BC_ARGS)
 
-dnl just in case
+# just in case
 PACKAGE_NAME="BRL-CAD"
 AC_SUBST(PACKAGE_NAME)
 
@@ -308,7 +312,7 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
 
 # togl
-BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
+#BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
 
 # tkpng 
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
@@ -517,7 +521,7 @@ BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
 BC_ARG_ALIAS([build_tktable], [tktable])
 
 # aliases to force building togl (help uses togl-build)
-BC_ARG_ALIAS([build_togl], [togl])
+#BC_ARG_ALIAS([build_togl], [togl])
 
 # aliases to force building tkpng(help uses tkpng-build)
 BC_ARG_ALIAS([build_tkpng], [tkpng])
@@ -691,6 +695,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
 	fi
+	#if test "x$bc_build_togl" = "xno" ; then
+	#	bc_build_togl="$set_everything"
+	#fi
 	if test "x$bc_build_tktable" = "xno" ; then
 		bc_build_tktable="$set_everything"
 	fi
@@ -824,8 +831,8 @@ AC_MSG_RESULT($bc_build_tkhtml3)
 AC_MSG_CHECKING(whether to build the tktable library)
 AC_MSG_RESULT($bc_build_tktable)
 
-AC_MSG_CHECKING(whether to build the togl library)
-AC_MSG_RESULT($bc_build_togl)
+#AC_MSG_CHECKING(whether to build the togl library)
+#AC_MSG_RESULT($bc_build_togl)
 
 AC_MSG_CHECKING(whether to build the tkpng library)
 AC_MSG_RESULT($bc_build_tkpng)
@@ -1286,11 +1293,7 @@ AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
     [AC_CHECK_LIB(tcl86, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl86",
 	[AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
 	    [AC_CHECK_LIB(tcl85, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl85",
-		[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
-		    [AC_CHECK_LIB(tcl84, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl84",
-			[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
-		    )]
-	    	)]
+		[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
 	    )]
 	)]
     )]
@@ -1303,11 +1306,7 @@ AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-lt
     [AC_CHECK_LIB(tclstub86, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub86",
 	[AC_CHECK_LIB(tclstub8.5, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.5",
 	    [AC_CHECK_LIB(tclstub85, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub85",
-	    	[AC_CHECK_LIB(tclstub8.4, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.4",
-		    [AC_CHECK_LIB(tclstub84, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub84",
-			[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
-		    )]
-		)]
+		[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
 	    )]
 	)]
     )]
@@ -1322,11 +1321,7 @@ AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
     [AC_CHECK_LIB(tk86, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk86",
 	[AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
 	    [AC_CHECK_LIB(tk85, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk85",
-		[AC_CHECK_LIB(tk8.4, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.4",
-		    [AC_CHECK_LIB(tk84, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk84",
-			[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
-		    )]
-	        )]
+		[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
 	    )]
 	)]
     )]
@@ -1342,11 +1337,7 @@ AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstu
     [AC_CHECK_LIB(tkstub86, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub86",
 	[AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
 	    [AC_CHECK_LIB(tkstub85, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub85",
-	    	[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
-		    [AC_CHECK_LIB(tkstub84, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub84",
-			[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
-		    )]
-		)]
+		[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
 	    )]
 	)]
     )]
@@ -2414,7 +2405,7 @@ AC_MSG_CHECKING(whether to build the included portable network graphics library)
 PNG=""
 PNG_CPPFLAGS=""
 if test "x$build_brlcad_png" = "xyes" ; then
-    PNG='${top_builddir}/src/other/libpng/libpng.la'
+    PNG='${top_builddir}/src/other/libpng/libpng14.la'
     PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
     AC_MSG_RESULT(yes)
 else
@@ -2753,8 +2744,8 @@ int main() {
 #if TCL_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8\n");
     return 1;
-#elif TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
-    fprintf(stderr, "minor version < 4\n");
+#elif TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5
+    fprintf(stderr, "minor version < 5\n");
     return 1;
 #endif
     return 0;
@@ -2829,6 +2820,7 @@ else
 	sleep 1
     fi
 fi
+# needed by incrTcl 3.3
 AM_CONDITIONAL(TCL_8_4_HEADERS, [test "x$TCL_VERSION" = "x8.4"])
 AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)
@@ -2875,10 +2867,10 @@ int main() {
  	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
 #if TK_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8  (it's %d)\n", TK_MAJOR_VERSION);
-    return 4;
-#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 4
-    fprintf(stderr, "minor version < 4  (it's %d)\n", TK_MINOR_VERSION);
-    return 5;
+    return 1;
+#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
+    fprintf(stderr, "minor version < 5  (it's %d)\n", TK_MINOR_VERSION);
+    return 1;
 #endif
     return 0;
 }
@@ -3182,20 +3174,19 @@ AC_SUBST(TKHTML3)
 
 dnl *** togl ***
 dnl figure out whether we need to build togl
-TOGL_VERSION="2.1"
-AC_SUBST(TOGL_VERSION)
-TOGL_CPPFLAGS=""
-AC_MSG_CHECKING(whether to build togl)
-if test ! "x$bc_build_togl" = "xno" ; then
-    build_brlcad_togl=yes
-    TOGL_CPPFLAGS='-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl'
-    AC_MSG_RESULT(yes)
-else
-    build_brlcad_togl=no
-    TOGL=""
-    AC_MSG_RESULT(no)
-fi
-AC_SUBST(TOGL_CPPFLAGS)
+#TOGL_VERSION="2.1"
+#AC_SUBST(TOGL_VERSION)
+#TOGL_CPPFLAGS=""
+#AC_MSG_CHECKING(whether to build togl)
+#if test ! "x$bc_build_togl" = "xno" ; then
+#    build_brlcad_togl=yes
+#    TOGL_CPPFLAGS='-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl'
+#    AC_MSG_RESULT(yes)
+#else
+#    build_brlcad_togl=no
+#    AC_MSG_RESULT(no)
+#fi
+#AC_SUBST(TOGL_CPPFLAGS)
 
 dnl *** tktable ***
 dnl figure out whether we need to build tktable
@@ -3873,7 +3864,7 @@ AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
-AM_CONDITIONAL(BUILD_TOGL, [test "x$build_brlcad_togl" = "xyes"])
+#AM_CONDITIONAL(BUILD_TOGL, [test "x$build_brlcad_togl" = "xyes__disabled__"])
 AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
@@ -4142,6 +4133,11 @@ if test "x$build_brlcad_tk" = "xyes" ; then
 fi
 AC_SUBST(TK_PATH)
 
+dnl configure libpng
+if test "x$build_brlcad_png" = "xyes" ; then
+   AC_CONFIG_SUBDIRS([src/other/libpng])
+fi
+
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
@@ -4161,14 +4157,14 @@ if test "x$build_brlcad_tkhtml3" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
 fi
 
-dnl configure togl
-if test "x$build_brlcad_togl" = "xyes" ; then
-    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-    if test ! "x$TKINCDIR" = "x" ; then
-	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
-    fi
-    AC_CONFIG_SUBDIRS([src/other/togl])
-fi
+#dnl configure togl
+#if test "x$build_brlcad_togl" = "xyes" ; then
+#    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+#    if test ! "x$TKINCDIR" = "x" ; then
+#	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+#    fi
+#    AC_CONFIG_SUBDIRS([src/other/togl])
+#fi
 
 dnl configure tktable
 if test "x$build_brlcad_tktable" = "xyes" ; then
@@ -4250,6 +4246,7 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Makefile
 	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Utility/attrGroupsDisplayUtilityP/Makefile
+	src/archer/plugins/Utility/botUtilityP/Makefile
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/humanwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/Makefile
@@ -4339,7 +4336,6 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/pkgIndex.tcl
 	src/other/jove/Makefile
 	src/other/jove/teach-jove
-	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
@@ -4364,6 +4360,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Themes/Crystal/Makefile
 	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
 	src/tclscripts/archer/images/Themes/Windows/Makefile
+	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
@@ -4489,7 +4486,7 @@ AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
-AC_MSG_RESULT([Build TOGL............................: $build_brlcad_togl])
+#AC_MSG_RESULT([Build TOGL............................: $build_brlcad_togl])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])

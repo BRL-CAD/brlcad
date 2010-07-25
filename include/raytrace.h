@@ -5790,6 +5790,12 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_h_binu,
 RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 		    (const int minor));
 
+/* these two functions may not be appropriate to export, but windows requires the export notation. */
+RT_EXPORT BU_EXTERN(size_t db5_is_standard_attribute,
+		    (const char *attrname));
+RT_EXPORT BU_EXTERN(void db5_standardize_avs,
+		    (struct bu_attribute_value_set *avs));
+
 #endif
 
 /* defined in binary_obj.c */
@@ -5835,11 +5841,8 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
  * to conform to the attribute values on the comb.  When using this
  * function, attribute/value pairs are "senior" to other values
  * and other values will be updated to match the attributes.
- *
- * @file: db5_types.c
  */
-
-RT_EXPORT BU_EXTERN(size_t db5_apply_std_attributes,
+RT_EXPORT BU_EXTERN(void db5_apply_std_attributes,
                          (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
 
 
@@ -5853,12 +5856,9 @@ RT_EXPORT BU_EXTERN(size_t db5_apply_std_attributes,
  * to conform to the attribute values on the comb.  When using this
  * function, attribute/value pairs are "junior" to other values
  * and attributes will be updated to reflect those values.
- *
- * @file: db5_types.c
  */
-
-RT_EXPORT BU_EXTERN(size_t db5_update_std_attributes,
-                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+RT_EXPORT BU_EXTERN(void db5_update_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
 
 
 /*

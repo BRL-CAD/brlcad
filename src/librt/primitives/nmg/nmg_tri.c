@@ -818,7 +818,10 @@ poly_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	}
     }
 
-    bu_bomb("Didn't find trapezoid to close!\n");
+    if (!tp->bot)
+	bu_bomb("Didn't find trapezoid to close!\n");
+    else
+	return;
 
     /* Complete the trapezoid. */
  trap_found:
@@ -1730,7 +1733,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	    nmg_stash_model_to_file("bad_tri_cut.g",
 				    nmg_find_model(&p1->vu_p->l.magic), buf);
 
-	    bu_bomb("cut_mapped_loop() goodnight 2\n");
+	    bu_bomb("cut_mapped_loop() goodnight 3\n");
 	}
     }
 

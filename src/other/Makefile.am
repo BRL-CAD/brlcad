@@ -75,15 +75,15 @@ else
 TKHTMLDIR=
 endif
 
-if BUILD_TOGL
-if WITH_TK
-TOGLDIR=togl
-else
-TOGLDIR=
-endif
-else
-TOGLDIR=
-endif
+#if BUILD_TOGL
+#if WITH_TK
+#TOGLDIR=togl
+#else
+#TOGLDIR=
+#endif
+#else
+#TOGLDIR=
+#endif
 
 if BUILD_TKPNG
 if WITH_TK
@@ -161,7 +161,6 @@ SUBDIRS = \
 	${STEPDIR} \
 	${TKPNGDIR} \
 	${TKHTMLDIR} \
-	${TOGLDIR} \
 	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
@@ -174,7 +173,8 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost
+	boost \
+	togl
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -194,7 +194,6 @@ DIST_SUBDIRS = \
 	tk \
 	tkpng \
 	tkhtml3 \
-	togl \
 	tktable \
 	tnt
 

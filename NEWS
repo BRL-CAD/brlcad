@@ -10,13 +10,24 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-06-22  Release 7.16.10                                    ---
+--- 2010-06-30  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
+The release concludes a phenomenal effort by Jesica Guidice who
+meticulously translated approximately 150 pages of MGED tutorial
+documentation from English to Spanish.  The 16 tutorials are now fully
+converted and work continues on the technical side to develop
+stylesheets for publishing corresponding PDF documents on the BRL-CAD
+website.
+
+* added all remaining shape tools to the Windows build - Sean Morrison
+* libpng updated from version 1.4.1 to 1.4.3 - Sean Morrison
+* fixed crash tessellating pipes with maximum bends - John Anderson
+* mged 'red' command no longer deletes custom attributes - Cliff Yapp
 * fixed pixhalve memory leak and corruption on exit - Sean Morrison
 * spanish translation for tutorial 9 - Jesica Giudice, Luciano Lamaita
 * Tcl/Tk updated from 8.5.6 to 8.5.8 - Cliff Yapp
-* spanish translations for tutorials 4-5, 7-8, 10-15 - Jesica Giudice
+* spanish translations for tutorials 4-5, 7-8, 10-16 - Jesica Giudice
 * fixed extrude object tessellation failures - Östen Lundahl
 * added manual page for 'random' number generator tool - Sean Morrison
 * added Tktable 2.10 external dependency for archer - Cliff Yapp

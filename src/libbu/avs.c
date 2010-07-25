@@ -82,6 +82,11 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 	return 0;
     }
 
+    if (strlen(name) == 0) {
+	bu_log("WARNING: bu_avs_add() received an attribute name with zero length\n");
+	return 0;
+    }
+
     if (avsp->count) {
 	for (BU_AVS_FOR(app, avsp)) {
 	    if (strcmp(app->name, name) != 0) continue;
