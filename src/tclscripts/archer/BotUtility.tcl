@@ -22,6 +22,12 @@
 # Description:
 #	This is an Archer class for editing a BoT primitive.
 #
+if {[catch {
+    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
+    source $script
+} errMsg] > 0} {
+    puts "Couldn't load \"botEditor.tcl\"\n$errMsg"
+} 
 
 ::itcl::class BotUtility {
     inherit Utility
@@ -69,16 +75,6 @@
     # process widget options
     eval itk_initialize $args
 
-    # load BotEditor class for first instance
-    if {$instances == 0} {
-	if {[catch {
-	    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
-	    source $script
-	} errMsg] > 0} {
-	    puts "Couldn't load \"botEditor.tcl\"\n$errMsg"
-	}
-    }
-
     # search for bots
     set bots {}
     catch {set bots [$_archer search -type bot]}
@@ -86,19 +82,14 @@
 
     if {$numBots == 0} {
 
-	# no bots - show error message
-	itk_component add btError {
+	# no bots - show notice
+	itk_component add noBots {
 
-	    label $itk_interior.errLbl \
+	    label $itk_interior.noticeLbl \
 		-text {There are no bots to edit.}
 	}
 	
-	grid $itk_component(btError)
-
-    } elseif {$numBots == 1} {	
-
-	# edit only bot
-	editBot [lindex $bots 0]
+	grid $itk_component(noBots)
 
     } else {
 
@@ -169,13 +160,13 @@
 # editSelected
 #     Calls editBot with current selection.
 #
-#     Used as the selectBot button callback, since scoping problems make it
-#     hard to query the current selection in a more direct fashion.
+#     Used as the selectBot button callback.
 #
 ::itcl::body BotUtility::editSelected {} {
+
     BotUtility::editBot $itk_option(-selectedbot)
 
-    # close the selection window
+    # close the plugin selection window
     set mToplevel [winfo toplevel $itk_interior]
     namespace eval :: "$mToplevel deactivate; ::itcl::delete object $mToplevel"
 }

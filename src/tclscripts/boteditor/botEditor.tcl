@@ -1,6 +1,13 @@
 package require Itcl
 package require Itk
 
+if {[catch {
+    set script [file join [bu_brlcad_data "tclscripts"] boteditor botPropertyBox.tcl]
+    source $script
+} errMsg] > 0} {
+    puts "Couldn't load \"botPropertyBox.tcl\"\n$errMsg"
+} 
+
 ::itcl::class BotEditor {
     inherit ::itk::Toplevel
 
@@ -9,9 +16,6 @@ package require Itk
     public {
 	method load {bot}
     }    
-
-    private {
-    }
 }
 
 ::itcl::body BotEditor::constructor {args} {
@@ -24,4 +28,10 @@ package require Itk
 
     # show name of bot being edited
     $this configure -title "BoT Editor - $bot"
+
+    itk_component add propBox {
+	BotPropertyBox $itk_interior.propBox
+    } {}
+
+    grid $itk_component(propBox) -row 0 -column 0
 }
