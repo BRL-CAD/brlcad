@@ -134,7 +134,7 @@ SET(CONFIG_DATE "NOTIMPLEMENTED")
 # strings of the right length, so use extra lines around the title
 MESSAGE(STATUS)
 MESSAGE(STATUS)
-MESSAGE(STATUS "*** Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE ***")
+MESSAGE(STATUS "*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build $CONFIG_DATE ***")
 MESSAGE(STATUS)
 MESSAGE(STATUS)
 
