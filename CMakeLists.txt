@@ -205,10 +205,24 @@ IF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 ENDIF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 
 #---------------------------------------------------------------------------------
-#  Build Options
+# Optionally Building Local Copies of External Libraries 
+#
+# Need to get a bit fancy here - since we want to be able to turn local libs
+# on/off at will, need to be careful about how we handle key variables. Approach
+# is to stash values in BRLCAD_* prefixed versions, then restore them after
+# the various Find*.cmake commands do their thing.  If NOT doing local build,
+# then the BRLCAD_* and standard variables will be the same.  It remains to be
+# seen if there will be enough consistency for a macro - the variables that
+# need to be overridden will vary depending on the particular tests made by each
+# subdirectory's CMake logic.
 #---------------------------------------------------------------------------------
+
+# This is our "heavy hammer" flag - if this is set, assume system for
+# everything.  As yet, there is no "automatic" logic to toggle specific
+# libraries on if detection fails, but that may be possible.
 OPTION(BRLCAD_USE_SYSTEM_LIBS "Use the system's libraries." OFF)
 
+# zlib Library
 BRLCAD_THIRD_PARTY_OPTION(ZLIB zlib)
 BRLCAD_THIRD_PARTY_SUBDIR(ZLIB src/other/libz)
 IF(BRLCAD_USE_SYSTEM_LIBS)
@@ -223,7 +237,14 @@ ELSE(NOT BRLCAD_USE_SYSTEM_ZLIB)
    SET(BRLCAD_ZLIB_LIBRARY "${ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_ZLIB)
 
+# libpng Library - Checks for ZLIB, so need to restore BRLCAD_ZLIB* settings - a
+# successful search by FindZLIB will reset the basic variables.  If not using local
+# copy of zlib, FindZLIB results will be identical in both cases so there is no
+# danger of harming the libpng setup by changing BRLCAD_ZLIB*.
 BRLCAD_THIRD_PARTY_OPTION(PNG libpng)
+SET(ZLIB_INCLUDE_DIR "${BRLCAD_ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
+SET(ZLIB_LIBRARY "${BRLCAD_ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
+BRLCAD_THIRD_PARTY_SUBDIR(PNG src/other/libpng)
 IF(BRLCAD_USE_SYSTEM_LIBS)
    SET(BRLCAD_USE_SYSTEM_PNG ON CACHE BOOL "Use the system's libpng library" FORCE)
 ENDIF(BRLCAD_USE_SYSTEM_LIBS)
@@ -233,6 +254,4 @@ ELSE(NOT BRLCAD_USE_SYSTEM_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_PNG)
 
-BRLCAD_THIRD_PARTY_SUBDIR(PNG src/other/libpng)
-SET(ZLIB_INCLUDE_DIR "${BRLCAD_ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
-SET(ZLIB_LIBRARY "${BRLCAD_ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
+
