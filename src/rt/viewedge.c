@@ -230,8 +230,6 @@ struct bu_vls occlusion_objects;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
-static struct bu_image_file *bif = NULL;
-
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
