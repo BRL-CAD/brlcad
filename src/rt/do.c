@@ -902,6 +902,7 @@ do_frame(int framenumber)
     }
     if (bif != NULL)
 	bu_image_save_close(bif);
+    bif = NULL;
     if (outfp != NULL) {
 	/* Protect finished product */
 	if (outputfile != (char *)0)
