@@ -228,10 +228,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\libpng\pnggccrd.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\other\libpng\pngget.c"
 				>
 			</File>
@@ -265,10 +261,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\other\libpng\pngtrans.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\other\libpng\pngvcrd.c"
 				>
 			</File>
 			<File
