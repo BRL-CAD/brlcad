@@ -175,7 +175,6 @@ void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
     int i, count = model.m_layer_table.Count();
     dump->Print("Number of LAYERS - %d\n.", count);
     for ( i=0; i < count; i++) {
-	char name[256];
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
 	strncpy(name, ON_String( lname ),255);
