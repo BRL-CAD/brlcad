@@ -46,7 +46,7 @@ SET(LIBUTAHRLE_SOURCES
         vaxshort.c
 )
 
-add_library(libutahrle SHARED ${LIBUTAHRLE_SOURCES})
+add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 
 SET(LIBUTAHRLE_MAN3
 	buildmap.3 
