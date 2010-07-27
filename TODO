@@ -23,6 +23,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test nirt command
 
+* fix libpng configure failure for machines without libz-dev
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
