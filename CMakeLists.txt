@@ -118,17 +118,17 @@ SET(BRLCAD_VERSION
 
 
 # Unfortunately, CMake doesn't give you variables with current day, month,
-# etc.  Will have to prepare cross platform solution, which looks like it will
-# mean defining a SystemDateTime.cmake file to include which will require the
-# following:
-
-# 1.  A Windows bat file worked out along the lines of the examples here:
-#	http://stackoverflow.com/questions/203090/how-to-get-current-datetime-on-windows-command-line-in-a-suitable-format-for-usi
-#       This may come in handy, depending:  http://www.mail-archive.com/cmake@cmake.org/msg16686.html
-# 2.  The date scripts from the BRL-CAD configure.ac
-# 3.  Platform conditional execution as above
-
-SET(CONFIG_DATE "NOTIMPLEMENTED")
+# etc.  For Windows use d_rossberg's execute_process, which doesn't give individual
+# day, month, etc. values but does give us something for the banner. Otherwise,
+# use the date command.
+IF(WIN32)
+   execute_process(COMMAND cmd /c date /t OUTPUT_VARIABLE CONFIG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
+ELSE(WIN32)
+   EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY) 
+   EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH) 
+   EXEC_PROGRAM(date ARGS +%Y OUTPUT_VARIABLE CONFIG_YEAR)
+   SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
+ENDIF(WIN32)
 
 # CMake doesn't seem to allow for the fancy separator logic to generate "*"
 # strings of the right length, so use extra lines around the title
