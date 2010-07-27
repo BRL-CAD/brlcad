@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="gastank"
-	ProjectGUID="{D4B7A4C2-1029-4273-8DA1-232668DD7B0F}"
+	ProjectGUID="{969917A4-E75F-4564-B71B-A2B734915C6D}"
 	>
 	<Platforms>
 		<Platform
