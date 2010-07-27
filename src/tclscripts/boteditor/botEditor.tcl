@@ -29,9 +29,15 @@ if {[catch {
     # show name of bot being edited
     $this configure -title "BoT Editor - $bot"
 
-    itk_component add propBox {
-	BotPropertyBox $itk_interior.propBox
+    itk_component add editFrame {
+	ttk::frame $itk_interior.eframe \
+	    -padding 5
     } {}
 
+    itk_component add propBox {
+	BotPropertyBox $itk_component(editFrame).propBox
+    } {}
+
+    grid $itk_component(editFrame) -row 0 -column 0
     grid $itk_component(propBox) -row 0 -column 0
 }
