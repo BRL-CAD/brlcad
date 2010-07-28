@@ -297,6 +297,7 @@ ENDIF(NOT BRLCAD_USE_SYSTEM_UTAHRLE)
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 
 # Tk
 #include(ExternalProject)

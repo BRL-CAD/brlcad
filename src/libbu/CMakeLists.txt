@@ -92,4 +92,4 @@ set(HTESTER_SOURCES
 )
 
 add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester ${BRLCAD_PNG_LIB_NAME} libbu)
+target_link_libraries(htester ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} libbu)
