@@ -92,4 +92,4 @@ set(HTESTER_SOURCES
 )
 
 add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester ${PNGLIB_NAME} libbu)
+target_link_libraries(htester ${PNG_LIB_NAME} libbu)

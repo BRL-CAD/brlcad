@@ -254,13 +254,11 @@ IF(NOT BRLCAD_USE_SYSTEM_PNG)
   SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
   # BRL-CAD needs STDIO - turn it on
   SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
-  # We have to override the PNGLIB_NAME variable manually here to raise its scope to the toplevel -
-  # without doing so, CMake subdirectory variable scoping keeps the name confined to the subdirectory
-  # level.  This is what is used in the libpng add_library command, so once in scope it should
-  # be usable for local linking. Main disadvantage appears to be the loss of libpng informing
-  # the correct name here. May be able to override a few version variables too and make this
-  # fully toplevel controlled - what's the best approach?
-  SET(PNGLIB_NAME "png14" CACHE STRING "Override libpng name for BRL-CAD" FORCE)
+  # This is ugly, but there doesn't seem to be a good alternative yet - set PNG_LIB_NAME here so our projects can see it.
+  # Must match what would be produced by the png CMakeLists.txt file or badness will ensue.  What would be nice is a way
+  # to mark this variable as "always overwrite in CACHE, no matter where it's changed" - anyone know of a good
+  # way to do that?  This would let libpng have the last word without surgery on their CMakeLists.txt file.
+  SET(PNG_LIB_NAME "png14" CACHE STRING "Set the png library name at the BRL-CAD toplevel" FORCE)
 ELSE(NOT BRLCAD_USE_SYSTEM_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_PNG)
