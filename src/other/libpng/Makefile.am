@@ -34,6 +34,8 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = png.c pngset.c pngget.c pngrutil
 # support automake 1.7+, no target-specific CPPFLAGS
 AM_CPPFLAGS = @LIBPNG_DEFINES@
 
+DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(srcdir)/../libz
+
 libpng_la_LDFLAGS = -no-undefined -export-dynamic \
 	-version-number @PNGLIB_MAJOR@@PNGLIB_MINOR@:@PNGLIB_RELEASE@:0
 

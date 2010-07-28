@@ -57,7 +57,7 @@ AC_STRUCT_TM
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([memset], , AC_ERROR([memset not found in libc]))
 AC_CHECK_FUNCS([pow], , AC_CHECK_LIB(m, pow, , AC_ERROR([cannot find pow])) )
-AC_CHECK_LIB(z, zlibVersion, , AC_ERROR([zlib not installed]))
+#AC_CHECK_LIB(z, zlibVersion, , AC_ERROR([zlib not installed]))
 
 case $host_os in
   aix*)
