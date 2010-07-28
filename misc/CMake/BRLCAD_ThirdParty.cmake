@@ -48,7 +48,7 @@ ENDMACRO(BRLCAD_THIRD_PARTY_INCLUDE2)
 #-----------------------------------------------------------------------------
 MACRO(BRLCAD_THIRD_PARTY_SUBDIR upper lower)
   IF(NOT BRLCAD_USE_SYSTEM_${upper})
-    SUBDIRS(${lower})
+    ADD_SUBDIRECTORY(${lower})
   ENDIF(NOT BRLCAD_USE_SYSTEM_${upper})
 ENDMACRO(BRLCAD_THIRD_PARTY_SUBDIR)
 

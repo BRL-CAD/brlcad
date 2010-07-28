@@ -251,12 +251,16 @@ IF(BRLCAD_USE_SYSTEM_LIBS)
    SET(BRLCAD_USE_SYSTEM_PNG ON CACHE BOOL "Use the system's libpng library" FORCE)
 ENDIF(BRLCAD_USE_SYSTEM_LIBS)
 IF(NOT BRLCAD_USE_SYSTEM_PNG)
-  SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
-  # BRL-CAD needs STDIO - turn it on
-  SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
-#  get_directory_property(BRLCAD_PNG_LIB_NAME DIRECTORY "${BRLCAD_SOURCE_DIR}/src/other/libpng" DEFINITION PNG_LIB_NAME)
+   SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
+   # BRL-CAD needs STDIO - turn it on
+   SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
+   # PNG_LIB_NAME doesn't automatically propogate to toplevel due to scoping of CMake variables - 
+   # use get_directory_property to recover the value and place it in the CACHE
+   get_directory_property(BRLCAD_PNG_LIB_NAME DIRECTORY src/other/libpng DEFINITION PNG_LIB_NAME)
+   SET(BRLCAD_PNG_LIB_NAME "${BRLCAD_PNG_LIB_NAME}" CACHE STRING "libpng name for targets" FORCE)
 ELSE(NOT BRLCAD_USE_SYSTEM_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers" FORCE)
+   SET(BRLCAD_PNG_LIB_NAME "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_PNG)
 
 # libregex Library

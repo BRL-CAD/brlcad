@@ -179,7 +179,6 @@ if(PNG_STATIC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(${PNG_LIB_NAME_STATIC} PROPERTIES PREFIX "lib")
   endif()
-  SET(PNG_LIB_NAME_STATIC "${PNG_LIB_NAME_STATIC}" CACHE STRING "Put the final static library name in the cache" FORCE)
 endif()
 
 
@@ -194,9 +193,6 @@ if(PNG_TESTS AND PNG_SHARED)
   add_test(pngtest pngtest ${CMAKE_CURRENT_SOURCE_DIR}/pngtest.png)
 endif()
 
-if(PNG_SHARED)
-   SET(PNG_LIB_NAME "${PNG_LIB_NAME}" CACHE STRING "Put the final library name in the cache" FORCE)
-endif()
 
 # CREATE PKGCONFIG FILES
 # we use the same files like ./configure, so we have to set its vars
