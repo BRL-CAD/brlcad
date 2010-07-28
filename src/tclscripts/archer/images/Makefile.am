@@ -77,6 +77,7 @@ dist_tcl_DATA = \
 	command.png \
 	component_pick.png \
 	component_erase.png \
+	component_select.png \
 	configure.png \
 	cycle_az.png \
 	cycle_el.png \

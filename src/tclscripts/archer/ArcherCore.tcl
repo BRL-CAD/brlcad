@@ -72,12 +72,13 @@ namespace eval ArcherCore {
 	common VIEW_CENTER_MODE 3
 	common COMP_PICK_MODE 4
 	common COMP_ERASE_MODE 5
-	common MEASURE_MODE 6
-	common OBJECT_ROTATE_MODE 7
-	common OBJECT_TRANSLATE_MODE 8
-	common OBJECT_SCALE_MODE 9
-	common OBJECT_CENTER_MODE 10
-	common FIRST_FREE_BINDING_MODE 11
+	common COMP_SELECT_MODE 6
+	common MEASURE_MODE 7
+	common OBJECT_ROTATE_MODE 8
+	common OBJECT_TRANSLATE_MODE 9
+	common OBJECT_SCALE_MODE 10
+	common OBJECT_CENTER_MODE 11
+	common FIRST_FREE_BINDING_MODE 12
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -695,6 +696,7 @@ Popup Menu    Right or Ctrl-Left
 	method updateTree        {{_cflag 0}}
 	method fillTree          {_pnode _ctext {_flat 0}}
 	method fillTreeColumns   {_cnode _ctext}
+	method isRegion          {_cgdata}
 	method loadMenu          {_menu _node _nodeType}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
@@ -764,6 +766,9 @@ Popup Menu    Right or Ctrl-Left
 
 	method initCompErase {}
 	method initCompPick {}
+
+	method initCompSelect {}
+	method compSelectCallback {_mstring}
 
 	method mrayCallback_cvo {_start _target _partitions}
 	method mrayCallback_erase {_start _target _partitions}
@@ -1407,6 +1412,9 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure cerase \
 	-image [image create photo \
 		    -file [file join $dir component_erase.png]]
+    $itk_component(primaryToolbar) itemconfigure cselect \
+	-image [image create photo \
+		    -file [file join $dir component_select.png]]
     $itk_component(primaryToolbar) itemconfigure measure \
 	-image [image create photo \
 		    -file [file join $dir measure.png]]
@@ -2049,6 +2057,10 @@ Popup Menu    Right or Ctrl-Left
 		initCompPick \
 		set ret 1
 	} \
+	$COMP_SELECT_MODE { \
+		initCompSelect \
+		set ret 1
+	} \
 	$MEASURE_MODE { \
 		initViewMeasure \
 		set ret 1
@@ -2218,6 +2230,13 @@ Popup Menu    Right or Ctrl-Left
 	-value $COMP_ERASE_MODE \
 	-command [::itcl::code $this initCompErase] \
 	-state disabled
+    $itk_component(primaryToolbar) add radiobutton cselect \
+	-balloonstr "Component Select Mode" \
+	-helpstr "Component Select Mode" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $COMP_SELECT_MODE \
+	-command [::itcl::code $this initCompSelect] \
+	-state disabled
     $itk_component(primaryToolbar) add radiobutton measure \
 	-balloonstr "Measuring Tool" \
 	-helpstr "Measuring Tool" \
@@ -2232,6 +2251,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
+    $itk_component(primaryToolbar) itemconfigure cselect -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     eval pack configure [pack slaves $itk_component(primaryToolbar)] -padx 2
@@ -2277,6 +2297,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::beginViewTranslate {} {
     $itk_component(ged) init_view_translate 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
@@ -2288,6 +2309,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::initViewCenterMode {} {
     $itk_component(ged) init_view_center 1
+    $itk_component(ged) init_button_no_op 2
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
@@ -2306,6 +2328,17 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick 1
     $itk_component(ged) init_button_no_op 2
+}
+
+::itcl::body ArcherCore::initCompSelect {} {
+    $itk_component(ged) clear_view_rect_callback_list
+    $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
+    $itk_component(ged) init_view_rect 1
+    $itk_component(ged) init_button_no_op 2
+}
+
+::itcl::body ArcherCore::compSelectCallback {_mstring} {
+    putString $_mstring
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
@@ -2378,6 +2411,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) clear_view_measure_callback_list
     $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
     $itk_component(ged) init_view_measure
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewMeasure {_mstring} {
@@ -2392,6 +2426,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center -state normal
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
     $itk_component(primaryToolbar) itemconfigure cerase -state normal
+    $itk_component(primaryToolbar) itemconfigure cselect -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
 
     $itk_component(ged) init_view_bindings
@@ -2408,6 +2443,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
+    $itk_component(primaryToolbar) itemconfigure cselect -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     $itk_component(ged) init_view_bindings brlcad
@@ -3082,39 +3118,7 @@ Popup Menu    Right or Ctrl-Left
     set ptext $mNode2Text($_pnode)
 
     if {!$_flat && $ctype == "comb"} {
-	set ri [lsearch $cgdata region]
-	incr ri
-	set isregion [lindex $cgdata $ri]
-
-	if {$isregion} {
-	    # Check for rid
-	    set ii [lsearch $cgdata id]
-	    if {$ii != -1} {
-		incr ii
-		set hasId [lindex $cgdata $ii]
-	    } else {
-		set hasId 0
-	    }
-
-	    # Check for air
-	    set ai [lsearch $cgdata air]
-
-	    if {$ai != -1} {
-		set hasAir 1
-	    } else {
-		set hasAir 0
-	    }
-
-	    if {($hasId && $hasAir) || (!$hasId && !$hasAir)} {
-		set isregion 3
-	    } else {
-		if {$hasId} {
-		    set isregion 1
-		} else {
-		    set isregion 2
-		}
-	    }
-	}
+	set isregion [isRegion $cgdata]
 
 	set op [getTreeOp $ptext $_ctext]
 	set img [getTreeImage $_ctext $ctype $op $isregion]
@@ -3129,8 +3133,8 @@ Popup Menu    Right or Ctrl-Left
 	    addTreePlaceholder $cnode
 	}
     } else {
-	set op [getTreeOp $ptext $_ctext]
-	set img [getTreeImage $_ctext $ctype $op]
+	set isregion [isRegion $cgdata]
+	set img [getTreeImage $_ctext $ctype "" $isregion]
 	set cnode [$itk_component(newtree) insert $_pnode end \
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
@@ -3165,6 +3169,50 @@ Popup Menu    Right or Ctrl-Left
 
 	$itk_component(newtree) item $_cnode -values $vals
     }
+}
+
+::itcl::body ArcherCore::isRegion {_cgdata} {
+    set ri [lsearch $_cgdata region]
+    if {$ri == -1} {
+	return 0
+    }
+
+    incr ri
+    set isregion [lindex $_cgdata $ri]
+
+    if {$isregion} {
+	# Check for rid
+	set ii [lsearch $_cgdata id]
+	if {$ii != -1} {
+	    incr ii
+	    set hasId [lindex $_cgdata $ii]
+	} else {
+	    set hasId 0
+	}
+
+	# Check for air
+	set ai [lsearch $_cgdata air]
+
+	if {$ai != -1} {
+	    set hasAir 1
+	} else {
+	    set hasAir 0
+	}
+
+	if {($hasId && $hasAir) || (!$hasId && !$hasAir)} {
+	    set isregion 3
+	} else {
+	    if {$hasId} {
+		set isregion 1
+	    } else {
+		set isregion 2
+	    }
+	}
+
+	return $isregion
+    }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::loadMenu {_menu _node _nodeType} {
