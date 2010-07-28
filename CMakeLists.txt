@@ -254,11 +254,7 @@ IF(NOT BRLCAD_USE_SYSTEM_PNG)
   SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
   # BRL-CAD needs STDIO - turn it on
   SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
-  # This is ugly, but there doesn't seem to be a good alternative yet - set PNG_LIB_NAME here so our projects can see it.
-  # Must match what would be produced by the png CMakeLists.txt file or badness will ensue.  What would be nice is a way
-  # to mark this variable as "always overwrite in CACHE, no matter where it's changed" - anyone know of a good
-  # way to do that?  This would let libpng have the last word without surgery on their CMakeLists.txt file.
-  SET(PNG_LIB_NAME "png14" CACHE STRING "Set the png library name at the BRL-CAD toplevel" FORCE)
+#  get_directory_property(BRLCAD_PNG_LIB_NAME DIRECTORY "${BRLCAD_SOURCE_DIR}/src/other/libpng" DEFINITION PNG_LIB_NAME)
 ELSE(NOT BRLCAD_USE_SYSTEM_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_PNG)
