@@ -251,7 +251,16 @@ IF(BRLCAD_USE_SYSTEM_LIBS)
    SET(BRLCAD_USE_SYSTEM_PNG ON CACHE BOOL "Use the system's libpng library" FORCE)
 ENDIF(BRLCAD_USE_SYSTEM_LIBS)
 IF(NOT BRLCAD_USE_SYSTEM_PNG)
-   SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
+  SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
+  # BRL-CAD needs STDIO - turn it on
+  SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
+  # We have to override the PNGLIB_NAME variable manually here to raise its scope to the toplevel -
+  # without doing so, CMake subdirectory variable scoping keeps the name confined to the subdirectory
+  # level.  This is what is used in the libpng add_library command, so once in scope it should
+  # be usable for local linking. Main disadvantage appears to be the loss of libpng informing
+  # the correct name here. May be able to override a few version variables too and make this
+  # fully toplevel controlled - what's the best approach?
+  SET(PNGLIB_NAME "png14" CACHE STRING "Override libpng name for BRL-CAD" FORCE)
 ELSE(NOT BRLCAD_USE_SYSTEM_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_PNG)
@@ -314,6 +323,7 @@ CHECK_INCLUDE_FILES(pthread.h HAVE_PTHREAD)
 CHECK_INCLUDE_FILES(pwd.h HAVE_PWD_H)
 CHECK_INCLUDE_FILES(sys/stat.h HAVE_SYS_STAT_H)
 CHECK_INCLUDE_FILES(sys/types.h HAVE_SYS_TYPES_H)
+CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 INCLUDE(CheckTypeSize)
 CHECK_TYPE_SIZE("ssize_t" SSIZE_T)
 
