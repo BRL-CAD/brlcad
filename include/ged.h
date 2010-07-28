@@ -95,6 +95,7 @@ __BEGIN_DECLS
 #define GED_PROTATE_MODE 12
 #define GED_PSCALE_MODE 13
 #define GED_PTRANSLATE_MODE 14
+#define GED_RECTANGLE_MODE 15
 
 /**
  * S E M A P H O R E S
@@ -2634,6 +2635,14 @@ GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_rrt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Returns a list of items within the previously defined rectangle.
+ *
+ * Usage:
+ *     rselect
+ */
+GED_EXPORT BU_EXTERN(int ged_rselect, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Run the raytracing application.
  *
  * Usage:
@@ -2689,6 +2698,14 @@ GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *arg
  *     search [options] (see search man page)
  */
 GED_EXPORT BU_EXTERN(int ged_search, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns a list of items within the specified rectangle or circle.
+ *
+ * Usage:
+ *     select vx vy {vr | vw vh}
+ */
+GED_EXPORT BU_EXTERN(int ged_select, (struct ged *gedp, int argc, const char *argv[]));
 
 
 /**
