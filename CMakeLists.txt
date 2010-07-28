@@ -286,4 +286,26 @@ ELSE(NOT BRLCAD_USE_SYSTEM_UTAHRLE)
    SET(BRLCAD_UTAHRLE_LIBRARY "${UTAHRLE_LIBRARY}" CACHE STRING "libutahrle library" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_UTAHRLE)
 
+# URTToolkit
+# Programs, not a library - needs libutahrle, but the "check for system install" logic
+# will be different here.  Ignore for now, revisit later.
 
+
+# Tk
+#include(ExternalProject)
+#ExternalProject_Add(
+#	tk
+#	DOWNLOAD_COMMAND ""
+#	PREFIX "${BRLCAD_INSTALL_ROOT}"
+#	SOURCE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tk"
+#	CONFIGURE_COMMAND
+#	autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tk/unix -o ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure --with-tk=${BRLCAD_SOURCE_DIR}/src/other/tk/unix 
+#        BUILD_COMMAND make
+#)
+
+INCLUDE(CheckFunctionExists)
+CHECK_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
+
+configure_file(${BRLCAD_SOURCE_DIR}/include/brlcad_config.h.cmake ${BRLCAD_SOURCE_DIR}/include/brlcad_config.h)
+
+SUBDIRS(src/libbu)
