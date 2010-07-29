@@ -8350,12 +8350,6 @@ go_close_fbs(struct ged_dm_view *gdvp)
 
     fb_flush(gdvp->gdv_fbs.fbs_fbp);
     fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
-
-    /* free framebuffer memory */
-    if (gdvp->gdv_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
-	free((void *)gdvp->gdv_fbs.fbs_fbp->if_pbase);
-    free((void *)gdvp->gdv_fbs.fbs_fbp->if_name);
-    free((void *)gdvp->gdv_fbs.fbs_fbp);
     gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
 
     return TCL_OK;
