@@ -20,6 +20,7 @@ converted and work continues on the technical side to develop
 stylesheets for publishing corresponding PDF documents on the BRL-CAD
 website.
 
+* fixed framebuffer shutdown and memory management bugs - Bob Parker
 * added all remaining shape tools to the Windows build - Sean Morrison
 * libpng updated from version 1.4.1 to 1.4.3 - Sean Morrison
 * fixed crash tessellating pipes with maximum bends - John Anderson
