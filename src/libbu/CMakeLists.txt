@@ -85,11 +85,11 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(libbu ${LIBBU_SOURCES})
+add_library(bu ${LIBBU_SOURCES})
 
 set(HTESTER_SOURCES
     htester.c
 )
 
 add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} libbu)
+target_link_libraries(htester ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} bu)

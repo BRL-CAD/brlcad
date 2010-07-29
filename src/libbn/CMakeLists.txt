@@ -40,4 +40,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(libbn ${LIBBN_SOURCES})
+add_library(bn ${LIBBN_SOURCES})

@@ -333,4 +333,5 @@ FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
 
-SUBDIRS(src/libbu)
+ADD_SUBDIRECTORY(src/libbu)
+ADD_SUBDIRECTORY(src/libbn)
