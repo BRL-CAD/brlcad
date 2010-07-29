@@ -1063,7 +1063,7 @@ polyhbld(void)
     char	*cp;
     char	*name;
     long	startpos;
-    long	nlines;
+    size_t	nlines;
     struct rt_pg_internal	*pg;
     struct rt_db_internal	intern;
     struct bn_tol	tol;
