@@ -315,7 +315,6 @@ package provide Archer 1.0
 	method rtEdgeMenuStatusCB {_w}
 	method rtMenuStatusCB {_w}
 
-	method updateCreationButtons {_on}
 	method updatePrimaryToolbar {}
 	method updateRaytraceButtons {_on}
 
@@ -517,7 +516,6 @@ package provide Archer 1.0
 	updateToggleMode
 
 	setTreeView
-	updateCreationButtons 0
 	updateRaytraceButtons 0
 	updateCheckpointMode
 	updateSaveMode
@@ -1528,7 +1526,6 @@ package provide Archer 1.0
 	deleteTargetOldCopy
 #	createTargetLedger
 
-	updateCreationButtons 1
 #	updateRaytraceButtons 1
 
 	buildGroundPlane
@@ -4624,28 +4621,6 @@ proc title_node_handler {node} {
 		set mStatusStr ""
 	    }
 	}
-    }
-}
-
-::itcl::body Archer::updateCreationButtons {_on} {
-    if {$_on} {
-	$itk_component(primaryToolbar) itemconfigure arb6 -state normal
-	$itk_component(primaryToolbar) itemconfigure arb8 -state normal
-	$itk_component(primaryToolbar) itemconfigure cone -state normal
-	$itk_component(primaryToolbar) itemconfigure sphere -state normal
-	$itk_component(primaryToolbar) itemconfigure torus -state normal
-	#	$itk_component(primaryToolbar) itemconfigure pipe -state normal
-	$itk_component(primaryToolbar) itemconfigure other -state normal
-	$itk_component(primaryToolbar) itemconfigure comb -state normal
-    } else {
-	$itk_component(primaryToolbar) itemconfigure arb6 -state disabled
-	$itk_component(primaryToolbar) itemconfigure arb8 -state disabled
-	$itk_component(primaryToolbar) itemconfigure cone -state disabled
-	$itk_component(primaryToolbar) itemconfigure sphere -state disabled
-	$itk_component(primaryToolbar) itemconfigure torus -state disabled
-	#	$itk_component(primaryToolbar) itemconfigure pipe -state disabled
-	$itk_component(primaryToolbar) itemconfigure other -state disabled
-	$itk_component(primaryToolbar) itemconfigure comb -state disabled
     }
 }
 
