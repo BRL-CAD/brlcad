@@ -75,7 +75,7 @@ set(LIBBU_SOURCES
 
 include_directories(
     ../../include
-    ../other/libpng
+    ${BRLCAD_PNG_INCLUDE_DIR}
     ../other/libz
     ../other/tcl/generic
 )
