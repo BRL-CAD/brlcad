@@ -196,6 +196,7 @@ set(LIBGED_SOURCES
     scale_tgc.c
     scale_tor.c
     search.c
+    select.c
     set_output_script.c
     set_transparency.c
     set_uplotOutputMode.c
