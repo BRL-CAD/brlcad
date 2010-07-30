@@ -207,6 +207,38 @@ IF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 ENDIF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 
 #---------------------------------------------------------------------------------
+# We will need a brlcad_config.h.in file to hold all the #cmakedefine statements,
+# which will in turn need to generate a brlcad_conf.h file.  In autotools this
+# process is handled by autoheader - in the case of CMake we wrap the CHECK_*
+# functions and the creation of the entry in the brlcad_config.h.in file into
+# one step via a macro.  To run this macro, the file must first be present, which
+# we take care of here:
+
+SET(CONFIG_H_FILE "${BRLCAD_SOURCE_DIR}/include/brlcad_config.h.in")
+FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
+
+BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
+BRLCAD_FUNCTION_EXISTS(strchr HAVE_STRCHR)
+BRLCAD_FUNCTION_EXISTS(kill HAVE_KILL)
+BRLCAD_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
+BRLCAD_INCLUDE_FILE(grp.h HAVE_GRP_H)
+BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD)
+BRLCAD_INCLUDE_FILE(pwd.h HAVE_PWD_H)
+BRLCAD_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+BRLCAD_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
+BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
+
+configure_file(${CONFIG_H_FILE} ${BRLCAD_SOURCE_DIR}/include/brlcad_config.h)
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/COUNT "1")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/DATE "1")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "1")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
+
+
+#---------------------------------------------------------------------------------
 # Optionally Building Local Copies of External Libraries 
 #
 # Need to get a bit fancy here - since we want to be able to turn local libs
@@ -310,28 +342,6 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 #	autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tk/unix -o ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure --with-tk=${BRLCAD_SOURCE_DIR}/src/other/tk/unix 
 #        BUILD_COMMAND make
 #)
-
-INCLUDE(CheckFunctionExists)
-CHECK_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
-CHECK_FUNCTION_EXISTS(strchr HAVE_STRCHR)
-CHECK_FUNCTION_EXISTS(kill HAVE_KILL)
-INCLUDE(CheckIncludeFiles)
-CHECK_INCLUDE_FILES(memory.h HAVE_MEMORY_H)
-CHECK_INCLUDE_FILES(grp.h HAVE_GRP_H)
-CHECK_INCLUDE_FILES(pthread.h HAVE_PTHREAD)
-CHECK_INCLUDE_FILES(pwd.h HAVE_PWD_H)
-CHECK_INCLUDE_FILES(sys/stat.h HAVE_SYS_STAT_H)
-CHECK_INCLUDE_FILES(sys/types.h HAVE_SYS_TYPES_H)
-CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
-INCLUDE(CheckTypeSize)
-CHECK_TYPE_SIZE("ssize_t" SSIZE_T)
-
-configure_file(${BRLCAD_SOURCE_DIR}/include/brlcad_config.h.cmake ${BRLCAD_SOURCE_DIR}/include/brlcad_config.h)
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/COUNT "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/DATE "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
 
 ADD_SUBDIRECTORY(src/libbu)
 ADD_SUBDIRECTORY(src/libbn)
