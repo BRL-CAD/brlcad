@@ -32,6 +32,7 @@ dnl End of version number stuff
 
 AC_CONFIG_SRCDIR([pngget.c])
 AM_CONFIG_HEADER(config.h)
+AC_CONFIG_MACRO_DIR([../../../m4])
 
 # Checks for programs.
 AC_PROG_CC
@@ -125,5 +126,9 @@ AC_SUBST([binconfigs])
 AC_CONFIG_FILES([Makefile libpng.pc:libpng.pc.in])
 AC_CONFIG_FILES([libpng-config:libpng-config.in],
 		[chmod +x libpng-config])
+
+# provides convenience argument handlers for specifying CFLAGS,
+# LDFLAGS, CPPFLAGS, and LIBS using --with argument handlers.
+BC_WITH_FLAG_ARGS
 
 AC_OUTPUT
