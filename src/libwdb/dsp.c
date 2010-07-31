@@ -42,18 +42,19 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
 {
     struct rt_dsp_internal *dsp;
 
-    BU_GETSTRUCT( dsp, rt_dsp_internal );
+    BU_GETSTRUCT(dsp, rt_dsp_internal);
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
-    bu_vls_init( &dsp->dsp_name );
-    bu_vls_strcat( &dsp->dsp_name, file);
+    bu_vls_init(&dsp->dsp_name);
+    bu_vls_strcat(&dsp->dsp_name, file);
 
     dsp->dsp_xcnt = xdim;
     dsp->dsp_ycnt = ydim;
-    MAT_COPY( dsp->dsp_stom, mat );
+    MAT_COPY(dsp->dsp_stom, mat);
 
-    return wdb_export( fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm );
+    return wdb_export(fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:

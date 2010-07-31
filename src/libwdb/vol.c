@@ -35,8 +35,8 @@
 #include "db.h"
 
 
-/*
- *			M K _ V O L
+/**
+ * M K _ V O L
  */
 int
 mk_vol(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, int zdim, int lo, int hi, const fastf_t *cellsize, const matp_t mat)
@@ -49,21 +49,22 @@ mk_vol(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
     /* ideal coords: size of each cell */
     /* convert local coords to model space */
 {
-    struct rt_vol_internal	*vol;
+    struct rt_vol_internal *vol;
 
-    BU_GETSTRUCT( vol, rt_vol_internal );
+    BU_GETSTRUCT(vol, rt_vol_internal);
     vol->magic = RT_VOL_INTERNAL_MAGIC;
-    bu_strlcpy( vol->file, file, RT_VOL_NAME_LEN );
+    bu_strlcpy(vol->file, file, RT_VOL_NAME_LEN);
     vol->xdim = xdim;
     vol->ydim = ydim;
     vol->zdim = zdim;
     vol->lo = lo;
     vol->hi = hi;
-    VMOVE( vol->cellsize, cellsize );
-    MAT_COPY( vol->mat, mat );
+    VMOVE(vol->cellsize, cellsize);
+    MAT_COPY(vol->mat, mat);
 
-    return wdb_export( fp, name, (genptr_t)vol, ID_VOL, mk_conv2mm );
+    return wdb_export(fp, name, (genptr_t)vol, ID_VOL, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:
