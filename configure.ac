@@ -4136,9 +4136,10 @@ AC_SUBST(TK_PATH)
 dnl configure libpng
 if test "x$build_brlcad_png" = "xyes" ; then
    if test "x$LIBZ_CPPFLAGS" != "x" ; then
-	ac_configure_args="$ac_configure_args --with-libs='../libz/libz.la' --with-cppflags='-I../libz'"
+	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
+	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\""
     else
-	ac_configure_args="$ac_configure_args --with-libs='$LIBZLIB'"
+	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB'"
    fi
    AC_CONFIG_SUBDIRS([src/other/libpng])
 fi

@@ -129,6 +129,6 @@ AC_CONFIG_FILES([libpng-config:libpng-config.in],
 
 # provides convenience argument handlers for specifying CFLAGS,
 # LDFLAGS, CPPFLAGS, and LIBS using --with argument handlers.
-BC_WITH_FLAG_ARGS
+BC_WITH_SUB_FLAG_ARGS
 
 AC_OUTPUT
