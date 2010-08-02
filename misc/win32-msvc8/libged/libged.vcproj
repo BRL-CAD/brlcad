@@ -1010,6 +1010,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\select.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\set_output_script.c"
 				>
 			</File>
