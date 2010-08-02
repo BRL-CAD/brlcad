@@ -351,7 +351,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 \
   _comb = (struct rt_comb_internal *)(_intern).idb_ptr;	\
   RT_CK_COMB(_comb); \
-  if (_comb->tree) {							\ 
+  if (_comb->tree) {							\
       (_ntp) = db_dup_subtree(_comb->tree, &rt_uniresource);	\
       RT_CK_TREE(_ntp);						\
 \
