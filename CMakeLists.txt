@@ -95,23 +95,13 @@ PROJECT(BRLCAD)
 SET(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
 SET(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}" ${CMAKE_MODULE_PATH})
 
-#--------------------------------------------------------------------
-# BRL-CAD version numbers are read from files - to do this, support 
-# for reading the values into variables via cat is needed (thanks
-# to Andy Cedilnik on the CMake list for demonstrating how to use
-# this technique with CMake)
-# http://www.cmake.org/pipermail/cmake/2003-March/003486.html
 
-SET(cat_prog cat)
-IF(WIN32)
-  IF(NOT UNIX)
-    SET(cat_prog type)
-  ENDIF(NOT UNIX)
-ENDIF(WIN32)
-
-EXEC_PROGRAM(${cat_prog} ARGS ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR OUTPUT_VARIABLE BRLCAD_MAJOR_VERSION)
-EXEC_PROGRAM(${cat_prog} ARGS ${BRLCAD_SOURCE_DIR}/include/conf/MINOR OUTPUT_VARIABLE BRLCAD_MINOR_VERSION)
-EXEC_PROGRAM(${cat_prog} ARGS ${BRLCAD_SOURCE_DIR}/include/conf/PATCH OUTPUT_VARIABLE BRLCAD_PATCH_VERSION)
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
+STRING(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_MINOR_VERSION)
+STRING(STRIP ${BRLCAD_MINOR_VERSION} BRLCAD_MINOR_VERSION)
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
+STRING(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
 
 SET(BRLCAD_VERSION
     "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
