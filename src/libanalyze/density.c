@@ -88,7 +88,8 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 	if (!*p)
 	    break;
 
-	if ((q = strchr(p, '\n')))
+        q = strchr(p, '\n');
+	if (q)
 	    *q++ = '\0';
 	else
 	    q = last;

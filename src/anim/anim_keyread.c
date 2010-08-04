@@ -127,7 +127,7 @@ main(int argc, char **argv)
 	    printf("%.10g\t%.10g\t%.10g\t%.10g\n", quat[X], quat[Y], quat[Z], quat[W]);
 	}
     }
-    return( 0 );
+    return 0;
 }
 
 
@@ -157,10 +157,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 

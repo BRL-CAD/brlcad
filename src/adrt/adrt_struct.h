@@ -31,7 +31,7 @@
 #  error "Need single floating point precision out of tie"
 # endif
 #else
-# error "Need TIE_PRECISION set to 0 in the CFLAGS"
+# define TIE_PRECISION 0
 #endif
 
 #include "tie.h"
@@ -55,6 +55,7 @@ typedef struct adrt_mesh_attributes_s {
 typedef struct adrt_mesh_s {
     struct bu_list l;
     int flags;
+    int matid;
     char name[256];
     TIE_3 min, max;
     tfloat matrix[16];

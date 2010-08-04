@@ -113,8 +113,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 
 	    _ged_eraseAllNamesFromDisplay(gedp, argv[i], 0);
 
-	    if (db_delete(gedp->ged_wdbp->dbip, dp) < 0 ||
-		db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
+	    if (db_delete(gedp->ged_wdbp->dbip, dp) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, dp) != 0) {
 		/* Abort kill processing on first error */
 		bu_vls_printf(&gedp->ged_result_str, "an error occurred while deleting %s", argv[i]);
 		return GED_ERROR;

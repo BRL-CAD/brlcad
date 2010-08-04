@@ -126,7 +126,7 @@ int add_segment(struct xray *rp, struct hit *ihitp, struct hit *outp, struct reg
     int order = strcmp(reg1->reg_name, reg2->reg_name);
 
     /* If we somehow got the same region name in both regions, ignore the segment */
-    if (!order) return (0); 
+    if (!order) return 0; 
     
     /* Translate ray hit information into segment length */
     VJOIN1( ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir );
@@ -135,11 +135,11 @@ int add_segment(struct xray *rp, struct hit *ihitp, struct hit *outp, struct reg
     
     /* If depth is so small as to be within floating point tolerance, don't report it */
     if (NEAR_ZERO(depth, SMALL_FASTF))
-	return(0);
+	return 0;
     
     /* Filter based on overlap tolerance, if any */
     if ((overlap_tolerance > 0) && (depth < overlap_tolerance))
-	return(0);
+	return 0;
     
     /* Check for segment in existing overlap set, if any have already been found.
      * This part of the code needs to be prepared to run in parallel.*/
@@ -156,7 +156,7 @@ int add_segment(struct xray *rp, struct hit *ihitp, struct hit *outp, struct reg
 	   if (overlap->maxdepth < depth) overlap->maxdepth = depth;
 	   /* append segment to list - figure this out */
 	   bu_semaphore_release( BU_SEM_SYSCALL );
-	   return(1);
+	   return 1;
        } 	   
     }
     /* If we're here we have a new overlap, need to create a new entry */
@@ -177,7 +177,7 @@ int add_segment(struct xray *rp, struct hit *ihitp, struct hit *outp, struct reg
     entry = bu_hash_add_entry(overlaps, (unsigned char *)bu_vls_addr(str), bu_vls_strlen((const)str), &status);
     bu_set_hash_value(entry, (unsigned char *)overlap);
     bu_semaphore_release( BU_SEM_SYSCALL );
-    return(2);
+    return 2;
 }
 #endif	
     

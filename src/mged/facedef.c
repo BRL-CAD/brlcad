@@ -374,9 +374,9 @@ get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
 
     if (bn_mk_plane_3pts(plane, a, b, c, tol) < 0) {
 	Tcl_AppendResult(interp, "Facedef: not a plane\n", (char *)NULL);
-	return(-1);		/* failure */
+	return -1;		/* failure */
     }
-    return(0);			/* success */
+    return 0;			/* success */
 }
 
 

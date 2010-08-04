@@ -36,6 +36,7 @@
 #include "compnet.h"		/* Component Networking, Sends Component Names via Network */
 #include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
+#include "tienet.h"
 #include "tienet_master.h"
 
 /* Networking Includes */
@@ -450,7 +451,7 @@ master_networking (void *ptr)
 	    {
 		case ADRT_NETOP_SHUTDOWN:
 		    tienet_sem_post (&master.wait_sem);
-		    return (NULL);
+		    return NULL;
 		    break;
 
 		case ADRT_NETOP_INIT:

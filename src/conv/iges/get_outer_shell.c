@@ -45,7 +45,7 @@ Get_outer_shell( r, entityno, shell_orient )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
     Readrec( dir[entityno]->param );
@@ -76,7 +76,7 @@ Get_outer_shell( r, entityno, shell_orient )
     bu_free( (char *)fu, "Get_outer_shell: faceuse list" );
     bu_free( (char *)face_de, "Get_outer_shell: face DE's" );
     bu_free( (char *)face_orient, "Get_outer_shell: face orients" );
-    return( s );
+    return s;
 }
 
 /*

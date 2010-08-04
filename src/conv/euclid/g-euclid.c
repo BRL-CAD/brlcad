@@ -138,9 +138,9 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const
 	bu_log( "select_region: curr_id = %d, tsp->ts_regionid = %d\n", curr_id, tsp->ts_regionid);
 
     if ( tsp->ts_regionid == curr_id )
-	return( 0 );
+	return 0;
     else
-	return( -1 );
+	return -1;
 }
 
 static int
@@ -149,21 +149,21 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const st
     if ( verbose )
 	bu_log( "get_reg_id: Adding id %d to list\n", tsp->ts_regionid );
     insert_id( tsp->ts_regionid );
-    return( -1 );
+    return -1;
 }
 
 static union tree *
 region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     bu_exit(1, "ERROR; region stub called, this shouldn't happen\n" );
-    return( (union tree *)NULL ); /* just to keep the compilers happy */
+    return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
 static union tree *
 leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     bu_exit(1, "ERROR: leaf stub called, this shouldn't happen\n" );
-    return( (union tree *)NULL ); /* just to keep the compilers happy */
+    return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
 static void
@@ -685,7 +685,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     }
 
     if (curtree->tr_op == OP_NOP)
-	return  curtree;
+	return curtree;
 
     regions_tried++;
 
@@ -783,7 +783,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
-    return(curtree);
+    return curtree;
 }
 
 /*

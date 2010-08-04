@@ -34,6 +34,7 @@
 
 #include "libtie/tie.h"
 #include "adrt.h"
+#include "tienet.h"
 
 int master_compserv_socket;
 int master_compserv_active;

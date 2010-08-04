@@ -240,8 +240,8 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     int			node;
     int			i;
     int			long_size = 0;
-    int			file_size_long;
-    int			file_size_int;
+    size_t		file_size_long;
+    size_t		file_size_int;
 
     /* check the arguments */
     RT_CHECK_RTI(rtip);
@@ -452,7 +452,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	tthrm_print(rp, *dpp);
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -506,7 +506,8 @@ get_solid_number(struct partition *pp)
 	bu_bomb("Choke! ack! gasp! wheeeeeeze.\n");
     }
 
-    if (! (solid_digits=strrchr(solid_name, (int)'_'))) {
+    solid_digits=strrchr(solid_name, (int)'_');
+    if (!solid_digits) {
 	bu_log("%s:%d solid name %s doesn't have '_'\n",
 	       __FILE__, __LINE__, solid_name);
 	bu_bomb("Choke! ack! gasp! wheeeeeeze.\n");
@@ -694,7 +695,7 @@ too large.  Probable mis-match between geometry and thermal data\n"
 	       V3ARGS(swp->sw_hit.hit_point),
 	       V3ARGS(pt) );
     }
-    return(1);
+    return 1;
 }
 
 /*

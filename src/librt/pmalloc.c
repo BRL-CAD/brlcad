@@ -239,7 +239,7 @@ foundit:
     }
 
     p->ov_magic = MAGIC_BUSY;
-    return((char*)p + sizeof(struct overhead));
+    return (char*)p + sizeof(struct overhead);
 }
 
 
@@ -267,7 +267,7 @@ mlindx(n)
 	}
     }
 
-    return(index);
+    return index;
 }
 
 
@@ -455,16 +455,16 @@ rt_prealloc(mem, nbytes, pmem)
     char oendfree;
 
     if (mem == NULL)
-	return(rt_pmalloc((long)nbytes, pmem));
+	return rt_pmalloc((long)nbytes, pmem);
 
     /* if beyond current arena it has to be bad */
     if (mem > (char*)FROMADJ(pmem->adjhead.q_back) + sizeof(struct overhead))
-	return(NULL);
+	return NULL;
 
     p = (struct overhead *)(mem - sizeof(struct overhead));
 
     if (p->ov_magic != MAGIC_BUSY && p->ov_magic != MAGIC_FREE)
-	return(NULL);	/* already gone */
+	return NULL;	/* already gone */
 
     length = p->ov_length;
 
@@ -495,7 +495,7 @@ rt_prealloc(mem, nbytes, pmem)
 
 	if (endfree)
 	    mlfree_end(pmem);
-	return(mem);
+	return mem;
     }
 
     /* if at break, grow in place */
@@ -511,7 +511,7 @@ rt_prealloc(mem, nbytes, pmem)
 	/* declare it to be busy */
 	rt_pm_remque(TOBUK(p));
 	p->ov_magic = MAGIC_BUSY;
-	return(mem);
+	return mem;
     } else
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -527,7 +527,7 @@ rt_prealloc(mem, nbytes, pmem)
     if (endfree)
 	mlfree_end(pmem);
 
-    return(newmem);
+    return newmem;
 }
 
 
@@ -547,7 +547,7 @@ rt_pcalloc(num, size, pmem)
     if ((p = rt_pmalloc((long)size, pmem))) {
 	memset(p, 0, size);
     }
-    return (p);
+    return p;
 }
 
 

@@ -709,11 +709,11 @@ gobble_token(int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
 	case BU_LEX_ANY:
 	    return 1;
 	case BU_LEX_INT:
-	    return (token.type == BU_LEX_INT);
+	    return token.type == BU_LEX_INT;
 	case BU_LEX_DOUBLE:
-	    return (token.type == BU_LEX_DOUBLE);
+	    return token.type == BU_LEX_DOUBLE;
 	case BU_LEX_NUMBER:
-	    return (token.type == BU_LEX_INT || token.type == BU_LEX_DOUBLE);
+	    return token.type == BU_LEX_INT || token.type == BU_LEX_DOUBLE;
 	case BU_LEX_SYMBOL:
 	    return (token.type == BU_LEX_SYMBOL &&
 		    value_wanted == token.t_key.value);
@@ -721,7 +721,7 @@ gobble_token(int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
 	    return (token.type == BU_LEX_KEYWORD &&
 		    value_wanted == token.t_key.value);
 	case BU_LEX_IDENT:
-	    return (token.type == BU_LEX_IDENT);
+	    return token.type == BU_LEX_IDENT;
     }
     return 0;
 }

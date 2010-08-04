@@ -233,7 +233,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     }
 
     if (curtree->tr_op == OP_NOP)
-	return  curtree;
+	return curtree;
 
     regions_tried++;
 
@@ -368,7 +368,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
-    return(curtree);
+    return curtree;
 }
 
 /*

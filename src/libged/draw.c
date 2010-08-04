@@ -58,17 +58,17 @@ static int _ged_drawtrees_depth = 0;
 static void
 ged_bound_solid(struct ged *gedp, struct solid *sp)
 {
-    struct bn_vlist	*vp;
-    double			xmax, ymax, zmax;
-    double			xmin, ymin, zmin;
+    struct bn_vlist *vp;
+    double xmax, ymax, zmax;
+    double xmin, ymin, zmin;
 
     xmax = ymax = zmax = -INFINITY;
     xmin = ymin = zmin =  INFINITY;
     sp->s_vlen = 0;
     for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	int	j;
-	int	nused = vp->nused;
-	int	*cmd = vp->cmd;
+	int j;
+	int nused = vp->nused;
+	int *cmd = vp->cmd;
 	point_t *pt = vp->pt;
 	for (j = 0; j < nused; j++, cmd++, pt++) {
 	    switch (*cmd) {
@@ -89,9 +89,9 @@ ged_bound_solid(struct ged *gedp, struct solid *sp)
 		    V_MAX(zmax, (*pt)[Z]);
 		    break;
 		default:
-		{
-		    bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-		}
+		    {
+			bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
+		    }
 	    }
 	}
 	sp->s_vlen += nused;
@@ -102,8 +102,8 @@ ged_bound_solid(struct ged *gedp, struct solid *sp)
     sp->s_center[Z] = (zmin + zmax) * 0.5;
 
     sp->s_size = xmax - xmin;
-    V_MAX( sp->s_size, ymax - ymin );
-    V_MAX( sp->s_size, zmax - zmin );
+    V_MAX(sp->s_size, ymax - ymin);
+    V_MAX(sp->s_size, zmax - zmin);
 }
 
 
@@ -131,7 +131,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	    sp->s_dlist = 1;
     } else {
 	/* Just updating an existing solid.
-	 *  'tsp' and 'pathpos' will not be used
+	 * 'tsp' and 'pathpos' will not be used
 	 */
 	sp = existing_sp;
     }
@@ -144,8 +144,8 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
     ged_bound_solid(dgcdp->gedp, sp);
 
     /*
-     *  If this solid is new, fill in it's information.
-     *  Otherwise, don't touch what is already there.
+     * If this solid is new, fill in it's information.
+     * Otherwise, don't touch what is already there.
      */
     if (!existing_sp) {
 	/* Take note of the base color */
@@ -177,7 +177,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	sp->s_iflag = DOWN;
 	sp->s_soldash = dashflag;
 	sp->s_Eflag = 0;	/* This is a solid */
-	db_dup_full_path( &sp->s_fullpath, pathp );
+	db_dup_full_path(&sp->s_fullpath, pathp);
 	sp->s_regionid = tsp->ts_regionid;
 	sp->s_transparency = dgcdp->transparency;
 	sp->s_dmode = dgcdp->dmode;
@@ -198,7 +198,7 @@ ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *p
     if (pathp) RT_CK_FULL_PATH(pathp);
     if (curtree) RT_CK_TREE(curtree);
 
-    return (curtree);
+    return curtree;
 }
 
 
@@ -291,19 +291,19 @@ ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 static int
 ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
-    union tree		*tp;
-    struct directory	*dp;
-    struct rt_db_internal	intern;
-    mat_t			xform;
-    matp_t			matp;
-    struct bu_list		vhead;
+    union tree *tp;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    mat_t xform;
+    matp_t matp;
+    struct bu_list vhead;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_nmg_region_start(%s)\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
-	rt_pr_tree( combp->tree, 1 );
+	rt_pr_tree(combp->tree, 1);
 	db_pr_tree_state(tsp);
     }
 
@@ -315,7 +315,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     RT_CK_COMB(combp);
     tp = combp->tree;
     if (!tp)
-	return( -1 );
+	return -1;
     RT_CK_TREE(tp);
     if (tp->tr_l.tl_op != OP_DB_LEAF)
 	return 0;	/* proceed as usual */
@@ -323,7 +323,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     /* The subtree is a single node.  It may be a combination, though */
 
     /* Fetch by name, check to see if it's an easy type */
-    dp = db_lookup( tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY );
+    dp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
     if (!dp)
 	return 0;	/* proceed as usual */
     if (tsp->ts_mat) {
@@ -345,29 +345,29 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 
     switch (intern.idb_type) {
 	case ID_POLY:
-	{
-	    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
+	    {
+		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
+		}
+		if (dgcdp->draw_wireframes) {
+		    (void)rt_pg_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		} else {
+		    (void)rt_pg_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		}
 	    }
-	    if (dgcdp->draw_wireframes) {
-		(void)rt_pg_plot( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    } else {
-		(void)rt_pg_plot_poly( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    }
-	}
-	goto out;
+	    goto out;
 	case ID_BOT:
-	{
-	    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-		bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
+	    {
+		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
+		}
+		if (dgcdp->draw_wireframes) {
+		    (void)rt_bot_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		} else {
+		    (void)rt_bot_plot_poly(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol);
+		}
 	    }
-	    if (dgcdp->draw_wireframes) {
-		(void)rt_bot_plot( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    } else {
-		(void)rt_bot_plot_poly( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
-	    }
-	}
-	goto out;
+	    goto out;
 	case ID_COMBINATION:
 	default:
 	    break;
@@ -402,9 +402,9 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 static union tree *
 ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-    struct nmgregion	*r;
-    struct bu_list		vhead;
-    int			failed;
+    struct nmgregion *r;
+    struct bu_list vhead;
+    int failed;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
@@ -412,72 +412,71 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     NMG_CK_MODEL(*tsp->ts_m);
     RT_CK_RESOURCE(tsp->ts_resp);
 
-    BU_LIST_INIT( &vhead );
+    BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK)  {
-	char	*sofar = db_path_to_string(pathp);
+    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_nmg_region_end() path='%s'\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     } else {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s:\n", sofar );
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s:\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 
-    if ( curtree->tr_op == OP_NOP )  return  curtree;
+    if (curtree->tr_op == OP_NOP) return curtree;
 
-    if ( !dgcdp->draw_nmg_only ) {
+    if (!dgcdp->draw_nmg_only) {
 	if (BU_SETJUMP) {
-	    char  *sofar = db_path_to_string(pathp);
+	    char *sofar = db_path_to_string(pathp);
 
 	    BU_UNSETJUMP;
 
 	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
 	    bu_free((genptr_t)sofar, "path string");
 	    if (curtree)
-		db_free_tree( curtree, tsp->ts_resp );
+		db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
-	failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp );
+	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp);
 	BU_UNSETJUMP;
 	if (failed) {
-	    db_free_tree( curtree, tsp->ts_resp );
+	    db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
-    }
-    else if (curtree->tr_op != OP_NMG_TESS) {
+    } else if (curtree->tr_op != OP_NMG_TESS) {
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
-	db_free_tree( curtree, tsp->ts_resp );
+	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
     r = curtree->tr_d.td_r;
     NMG_CK_REGION(r);
 
-    if ( dgcdp->do_not_draw_nmg_solids_during_debugging && r )  {
-	db_free_tree( curtree, tsp->ts_resp );
+    if (dgcdp->do_not_draw_nmg_solids_during_debugging && r) {
+	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
 
     if (dgcdp->nmg_triangulate) {
 	if (BU_SETJUMP) {
-	    char  *sofar = db_path_to_string(pathp);
+	    char *sofar = db_path_to_string(pathp);
 
 	    BU_UNSETJUMP;
 
 	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
 	    bu_free((genptr_t)sofar, "path string");
-	    if ( curtree )
-		db_free_tree( curtree, tsp->ts_resp );
+	    if (curtree)
+		db_free_tree(curtree, tsp->ts_resp);
 	    return (union tree *)NULL;
 	}
 	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
 	BU_UNSETJUMP;
     }
 
-    if ( r != 0 )  {
-	int	style;
+    if (r != 0) {
+	int style;
 	/* Convert NMG to vlist */
 	NMG_CK_REGION(r);
 
@@ -505,7 +504,7 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);
 	}
 	/* NMG region is no longer necessary, only vlist remains */
-	db_free_tree( curtree, tsp->ts_resp );
+	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
 
@@ -520,13 +519,13 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 void
 _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy)
 {
-    int		i;
-    char		shortname[32];
-    char		namebuf[64];
+    int i;
+    char shortname[32];
+    char namebuf[64];
 
     bu_strlcpy(shortname, name, sizeof(shortname));
 
-    for ( i=0; i < vbp->nused; i++ )  {
+    for (i=0; i < vbp->nused; i++) {
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
 
@@ -537,20 +536,20 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name,
 
 
 /*
- *			G E D _ D R A W T R E E S
+ * G E D _ D R A W T R E E S
  *
- *  This routine is the drawable geometry object's analog of rt_gettrees().
- *  Add a set of tree hierarchies to the active set.
- *  Note that argv[0] should be ignored, it has the command name in it.
+ * This routine is the drawable geometry object's analog of rt_gettrees().
+ * Add a set of tree hierarchies to the active set.
+ * Note that argv[0] should be ignored, it has the command name in it.
  *
- *  Kind =
- *	1	regular wireframes
- *	2	big-E
- *	3	NMG polygons
+ * Kind =
+ * 1 regular wireframes
+ * 2 big-E
+ * 3 NMG polygons
  *
- *  Returns -
- *  	0	Ordinarily
- *	-1	On major error
+ * Returns -
+ * 0 Ordinarily
+ * -1 On major error
  */
 int
 _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct _ged_client_data *_dgcdp)
@@ -562,14 +561,14 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int dgo_enable_fastpath = 0;
     struct model *dgo_nmg_model;
     struct _ged_client_data *dgcdp;
-    int  i;
-    int  ac = 1;
+    int i;
+    int ac = 1;
     char *av[2];
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
     if (argc <= 0)
-	return(-1);	/* FAIL */
+	return -1;	/* FAIL */
 
     ++_ged_drawtrees_depth;
     av[1] = (char *)0;
@@ -649,28 +648,28 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgo_enable_fastpath = 1;
 		    break;
 		case 'C':
-		{
-		    int		r, g, b;
-		    char	*cp = bu_optarg;
+		    {
+			int r, g, b;
+			char *cp = bu_optarg;
 
-		    r = atoi(cp);
-		    while ( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    g = atoi(cp);
-		    while ( (*cp >= '0' && *cp <= '9') )  cp++;
-		    while ( *cp && (*cp < '0' || *cp > '9') ) cp++;
-		    b = atoi(cp);
+			r = atoi(cp);
+			while ((*cp >= '0' && *cp <= '9')) cp++;
+			while (*cp && (*cp < '0' || *cp > '9')) cp++;
+			g = atoi(cp);
+			while ((*cp >= '0' && *cp <= '9')) cp++;
+			while (*cp && (*cp < '0' || *cp > '9')) cp++;
+			b = atoi(cp);
 
-		    if ( r < 0 || r > 255 )  r = 255;
-		    if ( g < 0 || g > 255 )  g = 255;
-		    if ( b < 0 || b > 255 )  b = 255;
+			if (r < 0 || r > 255) r = 255;
+			if (g < 0 || g > 255) g = 255;
+			if (b < 0 || b > 255) b = 255;
 
-		    dgcdp->wireframe_color_override = 1;
-		    dgcdp->wireframe_color[0] = r;
-		    dgcdp->wireframe_color[1] = g;
-		    dgcdp->wireframe_color[2] = b;
-		}
-		break;
+			dgcdp->wireframe_color_override = 1;
+			dgcdp->wireframe_color[0] = r;
+			dgcdp->wireframe_color[1] = g;
+			dgcdp->wireframe_color[2] = b;
+		    }
+		    break;
 		case 'h':
 		    dgcdp->hiddenLine = 1;
 		    dgcdp->shaded_mode_override = _GED_SHADED_MODE_ALL;
@@ -699,12 +698,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    /* nothing to do, handled by edit_com wrapper on the front-end */
 		    break;
 		default:
-		{
-		    bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
-		    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
-		    --_ged_drawtrees_depth;
-		    return GED_ERROR;
-		}
+		    {
+			bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
+			bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
+			--_ged_drawtrees_depth;
+			return GED_ERROR;
+		    }
 	    }
 	}
 	argc -= bu_optind;
@@ -733,95 +732,95 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    bu_vls_printf(&gedp->ged_result_str, "ERROR, bad kind\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --_ged_drawtrees_depth;
-	    return(-1);
+	    return -1;
 	case 1:		/* Wireframes */
-	{
-	    union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t);
-	    union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t);
+	    {
+		union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t);
+		union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t);
 
-	    /*
-	     * If asking for wireframe and in shaded_mode and no shaded mode override,
-	     * or asking for wireframe and shaded mode is being overridden with a value
-	     * greater than 0, then draw shaded polygons for each object's primitives if possible.
-	     *
-	     * Note -
-	     * If shaded_mode is _GED_SHADED_MODE_BOTS, only BOTS and polysolids
-	     * will be shaded. The rest is drawn as wireframe.
-	     * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
-	     * are drawn as shaded polygons.
-	     */
-	    if (_GED_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= _GED_SHADED_MODE_ALL) {
-		reg_end_func = ged_bot_check_region_end;
-		leaf_func = ged_bot_check_leaf;
-	    } else {
-		reg_end_func = ged_wireframe_region_end;
-		leaf_func = ged_wireframe_leaf;
+		/*
+		 * If asking for wireframe and in shaded_mode and no shaded mode override,
+		 * or asking for wireframe and shaded mode is being overridden with a value
+		 * greater than 0, then draw shaded polygons for each object's primitives if possible.
+		 *
+		 * Note -
+		 * If shaded_mode is _GED_SHADED_MODE_BOTS, only BOTS and polysolids
+		 * will be shaded. The rest is drawn as wireframe.
+		 * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
+		 * are drawn as shaded polygons.
+		 */
+		if (_GED_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= _GED_SHADED_MODE_ALL) {
+		    reg_end_func = ged_bot_check_region_end;
+		    leaf_func = ged_bot_check_leaf;
+		} else {
+		    reg_end_func = ged_wireframe_region_end;
+		    leaf_func = ged_wireframe_leaf;
+		}
+
+		for (i = 0; i < argc; ++i) {
+		    if (_ged_drawtrees_depth == 1)
+			dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+
+		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
+			continue;
+
+		    av[0] = (char *)argv[i];
+		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+				       ac,
+				       (const char **)av,
+				       ncpu,
+				       &gedp->ged_wdbp->wdb_initial_tree_state,
+				       0,
+				       reg_end_func,
+				       leaf_func,
+				       (genptr_t)dgcdp);
+		}
 	    }
-
-	    for (i = 0; i < argc; ++i) {
-		if (_ged_drawtrees_depth == 1)
-		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
-
-		if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
-		    continue;
-
-		av[0] = (char *)argv[i];
-		ret = db_walk_tree(gedp->ged_wdbp->dbip,
-				   ac,
-				   (const char **)av,
-				   ncpu,
-				   &gedp->ged_wdbp->wdb_initial_tree_state,
-				   0,
-				   reg_end_func,
-				   leaf_func,
-				   (genptr_t)dgcdp);
-	    }
-	}
 	    break;
 	case 2:		/* Big-E */
 	    bu_vls_printf(&gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --_ged_drawtrees_depth;
-	    return (-1);
+	    return -1;
 	case 3:
-	{
-	    /* NMG */
-	    dgo_nmg_model = nmg_mm();
-	    gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
-	    if (dgcdp->draw_edge_uses) {
-		bu_vls_printf(&gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
-		dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
+	    {
+		/* NMG */
+		dgo_nmg_model = nmg_mm();
+		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
+		if (dgcdp->draw_edge_uses) {
+		    bu_vls_printf(&gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
+		    dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
+		}
+
+		for (i = 0; i < argc; ++i) {
+		    if (_ged_drawtrees_depth == 1)
+			dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+
+		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
+			continue;
+
+		    av[0] = (char *)argv[i];
+		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+				       ac,
+				       (const char **)av,
+				       ncpu,
+				       &gedp->ged_wdbp->wdb_initial_tree_state,
+				       dgo_enable_fastpath ? ged_nmg_region_start : 0,
+				       ged_nmg_region_end,
+				       dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				       (genptr_t)dgcdp);
+		}
+
+		if (dgcdp->draw_edge_uses) {
+		    _ged_cvt_vlblock_to_solids(gedp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
+		    rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
+		    dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
+		}
+
+		/* Destroy NMG */
+		nmg_km(dgo_nmg_model);
+		break;
 	    }
-
-	    for (i = 0; i < argc; ++i) {
-		if (_ged_drawtrees_depth == 1)
-		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
-
-		if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
-		    continue;
-
-		av[0] = (char *)argv[i];
-		ret = db_walk_tree(gedp->ged_wdbp->dbip,
-				   ac,
-				   (const char **)av,
-				   ncpu,
-				   &gedp->ged_wdbp->wdb_initial_tree_state,
-				   dgo_enable_fastpath ? ged_nmg_region_start : 0,
-				   ged_nmg_region_end,
-				   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-				   (genptr_t)dgcdp);
-	    }
-
-	    if (dgcdp->draw_edge_uses) {
-		_ged_cvt_vlblock_to_solids(gedp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
-		rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
-		dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
-	    }
-
-	    /* Destroy NMG */
-	    nmg_km(dgo_nmg_model);
-	    break;
-	}
     }
 
     --_ged_drawtrees_depth;
@@ -834,9 +833,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 
     if (ret < 0)
-	return (-1);
+	return -1;
 
-    return (0);	/* OK */
+    return 0;	/* OK */
 }
 
 
@@ -855,13 +854,13 @@ ged_bot_check_region_end(struct db_tree_state *tsp,
 
 
 static union tree *
-ged_bot_check_leaf(struct db_tree_state		*tsp,
+ged_bot_check_leaf(struct db_tree_state *tsp,
 		   const struct db_full_path *pathp,
-		   struct rt_db_internal	*ip,
-		   genptr_t			client_data)
+		   struct rt_db_internal *ip,
+		   genptr_t client_data)
 {
     union tree *curtree;
-    int  ac = 1;
+    int ac = 1;
     const char *av[2];
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
@@ -963,27 +962,27 @@ ged_bot_check_leaf(struct db_tree_state		*tsp,
 
 
 /*
- *			I N V E N T _ S O L I D
+ * I N V E N T _ S O L I D
  *
- *  Invent a solid by adding a fake entry in the database table,
- *  adding an entry to the solid table, and populating it with
- *  the given vector list.
+ * Invent a solid by adding a fake entry in the database table,
+ * adding an entry to the solid table, and populating it with
+ * the given vector list.
  *
- *  This parallels much of the code in dodraw.c
+ * This parallels much of the code in dodraw.c
  */
 int
-_ged_invent_solid(struct ged	*gedp,
-		 char		*name,
-		 struct bu_list	*vhead,
-		 long int	rgb,
-		 int		copy,
-		 fastf_t	transparency,
-		 int		dmode)
+_ged_invent_solid(struct ged *gedp,
+		  char *name,
+		  struct bu_list *vhead,
+		  long int rgb,
+		  int copy,
+		  fastf_t transparency,
+		  int dmode)
 {
-    struct directory	*dp;
-    struct solid	*sp;
-    struct ged_display_list	*gdlp;
-    unsigned char		type='0';
+    struct directory *dp;
+    struct solid *sp;
+    struct ged_display_list *gdlp;
+    unsigned char type='0';
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
@@ -992,7 +991,7 @@ _ged_invent_solid(struct ged	*gedp,
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "_ged_invent_solid(%s) would clobber existing database entry, ignored\n", name);
-	    return (-1);
+	    return -1;
 	}
 
 	/*
@@ -1008,17 +1007,17 @@ _ged_invent_solid(struct ged	*gedp,
     GET_SOLID(sp, &_FreeSolid.l);
 
     if (copy) {
-	BU_LIST_INIT( &(sp->s_vlist) );
-	rt_vlist_copy( &(sp->s_vlist), vhead );
+	BU_LIST_INIT(&(sp->s_vlist));
+	rt_vlist_copy(&(sp->s_vlist), vhead);
     } else {
 	/* For efficiency, just swipe the vlist */
-	BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
 	BU_LIST_INIT(vhead);
     }
     ged_bound_solid(gedp, sp);
 
     /* set path information -- this is a top level node */
-    db_add_node_to_full_path( &sp->s_fullpath, dp );
+    db_add_node_to_full_path(&sp->s_fullpath, dp);
 
     gdlp = ged_addToDisplay(gedp, name);
 
@@ -1027,7 +1026,7 @@ _ged_invent_solid(struct ged	*gedp,
     sp->s_Eflag = 1;		/* Can't be solid edited! */
     sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
     sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
-    sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
+    sp->s_color[2] = sp->s_basecolor[2] = (rgb) & 0xFF;
     sp->s_regionid = 0;
 
     if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
@@ -1046,15 +1045,15 @@ _ged_invent_solid(struct ged	*gedp,
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
-    return (0);		/* OK */
+    return 0;		/* OK */
 }
 
 
 /*
- *  			C O L O R _ S O L T A B
+ * C O L O R _ S O L T A B
  *
- *  Pass through the solid table and set pointer to appropriate
- *  mater structure.
+ * Pass through the solid table and set pointer to appropriate
+ * mater structure.
  */
 void
 ged_color_soltab(struct bu_list *hdlp)
@@ -1092,11 +1091,11 @@ ged_color_soltab(struct bu_list *hdlp)
 	    }
 
 	    /*
-	     *  There is no region-id-based coloring entry in the
-	     *  table, so use the combination-record ("mater"
-	     *  command) based color if one was provided. Otherwise,
-	     *  use the default wireframe color.
-	     *  This is the "new way" of coloring things.
+	     * There is no region-id-based coloring entry in the
+	     * table, so use the combination-record ("mater"
+	     * command) based color if one was provided. Otherwise,
+	     * use the default wireframe color.
+	     * This is the "new way" of coloring things.
 	     */
 
 	    /* use wireframe_default_color */
@@ -1119,9 +1118,9 @@ int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
     int i;
-    int	flag_A_attr=0;
-    int	flag_o_nonunique=1;
-    int	last_opt=0;
+    int flag_A_attr=0;
+    int flag_o_nonunique=1;
+    int last_opt=0;
     struct bu_vls vls;
     static const char *usage = "<[-R -C#/#/# -s] objects> | <-o -A attribute name/value pairs>";
 
@@ -1144,39 +1143,47 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
     /* check args for "-A" (attributes) and "-o" */
     bu_vls_init(&vls);
-    for ( i=0; i<argc; i++ ) {
+    for (i=0; i<argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 	char *c;
 
-	if ( *argv[i] != '-' ) break;
-	if ( (ptr_A=strchr(argv[i], 'A' )) ) flag_A_attr = 1;
-	if ( (ptr_o=strchr(argv[i], 'o' )) ) flag_o_nonunique = 2;
+	if (*argv[i] != '-')
+	    break;
+
+	ptr_A=strchr(argv[i], 'A');
+	if (ptr_A)
+	    flag_A_attr = 1;
+
+	ptr_o=strchr(argv[i], 'o');
+	if (ptr_o)
+	    flag_o_nonunique = 2;
+
 	last_opt = i;
 
 	if (!ptr_A && !ptr_o) {
-	    bu_vls_putc( &vls, ' ' );
-	    bu_vls_strcat( &vls, argv[i] );
+	    bu_vls_putc(&vls, ' ');
+	    bu_vls_strcat(&vls, argv[i]);
  	    continue;
 	}
 
-	if (strlen( argv[i] ) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
+	if (strlen(argv[i]) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
 	    /* argv[i] is just a "-A" or "-o" */
 	    continue;
 	}
 
 	/* copy args other than "-A" or "-o" */
-	bu_vls_putc( &vls, ' ' );
+	bu_vls_putc(&vls, ' ');
 	c = (char *)argv[i];
-	while ( *c != '\0' ) {
+	while (*c != '\0') {
 	    if (*c != 'A' && *c != 'o') {
-		bu_vls_putc( &vls, *c );
+		bu_vls_putc(&vls, *c);
 	    }
 	    c++;
 	}
     }
 
-    if ( flag_A_attr ) {
+    if (flag_A_attr) {
 	/* args are attribute name/value pairs */
 	struct bu_attribute_value_set avs;
 	int max_count=0;
@@ -1186,57 +1193,57 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	struct bu_ptbl *tbl;
 
 	remaining_args = argc - last_opt - 1;
-	if ( remaining_args < 2 || remaining_args%2 ) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n" );
-	    bu_vls_free( &vls );
+	if (remaining_args < 2 || remaining_args%2) {
+	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
+	    bu_vls_free(&vls);
 	    return GED_ERROR;
 	}
 
-	bu_avs_init( &avs, (argc - last_opt)/2, "ged_draw_guts avs" );
+	bu_avs_init(&avs, (argc - last_opt)/2, "ged_draw_guts avs");
 	i = 0;
-	while ( i < argc ) {
-	    if ( *argv[i] == '-' ) {
+	while (i < argc) {
+	    if (*argv[i] == '-') {
 		i++;
 		continue;
 	    }
 
 	    /* this is a name/value pair */
-	    if ( flag_o_nonunique == 2 ) {
-		bu_avs_add_nonunique( &avs, argv[i], argv[i+1] );
+	    if (flag_o_nonunique == 2) {
+		bu_avs_add_nonunique(&avs, argv[i], argv[i+1]);
 	    } else {
-		bu_avs_add( &avs, argv[i], argv[i+1] );
+		bu_avs_add(&avs, argv[i], argv[i+1]);
 	    }
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr( gedp->ged_wdbp->dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique );
-	bu_avs_free( &avs );
-	if ( !tbl ) {
-	    bu_log( "Error: db_lookup_by_attr() failed!!\n" );
-	    bu_vls_free( &vls );
+	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique);
+	bu_avs_free(&avs);
+	if (!tbl) {
+	    bu_log("Error: db_lookup_by_attr() failed!!\n");
+	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
-	if ( BU_PTBL_LEN( tbl ) < 1 ) {
+	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
-	    bu_vls_free( &vls );
+	    bu_vls_free(&vls);
 	    return TCL_OK;
 	}
-	for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
+	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
 
-	    dp = (struct directory *)BU_PTBL_GET( tbl, i );
-	    bu_vls_putc( &vls, ' ' );
-	    bu_vls_strcat( &vls, dp->d_namep );
+	    dp = (struct directory *)BU_PTBL_GET(tbl, i);
+	    bu_vls_putc(&vls, ' ');
+	    bu_vls_strcat(&vls, dp->d_namep);
 	}
 
-	max_count = BU_PTBL_LEN( tbl ) + last_opt + 1;
-	bu_ptbl_free( tbl );
-	bu_free( (char *)tbl, "ged_draw_guts ptbl" );
-	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "ged_draw_guts new_argv" );
-	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
+	max_count = BU_PTBL_LEN(tbl) + last_opt + 1;
+	bu_ptbl_free(tbl);
+	bu_free((char *)tbl, "ged_draw_guts ptbl");
+	new_argv = (char **)bu_calloc(max_count+1, sizeof(char *), "ged_draw_guts new_argv");
+	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
-	/*  First, delete any mention of these objects.
-	 *  Silently skip any leading options (which start with minus signs).
+	/* First, delete any mention of these objects.
+	 * Silently skip any leading options (which start with minus signs).
 	 */
 	for (i = 0; i < new_argc; ++i) {
 	    /* Skip any options */
@@ -1247,13 +1254,13 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	}
 
 	_ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
-	bu_vls_free( &vls );
-	bu_free( (char *)new_argv, "ged_draw_guts new_argv" );
+	bu_vls_free(&vls);
+	bu_free((char *)new_argv, "ged_draw_guts new_argv");
     } else {
-	bu_vls_free( &vls );
+	bu_vls_free(&vls);
 
-	/*  First, delete any mention of these objects.
-	 *  Silently skip any leading options (which start with minus signs).
+	/* First, delete any mention of these objects.
+	 * Silently skip any leading options (which start with minus signs).
 	 */
 	for (i = 0; i < argc; ++i) {
 	    /* Skip any options */
@@ -1271,11 +1278,13 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     return GED_OK;
 }
 
+
 int
 ged_draw(struct ged *gedp, int argc, const char *argv[])
 {
     return ged_draw_guts(gedp, argc, argv, 1);
 }
+
 
 int
 ged_ev(struct ged *gedp, int argc, const char *argv[])

@@ -68,7 +68,7 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
@@ -82,7 +82,7 @@ get_args(int argc, char **argv)
     if (++bu_optind <= argc)
 	(void)fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 

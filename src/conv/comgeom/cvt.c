@@ -100,39 +100,39 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind+2 > argc )
-	return(0);		/* FAIL */
+	return 0;		/* FAIL */
 
     /* Input File */
     if ( bu_optind >= argc )  {
-	return(0);		/* FAIL */
+	return 0;		/* FAIL */
     } else {
 	file_name = argv[bu_optind++];
 	if ( (infp = fopen(file_name, "rb")) == NULL )  {
 	    perror(file_name);
-	    return(0);
+	    return 0;
 	}
     }
 
     /* Output File */
     if ( bu_optind >= argc )  {
-	return(0);		/* FAIL */
+	return 0;		/* FAIL */
     } else {
 	file_name = argv[bu_optind++];
 	if ( (outfp = wdb_fopen(file_name)) == NULL )  {
 	    perror(file_name);
-	    return(0);
+	    return 0;
 	}
     }
 
     if ( argc > ++bu_optind )
 	(void)fprintf( stderr, "comgeom-g: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -335,7 +335,7 @@ main(int argc, char **argv)
     group_write();
     if (verbose) printf("\n");
 
-    return(0);
+    return 0;
 }
 
 /*

@@ -75,6 +75,16 @@ else
 TKHTMLDIR=
 endif
 
+#if BUILD_TOGL
+#if WITH_TK
+#TOGLDIR=togl
+#else
+#TOGLDIR=
+#endif
+#else
+#TOGLDIR=
+#endif
+
 if BUILD_TKPNG
 if WITH_TK
 TKPNGDIR=tkpng
@@ -83,6 +93,16 @@ TKPNGDIR=
 endif
 else !BUILD_TKPNG
 TKPNGDIR=
+endif
+
+if BUILD_TKTABLE
+if WITH_TK
+TKTABLEDIR=tktable
+else
+TKTABLEDIR=
+endif
+else
+TKTABLEDIR=
 endif
 
 if BUILD_OPENNURBS
@@ -141,6 +161,7 @@ SUBDIRS = \
 	${STEPDIR} \
 	${TKPNGDIR} \
 	${TKHTMLDIR} \
+	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
@@ -152,7 +173,8 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost
+	boost \
+	togl
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -172,6 +194,7 @@ DIST_SUBDIRS = \
 	tk \
 	tkpng \
 	tkhtml3 \
+	tktable \
 	tnt
 
 include $(top_srcdir)/misc/Makefile.defs

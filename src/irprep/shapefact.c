@@ -746,7 +746,7 @@ int main(int argc, char **argv)
 	}
 
     }						/*  END # 1  */
-    return(0);
+    return 0;
 }
 
 
@@ -957,12 +957,12 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 
     if (iprev == (-1) )		/*  Went through air only.  */
     {
-	return(1);		/*  Indicates miss.  */
+	return 1;		/*  Indicates miss.  */
     }
 
     else
     {
-	return(0);
+	return 0;
     }
 }						/*  END # 0H  */
 
@@ -977,7 +977,7 @@ miss(struct application *ap)
 
     nummiss = nummiss + 1.;
 
-    return(1);
+    return 1;
 }
 
 /*  User supplied overlap function.  */
@@ -989,7 +989,7 @@ overlap(struct application *ap, struct partition *pp, struct region *r1, struct 
      * (void)fflush(stdout);
      */
 
-    return(2);
+    return 2;
 }
 
 /*

@@ -65,17 +65,31 @@
 
 <refsect1 id='description'>
   <title>DESCRIPTION</title>
-  <para>Rotates the currently edited object by <emphasis>z</emphasis> angle degrees about 	the <emphasis>z</emphasis> direction, <emphasis>y</emphasis> angle degrees about the 	<emphasis>y</emphasis> direction, and <emphasis>x</emphasis> angle degrees about the 	<emphasis>x</emphasis> direction in that order. If an <emphasis>-i</emphasis> option is 	included, then the rotations are treated as increments to the previous rotations. MGED must 	be in the matrix edit mode for this command to be useful. The <command>p</command> command 	provides a similar capability for primitive editing. 
-  </para>
+
+  <para>Rotates the currently edited object by <emphasis>z</emphasis>
+        angle degrees about the <emphasis>z</emphasis> direction,
+        <emphasis>y</emphasis> angle degrees about the
+        <emphasis>y</emphasis> direction, and <emphasis>x</emphasis>
+        angle degrees about the <emphasis>x</emphasis> direction in
+        that order. If an <emphasis>-i</emphasis> option is included,
+        then the rotations are treated as increments to the previous
+        rotations. MGED must be in the matrix edit mode for this
+        command to be useful. The <command>p</command> command
+        provides a similar capability for primitive editing.</para>
 </refsect1>
 
 <refsect1 id='examples'>
   <title>EXAMPLES</title>
-  <para>The example shows the use of the <commmand>rotobj</commmand> command to rotate the currently edited object by a given number of degrees in the <emphasis>x</emphasis>, <emphasis>y</emphasis>, and <emphasis>z</emphasis> directions.
-   </para>
-        
+
+  <para>The example shows the use of the <command>rotobj</command>
+        command to rotate the currently edited object by a given
+        number of degrees in the <emphasis>x</emphasis>,
+        <emphasis>y</emphasis>, and <emphasis>z</emphasis>
+        directions.</para>
+
   <example>
     <title>Rotate the current object by a specified number of degrees in the <emphasis>x, y,</emphasis> and <emphasis>z</emphasis> directions.</title>
+
     <para>
       <prompt>mged></prompt><userinput>rotobj 0 0 25</userinput>
     </para>

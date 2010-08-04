@@ -77,7 +77,7 @@ ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
     if ( count1 )
 	(void)rt_bot_condense( bot );
 
-    GED_DB_DIRADD(gedp, new_dp, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     return GED_OK;

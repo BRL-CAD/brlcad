@@ -17,7 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* SHIP IT.
+* ALL CLEAR!
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -26,8 +26,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * explore the g_qa/plot issue
 
 * release dm X get_color() memory
-
-* fix archer/libdm labels/axes to not use pointer printing
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -38,8 +36,27 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* investigate tessellation failures (Stryker, et al), possibily due to
-  recent tolerance checks.
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* the 'cp' command no longer draws the object that was copied --
+  undoubtedly a libged change -- so restore previous functionality.
+  as that behavior was not intentional and is undesirable for large
+  objects, have some means to determine that something is "large and
+  complex" or at a minimum, provide an option to not draw on copy.
+
+* rt/rtedge command-line options for overriding object colors
+
+* rtwizard enhancement to allow color overrides to be specified for
+  selected objects.
+
+* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
+  mode BoTs, 'brep' objects need the ability to have a thickness
+  described so you could automatically handle non-solid NURBS and
+  sheet-metal style geometry without requiring surface solidity.
+
+* fix archer/libdm labels/axes to not use pointer printing
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -52,9 +69,56 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
+* investigate tessellation failures (Stryker, et al), possibily due to
+  recent tolerance checks.
 
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* add support for a custom unit conversion factor to the units command
+  (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
+
+* fix forum links to point to the sourceforge forums, not the nabble
+  forums
+
+* write up a brief DSP overview on the wiki
+
+* merge conv-vg2g into dbupgrade
+
+* usage statistics.  similar to the eclipse Usage Data Collector, keep
+  track of which BRL-CAD command-line commands and MGED/libged
+  commands are run.  Give the user the option of uploading those
+  statistics (now, always, later, off).  Provide terms of use
+  explaining the ways that their data will be used and shared.
+  aggregate, this can help us focus development resources towards
+  improving workflows, documentation, robustness, and new development
+  areas.
+
+* update the msvc build to not use installTree.tcl -- the build
+  shouldn't really be reliant upon tclsh or be all contained within
+  the tclsh project.  sub-projects should build and install by
+  themselves (e.g. tkhtml3 should generate its htmltokens.h file).
+  the "brlcad" project, if any, can build up the installation tree and
+  generate the final installation exe.
+
+* implement namespacing for attributes as a means to group attributes
+  together.  this can predominantly be a naming convention, but
+  requires awareness in the attribute-searching routines to search
+  without the namespace unless one is specified, and to reserve :: in
+  attribute names unless they're quoted.
+
+* clean up default attributes to be consistent and upgrade old
+  attributes to their new names.  includes likes of region, region_id,
+  material_id, air, los, rgb, oshader, and inherit.  see
+  doc/docbook/system/man5/en/attributes.xml for more detailed listing.
+
+* automatic anti-aliasing as a second render pass on the edges
+  encountered (possibly using bilinear filtering scheme, improve upon
+  rtedge's current simple filter)
+
+* kdtree spatial partitioning option in librt
+
+* implement rt_volume() API for computing geometry volume (g_qa style
+  for complex, direct for primitives)
+
+* implement parallel prep
 
 * improve compile-time version management -- port brlcad-version to
   windows, reconsider providing compile-time header constants.
@@ -385,13 +449,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * break up library headers into subheaders so includes can be more
   specific (and help speed up compilation) and locally documented.
 
-* fix framebuffer refresh bug.  problem was caused when the if_ogl
-  framebuffer was changed (back) to request a direct rendering
-  context.  presumably that is triggering other code that is failing
-  to redraw.  Might be worth investigating whether the use of the 
-  extension GL_EXT_framebuffer_object would benefit if_ogl, see:
-  http://www.opengl3.org/wiki/GL_EXT_framebuffer_object
-
 * implement a routine/command to convert from a bot to an nmg
   (similar/related to the nmg-bot tool, but the reverse).
 
@@ -692,7 +749,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
-	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+	a-d archer asc2g asc2pix bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod istat jack-g kurt lowp molecule nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pixpaste pix-spm pix-yuv plstat pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
 
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their
@@ -821,6 +878,13 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   relying on the raw wrapper to encode it, so that proper
   import/export can be performed without relying on minor_type hacks
   in the API.
+
+* implement support for binary attributes.  the idea is to allow
+  arrays of {u,s}int{8,16,32,64}, float, double, and strings, typed as
+  such when written out to storage.  this idea overlaps with what
+  binunif objects provide, so need to reconcile and consolidate into
+  one attribute object entity that can do everything a binunif can do,
+  then allow attributes on objects to provide that same flexibility.
 
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING

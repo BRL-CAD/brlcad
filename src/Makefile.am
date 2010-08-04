@@ -57,6 +57,7 @@ kitchensink_dirs = \
 	libcursor \
 	libdm \
 	libfft \
+	libicv \
 	libmultispectral \
 	libtclcad \
 	libtermio \
@@ -140,6 +141,7 @@ DIST_SUBDIRS= \
 	$(rts_dirs) \
 	$(kitchensink_dirs)
 
-EXTRA_DIST = README
+EXTRA_DIST = \
+	README
 
 include $(top_srcdir)/misc/Makefile.defs

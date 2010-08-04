@@ -40,7 +40,7 @@ splinef(fastf_t c[4], fastf_t s)
 	    retval += c[i]*stopow;
     }
 
-    return(retval);
+    return retval;
 }
 
 

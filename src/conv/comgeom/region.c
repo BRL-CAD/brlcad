@@ -87,11 +87,11 @@ getregion(void)
     /* Pre-load very first region card */
     if ( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
 	printf("getregion: premature EOF\n");
-	return( -1 );
+	return -1;
     }
     if ( getint( rcard, 0, 5 ) != 1 )  {
 	printf("First region card not #1\ncard='%s'\n", rcard);
-	return(-1);
+	return -1;
     }
 
  top:
@@ -104,25 +104,25 @@ getregion(void)
 
 	    /* -1 region number terminates table */
 	    if ( reg_num < 0 )
-		return( 0 );		/* Done */
+		return 0;		/* Done */
 
 	    if ( reg_num > reg_total )  {
 		printf("%d regions is more than claimed %d\n",
 		       reg_num, reg_total );
-		return(-1);
+		return -1;
 	    }
 
 	    namecvt( reg_num, &(wmp[reg_num].wm_name), 'r' );
 	} else {
 	    if ( get_line( rcard, sizeof(rcard), "region card" ) == EOF )  {
 		printf("getregion: premature EOF\n");
-		return( -1 );
+		return -1;
 	    }
 	    if ( strcmp( rcard, "  end" ) == 0 ||
 		 strcmp( rcard, "  END" ) == 0 )  {
 		/* Version 1, DoE/MORSE */
 		reg_total = reg_num;
-		return(0);	/* done */
+		return 0;	/* done */
 	    }
 	    if ( getint( rcard, 0, 5 ) != 0 )  {
 		/* finished with this region */

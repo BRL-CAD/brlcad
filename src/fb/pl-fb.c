@@ -525,10 +525,10 @@ long
 sxt16(long int v)
 {
     long w;
-    if ( v <= 0x7FFF )  return(v);
+    if ( v <= 0x7FFF )  return v;
     w = -1;
     w &= ~0x7FFF;
-    return( w | v );
+    return w | v;
 }
 
 int
@@ -573,14 +573,14 @@ get_args(int argc, char **argv)
 		Nscanlines = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind >= argc ) {
 	/* no file name given, use stdin */
 	if ( isatty(fileno(stdin)) )
-	    return(0);
+	    return 0;
 	filename = "-";
 	pfin = stdin;
     } else {
@@ -589,14 +589,14 @@ get_args(int argc, char **argv)
 	if ( (pfin = fopen(filename, "rb")) == NULL ) {
 	    fprintf( stderr,
 		     "pl-fb: Can't open file \"%s\"\n", filename );
-	    return(0);
+	    return 0;
 	}
     }
 
     if ( argc > ++bu_optind )
 	(void)fprintf( stderr, "pl-fb: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 static char usage[] = "\
@@ -792,7 +792,7 @@ bool Get3Coords(coords *coop)
 
     ret = GetCoords( coop );
     fread( trash, sizeof(trash), 1, pfin );
-    return( ret );
+    return ret;
 }
 
 
@@ -830,7 +830,7 @@ bool Get3DCoords(coords *coop)
 	fprintf(stderr, "Coord3: (%g,%g) ", out[0], out[1]);
 	fprintf(stderr, "Pixel3: (%d,%d)\n", coop->x, coop->y);
     }
-    return( true );
+    return true;
 }
 
 

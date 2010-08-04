@@ -2298,7 +2298,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
     } else {
 	if (rt_g.NMG_debug&DEBUG_FCUT)
 	    bu_log("\tfind_loop_to_cut returning 0\n");
-	return((struct bu_ptbl *)NULL);
+	return (struct bu_ptbl *)NULL;
     }
 
     for (k=0; k<BU_PTBL_END(cuts); k++) {
@@ -2519,7 +2519,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 	bu_log("\tfind_loop_to_cut: returning %d cuts (index1=%d, index2=%d)\n",
 	       BU_PTBL_END(cuts), *index1, *index2);
 
-    return(cuts);
+    return cuts;
 }
 
 
@@ -2552,7 +2552,7 @@ nmg_eu_angle(struct edgeuse *eu, struct vertex *vp)
     VSUB2(eu_dir, vg2->coord, vg1->coord);
     angle = atan2(VDOT(eu_dir, y_dir), VDOT(eu_dir, x_dir));
 
-    return(angle);
+    return angle;
 }
 
 
@@ -2579,7 +2579,7 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 	if (rt_g.NMG_debug&DEBUG_FCUT)
 	    bu_log("\tfind_best_vu returning %d\n", start);
 
-	return(start);
+	return start;
     }
 
     best_vu = rs->vu[start];
@@ -2684,7 +2684,7 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 	}
     }
 
-    return(best_index);
+    return best_index;
 }
 
 
@@ -3410,7 +3410,8 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
      */
 
     /* Merging uses of common edges is OK, though, and quite necessary. */
-    if ((i = nmg_mesh_two_faces(fu1, fu2, tol))) {
+    i = nmg_mesh_two_faces(fu1, fu2, tol);
+    if (i) {
 	if (rt_g.NMG_debug&DEBUG_FCUT)
 	    bu_log("nmg_face_cutjoin() meshed %d edges\n", i);
     }
@@ -3640,7 +3641,7 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
 		    bu_log("\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n", dist_to_loop_sq, tol->dist_sq);
 		new_eu = nmg_ebreaker(vu1->v_p, vu2->up.eu_p, tol);
 		nmg_klu(vu1->up.lu_p);
-		return(1);
+		return 1;
 	    }
 	}
     }
@@ -3660,11 +3661,11 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
 		    bu_log("\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n", dist_to_loop_sq, tol->dist_sq);
 		new_eu = nmg_ebreaker(vu1->v_p, eu_to, tol);
 		nmg_klu(vu1->up.lu_p);
-		return(1);
+		return 1;
 	    }
 	}
     }
-    return(0);
+    return 0;
 }
 
 

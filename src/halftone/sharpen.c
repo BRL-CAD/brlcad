@@ -77,11 +77,11 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  */
     if (Beta == 0.0) {
 	result = fread(buf, size, num, file);
-	if (!result) return(result);
+	if (!result) return result;
 	for (i=0; i<size*num; i++) {
 	    buf[i] = Map[buf[i]];
 	}
-	return(result);
+	return result;
     }
 
 /*
@@ -104,7 +104,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	next = (unsigned char *)malloc(linelen);
 	result = fread(cur, 1, linelen, file);
 	for (i=0; i<linelen;i++) cur[i] = Map[cur[i]];
-	if (!result) return(result);	/* nothing there! */
+	if (!result) return result;	/* nothing there! */
 	result = fread(next, 1, linelen, file);
 	if (!result) {
 	    free(next);
@@ -142,7 +142,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  *	if cur is NULL then we are at EOF.  Memory leak here as
  *	we don't free last.
  */
-    if (!cur) return(0);
+    if (!cur) return 0;
 
 /*
  * Value is the following Laplacian filter kernel:
@@ -229,7 +229,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ?
 	    255: newvalue;
     }
-    return(linelen);
+    return linelen;
 }
 
 /*

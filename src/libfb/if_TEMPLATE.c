@@ -59,119 +59,119 @@ HIDDEN int
 DEVNAME_open(FBIO *ifp, char *file, int width, int height)
 {
     FB_CK_FBIO(ifp);
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_close(FBIO *ifp)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_clear(FBIO *ifp, unsigned char *pp)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
-DEVNAME_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+DEVNAME_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    return(count);
+    return (int)count;
 }
 
 
 HIDDEN int
-DEVNAME_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+DEVNAME_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    return(count);
+    return (int)count;
 }
 
 
 HIDDEN int
 DEVNAME_rmap(FBIO *ifp, ColorMap *cmp)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_wmap(FBIO *ifp, const ColorMap *cmp)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_cursor(FBIO *ifp, int mode, int x, int y)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
-    return(width*height);
+    return width*height;
 }
 
 
 HIDDEN int
 DEVNAME_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-    return(width*height);
+    return width*height;
 }
 
 
 HIDDEN int
 DEVNAME_poll(FBIO *ifp)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_flush(FBIO *ifp)
 {
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
 DEVNAME_free(FBIO *ifp)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -186,7 +186,7 @@ DEVNAME_help(FBIO *ifp)
     fb_log("Default width/height: %d %d\n",
 	   DEVNAME_interface.if_width,
 	   DEVNAME_interface.if_height);
-    return(0);
+    return 0;
 }
 
 

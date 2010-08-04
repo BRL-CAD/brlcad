@@ -15,6 +15,24 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Update/create .mgedrc results in bogus qray lines if a db is not
+  open when the file is created.
+
+* MGED doesn't initialize multipane view to the documented multipane
+  defaults if you just open a db with multipane already enabled.
+
+* Creating an 'extrude' via MGED gui crashes MGED.
+
+* edcomb command seems to be busted similar to red, doesn't seem to do
+  anything.
+
+* gqa manpage has the wrong indentation on the options write-up.
+
+* Detailed BoT model ray trace image had incorrect background pixel
+  values in framebuffer, off slightly by one.
+
+* /dev/oglb 'copy mode' fails to refresh the framebuffer
+
 * X display manager (and probably others) will lock up mged if you Z/B
   while the wireframe is being actively drawn (in X_drawVList()).
   reproducible by cloning havoc a dozen or more times, getting
@@ -183,9 +201,6 @@ Recent Bugs
 * rt is consuming 100% CPU in fb_close() on a lingering ogl
   framebuffer waiting to close.  needs to sleep or select for a while.
 
-* /dev/ogl framebuffer is not refreshing/updating on mac os x,
-  resulting in the window remaining blank until you give expose events
-
 * report of mged being locked up on startup taking full cpu, works
   fine with with -c with X dm.
 
@@ -193,9 +208,6 @@ Recent Bugs
   _font" doesn't exist on Linux.
 
 * mged tab-completion doesn't work if the object names have spaces
-
-* OpenGL display manager doesn't refresh automatically when the
-  context is invalidated (on Mac OS X) any more
 
 * Open dialog in MGED seems rather busted for scrolling and selection
   (seems to be Mac OS X specific)

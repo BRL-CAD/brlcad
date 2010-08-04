@@ -21,7 +21,6 @@
  *
  */
 
-#include "hit.h"
 #include "adrt_struct.h"
 
 
@@ -30,7 +29,7 @@ void* render_hit(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
     if (ray->dir.v[0] * id->norm.v[0] + ray->dir.v[1] * id->norm.v[1] + ray->dir.v[2] * id->norm.v[2] > 0)
 	VSCALE(id->norm.v,  id->norm.v,  -1.0);
 
-    return((adrt_mesh_t *)(tri->ptr));
+    return (adrt_mesh_t *)(tri->ptr);
 }
 
 /*

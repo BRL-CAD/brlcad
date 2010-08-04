@@ -72,7 +72,7 @@ init_coswintab(int size)
      * Mark size and return success.
      */
     _init_length = size;
-    return( 1 );
+    return 1;
 }
 
 

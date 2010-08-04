@@ -50,25 +50,25 @@ nmg_rt_inout_str(int code)
 {
     switch (code) {
 	case HMG_HIT_IN_IN:
-	    return("IN_IN");
+	    return "IN_IN";
 	case HMG_HIT_IN_OUT:
-	    return("IN_OUT");
+	    return "IN_OUT";
 	case HMG_HIT_OUT_IN:
-	    return("OUT_IN");
+	    return "OUT_IN";
 	case HMG_HIT_OUT_OUT:
-	    return("OUT_OUT");
+	    return "OUT_OUT";
 	case HMG_HIT_IN_ON:
-	    return("IN_ON");
+	    return "IN_ON";
 	case HMG_HIT_ON_IN:
-	    return("ON_IN");
+	    return "ON_IN";
 	case HMG_HIT_OUT_ON:
-	    return("OUT_ON");
+	    return "OUT_ON";
 	case HMG_HIT_ON_OUT:
-	    return("ON_OUT");
+	    return "ON_OUT";
 	case HMG_HIT_ANY_ANY:
-	    return("ANY_ANY");
+	    return "ANY_ANY";
     }
-    return("?_?\n");
+    return "?_?\n";
 }
 
 
@@ -310,7 +310,8 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
 	       vu_p->v_p->vg_p->coord[2]);
     }
 
-    if ((myhit=NMG_INDEX_GET(rd->hitmiss, vu_p->v_p))) {
+    myhit=NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
+    if (myhit) {
 	/* vertex previously processed */
 	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -319,12 +320,13 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("ray_miss_vertex(vertex previously HIT_SUB!?!?)\n");
 	}
-	return(myhit);
+	return myhit;
     }
-    if ((myhit=NMG_INDEX_GET(rd->hitmiss, vu_p->v_p))) {
+    myhit=NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
+    if (myhit) {
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 	    bu_log("ray_miss_vertex(vertex previously missed)\n");
-	return(myhit);
+	return myhit;
     }
 
     NMG_GET_HITMISS(myhit, rd->ap);
@@ -969,7 +971,8 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
 	bu_log("ray_hit_vertex x%x (%g %g %g) status=%d\n",
 	       vu_p->v_p, V3ARGS(vu_p->v_p->vg_p->coord), status);
 
-    if ((myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p))) {
+    myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
+    if (myhit) {
 	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC))
 	    return;
 	/* oops, we have to change a MISS into a HIT */
@@ -1040,12 +1043,13 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
 	       vu_p->v_p->vg_p->coord[1],
 	       vu_p->v_p->vg_p->coord[2]);
 
-    if ((myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p))) {
+    myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
+    if (myhit) {
 	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
 	    /* we've previously hit this vertex */
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously hit\n");
-	    return(1);
+	    return 1;
 	} else {
 	    /* we've previously missed this vertex */
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -1199,7 +1203,8 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     faces_found = 0;
     eu_p = eu->e_p->eu_p;
     do {
-	if ((fu=nmg_find_fu_of_eu(eu_p))) {
+	fu=nmg_find_fu_of_eu(eu_p);
+	if (fu) {
 	    fu_eu = eu_p;
 	    faces_found = 1;
 	    if (fu->orientation == OT_OPPOSITE &&
@@ -1392,7 +1397,8 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) bu_log("\t - HIT edge 0x%08x (edgeuse=x%x)\n", eu_p->e_p, eu_p);
 
-    if ((myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p))) {
+    myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p);
+    if (myhit) {
 	switch (((struct bu_list *)myhit)->magic) {
 	    case NMG_RT_MISS_MAGIC:
 		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -1428,8 +1434,9 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
     hit_ins(rd, myhit);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-	register struct faceuse *fu;
-	if ((fu=nmg_find_fu_of_eu(eu_p)))
+	struct faceuse *fu=nmg_find_fu_of_eu(eu_p);
+
+	if (fu)
 	    nmg_rt_isect_plfu(fu, rd->rp->r_pt, myhit->hit.hit_point);
 	else
 	    pleu(eu_p, rd->rp->r_pt, myhit->hit.hit_point);
@@ -1579,7 +1586,8 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 	bu_log("\n\tLooking for previous hit on edge 0x%08x ...\n",
 	       eu_p->e_p);
 
-    if ((myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p))) {
+    myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p);
+    if (myhit) {
 	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
 	    /* previously hit vertex or edge */
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -1838,7 +1846,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	point_t srf_min, srf_max;
 	int planar;
 	point_t hit;
-	fastf_t dist;
+	fastf_t dist = (fastf_t)0.0;
 
 	VSETALL(hit, 0);
 
@@ -2228,7 +2236,8 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 
 
     /* if this face already processed, we are done. */
-    if ((myhit = NMG_INDEX_GET(rd->hitmiss, fp))) {
+    myhit = NMG_INDEX_GET(rd->hitmiss, fp);
+    if (myhit) {
 	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit,
 			     NMG_RT_HIT_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)

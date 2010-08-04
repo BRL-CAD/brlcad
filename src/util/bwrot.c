@@ -40,45 +40,37 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <math.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu.h"
+#include "bn.h"
 
 
-#define MAXBUFBYTES (1280*1024)
-
-int buflines, scanbytes;
-int firsty = -1;	/* first "y" scanline in buffer */
-int lasty = -1;	/* last "y" scanline in buffer */
-unsigned char *buffer;
+size_t buflines, scanbytes;
+ssize_t firsty = -1;	/* first "y" scanline in buffer */
+ssize_t lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *bp;
-unsigned char *obuf;
 unsigned char *obp;
 
-int nxin = 512;
-int nyin = 512;
-int yin, xout, yout;
+size_t nxin = 512;
+size_t nyin = 512;
+size_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
-double angle;
+size_t pixbytes = 1;
 
-static char usage[] = "\
-Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
-	[-w width] [-n height] [file.bw] > file.bw\n\
-  or   bwrot -a angle [-s squaresize]\n\
-	[-w width] [-n height] [file.bw] > file.bw\n";
-
-void fill_buffer(void), reverse_buffer(void), arbrot(double a);
-
-static char *file_name;
-FILE *ifp, *ofp;
 
 int
-get_args(int argc, char **argv)
+get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 {
     int c;
+    char *in_file_name = NULL;
+    char *out_file_name = NULL;
 
-    while ((c = bu_getopt(argc, argv, "fbrihs:w:n:S:W:N:a:")) != EOF) {
+    if (!ifp || !ofp || !angle)
+	bu_exit(1, "bwrot: internal error processing arguments\n");
+
+    while ((c = bu_getopt(argc, argv, "fbrih#:a:s:o:w:n:S:W:N:")) != EOF) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -96,6 +88,9 @@ get_args(int argc, char **argv)
 		/* high-res */
 		nxin = nyin = 1024;
 		break;
+	    case '#':
+		pixbytes = atoi(bu_optarg);
+		break;
 	    case 'S':
 	    case 's':
 		/* square size */
@@ -110,11 +105,20 @@ get_args(int argc, char **argv)
 		nyin = atoi(bu_optarg);
 		break;
 	    case 'a':
-		angle = atof(bu_optarg);
+		*angle = atof(bu_optarg);
+		break;
+	    case 'o':
+		out_file_name = bu_optarg;
+		*ofp = fopen(out_file_name, "wb+");
+		if (*ofp == NULL) {
+		    bu_log("ERROR: %s cannot open \"%s\" for writing\n", bu_getprogname(), out_file_name);
+		    return 0;
+		}
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", bu_getprogname(), c);
+		return 0;
 	}
     }
 
@@ -123,171 +127,67 @@ get_args(int argc, char **argv)
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
     }
+
     if (bu_optind >= argc) {
-	if (isatty(fileno(stdin)))
-	    return(0);
-	file_name = "-";
-	ifp = stdin;
+	in_file_name = "-";
     } else {
-	file_name = argv[bu_optind];
-	if ((ifp = fopen(file_name, "r")) == NULL) {
-	    (void)fprintf(stderr,
-			  "bwrot: cannot open \"%s\" for reading\n",
-			  file_name);
-	    return(0);
+	in_file_name = argv[bu_optind];
+    }
+
+    if (strcmp(in_file_name, "-") == 0) {
+	*ifp = stdin;
+    } else {
+	*ifp = fopen(in_file_name, "rb");
+	if (*ifp == NULL) {
+	    bu_log("ERROR: %s cannot open \"%s\" for reading\n", bu_getprogname(), in_file_name);
+	    return 0;
 	}
     }
 
-    if (argc > ++bu_optind)
-	(void)fprintf(stderr, "bwrot: excess argument(s) ignored\n");
+    /* sanity */
+    if (isatty(fileno(*ifp))) {
+	bu_log("ERROR: %s will not read bw data from a tty\nRedirect input or specify an input file.\n", bu_getprogname());
+	return 0;
+    }
+    if (isatty(fileno(*ofp))) {
+	bu_log("ERROR: %s will not write bw data to a tty\nRedirect output or use the -o output option.\n", bu_getprogname());
+	return 0;
+    }
 
-    return(1);		/* OK */
+    if (argc > ++bu_optind) {
+	bu_log("bwrot: excess argument(s) ignored\n");
+    }
+
+    return 1;		/* OK */
 }
 
 
-int
-main(int argc, char **argv)
+static void
+fill_buffer(FILE *ifp, unsigned char *buf)
 {
-    int x, y;
-    long outbyte, outplace;
-
-    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
-	(void)fputs(usage, stderr);
-	bu_exit (1, NULL);
-    }
-
-    ofp = stdout;
-
-    scanbytes = nxin;
-    buflines = MAXBUFBYTES / scanbytes;
-    if (buflines <= 0) {
-	fprintf(stderr, "bwrot: I'm not compiled to do a scanline that long!\n");
-	bu_exit (1, NULL);
-    }
-    if (buflines > nyin) buflines = nyin;
-    buffer = (unsigned char *)malloc(buflines * scanbytes);
-    obuf = (unsigned char *)malloc((nyin > nxin) ? nyin : nxin);
-    if (buffer == (unsigned char *)0 || obuf == (unsigned char *)0) {
-	fprintf(stderr, "bwrot: malloc failed\n");
-	bu_exit (3, NULL);
-    }
-
-    /*
-     * Break out to added arbitrary angle routine
-     */
-    if (angle) {
-	arbrot(angle);
-	bu_exit (0, NULL);
-    }
-
-    /*
-     * Clear our "file pointer."  We need to maintain this
-     * In order to tell if seeking is required.  ftell() always
-     * fails on pipes, so we can't use it.
-     */
-    outplace = 0;
-
-    yin = 0;
-    while (yin < nyin) {
-	/* Fill buffer */
-	fill_buffer();
-	if (!buflines)
-	    break;
-	if (reverse)
-	    reverse_buffer();
-	if (plus90) {
-	    for (x = 0; x < nxin; x++) {
-		obp = obuf;
-		bp = &buffer[ (lasty-firsty)*scanbytes + x ];
-		for (y = lasty; y >= yin; y--) {
-		    /* firsty? */
-		    *obp++ = *bp;
-		    bp -= scanbytes;
-		}
-		yout = x;
-		xout = (nyin - 1) - lasty;
-		outbyte = ((yout * nyin) + xout);
-		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
-			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
-			bu_exit (3, NULL);
-		    }
-		    outplace = outbyte;
-		}
-		fwrite(obuf, 1, buflines, ofp);
-		outplace += buflines;
-	    }
-	} else if (minus90) {
-	    for (x = nxin-1; x >= 0; x--) {
-		obp = obuf;
-		bp = &buffer[ x ];
-		for (y = firsty; y <= lasty; y++) {
-		    *obp++ = *bp;
-		    bp += scanbytes;
-		}
-		yout = (nxin - 1) - x;
-		xout = yin;
-		outbyte = ((yout * nyin) + xout);
-		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
-			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
-			bu_exit (3, NULL);
-		    }
-		    outplace = outbyte;
-		}
-		fwrite(obuf, 1, buflines, ofp);
-		outplace += buflines;
-	    }
-	} else if (invert) {
-	    for (y = lasty; y >= firsty; y--) {
-		yout = (nyin - 1) - y;
-		outbyte = yout * scanbytes;
-		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
-			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
-			bu_exit (3, NULL);
-		    }
-		    outplace = outbyte;
-		}
-		fwrite(&buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp);
-		outplace += scanbytes;
-	    }
-	} else {
-	    /* Reverse only */
-	    for (y = 0; y < buflines; y++) {
-		fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
-	    }
-	}
-
-	yin += buflines;
-    }
-    return 0;
-}
-
-
-void
-fill_buffer(void)
-{
-    buflines = fread(buffer, scanbytes, buflines, ifp);
+    buflines = fread(buf, scanbytes, buflines, ifp);
 
     firsty = lasty + 1;
     lasty = firsty + (buflines - 1);
 }
 
 
-void
-reverse_buffer(void)
+static void
+reverse_buffer(unsigned char *buf)
 {
-    int i;
+    size_t i, j;
     unsigned char *p1, *p2, temp;
 
     for (i = 0; i < buflines; i++) {
-	p1 = &buffer[ i * scanbytes ];
-	p2 = p1 + (scanbytes - 1);
+	p1 = &buf[ i * scanbytes ];
+	p2 = p1 + (scanbytes - pixbytes);
 	while (p1 < p2) {
-	    temp = *p1;
-	    *p1++ = *p2;
-	    *p2-- = temp;
+	    for (j = 0; j < pixbytes; j++) {
+		temp = *p1;
+		*p1++ = *p2;
+		*p2++ = temp;
+	    }
+	    p2 -= 2*pixbytes;
 	}
     }
 }
@@ -295,6 +195,9 @@ reverse_buffer(void)
 
 /*
  * Arbitrary angle rotation.
+ *
+ * 'a' is rotation angle
+ *
  * Currently this needs to be able to buffer the entire image
  * in memory at one time.
  *
@@ -313,21 +216,14 @@ reverse_buffer(void)
  * dx' = -sin(a)
  * dy' = cos(a)
  */
-#ifndef M_PI
-#  define PI 3.1415926535898
-#else
-# define PI M_PI
-#endif
-#define DtoR(x)	((x)*PI/180.0)
-
-void
-arbrot(double a)
-    /* rotation angle */
+static void
+arbrot(double a, FILE *ifp, unsigned char *buf)
 {
-    int x, y;				/* working coord */
+#define DtoR(x)	((x)*M_PI/180.0)
+    size_t x, y;				/* working coord */
     double x2, y2;				/* its rotated position */
     double xc, yc;				/* rotation origin */
-    int x_min, y_min, x_max, y_max;	/* area to rotate */
+    size_t x_min, y_min, x_max, y_max;		/* area to rotate */
     double x_goop, y_goop;
     double sina, cosa;
 
@@ -337,7 +233,7 @@ arbrot(double a)
 	bu_exit (1, NULL);
     }
     if (buflines > nyin) buflines = nyin;
-    fill_buffer();
+    fill_buffer(ifp, buf);
 
     /*
      * Convert rotation angle to radians.
@@ -365,15 +261,160 @@ arbrot(double a)
 	y2 = x_min * sina + y * cosa + y_goop;
 	for (x = x_min; x < x_max; x++) {
 	    /* check for in bounds */
-	    if (x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin)
-		putchar(buffer[(int)y2*nyin + (int)x2]);
-	    else
+	    if (x2 > 0.0
+		&& NEAR_ZERO(x2, SMALL_FASTF)
+		&& x2 < (double)nxin
+		&& y2 > 0.0
+		&& NEAR_ZERO(y2, SMALL_FASTF)
+		&& y2 < (double)nyin)
+	    {
+		putchar(buf[(int)y2*nyin + (int)x2]);
+	    } else {
 		putchar(0);	/* XXX - setable color? */
+	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;
 	    y2 += sina;
 	}
     }
+}
+
+
+int
+main(int argc, char **argv)
+{
+    const size_t MAXBUFBYTES = 1280*1024;
+
+    char usage[] = "Usage: bwrot [-rifb | -a angle] [-s squaresize] [-w width] [-n height] [-o output.bw] input.bw [> output.bw]\n";
+
+    size_t x, y, j;
+    int ret = 0;
+    long outbyte, outplace;
+    FILE *ifp, *ofp;
+    unsigned char *obuf;
+    unsigned char *buffer;
+    double angle = 0.0;
+
+    ifp = stdin;
+    ofp = stdout;
+    bu_setprogname(argv[0]);
+
+    if (!get_args(argc, argv, &ifp, &ofp, &angle)) {
+	bu_exit(1, "%s", usage);
+    }
+
+    scanbytes = nxin * pixbytes;
+    buflines = MAXBUFBYTES / scanbytes;
+    if (buflines <= 0) {
+	bu_exit(1, "%s", "bwrot: I'm not compiled to do a scanline that long!\n");
+    }
+    if (buflines > nyin) buflines = nyin;
+    buffer = (unsigned char *)bu_malloc(buflines * scanbytes, "buffer");
+    obuf = (unsigned char *)bu_malloc((nyin > nxin) ? nyin*pixbytes : nxin*pixbytes, "obuf");
+
+    /*
+     * Break out to added arbitrary angle routine
+     */
+    if (angle > 0.0) {
+	arbrot(angle, ifp, buffer);
+	goto done;
+    }
+
+    /*
+     * Clear our "file pointer."  We need to maintain this
+     * In order to tell if seeking is required.  ftell() always
+     * fails on pipes, so we can't use it.
+     */
+    outplace = 0;
+
+    yin = 0;
+    while (yin < nyin) {
+	/* Fill buffer */
+	fill_buffer(ifp, buffer);
+	if (!buflines)
+	    break;
+	if (reverse)
+	    reverse_buffer(buffer);
+	if (plus90) {
+	    for (x = 0; x < nxin; x++) {
+		obp = obuf;
+		bp = &buffer[ (lasty-firsty)*scanbytes + x*pixbytes ];
+		for (y = lasty+1; y > yin; y--) {
+		    /* firsty? */
+		    for (j = 0; j < pixbytes; j++)
+			*obp++ = *bp++;
+		    bp -= scanbytes + pixbytes;
+		}
+		yout = x;
+		xout = (nyin - 1) - lasty;
+		outbyte = ((yout * nyin) + xout) * pixbytes;
+		if (outplace != outbyte) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+			ret = 3;
+			perror("fseek");
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			goto done;
+		    }
+		    outplace = outbyte;
+		}
+		fwrite(obuf, pixbytes, buflines, ofp);
+		outplace += buflines*pixbytes;
+	    }
+	} else if (minus90) {
+	    for (x = nxin; x > 0; x--) {
+		obp = obuf;
+		bp = &buffer[ (x-1)*pixbytes ];
+		for (y = firsty+1; (ssize_t)y < lasty; y++) {
+		    for (j = 0; j < pixbytes; j++)
+			*obp++ = *bp++;
+		    bp += scanbytes - pixbytes;
+		}
+		yout = (nxin - 1) - x + 1;
+		xout = yin;
+		outbyte = ((yout * nyin) + xout) * pixbytes;
+		if (outplace != outbyte) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+			ret = 3;
+			perror("fseek");
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			goto done;
+		    }
+		    outplace = outbyte;
+		}
+		fwrite(obuf, pixbytes, buflines, ofp);
+		outplace += buflines*pixbytes;
+	    }
+	} else if (invert) {
+	    for (y = lasty+1; (ssize_t)y > firsty; y--) {
+		yout = (nyin - 1) - y + 1;
+		outbyte = yout * scanbytes;
+		if (outplace != outbyte) {
+		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
+			ret = 3;
+			perror("fseek");
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			goto done;
+		    }
+		    outplace = outbyte;
+		}
+		fwrite(&buffer[(y-firsty-1)*scanbytes], 1, scanbytes, ofp);
+		outplace += scanbytes;
+	    }
+	} else {
+	    /* Reverse only */
+	    for (y = 0; y < buflines; y++) {
+		fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
+	    }
+	}
+
+	yin += buflines;
+    }
+
+done:
+    bu_free(buffer, "buffer");
+    bu_free(obuf, "obuf");
+
+    return ret;
 }
 
 

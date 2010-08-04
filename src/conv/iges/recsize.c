@@ -92,10 +92,10 @@ Recsize()
 	for ( j=2; j<k; j++ )
 	{
 	    if ( recl != length[j] )
-		return( 0 );
+		return 0;
 	}
     }
-    return( recl );
+    return recl;
 }
 
 

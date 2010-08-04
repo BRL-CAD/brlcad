@@ -66,14 +66,14 @@ get_args(int argc, char **argv)
 		file_length = atoi(bu_optarg);
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( argc > ++bu_optind )
 	(void)fprintf( stderr, "pixautosize: excess argument(s) ignored\n" );
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 int

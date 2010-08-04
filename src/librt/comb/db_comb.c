@@ -100,7 +100,7 @@ db_comb_mat_categorize(const fastf_t *matp)
  *
  * Return count of number of leaf nodes in this tree.
  */
-int
+size_t
 db_tree_nleaves(const union tree *tp)
 {
     if (tp == TREE_NULL) return 0;
@@ -135,7 +135,7 @@ db_tree_nleaves(const union tree *tp)
 	    bu_log("db_tree_nleaves: bad op %d\n", tp->tr_op);
 	    bu_bomb("db_tree_nleaves\n");
     }
-    return(-1);	/* for the compiler */
+    return 0;	/* for the compiler */
 }
 
 
@@ -191,7 +191,7 @@ db_flatten_tree(
 	    bu_bomb("db_flatten_tree\n");
     }
 
-    return((struct rt_tree_array *)NULL); /* for the compiler */
+    return (struct rt_tree_array *)NULL; /* for the compiler */
 }
 
 
@@ -221,7 +221,7 @@ rt_comb_import4(
 
     if (rp[0].u_id != ID_COMB) {
 	bu_log("rt_comb_import4: Attempt to import a non-combination\n");
-	return(-1);
+	return -1;
     }
 
     /* Compute how many granules of MEMBER records follow */
@@ -236,7 +236,7 @@ rt_comb_import4(
 	if (rp[j+1].u_id != ID_MEMB) {
 	    bu_free((genptr_t)rt_tree_array, "rt_comb_import4: rt_tree_array");
 	    bu_log("rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id);
-	    return(-1);
+	    return -1;
 	}
 
 	switch (rp[j+1].M.m_relation) {
@@ -313,7 +313,7 @@ rt_comb_import4(
 	}
     }
     if (node_count)
-	tree = db_mkgift_tree(rt_tree_array, (long)node_count, &rt_uniresource);
+	tree = db_mkgift_tree(rt_tree_array, node_count, &rt_uniresource);
     else
 	tree = (union tree *)NULL;
 
@@ -402,7 +402,7 @@ rt_comb_import4(
 
     if (rt_tree_array) bu_free((genptr_t)rt_tree_array, "rt_tree_array");
 
-    return(0);
+    return 0;
 }
 
 
@@ -418,12 +418,12 @@ rt_comb_export4(
     struct resource *resp)
 {
     struct rt_comb_internal *comb;
-    int node_count;
-    int actual_count;
+    size_t node_count;
+    size_t actual_count;
     struct rt_tree_array *rt_tree_array;
     union tree *tp;
     union record *rp;
-    int j;
+    size_t j;
     char *endp;
     struct bu_vls tmp_vls;
 
@@ -452,7 +452,7 @@ rt_comb_export4(
 	/* Convert tree into array form */
 	actual_count = db_flatten_tree(rt_tree_array, comb->tree,
 				       OP_UNION, 1, resp) - rt_tree_array;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	comb->tree = TREE_NULL;
     } else {
 	rt_tree_array = (struct rt_tree_array *)NULL;
@@ -595,9 +595,9 @@ db_tree_flatten_describe(
     double mm2local,
     struct resource *resp)
 {
-    int node_count;
+    size_t i;
+    size_t node_count;
     struct rt_tree_array *rt_tree_array;
-    int i;
     char op = OP_NOP;
     int status;
     union tree *ntp;
@@ -613,7 +613,7 @@ db_tree_flatten_describe(
     RT_CK_TREE(tp);
 
     node_count = db_tree_nleaves(tp);
-    if (node_count <= 0) {
+    if (node_count == 0) {
 	if (!indented) bu_vls_spaces(vls, 2*lvl);
 	bu_vls_strcat(vls, "-empty-\n");
 	return;
@@ -1042,7 +1042,7 @@ db_mkbool_tree(
     struct resource *resp)
 {
     register struct rt_tree_array *tlp;
-    register int i;
+    size_t i;
     register struct rt_tree_array *first_tlp = (struct rt_tree_array *)0;
     register union tree *xtp;
     register union tree *curtree;
@@ -1051,7 +1051,7 @@ db_mkbool_tree(
     RT_CK_RESOURCE(resp);
 
     if (howfar == 0)
-	return(TREE_NULL);
+	return TREE_NULL;
 
     /* Count number of non-null sub-trees to do */
     for (i=howfar, inuse=0, tlp=rt_tree_array; i>0; i--, tlp++) {
@@ -1063,11 +1063,11 @@ db_mkbool_tree(
 
     /* Handle trivial cases */
     if (inuse <= 0)
-	return(TREE_NULL);
+	return TREE_NULL;
     if (inuse == 1) {
 	curtree = first_tlp->tl_tree;
 	first_tlp->tl_tree = TREE_NULL;
-	return(curtree);
+	return curtree;
     }
 
     if (first_tlp->tl_op != OP_UNION) {
@@ -1094,7 +1094,7 @@ db_mkbool_tree(
 	curtree = xtp;
 	tlp->tl_tree = TREE_NULL;	/* empty the input slot */
     }
-    return(curtree);
+    return curtree;
 }
 
 
@@ -1102,15 +1102,19 @@ db_mkbool_tree(
  * D B _ M K G I F T _ T R E E
  */
 union tree *
-db_mkgift_tree(struct rt_tree_array *trees, long subtreecount, struct resource *resp)
+db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource *resp)
 {
     struct rt_tree_array *tstart;
     struct rt_tree_array *tnext;
     union tree *curtree;
     long i;
     long j;
+    long treecount;
 
     RT_CK_RESOURCE(resp);
+
+    BU_ASSERT_SIZE_T(subtreecount, <, LONG_MAX);
+    treecount = (long)subtreecount;
 
     /*
      * This is how GIFT interpreted equations, so it is duplicated here.
@@ -1123,12 +1127,16 @@ db_mkgift_tree(struct rt_tree_array *trees, long subtreecount, struct resource *
      */
     tstart = trees;
     tnext = trees+1;
-    for (i=subtreecount-1; i>=0; i--, tnext++) {
+    for (i=treecount-1; i>=0; i--, tnext++) {
 	/* If we went off end, or hit a union, do it */
+
 	if (i>0 && tnext->tl_op != OP_UNION)
 	    continue;
-	if ((j = tnext-tstart) <= 0)
+
+	j = tnext-tstart;
+	if (j <= 0)
 	    continue;
+
 	curtree = db_mkbool_tree(tstart, (size_t)j, resp);
 	/* db_mkbool_tree() has side effect of zapping tree array,
 	 * so build new first node in array.
@@ -1145,12 +1153,12 @@ db_mkgift_tree(struct rt_tree_array *trees, long subtreecount, struct resource *
 	tstart = tnext;
     }
 
-    curtree = db_mkbool_tree(trees, (size_t)subtreecount, resp);
+    curtree = db_mkbool_tree(trees, subtreecount, resp);
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	bu_log("db_mkgift_tree() returns:\n");
 	rt_pr_tree(curtree, 0);
     }
-    return(curtree);
+    return curtree;
 }
 
 

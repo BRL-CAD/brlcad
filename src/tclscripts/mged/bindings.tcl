@@ -274,14 +274,22 @@ proc forward_key_bindings { w } {
 
 proc default_mouse_bindings { w } {
     global transform
+    global tcl_platform
 
     # default button bindings
-    bind $w <1> "winset $w; zoom 0.5; break"
-    bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
-    bind $w <3> "winset $w; zoom 2.0; break"
-#    bind $w <1> "winset $w; focus $w; zoom 0.5; break"
-#    bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
-#    bind $w <3> "winset $w; focus $w; zoom 2.0; break"
+    if {![regexp {^[0-9]+} $tcl_platform(osVersion) osMajorVersion]} {
+	set osMajorVersion 0
+    }
+
+    if {$::tcl_platform(os) == "Darwin" && $osMajorVersion == 9} {
+	bind $w <1> "winset $w; zoom 0.5; break"
+	bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
+	bind $w <3> "winset $w; zoom 2.0; break"
+    } else {
+	bind $w <1> "winset $w; focus $w; zoom 0.5; break"
+	bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
+	bind $w <3> "winset $w; focus $w; zoom 2.0; break"
+    }
 
     bind $w <ButtonRelease> "winset $w; dm idle; break"
     bind $w <KeyRelease-Control_L> "winset $w; dm idle; break"

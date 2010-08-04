@@ -96,12 +96,8 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		bot_intern.idb_meth = &rt_functab[ID_BOT];
 		bot_intern.idb_ptr = (genptr_t)rblp->bot;
 
-		if ((dp = db_diradd(gedp->ged_wdbp->dbip,
-				    bu_vls_addr(&gedp->ged_result_str),
-				    -1L,
-				    0,
-				    DIR_SOLID,
-				    (genptr_t)&bot_intern.idb_type)) == DIR_NULL) {
+		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+		if (dp == DIR_NULL) {
 		    bu_vls_printf(&gedp->ged_result_str, " failed to be added to the database.");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);

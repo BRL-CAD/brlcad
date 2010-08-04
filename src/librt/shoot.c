@@ -1025,7 +1025,7 @@ rt_shootray(register struct application *ap)
 	f = MAGSQ(ap->a_ray.r_dir);
 	if (NEAR_ZERO(f, 0.0001)) {
 	    bu_bomb("rt_shootray:  zero length dir vector\n");
-	    return(0);
+	    return 0;
 	}
 	diff = f - 1;
 	if (!NEAR_ZERO(diff, 0.0001)) {
@@ -1599,7 +1599,7 @@ out:
 	       ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
 	       status, ap->a_return);
     }
-    return(ap->a_return);
+    return ap->a_return;
 }
 
 
@@ -1880,7 +1880,7 @@ rt_in_rpp(struct xray *rp,
 	 * so merely check position against the boundaries.
 	 */
 	if ((*min > *pt) || (*max < *pt))
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
     }
 
     /* Y axis */
@@ -1897,7 +1897,7 @@ rt_in_rpp(struct xray *rp,
 	    rmin = sv;
     } else {
 	if ((*min > *pt) || (*max < *pt))
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
     }
 
     /* Z axis */
@@ -1914,17 +1914,17 @@ rt_in_rpp(struct xray *rp,
 	    rmin = sv;
     } else {
 	if ((*min > *pt) || (*max < *pt))
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
     }
 
     /* If equal, RPP is actually a plane */
     if (rmin > rmax)
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     /* HIT.  Only now do rp->r_min and rp->r_max have to be written */
     rp->r_min = rmin;
     rp->r_max = rmax;
-    return(1);		/* HIT */
+    return 1;		/* HIT */
 }
 
 
@@ -2048,10 +2048,10 @@ rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register con
     if (rp->r_min > rp->r_max)
 	goto miss;
     bu_log("HIT:  %g..%g\n", rp->r_min, rp->r_max);
-    return(1);		/* HIT */
+    return 1;		/* HIT */
 miss:
     bu_log("MISS\n");
-    return(0);		/* MISS */
+    return 0;		/* MISS */
 }
 
 

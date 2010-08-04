@@ -5,6 +5,7 @@ man1DOCBOOK_EN = \
 	system/man1/en/gqa.xml \
 	system/man1/en/mged.xml \
 	system/man1/en/nirt.xml \
+	system/man1/en/obj-g.xml \
 	system/man1/en/rt.xml \
 	system/man1/en/rtarea.xml \
 	system/man1/en/rtcheck.xml \

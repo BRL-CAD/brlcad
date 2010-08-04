@@ -230,6 +230,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;fi;fd"
 			>
+			<File
+				RelativePath="..\..\..\src\shapes\fence.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

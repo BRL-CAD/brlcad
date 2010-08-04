@@ -21,23 +21,21 @@
  *
  */
 
-#include "grid.h"
-#include "hit.h"
 #include "adrt_struct.h"
 #include <stdio.h>
 
 #define GRID 5.0
 #define LINE 0.4
-void render_grid_init(render_t *render, char *usr) {
-    render->work = render_grid_work;
-    render->free = render_grid_free;
+
+
+void
+render_grid_free(render_t *render)
+{
 }
 
-
-void render_grid_free(render_t *render) {
-}
-
-void render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     tie_id_t id;
     adrt_mesh_t *m;
     TIE_3 vec;
@@ -67,6 +65,14 @@ void render_grid_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
     pixel->v[0] += 0.1;
     pixel->v[1] += 0.1;
     pixel->v[2] += 0.1;
+}
+
+int
+render_grid_init(render_t *render, char *usr)
+{
+    render->work = render_grid_work;
+    render->free = render_grid_free;
+    return 0;
 }
 
 /*

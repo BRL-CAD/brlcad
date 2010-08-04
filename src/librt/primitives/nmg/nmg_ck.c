@@ -1089,7 +1089,7 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
 	}
     }
 
-    return(count);
+    return count;
 }
 
 
@@ -1146,7 +1146,7 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
     bu_ptbl_free(&g_tbl);
 
-    return(count);
+    return count;
 }
 
 
@@ -1370,7 +1370,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 	    nmg_pr_fu_around_eu(eu_orig, tol);
 
 	    bu_log("nmg_check_radial: unclosed space\n");
-	    return(2);
+	    return 2;
 	}
 
 	eu1 = eur->eumate_p;
@@ -1379,7 +1379,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 	curr_orient = eu1->up.lu_p->up.fu_p->orientation;
 	eur = eu1->radial_p;
     } while (eur != eurstart);
-    return(0);
+    return 0;
 #endif
 }
 
@@ -1549,7 +1549,7 @@ nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
 	    }
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1572,9 +1572,9 @@ nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
     BN_CK_TOL(tol);
     for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	ret = nmg_ck_closed_surf(s, tol);
-	if (ret != 0) return(ret);
+	if (ret != 0) return ret;
     }
-    return(0);
+    return 0;
 }
 
 

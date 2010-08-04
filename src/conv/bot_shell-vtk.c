@@ -86,14 +86,14 @@ static char *usage="Usage:\n\
 HIDDEN int
 a_overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(pheadp))
 {
-    return( 1 );
+    return 1;
 }
 
 
 HIDDEN int
 miss( struct application *UNUSED(ap))
 {
-    return(0);
+    return 0;
 }
 
 HIDDEN void

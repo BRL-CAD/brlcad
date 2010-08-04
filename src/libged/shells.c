@@ -109,8 +109,8 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_meth = &rt_functab[ID_NMG];
 	    new_intern.idb_ptr = (genptr_t)m_tmp;
 
-	    if ((new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), -1, 0,
-				  DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
+	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	    if (new_dp == DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.\n");
 		return GED_ERROR;
 	    }

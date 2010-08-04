@@ -128,7 +128,7 @@ mem_open(FBIO *ifp, char *file, int width, int height)
     /* build a local static info struct */
     if ((MIL(ifp) = (char *)calloc(1, sizeof(struct meminfo))) == NULL) {
 	fb_log("mem_open:  meminfo malloc failed\n");
-	return(-1);
+	return -1;
     }
     cp = &file[strlen("/dev/mem")];
     while (*cp != '\0' && *cp != ' ' && *cp != '\t')
@@ -140,7 +140,7 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 	/* frame buffer device specified */
 	if ((fbp = fb_open(cp, width, height)) == FBIO_NULL) {
 	    free(MIL(ifp));
-	    return(-1);
+	    return -1;
 	}
 	MI(ifp)->fbp = fbp;
 	ifp->if_width = fbp->if_width;
@@ -158,7 +158,7 @@ mem_open(FBIO *ifp, char *file, int width, int height)
     if ((MI(ifp)->mem = (unsigned char *)calloc(ifp->if_width*ifp->if_height, 3)) == NULL) {
 	fb_log("mem_open:  memory buffer malloc failed\n");
 	(void)free(MIL(ifp));
-	return(-1);
+	return -1;
     }
     if ((MI(ifp)->fbp != FBIO_NULL)
 	&& (mode & MODE_2MASK) == MODE_2PREREAD) {
@@ -178,7 +178,7 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 	fb_make_linear_cmap(&(MI(ifp)->cmap));
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -202,7 +202,7 @@ mem_close(FBIO *ifp)
     (void)free((char *)MI(ifp)->mem);
     (void)free((char *)MIL(ifp));
 
-    return(0);
+    return 0;
 }
 
 
@@ -240,17 +240,17 @@ mem_clear(FBIO *ifp, unsigned char *pp)
     } else {
 	MI(ifp)->mem_dirty = 1;
     }
-    return(0);
+    return 0;
 }
 
 
 HIDDEN int
-mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    int pixels_to_end;
+    size_t pixels_to_end;
 
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
-	return(-1);
+	return -1;
 
     /* make sure we don't run off the end of the buffer */
     pixels_to_end = ifp->if_width*ifp->if_height - (y*ifp->if_width + x);
@@ -259,17 +259,17 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
     memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
 
-    return(count);
+    return (int)count;
 }
 
 
 HIDDEN int
-mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    int pixels_to_end;
+    size_t pixels_to_end;
 
     if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
-	return(-1);
+	return -1;
 
     /* make sure we don't run off the end of the buffer */
     pixels_to_end = ifp->if_width*ifp->if_height - (y*ifp->if_width + x);
@@ -283,7 +283,7 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     } else {
 	MI(ifp)->mem_dirty = 1;
     }
-    return(count);
+    return (int)count;
 }
 
 
@@ -291,7 +291,7 @@ HIDDEN int
 mem_rmap(FBIO *ifp, ColorMap *cmp)
 {
     *cmp = MI(ifp)->cmap;		/* struct copy */
-    return(0);
+    return 0;
 }
 
 
@@ -309,7 +309,7 @@ mem_wmap(FBIO *ifp, const ColorMap *cmp)
     } else {
 	MI(ifp)->cmap_dirty = 1;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -321,7 +321,7 @@ mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	return fb_view(MI(ifp)->fbp, xcenter, ycenter,
 		       xzoom, yzoom);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -333,7 +333,7 @@ mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 			  xzoom, yzoom);
     }
     fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
-    return(0);
+    return 0;
 }
 
 
@@ -344,7 +344,7 @@ mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 	return fb_setcursor(MI(ifp)->fbp,
 			    bits, xbits, ybits, xorig, yorig);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -355,7 +355,7 @@ mem_cursor(FBIO *ifp, int mode, int x, int y)
     if (MI(ifp)->write_thru) {
 	return fb_cursor(MI(ifp)->fbp, mode, x, y);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -366,7 +366,7 @@ mem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 	return fb_getcursor(MI(ifp)->fbp, mode, x, y);
     }
     fb_sim_getcursor(ifp, mode, x, y);
-    return(0);
+    return 0;
 }
 
 
@@ -376,7 +376,7 @@ mem_poll(FBIO *ifp)
     if (MI(ifp)->write_thru) {
 	return fb_poll(MI(ifp)->fbp);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -422,7 +422,7 @@ mem_help(FBIO *ifp)
     for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 	fb_log("   %c   %s\n", mfp->c, mfp->help);
     }
-    return(0);
+    return 0;
 }
 
 

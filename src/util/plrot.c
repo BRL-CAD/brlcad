@@ -164,7 +164,7 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 		V3ARGS(space_min), V3ARGS(space_max));
     }
 
-    return(1);
+    return 1;
 }
 
 
@@ -177,10 +177,10 @@ getshort(FILE *fp)
     v |= (getc(fp)<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if (v <= 0x7FFF) return(v);
+    if (v <= 0x7FFF) return v;
     w = -1;
     w &= ~0x7FFF;
-    return(w | v);
+    return w | v;
 }
 
 
@@ -301,17 +301,17 @@ get_args(int argc, char **argv)
 		forced_space = 1;
 		break;
 	    default:		/* '?' */
-		return(0);	/* Bad */
+		return 0;	/* Bad */
 	}
     }
 
 
     if (isatty(fileno(stdout))
 	|| (isatty(fileno(stdin)) && (bu_optind >= argc))) {
-	return(0);	/* Bad */
+	return 0;	/* Bad */
     }
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 
@@ -628,7 +628,7 @@ getdouble(FILE *fp)
     unsigned char buf[8];
     fread(buf, 8, 1, fp);
     ntohd((unsigned char *)&d, buf, 1);
-    return(d);
+    return d;
 }
 
 

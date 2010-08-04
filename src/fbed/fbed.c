@@ -842,7 +842,7 @@ f_Exec_Function()
 	return 0;
     else
 	if ( strcmp( ftbl->f_name, name ) == 0 )
-	    return (*ftbl->f_func)( ftbl->f_buff );
+	    return (*ftbl->f_func)(ftbl->f_buff);
 	else
 	{
 	    fb_log( "I seem to have lost my bindings.\n" );
@@ -1793,6 +1793,7 @@ f_Quit()
     restore_Tty();
     bu_exit( 0, NULL );
     /*NOTREACHED*/
+    return 0;
 }
 
 HIDDEN int
@@ -2370,16 +2371,14 @@ do_Bitpad(Point *pointp)
     return -1;
 }
 
+
 int
 get_Char(void)
 {
     int c;
-#if 0
-    if ( isSGI )
-	return (c = sgi_Getchar()) == EOF ? EOF : toascii( c );
-    else
-#endif
-	return (c = getchar()) == EOF ? EOF : toascii( c );
+
+    c = getchar();
+    return c == EOF ? EOF : toascii(c);
 }
 
 /*

@@ -210,7 +210,7 @@ rt_grp_free(struct soltab *stp)
 int
 rt_grp_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -267,7 +267,7 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     RT_ADD_VLIST(vhead, y_1,  BN_VLIST_LINE_MOVE);
     RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
     RT_ADD_VLIST(vhead, y_2,  BN_VLIST_LINE_DRAW);
-    return(0);
+    return 0;
 }
 
 
@@ -293,7 +293,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_grp_import4: defective record, id=x%x\n", rp->u_id);
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -319,7 +319,7 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     f = MAGNITUDE(gip->normal);
     if (f <= SMALL) {
 	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
     t = f - 1.0;
     if (!NEAR_ZERO(t, 0.001)) {
@@ -343,7 +343,7 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double U
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_GRIP) return(-1);
+    if (ip->idb_type != ID_GRIP) return -1;
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
@@ -358,7 +358,7 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double U
     VMOVE(&rec->s.s_grip_C, gip->center);
     rec->s.s_grip_m = gip->mag;
 
-    return(0);
+    return 0;
 }
 
 
@@ -399,7 +399,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     f = MAGNITUDE(gip->normal);
     if (f <= SMALL) {
 	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
-	return(-1);		/* BAD */
+	return -1;		/* BAD */
     }
     t = f - 1.0;
     if (!NEAR_ZERO(t, 0.001)) {
@@ -423,7 +423,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_GRIP) return(-1);
+    if (ip->idb_type != ID_GRIP) return -1;
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
@@ -509,7 +509,7 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_GRIP_CK_MAGIC(gip);
 
     /* XXX tess routine needed */
-    return(-1);
+    return -1;
 }
 
 
@@ -523,7 +523,7 @@ rt_grp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

@@ -182,12 +182,12 @@ fhvis(int x, int y)
 {
     /* See if hidden behind horizons */
     if ( y < upper[x] && y > lower[x] )
-	return( INVISIBLE );
+	return INVISIBLE;
 
     if ( y >= upper[x] )
-	return( ABOVE );
+	return ABOVE;
 
-    return( BELOW );
+    return BELOW;
 }
 
 /*
@@ -285,11 +285,11 @@ int
 sign(int i)
 {
     if ( i > 0 )
-	return( 1 );
+	return 1;
     else if ( i < 0 )
-	return( -1 );
+	return -1;
     else
-	return( 0 );
+	return 0;
 }
 
 /*

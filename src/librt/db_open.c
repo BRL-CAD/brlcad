@@ -209,7 +209,7 @@ db_create(const char *name,
 
     if (fp == NULL) {
 	perror(name);
-	return(DBI_NULL);
+	return DBI_NULL;
     }
 
     if (version == 5) {

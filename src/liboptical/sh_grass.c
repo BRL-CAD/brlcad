@@ -93,7 +93,6 @@ struct grass_ray {
     long		magic;
     double		occlusion;
     struct xray	r;
-    double		d_min;
     double		d_max;
     vect_t		rev;
     double		diverge;
@@ -497,7 +496,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, grass_parse_tab, (char *)grass_sp ) < 0 )
-	return(-1);
+	return -1;
 
     /* The shader needs to operate in a coordinate system which stays
      * fixed on the region when the region is moved (as in animation).
@@ -519,7 +518,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     }
 
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -965,8 +964,8 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 
 
 {
-    point_t c;		/* float version of cell # */
-    point_t cell_pos;	/* origin of cell in region coordinates */
+    point_t c = {0.0, 0.0, 0.0};	/* float version of cell # */
+    point_t cell_pos = {0.0, 0.0, 0.0};	/* origin of cell in region coordinates */
     double val;
     vect_t v;
     int p;		/* current plant number (loop variable) */
@@ -1173,16 +1172,9 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
      */
     gr.magic = GRASSRAY_MAGIC;
     gr.occlusion = 0.0;
-
-
-#if 1
     gr.tol = ap->a_rt_i->rti_tol;
-#else
-    gr.tol.magic = BN_TOL_MAGIC;
-    gr.tol.dist = grass_sp->blade_width;
-    gr.tol.dist_sq = grass_sp->blade_width * grass_sp->blade_width;
-#endif
     gr.ap = ap;
+    gr.fd = NULL;
 
     /* Convert everything over to Region space.
      * First the ray and its radius then
@@ -1407,63 +1399,14 @@ grass_render(struct application *ap, struct partition *pp, struct shadework *swp
  done:
     if ( rdebug&RDEBUG_SHADE) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fflush(gr.fd);
-	fclose(gr.fd);
+	if (gr.fd) {
+	    fflush(gr.fd);
+	    fclose(gr.fd);
+	}
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
-#if 0
-
-    /* Tell stacker to abort shading */
-    return 0;
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log("Hit grass blades\n");
-
-
-    /* if we got here then we hit something.  Convert the hit info
-     * back into model coordinates.
-     *
-     * Tell stacker to shade with plastic
-     * XXX another possibility here is to do:
-     *	extern struct mfuncs phg_mfuncs[];
-     *	return phg_mfuncs[1].mf_render(ap, pp, swp, dp);
-     * This would require calling the mf_setup routine in our _setup(),
-     * and hiding a pointer to a phong_specific in grass_specific.
-     */
-
-    MAT4X3PNT(swp->sw_hit.hit_point, grass_sp->sh_to_m, gr.hit.hit_point);
-    VSUB2(v, swp->sw_hit.hit_point, ap->a_ray.r_pt);
-    swp->sw_hit.hit_dist = MAGNITUDE(v);
-
-    swp->sw_transmit = 0.0;
-
-    if (status & SHADE_ABORT_STACK) {
-	if (rdebug&RDEBUG_SHADE)
-	    bu_log("Aborting stack (statistical grass)\n");
-	return 0;
-    }
-
-
-    if (swp->sw_xmitonly) return 0;
-
-    if (rdebug&RDEBUG_SHADE)
-	bu_log("normal before xform:(%g %g %g)\n",
-	       V3ARGS(swp->sw_hit.hit_normal));
-
-    MAT4X3VEC(swp->sw_hit.hit_normal, grass_sp->sh_to_m, gr.hit.hit_normal);
-
-    if (rdebug&RDEBUG_SHADE) {
-	VPRINT("Rnormal", gr.hit.hit_normal);
-	VPRINT("Mnormal", swp->sw_hit.hit_normal);
-	bu_log("MAG(Rnormal)%g, MAG(Mnormal)%g\n", MAGNITUDE(gr.hit.hit_normal), MAGNITUDE(swp->sw_hit.hit_normal));
-    }
-    VUNITIZE(swp->sw_hit.hit_normal);
-#endif
-
     return 1;
-
-
 }
 
 /*

@@ -188,7 +188,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (NEAR_ZERO(eto->eto_r, 0.0001) || NEAR_ZERO(eto->eto_rd, 0.0001)
 	|| NEAR_ZERO(eto->eto_rc, 0.0001)) {
 	bu_log("eto(%s): r, rd, or rc zero length\n", stp->st_name);
-	return(1);
+	return 1;
     }
 
     VMOVE(eto->eto_V, tip->eto_V);
@@ -212,7 +212,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (ch > eto->eto_r || dh > eto->eto_r) {
 	bu_log("eto(%s): revolved ellipse overlaps itself\n",
 	       stp->st_name);
-	return(1);
+	return 1;
     }
 
     eto->ev = fabs(VDOT(Cu, Nu));	/* vertical component of Cu */
@@ -264,7 +264,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = eto->eto_V[Z] - f;
     stp->st_max[Z] = eto->eto_V[Z] + f;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -450,7 +450,7 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 		reported=1;
 	    }
 	}
-	return(0);		/* MISS */
+	return 0;		/* MISS */
     }
 
     /* Only real roots indicate an intersection in real space.
@@ -471,12 +471,12 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /* Here, 'i' is number of points found */
     switch (i) {
 	case 0:
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 
 	default:
 	    bu_log("rt_eto_shot: reduced 4 to %d roots\n", i);
 	    bn_pr_roots(stp->st_name, val, 4);
-	    return(0);		/* No hit */
+	    return 0;		/* No hit */
 
 	case 2: {
 	    /* Sort most distant to least distant. */
@@ -521,7 +521,7 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
     if (i == 2)
-	return(2);			/* HIT */
+	return 2;			/* HIT */
 
     /* 4 points */
     /* k[3] is entry point, and k[2] is exit point */
@@ -534,7 +534,7 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     VJOIN1(segp->seg_in.hit_vpriv, pprime, k[3], dprime);
     VJOIN1(segp->seg_out.hit_vpriv, pprime, k[2], dprime);
     BU_LIST_INSERT(&(seghead->l), &(segp->l));
-    return(4);			/* HIT */
+    return 4;			/* HIT */
 }
 
 
@@ -719,7 +719,7 @@ rt_eto_free(struct soltab *stp)
 int
 rt_eto_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -740,7 +740,7 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_ell;
-    struct rt_pt_node *new, *rt_ptalloc(void);
+    struct rt_pt_node *new;
 
     /* endpoints of segment approximating ellipse */
     VMOVE(p0, pts->p);
@@ -766,7 +766,7 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	new = rt_ptalloc();
+	new = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	VMOVE(new->p, mpt);
 	new->next = pts->next;
 	pts->next = new;
@@ -778,7 +778,7 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
 	n += make_ellipse4(new, a, b, dtol, ntol);
     } else
 	n  = 0;
-    return(n);
+    return n;
 }
 
 
@@ -794,11 +794,11 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
     int i;
     point_t *ell;
-    struct rt_pt_node *ell_quad, *oldpos, *pos, *rt_ptalloc(void);
+    struct rt_pt_node *ell_quad, *oldpos, *pos;
 
-    ell_quad = rt_ptalloc();
+    ell_quad = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VSET(ell_quad->p, b, 0., 0.);
-    ell_quad->next = rt_ptalloc();
+    ell_quad->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VSET(ell_quad->next->p, 0., a, 0.);
     ell_quad->next->next = NULL;
 
@@ -831,7 +831,7 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 	ell[i][Y] = -ell[i][Y];
     }
     *n = 4*(*n + 1);
-    return(ell);
+    return ell;
 }
 
 
@@ -869,7 +869,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (NEAR_ZERO(tip->eto_r, 0.0001) || NEAR_ZERO(b, 0.0001)
 	|| NEAR_ZERO(a, 0.0001)) {
 	bu_log("eto_plot: r, rd, or rc zero length\n");
-	return(1);
+	return 1;
     }
 
     /* Establish tolerances */
@@ -930,7 +930,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* make sure ellipse doesn't overlap itself when revolved */
     if (ch > tip->eto_r || dh > tip->eto_r) {
 	bu_log("eto_plot: revolved ellipse overlaps itself\n");
-	return(1);
+	return 1;
     }
 
     /* get memory for nells ellipses */
@@ -976,7 +976,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
     bu_free((char *)eto_ells, "ells[]");
-    return(0);
+    return 0;
 }
 
 
@@ -1178,7 +1178,7 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)faces, "rt_eto_tess *faces[]");
     bu_free((char *)norms, "rt_eto_tess: norms[]");
 
-    return(fail);
+    return fail;
 }
 
 
@@ -1201,7 +1201,7 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_eto_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1222,10 +1222,10 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     if (tip->eto_r <= SMALL || tip->eto_rd <= SMALL) {
 	bu_log("rt_eto_import4:  zero length R or Rd vector\n");
-	return(-1);
+	return -1;
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1243,7 +1243,7 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ETO) return(-1);
+    if (ip->idb_type != ID_ETO) return -1;
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
 
@@ -1260,12 +1260,12 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| tip->eto_r < RT_LEN_TOL
 	|| tip->eto_rd < RT_LEN_TOL) {
 	bu_log("rt_eto_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     if (tip->eto_rd > MAGNITUDE(tip->eto_C)) {
 	bu_log("rt_eto_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return(-1);
+	return -1;
     }
 
     /* Warning:  type conversion */
@@ -1275,7 +1275,7 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     eto->s.s_values[3*3] = tip->eto_r * local2mm;
     eto->s.s_values[3*3+1] = tip->eto_rd * local2mm;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1318,10 +1318,10 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     if (tip->eto_r <= SMALL || tip->eto_rd <= SMALL) {
 	bu_log("rt_eto_import4:  zero length R or Rd vector\n");
-	return(-1);
+	return -1;
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -1339,7 +1339,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ETO) return(-1);
+    if (ip->idb_type != ID_ETO) return -1;
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
 
@@ -1352,12 +1352,12 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| tip->eto_r < RT_LEN_TOL
 	|| tip->eto_rd < RT_LEN_TOL) {
 	bu_log("rt_eto_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     if (tip->eto_rd > MAGNITUDE(tip->eto_C)) {
 	bu_log("rt_eto_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return(-1);
+	return -1;
     }
 
     /* scale 'em into local buffer */
@@ -1370,7 +1370,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 11);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1450,10 +1450,10 @@ rt_eto_ifree(struct rt_db_internal *ip)
 int
 rt_eto_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
-    if (!ps) return(0);
+    if (!ps) return 0;
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

@@ -81,19 +81,19 @@ get_args(int argc, char **argv)
 		outframebuffer = bu_optarg;
 		break;
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind >= argc )
-	return(0);
+	return 0;
     else
 	yline = atoi( argv[bu_optind] );
 
     if ( argc > ++bu_optind )
-	return(0);	/* too many args */
+	return 0;	/* too many args */
 
-    return(1);		/* OK */
+    return 1;		/* OK */
 }
 
 int

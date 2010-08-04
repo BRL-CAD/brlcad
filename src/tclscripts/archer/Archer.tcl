@@ -98,6 +98,7 @@ namespace eval Archer {
 
 LoadArcherLibs
 package require ArcherCore 1.0
+package require Tktable 2.10
 package provide Archer 1.0
 
 ::itcl::class Archer {
@@ -169,6 +170,7 @@ package provide Archer 1.0
 	method clone               {args}
 	method color               {args}
 	method comb                {args}
+	method combmem             {args}
 	method cp                  {args}
 	method cpi                 {args}
 	method copyeval            {args}
@@ -220,7 +222,8 @@ package provide Archer 1.0
 	method track               {args}
 	method units               {args}
 	method vmake               {args}
-	method initImages         {}
+	method initImages          {}
+	method initFbImages        {}
 
 	# Object Edit Management
 	method checkpoint {_obj _type}
@@ -531,6 +534,8 @@ package provide Archer 1.0
 
     $itk_component(primaryToolbar) itemconfigure new -state normal
     $itk_component(primaryToolbar) itemconfigure preferences -state normal
+
+    after idle [::itcl::code $this Load ""]
 }
 
 
@@ -1021,6 +1026,27 @@ package provide Archer 1.0
 #
 ::itcl::body Archer::comb {args} {
     eval combWrapper comb 3 $args
+}
+
+::itcl::body Archer::combmem {args} {
+    SetWaitCursor $this
+
+    set len [llength $args]
+
+    if {[catch {eval gedCmd combmem $args} ret] ||
+	$len < 2} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Checkpoint the created object
+    checkpoint_olist [lindex $args 0] $LEDGER_MODIFY
+
+    refreshTree 1
+    updateUndoState
+    SetNormalCursor $this
+
+    return $ret
 }
 
 ::itcl::body Archer::cp {args} {
@@ -1667,22 +1693,22 @@ package provide Archer 1.0
 	$itk_component(primaryToolbar) itemconfigure comb \
 	    -image [image create photo \
 			-file [file join $mImgDir combination.png]]
-	$itk_component(primaryToolbar) itemconfigure arb6 \
+#	$itk_component(primaryToolbar) itemconfigure arb6 \
 	    -image [image create photo \
 			-file [file join $mImgDir primitive_arb6.png]]
-	$itk_component(primaryToolbar) itemconfigure arb8 \
+#	$itk_component(primaryToolbar) itemconfigure arb8 \
 	    -image [image create photo \
 			-file [file join $mImgDir primitive_arb8.png]]
-	$itk_component(primaryToolbar) itemconfigure cone \
+#	$itk_component(primaryToolbar) itemconfigure cone \
 	    -image [image create photo \
 			-file [file join $mImgDir primitive_cone.png]]
-	#$itk_component(primaryToolbar) itemconfigure pipe \
+#	$itk_component(primaryToolbar) itemconfigure pipe \
 	    -image [image create photo \
 			-file [file join $mImgDir primitive_pipe.png]]
-	$itk_component(primaryToolbar) itemconfigure sphere \
+#	$itk_component(primaryToolbar) itemconfigure sphere \
 	    -image [image create photo \
 			-file [file join $mImgDir primitive_sph.png]]
-	$itk_component(primaryToolbar) itemconfigure torus \
+#	$itk_component(primaryToolbar) itemconfigure torus \
 	    -image [image create photo \
 			-file [file join $mImgDir primitive_tor.png]]
 	$itk_component(primaryToolbar) itemconfigure other \
@@ -1784,6 +1810,10 @@ package provide Archer 1.0
 			-file [file join $mImgDir option_tree.png]]
     }
 
+    initFbImages
+}
+
+::itcl::body Archer::initFbImages {} {
     set mImage_fbOff [image create photo -file [file join $mImgDir framebuffer_off.png]]
     set mImage_fbOn [image create photo -file [file join $mImgDir framebuffer.png]]
     set mImage_fbInterlay [image create photo -file [file join $mImgDir framebuffer_interlay.png]]
@@ -1909,7 +1939,7 @@ package provide Archer 1.0
 	eval createWrapper $_cmd $args
     } else {
 	# Modifying an existing combination
-	eval gedWrapper $_cmd 0 0 1 1 $args
+	eval gedWrapper $_cmd 0 0 1 2 $args
     }
 }
 
@@ -2433,19 +2463,13 @@ package provide Archer 1.0
 	set win $dm
 
 	if {$mViewOnly} {
-	    bind $win <Control-ButtonPress-1> \
-		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	    bind $win <3> \
 		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	} else {
 	    if {$ArcherCore::inheritFromToplevel} {
-		bind $win <Control-ButtonPress-1> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(displaymenu) %X %Y]; break"
 		bind $win <3> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(displaymenu) %X %Y]; break"
 	    } else {
-		bind $win <Control-ButtonPress-1> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 		bind $win <3> \
 		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 	    }
@@ -2809,13 +2833,14 @@ proc Archer::html_help_display {me} {
 
     upvar $me O
     set origurl $O(-uri)
-    regexp {(home://blank/)(.+)} $origurl -> prefix tempurl
-    set url [bu_brlcad_data "html/"]
+    if {[catch {regexp {(home://blank)(.+)} $origurl match prefix tempurl} msg]} {
+	tk_messageBox -message "html_help_display: regexp failed, msg - $msg"
+    }
+    set url [bu_brlcad_data "html"]
     append url $tempurl
     get_html_data $url
     $htmlviewer reset
     $htmlviewer parse $archer_help_data
-    
 }
 
 proc Archer::mkHelpTkImage {file} {
@@ -2974,7 +2999,7 @@ proc title_node_handler {node} {
     if {[file exists [file join [bu_brlcad_data "html/mann/en"] Introduction.html]]} {
 
    # List of available help documents
-    set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en/"] *.html ]
+    set cmdfiles [glob -directory [bu_brlcad_data "html/mann/en"] *.html ]
     set cmds [list ]
     foreach cmdfile $cmdfiles {
            regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
@@ -4613,21 +4638,9 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::updateCreationButtons {_on} {
     if {$_on} {
-	$itk_component(primaryToolbar) itemconfigure arb6 -state normal
-	$itk_component(primaryToolbar) itemconfigure arb8 -state normal
-	$itk_component(primaryToolbar) itemconfigure cone -state normal
-	$itk_component(primaryToolbar) itemconfigure sphere -state normal
-	$itk_component(primaryToolbar) itemconfigure torus -state normal
-	#	$itk_component(primaryToolbar) itemconfigure pipe -state normal
 	$itk_component(primaryToolbar) itemconfigure other -state normal
 	$itk_component(primaryToolbar) itemconfigure comb -state normal
     } else {
-	$itk_component(primaryToolbar) itemconfigure arb6 -state disabled
-	$itk_component(primaryToolbar) itemconfigure arb8 -state disabled
-	$itk_component(primaryToolbar) itemconfigure cone -state disabled
-	$itk_component(primaryToolbar) itemconfigure sphere -state disabled
-	$itk_component(primaryToolbar) itemconfigure torus -state disabled
-	#	$itk_component(primaryToolbar) itemconfigure pipe -state disabled
 	$itk_component(primaryToolbar) itemconfigure other -state disabled
 	$itk_component(primaryToolbar) itemconfigure comb -state disabled
     }
@@ -4741,42 +4754,42 @@ proc title_node_handler {node} {
 	-relief flat \
 	-width 3
 
-    $itk_component(primaryToolbar) insert rotate button arb6 \
+#    $itk_component(primaryToolbar) insert rotate button arb6 \
 	-balloonstr "Create an arb6" \
 	-helpstr "Create an arb6" \
 	-relief flat \
 	-overrelief raised \
 	-command [::itcl::code $this createObj arb6]
 
-    $itk_component(primaryToolbar) insert rotate button arb8 \
+#    $itk_component(primaryToolbar) insert rotate button arb8 \
 	-balloonstr "Create an arb8" \
 	-helpstr "Create an arb8" \
 	-relief flat \
 	-overrelief raised \
 	-command [::itcl::code $this createObj arb8]
 
-    $itk_component(primaryToolbar) insert rotate button cone \
+#    $itk_component(primaryToolbar) insert rotate button cone \
 	-balloonstr "Create a tgc" \
 	-helpstr "Create a tgc" \
 	-relief flat \
 	-overrelief raised \
 	-command [::itcl::code $this createObj tgc]
 
-    $itk_component(primaryToolbar) insert rotate button sphere \
+#    $itk_component(primaryToolbar) insert rotate button sphere \
 	-balloonstr "Create a sphere" \
 	-helpstr "Create a sphere" \
 	-relief flat \
 	-overrelief raised \
 	-command [::itcl::code $this createObj sph]
 
-    $itk_component(primaryToolbar) insert rotate button torus \
+#    $itk_component(primaryToolbar) insert rotate button torus \
 	-balloonstr "Create a torus" \
 	-helpstr "Create a torus" \
 	-relief flat \
 	-overrelief raised \
 	-command [::itcl::code $this createObj tor]
 
-    #    $itk_component(primaryToolbar) insert rotate button pipe \
+#    $itk_component(primaryToolbar) insert rotate button pipe \
 	-balloonstr "Create a pipe" \
 	-helpstr "Create a pipe" \
 	-relief flat \
@@ -4816,31 +4829,111 @@ proc title_node_handler {node} {
     } {
 	keep -background
     }
-    itk_component add arbMenu {
+    itk_component add arbsMenu {
 	::menu $itk_component(primitiveMenu).arbmenu \
 	    -tearoff 0
     } {
 	keep -background
     }
-    $itk_component(arbMenu) add command \
-	-label arb4 \
-	-command [::itcl::code $this createObj arb4]
-    $itk_component(arbMenu) add command \
-	-label arb5 \
-	-command [::itcl::code $this createObj arb5]
-    $itk_component(arbMenu) add command \
+    $itk_component(arbsMenu) add command \
+	-image $mImage_arb8Labeled \
+	-command [::itcl::code $this createObj arb8]
+    $itk_component(arbsMenu) add command \
+	-image $mImage_arb7Labeled \
+	-command [::itcl::code $this createObj arb7]
+    $itk_component(arbsMenu) add command \
+	-image $mImage_arb6Labeled \
 	-label arb6 \
 	-command [::itcl::code $this createObj arb6]
-    $itk_component(arbMenu) add command \
-	-label arb7 \
-	-command [::itcl::code $this createObj arb7]
-    $itk_component(arbMenu) add command \
-	-label arb8 \
+    $itk_component(arbsMenu) add command \
+	-image $mImage_arb5Labeled \
+	-label arb5 \
+	-command [::itcl::code $this createObj arb5]
+    $itk_component(arbsMenu) add command \
+	-image $mImage_arb4Labeled \
+	-command [::itcl::code $this createObj arb4]
+    $itk_component(arbsMenu) add command \
+	-label rpp \
 	-command [::itcl::code $this createObj arb8]
+    $itk_component(arbsMenu) add separator
+    $itk_component(arbsMenu) add command \
+	-image $mImage_arb5Labeled \
+	-command [::itcl::code $this createObj arbn]
+
+    itk_component add conesCylsMenu {
+	::menu $itk_component(primitiveMenu).conescylsmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(conesCylsMenu) add command \
+	-label rcc \
+	-command [::itcl::code $this createObj rcc]
+    $itk_component(conesCylsMenu) add command \
+	-label rec \
+	-command [::itcl::code $this createObj rec]
+    $itk_component(conesCylsMenu) add command \
+	-image $mImage_rhcLabeled \
+	-command [::itcl::code $this createObj rhc]
+    $itk_component(conesCylsMenu) add command \
+	-image $mImage_rpcLabeled \
+	-command [::itcl::code $this createObj rpc]
+    $itk_component(conesCylsMenu) add command \
+	-label tec \
+	-command [::itcl::code $this createObj tec]
+    $itk_component(conesCylsMenu) add command \
+	-image $mImage_tgcLabeled \
+	-command [::itcl::code $this createObj tgc]
+    $itk_component(conesCylsMenu) add command \
+	-label trc \
+	-command [::itcl::code $this createObj trc]
+
+    itk_component add ellsMenu {
+	::menu $itk_component(primitiveMenu).ellsmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(ellsMenu) add command \
+	-image $mImage_ellLabeled \
+	-command [::itcl::code $this createObj ell]
+    $itk_component(ellsMenu) add command \
+	-label ell1 \
+	-command [::itcl::code $this createObj ell1]
+    $itk_component(ellsMenu) add command \
+	-image $mImage_epaLabeled \
+	-command [::itcl::code $this createObj epa]
+    $itk_component(ellsMenu) add command \
+	-image $mImage_sphLabeled \
+	-command [::itcl::code $this createObj sph]
+
+    itk_component add toriiMenu {
+	::menu $itk_component(primitiveMenu).toriimenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+    $itk_component(toriiMenu) add command \
+	-image $mImage_etoLabeled \
+	-command [::itcl::code $this createObj eto]
+    $itk_component(toriiMenu) add command \
+	-image $mImage_torLabeled \
+	-command [::itcl::code $this createObj tor]
 
     $itk_component(primitiveMenu) add cascade \
 	-label Arbs \
-	-menu $itk_component(arbMenu)
+	-menu $itk_component(arbsMenu)
+    $itk_component(primitiveMenu) add cascade \
+	-label "Cones & Cylinders" \
+	-menu $itk_component(conesCylsMenu)
+    $itk_component(primitiveMenu) add cascade \
+	-label Ellipsoids \
+	-menu $itk_component(ellsMenu)
+    $itk_component(primitiveMenu) add cascade \
+	-label Torii \
+	-menu $itk_component(toriiMenu)
+    $itk_component(primitiveMenu) add separator
+
     #    $itk_component(primitiveMenu) add command \
 	-label bot \
 	-command [::itcl::code $this createObj bot]
@@ -4884,13 +4977,37 @@ proc title_node_handler {node} {
 	-label sketch \
 	-command [::itcl::code $this createObj sketch]
     $itk_component(primitiveMenu) add command \
-	-label sph \
-	-command [::itcl::code $this createObj sph]
+	-image $mImage_arsLabeled \
+	-command [::itcl::code $this createObj ars]
     $itk_component(primitiveMenu) add command \
-	-label tgc \
-	-command [::itcl::code $this createObj tgc]
+	-image $mImage_ehyLabeled \
+	-command [::itcl::code $this createObj ehy]
+#    $itk_component(primitiveMenu) add command \
+	-image $mImage_etoLabeled \
+	-command [::itcl::code $this createObj eto]
     $itk_component(primitiveMenu) add command \
-	-label tor \
+	-image $mImage_extrudeLabeled \
+	-command [::itcl::code $this createObj extrude]
+    $itk_component(primitiveMenu) add command \
+	-image $mImage_halfLabeled \
+	-command [::itcl::code $this createObj hyp]
+    $itk_component(primitiveMenu) add command \
+	-image $mImage_hypLabeled \
+	-command [::itcl::code $this createObj hyp]
+    $itk_component(primitiveMenu) add command \
+	-image $mImage_metaballLabeled \
+	-command [::itcl::code $this createObj metaball]
+    $itk_component(primitiveMenu) add command \
+	-label part \
+	-command [::itcl::code $this createObj part]
+    $itk_component(primitiveMenu) add command \
+	-image $mImage_pipeLabeled \
+	-command [::itcl::code $this createObj pipe]
+    $itk_component(primitiveMenu) add command \
+	-image $mImage_sketchLabeled \
+	-command [::itcl::code $this createObj sketch]
+#    $itk_component(primitiveMenu) add command \
+	-image $mImage_torLabeled \
 	-command [::itcl::code $this createObj tor]
 
     set parent [$itk_component(primaryToolbar) component other]
@@ -5592,6 +5709,73 @@ proc title_node_handler {node} {
 	-state disabled
 }
 
+
+	if {$ArcherCore::inheritFromToplevel} {
+	    if {$mSeparateCommandWindow} {
+		set plist [list {} $mSepCmdPrefix]
+	    } else {
+		set plist {{}}
+	    }
+
+	    foreach prefix $plist {
+		$itk_component(${prefix}filemenu) entryconfigure "Raytrace Control Panel..." -state normal
+
+		$itk_component(${prefix}displaymenu) entryconfigure "Standard Views" -state normal
+		$itk_component(${prefix}displaymenu) entryconfigure "Reset" -state normal
+		$itk_component(${prefix}displaymenu) entryconfigure "Autoview" -state normal
+		$itk_component(${prefix}displaymenu) entryconfigure "Center..." -state normal
+		$itk_component(${prefix}displaymenu) entryconfigure "Clear" -state normal
+		$itk_component(${prefix}displaymenu) entryconfigure "Refresh" -state normal
+
+		$itk_component(${prefix}modesmenu) entryconfigure "Active Pane" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Quad View" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "View Axes" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Model Axes" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Ground Plane" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Primitive Labels" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Viewing Parameters" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Scale" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Lighting" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Grid" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Snap Grid" -state normal
+		$itk_component(${prefix}modesmenu) entryconfigure "Angle/Distance Cursor" -state normal
+
+		$itk_component(${prefix}raytracemenu) entryconfigure "rt" -state normal
+		$itk_component(${prefix}raytracemenu) entryconfigure "rtcheck" -state normal
+		$itk_component(${prefix}raytracemenu) entryconfigure "rtedge" -state normal
+		$itk_component(${prefix}raytracemenu) entryconfigure "nirt" -state normal
+	    }
+	} else {
+	    $itk_component(menubar) menuconfigure .file.rt -state normal
+
+	    $itk_component(menubar) menuconfigure .display.standard -state normal
+	    $itk_component(menubar) menuconfigure .display.reset -state normal
+	    $itk_component(menubar) menuconfigure .display.autoview -state normal
+	    $itk_component(menubar) menuconfigure .display.center -state normal
+	    $itk_component(menubar) menuconfigure .display.clear -state normal
+	    $itk_component(menubar) menuconfigure .display.refresh -state normal
+
+	    $itk_component(menubar) menuconfigure .modes.activepane -state normal
+	    $itk_component(menubar) menuconfigure .modes.quad -state normal
+	    $itk_component(menubar) menuconfigure .modes.vaxes -state normal
+	    $itk_component(menubar) menuconfigure .modes.maxes -state normal
+	    $itk_component(menubar) menuconfigure .modes.gplane -state normal
+	    $itk_component(menubar) menuconfigure .modes.plabels -state normal
+	    $itk_component(menubar) menuconfigure .modes.vparams -state normal
+	    $itk_component(menubar) menuconfigure .modes.cdot -state normal
+	    $itk_component(menubar) menuconfigure .modes.scale -state normal
+	    $itk_component(menubar) menuconfigure .modes.light -state normal
+	    $itk_component(menubar) menuconfigure .modes.grid -state normal
+	    $itk_component(menubar) menuconfigure .modes.sgrid -state normal
+	    $itk_component(menubar) menuconfigure .modes.adc -state normal
+
+	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.rtedge -state normal
+	    $itk_component(menubar) menuconfigure .raytrace.nirt -state normal
+	}
+    }
+}
 
 ################################### Modes Section ###################################
 
@@ -8137,8 +8321,6 @@ proc title_node_handler {node} {
 ################################### Primitive Creation Section ###################################
 
 ::itcl::body Archer::createObj {type} {
-    return
-
     gedCmd make_name -s 1
 
     switch -- $type {
@@ -8162,12 +8344,27 @@ proc title_node_handler {node} {
 	    set name [gedCmd make_name "arb8."]
 	    createArb8 $name
 	}
-	"bot" {
+	"arbn" {
+	    set name [gedCmd make_name "arbn."]
+	    vmake $name arbn
+	}
+	"ars" {
+	    set name [gedCmd make_name "ars."]
+	    vmake $name ars
+	}
+	"binunif" {
 	    #XXX Not ready yet
 	    return
-
+	}
+	"bot" {
 	    set name [gedCmd make_name "bot."]
-	    createBot $name
+	    vmake $name bot
+
+	    #XXX Not ready yet
+#	    return
+
+#	    set name [gedCmd make_name "bot."]
+#	    createBot $name
 	}
 	"comb" {
 	    set name [gedCmd make_name "comb."]
@@ -8181,6 +8378,10 @@ proc title_node_handler {node} {
 	    set name [gedCmd make_name "ell."]
 	    createEll $name
 	}
+	"ell1" {
+	    set name [gedCmd make_name "ell1."]
+	    vmake $name ell1
+	}
 	"epa" {
 	    set name [gedCmd make_name "epa."]
 	    createEpa $name
@@ -8190,11 +8391,14 @@ proc title_node_handler {node} {
 	    createEto $name
 	}
 	"extrude" {
-	    #XXX Not ready yet
-	    return
-
 	    set name [gedCmd make_name "extrude."]
-	    createExtrude $name
+	    vmake $name extrude
+
+	    #XXX Not ready yet
+#	    return
+
+#	    set name [gedCmd make_name "extrude."]
+#	    createExtrude $name
 	}
 	"grip" {
 	    set name [gedCmd make_name "grip."]
@@ -8208,16 +8412,35 @@ proc title_node_handler {node} {
 	    set name [gedCmd make_name "hyp."]
 	    createHyp $name
 	}
+	"metaball" {
+	    set name [gedCmd make_name "metaball."]
+	    vmake $name metaball
+	}
+	"nmg" {
+	    set name [gedCmd make_name "nmg."]
+	    vmake $name nmg
+	}
 	"part" {
 	    set name [gedCmd make_name "part."]
 	    createPart $name
 	}
 	"pipe" {
-	    #XXX Not ready yet
-	    return
-
 	    set name [gedCmd make_name "pipe."]
-	    createPipe $name
+	    vmake $name pipe
+
+	    #XXX Not ready yet
+#	    return
+
+#	    set name [gedCmd make_name "pipe."]
+#	    createPipe $name
+	}
+	"rcc" {
+	    set name [gedCmd make_name "rcc."]
+	    vmake $name rcc
+	}
+	"rec" {
+	    set name [gedCmd make_name "rec."]
+	    vmake $name rec
 	}
 	"rhc" {
 	    set name [gedCmd make_name "rhc."]
@@ -8227,9 +8450,15 @@ proc title_node_handler {node} {
 	    set name [gedCmd make_name "rpc."]
 	    createRpc $name
 	}
+	"rpp" {
+	    set name [gedCmd make_name "rpp."]
+	    createArb8 $name
+	}
 	"sketch" {
 	    set name [gedCmd make_name "sketch."]
-	    createSketch $name
+	    vmake $name sketch
+#	    set name [gedCmd make_name "sketch."]
+#	    createSketch $name
 	}
 	"sph" {
 	    set name [gedCmd make_name "sph."]
@@ -8239,6 +8468,10 @@ proc title_node_handler {node} {
 	    set name [gedCmd make_name "ell."]
 	    createSuperell $name
 	}
+	"tec" {
+	    set name [gedCmd make_name "tec."]
+	    vmake $name tec
+	}
 	"tgc" {
 	    set name [gedCmd make_name "tgc."]
 	    createTgc $name
@@ -8247,21 +8480,19 @@ proc title_node_handler {node} {
 	    set name [gedCmd make_name "tor."]
 	    createTorus $name
 	}
+	"trc" {
+	    set name [gedCmd make_name "trc."]
+	    vmake $name trc
+	}
 	default {
 	    return
 	}
     }
 
-    $itk_component(tree) selection clear
-    set node [$itk_component(tree) insert end "root" $name "leaf"]
-    $itk_component(tree) alternode $node -color blue
-    $itk_component(tree) redraw; # force redraw to
-    # make sure stuff is there to select
-    $itk_component(tree) selection set $node
-
-    gedCmd configure -autoViewEnable 0
-    dblClick [$itk_component(tree) selection get]
-    gedCmd configure -autoViewEnable 1
+    fillTree {} $name $mEnableListView
+    $itk_component(ged) draw $name
+    selectTreePath $name
+    updateTree
 
     set mNeedSave 1
     updateSaveMode

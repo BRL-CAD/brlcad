@@ -111,6 +111,8 @@ static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
 
 int	save_overlaps=0;
 
+struct bu_image_file *bif = NULL;
+
 /*
  * Package Handlers.
  */
@@ -378,7 +380,7 @@ main(int argc, char **argv)
 	}
     }
 
-    return(0);		/* bu_exit(0, NULL) */
+    return 0;		/* bu_exit(0, NULL) */
 }
 
 /*

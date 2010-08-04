@@ -72,12 +72,13 @@ namespace eval ArcherCore {
 	common VIEW_CENTER_MODE 3
 	common COMP_PICK_MODE 4
 	common COMP_ERASE_MODE 5
-	common MEASURE_MODE 6
-	common OBJECT_ROTATE_MODE 7
-	common OBJECT_TRANSLATE_MODE 8
-	common OBJECT_SCALE_MODE 9
-	common OBJECT_CENTER_MODE 10
-	common FIRST_FREE_BINDING_MODE 11
+	common COMP_SELECT_MODE 6
+	common MEASURE_MODE 7
+	common OBJECT_ROTATE_MODE 8
+	common OBJECT_TRANSLATE_MODE 9
+	common OBJECT_SCALE_MODE 10
+	common OBJECT_CENTER_MODE 11
+	common FIRST_FREE_BINDING_MODE 12
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -162,6 +163,7 @@ namespace eval ArcherCore {
 	method color               {args}
 	method comb                {args}
 	method comb_color          {args}
+	method combmem             {args}
 	method copy                {args}
 	method copyeval            {args}
 	method copymat             {args}
@@ -433,7 +435,7 @@ namespace eval ArcherCore {
 					   3ptarb adjust arced attr bb bev blast bo \
 					   bot2pipe bot_condense bot_decimate bot_face_fuse \
 					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-					   c cd clear clone color comb comb_color copy copyeval copymat \
+					   c cd clear clone color comb comb_color combmem copy copyeval copymat \
 					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
 					   edmater erase erase_all ev exit facetize fracture \
 					   g group hide human i importFg4Section \
@@ -517,6 +519,7 @@ Popup Menu    Right or Ctrl-Left
 
 	# variables for images
 	variable mImage_air ""
+	variable mImage_airLabeled ""
 	variable mImage_airInter ""
 	variable mImage_airSub ""
 	variable mImage_airUnion ""
@@ -525,58 +528,76 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_airregionSub ""
 	variable mImage_airregionUnion ""
 	variable mImage_comb ""
+	variable mImage_combLabeled ""
 	variable mImage_combInter ""
 	variable mImage_combSub ""
 	variable mImage_combUnion ""
 	variable mImage_region ""
+	variable mImage_regionLabeled ""
 	variable mImage_regionInter ""
 	variable mImage_regionSub ""
 	variable mImage_regionUnion ""
 	variable mImage_arb8 ""
+	variable mImage_arb8Labeled ""
 	variable mImage_arb8Inter ""
 	variable mImage_arb8Sub ""
 	variable mImage_arb8Union ""
+	variable mImage_arb7Labeled ""
+	variable mImage_arb6Labeled ""
+	variable mImage_arb5Labeled ""
+	variable mImage_arb4Labeled ""
 	variable mImage_arbn ""
+	variable mImage_arbnLabeled ""
 	variable mImage_arbnInter ""
 	variable mImage_arbnSub ""
 	variable mImage_arbnUnion ""
 	variable mImage_ars ""
+	variable mImage_arsLabeled ""
 	variable mImage_arsInter ""
 	variable mImage_arsSub ""
 	variable mImage_arsUnion ""
 	variable mImage_bot ""
+	variable mImage_botLabeled ""
 	variable mImage_botInter ""
 	variable mImage_botSub ""
 	variable mImage_botUnion ""
 	variable mImage_dsp ""
+	variable mImage_dspLabeled ""
 	variable mImage_dspInter ""
 	variable mImage_dspSub ""
 	variable mImage_dspUnion ""
 	variable mImage_ehy ""
+	variable mImage_ehyLabeled ""
 	variable mImage_ehyInter ""
 	variable mImage_ehySub ""
 	variable mImage_ehyUnion ""
 	variable mImage_ell ""
+	variable mImage_ellLabeled ""
 	variable mImage_ellInter ""
 	variable mImage_ellSub ""
 	variable mImage_ellUnion ""
 	variable mImage_epa ""
+	variable mImage_epaLabeled ""
 	variable mImage_epaInter ""
 	variable mImage_epaSub ""
 	variable mImage_epaUnion ""
 	variable mImage_eto ""
+	variable mImage_etoLabeled ""
 	variable mImage_etoInter ""
 	variable mImage_etoSub ""
 	variable mImage_etoUnion ""
 	variable mImage_extrude ""
+	variable mImage_extrudeLabeled ""
 	variable mImage_extrudeInter ""
 	variable mImage_extrudeSub ""
 	variable mImage_extrudeUnion ""
 	variable mImage_half ""
+	variable mImage_halfLabeled ""
 	variable mImage_halfInter ""
 	variable mImage_halfSub ""
 	variable mImage_halfUnion ""
 	variable mImage_hyp ""
+	variable mImage_hypLabeled ""
 	variable mImage_hypInter ""
 	variable mImage_hypSub ""
 	variable mImage_hypUnion ""
@@ -585,10 +606,12 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_invalidSub ""
 	variable mImage_invalidUnion ""
 	variable mImage_metaball ""
+	variable mImage_metaballLabeled ""
 	variable mImage_metaballInter ""
 	variable mImage_metaballSub ""
 	variable mImage_metaballUnion ""
 	variable mImage_nmg ""
+	variable mImage_nmgLabeled ""
 	variable mImage_nmgInter ""
 	variable mImage_nmgSub ""
 	variable mImage_nmgUnion ""
@@ -596,27 +619,39 @@ Popup Menu    Right or Ctrl-Left
 	variable mImage_otherInter ""
 	variable mImage_otherSub ""
 	variable mImage_otherUnion ""
+	variable mImage_partLabeled ""
 	variable mImage_pipe ""
+	variable mImage_pipeLabeled ""
 	variable mImage_pipeInter ""
 	variable mImage_pipeSub ""
 	variable mImage_pipeUnion ""
 	variable mImage_rhc ""
+	variable mImage_rhcLabeled ""
 	variable mImage_rhcInter ""
 	variable mImage_rhcSub ""
 	variable mImage_rhcUnion ""
 	variable mImage_rpc ""
+	variable mImage_rpcLabeled ""
 	variable mImage_rpcInter ""
 	variable mImage_rpcSub ""
 	variable mImage_rpcUnion ""
 	variable mImage_sketch ""
+	variable mImage_sketchLabeled ""
 	variable mImage_sketchInter ""
 	variable mImage_sketchSub ""
 	variable mImage_sketchUnion ""
+	variable mImage_sph ""
+	variable mImage_sphLabeled ""
+	variable mImage_sphInter ""
+	variable mImage_sphSub ""
+	variable mImage_sphUnion ""
 	variable mImage_tgc ""
+	variable mImage_tgcLabeled ""
 	variable mImage_tgcInter ""
 	variable mImage_tgcSub ""
 	variable mImage_tgcUnion ""
 	variable mImage_tor ""
+	variable mImage_torLabeled ""
 	variable mImage_torInter ""
 	variable mImage_torSub ""
 	variable mImage_torUnion ""
@@ -658,6 +693,7 @@ Popup Menu    Right or Ctrl-Left
 	method updateTree        {{_cflag 0}}
 	method fillTree          {_pnode _ctext {_flat 0}}
 	method fillTreeColumns   {_cnode _ctext}
+	method isRegion          {_cgdata}
 	method loadMenu          {_menu _node _nodeType}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
@@ -727,6 +763,9 @@ Popup Menu    Right or Ctrl-Left
 
 	method initCompErase {}
 	method initCompPick {}
+
+	method initCompSelect {}
+	method compSelectCallback {_mstring}
 
 	method mrayCallback_cvo {_start _target _partitions}
 	method mrayCallback_erase {_start _target _partitions}
@@ -1358,6 +1397,9 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure cerase \
 	-image [image create photo \
 		    -file [file join $dir component_erase.png]]
+    $itk_component(primaryToolbar) itemconfigure cselect \
+	-image [image create photo \
+		    -file [file join $dir component_select.png]]
     $itk_component(primaryToolbar) itemconfigure measure \
 	-image [image create photo \
 		    -file [file join $dir measure.png]]
@@ -1428,6 +1470,7 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::initTreeImages {} {
     set mImage_air [image create photo -file [file join $mImgDir air.png]]
+    set mImage_airLabeled [image create photo -file [file join $mImgDir air_labeled.png]]
     set mImage_airInter [image create photo -file [file join $mImgDir air_intersect.png]]
     set mImage_airSub [image create photo -file [file join $mImgDir air_subtract.png]]
     set mImage_airUnion [image create photo -file [file join $mImgDir air_union.png]]
@@ -1438,71 +1481,90 @@ Popup Menu    Right or Ctrl-Left
     set mImage_airregionUnion [image create photo -file [file join $mImgDir airregion_union.png]]
 
     set mImage_comb [image create photo -file [file join $mImgDir comb.png]]
+    set mImage_combLabeled [image create photo -file [file join $mImgDir comb_labeled.png]]
     set mImage_combInter [image create photo -file [file join $mImgDir comb_intersect.png]]
     set mImage_combSub [image create photo -file [file join $mImgDir comb_subtract.png]]
     set mImage_combUnion [image create photo -file [file join $mImgDir comb_union.png]]
 
     set mImage_region [image create photo -file [file join $mImgDir region.png]]
+    set mImage_regionLabeled [image create photo -file [file join $mImgDir region_labeled.png]]
     set mImage_regionInter [image create photo -file [file join $mImgDir region_intersect.png]]
     set mImage_regionSub [image create photo -file [file join $mImgDir region_subtract.png]]
     set mImage_regionUnion [image create photo -file [file join $mImgDir region_union.png]]
 
     set mImage_arb8 [image create photo -file [file join $mImgDir arb8.png]]
+    set mImage_arb8Labeled [image create photo -file [file join $mImgDir arb8_labeled.png]]
     set mImage_arb8Inter [image create photo -file [file join $mImgDir arb8_intersect.png]]
     set mImage_arb8Sub [image create photo -file [file join $mImgDir arb8_subtract.png]]
     set mImage_arb8Union [image create photo -file [file join $mImgDir arb8_union.png]]
 
+    set mImage_arb7Labeled [image create photo -file [file join $mImgDir arb7_labeled.png]]
+    set mImage_arb6Labeled [image create photo -file [file join $mImgDir arb6_labeled.png]]
+    set mImage_arb5Labeled [image create photo -file [file join $mImgDir arb5_labeled.png]]
+    set mImage_arb4Labeled [image create photo -file [file join $mImgDir arb4_labeled.png]]
+
     set mImage_arbn [image create photo -file [file join $mImgDir arbn.png]]
+    set mImage_arbnLabeled [image create photo -file [file join $mImgDir arbn_labeled.png]]
     set mImage_arbnInter [image create photo -file [file join $mImgDir arbn_intersect.png]]
     set mImage_arbnSub [image create photo -file [file join $mImgDir arbn_subtract.png]]
     set mImage_arbnUnion [image create photo -file [file join $mImgDir arbn_union.png]]
 
     set mImage_ars [image create photo -file [file join $mImgDir ars.png]]
+    set mImage_arsLabeled [image create photo -file [file join $mImgDir ars_labeled.png]]
     set mImage_arsInter [image create photo -file [file join $mImgDir ars_intersect.png]]
     set mImage_arsSub [image create photo -file [file join $mImgDir ars_subtract.png]]
     set mImage_arsUnion [image create photo -file [file join $mImgDir ars_union.png]]
 
     set mImage_bot [image create photo -file [file join $mImgDir bot.png]]
+    set mImage_botLabeled [image create photo -file [file join $mImgDir bot_labeled.png]]
     set mImage_botInter [image create photo -file [file join $mImgDir bot_intersect.png]]
     set mImage_botSub [image create photo -file [file join $mImgDir bot_subtract.png]]
     set mImage_botUnion [image create photo -file [file join $mImgDir bot_union.png]]
 
     set mImage_dsp [image create photo -file [file join $mImgDir dsp.png]]
+    set mImage_dspLabeled [image create photo -file [file join $mImgDir dsp_labeled.png]]
     set mImage_dspInter [image create photo -file [file join $mImgDir dsp_intersect.png]]
     set mImage_dspSub [image create photo -file [file join $mImgDir dsp_subtract.png]]
     set mImage_dspUnion [image create photo -file [file join $mImgDir dsp_union.png]]
 
     set mImage_ehy [image create photo -file [file join $mImgDir ehy.png]]
+    set mImage_ehyLabeled [image create photo -file [file join $mImgDir ehy_labeled.png]]
     set mImage_ehyInter [image create photo -file [file join $mImgDir ehy_intersect.png]]
     set mImage_ehySub [image create photo -file [file join $mImgDir ehy_subtract.png]]
     set mImage_ehyUnion [image create photo -file [file join $mImgDir ehy_union.png]]
 
     set mImage_ell [image create photo -file [file join $mImgDir ell.png]]
+    set mImage_ellLabeled [image create photo -file [file join $mImgDir ell_labeled.png]]
     set mImage_ellInter [image create photo -file [file join $mImgDir ell_intersect.png]]
     set mImage_ellSub [image create photo -file [file join $mImgDir ell_subtract.png]]
     set mImage_ellUnion [image create photo -file [file join $mImgDir ell_union.png]]
 
     set mImage_epa [image create photo -file [file join $mImgDir epa.png]]
+    set mImage_epaLabeled [image create photo -file [file join $mImgDir epa_labeled.png]]
     set mImage_epaInter [image create photo -file [file join $mImgDir epa_intersect.png]]
     set mImage_epaSub [image create photo -file [file join $mImgDir epa_subtract.png]]
     set mImage_epaUnion [image create photo -file [file join $mImgDir epa_union.png]]
 
     set mImage_eto [image create photo -file [file join $mImgDir eto.png]]
+    set mImage_etoLabeled [image create photo -file [file join $mImgDir eto_labeled.png]]
     set mImage_etoInter [image create photo -file [file join $mImgDir eto_intersect.png]]
     set mImage_etoSub [image create photo -file [file join $mImgDir eto_subtract.png]]
     set mImage_etoUnion [image create photo -file [file join $mImgDir eto_union.png]]
 
     set mImage_extrude [image create photo -file [file join $mImgDir extrude.png]]
+    set mImage_extrudeLabeled [image create photo -file [file join $mImgDir extrude_labeled.png]]
     set mImage_extrudeInter [image create photo -file [file join $mImgDir extrude_intersect.png]]
     set mImage_extrudeSub [image create photo -file [file join $mImgDir extrude_subtract.png]]
     set mImage_extrudeUnion [image create photo -file [file join $mImgDir extrude_union.png]]
 
     set mImage_half [image create photo -file [file join $mImgDir half.png]]
+    set mImage_halfLabeled [image create photo -file [file join $mImgDir half_labeled.png]]
     set mImage_halfInter [image create photo -file [file join $mImgDir half_intersect.png]]
     set mImage_halfSub [image create photo -file [file join $mImgDir half_subtract.png]]
     set mImage_halfUnion [image create photo -file [file join $mImgDir half_union.png]]
 
     set mImage_hyp [image create photo -file [file join $mImgDir hyp.png]]
+    set mImage_hypLabeled [image create photo -file [file join $mImgDir hyp_labeled.png]]
     set mImage_hypInter [image create photo -file [file join $mImgDir hyp_intersect.png]]
     set mImage_hypSub [image create photo -file [file join $mImgDir hyp_subtract.png]]
     set mImage_hypUnion [image create photo -file [file join $mImgDir hyp_union.png]]
@@ -1513,11 +1575,13 @@ Popup Menu    Right or Ctrl-Left
     set mImage_invalidUnion [image create photo -file [file join $mImgDir invalid_union.png]]
 
     set mImage_metaball [image create photo -file [file join $mImgDir metaball.png]]
+    set mImage_metaballLabeled [image create photo -file [file join $mImgDir metaball_labeled.png]]
     set mImage_metaballInter [image create photo -file [file join $mImgDir metaball_intersect.png]]
     set mImage_metaballSub [image create photo -file [file join $mImgDir metaball_subtract.png]]
     set mImage_metaballUnion [image create photo -file [file join $mImgDir metaball_union.png]]
 
     set mImage_nmg [image create photo -file [file join $mImgDir nmg.png]]
+    set mImage_nmgLabeled [image create photo -file [file join $mImgDir nmg_labeled.png]]
     set mImage_nmgInter [image create photo -file [file join $mImgDir nmg_intersect.png]]
     set mImage_nmgSub [image create photo -file [file join $mImgDir nmg_subtract.png]]
     set mImage_nmgUnion [image create photo -file [file join $mImgDir nmg_union.png]]
@@ -1527,32 +1591,46 @@ Popup Menu    Right or Ctrl-Left
     set mImage_otherSub [image create photo -file [file join $mImgDir other_subtract.png]]
     set mImage_otherUnion [image create photo -file [file join $mImgDir other_union.png]]
 
+    set mImage_partLabeled [image create photo -file [file join $mImgDir part_labeled.png]]
+
     set mImage_pipe [image create photo -file [file join $mImgDir pipe.png]]
+    set mImage_pipeLabeled [image create photo -file [file join $mImgDir pipe_labeled.png]]
     set mImage_pipeInter [image create photo -file [file join $mImgDir pipe_intersect.png]]
     set mImage_pipeSub [image create photo -file [file join $mImgDir pipe_subtract.png]]
     set mImage_pipeUnion [image create photo -file [file join $mImgDir pipe_union.png]]
 
     set mImage_rhc [image create photo -file [file join $mImgDir rhc.png]]
+    set mImage_rhcLabeled [image create photo -file [file join $mImgDir rhc_labeled.png]]
     set mImage_rhcInter [image create photo -file [file join $mImgDir rhc_intersect.png]]
     set mImage_rhcSub [image create photo -file [file join $mImgDir rhc_subtract.png]]
     set mImage_rhcUnion [image create photo -file [file join $mImgDir rhc_union.png]]
 
     set mImage_rpc [image create photo -file [file join $mImgDir rpc.png]]
+    set mImage_rpcLabeled [image create photo -file [file join $mImgDir rpc_labeled.png]]
     set mImage_rpcInter [image create photo -file [file join $mImgDir rpc_intersect.png]]
     set mImage_rpcSub [image create photo -file [file join $mImgDir rpc_subtract.png]]
     set mImage_rpcUnion [image create photo -file [file join $mImgDir rpc_union.png]]
 
     set mImage_sketch [image create photo -file [file join $mImgDir sketch.png]]
+    set mImage_sketchLabeled [image create photo -file [file join $mImgDir sketch_labeled.png]]
     set mImage_sketchInter [image create photo -file [file join $mImgDir sketch_intersect.png]]
     set mImage_sketchSub [image create photo -file [file join $mImgDir sketch_subtract.png]]
     set mImage_sketchUnion [image create photo -file [file join $mImgDir sketch_union.png]]
 
+    set mImage_sph [image create photo -file [file join $mImgDir sph.png]]
+    set mImage_sphLabeled [image create photo -file [file join $mImgDir sph_labeled.png]]
+    set mImage_sphInter [image create photo -file [file join $mImgDir sph_intersect.png]]
+    set mImage_sphSub [image create photo -file [file join $mImgDir sph_subtract.png]]
+    set mImage_sphUnion [image create photo -file [file join $mImgDir sph_union.png]]
+
     set mImage_tgc [image create photo -file [file join $mImgDir tgc.png]]
+    set mImage_tgcLabeled [image create photo -file [file join $mImgDir tgc_labeled.png]]
     set mImage_tgcInter [image create photo -file [file join $mImgDir tgc_intersect.png]]
     set mImage_tgcSub [image create photo -file [file join $mImgDir tgc_subtract.png]]
     set mImage_tgcUnion [image create photo -file [file join $mImgDir tgc_union.png]]
 
     set mImage_tor [image create photo -file [file join $mImgDir tor.png]]
+    set mImage_torLabeled [image create photo -file [file join $mImgDir tor_labeled.png]]
     set mImage_torInter [image create photo -file [file join $mImgDir tor_intersect.png]]
     set mImage_torSub [image create photo -file [file join $mImgDir tor_subtract.png]]
     set mImage_torUnion [image create photo -file [file join $mImgDir tor_union.png]]
@@ -1572,6 +1650,7 @@ Popup Menu    Right or Ctrl-Left
 	    -sashcursor sb_v_double_arrow \
 	    -hsashcursor sb_h_double_arrow \
 	    -showViewingParams $mShowViewingParams \
+	    -centerDotEnable $mShowViewingParams \
 	    -multi_pane $mMultiPane
     } {
 	keep -sashwidth -sashheight -sashborderwidth
@@ -1952,6 +2031,10 @@ Popup Menu    Right or Ctrl-Left
 		initCompPick \
 		set ret 1
 	} \
+	$COMP_SELECT_MODE { \
+		initCompSelect \
+		set ret 1
+	} \
 	$MEASURE_MODE { \
 		initViewMeasure \
 		set ret 1
@@ -2121,6 +2204,13 @@ Popup Menu    Right or Ctrl-Left
 	-value $COMP_ERASE_MODE \
 	-command [::itcl::code $this initCompErase] \
 	-state disabled
+    $itk_component(primaryToolbar) add radiobutton cselect \
+	-balloonstr "Component Select Mode" \
+	-helpstr "Component Select Mode" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $COMP_SELECT_MODE \
+	-command [::itcl::code $this initCompSelect] \
+	-state disabled
     $itk_component(primaryToolbar) add radiobutton measure \
 	-balloonstr "Measuring Tool" \
 	-helpstr "Measuring Tool" \
@@ -2135,6 +2225,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
+    $itk_component(primaryToolbar) itemconfigure cselect -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     eval pack configure [pack slaves $itk_component(primaryToolbar)] -padx 2
@@ -2200,6 +2291,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     $itk_component(ged) init_view_translate 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
@@ -2219,6 +2311,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     $itk_component(ged) init_view_center 1
+    $itk_component(ged) init_button_no_op 2
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
@@ -2245,6 +2338,17 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick 1
     $itk_component(ged) init_button_no_op 2
+}
+
+::itcl::body ArcherCore::initCompSelect {} {
+    $itk_component(ged) clear_view_rect_callback_list
+    $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
+    $itk_component(ged) init_view_rect 1
+    $itk_component(ged) init_button_no_op 2
+}
+
+::itcl::body ArcherCore::compSelectCallback {_mstring} {
+    putString $_mstring
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
@@ -2321,6 +2425,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) clear_view_measure_callback_list
     $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
     $itk_component(ged) init_view_measure
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewMeasure {_mstring} {
@@ -2339,6 +2444,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center -state normal
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
     $itk_component(primaryToolbar) itemconfigure cerase -state normal
+    $itk_component(primaryToolbar) itemconfigure cselect -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
 
     $itk_component(ged) init_view_bindings
@@ -2359,6 +2465,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
+    $itk_component(primaryToolbar) itemconfigure cselect -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     $itk_component(ged) init_view_bindings brlcad
@@ -2915,7 +3022,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set mShowModelAxes [gedCmd cget -modelAxesEnable]
-    set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnabled]
+    set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnable]
     set mShowViewAxes [gedCmd cget -viewAxesEnable]
     set mShowGrid [gedCmd cget -gridEnable]
     set mSnapGrid [gedCmd cget -gridSnap]
@@ -3011,7 +3118,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::showModelAxesTicks {} {
-    catch {gedCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
+    catch {gedCmd configure -modelAxesTickEnable $mShowModelAxesTicks}
 }
 
 ::itcl::body ArcherCore::showGrid {} {
@@ -3096,39 +3203,7 @@ Popup Menu    Right or Ctrl-Left
     set ptext $mNode2Text($_pnode)
 
     if {!$_flat && $ctype == "comb"} {
-	set ri [lsearch $cgdata region]
-	incr ri
-	set isregion [lindex $cgdata $ri]
-
-	if {$isregion} {
-	    # Check for rid
-	    set ii [lsearch $cgdata id]
-	    if {$ii != -1} {
-		incr ii
-		set hasId [lindex $cgdata $ii]
-	    } else {
-		set hasId 0
-	    }
-
-	    # Check for air
-	    set ai [lsearch $cgdata air]
-
-	    if {$ai != -1} {
-		set hasAir 1
-	    } else {
-		set hasAir 0
-	    }
-
-	    if {($hasId && $hasAir) || (!$hasId && !$hasAir)} {
-		set isregion 3
-	    } else {
-		if {$hasId} {
-		    set isregion 1
-		} else {
-		    set isregion 2
-		}
-	    }
-	}
+	set isregion [isRegion $cgdata]
 
 	set op [getTreeOp $ptext $_ctext]
 	set img [getTreeImage $_ctext $ctype $op $isregion]
@@ -3143,8 +3218,8 @@ Popup Menu    Right or Ctrl-Left
 	    addTreePlaceholder $cnode
 	}
     } else {
-	set op [getTreeOp $ptext $_ctext]
-	set img [getTreeImage $_ctext $ctype $op]
+	set isregion [isRegion $cgdata]
+	set img [getTreeImage $_ctext $ctype "" $isregion]
 	set cnode [$itk_component(newtree) insert $_pnode end \
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
@@ -3179,6 +3254,50 @@ Popup Menu    Right or Ctrl-Left
 
 	$itk_component(newtree) item $_cnode -values $vals
     }
+}
+
+::itcl::body ArcherCore::isRegion {_cgdata} {
+    set ri [lsearch $_cgdata region]
+    if {$ri == -1} {
+	return 0
+    }
+
+    incr ri
+    set isregion [lindex $_cgdata $ri]
+
+    if {$isregion} {
+	# Check for rid
+	set ii [lsearch $_cgdata id]
+	if {$ii != -1} {
+	    incr ii
+	    set hasId [lindex $_cgdata $ii]
+	} else {
+	    set hasId 0
+	}
+
+	# Check for air
+	set ai [lsearch $_cgdata air]
+
+	if {$ai != -1} {
+	    set hasAir 1
+	} else {
+	    set hasAir 0
+	}
+
+	if {($hasId && $hasAir) || (!$hasId && !$hasAir)} {
+	    set isregion 3
+	} else {
+	    if {$hasId} {
+		set isregion 1
+	    } else {
+		set isregion 2
+	    }
+	}
+
+	return $isregion
+    }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::loadMenu {_menu _node _nodeType} {
@@ -3423,6 +3542,7 @@ Popup Menu    Right or Ctrl-Left
 	rhc -
 	rpc -
 	sketch -
+	sph -
 	tgc -
 	tor {
 	    return [subst $[subst mImage_$_type$_op]]
@@ -3555,6 +3675,10 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::handleTreeOpen {} {
+    if {$mEnableListView} {
+	return
+    }
+
     SetWaitCursor $this
 
     set cnode [$itk_component(newtree) focus]
@@ -3761,6 +3885,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::setTreeView {{_rflag 0}} {
+    SetWaitCursor $this
+
     if {$mEnableListView} {
 	set text "Show Tree"
     } else {
@@ -3781,6 +3907,8 @@ Popup Menu    Right or Ctrl-Left
 	    }
 	}
     }
+
+    SetNormalCursor $this
 }
 
 ::itcl::body ArcherCore::toggleTreeView {} {
@@ -4301,6 +4429,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    $itk_component(ged) configure -centerDotEnable $mShowViewingParams
     refreshDisplay
 }
 
@@ -4492,6 +4621,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::comb_color {args} {
     eval gedWrapper comb_color 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::combmem {args} {
+    eval gedWrapper combmem 0 1 1 1 $args
 }
 
 ::itcl::body ArcherCore::copy {args} {

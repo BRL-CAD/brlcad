@@ -128,7 +128,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     if (rt_check_curve(&skt->skt_curve, skt, 1)) {
 	bu_log("ERROR: referenced sketch (%s) is bad!\n",
 	       eip->sketch_name);
-	return(-1);
+	return -1;
     }
 
     BU_GETSTRUCT(extr, extrude_specific);
@@ -296,7 +296,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 		    bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
 			   stp->st_dp->d_namep, csg_extr->radius, sqrt(magsq_s2m));
 		    bu_log("Difference is %g\n", max_radius - csg->radius);
-		    return(-1);
+		    return -1;
 		}
 	    }
 	    dist = sqrt(csg_extr->radius*csg_extr->radius - magsq_s2m);
@@ -331,7 +331,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     stp->st_aradius = 0.5 * MAGNITUDE(tmp);
     stp->st_bradius = stp->st_aradius;
 
-    return(0);              /* OK */
+    return 0;              /* OK */
 }
 
 
@@ -360,14 +360,14 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 
     if (*vy >= 0.0) {
 	if (*vx >= 0.0)
-	    return(1);
+	    return 1;
 	else
-	    return(2);
+	    return 2;
     } else {
 	if (*vx >= 0.0)
-	    return(4);
+	    return 4;
 	else
-	    return(3);
+	    return 3;
     }
 }
 
@@ -405,16 +405,16 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 
     disc = b*b - 4.0*a*c;
     if (disc < 0.0)
-	return(0);
+	return 0;
 
     if (disc <= SMALL_FASTF) {
 	dist[0] = -b/(2.0*a);
-	return(1);
+	return 1;
     }
 
     dist[0] = (-b - sqrt(disc)) / (2.0*a);
     dist[1] = (-b + sqrt(disc)) / (2.0*a);
-    return(2);
+    return 2;
 }
 
 
@@ -436,7 +436,7 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
     dist_count = isect_line2_ellipse(dist, ray_start, ray_dir, center, ra, rb);
 
     if (dist_count == 0)
-	return(0);
+	return 0;
 
     if (orientation) {
 	VREVERSE(local_z, norm);
@@ -552,7 +552,7 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 	}
     }
 
-    return(dist_count);
+    return dist_count;
 }
 
 
@@ -591,7 +591,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     int free_dists=0;
     point2d_t *verts;
     point2d_t *intercept;
-    point2d_t *normal;
+    point2d_t *normal = NULL;
     point2d_t ray_perp;
 
     crv = &extr->crv;
@@ -603,9 +603,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	dist_bottom = DIST_PT_PLANE(rp->r_pt, extr->pl1);
 	dist_top = DIST_PT_PLANE(rp->r_pt, extr->pl2);
 	if (dist_bottom < 0.0 && dist_top < 0.0)
-	    return(0);
+	    return 0;
 	if (dist_bottom > 0.0 && dist_top > 0.0)
-	    return(0);
+	    return 0;
 	dist_bottom = -MAX_FASTF;
 	dist_top = MAX_FASTF;
     } else {
@@ -891,9 +891,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    segp->seg_in = hits[0];	/* struct copy */
 	    segp->seg_out = hits[1];	/* struct copy */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	    return(2);
+	    return 2;
 	} else {
-	    return(0);
+	    return 0;
 	}
     }
 
@@ -957,7 +957,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	}
     }
 
-    return(hit_count);
+    return hit_count;
 }
 
 
@@ -1101,7 +1101,7 @@ rt_extrude_free(struct soltab *stp)
 int
 rt_extrude_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -1127,7 +1127,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	bu_log("ERROR: no sketch to extrude!\n");
 	RT_ADD_VLIST(vhead, extrude_ip->V, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, extrude_ip->V, BN_VLIST_LINE_DRAW);
-	return(0);
+	return 0;
     }
 
     sketch_ip = extrude_ip->skt;
@@ -1144,7 +1144,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
 	RT_ADD_VLIST(vhead, extrude_ip->V, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, extrude_ip->V, BN_VLIST_LINE_DRAW);
-	return(0);
+	return 0;
     }
 
     /* plot bottom curve */
@@ -1153,7 +1153,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     if (curve_to_vlist(vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv)) {
 	bu_log("ERROR: sketch (%s) references non-existent vertices!\n",
 	       extrude_ip->sketch_name);
-	return(-1);
+	return -1;
     }
 
     /* plot top curve */
@@ -1191,7 +1191,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1394,7 +1394,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 	fastf_t radius;
 	point2d_t *verts;
 	point2d_t *intercept;
-	point2d_t *normal;
+	point2d_t *normal = NULL;
 
 	lng = BU_PTBL_GET(loop, i);
 	switch (*lng) {
@@ -1566,7 +1566,6 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		intercept = NULL;
-		normal = NULL;
 		verts = (point2d_t *)bu_calloc(bsg->degree + 1, sizeof(point2d_t), "Bezier verts");
 		for (j=0; j<=bsg->degree; j++) {
 		    V2MOVE(verts[j], ip->verts[bsg->ctl_points[j]]);
@@ -1727,7 +1726,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
 	bu_free((char *)tmp, "loop intercept");
     }
 
-    return(ret);
+    return ret;
 }
 
 
@@ -1762,7 +1761,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
     if (!extrude_ip->skt) {
 	bu_log("rt_extrude_tess: ERROR: no sketch for extrusion!\n");
-	return(-1);
+	return -1;
     }
 
     sketch_ip = extrude_ip->skt;
@@ -1771,7 +1770,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     crv = &sketch_ip->skt_curve;
 
     if (crv->seg_count < 1)
-	return(0);
+	return 0;
 
     /* find all the loops */
     used_seg = (int *)bu_calloc(crv->seg_count, sizeof(int), "used_seg");
@@ -1821,7 +1820,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 		}
 		bu_ptbl_free(&loops);
 		bu_free((char *)used_seg, "used_seg");
-		return(-2);
+		return -2;
 	    }
 	}
 	bu_ptbl_ins(&loops, (long *)aloop);
@@ -1931,7 +1930,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     bu_free((char *)verts, "verts");
     if (nmg_calc_face_plane(fu, pl)) {
 	bu_log("Failed to calculate face plane for extrusion\n");
-	return(-1);
+	return -1;
     }
     nmg_face_g(fu, pl);
     if (VDOT(pl, extrude_ip->h) > 0.0) {
@@ -1969,7 +1968,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	/* calculate plane of this loop */
 	VSETALLN(pl, 0.0, 4);
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
-	    for (j=1; j<vlp->nused; j++) {
+	    for (j=0; j<vlp->nused; j++) {
 		if (vlp->cmd[j] == BN_VLIST_LINE_DRAW) {
 		    VCROSS(cross, vlp->pt[j-1], vlp->pt[j]);
 		    VADD2(pl, pl, cross);
@@ -1980,7 +1979,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	VUNITIZE(pl);
 
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
-	    for (j=1; j<vlp->nused; j++) {
+	    for (j=0; j<vlp->nused; j++) {
 		if (vlp->cmd[j] == BN_VLIST_LINE_DRAW) {
 		    pl[W] += VDOT(pl, vlp->pt[j]);
 		    pt_count++;
@@ -2002,7 +2001,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
 	k = 0;
 	for (BU_LIST_FOR (vlp, bn_vlist, &vhead)) {
-	    for (j=1; j<vlp->nused; j++) {
+	    for (j=0; j<vlp->nused; j++) {
 		if (vlp->cmd[j] == BN_VLIST_LINE_DRAW) {
 		    if (rev) {
 			nmg_vertex_gv(vertsa[(int)(pt_count) - k - 1], vlp->pt[j]);
@@ -2019,12 +2018,12 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     /* extrude this face */
     if (nmg_extrude_face(fu, extrude_ip->h, tol)) {
 	bu_log("Failed to extrude face sketch\n");
-	return(-1);
+	return -1;
     }
 
     nmg_region_a(*r, tol);
 
-    return(0);
+    return 0;
 
  failed:
     for (i=0; i<BU_PTBL_END(&loops); i++) {
@@ -2034,7 +2033,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     bu_free((char *)containing_loops, "containing_loops");
     bu_ptbl_free(aloop);
     bu_free((char *)aloop, "aloop");
-    return(-1);
+    return -1;
 }
 
 
@@ -2060,7 +2059,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     /* Check record type */
     if (rp->u_id != DBID_EXTR) {
 	bu_log("rt_extrude_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -2083,7 +2082,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 		   sketch_name, rp->extr.ex_name);
 	    bu_free(ip->idb_ptr, "extrusion");
-	    return(-1);
+	    return -1;
 	} else {
 	    extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 	}
@@ -2105,7 +2104,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     extrude_ip->sketch_name = (char *)bu_calloc(NAMESIZE+1, sizeof(char), "Extrude sketch name");
     bu_strlcpy(extrude_ip->sketch_name, ptr, NAMESIZE+1);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -2125,7 +2124,7 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EXTRUDE) return(-1);
+    if (ip->idb_type != ID_EXTRUDE) return -1;
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
@@ -2152,7 +2151,7 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
     bu_strlcpy((char *)ptr, extrude_ip->sketch_name, ep->ext_nbytes-sizeof(struct extr_rec));
 
-    return(0);
+    return 0;
 }
 
 
@@ -2172,7 +2171,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EXTRUDE) return(-1);
+    if (ip->idb_type != ID_EXTRUDE) return -1;
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2200,7 +2199,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
     bu_strlcpy((char *)ptr, extrude_ip->sketch_name, rem);
 
-    return(0);
+    return 0;
 }
 
 
@@ -2243,7 +2242,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
-	    return(-1);
+	    return -1;
 	} else {
 	    extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 	}
@@ -2260,7 +2259,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     ptr += SIZEOF_NETWORK_LONG;
     extrude_ip->sketch_name = bu_strdup((const char *)ptr);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -2401,7 +2400,7 @@ rt_extrude_xform(
 	bu_mem_barriercheck();
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -2521,10 +2520,10 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 int
 rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
-    if (!ps) return(0);
+    if (!ps) return 0;
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

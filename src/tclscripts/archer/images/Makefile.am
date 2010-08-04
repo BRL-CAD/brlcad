@@ -8,18 +8,41 @@ dist_tcl_DATA = \
 	aboutArcher.png \
 	air.png \
 	air_intersect.png \
+	air_labeled.png \
 	air_subtract.png \
 	air_union.png \
 	airregion.png \
 	airregion_intersect.png \
 	airregion_subtract.png \
 	airregion_union.png \
+	arb4.png \
+	arb4_intersect.png \
+	arb4_labeled.png \
+	arb4_subtract.png \
+	arb4_union.png \
+	arb5.png \
+	arb5_intersect.png \
+	arb5_labeled.png \
+	arb5_subtract.png \
+	arb5_union.png \
+	arb6.png \
+	arb6_intersect.png \
+	arb6_labeled.png \
+	arb6_subtract.png \
+	arb6_union.png \
+	arb7.png \
+	arb7_intersect.png \
+	arb7_labeled.png \
+	arb7_subtract.png \
+	arb7_union.png \
 	arb8.png \
 	arb8_intersect.png \
+	arb8_labeled.png \
 	arb8_subtract.png \
 	arb8_union.png \
 	arbn.png \
 	arbn_intersect.png \
+	arbn_labeled.png \
 	arbn_subtract.png \
 	arbn_union.png \
 	archer.bmp \
@@ -27,15 +50,18 @@ dist_tcl_DATA = \
 	arrow_forward.png \
 	ars.png \
 	ars_intersect.png \
+	ars_labeled.png \
 	ars_subtract.png \
 	ars_union.png \
 	assembly.png \
 	assembly_intersect.png \
+	assembly_labeled.png \
 	assembly_subtract.png \
 	assembly_union.png \
 	blank.png \
 	bot.png \
 	bot_intersect.png \
+	bot_labeled.png \
 	bot_subtract.png \
 	bot_union.png \
 	bug.png \
@@ -44,15 +70,31 @@ dist_tcl_DATA = \
 	closedf.gif \
 	comb.png \
 	comb_intersect.png \
+	comb_labeled.png \
 	comb_subtract.png \
 	comb_union.png \
 	combination.png \
 	command.png \
 	component_pick.png \
 	component_erase.png \
+	component_select.png \
 	configure.png \
+	cycle_az.png \
+	cycle_el.png \
+	cycle_kx.png \
+	cycle_ky.png \
+	cycle_kz.png \
+	cycle_s.png \
+	cycle_sx.png \
+	cycle_sy.png \
+	cycle_sz.png \
+	cycle_tw.png \
+	cycle_tx.png \
+	cycle_ty.png \
+	cycle_tz.png \
 	dsp.png \
 	dsp_intersect.png \
+	dsp_labeled.png \
 	dsp_subtract.png \
 	dsp_union.png \
 	edit_copy.png \
@@ -64,22 +106,27 @@ dist_tcl_DATA = \
 	edit_translate.png \
 	ehy.png \
 	ehy_intersect.png \
+	ehy_labeled.png \
 	ehy_subtract.png \
 	ehy_union.png \
 	ell.png \
 	ell_intersect.png \
+	ell_labeled.png \
 	ell_subtract.png \
 	ell_union.png \
 	epa.png \
 	epa_intersect.png \
+	epa_labeled.png \
 	epa_subtract.png \
 	epa_union.png \
 	eto.png \
 	eto_intersect.png \
+	eto_labeled.png \
 	eto_subtract.png \
 	eto_union.png \
 	extrude.png \
 	extrude_intersect.png \
+	extrude_labeled.png \
 	extrude_subtract.png \
 	extrude_union.png \
 	file_new.png \
@@ -99,10 +146,12 @@ dist_tcl_DATA = \
 	global_undo.png \
 	half.png \
 	half_intersect.png \
+	half_labeled.png \
 	half_subtract.png \
 	half_union.png \
 	hyp.png \
 	hyp_intersect.png \
+	hyp_labeled.png \
 	hyp_subtract.png \
 	hyp_union.png \
 	invalid.png \
@@ -112,10 +161,12 @@ dist_tcl_DATA = \
 	measure.png \
 	metaball.png \
 	metaball_intersect.png \
+	metaball_labeled.png \
 	metaball_subtract.png \
 	metaball_union.png \
 	nmg.png \
 	nmg_intersect.png \
+	nmg_labeled.png \
 	nmg_subtract.png \
 	nmg_union.png \
 	node.gif \
@@ -131,8 +182,14 @@ dist_tcl_DATA = \
 	pane_blank.png \
 	pane_collapse.png \
 	pane_expand.png \
+	part.png \
+	part_intersect.png \
+	part_labeled.png \
+	part_subtract.png \
+	part_union.png \
 	pipe.png \
 	pipe_intersect.png \
+	pipe_labeled.png \
 	pipe_subtract.png \
 	pipe_union.png \
 	primitive_arb6.png \
@@ -163,29 +220,40 @@ dist_tcl_DATA = \
 	refresh.png \
 	region.png \
 	region_intersect.png \
+	region_labeled.png \
 	region_subtract.png \
 	region_union.png \
 	revert.png \
 	rhc.png \
 	rhc_intersect.png \
+	rhc_labeled.png \
 	rhc_subtract.png \
 	rhc_union.png \
 	rpc.png \
 	rpc_intersect.png \
+	rpc_labeled.png \
 	rpc_subtract.png \
 	rpc_union.png \
 	run.png \
 	save.png \
 	sketch.png \
 	sketch_intersect.png \
+	sketch_labeled.png \
 	sketch_subtract.png \
 	sketch_union.png \
+	sph.png \
+	sph_intersect.png \
+	sph_labeled.png \
+	sph_subtract.png \
+	sph_union.png \
 	tgc.png \
 	tgc_intersect.png \
+	tgc_labeled.png \
 	tgc_subtract.png \
 	tgc_union.png \
 	tor.png \
 	tor_intersect.png \
+	tor_labeled.png \
 	tor_subtract.png \
 	tor_union.png \
 	view_center.png \

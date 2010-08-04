@@ -93,7 +93,7 @@ revolve( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[entityno]->param );
     Readint( &sol_num, "" );
@@ -121,7 +121,7 @@ revolve( entityno )
     {
 	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return( 0 );
+	return 0;
     }
 
     dir[entityno]->referenced = 1;
@@ -134,7 +134,7 @@ revolve( entityno )
 	bu_log( "Could not get points along curve for revovling\n" );
 	bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return( 0 );
+	return 0;
     }
 
 /* Construct a linked list of TRC's */
@@ -223,7 +223,7 @@ revolve( entityno )
 			 trcptr->top, trcptr->r1, trcptr->r2 ) < 0 )  {
 	    bu_log( "Unable to write TRC for entity D%07d (%s)\n" ,
 		    dir[entityno]->direct, dir[entityno]->name );
-	    return( 0 );
+	    return 0;
 	}
 
 	/* Count 'em */
@@ -405,7 +405,7 @@ revolve( entityno )
 	if ( mk_arb8( fdout, cutname, &pts[0][X] ) < 0 )  {
 	    bu_log( "Unable to write ARB8 for entity D%07d (%s)\n" ,
 		    dir[entityno]->direct, dir[entityno]->name );
-	    return( 0 );
+	    return 0;
 	}
     }
 
@@ -440,7 +440,7 @@ revolve( entityno )
 		   (char *)0, (char *)0, (unsigned char *)0, 0 ) < 0 )  {
 	bu_log( "Unable to make combination for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return( 0 );
+	return 0;
     }
 
 
@@ -451,7 +451,7 @@ revolve( entityno )
 	bu_free( (char *)trcptr, "Revolve: trcptr" );
 	trcptr = trcptr->next;
     }
-    return( 1 );
+    return 1;
 }
 
 /* Routine to add a name to the list of subtractions */

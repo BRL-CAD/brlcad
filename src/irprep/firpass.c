@@ -2296,7 +2296,7 @@ int main(int argc, char **argv)
 	bu_free(overlaps, "overlaps");
 
     }
-    return(0);
+    return 0;
 }
 
 int
@@ -2707,7 +2707,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 	prevair = pp->pt_regionp->reg_aircode;
     }
 
-    return (1);
+    return 1;
 }
 
 /*  User supplied miss function.  */
@@ -2718,7 +2718,7 @@ miss(struct application *ap_p)
      *	(void)printf("It was a miss.\n");
      *	(void)fflush(stdout);
      */
-    return (0);
+    return 0;
 }
 
 /*  User supplied overlap function.  */
@@ -2769,7 +2769,7 @@ ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg
      *	(void)fflush(stdout);
      */
 
-    return(1);
+    return 1;
 }
 
 /*

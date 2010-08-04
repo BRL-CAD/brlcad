@@ -750,7 +750,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
 				       stp->st_dp->d_namep, csg->radius, sqrt(magsq_s2m));
 				bu_log("Difference is %g\n", max_radius - csg->radius);
-				return(-1);
+				return -1;
 			    }
 			}
 			distance = sqrt(csg->radius*csg->radius - magsq_s2m);
@@ -1294,7 +1294,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     }
 
     bu_free(endcount, "endcount");
-    return(0);
+    return 0;
 }
 
 
@@ -1371,7 +1371,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	    bu_log("rt_revolve_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
-	    return(-1);
+	    return -1;
 	} else
 	    rip->sk = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
     }
@@ -1389,7 +1389,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     bu_vls_init(&rip->sketch_name);
     bu_vls_strcpy(&rip->sketch_name, (char *)ep->ext_buf + (ELEMENTS_PER_VECT * 3 + 1) * SIZEOF_NETWORK_DOUBLE);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1412,7 +1412,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_REVOLVE) return(-1);
+    if (ip->idb_type != ID_REVOLVE) return -1;
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 

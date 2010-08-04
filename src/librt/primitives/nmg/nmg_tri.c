@@ -101,11 +101,11 @@ int PvsV(struct trap *p, struct trap *v)
     NMG_CK_TRAP(p);
     NMG_CK_TRAP(v);
 
-    if (p->top->coord[Y] > v->top->coord[Y]) return(1);
-    else if (p->top->coord[Y] < v->top->coord[Y]) return(-1);
-    else if (p->top->coord[X] < v->top->coord[X]) return(1);
-    else if (p->top->coord[X] > v->top->coord[X]) return(-1);
-    else return(0);
+    if (p->top->coord[Y] > v->top->coord[Y]) return 1;
+    else if (p->top->coord[Y] < v->top->coord[Y]) return -1;
+    else if (p->top->coord[X] < v->top->coord[X]) return 1;
+    else if (p->top->coord[X] > v->top->coord[X]) return -1;
+    else return 0;
 }
 
 
@@ -230,7 +230,8 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 	} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	    pdv_3move(fp, vu->v_p->vg_p->coord);
-	    if ((p=find_pt2d(tbl2d, vu))) {
+	    p=find_pt2d(tbl2d, vu);
+	    if (p) {
 		sprintf(buf, "%g, %g",
 			p->coord[0], p->coord[1]);
 		pl_label(fp, buf);
@@ -242,7 +243,8 @@ nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 	    NMG_CK_EDGEUSE(eu);
 
 	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		if ((p=find_pt2d(tbl2d, eu->vu_p))) {
+		p=find_pt2d(tbl2d, eu->vu_p);
+		if (p) {
 		    pdv_3move(fp, eu->vu_p->v_p->vg_p->coord);
 
 		    sprintf(buf, "%g, %g",
@@ -339,7 +341,8 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 
     /* if one of the other vertexuses has been mapped, use that data */
     for (BU_LIST_FOR(vu_p, vertexuse, &vu->v_p->vu_hd)) {
-	if ((p = find_pt2d(tbl2d, vu_p))) {
+	p = find_pt2d(tbl2d, vu_p);
+	if (p) {
 	    VMOVE(np->coord, p->coord);
 	    return;
 	}
@@ -487,7 +490,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 	} else bu_bomb("bad magic of loopuse child\n");
     }
 
-    return(tbl2d);
+    return tbl2d;
 }
 
 
@@ -519,7 +522,7 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("\tangle == %g tol angle: %g\n", angle, tol->perp);
 
-    return (angle > tol->perp && angle <= M_PI-tol->perp);
+    return angle > tol->perp && angle <= M_PI-tol->perp;
 }
 
 
@@ -566,9 +569,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
     if (p == n && n == v) {
 	/* loopuse of vertexuse or loopuse of 1 edgeuse */
 	if (lu->orientation == OT_SAME)
-	    return(POLY_POINT);
+	    return POLY_POINT;
 	else if (lu->orientation == OT_OPPOSITE)
-	    return(HOLE_POINT);
+	    return HOLE_POINT;
     }
 
     if (P_GT_V(n, v) && P_GT_V(p, v)) {
@@ -583,9 +586,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 
 	if (p == n) {
 	    if (lu->orientation == OT_OPPOSITE)
-		return(HOLE_END);
+		return HOLE_END;
 	    else if (lu->orientation == OT_SAME)
-		return(POLY_END);
+		return POLY_END;
 	    else {
 		bu_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
 		       __FILE__, __LINE__);
@@ -593,8 +596,8 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	    }
 	}
 
-	if (is_convex(p, v, n, tol)) return(POLY_END);
-	else return(HOLE_END);
+	if (is_convex(p, v, n, tol)) return POLY_END;
+	else return HOLE_END;
 
     }
 
@@ -609,9 +612,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 
 	if (p == n) {
 	    if (lu->orientation == OT_OPPOSITE)
-		return(HOLE_START);
+		return HOLE_START;
 	    else if (lu->orientation == OT_SAME)
-		return(POLY_START);
+		return POLY_START;
 	    else {
 		bu_log("%s: %d loopuse is not OT_SAME or OT_OPPOSITE\n",
 		       __FILE__, __LINE__);
@@ -620,9 +623,9 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	}
 
 	if (is_convex(p, v, n, tol))
-	    return(POLY_START);
+	    return POLY_START;
 	else
-	    return(HOLE_START);
+	    return HOLE_START;
     }
     if ((P_GT_V(n, v) && P_LT_V(p, v)) ||
 	(P_LT_V(n, v) && P_GT_V(p, v))) {
@@ -635,7 +638,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	 *
 	 * This is the "side" of a polygon.
 	 */
-	return(POLY_SIDE);
+	return POLY_SIDE;
     }
     bu_log(
 	"%s %d HELP! special case:\np:(%g %g) v:(%g %g)\nn:(%g %g)\n",
@@ -644,7 +647,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	v->coord[X], v->coord[Y],
 	n->coord[X], n->coord[Y]);
 
-    return(0);
+    return 0;
 }
 
 
@@ -815,7 +818,10 @@ poly_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	}
     }
 
-    bu_bomb("Didn't find trapezoid to close!\n");
+    if (!tp->bot)
+	bu_bomb("Didn't find trapezoid to close!\n");
+    else
+	return;
 
     /* Complete the trapezoid. */
  trap_found:
@@ -1103,7 +1109,8 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
     NMG_CK_VERTEXUSE(vu_p);
 
     /* if it's already mapped we're outta here! */
-    if ((p = find_pt2d(tbl2d, vu_p))) {
+    p = find_pt2d(tbl2d, vu_p);
+    if (p) {
 	if (rt_g.NMG_debug & DEBUG_TRI)
 	    bu_log("%s %d map_new_vertexuse() vertexuse already mapped!\n",
 		   __FILE__, __LINE__);
@@ -1116,7 +1123,8 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
     /* find another use of the same vertex that is already mapped */
     for (BU_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {
 	NMG_CK_VERTEXUSE(vu);
-	if (! (p=find_pt2d(tbl2d, vu)))
+	p=find_pt2d(tbl2d, vu);
+	if (!p)
 	    continue;
 
 	/* map parameter vertexuse */
@@ -1596,7 +1604,8 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
     if (rt_g.NMG_debug & DEBUG_TRI)
 	VPRINT("\t\tdir", dir);
 
-    if (! (fu = nmg_find_fu_of_vu(cut_vu1))) {
+    fu = nmg_find_fu_of_vu(cut_vu1);
+    if (!fu) {
 	bu_log("%s: %d no faceuse parent of vu\n", __FILE__, __LINE__);
 	bu_bomb("Bye now\n");
     }
@@ -1724,7 +1733,7 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 	    nmg_stash_model_to_file("bad_tri_cut.g",
 				    nmg_find_model(&p1->vu_p->l.magic), buf);
 
-	    bu_bomb("cut_mapped_loop() goodnight 2\n");
+	    bu_bomb("cut_mapped_loop() goodnight 3\n");
 	}
     }
 
@@ -2422,7 +2431,8 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 
 	    pl_color(plot_fp, 200, 200, 100);
 
-	    if (! (p=find_pt2d(tbl2d, vu)))
+	    p=find_pt2d(tbl2d, vu);
+	    if (!p)
 		bu_bomb("didn't find vertexuse in list!\n");
 
 	    pdv_3point(plot_fp, p->coord);
@@ -2437,10 +2447,12 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 
 	    eu_pnext = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
-	    if (! (p=find_pt2d(tbl2d, eu->vu_p)))
+	    p=find_pt2d(tbl2d, eu->vu_p);
+	    if (!p)
 		bu_bomb("didn't find vertexuse in list!\n");
 
-	    if (! (pn=find_pt2d(tbl2d, eu_pnext->vu_p)))
+	    pn=find_pt2d(tbl2d, eu_pnext->vu_p);
+	    if (!pn)
 		bu_bomb("didn't find vertexuse in list!\n");
 
 

@@ -21,23 +21,18 @@
  *
  */
 
-#include "flat.h"
-#include "hit.h"
 #include "adrt_struct.h"
 #include <stdio.h>
 
 
-void render_flat_init(render_t *render, char *usr) {
-    render->work = render_flat_work;
-    render->free = render_flat_free;
+void
+render_flat_free(render_t *render)
+{
 }
 
-
-void render_flat_free(render_t *render) {
-}
-
-
-void render_flat_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel) {
+void
+render_flat_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
+{
     tie_id_t id;
     adrt_mesh_t *mesh;
 
@@ -47,6 +42,15 @@ void render_flat_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel
 	    mesh->texture->work(mesh->texture, mesh, ray, &id, pixel);
     }
 }
+
+int
+render_flat_init(render_t *render, char *usr)
+{
+    render->work = render_flat_work;
+    render->free = render_flat_free;
+    return 0;
+}
+
 
 /*
  * Local Variables:

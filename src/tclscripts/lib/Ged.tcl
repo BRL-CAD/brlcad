@@ -63,7 +63,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -modelAxesTripleColor modelAxesTripleColor AxesTripleColor 0
 
     itk_option define -modelAxesTickColor modelAxesTickColor AxesTickColor Yellow
-    itk_option define -modelAxesTickEnabled modelAxesTickEnabled AxesTickEnabled 1
+    itk_option define -modelAxesTickEnable modelAxesTickEnable AxesTickEnable 1
     itk_option define -modelAxesTickInterval modelAxesTickInterval AxesTickInterval 100
     itk_option define -modelAxesTickLength modelAxesTickLength AxesTickLength 4
     itk_option define -modelAxesTickMajorColor modelAxesTickMajorColor AxesTickMajorColor Red
@@ -104,7 +104,7 @@ package provide cadwidgets::Ged 1.0
 
 	method 3ptarb {args}
 	method adc {args}
-	method adjust {args}
+ 	method adjust {args}
 	method ae {args}
 	method ae2dir {args}
 	method aet {args}
@@ -143,6 +143,7 @@ package provide cadwidgets::Ged 1.0
 	method color {args}
 	method comb {args}
 	method comb_color {args}
+	method combmem {args}
 	method configure_win {args}
 	method constrain_rmode {args}
 	method constrain_tmode {args}
@@ -241,6 +242,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_orotate {args}
 	method mouse_oscale {args}
 	method mouse_otranslate {args}
+	method mouse_rect {args}
 	method mouse_rot {args}
 	method mouse_rotate_arb_face {args}
 	method mouse_scale {args}
@@ -259,6 +261,7 @@ package provide cadwidgets::Ged 1.0
 	method nmg_simplify {args}
 	method ocenter {args}
 	method open {args}
+	method opendb {args}
 	method orient {args}
 	method orotate {args}
 	method orotate_mode {args}
@@ -298,6 +301,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_orotate {_pane args}
 	method pane_mouse_oscale {_pane args}
 	method pane_mouse_otranslate {_pane args}
+	method pane_mouse_rect {_pane args}
 	method pane_mouse_rot {_pane args}
 	method pane_mouse_rotate_arb_face {_pane args}
 	method pane_mouse_scale {_pane args}
@@ -326,6 +330,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_quat {_pane args}
 	method pane_qvrot {_pane args}
 	method pane_rect {_pane args}
+	method pane_rect_mode {_pane args}
 	method pane_refresh {_pane args}
 	method pane_rmat {_pane args}
 	method pane_rot {_pane args}
@@ -388,6 +393,7 @@ package provide cadwidgets::Ged 1.0
 	method r {args}
 	method rcodes {args}
 	method rect {args}
+	method rect_mode {args}
 	method red {args}
 	method refresh {args}
 	method refresh_all {args}
@@ -408,6 +414,7 @@ package provide cadwidgets::Ged 1.0
 	method rotate_arb_face_mode {args}
 	method rotate_mode {args}
 	method rrt {args}
+	method rselect {args}
 	method rt {args}
 	method rt_end_callback {args}
 	method rt_gettrees {args}
@@ -432,6 +439,7 @@ package provide cadwidgets::Ged 1.0
 	method sdata_labels {args}
 	method sdata_lines {args}
 	method search {args}
+	method select {args}
 	method set_coord {args}
 	method set_fb_mode {args}
 	method set_output_script {args}
@@ -502,13 +510,14 @@ package provide cadwidgets::Ged 1.0
 	method end_data_move {_pane}
 	method end_view_measure {_pane {_part2_button 2}}
 	method end_view_measure_part2 {_pane _button}
+	method end_view_rect {_pane {_button 1}}
+	method end_view_rotate {_pane}
+	method end_view_scale {_pane}
+	method end_view_translate {_pane}
 	method getUserCmds {}
 	method handle_data_move {_pane _dtype _dindex _x _y}
 	method handle_view_measure {_pane _x _y}
 	method handle_view_measure_part2 {_pane _x _y}
-	method handle_view_rotate_end {_pane}
-	method handle_view_scale_end {_pane}
-	method handle_view_translate_end {_pane}
 	method help {args}
 	method history_callback {args}
 	method init_button_no_op {{_button 1}}
@@ -522,6 +531,7 @@ package provide cadwidgets::Ged 1.0
 	method init_view_center {{_button 1}}
 	method init_view_measure {{_button 1} {_part2_button 2}}
 	method init_view_measure_part2 {_button}
+	method init_view_rect {{_button 1}}
 	method init_view_rotate {{_button 1}}
 	method init_view_scale {{_button 1}}
 	method init_view_translate {{_button 1}}
@@ -577,6 +587,10 @@ package provide cadwidgets::Ged 1.0
 	method add_view_measure_callback {_callback}
 	method clear_view_measure_callback_list {}
 	method delete_view_measure_callback {_callback}
+
+	method add_view_rect_callback {_callback}
+	method clear_view_rect_callback_list {}
+	method delete_view_rect_callback {_callback}
  
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
@@ -617,6 +631,7 @@ package provide cadwidgets::Ged 1.0
 	variable mMouseDataCallbacks ""
 	variable mMouseRayCallbacks ""
 	variable mViewMeasureCallbacks ""
+	variable mViewRectCallbacks ""
 
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
@@ -726,7 +741,7 @@ package provide cadwidgets::Ged 1.0
 ############################### Configuration Options ###############################
 
 ::itcl::configbody cadwidgets::Ged::centerDotEnable {
-    eval faceplate center_dot draw [get_rgb_color $itk_option(-centerDotEnable)]
+    eval faceplate center_dot draw $itk_option(-centerDotEnable)
 }
 
 ::itcl::configbody cadwidgets::Ged::adcEnable {
@@ -773,8 +788,8 @@ package provide cadwidgets::Ged 1.0
     eval model_axes tick_color [get_rgb_color $itk_option(-modelAxesTickColor)]
 }
 
-::itcl::configbody cadwidgets::Ged::modelAxesTickEnabled {
-    model_axes tick_enabled $itk_option(-modelAxesTickEnabled)
+::itcl::configbody cadwidgets::Ged::modelAxesTickEnable {
+    model_axes tick_enable $itk_option(-modelAxesTickEnable)
 }
 
 ::itcl::configbody cadwidgets::Ged::modelAxesTickInterval {
@@ -1041,6 +1056,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed comb_color $args
 }
 
+::itcl::body cadwidgets::Ged::combmem {args} {
+    eval $mGed combmem $args
+}
+
 ::itcl::body cadwidgets::Ged::configure_win {args} {
     eval $mGed configure $args
 }
@@ -1218,10 +1237,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::faceplate {args} {
-    eval $mGed faceplate $itk_component(ur) $args
-    eval $mGed faceplate $itk_component(ul) $args
-    eval $mGed faceplate $itk_component(ll) $args
-    eval $mGed faceplate $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	set ret [eval $mGed faceplate $itk_component($dm) $args]
+    }
+
+    return $ret
 }
 
 ::itcl::body cadwidgets::Ged::facetize {args} {
@@ -1439,10 +1459,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::model_axes {args} {
-    eval $mGed model_axes $itk_component(ur) $args
-    eval $mGed model_axes $itk_component(ul) $args
-    eval $mGed model_axes $itk_component(ll) $args
-    eval $mGed model_axes $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	set ret [eval $mGed model_axes $itk_component($dm) $args]
+    }
+
+    return $ret
 }
 
 ::itcl::body cadwidgets::Ged::more_args_callback {args} {
@@ -1475,6 +1496,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::mouse_otranslate {args} {
     eval $mGed mouse_otranslate $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::mouse_rect {args} {
+    eval $mGed mouse_rect $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_rot {args} {
@@ -1546,6 +1571,10 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::open {args} {
+    set $mGedFile [eval $mGed open $args]
+}
+
+::itcl::body cadwidgets::Ged::opendb {args} {
     set $mGedFile [eval $mGed open $args]
 }
 
@@ -1705,6 +1734,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_otranslate $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_mouse_rect {_pane args} {
+    eval $mGed mouse_rect $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_rot {_pane args} {
     eval $mGed mouse_rot $itk_component($_pane) $args
 }
@@ -1815,6 +1848,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_rect {_pane args} {
     eval $mGed rect $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_rect_mode {_pane args} {
+    eval $mGed rect_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_refresh {_pane args} {
@@ -2092,6 +2129,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed rect $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::rect_mode {args} {
+    eval $mGed rect_mode $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::red {args} {
     eval $mGed red $args
 }
@@ -2178,6 +2219,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::rrt {args} {
     eval $mGed rrt $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::rselect {args} {
+    eval $mGed rselect $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::rt {args} {
@@ -2306,6 +2351,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::search {args} {
     eval $mGed search $args
+}
+
+::itcl::body cadwidgets::Ged::select {args} {
+    eval $mGed select $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::set_coord {args} {
@@ -2457,10 +2506,11 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::view_axes {args} {
-    eval $mGed view_axes $itk_component(ur) $args
-    eval $mGed view_axes $itk_component(ul) $args
-    eval $mGed view_axes $itk_component(ll) $args
-    eval $mGed view_axes $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	set ret [eval $mGed view_axes $itk_component($dm) $args]
+    }
+
+    return $ret
 }
 
 ::itcl::body cadwidgets::Ged::viewdir {args} {
@@ -2630,6 +2680,10 @@ package provide cadwidgets::Ged 1.0
 
     # start receiving motion events
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_view_measure $_pane %x %y]; break"
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <ButtonRelease-$_part1_button> "[::itcl::code $this end_view_measure $dm $_part1_button $_part2_button]; break"
+    }
 
     set mMeasuringStickColorVDraw3D [get_vdraw_color $itk_option(-measuringStickColor)]
 }
@@ -2820,6 +2874,48 @@ package provide cadwidgets::Ged 1.0
     init_button_no_op_prot $_button
 }
 
+::itcl::body cadwidgets::Ged::end_view_rect {_pane {_button 1}} {
+    $mGed idle_mode $itk_component($_pane)
+
+#    # Add specific bindings to eliminate bleed through from rectangle mode
+#    foreach dm {ur ul ll lr} {
+#	bind $itk_component($dm) <Control-ButtonRelease-$_button> "$mGed idle_mode $itk_component($dm); break"
+#	bind $itk_component($dm) <Shift-ButtonRelease-$_button> "$mGed idle_mode $itk_component($dm); break"
+#    }
+
+    if {[llength $mViewRectCallbacks] == 0} {
+	tk_messageBox -message [$mGed rselect $itk_component($_pane)]
+    } else {
+	foreach callback $mViewRectCallbacks {
+	    catch {$callback [$mGed rselect $itk_component($_pane)]}
+	}
+    }
+}
+
+::itcl::body cadwidgets::Ged::end_view_rotate {_pane} {
+    $mGed idle_mode $itk_component($_pane)
+
+    if {$mHistoryCallback != ""} {
+	eval $mHistoryCallback [list [list aet [pane_aet $_pane]]]
+    }
+}
+
+::itcl::body cadwidgets::Ged::end_view_scale {_pane} {
+    $mGed idle_mode $itk_component($_pane)
+
+    if {$mHistoryCallback != ""} {
+	eval $mHistoryCallback [list [list size [pane_size $_pane]]]
+    }
+}
+
+::itcl::body cadwidgets::Ged::end_view_translate {_pane} {
+    $mGed idle_mode $itk_component($_pane)
+
+    if {$mHistoryCallback != ""} {
+	eval $mHistoryCallback [list [list center [pane_center $_pane]]]
+    }
+}
+
 ::itcl::body cadwidgets::Ged::getUserCmds {} {
     return [$help getCmds]
 }
@@ -2880,30 +2976,6 @@ package provide cadwidgets::Ged 1.0
     $mGed vdraw delete 2
     eval $mGed vdraw write next 1 $mEnd3DPoint
     $mGed vdraw send
-}
-
-::itcl::body cadwidgets::Ged::handle_view_rotate_end {_pane} {
-    $mGed idle_mode $itk_component($_pane)
-
-    if {$mHistoryCallback != ""} {
-	eval $mHistoryCallback [list [list aet [pane_aet $_pane]]]
-    }
-}
-
-::itcl::body cadwidgets::Ged::handle_view_scale_end {_pane} {
-    $mGed idle_mode $itk_component($_pane)
-
-    if {$mHistoryCallback != ""} {
-	eval $mHistoryCallback [list [list size [pane_size $_pane]]]
-    }
-}
-
-::itcl::body cadwidgets::Ged::handle_view_translate_end {_pane} {
-    $mGed idle_mode $itk_component($_pane)
-
-    if {$mHistoryCallback != ""} {
-	eval $mHistoryCallback [list [list center [pane_center $_pane]]]
-    }
 }
 
 ::itcl::body cadwidgets::Ged::help {args} {
@@ -3090,29 +3162,18 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::init_view_center {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "$mGed vslew $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <$_button> "$mGed vslew $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <$_button> "$mGed vslew $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <$_button> "$mGed vslew $itk_component(lr) %x %y; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end lr]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed vslew $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_translate $dm]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_measure {{_button 1} {_part2_button 2}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_view_measure ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_view_measure ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_view_measure ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_view_measure lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ur $_part2_button]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ul $_part2_button]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ll $_part2_button]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure lr $_part2_button]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_part1_button> "[::itcl::code $this begin_view_measure $dm $_part1_button $_part2_button %x %y]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_measure_part2 {_button} {
@@ -3127,46 +3188,40 @@ package provide cadwidgets::Ged 1.0
     bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 lr $_button]; break"
 }
 
+::itcl::body cadwidgets::Ged::init_view_rect {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed rect_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rect $dm]; break"
+    }
+}
+
 ::itcl::body cadwidgets::Ged::init_view_rotate {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "$mGed rotate_mode $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <$_button> "$mGed rotate_mode $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <$_button> "$mGed rotate_mode $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <$_button> "$mGed rotate_mode $itk_component(lr) %x %y; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end lr]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed rotate_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rotate $dm]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_scale {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "$mGed scale_mode $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <$_button> "$mGed scale_mode $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <$_button> "$mGed scale_mode $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <$_button> "$mGed scale_mode $itk_component(lr) %x %y; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end lr]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed scale_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_scale $dm]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_translate {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "$mGed translate_mode $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <$_button> "$mGed translate_mode $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <$_button> "$mGed translate_mode $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <$_button> "$mGed translate_mode $itk_component(lr) %x %y; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end lr]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed translate_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_translate $dm]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::center_ray {{_pflag 0}} {
@@ -3211,15 +3266,15 @@ package provide cadwidgets::Ged 1.0
 
 	    if {[catch {bu_get_value_by_keyword in $partition} in]} {
 		set mMeasuringStick3DCurrent 0
-		putString "Partition does not contain an \"in\""
-		putString "$in"
+#		putString "Partition does not contain an \"in\""
+#		putString "$in"
 		return
 	    }
 
 	    if {[catch {bu_get_value_by_keyword point $in} point]} {
 		set mMeasuringStick3DCurrent 0
-		putString "Partition does not contain an \"in\" point"
-		putString "$point"
+#		putString "Partition does not contain an \"in\" point"
+#		putString "$point"
 		return
 	    }
 	}
@@ -3670,6 +3725,26 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+::itcl::body cadwidgets::Ged::add_view_rect_callback {_callback} {
+    set i [lsearch $mViewRectCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mViewRectCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_view_rect_callback_list {} {
+    set mViewRectCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_view_rect_callback {_callback} {
+    set i [lsearch $mViewRectCallbacks $_callback]
+    if {$i != -1} {
+	set mViewRectCallbacks [lreplace $mViewRectCallbacks $i $i]
+    }
+}
+
 ::itcl::body cadwidgets::Ged::get_ged_color {_color} {
     switch -- $_color {
 	"Grey" {
@@ -3788,14 +3863,11 @@ package provide cadwidgets::Ged 1.0
 ############################### Protected Methods ###############################
 
 ::itcl::body cadwidgets::Ged::init_button_no_op_prot {{_button 1}} {
-    bind $itk_component(ur) <$_button> ""
-    bind $itk_component(ul) <$_button> ""
-    bind $itk_component(ll) <$_button> ""
-    bind $itk_component(lr) <$_button> ""
-    bind $itk_component(ur) <ButtonRelease-$_button> ""
-    bind $itk_component(ul) <ButtonRelease-$_button> ""
-    bind $itk_component(ll) <ButtonRelease-$_button> ""
-    bind $itk_component(lr) <ButtonRelease-$_button> ""
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> ""
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+	$mGed rect $itk_component($dm) draw 0
+    }
 }
 
 ::itcl::body cadwidgets::Ged::measure_line_erase {} {
@@ -3947,6 +4019,7 @@ package provide cadwidgets::Ged 1.0
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}
+    $help add combmem		{{comb_name <op name az el tw tx ty tz sa sx sy sz ...>} {set/get comb members}}
     $help add copyeval		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
     $help add copymat		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
     $help add cp		{{from to} {copy [duplicate] object}}
@@ -4070,6 +4143,7 @@ package provide cadwidgets::Ged 1.0
     $help add rot_point		{{x y z} {rotate xyz by the current view rotation matrix}}
     $help add rotate_arb_face	{{arb face pt} {rotate an arb's face through pt}}
     $help add rrt		{{rt_application [options]} {run the specified rt application}}
+    $help add rselect		{{} {select objects within a previously define rectangle}}
     $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}
     $help add rt_gettrees      	{{[-i] [-u] pname object} {create a raytracing object}}
     $help add rtabort		{{} {abort the associated raytraces}}
@@ -4081,6 +4155,7 @@ package provide cadwidgets::Ged 1.0
     $help add saveview		{{[-e] [-i] [-l] [-o] filename [args]} {save the current view to file}}
     $help add sca		{{sfactor} {scale by sfactor}}
     $help add search		{{options} {see search man page}}
+    $help add select		{{vx vy {vr | vw vh}} {select objects within the specified circle or rectangle}}
     $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}
     $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
     $help add shader		{{comb shader_material [shader_args]} {command line version of the mater command}}

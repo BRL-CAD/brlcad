@@ -107,9 +107,9 @@ static int
 select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     if ( tsp->ts_regionid == curr_id )
-	return( 0 );
+	return 0;
     else
-	return( -1 );
+	return -1;
 }
 
 /* routine used in tree walker to collect region ident numbers */
@@ -117,7 +117,7 @@ static int
 get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     insert_id( tsp->ts_regionid );
-    return( -1 );
+    return -1;
 }
 
 /* stubs to warn of the unexpected */
@@ -128,7 +128,7 @@ region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union t
 
     fp_name = DB_FULL_PATH_CUR_DIR( pathp );
     bu_log( "region stub called (for object %s), this shouldn't happen\n", fp_name->d_namep );
-    return( (union tree *)NULL );
+    return (union tree *)NULL;
 }
 
 static union tree *
@@ -138,7 +138,7 @@ leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
     fp_name = DB_FULL_PATH_CUR_DIR( pathp );
     bu_log( "Only regions may be converted to TANKILL format\n\t%s is not a region and will be ignored\n", fp_name->d_namep );
-    return( (union tree *)NULL );
+    return (union tree *)NULL;
 }
 
 #if 0
@@ -846,7 +846,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     }
 
     if (curtree->tr_op == OP_NOP)
-	return  curtree;
+	return curtree;
 
     regions_tried++;
 
@@ -984,7 +984,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     BU_GETUNION(curtree, tree);
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
-    return(curtree);
+    return curtree;
 }
 
 /*

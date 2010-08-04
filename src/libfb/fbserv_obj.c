@@ -227,14 +227,14 @@ fbs_makeconn(int fd, const struct pkg_switch *switchp)
 
     if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
 	comm_error("fbs_makeconn: malloc failure\n");
-	return(PKC_ERROR);
+	return PKC_ERROR;
     }
 
 #ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	comm_error("fbs_makeconn:  could not find a usable WinSock DLL\n");
-	return(PKC_ERROR);
+	return PKC_ERROR;
     }
 #endif
 
@@ -382,7 +382,7 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
 {
-    int x, y, num;
+    long x, y, num;
     char rbuf[NET_LONG_LEN+1];
     int ret;
     int type;
@@ -391,7 +391,7 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
     type = pcp->pkc_type;
-    ret = fb_write(curr_fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], num);
+    ret = fb_write(curr_fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], (size_t)num);
 
     if (type < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -917,7 +917,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	return TCL_ERROR;
     }
 
-    fbsp->fbs_listener.fbsl_port = port;
+    fbsp->fbs_listener.fbsl_port = available_port;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_GetChannelHandle(fbsp->fbs_listener.fbsl_chan, TCL_READABLE, (ClientData *)&fbsp->fbs_listener.fbsl_fd);

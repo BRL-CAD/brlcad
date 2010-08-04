@@ -507,7 +507,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trunc(&v, 0);
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
-	    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
+	    bu_vls_printf(&gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
 	}
     }
 
@@ -517,7 +517,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_trunc(&v, 0);
 	bu_vls_strcpy(&v, line);
 	bu_vls_trimspace(&v);
-	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
+	bu_vls_printf(&gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
     }
     (void)fclose(fp_err);
 

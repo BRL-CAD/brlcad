@@ -288,7 +288,7 @@ light_render(struct application *ap, struct partition *pp, struct shadework *swp
 	VSCALE(swp->sw_color, lsp->lt_color, f);
     }
 #endif
-    return(1);
+    return 1;
 }
 
 
@@ -620,7 +620,7 @@ light_setup(register struct region *rp,
 
     if (bu_struct_parse(matparm, light_parse, (char *)lsp) < 0) {
 	light_free((char *)lsp);
-	return(-1);
+	return -1;
     }
 
     if (lsp->lt_angle > 180)  lsp->lt_angle = 180;
@@ -638,12 +638,12 @@ light_setup(register struct region *rp,
 	register union tree *tp;
 
 	if (rt_bound_tree(rp->reg_treetop, min_rpp, max_rpp) < 0)
-	    return(-1);
+	    return -1;
 
 	if (max_rpp[X] >= INFINITY) {
 	    bu_log("light_setup(%s) Infinitely large light sources not supported\n",
 		   lsp->lt_name);
-	    return(-1);
+	    return -1;
 	}
 
 	VADD2SCALE(lsp->lt_pos, min_rpp, max_rpp, 0.5);
@@ -726,11 +726,11 @@ light_setup(register struct region *rp,
 	light_print(rp, (char *)lsp);
     }
     if (lsp->lt_invisible) {
-	return(2);	/* don't show light, destroy it later */
+	return 2;	/* don't show light, destroy it later */
     }
 
     *dpp = (genptr_t)lsp;	/* Associate lsp with reg_udata */
-    return(1);
+    return 1;
 }
 
 
@@ -829,7 +829,7 @@ light_init(struct application *ap)
 	bu_log("Number of lights limited to %d\n", SW_NLIGHTS);
 	nlights = SW_NLIGHTS;
     }
-    return(nlights);
+    return nlights;
 }
 
 
@@ -1252,7 +1252,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 				      V3ARGS(ap->a_color), reason,
 				      regp ? regp->reg_name : "");
 #endif
-    return(light_visible);
+    return light_visible;
 }
 
 
@@ -1271,7 +1271,7 @@ light_miss(register struct application *ap)
     if (lsp->lt_invisible || lsp->lt_infinite) {
 	VSETALL(ap->a_color, 1);
 	if (rdebug & RDEBUG_LIGHT) bu_log("light_miss vis=1\n");
-	return(1);		/* light_visible = 1 */
+	return 1;		/* light_visible = 1 */
     }
 
     if (rdebug & RDEBUG_LIGHT) {
@@ -1284,7 +1284,7 @@ light_miss(register struct application *ap)
     /* Missed light, either via blockage or dither.  Return black */
     VSETALL(ap->a_color, 0);
     if (rdebug & RDEBUG_LIGHT) bu_log("light_miss vis=0\n");
-    return(-1);			/* light_visible = 0 */
+    return -1;			/* light_visible = 0 */
 }
 
 

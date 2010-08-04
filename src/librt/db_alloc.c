@@ -41,11 +41,11 @@
  *
  * Find a block of database storage of "count" granules.
  *
- * Returns -
+ * Returns:
  * 0 OK
- * -1 failure
+ * non-0 failure
  */
-size_t
+int
 db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count)
 {
     size_t len;
@@ -57,7 +57,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 				    dp->d_namep, dbip, dp, count);
     if (count <= 0) {
 	bu_log("db_alloc(0)\n");
-	return (size_t)-1;
+	return -1;
     }
 
     if (dp->d_flags & RT_DIR_INMEM) {
@@ -73,7 +73,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
     if (dbip->dbi_read_only) {
 	bu_log("db_alloc on READ-ONLY file\n");
-	return (size_t)-1;
+	return -1;
     }
     while (1) {
 	len = rt_memalloc(&(dbip->dbi_freep), (unsigned)count);
@@ -81,17 +81,17 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 	    /* No contiguous free block, append to file */
 	    if ((dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR) {
 		bu_log("db_alloc: bad EOF\n");
-		return (size_t)-1;
+		return -1;
 	    }
 	    dp->d_len = count;
-	    dbip->dbi_eof += count * sizeof(union record);
+	    dbip->dbi_eof += (off_t)(count * sizeof(union record));
 	    dbip->dbi_nrec += count;
 	    break;
 	}
 	dp->d_addr = (off_t)(len * sizeof(union record));
 	dp->d_len = count;
 	if (db_get(dbip, dp, &rec, 0, 1) < 0)
-	    return (size_t)-1;
+	    return -1;
 	if (rec.u_id != ID_FREE) {
 	    bu_log("db_alloc():  len %ld non-FREE (id %d), skipping\n",
 		   len, rec.u_id);
@@ -100,7 +100,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
     }
 
     /* Clear out ALL the granules, for safety */
-    return(db_zapper(dbip, dp, 0));
+    return db_zapper(dbip, dp, 0);
 }
 
 
@@ -130,11 +130,15 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
  * Delete the indicated database record(s).
  * Arrange to write "free storage" database markers in it's place,
  * positively erasing what had been there before.
+ *
+ * Returns:
+ * 0 on success
+ * non-zero on failure
  */
-size_t
+int
 db_delete(struct db_i *dbip, struct directory *dp)
 {
-    size_t i = (size_t)-1;
+    int i = 0;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -172,15 +176,16 @@ db_delete(struct db_i *dbip, struct directory *dp)
  * This will zap all records from "start" to the end of this entry.
  *
  * Returns:
- * -1 on error
  * 0 on success (from db_put())
+ * non-zero on failure
  */
-size_t
+int
 db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 {
     union record *rp;
     size_t i;
     size_t todo;
+    int ret;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -190,23 +195,24 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     if (dp->d_flags & RT_DIR_INMEM) bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
 
     if (dbip->dbi_read_only)
-	return (size_t)-1;
+	return -1;
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 4);
 
     if (dp->d_len < start)
-	return (size_t)-1;
+	return -1;
 
     if ((todo = dp->d_len - start) == 0)
 	return 0;		/* OK -- trivial */
 
     rp = (union record *)bu_malloc(todo * sizeof(union record), "db_zapper buf");
     memset((char *)rp, 0, todo * sizeof(union record));
+
     for (i=0; i < todo; i++)
 	rp[i].u_id = ID_FREE;
-    i = db_put(dbip, dp, rp, start, todo);
+    ret = db_put(dbip, dp, rp, (off_t)start, todo);
     bu_free((char *)rp, "db_zapper buf");
-    return i;
+    return ret;
 }
 /** @} */
 

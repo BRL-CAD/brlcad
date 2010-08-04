@@ -114,110 +114,6 @@ rt_nurb_grans(struct face_g_snurb *srf)
 }
 
 
-HIDDEN struct nurb_hit *
-rt_conv_uv(struct nurb_specific *n, struct xray *r, struct rt_nurb_uv_hit *h)
-{
-    struct nurb_hit *hit;
-    fastf_t pt[4];
-    point_t vecsub;
-
-    hit = (struct nurb_hit *) bu_malloc(sizeof (struct nurb_hit),
-					"rt_conv_uv:nurb hit");
-
-    hit->prev = hit->next = (struct nurb_hit *)0;
-    VSET(hit->hit_normal, 0.0, 0.0, 0.0);
-
-    rt_nurb_s_eval(n->srf, h->u, h->v, pt);
-
-    if (RT_NURB_IS_PT_RATIONAL(n->srf->pt_type)) {
-	hit->hit_point[0] = pt[0] / pt[3];
-	hit->hit_point[1] = pt[1] / pt[3];
-	hit->hit_point[2] = pt[2] / pt[3];
-    } else {
-	hit->hit_point[0] = pt[0];
-	hit->hit_point[1] = pt[1];
-	hit->hit_point[2] = pt[2];
-    }
-
-    VSUB2(vecsub, hit->hit_point, r->r_pt);
-    hit->hit_dist = VDOT(vecsub, r->r_dir);
-    hit->hit_uv[0] = h->u;
-    hit->hit_uv[1] = h->v;
-    hit->hit_private = (char *) n->srf;
-
-    return (struct nurb_hit *) hit;
-}
-
-
-HIDDEN struct nurb_hit *
-rt_return_nurb_hit(struct nurb_hit *head)
-{
-
-    register struct nurb_hit *h, *ret;
-    fastf_t dist;
-
-    if (head->next == NULL_HIT)
-	return NULL_HIT;
-
-    dist = INFINITY;
-    ret = NULL_HIT;
-
-    for (h = head->next; h != NULL_HIT; h = h->next) {
-	if (h->hit_dist < dist) {
-	    ret = h;
-	    dist = ret->hit_dist;
-	}
-    }
-
-    if (ret != NULL_HIT) {
-	if (ret->prev != NULL_HIT) ret->prev->next = ret->next;
-	if (ret->next != NULL_HIT) ret->next->prev = ret->prev;
-	ret->next = ret->prev = NULL_HIT;
-    }
-    return (struct nurb_hit *) ret;
-}
-
-
-HIDDEN void
-rt_nurb_add_hit(struct nurb_hit *head, struct nurb_hit *hit, const struct bn_tol *tol)
-{
-    register struct nurb_hit *h_ptr;
-
-    BN_CK_TOL(tol);
-
-    /* If this is the only one, nothing to check against */
-    if (head->next == (struct nurb_hit *) 0) {
-	head->next = hit;
-	hit->prev = head;
-	return;
-    }
-
-    /* Check for duplicates */
-    for (h_ptr = head->next; h_ptr != (struct nurb_hit *)0; h_ptr = h_ptr->next) {
-	register fastf_t f;
-
-	/* This test a distance in model units (mm) */
-	f = hit->hit_dist - h_ptr->hit_dist;
-	if (NEAR_ZERO(f, tol->dist))  goto duplicate;
-
-	/* These tests are in parameter space, 0..1 */
-	f = hit->hit_uv[0] - h_ptr->hit_uv[0];
-	if (NEAR_ZERO(f, 0.0001))  goto duplicate;
-	f = hit->hit_uv[1] - h_ptr->hit_uv[1];
-	if (NEAR_ZERO(f, 0.0001))  goto duplicate;
-    }
-
-    hit->prev = head;
-    hit->next = head->next;
-    hit->next->prev = hit;
-    head->next = hit;
-    return;
- duplicate:
-    bu_free((char *) hit, "add hit: hit");
-    return;
-}
-
-
 /**
  * R T _ N U R B _ P R E P
  *
@@ -495,7 +391,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
 
-    return(hit_num);	/* not hit */
+    return hit_num;	/* not hit */
 #endif /* CONVERT_TO_BREP */
 }
 
@@ -632,7 +528,7 @@ rt_nurb_free(register struct soltab *stp)
 int
 rt_nurb_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -782,7 +678,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     return rt_brep_plot(vhead, &di, ttol, tol);
 #else
-    return(0);
+    return 0;
 #endif /* CONVERT_TO_BREP */
 }
 
@@ -793,7 +689,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 int
 rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
 {
-    return(-1);
+    return -1;
 }
 
 
@@ -814,7 +710,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_BSOLID) {
 	bu_log("rt_nurb_import4: defective header record");
-	return (-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -882,7 +778,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	    }
 	} else {
 	    bu_log("rt_nurb_internal: %d invalid elements per vect\n", rp->d.d_geom_type);
-	    return (-1);
+	    return -1;
 	}
 
 	/* bound the surface for tolerancing and other bounding box tests */
@@ -891,7 +787,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
 	rp += 1 + rp->d.d_nknots + rp->d.d_nctls;
     }
-    return (0);
+    return 0;
 }
 
 
@@ -913,7 +809,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_BSPLINE) return(-1);
+    if (ip->idb_type != ID_BSPLINE) return -1;
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
 
@@ -980,7 +876,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	rec_ptr += grans;
 	total_grans -= grans;
     }
-    return(0);
+    return 0;
 }
 
 int
@@ -1014,7 +910,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_BSPLINE) return(-1);
+    if (ip->idb_type != ID_BSPLINE) return -1;
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
 
@@ -1065,7 +961,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1157,7 +1053,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		MAT4X4PNT(&srf->ctl_points[i*coords], mat, tmp_vec);
 	    } else {
 		bu_log("rt_nurb_internal: %d invalid elements per vect\n", coords);
-		return (-1);
+		return -1;
 	    }
 	}
 
@@ -1165,7 +1061,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	rt_nurb_s_bound(sip->srfs[s], sip->srfs[s]->min_pt,
 			sip->srfs[s]->max_pt);
     }
-    return (0);
+    return 0;
 }
 
 
@@ -1439,7 +1335,7 @@ rt_nurb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 int
 rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 {
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 #ifdef __cplusplus

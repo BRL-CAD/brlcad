@@ -152,14 +152,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 #endif
 	}
     }
-    return(1);	/* report hit to main routine */
+    return 1;	/* report hit to main routine */
 }
 
 
 int
 miss(register struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -169,7 +169,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     noverlaps++;
     bu_semaphore_release( BU_SEM_SYSCALL );
-    return(0);
+    return 0;
 }
 
 
@@ -246,7 +246,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     ap->a_overlap = overlap;
     ap->a_onehit = 0;
 
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 /* beginning of a frame */

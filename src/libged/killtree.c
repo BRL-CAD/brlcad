@@ -175,7 +175,7 @@ ged_killtree_callback(struct db_i		*dbip,
 		      dp->d_namep);
 
 	if (!gktdp->killrefs) {
-	    if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+	    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
 		bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
 	    }
 	} else {
@@ -183,7 +183,7 @@ ged_killtree_callback(struct db_i		*dbip,
 		gktdp->av[gktdp->ac++] = bu_strdup(dp->d_namep);
 		gktdp->av[gktdp->ac] = (char *)0;
 
-		if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
 		    bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
 
 		    /* Remove from list */
@@ -193,7 +193,7 @@ ged_killtree_callback(struct db_i		*dbip,
 	    } else {
 		bu_vls_printf(&gktdp->gedp->ged_result_str, "MAXARGS exceeded while scheduling %s for a killrefs\n", dp->d_namep);
 
-		if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
 		    bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
 		}
 	    }

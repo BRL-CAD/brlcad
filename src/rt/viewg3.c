@@ -165,7 +165,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	}
     }
 
-    return(0);		/* No framebuffer needed */
+    return 0;		/* No framebuffer needed */
 }
 
 /*
@@ -233,7 +233,7 @@ view_2init(struct application *ap)
 int
 raymiss(register struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 /*
@@ -286,7 +286,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     int			first;
 
     if ( pp == PartHeadp )
-	return(0);		/* nothing was actually hit?? */
+	return 0;		/* nothing was actually hit?? */
 
     if ( ap->a_rt_i->rti_save_overlaps )
 	rt_rebuild_overlaps( PartHeadp, ap, 1 );
@@ -310,7 +310,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     if ( pp!=PartHeadp && pp->pt_regionp->reg_regionid <= 0 )
 	comp_count++;  /* a trailing '111' ident */
     if ( comp_count == 0 )
-	return( 0 );
+	return 0;
 
     /* Set up variable length string, to buffer this shotline in.
      * Note that there is one component per card, and that each card
@@ -704,7 +704,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     /* Release vls storage */
     bu_vls_free( &str );
 
-    return(0);
+    return 0;
 }
 
 /*

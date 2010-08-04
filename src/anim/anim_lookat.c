@@ -129,7 +129,7 @@ main(int argc, char **argv)
 
 
     }
-    return( 0 );
+    return 0;
 }
 
 #define OPT_STR "f:yqv"
@@ -153,10 +153,10 @@ int get_args(int argc, char **argv)
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
-		return(0);
+		return 0;
 	}
     }
-    return(1);
+    return 1;
 }
 
 

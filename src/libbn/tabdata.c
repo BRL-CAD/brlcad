@@ -128,7 +128,7 @@ bn_table_make_uniform(int num, double first, double last)
     }
     tabp->x[num] = last;
 
-    return( tabp );
+    return tabp;
 }
 
 /*

@@ -56,8 +56,22 @@ new names should be listed for reference.
 
 7.16
 ----
+SGI-specific tools
+	pl-sgi -> pl-fb [ deprecated 7.16 ]
+Dunn camera and Canon printer tools
+	dunncolor [ deprecated 7.16 ]
+	dunnsnap [ deprecated 7.16 ]
+	canonize [ deprecated 7.16 ]
+reserved attributes and case-sensitivity
+	id -> region_id [deprecated 7.16]
+	GIFTmater -> material_id [deprecated 7.16]
+	GIFT_MATERIAL -> material_id [deprecated 7.16]
+	mat -> material_id [deprecated 7.16]
+	AIRCODE -> air [deprecated 7.16]
+	rgb -> color [deprecated 7.16]
+	oshader -> shader [deprecated 7.16]
 genptr_t/GENPTR_NULL
-        genptr_t -> void* [deprecated 7.16]
+	genptr_t -> void* [deprecated 7.16]
 .pl file suffix
 	.pl -> .plot3 [deprecated 7.16]
 *-pl
@@ -266,5 +280,7 @@ include/[library].h (several)
 ***********************************
 * MINIMALLY IMPACTING API CHANGES *
 ***********************************
+s/rt_ptalloc();/(struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");/g
+        rt_ptalloc_removed [7.16]
 s/rt_db_free_internal(\([^,]+\),[^)]*)/rt_db_free_internal(\1)/g
 	struct resource pointer parameter removed [7.14]

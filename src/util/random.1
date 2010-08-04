@@ -1,0 +1,86 @@
+.TH RANDOM 1 BRL-CAD
+.\"                       R A N D O M . 1
+.\" BRL-CAD
+.\"
+.\" Copyright (c) 2005-2010 United States Government as represented by
+.\" the U.S. Army Research Laboratory.
+.\"
+.\" Redistribution and use in source (Docbook format) and 'compiled'
+.\" forms (PDF, PostScript, HTML, RTF, etc), with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code (Docbook format) must retain the
+.\" above copyright notice, this list of conditions and the following
+.\" disclaimer.
+.\"
+.\" 2. Redistributions in compiled form (transformed to other DTDs,
+.\" converted to PDF, PostScript, HTML, RTF, and other formats) must
+.\" reproduce the above copyright notice, this list of conditions and
+.\" the following disclaimer in the documentation and/or other
+.\" materials provided with the distribution.
+.\"
+.\" 3. The name of the author may not be used to endorse or promote
+.\" products derived from this documentation without specific prior
+.\" written permission.
+.\"
+.\" THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+.\" LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\" USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\".\".\"
+.\"
+.\" Begin actual content
+.\"
+.SH NAME
+random \- generates a random number between two specified values
+.SH SYNOPSIS
+.B random
+.RB [\-s\ seed]
+.RB [\-g\ [\-c\ center]]
+.RB [\-u]
+.RB [\-v]
+low high
+.SH DESCRIPTION
+.I random\^
+generates a random number between the two values given.  The number
+can be uniform across the entire range or it can be a gaussian
+distrubution around the center of the range (or a named center).
+.PP
+The
+.I \-s
+option specifies what integer seed to use to prime the random number
+generator.
+The
+.I \-u
+option specifies that the random number distribution should be uniform
+across the low-to-high range.
+The
+.I \-g
+option specifies that the random number distribution should be a
+gaussian distribution around a default or named center, specified with
+the
+.I \-c
+option.
+The
+.I \-v
+option specifies verbose diagnostic output.
+.SH EXAMPLES
+\fI
+.nf
+random 0 100
+random -g 40 2000
+.fi
+\fP
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <devs@brlcad.org>.

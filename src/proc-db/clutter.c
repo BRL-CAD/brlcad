@@ -236,7 +236,7 @@ crystal_stack(char *cname, double xc, double yc, double size)
     (void)mk_addmember(rppname, &reg_head.l, NULL, WMOP_INTERSECT);
     mk_lcomb(outfp, cname, &reg_head, 1,
 	     mtab[i].mt_name, mtab[i].mt_param, rgb, 0);
-    return(height);
+    return height;
 }
 
 double
@@ -322,7 +322,7 @@ crystal_layer(char *crname, fastf_t *center, double radius, fastf_t *maj, fastf_
     }
 
     mk_lfcomb(outfp, crname, &head, 0);
-    return(height);
+    return height;
 }
 
 void
@@ -381,7 +381,7 @@ ball_stack(char *bname, double xc, double yc, double size)
     get_rgb(rgb);
     mk_lcomb(outfp, bname, &head, 0, (char *)0, "", rgb, 0);
 
-    return(n*size);
+    return n*size;
 }
 
 double
@@ -461,7 +461,7 @@ prim_stack(char *pname, double xc, double yc, double size)
     mk_lcomb(outfp, pname, &head, 0,
 	     mtab[i].mt_name, mtab[i].mt_param,
 	     rgb, 0);
-    return(vpos);
+    return vpos;
 }
 
 void

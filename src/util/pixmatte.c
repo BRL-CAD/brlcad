@@ -113,14 +113,14 @@ open_file(int i, char *name)
 	file_name[i] = name+1;	/* skip '=' */
 	fp[i] = NULL;
 	buf[i] = NULL;
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
 
     file_name[i] = name;
     if (strcmp(name, "-") == 0) {
 	fp[i] = stdin;
 	if (isatty(fileno(stdin)))
-	    return(-1);	/* FAIL */
+	    return -1;	/* FAIL */
 	/* XXX No checking for multiple uses of stdin */
 #if defined(_WIN32) && !defined(__CYGWIN__)
     } else if ((fp[i] = fopen(name, "rb")) == NULL) {
@@ -129,7 +129,7 @@ open_file(int i, char *name)
 #endif
 	perror(name);
 	bu_log("pixmatte: cannot open \"%s\" for reading\n", name);
-	return(-1);		/* FAIL */
+	return -1;		/* FAIL */
     }
 
     /* Obtain buffer */
@@ -137,7 +137,7 @@ open_file(int i, char *name)
 	bu_exit (3, "pixmatte:  input buffer malloc failure\n");
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

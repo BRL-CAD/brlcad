@@ -139,13 +139,13 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
     if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )  {
 	bu_free( (char *)pp, "cook_specific" );
-	return(-1);
+	return -1;
     }
 
     pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
     if (pp->transmit > 0 )
 	rp->reg_transmit = 1;
-    return(1);
+    return 1;
 }
 
 /*
@@ -180,12 +180,12 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
     pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
     if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
-	return(-1);
+	return -1;
 
     pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
     if (pp->transmit > 0 )
 	rp->reg_transmit = 1;
-    return(1);
+    return 1;
 }
 
 /*
@@ -220,12 +220,12 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
     if (bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
-	return(-1);
+	return -1;
 
     pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
     if (pp->transmit > 0 )
 	rp->reg_transmit = 1;
-    return(1);
+    return 1;
 }
 
 /*
@@ -295,7 +295,7 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
     {
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);	/* done */
+	return 1;	/* done */
     }
 
     VMOVE( matcolor, swp->sw_color );
@@ -368,7 +368,7 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 HIDDEN double
@@ -380,11 +380,11 @@ fresnel(double c, double n)
 
     if (n < 1.0 ) {
 	fprintf( stderr, "fresnel: can't handle n < 1.0\n" );
-	return( 0.0 );
+	return 0.0;
     }
     /* avoid divide by zero.  limit -> 1.0 as theta -> pi/2 */
     if (c < 1.0e-10 )
-	return( 1.0 );
+	return 1.0;
 
     g = sqrt( n*n + c*c - 1.0 );
     gmc = g - c;
@@ -393,21 +393,21 @@ fresnel(double c, double n)
     t2 = c * gmc + 1.0;
     f = 0.5 * (gmc*gmc) / (gpc*gpc) * (1.0 + (t1*t1) / (t2*t2));
 
-    return( f );
+    return f;
 }
 double cos4(double a)
 {
     double	c;
 
     c = cos(a);
-    return( c*c*c*c );
+    return c*c*c*c;
 }
 double tan2(double a)
 {
     double	t;
 
     t = tan(a);
-    return( t*t );
+    return t*t;
 }
 /*
  *  The Beckmann Distribution
@@ -430,11 +430,11 @@ beckmann(double a, double m2)
 
     t1 = cos4(a);		/* note: no m^2 term */
     if (t1 < 1.0e-20 )	/* avoid divide by zero */
-	return( 0.0 );
+	return 0.0;
 
     t2 = exp( -tan2(a)/m2 );
 
-    return( t2/t1 );
+    return t2/t1;
 }
 
 /*

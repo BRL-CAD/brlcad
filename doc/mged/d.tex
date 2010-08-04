@@ -1,0 +1,649 @@
+\chapter{VIEWING FUNCTIONS}
+
+The MGED viewing features are designed to allow one to examine an object
+in close detail.  Any of the viewing features can be invoked at any time.
+It should be noted, that these functions do not change the actual data,
+only the way the data is displayed.
+
+\section{Preset Views}
+
+Six standard views (front, rear, top, bottom, left, and right) and one
+oblique view (azimuth 35, elevation 25 isometric) are each assigned to the
+function buttons, views 35 25 (isometric), top, right, front,
+45 45 are available from the screen editor menu.  Hence, any of these views
+is immediately available at the press of the appropriate function button or
+mouse selection.  The views available are not limited to these standard views
+however, as the display can be rotated to any view by using the dial box.  By
+pressing the function button labeled ``save view'' or entering
+the keyboard {\em saveview} command, the present view as displayed display is
+saved (used for raytracing,
+producing colored pictures, which will be discussed later).
+At any time, the saved view can be immediately returned to the
+screen by pressing the ``restore view'' function button.  The
+``restore view'' button will be lit whenever a view has been saved.
+The function button labeled ``reset'',
+restores the display to the default view (front) when pressed.
+
+\section{View Translation}
+
+The displays can be panned or slewed on the screen in two ways -- using the
+mouse pointer or by using the dial box knobs.  When one is editing, the mouse
+functions are not available for slewing, hence one must use the dial box knobs
+to slew the display.
+
+To slew the display using the control knobs, one uses the knobs labeled
+``slew x'' or ``slew y''.  The null positions on these knobs is in the
+center or straight up.  If the ``slew x'' knob is turned clockwise of center,
+the display will move to the right.  If it turned counterclockwise, the
+display will move to the left.  For the ``slew y'' central knob, clockwise
+of the center moves the display up and counterclockwise moves the display
+down.  The further these knobs are turned from center, the faster the display
+moves.
+
+\section{View Zooming}
+
+One can zoom the display by using the dial box knob labeled ``zoom''.
+Again the null position of this knob is center or straight
+up.  Turning this knob clockwise of center causes the display to increase in
+size producing a zoom-in effect.  Turning this knob counterclockwise of center
+causes the display to decrease in size or zoom-out.  Again, the further the
+``zoom'' knob is turned from center, the faster the zooming will occur.
+
+\begin{figure}
+\centering \includegraphics{adc.ps}
+\caption{The Angle Distance Cursor.}
+\label{adc}
+\end{figure}
+
+\section{The Angle Distance Cursor (ADC)}
+
+The angle distance cursor is a construction aid used to measure
+angles and distances. It should be noted that all measurements are
+made in the projected space of the screen, so one should measure only
+in a view normal to the surface where the measurement is to take place.
+The ADC is placed on (or removed from) the display by pushing the ``ADC''
+button.
+The ADC consists of three cursors which cover the entire screen.
+Figure \ref{adc} depicts the ADC as it appears on the screen.
+All the cursors are centered at the same point and can be moved to any
+location on the screen.  Two of these cursors rotate for angle measuring
+purposes. Angle cursor 1 is solid while angle cursor 2 is dashed.  Angle
+cursor 1 has movable tic marks for measuring distances on the screen.
+The two angle cursors move with the horizontal and vertical
+lines of the main cursor.
+The resulting effect is the moving of the center point
+horizontally or vertically.
+The ADC is controlled by the bottom row
+of the (Megatek) knobs:
+
+\begin{tabular}{rl}
+Knob  & Function \\
+ \\
+6     & moves the center in the horizontal direction \\
+7     & moves the center in the vertical direction \\
+8     & rotates angle cursor 1  (alpha) \\
+9     & rotates angle cursor 2  (beta) \\
+10    & moves the tic marks
+\end{tabular}
+
+Whenever the ADC is on the screen, there is a readout at the bottom of
+the screen listing pertinent information about the ADC.
+This information includes the angles that angle cursors 1 and 2
+have been rotated (alpha and beta), the distance the tic marks are
+from the center of the ADC, and the location of the center of the ADC.
+This information is continually updated on the screen.
+
+\chapter{MGED EDITING FEATURES}
+
+The heart of the MGED system is its editing features.
+The editing features are divided into two classes: object editing
+and solid editing.
+Object editing is designed to allow one to change the location,
+size, and orientation of an object.
+Recall that an object is defined as the basic data unit of the
+MGED system and includes both combinations and solids.
+In the case of a solid, one needs to change not only its location,
+size, and orientation, but also its ``shape''.
+Changing the shape of a solid means changing any of its individual parameters.
+Hence, solid editing is handled separately.
+
+\section{Combination Editing (OBJECT EDIT)}
+
+Before being able to enter the OBJECT EDIT state
+(i.e. edit non-terminal),
+it is necessary to pass through two intermediate states
+in which the full path of an object to be edited is specified,
+and the location of one arc along that path is designated for editing.
+It is possible to create a transformation matrix to be applied
+above the root of the tree, affecting everything in the path,
+or to apply the matrix between any pair of nodes.
+For example, if the full path /car/chassis/door is specified,
+the matrix could be applied above the node ``car'', between
+``car/chassis'', or between ``chassis/door''.
+
+The transformation matrix to be applied at the
+designated location can be created by the concatenation of
+operations, each specified through several types of user direction.
+Trees can be rotated around the center of the viewing cube;
+this rotation can be specified in degrees via keyboard command, or can
+be controlled by the rotation of a set of control dials or motions on
+a three-axis joystick.
+Translation of trees can be specified in terms of a precise new location
+via keyboard command, or by adjusting a set of control dials.
+Tree translation can also be accomplished by pointing and
+clicking with the mouse or tablet.
+Uniform and single-axis (affine) scaling of a tree can be controlled
+by a numeric scale factor via keyboard command, or by way of repeated
+analog scaling by pointing and clicking with the mouse or tablet.
+Before we discuss the editing features of MGED, we will discuss
+how one selects objects for editing.
+
+\section{Selecting Objects For Editing}
+
+To select a displayed object for editing, press the object illuminate button
+or select ``Object illum'' from the ***BUTTON MENU***.
+The object selection is a two step process.
+
+Whenever an object is displayed (using the {\em e} command), all paths in the
+object's hierarchy are traversed recursively, accumulating the transformation
+matrices.  When the bottom of the path (a solid) is encountered, the
+accumulated
+transformations are applied to the solid's parameters and the solid is drawn.
+Thus every solid displayed is really a path ending with that solid.
+If the object has been displayed using the {\em E} command, the same procedure
+is followed, but only until a region is encountered.
+Then all members of the region have the accumulated transformations
+applied and the region is then ``evaluated'' and drawn.
+
+In the first step of the object selection process, the path is selected.
+Again, the data tablet is divided in as many horizontal sections as there are
+paths drawn.
+The path (solid or evaluated region) corresponding to the horizontal
+section the pen/mouse is located in will be illuminated (brighter on B/W
+displays and white on color displays).
+This complete path is also listed on the display.
+When the pen/mouse is pressed the illuminated path is selected.
+
+In the second step, a member of the selected path is chosen.
+All editing will then be applied to this member.
+The tablet is divided into as many horizontal sections as there are
+path members.
+The word ``[MATRIX]'' is used to illuminate path members and will appear
+above the member corresponding to the location of the pen/mouse.
+Pressing the pen/mouse when the desired path member is ``illuminated''
+will put MGED in the object edit state.
+The editing will be performed on the path member selected.
+
+If a solid is located at the bottom of this path, it becomes the key
+solid and its vertex becomes the key point.
+If an evaluated region is at the bottom of the path, the center of
+this region becomes the key point.
+All object editing is done with respect to this key point.
+
+The object editing features can be invoked in any order and at any time
+once an object has been selected for editing.  During object editing, any of
+the viewing features, such as changing views, zooming, and slewing, can be
+used, and in fact, are usually quite useful.  Again, the only way to exit the
+object editing mode is to ``accept'' or ``reject'' the editing.
+If the ``reject'' button is pressed (or selected from the edit menu), the
+object will return to its pre-edit state.  If the ``accept'' button is pressed
+(or selected from the edit menu), the data base will be changed to reflect the
+object editing performed.
+
+\section{Object Edit State}
+
+When MGED enters the object edit state, the following occurs:
+
+\begin{enumerate}
+\item all the solids/evaluated regions of the edited object
+become illuminated
+\item the key solid's parameters are labeled  OR \\
+the center of the key evaluated region is marked
+\item the key solid's parameters are listed and
+continually updated  OR \\
+the key evaluated region's center is listed and
+continually updated
+\item the ***OBJ EDIT*** menu is displayed
+\end{enumerate}
+
+\section{Translate An Object}
+
+There are three ways to translate an object:  translate in the screen
+X direction only (X move), translate in the screen Y direction only
+(Y move) or just straight translation (XY move).
+In all cases, the complete object is translated so that the ``key point''
+is positioned at the desired location.
+The {\em translate} command is used to enter a precise location (x,y,z) for
+the key point.
+Entering {\em translate x y z} will move the complete object so that the key
+point will be at coordinates (x,y,z).
+
+\section{Rotate An Object}
+
+Rotation of the object may be accomplished by selecting the ``Rotate''
+menu item, or pressing the ``Rotate'' button.
+Turning the knobs results in the object being rotated.
+The {\em rotobj x y z} command can be used here, to specify
+a precise rotation in degrees.
+While in this edit state, the only way to rotate view is to use
+the {\em vrot x y z} command.
+
+\section{Scale An Object}
+\subsection{Global Scale}
+
+To select global object scale, press the object scale button or select
+``Scale'' from the ***OBJ EDIT*** menu.
+When the pen/mouse is pressed, the edited object is scaled about the key
+point by an amount
+proportional to the distance the pen/mouse is from the center of the screen.
+If the pen/mouse is above the center, the edited object will become larger.
+If it is below the center, the object will become smaller.
+The {\em scale} command can be used to enter precise scale factors.
+The value entered is applied to the object as it existed when object
+scale was entered.
+Hence entering {\em scale 1} will return the object to its size when the
+object scale session first started.
+
+\subsection{Local Scale}
+
+Local object scaling is allowed about any of the coordinate axes.
+To select local scaling, press one of the buttons (OBJ Scale X, OBJ Scale Y,
+or OBJ Scale Z) or select ``Scale X'', ``Scale Y'', or ``Scale Z'' from
+the ***OBJ EDIT*** menu.
+When the pen/mouse is pressed, the edited object is scaled in the selected
+coordinate axis only, about the key point.
+The amount of scaling is proportional to the distance the pen/mouse is
+from the center of the screen.
+If the pen/mouse is above the center, the edited object will become larger
+in the selected axis direction.
+If it is below the center, the object will become smaller in the selected
+axis direction.
+The {\em scale} command can be used to enter precise scale factors.
+The value entered is applied to the object as it existed when local object
+scale was entered.
+Hence entering {\em scale 1} will return the object (in the selected axis
+direction) to its size when the object scale session first started.
+
+\section{Solid Editing}
+
+There are two classes of editing operations that can be performed on
+leaf nodes, the primitive solids.
+The first class of operations are generic operations which can be applied to
+any type of solid, and the second class of operations are those operations
+which are specific to a particular type of solid.
+Generic operations which can be applied to all primitive solids are
+rotation, translation and scaling.
+Recall that primitives can be treated as any other object and ``object
+edited'' as detailed above.
+Each primitive solid also has a variety of editing operations available that
+are specific to the definition of that solid.  These operations are
+detailed below.
+
+The solid editing mode is necessary to
+perform to basic shapes of solids.
+Precise modifications
+of the shape are possible (using the {\em p} keyboard command) in the solid
+editing mode.
+
+The solid editing feature allows the user to interactively translate,
+rotate, scale, and modify individual parameters of a solid.  Whenever one is
+in the solid edit mode, the parameters of the solid being edited are listed
+and continually updated at the top of the screen.  Certain parameters are
+also labeled on the solid being edited.  Solid editing  is generally used to
+``build'' objects by producing solids of the desired shape and size in the
+correct orientation and position.  Once the object is built, object editing
+is used to scale, orient, and position the object in the description.  The
+general philosophy of solid editing is to first create a solid with the
+desired name and then to edit this solid.  As an example, suppose one were
+to build an object called ``BRACKET''; to produce the base of the object the
+primitive solid type ARB8 (see Figure 1) would be used along with either the
+{\em in} command or {\em make} command, so one would type:
+\begin{verse}
+     in btm box 0 0 0  0 -90 0  40 0 0  0 0 6 \\
+     make block arb8
+\end{verse}
+A new solid called ``btm'' or ``block'' would be created and displayed on the
+screen.  These solids would then be edited using solid editing to produce the
+solid parameters for the shape desired.
+
+\section{Selecting Solids For Editing}
+
+The procedure for solid editing is quite similar to that for object editing.
+First, solid edit state must be entered, by pressing the
+``solid illuminate'' button, or selecting the ``solid illum'' menu item.
+Second,
+A solid is selected for
+editing using the illuminate mode, just as in object editing,
+by moving the cursor up and down, and choosing the desired solid.
+The solid data is listed at the top of the screen and a
+header depending on the solid type is written above the solid editing data.
+Third, select the appropriate function button or edit menu operations,
+and perform the editing desired.  Finally, the solid
+editing mode is exited
+by either accepting or rejecting the editing performed.
+
+A solid must be displayed before it can be picked for editing.
+To pick a displayed solid for editing, press the ``solid illum'' button or
+select ``Solid Illum'' from the ***BUTTON MENU***.
+The data tablet and pen/mouse are then used to pick the solid.
+The surface of the data tablet is divided into as many horizontal sections
+as there are solids displayed.
+The displayed solid corresponding to the horizontal section the pen/mouse
+is located in will be ``illuminated'' (it will become brighter on black and
+white devices and white on color devices).
+The complete hierarchical path to reach the solid is also listed on the
+display.  When the pen/mouse is pressed, MGED enters the solid edit state
+with the illuminated solid as the solid to be edited.
+If the solid is not multiply referenced, entering {\em sed solidname} on
+the keyboard will immediately put MGED in the solid edit state with
+{\em solidname} as the edited solid.
+
+\section{Solid Edit State}
+
+When MGED enters the solid edit state, the following occurs:
+
+\begin{enumerate}
+\item the edited solid remains illuminated
+\item the edited solid's parameters are labeled
+\item the edited solid's parameters are listed
+\item  (and continually updated)
+\item the ***SOLID EDIT*** menu is displayed
+\item the parameter edit menu is initially displayed (default)
+\end{enumerate}
+
+\section{Rotate A Solid}
+
+Solid rotation allows the user to rotate the solid being edited to any
+desired orientation.  The rotation is performed about the vertex of the
+solid.  To select this option, one presses the function button labeled
+``solid rotate'' or selects from the edit menu on screen.
+The rotation can be done using the dial box or one can input exact angles
+of rotation of the solid by using the {\em p} keyboard command.
+For example, typing:
+{\em \center
+p alpha beta gamma
+}
+will rotate the solid {\em alpha} degrees about the x-axis, {\em beta} degrees
+about the y-axis and {\em gamma} degrees about the z-axis.  Alpha, beta, and
+gamma are measured from the original ``zero'' orientation of the solid,
+defined when the ``solid edit'' function button was
+pressed.  Hence, typing
+{\em \center
+p 0 0 0
+}
+will always return the solid to its original position (its position when the
+current solid editing session began) before accepting edit.
+
+To select solid rotation, press the solid rotate button or select ``Rotate''
+from the ***SOLID EDIT*** menu.
+The joy stick or appropriate rotation knobs then will rotate the edited solid
+about the coordinate axes.
+The solid is rotated about its vertex.
+The parameter (p) command can be used to make precise rotation changes.
+The values entered after the p are absolute -- the rotations are applied
+to the solid as it existed when solid rotation was first selected.
+Thus entering {\em p 0 0 0} will ``undo'' any rotations performed since
+solid rotation was selected.
+The rotation about the z-axis is done first, then the y, then the x.
+
+\section{Translate A Solid}
+
+Solid translation allows the user to place the solid being edited anywhere
+in the description.  To invoke this option, one presses the function
+button labeled ``solid trans'' or selects from the screen edit
+menu.  To move the solid, use the mouse pointer to position the solid and
+click the center mouse button.  Whenever the mouse button is pressed, the
+VERTEX of the solid moves to that location on the screen.
+
+One can read the actual coordinates of the vertex on the top of the
+screen, along with other data.  If the actual desired coordinates of the
+vertex are known, one can place the solid exactly using the {\em p} keyboard
+command.  For example, to place a solid's vertex at the coordinates (x,y,z)
+one would type:
+{\em \center
+p40 20 10
+}
+The solid would then jump to this location.
+
+To select solid translation, press the solid translate button or
+select ``Translate'' from the ***SOLID EDIT*** menu.
+When the pen/mouse is pressed, the vertex of the edited solid will
+move to that location.
+The parameter (p) command can be used to translate the solid to
+a precise location.
+Entering {\em p x y z} will place the vertex of the edited solid at (x, y, z).
+
+\section{Scale A Solid}
+
+The solid SCALE feature allows the user to scale the solid being to any
+desirable size.  The scaling is done about the vertex of the solid, hence NO
+translation of the solid occurs.  The scaling is performed using the mouse
+pointer and clicking the center mouse button, just as in object scaling.  One
+can input an exact scale factor using the {\em p} keyboard command, in the form
+of.  For example, typing
+{\em \center
+p factor
+}
+will scale the solid by an amount equal to {\em factor}.   The value of
+{\em factor} is absolute -- the original solid is scaled.  By setting {\em factor}
+equal to one (1), the original size solid will be displayed on the screen
+before accepting your edit.
+
+To select solid scale, press the solid scale button or select ``Scale''
+from the ***SOLID EDIT*** menu.
+When the pen/mouse is pressed, the edited solid is scaled by an amount
+proportional to the distance the pen/mouse is from the center of the screen.
+If the pen/mouse is above the center, the edited solid will become larger.
+If it is below the center, the solid will become smaller.
+The parameter (p) command can be used to enter precise scale factors.
+The value entered is applied to the solid as it existed when solid
+scale was entered.
+Hence entering {\em p 1} will return the solid to its size when solid scale
+session first started.
+
+\section{Solid Parameter Editing}
+
+To modify individual solid parameters, press the menu button or select
+``edit menu'' from the ***SOLID EDIT*** menu.
+A menu listing what parameter editing is available for that particular
+solid type will be displayed.
+Using the pen/mouse select the desired item(s) from this menu.
+For most of the parameter editing, the {\em p} command can be used to
+make precise changes.
+Parameter editing is the default edit mode entered when MGED first
+enters the solid edit state.
+In the following paragraphs, we will discuss parameter editing
+for each of the MGED general types of solids.
+
+\begin{figure}
+\centering \includegraphics{menu-arb-ctl.ps}
+\caption{ARB Control Menu.}
+\label{menu-arb-ctl}
+\end{figure}
+
+\subsection{ARB Parameter Editing}
+
+The GENERAL ARB class of solids represents all the convex polyhedrons
+(RPP, BOX, RAW, and ARBs).
+The ARBs comprise five classes of polyhedrons each with a characteristic
+number of vertices.
+These are the ARB8, ARB7, ARB6, ARB5, and ARB4, where the ARB8 has
+eight vertices, etc.
+During editing, all the vertices are labeled on the screen.
+
+An ARB is defined by a fixed number of vertices where all faces must
+be planar.  This fact means that during parameter editing, movement
+of individual vertices in faces containing four vertices is not allowed.
+There are three classes of parameter editing that can be done to ARBs:
+move edges,
+move faces, and rotate faces.  There is an ``ARB control menu''
+(see Figure \ref{menu-arb-ctl}) from
+which one selects the type of parameter editing to be done.
+A specific ARB edit menu will appear dependent on which parameter editing
+option was selected.  The ``return'' entry on each of these specific menus
+will return the ``ARB control'' menu to the screen.
+
+Note that there are several keyboard commands that apply only to ARB solids
+which are being edited in SOLID EDIT state.
+Once such command is {\em mirface}, which replaces a designated
+face of the ARB with a copy of an original face mirrored about
+the indicated axis.
+Another such command is {\em extrude}, which projects a designated face
+a given amount in the indicated direction.
+
+\begin{figure}
+\centering \includegraphics{menu-arb8-edge.ps}
+\caption{Move Edge Menu for ARB8.}
+\label{menu-arb8-edge}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{menu-arb4-edge.ps}
+\caption{Move Edge Menu for ARB4.}
+\label{menu-arb4-edge}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{menu-arb8-face.ps}
+\caption{Move Face Menu for ARB8.}
+\label{menu-arb8-face}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{menu-arb4-face.ps}
+\caption{Move Face Menu for ARB4.}
+\label{menu-arb4-face}
+\end{figure}
+
+\subsection{Move ARB Edges}
+
+To move an ARB edge, select the desired edge from the ``move edge'' menu.
+For example, Figure \ref{menu-arb8-edge} shows the menu for
+moving an edge of an ARB8, and Figure \ref{menu-arb4-edge}
+shows the menu for moving an edge of an ARB4.
+A point is then ``input'' either through a pen press or through the {\em p}
+command.
+The line containing the selected edge is moved so that it goes through
+coordinate of the input point.
+Any affected faces are automatically adjusted to remain planar.
+
+\subsection{Move ARB Faces}
+
+To move an ARB face, select the desired face from the ``move face'' menu.
+A point is then ``input'' either through a pen press or through the {\em p}
+command.  The plane containing the edited face is then moved so that it
+contains the input point.  The new face is then calculated and the ARB
+is displayed.
+The move face menus for an ARB8 are shown
+in Figure \ref{menu-arb8-face}, and the move face menus for an ARB4
+are shown in Figure \ref{menu-arb4-face}.
+
+\begin{figure}
+\centering \includegraphics{menu-arb8-rot.ps}
+\caption{Rotate Face Menu for ARB8.}
+\label{menu-arb8-rot}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{menu-arb4-rot.ps}
+\caption{Rotate Face Menu for ARB4.}
+\label{menu-arb4-rot}
+\end{figure}
+
+\subsection{Rotate ARB Faces}
+
+ARB faces may be rotated around any of the vertices comprising that face.
+First, select the desired face from the ``rotate face'' menu.  You will then
+be asked to select the vertex number around which to rotate the face.
+The face can be rotated about the three coordinate axes.  The knobs (Rotate X,
+Rotate Y, and Rotate Z) are used for this purpose.  For precise rotations,
+use the {\em p} command.  If three values are entered after the {\em p}, then
+they are interpreted as angles (absolute) of rotation about the X, Y, Z axes
+respectively.  If only two values are entered, then they are considered as
+rotation and fallback angles for the normal to that face.  The {\em eqn}
+command can also be used here to define the plane equation coefficients of
+the face being rotated.
+The rotate face menus for an ARB8 are shown
+in Figure \ref{menu-arb8-rot}, and the rotate face menus for an ARB4
+are shown in Figure \ref{menu-arb4-rot}.
+
+\begin{figure}
+\centering \includegraphics{ped-tgc.ps}
+\caption{Typical TGC During Parameter Editing.}
+\label{ped-tgc}
+\end{figure}
+
+\subsection{Truncated General Cone (TGC) Parameter Editing}
+
+The TGC general class of solids includes all the cylindrical COMGEOM solids.
+The defining parameters of the TGC are two base vectors (A and B), a height
+vector (H), two top vectors (C and D), and the vertex (V).
+The top vectors C and D are directed the same as the base vectors A and
+B respectively,
+hence the top vectors are defined only by their lengths (c and d).
+During solid editing, only vectors A and B are
+labeled on the display.
+Figure \ref{ped-tgc} depicts a typical TGC during parameter editing.
+
+It is possible to change the length of the H, A, B, C, or D
+vectors, resulting in a change in height or eccentricity of the
+end plates.  The overall size of the A,B or C,D end plates can
+be adjusted, or the size of both can be changed together, leaving
+only the H vector constant.
+The H vector or the base plate (AXB) can be rotated.
+Recall that vectors A \& C and vectors B \& D have like directions, hence
+rotating the base (AXC) will automatically rotate the top (BXD).
+Finally, one can move the end of the height vector H
+with the TGC becoming or remaining
+a right cylinder (move end H (rt)),
+or with the orientation of the base (and top)
+unchanged (move end H).
+Either the mouse/tablet or the {\em p} command can be used.
+These functions are selected from the menu which can be seen
+in Figure \ref{ped-tgc}.
+
+\begin{figure}
+\centering \includegraphics{ped-ell}
+\caption{Ellipsoid Parameter Editing Menu.}
+\label{ped-ell}
+\end{figure}
+
+\subsection{Ellipsoid Parameter Editing}
+
+The ELLG general class represents all the ellipsoidal solids, including
+spheres and ellipsoids of revolution.
+The defining parameters of the ELLG are three mutually perpendicular
+vectors (A, B, and C) and the vertex (V).
+When an ELLG is being edited, only vectors A and B are labeled on the display.
+Figure \ref{ped-ell} depicts a typical ELLG during parameter editing.
+
+The parameter editing of the ELLG consists of scaling the lengths of the
+individual vectors A, B, C.
+One may also scale all theses vectors together of equal length.
+
+The scaling of these vectors is done using the data tablet/mouse in
+exactly the same manner as in object scaling.
+The {\em p} keyboard command again can be used to produce a vector of
+desired length.
+
+\begin{figure}
+\centering \includegraphics{ped-tor}
+\caption{Torus Parameter Editing Menu.}
+\label{ped-tor}
+\end{figure}
+
+\subsection{Torus Parameter Editing}
+
+The TOR general class of solids contains only one type of torus, one with
+circular cross-sections.
+The defining parameters of the TOR are two radii (r1 and r2), a normal
+vector (N), and the vertex (V).
+The scalar r1 is the distance from the vertex to the midpoint of the
+circular cross section.
+The scalar r2 is the radius of the circular cross-section.
+The vector N is used to orient the torus.
+During solid editing, none of these parameters are labeled on the screen.
+Figure \ref{ped-tor} depicts a typical torus during parameter editing.
+
+The parameter editing of the TOR consists of scaling the radii, hence the
+menu contains only two members.

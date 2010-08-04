@@ -76,14 +76,14 @@ Basis(int i /* interval number (0 through k) */, int k /* degree of basis functi
     if ((i+1) > (numknots-1)) {
 	bu_log("Error in evaluation of a B-spline Curve\n");
 	bu_log("attempt to access knots out of range: numknots=%d i=%d, k=%d\n", numknots, i, k);
-	return(0.0);
+	return 0.0;
     }
 
     if (k == 1) {
 	if (t >= knots[i] && t < knots[i+1])
-	    return(1.0);
+	    return 1.0;
 	else
-	    return(0.0);
+	    return 0.0;
     } else {
 	denom1 = knots[i+k-1] - knots[i];
 	denom2 = knots[i+k] - knots[i+1];
@@ -94,7 +94,7 @@ Basis(int i /* interval number (0 through k) */, int k /* degree of basis functi
 	if (denom2 != 0.0)
 	    retval += (knots[i+k] - t)*Basis(i+1, k-1, t)/denom2;
 
-	return(retval);
+	return retval;
     }
 }
 

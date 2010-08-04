@@ -146,7 +146,7 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 	bu_log("_rb_insert(%p): comparison = %d, returning %d\n",
 	       new_node, comparison, result);
 
-    return (result);
+    return result;
 }
 
 
@@ -179,7 +179,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 	    if (tree->rbt_debug & BU_RB_DEBUG_UNIQ)
 		bu_log("bu_rb_insert(<%p>, <%p>, TBD) will return %d\n",
 		       tree, data, -(order + 1));
-	    return (-(order + 1));
+	    return -(order + 1);
 	}
     }
 
@@ -274,7 +274,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
 
     ++(tree->rbt_nm_nodes);
     rb_current(tree) = node;
-    return (result);
+    return result;
 }
 
 
@@ -300,20 +300,20 @@ _rb_set_uniq(bu_rb_tree *tree, int order, int new_value)
 
     prev_value = rb_get_uniqueness(tree, order);
     rb_set_uniqueness(tree, order, new_value);
-    return (prev_value);
+    return prev_value;
 }
 
 
 int
 bu_rb_uniq_on(bu_rb_tree *tree, int order)
 {
-    return (_rb_set_uniq(tree, order, 1));
+    return _rb_set_uniq(tree, order, 1);
 }
 
 int
 bu_rb_uniq_off(bu_rb_tree *tree, int order)
 {
-    return (_rb_set_uniq(tree, order, 0));
+    return _rb_set_uniq(tree, order, 0);
 }
 
 
@@ -323,7 +323,7 @@ bu_rb_is_uniq(bu_rb_tree *tree, int order)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
-    return (rb_get_uniqueness(tree, order));
+    return rb_get_uniqueness(tree, order);
 }
 
 

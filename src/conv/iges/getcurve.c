@@ -831,7 +831,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		break;
 	    }
     }
-    return(npts);
+    return npts;
 }
 
 

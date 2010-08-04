@@ -159,6 +159,9 @@
 #include "raytrace.h"
 
 
+extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+
+
 struct epa_specific {
     point_t epa_V;		/* vector to epa origin */
     vect_t epa_Hunit;		/* unit H vector */
@@ -228,13 +231,13 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 < 0.0 || r2 < 0.0) {
-	return(1);		/* BAD, too small */
+	return 1;		/* BAD, too small */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /*
@@ -291,7 +294,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -417,7 +420,7 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     if (hitp != &hits[2])
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
@@ -438,7 +441,7 @@ rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	segp->seg_out = hits[0];	/* struct copy */
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -607,7 +610,7 @@ rt_epa_free(struct soltab *stp)
 int
 rt_epa_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -628,9 +631,6 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Hu, V, Work;
 
-    struct rt_pt_node *rt_ptalloc(void);
-    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -649,13 +649,13 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0) {
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* make unit vectors in A, H, and BxH directions */
@@ -703,8 +703,8 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      */
 
     /* approximate positive half of parabola along semi-minor axis */
-    pts_b = rt_ptalloc();
-    pts_b->next = rt_ptalloc();
+    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -717,14 +717,14 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* construct positive half of parabola along semi-major axis of
      * epa using same z coords as parab along semi-minor axis
      */
-    pts_a = rt_ptalloc();
+    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_parabola to a_parabola */
-	pos_a->next = rt_ptalloc();
+	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on parabola */
@@ -761,14 +761,14 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* construct parabola along semi-major axis of epa using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = rt_ptalloc();
+	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_parabola to b_parabola */
-	    pos_b->next = rt_ptalloc();
+	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on parabola */
@@ -876,7 +876,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)pts_dbl, "dbl ints");
 
-    return(0);
+    return 0;
 }
 
 
@@ -966,7 +966,7 @@ rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	return(rt_ell_ang(mpt, a, b, dtol, ntol));
+	return rt_ell_ang(mpt, a, b, dtol, ntol);
     } else
 	return(acos(VDOT(p0, p1)
 		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
@@ -992,7 +992,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t invR;
     struct rt_epa_internal *xip;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct vertex *vertp[3];
@@ -1021,13 +1021,13 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0) {
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* make unit vectors in A, H, and BxH directions */
@@ -1078,8 +1078,8 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* approximate positive half of parabola along semi-minor axis */
-    pts_b = rt_ptalloc();
-    pts_b->next = rt_ptalloc();
+    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -1092,14 +1092,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* construct positive half of parabola along semi-major axis of
      * epa using same z coords as parab along semi-minor axis
      */
-    pts_a = rt_ptalloc();
+    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_parabola to a_parabola */
-	pos_a->next = rt_ptalloc();
+	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on parabola */
@@ -1135,14 +1135,14 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* construct parabola along semi-major axis of epa
 	 * using same z coords as parab along semi-minor axis
 	 */
-	pts_b = rt_ptalloc();
+	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_parabola to b_parabola */
-	    pos_b->next = rt_ptalloc();
+	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on parabola */
@@ -1413,7 +1413,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)vells, "vertex [][]");
 
-    return(0);
+    return 0;
 
  fail:
     /* free mem */
@@ -1426,7 +1426,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)pts_dbl, "dbl ints");
     bu_free((char *)vells, "vertex [][]");
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1449,7 +1449,7 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_epa_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1472,10 +1472,10 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF) {
 	bu_log("rt_epa_import4: r1 or r2 are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_epa_import4: ip->idb_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1494,7 +1494,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EPA) return(-1);
+    if (ip->idb_type != ID_EPA) return -1;
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 
@@ -1508,7 +1508,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
-	return(-1);
+	return -1;
     }
 
     mag_h = MAGNITUDE(xip->epa_H);
@@ -1517,17 +1517,17 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| xip->epa_r1 < RT_LEN_TOL
 	|| xip->epa_r2 < RT_LEN_TOL) {
 	bu_log("rt_epa_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     if (!NEAR_ZERO(VDOT(xip->epa_Au, xip->epa_H)/mag_h, RT_DOT_TOL)) {
 	bu_log("rt_epa_export4: Au and H are not perpendicular!\n");
-	return(-1);
+	return -1;
     }
 
     if (xip->epa_r2 > xip->epa_r1) {
 	bu_log("rt_epa_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return(-1);
+	return -1;
     }
 
     /* Warning:  type conversion */
@@ -1537,7 +1537,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     epa->s.s_values[3*3] = xip->epa_r1 * local2mm;
     epa->s.s_values[3*3+1] = xip->epa_r2 * local2mm;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1582,10 +1582,10 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->epa_r1 <= SMALL_FASTF || xip->epa_r2 <= SMALL_FASTF) {
 	bu_log("rt_epa_import4: r1 or r2 are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_epa_import4: ip->idb_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1604,7 +1604,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EPA) return(-1);
+    if (ip->idb_type != ID_EPA) return -1;
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 
@@ -1614,7 +1614,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
-	return(-1);
+	return -1;
     }
 
     mag_h = MAGNITUDE(xip->epa_H);
@@ -1623,17 +1623,17 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| xip->epa_r1 < RT_LEN_TOL
 	|| xip->epa_r2 < RT_LEN_TOL) {
 	bu_log("rt_epa_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     if (!NEAR_ZERO(VDOT(xip->epa_Au, xip->epa_H)/mag_h, RT_DOT_TOL)) {
 	bu_log("rt_epa_export4: Au and H are not perpendicular!\n");
-	return(-1);
+	return -1;
     }
 
     if (xip->epa_r2 > xip->epa_r1) {
 	bu_log("rt_epa_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return(-1);
+	return -1;
     }
 
     /* scale 'em into local buffer */
@@ -1646,7 +1646,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 11);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1721,10 +1721,10 @@ rt_epa_ifree(struct rt_db_internal *ip)
 int
 rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
-    if (!ps) return(0);
+    if (!ps) return 0;
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

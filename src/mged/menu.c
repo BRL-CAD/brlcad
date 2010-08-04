@@ -316,7 +316,7 @@ mmenu_select(int pen_y, int do_func)
     int yy;
 
     if (pen_y > menu_state->ms_top)
-	return(-1);	/* pen above menu area */
+	return -1;	/* pen above menu area */
 
     /*
      * Start at the top of the list and see if the pen is
@@ -340,10 +340,10 @@ mmenu_select(int pen_y, int do_func)
 	    if (do_func && mptr->menu_func != ((void (*)())0))
 		(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
-	    return(1);		/* menu claims pen value */
+	    return 1;		/* menu claims pen value */
 	}
     }
-    return(0);		/* pen below menu area */
+    return 0;		/* pen below menu area */
 }
 
 

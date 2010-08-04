@@ -46,7 +46,7 @@ edcodes_id_compare(const void *p1, const void *p2)
     id1 = atoi(*(char **)p1);
     id2 = atoi(*(char **)p2);
 
-    return (id1 - id2);
+    return id1 - id2;
 }
 
 
@@ -151,7 +151,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     char **av;
     FILE *fp = NULL;
     char tmpfil[MAXPATHLEN] = {0};
-    const char *editstring;
+    const char *editstring = NULL;
 
     static const char *usage = "[-i|-n|-r] object(s)";
 

@@ -64,7 +64,7 @@ rt_read_timer(char *str, int len)
 	    usert,
 	    htime[0], htime[1], htime[2], htime[3], htime[4]);
     bu_strlcpy(str, line, len);
-    return(usert);
+    return usert;
 }
 
 

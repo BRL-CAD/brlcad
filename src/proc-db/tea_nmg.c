@@ -36,9 +36,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#include "./tea.h"		/* IEEE Data Structures */
-#include "./ducks.h"		/* Teapot Vertex data */
-#include "./patches.h"		/* Teapot Patch data */
+#include "./tea.h"		/* Teapot Data */
 
 
 static struct shell *s;
@@ -82,7 +80,7 @@ dump_patch(int (*patch)[4])
 	struct vertexuse *vu;
 	vect_t uvw;
 	point_t pnt;
-	int k, j;
+	int k;
 
 	switch (i) {
 	    default:
@@ -199,7 +197,7 @@ main(int argc, char **argv)
 	    default	:
 		(void)fprintf(stderr,
 			      "Usage: %s [-d] > database.g\n", *argv);
-		return(-1);
+		return -1;
 	}
     }
 
@@ -239,7 +237,7 @@ main(int argc, char **argv)
 	rt_vlist_to_uplot(fp, &vhead);
     }
 
-    return(0);
+    return 0;
 }
 
 /*

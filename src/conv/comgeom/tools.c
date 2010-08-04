@@ -30,7 +30,7 @@ char *
 endstr(char *str)
 {
     while ( *str != 0 )	*str++;
-    return( str );
+    return str;
 }
 
 strappend(char *s, char *t)	/* === */

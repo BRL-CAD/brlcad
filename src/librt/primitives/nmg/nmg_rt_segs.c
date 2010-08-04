@@ -1188,7 +1188,8 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	     * else
 	     * This is a real conflict.
 	     */
-	    if ((long_ptr = common_topo(a_tbl, next_tbl))) {
+	    long_ptr = common_topo(a_tbl, next_tbl);
+	    if (long_ptr) {
 		/* morf the two hit points */
 		a_hit->in_out = (a_hit->in_out & 0x0f0) +
 		    NMG_RAY_STATE_ON;
@@ -1252,7 +1253,7 @@ nmg_ray_segs(struct ray_data *rd)
 	    else bu_log("ray missed NMG\n");
 	}
 	last_miss = 1;
-	return(0);			/* MISS */
+	return 0;			/* MISS */
     } else if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 	int seg_count=0;
 
@@ -1292,7 +1293,7 @@ nmg_ray_segs(struct ray_data *rd)
 	    /* print debugging data before returning */
 	    print_seg_list(rd->seghead, seg_count, "after");
 	}
-	return(seg_count);
+	return seg_count;
     }
 }
 

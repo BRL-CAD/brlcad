@@ -1895,15 +1895,7 @@ struct rt_functab {
     void (*ft_curve) BU_ARGS((struct curvature * /**< @brief cvp*/,
 			      struct hit * /**< @brief hitp*/,
 			      struct soltab * /**< @brief stp*/));
-#if 1
-    /*XXX temporarily changing signature to what's actually being used by the funtions */
-    int (*ft_classify) BU_ARGS(());
-#else
-    int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/,
-				const vect_t /*min*/,
-				const vect_t /*max*/,
-				const struct bn_tol * /*tol*/));
-#endif
+    int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/));
     void (*ft_free) BU_ARGS((struct soltab * /*stp*/));
     int (*ft_plot) BU_ARGS((struct bu_list * /*vhead*/,
 			    struct rt_db_internal * /*ip*/,
@@ -1969,10 +1961,6 @@ RT_EXPORT extern const struct rt_functab rt_functab[];
 
 #define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
-#define RT_CLASSIFY_UNIMPLEMENTED	BN_CLASSIFY_UNIMPLEMENTED
-#define RT_CLASSIFY_INSIDE		BN_CLASSIFY_INSIDE
-#define RT_CLASSIFY_OVERLAPPING		BN_CLASSIFY_OVERLAPPING
-#define RT_CLASSIFY_OUTSIDE		BN_CLASSIFY_OUTSIDE
 
 /**
  * R T _ S H O O T R A Y _ S T A T U S
@@ -2798,8 +2786,7 @@ RT_EXPORT BU_EXTERN(int db5_get_attributes,
 		     const struct directory *dp));
 
 /* db_comb.c */
-RT_EXPORT BU_EXTERN(int db_tree_nleaves,
-		    (const union tree *tp));
+RT_EXPORT BU_EXTERN(size_t db_tree_nleaves, (const union tree *tp));
 RT_EXPORT BU_EXTERN(struct rt_tree_array *db_flatten_tree,
 		    (struct rt_tree_array	*rt_tree_array,
 		     union tree			*tp,
@@ -2857,9 +2844,9 @@ RT_EXPORT BU_EXTERN(union tree *db_mkbool_tree,
 		     size_t		howfar,
 		     struct resource	*resp));
 RT_EXPORT BU_EXTERN(union tree *db_mkgift_tree,
-		    (struct rt_tree_array	*trees,
-		     long			subtreecount,
-		     struct resource		*resp));
+		    (struct rt_tree_array *trees,
+		     size_t subtreecount,
+		     struct resource *resp));
 RT_EXPORT BU_EXTERN(int rt_comb_get_color,
 		    (unsigned char rgb[3], const struct rt_comb_internal *comb));
 
@@ -2906,7 +2893,7 @@ RT_EXPORT BU_EXTERN(int db_get,
 		     off_t offset,
 		     size_t len));
 /* put several records into db */
-RT_EXPORT BU_EXTERN(size_t db_put,
+RT_EXPORT BU_EXTERN(int db_put,
 		    (struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
@@ -3073,7 +3060,7 @@ RT_EXPORT BU_EXTERN(int db_flags_raw_internal,
 /* db_alloc.c */
 
 /* allocate "count" granules */
-RT_EXPORT BU_EXTERN(size_t db_alloc,
+RT_EXPORT BU_EXTERN(int db_alloc,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t count));
@@ -3083,11 +3070,11 @@ RT_EXPORT BU_EXTERN(int db_delrec,
 		     struct directory *dp,
 		     int recnum));
 /* delete all granules assigned dp */
-RT_EXPORT BU_EXTERN(size_t db_delete,
+RT_EXPORT BU_EXTERN(int db_delete,
 		    (struct db_i *,
 		     struct directory *dp));
 /* write FREE records from 'start' */
-RT_EXPORT BU_EXTERN(size_t db_zapper,
+RT_EXPORT BU_EXTERN(int db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
 		     size_t start));
@@ -3412,8 +3399,6 @@ RT_EXPORT BU_EXTERN(int rt_mk_parabola,
 		     fastf_t b,
 		     fastf_t dtol,
 		     fastf_t ntol));
-RT_EXPORT BU_EXTERN(struct rt_pt_node *rt_ptalloc,
-		    ());
 
 /* memalloc.c -- non PARALLEL routines */
 RT_EXPORT BU_EXTERN(size_t rt_memalloc,
@@ -5805,6 +5790,12 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_h_binu,
 RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 		    (const int minor));
 
+/* these two functions may not be appropriate to export, but windows requires the export notation. */
+RT_EXPORT BU_EXTERN(size_t db5_is_standard_attribute,
+		    (const char *attrname));
+RT_EXPORT BU_EXTERN(void db5_standardize_avs,
+		    (struct bu_attribute_value_set *avs));
+
 #endif
 
 /* defined in binary_obj.c */
@@ -5835,6 +5826,40 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t max_chord_error,
 		     fastf_t max_normal_error,
 		     fastf_t min_edge_length));
+
+/*
+ *  Utility functions for standard attributes
+ */
+
+/**
+ * D B 5  _ A P P L Y _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "senior" to other values
+ * and other values will be updated to match the attributes.
+ */
+RT_EXPORT BU_EXTERN(void db5_apply_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+
+
+/**
+ * D B 5  _ U P D A T E _ S T D _ A T T R I B U T E S
+ *
+ * Because standard attributes in BRL-CAD databases may involve
+ * more data and structures than just the avs, provide a helper
+ * function that checks the avs structures associated with a
+ * comb and automatically syncs any other relevant data structures
+ * to conform to the attribute values on the comb.  When using this
+ * function, attribute/value pairs are "junior" to other values
+ * and attributes will be updated to reflect those values.
+ */
+RT_EXPORT BU_EXTERN(void db5_update_std_attributes,
+                         (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+
 
 /*
  *  Constants provided and used by the RT library.

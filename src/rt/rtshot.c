@@ -375,7 +375,7 @@ main(int argc, char **argv)
 	(void)rt_shootray( &ap );
     }
 
-    return(0);
+    return 0;
 }
 
 int hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
@@ -388,7 +388,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     vect_t	inormal, onormal;
 
     if ( (pp=PartHeadp->pt_forw) == PartHeadp )
-	return(0);		/* Nothing hit?? */
+	return 0;		/* Nothing hit?? */
 
     if ( overlap_claimant_handling == 1 )
 	rt_rebuild_overlaps( PartHeadp, ap, 1 );
@@ -508,7 +508,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    }
 	}
     }
-    return(1);
+    return 1;
 }
 
 int miss(register struct application *ap)
@@ -522,7 +522,7 @@ int miss(register struct application *ap)
 	pl_color( plotfp, 190, 0, 0 );
 	pdv_3line( plotfp, ap->a_ray.r_pt, out );
     }
-    return(0);
+    return 0;
 }
 
 /*

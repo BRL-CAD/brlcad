@@ -162,6 +162,9 @@
 #include "raytrace.h"
 
 
+extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+
+
 struct ehy_specific {
     point_t ehy_V;	/* vector to ehy origin */
     vect_t ehy_Hunit;	/* unit H vector */
@@ -231,13 +234,13 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 < 0.0 || r2 < 0.0 || c < 0.0) {
-	return(-2);		/* BAD, too small */
+	return -2;		/* BAD, too small */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
     if (!NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /*
@@ -291,7 +294,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
     stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -427,7 +430,7 @@ rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     }
 
     if (hitp != &hits[2])
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
@@ -448,7 +451,7 @@ rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	segp->seg_out = hits[0];	/* struct copy */
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -623,7 +626,7 @@ rt_ehy_free(struct soltab *stp)
 int
 rt_ehy_class(void)
 {
-    return(0);
+    return 0;
 }
 
 
@@ -644,9 +647,6 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     struct rt_ehy_internal *xip;
     vect_t A, Au, B, Bu, Hu, V, Work;
 
-    struct rt_pt_node *rt_ptalloc(void);
-    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -666,13 +666,13 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(-2);		/* BAD */
+	return -2;		/* BAD */
     }
 
     /* make unit vectors in A, H, and BxH directions */
@@ -720,8 +720,8 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    pts_b = rt_ptalloc();
-    pts_b->next = rt_ptalloc();
+    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -734,14 +734,14 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as hyperbola along semi-minor axis
      */
-    pts_a = rt_ptalloc();
+    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	pos_a->next = rt_ptalloc();
+	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -782,14 +782,14 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = rt_ptalloc();
+	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    pos_b->next = rt_ptalloc();
+	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */
@@ -903,7 +903,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)pts_dbl, "dbl ints");
 
-    return(0);
+    return 0;
 }
 
 
@@ -939,9 +939,6 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
 
-    struct rt_pt_node *rt_ptalloc(void);
-    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);
@@ -961,13 +958,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
 	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* Check for A.H == 0 */
     f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
     if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return(1);		/* BAD */
+	return 1;		/* BAD */
     }
 
     /* make unit vectors in A, H, and BxH directions */
@@ -1025,8 +1022,8 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      */
 
     /* approximate positive half of hyperbola along semi-minor axis */
-    pts_b = rt_ptalloc();
-    pts_b->next = rt_ptalloc();
+    pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts_b->next->next = NULL;
     VSET(pts_b->p,       0, 0, -mag_h);
     VSET(pts_b->next->p, 0, r2, 0);
@@ -1039,14 +1036,14 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as parab along semi-minor axis
      */
-    pts_a = rt_ptalloc();
+    pts_a = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
     pts_a->next = NULL;
     pos_b = pts_b->next;
     pos_a = pts_a;
     while (pos_b) {
 	/* copy node from b_hyperbola to a_hyperbola */
-	pos_a->next = rt_ptalloc();
+	pos_a->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pos_a = pos_a->next;
 	pos_a->p[Z] = pos_b->p[Z];
 	/* at given z, find y on hyperbola */
@@ -1086,14 +1083,14 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* construct hyperbola along semi-major axis of ehy using same
 	 * z coords as parab along semi-minor axis
 	 */
-	pts_b = rt_ptalloc();
+	pts_b = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	pts_b->p[Z] = pts_a->p[Z];
 	pts_b->next = NULL;
 	pos_a = pts_a->next;
 	pos_b = pts_b;
 	while (pos_a) {
 	    /* copy node from a_hyperbola to b_hyperbola */
-	    pos_b->next = rt_ptalloc();
+	    pos_b->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 	    pos_b = pos_b->next;
 	    pos_b->p[Z] = pos_a->p[Z];
 	    /* at given z, find y on hyperbola */
@@ -1378,7 +1375,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     bu_ptbl_free(&vert_tab);
-    return(0);
+    return 0;
 
  fail:
     /* free mem */
@@ -1390,7 +1387,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)ellipses, "fastf_t ell[]");
     bu_free((char *)vells, "vertex [][]");
 
-    return(-1);
+    return -1;
 }
 
 
@@ -1413,7 +1410,7 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_ehy_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1437,10 +1434,10 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
 	bu_log("rt_ehy_import4: r1, r2, or c are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_ehy_import4: ip->idb_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1458,7 +1455,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EHY) return(-1);
+    if (ip->idb_type != ID_EHY) return -1;
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);
 
@@ -1472,7 +1469,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (!NEAR_ZERO(MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");
-	return(-1);
+	return -1;
     }
 
     if (MAGNITUDE(xip->ehy_H) < RT_LEN_TOL
@@ -1480,17 +1477,17 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| xip->ehy_r1 < RT_LEN_TOL
 	|| xip->ehy_r2 < RT_LEN_TOL) {
 	bu_log("rt_ehy_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     if (!NEAR_ZERO(VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL)) {
 	bu_log("rt_ehy_export4: Au and H are not perpendicular!\n");
-	return(-1);
+	return -1;
     }
 
     if (xip->ehy_r2 > xip->ehy_r1) {
 	bu_log("rt_ehy_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return(-1);
+	return -1;
     }
 
     /* Warning:  type conversion */
@@ -1502,7 +1499,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ehy->s.s_values[3*3+1] = xip->ehy_r2 * local2mm;
     ehy->s.s_values[3*3+2] = xip->ehy_c * local2mm;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1548,10 +1545,10 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (xip->ehy_r1 <= SMALL_FASTF || xip->ehy_r2 <= SMALL_FASTF || xip->ehy_c <= SMALL_FASTF) {
 	bu_log("rt_ehy_import4: r1, r2, or c are zero\n");
 	bu_free((char *)ip->idb_ptr, "rt_ehy_import4: ip->idb_ptr");
-	return(-1);
+	return -1;
     }
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1569,7 +1566,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EHY) return(-1);
+    if (ip->idb_type != ID_EHY) return -1;
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);
 
@@ -1579,7 +1576,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (!NEAR_ZERO(MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");
-	return(-1);
+	return -1;
     }
 
     if (MAGNITUDE(xip->ehy_H) < RT_LEN_TOL
@@ -1587,17 +1584,17 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	|| xip->ehy_r1 < RT_LEN_TOL
 	|| xip->ehy_r2 < RT_LEN_TOL) {
 	bu_log("rt_ehy_export4: not all dimensions positive!\n");
-	return(-1);
+	return -1;
     }
 
     if (!NEAR_ZERO(VDOT(xip->ehy_Au, xip->ehy_H), RT_DOT_TOL)) {
 	bu_log("rt_ehy_export4: Au and H are not perpendicular!\n");
-	return(-1);
+	return -1;
     }
 
     if (xip->ehy_r2 > xip->ehy_r1) {
 	bu_log("rt_ehy_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return(-1);
+	return -1;
     }
 
     /* Warning:  type conversion */
@@ -1612,7 +1609,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     /* Convert from internal (host) to database (network) format */
     htond(ep->ext_buf, (unsigned char *)vec, 3*4);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1690,10 +1687,10 @@ rt_ehy_ifree(struct rt_db_internal *ip)
 int
 rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
-    if (!ps) return (0);
+    if (!ps) return 0;
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

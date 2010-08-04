@@ -100,7 +100,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 	if (pp->pt_outhit->hit_dist >= 0.0) break;
     if (pp == PartHeadp) {
 	bu_log("pphit:  no hit out front?\n");
-	return(0);
+	return 0;
     }
     hitp = pp->pt_inhit;
     RT_HIT_NORMAL(normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
@@ -110,7 +110,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 	cosI0 = -cosI0;
     if (cosI0 <= 0.0) {
 	ntomiss++;
-	return(0);
+	return 0;
     }
     if (ntomiss > 0) {
 	pchar(' ');		/* miss target cmd */
@@ -136,7 +136,7 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
     }
     j = i & 037;
     pchar('@'+j);		/* low bits of pixel */
-    return(1);
+    return 1;
 }
 
 int
@@ -144,7 +144,7 @@ ppmiss(struct application *ap)
 {
     last_solidp = SOLTAB_NULL;
     ntomiss++;
-    return(0);
+    return 0;
 }
 
 void
@@ -183,7 +183,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
     fprintf(stdout, "%s: %s (RT)\n", file, obj);
     fprintf(stdout, "%10d%10d", (int)azimuth, (int)elevation);
     fprintf(stdout, "%10d%10d\n", width, height);
-    return(0);		/* no framebuffer needed */
+    return 0;		/* no framebuffer needed */
 }
 
 void view_2init(void) {;}

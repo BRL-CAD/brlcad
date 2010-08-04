@@ -86,9 +86,9 @@ hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp
     len = MAGNITUDE(diff);
 
     if (NEAR_ZERO(len, epsilon) || (diff_solid && VDOT(diff, ap->a_ray.r_dir) > 0))
-	return(1);
+	return 1;
     else
-	return(0);
+	return 0;
 }
 
 
@@ -104,7 +104,7 @@ hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp
 static int
 hit_tangent(struct application *ap)
 {
-    return(1);		/* always a hit */
+    return 1;		/* always a hit */
 }
 
 
@@ -114,7 +114,7 @@ hit_tangent(struct application *ap)
 static int
 hit_overlap(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
 {
-    return(0);		/* never a hit */
+    return 0;		/* never a hit */
 }
 
 

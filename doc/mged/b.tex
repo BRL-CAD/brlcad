@@ -1,0 +1,495 @@
+\chapter{PERIPHERAL DEVICES}
+
+Before we discuss the features of MGED, we will introduce
+the hardware devices used to implement them.
+These devices are the ``tools of the trade'' for the MGED user.
+We will discuss only basic operational characteristics here.
+Specific use of these devices will be covered in the later sections
+on the viewing and editing features of MGED.
+
+\section{Joystick}
+
+The joystick is a mechanical device used to do rotations in MGED.
+Any movement left or right rotates the display about the
+X-axis.  Any movement up or down rotates the display
+about the Y-axis.  When the joystick top is twisted in a clockwise or
+counterclockwise direction, the display rotates about the Z-axis.
+Any combination motion of the joystick will produce a ``combined''
+rotation about the appropriate axes.
+As implemented on the Vector General hardware,
+all of these motions have a spring return to a null center position.
+
+\section{Button Box}
+
+The button box contains a collection of buttons.
+On each button is a light that can be lit under program control.
+Pressing a button sends a ``press'' event to MGED,
+and results in an action occurring, or a condition being set.
+The exact functions assigned to these buttons will be discussed
+in the sections on viewing the display and on editing.
+
+\subsection{Vector General Buttons}
+
+\begin{figure}
+\centering \includegraphics{fig-vg-buttons.ps}
+\caption{Vector General Button Assignments}
+\label{vg-buttons}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{fig-sgi-buttons.ps}
+\caption{Silicon Graphics Button Assignments}
+\label{sgi-buttons}
+\end{figure}
+
+% \gluein 4.5in by 4.5in, Vector General Button Assignments, vg-buttons.
+% XXX \gluein 4.5in by 4in, Megatek Dial and Button Box, mg-buttons.
+The Vector General has thirty-two buttons.
+Figure \ref{vg-buttons} depicts the functions programmed
+for each button.
+The buttons in the shaded area are used for editing while the
+rest are used for viewing the display.
+
+\subsection{Megatek Buttons}
+
+\begin{figure}[tbp]
+\begin{tabular}{rl}
+Button  & Function\\
+ \\
+1       & View Mode:  Restores View \\
+        & Edit Mode:  Translation in the Object-Edit mode \\
+2       & View Mode:  Saves View \\
+        & Edit Mode:  Translation in the Object-Edit mode \\
+3 \\
+        & Edit Mode:  Saves the model being displayed on the screen \\
+4       & Off:        Viewing mode \\
+        & On:         Edit mode \\
+5       & View Mode:  Resets View \\
+        & Edit Mode:  Scaling in the Object-Edit mode \\
+6 \\
+        & Edit Mode:  Rotation in the Object-Edit mode \\
+7       & View Mode:  Angle/Distance Cursor \\
+        & Edit Mode:  Translation in the Object-Edit mode \\
+8 \\
+        & Edit Mode:  Rejects display and returns to Viewing display \\
+9       & View Mode:  Bottom View \\
+        & Edit Mode:  Scaling in the Solid-Edit mode \\
+10      & View Mode:  Left View \\
+        & Edit Mode:  Rotation in the Solid-Edit mode \\
+11      & View Mode:  Rear View \\
+        & Edit Mode:  Translation in the Solid-Edit mode \\
+12      & View Mode:  90, 90 View \\
+        & Edit Mode:  Restores Edit mode menu \\
+13      & View Mode:  Top View \\
+        & Edit Mode:  Transfers from Viewing to Solid Pick \\
+14      & View Mode:  Right View \\
+        & Edit Mode:  Transfers from Viewing to Object Pick \\
+15      & View Mode:  Front View \\
+ \\
+16      & View Mode:  35/45 View
+\end{tabular}
+\caption{Megatek Buttons \label{mg-button-table} }
+\end{figure}
+
+The Megatek button box
+is a general purpose input/output device that communicates with
+MGED through an intelligent control unit.  The device has eight
+rotatable knobs and 16 buttons with lights.
+% XXX See Figure \ref{mg-buttons}.
+The ``buttons'' and ``knobs'' of the Megateks are located in the same box.
+There are not enough buttons to have just one assigned meaning, hence
+most buttons have dual functions.
+To toggle the functions of the buttons,
+use the upper right button (toggle button).
+When the light on this button is ON, the functions listed on the RIGHT above
+each button is the current function.
+When the light on the ``toggle'' button is OFF, the functions labeled on the
+LEFT are then in effect.
+The left/right meaning of these buttons is grouped generally according to
+viewing functions on the left and editing functions on the right.
+
+Figure \ref{mg-button-table}
+summarizes the uses of the buttons.
+Depressing the button switches the light on and off.  Many of these serve a
+dual role depending upon the selected mode - viewing or editing.  The mode is
+selected by depressing button 4.  If light 4 is off, the system is performing
+in the viewing mode, and the commands shown in the top half of the table are
+executed.  If light 4 is on, the system is performing in the edit mode, and
+the commands shown in the bottom half are executed.
+
+\subsection{Silicon Graphics Buttons}
+
+The button box layout for the SGI Iris is given
+in Figure \ref{sgi-buttons}.
+Note that the ``right'' button shows you the right side of the
+model, as if you were looking in from the left.
+To achieve the customary draftsman views, this function
+goes on the left.
+
+The upper left button is the {\bf help} key.
+If this button is held down, and any other button (or knob)
+is activated, a descriptive string is displayed in the eight character
+LED display on the button box.
+The upper right button is used to reset all the knobs to zero.
+This is useful to halt a runaway rotation or zoom operation.
+
+%\begin{figure}[tbp]
+%{\tt \begin{verbatim}
+%          |---------|---------|---------|---------|
+%          |         |         |         |  Zero   |
+%          |  Help   |   ADC   | Reset   |  Knobs  |
+%|---------|---------|---------|---------|---------|---------|
+%|   Obj   |   Obj   |   Obj   |   Obj   |         |  Save   |
+%|  Scale  | ScaleX  | ScaleY  | ScaleZ  | empty   |  View   |
+%|---------|---------|---------|---------|---------|---------|
+%|   Obj   |   Obj   |   Obj   |   Obj   |         | Restore |
+%| TransX  | TransY  | TransXY | Rotate  | empty   |  View   |
+%|---------|---------|---------|---------|---------|---------|
+%|  Solid  |  Solid  |  Solid  |  Solid  |   Obj   | Solid   |
+%|  Trans  |   Rot   |  Scale  |  Menu   |  Pick   | Pick    |
+%|---------|---------|---------|---------|---------|---------|
+%| REJECT  | Bottom  |  Top    |  Rear   |  90,90  | ACCEPT  |
+%|---------|---------|---------|---------|---------|---------|
+%          |  Right  |  Front  |  Left   |  35,25  |
+%          |---------|---------|---------|---------|
+%\end{verbatim} }
+%\caption{Silicon Graphics Button Layout \label{XXsgi-buttons} }
+%\end{figure}
+
+\section{Knobs (Dials)}
+
+The knobs (or control dials) are used to send digital information
+to the computer.
+As a knob is turned, a succession of numbers are available for
+use by the computer.
+The knobs can be used to rotate a displayed object about the x, y, or z
+axis, translate the object along the x or y axis, and change the size of the
+view.  Action performed by these knobs is continuous and is initiated by
+turning the knob in the proper direction and terminated by turning the knob
+in the opposite direction.
+
+\subsection{Vector General Knobs}
+
+\begin{figure}
+\centering \includegraphics{fig-vg-knobs.ps}
+\caption{Vector General Knob Assignments}
+\label{vg-knobs}
+\end{figure}
+
+\begin{figure}
+\centering \includegraphics{fig-sgi-knobs.ps}
+\caption{Silicon Graphics Knob Assignments}
+\label{sgi-knobs}
+\end{figure}
+
+% \gluein 4.5in by 3.5in, Vector General Knobs, vg-knobs.
+% \gluein 4.5in by 3.5in, Silicon Graphics Knobs, sgi-knobs.
+Figure \ref{vg-knobs} depicts the functions assigned to each of the ten knobs.
+The exact functions of each of these knobs will be discussed in
+the angle distance cursor section and in the viewing features section.
+
+\subsection{Megatek Knobs}
+
+The ``buttons'' and ``knobs'' of the Megateks are located in the same box.
+% XXX as shown in Figure \ref{mg-buttons}.
+There are not enough knobs to have ONE assigned meaning, hence
+three knobs have dual functions.
+The second function of the first three knobs is only in effect when
+the angle-distance cursor (ADC) is on the screen.
+
+\subsection{Silicon Graphics Knobs}
+
+Figure \ref{sgi-knobs} depicts the functions assigned to the
+eight knobs on the Silicon Graphics knob box.
+In normal operation, the left knobs provide rotations,
+and the right knobs provide translations and zooming.
+When the angle/distance cursor is activated, some of the
+knobs are redefined.
+
+\section{Mouse or Data Tablet}
+
+Moving the mouse or the data tablet ``pen'' causes a cursor
+on the screen to move.
+The screen X-Y coordinates of the cursor can be sensed by MGED
+at any time.
+Clicking one of the mouse buttons,
+or depressing the tip of the pen, results in MGED receiving
+a special event notification.
+The meaning of this mouse event depends on the current editing mode
+and which portion of the display faceplate that the cursor is located
+in.
+
+Below is a list of some of the functions the mouse is used for in MGED;
+\begin{itemize}
+\item
+Selecting editing menus, edit functions (move faces, move edges
+etc.) and viewing functions (selected from main edit menu); move
+pointer to appropriate edit function and press center mouse button.
+\item
+Pointing functions; interactively positioning solid primitive
+relative to other solids with positioning or size update being
+displayed at the same time, position pointer where required and click
+center mouse button.
+\item
+Scaling of view size; enlarge or reduce for a more detailed view of
+object, left button shrinks view size, right button enlarges view
+size.
+\item
+During the solid or object illuminate phase of editing,
+the screen is divided into
+invisible horizontal sections.
+The available selections are scanned by moving the mouse up and down.
+\item
+When MGED is is the viewing state,
+and a mouse event is received which is not in the menu area of the faceplate,
+the point at which the cursor is pointing at will be translated to become
+the center of the current view.
+By pointing and clicking the center mouse button,
+the center of the viewing cube
+can be moved to allow close-up viewing of different areas in your
+model.
+\end{itemize}
+
+\subsection{Vector General Data Tablet}
+
+Position information is entered using a pen-like stylus.
+The distance this pen is from the tablet is important.
+If the pen tip is within one half inch of the tablet surface, the cursor
+location on the screen corresponds to the X,Y location of the
+pen on the tablet.  This condition is called the ``near'' position.
+If the pen is more than one half inch from the tablet surface, the
+cursor remains located in the center of the screen.
+When the pen is pressed against the tablet surface,
+the pressure switch is activated and a ``mouse'' event
+is sent to MGED.
+
+\subsection{Megatek Data Tablet}
+
+Some Megatek systems enter position data on the data tablet
+using a pen-like stylus.
+If the tip of the stylus is
+within one-half inch of the surface of the tablet, a ``star'' corresponding
+to this location is displayed on the display screen.  If the tip is moved
+more than one-half inch from the surface, the position of the star remains
+fixed.  When the stylus is pressed against the tablet surface, the pressure
+switch is activated and a ``mouse'' event is sent MGED.
+
+Other Megatek data tablets have a mouse instead of a pen.
+This mouse has four buttons on it.
+The yellow (top) button is used during illumination and editing just as the
+pen on the Vector General terminals.
+However, in the viewing mode, when pushed, the point which it was pointing
+at will be drawn at the center of the screen.
+The blue (bottom) button has this same function at ALL times and is used
+to ``slew'' the display during editing.
+The white (left) and the green (right) buttons on the mouse are used for
+zooming the display at a fixed rate.
+The white button will zoom out and the green button will zoom in.
+
+\subsection{Silicon Graphics Mouse}
+
+The left and right mouse buttons are used for binary (2x) zooming,
+and the center mouse button is used for all other MGED mouse functions.
+
+On the Silicon Graphics 3-D workstations, MGED can be run directly,
+or it can be run under the window manager MEX.  In both cases,
+MGED opens two windows, one outlined in white for all text interaction,
+and one outlined in yellow for all graphics display.
+When running MGED directly (without MEX), all mouse events are
+sent the MGED, regardless of where the mouse is pointing.
+In order to shift emphasis between the graphics and text windows,
+the smaller one can be enlarged by pointing the cursor within the
+boundaries of the smaller window, and pressing the center button.
+This enlarges that window, and reduces the size of the other window.
+
+When MEX is running, it is necessary to follow the MEX convention of
+moving the cursor into the desired window, and clicking the right mouse
+button, to ``attach'' all input to that window.
+This has the unfortunate consequence of requiring a lot of extra
+mouse clicking, because the graphics window needs to be attached
+when using the buttons, knobs, and mouse, while the text window
+needs to be attached in order to enter keyboard commands.
+
+On the Silicon Graphics 4-D workstations running 4Sight,
+mouse events are sent to MGED only when the cursor is within the
+boundaries of the MGED graphics window.
+
+\subsection{Sun Workstation Mouse}
+
+On the Sun workstation, MGED must be run in a {\bf suntools} window.
+The main consequence of this is that mouse events are sent to MGED
+only when the cursor is within the boundaries of the MGED graphics window
+on the screen.
+The left and right mouse buttons are used for binary (2x) zooming,
+and the center mouse button is used for all other MGED mouse functions.
+
+\section{Keyboard}
+
+The keyboard is used to issue commands and supply parameters to MGED.
+It is also used to login and logout of the UNIX system, and to
+run other UNIX programs.
+All characters typed on the keyboard,
+with the exception of the user's password, are displayed (echoed) on the
+monitor.
+In this text, all input typed by the user is
+shown in {\em italics}, while all literal MGED output
+is shown in {\tt typewriter font}.
+All entries are
+terminated by depressing the RETURN key.
+This action immediately precedes the execution of the directive.
+In most cases, lower case letters
+must be used.  A space must be used between the command and its
+arguments.
+Embedded blanks are not allowed.
+Entering Control/H causes cursor to backspace and erase entered
+information.
+An MGED command is interrupted by entering Control/C.
+End-of-File is sent to MGED by entering Control/D.
+The graphics editor displays the prompt
+\begin{verbatim}
+	mged>
+\end{verbatim}
+on the display whenever it is ready to accept a command from the keyboard.
+
+\chapter{OPERATING INSTRUCTIONS}
+
+\section{Entering the Graphics Editor}
+
+Type {\em mged filename}, e.g.:
+\begin{verbatim}
+     mged s_axle.g
+     mged shaft.g
+     mged fred.g
+\end{verbatim}
+where the filename is the name of the UNIX file in which
+your object description data is stored.
+It is conventional that the
+extension ``.g'' on the filename
+signifies a graphics file, and is a good practice, but is not required.
+If the named database does not already exist,
+MGED will ask if it should create a new database.
+MGED will ask:
+
+{\tt \begin{verse}
+\% {\em mged new.g} \\
+BRL-CAD Release 3.0 Graphics Editor (MGED) \\
+\ \ \ \ Tue Sep 6 02:52:55 EDT 1988 \\
+\ \ \ \ mike@video:/cad/mged.4d \\
+new.g: No such file or directory \\
+Create new database (y|n)[n]? {\em y} \\
+attach (nu|tek|tek4109|ps|plot|sgi)[nu]? {\em sgi} \\
+ATTACHING sgi (SGI 4d) \\
+Untitled MGED Database (units=mm) \\
+mged>
+\end{verse} }
+Here, the {\em italic} type indicates the user's response:
+{\em y} instructs MGED to create the new database, and
+{\em sgi} instructs MGED to attach to a window
+on the Silicon Graphics (SGI) workstation.
+
+Directives to the graphics editor are made by
+\begin{enumerate}
+\item entering information from the keyboard,
+shown here in the text by the use of {\em italics},
+\item using the stylus to select items from
+the menu (select), and
+\item pressing buttons and twisting knobs on the
+function control box (press, twist).
+\end{enumerate}
+
+The prompt for a command is {\tt mged>}.
+
+\subsection{Running MGED on a Silicon Graphics}
+
+When running MGED from the console of a Silicon Graphics workstation,
+MGED retains the text window from which it was started,
+and opens a second window for the graphics display.
+By default, the graphics window is quite large, and the text window
+is rather small.
+
+On the SGI 3-d workstations,
+should you wish to have a large text window to scan printed output, move
+the mouse pointer into the text window and click the center mouse button.
+Use the reverse procedure to regain a large graphics window, i.e.,
+move the mouse pointer into the graphics window
+and click the center mouse button.
+
+\subsection{Running MGED on a Tektronix}
+
+To run MGED on the tek4014 class of terminals one needs to have TWO
+terminals - the graphics terminal (4014 or one which emulates a 4014) and
+another terminal to enter commands on.
+
+The procedure is as follows:
+\begin{enumerate}
+\item login on the graphics terminal
+\item enter {\em tty} to find out which terminal number has been assigned
+\item  enter {\em sleep 32000} to put the graphics terminal in sleep mode
+\item  login on the other terminal
+\item  enter {\em mged file} to execute MGED
+\item  enter {\em tek} to select the tek4014 device processor
+\item  enter the tty value found in step 2.
+\item  perform editing
+\item  enter {\em q} to quit MGED
+\item  enter control-c on the graphics terminal to end the sleep mode
+\item  logout on both terminals
+\end{enumerate}
+
+Since there are no knobs or buttons on the tek4014 class of terminals, one
+is forced to use the {\em press} and {\em knob} commands to emulate these
+peripherals.
+Other commands which can/should be used are:
+
+\begin{tabular}{rl}
+ill     & put up a desired path \\
+center  & slew the display \\
+size    & zoom the display \\
+sed     & solid edit immediately
+\end{tabular}
+
+The main force behind the writing of a driver for the tek4014 terminals
+was to allow the use of the Teletype 5620 terminals.
+These graphic terminals have an internal processor and different windows
+can be set up which represent different terminals.
+Hence two terminals are NOT necessary.
+The use of the Teletype 5620 terminals is then the same as the procedure
+outlined above, except each window represents a terminal.
+
+\section{The Pop-Up Button Menu}
+
+The default MGED faceplate is shown in Figure \ref{faceplate}.
+If the BUTTON MENU area on the screen is selected with the mouse,
+then the pop-up button menu appears, as shown in Figure \ref{buttonmenu}.
+This menu can be very useful in reducing the amount of hand motion
+between the mouse and the button box.
+
+\section{Starting Your Model}
+
+Modeling practices using MGED can be quite individual.  The following is a
+suggested modeling method to start with; you may end up developing your own
+style as you become more familiar with MGED.
+
+First of all, decide how you want to represent your model, including the
+amount of detail, types of solids and regions necessary.  Have an accurate
+sketch or engineering drawing available, so that you can easily tranfer its
+information into the types of primitive solids necessary to create your model.
+Where possible it is recommended to start with a large block solid and
+``subtract'' pieces from it.  In this way you avoid errors with abutting
+faces of a collection of solids ``unioned'' together.
+
+Next the solids are created using the
+{\em make}, {\em cp}, {\em mirror} or {\em in}
+commands.  Depending on the complexity of the model, the solids may be
+created in the desired location or created at the origin and later
+translated to the desired location.  Creation at the origin provides
+an opportunity to take advantage of possible symmetries in the geometry.
+Once all the solids are finished it is time to create the region[s],
+which will describe (to MGED) how to combine the solids to represent
+the model.
+
+The region[s] are then given the desired item/air code (if this is
+necessary, otherwise leave it as the system default value), and material
+codes.  The regions are then put onto a group, usually for functionality only.
+A group has no operations as such (like union [u], intersection [+] or
+difference [-]) and is just a collection of objects for convenient naming
+of a whole screen or collection of objects.

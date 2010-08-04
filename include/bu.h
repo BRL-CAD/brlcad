@@ -1196,7 +1196,7 @@ struct bu_bitv {
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
  * directly, instead calling the BU_BITV_SHIFT macro instead.
  */
-BU_EXPORT BU_EXTERN(inline unsigned int bu_bitv_shift, ());
+BU_EXPORT BU_EXTERN(unsigned int bu_bitv_shift, ());
 
 /*
  * Bit-string manipulators for arbitrarily long bit strings stored as
@@ -2212,7 +2212,8 @@ BU_EXPORT BU_EXTERN(void bu_avs_add_nonunique,
  * B U _ B I T V _ N E W
  * @brief
  * Allocate storage for a new bit vector of at least 'nbits' in
- * length.  For efficiency, the bit vector itself is not initialized.
+ * length.  The bit vector itself is guaranteed to be initialized to
+ * all zero.
  */
 BU_EXPORT BU_EXTERN(struct bu_bitv *bu_bitv_new, (unsigned int nbits));
 
@@ -2232,7 +2233,8 @@ BU_EXPORT BU_EXTERN(void bu_bitv_free, (struct bu_bitv *bv));
  * @brief
  * Set all the bits in the bit vector to zero.
  *
- * Also available as a macro if you don't desire the pointer checking.
+ * Also available as a BU_BITV_ZEROALL macro if you don't desire the
+ * pointer checking.
  */
 BU_EXPORT BU_EXTERN(void bu_bitv_clear, (struct bu_bitv *bv));
 
@@ -5964,6 +5966,7 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 
 enum {
     BU_IMAGE_AUTO,
+    BU_IMAGE_AUTO_NO_PIX,
     BU_IMAGE_PIX,
     BU_IMAGE_BW,
     BU_IMAGE_ALIAS,
@@ -5999,6 +6002,12 @@ BU_EXPORT BU_EXTERN(struct bu_image_file *bu_image_save_open,
 
 BU_EXPORT BU_EXTERN(int bu_image_save_writeline,
 		    (struct bu_image_file *bif,
+		     int y,
+		     unsigned char *data));
+
+BU_EXPORT BU_EXTERN(int bu_image_save_writepixel,
+		    (struct bu_image_file *bif,
+		     int x,
 		     int y,
 		     unsigned char *data));
 
@@ -6121,6 +6130,21 @@ BU_EXPORT BU_EXTERN(int bu_suspend_interrupts, ());
  * Returns non-zero on error (with perror set if signal() failure).
  */
 BU_EXPORT BU_EXTERN(int bu_restore_interrupts, ());
+
+/** @} */
+
+/** @addtogroup file */
+/** @{ */
+/** @file simd.c
+ * Detect SIMD type at runtime.
+ */
+
+#define BU_SIMD_ALTIVEC 4
+#define BU_SIMD_SSE2 3
+#define BU_SIMD_SSE 2
+#define BU_SIMD_MMX 1
+#define BU_SIMD_NONE 0
+BU_EXPORT BU_EXTERN(int bu_simd_level, ());
 
 /** @} */
 

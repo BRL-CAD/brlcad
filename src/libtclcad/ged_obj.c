@@ -58,6 +58,8 @@
 #include "dm.h"
 #include "dg.h"
 
+#include "ged.h"
+
 #ifdef DM_X
 #  ifdef WITH_TK
 #    include "tk.h"
@@ -313,6 +315,12 @@ HIDDEN int go_mouse_ray(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int go_mouse_rect(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int maxargs);
 HIDDEN int go_mouse_rot(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -412,6 +420,12 @@ HIDDEN int go_prim_label(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
+HIDDEN int go_rect_mode(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
 HIDDEN int go_refresh(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
@@ -673,6 +687,7 @@ static struct go_cmdtab go_cmds[] = {
     {"color",	(char *)0, MAXARGS, go_pass_through_func, ged_color},
     {"comb",	(char *)0, MAXARGS, go_pass_through_func, ged_comb},
     {"comb_color",	(char *)0, MAXARGS, go_pass_through_func, ged_comb_color},
+    {"combmem",	(char *)0, MAXARGS, go_pass_through_func, ged_combmem},
     {"configure",	"vname", MAXARGS, go_configure, GED_FUNC_PTR_NULL},
     {"constrain_rmode",	"x|y|z x y", MAXARGS, go_constrain_rmode, GED_FUNC_PTR_NULL},
     {"constrain_tmode",	"x|y|z x y", MAXARGS, go_constrain_tmode, GED_FUNC_PTR_NULL},
@@ -779,6 +794,7 @@ static struct go_cmdtab go_cmds[] = {
     {"mouse_oscale",	"obj x y", MAXARGS, go_mouse_oscale, GED_FUNC_PTR_NULL},
     {"mouse_otranslate",	"obj x y", MAXARGS, go_mouse_otranslate, GED_FUNC_PTR_NULL},
     {"mouse_ray",	"x y", MAXARGS, go_mouse_ray, GED_FUNC_PTR_NULL},
+    {"mouse_rect",	"x y", MAXARGS, go_mouse_rect, GED_FUNC_PTR_NULL},
     {"mouse_rot",	"x y", MAXARGS, go_mouse_rot, GED_FUNC_PTR_NULL},
     {"mouse_rotate_arb_face",	"obj face v x y", MAXARGS, go_mouse_rotate_arb_face, GED_FUNC_PTR_NULL},
     {"mouse_scale",	"x y", MAXARGS, go_mouse_scale, GED_FUNC_PTR_NULL},
@@ -788,7 +804,7 @@ static struct go_cmdtab go_cmds[] = {
     {"mouse_trans",	"x y", MAXARGS, go_mouse_trans, GED_FUNC_PTR_NULL},
     {"mv",	(char *)0, MAXARGS, go_pass_through_func, ged_move},
     {"mvall",	(char *)0, MAXARGS, go_pass_through_func, ged_move_all},
-    {"new_view",	"type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
+    {"new_view",	"vname type [args]", MAXARGS, go_new_view, GED_FUNC_PTR_NULL},
     {"nirt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_nirt},
     {"nmg_collapse",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_collapse},
     {"nmg_simplify",	(char *)0, MAXARGS, go_pass_through_func, ged_nmg_simplify},
@@ -835,6 +851,7 @@ static struct go_cmdtab go_cmds[] = {
     {"r",	(char *)0, MAXARGS, go_pass_through_func, ged_region},
     {"rcodes",	(char *)0, MAXARGS, go_pass_through_func, ged_rcodes},
     {"rect",	"args", 6, go_view_func, ged_rect},
+    {"rect_mode",	"x y", MAXARGS, go_rect_mode, GED_FUNC_PTR_NULL},
     {"red",	(char *)0, MAXARGS, go_pass_through_func, ged_red},
     {"refresh",	"vname", MAXARGS, go_refresh, GED_FUNC_PTR_NULL},
     {"refresh_all",	(char *)0, MAXARGS, go_refresh_all, GED_FUNC_PTR_NULL},
@@ -854,6 +871,7 @@ static struct go_cmdtab go_cmds[] = {
     {"rotate_arb_face_mode",	"obj face v x y", MAXARGS, go_rotate_arb_face_mode, GED_FUNC_PTR_NULL},
     {"rotate_mode",	"x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
     {"rrt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rrt},
+    {"rselect",		(char *)0, MAXARGS, go_view_func, ged_rselect},
     {"rt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
     {"rt_end_callback",	"[args]", GO_MAX_RT_ARGS, go_rt_end_callback, GED_FUNC_PTR_NULL},
     {"rt_gettrees",	"[-i] [-u] pname object", MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
@@ -873,6 +891,7 @@ static struct go_cmdtab go_cmds[] = {
     {"sdata_labels",	"???", MAXARGS, go_data_labels, GED_FUNC_PTR_NULL},
     {"sdata_lines",	"???", MAXARGS, go_data_lines, GED_FUNC_PTR_NULL},
     {"search",		(char *)0, MAXARGS, go_pass_through_func, ged_search},
+    {"select",		(char *)0, MAXARGS, go_view_func, ged_select},
     {"set_coord",	"[m|v]", MAXARGS, go_set_coord, GED_FUNC_PTR_NULL},
     {"set_fb_mode",	"[mode]", MAXARGS, go_set_fb_mode, GED_FUNC_PTR_NULL},
     {"set_output_script",	"[script]", MAXARGS, go_pass_through_func, ged_set_output_script},
@@ -905,7 +924,7 @@ static struct go_cmdtab go_cmds[] = {
     {"vdraw",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_vdraw},
     {"version",	(char *)0, MAXARGS, go_pass_through_func, ged_version},
     {"view",	"quat|ypr|aet|center|eye|size [args]", 3, go_view_func, ged_view},
-    {"view_axes",	"???", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
+    {"view_axes",	"vname [args]", MAXARGS, go_view_axes, GED_FUNC_PTR_NULL},
     {"view_win_size",	"[s] | [x y]", 4, go_view_win_size, GED_FUNC_PTR_NULL},
     {"view2model",	"vname", 2, go_view_func, ged_view2model},
     {"viewdir",	"[-i]", 3, go_view_func, ged_viewdir},
@@ -980,7 +999,7 @@ go_cmd(ClientData clientData,
     register struct go_cmdtab *ctp;
     struct ged_obj *gop = (struct ged_obj *)clientData;
     Tcl_DString ds;
-    int ret;
+    int ret = GED_ERROR;
 
     Tcl_DStringInit(&ds);
 
@@ -1447,7 +1466,7 @@ go_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (strcmp(argv[2], "tick_enabled") == 0) {
+    if (strcmp(argv[2], "tick_enable") == 0) {
 	if (argc == 3) {
 	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
 	    return BRLCAD_OK;
@@ -2062,7 +2081,8 @@ go_copy(struct ged *gedp,
     bu_vls_init(&from_vls);
     bu_vls_init(&to_vls);
 
-    if ((cp = strchr(argv[1], ':'))) {
+    cp = strchr(argv[1], ':');
+    if (cp) {
 	bu_vls_strncpy(&db_vls, argv[1], cp-argv[1]);
 	bu_vls_strcpy(&from_vls, cp+1);
 
@@ -2085,7 +2105,8 @@ go_copy(struct ged *gedp,
 	from_gedp = gedp;
     }
 
-    if ((cp = strchr(argv[2], ':'))) {
+    cp = strchr(argv[2], ':');
+    if (cp) {
 	bu_vls_trunc(&db_vls, 0);
 	bu_vls_strncpy(&db_vls, argv[2], cp-argv[2]);
 	bu_vls_strcpy(&to_vls, cp+1);
@@ -5029,6 +5050,79 @@ go_mouse_ray(struct ged *gedp,
 }
 
 HIDDEN int
+go_mouse_rect(struct ged *gedp,
+	      int argc,
+	      const char *argv[],
+	      ged_func_ptr func,
+	      const char *usage,
+	      int maxargs)
+{
+    int ret;
+    int ac;
+    char *av[5];
+    int x, y;
+    int dx, dy;
+    int half_wMh;
+    struct bu_vls dx_vls, dy_vls;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[2], "%d", &x) != 1 ||
+	sscanf(argv[3], "%d", &y) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    half_wMh = (gdvp->gdv_dmp->dm_width - gdvp->gdv_dmp->dm_height) * 0.5;
+    dx = x - gdvp->gdv_view->gv_prevMouseX;
+    dy = gdvp->gdv_dmp->dm_height - y + half_wMh - gdvp->gdv_view->gv_prevMouseY;
+
+    bu_vls_init(&dx_vls);
+    bu_vls_init(&dy_vls);
+    bu_vls_printf(&dx_vls, "%d", dx);
+    bu_vls_printf(&dy_vls, "%d", dy);
+    gedp->ged_gvp = gdvp->gdv_view;
+    ac = 4;
+    av[0] = "rect";
+    av[1] = "dim";
+    av[2] = bu_vls_addr(&dx_vls);
+    av[3] = bu_vls_addr(&dy_vls);
+    av[4] = (char *)0;
+
+    ret = ged_rect(gedp, ac, (const char **)av);
+    bu_vls_free(&dx_vls);
+    bu_vls_free(&dy_vls);
+
+    if (ret == GED_OK)
+	go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
+}
+
+HIDDEN int
 go_mouse_rot(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -5876,7 +5970,8 @@ go_new_view(struct ged *gedp,
 	    av[i+newargs] = (char *)argv[i];
 	av[i+newargs] = (char *)NULL;
 
-	if ((new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av)) == DM_NULL) {
+	new_gdvp->gdv_dmp = dm_open(go_current_gop->go_interp, type, ac, av);
+	if (new_gdvp->gdv_dmp == DM_NULL) {
 	    bu_free((genptr_t)new_gdvp->gdv_view, "ged_view");
 	    bu_free((genptr_t)new_gdvp, "ged_dm_view");
 	    bu_free((genptr_t)av, "go_new_view: av");
@@ -6150,19 +6245,20 @@ go_png(struct ged *gedp,
        const char *usage,
        int maxargs)
 {
-    struct ged_dm_view *gdvp;
-    FILE *fp;
     png_structp png_p;
     png_infop info_p;
-    unsigned char **rows;
-    unsigned char *idata;
-    unsigned char *irow;
-    int bytes_per_pixel;
+
+    unsigned char *dbyte0 = NULL, *dbyte1 = NULL, *dbyte2 = NULL, *dbyte3 = NULL;
+    struct ged_dm_view *gdvp = NULL;
+    FILE *fp = NULL;
+    unsigned char **rows = NULL;
+    unsigned char *idata = NULL;
+    unsigned char *irow = NULL;
+    int bytes_per_pixel = 0;
     int bits_per_channel = 8;  /* bits per color channel */
-    int i, j, k;
-    unsigned char *dbyte0, *dbyte1, *dbyte2, *dbyte3;
-    int width;
-    int height;
+    int i = 0, j = 0, k = 0;
+    int width = 0;
+    int height = 0;
     int found_valid_dm = 0;
 
     /* initialize result */
@@ -6375,6 +6471,98 @@ go_prim_label(struct ged *gedp,
 	bu_vls_init(&go_current_gop->go_prim_label_list[i]);
 	bu_vls_printf(&go_current_gop->go_prim_label_list[i], "%s", argv[i+1]);
     }
+
+    return BRLCAD_OK;
+}
+
+HIDDEN int
+go_rect_mode(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    int ac;
+    char *av[5];
+    int x, y;
+    int half_wMh;
+    struct bu_vls bindings;
+    struct bu_vls x_vls, y_vls;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    if (sscanf(argv[2], "%d", &x) != 1 ||
+	sscanf(argv[3], "%d", &y) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    half_wMh = (gdvp->gdv_dmp->dm_width - gdvp->gdv_dmp->dm_height) * 0.5;
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y + half_wMh;
+    gdvp->gdv_view->gv_mode = GED_RECTANGLE_MODE;
+
+    ac = 4;
+    av[0] = "rect";
+    av[1] = "dim";
+    av[2] = "0";
+    av[3] = "0";
+    av[4] = (char *)0;
+    (void)ged_rect(gedp, ac, (const char **)av);
+
+    bu_vls_init(&x_vls);
+    bu_vls_init(&y_vls);
+    bu_vls_printf(&x_vls, "%d", (int)gdvp->gdv_view->gv_prevMouseX);
+    bu_vls_printf(&y_vls, "%d", (int)gdvp->gdv_view->gv_prevMouseY);
+    av[1] = "pos";
+    av[2] = bu_vls_addr(&x_vls);
+    av[3] = bu_vls_addr(&y_vls);
+    (void)ged_rect(gedp, ac, (const char **)av);
+    bu_vls_free(&x_vls);
+    bu_vls_free(&y_vls);
+
+    ac = 3;
+    av[0] = "rect";
+    av[1] = "draw";
+    av[2] = "1";
+    av[3] = (char *)0;
+    (void)ged_rect(gedp, ac, (const char **)av);
+
+    bu_vls_init(&bindings);
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_rect %V %%x %%y}",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &go_current_gop->go_name,
+		  &gdvp->gdv_name);
+    Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+
+    go_refresh_view(gdvp);
 
     return BRLCAD_OK;
 }
@@ -8136,37 +8324,7 @@ go_close_fbs(struct ged_dm_view *gdvp)
 	return TCL_OK;
 
     fb_flush(gdvp->gdv_fbs.fbs_fbp);
-
-    switch (gdvp->gdv_dmp->dm_type) {
-#ifdef DM_X
-	case DM_TYPE_X:
-	    X24_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_TK
-/* XXX TJM: not ready yet
-   case DM_TYPE_TK:
-   tk_close_existing(gdvp->gdv_fbs.fbs_fbp);
-   break;
-*/
-#endif
-#ifdef DM_OGL
-	case DM_TYPE_OGL:
-	    ogl_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_close_existing(gdvp->gdv_fbs.fbs_fbp);
-	    break;
-#endif
-    }
-
-    /* free framebuffer memory */
-    if (gdvp->gdv_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
-	free((void *)gdvp->gdv_fbs.fbs_fbp->if_pbase);
-    free((void *)gdvp->gdv_fbs.fbs_fbp->if_name);
-    free((void *)gdvp->gdv_fbs.fbs_fbp);
+    fb_close_existing(gdvp->gdv_fbs.fbs_fbp);
     gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
 
     return TCL_OK;

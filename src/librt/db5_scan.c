@@ -85,7 +85,7 @@ db5_scan(
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
-	    addr += raw.object_length;
+	    addr += (off_t)raw.object_length;
 	}
 	dbip->dbi_eof = addr;
 	BU_ASSERT_LONG(dbip->dbi_eof, ==, (off_t)dbip->dbi_mf->buflen);
@@ -193,7 +193,7 @@ db_diradd5(
     dp->d_forw = *headp;
     *headp = dp;
 
-    return(dp);
+    return dp;
 }
 
 
@@ -275,7 +275,7 @@ db5_diradd(struct db_i *dbip,
     dp->d_forw = *headp;
     *headp = dp;
 
-    return(dp);
+    return dp;
 }
 
 
@@ -467,7 +467,7 @@ db_get_version(struct db_i *dbip)
 	return 4;
     }
 
-    return(-1);
+    return -1;
 }
 
 

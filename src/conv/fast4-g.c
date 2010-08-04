@@ -260,7 +260,7 @@ get_line(void)
 
     bu_vls_free(&buffer);
 
-    return (len >= 0);
+    return len >= 0;
 }
 
 
@@ -290,13 +290,13 @@ is_a_hole(int id)
 	    ptr = hole_ptr->holes;
 	    while (ptr) {
 		if ((ptr->group * 1000 + ptr->component) == id)
-		    return(1);
+		    return 1;
 		ptr = ptr->next;
 	    }
 	}
 	hole_ptr = hole_ptr->next;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -373,7 +373,7 @@ Search_names(struct name_tree *root, char *name, int *found)
 
     ptr = root;
     if (!ptr)
-	return((struct name_tree *)NULL);
+	return (struct name_tree *)NULL;
 
     while (1) {
 	int diff;
@@ -381,17 +381,17 @@ Search_names(struct name_tree *root, char *name, int *found)
 	diff = strcmp(name, ptr->name);
 	if (diff == 0) {
 	    *found = 1;
-	    return(ptr);
+	    return ptr;
 	} else if (diff > 0) {
 	    if (ptr->nright)
 		ptr = ptr->nright;
 	    else
-		return(ptr);
+		return ptr;
 	} else if (diff < 0) {
 	    if (ptr->nleft)
 		ptr = ptr->nleft;
 	    else
-		return(ptr);
+		return ptr;
 	}
     }
 }
@@ -406,7 +406,7 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
 
     ptr = root;
     if (!ptr)
-	return((struct name_tree *)NULL);
+	return (struct name_tree *)NULL;
 
     while (1) {
 	int diff;
@@ -415,17 +415,17 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
 
 	if (diff == 0) {
 	    *found = 1;
-	    return(ptr);
+	    return ptr;
 	} else if (diff > 0) {
 	    if (ptr->rright)
 		ptr = ptr->rright;
 	    else
-		return(ptr);
+		return ptr;
 	} else if (diff < 0) {
 	    if (ptr->rleft)
 		ptr = ptr->rleft;
 	    else
-		return(ptr);
+		return ptr;
 	}
     }
 }
@@ -567,9 +567,9 @@ find_region_name(int g_id, int c_id)
     ptr = Search_ident(name_root, reg_id, &found);
 
     if (found)
-	return(ptr->name);
+	return ptr->name;
     else
-	return((char *)NULL);
+	return (char *)NULL;
 }
 
 
@@ -583,7 +583,7 @@ make_unique_name(char *name)
 
     (void)Search_names(name_root, name, &found);
     if (!found)
-	return(bu_strdup(name));
+	return bu_strdup(name);
 
     bu_vls_init(&vls);
 
@@ -595,7 +595,7 @@ make_unique_name(char *name)
     if (RT_G_DEBUG&DEBUG_MEM_FULL &&  bu_mem_barriercheck())
 	bu_log("ERROR: bu_mem_barriercheck failed in make_unique_name\n");
 
-    return(bu_vls_strgrab(&vls));
+    return bu_vls_strgrab(&vls);
 }
 
 
@@ -635,7 +635,7 @@ get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d.%d.%c%d", reg_id, element_id, type, inner);
 
-    return(bu_vls_strgrab(&vls));
+    return bu_vls_strgrab(&vls);
 }
 
 
@@ -699,7 +699,7 @@ make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 
     Insert_name(&name_root, name, inner);
 
-    return(name);
+    return name;
 }
 
 
@@ -1962,14 +1962,14 @@ skip_region(int id)
     int i;
 
     if (!f4_do_skips)
-	return(0);
+	return 0;
 
     for (i=0; i<f4_do_skips; i++) {
 	if (id == region_list[i])
-	    return(0);
+	    return 0;
     }
 
-    return(1);
+    return 1;
 }
 
 
@@ -2358,7 +2358,6 @@ make_bot_object(void)
     if (mode == PLATE_MODE) {
 	bot_mode = RT_BOT_PLATE;
 	bv = bu_bitv_new(face_count);
-	bu_bitv_clear(bv);
 	for (i=0; i<face_count; i++) {
 	    if (facemode[i] == POS_FRONT)
 		BU_BITSET(bv, i);
@@ -2808,7 +2807,7 @@ Process_input(int pass_number)
 	List_names();
     }
 
-    return(0);
+    return 0;
 }
 
 

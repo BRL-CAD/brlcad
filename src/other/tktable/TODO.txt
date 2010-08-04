@@ -1,0 +1,63 @@
+## TODO LIST
+##
+## updated 1 June 1999, jeff at hobbs org
+##
+## Any information in here may be out of date.  For up-to-date info see:
+##	http://tktable.sourceforge.net/
+##
+
+These are recommendations, not all of the same priority, and not
+all necessarily will be implemented.  If you see something you
+feel is important, email me and say so.  Very democratic.
+
+* some sort of textbbox command that will return the size of the
+  text in a cell, to allow for perfect cell sizing.
+
+* anchor title areas in different parts of the screen
+
+* -rowstretchmode fill ignores initial # of rows, or config requests for more.
+* interpret 0 rows/cols to be FILL
+* add -colstretchmode fill
+* scratch stretchmode "fill" in favor of "dynamic" which would monitor
+  the max extent of row/col (difficult)
+
+* fix selection routines to properly handle title area movement
+
+* support smooth scrolling of rows/cols
+ 
+* add ability to index by tagname
+* overhaul tag mechanism (include way to query for tags on a cell, add
+  priority)
+
+* add internal sort procedures
+pathName  sort	-row	{the list of rows we want to sort | all}
+		-col	{the list of cols we use for sorting}
+		-master row,col
+		-command _command_to_use_
+		-type	{for each column specifies the type of sort:
+			ascii | dictionary | integer | real }
+		-order	{for each column specify the order of sort:
+			increasing | decreasing | none }
+
+* row/column swap (maybe only in terms of visual remapping)
+
+=	BBBB  U   U  GGG   SSS
+==	B   B U   U G     S  
+==-	B BB  U   U G GGG  SSS
+==	B   B U   U G   G     S
+=	BBBB   UUU   GGGG  SSS
+
+MINOR:
+
+Windows: With "-colstretchmode last", the scrollbar behaves oddly in
+	handling the space for the last cell properly when moving the
+	main part of the scrollbar with the mouse.  This seems to be
+	that even though the scrollbar receives the "set 0.6xxx 1",
+	the scrollbar immediately jumps back to what the mouse says,
+	although this isn't a problem in X...
+
+Windows: when moving windows in "Show Window While Dragging" mode,
+	the column titles don't refresh properly.
+
+Windows: When using bitmaps in cells, they occasionally don't redraw
+	 correctly.  The work-around is to use -drawmode slow.

@@ -326,7 +326,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     screen_number = XDefaultScreen(tmp_dpy);
-    if (screen_number <= 0)
+    if (screen_number < 0)
 	bu_log("WARNING: screen number is [%d]\n", screen_number);
 
 
@@ -1202,7 +1202,7 @@ int ignoreMiss(struct application *app) {
 
 double jitter(double range) {
     if (rand() % 2)
-	return (fmod(rand(), range));
+	return fmod(rand(), range);
 
     return (-1 *(fmod(rand(), range)));
 }
@@ -2290,7 +2290,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 		    if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
 
-		    return (maxvip); /* success */
+		    return maxvip; /* success */
 		} else {
 		    /* retry with lesser depth */
 		    baddepth = maxvip->depth;

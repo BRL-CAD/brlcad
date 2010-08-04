@@ -69,7 +69,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
 	bu_exit (-1, NULL);
     }
 
-    return(buffer);
+    return buffer;
 }
 
 
@@ -249,11 +249,11 @@ int main(int ac, char **av)
 	case METH_BOXCAR : shrink_image(scanlen, width, height, buffer, factor); break;
 	case METH_UNDERSAMPLE : usample_image(scanlen, width, height, buffer, factor);
 	    break;
-	default: return(-1);
+	default: return -1;
     }
 
     write_image(width/factor, height/factor, buffer);
-    return(0);
+    return 0;
 }
 
 

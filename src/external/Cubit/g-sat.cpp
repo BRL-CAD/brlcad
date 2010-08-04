@@ -1309,7 +1309,7 @@ booltree_evaluate( tree *tp, resource *resp )
 
     switch(tp->tr_op) {
 	case OP_NOP:
-	    return(0);
+	    return 0;
 	case OP_DB_LEAF:
 	    /* Hit a tree leaf */
 	    return tp;
@@ -1327,7 +1327,7 @@ booltree_evaluate( tree *tp, resource *resp )
 	    break;
 	default:
 	    bu_log("booltree_evaluate: bad op %d\n", tp->tr_op);
-	    return(0);
+	    return 0;
     }
     /* Handle a boolean operation node.  First get it's leaves. */
     tl = booltree_evaluate(tp->tr_b.tb_left, resp);

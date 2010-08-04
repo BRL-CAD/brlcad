@@ -697,7 +697,7 @@ main (int argc, char **argv)
 
     /* Wrap up */
     fb_close(fbPtr);
-    return(0);
+    return 0;
 }
 
 void
@@ -820,7 +820,7 @@ LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_
 
     if (fPtr != stdin)
 	(void) fclose(fPtr);
-    return(Warnings);
+    return Warnings;
 }
 
 int
@@ -836,7 +836,7 @@ OnGrid (double theta, double rho)
     for (t = 0; t < 360; t += 30)
     {
 	if (fabs(theta - t) < squeeze)
-	    return(1);
+	    return 1;
     }
 
     /* Determine whether the point is on a circle */
@@ -845,9 +845,9 @@ OnGrid (double theta, double rho)
 	(((0.6 - rho) > 0) && ((0.6 - rho) < GRID_RHO_EPS)) ||
 	(((0.4 - rho) > 0) && ((0.4 - rho) < GRID_RHO_EPS)) ||
 	(((0.2 - rho) > 0) && ((0.2 - rho) < GRID_RHO_EPS)))
-	return(1);
+	return 1;
 
-    return (0);
+    return 0;
 }
 
 void

@@ -60,7 +60,7 @@ cone( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[entityno]->param );
     Readint( &sol_num, "" );
@@ -81,12 +81,12 @@ cone( entityno )
 	if ( scale_height == 0.0 )
 	{
 	    bu_log( "\tCone height is zero!!\n" );
-	    return( 0 );
+	    return 0;
 	}
 	if ( rad1 == 0.0 && rad2 == 0.0 )
 	{
 	    bu_log( "\tBoth radii for cone are zero!!!\n" );
-	    return( 0 );
+	    return 0;
 	}
 	if ( rad1 < 0.0 )
 	{
@@ -132,16 +132,16 @@ cone( entityno )
 	bu_log("Illegal height vector %g,%g,%g for entity D%07d (%s)\n",
 	       V3ARGS(hdir),
 	       dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
     VUNITIZE(hdir);
 
     if ( mk_cone( fdout, dir[entityno]->name, base, hdir, scale_height, rad1, rad2 ) < 0 )  {
 	bu_log("Unable to write entity D%07d (%s)\n",
 	       dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
-    return( 1 );
+    return 1;
 }
 
 /*

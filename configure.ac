@@ -80,11 +80,11 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-dnl minimum version of autoconf required.  should coincide with
-dnl setting in autogen.sh script.
+# minimum version of autoconf required.  should coincide with setting
+# in autogen.sh script.
 AC_PREREQ(2.52)
 
-dnl See HACKING for details on how to properly update the version
+# See HACKING for details on how to properly update the version
 define([MAJOR_VERSION], [patsubst(esyscmd([cat include/conf/MAJOR]), [
 ])])
 define([MINOR_VERSION], [patsubst(esyscmd([cat include/conf/MINOR]), [
@@ -103,10 +103,14 @@ AC_CONFIG_MACRO_DIR([m4])
 # keep track of cmd-line options for later
 BC_ARG0="$0"
 AC_SUBST(BC_ARG0)
-BC_ARGS="$*"
+if test "x$ac_configure_args" = "x" ; then
+    BC_ARGS="$*"
+else
+    BC_ARGS="$ac_configure_args"
+fi
 AC_SUBST(BC_ARGS)
 
-dnl just in case
+# just in case
 PACKAGE_NAME="BRL-CAD"
 AC_SUBST(PACKAGE_NAME)
 
@@ -307,8 +311,14 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # tkhtml3
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
 
+# togl
+#BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
+
 # tkpng 
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
+
+# tktable
+BC_ARG_ENABLE([build_tktable], [tktable-build], [Build the included tktable], [yes])
 
 # force enable/disable building of tnt
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
@@ -504,6 +514,12 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 # aliases to force building tkhtml3 (help uses tkhtml3-build)
 BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
 
+# aliases to force building tktable (help uses tktable-build)
+BC_ARG_ALIAS([build_tktable], [tktable])
+
+# aliases to force building togl (help uses togl-build)
+#BC_ARG_ALIAS([build_togl], [togl])
+
 # aliases to force building tkpng(help uses tkpng-build)
 BC_ARG_ALIAS([build_tkpng], [tkpng])
 BC_ARG_ALIAS([build_tkpng], [libtkpng])
@@ -673,6 +689,12 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
 	fi
+	#if test "x$bc_build_togl" = "xno" ; then
+	#	bc_build_togl="$set_everything"
+	#fi
+	if test "x$bc_build_tktable" = "xno" ; then
+		bc_build_tktable="$set_everything"
+	fi
 	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
 	fi
@@ -799,6 +821,12 @@ AC_MSG_RESULT($bc_build_iwidgets)
 
 AC_MSG_CHECKING(whether to build the tkhtml3 library)
 AC_MSG_RESULT($bc_build_tkhtml3)
+
+AC_MSG_CHECKING(whether to build the tktable library)
+AC_MSG_RESULT($bc_build_tktable)
+
+#AC_MSG_CHECKING(whether to build the togl library)
+#AC_MSG_RESULT($bc_build_togl)
 
 AC_MSG_CHECKING(whether to build the tkpng library)
 AC_MSG_RESULT($bc_build_tkpng)
@@ -1256,11 +1284,7 @@ AC_CHECK_LIB(tcl8.6, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.6",
     [AC_CHECK_LIB(tcl86, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl86",
 	[AC_CHECK_LIB(tcl8.5, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.5",
 	    [AC_CHECK_LIB(tcl85, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl85",
-		[AC_CHECK_LIB(tcl8.4, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl8.4",
-		    [AC_CHECK_LIB(tcl84, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl84",
-			[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
-		    )]
-	    	)]
+		[AC_CHECK_LIB(tcl, Tcl_Main, tcl_link_works=yes ; LIBTCL="-ltcl")]
 	    )]
 	)]
     )]
@@ -1273,11 +1297,7 @@ AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-lt
     [AC_CHECK_LIB(tclstub86, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub86",
 	[AC_CHECK_LIB(tclstub8.5, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.5",
 	    [AC_CHECK_LIB(tclstub85, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub85",
-	    	[AC_CHECK_LIB(tclstub8.4, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub8.4",
-		    [AC_CHECK_LIB(tclstub84, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub84",
-			[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
-		    )]
-		)]
+		[AC_CHECK_LIB(tclstub, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-ltclstub")]
 	    )]
 	)]
     )]
@@ -1286,19 +1306,18 @@ AC_CHECK_LIB(tclstub8.6, Tcl_InitStubs, tclstub_link_works=yes ; LIBTCLSTUB="-lt
 dnl check if libtk library links
 tk_link_works=no
 LIBTK=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(tk8.6, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.6",
     [AC_CHECK_LIB(tk86, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk86",
 	[AC_CHECK_LIB(tk8.5, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.5",
 	    [AC_CHECK_LIB(tk85, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk85",
-		[AC_CHECK_LIB(tk8.4, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk8.4",
-		    [AC_CHECK_LIB(tk84, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk84",
-			[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
-		    )]
-	        )]
+		[AC_CHECK_LIB(tk, Tk_MainLoop, tk_link_works=yes ; LIBTK="-ltk")]
 	    )]
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if libtkstub library links
 tkstub_link_works=no
@@ -1309,11 +1328,7 @@ AC_CHECK_LIB(tkstub8.6, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstu
     [AC_CHECK_LIB(tkstub86, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub86",
 	[AC_CHECK_LIB(tkstub8.5, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.5",
 	    [AC_CHECK_LIB(tkstub85, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub85",
-	    	[AC_CHECK_LIB(tkstub8.4, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub8.4",
-		    [AC_CHECK_LIB(tkstub84, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub84",
-			[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
-		    )]
-		)]
+		[AC_CHECK_LIB(tkstub, Tk_InitStubs, tkstub_link_works=yes ; LIBTKSTUB="-ltkstub")]
 	    )]
 	)]
     )]
@@ -1323,6 +1338,8 @@ LIBS="$PRELIBS"
 dnl check if libitcl library links
 itcl_link_works=no
 LIBITCL=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTCLSTUB"
 AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
     [AC_CHECK_LIB(itcl34, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl34",
 	[AC_CHECK_LIB(itcl3.3, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.3",
@@ -1336,10 +1353,13 @@ AC_CHECK_LIB(itcl3.4, Itcl_Init, itcl_link_works=yes ; LIBITCL="-litcl3.4",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if libitk library links
 itk_link_works=no
 LIBITK=""
+PRELIBS="$LIBS"
+LIBS="$LIBS $LIBTKSTUB $LIBTCLSTUB"
 AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
     [AC_CHECK_LIB(itk34, Itk_Init, itk_link_works=yes ; LIBITK="-litk34",
 	[AC_CHECK_LIB(itk3.3, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.3",
@@ -1353,6 +1373,7 @@ AC_CHECK_LIB(itk3.4, Itk_Init, itk_link_works=yes ; LIBITK="-litk3.4",
 	)]
     )]
 )
+LIBS="$PRELIBS"
 
 dnl check if a socket library links
 socket_link_works=no
@@ -1980,12 +2001,7 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-fast], [mac_opt_flag], [nokeep])
-	if test "x$bc_mac_opt_flag" = "xyes" ; then
-		BC_COMPILER_AND_LINKER_RECOGNIZES([-gstabs3], [debug_flag])
-	else
-		BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
-	fi
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
@@ -2349,7 +2365,7 @@ AC_MSG_CHECKING(whether to build the included portable network graphics library)
 PNG=""
 PNG_CPPFLAGS=""
 if test "x$build_brlcad_png" = "xyes" ; then
-    PNG='${top_builddir}/src/other/libpng/libpng.la'
+    PNG='${top_builddir}/src/other/libpng/libpng14.la'
     PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
     AC_MSG_RESULT(yes)
 else
@@ -2688,8 +2704,8 @@ int main() {
 #if TCL_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8\n");
     return 1;
-#elif TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 4
-    fprintf(stderr, "minor version < 4\n");
+#elif TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5
+    fprintf(stderr, "minor version < 5\n");
     return 1;
 #endif
     return 0;
@@ -2764,6 +2780,7 @@ else
 	sleep 1
     fi
 fi
+# needed by incrTcl 3.3
 AM_CONDITIONAL(TCL_8_4_HEADERS, [test "x$TCL_VERSION" = "x8.4"])
 AC_SUBST(TCL)
 AC_SUBST(TCLSTUB)
@@ -2810,10 +2827,10 @@ int main() {
  	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
 #if TK_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8  (it's %d)\n", TK_MAJOR_VERSION);
-    return 4;
-#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 4
-    fprintf(stderr, "minor version < 4  (it's %d)\n", TK_MINOR_VERSION);
-    return 5;
+    return 1;
+#elif TK_MAJOR_VERSION == 8 && TK_MINOR_VERSION < 5
+    fprintf(stderr, "minor version < 5  (it's %d)\n", TK_MINOR_VERSION);
+    return 1;
 #endif
     return 0;
 }
@@ -3114,6 +3131,37 @@ else
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(TKHTML3)
+
+dnl *** togl ***
+dnl figure out whether we need to build togl
+#TOGL_VERSION="2.1"
+#AC_SUBST(TOGL_VERSION)
+#TOGL_CPPFLAGS=""
+#AC_MSG_CHECKING(whether to build togl)
+#if test ! "x$bc_build_togl" = "xno" ; then
+#    build_brlcad_togl=yes
+#    TOGL_CPPFLAGS='-I${top_srcdir}/src/other/togl -I${top_builddir}/src/other/togl'
+#    AC_MSG_RESULT(yes)
+#else
+#    build_brlcad_togl=no
+#    AC_MSG_RESULT(no)
+#fi
+#AC_SUBST(TOGL_CPPFLAGS)
+
+dnl *** tktable ***
+dnl figure out whether we need to build tktable
+TKTABLE_VERSION="2.10"
+AC_SUBST(TKTABLE_VERSION)
+AC_MSG_CHECKING(whether to build tktable)
+if test ! "x$bc_build_tktable" = "xno" ; then
+    build_brlcad_tktable=yes
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_tktable=no
+    TKTABLE=""
+    AC_MSG_RESULT(no)
+fi
+AC_SUBST(TKTABLE)
 
 
 dnl *** tkpng ***
@@ -3725,6 +3773,8 @@ AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
+AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
+#AM_CONDITIONAL(BUILD_TOGL, [test "x$build_brlcad_togl" = "xyes__disabled__"])
 AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
@@ -3826,6 +3876,7 @@ CURSOR='${top_builddir}/src/libcursor/libcursor.la'
 DM='${top_builddir}/src/libdm/libdm.la'
 FB='${top_builddir}/src/libfb/libfb.la'
 FFT='${top_builddir}/src/libfft/libfft.la'
+ICV='${top_builddir}/src/libicv/libicv.la'
 GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
@@ -3833,10 +3884,12 @@ OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
 PC='${top_builddir}/src/libpc/libpc.la'
 PKG='${top_builddir}/src/libpkg/libpkg.la'
+RENDER='${top_builddir}/src/adrt/librender.la'
 RT='${top_builddir}/src/librt/librt.la'
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
 TCLCAD='${top_builddir}/src/libtclcad/libtclcad.la'
 TERMIO='${top_builddir}/src/libtermio/libtermio.la'
+TIE='${top_builddir}/src/adrt/libtie.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
@@ -3859,9 +3912,10 @@ TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
 ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
+BU_LIBS="${TCL} ${PNG} ${LIBZ} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
+ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -3890,6 +3944,7 @@ AC_SUBST(CURSOR)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
+AC_SUBST(ICV)
 AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
@@ -3897,10 +3952,12 @@ AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
 AC_SUBST(PC)
+AC_SUBST(RENDER)
 AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TCLCAD)
 AC_SUBST(TERMIO)
+AC_SUBST(TIE)
 AC_SUBST(WDB)
 AC_SUBST(BRLCAD)
 
@@ -3923,6 +3980,7 @@ AC_SUBST(CURSOR_LIBS)
 AC_SUBST(DM_LIBS)
 AC_SUBST(FB_LIBS)
 AC_SUBST(FFT_LIBS)
+AC_SUBST(ICV_LIBS)
 AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
@@ -3985,6 +4043,17 @@ if test "x$build_brlcad_tk" = "xyes" ; then
 fi
 AC_SUBST(TK_PATH)
 
+dnl configure libpng
+if test "x$build_brlcad_png" = "xyes" ; then
+   if test "x$LIBZ_CPPFLAGS" != "x" ; then
+	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
+	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\""
+    else
+	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB'"
+   fi
+   AC_CONFIG_SUBDIRS([src/other/libpng])
+fi
+
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
@@ -4002,6 +4071,24 @@ if test "x$build_brlcad_tkhtml3" = "xyes" ; then
 	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
     fi
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
+fi
+
+#dnl configure togl
+#if test "x$build_brlcad_togl" = "xyes" ; then
+#    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+#    if test ! "x$TKINCDIR" = "x" ; then
+#	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+#    fi
+#    AC_CONFIG_SUBDIRS([src/other/togl])
+#fi
+
+dnl configure tktable
+if test "x$build_brlcad_tktable" = "xyes" ; then
+    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+    if test ! "x$TKINCDIR" = "x" ; then
+	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+    fi
+    AC_CONFIG_SUBDIRS([src/other/tktable])
 fi
 
 AC_CONFIG_FILES([
@@ -4054,6 +4141,7 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libfft.pc
 	misc/pkgconfig/libged.pc
 	misc/pkgconfig/libgcv.pc
+	misc/pkgconfig/libicv.pc
 	misc/pkgconfig/libmultispectral.pc
 	misc/pkgconfig/liboptical.pc
 	misc/pkgconfig/libpc.pc
@@ -4074,6 +4162,7 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Makefile
 	src/archer/plugins/Utility/Makefile
 	src/archer/plugins/Utility/attrGroupsDisplayUtilityP/Makefile
+	src/archer/plugins/Utility/botUtilityP/Makefile
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/humanwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/Makefile
@@ -4116,8 +4205,9 @@ AC_CONFIG_FILES([
 	src/libfb/Makefile
 	src/libfft/Makefile
 	src/libgcv/Makefile
-	src/libgcv/obj/Makefile
+	src/libgcv/wfobj/Makefile
 	src/libged/Makefile
+	src/libicv/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
@@ -4162,7 +4252,6 @@ AC_CONFIG_FILES([
 	src/other/iwidgets/pkgIndex.tcl
 	src/other/jove/Makefile
 	src/other/jove/teach-jove
-	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtermlib/Makefile
 	src/other/libutahrle/Makefile
@@ -4187,6 +4276,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Themes/Crystal/Makefile
 	src/tclscripts/archer/images/Themes/Crystal_Large/Makefile
 	src/tclscripts/archer/images/Themes/Windows/Makefile
+	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
@@ -4312,7 +4402,7 @@ AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
 AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
-AC_MSG_RESULT([Build jove ...........................: $build_brlcad_jove])
+#AC_MSG_RESULT([Build TOGL............................: $build_brlcad_togl])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])

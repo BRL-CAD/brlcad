@@ -116,7 +116,7 @@ editarb(vect_t pos_model)
 	default:
 	    Tcl_AppendResult(interp, "edarb: unknown ARB type\n", (char *)NULL);
 
-	    return(1);
+	    return 1;
     }
 
     /* do the arb editing */
@@ -245,7 +245,7 @@ editarb(vect_t pos_model)
 		    break;
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 
  err:
     /* Error handling */
@@ -260,7 +260,7 @@ editarb(vect_t pos_model)
 
     es_edflag = IDLE;
 
-    return(1);		/* BAD */
+    return 1;		/* BAD */
 }
 
 
@@ -283,7 +283,7 @@ mv_edge(
     if (bn_isect_line3_plane(&t1, thru, dir, es_peqn[bp1], &mged_tol) < 0 ||
 	bn_isect_line3_plane(&t2, thru, dir, es_peqn[bp2], &mged_tol) < 0) {
 	Tcl_AppendResult(interp, "edge (direction) parallel to face normal\n", (char *)NULL);
-	return(1);
+	return 1;
     }
 
     arb = (struct rt_arb_internal *)es_int.idb_ptr;
@@ -292,7 +292,7 @@ mv_edge(
     VJOIN1(arb->pt[end1], thru, t1, dir);
     VJOIN1(arb->pt[end2], thru, t2, dir);
 
-    return(0);
+    return 0;
 }
 
 

@@ -57,7 +57,7 @@
 #define TOL2 0.00001
 
 
-extern int getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
+extern int brep_getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
 
 bool
 ON_NearZero(double x, double tolerance) {
@@ -156,13 +156,13 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		double *knots = new double[knotcnt + 1];
 
 		trimCurve->GetSpanVector(knots);
-		list<double> splitlist;
+		std::list<double> splitlist;
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    ON_Interval range(knots[knot_index - 1], knots[knot_index]);
 
 		    getHVTangents(trimCurve, range, splitlist);
 		}
-		for (list<double>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
+		for (std::list<double>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
 		    if (!NEAR_ZERO(xmax-min, TOL)) {
 			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
@@ -234,17 +234,17 @@ CurveTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Inte
 
 
 void
-CurveTree::getLeaves(list<BRNode*>& out_leaves)
+CurveTree::getLeaves(std::list<BRNode*>& out_leaves)
 {
     m_root->getLeaves(out_leaves);
 }
 
 void
-CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
+CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
 {
     point_t bmin, bmax;
     double dist;
-    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -260,11 +260,10 @@ CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_Interval& u, const
 }
 
 void
-CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt)
+CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    double dist;
-    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 		BRNode* br = dynamic_cast<BRNode*>(*i);
 		br->GetBBox(bmin, bmax);
 
@@ -280,11 +279,11 @@ CurveTree::getLeavesAbove(list<BRNode*>& out_leaves, const ON_2dPoint& pt)
 }
 
 void
-CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
+CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
 {
     point_t bmin, bmax;
     double dist;
-    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -300,11 +299,10 @@ CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_Interval& u, const
 }
 
 void
-CurveTree::getLeavesRight(list<BRNode*>& out_leaves, const ON_2dPoint& pt)
+CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    double dist;
-    for (list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -384,7 +382,7 @@ CurveTree::getHorizontalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)
 
 
 bool
-CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, list<fastf_t>& list)
+CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_t>& list)
 {
     bool tanx1, tanx2, tanx_changed;
     bool tany1, tany2, tany_changed;
@@ -592,7 +590,7 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 	    return false; //already failed
     }
 		
-    return (vdot >= BREP_CURVE_FLATNESS);
+    return vdot >= BREP_CURVE_FLATNESS;
 }
 
 
@@ -672,7 +670,7 @@ SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_In
 
 
 void
-SurfaceTree::getLeaves(list<BBNode*>& out_leaves)
+SurfaceTree::getLeaves(std::list<BBNode*>& out_leaves)
 {
     m_root->getLeaves(out_leaves);
 }
@@ -688,17 +686,17 @@ SurfaceTree::getSurface()
 int
 SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from, double tolerance) const
 {
-    list<BBNode*> nodes;
+    std::list<BBNode*> nodes;
     (void)m_root->getLeavesBoundingPoint(from, nodes);
 
     double min_dist = MAX_FASTF;
     ON_2dPoint curr_uv;
     bool found = false;
 
-    list<BBNode*>::iterator i;
+    std::list<BBNode*>::iterator i;
     for (i = nodes.begin(); i != nodes.end(); i++) {
 	BBNode* node = (*i);
-	if (::getSurfacePoint(pt, curr_uv, node)) {
+	if (::brep_getSurfacePoint(pt, curr_uv, node)) {
 	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
 	    double dist = fp.DistanceTo(pt);
 	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
@@ -1229,8 +1227,8 @@ typedef struct _bspline {
     int p; // degree
     int m; // num_knots-1
     int n; // num_samples-1 (aka number of control points)
-    vector<double> params;
-    vector<double> knots;
+    std::vector<double> params;
+    std::vector<double> knots;
     ON_2dPointArray controls;
 } BSpline;
 

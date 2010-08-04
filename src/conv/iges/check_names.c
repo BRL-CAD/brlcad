@@ -50,7 +50,7 @@ Add_brl_name( name )
     while ( ptr )
     {
 	if ( !strncmp( ptr->name, name, NAMESIZE+1 ) )
-	    return( ptr->name );
+	    return ptr->name;
 	ptr = ptr->next;
     }
 
@@ -60,7 +60,7 @@ Add_brl_name( name )
     ptr->next = name_root;
     name_root = ptr;
 
-    return( ptr->name );
+    return ptr->name;
 }
 
 char *
@@ -95,7 +95,7 @@ Make_unique_brl_name( name )
     }
 
     if ( !found )
-	return( Add_brl_name( name ) );
+	return Add_brl_name( name );
 
     /* name is not unique, make it unique with a single character suffix */
     if ( namelen < NAMESIZE )
@@ -125,7 +125,7 @@ Make_unique_brl_name( name )
     }
 
     if ( !found )
-	return( Add_brl_name( name ) );
+	return Add_brl_name( name );
 
 
     /* still not unique! Try two character suffix */
@@ -166,10 +166,10 @@ Make_unique_brl_name( name )
     {
 	/* not likely */
 	bu_exit(1, "Could not make name unique: (%s)\n", name );
-	return( (char *)NULL );		/* make the compilers happy */
+	return (char *)NULL;		/* make the compilers happy */
     }
     else
-	return( Add_brl_name( name ) );
+	return Add_brl_name( name );
 }
 
 

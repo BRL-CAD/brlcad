@@ -93,25 +93,25 @@ deb_clear(FBIO *ifp, unsigned char *pp)
 
 
 HIDDEN int
-deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FBIO(ifp);
-    fb_log("fb_read(%p, %4d, %4d, %p, %d)\n",
+    fb_log("fb_read(%p, %4d, %4d, %p, %ld)\n",
 	   (void *)ifp, x, y,
-	   (void *)pixelp, count);
+	   (void *)pixelp, (long)count);
     return count;
 }
 
 
 HIDDEN int
-deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    int i;
+    size_t i;
 
     FB_CK_FBIO(ifp);
-    fb_log("fb_write(%p, %4d, %4d, 0x%lx, %d)\n",
+    fb_log("fb_write(%p, %4d, %4d, 0x%lx, %ld)\n",
 	   (void *)ifp, x, y,
-	   (void *)pixelp, count);
+	   (void *)pixelp, (long)count);
 
     /* write them out, four per line */
     if (ifp->if_debug & FB_DEBUG_RW) {
@@ -127,7 +127,7 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	    fb_log("\n");
     }
 
-    return count;
+    return (int)count;
 }
 
 
@@ -231,7 +231,7 @@ deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char
     fb_log("fb_readrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -242,7 +242,7 @@ deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsign
     fb_log("fb_writerect(%p, %4d, %4d, %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -253,7 +253,7 @@ deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned ch
     fb_log("fb_bwreadrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 
@@ -264,7 +264,7 @@ deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsi
     fb_log("fb_bwwriterect(%p, %4d, %4d, %4d, %4d, %p)\n",
 	   (void *)ifp, xmin, ymin, width, height,
 	   (void *)pp);
-    return(width*height);
+    return width*height;
 }
 
 

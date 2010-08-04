@@ -103,7 +103,7 @@ cmd_glob(int *argcp, char **argv, int maxargs)
     pattern = word;
     do {
 	if (*pattern == '\0')
-	    return(0);		/* nothing to do */
+	    return 0;		/* nothing to do */
 	if (*pattern == '*' ||
 	    *pattern == '?' ||
 	    *pattern == '[' ||
@@ -144,7 +144,7 @@ cmd_glob(int *argcp, char **argv, int maxargs)
      */
     if (*argcp > orig_numargs) {
 	(*argcp)--;
-	return(1);
+	return 1;
     } else if (escaped) {
 	char *temp;
 	temp = pattern = argv[*argcp];
@@ -163,7 +163,7 @@ cmd_glob(int *argcp, char **argv, int maxargs)
 	if (*(argv[*argcp]) == '\0')
 	    (*argcp)--;
     }
-    return(0);		/* found nothing */
+    return 0;		/* found nothing */
 }
 
 

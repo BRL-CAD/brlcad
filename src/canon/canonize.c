@@ -121,7 +121,7 @@ main(int ac, char *av[])
 
 	queue(stdin);
 
-	return(0);
+	return 0;
     }
 
     bu_strlcat(cmdbuf, print_queue, sizeof(cmdbuf));
@@ -133,18 +133,18 @@ main(int ac, char *av[])
 	    fprintf(stderr,
 		    "unable to autosize \"%s\"\n",
 		    av[arg_ind]);
-	    return(-1);
+	    return -1;
 	}
 
 	if ((fp=fopen(av[arg_ind], "rb")) == (FILE *)NULL) {
 	    fprintf(stderr, "%s: ", progname);
 	    perror(av[arg_ind]);
-	    return(-1);
+	    return -1;
 	}
 	queue(fp);
 	fclose(fp);
     }
-    return(0);
+    return 0;
 }
 
 /*

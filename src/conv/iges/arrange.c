@@ -109,7 +109,7 @@ Arrange( root )
 	}
 
 	if ( ptr == root )
-	    return( retval );
+	    return retval;
 
 	if ( ptr != ptr->parent->right )
 	    ptr = ptr->parent->right;

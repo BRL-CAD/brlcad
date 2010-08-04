@@ -58,41 +58,23 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    int
-    rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
-    void
-    rt_brep_print(register const struct soltab *stp);
-    int
-    rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
-    void
-    rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp);
-    void
-    rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
-    int
-    rt_brep_class();
-    void
-    rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
-    void
-    rt_brep_free(register struct soltab *stp);
-    int
-    rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
-    int
-    rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
-    int
-    rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
-    int
-    rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
-    void
-    rt_brep_ifree(struct rt_db_internal *ip);
-    int
-    rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-    int
-    rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
-    int
-    rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
-    int
-    rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
+    int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
+    void rt_brep_print(register const struct soltab *stp);
+    int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
+    void rt_brep_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp);
+    void rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
+    int rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol);
+    void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
+    void rt_brep_free(register struct soltab *stp);
+    int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
+    int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
+    void rt_brep_ifree(struct rt_db_internal *ip);
+    int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+    int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
+    int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv);
+    int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 #ifdef __cplusplus
 }
 #endif
@@ -228,7 +210,7 @@ getHorizontalTangent(const ON_Curve *curve, double min, double max) {
 
 
 bool
-split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list) {
+split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, std::list<double>& list) {
     bool tanx1, tanx2, tanx_changed;
     bool tany1, tany2, tany_changed;
     bool tan_changed;
@@ -579,7 +561,7 @@ brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, p
 
 
 int
-getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
+brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
     plane_ray pr;
     const ON_Surface *surf = node->m_face->SurfaceOf();
     double umin, umax;
@@ -1003,7 +985,7 @@ lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3
         double x = (B2*C1 - B1*C2)/det;
         double y = (A1*C2 - A2*C1)/det;
 
-        if ((x >= min(x1, x2)) && (x <= max(x1, x2)) && (x >= min(x3, x4)) && (x <= max(x3, x4)) && (y >= min(y1, y2)) && (y <= max(y1, y2)) && (y >= min(y3, y4)) && (y <= max(y3, y4))) {
+        if ((x >= std::min(x1, x2)) && (x <= std::max(x1, x2)) && (x >= std::min(x3, x4)) && (x <= std::max(x3, x4)) && (y >= std::min(y1, y2)) && (y <= std::max(y1, y2)) && (y >= std::min(y3, y4)) && (y <= std::max(y3, y4))) {
             return true;
         }
 
@@ -1417,7 +1399,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
      * intersected, there is potentially a hit and more evaluation is
      * needed.  Otherwise, return a miss.
      */
-    list<BBNode*> inters;
+    std::list<BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
     if (inters.size() == 0) return 0; // MISS
@@ -1427,7 +1409,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     MissList misses;
     int s = 0;
     hit_count = 0;
-    for (list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
+    for (std::list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
         const BBNode* sbv = (*i);
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
@@ -2186,22 +2168,15 @@ rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 }
 
 
-/**
- * R T _ B R E P _ C L A S S
- *
- * Don't know what this is supposed to do...
- *
- * Looking at g_arb.c, seems the actual signature is:
- *
- * class(const struct soltab* stp,
- * const fastf_t* min,
- * const fastf_t* max,
- * const struct bn_tol* tol)
- */
 int
-rt_brep_class()
+rt_brep_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
-    return RT_CLASSIFY_UNIMPLEMENTED;
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
+    return 0;
 }
 
 
@@ -2786,21 +2761,21 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	// XXX does openNURBS force us to copy? it seems the answer is
 	// YES due to the const-ness
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
-    if (mat) {
-    	ON_Xform xform(mat);
+	if (mat) {
+	    ON_Xform xform(mat);
 
-   	if (!xform.IsIdentity()) {
-			bu_log("Applying transformation matrix....\n");
-	    	for(int row=0;row<4;row++) {
-				bu_log("%d - ", row);
-	    		for(int col=0;col<4;col++) {
-	    			bu_log(" %5f", xform.m_xform[row][col]);
-	    		}
-				bu_log("\n");
+	    if (!xform.IsIdentity()) {
+		bu_log("Applying transformation matrix....\n");
+	    	for (int row=0;row<4;row++) {
+		    bu_log("%d - ", row);
+		    for (int col=0;col<4;col++) {
+			bu_log(" %5f", xform.m_xform[row][col]);
+		    }
+		    bu_log("\n");
 	    	}
     		bi->brep->Transform(xform);
-    	}
-    }
+	    }
+	}
 	return 0;
     } else {
 	return -1;

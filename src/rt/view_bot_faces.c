@@ -97,7 +97,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     struct bu_ptbl *faces;
 
     if (pp == PartHeadp)
-	return(0);		/* nothing was actually hit?? */
+	return 0;		/* nothing was actually hit?? */
 
     if (ap->a_rt_i->rti_save_overlaps)
 	rt_rebuild_overlaps(PartHeadp, ap, 1);
@@ -122,7 +122,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     bu_ptbl_ins_unique(faces, (long *)(size_t)pp->pt_inhit->hit_surfno);
     bu_semaphore_release(BU_SEM_LISTS);
 
-    return(0);
+    return 0;
 }
 
 
@@ -136,7 +136,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 int
 raymiss(struct application *UNUSED(ap))
 {
-    return(0);
+    return 0;
 }
 
 
@@ -167,7 +167,7 @@ view_init(struct application *ap, char *file, char *obj, int minus_o)
     /* initialize hash table */
     Tcl_InitHashTable(&bots, TCL_STRING_KEYS);
 
-    return(0);		/* No framebuffer needed */
+    return 0;		/* No framebuffer needed */
 }
 
 

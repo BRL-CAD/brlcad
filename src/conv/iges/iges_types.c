@@ -40,7 +40,7 @@ iges_type( type )
 	}
     }
 
-    return( typecount[type_no].name );
+    return typecount[type_no].name;
 }
 
 /*

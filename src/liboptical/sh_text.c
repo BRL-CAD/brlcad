@@ -305,7 +305,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	VSET( swp->sw_color, uvc.uv_u, 0, uvc.uv_v );
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);
+	return 1;
     }
 
     /* u is left->right index, v is line number bottom->top */
@@ -502,7 +502,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);
+	return 1;
     }
     /* This circumlocution needed to keep expression simple for Cray,
      * and others
@@ -522,7 +522,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
-    return(1);
+    return 1;
 }
 
 /*
@@ -557,7 +557,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 	VSET( swp->sw_color, uvc.uv_u, 0, uvc.uv_v );
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);
+	return 1;
     }
 
     /* take care of scaling U, V coordinates to get the desired amount
@@ -634,7 +634,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
 		 bw * bn_inv255 / (dx*dy) );
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);
+	return 1;
     }
     /* This circumlocution needed to keep expression simple for Cray,
      * and others
@@ -649,7 +649,7 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
     swp->sw_reflect = 0.0;
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
-    return(1);
+    return 1;
 }
 
 /*
@@ -680,7 +680,7 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
     /* load given values */
     if (bu_struct_parse( matparm, txt_parse, (char *)tp ) < 0 )  {
 	bu_free( (char *)tp, "txt_specific" );
-	return(-1);
+	return -1;
     }
 
     /* validate values */
@@ -785,7 +785,7 @@ ckr_render(struct application *ap, struct partition *pp, register struct shadewo
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -807,7 +807,7 @@ ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     ckp->ckr_scale = 2.0;
     if (bu_struct_parse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
 	bu_free( (char *)ckp, "ckr_specific" );
-	return(-1);
+	return -1;
     }
     ckp->ckr_a[0] &= 0x0ff;
     ckp->ckr_a[1] &= 0x0ff;
@@ -815,7 +815,7 @@ ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     ckp->ckr_b[0] &= 0x0ff;
     ckp->ckr_b[1] &= 0x0ff;
     ckp->ckr_b[2] &= 0x0ff;
-    return(1);
+    return 1;
 }
 
 /*
@@ -850,7 +850,7 @@ tstm_render(struct application *ap, struct partition *pp, register struct shadew
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 static vect_t star_colors[] = {
@@ -897,7 +897,7 @@ star_render(register struct application *ap, register struct partition *pp, stru
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -931,7 +931,7 @@ bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);
+	return 1;
     }
     /* u is left->right index, v is line number bottom->top */
     if (swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
@@ -942,7 +942,7 @@ bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	VSET( swp->sw_color, 0, 1, 0 );
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	    (void)rr_render( ap, pp, swp );
-	return(1);
+	return 1;
     }
 
     /* Find a local coordinate system */
@@ -986,7 +986,7 @@ bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -1000,7 +1000,7 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, con
     RT_CK_RTI(rtip);
     if (env_region.reg_mfuncs )  {
 	bu_log("envmap_setup:  second environment map ignored\n");
-	return(0);		/* drop region */
+	return 0;		/* drop region */
     }
     env_region = *rp;		/* struct copy */
     /* Get copies of, or eliminate, references to dynamic structures */
@@ -1015,7 +1015,7 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, con
     if (mlib_setup( headp, &env_region, rtip ) < 0 )
 	bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 
-    return(0);		/* This region should be dropped */
+    return 0;		/* This region should be dropped */
 }
 
 
@@ -1029,7 +1029,7 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, con
 int
 mlib_zero()
 {
-    return(0);
+    return 0;
 }
 
 /*
@@ -1042,7 +1042,7 @@ mlib_zero()
 int
 mlib_one()
 {
-    return(1);
+    return 1;
 }
 
 /*

@@ -46,10 +46,11 @@ bwrot \- rotate, invert, or reverse a black and white bw file
 .RB [ \-s\  squaresize]
 .RB [ \-w\  in_width]
 .RB [ \-n\  in_height]
-[file.bw] \>\ out.bw
+.RB [ \-o\  out.bw]
+[file.bw] [\>\ out.bw]
 .SH DESCRIPTION
-.I Bwrot
-will rotate, invert, or reverse a back and white
+.I bwrot
+will rotate, vertically invert, and horizontally reverse a black and white
 .IR bw (5)
 format file or read from standard input if a file name is not given.  The
 .I \-w
@@ -82,6 +83,11 @@ If the
 .B \-a
 flag is used, the image will be rotated counterclockwise by the specified
 arbitrary angle.
+.PP
+The
+.B \-o
+option can be used to specify an output file instead of redirecting
+standard out.
 .SH METHOD
 A fairly large buffer is kept in memory so that, file size permitting,
 the entire rotation can occur without seeking on input or output.

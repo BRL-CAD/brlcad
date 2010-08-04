@@ -48,7 +48,7 @@ Extrudcirc( entityno, curve, evect )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[curve]->direct, dir[curve]->name );
-	return(0);
+	return 0;
     }
     Readrec( dir[curve]->param );
     Readint( &sol_num, "" );
@@ -68,7 +68,7 @@ Extrudcirc( entityno, curve, evect )
 	bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 		dir[entityno]->name );
 	bu_log( "\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name );
-	return( 0 );
+	return 0;
     }
 
     radius = sqrt( (x1 - base[X])*(x1 - base[X]) + (y1 - base[Y])*(y1 - base[Y]) );
@@ -78,7 +78,7 @@ Extrudcirc( entityno, curve, evect )
 
     mk_rcc( fdout, dir[entityno]->name, base, evect, radius );
 
-    return( 1 );
+    return 1;
 }
 
 /*

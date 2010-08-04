@@ -47,7 +47,7 @@ fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
     RT_CK_PT_HD(headp);
     if (segp) RT_CK_SEG(segp);
 
-    if ( headp->pt_forw == headp )  return(0);
+    if ( headp->pt_forw == headp )  return 0;
 
     /* Steal the linked list, hang it off a global header */
     fr_global_head.pt_forw = headp->pt_forw;
@@ -56,7 +56,7 @@ fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
     fr_global_head.pt_forw->pt_back = &fr_global_head;
 
     headp->pt_forw = headp->pt_back = headp;
-    return(1);
+    return 1;
 }
 
 HIDDEN int
@@ -65,7 +65,7 @@ fr_miss(struct application *ap)
     RT_CK_AP(ap);
 
     fr_global_head.pt_forw = fr_global_head.pt_back = &fr_global_head;
-    return(0);
+    return 0;
 }
 
 
@@ -112,7 +112,7 @@ fr_string_f2c(char *str, int maxlen)
 	if ( buf[i] != ' ' && buf[i] != '\n' )  break;
 	buf[i] = '\0';
     }
-    return(buf);
+    return buf;
 }
 
 

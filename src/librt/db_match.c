@@ -59,19 +59,19 @@ db_regexp_match(register const char *pattern, register const char *string)
 		++pattern;
 		do {
 		    if ( db_regexp_match( pattern, string ) )
-			return( 1 );
+			return 1;
 		} while ( *string++ != '\0' );
-		return( 0 );
+		return 0;
 	    case '?':
 		/* match any character  */
 		if ( *string == '\0' )
-		    return( 0 );
+		    return 0;
 		break;
 	    case '[':
 		/* try to match one of the characters in brackets */
 		++pattern;
 		if ( *pattern == '\0' )
-		    return( 0 );
+		    return 0;
 		while ( *pattern != *string ) {
 		    if ( pattern[0] == '-' && pattern[-1] != '\\')
 			if (	pattern[-1] <= *string &&
@@ -81,7 +81,7 @@ db_regexp_match(register const char *pattern, register const char *string)
 			    break;
 		    ++pattern;
 		    if ( *pattern == '\0' || *pattern == ']' )
-			return( 0 );
+			return 0;
 		}
 		/* skip to next character after closing bracket */
 		while ( *pattern != '\0' && *pattern != ']' )
@@ -92,16 +92,16 @@ db_regexp_match(register const char *pattern, register const char *string)
 		++pattern;
 		/* compare characters */
 		if ( *pattern != *string )
-		    return( 0 );
+		    return 0;
 		break;
 	    default:
 		/* compare characters */
 		if ( *pattern != *string )
-		    return( 0 );
+		    return 0;
 	}
 	++string;
     } while ( *pattern++ != '\0' );
-    return( 1 );
+    return 1;
 }
 
 

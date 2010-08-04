@@ -130,7 +130,7 @@ rt_ars_rd_curve(union record *rp, int npts)
 	    fp += ELEMENTS_PER_VECT;
 	}
     }
-    return(base);
+    return base;
 }
 
 
@@ -160,7 +160,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_ARS_A) {
 	bu_log("rt_ars_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -210,7 +210,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	}
 	VMOVE(v, ari->curves[i]);		/* replicate first point */
     }
-    return(0);
+    return 0;
 }
 
 
@@ -233,7 +233,7 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
 
-    if (ip->idb_type != ID_ARS) return(-1);
+    if (ip->idb_type != ID_ARS) return -1;
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
@@ -286,7 +286,7 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    gno++;
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -344,7 +344,7 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	}
 	VMOVE(fp, ari->curves[i]);	/* duplicate first point */
     }
-    return(0);
+    return 0;
 }
 
 
@@ -363,7 +363,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     int cur;		/* current curve number */
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ARS) return(-1);
+    if (ip->idb_type != ID_ARS) return -1;
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
@@ -392,7 +392,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    fp += ELEMENTS_PER_VECT;
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -427,7 +427,7 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	bu_vls_strcat(str, buf);
     }
 
-    if (!verbose) return(0);
+    if (!verbose) return 0;
 
     /* Print out all the points */
     for (i=0; i < arip->ncurves; i++) {
@@ -445,7 +445,7 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -525,7 +525,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     if (bad_ars) {
 	bu_log("TESSELATION FAILURE: This ARS solid has not been tesselated.\n\tAny result you may obtain is incorrect.\n");
-	return(-1);
+	return -1;
     }
 
     bu_ptbl_init(&kill_fus, 64, " &kill_fus");
@@ -650,7 +650,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
-    return(0);
+    return 0;
 }
 
 
@@ -684,7 +684,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (rt_ars_tess(&r, m, ip, &rtip->rti_ttol, &rtip->rti_tol)) {
 	bu_log("Failed to tessellate ARS (%s)\n", stp->st_dp->d_namep);
 	nmg_km(m);
-	return(-1);
+	return -1;
     }
     rt_ars_ifree(ip);
 
@@ -694,7 +694,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (!bot) {
 	bu_log("Failed to convert ARS to BOT (%s)\n", stp->st_dp->d_namep);
 	nmg_km(m);
-	return(-1);
+	return -1;
     }
 
     nmg_km(m);
@@ -710,7 +710,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     rt_bot_ifree(&intern);
 
-    return(ret);
+    return ret;
 #else
     fastf_t dx, dy, dz;	/* For finding the bounding spheres */
     int i, j, ntri;
@@ -795,7 +795,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (bot->bot_facelist == (struct tri_specific *)0) {
 	bu_log("ars(%s):  no faces\n", stp->st_name);
-	return(-1);             /* BAD */
+	return -1;             /* BAD */
     }
 
     bot->bot_ntri = ntri;
@@ -821,7 +821,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     rt_ars_ifree(ip);
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 #endif
 }
 
@@ -846,7 +846,8 @@ rt_ars_print(register const struct soltab *stp)
 	VPRINT("BA x CA", trip->tri_wn);
 	VPRINT("Normal", trip->tri_N);
 	bu_log("\n");
-    } while ((trip = trip->tri_forw));
+	trip = trip->tri_forw;
+    } while (trip);
 }
 
 
@@ -937,7 +938,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	hp++;
     }
     if (nhits == 0)
-	return(0);		/* MISS */
+	return 0;		/* MISS */
 
     /* Sort hits, Near to Far */
     rt_hitsort(hits, nhits);
@@ -988,7 +989,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	for (i=0; i < nhits; i++)
 	    bu_log("k=%g dn=%g\n",
 		   hits[i].hit_dist, hp->hit_vpriv[X]);
-	return(0);		/* MISS */
+	return 0;		/* MISS */
     }
 
     /* nhits is even, build segments */
@@ -1031,7 +1032,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		    bu_log("\tseg length = %g\n", hits[j].hit_dist - hits[j-1].hit_dist);
 	    }
 #ifdef CONSERVATIVE
-	    return(0);
+	    return 0;
 #else
 	    /* For now, just chatter, and return *something* */
 	    break;
@@ -1046,7 +1047,7 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
     }
-    return(nhits);			/* HIT */
+    return nhits;			/* HIT */
 }
 
 
@@ -1184,7 +1185,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    RT_ADD_VLIST(vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1230,7 +1231,8 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    return BRLCAD_ERROR;
 	}
 
-	if ((ptr=strchr(attr, 'P'))) {
+	ptr = strchr(attr, 'P');
+	if (ptr) {
 	    /* a specific point on a specific curve */
 	    if (!isdigit(*(ptr+1))) {
 		bu_vls_printf(logstr, 
@@ -1341,7 +1343,8 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 		char *ptr;
 
 		/* a specific curve */
-		if ((ptr=strchr(argv[0], 'P'))) {
+		ptr = strchr(argv[0], 'P');
+		if (ptr) {
 		    /* a specific point on this curve */
 		    i = atoi(&argv[0][1]);
 		    j = atoi(ptr+1);
@@ -1404,7 +1407,7 @@ rt_ars_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

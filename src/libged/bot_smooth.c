@@ -118,7 +118,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ( dp_new == DIR_NULL ) {
-	GED_DB_DIRADD(gedp, dp_new, new_bot_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     }
 
     GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);

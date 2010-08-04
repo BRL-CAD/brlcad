@@ -133,7 +133,7 @@ tp_sep(float x, float *coef, int *ex)
  */
 double tp_ipow (double x, int n)
 {
-    return(n>0?x*tp_ipow(x, n-1):1);
+    return n>0?x*tp_ipow(x, n-1):1;
 }
 
 
@@ -185,16 +185,16 @@ tp_fixsc(float *x,
     }
 
     diff = txma - txmi;
-    if ( diff < .000001 )
-	diff = .000001;
+    if ( diff < .000001f )
+	diff = .000001f;
 
     tp_sep (diff, &coef, &ex);
-    if ( coef < 2.0 )
-	delta = .1;
-    else if ( coef < 4.0 )
-	delta = .2;
+    if ( coef < 2.0f )
+	delta = .1f;
+    else if ( coef < 4.0f )
+	delta = .2f;
     else
-	delta = .5;
+	delta = .5f;
 
     i = 0;
     if (ex < 0 ) {
@@ -209,16 +209,16 @@ tp_fixsc(float *x,
 
     i = (fabs(txmi)/delta);
     *xmin = i*delta;
-    if ( txmi < 0.0 )
+    if ( txmi < 0.0f )
 	*xmin = -(*xmin+delta);
 
     i = (fabs(txma)/delta);
     *xmax = i*delta;
-    if ( txma < 0.0)
+    if ( txma < 0.0f)
 	*xmax = - *xmax;
     else
 	*xmax = *xmax+delta;
-    *xs = 1000.*size/(*xmax - *xmin);
+    *xs = 1000.0f*size/(*xmax - *xmin);
 }
 
 

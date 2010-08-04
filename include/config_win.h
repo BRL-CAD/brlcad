@@ -166,9 +166,6 @@
 
 #define SHARED_PTR_BOOST	1
 
-/* provide isblank since msvc doesn't */
-#define isblank(c) ((c == ' ') || (c == '\t')) ? 1 : 0
-
 /*
  * Signal handling
  */

@@ -151,7 +151,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	bu_log("scloud_setup\n");
 
     if (bu_struct_parse( matparm, scloud_parse, (char *)scloud ) < 0 )
-	return(-1);
+	return -1;
 
     if (rdebug&RDEBUG_SHADE)
 	(void)bu_struct_print( rp->reg_name, scloud_parse, (char *)scloud );
@@ -189,7 +189,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     bn_mat_mul2(tmp, scloud->mtos);
     bn_mat_inv(scloud->stom, scloud->mtos);
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -401,7 +401,7 @@ scloud_render(struct application *ap, struct partition *pp, struct shadework *sw
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 

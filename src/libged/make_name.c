@@ -29,7 +29,6 @@
 int
 ged_make_name(struct ged *gedp, int argc, const char *argv[])
 {
-    int status = GED_OK;
     struct bu_vls obj_name;
     char *cp, *tp;
     static int i = 0;

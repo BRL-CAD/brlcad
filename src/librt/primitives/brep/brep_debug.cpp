@@ -108,10 +108,10 @@ brep_plot_file(const char *pname)
 void
 plotsurfaceleafs(SurfaceTree* surf) {
     double min[3], max[3];
-    list<BBNode*> leaves;
+    std::list<BBNode*> leaves;
     surf->getLeaves(leaves);
 
-    for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
+    for (std::list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
 	BBNode* bb = dynamic_cast<BBNode*>(*i);
 	if (bb->m_trimmed) {
 	    COLOR_PLOT(255, 0, 0);
@@ -152,7 +152,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 {
     register struct bu_list *vhead;
     double min[3], max[3];
-    list<BBNode*> leaves;
+    std::list<BBNode*> leaves;
     surf->getLeaves(leaves);
 
     VSETALL(min, 0.0);
@@ -165,7 +165,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
     vhead = rt_vlblock_find(vbp, MAGENTA);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
 
-    for (list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
+    for (std::list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
 	BBNode* bb = dynamic_cast<BBNode*>(*i);
 	if (bb->m_trimmed) {
 	    vhead = rt_vlblock_find(vbp, RED);
@@ -191,7 +191,7 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 {
     register struct bu_list *vhead;
     double min[3], max[3];
-    list<BRNode*> leaves;
+    std::list<BRNode*> leaves;
     st->ctree->getLeaves(leaves);
 
     VSETALL(min, 0.0);
@@ -204,7 +204,7 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
     vhead = rt_vlblock_find(vbp, MAGENTA);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
 
-    for (list<BRNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
+    for (std::list<BRNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
 	BRNode* bb = dynamic_cast<BRNode*>(*i);
 	if (bb->m_XIncreasing) {
 	    vhead = rt_vlblock_find(vbp, GREEN);
@@ -1066,7 +1066,7 @@ plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int isocurveres, int gridres)
 		int cnt=1;
 		//bu_log("U - %f\n",pt.x);
 		trim_hits.clear();
-		for (list<BRNode*>::iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++,cnt++) {
+		for (std::list<BRNode*>::iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++,cnt++) {
 			BRNode* br = dynamic_cast<BRNode*>(*i);
 
 		    point_t bmin, bmax;
@@ -1122,7 +1122,7 @@ plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int isocurveres, int gridres)
 		cnt=1;
 		//bu_log("V - %f\n",pt.x);
 		trim_hits.clear();
-		for (list<BRNode*>::iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++,cnt++) {
+		for (std::list<BRNode*>::iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++,cnt++) {
 			BRNode* br = dynamic_cast<BRNode*>(*i);
 
 		    point_t bmin, bmax;
@@ -1196,7 +1196,7 @@ drawisoUCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp,fastf_t from, fastf
 	int cnt = 1;
 	//bu_log("V - %f\n",pt.x);
 	trim_hits.clear();
-	for (list<BRNode*>::iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
+	for (std::list<BRNode*>::iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
 		BRNode* br = dynamic_cast<BRNode*> (*i);
 
 		point_t bmin, bmax;
@@ -1314,7 +1314,7 @@ drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp,fastf_t from, fastf
 
 	int cnt = 1;
 	trim_hits.clear();
-	for (list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++,cnt++) {
+	for (std::list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++,cnt++) {
 		BRNode* br = dynamic_cast<BRNode*>(*i);
 
 	    point_t bmin, bmax;
@@ -1493,7 +1493,7 @@ drawBBNode(SurfaceTree* st, struct bn_vlblock *vbp, BBNode * node) {
 		}
 	} else {
 		if (node->m_children.size() > 0) {
-			for (vector<BBNode*>::iterator childnode = node->m_children.begin(); childnode
+			for (std::vector<BBNode*>::iterator childnode = node->m_children.begin(); childnode
 					!= node->m_children.end(); childnode++) {
 				drawBBNode(st,vbp,*childnode);
 			}

@@ -151,7 +151,7 @@ view_init( register struct application *ap, char *file, char *obj )
 
     hit_count = 0;
 
-    return(0);		/* No framebuffer needed */
+    return 0;		/* No framebuffer needed */
 }
 
 /*
@@ -247,7 +247,7 @@ view_2init( struct application *ap )
 int
 raymiss(register struct application *ap)
 {
-    return(0);
+    return 0;
 }
 
 /*
@@ -467,7 +467,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     extern fastf_t exposed_hit_z_sum;
 
     if ( pp == PartHeadp )
-	return(0);		/* nothing was actually hit?? */
+	return 0;		/* nothing was actually hit?? */
 
     /* ugh, horrible block */
     bu_semaphore_acquire( RT_SEM_RESULTS );
@@ -696,7 +696,7 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp
     }
     bu_semaphore_release( RT_SEM_RESULTS );
 
-    return(0);
+    return 0;
 }
 
 
@@ -1028,29 +1028,30 @@ view_end(struct application *ap)
     long int exposed_region_count = 0;
     long int exposed_assembly_count = 0;
 
+    double factor = 1.0; /* show local database units in parens by default */
+
     /* if not specified by user use local database units for summary units */
     if (model_units) {
     	units = rtip->rti_dbip->dbi_local2base;
     	bu_log("WARNING: using current model working units of (%s)\n", bu_units_string(units));
     }
 
-    double factor = 1.0; /* show local database units in parens by default */
-	/* show some common larger units in parens otherwise default to mm^2*/
-	if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
-	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
-	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
-	    factor = bu_units_conversion("m");
-	} else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
-	    factor = bu_units_conversion("km");
-	} else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
-	    factor = bu_units_conversion("ft");
-	} else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
-	    factor = bu_units_conversion("yd");
-	} else {
-		factor = bu_units_conversion("mm");
-	}
+    /* show some common larger units in parens otherwise default to mm^2*/
+    if (NEAR_ZERO(units - 1.0, SMALL_FASTF)) {
+	factor = bu_units_conversion("m");
+    } else if (NEAR_ZERO(units - 10.0, SMALL_FASTF)) {
+	factor = bu_units_conversion("m");
+    } else if (NEAR_ZERO(units - 100.0, SMALL_FASTF)) {
+	factor = bu_units_conversion("m");
+    } else if (NEAR_ZERO(units - 1000.0, SMALL_FASTF)) {
+	factor = bu_units_conversion("km");
+    } else if (NEAR_ZERO(units - 25.4, SMALL_FASTF)) {
+	factor = bu_units_conversion("ft");
+    } else if (NEAR_ZERO(units - 304.8, SMALL_FASTF)) {
+	factor = bu_units_conversion("yd");
+    } else {
+	factor = bu_units_conversion("mm");
+    }
     bu_log("\n"
 	   "********************************************************************\n"
 	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"

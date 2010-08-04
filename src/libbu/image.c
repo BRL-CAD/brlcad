@@ -29,6 +29,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 /* c99 doesn't declare these */
@@ -257,9 +258,11 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 {
     struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
     bif->magic = BU_IMAGE_FILE_MAGIC;
-    if (format == BU_IMAGE_AUTO) {
+    if (format == BU_IMAGE_AUTO || BU_IMAGE_AUTO_NO_PIX) {
 	char buf[BUFSIZ];
 	bif->format = guess_file_format(filename, buf);
+	if(format == BU_IMAGE_AUTO_NO_PIX && bif->format == BU_IMAGE_PIX)
+	    return NULL;
 	bif->filename = bu_strdup(buf);
     } else {
 	bif->format = format;
@@ -290,6 +293,20 @@ bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 	return -1;
     }
     memcpy(bif->data + bif->width*bif->depth*y, data, (size_t)bif->width*bif->depth);
+    return 0;
+}
+
+int
+bu_image_save_writepixel(struct bu_image_file *bif, int x, int y, unsigned char *data)
+{
+    unsigned char *dst;
+
+    if( bif == NULL ) {
+	bu_log("ERROR: trying to write a line with a null bif\n");
+	return -1;
+    }
+    dst = bif->data + (bif->width*y+x)*bif->depth;
+    VMOVE(dst, data);
     return 0;
 }
 

@@ -1233,7 +1233,7 @@ add_seg(struct isect_stuff *isect,
 
 
     if (seg->seg_in.hit_dist > 0.0 || seg->seg_out.hit_dist > 0.0) {
-	return (++isect->num_segs > isect->ap->a_onehit);
+	return ++isect->num_segs > isect->ap->a_onehit;
     }
     return 0;
 }
@@ -2041,7 +2041,7 @@ dsp_in_rpp(struct isect_stuff *isect,
 	 * position against the boundaries.
 	 */
 	if ((*min > *pt) || (*max < *pt))
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
     }
 
     /* Y axis */
@@ -2068,7 +2068,7 @@ dsp_in_rpp(struct isect_stuff *isect,
 	}
     } else {
 	if ((*min > *pt) || (*max < *pt))
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
     }
 
     /* Z axis */
@@ -2095,12 +2095,12 @@ dsp_in_rpp(struct isect_stuff *isect,
 	}
     } else {
 	if ((*min > *pt) || (*max < *pt))
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
     }
 
     /* If equal, RPP is actually a plane */
     if (rmin > rmax)
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     /* HIT.  Only now do rp->r_min and rp->r_max have to be written */
     rp->r_min = rmin;
@@ -2108,7 +2108,7 @@ dsp_in_rpp(struct isect_stuff *isect,
 
     isect->dmin = dmin;
     isect->dmax = dmax;
-    return(1);		/* HIT */
+    return 1;		/* HIT */
 }
 
 
@@ -2403,7 +2403,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	}
 
 	/* outta here */
-	return (ADD_SEG(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255));
+	return ADD_SEG(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255);
     }
 
 
@@ -2412,7 +2412,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
      */
     if (dsp_bb->dspb_ch_dim[0]) {
 #ifdef ORDERED_ISECT
-	return (recurse_dsp_bb(isect, dsp_bb, minpt, maxpt, bbmin, bbmax));
+	return recurse_dsp_bb(isect, dsp_bb, minpt, maxpt, bbmin, bbmax);
 #else
 	int i;
 	/* there are children, so we recurse */
@@ -2479,7 +2479,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
 
 	/* add a segment to the list */
-	return (ADD_SEG(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0));
+	return ADD_SEG(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
     }
 
     return 0;
@@ -3088,7 +3088,7 @@ rt_dsp_class(void)
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_class()\n");
 
-    return(0);
+    return 0;
 }
 
 
@@ -3354,7 +3354,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 #undef MOVE
 #undef DRAW
-    return(0);
+    return 0;
 }
 
 
@@ -3960,7 +3960,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* sanity check */
     nmg_make_faces_within_tol(s, tol);
 
-    return(0);
+    return 0;
 }
 
 
@@ -4187,7 +4187,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Check record type */
     if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_dsp_import4: defective record\n");
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -4239,7 +4239,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
     RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -4259,7 +4259,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_DSP) return(-1);
+    if (ip->idb_type != ID_DSP) return -1;
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
     BU_CK_VLS(&dsp_ip->dsp_name);
@@ -4289,7 +4289,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
 
-    return(0);
+    return 0;
 }
 
 
@@ -4415,7 +4415,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_DSP) return(-1);
+    if (ip->idb_type != ID_DSP) return -1;
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
@@ -4538,7 +4538,7 @@ rt_dsp_describe(struct bu_vls *str,
 
     if (BU_VLS_IS_INITIALIZED(&vls)) bu_vls_free(&vls);
 
-    return(0);
+    return 0;
 }
 
 
@@ -4779,10 +4779,10 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 int
 rt_dsp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
-    if (!ps) return(0);
+    if (!ps) return 0;
     RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 

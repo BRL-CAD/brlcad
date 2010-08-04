@@ -64,7 +64,6 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
     fastf_t planes[7][4];		/* ARBs defining plane equations */
     int arb_type;
     int face;
-    int bad_face_id = 0;
     int rflag = 0;
     point_t pt;
     mat_t mat;

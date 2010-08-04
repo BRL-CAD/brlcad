@@ -14,6 +14,7 @@ scripts = \
 	ArcherCore.tcl \
 	AttrGroupsDisplayUtility.tcl \
 	bgerror.tcl \
+	BotUtility.tcl \
 	CombEditFrame.tcl \
 	cursor.tcl \
 	EhyEditFrame.tcl \

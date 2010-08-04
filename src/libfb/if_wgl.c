@@ -37,7 +37,6 @@
 
 #ifdef IF_WGL
 
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -328,12 +327,12 @@ success:
     /* Provide non-black colormap on creation of new shared mem */
     if (new)
 	wgl_cminit(ifp);
-    return(0);
+    return 0;
 fail:
     fb_log("wgl_getmem:  Unable to attach to shared memory.\n");
     if ((sp = calloc(1, size)) == NULL) {
 	fb_log("wgl_getmem:  malloc failure\n");
-	return(-1);
+	return -1;
     }
     new = 1;
     goto success;
@@ -620,7 +619,7 @@ wgl_open(FBIO *ifp, char *file, int width, int height)
 	if ((mode & MODE_15MASK) == MODE_15ZAP) {
 	    /* Only task: Attempt to release shared memory segment */
 	    wgl_zapmem();
-	    return(-1);
+	    return -1;
 	}
     }
     ifp->if_mode = mode;
@@ -632,11 +631,11 @@ wgl_open(FBIO *ifp, char *file, int width, int height)
 
     if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
 	fb_log("wgl_open:  sgiinfo malloc failed\n");
-	return(-1);
+	return -1;
     }
     if ((WGLL(ifp) = (char *)calloc(1, sizeof(struct wglinfo))) == NULL) {
 	fb_log("wgl_open:  wglinfo malloc failed\n");
-	return(-1);
+	return -1;
     }
 
     SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
@@ -686,7 +685,7 @@ wgl_open(FBIO *ifp, char *file, int width, int height)
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (wgl_getmem(ifp) < 0)
-	return(-1);
+	return -1;
 
     /* Register the frame class */
     wndclass.style         = 0;
@@ -730,7 +729,7 @@ wgl_open(FBIO *ifp, char *file, int width, int height)
     /* Choose an appropriate visual. */
     if ((WGL(ifp)->vip = wgl_choose_visual(ifp)) == NULL) {
 	fb_log("wgl_open: Couldn't find an appropriate visual.  Exiting.\n");
-	return (-1);
+	return -1;
     }
 
     WGL(ifp)->glxc = wglCreateContext(WGL(ifp)->hdc);
@@ -914,7 +913,7 @@ wgl_final_close(FBIO *ifp)
     }
 
     wgl_nwindows--;
-    return(0);
+    return 0;
 }
 
 
@@ -942,7 +941,7 @@ wgl_flush(FBIO *ifp)
     }
     /* XFlush(WGL(ifp)->dispp); */
     glFlush();
-    return(0);
+    return 0;
 }
 
 
@@ -981,10 +980,6 @@ wgl_close(FBIO *ifp)
      * with eliminating stdin.
      */
     fclose(stdin);
-
-    /* Ignore likely signals, perhaps in the background, from other
-     * typing at the keyboard
-     */
 
     while (0 < WGL(ifp)->alive)
 	wgl_do_event(ifp);
@@ -1030,9 +1025,9 @@ wgl_poll(FBIO *ifp)
     wgl_do_event(ifp);
 
     if (WGL(ifp)->alive < 0)
-	return(1);
+	return 1;
     else
-	return(0);
+	return 0;
 }
 
 
@@ -1129,7 +1124,7 @@ wgl_clear(FBIO *ifp, unsigned char *pp)
     /* unattach context for other threads to use */
     wglMakeCurrent(NULL, NULL);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1147,14 +1142,14 @@ wgl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     if (yzoom < 1) yzoom = 1;
     if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
 	&& ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom)
-	return(0);
+	return 0;
 
     if (xcenter < 0 || xcenter >= ifp->if_width)
-	return(-1);
+	return -1;
     if (ycenter < 0 || ycenter >= ifp->if_height)
-	return(-1);
+	return -1;
     if (xzoom >= ifp->if_width || yzoom >= ifp->if_height)
-	return(-1);
+	return -1;
 
     ifp->if_xcenter = xcenter;
     ifp->if_ycenter = ycenter;
@@ -1203,7 +1198,7 @@ wgl_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	wglMakeCurrent(NULL, NULL);
     }
 
-    return(0);
+    return 0;
 }
 
 
@@ -1220,7 +1215,7 @@ wgl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     *xzoom = ifp->if_xzoom;
     *yzoom = ifp->if_yzoom;
 
-    return(0);
+    return 0;
 }
 
 
@@ -1228,19 +1223,19 @@ wgl_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
  * read count pixels into pixelp starting at x, y
  */
 HIDDEN int
-wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    short scan_count;	/* # pix on this scanline */
+    size_t n;
+    size_t scan_count;	/* # pix on this scanline */
     unsigned char *cp;
     int ret;
-    unsigned int n;
     struct wgl_pixel *wglp;
 
     if (CJDEBUG) printf("entering wgl_read\n");
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
-	return(-1);
+	return -1;
 
     ret = 0;
     cp = (unsigned char *)(pixelp);
@@ -1273,7 +1268,7 @@ wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 	if (++y >= ifp->if_height)
 	    break;
     }
-    return(ret);
+    return ret;
 }
 
 
@@ -1281,30 +1276,29 @@ wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
  * write count pixels from pixelp starting at xstart, ystart
  */
 HIDDEN int
-wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int count)
+wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
-    short scan_count;	/* # pix on this scanline */
+    size_t scan_count;	/* # pix on this scanline */
+    size_t pix_count;	/* # pixels to send */
     unsigned char *cp;
     int ret;
     int ybase;
-    int pix_count;	/* # pixels to send */
     int x;
     int y;
 
     if (CJDEBUG) printf("entering wgl_write\n");
 
     /* fast exit cases */
-    if ((pix_count = count) == 0)
+    pix_count = count;
+    if (pix_count == 0)
 	return 0;	/* OK, no pixels transferred */
-    if (pix_count < 0)
-	return -1;	/* ERROR */
 
     x = xstart;
     ybase = y = ystart;
 
     if (x < 0 || x >= ifp->if_width ||
 	y < 0 || y >= ifp->if_height)
-	return(-1);
+	return -1;
 
     ret = 0;
     cp = (unsigned char *)(pixelp);
@@ -1401,7 +1395,7 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, int co
 	wglMakeCurrent(NULL, NULL);
     }
 
-    return(ret);
+    return ret;
 
 }
 
@@ -1430,10 +1424,10 @@ wgl_writerect(FBIO *ifp,
 
 
     if (width <= 0 || height <= 0)
-	return(0);  /* do nothing */
+	return 0;  /* do nothing */
     if (xmin < 0 || xmin+width > ifp->if_width ||
 	ymin < 0 || ymin+height > ifp->if_height)
-	return(-1); /* no can do */
+	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
@@ -1473,7 +1467,7 @@ wgl_writerect(FBIO *ifp,
 	wglMakeCurrent(NULL, NULL);
     }
 
-    return(width*height);
+    return width*height;
 }
 
 
@@ -1501,10 +1495,10 @@ wgl_bwwriterect(FBIO *ifp,
 
 
     if (width <= 0 || height <= 0)
-	return(0);  /* do nothing */
+	return 0;  /* do nothing */
     if (xmin < 0 || xmin+width > ifp->if_width ||
 	ymin < 0 || ymin+height > ifp->if_height)
-	return(-1); /* no can do */
+	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
@@ -1544,7 +1538,7 @@ wgl_bwwriterect(FBIO *ifp,
 	wglMakeCurrent(NULL, NULL);
     }
 
-    return(width*height);
+    return width*height;
 }
 
 
@@ -1561,7 +1555,7 @@ wgl_rmap(FBIO *ifp, ColorMap *cmp)
 	cmp->cm_green[i] = CMG(ifp)[i]<<8;
 	cmp->cm_blue[i]  = CMB(ifp)[i]<<8;
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1577,11 +1571,11 @@ is_linear_cmap(FBIO *ifp)
     int i;
 
     for (i=0; i<256; i++) {
-	if (CMR(ifp)[i] != i) return(0);
-	if (CMG(ifp)[i] != i) return(0);
-	if (CMB(ifp)[i] != i) return(0);
+	if (CMR(ifp)[i] != i) return 0;
+	if (CMG(ifp)[i] != i) return 0;
+	if (CMB(ifp)[i] != i) return 0;
     }
-    return(1);
+    return 1;
 }
 
 
@@ -1628,7 +1622,7 @@ wgl_wmap(FBIO *ifp, const ColorMap *cmp)
     if (!WGL(ifp)->use_ext_ctrl) {
 	if (WGL(ifp)->soft_cmap_flag) {
 	    /* if current and previous maps are linear, return */
-	    if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return(0);
+	    if (SGI(ifp)->mi_cmap_flag == 0 && prev == 0) return 0;
 
 	    /* Software color mapping, trigger a repaint */
 
@@ -1650,7 +1644,7 @@ wgl_wmap(FBIO *ifp, const ColorMap *cmp)
 	}
     }
 
-    return(0);
+    return 0;
 }
 
 

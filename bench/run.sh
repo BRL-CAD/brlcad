@@ -460,10 +460,10 @@ look_for ( ) {
 		    opts="-d -x"
 		    ;;
 		xexe*)
-		    opts="$opts -x"
+		    opts="$opts -f -r -x"
 		    ;;
 		xscr*)
-		    opts="$opts -x"
+		    opts="$opts -f -r -x"
 		    ;;
 	    esac
 	    look_for_failed=no
@@ -1398,7 +1398,7 @@ else
     blankit=no
 
     # BSD
-    look_for executable "a sysctl command" SYSCTL_CMD `echo $PATH | sed 's/:/\/sysctl /g'`
+    look_for executable "a sysctl command" SYSCTL_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/sysctl/g'`
     if test ! "x$SYSCTL_CMD" = "x" ; then
 	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
 	preQUIET="$QUIET"
@@ -1413,7 +1413,7 @@ else
     fi
 
     # Solaris
-    look_for executable "a prtdiag command" PRTDIAG_CMD `echo $PATH | sed 's/:/\/prtdiag /g'`
+    look_for executable "a prtdiag command" PRTDIAG_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/prtdiag/g'`
     if test ! "x$PRTDIAG_CMD" = "x" ; then
 	$ECHO "Collecting system diagnostics information (via $PRTDIAG_CMD)"
 	preQUIET="$QUIET"
@@ -1426,7 +1426,7 @@ else
     fi
 
     # AIX
-    look_for executable "a prtconf command" PRTCONF_CMD `echo $PATH | sed 's/:/\/prtconf /g'`
+    look_for executable "a prtconf command" PRTCONF_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/prtconf/g'`
     if test ! "x$PRTCONF_CMD" = "x" ; then
 	$ECHO "Collecting system configuration information (via $PRTCONF_CMD)"
 	preQUIET="$QUIET"
@@ -1439,7 +1439,7 @@ else
     fi
 
     # SGI
-    look_for executable "an hinv command" HINV_CMD `echo $PATH | sed 's/:/\/hinv /g'`
+    look_for executable "an hinv command" HINV_CMD `echo "$PATH" | tr ":" "\n" | sed 's/$/\/hinv/g'`
     if test ! "x$HINV_CMD" = "x" ; then
 	$ECHO "Collecting system configuration information (via $HINV_CMD)"
 	preQUIET="$QUIET"

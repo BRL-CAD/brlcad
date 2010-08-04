@@ -70,8 +70,8 @@ tables_check(char *a, char *b)
 
     int c= sizeof(struct identt);
 
-    while (c--) if (*a++ != *b++) return(0);	/* no match */
-    return(1);	/* match */
+    while (c--) if (*a++ != *b++) return 0;	/* no match */
+    return 1;	/* match */
 
 }
 
@@ -99,7 +99,7 @@ tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
 
 	if (tables_check((char *)&idbuf1, (char *)&idbuf2) == 1) {
 	    *old = 1;
-	    return(idbuf2.i_index);
+	    return idbuf2.i_index;
 	}
     }
     *numsol++;
@@ -109,7 +109,7 @@ tables_sol_number(matp_t matrix, char *name, int *old, long *numsol)
     (void)write(idfd, &idbuf1, sizeof identt);
 
     *old = 0;
-    return(idbuf1.i_index);
+    return idbuf1.i_index;
 }
 
 
@@ -119,8 +119,8 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct rt_tree_array *tree_list;
-    int node_count;
-    int actual_count;
+    size_t node_count;
+    size_t actual_count;
     int i, k;
 
     RT_CK_DIR(dp);
@@ -159,7 +159,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fas
     /* flatten tree */
     actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
 							   comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-    BU_ASSERT_LONG(actual_count, ==, node_count);
+    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 
     if (dp->d_flags & DIR_REGION) {
 	*numreg++;

@@ -258,7 +258,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse( matparm, noise_parse_tab, (char *)noise_sp ) < 0 )
-	return(-1);
+	return -1;
 
     /* figure out which shader is really being called */
     for (i = 0; noise_mfuncs[i].mf_name; i++ ) {
@@ -304,7 +304,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 	bn_mat_print( "m_to_sh", noise_sp->m_to_sh );
     }
 
-    return(1);
+    return 1;
 }
 
 /*
@@ -524,7 +524,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
 
-    return(1);
+    return 1;
 }
 
 /*

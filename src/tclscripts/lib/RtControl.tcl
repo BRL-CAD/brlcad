@@ -1368,7 +1368,7 @@
     }
 
     if {$isaMged} {
-	set size [$itk_option(-mged) component $rtAcivePane cget -dmsize]
+	set size [$itk_option(-mged) component $rtActivePane cget -dmsize]
     } else {
 	set size [$itk_option(-mged) pane_win_size $rtActivePane]
     }

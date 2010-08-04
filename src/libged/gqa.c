@@ -591,10 +591,14 @@ parse_args(int ac, char *av[])
 		    /* find out if we have two or one args user can
 		     * separate them with, or - delimiter
 		     */
-		    if ((p = strchr(bu_optarg, COMMA)))
+		    p = strchr(bu_optarg, COMMA);
+		    if (p)
 			*p++ = '\0';
-		    else if ((p = strchr(bu_optarg, '-')))
-			*p++ = '\0';
+		    else {
+			p = strchr(bu_optarg, '-');
+			if (p)
+			    *p++ = '\0';
+		    }
 
 
 		    if (read_units_double(&value1, bu_optarg, units_tab[0])) {
@@ -740,7 +744,7 @@ parse_args(int ac, char *av[])
 	}
     }
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 
@@ -870,7 +874,7 @@ overlap(struct application *ap,
 
     if (depth < overlap_tolerance)
 	/* too small to matter, pick one or none */
-	return(1);
+	return 1;
 
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
@@ -914,7 +918,7 @@ overlap(struct application *ap,
     /* XXX We should somehow flag the volume/weight calculations as invalid */
 
     /* since we have no basis to pick one over the other, just pick */
-    return(1);	/* No further consideration to this partition */
+    return 1;	/* No further consideration to this partition */
 }
 
 
@@ -1275,7 +1279,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     /* This value is returned by rt_shootray a hit usually returns 1,
      * miss 0.
      */
-    return(1);
+    return 1;
 }
 
 
@@ -1294,7 +1298,7 @@ miss(struct application *ap)
     bu_vls_printf(&_ged_current_gedp->ged_result_str, "missed\n");
     bu_semaphore_release(GED_SEM_WORKER);
 #endif
-    return(0);
+    return 0;
 }
 
 
@@ -1351,7 +1355,9 @@ plane_worker (int cpu, genptr_t ptr)
 
     u = -1;
 
-    while ((v = get_next_row(state))) {
+    v = get_next_row(state);
+
+    while (v) {
 
 	v_coord = v * gridSpacing;
 	if (debug) {
@@ -1426,6 +1432,9 @@ plane_worker (int cpu, genptr_t ptr)
 		    }
 	    }
 	}
+
+	/* iterate */
+	v = get_next_row(state);
     }
 
     if (debug && (u == -1)) {
@@ -1456,7 +1465,8 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
     char *str = bu_strdup(name);
     char *p;
 
-    if ((p=strchr(str, '/'))) {
+    p=strchr(str, '/');
+    if (p) {
 	*p = '\0';
     }
 
@@ -2489,7 +2499,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     } while (terminate_check(&state));
 
-aborted:
+ aborted:
     if (plot_overlaps) fclose(plot_overlaps);
     if (plot_weight) fclose(plot_weight);
     if (plot_volume) fclose(plot_volume);

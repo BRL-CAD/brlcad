@@ -130,13 +130,13 @@ int read_faces(struct model *m, FILE *fgeom)
 
     }
 
-    if (fail) return (-1);
+    if (fail) return -1;
 
     nmg_gluefaces(outfaceuses, nfaces, &tol);
     nmg_region_a(r, &tol);
 
     bu_free((char *)pts, "points list");
-    return (0);
+    return 0;
 }
 
 
@@ -189,7 +189,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
     mk_comb1(fpout, rname, sname, 1);
 
     nmg_km(m);
-    return (0);
+    return 0;
 }
 
 
@@ -223,7 +223,7 @@ int main(int argc, char **argv)
     fclose(fpin);
     wdb_close(fpout);
 
-    return (0);
+    return 0;
 }
 
 /*

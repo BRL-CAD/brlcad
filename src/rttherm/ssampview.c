@@ -437,6 +437,8 @@ tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 int
 tcl_appinit(Tcl_Interp *inter)
 {
+    const char *ssampview_tcl = NULL;
+
     interp = inter;	/* set global var */
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
@@ -475,8 +477,11 @@ tcl_appinit(Tcl_Interp *inter)
 
     /* Specify startup file to invoke when run interactively */
     /* Source the TCL part of this lashup */
-    /* Tcl7 way:  tcl_RcFileName = "./ssampview.tcl"; */
-    Tcl_SetVar(interp, "tcl_rcFileName", "~/brlcad/rttherm/ssampview.tcl", TCL_GLOBAL_ONLY);
+    ssampview_tcl = bu_brlcad_root("bin/ssampview.tcl", 0);
+    if (ssampview_tcl)
+	Tcl_SetVar(interp, "tcl_rcFileName", ssampview_tcl, TCL_GLOBAL_ONLY);
+    else
+	Tcl_SetVar(interp, "tcl_rcFileName", "./ssampview.tcl", TCL_GLOBAL_ONLY);
 
     return TCL_OK;
 }
@@ -608,7 +613,7 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 

@@ -49,6 +49,8 @@
 
 #include "./fbserv.h"
 
+HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp);
+
 #define NET_LONG_LEN 4 /* # bytes to network long */
 
 
@@ -190,7 +192,7 @@ fbserv_new_client(struct pkg_conn *pcp,
 	return;
 
     for (i = MAX_CLIENTS-1; i >= 0; i--) {
-	Clientdata fd;
+	ClientData fd;
 	if (clients[i].c_fd != 0)
 	    continue;
 
@@ -251,7 +253,7 @@ fbserv_set_port(void)
 
     /* Check to see if previously active --- if so then deactivate */
     if (netchan != NULL) {
-	Clientdata fd;
+	ClientData fd;
 
 	/* first drop all clients */
 	for (i = 0; i < MAX_CLIENTS; ++i)
@@ -326,14 +328,14 @@ fbserv_makeconn(int fd,
 
     if ((pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn))) == PKC_NULL) {
 	communications_error("fbserv_makeconn: malloc failure\n");
-	return(PKC_ERROR);
+	return PKC_ERROR;
     }
 
 #ifdef HAVE_WINSOCK_H
     wVersionRequested = MAKEWORD(1, 1);
     if (WSAStartup(wVersionRequested, &wsaData) != 0) {
 	communications_error("fbserv_makeconn:  could not find a usable WinSock DLL\n");
-	return(PKC_ERROR);
+	return PKC_ERROR;
     }
 #endif
 

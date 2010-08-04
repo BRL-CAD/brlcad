@@ -38,7 +38,7 @@ planar_nurb( entityno )
     {
 	bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 		dir[entityno]->direct, dir[entityno]->name );
-	return(0);
+	return 0;
     }
 
     Readrec( dir[entityno]->param );
@@ -46,7 +46,7 @@ planar_nurb( entityno )
     if ( sol_num != 128 )
     {
 	bu_log( "entity at D%07d is not a B-spline surface\n", entityno*2 + 1 );
-	return( 0 );
+	return 0;
     }
     Readint( &k1, "" );
     Readint( &k2, "" );
@@ -54,9 +54,9 @@ planar_nurb( entityno )
     Readint( &m2, "" );
 
     if ( m1 == 1 && m2 == 1 )
-	return( 1 );
+	return 1;
     else
-	return( 0 );
+	return 0;
 }
 
 

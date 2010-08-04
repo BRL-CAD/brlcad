@@ -96,6 +96,7 @@ __BEGIN_DECLS
 #define GED_PROTATE_MODE 12
 #define GED_PSCALE_MODE 13
 #define GED_PTRANSLATE_MODE 14
+#define GED_RECTANGLE_MODE 15
 
 /**
  * S E M A P H O R E S
@@ -120,7 +121,8 @@ __BEGIN_DECLS
 /** Check if the object is a combination */
 #define	GED_CHECK_COMB(_gedp, _dp, _flags) \
     if (((_dp)->d_flags & DIR_COMB) == 0) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_comb_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_comb_quiet) { \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a combination", (_dp)->d_namep); \
 	} \
 	return (_flags); \
@@ -129,7 +131,8 @@ __BEGIN_DECLS
 /** Check if a database is open */
 #define GED_CHECK_DATABASE_OPEN(_gedp, _flags) \
     if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_database_open_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_database_open_quiet) { \
 	    if ((_gedp) != GED_NULL) { \
 		bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 		bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
@@ -143,7 +146,8 @@ __BEGIN_DECLS
 /** Check if a drawable exists */
 #define GED_CHECK_DRAWABLE(_gedp, _flags) \
     if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_drawable_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_drawable_quiet) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist."); \
 	} \
@@ -153,7 +157,8 @@ __BEGIN_DECLS
 /** Check if a view exists */
 #define GED_CHECK_VIEW(_gedp, _flags) \
     if (_gedp->ged_gvp == GED_VIEW_NULL) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_view_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_view_quiet) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist."); \
 	} \
@@ -163,7 +168,8 @@ __BEGIN_DECLS
 /** Lookup database object */
 #define GED_CHECK_EXISTS(_gedp, _name, _noisy, _flags) \
     if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != DIR_NULL) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_exists_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_exists_quiet) { \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists.", (_name)); \
 	} \
 	return (_flags); \
@@ -172,7 +178,8 @@ __BEGIN_DECLS
 /** Check if the database is read only */
 #define	GED_CHECK_READ_ONLY(_gedp, _flags) \
     if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_read_only_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_read_only_quiet) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY."); \
 	} \
@@ -182,7 +189,8 @@ __BEGIN_DECLS
 /** Check if the object is a region */
 #define	GED_CHECK_REGION(_gedp, _dp, _flags) \
     if (((_dp)->d_flags & DIR_REGION) == 0) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_region_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_region_quiet) { \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a region.", (_dp)->d_namep); \
 	} \
 	return (_flags); \
@@ -191,7 +199,8 @@ __BEGIN_DECLS
 /** make sure there is a command name given */
 #define GED_CHECK_ARGC_GT_0(_gedp, _argc, _flags) \
     if ((_argc) < 1) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_check_argc_gt_0_quiet = (_flags) & GED_QUIET; \
+	if (!ged_check_argc_gt_0_quiet) { \
 	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \
 	} \
@@ -201,7 +210,8 @@ __BEGIN_DECLS
 /** add a new directory entry to the currently open database */
 #define GED_DB_DIRADD(_gedp, _dp, _name, _laddr, _len, _dirflags, _ptr, _flags) \
     if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_dirflags), (_ptr))) == DIR_NULL) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_db_diradd_quiet = (_flags) & GED_QUIET; \
+	if (!ged_db_diradd_quiet) { \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to add %s to the database.", (_name)); \
 	} \
 	return (_flags); \
@@ -210,7 +220,8 @@ __BEGIN_DECLS
 /** Lookup database object */
 #define GED_DB_LOOKUP(_gedp, _dp, _name, _noisy, _flags) \
     if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy))) == DIR_NULL) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_db_lookup_quiet = (_flags) & GED_QUIET; \
+	if (!ged_db_lookup_quiet) { \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to find %s in the database.", (_name)); \
 	} \
 	return (_flags); \
@@ -219,7 +230,8 @@ __BEGIN_DECLS
 /** Get internal representation */
 #define GED_DB_GET_INTERNAL(_gedp, _intern, _dp, _mat, _resource, _flags) \
     if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_wdbp->dbip, (_mat), (_resource)) < 0) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_db_get_internal_quiet = (_flags) & GED_QUIET; \
+	if (!ged_db_get_internal_quiet) { \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "Database read failure."); \
 	} \
 	return (_flags); \
@@ -228,7 +240,8 @@ __BEGIN_DECLS
 /** Put internal representation */
 #define GED_DB_PUT_INTERNAL(_gedp, _dp, _intern, _resource, _flags) \
     if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, (_intern), (_resource)) < 0) { \
-	if (!((_flags) & GED_QUIET)) { \
+	int ged_db_put_internal_quiet = (_flags) & GED_QUIET; \
+	if (!ged_db_put_internal_quiet) { \
 	    bu_vls_printf(&(_gedp)->ged_result_str, "Database write failure."); \
 	} \
 	return (_flags); \
@@ -1531,6 +1544,14 @@ GED_EXPORT BU_EXTERN(int ged_comb, (struct ged *gedp, int argc, const char *argv
 GED_EXPORT BU_EXTERN(int ged_comb_std, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Set/get comb's members.
+ *
+ * Usage:
+ *     combmem comb_name <az el tw tx ty tz sa sx sy sz ...>
+ */
+GED_EXPORT BU_EXTERN(int ged_combmem, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Import a database into the current database using an auto-incrementing or custom affix
  *
  * Usage:
@@ -2071,14 +2092,6 @@ GED_EXPORT BU_EXTERN(int ged_lookat, (struct ged *gedp, int argc, const char *ar
  *     ls [-A name/value pairs] OR [-acrslop] object(s)
  */
 GED_EXPORT BU_EXTERN(int ged_ls, (struct ged *gedp, int argc, const char *argv[]));
-
-/**
- * List the constraint objects in this database
- *
- * Usage:
- *     lscon
- */
-GED_EXPORT BU_EXTERN(int ged_lscon, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * List object's tree as a tcl list of {operator object} pairs
@@ -2623,6 +2636,14 @@ GED_EXPORT BU_EXTERN(int ged_rot_point, (struct ged *gedp, int argc, const char 
 GED_EXPORT BU_EXTERN(int ged_rrt, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Returns a list of items within the previously defined rectangle.
+ *
+ * Usage:
+ *     rselect
+ */
+GED_EXPORT BU_EXTERN(int ged_rselect, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Run the raytracing application.
  *
  * Usage:
@@ -2678,6 +2699,14 @@ GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *arg
  *     search [options] (see search man page)
  */
 GED_EXPORT BU_EXTERN(int ged_search, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Returns a list of items within the specified rectangle or circle.
+ *
+ * Usage:
+ *     select vx vy {vr | vw vh}
+ */
+GED_EXPORT BU_EXTERN(int ged_select, (struct ged *gedp, int argc, const char *argv[]));
 
 
 /**

@@ -335,12 +335,12 @@ read_frame(FILE *fp)
     double dx = 0.0;
 
     if (feof(fp))
-	return(-1);
+	return -1;
 
 #ifdef never
     /* Phils format */
     for (nsamples=0;;nsamples++) {
-	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return(-1);
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return -1;
 	if (buf[0] == '\0' || buf[0] == '\n')
 	    /* Blank line, marks break in implicit connection */
 	    fprintf(stderr, "implicit break unimplemented\n");
@@ -372,20 +372,20 @@ read_frame(FILE *fp)
 	    sample[nsamples][X] = dxtab[nsamples];
 	    sample[nsamples][Y] = sample[nsamples][Z] = 0;
 	}
-	return(0);		/* OK */
+	return 0;		/* OK */
     }
     if (last_read_time > cur_time)
-	return(0);		/* OK, reuse last step's data */
+	return 0;		/* OK, reuse last step's data */
     /* Ferret out next time marker */
     while (1) {
 	if (bu_fgets(buf, sizeof(buf), fp) == NULL) {
 	    fprintf(stderr, "EOF?\n");
-	    return(-1);
+	    return -1;
 	}
 	if (strncmp(buf, "TIME", strlen("TIME")) != 0)  continue;
 	if (sscanf(buf, "TIME %f", &last_read_time) < 1) {
 	    fprintf(stderr, "bad TIME\n");
-	    return(-1);
+	    return -1;
 	}
 	break;
     }
@@ -395,7 +395,7 @@ read_frame(FILE *fp)
 	float kx, ky, kz;
 	
 	buf[0] = '\0';
-	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return(-1);
+	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return -1;
 	/* center of mass #, +X, +Z, -Y (chg of coordinates) */
 	if (buf[0] == '\0' || buf[0] == '\n')
 	    break;		/* stop at a blank line */
@@ -403,12 +403,12 @@ read_frame(FILE *fp)
 		   &nmass, &kx, &ky, &kz);
 	if (i != 4) {
 	    fprintf(stderr, "input line in error: %s\n", buf);
-	    return(-1);
+	    return -1;
 	}
 	if (nmass-1 != nsamples) {
 	    fprintf(stderr, "nmass %d / nsamples %d mismatch\n",
 		    nmass, nsamples);
-	    return(-1);
+	    return -1;
 	}
 #define EXAGERATION (4 * oradius)
 	/* scale = EXAGERATIONmm / MAX_DEVIATIONmm */
@@ -428,9 +428,9 @@ read_frame(FILE *fp)
 #endif
     if (nsamples <= 4) {
 	fprintf(stderr, "insufficient samples\n");
-	return(-1);
+	return -1;
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 void

@@ -108,13 +108,13 @@ get_args(int argc, char **argv)
 		break;
 
 	    default:		/* '?' */
-		return(0);
+		return 0;
 	}
     }
 
     if ( bu_optind+1 >= argc )	/* two mandatory positional args */
-	return(0);
-    return(1);		/* OK */
+	return 0;
+    return 1;		/* OK */
 }
 
 int
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 	}
     }
     fb_close( fbp );
-    return(0);
+    return 0;
 }
 
 void

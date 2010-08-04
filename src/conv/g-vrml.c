@@ -182,7 +182,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 	bot->face_mode = bu_bitv_dup( bot_in->face_mode );
     }
 
-    return( bot );
+    return bot;
 }
 
 static int
@@ -197,20 +197,20 @@ select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const
     dp = DB_FULL_PATH_CUR_DIR( pathp );
 
     if ( !(dp->d_flags & DIR_COMB) )
-	return( -1 );
+	return -1;
 
     id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource );
     if ( id < 0 )
     {
 	bu_log( "Cannot internal form of %s\n", dp->d_namep );
-	return( -1 );
+	return -1;
     }
 
     if ( id != ID_COMBINATION )
     {
 	bu_log( "Directory/database mismatch!\n\t is '%s' a combination or not?\n",
 		dp->d_namep );
-	return( -1 );
+	return -1;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -219,12 +219,12 @@ select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const
     if ( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
     {
 	rt_db_free_internal(&intern);
-	return( 0 );
+	return 0;
     }
     else
     {
 	rt_db_free_internal(&intern);
-	return( -1 );
+	return -1;
     }
 }
 
@@ -235,9 +235,9 @@ select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, c
 
     ret =  select_lights( tsp, pathp, combp, client_data );
     if ( ret == 0 )
-	return( -1 );
+	return -1;
     else
-	return( 0 );
+	return 0;
 }
 
 union tree *
@@ -250,7 +250,7 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 
     if ( ip->idb_type != ID_BOT ) {
 	pmp->num_nonbots++;
-	return( nmg_booltree_leaf_tess(tsp, pathp, ip, client_data) );
+	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
     }
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -270,14 +270,14 @@ leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt
 	pmp->bots[pmp->num_bots] = dup_bot( bot );
 	BARRIER_CHECK;
 	pmp->num_bots++;
-	return( (union tree *)NULL );
+	return (union tree *)NULL;
     }
 
     pmp->num_nonbots++;
 
     BARRIER_CHECK;
 
-    return( nmg_booltree_leaf_tess(tsp, pathp, ip, client_data) );
+    return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
 }
 
 
@@ -1220,14 +1220,14 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     BARRIER_CHECK;
     if ( tsp->ts_is_fastgen != REGION_FASTGEN_PLATE ) {
 	clean_pmp( pmp );
-	return( nmg_region_end(tsp, pathp, curtree, client_data) );
+	return nmg_region_end(tsp, pathp, curtree, client_data);
     }
 
     /* FASTGEN plate mode region, just spew the bot triangles */
     if ( pmp->num_bots < 1 || pmp->num_nonbots > 0 ) {
 	clean_pmp( pmp );
 	BARRIER_CHECK;
-	return( nmg_region_end(tsp, pathp, curtree, client_data) );
+	return nmg_region_end(tsp, pathp, curtree, client_data);
     }
 
     if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
@@ -1244,7 +1244,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     clean_pmp( pmp );
     regions_converted++;
     BARRIER_CHECK;
-    return( (union tree *)NULL );
+    return (union tree *)NULL;
 }
 
 union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
@@ -1268,7 +1268,7 @@ union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path 
     }
 
     if (curtree->tr_op == OP_NOP)
-	return  curtree;
+	return curtree;
 
     name = db_path_to_string( pathp );
     bu_log( "Attempting %s\n", name );
@@ -1376,7 +1376,7 @@ union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path 
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
     BARRIER_CHECK;
-    return(curtree);
+    return curtree;
 }
 
 /*

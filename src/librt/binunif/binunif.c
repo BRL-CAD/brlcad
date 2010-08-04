@@ -55,32 +55,33 @@
 int
 rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type, size_t max_count)
 {
+    int ret;
     struct stat st;
-    unsigned int major_type=DB5_MAJORTYPE_BINARY_UNIF;
-    size_t num_items=(size_t)-1;
-    size_t obj_length=(size_t)-1;
-    size_t item_length=0;
-    struct bu_mapped_file *bu_fd;
-    struct rt_binunif_internal *bip;
-    struct rt_db_internal intern;
+    size_t num_items = 0;
+    size_t obj_length = 0;
+    size_t item_length = 0;
+    unsigned int major_type = DB5_MAJORTYPE_BINARY_UNIF;
+    struct directory *dp = NULL;
+    struct bu_mapped_file *bu_fd = NULL;
+    struct rt_binunif_internal *bip = NULL;
     struct bu_external body;
     struct bu_external bin_ext;
-    struct directory *dp;
-    int ret;
+    struct rt_db_internal intern;
 
-    if ((item_length=db5_type_sizeof_h_binu(minor_type)) <= 0) {
-	bu_log("Unrecognized minor type!\n");
+    item_length = db5_type_sizeof_h_binu(minor_type);
+    if (item_length == 0) {
+	bu_log("Unrecognized minor type (%d)!\n", minor_type);
 	return -1;
     }
 
     if (stat(file_name, &st)) {
-	bu_log("Cannot stat input file(%s)", file_name);
+	bu_log("Cannot stat input file (%s)", file_name);
 	return -1;
     }
 
-    if ((bu_fd=bu_open_mapped_file(file_name, NULL)) == NULL) {
-	bu_log("Cannot open input file(%s) for reading",
-	       file_name);
+    bu_fd = bu_open_mapped_file(file_name, NULL);
+    if (bu_fd == NULL) {
+	bu_log("Cannot open input file (%s) for reading", file_name);
 	return -1;
     }
 

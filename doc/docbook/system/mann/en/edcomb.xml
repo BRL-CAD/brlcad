@@ -58,18 +58,14 @@
     <command>edcomb</command>    
     
     <arg choice='req'><replaceable>combname</replaceable></arg>
-    <arg>R</arg>
-    <arg>G</arg> 
-    <arg><replaceable>regionid air_code los material_code</replaceable></arg>
+    <arg><replaceable>regionflag regionid air_code los material_code</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1 id='description'>
   <title>DESCRIPTION</title>
   <para>Allows the user to modify the attributes of a combination.
-The <emphasis>combname</emphasis> is the name of the combination to be modified. An <emphasis>R</emphasis> flag indicates that the region flag should be set; otherwise, the region flag is unset. If the region
-flag is not being set, then the remainder of the attributes are ignored. If the region
-flag is being set, then the <emphasis>region_id, aircode, los,</emphasis> and/or <emphasis>material_code</emphasis> are set according to the arguments supplied.  *****Cliff:  check the consistency of the arguments region_id and air_code.  Also, the purpose of the G flag is not explained.
+The <emphasis>combname</emphasis> is the name of the combination to be modified. The <emphasis>regionflag</emphasis> controls whether the combination is identified as a region - supplying either <emphasis>R</emphasis> or <emphasis>1</emphasis> for the <emphasis>regionflag</emphasis> indicates that the combination is a region; to indicate the combination is NOT a region simply supply any other character (<emphasis>C</emphasis> or <emphasis>0</emphasis> are useful conventions here.) If the region flag is not being set, then the remainder of the attributes are ignored.  However, the <command>edcomb</command> command requires that something is suppled for those arguments in order to work - so if using <command>edcomb</command> to turn off the region flag on a combination simply supply 0 for each of the remaining arguments to <command>edcomb</command>. If the region flag is being set, then the <emphasis>region_id, aircode, los,</emphasis> and/or <emphasis>material_code</emphasis> are set according to the arguments supplied.  
   </para>
 </refsect1>
 
@@ -93,7 +89,7 @@ flag is being set, then the <emphasis>region_id, aircode, los,</emphasis> and/or
   <example>
     <title>Unset a <emphasis>region</emphasis> flag for a particular combination.</title>
     <para>
-      <prompt>mged></prompt> <userinput>edcomb comb1 0 0 0 0</userinput>
+      <prompt>mged></prompt> <userinput>edcomb comb1 C 0 0 0 0</userinput>
     </para>
     <para>Unsets the <emphasis>region</emphasis> flag for combination <emphasis>comb1</emphasis>.
         </para>

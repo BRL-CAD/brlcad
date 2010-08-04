@@ -163,7 +163,7 @@ parse_args(int ac, char **av)
 		break;
 	}
 
-    return(bu_optind);
+    return bu_optind;
 }
 
 

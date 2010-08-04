@@ -351,7 +351,7 @@ nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
 	       nmg_class_name(class),
 	       nmg_baction_names[ret]);
     }
-    return(ret);
+    return ret;
 }
 
 
@@ -578,7 +578,8 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
     /*
      * Final case:  shell of a single vertexuse
      */
-    if ((vu = s->vu_p)) {
+    vu = s->vu_p;
+    if (vu) {
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_VERTEX(vu->v_p);
 	switch (nmg_eval_action(&vu->v_p->magic, bs)) {

@@ -274,9 +274,9 @@ rt_arb_get_cgtype(
 	    bu_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
 		   numuvec);
 
-	    return(0);
+	    return 0;
     }
-    return(numuvec);
+    return numuvec;
 }
 
 
@@ -314,9 +314,9 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
     RT_ARB_CK_MAGIC(arb);
 
     if (rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec) == 0)
-	return(0);
+	return 0;
 
-    return(cgtype);
+    return cgtype;
 }
 
 
@@ -380,18 +380,18 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	    if (pap->pa_doopt) {
 		VMOVE(ofp->arb_UVorig, point);
 	    }
-	    return(0);				/* OK */
+	    return 0;				/* OK */
 	case 1:
 	    VSUB2(ofp->arb_U, point, afp->A);	/* B-A */
 	    f = MAGNITUDE(ofp->arb_U);
 	    if (NEAR_ZERO(f, SQRT_SMALL_FASTF)) {
-		return(-1);			/* BAD */
+		return -1;			/* BAD */
 	    }
 	    ofp->arb_Ulen = f;
 	    f = 1/f;
 	    VSCALE(ofp->arb_U, ofp->arb_U, f);
 	    /* Note that arb_U is used to build N, below */
-	    return(0);				/* OK */
+	    return 0;				/* OK */
 	case 2:
 	    VSUB2(P_A, point, afp->A);	/* C-A */
 	    /* Pts are given clockwise, so reverse terms of cross prod. */
@@ -400,7 +400,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	    /* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
 	    f = MAGNITUDE(afp->peqn);
 	    if (NEAR_ZERO(f, RT_SLOPPY_DOT_TOL)) {
-		return(-1);			/* BAD */
+		return -1;			/* BAD */
 	    }
 	    f = 1/f;
 	    VSCALE(afp->peqn, afp->peqn, f);
@@ -449,7 +449,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 		pap->pa_clockwise[pap->pa_faces] = 0;
 	    }
 	    afp->peqn[W] = VDOT(afp->peqn, afp->A);
-	    return(0);				/* OK */
+	    return 0;				/* OK */
 	default:
 	    /* Merely validate 4th and subsequent points */
 	    if (pap->pa_doopt) {
@@ -481,10 +481,10 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 		bu_log("arb(%s): face %s[%d] non-planar, dot=%g\n",
 		       name, title, ptno, f);
 #ifdef CONSERVATIVE
-		return(-1);			/* BAD */
+		return -1;			/* BAD */
 #endif
 	    }
-	    return(0);				/* OK */
+	    return 0;				/* OK */
     }
     /* NOTREACHED */
 }
@@ -612,9 +612,9 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
     if (pap->pa_faces < 4  || pap->pa_faces > 6) {
 	bu_log("arb(%s):  only %d faces present\n",
 	       name, pap->pa_faces);
-	return(-1);			/* Error */
+	return -1;			/* Error */
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -640,7 +640,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
     pa.pa_tol_sq = rtip->rti_tol.dist_sq;
 
     if (rt_arb_mk_planes(&pa, aip, stp->st_dp->d_namep) < 0) {
-	return(-2);		/* Error */
+	return -2;		/* Error */
     }
 
     /*
@@ -702,7 +702,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
     }
-    return(0);		/* OK */
+    return 0;		/* OK */
 }
 
 
@@ -723,7 +723,7 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
-    return(rt_arb_setup(stp, aip, rtip, 0));
+    return rt_arb_setup(stp, aip, rtip, 0);
 }
 
 
@@ -829,19 +829,19 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	     * rays that lie very nearly in the plane of a face.
 	     */
 	    if (dxbdn > SQRT_SMALL_FASTF)
-		return(0);	/* MISS */
+		return 0;	/* MISS */
 	}
 	if (in > out)
-	    return(0);	/* MISS */
+	    return 0;	/* MISS */
     }
     /* Validate */
     if (iplane == -1 || oplane == -1) {
 	bu_log("rt_arb_shoot(%s): 1 hit => MISS\n",
 	       stp->st_name);
-	return(0);	/* MISS */
+	return 0;	/* MISS */
     }
     if (in >= out || out >= INFINITY)
-	return(0);	/* MISS */
+	return 0;	/* MISS */
 
     {
 	register struct seg *segp;
@@ -855,7 +855,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	segp->seg_out.hit_surfno = oplane;
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    return(2);			/* HIT */
+    return 2;			/* HIT */
 }
 
 
@@ -1120,7 +1120,7 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     ARB_FACE(aip->pt, 4, 0, 3, 7);
     ARB_FACE(aip->pt, 5, 4, 7, 6);
     ARB_FACE(aip->pt, 1, 5, 6, 2);
-    return(0);
+    return 0;
 }
 
 
@@ -1136,18 +1136,17 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
 
     if (arbp == (struct arb_specific *)0) {
 	bu_log("arb(%s): no faces\n", stp->st_name);
-	return RT_CLASSIFY_UNIMPLEMENTED;
+	return BN_CLASSIFY_UNIMPLEMENTED;
     }
 
     for (i=0; i<arbp->arb_nmfaces; i++) {
 	if (bn_hlf_class(arbp->arb_face[i].peqn, min, max, tol) ==
 	    BN_CLASSIFY_OUTSIDE)
-	    return RT_CLASSIFY_OUTSIDE;
+	    return BN_CLASSIFY_OUTSIDE;
     }
 
-    /* We need to test for RT_CLASSIFY_INSIDE vs. RT_CLASSIFY_OVERLAPPING!
-       XXX Do this soon */
-    return RT_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
+    /* FIXME: We need to test for BN_CLASSIFY_INSIDE vs. BN_CLASSIFY_OVERLAPPING! */
+    return BN_CLASSIFY_UNIMPLEMENTED; /* let the caller assume the worst */
 }
 
 
@@ -1180,7 +1179,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
 	bu_log("rt_arb_import4: defective record, id=x%x\n", rp->u_id);
-	return(-1);
+	return -1;
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1204,7 +1203,7 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 	VADD2(work, &vec[0*3], &vec[i*3]);
 	MAT4X3PNT(aip->pt[i], mat, work);
     }
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
@@ -1221,7 +1220,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
 
-    if (ip->idb_type != ID_ARB8) return(-1);
+    if (ip->idb_type != ID_ARB8) return -1;
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
@@ -1239,7 +1238,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	VSUB2SCALE(&rec->s.s_values[3*i],
 		   aip->pt[i], aip->pt[0], local2mm);
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1349,7 +1348,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		INTCLAMP(aip->pt[0][Z] * mm2local));
 	bu_vls_strcat(str, buf);
 
-	if (!verbose) return(0);
+	if (!verbose) return 0;
 
 	for (i=1; i < 8; i++) {
 	    sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
@@ -1419,7 +1418,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		break;
 	}
     }
-    return(0);
+    return 0;
 }
 
 
@@ -1466,7 +1465,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     memset((char *)&pa, 0, sizeof(pa));
     pa.pa_doopt = 0;		/* no UV stuff */
     pa.pa_tol_sq = tol->dist_sq;
-    if (rt_arb_mk_planes(&pa, aip, "(tess)") < 0) return(-2);
+    if (rt_arb_mk_planes(&pa, aip, "(tess)") < 0) return -2;
 
     for (i=0; i<8; i++) verts[i] = (struct vertex *)0;
 
@@ -1530,7 +1529,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Some arbs may not be within tolerance, so triangulate faces where needed */
     nmg_make_faces_within_tol(s, tol);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1580,7 +1579,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     memset((char *)&pa, 0, sizeof(pa));
     pa.pa_doopt = 0;		/* no UV stuff */
     pa.pa_tol_sq = tol->dist_sq;
-    if (rt_arb_mk_planes(&pa, aip, "(tnurb)") < 0) return(-2);
+    if (rt_arb_mk_planes(&pa, aip, "(tnurb)") < 0) return -2;
 
     for (i=0; i<8; i++) verts[i] = (struct vertex *)0;
 
@@ -1708,7 +1707,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
-    return(0);
+    return 0;
 }
 
 
@@ -1861,7 +1860,7 @@ rt_arb_move_edge(struct bu_vls *error_msg_ret,
     if (bn_isect_line3_plane(&t1, thru, dir, planes[bp1], tol) < 0 ||
 	bn_isect_line3_plane(&t2, thru, dir, planes[bp2], tol) < 0) {
 	bu_vls_printf(error_msg_ret, "edge (direction) parallel to face normal\n");
-	return (1);
+	return 1;
     }
 
     RT_ARB_CK_MAGIC(arb);
@@ -1869,7 +1868,7 @@ rt_arb_move_edge(struct bu_vls *error_msg_ret,
     VJOIN1(arb->pt[end1], thru, t1, dir);
     VJOIN1(arb->pt[end2], thru, t2, dir);
 
-    return(0);
+    return 0;
 }
 
 
@@ -2010,7 +2009,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	default:
 	    bu_vls_printf(error_msg_ret, "rt_arb_edit: unknown ARB type\n");
 
-	    return(1);
+	    return 1;
     }
 
     /* do the arb editing */
@@ -2129,12 +2128,12 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 		    break;
     }
 
-    return(0);		/* OK */
+    return 0;		/* OK */
 
  err:
     /* Error handling */
     bu_vls_printf(error_msg_ret, "cannot move edge: %d%d\n", pt1+1, pt2+1);
-    return(1);		/* BAD */
+    return 1;		/* BAD */
 }
 
 
@@ -2148,7 +2147,7 @@ rt_arb_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
     ps = ps; /* quellage */
     RT_CK_DB_INTERNAL(ip);
 
-    return(0);			/* OK */
+    return 0;			/* OK */
 }
 
 
