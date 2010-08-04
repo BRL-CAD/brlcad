@@ -20,6 +20,7 @@ converted and work continues on the technical side to develop
 stylesheets for publishing corresponding PDF documents on the BRL-CAD
 website.
 
+* rt can now output directly to PNG, among others - Erik Greenwald
 * fixed crash-on-exit bug with iges-g importer - Richard Weiss
 * fixed framebuffer shutdown and memory management bugs - Bob Parker
 * added all remaining shape tools to the Windows build - Sean Morrison
@@ -43,7 +44,6 @@ website.
 * improved NURBS curve evaluation for mged brep command - Keith Bowman
 * fixed OpenGL framebuffer Mac refresh bug - Sean Morrison, Bob Parker
 * improved archer object list view - Bob Parker
-* rt can now output directly to PNG, among others - Erik Greenwald
 
 
 ----------------------------------------------------------------------
