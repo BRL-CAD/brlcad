@@ -228,6 +228,13 @@ FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
 
 
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING
+	"Set build type" FORCE)
+
+
+
 #---------------------------------------------------------------------------------
 # Optionally Building Local Copies of External Libraries 
 #
