@@ -502,13 +502,13 @@ package provide cadwidgets::Ged 1.0
 	method begin_data_arrow {_pane _x _y}
 	method begin_data_line {_pane _x _y}
 	method begin_data_move {_pane _x _y}
-	method begin_view_measure {_pane _x _y}
+	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
 	method end_data_move {_pane}
-	method end_view_measure {_pane {_part2_button 2}}
+	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
 	method end_view_rect {_pane {_button 1}}
 	method end_view_rotate {_pane}
@@ -717,10 +717,9 @@ package provide cadwidgets::Ged 1.0
     # initialize the views
     default_views
 
-    pack $itk_component(ul) -fill both -expand yes
-    pack $itk_component(ur) -fill both -expand yes
-    pack $itk_component(ll) -fill both -expand yes
-    pack $itk_component(lr) -fill both -expand yes
+    foreach dm {ur ul ll lr} {
+	pack $itk_component($dm) -fill both -expand yes
+    }
 
     pack $itk_component(upw) -fill both -expand yes
     pack $itk_component(lpw) -fill both -expand yes
@@ -932,10 +931,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::autoview_all {args} {
-    eval $mGed autoview $itk_component(ur) $args
-    eval $mGed autoview $itk_component(ul) $args
-    eval $mGed autoview $itk_component(ll) $args
-    eval $mGed autoview $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed autoview $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::base2local {} {
@@ -955,10 +953,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bg_all {args} {
-    eval $mGed bg $itk_component(ur) $args
-    eval $mGed bg $itk_component(ul) $args
-    eval $mGed bg $itk_component(ll) $args
-    eval $mGed bg $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed bg $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::blast {args} {
@@ -1018,10 +1015,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bounds_all {args} {
-    eval $mGed bounds $itk_component(ur) $args
-    eval $mGed bounds $itk_component(ul) $args
-    eval $mGed bounds $itk_component(ll) $args
-    eval $mGed bounds $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed bounds $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::c {args} {
@@ -1093,11 +1089,10 @@ package provide cadwidgets::Ged 1.0
     if {$len < 2} {
 	return [eval $mGed data_arrows $itk_component($itk_option(-pane)) $args]
     }
-
-    eval $mGed data_arrows $itk_component(ur) $args
-    eval $mGed data_arrows $itk_component(ul) $args
-    eval $mGed data_arrows $itk_component(ll) $args
-    eval $mGed data_arrows $itk_component(lr) $args
+ 
+    foreach dm {ur ul ll lr} {
+	eval $mGed data_arrows $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::data_axes {args} {
@@ -1106,10 +1101,9 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed data_axes $itk_component($itk_option(-pane)) $args]
     }
 
-    eval $mGed data_axes $itk_component(ur) $args
-    eval $mGed data_axes $itk_component(ul) $args
-    eval $mGed data_axes $itk_component(ll) $args
-    eval $mGed data_axes $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed data_axes $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::data_labels {args} {
@@ -1118,10 +1112,9 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed data_labels $itk_component($itk_option(-pane)) $args]
     }
 
-    eval $mGed data_labels $itk_component(ur) $args
-    eval $mGed data_labels $itk_component(ul) $args
-    eval $mGed data_labels $itk_component(ll) $args
-    eval $mGed data_labels $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed data_labels $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::data_lines {args} {
@@ -1130,10 +1123,9 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed data_lines $itk_component($itk_option(-pane)) $args]
     }
 
-    eval $mGed data_lines $itk_component(ur) $args
-    eval $mGed data_lines $itk_component(ul) $args
-    eval $mGed data_lines $itk_component(ll) $args
-    eval $mGed data_lines $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed data_lines $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::data_move {args} {
@@ -1293,10 +1285,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::grid {args} {
-    eval $mGed grid $itk_component(ur) $args
-    eval $mGed grid $itk_component(ul) $args
-    eval $mGed grid $itk_component(ll) $args
-    eval $mGed grid $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed grid $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::hide {args} {
@@ -1380,10 +1371,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::light_all {args} {
-    eval $mGed light $itk_component(ur) $args
-    eval $mGed light $itk_component(ul) $args
-    eval $mGed light $itk_component(ll) $args
-    eval $mGed light $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed light $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::list_views {args} {
@@ -2307,10 +2297,9 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed sdata_arrows $itk_component($itk_option(-pane)) $args]
     }
 
-    eval $mGed sdata_arrows $itk_component(ur) $args
-    eval $mGed sdata_arrows $itk_component(ul) $args
-    eval $mGed sdata_arrows $itk_component(ll) $args
-    eval $mGed sdata_arrows $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed sdata_arrows $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::sdata_axes {args} {
@@ -2319,10 +2308,9 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed sdata_axes $itk_component($itk_option(-pane)) $args]
     }
 
-    eval $mGed sdata_axes $itk_component(ur) $args
-    eval $mGed sdata_axes $itk_component(ul) $args
-    eval $mGed sdata_axes $itk_component(ll) $args
-    eval $mGed sdata_axes $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed sdata_axes $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::sdata_labels {args} {
@@ -2331,10 +2319,9 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed sdata_labels $itk_component($itk_option(-pane)) $args]
     }
 
-    eval $mGed sdata_labels $itk_component(ur) $args
-    eval $mGed sdata_labels $itk_component(ul) $args
-    eval $mGed sdata_labels $itk_component(ll) $args
-    eval $mGed sdata_labels $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed sdata_labels $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::sdata_lines {args} {
@@ -2343,10 +2330,9 @@ package provide cadwidgets::Ged 1.0
 	return [eval $mGed sdata_lines $itk_component($itk_option(-pane)) $args]
     }
 
-    eval $mGed sdata_lines $itk_component(ur) $args
-    eval $mGed sdata_lines $itk_component(ul) $args
-    eval $mGed sdata_lines $itk_component(ll) $args
-    eval $mGed sdata_lines $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed sdata_lines $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::search {args} {
@@ -2467,10 +2453,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::transparency_all {args} {
-    eval $mGed transparency $itk_component(ur) $args
-    eval $mGed transparency $itk_component(ul) $args
-    eval $mGed transparency $itk_component(ll) $args
-    eval $mGed transparency $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed transparency $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::tree {args} {
@@ -2574,10 +2559,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::zbuffer_all {args} {
-    eval $mGed zbuffer $itk_component(ur) $args
-    eval $mGed zbuffer $itk_component(ul) $args
-    eval $mGed zbuffer $itk_component(ll) $args
-    eval $mGed zbuffer $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed zbuffer $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::zclip {args} {
@@ -2585,10 +2569,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::zclip_all {args} {
-    eval $mGed zclip $itk_component(ur) $args
-    eval $mGed zclip $itk_component(ul) $args
-    eval $mGed zclip $itk_component(ll) $args
-    eval $mGed zclip $itk_component(lr) $args
+    foreach dm {ur ul ll lr} {
+	eval $mGed zclip $itk_component($dm) $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::zoom {args} {
@@ -2671,7 +2654,7 @@ package provide cadwidgets::Ged 1.0
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane $mLastDataType $mLastDataIndex %x %y]; break"
 }
 
-::itcl::body cadwidgets::Ged::begin_view_measure {_pane _x _y} {
+::itcl::body cadwidgets::Ged::begin_view_measure {_pane _part1_button _part2_button _x _y} {
     measure_line_erase
 
     set mBegin3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
@@ -2808,8 +2791,14 @@ package provide cadwidgets::Ged 1.0
     refresh_all
 }
 
-::itcl::body cadwidgets::Ged::end_view_measure {_pane {_part2_button 2}} {
+::itcl::body cadwidgets::Ged::end_view_measure {_pane _part1_button _part2_button} {
     $mGed idle_mode $itk_component($_pane)
+
+    # Add specific bindings to eliminate bleed through from measure tool bindings
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <Control-ButtonRelease-$_part1_button> "$mGed idle_mode $itk_component($dm); break"
+	bind $itk_component($dm) <Shift-ButtonRelease-$_part1_button> "$mGed idle_mode $itk_component($dm); break"
+    }
 
     refresh_off
 
@@ -2819,7 +2808,14 @@ package provide cadwidgets::Ged 1.0
     if {[expr {abs($delta) > 0.0001}]} {
 	set mMeasureLineActive 1
 	init_view_measure_part2 $_part2_button
+
+	# Add specific bindings to eliminate bleed through from measure tool bindings
+	foreach dm {ur ul ll lr} {
+	    bind $itk_component($dm) <Control-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	    bind $itk_component($dm) <Shift-ButtonRelease-$_part2_button> "$mGed idle_mode $itk_component($dm); break"
+	}
     } else {
+	init_button_no_op_prot $_part2_button
 	refresh_on
 	return
     }
@@ -2847,8 +2843,15 @@ package provide cadwidgets::Ged 1.0
     set diff [vsub2 $mEnd3DPoint $mMiddle3DPoint]
     set delta [expr {[magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
 
-    set A [vunitize [vsub2 $mBegin3DPoint $mMiddle3DPoint]]
-    set B [vunitize [vsub2 $mEnd3DPoint $mMiddle3DPoint]]
+    set ret [catch {
+	set A [vunitize [vsub2 $mBegin3DPoint $mMiddle3DPoint]]
+	set B [vunitize [vsub2 $mEnd3DPoint $mMiddle3DPoint]]
+    }]
+
+    if {$ret} {
+	return
+    }
+
     set cos [vdot $A $B]
     set angle [format "%.2f" [expr {acos($cos) * (180.0 / 3.141592653589793)}]]
 
@@ -2870,6 +2873,10 @@ package provide cadwidgets::Ged 1.0
 	    catch {$callback $mstring}
 	}
     }
+
+    set mBegin3DPoint {0 0 0}
+    set mMiddle3DPoint {0 0 0}
+    set mEndDPoint {0 0 0}
 
     init_button_no_op_prot $_button
 }
@@ -2928,17 +2935,15 @@ package provide cadwidgets::Ged 1.0
     if {$_dtype == "data_labels" || $_dtype == "sdata_labels"} {
 	set labels [$mGed $_dtype $itk_component($_pane) labels]
 
-	$mGed $_dtype $itk_component(ur) labels $labels
-	$mGed $_dtype $itk_component(ul) labels $labels
-	$mGed $_dtype $itk_component(ll) labels $labels
-	$mGed $_dtype $itk_component(lr) labels $labels
+	foreach dm {ur ul ll lr} {
+	    $mGed $_dtype $itk_component($dm) labels $labels
+	}
     } else {
 	set points [$mGed $_dtype $itk_component($_pane) points]
 
-	$mGed $_dtype $itk_component(ur) points $points
-	$mGed $_dtype $itk_component(ul) points $points
-	$mGed $_dtype $itk_component(ll) points $points
-	$mGed $_dtype $itk_component(lr) points $points
+	foreach dm {ur ul ll lr} {
+	    $mGed $_dtype $itk_component($dm) points $points
+	}
     }
     refresh_on
     refresh_all
@@ -2998,85 +3003,55 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::init_comp_pick {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this pane_mouse_ray ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this pane_mouse_ray ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this pane_mouse_ray ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this pane_mouse_ray lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> ""
-    bind $itk_component(ul) <ButtonRelease-$_button> ""
-    bind $itk_component(ll) <ButtonRelease-$_button> ""
-    bind $itk_component(lr) <ButtonRelease-$_button> ""
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_ray $dm %x %y]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_data_arrow {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_data_arrow ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_data_arrow ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_data_arrow ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_data_arrow lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow ur]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow ul]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow ll]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow lr]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_arrow $dm %x %y]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow $dm]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_data_label {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this pane_mouse_data_label ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this pane_mouse_data_label ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this pane_mouse_data_label ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this pane_mouse_data_label lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> ""
-    bind $itk_component(ul) <ButtonRelease-$_button> ""
-    bind $itk_component(ll) <ButtonRelease-$_button> ""
-    bind $itk_component(lr) <ButtonRelease-$_button> ""
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_label $dm %x %y]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_data_line {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_data_line ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_data_line ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_data_line ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_data_line lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_data_line ur]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_data_line ul]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_data_line ll]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_data_line lr]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_line $dm %x %y]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_line $dm]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_data_move {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_data_move ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_data_move ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_data_move ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_data_move lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_data_move ur]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_data_move ul]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_data_move ll]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_data_move lr]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move $dm %x %y]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_move $dm]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_data_pick {{_button 1}} {
     measure_line_erase
 
-    bind $itk_component(ur) <$_button> "[::itcl::code $this pane_mouse_data_pick ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this pane_mouse_data_pick ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this pane_mouse_data_pick ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this pane_mouse_data_pick lr %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> ""
-    bind $itk_component(ul) <ButtonRelease-$_button> ""
-    bind $itk_component(ll) <ButtonRelease-$_button> ""
-    bind $itk_component(lr) <ButtonRelease-$_button> ""
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_pick $dm %x %y]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_bindings {{_type default}} {
@@ -3088,72 +3063,13 @@ package provide cadwidgets::Ged 1.0
 	}
 	default {
 	    foreach pane {ul ur ll lr} {
+		$mGed init_view_bindings $itk_component($pane)
 		set win $itk_component($pane)
 
-		# Turn off mouse bindings
+		# Turn off a few mouse bindings
 		bind $win <1> {}
 		bind $win <2> {}
 		bind $win <3> {}
-		bind $win <ButtonRelease-1> {}
-
-		# Turn off rotate mode
-		bind $win <Control-ButtonPress-1> {}
-		bind $win <Control-ButtonPress-2> {}
-		bind $win <Control-ButtonPress-3> {}
-
-		# Turn off translate mode
-		bind $win <Shift-ButtonPress-1> {}
-		bind $win <Shift-ButtonPress-2> {}
-		bind $win <Shift-ButtonPress-3> {}
-
-		# Turn off scale mode
-		bind $win <Control-Shift-ButtonPress-1> {}
-		bind $win <Control-Shift-ButtonPress-2> {}
-		bind $win <Control-Shift-ButtonPress-3> {}
-
-		# Turn off constrained rotate mode
-		bind $win <Alt-Control-ButtonPress-1> {}
-		bind $win <Alt-Control-ButtonPress-2> {}
-		bind $win <Alt-Control-ButtonPress-3> {}
-
-		# Turn off constrained translate mode
-		bind $win <Alt-Shift-ButtonPress-1> {}
-		bind $win <Alt-Shift-ButtonPress-2> {}
-		bind $win <Alt-Shift-ButtonPress-3> {}
-
-		# Turn off constrained scale mode
-		bind $win <Alt-Control-Shift-ButtonPress-1> {}
-		bind $win <Alt-Control-Shift-ButtonPress-2> {}
-		bind $win <Alt-Control-Shift-ButtonPress-3> {}
-
-		# Turn off key bindings
-		bind $win 3 {}
-		bind $win 4 {}
-		bind $win f {}
-		bind $win R {}
-		bind $win r {}
-		bind $win l {}
-		bind $win t {}
-		bind $win b {}
-		bind $win m {}
-		bind $win T {}
-		bind $win v {}
-		bind $win <F2> {}
-		bind $win <F3> {}
-		bind $win <F4> {}
-		bind $win <F5> {}
-		bind $win <F10> {}
-
-		# overrides
-		bind $win <Shift-ButtonPress-1> "$mGed rotate_mode $win %x %y; break"
-		bind $win <Shift-ButtonPress-2> "$mGed scale_mode $win %x %y; break"
-		bind $win <Shift-ButtonPress-3> "$mGed translate_mode $win  %x %y; break"
-		bind $win <Control-Shift-ButtonPress-3> "$mGed vslew $win %x %y; break"
-
-		bind $win <Shift-ButtonRelease-1> "[::itcl::code $this handle_view_rotate_end $pane]; break"
-		bind $win <Shift-ButtonRelease-2> "[::itcl::code $this handle_view_scale_end $pane]; break"
-		bind $win <Shift-ButtonRelease-3> "[::itcl::code $this handle_view_translate_end $pane]; break"
-		bind $win <Control-Shift-ButtonRelease-3> "[::itcl::code $this handle_view_translate_end $pane]; break"
 	    }
 	}
     }
@@ -3168,7 +3084,7 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::init_view_measure {{_button 1} {_part2_button 2}} {
+::itcl::body cadwidgets::Ged::init_view_measure {{_part1_button 1} {_part2_button 2}} {
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
@@ -3177,15 +3093,10 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::init_view_measure_part2 {_button} {
-    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_view_measure_part2 ur $_button %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_view_measure_part2 ul $_button %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_view_measure_part2 ll $_button %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_view_measure_part2 lr $_button %x %y]; break"
-
-    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 ur $_button]; break"
-    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 ul $_button]; break"
-    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 ll $_button]; break"
-    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 lr $_button]; break"
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_view_measure_part2 $dm $_button %x %y]; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 $dm $_button]; break"
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_rect {{_button 1}} {

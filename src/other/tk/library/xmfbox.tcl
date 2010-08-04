@@ -159,9 +159,11 @@ proc ::tk::MotifFDialog_FileTypes {w} {
     # set data(fileType) $data(-defaulttype)
     # Default type to first entry
     set initialTypeName [lindex $data(-filetypes) 0 0]
-    if {($data(-typevariable) ne "")
-	&& [uplevel 4 [list info exists $data(-typevariable)]]} {
-	set initialTypeName [uplevel 4 [list set $data(-typevariable)]]
+    if {$data(-typevariable) ne ""} {
+	upvar #0 $data(-typevariable) typeVariable
+	if {[info exist typeVariable]} {
+	    set initialTypeName $typeVariable
+	}
     }
     set ix 0
     set data(fileType) 0
@@ -863,9 +865,9 @@ proc ::tk::MotifFDialog_ActivateSEnt {w} {
 
     # Return selected filter
     if {[info exists data(-typevariable)] && $data(-typevariable) ne ""
-	&& [info exists data(-filetypes)] && $data(-filetypes) ne ""} {
-	upvar 2 $data(-typevariable) initialTypeName
-	set initialTypeName [lindex $data(-filetypes) $data(fileType) 0]
+	    && [info exists data(-filetypes)] && $data(-filetypes) ne ""} {
+	upvar #0 $data(-typevariable) typeVariable
+	set typeVariable [lindex $data(-filetypes) $data(fileType) 0]
     }
 
     if {$data(-multiple) != 0} {

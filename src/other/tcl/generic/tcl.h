@@ -60,10 +60,10 @@ extern "C" {
 #define TCL_MAJOR_VERSION   8
 #define TCL_MINOR_VERSION   5
 #define TCL_RELEASE_LEVEL   TCL_FINAL_RELEASE
-#define TCL_RELEASE_SERIAL  6
+#define TCL_RELEASE_SERIAL  8
 
 #define TCL_VERSION	    "8.5"
-#define TCL_PATCH_LEVEL	    "8.5.6"
+#define TCL_PATCH_LEVEL	    "8.5.8"
 
 /*
  * The following definitions set up the proper options for Windows compilers.
@@ -176,7 +176,7 @@ extern "C" {
  *       MSVCRT.  
  */
 
-#if defined(__WIN32__) && (defined(_MSC_VER) || (__BORLANDC__ >= 0x0550) || defined(__LCC__) || defined(__WATCOMC__) || (defined(__GNUC__) && defined(__declspec)))
+#if (defined(__WIN32__) && (defined(_MSC_VER) || (__BORLANDC__ >= 0x0550) || defined(__LCC__) || defined(__WATCOMC__) || (defined(__GNUC__) && defined(__declspec))))
 #   define HAVE_DECLSPEC 1
 #   ifdef STATIC_BUILD
 #       define DLLIMPORT
@@ -189,7 +189,7 @@ extern "C" {
 #   else
 #       define DLLIMPORT __declspec(dllimport)
 #       define DLLEXPORT __declspec(dllexport)
-#	define CRTIMPORT __declspec(dllimport)
+#       define CRTIMPORT __declspec(dllimport)
 #   endif
 #else
 #   define DLLIMPORT
@@ -1623,11 +1623,11 @@ typedef int (Tcl_FSUtimeProc) _ANSI_ARGS_((Tcl_Obj *pathPtr,
 typedef int (Tcl_FSNormalizePathProc) _ANSI_ARGS_((Tcl_Interp *interp,
 	Tcl_Obj *pathPtr, int nextCheckpoint));
 typedef int (Tcl_FSFileAttrsGetProc) _ANSI_ARGS_((Tcl_Interp *interp,
-	int idx, Tcl_Obj *pathPtr, Tcl_Obj **objPtrRef));
+	int index, Tcl_Obj *pathPtr, Tcl_Obj **objPtrRef));
 typedef CONST char ** (Tcl_FSFileAttrStringsProc) _ANSI_ARGS_((
 	Tcl_Obj *pathPtr, Tcl_Obj **objPtrRef));
 typedef int (Tcl_FSFileAttrsSetProc) _ANSI_ARGS_((Tcl_Interp *interp,
-	int idx, Tcl_Obj *pathPtr, Tcl_Obj *objPtr));
+	int index, Tcl_Obj *pathPtr, Tcl_Obj *objPtr));
 typedef Tcl_Obj * (Tcl_FSLinkProc) _ANSI_ARGS_((Tcl_Obj *pathPtr,
 	Tcl_Obj *toPtr, int linkType));
 typedef int (Tcl_FSLoadFileProc) _ANSI_ARGS_((Tcl_Interp * interp,
@@ -2189,14 +2189,10 @@ typedef void (Tcl_LimitHandlerProc) _ANSI_ARGS_((ClientData clientData,
 	Tcl_Interp *interp));
 typedef void (Tcl_LimitHandlerDeleteProc) _ANSI_ARGS_((ClientData clientData));
 
-#ifndef MP_INT_DECLARED
 typedef struct mp_int mp_int;
 #define MP_INT_DECLARED
-#endif
-#ifndef MP_DIGIT_DECLARED
-typedef unsigned long mp_digit;
+typedef unsigned int mp_digit;
 #define MP_DIGIT_DECLARED
-#endif
 
 /*
  * The following constant is used to test for older versions of Tcl in the
@@ -2449,12 +2445,12 @@ EXTERN int		Tcl_AppInit _ANSI_ARGS_((Tcl_Interp *interp));
  * end block for C++
  */
 
+/* quell shadow warnings */
+#undef index
+
 #ifdef __cplusplus
 }
 #endif
-
-/* quell shadow warnings */
-#undef index
 
 #endif /* _TCL */
 

@@ -581,8 +581,7 @@ window.
 .LP
 The replacement string for a %-replacement is formatted as a proper
 Tcl list element.
-This means that it will be surrounded with braces
-if it contains spaces, or special characters such as \fB$\fR and
+This means that spaces or special characters such as \fB$\fR and
 \fB{\fR may be preceded by backslashes.
 This guarantees that the string will be passed through the Tcl
 parser when the binding script is evaluated.

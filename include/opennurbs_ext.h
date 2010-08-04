@@ -182,6 +182,7 @@ public:
     bool m_checkTrim;
     bool m_trimmed;
     bool m_XIncreasing;
+    bool m_Horizontal;
     bool m_Vertical;
     bool m_innerTrim;
 
@@ -519,6 +520,11 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
 	Tb = m_t[0];
     }
 
+    fastf_t dU = B[X] - A[X];
+    if (NEAR_ZERO(dU, tol)) {  //vertical
+    	return A[Y];
+    }
+
     ON_3dVector Tan_start = m_trim->TangentAt(Ta);
     ON_3dVector Tan_end = m_trim->TangentAt(Tb);
 
@@ -545,7 +551,10 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     	du = fabs(Tan_end.x - Tan_start.x);
     }
 
-    fastf_t dU = B[X] - A[X];
+    dU = B[X] - A[X];
+    if (NEAR_ZERO(dU, tol)) {  //vertical
+    	return A[Y];
+    }
 
     guess = Ta + (u - A[X]) * dT/dU;
     p = m_trim->PointAt(guess);
@@ -630,7 +639,10 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     	dv = fabs(Tan_end.y - Tan_start.y);
     }
 
-    fastf_t dV = B[Y] - A[Y];
+    dV = B[Y] - A[Y];
+    if (NEAR_ZERO(dV, tol)) {  //horizontal
+    	return A[X];
+    }
 
     guess = Ta + (v - A[Y]) * dT/dV;
     p = m_trim->PointAt(guess);

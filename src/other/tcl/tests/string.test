@@ -338,7 +338,7 @@ test string-6.13 {string is alnum, false} {
     list [string is alnum -failindex var abc1.23] $var
 } {0 4}
 test string-6.14 {string is alnum, unicode} {
-    string is alnum abcü
+    string is alnum abc\u00fc
 } 1
 test string-6.15 {string is alpha, true} {
     string is alpha abc
@@ -371,7 +371,7 @@ test string-6.24 {string is digit, true} {
     string is digit 0123456789
 } 1
 test string-6.25 {string is digit, false} {
-    list [string is digit -fail var 0123Ü567] $var
+    list [string is digit -fail var 0123\u00dc567] $var
 } {0 4}
 test string-6.26 {string is digit, false} {
     list [string is digit -fail var +123567] $var
@@ -492,7 +492,7 @@ test string-6.60 {string is lower, true} {
     string is lower abc
 } 1
 test string-6.61 {string is lower, unicode true} {
-    string is lower abcüue
+    string is lower abc\u00fcue
 } 1
 test string-6.62 {string is lower, false} {
     list [string is lower -fail var aBc] $var
@@ -501,7 +501,7 @@ test string-6.63 {string is lower, false} {
     list [string is lower -fail var abc1] $var
 } {0 3}
 test string-6.64 {string is lower, unicode false} {
-    list [string is lower -fail var abÜUE] $var
+    list [string is lower -fail var ab\u00dcUE] $var
 } {0 2}
 test string-6.65 {string is space, true} {
     string is space " \t\n\v\f"
@@ -539,7 +539,7 @@ test string-6.75 {string is upper, true} {
     string is upper ABC
 } 1
 test string-6.76 {string is upper, unicode true} {
-    string is upper ABCÜUE
+    string is upper ABC\u00dcUE
 } 1
 test string-6.77 {string is upper, false} {
     list [string is upper -fail var AbC] $var
@@ -548,13 +548,13 @@ test string-6.78 {string is upper, false} {
     list [string is upper -fail var AB2C] $var
 } {0 2}
 test string-6.79 {string is upper, unicode false} {
-    list [string is upper -fail var ABCüue] $var
+    list [string is upper -fail var ABC\u00fcue] $var
 } {0 3}
 test string-6.80 {string is wordchar, true} {
     string is wordchar abc_123
 } 1
 test string-6.81 {string is wordchar, unicode true} {
-    string is wordchar abcüabÜAB\u5001
+    string is wordchar abc\u00fcab\u00dcAB\u5001
 } 1
 test string-6.82 {string is wordchar, false} {
     list [string is wordchar -fail var abcd.ef] $var

@@ -43,15 +43,15 @@ typedef HRESULT	(STDAPICALLTYPE GetThemePartSizeProc)(HTHEME,HDC,
 		 int iPartId, int iStateId,
 		 RECT *prc, enum THEMESIZE eSize, SIZE *psz);
 typedef int     (STDAPICALLTYPE GetThemeSysSizeProc)(HTHEME,int);
-/* GetThemeTextExtent and DrawThemeText only used with BROKEN_TEXT_ELEMENT */ 
+/* GetThemeTextExtent and DrawThemeText only used with BROKEN_TEXT_ELEMENT */
 typedef HRESULT (STDAPICALLTYPE GetThemeTextExtentProc)(HTHEME hTheme, HDC hdc,
 		 int iPartId, int iStateId, LPCWSTR pszText, int iCharCount,
 		 DWORD dwTextFlags, const RECT *pBoundingRect, RECT *pExtent);
 typedef HRESULT (STDAPICALLTYPE DrawThemeTextProc)(HTHEME hTheme, HDC hdc,
 		 int iPartId, int iStateId, LPCWSTR pszText, int iCharCount,
 		 DWORD dwTextFlags, DWORD dwTextFlags2, const RECT *pRect);
-typedef BOOL    (STDAPICALLTYPE IsThemeActiveProc)(VOID);
-typedef BOOL    (STDAPICALLTYPE IsAppThemedProc)(VOID);
+typedef BOOL    (STDAPICALLTYPE IsThemeActiveProc)(void);
+typedef BOOL    (STDAPICALLTYPE IsAppThemedProc)(void);
 
 typedef struct
 {
@@ -93,7 +93,7 @@ LoadXPThemeProcs(HINSTANCE *phlib)
 {
     /*
      * Load the library "uxtheme.dll", where the native widget
-     * drawing routines are implemented.  This will only succeed 
+     * drawing routines are implemented.  This will only succeed
      * if we are running at least on Windows XP.
      */
     HINSTANCE handle;
@@ -228,7 +228,7 @@ static Ttk_StateTable groupbox_statemap[] =
 /*
  * Edit fields (tk: "entry")
  */
-static Ttk_StateTable edittext_statemap[] = 
+static Ttk_StateTable edittext_statemap[] =
 {
     { ETS_DISABLED,	TTK_STATE_DISABLED, 0 },
     { ETS_READONLY,	TTK_STATE_READONLY, 0 },
@@ -239,11 +239,11 @@ static Ttk_StateTable edittext_statemap[] =
 };
 
 /*
- * Combobox text field statemap: 
- * Same as edittext_statemap, but doesn't use ETS_READONLY 
+ * Combobox text field statemap:
+ * Same as edittext_statemap, but doesn't use ETS_READONLY
  * (fixes: #1032409)
  */
-static Ttk_StateTable combotext_statemap[] = 
+static Ttk_StateTable combotext_statemap[] =
 {
     { ETS_DISABLED,	TTK_STATE_DISABLED, 0 },
     { ETS_FOCUSED,	TTK_STATE_FOCUS, 0 },
@@ -258,6 +258,7 @@ static Ttk_StateTable combobox_statemap[] = {
     { CBXS_DISABLED,	TTK_STATE_DISABLED, 0 },
     { CBXS_PRESSED, 	TTK_STATE_PRESSED, 0 },
     { CBXS_HOT, 	TTK_STATE_ACTIVE, 0 },
+    { CBXS_HOT, 	TTK_STATE_HOVER, 0 },
     { CBXS_NORMAL, 	0, 0 }
 };
 
@@ -346,7 +347,7 @@ static Ttk_StateTable tabitem_statemap[] =
  * to most elements in this theme.  It contains data relevant
  * to a single XP Theme "part".
  *
- * <<NOTE-GetThemeMargins>>: 
+ * <<NOTE-GetThemeMargins>>:
  *	In theory, we should be call GetThemeMargins(...TMT_CONTENTRECT...)
  *	to calculate the internal padding.  In practice, this routine
  *	only seems to work properly for BP_PUSHBUTTON.  So we hardcode
@@ -355,7 +356,7 @@ static Ttk_StateTable tabitem_statemap[] =
  *	The PAD_MARGINS flag bit determines whether the padding
  *	should be added on the inside (0) or outside (1) of the element.
  *
- * <<NOTE-GetThemePartSize>>: 
+ * <<NOTE-GetThemePartSize>>:
  *	This gives bogus metrics for some parts (in particular,
  *	BP_PUSHBUTTONS).  Set the IGNORE_THEMESIZE flag to skip this call.
  */
@@ -363,15 +364,16 @@ static Ttk_StateTable tabitem_statemap[] =
 typedef struct 	/* XP element specifications */
 {
     const char	*elementName;	/* Tk theme engine element name */
-    Ttk_ElementSpec *elementSpec;	
+    Ttk_ElementSpec *elementSpec;
     				/* Element spec (usually GenericElementSpec) */
     LPCWSTR	className;	/* Windows window class name */
     int 	partId;		/* BP_PUSHBUTTON, BP_CHECKBUTTON, etc. */
     Ttk_StateTable *statemap;	/* Map Tk states to XP states */
     Ttk_Padding	padding;	/* See NOTE-GetThemeMargins */
-    int  	flags;		
+    int  	flags;
 #   define 	IGNORE_THEMESIZE 0x80000000 /* See NOTE-GetThemePartSize */
 #   define 	PAD_MARGINS	 0x40000000 /* See NOTE-GetThemeMargins */
+#   define 	HEAP_ELEMENT	 0x20000000 /* ElementInfo is on heap */
 } ElementInfo;
 
 typedef struct
@@ -406,9 +408,21 @@ NewElementData(XPThemeProcs *procs, ElementInfo *info)
     return elementData;
 }
 
-static void DestroyElementData(void *elementData)
+/*
+ * Destroy elements. If the element was created by the element factory
+ * then the info member is dynamically allocated. Otherwise it was
+ * static data from the C object and only the ElementData needs freeing.
+ */
+static void DestroyElementData(void *clientData)
 {
-    ckfree(elementData);
+    ElementData *elementData = clientData;
+    if (elementData->info->flags & HEAP_ELEMENT) {
+	ckfree((char *)elementData->info->statemap);
+	ckfree((char *)elementData->info->className);
+	ckfree((char *)elementData->info->elementName);
+	ckfree((char *)elementData->info);
+    }
+    ckfree(clientData);
 }
 
 /*
@@ -460,7 +474,7 @@ FreeElementData(ElementData *elementData)
 
 /*----------------------------------------------------------------------
  * +++ Generic element implementation.
- * 
+ *
  * Used for elements which are handled entirely by the XP Theme API,
  * such as radiobutton and checkbutton indicators, scrollbar arrows, etc.
  */
@@ -489,10 +503,10 @@ static void GenericElementSize(
 	if (SUCCEEDED(result)) {
 	    *widthPtr = size.cx;
 	    *heightPtr = size.cy;
-	} 
+	}
     }
 
-    /* See NOTE-GetThemeMargins 
+    /* See NOTE-GetThemeMargins
      */
     *paddingPtr = elementData->info->padding;
     if (elementData->info->flags & PAD_MARGINS) {
@@ -539,7 +553,7 @@ static Ttk_ElementSpec GenericElementSpec =
 
 /*----------------------------------------------------------------------
  * +++ Sized element implementation.
- * 
+ *
  * Used for elements which are handled entirely by the XP Theme API,
  * but that require a fixed size adjustment.
  * Note that GetThemeSysSize calls through to GetSystemMetrics
@@ -613,7 +627,7 @@ static Ttk_ElementSpec ThumbElementSpec =
 /*----------------------------------------------------------------------
  * +++ Progress bar element.
  *	Increases the requested length of PP_CHUNK and PP_CHUNKVERT parts
- *	so that indeterminate progress bars show 3 bars instead of 1.   
+ *	so that indeterminate progress bars show 3 bars instead of 1.
  */
 
 static void PbarElementSize(
@@ -646,14 +660,14 @@ static Ttk_ElementSpec PbarElementSpec =
  * +++  Notebook tab element.
  *	Same as generic element, with additional logic to select
  *	proper iPartID for the leftmost tab.
- * 	
- *	Notes: TABP_TABITEMRIGHTEDGE (or TABP_TOPTABITEMRIGHTEDGE, 
+ *
+ *	Notes: TABP_TABITEMRIGHTEDGE (or TABP_TOPTABITEMRIGHTEDGE,
  * 	which appears to be identical) should be used if the
  *	tab is exactly at the right edge of the notebook, but
  *	not if it's simply the rightmost tab.  This information
  * 	is not available.
  *
- *	The TIS_* and TILES_* definitions are identical, so 
+ *	The TIS_* and TILES_* definitions are identical, so
  * 	we can use the same statemap no matter what the partId.
  */
 static void TabElementDraw(
@@ -692,14 +706,22 @@ static Ttk_ElementSpec TabElementSpec =
 #define TTK_STATE_OPEN TTK_STATE_USER1
 #define TTK_STATE_LEAF TTK_STATE_USER2
 
-static Ttk_StateTable header_statemap[] = 
+static Ttk_StateTable header_statemap[] =
 {
     { HIS_PRESSED, 	TTK_STATE_PRESSED, 0 },
     { HIS_HOT,  	TTK_STATE_ACTIVE, 0 },
     { HIS_NORMAL, 	0,0 },
 };
 
-static Ttk_StateTable tvpglyph_statemap[] = 
+static Ttk_StateTable treeview_statemap[] =
+{
+    { TREIS_DISABLED, 	TTK_STATE_DISABLED, 0 },
+    { TREIS_SELECTED,	TTK_STATE_SELECTED, 0},
+    { TREIS_HOT, 	TTK_STATE_ACTIVE, 0 },
+    { TREIS_NORMAL, 	0,0 },
+};
+
+static Ttk_StateTable tvpglyph_statemap[] =
 {
     { GLPS_OPENED, 	TTK_STATE_OPEN, 0 },
     { GLPS_CLOSED, 	0,0 },
@@ -729,11 +751,11 @@ static Ttk_ElementSpec TreeIndicatorElementSpec =
  *----------------------------------------------------------------------
  * Text element (does not work yet).
  *
- * According to "Using Windows XP Visual Styles",  we need to select 
+ * According to "Using Windows XP Visual Styles",  we need to select
  * a font into the DC before calling DrawThemeText().
  * There's just no easy way to get an HFONT out of a Tk_Font.
  * Maybe GetThemeFont() would work?
- * 
+ *
  */
 
 typedef struct
@@ -828,7 +850,7 @@ TTK_BEGIN_LAYOUT_TABLE(LayoutTable)
 
 TTK_LAYOUT("TButton",
     TTK_GROUP("Button.button", TTK_FILL_BOTH,
-	TTK_GROUP("Button.focus", TTK_FILL_BOTH, 
+	TTK_GROUP("Button.focus", TTK_FILL_BOTH,
 	    TTK_GROUP("Button.padding", TTK_FILL_BOTH,
 		TTK_NODE("Button.label", TTK_FILL_BOTH)))))
 
@@ -855,7 +877,7 @@ TTK_LAYOUT("Vertical.TScrollbar",
 TTK_LAYOUT("Horizontal.TScale",
     TTK_GROUP("Scale.focus", TTK_EXPAND|TTK_FILL_BOTH,
 	TTK_GROUP("Horizontal.Scale.trough", TTK_EXPAND|TTK_FILL_BOTH,
-	    TTK_NODE("Horizontal.Scale.track", TTK_FILL_X) 
+	    TTK_NODE("Horizontal.Scale.track", TTK_FILL_X)
 	    TTK_NODE("Horizontal.Scale.slider", TTK_PACK_LEFT) )))
 
 TTK_LAYOUT("Vertical.TScale",
@@ -867,7 +889,7 @@ TTK_LAYOUT("Vertical.TScale",
 TTK_END_LAYOUT_TABLE
 
 /*----------------------------------------------------------------------
- * +++ XP element info table: 
+ * +++ XP element info table:
  */
 
 #define PAD(l,t,r,b) {l,t,r,b}
@@ -935,7 +957,7 @@ static ElementInfo ElementInfoTable[] = {
     /* ttk::notebook */
     { "tab", &TabElementSpec, L"TAB",
     	TABP_TABITEM, tabitem_statemap, PAD(3,3,3,0), 0 },
-    { "client", &GenericElementSpec, L"TAB", 
+    { "client", &GenericElementSpec, L"TAB",
     	TABP_PANE, null_statemap, PAD(1,1,3,3), 0 },
     { "NotebookPane.background", &GenericElementSpec, L"TAB",
     	TABP_BODY, null_statemap, NOPAD, 0 },
@@ -945,21 +967,169 @@ static ElementInfo ElementInfoTable[] = {
     	TP_SPLITBUTTON,toolbutton_statemap, NOPAD,0 },
     { "Menubutton.dropdown", &GenericElementSpec, L"TOOLBAR",
     	TP_SPLITBUTTONDROPDOWN,toolbutton_statemap, NOPAD,0 },
+    { "Treeview.field", &GenericElementSpec, L"TREEVIEW",
+	TVP_TREEITEM, treeview_statemap, PAD(1, 1, 1, 1), 0 },
     { "Treeitem.indicator", &TreeIndicatorElementSpec, L"TREEVIEW",
     	TVP_GLYPH, tvpglyph_statemap, PAD(1,1,6,0), PAD_MARGINS },
-    { "Treeheading.border", &GenericElementSpec, L"HEADER", 
+    { "Treeheading.border", &GenericElementSpec, L"HEADER",
     	HP_HEADERITEM, header_statemap, PAD(4,0,4,0),0 },
-    { "sizegrip", &GenericElementSpec, L"STATUS", 
+    { "sizegrip", &GenericElementSpec, L"STATUS",
     	SP_GRIPPER, null_statemap, NOPAD,0 },
 
 #if BROKEN_TEXT_ELEMENT
-    { "Labelframe.text", &TextElementSpec, L"BUTTON", 
+    { "Labelframe.text", &TextElementSpec, L"BUTTON",
     	BP_GROUPBOX, groupbox_statemap, NOPAD,0 },
 #endif
 
     { 0,0,0,0,0,NOPAD,0 }
 };
 #undef PAD
+
+/*----------------------------------------------------------------------
+ * Windows Visual Styles API Element Factory
+ *
+ * The Vista release has shown that the Windows Visual Styles can be
+ * extended with additional elements. This element factory can permit
+ * the programmer to create elements for use with script-defined layouts
+ *
+ * eg: to create the small close button:
+ * style element create smallclose vsapi \
+ *    WINDOW 19 {disabled 4 pressed 3 active 2 {} 1}
+ */
+
+static int
+Ttk_CreateVsapiElement(
+    Tcl_Interp *interp,
+    void *clientData,
+    Ttk_Theme theme,
+    const char *elementName,
+    int objc,
+    Tcl_Obj *const objv[])
+{
+    XPThemeData *themeData = clientData;
+    ElementInfo *elementPtr = NULL;
+    ClientData elementData;
+    Tcl_UniChar *className;
+    int partId = 0;
+    Ttk_StateTable *stateTable;
+    Ttk_Padding pad = {0, 0, 0, 0};
+    int flags = 0;
+    int length = 0;
+    char *name;
+    LPWSTR wname;
+
+    const char *optionStrings[] =
+	{ "-padding","-width","-height","-margins",NULL };
+    enum { O_PADDING, O_WIDTH, O_HEIGHT, O_MARGINS };
+
+    if (objc < 2) {
+	Tcl_AppendResult(interp,
+	    "missing required arguments 'class' and/or 'partId'", NULL);
+	return TCL_ERROR;
+    }
+
+    if (Tcl_GetIntFromObj(interp, objv[1], &partId) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    className = Tcl_GetUnicodeFromObj(objv[0], &length);
+
+    /* flags or padding */
+    if (objc > 3) {
+	int i = 3, option = 0;
+	for (i = 3; i < objc; i += 2) {
+	    int tmp = 0;
+	    if (i == objc -1) {
+		Tcl_AppendResult(interp, "Missing value for \"",
+			Tcl_GetString(objv[i]), "\".", NULL);
+		return TCL_ERROR;
+	    }
+	    if (Tcl_GetIndexFromObj(interp, objv[i], optionStrings,
+		    "option", 0, &option) != TCL_OK)
+		return TCL_ERROR;
+	    switch (option) {
+	    case O_PADDING:
+		if (Ttk_GetBorderFromObj(interp, objv[i+1], &pad) != TCL_OK) {
+		    return TCL_ERROR;
+		}
+		break;
+	    case O_MARGINS:
+		if (Ttk_GetBorderFromObj(interp, objv[i+1], &pad) != TCL_OK) {
+		    return TCL_ERROR;
+		}
+		flags |= PAD_MARGINS;
+		break;
+	    case O_WIDTH:
+		if (Tcl_GetIntFromObj(interp, objv[i+1], &tmp) != TCL_OK) {
+		    return TCL_ERROR;
+		}
+		pad.left = pad.right = tmp;
+		flags |= IGNORE_THEMESIZE;
+		break;
+	    case O_HEIGHT:
+		if (Tcl_GetIntFromObj(interp, objv[i+1], &tmp) != TCL_OK) {
+		    return TCL_ERROR;
+		}
+		pad.top = pad.bottom = tmp;
+		flags |= IGNORE_THEMESIZE;
+		break;
+	    }
+	}
+    }
+
+    /* convert a statemap into a state table */
+    if (objc > 2) {
+	Tcl_Obj **specs;
+	int n,j,count, status = TCL_OK;
+	if (Tcl_ListObjGetElements(interp, objv[2], &count, &specs) != TCL_OK)
+	    return TCL_ERROR;
+	/* we over-allocate to ensure there is a terminating entry */
+	stateTable = (Ttk_StateTable *)
+		ckalloc(sizeof(Ttk_StateTable) * (count + 1));
+	memset(stateTable, 0, sizeof(Ttk_StateTable) * (count + 1));
+	for (n = 0, j = 0; status == TCL_OK && n < count; n += 2, ++j) {
+	    Ttk_StateSpec spec = {0,0};
+	    status = Ttk_GetStateSpecFromObj(interp, specs[n], &spec);
+	    if (status == TCL_OK) {
+		stateTable[j].onBits = spec.onbits;
+		stateTable[j].offBits = spec.offbits;
+		status = Tcl_GetIntFromObj(interp, specs[n+1],
+			&stateTable[j].index);
+	    }
+	}
+	if (status != TCL_OK) {
+	    ckfree((char *)stateTable);
+	    return status;
+	}
+    } else {
+	stateTable = (Ttk_StateTable *)ckalloc(sizeof(Ttk_StateTable));
+	memset(stateTable, 0, sizeof(Ttk_StateTable));
+    }
+
+    elementPtr = (ElementInfo *)ckalloc(sizeof(ElementInfo));
+    elementPtr->elementSpec = &GenericElementSpec;
+    elementPtr->partId = partId;
+    elementPtr->statemap = stateTable;
+    elementPtr->padding = pad;
+    elementPtr->flags = HEAP_ELEMENT | flags;
+
+    /* set the element name to an allocated copy */
+    name = ckalloc(strlen(elementName) + 1);
+    strcpy(name, elementName);
+    elementPtr->elementName = name;
+
+    /* set the class name to an allocated copy */
+    wname = (LPWSTR) ckalloc(sizeof(WCHAR) * (length + 1));
+    wcscpy(wname, className);
+    elementPtr->className = wname;
+
+    elementData = NewElementData(themeData->procs, elementPtr);
+    Ttk_RegisterElementSpec(
+	theme, elementName, elementPtr->elementSpec, elementData);
+
+    Ttk_RegisterCleanup(interp, elementData, DestroyElementData);
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(elementName, -1));
+    return TCL_OK;
+}
 
 /*----------------------------------------------------------------------
  * +++ Initialization routine:
@@ -970,8 +1140,12 @@ MODULE_SCOPE int TtkXPTheme_Init(Tcl_Interp *interp, HWND hwnd)
     XPThemeData *themeData;
     XPThemeProcs *procs;
     HINSTANCE hlibrary;
-    Ttk_Theme themePtr, parentPtr;
+    Ttk_Theme themePtr, parentPtr, vistaPtr;
     ElementInfo *infoPtr;
+    OSVERSIONINFO os;
+
+    os.dwOSVersionInfoSize = sizeof(os);
+    GetVersionEx(&os);
 
     procs = LoadXPThemeProcs(&hlibrary);
     if (!procs)
@@ -997,6 +1171,19 @@ MODULE_SCOPE int TtkXPTheme_Init(Tcl_Interp *interp, HWND hwnd)
 
     Ttk_SetThemeEnabledProc(themePtr, XPThemeEnabled, themeData);
     Ttk_RegisterCleanup(interp, themeData, XPThemeDeleteProc);
+    Ttk_RegisterElementFactory(interp, "vsapi", Ttk_CreateVsapiElement, themeData);
+
+    /*
+     * Create the vista theme on suitable platform versions and set the theme
+     * enable function. The theme itself is defined in script.
+     */
+
+    if (os.dwPlatformId == VER_PLATFORM_WIN32_NT && os.dwMajorVersion > 5) {
+	vistaPtr = Ttk_CreateTheme(interp, "vista", themePtr);
+	if (vistaPtr) {
+	    Ttk_SetThemeEnabledProc(vistaPtr, XPThemeEnabled, themeData);
+	}
+    }
 
     /*
      * New elements:

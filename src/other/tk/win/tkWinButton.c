@@ -167,6 +167,40 @@ InitBoxes(void)
 /*
  *----------------------------------------------------------------------
  *
+ * ButtonDefaultsExitHandler --
+ *
+ *	Frees the defaults for the buttons.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+ButtonDefaultsExitHandler(
+    ClientData clientData)	/* Points to an array of option specs,
+				 * terminated by one with type
+				 * TK_OPTION_END. */
+{
+    Tk_OptionSpec *specPtr = (Tk_OptionSpec *)clientData;
+
+    for ( ; specPtr->type != TK_OPTION_END; specPtr++) {
+	if (specPtr->internalOffset == Tk_Offset(TkButton, borderWidth)) {
+	    if (specPtr->defValue != NULL) {
+		ckfree((char *) specPtr->defValue);
+		specPtr->defValue = NULL;
+	    }
+	}
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TkpButtonSetDefaults --
  *
  *	This procedure is invoked before option tables are created for
@@ -189,6 +223,7 @@ TkpButtonSetDefaults(
 				 * TK_OPTION_END. */
 {
     int width;
+    Tk_OptionSpec *savedSpecPtr = specPtr;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -201,9 +236,12 @@ TkpButtonSetDefaults(
     }
     for ( ; specPtr->type != TK_OPTION_END; specPtr++) {
 	if (specPtr->internalOffset == Tk_Offset(TkButton, borderWidth)) {
-	    specPtr->defValue = tsdPtr->defWidth;
+	    char *defValue = (char *) ckalloc(strlen(tsdPtr->defWidth) + 1);
+	    strcpy(defValue, tsdPtr->defWidth);
+	    specPtr->defValue = defValue;
 	}
     }
+    TkCreateExitHandler(ButtonDefaultsExitHandler, (ClientData) savedSpecPtr);
 }
 
 /*
@@ -552,15 +590,17 @@ TkpDisplayButton(
 	       	(butPtr->disabledFg != NULL)) {
 	    COLORREF oldFgColor = gc->foreground;
 
-	    gc->foreground = GetSysColor(COLOR_3DHILIGHT);
-	    Tk_DrawTextLayout(butPtr->display, pixmap, gc,
+	    if (gc->background == GetSysColor(COLOR_BTNFACE)) {
+		gc->foreground = GetSysColor(COLOR_3DHILIGHT);
+		Tk_DrawTextLayout(butPtr->display, pixmap, gc,
 		    butPtr->textLayout, x + textXOffset + 1,
 		    y + textYOffset + 1, 0, -1);
-	    Tk_UnderlineTextLayout(butPtr->display, pixmap, gc,
+		Tk_UnderlineTextLayout(butPtr->display, pixmap, gc,
 		    butPtr->textLayout, x + textXOffset + 1,
 		    y + textYOffset + 1,
 		    butPtr->underline);
-	    gc->foreground = oldFgColor;
+		gc->foreground = oldFgColor;
+	    }
 	}
 
 	Tk_DrawTextLayout(butPtr->display, pixmap, gc,
@@ -615,13 +655,15 @@ TkpDisplayButton(
 	    if ((butPtr->state == STATE_DISABLED) &&
 		    (butPtr->disabledFg != NULL)) {
 		COLORREF oldFgColor = gc->foreground;
-		gc->foreground = GetSysColor(COLOR_3DHILIGHT);
-		Tk_DrawTextLayout(butPtr->display, pixmap, gc,
+		if (gc->background == GetSysColor(COLOR_BTNFACE)) {
+		    gc->foreground = GetSysColor(COLOR_3DHILIGHT);
+		    Tk_DrawTextLayout(butPtr->display, pixmap, gc,
 		       	butPtr->textLayout,
 			x + 1, y + 1, 0, -1);
-		Tk_UnderlineTextLayout(butPtr->display, pixmap, gc,
+		    Tk_UnderlineTextLayout(butPtr->display, pixmap, gc,
 			butPtr->textLayout, x + 1, y + 1, butPtr->underline);
-		gc->foreground = oldFgColor;
+		    gc->foreground = oldFgColor;
+		}
 	    }
 	    Tk_DrawTextLayout(butPtr->display, pixmap, gc, butPtr->textLayout,
 		    x, y, 0, -1);

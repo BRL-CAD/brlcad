@@ -10,7 +10,9 @@
 package require tcltest 2.1
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
-
+testConstraint unthreaded [expr {
+    (![info exist tcl_platform(threaded)] || !$tcl_platform(threaded))
+}]
 namespace import -force ::tk::test::loadTkCommand
 update
 
@@ -174,8 +176,9 @@ test window-2.8 {Tk_DestroyWindow, cleanup half dead windows at exit} \
     list $error $msg
 } {0 {}}
 
+# window-2.9 deadlocks threaded Tk [Bug 1715716]
 test window-2.9 {Tk_DestroyWindow, Destroy bindings
-        evaluated after exit} unixOrWin {
+        evaluated after exit} {unixOrWin unthreaded} {
     set code [loadTkCommand]
     append code {
         toplevel .t1

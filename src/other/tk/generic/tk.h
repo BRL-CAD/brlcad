@@ -53,10 +53,10 @@ extern "C" {
 #define TK_MAJOR_VERSION	8
 #define TK_MINOR_VERSION	5
 #define TK_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL	6
+#define TK_RELEASE_SERIAL	8
 
 #define TK_VERSION		"8.5"
-#define TK_PATCH_LEVEL		"8.5.6"
+#define TK_PATCH_LEVEL		"8.5.8"
 
 /*
  * A special definition used to allow this header file to be included from
@@ -1019,7 +1019,7 @@ typedef int	Tk_ItemIndexProc _ANSI_ARGS_((Tcl_Interp *interp,
 		    Tk_Canvas canvas, Tk_Item *itemPtr, char *indexString,
 		    int *indexPtr));
 typedef void	Tk_ItemCursorProc _ANSI_ARGS_((Tk_Canvas canvas,
-		    Tk_Item *itemPtr, int idx));
+		    Tk_Item *itemPtr, int index));
 typedef int	Tk_ItemSelectionProc _ANSI_ARGS_((Tk_Canvas canvas,
 		    Tk_Item *itemPtr, int offset, char *buffer,
 		    int maxBytes));

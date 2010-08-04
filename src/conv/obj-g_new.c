@@ -204,6 +204,10 @@ typedef const size_t (**arr_1D_t);    /* 1 dimensional array type */
 typedef const size_t (**arr_2D_t)[2]; /* 2 dimensional array type */
 typedef const size_t (**arr_3D_t)[3]; /* 3 dimensional array type */
 
+typedef size_t (*tri_arr_1D_t)[3];    /* triangle index array 1 dimensional type (v) */
+typedef size_t (*tri_arr_2D_t)[3][2]; /* triangle index array 2 dimensional type (tv) or (nv) */
+typedef size_t (*tri_arr_3D_t)[3][3]; /* triangle index array 3 dimensional type (tnv) */
+
 typedef size_t (*edge_arr_2D_t)[2]; /* edge array type */
 
 /* grouping face indices type */

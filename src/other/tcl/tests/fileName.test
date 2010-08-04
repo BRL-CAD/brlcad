@@ -1335,6 +1335,19 @@ test filename-14.25.1 {type specific globbing} {win} {
 test filename-14.26 {type specific globbing} {
     list [catch {glob -nocomplain -dir globTest -types {readonly} *} msg] $msg
 } [list 0 {}]
+test filename-14.27 {Bug 2710920} {unixOrPc} {
+    file tail [lindex [lsort [glob globTest/*/]] 0]
+} a1
+test filename-14.28 {Bug 2710920} {unixOrPc} {
+    file dirname [lindex [lsort [glob globTest/*/]] 0]
+} globTest
+test filename-14.29 {Bug 2710920} {unixOrPc} {
+    file extension [lindex [lsort [glob globTest/*/]] 0]
+} {}
+test filename-14.30 {Bug 2710920} {unixOrPc} {
+    file rootname [lindex [lsort [glob globTest/*/]] 0]
+} globTest/a1/
+
 
 unset globname
 
@@ -1500,6 +1513,11 @@ test filename-16.17 {windows specific globbing} {win} {
     }
 } {ok}
 
+# Put the working directory back now that we're done with globbing in C:/
+if {[testConstraint win]} {
+    cd $oldDir
+}
+
 test filename-17.1 {windows specific special files} {testsetplatform} {
     testsetplatform win
     list [file pathtype com1] [file pathtype con] [file pathtype lpt3] \
@@ -1521,6 +1539,12 @@ test filename-17.2 {windows specific glob with executable} {win} {
     removeDirectory execglob
     set res
 } {abc.exe}
+test filename-17.3 {Bug 2571597} win {
+    set p /a
+    file pathtype $p
+    file normalize $p
+    file pathtype $p
+} volumerelative
 
 test fileName-18.1 {windows - split ADS name correctly} {win} {
     # bug 1194458
@@ -1570,6 +1594,92 @@ test fileName-20.4 {Bug 1750300} -setup {
     removeFile TAGS $d
     removeDirectory foo
 } -result 0
+
+test fileName-20.5 {Bug 2837800} -setup {
+    set dd [makeDirectory isolate]
+    set d [makeDirectory ./~foo $dd]
+    makeFile {} test $d
+    set savewd [pwd]
+    cd $dd
+} -body {
+    glob -nocomplain */test
+} -cleanup {
+    cd $savewd
+    removeFile test $d
+    removeDirectory ./~foo $dd
+    removeDirectory isolate
+} -result ~foo/test
+
+test fileName-20.6 {Bug 2837800} -setup {
+    # Recall that we have $env(HOME) set so that references
+    # to ~ point to [temporaryDirectory]
+    makeFile {} test ~
+    set dd [makeDirectory isolate]
+    set d [makeDirectory ./~ $dd]
+    set savewd [pwd]
+    cd $dd
+} -body {
+    glob -nocomplain */test
+} -cleanup {
+    cd $savewd
+    removeDirectory ./~ $dd
+    removeDirectory isolate
+    removeFile test ~
+} -result {}
+
+test fileName-20.7 {Bug 2806250} -setup {
+    set savewd [pwd]
+    cd [temporaryDirectory]
+    set d [makeDirectory isolate]
+    makeFile {} ./~test $d
+} -body {
+    file exists [lindex [glob -nocomplain isolate/*] 0]
+} -cleanup {
+    removeFile ./~test $d
+    removeDirectory isolate
+    cd $savewd
+} -result 1
+
+test fileName-20.8 {Bug 2806250} -setup {
+    set savewd [pwd]
+    cd [temporaryDirectory]
+    set d [makeDirectory isolate]
+    makeFile {} ./~test $d
+} -body {
+    file tail [lindex [glob -nocomplain isolate/*] 0]
+} -cleanup {
+    removeFile ./~test $d
+    removeDirectory isolate
+    cd $savewd
+} -result ./~test
+
+test fileName-20.9 {} -setup {
+    makeFile {} test ~
+    set d [makeDirectory isolate]
+    set savewd [pwd]
+    cd $d
+} -body {
+   glob -nocomplain -directory ~ test
+} -cleanup {
+    cd $savewd
+    removeDirectory isolate
+    removeFile test ~
+} -result ~/test
+
+test fileName-20.10 {} -setup {
+    set s [makeDirectory sub ~]
+    makeFile {} fileName-20.10 $s
+    set d [makeDirectory isolate]
+    set savewd [pwd]
+    cd $d
+} -body {
+   glob -nocomplain -directory ~ -join * fileName-20.10
+} -cleanup {
+    cd $savewd
+    removeDirectory isolate
+    removeFile fileName-20.10 $s
+    removeDirectory sub ~
+} -result ~/sub/fileName-20.10
 
 # cleanup
 catch {file delete -force C:/globTest}

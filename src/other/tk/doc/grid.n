@@ -404,11 +404,13 @@ A toplevel window containing a text widget and two scrollbars:
 # Make the widgets
 toplevel .t
 text .t.txt \-wrap none \-xscroll {.t.h set} \-yscroll {.t.v set}
-scrollbar .t.v \-orient vertical   \-command {.t.txt xview}
+scrollbar .t.v \-orient vertical   \-command {.t.txt yview}
 scrollbar .t.h \-orient horizontal \-command {.t.txt xview}
+
 # Lay them out
 \fBgrid\fR .t.txt .t.v \-sticky nsew
 \fBgrid\fR .t.h        \-sticky nsew
+
 # Tell the text widget to take all the extra room
 \fBgrid rowconfigure\fR    .t .t.txt \-weight 1
 \fBgrid columnconfigure\fR .t .t.txt \-weight 1
@@ -421,6 +423,7 @@ widths:
 button .b \-text "Foo"
 entry .e \-variable foo
 label .l \-text "This is a fairly long piece of text"
+
 \fBgrid\fR .b .e .l \-sticky ew
 \fBgrid columnconfigure\fR . "all" \-uniform allTheSame
 .CE

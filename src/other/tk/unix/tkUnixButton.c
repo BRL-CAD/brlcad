@@ -389,8 +389,8 @@ TkpDisplayButton(
     } else {
 	gc = butPtr->normalTextGC;
     }
-    if ((butPtr->flags & SELECTED) && (butPtr->state != STATE_ACTIVE)
-	    && (butPtr->selectBorder != NULL) && !butPtr->indicatorOn) {
+    if ((butPtr->flags & SELECTED) && (butPtr->selectBorder != NULL)
+	    && !butPtr->indicatorOn) {
 	border = butPtr->selectBorder;
     }
 

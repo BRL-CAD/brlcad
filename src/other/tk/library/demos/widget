@@ -199,12 +199,12 @@ set lastLine ""
 .t tag bind demo <Enter> {
     set lastLine [.t index {@%x,%y linestart}]
     .t tag add hot "$lastLine +1 chars" "$lastLine lineend -1 chars"
-    .t config -cursor hand2
+    .t config -cursor [::ttk::cursor link]
     showStatus [.t index {@%x,%y}]
 }
 .t tag bind demo <Leave> {
     .t tag remove hot 1.0 end
-    .t config -cursor xterm
+    .t config -cursor [::ttk::cursor text]
     .statusBar.lab config -text ""
 }
 .t tag bind demo <Motion> {
@@ -516,7 +516,7 @@ proc invoke index {
 	return
     }
     set cursor [.t cget -cursor]
-    .t configure -cursor watch
+    .t configure -cursor [::ttk::cursor busy]
     update
     set demo [string range [lindex $tags $i] 5 end]
     uplevel 1 [list source [file join $tk_demoDirectory $demo.tcl]]
@@ -537,11 +537,11 @@ proc showStatus index {
     set cursor [.t cget -cursor]
     if {$i < 0} {
 	.statusBar.lab config -text " "
-	set newcursor xterm
+	set newcursor [::ttk::cursor text]
     } else {
 	set demo [string range [lindex $tags $i] 5 end]
 	.statusBar.lab config -text [mc "Run the \"%s\" sample program" $demo]
-	set newcursor hand2
+	set newcursor [::ttk::cursor link]
     }
     if {$cursor ne $newcursor} {
 	.t config -cursor $newcursor

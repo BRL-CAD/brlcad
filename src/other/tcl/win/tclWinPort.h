@@ -47,7 +47,6 @@
 /*
  * These string functions are not defined with the same names on Windows.
  */
-
 #ifndef strcasecmp
 #   define strcasecmp stricmp
 #endif
@@ -76,12 +75,13 @@
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 
-/*
- * Ask for the winsock function typedefs, also.
- */
 #ifdef INCL_WINSOCK_API_TYPEDEFS
 #undef INCL_WINSOCK_API_TYPEDEFS
 #endif
+
+/*
+ * Ask for the winsock function typedefs, also.
+ */
 #define INCL_WINSOCK_API_TYPEDEFS   1
 #include <winsock2.h>
 
@@ -305,7 +305,7 @@
  */
 
 #ifndef S_IFLNK
-#   define S_IFLNK        0120000  /* Symbolic Link */
+#define S_IFLNK        0120000  /* Symbolic Link */
 #endif
 
 #ifndef S_ISREG
@@ -357,11 +357,11 @@
  */
 
 #ifndef MAXPATH
-#   define MAXPATH MAX_PATH
+#define MAXPATH MAX_PATH
 #endif /* MAXPATH */
 
 #ifndef MAXPATHLEN
-#   define MAXPATHLEN MAXPATH
+#define MAXPATHLEN MAXPATH
 #endif /* MAXPATHLEN */
 
 /*
@@ -382,13 +382,13 @@
  */
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
-#   define environ _environ
-#   define hypot _hypot
-#   define exception _exception
-#   undef EDEADLOCK
-#   if defined(__MINGW32__) && !defined(__MSVCRT__)
-#       define timezone _timezone
-#   endif
+#    define environ _environ
+#    define hypot _hypot
+#    define exception _exception
+#    undef EDEADLOCK
+#    if defined(__MINGW32__) && !defined(__MSVCRT__)
+#	define timezone _timezone
+#    endif
 #endif /* _MSC_VER || __MINGW32__ */
 
 /*

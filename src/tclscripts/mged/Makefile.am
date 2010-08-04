@@ -145,6 +145,7 @@ BUILT_SOURCES = \
 
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
+	rrmb.tcl \
 	$(tcl_SCRIPTS)
 
 # CLEANFILES = $(BUILT_SOURCES)

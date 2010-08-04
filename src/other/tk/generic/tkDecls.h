@@ -180,7 +180,7 @@ EXTERN void		Tk_ChangeWindowAttributes (Tk_Window tkwin,
 #ifndef Tk_CharBbox_TCL_DECLARED
 #define Tk_CharBbox_TCL_DECLARED
 /* 23 */
-EXTERN int		Tk_CharBbox (Tk_TextLayout layout, int idx, 
+EXTERN int		Tk_CharBbox (Tk_TextLayout layout, int index, 
 				int * xPtr, int * yPtr, int * widthPtr, 
 				int * heightPtr);
 #endif
@@ -1729,7 +1729,7 @@ typedef struct TkStubs {
     Tk_Window (*tk_CanvasTkwin) (Tk_Canvas canvas); /* 20 */
     void (*tk_CanvasWindowCoords) (Tk_Canvas canvas, double x, double y, short * screenXPtr, short * screenYPtr); /* 21 */
     void (*tk_ChangeWindowAttributes) (Tk_Window tkwin, unsigned long valueMask, XSetWindowAttributes * attsPtr); /* 22 */
-    int (*tk_CharBbox) (Tk_TextLayout layout, int idx, int * xPtr, int * yPtr, int * widthPtr, int * heightPtr); /* 23 */
+    int (*tk_CharBbox) (Tk_TextLayout layout, int index, int * xPtr, int * yPtr, int * widthPtr, int * heightPtr); /* 23 */
     void (*tk_ClearSelection) (Tk_Window tkwin, Atom selection); /* 24 */
     int (*tk_ClipboardAppend) (Tcl_Interp * interp, Tk_Window tkwin, Atom target, Atom format, char* buffer); /* 25 */
     int (*tk_ClipboardClear) (Tcl_Interp * interp, Tk_Window tkwin); /* 26 */

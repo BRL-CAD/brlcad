@@ -900,7 +900,7 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 
 * implement SIMD shots
 
-* implement SAH for all primitives
+* implement SAH for all primitives (routine that fires a ray at each primitive for initial estimate, caches result)
 
 * write and use kdtree - make traversal cache coherent
 

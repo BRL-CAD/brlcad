@@ -32,7 +32,6 @@
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
 #  include <windows.h>
-#  include <io.h>
 #endif
 
 #include "raytrace.h"
@@ -1359,7 +1358,7 @@ GED_EXPORT BU_EXTERN(int ged_bev, (struct ged *gedp, int argc, const char *argv[
  * For input, source is a file name and dest is an object name.
  * For output source is an object name and dest is a file name.
  * Only uniform array binary objects (major_type=u) are currently supported}}
- * 
+ *
  * Usage:
  *     binary {-i major_type minor_type | -o} dest source
  */
@@ -1604,7 +1603,7 @@ GED_EXPORT BU_EXTERN(int ged_dbip, (struct ged *gedp, int argc, const char *argv
  *
  * Usage:
  *     debugbu [hex_code]
- *     
+ *
  */
 GED_EXPORT BU_EXTERN(int ged_debugbu, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1613,7 +1612,7 @@ GED_EXPORT BU_EXTERN(int ged_debugbu, (struct ged *gedp, int argc, const char *a
  *
  * Usage:
  *     debugdir
- *     
+ *
  */
 GED_EXPORT BU_EXTERN(int ged_debugdir, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1622,7 +1621,7 @@ GED_EXPORT BU_EXTERN(int ged_debugdir, (struct ged *gedp, int argc, const char *
  *
  * Usage:
  *     debuglib [hex_code]
- *     
+ *
  */
 GED_EXPORT BU_EXTERN(int ged_debuglib, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1631,7 +1630,7 @@ GED_EXPORT BU_EXTERN(int ged_debuglib, (struct ged *gedp, int argc, const char *
  *
  * Usage:
  *     debugmem
- *     
+ *
  */
 GED_EXPORT BU_EXTERN(int ged_debugmem, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1640,7 +1639,7 @@ GED_EXPORT BU_EXTERN(int ged_debugmem, (struct ged *gedp, int argc, const char *
  *
  * Usage:
  *     debugnmg [hex_code]
- *     
+ *
  */
 GED_EXPORT BU_EXTERN(int ged_debugnmg, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1841,7 +1840,7 @@ GED_EXPORT BU_EXTERN(int ged_fracture, (struct ged *gedp, int argc, const char *
  * Get object attributes
  *
  * Usage:
- *     get object ?attr? 
+ *     get object ?attr?
  */
 GED_EXPORT BU_EXTERN(int ged_get, (struct ged *gedp, int argc, const char *argv[]));
 
@@ -1886,7 +1885,7 @@ GED_EXPORT BU_EXTERN(int ged_get_type, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_glob, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * 
+ *
  *
  * Usage:
  *     gqa args
@@ -2293,7 +2292,7 @@ GED_EXPORT BU_EXTERN(int ged_reopen, (struct ged *gedp, int argc, const char *ar
 GED_EXPORT BU_EXTERN(int ged_orient, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * Rotate obj about the keypoint by 
+ * Rotate obj about the keypoint by
  *
  * Usage:
  *     orotate obj rX rY rZ [kX kY kZ]
@@ -2782,7 +2781,7 @@ GED_EXPORT BU_EXTERN(int ged_showmats, (struct ged *gedp, int argc, const char *
 GED_EXPORT BU_EXTERN(int ged_size, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
- * 
+ *
  *
  * Usage:
  *     solids_on_ray
@@ -2892,7 +2891,7 @@ GED_EXPORT BU_EXTERN(int ged_track, (struct ged *gedp, int argc, const char *arg
 
 #if 0
 /**
- * 
+ *
  *
  * Usage:
  *     tracker [-fh] [# links] [increment] [spline.iges] [link...]

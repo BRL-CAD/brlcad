@@ -359,6 +359,12 @@ CreateXIC(
 	XFree(preedit_attlist);
     }
 
+    
+    if (winPtr->inputContext == NULL) {
+	/* XCreateIC failed. */
+        return;
+    }
+    
     /*
      * Adjust the window's event mask if the IM requires it.
      */

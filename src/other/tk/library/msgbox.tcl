@@ -302,7 +302,7 @@ proc ::tk::MessageBox {args} {
 	if {$windowingsystem eq "aqua"
 		|| ([winfo depth $w] < 4) || $tk_strictMotif} {
 	    # ttk::label has no -bitmap option
-	    label $w.bitmap -bitmap $data(-icon) -background $bg
+	    label $w.bitmap -bitmap $data(-icon);# -background $bg
 	} else {
 	    canvas $w.bitmap -width 32 -height 32 -highlightthickness 0 \
 		    -background $bg
@@ -396,12 +396,12 @@ proc ::tk::MessageBox {args} {
 
     if {$data(-default) ne ""} {
 	bind $w <FocusIn> {
-	    if {[winfo class %W] eq "Button"} {
+	    if {[winfo class %W] in "Button TButton"} {
 		%W configure -default active
 	    }
 	}
 	bind $w <FocusOut> {
-	    if {[winfo class %W] eq "Button"} {
+	    if {[winfo class %W] in "Button TButton"} {
 		%W configure -default normal
 	    }
 	}
@@ -410,7 +410,7 @@ proc ::tk::MessageBox {args} {
     # 6. Create bindings for <Return>, <Escape> and <Destroy> on the dialog
 
     bind $w <Return> {
-	if {[winfo class %W] eq "Button"} {
+	if {[winfo class %W] in "Button TButton"} {
 	    %W invoke
 	}
     }

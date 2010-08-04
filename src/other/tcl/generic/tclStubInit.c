@@ -335,6 +335,13 @@ TclIntStubs tclIntStubs = {
     TclVarHashCreateVar, /* 234 */
     TclInitVarHashTable, /* 235 */
     TclBackgroundException, /* 236 */
+    NULL, /* 237 */
+    NULL, /* 238 */
+    NULL, /* 239 */
+    NULL, /* 240 */
+    NULL, /* 241 */
+    NULL, /* 242 */
+    TclDbDumpActiveObjects, /* 243 */
 };
 
 TclIntPlatStubs tclIntPlatStubs = {
@@ -409,6 +416,7 @@ TclIntPlatStubs tclIntPlatStubs = {
     TclMacOSXSetFileAttribute, /* 16 */
     TclMacOSXCopyFileAttributes, /* 17 */
     TclMacOSXMatchType, /* 18 */
+    TclMacOSXNotifierAddRunLoopMode, /* 19 */
 #endif /* MACOSX */
 };
 

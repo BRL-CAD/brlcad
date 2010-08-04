@@ -322,6 +322,7 @@ test proc-4.8 {TclCreateProc, procbody obj, no leak on multiple iterations} -set
     set leakedBytes [expr {$end - $tmp}]
 } -cleanup {
     rename getbytes {}
+    unset -nocomplain end i tmp leakedBytes
 } -result 0
 
 test proc-5.1 {Bytecompiling noop; test for correct argument substitution} {

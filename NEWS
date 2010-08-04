@@ -20,6 +20,8 @@ converted and work continues on the technical side to develop
 stylesheets for publishing corresponding PDF documents on the BRL-CAD
 website.
 
+* fixed nirt output formatting in MGED - Cliff Yapp
+* rt can now output directly to PNG, among others - Erik Greenwald
 * fixed crash-on-exit bug with iges-g importer - Richard Weiss
 * fixed framebuffer shutdown and memory management bugs - Bob Parker
 * added all remaining shape tools to the Windows build - Sean Morrison

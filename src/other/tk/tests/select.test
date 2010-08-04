@@ -796,7 +796,7 @@ test select-9.1 {SelCvtToX and SelCvtFromX procedures} -setup {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} -result {0x400 {TEST 0 4000}}
+} -result {{0x400 } {TEST 0 4000}}
 test select-9.2 {SelCvtToX and SelCvtFromX procedures} unix {
     setup
     setupbg
@@ -808,7 +808,7 @@ test select-9.2 {SelCvtToX and SelCvtFromX procedures} unix {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} {{0x400 0xffff 0x800 0xfffffffe} {TEST 0 4000}}
+} {{0x400 0xffff 0x800 0xfffffffe } {TEST 0 4000}}
 test select-9.3 {SelCvtToX and SelCvtFromX procedures} unix {
     setup
     setupbg
@@ -820,7 +820,7 @@ test select-9.3 {SelCvtToX and SelCvtFromX procedures} unix {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} {{} {TEST 0 4000}}
+} {{ } {TEST 0 4000}}
 test select-9.4 {SelCvtToX and SelCvtFromX procedures} unix {
     setup
     setupbg
@@ -832,7 +832,7 @@ test select-9.4 {SelCvtToX and SelCvtFromX procedures} unix {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} {{0x10 0x0 0x20} {TEST 0 4000}}
+} {{0x10 0x0 0x20 } {TEST 0 4000}}
 test select-9.5 {SelCvtToX and SelCvtFromX procedures} -setup {
     setup
     setupbg
@@ -971,7 +971,7 @@ test select-12.1 {DefaultSelection procedure} unix {
     lappend result [dobg {selection get -type TIMESTAMP}]
     cleanupbg
     set result
-} {0x0 0x0}
+} {0x0 {0x0 }}
 test select-12.2 {DefaultSelection procedure} unix {
     setup
     set result [lsort [list [selection get -type TARGETS]]]

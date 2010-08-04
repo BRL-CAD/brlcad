@@ -1517,7 +1517,8 @@ TkBTreeDeleteIndexRange(
 	if (treePtr->startEnd != NULL) {
 	    int checkCount = 0;
 
-	    while (treePtr->startEnd[checkCount] != NULL) {
+	    while (checkCount < treePtr->startEndCount &&
+		    treePtr->startEnd[checkCount] != NULL) {
 		if (treePtr->startEnd[checkCount] == index2Ptr->linePtr) {
 		    TkText *peer = treePtr->startEndRef[checkCount];
 

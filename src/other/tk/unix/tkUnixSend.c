@@ -681,8 +681,52 @@ ServerSecure(
 
     secure = 0;
     addrPtr = XListHosts(dispPtr->display, &numHosts, &enabled);
-    if (enabled && (numHosts == 0)) {
-	secure = 1;
+    if (enabled) {
+	if (numHosts == 0) {
+	    secure = 1;
+	}
+
+	/*
+	 * Recent versions of X11 have the extra feature of allowing more
+	 * sophisticated authorization checks to be performed than the dozy
+	 * old ones that used to plague xhost usage. However, not all deployed
+	 * versions of Xlib know how to deal with this feature, so this code
+	 * is conditional on having the right #def in place. [Bug 1909931]
+	 */
+
+#ifdef FamilyServerInterpreted
+	if (numHosts == 1 && addrPtr[0].family == FamilyServerInterpreted) {
+	    XServerInterpretedAddress *siPtr =
+		    (XServerInterpretedAddress *) addrPtr[0].address;
+
+	    if (siPtr->typelength==9 && !memcmp(siPtr->type,"localuser",9)) {
+		/*
+		 * We don't check the username here. This is because it's
+		 * officially non-portable and we are just making sure there
+		 * aren't silly misconfigurations. (Apparently 'root' is not a
+		 * very good choice, but we still don't put any effort in to
+		 * spot that.)
+		 */
+
+		secure = 1;
+	    } else if (siPtr->typelength == 10
+		    && !memcmp(siPtr->type, "localgroup", 10)) {
+		/*
+		 * Similarly to above, we don't attempt to peek inside server
+		 * interpreted group names. If someone set it, it's what they
+		 * want and we assume it's OK.
+		 */
+
+		secure = 1;
+	    }
+
+	    /*
+	     * The other defined types of server-interpreted controls involve
+	     * particular hosts; these are still insecure for the same reasons
+	     * that classic xhost access is insecure.
+	     */
+	}
+#endif
     }
     if (addrPtr != NULL) {
 	XFree((char *) addrPtr);

@@ -41,10 +41,10 @@
 	<string>Wish</string>
 	<key>CFBundleGetInfoString</key>
 	<string>Wish Shell @TK_VERSION@@TK_PATCH_LEVEL@,
-Copyright © @TK_YEAR@ Tcl Core Team,
+Copyright © 1989-@TK_YEAR@ Tcl Core Team,
 Copyright © 2002-@TK_YEAR@ Daniel A. Steffen,
-Initial MacOS X Port by Jim Ingham &amp; Ian Reid,
-Copyright © 2001-2002, Apple Computer, Inc.</string>
+Copyright © 2001-2002 Apple Inc.,
+Copyright © 2001-2002 Jim Ingham &amp; Ian Reid</string>
 	<key>CFBundleIconFile</key>
 	<string>Wish.icns</string>
 	<key>CFBundleIdentifier</key>

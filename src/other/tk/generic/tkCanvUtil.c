@@ -1136,12 +1136,10 @@ Tk_ConfigOutlineGC(
     if (mask && (dash->number != 0)) {
 	gcValues->line_style = LineOnOffDash;
 	gcValues->dash_offset = outline->offset;
-	if (dash->number >= 2) {
-	    gcValues->dashes = 4;
-	} else if (dash->number > 0) {
+	if (dash->number > 0) {
 	    gcValues->dashes = dash->pattern.array[0];
 	} else {
-	    gcValues->dashes = (char) (4 * width);
+	    gcValues->dashes = (char) (4 * width + 0.5);
 	}
 	mask |= GCLineStyle|GCDashList|GCDashOffset;
     }
@@ -1221,7 +1219,7 @@ Tk_ChangeOutlineGC(
     }
 
     if ((dash->number<-1) ||
-	    ((dash->number == -1) && (dash->pattern.array[1] != ','))) {
+	    ((dash->number == -1) && (dash->pattern.array[0] != ','))) {
 	char *q;
 	int i = -dash->number;
 
@@ -1341,13 +1339,11 @@ Tk_ResetOutlineGC(
 
     if ((dash->number > 2) || (dash->number < -1) || (dash->number==2 &&
 	    (dash->pattern.array[0] != dash->pattern.array[1])) ||
-	    ((dash->number == -1) && (dash->pattern.array[1] != ','))) {
-	if (dash->number < 0) {
-	    dashList = (int) (4 * width + 0.5);
-	} else if (dash->number<3) {
+	    ((dash->number == -1) && (dash->pattern.array[0] != ','))) {
+	if (dash->number > 0) {
 	    dashList = dash->pattern.array[0];
 	} else {
-	    dashList = 4;
+	    dashList = (char) (4 * width + 0.5);
 	}
 	XSetDashes(((TkCanvas *)canvas)->display, outline->gc,
 		outline->offset, &dashList , 1);

@@ -51,7 +51,7 @@ typedef struct ErrAssocData {
 } ErrAssocData;
 
 /*
- * For each exit handler created with a call to Tcl_CreateExitHandler there is
+ * For each exit handler created with a call to Tcl_Create(Late)ExitHandler there is
  * a structure of the following type:
  */
 
@@ -69,6 +69,9 @@ typedef struct ExitHandler {
 
 static ExitHandler *firstExitPtr = NULL;
 				/* First in list of all exit handlers for
+				 * application. */
+static ExitHandler *firstLateExitPtr = NULL;
+				/* First in list of all late exit handlers for
 				 * application. */
 TCL_DECLARE_MUTEX(exitMutex)
 
@@ -633,6 +636,39 @@ Tcl_CreateExitHandler(
 /*
  *----------------------------------------------------------------------
  *
+ * TclCreateLateExitHandler --
+ *
+ *	Arrange for a given function to be invoked after all pre-thread cleanups
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Proc will be invoked with clientData as argument when the application
+ *	exits.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclCreateLateExitHandler(
+    Tcl_ExitProc *proc,		/* Function to invoke. */
+    ClientData clientData)	/* Arbitrary value to pass to proc. */
+{
+    ExitHandler *exitPtr;
+
+    exitPtr = (ExitHandler *) ckalloc(sizeof(ExitHandler));
+    exitPtr->proc = proc;
+    exitPtr->clientData = clientData;
+    Tcl_MutexLock(&exitMutex);
+    exitPtr->nextPtr = firstLateExitPtr;
+    firstLateExitPtr = exitPtr;
+    Tcl_MutexUnlock(&exitMutex);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * Tcl_DeleteExitHandler --
  *
  *	This function cancels an existing exit handler matching proc and
@@ -662,6 +698,49 @@ Tcl_DeleteExitHandler(
 		&& (exitPtr->clientData == clientData)) {
 	    if (prevPtr == NULL) {
 		firstExitPtr = exitPtr->nextPtr;
+	    } else {
+		prevPtr->nextPtr = exitPtr->nextPtr;
+	    }
+	    ckfree((char *) exitPtr);
+	    break;
+	}
+    }
+    Tcl_MutexUnlock(&exitMutex);
+    return;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclDeleteLateExitHandler --
+ *
+ *	This function cancels an existing late exit handler matching proc and
+ *	clientData, if such a handler exits.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	If there is a late exit handler corresponding to proc and clientData then
+ *	it is canceled; if no such handler exists then nothing happens.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TclDeleteLateExitHandler(
+    Tcl_ExitProc *proc,		/* Function that was previously registered. */
+    ClientData clientData)	/* Arbitrary value to pass to proc. */
+{
+    ExitHandler *exitPtr, *prevPtr;
+
+    Tcl_MutexLock(&exitMutex);
+    for (prevPtr = NULL, exitPtr = firstLateExitPtr; exitPtr != NULL;
+	    prevPtr = exitPtr, exitPtr = exitPtr->nextPtr) {
+	if ((exitPtr->proc == proc)
+		&& (exitPtr->clientData == clientData)) {
+	    if (prevPtr == NULL) {
+		firstLateExitPtr = exitPtr->nextPtr;
 	    } else {
 		prevPtr->nextPtr = exitPtr->nextPtr;
 	    }
@@ -976,6 +1055,27 @@ Tcl_Finalize(void)
     Tcl_FinalizeThread();
 
     /*
+     * Now invoke late (process-wide) exit handlers.
+     */
+
+    Tcl_MutexLock(&exitMutex);
+    for (exitPtr = firstLateExitPtr; exitPtr != NULL; exitPtr = firstLateExitPtr) {
+	/*
+	 * Be careful to remove the handler from the list before invoking its
+	 * callback. This protects us against double-freeing if the callback
+	 * should call Tcl_DeleteLateExitHandler on itself.
+	 */
+
+	firstLateExitPtr = exitPtr->nextPtr;
+	Tcl_MutexUnlock(&exitMutex);
+	exitPtr->proc(exitPtr->clientData);
+	ckfree((char *) exitPtr);
+	Tcl_MutexLock(&exitMutex);
+    }
+    firstLateExitPtr = NULL;
+    Tcl_MutexUnlock(&exitMutex);
+
+    /*
      * Now finalize the Tcl execution environment. Note that this must be done
      * after the exit handlers, because there are order dependencies.
      */
@@ -1139,6 +1239,7 @@ Tcl_FinalizeThread(void)
 	TclFinalizeIOSubsystem();
 	TclFinalizeNotifier();
 	TclFinalizeAsync();
+	TclFinalizeThreadObjects();
     }
 
     /*

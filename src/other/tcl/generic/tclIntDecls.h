@@ -374,12 +374,12 @@ EXTERN unsigned long	TclpGetSeconds (void);
 #ifndef TclpGetTime_TCL_DECLARED
 #define TclpGetTime_TCL_DECLARED
 /* 77 */
-EXTERN void		TclpGetTime (Tcl_Time * timeval);
+EXTERN void		TclpGetTime (Tcl_Time * time);
 #endif
 #ifndef TclpGetTimeZone_TCL_DECLARED
 #define TclpGetTimeZone_TCL_DECLARED
 /* 78 */
-EXTERN int		TclpGetTimeZone (unsigned long timeval);
+EXTERN int		TclpGetTimeZone (unsigned long time);
 #endif
 /* Slot 79 is reserved */
 /* Slot 80 is reserved */
@@ -644,7 +644,7 @@ EXTERN int		TclpHasSockets (Tcl_Interp * interp);
 #ifndef TclpGetDate_TCL_DECLARED
 #define TclpGetDate_TCL_DECLARED
 /* 133 */
-EXTERN struct tm *	TclpGetDate (CONST time_t * timeval, int useGMT);
+EXTERN struct tm *	TclpGetDate (CONST time_t * time, int useGMT);
 #endif
 /* Slot 134 is reserved */
 /* Slot 135 is reserved */
@@ -869,12 +869,12 @@ EXTERN Tcl_Obj *	Tcl_GetStartupScript (CONST char ** encodingNamePtr);
 #ifndef TclpLocaltime_TCL_DECLARED
 #define TclpLocaltime_TCL_DECLARED
 /* 182 */
-EXTERN struct tm *	TclpLocaltime (CONST time_t * _clock);
+EXTERN struct tm *	TclpLocaltime (CONST time_t * clock);
 #endif
 #ifndef TclpGmtime_TCL_DECLARED
 #define TclpGmtime_TCL_DECLARED
 /* 183 */
-EXTERN struct tm *	TclpGmtime (CONST time_t * _clock);
+EXTERN struct tm *	TclpGmtime (CONST time_t * clock);
 #endif
 /* Slot 184 is reserved */
 /* Slot 185 is reserved */
@@ -1076,6 +1076,17 @@ EXTERN void		TclInitVarHashTable (TclVarHashTable * tablePtr,
 EXTERN void		TclBackgroundException (Tcl_Interp * interp, 
 				int code);
 #endif
+/* Slot 237 is reserved */
+/* Slot 238 is reserved */
+/* Slot 239 is reserved */
+/* Slot 240 is reserved */
+/* Slot 241 is reserved */
+/* Slot 242 is reserved */
+#ifndef TclDbDumpActiveObjects_TCL_DECLARED
+#define TclDbDumpActiveObjects_TCL_DECLARED
+/* 243 */
+EXTERN void		TclDbDumpActiveObjects (FILE * outFile);
+#endif
 
 typedef struct TclIntStubs {
     int magic;
@@ -1174,8 +1185,8 @@ typedef struct TclIntStubs {
     void (*tclpFree) (char * ptr); /* 74 */
     unsigned long (*tclpGetClicks) (void); /* 75 */
     unsigned long (*tclpGetSeconds) (void); /* 76 */
-    void (*tclpGetTime) (Tcl_Time * timeval); /* 77 */
-    int (*tclpGetTimeZone) (unsigned long timeval); /* 78 */
+    void (*tclpGetTime) (Tcl_Time * time); /* 77 */
+    int (*tclpGetTimeZone) (unsigned long time); /* 78 */
     void *reserved79;
     void *reserved80;
     char * (*tclpRealloc) (char * ptr, unsigned int size); /* 81 */
@@ -1238,7 +1249,7 @@ typedef struct TclIntStubs {
     int (*tcl_RemoveInterpResolvers) (Tcl_Interp * interp, CONST char * name); /* 130 */
     void (*tcl_SetNamespaceResolvers) (Tcl_Namespace * namespacePtr, Tcl_ResolveCmdProc * cmdProc, Tcl_ResolveVarProc * varProc, Tcl_ResolveCompiledVarProc * compiledVarProc); /* 131 */
     int (*tclpHasSockets) (Tcl_Interp * interp); /* 132 */
-    struct tm * (*tclpGetDate) (CONST time_t * timeval, int useGMT); /* 133 */
+    struct tm * (*tclpGetDate) (CONST time_t * time, int useGMT); /* 133 */
     void *reserved134;
     void *reserved135;
     void *reserved136;
@@ -1287,8 +1298,8 @@ typedef struct TclIntStubs {
     Tcl_Obj * (*tcl_GetStartupScript) (CONST char ** encodingNamePtr); /* 179 */
     void *reserved180;
     void *reserved181;
-    struct tm * (*tclpLocaltime) (CONST time_t * _clock); /* 182 */
-    struct tm * (*tclpGmtime) (CONST time_t * _clock); /* 183 */
+    struct tm * (*tclpLocaltime) (CONST time_t * clock); /* 182 */
+    struct tm * (*tclpGmtime) (CONST time_t * clock); /* 183 */
     void *reserved184;
     void *reserved185;
     void *reserved186;
@@ -1342,6 +1353,13 @@ typedef struct TclIntStubs {
     Var * (*tclVarHashCreateVar) (TclVarHashTable * tablePtr, const char * key, int * newPtr); /* 234 */
     void (*tclInitVarHashTable) (TclVarHashTable * tablePtr, Namespace * nsPtr); /* 235 */
     void (*tclBackgroundException) (Tcl_Interp * interp, int code); /* 236 */
+    void *reserved237;
+    void *reserved238;
+    void *reserved239;
+    void *reserved240;
+    void *reserved241;
+    void *reserved242;
+    void (*tclDbDumpActiveObjects) (FILE * outFile); /* 243 */
 } TclIntStubs;
 
 #ifdef __cplusplus
@@ -2089,6 +2107,16 @@ extern TclIntStubs *tclIntStubsPtr;
 #ifndef TclBackgroundException
 #define TclBackgroundException \
 	(tclIntStubsPtr->tclBackgroundException) /* 236 */
+#endif
+/* Slot 237 is reserved */
+/* Slot 238 is reserved */
+/* Slot 239 is reserved */
+/* Slot 240 is reserved */
+/* Slot 241 is reserved */
+/* Slot 242 is reserved */
+#ifndef TclDbDumpActiveObjects
+#define TclDbDumpActiveObjects \
+	(tclIntStubsPtr->tclDbDumpActiveObjects) /* 243 */
 #endif
 
 #endif /* defined(USE_TCL_STUBS) && !defined(USE_TCL_STUB_PROCS) */

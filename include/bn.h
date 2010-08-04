@@ -1298,8 +1298,8 @@ BN_EXPORT extern void bn_mathtab_constant();
  *
  */
 
-extern double bn_randmt();
-extern void bn_randmt_seed(unsigned long seed);
+BN_EXPORT BU_EXTERN(double bn_randmt, ());
+BN_EXPORT BU_EXTERN(void bn_randmt_seed, (unsigned long seed));
 
 
 /*----------------------------------------------------------------------*/

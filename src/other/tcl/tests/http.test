@@ -335,7 +335,7 @@ test http-4.1 {http::Event} {
     set token [http::geturl $url -keepalive 0]
     upvar #0 $token data
     array set meta $data(meta)
-    expr ($data(totalsize) == $meta(Content-Length))
+    expr {($data(totalsize) == $meta(Content-Length))}
 } 1
 test http-4.2 {http::Event} {
     set token [http::geturl $url]
@@ -369,7 +369,7 @@ test http-4.5 {http::Event} {
     close $out
     upvar #0 $token data
     removeFile $testfile
-    expr $data(currentsize) == $data(totalsize)
+    expr {$data(currentsize) == $data(totalsize)}
 } 1
 test http-4.6 {http::Event} {
     set testfile [makeFile "" testfile]

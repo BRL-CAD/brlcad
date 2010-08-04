@@ -2,9 +2,13 @@
     inherit ::itk::Widget
 
     constructor {args} {}
+
+    itk_option define -command command Command {} {}
 }
 
 ::itcl::body BotPropertyBox::constructor {args} {
+
+    eval itk_initialize $args
 
     # create main box
     itk_component add box {
@@ -26,7 +30,8 @@
     
     itk_component add surfRadio {
 	ttk::radiobutton $itk_component(box).surfRadio \
-	    -text Surface
+	    -text Surface \
+	    -command $itk_option(-command)
     } {}
 
     itk_component add volRadio {
@@ -61,8 +66,10 @@
     } {}
 
     # display main box
-    grid $itk_component(box) -row 0 -column 0
+    grid $itk_component(box) -row 0 -column 0 -sticky news
     grid rowconfigure $itk_component(box) {0 1 3 4} -weight 1
+    grid rowconfigure $itk_interior 0 -weight 1
+    grid columnconfigure $itk_interior 0 -weight 1
 
     # display bot type selection widgets
     set r 0; set c 0
@@ -111,6 +118,4 @@
         -row $r -column $c \
 	-sticky w \
 	-padx 5
-
-    eval itk_initialize $args
 }

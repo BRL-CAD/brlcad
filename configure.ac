@@ -380,6 +380,9 @@ BC_ARG_WITH([with_x11], [x11], [Specify use of or path to X11 (optional)], [auto
 # use opengl
 BC_ARG_WITH([with_opengl], [ogl], [Specify use of or path to OpenGL (optional)], [no])
 
+# use Apple opengl
+BC_ARG_WITH([with_agl], [agl], [Specify use of or path to Apple OpenGL (optional)], [no])
+
 # use wgl
 BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
 
@@ -614,6 +617,9 @@ BC_ARG_WITH_ALIAS([with_x11], [x])
 
 # with opengl aliases (help uses ogl)
 BC_ARG_WITH_ALIAS([with_opengl], [opengl])
+
+# with agl aliases (help uses agl)
+BC_ARG_WITH_ALIAS([with_agl], [agl])
 
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
@@ -878,6 +884,9 @@ AC_MSG_RESULT($bc_with_x11)
 
 AC_MSG_CHECKING(whether to compile the OpenGL interfaces)
 AC_MSG_RESULT($bc_with_opengl)
+
+AC_MSG_CHECKING(whether to compile the AGL interfaces)
+AC_MSG_RESULT($bc_with_agl)
 
 AC_MSG_CHECKING(whether to compile the WindowsGL interfaces)
 AC_MSG_RESULT($bc_with_wgl)
@@ -1461,6 +1470,27 @@ if test "x$bc_with_opengl" != "xno" ; then
     fi
 fi
 
+dnl check if the Apple OpenGL framework is available
+FRAMEWORK_OPENGL=""
+if test "xbc_with_agl" != "xno" ; then
+    AC_MSG_CHECKING([whether -framework OpenGL is available])
+    framework_opengl=no
+    PRELIBS="$LIBS"
+    LIBS="$LIBS -framework OpenGL"
+    AC_TRY_LINK([#include <OpenGL/OpenGL.h>], [
+    GLboolean values;
+    void (*func)() = glBegin;
+    if (GL_FALSE) {
+        func(GL_POINTS);
+        glGetBooleanv(GL_DEPTH_TEST, &values);
+        glEnd();
+    }
+    ], [framework_opengl=yes ; FRAMEWORK_OPENGL="-framework OpenGL"])
+    LIBS="$PRELIBS"
+    AC_MSG_RESULT($framework_opengl)
+fi
+AC_SUBST(FRAMEWORK_OPENGL)
+
 dnl check if the Windows WGL graphics library links
 wgl_link_works=no
 LIBWGL=""
@@ -1650,7 +1680,17 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
     fi
     CPPFLAGS="$PRECPPFLAGS"
 fi # bc_with_opengl
-GL_CPPFLAGS="$GL_H_CPPFLAGS $GLX_H_CPPFLAGS"
+
+AGL_CPPFLAGS=""
+if test "x$bc_with_agl" != "xno"; then
+    # Apple OpenGL is a bit different - the GL_CPPFLAGS need to contain
+    # the call to the OpenGL framework.
+    GL_H_CPPFLAGS=
+    GLX_H_CPPFLAGS=
+    AGL_CPPFLAGS="-framework OpenGL"
+fi
+
+GL_CPPFLAGS="$GL_H_CPPFLAGS $GLX_H_CPPFLAGS $AGL_CPPFLAGS"
 AC_SUBST(GL_CPPFLAGS)
 
 
@@ -3390,6 +3430,11 @@ AC_MSG_CHECKING(for OpenGL library availability)
 AC_MSG_RESULT($gl_link_works)
 AC_SUBST(LIBGL)
 
+dnl *** Apple OpenGL ***
+AC_MSG_CHECKING(for Apple OpenGL framework availability)
+AC_MSG_RESULT($framework_opengl)
+AC_SUBST(FRAMEWORK_AGL)
+
 dnl *** libopengl32 ***
 AC_MSG_CHECKING(for WindowsGL library availability)
 AC_MSG_RESULT($wgl_link_works)
@@ -3615,6 +3660,51 @@ fi # bc_with_opengl
 AC_MSG_CHECKING(whether to build against OpenGL)
 AC_MSG_RESULT($build_against_opengl)
 
+dnl *** Apple OpenGL interface compilation ***
+build_against_agl="no"
+if test "x$bc_with_agl" != "xno" ; then
+    AC_MSG_CHECKING(for Apple OpenGL functionality)
+    agl_works=no
+    PRELIBS="$LIBS"
+    PRECPPFLAGS="$CPPFLAGS"
+    PRELDFLAGS="$LDFLAGS"
+    LIBS="$LIBS $LIBGL"
+    CPPFLAGS="$CPPFLAGS $GL_CPPFLAGS"
+    LDFLAGS="$LDFLAGS $FRAMEWORK_OPENGL"
+    AC_TRY_RUN([
+#include <OpenGL/OpenGL.h>
+main(int argc, char *argv[]) {
+    GLboolean values;
+    void (*func)() = glBegin;
+    if (GL_FALSE || argc > 1) {
+	func(GL_POINTS);
+	glGetBooleanv(GL_DEPTH_TEST, &values);
+	glEnd();
+    }
+    return 0;
+}
+    ], [agl_works=yes])
+    LIBS="$PRELIBS"
+    CPPFLAGS="$PRECPPFLAGS"
+    LDFLAGS="$PRELDFLAGS"
+    AC_MSG_RESULT($agl_works)
+
+    dnl figure out whether we need to build against opengl
+    if test "x$agl_works" = "xyes" ; then
+	build_against_agl="yes"
+    else
+	if test "x$bc_with_agl" = "xyes" ; then
+	    AC_MSG_NOTICE([Apple OpenGL was requested, but no system OpenGL libraries were found])
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_NOTICE([Try adding --without-agl])
+	    AC_MSG_ERROR([*** Using Apple OpenGL was requested, yet no system OpenGL was found ***])
+	else
+	    AC_MSG_NOTICE([OpenGL does not appear to be functionally available])
+	fi
+    fi
+fi # bc_with_agl
+AC_MSG_CHECKING(whether to build against Apple OpenGL)
+AC_MSG_RESULT($build_against_agl)
 
 dnl *** WindowsGL interface compilation ***
 build_against_wgl="no"

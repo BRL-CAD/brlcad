@@ -582,7 +582,6 @@
 	}
     }
 
-
     if {$itk_option(-fb_active_pane_callback) != ""} {
 	catch {$itk_option(-fb_active_pane_callback) $rtActivePane}
     }

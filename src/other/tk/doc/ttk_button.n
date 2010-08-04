@@ -58,8 +58,7 @@ in the style.
 .SH "WIDGET COMMAND"
 In addition to the standard 
 \fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR 
-commands, checkbuttons support the following additional
-widget commands:
+commands, buttons support the following additional widget commands:
 .TP
 \fIpathName \fBinvoke\fR
 Invokes the command associated with the button.
@@ -74,3 +73,7 @@ widget command does not affect the state option.
 ttk::widget(n), button(n)
 .SH "KEYWORDS"
 widget, button, default, command
+'\" Local Variables:
+'\" mode: nroff
+'\" fill-column: 78
+'\" End:

@@ -506,6 +506,19 @@ typedef enum {
 } TkTextEditMode;
 
 /*
+ * Enumeration defining the ways in which a text widget may be modified (for
+ * undo/redo handling).
+ */
+
+typedef enum {
+    TK_TEXT_DIRTY_NORMAL,	/* Normal behavior. */
+    TK_TEXT_DIRTY_UNDO,		/* Reverting a compound action. */
+    TK_TEXT_DIRTY_REDO,		/* Reapplying a compound action. */
+    TK_TEXT_DIRTY_FIXED		/* Forced to be dirty; can't be undone/redone
+				 * by normal activity. */
+} TkTextDirtyMode;
+
+/*
  * The following enum is used to define a type for the -state option of the
  * Text widget.
  */
@@ -555,10 +568,10 @@ typedef struct TkSharedText {
 				 * longer valid. */
 
     /*
-     * Information related to the undo/redo functonality
+     * Information related to the undo/redo functionality.
      */
 
-    TkUndoRedoStack *undoStack; /* The undo/redo stack. */
+    TkUndoRedoStack *undoStack;	/* The undo/redo stack. */
     int undo;			/* Non-zero means the undo/redo behaviour is
 				 * enabled. */
     int maxUndo;		/* The maximum depth of the undo stack
@@ -566,14 +579,12 @@ typedef struct TkSharedText {
 				 * statements. */
     int autoSeparators;		/* Non-zero means the separators will be
 				 * inserted automatically. */
-    int modifiedSet;		/* Flag indicating that the 'dirtyness' of
-				 * the text widget has been explicitly set. */
     int isDirty;		/* Flag indicating the 'dirtyness' of the
 				 * text widget. If the flag is not zero,
 				 * unsaved modifications have been applied to
 				 * the text widget. */
-    int isDirtyIncrement;	/* Amount with which the isDirty flag is
-				 * incremented every edit action. */
+    TkTextDirtyMode dirtyMode;	/* The nature of the dirtyness characterized
+				 * by the isDirty flag. */
     TkTextEditMode lastEditMode;/* Keeps track of what the last edit mode
 				 * was. */
 
@@ -1156,3 +1167,11 @@ MODULE_SCOPE void	TkTextWinFreeClient(Tcl_HashEntry *hPtr,
 # define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKTEXT */
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */

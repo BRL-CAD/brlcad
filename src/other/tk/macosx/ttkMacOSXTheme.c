@@ -56,6 +56,12 @@
 	SetGWorld(saveWorld,saveDevice); }
 #endif /* defined(BUILD_TILE) */
 
+#ifdef __LP64__
+#define RangeToFactor(maximum) (((double) (INT_MAX >> 1)) / (maximum))
+#else
+#define RangeToFactor(maximum) (((double) (LONG_MAX >> 1)) / (maximum))
+#endif /* __LP64__ */
+
 /*----------------------------------------------------------------------
  * +++ Utilities.
  */
@@ -525,7 +531,7 @@ static void TrackElementDraw(
 {
     TrackElementData *data = clientData;
     TrackElement *elem = elementRecord;
-    double from = 0, to = 100, value = 0;
+    double from = 0, to = 100, value = 0, factor;
     int orientation = TTK_ORIENT_HORIZONTAL;
     ThemeTrackDrawInfo info;
 
@@ -533,15 +539,13 @@ static void TrackElementDraw(
     Tcl_GetDoubleFromObj(NULL, elem->toObj, &to);
     Tcl_GetDoubleFromObj(NULL, elem->valueObj, &value);
     Ttk_GetOrientFromObj(NULL, elem->orientObj, &orientation);
+    factor = RangeToFactor(to - from);
 
-    /* @@@ BUG: min, max, and value should account for resolution:
-     * @@@ if finer than 1.0, conversion to int breaks.
-     */
     info.kind = data->kind;
     info.bounds = BoxToRect(d, b);
-    info.min = (int) from;		/* @@@ */
-    info.max = (int) to;		/* @@@ */
-    info.value = (int) value;		/* @@@ */
+    info.min = (int) from * factor;
+    info.max = (int) to * factor;
+    info.value = (int) value * factor;
 
     info.attributes = orientation == TTK_ORIENT_HORIZONTAL
 	    ? kThemeTrackHorizontal : 0;
@@ -549,14 +553,15 @@ static void TrackElementDraw(
     info.enableState = Ttk_StateTableLookup(ThemeTrackEnableTable, state);
 
     switch (data->kind) {
-	case kThemeProgressBar:
-	    info.trackInfo.progress.phase = 0; /* 1-4: animation phase */
-	    break;
-	case kThemeSlider:
-	    info.trackInfo.slider.pressState = 0; /* @@@ fill this in */
-	    info.trackInfo.slider.thumbDir =  kThemeThumbPlain;
+    case kThemeProgressBar:
+	info.trackInfo.progress.phase = 0; /* 1-4: animation phase */
+	break;
+    case kThemeSlider:
+	info.trackInfo.slider.pressState = state & TTK_STATE_PRESSED ?
+		kThemeThumbPressed : 0;
+	info.trackInfo.slider.thumbDir =  kThemeThumbPlain;
 		/* kThemeThumbUpward, kThemeThumbDownward, kThemeThumbPlain  */
-	    break;
+	break;
     }
 
     BEGIN_DRAWING(d)
@@ -643,7 +648,7 @@ static void PbarElementDraw(
 {
     PbarElement *pbar = elementRecord;
     int orientation = TTK_ORIENT_HORIZONTAL;
-    double value = 0, maximum = 100;
+    double value = 0, maximum = 100, factor;
     int phase = 0;
     ThemeTrackDrawInfo info;
 
@@ -651,6 +656,7 @@ static void PbarElementDraw(
     Tcl_GetDoubleFromObj(NULL, pbar->valueObj, &value);
     Tcl_GetDoubleFromObj(NULL, pbar->maximumObj, &maximum);
     Tcl_GetIntFromObj(NULL, pbar->phaseObj, &phase);
+    factor = RangeToFactor(maximum);
 
     if (!strcmp("indeterminate", Tcl_GetString(pbar->modeObj)) && value) {
 	info.kind = kThemeIndeterminateBar;
@@ -659,8 +665,8 @@ static void PbarElementDraw(
     }
     info.bounds = BoxToRect(d, b);
     info.min = 0;
-    info.max = (int) maximum;	/* @@@ See note above */
-    info.value = (int) value;
+    info.max = (int) maximum * factor;
+    info.value = (int) value * factor;
     info.attributes = orientation == TTK_ORIENT_HORIZONTAL
 	    ? kThemeTrackHorizontal : 0;
     info.attributes |= kThemeTrackShowThumb;

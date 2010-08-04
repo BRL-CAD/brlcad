@@ -48,7 +48,7 @@ typedef unsigned int Ttk_State;
 #define TTK_STATE_ALTERNATE	(1<<6)
 #define TTK_STATE_INVALID	(1<<7)
 #define TTK_STATE_READONLY 	(1<<8)
-#define TTK_STATE_USER7 	(1<<9)
+#define TTK_STATE_HOVER		(1<<9)
 #define TTK_STATE_USER6		(1<<10)
 #define TTK_STATE_USER5		(1<<11)
 #define TTK_STATE_USER4		(1<<12)

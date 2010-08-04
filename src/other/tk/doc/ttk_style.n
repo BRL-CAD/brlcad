@@ -58,9 +58,11 @@ for style \fIstyle\fR.
 .TP 
 \fBttk::style element create\fR \fIelementName\fR \fItype\fR ?\fIargs...\fR?
 Creates a new element in the current theme of type \fItype\fR.
-The only built-in element type is \fIimage\fR (see \fBttk_image\fR(n)),
-although themes may define other element types 
-(see \fBTtk_RegisterElementFactory\fR).
+The only cross-platform built-in element type is \fIimage\fR 
+(see \fBttk_image\fR(n)) but themes may define other element types 
+(see \fBTtk_RegisterElementFactory\fR). On suitable versions of Windows
+an element factory is registered to create Windows theme elements
+(see \fBttk_vsapi\fR(n)).
 .TP 
 \fBttk::style element names\fR
 Returns the list of elements defined in the current theme.

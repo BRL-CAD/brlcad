@@ -12,6 +12,8 @@
  */
 
 #include "tclInt.h"
+#ifndef HAVE_COREFOUNDATION	/* Darwin/Mac OS X CoreFoundation notifier is
+				 * in tclMacOSXNotify.c */
 
 /*
  *----------------------------------------------------------------------
@@ -85,6 +87,7 @@ Tcl_Sleep(
     }
 }
 
+#endif /* HAVE_COREFOUNDATION */
 /*
  * Local Variables:
  * mode: c

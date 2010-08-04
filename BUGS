@@ -95,6 +95,18 @@ Recent Bugs
 
 * mged rotation halts after a few events and after zooming in/out at
   least once (Mac OS X 10.5)
+  More info:  This problem appears to be specific to a particular
+  X11 version or versions - it has been observed with 
+  xorg-server-1.4.2-apple33 on 10.5.  It does not occur with the
+  community XQuartz 2.5.0 (xorg-server 1.7.6), nor does it occur
+  when Tk 8.5.8 is compiled to use the Aqua backend. At least one other
+  (possibly earlier) verison of X11 from Apple on a 10.5 Mac did not
+  exhibit bad rotate behavior. The problem is not specifically the 
+  zooming action - rather, the zoom triggers
+  a Tk focus call on the display manager window (rather than the 
+  Tk parent window) and the problem manifests when focus is on the
+  display manager window.  mged classic mode, where there is no
+  parent window, exhibits the bad rotate behavior immediately.
 
 * rtedge fills in nearly entire faces of an object when executing on a
   model that is in perspective mode. Effects really bad on small sized

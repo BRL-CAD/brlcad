@@ -144,6 +144,7 @@ typedef struct TclWinProcs {
       LPDWORD lpNumberOfCharsWritten,
       LPVOID lpReserved
     );
+    BOOL (WINAPI *getUserName)(LPTSTR lpBuffer, LPDWORD lpnSize);
 } TclWinProcs;
 
 MODULE_SCOPE TclWinProcs *tclWinProcs;

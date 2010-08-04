@@ -267,11 +267,10 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, 
 		BRNode* br = dynamic_cast<BRNode*>(*i);
 		br->GetBBox(bmin, bmax);
 
-		dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
-		if (bmax[X]+dist < pt.x)
+		if (bmax[X]+tol < pt.x)
 			continue;
-		if (bmin[X]-dist < pt.x) {
-			if (bmax[Y]+dist > pt.y) {
+		if (bmin[X]-tol < pt.x) {
+			if (bmax[Y]+tol > pt.y) {
 			out_leaves.push_back(br);
 			}
 		}
@@ -306,11 +305,10 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, 
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
-	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
-	if (bmax[Y]+dist < pt.y)
+	if (bmax[Y]+tol < pt.y)
 	    continue;
-	if (bmin[Y]-dist < pt.y) {
-	    if (bmax[X]+dist > pt.x) {
+	if (bmin[Y]-tol < pt.y) {
+	    if (bmax[X]+tol > pt.x) {
 		out_leaves.push_back(br);
 	    }
 	}

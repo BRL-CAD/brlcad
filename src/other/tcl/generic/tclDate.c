@@ -53,10 +53,10 @@
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 0
+#define YYPURE 1
 
 /* Using locations.  */
-#define YYLSP_NEEDED 0
+#define YYLSP_NEEDED 1
 
 /* Substitute the variable and function names.  */
 #define yyparse TclDateparse
@@ -66,7 +66,7 @@
 #define yychar  TclDatechar
 #define yydebug TclDatedebug
 #define yynerrs TclDatenerrs
-
+#define yylloc TclDatelloc
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -79,19 +79,18 @@
      tDAYZONE = 260,
      tID = 261,
      tMERIDIAN = 262,
-     tMINUTE_UNIT = 263,
-     tMONTH = 264,
-     tMONTH_UNIT = 265,
-     tSTARDATE = 266,
-     tSEC_UNIT = 267,
-     tSNUMBER = 268,
-     tUNUMBER = 269,
-     tZONE = 270,
-     tEPOCH = 271,
-     tDST = 272,
-     tISOBASE = 273,
-     tDAY_UNIT = 274,
-     tNEXT = 275
+     tMONTH = 263,
+     tMONTH_UNIT = 264,
+     tSTARDATE = 265,
+     tSEC_UNIT = 266,
+     tSNUMBER = 267,
+     tUNUMBER = 268,
+     tZONE = 269,
+     tEPOCH = 270,
+     tDST = 271,
+     tISOBASE = 272,
+     tDAY_UNIT = 273,
+     tNEXT = 274
    };
 #endif
 /* Tokens.  */
@@ -100,19 +99,18 @@
 #define tDAYZONE 260
 #define tID 261
 #define tMERIDIAN 262
-#define tMINUTE_UNIT 263
-#define tMONTH 264
-#define tMONTH_UNIT 265
-#define tSTARDATE 266
-#define tSEC_UNIT 267
-#define tSNUMBER 268
-#define tUNUMBER 269
-#define tZONE 270
-#define tEPOCH 271
-#define tDST 272
-#define tISOBASE 273
-#define tDAY_UNIT 274
-#define tNEXT 275
+#define tMONTH 263
+#define tMONTH_UNIT 264
+#define tSTARDATE 265
+#define tSEC_UNIT 266
+#define tSNUMBER 267
+#define tUNUMBER 268
+#define tZONE 269
+#define tEPOCH 270
+#define tDST 271
+#define tISOBASE 272
+#define tDAY_UNIT 273
+#define tNEXT 274
 
 
 
@@ -133,7 +131,6 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
  */
-
 #include "tclInt.h"
 
 /*
@@ -151,6 +148,10 @@
  */
 
 typedef struct DateInfo {
+
+    Tcl_Obj* messages;		/* Error messages */
+    const char* separatrix;	/* String separating messages */
+
     time_t dateYear;
     time_t dateMonth;
     time_t dateDay;
@@ -178,42 +179,40 @@ typedef struct DateInfo {
     time_t dateDayNumber;
     int dateHaveDay;
 
-    char *dateInput;
+    const char *dateStart;
+    const char *dateInput;
     time_t *dateRelPointer;
 
     int dateDigitCount;
 } DateInfo;
 
-#define YYPARSE_PARAM	info
-#define YYLEX_PARAM	info
-
 #define YYMALLOC	ckalloc
 #define YYFREE(x)	(ckfree((void*) (x)))
 
-#define yyDSTmode	(((DateInfo *) info)->dateDSTmode)
-#define yyDayOrdinal	(((DateInfo *) info)->dateDayOrdinal)
-#define yyDayNumber	(((DateInfo *) info)->dateDayNumber)
-#define yyMonthOrdinal	(((DateInfo *) info)->dateMonthOrdinal)
-#define yyHaveDate	(((DateInfo *) info)->dateHaveDate)
-#define yyHaveDay	(((DateInfo *) info)->dateHaveDay)
-#define yyHaveOrdinalMonth (((DateInfo *) info)->dateHaveOrdinalMonth)
-#define yyHaveRel	(((DateInfo *) info)->dateHaveRel)
-#define yyHaveTime	(((DateInfo *) info)->dateHaveTime)
-#define yyHaveZone	(((DateInfo *) info)->dateHaveZone)
-#define yyTimezone	(((DateInfo *) info)->dateTimezone)
-#define yyDay		(((DateInfo *) info)->dateDay)
-#define yyMonth		(((DateInfo *) info)->dateMonth)
-#define yyYear		(((DateInfo *) info)->dateYear)
-#define yyHour		(((DateInfo *) info)->dateHour)
-#define yyMinutes	(((DateInfo *) info)->dateMinutes)
-#define yySeconds	(((DateInfo *) info)->dateSeconds)
-#define yyMeridian	(((DateInfo *) info)->dateMeridian)
-#define yyRelMonth	(((DateInfo *) info)->dateRelMonth)
-#define yyRelDay	(((DateInfo *) info)->dateRelDay)
-#define yyRelSeconds	(((DateInfo *) info)->dateRelSeconds)
-#define yyRelPointer	(((DateInfo *) info)->dateRelPointer)
-#define yyInput		(((DateInfo *) info)->dateInput)
-#define yyDigitCount	(((DateInfo *) info)->dateDigitCount)
+#define yyDSTmode	(info->dateDSTmode)
+#define yyDayOrdinal	(info->dateDayOrdinal)
+#define yyDayNumber	(info->dateDayNumber)
+#define yyMonthOrdinal	(info->dateMonthOrdinal)
+#define yyHaveDate	(info->dateHaveDate)
+#define yyHaveDay	(info->dateHaveDay)
+#define yyHaveOrdinalMonth (info->dateHaveOrdinalMonth)
+#define yyHaveRel	(info->dateHaveRel)
+#define yyHaveTime	(info->dateHaveTime)
+#define yyHaveZone	(info->dateHaveZone)
+#define yyTimezone	(info->dateTimezone)
+#define yyDay		(info->dateDay)
+#define yyMonth		(info->dateMonth)
+#define yyYear		(info->dateYear)
+#define yyHour		(info->dateHour)
+#define yyMinutes	(info->dateMinutes)
+#define yySeconds	(info->dateSeconds)
+#define yyMeridian	(info->dateMeridian)
+#define yyRelMonth	(info->dateRelMonth)
+#define yyRelDay	(info->dateRelDay)
+#define yyRelSeconds	(info->dateRelSeconds)
+#define yyRelPointer	(info->dateRelPointer)
+#define yyInput		(info->dateInput)
+#define yyDigitCount	(info->dateDigitCount)
 
 #define EPOCH		1970
 #define START_OF_TIME	1902
@@ -235,7 +234,7 @@ typedef struct DateInfo {
  */
 
 typedef struct _TABLE {
-    char *name;
+    const char *name;
     int type;
     time_t value;
 } TABLE;
@@ -256,17 +255,6 @@ typedef enum _MERIDIAN {
     MERam, MERpm, MER24
 } MERIDIAN;
 
-/*
- * Prototypes of internal functions.
- */
-
-static int		LookupWord(char *buff);
-static void		TclDateerror(char *s);
-static int		TclDatelex(void *info);
-static time_t		ToSeconds(time_t Hours, time_t Minutes,
-			    time_t Seconds, MERIDIAN Meridian);
-MODULE_SCOPE int	yyparse(void *);
-
 
 
 /* Enabling traces.  */
@@ -302,9 +290,37 @@ typedef union YYSTYPE
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
 
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+typedef struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+} YYLTYPE;
+# define yyltype YYLTYPE /* obsolescent; will be withdrawn */
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
 
 
 /* Copy the second part of user declarations.  */
+
+
+
+/*
+ * Prototypes of internal functions.
+ */
+
+static int		LookupWord(YYSTYPE* yylvalPtr, char *buff);
+ static void		TclDateerror(YYLTYPE* location,
+				     DateInfo* info, const char *s);
+ static int		TclDatelex(YYSTYPE* yylvalPtr, YYLTYPE* location,
+				   DateInfo* info);
+static time_t		ToSeconds(time_t Hours, time_t Minutes,
+			    time_t Seconds, MERIDIAN Meridian);
+MODULE_SCOPE int	yyparse(DateInfo*);
+
 
 
 /* Line 216 of yacc.c.  */
@@ -466,14 +482,16 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-	 || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+	 || (defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL \
+	     && defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
   yytype_int16 yyss;
   YYSTYPE yyvs;
-  };
+    YYLTYPE yyls;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -481,8 +499,8 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
-      + YYSTACK_GAP_MAXIMUM)
+     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE) + sizeof (YYLTYPE)) \
+      + 2 * YYSTACK_GAP_MAXIMUM)
 
 /* Copy COUNT objects from FROM to TO.  The source and destination do
    not overlap.  */
@@ -526,7 +544,7 @@ union yyalloc
 #define YYLAST   79
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  27
+#define YYNTOKENS  26
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  16
 /* YYNRULES -- Number of rules.  */
@@ -536,7 +554,7 @@ union yyalloc
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   275
+#define YYMAXUTOK   274
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -548,8 +566,8 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    26,    23,    22,    25,    24,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    21,     2,
+       2,     2,     2,    25,    22,    21,    24,    23,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    20,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -571,7 +589,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20
+      15,    16,    17,    18,    19
 };
 
 #if YYDEBUG
@@ -590,35 +608,35 @@ static const yytype_uint8 yyprhs[] =
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      28,     0,    -1,    -1,    28,    29,    -1,    30,    -1,    31,
-      -1,    33,    -1,    34,    -1,    32,    -1,    37,    -1,    35,
-      -1,    36,    -1,    41,    -1,    14,     7,    -1,    14,    21,
-      14,    42,    -1,    14,    21,    14,    22,    14,    -1,    14,
-      21,    14,    21,    14,    42,    -1,    14,    21,    14,    21,
-      14,    22,    14,    -1,    15,    17,    -1,    15,    -1,     5,
-      -1,     4,    -1,     4,    23,    -1,    14,     4,    -1,    39,
-      14,     4,    -1,    20,     4,    -1,    14,    24,    14,    -1,
-      14,    24,    14,    24,    14,    -1,    18,    -1,    14,    22,
-       9,    22,    14,    -1,    14,    22,    14,    22,    14,    -1,
-       9,    14,    -1,     9,    14,    23,    14,    -1,    14,     9,
-      -1,    16,    -1,    14,     9,    14,    -1,    20,     9,    -1,
-      20,    14,     9,    -1,    18,    15,    18,    -1,    18,    15,
-      14,    21,    14,    21,    14,    -1,    18,    18,    -1,    11,
-      14,    25,    14,    -1,    38,     3,    -1,    38,    -1,    39,
-      14,    40,    -1,    14,    40,    -1,    20,    40,    -1,    20,
-      14,    40,    -1,    40,    -1,    22,    -1,    26,    -1,    12,
-      -1,    19,    -1,    10,    -1,    14,    -1,    -1,     7,    -1
+      27,     0,    -1,    -1,    27,    28,    -1,    29,    -1,    30,
+      -1,    32,    -1,    33,    -1,    31,    -1,    36,    -1,    34,
+      -1,    35,    -1,    40,    -1,    13,     7,    -1,    13,    20,
+      13,    41,    -1,    13,    20,    13,    21,    13,    -1,    13,
+      20,    13,    20,    13,    41,    -1,    13,    20,    13,    20,
+      13,    21,    13,    -1,    14,    16,    -1,    14,    -1,     5,
+      -1,     4,    -1,     4,    22,    -1,    13,     4,    -1,    38,
+      13,     4,    -1,    19,     4,    -1,    13,    23,    13,    -1,
+      13,    23,    13,    23,    13,    -1,    17,    -1,    13,    21,
+       8,    21,    13,    -1,    13,    21,    13,    21,    13,    -1,
+       8,    13,    -1,     8,    13,    22,    13,    -1,    13,     8,
+      -1,    15,    -1,    13,     8,    13,    -1,    19,     8,    -1,
+      19,    13,     8,    -1,    17,    14,    17,    -1,    17,    14,
+      13,    20,    13,    20,    13,    -1,    17,    17,    -1,    10,
+      13,    24,    13,    -1,    37,     3,    -1,    37,    -1,    38,
+      13,    39,    -1,    13,    39,    -1,    19,    39,    -1,    19,
+      13,    39,    -1,    39,    -1,    21,    -1,    25,    -1,    11,
+      -1,    18,    -1,     9,    -1,    13,    -1,    -1,     7,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   185,   185,   186,   189,   192,   195,   198,   201,   204,
-     207,   211,   216,   219,   225,   231,   239,   245,   256,   260,
-     264,   270,   274,   278,   282,   286,   292,   296,   301,   306,
-     311,   316,   320,   325,   329,   334,   341,   345,   351,   360,
-     369,   379,   393,   398,   401,   404,   407,   410,   413,   418,
-     421,   426,   430,   434,   440,   458,   461
+       0,   225,   225,   226,   229,   232,   235,   238,   241,   244,
+     247,   251,   256,   259,   265,   271,   279,   285,   296,   300,
+     304,   310,   314,   318,   322,   326,   332,   336,   341,   346,
+     351,   356,   360,   365,   369,   374,   381,   385,   391,   400,
+     409,   419,   433,   438,   441,   444,   447,   450,   453,   458,
+     461,   466,   470,   474,   480,   498,   501
 };
 #endif
 
@@ -628,12 +646,12 @@ static const yytype_uint16 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "tAGO", "tDAY", "tDAYZONE", "tID",
-  "tMERIDIAN", "tMINUTE_UNIT", "tMONTH", "tMONTH_UNIT", "tSTARDATE",
-  "tSEC_UNIT", "tSNUMBER", "tUNUMBER", "tZONE", "tEPOCH", "tDST",
-  "tISOBASE", "tDAY_UNIT", "tNEXT", "':'", "'-'", "','", "'/'", "'.'",
-  "'+'", "$accept", "spec", "item", "time", "zone", "day", "date",
-  "ordMonth", "iso", "trek", "relspec", "relunits", "sign", "unit",
-  "number", "o_merid", 0
+  "tMERIDIAN", "tMONTH", "tMONTH_UNIT", "tSTARDATE", "tSEC_UNIT",
+  "tSNUMBER", "tUNUMBER", "tZONE", "tEPOCH", "tDST", "tISOBASE",
+  "tDAY_UNIT", "tNEXT", "':'", "'-'", "','", "'/'", "'.'", "'+'",
+  "$accept", "spec", "item", "time", "zone", "day", "date", "ordMonth",
+  "iso", "trek", "relspec", "relunits", "sign", "unit", "number",
+  "o_merid", 0
 };
 #endif
 
@@ -644,19 +662,19 @@ static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,    58,    45,    44,    47,    46,    43
+      58,    45,    44,    47,    46,    43
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    27,    28,    28,    29,    29,    29,    29,    29,    29,
-      29,    29,    29,    30,    30,    30,    30,    30,    31,    31,
-      31,    32,    32,    32,    32,    32,    33,    33,    33,    33,
-      33,    33,    33,    33,    33,    33,    34,    34,    35,    35,
-      35,    36,    37,    37,    38,    38,    38,    38,    38,    39,
-      39,    40,    40,    40,    41,    42,    42
+       0,    26,    27,    27,    28,    28,    28,    28,    28,    28,
+      28,    28,    28,    29,    29,    29,    29,    29,    30,    30,
+      30,    31,    31,    31,    31,    31,    32,    32,    32,    32,
+      32,    32,    32,    32,    32,    32,    33,    33,    34,    34,
+      34,    35,    36,    36,    37,    37,    37,    37,    37,    38,
+      38,    39,    39,    39,    40,    41,    41
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
@@ -695,25 +713,25 @@ static const yytype_int8 yydefgoto[] =
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
-#define YYPACT_NINF -23
+#define YYPACT_NINF -22
 static const yytype_int8 yypact[] =
 {
-     -23,     2,   -23,   -22,   -23,    -5,   -23,    -4,   -23,    22,
-      -2,   -23,    12,   -23,    38,   -23,   -23,   -23,   -23,   -23,
-     -23,   -23,   -23,   -23,   -23,   -23,    30,    11,   -23,   -23,
-     -23,    17,    10,   -23,   -23,    35,    40,    -6,    47,   -23,
-     -23,    45,   -23,   -23,   -23,    46,   -23,   -23,    41,    48,
-      50,   -23,    16,    44,    49,    43,    51,   -23,   -23,   -23,
-     -23,   -23,   -23,   -23,   -23,    54,    55,   -23,    56,    59,
-      60,    61,    -3,   -23,   -23,   -23,   -23,    57,    62,   -23,
-      63,   -23,   -23
+     -22,     2,   -22,   -21,   -22,    -4,   -22,     1,   -22,    22,
+      18,   -22,     8,   -22,    40,   -22,   -22,   -22,   -22,   -22,
+     -22,   -22,   -22,   -22,   -22,   -22,    32,    28,   -22,   -22,
+     -22,    24,    26,   -22,   -22,    42,    47,    -5,    49,   -22,
+     -22,    15,   -22,   -22,   -22,    48,   -22,   -22,    43,    50,
+      51,   -22,    17,    44,    46,    45,    52,   -22,   -22,   -22,
+     -22,   -22,   -22,   -22,   -22,    56,    57,   -22,    58,    60,
+      61,    62,    -3,   -22,   -22,   -22,   -22,    59,    63,   -22,
+      64,   -22,   -22
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -23,   -23,   -23,   -23,   -23,   -23,   -23,   -23,   -23,   -23,
-     -23,   -23,   -23,    -9,   -23,     7
+     -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
+     -22,   -22,   -22,    -9,   -22,     6
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
@@ -724,40 +742,40 @@ static const yytype_int8 yypgoto[] =
 static const yytype_uint8 yytable[] =
 {
       39,    30,     2,    53,    64,    46,     3,     4,    54,    31,
-      32,     5,     6,     7,     8,    40,     9,    10,    11,    78,
-      12,    13,    14,    64,    15,    48,    33,    41,    16,    34,
-      42,    35,     6,    47,     8,    50,    59,    65,    66,    61,
-      49,    13,    43,    36,    37,    60,    38,    44,     6,    51,
-       8,     6,    45,     8,    52,    58,     6,    13,     8,    56,
-      13,    55,    62,    57,    63,    13,    68,    70,    72,    73,
-      74,    69,    71,    75,    76,    77,    81,    82,    80,    79
+       5,     6,     7,     8,    32,     9,    10,    11,    78,    12,
+      13,    14,    41,    15,    64,    42,    33,    16,    56,    34,
+      35,     6,    57,     8,    40,    47,    59,    65,    66,    61,
+      13,    48,    36,    37,    43,    38,    49,    60,    44,     6,
+      50,     8,     6,    45,     8,    51,    58,     6,    13,     8,
+      52,    13,    55,    62,    63,    68,    13,    69,    70,    72,
+      73,    74,    71,    75,    76,    77,    81,    82,    79,    80
 };
 
 static const yytype_uint8 yycheck[] =
 {
-       9,    23,     0,     9,     7,    14,     4,     5,    14,    14,
-      14,     9,    10,    11,    12,    17,    14,    15,    16,    22,
-      18,    19,    20,     7,    22,    14,     4,    15,    26,     7,
-      18,     9,    10,     3,    12,    25,    45,    21,    22,    48,
-      23,    19,     4,    21,    22,     4,    24,     9,    10,    14,
-      12,    10,    14,    12,    14,     9,    10,    19,    12,    14,
-      19,    14,    14,    18,    14,    19,    22,    24,    14,    14,
-      14,    22,    21,    14,    14,    14,    14,    14,    21,    72
+       9,    22,     0,     8,     7,    14,     4,     5,    13,    13,
+       8,     9,    10,    11,    13,    13,    14,    15,    21,    17,
+      18,    19,    14,    21,     7,    17,     4,    25,    13,     7,
+       8,     9,    17,    11,    16,     3,    45,    20,    21,    48,
+      18,    13,    20,    21,     4,    23,    22,     4,     8,     9,
+      24,    11,     9,    13,    11,    13,     8,     9,    18,    11,
+      13,    18,    13,    13,    13,    21,    18,    21,    23,    13,
+      13,    13,    20,    13,    13,    13,    13,    13,    72,    20
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,    28,     0,     4,     5,     9,    10,    11,    12,    14,
-      15,    16,    18,    19,    20,    22,    26,    29,    30,    31,
-      32,    33,    34,    35,    36,    37,    38,    39,    40,    41,
-      23,    14,    14,     4,     7,     9,    21,    22,    24,    40,
-      17,    15,    18,     4,     9,    14,    40,     3,    14,    23,
-      25,    14,    14,     9,    14,    14,    14,    18,     9,    40,
-       4,    40,    14,    14,     7,    21,    22,    42,    22,    22,
-      24,    21,    14,    14,    14,    14,    14,    14,    22,    42,
-      21,    14,    14
+       0,    27,     0,     4,     5,     8,     9,    10,    11,    13,
+      14,    15,    17,    18,    19,    21,    25,    28,    29,    30,
+      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
+      22,    13,    13,     4,     7,     8,    20,    21,    23,    39,
+      16,    14,    17,     4,     8,    13,    39,     3,    13,    22,
+      24,    13,    13,     8,    13,    13,    13,    17,     8,    39,
+       4,    39,    13,    13,     7,    20,    21,    41,    21,    21,
+      23,    20,    13,    13,    13,    13,    13,    13,    21,    41,
+      20,    13,    13
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -790,7 +808,7 @@ do								\
     }								\
   else								\
     {								\
-      yyerror (YY_("syntax error: cannot back up")); \
+      yyerror (&yylloc, info, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -845,9 +863,9 @@ while (YYID (0))
 /* YYLEX -- calling `yylex' with the right arguments.  */
 
 #ifdef YYLEX_PARAM
-# define YYLEX yylex (YYLEX_PARAM)
+# define YYLEX yylex (&yylval, &yylloc, YYLEX_PARAM)
 #else
-# define YYLEX yylex ()
+# define YYLEX yylex (&yylval, &yylloc, info)
 #endif
 
 /* Enable debugging if requested.  */
@@ -870,7 +888,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value); \
+		  Type, Value, Location, info); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -884,17 +902,21 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, DateInfo* info)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, info)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
+    YYLTYPE const * const yylocationp;
+    DateInfo* info;
 #endif
 {
   if (!yyvaluep)
     return;
+  YYUSE (yylocationp);
+  YYUSE (info);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -916,13 +938,15 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, DateInfo* info)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep)
+yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, info)
     FILE *yyoutput;
     int yytype;
     YYSTYPE const * const yyvaluep;
+    YYLTYPE const * const yylocationp;
+    DateInfo* info;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -930,7 +954,9 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
   else
     YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
+  YY_LOCATION_PRINT (yyoutput, *yylocationp);
+  YYFPRINTF (yyoutput, ": ");
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, info);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -970,12 +996,14 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, DateInfo* info)
 #else
 static void
-yy_reduce_print (yyvsp, yyrule)
+yy_reduce_print (yyvsp, yylsp, yyrule, info)
     YYSTYPE *yyvsp;
+    YYLTYPE *yylsp;
     int yyrule;
+    DateInfo* info;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -989,7 +1017,7 @@ yy_reduce_print (yyvsp, yyrule)
       fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       		       );
+		       , &(yylsp[(yyi + 1) - (yynrhs)])		       , info);
       fprintf (stderr, "\n");
     }
 }
@@ -997,7 +1025,7 @@ yy_reduce_print (yyvsp, yyrule)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, Rule); \
+    yy_reduce_print (yyvsp, yylsp, Rule, info); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1248,16 +1276,20 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp, DateInfo* info)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep)
+yydestruct (yymsg, yytype, yyvaluep, yylocationp, info)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
+    YYLTYPE *yylocationp;
+    DateInfo* info;
 #endif
 {
   YYUSE (yyvaluep);
+  YYUSE (yylocationp);
+  YYUSE (info);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1282,7 +1314,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (void);
+int yyparse (DateInfo* info);
 #else
 int yyparse ();
 #endif
@@ -1290,14 +1322,6 @@ int yyparse ();
 
 
 
-/* The look-ahead symbol.  */
-int yychar;
-
-/* The semantic value of the look-ahead symbol.  */
-YYSTYPE yylval;
-
-/* Number of syntax errors so far.  */
-int yynerrs;
 
 
 
@@ -1319,15 +1343,25 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (void)
+yyparse (DateInfo* info)
 #else
 int
-yyparse ()
-
+yyparse (info)
+    DateInfo* info;
 #endif
 #endif
 {
-  
+  /* The look-ahead symbol.  */
+int yychar;
+
+/* The semantic value of the look-ahead symbol.  */
+YYSTYPE yylval;
+
+/* Number of syntax errors so far.  */
+int yynerrs;
+/* Location data for the look-ahead symbol.  */
+YYLTYPE yylloc;
+
   int yystate;
   int yyn;
   int yyresult;
@@ -1360,16 +1394,21 @@ yyparse ()
   YYSTYPE *yyvs = yyvsa;
   YYSTYPE *yyvsp;
 
+  /* The location stack.  */
+  YYLTYPE yylsa[YYINITDEPTH];
+  YYLTYPE *yyls = yylsa;
+  YYLTYPE *yylsp;
+  /* The locations where the error started and ended.  */
+  YYLTYPE yyerror_range[2];
 
-
-#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
 
   YYSIZE_T yystacksize = YYINITDEPTH;
 
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
-
+  YYLTYPE yyloc;
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
@@ -1389,6 +1428,12 @@ yyparse ()
 
   yyssp = yyss;
   yyvsp = yyvs;
+  yylsp = yyls;
+#if YYLTYPE_IS_TRIVIAL
+  /* Initialize the default location before parsing starts.  */
+  yylloc.first_line   = yylloc.last_line   = 1;
+  yylloc.first_column = yylloc.last_column = 0;
+#endif
 
   goto yysetstate;
 
@@ -1415,7 +1460,7 @@ yyparse ()
 	   memory.  */
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
-
+	YYLTYPE *yyls1 = yyls;
 
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
@@ -1424,9 +1469,9 @@ yyparse ()
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
-
+		    &yyls1, yysize * sizeof (*yylsp),
 		    &yystacksize);
-
+	yyls = yyls1;
 	yyss = yyss1;
 	yyvs = yyvs1;
       }
@@ -1449,7 +1494,7 @@ yyparse ()
 	  goto yyexhaustedlab;
 	YYSTACK_RELOCATE (yyss);
 	YYSTACK_RELOCATE (yyvs);
-
+	YYSTACK_RELOCATE (yyls);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -1459,7 +1504,7 @@ yyparse ()
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
-
+      yylsp = yyls + yysize - 1;
 
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
@@ -1536,7 +1581,7 @@ yybackup:
 
   yystate = yyn;
   *++yyvsp = yylval;
-
+  *++yylsp = yylloc;
   goto yynewstate;
 
 
@@ -1567,7 +1612,8 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-
+  /* Default location.  */
+  YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
@@ -2034,7 +2080,7 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
-
+  *++yylsp = yyloc;
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -2060,7 +2106,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (YY_("syntax error"));
+      yyerror (&yylloc, info, YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
@@ -2084,11 +2130,11 @@ yyerrlab:
 	if (0 < yysize && yysize <= yymsg_alloc)
 	  {
 	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (yymsg);
+	    yyerror (&yylloc, info, yymsg);
 	  }
 	else
 	  {
-	    yyerror (YY_("syntax error"));
+	    yyerror (&yylloc, info, YY_("syntax error"));
 	    if (yysize != 0)
 	      goto yyexhaustedlab;
 	  }
@@ -2096,7 +2142,7 @@ yyerrlab:
 #endif
     }
 
-
+  yyerror_range[0] = yylloc;
 
   if (yyerrstatus == 3)
     {
@@ -2112,7 +2158,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval);
+		      yytoken, &yylval, &yylloc, info);
 	  yychar = YYEMPTY;
 	}
     }
@@ -2133,6 +2179,7 @@ yyerrorlab:
   if (/*CONSTCOND*/ 0)
      goto yyerrorlab;
 
+  yyerror_range[0] = yylsp[1-yylen];
   /* Do not reclaim the symbols of the rule which action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
@@ -2166,9 +2213,9 @@ yyerrlab1:
       if (yyssp == yyss)
 	YYABORT;
 
-
+      yyerror_range[0] = *yylsp;
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp);
+		  yystos[yystate], yyvsp, yylsp, info);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2179,6 +2226,11 @@ yyerrlab1:
 
   *++yyvsp = yylval;
 
+  yyerror_range[1] = yylloc;
+  /* Using YYLLOC is tempting, but would change the location of
+     the look-ahead.  YYLOC is available though.  */
+  YYLLOC_DEFAULT (yyloc, (yyerror_range - 1), 2);
+  *++yylsp = yyloc;
 
   /* Shift the error token.  */
   YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
@@ -2206,7 +2258,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (YY_("memory exhausted"));
+  yyerror (&yylloc, info, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -2214,7 +2266,7 @@ yyexhaustedlab:
 yyreturn:
   if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval);
+		 yytoken, &yylval, &yylloc, info);
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
@@ -2222,7 +2274,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp);
+		  yystos[*yyssp], yyvsp, yylsp, info);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -2451,8 +2503,25 @@ static TABLE	MilitaryTable[] = {
 
 static void
 TclDateerror(
-    char *s)
+    YYLTYPE* location,
+    DateInfo* infoPtr,
+    const char *s)
 {
+    Tcl_Obj* t;
+    Tcl_AppendToObj(infoPtr->messages, infoPtr->separatrix, -1);
+    Tcl_AppendToObj(infoPtr->messages, s, -1);
+    Tcl_AppendToObj(infoPtr->messages, " (characters ", -1);
+    t = Tcl_NewIntObj(location->first_column);
+    Tcl_IncrRefCount(t);
+    Tcl_AppendObjToObj(infoPtr->messages, t);
+    Tcl_DecrRefCount(t);
+    Tcl_AppendToObj(infoPtr->messages, "-", -1);
+    t = Tcl_NewIntObj(location->last_column);
+    Tcl_IncrRefCount(t);
+    Tcl_AppendObjToObj(infoPtr->messages, t);
+    Tcl_DecrRefCount(t);
+    Tcl_AppendToObj(infoPtr->messages, ")", -1);
+    infoPtr->separatrix = "\n";
 }
 
 static time_t
@@ -2487,6 +2556,7 @@ ToSeconds(
 
 static int
 LookupWord(
+    YYSTYPE* yylvalPtr,
     char *buff)
 {
     register char *p;
@@ -2501,11 +2571,11 @@ LookupWord(
     Tcl_UtfToLower(buff);
 
     if (strcmp(buff, "am") == 0 || strcmp(buff, "a.m.") == 0) {
-	yylval.Meridian = MERam;
+	yylvalPtr->Meridian = MERam;
 	return tMERIDIAN;
     }
     if (strcmp(buff, "pm") == 0 || strcmp(buff, "p.m.") == 0) {
-	yylval.Meridian = MERpm;
+	yylvalPtr->Meridian = MERpm;
 	return tMERIDIAN;
     }
 
@@ -2525,25 +2595,25 @@ LookupWord(
     for (tp = MonthDayTable; tp->name; tp++) {
 	if (abbrev) {
 	    if (strncmp(buff, tp->name, 3) == 0) {
-		yylval.Number = tp->value;
+		yylvalPtr->Number = tp->value;
 		return tp->type;
 	    }
 	} else if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylvalPtr->Number = tp->value;
 	    return tp->type;
 	}
     }
 
     for (tp = TimezoneTable; tp->name; tp++) {
 	if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylvalPtr->Number = tp->value;
 	    return tp->type;
 	}
     }
 
     for (tp = UnitsTable; tp->name; tp++) {
 	if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylvalPtr->Number = tp->value;
 	    return tp->type;
 	}
     }
@@ -2557,7 +2627,7 @@ LookupWord(
 	buff[i] = '\0';
 	for (tp = UnitsTable; tp->name; tp++) {
 	    if (strcmp(buff, tp->name) == 0) {
-		yylval.Number = tp->value;
+		yylvalPtr->Number = tp->value;
 		return tp->type;
 	    }
 	}
@@ -2565,7 +2635,7 @@ LookupWord(
 
     for (tp = OtherTable; tp->name; tp++) {
 	if (strcmp(buff, tp->name) == 0) {
-	    yylval.Number = tp->value;
+	    yylvalPtr->Number = tp->value;
 	    return tp->type;
 	}
     }
@@ -2578,7 +2648,7 @@ LookupWord(
 	    && isalpha(UCHAR(*buff))) {			/* INTL: ISO only */
 	for (tp = MilitaryTable; tp->name; tp++) {
 	    if (strcmp(buff, tp->name) == 0) {
-		yylval.Number = tp->value;
+		yylvalPtr->Number = tp->value;
 		return tp->type;
 	    }
 	}
@@ -2599,7 +2669,7 @@ LookupWord(
     if (i) {
 	for (tp = TimezoneTable; tp->name; tp++) {
 	    if (strcmp(buff, tp->name) == 0) {
-		yylval.Number = tp->value;
+		yylvalPtr->Number = tp->value;
 		return tp->type;
 	    }
 	}
@@ -2610,13 +2680,16 @@ LookupWord(
 
 static int
 TclDatelex(
-    void *info)
+    YYSTYPE* yylvalPtr,
+    YYLTYPE* location,
+    DateInfo *info)
 {
     register char c;
     register char *p;
     char buff[20];
     int Count;
 
+    location->first_column = yyInput - info->dateStart;
     for ( ; ; ) {
 	while (isspace(UCHAR(*yyInput))) {
 	    yyInput++;
@@ -2628,9 +2701,9 @@ TclDatelex(
 	     */
 
 	    Count = 0;
-	    for (yylval.Number = 0;
+	    for (yylvalPtr->Number = 0;
 		    isdigit(UCHAR(c = *yyInput++)); ) {	  /* INTL: digit */
-		yylval.Number = 10 * yylval.Number + c - '0';
+		yylvalPtr->Number = 10 * yylvalPtr->Number + c - '0';
 		Count++;
 	    }
 	    yyInput--;
@@ -2641,8 +2714,10 @@ TclDatelex(
 	     */
 
 	    if (Count >= 6) {
+		location->last_column = yyInput - info->dateStart - 1;
 		return tISOBASE;
 	    } else {
+		location->last_column = yyInput - info->dateStart - 1;
 		return tUNUMBER;
 	    }
 	}
@@ -2655,15 +2730,18 @@ TclDatelex(
 	    }
 	    *p = '\0';
 	    yyInput--;
-	    return LookupWord(buff);
+	    location->last_column = yyInput - info->dateStart - 1;
+	    return LookupWord(yylvalPtr, buff);
 	}
 	if (c != '(') {
+	    location->last_column = yyInput - info->dateStart;
 	    return *yyInput++;
 	}
 	Count = 0;
 	do {
 	    c = *yyInput++;
 	    if (c == '\0') {
+		location->last_column = yyInput - info->dateStart - 1;
 		return c;
 	    } else if (c == '(') {
 		Count++;
@@ -2684,7 +2762,8 @@ TclClockOldscanObjCmd(
     Tcl_Obj *result, *resultElement;
     int yr, mo, da;
     DateInfo dateInfo;
-    void *info = (void *) &dateInfo;
+    DateInfo* info = &dateInfo;
+    int status;
 
     if (objc != 5) {
 	Tcl_WrongNumArgs(interp, 1, objv,
@@ -2693,6 +2772,7 @@ TclClockOldscanObjCmd(
     }
 
     yyInput = Tcl_GetString( objv[1] );
+    dateInfo.dateStart = yyInput;
 
     yyHaveDate = 0;
     if (Tcl_GetIntFromObj(interp, objv[2], &yr) != TCL_OK
@@ -2717,10 +2797,28 @@ TclClockOldscanObjCmd(
     yyHaveRel = 0;
     yyRelMonth = 0; yyRelDay = 0; yyRelSeconds = 0; yyRelPointer = NULL;
 
-    if (yyparse(info)) {
-	Tcl_SetObjResult(interp, Tcl_NewStringObj("syntax error", -1));
+    dateInfo.messages = Tcl_NewObj();
+    dateInfo.separatrix = "";
+    Tcl_IncrRefCount(dateInfo.messages);
+
+    status = yyparse(&dateInfo);
+    if (status == 1) {
+	Tcl_SetObjResult(interp, dateInfo.messages);
+	Tcl_DecrRefCount(dateInfo.messages);
+	return TCL_ERROR;
+    } else if (status == 2) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("memory exhausted", -1));
+	Tcl_DecrRefCount(dateInfo.messages);
+	return TCL_ERROR;
+    } else if (status != 0) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("Unknown status returned "
+						  "from date parser. Please "
+						  "report this error as a "
+						  "bug in Tcl.", -1));
+	Tcl_DecrRefCount(dateInfo.messages);
 	return TCL_ERROR;
     }
+    Tcl_DecrRefCount(dateInfo.messages);
 
     if (yyHaveDate > 1) {
 	Tcl_SetObjResult(interp,

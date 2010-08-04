@@ -993,12 +993,14 @@ TeststringobjCmd(
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int varIndex, option, i, length;
+    Tcl_UniChar *unicode;
 #define MAX_STRINGS 11
     char *index, *string, *strings[MAX_STRINGS+1];
     TestString *strPtr;
     static const char *options[] = {
 	"append", "appendstrings", "get", "get2", "length", "length2",
-	"set", "set2", "setlength", "ualloc", "getunicode", NULL
+	"set", "set2", "setlength", "ualloc", "getunicode",
+	"appendself", "appendself2", NULL
     };
 
     if (objc < 3) {
@@ -1165,6 +1167,68 @@ TeststringobjCmd(
 		goto wrongNumArgs;
 	    }
 	    Tcl_GetUnicodeFromObj(varPtr[varIndex], NULL);
+	    break;
+	case 11:			/* appendself */
+	    if (objc != 4) {
+		goto wrongNumArgs;
+	    }
+	    if (varPtr[varIndex] == NULL) {
+		SetVarToObj(varIndex, Tcl_NewObj());
+	    }
+
+	    /*
+	     * If the object bound to variable "varIndex" is shared, we must
+	     * "copy on write" and append to a copy of the object.
+	     */
+
+	    if (Tcl_IsShared(varPtr[varIndex])) {
+		SetVarToObj(varIndex, Tcl_DuplicateObj(varPtr[varIndex]));
+	    }
+
+	    string = Tcl_GetStringFromObj(varPtr[varIndex], &length);
+
+	    if (Tcl_GetIntFromObj(interp, objv[3], &i) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if ((i < 0) || (i > length)) {
+		Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			"index value out of range", -1));
+		return TCL_ERROR;
+	    }
+
+	    Tcl_AppendToObj(varPtr[varIndex], string + i, length - i);
+	    Tcl_SetObjResult(interp, varPtr[varIndex]);
+	    break;
+	case 12:			/* appendself2 */
+	    if (objc != 4) {
+		goto wrongNumArgs;
+	    }
+	    if (varPtr[varIndex] == NULL) {
+		SetVarToObj(varIndex, Tcl_NewObj());
+	    }
+
+	    /*
+	     * If the object bound to variable "varIndex" is shared, we must
+	     * "copy on write" and append to a copy of the object.
+	     */
+
+	    if (Tcl_IsShared(varPtr[varIndex])) {
+		SetVarToObj(varIndex, Tcl_DuplicateObj(varPtr[varIndex]));
+	    }
+
+	    unicode = Tcl_GetUnicodeFromObj(varPtr[varIndex], &length);
+
+	    if (Tcl_GetIntFromObj(interp, objv[3], &i) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if ((i < 0) || (i > length)) {
+		Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			"index value out of range", -1));
+		return TCL_ERROR;
+	    }
+
+	    Tcl_AppendUnicodeToObj(varPtr[varIndex], unicode + i, length - i);
+	    Tcl_SetObjResult(interp, varPtr[varIndex]);
 	    break;
     }
 

@@ -1050,13 +1050,17 @@ test reg-33.8 {Bug 505048} {
 test reg-33.9 {Bug 505048} {
     regexp -indices -inline {\A\s*[^b]*b} ab
 } {{0 1}}
-test reg-33.10 {Bug 840258} {
+test reg-33.10 {Bug 840258} -body {
     regsub {(^|\n)+\.*b} \n.b {} tmp
-} 1
-test reg-33.11 {Bug 840258} {
+} -cleanup {
+    unset tmp
+} -result 1
+test reg-33.11 {Bug 840258} -body {
     regsub {(^|[\n\r]+)\.*\?<.*?(\n|\r)+} \
 	    "TQ\r\n.?<5000267>Test already stopped\r\n" {} tmp
-} 1
+} -cleanup {
+    unset tmp
+} -result 1
 test reg-33.12 {Bug 1810264 - bad read} {
     regexp {\3161573148} {\3161573148}
 } 0
