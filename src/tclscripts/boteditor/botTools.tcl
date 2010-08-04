@@ -35,7 +35,8 @@
     incr panes
 
     itk_component add $name {
-	ttk::frame $itk_interior.$name
+	ttk::frame $itk_interior.$name \
+	    -padding 5
     } {}
 
     return $itk_component($name)
