@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2004-2010 United States Government as represented by
+# Copyright (c) 2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -90,52 +90,104 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(BRLCAD)
 
+# See HACKING for details on how to properly update the version
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR MAJOR_VERSION)
+STRING(STRIP ${MAJOR_VERSION} MAJOR_VERSION)
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR MINOR_VERSION)
+STRING(STRIP ${MINOR_VERSION} MINOR_VERSION)
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH PATCH_VERSION)
+STRING(STRIP ${PATCH_VERSION} PATCH_VERSION)
+
+SET(CAD_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
+SET(BRLCAD_VERSION "${CAD_VERSION}")
+
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
 SET(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
 SET(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}" ${CMAKE_MODULE_PATH})
 
-
-FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
-STRING(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
-FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_MINOR_VERSION)
-STRING(STRIP ${BRLCAD_MINOR_VERSION} BRLCAD_MINOR_VERSION)
-FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
-STRING(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
-
-SET(BRLCAD_VERSION
-    "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
+# Save the current LC_ALL, LC_MESSAGES, and LANG environment variables and set them
+# to "C" so things like date output are as expected
+SET(_orig_lc_all      $ENV{LC_ALL})
+SET(_orig_lc_messages $ENV{LC_MESSAGES})
+SET(_orig_lang        $ENV{LANG})
+IF(_orig_lc_all)
+  SET(ENV{LC_ALL}      C)
+ENDIF(_orig_lc_all)
+IF(_orig_lc_messages)
+  SET(ENV{LC_MESSAGES} C)
+ENDIF(_orig_lc_messages)
+IF(_orig_lang)
+  SET(ENV{LANG}        C)
+ENDIF(_orig_lang)
 
 
 # Unfortunately, CMake doesn't give you variables with current day, month,
-# etc.  For Windows use d_rossberg's execute_process, which doesn't give individual
-# day, month, etc. values but does give us something for the banner. Otherwise,
+# etc.  For Windows use d_rossberg's execute_process approach, which doesn't give individual
+# day, month, etc. values but does give us something we can work with. Otherwise,
 # use the date command.
+
+# TODO - figure out REGEX to get desired variables out of win32 string 
+
 IF(WIN32)
    execute_process(COMMAND cmd /c date /t OUTPUT_VARIABLE CONFIG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
+   execute_process(COMMAND cmd /c time /t OUTPUT_VARIABLE CONFIG_TS OUTPUT_STRIP_TRAILING_WHITESPACE)
+# SET(TMPSTR "Wed 08/04/2010")
+# SET(TMPSTR2 "06:57 PM")
+ #  STRING(REGEX REPLACE ...
 ELSE(WIN32)
    EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY) 
    EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH) 
    EXEC_PROGRAM(date ARGS +%Y OUTPUT_VARIABLE CONFIG_YEAR)
    SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
+   # try RFC 2822 for timestamp
+   EXEC_PROGRAM(date ARGS -R 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
+   IF (NOT CONFIG_TS) EXEC_PROGRAM(date ARGS +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null OUTPUT_VARIABLE CONFIG_TS) ENDIF(NOT CONFIG_TS)
+   IF (NOT CONFIG_TS) EXEC_PROGRAM(date ARGS OUTPUT_VARIABLE CONFIG_TS) ENDIF(NOT CONFIG_TS)
 ENDIF(WIN32)
 
-# CMake doesn't seem to allow for the fancy separator logic to generate "*"
-# strings of the right length, so use extra lines around the title
-MESSAGE(STATUS)
-MESSAGE(STATUS)
-MESSAGE(STATUS "*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***")
-MESSAGE(STATUS)
-MESSAGE(STATUS)
+# Set build type here?  May be useful for picking intelligent defaults
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+set(CMAKE_BUILD_TYPE "Debug" CACHE STRING
+	"Set build type" FORCE)
 
-# For NFS volumes, to ensure proper file creation
+
+
+# print out the title with a pretty box computed to wrap around
+SET(CONFIG_TITLE "*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***")
+STRING(LENGTH ${CONFIG_TITLE_LENGTH} CONFIG_TITLE_LENGTH)
+SET(SEPARATOR_STRING "*")
+STRING(LENGTH ${SEPARATOR_STRING} SEPARATOR_STRING_LENGTH)
+WHILE(CONFIG_TITLE_LENGTH > SEPARATOR_STRING_LENGTH)
+   SET(SEPARATOR_STRING "${SEPARATOR_STRING}*")
+   STRING(LENGTH ${SEPARATOR_STRING} SEPARATOR_STRING_LENGTH)
+ENDWHILE(CONFIG_TITLE_LENGTH >  SEPARATOR_STRING_LENGTH)
+MESSAGE(STATUS "${SEPARATOR_STRING}")
+MESSAGE(STATUS "${CONFIG_TITLE}")
+MESSAGE(STATUS "${SEPARATOR_STRING}")
+
+# For NFS volumes, to ensure proper file creation.
 IF(NOT WIN32)
   EXEC_PROGRAM(umask ARGS 022)
 ENDIF(NOT WIN32)
 
-#-----------------------------------------------------------------------------
-# Load some macros.
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ThirdParty.cmake)
+
+# The location in which to install BRLCAD.  What is this for Windows?
+# This would be a good setting to conditionalize based on a flag for debug
+# vs. release vs. ?? - set different defaults accordingly.
+IF(NOT BRLCAD_PREFIX)
+  IF(NOT WIN32)
+#    SET(BRLCAD_PREFIX "/usr/brlcad/brlcad-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
+#    SET(BRLCAD_PREFIX "${BRLCAD_SOURCE_DIR}/../brlcad-install")
+    SET(BRLCAD_PREFIX "/usr/brlcad")
+  ENDIF(NOT WIN32)
+ENDIF(NOT BRLCAD_PREFIX)
+
+SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "prefix" FORCE)
+
+# TODO - need to replace the functionality of BC_BRLCAD_ROOT and BC_BRLCAD_DATA here,
+# if it's not already being handled - the data directory at least is likely to need some help
 
 #-----------------------------------------------------------------------------
 # Output directories.
@@ -150,33 +202,23 @@ SET(BRLCAD_EXECUTABLE_DIR ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
 
 #-----------------------------------------------------------------------------
 # Configure install locations.  This allows parent projects to modify
-# the install location.  Specify a BRLCAD_INSTALL_ROOT which prefixes
+# the install location.  Specify a BRLCAD_PREFIX which prefixes
 # all install targets.
-
-# The location in which to install BRLCAD.
-IF(NOT BRLCAD_INSTALL_ROOT)
-  IF(NOT WIN32)
-    SET(BRLCAD_INSTALL_ROOT /usr/brlcad/brlcad-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION})
-  ENDIF(NOT WIN32)
-ENDIF(NOT BRLCAD_INSTALL_ROOT)
-
-SET(CMAKE_INSTALL_PREFIX "${BRLCAD_INSTALL_ROOT}" CACHE STRING "prefix" FORCE)
-
 # The location in which to install BRLCAD executables.
 IF(NOT BRLCAD_INSTALL_BIN_DIR)
-  SET(BRLCAD_INSTALL_BIN_DIR ${BRLCAD_INSTALL_ROOT}/bin)
+  SET(BRLCAD_INSTALL_BIN_DIR ${BRLCAD_PREFIX}/bin)
 ENDIF(NOT BRLCAD_INSTALL_BIN_DIR)
 
 # The location in which to install BRLCAD header files.
 IF(NOT BRLCAD_INSTALL_INCLUDE_DIR)
   SET(BRLCAD_INSTALL_INCLUDE_DIR
-    ${BRLCAD_INSTALL_ROOT}/include)
+    ${BRLCAD_PREFIX}/include)
 ENDIF(NOT BRLCAD_INSTALL_INCLUDE_DIR)
 
 # The location in which to install BRL-CAD libraries.
 IF(NOT BRLCAD_INSTALL_LIB_DIR)
   SET(BRLCAD_INSTALL_LIB_DIR 
-    ${BRLCAD_INSTALL_ROOT}/lib)
+    ${BRLCAD_PREFIX}/lib)
 ENDIF(NOT BRLCAD_INSTALL_LIB_DIR)
 
 # The location in which to install CMake scripts for packaging BRLCAD.
@@ -184,29 +226,50 @@ IF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
   SET(BRLCAD_INSTALL_PACKAGE_DIR ${BRLCAD_INSTALL_LIB_DIR})
 ENDIF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
 
-# The location in which to install BRL-CAD documentation files that
-# are not automatically generated.
+# The location in which to install BRL-CAD documentation files 
 IF(NOT BRLCAD_INSTALL_DOC_DIR)
-  SET(BRLCAD_INSTALL_DOC_DIR ${BRLCAD_INSTALL_PACKAGE_DIR}/doc)
+  SET(BRLCAD_INSTALL_DOC_DIR ${BRLCAD_PREFIX}/share/brlcad/doc)
 ENDIF(NOT BRLCAD_INSTALL_DOC_DIR)
 
 # The location in which to install BRL-CAD doxygen documentation helper
 # files.
 IF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
-  SET(BRLCAD_INSTALL_DOXYGEN_DIR ${BRLCAD_INSTALL_PACKAGE_DIR}/doc/doxygen)
+  SET(BRLCAD_INSTALL_DOXYGEN_DIR ${BRLCAD_INSTALL_DOC_DIR}/doxygen)
 ENDIF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 
-#---------------------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine statements,
-# which will in turn need to generate a brlcad_conf.h file.  In autotools this
+# which will in turn be used to generate a brlcad_conf.h file.  In autotools this
 # process is handled by autoheader - in the case of CMake we wrap the CHECK_*
 # functions and the creation of the entry in the brlcad_config.h.in file into
 # one step via a macro.  To run this macro, the file must first be present, which
 # we take care of here:
 
-SET(CONFIG_H_FILE "${BRLCAD_SOURCE_DIR}/include/brlcad_config.h.in")
+SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
+
+#--------------------------------------------------------------------------------
+# Now we define the various options for BRL-CAD things the user can enable and
+# disable.  As much as possible, autodetect sane default options.
+
+# Sometimes an option no longer makes sense in light of other options,
+# or a new option becomes available when others are enabled - load a
+# macro to help with those cases.
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Dependent_Options.cmake)
+
+
+OPTION(BRLCAD-BUILD_BENCHMARK_ONLY "Only build benchmark." OFF)
+MARK_AS_ADVANCED(BRLCAD-BUILD_BENCHMARK_ONLY)
+OPTION(BRLCAD-BUILD_RTSERVER_ONLY "Only build rtserver." OFF)
+MARK_AS_ADVANCED(BRLCAD-BUILD_RTSERVER_ONLY)
+
+# This is the top level control property for handling library building 
+set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
+	"Yes" "No" "Auto")
+set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
+	"Set build type" FORCE)
+
+# 
+
 
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
 BRLCAD_FUNCTION_EXISTS(strchr HAVE_STRCHR)
@@ -220,7 +283,6 @@ BRLCAD_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
 
-configure_file(${CONFIG_H_FILE} ${BRLCAD_SOURCE_DIR}/include/brlcad_config.h)
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/COUNT "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/DATE "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "1")
@@ -228,11 +290,13 @@ FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
 
 
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-set(CMAKE_BUILD_TYPE "Debug" CACHE STRING
-	"Set build type" FORCE)
+# Now that all the tests are done, configure the brlcad_config.h file:
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
+configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
+#-----------------------------------------------------------------------------
+# Load some CMake macros to handle the special case of third party libraries.
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ThirdParty.cmake)
 
 
 #---------------------------------------------------------------------------------
@@ -333,7 +397,7 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 #ExternalProject_Add(
 #	tk
 #	DOWNLOAD_COMMAND ""
-#	PREFIX "${BRLCAD_INSTALL_ROOT}"
+#	PREFIX "${BRLCAD_PREFIX}"
 #	SOURCE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tk"
 #	CONFIGURE_COMMAND
 #	autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tk/unix -o ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure --with-tk=${BRLCAD_SOURCE_DIR}/src/other/tk/unix 
