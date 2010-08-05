@@ -260,11 +260,15 @@ FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
 # macro to help with those cases.
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Dependent_Options.cmake)
 
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
+
 
 OPTION(BRLCAD-BUILD_BENCHMARK_ONLY "Only build benchmark." OFF)
 MARK_AS_ADVANCED(BRLCAD-BUILD_BENCHMARK_ONLY)
 OPTION(BRLCAD-BUILD_RTSERVER_ONLY "Only build rtserver." OFF)
 MARK_AS_ADVANCED(BRLCAD-BUILD_RTSERVER_ONLY)
+
+INCLUDE (CheckLibraryExists)
 
 # Need to work on this - CMake can detect flex and bison, but apparently not
 # generic lex/yacc - need to update the Wireshark files to be a a graceful
@@ -279,6 +283,24 @@ if (NOT BISON_FOUND)
     INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 endif (NOT BISON_FOUND)
 
+# First, use CMake techniques for finding libraries that BRL-CAD
+# doesn't supply locally
+find_package(Threads)
+
+# This may be overkill - does CHECK_LIBRARY_EXISTS usably set
+# anything for us?
+set(LIBBSD "")
+CHECK_LIBRARY_EXISTS(bsd daemon "" HAVE_BSDDAEMON)
+if (NOT HAVE_BSDDAEMON)
+   CHECK_LIBRARY_EXISTS(c daemon "" HAVE_CDAEMON)
+endif (NOT HAVE_BSDDAEMON)
+if (HAVE_BSDDAEMON)
+   set(LIBBSD "-lbsd")
+endif (HAVE_BSDDAEMON)
+if (HAVE_CDAEMON)
+   set(LIBBSD "-c")
+endif (HAVE_CDAEMON)
+
 
 # This is the top level control property for handling library building 
 set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
@@ -286,7 +308,6 @@ set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
 set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
 	"Yes" "No" "Auto")
 
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
 BRLCAD_FUNCTION_EXISTS(strchr HAVE_STRCHR)
 BRLCAD_FUNCTION_EXISTS(kill HAVE_KILL)
