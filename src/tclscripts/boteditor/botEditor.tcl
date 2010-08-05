@@ -28,9 +28,12 @@ if {[catch {
 	method revert {}
 	method accept {}
 	method reject {}
+
+	proc localizeDialog {d}
     }    
 
     private {
+	variable original ""
 	method showUnsaved {show}
     }
 }
@@ -48,10 +51,15 @@ if {[catch {
 #
 ::itcl::body BotEditor::load {bot} {
 
+    set original $bot
+
     # show name of bot being edited
     $this configure -title "[eval $this cget -title] - $bot"
 
-    # create frames for organization
+    # handle window close
+#    wm protocol $itk_interior WM_DELETE_WINDOW "$this reject"
+
+    # create layout frames
     itk_component add histFrame {
 	ttk::frame $itk_interior.historyFrame \
 	    -padding 7
@@ -141,18 +149,113 @@ if {[catch {
 
 # apply changes to original
 ::itcl::body BotEditor::accept {} {
-    # close window
-    delete object $this
+
+    # get confirmation
+    itk_component add confirm {
+	ConfirmationDialog $itk_interior.confirmDialog \
+	    -title {Confirm Accept} \
+	    -text "This operation will overwrite $original in the current database.\n\
+		Are you sure you want to save your changes and exit?" \
+	    -yescommand "delete object $this"
+    } {}
+
+    # place dialog
+    localizeDialog $itk_component(confirm)
 }
 
 # discard all changes
 ::itcl::body BotEditor::reject {} {
-    # close window
-    delete object $this
 
-    # TODO - modal confirmation dialog
+    # get confirmation
+    itk_component add confirm {
+	ConfirmationDialog $itk_interior.confirmDialog \
+	    -title {Confirm Reject} \
+	    -text {Are you sure you want to discard all changes and exit?} \
+	    -yescommand "delete object $this"
+    } {}
+
+    # place dialog
+    localizeDialog $itk_component(confirm)
 }
 
+# place dialog near its parent
+::itcl::body BotEditor::localizeDialog {d} {
+
+    update
+    set p [winfo parent $d]
+
+    # calculate offset
+    set x [winfo x $p]
+    set y [winfo y $p]
+    set x [expr "$x + 50"]
+    set y [expr "$y + 50"]
+
+    # place dialog
+    set width [winfo reqwidth $d]
+    set height [winfo reqheight $d]
+    wm geometry $d ${width}x${height}+${x}+$y
+}
+
+# Confirmation Dialog helper class
+#
+::itcl::class ConfirmationDialog {
+    inherit itk::Toplevel
+
+    constructor {args} {
+	eval itk_initialize $args
+
+	# disable resize
+	wm resizable $itk_interior 0 0
+
+	# make container frame
+	itk_component add main {
+	    ttk::frame $itk_interior.confirmationDialogFrame \
+		-padding 7
+	} {}
+
+	# make layout frames
+	itk_component add info {
+	    ttk::frame $itk_interior.infoFrame \
+		-padding 7
+	} {}
+	itk_component add act {
+	    ttk::frame $itk_interior.actionsFrame \
+		-padding 7
+	} {}
+
+	# add components
+	itk_component add msg {
+	    ttk::label $itk_component(info).message \
+		-text $itk_option(-text)
+	} {}
+	itk_component add yes {
+	    ttk::button $itk_component(act).confirm \
+		-text Yes \
+		-command "$itk_option(-yescommand)"
+	} {}
+	itk_component add no {
+	    ttk::button $itk_component(act).deny \
+		-text No \
+		-command "delete object $this"
+	} {}
+
+	# display frames
+	pack $itk_component(main) -expand yes -fill both
+	pack $itk_component(act) -side bottom -fill x
+	pack $itk_component(info) -expand yes -fill both
+
+	# display components
+	pack $itk_component(msg) -expand yes
+	pack $itk_component(no) -side right
+	pack $itk_component(yes) -side right -padx 5
+    }
+
+    itk_option define -text text Text "" {}
+    itk_option define -yescommand yesCommand Command "" {}
+}
+
+# Edit Pane helper class to wrap edit widgets
+#
 ::itcl::class EditPane {
     inherit itk::Widget
 
