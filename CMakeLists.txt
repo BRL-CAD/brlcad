@@ -286,6 +286,9 @@ endif (NOT BISON_FOUND)
 # First, use CMake techniques for finding libraries that BRL-CAD
 # doesn't supply locally
 find_package(Threads)
+find_package(Curses)
+find_package(X11)
+find_package(OpenGL)
 
 # This may be overkill - does CHECK_LIBRARY_EXISTS usably set
 # anything for us?
@@ -301,6 +304,42 @@ if (HAVE_CDAEMON)
    set(LIBBSD "-c")
 endif (HAVE_CDAEMON)
 
+# rework this - check maybe should come after library
+# is successfully found?
+if(NOT WIN32)
+  CHECK_LIBRARY_EXISTS(m cos "" HAVE_MLIBRARY)
+  if(HAVE_MLIBRARY)
+     find_library(M_LIBRARY
+       NAMES m
+       PATHS /usr/lib /usr/local/lib
+     )
+  endif()
+else()
+  # not needed on windows
+  set(M_LIBRARY "")
+endif()
+
+
+# once we decide how to handle the bsd daemon example, do the
+# same thing for all of these:
+CHECK_LIBRARY_EXISTS(socket socket "" HAVE_SOCKETLIB)
+CHECK_LIBRARY_EXISTS(nsl gethostbyaddr "" HAVE_NSLIB)
+CHECK_LIBRARY_EXISTS(network socket "" HAVE_NETWORKSOCKETLIB)
+CHECK_LIBRARY_EXISTS(c malloc "" HAVE_MALLOC_LIB)
+
+
+# Only look for frameworks if we're on an Apple machine - start
+# with the example from the cmake wiki, but will very likely need
+# fleshing out
+if (APPLE)
+   INCLUDE_DIRECTORIES ( /Developer/Headers/FlatCarbon )
+   FIND_LIBRARY(APP_SERVICES_LIBRARY ApplicationServices )
+   FIND_LIBRARY(CARBON_LIBRARY Carbon)
+   FIND_LIBRARY(JAVAVM_LIBRARY JavaVM)
+   MARK_AS_ADVANCED (CARBON_LIBRARY
+                     APP_SERVICES_LIBRARY)
+   SET(APPLE_LIBS ${CARBON_LIBRARY} ${JAVAVM_LIBRARY} ${APP_SERVICES_LIBRARY})
+endif (APPLE)
 
 # This is the top level control property for handling library building 
 set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
