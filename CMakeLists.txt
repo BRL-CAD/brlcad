@@ -266,9 +266,18 @@ MARK_AS_ADVANCED(BRLCAD-BUILD_BENCHMARK_ONLY)
 OPTION(BRLCAD-BUILD_RTSERVER_ONLY "Only build rtserver." OFF)
 MARK_AS_ADVANCED(BRLCAD-BUILD_RTSERVER_ONLY)
 
-
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
+# Need to work on this - CMake can detect flex and bison, but apparently not
+# generic lex/yacc - need to update the Wireshark files to be a a graceful
+# fallback to the FLEX/BISON logic, and (perhaps) wrap both in some way to
+# hide any differences from the build code?
+find_package(FLEX)
+find_package(BISON)
+if (NOT FLEX_FOUND)
+    INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
+endif (NOT FLEX_FOUND)
+if (NOT BISON_FOUND)
+    INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
+endif (NOT BISON_FOUND)
 
 
 # This is the top level control property for handling library building 
