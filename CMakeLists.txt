@@ -453,7 +453,7 @@ FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
 
 
 # Now that all the tests are done, configure the brlcad_config.h file:
-configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
+configure_file(${CONFIG_H_FILE} ${BRLCAD_SOURCE_DIR}/include/brlcad_config.h)
 
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
@@ -506,7 +506,8 @@ IF(BRLCAD_USE_SYSTEM_LIBS)
 ENDIF(BRLCAD_USE_SYSTEM_LIBS)
 IF(NOT BRLCAD_USE_SYSTEM_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
-   # BRL-CAD needs STDIO - turn it on
+   # BRL-CAD needs PNG's IO - turn it on (i.e. turn off the disabling flags)
+   SET(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
    SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
    # PNG_LIB_NAME doesn't automatically propogate to toplevel due to scoping of CMake variables - 
    # use get_directory_property to recover the value and place it in the CACHE

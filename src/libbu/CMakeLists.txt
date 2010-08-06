@@ -74,9 +74,10 @@ set(LIBBU_SOURCES
 )
 
 include_directories(
-    ../../include
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
     ${BRLCAD_PNG_INCLUDE_DIR}
-    ../other/libz
+    ${BRLCAD_ZLIB_INCLUDE_DIR}
     ../other/tcl/generic
 )
 
@@ -86,6 +87,7 @@ add_definitions(
 )
 
 add_library(bu ${LIBBU_SOURCES})
+target_link_libraries(bu ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY})
 
 set(HTESTER_SOURCES
     htester.c

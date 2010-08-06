@@ -41,3 +41,5 @@ add_definitions(
 )
 
 add_library(bn ${LIBBN_SOURCES})
+target_link_libraries(bn bu)
+
