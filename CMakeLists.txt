@@ -335,13 +335,8 @@ endif (NOT HAVE_CMALLOC_LIB)
 # with the example from the cmake wiki, but will very likely need
 # fleshing out
 if (APPLE)
-   INCLUDE_DIRECTORIES ( /Developer/Headers/FlatCarbon )
-   FIND_LIBRARY(APP_SERVICES_LIBRARY ApplicationServices )
-   FIND_LIBRARY(CARBON_LIBRARY Carbon)
-   FIND_LIBRARY(JAVAVM_LIBRARY JavaVM)
-   MARK_AS_ADVANCED (CARBON_LIBRARY
-                     APP_SERVICES_LIBRARY)
-   SET(APPLE_LIBS ${CARBON_LIBRARY} ${JAVAVM_LIBRARY} ${APP_SERVICES_LIBRARY})
+   INCLUDE(${BRLCAD_CMAKE_DIR}/FindCarbon.cmake)
+   INCLUDE(${BRLCAD_CMAKE_DIR}/FindCocoa.cmake)
 endif (APPLE)
 
 # This is the top level control property for handling library building 
