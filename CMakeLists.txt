@@ -325,7 +325,10 @@ endif()
 CHECK_LIBRARY_EXISTS(socket socket "" HAVE_SOCKETLIB)
 CHECK_LIBRARY_EXISTS(nsl gethostbyaddr "" HAVE_NSLIB)
 CHECK_LIBRARY_EXISTS(network socket "" HAVE_NETWORKSOCKETLIB)
-CHECK_LIBRARY_EXISTS(c malloc "" HAVE_MALLOC_LIB)
+CHECK_LIBRARY_EXISTS(c mallopt "" HAVE_CMALLOC_LIB)
+if (NOT HAVE_CMALLOC_LIB)
+   CHECK_LIBRARY_EXISTS(malloc mallopt "" HAVE_MALLOC_LIB)
+endif (NOT HAVE_CMALLOC_LIB)
 
 
 # Only look for frameworks if we're on an Apple machine - start
