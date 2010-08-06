@@ -288,7 +288,7 @@ endif (NOT BISON_FOUND)
 find_package(Threads)
 find_package(Curses)
 find_package(X11)
-find_package(OpenGL)
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
 
 # This may be overkill - does CHECK_LIBRARY_EXISTS usably set
 # anything for us?
