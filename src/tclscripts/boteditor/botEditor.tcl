@@ -19,10 +19,9 @@ if {[catch {
 ::itcl::class BotEditor {
     inherit ::itk::Toplevel
 
-    constructor {args} {}
+    constructor {bot args} {}
 
     public {
-	method load {bot}
 	method onChange {}
 	method apply {}
 	method revert {}
@@ -30,34 +29,39 @@ if {[catch {
 	method reject {}
 
 	proc localizeDialog {d}
+	proc focusOnEnter {d}
     }    
 
     private {
 	variable original ""
+	variable copy ""
 	method showUnsaved {show}
     }
-}
 
-# basic initialization - nothing can really be done until load
-#
-::itcl::body BotEditor::constructor {args} {
-    eval itk_initialize $args
-    
-    $this configure -title "BoT Editor"
+    itk_option define -prefix prefix Prefix "" {}
 }
 
 # open editor for bot named 'bot'
 # this bot is assumed to exist in the current database
 #
-::itcl::body BotEditor::load {bot} {
+::itcl::body BotEditor::constructor {bot args} {
 
-    set original $bot
+    eval itk_initialize $args
+
+    # use proper command context
+    set _ $itk_option(-prefix)
+
+    # remove path prefix from bot name
+    while {[regsub {.*/} $bot {} bot]} {}
 
     # show name of bot being edited
     $this configure -title "[eval $this cget -title] - $bot"
+    set statusLine "editing \"$bot\""
 
-    # handle window close
-#    wm protocol $itk_interior WM_DELETE_WINDOW "$this reject"
+    # make working copy
+    set original $bot
+    set copy $original.edit
+    $_ cp $original $copy
 
     # create layout frames
     itk_component add histFrame {
@@ -65,11 +69,15 @@ if {[catch {
 	    -padding 7
     } {}
     itk_component add eframe {
-	EditPane $itk_interior.editPane
+	EditPane $itk_interior.editPane $copy \
+	    -prefix $itk_option(-prefix)
     } {}
     itk_component add closeframe {
 	ttk::frame $itk_interior.closeFrame \
 	    -padding 7
+    } {}
+    itk_component add statusframe {
+	ttk::frame $itk_interior.statusFrame
     } {}
     
     # add widgets to history frame
@@ -96,10 +104,21 @@ if {[catch {
 	    -command "$this reject"
     } {}
 
+    # add widgets to status frame
+    itk_component add rule {
+	ttk::separator $itk_component(statusframe).separator \
+	    -orient horizontal
+    } {}
+    itk_component add status {
+	ttk::label $itk_component(statusframe).statusLabel \
+	    -text $statusLine
+    } {}
+
     # display main frames
-    grid $itk_component(histFrame) -row 0 -column 0 -sticky news
+#    grid $itk_component(histFrame) -row 0 -column 0 -sticky news
     grid $itk_component(eframe) -row 1 -column 0 -sticky news
     grid $itk_component(closeframe) -row 2 -column 0 -sticky news
+    grid $itk_component(statusframe) -row 3 -column 0 -sticky news
     grid rowconfigure $itk_interior 1 -weight 1
     grid columnconfigure $itk_interior 0 -weight 1
 
@@ -110,6 +129,10 @@ if {[catch {
     # display close frame components
     pack $itk_component(reject) -side right
     pack $itk_component(accept) -side right -padx 5
+
+    # display status frame components
+    pack $itk_component(rule) -expand yes -fill x
+    pack $itk_component(status) -expand yes -fill both
 }
 
 # give feedback on unsaved change
@@ -150,50 +173,64 @@ if {[catch {
 # apply changes to original
 ::itcl::body BotEditor::accept {} {
 
+    set _ $itk_option(-prefix)
+    set cmd "$_ kill $original; $_ mv $copy $original; delete object $this"
+
     # get confirmation
     itk_component add confirm {
 	ConfirmationDialog $itk_interior.confirmDialog \
 	    -title {Confirm Accept} \
-	    -text "This operation will overwrite $original in the current database.\n\
+	    -text "This operation will overwrite $original in the current database.\n\n\
 		Are you sure you want to save your changes and exit?" \
-	    -yescommand "delete object $this"
+	    -yescommand $cmd
     } {}
-
-    # place dialog
-    localizeDialog $itk_component(confirm)
 }
 
 # discard all changes
 ::itcl::body BotEditor::reject {} {
+
+    set _ $itk_option(-prefix)
+    set cmd "$_ kill $copy; delete object $this"
 
     # get confirmation
     itk_component add confirm {
 	ConfirmationDialog $itk_interior.confirmDialog \
 	    -title {Confirm Reject} \
 	    -text {Are you sure you want to discard all changes and exit?} \
-	    -yescommand "delete object $this"
+	    -yescommand $cmd
     } {}
-
-    # place dialog
-    localizeDialog $itk_component(confirm)
 }
 
-# place dialog near its parent
+# center dialog with respect to its parent
 ::itcl::body BotEditor::localizeDialog {d} {
 
-    update
+    # get parent geometry
     set p [winfo parent $d]
+    set pwidth [winfo width $p]
+    set pheight [winfo height $p]
+    set px [winfo x $p]
+    set py [winfo y $p]
 
-    # calculate offset
-    set x [winfo x $p]
-    set y [winfo y $p]
-    set x [expr "$x + 50"]
-    set y [expr "$y + 50"]
+    # first draw tiny at center
+    # (this minimizes the visual distraction when we redraw)
+    wm geometry $d 0x0+[expr "$pwidth / 2"]+[expr "$pheight / 2"]
+    update
 
-    # place dialog
+    # now that the window is drawn, we can get accurate
+    # values for the requested dimensions
     set width [winfo reqwidth $d]
     set height [winfo reqheight $d]
-    wm geometry $d ${width}x${height}+${x}+$y
+
+    # draw again, properly centered 
+    set x [expr "$px + ($pwidth - $width) / 2"]
+    set y [expr "$py + ($pheight - $height) / 2"]
+    wm geometry $d ${width}x${height}+${x}+${y}
+}
+
+# automatically focus window when mouse enters it
+::itcl::body BotEditor::focusOnEnter {d} {
+
+    bind $d <Enter> "focus $d"
 }
 
 # Confirmation Dialog helper class
@@ -203,9 +240,6 @@ if {[catch {
 
     constructor {args} {
 	eval itk_initialize $args
-
-	# disable resize
-	wm resizable $itk_interior 0 0
 
 	# make container frame
 	itk_component add main {
@@ -226,17 +260,18 @@ if {[catch {
 	# add components
 	itk_component add msg {
 	    ttk::label $itk_component(info).message \
-		-text $itk_option(-text)
+		-text $itk_option(-text) \
+		-wraplength 300 
 	} {}
 	itk_component add yes {
 	    ttk::button $itk_component(act).confirm \
 		-text Yes \
-		-command "$itk_option(-yescommand)"
+		-command "grab release $itk_interior; $itk_option(-yescommand)"
 	} {}
 	itk_component add no {
 	    ttk::button $itk_component(act).deny \
 		-text No \
-		-command "delete object $this"
+		-command "grab release $itk_interior; delete object $this"
 	} {}
 
 	# display frames
@@ -248,6 +283,17 @@ if {[catch {
 	pack $itk_component(msg) -expand yes
 	pack $itk_component(no) -side right
 	pack $itk_component(yes) -side right -padx 5
+
+
+	# make modal
+	grab $itk_interior
+
+	# disable resize
+	wm resizable $itk_interior 0 0
+
+	# center and auto focus dialog
+	BotEditor::localizeDialog $itk_interior
+	BotEditor::focusOnEnter $itk_interior
     }
 
     itk_option define -text text Text "" {}
@@ -259,7 +305,7 @@ if {[catch {
 ::itcl::class EditPane {
     inherit itk::Widget
 
-    constructor {args} {
+    constructor {bot args} {
 	eval itk_initialize $args
 
 	# make container frame
@@ -288,7 +334,8 @@ if {[catch {
 
 	# add components
 	itk_component add tools {
-	    BotTools $itk_component(lframe).tools
+	    BotTools $itk_component(lframe).tools $bot \
+		-prefix $itk_option(-prefix)
 	} {}
 	itk_component add props {
 	    BotPropertyBox $itk_component(rframe).properties
@@ -313,4 +360,6 @@ if {[catch {
 	pack $itk_component(tools) -expand yes -fill both
 	pack $itk_component(props) -expand yes -fill both
     }
+
+    itk_option define -prefix prefix Prefix "" {}
 }
