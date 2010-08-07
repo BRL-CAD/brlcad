@@ -232,18 +232,26 @@ else(MSVC)
 endif(MSVC)
 
 include_directories(
-    ../../include
-    ../other/libz
-    ../other/openNURBS
-    ../other/libregex
+    ${BRLCAD_SOURCE_DIR}/include
+    ${BRLCAD_REGEX_INCLUDE_DIR}
+    ${BRLCAD_ZLIB_INCLUDE_DIR}
+    ${BRLCAD_OPENNURBS_INCLUDE_DIR}
+    ${BRLCAD_SOURCE_DIR}/src/other/tnt
     ../other/tcl/generic
-    ../other/tnt
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-    -DON_DLL_IMPORTS
-)
+if(MSVC)
+   add_definitions(
+       -DHAVE_CONFIG_H
+       -DBRLCADBUILD
+       -DON_DLL_IMPORTS
+   )
+else(MSVC)
+   add_definitions(
+       -DHAVE_CONFIG_H
+       -DBRLCADBUILD
+   )
+endif(MSVC)
 
-add_library(librt ${LIBRT_SOURCES})
+add_library(rt ${LIBRT_SOURCES})
+target_link_libraries(rt bu bn ${BRLCAD_OPENNURBS_LIBRARY} ${BRLCAD_REGEX_LIBRARY} ${BRLCAD_ZLIB_LIBRARY} ${TCL_LIBRARY})
