@@ -109,12 +109,12 @@ set(OPENNURBS_SOURCES
 file(GLOB OPENNURBS_HEADERS *.h)
 
 set(OPENNURBS_LINKLIBRARIES
-    libz
+    ${BRLCAD_ZLIB_LIBRARY}
 )
 
 include_directories(
-    ../../../include
-    ../libz
+    ${BRLCAD_ZLIB_INCLUDE_DIR}
+    ${BRLCAD_SOURCE_DIR}/include
 )
 
 add_definitions(
