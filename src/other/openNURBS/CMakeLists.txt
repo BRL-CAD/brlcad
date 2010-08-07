@@ -117,10 +117,17 @@ include_directories(
     ${BRLCAD_SOURCE_DIR}/include
 )
 
-add_definitions(
-   -DON_COMPILING_OPENNURBS
-   -DON_DLL_EXPORTS
-)
+if (MSVC)
+   add_definitions(
+      -DON_COMPILING_OPENNURBS
+       -DON_DLL_EXPORTS
+   )
+else (MSVC)
+   add_definitions(
+       -DON_COMPILING_OPENNURBS
+   )
+endif(MSVC)
+
 
 if(MSVC)
     add_definitions(
