@@ -8,7 +8,7 @@ set(LIBSYSV_SOURCES
 )
 
 include_directories(
-    ../../include
+    ${BRLCAD_SOURCE_DIR}/include
     ../other/tcl/generic
 )
 
@@ -21,4 +21,5 @@ add_definitions(
     -DHAVE_STRTOK
 )
 
-add_library(libsysv ${LIBSYSV_SOURCES})
+add_library(sysv ${LIBSYSV_SOURCES})
+target_link_libraries(sysv ${TCL_LIBRARY})
