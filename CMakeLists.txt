@@ -493,6 +493,23 @@ ELSE(NOT BRLCAD_USE_SYSTEM_ZLIB)
    SET(BRLCAD_ZLIB_LIBRARY "${ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_ZLIB)
 
+# libtermlib Library
+BRLCAD_THIRD_PARTY_OPTION(LIBTERM termlib)
+BRLCAD_THIRD_PARTY_SUBDIR(LIBTERM src/other/libtermlib)
+IF(BRLCAD_USE_SYSTEM_LIBS)
+   SET(BRLCAD_USE_SYSTEM_LIBTERM ON CACHE BOOL "Use the system's termlib library" FORCE)
+ENDIF(BRLCAD_USE_SYSTEM_LIBS)
+IF(NOT BRLCAD_USE_SYSTEM_LIBTERM)
+   SET(BRLCAD_LIBTERM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libtermlib" CACHE STRING "Directory containing termlib headers" FORCE)
+   SET(LIBTERM_INCLUDE_DIR "${BRLCAD_LIBTERM_INCLUDE_DIR}" CACHE STRING "Directory containing termlib headers" FORCE)
+   SET(BRLCAD_LIBTERM_LIBRARY "termlib" CACHE STRING "termlib" FORCE)
+ELSE(NOT BRLCAD_USE_SYSTEM_LIBTERM)
+   SET(BRLCAD_LIBTERM_INCLUDE_DIR "${LIBTERM_INCLUDE_DIR}" CACHE STRING "Directory containing termlib headers" FORCE)
+   SET(BRLCAD_LIBTERM_LIBRARY "${LIBTERM_LIBRARY}" CACHE STRING "termlib library" FORCE)
+ENDIF(NOT BRLCAD_USE_SYSTEM_LIBTERM)
+
+
+
 # libpng Library - Checks for ZLIB, so need to restore BRLCAD_ZLIB* settings - a
 # successful search by FindZLIB will reset the basic variables.  If not using local
 # copy of zlib, FindZLIB results will be identical in both cases so there is no
