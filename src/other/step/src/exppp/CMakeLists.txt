@@ -3,13 +3,13 @@ set(LIBEXPPP_SOURCES
 )
 
 SET(EXPPP_SOURCES
-    ${CMAKE_SOURCE_DIR}/src/express/fedex.c
+    ${SCL_SOURCE_DIR}/src/express/fedex.c
     exppp-main.c
 )
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/include/exppp
+    ${SCL_SOURCE_DIR}/include
+    ${SCL_SOURCE_DIR}/include/exppp
 )
 MESSAGE("currentsrcdir: ${CMAKE_CURRENT_SOURCE_DIR}")
 

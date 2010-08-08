@@ -28,8 +28,8 @@ SET(LIBSTEPDAI_PRIVATE_HDRS
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/src/clstepcore
-    ${CMAKE_SOURCE_DIR}/src/clutils
+    ${SCL_SOURCE_DIR}/src/clstepcore
+    ${SCL_SOURCE_DIR}/src/clutils
 )
 
 add_definitions(

@@ -1,6 +1,6 @@
 set(FEDEX_COMMON_SRCS
     classes_misc.c
-    ${CMAKE_SOURCE_DIR}/src/express/fedex.c
+    ${SCL_SOURCE_DIR}/src/express/fedex.c
 )
 
 set(fedex_os_SOURCES
@@ -35,9 +35,9 @@ set(fedex_plus_SOURCES
 )
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/include/exppp
-    ${CMAKE_SOURCE_DIR}/include/express
+    ${SCL_SOURCE_DIR}/include
+    ${SCL_SOURCE_DIR}/include/exppp
+    ${SCL_SOURCE_DIR}/include/express
 )
 
 add_definitions(

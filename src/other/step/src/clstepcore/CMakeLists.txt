@@ -55,9 +55,9 @@ SET(LIBSTEPCORE_PRIVATE_HDRS
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/src/cldai
-    ${CMAKE_SOURCE_DIR}/src/cleditor
-    ${CMAKE_SOURCE_DIR}/src/clutils
+    ${SCL_SOURCE_DIR}/src/cldai
+    ${SCL_SOURCE_DIR}/src/cleditor
+    ${SCL_SOURCE_DIR}/src/clutils
 )
 
 add_definitions(
