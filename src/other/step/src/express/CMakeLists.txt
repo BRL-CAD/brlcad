@@ -46,7 +46,6 @@ SET(EXPRESS_PRIVATE_HDRS
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
-#    ${SCL_SOURCE_DIR}/include/express
 )
 
 add_definitions(
