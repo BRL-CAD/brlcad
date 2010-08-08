@@ -209,7 +209,7 @@ include_directories(
 )
 
 ADD_SUBDIRECTORY(src/express)
-#ADD_SUBDIRECTORY(src/exppp)
+ADD_SUBDIRECTORY(src/exppp)
 #ADD_SUBDIRECTORY(src/fedex_plus)
 #ADD_SUBDIRECTORY(src/clstepcore)
 #ADD_SUBDIRECTORY(src/cleditor)
