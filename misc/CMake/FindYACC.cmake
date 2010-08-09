@@ -120,6 +120,7 @@ IF(YACC_EXECUTABLE)
         COMMAND ${YACC_EXECUTABLE}
         ARGS ${YACC_TARGET_cmdopt} -o ${ARGV2} ${ARGV1}
         DEPENDS ${ARGV1}
+	COMMENT "[YACC][${Name}] Building parser with ${YACC_EXECUTABLE}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     
       # define target variables

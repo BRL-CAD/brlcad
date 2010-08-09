@@ -93,6 +93,7 @@ IF(LEX_EXECUTABLE)
       COMMAND ${LEX_EXECUTABLE}
       ARGS ${LEX_EXECUTABLE_opts} -o${Output} ${Input}
       DEPENDS ${Input}
+      COMMENT "[LEX][${Name}] Building scanner with ${LEX_EXECUTABLE}"
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
     SET(LEX_${Name}_DEFINED TRUE)
