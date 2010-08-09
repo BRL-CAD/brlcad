@@ -267,4 +267,5 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(libged ${LIBGED_SOURCES})
+add_library(ged ${LIBGED_SOURCES})
+target_link_libraries(ged bu rt wdb analyze)

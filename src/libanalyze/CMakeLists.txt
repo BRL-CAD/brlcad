@@ -1,4 +1,5 @@
 set(LIBANALYZE_SOURCES
+    density.c
     overlaps.c
 )
 
@@ -13,3 +14,4 @@ add_definitions(
 )
 
 add_library(analyze ${LIBANALYZE_SOURCES})
+target_link_libraries(analyze bu)
