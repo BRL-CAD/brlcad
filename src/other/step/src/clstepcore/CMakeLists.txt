@@ -64,5 +64,6 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
+SET(CMAKE_SHARED_LINKER_FLAGS "-flat_namespace -undefined suppress")
 add_library(stepcore ${LIBSTEPCORE_SRCS})
 target_link_libraries(stepcore express steputils)
