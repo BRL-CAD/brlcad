@@ -14,4 +14,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(libgcv ${LIBGCV_SOURCES})
+add_library(gcv ${LIBGCV_SOURCES})

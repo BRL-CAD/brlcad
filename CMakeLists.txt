@@ -600,7 +600,7 @@ ELSE(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
    SET(BRLCAD_OPENNURBS_LIBRARY "${OPENNURBS_LIBRARY}" CACHE STRING "openNURBS library" FORCE)
 ENDIF(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
 
-# STEP is going to require some extra though - it's a src/other 
+# STEP is going to require some extra thought - it's a src/other 
 # with multiple libraries.  For now, just add it as a subdir
 ADD_SUBDIRECTORY(src/other/step)
 
@@ -611,7 +611,7 @@ ADD_SUBDIRECTORY(src/librt)
 #ADD_SUBDIRECTORY(src/external)
 ADD_SUBDIRECTORY(src/libpkg)
 #ADD_SUBDIRECTORY(src/libfb)
-#ADD_SUBDIRECTORY(src/libwdb)
-#ADD_SUBDIRECTORY(src/libgcv)
-#ADD_SUBDIRECTORY(src/libanalyze)
-#ADD_SUBDIRECTORY(src/libged)
+ADD_SUBDIRECTORY(src/libwdb)
+ADD_SUBDIRECTORY(src/libgcv)
+ADD_SUBDIRECTORY(src/libanalyze)
+ADD_SUBDIRECTORY(src/libged)

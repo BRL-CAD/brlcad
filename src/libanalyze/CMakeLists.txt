@@ -12,4 +12,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(libanalyze ${LIBANALYZE_SOURCES})
+add_library(analyze ${LIBANALYZE_SOURCES})
