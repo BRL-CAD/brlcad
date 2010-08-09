@@ -1,10 +1,10 @@
-BISON_TARGET(ExpParser expparse.y ${CMAKE_CURRENT_BINARY_DIR}/expparse.c)
-FLEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c COMPILE_FLAGS "-l")
-ADD_FLEX_BISON_DEPENDENCY(ExpScanner ExpParser)
+YACC_TARGET(ExpParser expparse.y ${CMAKE_CURRENT_BINARY_DIR}/expparse.c)
+LEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c COMPILE_FLAGS "-l")
+ADD_LEX_YACC_DEPENDENCY(ExpScanner ExpParser)
 
 set(EXPRESS_SOURCES
-    ${BISON_ExpParser_OUTPUTS}
-    ${FLEX_ExpScanner_OUTPUTS}
+    ${YACC_ExpParser_OUTPUTS}
+    ${LEX_ExpScanner_OUTPUTS}
     symbol.c 
     type.c 
     variable.c 

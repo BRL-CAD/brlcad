@@ -171,14 +171,8 @@ INCLUDE (CheckLibraryExists)
 # generic lex/yacc - need to update the Wireshark files to be a a graceful
 # fallback to the FLEX/BISON logic, and (perhaps) wrap both in some way to
 # hide any differences from the build code?
-find_package(FLEX)
-find_package(BISON)
-if (NOT FLEX_FOUND)
-    INCLUDE(${SCL_CMAKE_DIR}/FindLEX.cmake)
-endif (NOT FLEX_FOUND)
-if (NOT BISON_FOUND)
-    INCLUDE(${SCL_CMAKE_DIR}/FindYACC.cmake)
-endif (NOT BISON_FOUND)
+INCLUDE(${SCL_CMAKE_DIR}/FindLEX.cmake)
+INCLUDE(${SCL_CMAKE_DIR}/FindYACC.cmake)
 
 CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCCXX)
 
