@@ -11,7 +11,6 @@ include_directories(
     ${SCL_SOURCE_DIR}/include
     ${SCL_SOURCE_DIR}/include/exppp
 )
-MESSAGE("currentsrcdir: ${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_definitions(
     -DHAVE_CONFIG_H
