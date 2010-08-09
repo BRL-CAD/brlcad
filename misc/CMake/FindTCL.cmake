@@ -162,12 +162,24 @@ SET(TCLTK_POSSIBLE_INCLUDE_PATHS
   /usr/local/include
   /usr/include/tcl${TK_LIBRARY_VERSION}
   /usr/include/tcl${TCL_LIBRARY_VERSION}
+  /usr/local/include/tcl${TK_LIBRARY_VERSION}
+  /usr/local/include/tcl${TCL_LIBRARY_VERSION}
   /usr/include/tcl8.6
   /usr/include/tcl8.5
   /usr/include/tcl8.4
   /usr/include/tcl8.3
   /usr/include/tcl8.2
   /usr/include/tcl8.0
+  /usr/include/tk${TK_LIBRARY_VERSION}
+  /usr/include/tk${TCL_LIBRARY_VERSION}
+  /usr/local/include/tk${TK_LIBRARY_VERSION}
+  /usr/local/include/tk${TCL_LIBRARY_VERSION}
+  /usr/include/tk8.6
+  /usr/include/tk8.5
+  /usr/include/tk8.4
+  /usr/include/tk8.3
+  /usr/include/tk8.2
+  /usr/include/tk8.0
   )
 
 IF(WIN32)
