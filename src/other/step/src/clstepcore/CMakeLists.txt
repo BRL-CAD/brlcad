@@ -65,4 +65,4 @@ add_definitions(
 )
 
 add_library(stepcore ${LIBSTEPCORE_SRCS})
-target_link_libraries(stepcore express)
+target_link_libraries(stepcore express steputils)

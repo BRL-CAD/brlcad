@@ -37,4 +37,4 @@ add_definitions(
 )
 
 add_library(stepdai ${LIBSTEPDAI_SRCS})
-target_link_libraries(stepdai stepcore)
+target_link_libraries(stepdai steputils stepcore)
