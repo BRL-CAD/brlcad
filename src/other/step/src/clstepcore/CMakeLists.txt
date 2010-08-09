@@ -64,8 +64,8 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-if(APPLE)
-   SET(CMAKE_SHARED_LINKER_FLAGS "-flat_namespace -undefined suppress")
-endif(APPLE)
 add_library(stepcore ${LIBSTEPCORE_SRCS})
+if(APPLE)
+   set_target_properties(stepcore PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
+endif(APPLE)
 target_link_libraries(stepcore express steputils)
