@@ -1,4 +1,10 @@
-/Makefile
-/Makefile.in
 /.deps
 /.libs
+/Makefile
+/Makefile.in
+/brep_test
+/prcomb
+/librt.plg
+/nurb_example
+/namegen
+/parsetest
