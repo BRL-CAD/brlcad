@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Report of copy/paste not working with Tk on Windows Vista - does
+  work on Windows XP.
+
 * Update/create .mgedrc results in bogus qray lines if a db is not
   open when the file is created.
 
