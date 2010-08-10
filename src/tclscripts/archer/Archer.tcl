@@ -159,6 +159,7 @@ package provide Archer 1.0
 	method 3ptarb              {args}
 	method attr                {args}
 	method bo                  {args}
+	method bot                 {args}
 	method bot_condense        {args}
 	method bot_decimate        {args}
 	method bot_face_fuse       {args}
@@ -977,6 +978,10 @@ package provide Archer 1.0
 
 ::itcl::body Archer::bo {args} {
     eval ArcherCore::gedWrapper bo 0 0 1 1 $args
+}
+
+::itcl::body Archer::bot {args} {
+    eval ArcherCore::gedWrapper bot 0 0 1 1 $args
 }
 
 ::itcl::body Archer::bot_condense {args} {

@@ -1,14 +1,30 @@
 # BotPropertyBox class for viewing/manipulating BoT properties
 #
+# Usage: BotPropertyBox <instance name> <bot name> \
+#    [-command <callback>] 
+# 
+# The callback function passed in the -command option is called whenever
+# the supplied bot is modified.
+#
+package require Tk
+package require Itcl
+package require Itk
+
 ::itcl::class BotPropertyBox {
     inherit ::itk::Widget
 
-    constructor {args} {}
+    constructor {bot args} {}
+
+    public {
+	common TYPE_SURFACE 1
+	common TYPE_VOLUME 2
+	common TYPE_PLATE 3
+    }
 
     itk_option define -command command Command {} {}
 }
 
-::itcl::body BotPropertyBox::constructor {args} {
+::itcl::body BotPropertyBox::constructor {bot args} {
 
     eval itk_initialize $args
 
@@ -24,10 +40,10 @@
 
     # add tab panes to container frame
     itk_component add tpane {
-	TypePane $itk_component(main).typePane
+	TypePane $itk_component(main).typePane $bot
     } {}
     itk_component add gpane {
-	GeometryPane $itk_component(main).geometryPane
+	GeometryPane $itk_component(main).geometryPane $bot
     } {}
 
     # display main frame
@@ -48,7 +64,7 @@
 ::itcl::class TypePane {
     inherit itk::Widget
 
-    constructor {args} {
+    constructor {bot args} {
 	eval itk_initialize $args
 
 	# make container frame
@@ -65,19 +81,29 @@
 	    ttk::frame $itk_component(main).springFrame
 	} {}
 
-	# add widgets to content frame
+	# add radio widgets to content frame
+	set ::radio 0
 	itk_component add surfRadio {
 	    ttk::radiobutton $itk_component(cframe).surfaceRadio \
-	        -text Surface
+	        -text Surface \
+		-value $BotPropertyBox::TYPE_SURFACE \
+		-variable radio
 	} {}
 	itk_component add volRadio {
 	    ttk::radiobutton $itk_component(cframe).volumeRadio \
-	        -text Volume
+	        -text Volume \
+		-value $BotPropertyBox::TYPE_VOLUME \
+		-variable radio
 	} {}
 	itk_component add plateRadio {
 	    ttk::radiobutton $itk_component(cframe).plateRadio \
-	        -text Plate
+	        -text Plate \
+		-value $BotPropertyBox::TYPE_PLATE \
+		-variable radio
 	} {}
+
+	# select appropriate radio
+	set ::radio [bot get type $bot]
 
 	# display container frame
 	pack $itk_component(main) -expand yes -fill both
@@ -98,7 +124,7 @@
 ::itcl::class GeometryPane {
     inherit itk::Widget
 
-    constructor {args} {
+    constructor {bot args} {
 	eval itk_initialize $args
 
 	# make container frame
@@ -118,12 +144,12 @@
 	# add widgets to content frame
 	itk_component add faces {
 	    ttk::label $itk_component(cframe).faces \
-	        -text {Faces: }
+	        -text "Faces: [bot get faces $bot]"
 	} {}
 
 	itk_component add vertices {
 	    ttk::label $itk_component(cframe).vertices \
-	        -text {Vertices: }
+	        -text "Vertices: [bot get vertices $bot]"
 	} {}
 
 	# display container frame

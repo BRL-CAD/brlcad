@@ -1,5 +1,10 @@
 # BotEditor class for editing a BoT primitive
 #
+# Usage: BotEditor <instance name> <bot name> [-prefix <Archer instance name>]
+# 
+# The -prefix option is used when this class is instanced in Archer,
+# where the ged commands are methods of the Archer mega-widget instance.
+#
 package require Tk
 package require Itcl
 package require Itk
@@ -22,12 +27,13 @@ if {[catch {
     constructor {bot args} {}
 
     public {
+	common _ ""
+
 	method onChange {}
-	method apply {}
-	method revert {}
 	method accept {}
 	method reject {}
 
+	proc defineCommands {prefix}
 	proc localizeDialog {d}
 	proc focusOnEnter {d}
     }    
@@ -48,8 +54,8 @@ if {[catch {
 
     eval itk_initialize $args
 
-    # use proper command context
-    set _ $itk_option(-prefix)
+    # setup commands
+    defineCommands $itk_option(-prefix)
 
     # remove path prefix from bot name
     while {[regsub {.*/} $bot {} bot]} {}
@@ -61,7 +67,10 @@ if {[catch {
     # make working copy
     set original $bot
     set copy $original.edit
-    $_ cp $original $copy
+    cp $original $copy
+
+    # handle window close
+    wm protocol $itk_interior WM_DELETE_WINDOW "kill $copy; delete object $this"
 
     # create layout frames
     itk_component add histFrame {
@@ -69,8 +78,7 @@ if {[catch {
 	    -padding 7
     } {}
     itk_component add eframe {
-	EditPane $itk_interior.editPane $copy \
-	    -prefix $itk_option(-prefix)
+	EditPane $itk_interior.editPane $copy
     } {}
     itk_component add closeframe {
 	ttk::frame $itk_interior.closeFrame \
@@ -80,18 +88,6 @@ if {[catch {
 	ttk::frame $itk_interior.statusFrame
     } {}
     
-    # add widgets to history frame
-    itk_component add apply {
-	ttk::button $itk_component(histFrame).apply \
-	    -text Apply \
-	    -command "$this apply"
-    } {}
-    itk_component add revert {
-	ttk::button $itk_component(histFrame).revert \
-	    -text Revert \
-	    -command "$this revert"
-    } {}
-
     # add widgets to close frame
     itk_component add accept {
 	ttk::button $itk_component(closeframe).accept \
@@ -115,16 +111,11 @@ if {[catch {
     } {}
 
     # display main frames
-#    grid $itk_component(histFrame) -row 0 -column 0 -sticky news
     grid $itk_component(eframe) -row 1 -column 0 -sticky news
     grid $itk_component(closeframe) -row 2 -column 0 -sticky news
     grid $itk_component(statusframe) -row 3 -column 0 -sticky news
     grid rowconfigure $itk_interior 1 -weight 1
     grid columnconfigure $itk_interior 0 -weight 1
-
-    # display history frame components
-    pack $itk_component(apply) -side left
-    pack $itk_component(revert) -side left -padx 5
 
     # display close frame components
     pack $itk_component(reject) -side right
@@ -160,21 +151,28 @@ if {[catch {
     showUnsaved yes
 }
 
-# save current edit
-::itcl::body BotEditor::apply {} {
-    showUnsaved no
-}
+# define commands so they work properly
+::itcl::body BotEditor::defineCommands {prefix} {
 
-# return to last saved edit
-::itcl::body BotEditor::revert {} {
-    showUnsaved no
+    if {$prefix == ""} return
+
+    set _ $prefix
+
+    proc ::cp {args} {eval $BotEditor::_ cp $args}
+    proc ::mv {args} {eval $BotEditor::_ mv $args}
+    proc ::kill {args} {eval $BotEditor::_ kill $args}
+    proc ::bot {args} {eval $BotEditor::_ bot $args}
+    proc ::bot_condense {args} {eval $BotEditor::_ bot_condense $args}
+    proc ::bot_face_fuse {args} {eval $BotEditor::_ bot_face_fuse $args}
+    proc ::bot_vertex_fuse {args} {eval $BotEditor::_ bot_vertex_fuse $args}
+    proc ::bot_face_sort {args} {eval $BotEditor::_ bot_face_sort $args}
+    proc ::bot_decimate {args} {eval $BotEditor::_ bot_decimate $args}
 }
 
 # apply changes to original
 ::itcl::body BotEditor::accept {} {
 
-    set _ $itk_option(-prefix)
-    set cmd "$_ kill $original; $_ mv $copy $original; delete object $this"
+    set cmd "kill $original; mv $copy $original; delete object $this"
 
     # get confirmation
     itk_component add confirm {
@@ -189,8 +187,7 @@ if {[catch {
 # discard all changes
 ::itcl::body BotEditor::reject {} {
 
-    set _ $itk_option(-prefix)
-    set cmd "$_ kill $copy; delete object $this"
+    set cmd "kill $copy; delete object $this"
 
     # get confirmation
     itk_component add confirm {
@@ -212,7 +209,7 @@ if {[catch {
     set py [winfo y $p]
 
     # first draw tiny at center
-    # (this minimizes the visual distraction when we redraw)
+    # (trying to minimize the visual distraction when we redraw)
     wm geometry $d 0x0+[expr "$pwidth / 2"]+[expr "$pheight / 2"]
     update
 
@@ -335,10 +332,10 @@ if {[catch {
 	# add components
 	itk_component add tools {
 	    BotTools $itk_component(lframe).tools $bot \
-		-prefix $itk_option(-prefix)
+		-command "$itk_option(-command)"
 	} {}
 	itk_component add props {
-	    BotPropertyBox $itk_component(rframe).properties
+	    BotPropertyBox $itk_component(rframe).properties $bot
 	} {}
 
 	# display main frame
@@ -361,5 +358,5 @@ if {[catch {
 	pack $itk_component(props) -expand yes -fill both
     }
 
-    itk_option define -prefix prefix Prefix "" {}
+    itk_option define -command command Command "" {}
 }

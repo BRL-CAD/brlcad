@@ -1373,6 +1373,14 @@ GED_EXPORT BU_EXTERN(int ged_bo, (struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT BU_EXTERN(int ged_blast, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Query or manipulate properties of bot
+ *
+ * Usage:
+ *     bot subcommand args bot 
+ */
+GED_EXPORT BU_EXTERN(int ged_bot, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create new_bot by condensing old_bot
  *
  * Usage:

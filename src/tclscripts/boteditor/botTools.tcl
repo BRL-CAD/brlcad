@@ -1,9 +1,10 @@
 # BotTools class for wrapping BoT commands
 #     
-# Usage: BotTools <instance name> <bot name> [-prefix <Archer instance name>]
-# 
-# The -prefix option is used when this class is instanced in Archer,
-# where the ged commands are methods of the Archer mega-widget instance.
+# Usage: BotTools <instance name> <bot name> \
+#    [-command <callback>] 
+#
+# The callback function passed in the -command option is called whenever
+# the supplied bot is modified.
 #
 package require Tk
 package require Itcl
@@ -15,9 +16,9 @@ package require Itk
     constructor {bot args} {}
 
     public {
-	method apply {cmd args}
+	method runBot {cmd args}
     }
-
+    
     private {
 	variable panes 0
 	variable bot ""
@@ -25,7 +26,7 @@ package require Itk
 	method makeQualityPane {}
     }
 
-    itk_option define -prefix prefix Prefix "" {}
+    itk_option define -command command Command "" {}
 }
 
 # initialize
@@ -54,16 +55,11 @@ package require Itk
     pack $itk_component(nb) -expand yes -fill both
 }
 
-# convenience method for uniformly applying bot_* commands
-::itcl::body BotTools::apply {cmd args} {
-
-    # use proper context
-    set _ $itk_option(-prefix)
-
-    # run command; overwrite original
-    $_ mv $bot $bot.old
-    eval $_ $cmd $args $bot $bot.old
-    $_ kill $bot.old
+# convenience method for uniformly running bot_* commands
+::itcl::body BotTools::runBot {cmd args} {
+    mv $bot $bot.old
+    eval $cmd $args $bot $bot.old
+    kill $bot.old
 }
 
 # convenience method for creating a new tab pane
@@ -89,31 +85,31 @@ package require Itk
     itk_component add condense {
 	ttk::button $pane.condense \
 	    -text Condense \
-	    -command "$this apply bot_condense"
+	    -command "$this runBot bot_condense; $itk_option(-command)"
     } {}
     itk_component add ffaces {
 	ttk::button $pane.fuse_faces \
 	    -text {Fuse Faces} \
-	    -command "$this apply bot_face_fuse"
+	    -command "$this runBot bot_face_fuse; $itk_option(-command)"
     } {}
     itk_component add fvertices {
 	ttk::button $pane.fuse_vertices \
 	    -text {Fuse Vertices} \
-	    -command "$this apply bot_vertex_fuse"
+	    -command "$this runBot bot_vertex_fuse; $itk_option(-command)"
     } {}
     itk_component add sort {
 	ttk::button $pane.sort_faces \
 	    -text {Sort Faces} \
-	    -command "$this apply bot_face_fuse"
+	    -command "bot_face_sort 3 $bot; $itk_option(-command)"
     } {}
     itk_component add decimate {
 	ttk::button $pane.decimate \
 	    -text {Decimate} \
-	    -command "$this apply bot_decimate -n 5"
+	    -command "$this runBot bot_decimate -n 5; $itk_option(-command)"
     } {}
     itk_component add auto {
 	ttk::button $pane.auto_simplify \
-	    -text {Automatically Simplify} \
+	    -text {Automatically Simplify}
     } {}
 
     # draw components

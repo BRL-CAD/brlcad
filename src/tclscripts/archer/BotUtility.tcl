@@ -173,7 +173,7 @@ if {[catch {
     set root [string range $top 0 $last]
 
     # create new editor instance
-    set editor [BotEditor $root.editor$instances $bot -prefix $root]
+    set editor [BotEditor $root.editor$instances $bot -prefix $root -title {Bot Utility}]
     incr instances
 
     # center and auto focus editor dialog
