@@ -258,9 +258,11 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 {
     struct bu_image_file *bif = (struct bu_image_file *)bu_malloc(sizeof(struct bu_image_file), "bu_image_save_open");
     bif->magic = BU_IMAGE_FILE_MAGIC;
-    if (format == BU_IMAGE_AUTO) {
+    if (format == BU_IMAGE_AUTO || BU_IMAGE_AUTO_NO_PIX) {
 	char buf[BUFSIZ];
 	bif->format = guess_file_format(filename, buf);
+	if(format == BU_IMAGE_AUTO_NO_PIX && bif->format == BU_IMAGE_PIX)
+	    return NULL;
 	bif->filename = bu_strdup(buf);
     } else {
 	bif->format = format;

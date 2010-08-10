@@ -59,8 +59,6 @@ static short int pwidth;			/* Width of each pixel (in bytes) */
 static struct scanline* scanline;   /* From scanline.c */
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
-static struct bu_image_file *bif = NULL;
-
 extern FBIO* fbp;
 
 const char title[] = "Metropolis Light Transport renderer";

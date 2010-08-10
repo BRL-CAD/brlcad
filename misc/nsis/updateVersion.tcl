@@ -24,8 +24,8 @@
 #    VERSION.bat (used by asc2g.vcproj).
 #
 
-set rootDir [file normalize ../../..]
-if {![file exists $rootDir]} {
+set rootDir [file normalize ../../../]
+if {![file exists [file join $rootDir include]]} {
     puts "$rootDir must exist and must be the root of the BRL-CAD source tree. "
     return
 }

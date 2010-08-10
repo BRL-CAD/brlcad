@@ -31,30 +31,30 @@
 #include "db.h"
 
 
-/*
- *			M K _ S U B M O D E L
+/**
+ * M K _ S U B M O D E L
  *
- *  Create a submodel solid.
- *  If file is NULL or "", the treetop refers to the current database.
- *  Treetop is the name of a single database object in 'file'.
- *  meth is 0 (RT_PART_NUBSPT) or 1 (RT_PART_NUGRID).
- *  method 0 is what is normally used.
+ * Create a submodel solid.  If file is NULL or "", the treetop refers
+ * to the current database.  Treetop is the name of a single database
+ * object in 'file'.  meth is 0 (RT_PART_NUBSPT) or 1
+ * (RT_PART_NUGRID).  method 0 is what is normally used.
  */
 int
 mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *treetop, int meth)
 {
     struct rt_submodel_internal *in;
 
-    BU_GETSTRUCT( in, rt_submodel_internal );
+    BU_GETSTRUCT(in, rt_submodel_internal);
     in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
-    bu_vls_init( &in->file );
-    if ( file )  bu_vls_strcpy( &in->file, file );
-    bu_vls_init( &in->treetop );
-    bu_vls_strcpy( &in->treetop, treetop );
+    bu_vls_init(&in->file);
+    if (file) bu_vls_strcpy(&in->file, file);
+    bu_vls_init(&in->treetop);
+    bu_vls_strcpy(&in->treetop, treetop);
     in->meth = meth;
 
-    return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
+    return wdb_export(fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:

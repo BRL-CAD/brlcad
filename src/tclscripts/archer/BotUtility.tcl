@@ -22,6 +22,12 @@
 # Description:
 #	This is an Archer class for editing a BoT primitive.
 #
+if {[catch {
+    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
+    source $script
+} errMsg] > 0} {
+    puts "Couldn't load \"$script\"\n$errMsg"
+} 
 
 ::itcl::class BotUtility {
     inherit Utility
@@ -42,7 +48,7 @@
 
 	method editSelected {}
 	method selectBot {bots}
-	proc editBot {bot}
+	method editBot {bot}
     }
 
     protected {
@@ -69,16 +75,6 @@
     # process widget options
     eval itk_initialize $args
 
-    # load BotEditor class for first instance
-    if {$instances == 0} {
-	if {[catch {
-	    set script [file join [bu_brlcad_data "tclscripts"] boteditor botEditor.tcl]
-	    source $script
-	} errMsg] > 0} {
-	    puts "Couldn't load \"botEditor.tcl\"\n$errMsg"
-	}
-    }
-
     # search for bots
     set bots {}
     catch {set bots [$_archer search -type bot]}
@@ -86,19 +82,14 @@
 
     if {$numBots == 0} {
 
-	# no bots - show error message
-	itk_component add btError {
+	# no bots - show notice
+	itk_component add noBots {
 
-	    label $itk_interior.errLbl \
+	    ttk::label $itk_interior.noticeLbl \
 		-text {There are no bots to edit.}
-	}
+	} {}
 	
-	grid $itk_component(btError)
-
-    } elseif {$numBots == 1} {	
-
-	# edit only bot
-	editBot [lindex $bots 0]
+	grid $itk_component(noBots)
 
     } else {
 
@@ -110,7 +101,12 @@
     set mToplevel [winfo toplevel $itk_interior]
 
     if {$mHandleToplevel} {
-	wm geometry $mToplevel "400x200"
+
+	# center and auto focus window
+	BotEditor::localizeDialog $mToplevel
+	BotEditor::focusOnEnter $mToplevel
+
+	wm geometry $mToplevel "400x100"
     }
 }
 
@@ -126,32 +122,45 @@
 #     populated with the elements of the bots list argument.
 #
 ::itcl::body BotUtility::selectBot {bots} {    
+    # create container frame
+    itk_component add sframe {
+	ttk::frame $itk_interior.selectFrame
+    } {}
 
     # create combobox of available bots
-    set combo [ttk::combobox $itk_interior.selectCombo -values $bots]
+    itk_component add combo {
+	ttk::combobox $itk_component(sframe).selectCombo -values $bots
+    } {}
 
     # auto-select first bot
     # - initialize selectedbot variable to first bot
     # - make combobox show firstbot
     namespace eval :: "$this configure -selectedbot [lindex $bots 0]"    
-    $combo current 0
+    $itk_component(combo) current 0
 
     # will update selectedbot variable whenever user changes combobox selection
     # 0 return value prevents user from editing the combobox entry
-    $combo configure \
+    $itk_component(combo) configure \
         -validate all \
 	-validatecommand "$this configure -selectedbot %s; return 0"
 
     # create button that starts editing for the selected bot
-    set button [ttk::button $itk_interior.selectButton \
-        -text {Edit Selected} \
-	-command "$this editSelected"]
+    itk_component add button {
+        ttk::button $itk_component(sframe).editButton \
+            -text {Edit Selected} \
+	    -command "$this editSelected"
+    } {}
+
+    # display frame
+    grid rowconfigure $itk_interior 0 -weight 1
+    grid columnconfigure $itk_interior 0 -weight 1
+    grid $itk_component(sframe) -row 0 -column 0 -sticky news
 
     # display select widgets
-    grid $combo -row 0 -column 0 -sticky new -pady 5
-    grid $button -row 0 -column 1 -padx 5
-    grid rowconfigure $itk_interior 0 -pad 5
-    grid columnconfigure $itk_interior 0 -weight 1 -pad 5
+    grid rowconfigure $itk_component(sframe) 0 -weight 1
+    grid columnconfigure $itk_component(sframe) 0 -weight 1
+    grid $itk_component(combo) -row 0 -column 0 -sticky new -padx 5 -pady 5
+    grid $itk_component(button) -row 0 -column 1 -sticky nw -padx 5
 }
 
 # editBot bot
@@ -159,25 +168,32 @@
 #
 ::itcl::body BotUtility::editBot {bot} {
 
+    set top [winfo toplevel $itk_interior]
+    set last [expr "[string last "." $top] - 1"]
+    set root [string range $top 0 $last]
+
     # create new editor instance
-    set editor [BotEditor .editor$instances]
+    set editor [BotEditor $root.editor$instances $bot -prefix $root]
     incr instances
 
-    $editor load $bot
+    # center and auto focus editor dialog
+    BotEditor::localizeDialog $editor
+    BotEditor::focusOnEnter $editor
 }
 
 # editSelected
 #     Calls editBot with current selection.
 #
-#     Used as the selectBot button callback, since scoping problems make it
-#     hard to query the current selection in a more direct fashion.
+#     Used as the selectBot button callback.
 #
 ::itcl::body BotUtility::editSelected {} {
+
     BotUtility::editBot $itk_option(-selectedbot)
 
-    # close the selection window
-    set mToplevel [winfo toplevel $itk_interior]
-    namespace eval :: "$mToplevel deactivate; ::itcl::delete object $mToplevel"
+    # close original plugin window
+    set top [winfo toplevel $itk_interior]
+    destroy $top
+    
 }
 	
 # Local Variables:

@@ -2,7 +2,9 @@ this_dir = tclscripts/boteditor
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 tcl_SCRIPTS = \
-	botEditor.tcl
+	botEditor.tcl \
+	botPropertyBox.tcl \
+	botTools.tcl
 
 EXTRA_DIST = $(tcl_SCRIPTS)
 

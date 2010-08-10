@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="bolt"
-	ProjectGUID="{D4B7A4C2-1029-4273-8DA1-232668DD7B0F}"
+	ProjectGUID="{B808DF2C-A716-42C9-B45D-E84E992A89C3}"
 	>
 	<Platforms>
 		<Platform

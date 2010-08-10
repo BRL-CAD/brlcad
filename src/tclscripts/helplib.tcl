@@ -117,7 +117,7 @@ set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region
 set helplib_data(wdb_remove)		{{comb object(s)} {remove members from a combination}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
-set helplib_data(wdb_search)		{{[pathname][options]} {search database for objects matching parameters defined by options within specified path}}
+set helplib_data(wdb_search)		{{[path] [options]} {search database for objects matching parameters defined by options within the specified path}}
 set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_bot_smooth)        {{[-t norm_tolerance_degrees] new_bot_name old_bot_name} {calculate vertex normals for BOT primitive}}

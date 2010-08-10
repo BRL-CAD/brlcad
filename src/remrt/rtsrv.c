@@ -111,6 +111,8 @@ static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
 
 int	save_overlaps=0;
 
+struct bu_image_file *bif = NULL;
+
 /*
  * Package Handlers.
  */

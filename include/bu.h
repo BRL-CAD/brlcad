@@ -5966,6 +5966,7 @@ BU_EXPORT BU_EXTERN(struct bu_hash_entry *bu_hash_tbl_next,
 
 enum {
     BU_IMAGE_AUTO,
+    BU_IMAGE_AUTO_NO_PIX,
     BU_IMAGE_PIX,
     BU_IMAGE_BW,
     BU_IMAGE_ALIAS,

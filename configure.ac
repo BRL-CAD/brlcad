@@ -4002,7 +4002,7 @@ TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
 ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
+BU_LIBS="${TCL} ${PNG} ${LIBZ} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
@@ -4135,6 +4135,12 @@ AC_SUBST(TK_PATH)
 
 dnl configure libpng
 if test "x$build_brlcad_png" = "xyes" ; then
+   if test "x$LIBZ_CPPFLAGS" != "x" ; then
+	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
+	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\""
+    else
+	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB'"
+   fi
    AC_CONFIG_SUBDIRS([src/other/libpng])
 fi
 

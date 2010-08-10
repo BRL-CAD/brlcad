@@ -105,6 +105,7 @@ void do_ae(double azim, double elev);
 void res_pr(void);
 void memory_summary(void);
 
+extern struct bu_image_file *bif;
 
 /**
  * O L D _ F R A M E
@@ -771,10 +772,13 @@ do_frame(int framenumber)
 #endif
 
 	/* Ordinary case for creating output file */
-	if (outfp == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
-	    perror(framename);
-	    if (matflag) return 0;	/* OK */
-	    return -1;			/* Bad */
+	if (outfp == NULL) {
+	    bif = bu_image_save_open(framename, BU_IMAGE_AUTO_NO_PIX, width, height, 3);
+	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
+		perror(framename);
+		if (matflag) return 0;	/* OK */
+		return -1;			/* Bad */
+	    }
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
@@ -896,6 +900,9 @@ do_frame(int framenumber)
 	       rtip->rti_nrays,
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
+    if (bif != NULL)
+	bu_image_save_close(bif);
+    bif = NULL;
     if (outfp != NULL) {
 	/* Protect finished product */
 	if (outputfile != (char *)0)

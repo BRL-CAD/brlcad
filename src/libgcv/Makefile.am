@@ -26,12 +26,14 @@ libgcv_nil_la_SOURCES = \
 EXTRA_DIST = \
 	CMakeLists.txt \
 	NOTES \
-	wfobj/Makefile.in \
 	wfobj/Makefile.am \
+	wfobj/Makefile.in \
 	wfobj/obj_grammar.y \
 	wfobj/obj_grammar.yy \
+	wfobj/obj_parser.c \
 	wfobj/obj_parser.cc \
 	wfobj/obj_parser.h \
+	wfobj/obj_parser.h.orig \
 	wfobj/obj_parser_state.h \
 	wfobj/obj_rules.l \
 	wfobj/obj_rules.ll

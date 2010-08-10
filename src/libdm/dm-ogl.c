@@ -773,7 +773,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     screen_number = XDefaultScreen(tmp_dpy);
-    if (screen_number <= 0)
+    if (screen_number < 0)
 	bu_log("WARNING: screen number is [%d]\n", screen_number);
 
     if (dmp->dm_width == 0) {

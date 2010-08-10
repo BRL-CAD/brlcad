@@ -7,14 +7,7 @@ to install BRL-CAD under the Mingw or Cygwin compatibility
 environments where the build steps are the same as on the other
 platforms (documented in the INSTALL file).
 
-The second approach is to compile using MSVC 6 using the build files
-in the misc/win32-msvc directory.  This approach, however, will ONLY
-currently build all of the libraries and is intended for 3rd party
-applications that link against BRL-CAD as a geometry engine or
-ray-trace library.  This approach also requires separate installation
-of Tcl using, for example, the ActiveTcl distribution.
-
-The third approach is to compile using MSVC 8 (2005) using the build
+The second approach is to compile using MSVC 8 (2005) using the build
 files in the misc/win32-msvc8 directory.  The main brlcad.sln solution
 file is in the brlcad directory.  This approach will compile the vast
 majority of the package and is the method utilized when making a
@@ -23,12 +16,11 @@ binary release of BRL-CAD for Windows.  This will compile 'mged',
 tools, and more.  In all, it compiles all of the BRL-CAD libraries and
 about half of the available BRL-CAD utilities.
 
-openNURBS and Microsoft Visual C++ 6.0: If you get a compile bug error
-c2676 binary != not defined for stuct _GUID, then you are not using
-the November 2001 Platform SDK or the platform SDK is not first in
-your includes list. The last SDK that will work with VC 6.0 is the
-February 2003 Edition, you can download it from
-http://www.microsoft.com/msdownload/platformsdk/sdkupdate/psdk-full.htm.
+The third approach is to compile using CMake using the build files
+in the misc/win32-msvc directory.  This approach, however, will ONLY
+currently build the core libraries together with their C++ interface
+in rt^3 and is intended for 3rd party applications that link against
+BRL-CAD as a geometry engine or ray-trace library.
 
 Special thanks to Jonathan Bonomo for the Windows installer that uses
 the Nullsoft Scriptable Install System (i.e. NSIS) that replaces the

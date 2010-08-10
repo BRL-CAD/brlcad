@@ -423,6 +423,7 @@ cmd_setup(void)
     if (pathname) {
 	/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
 	int i;
+        struct bu_vls vls;
 
 	bu_strlcat(buffer, "/", MAXPATHLEN);
 
