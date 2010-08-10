@@ -263,6 +263,15 @@ ENDIF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
 
+
+# CMake can detect flex and bison, but apparently not generic lex/yacc.
+# Solution is to make our own generic lex/yacc Find routines that look
+# first for flex/bison, but will take whatever's available.  Since the
+# BRL-CAD project isn't supposed to rely on flex/bison specific features
+# anyway, there shouldn't be a problem.
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
+
 #--------------------------------------------------------------------------------
 # Now we define the various options for BRL-CAD things the user can enable and
 # disable.  As much as possible, autodetect sane default options.
@@ -280,21 +289,27 @@ MARK_AS_ADVANCED(BRLCAD-BUILD_BENCHMARK_ONLY)
 OPTION(BRLCAD-BUILD_RTSERVER_ONLY "Only build rtserver." OFF)
 MARK_AS_ADVANCED(BRLCAD-BUILD_RTSERVER_ONLY)
 
-INCLUDE (CheckLibraryExists)
 
-# Need to work on this - CMake can detect flex and bison, but apparently not
-# generic lex/yacc - need to update the Wireshark files to be a a graceful
-# fallback to the FLEX/BISON logic, and (perhaps) wrap both in some way to
-# hide any differences from the build code?
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
+# Use CMake techniques for finding libraries that BRL-CAD
+# doesn't supply locally, but pay attention to which options
+# are enabled
 
-# First, use CMake techniques for finding libraries that BRL-CAD
-# doesn't supply locally
 find_package(Threads)
 find_package(Curses)
-find_package(X11)
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+
+if(WIN32 OR APPLE)
+   OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
+endif(WIN32 OR APPLE)
+if (BRLCAD-ENABLE_X11)
+   find_package(X11)
+endif (BRLCAD-ENABLE_X11)
+
+OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
+if (BRLCAD-ENABLE_OPENGL)
+   INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+endif (BRLCAD-ENABLE_OPENGL)
+
+INCLUDE (CheckLibraryExists)
 
 # This may be overkill - does CHECK_LIBRARY_EXISTS usably set
 # anything for us?  May want to wrap some combination of
