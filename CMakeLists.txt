@@ -242,6 +242,15 @@ IF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
   SET(BRLCAD_INSTALL_PACKAGE_DIR ${BRLCAD_INSTALL_LIB_DIR})
 ENDIF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
 
+# The location in which to install BRL-CAD data files 
+IF(NOT BRLCAD_INSTALL_DATA_DIR)
+  IF (${BRLCAD_PREFIX} MATCHES "^/usr[/]*$" OR ${BRLCAD_PREFIX} MATCHES "^/usr/local[/]*$")
+     SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad)
+  ELSE()
+     SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share)
+  ENDIF()
+ENDIF(NOT BRLCAD_INSTALL_DATA_DIR)
+
 # The location in which to install BRL-CAD documentation files 
 IF(NOT BRLCAD_INSTALL_DOC_DIR)
   SET(BRLCAD_INSTALL_DOC_DIR ${BRLCAD_PREFIX}/share/brlcad/doc)
@@ -263,6 +272,20 @@ ENDIF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
 FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
 
+# Set up some of the define statements for path information and other basics
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE \"brlcad\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"BRL-CAD\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"brlcad\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA \"${BRLCAD_INSTALL_DATA_DIR}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${BRLCAD_PREFIX}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
+
+IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+   FILE(APPEND ${CONFIG_H_FILE} "#define DEBUG 1\n")
+ENDIF()
+
 
 # CMake can detect flex and bison, but apparently not generic lex/yacc.
 # Solution is to make our own generic lex/yacc Find routines that look
@@ -275,6 +298,19 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 #--------------------------------------------------------------------------------
 # Now we define the various options for BRL-CAD things the user can enable and
 # disable.  As much as possible, autodetect sane default options.
+
+OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings" OFF)
+if (BRLCAD-ENABLE_STRICT)
+   FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
+endif (BRLCAD-ENABLE_STRICT)
+
+OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_SMP)
+if (BRLCAD-ENABLE_SMP)
+   FILE(APPEND  ${CONFIG_H_FILE} "#define PARALLEL 1\n")
+endif (BRLCAD-ENABLE_SMP)
+
+
 
 # Sometimes an option no longer makes sense in light of other options,
 # or a new option becomes available when others are enabled - load a
@@ -296,6 +332,9 @@ MARK_AS_ADVANCED(BRLCAD-BUILD_RTSERVER_ONLY)
 
 find_package(Threads)
 find_package(Curses)
+if (CURSES_HAVE_CURSES_H)
+   FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_CURSES_H 1\n")
+endif()
 
 if(WIN32 OR APPLE)
    OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
@@ -363,7 +402,9 @@ CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCCXX)
 # in configure.ac and will probably change more - will also need to
 # make sure local variations of the Find* routines do what is needed
 # if CMake default Modules don't.
+BRLCAD_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
+BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 BRLCAD_INCLUDE_FILE(getopt.h HAVE_GETOPT_H)
 BRLCAD_INCLUDE_FILE(gl/device.h HAVE_GL_DEVICE_H)
 BRLCAD_INCLUDE_FILE(grp.h HAVE_GRP_H)
@@ -412,6 +453,7 @@ BRLCAD_INCLUDE_FILE(winsock.h HAVE_WINSOCK_H)
 
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
+BRLCAD_FUNCTION_EXISTS(alloca HAVE_ALLOCA)
 BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
 BRLCAD_FUNCTION_EXISTS(fchmod HAVE_FCHMOD)
@@ -447,9 +489,49 @@ BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
 BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
-# Need to put TRY_RUN tests in foro basename and dirname - see configure.ac
 
 BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
+
+
+INCLUDE(CheckCSourceRuns)
+
+# Check for basename and dirname
+CHECK_LIBRARY_EXISTS(gen basename "" HAVE_LIBGEN)
+if(HAVE_LIBGEN)
+SET(basename_SRC "
+#include <libgen.h>
+int main(int argc, char *argv[]) {
+  (void)basename(argv[0]);
+  return 0;
+}")
+SET(dirname_SRC "
+#include <libgen.h>
+int main(int argc, char *argv[]) {
+  (void)dirname(argv[0]);
+  return 0;
+}")
+ELSE(HAVE_LIBGEN_H)
+SET(basename_SRC "
+int main(int argc, char *argv[]) {
+  (void)basename(argv[0]);
+  return 0;
+}")
+SET(dirname_SRC "
+int main(int argc, char *argv[]) {
+  (void)dirname(argv[0]);
+  return 0;
+}")
+ENDIF(HAVE_LIBGEN)
+
+CHECK_C_SOURCE_RUNS("${basename_SRC}" HAVE_BASENAME)
+CHECK_C_SOURCE_RUNS("${dirname_SRC}" HAVE_DIRNAME)
+if (HAVE_BASENAME)
+   FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_BASENAME 1\n")
+endif()
+if (HAVE_DIRNAME)
+   FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_DIRNAME 1\n")
+endif()
+
 
 
 # Only look for frameworks if we're on an Apple machine - start
@@ -615,6 +697,7 @@ IF(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
    SET(BRLCAD_OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Directory containing openNURBS headers" FORCE)
    SET(OPENNURBS_INCLUDE_DIR "${BRLCAD_OPENNURBS_INCLUDE_DIR}" CACHE STRING "Directory containing openNURBS headers" FORCE)
    SET(BRLCAD_OPENNURBS_LIBRARY "openNURBS" CACHE STRING "openNURBS" FORCE)
+   BRLCAD_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
 ELSE(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
    SET(BRLCAD_OPENNURBS_INCLUDE_DIR "${OPENNURBS_INCLUDE_DIR}" CACHE STRING "Directory containing openNURBS headers" FORCE)
    SET(BRLCAD_OPENNURBS_LIBRARY "${OPENNURBS_LIBRARY}" CACHE STRING "openNURBS library" FORCE)
