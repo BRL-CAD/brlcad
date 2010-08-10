@@ -194,7 +194,7 @@ FILE(WRITE ${SCL_SOURCE_DIR}/include/conf/USER "1")
 
 
 # Now that all the tests are done, configure the scl_config.h file:
-configure_file(${CONFIG_H_FILE} ${SCL_SOURCE_DIR}/include/scl_config.h)
+configure_file(${CONFIG_H_FILE} ${SCL_BINARY_DIR}/include/scl_config.h)
 
 include_directories(
         ${SCL_SOURCE_DIR}/include
