@@ -280,6 +280,7 @@ FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"brlcad\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA \"${BRLCAD_INSTALL_DATA_DIR}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${BRLCAD_PREFIX}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
 IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
@@ -304,7 +305,7 @@ if (BRLCAD-ENABLE_STRICT)
    FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
 endif (BRLCAD-ENABLE_STRICT)
 
-OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" OFF)
+OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_SMP)
 if (BRLCAD-ENABLE_SMP)
    FILE(APPEND  ${CONFIG_H_FILE} "#define PARALLEL 1\n")
@@ -415,7 +416,7 @@ BRLCAD_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 BRLCAD_INCLUDE_FILE(ncurses.h HAVE_NCURSES_H)
 BRLCAD_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 BRLCAD_INCLUDE_FILE(poll.h HAVE_POLL_H)
-BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD)
+BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
 BRLCAD_INCLUDE_FILE(pwd.h HAVE_PWD_H)
 BRLCAD_INCLUDE_FILE(rle.h HAVE_RLE_H)
 BRLCAD_INCLUDE_FILE(sched.h HAVE_SCHED_H)
@@ -476,7 +477,7 @@ BRLCAD_FUNCTION_EXISTS(setenv HAVE_SETENV)
 BRLCAD_FUNCTION_EXISTS(setpgid HAVE_SETPGID)
 BRLCAD_FUNCTION_EXISTS(setpriority HAVE_SETPRIORITY)
 BRLCAD_FUNCTION_EXISTS(setprogname HAVE_SETPROGNAME)
-BRLCAD_FUNCTION_EXISTS(srand48 HAVE__SRAND48)
+BRLCAD_FUNCTION_EXISTS(srand48 HAVE_SRAND48)
 BRLCAD_FUNCTION_EXISTS(strchr HAVE_STRCHR)
 BRLCAD_FUNCTION_EXISTS(strdup HAVE_STRDUP)
 BRLCAD_FUNCTION_EXISTS(strlcat HAVE_STRLCAT)
@@ -553,9 +554,6 @@ FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/DATE "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
-
-# Now that all the tests are done, configure the brlcad_config.h file:
-configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
@@ -706,6 +704,11 @@ ENDIF(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
 # STEP is going to require some extra thought - it's a src/other 
 # with multiple libraries.  For now, just add it as a subdir
 ADD_SUBDIRECTORY(src/other/step)
+
+
+# Now that all the tests are done, configure the brlcad_config.h file:
+configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
+
 
 ADD_SUBDIRECTORY(src/libbu)
 ADD_SUBDIRECTORY(src/libbn)
