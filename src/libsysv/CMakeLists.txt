@@ -8,6 +8,7 @@ set(LIBSYSV_SOURCES
 )
 
 include_directories(
+    ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
     ../other/tcl/generic
 )

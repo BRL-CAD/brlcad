@@ -4,7 +4,8 @@ set(LIBANALYZE_SOURCES
 )
 
 include_directories(
-    ../../include
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
     ../other/tcl/generic
 )
 

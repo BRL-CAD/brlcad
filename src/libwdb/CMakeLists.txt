@@ -24,6 +24,7 @@ set(LIBWDB_SOURCES
 )
 
 include_directories(
+    ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
     ${BRLCAD_REGEX_INCLUDE_DIR}
     ${BRLCAD_ZLIB_INCLUDE_DIR}

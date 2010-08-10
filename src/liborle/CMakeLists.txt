@@ -3,6 +3,7 @@ set(LIBORLE_SOURCES
 )
 
 include_directories(
+    ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
     ${BRLCAD_UTAHRLE_INCLUDE_DIR}
 )

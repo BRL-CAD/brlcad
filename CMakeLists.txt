@@ -168,7 +168,10 @@ IF(NOT WIN32)
   EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
 ENDIF(NOT WIN32)
 
-# Set build type here?  May be useful for picking intelligent defaults
+# Set build type here. In this case, watch for a command line assignment
+# and if there isn't one force set to basic in order to have a default
+# set for the remainder of the configure.  May not be necessary, and if
+# not should be removed - wait for finished build files to tell.
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
 	"Basic" "Debug" "Release")
 if (NOT CMAKE_BUILD_TYPE)
@@ -176,8 +179,6 @@ if (NOT CMAKE_BUILD_TYPE)
 endif (NOT CMAKE_BUILD_TYPE)
 
 # The location in which to install BRLCAD.  What is this for Windows?
-# This would be a good setting to conditionalize based on a flag for debug
-# vs. release vs. ?? - set different defaults accordingly.
 IF(NOT BRLCAD_PREFIX)
   IF(NOT WIN32)
      IF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
@@ -200,6 +201,9 @@ MESSAGE(STATUS "Install directory prefix: ${BRLCAD_PREFIX}")
 
 # TODO - need to replace the functionality of BC_BRLCAD_ROOT and BC_BRLCAD_DATA here,
 # if it's not already being handled - the data directory at least is likely to need some help
+# also will need to set CFLAGS for debug, optimized, what have you - likely to need some
+# options for all of that, although can probably use the build type setting to make intelligent
+# default choices
 
 #-----------------------------------------------------------------------------
 # Output directories.
@@ -454,7 +458,7 @@ FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
 
 # Now that all the tests are done, configure the brlcad_config.h file:
-configure_file(${CONFIG_H_FILE} ${BRLCAD_SOURCE_DIR}/include/brlcad_config.h)
+configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
