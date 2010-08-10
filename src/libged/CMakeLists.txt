@@ -271,4 +271,4 @@ add_definitions(
 )
 
 add_library(ged ${LIBGED_SOURCES})
-target_link_libraries(ged bu rt wdb analyze)
+target_link_libraries(ged bu rtlib wdb analyze)

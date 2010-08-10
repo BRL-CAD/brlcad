@@ -254,5 +254,5 @@ else(MSVC)
    )
 endif(MSVC)
 
-add_library(rt ${LIBRT_SOURCES})
-target_link_libraries(rt bu bn ${BRLCAD_OPENNURBS_LIBRARY} ${BRLCAD_REGEX_LIBRARY} ${BRLCAD_ZLIB_LIBRARY} ${TCL_LIBRARY})
+add_library(rtlib ${LIBRT_SOURCES})
+target_link_libraries(rtlib bu bn ${BRLCAD_OPENNURBS_LIBRARY} ${BRLCAD_REGEX_LIBRARY} ${BRLCAD_ZLIB_LIBRARY} ${TCL_LIBRARY})

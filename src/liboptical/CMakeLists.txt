@@ -52,4 +52,4 @@ add_definitions(
 )
 
 add_library(optical ${LIBOPTICAL_SOURCES})
-target_link_libraries(optical bu bn rt)
+target_link_libraries(optical bu bn rtlib)

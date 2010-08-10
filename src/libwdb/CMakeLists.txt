@@ -48,4 +48,4 @@ else(MSVC)
 endif(MSVC)
 
 add_library(wdb ${LIBWDB_SOURCES})
-target_link_libraries(wdb rt bu bn sysv ${BRLCAD_OPENNURBS_LIBRARY} ${BRLCAD_REGEX_LIBRARY} ${BRLCAD_ZLIB_LIBRARY} ${TCL_LIBRARY})
+target_link_libraries(wdb rtlib bu bn sysv ${BRLCAD_OPENNURBS_LIBRARY} ${BRLCAD_REGEX_LIBRARY} ${BRLCAD_ZLIB_LIBRARY} ${TCL_LIBRARY})
