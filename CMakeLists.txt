@@ -149,13 +149,6 @@ ELSE(WIN32)
    ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
 ENDIF(WIN32)
 
-# Set build type here?  May be useful for picking intelligent defaults
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-set(CMAKE_BUILD_TYPE "Debug" CACHE STRING
-	"Set build type" FORCE)
-
-
 
 # print out the title with a pretty box computed to wrap around
 SET(CONFIG_TITLE "*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***")
@@ -172,22 +165,33 @@ MESSAGE(STATUS "${SEPARATOR_STRING}")
 
 # For NFS volumes, to ensure proper file creation.
 IF(NOT WIN32)
-  EXEC_PROGRAM(umask ARGS 022)
+  EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
 ENDIF(NOT WIN32)
 
+# Set build type here?  May be useful for picking intelligent defaults
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+	"Basic" "Debug" "Release")
+set(CMAKE_BUILD_TYPE "Basic" CACHE STRING "Set build type" FORCE)
 
 # The location in which to install BRLCAD.  What is this for Windows?
 # This would be a good setting to conditionalize based on a flag for debug
 # vs. release vs. ?? - set different defaults accordingly.
 IF(NOT BRLCAD_PREFIX)
   IF(NOT WIN32)
-#    SET(BRLCAD_PREFIX "/usr/brlcad/brlcad-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
-#    SET(BRLCAD_PREFIX "${BRLCAD_SOURCE_DIR}/../brlcad-install")
-    SET(BRLCAD_PREFIX "/usr/brlcad")
+     IF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
+         SET(BRLCAD_PREFIX "/usr/brlcad/brlcad-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
+     ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
+     IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+         SET(BRLCAD_PREFIX "${BRLCAD_SOURCE_DIR}/../brlcad-install")
+     ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+     IF ("${CMAKE_BUILD_TYPE}" MATCHES "Basic")
+         SET(BRLCAD_PREFIX "/usr/brlcad")
+     ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Basic")
   ENDIF(NOT WIN32)
 ENDIF(NOT BRLCAD_PREFIX)
 
 SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "prefix" FORCE)
+MESSAGE(STATUS "Install directory prefix: ${BRLCAD_PREFIX}")
 
 # TODO - need to replace the functionality of BC_BRLCAD_ROOT and BC_BRLCAD_DATA here,
 # if it's not already being handled - the data directory at least is likely to need some help

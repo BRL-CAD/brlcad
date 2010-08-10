@@ -80,39 +80,31 @@ ENDIF(_orig_lang)
 
 
 # Unfortunately, CMake doesn't give you variables with current day, month,
-# etc.  For Windows use d_rossberg's execute_process approach, which doesn't give individual
-# day, month, etc. values but does give us something we can work with. Otherwise,
+# etc.  For Windows use d_rossberg's execute_process approach and some
+# regular expressions (the resulting timestamp is not identical in format to
+# that given by the Unix date command but is close) and for all other systems
 # use the date command.
-
-# TODO - figure out REGEX to get desired variables out of win32 string 
-
 IF(WIN32)
    execute_process(COMMAND cmd /c date /t OUTPUT_VARIABLE CONFIG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
-   execute_process(COMMAND cmd /c time /t OUTPUT_VARIABLE CONFIG_TS OUTPUT_STRIP_TRAILING_WHITESPACE)
-# SET(TMPSTR "Wed 08/04/2010")
-# SET(TMPSTR2 "06:57 PM")
- #  STRING(REGEX REPLACE ...
+   execute_process(COMMAND cmd /c time /t OUTPUT_VARIABLE CONFIG_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
+   SET(CONFIG_TS "${CONFIG_DATE} ${CONFIG_TIME}")
+   STRING(REGEX REPLACE "[^0-9]*([0-9][0-9]).*" "\\1" CONFIG_MONTH "${CONFIG_DATE}" )
+   STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].([0-9][0-9]).*" "\\1" CONFIG_DAY "${CONFIG_DATE}" )
+   STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].[0-9][0-9].([0-9][0-9][0-9][0-9]).*" "\\1" CONFIG_YEAR "${CONFIG_DATE}" )
 ELSE(WIN32)
-   EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY) 
-   EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH) 
+   EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY)
+   EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH)
    EXEC_PROGRAM(date ARGS +%Y OUTPUT_VARIABLE CONFIG_YEAR)
    SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
    # try RFC 2822 for timestamp
    EXEC_PROGRAM(date ARGS -R 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
-   IF (NOT CONFIG_TS) 
-      EXEC_PROGRAM(date ARGS +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null OUTPUT_VARIABLE CONFIG_TS) 
-   ENDIF(NOT CONFIG_TS)
-   IF (NOT CONFIG_TS) 
-      EXEC_PROGRAM(date ARGS OUTPUT_VARIABLE CONFIG_TS) 
-   ENDIF(NOT CONFIG_TS)
+   IF ("${CONFIG_TS}" MATCHES ".*usage.*")
+      EXEC_PROGRAM(date ARGS +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
+   ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
+   IF ("${CONFIG_TS}" MATCHES ".*usage.*")
+      EXEC_PROGRAM(date ARGS OUTPUT_VARIABLE CONFIG_TS)
+   ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
 ENDIF(WIN32)
-
-# Set build type here?  May be useful for picking intelligent defaults
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-	"Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-set(CMAKE_BUILD_TYPE "Debug" CACHE STRING
-	"Set build type" FORCE)
-
 
 
 # print out the title with a pretty box computed to wrap around
@@ -130,8 +122,14 @@ MESSAGE(STATUS "${SEPARATOR_STRING}")
 
 # For NFS volumes, to ensure proper file creation.
 IF(NOT WIN32)
-  EXEC_PROGRAM(umask ARGS 022)
+  EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
 ENDIF(NOT WIN32)
+
+# Set build type here?  May be useful for picking intelligent defaults
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+	"Basic" "Debug" "Release")
+set(CMAKE_BUILD_TYPE "Basic" CACHE STRING "Set build type" FORCE)
+
 
 #-----------------------------------------------------------------------------
 # Output directories.
