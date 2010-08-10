@@ -124,6 +124,7 @@ set(LIBREMRT_SOURCES
 )
 
 include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
     ${BRLCAD_PNG_INCLUDE_DIR}
@@ -133,6 +134,7 @@ include_directories(
 
 add_definitions(
     -DHAVE_CONFIG_H
+    -DBRLCADBUILD=1
 )
 
 add_executable(rtexample ${rtexample_SRCS})
@@ -189,5 +191,4 @@ target_link_libraries(rtweight fb rtlib optical)
 add_executable(rtxray ${rtxray_SRCS})
 target_link_libraries(rtxray fb rtlib optical)
 
-#add_library(remrt ${LIBREMRT_SOURCES})
-#target_link_libraries(remrt rtlib optical fb bu pkg)
+add_library(remrt STATIC ${LIBREMRT_SOURCES})
