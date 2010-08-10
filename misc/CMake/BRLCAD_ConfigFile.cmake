@@ -2,6 +2,7 @@
 
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckIncludeFiles)
+INCLUDE(CheckIncludeFileCXX)
 INCLUDE(CheckTypeSize)
 
 MACRO(BRLCAD_FUNCTION_EXISTS function var)
@@ -17,6 +18,13 @@ MACRO(BRLCAD_INCLUDE_FILE filename var)
      FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE)
 ENDMACRO(BRLCAD_INCLUDE_FILE)
+
+MACRO(BRLCAD_INCLUDE_FILE_CXX filename var)
+  CHECK_INCLUDE_FILE_CXX(${filename} ${var})
+  if(CONFIG_H_FILE)
+     FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ${var} 1\n")
+  endif(CONFIG_H_FILE)
+ENDMACRO(BRLCAD_INCLUDE_FILE_CXX)
 
 MACRO(BRLCAD_TYPE_SIZE typename var)
   CHECK_TYPE_SIZE(${typename} ${var})
