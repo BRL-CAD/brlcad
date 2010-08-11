@@ -97,4 +97,4 @@ print "Making the shape into a solid region (so it has mass and occupies space).
 
 # `rt -W -a 35 -e 25 -s1024 spiral.g spiral.r`;
 
-print "All done.\n=n";
+print "All done.\n";

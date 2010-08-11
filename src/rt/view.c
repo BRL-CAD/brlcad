@@ -63,23 +63,22 @@ const char title[] = "The BRL-CAD Raytracer RT";
 const char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
- -s #		Square grid size in pixels (default 512)\n\
- -w # -n #	Grid size width and height in pixels\n\
+ -r		Report overlaps (default)\n\
+ -R		Do not report overlaps\n\
+ -M		Read matrix+commands on stdin\n\
+ -o model.pix	Output .pix format file (default is window)\n\
+ -s #		Square grid size in pixels (default is 512)\n\
+ -w # -n #	Grid size width (w) and height (n) in pixels\n\
+ -a # -e #	Azimuth (a) and elevation (e) in degrees\n\
  -V #		View (pixel) aspect ratio (width/height)\n\
- -a #		Azimuth in deg\n\
- -e #		Elevation in deg\n\
- -M		Read matrix+cmds on stdin\n\
- -N #		NMG debug flags\n\
- -o model.pix	Output file, .pix format (default=fb)\n\
- -x #		librt debug flags\n\
- -X #		rt debug flags\n\
- -p #		Perspective, degrees side to side\n\
+ -p #		Perspective angle, degrees side to side\n\
  -P #		Set number of processors\n\
  -T #/#		Tolerance: distance/angular\n\
- -r		Report overlaps\n\
- -R		Do not report overlaps\n\
- -l #		Set the light model\n\
+ -l #		Set lighting model rendering style\n\
  -U #		Use air if # is greater than 0\n\
+ -x #		librt debug flags\n\
+ -N #		NMG debug flags\n\
+ -X #		rt debug flags\n\
 ";
 
 

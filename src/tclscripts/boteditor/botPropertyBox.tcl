@@ -1,116 +1,168 @@
+# BotPropertyBox class for viewing/manipulating BoT properties
+#
+# Usage: BotPropertyBox <instance name> <bot name> \
+#    [-command <callback>] 
+# 
+# The callback function passed in the -command option is called whenever
+# the supplied bot is modified.
+#
+package require Tk
+package require Itcl
+package require Itk
+
 ::itcl::class BotPropertyBox {
     inherit ::itk::Widget
 
-    constructor {args} {}
+    constructor {bot args} {}
+
+    public {
+	common TYPE_SURFACE 1
+	common TYPE_VOLUME 2
+	common TYPE_PLATE 3
+    }
+
+    itk_option define -command command Command {} {}
 }
 
-::itcl::body BotPropertyBox::constructor {args} {
-
-    # create main box
-    itk_component add box {
-	ttk::labelframe $itk_interior.box \
-	    -text {BoT Properties} \
-	    -padding 5
-    } {}
-
-    # create type selection widgets
-    itk_component add typeLabel {
-	ttk::label $itk_component(box).typeLbl \
-	    -text {Type}
-    } {}
-    
-    itk_component add typeLine {
-	ttk::separator $itk_component(box).typeSep \
-	    -orient horizontal
-    } {}
-    
-    itk_component add surfRadio {
-	ttk::radiobutton $itk_component(box).surfRadio \
-	    -text Surface
-    } {}
-
-    itk_component add volRadio {
-	ttk::radiobutton $itk_component(box).volRadio \
-	    -text Volume
-    } {}
-
-    itk_component add plateRadio {
-	ttk::radiobutton $itk_component(box).plateRadio \
-	    -text Plate
-    } {}
-
-    # create geometry info widgets
-    itk_component add infoLabel {
-	ttk::label $itk_component(box).infoLbl \
-	    -text {Geometry}
-    } {}
-
-    itk_component add infoLine {
-	ttk::separator $itk_component(box).infoSep \
-	    -orient horizontal
-    } {}
-
-    itk_component add faces {
-	ttk::label $itk_component(box).faces \
-	    -text {Faces: }
-    } {}
-
-    itk_component add vertices {
-	ttk::label $itk_component(box).vertices \
-	    -text {Vertices: }
-    } {}
-
-    # display main box
-    grid $itk_component(box) -row 0 -column 0
-    grid rowconfigure $itk_component(box) {0 1 3 4} -weight 1
-
-    # display bot type selection widgets
-    set r 0; set c 0
-    grid $itk_component(typeLabel) \
-        -row $r -column $c \
-	-sticky nw \
-	-padx 2
-    incr r
-    grid $itk_component(typeLine) \
-        -row $r -column $c \
-	-columnspan 4 \
-	-sticky ew \
-	-padx {2 10} -pady {0 5} 
-    incr r; set c 0
-    grid $itk_component(surfRadio) \
-        -row $r -column $c \
-	-padx 5
-    incr c
-    grid $itk_component(volRadio) \
-        -row $r -column $c \
-	-padx 5
-    incr c
-    grid $itk_component(plateRadio) \
-        -row $r -column $c \
-	-padx 5
-
-    # display geometry info widgets
-    incr r; set c 0
-    grid $itk_component(infoLabel) \
-        -row $r -column $c \
-	-sticky nw \
-	-padx 2 -pady {20 0}
-    incr r
-    grid $itk_component(infoLine) \
-        -row $r -column $c \
-	-columnspan 3 \
-	-sticky ew \
-	-padx {2 10} -pady {0 5}
-    incr r
-    grid $itk_component(faces) \
-        -row $r -column $c \
-	-sticky w \
-	-padx 5
-    incr r
-    grid $itk_component(vertices) \
-        -row $r -column $c \
-	-sticky w \
-	-padx 5
+::itcl::body BotPropertyBox::constructor {bot args} {
 
     eval itk_initialize $args
+
+    # make container frame
+    itk_component add main {
+	ttk::frame $itk_interior.propertyFrame
+    } {}
+
+    # add notebook to container frame
+    itk_component add nb {
+	ttk::notebook $itk_component(main).notebook
+    } {}
+
+    # add tab panes to container frame
+    itk_component add tpane {
+	TypePane $itk_component(main).typePane $bot
+    } {}
+    itk_component add gpane {
+	GeometryPane $itk_component(main).geometryPane $bot
+    } {}
+
+    # display main frame
+    pack $itk_component(main) -expand yes -fill both
+
+    # display notebook in main frame
+    pack $itk_component(nb) -expand yes -fill both
+
+    # display tab panes in notebook
+    $itk_component(nb) add $itk_component(gpane) \
+        -text Geometry \
+	-sticky nw
+    $itk_component(nb) add $itk_component(tpane) \
+        -text Type \
+	-sticky nw
+}
+
+::itcl::class TypePane {
+    inherit itk::Widget
+
+    constructor {bot args} {
+	eval itk_initialize $args
+
+	# make container frame
+	itk_component add main {
+	    ttk::frame $itk_interior.typePaneFrame
+	} {}
+
+	# add layout frames to container frame
+	itk_component add cframe {
+	    ttk::frame $itk_component(main).contentFrame \
+	        -padding 5
+	} {}
+	itk_component add sframe {
+	    ttk::frame $itk_component(main).springFrame
+	} {}
+
+	# add radio widgets to content frame
+	set ::radio 0
+	itk_component add surfRadio {
+	    ttk::radiobutton $itk_component(cframe).surfaceRadio \
+	        -text Surface \
+		-value $BotPropertyBox::TYPE_SURFACE \
+		-variable radio
+	} {}
+	itk_component add volRadio {
+	    ttk::radiobutton $itk_component(cframe).volumeRadio \
+	        -text Volume \
+		-value $BotPropertyBox::TYPE_VOLUME \
+		-variable radio
+	} {}
+	itk_component add plateRadio {
+	    ttk::radiobutton $itk_component(cframe).plateRadio \
+	        -text Plate \
+		-value $BotPropertyBox::TYPE_PLATE \
+		-variable radio
+	} {}
+
+	# select appropriate radio
+	set ::radio [bot get type $bot]
+
+	# display container frame
+	pack $itk_component(main) -expand yes -fill both
+
+	# display layout frames in container frame
+	grid $itk_component(cframe) -row 0 -column 0
+	grid $itk_component(sframe) -row 1 -column 0 -sticky news
+	grid rowconfigure $itk_component(main) 1 -weight 1
+	grid columnconfigure $itk_component(main) 0 -weight 1
+
+	# display widgets in content frame - no expansion
+	grid $itk_component(surfRadio) -row 0 -column 0 -sticky nw
+	grid $itk_component(volRadio) -row 1 -column 0 -sticky nw
+	grid $itk_component(plateRadio) -row 2 -column 0 -sticky nw
+    }
+}
+
+::itcl::class GeometryPane {
+    inherit itk::Widget
+
+    constructor {bot args} {
+	eval itk_initialize $args
+
+	# make container frame
+	itk_component add main {
+	    ttk::frame $itk_interior.geometryPaneFrame
+	} {}
+
+	# add layout frames to container frame
+	itk_component add cframe {
+	    ttk::frame $itk_component(main).contentFrame \
+	        -padding 5
+	} {}
+	itk_component add sframe {
+	    ttk::frame $itk_component(main).springFrame
+	} {}
+
+	# add widgets to content frame
+	itk_component add faces {
+	    ttk::label $itk_component(cframe).faces \
+	        -text "Faces: [bot get faces $bot]"
+	} {}
+
+	itk_component add vertices {
+	    ttk::label $itk_component(cframe).vertices \
+	        -text "Vertices: [bot get vertices $bot]"
+	} {}
+
+	# display container frame
+	pack $itk_component(main) -expand yes -fill both
+
+	# display layout frames in container frame
+	grid $itk_component(cframe) -row 0 -column 0
+	grid $itk_component(sframe) -row 1 -column 0 -sticky news
+	grid rowconfigure $itk_component(main) 1 -weight 1
+	grid columnconfigure $itk_component(main) 0 -weight 1
+
+	# display widgets in content frame - no expansion
+	grid $itk_component(faces) -row 0 -column 0 -sticky nw
+	grid $itk_component(vertices) -row 1 -column 0 -sticky nw
+    }
 }

@@ -2428,6 +2428,35 @@ rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
  *
  *************************************************************************/
 
+/**
+ * RT_BOT_PROPGET
+ * 
+ * Command used to query BoT property values.
+ */
+int
+rt_bot_propget(struct rt_bot_internal *bot, char *property)
+{
+    if (bot == NULL)
+	return -1;
+
+    size_t len = strlen(property);
+
+    /* return value of requested property */
+    if (strncmp(property, "faces", len) == 0) {
+	return bot->num_faces;
+    }
+    else if (strncmp(property, "orientation", len) == 0) {
+	return bot->orientation;
+    }
+    else if (strncmp(property, "type", len) == 0 || strncmp(property, "mode", len) == 0) {
+	return bot->mode;
+    }
+    else if (strncmp(property, "vertices", len) == 0) {
+	return bot->num_vertices;
+    }
+
+    return -1;
+}
 
 /**
  * This routine adjusts the vertex pointers in each face so that

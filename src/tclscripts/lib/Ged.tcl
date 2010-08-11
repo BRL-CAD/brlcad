@@ -122,6 +122,7 @@ package provide cadwidgets::Ged 1.0
 	method bg_all {args}
 	method blast {args}
 	method bo {args}
+	method bot {args}
 	method bot_condense {args}
 	method bot_decimate {args}
 	method bot_dump {args}
@@ -964,6 +965,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bo {args} {
     eval $mGed bo $args
+}
+
+::itcl::body cadwidgets::Ged::bot {args} {
+    eval $mGed bot $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_condense {args} {

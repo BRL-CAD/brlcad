@@ -33,7 +33,8 @@
 #include "./ged_private.h"
 
 enum etypes {
-   ETYPES_ABS = 0,
+   ETYPES_NULL = -1,
+   ETYPES_ABS,
    ETYPES_REL,
    ETYPES_ROT_AET, 
    ETYPES_ROT_XYZ,
@@ -330,8 +331,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 }
 
 
-#define COMBMEM_GETCOMBTREE(_gedp, _cmd, _name, _intern, _ntp, _rt_tree_array, _node_count) { \
-  struct directory *_dp; \
+#define COMBMEM_GETCOMBTREE(_gedp, _cmd, _name, _dp, _intern, _ntp, _rt_tree_array, _node_count) { \
   struct rt_comb_internal *_comb; \
 \
   if ((_dp = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == DIR_NULL) { \
@@ -351,45 +351,41 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 \
   _comb = (struct rt_comb_internal *)(_intern).idb_ptr;	\
   RT_CK_COMB(_comb); \
-  if (!_comb->tree) {							\
-    bu_vls_printf(&(_gedp)->ged_result_str, "%s: empty combination", _dp->d_namep); \
-    rt_db_free_internal(&(_intern)); \
-    return GED_ERROR; \
+  if (_comb->tree) {							\
+      (_ntp) = db_dup_subtree(_comb->tree, &rt_uniresource);	\
+      RT_CK_TREE(_ntp);						\
+\
+      /* Convert to "v4 / GIFT style", so that the flatten makes sense. */ \
+      if (db_ck_v4gift_tree(_ntp) < 0)					\
+	  db_non_union_push((_ntp), &rt_uniresource);			\
+      RT_CK_TREE(_ntp);							\
+\
+      (_node_count) = db_tree_nleaves(_ntp);				\
+      (_rt_tree_array) = (struct rt_tree_array *)bu_calloc((_node_count), sizeof(struct rt_tree_array), "rt_tree_array"); \
+\
+      /*							 \
+       * free=0 means that the tree won't have any leaf nodes freed. \
+       */								\
+      (void)db_flatten_tree((_rt_tree_array), (_ntp), OP_UNION, 0, &rt_uniresource); \
+  } else { \
+      (_ntp) = TREE_NULL; \
+      (_node_count) = 0; \
+      (_rt_tree_array) = (struct rt_tree_array *)0; \
   } \
-\
-  (_ntp) = db_dup_subtree(_comb->tree, &rt_uniresource); \
-  RT_CK_TREE(_ntp); \
-\
-  /* Convert to "v4 / GIFT style", so that the flatten makes sense. */ \
-  if (db_ck_v4gift_tree(_ntp) < 0) \
-    db_non_union_push((_ntp), &rt_uniresource); \
-  RT_CK_TREE(_ntp); \
-\
-  (_node_count) = db_tree_nleaves(_ntp); \
-  (_rt_tree_array) = (struct rt_tree_array *)bu_calloc((_node_count), sizeof(struct rt_tree_array), "rt_tree_array"); \
-\
-  /* \
-   * free=0 means that the tree won't have any leaf nodes freed. \
-   */ \
-  (void)db_flatten_tree((_rt_tree_array), (_ntp), OP_UNION, 0, &rt_uniresource); \
 }
 
 
 HIDDEN int
 combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 {
+    struct directory *dp;
     struct rt_db_internal intern;
     union tree *ntp;
     struct rt_tree_array *rt_tree_array;
     size_t i;
     size_t node_count;
 
-    if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Internal error, missing an object name.\n", argv[0]);
-	return GED_ERROR;
-    }
-
-    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], intern, ntp, rt_tree_array, node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, intern, ntp, rt_tree_array, node_count);
 
     for (i=0; i<node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
@@ -424,31 +420,19 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 }
 
 #define COMBMEM_SET_PART_I(_gedp,_argc,_cmd,_name,_num_params,_intern,_dp,_comb,_node_count,_rt_tree_array) { \
-if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == DIR_NULL) { \
-    bu_vls_printf(&(_gedp)->ged_result_str, "%s: Warning - %s not found in database.\n", (_cmd), (_name)); \
-    return GED_ERROR; \
-} \
+  if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+      bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
+      return GED_ERROR;							\
+  }									\
 \
-if (!((_dp)->d_flags & DIR_COMB)) { \
-    bu_vls_printf(&(_gedp)->ged_result_str, "%s: Warning - %s not a combination\n", (_cmd), (_name)); \
-    return GED_ERROR; \
-} \
-\
-if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
-    bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
-    return GED_ERROR; \
-} \
-\
-(_comb) = (struct rt_comb_internal *)(_intern).idb_ptr; \
-RT_CK_COMB((_comb)); \
-if (!(_comb)->tree) { \
-    bu_vls_printf(&(_gedp)->ged_result_str, "%s: empty combination", (_dp)->d_namep); \
-    rt_db_free_internal(&(_intern)); \
-    return GED_ERROR; \
-} \
-\
-(_node_count) = ((_argc) - 2) / (_num_params); /* integer division */	\
-(_rt_tree_array) = (struct rt_tree_array *)bu_calloc((_node_count), sizeof(struct rt_tree_array), "tree list"); \
+  (_comb) = (struct rt_comb_internal *)(_intern).idb_ptr;		\
+  RT_CK_COMB((_comb));							\
+  (_node_count) = ((_argc) - 2) / (_num_params); /* integer division */ \
+  if (_node_count) {							\
+      (_rt_tree_array) = (struct rt_tree_array *)bu_calloc((_node_count), sizeof(struct rt_tree_array), "tree list"); \
+  } else { \
+      (_rt_tree_array) = (struct rt_tree_array *)0; \
+  }									\
 }
 
 #define COMBMEM_SET_PART_II(_gedp,_argv,_op,_i,_rt_tree_array,_tree_index,_mat) { \
@@ -487,7 +471,7 @@ db_free_tree((_comb)->tree, &rt_uniresource); \
 if ((_tree_index)) \
     (_final_tree) = (union tree *)db_mkgift_tree((_rt_tree_array), (_node_count), &rt_uniresource); \
 else \
-    (_final_tree) = (union tree *)NULL; \
+    (_final_tree) = TREE_NULL; \
 \
 RT_INIT_DB_INTERNAL(&(_intern)); \
 (_intern).idb_major_type = DB5_MAJORTYPE_BRLCAD; \
@@ -561,7 +545,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	  return GED_ERROR;
     }
 
-    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, old_intern, old_ntp, old_rt_tree_array, old_node_count);
     COMBMEM_SET_PART_I(gedp, argc, argv[0], argv[1], 15, intern, dp, comb, node_count, rt_tree_array);
 
     tree_index = 0;
@@ -656,7 +640,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	  return GED_ERROR;
     }
 
-    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, old_intern, old_ntp, old_rt_tree_array, old_node_count);
     COMBMEM_SET_PART_I(gedp, argc, argv[0], argv[1], 8, intern, dp, comb, node_count, rt_tree_array);
 
     tree_index = 0;
@@ -736,7 +720,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
     if (etype != ETYPES_ROT_ARBITRARY_AXIS)
 	return GED_ERROR;
 
-    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, old_intern, old_ntp, old_rt_tree_array, old_node_count);
     COMBMEM_SET_PART_I(gedp, argc, argv[0], argv[1], 9, intern, dp, comb, node_count, rt_tree_array);
 
     tree_index = 0;
@@ -813,7 +797,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     if (etype != ETYPES_TRA)
        return GED_ERROR;
 
-    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, old_intern, old_ntp, old_rt_tree_array, old_node_count);
     COMBMEM_SET_PART_I(gedp, argc, argv[0], argv[1], 5, intern, dp, comb, node_count, rt_tree_array);
 
     tree_index = 0;
@@ -875,7 +859,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     if (etype != ETYPES_SCA)
        return GED_ERROR;
 
-    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], old_intern, old_ntp, old_rt_tree_array, old_node_count);
+    COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, old_intern, old_ntp, old_rt_tree_array, old_node_count);
     COMBMEM_SET_PART_I(gedp, argc, argv[0], argv[1], 9, intern, dp, comb, node_count, rt_tree_array);
 
     tree_index = 0;
@@ -927,6 +911,43 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     return GED_OK;
 }
 
+HIDDEN int
+combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
+{
+    struct directory *dp;
+    struct rt_comb_internal *comb;
+    struct rt_db_internal intern;
+    union tree *ntp;
+    struct rt_tree_array *rt_tree_array;
+    size_t node_count;
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (!(dp->d_flags & DIR_COMB)) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], argv[1]);
+	return GED_ERROR;
+    }									\
+
+    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	return GED_ERROR;
+    }
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    db_free_tree(comb->tree, &rt_uniresource);
+    comb->tree = NULL;
+
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Unable to write combination into database - %s\n", argv[1]);
+	return GED_ERROR;
+    }
+
+    return GED_OK;
+}
 
 /*
  * Set/get a combinations members.
@@ -936,7 +957,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 {
     char c;
     enum etypes iflag = ETYPES_ABS;
-    enum etypes rflag = ETYPES_ABS;
+    enum etypes rflag = ETYPES_NULL;
     static const char *usage = "[-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]";
 
     /* initialize result */
@@ -963,6 +984,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 
 	     iflag = (enum etypes)d;
 	  }
+	  break;
 	  case 'r':
 	  {
 	     int d;
@@ -973,13 +995,21 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 
 	     rflag = (enum etypes)d;
 	  }
-	}
+	  break;
+          default:
+	     break;
+       }
     }
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
 
-    if (argc == 2)
-	return combmem_get(gedp, argc, argv, iflag);
+    if (argc == 2) {
+	if (rflag == ETYPES_NULL)
+	    return combmem_get(gedp, argc, argv, iflag);
+
+	/* Remove all members */
+	return combmem_set_empty(gedp, argc, argv);
+    }
 
     /* Check number of args */
     switch (rflag) {
@@ -1008,7 +1038,11 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 	  if (argc > 10 && !((argc-2)%9)) {
 	     return combmem_set_sca(gedp, argc, argv, rflag);
 	  }
+       case ETYPES_NULL:
        default:
+	  if (argc > 16 && !((argc-2)%15)) {
+	      return combmem_set(gedp, argc, argv, ETYPES_ABS);
+	  }
 	  break;
     }
 

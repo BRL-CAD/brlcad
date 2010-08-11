@@ -145,6 +145,7 @@ namespace eval ArcherCore {
 	method bev                 {args}
 	method blast               {args}
 	method bo                  {args}
+	method bot                 {args}
 	method bot_condense        {args}
 	method bot_decimate        {args}
 	method bot_face_fuse       {args}
@@ -437,7 +438,7 @@ namespace eval ArcherCore {
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
 					   3ptarb adjust arced attr bb bev blast bo \
-					   bot2pipe bot_condense bot_decimate bot_face_fuse \
+					   bot bot2pipe bot_condense bot_decimate bot_face_fuse \
 					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
 					   c cd clear clone color comb comb_color combmem copy copyeval copymat \
 					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
@@ -4444,6 +4445,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::bo {args} {
     eval gedWrapper bo 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::bot {args} {
+    eval gedWrapper bot 0 0 1 1 $args
 }
 
 ::itcl::body ArcherCore::bot_condense {args} {
