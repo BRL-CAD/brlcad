@@ -245,13 +245,30 @@ librt_nil_la_SOURCES = \
 	vshoot.c \
 	wdb.c
 
+tie1.lo: primitives/bot/tie.c
+	$(LTCOMPILE) -DTIE_PRECISION=1 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+tie0.lo: primitives/bot/tie.c
+	$(LTCOMPILE) -DTIE_PRECISION=0 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+tie_kdtree1.lo: primitives/bot/tie_kdtree.c
+	$(LTCOMPILE) -DTIE_PRECISION=1 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+tie_kdtree0.lo: primitives/bot/tie_kdtree.c
+	$(LTCOMPILE) -DTIE_PRECISION=0 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+
 librt_nil_la_LIBADD = ${BREP_LIBADD}
 
 librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 librt_la_LIBADD = \
 	librt_nil.la \
-	${RT_LIBS}
+	${RT_LIBS} \
+	tie0.lo \
+	tie1.lo \
+	tie_kdtree0.lo \
+	tie_kdtree1.lo
 
 prcomb_SOURCES = prcomb.c
 prcomb_LDADD = \
