@@ -3135,7 +3135,8 @@ Popup Menu    Right or Ctrl-Left
 	}
     } else {
 	set isregion [isRegion $cgdata]
-	set img [getTreeImage $_ctext $ctype "" $isregion]
+	set op [getTreeOp $ptext $_ctext]
+	set img [getTreeImage $_ctext $ctype $op $isregion]
 	set cnode [$itk_component(newtree) insert $_pnode end \
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
