@@ -2436,10 +2436,12 @@ rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 int
 rt_bot_propget(struct rt_bot_internal *bot, char *property)
 {
+    size_t len;
+
     if (bot == NULL)
 	return -1;
 
-    size_t len = strlen(property);
+    len = strlen(property);
 
     /* return value of requested property */
     if (strncmp(property, "faces", len) == 0) {

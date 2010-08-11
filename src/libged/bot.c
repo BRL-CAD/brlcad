@@ -42,8 +42,11 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     char *cmd = argv[0];
+    char *sub;
+    char *arg;
     char *primitive = argv[argc - 1];
     char prop = '\0';
+    size_t len;
     static const char *usage = "get (faces|orientation|type|vertices) bot\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -72,9 +75,9 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     RT_BOT_CK_MAGIC(bot);
 
     /* run subcommand */
-    char *sub = argv[1];
-    char *arg = argv[2];
-    size_t len = strlen(sub);
+    sub = argv[1];
+    arg = argv[2];
+    len = strlen(sub);
 
     if (strncmp(sub, "get", len) == 0) {
 	int propVal = rt_bot_propget(bot, arg);
