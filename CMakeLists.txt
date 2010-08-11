@@ -244,13 +244,17 @@ ENDIF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
 
 # The location in which to install BRL-CAD data files 
 IF(NOT BRLCAD_INSTALL_DATA_DIR)
-  IF (${BRLCAD_PREFIX} MATCHES "^/usr[/]*$" OR ${BRLCAD_PREFIX} MATCHES "^/usr/local[/]*$")
+  IF (${BRLCAD_PREFIX} MATCHES "^/usr[/]*$")
      SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad)
-  ELSE()
+  ENDIF()
+  IF (${BRLCAD_PREFIX} MATCHES "^/usr/local[/]*$")
+     SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad)
+  ENDIF()
+  IF(NOT BRLCAD_INSTALL_DATA_DIR)
      SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share)
   ENDIF()
 ENDIF(NOT BRLCAD_INSTALL_DATA_DIR)
-
+MESSAGE("datadir: ${BRLCAD_INSTALL_DATA_DIR}")
 # The location in which to install BRL-CAD documentation files 
 IF(NOT BRLCAD_INSTALL_DOC_DIR)
   SET(BRLCAD_INSTALL_DOC_DIR ${BRLCAD_PREFIX}/share/brlcad/doc)
