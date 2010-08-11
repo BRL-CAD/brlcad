@@ -105,6 +105,13 @@ rt_nurb_s_eval(const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *fi
     bu_free( (char *)curves, "rt_nurb_s_eval: curves" );
 
     k_index = rt_nurb_knot_index( &srf->v, v, srf->order[RT_NURB_SPLIT_COL] );
+    if ( k_index < 0 )
+    {
+	bu_log( "rt_nurb_s_eval: v value outside parameter range\n");
+	bu_log( "\tUV = (%g %g )\n", u, v );
+	rt_nurb_s_print( "", srf );
+	bu_bomb( "rt_nurb_s_eval: v value outside parameter range\n");
+    }
 
     ev_pt = (fastf_t * ) rt_nurb_eval_crv( diff_curve, srf->order[RT_NURB_SPLIT_COL],
 					   v, &srf->v, k_index, coords);
