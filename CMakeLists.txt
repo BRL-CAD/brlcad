@@ -123,32 +123,62 @@ ENDIF(_orig_lang)
 
 
 # Unfortunately, CMake doesn't give you variables with current day, month,
-# etc.  For Windows use d_rossberg's execute_process approach and some
-# regular expressions (the resulting timestamp is not identical in format to
-# that given by the Unix date command but is close) and for all other systems
-# use the date command.
-IF(WIN32)
-   execute_process(COMMAND cmd /c date /t OUTPUT_VARIABLE CONFIG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
-   execute_process(COMMAND cmd /c time /t OUTPUT_VARIABLE CONFIG_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
-   SET(CONFIG_TS "${CONFIG_DATE} ${CONFIG_TIME}")
-   STRING(REGEX REPLACE "[^0-9]*([0-9][0-9]).*" "\\1" CONFIG_MONTH "${CONFIG_DATE}" )
-   STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].([0-9][0-9]).*" "\\1" CONFIG_DAY "${CONFIG_DATE}" )
-   STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].[0-9][0-9].([0-9][0-9][0-9][0-9]).*" "\\1" CONFIG_YEAR "${CONFIG_DATE}" )
-ELSE(WIN32)
-   EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY) 
-   EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH) 
-   EXEC_PROGRAM(date ARGS +%Y OUTPUT_VARIABLE CONFIG_YEAR)
+# etc.  There are several approaches to this - the most theoretically robust,
+# and the first one tried, builds a small C file which writes out the needed
+# values to files in the build directory, which are then read and stripped by
+# CMake - essentially the same approach as the version numbers except with the
+# C file generating the files.  If that fails, fall back on command line scripts
+# and output capture - this will work well on systems with the date command but
+# Windows does not provide region-independent ordering for day/month in its
+# command line tool outputs.  It is vastly preferable to have the C based
+# solution succeed. 
+SET(CONFIG_TIME_DAY_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_DAY")
+SET(CONFIG_TIME_MONTH_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_MONTH")
+SET(CONFIG_TIME_YEAR_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_YEAR")
+SET(CONFIG_TIMESTAMP_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIMESTAMP")
+FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include")
+FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include/conf")
+configure_file(${CONFIG_H_FILE} ${BRLCAD_CMAKE_DIR}/test_srcs/time.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/time.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED 
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/time.c
+  OUTPUT_VARIABLE COMPILEMESSAGES)
+IF(TIME_RESULT MATCHES "^0$")
+   FILE(READ ${CONFIG_TIME_DAY_FILE} CONFIG_DAY)
+   STRING(STRIP ${CONFIG_DAY} CONFIG_DAY)
+   FILE(READ ${CONFIG_TIME_MONTH_FILE} CONFIG_MONTH)
+   STRING(STRIP ${CONFIG_MONTH} CONFIG_MONTH)
+   FILE(READ ${CONFIG_TIME_YEAR_FILE} CONFIG_YEAR)
+   STRING(STRIP ${CONFIG_YEAR} CONFIG_YEAR)
    SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
-   # try RFC 2822 for timestamp
-   EXEC_PROGRAM(date ARGS -R 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
-   IF ("${CONFIG_TS}" MATCHES ".*usage.*")
-      EXEC_PROGRAM(date ARGS +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null OUTPUT_VARIABLE CONFIG_TS) 
-   ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
-   IF ("${CONFIG_TS}" MATCHES ".*usage.*")
-      EXEC_PROGRAM(date ARGS OUTPUT_VARIABLE CONFIG_TS) 
-   ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
-ENDIF(WIN32)
-
+   FILE(READ ${CONFIG_TIMESTAMP_FILE} CONFIG_TS)
+   STRING(STRIP ${CONFIG_TS} CONFIG_TS)
+ELSE(TIME_RESULT MATCHES "^0$")
+   IF(WIN32)
+      # There appears to be no way to spot the region-specific aspsects of this reliably - regionalize
+      # as appropriate to your computer, or if there is a command-line way to access this information
+      # on Windows please enhance this logic.
+      execute_process(COMMAND cmd /c date /t OUTPUT_VARIABLE CONFIG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND cmd /c time /t OUTPUT_VARIABLE CONFIG_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
+      SET(CONFIG_TS "${CONFIG_DATE} ${CONFIG_TIME}")
+      STRING(REGEX REPLACE "[^0-9]*([0-9][0-9]).*" "\\1" CONFIG_MONTH "${CONFIG_DATE}" )
+      STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].([0-9][0-9]).*" "\\1" CONFIG_DAY "${CONFIG_DATE}" )
+      STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].[0-9][0-9].([0-9][0-9][0-9][0-9]).*" "\\1" CONFIG_YEAR "${CONFIG_DATE}" )
+   ELSE(WIN32)
+      EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY) 
+      EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH) 
+      EXEC_PROGRAM(date ARGS +%Y OUTPUT_VARIABLE CONFIG_YEAR)
+      SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
+      # try RFC 2822 for timestamp
+      EXEC_PROGRAM(date ARGS -R 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
+      IF ("${CONFIG_TS}" MATCHES ".*usage.*")
+         EXEC_PROGRAM(date ARGS +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null OUTPUT_VARIABLE CONFIG_TS) 
+      ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
+      IF ("${CONFIG_TS}" MATCHES ".*usage.*")
+         EXEC_PROGRAM(date ARGS OUTPUT_VARIABLE CONFIG_TS) 
+      ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
+   ENDIF(WIN32)
+ENDIF(TIME_RESULT MATCHES "^0$")
 
 # print out the title with a pretty box computed to wrap around
 SET(CONFIG_TITLE "*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***")
@@ -504,7 +534,6 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
 
 BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
-
 
 INCLUDE(CheckCSourceRuns)
 
