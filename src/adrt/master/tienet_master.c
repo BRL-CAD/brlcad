@@ -36,7 +36,7 @@
 
 #include <inttypes.h>
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "adrt.h"
 #include "tienet.h"
 #include "tienet_master.h"

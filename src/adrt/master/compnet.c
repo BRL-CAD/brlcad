@@ -32,7 +32,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "adrt.h"
 #include "tienet.h"
 

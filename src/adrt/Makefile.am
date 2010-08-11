@@ -9,19 +9,7 @@ AM_CFLAGS = \
 	${TCL_CPPFLAGS}
 
 bin_PROGRAMS = adrt_master adrt_slave
-lib_LTLIBRARIES = libtie.la librender.la
-
-libtie_la_LIBADD = libtie0.la libtie1.la ${BU} ${BU_LIBS}
-libtie_la_SOURCES =
-
-SOURCES = libtie/tie.c libtie/tie_kdtree.c
-libtie0_la_SOURCES = $(SOURCES)
-libtie1_la_SOURCES = $(SOURCES)
-
-libtie0_la_CFLAGS = -DTIE_PRECISION=0
-libtie1_la_CFLAGS = -DTIE_PRECISION=1
-
-noinst_LTLIBRARIES = libtie0.la libtie1.la
+lib_LTLIBRARIES = librender.la
 
 librender_la_SOURCES = \
 	load.c \
@@ -52,7 +40,6 @@ librender_la_SOURCES = \
 	librender/texture_stack.c
 
 librender_la_LIBADD = \
-	libtie.la \
 	${GCV} \
 	${GCV_LIBS}
 
@@ -63,7 +50,7 @@ adrt_master_SOURCES = \
 	master/master.c
 
 adrt_master_LDADD = \
-	libtie.la \
+	${RT} \
 	${BU} \
 	${LIBNETWORK} \
 	${LIBTHREAD} \
@@ -76,10 +63,10 @@ adrt_slave_SOURCES = \
 	slave/tienet_slave.c
 
 adrt_slave_LDADD = \
+	${RT} \
 	${LIBNETWORK} \
 	${LIBTHREAD} \
-	librender.la \
-	libtie.la
+	librender.la
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \
@@ -90,8 +77,7 @@ tieinclude_HEADERS = \
 	librender/render_internal.h \
 	librender/render_util.h \
 	librender/texture.h \
-	librender/texture_internal.h \
-	libtie/tie.h
+	librender/texture_internal.h
 
 noinst_HEADERS = \
 	load.h \

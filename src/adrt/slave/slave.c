@@ -38,11 +38,10 @@
 #  include <getopt.h>
 #endif
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
-#include "tie.h"
 #include "render_util.h"
 
 #include "slave.h"
