@@ -19,6 +19,8 @@ package require Itk
 	common TYPE_SURFACE 1
 	common TYPE_VOLUME 2
 	common TYPE_PLATE 3
+
+	method update {bot}
     }
 
     itk_option define -command command Command {} {}
@@ -61,6 +63,17 @@ package require Itk
 	-sticky nw
 }
 
+# update information for bot
+::itcl::body BotPropertyBox::update {bot} {
+    $itk_component(gpane) component faces configure \
+	-text "Faces: [bot get faces $bot]"
+
+    $itk_component(gpane) component vertices configure \
+	-text "Vertices: [bot get vertices $bot]"
+
+    set ::${itk_interior}Radio [bot get type $bot]
+}
+
 ::itcl::class TypePane {
     inherit itk::Widget
 
@@ -82,28 +95,28 @@ package require Itk
 	} {}
 
 	# add radio widgets to content frame
-	set ::radio 0
+	set ::${itk_interior}Radio 0
 	itk_component add surfRadio {
 	    ttk::radiobutton $itk_component(cframe).surfaceRadio \
 	        -text Surface \
 		-value $BotPropertyBox::TYPE_SURFACE \
-		-variable radio
+		-variable ::${itk_interior}Radio
 	} {}
 	itk_component add volRadio {
 	    ttk::radiobutton $itk_component(cframe).volumeRadio \
 	        -text Volume \
 		-value $BotPropertyBox::TYPE_VOLUME \
-		-variable radio
+		-variable ${itk_interior}Radio
 	} {}
 	itk_component add plateRadio {
 	    ttk::radiobutton $itk_component(cframe).plateRadio \
 	        -text Plate \
 		-value $BotPropertyBox::TYPE_PLATE \
-		-variable radio
+		-variable ${itk_interior}Radio
 	} {}
 
 	# select appropriate radio
-	set ::radio [bot get type $bot]
+	set ::${itk_interior}Radio [bot get type $bot]
 
 	# display container frame
 	pack $itk_component(main) -expand yes -fill both

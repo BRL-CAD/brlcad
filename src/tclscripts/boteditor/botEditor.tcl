@@ -29,18 +29,19 @@ if {[catch {
     public {
 	common _ ""
 
-	method onChange {}
-	method accept {}
-	method reject {}
-
 	proc defineCommands {prefix}
 	proc localizeDialog {d}
 	proc focusOnEnter {d}
+
+	method onChange {}
+	method accept {}
+	method reject {}
     }    
 
     private {
 	variable original ""
 	variable copy ""
+
 	method showUnsaved {show}
     }
 
@@ -78,7 +79,8 @@ if {[catch {
 	    -padding 7
     } {}
     itk_component add eframe {
-	EditPane $itk_interior.editPane $copy
+	EditPane $itk_interior.editPane $copy \
+	    -command "$this onChange"
     } {}
     itk_component add closeframe {
 	ttk::frame $itk_interior.closeFrame \
@@ -149,9 +151,17 @@ if {[catch {
 # called whenever an edit is made
 ::itcl::body BotEditor::onChange {} {
     showUnsaved yes
+
+    # update properties
+    $itk_component(eframe) update $copy
 }
 
-# define commands so they work properly
+# defineCommands
+#
+# In Archer these commands are methods of an Archer instance (prefix).
+# We'll create wrappers for these commands so that we can call them
+# without an Archer object.
+#
 ::itcl::body BotEditor::defineCommands {prefix} {
 
     if {$prefix == ""} return
@@ -332,10 +342,11 @@ if {[catch {
 	# add components
 	itk_component add tools {
 	    BotTools $itk_component(lframe).tools $bot \
-		-command "$itk_option(-command)"
+		-command $itk_option(-command)
 	} {}
 	itk_component add props {
-	    BotPropertyBox $itk_component(rframe).properties $bot
+	    BotPropertyBox $itk_component(rframe).properties $bot \
+		-command $itk_option(-command)
 	} {}
 
 	# display main frame
@@ -359,4 +370,8 @@ if {[catch {
     }
 
     itk_option define -command command Command "" {}
+
+    public {
+	method update {bot} {$itk_component(props) update $bot}
+    }
 }
