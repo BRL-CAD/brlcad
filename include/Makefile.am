@@ -18,7 +18,8 @@ brlcadinclude_required = \
 	rtgeom.h \
 	rtprivate.h \
 	rtserver.h \
-	tclcad.h
+	tclcad.h \
+	tie.h
 
 brlcadinclude_wanted = \
 	analyze.h \
