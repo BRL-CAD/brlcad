@@ -45,6 +45,10 @@
 #define GLUE(_a, _b)      _a ## _b
 #define XGLUE(_a, _b) GLUE(_a, _b)
 
+/* this should be done using more of a GLUE type method. */
+#define TIE_PRECISION 1
+#include "tie.h"
+
 
 #define MAXHITS 128
 
@@ -203,7 +207,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (bot_ip->bot_flags & RT_BOT_USE_FLOATS) {
+    if (bot_ip->tie != NULL) {
+	tie_prep1(bot_ip->tie);	/* FIXME: needs XGLUE */
+    } else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS) {
 	return rt_bot_prep_float(stp, bot_ip, rtip);
     } else {
 	return rt_bot_prep_double(stp, bot_ip, rtip);
@@ -298,7 +304,9 @@ rt_bot_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
+    if (bot->tie) {
+	/* do things. And stuff. */
+    } else if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	return rt_bot_shot_float(stp, rp, ap, seghead);
     } else {
 	return rt_bot_shot_double(stp, rp, ap, seghead);
@@ -420,6 +428,8 @@ rt_bot_free(register struct soltab *stp)
     register struct bot_specific *bot =
 	(struct bot_specific *)stp->st_specific;
 
+    if (bot->tie != NULL)
+	tie_free1(bot->tie);
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	rt_bot_free_float(bot);
     } else {
@@ -976,6 +986,18 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	bip->num_normals = 0;
 	bip->num_face_normals = 0;
     }
+
+    /* alloc bip->tie and fill it in if reasonabe.
+     * do not ignore original, need it for plot 'n stuff. */
+    bip->tie = NULL;
+    /* without known winding or normals, we cannot use tie. */
+    if ( bip->face_normals == NULL && bip->orientation == RT_BOT_UNORIENTED )
+	return 0;
+    bip->tie = bu_malloc(sizeof(struct tie_s), "TIE");
+    /* tie_init1((struct tie_s *)bip->tie, bip->num_faces, TIE_KDTREE_FAST); */
+    /* bunches of tie_push1((struct tie_s *)bip->tie, tlist, tnum, plist,
+     *   pstride); (steal from load_g.c?) */
+    /* prep will wire the engine to bot_specific */
 
     return 0;			/* OK */
 }
