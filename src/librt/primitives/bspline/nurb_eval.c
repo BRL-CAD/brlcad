@@ -136,6 +136,13 @@ rt_nurb_c_eval(const struct edge_g_cnurb *crv, fastf_t param, fastf_t *final_val
     coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
 
     k_index = rt_nurb_knot_index( &crv->k, param, crv->order);
+    if ( k_index < 0 )
+    {
+	bu_log( "rt_nurb_c_eval: param value outside parameter range\n");
+	bu_log( "\tparam = (%g )\n", param );
+	rt_nurb_c_print( crv );
+	bu_bomb( "rt_nurb_c_eval: param value outside parameter range\n");
+    }
 
     pnts = (fastf_t * ) bu_malloc( coords * sizeof( fastf_t) *
 				   crv->c_size, "diff: rt_nurb_c_eval");
