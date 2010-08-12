@@ -1,2 +1,7 @@
-/gattributes.5
-/gattributes.html
+/mkinstalldirs
+/missing
+/config.guess
+/config.sub
+/depcomp
+/ltmain.sh
+/install-sh
