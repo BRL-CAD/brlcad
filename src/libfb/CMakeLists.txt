@@ -46,6 +46,8 @@ include_directories(
 )
 
 add_definitions(
+ 	-DHAVE_CONFIG_H
+	-DBRLCADBUILD=1
 	-DIF_REMOTE
         -DIF_AB
 	${FBX11DEFS}
