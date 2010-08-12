@@ -125,10 +125,15 @@ IF(NOT WIN32)
   EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
 ENDIF(NOT WIN32)
 
-# Set build type here?  May be useful for picking intelligent defaults
+# Set build type here. In this case, watch for a command line assignment
+# and if there isn't one force set to basic in order to have a default
+# set for the remainder of the configure.  May not be necessary, and if
+# not should be removed - wait for finished build files to tell.
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-	"Basic" "Debug" "Release")
-set(CMAKE_BUILD_TYPE "Basic" CACHE STRING "Set build type" FORCE)
+        "Basic" "Debug" "Release")
+if (NOT CMAKE_BUILD_TYPE)
+   set(CMAKE_BUILD_TYPE "Basic" CACHE STRING "Set build type" FORCE)
+endif (NOT CMAKE_BUILD_TYPE)
 
 
 #-----------------------------------------------------------------------------
