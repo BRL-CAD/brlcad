@@ -109,7 +109,7 @@ WISH		= $(TCLSH_ENV) $(WISH_PROG)
 SHARED_BUILD	= @SHARED_BUILD@
 
 #INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@
-INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@ -I$(srcdir)/src  -I$(top_builddir)/.
+INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@ -I$(srcdir)/src -I$(srcdir) -I$(top_builddir)
 
 PKG_CFLAGS	= @PKG_CFLAGS@
 
@@ -331,12 +331,12 @@ src/swproc.c: cssprop.h
 # The special targets to generate C code from tcl and lemon files are 
 # here:
 
-htmldefaultstyle.c: $(srcdir)/src/mkdefaultstyle.tcl
-	$(TCLSH) $(srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
+htmldefaultstyle.c: $(top_srcdir)/src/mkdefaultstyle.tcl
+	$(TCLSH) $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
 
 
 tokenlist.txt:
-	test -f tokenlist.txt || cp $(srcdir)/src/tokenlist.txt .
+	test -f tokenlist.txt || cp $(top_srcdir)/src/tokenlist.txt .
 
 htmltokens.h: tokenlist.txt
 	$(TCLSH) tokenlist.txt
@@ -345,7 +345,7 @@ htmltokens.c: htmltokens.h
 
 
 cssprop.tcl:
-	cp $(srcdir)/src/cssprop.tcl .
+	cp $(top_srcdir)/src/cssprop.tcl .
 
 cssprop.h: cssprop.tcl
 	test -f cssprop.h || $(TCLSH) cssprop.tcl
@@ -503,6 +503,8 @@ uninstall-doc:
 	done
 
 EXTRA_DIST = \
+	$(BUILT_EXTRA) \
+	$(BUILT_SOURCES) \
 	doc/html.man \
 	doc/macros.tcl \
 	doc/tkhtml_requirements.tcl \
@@ -511,6 +513,7 @@ EXTRA_DIST = \
 	src/html.css \
 	src/htmltcl.c \
 	src/main.c \
+	src/mkdefaultstyle.tcl \
 	src/quirks.css \
 	src/tkhtml.tcl \
 	tclconfig/README.txt \
