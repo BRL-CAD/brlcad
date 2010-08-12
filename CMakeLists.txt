@@ -603,10 +603,10 @@ set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
 	"Yes" "No" "Auto")
 
 FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/COUNT "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/DATE "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "1")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/DATE "\"${CONFIG_TS}\"")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "\"some_machine\"")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"")
+FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "\"some_user\"")
 
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
