@@ -250,7 +250,7 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 
 HDR = $(GENHDR) $(SRCHDR)
 
-noinst_LTLIBRARIES = libTkhtml_nil.la
+EXTRA_LTLIBRARIES = libTkhtml_nil.la
 
 noinst_HEADERS = \
 	src/css.h \
