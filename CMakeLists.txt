@@ -229,7 +229,6 @@ IF(NOT BRLCAD_PREFIX)
 ENDIF(NOT BRLCAD_PREFIX)
 
 SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "prefix" FORCE)
-MESSAGE(STATUS "Install directory prefix: ${BRLCAD_PREFIX}")
 
 # TODO - need to replace the functionality of BC_BRLCAD_ROOT and BC_BRLCAD_DATA here,
 # if it's not already being handled - the data directory at least is likely to need some help
