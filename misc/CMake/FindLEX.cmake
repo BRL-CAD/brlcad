@@ -42,7 +42,7 @@
 #      ${LEX_MyScanner_OUTPUTS}
 #   )
 #  ====================================================================
-
+#
 #=============================================================================
 # Copyright 2010 United States Government as represented by
 #                the U.S. Army Research Laboratory.
@@ -76,6 +76,7 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#=============================================================================
 
 FIND_PROGRAM(LEX_EXECUTABLE flex DOC "path to the lex executable")
 IF(NOT LEX_EXECUTABLE)
