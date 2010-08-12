@@ -154,6 +154,9 @@ if {[catch {
 
     # update properties
     $itk_component(eframe) update $copy
+
+    Z
+    draw $copy
 }
 
 # defineCommands
@@ -168,6 +171,8 @@ if {[catch {
 
     set _ $prefix
 
+    proc ::Z {} {eval $BotEditor::_ Z}
+    proc ::draw {args} {eval $BotEditor::_ draw $args}
     proc ::cp {args} {eval $BotEditor::_ cp $args}
     proc ::mv {args} {eval $BotEditor::_ mv $args}
     proc ::kill {args} {eval $BotEditor::_ kill $args}
@@ -182,7 +187,10 @@ if {[catch {
 # apply changes to original
 ::itcl::body BotEditor::accept {} {
 
-    set cmd "kill $original; mv $copy $original; delete object $this"
+    set cmd "kill $original; \
+	mv $copy $original; \
+	bind all <ButtonPress> {}; \
+	delete object $this"
 
     # get confirmation
     itk_component add confirm {
@@ -197,7 +205,9 @@ if {[catch {
 # discard all changes
 ::itcl::body BotEditor::reject {} {
 
-    set cmd "kill $copy; delete object $this"
+    set cmd "kill $copy; \
+	bind all <ButtonPress> {}; \
+	delete object $this"
 
     # get confirmation
     itk_component add confirm {
