@@ -1,5 +1,7 @@
 #-----------------------------------------------------------------------------
 MACRO(BRLCAD_THIRD_PARTY_OPTION upper lower)
+  SET(${upper}_LIBRARY "${lower}-NOTFOUND")
+  SET(${upper}_INCLUDE_DIR "${lower}-NOTFOUND")
   OPTION(BRLCAD_BUILD_LOCAL_${upper} "Build the local ${lower} library." ON)
   MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_${upper})
   IF(NOT BRLCAD_BUILD_LOCAL_${upper})
