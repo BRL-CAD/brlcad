@@ -611,7 +611,7 @@ FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "\"some_user\"")
 
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ThirdParty.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 
 
 #---------------------------------------------------------------------------------
@@ -633,8 +633,8 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ThirdParty.cmake)
 OPTION(BRLCAD_SYSTEM_LIBS_ONLY "Use the system's libraries." OFF)
 
 # zlib Library
-BRLCAD_THIRD_PARTY_OPTION(ZLIB zlib)
-BRLCAD_THIRD_PARTY_SUBDIR(ZLIB src/other/libz)
+THIRD_PARTY_OPTION(ZLIB zlib)
+THIRD_PARTY_SUBDIR(ZLIB src/other/libz)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
    SET(BRLCAD_BUILD_LOCAL_ZLIB OFF CACHE BOOL "Use the system's zlib library" FORCE)
 ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
@@ -648,8 +648,8 @@ ELSE(BRLCAD_BUILD_LOCAL_ZLIB)
 ENDIF(BRLCAD_BUILD_LOCAL_ZLIB)
 
 # libtermlib Library
-BRLCAD_THIRD_PARTY_OPTION(LIBTERM termlib)
-BRLCAD_THIRD_PARTY_SUBDIR(LIBTERM src/other/libtermlib)
+THIRD_PARTY_OPTION(LIBTERM termlib)
+THIRD_PARTY_SUBDIR(LIBTERM src/other/libtermlib)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
    SET(BRLCAD_BUILD_LOCAL_LIBTERM ON CACHE BOOL "Use the system's termlib library" FORCE)
 ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
@@ -668,7 +668,7 @@ ENDIF(BRLCAD_BUILD_LOCAL_LIBTERM)
 # successful search by FindZLIB will reset the basic variables.  If not using local
 # copy of zlib, FindZLIB results will be identical in both cases so there is no
 # danger of harming the libpng setup by changing BRLCAD_ZLIB*.
-BRLCAD_THIRD_PARTY_OPTION(PNG libpng)
+THIRD_PARTY_OPTION(PNG libpng)
 SET(ZLIB_INCLUDE_DIR "${BRLCAD_ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
 SET(ZLIB_LIBRARY "${BRLCAD_ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
 # BRL-CAD needs PNG's IO - turn it on (i.e. turn off the disabling flags)
@@ -676,7 +676,7 @@ SET(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE
 MARK_AS_ADVANCED(PNG_NO_CONSOLE_IO)
 SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
 MARK_AS_ADVANCED(PNG_NO_STDIO)
-BRLCAD_THIRD_PARTY_SUBDIR(PNG src/other/libpng)
+THIRD_PARTY_SUBDIR(PNG src/other/libpng)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
    SET(BRLCAD_BUILD_LOCAL_PNG ON CACHE BOOL "Use the system's libpng library" FORCE)
 ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
@@ -692,8 +692,8 @@ ELSE(BRLCAD_BUILD_LOCAL_PNG)
 ENDIF(BRLCAD_BUILD_LOCAL_PNG)
 
 # libregex Library
-BRLCAD_THIRD_PARTY_OPTION(REGEX libregex)
-BRLCAD_THIRD_PARTY_SUBDIR(REGEX src/other/libregex)
+THIRD_PARTY_OPTION(REGEX libregex)
+THIRD_PARTY_SUBDIR(REGEX src/other/libregex)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
    SET(BRLCAD_BUILD_LOCAL_REGEX ON CACHE BOOL "Use the system's libregex library" FORCE)
 ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
@@ -707,8 +707,8 @@ ELSE(BRLCAD_BUILD_LOCAL_REGEX)
 ENDIF(BRLCAD_BUILD_LOCAL_REGEX)
 
 # libutahrle Library
-BRLCAD_THIRD_PARTY_OPTION(UTAHRLE libutahrle)
-BRLCAD_THIRD_PARTY_SUBDIR(UTAHRLE src/other/libutahrle)
+THIRD_PARTY_OPTION(UTAHRLE libutahrle)
+THIRD_PARTY_SUBDIR(UTAHRLE src/other/libutahrle)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
    SET(BRLCAD_BUILD_LOCAL_UTAHRLE ON CACHE BOOL "Use the system's libutahrle library" FORCE)
 ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
@@ -740,8 +740,8 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 #)
 
 # OpenNURBS Library
-BRLCAD_THIRD_PARTY_OPTION(OPENNURBS openNURBS)
-BRLCAD_THIRD_PARTY_SUBDIR(OPENNURBS src/other/openNURBS)
+THIRD_PARTY_OPTION(OPENNURBS openNURBS)
+THIRD_PARTY_SUBDIR(OPENNURBS src/other/openNURBS)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
    SET(BRLCAD_BUILD_LOCAL_OPENNURBS ON CACHE BOOL "Use the system's openNURBS library" FORCE)
 ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
