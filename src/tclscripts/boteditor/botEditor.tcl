@@ -28,12 +28,13 @@ if {[catch {
 
     public {
 	common _ ""
-
+	
 	proc defineCommands {prefix}
 	proc localizeDialog {d}
 	proc focusOnEnter {d}
 
 	method onChange {}
+	method updateStatus {msg} {}
 	method accept {}
 	method reject {}
     }    
@@ -46,6 +47,7 @@ if {[catch {
     }
 
     itk_option define -prefix prefix Prefix "" {}
+    itk_option define -lastpost lastPost Time 0 {}
 }
 
 # open editor for bot named 'bot'
@@ -63,7 +65,7 @@ if {[catch {
 
     # show name of bot being edited
     $this configure -title "[eval $this cget -title] - $bot"
-    set statusLine "editing \"$bot\""
+    set ::${itk_interior}statusLine "editing \"$bot\""
 
     # make working copy
     set original $bot
@@ -80,7 +82,8 @@ if {[catch {
     } {}
     itk_component add eframe {
 	EditPane $itk_interior.editPane $copy \
-	    -command "$this onChange"
+	    -command "$this onChange" \
+	    -output "$this updateStatus"
     } {}
     itk_component add closeframe {
 	ttk::frame $itk_interior.closeFrame \
@@ -109,7 +112,7 @@ if {[catch {
     } {}
     itk_component add status {
 	ttk::label $itk_component(statusframe).statusLabel \
-	    -text $statusLine
+	    -textvariable ${itk_interior}statusLine
     } {}
 
     # display main frames
@@ -157,6 +160,46 @@ if {[catch {
 
     Z
     draw $copy
+}
+
+# show msg in status line
+::itcl::body BotEditor::updateStatus {msg} {
+
+    set statusLine ::${itk_interior}statusLine
+
+    # see how long since the lastest message was posted
+    set now [clock milliseconds]
+    set elapsed [expr $now - $itk_option(-lastpost)]
+
+    # more than a second since latest message was posted
+    if {$elapsed > 1000} {
+
+	# display the new message now
+	set $statusLine "$msg"
+	configure -lastpost $now
+
+	return
+    }
+
+    # latest message hasn't been posted yet
+    if {$elapsed < 0} {
+
+	# post new message one second after latest
+	set wait [expr -1 * $elapsed + 1000]
+	configure -lastpost [expr $now + $wait]
+	after $wait "set $statusLine \"$msg\""
+
+	return 
+    }
+    
+    # latest message has been posted for less than a second
+    if {$elapsed < 1000} {
+
+	# post new message one second after latest
+	set wait [expr 1000 - $elapsed]
+	configure -lastpost [expr $now + $wait]
+	after $wait "set $statusLine \"$msg\""
+    }
 }
 
 # defineCommands
@@ -352,7 +395,8 @@ if {[catch {
 	# add components
 	itk_component add tools {
 	    BotTools $itk_component(lframe).tools $bot \
-		-command $itk_option(-command)
+		-command $itk_option(-command) \
+		-output $itk_option(-output)
 	} {}
 	itk_component add props {
 	    BotPropertyBox $itk_component(rframe).properties $bot \
@@ -380,6 +424,7 @@ if {[catch {
     }
 
     itk_option define -command command Command "" {}
+    itk_option define -output output Command "" {}
 
     public {
 	method update {bot} {$itk_component(props) update $bot}

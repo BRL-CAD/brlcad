@@ -1,11 +1,15 @@
 # BotTools class for wrapping BoT commands
 #     
 # Usage: BotTools <instance name> <bot name> \
-#    [-command <callback>] 
+#    [-command <callback>] \
+#    [-output <callback>]
 #
 # The callback function passed in the -command option is called whenever
-# the supplied bot is modified.
+# the supplied bot is modified. It should take no arguments.
 #
+# The callback function passed in the -output option will ocassionally be
+# passed notification strings. It should take a single string argument.
+# 
 package require Tk
 package require Itcl
 package require Itk
@@ -18,8 +22,10 @@ package require Itk
     public {
 	proc inRange {min max n} {}
 	proc keepFocus {widget}
+	proc disabledRun {widget cmd args}
 
 	method runBotCmd {cmd args}
+	method print {msg} {}
 
 	method simplify {}
 	method validateSimplifyChecks {}
@@ -45,6 +51,7 @@ package require Itk
     }
 
     itk_option define -command command Command "" {}
+    itk_option define -output output Command "" {}
 }
 
 # initialize
@@ -84,6 +91,16 @@ package require Itk
     mv $bot $bot.old
     eval $cmd $args $bot $bot.old
     kill $bot.old
+}
+
+::itcl::body BotTools::print {msg} {
+    set out $itk_option(-output)
+
+    if {$out == ""} {
+	return
+    }
+
+    catch {eval $out {$msg}}
 }
 
 # convenience method for creating a new tab pane
@@ -137,9 +154,9 @@ package require Itk
     set ::${itk_interior}GroupsEntry 4
     itk_component add sort {
 	ttk::button $pane.sort_faces \
-	    -text {Group Adjacent Faces} \
-	    -command "$this sortFaces"
+	    -text {Group Adjacent Faces}
     } {}
+    $itk_component(sort) configure -command "BotTools::disabledRun $itk_component(sort) $this sortFaces"
     itk_component add gframe {
 	ttk::frame $pane.groupFrame
     } {}
@@ -158,11 +175,6 @@ package require Itk
 	ttk::separator $pane.separator \
 	    -orient vertical
     } {}
-#    itk_component add decimate {
-#	ttk::button $pane.decimate \
-#	    -text {Decimate} \
-#	    -command "$this runBotCmd bot_decimate -n 5; $itk_option(-command)"
-#    } {}
 
     # draw simplify components
     set padx 3; set pady 2
@@ -205,13 +217,16 @@ package require Itk
     set faces [set ::${itk_interior}FacesCheck]
 
     if {$condense} {
-	$this runBotCmd bot_condense
+	print "bot_condense"
+	disabledRun $itk_component(simplify) $this runBotCmd bot_condense
     }
     if {$vertices} {
-	$this runBotCmd bot_vertex_fuse
+	print "bot_vertex_fuse"
+	disabledRun $itk_component(simplify) $this runBotCmd bot_vertex_fuse
     }
     if {$faces} {
-	$this runBotCmd bot_face_fuse
+	print "bot_face_fuse"
+	disabledRun $itk_component(simplify) $this runBotCmd bot_face_fuse
     }
 
     # run callback if commands were run
@@ -224,6 +239,7 @@ package require Itk
 ::itcl::body BotTools::sortFaces {} {
     set size [set ::${itk_interior}GroupsEntry]
 
+    print "bot_face_sort $size"
     bot_face_sort $size $bot
     eval $itk_option(-command)
 }
@@ -381,6 +397,14 @@ package require Itk
     "
 }
 
+# disable widget until cmd returns
+::itcl::body BotTools::disabledRun {widget cmd args} {
+
+    $widget configure -state disabled
+    eval $cmd $args
+    $widget configure -state normal
+}
+
 # test if n is an integer, not prefixed with 0s,
 # in the range [min, max]
 #
@@ -500,6 +524,7 @@ package require Itk
 	set args "$args -e $edgeVal"
     }
 
-    eval runBotCmd bot_decimate $args
+    print "bot_decimate $args"
+    disabledRun $itk_component(decimate) $this runBotCmd "bot_decimate $args"
     eval $itk_option(-command)
 }
