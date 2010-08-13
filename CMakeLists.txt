@@ -951,27 +951,13 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"") 
 
 
-ADD_CUSTOM_COMMAND(
-   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/DATE
-   COMMAND LANG=C date +'\"%a, %d %b %Y %H:%M:%S %z\"' > ${BRLCAD_BINARY_DIR}/include/conf/DATE
-   )
-ADD_CUSTOM_TARGET(writebuildtime ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/DATE) 
-
+ADD_CUSTOM_TARGET(BUILD_TIMESTAMP ALL
+   COMMAND LANG=C date +'\"%a, %d %b %Y %H:%M:%S %z\"' > ${BRLCAD_BINARY_DIR}/include/conf/DATE)
 
 # Scary slight of hand here, also not really portable but does work - make rule to increment COUNT depend on a
 # rule that moves the COUNT file to COUNT_TMP, and have the COUNT rule remove COUNT_TMP.  Thus
 # the COUNT rule ensures COUNT_TMP is never satisfied, and COUNT_TMP ensures COUNT is never satisfied,
 # thus the increment logic runs every time.
 
-FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "0")
-ADD_CUSTOM_COMMAND(
-   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
-   COMMAND test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && mv -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP || /bin/echo "0" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
-   )
-ADD_CUSTOM_COMMAND(
-   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/COUNT
-   COMMAND mv -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP ${BRLCAD_BINARY_DIR}/include/conf/COUNT && test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && expr `cat ${BRLCAD_BINARY_DIR}/include/conf/COUNT` + 1 > ${BRLCAD_BINARY_DIR}/include/conf/COUNT || /bin/echo "1" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT && rm -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
-   )
-ADD_CUSTOM_TARGET(incrementsetup ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP) 
-ADD_CUSTOM_TARGET(incrementbuildcount ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/COUNT) 
-ADD_DEPENDENCIES(incrementbuildcount incrementsetup)
+ADD_CUSTOM_TARGET(INCREMENT_BUILD_COUNT ALL
+   COMMAND test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && expr `cat ${BRLCAD_BINARY_DIR}/include/conf/COUNT` + 1 > ${BRLCAD_BINARY_DIR}/include/conf/COUNT || /bin/echo "1" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
