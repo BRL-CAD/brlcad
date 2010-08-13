@@ -716,6 +716,9 @@ Popup Menu    Right or Ctrl-Left
 	method selectTreePath {_path}
 	method setTreeView {{_rflag 0}}
 	method toggleTreeView {}
+	method treeNodeHasBeenOpened {_node}
+	method treeNodeIsOpen {_node}
+	method purgeNodeData {_node}
 
 	# db/display commands
 	method getNodeChildren  {_node}
@@ -3129,10 +3132,7 @@ Popup Menu    Right or Ctrl-Left
 		       -image $img]
 
 	fillTreeColumns $cnode $_ctext
-
-	if {$_pnode == {}} {
-	    addTreePlaceholder $cnode
-	}
+	addTreePlaceholder $cnode
     } else {
 	set isregion [isRegion $cgdata]
 	set op [getTreeOp $ptext $_ctext]
@@ -3637,15 +3637,6 @@ Popup Menu    Right or Ctrl-Left
 
 		# Add gchild members
 		fillTree $cnode $gctext
-
-		set gctype [lindex $gcgdata 0]
-
-		if {$gctype == "comb"} {
-		    set gcnode [getCNodeFromCText $cnode $gctext]
-
-		    # Add a placeholder for gcnode's possible members
-		    addTreePlaceholder $gcnode
-		}
 	    }
 	}
     }
@@ -3837,6 +3828,80 @@ Popup Menu    Right or Ctrl-Left
 
     setTreeView 1
 }
+
+::itcl::body ArcherCore::treeNodeHasBeenOpened {_node} {
+    set tags [$itk_component(newtree) item $_node -tags]
+    set ai [lsearch $tags $TREE_OPENED_TAG]
+    if {$ai == -1} {
+	return 0
+    }
+
+    return 1
+}
+
+::itcl::body ArcherCore::treeNodeIsOpen {_node} {
+    return [$itk_component(newtree) item $_node -open]
+}
+
+#
+# Delete any use of _node and its descendents in the data
+# variables that are used to interact with the tree viewer.
+#
+::itcl::body ArcherCore::purgeNodeData {_node} {
+    if {[info exists mPNode2CList($_node)]} {
+	foreach sublist $mPNode2CList($_node) {
+	    if {[lindex $sublist 0] != $TREE_PLACEHOLDER_TAG} {
+		purgeNodeData [lindex $sublist 1]
+	    }
+	}
+    }
+
+    set name $mNode2Text($_node)
+    if {[info exists mText2Node($name)]} {
+	set leftovers {}
+	foreach sublist $mText2Node($name) {
+	    if {$_node != [lindex $sublist 0]} {
+		lappend leftovers $sublist
+	    }
+	}
+
+	if {$leftovers != {}} {
+	    set mText2Node($name) $leftovers
+	} else {
+	    unset mText2Node($name)
+	}
+    }
+
+    set pnode [lindex $mCNode2PList($_node) 1]
+    if {[info exists mPNode2CList($pnode)]} {
+	set leftovers {}
+	foreach sublist $mPNode2CList($pnode) {
+	    if {$_node != [lindex $sublist 1]} {
+		lappend leftovers $sublist
+	    }
+	}
+
+	if {$leftovers != {}} {
+	    set mPNode2CList($pnode) $leftovers
+	} else {
+	    unset mPNode2CList($pnode)
+	}
+    }
+
+    unset mNode2Text($_node)
+    unset mCNode2PList($_node)
+
+    set i [lsearch $mNodePDrawList $_node]
+    if {$i != -1} {
+	set mNodePDrawList [lreplace $mNodePDrawList $i $i]
+    }
+
+    set i [lsearch $mNodeDrawList $_node]
+    if {$i != -1} {
+	set mNodeDrawList [lreplace $mNodeDrawList $i $i]
+    }
+}
+
 
 # ------------------------------------------------------------
 #                         GENERAL
