@@ -966,7 +966,7 @@ ADD_CUSTOM_TARGET(writebuildtime ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/D
 FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "0")
 ADD_CUSTOM_COMMAND(
    OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
-   COMMAND mv -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
+   COMMAND test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && mv -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP || /bin/echo "0" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
    )
 ADD_CUSTOM_COMMAND(
    OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/COUNT
