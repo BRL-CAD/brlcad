@@ -954,10 +954,5 @@ FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"")
 ADD_CUSTOM_TARGET(BUILD_TIMESTAMP ALL
    COMMAND LANG=C date +'\"%a, %d %b %Y %H:%M:%S %z\"' > ${BRLCAD_BINARY_DIR}/include/conf/DATE)
 
-# Scary slight of hand here, also not really portable but does work - make rule to increment COUNT depend on a
-# rule that moves the COUNT file to COUNT_TMP, and have the COUNT rule remove COUNT_TMP.  Thus
-# the COUNT rule ensures COUNT_TMP is never satisfied, and COUNT_TMP ensures COUNT is never satisfied,
-# thus the increment logic runs every time.
-
 ADD_CUSTOM_TARGET(INCREMENT_BUILD_COUNT ALL
    COMMAND test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && expr `cat ${BRLCAD_BINARY_DIR}/include/conf/COUNT` + 1 > ${BRLCAD_BINARY_DIR}/include/conf/COUNT || /bin/echo "1" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
