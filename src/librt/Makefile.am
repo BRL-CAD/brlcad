@@ -88,6 +88,8 @@ librt_nil_la_SOURCES = \
 	primitives/bot/bot.c \
 	primitives/bot/bot_brep.cpp \
 	primitives/bot/bot_mirror.c \
+	primitives/bot/btg.c \
+	primitives/bot/btgf.c \
 	primitives/brep/brep.cpp \
 	primitives/brep/brep_debug.cpp \
 	primitives/bspline/bspline.cpp \
@@ -245,30 +247,13 @@ librt_nil_la_SOURCES = \
 	vshoot.c \
 	wdb.c
 
-tie1.lo: primitives/bot/tie.c
-	$(LTCOMPILE) -DTIE_PRECISION=1 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-tie0.lo: primitives/bot/tie.c
-	$(LTCOMPILE) -DTIE_PRECISION=0 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-tie_kdtree1.lo: primitives/bot/tie_kdtree.c
-	$(LTCOMPILE) -DTIE_PRECISION=1 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-tie_kdtree0.lo: primitives/bot/tie_kdtree.c
-	$(LTCOMPILE) -DTIE_PRECISION=0 -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-
 librt_nil_la_LIBADD = ${BREP_LIBADD}
 
 librt_la_SOURCES =
 librt_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 librt_la_LIBADD = \
 	librt_nil.la \
-	${RT_LIBS} \
-	tie0.lo \
-	tie1.lo \
-	tie_kdtree0.lo \
-	tie_kdtree1.lo
+	${RT_LIBS}
 
 prcomb_SOURCES = prcomb.c
 prcomb_LDADD = \
@@ -292,8 +277,9 @@ parsetest_LDADD = \
 
 
 noinst_HEADERS = \
-	primitives/fixpt.h \
+	primitives/bot/btg.h \
 	primitives/brep/brep_debug.h \
+	primitives/fixpt.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
@@ -316,6 +302,8 @@ EXTRA_DIST = \
 	parse.c \
 	pmalloc.c \
 	primitives/bot/g_bot_include.c \
+	primitives/bot/tie.c \
+	primitives/bot/tie_kdtree.c \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \

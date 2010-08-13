@@ -45,10 +45,7 @@
 #define GLUE(_a, _b)      _a ## _b
 #define XGLUE(_a, _b) GLUE(_a, _b)
 
-/* this should be done using more of a GLUE type method. */
-#define TIE_PRECISION 1
-#include "tie.h"
-
+#include "btg.h"	/* for the bottie_ functions */
 
 #define MAXHITS 128
 
@@ -208,7 +205,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_BOT_CK_MAGIC(bot_ip);
 
     if (bot_ip->tie != NULL) {
-	tie_prep1(bot_ip->tie);	/* FIXME: needs XGLUE */
+	bottie_prep_double(bot_ip->tie);
     } else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS) {
 	return rt_bot_prep_float(stp, bot_ip, rtip);
     } else {
@@ -304,8 +301,8 @@ rt_bot_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
-    if (bot->tie) {
-	/* do things. And stuff. */
+    if (bot->tie != NULL) {
+	return bottie_shot_double(stp, rp, ap, seghead);
     } else if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	return rt_bot_shot_float(stp, rp, ap, seghead);
     } else {
@@ -429,7 +426,7 @@ rt_bot_free(register struct soltab *stp)
 	(struct bot_specific *)stp->st_specific;
 
     if (bot->tie != NULL)
-	tie_free1(bot->tie);
+	bottie_free_double(bot->tie);
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	rt_bot_free_float(bot);
     } else {
@@ -993,7 +990,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* without known winding or normals, we cannot use tie. */
     if ( bip->face_normals == NULL && bip->orientation == RT_BOT_UNORIENTED )
 	return 0;
-    bip->tie = bu_malloc(sizeof(struct tie_s), "TIE");
+    bip->tie = bottie_allocn_double(bip->num_faces);
     /* tie_init1((struct tie_s *)bip->tie, bip->num_faces, TIE_KDTREE_FAST); */
     /* bunches of tie_push1((struct tie_s *)bip->tie, tlist, tnum, plist,
      *   pstride); (steal from load_g.c?) */
