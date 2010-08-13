@@ -630,37 +630,37 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ThirdParty.cmake)
 # This is our "heavy hammer" flag - if this is set, assume system for
 # everything.  As yet, there is no "automatic" logic to toggle specific
 # libraries on if detection fails, but that may be possible.
-OPTION(BRLCAD_USE_SYSTEM_LIBS "Use the system's libraries." OFF)
+OPTION(BRLCAD_SYSTEM_LIBS_ONLY "Use the system's libraries." OFF)
 
 # zlib Library
 BRLCAD_THIRD_PARTY_OPTION(ZLIB zlib)
 BRLCAD_THIRD_PARTY_SUBDIR(ZLIB src/other/libz)
-IF(BRLCAD_USE_SYSTEM_LIBS)
-   SET(BRLCAD_USE_SYSTEM_ZLIB ON CACHE BOOL "Use the system's zlib library" FORCE)
-ENDIF(BRLCAD_USE_SYSTEM_LIBS)
-IF(NOT BRLCAD_USE_SYSTEM_ZLIB)
+IF(BRLCAD_SYSTEM_LIBS_ONLY)
+   SET(BRLCAD_BUILD_LOCAL_ZLIB OFF CACHE BOOL "Use the system's zlib library" FORCE)
+ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
+IF(BRLCAD_BUILD_LOCAL_ZLIB)
    SET(BRLCAD_ZLIB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libz" CACHE STRING "Directory containing zlib headers" FORCE)
    SET(ZLIB_INCLUDE_DIR "${BRLCAD_ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
    SET(BRLCAD_ZLIB_LIBRARY "zlib" CACHE STRING "zlib" FORCE)
-ELSE(NOT BRLCAD_USE_SYSTEM_ZLIB)
+ELSE(BRLCAD_BUILD_LOCAL_ZLIB)
    SET(BRLCAD_ZLIB_INCLUDE_DIR "${ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
    SET(BRLCAD_ZLIB_LIBRARY "${ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
-ENDIF(NOT BRLCAD_USE_SYSTEM_ZLIB)
+ENDIF(BRLCAD_BUILD_LOCAL_ZLIB)
 
 # libtermlib Library
 BRLCAD_THIRD_PARTY_OPTION(LIBTERM termlib)
 BRLCAD_THIRD_PARTY_SUBDIR(LIBTERM src/other/libtermlib)
-IF(BRLCAD_USE_SYSTEM_LIBS)
-   SET(BRLCAD_USE_SYSTEM_LIBTERM ON CACHE BOOL "Use the system's termlib library" FORCE)
-ENDIF(BRLCAD_USE_SYSTEM_LIBS)
-IF(NOT BRLCAD_USE_SYSTEM_LIBTERM)
+IF(BRLCAD_SYSTEM_LIBS_ONLY)
+   SET(BRLCAD_BUILD_LOCAL_LIBTERM ON CACHE BOOL "Use the system's termlib library" FORCE)
+ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
+IF(BRLCAD_BUILD_LOCAL_LIBTERM)
    SET(BRLCAD_LIBTERM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libtermlib" CACHE STRING "Directory containing termlib headers" FORCE)
    SET(LIBTERM_INCLUDE_DIR "${BRLCAD_LIBTERM_INCLUDE_DIR}" CACHE STRING "Directory containing termlib headers" FORCE)
    SET(BRLCAD_LIBTERM_LIBRARY "termlib" CACHE STRING "termlib" FORCE)
-ELSE(NOT BRLCAD_USE_SYSTEM_LIBTERM)
+ELSE(BRLCAD_BUILD_LOCAL_LIBTERM)
    SET(BRLCAD_LIBTERM_INCLUDE_DIR "${LIBTERM_INCLUDE_DIR}" CACHE STRING "Directory containing termlib headers" FORCE)
    SET(BRLCAD_LIBTERM_LIBRARY "${LIBTERM_LIBRARY}" CACHE STRING "termlib library" FORCE)
-ENDIF(NOT BRLCAD_USE_SYSTEM_LIBTERM)
+ENDIF(BRLCAD_BUILD_LOCAL_LIBTERM)
 
 
 
@@ -677,49 +677,49 @@ MARK_AS_ADVANCED(PNG_NO_CONSOLE_IO)
 SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
 MARK_AS_ADVANCED(PNG_NO_STDIO)
 BRLCAD_THIRD_PARTY_SUBDIR(PNG src/other/libpng)
-IF(BRLCAD_USE_SYSTEM_LIBS)
-   SET(BRLCAD_USE_SYSTEM_PNG ON CACHE BOOL "Use the system's libpng library" FORCE)
-ENDIF(BRLCAD_USE_SYSTEM_LIBS)
-IF(NOT BRLCAD_USE_SYSTEM_PNG)
+IF(BRLCAD_SYSTEM_LIBS_ONLY)
+   SET(BRLCAD_BUILD_LOCAL_PNG ON CACHE BOOL "Use the system's libpng library" FORCE)
+ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
+IF(BRLCAD_BUILD_LOCAL_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
    # PNG_LIB_NAME doesn't automatically propogate to toplevel due to scoping of CMake variables - 
    # use get_directory_property to recover the value and place it in the CACHE
    get_directory_property(BRLCAD_PNG_LIB_NAME DIRECTORY src/other/libpng DEFINITION PNG_LIB_NAME)
    SET(BRLCAD_PNG_LIB_NAME "${BRLCAD_PNG_LIB_NAME}" CACHE STRING "libpng name for targets" FORCE)
-ELSE(NOT BRLCAD_USE_SYSTEM_PNG)
+ELSE(BRLCAD_BUILD_LOCAL_PNG)
    SET(BRLCAD_PNG_INCLUDE_DIR "${PNG_PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers" FORCE)
    SET(BRLCAD_PNG_LIB_NAME "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
-ENDIF(NOT BRLCAD_USE_SYSTEM_PNG)
+ENDIF(BRLCAD_BUILD_LOCAL_PNG)
 
 # libregex Library
 BRLCAD_THIRD_PARTY_OPTION(REGEX libregex)
 BRLCAD_THIRD_PARTY_SUBDIR(REGEX src/other/libregex)
-IF(BRLCAD_USE_SYSTEM_LIBS)
-   SET(BRLCAD_USE_SYSTEM_REGEX ON CACHE BOOL "Use the system's libregex library" FORCE)
-ENDIF(BRLCAD_USE_SYSTEM_LIBS)
-IF(NOT BRLCAD_USE_SYSTEM_REGEX)
+IF(BRLCAD_SYSTEM_LIBS_ONLY)
+   SET(BRLCAD_BUILD_LOCAL_REGEX ON CACHE BOOL "Use the system's libregex library" FORCE)
+ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
+IF(BRLCAD_BUILD_LOCAL_REGEX)
    SET(BRLCAD_REGEX_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libregex" CACHE STRING "Directory containing libregex headers" FORCE)
    SET(REGEX_INCLUDE_DIR "${BRLCAD_REGEX_INCLUDE_DIR}" CACHE STRING "Directory containing libregex headers" FORCE)
    SET(BRLCAD_REGEX_LIBRARY "regex" CACHE STRING "regex" FORCE)
-ELSE(NOT BRLCAD_USE_SYSTEM_REGEX)
+ELSE(BRLCAD_BUILD_LOCAL_REGEX)
    SET(BRLCAD_REGEX_INCLUDE_DIR "${REGEX_INCLUDE_DIR}" CACHE STRING "Directory containing libregex headers" FORCE)
    SET(BRLCAD_REGEX_LIBRARY "${REGEX_LIBRARY}" CACHE STRING "libregex library" FORCE)
-ENDIF(NOT BRLCAD_USE_SYSTEM_REGEX)
+ENDIF(BRLCAD_BUILD_LOCAL_REGEX)
 
 # libutahrle Library
 BRLCAD_THIRD_PARTY_OPTION(UTAHRLE libutahrle)
 BRLCAD_THIRD_PARTY_SUBDIR(UTAHRLE src/other/libutahrle)
-IF(BRLCAD_USE_SYSTEM_LIBS)
-   SET(BRLCAD_USE_SYSTEM_UTAHRLE ON CACHE BOOL "Use the system's libutahrle library" FORCE)
-ENDIF(BRLCAD_USE_SYSTEM_LIBS)
-IF(NOT BRLCAD_USE_SYSTEM_UTAHRLE)
+IF(BRLCAD_SYSTEM_LIBS_ONLY)
+   SET(BRLCAD_BUILD_LOCAL_UTAHRLE ON CACHE BOOL "Use the system's libutahrle library" FORCE)
+ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
+IF(BRLCAD_BUILD_LOCAL_UTAHRLE)
    SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle" CACHE STRING "Directory containing libutahrle headers" FORCE)
    SET(UTAHRLE_INCLUDE_DIR "${BRLCAD_UTAHRLE_INCLUDE_DIR}" CACHE STRING "Directory containing libutahrle headers" FORCE)
    SET(BRLCAD_UTAHRLE_LIBRARY "libutahrle" CACHE STRING "libutahrle" FORCE)
-ELSE(NOT BRLCAD_USE_SYSTEM_UTAHRLE)
+ELSE(BRLCAD_BUILD_LOCAL_UTAHRLE)
    SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "Directory containing libutahrle headers" FORCE)
    SET(BRLCAD_UTAHRLE_LIBRARY "${UTAHRLE_LIBRARY}" CACHE STRING "libutahrle library" FORCE)
-ENDIF(NOT BRLCAD_USE_SYSTEM_UTAHRLE)
+ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 
 # URTToolkit
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
@@ -742,18 +742,18 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 # OpenNURBS Library
 BRLCAD_THIRD_PARTY_OPTION(OPENNURBS openNURBS)
 BRLCAD_THIRD_PARTY_SUBDIR(OPENNURBS src/other/openNURBS)
-IF(BRLCAD_USE_SYSTEM_LIBS)
-   SET(BRLCAD_USE_SYSTEM_OPENNURBS ON CACHE BOOL "Use the system's openNURBS library" FORCE)
-ENDIF(BRLCAD_USE_SYSTEM_LIBS)
-IF(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
+IF(BRLCAD_SYSTEM_LIBS_ONLY)
+   SET(BRLCAD_BUILD_LOCAL_OPENNURBS ON CACHE BOOL "Use the system's openNURBS library" FORCE)
+ENDIF(BRLCAD_SYSTEM_LIBS_ONLY)
+IF(BRLCAD_BUILD_LOCAL_OPENNURBS)
    SET(BRLCAD_OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Directory containing openNURBS headers" FORCE)
    SET(OPENNURBS_INCLUDE_DIR "${BRLCAD_OPENNURBS_INCLUDE_DIR}" CACHE STRING "Directory containing openNURBS headers" FORCE)
    SET(BRLCAD_OPENNURBS_LIBRARY "openNURBS" CACHE STRING "openNURBS" FORCE)
    BRLCAD_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
-ELSE(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
+ELSE(BRLCAD_BUILD_LOCAL_OPENNURBS)
    SET(BRLCAD_OPENNURBS_INCLUDE_DIR "${OPENNURBS_INCLUDE_DIR}" CACHE STRING "Directory containing openNURBS headers" FORCE)
    SET(BRLCAD_OPENNURBS_LIBRARY "${OPENNURBS_LIBRARY}" CACHE STRING "openNURBS library" FORCE)
-ENDIF(NOT BRLCAD_USE_SYSTEM_OPENNURBS)
+ENDIF(BRLCAD_BUILD_LOCAL_OPENNURBS)
 
 # STEP is going to require some extra thought - it's a src/other 
 # with multiple libraries.  For now, just add it as a subdir
@@ -779,6 +779,12 @@ ADD_SUBDIRECTORY(src/liboptical)
 ADD_SUBDIRECTORY(src/liborle)
 ADD_SUBDIRECTORY(src/rt)
 
+# Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
+# the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
+# value of the appropriate build variable.  The convention is to assign the text labeling each value to a
+# variable named <variable_name>_LABEL - this allows a loop to iterate over a list of variables and handle
+# them all, rather than each line needing its own logic.
+
 OPTION(BRLCAD_PRINT_VERBOSE_SUMMARY "Print extra summary information" OFF)
 
 if(BRLCAD_PRINT_VERBOSE_SUMMARY)
@@ -789,6 +795,9 @@ else(BRLCAD_PRINT_VERBOSE_SUMMARY)
    MESSAGE("")
    MESSAGE("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
    MESSAGE("")
+
+   # Directory settings
+
    SET(BRLCAD_PREFIX_LABEL "Prefix")
    SET(BRLCAD_INSTALL_BIN_DIR_LABEL "Binaries")
    SET(BRLCAD_INSTALL_MAN_DIR_LABEL "Manual pages")
@@ -824,6 +833,10 @@ else(BRLCAD_PRINT_VERBOSE_SUMMARY)
       SET(CMAKE_ALL_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
       SET(CMAKE_ALL_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
    endif()
+
+   # Compiler settings - in this case there are additional "special case" flags that get
+   # added depending on build type - roll all flags into individual variables before printing
+
    SET(CMAKE_C_COMPILER_LABEL "CC")
    SET(CMAKE_CXX_COMPILER_LABEL "CXX")
    SET(CMAKE_ALL_C_FLAGS_LABEL "CFLAGS")
@@ -849,5 +862,7 @@ else(BRLCAD_PRINT_VERBOSE_SUMMARY)
    ENDFOREACH() 
    MESSAGE("")
 
+   # Build options - building local copies of external libraries
+   MESSAGE("Build zlib:  ${BRLCAD_BUILD_LOCAL_ZLIB}")
 
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)

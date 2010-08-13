@@ -1,8 +1,8 @@
 #-----------------------------------------------------------------------------
 MACRO(BRLCAD_THIRD_PARTY_OPTION upper lower)
-  OPTION(BRLCAD_USE_SYSTEM_${upper} "Use the system's ${lower} library." OFF)
-  MARK_AS_ADVANCED(BRLCAD_USE_SYSTEM_${upper})
-  IF(BRLCAD_USE_SYSTEM_${upper})
+  OPTION(BRLCAD_BUILD_LOCAL_${upper} "Build the local ${lower} library." ON)
+  MARK_AS_ADVANCED(BRLCAD_BUILD_LOCAL_${upper})
+  IF(NOT BRLCAD_BUILD_LOCAL_${upper})
     IF(EXISTS ${CMAKE_ROOT}/Modules/Find${upper}.cmake)
       INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
     ELSE(EXISTS ${CMAKE_ROOT}/Modules/Find${upper}.cmake)
@@ -16,40 +16,40 @@ MACRO(BRLCAD_THIRD_PARTY_OPTION upper lower)
         MARK_AS_ADVANCED(PNG_PNG_INCLUDE_DIR)
       ENDIF("${upper}" MATCHES "^PNG$")
     ELSE(${upper}_FOUND)
-      MESSAGE(SEND_ERROR "BRLCAD_USE_SYSTEM_${upper} is ON, but ${upper}_LIBRARY is NOTFOUND.")
+      MESSAGE(SEND_ERROR "BRLCAD_BUILD_LOCAL_${upper} is ON, but ${upper}_LIBRARY is NOTFOUND.")
     ENDIF(${upper}_FOUND)
-  ELSE(BRLCAD_USE_SYSTEM_${upper})
+  ELSE(NOT BRLCAD_BUILD_LOCAL_${upper})
     SET(BRLCAD_${upper}_LIBRARIES ${lower})
-  ENDIF(BRLCAD_USE_SYSTEM_${upper})
+  ENDIF(NOT BRLCAD_BUILD_LOCAL_${upper})
 ENDMACRO(BRLCAD_THIRD_PARTY_OPTION)
 
 #-----------------------------------------------------------------------------
 MACRO(BRLCAD_THIRD_PARTY_INCLUDE upper lower)
-  IF(BRLCAD_USE_SYSTEM_${upper})
+  IF(NOT BRLCAD_BUILD_LOCAL_${upper})
     IF(${upper}_INCLUDE_DIR)
       SET(BRLCAD_INCLUDE_DIRS_SYSTEM ${BRLCAD_INCLUDE_DIRS_SYSTEM} ${${upper}_INCLUDE_DIR})
     ENDIF(${upper}_INCLUDE_DIR)
-  ELSE(BRLCAD_USE_SYSTEM_${upper})
+  ELSE(NOT BRLCAD_BUILD_LOCAL_${upper})
     SET(BRLCAD_INCLUDE_DIRS_SOURCE_TREE ${BRLCAD_INCLUDE_DIRS_SOURCE_TREE}
       ${BRLCAD_BINARY_DIR}/Utilities/${lower}
       ${BRLCAD_SOURCE_DIR}/Utilities/${lower}
     )
-  ENDIF(BRLCAD_USE_SYSTEM_${upper})
+  ENDIF(NOT BRLCAD_BUILD_LOCAL_${upper})
 ENDMACRO(BRLCAD_THIRD_PARTY_INCLUDE)
 
 MACRO(BRLCAD_THIRD_PARTY_INCLUDE2 upper)
-  IF(BRLCAD_USE_SYSTEM_${upper})
+  IF(NOT BRLCAD_BUILD_LOCAL_${upper})
     IF(${upper}_INCLUDE_DIR)
       SET(BRLCAD_INCLUDE_DIRS_SYSTEM ${BRLCAD_INCLUDE_DIRS_SYSTEM} ${${upper}_INCLUDE_DIR})
     ENDIF(${upper}_INCLUDE_DIR)
-  ENDIF(BRLCAD_USE_SYSTEM_${upper})
+  ENDIF(NOT BRLCAD_BUILD_LOCAL_${upper})
 ENDMACRO(BRLCAD_THIRD_PARTY_INCLUDE2)
 
 #-----------------------------------------------------------------------------
 MACRO(BRLCAD_THIRD_PARTY_SUBDIR upper lower)
-  IF(NOT BRLCAD_USE_SYSTEM_${upper})
+  IF(BRLCAD_BUILD_LOCAL_${upper})
     ADD_SUBDIRECTORY(${lower})
-  ENDIF(NOT BRLCAD_USE_SYSTEM_${upper})
+  ENDIF(BRLCAD_BUILD_LOCAL_${upper})
 ENDMACRO(BRLCAD_THIRD_PARTY_SUBDIR)
 
 #-----------------------------------------------------------------------------
