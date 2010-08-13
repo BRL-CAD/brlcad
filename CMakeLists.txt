@@ -138,7 +138,7 @@ SET(CONFIG_TIME_YEAR_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_YEAR")
 SET(CONFIG_TIMESTAMP_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIMESTAMP")
 FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include")
 FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include/conf")
-configure_file(${CONFIG_H_FILE} ${BRLCAD_CMAKE_DIR}/test_srcs/time.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/time.c)
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/time.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/time.c)
 TRY_RUN(TIME_RESULT TIME_COMPILED 
   ${CMAKE_BINARY_DIR}/CMakeTmp
   ${CMAKE_BINARY_DIR}/CMakeTmp/time.c
@@ -935,22 +935,22 @@ endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 # Make the include/conf files build time generated, but most don't work - quoting is eating the " characters 
 # Need to replace these scripts with some kind of portable C code which is compiled and run instead,
 # see http://www.cmake.org/Wiki/CMake_FAQ#How_do_I_generate_an_executable.2C_then_use_the_executable_to_generate_a_file.3F
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED 
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
+  OUTPUT_VARIABLE COMPILEMESSAGES)
 
-ADD_CUSTOM_COMMAND(
-   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/HOST
-   COMMAND /bin/echo '\"`hostname`\"' > ${BRLCAD_BINARY_DIR}/include/conf/HOST
-   )
-ADD_CUSTOM_TARGET(writehostname ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/HOST) 
-ADD_CUSTOM_COMMAND(
-   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/PATH
-   COMMAND /bin/echo '\"${BRLCAD_PREFIX}\"' > ${BRLCAD_BINARY_DIR}/include/conf/PATH
-   )
-ADD_CUSTOM_TARGET(writepath ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/PATH) 
-ADD_CUSTOM_COMMAND(
-   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/USER
-   COMMAND /bin/echo '\"`whoami`\"' > ${BRLCAD_BINARY_DIR}/include/conf/USER
-   )
-ADD_CUSTOM_TARGET(writeusername ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/USER) 
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED 
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
+  OUTPUT_VARIABLE COMPILEMESSAGES)
+
+
+FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"") 
+
+
 ADD_CUSTOM_COMMAND(
    OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/DATE
    COMMAND LANG=C date +'\"%a, %d %b %Y %H:%M:%S %z\"' > ${BRLCAD_BINARY_DIR}/include/conf/DATE
