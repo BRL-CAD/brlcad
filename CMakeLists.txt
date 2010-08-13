@@ -603,12 +603,6 @@ set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
 set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
 	"Yes" "No" "Auto")
 
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/COUNT "1")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/DATE "\"${CONFIG_TS}\"")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/HOST "\"some_machine\"")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"")
-FILE(WRITE ${BRLCAD_SOURCE_DIR}/include/conf/USER "\"some_user\"")
-
 #-----------------------------------------------------------------------------
 # Load some CMake macros to handle the special case of third party libraries.
 INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
@@ -936,3 +930,48 @@ else(BRLCAD_PRINT_VERBOSE_SUMMARY)
    ENDFOREACH() 
 
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
+
+
+# Make the include/conf files build time generated, but most don't work - quoting is eating the " characters 
+# Need to replace these scripts with some kind of portable C code which is compiled and run instead,
+# see http://www.cmake.org/Wiki/CMake_FAQ#How_do_I_generate_an_executable.2C_then_use_the_executable_to_generate_a_file.3F
+
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/HOST
+   COMMAND /bin/echo '\"`hostname`\"' > ${BRLCAD_BINARY_DIR}/include/conf/HOST
+   )
+ADD_CUSTOM_TARGET(writehostname ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/HOST) 
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/PATH
+   COMMAND /bin/echo '\"${BRLCAD_PREFIX}\"' > ${BRLCAD_BINARY_DIR}/include/conf/PATH
+   )
+ADD_CUSTOM_TARGET(writepath ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/PATH) 
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/USER
+   COMMAND /bin/echo '\"`whoami`\"' > ${BRLCAD_BINARY_DIR}/include/conf/USER
+   )
+ADD_CUSTOM_TARGET(writeusername ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/USER) 
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/DATE
+   COMMAND LANG=C date +'\"%a, %d %b %Y %H:%M:%S %z\"' > ${BRLCAD_BINARY_DIR}/include/conf/DATE
+   )
+ADD_CUSTOM_TARGET(writebuildtime ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/DATE) 
+
+
+# Scary slight of hand here, also not really portable but does work - make rule to increment COUNT depend on a
+# rule that moves the COUNT file to COUNT_TMP, and have the COUNT rule remove COUNT_TMP.  Thus
+# the COUNT rule ensures COUNT_TMP is never satisfied, and COUNT_TMP ensures COUNT is never satisfied,
+# thus the increment logic runs every time.
+
+FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "0")
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
+   COMMAND mv -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
+   )
+ADD_CUSTOM_COMMAND(
+   OUTPUT ${BRLCAD_BINARY_DIR}/include/conf/COUNT
+   COMMAND mv -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP ${BRLCAD_BINARY_DIR}/include/conf/COUNT && test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && expr `cat ${BRLCAD_BINARY_DIR}/include/conf/COUNT` + 1 > ${BRLCAD_BINARY_DIR}/include/conf/COUNT || /bin/echo "1" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT && rm -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP
+   )
+ADD_CUSTOM_TARGET(incrementsetup ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/COUNT_TMP) 
+ADD_CUSTOM_TARGET(incrementbuildcount ALL DEPENDS ${BRLCAD_BINARY_DIR}/include/conf/COUNT) 
+ADD_DEPENDENCIES(incrementbuildcount incrementsetup)
