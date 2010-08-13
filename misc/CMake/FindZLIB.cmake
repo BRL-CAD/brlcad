@@ -24,7 +24,6 @@
 #  License text for the above reference.)
 
 FIND_PATH(ZLIB_INCLUDE_DIR zlib.h
-    "${BRLCAD_SOURCE_DIR}/src/other/libz"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Zlib;InstallPath]/include"
 )
 
@@ -33,14 +32,13 @@ FIND_LIBRARY(ZLIB_LIBRARY
     NAMES
         ${ZLIB_NAMES}
     PATHS
-        "${BRLCAD_SOURCE_DIR}/src/other/libz"
         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Zlib;InstallPath]/lib"
 )
 MARK_AS_ADVANCED(ZLIB_LIBRARY ZLIB_INCLUDE_DIR)
 
 IF (ZLIB_INCLUDE_DIR AND EXISTS "${ZLIB_INCLUDE_DIR}/zlib.h")
     FILE(READ "${ZLIB_INCLUDE_DIR}/zlib.h" ZLIB_H)
-    STRING(REGEX REPLACE ".*#define ZLIB_VERSION \"([0-9]+)\\.([0-9]+)\\.([0-9]+).*" "\\1.\\2.\\3" ZLIB_VERSION_STRING "${ZLIB_H}")
+    STRING(REGEX REPLACE ".*#define ZLIB_VERSION \"([0-9]+)\\.([0-9]+)\\.([0-9]+)\".*" "\\1.\\2.\\3" ZLIB_VERSION_STRING "${ZLIB_H}")
 ENDIF()
 
 # handle the QUIETLY and REQUIRED arguments and set ZLIB_FOUND to TRUE if 
