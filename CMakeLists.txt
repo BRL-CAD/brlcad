@@ -959,13 +959,13 @@ FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"")
 
 # COUNT - force CMake to look every time in case of manual removal of COUNT file
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
-find_file(countFile COUNT ${BRLCAD_BINARY_DIR}/include/conf)
-if(countFile)
-    file(READ COUNT buildCounter)
-    math(EXPR buildCounter "${buildCounter} + 1")
-else(countFile)
+find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
+if(countFile MATCHES "^countFile-NOTFOUND$")
     set(buildCounter 0)
-endif(countFile)
+else()
+    file(READ ${countFile} buildCounter)
+    math(EXPR buildCounter "${buildCounter} + 1")
+endif()
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
 
 # DATE
