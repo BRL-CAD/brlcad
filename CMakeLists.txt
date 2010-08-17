@@ -215,6 +215,23 @@ ENDIF(NOT BRLCAD_PREFIX)
 
 SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "prefix" FORCE)
 
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# the RPATH/INSTALL_NAME_DIR to be used when installing
+if (APPLE)
+   SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+endif(APPLE)
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # TODO - need to replace the functionality of BC_BRLCAD_ROOT and BC_BRLCAD_DATA here,
 # if it's not already being handled - the data directory at least is likely to need some help
 # also will need to set CFLAGS for debug, optimized, what have you - likely to need some
