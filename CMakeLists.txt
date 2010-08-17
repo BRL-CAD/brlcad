@@ -129,7 +129,6 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
   ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c
   OUTPUT_VARIABLE COMPILEMESSAGES)
 
-
 # Unfortunately, CMake doesn't give you variables with current day, month,
 # etc.  There are several approaches to this - the most theoretically robust,
 # and the first one tried, builds a small C file which writes out the needed
@@ -934,32 +933,40 @@ else(BRLCAD_PRINT_VERBOSE_SUMMARY)
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
 
-# Make the include/conf files build time generated, but most don't work - quoting is eating the " characters 
-# Need to replace these scripts with some kind of portable C code which is compiled and run instead,
-# see http://www.cmake.org/Wiki/CMake_FAQ#How_do_I_generate_an_executable.2C_then_use_the_executable_to_generate_a_file.3F
+# Generate the include/conf files
+
+# HOST 
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
 TRY_RUN(TIME_RESULT TIME_COMPILED 
   ${CMAKE_BINARY_DIR}/CMakeTmp
   ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
   OUTPUT_VARIABLE COMPILEMESSAGES)
 
+# USER
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
 TRY_RUN(TIME_RESULT TIME_COMPILED 
   ${CMAKE_BINARY_DIR}/CMakeTmp
   ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
   OUTPUT_VARIABLE COMPILEMESSAGES)
 
-
+# PATH
 FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"") 
 
+# COUNT - force CMake to look every time in case of manual removal of COUNT file
+set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
+find_file(countFile COUNT ${BRLCAD_BINARY_DIR}/include/conf)
+if(countFile)
+    file(READ COUNT buildCounter)
+    math(EXPR buildCounter "${buildCounter} + 1")
+else(countFile)
+    set(buildCounter 0)
+endif(countFile)
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
 
-ADD_CUSTOM_TARGET(BUILD_TIMESTAMP ALL
-   COMMAND LANG=C date +'\"%a, %d %b %Y %H:%M:%S %z\"' > ${BRLCAD_BINARY_DIR}/include/conf/DATE)
-
-ADD_CUSTOM_TARGET(INCREMENT_BUILD_COUNT ALL
-   COMMAND test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && expr `cat ${BRLCAD_BINARY_DIR}/include/conf/COUNT` + 1 > ${BRLCAD_BINARY_DIR}/include/conf/COUNT || /bin/echo "1" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-
-ADD_DEPENDENCIES(bu BUILD_TIMESTAMP INCREMENT_BUILD_COUNT)
+# DATE
+file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
+STRING(STRIP ${DATESTAMP} DATESTAMP)
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
 
 #Done with everything else - do the configure time delta
 SET(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
