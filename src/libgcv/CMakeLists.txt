@@ -16,3 +16,4 @@ add_definitions(
 
 add_library(gcv ${LIBGCV_SOURCES})
 target_link_libraries(gcv bu rtlib)
+INSTALL(TARGETS gcv LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

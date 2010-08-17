@@ -17,4 +17,4 @@ add_definitions(
 
 add_library(pkg ${LIBPKG_SOURCES})
 target_link_libraries(pkg bu)
-
+INSTALL(TARGETS pkg LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

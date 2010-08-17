@@ -14,3 +14,4 @@ add_definitions(
 )
 
 add_library(orle ${LIBORLE_SOURCES})
+INSTALL(TARGETS orle LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

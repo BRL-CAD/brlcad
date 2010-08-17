@@ -16,3 +16,4 @@ add_definitions(
 
 add_library(analyze ${LIBANALYZE_SOURCES})
 target_link_libraries(analyze bu)
+INSTALL(TARGETS analyze LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

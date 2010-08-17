@@ -272,3 +272,4 @@ add_definitions(
 
 add_library(ged ${LIBGED_SOURCES})
 target_link_libraries(ged bu rtlib wdb analyze)
+INSTALL(TARGETS ged LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

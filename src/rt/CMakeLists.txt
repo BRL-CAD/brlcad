@@ -139,6 +139,7 @@ add_definitions(
 
 add_executable(rtexample ${rtexample_SRCS})
 target_link_libraries(rtexample fb rtlib optical)
+INSTALL(TARGETS rtexample RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(reshoot ${reshoot_SRCS})
 target_link_libraries(reshoot fb rtlib optical)

@@ -24,3 +24,4 @@ add_definitions(
 
 add_library(sysv ${LIBSYSV_SOURCES})
 target_link_libraries(sysv ${TCL_LIBRARY})
+INSTALL(TARGETS sysv LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

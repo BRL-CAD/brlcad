@@ -56,4 +56,4 @@ add_definitions(
 
 add_library(fb ${LIBFB_SOURCES})
 target_link_libraries(fb bu pkg ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} ${TK_LIBRARY} ${LINKLIBS})
-
+INSTALL(TARGETS fb LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
