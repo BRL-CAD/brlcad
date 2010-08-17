@@ -121,6 +121,14 @@ IF(_orig_lang)
   SET(ENV{LANG}        C)
 ENDIF(_orig_lang)
 
+# Write out entries to populate a tm struct to be used for time deltas later
+SET(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_start.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED 
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c
+  OUTPUT_VARIABLE COMPILEMESSAGES)
+
 
 # Unfortunately, CMake doesn't give you variables with current day, month,
 # etc.  There are several approaches to this - the most theoretically robust,
@@ -958,3 +966,21 @@ ADD_CUSTOM_TARGET(INCREMENT_BUILD_COUNT ALL
    COMMAND test -f ${BRLCAD_BINARY_DIR}/include/conf/COUNT && expr `cat ${BRLCAD_BINARY_DIR}/include/conf/COUNT` + 1 > ${BRLCAD_BINARY_DIR}/include/conf/COUNT || /bin/echo "1" > ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
 
 ADD_DEPENDENCIES(bu BUILD_TIMESTAMP INCREMENT_BUILD_COUNT)
+
+#Done with everything else - do the configure time delta
+SET(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
+configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_end.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED 
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c
+  OUTPUT_VARIABLE COMPILEMESSAGES)
+FILE(READ ${DELTA_END} CONFIG_TIME_MSG)
+STRING(STRIP ${CONFIG_TIME_MSG} CONFIG_TIME_MSG)
+SET(CONFIG_TIME_MSG_LABEL "Elapsed configuration time")
+STRING(LENGTH ${CONFIG_TIME_MSG_LABEL} CURRENTLENGTH)
+WHILE(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
+   SET(CONFIG_TIME_MSG_LABEL "${CONFIG_TIME_MSG_LABEL}.")
+   STRING(LENGTH ${CONFIG_TIME_MSG_LABEL} CURRENTLENGTH)
+ENDWHILE(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
+MESSAGE("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
+
