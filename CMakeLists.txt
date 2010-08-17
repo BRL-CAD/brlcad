@@ -162,30 +162,7 @@ IF(TIME_RESULT MATCHES "^0$")
    FILE(READ ${CONFIG_TIMESTAMP_FILE} CONFIG_TS)
    STRING(STRIP ${CONFIG_TS} CONFIG_TS)
 ELSE(TIME_RESULT MATCHES "^0$")
-   IF(WIN32)
-      # There appears to be no way to spot the region-specific aspsects of this reliably - regionalize
-      # as appropriate to your computer, or if there is a command-line way to access this information
-      # on Windows please enhance this logic.
-      execute_process(COMMAND cmd /c date /t OUTPUT_VARIABLE CONFIG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
-      execute_process(COMMAND cmd /c time /t OUTPUT_VARIABLE CONFIG_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
-      SET(CONFIG_TS "${CONFIG_DATE} ${CONFIG_TIME}")
-      STRING(REGEX REPLACE "[^0-9]*([0-9][0-9]).*" "\\1" CONFIG_MONTH "${CONFIG_DATE}" )
-      STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].([0-9][0-9]).*" "\\1" CONFIG_DAY "${CONFIG_DATE}" )
-      STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].[0-9][0-9].([0-9][0-9][0-9][0-9]).*" "\\1" CONFIG_YEAR "${CONFIG_DATE}" )
-   ELSE(WIN32)
-      EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY) 
-      EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH) 
-      EXEC_PROGRAM(date ARGS +%Y OUTPUT_VARIABLE CONFIG_YEAR)
-      SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
-      # try RFC 2822 for timestamp
-      EXEC_PROGRAM(date ARGS -R 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
-      IF ("${CONFIG_TS}" MATCHES ".*usage.*")
-         EXEC_PROGRAM(date ARGS +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null OUTPUT_VARIABLE CONFIG_TS) 
-      ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
-      IF ("${CONFIG_TS}" MATCHES ".*usage.*")
-         EXEC_PROGRAM(date ARGS OUTPUT_VARIABLE CONFIG_TS) 
-      ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
-   ENDIF(WIN32)
+   MESSAGE(ERROR "Code to determine current date and time failed!\n")
 ENDIF(TIME_RESULT MATCHES "^0$")
 
 # print out the title with a pretty box computed to wrap around
