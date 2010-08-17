@@ -1,52 +1,77 @@
-# - Find Tcl includes and libraries.
-# This module finds if Tcl is installed and determines where the
-# include files and libraries are. It also determines what the name of
-# the library is. This code sets the following variables:
-#  TCL_FOUND              = Tcl was found
-#  TK_FOUND               = Tk was found
-#  TCLTK_FOUND            = Tcl and Tk were found
-#  TCL_LIBRARY            = path to Tcl library (tcl tcl80)
-#  TCL_INCLUDE_PATH       = path to where tcl.h can be found
-#  TCL_TCLSH              = path to tclsh binary (tcl tcl80)
-#  TK_LIBRARY             = path to Tk library (tk tk80 etc)
-#  TK_INCLUDE_PATH        = path to where tk.h can be found
-#  TK_WISH                = full path to the wish executable
-#
-# In an effort to remove some clutter and clear up some issues for people
-# who are not necessarily Tcl/Tk gurus/developpers, some variables were
-# moved or removed. Changes compared to CMake 2.4 are:
-# - The stub libraries are now found in FindTclStub.cmake
-#   => they were only useful for people writing Tcl/Tk extensions.
-# - TCL_LIBRARY_DEBUG and TK_LIBRARY_DEBUG were removed.
-#   => these libs are not packaged by default with Tcl/Tk distributions. 
-#      Even when Tcl/Tk is built from source, several flavors of debug libs
-#      are created and there is no real reason to pick a single one
-#      specifically (say, amongst tcl84g, tcl84gs, or tcl84sgx). 
-#      Let's leave that choice to the user by allowing him to assign 
-#      TCL_LIBRARY to any Tcl library, debug or not.
-# - TK_INTERNAL_PATH was removed.
-#   => this ended up being only a Win32 variable, and there is a lot of
-#      confusion regarding the location of this file in an installed Tcl/Tk
-#      tree anyway (see 8.5 for example). If you need the internal path at
-#      this point it is safer you ask directly where the *source* tree is
-#      and dig from there.
+# - Find Tcl/Tk includes and libraries.
 
-#=============================================================================
-# Copyright 2001-2009 Kitware, Inc.
-#
-# Distributed under the OSI-approved BSD License (the "License");
-# see accompanying file Copyright.txt for details.
-#
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
-#=============================================================================
-# (To distributed this file outside of CMake, substitute the full
-#  License text for the above reference.)
+# There are quite a number of potential compilcations when it comes to
+# Tcl/Tk, particularly in cases where multiple versions of Tcl/Tk are
+# present on a system and the case of OSX, which my have Tk built for
+# either X11 or Aqua.  On Windows there may be Cygwin installs of
+# Tcl/Tk as well.  The approach of this cmake file, as opposed to
+# the standard one in CMake, is to provide controlling variables which
+# will allow a parent CMakeLists.txt file to specify what they are
+# looking for.  For the moment, this file is intended to handle everything -
+# stub libraries, tclsh, and the libraries themselves.
 
-INCLUDE(CMakeFindFrameworks)
-INCLUDE(FindTclsh)
-INCLUDE(FindWish)
+SET(TCLTK_POSSIBLE_MAJOR_VERSIONS 8)
+SET(TCLTK_POSSIBLE_MINOR_VERSIONS 6 5 4 3 2 1 0)
+
+# There are four variables that will be used as "feeders"
+# for locating Tcl/Tk installations - TCL_PREFIX, TCL_INCLUDE_DIR,
+# TCL_LIBRARY_DIR, and TCL_BIN_DIR.  In search paths, TCL_PREFIX
+# generated paths should come after the more specific variables.
+
+IF(TCL_PREFIX)
+   SET(TCL_PREFIX_BIN "${TCL_PREFIX}/bin")
+   SET(TCL_PREFIX_LIB "${TCL_PREFIX}/lib")
+   SET(TCL_PREFIX_INC "${TCL_PREFIX}/include")
+ENDIF(TCL_PREFIX)
+
+MACRO(WIN32TCLTKPATHS vararray extension)
+  IF(WIN32)
+    GET_FILENAME_COMPONENT(
+      ActiveTcl_CurrentVersion 
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl;CurrentVersion]" 
+      NAME)
+    SET(${vararray} ${${vararray}}
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl\\${ActiveTcl_CurrentVersion}]/${extension}")
+      FOREACH(MAJORNUM ${TCLTK_POSSIBLE_MAJOR_VERSIONS})
+        FOREACH(MINORNUM ${TCLTK_POSSIBLE_MINOR_VERSIONS})
+         SET(${vararray} ${${vararray}} "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\${MAJORNUM}.${MINORNUM};Root]/${extension}")
+        ENDFOREACH()
+      ENDFOREACH()
+    ENDIF(WIN32)
+ENDMACRO(WIN32TCLTKPATHS)
+
+IF(WIN32)
+   WIN32TCLTKPATHS(SYSTEM_LOCALS bin)
+endif(WIN32)
+
+SET(SEARCHPATHS ${TCL_BIN_DIR} ${TCL_PREFIX_BIN} ${SYSTEM_LOCALS})
+
+FOREACH(MAJORNUM ${TCLTK_POSSIBLE_MAJOR_VERSIONS})
+   FOREACH(MINORNUM ${TCLTK_POSSIBLE_MINOR_VERSIONS})
+      FOREACH(SPATH ${SEARCHPATHS})
+         FIND_PROGRAM(TCL_TCLSH${MAJORNUM}${MINORNUM} NAMES tclsh${MAJORNUM}.${MINORNUM} tclsh${MAJORNUM}${MINORNUM} PATHS ${SPATH} NO_SYSTEM_PATH)
+         IF(NOT TCL_TCLSH${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
+            SET(TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST ${TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST} ${TCL_TCLSH${MAJORNUM}${MINORNUM}})
+         endif()
+         SET(TCL_TCLSH${MAJORNUM}${MINORNUM} TCL_TCLSH${MAJORNUM}${MINORNUM}-NOTFOUND)
+      ENDFOREACH()
+      # Tried all the specific paths - now see what the system PATH has
+      FIND_PROGRAM(TCL_TCLSH${MAJORNUM}${MINORNUM} NAMES tclsh${MAJORNUM}.${MINORNUM} tclsh${MAJORNUM}${MINORNUM})
+      IF(NOT TCL_TCLSH${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
+         # Make sure we don't have it already
+         IF (NOT TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST MATCHES "${TCL_TCLSH${MAJORNUM}${MINORNUM}}")
+            # On repeat configures, CMAKE_INSTALL_PREFIX apparently gets added to the FIND_PROGRAM search path.  This is a problem
+            # if re-installing over a previous compile that includes a tclsh of its own, so strip these out - never want
+            # to use a tclsh from a previous build to do the current build!
+            IF(NOT TCL_TCLSH${MAJORNUM}${MINORNUM} MATCHES "^${CMAKE_INSTALL_PREFIX}")
+               SET(TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST ${TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST} ${TCL_TCLSH${MAJORNUM}${MINORNUM}})
+            endif()
+         endif()
+      endif()
+      SET(TCL_TCLSH${MAJORNUM}${MINORNUM} TCL_TCLSH${MAJORNUM}${MINORNUM}-NOTFOUND CACHE STRING "tclsh var" FORCE)
+   MESSAGE("list${MAJORNUM}${MINORNUM}: ${TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST}")
+   ENDFOREACH()
+ENDFOREACH()
 
 GET_FILENAME_COMPONENT(TCL_TCLSH_PATH "${TCL_TCLSH}" PATH)
 GET_FILENAME_COMPONENT(TCL_TCLSH_PATH_PARENT "${TCL_TCLSH_PATH}" PATH)
@@ -81,26 +106,6 @@ SET(TCLTK_POSSIBLE_LIB_PATHS
   /usr/lib 
   /usr/local/lib
   )
-
-IF(WIN32)
-  GET_FILENAME_COMPONENT(
-    ActiveTcl_CurrentVersion 
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl;CurrentVersion]" 
-    NAME)
-  SET(TCLTK_POSSIBLE_LIB_PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl\\${ActiveTcl_CurrentVersion}]/lib"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.6;Root]/lib"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.5;Root]/lib"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.4;Root]/lib"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.3;Root]/lib"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.2;Root]/lib"
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.0;Root]/lib"
-    "$ENV{ProgramFiles}/Tcl/Lib"
-    "C:/Program Files/Tcl/lib" 
-    "C:/Tcl/lib" 
-    )
-ENDIF(WIN32)
-
 FIND_LIBRARY(TCL_LIBRARY
   NAMES 
   tcl   
@@ -126,28 +131,6 @@ FIND_LIBRARY(TK_LIBRARY
   tk80 tk8.0
   PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
   )
-
-CMAKE_FIND_FRAMEWORKS(Tcl)
-CMAKE_FIND_FRAMEWORKS(Tk)
-
-SET(TCL_FRAMEWORK_INCLUDES)
-IF(Tcl_FRAMEWORKS)
-  IF(NOT TCL_INCLUDE_PATH)
-    FOREACH(dir ${Tcl_FRAMEWORKS})
-      SET(TCL_FRAMEWORK_INCLUDES ${TCL_FRAMEWORK_INCLUDES} ${dir}/Headers)
-    ENDFOREACH(dir)
-  ENDIF(NOT TCL_INCLUDE_PATH)
-ENDIF(Tcl_FRAMEWORKS)
-
-SET(TK_FRAMEWORK_INCLUDES)
-IF(Tk_FRAMEWORKS)
-  IF(NOT TK_INCLUDE_PATH)
-    FOREACH(dir ${Tk_FRAMEWORKS})
-      SET(TK_FRAMEWORK_INCLUDES ${TK_FRAMEWORK_INCLUDES}
-        ${dir}/Headers ${dir}/PrivateHeaders)
-    ENDFOREACH(dir)
-  ENDIF(NOT TK_INCLUDE_PATH)
-ENDIF(Tk_FRAMEWORKS)
 
 SET(TCLTK_POSSIBLE_INCLUDE_PATHS
   "${TCL_LIBRARY_PATH_PARENT}/include"
