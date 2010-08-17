@@ -932,6 +932,11 @@ else(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
+# Set up rules to print a timestamp string during build
+ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
+ADD_CUSTOM_TARGET(timestamp ALL	COMMAND printtimestamp)
+
+ADD_DEPENDENCIES(bu timestamp)
 
 # Generate the include/conf files
 
