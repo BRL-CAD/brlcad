@@ -173,7 +173,7 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 		p = srf->v.knots[i];
 
 		if (NEAR_ZERO(v - p, SMALL_FASTF))
-		    p = srf->u.knots[i+1];
+		    p = srf->v.knots[i+1];
 		if (NEAR_ZERO(v - p, SMALL_FASTF) && i > 1)
 		    p = srf->v.knots[i-1];
 	    }
