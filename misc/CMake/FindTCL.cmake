@@ -13,6 +13,22 @@
 SET(TCLTK_POSSIBLE_MAJOR_VERSIONS 8)
 SET(TCLTK_POSSIBLE_MINOR_VERSIONS 6 5 4 3 2 1 0)
 
+OPTION(TCLTK_USE_TK "Look for Tk installation, not just Tcl." ON)
+OPTION(TCLTK_NEED_HEADERS "Don't report a found Tcl/Tk unless headers are present." ON)
+
+SET(tkwin_script "
+set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
+set fileId [open $filename \"w\"]
+set windowingsystem [tk windowingsystem]
+puts $fileId $windowingsystem
+close $fileId
+exit
+")
+
+SET(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
+
+FILE(WRITE ${tkwin_scriptfile} ${tkwin_script})
+
 # There are four variables that will be used as "feeders"
 # for locating Tcl/Tk installations - TCL_PREFIX, TCL_INCLUDE_DIR,
 # TCL_LIBRARY_DIR, and TCL_BIN_DIR.  In search paths, TCL_PREFIX
