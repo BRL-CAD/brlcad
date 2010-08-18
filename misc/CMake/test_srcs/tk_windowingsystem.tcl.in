@@ -1,0 +1,6 @@
+set filename "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM"
+set fileId [open $filename "w"]
+set windowingsystem [tk windowingsystem]
+puts $fileId $windowingsystem
+close $fileId
+exit
