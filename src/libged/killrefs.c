@@ -45,6 +45,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
