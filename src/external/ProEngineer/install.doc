@@ -19,7 +19,7 @@ line 2:startup spawn
 line 3:exec_file 'full path to wherever you install the proe-brl executable'
 line 4:text_dir 'full path to the "text" directory'
 line 5:revision 2001
-line 5:description Convert currently displayed model to BRL-CAD
+line 6:description Convert currently displayed model to BRL-CAD
 line 7:end
 
 See "protk.dat" in this directory for an example. The exec_file must
