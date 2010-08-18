@@ -142,6 +142,14 @@ LIST(REMOVE_DUPLICATES TCLTK_POSSIBLE_PATHS)
 
 MESSAGE("possible paths: ${TCLTK_POSSIBLE_PATHS}")
 
+FOREACH(SPATH ${TCLTK_POSSIBLE_PATHS})
+     set(tclconffile "tclConfig.sh-NOTFOUND") 
+     find_file(tclconffile tclConfig.sh PATHS ${SPATH}/lib)
+     if(NOT tclconffile MATCHES "NOTFOUND$")
+	MESSAGE("Found config file: ${tclconffile}")
+     endif()
+endforeach()
+
 GET_FILENAME_COMPONENT(TCL_TCLSH_PATH "${TCL_TCLSH}" PATH)
 GET_FILENAME_COMPONENT(TCL_TCLSH_PATH_PARENT "${TCL_TCLSH_PATH}" PATH)
 STRING(REGEX REPLACE 
