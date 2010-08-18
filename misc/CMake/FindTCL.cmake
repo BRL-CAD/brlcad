@@ -121,7 +121,17 @@ FOREACH(MAJORNUM ${TCL_FOUND_MAJOR_VERSIONS})
              LIST(GET TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST ${LISTITEM} TCL_TCLSH)
              GET_FILENAME_COMPONENT(TCL_TCLSH_PATH "${TCL_TCLSH}" PATH)
              GET_FILENAME_COMPONENT(TCL_TCLSH_PATH_PARENT "${TCL_TCLSH_PATH}" PATH)
-             SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+             IF (TCLTK_USE_TK)
+		 # FIXME: There is a risk here of picking up a wish in a system path that we don't want to consider, but if
+		 # the NO_SYSTEM_PATH option is added valid entires in our list will not find their corresponding wish
+		 # even if it is there - looks like we're going to have to special case tclsh/wish found in system paths
+                 FIND_PROGRAM(TCLTK_WISH${MAJORNUM}${MINORNUM} NAMES wish${MAJORNUM}.${MINORNUM} wish${MAJORNUM}${MINORNUM} PATHS ${TCL_TCLSH_PATH_PARENT}/bin})
+                 IF(NOT TCLTK_WISH${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
+                    SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+		 endif()
+             ELSE(TCLTK_USE_TK)
+               SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+             ENDIF(TCLTK_USE_TK)
 	     math(EXPR LISTITEM "${LISTITEM} + 1")
 	  endwhile()
        endif()
