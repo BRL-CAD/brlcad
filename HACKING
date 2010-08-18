@@ -1188,6 +1188,15 @@ Source or binary release:
       OpenSUSE package maintainer
       https://build.opensuse.org/package/users?package=brlcad&project=Education
 
+      FreeBSD ports maintainer
+      http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
+
+      Gentoo portage maintainer
+      http://packages.gentoo.org/package/sci-misc/brlcad
+
+      Debian apt package maintainer
+      http://git.debian.org/?p=debian-science/packages/brlcad.git
+
 Linux binary release:
 
       CAD on Linux mailing list
