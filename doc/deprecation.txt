@@ -140,8 +140,6 @@ srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
 	terminology and output format [deprecated 7.12]
-include/wdb.h
-	mk_fastgen_region() -> mk_comb() [deprecated 7.12]
 src/libbu/parallel.c
 	bu_get_load_average(), remove [deprecated 7.12]
 include/raytrace.h
@@ -149,8 +147,6 @@ include/raytrace.h
 
 pre 7.0
 -------
-include/wdb.h
-	mk_fastgen_region() -> mk_comb()
 include/raytrace.h
 	db_free_external -> db_free_external [deprecated pre-7.0]
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
@@ -166,6 +162,8 @@ hf primitive
 
 7.18.0
 ------
+include/wdb.h
+	mk_fastgen_region() -> mk_comb() [deprecated 7.12]
 src/librt/bomb.c
 	rt_bomb() -> bu_bomb() [deprecated 7.10]
 include/machine.h
