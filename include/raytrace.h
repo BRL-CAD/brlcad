@@ -2908,10 +2908,6 @@ RT_EXPORT BU_EXTERN(int db_put_external,
 		     struct directory *dp,
 		     struct db_i *dbip));
 
-/* DEPRECATED - use bu_free_external instead */
-RT_EXPORT BU_EXTERN(void db_free_external,
-		    (struct bu_external *ep));
-
 /* db_scan.c */
 /* read db (to build directory) */
 RT_EXPORT BU_EXTERN(int db_scan,

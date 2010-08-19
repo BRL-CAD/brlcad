@@ -103,7 +103,6 @@ db_close
 db_create
 db_dirbuild
 db_flatten_tree
-db_free_external
 db_free_tree
 db_functree
 db_lookup

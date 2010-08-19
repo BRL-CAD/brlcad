@@ -148,7 +148,7 @@ include/raytrace.h
 pre 7.0
 -------
 include/raytrace.h
-	db_free_external -> db_free_external [deprecated pre-7.0]
+	db_free_external -> bu_free_external [deprecated pre-7.0]
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
@@ -160,6 +160,8 @@ include/raytrace.h
 
 7.18.0
 ------
+include/raytrace.h
+	db_free_external -> bu_free_external [deprecated pre-7.0]
 include/wdb.h
 	mk_fastgen_region() -> mk_comb() [deprecated 7.12]
 src/librt/bomb.c

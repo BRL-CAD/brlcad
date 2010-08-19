@@ -177,7 +177,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				perror("bu_struct_put");
 				break;
 			    }
-			    db_free_external(&obuf);
+			    bu_free_external(&obuf);
 			    /* Now export the vertices */
 			    vertex_desc[0].sp_count = ph.npts * 3;
 			    if (bu_struct_export(&obuf, (genptr_t)verts, vertex_desc) < 0) {
@@ -188,7 +188,7 @@ f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				perror("bu_struct_wrap_buf");
 				break;
 			    }
-			    db_free_external(&obuf);
+			    bu_free_external(&obuf);
 			    ph.npts = 0;		/* sanity */
 			    break;
 		    }
