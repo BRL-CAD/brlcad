@@ -4,16 +4,102 @@
 # Tcl/Tk, particularly in cases where multiple versions of Tcl/Tk are
 # present on a system and the case of OSX, which my have Tk built for
 # either X11 or Aqua.  On Windows there may be Cygwin installs of
-# Tcl/Tk as well.  The approach of this cmake file, as opposed to
-# the standard one in CMake, is to provide controlling variables which
-# will allow a parent CMakeLists.txt file to specify what they are
-# looking for.  For the moment, this file is intended to handle everything -
-# stub libraries, tclsh, and the libraries themselves.
-
+# Tcl/Tk as well. 
+#
+# Several "design philosophy" decisions have to be made - what to report
+# when multiple instances of Tcl/Tk are available, how much control to
+# allow users, how to expose those controls, etc.  Here are the rules
+# this particular implementation of FindTCLTK will strive to express:
+#
+# 1. If a parent CMakeLists.txt defines a specific Tcl_Prefix
+#    directory, don't look for or return any settings using
+#    other Tcl/Tk installations, even if nothing is found
+#    below Tcl_Prefix and other installations are present.
+#    Report NOTFOUND instead.
+#
+# 2. There will be three possible variables for controlling
+#    which versions to report:
+#
+#    TCLTK_MIN_VERSION
+#    TCLTK_MAX_VERSION
+#    TCLTK_EXACT_VERSION
+#
+#    All of these will be expected to have the form:
+#
+#    TCLTK_MAJOR_VERSION.TCLTK_MINOR_VERSION.TCLTK_PATCH_VERSION
+#
+#    although the PATCH_VERSION will be optional.  If
+#    no PATCH_VERSION is specified, any patch version will
+#    be regarded as satisfying the criteria of any version
+#    number test applied.
+#
+# 3. Tk provides the option to compile either for
+#    the "native" graphics system (aqua, win32, etc.) or for
+#    X11 (which is also the native graphics system on Unix-type
+#    platforms other than Mac OSX.)  There are situations were
+#    a program or developer may want to require a particular
+#    windowing system.  If that is the case they can make use
+#    of the following two options:
+#
+#    TCLTK_NATIVE_GRAPHICS
+#    TCLTK_X11_GRAPHICS
+#
+#    If NATIVE_GRAPHICS is set to ON, a Tcl/Tk system is 
+#    reported found only if the reported graphics system
+#    matches that of the current platform.  If X11_GRAPHICS
+#    is on, a match is reported only if the windowing system
+#    reports X11.  If neither option is ON, the windowing
+#    system is not a factor is deciding to report
+#    FOUND or NOTFOUND.  If BOTH are ON (why??) NATIVE_GRAPHICS
+#    will override the TCLTK_X11_GRAPHICS setting and set it
+#    to OFF.
+#
+# 4. By default, if no prefix is specified, FindTCLTK will search
+#    a list of directories and the system path for tcl libraries.
+#    This list can be expanded by a parent CMakeLists.txt file
+#    by specifying additional paths in this variable:
+#
+#    TCLTK_SEARCH_ADDITIONAL_PATHS
+#
+# 5. On Apple platforms, there may be a "Framework" install of
+#    Tcl/Tk. By default, FindTCLTK will start with this version
+#    on OSX platforms if no TCL_PREFIX is specified, but will
+#    move on to another installation if the Framework Tcl/Tk doesn't
+#    satisfy other criteria.  If a developer wishes to REQUIRE a 
+#    Framework build of Tcl/Tk and reject other installs even though
+#    they may satisfy other criteria, they can enable the following 
+#    option:
+#
+#    TCKTK_USE_FRAMEWORK_ONLY
+#
+# 6. If a developer needs ONLY Tcl, without the Tk graphics library,
+#    they can disable the following option (on by default)
+#  
+#    TCLTK_REQUIRE_TK
+#
+# 7. Normally, FindTCLTK will assume that the intent is to compile
+#    C code and will require headers.  If a developer needs Tcl/Tk
+#    ONLY for the purposes of running tclsh or wish scripts and is
+#    not planning to do any compiling, they can disable the following
+#    option and FindTCLTK will report a Tcl/Tk installation without
+#    headers as FOUND.
+#
+# The following "results" variables will be set (Tk variables only
+# set when TCKTK_REQUIRE_TK is ON):
+#
+#   TCLTK_FOUND          = Tcl (and Tk) found (see TCKTK_REQUIRE_TK)
+#   TCLTK_FOUND_VERSION  = Version of selected Tcl/TK
+#   TCL_LIBRARY          = path to Tcl library
+#   TCL_INCLUDE_PATH     = path to directory containing tcl.h
+#   TK_LIBRARY           = path to Tk library
+#   TK_INCLUDE_PATH      = path to directory containing tk.h
+#   TCL_TCLSH            = full path to tclsh binary
+#   TK_WISH              = full path wo wish binary
+ 
 SET(TCLTK_POSSIBLE_MAJOR_VERSIONS 8)
 SET(TCLTK_POSSIBLE_MINOR_VERSIONS 6 5 4 3 2 1 0)
 
-OPTION(TCLTK_USE_TK "Look for Tk installation, not just Tcl." ON)
+OPTION(TCLTK_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
 OPTION(TCLTK_NEED_HEADERS "Don't report a found Tcl/Tk unless headers are present." ON)
 
 SET(tkwin_script "
@@ -174,12 +260,12 @@ STRING(REGEX REPLACE
   "^.*tk([0-9]\\.*[0-9]).*$" "\\1" TK_LIBRARY_VERSION "${TK_LIBRARY}")
 
 SET(TCLTK_POSSIBLE_LIB_PATHS
-  "${TCL_INCLUDE_PATH_PARENT}/lib"
-  "${TK_INCLUDE_PATH_PARENT}/lib"
-  "${TCL_LIBRARY_PATH}"
-  "${TK_LIBRARY_PATH}"
-  "${TCL_TCLSH_PATH_PARENT}/lib"
-  "${TK_WISH_PATH_PARENT}/lib"
+#  "${TCL_INCLUDE_PATH_PARENT}/lib"
+#  "${TK_INCLUDE_PATH_PARENT}/lib"
+#  "${TCL_LIBRARY_PATH}"
+#  "${TK_LIBRARY_PATH}"
+#  "${TCL_TCLSH_PATH_PARENT}/lib"
+#  "${TK_WISH_PATH_PARENT}/lib"
   /usr/lib 
   /usr/local/lib
   )
@@ -214,8 +300,8 @@ SET(TCLTK_POSSIBLE_INCLUDE_PATHS
   "${TK_LIBRARY_PATH_PARENT}/include"
   "${TCL_INCLUDE_PATH}"
   "${TK_INCLUDE_PATH}"
-  ${TCL_FRAMEWORK_INCLUDES} 
-  ${TK_FRAMEWORK_INCLUDES} 
+#  ${TCL_FRAMEWORK_INCLUDES} 
+#  ${TK_FRAMEWORK_INCLUDES} 
   "${TCL_TCLSH_PATH_PARENT}/include"
   "${TK_WISH_PATH_PARENT}/include"
   /usr/include
