@@ -10,16 +10,6 @@ CUBIT_FILES = \
 	Cubit/g-sat.cpp
 endif
 
-if BUILD_EF
-EF_DIR = EndgameFramework
-EF_FILES =
-else !BUILD_EF
-EF_DIR =
-EF_FILES = \
-	EndgameFramework/Makefile.am \
-	EndgameFramework/Makefile.in
-endif
-
 if WITH_PROE
 PROE_DIR = ProEngineer
 PROE_FILES =
@@ -69,7 +59,6 @@ EXTRA_DIST = \
 
 DIST_SUBDIRS = \
 	Cubit \
-	EndgameFramework \
 	ProEngineer \
 	Unigraphics
 

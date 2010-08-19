@@ -3876,7 +3876,6 @@ AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
-AM_CONDITIONAL(BUILD_EF, [test "x$bc_build_ef" = "xyes"])
 AM_CONDITIONAL(BUILD_CUBIT, [test "x$bc_build_cubit" = "xyes"])
 AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 
@@ -4269,7 +4268,6 @@ AC_CONFIG_FILES([
 	src/conv/step/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
-	src/external/EndgameFramework/Makefile
 	src/external/ProEngineer/Makefile
 	src/external/ProEngineer/mk
 	src/external/ProEngineer/protk.dat
