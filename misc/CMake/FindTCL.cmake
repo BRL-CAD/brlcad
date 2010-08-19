@@ -155,6 +155,17 @@ MACRO(WIN32TCLTKPATHS vararray extension)
    ENDIF(WIN32)
 ENDMACRO(WIN32TCLTKPATHS)
 
+# Need some routines to chop version numbers up
+MACRO(SPLITTCLVERSIONNUM versionnum)
+     STRING(REGEX REPLACE "([0-9]*).[0-9]*.?[0-9]*" "\\1" ${versionnum}_MAJOR "${${versionnum}}")
+     STRING(REGEX REPLACE "[0-9]*.([0-9]*).?[0-9]*" "\\1" ${versionnum}_MINOR "${${versionnum}}")
+     STRING(REGEX REPLACE "[0-9]*.[0-9]*.?([0-9]*)" "\\1" ${versionnum}_PATCH "${${versionnum}}")
+     MESSAGE("nums: ${${versionnum}_MAJOR} ${${versionnum}_MINOR} ${${versionnum}_PATCH}")
+ENDMACRO()    
+
+SET(TESTVERSION "3.1.2")
+SPLITTCLVERSIONNUM(TESTVERSION)
+
 MACRO(FINDLIBRARYVERSIONS targetname pathnames options)
    FOREACH(MAJORNUM ${TCLTK_POSSIBLE_MAJOR_VERSIONS})
       FOREACH(MINORNUM ${TCLTK_POSSIBLE_MINOR_VERSIONS})
