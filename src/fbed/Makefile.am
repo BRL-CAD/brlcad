@@ -38,9 +38,7 @@ fbed_LDADD = \
 
 man_MANS = fbed.1
 
-EXTRA_DIST = \
-	$(man_MANS) \
-	font.doc
+EXTRA_DIST = $(man_MANS)
 
 DEPENDS = src/vfont
 
