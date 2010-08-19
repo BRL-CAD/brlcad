@@ -144,15 +144,11 @@ include/wdb.h
 	mk_fastgen_region() -> mk_comb() [deprecated 7.12]
 src/libbu/parallel.c
 	bu_get_load_average(), remove [deprecated 7.12]
-src/vas4
-	vas4, remove [deprecated 7.12]
 include/raytrace.h
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
 
 7.10
 ----
-include/machine.h
-	machine.h -> common.h && bu.h [deprecated 7.10]
 src/librt/bomb.c
 	rt_bomb() -> bu_bomb() [deprecated 7.10]
 
@@ -172,6 +168,13 @@ hf primitive
 ************
 * OBSOLETE *
 ************
+
+7.18.0
+------
+include/machine.h
+	machine.h -> common.h && bu.h [deprecated 7.10]
+src/vas4
+	vas4, remove [deprecated 7.12]
 
 7.16.4
 ------
