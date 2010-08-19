@@ -11,10 +11,10 @@
 # allow users, how to expose those controls, etc.  Here are the rules
 # this particular implementation of FindTCLTK will strive to express:
 #
-# 1. If a parent CMakeLists.txt defines a specific Tcl_Prefix
+# 1. If a parent CMakeLists.txt defines a specific TCLTK_PREFIX 
 #    directory, don't look for or return any settings using
 #    other Tcl/Tk installations, even if nothing is found
-#    below Tcl_Prefix and other installations are present.
+#    below TCLTK_PREFIX and other installations are present.
 #    Report NOTFOUND instead.
 #
 # 2. There will be three possible variables for controlling
@@ -58,13 +58,15 @@
 # 4. By default, if no prefix is specified, FindTCLTK will search
 #    a list of directories and the system path for tcl libraries.
 #    This list can be expanded by a parent CMakeLists.txt file
-#    by specifying additional paths in this variable:
+#    by specifying additional paths in this variable, which will
+#    be checked before the system path - essentially, this lets
+#    a configure process do a "soft set" of the TCL prefix:
 #
 #    TCLTK_SEARCH_ADDITIONAL_PATHS
 #
 # 5. On Apple platforms, there may be a "Framework" install of
 #    Tcl/Tk. By default, FindTCLTK will start with this version
-#    on OSX platforms if no TCL_PREFIX is specified, but will
+#    on OSX platforms if no TCLTK_PREFIX is specified, but will
 #    move on to another installation if the Framework Tcl/Tk doesn't
 #    satisfy other criteria.  If a developer wishes to REQUIRE a 
 #    Framework build of Tcl/Tk and reject other installs even though
@@ -179,7 +181,7 @@ MACRO(FIND_LIBRARY_VERSIONS targetname pathnames options)
          if(NOT MINORNUM LESS TCLTK_MIN_VERSION_MINOR)
          if(NOT MINORNUM GREATER TCLTK_MAX_VERSION_MINOR)
          SET(TCLTK_${targetname}${MAJORNUM}${MINORNUM} TCLTK_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
-         FOREACH(SPATH ${pathnames})
+         FOREACH(SPATH ${${pathnames}})
             FIND_LIBRARY(TCLTK_${targetname}${MAJORNUM}${MINORNUM} NAMES ${targetname}${MAJORNUM}.${MINORNUM} ${targetname}${MAJORNUM}${MINORNUM} PATHS ${SPATH} ${options})
             IF(NOT TCLTK_${targetname}${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
                # On repeat configures, CMAKE_INSTALL_PREFIX apparently gets added to the FIND_* paths.  This is a problem
@@ -201,19 +203,21 @@ MACRO(FIND_LIBRARY_VERSIONS targetname pathnames options)
    ENDFOREACH()
 ENDMACRO()
 
-# There are four variables that will be used as "feeders"
-# for locating Tcl/Tk installations - TCL_PREFIX, TCL_INCLUDE_DIR,
-# TCL_LIBRARY_DIR, and TCL_BIN_DIR.  In search paths, TCL_PREFIX
-# generated paths should come after the more specific variables.
+# Try to be a bit forgiving with the TCLTK prefix - if someone gives the
+# full path to the lib directory, catch that by adding the parent path
+# to the list to check
+IF(TCLTK_PREFIX)
+   SET(TCLTK_PREFIX_LIBDIRS "${TCLTK_PREFIX}")
+   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} "${TCLTK_PREFIX}/lib")
+   GET_FILENAME_COMPONENT(TCLTK_LIB_PATH_PARENT "${TCLTK_PREFIX}" PATH)
+   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_LIB_PATH_PARENT})
+   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_LIB_PATH_PARENT}/lib)
+   LIST(REMOVE_DUPLICATES TCLTK_PREFIX_LIBDIRS)
+   FIND_LIBRARY_VERSIONS(tcl TCLTK_PREFIX_LIBDIRS NO_SYSTEM_PATH)
+ENDIF(TCLTK_PREFIX)
 
-IF(TCL_PREFIX)
-   SET(TCL_PREFIX_BIN "${TCL_PREFIX}/bin")
-   SET(TCL_PREFIX_LIB "${TCL_PREFIX}/lib")
-   SET(TCL_PREFIX_INC "${TCL_PREFIX}/include")
-ENDIF(TCL_PREFIX)
-
-FIND_LIBRARY_VERSIONS(tcl ${TCL_PREFIX_LIB} NO_SYSTEM_PATH)
-FIND_LIBRARY_VERSIONS(tcl "/usr" "")
+SET(syspath "/usr")
+FIND_LIBRARY_VERSIONS(tcl syspath "")
 
 #LIST(REMOVE_DUPLICATES TCL_FOUND_MAJOR_VERSIONS)
 #LIST(REMOVE_DUPLICATES TCL_FOUND_MINOR_VERSIONS)
@@ -255,7 +259,7 @@ FOREACH(MAJORNUM ${TCL_FOUND_MAJOR_VERSIONS})
    ENDFOREACH()
 ENDFOREACH()
 
-LIST(REMOVE_DUPLICATES TCLTK_POSSIBLE_PATHS)
+#LIST(REMOVE_DUPLICATES TCLTK_POSSIBLE_PATHS)
 
 MESSAGE("possible paths: ${TCLTK_POSSIBLE_PATHS}")
 
@@ -419,3 +423,4 @@ MESSAGE("TCL_INCLUDE_PATH: ${TCL_INCLUDE_PATH}")
 MESSAGE("TK_INCLUDE_PATH: ${TK_INCLUDE_PATH}")
 MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
 MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
+
