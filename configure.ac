@@ -308,8 +308,8 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidgets], [auto])
 
-# tkhtml3
-BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
+# tkhtml
+BC_ARG_ENABLE([build_tkhtml], [tkhtml-build], [Build the included tkhtml], [yes])
 
 # togl
 #BC_ARG_ENABLE([build_togl], [togl-build], [Build the included togl], [no])
@@ -514,8 +514,10 @@ BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 
-# aliases to force building tkhtml3 (help uses tkhtml3-build)
-BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
+# aliases to force building tkhtml (help uses tkhtml-build)
+BC_ARG_ALIAS([build_tkhtml], [tkhtml])
+BC_ARG_ALIAS([build_tkhtml], [tkhtml3])
+BC_ARG_ALIAS([build_tkhtml], [tkhtml3-build])
 
 # aliases to force building tktable (help uses tktable-build)
 BC_ARG_ALIAS([build_tktable], [tktable])
@@ -689,8 +691,8 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_iwidgets_set" = "xno" ; then
 		bc_build_iwidgets="$set_everything"
 	fi
-	if test "x$bc_build_tkhtml3" = "xno" ; then
-		bc_build_tkhtml3="$set_everything"
+	if test "x$bc_build_tkhtml" = "xno" ; then
+		bc_build_tkhtml="$set_everything"
 	fi
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
@@ -825,8 +827,8 @@ AC_MSG_RESULT($bc_build_itcl)
 AC_MSG_CHECKING(whether to install the iwidgets library)
 AC_MSG_RESULT($bc_build_iwidgets)
 
-AC_MSG_CHECKING(whether to build the tkhtml3 library)
-AC_MSG_RESULT($bc_build_tkhtml3)
+AC_MSG_CHECKING(whether to build the tkhtml library)
+AC_MSG_RESULT($bc_build_tkhtml)
 
 AC_MSG_CHECKING(whether to build the tktable library)
 AC_MSG_RESULT($bc_build_tktable)
@@ -3157,20 +3159,16 @@ AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets
 AC_SUBST(IWIDGETS_VERSION)
 
 
-dnl *** tkhtml3 ***
-dnl figure out whether we need to build tkhtml3
-TKHTML3_VERSION="alpha16"
-AC_SUBST(TKHTML3_VERSION)
-AC_MSG_CHECKING(whether to build tkhtml3)
-if test ! "x$bc_build_tkhtml3" = "xno" ; then
-    build_brlcad_tkhtml3=yes
+dnl *** tkhtml ***
+dnl figure out whether we need to build tkhtml
+AC_MSG_CHECKING(whether to build tkhtml)
+if test ! "x$bc_build_tkhtml" = "xno" ; then
+    build_brlcad_tkhtml=yes
     AC_MSG_RESULT(yes)
 else
-    build_brlcad_tkhtml3=no
-    TKHTML3=""
+    build_brlcad_tkhtml=no
     AC_MSG_RESULT(no)
 fi
-AC_SUBST(TKHTML3)
 
 dnl *** togl ***
 dnl figure out whether we need to build togl
@@ -3862,7 +3860,7 @@ AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
-AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
+AM_CONDITIONAL(BUILD_TKHTML, [test "x$build_brlcad_tkhtml" = "xyes"])
 AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
 #AM_CONDITIONAL(BUILD_TOGL, [test "x$build_brlcad_togl" = "xyes__disabled__"])
 AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
@@ -4151,15 +4149,15 @@ if test "x$build_brlcad_step" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/step])
 fi
 
-dnl configure tkhtml3
-if test "x$build_brlcad_tkhtml3" = "xyes" ; then
+dnl configure tkhtml
+if test "x$build_brlcad_tkhtml" = "xyes" ; then
     ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-    # this is a hack to all tkhtml3 to see when the tk headers are in odd 
+    # this is a hack to all tkhtml to see when the tk headers are in odd 
     # places. it seems to ignore the CPPFLAGS in it's configure phase.
     if test ! "x$TKINCDIR" = "x" ; then
 	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
     fi
-    AC_CONFIG_SUBDIRS([src/other/tkhtml3])
+    AC_CONFIG_SUBDIRS([src/other/tkhtml])
 fi
 
 #dnl configure togl
@@ -4479,7 +4477,7 @@ AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
 AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
-AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
+AC_MSG_RESULT([Build tkhtml .........................: $build_brlcad_tkhtml])
 AC_MSG_RESULT([Build tkpng ..........................: $build_brlcad_tkpng])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
