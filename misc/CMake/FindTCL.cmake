@@ -31,7 +31,8 @@
 #    although the PATCH_VERSION will be optional.  If
 #    no PATCH_VERSION is specified, any patch version will
 #    be regarded as satisfying the criteria of any version
-#    number test applied.
+#    number test applied.  If no versions are specified it
+#    is assumed any will do.
 #
 # 3. Tk provides the option to compile either for
 #    the "native" graphics system (aqua, win32, etc.) or for
@@ -84,6 +85,8 @@
 #    option and FindTCLTK will report a Tcl/Tk installation without
 #    headers as FOUND.
 #
+#    TCLTK_NEED_HEADERS
+#
 # The following "results" variables will be set (Tk variables only
 # set when TCKTK_REQUIRE_TK is ON):
 #
@@ -95,12 +98,22 @@
 #   TK_INCLUDE_PATH      = path to directory containing tk.h
 #   TCL_TCLSH            = full path to tclsh binary
 #   TK_WISH              = full path wo wish binary
- 
+
+# Tcl/Tk tends to name things using version numbers, so we need a
+# list of numbers to check 
 SET(TCLTK_POSSIBLE_MAJOR_VERSIONS 8)
 SET(TCLTK_POSSIBLE_MINOR_VERSIONS 6 5 4 3 2 1 0)
 
+# Create the Tcl/Tk options if not already present
+OPTION(TCLTK_NATIVE_GRAPHICS "Require native Tk graphics." OFF)
+OPTION(TCLTK_X11_GRAPHICS "Require X11 Tk graphics." OFF)
+OPTION(TCLTK_USE_FRAMEWORK_ONLY "Don't use any Tcl/Tk installation that isn't a Framework." OFF)
 OPTION(TCLTK_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
 OPTION(TCLTK_NEED_HEADERS "Don't report a found Tcl/Tk unless headers are present." ON)
+
+# Set up the logic for determing the tk windowingsystem.  This requires
+# running a small wish script and recovering the results from a file -
+# wrap this logic in a macro
 
 SET(tkwin_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
@@ -113,7 +126,15 @@ exit
 
 SET(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
 
-FILE(WRITE ${tkwin_scriptfile} ${tkwin_script})
+MACRO(TKGRAPHICSSYSTEM wishcmd resultvar)
+   SET(${resultvar} "wm-NOTFOUND")
+   FILE(WRITE ${tkwin_scriptfile} ${tkwin_script})
+   EXEC_PROGRAM(${wishcmd} ARGS ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+   FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM ${resultvar})
+   MESSAGE("TK graphics: ${${resultvar}}")
+ENDMACRO()
+
+TKGRAPHICSSYSTEM(wish TK_GRAPHICSTYPE)
 
 # There are four variables that will be used as "feeders"
 # for locating Tcl/Tk installations - TCL_PREFIX, TCL_INCLUDE_DIR,
