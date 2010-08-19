@@ -32,7 +32,8 @@
 #    no PATCH_VERSION is specified, any patch version will
 #    be regarded as satisfying the criteria of any version
 #    number test applied.  If no versions are specified it
-#    is assumed any will do.
+#    is assumed any will do.  Higher versions are preferred
+#    over lower, within the above constraints.
 #
 # 3. Tk provides the option to compile either for
 #    the "native" graphics system (aqua, win32, etc.) or for
@@ -194,10 +195,33 @@ MACRO(FIND_LIBRARY_VERSIONS targetname pathnames options)
             SET(TCLTK_${targetname}${MAJORNUM}${MINORNUM} TCLTK_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
          ENDFOREACH()
 	 MESSAGE("TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST: ${TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST}")
-	 SET(TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST "")
          endif()
          endif()
       ENDFOREACH()
+      endif()
+      endif()
+   ENDFOREACH()
+ENDMACRO()
+
+MACRO(PULL_PREFERRED_VERSION  targetname targetvar)
+   FOREACH(MAJORNUM ${TCLTK_POSSIBLE_MAJOR_VERSIONS})
+      if(NOT MAJORNUM LESS TCLTK_MIN_VERSION_MAJOR)
+      if(NOT MAJORNUM GREATER TCLTK_MAX_VERSION_MAJOR)
+      if(${${targetvar}} MATCHES "NOTFOUND$")
+      FOREACH(MINORNUM ${TCLTK_POSSIBLE_MINOR_VERSIONS})
+         if(NOT MINORNUM LESS TCLTK_MIN_VERSION_MINOR)
+         if(NOT MINORNUM GREATER TCLTK_MAX_VERSION_MINOR)
+         if(${${targetvar}} MATCHES "NOTFOUND$")
+	    LIST(LENGTH TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST LISTLENGTH)
+            IF(LISTLENGTH GREATER 0)
+               LIST(GET TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST 0 ${targetvar})
+	       LIST(REMOVE_AT TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST 0)
+            endif()
+         endif()
+         endif()
+         endif()
+      ENDFOREACH()
+      endif()
       endif()
       endif()
    ENDFOREACH()
@@ -207,13 +231,17 @@ ENDMACRO()
 # full path to the lib directory, catch that by adding the parent path
 # to the list to check
 IF(TCLTK_PREFIX)
-   SET(TCLTK_PREFIX_LIBDIRS "${TCLTK_PREFIX}")
-   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} "${TCLTK_PREFIX}/lib")
+   SET(TCL_LIBRARY "NOTFOUND")
+   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_PREFIX}/lib)
+   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_PREFIX})
    GET_FILENAME_COMPONENT(TCLTK_LIB_PATH_PARENT "${TCLTK_PREFIX}" PATH)
-   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_LIB_PATH_PARENT})
    SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_LIB_PATH_PARENT}/lib)
+   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_LIB_PATH_PARENT})
    LIST(REMOVE_DUPLICATES TCLTK_PREFIX_LIBDIRS)
+   MESSAGE("TCLTK_PREFIX_LIBDIRS: ${TCLTK_PREFIX_LIBDIRS}")
    FIND_LIBRARY_VERSIONS(tcl TCLTK_PREFIX_LIBDIRS NO_SYSTEM_PATH)
+   PULL_PREFERRED_VERSION(tcl TCL_LIBRARY)
+   MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
 ENDIF(TCLTK_PREFIX)
 
 SET(syspath "/usr")
