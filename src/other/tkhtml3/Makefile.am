@@ -32,8 +32,8 @@ PKG_STUB_OBJECTS = @PKG_STUB_OBJECTS@
 PKG_LIB_FILE	= @PKG_LIB_FILE@
 PKG_STUB_LIB_FILE = @PKG_STUB_LIB_FILE@
 
-lib_BINARIES	= $(PKG_LIB_FILE)
-BINARIES	= $(lib_BINARIES)
+# lib_BINARIES	= $(PKG_LIB_FILE)
+# BINARIES	= $(lib_BINARIES)
 
 SHELL		= @SHELL@
 
@@ -250,7 +250,7 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 
 HDR = $(GENHDR) $(SRCHDR)
 
-EXTRA_LTLIBRARIES = libTkhtml_nil.la
+lib_LTLIBRARIES = libTkhtml.la
 
 noinst_HEADERS = \
 	src/css.h \
@@ -262,7 +262,7 @@ noinst_HEADERS = \
 	src/restrack.h \
 	src/swproc.h
 
-libTkhtml_nil_la_SOURCES = \
+libTkhtml_la_SOURCES = \
 	$(compiled_srcs) \
 	src/css.c \
 	src/cssdynamic.c \
