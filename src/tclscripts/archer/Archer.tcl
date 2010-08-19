@@ -265,7 +265,8 @@ package provide Archer 1.0
 	# ArcherCore Override Section
 	method buildCommandView {}
 	method dblClick {_tags}
-	method addCombMemberWrapper {_cmd args}
+	method addCombMemberWrapper {_cmd _cflag args}
+	method createCombWrapper {_cmd args}
 	method removeCombMemberWrapper {_cmd args}
 	method combWrapper {_cmd _minArgs args}
 	method createWrapper {_cmd args}
@@ -1020,7 +1021,8 @@ package provide Archer 1.0
 # Create a combination.
 #
 ::itcl::body Archer::c {args} {
-    eval combWrapper c 2 $args
+#    eval combWrapper c 2 $args
+    putString "Momentarily disabled. Fix me!"
 }
 
 ::itcl::body Archer::clone {args} {
@@ -1986,9 +1988,7 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::addCombMemberWrapper {_cmd args} {
-    SetWaitCursor $this
-
+::itcl::body Archer::addCombMemberWrapper {_cmd _cflag args} {
     # Returns a help message.
     set alen [llength $args]
     if {$alen == 0} {
@@ -2018,7 +2018,7 @@ package provide Archer 1.0
 	}
     }
 
-
+    SetWaitCursor $this
     checkpoint $cname $LEDGER_MODIFY
 
     if {[catch {eval gedCmd $_cmd $args} ret]} {
@@ -2029,44 +2029,31 @@ package provide Archer 1.0
     # Delete any toplevel nodes of newly added members
     foreach member $mlist {
 	if {[info exists mText2Node($member)]} {
-	    set leftovers {}
-	    set leftovers2 {}
 	    foreach sublist $mText2Node($member) {
 		set pnode [lindex $sublist 1]
 
 		if {$pnode == {}} {
 		    set cnode [lindex $sublist 0]
+
+		    # Before deleting cnode we need to delete any
+		    # use of cnode and its descendents in the data
+		    # variables that are used to interact with the
+		    # tree viewer.
+		    purgeNodeData $cnode
+
 		    $itk_component(newtree) delete $cnode
-		    unset mNode2Text($cnode)
-		    unset mCNode2PList($cnode)
-
-		    if {[info exists mPNode2CList()]} {
-			foreach csublist $mPNode2CList() {
-			    if {$cnode != [lindex $csublist 1]} {
-				lappend leftovers2 $csublist
-			    }
-			}
-		    }		    
-		} else {
-		    lappend leftovers $sublist
 		}
-	    }
-
-	    if {$leftovers == {}} {
-		unset mText2Node($member)
-	    } else {
-		set mText2Node($member) $leftovers
-	    }
-
-	    if {$leftovers2 == {}} {
-		unset mPNode2CList()
-	    } else {
-		set mPNode2CList() $leftovers2
 	    }
 	}
     }
 
+    if {$_cflag} {
+	SetNormalCursor $this
+	return
+    }
+
     # Add new members to parent node(s) if the parent nodes have been previously opened.
+    set cnode ""
     if {[info exists mText2Node($cname)]} {
 	foreach sublist $mText2Node($cname) {
 	    set cnode [lindex $sublist 0]
@@ -2080,14 +2067,41 @@ package provide Archer 1.0
     }
 
     object_update $cname
-#    selectTreePath $cname
+
+    if {$cnode != ""} {
+	set path ""
+	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
+	    append path "/" $mNode2Text($pnode)
+	}
+
+	if {$path != ""} {
+	    append path "/"
+	}
+
+	append path $cname
+	selectTreePath $path
+    }
+
+    SetNormalCursor $this
+}
+
+::itcl::body Archer::createCombWrapper {_cmd args} {
+    eval addCombMemberWrapper $_cmd 1 $args
+
+    SetWaitCursor $this
+    set cname [lindex $args 0]
+    fillTree {} $cname $mEnableListView
+    $itk_component(ged) draw $cname
+    selectTreePath $cname
+
+    checkpoint $cname $LEDGER_CREATE
+    set mNeedSave 1
+    updateSaveMode
 
     SetNormalCursor $this
 }
 
 ::itcl::body Archer::removeCombMemberWrapper {_cmd args} {
-    SetWaitCursor $this
-
     # Returns a help message.
     set alen [llength $args]
     if {$alen == 0} {
@@ -2109,6 +2123,7 @@ package provide Archer 1.0
 	}
     }
 
+    SetWaitCursor $this
     checkpoint $cname $LEDGER_MODIFY
 
     if {[catch {eval gedCmd $_cmd $args} ret]} {
@@ -2117,12 +2132,13 @@ package provide Archer 1.0
     }
 
     # Delete members from parent nodes
+    set cnode ""
     if {[info exists mText2Node($cname)]} {
 	foreach sublist $mText2Node($cname) {
-	    set combnode [lindex $sublist 0]
+	    set cnode [lindex $sublist 0]
 
-	    if {[info exists mPNode2CList($combnode)]} {
-		foreach clist $mPNode2CList($combnode) {
+	    if {[info exists mPNode2CList($cnode)]} {
+		foreach clist $mPNode2CList($cnode) {
 		    set mname [lindex $clist 0] 
 
 		    if {$mname == $TREE_PLACEHOLDER_TAG} {
@@ -2153,7 +2169,7 @@ package provide Archer 1.0
 					selectTreePath $member
 				    }
 				} elseif {$member == $mSelectedObj} {
-				    selectTreePath [getTreePath $combnode]
+				    selectTreePath [getTreePath $cnode]
 				}
 			    }
 			}
@@ -2164,7 +2180,22 @@ package provide Archer 1.0
     }
 
     object_update $cname
-#    selectTreePath $cname
+
+    if {$cnode != ""} {
+	set path ""
+	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
+	    append path "/" $mNode2Text($pnode)
+	}
+
+	if {$path != ""} {
+	    append path "/"
+	}
+
+	append path $cname
+	selectTreePath $path
+    }
+
+    updateTree
     SetNormalCursor $this
 }
 
@@ -2182,11 +2213,10 @@ package provide Archer 1.0
     # Check for the existence of obj
     if {[catch {gedCmd attr show $obj} adata]} {
 	# Create a new combination
-	eval createWrapper $_cmd $args
+	eval createCombWrapper $_cmd $args
     } else {
 	# Modifying an existing combination
-	eval addCombMemberWrapper $_cmd $args
-#	eval gedWrapper $_cmd 0 0 1 2 $args
+	eval addCombMemberWrapper $_cmd 0 $args
     }
 }
 
@@ -2257,19 +2287,6 @@ package provide Archer 1.0
 
 	    set clist [lindex $expandedArgs 0]
 	}
-	"c" -
-	"comb" -
-	"g" -
-	"r" {
-	    # Returns a help message.
-	    if {[llength $args] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set options {}
-	    set expandedArgs $args
-	    set clist [lindex $expandedArgs 0]
-	}
 	default {
 	    return "createWrapper: $_cmd not recognized."
 	}
@@ -2285,12 +2302,6 @@ package provide Archer 1.0
     if {$_cmd == "in" || $_cmd == "inside"} {
 	set clist $ret
     }
-
-    # Checkpoint the created object
-#    checkpoint_olist $clist $LEDGER_CREATE
-#    refreshTree 1
-#
-#    updateUndoState
 
     set name $clist
     fillTree {} $name $mEnableListView
