@@ -1,14 +1,21 @@
 CVS checkout: cvs -d :pserver:anonymous@tkhtml.tcl.tk:/tkhtml checkout htmlwidget
 Date of last BRL-CAD update: 10/07/2008 
 
-Changes include using directory named tkhtml3 instead of htmlwidget,
-not using tkhtml3's make logic, and not including any of the test code.
-Only the tkhtml3 widget itself is included, not the hv browser code.
+Changes include using directory named tkhtml instead of htmlwidget,
+not using tkhtml's make logic, and not including any of the test code.
+Only the tkhtml widget itself is included, not the hv browser code.
 
-This build of Tkhtml3 incorporates files which are generated
-using tclsh in the main Tkhtml3 build.  In order to better work with
+The top-level Makefile.in file was converted to Makefile.am and
+modified to create a libtool library.
+
+The scripts that generate source files (src/*.tcl) were updated to
+generate sources in the correct location compatible with out-of-dir
+building.
+
+This build of Tkhtml incorporates files which are generated using
+tclsh in the main Tkhtml build.  In order to better work with
 BRL-CAD's existing build mechanisms, the following files are manually
-generated and updated when Tkhtml3 is updated:
+generated and updated when Tkhtml is updated:
 
 
 * Generated in the original distribution by the 
