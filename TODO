@@ -834,6 +834,8 @@ ODDITIES
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
+* remove the hf primitive (fully)
+
 * support for features either as primitives or operations or both
   e.g. chamfer, fillet, round, cut, etc
 
