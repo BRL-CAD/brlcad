@@ -4034,10 +4034,9 @@ BU_EXPORT BU_EXTERN(void bu_ptbl_free,
  * This version maintained for source compatibility with existing NMG
  * code.
  */
-/*BU_EXPORT BU_EXTERN(int bu_ptbl,
+BU_EXPORT BU_EXTERN(int bu_ptbl,
 		    (struct bu_ptbl *b,
 		     int func, long *p));
-*/
 
 /**
  * B U _ P R _ P T B L
