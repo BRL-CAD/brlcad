@@ -4389,7 +4389,6 @@ AC_CONFIG_FILES([
 	src/tclscripts/swidgets/scripts/Makefile
 	src/tclscripts/util/Makefile
 	src/util/Makefile
-	src/vas4/Makefile
 	src/vdeck/Makefile
 	src/vfont/Makefile
 ])
