@@ -4128,7 +4128,7 @@ dnl configure libpng
 if test "x$build_brlcad_png" = "xyes" ; then
    if test "x$LIBZ_CPPFLAGS" != "x" ; then
 	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
-	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\""
+	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\" --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
     else
 	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB'"
    fi
