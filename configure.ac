@@ -3576,36 +3576,30 @@ fi # bc_with_java
 dnl *** Pro/ENGINEER installation / plugin compilation ***
 build_against_proe=no
 if test "x$bc_with_proe" != "xno" ; then
-    if test "x$pointer_size" != "x4" ; then
+    AC_MSG_CHECKING(for Pro/ENGINEER installation)
+    if test "x$found_protk_h" = "xno" ; then
 	AC_MSG_RESULT(no)
-	AC_MSG_WARN([The Pro/E plugin must be built as a 32-bit library. Please disable 64-bit builds and set appropriate C/CXXFLAGS])
-	sleep 1
-    else
-	AC_MSG_CHECKING(for Pro/ENGINEER installation)
-	if test "x$found_protk_h" = "xno" ; then
-	    AC_MSG_RESULT(no)
-	    if test "x$bc_with_proe" = "xyes" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Unable to locate ProToolkit.h. Make sure your installation of Pro/E also has Pro/TOOLKIT])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		sleep 5
-	    fi
-	    if test "x$bc_with_proe" = "xauto" ; then
-		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-		AC_MSG_WARN([Pro/E was not installed in the standard place (/usr/local/ptc/proeWildfire3.0).])
-		AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
-		AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
-		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-		sleep 5
-	    fi
-	else
-	    if test "x$bc_with_proe" = "xauto" ; then
-		build_against_proe=yes
-	    else
-		build_against_proe="yes ($bc_with_proe_val)"
-	    fi
-	    AC_MSG_RESULT(yes)
+	if test "x$bc_with_proe" = "xyes" ; then
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([Unable to locate ProToolkit.h. Make sure your installation of Pro/E also has Pro/TOOLKIT])
+	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	    sleep 5
 	fi
+	if test "x$bc_with_proe" = "xauto" ; then
+	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	    AC_MSG_WARN([Pro/E was not installed in the standard place (/usr/local/ptc/proeWildfire3.0).])
+	    AC_MSG_WARN([Try adding --with-proe=/path/to/proe to find the ProToolkit.h])
+	    AC_MSG_WARN([Compilation of Pro/ENGINEER plugin will be disabled])
+	    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	    sleep 5
+	fi
+    else
+	if test "x$bc_with_proe" = "xauto" ; then
+	    build_against_proe=yes
+	else
+	    build_against_proe="yes ($bc_with_proe_val)"
+	fi
+	AC_MSG_RESULT(yes)
     fi
 fi
 
