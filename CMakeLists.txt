@@ -80,7 +80,6 @@
 
 # This file contains the top level CMakeLists.txt logic for the 
 # BRL-CAD software package.
-
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
@@ -333,7 +332,6 @@ FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
 IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
    FILE(APPEND ${CONFIG_H_FILE} "#define DEBUG 1\n")
 ENDIF()
-
 
 # CMake can detect flex and bison, but apparently not generic lex/yacc.
 # Solution is to make our own generic lex/yacc Find routines that look
@@ -737,18 +735,27 @@ ExternalProject_Add(
   BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && make
   INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && make install
 )
+SET(TCL_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tcl8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
+SET(TCL_INCLUDE "${BRLCAD_PREFIX}/include")
+MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
 
-# Tk
-#include(ExternalProject)
-#ExternalProject_Add(
-#	tk
-#	DOWNLOAD_COMMAND ""
-#	PREFIX "${BRLCAD_PREFIX}"
-#	SOURCE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tk"
-#	CONFIGURE_COMMAND
-#	autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tk/unix -o ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure --with-tk=${BRLCAD_SOURCE_DIR}/src/other/tk/unix 
-#        BUILD_COMMAND make
-#)
+ExternalProject_Add(
+  tk
+  DOWNLOAD_COMMAND ""
+  PREFIX ${BRLCAD_BINARY_DIR}
+  SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tk/unix
+  CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tk/unix -o
+  ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure
+  ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && mkdir -p
+  ${BRLCAD_BINARY_DIR}/src/other/tk/ && cd
+  ${BRLCAD_BINARY_DIR}/src/other/tk/ &&
+  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib
+  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && make
+  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && make install
+)
+SET(TK_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tk8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
+SET(TK_INCLUDE "${BRLCAD_PREFIX}/include")
+MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
 
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
@@ -1005,4 +1012,3 @@ WHILE(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
    STRING(LENGTH ${CONFIG_TIME_MSG_LABEL} CURRENTLENGTH)
 ENDWHILE(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
 MESSAGE("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
-
