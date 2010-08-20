@@ -732,8 +732,8 @@ ExternalProject_Add(
   ${BRLCAD_BINARY_DIR}/src/other/tcl/ && cd
   ${BRLCAD_BINARY_DIR}/src/other/tcl/ &&
   <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX}
-  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && make
-  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && make install
+  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE)
+  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE) install
 )
 SET(TCL_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tcl8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
 SET(TCL_INCLUDE "${BRLCAD_PREFIX}/include")
@@ -750,8 +750,8 @@ ExternalProject_Add(
   ${BRLCAD_BINARY_DIR}/src/other/tk/ && cd
   ${BRLCAD_BINARY_DIR}/src/other/tk/ &&
   <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib
-  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && make
-  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && make install
+  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE)
+  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE) install
 )
 SET(TK_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tk8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
 SET(TK_INCLUDE "${BRLCAD_PREFIX}/include")
@@ -772,6 +772,8 @@ ELSE(BRLCAD_BUILD_LOCAL_OPENNURBS)
    SET(BRLCAD_OPENNURBS_INCLUDE_DIR "${OPENNURBS_INCLUDE_DIR}" CACHE STRING "Directory containing openNURBS headers" FORCE)
    SET(BRLCAD_OPENNURBS_LIBRARY "${OPENNURBS_LIBRARY}" CACHE STRING "openNURBS library" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_OPENNURBS)
+
+ADD_DEPENDENCIES(tk tcl)
 
 # STEP is going to require some extra thought - it's a src/other 
 # with multiple libraries.  For now, just add it as a subdir
