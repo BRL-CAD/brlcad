@@ -291,7 +291,7 @@ icv_rot(int argc, char **argv)
     unsigned char *obuf;
     unsigned char *buffer;
     double angle = 0.0;
-    int wrote = 0;
+    size_t wrote = 0;
 
     ifp = stdin;
     ofp = stdout;
