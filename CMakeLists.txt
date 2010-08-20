@@ -720,7 +720,23 @@ ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
+#INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
+
+include(ExternalProject)
+ExternalProject_Add(
+  tcl
+  DOWNLOAD_COMMAND ""
+  PREFIX ${BRLCAD_BINARY_DIR}
+  SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix
+  CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix -o
+  ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix/configure
+  ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix/configure.in && mkdir -p
+  ${BRLCAD_BINARY_DIR}/src/other/tcl/ && cd
+  ${BRLCAD_BINARY_DIR}/src/other/tcl/ &&
+  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX}
+  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && make
+  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && make install
+)
 
 # Tk
 #include(ExternalProject)
