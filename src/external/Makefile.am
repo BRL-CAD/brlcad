@@ -46,14 +46,12 @@ endif
 
 SUBDIRS = \
 	$(CUBIT_DIR) \
-	$(EF_DIR) \
 	$(PROE_DIR) \
 	$(UG_DIR)
 
 EXTRA_DIST = \
 	README \
 	$(CUBIT_FILES) \
-	$(EF_FILES) \
 	$(PROE_FILES) \
 	$(UG_FILES)
 
