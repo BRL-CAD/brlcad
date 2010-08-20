@@ -718,9 +718,8 @@ ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 
-#INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 
-THIRD_PARTY_OPTION(TCL tcl)
+#THIRD_PARTY_OPTION(TCL tcl)
 if(BRLCAD_BUILD_LOCAL_TCL)
 include(ExternalProject)
 ExternalProject_Add(
@@ -764,10 +763,7 @@ SET(TK_DEP "tk")
 else(BRLCAD_BUILD_LOCAL_TCL)
    SET(TCL_DEP "")
    SET(TK_DEP "")
-endif(BRLCAD_BUILD_LOCAL_TCL)
-
-if(BRLCAD_BUILD_LOCAL_TCL)
-   ADD_DEPENDENCIES(tk tcl)
+   INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 endif(BRLCAD_BUILD_LOCAL_TCL)
 
 # OpenNURBS Library
@@ -973,6 +969,11 @@ endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
 ADD_CUSTOM_TARGET(timestamp ALL	COMMAND printtimestamp)
 
+
+if(BRLCAD_BUILD_LOCAL_TCL)
+   ADD_DEPENDENCIES(tcl timestamp)
+   ADD_DEPENDENCIES(tk tcl)
+endif(BRLCAD_BUILD_LOCAL_TCL)
 ADD_DEPENDENCIES(bu timestamp ${TCL_DEP} ${TK_DEP})
 ADD_DEPENDENCIES(sysv timestamp ${TCL_DEP} ${TK_DEP})
 ADD_DEPENDENCIES(rtlib timestamp ${TCL_DEP} ${TK_DEP})
