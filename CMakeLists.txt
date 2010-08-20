@@ -720,6 +720,8 @@ ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 
 #INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
 
+THIRD_PARTY_OPTION(TCLTK tcl_tk)
+if(BRLCAD_BUILD_LOCAL_TCLTK)
 include(ExternalProject)
 ExternalProject_Add(
   tcl
@@ -735,8 +737,9 @@ ExternalProject_Add(
   BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE)
   INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE) install
 )
+THIRD_PARTY_OPTION(TCL tk)
 SET(TCL_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tcl8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
-SET(TCL_INCLUDE "${BRLCAD_PREFIX}/include")
+SET(TCL_INCLUDE_DIR "${BRLCAD_PREFIX}/include")
 MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
 
 ExternalProject_Add(
@@ -754,8 +757,14 @@ ExternalProject_Add(
   INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE) install
 )
 SET(TK_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tk8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
-SET(TK_INCLUDE "${BRLCAD_PREFIX}/include")
+SET(TK_INCLUDE_DIR "${BRLCAD_PREFIX}/include")
 MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
+SET(TCL_DEP "tcl")
+SET(TK_DEP "tk")
+else(BRLCAD_BUILD_LOCAL_TCLTK)
+   SET(TCL_DEP "")
+   SET(TK_DEP "")
+endif(BRLCAD_BUILD_LOCAL_TCLTK)
 
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
@@ -961,7 +970,9 @@ endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
 ADD_CUSTOM_TARGET(timestamp ALL	COMMAND printtimestamp)
 
-ADD_DEPENDENCIES(bu timestamp)
+ADD_DEPENDENCIES(bu timestamp ${TCL_DEP} ${TK_DEP})
+ADD_DEPENDENCIES(sysv timestamp ${TCL_DEP} ${TK_DEP})
+ADD_DEPENDENCIES(rtlib timestamp ${TCL_DEP} ${TK_DEP})
 
 # Generate the include/conf files
 
