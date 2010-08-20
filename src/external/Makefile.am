@@ -18,7 +18,7 @@ PROE_DIR =
 PROE_FILES = \
 	ProEngineer/Makefile.am \
 	ProEngineer/Makefile.in \
-	ProEngineer/install.doc \
+	ProEngineer/INSTALL.txt \
 	ProEngineer/mk.in \
 	ProEngineer/proe-brl.c \
 	ProEngineer/proe_brl.res \
