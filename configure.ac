@@ -4130,7 +4130,7 @@ if test "x$build_brlcad_png" = "xyes" ; then
 	LIBZ_PATH="$PWD/${ac_top_builddir}/src/other/libz"
 	ac_configure_args="$ac_configure_args --with-sub-libs=\"${LIBZ_PATH}/libz.la\" --with-sub-cppflags=\"-I${LIBZ_PATH}\" --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
     else
-	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB'"
+	ac_configure_args="$ac_configure_args --with-sub-libs='$LIBZLIB' --with-sub-cflags=\"$CFLAGS\" --with-sub-ldflags=\"$LDFLAGS\""
    fi
    AC_CONFIG_SUBDIRS([src/other/libpng])
 fi
