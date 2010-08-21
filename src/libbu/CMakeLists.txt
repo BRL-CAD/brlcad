@@ -95,4 +95,4 @@ set(HTESTER_SOURCES
 )
 
 add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} bu)
+target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} bu)
