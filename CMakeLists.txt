@@ -976,7 +976,7 @@ if(BRLCAD_BUILD_LOCAL_TCL)
 endif(BRLCAD_BUILD_LOCAL_TCL)
 ADD_DEPENDENCIES(bu timestamp ${TCL_DEP} ${TK_DEP})
 ADD_DEPENDENCIES(sysv timestamp ${TCL_DEP} ${TK_DEP})
-ADD_DEPENDENCIES(rtlib timestamp ${TCL_DEP} ${TK_DEP})
+ADD_DEPENDENCIES(librt timestamp ${TCL_DEP} ${TK_DEP})
 
 # Generate the include/conf files
 
