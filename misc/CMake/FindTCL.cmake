@@ -9,24 +9,24 @@
 # Several "design philosophy" decisions have to be made - what to report
 # when multiple instances of Tcl/Tk are available, how much control to
 # allow users, how to expose those controls, etc.  Here are the rules
-# this particular implementation of FindTCLTK will strive to express:
+# this particular implementation of FindTCL will strive to express:
 #
-# 1. If a parent CMakeLists.txt defines a specific TCLTK_PREFIX 
+# 1. If a parent CMakeLists.txt defines a specific TCL_PREFIX 
 #    directory, don't look for or return any settings using
 #    other Tcl/Tk installations, even if nothing is found
-#    below TCLTK_PREFIX and other installations are present.
+#    below TCL_PREFIX and other installations are present.
 #    Report NOTFOUND instead.
 #
 # 2. There will be three possible variables for controlling
 #    which versions to report:
 #
-#    TCLTK_MIN_VERSION
-#    TCLTK_MAX_VERSION
-#    TCLTK_EXACT_VERSION
+#    TCL_MIN_VERSION
+#    TCL_MAX_VERSION
+#    TCL_EXACT_VERSION
 #
 #    All of these will be expected to have the form:
 #
-#    TCLTK_MAJOR_VERSION.TCLTK_MINOR_VERSION.TCLTK_PATCH_VERSION
+#    TCL_MAJOR_VERSION.TCL_MINOR_VERSION.TCL_PATCH_VERSION
 #
 #    although the PATCH_VERSION will be optional.  If
 #    no PATCH_VERSION is specified, any patch version will
@@ -43,8 +43,8 @@
 #    windowing system.  If that is the case they can make use
 #    of the following two options:
 #
-#    TCLTK_NATIVE_GRAPHICS
-#    TCLTK_X11_GRAPHICS
+#    TK_NATIVE_GRAPHICS
+#    TK_X11_GRAPHICS
 #
 #    If NATIVE_GRAPHICS is set to ON, a Tcl/Tk system is 
 #    reported found only if the reported graphics system
@@ -53,48 +53,48 @@
 #    reports X11.  If neither option is ON, the windowing
 #    system is not a factor is deciding to report
 #    FOUND or NOTFOUND.  If BOTH are ON (why??) NATIVE_GRAPHICS
-#    will override the TCLTK_X11_GRAPHICS setting and set it
+#    will override the TK_X11_GRAPHICS setting and set it
 #    to OFF.
 #
-# 4. By default, if no prefix is specified, FindTCLTK will search
+# 4. By default, if no prefix is specified, FindTCL will search
 #    a list of directories and the system path for tcl libraries.
 #    This list can be expanded by a parent CMakeLists.txt file
 #    by specifying additional paths in this variable, which will
 #    be checked before the system path - essentially, this lets
 #    a configure process do a "soft set" of the TCL prefix:
 #
-#    TCLTK_SEARCH_ADDITIONAL_PATHS
+#    TCL_SEARCH_ADDITIONAL_PATHS
 #
 # 5. On Apple platforms, there may be a "Framework" install of
-#    Tcl/Tk. By default, FindTCLTK will start with this version
-#    on OSX platforms if no TCLTK_PREFIX is specified, but will
+#    Tcl/Tk. By default, FindTCL will start with this version
+#    on OSX platforms if no TCL_PREFIX is specified, but will
 #    move on to another installation if the Framework Tcl/Tk doesn't
 #    satisfy other criteria.  If a developer wishes to REQUIRE a 
 #    Framework build of Tcl/Tk and reject other installs even though
 #    they may satisfy other criteria, they can enable the following 
 #    option:
 #
-#    TCKTK_USE_FRAMEWORK_ONLY
+#    TCL_USE_FRAMEWORK_ONLY
 #
 # 6. If a developer needs ONLY Tcl, without the Tk graphics library,
 #    they can disable the following option (on by default)
 #  
-#    TCLTK_REQUIRE_TK
+#    TCL_REQUIRE_TK
 #
-# 7. Normally, FindTCLTK will assume that the intent is to compile
+# 7. Normally, FindTCL will assume that the intent is to compile
 #    C code and will require headers.  If a developer needs Tcl/Tk
 #    ONLY for the purposes of running tclsh or wish scripts and is
 #    not planning to do any compiling, they can disable the following
-#    option and FindTCLTK will report a Tcl/Tk installation without
+#    option and FindTCL will report a Tcl/Tk installation without
 #    headers as FOUND.
 #
-#    TCLTK_NEED_HEADERS
+#    TCL_NEED_HEADERS
 #
 # The following "results" variables will be set (Tk variables only
 # set when TCKTK_REQUIRE_TK is ON):
 #
-#   TCLTK_FOUND          = Tcl (and Tk) found (see TCKTK_REQUIRE_TK)
-#   TCLTK_FOUND_VERSION  = Version of selected Tcl/TK
+#   TCL_FOUND          = Tcl (and Tk) found (see TCKTK_REQUIRE_TK)
+#   TCL_FOUND_VERSION  = Version of selected Tcl/TK
 #   TCL_LIBRARY          = path to Tcl library
 #   TCL_INCLUDE_PATH     = path to directory containing tcl.h
 #   TK_LIBRARY           = path to Tk library
@@ -104,15 +104,24 @@
 
 # Tcl/Tk tends to name things using version numbers, so we need a
 # list of numbers to check 
-SET(TCLTK_POSSIBLE_MAJOR_VERSIONS 8)
-SET(TCLTK_POSSIBLE_MINOR_VERSIONS 6 5 4 3 2 1 0)
+SET(TCL_POSSIBLE_MAJOR_VERSIONS 8)
+SET(TCL_POSSIBLE_MINOR_VERSIONS 6 5 4 3 2 1 0)
 
 # Create the Tcl/Tk options if not already present
-OPTION(TCLTK_NATIVE_GRAPHICS "Require native Tk graphics." OFF)
-OPTION(TCLTK_X11_GRAPHICS "Require X11 Tk graphics." OFF)
-OPTION(TCLTK_USE_FRAMEWORK_ONLY "Don't use any Tcl/Tk installation that isn't a Framework." OFF)
-OPTION(TCLTK_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
-OPTION(TCLTK_NEED_HEADERS "Don't report a found Tcl/Tk unless headers are present." ON)
+OPTION(TK_NATIVE_GRAPHICS "Require native Tk graphics." OFF)
+OPTION(TK_X11_GRAPHICS "Require X11 Tk graphics." OFF)
+OPTION(TCL_USE_FRAMEWORK_ONLY "Don't use any Tcl/Tk installation that isn't a Framework." OFF)
+OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
+OPTION(TCL_NEED_HEADERS "Don't report a found Tcl/Tk unless headers are present." ON)
+
+# Sanity check the settings - can't require both Native and X11 if X11 isn't
+# the native windowing system on the platform
+IF(WIN32 OR APPLE)
+  IF(TK_NATIVE_GRAPHICS AND TK_X11_GRAPHICS)
+    MESSAGE(STATUS "Warning - both Native and X11 graphics required on platform where X11 is not a native graphics layer - disabling X11 graphics.")
+    SET(TK_X11_GRAPHICS OFF CACHE BOOL "Require X11 Tk graphics." FORCE)
+  ENDIF(TK_NATIVE_GRAPHICS AND TK_X11_GRAPHICS)
+ENDIF(WIN32 OR APPLE)
 
 # Set up the logic for determing the tk windowingsystem.  This requires
 # running a small wish script and recovering the results from a file -
@@ -142,7 +151,7 @@ ENDMACRO()
 # For ActiveState's Tcl/Tk install on Windows, there are some specific
 # paths that may be needed.  This is a macro-ized version of the paths
 # found in CMake's FindTCL.cmake
-MACRO(WIN32TCLTKPATHS vararray extension)
+MACRO(WIN32TCLPATHS vararray extension)
   IF(WIN32)
     GET_FILENAME_COMPONENT(
       ActiveTcl_CurrentVersion 
@@ -150,13 +159,13 @@ MACRO(WIN32TCLTKPATHS vararray extension)
       NAME)
       SET(${vararray} ${${vararray}}
         "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl\\${ActiveTcl_CurrentVersion}]/${extension}")
-      FOREACH(MAJORNUM ${TCLTK_POSSIBLE_MAJOR_VERSIONS})
-        FOREACH(MINORNUM ${TCLTK_POSSIBLE_MINOR_VERSIONS})
+      FOREACH(MAJORNUM ${TCL_POSSIBLE_MAJOR_VERSIONS})
+        FOREACH(MINORNUM ${TCL_POSSIBLE_MINOR_VERSIONS})
          SET(${vararray} ${${vararray}} "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\${MAJORNUM}.${MINORNUM};Root]/${extension}")
         ENDFOREACH()
       ENDFOREACH()
    ENDIF(WIN32)
-ENDMACRO(WIN32TCLTKPATHS)
+ENDMACRO(WIN32TCLPATHS)
 
 # Need some routines to chop version numbers up
 MACRO(SPLIT_TCL_VERSION_NUM versionnum)
@@ -166,35 +175,35 @@ MACRO(SPLIT_TCL_VERSION_NUM versionnum)
 ENDMACRO()    
 
 # If an exact version is set, peg min and max at it too so the comparisons will work
-IF(TCLTK_EXACT_VERSION)
-   SET(TCLTK_MIN_VERSION ${TCLTK_EXACT_VERSION})
-   SET(TCLTK_MAX_VERSION ${TCLTK_EXACT_VERSION})
-ENDIF(TCLTK_EXACT_VERSION)
+IF(TCL_EXACT_VERSION)
+   SET(TCL_MIN_VERSION ${TCL_EXACT_VERSION})
+   SET(TCL_MAX_VERSION ${TCL_EXACT_VERSION})
+ENDIF(TCL_EXACT_VERSION)
 
 
 MACRO(FIND_LIBRARY_VERSIONS targetname pathnames options)
-   SPLIT_TCL_VERSION_NUM(TCLTK_MIN_VERSION)
-   SPLIT_TCL_VERSION_NUM(TCLTK_MAX_VERSION)
-   FOREACH(MAJORNUM ${TCLTK_POSSIBLE_MAJOR_VERSIONS})
-      if(NOT MAJORNUM LESS TCLTK_MIN_VERSION_MAJOR)
-      if(NOT MAJORNUM GREATER TCLTK_MAX_VERSION_MAJOR)
-      FOREACH(MINORNUM ${TCLTK_POSSIBLE_MINOR_VERSIONS})
-         if(NOT MINORNUM LESS TCLTK_MIN_VERSION_MINOR)
-         if(NOT MINORNUM GREATER TCLTK_MAX_VERSION_MINOR)
-         SET(TCLTK_${targetname}${MAJORNUM}${MINORNUM} TCLTK_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
+   SPLIT_TCL_VERSION_NUM(TCL_MIN_VERSION)
+   SPLIT_TCL_VERSION_NUM(TCL_MAX_VERSION)
+   FOREACH(MAJORNUM ${TCL_POSSIBLE_MAJOR_VERSIONS})
+      if(NOT MAJORNUM LESS TCL_MIN_VERSION_MAJOR)
+      if(NOT MAJORNUM GREATER TCL_MAX_VERSION_MAJOR)
+      FOREACH(MINORNUM ${TCL_POSSIBLE_MINOR_VERSIONS})
+         if(NOT MINORNUM LESS TCL_MIN_VERSION_MINOR)
+         if(NOT MINORNUM GREATER TCL_MAX_VERSION_MINOR)
+         SET(TCL_${targetname}${MAJORNUM}${MINORNUM} TCL_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
          FOREACH(SPATH ${${pathnames}})
-            FIND_LIBRARY(TCLTK_${targetname}${MAJORNUM}${MINORNUM} NAMES ${targetname}${MAJORNUM}.${MINORNUM} ${targetname}${MAJORNUM}${MINORNUM} PATHS ${SPATH} ${options})
-            IF(NOT TCLTK_${targetname}${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
+            FIND_LIBRARY(TCL_${targetname}${MAJORNUM}${MINORNUM} NAMES ${targetname}${MAJORNUM}.${MINORNUM} ${targetname}${MAJORNUM}${MINORNUM} PATHS ${SPATH} ${options})
+            IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
                # On repeat configures, CMAKE_INSTALL_PREFIX apparently gets added to the FIND_* paths.  This is a problem
                # if re-installing over a previous install so strip these out - don't use output from the previous build to 
 	       # do the current build!
-               IF(NOT TCLTK_${targetname}${MAJORNUM}${MINORNUM} MATCHES "^${CMAKE_INSTALL_PREFIX}")
-                  SET(TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST ${TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST} ${TCLTK_${targetname}${MAJORNUM}${MINORNUM}})
+               IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "^${CMAKE_INSTALL_PREFIX}")
+                  SET(TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST ${TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST} ${TCL_${targetname}${MAJORNUM}${MINORNUM}})
                endif()
             endif()
-            SET(TCLTK_${targetname}${MAJORNUM}${MINORNUM} TCLTK_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
+            SET(TCL_${targetname}${MAJORNUM}${MINORNUM} TCL_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
          ENDFOREACH()
-	 #MESSAGE("TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST: ${TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST}")
+	 #MESSAGE("TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST: ${TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST}")
          endif()
          endif()
       ENDFOREACH()
@@ -204,18 +213,18 @@ MACRO(FIND_LIBRARY_VERSIONS targetname pathnames options)
 ENDMACRO()
 
 MACRO(PULL_PREFERRED_VERSION  targetname targetvar)
-   FOREACH(MAJORNUM ${TCLTK_POSSIBLE_MAJOR_VERSIONS})
-      if(NOT MAJORNUM LESS TCLTK_MIN_VERSION_MAJOR)
-      if(NOT MAJORNUM GREATER TCLTK_MAX_VERSION_MAJOR)
+   FOREACH(MAJORNUM ${TCL_POSSIBLE_MAJOR_VERSIONS})
+      if(NOT MAJORNUM LESS TCL_MIN_VERSION_MAJOR)
+      if(NOT MAJORNUM GREATER TCL_MAX_VERSION_MAJOR)
       if(${${targetvar}} MATCHES "NOTFOUND$")
-      FOREACH(MINORNUM ${TCLTK_POSSIBLE_MINOR_VERSIONS})
-         if(NOT MINORNUM LESS TCLTK_MIN_VERSION_MINOR)
-         if(NOT MINORNUM GREATER TCLTK_MAX_VERSION_MINOR)
+      FOREACH(MINORNUM ${TCL_POSSIBLE_MINOR_VERSIONS})
+         if(NOT MINORNUM LESS TCL_MIN_VERSION_MINOR)
+         if(NOT MINORNUM GREATER TCL_MAX_VERSION_MINOR)
          if(${${targetvar}} MATCHES "NOTFOUND$")
-	    LIST(LENGTH TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST LISTLENGTH)
+	    LIST(LENGTH TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST LISTLENGTH)
             IF(LISTLENGTH GREATER 0)
-               LIST(GET TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST 0 ${targetvar})
-	       LIST(REMOVE_AT TCLTK_${targetname}${MAJORNUM}${MINORNUM}_LIST 0)
+               LIST(GET TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST 0 ${targetvar})
+	       LIST(REMOVE_AT TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST 0)
             endif()
          endif()
          endif()
@@ -227,25 +236,112 @@ MACRO(PULL_PREFERRED_VERSION  targetname targetvar)
    ENDFOREACH()
 ENDMACRO()
 
-# Try to be a bit forgiving with the TCLTK prefix - if someone gives the
+MACRO(RESET_TCL_VARS)
+   SET(TCL_MAJOR_VERSION "NOTFOUND")
+   SET(TCL_MINOR_VERSION "NOTFOUND")
+   SET(TCL_PATCH_LEVEL "NOTFOUND")
+   SET(TCL_INCLUDE_PATH "NOTFOUND")
+   SET(TCL_LIBRARY "NOTFOUND")
+ENDMACRO()
+
+MACRO(READ_TCLCONFIG_FILE tclconffile)
+   RESET_TCL_VARS()
+   MESSAGE("tclconffile: ${tclconffile}")
+   FILE(READ ${tclconffile} TCL_CONF_FILE)
+   STRING(REGEX REPLACE "\r?\n" ";" ENT "${TCL_CONF_FILE}")
+   FOREACH(line ${ENT})
+	IF(${line} MATCHES "TCL_MAJOR_VERSION")
+	  STRING(REGEX REPLACE ".*TCL_MAJOR_VERSION='([0-9]*)'.*" "\\1" TCL_MAJOR_VERSION ${line})
+	  MESSAGE("Major Version: ${TCL_CURRENTMAJORVERSION}")
+	endif(${line} MATCHES "TCL_MAJOR_VERSION")
+ 	IF(${line} MATCHES "TCL_MINOR_VERSION")
+	  STRING(REGEX REPLACE ".*TCL_MINOR_VERSION='([0-9]*)'.*" "\\1" TCL_MINOR_VERSION ${line})
+	  MESSAGE("Minor Version: ${TCL_CURRENTMINORVERSION}")
+	endif(${line} MATCHES "TCL_MINOR_VERSION")
+	IF(${line} MATCHES "TCL_PATCH_LEVEL")
+	  STRING(REGEX REPLACE ".*TCL_PATCH_LEVEL='.([0-9]*)'.*" "\\1" TCL_PATCH_LEVEL ${line})
+	  MESSAGE("Patch Level: ${TCL_CURRENTPATCHLEVEL}")
+	endif(${line} MATCHES "TCL_PATCH_LEVEL")
+   ENDFOREACH(line ${ENT})
+ENDMACRO()
+
+
+MACRO(READ_TKCONFIG_FILE tclconffile)
+   MESSAGE("tclconffile: ${tclconffile}")
+   FILE(READ ${tclconffile} TK_CONF_FILE)
+   STRING(REGEX REPLACE "\r?\n" ";" ENT "${TK_CONF_FILE}")
+   FOREACH(line ${ENT})
+	IF(${line} MATCHES "TK_MAJOR_VERSION")
+	  STRING(REGEX REPLACE ".*TK_MAJOR_VERSION='([0-9]*)'.*" "\\1" TK_MAJOR_VERSION ${line})
+	  MESSAGE("Major Version: ${TK_CURRENTMAJORVERSION}")
+	endif(${line} MATCHES "TK_MAJOR_VERSION")
+ 	IF(${line} MATCHES "TK_MINOR_VERSION")
+	  STRING(REGEX REPLACE ".*TK_MINOR_VERSION='([0-9]*)'.*" "\\1" TK_MINOR_VERSION ${line})
+	  MESSAGE("Minor Version: ${TK_CURRENTMINORVERSION}")
+	endif(${line} MATCHES "TK_MINOR_VERSION")
+	IF(${line} MATCHES "TK_PATCH_LEVEL")
+	  STRING(REGEX REPLACE ".*TK_PATCH_LEVEL='.([0-9]*)'.*" "\\1" TK_PATCH_LEVEL ${line})
+	  MESSAGE("Patch Level: ${TK_CURRENTPATCHLEVEL}")
+	endif(${line} MATCHES "TK_PATCH_LEVEL")
+   ENDFOREACH(line ${ENT})
+ENDMACRO()
+
+
+MACRO(VALIDATE_VERSION vstatus MAJORNUM MINORNUM PATCHNUM)
+   SET(${vstatus} "NOTFOUND")
+   MESSAGE("nums:  ${MAJORNUM} ${MINORNUM} ${PATCHNUM}")
+   MESSAGE("TCL_MIN_VERSION:  ${TCL_MIN_VERSION}")
+   MESSAGE("TCL_MAX_VERSION:  ${TCL_MAX_VERSION}")
+   SPLIT_TCL_VERSION_NUM(TCL_MIN_VERSION)
+   SPLIT_TCL_VERSION_NUM(TCL_MAX_VERSION)
+   MESSAGE("numsmin:  ${TCL_MIN_VERSION_MAJOR} ${TCL_MIN_VERSION_MINOR} ${TCL_MIN_VERSION_PATCH}")
+   MESSAGE("numsmax:  ${TCL_MAX_VERSION_MAJOR} ${TCL_MAX_VERSION_MINOR} ${TCL_MAX_VERSION_PATCH}")
+   if(NOT ${MAJORNUM} LESS TCL_MIN_VERSION_MAJOR AND NOT ${MAJORNUM} GREATER TCL_MAX_VERSION_MAJOR)
+      if(NOT ${MAJORNUM} GREATER TCL_MAX_VERSION_MAJOR)
+	 if(NOT ${MINORNUM} LESS TCL_MIN_VERSION_MINOR)
+            if(NOT ${MINORNUM} GREATER TCL_MAX_VERSION_MINOR)
+	       if(NOT ${PATCHNUM} LESS TCL_MIN_VERSION_PATCH)
+                  if(NOT ${PATCHNUM} GREATER TCL_MAX_VERSION_PATCH)
+   		     SET(${vstatus} 1)
+                  else(NOT ${PATCHNUM} GREATER TCL_MAX_VERSION_PATCH)
+   		     SET(${vstatus} 0)
+                  endif(NOT ${PATCHNUM} GREATER TCL_MAX_VERSION_PATCH)
+               else(NOT ${PATCHNUM} LESS TCL_MIN_VERSION_PATCH) 
+   		  SET(${vstatus} 0)
+               endif(NOT ${PATCHNUM} LESS TCL_MIN_VERSION_PATCH)
+            else(NOT ${MINORNUM} GREATER TCL_MAX_VERSION_MINOR)
+   		 SET(${vstatus} 0)
+            endif(NOT ${MINORNUM} GREATER TCL_MAX_VERSION_MINOR)
+         else(NOT ${MINORNUM} LESS TCL_MIN_VERSION_MINOR) 
+   	      SET(${vstatus} 0)
+         endif(NOT ${MINORNUM} LESS TCL_MIN_VERSION_MINOR) 
+      else(NOT ${MAJORNUM} GREATER TCL_MAX_VERSION_MAJOR)
+   	   SET(${vstatus} 0)
+      endif(NOT ${MAJORNUM} GREATER TCL_MAX_VERSION_MAJOR)
+   else(NOT ${MAJORNUM} LESS TCL_MIN_VERSION_MAJOR)
+        SET(${vstatus} 0)
+   endif(NOT ${MAJORNUM} LESS TCL_MIN_VERSION_MAJOR)  
+ENDMACRO()
+
+# Try to be a bit forgiving with the TCL prefix - if someone gives the
 # full path to the lib directory, catch that by adding the parent path
 # to the list to check
-IF(TCLTK_PREFIX)
+IF(TCL_PREFIX)
    SET(TCL_LIBRARY "NOTFOUND")
-   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_PREFIX}/lib)
-   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_PREFIX})
-   GET_FILENAME_COMPONENT(TCLTK_LIB_PATH_PARENT "${TCLTK_PREFIX}" PATH)
-   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_LIB_PATH_PARENT}/lib)
-   SET(TCLTK_PREFIX_LIBDIRS ${TCLTK_PREFIX_LIBDIRS} ${TCLTK_LIB_PATH_PARENT})
-   LIST(REMOVE_DUPLICATES TCLTK_PREFIX_LIBDIRS)
-   MESSAGE("TCLTK_PREFIX_LIBDIRS: ${TCLTK_PREFIX_LIBDIRS}")
-   FIND_LIBRARY_VERSIONS(tcl TCLTK_PREFIX_LIBDIRS NO_SYSTEM_PATH)
+   SET(TCL_PREFIX_LIBDIRS ${TCL_PREFIX_LIBDIRS} ${TCL_PREFIX}/lib)
+   SET(TCL_PREFIX_LIBDIRS ${TCL_PREFIX_LIBDIRS} ${TCL_PREFIX})
+   GET_FILENAME_COMPONENT(TCL_LIB_PATH_PARENT "${TCL_PREFIX}" PATH)
+   SET(TCL_PREFIX_LIBDIRS ${TCL_PREFIX_LIBDIRS} ${TCL_LIB_PATH_PARENT}/lib)
+   SET(TCL_PREFIX_LIBDIRS ${TCL_PREFIX_LIBDIRS} ${TCL_LIB_PATH_PARENT})
+   LIST(REMOVE_DUPLICATES TCL_PREFIX_LIBDIRS)
+   MESSAGE("TCL_PREFIX_LIBDIRS: ${TCL_PREFIX_LIBDIRS}")
+   FIND_LIBRARY_VERSIONS(tcl TCL_PREFIX_LIBDIRS NO_SYSTEM_PATH)
    PULL_PREFERRED_VERSION(tcl TCL_LIBRARY)
    MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
-   GET_FILENAME_COMPONENT(TCLTK_LIB_PATH_PARENT "${TCL_LIBRARY}" PATH)
-   MESSAGE("TCL_PATH: ${TCLTK_LIB_PATH_PARENT}")
+   GET_FILENAME_COMPONENT(TCL_LIB_PATH_PARENT "${TCL_LIBRARY}" PATH)
+   MESSAGE("TCL_PATH: ${TCL_LIB_PATH_PARENT}")
      set(tclconffile "tclConfig.sh-NOTFOUND") 
-     find_file(tclconffile tclConfig.sh PATHS ${TCLTK_LIB_PATH_PARENT})
+     find_file(tclconffile tclConfig.sh PATHS ${TCL_LIB_PATH_PARENT})
      if(NOT tclconffile MATCHES "NOTFOUND$")
 	MESSAGE("Found config file: ${tclconffile}")
         FILE(READ ${tclconffile} TCL_CONF_FILE)
@@ -258,59 +354,54 @@ IF(TCLTK_PREFIX)
 	   endif()
 	endforeach(line ${ENT})
      endif(NOT tclconffile MATCHES "NOTFOUND$")
-ELSE(TCLTK_PREFIX)
+ELSE(TCL_PREFIX)
 
    IF(APPLE)
         INCLUDE(CMakeFindFrameworks)
 	CMAKE_FIND_FRAMEWORKS(Tcl)
         CMAKE_FIND_FRAMEWORKS(Tk)
-	SET(TCL_FRAMEWORK_INCLUDES)
-	SET(TK_FRAMEWORK_INCLUDES)
 	IF(Tcl_FRAMEWORKS)
-	     IF(NOT TCL_INCLUDE_PATH)
-	       FOREACH(dir ${Tcl_FRAMEWORKS})
-                  SET(TCL_FRAMEWORK_INCLUDES ${TCL_FRAMEWORK_INCLUDES} ${dir}/Headers)
-    	       ENDFOREACH(dir)
-	     ENDIF(NOT TCL_INCLUDE_PATH)
-	     IF(Tk_FRAMEWORKS)
-		  IF(NOT TK_INCLUDE_PATH)
-		    FOREACH(dir ${Tk_FRAMEWORKS})
-		      SET(TK_FRAMEWORK_INCLUDES ${TK_FRAMEWORK_INCLUDES}
-		        ${dir}/Headers ${dir}/PrivateHeaders)
-		    ENDFOREACH(dir)
-		  ENDIF(NOT TK_INCLUDE_PATH)
-	     ENDIF(Tk_FRAMEWORKS)
+           SET(TCLVALID "NOTFOUND")
+   	   FOREACH(dir ${Tcl_FRAMEWORKS})
+              IF(NOT TCLVALID)
+ 	         set(tclconf "tclConfig.sh-NOTFOUND") 
+                 find_file(tclconf tclConfig.sh PATHS ${dir})
+                 if(NOT tclconf MATCHES "NOTFOUND$")
+ 	            MESSAGE("Found config file: ${tclconf}")
+                    READ_TCLCONFIG_FILE(${tclconf})
+		    SET(CURRENTVERSION "${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}.${TCL_PATCH_LEVEL}")
+		    include(CompareVersions)
+		    COMPARE_VERSIONS(${CURRENTVERSION} ${TCL_MIN_VERSION} testvar)
+		    MESSAGE("TESTVAR: ${testvar}")
+	            VALIDATE_VERSION(TCLVALID ${TCL_MAJOR_VERSION} ${TCL_MINOR_VERSION} ${TCL_PATCH_LEVEL})
+	            MESSAGE("valid: ${TCLVALID}")
+                 endif(NOT tclconf MATCHES "NOTFOUND$")
+	      ENDIF(NOT TCLVALID)
+           ENDFOREACH(dir ${Tcl_FRAMEWORKS})
+	   MESSAGE("valid: ${TCLVALID} framework: ${Tk_FRAMEWORKS}")
+	     IF(Tk_FRAMEWORKS AND TCLVALID)
+		SET(TKVALID "NOTFOUND")
+    	        FOREACH(dir ${Tk_FRAMEWORKS})
+                  IF(NOT TKVALID)
+ 	            set(tkconf "tkConfig.sh-NOTFOUND") 
+                    find_file(tkconf tkConfig.sh PATHS ${dir})
+                    if(NOT tkconf MATCHES "NOTFOUND$")
+ 	               MESSAGE("Found config file: ${tkconf}")
+                       READ_TKCONFIG_FILE(${tkconf})
+	               VALIDATE_VERSION(TKVALID ${TK_MAJOR_VERSION} ${TK_MINOR_VERSION} ${TK_PATCH_LEVEL})
+	               MESSAGE("valid: ${TKVALID}")
+                    endif(NOT tkconffile MATCHES "NOTFOUND$")
+	          ENDIF(NOT TKVALID)
+                ENDFOREACH(dir ${Tk_FRAMEWORKS})
+	     ENDIF(Tk_FRAMEWORKS AND TCLVALID)
 	ENDIF(Tcl_FRAMEWORKS)
-	FOREACH(dir ${Tcl_FRAMEWORKS})
- 	   FIND_LIBRARY(TCL_LIBRARY tcl Tcl PATHS ${dir} NO_SYSTEM_PATH)
-        ENDFOREACH()
+	MESSAGE("Tcl_Frameworks: ${Tcl_FRAMEWORKS}")
         MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
-        GET_FILENAME_COMPONENT(TCLTK_LIB_PATH_PARENT "${TCL_LIBRARY}" PATH)
-        set(tclconffile "tclConfig.sh-NOTFOUND") 
-        find_file(tclconffile tclConfig.sh PATHS ${TCLTK_LIB_PATH_PARENT}/Tcl.framework)
-        if(NOT tclconffile MATCHES "NOTFOUND$")
- 	   MESSAGE("Found config file: ${tclconffile}")
-           FILE(READ ${tclconffile} TCL_CONF_FILE)
-           STRING(REGEX REPLACE "\r?\n" ";" ENT "${TCL_CONF_FILE}")
-           FOREACH(line ${ENT})
-	      IF(${line} MATCHES "TCL_MAJOR_VERSION")
-	         STRING(REGEX REPLACE ".*TCL_MAJOR_VERSION='([0-9]*)'.*" "\\1" TCL_CURRENTMAJORVERSION ${line})
-	         MESSAGE("Major Version: ${TCL_CURRENTMAJORVERSION}")
-	      endif(${line} MATCHES "TCL_MAJOR_VERSION")
- 	      IF(${line} MATCHES "TCL_MINOR_VERSION")
-	         STRING(REGEX REPLACE ".*TCL_MINOR_VERSION='([0-9]*)'.*" "\\1" TCL_CURRENTMINORVERSION ${line})
-	         MESSAGE("Minor Version: ${TCL_CURRENTMINORVERSION}")
-	      endif(${line} MATCHES "TCL_MINOR_VERSION")
-	      IF(${line} MATCHES "TCL_PATCH_LEVEL")
-	         STRING(REGEX REPLACE ".*TCL_PATCH_LEVEL='.([0-9]*)'.*" "\\1" TCL_CURRENTPATCHLEVEL ${line})
-	         MESSAGE("Patch Level: ${TCL_CURRENTPATCHLEVEL}")
-	      endif(${line} MATCHES "TCL_PATCH_LEVEL")
-	   ENDFOREACH(line ${ENT})
-         endif(NOT tclconffile MATCHES "NOTFOUND$")
+        GET_FILENAME_COMPONENT(TCL_LIB_PATH_PARENT "${TCL_LIBRARY}" PATH)
    ENDIF(APPLE)
 	
 
-ENDIF(TCLTK_PREFIX)
+ENDIF(TCL_PREFIX)
 
 #SET(syspath "/usr")
 #FIND_LIBRARY_VERSIONS(tcl syspath "")
@@ -319,15 +410,15 @@ ENDIF(TCLTK_PREFIX)
 #LIST(REMOVE_DUPLICATES TCL_FOUND_MINOR_VERSIONS)
 
 GET_FILENAME_COMPONENT(TCL_TCLSH_PATH_PARENT "${TCL_BIN_DIR}" PATH)
-SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+SET(TCL_POSSIBLE_PATHS ${TCL_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
 
 GET_FILENAME_COMPONENT(TCL_TCLSH_PATH_PARENT "${TCL_LIBRARY_DIR}" PATH)
-SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+SET(TCL_POSSIBLE_PATHS ${TCL_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
 
 GET_FILENAME_COMPONENT(TCL_TCLSH_PATH_PARENT "${TCL_INCLUDE_DIR}" PATH)
-SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+SET(TCL_POSSIBLE_PATHS ${TCL_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
 
-SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_PREFIX})
+SET(TCL_POSSIBLE_PATHS ${TCL_POSSIBLE_PATHS} ${TCL_PREFIX})
 
 FOREACH(MAJORNUM ${TCL_FOUND_MAJOR_VERSIONS})
    FOREACH(MINORNUM ${TCL_FOUND_MINOR_VERSIONS})
@@ -338,26 +429,26 @@ FOREACH(MAJORNUM ${TCL_FOUND_MAJOR_VERSIONS})
              LIST(GET TCL_TCLSH${MAJORNUM}${MINORNUM}_LIST ${LISTITEM} TCL_TCLSH)
              GET_FILENAME_COMPONENT(TCL_TCLSH_PATH "${TCL_TCLSH}" PATH)
              GET_FILENAME_COMPONENT(TCL_TCLSH_PATH_PARENT "${TCL_TCLSH_PATH}" PATH)
-             IF (TCLTK_USE_TK)
+             IF (TCL_USE_TK)
 		 # FIXME: There is a risk here of picking up a wish in a system path that we don't want to consider, but if
 		 # the NO_SYSTEM_PATH option is added valid entires in our list will not find their corresponding wish
 		 # even if it is there - looks like we're going to have to special case tclsh/wish found in system paths
-                 FIND_PROGRAM(TCLTK_WISH${MAJORNUM}${MINORNUM} NAMES wish${MAJORNUM}.${MINORNUM} wish${MAJORNUM}${MINORNUM} PATHS ${TCL_TCLSH_PATH_PARENT}/bin})
-                 IF(NOT TCLTK_WISH${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
-                    SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+                 FIND_PROGRAM(TCL_WISH${MAJORNUM}${MINORNUM} NAMES wish${MAJORNUM}.${MINORNUM} wish${MAJORNUM}${MINORNUM} PATHS ${TCL_TCLSH_PATH_PARENT}/bin})
+                 IF(NOT TCL_WISH${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
+                    SET(TCL_POSSIBLE_PATHS ${TCL_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
 		 endif()
-             ELSE(TCLTK_USE_TK)
-               SET(TCLTK_POSSIBLE_PATHS ${TCLTK_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
-             ENDIF(TCLTK_USE_TK)
+             ELSE(TCL_USE_TK)
+               SET(TCL_POSSIBLE_PATHS ${TCL_POSSIBLE_PATHS} ${TCL_TCLSH_PATH_PARENT})
+             ENDIF(TCL_USE_TK)
 	     math(EXPR LISTITEM "${LISTITEM} + 1")
 	  endwhile()
        endif()
    ENDFOREACH()
 ENDFOREACH()
 
-#LIST(REMOVE_DUPLICATES TCLTK_POSSIBLE_PATHS)
+#LIST(REMOVE_DUPLICATES TCL_POSSIBLE_PATHS)
 
-FOREACH(SPATH ${TCLTK_POSSIBLE_PATHS})
+FOREACH(SPATH ${TCL_POSSIBLE_PATHS})
      set(tclconffile "tclConfig.sh-NOTFOUND") 
      find_file(tclconffile tclConfig.sh PATHS ${SPATH}/lib)
      if(NOT tclconffile MATCHES "NOTFOUND$")
@@ -387,7 +478,7 @@ GET_FILENAME_COMPONENT(TK_LIBRARY_PATH_PARENT "${TK_LIBRARY_PATH}" PATH)
 STRING(REGEX REPLACE 
   "^.*tk([0-9]\\.*[0-9]).*$" "\\1" TK_LIBRARY_VERSION "${TK_LIBRARY}")
 
-SET(TCLTK_POSSIBLE_LIB_PATHS
+SET(TCL_POSSIBLE_LIB_PATHS
 #  "${TCL_INCLUDE_PATH_PARENT}/lib"
 #  "${TK_INCLUDE_PATH_PARENT}/lib"
 #  "${TCL_LIBRARY_PATH}"
@@ -407,8 +498,10 @@ FIND_LIBRARY(TCL_LIBRARY
   tcl83 tcl8.3 
   tcl82 tcl8.2 
   tcl80 tcl8.0
-  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+  PATHS ${TCL_POSSIBLE_LIB_PATHS}
   )
+MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
+MESSAGE("possible paths: ${TCL_POSSIBLE_LIB_PATHS}")
 
 FIND_LIBRARY(TK_LIBRARY 
   NAMES 
@@ -420,10 +513,10 @@ FIND_LIBRARY(TK_LIBRARY
   tk83 tk8.3 
   tk82 tk8.2 
   tk80 tk8.0
-  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+  PATHS ${TCL_POSSIBLE_LIB_PATHS}
   )
 
-SET(TCLTK_POSSIBLE_INCLUDE_PATHS
+SET(TCL_POSSIBLE_INCLUDE_PATHS
   "${TCL_LIBRARY_PATH_PARENT}/include"
   "${TK_LIBRARY_PATH_PARENT}/include"
   "${TCL_INCLUDE_PATH}"
@@ -469,7 +562,7 @@ SET(TCLTK_POSSIBLE_INCLUDE_PATHS
   )
 
 IF(WIN32)
-  SET(TCLTK_POSSIBLE_INCLUDE_PATHS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
+  SET(TCL_POSSIBLE_INCLUDE_PATHS ${TCL_POSSIBLE_INCLUDE_PATHS}
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl\\${ActiveTcl_CurrentVersion}]/include"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.6;Root]/include"
     "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scriptics\\Tcl\\8.5;Root]/include"
@@ -485,12 +578,12 @@ ENDIF(WIN32)
 
 FIND_PATH(TCL_INCLUDE_PATH 
   NAMES tcl.h
-  HINTS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
+  HINTS ${TCL_POSSIBLE_INCLUDE_PATHS}
   )
 
 FIND_PATH(TK_INCLUDE_PATH 
   NAMES tk.h
-  HINTS ${TCLTK_POSSIBLE_INCLUDE_PATHS}
+  HINTS ${TCL_POSSIBLE_INCLUDE_PATHS}
   )
 
 # handle the QUIETLY and REQUIRED arguments and set TCL_FOUND to TRUE if 
@@ -498,9 +591,9 @@ FIND_PATH(TK_INCLUDE_PATH
 INCLUDE(FindPackageHandleStandardArgs)
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY TCL_INCLUDE_PATH)
-SET(TCLTK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
-SET(TCLTK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCLTK DEFAULT_MSG TCL_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_INCLUDE_PATH)
+SET(TCL_FIND_REQUIRED ${TCL_FIND_REQUIRED})
+SET(TCL_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_INCLUDE_PATH)
 SET(TK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
 SET(TK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TK DEFAULT_MSG TK_LIBRARY TK_INCLUDE_PATH)
