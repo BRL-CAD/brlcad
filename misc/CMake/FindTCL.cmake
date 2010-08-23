@@ -86,7 +86,6 @@
 #
 #    TCL_REQUIRE_THREADS
 #
-#
 # 8. Normally, FindTCL will assume that the intent is to compile
 #    C code and will require headers.  If a developer needs Tcl/Tk
 #    ONLY for the purposes of running tclsh or wish scripts and is
@@ -101,12 +100,12 @@
 #
 #   TCL_FOUND          = Tcl (and Tk) found (see TCKTK_REQUIRE_TK)
 #   TCL_FOUND_VERSION  = Version of selected Tcl/TK
-#   TCL_LIBRARY          = path to Tcl library
-#   TCL_INCLUDE_PATH     = path to directory containing tcl.h
-#   TK_LIBRARY           = path to Tk library
-#   TK_INCLUDE_PATH      = path to directory containing tk.h
-#   TCL_TCLSH            = full path to tclsh binary
-#   TK_WISH              = full path wo wish binary
+#   TCL_LIBRARY        = path to Tcl library
+#   TCL_INCLUDE_PATH   = path to directory containing tcl.h
+#   TK_LIBRARY         = path to Tk library
+#   TK_INCLUDE_PATH    = path to directory containing tk.h
+#   TCL_TCLSH          = full path to tclsh binary
+#   TK_WISH            = full path wo wish binary
 
 # Tcl/Tk tends to name things using version numbers, so we need a
 # list of numbers to check 
@@ -272,15 +271,15 @@ MACRO(READ_TCLCONFIG_FILE tclconffile)
 	   MESSAGE("INCLUDEDIR: ${TCL_INCLUDE_PATH}")
 	endif()
 	IF(${line} MATCHES "TCL_EXEC_PREFIX")
-	   STRING(REGEX REPLACE ".*TCL_EXEC_PREFIX='(.+)'.*" "\\1" TCL_SH_CMD ${line})
-	   IF (EXISTS "${TCL_SH_CMD}/bin/tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION}")
-	      SET(TCL_SH_CMD "${TCL_SH_CMD}/bin/tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION}")
+	   STRING(REGEX REPLACE ".*TCL_EXEC_PREFIX='(.+)'.*" "\\1" TCL_TCLSH ${line})
+	   IF (EXISTS "${TCL_TCLSH}/bin/tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION}")
+	      SET(TCL_TCLSH "${TCL_TCLSH}/bin/tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION}")
 	   ELSE()
-	      IF (EXISTS "${TCL_SH_CMD}/bin/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}")
-	         SET(TCL_SH_CMD "${TCL_SH_CMD}/bin/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}")
+	      IF (EXISTS "${TCL_TCLSH}/bin/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}")
+	         SET(TCL_TCLSH "${TCL_TCLSH}/bin/tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}")
               ENDIF()
 	   ENDIF()
-	   MESSAGE("Tclsh command: ${TCL_SH_CMD}")
+	   MESSAGE("Tclsh command: ${TCL_TCLSH}")
 	endif()
    ENDFOREACH(line ${ENT})
    MESSAGE("Reported TCL version: ${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}.${TCL_PATCH_LEVEL}")
@@ -307,15 +306,15 @@ MACRO(READ_TKCONFIG_FILE tkconffile)
 	   MESSAGE("INCLUDEDIR: ${TK_INCLUDE_PATH}")
 	endif()
 	IF(${line} MATCHES "TK_EXEC_PREFIX")
-	   STRING(REGEX REPLACE ".*TK_EXEC_PREFIX='(.+)'.*" "\\1" TK_WISH_CMD ${line})
-	   IF (EXISTS "${TK_WISH_CMD}/bin/wish${TK_MAJOR_VERSION}${TK_MINOR_VERSION}")
-	      SET(TK_WISH_CMD "${TK_WISH_CMD}/bin/wish${TK_MAJOR_VERSION}${TK_MINOR_VERSION}")
+	   STRING(REGEX REPLACE ".*TK_EXEC_PREFIX='(.+)'.*" "\\1" TK_WISH ${line})
+	   IF (EXISTS "${TK_WISH}/bin/wish${TK_MAJOR_VERSION}${TK_MINOR_VERSION}")
+	      SET(TK_WISH "${TK_WISH}/bin/wish${TK_MAJOR_VERSION}${TK_MINOR_VERSION}")
 	   ELSE()
-	      IF (EXISTS "${TK_WISH_CMD}/bin/wish${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}")
-	         SET(TK_WISH_CMD "${TK_WISH_CMD}/bin/wish${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}")
+	      IF (EXISTS "${TK_WISH}/bin/wish${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}")
+	         SET(TK_WISH "${TK_WISH}/bin/wish${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}")
               ENDIF()
 	   ENDIF()
-	   MESSAGE("Wish command: ${TK_WISH_CMD}")
+	   MESSAGE("Wish command: ${TK_WISH}")
 	endif()
    ENDFOREACH(line ${ENT})
    MESSAGE("Reported TK version: ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_LEVEL}")
@@ -426,7 +425,7 @@ ELSE(TCL_PREFIX)
 			  SET(TK_FRAMEWORK_DIR ${dir})
 			  # check for specific graphics, if needed
 			  IF(TK_NATIVE_GRAPHICS OR TK_X11_GRAPHICS)
-			    TK_GRAPHICS_SYSTEM(${TK_WISH_CMD} TK_SYSTEM_GRAPHICS)
+			    TK_GRAPHICS_SYSTEM(${TK_WISH} TK_SYSTEM_GRAPHICS)
 			    IF(APPLE AND TK_NATIVE_GRAPHICS)
 			    MESSAGE("TK_SYSTEM_GRAPHICS: ${TK_SYSTEM_GRAPHICS}")
 			      IF(${TK_SYSTEM_GRAPHICS} MATCHES "aqua")
