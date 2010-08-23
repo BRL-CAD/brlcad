@@ -81,7 +81,13 @@
 #  
 #    TCL_REQUIRE_TK
 #
-# 7. Normally, FindTCL will assume that the intent is to compile
+# 7. If a developer needs Threads support in Tcl, they can enable
+#    the following option (disabled by default)
+#
+#    TCL_REQUIRE_THREADS
+#
+#
+# 8. Normally, FindTCL will assume that the intent is to compile
 #    C code and will require headers.  If a developer needs Tcl/Tk
 #    ONLY for the purposes of running tclsh or wish scripts and is
 #    not planning to do any compiling, they can disable the following
@@ -145,8 +151,6 @@ MACRO(TK_GRAPHICS_SYSTEM wishcmd resultvar)
    FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM ${resultvar})
 ENDMACRO()
 
-#TKGRAPHICSSYSTEM(wish TK_GRAPHICSTYPE)
-
 # For ActiveState's Tcl/Tk install on Windows, there are some specific
 # paths that may be needed.  This is a macro-ized version of the paths
 # found in CMake's FindTCL.cmake
@@ -193,7 +197,8 @@ MACRO(FIND_LIBRARY_VERSIONS targetname pathnames options)
             IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
                # On repeat configures, CMAKE_INSTALL_PREFIX apparently gets added to the FIND_* paths.  This is a problem
                # if re-installing over a previous install so strip these out - don't use output from the previous build to 
-	       # do the current build!
+	       # do the current build!  If the goal is to use an ExternalProject_ADD target that will be in CMAKE_INSTALL_PREFIX,
+	       # the relevant variables should be set in the CMakeLists.txt file with the ExternalProject_ADD definition.
                IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "^${CMAKE_INSTALL_PREFIX}")
                   SET(TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST ${TCL_${targetname}${MAJORNUM}${MINORNUM}_LIST} ${TCL_${targetname}${MAJORNUM}${MINORNUM}})
                endif()
@@ -312,7 +317,6 @@ MACRO(READ_TKCONFIG_FILE tkconffile)
 	   ENDIF()
 	   MESSAGE("Wish command: ${TK_WISH_CMD}")
 	endif()
-
    ENDFOREACH(line ${ENT})
    MESSAGE("Reported TK version: ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_LEVEL}")
 ENDMACRO()
@@ -373,11 +377,7 @@ IF(TCL_PREFIX)
      find_file(tclconffile tclConfig.sh PATHS ${TCL_LIB_PATH_PARENT})
      if(NOT tclconffile MATCHES "NOTFOUND$")
 	MESSAGE("Found config file: ${tclconffile}")
-        FILE(READ ${tclconffile} TCL_CONF_FILE)
-#        MESSAGE("${tclconffile}:\n ${TCL_CONF_FILE}")
-        STRING(REGEX REPLACE "\r?\n" ";" ENT "${TCL_CONF_FILE}")
-        FOREACH(line ${ENT})
-	endforeach(line ${ENT})
+        READ_TCLCONFIG_FILE(${tclconffile})
      endif(NOT tclconffile MATCHES "NOTFOUND$")
 ELSE(TCL_PREFIX)
 
