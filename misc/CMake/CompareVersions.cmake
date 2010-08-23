@@ -1,6 +1,8 @@
 # Note that these routines don't (yet) handle letters in versions
 
 MACRO(COMPARE_VERSIONS version1 version2 resultvar)
+   SET(compnum1 "")
+   SET(compnum2 "")
    STRING(REGEX REPLACE "[.-]" ";" LIST1 "${version1}")
    STRING(REGEX REPLACE "[.-]" ";" LIST2 "${version2}")
    list(LENGTH LIST1 LEN1)
@@ -43,6 +45,7 @@ MACRO(COMPARE_VERSIONS version1 version2 resultvar)
     FOREACH(num ${LIST2})
       SET(compnum2 "${num}${compnum2}")
     ENDFOREACH ()
+    MESSAGE("compnum1: ${compnum1} compnum2: ${compnum2}")
     IF(${compnum1} GREATER ${compnum2})
 	SET(${resultvar} 1)
     ENDIF()
