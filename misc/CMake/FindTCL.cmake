@@ -95,6 +95,14 @@
 #
 #    TCL_NEED_HEADERS
 #
+# 9. It may be that there are Tcl/Tk installations on a machine that
+#    should NOT be found by Tcl/Tk for reasons other than those
+#    available above - in that case, the parent CMakeLists.txt file
+#    can list REGEX patterns identifying those locations in the
+#    variable (empty by default):
+#
+#    TCL_PATH_NOMATCH_PATTERNS
+#
 # The following "results" variables will be set (Tk variables only
 # set when TCKTK_REQUIRE_TK is ON):
 #
@@ -429,20 +437,35 @@ ELSE(TCL_PREFIX)
    LIST(REMOVE_DUPLICATES LIBPATHLIST)
    MESSAGE("LIBPATHLIST: ${LIBPATHLIST}")
    FIND_LIBRARY_VERSIONS(tcl LIBPATHLIST NO_SYSTEM_PATH)
-   SET(FOUND_FILES "${TCL_tclsh_LIST} ${TCL_wish_LIST} ${TCL_tcl_LIST}")
+   SET(FOUND_FILES "${TCL_tclsh_LIST};${TCL_wish_LIST};${TCL_tcl_LIST}")
+   STRING(REGEX REPLACE "/s?bin" "/lib" FOUND_FILES32 "${FOUND_FILES}")
+   STRING(REGEX REPLACE "/s?bin" "/lib64" FOUND_FILES64 "${FOUND_FILES}")
+   SET(FOUND_FILES "${FOUND_FILES32};${FOUND_FILES64}")
+   LIST(REMOVE_DUPLICATES FOUND_FILES)
+   MESSAGE("Found files: ${FOUND_FILES}")
    SET(FOUND_PATHS "")
-   FOREACH(foundfile ${TCL_tcl_LIST})
+   FOREACH(foundfile ${FOUND_FILES})
 	GET_FILENAME_COMPONENT(FILE_PATH_PARENT "${foundfile}" PATH)
 	SET(FOUND_PATHS "${FOUND_PATHS}${FILE_PATH_PARENT};")
    ENDFOREACH()
-   STRING(REGEX REPLACE "/s?bin" "/lib" FOND_PATHS "${FOUND_PATHS}")
    LIST(REMOVE_DUPLICATES FOUND_PATHS)
+   FOREACH(foundpath ${FOUND_PATHS})
+      FOREACH(pattern ${TCL_PATH_NOMATCH_PATTERNS})
+	if(foundpath MATCHES "${pattern}")
+	  LIST(REMOVE_ITEM FOUND_PATHS ${foundpath})
+	endif(foundpath MATCHES "${pattern}")
+      ENDFOREACH(pattern ${TCL_PATH_NOMATCH_PATTERNS})
+   ENDFOREACH()
    MESSAGE("Found paths: ${FOUND_PATHS}")
+   SET(TCLCONFIG_LIST "")
    FOREACH(foundpath ${FOUND_PATHS})
         set(tclconf "tclConfig.sh-NOTFOUND") 
         find_file(tclconf tclConfig.sh PATHS ${foundpath})
-        MESSAGE("Found config file: ${tclconf}")
+        if(NOT tclconf MATCHES "NOTFOUND$")
+        SET(TCLCONFIG_LIST "${TCLCONFIG_LIST}${tclconf};")
+        endif(NOT tclconf MATCHES "NOTFOUND$")
    ENDFOREACH()
+   MESSAGE("Tcl config file list: ${TCLCONFIG_LIST}")
  
    IF(APPLE)
         INCLUDE(CMakeFindFrameworks)

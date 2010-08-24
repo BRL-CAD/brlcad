@@ -718,6 +718,10 @@ ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 
+# Prevent FindTCL.cmake from spotting Tcl/Tk installs that are
+# specific to BRL-CAD - user either a non-BRL-CAD system install
+# or build locally
+SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install")
 
 #THIRD_PARTY_OPTION(TCL tcl)
 if(BRLCAD_BUILD_LOCAL_TCL)
