@@ -207,13 +207,7 @@ MACRO(FIND_LIBRARY_VERSIONS targetname pathnames options)
          FOREACH(SPATH ${${pathnames}})
             FIND_LIBRARY(TCL_${targetname}${MAJORNUM}${MINORNUM} NAMES ${targetname}${MAJORNUM}.${MINORNUM} ${targetname}${MAJORNUM}${MINORNUM} PATHS ${SPATH} ${options})
             IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
-               # On repeat configures, CMAKE_INSTALL_PREFIX apparently gets added to the FIND_* paths.  This is a problem
-               # if re-installing over a previous install so strip these out - don't use output from the previous build to 
-	       # do the current build!  If the goal is to use an ExternalProject_ADD target that will be in CMAKE_INSTALL_PREFIX,
-	       # the relevant variables should be set in the CMakeLists.txt file with the ExternalProject_ADD definition.
-               IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "^${CMAKE_INSTALL_PREFIX}")
-                  SET(TCL_${targetname}_LIST ${TCL_${targetname}_LIST} ${TCL_${targetname}${MAJORNUM}${MINORNUM}})
-               endif()
+               SET(TCL_${targetname}_LIST ${TCL_${targetname}_LIST} ${TCL_${targetname}${MAJORNUM}${MINORNUM}})
             endif()
             SET(TCL_${targetname}${MAJORNUM}${MINORNUM} TCL_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
          ENDFOREACH()
@@ -233,13 +227,7 @@ MACRO(FIND_PROGRAM_VERSIONS targetname pathnames options)
          FOREACH(SPATH ${${pathnames}})
             FIND_PROGRAM(TCL_${targetname}${MAJORNUM}${MINORNUM} NAMES ${targetname}${MAJORNUM}.${MINORNUM} ${targetname}${MAJORNUM}${MINORNUM} PATHS ${SPATH} ${options})
             IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "NOTFOUND$")
-               # On repeat configures, CMAKE_INSTALL_PREFIX apparently gets added to the FIND_* paths.  This is a problem
-               # if re-installing over a previous install so strip these out - don't use output from the previous build to 
-	       # do the current build!  If the goal is to use an ExternalProject_ADD target that will be in CMAKE_INSTALL_PREFIX,
-	       # the relevant variables should be set in the CMakeLists.txt file with the ExternalProject_ADD definition.
-               IF(NOT TCL_${targetname}${MAJORNUM}${MINORNUM} MATCHES "^${CMAKE_INSTALL_PREFIX}")
-                  SET(TCL_${targetname}_LIST ${TCL_${targetname}_LIST} ${TCL_${targetname}${MAJORNUM}${MINORNUM}})
-               endif()
+               SET(TCL_${targetname}_LIST ${TCL_${targetname}_LIST} ${TCL_${targetname}${MAJORNUM}${MINORNUM}})
             endif()
             SET(TCL_${targetname}${MAJORNUM}${MINORNUM} TCL_${targetname}${MAJORNUM}${MINORNUM}-NOTFOUND)
          ENDFOREACH()

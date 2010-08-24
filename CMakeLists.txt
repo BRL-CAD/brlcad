@@ -730,12 +730,14 @@ ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 include(ExternalProject)
 
 # Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
-SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
+SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
 SET(TCL_MIN_VERSION "8.5.6" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
 
 OPTION(BRLCAD_BUILD_LOCAL_TCL "Build the local versions of Tcl/Tk" OFF)
+OPTION(BRLCAD_BUILD_LOCAL_TK "Build the local versions of Tcl/Tk" OFF)
 if(NOT BRLCAD_BUILD_LOCAL_TCL)
    INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
+   SET(BRLCAD_BUILD_LOCAL_TK OFF)
    SET(TCL_DEP "")
    SET(TK_DEP "")
    ExternalProject_Add(
@@ -757,7 +759,8 @@ if(NOT BRLCAD_BUILD_LOCAL_TCL)
      INSTALL_COMMAND "" 
    )
 endif(NOT BRLCAD_BUILD_LOCAL_TCL)
-IF(NOT TCL_FOUND)
+IF(BRLCAD_BUILD_LOCAL_TCL)
+   SET(BRLCAD_BUILD_LOCAL_TK ON)
    ExternalProject_Add(
      tcl
      DOWNLOAD_COMMAND ""
