@@ -718,57 +718,84 @@ ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 
-# Prevent FindTCL.cmake from spotting Tcl/Tk installs that are
-# specific to BRL-CAD - user either a non-BRL-CAD system install
-# or build locally
-SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install")
 
-#THIRD_PARTY_OPTION(TCL tcl)
-if(BRLCAD_BUILD_LOCAL_TCL)
+
+
+# Tcl/Tk presents a number of complexities for BRL-CAD and CMake - BRL-CAD requires
+# far more knowledge of the details of a Tcl/Tk installation than most programs,
+# which unfortunately means the standard FindTCL.cmake is not sufficient.  Rather than
+# use THIRD_PARTY_OPTION here, we will instead provide the option manually and ensure
+# that BRL-CAD's own FindTCL.cmake file is loaded.  
+
 include(ExternalProject)
-ExternalProject_Add(
-  tcl
-  DOWNLOAD_COMMAND ""
-  PREFIX ${BRLCAD_BINARY_DIR}
-  SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix
-  CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix -o
-  ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix/configure
-  ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix/configure.in && mkdir -p
-  ${BRLCAD_BINARY_DIR}/src/other/tcl/ && cd
-  ${BRLCAD_BINARY_DIR}/src/other/tcl/ &&
-  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX}
-  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE)
-  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE) install
-)
-THIRD_PARTY_OPTION(TCL tk)
-SET(TCL_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tcl8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
-SET(TCL_INCLUDE_DIR "${BRLCAD_PREFIX}/include")
-MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
 
-ExternalProject_Add(
-  tk
-  DOWNLOAD_COMMAND ""
-  PREFIX ${BRLCAD_BINARY_DIR}
-  SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tk/unix
-  CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tk/unix -o
-  ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure
-  ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && mkdir -p
-  ${BRLCAD_BINARY_DIR}/src/other/tk/ && cd
-  ${BRLCAD_BINARY_DIR}/src/other/tk/ &&
-  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib
-  BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE)
-  INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE) install
-)
-SET(TK_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tk8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
-SET(TK_INCLUDE_DIR "${BRLCAD_PREFIX}/include")
-MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
-SET(TCL_DEP "tcl")
-SET(TK_DEP "tk")
-else(BRLCAD_BUILD_LOCAL_TCL)
+# Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
+SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
+SET(TCL_MIN_VERSION "8.5.6" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
+
+OPTION(BRLCAD_BUILD_LOCAL_TCL "Build the local versions of Tcl/Tk" OFF)
+if(NOT BRLCAD_BUILD_LOCAL_TCL)
+   INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
    SET(TCL_DEP "")
    SET(TK_DEP "")
-   INCLUDE(${BRLCAD_CMAKE_DIR}/FindTCL.cmake)
-endif(BRLCAD_BUILD_LOCAL_TCL)
+   ExternalProject_Add(
+     tcl
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix
+     CONFIGURE_COMMAND ""
+     BUILD_COMMAND ""
+     INSTALL_COMMAND "" 
+   )
+   ExternalProject_Add(
+     tk
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tk/unix
+     CONFIGURE_COMMAND ""
+     BUILD_COMMAND ""
+     INSTALL_COMMAND "" 
+   )
+endif(NOT BRLCAD_BUILD_LOCAL_TCL)
+IF(NOT TCL_FOUND)
+   ExternalProject_Add(
+     tcl
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix
+     CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix -o
+     ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix/configure
+     ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix/configure.in && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/tcl/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/tcl/ &&
+     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX}
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE) install
+   )
+   SET(TCL_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tcl8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
+   SET(TCL_INCLUDE_PATH "${BRLCAD_PREFIX}/include")
+   MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
+   
+   ExternalProject_Add(
+     tk
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tk/unix
+     CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tk/unix -o
+     ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure
+     ${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/tk/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/tk/ &&
+     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE) install
+   )
+   SET(TK_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tk8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
+   SET(TK_INCLUDE_PATH "${BRLCAD_PREFIX}/include")
+   MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
+   SET(TCL_DEP "tcl")
+   SET(TK_DEP "tk")
+endif()
 
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
