@@ -3177,7 +3177,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 		edges[edg->v] = edg;
 		edg->v = v2;
 	    }
-	} else {
+	} else if (edg->v > v2) {
 	    ptr = edges[v2];
 	    while (ptr) {
 		if (ptr->v == edg->v) {
@@ -3193,6 +3193,10 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 		edg->next = edges[v2];
 		edges[v2] = edg;
 	    }
+	} else {
+	    edg->v = -1;
+	    edg->next = NULL;
+	    bu_free(edg, "bot edge");
 	}
 
 	edg = next;
@@ -3243,7 +3247,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 			edges[v2] = edg;
 		    }
 		    edg = next;
-		} else {
+		} else if (v2 > i) {
 		    /* look for other occurences of this edge in this
 		     * list if found, just increment use count
 		     */
@@ -3274,6 +3278,18 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, int num_edges, int *faces
 			prev = edg;
 		    }
 		    edg = next;
+		} else {
+		    /* disconnect original from list */
+		    if (prev) {
+			prev->next = next;
+		    } else {
+			edges[i] = next;
+		    } 
+
+		    /* free it */
+		    edg->v = -1;
+		    edg->next = NULL;
+		    bu_free(edg, "bot edge");
 		}
 	    } else {
 		/* unaffected edge, just continue */
