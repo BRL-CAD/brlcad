@@ -252,6 +252,8 @@ HDR = $(GENHDR) $(SRCHDR)
 
 lib_LTLIBRARIES = libTkhtml.la
 
+libTkhtml_la_LDFLAGS = -module
+
 noinst_HEADERS = \
 	src/css.h \
 	src/cssInt.h \
