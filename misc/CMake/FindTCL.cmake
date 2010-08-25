@@ -97,7 +97,13 @@
 #
 #    TCL_NEED_HEADERS
 #
-# 9. It may be that there are Tcl/Tk installations on a machine that
+# 9. FindTCL will also typically require the stub libraries be present
+#    If that is not true, the parent CMakeLists.txt file can disable
+#    the following variable (defaults to ON)
+#
+#    TCL_NEED_STUB_LIBS
+#
+#10. It may be that there are Tcl/Tk installations on a machine that
 #    should NOT be found by Tcl/Tk for reasons other than those
 #    available above - in that case, the parent CMakeLists.txt file
 #    can list REGEX patterns identifying those locations in the
@@ -117,6 +123,8 @@
 #   TCL_TCLSH          = full path to tclsh binary
 #   TK_WISH            = full path wo wish binary
 
+IF(NOT TCL_FOUND)
+
 # Tcl/Tk tends to name things using version numbers, so we need a
 # list of numbers to check 
 SET(TCL_POSSIBLE_MAJOR_VERSIONS 8)
@@ -127,7 +135,9 @@ OPTION(TK_NATIVE_GRAPHICS "Require native Tk graphics." OFF)
 OPTION(TK_X11_GRAPHICS "Require X11 Tk graphics." OFF)
 OPTION(TCL_USE_FRAMEWORK_ONLY "Don't use any Tcl/Tk installation that isn't a Framework." OFF)
 OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
+OPTION(TCL_REQUIRE_THREADS "Reject a Tcl/Tk installation unless threads are enabled." OFF)
 OPTION(TCL_NEED_HEADERS "Don't report a found Tcl/Tk unless headers are present." ON)
+OPTION(TCL_NEED_STUB_LIBS "Don't report a found Tcl/Tk unless the stub libraries are present." ON)
 
 # Sanity check the settings - can't require both Native and X11 if X11 isn't
 # the native windowing system on the platform
@@ -159,6 +169,26 @@ MACRO(TK_GRAPHICS_SYSTEM wishcmd resultvar)
 	EXEC_PROGRAM(${wishcmd} ARGS ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM ${resultvar})
 ENDMACRO()
+
+# Set up the logic for determing the version of Tcl/Tk via running a script.
+SET(tclversion_script "
+set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION\"
+set fileId [open $filename \"w\"]
+set windowingsystem [tk windowingsystem]
+puts $fileId $tcl_patchLevel
+close $fileId
+exit
+")
+
+SET(tclversion_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
+
+MACRO(TCL_GET_VERSION tclshcmd resultvar)
+	SET(${resultvar} "NOTFOUND")
+	FILE(WRITE ${tclversion_scriptfile} ${tclversion_script})
+	EXEC_PROGRAM(${tclshcmd} ARGS ${tclversion_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION ${resultvar})
+ENDMACRO()
+
 
 # For ActiveState's Tcl/Tk install on Windows, there are some specific
 # paths that may be needed.  This is a macro-ized version of the paths
@@ -557,6 +587,11 @@ IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 							RESET_TCL_VARS()
 						ENDIF(NOT TCL_INCLUDE_PATH)
 					ENDIF(TCL_NEED_HEADERS)
+					IF(TCL_NEED_STUB_LIBS)
+						IF(NOT TCL_STUB_LIBRARY)
+							RESET_TCL_VARS()
+						ENDIF(NOT TCL_STUB_LIBRARY)
+					ENDIF(TCL_NEED_STUB_LIBS)
 					IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 						RESET_TCL_VARS()
 					ELSE(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
@@ -590,6 +625,11 @@ IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 														SET(TK_LIBRARY "NOTFOUND")
 													ENDIF(NOT TK_INCLUDE_PATH)
 												ENDIF(TCL_NEED_HEADERS)
+												IF(TCL_NEED_STUB_LIBS)
+													IF(NOT TK_STUB_LIBRARY)
+														RESET_TK_VARS()
+													ENDIF(NOT TK_STUB_LIBRARY)
+												ENDIF(TCL_NEED_STUB_LIBS)
 												IF(NOT TK_LIBRARY OR NOT TK_WISH)
 													SET(TK_INCLUDE_PATH "NOTFOUND")
 													SET(TK_WISH "NOTFOUND")
@@ -621,36 +661,49 @@ ENDIF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 
 
 
-# handle the QUIETLY and REQUIRED arguments and set TCL_FOUND to TRUE if 
-# all listed variables are TRUE
+# Set TCL_FOUND to TRUE if all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
+SET(PACKAGE_HANDLE_VARS "TCL_TCLSH")
 IF(TCL_REQUIRE_TK)
-	FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_INCLUDE_PATH)
-	SET(TCL_FIND_REQUIRED ${TCL_FIND_REQUIRED})
-	SET(TCL_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
-	SET(TK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
-	SET(TK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
-ELSE(TCL_REQUIRE_TK)
-   FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY TCL_INCLUDE_PATH)
-	SET(TCL_FIND_REQUIRED ${TCL_FIND_REQUIRED})
-	SET(TCL_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
-endif(TCL_REQUIRE_TK)
+	SET(PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS} TK_LIBRARY TK_WISH")
+ENDIF(TCL_REQUIRE_TK)
+IF(TCL_NEED_HEADERS)
+	SET(PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS} TCL_INCLUDE_PATH")
+ENDIF(TCL_NEED_HEADERS)
+IF(TCL_NEED_HEADERS AND TCL_REQUIRE_TK)
+	SET(PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS} TK_INCLUDE_PATH")
+ENDIF(TCL_NEED_HEADERS AND TCL_REQUIRE_TK)
+IF(TCL_NEED_STUB_LIBS)
+	SET(PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS} TCL_STUB_LIBRARY")
+ENDIF(TCL_NEED_STUB_LIBS)
+IF(TCL_NEED_STUB_LIBS AND TCL_REQUIRE_TK)
+	SET(PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS} TK_STUB_LIBRARY")
+ENDIF(TCL_NEED_STUB_LIBS AND TCL_REQUIRE_TK)
+STRING(REGEX REPLACE " " ";" PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS}")
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY ${PACKAGE_HANDLE_VARS})
+# Hmm - looks like not all the values are being set in the cache.
+# Put these values in the cache - since this FindTCL routine can be a bit expensive,
+# run it once and then rely on the cache unless the parent CMake turns off TCL_FOUND
+# explicitly or the cache is edited.
+SET(TCL_FOUND ${TCL_FOUND} CACHE STRING "Set by FindTCL.cmake" FORCE)
+SET(TCL_FOUND_VERSION ${TCL_FOUND_VERSION} CACHE STRING "Set by FindTCL.cmake" FORCE)
+FOREACH(tclvar ${PACKAGE_HANDLE_VARS})
+	SET(${tclvar} ${${tclvar}} CACHE STRING "Set by FindTCL.cmake" FORCE)
+ENDFOREACH(tclvar ${PACKAGE_HANDLE_VARS})
+IF(TCL_REQUIRE_TK)
+	SET(PACKAGE_HANDLE_VARS "${PACKAGE_HANDLE_VARS};TCL_LIBRARY")
+	FIND_PACKAGE_HANDLE_STANDARD_ARGS(TK DEFAULT_MSG TK_LIBRARY ${PACKAGE_HANDLE_VARS})
+ENDIF(TCL_REQUIRE_TK)
 
 MARK_AS_ADVANCED(
  	TCL_INCLUDE_PATH
  	TK_INCLUDE_PATH
  	TCL_LIBRARY
  	TK_LIBRARY
+	TCL_STUB_LIBRARY
+	TK_STUB_LIBRARY
+	TCL_TCLSH
+	TK_WISH
 )
-
-MESSAGE("TCL_FOUND: ${TCL_FOUND}")
-MESSAGE("TCL_FOUND_VERSION: ${TCL_FOUND_VERSION}")
-MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
-MESSAGE("TCL_STUB_LIBRARY: ${TCL_STUB_LIBRARY}")
-MESSAGE("TCL_INCLUDE_PATH: ${TCL_INCLUDE_PATH}")
-MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
-MESSAGE("TK_STUB_LIBRARY: ${TK_STUB_LIBRARY}")
-MESSAGE("TK_INCLUDE_PATH: ${TK_INCLUDE_PATH}")
-MESSAGE("TCL_TCLSH: ${TCL_TCLSH}")
-MESSAGE("TK_WISH: ${TK_WISH}")
+ENDIF(NOT TCL_FOUND)
 
