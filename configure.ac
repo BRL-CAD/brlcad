@@ -2765,7 +2765,7 @@ if test "x$bc_build_tcl" = "xyes" ; then
 else
     if test "x$bc_build_tcl" = "xno" ; then
 	if test "x$tcl_works" = "xno" ; then
-	    AC_MSG_NOTICE([libtcl was disabled, but no system Tcl library was found])
+	    AC_MSG_NOTICE([Tcl was disabled, but no suitable (8.5+) system Tcl was found])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-tcl-build])
 	    AC_MSG_ERROR([*** Tcl was disabled, yet no usable libtcl system library was found ***])
@@ -2891,7 +2891,7 @@ if test "x$bc_build_tk" = "xyes" ; then
 else
     if test "x$bc_build_tk" = "xno" ; then
 	if test "x$tk_works" = "xno" ; then
-	    AC_MSG_NOTICE([libtk was disabled, but no system Tk library was found])
+	    AC_MSG_NOTICE([Tk was disabled, but no suitable (8.5+) system Tk was found])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-tk-build])
 	    AC_MSG_ERROR([*** Tk was disabled, yet no usable libtk system library was found ***])
@@ -3012,7 +3012,7 @@ if test "x$bc_build_itcl" = "xyes" ; then
 else
     if test "x$bc_build_itcl" = "xno" ; then
 	if test "x$itcl_works" = "xno" ; then
-	    AC_MSG_NOTICE([incrTcl was disabled, but no system incrTcl library was found])
+	    AC_MSG_NOTICE([incrTcl was disabled, but no suitable (3.2+) system incrTcl library was found])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-itcl-build])
 	    AC_MSG_ERROR([*** incrTcl was disabled, yet no usable libitcl system library was found ***])
@@ -3140,10 +3140,10 @@ if test "x$bc_build_iwidgets" = "xyes" ; then
 else
     if test "x$bc_build_iwidgets" = "xno" ; then
 	if test "x$iwidgets_works" = "xno" ; then
-	    AC_MSG_NOTICE([iwidgets was disabled, but no system iwidgets package was found])
+	    AC_MSG_NOTICE([iwidgets was disabled, but no suitable system iwidgets package was found])
 	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	    AC_MSG_NOTICE([Try adding --enable-iwidgets-build])
-	    AC_MSG_ERROR([*** iwidgets was disabled, yet no usable iwidgets system package was found ***])
+	    AC_MSG_ERROR([*** iwidgets was disabled, yet no usable system iwidgets package was found ***])
 	fi
     else
 	dnl automatic detection
