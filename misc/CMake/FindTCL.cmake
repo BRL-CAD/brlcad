@@ -149,7 +149,6 @@ ENDIF(WIN32 OR APPLE)
 # Set up the logic for determing the tk windowingsystem.  This requires
 # running a small wish script and recovering the results from a file -
 # wrap this logic in a macro
-
 SET(tkwin_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
 set fileId [open $filename \"w\"]
@@ -158,34 +157,51 @@ puts $fileId $windowingsystem
 close $fileId
 exit
 ")
-
 SET(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
-
 MACRO(TK_GRAPHICS_SYSTEM wishcmd resultvar)
 	SET(${resultvar} "wm-NOTFOUND")
 	FILE(WRITE ${tkwin_scriptfile} ${tkwin_script})
 	EXEC_PROGRAM(${wishcmd} ARGS ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM ${resultvar})
+	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM readresultvar)
+	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
 ENDMACRO()
+
 
 # Set up the logic for determing the version of Tcl/Tk via running a script.
 SET(tclversion_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION\"
 set fileId [open $filename \"w\"]
-set windowingsystem [tk windowingsystem]
 puts $fileId $tcl_patchLevel
 close $fileId
 exit
 ")
-
-SET(tclversion_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
-
+SET(tclversion_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_version.tcl")
 MACRO(TCL_GET_VERSION tclshcmd resultvar)
 	SET(${resultvar} "NOTFOUND")
 	FILE(WRITE ${tclversion_scriptfile} ${tclversion_script})
 	EXEC_PROGRAM(${tclshcmd} ARGS ${tclversion_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION ${resultvar})
+	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION readresultvar)
+	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
 ENDMACRO()
+
+
+# Set up the logic for determing if a particular Tcl is compiled threaded.
+SET(tclthreaded_script"
+set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TCL_THREADED\"
+set fileId [open $filename \"w\"]
+if {[info exists tcl_platform(threaded)]} {puts $fileId 1}
+close $fileId
+exit
+")
+SET(tclthreaded_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_threaded.tcl")
+MACRO(TCL_ISTHREADED tclshcmd resultvar)
+	SET(${resultvar} "NOTFOUND")
+	FILE(WRITE ${tclthreaded_scriptfile} ${tclthreaded_script})
+	EXEC_PROGRAM(${tclshcmd} ARGS ${tclthreaded_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+	FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/TCL_THREADED readresultvar)
+	STRING(REGEX REPLACE "\n" "" ${resultvar} ${readresultvar})
+ENDMACRO()
+
 
 
 # For ActiveState's Tcl/Tk install on Windows, there are some specific
@@ -335,6 +351,9 @@ MACRO(READ_TCLCONFIG_FILE tclconffile)
 		endif()
 		IF(${line} MATCHES "TCL_STUB_LIB_PATH")
 			STRING(REGEX REPLACE ".*TCL_STUB_LIB_PATH='(.+)/lib.*" "\\1" TCL_STUB_LIB_PATH ${line})
+		endif()
+		IF(${line} MATCHES "TCL_THREADS")
+			STRING(REGEX REPLACE ".*TCL_THREADS=(.+)" "\\1" TCL_THREADS ${line})
 		endif()
 	ENDFOREACH(line ${ENT})
 ENDMACRO()
@@ -496,6 +515,14 @@ FOREACH(tcl_config_file ${TCLCONFIG_LIST})
   			FIND_LIBRARY(TCL_LIBRARY tcl Tcl tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION} tcl${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION} PATHS ${TCL_LIBRARY_DIR1} ${TCL_LIBRARY_DIR2} NO_SYSTEM_PATH)
 			FIND_LIBRARY(TCL_STUB_LIBRARY tclstub${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION} tclstub${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION} PATHS ${TCL_STUB_LIB_PATH} ${TCL_LIBRARY_DIR1} ${TCL_LIBRARY_DIR2} NO_SYSTEM_PATH)
   			SET(TCL_FOUND_VERSION ${CURRENTTCLVERSION})
+			IF(TCL_REQUIRE_THREADS)
+				MESSAGE("require threads TCL_THREADS: ${TCL_THREADS}")
+				IF(NOT TCL_THREADS)
+					SET(TCLVALID 0)
+ 		         RESET_TCL_VARS()
+ 		         RESET_TK_VARS()
+				ENDIF(NOT TCL_THREADS)
+			ENDIF(TCL_REQUIRE_THREADS)
  		ENDIF(TCLVALID)
 	ENDIF(NOT TCLVALID)
 	IF(TCLVALID)
@@ -578,8 +605,20 @@ IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 							FIND_LIBRARY(TCL_STUB_LIBRARY tclstub${MAJORNUM}.${MINORNUM} tclstub${MAJORNUM}${MINORNUM} PATHS ${SPATH} ${SPATH}/lib ${SPATH}/lib64 ${SPATH}/lib${MAJORNUM}.${MINORNUM} ${SPATH}${MAJORNUM}${MINORNUM} NO_SYSTEM_PATH)
 							FIND_PATH(TCL_INCLUDE_PATH NAMES tcl.h PATHS ${SPATH}/include ${SPATH}/include/tcl${MAJORNUM}.${MINORNUM} ${SPATH}/include/tcl${MAJORNUM}${MINORNUM} NO_SYSTEM_PATH)
 						ENDIF(dosearch)
-						MESSAGE("TCL_TCLSH: ${TCL_TCLSH} TCL_LIBRARY: ${TCL_LIBRARY} TCL_INCLUDE_PATH: ${TCL_INCLUDE_PATH}")
 					ENDIF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
+					IF(TCL_TCLSH)
+						TCL_GET_VERSION(${TCL_TCLSH} CURRENT_SEARCH_VERSION)
+						VALIDATE_VERSION(dosearch ${CURRENT_SEARCH_VERSION})
+						IF(NOT dosearch)
+							RESET_TCL_VARS()
+						ENDIF(NOT dosearch)
+					ENDIF(TCL_TCLSH)
+					IF(TCL_REQUIRE_THREADS AND TCL_TCLSH)
+						TCL_ISTHREADED(${TCL_TCLSH} TCL_THREADS)
+						IF(NOT TCL_THREADS)
+							RESET_TK_VARS()
+						ENDIF(NOT TCL_THREADS)
+					ENDIF(TCL_REQUIRE_THREADS AND TCL_TCLSH)
 					IF(TCL_NEED_HEADERS)
 						IF(NOT TCL_INCLUDE_PATH)
 							RESET_TCL_VARS()
@@ -594,7 +633,7 @@ IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 						RESET_TCL_VARS()
 					ELSE(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 						IF(NOT TCL_FOUND_VERSION)
-							SET(TCL_FOUND_VERSION "${MAJORNUM}.${MINORNUM}")
+							SET(TCL_FOUND_VERSION "${CURRENT_SEARCH_VERSION}")
 						ENDIF(NOT TCL_FOUND_VERSION)
 					ENDIF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 					IF(TCL_CURRENTPATH)
@@ -628,6 +667,24 @@ IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 														RESET_TK_VARS()
 													ENDIF(NOT TK_STUB_LIBRARY)
 												ENDIF(TCL_NEED_STUB_LIBS)
+												IF(TK_NATIVE_GRAPHICS OR TK_X11_GRAPHICS)
+													TK_GRAPHICS_SYSTEM(${TK_WISH} TK_SYSTEM_GRAPHICS)
+													IF(APPLE AND TK_NATIVE_GRAPHICS)
+														IF(NOT ${TK_SYSTEM_GRAPHICS} MATCHES "aqua")
+															SET(TK_LIBRARY "NOTFOUND")
+														ENDIF()
+													ENDIF()
+													IF(WIN32 AND TK_NATIVE_GRAPHICS)
+														IF(NOT ${TK_SYSTEM_GRAPHICS} MATCHES "win32")
+															SET(TK_LIBRARY "NOTFOUND")
+														ENDIF()
+													ENDIF()
+													IF(TK_X11_GRAPHICS)
+														IF(NOT ${TK_SYSTEM_GRAPHICS} MATCHES "x11")
+															SET(TK_LIBRARY "NOTFOUND")
+														ENDIF()
+													ENDIF()
+												ENDIF(TK_NATIVE_GRAPHICS OR TK_X11_GRAPHICS)
 												IF(NOT TK_LIBRARY OR NOT TK_WISH)
 													SET(TK_INCLUDE_PATH "NOTFOUND")
 													SET(TK_WISH "NOTFOUND")
