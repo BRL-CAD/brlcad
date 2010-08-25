@@ -9,3 +9,5 @@
 /pkgIndex.tcl
 /tkhtml.n
 /Makefile.in
+/.deps
+/.libs
