@@ -528,7 +528,6 @@ ENDFOREACH(tcl_config_file ${TCLCONFIG_LIST})
 # Back to trying to guess values, using the TCLPATHLIST and TKPATHLIST arrays of paths.  Since we
 # no longer are assuming config files, we can't assume headers either - now we need to check the
 # TCL_NEED_HEADERS option and conditionalize on it.
-SET(TCL_LIBRARY "NOTFOUND")
 IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 	RESET_TCL_VARS()
 	IF(TCL_REQUIRE_TK)
