@@ -547,7 +547,9 @@ ENDIF(TCL_REQUIRE_TK)
 ENDFOREACH(tcl_config_file ${TCLCONFIG_LIST}) 
 
 # If we still don't have anything by now, we may have a system without tclConfig.sh and tkConfig.sh
-# Back to trying to guess values, using the TCLPATHLIST and TKPATHLIST arrays of paths.
+# Back to trying to guess values, using the TCLPATHLIST and TKPATHLIST arrays of paths.  Since we
+# no longer are assuming config files, we can't assume headers either - now we need to check the
+# TCL_NEED_HEADERS option and conditionalize on it.
 IF(NOT TCL_LIBRARY OR NOT TCL_TCLSH)
 SET(TCL_FOUND_VERSION "NOTFOUND")
 FOREACH(MAJORNUM ${TCL_POSSIBLE_MAJOR_VERSIONS})
