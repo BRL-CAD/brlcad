@@ -123,8 +123,6 @@
 #   TCL_TCLSH          = full path to tclsh binary
 #   TK_WISH            = full path wo wish binary
 
-IF(NOT TCL_FOUND)
-
 # Tcl/Tk tends to name things using version numbers, so we need a
 # list of numbers to check 
 SET(TCL_POSSIBLE_MAJOR_VERSIONS 8)
@@ -685,7 +683,7 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY ${PACKAGE_HANDLE_V
 # Put these values in the cache - since this FindTCL routine can be a bit expensive,
 # run it once and then rely on the cache unless the parent CMake turns off TCL_FOUND
 # explicitly or the cache is edited.
-SET(TCL_FOUND ${TCL_FOUND} CACHE STRING "Set by FindTCL.cmake" FORCE)
+#SET(TCL_FOUND ${TCL_FOUND} CACHE STRING "Set by FindTCL.cmake" FORCE)
 SET(TCL_FOUND_VERSION ${TCL_FOUND_VERSION} CACHE STRING "Set by FindTCL.cmake" FORCE)
 FOREACH(tclvar ${PACKAGE_HANDLE_VARS})
 	SET(${tclvar} ${${tclvar}} CACHE STRING "Set by FindTCL.cmake" FORCE)
@@ -705,5 +703,4 @@ MARK_AS_ADVANCED(
 	TCL_TCLSH
 	TK_WISH
 )
-ENDIF(NOT TCL_FOUND)
 
