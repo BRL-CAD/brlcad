@@ -414,6 +414,7 @@ package provide Archer 1.0
 	method initTgcEditView {_odata}
 	method initTorusEditView {_odata}
 
+	method updateCombEditView {}
 	method updateObjEdit {_updateObj _needInit _needSave}
 	method updateObjEditView {}
 
@@ -2355,19 +2356,6 @@ package provide Archer 1.0
     if {$obj == ""} {
 	catch {eval gedCmd $cmd $options $expandedArgs} ret
 	SetNormalCursor $this
-
-	switch -- $tflag {
-	    0 {
-		# Do nothing
-	    }
-	    1 {
-		catch {updateTree}
-	    }
-	    default {
-		catch {syncTree}
-#		catch {refreshTree}
-	    }
-	}
 
 	return $ret
     }
@@ -6800,7 +6788,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initCombEditView {odata} {
     $itk_component(combView) configure \
 	-geometryObject $mSelectedObj \
-	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-geometryChangedCallback [::itcl::code $this updateCombEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
@@ -7317,6 +7305,12 @@ proc title_node_handler {node} {
 ::itcl::body Archer::updateObjEditView {} {
     updateObjSave
     redrawObj $mSelectedObjPath
+}
+
+::itcl::body Archer::updateCombEditView {} {
+    updateObjEditView
+    syncTree
+    initEdit
 }
 
 
