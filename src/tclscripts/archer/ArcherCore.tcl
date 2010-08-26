@@ -2105,7 +2105,6 @@ Popup Menu    Right or Ctrl-Left
 
 	# Anything leftover in mlist needs to be added
 	foreach member $mlist {
-	    puts "rsyncTree: adding $member"
 	    fillTree $_pnode $member $mEnableListView
 	}
     } else {
@@ -4002,8 +4001,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(newtree) heading \#0 -text $text
 
     if {$_rflag} {
-	syncTree
-#	refreshTree
+	refreshTree
 
 	if {$mEnableListView} {
 	    selectTreePath $mSelectedObj
