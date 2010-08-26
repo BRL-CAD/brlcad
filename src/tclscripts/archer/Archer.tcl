@@ -913,7 +913,8 @@ package provide Archer 1.0
 	    $itk_component(ged) attr set $wizTop $key $val
 	}
 
-	refreshTree
+	syncTree
+#	refreshTree
 	#	if {$firstName != ""} {
 	#	    if {$firstName == $lastName} {
 	#		after idle [::itcl::code $this _select_node [$itk_component(tree) find $regionName] 0]
@@ -1048,7 +1049,8 @@ package provide Archer 1.0
     # Checkpoint the created object
     checkpoint_olist $clist $LEDGER_CREATE
 
-    refreshTree 1
+    syncTree
+#    refreshTree 1
 
     updateUndoState
     SetNormalCursor $this
@@ -1081,7 +1083,8 @@ package provide Archer 1.0
     # Checkpoint the created object
     checkpoint_olist [lindex $args 0] $LEDGER_MODIFY
 
-    refreshTree 1
+    syncTree
+#    refreshTree 1
     updateUndoState
     SetNormalCursor $this
 
@@ -1326,7 +1329,8 @@ package provide Archer 1.0
 	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
     }
 
-    refreshTree 1
+    syncTree
+#    refreshTree 1
 
     checkpoint_olist $olist $LEDGER_MODIFY
     updateUndoState
@@ -2086,11 +2090,14 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::createCombWrapper {_cmd args} {
+
     eval addCombMemberWrapper $_cmd 1 $args
 
     SetWaitCursor $this
     set cname [lindex $args 0]
-    fillTree {} $cname $mEnableListView
+
+    updateTreeTopWithName $cname
+
     $itk_component(ged) draw $cname
     selectTreePath $cname
 
@@ -2304,7 +2311,8 @@ package provide Archer 1.0
     }
 
     set name $clist
-    fillTree {} $name $mEnableListView
+    updateTreeTopWithName $name
+
     $itk_component(ged) draw $name
     selectTreePath $name
 
@@ -2356,7 +2364,8 @@ package provide Archer 1.0
 		catch {updateTree}
 	    }
 	    default {
-		catch {refreshTree}
+		catch {syncTree}
+#		catch {refreshTree}
 	    }
 	}
 
@@ -2390,7 +2399,8 @@ package provide Archer 1.0
 	    catch {updateTree}
 	}
 	default {
-	    catch {refreshTree}
+	    catch {syncTree}
+#	    catch {refreshTree}
 	}
     }
     SetNormalCursor $this
@@ -2527,7 +2537,8 @@ package provide Archer 1.0
 	}
     }
 
-    refreshTree 1
+    syncTree
+#    refreshTree 1
 
     if {[lsearch $klist $mSelectedObj] != -1} {
 	set mSelectedObj ""
@@ -2606,7 +2617,8 @@ package provide Archer 1.0
     # Save the command for moving things back
     $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
 
-    refreshTree 1
+    syncTree
+#    refreshTree 1
 
     if {$old_name == $mSelectedObj} {
 	set mSelectedObj $new_name
@@ -7538,7 +7550,8 @@ proc title_node_handler {node} {
 	}
     }
 
-    refreshTree
+    syncTree
+#    refreshTree
 }
 
 ::itcl::body Archer::pluginGetMinAllowableRid {} {
@@ -9190,7 +9203,8 @@ proc title_node_handler {node} {
 	}
     }
 
-    refreshTree 1
+    syncTree
+#    refreshTree 1
 
     set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
     set len [llength $l]
@@ -9331,7 +9345,8 @@ proc title_node_handler {node} {
     set mNeedCheckpoint 0
     updateUndoState
 
-    refreshTree 1
+    syncTree
+#    refreshTree 1
 
     # Make sure the selected object has atleast one checkpoint
     checkpoint $mSelectedObj $LEDGER_MODIFY
