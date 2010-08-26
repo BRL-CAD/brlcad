@@ -238,7 +238,7 @@ include_directories(
     ${BRLCAD_ZLIB_INCLUDE_DIR}
     ${BRLCAD_OPENNURBS_INCLUDE_DIR}
     ${BRLCAD_SOURCE_DIR}/src/other/tnt
-    ../other/tcl/generic
+	 ${TCL_INCLUDE_PATH}
 )
 
 if(MSVC)

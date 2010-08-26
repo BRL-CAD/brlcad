@@ -29,7 +29,7 @@ include_directories(
     ${BRLCAD_REGEX_INCLUDE_DIR}
     ${BRLCAD_ZLIB_INCLUDE_DIR}
     ${BRLCAD_OPENNURBS_INCLUDE_DIR}
-    ../other/tcl/generic
+    ${TCL_INCLUDE_PATH}
 )
 
 if(MSVC)

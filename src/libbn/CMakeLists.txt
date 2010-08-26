@@ -33,7 +33,7 @@ set(LIBBN_SOURCES
 include_directories(
     ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
-    ../other/tcl/generic
+    ${TCL_INCLUDE_PATH}
 )
 
 add_definitions(

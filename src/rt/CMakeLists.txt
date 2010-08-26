@@ -129,7 +129,7 @@ include_directories(
     ${BRLCAD_SOURCE_DIR}/include
     ${BRLCAD_PNG_INCLUDE_DIR}
     ${BRLCAD_ZLIB_INCLUDE_DIR}
-    ../other/tcl/generic
+    ${TCL_INCLUDE_PATH}
 )
 
 add_definitions(
