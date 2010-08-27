@@ -383,6 +383,7 @@ package provide Archer 1.0
 	method buildSuperellEditView {}
 	method buildTgcEditView {}
 	method buildTorusEditView {}
+	method buildInvalidObjEditView {}
 
 	method initArb4EditView {_odata}
 	method initArb5EditView {_odata}
@@ -413,6 +414,7 @@ package provide Archer 1.0
 	method initSuperellEditView {_odata}
 	method initTgcEditView {_odata}
 	method initTorusEditView {_odata}
+	method initInvalidObjEditView {_oname}
 
 	method updateCombEditView {}
 	method updateObjEdit {_updateObj _needInit _needSave}
@@ -2594,12 +2596,14 @@ package provide Archer 1.0
 
     if {$old_name == $mSelectedObj} {
 	set mSelectedObj $new_name
-	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
-	initEdit 0
 	checkpoint $mSelectedObj $LEDGER_MODIFY
+	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
     } elseif {[lsearch $mlist $mSelectedObj] != -1} {
 	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
+
+    initEdit 0
+    selectTreePath $mSelectedObjPath
 
     updateUndoState
     SetNormalCursor $this
@@ -5991,7 +5995,14 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initEdit {{_initEditMode 1}} {
-    set mSelectedObjType [gedCmd get_type $mSelectedObj]
+    if {[catch {gedCmd get_type $mSelectedObj} mSelectedObjType]} {
+	if {![info exists itk_component(invalidView)]} {
+	    buildInvalidObjEditView
+	}
+
+	initInvalidObjEditView $mSelectedObj
+	return
+    }
 
     if {$mSelectedObjType != "bot"} {
 	set odata [lrange [gedCmd get $mSelectedObj] 1 end]
@@ -6671,6 +6682,14 @@ proc title_node_handler {node} {
     } {}
 }
 
+::itcl::body Archer::buildInvalidObjEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add invalidView {
+	::ttk::label $parent.invalidview \
+	    -anchor center
+    } {}
+}
+
 ::itcl::body Archer::initArb4EditView {odata} {
     $itk_component(arb4View) configure \
 	-geometryObject $mSelectedObj \
@@ -7258,6 +7277,14 @@ proc title_node_handler {node} {
     $itk_component(torView) initGeometry $odata
 
     pack $itk_component(torView) \
+	-expand yes \
+	-fill both
+}
+
+::itcl::body Archer::initInvalidObjEditView {_oname} {
+    $itk_component(invalidView) configure \
+	-text "$_oname does not exist"
+    pack $itk_component(invalidView) \
 	-expand yes \
 	-fill both
 }
