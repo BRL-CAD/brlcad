@@ -2589,6 +2589,9 @@ package provide Archer 1.0
     # Checkpoint the renamed object
     set lnew_name [checkpoint $new_name $LEDGER_RENAME]
 
+    # Flag the renamed object as having mods
+    $mLedger attr set $lnew_name $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
+
     # Save the command for moving things back
     $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
 
@@ -8914,6 +8917,14 @@ proc title_node_handler {node} {
 	    }
 
 	    updateUndoMode $oflag
+
+	    if {$gid < $mLedgerGID} {
+		incr mLedgerGID
+		set lname $mLedgerGID\_$oid\_$_obj
+		$mLedger mv $le $lname
+		$mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
+		return $lname
+	    }
 
 	    return $le
 	}
