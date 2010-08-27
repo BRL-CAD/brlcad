@@ -89,8 +89,8 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(BRLCAD)
 
-#STRING(REGEX REPLACE "-bundle" "-dynamiclib" CMAKE_SHARED_MODULE_CREATE_C_FLAGS "${CMAKE_SHARED_MODULE_CREATE_C_FLAGS}")
-#MESSAGE("CMAKE_SHARED_MODULE_CREATE_C_FLAGS: ${CMAKE_SHARED_MODULE_CREATE_C_FLAGS}")
+# build shared libs by default
+OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 # See HACKING for details on how to properly update the version
 FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
