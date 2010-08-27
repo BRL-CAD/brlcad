@@ -915,15 +915,6 @@ package provide Archer 1.0
 	}
 
 	syncTree
-#	refreshTree
-	#	if {$firstName != ""} {
-	#	    if {$firstName == $lastName} {
-	#		after idle [::itcl::code $this _select_node [$itk_component(tree) find $regionName] 0]
-	#	    } else {
-	#		after idle [::itcl::code $this _select_node [$itk_component(tree) find $firstName] 0]
-	#	    }
-	#	}
-
 	set mNeedSave 1
 	updateSaveMode
 	$itk_component(ged) units $savedUnits
@@ -1051,8 +1042,6 @@ package provide Archer 1.0
     checkpoint_olist $clist $LEDGER_CREATE
 
     syncTree
-#    refreshTree 1
-
     updateUndoState
     SetNormalCursor $this
 
@@ -1085,7 +1074,6 @@ package provide Archer 1.0
     checkpoint_olist [lindex $args 0] $LEDGER_MODIFY
 
     syncTree
-#    refreshTree 1
     updateUndoState
     SetNormalCursor $this
 
@@ -1331,7 +1319,6 @@ package provide Archer 1.0
     }
 
     syncTree
-#    refreshTree 1
 
     checkpoint_olist $olist $LEDGER_MODIFY
     updateUndoState
@@ -1591,7 +1578,7 @@ package provide Archer 1.0
 	-state readonly
 
     # refresh tree contents
-    refreshTree 0
+    rebuildTree
 
     if {$mBindingMode == "Default"} {
 	set mDefaultBindingMode $VIEW_ROTATE_MODE
@@ -2388,7 +2375,6 @@ package provide Archer 1.0
 	}
 	default {
 	    catch {syncTree}
-#	    catch {refreshTree}
 	}
     }
     SetNormalCursor $this
@@ -2526,7 +2512,6 @@ package provide Archer 1.0
     }
 
     syncTree
-#    refreshTree 1
 
     if {[lsearch $klist $mSelectedObj] != -1} {
 	set mSelectedObj ""
@@ -2606,7 +2591,6 @@ package provide Archer 1.0
     $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
 
     syncTree
-#    refreshTree 1
 
     if {$old_name == $mSelectedObj} {
 	set mSelectedObj $new_name
@@ -7545,7 +7529,6 @@ proc title_node_handler {node} {
     }
 
     syncTree
-#    refreshTree
 }
 
 ::itcl::body Archer::pluginGetMinAllowableRid {} {
@@ -7796,7 +7779,7 @@ proc title_node_handler {node} {
 	    }
 	}
     } elseif {$cflag} {
-	refreshTree
+	rebuildTree
 
 	if {$mTreeAttrColumns == {}} {
 	    set twidth [expr {[winfo width $itk_component(newtree)] - 4}]
@@ -9198,7 +9181,6 @@ proc title_node_handler {node} {
     }
 
     syncTree
-#    refreshTree 1
 
     set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
     set len [llength $l]
@@ -9340,7 +9322,6 @@ proc title_node_handler {node} {
     updateUndoState
 
     syncTree
-#    refreshTree 1
 
     # Make sure the selected object has atleast one checkpoint
     checkpoint $mSelectedObj $LEDGER_MODIFY

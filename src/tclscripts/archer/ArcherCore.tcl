@@ -110,7 +110,7 @@ namespace eval ArcherCore {
 	method primaryToolbarRemoveItem  {_index}
 	method closeHierarchy {}
 	method openHierarchy {{_fraction 30}}
-	method refreshTree {{_restore 1}}
+	method rebuildTree {}
 	method rsyncTree {_pnode}
 	method syncTree {}
 	method mouseRay {_dm _x _y}
@@ -1124,7 +1124,6 @@ Popup Menu    Right or Ctrl-Left
 	}
 	default {
 	    catch {syncTree}
-#	    catch {refreshTree}
 	}
     }
     SetNormalCursor $this
@@ -1808,7 +1807,7 @@ Popup Menu    Right or Ctrl-Left
     grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
     set mDbType ""
 
-    refreshTree 0
+    rebuildTree
 }
 
 ::itcl::body ArcherCore::newDb {} {
@@ -1952,7 +1951,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(vpane) fraction $fraction [expr {100 - $fraction}]
 }
 
-::itcl::body ArcherCore::refreshTree {{_restore 1}} {
+::itcl::body ArcherCore::rebuildTree {} {
     foreach node [array names mNode2Text] {
 	catch {$itk_component(newtree) delete $node}
     }
@@ -2341,7 +2340,7 @@ Popup Menu    Right or Ctrl-Left
     # remove from tree
 #    set parent [$itk_component(tree) query -parent $element]
 #    $itk_component(tree) remove $element $parent
-#    refreshTree
+#    rebuildTree
     SetNormalCursor $this
 }
 
@@ -2353,7 +2352,6 @@ Popup Menu    Right or Ctrl-Left
     wm withdraw $top
     gedCmd $cmd $comp
     syncTree
-#    refreshTree
     SetNormalCursor $this
     destroy $top
 }
@@ -4003,7 +4001,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(newtree) heading \#0 -text $text
 
     if {$_rflag} {
-	refreshTree
+	rebuildTree
 
 	if {$mEnableListView} {
 	    selectTreePath $mSelectedObj
@@ -4237,8 +4235,8 @@ Popup Menu    Right or Ctrl-Left
 	doLighting
 	deleteTargetOldCopy
 
-	# refresh tree contents
-	refreshTree 0
+	# rebuild tree contents
+	rebuildTree
     } else {
 	doLighting
     }
