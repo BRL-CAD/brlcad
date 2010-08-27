@@ -2715,6 +2715,7 @@ rt_bot_propget(struct rt_bot_internal *bot, char *property)
     return -1;
 }
 
+
 /**
  * This routine adjusts the vertex pointers in each face so that
  * pointers to duplicate vertices end up pointing to the same vertex.
@@ -2725,9 +2726,23 @@ int
 rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 {
     int i, j, k;
+    int slot;
     int count=0;
+    long *bin[256];
+    long bin_capacity[256];
+    long bin_todonext[256];
+    const int DEFAULT_CAPACITY = 32;
+    fastf_t min_xval = (fastf_t)LONG_MAX;
+    fastf_t max_xval = (fastf_t)LONG_MIN;
+    fastf_t delta = (fastf_t)0.0;
+
+    vect_t infinity;
+    VSETALL(infinity, INFINITY);
 
     RT_BOT_CK_MAGIC(bot);
+
+#if 0
+    /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
 
     for (i=0; i<bot->num_vertices; i++) {
 	j = i + 1;
@@ -2735,9 +2750,15 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    /* specifically not using tolerances here (except underlying representation tolerance) */
 	    if (VEQUAL(&bot->vertices[i*3], &bot->vertices[j*3])) {
 		count++;
+
+		/* update bot */
 		bot->num_vertices--;
+
+		/* shift vertices down */
 		for (k=j; k<bot->num_vertices; k++)
 		    VMOVE(&bot->vertices[k*3], &bot->vertices[(k+1)*3]);
+
+		/* update face references */
 		for (k=0; k<bot->num_faces*3; k++) {
 		    if (bot->faces[k] == j) {
 			bot->faces[k] = i;
@@ -2750,6 +2771,152 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	}
 	Tcl_DoOneEvent(TCL_DONT_WAIT);
     }
+#else
+    /* THE NEW WAY .. possibly O(n) with basic bin sorting */
+
+    /* initialize a simple 256-slot integer bin space partitioning */
+    for (slot=0; slot<256; slot++) {
+	bin_todonext[slot] = 0;
+	bin_capacity[slot] = DEFAULT_CAPACITY;
+	bin[slot] = bu_calloc(DEFAULT_CAPACITY, sizeof(long *), "vertices bin");
+    }
+
+    /* first pass to get the range of vertex values */
+    for (i=0; i<bot->num_vertices; i++) {
+	/* bins are assigned based on X value */
+	if ((&bot->vertices[i*3])[X] < min_xval)
+	    min_xval = (&bot->vertices[i*3])[X];
+	if ((&bot->vertices[i*3])[X] > max_xval)
+	    max_xval = (&bot->vertices[i*3])[X];
+    }
+    /* sanity swap */
+    if (min_xval > max_xval) {
+	fastf_t t;
+	t = min_xval;
+	min_xval = max_xval;
+	max_xval = t;
+    }
+    /* range sanity */
+    if (max_xval > (fastf_t)LONG_MAX) {
+	max_xval = (fastf_t)LONG_MAX;
+    }
+    if (min_xval < (fastf_t)LONG_MIN) {
+	min_xval = (fastf_t)LONG_MIN;
+    }
+    if (NEAR_ZERO(max_xval - min_xval, SMALL_FASTF)) {
+	if (NEAR_ZERO(max_xval - (fastf_t)LONG_MAX, SMALL_FASTF)) {
+	    max_xval += VDIVIDE_TOL;
+	} else {
+	    min_xval -= VDIVIDE_TOL;
+	}
+    }
+
+    /* calculate the width of a bin */
+    delta = fabs(max_xval - min_xval) / (fastf_t)256.0;
+    if (NEAR_ZERO(delta, SMALL_FASTF))
+	delta = (fastf_t)1.0;
+
+    /* second pass to sort the vertices into bins based on their X value */
+    for (i=0; i<bot->num_vertices; i++) {
+	if ((&bot->vertices[i*3])[X] > (fastf_t)LONG_MAX) {
+	    /* exceeds our range, put in last bin */
+	    slot = 255;
+	} else if ((&bot->vertices[i*3])[X] < (fastf_t)LONG_MIN) {
+	    /* exceeds our range, put in first bin */
+	    slot = 0;
+	} else {
+	    /* bins are assigned based on X value */
+	    slot = (long)(((&bot->vertices[i*3])[X] - min_xval) / delta);
+	}
+
+	/* extra sanity that we don't imagine non-existent bins */
+	if (slot < 0) {
+	    slot = 0;
+	} else if (slot > 255) {
+	    slot = 255;
+	}
+
+	if (bin_todonext[slot] + 1 > bin_capacity[slot]) {
+
+/* bu_log("increasing %i from capacity %ld given next is %ld\n", slot, bin_capacity[slot], bin_todonext[slot]); */
+
+	    BU_ASSERT_LONG(bin_capacity[slot], <, LONG_MAX / 2);
+
+	    bin[slot] = bu_realloc(bin[slot], bin_capacity[slot] * 2 * sizeof(long), "increase vertices bin");
+	    bin_capacity[slot] *= 2;
+
+	    /* init to zero for sanity */
+	    for (j=bin_todonext[slot]+1; j<bin_capacity[slot]; j++) {
+		bin[slot][j] = (long *)NULL;
+	    }
+	}
+
+/* bu_log("setting bin[%d][%d] = %ld\n", slot, bin_todonext[slot], i); */
+
+	bin[slot][bin_todonext[slot]++] = i;
+    }
+
+    /* third pass to check the vertices in each bin */
+    for (slot=0; slot<256; slot++) {
+
+	/* iterate over all vertices in this bin */
+	for (i=0; i<bin_todonext[slot]; i++) {
+	    
+	    /* compare to the other vertices in this bin */
+	    for (j=i+1; j<bin_todonext[slot]; j++) {
+
+		/* specifically not using tolerances here (except underlying representation tolerance) */
+		if (VEQUAL(&bot->vertices[bin[slot][i]*3], &bot->vertices[bin[slot][j]*3])) {
+		    count++;
+
+		    /*  update face references */
+		    for (k=0; k<bot->num_faces*3; k++) {
+			if (bot->faces[k] == bin[slot][j]) {
+			    bot->faces[k] = bin[slot][i];
+			}
+		    }
+
+		    /* wipe out the vertex marking it for cleanup later */
+		    VMOVE(&bot->vertices[bin[slot][j]*3], infinity);
+		}
+	    }
+	}
+    }
+
+    /* clean up and compress */
+    for (i=bot->num_vertices-1; i>=0; i--) {
+
+	/* look for the wiped out vertices */
+	if (VEQUAL(&bot->vertices[i], infinity)) {
+
+	    /* shift vertices down */
+	    for (j=i; j<bot->num_vertices-1; j++) {
+		VMOVE(&bot->vertices[j*3], &bot->vertices[(j+1)*3]);
+	    }
+
+	    /* update face references */
+	    for (k=0; k<bot->num_faces*3; k++) {
+		if (bot->faces[k] > i)
+		    bot->faces[k]--;
+	    }
+	    
+	    /* update vertex count */
+	    bot->num_vertices--;
+	}
+    }
+
+    /* clear and release the memory for our integer bin space partitioning */
+    int total = 0;
+    for (slot=0; slot<256; slot++) {
+	total += bin_todonext[slot];
+/*	bu_log("[%d]: %ld (of %ld)\n", slot, bin_todonext[slot], bin_capacity[slot]); */
+	bu_free(bin[slot], "vertices bin");
+	bin_capacity[slot] = bin_todonext[slot] = 0;
+    }
+    memset(bin, 0, 256 * sizeof(long *));
+
+/*    bu_log("sorted %d of %d vertices\n", total, bot->num_vertices); */
+#endif
 
     return count;
 }
