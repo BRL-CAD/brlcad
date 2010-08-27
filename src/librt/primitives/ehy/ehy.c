@@ -854,7 +854,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     /* connect ellipses */
     for (i = nell-2; i >= 0; i--) {
- 	/* skip top ellipse */
+	/* skip top ellipse */
 	int bottom, top;
 
 	top = i + 1;
@@ -1202,7 +1202,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* connect ellipses with triangles */
     for (i = nell-2; i >= 0; i--) {
- 	/* skip top ellipse */
+	/* skip top ellipse */
 	int bottom, top;
 
 	top = i + 1;
@@ -1650,7 +1650,7 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     sprintf(buf, "\tB=%g\n", INTCLAMP(xip->ehy_r2 * mm2local));
     bu_vls_strcat(str, buf);
-	
+
     sprintf(buf, "\tc=%g\n", INTCLAMP(xip->ehy_c * mm2local));
     bu_vls_strcat(str, buf);
 

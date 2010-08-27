@@ -1447,7 +1447,7 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 	    /* nmg_pr_r(new->tr_d.td_r, "ORIGINAL REGION"); */
 #endif
 	    /* !!! fake "copy" .. lie */
- 	    new->tr_d.td_r = tp->tr_d.td_r;
+	    new->tr_d.td_r = tp->tr_d.td_r;
 	    new->tr_d.td_name = bu_strdup(tp->tr_d.td_name);
 	    return new;
 	}
@@ -2813,9 +2813,9 @@ tree_list_sublist_begin(struct bu_vls *vls)
     if (!vls) return;
 
     if (tree_list_needspace(vls)) {
-        bu_vls_strcat(vls, " {");
+	bu_vls_strcat(vls, " {");
     } else {
-        bu_vls_putc(vls, '{');
+	bu_vls_putc(vls, '{');
     }
 }
 
@@ -2871,7 +2871,7 @@ tree_list_append(struct bu_vls *vls, const char *str)
     if (*p == '{' || *p == '"') {
 	quoteit = 0;
     }
-	
+
     if (quoteit) {
 	tree_list_sublist_begin(vls);
 	bu_vls_strcat(vls, str);

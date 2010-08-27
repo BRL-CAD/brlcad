@@ -44,7 +44,6 @@
 #include "nurb.h"
 
 
-
 /**
  * Solve must be passed two matrices that are of the form of pointer
  * to double arrays. mat_1 is the n by n matrix that is to be

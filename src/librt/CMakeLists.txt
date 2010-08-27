@@ -220,13 +220,13 @@ set(IGNORED_SOURCES
 
 if(MSVC)
     set(LIBRT_SOURCES
-        ${LIBRT_SOURCES}
-        timer-nt.c
+	${LIBRT_SOURCES}
+	timer-nt.c
     )
 else(MSVC)
     set(LIBRT_SOURCES
-        ${LIBRT_SOURCES}
-        timer42.c
+	${LIBRT_SOURCES}
+	timer42.c
     )
 endif(MSVC)
 

@@ -32,7 +32,7 @@
 #include "bu.h"
 
 /**
- * 
+ *
  */
 HIDDEN ON_Surface*
 sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
@@ -62,14 +62,14 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     int edge_index;
     long* brepi;
-        
+
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
-   
+
     brepi = static_cast<long*>(bu_malloc(m->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
-    
+
     *b = ON_Brep::New();
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
@@ -77,7 +77,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
 		if (fu->orientation != OT_SAME) continue;
-		
+
 		// Need to create ON_NurbsSurface based on plane of
 		// face in order to have UV space in which to define
 		// trimming loops.  Bounding points are NOT on the
@@ -103,51 +103,51 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		// all the edges are equal to or further than the
 		// distance between the furthest vertex and the center
 		// point.
-		
+
 		// ............. .............
- 		// .           .* .          .
- 		// .         .  .    .       .
- 		// .        .   .      .     .
- 		// .       .    .       *    .
- 		// .      .     .       .    .
- 		// .     .      .       .    .
- 		// .    .       .       .    .
- 		// .   *        *       .    .
- 		// .   .                .    .
- 		// .   .                .    .
- 		// .   .                .    .
- 		// .   *.               .    .
- 		// .     ...        ...*     .
- 		// .       .... ....         .
- 		// .           *             .
- 		// ...........................
- 		//
+		// .           .* .          .
+		// .         .  .    .       .
+		// .        .   .      .     .
+		// .       .    .       *    .
+		// .      .     .       .    .
+		// .     .      .       .    .
+		// .    .       .       .    .
+		// .   *        *       .    .
+		// .   .                .    .
+		// .   .                .    .
+		// .   .                .    .
+		// .   *.               .    .
+		// .     ...        ...*     .
+		// .       .... ....         .
+		// .           *             .
+		// ...........................
+		//
 
 
- 		const struct face_g_plane *fg = fu->f_p->g.plane_p;
+		const struct face_g_plane *fg = fu->f_p->g.plane_p;
 		struct bu_ptbl vert_table;
 		nmg_tabulate_face_g_verts(&vert_table, fg);
-	    	point_t tmppt, center, max_pt;
+		point_t tmppt, center, max_pt;
 		struct vertex **pt;
-	    	VSET(tmppt, 0, 0, 0);
-	    	int ptcnt = 0;
-	    	for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
-	    	    tmppt[0] += (*pt)->vg_p->coord[0];
-	    	    tmppt[1] += (*pt)->vg_p->coord[1];
-	    	    tmppt[2] += (*pt)->vg_p->coord[2];
+		VSET(tmppt, 0, 0, 0);
+		int ptcnt = 0;
+		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
+		    tmppt[0] += (*pt)->vg_p->coord[0];
+		    tmppt[1] += (*pt)->vg_p->coord[1];
+		    tmppt[2] += (*pt)->vg_p->coord[2];
 		    ptcnt++;
 		    if (brepi[(*pt)->vg_p->index] == -INT_MAX) {
-    			ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
-    			brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
+			ON_BrepVertex& vert = (*b)->NewVertex((*pt)->vg_p->coord, SMALL_FASTF);
+			brepi[(*pt)->vg_p->index] = vert.m_vertex_index;
 		    }
-	    	}
-	    	VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
+		}
+		VSET(center, tmppt[0]/ptcnt, tmppt[1]/ptcnt, tmppt[2]/ptcnt);
 		fastf_t max_dist = 0.0;
 		fastf_t curr_dist;
 		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
-	    	    tmppt[0] = (*pt)->vg_p->coord[0];
-	    	    tmppt[1] = (*pt)->vg_p->coord[1];
-	    	    tmppt[2] = (*pt)->vg_p->coord[2];
+		    tmppt[0] = (*pt)->vg_p->coord[0];
+		    tmppt[1] = (*pt)->vg_p->coord[1];
+		    tmppt[2] = (*pt)->vg_p->coord[2];
 		    curr_dist = DIST_PT_PT(center, tmppt);
 		    if (curr_dist > max_dist) {
 			max_dist = curr_dist;
@@ -160,11 +160,11 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		// If an outer loop is found in the nmg with a cw
 		// orientation, use a flipped normal to form the NURBS
 		// surface
-                for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    if (lu->orientation == OT_SAME && nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
 		}
 		if (ccw != -1) {
-    		    VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
+		    VSET(vnormal, fg->N[0], fg->N[1], fg->N[2]);
 		} else {
 		    VSET(vnormal, -fg->N[0], -fg->N[1], -fg->N[2]);
 		}
@@ -172,13 +172,13 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		VCROSS(vtmp, uv1, vnormal);
 		VADD2(uv1, uv1, vtmp);
 		VCROSS(uv2, uv1, vnormal);
-	        VREVERSE(uv3, uv1);
+		VREVERSE(uv3, uv1);
 		VCROSS(uv4, uv3, vnormal);
 		VADD2(uv1, uv1, center);
 		VADD2(uv2, uv2, center);
 		VADD2(uv3, uv3, center);
 		VADD2(uv4, uv4, center);
-			
+
 		ON_3dPoint p1 = ON_3dPoint(uv1);
 		ON_3dPoint p2 = ON_3dPoint(uv2);
 		ON_3dPoint p3 = ON_3dPoint(uv3);
@@ -190,7 +190,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
 		// Now that we have the surface, define the face
 		ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-		
+
 		// With the surface and the face defined, make
 		// trimming loops and create faces.  To generate UV
 		// coordinates for each from and to for the
@@ -221,7 +221,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			struct vertex_g *vg1, *vg2;
 			vg1 = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg1);
-		        int vert1 = brepi[vg1->index];
+			int vert1 = brepi[vg1->index];
 			VMOVE(ev1, vg1->coord);
 			vg2 = eu->eumate_p->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg2);
@@ -264,7 +264,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			double u0, u1, v0, v1;
 			surf->GetDomain(0, &u0, &u1);
 			surf->GetDomain(1, &v0, &v1);
-			
+
 			VPROJECT(vect1, u_axis, u_component, v_component);
 			from_uv.y = u0 + MAGNITUDE(u_component)/u_axis_dist*(u1-u0);
 			from_uv.x = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
@@ -280,13 +280,13 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			int c2i = (*b)->m_C2.Count();
 			(*b)->m_C2.Append(c2d);
 			edge_index = brepi[eu->e_p->index];
-    			ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[edge_index], orientation, loop, c2i);
-    			trim.m_type = ON_BrepTrim::mated;
-    			trim.m_tolerance[0] = 0.0;
-    			trim.m_tolerance[1] = 0.0;
+			ON_BrepTrim& trim = (*b)->NewTrim((*b)->m_E[edge_index], orientation, loop, c2i);
+			trim.m_type = ON_BrepTrim::mated;
+			trim.m_tolerance[0] = 0.0;
+			trim.m_tolerance[1] = 0.0;
 		    }
 		}
-	    } 
+	    }
 	    (*b)->SetTrimIsoFlags();
 	}
     }

@@ -1825,7 +1825,7 @@ nmg_model_area(const struct model *m)
  * XXX Why are the calling sequences just slightly different?
  * XXX Can we pick the better one, and get rid of the other one?
  * XXX If not, can we document how they differ?
- */	
+ */
 int
 rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const fastf_t *p2, const fastf_t *d2, const struct bn_tol *tol)
 {
@@ -1962,7 +1962,7 @@ rt_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
 }
 
 
-/** 
+/**
  * N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I N T S
  *
  * Make sure that the list of intersection points doesn't contain any
@@ -10711,7 +10711,7 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
 		bu_log("\t\tnew tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
 		       V3ARGS(v2->vg_p->coord),
 		       V3ARGS(vg1->coord),
-	    	       V3ARGS(vg2->coord));
+		       V3ARGS(vg2->coord));
 #endif
 		fu = nmg_find_fu_of_eu(edgeuse1);
 		if (fu->orientation == OT_SAME) {

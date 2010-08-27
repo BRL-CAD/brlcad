@@ -61,10 +61,10 @@
 	BU_EXTERN(int rt_##name##_import4, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_export4, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
-        BU_EXTERN(int rt_##name##_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)); \
-        BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)); \
+	BU_EXTERN(int rt_##name##_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)); \
+	BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i)); \
-        BU_EXTERN(void rt_##name##_make, (const struct rt_functab *ftp, struct rt_db_internal *intern)); \
+	BU_EXTERN(void rt_##name##_make, (const struct rt_functab *ftp, struct rt_db_internal *intern)); \
 	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, const struct rt_db_internal *ip)); \
 	BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t *plane)); \
@@ -143,7 +143,6 @@ BU_EXTERN(int rt_bot_form, (struct bu_vls *logstr, const struct rt_functab *ftp)
 BU_EXTERN(int rt_sketch_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
 BU_EXTERN(int rt_cline_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
 BU_EXTERN(int rt_extrude_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
-
 
 
 const struct rt_functab rt_functab[] = {

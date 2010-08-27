@@ -444,8 +444,8 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		segp[i].seg_in.hit_dist = k2;
 		segp[i].seg_out.hit_dist = k1;
 	    }
-            segp[i].seg_in.hit_surfno = 0;
-            segp[i].seg_out.hit_surfno = 0;
+	    segp[i].seg_in.hit_surfno = 0;
+	    segp[i].seg_out.hit_surfno = 0;
 	}
     }
 }
@@ -1653,11 +1653,11 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
 #if 0
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
-    
+
     strcpy(pcs->ps[0].pname, "V");
     pcs->ps[0].ptype = pc_point;
     pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
-    
+
     strcpy(pcs->ps[1].pname, "A");
     pcs->ps[1].ptype = pc_vector;
     pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);

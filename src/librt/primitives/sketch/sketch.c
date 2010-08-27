@@ -331,8 +331,8 @@ rt_sketch_contains(struct rt_sketch_internal *sk, point2d_t pt)
 			/* outside the circle - if it passes between the endpoints, count it as a hit */
 			/* otherwise, it will hit either twice or not at all, and can be ignored */
 			if (pt[Y] > FMIN(pt1[Y], pt2[Y]) && pt[Y] <= FMAX(pt1[Y], pt2[Y])) {
-			    if ((pt[X] >= 0 && pt[X] < FMIN(pt1[X], pt2[X])) 
-			    	|| (pt[X] < 0 && pt[X] > FMAX(pt1[X], pt2[X]))) hits++;
+			    if ((pt[X] >= 0 && pt[X] < FMIN(pt1[X], pt2[X]))
+				|| (pt[X] < 0 && pt[X] > FMAX(pt1[X], pt2[X]))) hits++;
 			}
 		    } else {
 			fastf_t angMin, angMax, angle;
@@ -2532,7 +2532,7 @@ rt_curve_order_segments(struct curve *crv)
 	    tmp_seg = crv->segments[j];
 	    crv->segments[j] = crv->segments[k];
 	    crv->segments[k] = tmp_seg;
-	    
+
 	    tmp_reverse = crv->reverse[j];
 	    crv->reverse[j] = crv->reverse[k];
 	    crv->reverse[k] = tmp_reverse;
@@ -2550,13 +2550,13 @@ rt_curve_order_segments(struct curve *crv)
 		continue;
 
 	    rt_curve_reverse_segment(crv->segments[k]);
-		
+
 	    if (k != j) {
 		/* exchange j and k segments */
 		tmp_seg = crv->segments[j];
 		crv->segments[j] = crv->segments[k];
 		crv->segments[k] = tmp_seg;
-		
+
 		tmp_reverse = crv->reverse[j];
 		crv->reverse[j] = crv->reverse[k];
 		crv->reverse[k] = tmp_reverse;
