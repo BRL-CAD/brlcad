@@ -399,7 +399,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		}
 		/* FALLTHROUGH */
 	    default:
-	normal:
+	    normal:
 		if (c != *string && !((flags & BU_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))

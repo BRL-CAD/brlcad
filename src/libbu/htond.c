@@ -40,18 +40,18 @@
 	*out++ = 0; \
 	continue; } \
 
-#define OUT_IEEE_NAN { /* Signaling NAN */ \
-	*out++ = 0xFF; \
-	*out++ = 0xF0; \
-	*out++ = 0x0B; \
-	*out++ = 0xAD; \
-	*out++ = 0x0B; \
-	*out++ = 0xAD; \
-	*out++ = 0x0B; \
-	*out++ = 0xAD; \
-	continue; } \
-
-
+#define OUT_IEEE_NAN { /* Signaling NAN */	\
+	*out++ = 0xFF;				\
+	*out++ = 0xF0;				\
+	*out++ = 0x0B;				\
+	*out++ = 0xAD;				\
+	*out++ = 0x0B;				\
+	*out++ = 0xAD;				\
+	*out++ = 0x0B;				\
+	*out++ = 0xAD;				\
+	continue; }				\
+						\
+						\
 void
 htond(register unsigned char *out, register const unsigned char *in, size_t count)
 {
@@ -459,14 +459,14 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	    continue;
 	} else if (exp == 0x7FF) {
 	vax_undef:		*out++ = 0x80;		/* VAX "undefined" */
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	continue;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    continue;
 	}
 	exp += 129 - 1023;
 	/* Check for exponent out of range */
@@ -507,14 +507,14 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	signbit = (left & 0x80000000) >> 24;
 	if (exp == 0 || exp == 0x7FF) {
 	ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	*out++ = 0;
-	continue;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    *out++ = 0;
+	    continue;
 	}
 
 	left = (left & 0x000FFFFF) | 0x00100000;/* replace "hidden" bit */

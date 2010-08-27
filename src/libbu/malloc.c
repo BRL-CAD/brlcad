@@ -79,7 +79,7 @@ _bu_memdebug_add(genptr_t ptr, size_t cnt, const char *str)
 {
     register struct memdebug *mp = NULL;
 
- top:
+top:
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
     if (bu_memdebug) {
@@ -93,7 +93,7 @@ _bu_memdebug_add(genptr_t ptr, size_t cnt, const char *str)
 	}
     }
 
- again:
+again:
     if (bu_memdebug) {
 	for (; mp >= bu_memdebug; mp--) {
 	    /* Search for an empty slot */
@@ -536,9 +536,9 @@ bu_malloc_len_roundup(register int nbytes)
     if (pagesz == 0)
 	pagesz = getpagesize();
 
-#define OVERHEAD (4*sizeof(unsigned char) + \
-			2*sizeof(unsigned short) + \
-			sizeof(unsigned int))
+#define OVERHEAD (4*sizeof(unsigned char) +	\
+		  2*sizeof(unsigned short) +	\
+		  sizeof(unsigned int))
     n = pagesz - OVERHEAD;
     if (nbytes <= n)
 	return n;

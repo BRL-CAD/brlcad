@@ -48,8 +48,8 @@ static struct bu_list bu_mapped_file_list = {
 
 struct bu_mapped_file *
 bu_open_mapped_file(const char *name, const char *appl)
-    /* file name */
-    /* non-null only when app. will use 'apbuf' */
+/* file name */
+/* non-null only when app. will use 'apbuf' */
 {
     struct bu_mapped_file *mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_SYS_STAT_H
@@ -241,7 +241,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
     return mp;
 
- fail:
+fail:
     if (mp) {
 	bu_free(mp->name, "mp->name");
 	if (mp->appl) bu_free(mp->appl, "mp->appl");
@@ -342,8 +342,8 @@ bu_free_mapped_files(int verbose)
 struct bu_mapped_file *
 bu_open_mapped_file_with_path(char *const *path, const char *name, const char *appl)
 
-    /* file name */
-    /* non-null only when app. will use 'apbuf' */
+/* file name */
+/* non-null only when app. will use 'apbuf' */
 {
     char * const *pathp = path;
     struct bu_vls str;
