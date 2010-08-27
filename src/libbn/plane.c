@@ -2130,10 +2130,11 @@ bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *
     point_t local;		/* vertex point in local coordinates */
     point_t model;		/* vertex point in model coordinates */
 
-#define ROT_VERT(a, b, c)			\
-    VSET(local, a[X], b[Y], c[Z]);		\
-    MAT4X3PNT(model, mat, local);		\
-    VMINMAX(omin, omax, model)			\
+#define ROT_VERT(a, b, c) {			\
+	VSET(local, a[X], b[Y], c[Z]);		\
+	MAT4X3PNT(model, mat, local);		\
+	VMINMAX(omin, omax, model);		\
+    }
 
     ROT_VERT(imin, imin, imin);
     ROT_VERT(imin, imin, imax);
