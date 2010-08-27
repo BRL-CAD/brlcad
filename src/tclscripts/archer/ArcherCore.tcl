@@ -4099,6 +4099,9 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+#
+# Note -_name is expected to exist in the database.
+#
 ::itcl::body ArcherCore::updateTreeTopWithName {_name} {
     # Check to see if its okay to add a toplevel node
     set toplist {}
@@ -4106,15 +4109,18 @@ Popup Menu    Right or Ctrl-Left
 	lappend toplist [regsub {/.*} $item {}]
     }
 
-    set i [lsearch -index 0 $toplist $_name]
-    # Okay to add a toplevel node to the tree
+    set i [lsearch $toplist $_name]
+
+    # Possibly add a toplevel node to the tree
     if {$i != -1} {
-	fillTree {} $_name $mEnableListView
+	# Add _name if not already there.
+	set j [lsearch -index 0 $mPNode2CList() $_name]
+	if {$j == -1} {
+	    fillTree {} $_name $mEnableListView
+	}
     } else {
 	# Not found in call to tops, so possibly need to update _name as a member
-	# of some other combination(s). This can happen when _name is being
-	# referred to by one or more combinations even though it doesn't exist.
-
+	# of some other combination(s).
 	if {![catch {set tlists $mText2Node($_name)}]} {
 	    foreach tlist $tlists {
 		set cnode [lindex $tlist 0]
