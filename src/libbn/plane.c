@@ -2134,8 +2134,8 @@ bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *
     VSET(local, a[X], b[Y], c[Z]);		\
     MAT4X3PNT(model, mat, local);		\
     VMINMAX(omin, omax, model)			\
-						\
-	ROT_VERT(imin, imin, imin);
+
+    ROT_VERT(imin, imin, imin);
     ROT_VERT(imin, imin, imax);
     ROT_VERT(imin, imax, imin);
     ROT_VERT(imin, imax, imax);
