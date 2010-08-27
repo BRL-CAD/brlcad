@@ -340,7 +340,7 @@ bu_image_save_close(struct bu_image_file *bif)
 	    close(bif->fd);
 	    break;
     }
- 
+
     bu_free(bif->filename, "bu_image_file filename");
     bu_free(bif->data, "bu_image_file data");
     bu_free(bif, "bu_image_file");

@@ -87,7 +87,7 @@ _bu_ipwd()
 
     ipwd = getenv("PWD"); /* not our memory to free */
     if (!ipwd)
-        ipwd = bu_which("pwd");
+	ipwd = bu_which("pwd");
 
     if (ipwd) {
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)

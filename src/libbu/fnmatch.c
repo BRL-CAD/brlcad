@@ -222,7 +222,7 @@ charclassmatch(const char *pattern, char test, int *s)
 	if (c == BU_FNM_EOS) resultholder = -1;
 	counter++;
 
-        c = *pattern++; /* next */
+	c = *pattern++; /* next */
     }
     c = *pattern++;
     if (c != ']') resultholder = -1;

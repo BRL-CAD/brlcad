@@ -53,7 +53,7 @@
 extern int kill(pid_t, int);
 #endif
 
-#ifndef fileno 
+#ifndef fileno
 extern int fileno(FILE*);
 #endif
 
