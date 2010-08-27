@@ -696,7 +696,7 @@ Popup Menu    Right or Ctrl-Left
 	method primaryToolbarRemove     {_index}
 
 	# tree commands
-	method updateTree        {{_cflag 0}}
+	method updateTreeDrawLists        {{_cflag 0}}
 	method fillTree          {_pnode _ctext {_flat 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
@@ -1120,7 +1120,7 @@ Popup Menu    Right or Ctrl-Left
 	    # Do nothing
 	}
 	1 {
-	    catch {updateTree}
+	    catch {updateTreeDrawLists}
 	}
 	default {
 	    catch {syncTree}
@@ -1988,7 +1988,7 @@ Popup Menu    Right or Ctrl-Left
 	fillTree {} $item $mEnableListView
     }
 
-    updateTree
+    updateTreeDrawLists
 }
 
 ##
@@ -2175,6 +2175,8 @@ Popup Menu    Right or Ctrl-Left
 	    rsyncTree $cnode
 	}
     }
+
+    updateTreeDrawLists
 }
 
 ::itcl::body ArcherCore::mouseRay {_dm _x _y} {
@@ -2584,7 +2586,7 @@ Popup Menu    Right or Ctrl-Left
     if {!$mEnableListView} {
 	getTreeNode $path 1
     }
-    updateTree
+    updateTreeDrawLists
     putString "erase $path"
     set mStatusStr "erase $path"
 }
@@ -3031,7 +3033,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$updateTree} {
-	updateTree
+	updateTreeDrawLists
     }
 
     if {$wflag} {
@@ -3248,7 +3250,7 @@ Popup Menu    Right or Ctrl-Left
 #                     TREE COMMANDS
 # ------------------------------------------------------------
 
-::itcl::body ArcherCore::updateTree {{_cflag 0}} {
+::itcl::body ArcherCore::updateTreeDrawLists {{_cflag 0}} {
     foreach node $mNodePDrawList {
 	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
     }
@@ -3838,7 +3840,7 @@ Popup Menu    Right or Ctrl-Left
 	}
     }
 
-    updateTree
+    updateTreeDrawLists
     SetNormalCursor $this
 }
 
@@ -4980,14 +4982,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd draw $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	updateTree
+	updateTreeDrawLists
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    updateTree
+    updateTreeDrawLists
     if {$wflag} {
 	SetNormalCursor $this
     }
@@ -5033,14 +5035,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	updateTree
+	updateTreeDrawLists
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    updateTree
+    updateTreeDrawLists
     SetNormalCursor $this
 }
 

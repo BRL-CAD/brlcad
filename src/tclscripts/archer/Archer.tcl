@@ -2203,7 +2203,7 @@ package provide Archer 1.0
 	selectTreePath $path
     }
 
-    updateTree
+    updateTreeDrawLists
     SetNormalCursor $this
 }
 
@@ -2384,7 +2384,7 @@ package provide Archer 1.0
 	    # Do nothing
 	}
 	1 {
-	    catch {updateTree}
+	    catch {updateTreeDrawLists}
 	}
 	default {
 	    catch {syncTree}
@@ -8615,7 +8615,7 @@ proc title_node_handler {node} {
     fillTree {} $name $mEnableListView
     $itk_component(ged) draw $name
     selectTreePath $name
-#    updateTree
+#    updateTreeDrawLists
 
     # Checkpoint the created object
     checkpoint $name $LEDGER_CREATE
@@ -9401,7 +9401,7 @@ proc title_node_handler {node} {
     }
 
     if {$tflag} {
-	updateTree
+	updateTreeDrawLists
     }
 }
 
