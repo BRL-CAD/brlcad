@@ -4625,7 +4625,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2,
 		     const struct rt_bot_internal *bot,
 		     const point_t	pt2,
 		     const mat_t	mat));
-RT_EXPORT BU_EXTERN(int rt_bot_propget,
+RT_EXPORT BU_EXTERN(fastf_t rt_bot_propget,
 		    (struct rt_bot_internal *bot,
 		    char *property));
 RT_EXPORT BU_EXTERN(int rt_bot_vertex_fuse,
