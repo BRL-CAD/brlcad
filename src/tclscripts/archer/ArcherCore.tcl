@@ -3974,17 +3974,27 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    set obj [lindex [split $_path /] end]
+
     if {$mEnableListView} {
-	set obj [lindex [split $_path /] end]
+	set mSelectedObj $obj
+	set mSelectObjPath $obj
 	$itk_component(newtree) selection set [lindex [lindex $mText2Node($obj) 0] 0]
     } else {
 	getTreeNode $_path 1
 	set snode [$itk_component(newtree) focus]
+	set mSelectedObjPath ""
 
 	if {$snode == {}} {
+	    set mSelectedObj ""
 	    putString $_path
 	} else {
+	    set mSelectedObj $obj
 	    $itk_component(newtree) selection set $snode
+	    foreach pnode [lreverse [findTreeParentNodes $snode]] {
+		append mSelectedObjPath $mNode2Text($pnode) "/"
+	    }
+	    append mSelectedObjPath $mNode2Text($snode)
 	}
     }
 }
