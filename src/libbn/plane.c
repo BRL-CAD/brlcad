@@ -393,7 +393,7 @@ bn_2line3_colinear(const fastf_t *p1,
 	bu_log("bn_2line3colinear(range=%g) ret=1\n", range);
     }
     return 1;
- fail:
+fail:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_2line3colinear(range=%g) ret=0\n", range);
     }
@@ -598,7 +598,7 @@ bn_isect_2planes(fastf_t *pt,
  */
 int
 bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *c, const struct bn_tol *tol)
-    /* dist[2] */
+/* dist[2] */
 
 
 {
@@ -950,7 +950,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	goto out;
     }
     ret = 3;			/* Intersection between A and B */
- out:
+out:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_isect_line2_lseg2() dist[0]=%g, dist[1]=%g, ret=%d\n",
 	       dist[0], dist[1], ret);
@@ -1551,7 +1551,7 @@ bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 	goto out;
     }
     FdotD = sqrt(FdotD);
- out:
+out:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_dist_line3_pt3() ret=%g\n", FdotD);
     }
@@ -1585,7 +1585,7 @@ bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     if ((FdotD = VDOT(f, f) - FdotD * FdotD) <= SMALL_FASTF) {
 	FdotD = 0.0;
     }
- out:
+out:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_distsq_line3_pt3() ret=%g\n", FdotD);
     }
@@ -1733,8 +1733,8 @@ int bn_isect_pt_lseg(fastf_t *dist,
 		     const fastf_t *b,
 		     const fastf_t *p,
 		     const struct bn_tol *tol)
-    /* distance along line from A to P */
-    /* points for line and intersect */
+/* distance along line from A to P */
+/* points for line and intersect */
 
 {
     vect_t AtoP,
@@ -1814,8 +1814,8 @@ int bn_isect_pt_lseg(fastf_t *dist,
 */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
-    /* distance along line from A to P */
-    /* points for line and intersect */
+/* distance along line from A to P */
+/* points for line and intersect */
 
 {
     vect_t AtoP,
@@ -2130,12 +2130,12 @@ bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *
     point_t local;		/* vertex point in local coordinates */
     point_t model;		/* vertex point in model coordinates */
 
-#define ROT_VERT(a, b, c)  \
-	VSET(local, a[X], b[Y], c[Z]); \
-	MAT4X3PNT(model, mat, local); \
-	VMINMAX(omin, omax, model) \
-
-    ROT_VERT(imin, imin, imin);
+#define ROT_VERT(a, b, c)			\
+    VSET(local, a[X], b[Y], c[Z]);		\
+    MAT4X3PNT(model, mat, local);		\
+    VMINMAX(omin, omax, model)			\
+						\
+	ROT_VERT(imin, imin, imin);
     ROT_VERT(imin, imin, imax);
     ROT_VERT(imin, imax, imin);
     ROT_VERT(imin, imax, imax);
@@ -2344,7 +2344,7 @@ bn_between(double left, double mid, double right, const struct bn_tol *tol)
     }
     if (mid < right || mid > left)  goto fail;
     return 1;
- fail:
+fail:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_between(%.17e, %.17e, %.17e) ret=0 FAIL\n",
 	       left, mid, right);
@@ -2531,17 +2531,17 @@ bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, co
     int class;	/* current classification */
     fastf_t d;
 
-#define CHECK_PT(x, y, z) \
-	d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3];\
-	if (d < -tol->dist) { \
-		if (class == BN_CLASSIFY_OUTSIDE) \
-			return BN_CLASSIFY_OVERLAPPING; \
-		else class = BN_CLASSIFY_INSIDE; \
-	} else if (d > tol->dist) { \
-		if (class == BN_CLASSIFY_INSIDE) \
-			return BN_CLASSIFY_OVERLAPPING; \
-		else class = BN_CLASSIFY_OUTSIDE; \
-	} else return BN_CLASSIFY_OVERLAPPING
+#define CHECK_PT(x, y, z)						\
+    d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3]; \
+    if (d < -tol->dist) {						\
+	if (class == BN_CLASSIFY_OUTSIDE)				\
+	    return BN_CLASSIFY_OVERLAPPING;				\
+	else class = BN_CLASSIFY_INSIDE;				\
+    } else if (d > tol->dist) {						\
+	if (class == BN_CLASSIFY_INSIDE)				\
+	    return BN_CLASSIFY_OVERLAPPING;				\
+	else class = BN_CLASSIFY_OUTSIDE;				\
+    } else return BN_CLASSIFY_OVERLAPPING
 
     class = BN_CLASSIFY_UNIMPLEMENTED;
     CHECK_PT(min[X], min[Y], min[Z]);

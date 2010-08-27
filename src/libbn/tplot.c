@@ -327,7 +327,7 @@ tp_plot(FILE *fp,
     /* now at long last plot the data */
     j = 0;
 
- loop:
+loop:
     if ( n <= 100 ) {
 	isave = n-1;
     } else {

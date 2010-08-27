@@ -561,7 +561,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 /**
  * B N _ V E C _ A E
  *
- * Find a unit vector from the origin given azimuth and elevation. 
+ * Find a unit vector from the origin given azimuth and elevation.
  */
 void
 bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
@@ -578,7 +578,7 @@ bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
 /**
  * B N _ V E C _ A E D
  *
- * Find a vector from the origin given azimuth, elevation, and distance. 
+ * Find a vector from the origin given azimuth, elevation, and distance.
  */
 void
 bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
