@@ -807,6 +807,21 @@ IF(BRLCAD_BUILD_LOCAL_TCL)
    SET(TK_DEP "tk")
 endif()
 
+# Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
+# building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
+# check the found Tcl/Tk and enable what it doesn't supply.  If doing a non-graphical
+# build, only compile extensions that don't use Tk.
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindTclPackage.cmake)
+IF(TCL_FOUND)
+   FIND_TCL_PACKAGE(${TCL_TCLSH} Itcl)
+   IF(TK_LIBRARY)
+      FIND_TCL_PACKAGE(${TK_WISH} Itk)
+      FIND_TCL_PACKAGE(${TK_WISH} Iwidgets)
+      FIND_TCL_PACKAGE(${TK_WISH} Tkhtml)
+      FIND_TCL_PACKAGE(${TK_WISH} tkpng)
+   ENDIF(TK_LIBRARY)
+ENDIF(TCL_FOUND)
+
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
 THIRD_PARTY_SUBDIR(OPENNURBS src/other/openNURBS)
@@ -854,13 +869,10 @@ ADD_SUBDIRECTORY(src/rt)
 # variable named <variable_name>_LABEL - this allows a loop to iterate over a list of variables and handle
 # them all, rather than each line needing its own logic.
 
-OPTION(BRLCAD_PRINT_VERBOSE_SUMMARY "Print extra summary information" OFF)
+OPTION(BRLCAD_PRINT_VERBOSE_SUMMARY "Print summary" ON)
+MARK_AS_ADVANCED(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
 if(BRLCAD_PRINT_VERBOSE_SUMMARY)
-   MESSAGE("")
-   MESSAGE("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build (VERBOSE SUMMARY) ------")
-   MESSAGE("")
-else(BRLCAD_PRINT_VERBOSE_SUMMARY)
    MESSAGE("")
    MESSAGE("------ BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} - ${CMAKE_BUILD_TYPE} Build  ------")
    MESSAGE("")
