@@ -1,7 +1,7 @@
 MACRO(FIND_TCL_PACKAGE wishcmd packagename)
-   MESSAGE("wishcmd: ${wishcmd} packagename: ${packagename}")
    STRING(TOUPPER ${packagename} PKGNAME_UPPER)
    SET(packagefind_script "
+package require ${packagename}
 set packageversion NOTFOUND
 set packageversion [package versions ${packagename}]
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION\"
