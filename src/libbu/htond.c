@@ -38,7 +38,9 @@
 	*out++ = 0; \
 	*out++ = 0; \
 	*out++ = 0; \
-	continue; }
+	continue;   \
+}
+
 
 #define OUT_IEEE_NAN { /* Signaling NAN */	\
 	*out++ = 0xFF;				\
@@ -49,7 +51,8 @@
 	*out++ = 0xAD;				\
 	*out++ = 0x0B;				\
 	*out++ = 0xAD;				\
-	continue; }
+	continue;				\
+}
 
 
 void
@@ -458,7 +461,8 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	    *out++ = 0;
 	    continue;
 	} else if (exp == 0x7FF) {
-	vax_undef:		*out++ = 0x80;		/* VAX "undefined" */
+vax_undef:
+	    *out++ = 0x80;		/* VAX "undefined" */
 	    *out++ = 0;
 	    *out++ = 0;
 	    *out++ = 0;
@@ -506,7 +510,8 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	exp = ((left >> 20) & 0x7FF);
 	signbit = (left & 0x80000000) >> 24;
 	if (exp == 0 || exp == 0x7FF) {
-	ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
+ibm_undef:
+	    *out++ = 0;		/* IBM zero.  No NAN */
 	    *out++ = 0;
 	    *out++ = 0;
 	    *out++ = 0;
@@ -559,11 +564,11 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	 * normalize the number.  Remove for production speed.
 	 */
 	while ((left & 0x00F00000) == 0 && left != 0) {
-	    if (signbit && exp <= 0x41)  break;
+	    if (signbit && exp <= 0x41) break;
 
 	    left = (left << 4) | (right >> (32-4));
 	    right <<= 4;
-	    if (signbit)  exp--;
+	    if (signbit) exp--;
 	    else exp++;
 	}
 
@@ -656,6 +661,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 
     bu_bomb("ntohd.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
+
 
 /*
  * Local Variables:
