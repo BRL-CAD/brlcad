@@ -461,7 +461,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, size_t coun
 	    *out++ = 0;
 	    continue;
 	} else if (exp == 0x7FF) {
-vax_undef:
+	vax_undef:
 	    *out++ = 0x80;		/* VAX "undefined" */
 	    *out++ = 0;
 	    *out++ = 0;
@@ -510,7 +510,7 @@ vax_undef:
 	exp = ((left >> 20) & 0x7FF);
 	signbit = (left & 0x80000000) >> 24;
 	if (exp == 0 || exp == 0x7FF) {
-ibm_undef:
+	ibm_undef:
 	    *out++ = 0;		/* IBM zero.  No NAN */
 	    *out++ = 0;
 	    *out++ = 0;
