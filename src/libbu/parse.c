@@ -2535,11 +2535,10 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr, "%s ", argv[0]);
 		    break;
 		}
-		case 'p':
-		    {
-			/* Indirect to another structure */
-			/* FIXME: unimplemented */
-		    }
+		case 'p': {
+		    /* Indirect to another structure */
+		    /* FIXME: unimplemented */
+		}
 
 		default: {
 		    bu_vls_printf(logstr,
