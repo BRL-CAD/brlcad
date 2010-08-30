@@ -2728,6 +2728,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     int i, j, k;
     int slot;
     int count=0;
+    int total = 0;
     long *bin[256];
     long bin_capacity[256];
     long bin_todonext[256];
@@ -2906,7 +2907,6 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     }
 
     /* clear and release the memory for our integer bin space partitioning */
-    int total = 0;
     for (slot=0; slot<256; slot++) {
 	total += bin_todonext[slot];
 /*	bu_log("[%d]: %ld (of %ld)\n", slot, bin_todonext[slot], bin_capacity[slot]); */
