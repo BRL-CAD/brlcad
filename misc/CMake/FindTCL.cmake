@@ -115,7 +115,6 @@
 # set when TCKTK_REQUIRE_TK is ON):
 #
 #   TCL_FOUND          = Tcl (and Tk) found (see TCKTK_REQUIRE_TK)
-#   TCL_FOUND_VERSION  = Version of selected Tcl/TK
 #   TCL_LIBRARY        = path to Tcl library
 #   TCL_STUB_LIBRARY   = path to Tcl stub library
 #   TCL_INCLUDE_PATH   = path to directory containing tcl.h
@@ -394,13 +393,12 @@ MACRO(RESET_TK_VARS)
   SET(TK_STUB_LIBRARY "NOTFOUND")
 ENDMACRO()
 
+
 #-----------------------------------------------------------------------------
 #
 #       Routines for extracting variable values from Tcl/Tk config files
 #
 #-----------------------------------------------------------------------------
-
-
 
 MACRO(READ_TCLCONFIG_FILE tclconffile)
   RESET_TCL_VARS()
@@ -476,6 +474,55 @@ MACRO(READ_TKCONFIG_FILE tkconffile)
     endif()
   ENDFOREACH(line ${ENT})
 ENDMACRO()
+
+
+#-----------------------------------------------------------------------------
+#
+#             Validate a Tcl/Tk installation based on options
+#
+#-----------------------------------------------------------------------------
+
+# not done yet - just copy/pasted code so far
+MACRO(VALIDATE_TCLTK)
+  IF(TCL_NEED_HEADERS)
+    IF(NOT TK_INCLUDE_PATH)
+      SET(TK_LIBRARY "NOTFOUND")
+    ENDIF(NOT TK_INCLUDE_PATH)
+  ENDIF(TCL_NEED_HEADERS)
+  IF(TCL_NEED_STUB_LIBS)
+    IF(NOT TK_STUB_LIBRARY)
+      RESET_TK_VARS()
+    ENDIF(NOT TK_STUB_LIBRARY)
+  ENDIF(TCL_NEED_STUB_LIBS)
+  IF(TK_NATIVE_GRAPHICS OR TK_X11_GRAPHICS)
+    TK_GRAPHICS_SYSTEM(${TK_WISH} TK_SYSTEM_GRAPHICS)
+    IF(APPLE AND TK_NATIVE_GRAPHICS)
+      IF(NOT ${TK_SYSTEM_GRAPHICS} MATCHES "aqua")
+	SET(TK_LIBRARY "NOTFOUND")
+      ENDIF()
+    ENDIF()
+    IF(WIN32 AND TK_NATIVE_GRAPHICS)
+      IF(NOT ${TK_SYSTEM_GRAPHICS} MATCHES "win32")
+	SET(TK_LIBRARY "NOTFOUND")
+      ENDIF()
+    ENDIF()
+    IF(TK_X11_GRAPHICS)
+      IF(NOT ${TK_SYSTEM_GRAPHICS} MATCHES "x11")
+	SET(TK_LIBRARY "NOTFOUND")
+      ENDIF()
+    ENDIF()
+  ENDIF(TK_NATIVE_GRAPHICS OR TK_X11_GRAPHICS)
+  IF(NOT TK_LIBRARY OR NOT TK_WISH)
+    SET(TK_INCLUDE_PATH "NOTFOUND")
+    SET(TK_WISH "NOTFOUND")
+    SET(TK_LIBRARY "NOTFOUND")
+  ELSE(NOT TK_LIBRARY OR NOT TK_WISH)
+    IF(NOT TK_FOUND_VERSION)
+      SET(TK_FOUND_VERSION "${MAJORNUM}.${MINORNUM}")
+    ENDIF(NOT TK_FOUND_VERSION)
+  ENDIF(NOT TK_LIBRARY OR NOT TK_WISH)
+ENDMACRO(VALIDATE_TCLTK)
+
 
 #-----------------------------------------------------------------------------
 #
@@ -822,8 +869,6 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL DEFAULT_MSG TCL_LIBRARY ${PACKAGE_HANDLE_V
 # Put these values in the cache - since this FindTCL routine can be a bit expensive,
 # run it once and then rely on the cache unless the parent CMake turns off TCL_FOUND
 # explicitly or the cache is edited.
-#SET(TCL_FOUND ${TCL_FOUND} CACHE STRING "Set by FindTCL.cmake" FORCE)
-SET(TCL_FOUND_VERSION ${TCL_FOUND_VERSION} CACHE STRING "Set by FindTCL.cmake" FORCE)
 FOREACH(tclvar ${PACKAGE_HANDLE_VARS})
   SET(${tclvar} ${${tclvar}} CACHE STRING "Set by FindTCL.cmake" FORCE)
 ENDFOREACH(tclvar ${PACKAGE_HANDLE_VARS})
