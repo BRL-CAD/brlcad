@@ -38,7 +38,7 @@
 	*out++ = 0; \
 	*out++ = 0; \
 	*out++ = 0; \
-	continue; } \
+	continue; }
 
 #define OUT_IEEE_NAN { /* Signaling NAN */	\
 	*out++ = 0xFF;				\
@@ -49,9 +49,9 @@
 	*out++ = 0xAD;				\
 	*out++ = 0x0B;				\
 	*out++ = 0xAD;				\
-	continue; }				\
-						\
-						\
+	continue; }
+
+
 void
 htond(register unsigned char *out, register const unsigned char *in, size_t count)
 {
