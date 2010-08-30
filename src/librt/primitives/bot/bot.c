@@ -2888,7 +2888,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     for (i=bot->num_vertices-1; i>=0; i--) {
 
 	/* look for the wiped out vertices */
-	if (VEQUAL(&bot->vertices[i], infinity)) {
+	if (VEQUAL(&bot->vertices[i*3], infinity)) {
 
 	    /* shift vertices down */
 	    for (j=i; j<bot->num_vertices-1; j++) {
