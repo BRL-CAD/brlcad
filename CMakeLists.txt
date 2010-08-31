@@ -734,7 +734,7 @@ include(ExternalProject)
 
 # Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
 SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
-SET(TCL_MIN_VERSION "8.5.6" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
+SET(TCL_MIN_VERSION "8.5" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
 
 OPTION(BRLCAD_BUILD_LOCAL_TCL "Build the local versions of Tcl/Tk" OFF)
 OPTION(BRLCAD_BUILD_LOCAL_TK "Build the local versions of Tcl/Tk" OFF)
@@ -821,6 +821,10 @@ IF(TCL_FOUND)
       FIND_TCL_PACKAGE(${TK_WISH} tkpng)
    ENDIF(TK_LIBRARY)
 ENDIF(TCL_FOUND)
+
+IF(NOT ITCL_FOUND OR NOT ITK_FOUND)
+	ADD_SUBDIRECTORY(src/other/incrTcl)
+ENDIF(NOT ITCL_FOUND OR NOT ITK_FOUND)
 
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
