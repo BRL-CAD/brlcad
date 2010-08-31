@@ -236,7 +236,7 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 		ptr = malloc(size);
 		memset(ptr, 0, size);
 	    } else {
-		ptr = calloc(cnt, sz);
+		ptr = calloc(1, size);
 	    }
 	    break;
 	default:
