@@ -119,7 +119,7 @@
 #   TCL_STUB_LIBRARY   = path to Tcl stub library
 #   TCL_INCLUDE_PATH   = path to directory containing tcl.h
 #   TK_LIBRARY         = path to Tk library
-#   TK_STUB_LIBRARY         = path to Tk stub library
+#   TK_STUB_LIBRARY    = path to Tk stub library
 #   TK_INCLUDE_PATH    = path to directory containing tk.h
 #   TCL_TCLSH          = full path to tclsh binary
 #   TK_WISH            = full path wo wish binary
