@@ -193,7 +193,7 @@ HIDDEN genptr_t
 _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 {
     register genptr_t ptr = 0;
-    register size_t size = cnt * sz;
+    register size_t size = sz;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
     static int failsafe_init = 0;
@@ -203,7 +203,7 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	failsafe_init = bu_bomb_failsafe_init();
     }
 
-    if (size == 0) {
+    if (cnt == 0 || sz == 0) {
 	fprintf(stderr, "ERROR: _bu_alloc size=0 (cnt=%llu, sz=%llu) %s\n",
 		(unsigned long long)cnt, (unsigned long long)sz, str);
 	bu_bomb("ERROR: bu_malloc(0)\n");
@@ -219,10 +219,9 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	/* Pad, plus full int for magic number */
-	size = (size+2*sizeof(long)-1)&(~(sizeof(long)-1));
+	size = (size + 2*sizeof(long) - 1) & (~(sizeof(long) - 1));
     } else if (bu_debug&BU_DEBUG_MEM_QCHECK) {
-	size = (size+2*sizeof(struct memqdebug)-1)
-	    &(~(sizeof(struct memqdebug)-1));
+	size = (size + 2*sizeof(struct memqdebug) - 1) & (~(sizeof(struct memqdebug) - 1));
     }
 
 #if defined(MALLOC_NOT_MP_SAFE)
@@ -231,17 +230,17 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 
     switch (type) {
 	case MALLOC:
-	    ptr = malloc(size);
+	    ptr = malloc(cnt*size);
 	    break;
 	case CALLOC:
 	    /* if we're debugging, we need a slightly larger
 	     * allocation size for debug tracking.
 	     */
 	    if (bu_debug&(BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_QCHECK)) {
-		ptr = malloc(size);
-		memset(ptr, 0, size);
+		ptr = malloc(cnt*size);
+		memset(ptr, 0, cnt*size);
 	    } else {
-		ptr = calloc(1, size);
+		ptr = calloc(cnt, size);
 	    }
 	    break;
 	default:
@@ -249,7 +248,7 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
     }
 
     if (ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG) {
-	fprintf(stderr, "%p malloc%llu %s\n", ptr, (unsigned long long)size, str);
+	fprintf(stderr, "NULL malloc(%llu) %s\n", (unsigned long long)(cnt*size), str);
     }
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -260,18 +259,18 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	bu_bomb("bu_malloc: malloc failure");
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	_bu_memdebug_add(ptr, size, str);
+	_bu_memdebug_add(ptr, cnt*size, str);
 
 	/* Install a barrier word at the end of the dynamic arena */
-	/* Correct location depends on 'size' being rounded up, above */
+	/* Correct location depends on 'cnt*size' being rounded up, above */
 
-	*((long *)(((char *)ptr)+size-sizeof(long))) = MDB_MAGIC;
+	*((long *)(((char *)ptr) + (cnt*size) - sizeof(long))) = MDB_MAGIC;
     } else if (bu_debug&BU_DEBUG_MEM_QCHECK) {
 	struct memqdebug *mp = (struct memqdebug *)ptr;
 	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
 	mp->m.magic = MDB_MAGIC;
 	mp->m.mdb_addr = ptr;
-	mp->m.mdb_len = size;
+	mp->m.mdb_len = cnt*size;
 	mp->m.mdb_str = str;
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	if (bu_memq == BU_LIST_NULL) {
