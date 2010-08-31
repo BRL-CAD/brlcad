@@ -194,6 +194,7 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 {
     register genptr_t ptr = 0;
     register size_t size = cnt * sz;
+    const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
     static int failsafe_init = 0;
 
@@ -208,8 +209,12 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	bu_bomb("ERROR: bu_malloc(0)\n");
     }
 
-    if (size < sizeof(int)) {
-	size = sizeof(int);
+    /* minimum allocation size, always big enough to stash a pointer.
+     * that said, if you're anywhere near this size, you're probably
+     * doing something wrong.
+     */
+    if (size < MINSIZE) {
+	size = MINSIZE;
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
@@ -334,7 +339,14 @@ bu_free(genptr_t ptr, const char *str)
 #ifndef _WIN32
     /* !!! Windows apparently does not like this. */
     /* TODO: figure out why. */
-    *((int *)ptr) = -1;	/* zappo! */
+    /* Here we wipe out the first four bytes before free() as a basic
+     * memory safeguard.  This should wipe out half of any magic
+     * number header in structures and provide a distinct memory
+     * footprint if this memory address happens to be accessed via
+     * some other pointer.  If the program crashes, this footprint
+     * will hopefully indicate the problem better.
+     */
+    *((uint32_t *)ptr) = 0xFFFF;	/* zappo! */
 #endif
 
     free(ptr);
