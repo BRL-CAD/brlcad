@@ -40,6 +40,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate OpenEXR (BSD licensed HDE image format)
+
 * the 'cp' command no longer draws the object that was copied --
   undoubtedly a libged change -- so restore previous functionality.
   as that behavior was not intentional and is undesirable for large
