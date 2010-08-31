@@ -2085,14 +2085,18 @@ Popup Menu    Right or Ctrl-Left
 				if {$gclen != 0} {
 				    rsyncTree [lindex $clist 1]
 				} else {
-				    # This shouldn't happen
-				    addTreePlaceholder $cnode
+				    # This shouldn't happen.
+				    puts "ArcherCore::rsyncTree - $ctext has empty child list"
 				}
 
 			    } else {
-				removeTreeNodeTag $cnode $TREE_OPENED_TAG
-				$itk_component(newtree) item $cnode -open false
-				addTreePlaceholder $cnode
+				set ctree [getTreeFromGData $cgdata]
+				set cmlist [getTreeMembers $ctree]
+				if {$cmlist != ""} {
+				    removeTreeNodeTag $cnode $TREE_OPENED_TAG
+				    $itk_component(newtree) item $cnode -open false
+				    addTreePlaceholder $cnode
+				}
 			    }
 			}
 
