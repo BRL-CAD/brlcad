@@ -346,7 +346,7 @@ bu_free(genptr_t ptr, const char *str)
      * some other pointer.  If the program crashes, this footprint
      * will hopefully indicate the problem better.
      */
-    *((uint32_t *)ptr) = 0xFFFF;	/* zappo! */
+    *((uint32_t *)ptr) = 0xFFFFFFFF;	/* zappo! */
 #endif
 
     free(ptr);
