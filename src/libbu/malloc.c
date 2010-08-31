@@ -335,18 +335,14 @@ bu_free(genptr_t ptr, const char *str)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
 
-#ifndef _WIN32
-    /* !!! Windows apparently does not like this. */
-    /* TODO: figure out why. */
-    /* Here we wipe out the first four bytes before free() as a basic
-     * memory safeguard.  This should wipe out half of any magic
-     * number header in structures and provide a distinct memory
-     * footprint if this memory address happens to be accessed via
-     * some other pointer.  If the program crashes, this footprint
-     * will hopefully indicate the problem better.
+    /* Here we wipe out the first four bytes before the actual free()
+     * as a basic memory safeguard.  This should wipe out any magic
+     * number in structures and provide a distinct memory signature if
+     * the address happens to be accessed via some other pointer or
+     * the program crashes.  While we're not guaranteed anything after
+     * free(), some implementations leave the zapped value intact.
      */
     *((uint32_t *)ptr) = 0xFFFFFFFF;	/* zappo! */
-#endif
 
     free(ptr);
 #if defined(MALLOC_NOT_MP_SAFE)
