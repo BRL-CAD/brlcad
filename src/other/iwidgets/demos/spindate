@@ -1,9 +1,0 @@
-# ----------------------------------------------------------------------
-#  DEMO: spindate in [incr Widgets]
-# ----------------------------------------------------------------------
-package require Iwidgets 4.0
-
-option add *textBackground seashell
-
-iwidgets::spindate .sd -monthformat brief
-pack .sd
