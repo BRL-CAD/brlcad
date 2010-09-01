@@ -19,6 +19,8 @@ package require Itk
 	common TYPE_SURFACE 1
 	common TYPE_VOLUME 2
 	common TYPE_PLATE 3
+
+	method update {bot}
     }
 
     itk_option define -command command Command {} {}
@@ -61,6 +63,17 @@ package require Itk
 	-sticky nw
 }
 
+# update information for bot
+::itcl::body BotPropertyBox::update {bot} {
+    $itk_component(gpane) component modfaces configure \
+	-text [bot get faces $bot]
+
+    $itk_component(gpane) component modverts configure \
+	-text [bot get vertices $bot]
+
+    set ::${itk_interior}Radio [bot get type $bot]
+}
+
 ::itcl::class TypePane {
     inherit itk::Widget
 
@@ -82,28 +95,33 @@ package require Itk
 	} {}
 
 	# add radio widgets to content frame
-	set ::radio 0
+	set ::${itk_interior}Radio 0
 	itk_component add surfRadio {
 	    ttk::radiobutton $itk_component(cframe).surfaceRadio \
 	        -text Surface \
 		-value $BotPropertyBox::TYPE_SURFACE \
-		-variable radio
+		-variable ::${itk_interior}Radio
 	} {}
 	itk_component add volRadio {
 	    ttk::radiobutton $itk_component(cframe).volumeRadio \
 	        -text Volume \
 		-value $BotPropertyBox::TYPE_VOLUME \
-		-variable radio
+		-variable ${itk_interior}Radio
 	} {}
 	itk_component add plateRadio {
 	    ttk::radiobutton $itk_component(cframe).plateRadio \
 	        -text Plate \
 		-value $BotPropertyBox::TYPE_PLATE \
-		-variable radio
+		-variable ${itk_interior}Radio
 	} {}
 
 	# select appropriate radio
-	set ::radio [bot get type $bot]
+	set ::${itk_interior}Radio [bot get type $bot]
+	
+	# disabling for now
+        $itk_component(surfRadio) configure -state disabled
+        $itk_component(volRadio) configure -state disabled
+        $itk_component(plateRadio) configure -state disabled
 
 	# display container frame
 	pack $itk_component(main) -expand yes -fill both
@@ -141,28 +159,87 @@ package require Itk
 	    ttk::frame $itk_component(main).springFrame
 	} {}
 
-	# add widgets to content frame
-	itk_component add faces {
-	    ttk::label $itk_component(cframe).faces \
-	        -text "Faces: [bot get faces $bot]"
+	# add header widgets
+	itk_component add faceslbl {
+	    ttk::label $itk_component(cframe).facesLabel \
+	        -text {Faces}
+	} {}
+	itk_component add vertlbl {
+	    ttk::label $itk_component(cframe).verticesLabel \
+	        -text {Vertices}
+	} {}
+	itk_component add orglbl {
+	    ttk::label $itk_component(cframe).originalLabel \
+		-text {Original Mesh}
+	} {}
+	itk_component add modlbl {
+	    ttk::label $itk_component(cframe).modifiedLabel \
+		-text {Working Mesh}
+	} {}
+	itk_component add hzbar {
+	    ttk::separator $itk_component(cframe).horizontalBar \
+		-orient horizontal
+	} {}
+	itk_component add vtbar {
+	    ttk::separator $itk_component(cframe).verticalBar \
+		-orient vertical
 	} {}
 
-	itk_component add vertices {
+	# add widgets for original geometry
+	itk_component add orgfaces {
+	    ttk::label $itk_component(cframe).originalFaces \
+	        -text [bot get faces $bot]
+	} {}
+	itk_component add orgverts {
+	    ttk::label $itk_component(cframe).originalVertices \
+	        -text [bot get vertices $bot]
+	} {}
+
+	# add widgets for modified geometry 
+	itk_component add modfaces {
+	    ttk::label $itk_component(cframe).faces \
+	        -text [bot get faces $bot]
+	} {}
+	itk_component add modverts {
 	    ttk::label $itk_component(cframe).vertices \
-	        -text "Vertices: [bot get vertices $bot]"
+	        -text [bot get vertices $bot]
 	} {}
 
 	# display container frame
 	pack $itk_component(main) -expand yes -fill both
-
-	# display layout frames in container frame
-	grid $itk_component(cframe) -row 0 -column 0
-	grid $itk_component(sframe) -row 1 -column 0 -sticky news
 	grid rowconfigure $itk_component(main) 1 -weight 1
 	grid columnconfigure $itk_component(main) 0 -weight 1
 
-	# display widgets in content frame - no expansion
-	grid $itk_component(faces) -row 0 -column 0 -sticky nw
-	grid $itk_component(vertices) -row 1 -column 0 -sticky nw
+	# display layout frames in container frame
+	grid $itk_component(sframe) -row 1 -column 0 \
+	    -sticky news
+	grid $itk_component(cframe) -row 0 -column 0 \
+	    -padx {0 10} -pady {10 0}
+	grid rowconfigure $itk_component(cframe) {1 2 3} -weight 1
+	grid columnconfigure $itk_component(cframe) {1 2 3} -weight 1
+
+	# display top headers 
+	grid $itk_component(modlbl) -row 0 -column 2 \
+	    -padx {0 5}
+	grid $itk_component(orglbl) -row 0 -column 3 \
+	    -padx {5 0}
+	grid $itk_component(hzbar) -row 1 -column 2 \
+	    -columnspan 2 \
+	    -sticky ew
+
+	# display side headers
+	grid $itk_component(faceslbl) -row 2 -column 0
+	grid $itk_component(vertlbl) -row 3 -column 0
+	grid $itk_component(vtbar) -row 2 -column 1 \
+	    -rowspan 2 \
+	    -sticky ns
+
+	# display widgets for modified geometry
+	grid $itk_component(modfaces) -row 2 -column 2
+	grid $itk_component(modverts) -row 3 -column 2
+
+	# display widgets for original geometry
+	grid $itk_component(orgfaces) -row 2 -column 3
+	grid $itk_component(orgverts) -row 3 -column 3
     }
 }

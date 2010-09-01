@@ -329,7 +329,7 @@ CurveTree::getVerticalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)
     tangent = curve->TangentAt(min);
     if (NEAR_ZERO(tangent.x, TOL2))
 	return min;
-		
+
     tanmin = (tangent[X] < 0.0);
     while ((max-min) > TOL2) {
 	mid = (max + min)/2.0;
@@ -361,7 +361,7 @@ CurveTree::getHorizontalTangent(const ON_Curve *curve, fastf_t min, fastf_t max)
     tangent = curve->TangentAt(min);
     if (NEAR_ZERO(tangent.y, TOL2))
 	return min;
-	
+
     tanmin = (tangent[Y] < 0.0);
     while ((max-min) > TOL2) {
 	mid = (max + min)/2.0;
@@ -390,7 +390,7 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_
 
     tangent1 = curve->TangentAt(t[0]);
     tangent2 = curve->TangentAt(t[1]);
-    
+
     tanx1 = (tangent1[X] < 0.0);
     tanx2 = (tangent2[X] < 0.0);
     tany1 = (tangent1[Y] < 0.0);
@@ -400,7 +400,7 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_
     tany_changed =(tany1 != tany2);
 
     tan_changed = tanx_changed || tany_changed;
-    
+
     if (tan_changed) {
 	if (tanx_changed && tany_changed) {//horz & vert simply split
 	    double midpoint = (t[1]+t[0])/2.0;
@@ -421,25 +421,25 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_
 	bool slopey, slopey_changed;
 	bool slope_changed;
 	fastf_t xdelta, ydelta;
-	
+
 	p1 = curve->PointAt(t[0]);
 	p2 = curve->PointAt(t[1]);
-	
+
 	xdelta = (p2[X] - p1[X]);
 	slopex = (xdelta < 0.0);
 	ydelta = (p2[Y] - p1[Y]);
 	slopey = (ydelta < 0.0);
-	
+
 	if (NEAR_ZERO(xdelta, TOL) ||
 	    NEAR_ZERO(ydelta, TOL)) {
 	    return true;
 	}
-	
+
 	slopex_changed = (slopex != tanx1);
 	slopey_changed = (slopey != tany1);
 
 	slope_changed = slopex_changed || slopey_changed;
-			
+
 	if (slope_changed) {  //2 horz or 2 vert changes simply split
 	    double midpoint = (t[1]+t[0])/2.0;
 	    ON_Interval left(t[0], midpoint);
@@ -458,7 +458,7 @@ CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, 
 {
     BRNode* node;
     fastf_t vdot = 1.0;
-	
+
     if (isLeaf) {
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
 	node = new BRNode(curve, adj_face_index, bb, m_face, t, vdot, innerTrim);
@@ -505,7 +505,7 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
     points[0]=ON_3dPoint(minpt);
     points[1]=ON_3dPoint(maxpt);
     ON_BoundingBox bb(points[0], points[1]);
-		
+
     ON_Interval t(min, max);
     if (isLinear(curve, min, max) || divDepth >= BREP_MAX_LN_DEPTH) {
 	double delta = (max - min)/(BREP_BB_CRV_PNT_CNT-1);
@@ -517,7 +517,7 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
 	}
 	pnt = curve->PointAt(max);
 	VSET(pnts[BREP_BB_CRV_PNT_CNT-1], pnt[0], pnt[1], pnt[2]);
-			
+
 	VSETALL(minpt, MAX_FASTF);
 	VSETALL(maxpt, -MAX_FASTF);
 	for (int i = 0; i < BREP_BB_CRV_PNT_CNT; i++)
@@ -542,7 +542,7 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
 
 
 /**
- * Determine whether a given curve segment is linear 
+ * Determine whether a given curve segment is linear
  */
 bool
 CurveTree::isLinear(const ON_Curve* curve, double min, double max)
@@ -551,11 +551,11 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
     ON_3dVector tangent_end = curve->TangentAt(max);
     double vdot = tangent_start * tangent_end;
     if (vdot <  BREP_CURVE_FLATNESS)
-    	return false;
+	return false;
 
     ON_3dPoint pmin = curve->PointAt(min);
     ON_3dPoint pmax = curve->PointAt(max);
-		
+
     const ON_Surface* surf = m_face->SurfaceOf();
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
@@ -564,10 +564,10 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
     VSET(b, u[1], v[1], 0.0);
     double dd = DIST_PT_PT(a, b);
     double cd = DIST_PT_PT(pmin, pmax);
-		
+
     if (cd > BREP_TRIM_SUB_FACTOR*dd)
 	return false;
-		
+
     double delta = (max - min)/(BREP_BB_CRV_PNT_CNT-1);
     ON_3dPoint points[BREP_BB_CRV_PNT_CNT];
     for (int i=0;i<BREP_BB_CRV_PNT_CNT-1;i++) {
@@ -587,7 +587,7 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 	if (vdot < BREP_CURVE_FLATNESS)
 	    return false; //already failed
     }
-		
+
     return vdot >= BREP_CURVE_FLATNESS;
 }
 
@@ -727,7 +727,7 @@ SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_norm
     VSETALL(max, -MAX_FASTF);
     for (int i = 0; i < 9; i++)
 	VMINMAX(min, max, ((double*)m_corners[i]));
-	
+
     // calculate the estimate point on the surface: i.e. use the point
     // on the surface defined by (u.Mid(), v.Mid()) as a heuristic for
     // finding the uv domain bounding a portion of the surface close
@@ -737,11 +737,11 @@ SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_norm
     ON_3dVector normal;
     estimate = m_corners[4];
     normal = m_normals[4];
-	
+
     BBNode* node;
     if (isLeaf) {
 	vect_t delta;
-		
+
 	VSUB2(min, min, buffer);
 	VADD2(max, max, buffer);
 	VSUB2(delta, max, min);
@@ -755,7 +755,7 @@ SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_norm
 			  m_face,
 			  u, v);
 	node->prepTrims();
-					
+
     } else {
 	node = new BBNode(ctree, ON_BoundingBox(ON_3dPoint(min),
 						ON_3dPoint(max)));
@@ -821,7 +821,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	/*********************************************************************
 	 * In order to avoid fairly expensive re-calculation of 3d points at
 	 * uv coordinates, all values that are shared between children at
-	 * the same depth of a surface subdivision are pre-computed and 
+	 * the same depth of a surface subdivision are pre-computed and
 	 * passed as paramters.
 	 *
 	 * The majority of these points are already evaluated in the process
@@ -829,11 +829,11 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	 * values are in the normals and corners arrays and have index values
 	 * corresponding to the values of the figure on the left below.  There
 	 * are four other shared values that are precomputed in the sharedcorners
-	 * and sharednormals arrays; their index values in those arrays are 
+	 * and sharednormals arrays; their index values in those arrays are
 	 * illustrated in the figure on the right:
 	 *
-	 * 
-	 *   3-------------------2      +---------2---------+      
+	 *
+	 *   3-------------------2      +---------2---------+
 	 *   |                   |      |                   |
 	 *   |    6         8    |      |                   |
 	 *   |                   |      |                   |
@@ -842,8 +842,8 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	 *   |    5         7    |      |                   |
 	 *   |                   |      |                   |
 	 *   0-------------------1      +---------0---------+
-	 *             U                          U         
-	 * 
+	 *             U                          U
+	 *
 	 *   Values inherited from      Values pre-prepared in
 	 *   parent subdivision         shared arrays
 	 *
@@ -859,7 +859,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	 *    |               |     |               |
 	 *    |               |     |               |
 	 *    S1--------------4     4--------------S3
-	 *            U                     U         
+	 *            U                     U
 	 *
 	 *        Quadrant 3            Quadrant 2
 	 *
@@ -870,7 +870,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	 *    |               |     |               |
 	 *    |               |     |               |
 	 *    0--------------S0     S0--------------1
-	 *             U                         U         
+	 *             U                         U
 	 *
 	 *        Quadrant 0            Quadrant 1
 	 *
@@ -884,7 +884,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	surf->EvNormal(u.Min(), v.Mid(), sharedcorners[1], sharednormals[1]);
 	surf->EvNormal(u.Mid(), v.Max(), sharedcorners[2], sharednormals[2]);
 	surf->EvNormal(u.Max(), v.Mid(), sharedcorners[3], sharednormals[3]);
-	    
+
 	ON_3dPoint *newcorners;
 	ON_3dVector *newnormals;
 	newcorners = (ON_3dPoint *)bu_malloc(9*sizeof(ON_3dPoint), "new corners");
@@ -935,10 +935,10 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	quads[3] = subdivideSurface(u.ParameterAt(first), v.ParameterAt(second), newcorners, newnormals, divDepth+1);
 	bu_free(newcorners, "free subsurface corners array");
 	bu_free(newnormals, "free subsurface normals array");
-	    
+
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
-	
+
 	for (int i = 0; i < 4; i++) {
 	    if (!(quads[i]->m_trimmed)) {
 		parent->m_trimmed = false;
@@ -976,7 +976,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
  *
  * We're using a slightly different placement of the interior normal
  * tests to save on calculations
- * 
+ *
  *   +-------------------+
  *   |                   |
  *   |    +         +    |
@@ -987,7 +987,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
  *   |                   |
  *   +-------------------+
  *             U
- * 
+ *
  *
  * The "+" indicates the normal sample.
  *
@@ -1005,9 +1005,9 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
  *   0-------------------1
  *             U
  *
- * The actual values used in the flatness test are 0, 1, 2, 3 and 
+ * The actual values used in the flatness test are 0, 1, 2, 3 and
  * 5, 6, 7, 8 - the center point is not used.
- * 
+ *
  */
 
 #define NE 1
@@ -1022,7 +1022,7 @@ SurfaceTree::isFlat(const ON_Surface* UNUSED(surf), ON_3dVector *m_normals, cons
     for (int i = 0; i < 4; i++) {
 	normals[i] = m_normals[i];
     }
-	
+
     for (int i = 4; i < 8; i++) {
 	normals[i] = m_normals[i+1];
     }
@@ -1543,7 +1543,7 @@ sortX(BRNode* first, BRNode* second)
 
     if (first_min[X] < second_min[X])
 	return true;
-    else 
+    else
 	return false;
 }
 
@@ -1558,7 +1558,7 @@ bool sortY(BRNode* first, BRNode* second)
 
     if (first_min[Y] < second_min[Y])
 	return true;
-    else 
+    else
 	return false;
 }
 

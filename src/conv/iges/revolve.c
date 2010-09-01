@@ -71,7 +71,7 @@ revolve( entityno )
     struct ptlist	*curv_pts, *ptr;		/* Pointer to a linked list of npts points along curve */
     int		ntrcs;			/* number of "TRC" solids used */
     vect_t		tmp;			/* temporary storage for a vector */
-    struct trclist	*trcs, *trcptr, *ptr2;	/* Pointers to linked list of TRC`s */
+    struct trclist	*trcs, *trcptr, *trcptr_tmp, *ptr2;	/* Pointers to linked list of TRC`s */
     fastf_t		r2;			/* TRC radius */
     fastf_t		hmax, hmin;		/* Max and Min distances along axis of rotation */
     fastf_t		rmax;			/* Max radius */
@@ -448,8 +448,9 @@ revolve( entityno )
     trcptr = trcs;
     while ( trcptr != NULL )
     {
+	trcptr_tmp = trcptr->next;
 	bu_free( (char *)trcptr, "Revolve: trcptr" );
-	trcptr = trcptr->next;
+	trcptr = trcptr_tmp;
     }
     return 1;
 }

@@ -32,8 +32,8 @@ PKG_STUB_OBJECTS = @PKG_STUB_OBJECTS@
 PKG_LIB_FILE	= @PKG_LIB_FILE@
 PKG_STUB_LIB_FILE = @PKG_STUB_LIB_FILE@
 
-lib_BINARIES	= $(PKG_LIB_FILE)
-BINARIES	= $(lib_BINARIES) html.css
+# lib_BINARIES	= $(PKG_LIB_FILE)
+# BINARIES	= $(lib_BINARIES)
 
 SHELL		= @SHELL@
 
@@ -64,7 +64,7 @@ PACKAGE_VERSION	= @PACKAGE_VERSION@
 CC		= @CC@
 CFLAGS_DEFAULT	= @CFLAGS_DEFAULT@
 CFLAGS_WARNING	= @CFLAGS_WARNING@
-CLEANFILES	= @CLEANFILES@
+CLEANFILES	= @CLEANFILES@ $(BUILT_SOURCES) $(BUILT_EXTRA)
 EXEEXT		= @EXEEXT@
 LDFLAGS_DEFAULT	= @LDFLAGS_DEFAULT@ ${LDFLAGS}
 MAKE_LIB	= @MAKE_LIB@
@@ -109,7 +109,7 @@ WISH		= $(TCLSH_ENV) $(WISH_PROG)
 SHARED_BUILD	= @SHARED_BUILD@
 
 #INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@
-INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@
+INCLUDES	= @PKG_INCLUDES@ @TCL_INCLUDES@ @TK_INCLUDES@ @TK_XINCLUDES@ -I$(srcdir)/src -I$(srcdir) -I$(top_builddir)
 
 PKG_CFLAGS	= @PKG_CFLAGS@
 
@@ -246,103 +246,113 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 # As necessary, add $(srcdir):$(srcdir)/compat:....
 #========================================================================
 
-VPATH = $(srcdir):$(srcdir)/src:$(srcdir)/unix:$(srcdir)/win:.
+# VPATH = $(srcdir):$(srcdir)/src:$(srcdir)/unix:$(srcdir)/win:.
 
 HDR = $(GENHDR) $(SRCHDR)
 
-css.o: cssprop.h htmltokens.h
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/css.c -o $@
+lib_LTLIBRARIES = libTkhtml.la
 
-cssdynamic.o: cssprop.h htmltokens.h
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/cssdynamic.c -o $@
+libTkhtml_la_LDFLAGS = -module
 
-cssparser.o: cssprop.h htmltokens.h
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/cssparser.c -o $@
+noinst_HEADERS = \
+	src/css.h \
+	src/cssInt.h \
+	src/html.h \
+	src/htmllayout.h \
+	src/htmlmacros.h \
+	src/htmlprop.h \
+	src/restrack.h \
+	src/swproc.h
 
-csssearch.o: cssprop.h htmltokens.h
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/csssearch.c -o $@
+libTkhtml_la_SOURCES = \
+	$(compiled_srcs) \
+	src/css.c \
+	src/cssdynamic.c \
+	src/cssparser.c \
+	src/csssearch.c \
+	src/htmldecode.c \
+	src/htmldraw.c \
+	src/htmlfloat.c \
+	src/htmlhash.c \
+	src/htmlimage.c \
+	src/htmlinline.c \
+	src/htmllayout.c \
+	src/htmlparse.c \
+	src/htmlprop.c \
+	src/htmlstyle.c \
+	src/htmltable.c \
+	src/htmltagdb.c \
+	src/htmltcl.c \
+	src/htmltext.c \
+	src/htmltree.c \
+	src/htmlutil.c \
+	src/restrack.c \
+	src/swproc.c
 
-htmldraw.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmldraw.c -o $@
+compiled_srcs = \
+	cssprop.c
 
-htmlfloat.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlfloat.c -o $@
+BUILT_SOURCES = \
+	$(compiled_srcs) \
+	htmldefaultstyle.c \
+	htmltokens.c
 
-htmlhash.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlhash.c -o $@
+BUILT_EXTRA = \
+	cssprop.h \
+	cssprop.tcl \
+	htmltokens.h \
+	tokenlist.txt
 
-htmlw.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlw.c -o $@
+# ensure everyone is dependent upon cssprop.h so parallel make can
+# succeed.  Inclusion is: cssprop.h -> css.h -> cssInt.h|html.h -> *.c
+src/css.c: cssprop.h
+src/cssdynamic.c: cssprop.h
+src/cssparser.c: cssprop.h
+src/csssearch.c: cssprop.h
+src/htmldecode.c: cssprop.h
+src/htmldraw.c: cssprop.h
+src/htmlfloat.c: cssprop.h
+src/htmlhash.c: cssprop.h
+src/htmlimage.c: cssprop.h
+src/htmlinline.c: cssprop.h
+src/htmllayout.c: cssprop.h
+src/htmlparse.c: cssprop.h
+src/htmlprop.c: cssprop.h
+src/htmlstyle.c: cssprop.h
+src/htmltable.c: cssprop.h
+src/htmltagdb.c: cssprop.h
+src/htmltcl.c: cssprop.h
+src/htmltext.c: cssprop.h
+src/htmltree.c: cssprop.h
+src/htmlutil.c: cssprop.h
+src/restrack.c: cssprop.h
+src/swproc.c: cssprop.h
 
-htmlimage.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlimage.c -o $@
-
-htmlinline.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlinline.c -o $@
-
-htmllayout.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmllayout.c -o $@
-
-htmlparse.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlparse.c -o $@
-
-htmlprop.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlprop.c -o $@
-
-htmlstyle.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlstyle.c -o $@
-
-htmltagdb.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltagdb.c -o $@
-
-htmltable.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltable.c -o $@
-
-htmltcl.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltcl.c -o $@
-
-htmltree.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltree.c -o $@
-
-swproc.o:
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/swproc.c -o $@
-
-restrack.o:
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/restrack.c -o $@
-
-htmldecode.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmldecode.c -o $@
-
-htmltext.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmltext.c -o $@
-
-htmlutil.o: htmltokens.h htmldefaultstyle.c
-	$(COMPILE) -c -I. -I$(srcdir)/src $(srcdir)/src/htmlutil.c -o $@
-
-html.h:
 
 #========================================================================
 # The special targets to generate C code from tcl and lemon files are 
 # here:
 
-htmltokens.c:	$(srcdir)/src/tokenlist.txt
-	$(TCLSH) $?
+htmldefaultstyle.c: $(top_srcdir)/src/mkdefaultstyle.tcl
+	$(TCLSH) $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
 
-htmldefaultstyle.c: $(srcdir)/src/tkhtml.tcl  $(srcdir)/src/html.css \
-                    $(srcdir)/src/mkdefaultstyle.tcl 
-	$(TCLSH) $(srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
 
-htmltokens.h: htmltokens.c
+tokenlist.txt:
+	test -f tokenlist.txt || cp $(top_srcdir)/src/tokenlist.txt .
 
-cssprop.o: cssprop.h htmltokens.h
-	$(COMPILE) -c -I. -I$(srcdir)/src $(top_builddir)/cssprop.c -o $@
+htmltokens.h: tokenlist.txt
+	$(TCLSH) tokenlist.txt
 
-cssprop.h: $(srcdir)/src/cssprop.tcl
-	$(TCLSH) $?
+htmltokens.c: htmltokens.h
 
-cssprop.c: cssprop.h
 
 cssprop.tcl:
+	cp $(top_srcdir)/src/cssprop.tcl .
+
+cssprop.h: cssprop.tcl
+	test -f cssprop.h || $(TCLSH) cssprop.tcl
+
+cssprop.c: cssprop.h
 
 
 #========================================================================
@@ -357,7 +367,8 @@ cssprop.tcl:
 # 	( echo pkg_mkIndex -load Tk . \; exit; ) | $(WISH)
 
 pkgIndex.tcl:
-	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir $(PKG_LIB_FILE)]]' > pkgIndex.tcl
+	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir libTkhtml.so]]' > pkgIndex.tcl
+#	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir $(PKG_LIB_FILE)]]' > pkgIndex.tcl
 
 
 #========================================================================
@@ -495,48 +506,19 @@ uninstall-doc:
 	done
 
 EXTRA_DIST = \
+	$(BUILT_EXTRA) \
+	$(BUILT_SOURCES) \
 	doc/html.man \
 	doc/macros.tcl \
 	doc/tkhtml_requirements.tcl \
 	doc/tree.fig \
 	doc/tree.gif \
-	src/css.c \
-	src/cssdynamic.c \
-	src/css.h \
-	src/cssInt.h \
-	src/cssparser.c \
-	src/cssprop.tcl \
-	src/csssearch.c \
 	src/html.css \
-	src/htmldecode.c \
-	src/htmldraw.c \
-	src/htmlfloat.c \
-	src/html.h \
-	src/htmlhash.c \
-	src/htmlimage.c \
-	src/htmlinline.c \
-	src/htmllayout.c \
-	src/htmllayout.h \
-	src/htmlmacros.h \
-	src/htmlparse.c \
-	src/htmlprop.c \
-	src/htmlprop.h \
-	src/htmlstyle.c \
-	src/htmltable.c \
-	src/htmltagdb.c \
 	src/htmltcl.c \
-	src/htmltext.c \
-	src/htmltree.c \
-	src/htmlutil.c \
 	src/main.c \
 	src/mkdefaultstyle.tcl \
 	src/quirks.css \
-	src/restrack.c \
-	src/restrack.h \
-	src/swproc.c \
-	src/swproc.h \
 	src/tkhtml.tcl \
-	src/tokenlist.txt \
 	tclconfig/README.txt \
 	tclconfig/tcl.m4
 

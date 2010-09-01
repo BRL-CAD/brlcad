@@ -1162,6 +1162,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	return GED_ERROR;
     }
 
+    bu_vls_printf(&gedp->ged_result_str, "%s", argv[2]);
     return GED_OK;
 }
 

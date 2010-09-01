@@ -110,7 +110,9 @@ namespace eval ArcherCore {
 	method primaryToolbarRemoveItem  {_index}
 	method closeHierarchy {}
 	method openHierarchy {{_fraction 30}}
-	method refreshTree {{_restore 1}}
+	method rebuildTree {}
+	method rsyncTree {_pnode}
+	method syncTree {}
 	method mouseRay {_dm _x _y}
 	method shootRay {_start _op _target _prep _no_bool _onehit}
 	method addMouseRayCallback {_callback}
@@ -694,7 +696,7 @@ Popup Menu    Right or Ctrl-Left
 	method primaryToolbarRemove     {_index}
 
 	# tree commands
-	method updateTree        {{_cflag 0}}
+	method updateTreeDrawLists        {{_cflag 0}}
 	method fillTree          {_pnode _ctext {_flat 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
@@ -716,6 +718,10 @@ Popup Menu    Right or Ctrl-Left
 	method selectTreePath {_path}
 	method setTreeView {{_rflag 0}}
 	method toggleTreeView {}
+	method treeNodeHasBeenOpened {_node}
+	method treeNodeIsOpen {_node}
+	method purgeNodeData {_node}
+	method updateTreeTopWithName {_name}
 
 	# db/display commands
 	method getNodeChildren  {_node}
@@ -1114,10 +1120,10 @@ Popup Menu    Right or Ctrl-Left
 	    # Do nothing
 	}
 	1 {
-	    catch {updateTree}
+	    catch {updateTreeDrawLists}
 	}
 	default {
-	    catch {refreshTree}
+	    catch {syncTree}
 	}
     }
     SetNormalCursor $this
@@ -1801,7 +1807,7 @@ Popup Menu    Right or Ctrl-Left
     grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
     set mDbType ""
 
-    refreshTree 0
+    rebuildTree
 }
 
 ::itcl::body ArcherCore::newDb {} {
@@ -1945,7 +1951,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(vpane) fraction $fraction [expr {100 - $fraction}]
 }
 
-::itcl::body ArcherCore::refreshTree {{_restore 1}} {
+::itcl::body ArcherCore::rebuildTree {} {
     foreach node [array names mNode2Text] {
 	catch {$itk_component(newtree) delete $node}
     }
@@ -1981,7 +1987,199 @@ Popup Menu    Right or Ctrl-Left
 	fillTree {} $item $mEnableListView
     }
 
-    updateTree
+    updateTreeDrawLists
+}
+
+##
+# This routine expects mEnableListView to be 0.
+#
+::itcl::body ArcherCore::rsyncTree {_pnode} {
+    set ptext $mNode2Text($_pnode)
+
+    # Is _pnode currently set up for children?
+    if {![catch {set clists $mPNode2CList($_pnode)}]} {
+
+	set pgdata [$itk_component(ged) get $ptext]
+	set tree [getTreeFromGData $pgdata]
+	set mlist [getTreeMembers $tree]
+
+	# Reconcile clists (i.e. the tree's view)
+	# with mlist (i.e. the database's view).
+
+	set clen [llength $clists]
+	switch -- $clen {
+	    0 {
+		# This shouldn't happen.
+		puts "ArcherCore::rsyncTree - $ptext has empty child list"
+	    }
+	    default {
+		foreach clist $clists {
+		    set ctext [lindex $clist 0]
+		    if {$ctext == $TREE_PLACEHOLDER_TAG} {
+			if {$mlist == {}} {
+			    # Since there are NO children, remove the placeholder
+			    $itk_component(newtree) delete [lindex $clist 1]
+			    unset mPNode2CList($_pnode)
+
+			} else {
+			    # There are children so keep the placeholder since
+			    # the parent node has not been opened.
+
+			    set mlist {}
+			}
+
+			continue
+		    }
+
+		    set cnode [lindex $clist 1]
+
+		    set i [lsearch $mlist $ctext]
+		    if {$i == -1} {
+			purgeNodeData $cnode
+			$itk_component(newtree) delete $cnode
+			continue
+		    }
+
+		    set mlist [lreplace $mlist $i $i]
+
+		    if {[catch {$itk_component(ged) get $ctext} cgdata]} {
+			# In here, the child node refers to non-existent geometry
+			# so update the image and remove any grandchildren etc.
+
+			set op [getTreeOp $ptext $ctext]
+			set img [getTreeImage $ctext "invalid" $op]
+			$itk_component(newtree) item $cnode -image $img
+
+			# Remove all grandchildren
+			if {![catch {set gclists $mPNode2CList($cnode)}]} {
+			    foreach gclist $gclists {
+				set gctext [lindex $gclist 0]
+				set gcnode [lindex $gclist 1]
+
+				if {$gctext == $TREE_PLACEHOLDER_TAG} {
+				    unset mPNode2CList($cnode)
+				} else {
+				    purgeNodeData $gcnode
+				}
+
+				$itk_component(newtree) delete $gcnode
+			    }
+			}
+		    } else {
+			# The child node refers to geometry that exists. The image
+			# needs to be updated in case we're going from non-existent
+			# to existent geometry.
+
+			set ctype [lindex $cgdata 0]
+			set isregion [isRegion $cgdata]
+			set op [getTreeOp $ptext $ctext]
+			set img [getTreeImage $ctext $ctype $op $isregion]
+
+			# Also, for combinations the placeholders and
+			# TREE_OPENED_TAGs might need updating.
+			if {$ctype == "comb"} {
+			    # Possibly add a place holder
+			    if {![catch {set gclists $mPNode2CList($cnode)}]} {
+				set gclen [llength $gclists]
+
+				if {$gclen != 0} {
+				    rsyncTree [lindex $clist 1]
+				} else {
+				    # This shouldn't happen.
+				    puts "ArcherCore::rsyncTree - $ctext has empty child list"
+				}
+
+			    } else {
+				set ctree [getTreeFromGData $cgdata]
+				set cmlist [getTreeMembers $ctree]
+				if {$cmlist != ""} {
+				    removeTreeNodeTag $cnode $TREE_OPENED_TAG
+				    $itk_component(newtree) item $cnode -open false
+				    addTreePlaceholder $cnode
+				}
+			    }
+			}
+
+			$itk_component(newtree) item $cnode -image $img
+		    }
+		}
+	    }
+	}
+
+	# Anything leftover in mlist needs to be added
+	foreach member $mlist {
+	    fillTree $_pnode $member $mEnableListView
+	}
+    } else {
+	set pgdata [$itk_component(ged) get $ptext]
+	set ptype [lindex $pgdata 0]
+	if {$ptype == "comb"} {
+	    set tree [getTreeFromGData $pgdata]
+	    set mlist [getTreeMembers $tree]
+	    if {$mlist != ""} {
+		removeTreeNodeTag $_pnode $TREE_OPENED_TAG
+		$itk_component(newtree) item $_pnode -open false
+		addTreePlaceholder $_pnode
+	    }
+	}
+    }
+}
+
+##
+# Synchronize the tree view with the database.
+#
+::itcl::body ArcherCore::syncTree {} {
+    # Get list of toplevel tree items
+    if {$mEnableListView} {
+	set items [lsort -dictionary [$itk_component(ged) ls]]
+    } else {
+	set items [lsort -dictionary [$itk_component(ged) tops]]
+    }
+
+    set scrubbed_items {}
+    foreach item $items {
+	set item [regsub {/.*} $item {}]
+	lappend scrubbed_items  $item
+    }
+
+    # Get rid of toplevel tree nodes that are no
+    # longer valid (i.e. either they don't exist or they
+    # belong to atleast one combination).
+    if {![catch {set clists $mPNode2CList()}]} {
+	foreach clist $clists {
+	    set ctext [lindex $clist 0]
+
+	    # Checking for the existence of ctext
+	    if {[catch {$itk_component(ged) attr show $ctext} adata]} {
+		# ctext doesn't exist
+		set cnode [lindex $clist 1]
+		purgeNodeData $cnode
+		$itk_component(newtree) delete $cnode
+	    } elseif {!$mEnableListView} {
+		# Make sure ctext is a valid toplevel
+		set i [lsearch $scrubbed_items $ctext]
+		if {$i == -1} {
+		    # ctext does exist, but is not a toplevel tree node
+		    set cnode [lindex $clist 1]
+		    purgeNodeData $cnode
+		    $itk_component(newtree) delete $cnode
+		}
+	    }
+	}
+    }
+
+    # Make sure each item has a tree node
+    foreach item $scrubbed_items {
+	set cnode [getCNodeFromCText {} $item]
+
+	if {$cnode == ""} {
+	    fillTree {} $item $mEnableListView
+	} elseif {!$mEnableListView} {
+	    rsyncTree $cnode
+	}
+    }
+
+    updateTreeDrawLists
 }
 
 ::itcl::body ArcherCore::mouseRay {_dm _x _y} {
@@ -2146,7 +2344,7 @@ Popup Menu    Right or Ctrl-Left
     # remove from tree
 #    set parent [$itk_component(tree) query -parent $element]
 #    $itk_component(tree) remove $element $parent
-#    refreshTree
+#    rebuildTree
     SetNormalCursor $this
 }
 
@@ -2157,7 +2355,7 @@ Popup Menu    Right or Ctrl-Left
     set comp2 [string trim [$top.entry get]]
     wm withdraw $top
     gedCmd $cmd $comp
-    refreshTree
+    syncTree
     SetNormalCursor $this
     destroy $top
 }
@@ -2390,7 +2588,7 @@ Popup Menu    Right or Ctrl-Left
     if {!$mEnableListView} {
 	getTreeNode $path 1
     }
-    updateTree
+    updateTreeDrawLists
     putString "erase $path"
     set mStatusStr "erase $path"
 }
@@ -2837,7 +3035,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     if {$updateTree} {
-	updateTree
+	updateTreeDrawLists
     }
 
     if {$wflag} {
@@ -3054,7 +3252,7 @@ Popup Menu    Right or Ctrl-Left
 #                     TREE COMMANDS
 # ------------------------------------------------------------
 
-::itcl::body ArcherCore::updateTree {{_cflag 0}} {
+::itcl::body ArcherCore::updateTreeDrawLists {{_cflag 0}} {
     foreach node $mNodePDrawList {
 	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
     }
@@ -3130,12 +3328,17 @@ Popup Menu    Right or Ctrl-Left
 
 	fillTreeColumns $cnode $_ctext
 
-	if {$_pnode == {}} {
+	set tree [getTreeFromGData $cgdata]
+	set mlist [getTreeMembers $tree]
+	if {$mlist != ""} {
+	    removeTreeNodeTag $cnode $TREE_OPENED_TAG
+	    $itk_component(newtree) item $cnode -open false
 	    addTreePlaceholder $cnode
 	}
     } else {
 	set isregion [isRegion $cgdata]
-	set img [getTreeImage $_ctext $ctype "" $isregion]
+	set op [getTreeOp $ptext $_ctext]
+	set img [getTreeImage $_ctext $ctype $op $isregion]
 	set cnode [$itk_component(newtree) insert $_pnode end \
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
@@ -3411,10 +3614,9 @@ Popup Menu    Right or Ctrl-Left
 	return ""
     }
 
-    foreach clist $clists {
-	if {[lindex $clist 0] == $_text} {
-	    return [lindex $clist 1]
-	}
+    set i [lsearch -index 0 $clists $_text]
+    if {$i != -1} {
+	return [lindex [lindex $clists $i] 1]
     }
 
     return ""
@@ -3636,20 +3838,11 @@ Popup Menu    Right or Ctrl-Left
 
 		# Add gchild members
 		fillTree $cnode $gctext
-
-		set gctype [lindex $gcgdata 0]
-
-		if {$gctype == "comb"} {
-		    set gcnode [getCNodeFromCText $cnode $gctext]
-
-		    # Add a placeholder for gcnode's possible members
-		    addTreePlaceholder $gcnode
-		}
 	    }
 	}
     }
 
-    updateTree
+    updateTreeDrawLists
     SetNormalCursor $this
 }
 
@@ -3785,17 +3978,27 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    set obj [lindex [split $_path /] end]
+
     if {$mEnableListView} {
-	set obj [lindex [split $_path /] end]
+	set mSelectedObj $obj
+	set mSelectObjPath $obj
 	$itk_component(newtree) selection set [lindex [lindex $mText2Node($obj) 0] 0]
     } else {
 	getTreeNode $_path 1
 	set snode [$itk_component(newtree) focus]
+	set mSelectedObjPath ""
 
 	if {$snode == {}} {
+	    set mSelectedObj ""
 	    putString $_path
 	} else {
+	    set mSelectedObj $obj
 	    $itk_component(newtree) selection set $snode
+	    foreach pnode [lreverse [findTreeParentNodes $snode]] {
+		append mSelectedObjPath $mNode2Text($pnode) "/"
+	    }
+	    append mSelectedObjPath $mNode2Text($snode)
 	}
     }
 }
@@ -3812,7 +4015,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(newtree) heading \#0 -text $text
 
     if {$_rflag} {
-	refreshTree
+	rebuildTree
 
 	if {$mEnableListView} {
 	    selectTreePath $mSelectedObj
@@ -3835,6 +4038,139 @@ Popup Menu    Right or Ctrl-Left
     }
 
     setTreeView 1
+}
+
+::itcl::body ArcherCore::treeNodeHasBeenOpened {_node} {
+    set tags [$itk_component(newtree) item $_node -tags]
+    set ai [lsearch $tags $TREE_OPENED_TAG]
+    if {$ai == -1} {
+	return 0
+    }
+
+    return 1
+}
+
+::itcl::body ArcherCore::treeNodeIsOpen {_node} {
+    return [$itk_component(newtree) item $_node -open]
+}
+
+#
+# Delete any use of _node and its descendents in the data
+# variables that are used to interact with the tree viewer.
+#
+::itcl::body ArcherCore::purgeNodeData {_node} {
+    if {[info exists mPNode2CList($_node)]} {
+	foreach sublist $mPNode2CList($_node) {
+	    if {[lindex $sublist 0] != $TREE_PLACEHOLDER_TAG} {
+		purgeNodeData [lindex $sublist 1]
+	    }
+	}
+    }
+
+    set name $mNode2Text($_node)
+    if {[info exists mText2Node($name)]} {
+	set leftovers {}
+	foreach sublist $mText2Node($name) {
+	    if {$_node != [lindex $sublist 0]} {
+		lappend leftovers $sublist
+	    }
+	}
+
+	if {$leftovers != {}} {
+	    set mText2Node($name) $leftovers
+	} else {
+	    unset mText2Node($name)
+	}
+    }
+
+    set pnode [lindex $mCNode2PList($_node) 1]
+    if {[info exists mPNode2CList($pnode)]} {
+	set leftovers {}
+	foreach sublist $mPNode2CList($pnode) {
+	    if {$_node != [lindex $sublist 1]} {
+		lappend leftovers $sublist
+	    }
+	}
+
+	if {$leftovers != {}} {
+	    set mPNode2CList($pnode) $leftovers
+	} else {
+	    unset mPNode2CList($pnode)
+	}
+    }
+
+    unset mNode2Text($_node)
+    unset mCNode2PList($_node)
+
+    set i [lsearch $mNodePDrawList $_node]
+    if {$i != -1} {
+	set mNodePDrawList [lreplace $mNodePDrawList $i $i]
+    }
+
+    set i [lsearch $mNodeDrawList $_node]
+    if {$i != -1} {
+	set mNodeDrawList [lreplace $mNodeDrawList $i $i]
+    }
+}
+
+#
+# Note -_name is expected to exist in the database.
+#
+::itcl::body ArcherCore::updateTreeTopWithName {_name} {
+    # Check to see if its okay to add a toplevel node
+    set toplist {}
+    foreach item [$itk_component(ged) tops] {
+	lappend toplist [regsub {/.*} $item {}]
+    }
+
+    set i [lsearch $toplist $_name]
+
+    # Possibly add a toplevel node to the tree
+    if {$i != -1} {
+	# Add _name if not already there.
+	set j [lsearch -index 0 $mPNode2CList() $_name]
+	if {$j == -1} {
+	    fillTree {} $_name $mEnableListView
+	}
+    } else {
+	# Not found in call to tops, so possibly need to update _name as a member
+	# of some other combination(s).
+	if {![catch {set tlists $mText2Node($_name)}]} {
+	    foreach tlist $tlists {
+		set cnode [lindex $tlist 0]
+		set pnode [lindex $tlist 1]
+		set ptext $mNode2Text($pnode)
+
+		if {[catch {$itk_component(ged) get $_name} cgdata]} {
+		    # Shouldn't happen at this point.
+		} else {
+		    set ctype [lindex $cgdata 0]
+
+		    if {!$mEnableListView} {
+			set isregion [isRegion $cgdata]
+			set op [getTreeOp $ptext $_name]
+			set img [getTreeImage $_name $ctype $op $isregion]
+
+			if {$ctype == "comb"} {
+			    # Possibly add a place holder
+			    if {![catch {set gclists $mPNode2CList($cnode)}]} {
+				set gclen [llength $gclists]
+
+				# This will probably never happen
+				if {$gclen == 0} {
+				    addTreePlaceholder $cnode
+				}
+			    } else {
+				addTreePlaceholder $cnode
+			    }
+			}
+
+			$itk_component(newtree) item $cnode -image $img
+		    }
+		}
+	    }
+	}
+    }
 }
 
 # ------------------------------------------------------------
@@ -3913,8 +4249,8 @@ Popup Menu    Right or Ctrl-Left
 	doLighting
 	deleteTargetOldCopy
 
-	# refresh tree contents
-	refreshTree 0
+	# rebuild tree contents
+	rebuildTree
     } else {
 	doLighting
     }
@@ -4658,14 +4994,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd draw $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	updateTree
+	updateTreeDrawLists
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    updateTree
+    updateTreeDrawLists
     if {$wflag} {
 	SetNormalCursor $this
     }
@@ -4711,14 +5047,14 @@ Popup Menu    Right or Ctrl-Left
 
     if {[catch {eval gedCmd erase $options $tobjects} ret]} {
 	gedCmd configure -primitiveLabels {}
-	updateTree
+	updateTreeDrawLists
 	SetNormalCursor $this
 
 	return $ret
     }
 
     gedCmd configure -primitiveLabels {}
-    updateTree
+    updateTreeDrawLists
     SetNormalCursor $this
 }
 

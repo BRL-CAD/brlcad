@@ -28,19 +28,26 @@ if {[catch {
 
     public {
 	common _ ""
-
-	method onChange {}
-	method accept {}
-	method reject {}
-
+	
 	proc defineCommands {prefix}
 	proc localizeDialog {d}
 	proc focusOnEnter {d}
+
+	method giveFeedback {}
+	method animate {}
+	method onChange {}
+	method updateStatus {msg} {}
+	method accept {}
+	method reject {}
+	method cancel {}
     }    
 
     private {
 	variable original ""
 	variable copy ""
+	variable cmdDone 0
+	variable lastTime 0
+
 	method showUnsaved {show}
     }
 
@@ -62,7 +69,7 @@ if {[catch {
 
     # show name of bot being edited
     $this configure -title "[eval $this cget -title] - $bot"
-    set statusLine "editing \"$bot\""
+    set ::${itk_interior}statusLine "editing \"$bot\""
 
     # make working copy
     set original $bot
@@ -78,7 +85,10 @@ if {[catch {
 	    -padding 7
     } {}
     itk_component add eframe {
-	EditPane $itk_interior.editPane $copy
+	EditPane $itk_interior.editPane $copy \
+	    -beforecommand "$this giveFeedback" \
+	    -aftercommand "$this onChange" \
+	    -output "$this updateStatus"
     } {}
     itk_component add closeframe {
 	ttk::frame $itk_interior.closeFrame \
@@ -86,6 +96,13 @@ if {[catch {
     } {}
     itk_component add statusframe {
 	ttk::frame $itk_interior.statusFrame
+    } {}
+
+    # add widgets to history frame
+    itk_component add cancel {
+	ttk::button $itk_component(histFrame).cancel \
+	    -text {Start Over} \
+	    -command "$this cancel"
     } {}
     
     # add widgets to close frame
@@ -107,23 +124,45 @@ if {[catch {
     } {}
     itk_component add status {
 	ttk::label $itk_component(statusframe).statusLabel \
-	    -text $statusLine
+	    -textvariable ${itk_interior}statusLine
+    } {}
+    itk_component add progress {
+	ttk::progressbar $itk_component(statusframe).progressBar \
+	    -mode indeterminate
+    } {}
+    itk_component add mask {
+	ttk::frame $itk_component(statusframe).progressMask
     } {}
 
     # display main frames
+    grid $itk_component(histFrame) -row 0 -column 0 -sticky news
     grid $itk_component(eframe) -row 1 -column 0 -sticky news
     grid $itk_component(closeframe) -row 2 -column 0 -sticky news
     grid $itk_component(statusframe) -row 3 -column 0 -sticky news
     grid rowconfigure $itk_interior 1 -weight 1
     grid columnconfigure $itk_interior 0 -weight 1
+    grid rowconfigure $itk_component(statusframe) {0 1} -weight 1
+    grid columnconfigure $itk_component(statusframe) 0 -weight 1
+
+    # display history frame components
+    pack $itk_component(cancel) -side left -padx 5
 
     # display close frame components
     pack $itk_component(reject) -side right
     pack $itk_component(accept) -side right -padx 5
 
     # display status frame components
-    pack $itk_component(rule) -expand yes -fill x
-    pack $itk_component(status) -expand yes -fill both
+    grid $itk_component(rule) -row 0 -column 0 \
+	-columnspan 2 \
+	-sticky ew
+    grid $itk_component(status) -row 1 -column 0 \
+        -sticky ew
+    grid $itk_component(progress) -row 1 -column 1 \
+        -sticky ew \
+	-padx {5 20}
+    grid $itk_component(mask) -row 1 -column 1 \
+        -sticky news \
+	-padx {5 20}
 }
 
 # give feedback on unsaved change
@@ -146,54 +185,135 @@ if {[catch {
     }
 }
 
+# animate progress bar
+::itcl::body BotEditor::animate {} {
+
+    if {!$cmdDone} {
+
+	# current bar position
+	set curr [$itk_component(progress) cget -value]
+
+	# how long since last update
+	set elapsed [expr [clock milliseconds] - $lastTime]
+
+	# increment position - want to go entire length in 1s
+	$itk_component(progress) configure -value [expr $curr + $elapsed / 10]
+	update
+
+	set lastTime [clock milliseconds]
+	after 50 "$this animate"
+    }
+}
+
+# called before a command is run
+::itcl::body BotEditor::giveFeedback {} {
+
+    # initialize
+    set cmdDone 0
+    set lastTime [clock milliseconds]
+    $itk_component(progress) configure -value 0 
+
+    # display bar
+    raise $itk_component(progress)
+    update
+
+    # animate bar
+    animate
+}
+
 # called whenever an edit is made
 ::itcl::body BotEditor::onChange {} {
     showUnsaved yes
+
+    # update properties
+    $itk_component(eframe) update $copy
+
+    Z
+    draw $copy
+
+    set cmdDone 1
+    lower $itk_component(progress)
 }
 
-# define commands so they work properly
+# show msg in status line
+::itcl::body BotEditor::updateStatus {msg} {
+
+    set statusLine ::${itk_interior}statusLine
+    set $statusLine "$msg"
+    update
+}
+
+# defineCommands
+#
+# In Archer these commands are methods of an Archer instance (prefix).
+# We'll create wrappers for these commands so that we can call them
+# without an Archer object.
+#
 ::itcl::body BotEditor::defineCommands {prefix} {
 
     if {$prefix == ""} return
 
     set _ $prefix
 
-    proc ::cp {args} {eval $BotEditor::_ cp $args}
-    proc ::mv {args} {eval $BotEditor::_ mv $args}
-    proc ::kill {args} {eval $BotEditor::_ kill $args}
+    proc ::bb {args} {eval $BotEditor::_ bb $args}
     proc ::bot {args} {eval $BotEditor::_ bot $args}
     proc ::bot_condense {args} {eval $BotEditor::_ bot_condense $args}
-    proc ::bot_face_fuse {args} {eval $BotEditor::_ bot_face_fuse $args}
-    proc ::bot_vertex_fuse {args} {eval $BotEditor::_ bot_vertex_fuse $args}
-    proc ::bot_face_sort {args} {eval $BotEditor::_ bot_face_sort $args}
     proc ::bot_decimate {args} {eval $BotEditor::_ bot_decimate $args}
+    proc ::bot_face_fuse {args} {eval $BotEditor::_ bot_face_fuse $args}
+    proc ::bot_face_sort {args} {eval $BotEditor::_ bot_face_sort $args}
+    proc ::bot_vertex_fuse {args} {eval $BotEditor::_ bot_vertex_fuse $args}
+    proc ::cp {args} {eval $BotEditor::_ cp $args}
+    proc ::draw {args} {eval $BotEditor::_ draw $args}
+    proc ::kill {args} {eval $BotEditor::_ kill $args}
+    proc ::mv {args} {eval $BotEditor::_ mv $args}
+    proc ::Z {} {eval $BotEditor::_ Z}
 }
 
-# apply changes to original
+# apply changes to original and exit
 ::itcl::body BotEditor::accept {} {
 
-    set cmd "kill $original; mv $copy $original; delete object $this"
+    set cmd "kill $original; \
+	mv $copy $original; \
+	bind all <ButtonPress> {}; \
+	delete object $this"
 
     # get confirmation
     itk_component add confirm {
 	ConfirmationDialog $itk_interior.confirmDialog \
-	    -title {Confirm Accept} \
+	    -title {Apply Changes and Exit?} \
 	    -text "This operation will overwrite $original in the current database.\n\n\
 		Are you sure you want to save your changes and exit?" \
 	    -yescommand $cmd
     } {}
 }
 
-# discard all changes
+# discard all changes and exit
 ::itcl::body BotEditor::reject {} {
 
-    set cmd "kill $copy; delete object $this"
+    set cmd "kill $copy; \
+	bind all <ButtonPress> {}; \
+	delete object $this"
 
     # get confirmation
     itk_component add confirm {
 	ConfirmationDialog $itk_interior.confirmDialog \
-	    -title {Confirm Reject} \
+	    -title {Exit Without Applying Changes?} \
 	    -text {Are you sure you want to discard all changes and exit?} \
+	    -yescommand $cmd
+    } {}
+}
+
+# discard all changes
+::itcl::body BotEditor::cancel {} {
+
+    # overwirte copy with original
+    set cmd "kill $copy; cp $original $copy; $this onChange"
+
+    # get confirmation
+    itk_component add confirm {
+	ConfirmationDialog $itk_interior.confirmDialog \
+	    -title {Revert Edits?} \
+	    -text {Are you sure you want to discard all changes to the working mesh?} \
 	    -yescommand $cmd
     } {}
 }
@@ -263,7 +383,7 @@ if {[catch {
 	itk_component add yes {
 	    ttk::button $itk_component(act).confirm \
 		-text Yes \
-		-command "grab release $itk_interior; $itk_option(-yescommand)"
+		-command "grab release $itk_interior; $itk_option(-yescommand); catch {delete object $this}"
 	} {}
 	itk_component add no {
 	    ttk::button $itk_component(act).deny \
@@ -332,10 +452,13 @@ if {[catch {
 	# add components
 	itk_component add tools {
 	    BotTools $itk_component(lframe).tools $bot \
-		-command "$itk_option(-command)"
+		-beforecommand $itk_option(-beforecommand) \
+		-aftercommand $itk_option(-aftercommand) \
+		-output $itk_option(-output)
 	} {}
 	itk_component add props {
-	    BotPropertyBox $itk_component(rframe).properties $bot
+	    BotPropertyBox $itk_component(rframe).properties $bot \
+		-command $itk_option(-aftercommand)
 	} {}
 
 	# display main frame
@@ -358,5 +481,11 @@ if {[catch {
 	pack $itk_component(props) -expand yes -fill both
     }
 
-    itk_option define -command command Command "" {}
+    itk_option define -beforecommand command Command "" {}
+    itk_option define -aftercommand command Command "" {}
+    itk_option define -output output Command "" {}
+
+    public {
+	method update {bot} {$itk_component(props) update $bot}
+    }
 }

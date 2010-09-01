@@ -286,7 +286,7 @@ rt_dup_material_head()
     struct mater *newmater = NULL;
     struct mater *dupmater = NULL;
 
-    mp = material_head;    
+    mp = material_head;
     while (mp != MATER_NULL) {
 	BU_GETSTRUCT(newmater, mater);
 	*newmater = *mp; /* struct copy */

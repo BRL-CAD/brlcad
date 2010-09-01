@@ -319,8 +319,8 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* we know root is positive, so we know the smaller t */
 	segp[i].seg_in.hit_dist = b - root;
 	segp[i].seg_out.hit_dist = b + root;
-        segp[i].seg_in.hit_surfno = 0;
-        segp[i].seg_out.hit_surfno = 0;
+	segp[i].seg_in.hit_surfno = 0;
+	segp[i].seg_out.hit_surfno = 0;
     }
 }
 

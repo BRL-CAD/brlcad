@@ -83,7 +83,7 @@ _rb_fixup(bu_rb_tree *tree, struct bu_rb_node *node, int order)
 	    rb_set_color(w, order, rb_get_color(parent, order));
 	    rb_set_color(parent, order, RB_BLK);
 	    rb_set_color(rb_other_child(w, order, direction),
-			    order, RB_BLK);
+			 order, RB_BLK);
 	    rb_rotate(parent, order, direction);
 	    node = rb_root(tree, order);
 	}

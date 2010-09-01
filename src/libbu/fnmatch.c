@@ -222,7 +222,7 @@ charclassmatch(const char *pattern, char test, int *s)
 	if (c == BU_FNM_EOS) resultholder = -1;
 	counter++;
 
-        c = *pattern++; /* next */
+	c = *pattern++; /* next */
     }
     c = *pattern++;
     if (c != ']') resultholder = -1;
@@ -399,7 +399,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 		}
 		/* FALLTHROUGH */
 	    default:
-	normal:
+	    normal:
 		if (c != *string && !((flags & BU_CASEFOLD) &&
 				      (tolower((unsigned char)c) ==
 				       tolower((unsigned char)*string))))

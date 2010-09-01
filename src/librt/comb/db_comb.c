@@ -357,7 +357,7 @@ rt_comb_import4(
 	comb->GIFTmater = rp[0].c.c_material;
 	comb->los = rp[0].c.c_los;
     } else {
- 	/* set some reasonable defaults */
+	/* set some reasonable defaults */
 	comb->region_id = 0;
 	comb->aircode = 0;
 	comb->GIFTmater = 0;

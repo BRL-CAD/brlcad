@@ -60,7 +60,7 @@ rt_constraint_ifree(struct rt_db_internal *ip)
 
     RT_CK_DB_INTERNAL(ip);
     constraint = (struct rt_constraint_internal *)ip->idb_ptr;
-    
+
     if (constraint) {
 	constraint->magic = 0;			/* sanity */
 	if (BU_VLS_IS_INITIALIZED(&constraint->expression))
@@ -72,7 +72,6 @@ rt_constraint_ifree(struct rt_db_internal *ip)
     }
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
-
 
 
 /**
@@ -103,14 +102,14 @@ rt_constraint_export5(
     local2mm = local2mm; /* quell */
 
     BU_INIT_EXTERNAL(ep);
-    
+
     bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_constraint_parse, (char *) &constraint);
 
     ep->ext_nbytes = bu_vls_strlen(&str);
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "constrnt external");
     bu_strlcpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
-   
+
     bu_vls_free(&str);
 
     return 0;	/* OK */

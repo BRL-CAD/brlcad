@@ -1235,6 +1235,7 @@ find_intersections( fu, mid_pt, ray_dir, hit_list )
 	    }
 
 	    myhit = (struct snurb_hit *)bu_malloc( sizeof( struct snurb_hit ), "myhit" );
+	    BU_LIST_INIT( &myhit->l );
 	    myhit->f = f;
 
 	    /* calculate actual hit point (x y z) */
@@ -1533,7 +1534,7 @@ Convtrimsurfs()
 	    continue;
 
 	BU_LIST_INIT( &hit_list );
-	if ( Find_pt_in_fu( fu, mid_pt, ray_dir/* !!! fourth param missing */ ) )
+	if ( Find_pt_in_fu( fu, mid_pt, ray_dir, &hit_list ) )
 	{
 	    bu_log( "Convtrimsurfs: Cannot find a point in fu (x%x)\n", fu );
 	    nmg_pr_fu( fu, " " );

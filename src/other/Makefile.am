@@ -62,9 +62,9 @@ TERMLIBDIR=
 endif
 
 if BUILD_DOCS
-if BUILD_TKHTML3
+if BUILD_TKHTML
 if WITH_TK
-TKHTMLDIR=tkhtml3
+TKHTMLDIR=tkhtml
 else
 TKHTMLDIR=
 endif
@@ -193,7 +193,7 @@ DIST_SUBDIRS = \
 	tcl \
 	tk \
 	tkpng \
-	tkhtml3 \
+	tkhtml \
 	tktable \
 	tnt
 

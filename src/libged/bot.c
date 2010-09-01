@@ -42,9 +42,14 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     char *cmd = argv[0];
+    char *sub;
+    char *arg;
     char *primitive = argv[argc - 1];
     char prop = '\0';
-    static const char *usage = "get (faces|orientation|type|vertices) bot\n";
+    size_t len;
+    fastf_t tmp;
+    fastf_t propVal;
+    static const char *usage = "get (faces|minEdge|maxEdge|orientation|type|vertices) bot\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -71,16 +76,29 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    /* run subcommand */
-    char *sub = argv[1];
-    char *arg = argv[2];
-    size_t len = strlen(sub);
+    /* determine subcommand */
+    sub = argv[1];
+    arg = argv[2];
+    len = strlen(sub);
 
     if (strncmp(sub, "get", len) == 0) {
-	int propVal = rt_bot_propget(bot, arg);
 
+	propVal = rt_bot_propget(bot, arg);
+
+	/* print result string */
 	if (propVal != -1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", propVal);
+
+	    tmp = (int) propVal;
+
+	    /* int result */
+	    if (propVal == tmp) {
+		bu_vls_printf(&gedp->ged_result_str, "%d", (int) propVal);
+	    }
+	    
+	    /* float result */
+	    else {
+		bu_vls_printf(&gedp->ged_result_str, "%f", propVal);
+	    }
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a valid argument!", sub, arg);
 	    return GED_ERROR;

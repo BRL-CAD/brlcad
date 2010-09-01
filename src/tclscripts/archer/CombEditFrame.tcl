@@ -25,6 +25,15 @@
 # Description:
 #    The class for editing combinations within Archer.
 #
+#
+# Todo:
+#   - Functionality needed for the relative edit tables
+#      - create rows (prompt for operator and name)
+#      - delete rows
+#      - pulldown menu for operators
+#      - pulldown menu for names
+#      - easier ways to obtain keypoints
+#
 ##############################################################
 
 ::itcl::class CombEditFrame {
@@ -63,15 +72,17 @@
 	variable mMemberHeadingsTra {Op Name Tx Ty Tz}
 	variable mMemberHeadingsSca {Op Name Sa Sx Sy Sz Kx Ky Kz}
 	variable mMemberDataOrder {RotAet RotXyz RotArb Tra Sca}
+	variable mLastTabIndex -1
 
 	method buildGeneralGUI {}
 	method buildShaderGUI {}
 	method buildTreeGUI {}
 	method buildMembersGUI {}
 	method clearMemberData {}
-	method initMemberData {}
-
+	method applyData {}
 	method applyMemberData {}
+	method initMemberData {}
+	method resetData {}
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -94,7 +105,7 @@
 
     buildGeneralGUI
     buildShaderGUI
-#    buildTreeGUI
+    buildTreeGUI
     buildMembersGUI
 
     pack $itk_component(tabs) -expand yes -fill both
@@ -178,8 +189,8 @@
     } else {
 	set tree ""
     }
-#    $itk_component(combTreeT) delete 1.0 end
-#    $itk_component(combTreeT) insert end $tree
+    $itk_component(combTreeT) delete 1.0 end
+    $itk_component(combTreeT) insert end $tree
 
     GeometryEditFrame::initGeometry $gdata
 
@@ -239,7 +250,7 @@
 	lappend _attrs inherit $mInherit
     }
 
-#    lappend _attrs tree [ArcherCore::packTree [$itk_component(combTreeT) get 1.0 end]]
+    lappend _attrs tree [ArcherCore::packTree [$itk_component(combTreeT) get 1.0 end]]
 
     if {[catch {eval $itk_option(-mged) adjust $itk_option(-geometryObject) $_attrs}]} {
 	return
@@ -450,33 +461,35 @@
     #    grid columnconfigure [namespace tail $this] 1 -weight 1
 
     # Set up bindings
-    bind $itk_component(combIdE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combAirE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combLosE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combGiftE) <Return> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combRgbE) <Return> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combIdE) <Return> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combAirE) <Return> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combLosE) <Return> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combGiftE) <Return> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combRgbE) <Return> [::itcl::code $this updateGeometryIfMod]
 
-    bind $itk_component(combIdE) <Tab> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combAirE) <Tab> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combLosE) <Tab> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combGiftE) <Tab> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combRgbE) <Tab> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combIdE) <Tab> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combAirE) <Tab> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combLosE) <Tab> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combGiftE) <Tab> [::itcl::code $this updateGeometryIfMod]
+#    bind $itk_component(combRgbE) <Tab> [::itcl::code $this updateGeometryIfMod]
 
     #    bind $itk_component(combMaterialE) <Return> [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combInheritE) <Return> [::itcl::code $this updateGeometryIfMod]
 
     $itk_component(tabs) add $itk_component(combGeneralF) -text "General"
+    incr mLastTabIndex
 }
 
 ::itcl::body CombEditFrame::buildShaderGUI {} {
     itk_component add combShader {
-	::ShaderEdit $itk_component(tabs).shader \
-	    -shaderChangedCallback [::itcl::code $this updateGeometryIfMod]
+	::ShaderEdit $itk_component(tabs).shader
     } {}
 
+#	    -shaderChangedCallback [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combShaderE) <Return> [::itcl::code $this updateGeometryIfMod]
 
     $itk_component(tabs) add $itk_component(combShader) -text "Shader"
+    incr mLastTabIndex
 }
 
 ::itcl::body CombEditFrame::buildTreeGUI {} {
@@ -499,9 +512,10 @@
     #    bind $itk_component(combTreeT) <Leave> [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combTreeT) <Return> [::itcl::code $this updateGeometryIfMod]
     #    bind $itk_component(combTreeT) <FocusOut> [::itcl::code $this updateGeometryIfMod]
-    bind $itk_component(combTreeT) <KeyRelease> [::itcl::code $this updateGeometryIfMod]
+    #bind $itk_component(combTreeT) <KeyRelease> [::itcl::code $this updateGeometryIfMod]
 
-    $itk_component(tabs) add $itk_component(combTreeF) -text "Tree"
+    $itk_component(tabs) add $itk_component(combTreeF) -text "Members"
+    incr mLastTabIndex
 }
 
 ::itcl::body CombEditFrame::buildMembersGUI {} {
@@ -557,18 +571,19 @@
     grid columnconfigure $itk_component(combMembersTabs) 0 -weight 1
     grid rowconfigure $itk_component(combMembersTabs) 0 -weight 1
 
-    $itk_component(tabs) add $itk_component(combMembersTabs) -text "Members"
+    $itk_component(tabs) add $itk_component(combMembersTabs) -text "Relative Edit"
+    incr mLastTabIndex
 
     set parent [childsite lower]
     itk_component add combApplyB {
 	::ttk::button $parent.applyB \
 	    -text "Apply" \
-	    -command [::itcl::code $this applyMemberData]
+	    -command [::itcl::code $this applyData]
     } {}
     itk_component add combResetB {
 	::ttk::button $parent.resetB \
 	    -text "Reset" \
-	    -command [::itcl::code $this initMemberData]
+	    -command [::itcl::code $this resetData]
     } {}
     grid x $itk_component(combApplyB) $itk_component(combResetB) x -sticky nsew
     grid columnconfigure $parent 0 -weight 1
@@ -616,40 +631,14 @@
 #    }
 }
 
-::itcl::body CombEditFrame::initMemberData {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
+::itcl::body CombEditFrame::applyData {} {
+    set tindex [$itk_component(tabs) index current]
+    if {$tindex != $mLastTabIndex} {
+	updateGeometryIfMod
 	return
     }
 
-    clearMemberData
-
-    foreach {dname dtype} {RotAet 2 RotXyz 3 RotArb 4 Tra 5 Sca 6} {
-	set mdata [$itk_option(-mged) combmem -i $dtype $itk_option(-geometryObject)]
-
-	set i 1
-	foreach row [split $mdata "\n"] {
-	    set j 0
-	    foreach col $row {
-		set mMemberData$dname\($i,$j) $col
-		incr j
-	    }
-
-	    incr i
-	}
-    }
-
-#    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
-#    set i 1
-#    foreach row [split $mdata "\n"] {
-#	set j 0
-#	foreach col $row {
-#	    set mMemberData($i,$j) $col
-#	    incr j
-#	}
-#
-#	incr i
-#    }
+    applyMemberData
 }
 
 ::itcl::body CombEditFrame::applyMemberData {} {
@@ -686,6 +675,47 @@
 
     catch {eval $itk_option(-mged) combmem -r $dtype $itk_option(-geometryObject) [regsub -all {\n} $_mdata " "]}
     GeometryEditFrame::updateGeometry
+}
+
+::itcl::body CombEditFrame::initMemberData {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    clearMemberData
+
+    foreach {dname dtype} {RotAet 2 RotXyz 3 RotArb 4 Tra 5 Sca 6} {
+	set mdata [$itk_option(-mged) combmem -i $dtype $itk_option(-geometryObject)]
+
+	set i 1
+	foreach row [split $mdata "\n"] {
+	    set j 0
+	    foreach col $row {
+		set mMemberData$dname\($i,$j) $col
+		incr j
+	    }
+
+	    incr i
+	}
+    }
+
+#    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
+#    set i 1
+#    foreach row [split $mdata "\n"] {
+#	set j 0
+#	foreach col $row {
+#	    set mMemberData($i,$j) $col
+#	    incr j
+#	}
+#
+#	incr i
+#    }
+}
+
+::itcl::body CombEditFrame::resetData {} {
+    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+    initGeometry $gdata
 }
 
 ::itcl::body CombEditFrame::updateGeometryIfMod {} {
@@ -748,12 +778,12 @@
 	set _mInherit ""
     }
 
-#    set tree [string trim [$itk_component(combTreeT) get 1.0 end]]
-#    if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
-#	set _tree [string trim [ArcherCore::unpackTree $_tree]]
-#    } else {
-#	set _tree ""
-#    }
+    set tree [string trim [$itk_component(combTreeT) get 1.0 end]]
+    if {![catch {bu_get_value_by_keyword tree $gdata} _tree]} {
+	set _tree [string trim [ArcherCore::unpackTree $_tree]]
+    } else {
+	set _tree ""
+    }
 
 #    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
 #    set row ""
@@ -800,7 +830,8 @@
 	$_mGift != $mGift ||
 	$_mRgb != $mRgb ||
 	$_mShader != $mShader ||
-	$_mInherit != $mInherit} {
+	$_mInherit != $mInherit ||
+	$_tree != $tree} {
 	updateGeometry
     }
 

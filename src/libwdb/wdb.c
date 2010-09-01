@@ -206,7 +206,7 @@ mk_arb5(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     VMOVE(pt8[1], &pts[1*3]);
     VMOVE(pt8[2], &pts[2*3]);
     VMOVE(pt8[3], &pts[3*3]);
-    VMOVE(pt8[4], &pts[4*3]); 
+    VMOVE(pt8[4], &pts[4*3]);
     VMOVE(pt8[5], &pts[4*3]);
     VMOVE(pt8[6], &pts[4*3]);
     VMOVE(pt8[7], &pts[4*3]);
@@ -241,7 +241,7 @@ mk_arb7(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     /* [7*3] */
 {
     point_t pt8[8];
-    
+
     VMOVE(pt8[0], &pts[0*3]);
     VMOVE(pt8[1], &pts[1*3]);
     VMOVE(pt8[2], &pts[2*3]);
@@ -339,14 +339,14 @@ int
 mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t height_vector, const vect_t vectA, fastf_t magB, fastf_t base_neck_ratio)
 {
     struct rt_hyp_internal *hyp;
-    
+
     BU_GETSTRUCT(hyp, rt_hyp_internal);
     hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;
- 
+
 
     if ((MAGNITUDE(vectA) <= SQRT_SMALL_FASTF) || (magB <= SQRT_SMALL_FASTF))
 	return -2;
-    
+
     hyp->hyp_bnr = base_neck_ratio;
     hyp->hyp_b = magB;
     VMOVE(hyp->hyp_Hi, height_vector);
@@ -355,20 +355,20 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 
     if (MAGNITUDE(hyp->hyp_Hi) < RT_LEN_TOL
 	|| MAGNITUDE(hyp->hyp_A) < RT_LEN_TOL
-        || hyp->hyp_b < RT_LEN_TOL
-        || hyp->hyp_bnr < RT_LEN_TOL) {
+	|| hyp->hyp_b < RT_LEN_TOL
+	|| hyp->hyp_bnr < RT_LEN_TOL) {
 	bu_log("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
 	return -1;
     }
-	
+
     if (!NEAR_ZERO (VDOT(hyp->hyp_Hi, hyp->hyp_A), RT_DOT_TOL)) {
-    	bu_log("ERROR, major axis must be perpendicular to height vector!\n");
+	bu_log("ERROR, major axis must be perpendicular to height vector!\n");
 	return -1;
     }
 
     if (base_neck_ratio >= 1 || base_neck_ratio <= 0) {
-    	bu_log("ERROR, neck to base ratio must be between 0 and 1!\n");
-    	return -1;
+	bu_log("ERROR, neck to base ratio must be between 0 and 1!\n");
+	return -1;
     }
 
     if (hyp->hyp_b > MAGNITUDE(hyp->hyp_A)) {

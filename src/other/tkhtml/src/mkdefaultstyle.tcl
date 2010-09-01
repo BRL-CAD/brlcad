@@ -28,8 +28,8 @@ proc VersionsToDefine {glob define} {
 
 set css_file    [file join [file dirname [info script]] .. src html.css]
 set tcl_file    [file join [file dirname [info script]] .. src tkhtml.tcl]
-set quirks_file [file join [file dirname [info script]] quirks.css]
-set src_files   [file join [file dirname [info script]] {*.c}]
+set quirks_file [file join [file dirname [info script]] .. src quirks.css]
+set src_files   [file join [file dirname [info script]] .. src {*.c}]
 
 puts ""
 puts [FileToDefine $tcl_file      HTML_DEFAULT_TCL]

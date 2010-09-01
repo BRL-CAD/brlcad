@@ -210,8 +210,8 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     magsq_b = MAGSQ(eip->b);
     magsq_c = MAGSQ(eip->c);
 
-    if (magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist) {
-	bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
+    if (magsq_a < rtip->rti_tol.dist_sq || magsq_b < rtip->rti_tol.dist_sq || magsq_c < rtip->rti_tol.dist_sq) {
+	bu_log("rt_ell_prep():  ell(%s) zero length A(%g), B(%g), or C(%g) vector\n",
 	       stp->st_name, magsq_a, magsq_b, magsq_c);
 	return 1;		/* BAD */
     }
@@ -227,17 +227,17 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
-	bu_log("ell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
+	bu_log("rt_ell_prep():  ell(%s) A not perpendicular to B, f=%f\n", stp->st_name, f);
 	return 1;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
-	bu_log("ell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
+	bu_log("rt_ell_prep():  ell(%s) B not perpendicular to C, f=%f\n", stp->st_name, f);
 	return 1;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
-	bu_log("ell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
+	bu_log("rt_ell_prep():  ell(%s) A not perpendicular to C, f=%f\n", stp->st_name, f);
 	return 1;		/* BAD */
     }
 
@@ -444,8 +444,8 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		segp[i].seg_in.hit_dist = k2;
 		segp[i].seg_out.hit_dist = k1;
 	    }
-            segp[i].seg_in.hit_surfno = 0;
-            segp[i].seg_out.hit_surfno = 0;
+	    segp[i].seg_in.hit_surfno = 0;
+	    segp[i].seg_out.hit_surfno = 0;
 	}
     }
 }
@@ -764,7 +764,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     magsq_a = MAGSQ(state.eip->a);
     magsq_b = MAGSQ(state.eip->b);
     magsq_c = MAGSQ(state.eip->c);
-    if (magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist) {
+    if (magsq_a < tol->dist_sq || magsq_b < tol->dist_sq || magsq_c < tol->dist_sq) {
 	bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
 	return -2;		/* BAD */
     }
@@ -780,17 +780,17 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, tol->dist)) {
-	bu_log("ell():  A not perpendicular to B, f=%f\n", f);
+	bu_log("rt_ell_tess():  A not perpendicular to B, f=%f\n", f);
 	return -3;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
-	bu_log("ell():  B not perpendicular to C, f=%f\n", f);
+	bu_log("rt_ell_tess():  B not perpendicular to C, f=%f\n", f);
 	return -3;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
-	bu_log("ell():  A not perpendicular to C, f=%f\n", f);
+	bu_log("rt_ell_tess():  A not perpendicular to C, f=%f\n", f);
 	return -3;		/* BAD */
     }
 
@@ -953,7 +953,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
     /* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
-    for (i = nsegs; i < nstrips; i++) {
+    for (i = nsegs; i < nstrips-1; i++) {
 	faceno = 0;
 	tlim = strips[i+1].nverts;
 	blim = strips[i].nverts;
@@ -1381,8 +1381,8 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     magsq_a = MAGSQ(eip->a);
     magsq_b = MAGSQ(eip->b);
     magsq_c = MAGSQ(eip->c);
-    if (magsq_a < tol->dist || magsq_b < tol->dist || magsq_c < tol->dist) {
-	bu_log("rt_ell_tess():  zero length A, B, or C vector\n");
+    if (magsq_a < tol->dist_sq || magsq_b < tol->dist_sq || magsq_c < tol->dist_sq) {
+	bu_log("rt_ell_tnurb():  zero length A, B, or C vector\n");
 	return -2;		/* BAD */
     }
 
@@ -1397,17 +1397,17 @@ rt_ell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, tol->dist)) {
-	bu_log("ell():  A not perpendicular to B, f=%f\n", f);
+	bu_log("rt_ell_tnurb():  A not perpendicular to B, f=%f\n", f);
 	return -3;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
-	bu_log("ell():  B not perpendicular to C, f=%f\n", f);
+	bu_log("rt_ell_tnurb():  B not perpendicular to C, f=%f\n", f);
 	return -3;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, tol->dist)) {
-	bu_log("ell():  A not perpendicular to C, f=%f\n", f);
+	bu_log("rt_ell_tnurb():  A not perpendicular to C, f=%f\n", f);
 	return -3;		/* BAD */
     }
 
@@ -1653,11 +1653,11 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
 #if 0
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
-    
+
     strcpy(pcs->ps[0].pname, "V");
     pcs->ps[0].ptype = pc_point;
     pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
-    
+
     strcpy(pcs->ps[1].pname, "A");
     pcs->ps[1].ptype = pc_vector;
     pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);

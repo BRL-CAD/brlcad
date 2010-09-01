@@ -156,6 +156,10 @@ if {![info exists mged_default(font_init)]} {
     font_init
 }
 
+if {![info exists mged_default(status_bar)]} {
+    set mged_default(status_bar) 1
+}
+
 if {![info exists mged_default(faceplate)]} {
     set mged_default(faceplate) 0
 }
@@ -428,7 +432,7 @@ proc gui { args } {
     set mged_gui($id,comb) $comb
     set mged_gui($id,show_cmd) $scw
     set mged_gui($id,show_dm) $sgw
-    set mged_gui($id,show_status) 1
+    set mged_gui($id,show_status) $mged_default(status_bar)
     set mged_gui($id,apply_to) 0
     set mged_gui($id,edit_info_pos) "+0+0"
     set mged_gui($id,num_lines) $mged_default(num_lines)

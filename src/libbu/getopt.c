@@ -31,12 +31,12 @@
 
 #define BADCH (int)'?'
 #define EMSG ""
-#define tell(s)	if (bu_opterr) { \
-    fputs(*nargv, stderr); \
-    fputs(s, stderr); \
-    fputc(bu_optopt, stderr); \
-    fputc('\n', stderr); \
-} return BADCH;
+#define tell(s)	if (bu_opterr) {		\
+	fputs(*nargv, stderr);			\
+	fputs(s, stderr);			\
+	fputc(bu_optopt, stderr);		\
+	fputc('\n', stderr);			\
+    } return BADCH;
 
 
 int

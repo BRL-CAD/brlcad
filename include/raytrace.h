@@ -2908,10 +2908,6 @@ RT_EXPORT BU_EXTERN(int db_put_external,
 		     struct directory *dp,
 		     struct db_i *dbip));
 
-/* DEPRECATED - use bu_free_external instead */
-RT_EXPORT BU_EXTERN(void db_free_external,
-		    (struct bu_external *ep));
-
 /* db_scan.c */
 /* read db (to build directory) */
 RT_EXPORT BU_EXTERN(int db_scan,
@@ -4629,7 +4625,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2,
 		     const struct rt_bot_internal *bot,
 		     const point_t	pt2,
 		     const mat_t	mat));
-RT_EXPORT BU_EXTERN(int rt_bot_propget,
+RT_EXPORT BU_EXTERN(fastf_t rt_bot_propget,
 		    (struct rt_bot_internal *bot,
 		    char *property));
 RT_EXPORT BU_EXTERN(int rt_bot_vertex_fuse,

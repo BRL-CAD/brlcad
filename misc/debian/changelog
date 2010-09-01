@@ -1,0 +1,5 @@
+brlcad (7.16.10-1) unstable; urgency=low
+
+  * Initial release (Closes: #289632).
+
+ -- Manuel A. Fernandez Montecelo <manuel.montezelo@gmail.com>  Wed, 25 Aug 2010 11:16:45 +0200

@@ -215,6 +215,7 @@ package provide Archer 1.0
 	method r                   {args}
 	method rcodes              {args}
 	method rfarb               {args}
+	method rm                  {args}
 	method rmater              {args}
 	method saveDb              {}
 	method shells              {args}
@@ -236,6 +237,7 @@ package provide Archer 1.0
 	method ledger_cleanup {}
 	method object_checkpoint {}
 	method object_undo {}
+	method object_update {_obj {_rflag 1}}
 	method revert {}
 	method selection_checkpoint {_obj}
 	method updateObjSave {}
@@ -263,6 +265,9 @@ package provide Archer 1.0
 	# ArcherCore Override Section
 	method buildCommandView {}
 	method dblClick {_tags}
+	method addCombMemberWrapper {_cmd _cflag args}
+	method createCombWrapper {_cmd args}
+	method removeCombMemberWrapper {_cmd args}
 	method combWrapper {_cmd _minArgs args}
 	method createWrapper {_cmd args}
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
@@ -378,6 +383,7 @@ package provide Archer 1.0
 	method buildSuperellEditView {}
 	method buildTgcEditView {}
 	method buildTorusEditView {}
+	method buildInvalidObjEditView {}
 
 	method initArb4EditView {_odata}
 	method initArb5EditView {_odata}
@@ -408,7 +414,9 @@ package provide Archer 1.0
 	method initSuperellEditView {_odata}
 	method initTgcEditView {_odata}
 	method initTorusEditView {_odata}
+	method initInvalidObjEditView {_oname}
 
+	method updateCombEditView {}
 	method updateObjEdit {_updateObj _needInit _needSave}
 	method updateObjEditView {}
 
@@ -908,15 +916,7 @@ package provide Archer 1.0
 	    $itk_component(ged) attr set $wizTop $key $val
 	}
 
-	refreshTree
-	#	if {$firstName != ""} {
-	#	    if {$firstName == $lastName} {
-	#		after idle [::itcl::code $this _select_node [$itk_component(tree) find $regionName] 0]
-	#	    } else {
-	#		after idle [::itcl::code $this _select_node [$itk_component(tree) find $firstName] 0]
-	#	    }
-	#	}
-
+	syncTree
 	set mNeedSave 1
 	updateSaveMode
 	$itk_component(ged) units $savedUnits
@@ -1016,11 +1016,38 @@ package provide Archer 1.0
 # Create a combination.
 #
 ::itcl::body Archer::c {args} {
-    eval combWrapper c 2 $args
+#    eval combWrapper c 2 $args
+    putString "Momentarily disabled. Fix me!"
 }
 
 ::itcl::body Archer::clone {args} {
-    eval createWrapper clone $args
+#    eval createWrapper clone $args
+
+    # Returns a help message.
+    if {[llength $args] == 0} {
+	return [gedCmd clone]
+    }
+
+    # Clone will return the clist info. Consequently,
+    # clist is set after invoking clone below.
+    SetWaitCursor $this
+
+    if {[catch {eval gedCmd clone $args} ret]} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    set clist [lindex $ret 1]
+    set ret [lindex $ret 0]
+
+    # Checkpoint the created object
+    checkpoint_olist $clist $LEDGER_CREATE
+
+    syncTree
+    updateUndoState
+    SetNormalCursor $this
+
+    return $ret
 }
 
 ::itcl::body Archer::color {args} {
@@ -1048,7 +1075,7 @@ package provide Archer 1.0
     # Checkpoint the created object
     checkpoint_olist [lindex $args 0] $LEDGER_MODIFY
 
-    refreshTree 1
+    syncTree
     updateUndoState
     SetNormalCursor $this
 
@@ -1293,7 +1320,7 @@ package provide Archer 1.0
 	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
     }
 
-    refreshTree 1
+    syncTree
 
     checkpoint_olist $olist $LEDGER_MODIFY
     updateUndoState
@@ -1553,7 +1580,7 @@ package provide Archer 1.0
 	-state readonly
 
     # refresh tree contents
-    refreshTree 0
+    rebuildTree
 
     if {$mBindingMode == "Default"} {
 	set mDefaultBindingMode $VIEW_ROTATE_MODE
@@ -1579,6 +1606,10 @@ package provide Archer 1.0
 
 ::itcl::body Archer::rfarb {args} {
     eval ArcherCore::gedWrapper rfarb 0 0 1 1 $args
+}
+
+::itcl::body Archer::rm {args} {
+    eval removeCombMemberWrapper rm $args
 }
 
 # XXX libged's rmater needs to return the objects affected
@@ -1646,7 +1677,8 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::vmake {args} {
-    eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
+    eval createWrapper make $args
+#    eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
 }
 
 ::itcl::body Archer::initImages {} {
@@ -1950,6 +1982,220 @@ package provide Archer 1.0
     }
 }
 
+::itcl::body Archer::addCombMemberWrapper {_cmd _cflag args} {
+    # Returns a help message.
+    set alen [llength $args]
+    if {$alen == 0} {
+	return [gedCmd $_cmd]
+    }
+
+    set cname [lindex $args 0]
+    set mlist {}
+
+    # Set the list of members (i.e. mlist)
+    switch -- $_cmd {
+	"g" {
+	    set mlist [lrange $args 1 end]
+	}
+	"comb" -
+	"r" {
+	    if {$alen < 3 || [expr {$alen % 2}] == 0} {
+		return [gedCmd $_cmd]
+	    }
+
+	    foreach {op oname} [lrange $args 1 end] {
+		lappend mlist $oname
+	    }
+	}
+	default {
+	    return "addCombMemberWrapper: $_cmd not recognized."
+	}
+    }
+
+    SetWaitCursor $this
+    checkpoint $cname $LEDGER_MODIFY
+
+    if {[catch {eval gedCmd $_cmd $args} ret]} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Delete any toplevel nodes of newly added members
+    foreach member $mlist {
+	if {[info exists mText2Node($member)]} {
+	    foreach sublist $mText2Node($member) {
+		set pnode [lindex $sublist 1]
+
+		if {$pnode == {}} {
+		    set cnode [lindex $sublist 0]
+
+		    # Before deleting cnode we need to delete any
+		    # use of cnode and its descendents in the data
+		    # variables that are used to interact with the
+		    # tree viewer.
+		    purgeNodeData $cnode
+
+		    $itk_component(newtree) delete $cnode
+		}
+	    }
+	}
+    }
+
+    if {$_cflag} {
+	SetNormalCursor $this
+	return
+    }
+
+    # Add new members to parent node(s) if the parent nodes have been previously opened.
+    set cnode ""
+    if {[info exists mText2Node($cname)]} {
+	foreach sublist $mText2Node($cname) {
+	    set cnode [lindex $sublist 0]
+
+	    if {[treeNodeHasBeenOpened $cnode]} {
+		foreach member $mlist {
+		    fillTree $cnode $member $mEnableListView
+		}
+	    }
+	}
+    }
+
+    object_update $cname
+
+    if {$cnode != ""} {
+	set path ""
+	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
+	    append path "/" $mNode2Text($pnode)
+	}
+
+	if {$path != ""} {
+	    append path "/"
+	}
+
+	append path $cname
+	selectTreePath $path
+    }
+
+    SetNormalCursor $this
+}
+
+::itcl::body Archer::createCombWrapper {_cmd args} {
+
+    eval addCombMemberWrapper $_cmd 1 $args
+
+    SetWaitCursor $this
+    set cname [lindex $args 0]
+
+    updateTreeTopWithName $cname
+
+    $itk_component(ged) draw $cname
+    selectTreePath $cname
+
+    checkpoint $cname $LEDGER_CREATE
+    set mNeedSave 1
+    updateSaveMode
+
+    SetNormalCursor $this
+}
+
+::itcl::body Archer::removeCombMemberWrapper {_cmd args} {
+    # Returns a help message.
+    set alen [llength $args]
+    if {$alen == 0} {
+	return [gedCmd $_cmd]
+    }
+
+    set cname [lindex $args 0]
+    set mlist {}
+
+    # Set the list of members (i.e. mlist)
+    switch -- $_cmd {
+	"rm" {
+	    # remove duplicates
+	    set mlist [lsort -unique [lrange $args 1 end]]
+	    set args [eval list $cname $mlist]
+	}
+	default {
+	    return "removeCombMemberWrapper: $_cmd not recognized."
+	}
+    }
+
+    SetWaitCursor $this
+    checkpoint $cname $LEDGER_MODIFY
+
+    if {[catch {eval gedCmd $_cmd $args} ret]} {
+	SetNormalCursor $this
+	return $ret
+    }
+
+    # Delete members from parent nodes
+    set cnode ""
+    if {[info exists mText2Node($cname)]} {
+	foreach sublist $mText2Node($cname) {
+	    set cnode [lindex $sublist 0]
+
+	    if {[info exists mPNode2CList($cnode)]} {
+		foreach clist $mPNode2CList($cnode) {
+		    set mname [lindex $clist 0] 
+
+		    if {$mname == $TREE_PLACEHOLDER_TAG} {
+			foreach member $mlist {
+			    # If member is a top level object, add it to the tree top
+			    if {[gedCmd dbfind $member] == ""} {
+				fillTree {} $member $mEnableListView
+			    }
+			}
+		    } else {
+			foreach member $mlist {
+			    if {$mname == $member} {
+				set mnode [lindex $clist 1]
+
+				# Before deleting mnode we need to delete any
+				# use of mnode and its descendents in the data
+				# variables that are used to interact with the
+				# tree viewer.
+				purgeNodeData $mnode
+
+				$itk_component(newtree) delete $mnode
+
+				# If mname is a top level object, add it to the tree top
+				if {[gedCmd dbfind $member] == ""} {
+				    fillTree {} $member $mEnableListView
+
+				    if {$member == $mSelectedObj} {
+					selectTreePath $member
+				    }
+				} elseif {$member == $mSelectedObj} {
+				    selectTreePath [getTreePath $cnode]
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    object_update $cname
+
+    if {$cnode != ""} {
+	set path ""
+	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
+	    append path "/" $mNode2Text($pnode)
+	}
+
+	if {$path != ""} {
+	    append path "/"
+	}
+
+	append path $cname
+	selectTreePath $path
+    }
+
+    updateTreeDrawLists
+    SetNormalCursor $this
+}
+
 #
 # Create a combination or modify an existing one.
 #
@@ -1964,17 +2210,16 @@ package provide Archer 1.0
     # Check for the existence of obj
     if {[catch {gedCmd attr show $obj} adata]} {
 	# Create a new combination
-	eval createWrapper $_cmd $args
+	eval createCombWrapper $_cmd $args
     } else {
 	# Modifying an existing combination
-	eval gedWrapper $_cmd 0 0 1 2 $args
+	eval addCombMemberWrapper $_cmd 0 $args
     }
 }
 
 ::itcl::body Archer::createWrapper {_cmd args} {
     # Set the list of created objects (i.e. clist)
     switch -- $_cmd {
-	"c" -
 	"facetize" {
 	    set optionsAndArgs [eval dbExpand $args]
 	    set options [lindex $optionsAndArgs 0]
@@ -1986,18 +2231,6 @@ package provide Archer 1.0
 	    }
 
 	    set clist [lindex $expandedArgs 0]
-	}
-	"clone" {
-	    # Returns a help message.
-	    if {[llength $args] == 0} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set options [lrange $args 0 end-1]
-	    set expandedArgs [lrange $args end end]
-
-	    # Clone will return the clist info. Consequently,
-	    # clist is set after invoking clone below.
 	}
 	"copyeval" -
 	"cp" -
@@ -2035,7 +2268,8 @@ package provide Archer 1.0
 		set clist [lindex $expandedArgs 1]
 	    }
 	}
-	"make" {
+	"make" -
+	"vmake" {
 	    # Returns a help message.
 	    if {[llength $args] < 2} {
 		return [gedCmd $_cmd]
@@ -2050,18 +2284,6 @@ package provide Archer 1.0
 
 	    set clist [lindex $expandedArgs 0]
 	}
-	"comb" -
-	"g" -
-	"r" {
-	    # Returns a help message.
-	    if {[llength $args] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set options {}
-	    set expandedArgs $args
-	    set clist [lindex $expandedArgs 0]
-	}
 	default {
 	    return "createWrapper: $_cmd not recognized."
 	}
@@ -2074,17 +2296,20 @@ package provide Archer 1.0
 	return $ret
     }
 
-    if {$_cmd == "clone"} {
-	set clist [lindex $ret 1]
-	set ret [lindex $ret 0]
+    if {$_cmd == "in" || $_cmd == "inside"} {
+	set clist $ret
     }
 
-    # Checkpoint the created object
-    checkpoint_olist $clist $LEDGER_CREATE
+    set name $clist
+    updateTreeTopWithName $name
 
-    refreshTree 1
+    $itk_component(ged) draw $name
+    selectTreePath $name
 
-    updateUndoState
+    checkpoint $name $LEDGER_CREATE
+    set mNeedSave 1
+    updateSaveMode
+
     SetNormalCursor $this
 
     return $ret
@@ -2121,18 +2346,6 @@ package provide Archer 1.0
 	catch {eval gedCmd $cmd $options $expandedArgs} ret
 	SetNormalCursor $this
 
-	switch -- $tflag {
-	    0 {
-		# Do nothing
-	    }
-	    1 {
-		catch {updateTree}
-	    }
-	    default {
-		catch {refreshTree}
-	    }
-	}
-
 	return $ret
     }
 
@@ -2151,50 +2364,7 @@ package provide Archer 1.0
     }
 
     if {$sflag} {
-	set l [$mLedger expand *_*_$obj]
-	set l [lsort -dictionary $l]
-	set le [lindex $l end]
-
-	if {$le == ""} {
-	    putString "No ledger entry found for $obj."
-	} else {
-	    # Assumed to have mods after the command invocation above
-	    $mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-
-	    set mNeedSave 1
-	    set mNeedGlobalUndo 1
-
-	    if {$obj == $mSelectedObj} {
-		# Checkpoint again in case the user starts interacting via the mouse
-		checkpoint $obj $LEDGER_MODIFY
-	    } else {
-		updateUndoMode 0
-	    }
-
-	    updateSaveMode
-
-	    # Possibly draw the updated object
-	    set ditem ""
-	    foreach item [gedCmd report 0] {
-		regexp {/([^/]+$)} $item all item
-		set l [split $item /]
-		set i [lsearch -exact $l $obj]
-		if {$i != -1} {
-		    for {set j 1} {$j <= $i} {incr j} {
-			if {$j == 1} {
-			    append ditem [lindex $l $j]
-			} else {
-			    append ditem / [lindex $l $j]
-			}
-		    }
-		    break
-		}
-	    }
-
-	    if {$ditem != ""} {
-		redrawObj $ditem
-	    }
-	}
+	object_update $obj
     }
 
     gedCmd configure -primitiveLabels {}
@@ -2203,10 +2373,10 @@ package provide Archer 1.0
 	    # Do nothing
 	}
 	1 {
-	    catch {updateTree}
+	    catch {updateTreeDrawLists}
 	}
 	default {
-	    catch {refreshTree}
+	    catch {syncTree}
 	}
     }
     SetNormalCursor $this
@@ -2343,7 +2513,7 @@ package provide Archer 1.0
 	}
     }
 
-    refreshTree 1
+    syncTree
 
     if {[lsearch $klist $mSelectedObj] != -1} {
 	set mSelectedObj ""
@@ -2419,19 +2589,24 @@ package provide Archer 1.0
     # Checkpoint the renamed object
     set lnew_name [checkpoint $new_name $LEDGER_RENAME]
 
+    # Flag the renamed object as having mods
+    $mLedger attr set $lnew_name $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
+
     # Save the command for moving things back
     $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
 
-    refreshTree 1
+    syncTree
 
     if {$old_name == $mSelectedObj} {
 	set mSelectedObj $new_name
-	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
-	initEdit 0
 	checkpoint $mSelectedObj $LEDGER_MODIFY
+	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
     } elseif {[lsearch $mlist $mSelectedObj] != -1} {
 	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
+
+    initEdit 0
+    selectTreePath $mSelectedObjPath
 
     updateUndoState
     SetNormalCursor $this
@@ -5823,7 +5998,14 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initEdit {{_initEditMode 1}} {
-    set mSelectedObjType [gedCmd get_type $mSelectedObj]
+    if {[catch {gedCmd get_type $mSelectedObj} mSelectedObjType]} {
+	if {![info exists itk_component(invalidView)]} {
+	    buildInvalidObjEditView
+	}
+
+	initInvalidObjEditView $mSelectedObj
+	return
+    }
 
     if {$mSelectedObjType != "bot"} {
 	set odata [lrange [gedCmd get $mSelectedObj] 1 end]
@@ -6503,6 +6685,14 @@ proc title_node_handler {node} {
     } {}
 }
 
+::itcl::body Archer::buildInvalidObjEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add invalidView {
+	::ttk::label $parent.invalidview \
+	    -anchor center
+    } {}
+}
+
 ::itcl::body Archer::initArb4EditView {odata} {
     $itk_component(arb4View) configure \
 	-geometryObject $mSelectedObj \
@@ -6604,7 +6794,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initCombEditView {odata} {
     $itk_component(combView) configure \
 	-geometryObject $mSelectedObj \
-	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-geometryChangedCallback [::itcl::code $this updateCombEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
 	-boldLabelFont $mFontTextBold \
@@ -7094,6 +7284,14 @@ proc title_node_handler {node} {
 	-fill both
 }
 
+::itcl::body Archer::initInvalidObjEditView {_oname} {
+    $itk_component(invalidView) configure \
+	-text "$_oname does not exist"
+    pack $itk_component(invalidView) \
+	-expand yes \
+	-fill both
+}
+
 ::itcl::body Archer::updateObjEdit {updateObj needInit needSave} {
     set renderData [gedCmd how -b $mSelectedObjPath]
     set renderMode [lindex $renderData 0]
@@ -7121,6 +7319,12 @@ proc title_node_handler {node} {
 ::itcl::body Archer::updateObjEditView {} {
     updateObjSave
     redrawObj $mSelectedObjPath
+}
+
+::itcl::body Archer::updateCombEditView {} {
+    updateObjEditView
+    syncTree
+    initEdit
 }
 
 
@@ -7354,7 +7558,7 @@ proc title_node_handler {node} {
 	}
     }
 
-    refreshTree
+    syncTree
 }
 
 ::itcl::body Archer::pluginGetMinAllowableRid {} {
@@ -7605,7 +7809,7 @@ proc title_node_handler {node} {
 	    }
 	}
     } elseif {$cflag} {
-	refreshTree
+	rebuildTree
 
 	if {$mTreeAttrColumns == {}} {
 	    set twidth [expr {[winfo width $itk_component(newtree)] - 4}]
@@ -8414,7 +8618,7 @@ proc title_node_handler {node} {
 	}
 	"trc" {
 	    set name [gedCmd make_name "trc."]
-	    vmake $name trc
+	    gedCmd vmake $name trc
 	}
 	default {
 	    return
@@ -8424,7 +8628,10 @@ proc title_node_handler {node} {
     fillTree {} $name $mEnableListView
     $itk_component(ged) draw $name
     selectTreePath $name
-    updateTree
+#    updateTreeDrawLists
+
+    # Checkpoint the created object
+    checkpoint $name $LEDGER_CREATE
 
     set mNeedSave 1
     updateSaveMode
@@ -8710,6 +8917,14 @@ proc title_node_handler {node} {
 	    }
 
 	    updateUndoMode $oflag
+
+	    if {$gid < $mLedgerGID} {
+		incr mLedgerGID
+		set lname $mLedgerGID\_$oid\_$_obj
+		$mLedger mv $le $lname
+		$mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
+		return $lname
+	    }
 
 	    return $le
 	}
@@ -9003,7 +9218,7 @@ proc title_node_handler {node} {
 	}
     }
 
-    refreshTree 1
+    syncTree
 
     set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
     set len [llength $l]
@@ -9144,7 +9359,7 @@ proc title_node_handler {node} {
     set mNeedCheckpoint 0
     updateUndoState
 
-    refreshTree 1
+    syncTree
 
     # Make sure the selected object has atleast one checkpoint
     checkpoint $mSelectedObj $LEDGER_MODIFY
@@ -9152,6 +9367,61 @@ proc title_node_handler {node} {
     updateCheckpointMode
     updateSaveMode
     updateUndoMode
+}
+
+::itcl::body Archer::object_update {_obj {_rflag 1}} {
+    set l [$mLedger expand *_*_$_obj]
+    set l [lsort -dictionary $l]
+    set le [lindex $l end]
+
+    set tflag 0
+
+    if {$le == ""} {
+	putString "No ledger entry found for $_obj."
+    } else {
+	# Assumed to have mods after the command invocation above
+	$mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
+
+	set mNeedSave 1
+	set mNeedGlobalUndo 1
+
+	if {$_obj == $mSelectedObj} {
+	    # Checkpoint again in case the user starts interacting via the mouse
+	    checkpoint $_obj $LEDGER_MODIFY
+	} else {
+	    updateUndoMode 0
+	}
+
+	updateSaveMode
+
+	if {$_rflag} {
+	    # Possibly draw the updated object
+	    set ditem ""
+	    foreach item [gedCmd report 0] {
+		set l [split $item /]
+		set i [lsearch -exact $l $_obj]
+		if {$i != -1} {
+		    for {set j 1} {$j <= $i} {incr j} {
+			if {$j == 1} {
+			    append ditem [lindex $l $j]
+			} else {
+			    append ditem / [lindex $l $j]
+			}
+		    }
+		    break
+		}
+	    }
+
+	    if {$ditem != ""} {
+		set tflag 1
+		redrawObj $ditem
+	    }
+	}
+    }
+
+    if {$tflag} {
+	updateTreeDrawLists
+    }
 }
 
 ::itcl::body Archer::revert {} {

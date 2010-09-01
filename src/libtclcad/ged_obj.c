@@ -861,7 +861,7 @@ static struct go_cmdtab go_cmds[] = {
     {"regions",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"report",	(char *)0, MAXARGS, go_pass_through_func, ged_report},
     {"rfarb",	(char *)0, MAXARGS, go_pass_through_func, ged_rfarb},
-    {"rm",	(char *)0, MAXARGS, go_pass_through_func, ged_remove},
+    {"rm",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_remove},
     {"rmap",	(char *)0, MAXARGS, go_pass_through_func, ged_rmap},
     {"rmat",	"[mat]", 3, go_view_func, ged_rmat},
     {"rmater",	(char *)0, MAXARGS, go_pass_through_func, ged_rmater},

@@ -60,7 +60,6 @@ rt_obj_import(struct rt_db_internal *ip, const struct bu_external *ep, const mat
 }
 
 
-
 /*
  * Local Variables:
  * mode: C

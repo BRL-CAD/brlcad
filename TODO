@@ -17,7 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* ALL CLEAR!
+* verify that optimized bot_vertex_fuse still works
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -39,6 +39,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* investigate OpenEXR (BSD licensed HDE image format)
 
 * the 'cp' command no longer draws the object that was copied --
   undoubtedly a libged change -- so restore previous functionality.
@@ -833,6 +835,8 @@ ODDITIES
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
+
+* remove the hf primitive (fully)
 
 * support for features either as primitives or operations or both
   e.g. chamfer, fillet, round, cut, etc
