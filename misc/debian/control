@@ -3,7 +3,7 @@ Section: science
 Priority: extra
 Maintainer: Manuel A. Fernandez Montecelo <manuel.montezelo@gmail.com>
 DM-Upload-Allowed: yes
-Build-Depends: debhelper (>= 7.0.0), make (>= 3.8.0), bison, flex, libncurses5-dev, xserver-xorg-dev, libx11-dev, libxi-dev, libpng-dev, zlib1g-dev, tcl8.5-dev (>= 8.5), tk8.5-dev (>= 8.5), itcl3-dev, itk3-dev, iwidgets4, libtk-img-dev, blt-dev, xsltproc
+Build-Depends: debhelper (>= 7.0.0), make (>= 3.8.0), bison, flex, libncurses5-dev, xserver-xorg-dev, libx11-dev, libxi-dev, libpng-dev, zlib1g-dev, tcl8.5-dev (>= 8.5), tk8.5-dev (>= 8.5), itcl3-dev, itk3-dev, iwidgets4, libtk-img-dev, blt-dev, libtnt-dev (>> 1.2.6), libjama-dev (>> 1.2.4), xsltproc
 Standards-Version: 3.9.1
 Homepage: http://brlcad.org/
 Vcs-Svn: https://brlcad.svn.sourceforge.net/svnroot/brlcad/
