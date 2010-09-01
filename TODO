@@ -19,6 +19,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * verify that optimized bot_vertex_fuse still works
 
+* verify rt/benchmark on windows doesn't crash
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
