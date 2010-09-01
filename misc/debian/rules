@@ -66,6 +66,10 @@ install-stamp: build-stamp
 	mkdir -p debian/tmp/usr/share/doc/brlcad
 	mv debian/tmp/usr/share/brlcad/*/doc debian/tmp/usr/share/doc/brlcad
 	mv debian/tmp/usr/share/brlcad/*/html debian/tmp/usr/share/doc/brlcad/html
+
+#	Move man pages
+	mkdir -p debian/tmp/usr/share/man/man3
+	mv debian/tmp/usr/man/mann/* debian/tmp/usr/share/man/man3/
 	mv debian/tmp/usr/man debian/tmp/usr/share/man
 
 # Build architecture-independent files here.
