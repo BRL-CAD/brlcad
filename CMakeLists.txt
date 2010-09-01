@@ -821,21 +821,178 @@ IF(TCL_FOUND)
       FIND_TCL_PACKAGE(${TK_WISH} Iwidgets)
       FIND_TCL_PACKAGE(${TK_WISH} Tkhtml)
       FIND_TCL_PACKAGE(${TK_WISH} tkpng)
+      FIND_TCL_PACKAGE(${TK_WISH} Tktable)
    ENDIF(TK_LIBRARY)
 ENDIF(TCL_FOUND)
 
+# For the moment, these external projects are assuming local Tcl/Tk was built.  That won't fly
+# for a valid Tcl/Tk system install, so need to handle at least the following issues:
+#
+# 1.  FindTCL needs to set a variable with the right directory to pass to --with-tcl/--with-tk
+# 2.  Need to determine the "right way", if it exists, to install Tcl/Tk packages so package
+#     require in a system Tcl/Tk can find them even if there is no access to the correct system
+#     paths.  It may be that this is where btclsh/bwish are needed
+# 3.  Can iwidgets be installed with a system Itcl/Itk and no source tree?  Or more practically
+#     can keeping --with-itcl set to the local copies still work with a system itcl/itk install?
+
 IF(NOT ITCL_FOUND OR NOT ITK_FOUND)
-	ADD_SUBDIRECTORY(src/other/incrTcl)
+   ExternalProject_Add(
+     itcl
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itcl
+     CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itcl -o
+     ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itcl/configure
+     ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itcl/configure.in && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl/ &&
+     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE) install
+   )
+   ExternalProject_Add(
+     itk
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itk
+     CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itk -o
+     ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itk/configure
+     ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itk/configure.in && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk/ &&
+     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE) install
+   )
+
 	ADD_DEPENDENCIES(itcl ${TCL_DEP} ${TK_DEP})
-	ADD_DEPENDENCIES(itk ${TCL_DEP} ${TK_DEP})
-	ADD_DEPENDENCIES(itclstub ${TCL_DEP} ${TK_DEP})
-	ADD_DEPENDENCIES(itkstub ${TCL_DEP} ${TK_DEP})
+	ADD_DEPENDENCIES(itk itcl ${TCL_DEP} ${TK_DEP})
 	SET(BRLCAD_BUILD_LOCAL_INCRTCL ON)
 	SET(ITCL_DEP "itcl")
 	SET(ITK_DEP "itk")
 ELSE(NOT ITCL_FOUND OR NOT ITK_FOUND)
 	SET(BRLCAD_BUILD_LOCAL_INCRTCL OFF)
 ENDIF(NOT ITCL_FOUND OR NOT ITK_FOUND)
+
+IF(NOT IWIDGETS_FOUND)
+   ExternalProject_Add(
+     iwidgets
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/iwidgets
+     CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/iwidgets -o
+     ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/iwidgets/configure
+     ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/iwidgets/configure.in && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets/ &&
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib --with-itcl=${BRLCAD_SOURCE_DIR}/src/other/incrTcl
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets && $(MAKE) install
+   )
+   ADD_DEPENDENCIES(iwidgets ${TCL_DEP} ${TK_DEP} ${ITCL_DEP} ${ITK_DEP})
+	SET(BRLCAD_BUILD_LOCAL_IWIDGETS ON)
+ELSE(NOT IWIDGETS_FOUND)
+	ExternalProject_Add(
+     iwidgets
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/iwidgets
+     CONFIGURE_COMMAND ""
+     BUILD_COMMAND ""
+     INSTALL_COMMAND "" 
+   )
+	SET(BRLCAD_BUILD_LOCAL_IWIDGETS OFF)
+ENDIF(NOT IWIDGETS_FOUND)
+
+IF(NOT TKHTML_FOUND)
+   ExternalProject_Add(
+     tkhtml
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tkhtml
+	  CONFIGURE_COMMAND cd ${BRLCAD_SOURCE_DIR}/src/other/tkhtml && autoreconf -i -f && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/tkhtml/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/tkhtml/ &&
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tkhtml && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tkhtml && $(MAKE) install
+   )
+   ADD_DEPENDENCIES(tkhtml ${TCL_DEP} ${TK_DEP})
+	SET(BRLCAD_BUILD_LOCAL_TKHTML ON)
+ELSE(NOT TKHTML_FOUND)
+	ExternalProject_Add(
+     tkhtml
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tkhtml
+     CONFIGURE_COMMAND ""
+     BUILD_COMMAND ""
+     INSTALL_COMMAND "" 
+   )
+	SET(BRLCAD_BUILD_LOCAL_TKHTML OFF)
+ENDIF(NOT TKHTML_FOUND)
+
+IF(NOT TKPNG_FOUND)
+   ExternalProject_Add(
+     tkpng
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tkpng
+     CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tkpng -o
+     ${BRLCAD_SOURCE_DIR}/src/other/tkpng/configure
+     ${BRLCAD_SOURCE_DIR}/src/other/tkpng/configure.in && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/tkpng/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/tkpng/ &&
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tkpng && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tkpng && $(MAKE) install
+   )
+   ADD_DEPENDENCIES(tkpng ${TCL_DEP} ${TK_DEP})
+	SET(BRLCAD_BUILD_LOCAL_TKPNG ON)
+ELSE(NOT TKPNG_FOUND)
+	ExternalProject_Add(
+     tkpng
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tkpng
+     CONFIGURE_COMMAND ""
+     BUILD_COMMAND ""
+     INSTALL_COMMAND "" 
+   )
+	SET(BRLCAD_BUILD_LOCAL_TKPNG OFF)
+ENDIF(NOT TKPNG_FOUND)
+
+IF(NOT TKTABLE_FOUND)
+   ExternalProject_Add(
+     tktable
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tktable
+     CONFIGURE_COMMAND autoconf -I ${BRLCAD_SOURCE_DIR}/src/other/tktable -o
+     ${BRLCAD_SOURCE_DIR}/src/other/tktable/configure
+     ${BRLCAD_SOURCE_DIR}/src/other/tktable/configure.in && mkdir -p
+     ${BRLCAD_BINARY_DIR}/src/other/tktable/ && cd
+     ${BRLCAD_BINARY_DIR}/src/other/tktable/ &&
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tktable && $(MAKE)
+     INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tktable && $(MAKE) install
+   )
+   ADD_DEPENDENCIES(tktable ${TCL_DEP} ${TK_DEP})
+	SET(BRLCAD_BUILD_LOCAL_TKTABLE ON)
+ELSE(NOT TKTABLE_FOUND)
+	ExternalProject_Add(
+     tktable
+     DOWNLOAD_COMMAND ""
+     PREFIX ${BRLCAD_BINARY_DIR}
+     SOURCE_DIR ${BRLCAD_SOURCE_DIR}/src/other/tktable
+     CONFIGURE_COMMAND ""
+     BUILD_COMMAND ""
+     INSTALL_COMMAND "" 
+   )
+	SET(BRLCAD_BUILD_LOCAL_TKTABLE OFF)
+ENDIF(NOT TKTABLE_FOUND)
+
+
 
 # OpenNURBS Library
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
@@ -962,9 +1119,10 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
    SET(BRLCAD_BUILD_LOCAL_TCL_LABEL "Build Tcl ")
    SET(BRLCAD_BUILD_LOCAL_TK_LABEL "Build Tk ")
 	SET(BRLCAD_BUILD_LOCAL_INCRTCL_LABEL "Build Itcl/Itk ")
-   SET(BRLCAD_BUILD_LOCAL_IWIDGETS_LABEL "Build IWidgets ")
-   SET(BRLCAD_BUILD_LOCAL_TKHTML3_LABEL "Build tkhtml3 ")
+   SET(BRLCAD_BUILD_LOCAL_IWIDGETS_LABEL "Build Iwidgets ")
+   SET(BRLCAD_BUILD_LOCAL_TKHTML_LABEL "Build Tkhtml ")
    SET(BRLCAD_BUILD_LOCAL_TKPNG_LABEL "Build tkpng ")
+	SET(BRLCAD_BUILD_LOCAL_TKTABLE_LABEL "Build Tktable ")
    SET(BRLCAD_BUILD_LOCAL_PNG_LABEL "Build libpng ")
    SET(BRLCAD_BUILD_LOCAL_REGEX_LABEL "Build libregex ")
    SET(BRLCAD_BUILD_LOCAL_ZLIB_LABEL "Build zlib ")
@@ -1005,7 +1163,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
    endif (BRLCAD-BUILD_EXTRADOCS)
    SET(BRLCAD-BUILD_DOCBUILD_MSG_LABEL "Build extra docs ")
 
-	SET(SETTINGLIST1 BRLCAD_BUILD_LOCAL_TCL BRLCAD_BUILD_LOCAL_TK BRLCAD_BUILD_LOCAL_INCRTCL BRLCAD_BUILD_LOCAL_IWIDGETS BRLCAD_BUILD_LOCAL_TKHTML3 BRLCAD_BUILD_LOCAL_TKPNG BRLCAD_BUILD_LOCAL_PNG BRLCAD_BUILD_LOCAL_REGEX BRLCAD_BUILD_LOCAL_ZLIB BRLCAD_BUILD_LOCAL_TERMLIB BRLCAD_BUILD_LOCAL_UTAHRLE BRLCAD_BUILD_LOCAL_TNT BRLCAD_BUILD_LOCAL_OPENNURBS BRLCAD_BUILD_LOCAL_STEP)
+	SET(SETTINGLIST1 BRLCAD_BUILD_LOCAL_TCL BRLCAD_BUILD_LOCAL_TK BRLCAD_BUILD_LOCAL_INCRTCL BRLCAD_BUILD_LOCAL_IWIDGETS BRLCAD_BUILD_LOCAL_TKHTML BRLCAD_BUILD_LOCAL_TKPNG BRLCAD_BUILD_LOCAL_TKTABLE BRLCAD_BUILD_LOCAL_PNG BRLCAD_BUILD_LOCAL_REGEX BRLCAD_BUILD_LOCAL_ZLIB BRLCAD_BUILD_LOCAL_TERMLIB BRLCAD_BUILD_LOCAL_UTAHRLE BRLCAD_BUILD_LOCAL_TNT BRLCAD_BUILD_LOCAL_OPENNURBS BRLCAD_BUILD_LOCAL_STEP)
    SET(SETTINGLIST2 BRLCAD-ENABLE_X11 BRLCAD-ENABLE_OPENGL BRLCAD-ENABLE_RTSERVERJDK BRLCAD-ENABLE_RUNTIMEDEBUGGING )
    SET(SETTINGLIST3 BRLCAD_ARCH_BITSETTING BRLCAD-ENABLE_OPTIMIZED BRLCAD-ENABLE_DEBUG BRLCAD-ENABLE_PROFILE BRLCAD-ENABLE_SMP BRLCAD-ENABLE_STATICLIBS BRLCAD-ENABLE_DYNAMICLIBS BRLCAD-ENABLE_VERBOSEWARN BRLCAD-ENABLE_VERBOSEPROGRESS BRLCAD-BUILD_BENCHMARK_ONLY BRLCAD-BUILD_RTSERVER_ONLY BRLCAD-BUILD_GEOMETRY BRLCAD-BUILD_DOCBUILD_MSG)
    SET(ARRAYLIST SETTINGLIST1 SETTINGLIST2 SETTINGLIST3)
