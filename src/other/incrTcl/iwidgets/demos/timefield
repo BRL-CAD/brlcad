@@ -1,0 +1,12 @@
+# ----------------------------------------------------------------------
+#  DEMO: timefield in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+proc returnCmd {} {
+  puts [.df get]
+}
+
+iwidgets::timefield .df -labeltext "Time:" -command returnCmd
+pack .df -fill x -expand yes -padx 10 -pady 10
+

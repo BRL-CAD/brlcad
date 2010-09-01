@@ -1,0 +1,32 @@
+# ----------------------------------------------------------------------
+#  DEMO: messagebox in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+. configure -background white
+
+iwidgets::messagebox .mb -hscrollmode dynamic -labeltext "Messages" \
+    -labelpos n -visibleitems 50x8
+
+pack .mb -padx 5 -pady 5 -fill both -expand yes
+
+.mb type add ERROR -background red -foreground white -bell 1
+.mb type add WARNING -background yellow -foreground black
+.mb type add INFO -background white -foreground black
+
+frame .cntls -background white
+pack .cntls -padx 5 -pady 5 -fill x
+button .cntls.error -text "Error" -command {
+    .mb issue "This is an error message in red with a beep" ERROR
+}
+pack .cntls.error -side left -expand yes
+
+button .cntls.warning -text "Warning" -command {
+    .mb issue "This warning message in yellow" WARNING
+}
+pack .cntls.warning -side left -expand yes
+
+button .cntls.info -text "Info" -command {
+    .mb issue "This is an informational message" INFO
+}
+pack .cntls.info -side left -expand yes

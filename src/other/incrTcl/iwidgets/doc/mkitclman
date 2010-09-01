@@ -1,0 +1,320 @@
+#!/bin/sh
+# \
+    exec itkwish "$0" ${1+"$@"}
+#
+# mkitclman "4 Dec 1995"
+# mkitclman - generate a man page from an itcl class
+#
+# SYNOPSIS
+#   mkitclman classfile
+#
+# DESCRIPTION
+#   Reads an [incr Tcl] or [incr Tk] class file as input, and outputs nroff.
+#   mkitclman generates a standard format used for [incr Widget] classes. It
+#   locates the class name, inheritance to one level, widget specific options,
+#   and widget specific methods. Areas that the script cannot handle it 
+#   places and uppercased name delimited by leading and trailing '_' characters.
+#
+#   [incr Tcl/Tk] 2.0 is the supported class format. 
+#
+# CAVEATS
+#   mkitlcman does not work with normal Tk or Tcl script files. 
+#   It expects only one class per file. In addition, it does not work on
+#   namespace files.
+
+proc init { } {
+	global _className
+	global _inheritClass
+    global _publicMethod
+    global _publicVariable
+    global _protectedMethod
+    global _protectedVariable
+    global _privateMethod
+    global _privateVariable
+	global _options
+
+	set _className {}
+	set _inheritClass {}
+
+}
+proc namespace { args } {
+	global _className
+
+	set _className [lindex $args 0]
+	set classBody [lindex $args 1]
+
+	eval $classBody
+}
+proc class { args } {
+	global _className
+
+	set _className [lindex $args 0]
+	set classBody [lindex $args 1]
+
+	eval $classBody
+}
+proc itk_option { action switch args } {
+	global _options
+
+	if { $action == "define" } {
+		set _options($switch) $args
+	}
+}
+proc inherit { inheritClass } {
+	global _inheritClass
+	set _inheritClass $inheritClass
+}
+
+# default is public method
+proc method { name args } {
+	global _publicMethod
+
+	set _publicMethod($name) $args
+}
+
+# pick up arrays later...
+proc common { name args } {
+	global _commonVariable
+
+	# set to defaults
+	set _commonVariable($name) $args
+}
+
+proc public { type args } {
+	global _publicMethod
+	global _publicVariable
+
+	switch $type {
+		method {
+			set _publicMethod([lindex $args 0]) [lindex $args 1]
+		}
+		variable {
+			# _publicVariable(varName) = defaultValue
+			set _publicVariable([lindex $args 0]) [lindex $args 1]
+		}
+	}
+}
+
+proc protected { type args } {
+	global _protectedMethod
+	global _protectedVariable
+
+	switch $type {
+		method {
+			# _protectedMethod(methodName) = argList
+			set _protectedMethod([lindex $args 0]) [lrange $args 1 end]
+		}
+		variable {
+			# _protectedVariable(varName) = defaultValue
+			set _protectedVariable([lindex $args 0]) [lindex $args 1]
+		}
+	}
+}
+
+proc private { type args } {
+	global _privateMethod
+	global _privateVariable
+
+	switch $type {
+		method {
+			# _privateMethod(methodName) = argList
+			set _privateMethod([lindex $args 0]) [lrange $args 1 end]
+		}
+		variable {
+			# _privateVariable(varName) = defaultValue
+			set _privateVariable([lindex $args 0]) [lindex $args 1]
+		}
+	}
+}
+
+proc body { args } {
+}
+
+proc configbody { args } {
+}
+
+proc destructor { args } {
+}
+proc constructor { args } {
+}
+
+proc gen { } {
+	global _className
+    global _classBody
+	global _inheritClass
+    global _publicMethod
+    global _publicVariable
+    global _protectedMethod
+    global _protectedVariable
+    global _privateMethod
+    global _privateVariable
+    global _methodSection
+    global _optionSection
+	global _manpage
+	global _optionManFmt
+	global _methodManFmt
+	global _method
+	global _options
+	global _optionSwitch
+	global _optionName
+	global _optionClass
+
+	if { $_inheritClass != {} } {
+		set _inheritClass "$_inheritClass <-"
+	}
+	set _optionManFmt {}
+	set _methodManFmt {}
+	set _methodArgs {}
+	foreach pbv [lsort [array names _publicVariable]]  {
+		set _optionSwitch "-$pbv"
+		set _optionName $pbv
+		set _optionClass "[string toupper [string index $pbv 0]][string range $pbv 1 end]"
+		lappend _optionManFmt [subst -nobackslash -nocommand $_optionSection]
+	}
+
+	foreach opt [lsort [array names _options]] {
+		set _optionSwitch $opt
+		set _optionName [lindex $_options($opt) 0]
+		set _optionClass [lindex $_options($opt) 1]
+		lappend _optionManFmt [subst -nobackslash -nocommand $_optionSection]
+	}
+	foreach pbm [lsort [array names _publicMethod]] {
+		set _method $pbm
+		eval set _methodArgs [list $_publicMethod($pbm)]
+		lappend _methodManFmt [subst -nobackslash -nocommand $_methodSection]
+	}
+	foreach ptm [lsort [array names _protectedMethod]] {
+	}
+	foreach ptv [lsort [array names _protectedVariable]] {
+	}
+	foreach pvm [lsort [array names _privateMethod]] {
+	}
+	foreach pvv [lsort [array names _privateVariable]] {
+	}
+
+	set _methodManFmt [join $_methodManFmt " "]
+	set _optionManFmt [join $_optionManFmt " "]
+
+	set _manpage [subst -nobackslash -nocommand $_manpage]
+
+	puts $_manpage
+}
+
+set _manpage {
+'\"
+'\" Copyright (c) _AUTHOR_
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) $_className.n
+'/"
+.so man.macros
+.HS $_className iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+'\"
+'\"
+.SH NAME
+$_className \- _NAME_DESCRIPTION_
+.SH SYNOPSIS
+\fB$_className\fI \fIpathName\fR ?\fIoptions\fR?
+.SH "INHERITANCE"
+$_inheritClass $_className
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+_STANDARD_OPTIONS_
+.fi
+.LP
+See the "options" manual entry for details on the standard options.
+.SH "ASSOCIATED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+_ASSOCIATED_OPTIONS_
+.fi
+.LP
+See the "_ASSOCIATED_WIDGET_" widget manual entry for details on the above
+associated options.
+.SH "INHERITED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+_INHERITED_OPTIONS_
+.fi
+.LP
+See the "_INHERITED_WIDGET_" class manual entry for details on the inherited options.
+.SH "WIDGET-SPECIFIC OPTIONS"
+.LP
+$_optionManFmt
+.BE
+.SH DESCRIPTION
+.PP
+_DESCRIPTION_
+.SH "METHODS"
+.PP
+The \fB$_className\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for $_className widgets:
+.SH "ASSOCIATED METHODS"
+.LP
+.nf
+.ta 4c 8c 12c
+_ASSOCIATED_METHODS_
+.fi
+.LP
+See the "_ASSOCIATED_WIDGET_" manual entry for details on the standard methods.
+.SH "WIDGET-SPECIFIC METHODS"
+$_methodManFmt
+.SH "COMPONENTS"
+.LP
+.nf
+Name:   \fB_COMPONENT_NAME_\fR
+Class:  \fB_COMPONENT_CLASS_\fR
+.fi
+.IP
+_COMPONENT_DESCRIPTION_
+See the "_COMPONENT_TYPE_" widget manual entry for details on the _COMPONENT_NAME_ component item.
+.fi
+.SH EXAMPLE
+.DS
+_EXAMPLE_CODE_
+.DE
+.SH AUTHOR
+_AUTHOR_
+.SH KEYWORDS
+_KEYWORDS_
+}
+
+set _optionSection {
+.nf
+Name:	\fB$_optionName\fR
+Class:	\fB$_optionClass\fR
+Command-Line Switch:	\fB$_optionSwitch\fR
+.fi
+.IP
+_OPTION_DESCRIPTION_
+.LP
+}
+
+set _methodSection {
+.TP
+\fIpathName\fR \fB$_method\fR \fI$_methodArgs\fR
+_METHOD_DESCRIPTION_
+}
+
+# Add these two lines up into the man page above to enable
+
+init
+source [lindex $argv 0]
+gen
+exit

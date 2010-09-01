@@ -1,0 +1,203 @@
+# This file is a Tcl script to test out [incr Widgets] Timeentry class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Timeentry-1.$c {Timeentry construction} {
+    iwidgets::Timeentry .te -labeltext "Time Entry"
+    pack .te -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Timeentry-2.$o {configuration option} {
+    llength [.te configure]
+} {46}
+
+incr o
+
+foreach test {
+    {-background #d9d9d9 #d9d9d9}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
+    {-command {.te configure -background red} {.te configure -background red}}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
+    {-highlightcolor Red Red}
+    {-highlightthickness 2 2}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
+    {-justify right right}
+    {-justify center center}
+    {-justify left left}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-foreground black black}
+    {-state disabled disabled}
+    {-state normal normal}
+    {-closetext Set Set}
+    {-watchheight 200 200}
+    {-watchwidth 200 200}
+    {-hourradius .40 .40}
+    {-hourcolor green green}
+    {-minuteradius .90 .90}
+    {-minutecolor blue blue}
+    {-secondradius .99 .99}
+    {-secondcolor red red}
+    {-clockcolor brown brown}
+    {-clockstipple error error}
+    {-sticky w w}
+    {-sticky nw nw}
+    {-sticky n n}
+    {-sticky ne ne}
+    {-sticky e e}
+    {-sticky se se}
+    {-sticky s s}
+    {-sticky sw sw}
+    {-sticky news news}
+    {-tickcolor purple purple}
+    {-textbackground GhostWhite GhostWhite} 
+    {-textbackground #d9d9d9 #d9d9d9}} {
+	set option [lindex $test 0]
+	test Timeentry-2.$o "configuration options, $option" {
+	    .te configure $option [lindex $test 1]
+	    lindex [.te configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-childsitepos bogus {bad childsite option "bogus": should be n, e, s, or w}}} {
+	set option [lindex $test 0]
+        test Timeentry-2.$o "configuration options, $option" {
+	    list [catch {.te configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.te childsite} {.te.lwchildsite}}
+    {{.te show "11:11:11 PM"} {11:11:11 PM}}
+    {{.te get} {11:11:11 PM}}
+    {{.te get -string} {11:11:11 PM}}
+    {{.te isvalid} {1}}
+    {{.te component time delete 0 end} {}}
+    {{.te component time insert end 44:44:44} {}}
+    {{.te isvalid} {0}}
+    {{.te show now; list} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Timeentry-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+test Timeentry-3.$m "object methods, clock clicks" {
+    set clicks [clock scan "3:15:00 PM"]
+    .te show $clicks
+    update 
+    .te get 
+} {03:15:00 PM}
+incr m
+
+#
+# Method tests which fail and produce errors
+#
+foreach test {
+    {{.te get bogus} {bad format option "bogus": should be -string or -clicks}}
+    {{.te show bogus} {bad time: "bogus", must be a valid time  string, clock clicks value or the keyword now}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Timeentry-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 1 [lindex $test 1]]
+	incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Timeentry-1.$c {Timeentry destruction} {
+    destroy .te
+    update 
+} {}
+
+incr c
+
+test Timeentry-1.$c {Timeentry construction} {
+    iwidgets::timeentry .te 
+    pack .te -padx 10 -pady 10
+    update 
+} {}
+
+incr c
+
+test Timeentry-1.$c {Timeentry destruction} {
+    destroy .te
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

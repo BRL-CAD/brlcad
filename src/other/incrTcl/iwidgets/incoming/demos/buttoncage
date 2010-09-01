@@ -1,0 +1,16 @@
+# ----------------------------------------------------------------------
+#  DEMO: new buttoncage
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+source ../src/buttoncage.itk
+
+puts "This demo creates a 5x2 grid of buttons..."
+
+. configure -relief ridge -bd 3
+iwidgets::buttoncage .bc -width 5 -height 2
+pack .bc
+
+for {set i 1} {$i <= 10} {incr i} {
+  .bc add $i -text "Button $i" \
+    -command [eval {list puts "Congratulations.  You just pressed button $i"}]
+}

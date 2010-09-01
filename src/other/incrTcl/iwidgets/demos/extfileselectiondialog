@@ -1,0 +1,15 @@
+# ----------------------------------------------------------------------
+#  DEMO: extfileselectiondialog in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::extfileselectiondialog .efsd -modality application
+
+button .select -text "Files..." -command {
+    if {[.efsd activate]} {
+        puts "selected: [.efsd get]"
+    } else {
+        puts ""
+    }
+}
+pack .select -side left

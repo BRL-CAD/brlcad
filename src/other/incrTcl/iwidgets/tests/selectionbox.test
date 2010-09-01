@@ -1,0 +1,190 @@
+# This file is a Tcl script to test out [incr Widgets] Selectionbox class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Selectionbox-1.$c {Selectionbox construction} {
+    iwidgets::Selectionbox .sb
+    .sb insert items end Hello {Out There} World
+    set cs [label [.sb childsite].label -text "Child Site"]
+    pack $cs -fill x -padx 10 -pady 10
+    pack .sb -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Selectionbox-2.$o {configuration option} {
+    llength [.sb configure]
+} {35}
+
+incr o
+
+foreach test {
+    {-width 280 280}
+    {-height 340 340}
+    {-activebackground #ececec #ececec}
+    {-activerelief raised raised}
+    {-background #d9d9d9 #d9d9d9} 
+    {-textbackground GhostWhite GhostWhite} 
+    {-borderwidth 2 2} 
+    {-childsitepos n n} 
+    {-childsitepos s s} 
+    {-childsitepos e e} 
+    {-childsitepos w w} 
+    {-childsitepos center center} 
+    {-cursor gumby gumby} 
+    {-dblclickcommand {.sb configure -background blue} {.sb configure -background blue}} 
+    {-exportselection 1 1} 
+    {-foreground Black Black}
+    {-highlightcolor Black Black}
+    {-highlightthickness 2 2}
+    {-insertbackground Black Black} 
+    {-insertborderwidth 0 0} 
+    {-insertofftime 300 300} 
+    {-insertontime  600 600} 
+    {-insertwidth 2 2} 
+    {-itemslabel "Items Label" "Items Label"} 
+    {-itemson no no} 
+    {-labelfont -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*} 
+    {-margin 10 10} 
+    {-itemson yes yes} 
+    {-selectbackground #c3c3c3 #c3c3c3} 
+    {-selectborderwidth 1 1} 
+    {-itemscommand {.sb selectitem} {.sb selectitem}} 
+    {-selectforeground Black Black} 
+    {-selectioncommand _command _command} 
+    {-selectionlabel "Selection Label" "Selection Label"} 
+    {-selectionon no no} 
+    {-selectionon yes yes} 
+    {-textfont 6x13 6x13} 
+    {-width 0 0}
+    {-height 0 0}} {
+	set option [lindex $test 0]
+	test Selectionbox-2.$o "configuration options, $option" {
+	    .sb configure $option [lindex $test 1]
+	    lindex [.sb configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.sb childsite} {.sb.sbchildsite}}
+    {{destroy [.sb childsite]} {}}
+    {{.sb delete Hello 1} {}}
+    {{.sb delete 0} {}}
+    {{.sb insert items 0 One Two Three Four Five Six} {}}
+    {{.sb component items get 0 end} {One Two Three Four Five Six}}
+    {{.sb size} 6}
+    {{.sb clear selection} {}}
+    {{.sb insert selection 0 One} {}}
+    {{.sb get} One}
+    {{.sb index end} 6}
+    {{.sb index Six} 5}
+    {{.sb selection set 1} {}}
+    {{.sb selectitem} {}}
+    {{.sb curselection} 1}
+    {{.sb get} Two}
+    {{.sb delete Three} {}}
+    {{.sb clear items} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Selectionbox-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+#
+# Method tests which fail and produce errors
+#
+foreach test {
+    {{.sb clear bogus} {bad clear argument "bogus": should be selection or items}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Selectionbox-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 1 [lindex $test 1]]
+	incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Selectionbox-1.$c {Selectionbox destruction} {
+    destroy .sb
+    update 
+} {}
+
+incr c
+
+test Selectionbox-1.$c {Selectionbox construction} {
+    iwidgets::selectionbox .sb 
+    .sb component items configure -vscrollmode none -hscrollmode none
+    pack .sb -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+test Selectionbox-1.$c {Selectionbox destruction} {
+    destroy .sb
+    update 
+} {}
+
+incr c
+
+test Selectionbox-1.$c {Selectionbox destruction} {
+    iwidgets::selectionbox .sb
+    pack .sb
+    destroy .sb
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

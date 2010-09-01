@@ -1,0 +1,258 @@
+<TITLE>hyperhelp - Create and manipulate a hyperhelp widget</TITLE>
+<H1>hyperhelp - Create and manipulate a hyperhelp widget</H1>
+
+</pre><H2>SYNOPSIS</H2>
+<B>hyperhelp<I> <I>pathName </I>?<I>options</I>?
+</pre><H2>INHERITANCE</H2>
+itk::Toplevel &lt;- shell &lt;- hyperhelp
+</pre><H2>STANDARD OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activeBackground</B><br>
+<B>cursor</B><br>
+<B>highlightThickness</B><br>
+<B>insertOnTime</B><br>
+<B>relief</B><br>
+<B>selectBorderWidth</B><br>
+</td>
+<td valign=top>
+<B>background</B><br>
+<B>exportSelection</B><br>
+<B>insertBackground</B><br>
+<B>insertWidth</B><br>
+<B>repeatDelay</B><br>
+<B>selectForeground</B><br>
+</td>
+<td valign=top>
+<B>borderWidth</B><br>
+<B>foreground</B><br>
+<B>insertBorderWidth<br>
+<B>padX</B><br>
+<B>repeatInterval</B><br>
+<B>setGrid</B><br>
+</td>
+<td valign=top>
+<B>closecmd</B><br>
+<B>highlightColor</B><br>
+<B>insertOffTime</B><br>
+<B>padY</B><br>
+<B>selectBackground</B><br>
+</td>
+</table>
+<P>
+See the <A HREF="http://www.sco.com/Technology/tcl/man/tk_man/options.n.html"> "options" </A> manual entry for details on the standard options.
+</pre><H2>ASSOCIATED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>hscrollmode</B><br>
+<B>fontsize</B><br>
+<B>width</B><br>
+<B>unknownimage</B><br>
+</td>
+<td valign=top>
+<B>vscrollmode</B><br>
+<B>fixedfont</B><br>
+<B>height</B><br>
+</td>
+<td valign=top>
+<B>textbackground</B><br>
+<B>link</B><br>
+<B>state</B><br>
+</td>
+<td valign=top>
+<B>fontname</B><br>
+<B>linkhighlight</B><br>
+<B>wrap</B><br>
+</td>
+</table>
+<P>
+See the "scrolledhtml" widget manual entry for details on the above
+associated options.
+</pre><H2>INHERITED OPTIONS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>modality</B><br>
+</td>
+<td valign=top>
+<B>title</B><br>
+</td>
+<td valign=top>
+</td>
+<td valign=top>
+</td>
+</table>
+<P>
+See the "shell" manual entry for details on the above inherited options.
+</pre><H2>WIDGET-SPECIFIC OPTIONS</H2>
+<P>
+<pre>
+Name:                   <B>topics</B>
+Class:                  <B>Topics</B>
+Command-Line Switch:    <B>-topics</B>
+</pre>
+<UL>
+Specifies a list of help topics in the form {?<I>topic</I>? ... }. <I>Topic</I> 
+may either be a topic name, in which case the 
+document associated with the topic should be in the file 
+<B>helpdir</B>/<I>topic</I>.html, or it may be of the form 
+{<I>name</I> <I>file</I>}. In the latter case, <I>name</I> is displayed in the
+topic menu, and selecting the name loads <I>file</I>. If file has a relative
+path, it is assumed to be relative to helpdir.
+</UL>
+<P>
+<pre>
+Name:                   <B>helpdir</B>
+Class:                  <B>Directory</B>
+Command-Line Switch:    <B>-helpdir</B>
+</pre>
+<UL>
+Specifies the directory where help files are located.
+</UL>
+<P>
+<pre>
+Name:                   <B>closeCmd</B>
+Class:                  <B>CloseCmd</B>
+Command-Line Switch:    <B>-closecmd</B>
+</pre>
+<UL>
+Specifies the tcl command to be executed when the close option is selected
+from the topics menu.
+</UL>
+<P>
+<pre>
+Name:                   <B>maxHistory</B>
+Class:                  <B>MaxHistory</B>
+Command-Line Switch:    <B>-maxhistory</B>
+</pre>
+<UL>
+Specifies the maximum number of entries stored in the history list
+</UL>
+<P>
+<pre>
+Name:                   <B>beforelink</B>
+Class:                  <B>BeforeLink</B>
+Command-Line Switch:    <B>-beforelink</B>
+</pre>
+<UL>
+Specifies a command to be eval'ed before a new link is displayed. The path
+of the link to be displayed is appended before evaling the command. A suggested
+use might be to busy the widget while a new page is being displayed.
+</UL>
+<P>
+<pre>
+Name:                   <B>afterlink</B>
+Class:                  <B>AfterLink</B>
+Command-Line Switch:    <B>-afterlink</B>
+</pre>
+<UL>
+Specifies a command to be eval'ed after a new link is completely displayed. 
+The path of the link that was displayed is appended before evaling the command.
+</UL>
+<P>
+</pre><HR>
+
+</pre><H2>DESCRIPTION</H2>
+<P>
+The <B>hyperhelp</B> command creates a shell window with a pulldown menu
+showing a list of topics. The topics are displayed by importing a HTML
+formatted file named <B>helpdir</B>/<I>topic</I>.html. For a list of 
+supported HTML tags, see <B>scrolledhtml(n)</B>.
+
+</pre><H2>METHODS</H2>
+<P>
+The <B>hyperhelp</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<pre>
+<I>pathName option </I>?<I>arg arg ...</I>?
+</pre>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for dialog widgets:
+</pre><H2>INHERITED METHODS</H2>
+<P>
+<table cellpadding=5>
+<td valign=top>
+<B>activate</B><br>
+</td>
+<td valign=top>
+<B>center</B><br>
+</td>
+<td valign=top>
+<B>childsite</B><br>
+</td>
+<td valign=top>
+<B>deactivate</B><br>
+</td>
+</table>
+<P>
+See the "shell" manual entry for details on the above inherited methods.
+
+</pre><H2>WIDGET-SPECIFIC METHODS</H2>
+<DL>
+<DT> <I>pathName <B>cget</B> <I>option</I>
+</I></B>
+<DD> Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>hyperhelp</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?
+</I></B>
+<DD> Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>hyperhelp</B>
+command.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>showtopic</B> <I>topic</I>
+</I></B>
+<DD> Display html file <B>helpdir</B>/<I>topic</I>.html. <I>Topic</I> may
+optionally be of the form <I>topicname</I>#<I>anchorname</I>. In
+this form, either <I>topicname</I> or <I>anchorname</I> or both may be empty. If
+<I>topicname</I> is empty, the current topic is assumed. If <I>anchorname</I>
+is empty, the top of the document is assumed
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>followlink</B> <I>href</I>
+</I></B>
+<DD> Display html file <I>href</I>. <I>Href</I> may
+be optionally be of the form <I>filename</I>#<I>anchorname</I>. In
+this form, either <I>filename</I> or <I>anchorname</I> or both may be empty. If
+<I>filename</I> is empty, the current document is assumed. If <I>anchorname</I>
+is empty, the top of the document is assumed.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>forward</B>
+</I></B>
+<DD> Display html file one forward in history list, if applicable.
+</DL>
+<DL>
+<DT> <I>pathName</I> <B>back</B>
+</I></B>
+<DD> Display html file one back in history list, if applicable.
+
+</DL>
+</pre><H2>EXAMPLE</H2>
+<pre>
+ hyperhelp .h -topics { Intro Help } -helpdir ~/help
+ .h showtopic Intro
+ 
+</pre>
+</pre><H2>AUTHOR</H2>
+Kris Raney
+</pre><H2>KEYWORDS</H2>
+hyperhelp, html, help, shell, widget

@@ -1,0 +1,196 @@
+# This file is a Tcl script to test out [incr Widgets] Timefield class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Timefield-1.$c {Timefield construction} {
+    iwidgets::Timefield .tf -labeltext "Date Field"
+    pack .tf -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Timefield-2.$o {configuration option} {
+    llength [.tf configure]
+} {30}
+
+incr o
+
+foreach test {
+    {-background #d9d9d9 #d9d9d9}
+    {-borderwidth 4 4} 
+    {-borderwidth 2 2} 
+    {-command {.tf configure -background red} {.tf configure -background red}}
+    {-cursor gumby gumby} 
+    {-exportselection 0 0} 
+    {-foreground Green Green} 
+    {-foreground Black Black} 
+    {-highlightcolor Red Red}
+    {-highlightthickness 2 2}
+    {-insertbackground Yellow Yellow} 
+    {-insertbackground Black Black} 
+    {-justify right right}
+    {-justify center center}
+    {-justify left left}
+    {-labelmargin 5 5} 
+    {-labelpos w w} 
+    {-labelpos nw nw} 
+    {-labelpos n n} 
+    {-labelpos ne ne} 
+    {-labelpos e e} 
+    {-labelpos se se} 
+    {-labelpos s s} 
+    {-labelpos sw sw} 
+    {-labeltext Label Label} 
+    {-gmt true true}
+    {-gmt false false}
+    {-gmt on on}
+    {-gmt off off}
+    {-gmt 1 1}
+    {-gmt 0 0}
+    {-gmt yes yes}
+    {-gmt no no}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-sticky w w}
+    {-sticky nw nw}
+    {-sticky n n}
+    {-sticky ne ne}
+    {-sticky e e}
+    {-sticky se se}
+    {-sticky s s}
+    {-sticky sw sw}
+    {-sticky news news}
+    {-textbackground GhostWhite GhostWhite} 
+    {-textbackground #d9d9d9 #d9d9d9}} {
+	set option [lindex $test 0]
+	test Timefield-2.$o "configuration options, $option" {
+	    .tf configure $option [lindex $test 1]
+	    lindex [.tf configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-childsitepos bogus {bad childsite option "bogus": should be n, e, s, or w}}} {
+	set option [lindex $test 0]
+        test Timefield-2.$o "configuration options, $option" {
+	    list [catch {.tf configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.tf childsite} {.tf.lwchildsite}}
+    {{.tf show "11:45:00 AM"} {11:45:00 AM}}
+    {{.tf get} {11:45:00 AM}}
+    {{.tf get -string} {11:45:00 AM}}
+    {{.tf isvalid} {1}}
+    {{.tf component time delete 0 end} {}}
+    {{.tf component time insert end "44:44:44 PM"} {}}
+    {{.tf isvalid} {0}}
+    {{.tf show now; list} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Timefield-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+test Timefield-3.$m "object methods, clock clicks" {
+    set clicks [clock scan "3:15:00 PM"]
+    .tf show $clicks
+    update 
+    .tf get 
+} {03:15:00 PM}
+incr m
+
+#
+# Method tests which fail and produce errors
+#
+foreach test {
+    {{.tf get bogus} {bad format option "bogus": should be -string or -clicks}}
+    {{.tf show bogus} {bad time: "bogus", must be a valid time  string, clock clicks value or the keyword now}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Timefield-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 1 [lindex $test 1]]
+	incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Timefield-1.$c {Timefield destruction} {
+    destroy .tf
+    update 
+} {}
+
+incr c
+
+test Timefield-1.$c {Timefield construction} {
+    iwidgets::timefield .tf 
+    pack .tf -padx 10 -pady 10
+    update 
+} {}
+
+incr c
+
+test Timefield-1.$c {Timefield destruction} {
+    destroy .tf
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

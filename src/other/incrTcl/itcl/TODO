@@ -1,0 +1,89 @@
+=======================================================================
+ Following is a list of notes describing things which might be
+ fixed or changed in a future release of [incr Tcl]
+=======================================================================
+
+Handle this case more elegantly:
+
+class Foo {
+    constructor {args} {
+        _init
+    }
+    proc _init {} {
+        puts "once!"
+        proc _init {} {}
+    }
+}
+Foo #auto
+Foo #auto
+
+
+itcl "wish" list
+------------------------------------------------------------------
+- add virtual inheritance
+- add "border" type to canvas widget
+- add "validate" and "valid" commands for type validation
+- add "unknownvar" and provide access to object data members: "obj.var"
+- check namespace [info class] {...} as a replacement for "virtual"
+- fix "auto_load_all" problem in Tcl-DP
+  (Their implementation uses "info commands" to verify that a command
+  has been successfully autoloaded, but absolute command names like
+  "::iwidgets::fileselectiondialog" don't show up.)
+- fix "auto_load" mechanism to be extensible like "unknown"
+- fix Itcl_RegisterC() to support ClientData
+- core dump with "cmdtrace" (tclX thing?)
+
+- ideas from Nelson Macy:
+  - add "delegate" keyword for inheritance via composition?
+  - add "forward" keyword for implementing error handlers
+  - add "get" code to public variables for "cget" access
+
+- equivalent of constructor/destructor for classes
+- protected/private recognized for constructor/destructor
+- add something like Tk_CreateWidgetCommand() for widget developers
+
+
+itcl documentation cleanup
+------------------------------------------------------------------
+- add "Finance: Trading Systems" to commercial uses of Itcl (Deshaw)
+- update doc:  "config" code also gets invoked on startup for itk widgets
+- update doc:  add to FAQ:  class with common array interacts with Tk widget
+
+itcl "to do" list
+------------------------------------------------------------------
+
+- write "auto_load_all" proc for Tcl-DP
+
+- bad errorInfo:
+  > More specifically, the constructor for the class did the following:
+  >
+  >         set hull [info namespace tail $this]
+  >         ::frame $hull
+  >
+  > One of the class variables had a configuration script:
+  >
+  >     public variable textvariable "" {
+  >         if { $textvariable != "" } {
+  >             regsub "\\(.*\\)" $textvariable "" global
+  >             global ::$global
+  >             trace variable $textvariable w "$hull adjust"
+  >         }
+  >     }
+
+- add "@body" in as many places as possible to support Tcl compiler
+
+- check out itcl with Tix:
+     lappend auto_path $env(TIX_LIBRARY)
+     source "$env(IWIDGETS_LIBRARY)/init.iwidgets"
+
+     iwidgets::Dialog ._Arcattributes -title "Code: Arc Annotations"
+     -modality application
+
+     set attrframe [._Arcattributes childsite]
+
+     tixScrolledHList $attrframe.ports
+     [$attrframe.ports subwidget hlist] configure -selectmode browse
+
+     pack $attrframe.ports -expand yes -fill both -padx 10 -pady 10
+
+     ._Arcattributes activate

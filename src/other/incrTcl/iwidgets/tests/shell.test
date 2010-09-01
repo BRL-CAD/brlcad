@@ -1,0 +1,212 @@
+# This file is a Tcl script to test out [incr Widgets] Shell class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#   4.x - Other tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Shell-1.$c {Shell construction} {
+    iwidgets::Shell .sh
+
+    listbox [.sh childsite].lb -relief sunken
+    pack [.sh childsite].lb -fill both -expand yes
+
+    .sh center
+    .sh activate
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Shell-2.$o {configuration option} {
+    llength [.sh configure]
+} {11}
+
+incr o
+
+foreach test {
+    {-background #d9d9d9 #d9d9d9} 
+    {-width 200 200}
+    {-height 200 200}
+    {-cursor gumby gumby} 
+    {-modality global global} 
+    {-modality application application} 
+    {-modality none none} 
+    {-padx 15 15} 
+    {-pady 15 15} 
+    {-width 0 0}
+    {-height 0 0}
+    {-title "Shell" "Shell"}} {
+	set option [lindex $test 0]
+	test Shell-2.$o "configuration options, $option" {
+	    .sh configure $option [lindex $test 1]
+	    lindex [.sh configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-modality bogus {bad modality option "bogus": should be none, application, or global}}} {
+	set option [lindex $test 0]
+        test Shell-2.$o "configuration options, $option" {
+	    list [catch {.sh configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{.sh childsite} {.sh.shellchildsite}}
+    {{.sh activate} {}}
+    {{.sh center .} {}}
+    {{.sh center} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Shell-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+#
+# Deactivate test
+#
+test Shell-3.$m "object methods, deactivate" {
+    list [catch {.sh deactivate} msg] $msg
+} [list 0 {}]
+update
+incr m
+
+#
+# Destruction test
+#
+test Shell-1.$c {Shell destruction} {
+    destroy .sh
+    update 
+} {}
+incr c
+
+#
+# Global modality test.
+#
+test Shell-4.2 "global modality, activation, and deactivation" {
+    iwidgets::shell .sh -modality global
+    .sh center
+    pack [label [.sh childsite].l -text "Global Modal Shell"]
+    after 2000 {.sh deactivate Test}
+    .sh center
+    list [catch {.sh activate} msg] $msg
+} [list 0 Test]
+update
+
+#
+# Destruction test
+#
+test Shell-1.$c {Shell destruction} {
+    destroy .sh
+    update 
+} {}
+incr c
+
+#
+# None modality test.
+#
+test Shell-4.3 "no modality, activation, and deactivation" {
+    iwidgets::shell .sh -modality none
+    .sh center
+    pack [label [.sh childsite].l -text "Non-Modal Shell"]
+    .sh center
+    .sh activate
+    update
+    after 2000
+    .sh deactivate
+} {}
+update
+
+#
+# Destruction test
+#
+test Shell-1.$c {Shell destruction} {
+    destroy .sh
+    update 
+} {}
+
+incr c
+
+#
+# Application modality test.
+#
+test Shell-4.4 "application modality, activation, and deactivation" {
+    iwidgets::shell .sh -modality application
+    .sh center
+    pack [label [.sh childsite].l -text "Application Modal Shell"]
+    after 2000 {.sh deactivate Test}
+    .sh center
+    list [catch {.sh activate} msg] $msg
+} [list 0 Test]
+update
+
+#
+# Destruction test
+#
+test Shell-1.$c {Shell destruction} {
+    destroy .sh
+    update 
+} {}
+
+incr c
+
+test Shell-1.$c {Shell destruction} {
+    iwidgets::shell .sh
+    destroy .sh
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

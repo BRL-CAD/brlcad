@@ -1,0 +1,30 @@
+# ----------------------------------------------------------------------
+#  DEMO: panedwindow in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+. configure -background white
+
+iwidgets::panedwindow .pw -width 3i -height 3i 
+pack .pw -padx 4 -pady 4
+
+.pw add "top"
+set pane [.pw childsite "top"]
+label $pane.l -text "(put some widgets here)" \
+    -background black -foreground white
+pack $pane.l -expand yes -fill both
+
+.pw add "bottom"
+set pane [.pw childsite "bottom"]
+label $pane.l -text "(put other widgets here)" \
+    -background black -foreground white
+pack $pane.l -expand yes -fill both
+
+.pw fraction 40 60
+
+
+iwidgets::optionmenu .orient -labeltext "Orientation:" -command {
+    .pw configure -orient [.orient get]
+}
+pack .orient -padx 4 -pady 4
+.orient insert end horizontal vertical

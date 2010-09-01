@@ -1,0 +1,145 @@
+'\"
+'\" Copyright (c) 1996 DSC Technologies Corporation
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) feedback.n
+'\" 
+.so man.macros
+.HS iwidgets::feedback iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+iwidgets::feedback \- Create and manipulate a feedback widget to display feedback on
+the current status of an ongoing operation to the user.
+.SH SYNOPSIS
+\fBiwidgets::feedback\fI \fIpathName \fR?\fIoptions\fR?
+.SH "INHERITANCE"
+itk::Widget <- iwidgets::Labeledwidget <- iwidgets::Feedback
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBbackground\fR	\fBcursor\fR 	\fBforeground\fR	\fBhighlightColor\fR
+\fBhighlightThickness\fR
+.fi
+.LP
+See the "options" manual entry for details on the standard options.
+.SH "INHERITED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBlabelBitmap\fR	\fBlabelFont\fR	\fBlabelImage\fR	\fBlabelMargin\fR
+\fBlabelPos\fR	\fBlabelText\fR	\fBlabelVariable\fR 	\fBsticky\fR
+.fi
+.LP
+See the "labeledwidget" class manual entry for details on the inherited options.
+.SH "WIDGET-SPECIFIC OPTIONS"
+.LP
+.nf
+Name:	\fBbarcolor\fR
+Class:	\fBBarColor\fR
+Command-Line Switch:	\fB-barcolor\fR
+.fi
+.IP
+Specifies the color of the status bar, in any of the forms
+acceptable to \fBTk_GetColor\fR.  The default is DodgerBlue.
+.LP
+.nf
+Name:	\fBbarheight\fR
+Class:	\fBBarHeight\fR
+Command-Line Switch:	\fB-barheight\fR
+.fi
+.IP
+Specifies the height of the status bar, in any of the forms
+acceptable to \fBTk_GetPixels\fR. The default is 20.
+.LP
+.nf
+Name:	\fBtroughColor\fR
+Class:	\fBTroughColor\fR
+Command-Line Switch:	\fB-troughcolor\fR
+.fi
+.IP
+Specifies the color of the frame in which the status bar sits,
+in any of the forms acceptable to \fBTk_GetColor\fR.  The default is white.
+.LP
+.nf
+Name:	\fBsteps\fR
+Class:	\fBSteps\fR
+Command-Line Switch:	\fB-steps\fR
+.fi
+.IP
+Specifies the total number of steps for the status bar. The default is 10.
+.LP
+
+.SH DESCRIPTION
+.PP
+The \fBiwidgets::feedback\fR command creates a widget to display feedback on
+the current status of an ongoing operation to the user. Display is given as
+a percentage and as a thermometer type bar. Options exist for adding a label
+and controlling its position.
+
+.SH "METHODS"
+.PP
+The \fBiwidgets::feedback\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This command may be used to invoke various
+operations on the widget.  It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for scrolledtext widgets:
+
+.SH "WIDGET-SPECIFIC METHODS"
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBscrolledhtml\fR
+command.
+.TP
+\fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::feedback\fR
+command.
+.TP
+\fIpathName\fR \fBreset\fR
+Reset the current number of steps completed to 0, and configures the
+percentage complete label text to 0%
+.TP
+\fIpathName\fR \fBstep\fR ?\fIinc\fR?
+Increase the current number of steps completed by the amount specified
+by \fIinc\fR. \fIInc\fR defaults to 1.
+
+.SH EXAMPLE
+.DS
+ package require Iwidgets 4.0
+ iwidgets::feedback .fb -labeltext "Status" -steps 20
+ pack .fb -padx 10 -pady 10 -fill both -expand yes
+
+ for {set i 0} {$i < 20} {incr i} {
+     .fb step
+     after 500
+ }
+.DE
+.SH ACKNOWLEDGEMENTS
+Sam Shen
+.IP
+This code is based largely on his feedback.tcl code from tk inspect. The 
+original feedback code is copyright 1995 Lawrence Berkeley Laboratory.
+.LP
+.SH AUTHOR
+Kris Raney
+.SH KEYWORDS
+feedback, widget

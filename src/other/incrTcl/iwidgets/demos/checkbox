@@ -1,0 +1,12 @@
+# ----------------------------------------------------------------------
+#  DEMO: checkbox in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::checkbox .cb -labeltext Styles
+.cb add bold -text Bold
+.cb add italic -text Italic
+.cb add underline -text Underline
+.cb select underline
+
+pack .cb -padx 10 -pady 10 -fill both -expand yes
