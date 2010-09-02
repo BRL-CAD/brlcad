@@ -165,7 +165,9 @@ libraries:
 doc:
 	$(TCLSH) $(srcdir)/doc/macros.tcl -nroff $(srcdir)/doc/html.man>tkhtml.n
 
-install: all install-binaries install-libraries install-doc
+# feed extra stuff to libtool
+install-data-local: all install-binaries install-libraries install-doc
+# install: all install-binaries install-libraries install-doc
 
 install-binaries: binaries install-lib-binaries install-bin-binaries
 
