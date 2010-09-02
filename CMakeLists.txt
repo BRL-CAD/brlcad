@@ -78,6 +78,13 @@
 # ***                 BRL-CAD's CMakeLists.txt                    ***
 # *******************************************************************
 
+# Repeated runs of cmake wil result in this variable being set during
+# the Find* routines, which will return libraries from previous
+# installs.  Re-set this at the beginning of the file - this ensures
+# that Find* results are consistent between the first run and
+# previous runs
+SET(CMAKE_INSTALL_PREFIX "")
+
 # This file contains the top level CMakeLists.txt logic for the 
 # BRL-CAD software package.
 # Minimum required version of CMake
@@ -703,7 +710,6 @@ ELSE(BRLCAD_BUILD_LOCAL_REGEX)
 ENDIF(BRLCAD_BUILD_LOCAL_REGEX)
 
 # libutahrle Library
-SET(UTAHRLE_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for utahrle" FORCE)
 THIRD_PARTY_OPTION(UTAHRLE libutahrle)
 THIRD_PARTY_SUBDIR(UTAHRLE src/other/libutahrle)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
@@ -1014,7 +1020,6 @@ ENDIF(NOT TKTABLE_FOUND)
 
 
 # OpenNURBS Library
-SET(OPENNURBS_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for openNURBS" FORCE)
 THIRD_PARTY_OPTION(OPENNURBS openNURBS)
 THIRD_PARTY_SUBDIR(OPENNURBS src/other/openNURBS)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
@@ -1033,7 +1038,6 @@ ENDIF(BRLCAD_BUILD_LOCAL_OPENNURBS)
 
 # STEP is going to require some extra thought - it's a src/other 
 # with multiple libraries.  For now, just add it as a subdir
-SET(SCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for SCL" FORCE)
 THIRD_PARTY_OPTION(SCL step)
 THIRD_PARTY_SUBDIR(SCL src/other/step)
 IF(BRLCAD_SYSTEM_LIBS_ONLY)
