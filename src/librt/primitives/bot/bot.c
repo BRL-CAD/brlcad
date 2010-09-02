@@ -2791,7 +2791,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    max_xval = (&bot->vertices[i*3])[X];
 
 	/* sanity to make sure our book-keeping doesn't go haywire */
-	if (NEAR_ZERO((&bot->vertices[i*3])[X] - INFINITY, SMALL_FASTF)) {
+	if (NEAR_ZERO((&bot->vertices[i*3])[X] - infinity[X], SMALL_FASTF)) {
 	    bu_log("WARNING: Unable to fuse due to vertex with infinite value (idx=%ld)\n", i);
 	    return 0;
 	}
