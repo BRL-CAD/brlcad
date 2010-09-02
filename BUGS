@@ -15,6 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
+* menu invocation seems to be broken again (ArchLinux)
+
 * Report of copy/paste not working with Tk on Windows Vista - does
   work on Windows XP.
 
