@@ -369,7 +369,7 @@ cssprop.c: cssprop.h
 # 	( echo pkg_mkIndex -load Tk . \; exit; ) | $(WISH)
 
 pkgIndex.tcl:
-	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir libTkhtml.so]]' > pkgIndex.tcl
+	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir/.. libTkhtml.so]]' > pkgIndex.tcl
 #	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir $(PKG_LIB_FILE)]]' > pkgIndex.tcl
 
 
