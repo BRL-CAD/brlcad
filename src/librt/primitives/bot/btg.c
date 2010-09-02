@@ -45,15 +45,16 @@ void
 }
 
 void
-bottie_push_double(void *vtie, double *tri, unsigned int ntri, void *plist, unsigned int pstride)
+bottie_push_double(void *vtie, double **tri, unsigned int ntri, void *u, unsigned int pstride)
 {
     struct tie_s *tie = (struct tie_s *)vtie;
 }
 
-void
+int
 bottie_prep_double(void *vtie)
 {
     tie_prep((struct tie_s *)vtie);
+    return 0;	/* always returning OK seems... bad. */
 }
 
 static int
@@ -71,7 +72,7 @@ bottie_shot_double(struct soltab *stp, register struct xray *rp, struct applicat
 void
 bottie_free_double(void *vtie)
 {
-    tie_free0((struct tie_s *)vtie);
+    tie_free((struct tie_s *)vtie);
 }
 
 /*

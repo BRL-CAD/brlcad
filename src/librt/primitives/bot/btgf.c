@@ -45,15 +45,16 @@ void
 }
 
 void
-bottie_push_float(void *vtie, float *tri, unsigned int ntri, void *plist, unsigned int pstride)
+bottie_push_float(void *vtie, float **tri, unsigned int ntri, void *usr, unsigned int pstride)
 {
     struct tie_s *tie = (struct tie_s *)vtie;
 }
 
-void
+int
 bottie_prep_float(void *vtie)
 {
     tie_prep((struct tie_s *)vtie);
+    return -1;
 }
 
 static int
