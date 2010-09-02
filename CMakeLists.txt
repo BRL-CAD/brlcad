@@ -837,7 +837,7 @@ ENDIF(TCL_FOUND)
 # 3.  Can iwidgets be installed with a system Itcl/Itk and no source tree?  Or more practically
 #     can keeping --with-itcl set to the local copies still work with a system itcl/itk install?
 
-IF(NOT ITCL_FOUND OR NOT ITK_FOUND)
+IF(NOT ITCL_FOUND OR NOT ITK_FOUND OR BRLCAD_BUILD_LOCAL_ITCL)
    ExternalProject_Add(
      itcl
      DOWNLOAD_COMMAND ""
