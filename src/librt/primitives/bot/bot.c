@@ -2789,6 +2789,12 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    min_xval = (&bot->vertices[i*3])[X];
 	if ((&bot->vertices[i*3])[X] > max_xval)
 	    max_xval = (&bot->vertices[i*3])[X];
+
+	/* sanity to make sure our book-keeping doesn't go haywire */
+	if (NEAR_ZERO((&bot->vertices[i*3])[X] - infinity, SMALL_FASTF)) {
+	    bu_log("WARNING: Unable to fuse due to vertex with infinite value (idx=%ld)\n", i);
+	    return 0;
+	}
     }
     /* sanity swap */
     if (min_xval > max_xval) {
@@ -2885,24 +2891,15 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     }
 
     /* clean up and compress */
-    for (i=bot->num_vertices-1; i>=0; i--) {
+    k = rt_bot_condense(bot);
+    if (k < count) {
+	bu_log("WARNING: Condensed fewer vertices than expected (%ld < %ld)\n", k, count);
+    }
 
-	/* look for the wiped out vertices */
+    /* sanity check, there should be no deleted vertices */
+    for (i=0; i < bot->num_vertices; i++) {
 	if (VEQUAL(&bot->vertices[i*3], infinity)) {
-
-	    /* shift vertices down */
-	    for (j=i; j<bot->num_vertices-1; j++) {
-		VMOVE(&bot->vertices[j*3], &bot->vertices[(j+1)*3]);
-	    }
-
-	    /* update face references */
-	    for (k=0; k<bot->num_faces*3; k++) {
-		if (bot->faces[k] > i)
-		    bot->faces[k]--;
-	    }
-	    
-	    /* update vertex count */
-	    bot->num_vertices--;
+	    bu_bomb("INTERNAL ERROR: encountered unexpected state during vertex fusing\n");
 	}
     }
 
