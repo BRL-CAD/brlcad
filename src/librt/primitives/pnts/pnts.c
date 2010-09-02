@@ -603,9 +603,9 @@ rt_pnts_ifree(struct rt_db_internal *internal)
      * element, we can treat them all as 'pnt' structs in order to
      * iterate over the bu_list and free them.
      */
-    for (BU_LIST_FOR(point, bu_list, &(((struct pnt *)pnts->point)->l))) {
+    while (BU_LIST_WHILE(point, bu_list, &(((struct pnt *)pnts->point)->l))) {
+	BU_LIST_DEQUEUE(point);
 	bu_free(point, "free point");
-	/* don't bother dequeuing */
     }
 
     /* free the head point */
