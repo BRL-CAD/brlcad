@@ -990,10 +990,21 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* without known winding or normals, we cannot use tie. */
     if ( bip->face_normals == NULL && bip->orientation == RT_BOT_UNORIENTED )
 	return 0;
-    bip->tie = bottie_allocn_double(bip->num_faces);
-    /* tie_init1((struct tie_s *)bip->tie, bip->num_faces, TIE_KDTREE_FAST); */
-    /* bunches of tie_push1((struct tie_s *)bip->tie, tlist, tnum, plist,
-     *   pstride); (steal from load_g.c?) */
+    {
+	int i;
+
+	bip->tie = bottie_allocn_double(bip->num_faces);
+
+	for(i=0;i< bip->num_faces; i++) {
+	    fastf_t *v[3];
+
+	    v[0] = &bip->vertices[bip->faces[i*3+0]*3];
+	    v[1] = &bip->vertices[bip->faces[i*3+1]*3];
+	    v[2] = &bip->vertices[bip->faces[i*3+2]*3];
+	    bottie_push_double((struct tie_s *)bip->tie, v, 1, i, 0);
+	}
+	bottie_prep_double((struct tie_s *)bip->tie);
+    }
     /* prep will wire the engine to bot_specific */
 
     return 0;			/* OK */
