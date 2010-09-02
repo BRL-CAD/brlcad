@@ -824,16 +824,7 @@ IF(NOT BRLCAD_BUILD_LOCAL_TCL)
 	ENDIF(NOT BRLCAD_BUILD_LOCAL_TK)
 ENDIF(NOT BRLCAD_BUILD_LOCAL_TCL)
 
-# For the moment, these external projects are assuming local Tcl/Tk was built.  That won't fly
-# for a valid Tcl/Tk system install, so need to handle at least the following issues:
-#
-# 1.  FindTCL needs to set a variable with the right directory to pass to --with-tcl/--with-tk
-# 2.  Need to determine the "right way", if it exists, to install Tcl/Tk packages so package
-#     require in a system Tcl/Tk can find them even if there is no access to the correct system
-#     paths.  It may be that this is where btclsh/bwish are needed
-# 3.  Can iwidgets be installed with a system Itcl/Itk and no source tree?  Or more practically
-#     can keeping --with-itcl set to the local copies still work with a system itcl/itk install?
-
+# Handle Tcl/Tk packages
 IF(NOT ITCL_FOUND OR NOT ITK_FOUND OR BRLCAD_BUILD_LOCAL_ITCL)
 	IF(NOT BRLCAD_SYSTEM_LIBS_ONLY)
 		ExternalProject_Add(
@@ -1043,8 +1034,7 @@ ELSE(BRLCAD_BUILD_LOCAL_OPENNURBS)
 ENDIF(BRLCAD_BUILD_LOCAL_OPENNURBS)
 
 
-# STEP is going to require some extra thought - it's a src/other 
-# with multiple libraries.  For now, just add it as a subdir
+# STEP Class Libraries
 THIRD_PARTY_OPTION(SCL)
 THIRD_PARTY_SUBDIR(SCL src/other/step)
 IF(BRLCAD_BUILD_LOCAL_SCL)
