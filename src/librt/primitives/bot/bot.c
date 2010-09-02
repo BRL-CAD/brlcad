@@ -205,7 +205,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_BOT_CK_MAGIC(bot_ip);
 
     if (bot_ip->tie != NULL) {
-	bottie_prep_double(bot_ip->tie);
+	return bottie_prep_double(bot_ip->tie);
     } else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS) {
 	return rt_bot_prep_float(stp, bot_ip, rtip);
     } else {
@@ -1003,7 +1003,6 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	    v[2] = &bip->vertices[bip->faces[i*3+2]*3];
 	    bottie_push_double((struct tie_s *)bip->tie, v, 1, i, 0);
 	}
-	bottie_prep_double((struct tie_s *)bip->tie);
     }
     /* prep will wire the engine to bot_specific */
 
