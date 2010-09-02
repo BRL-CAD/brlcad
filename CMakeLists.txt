@@ -785,6 +785,7 @@ IF(BRLCAD_BUILD_LOCAL_TCL)
    SET(TCL_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tcl8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
    SET(TCL_INCLUDE_PATH "${BRLCAD_PREFIX}/include")
 	SET(TCL_PRIVATE_HDRS "${BRLCAD_SOURCE_DIR}/src/other/tcl/generic;${BRLCAD_SOURCE_DIR}/src/other/tcl/unix")
+	SET(TCL_CONF_PREFIX "${BRLCAD_PREFIX}/lib")
    MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
    
    ExternalProject_Add(
@@ -804,6 +805,7 @@ IF(BRLCAD_BUILD_LOCAL_TCL)
    SET(TK_LIBRARY "${BRLCAD_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tk8.5${CMAKE_SHARED_LIBRARY_SUFFIX}")
    SET(TK_INCLUDE_PATH "${BRLCAD_PREFIX}/include")
 	SET(TK_PRIVATE_HDRS "${BRLCAD_SOURCE_DIR}/src/other/tk/generic;${BRLCAD_SOURCE_DIR}/src/other/tk/unix")
+	SET(TK_CONF_PREFIX "${BRLCAD_PREFIX}/lib")
    MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
    SET(TCL_DEP "tcl")
    SET(TK_DEP "tk")
@@ -846,7 +848,8 @@ IF(NOT ITCL_FOUND OR NOT ITK_FOUND)
      ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itcl/configure.in && mkdir -p
      ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl/ && cd
      ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl/ &&
-     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
+     --with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX}
      BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE)
      INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE) install
    )
@@ -860,12 +863,15 @@ IF(NOT ITCL_FOUND OR NOT ITK_FOUND)
      ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/itk/configure.in && mkdir -p
      ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk/ && cd
      ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk/ &&
-     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+     <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
+     --with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX}
      BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE)
      INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE) install
    )
 
+   IF(TCL_DEP OR TK_DEP)
 	ADD_DEPENDENCIES(itcl ${TCL_DEP} ${TK_DEP})
+   ENDIF(TCL_DEP OR TK_DEP)
 	ADD_DEPENDENCIES(itk itcl ${TCL_DEP} ${TK_DEP})
 	SET(BRLCAD_BUILD_LOCAL_INCRTCL ON)
 	SET(ITCL_DEP "itcl")
@@ -885,11 +891,14 @@ IF(NOT IWIDGETS_FOUND)
      ${BRLCAD_SOURCE_DIR}/src/other/incrTcl/iwidgets/configure.in && mkdir -p
      ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets/ && cd
      ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets/ &&
-	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib --with-itcl=${BRLCAD_SOURCE_DIR}/src/other/incrTcl
-     BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets && $(MAKE)
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
+	  --with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX} --with-itcl=${BRLCAD_SOURCE_DIR}/src/other/incrTcl
+     BUILD_COMMAND ""
      INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets && $(MAKE) install
    )
-   ADD_DEPENDENCIES(iwidgets ${TCL_DEP} ${TK_DEP} ${ITCL_DEP} ${ITK_DEP})
+   IF(TCL_DEP OR TK_DEP OR ITCL_DEP OR ITK_DEP)
+      ADD_DEPENDENCIES(iwidgets ${TCL_DEP} ${TK_DEP} ${ITCL_DEP} ${ITK_DEP})
+   ENDIF(TCL_DEP OR TK_DEP OR ITCL_DEP OR ITK_DEP)
 	SET(BRLCAD_BUILD_LOCAL_IWIDGETS ON)
 ELSE(NOT IWIDGETS_FOUND)
 	ExternalProject_Add(
@@ -913,11 +922,14 @@ IF(NOT TKHTML_FOUND)
 	  CONFIGURE_COMMAND cd ${BRLCAD_SOURCE_DIR}/src/other/tkhtml && autoreconf -i -f && mkdir -p
      ${BRLCAD_BINARY_DIR}/src/other/tkhtml/ && cd
      ${BRLCAD_BINARY_DIR}/src/other/tkhtml/ &&
-	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
+	  --with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX}
      BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tkhtml && $(MAKE)
      INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tkhtml && $(MAKE) install
    )
-   ADD_DEPENDENCIES(tkhtml ${TCL_DEP} ${TK_DEP})
+   IF(TCL_DEP OR TK_DEP)
+      ADD_DEPENDENCIES(tkhtml ${TCL_DEP} ${TK_DEP})
+   ENDIF(TCL_DEP OR TK_DEP)
 	SET(BRLCAD_BUILD_LOCAL_TKHTML ON)
 ELSE(NOT TKHTML_FOUND)
 	ExternalProject_Add(
@@ -943,11 +955,14 @@ IF(NOT TKPNG_FOUND)
      ${BRLCAD_SOURCE_DIR}/src/other/tkpng/configure.in && mkdir -p
      ${BRLCAD_BINARY_DIR}/src/other/tkpng/ && cd
      ${BRLCAD_BINARY_DIR}/src/other/tkpng/ &&
-	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
+	  --with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX}
      BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tkpng && $(MAKE)
      INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tkpng && $(MAKE) install
    )
-   ADD_DEPENDENCIES(tkpng ${TCL_DEP} ${TK_DEP})
+   IF(TCL_DEP OR TK_DEP)
+     ADD_DEPENDENCIES(tkpng ${TCL_DEP} ${TK_DEP})
+   ENDIF(TCL_DEP OR TK_DEP)
 	SET(BRLCAD_BUILD_LOCAL_TKPNG ON)
 ELSE(NOT TKPNG_FOUND)
 	ExternalProject_Add(
@@ -973,11 +988,14 @@ IF(NOT TKTABLE_FOUND)
      ${BRLCAD_SOURCE_DIR}/src/other/tktable/configure.in && mkdir -p
      ${BRLCAD_BINARY_DIR}/src/other/tktable/ && cd
      ${BRLCAD_BINARY_DIR}/src/other/tktable/ &&
-	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --with-tk=${BRLCAD_PREFIX}/lib
+	  <SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
+	  --with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX}
      BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tktable && $(MAKE)
      INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tktable && $(MAKE) install
    )
-   ADD_DEPENDENCIES(tktable ${TCL_DEP} ${TK_DEP})
+   IF(TCL_DEP OR TK_DEP)
+      ADD_DEPENDENCIES(tktable ${TCL_DEP} ${TK_DEP})
+   ENDIF(TCL_DEP OR TK_DEP)
 	SET(BRLCAD_BUILD_LOCAL_TKTABLE ON)
 ELSE(NOT TKTABLE_FOUND)
 	ExternalProject_Add(
