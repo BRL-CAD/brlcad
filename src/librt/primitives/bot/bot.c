@@ -2719,8 +2719,8 @@ rt_bot_propget(struct rt_bot_internal *bot, char *property)
 /**
  * This routine adjusts the vertex pointers in each face so that
  * pointers to duplicate vertices end up pointing to the same vertex.
- * The unused vertices are removed.  Returns the number of vertices
- * fused.
+ * The unused vertices are removed and the resulting bot is condensed.
+ * Returns the number of vertices fused.
  */
 int
 rt_bot_vertex_fuse(struct rt_bot_internal *bot)
