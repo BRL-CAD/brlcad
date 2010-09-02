@@ -2737,8 +2737,8 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     fastf_t max_xval = (fastf_t)LONG_MIN;
     fastf_t delta = (fastf_t)0.0;
 
-    vect_t infinity;
-    VSETALL(infinity, INFINITY);
+    vect_t deleted;
+    VSETALL(deleted, INFINITY);
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -2791,7 +2791,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    max_xval = (&bot->vertices[i*3])[X];
 
 	/* sanity to make sure our book-keeping doesn't go haywire */
-	if (NEAR_ZERO((&bot->vertices[i*3])[X] - infinity[X], SMALL_FASTF)) {
+	if (NEAR_ZERO((&bot->vertices[i*3])[X] - deleted[X], SMALL_FASTF)) {
 	    bu_log("WARNING: Unable to fuse due to vertex with infinite value (idx=%ld)\n", i);
 	    return 0;
 	}
@@ -2884,7 +2884,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 		    }
 
 		    /* wipe out the vertex marking it for cleanup later */
-		    VMOVE(&bot->vertices[bin[slot][j]*3], infinity);
+		    VMOVE(&bot->vertices[bin[slot][j]*3], deleted);
 		}
 	    }
 	}
@@ -2898,7 +2898,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
     /* sanity check, there should be no deleted vertices */
     for (i=0; i < bot->num_vertices; i++) {
-	if (VEQUAL(&bot->vertices[i*3], infinity)) {
+	if (VEQUAL(&bot->vertices[i*3], deleted)) {
 	    bu_bomb("INTERNAL ERROR: encountered unexpected state during vertex fusing\n");
 	}
     }
