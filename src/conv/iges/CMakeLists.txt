@@ -1,17 +1,24 @@
 include_directories(
-    ../../../include
-    ../../other/libz
-    ../../other/openNURBS
-    ../../other/libregex
-    ../../other/tcl/generic
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BRLCAD_ZLIB_INCLUDE_DIR}
+	${BRLCAD_OPENNURBS_INCLUDE_DIR}
+	${BRLCAD_REGEX_INCLUDE_DIR}
+	${TCL_INCLUDE_PATH}
 )
 
+IF(MSVC)
 add_definitions(
-    -DBRLCAD_DLL
     -DHAVE_CONFIG_H
     -DBRLCADBUILD
     -DON_DLL_IMPORTS
 )
+ELSE(MSVC)
+add_definitions(
+    -DHAVE_CONFIG_H
+    -DBRLCADBUILD
+)
+ENDIF(MSVC)
 
 add_executable(iges
     BrepHandler.cpp
@@ -19,10 +26,8 @@ add_executable(iges
     n_iges.cpp
     n_main.cpp
 )
-target_link_libraries(iges
-    BrlcadCore
-    openNURBS
-)
+target_link_libraries(iges bu librt wdb ${BRLCAD_OPENNURBS_LIBRARY})
+INSTALL(TARGETS iges RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(iges-g
     add_face.c
@@ -97,14 +102,12 @@ add_executable(iges-g
     usage.c
     wedge.c
 )
-target_link_libraries(iges-g
-    BrlcadCore
-)
+target_link_libraries(iges-g bu bn librt wdb)
+INSTALL(TARGETS iges-g RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(g-iges
     g-iges.c
     iges.c
 )
-target_link_libraries(g-iges
-    BrlcadCore
-)
+target_link_libraries(g-iges bu librt)
+INSTALL(TARGETS g-iges RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})

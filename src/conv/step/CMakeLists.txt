@@ -394,5 +394,5 @@ add_definitions(
 )
 
 add_executable(step-g ${stepg_SOURCES})
-target_link_libraries(step-g bu wdb librt steputils stepcore stepdai stepeditor)
+target_link_libraries(step-g bu wdb librt steputils stepcore stepdai stepeditor ${BRLCAD_OPENNURBS_LIBRARY})
 INSTALL(TARGETS step-g RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
