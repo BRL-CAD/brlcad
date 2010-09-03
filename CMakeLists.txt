@@ -1083,6 +1083,7 @@ ADD_SUBDIRECTORY(src/libanalyze)
 ADD_SUBDIRECTORY(src/libged)
 ADD_SUBDIRECTORY(src/liboptical)
 ADD_SUBDIRECTORY(src/liborle)
+ADD_SUBDIRECTORY(src/conv)
 ADD_SUBDIRECTORY(src/rt)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but

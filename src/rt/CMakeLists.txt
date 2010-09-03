@@ -143,53 +143,94 @@ INSTALL(TARGETS rtexample RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(reshoot ${reshoot_SRCS})
 target_link_libraries(reshoot ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS reshoot  RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(rtwalk ${rtwalk_SRCS})
 target_link_libraries(rtwalk ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtwalk RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(rtshot ${rtshot_SRCS})
 target_link_libraries(rtshot ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtshot RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(hurt ${hurt_SRCS})
 target_link_libraries(hurt ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS hurt RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(rtmlt ${rtmlt_SRCS})
 target_link_libraries(rtmlt ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtmlt RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtregis ${rtregis_SRCS})
 target_link_libraries(rtregis ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtregis RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtscale ${rtscale_SRCS})
 target_link_libraries(rtscale ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtscale RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rt ${rt_SRCS})
 target_link_libraries(rt ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rt RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rt_bot_faces ${rt_bot_faces_SRCS})
 target_link_libraries(rt_bot_faces ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rt_bot_faces RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtarea ${rtarea_SRCS})
 target_link_libraries(rtarea ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtarea RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtcell ${rtcell_SRCS})
 target_link_libraries(rtcell ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtcell RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtcheck ${rtcheck_SRCS})
 target_link_libraries(rtcheck ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtcheck RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtedge ${rtedge_SRCS})
 target_link_libraries(rtedge ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtedge RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtfrac ${rtfrac_SRCS})
 target_link_libraries(rtfrac ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtfrac RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtg3 ${rtg3_SRCS})
 target_link_libraries(rtg3 ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtg3 RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rthide ${rthide_SRCS})
 target_link_libraries(rthide ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rthide RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtpp ${rtpp_SRCS})
 target_link_libraries(rtpp ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtpp RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtrad ${rtrad_SRCS})
 target_link_libraries(rtrad ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtrad RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtrange ${rtrange_SRCS})
 target_link_libraries(rtrange ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtrange RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtray ${rtray_SRCS})
 target_link_libraries(rtray ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtray RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtsil ${rtsil_SRCS})
 target_link_libraries(rtsil ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtsil RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtweight ${rtweight_SRCS})
 target_link_libraries(rtweight ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtweight RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(rtxray ${rtxray_SRCS})
 target_link_libraries(rtxray ${CMAKE_THREAD_LIBS_INIT} fb librt optical)
+INSTALL(TARGETS rtxray RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_library(remrt STATIC ${LIBREMRT_SOURCES})
