@@ -162,10 +162,10 @@ db_open(const char *name, const char *mode)
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
 
+    /* If not a full path */
     if (argv[1][0] != '/') {
 	struct bu_vls fullpath;
 
-	bu_vls_init(&fullpath);
 	bu_free((genptr_t)argv[1], "db_open: argv[1]");
 	argv[1] = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
@@ -185,11 +185,11 @@ db_open(const char *name, const char *mode)
 	    bu_free((genptr_t)argv[0], "db_open: argv[0]");
 	    bu_free((genptr_t)argv, "db_open: argv");
 	    bu_free((char *)dbip, "struct db_i");
-	    bu_vls_free(&fullpath);
 
 	    return DBI_NULL;
 	}
 
+	bu_vls_init(&fullpath);
 	bu_vls_printf(&fullpath, "%s/%s", argv[1], name);
 	dbip->dbi_filename = bu_strdup(bu_vls_addr(&fullpath));
 	bu_vls_free(&fullpath);
