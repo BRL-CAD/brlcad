@@ -12,3 +12,5 @@ add_definitions(
 
 add_executable(fbserv fbserv.c server.c)
 target_link_libraries(fbserv fb)
+INSTALL(TARGETS fbserv RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+

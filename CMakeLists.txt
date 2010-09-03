@@ -1083,9 +1083,11 @@ ADD_SUBDIRECTORY(src/libanalyze)
 ADD_SUBDIRECTORY(src/libged)
 ADD_SUBDIRECTORY(src/liboptical)
 ADD_SUBDIRECTORY(src/liborle)
+ADD_SUBDIRECTORY(src/libcursor)
 ADD_SUBDIRECTORY(src/conv)
 ADD_SUBDIRECTORY(src/fbserv)
 ADD_SUBDIRECTORY(src/rt)
+#ADD_SUBDIRECTORY(src/librtserver)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
