@@ -697,13 +697,13 @@ Popup Menu    Right or Ctrl-Left
 
 	# tree commands
 	method updateTreeDrawLists        {{_cflag 0}}
-	method fillTree          {_pnode _ctext {_flat 0}}
+	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
 	method loadMenu          {_menu _node _nodeType}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
-	method getCNodeFromCText {_pnode _text}
+	method getCNodesFromCText {_pnode _text}
 	method getTreeImage {_obj _type {_op ""} {_isregion 0}}
 	method getTreeNode {_path {_cflag 0}}
 	method getTreeNodes {_path {_cflag 0}}
@@ -2108,7 +2108,7 @@ Popup Menu    Right or Ctrl-Left
 
 	# Anything leftover in mlist needs to be added
 	foreach member $mlist {
-	    fillTree $_pnode $member $mEnableListView
+	    fillTree $_pnode $member $mEnableListView 1
 	}
     } else {
 	set pgdata [$itk_component(ged) get $ptext]
@@ -2170,12 +2170,14 @@ Popup Menu    Right or Ctrl-Left
 
     # Make sure each item has a tree node
     foreach item $scrubbed_items {
-	set cnode [getCNodeFromCText {} $item]
+	set cnodes [getCNodesFromCText {} $item]
 
-	if {$cnode == ""} {
+	if {$cnodes == {}} {
 	    fillTree {} $item $mEnableListView
 	} elseif {!$mEnableListView} {
-	    rsyncTree $cnode
+	    foreach item $cnodes {
+		rsyncTree $item
+	    }
 	}
     }
 
@@ -2892,6 +2894,8 @@ Popup Menu    Right or Ctrl-Left
     # remove all other unwanted stuff
     regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $_tlist "" _tlist
 
+    return $_tlist
+
     # finally, remove any duplicates
     set ntlist {}
     foreach item $_tlist {
@@ -3272,16 +3276,6 @@ Popup Menu    Right or Ctrl-Left
 		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
 	    } else {
 		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
-#		incr dlen -1
-#		for {set i 0} {$i < $dlen} {incr i} {
-#		    foreach ilist $mText2Node([lindex $dlist $i]) {
-#			eval lappend mNodePDrawList [lindex $ilist 0]
-#		    }
-#		}
-#
-#		foreach ilist $mText2Node([lindex $dlist end]) {
-#		    eval lappend mNodeDrawList [lindex $ilist 0]
-#		}
 	    }
 	} else {
 	    set nodesList [getTreeNodes $ditem $_cflag]
@@ -3301,33 +3295,32 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::fillTree {_pnode _ctext {_flat 0}} {
-    set cnode [getCNodeFromCText $_pnode $_ctext]
+::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
+    set cnodes [getCNodesFromCText $_pnode $_ctext]
 
-    # A node for _pnode/_ctext already exists
-    if {$cnode != ""} {
+    # Atleast one node for _pnode/_ctext already exists
+    if {!$_allow_multiple && $cnodes != {}} {
 	return
     }
 
     if {[catch {$itk_component(ged) get $_ctext} cgdata]} {
-	return
+	set ctype invalid
+	set isregion 0
+    } else {
+	set ctype [lindex $cgdata 0]
+	set isregion [isRegion $cgdata]
     }
 
-    set ctype [lindex $cgdata 0]
     set ptext $mNode2Text($_pnode)
+    set op [getTreeOp $ptext $_ctext]
+    set img [getTreeImage $_ctext $ctype $op $isregion]
+    set cnode [$itk_component(newtree) insert $_pnode end \
+		   -tags $TREE_POPUP_TAG \
+		   -text $_ctext \
+		   -image $img]
+    fillTreeColumns $cnode $_ctext
 
     if {!$_flat && $ctype == "comb"} {
-	set isregion [isRegion $cgdata]
-
-	set op [getTreeOp $ptext $_ctext]
-	set img [getTreeImage $_ctext $ctype $op $isregion]
-	set cnode [$itk_component(newtree) insert $_pnode end \
-		       -tags $TREE_POPUP_TAG \
-		       -text $_ctext \
-		       -image $img]
-
-	fillTreeColumns $cnode $_ctext
-
 	set tree [getTreeFromGData $cgdata]
 	set mlist [getTreeMembers $tree]
 	if {$mlist != ""} {
@@ -3335,16 +3328,6 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(newtree) item $cnode -open false
 	    addTreePlaceholder $cnode
 	}
-    } else {
-	set isregion [isRegion $cgdata]
-	set op [getTreeOp $ptext $_ctext]
-	set img [getTreeImage $_ctext $ctype $op $isregion]
-	set cnode [$itk_component(newtree) insert $_pnode end \
-		       -tags $TREE_POPUP_TAG \
-		       -text $_ctext \
-		       -image $img]
-
-	fillTreeColumns $cnode $_ctext
     }
 
     lappend mText2Node($_ctext) [list $cnode $_pnode]
@@ -3609,17 +3592,21 @@ Popup Menu    Right or Ctrl-Left
     return $pnode
 }
 
-::itcl::body ArcherCore::getCNodeFromCText {_pnode _text} {
+::itcl::body ArcherCore::getCNodesFromCText {_pnode _text} {
     if {[catch {set clists $mPNode2CList($_pnode)}]} {
 	return ""
     }
 
-    set i [lsearch -index 0 $clists $_text]
-    if {$i != -1} {
-	return [lindex [lindex $clists $i] 1]
+    set cnodes {}
+
+    set ilist [lsearch -all -index 0 $clists $_text]
+    if {$ilist != {}} {
+	foreach i $ilist {
+	    lappend cnodes [lindex [lindex $clists $i] 1]
+	}
     }
 
-    return ""
+    return $cnodes
 }
 
 ::itcl::body ArcherCore::getTreeImage {_obj _type {_op ""} {_isregion 0}} {
@@ -3815,29 +3802,26 @@ Popup Menu    Right or Ctrl-Left
 	    set tree [getTreeFromGData $cgdata]
 	    foreach gctext [getTreeMembers $tree] {
 		if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
-		    set gcnode [getCNodeFromCText $cnode $gctext]
-		    if {$gcnode == ""} {
-			set op [getTreeOp $ctext $gctext]
-			set img [getTreeImage $gctext "invalid" $op]
+		    set op [getTreeOp $ctext $gctext]
+		    set img [getTreeImage $gctext "invalid" $op]
 
-			set gcnode [$itk_component(newtree) insert $cnode end \
-					-tags $TREE_POPUP_TAG \
-					-text $gctext \
-					-image $img]
+		    set gcnode [$itk_component(newtree) insert $cnode end \
+				    -tags $TREE_POPUP_TAG \
+				    -text $gctext \
+				    -image $img]
 
-			fillTreeColumns $gcnode $gctext
+		    fillTreeColumns $gcnode $gctext
 
-			lappend mText2Node($gctext) [list $gcnode $cnode]
-			set mNode2Text($gcnode) $gctext
-			lappend mPNode2CList($cnode) [list $gctext $gcnode]
-			set mCNode2PList($gcnode) [list $ctext $cnode]
-		    }
+		    lappend mText2Node($gctext) [list $gcnode $cnode]
+		    set mNode2Text($gcnode) $gctext
+		    lappend mPNode2CList($cnode) [list $gctext $gcnode]
+		    set mCNode2PList($gcnode) [list $ctext $cnode]
 
 		    continue
 		}
 
 		# Add gchild members
-		fillTree $cnode $gctext
+		fillTree $cnode $gctext $mEnableListView 1
 	    }
 	}
     }
