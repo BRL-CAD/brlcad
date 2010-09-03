@@ -1,6 +1,6 @@
 ADD_SUBDIRECTORY(step)
 ADD_SUBDIRECTORY(iges)
-#ADD_SUBDIRECTORY(intaval)
+ADD_SUBDIRECTORY(intaval)
 
 include_directories(
 	${BRLCAD_BINARY_DIR}/include
