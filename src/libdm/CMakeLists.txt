@@ -50,16 +50,20 @@ include_directories(
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${BRLCAD_TERMLIB_INCLUDE_DIR}
-	${X11_X11_INCLUDE_DIR}
+	${BRLCAD_PNG_INCLUDE_DIR}
+	${X11_INCLUDE_DIR}
+	${TCL_INCLUDE_PATH}
+	${TK_INCLUDE_PATH}
 )
 
 add_definitions(
 	-DHAVE_CONFIG_H
-	-DBRLCADBUILD
+	-DBRLCADBUILD=1
 	${DM_DEFINES}
 )
 
 add_library(dm ${LIBDM_SRCS})
-target_link_libraries(dm librt fb ged ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+MESSAGE("X11_LIBRARIES: ${X11_LIBRARIES} ${X11_Xi_LIB}")
+target_link_libraries(dm librt fb ged ${X11_LIBRARIES} ${X11_Xi_LIB}) 
 INSTALL(TARGETS dm LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
 
