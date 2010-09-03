@@ -162,13 +162,7 @@ db_open(const char *name, const char *mode)
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
 
-    /*
-     * XXX Need code to convert all relative paths to full paths.
-     *
-     * For now, if dirname is "." use the CWD and
-     * update the filename to include the fullpath.
-     */
-    if (argv[1][0] == '.' && argv[1][1] == '\0') {
+    if (argv[1][0] != '/') {
 	struct bu_vls fullpath;
 
 	bu_vls_init(&fullpath);
