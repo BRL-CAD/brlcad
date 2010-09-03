@@ -1,0 +1,65 @@
+IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_WGL -DIF_WGL")
+ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+
+IF(BRLCAD-ENABLE_X11)
+	SET(DM_DEFINES  "${DM_DEFINES} -DDM_X -DIF_X") 
+ENDIF(BRLCAD-ENABLE_X11)
+
+IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_OGL -DIF_OGL")
+ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+
+IF(BRLCAD-ENABLE_RTGL)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_RTGL -DIF_RTGL")
+ENDIF(BRLCAD-ENABLE_RTGL)
+
+IF(TK_LIBRARY)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_TK -DIF_TK")
+ENDIF(TK_LIBRARY)
+
+
+SET(LIBDM_SRCS
+	adc.c 
+	axes.c 
+	clip.c 
+	color.c 
+	dm-Null.c 
+	dm-X.c 
+	dm-tk.c 
+	dm-generic.c 
+	dm-ogl.c 
+	dm-rtgl.c 
+	dm-plot.c 
+	dm-ps.c 
+	dm-wgl.c 
+	dm_obj.c 
+	focus.c 
+	grid.c 
+	knob.c 
+	labels.c 
+	options.c 
+	query.c 
+	rect.c 
+	scale.c 
+	tcl.c 
+	vers.c
+)
+
+include_directories(
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BRLCAD_TERMLIB_INCLUDE_DIR}
+	${X11_X11_INCLUDE_DIR}
+)
+
+add_definitions(
+	-DHAVE_CONFIG_H
+	-DBRLCADBUILD
+	${DM_DEFINES}
+)
+
+add_library(dm ${LIBDM_SRCS})
+target_link_libraries(dm librt fb ged ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+INSTALL(TARGETS dm LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+
