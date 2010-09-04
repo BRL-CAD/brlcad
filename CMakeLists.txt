@@ -115,6 +115,10 @@ SET(BRLCAD_VERSION "${CAD_VERSION}")
 SET(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
 SET(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 
+# Load utility macros that will be used throughout the BRL-CAD
+# build logic
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Util.cmake)
+
 # Save the current LC_ALL, LC_MESSAGES, and LANG environment variables and set them
 # to "C" so things like date output are as expected
 SET(_orig_lc_all      $ENV{LC_ALL})

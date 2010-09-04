@@ -9,15 +9,6 @@ add_definitions(
   -DBRLCADBUILD=1
 )
 
-# Flesh this out and make it standard?  Add a regex to allow
-# srcs and libs to come in using spaces and get converted
-# to lists?  Would work if we have no filenames/paths with spaces
-MACRO(BRLCAD_ADDEXEC execname srcs libs)
-  add_executable(${execname} ${srcs})
-  target_link_libraries(${execname} ${libs})
-  INSTALL(TARGETS ${execname} RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
-ENDMACRO(BRLCAD_ADDEXEC execname srcs libs)
-
 BRLCAD_ADDEXEC(anim_cascade anim_cascade.c bn)
 
 BRLCAD_ADDEXEC(anim_fly anim_fly.c bu)
@@ -38,7 +29,7 @@ BRLCAD_ADDEXEC(anim_sort anim_sort.c bu)
 
 BRLCAD_ADDEXEC(anim_time anim_time.c bu)
 
-BRLCAD_ADDEXEC(anim_track "anim_track.c;cattrack.c" bn)
+BRLCAD_ADDEXEC(anim_track "anim_track.c cattrack.c" bn)
 
 BRLCAD_ADDEXEC(anim_turn anim_turn.c bn)
 
