@@ -3,9 +3,9 @@ set(LIBICV_SOURCES
 )
 
 include_directories(
-    ../../include
-    ../other
-    ../other/tcl/generic
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${TCL_INCLUDE_PATH}
 )
 
 add_definitions(

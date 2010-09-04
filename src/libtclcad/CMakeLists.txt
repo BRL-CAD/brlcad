@@ -1,0 +1,42 @@
+IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+  SET(TCLCAD_DEFINES "${TCLCAD_DEFINES} -DDM_WGL -DIF_WGL")
+ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+
+IF(BRLCAD-ENABLE_X11)
+  SET(TCLCAD_DEFINES  "${TCLCAD_DEFINES} -DDM_X -DIF_X")
+ENDIF(BRLCAD-ENABLE_X11)
+
+IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+  SET(TCLCAD_DEFINES "${TCLCAD_DEFINES} -DDM_OGL -DIF_OGL")
+ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+
+IF(TK_LIBRARY)
+  SET(TCLCAD_DEFINES "${TCLCAD_DEFINES} -DDM_TK -DIF_TK")
+ENDIF(TK_LIBRARY)
+
+include_directories(
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  ${BRLCAD_PNG_INCLUDE_DIR}
+  ${X11_INCLUDE_DIR}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
+  #TODO - this is needed because tclInt.h isn't being found
+  #by system itclInt.h - located in a deeper subdirectory
+  #not returned by FindTCL.  Either need to ferrit out the
+  #private directories if on system, or determine why the
+  #itcl headers are asking for something they shouldn't be
+  ${BRLCAD_SOURCE_DIR}/src/other/tcl/generic
+  #Same deal for tclUnixPort.h
+  ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix
+)
+
+add_definitions(
+        -DHAVE_CONFIG_H
+        -DBRLCADBUILD=1
+        ${TCLCAD_DEFINES}
+)
+
+add_library(tclcad tclcad.c tclcadAutoPath.c tkImgFmtPIX.c ged_obj.c)
+target_link_libraries(tclcad dm ged ${X11_LIBRARIES} ${X11_Xi_LIB})
+INSTALL(TARGETS tclcad LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

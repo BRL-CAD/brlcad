@@ -457,6 +457,11 @@ CHECK_LIBRARY_EXISTS(dl dlopen "" HAVE_DLOPEN)
 CHECK_LIBRARY_EXISTS(l yyless "" HAVE_SOLARISLEXERLIB)
 CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCCXX)
 
+
+
+# Not sure if this is correct or not!
+BRLCAD_INCLUDE_FILE(stddef.h STDC_HEADERS)
+
 # Some of these include should probably be handled by the Find*
 # routines - currently this isn't quite a 1/1 match to the list
 # in configure.ac and will probably change more - will also need to
@@ -913,6 +918,7 @@ ELSE(NOT IWIDGETS_FOUND OR BRLCAD_BUILD_LOCAL_IWIDGETS)
 		)
 	SET(BRLCAD_BUILD_LOCAL_IWIDGETS OFF)
 ENDIF(NOT IWIDGETS_FOUND OR BRLCAD_BUILD_LOCAL_IWIDGETS)
+FILE(APPEND ${CONFIG_H_FILE} "#define IWIDGETS_VERSION \"4.0.1\"\n")
 
 IF(NOT TKHTML_FOUND OR BRLCAD_BUILD_LOCAL_TKHTML)
 	IF(NOT BRLCAD_SYSTEM_LIBS_ONLY)
@@ -1095,6 +1101,9 @@ ADD_SUBDIRECTORY(src/rt)
 #ADD_SUBDIRECTORY(src/librtserver)
 ADD_SUBDIRECTORY(src/libdm)
 ADD_SUBDIRECTORY(src/libfft)
+ADD_SUBDIRECTORY(src/libicv)
+ADD_SUBDIRECTORY(src/libmultispectral)
+ADD_SUBDIRECTORY(src/libtclcad)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
