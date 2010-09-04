@@ -32,7 +32,7 @@ FOREACH(filenum ${FFT_NUMLIST})
     DEPENDS ifftc
   )
   SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};irfft${filenum}.c")
-ENDFOREACH(fileroot ${FFT_FILEROOTS})
+ENDFOREACH(filenum ${FFT_NUMLIST})
 
 SET(LIBFFT_SRCS
   fftfast.c
