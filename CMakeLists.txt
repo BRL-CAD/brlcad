@@ -413,17 +413,15 @@ INCLUDE (CheckLibraryExists)
 # This may be overkill - does CHECK_LIBRARY_EXISTS usably set
 # anything for us?  May want to wrap some combination of
 # CHECK_LIBRARY_EXISTS and FIND_LIBRARY into a macro...
-set(LIBBSD "")
-CHECK_LIBRARY_EXISTS(bsd daemon "" HAVE_BSDDAEMON)
-if (NOT HAVE_BSDDAEMON)
-	CHECK_LIBRARY_EXISTS(c daemon "" HAVE_CDAEMON)
-endif (NOT HAVE_BSDDAEMON)
-if (HAVE_BSDDAEMON)
-	set(LIBBSD "-lbsd")
-endif (HAVE_BSDDAEMON)
-if (HAVE_CDAEMON)
-	set(LIBBSD "-c")
-endif (HAVE_CDAEMON)
+SET(BSD_LIST "bsd;c")
+FOREACH(bsdcandidate ${BSD_LIST})
+   IF(NOT BSD_LIBRARY)
+     CHECK_LIBRARY_EXISTS(${bsdcandidate} daemon "" HAVE_BSDDAEMON)
+     if (HAVE_BSDDAEMON)
+	find_library(BSD_LIBRARY NAMES ${bsdcandidate})
+     endif (HAVE_BSDDAEMON)
+   ENDIF(NOT BSD_LIBRARY)
+ENDFOREACH(bsdcandidate ${BSD_LIST})
 
 # rework this - check maybe should come after library
 # is successfully found? Also, need to make sure 
@@ -1104,6 +1102,8 @@ ADD_SUBDIRECTORY(src/libfft)
 ADD_SUBDIRECTORY(src/libicv)
 ADD_SUBDIRECTORY(src/libmultispectral)
 ADD_SUBDIRECTORY(src/libtclcad)
+ADD_SUBDIRECTORY(src/libtermio)
+ADD_SUBDIRECTORY(src/adrt)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
