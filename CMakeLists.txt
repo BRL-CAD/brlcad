@@ -1109,6 +1109,7 @@ ADD_SUBDIRECTORY(src/libtclcad)
 ADD_SUBDIRECTORY(src/libtermio)
 ADD_SUBDIRECTORY(src/adrt)
 ADD_SUBDIRECTORY(src/anim)
+ADD_SUBDIRECTORY(src/brlman)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
