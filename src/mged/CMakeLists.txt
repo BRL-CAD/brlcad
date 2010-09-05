@@ -1,0 +1,107 @@
+ADD_SUBDIRECTORY(points)
+
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/points
+  ${BRLCAD_STD_INCLUDES}
+  ${BRLCAD_TERMLIB_INCLUDE_DIR}
+  ${BRLCAD_PNG_INCLUDE_DIR}
+  ${X11_INCLUDE_DIR}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
+)
+
+IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-wgl.c")
+  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_WGL -DIF_WGL")
+ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+
+IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-ogl.c")
+  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_OGL -DIF_OGL")
+ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+
+IF(BRLCAD-ENABLE_X11)
+  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-X.c")
+  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_X -DIF_X")
+ENDIF(BRLCAD-ENABLE_X11)
+
+#IF(TK_LIBRARY)
+#  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-tk.c")
+#  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_TK -DIF_TK")
+#ENDIF(TK_LIBRARY)
+
+#IF(BRLCAD-ENABLE_RTGL)
+#  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-rtgl.c")
+#  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_RTGL -DIF_RTGL")
+#ENDIF(TK_LIBRARY)
+
+add_definitions(
+  ${BRLCAD_STD_DEFS}
+  ${MGED_DEFINES}
+)
+
+SET(MGED_SOURCES
+  adc.c 
+  animedit.c 
+  arbs.c 
+  attach.c 
+  axes.c 
+  bodyio.c 
+  buttons.c 
+  chgmodel.c 
+  chgtree.c 
+  chgview.c 
+  cmd.c 
+  clone.c 
+  color_scheme.c 
+  columns.c 
+  dir.c 
+  ${MGED_DM_SOURCES}
+  dm-generic.c 
+  dm-plot.c 
+  dm-ps.c 
+  dodraw.c 
+  doevent.c 
+  dozoom.c 
+  edarb.c 
+  edars.c 
+  edpipe.c 
+  edsol.c 
+  facedef.c 
+  fbserv.c 
+  grid.c 
+  hideline.c 
+  history.c 
+  mater.c 
+  menu.c 
+  mged.c 
+  mover.c 
+  muves.c 
+  overlay.c 
+  plot.c 
+  polyif.c 
+  predictor.c 
+  qray.c 
+  rect.c 
+  rtif.c 
+  scroll.c 
+  set.c 
+  setup.c 
+  share.c 
+  solids_on_ray.c 
+  tedit.c 
+  titles.c 
+  track.c 
+  update.c 
+  usepen.c 
+  utility1.c 
+  vparse.c 
+  vrlink.c
+)
+
+BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "points termio wdb ged dm tclcad")
+
+BRLCAD_ADDEXEC(cad_boundp cad_boundp.c bu)
+
+BRLCAD_ADDEXEC(cad_parea cad_parea.c bu)
