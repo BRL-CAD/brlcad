@@ -1,19 +1,16 @@
 include_directories(
-    ../../include
-    ../other/libz
-    ../other/openNURBS
-    ../other/libregex
-    ../other/tcl/generic
+    ${BRLCAD_STD_INCLUDES}
+    ${BRLCAD_ZLIB_INCLUDE_DIR}
+    ${BRLCAD_OPENNURBS_INCLUDE_DIR}
+    ${BRLCAD_REGEX_INCLUDE_DIR}
+    ${TCL_INCLUDE_PATH}
 )
 
 add_definitions(
-    -DBRLCAD_DLL
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-    -DON_DLL_IMPORTS
+  ${BRLCAD_STD_DEFS}
 )
 
-add_executable(nirt
+SET(NIRT_SRCS
     nirt.c
     command.c
     conversion.c
@@ -24,13 +21,8 @@ add_executable(nirt
     str_manip.c
     parse_fmt.c
 )
-target_link_libraries(nirt
-    BrlcadCore
-)
 
-add_executable(showshot
-    showshot.c
-)
-target_link_libraries(showshot
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "fb librt")
+SET_TARGET_PROPERTIES(nirt PROPERTIES COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\"")
+
+BRLCAD_ADDEXEC(showshot showshot.c bn)

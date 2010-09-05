@@ -1,0 +1,50 @@
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_STD_INCLUDES}
+  ${BRLCAD_OPENNURBS_INCLUDE_DIR}
+  ${TCL_INCLUDE_PATH}
+)
+
+add_definitions(
+  ${BRLCAD_STD_DEFS}
+)
+
+BRLCAD_ADDEXEC(bottest bottest.c wdb)
+BRLCAD_ADDEXEC(brep_cube brep_cube.cpp "wdb ${BRLCAD_OPENNURBS_LIBRARY}")
+set_target_properties(brep_cube PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
+BRLCAD_ADDEXEC(brep_simple brep_simple.cpp "wdb ${BRLCAD_OPENNURBS_LIBRARY}")
+set_target_properties(brep_simple PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
+BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "wdb ${BRLCAD_OPENNURBS_LIBRARY}")
+set_target_properties(brepintersect PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
+BRLCAD_ADDEXEC(breplicator breplicator.cpp "wdb ${BRLCAD_OPENNURBS_LIBRARY}")
+set_target_properties(breplicator PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
+BRLCAD_ADDEXEC(brickwall brickwall.c wdb)
+BRLCAD_ADDEXEC(clutter "clutter.c common.c" wdb)
+BRLCAD_ADDEXEC(contours contours.c wdb)
+BRLCAD_ADDEXEC(csgbrep csgbrep.cpp wdb)
+BRLCAD_ADDEXEC(globe globe.c wdb)
+BRLCAD_ADDEXEC(kurt kurt.c wdb)
+BRLCAD_ADDEXEC(lens lens.c wdb)
+BRLCAD_ADDEXEC(masonry masonry.c wdb)
+BRLCAD_ADDEXEC(metaball metaball.c wdb)
+BRLCAD_ADDEXEC(mkbuilding "mkbuilding.c makebuilding/makebuilding.c" wdb)
+BRLCAD_ADDEXEC(molecule molecule.c wdb)
+BRLCAD_ADDEXEC(nmgmodel nmgmodel.c wdb)
+BRLCAD_ADDEXEC(pipe pipe.c wdb)
+BRLCAD_ADDEXEC(pipetest pipetest.c wdb)
+BRLCAD_ADDEXEC(pix2g pix2g.c wdb)
+BRLCAD_ADDEXEC(pyramid pyramid.c wdb)
+BRLCAD_ADDEXEC(rawbot rawbot.c wdb)
+BRLCAD_ADDEXEC(room "room.c common.c" wdb)
+BRLCAD_ADDEXEC(sketch sketch.c wdb)
+BRLCAD_ADDEXEC(sphflake sphflake.c wdb)
+BRLCAD_ADDEXEC(spltest spltest.c wdb)
+BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "wdb ${BRLCAD_OPENNURBS_LIBRARY}")
+set_target_properties(surfaceintersect PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
+BRLCAD_ADDEXEC(tea tea.c wdb)
+BRLCAD_ADDEXEC(tea_nmg tea_nmg.c wdb)
+BRLCAD_ADDEXEC(terrain terrain.c wdb)
+BRLCAD_ADDEXEC(torii torii.c wdb)
+BRLCAD_ADDEXEC(tube tube.c wdb)
+BRLCAD_ADDEXEC(vegetation vegetation.c wdb)
+BRLCAD_ADDEXEC(wdb_example wdb_example.c wdb)

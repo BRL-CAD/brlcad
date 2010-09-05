@@ -1134,6 +1134,13 @@ ADD_SUBDIRECTORY(src/halftone)
 ADD_SUBDIRECTORY(src/irprep)
 ADD_SUBDIRECTORY(src/lgt)
 ADD_SUBDIRECTORY(src/mged)
+ADD_SUBDIRECTORY(src/nirt)
+ADD_SUBDIRECTORY(src/proc-db)
+ADD_SUBDIRECTORY(src/remrt)
+ADD_SUBDIRECTORY(src/rttherm)
+ADD_SUBDIRECTORY(src/shapes)
+ADD_SUBDIRECTORY(src/sig)
+ADD_SUBDIRECTORY(src/tab)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
@@ -1304,7 +1311,7 @@ ADD_DEPENDENCIES(sysv timestamp ${TCL_DEP} ${TK_DEP})
 ADD_DEPENDENCIES(librt timestamp ${TCL_DEP} ${TK_DEP})
 
 # Generate the include/conf files
-
+if(0)
 # HOST 
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
 TRY_RUN(TIME_RESULT TIME_COMPILED 
@@ -1354,3 +1361,4 @@ WHILE(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
 	STRING(LENGTH ${CONFIG_TIME_MSG_LABEL} CURRENTLENGTH)
 ENDWHILE(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
 MESSAGE("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
+endif()
