@@ -34,9 +34,7 @@
 
 #ifdef HAVE_TK
 #  include "tk.h"
-#  include "itk.h"
 #endif
-#include "itcl.h"
 
 /* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
 #ifndef ITK_VERSION

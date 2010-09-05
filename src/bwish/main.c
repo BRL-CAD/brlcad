@@ -31,9 +31,7 @@
 #include "tcl.h"
 
 #ifdef BWISH
-#  include "itk.h"
-#else
-#  include "itcl.h"
+#  include "tk.h"
 #endif
 
 #include "bu.h"
@@ -72,95 +70,39 @@ Cad_AppInit(Tcl_Interp *interp)
     int init_tk = 1;
     int init_itcl = 1;
     int init_itk = 1;
-
-    /* a two-pass init loop.  the first pass just tries default init
-     * routines while the second calls tclcad_auto_path() to help it
-     * find other, potentially uninstalled, resources.
-     */
-    while (1) {
-
-	/* not called first time through, give Tcl_Init() a chance */
-	if (try_auto_path) {
-	    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-	    tclcad_auto_path(interp);
-	}
-
-	/* Initialize Tcl */
-	Tcl_ResetResult(interp);
-	if (init_tcl && Tcl_Init(interp) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path=1;
-		continue;
-	    }
-	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-	init_tcl=0;
-
-	/* warn if tcl_library isn't set by now */
-	if (try_auto_path) {
-	    tclcad_tcl_library(interp);
-	}
-
-#ifdef BWISH
-	/* Initialize Tk */
-	Tcl_ResetResult(interp);
-	if (init_tk && Tk_Init(interp) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path=1;
-		continue;
-	    }
-	    bu_log("Tk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-	Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
-	init_tk=0;
-#endif
-
-	/* Initialize [incr Tcl] */
-	Tcl_ResetResult(interp);
-	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path=1;
-		/* Itcl_Init() leaves initialization in a bad state
-		 * and can cause retry failures.  cleanup manually.
-		 */
-		Tcl_DeleteCommand(interp, "::itcl::class");
-		Tcl_DeleteNamespace(Tcl_FindNamespace(interp, "::itcl", NULL, 0));
-		continue;
-	    }
-	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
-	init_itcl=0;
-
-#ifdef BWISH
-	/* Initialize [incr Tk] */
-	Tcl_ResetResult(interp);
-	if (init_itk && Itk_Init(interp) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path=1;
-		continue;
-	    }
-	    bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    return TCL_ERROR;
-	}
-	Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
-	init_itk=0;
-#endif
-
-	/* don't actually want to loop forever */
-	break;
-
-    } /* end iteration over Init() routines that need auto_path */
-    Tcl_ResetResult(interp);
-
-    /* if we haven't loaded by now, load auto_path so we find our tclscripts */
-    if (!try_auto_path) {
-	/* Locate the BRL-CAD-specific Tcl scripts */
-	tclcad_auto_path(interp);
+    if (Tcl_Init(interp) == TCL_ERROR) {
+      return TCL_ERROR;
     }
+
+#ifdef HAVE_TK
+    if (Tk_Init(interp) == TCL_ERROR) {
+      return TCL_ERROR;
+    }
+#endif
+
+
+    /* Go ahead and add the BRL-CAD paths - if there is anything
+     * installed there we want to use it in preference to anything
+     * in system path */
+   /* if (Tcl_Eval(interp, "set auto_path [linsert $auto_path 0 /usr/brlcad/lib]") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }*/
+    tclcad_auto_path(interp);
+
+    /* Initialize Tcl */
+    if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+#ifdef BWISH
+    /* Initialize Tk */
+    if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+#endif  /* BWISH */
 
 #ifdef IMPORT_ITCL
     /* Import [incr Tcl] commands into the global namespace. */

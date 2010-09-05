@@ -5,14 +5,6 @@ include_directories(
   ${X11_INCLUDE_DIR}
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
-  #TODO - this is needed because tclInt.h isn't being found
-  #by system itclInt.h - located in a deeper subdirectory
-  #not returned by FindTCL.  Either need to ferrit out the
-  #private directories if on system, or determine why the
-  #itcl headers are asking for something they shouldn't be
-  ${BRLCAD_SOURCE_DIR}/src/other/tcl/generic
-  #Same deal for tclUnixPort.h
-  ${BRLCAD_SOURCE_DIR}/src/other/tcl/unix
 )
 
 add_definitions(
