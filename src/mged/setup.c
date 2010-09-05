@@ -28,7 +28,6 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <itcl.h>
 #include <string.h>
 
 /* common headers */
@@ -526,22 +525,9 @@ mged_setup(Tcl_Interp **interpreter)
 	}
 
 	/* Initialize [incr Tcl] */
-	Tcl_ResetResult(*interpreter);
-	if (init_itcl && Itcl_Init(*interpreter) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path=1;
-		/* Itcl_Init() leaves initialization in a bad state
-		 * and can cause retry failures.  cleanup manually.
-		 */
-		Tcl_DeleteCommand(*interpreter, "::itcl::class");
-		Tcl_DeleteNamespace(Tcl_FindNamespace(*interpreter, "::itcl", NULL, 0));
-		continue;
-	    }
-	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	    break;
+	if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
+	  return TCL_ERROR;
 	}
-	Tcl_StaticPackage(*interpreter, "Itcl", Itcl_Init, Itcl_SafeInit);
-	init_itcl=0;
 
 	/* don't actually want to loop forever */
 	break;
