@@ -404,7 +404,7 @@ else()
 	OPTION(BRLCAD-ENABLE_X11 "Use X11." ON)
 endif(WIN32)
 if (BRLCAD-ENABLE_X11)
-	find_package(X11)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
 endif (BRLCAD-ENABLE_X11)
 
 OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." OFF)
@@ -1111,6 +1111,7 @@ ADD_SUBDIRECTORY(src/adrt)
 ADD_SUBDIRECTORY(src/anim)
 ADD_SUBDIRECTORY(src/brlman)
 ADD_SUBDIRECTORY(src/burst)
+ADD_SUBDIRECTORY(src/bwish)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
