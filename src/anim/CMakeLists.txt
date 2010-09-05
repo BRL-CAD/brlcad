@@ -1,12 +1,10 @@
 include_directories(
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
+  ${BRLCAD_STD_INCLUDES}
   ${TCL_INCLUDE_PATH}
 )
 
 add_definitions(
-  -DHAVE_CONFIG_H
-  -DBRLCADBUILD=1
+  ${BRLCAD_STD_DEFS}
 )
 
 BRLCAD_ADDEXEC(anim_cascade anim_cascade.c bn)

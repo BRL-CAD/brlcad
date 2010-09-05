@@ -712,9 +712,10 @@ ENDIF(BRLCAD_BUILD_LOCAL_REGEX)
 THIRD_PARTY_OPTION(UTAHRLE)
 THIRD_PARTY_SUBDIR(UTAHRLE src/other/libutahrle)
 IF(BRLCAD_BUILD_LOCAL_UTAHRLE)
-	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle" CACHE STRING "Directory containing libutahrle headers" FORCE)
+	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "Directory containing libutahrle headers" FORCE)
 	SET(UTAHRLE_INCLUDE_DIR "${BRLCAD_UTAHRLE_INCLUDE_DIR}" CACHE STRING "Directory containing libutahrle headers" FORCE)
-	SET(BRLCAD_UTAHRLE_LIBRARY "libutahrle" CACHE STRING "libutahrle" FORCE)
+	SET(BRLCAD_UTAHRLE_LIBRARY "utahrle" CACHE STRING "libutahrle" FORCE)
+	SET(UTAHRLE_LIBRARY "utahrle" CACHE STRING "libutahrle" FORCE)
 ELSE(BRLCAD_BUILD_LOCAL_UTAHRLE)
 	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "Directory containing libutahrle headers" FORCE)
 	SET(BRLCAD_UTAHRLE_LIBRARY "${UTAHRLE_LIBRARY}" CACHE STRING "libutahrle library" FORCE)
@@ -1088,6 +1089,12 @@ ENDIF(BRLCAD_BUILD_LOCAL_SCL)
 # Now that all the tests are done, configure the brlcad_config.h file:
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
+# Virtually all of the BRL-CAD code needs the BRL-CAD include directories
+# and a couple of standard defines - set those up in variables now - the
+# idea being that if any other system-wide defines or include are needed
+# they can just be added here.
+SET(BRLCAD_STD_DEFS "-DHAVE_CONFIG_H;-DBRLCADBUILD=1")
+SET(BRLCAD_STD_INCLUDES "${BRLCAD_BINARY_DIR}/include;${BRLCAD_SOURCE_DIR}/include")
 
 ADD_SUBDIRECTORY(src/libbu)
 ADD_SUBDIRECTORY(src/libbn)
@@ -1118,6 +1125,14 @@ ADD_SUBDIRECTORY(src/anim)
 ADD_SUBDIRECTORY(src/brlman)
 ADD_SUBDIRECTORY(src/burst)
 ADD_SUBDIRECTORY(src/bwish)
+ADD_SUBDIRECTORY(src/canon)
+ADD_SUBDIRECTORY(src/fb)
+ADD_SUBDIRECTORY(src/vfont)
+ADD_SUBDIRECTORY(src/fbed)
+ADD_SUBDIRECTORY(src/gtools)
+ADD_SUBDIRECTORY(src/halftone)
+ADD_SUBDIRECTORY(src/irprep)
+ADD_SUBDIRECTORY(src/lgt)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
