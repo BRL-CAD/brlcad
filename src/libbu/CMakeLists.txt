@@ -87,7 +87,7 @@ add_definitions(
 )
 
 add_library(bu ${LIBBU_SOURCES})
-target_link_libraries(bu ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY})
+target_link_libraries(bu ${CMAKE_THREAD_LIBS_INIT} ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} )
 INSTALL(TARGETS bu LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
 
 set(HTESTER_SOURCES
