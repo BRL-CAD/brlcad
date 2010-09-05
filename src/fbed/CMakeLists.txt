@@ -24,4 +24,5 @@ SET(fbed_SOURCES
   try.c
 )
 
-BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "vfont fb termio cursor ${TERMLIB_LIBRARY}")
+BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "vfont fb termio cursor ${BRLCAD_TERMLIB_LIBRARY}")
+
