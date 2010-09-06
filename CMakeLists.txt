@@ -99,6 +99,20 @@ PROJECT(BRLCAD)
 # build shared libs by default
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
+# Will need our own add_executable and add_library
+# versions in order to keep track of targets and
+# define rules for all products.
+function(add_library name)
+   SET(CMAKE_LIBRARY_TARGET_LIST "${CMAKE_LIBRARY_TARGET_LIST};${name}" CACHE STRING "list of lib targets" FORCE)
+   _add_library(${name} ${ARGN})
+endfunction(add_library)
+
+function(add_executable name)
+   SET(CMAKE_EXEC_TARGET_LIST "${CMAKE_EXEC_TARGET_LIST};${name}" CACHE STRING "list of exec targets" FORCE)
+   _add_executable(${name} ${ARGN})
+endfunction(add_executable)
+
+
 # See HACKING for details on how to properly update the version
 FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
 STRING(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
@@ -790,6 +804,7 @@ IF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD_BUILD_LOCAL_LIBS)
 	SET(TCL_PRIVATE_HDRS "${BRLCAD_SOURCE_DIR}/src/other/tcl/generic;${BRLCAD_SOURCE_DIR}/src/other/tcl/unix")
 	SET(TCL_CONF_PREFIX "${BRLCAD_PREFIX}/lib")
 	MESSAGE("TCL_LIBRARY: ${TCL_LIBRARY}")
+	SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};tcl")
 
 	ExternalProject_Add(
 		tk
@@ -810,6 +825,7 @@ IF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD_BUILD_LOCAL_LIBS)
 	SET(TK_PRIVATE_HDRS "${BRLCAD_SOURCE_DIR}/src/other/tk/generic;${BRLCAD_SOURCE_DIR}/src/other/tk/unix")
 	SET(TK_CONF_PREFIX "${BRLCAD_PREFIX}/lib")
 	MESSAGE("TK_LIBRARY: ${TK_LIBRARY}")
+	SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};tk")
 	SET(TCL_DEP "tcl")
 	SET(TK_DEP "tk")
 ENDIF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD_BUILD_LOCAL_LIBS)
@@ -856,6 +872,8 @@ IF(NOT ITCL_FOUND OR NOT ITK_FOUND OR BRLCAD_BUILD_LOCAL_ITCL)
 			BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE)
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE) install
 			)
+
+	         SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};itcl")
 		ExternalProject_Add(
 			itk
 			DOWNLOAD_COMMAND ""
@@ -871,6 +889,7 @@ IF(NOT ITCL_FOUND OR NOT ITK_FOUND OR BRLCAD_BUILD_LOCAL_ITCL)
 			BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE)
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE) install
 			)
+	         SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};itk")
 
 		IF(TCL_DEP OR TK_DEP)
 			ADD_DEPENDENCIES(itcl ${TCL_DEP} ${TK_DEP})
@@ -911,6 +930,7 @@ IF(NOT IWIDGETS_FOUND OR BRLCAD_BUILD_LOCAL_IWIDGETS)
 			BUILD_COMMAND ""
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets && $(MAKE) install
 			)
+	         SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};iwidgets")
 		IF(TCL_DEP OR TK_DEP OR ITCL_DEP OR ITK_DEP)
 			ADD_DEPENDENCIES(iwidgets ${TCL_DEP} ${TK_DEP} ${ITCL_DEP} ${ITK_DEP})
 		ENDIF(TCL_DEP OR TK_DEP OR ITCL_DEP OR ITK_DEP)
@@ -947,6 +967,7 @@ IF(NOT TKHTML_FOUND OR BRLCAD_BUILD_LOCAL_TKHTML)
 			BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tkhtml && $(MAKE)
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tkhtml && $(MAKE) install
 			)
+	        SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};tkhtml")
 		IF(TCL_DEP OR TK_DEP)
 			ADD_DEPENDENCIES(tkhtml ${TCL_DEP} ${TK_DEP})
 		ENDIF(TCL_DEP OR TK_DEP)
@@ -984,6 +1005,7 @@ IF(NOT TKPNG_FOUND OR BRLCAD_BUILD_LOCAL_TKPNG)
 			BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tkpng && $(MAKE)
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tkpng && $(MAKE) install
 			)
+	        SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};tkpng")
 		IF(TCL_DEP OR TK_DEP)
 			ADD_DEPENDENCIES(tkpng ${TCL_DEP} ${TK_DEP})
 		ENDIF(TCL_DEP OR TK_DEP)
@@ -1021,6 +1043,7 @@ IF(NOT TKTABLE_FOUND OR BRLCAD_BUILD_LOCAL_TKTABLE)
 			BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tktable && $(MAKE)
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tktable && $(MAKE) install
 			)
+	        SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};tktable")
 		IF(TCL_DEP OR TK_DEP)
 			ADD_DEPENDENCIES(tktable ${TCL_DEP} ${TK_DEP})
 		ENDIF(TCL_DEP OR TK_DEP)
@@ -1308,14 +1331,33 @@ endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
 ADD_CUSTOM_TARGET(timestamp ALL	COMMAND printtimestamp)
 
+# We want the timestamp to come first, so make ALL library,
+# exec and external targets depend on timestamp (except for
+# the exec target printtimestamp, which is needed by timestamp)
+FOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
+  if(libtarget)
+    ADD_DEPENDENCIES(${libtarget} timestamp)
+  endif(libtarget)
+ENDFOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
+FOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
+  if(exectarget)
+    IF(NOT ${exectarget} MATCHES "printtimestamp")
+      ADD_DEPENDENCIES(${exectarget} timestamp)
+    ENDIF(NOT ${exectarget} MATCHES "printtimestamp")
+  endif(exectarget)
+ENDFOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
+FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
+  if(externaltarget)
+    ADD_DEPENDENCIES(${externaltarget} timestamp)
+  endif(externaltarget)
+ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
 if(BRLCAD_BUILD_LOCAL_TCL)
-	ADD_DEPENDENCIES(tcl timestamp)
-	ADD_DEPENDENCIES(tk tcl)
+  ADD_DEPENDENCIES(tk tcl)
+  ADD_DEPENDENCIES(bu ${TCL_DEP} ${TK_DEP})
+  ADD_DEPENDENCIES(sysv ${TCL_DEP} ${TK_DEP})
+  ADD_DEPENDENCIES(librt ${TCL_DEP} ${TK_DEP})
 endif(BRLCAD_BUILD_LOCAL_TCL)
-ADD_DEPENDENCIES(bu timestamp ${TCL_DEP} ${TK_DEP})
-ADD_DEPENDENCIES(sysv timestamp ${TCL_DEP} ${TK_DEP})
-ADD_DEPENDENCIES(librt timestamp ${TCL_DEP} ${TK_DEP})
 
 # Generate the include/conf files
 
