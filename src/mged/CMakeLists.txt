@@ -105,3 +105,9 @@ BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "points termio wdb ged dm tclcad")
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c bu)
 
 BRLCAD_ADDEXEC(cad_parea cad_parea.c bu)
+
+SET(mged_MANS
+  cad_boundp.1
+  cad_parea.1
+)
+install(FILES ${mged_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

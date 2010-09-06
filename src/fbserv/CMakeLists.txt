@@ -14,3 +14,4 @@ add_executable(fbserv fbserv.c server.c)
 target_link_libraries(fbserv fb)
 INSTALL(TARGETS fbserv RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
+install(FILES fbserv.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

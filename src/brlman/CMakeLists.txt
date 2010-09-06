@@ -14,3 +14,4 @@ SET(try "\${try}")
 
 configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman)
 INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+install(FILES brlman.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

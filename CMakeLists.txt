@@ -308,6 +308,7 @@ ENDIF(NOT BRLCAD_INSTALL_DATA_DIR)
 # The location in which to install BRL-CAD Manual pages
 IF(NOT BRLCAD_INSTALL_MAN_DIR)
 	SET(BRLCAD_INSTALL_MAN_DIR ${BRLCAD_PREFIX}/share/man)
+	SET(MAN_DIR "share/man")
 ENDIF(NOT BRLCAD_INSTALL_MAN_DIR)
 
 
@@ -780,7 +781,7 @@ IF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD_BUILD_LOCAL_LIBS)
 		${BRLCAD_SOURCE_DIR}/src/other/tcl/unix/configure.in && mkdir -p
 		${BRLCAD_BINARY_DIR}/src/other/tcl/ && cd
 		${BRLCAD_BINARY_DIR}/src/other/tcl/ &&
-		<SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX}
+		<SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --mandir=${BRLCAD_INSTALL_MAN_DIR}
 		BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE)
 		INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tcl/ && $(MAKE) install
 		)
@@ -800,7 +801,7 @@ IF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD_BUILD_LOCAL_LIBS)
 		${BRLCAD_SOURCE_DIR}/src/other/tk/unix/configure.in && mkdir -p
 		${BRLCAD_BINARY_DIR}/src/other/tk/ && cd
 		${BRLCAD_BINARY_DIR}/src/other/tk/ &&
-		<SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib
+		<SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --with-tcl=${BRLCAD_PREFIX}/lib --mandir=${BRLCAD_INSTALL_MAN_DIR}
 		BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE)
 		INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/tk/ && $(MAKE) install
 		)
@@ -851,7 +852,7 @@ IF(NOT ITCL_FOUND OR NOT ITK_FOUND OR BRLCAD_BUILD_LOCAL_ITCL)
 			${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl/ && cd
 			${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl/ &&
 			<SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
-			--with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX}
+			--with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX} --mandir=${BRLCAD_INSTALL_MAN_DIR}
 			BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE)
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itcl && $(MAKE) install
 			)
@@ -866,7 +867,7 @@ IF(NOT ITCL_FOUND OR NOT ITK_FOUND OR BRLCAD_BUILD_LOCAL_ITCL)
 			${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk/ && cd
 			${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk/ &&
 			<SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
-			--with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX}
+			--with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX} --mandir=${BRLCAD_INSTALL_MAN_DIR}
 			BUILD_COMMAND cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE)
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/itk && $(MAKE) install
 			)
@@ -904,7 +905,9 @@ IF(NOT IWIDGETS_FOUND OR BRLCAD_BUILD_LOCAL_IWIDGETS)
 			${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets/ && cd
 			${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets/ &&
 			<SOURCE_DIR>/configure --prefix=${BRLCAD_PREFIX} --exec-prefix=${BRLCAD_PREFIX}
-			--with-tcl=${TCL_CONF_PREFIX} --with-tk=${TK_CONF_PREFIX} --with-itcl=${BRLCAD_SOURCE_DIR}/src/other/incrTcl
+			--with-tcl=${TCL_CONF_PREFIX}
+			--with-tk=${TK_CONF_PREFIX} --mandir=${BRLCAD_INSTALL_MAN_DIR}
+			--with-itcl=${BRLCAD_SOURCE_DIR}/src/other/incrTcl
 			BUILD_COMMAND ""
 			INSTALL_COMMAND  cd ${BRLCAD_BINARY_DIR}/src/other/incrTcl/iwidgets && $(MAKE) install
 			)

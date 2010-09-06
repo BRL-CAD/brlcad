@@ -20,3 +20,9 @@ TARGET_LINK_LIBRARIES(rttherm librttherm optical fb multispectral ged)
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
 
 BRLCAD_ADDEXEC(ssamp_bw ssamp-bw.c "optical")
+
+set(rttherm_MANS
+  rttherm.1
+  ssamp-bw.1
+)
+install(FILES ${rttherm_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

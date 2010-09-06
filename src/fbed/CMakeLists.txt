@@ -26,3 +26,4 @@ SET(fbed_SOURCES
 
 BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "vfont fb termio cursor ${BRLCAD_TERMLIB_LIBRARY}")
 
+install(FILES fbed.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

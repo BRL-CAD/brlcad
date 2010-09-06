@@ -8,3 +8,4 @@ add_definitions(
 )
 
 BRLCAD_ADDEXEC(canonize "canonize.c canonlib.c" "fb")
+install(FILES canonize.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

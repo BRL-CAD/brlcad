@@ -239,3 +239,4 @@ set(util_MANS
   terrain.1 
   wavelet.1
 )
+install(FILES ${util_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

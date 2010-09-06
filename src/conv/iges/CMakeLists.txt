@@ -111,3 +111,9 @@ add_executable(g-iges
 )
 target_link_libraries(g-iges bu librt)
 INSTALL(TARGETS g-iges RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
+SET(iges_MANS
+  g-iges.1
+  iges-g.1
+)
+install(FILES ${iges_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

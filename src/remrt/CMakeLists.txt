@@ -9,5 +9,7 @@ add_definitions(
 )
 
 BRLCAD_ADDEXEC(remrt "ihost.c remrt.c" "libremrt optical fb")
+install(FILES remrt.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+
 BRLCAD_ADDEXEC(rtsrv rtsrv.c "libremrt optical pkg")
 SET_TARGET_PROPERTIES(rtsrv PROPERTIES COMPILE_DEFINITIONS "RTSRV")

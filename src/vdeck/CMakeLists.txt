@@ -9,3 +9,4 @@ add_definitions(
 )
 
 BRLCAD_ADDEXEC(vdeck "cgarbs.c match.c parsarg.c vdeck.c" librt)
+install(FILES vdeck.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)

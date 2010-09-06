@@ -18,3 +18,5 @@ SET(halftone_SOURCES
 )
 
 BRLCAD_ADDEXEC(halftone "${halftone_SOURCES}" "librt fb")
+
+install(FILES halftone.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
