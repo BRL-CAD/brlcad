@@ -105,11 +105,16 @@ OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 function(add_library name)
    SET(CMAKE_LIBRARY_TARGET_LIST "${CMAKE_LIBRARY_TARGET_LIST};${name}" CACHE STRING "list of lib targets" FORCE)
    _add_library(${name} ${ARGN})
+   get_target_property(targetfile ${name} LOCATION)
+   STRING(REGEX REPLACE "liblib" "lib" targetvar "${targetfile}")
+   SET(CMAKE_LIBRARY_TARGET_FILE_LIST "${CMAKE_LIBRARY_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of lib target files" FORCE)
 endfunction(add_library)
 
 function(add_executable name)
    SET(CMAKE_EXEC_TARGET_LIST "${CMAKE_EXEC_TARGET_LIST};${name}" CACHE STRING "list of exec targets" FORCE)
    _add_executable(${name} ${ARGN})
+   get_target_property(targetfile ${name} LOCATION)
+   SET(CMAKE_EXEC_TARGET_FILE_LIST "${CMAKE_EXEC_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of exec target files" FORCE)
 endfunction(add_executable)
 
 
@@ -1352,12 +1357,58 @@ FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
   endif(externaltarget)
 ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
+
 if(BRLCAD_BUILD_LOCAL_TCL)
   ADD_DEPENDENCIES(tk tcl)
   ADD_DEPENDENCIES(bu ${TCL_DEP} ${TK_DEP})
   ADD_DEPENDENCIES(sysv ${TCL_DEP} ${TK_DEP})
   ADD_DEPENDENCIES(librt ${TCL_DEP} ${TK_DEP})
 endif(BRLCAD_BUILD_LOCAL_TCL)
+
+
+
+
+# Set up the noprod rule.  Currently this is an "all or nothing"
+# command that will clear ALL products for lib or exec targets,
+# not just those in a particular subdirectory.
+STRING(REGEX REPLACE ";" "\\\;" LIBRARY_TARGET_FILES "${CMAKE_LIBRARY_TARGET_FILE_LIST}")
+STRING(REGEX REPLACE ";" "\\\;" EXEC_TARGET_FILES "${CMAKE_EXEC_TARGET_FILE_LIST}")
+SET(noprod_file "
+SET(CMAKE_LIBRARY_TARGET_FILE_LIST \"${LIBRARY_TARGET_FILES}\")
+FOREACH(file \${CMAKE_LIBRARY_TARGET_FILE_LIST})
+  IF(EXISTS \${file})
+    MESSAGE(\"removing \${file}\\n\")
+    EXEC_PROGRAM(
+      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
+      OUTPUT_VARIABLE rm_out
+      RETURN_VALUE rm_retval
+      )
+    IF(NOT \"\${rm_retval}\" STREQUAL 0)
+      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
+    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
+  ENDIF(EXISTS \${file})
+ENDFOREACH(file \${CMAKE_LIBRARY_TARGET_FILE_LIST})
+
+SET(CMAKE_EXEC_TARGET_FILE_LIST \"${EXEC_TARGET_FILES}\")
+FOREACH(file \${CMAKE_EXEC_TARGET_FILE_LIST})
+  IF(EXISTS \${file})
+    MESSAGE(\"removing \${file}\\n\")
+    EXEC_PROGRAM(
+      ${CMAKE_COMMAND} ARGS \"-E remove \${file}\"
+      OUTPUT_VARIABLE rm_out
+      RETURN_VALUE rm_retval
+      )
+    IF(NOT \"\${rm_retval}\" STREQUAL 0)
+      MESSAGE(FATAL_ERROR \"Problem when removing \${file}\")
+    ENDIF(NOT \"\${rm_retval}\" STREQUAL 0)
+  ENDIF(EXISTS \${file})
+ENDFOREACH(file \${CMAKE_EXEC_TARGET_FILE_LIST})
+")
+FILE(WRITE ${CMAKE_BINARY_DIR}/cmake_noprod.cmake ${noprod_file})
+ADD_CUSTOM_TARGET(noprod
+  "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_noprod.cmake")
+
+
 
 # Generate the include/conf files
 
