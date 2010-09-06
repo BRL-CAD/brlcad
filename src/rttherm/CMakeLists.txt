@@ -18,8 +18,10 @@ ENDIF(BRLCAD-ENABLE_X11)
 add_executable(rttherm spectrum.c viewtherm.c)
 TARGET_LINK_LIBRARIES(rttherm librttherm optical fb multispectral ged)
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
+INSTALL(PROGRAMS ${BRLCAD_BINARY_DIR}/bin/rttherm DESTINATION
+  ${BRLCAD_INSTALL_BIN_DIR})
 
-BRLCAD_ADDEXEC(ssamp_bw ssamp-bw.c "optical")
+BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c "optical")
 
 set(rttherm_MANS
   rttherm.1

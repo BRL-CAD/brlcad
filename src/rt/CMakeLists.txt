@@ -137,7 +137,8 @@ add_definitions(
     -DBRLCADBUILD=1
 )
 
-BRLCAD_ADDEXEC(rtexample "${rtexample_SRCS}" "fb librt optical")
+add_executable(rtexample "${rtexample_SRCS}")
+target_link_libraries(rtexample fb librt optical)
 
 BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt optical")
 
