@@ -44,3 +44,5 @@ add_definitions(
 add_library(bn ${LIBBN_SOURCES})
 target_link_libraries(bn bu)
 INSTALL(TARGETS bn LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+
+install(FILES libplot3.3 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man3)

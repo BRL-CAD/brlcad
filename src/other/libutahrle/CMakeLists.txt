@@ -66,7 +66,6 @@ SET(LIBUTAHRLE_MAN3
 	libutahrle.3 
 	make_square.3 
 	rgb_to_bw.3 
-	rle.5 
 	rle_addhist.3 
 	rle_cp.3 
 	rle_debug.3 
@@ -98,8 +97,12 @@ SET(LIBUTAHRLE_MAN3
 	rle_skiprow.3 
 	scanargs.3
 )
+IF(NOT MAN_DIR)
+  SET(MAN_DIR "share/man")
+ENDIF(NOT MAN_DIR)
 
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-    install(FILES ${LIBUTAHRLE_MAN3} DESTINATION share/man/man3)
+    install(FILES ${LIBUTAHRLE_MAN3} DESTINATION ${MAN_DIR}/man3)
+    install(FILES rle.5 DESTINATION ${MAN_DIR}/man5)
 endif()
 

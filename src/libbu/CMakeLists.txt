@@ -96,3 +96,10 @@ set(HTESTER_SOURCES
 
 add_executable(htester ${HTESTER_SOURCES})
 target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${BRLCAD_PNG_LIB_NAME} ${TCL_LIBRARY} bu)
+
+set(bu_MAN3
+  htond.3
+  libbu.3
+  redblack.3
+)
+install(FILES ${bu_MAN3} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man3)
