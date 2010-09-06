@@ -48,7 +48,7 @@ LIB_INSTALL_DIR = $(INSTALL_ROOT)$(exec_prefix)/lib
 BIN_INSTALL_DIR = $(INSTALL_ROOT)$(exec_prefix)/bin
 
 # Top-level directory in which to install manual entries:
-MAN_INSTALL_DIR = $(INSTALL_ROOT)$(prefix)/man/mann
+MAN_INSTALL_DIR = @mandir@/mann
 
 # Directory containing Tcl source code (for library used during test):
 TCL_SRC_DIR = @TCL_SRC_DIR@
