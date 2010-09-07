@@ -18,9 +18,7 @@ SET(LIBTIE_PRECISION_SRCS "libtie/tie.c;libtie/tie_kdtree.c")
 add_library(tie0 ${LIBTIE_PRECISION_SRCS})
 target_link_libraries(tie0 bu)
 SET_TARGET_PROPERTIES(tie0 PROPERTIES COMPILE_DEFINITIONS "TIE_PRECISION=0")
-add_library(tie ${LIBTIE_PRECISION_SRCS})
-target_link_libraries(tie tie0 bu)
-INSTALL(TARGETS tie DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(tie "${LIBTIE_PRECISION_SRCS}" "tie0 bu")
 SET_TARGET_PROPERTIES(tie PROPERTIES COMPILE_DEFINITIONS "TIE_PRECISION=1")
 
 SET(LIBRENDER_SRCS
@@ -51,9 +49,7 @@ SET(LIBRENDER_SRCS
   librender/texture_perlin.c 
   librender/texture_stack.c
 )
-add_library(render ${LIBRENDER_SRCS})
-target_link_libraries(render tie gcv) 
-INSTALL(TARGETS render DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(render "${LIBRENDER_SRCS}" "tie gcv")
 
 SET(ADRT_MASTER_SRCS
   master/compnet.c 
@@ -61,15 +57,10 @@ SET(ADRT_MASTER_SRCS
   master/tienet_master.c 
   master/master.c
 )
-add_executable(adrt_master ${ADRT_MASTER_SRCS})
-target_link_libraries(adrt_master tie bu ${M_LIBRARY} ${ZLIB_LIBRARY}
-  ${CMAKE_THREAD_LIBS_INIT} ${BSD_LIBRARY})
-INSTALL(TARGETS adrt_master RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+BRLCAD_ADDEXEC(adrt_master "${ADRT_MASTER_SRCS}" "tie bu ${M_LIBRARY} ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${BSD_LIBRARY}")
 
 SET(ADRT_SLAVE_SRCS
   slave/slave.c
   slave/tienet_slave.c
 )
-add_executable(adrt_slave ${ADRT_MASTER_SRCS})
-target_link_libraries(adrt_slave tie render ${CMAKE_THREAD_LIBS_INIT})
-INSTALL(TARGETS adrt_slave RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+BRLCAD_ADDEXEC(adrt_slave "${ADRT_MASTER_SRCS}" "tie render ${CMAKE_THREAD_LIBS_INIT}")

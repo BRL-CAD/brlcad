@@ -40,9 +40,8 @@ SET(LIBFFT_SRCS
   ditsplit.c
   ${FFT_GEN_SRCS}
 )
-add_library(fft ${LIBFFT_SRCS})
-target_link_libraries(fft)
-INSTALL(TARGETS fft DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+
+BRLCAD_ADDLIB(fft "${LIBFFT_SRCS}" "NONE")
 SET_TARGET_PROPERTIES(fft PROPERTIES LINKER_LANGUAGE C)
 
 add_executable(fftest fftest.c)

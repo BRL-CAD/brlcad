@@ -14,6 +14,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(gcv ${LIBGCV_SOURCES})
-target_link_libraries(gcv bu librt)
-INSTALL(TARGETS gcv DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(gcv "${LIBGCV_SOURCES}" "bu librt")

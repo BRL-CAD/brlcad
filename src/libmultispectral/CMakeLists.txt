@@ -9,6 +9,4 @@ add_definitions(
     -DRT_MULTISPECTRAL
 )
 
-add_library(multispectral init.c sh_temp.c)
-target_link_libraries(multispectral optical librt)
-INSTALL(TARGETS multispectral DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(multispectral "init.c sh_temp.c" "optical librt")

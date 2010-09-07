@@ -41,8 +41,6 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(bn ${LIBBN_SOURCES})
-target_link_libraries(bn bu)
-INSTALL(TARGETS bn DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(bn "${LIBBN_SOURCES}" bu)
 
 install(FILES libplot3.3 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man3)

@@ -14,6 +14,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(analyze ${LIBANALYZE_SOURCES})
-target_link_libraries(analyze bu)
-INSTALL(TARGETS analyze DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(analyze "${LIBANALYZE_SOURCES}" bu)

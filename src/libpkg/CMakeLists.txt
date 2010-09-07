@@ -15,6 +15,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(pkg ${LIBPKG_SOURCES})
-target_link_libraries(pkg bu)
-INSTALL(TARGETS pkg DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(pkg "${LIBPKG_SOURCES}" bu)

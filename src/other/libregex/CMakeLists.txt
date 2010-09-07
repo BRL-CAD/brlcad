@@ -10,7 +10,8 @@ set(LIBREGEX_SOURCES
 )
 
 include_directories(
-    ../../../include
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
 )
 
 add_library(regex ${LIBREGEX_SOURCES})

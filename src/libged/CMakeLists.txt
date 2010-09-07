@@ -270,6 +270,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-add_library(ged ${LIBGED_SOURCES})
-target_link_libraries(ged bu librt wdb analyze)
-INSTALL(TARGETS ged DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(ged "${LIBGED_SOURCES}" "bu librt wdb analyze")

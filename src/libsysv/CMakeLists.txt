@@ -22,6 +22,4 @@ add_definitions(
     -DHAVE_STRTOK
 )
 
-add_library(sysv ${LIBSYSV_SOURCES})
-target_link_libraries(sysv ${TCL_LIBRARY})
-INSTALL(TARGETS sysv DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+BRLCAD_ADDLIB(sysv "${LIBSYSV_SOURCES}" "${TCL_LIBRARY}")
