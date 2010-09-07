@@ -28,6 +28,6 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
 		  # http://www.cmake.org/Wiki/CMake_FAQ#How_do_I_make_my_shared_and_static_libraries_have_the_same_root_name.2C_but_different_suffixes.3F
 		  SET_TARGET_PROPERTIES(${libname}-static PROPERTIES PREFIX "lib")
 	  ENDIF(WIN32)
-	  INSTALL(TARGETS ${libname} DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+	  INSTALL(TARGETS ${libname}-static DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
   ENDIF(BUILD_STATIC_LIBS)
 ENDMACRO(BRLCAD_ADDLIB libname srcs libs)
