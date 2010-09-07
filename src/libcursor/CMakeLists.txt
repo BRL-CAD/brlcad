@@ -12,6 +12,6 @@ add_definitions(
 
 add_library(cursor cursor.c)
 target_link_libraries(cursor ${BRLCAD_TERMLIB_LIBRARY})
-INSTALL(TARGETS cursor LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+INSTALL(TARGETS cursor DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
 
 install(FILES libcursor.3 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man3)

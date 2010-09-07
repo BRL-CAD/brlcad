@@ -11,4 +11,4 @@ add_definitions(
 
 add_library(termio termio.c)
 target_link_libraries(termio ${BRLCAD_TERMLIB_LIBRARY})
-INSTALL(TARGETS termio LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+INSTALL(TARGETS termio DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

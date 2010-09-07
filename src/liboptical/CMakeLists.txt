@@ -53,4 +53,4 @@ add_definitions(
 
 add_library(optical ${LIBOPTICAL_SOURCES})
 target_link_libraries(optical bu bn librt)
-INSTALL(TARGETS optical LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+INSTALL(TARGETS optical DESTINATION ${BRLCAD_INSTALL_LIB_DIR})

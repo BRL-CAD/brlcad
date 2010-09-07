@@ -31,4 +31,4 @@ add_definitions(
 
 add_library(tclcad tclcad.c tclcadAutoPath.c tkImgFmtPIX.c ged_obj.c)
 target_link_libraries(tclcad dm ged ${X11_LIBRARIES} ${X11_Xi_LIB})
-INSTALL(TARGETS tclcad LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+INSTALL(TARGETS tclcad DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
