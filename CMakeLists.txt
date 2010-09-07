@@ -744,7 +744,7 @@ ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 # URTToolkit
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
-
+ADD_SUBDIRECTORY(src/other/URToolkit)
 
 
 
