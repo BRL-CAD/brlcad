@@ -168,15 +168,9 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	OUTPUT_VARIABLE COMPILEMESSAGES)
 
 # Unfortunately, CMake doesn't give you variables with current day, month,
-# etc.  There are several approaches to this - the most theoretically robust,
-# and the first one tried, builds a small C file which writes out the needed
-# values to files in the build directory, which are then read and stripped by
-# CMake - essentially the same approach as the version numbers except with the
-# C file generating the files.  If that fails, fall back on command line scripts
-# and output capture - this will work well on systems with the date command but
-# Windows does not provide region-independent ordering for day/month in its
-# command line tool outputs.  It is vastly preferable to have the C based
-# solution succeed. 
+# etc.  There are several possible approaches to this, but most (e.g. the date command)
+# are not cross platform. We build a small C file which writes out the needed values
+# to files in the build directory. Those files are then read and stripped by CMake.
 SET(CONFIG_TIME_DAY_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_DAY")
 SET(CONFIG_TIME_MONTH_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_MONTH")
 SET(CONFIG_TIME_YEAR_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_YEAR")
