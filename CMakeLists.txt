@@ -1116,6 +1116,10 @@ ELSE(BRLCAD_BUILD_LOCAL_SCL)
 	SET(BRLCAD_SCL_EDITOR_LIB "${SCL_EDITOR_LIB}" CACHE STRING "SCL editor library" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_SCL)
 
+# The jama/tnt headers are installed by default - BRL-CAD requires the altered headers
+# to build (I think?)
+ADD_SUBDIRECTORY(src/other/tnt)
+
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)

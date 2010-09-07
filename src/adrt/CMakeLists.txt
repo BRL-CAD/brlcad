@@ -13,7 +13,6 @@ add_definitions(
   -DBRLCADBUILD
 )
 
-
 SET(LIBTIE_PRECISION_SRCS "libtie/tie.c;libtie/tie_kdtree.c")
 add_library(tie0 ${LIBTIE_PRECISION_SRCS})
 target_link_libraries(tie0 bu)
@@ -64,3 +63,16 @@ SET(ADRT_SLAVE_SRCS
   slave/tienet_slave.c
 )
 BRLCAD_ADDEXEC(adrt_slave "${ADRT_MASTER_SRCS}" "tie render ${CMAKE_THREAD_LIBS_INIT}")
+
+SET(tie_HDRS
+	adrt.h  
+	adrt_struct.h 
+	librender/camera.h 
+	librender/render.h 
+	librender/render_internal.h 
+	librender/render_util.h 
+	librender/texture.h 
+	librender/texture_internal.h 
+	libtie/tie.h
+)
+INSTALL(FILES ${tie_HDRS} DESTINATION include/tie)
