@@ -99,6 +99,9 @@ PROJECT(BRLCAD)
 # build shared libs by default
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
+# build static libs by default
+OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+
 # Will need our own add_executable and add_library
 # versions in order to keep track of targets and
 # define rules for all products.
