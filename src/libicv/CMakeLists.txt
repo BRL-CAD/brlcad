@@ -13,4 +13,4 @@ add_definitions(
     -DBRLCADBUILD
 )
 
-BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" bu)
+BRLCAD_ADDLIB(icv "${LIBICV_SOURCES}" bu)

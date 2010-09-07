@@ -103,8 +103,11 @@ OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 # versions in order to keep track of targets and
 # define rules for all products.
 function(add_library name)
-   SET(CMAKE_LIBRARY_TARGET_LIST "${CMAKE_LIBRARY_TARGET_LIST};${name}" CACHE STRING "list of lib targets" FORCE)
    _add_library(${name} ${ARGN})
+	IF(${name} MATCHES "^lib*")
+		set_target_properties(${name} PROPERTIES PREFIX "")
+	ENDIF(${name} MATCHES "^lib*")
+   SET(CMAKE_LIBRARY_TARGET_LIST "${CMAKE_LIBRARY_TARGET_LIST};${name}" CACHE STRING "list of lib targets" FORCE)
    get_target_property(targetfile ${name} LOCATION)
    STRING(REGEX REPLACE "liblib" "lib" targetvar "${targetfile}")
    SET(CMAKE_LIBRARY_TARGET_FILE_LIST "${CMAKE_LIBRARY_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of lib target files" FORCE)
