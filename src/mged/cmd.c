@@ -46,8 +46,6 @@
 #  include "tk.h"
 #endif
 
-#include "itcl.h"
-
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
