@@ -314,13 +314,13 @@ ENDIF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
 # The location in which to install BRL-CAD data files 
 IF(NOT BRLCAD_INSTALL_DATA_DIR)
 	IF (${BRLCAD_PREFIX} MATCHES "^/usr[/]*$")
-		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad)
+		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad/${BRLCAD_VERSION})
 	ENDIF()
 	IF (${BRLCAD_PREFIX} MATCHES "^/usr/local[/]*$")
-		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad)
+		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad/${BRLCAD_VERSION})
 	ENDIF()
 	IF(NOT BRLCAD_INSTALL_DATA_DIR)
-		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share)
+		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/${BRLCAD_VERSION})
 	ENDIF()
 ENDIF(NOT BRLCAD_INSTALL_DATA_DIR)
 
@@ -1181,6 +1181,7 @@ ADD_SUBDIRECTORY(src/util)
 ADD_SUBDIRECTORY(src/vdeck)
 ADD_SUBDIRECTORY(db)
 ADD_SUBDIRECTORY(include)
+ADD_SUBDIRECTORY(doc)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
