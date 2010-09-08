@@ -1,7 +1,7 @@
 SET(swidgets_scripts_TCLSCRIPTS
 	selectlists.itk
 	tkgetdir.itk
-	togglearrow.itki
+	togglearrow.itk
 	tooltip.itk
 	tree.itk
 	)

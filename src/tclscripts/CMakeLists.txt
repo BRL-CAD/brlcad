@@ -1,3 +1,5 @@
+# Convenience macros for building pkgIndex.tcl and tclIndex files
+
 MACRO(pkgIndex_BUILD name srcdir targetdir)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${srcdir}/pkgIndex.tcl
@@ -19,19 +21,19 @@ MACRO(tclIndex_BUILD name srcdir targetdir)
 ENDMACRO(tclIndex_BUILD name srcdir targetdir)
 
 
-
+# Now that the macros are defined, we can add tclscript subdirs
 ADD_SUBDIRECTORY(archer)
 ADD_SUBDIRECTORY(boteditor)
 ADD_SUBDIRECTORY(geometree)
 ADD_SUBDIRECTORY(hv3)
-#ADD_SUBDIRECTORY(lib)
-#ADD_SUBDIRECTORY(mged)
-#ADD_SUBDIRECTORY(nirt)
-#ADD_SUBDIRECTORY(pl-dm)
-#ADD_SUBDIRECTORY(rtwizard)
-#ADD_SUBDIRECTORY(sdialogs)
-#ADD_SUBDIRECTORY(swidgets)
-#ADD_SUBDIRECTORY(util)
+ADD_SUBDIRECTORY(lib)
+ADD_SUBDIRECTORY(mged)
+ADD_SUBDIRECTORY(nirt)
+ADD_SUBDIRECTORY(pl-dm)
+ADD_SUBDIRECTORY(rtwizard)
+ADD_SUBDIRECTORY(sdialogs)
+ADD_SUBDIRECTORY(swidgets)
+ADD_SUBDIRECTORY(util)
 
 SET(toplevel_TCLSCRIPTS
 	ami.tcl 

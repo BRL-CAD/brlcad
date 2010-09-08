@@ -1,7 +1,3 @@
-
-this_dir = tclscripts/mged
-tcldir = $(BRLCAD_DATA)/$(this_dir)
-
 IF(BRLCAD-ENABLE_BUILD_DOCS)
 	SET(mgedman_TCLSCRIPTS
 		man.tcl
