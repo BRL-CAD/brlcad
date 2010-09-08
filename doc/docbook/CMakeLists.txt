@@ -7,8 +7,6 @@ SET(XSL_MAN_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/m
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/fo/docbook.xsl")
 SET(XML_CATALOG_FILES "${CMAKE_SOURCE_DIR}/doc/docbook/catalog.xml")
 
-SET(XSLTPROC_EXEC "/usr/bin/xsltproc")
-
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 	FOREACH(filename ${${xml_files}})
 		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")

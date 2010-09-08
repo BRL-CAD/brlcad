@@ -1120,6 +1120,15 @@ ENDIF(BRLCAD_BUILD_LOCAL_SCL)
 # to build (I think?)
 ADD_SUBDIRECTORY(src/other/tnt)
 
+# If building extra docs, need to look for XSLTPROC
+if (BRLCAD-BUILD_EXTRADOCS)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindXSLT.cmake)
+	IF(NOT XSLTPROC_EXEC)
+		MESSAGE("Extra doc build requested, but xsltproc not found - disabling.")
+		SET(BRLCAD-BUILD_EXTRADOCS OFF)
+	ENDIF(NOT XSLTPROC_EXEC)
+endif (BRLCAD-BUILD_EXTRADOCS)
+
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
