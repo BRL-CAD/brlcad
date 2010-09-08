@@ -1,0 +1,17 @@
+SET(pl-dm_TCLSCRIPTS
+	bindings.tcl
+	help.tcl
+	menu.tcl
+	)
+
+INSTALL(FILES ${pl-dm_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/pl-dm)
+
+pkgIndex_BUILD(pl-dm ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/pl-dm)
+tclIndex_BUILD(pl-dm ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/pl-dm)
+
+SET(pl-dm_TCLSCRIPT_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/pkgIndex.tcl
+	${CMAKE_CURRENT_SOURCE_DIR}/tclIndex
+	)
+SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${pl-dm_TCLSCRIPT_FILES}")
+

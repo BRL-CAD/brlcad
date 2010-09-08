@@ -1,0 +1,18 @@
+ADD_SUBDIRECTORY(images)
+ADD_SUBDIRECTORY(scripts)
+
+SET(swidgets_TCLSCRIPTS
+	swidgets.tcl
+)
+
+INSTALL(FILES ${swidgets_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/swidgets)
+
+pkgIndex_BUILD(swidgets ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/swidgets)
+tclIndex_BUILD(swidgets ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/swidgets)
+
+SET(swidgets_TCLSCRIPT_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/pkgIndex.tcl
+	${CMAKE_CURRENT_SOURCE_DIR}/tclIndex
+	)
+SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${swidgets_TCLSCRIPT_FILES}")
+

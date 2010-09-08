@@ -1,0 +1,149 @@
+
+this_dir = tclscripts/mged
+tcldir = $(BRLCAD_DATA)/$(this_dir)
+
+IF(BRLCAD-ENABLE_BUILD_DOCS)
+	SET(mgedman_TCLSCRIPTS
+		man.tcl
+	)
+ENDIF(BRLCAD-ENABLE_BUILD_DOCS)
+
+SET(mged_TCLSCRIPTS
+	${mgedman_TCLSCRIPTS} 
+	accel.tcl 
+	adc.tcl 
+	anim.tcl 
+	apply.tcl 
+	apply_mat.tcl 
+	asc2g.tcl 
+	attr_edit.tcl 
+	bindings.tcl 
+	bot_face_select.tcl 
+	bots.tcl 
+	build_region.tcl 
+	calipers.tcl 
+	callbacks.tcl 
+	clear.tcl 
+	collaborate.tcl 
+	color.tcl 
+	color_scheme.tcl 
+	comb.tcl 
+	combmenu.tcl 
+	cycle.tcl 
+	dbfindtree.tcl 
+	dbupgrade.tcl 
+        dmtype.tcl 
+	e_id.tcl 
+	edit_menu.tcl 
+	edit_solid.tcl 
+	edit_solid_int.tcl 
+	editmenu.tcl 
+	editobj.tcl 
+	eobjmenu.tcl 
+	expand_comb.tcl 
+	extract.tcl 
+	facetize_all_regions.tcl 
+	font.tcl 
+	g2asc.tcl 
+	garbage_collect.tcl 
+	get_regions.tcl 
+	grid.tcl 
+	help.tcl 
+	helpdevel.tcl 
+	icreate.tcl 
+	illum.tcl 
+	lgt_mat.tcl 
+	list.tcl 
+	make_solid.tcl 
+	menu.tcl 
+	mged.tcl 
+	mgedrc.tcl 
+	mike.tcl 
+	mouse.tcl 
+	muves.tcl 
+	mview.tcl 
+	openw.tcl 
+	overlap.tcl 
+	pattern.tcl 
+	pattern_gui.tcl 
+	plot.tcl 
+	points.tcl 
+	prj_add.tcl 
+	ps.tcl 
+	qray.tcl 
+	ray.tcl 
+	raypick.tcl 
+	reid.tcl 
+	remap_mater.tcl 
+	remat.tcl 
+	rt.tcl 
+	rt_script.tcl 
+	sample.tcl 
+	shaders.tcl 
+	skt_ed.tcl 
+	solclick.tcl 
+	solcreate.tcl 
+	solid.tcl 
+	text.tcl 
+	titles.tcl 
+	tree.tcl 
+	xclone.tcl
+)
+
+INSTALL(FILES ${mged_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/mged)
+
+pkgIndex_BUILD(mged ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/mged)
+tclIndex_BUILD(mged ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/mged)
+
+SET(mged_TCLSCRIPT_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/pkgIndex.tcl
+	${CMAKE_CURRENT_SOURCE_DIR}/tclIndex
+	)
+SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${mged_TCLSCRIPT_FILES}")
+
+SET(mged_tcl_DATA
+	l_i0_v0_s0.gif 
+	l_i0_v0_s1.gif 
+	l_i0_v0_s2.gif 
+	l_i0_v0_s3.gif 
+	l_i0_v0_s4.gif 
+	l_i0_v0_s5.gif 
+	l_i0_v0_s6.gif 
+	l_i0_v0_s7.gif 
+	l_i0_v0_s8.gif 
+	l_i0_v0_s9.gif 
+	l_i0_v1_s0.gif 
+	l_i0_v1_s1.gif 
+	l_i0_v1_s2.gif 
+	l_i0_v1_s3.gif 
+	l_i0_v1_s4.gif 
+	l_i0_v1_s5.gif 
+	l_i0_v1_s6.gif 
+	l_i0_v1_s7.gif 
+	l_i0_v1_s8.gif 
+	l_i0_v1_s9.gif 
+	l_i1_v0_s0.gif 
+	l_i1_v0_s1.gif 
+	l_i1_v0_s2.gif 
+	l_i1_v0_s3.gif 
+	l_i1_v0_s4.gif 
+	l_i1_v0_s5.gif 
+	l_i1_v0_s6.gif 
+	l_i1_v0_s7.gif 
+	l_i1_v0_s8.gif 
+	l_i1_v0_s9.gif 
+	l_i1_v1_s0.gif 
+	l_i1_v1_s1.gif 
+	l_i1_v1_s2.gif 
+	l_i1_v1_s3.gif 
+	l_i1_v1_s4.gif 
+	l_i1_v1_s5.gif 
+	l_i1_v1_s6.gif 
+	l_i1_v1_s7.gif 
+	l_i1_v1_s8.gif 
+	l_i1_v1_s9.gif 
+	mike-dedication.txt 
+	mike-tux.ppm 
+	mike-tux.png
+)
+INSTALL(FILES ${mged_tcl_DATA} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/mged)

@@ -1,0 +1,17 @@
+ADD_SUBDIRECTORY(scripts)
+
+SET(sdialogs_TCLSCRIPTS
+	sdialogs.tcl
+)
+
+INSTALL(FILES ${sdialogs_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/sdialogs)
+
+pkgIndex_BUILD(sdialogs ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/sdialogs)
+tclIndex_BUILD(sdialogs ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/sdialogs)
+
+SET(sdialogs_TCLSCRIPT_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/pkgIndex.tcl
+	${CMAKE_CURRENT_SOURCE_DIR}/tclIndex
+	)
+SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${sdialogs_TCLSCRIPT_FILES}")
+
