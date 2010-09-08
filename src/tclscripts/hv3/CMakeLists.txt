@@ -1,0 +1,23 @@
+SET(hv3_TCLSCRIPTS
+	combobox.tcl 
+	hv3.tcl 
+	hv3_encodings.tcl 
+	hv3_form.tcl 
+	hv3_request.tcl 
+	hv3_util.tcl 
+	snit.tcl
+)
+INSTALL(FILES ${hv3_TCLSCRIPTS} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/tclscripts/hv3)
+
+install(FILES hv3.man DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/doc)
+install(FILES tkhtml.n DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/mann)
+
+pkgIndex_BUILD(hv3 ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/hv3)
+tclIndex_BUILD(hv3 ${CMAKE_CURRENT_SOURCE_DIR} tclscripts/hv3)
+
+SET(hv3_TCLSCRIPT_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/pkgIndex.tcl
+	${CMAKE_CURRENT_SOURCE_DIR}/tclIndex
+	)
+SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${hv3_TCLSCRIPT_FILES}")
+
