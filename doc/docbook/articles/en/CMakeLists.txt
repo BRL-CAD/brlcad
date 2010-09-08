@@ -103,6 +103,6 @@ SET(docbook_articles_EN_IMAGES
 
 FOREACH(article ${docbook_articles_EN})
 	STRING(REGEX REPLACE "([0-9a-z_]*).xml" "\\1" article_root "${article}")
-	DOCBOOK_TO_HTML(${article_root}_article ${CMAKE_CURRENT_SOURCE_DIR}/${article} ${CMAKE_CURRENT_BINARY_DIR}/${article_root}.html ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en)
+	DOCBOOK_TO_HTML(${article_root}_article ${article} ${article_root}.html ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en)
 ENDFOREACH(article ${docbook_articles_EN})
 INSTALL(FILES ${docbook_articles_EN_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en/images)
