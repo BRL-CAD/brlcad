@@ -101,8 +101,5 @@ SET(docbook_articles_EN_IMAGES
 	images/tire_fig14.png
 )
 
-FOREACH(article ${docbook_articles_EN})
-	STRING(REGEX REPLACE "([0-9a-z_]*).xml" "\\1" article_root "${article}")
-	DOCBOOK_TO_HTML(${article_root}_article ${article} ${article_root}.html ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en)
-ENDFOREACH(article ${docbook_articles_EN})
+DOCBOOK_TO_HTML(article docbook_articles_EN ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en)
 INSTALL(FILES ${docbook_articles_EN_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en/images)

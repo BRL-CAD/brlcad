@@ -13,8 +13,6 @@ SET(docbook_man1_EN
 	tire.xml 
 )
 
-FOREACH(man1 ${docbook_man1_EN})
-	STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" man1_root "${man1}")
-	DOCBOOK_TO_MAN(${man1_root}_man1 ${man1} ${man1_root}.1 ${BRLCAD_INSTALL_MAN_DIR}/man1)
-ENDFOREACH(man1 ${docbook_man1_EN})
+DOCBOOK_TO_HTML(man1 docbook_man1_EN ${BRLCAD_INSTALL_DATA_DIR}/html/man1/en)
+DOCBOOK_TO_MAN(man1 docbook_man1_EN 1 1)
 
