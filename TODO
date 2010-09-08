@@ -42,6 +42,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Cache objects.  These are proper non-geometric geometry database
+  objects intended to store binary results that have a dependency on
+  other object(s).  A named hash (e.g. md5) is recorded for each
+  dependent object along with the computed results.
+
+  Three potential candidates for leveraging cache objects are 1) prep
+  objects containing the final prepped state of a given object
+  hierarchy (particularly useful for BoT and BREP geometry), 2)
+  raytrace objects containing the intersection results for a given
+  view (i.e., a grid of primary rays), and 3) rtgl point samples
+  (which is a variant of 2 but potentially view independent).
+
 * investigate OpenEXR (BSD licensed HDE image format)
 
 * the 'cp' command no longer draws the object that was copied --
