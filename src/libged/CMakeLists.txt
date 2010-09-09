@@ -271,3 +271,4 @@ add_definitions(
 )
 
 BRLCAD_ADDLIB(ged "${LIBGED_SOURCES}" "bu librt wdb analyze")
+SET_TARGET_PROPERTIES(ged PROPERTIES VERSION 19.0.1 SOVERSION 19)

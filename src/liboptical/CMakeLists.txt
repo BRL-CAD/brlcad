@@ -52,3 +52,4 @@ add_definitions(
 )
 
 BRLCAD_ADDLIB(optical "${LIBOPTICAL_SOURCES}" "bu bn librt")
+SET_TARGET_PROPERTIES(optical PROPERTIES VERSION 19.0.1 SOVERSION 19)

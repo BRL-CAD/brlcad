@@ -11,6 +11,7 @@ LEX_TARGET(SS_Scanner script.l
     ${CMAKE_CURRENT_BINARY_DIR}/script.c COMPILE_FLAGS "-l")
 
 BRLCAD_ADDEXEC(scriptsort "scriptsort.c ${LEX_SS_Scanner_OUTPUTS}" librt)
+BRLCAD_ADDEXEC(script-tab script-tab.c "bu bn librt")
 BRLCAD_ADDEXEC(tabinterp tabinterp.c "bu librt")
 BRLCAD_ADDEXEC(tabsub tabsub.c "bu bn")
 BRLCAD_ADDEXEC(txyz-pl txyz-pl.c "bu bn") 

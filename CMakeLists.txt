@@ -1193,6 +1193,7 @@ ADD_SUBDIRECTORY(db)
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(doc)
 ADD_SUBDIRECTORY(sh)
+ADD_SUBDIRECTORY(misc/pkgconfig)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the

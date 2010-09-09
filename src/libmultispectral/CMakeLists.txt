@@ -10,3 +10,4 @@ add_definitions(
 )
 
 BRLCAD_ADDLIB(multispectral "init.c sh_temp.c" "optical librt")
+SET_TARGET_PROPERTIES(multispectral PROPERTIES VERSION 19.0.1 SOVERSION 19)

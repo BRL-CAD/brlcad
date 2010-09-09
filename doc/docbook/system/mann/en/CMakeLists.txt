@@ -232,5 +232,10 @@ SET(docbook_mann_EN
 	zoom.xml
 )
 
+SET(docbook_mann_INTRO
+  Introduction.xml
+)
+
 DOCBOOK_TO_HTML(mann docbook_mann_EN ${BRLCAD_INSTALL_DATA_DIR}/html/mann/en)
+DOCBOOK_TO_HTML(mann docbook_mann_INTRO ${BRLCAD_INSTALL_DATA_DIR}/html/mann/en)
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged)
