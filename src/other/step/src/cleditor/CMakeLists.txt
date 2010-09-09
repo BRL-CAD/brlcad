@@ -40,5 +40,4 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-add_library(stepeditor ${LIBSTEPEDITOR_SRCS})
-target_link_libraries(stepeditor stepcore)
+SCL_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" stepcore)

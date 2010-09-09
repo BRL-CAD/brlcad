@@ -35,4 +35,4 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-add_library(steputils ${LIBSTEPUTILS_SRCS})
+SCL_ADDLIB(steputils "${LIBSTEPUTILS_SRCS}" "")

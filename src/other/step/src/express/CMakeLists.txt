@@ -52,10 +52,8 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-add_library(express ${EXPRESS_SOURCES})
+SCL_ADDLIB(express "${EXPRESS_SOURCES}" "")
 
-add_executable(fedex ${FEDEX_SOURCES})
-target_link_libraries(fedex express)
+SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)
 
-add_executable(symlink ${SYMLINK_SOURCES})
-target_link_libraries(symlink express)
+SCL_ADDEXEC(symlink "${SYMLINK_SOURCES}" express)

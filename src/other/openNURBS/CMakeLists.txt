@@ -1,3 +1,9 @@
+# build shared libs by default
+OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+
+# build static libs by default
+OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+
 set(OPENNURBS_SOURCES
     opennurbs_3dm_attributes.cpp
     opennurbs_3dm_properties.cpp
@@ -140,15 +146,18 @@ if(MSVC)
     )
 endif(MSVC)
 
-add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
+IF(BUILD_SHARED_LIBS)
+  add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
+  target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
+  set_property(TARGET openNURBS PROPERTY LINK_INTERFACE_LIBRARIES "")
+  install(TARGETS openNURBS LIBRARY DESTINATION lib)
+ENDIF(BUILD_SHARED_LIBS)
 
-target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
+IF(BUILD_STATIC_LIBS)
+  add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
+  target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
+  install(TARGETS openNURBS-static ARCHIVE DESTINATION lib)
+ENDIF(BUILD_STATIC_LIBS)
 
-set_property(TARGET openNURBS PROPERTY LINK_INTERFACE_LIBRARIES "")
-
-install(TARGETS openNURBS
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-)
 
 install(FILES ${OPENNURBS_HEADERS} DESTINATION include/openNURBS)

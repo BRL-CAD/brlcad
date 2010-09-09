@@ -64,8 +64,7 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-add_library(stepcore ${LIBSTEPCORE_SRCS})
+SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express steputils")
 if(APPLE)
    set_target_properties(stepcore PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
 endif(APPLE)
-target_link_libraries(stepcore express steputils)

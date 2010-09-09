@@ -36,5 +36,4 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-add_library(stepdai ${LIBSTEPDAI_SRCS})
-target_link_libraries(stepdai steputils stepcore)
+SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils stepcore")

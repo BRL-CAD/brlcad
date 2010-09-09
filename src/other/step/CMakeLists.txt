@@ -48,6 +48,13 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(SCL)
 
+# build shared libs by default
+OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+
+# build static libs by default
+OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+
+
 # See HACKING for details on how to properly update the version
 FILE(READ ${SCL_SOURCE_DIR}/include/conf/MAJOR MAJOR_VERSION)
 STRING(STRIP ${MAJOR_VERSION} MAJOR_VERSION)
@@ -61,7 +68,9 @@ SET(SCL_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
 SET(SCL_CMAKE_DIR "${SCL_SOURCE_DIR}/misc/CMake")
-SET(CMAKE_MODULE_PATH "${SCL_CMAKE_DIR}" ${CMAKE_MODULE_PATH})
+SET(CMAKE_MODULE_PATH "${SCL_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+
+INCLUDE(${SCL_CMAKE_DIR}/SCL_Utils.cmake)
 
 # Save the current LC_ALL, LC_MESSAGES, and LANG environment variables and set them
 # to "C" so things like date output are as expected
@@ -77,48 +86,6 @@ ENDIF(_orig_lc_messages)
 IF(_orig_lang)
   SET(ENV{LANG}        C)
 ENDIF(_orig_lang)
-
-
-# Unfortunately, CMake doesn't give you variables with current day, month,
-# etc.  For Windows use d_rossberg's execute_process approach and some
-# regular expressions (the resulting timestamp is not identical in format to
-# that given by the Unix date command but is close) and for all other systems
-# use the date command.
-IF(WIN32)
-   execute_process(COMMAND cmd /c date /t OUTPUT_VARIABLE CONFIG_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
-   execute_process(COMMAND cmd /c time /t OUTPUT_VARIABLE CONFIG_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
-   SET(CONFIG_TS "${CONFIG_DATE} ${CONFIG_TIME}")
-   STRING(REGEX REPLACE "[^0-9]*([0-9][0-9]).*" "\\1" CONFIG_MONTH "${CONFIG_DATE}" )
-   STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].([0-9][0-9]).*" "\\1" CONFIG_DAY "${CONFIG_DATE}" )
-   STRING(REGEX REPLACE "[^0-9]*[0-9][0-9].[0-9][0-9].([0-9][0-9][0-9][0-9]).*" "\\1" CONFIG_YEAR "${CONFIG_DATE}" )
-ELSE(WIN32)
-   EXEC_PROGRAM(date ARGS +%d OUTPUT_VARIABLE CONFIG_DAY)
-   EXEC_PROGRAM(date ARGS +%m OUTPUT_VARIABLE CONFIG_MONTH)
-   EXEC_PROGRAM(date ARGS +%Y OUTPUT_VARIABLE CONFIG_YEAR)
-   SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
-   # try RFC 2822 for timestamp
-   EXEC_PROGRAM(date ARGS -R 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
-   IF ("${CONFIG_TS}" MATCHES ".*usage.*")
-      EXEC_PROGRAM(date ARGS +'%a, %d %b %Y %H:%M:%S %z' 2>/dev/null OUTPUT_VARIABLE CONFIG_TS)
-   ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
-   IF ("${CONFIG_TS}" MATCHES ".*usage.*")
-      EXEC_PROGRAM(date ARGS OUTPUT_VARIABLE CONFIG_TS)
-   ENDIF ("${CONFIG_TS}" MATCHES ".*usage.*")
-ENDIF(WIN32)
-
-
-# print out the title with a pretty box computed to wrap around
-SET(CONFIG_TITLE "*** Configuring STEP Class Libraries Release ${SCL_VERSION}, Build ${CONFIG_DATE} ***")
-STRING(LENGTH ${CONFIG_TITLE} CONFIG_TITLE_LENGTH)
-SET(SEPARATOR_STRING "*")
-STRING(LENGTH ${SEPARATOR_STRING} SEPARATOR_STRING_LENGTH)
-WHILE(${CONFIG_TITLE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
-   SET(SEPARATOR_STRING "${SEPARATOR_STRING}*")
-   STRING(LENGTH ${SEPARATOR_STRING} SEPARATOR_STRING_LENGTH)
-ENDWHILE(${CONFIG_TITLE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
-MESSAGE(STATUS "${SEPARATOR_STRING}")
-MESSAGE(STATUS "${CONFIG_TITLE}")
-MESSAGE(STATUS "${SEPARATOR_STRING}")
 
 # For NFS volumes, to ensure proper file creation.
 IF(NOT WIN32)
@@ -164,16 +131,11 @@ FILE(WRITE ${CONFIG_H_FILE} "/**** Define statements for CMake ****/\n")
 
 INCLUDE(${SCL_CMAKE_DIR}/SCL_ConfigFile.cmake)
 
-
 OPTION(SCL-BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SCL-BUILD_EXPRESS_ONLY)
 
 INCLUDE (CheckLibraryExists)
 
-# Need to work on this - CMake can detect flex and bison, but apparently not
-# generic lex/yacc - need to update the Wireshark files to be a a graceful
-# fallback to the FLEX/BISON logic, and (perhaps) wrap both in some way to
-# hide any differences from the build code?
 INCLUDE(${SCL_CMAKE_DIR}/FindLEX.cmake)
 INCLUDE(${SCL_CMAKE_DIR}/FindYACC.cmake)
 
@@ -191,11 +153,46 @@ SCL_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
 
 SCL_TYPE_SIZE("ssize_t" SSIZE_T)
 
-FILE(WRITE ${SCL_SOURCE_DIR}/include/conf/COUNT "1")
-FILE(WRITE ${SCL_SOURCE_DIR}/include/conf/DATE "1")
-FILE(WRITE ${SCL_SOURCE_DIR}/include/conf/HOST "1")
-FILE(WRITE ${SCL_SOURCE_DIR}/include/conf/PATH "1")
-FILE(WRITE ${SCL_SOURCE_DIR}/include/conf/USER "1")
+
+# Generate the include/conf files
+
+# HOST 
+configure_file(${SCL_CMAKE_DIR}/test_srcs/report_hostname.c.in
+  ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED 
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
+  OUTPUT_VARIABLE COMPILEMESSAGES)
+
+# USER
+configure_file(${SCL_CMAKE_DIR}/test_srcs/report_username.c.in
+  ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
+TRY_RUN(TIME_RESULT TIME_COMPILED 
+  ${CMAKE_BINARY_DIR}/CMakeTmp
+  ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
+  OUTPUT_VARIABLE
+  COMPILEMESSAGES)
+
+# PATH
+FILE(WRITE ${SCL_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"") 
+
+# COUNT - force CMake to look
+# every time in case of manual
+# removal of COUNT file
+set(countFile "countFile-NOTFOUND" CACHE  STRING "Is there a count file?" FORCE)
+find_file(countFile COUNT PATHS ${SCL_BINARY_DIR}/include/conf)
+if(countFile MATCHES "^countFile-NOTFOUND$")
+  set(buildCounter 0)
+else()
+  file(READ ${countFile} buildCounter)
+  math(EXPR buildCounter "${buildCounter} + 1")
+endif()
+file(WRITE ${SCL_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
+
+# DATE
+file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
+STRING(STRIP ${DATESTAMP} DATESTAMP)
+file(WRITE ${SCL_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
 
 
 # Now that all the tests are done, configure the scl_config.h file:
@@ -212,3 +209,4 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
+ADD_SUBDIRECTORY(include)

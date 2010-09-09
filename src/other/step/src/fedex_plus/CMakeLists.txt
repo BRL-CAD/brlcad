@@ -44,12 +44,9 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-add_executable(fedex_os ${fedex_os_SOURCES})
-target_link_libraries(fedex_os exppplib express)
+SCL_ADDEXEC(fedex_os "${fedex_os_SOURCES}" "exppplib express")
 
-add_executable(fedex_idl ${fedex_idl_SOURCES})
-target_link_libraries(fedex_idl exppplib express)
+SCL_ADDEXEC(fedex_idl "${fedex_idl_SOURCES}" "exppplib express")
 
-add_executable(fedex_plus ${fedex_plus_SOURCES})
-target_link_libraries(fedex_plus exppplib express)
+SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES}" "exppplib express")
 
