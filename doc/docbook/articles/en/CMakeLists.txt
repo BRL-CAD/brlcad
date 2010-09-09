@@ -103,3 +103,7 @@ SET(docbook_articles_EN_IMAGES
 
 DOCBOOK_TO_HTML(article docbook_articles_EN ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en)
 INSTALL(FILES ${docbook_articles_EN_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/articles/en/images)
+
+IF(BRLCAD-BUILD_EXTRADOCS_PDF)
+DOCBOOK_TO_PDF(article docbook_articles_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/articles/en)
+ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
