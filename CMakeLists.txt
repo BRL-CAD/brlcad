@@ -433,10 +433,8 @@ if (BRLCAD-ENABLE_OPENGL)
 endif (BRLCAD-ENABLE_OPENGL)
 
 OPTION(BRLCAD-BUILD_EXTRADOCS "Build Docbook documentation" ON)
-IF(BRLCAD-BUILD_EXTRADOCS)
-  OPTION(BRLCAD-BUILD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" ON)
-  OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ${BRLCAD-BUILD_EXTRADOCS_PDF})
-ENDIF(BRLCAD-BUILD_EXTRADOCS)
+OPTION(BRLCAD-BUILD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF)
+OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ${BRLCAD-BUILD_EXTRADOCS_PDF})
 
 INCLUDE (CheckLibraryExists)
 
