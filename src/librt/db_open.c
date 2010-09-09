@@ -162,6 +162,7 @@ db_open(const char *name, const char *mode)
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
 
+#if !defined(_WIN32) || defined(__CYGWIN__)
     /* If not a full path */
     if (argv[1][0] != '/') {
 	struct bu_vls fullpath;
@@ -197,6 +198,10 @@ db_open(const char *name, const char *mode)
 	/* Record the filename and file path */
 	dbip->dbi_filename = bu_strdup(name);
     }
+#else
+    /* Record the filename and file path */
+    dbip->dbi_filename = bu_strdup(name);
+#endif
 
     bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
