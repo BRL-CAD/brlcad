@@ -153,48 +153,6 @@ SCL_FUNCTION_EXISTS(memmove HAVE_MEMMOVE)
 
 SCL_TYPE_SIZE("ssize_t" SSIZE_T)
 
-
-# Generate the include/conf files
-
-# HOST 
-configure_file(${SCL_CMAKE_DIR}/test_srcs/report_hostname.c.in
-  ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
-TRY_RUN(TIME_RESULT TIME_COMPILED 
-  ${CMAKE_BINARY_DIR}/CMakeTmp
-  ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
-  OUTPUT_VARIABLE COMPILEMESSAGES)
-
-# USER
-configure_file(${SCL_CMAKE_DIR}/test_srcs/report_username.c.in
-  ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
-TRY_RUN(TIME_RESULT TIME_COMPILED 
-  ${CMAKE_BINARY_DIR}/CMakeTmp
-  ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
-  OUTPUT_VARIABLE
-  COMPILEMESSAGES)
-
-# PATH
-FILE(WRITE ${SCL_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"") 
-
-# COUNT - force CMake to look
-# every time in case of manual
-# removal of COUNT file
-set(countFile "countFile-NOTFOUND" CACHE  STRING "Is there a count file?" FORCE)
-find_file(countFile COUNT PATHS ${SCL_BINARY_DIR}/include/conf)
-if(countFile MATCHES "^countFile-NOTFOUND$")
-  set(buildCounter 0)
-else()
-  file(READ ${countFile} buildCounter)
-  math(EXPR buildCounter "${buildCounter} + 1")
-endif()
-file(WRITE ${SCL_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
-
-# DATE
-file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
-STRING(STRIP ${DATESTAMP} DATESTAMP)
-file(WRITE ${SCL_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
-
-
 # Now that all the tests are done, configure the scl_config.h file:
 configure_file(${CONFIG_H_FILE} ${SCL_BINARY_DIR}/include/scl_config.h)
 
