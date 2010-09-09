@@ -90,6 +90,7 @@ set env(ARCHER_HOME) $dir
 
 if {$tcl_platform(platform) == "windows"} {
     lappend auto_path ${env(ARCHER_HOME)}/bin/Tkhtml3.0
+    lappend auto_path ${env(ARCHER_HOME)}/bin/Tktable2.10
 }
 
 # load archer guts
