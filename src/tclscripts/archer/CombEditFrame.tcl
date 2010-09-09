@@ -594,6 +594,7 @@
 	$itk_component(combMembersTabs) add $itk_component(combMembers$tname\F) -text $text
 
 	bind $itk_component(combMembers$tname) <Button-3> [::itcl::code $this handleTablePopup %W %x %y %X %Y]
+	bind $itk_component(combMembers$tname) <B3-Motion> {break}
     }
 
     grid columnconfigure $itk_component(combMembersTabs) 0 -weight 1
