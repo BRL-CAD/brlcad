@@ -130,3 +130,6 @@ SET(docbook_lessons_ES_IMAGES
 DOCBOOK_TO_HTML(lesson_ES docbook_lessons_ES ${BRLCAD_INSTALL_DATA_DIR}/html/lessons/es)
 INSTALL(FILES ${docbook_lessons_ES_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/lessons/es/images)
 
+IF(BRLCAD-BUILD_EXTRADOCS_PDF)
+  DOCBOOK_TO_PDF(lesson_ES docbook_lessons_ES ${BRLCAD_INSTALL_DATA_DIR}/pdf/lessons/es)
+ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)

@@ -239,3 +239,8 @@ SET(docbook_mann_INTRO
 DOCBOOK_TO_HTML(mann docbook_mann_EN ${BRLCAD_INSTALL_DATA_DIR}/html/mann/en)
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO ${BRLCAD_INSTALL_DATA_DIR}/html/mann/en)
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged)
+
+IF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
+   DOCBOOK_TO_PDF(mann docbook_mann_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/mann/en)
+ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
+

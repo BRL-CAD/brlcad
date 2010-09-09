@@ -48,3 +48,6 @@ SET(docbook_books_EN_IMAGES
 DOCBOOK_TO_HTML(book docbook_books_EN ${BRLCAD_INSTALL_DATA_DIR}/html/books/en)
 INSTALL(FILES ${docbook_books_EN_IMAGES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/html/books/en/images)
 
+IF(BRLCAD-BUILD_EXTRADOCS_PDF)
+  DOCBOOK_TO_PDF(book docbook_books_EN ${BRLCAD_INSTALL_DATA_DIR}/pdf/books/en)
+ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
