@@ -1178,6 +1178,7 @@ ADD_SUBDIRECTORY(src/halftone)
 ADD_SUBDIRECTORY(src/irprep)
 ADD_SUBDIRECTORY(src/lgt)
 ADD_SUBDIRECTORY(src/mged)
+ADD_SUBDIRECTORY(src/archer)
 ADD_SUBDIRECTORY(src/nirt)
 ADD_SUBDIRECTORY(src/proc-db)
 ADD_SUBDIRECTORY(src/remrt)
@@ -1191,6 +1192,7 @@ ADD_SUBDIRECTORY(src/vdeck)
 ADD_SUBDIRECTORY(db)
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(doc)
+ADD_SUBDIRECTORY(sh)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the

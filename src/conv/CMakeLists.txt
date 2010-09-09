@@ -140,6 +140,8 @@ BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "bu librt wdb")
 
 BRLCAD_ADDEXEC(g-xxx_facets g-xxx_facets.c "bu librt")
 
+install(PROGRAMS intaval-g.py DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 SET(conv_MANS
   asc/g2asc.1 
   asc/pix2asc.1 

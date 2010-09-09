@@ -139,6 +139,8 @@ BRLCAD_ADDEXEC(wavelet wavelet.c "bu bn fb")
 BRLCAD_ADDEXEC(xyz-pl xyz-pl.c "bu bn")
 BRLCAD_ADDEXEC(yuv-pix yuv-pix.c "bu bn fb")
 
+INSTALL(PROGRAMS morphedit.tcl DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+
 add_executable(roots_example roots_example.c)
 target_link_libraries(roots_example bu librt)
 
