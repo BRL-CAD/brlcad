@@ -13,7 +13,11 @@ SET(sh_SCRIPTS
   show.sh 
   tracker.sh 
   trimconfig.sh
-)
+  )
+FOREACH(script ${sh_SCRIPTS})
+	configure_file(${script} ${CMAKE_BINARY_DIR}/bin/${script} COPYONLY)
+ENDFOREACH(script ${sh_SCRIPTS})
+
 INSTALL(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 SET(noinst_SCRIPTS
