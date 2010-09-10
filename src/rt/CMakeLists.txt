@@ -141,13 +141,15 @@ add_definitions(
 add_executable(rtexample "${rtexample_SRCS}")
 target_link_libraries(rtexample fb librt optical)
 
+add_executable(hurt "${hurt_SRCS}")
+target_link_libraries(hurt fb librt optical)
+
+
 BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt optical")
 
 BRLCAD_ADDEXEC(rtwalk "${rtwalk_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt optical")
 
 BRLCAD_ADDEXEC(rtshot "${rtshot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt optical")
-
-BRLCAD_ADDEXEC(hurt "${hurt_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt optical")
 
 BRLCAD_ADDEXEC(rtmlt "${rtmlt_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt optical")
 
@@ -188,10 +190,8 @@ BRLCAD_ADDEXEC(rtweight "${rtweight_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt o
 BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT} fb librt optical")
 
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})
-INSTALL(TARGETS libremrt ARCHIVE DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
 
 add_library(librttherm STATIC ${RT_COMMON_SRCS})
-INSTALL(TARGETS librttherm ARCHIVE DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
 SET_TARGET_PROPERTIES(librttherm PROPERTIES LINKER_LANGUAGE C)
 
 SET(rt_MANS

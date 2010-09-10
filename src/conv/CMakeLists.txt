@@ -98,9 +98,11 @@ BRLCAD_ADDEXEC(stl-g stl/stl-g.c "bu librt wdb")
 
 BRLCAD_ADDEXEC(g-stl stl/g-stl.c "bu librt gcv")
 
-BRLCAD_ADDEXEC(g4-g5 g4-g5.c "bu librt")
+add_executable(g4-g5 g4-g5.c)
+target_link_libraries(g4-g5 bu librt)
 
-BRLCAD_ADDEXEC(g5-g4 g5-g4.c "bu librt wdb")
+add_executable(g5-g4 g5-g4.c)
+target_link_libraries(g5-g4 bu librt wdb)
 
 BRLCAD_ADDEXEC(g-acad g-acad.c "bu librt")
 
@@ -138,7 +140,8 @@ BRLCAD_ADDEXEC(proe-g proe-g.c "bu librt wdb")
 
 BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "bu librt wdb")
 
-BRLCAD_ADDEXEC(g-xxx_facets g-xxx_facets.c "bu librt")
+add_executable(g-xxx_facets g-xxx_facets.c)
+target_link_libraries(g-xxx_facets bu librt)
 
 BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "bu librt wdb")
 

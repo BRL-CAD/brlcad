@@ -21,5 +21,6 @@ SET(MGED_POINTS_SRCS
   main.c
 )
 
-BRLCAD_ADDLIB(points "${MGED_POINTS_SRCS}" bu)
+add_library(points ${MGED_POINTS_SRCS})
+target_link_libraries(points bu)
 SET_TARGET_PROPERTIES(points PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")

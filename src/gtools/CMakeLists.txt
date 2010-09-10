@@ -14,7 +14,9 @@ SET(beset_SRCS
   beset/population.c
 )
 
-BRLCAD_ADDEXEC(beset "${beset_SRCS}" wdb)
+add_executable(beset ${beset_SRCS})
+target_link_libraries(beset wdb)
+
 BRLCAD_ADDEXEC(g_diff g_diff.c "librt ged tclcad")
 BRLCAD_ADDEXEC(g_lint g_lint.c librt)
 BRLCAD_ADDEXEC(g_qa g_qa.c "librt ged")

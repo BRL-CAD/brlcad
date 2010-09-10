@@ -27,7 +27,7 @@ add_executable(iges
     n_main.cpp
 )
 target_link_libraries(iges bu librt wdb ${BRLCAD_OPENNURBS_LIBRARY})
-INSTALL(TARGETS iges RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+#INSTALL(TARGETS iges RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(iges-g
     add_face.c
