@@ -16,7 +16,8 @@ add_definitions(
     -DHAVE_CONFIG_H
 )
 
-SCL_ADDLIB(exppplib "${LIBEXPPP_SOURCES}" express)
+SCL_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" express)
 
-SCL_ADDEXEC(exppp "${EXPPP_SOURCES}" "exppplib express")
+
+SCL_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp express")
 

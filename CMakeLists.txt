@@ -468,6 +468,7 @@ else()
 	set(M_LIBRARY "")
 endif()
 
+find_library(CRYPT_LIBRARY NAMES crypt)
 
 # once we decide how to handle the bsd daemon example, do the
 # same thing for all of these:
@@ -1100,7 +1101,7 @@ IF(BRLCAD_BUILD_LOCAL_SCL)
 	SET(BRLCAD_SCL_FEDEX_OS_EXECUTABLE "fedex_os" CACHE STRING "SCL fedex_os binary" FORCE)
 	SET(BRLCAD_SCL_FEDEX_IDL_EXECUTABLE "fedex_idl" CACHE STRING "SCL fedex_idl binary" FORCE)
 	SET(BRLCAD_SCL_FEDEX_PLUS_EXECUTABLE "fedex_plus" CACHE STRING "SCL fedex_plus binary" FORCE)
-	SET(BRLCAD_SCL_EXPPP_LIB "exppplib" CACHE STRING "SCL exppp library" FORCE)
+	SET(BRLCAD_SCL_EXPPP_LIB "libexppp" CACHE STRING "SCL exppp library" FORCE)
 	SET(BRLCAD_SCL_CORE_LIB "stepcore" CACHE STRING "SCL core library" FORCE)
 	SET(BRLCAD_SCL_UTILS_LIB "steputils" CACHE STRING "SCL utilities library" FORCE)
 	SET(BRLCAD_SCL_DAI_LIB "stepdai" CACHE STRING "SCL DAI library" FORCE)
@@ -1142,6 +1143,9 @@ if (BRLCAD-BUILD_EXTRADOCS)
 	ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
 endif (BRLCAD-BUILD_EXTRADOCS)
 
+# A variety of tools, such as the benchmark utilities, need
+# a Bourne shell or something compatible.
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindSH.cmake)
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
@@ -1206,7 +1210,9 @@ ADD_SUBDIRECTORY(db)
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(doc)
 ADD_SUBDIRECTORY(sh)
-ADD_SUBDIRECTORY(misc/pkgconfig)
+ADD_SUBDIRECTORY(misc)
+ADD_SUBDIRECTORY(pix)
+ADD_SUBDIRECTORY(bench)
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the
@@ -1476,6 +1482,18 @@ file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
 file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
 STRING(STRIP ${DATESTAMP} DATESTAMP)
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
+
+# Rules for the toplevel documentation files
+SET(toplevel_DOCFILES
+  AUTHORS
+  COPYING
+  HACKING
+  INSTALL
+  NEWS
+  README
+  TODO
+)
+INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${BRLCAD_INSTALL_DATA_DIR})
 
 #Done with everything else - do the configure time delta
 SET(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")

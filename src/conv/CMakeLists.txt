@@ -144,6 +144,9 @@ BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "bu librt wdb")
 
 install(PROGRAMS intaval-g.py DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
+INSTALL(FILES g-xxx.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES g-xxx_facets.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+
 SET(conv_MANS
   asc/g2asc.1 
   asc/pix2asc.1 

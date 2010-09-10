@@ -214,10 +214,12 @@ set(IGNORED_SOURCES
     brep_test.cpp
     columnparse.c
     namegen.c
-    nurb_example.c
     prcomb.c
     primitives/xxx/xxx.c
 )
+
+INSTALL(FILES nurb_example.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES raydebug.tcl DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
 
 if(MSVC)
     set(LIBRT_SOURCES

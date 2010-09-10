@@ -27,3 +27,13 @@ SET_TARGET_PROPERTIES(nirt PROPERTIES COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\
 
 BRLCAD_ADDEXEC(showshot showshot.c bn)
 install(FILES showshot.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+
+SET(nirt_sfiles
+  sfiles/csv.nrt 
+  sfiles/csv-gap.nrt 
+  sfiles/default.nrt 
+  sfiles/entryexit.nrt 
+  sfiles/gap1.nrt 
+  sfiles/gap2.nrt
+)
+INSTALL(FILES ${nirt_sfiles} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/nirt)

@@ -23,6 +23,8 @@ BRLCAD_ADDEXEC(remapid remapid.c "bu librt")
 add_executable(g_transfer g_transfer.c)
 target_link_libraries(g_transfer librt pkg)
 
+INSTALL(FILES g_transfer.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+
 SET(gtools_MANS
   g_diff.1
   g_lint.1

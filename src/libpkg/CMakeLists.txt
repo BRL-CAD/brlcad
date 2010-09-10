@@ -4,6 +4,8 @@ set(LIBPKG_SOURCES
     vers.c
 )
 
+INSTALL(FILES tpkg.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+
 include_directories(
     ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include

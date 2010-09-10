@@ -50,6 +50,11 @@ add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle ${M_LIBRARY})
 INSTALL(TARGETS utahrle LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
 
+add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
+target_link_libraries(utahrle-static ${M_LIBRARY})
+INSTALL(TARGETS utahrle-static ARCHIVE DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+SET_TARGET_PROPERTIES(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
+
 SET(LIBUTAHRLE_MAN3
 	buildmap.3 
 	bwdithermap.3 

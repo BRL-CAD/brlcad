@@ -21,6 +21,8 @@ IF(BRLCAD-ENABLE_X11)
   ENDIF(TK_LIBRARY)
 ENDIF(BRLCAD-ENABLE_X11)
 
+INSTALL(FILES pl-dm.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+
 # Don't have the libpc or boost stuff yet
 # BRLCAD_ADDEXEC(pc_test pc_test.c "wdb pc")
 
@@ -143,6 +145,7 @@ INSTALL(PROGRAMS morphedit.tcl DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
 add_executable(roots_example roots_example.c)
 target_link_libraries(roots_example bu librt)
+INSTALL(FILES roots_example.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
 
 set(util_MANS
   ap-pix.1 

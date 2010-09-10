@@ -7,6 +7,7 @@ set(RT_COMMON_SRCS
 )
 
 set(rtexample_SRCS rtexample.c)
+INSTALL(FILES rtexample.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
 
 set(reshoot_SRCS reshoot.c)
 

@@ -1,10 +1,3 @@
-SET(prefix ${BRLCAD_PREFIX})
-SET(exec_prefix "\${prefix}")
-SET(libdir "\${exec_prefix}/lib")
-SET(includedir "\${prefix}/include")
-SET(datarootdir "\${prefix}/share")
-SET(datadir "\${datarootdir}")
-
 SET(pkgconfig_DATA
   libanalyze.pc.in 
   libbn.pc.in 
