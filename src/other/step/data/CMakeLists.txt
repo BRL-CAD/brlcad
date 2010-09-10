@@ -21,6 +21,13 @@ SET(ap227_data
 )
 INSTALL(FILES ${ap227_data} DESTINATION ${SCL_DATA}/data/ap227)
 
+SET(step_example_data
+  example/example.exp
+)
+INSTALL(FILES ${step_example_data} DESTINATION ${SCL_DATA}/data/example)
+
+
+
 SET(step_datafiles
   pdmnet.exp
   select.exp 

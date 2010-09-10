@@ -29,11 +29,11 @@ SET(irprep_MANS
   ${irprep_X_MANS}
   firpass.1 
   ir-sgi.1 
-  pictsgi.1 
-  pictx.1 
   secpass.1 
   shapefact.1
   showtherm.1
 )
+#  pictsgi.1
+#  pictx.1
 
 install(FILES ${irprep_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
