@@ -1,5 +1,7 @@
 ; brlcad.nsi
 
+RequestExecutionLevel user
+
 ;--------------------------------
 ;BRL-CAD Version Variables
 
@@ -13,6 +15,7 @@
 !include "WordFunc.nsh"
 
 !insertmacro GetFileName
+!insertmacro WordFind3X
 
 Function .onInit
   ; For the moment this must be global (nsis requires it)
@@ -201,7 +204,7 @@ Section "Documentation (required)" Documentation
     ;Main start menu shortcuts
     SetOutPath $INSTDIR
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals\Archer.lnk" "$BRLCAD_DATA_DIR\html\manuals\archer\Archer_Documentation.chm" "" "$INSTDIR\archer.ico" 0
+    ;CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals\Archer.lnk" "$BRLCAD_DATA_DIR\html\manuals\archer\Archer_Documentation.chm" "" "$INSTDIR\archer.ico" 0
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals\BRL-CAD.lnk" "$BRLCAD_DATA_DIR\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER${INSTALLERSUFFIX}\Manuals\MGED.lnk" "$BRLCAD_DATA_DIR\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
   !insertmacro MUI_STARTMENU_WRITE_END
