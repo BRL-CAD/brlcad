@@ -43,7 +43,7 @@ BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "wdb ${BRLCAD_OPENNURBS_LIB
 set_target_properties(surfaceintersect PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
 BRLCAD_ADDEXEC(tea tea.c wdb)
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c wdb)
-BRLCAD_ADDEXEC(terrain terrain.c wdb)
+BRLCAD_ADDEXEC(terraingen terrain.c wdb)
 BRLCAD_ADDEXEC(torii torii.c wdb)
 BRLCAD_ADDEXEC(tube tube.c wdb)
 BRLCAD_ADDEXEC(vegetation vegetation.c wdb)
