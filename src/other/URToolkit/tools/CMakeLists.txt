@@ -5,9 +5,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-
-# clock subdir is using an sh script to generate a file - not portable, in
-# all likelyhood, at least not to WIN32.  Need to examine in more detail later
+ADD_SUBDIRECTORY(clock)
 
 URT_EXEC(applymap applymap.c)
 URT_EXEC(avg4 avg4.c)
