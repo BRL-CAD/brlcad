@@ -156,7 +156,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../../include;../../../src/other/tktable;../../../src/other/tcl/generic;../../../src/other/tk/generic;../../../src/other/tk/win;../../../src/other/tk/bitmaps;../../../src/other/tk/xlib"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PACKAGE_VERSION=\&quot;2.10\&quot;;TBL_CMD=\&quot;table\&quot;;TBL_RUNTIME=\&quot;tkTable.tcl\&quot;;STDC_HEADERS=1;TCL_THREADS=1;USE_TCL_STUBS=1;USE_TK_STUBS=1"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;DLL_BUILD;BUILD_Tktable;PACKAGE_VERSION=\&quot;2.10\&quot;;TBL_COMMAND=\&quot;table\&quot;;TBL_RUNTIME=\&quot;tkTable.tcl\&quot;;TBL_RUNTIME_DIR=\&quot;\&quot;;STDC_HEADERS=1;TCL_THREADS=1;USE_TCL_STUBS=1;USE_TK_STUBS=1"
 				StringPooling="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
