@@ -25,11 +25,11 @@ IF(SH_EXEC)
 		DEPENDS rt
 		)
 	ADD_DEPENDENCIES(benchmark bldg391.g m35.g moss.g sphflake.g star.g world.g)
-	ADD_CUSTOM_TARGET(clean
+	ADD_CUSTOM_TARGET(benchmark-clean
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clean
 		DEPENDS rt
 		)
-	ADD_CUSTOM_TARGET(clobber
+	ADD_CUSTOM_TARGET(benchmark-clobber
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
 		DEPENDS rt
 		)
