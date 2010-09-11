@@ -85,6 +85,14 @@
 # previous runs
 SET(CMAKE_INSTALL_PREFIX "")
 
+# This is a tentative workaround for the current inability of
+# CMake to accept dependencies to "make clean" targets - examples
+# include the bench directory.
+if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+	set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS 1)
+	set(USE_SUBDIR_TARGETS 1)
+endif("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+
 # This file contains the top level CMakeLists.txt logic for the 
 # BRL-CAD software package.
 # Minimum required version of CMake
