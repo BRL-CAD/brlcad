@@ -17,6 +17,11 @@ exit
    #Need to handle multiple returned versions - this regex is wrong, fix
    #STRING(REGEX REPLACE "([0-9]+\.?[0-9]*)" "\\1" ${pkgversion} ${pkgversion})
    STRING(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})
+	IF(${PKGNAME_UPPER}_PACKAGE_VERSION)
+		OPTION(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${PKGNAME_UPPER} "Build the local ${packagename} library" ON)
+	ELSE(${PKGNAME_UPPER}_PACKAGE_VERSION)
+		OPTION(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${PKGNAME_UPPER} "Build the local ${packagename} library" OFF)
+	ENDIF(${PKGNAME_UPPER}_PACKAGE_VERSION)
    FIND_PACKAGE_HANDLE_STANDARD_ARGS(${PKGNAME_UPPER} DEFAULT_MSG ${PKGNAME_UPPER}_PACKAGE_VERSION)
    MARK_AS_ADVANCED(
       ${PKGNAME_UPPER}_PACKAGE_VERSION
