@@ -282,67 +282,56 @@ SET(BRLCAD_LIBRARY_DIR ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
 SET(BRLCAD_EXECUTABLE_DIR ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
 
 #-----------------------------------------------------------------------------
-# Configure install locations.  This allows parent projects to modify
-# the install location.  Specify a BRLCAD_PREFIX which prefixes
-# all install targets.
+# Configure install locations.  It may be that this should be made
+# into its own .cmake file and included in each library, to allow
+# for more flexibility in using individual libraries in other projects.
+MACRO(INSTALL_DIR upper suffix)
+	IF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
+		SET(${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR ${CMAKE_INSTALL_PREFIX}/${suffix})
+	ENDIF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
+ENDMACRO(INSTALL_DIR upper suffix)
+
 # The location in which to install BRLCAD executables.
-IF(NOT BRLCAD_INSTALL_BIN_DIR)
-	SET(BRLCAD_INSTALL_BIN_DIR ${BRLCAD_PREFIX}/bin)
-ENDIF(NOT BRLCAD_INSTALL_BIN_DIR)
+INSTALL_DIR(BIN bin)
 
 # The location in which to install BRLCAD header files.
-IF(NOT BRLCAD_INSTALL_INCLUDE_DIR)
-	SET(BRLCAD_INSTALL_INCLUDE_DIR
-		${BRLCAD_PREFIX}/include)
-ENDIF(NOT BRLCAD_INSTALL_INCLUDE_DIR)
+INSTALL_DIR(INCLUDE include)
 
 # The location in which to install BRL-CAD libraries.
-IF(NOT BRLCAD_INSTALL_LIB_DIR)
-	SET(BRLCAD_INSTALL_LIB_DIR 
-		${BRLCAD_PREFIX}/lib)
-ENDIF(NOT BRLCAD_INSTALL_LIB_DIR)
+INSTALL_DIR(LIB lib)
 
 # The location in which to install BRL-CAD configuration files.
-IF(NOT BRLCAD_INSTALL_CONF_DIR)
-	SET(BRLCAD_INSTALL_CONF_DIR ${BRLCAD_PREFIX}/etc)
-ENDIF(NOT BRLCAD_INSTALL_CONF_DIR)
+INSTALL_DIR(CONF etc)
 
 # The location in which to install CMake scripts for packaging BRLCAD.
-IF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
-	SET(BRLCAD_INSTALL_PACKAGE_DIR ${BRLCAD_INSTALL_LIB_DIR})
-ENDIF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
+INSTALL_DIR(PACKAGE lib)
 
 # The location in which to install BRL-CAD data files 
-IF(NOT BRLCAD_INSTALL_DATA_DIR)
-	IF (${BRLCAD_PREFIX} MATCHES "^/usr[/]*$")
-		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad)
+IF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
+	IF (${CMAKE_INSTALL_PREFIX} MATCHES "^/usr[/]*$")
+		SET(DATA_DIR_SUFFIX "share/brlcad")
 	ENDIF()
-	IF (${BRLCAD_PREFIX} MATCHES "^/usr/local[/]*$")
-		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share/brlcad)
+	IF (${CMAKE_INSTALL_PREFIX} MATCHES "^/usr/local[/]*$")
+		SET(DATA_DIR_SUFFIX "share/brlcad")
 	ENDIF()
-	IF(NOT BRLCAD_INSTALL_DATA_DIR)
-		SET(BRLCAD_INSTALL_DATA_DIR ${BRLCAD_PREFIX}/share)
+	IF(NOT DATA_DIR_SUFFIX)
+		SET(DATA_DIR_SUFFIX "share")
 	ENDIF()
-ENDIF(NOT BRLCAD_INSTALL_DATA_DIR)
+	SET(${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR ${CMAKE_INSTALL_PREFIX}/${DATA_DIR_SUFFIX})
+ENDIF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
-IF(NOT BRLCAD_INSTALL_MAN_DIR)
-	SET(BRLCAD_INSTALL_MAN_DIR ${BRLCAD_PREFIX}/share/man)
-	SET(MAN_DIR "share/man")
-ENDIF(NOT BRLCAD_INSTALL_MAN_DIR)
-
+INSTALL_DIR(MAN ${DATA_DIR_SUFFIX}/man)
+SET(MAN_DIR "${DATA_DIR_SUFFIX}/man")
 
 # The location in which to install BRL-CAD documentation files 
-IF(NOT BRLCAD_INSTALL_DOC_DIR)
-	SET(BRLCAD_INSTALL_DOC_DIR ${BRLCAD_PREFIX}/share/brlcad/doc)
-ENDIF(NOT BRLCAD_INSTALL_DOC_DIR)
+INSTALL_DIR(DOC ${DATA_DIR_SUFFIX}/doc)
 
 # The location in which to install BRL-CAD doxygen documentation helper
 # files.
-IF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
-	SET(BRLCAD_INSTALL_DOXYGEN_DIR ${BRLCAD_INSTALL_DOC_DIR}/doxygen)
-ENDIF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
+INSTALL_DIR(DOXYGEN ${DATA_DIR_SUFFIX}/doc/doxygen)
 
+#-----------------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine statements,
 # which will in turn be used to generate a brlcad_conf.h file.  In autotools this
 # process is handled by autoheader - in the case of CMake we wrap the CHECK_*
