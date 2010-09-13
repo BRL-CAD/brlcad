@@ -674,38 +674,19 @@ IF(BRLCAD_BUILD_LOCAL_LIBS)
 ENDIF(BRLCAD_BUILD_LOCAL_LIBS)
 
 # zlib Library
-THIRD_PARTY_OPTION(ZLIB)
+THIRD_PARTY_OPTION(ZLIB zlib)
 THIRD_PARTY_SUBDIR(ZLIB src/other/libz)
-IF(BRLCAD_BUILD_LOCAL_ZLIB)
-	SET(BRLCAD_ZLIB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libz" CACHE STRING "Directory containing zlib headers" FORCE)
-	SET(ZLIB_INCLUDE_DIR "${BRLCAD_ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
-	SET(BRLCAD_ZLIB_LIBRARY "zlib" CACHE STRING "zlib" FORCE)
-ELSE(BRLCAD_BUILD_LOCAL_ZLIB)
-	SET(BRLCAD_ZLIB_INCLUDE_DIR "${ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
-	SET(BRLCAD_ZLIB_LIBRARY "${ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
-ENDIF(BRLCAD_BUILD_LOCAL_ZLIB)
+MESSAGE("BRLCAD_BUILD_LOCAL_ZLIB: ${BRLCAD_ZLIB_INCLUDE_DIR} ${BRLCAD_ZLIB_LIBRARY}")
 
 # libtermlib Library
-THIRD_PARTY_OPTION(TERMLIB)
+THIRD_PARTY_OPTION(TERMLIB termlib)
 THIRD_PARTY_SUBDIR(TERMLIB src/other/libtermlib)
-IF(BRLCAD_BUILD_LOCAL_TERMLIB)
-	SET(BRLCAD_TERMLIB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libtermlib" CACHE STRING "Directory containing termlib headers" FORCE)
-	SET(TERMLIB_INCLUDE_DIR "${BRLCAD_TERMLIB_INCLUDE_DIR}" CACHE STRING "Directory containing termlib headers" FORCE)
-	SET(BRLCAD_TERMLIB_LIBRARY "termlib" CACHE STRING "termlib" FORCE)
-ELSE(BRLCAD_BUILD_LOCAL_TERMLIB)
-	SET(BRLCAD_TERMLIB_INCLUDE_DIR "${TERMLIB_INCLUDE_DIR}" CACHE STRING "Directory containing termlib headers" FORCE)
-	SET(BRLCAD_TERMLIB_LIBRARY "${TERMLIB_LIBRARY}" CACHE STRING "termlib library" FORCE)
-ENDIF(BRLCAD_BUILD_LOCAL_TERMLIB)
-
-
 
 # libpng Library - Checks for ZLIB, so need to restore BRLCAD_ZLIB* settings - a
 # successful search by FindZLIB will reset the basic variables.  If not using local
 # copy of zlib, FindZLIB results will be identical in both cases so there is no
 # danger of harming the libpng setup by changing BRLCAD_ZLIB*.
-THIRD_PARTY_OPTION(PNG)
-SET(ZLIB_INCLUDE_DIR "${BRLCAD_ZLIB_INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers" FORCE)
-SET(ZLIB_LIBRARY "${BRLCAD_ZLIB_LIBRARY}" CACHE STRING "zlib library" FORCE)
+THIRD_PARTY_OPTION(PNG png)
 # BRL-CAD needs PNG's IO - turn it on (i.e. turn off the disabling flags)
 SET(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
 MARK_AS_ADVANCED(PNG_NO_CONSOLE_IO)
@@ -713,46 +694,28 @@ SET(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
 MARK_AS_ADVANCED(PNG_NO_STDIO)
 THIRD_PARTY_SUBDIR(PNG src/other/libpng)
 IF(BRLCAD_BUILD_LOCAL_PNG)
-	SET(BRLCAD_PNG_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libpng" CACHE STRING "Directory containing libpng headers" FORCE)
 	# PNG_LIB_NAME doesn't automatically propogate to toplevel due to scoping of CMake variables - 
 	# use get_directory_property to recover the value and place it in the CACHE
 	get_directory_property(BRLCAD_PNG_LIB_NAME DIRECTORY src/other/libpng DEFINITION PNG_LIB_NAME)
 	SET(BRLCAD_PNG_LIB_NAME "${BRLCAD_PNG_LIB_NAME}" CACHE STRING "libpng name for targets" FORCE)
-ELSE(BRLCAD_BUILD_LOCAL_PNG)
-	SET(BRLCAD_PNG_INCLUDE_DIR "${PNG_PNG_INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers" FORCE)
-	SET(BRLCAD_PNG_LIB_NAME "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_PNG)
 
 # libregex Library
-THIRD_PARTY_OPTION(REGEX)
+THIRD_PARTY_OPTION(REGEX regex)
 THIRD_PARTY_SUBDIR(REGEX src/other/libregex)
-IF(BRLCAD_BUILD_LOCAL_REGEX)
-	SET(BRLCAD_REGEX_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libregex" CACHE STRING "Directory containing libregex headers" FORCE)
-	SET(REGEX_INCLUDE_DIR "${BRLCAD_REGEX_INCLUDE_DIR}" CACHE STRING "Directory containing libregex headers" FORCE)
-	SET(BRLCAD_REGEX_LIBRARY "regex" CACHE STRING "regex" FORCE)
-ELSE(BRLCAD_BUILD_LOCAL_REGEX)
-	SET(BRLCAD_REGEX_INCLUDE_DIR "${REGEX_INCLUDE_DIR}" CACHE STRING "Directory containing libregex headers" FORCE)
-	SET(BRLCAD_REGEX_LIBRARY "${REGEX_LIBRARY}" CACHE STRING "libregex library" FORCE)
-ENDIF(BRLCAD_BUILD_LOCAL_REGEX)
 
 # libutahrle Library
-THIRD_PARTY_OPTION(UTAHRLE)
+THIRD_PARTY_OPTION(UTAHRLE utahrle)
 THIRD_PARTY_SUBDIR(UTAHRLE src/other/libutahrle)
 IF(BRLCAD_BUILD_LOCAL_UTAHRLE)
-	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "Directory containing libutahrle headers" FORCE)
-	SET(UTAHRLE_INCLUDE_DIR "${BRLCAD_UTAHRLE_INCLUDE_DIR}" CACHE STRING "Directory containing libutahrle headers" FORCE)
-	SET(BRLCAD_UTAHRLE_LIBRARY "utahrle" CACHE STRING "libutahrle" FORCE)
-	SET(UTAHRLE_LIBRARY "utahrle" CACHE STRING "libutahrle" FORCE)
-ELSE(BRLCAD_BUILD_LOCAL_UTAHRLE)
-	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "Directory containing libutahrle headers" FORCE)
-	SET(BRLCAD_UTAHRLE_LIBRARY "${UTAHRLE_LIBRARY}" CACHE STRING "libutahrle library" FORCE)
+	SET(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
+	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 
 # URTToolkit
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 ADD_SUBDIRECTORY(src/other/URToolkit)
-
 
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake - BRL-CAD requires
@@ -766,7 +729,7 @@ include(ExternalProject)
 # Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
 SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
 SET(TCL_MIN_VERSION "8.5" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
-THIRD_PARTY_OPTION(TCL)
+THIRD_PARTY_OPTION(TCL tcl)
 IF(BRLCAD_BUILD_LOCAL_TCL AND TCL_REQUIRE_TK)
 	OPTION(BRLCAD_BUILD_LOCAL_TK "Build the local versions of Tcl/Tk" ON)
 ELSE(BRLCAD_BUILD_LOCAL_TCL AND TCL_REQUIRE_TK)
@@ -1079,21 +1042,11 @@ ENDIF(NOT TKTABLE_FOUND OR BRLCAD_BUILD_LOCAL_TKTABLE)
 
 
 # OpenNURBS Library
-THIRD_PARTY_OPTION(OPENNURBS)
+THIRD_PARTY_OPTION(OPENNURBS openNURBS)
 THIRD_PARTY_SUBDIR(OPENNURBS src/other/openNURBS)
-IF(BRLCAD_BUILD_LOCAL_OPENNURBS)
-	SET(BRLCAD_OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Directory containing openNURBS headers" FORCE)
-	SET(OPENNURBS_INCLUDE_DIR "${BRLCAD_OPENNURBS_INCLUDE_DIR}" CACHE STRING "Directory containing openNURBS headers" FORCE)
-	SET(BRLCAD_OPENNURBS_LIBRARY "openNURBS" CACHE STRING "openNURBS" FORCE)
-	BRLCAD_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
-ELSE(BRLCAD_BUILD_LOCAL_OPENNURBS)
-	SET(BRLCAD_OPENNURBS_INCLUDE_DIR "${OPENNURBS_INCLUDE_DIR}" CACHE STRING "Directory containing openNURBS headers" FORCE)
-	SET(BRLCAD_OPENNURBS_LIBRARY "${OPENNURBS_LIBRARY}" CACHE STRING "openNURBS library" FORCE)
-ENDIF(BRLCAD_BUILD_LOCAL_OPENNURBS)
-
 
 # STEP Class Libraries
-THIRD_PARTY_OPTION(SCL)
+THIRD_PARTY_OPTION(SCL scl)
 THIRD_PARTY_SUBDIR(SCL src/other/step)
 IF(BRLCAD_BUILD_LOCAL_SCL)
 	SET(BRLCAD_SCL_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/step/include" CACHE STRING "Directory containing SCL headers" FORCE)
@@ -1379,21 +1332,24 @@ ADD_CUSTOM_TARGET(timestamp ALL	COMMAND printtimestamp)
 # exec and external targets depend on timestamp (except for
 # the exec target printtimestamp, which is needed by timestamp)
 FOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-  if(libtarget)
-    ADD_DEPENDENCIES(${libtarget} timestamp)
-  endif(libtarget)
+	get_target_property(target_location ${libtarget} LOCATION)
+	if(target_location)
+		ADD_DEPENDENCIES(${libtarget} timestamp)
+	endif(target_location)
 ENDFOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
 FOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
-  if(exectarget)
-    IF(NOT ${exectarget} MATCHES "printtimestamp")
-      ADD_DEPENDENCIES(${exectarget} timestamp)
-    ENDIF(NOT ${exectarget} MATCHES "printtimestamp")
-  endif(exectarget)
+	get_target_property(target_location ${exectarget} LOCATION)
+	if(target_location)
+		IF(NOT ${exectarget} MATCHES "printtimestamp")
+			ADD_DEPENDENCIES(${exectarget} timestamp)
+		ENDIF(NOT ${exectarget} MATCHES "printtimestamp")
+	endif(target_location)
 ENDFOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
 FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
-  if(externaltarget)
-    ADD_DEPENDENCIES(${externaltarget} timestamp)
-  endif(externaltarget)
+	get_target_property(target_location ${externaltarget} LOCATION)
+	if(target_location)
+		ADD_DEPENDENCIES(${externaltarget} timestamp)
+	endif(target_location)
 ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
 
