@@ -214,10 +214,11 @@ IF(NOT WIN32)
 	EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
 ENDIF(NOT WIN32)
 
-# Set build type here. In this case, watch for a command line assignment
-# and if there isn't one force set to basic in order to have a default
-# set for the remainder of the configure.  May not be necessary, and if
-# not should be removed - wait for finished build files to tell.
+# Set build type here. Doing this wrong, see
+# http://www.cmake.org/Wiki/CMake_Useful_Variables
+# for a more complete list of types and the mechanism
+# to define new ones - dunno if  set_property can be
+# made to work here or not.
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
 	"Basic" "Debug" "Release")
 if (NOT CMAKE_BUILD_TYPE)
@@ -676,16 +677,16 @@ ENDIF(BRLCAD_BUILD_LOCAL_LIBS)
 # zlib Library
 THIRD_PARTY_OPTION(ZLIB zlib)
 THIRD_PARTY_SUBDIR(ZLIB src/other/libz)
-MESSAGE("BRLCAD_BUILD_LOCAL_ZLIB: ${BRLCAD_ZLIB_INCLUDE_DIR} ${BRLCAD_ZLIB_LIBRARY}")
 
 # libtermlib Library
 THIRD_PARTY_OPTION(TERMLIB termlib)
 THIRD_PARTY_SUBDIR(TERMLIB src/other/libtermlib)
 
-# libpng Library - Checks for ZLIB, so need to restore BRLCAD_ZLIB* settings - a
-# successful search by FindZLIB will reset the basic variables.  If not using local
-# copy of zlib, FindZLIB results will be identical in both cases so there is no
-# danger of harming the libpng setup by changing BRLCAD_ZLIB*.
+# libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
+# if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will 
+# be identical in both cases so there is no danger of harming the libpng setup.  The PNG
+# CMake system needs some options set and some variables translated to fit BRL-CAD's
+# standard assumptions, so handle that here as well.
 THIRD_PARTY_OPTION(PNG png)
 # BRL-CAD needs PNG's IO - turn it on (i.e. turn off the disabling flags)
 SET(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
@@ -696,15 +697,22 @@ THIRD_PARTY_SUBDIR(PNG src/other/libpng)
 IF(BRLCAD_BUILD_LOCAL_PNG)
 	# PNG_LIB_NAME doesn't automatically propogate to toplevel due to scoping of CMake variables - 
 	# use get_directory_property to recover the value and place it in the CACHE
-	get_directory_property(BRLCAD_PNG_LIB_NAME DIRECTORY src/other/libpng DEFINITION PNG_LIB_NAME)
-	SET(BRLCAD_PNG_LIB_NAME "${BRLCAD_PNG_LIB_NAME}" CACHE STRING "libpng name for targets" FORCE)
+	get_directory_property(PNG_LIBRARY DIRECTORY src/other/libpng DEFINITION PNG_LIB_NAME)
+	SET(BRLCAD_PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
+ELSE(BRLCAD_BUILD_LOCAL_PNG)
+	# The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than PNG_INCLUDE_DIR, so
+	# a generic macro won't pick up the setting - handle it here
+	SET(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
+	SET(BRLCAD_PNG_INCLUDE_DIR ${PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_PNG)
 
 # libregex Library
 THIRD_PARTY_OPTION(REGEX regex)
 THIRD_PARTY_SUBDIR(REGEX src/other/libregex)
 
-# libutahrle Library
+# libutahrle Library - The directory to perform ADD_SUBDIRECTORY on and the
+# include directory for utahrle are different, so override the macro's setting
+# of UTAHRLE_INCLUDE_DIR here.
 THIRD_PARTY_OPTION(UTAHRLE utahrle)
 THIRD_PARTY_SUBDIR(UTAHRLE src/other/libutahrle)
 IF(BRLCAD_BUILD_LOCAL_UTAHRLE)
