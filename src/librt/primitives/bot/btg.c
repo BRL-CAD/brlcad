@@ -55,9 +55,30 @@ bottie_push_double(void *vtie, double **tri, unsigned int ntri, void *u, unsigne
 }
 
 int
-bottie_prep_double(void *vtie)
+bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
 {
-    tie_prep((struct tie_s *)vtie);
+    struct tie_s *tie;
+    struct bot_specific *bot;
+    point_t p;
+
+    RT_BOT_CK_MAGIC(bot_ip);
+
+    BU_GETSTRUCT(bot, bot_specific);
+    stp->st_specific = (genptr_t)bot;
+    bot->bot_mode = bot_ip->mode;
+    bot->bot_orientation = bot_ip->orientation;
+    bot->bot_flags = bot_ip->bot_flags;
+    bot->tie = bot_ip->tie;
+    tie = bot_ip->tie;
+
+    tie_prep((struct tie_s *)bot_ip->tie);
+
+    VMOVE(stp->st_min, tie->min.v);
+    VMOVE(stp->st_max, tie->max.v);
+    VMOVE(stp->st_center, tie->mid);
+    stp->st_aradius = tie->radius;
+    stp->st_bradius = tie->radius;
+
     return 0;	/* always returning OK seems... bad. */
 }
 
@@ -92,13 +113,16 @@ hitfunc(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr)
 }
 
 int
-bottie_shot_double(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    struct tie_s *tie = (struct tie_s *)bot->tie;
+    struct bot_specific *bot;
+    struct tie_s *tie;
     struct hitdata_s hitdata;
     tie_id_t id;
     tie_ray_t ray;
+
+    bot = (struct bot_specific *)stp->st_specific;
+    tie = (struct tie_s *)bot->tie;
 
     hitdata.nhits = 0;
     hitdata.rp = &ap->a_ray;
@@ -107,8 +131,9 @@ bottie_shot_double(struct soltab *stp, register struct xray *rp, struct applicat
     VMOVE(ray.dir.v, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
 
-    bu_log("Pew\n");
-    tie_work(tie, &ray, &id, hitfunc, &hitdata);
+    bu_log("Shooting [%d] %g,%g,%g -> %g,%g,%g\n", tie->tri_num, V3ARGS(ray.pos.v), V3ARGS(ray.dir.v));
+
+    tie_work1(tie, &ray, &id, hitfunc, &hitdata);
 
     /* use hitfunc to build the hit list */
     if(hitdata.nhits == 0)
