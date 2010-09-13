@@ -204,13 +204,12 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (bot_ip->tie != NULL) {
-	return bottie_prep_double(bot_ip->tie);
-    } else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS) {
+    if (bot_ip->tie != NULL)
+	return bottie_prep_double(stp, bot_ip, rtip);
+    else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS)
 	return rt_bot_prep_float(stp, bot_ip, rtip);
-    } else {
+    else
 	return rt_bot_prep_double(stp, bot_ip, rtip);
-    }
 }
 
 

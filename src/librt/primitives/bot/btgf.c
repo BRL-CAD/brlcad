@@ -51,10 +51,19 @@ bottie_push_float(void *vtie, float **tri, unsigned int ntri, void *usr, unsigne
 }
 
 int
-bottie_prep_float(void *vtie)
+bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *rtip)
 {
-    tie_prep((struct tie_s *)vtie);
-    return -1;
+    struct tie_s *tie = (struct tie_s *)bot->tie;
+    point_t p;
+
+    tie_prep(tie);
+    VMOVE(stp->st_min, tie->min.v);
+    VMOVE(stp->st_max, tie->max.v);
+    VMOVE(stp->st_center, tie->mid);
+    stp->st_bradius = stp->st_aradius = tie->radius;
+    stp->st_specific = bot;
+
+    return 0;
 }
 
 static int
