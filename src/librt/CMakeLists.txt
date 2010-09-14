@@ -218,8 +218,8 @@ set(IGNORED_SOURCES
     primitives/xxx/xxx.c
 )
 
-INSTALL(FILES nurb_example.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
-INSTALL(FILES raydebug.tcl DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES nurb_example.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES raydebug.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 if(MSVC)
     set(LIBRT_SOURCES
@@ -234,29 +234,20 @@ else(MSVC)
 endif(MSVC)
 
 include_directories(
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${BRLCAD_REGEX_INCLUDE_DIR}
-    ${BRLCAD_ZLIB_INCLUDE_DIR}
-    ${BRLCAD_OPENNURBS_INCLUDE_DIR}
-    ${BRLCAD_SOURCE_DIR}/src/other/tnt
+    ${REGEX_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
+    ${OPENNURBS_INCLUDE_DIR}
 	 ${TCL_INCLUDE_PATH}
+	 ${TNT_INCLUDE_DIR}
 )
 
 if(MSVC)
    add_definitions(
-       -DHAVE_CONFIG_H
-       -DBRLCADBUILD
        -DON_DLL_IMPORTS
-   )
-else(MSVC)
-   add_definitions(
-       -DHAVE_CONFIG_H
-       -DBRLCADBUILD
    )
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "bu bn ${BRLCAD_OPENNURBS_LIBRARY} ${BRLCAD_REGEX_LIBRARY} ${BRLCAD_ZLIB_LIBRARY}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbu libbn ${OPENNURBS_LIBRARY} ${REGEX_LIBRARY} ${ZLIB_LIBRARY}")
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-install(FILES librt.3 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man3)
+install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)

@@ -1,5 +1,5 @@
 include_directories(
-	${BRLCAD_SOURCE_DIR}/include
+	${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
@@ -48,11 +48,11 @@ SET(LIBUTAHRLE_SOURCES
 
 add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle ${M_LIBRARY})
-INSTALL(TARGETS utahrle LIBRARY DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+INSTALL(TARGETS utahrle LIBRARY DESTINATION lib)
 
 add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle-static ${M_LIBRARY})
-INSTALL(TARGETS utahrle-static ARCHIVE DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+INSTALL(TARGETS utahrle-static ARCHIVE DESTINATION lib)
 SET_TARGET_PROPERTIES(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
 
 SET(LIBUTAHRLE_MAN3

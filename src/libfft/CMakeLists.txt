@@ -1,12 +1,5 @@
 include_directories(
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/src/libfft
-)
-
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
+	${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 ADD_EXECUTABLE(fftc fftc.c splitditc.c)
@@ -14,7 +7,6 @@ target_link_libraries(fftc ${M_LIBRARY})
 
 ADD_EXECUTABLE(ifftc ifftc.c ditsplitc.c)
 target_link_libraries(ifftc ${M_LIBRARY})
-
 
 SET(FFT_NUMLIST "16;32;64;128;256;512;1024")
 SET(FFT_GEN_SRCS "")
@@ -41,9 +33,9 @@ SET(LIBFFT_SRCS
   ${FFT_GEN_SRCS}
 )
 
-BRLCAD_ADDLIB(fft "${LIBFFT_SRCS}" "NONE")
-SET_TARGET_PROPERTIES(fft PROPERTIES LINKER_LANGUAGE C)
-SET_TARGET_PROPERTIES(fft PROPERTIES VERSION 19.0.1 SOVERSION 19)
+BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "NONE")
+SET_TARGET_PROPERTIES(libfft PROPERTIES LINKER_LANGUAGE C)
+SET_TARGET_PROPERTIES(libfft PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 add_executable(fftest fftest.c)
-target_link_libraries(fftest fft ${M_LIBRARY})
+target_link_libraries(fftest libfft ${M_LIBRARY})

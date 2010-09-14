@@ -2,7 +2,7 @@ MACRO(URT_EXEC execname srcs)
    STRING(REGEX REPLACE " " ";" srcslist "${srcs}")
 	add_executable(${execname} ${srcslist})
 	target_link_libraries(${execname} ${UTAHRLE_LIBRARY})
-	INSTALL(TARGETS ${execname} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+	INSTALL(TARGETS ${execname} RUNTIME DESTINATION bin)
 ENDMACRO()
 
 ADD_SUBDIRECTORY(cnv)

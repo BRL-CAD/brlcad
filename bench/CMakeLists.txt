@@ -8,7 +8,7 @@ add_definitions(
   -DBRLCADBUILD
 )
 
-BRLCAD_ADDEXEC(pixcmp pixcmp.c bu)
+BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 
 configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/benchmark COPYONLY)
 INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/benchmark DESTINATION ${BRLCAD_INSTALL_BIN_DIR})

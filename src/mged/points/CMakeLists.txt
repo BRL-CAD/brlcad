@@ -1,10 +1,6 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${BRLCAD_STD_INCLUDES}
-)
-add_definitions(
-  ${BRLCAD_STD_DEFS}
 )
 
 YACC_TARGET(MGEDPointsParser points_parse.y
@@ -21,6 +17,6 @@ SET(MGED_POINTS_SRCS
   main.c
 )
 
-add_library(points ${MGED_POINTS_SRCS})
-target_link_libraries(points bu)
-SET_TARGET_PROPERTIES(points PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")
+add_library(libpoints ${MGED_POINTS_SRCS})
+target_link_libraries(libpoints libbu)
+SET_TARGET_PROPERTIES(libpoints PROPERTIES COMPILE_DEFINITIONS "ENABLE_POINTS")

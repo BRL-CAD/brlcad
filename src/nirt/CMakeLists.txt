@@ -1,13 +1,8 @@
 include_directories(
-    ${BRLCAD_STD_INCLUDES}
-    ${BRLCAD_ZLIB_INCLUDE_DIR}
-    ${BRLCAD_OPENNURBS_INCLUDE_DIR}
-    ${BRLCAD_REGEX_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
+    ${OPENNURBS_INCLUDE_DIR}
+	 ${REGEX_INCLUDE_DIR}
     ${TCL_INCLUDE_PATH}
-)
-
-add_definitions(
-  ${BRLCAD_STD_DEFS}
 )
 
 SET(NIRT_SRCS
@@ -22,11 +17,11 @@ SET(NIRT_SRCS
     parse_fmt.c
 )
 
-BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "fb librt")
+BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "libfb librt")
 SET_TARGET_PROPERTIES(nirt PROPERTIES COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\"")
 
-BRLCAD_ADDEXEC(showshot showshot.c bn)
-install(FILES showshot.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+BRLCAD_ADDEXEC(showshot showshot.c libbn)
+install(FILES showshot.1 DESTINATION ${MAN_DIR}/man1)
 
 SET(nirt_sfiles
   sfiles/csv.nrt 
@@ -36,4 +31,4 @@ SET(nirt_sfiles
   sfiles/gap1.nrt 
   sfiles/gap2.nrt
 )
-INSTALL(FILES ${nirt_sfiles} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/nirt)
+INSTALL(FILES ${nirt_sfiles} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/nirt)

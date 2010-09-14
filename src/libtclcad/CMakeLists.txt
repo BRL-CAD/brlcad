@@ -15,22 +15,18 @@ IF(TK_LIBRARY)
 ENDIF(TK_LIBRARY)
 
 include_directories(
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
-  ${BRLCAD_PNG_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIR}
   ${X11_INCLUDE_DIR}
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
 )
 
 add_definitions(
-        -DHAVE_CONFIG_H
-        -DBRLCADBUILD=1
-        ${TCLCAD_DEFINES}
+	${TCLCAD_DEFINES}
 )
 
 FOREACH(xlib ${X11_LIBRARIES})
 	SET(TCLCAD_XLIBS "${TCLCAD_XLIBS} ${xlib}")
 ENDFOREACH(xlib ${X11_LIBRARIES})
-BRLCAD_ADDLIB(tclcad "tclcad.c tclcadAutoPath.c tkImgFmtPIX.c ged_obj.c" "dm ged ${TCLCAD_XLIBS} ${X11_Xi_LIB}")
-SET_TARGET_PROPERTIES(tclcad PROPERTIES VERSION 19.0.1 SOVERSION 19)
+BRLCAD_ADDLIB(libtclcad "tclcad.c tclcadAutoPath.c tkImgFmtPIX.c ged_obj.c" "libdm libged ${TCLCAD_XLIBS} ${X11_Xi_LIB}")
+SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 19.0.1 SOVERSION 19)

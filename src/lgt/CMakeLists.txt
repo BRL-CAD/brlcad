@@ -1,11 +1,6 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_STD_INCLUDES}
   ${TCL_INCLUDE_PATH}
-)
-
-add_definitions(
-  ${BRLCAD_STD_DEFS}
 )
 
 SET(lgt_SOURCES
@@ -29,7 +24,7 @@ SET(lgt_SOURCES
   trie.c
 )
 
-BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "vfont librt fb termio cursor")
+BRLCAD_ADDEXEC(lgt "${lgt_SOURCES}" "libvfont librt libfb libtermio libcursor")
 SET_TARGET_PROPERTIES(lgt PROPERTIES COMPILE_DEFINITIONS "BEHIND_ME_TOL=0.05")
 
-install(FILES lgt.1  DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES lgt.1  DESTINATION ${MAN_DIR}/man1)

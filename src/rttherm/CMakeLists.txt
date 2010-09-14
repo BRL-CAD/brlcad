@@ -1,30 +1,24 @@
 include_directories(
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
   ${X11_INCLUDE_DIR}
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
 )
 
-add_definitions(
-  ${BRLCAD_STD_DEFS}
-)
-
-
 IF(BRLCAD-ENABLE_X11)
-  BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "optical fb ${TK_LIBRARY} ${X11_LIBRARIES}")
+	FOREACH(xlib ${X11_LIBRARIES})
+		SET(RTTHERM_XLIBS "${RTTHERM_XLIBS} ${xlib}")
+	ENDFOREACH(xlib ${X11_LIBRARIES})
+	BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "liboptical libfb ${TK_LIBRARY} ${RTTHERM_XLIBS}")
 ENDIF(BRLCAD-ENABLE_X11)
 
-add_executable(rttherm spectrum.c viewtherm.c)
-TARGET_LINK_LIBRARIES(rttherm librttherm optical fb multispectral ged)
+BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "librttherm liboptical libfb libmultispectral libged")
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
-INSTALL(PROGRAMS ${BRLCAD_BINARY_DIR}/bin/rttherm DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 INSTALL(PROGRAMS ssampview.tcl DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 
-BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c "optical")
+BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c "liboptical")
 
 set(rttherm_MANS
   rttherm.1
   ssamp-bw.1
 )
-install(FILES ${rttherm_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES ${rttherm_MANS} DESTINATION ${MAN_DIR}/man1)

@@ -1,3 +1,7 @@
+include_directories(
+    ${TCL_INCLUDE_PATH}
+)
+
 set(LIBSYSV_SOURCES
     memset.c
     strchr.c
@@ -7,20 +11,12 @@ set(LIBSYSV_SOURCES
     tcl.c
 )
 
-include_directories(
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${TCL_INCLUDE_PATH}
-)
-
 add_definitions(
-    -DBRLCADBUILD
-    -DHAVE_CONFIG_H
     -DHAVE_MEMSET
     -DHAVE_STRCHR
     -DHAVE_STRDUP
     -DHAVE_STRTOK
 )
 
-BRLCAD_ADDLIB(sysv "${LIBSYSV_SOURCES}" "${TCL_LIBRARY}")
-SET_TARGET_PROPERTIES(sysv PROPERTIES VERSION 19.0.1 SOVERSION 19)
+BRLCAD_ADDLIB(libsysv "${LIBSYSV_SOURCES}" "${TCL_LIBRARY}")
+SET_TARGET_PROPERTIES(libsysv PROPERTIES VERSION 19.0.1 SOVERSION 19)

@@ -1,11 +1,6 @@
 include_directories(
-  ${BRLCAD_STD_INCLUDES}
   ${TCL_INCLUDE_PATH}
   ${BRLCAD_SOURCE_DIR}/src/gtools/beset
-)
-
-add_definitions(
-  ${BRLCAD_STD_DEFS}
 )
 
 SET(beset_SRCS
@@ -15,17 +10,17 @@ SET(beset_SRCS
 )
 
 add_executable(beset ${beset_SRCS})
-target_link_libraries(beset wdb)
+target_link_libraries(beset libwdb)
 
-BRLCAD_ADDEXEC(g_diff g_diff.c "librt ged tclcad")
+BRLCAD_ADDEXEC(g_diff g_diff.c "librt libged libtclcad")
 BRLCAD_ADDEXEC(g_lint g_lint.c librt)
-BRLCAD_ADDEXEC(g_qa g_qa.c "librt ged")
-BRLCAD_ADDEXEC(remapid remapid.c "bu librt")
+BRLCAD_ADDEXEC(g_qa g_qa.c "librt libged")
+BRLCAD_ADDEXEC(remapid remapid.c "libbu librt")
 
 add_executable(g_transfer g_transfer.c)
-target_link_libraries(g_transfer librt pkg)
+target_link_libraries(g_transfer librt libpkg)
 
-INSTALL(FILES g_transfer.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES g_transfer.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 SET(gtools_MANS
   g_diff.1
@@ -33,4 +28,4 @@ SET(gtools_MANS
   remapid.1
 )
 
-install(FILES ${gtools_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES ${gtools_MANS} DESTINATION ${MAN_DIR}/man1)

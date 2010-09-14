@@ -1,22 +1,16 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_STD_INCLUDES}
   ${TCL_INCLUDE_PATH}
 )
 
-add_definitions(
-  ${BRLCAD_STD_DEFS}
-)
-
-
-BRLCAD_ADDEXEC(bolt bolt.c wdb)
-BRLCAD_ADDEXEC(coil coil.c wdb)
-BRLCAD_ADDEXEC(fence fence.c wdb)
-BRLCAD_ADDEXEC(gastank gastank.c wdb)
-BRLCAD_ADDEXEC(handle handle.c wdb)
-BRLCAD_ADDEXEC(human human.c "wdb ged")
-BRLCAD_ADDEXEC(picket_fence picket_fence.c wdb)
-BRLCAD_ADDEXEC(tire tire.c "wdb ged")
-BRLCAD_ADDEXEC(window window.c wdb)
-BRLCAD_ADDEXEC(window_frame window_frame.c wdb)
-BRLCAD_ADDEXEC(wire wire.c wdb)
+BRLCAD_ADDEXEC(bolt bolt.c libwdb)
+BRLCAD_ADDEXEC(coil coil.c libwdb)
+BRLCAD_ADDEXEC(fence fence.c libwdb)
+BRLCAD_ADDEXEC(gastank gastank.c libwdb)
+BRLCAD_ADDEXEC(handle handle.c libwdb)
+BRLCAD_ADDEXEC(human human.c "libwdb libged")
+BRLCAD_ADDEXEC(picket_fence picket_fence.c libwdb)
+BRLCAD_ADDEXEC(tire tire.c "libwdb libged")
+BRLCAD_ADDEXEC(window window.c libwdb)
+BRLCAD_ADDEXEC(window_frame window_frame.c libwdb)
+BRLCAD_ADDEXEC(wire wire.c libwdb)

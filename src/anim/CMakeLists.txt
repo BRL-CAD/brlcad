@@ -1,41 +1,36 @@
 include_directories(
-  ${BRLCAD_STD_INCLUDES}
   ${TCL_INCLUDE_PATH}
 )
 
-add_definitions(
-  ${BRLCAD_STD_DEFS}
-)
+BRLCAD_ADDEXEC(anim_cascade anim_cascade.c libbn)
 
-BRLCAD_ADDEXEC(anim_cascade anim_cascade.c bn)
+BRLCAD_ADDEXEC(anim_fly anim_fly.c libbu)
 
-BRLCAD_ADDEXEC(anim_fly anim_fly.c bu)
+BRLCAD_ADDEXEC(anim_hardtrack anim_hardtrack.c libbn)
 
-BRLCAD_ADDEXEC(anim_hardtrack anim_hardtrack.c bn)
+BRLCAD_ADDEXEC(anim_keyread anim_keyread.c libbn)
 
-BRLCAD_ADDEXEC(anim_keyread anim_keyread.c bn)
+BRLCAD_ADDEXEC(anim_lookat anim_lookat.c libbn)
 
-BRLCAD_ADDEXEC(anim_lookat anim_lookat.c bn)
+BRLCAD_ADDEXEC(anim_offset anim_offset.c libbn)
 
-BRLCAD_ADDEXEC(anim_offset anim_offset.c bn)
+BRLCAD_ADDEXEC(anim_orient anim_orient.c libbn)
 
-BRLCAD_ADDEXEC(anim_orient anim_orient.c bn)
+BRLCAD_ADDEXEC(anim_script anim_script.c libbn)
 
-BRLCAD_ADDEXEC(anim_script anim_script.c bn)
+BRLCAD_ADDEXEC(anim_sort anim_sort.c libbu)
 
-BRLCAD_ADDEXEC(anim_sort anim_sort.c bu)
+BRLCAD_ADDEXEC(anim_time anim_time.c libbu)
 
-BRLCAD_ADDEXEC(anim_time anim_time.c bu)
+BRLCAD_ADDEXEC(anim_track "anim_track.c cattrack.c" libbn)
 
-BRLCAD_ADDEXEC(anim_track "anim_track.c cattrack.c" bn)
+BRLCAD_ADDEXEC(anim_turn anim_turn.c libbn)
 
-BRLCAD_ADDEXEC(anim_turn anim_turn.c bn)
+BRLCAD_ADDEXEC(chan_add chan_add.c libbu)
 
-BRLCAD_ADDEXEC(chan_add chan_add.c bu)
+BRLCAD_ADDEXEC(chan_mult chan_mult.c libbu)
 
-BRLCAD_ADDEXEC(chan_mult chan_mult.c bu)
-
-BRLCAD_ADDEXEC(chan_permute chan_permute.c bu)
+BRLCAD_ADDEXEC(chan_permute chan_permute.c libbu)
 
 set(anim_MANS
   anim_script.1 
@@ -47,4 +42,4 @@ set(anim_MANS
   chan_permute.1
 )
 
-install(FILES ${anim_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1) 
+install(FILES ${anim_MANS} DESTINATION ${MAN_DIR}/man1) 

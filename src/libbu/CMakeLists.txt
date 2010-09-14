@@ -1,3 +1,9 @@
+include_directories(
+    ${PNG_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
+    ${TCL_INCLUDE_PATH}
+)
+
 set(LIBBU_SOURCES
     argv.c
     avs.c
@@ -73,32 +79,15 @@ set(LIBBU_SOURCES
     xdr.c
 )
 
-include_directories(
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${BRLCAD_PNG_INCLUDE_DIR}
-    ${BRLCAD_ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_PATH}
-)
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} ${TCL_LIBRARY}")
+SET_TARGET_PROPERTIES(libbu PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
-
-BRLCAD_ADDLIB(bu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${BRLCAD_PNG_LIBRARY} ${TCL_LIBRARY}")
-SET_TARGET_PROPERTIES(bu PROPERTIES VERSION 19.0.1 SOVERSION 19)
-
-set(HTESTER_SOURCES
-    htester.c
-)
-
-add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${BRLCAD_PNG_LIBRARY} ${TCL_LIBRARY} bu)
+add_executable(htester htester.c)
+target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
 
 set(bu_MAN3
   htond.3
   libbu.3
   redblack.3
 )
-install(FILES ${bu_MAN3} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man3)
+install(FILES ${bu_MAN3} DESTINATION ${MAN_DIR}/man3)

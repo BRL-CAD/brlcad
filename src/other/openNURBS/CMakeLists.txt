@@ -221,12 +221,13 @@ SET(ON_DLL_HEADERS
 )
 
 set(OPENNURBS_LINKLIBRARIES
-    ${BRLCAD_ZLIB_LIBRARY}
+    ${ZLIB_LIBRARY}
 )
 
+# Ideally, we should only need ZLIB here
 include_directories(
-    ${BRLCAD_ZLIB_INCLUDE_DIR}
-    ${BRLCAD_SOURCE_DIR}/include
+	${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
+    ${ZLIB_INCLUDE_DIR}
 )
 
 if (MSVC)

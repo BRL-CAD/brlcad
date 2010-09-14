@@ -1,22 +1,13 @@
 include_directories(
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	${BRLCAD_ZLIB_INCLUDE_DIR}
-	${BRLCAD_OPENNURBS_INCLUDE_DIR}
-	${BRLCAD_REGEX_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+	${OPENNURBS_INCLUDE_DIR}
+	${REGEX_INCLUDE_DIR}
 	${TCL_INCLUDE_PATH}
 )
 
 IF(MSVC)
 add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
     -DON_DLL_IMPORTS
-)
-ELSE(MSVC)
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
 )
 ENDIF(MSVC)
 
@@ -26,8 +17,8 @@ add_executable(iges
     n_iges.cpp
     n_main.cpp
 )
-target_link_libraries(iges bu librt wdb ${BRLCAD_OPENNURBS_LIBRARY})
-#INSTALL(TARGETS iges RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+target_link_libraries(iges libbu librt libwdb ${OPENNURBS_LIBRARY})
+#INSTALL(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(iges-g
     add_face.c
@@ -102,18 +93,18 @@ add_executable(iges-g
     usage.c
     wedge.c
 )
-target_link_libraries(iges-g bu bn librt wdb)
-INSTALL(TARGETS iges-g RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+target_link_libraries(iges-g libbu libbn librt libwdb)
+INSTALL(TARGETS iges-g RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(g-iges
     g-iges.c
     iges.c
 )
-target_link_libraries(g-iges bu librt)
-INSTALL(TARGETS g-iges RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+target_link_libraries(g-iges libbu librt)
+INSTALL(TARGETS g-iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 SET(iges_MANS
   g-iges.1
   iges-g.1
 )
-install(FILES ${iges_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES ${iges_MANS} DESTINATION ${MAN_DIR}/man1)

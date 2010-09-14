@@ -1,12 +1,7 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_STD_INCLUDES}
-  ${BRLCAD_TERMLIB_INCLUDE_DIR}
+  ${TERMLIB_INCLUDE_DIR}
   ${TCL_INCLUDE_PATH}
-)
-
-add_definitions(
-  ${BRLCAD_STD_DEFS}
 )
 
 SET(fbed_SOURCES
@@ -24,6 +19,6 @@ SET(fbed_SOURCES
   try.c
 )
 
-BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "vfont fb termio cursor ${BRLCAD_TERMLIB_LIBRARY}")
+BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libvfont libfb libtermio libcursor ${TERMLIB_LIBRARY}")
 
-install(FILES fbed.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES fbed.1 DESTINATION ${MAN_DIR}/man1)

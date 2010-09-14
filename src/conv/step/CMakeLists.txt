@@ -374,25 +374,18 @@ SET(stepg_HDRS
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
 	${BRLCAD_SCL_INCLUDE_DIR}
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/cldai
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/test
-	${BRLCAD_OPENNURBS_INCLUDE_DIR}
-   ${BRLCAD_SOURCE_DIR}/src/other/tnt
-	${BRLCAD_ZLIB_INCLUDE_DIR}
+	${OPENNURBS_INCLUDE_DIR}
+	${TNT_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
 	${TCL_INCLUDE_PATH}
 )
 
-add_definitions(
-	-DHAVE_CONFIG_H
-	-DBRLCADBUILD=1
-)
-
 add_executable(step-g ${stepg_SOURCES})
-target_link_libraries(step-g bu wdb librt steputils stepcore stepdai stepeditor ${BRLCAD_OPENNURBS_LIBRARY})
-INSTALL(TARGETS step-g RUNTIME DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+target_link_libraries(step-g libbu libwdb librt steputils stepcore stepdai stepeditor ${OPENNURBS_LIBRARY})
+INSTALL(TARGETS step-g RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

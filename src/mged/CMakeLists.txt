@@ -3,9 +3,8 @@ ADD_SUBDIRECTORY(points)
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/points
-  ${BRLCAD_STD_INCLUDES}
-  ${BRLCAD_TERMLIB_INCLUDE_DIR}
-  ${BRLCAD_PNG_INCLUDE_DIR}
+  ${TERMLIB_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIR}
   ${X11_INCLUDE_DIR}
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
@@ -37,7 +36,6 @@ ENDIF(BRLCAD-ENABLE_X11)
 #ENDIF(TK_LIBRARY)
 
 add_definitions(
-  ${BRLCAD_STD_DEFS}
   ${MGED_DEFINES}
 )
 
@@ -100,14 +98,14 @@ SET(MGED_SOURCES
   vrlink.c
 )
 
-BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "points termio wdb ged dm tclcad")
+BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libpoints libtermio libwdb libged libdm libtclcad")
 
-BRLCAD_ADDEXEC(cad_boundp cad_boundp.c bu)
+BRLCAD_ADDEXEC(cad_boundp cad_boundp.c libbu)
 
-BRLCAD_ADDEXEC(cad_parea cad_parea.c bu)
+BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 
 SET(mged_MANS
   cad_boundp.1
   cad_parea.1
 )
-install(FILES ${mged_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES ${mged_MANS} DESTINATION ${MAN_DIR}/man1)

@@ -1,3 +1,7 @@
+include_directories(
+    ${TCL_INCLUDE_PATH}
+)
+
 set(LIBBN_SOURCES
     anim.c
     axis.c
@@ -30,18 +34,7 @@ set(LIBBN_SOURCES
     wavelet.c
 )
 
-include_directories(
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${TCL_INCLUDE_PATH}
-)
+BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" libbu)
+SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
-
-BRLCAD_ADDLIB(bn "${LIBBN_SOURCES}" bu)
-SET_TARGET_PROPERTIES(bn PROPERTIES VERSION 19.0.1 SOVERSION 19)
-
-install(FILES libplot3.3 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man3)
+install(FILES libplot3.3 DESTINATION ${MAN_DIR}/man3)

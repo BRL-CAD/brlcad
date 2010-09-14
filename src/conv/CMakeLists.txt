@@ -3,43 +3,34 @@ ADD_SUBDIRECTORY(iges)
 ADD_SUBDIRECTORY(intaval)
 
 include_directories(
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	${BRLCAD_ZLIB_INCLUDE_DIR}
-	${BRLCAD_REGEX_INCLUDE_DIR}
-	${BRLCAD_OPENNURBS_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+	${REGEX_INCLUDE_DIR}
+	${OPENNURBS_INCLUDE_DIR}
 	${TCL_INCLUDE_PATH}
 )
 
 IF(MSVC)
 add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
     -DON_DLL_IMPORTS
-)
-ELSE(MSVC)
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
 )
 ENDIF(MSVC)
 
-BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "wdb ${BRLCAD_OPENNURBS_LIBRARY}")
+BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb ${OPENNURBS_LIBRARY}")
 set_target_properties(3dm-g PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
 
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "bu librt wdb ged") 
+BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libbu librt libwdb libged") 
 
-BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c bu) 
+BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu) 
 
-BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c bu) 
+BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu) 
 
-BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c wdb) 
+BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c libwdb) 
 
-BRLCAD_ADDEXEC(g2asc asc/g2asc.c "bu librt")
+BRLCAD_ADDEXEC(g2asc asc/g2asc.c "libbu librt")
 
-BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "bu librt")
+BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "libbu librt")
 
-BRLCAD_ADDEXEC(bot_dump bot_dump.c "librt ged")
+BRLCAD_ADDEXEC(bot_dump bot_dump.c "librt libged")
 
 BRLCAD_ADDEXEC(bot_shell-vtk bot_shell-vtk.c librt)
 
@@ -52,103 +43,103 @@ SET(comgeom-g_SRCS
     comgeom/solid.c
     comgeom/tools.c
 )
-BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "bu bn wdb")
+BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libbu libbn libwdb")
 
-BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "bu sysv")
+BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu libsysv")
 
-BRLCAD_ADDEXEC(cy-g cy-g.c wdb)
+BRLCAD_ADDEXEC(cy-g cy-g.c libwdb)
 
-BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "bu librt wdb")
+BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(dem-g dem-g.c wdb)
+BRLCAD_ADDEXEC(dem-g dem-g.c libwdb)
 
-BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "bu bn librt wdb")
+BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libbu libbn librt libwdb")
 
-BRLCAD_ADDEXEC(enf-g enf-g.c wdb)
+BRLCAD_ADDEXEC(enf-g enf-g.c libwdb)
 
 BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 
-BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "bu bn sysv")
+BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbu libbn libsysv")
 
-BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c wdb)
+BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 
-BRLCAD_ADDEXEC(g-dxf dxf/g-dxf.c "bu librt gcv")
+BRLCAD_ADDEXEC(g-dxf dxf/g-dxf.c "libbu librt libgcv")
 
-BRLCAD_ADDEXEC(g-egg g-egg.c "wdb gcv")
+BRLCAD_ADDEXEC(g-egg g-egg.c "libwdb libgcv")
 
 BRLCAD_ADDEXEC(g-euclid euclid/g-euclid.c librt)
 
 BRLCAD_ADDEXEC(g-euclid1 euclid/g-euclid1.c librt)
 
-BRLCAD_ADDEXEC(g-nff g-nff.c wdb)
+BRLCAD_ADDEXEC(g-nff g-nff.c libwdb)
 
-BRLCAD_ADDEXEC(g-nmg nmg/g-nmg.c wdb)
+BRLCAD_ADDEXEC(g-nmg nmg/g-nmg.c libwdb)
 
-BRLCAD_ADDEXEC(fast4-g fast4-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(fast4-g fast4-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(jack-g jack/jack-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(jack-g jack/jack-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(g-jack jack/g-jack.c "bu librt")
+BRLCAD_ADDEXEC(g-jack jack/g-jack.c "libbu librt")
 
-BRLCAD_ADDEXEC(g-off off/g-off.c "bu librt")
+BRLCAD_ADDEXEC(g-off off/g-off.c "libbu librt")
 
-BRLCAD_ADDEXEC(off-g off/off-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(off-g off/off-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(stl-g stl/stl-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(stl-g stl/stl-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(g-stl stl/g-stl.c "bu librt gcv")
+BRLCAD_ADDEXEC(g-stl stl/g-stl.c "libbu librt libgcv")
 
 add_executable(g4-g5 g4-g5.c)
-target_link_libraries(g4-g5 bu librt)
+target_link_libraries(g4-g5 libbu librt)
 
 add_executable(g5-g4 g5-g4.c)
-target_link_libraries(g5-g4 bu librt wdb)
+target_link_libraries(g5-g4 libbu librt libwdb)
 
-BRLCAD_ADDEXEC(g-acad g-acad.c "bu librt")
+BRLCAD_ADDEXEC(g-acad g-acad.c "libbu librt")
 
-BRLCAD_ADDEXEC(g-obj g-obj.c "bu librt")
+BRLCAD_ADDEXEC(g-obj g-obj.c "libbu librt")
 
-BRLCAD_ADDEXEC(obj-g obj-g.c "bu librt")
+BRLCAD_ADDEXEC(obj-g obj-g.c "libbu librt")
 
-BRLCAD_ADDEXEC(patch-g patch/patch-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(rpatch patch/rpatch.c "bu librt")
+BRLCAD_ADDEXEC(rpatch patch/rpatch.c "libbu librt")
 
-BRLCAD_ADDEXEC(g-tankill tankill/g-tankill.c "bu librt")
+BRLCAD_ADDEXEC(g-tankill tankill/g-tankill.c "libbu librt")
 
-BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(g-var g-var.c "bu librt")
+BRLCAD_ADDEXEC(g-var g-var.c "libbu librt")
 
-BRLCAD_ADDEXEC(g-vrml g-vrml.c "bu librt")
+BRLCAD_ADDEXEC(g-vrml g-vrml.c "libbu librt")
 
-BRLCAD_ADDEXEC(g-x3d g-x3d.c "bu librt")
+BRLCAD_ADDEXEC(g-x3d g-x3d.c "libbu librt")
 
-BRLCAD_ADDEXEC(nastran-g nastran-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(nastran-g nastran-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c wdb)
+BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c libwdb)
 
-BRLCAD_ADDEXEC(nmg-rib nmg/nmg-rib.c wdb)
+BRLCAD_ADDEXEC(nmg-rib nmg/nmg-rib.c libwdb)
 
-BRLCAD_ADDEXEC(nmg-sgp nmg/nmg-sgp.c wdb)
+BRLCAD_ADDEXEC(nmg-sgp nmg/nmg-sgp.c libwdb)
 
-BRLCAD_ADDEXEC(ply-g ply-g.c "bu librt")
+BRLCAD_ADDEXEC(ply-g ply-g.c "libbu librt")
 
-BRLCAD_ADDEXEC(poly-bot poly-bot.c wdb) 
+BRLCAD_ADDEXEC(poly-bot poly-bot.c libwdb) 
 
-BRLCAD_ADDEXEC(proe-g proe-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(proe-g proe-g.c "libbu librt libwdb")
 
-BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "bu librt wdb")
+BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libbu librt libwdb")
 
 add_executable(g-xxx_facets g-xxx_facets.c)
-target_link_libraries(g-xxx_facets bu librt)
+target_link_libraries(g-xxx_facets libbu librt)
 
-BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "bu librt wdb")
+BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "libbu librt libwdb")
 
-install(PROGRAMS intaval-g.py DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
+install(PROGRAMS intaval-g.py DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-INSTALL(FILES g-xxx.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
-INSTALL(FILES g-xxx_facets.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES g-xxx.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
+INSTALL(FILES g-xxx_facets.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 SET(conv_MANS
   asc/g2asc.1 
@@ -191,4 +182,4 @@ SET(conv_MANS
   viewpoint-g.1
 )
 
-install(FILES ${conv_MANS} DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES ${conv_MANS} DESTINATION ${MAN_DIR}/man1)

@@ -1,10 +1,5 @@
 include_directories(
-  ${BRLCAD_STD_INCLUDES}
   ${TCL_INCLUDE_PATH}
-)
-
-add_definitions(
-  ${BRLCAD_STD_DEFS}
 )
 
 SET(halftone_SOURCES
@@ -17,6 +12,6 @@ SET(halftone_SOURCES
   tonescale.c
 )
 
-BRLCAD_ADDEXEC(halftone "${halftone_SOURCES}" "librt fb")
+BRLCAD_ADDEXEC(halftone "${halftone_SOURCES}" "librt libfb")
 
-install(FILES halftone.1 DESTINATION ${BRLCAD_INSTALL_MAN_DIR}/man1)
+install(FILES halftone.1 DESTINATION ${MAN_DIR}/man1)

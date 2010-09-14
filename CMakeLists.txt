@@ -867,7 +867,7 @@ ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
 # Some of the BRL-CAD targets need to depend on the local
 # tcl/tk targets if they are present
-SET(TCL_DEPLIBS "bu;sysv;librt")
+SET(TCL_DEPLIBS "libbu;libsysv;librt")
 if(BRLCAD_BUILD_LOCAL_TCL)
 	FOREACH(target ${TCL_DEPLIBS})
 		ADD_DEPENDENCIES(${target} tcl)

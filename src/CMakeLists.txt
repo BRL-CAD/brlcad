@@ -28,10 +28,32 @@
 #	${ON_NIL} \
 #	${TCL}
 
-# Minimal directories required for any BRL-CAD
-# functionality
+# Minimal directories required for any BRL-CAD functionality
+
+# The other subdirectory does not share (at least, not universally)
+# certain definitions common to all other directories in BRL-CAD, 
+# so add this first.  It is always on in any case, and if any src/other
+# directory requires BRL-CAD specific directories or definitions they
+# will need to call them out explicitly
+ADD_SUBDIRECTORY(other)
+
+# Define some common definitions and includes here that are used
+# in all BRL-CAD builds
+
+include_directories(
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	)
+add_definitions(
+	-DHAVE_CONFIG_H
+	-DBRLCADBUILD=1
+	)
+
+
+# We will always need the required directories,
+# so go ahead and add them
+
 SET(required_dirs
-	other 
 	libbu 
 	libbn 
 	libsysv 
@@ -39,8 +61,6 @@ SET(required_dirs
 	external
 )
 
-# We will always need the required directories,
-# so go ahead and add them
 FOREACH(subdir ${required_dirs})
 	ADD_SUBDIRECTORY(${subdir})
 ENDFOREACH(subdir ${required_dirs})
