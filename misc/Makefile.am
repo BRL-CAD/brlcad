@@ -23,7 +23,6 @@ EXTRA_DIST = \
 	${DATAFILES} \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
-	Cakefile.defs \
 	Description.txt \
 	Doxyfile \
 	Makefile.defs \
