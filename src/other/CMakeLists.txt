@@ -70,17 +70,18 @@ IF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 	SET(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_UTAHRLE)
 
+
 # URTToolkit
 # Programs, not a library - needs libutahrle, but the "check for system install" logic
 # will be different here.  Ignore for now, revisit later.
 ADD_SUBDIRECTORY(URToolkit)
 
 
-# Tcl/Tk presents a number of complexities for BRL-CAD and CMake - BRL-CAD requires
+# Tcl/Tk presents a number of complexities for BRL-CAD and CMake.  BRL-CAD requires
 # far more knowledge of the details of a Tcl/Tk installation than most programs,
-# which unfortunately means the standard FindTCL.cmake is not sufficient.  Rather than
-# use THIRD_PARTY_OPTION here, we will instead provide the option manually and ensure
-# that BRL-CAD's own FindTCL.cmake file is loaded.  
+# which unfortunately means the standard FindTCL.cmake is not sufficient. We have our
+# own FindTCL routine which handles Tcl/Tk and its stubs, so trigger this using
+# the THIRD_PARTY_OPTION for TCL.
 
 # Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
 SET(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
@@ -166,10 +167,8 @@ ENDIF(BRLCAD_BUILD_LOCAL_ITCL)
 FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ITCL_VERSION	\"${ITCL_VERSION}\"\n")
 
 THIRD_PARTY_AUTOCONF_EXTERNAL_PROJECT(ITK itk src/other/incrTcl/itk "" "--with-tcl=${TCL_CONF_PREFIX};--with-tk=${TK_CONF_PREFIX}")
-IF(BRLCAD_BUILD_LOCAL_TK)
-	ADD_DEPENDENCIES(itk itcl tcl tk)
-ENDIF(BRLCAD_BUILD_LOCAL_TK)
 IF(BRLCAD_BUILD_LOCAL_ITK)
+	ADD_DEPENDENCIES(itk itcl tcl tk)
 	SET(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
 ENDIF(BRLCAD_BUILD_LOCAL_ITK)
 FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine ITK_VERSION	\"${ITK_VERSION}\"\n")

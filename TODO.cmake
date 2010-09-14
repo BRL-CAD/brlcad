@@ -9,12 +9,6 @@ Remaining items:
 3.  Our tcl autopath function for adding paths to the package search list needs fixing - CMake breaks
     assumptions it was using.
 
-4.  Scrub the third party logic and clean up/simplify - try to get away from using BRLCAD_ variables
-    when they aren't needed.
-
-5.  Break logic out of the toplevel into src and src/other dirs - among other things, we want to
-    be able to cd in to src and type make to avoid the doc subdirectory.
-
 6.  Review the dist logic in the toplevel Makefile.am.  Gonna have to study up on CPack and CTest -
 	 figure out the process for checking permissions, install results, etc. in order to provide
 	 the same robustness for CMake generated tarballs that we have for autotools.
@@ -25,3 +19,14 @@ Remaining items:
 
 9.  Multiplatform testing.  Specifically, find a Windows box and conditionalize everything which
     doesn't work out-of-box (lex/yacc and sh based logic are obvious, other probables)
+
+
+Done (to first order, all this needs testing)
+
+4.  Scrub the third party logic and clean up/simplify - try to get away from using BRLCAD_ variables
+    when they aren't needed.
+
+5.  Break logic out of the toplevel into src and src/other dirs - among other things, we want to
+    be able to cd in to src and type make to avoid the doc subdirectory.
+
+
