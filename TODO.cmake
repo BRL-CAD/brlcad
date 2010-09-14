@@ -1,7 +1,5 @@
 Remaining items:
 
-1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
-
 2.  Do a diff of all the generated scripts using configure_file - make sure what autotools produces 
 	 is what is being produced by CMake, and make sure no variable definitions in support of scripts 
 	 are nuking variables used by CMake
@@ -22,6 +20,8 @@ Remaining items:
 
 
 Done (to first order, all this needs testing)
+
+1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
 
 4.  Scrub the third party logic and clean up/simplify - try to get away from using BRLCAD_ variables
     when they aren't needed.
