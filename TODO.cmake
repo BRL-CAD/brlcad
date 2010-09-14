@@ -4,9 +4,6 @@ Remaining items:
 	 is what is being produced by CMake, and make sure no variable definitions in support of scripts 
 	 are nuking variables used by CMake
 
-3.  Our tcl autopath function for adding paths to the package search list needs fixing - CMake breaks
-    assumptions it was using.
-
 6.  Review the dist logic in the toplevel Makefile.am.  Gonna have to study up on CPack and CTest -
 	 figure out the process for checking permissions, install results, etc. in order to provide
 	 the same robustness for CMake generated tarballs that we have for autotools.
@@ -22,6 +19,10 @@ Remaining items:
 Done (to first order, all this needs testing)
 
 1.  Detect OpenGL properly on Apple - choose X11 vs Aqua, and get the ogl code working
+
+3.  Our tcl autopath function for adding paths to the package search list needs fixing - CMake breaks
+    assumptions it was using.
+
 
 4.  Scrub the third party logic and clean up/simplify - try to get away from using BRLCAD_ variables
     when they aren't needed.
