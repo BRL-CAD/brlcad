@@ -46,106 +46,6 @@
 
 #define MAX_BUF 2048
 
-/* FIXME: we utilize this Tcl internal in here */
-#if !defined(_WIN32) || defined(__CYGWIN__)
-extern Tcl_Obj *TclGetLibraryPath (void);
-#endif
-
-
-/* helper routine to determine whether the full 'path' includes a
- * directory named 'src'.  this is used to determine whether a
- * particular invocation is being run from the BRL-CAD source
- * directories or from some install directory.
- *
- * returns a pointer to the subpath that contains the 'src' directory.
- * e.g. provided /some/path/to/src/dir/blah will return /some/path/to
- */
-static const char *
-path_to_src(const char *path)
-{
-    static char buffer[MAX_BUF] = {0};
-    char *match = NULL;
-
-    if (!path) {
-	return NULL;
-    }
-    if (strlen(path)+2 > MAX_BUF) {
-	/* path won't fit */
-	return NULL;
-    }
-
-    snprintf(buffer, MAX_BUF, "%s%c", path, BU_DIR_SEPARATOR);
-
-    match = strstr(buffer, "/src/");
-    if (match) {
-	*(match) = '\0';
-	return buffer;
-    }
-    return NULL;
-}
-
-
-/**
- * debug printing routine for printing out the tcl_library value(s)
- */
-void
-tclcad_tcl_library(Tcl_Interp *interp)
-{
-    int cnt = 0;
-    int pathcount = 0;
-    Tcl_Obj *dir = NULL;
-    Tcl_Obj *tclpath = NULL;
-    char buffer[MAX_BUF] = {0};
-
-    /* FIXME: this is a private internal call */
-    tclpath = TclGetLibraryPath();
-    if (!tclpath) {
-	bu_log("WARNING: Unable to get the library path\n");
-	return;
-    }
-
-    Tcl_IncrRefCount(tclpath);
-    Tcl_ListObjLength(NULL, tclpath, &pathcount);
-    if (pathcount > 1) {
-	bu_log("WARNING: tcl_library is set to multiple paths?\n");
-    } else if (pathcount <= 0) {
-	if (interp) {
-	    const char *setting;
-	    snprintf(buffer, MAX_BUF, "set tcl_library");
-	    Tcl_Eval(interp, buffer);
-	    setting = Tcl_GetStringResult(interp);
-	    if (setting && (strlen(setting) > 0)) {
-		Tcl_Obj *tcllib = Tcl_NewStringObj(setting, -1);
-		Tcl_Obj *listtl = Tcl_NewListObj(1, &tcllib);
-		TclSetLibraryPath(listtl);
-	    }
-	}
-
-	Tcl_DecrRefCount(tclpath);
-	/* FIXME: this is a private internal call */
-	tclpath = TclGetLibraryPath();
-	Tcl_IncrRefCount(tclpath);
-
-	Tcl_ListObjLength(NULL, tclpath, &pathcount);
-	if (pathcount <= 0) {
-	    bu_log("WARNING: tcl_library is unset (unexpected)\n");
-	}
-    }
-
-    for (cnt=0; cnt < pathcount; cnt++) {
-	Tcl_ListObjIndex(NULL, tclpath, cnt, &dir);
-	Tcl_IncrRefCount(dir);
-	if (dir) {
-#ifdef DEBUG
-	    bu_log("Using Tcl library at %s\n", Tcl_GetString(dir));
-#endif
-	}
-	Tcl_DecrRefCount(dir);
-    }
-    Tcl_DecrRefCount(tclpath);
-}
-
-
 /**
  * Set up the Tcl auto_path for locating various necessary BRL-CAD
  * scripting resources. Detect whether the current invocation is from
@@ -195,6 +95,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     const char *which_argv = NULL;
     const char *srcpath = NULL;
     int from_installed = 0;
+    int from_built = 0;
 
     int found_init_tcl = 0;
     int found_tk_tcl = 0;
@@ -256,14 +157,13 @@ tclcad_auto_path(Tcl_Interp *interp)
     Tcl_Eval(interp, bu_vls_addr(&tclcmd));
     bu_vls_sprintf(&build_full_path, "%s", Tcl_GetStringFromObj(Tcl_GetObjResult(interp), NULL));
 
-    printf("string of invocation binary: %s\n", bu_vls_addr(&invocation_full_path));
-    printf("root: %s\n", bu_vls_addr(&root_full_path));
-    printf("build: %s\n", bu_vls_addr(&build_full_path));
-    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&build_full_path)))
-       printf("Running from build directory\n");
-
-    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&root_full_path)))
-       printf("Running from installed directory\n");
+    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&root_full_path))) {
+	    from_installed = 1;
+    } else {
+	    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&build_full_path))) {
+		    from_built = 1;
+	    }
+    }
 
     bu_vls_free(&tclcmd);
     bu_vls_free(&invocation_full_path);
@@ -274,8 +174,7 @@ tclcad_auto_path(Tcl_Interp *interp)
     snprintf(buffer, MAX_BUF, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
 
     /* are we running from an installed binary? if so add to path */
-    if (bu_file_exists(buffer) && bu_same_file(buffer, which_argv)) {
-	from_installed = 1;
+    if (from_installed) {
 	bu_vls_printf(&auto_path, "%c%s%clib",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
@@ -309,10 +208,11 @@ tclcad_auto_path(Tcl_Interp *interp)
     }
 
     /* are we running uninstalled? */
-    srcpath = path_to_src(which_argv);
+    if(from_built)
+	    srcpath = BUILD_SOURCE_DIR;
 
-    /* add search paths for source invocation */
-    if (srcpath) {
+    /* if uninstalled, add search paths for source invocation */
+    if (from_built) {
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%cunix",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%clibrary",

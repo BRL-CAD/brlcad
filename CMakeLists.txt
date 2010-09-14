@@ -687,6 +687,11 @@ ADD_SUBDIRECTORY(misc)
 ADD_SUBDIRECTORY(pix)
 ADD_SUBDIRECTORY(bench)
 
+# Define the source and build directories in the config header for tcl auto_path setting
+# The install directory is already avaiable in C using bu_brlcad_root
+FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_BINARY_DIR \"${CMAKE_BINARY_DIR}\"\n")
+FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_SOURCE_DIR \"${CMAKE_SOURCE_DIR}\"\n")
+
 # Now that all the tests are done, configure the brlcad_config.h file:
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
