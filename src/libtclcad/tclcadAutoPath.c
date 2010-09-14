@@ -227,7 +227,22 @@ tclcad_auto_path(Tcl_Interp *interp)
     if (!which_argv) {
 	which_argv = bu_argv0_full_path();
     }
+    char resolvedargv0[MAXPATHLEN];
+    char resolvedroot[MAXPATHLEN];
+    char resolvedbuilddir[MAXPATHLEN];
+    realpath(which_argv, resolvedargv0);
+    printf("string of invocation binary: %s\n", resolvedargv0);
+    realpath(root, resolvedroot);
+    printf("root: %s\n", resolvedroot);
+    realpath(BUILD_BINARY_DIR, resolvedbuilddir);
+    printf("root: %s\n", resolvedbuilddir);
 
+    if(strstr(resolvedargv0, resolvedbuilddir))
+       printf("Running from build directory\n");
+
+    if(strstr(resolvedargv0, resolvedroot))
+       printf("Running from installed directory\n");
+    
     /* get name of installation binary */
     snprintf(buffer, MAX_BUF, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
 
