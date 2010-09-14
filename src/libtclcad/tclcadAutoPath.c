@@ -182,6 +182,10 @@ tclcad_auto_path(Tcl_Interp *interp)
 {
     struct bu_vls auto_path;
     struct bu_vls lappend;
+    struct bu_vls tclcmd;
+    struct bu_vls invocation_full_path;
+    struct bu_vls root_full_path;
+    struct bu_vls build_full_path;
     const char *library_path = NULL;
 
     const char *root = NULL;
@@ -197,6 +201,14 @@ tclcad_auto_path(Tcl_Interp *interp)
     int found_itcl_tcl = 0;
     int found_itk_tcl = 0;
 
+    Tcl_Obj *invocationPathPtr;
+    Tcl_Obj *rootPathPtr;
+    Tcl_Obj *buildPathPtr;
+
+    char *resolvedargv0;
+    char *resolvedrootdir;
+    char *resolvedbuilddir;
+
     char pathsep[2] = { BU_PATH_SEPARATOR, '\0' };
 
     if (!interp) {
@@ -209,7 +221,11 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     bu_vls_init(&auto_path);
     bu_vls_init(&lappend);
-
+    bu_vls_init(&tclcmd);
+    bu_vls_init(&invocation_full_path);
+    bu_vls_init(&root_full_path);
+    bu_vls_init(&build_full_path);
+ 
     /* determine if TCLCAD_LIBRARY_PATH is set */
     library_path = getenv("TCLCAD_LIBRARY_PATH");
     if (library_path) {
@@ -227,22 +243,33 @@ tclcad_auto_path(Tcl_Interp *interp)
     if (!which_argv) {
 	which_argv = bu_argv0_full_path();
     }
-    char resolvedargv0[MAXPATHLEN];
-    char resolvedroot[MAXPATHLEN];
-    char resolvedbuilddir[MAXPATHLEN];
-    realpath(which_argv, resolvedargv0);
-    printf("string of invocation binary: %s\n", resolvedargv0);
-    realpath(root, resolvedroot);
-    printf("root: %s\n", resolvedroot);
-    realpath(BUILD_BINARY_DIR, resolvedbuilddir);
-    printf("root: %s\n", resolvedbuilddir);
 
-    if(strstr(resolvedargv0, resolvedbuilddir))
+    bu_vls_sprintf(&tclcmd, "file normalize %s", which_argv); 
+    Tcl_Eval(interp, bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&invocation_full_path, "%s", Tcl_GetStringFromObj(Tcl_GetObjResult(interp), NULL));
+
+    bu_vls_sprintf(&tclcmd, "file normalize %s", root); 
+    Tcl_Eval(interp, bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&root_full_path, "%s", Tcl_GetStringFromObj(Tcl_GetObjResult(interp), NULL));
+
+    bu_vls_sprintf(&tclcmd, "file normalize %s", BUILD_BINARY_DIR); 
+    Tcl_Eval(interp, bu_vls_addr(&tclcmd));
+    bu_vls_sprintf(&build_full_path, "%s", Tcl_GetStringFromObj(Tcl_GetObjResult(interp), NULL));
+
+    printf("string of invocation binary: %s\n", bu_vls_addr(&invocation_full_path));
+    printf("root: %s\n", bu_vls_addr(&root_full_path));
+    printf("build: %s\n", bu_vls_addr(&build_full_path));
+    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&build_full_path)))
        printf("Running from build directory\n");
 
-    if(strstr(resolvedargv0, resolvedroot))
+    if(strstr(bu_vls_addr(&invocation_full_path), bu_vls_addr(&root_full_path)))
        printf("Running from installed directory\n");
-    
+
+    bu_vls_free(&tclcmd);
+    bu_vls_free(&invocation_full_path);
+    bu_vls_free(&root_full_path);
+    bu_vls_free(&build_full_path);
+ 
     /* get name of installation binary */
     snprintf(buffer, MAX_BUF, "%s%cbin%c%s", root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, bu_getprogname());
 
