@@ -8,7 +8,7 @@ SET(datadir "\${datarootdir}")
 ADD_SUBDIRECTORY(pkgconfig)
 ADD_SUBDIRECTORY(enigma)
 
-CONFIGURE_FILE(brlcad-config.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-config)
+CONFIGURE_FILE(brlcad-config.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-config @ONLY)
 
 INSTALL(FILES fortran_example.f DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)
 INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/brlcad-config DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
