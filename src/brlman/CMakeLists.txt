@@ -1,7 +1,8 @@
-SET(BRLCAD_ROOT ${BRLCAD_PREFIX})
-SET(BRLCAD_DATA ${BRLCAD_INSTALL_DATA_DIR})
-SET(datarootdir ${BRLCAD_INSTALL_DATA_DIR})
-SET(mandir "${BRLCAD_INSTALL_MAN_DIR}")
+SET(BRLCAD_ROOT "${BRLCAD_PREFIX}")
+SET(BRLCAD_DATA "${BRLCAD_INSTALL_DATA_DIR}")
+SET(prefix "${BRLCAD_PREFIX}")
+SET(datarootdir "\${prefix}/share")
+SET(mandir "\${datarootdir}/man")
 
 configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
 INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
