@@ -16,15 +16,6 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 # subdirectory's CMake logic.
 #---------------------------------------------------------------------------------
 
-# This is our "heavy hammer" flag - if this is set, assume system for
-# everything.  As yet, there is no "automatic" logic to toggle specific
-# libraries on if detection fails, but that may be possible.
-OPTION(BRLCAD_SYSTEM_LIBS_ONLY "Use the system's libraries." OFF)
-OPTION(BRLCAD_BUILD_LOCAL_LIBS "Build all the local copies of libraries." OFF)
-IF(BRLCAD_BUILD_LOCAL_LIBS)
-	SET(BRLCAD_SYSTEM_LIBS_ONLY OFF CACHE BOOL "Use the system's libraries." FORCE)
-ENDIF(BRLCAD_BUILD_LOCAL_LIBS)
-
 # zlib Library
 THIRD_PARTY_OPTION(ZLIB zlib)
 THIRD_PARTY_SUBDIR(ZLIB libz)

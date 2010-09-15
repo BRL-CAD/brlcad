@@ -1,3 +1,19 @@
+# Pretty-printing macro that generates a box around a string and prints the
+# resulting message.
+MACRO(BOX_PRINT input_string border_string)
+	STRING(LENGTH ${input_string} MESSAGE_LENGTH)
+	STRING(LENGTH ${border_string} SEPARATOR_STRING_LENGTH)
+	WHILE(${MESSAGE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
+		SET(SEPARATOR_STRING "${SEPARATOR_STRING}${border_string}")
+		STRING(LENGTH ${SEPARATOR_STRING} SEPARATOR_STRING_LENGTH)
+	ENDWHILE(${MESSAGE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
+	MESSAGE("${SEPARATOR_STRING}")
+	MESSAGE("${input_string}")
+	MESSAGE("${SEPARATOR_STRING}")
+ENDMACRO()
+
+# Core routines for adding executables and libraries to the build and
+# install lists of CMake
 MACRO(BRLCAD_ADDEXEC execname srcs libs)
   STRING(REGEX REPLACE " " ";" srcslist "${srcs}")
   STRING(REGEX REPLACE " " ";" libslist "${libs}")

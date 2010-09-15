@@ -38,53 +38,40 @@
 #
 # ******************************************************************
 #
-# This CMakeLists.txt file based on the VTK CMakeLists.txt file 
-# from VTK:
-#
-# Copyright (c) 1993-2008 Ken Martin, Will Schroeder, Bill Lorensen 
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# * Redistributions of source code must retain the above copyright 
-#   notice, this list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright
-#   notice, this list of conditions and the following disclaimer in 
-#   the documentation and/or other materials provided with the 
-#   distribution.
-#
-# * Neither name of Ken Martin, Will Schroeder, or Bill Lorensen nor
-#   the names of any contributors may be used to endorse or promote 
-#   products derived from this software without specific prior 
-#   written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
-# AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
+# Early versions of this CMakeLists.txt file were based on the VTK 
+# CMakeLists.txt file, also licensed under Modified BSD.
 
 # *******************************************************************
 # ***                 BRL-CAD's CMakeLists.txt                    ***
 # *******************************************************************
+#
+# This file define the toplevel CMake build logic for BRL-CAD.  
+# As best is reasonably possible, proper ordering and
+# separation of tests and settings should be maintained per the
+# recommended standard layout.  The tests should be added to the
+# rather clearly labeled sections below so that they are as
+# follows:
+#
+#     0) information on the package and toplevel CMake settings
+#     1) define top level options
+#     2) check programs
+#     3) check libraries
+#     4) check headers
+#     5) check types/structures
+#     6) check compiler characteristics
+#     7) check functions
+#     8) check system services
+#     9) output a summary
+#
+# The output summary should report key information about the final
+# configuration of the build.  Comprehensive information is available
+# in the CMake cache file in the build directory, so just hit the
+# high points in the summary.
 
-# Repeated runs of cmake wil result in this variable being set during
-# the Find* routines, which will return libraries from previous
-# installs.  Re-set this at the beginning of the file - this ensures
-# that Find* results are consistent between the first run and
-# previous runs
-SET(CMAKE_INSTALL_PREFIX "")
 
+# *******************************************************************
+# ***                 Top Level Settings                          ***
+# *******************************************************************
 # This file contains the top level CMakeLists.txt logic for the 
 # BRL-CAD software package.
 # Minimum required version of CMake
@@ -96,15 +83,23 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(BRLCAD)
 
-# build shared libs by default
-OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+# Repeated runs of cmake wil result in this variable being set during
+# the Find* routines, which will return libraries from previous
+# installs.  Re-set this at the beginning of the file - this ensures
+# that Find* results are consistent between the first run and
+# previous runs
+SET(CMAKE_INSTALL_PREFIX "")
 
-# build static libs by default
-OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 
-# Will need our own add_executable and add_library
-# versions in order to keep track of targets and
-# define rules for all products.
+#---------------------------------------------------------------------
+# By default (as of version 2.8.2) CMake does not provide access to 
+# global lists of executable and library targets.  This is useful
+# in a number of situations related to formulating custom rules and
+# target dependency management.  To avoid the necessity of replacing
+# add_library and add_executable calls with custom macros, override
+# the function names and call the _add_* functions to access the CMake
+# functionality previously available under the add_* functions. See
+# http://www.cmake.org/pipermail/cmake/2010-September/039388.html
 function(add_library name)
    _add_library(${name} ${ARGN})
 	IF(${name} MATCHES "^lib*")
@@ -124,17 +119,7 @@ function(add_executable name)
 endfunction(add_executable)
 
 
-# See HACKING for details on how to properly update the version
-FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
-STRING(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
-FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_MINOR_VERSION)
-STRING(STRIP ${BRLCAD_MINOR_VERSION} BRLCAD_MINOR_VERSION)
-FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
-STRING(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
-
-SET(CAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
-SET(BRLCAD_VERSION "${CAD_VERSION}")
-
+#---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
 SET(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
@@ -144,8 +129,9 @@ SET(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 # build logic
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Util.cmake)
 
-# Save the current LC_ALL, LC_MESSAGES, and LANG environment variables and set them
-# to "C" so things like date output are as expected
+#---------------------------------------------------------------------
+# Save the current LC_ALL, LC_MESSAGES, and LANG environment variables 
+# and set them to "C" so things like date output are as expected. 
 SET(_orig_lc_all      $ENV{LC_ALL})
 SET(_orig_lc_messages $ENV{LC_MESSAGES})
 SET(_orig_lang        $ENV{LANG})
@@ -159,7 +145,21 @@ IF(_orig_lang)
 	SET(ENV{LANG}        C)
 ENDIF(_orig_lang)
 
-# Write out entries to populate a tm struct to be used for time deltas later
+#---------------------------------------------------------------------
+# See HACKING for details on how to properly update the version
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR BRLCAD_MAJOR_VERSION)
+STRING(STRIP ${BRLCAD_MAJOR_VERSION} BRLCAD_MAJOR_VERSION)
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR BRLCAD_MINOR_VERSION)
+STRING(STRIP ${BRLCAD_MINOR_VERSION} BRLCAD_MINOR_VERSION)
+FILE(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH BRLCAD_PATCH_VERSION)
+STRING(STRIP ${BRLCAD_PATCH_VERSION} BRLCAD_PATCH_VERSION)
+
+SET(CAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
+SET(BRLCAD_VERSION "${CAD_VERSION}")
+
+#---------------------------------------------------------------------
+# Write out entries to populate a tm struct to be used for time deltas 
+# later
 SET(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_start.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c)
 TRY_RUN(TIME_RESULT TIME_COMPILED 
@@ -167,10 +167,12 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
 
-# Unfortunately, CMake doesn't give you variables with current day, month,
-# etc.  There are several possible approaches to this, but most (e.g. the date command)
-# are not cross platform. We build a small C file which writes out the needed values
-# to files in the build directory. Those files are then read and stripped by CMake.
+#---------------------------------------------------------------------
+# Unfortunately, CMake doesn't give you variables with current day, 
+# month, etc.  There are several possible approaches to this, but most 
+# (e.g. the date command) are not cross platform. We build a small C 
+# file which writes out the needed values to files in the build 
+# directory. Those files are then read and stripped by CMake.
 SET(CONFIG_TIME_DAY_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_DAY")
 SET(CONFIG_TIME_MONTH_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_MONTH")
 SET(CONFIG_TIME_YEAR_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_YEAR")
@@ -196,36 +198,29 @@ ELSE(TIME_RESULT MATCHES "^0$")
 	MESSAGE(ERROR "Code to determine current date and time failed!\n")
 ENDIF(TIME_RESULT MATCHES "^0$")
 
+#---------------------------------------------------------------------
 # print out the title with a pretty box computed to wrap around
-SET(CONFIG_TITLE "*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***")
-STRING(LENGTH ${CONFIG_TITLE} CONFIG_TITLE_LENGTH)
-SET(SEPARATOR_STRING "*")
-STRING(LENGTH ${SEPARATOR_STRING} SEPARATOR_STRING_LENGTH)
-WHILE(${CONFIG_TITLE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
-	SET(SEPARATOR_STRING "${SEPARATOR_STRING}*")
-	STRING(LENGTH ${SEPARATOR_STRING} SEPARATOR_STRING_LENGTH)
-ENDWHILE(${CONFIG_TITLE_LENGTH} GREATER ${SEPARATOR_STRING_LENGTH})
-MESSAGE(STATUS "${SEPARATOR_STRING}")
-MESSAGE(STATUS "${CONFIG_TITLE}")
-MESSAGE(STATUS "${SEPARATOR_STRING}")
+BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
+#---------------------------------------------------------------------
 # For NFS volumes, to ensure proper file creation.
 IF(NOT WIN32)
 	EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
 ENDIF(NOT WIN32)
 
-# Set build type here. Doing this wrong, see
-# http://www.cmake.org/Wiki/CMake_Useful_Variables
-# for a more complete list of types and the mechanism
-# to define new ones - dunno if  set_property can be
-# made to work here or not.
-set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-	"Basic" "Debug" "Release")
+#---------------------------------------------------------------------
+# Set build type here. Doing this wrong, see http://www.cmake.org/Wiki/CMake_Useful_Variables
+# for a more complete list of types and the mechanism to define new ones - dunno if 
+# set_property can be made to work here or not.  Reason to do this is in CMake gui it gives
+# the list of available build types as a drop-down menu
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Basic" "Debug" "Release")
 if (NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Basic" CACHE STRING "Set build type" FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
-# The location in which to install BRLCAD.  What is this for Windows?
+#---------------------------------------------------------------------
+# The location in which to install BRLCAD. Need a good Debug location 
+# for Windows 
 IF(NOT BRLCAD_PREFIX)
 	IF(NOT WIN32)
 		IF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
@@ -234,18 +229,21 @@ IF(NOT BRLCAD_PREFIX)
 		IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 			SET(BRLCAD_PREFIX "${BRLCAD_SOURCE_DIR}/../brlcad-install")
 		ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-		IF ("${CMAKE_BUILD_TYPE}" MATCHES "Basic")
-			SET(BRLCAD_PREFIX "/usr/brlcad")
-		ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Basic")
 		if (NOT BRLCAD_PREFIX)
 			SET(BRLCAD_PREFIX "/usr/brlcad")
 		endif (NOT BRLCAD_PREFIX)
 	ELSE(NOT WIN32)
-		SET(BRLCAD_PREFIX "Program Files/BRL-CAD/")
+		SET(BRLCAD_PREFIX "C:/Program Files/BRL-CAD")
 	ENDIF(NOT WIN32)
 ENDIF(NOT BRLCAD_PREFIX)
 
 SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "prefix" FORCE)
+
+
+#---------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in 
+# the build directory AND install directory.  Thanks to plplot for 
+# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
 # use, i.e. don't skip the full RPATH for the build tree
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
@@ -260,34 +258,28 @@ if (NOT APPLE)
 endif(NOT APPLE)
 SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
+# add the automatically determined parts of the RPATH which point to 
+# directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# TODO - need to replace the functionality of BC_BRLCAD_ROOT and BC_BRLCAD_DATA here,
-# if it's not already being handled - the data directory at least is likely to need some help
-# also will need to set CFLAGS for debug, optimized, what have you - likely to need some
-# options for all of that, although can probably use the build type setting to make intelligent
-# default choices
-
-#-----------------------------------------------------------------------------
-# Output directories.
+#---------------------------------------------------------------------
+# Output directories - this is where built library and executable 
+# files will be placed after building but prior to install.
 IF(NOT LIBRARY_OUTPUT_PATH)
 	SET(LIBRARY_OUTPUT_PATH ${BRLCAD_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
 ENDIF(NOT LIBRARY_OUTPUT_PATH)
 IF(NOT EXECUTABLE_OUTPUT_PATH)
 	SET(EXECUTABLE_OUTPUT_PATH ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
 ENDIF(NOT EXECUTABLE_OUTPUT_PATH)
-SET(BRLCAD_LIBRARY_DIR ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
-SET(BRLCAD_EXECUTABLE_DIR ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
 
-#-----------------------------------------------------------------------------
+#---------------------------------------------------------------------
 # Configure install locations.  It may be that this should be made
 # into its own .cmake file and included in each library, to allow
 # for more flexibility in using individual libraries in other projects.
 MACRO(INSTALL_DIR upper suffix)
 	IF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
-		SET(${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR ${CMAKE_INSTALL_PREFIX}/${suffix})
+		SET(${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR ${suffix})
+		SET(${upper}_DIR ${suffix})
 	ENDIF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
 ENDMACRO(INSTALL_DIR upper suffix)
 
@@ -309,34 +301,31 @@ INSTALL_DIR(PACKAGE lib)
 # The location in which to install BRL-CAD data files 
 IF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
 	IF (${CMAKE_INSTALL_PREFIX} MATCHES "^/usr[/]*$")
-		SET(DATA_DIR_SUFFIX "share/brlcad")
+		INSTALL_DIR(DATA "share/brlcad")
 	ENDIF()
 	IF (${CMAKE_INSTALL_PREFIX} MATCHES "^/usr/local[/]*$")
-		SET(DATA_DIR_SUFFIX "share/brlcad")
+		INSTALL_DIR(DATA "share/brlcad")
 	ENDIF()
-	IF(NOT DATA_DIR_SUFFIX)
-		SET(DATA_DIR_SUFFIX "share")
-	ENDIF()
-	SET(${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR ${CMAKE_INSTALL_PREFIX}/${DATA_DIR_SUFFIX})
+	INSTALL_DIR(DATA "share")
 ENDIF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
-INSTALL_DIR(MAN ${DATA_DIR_SUFFIX}/man)
-SET(MAN_DIR "${DATA_DIR_SUFFIX}/man")
+INSTALL_DIR(MAN ${DATA_DIR}/man)
 
 # The location in which to install BRL-CAD documentation files 
-INSTALL_DIR(DOC ${DATA_DIR_SUFFIX}/doc)
+INSTALL_DIR(DOC ${DATA_DIR}/doc)
 
 # The location in which to install BRL-CAD doxygen documentation helper
 # files.
-INSTALL_DIR(DOXYGEN ${DATA_DIR_SUFFIX}/doc/doxygen)
+INSTALL_DIR(DOXYGEN ${DOC_DIR}/doxygen)
 
-#-----------------------------------------------------------------------------
-# We will need a brlcad_config.h.in file to hold all the #cmakedefine statements,
-# which will in turn be used to generate a brlcad_conf.h file.  In autotools this
-# process is handled by autoheader - in the case of CMake we wrap the CHECK_*
-# functions and the creation of the entry in the brlcad_config.h.in file into
-# one step via a macro.  To run this macro, the file must first be present, which
+#---------------------------------------------------------------------
+# We will need a brlcad_config.h.in file to hold all the #cmakedefine 
+# statements, which will in turn be used to generate a brlcad_conf.h 
+# file.  In autotools this process is handled by autoheader - in the 
+# case of CMake we wrap the CHECK_* functions and the creation of the 
+# entry in the brlcad_config.h.in file into one step via a macro.  To 
+# run this macro, the config.h.in file must first be present, which
 # we take care of here:
 
 SET(CONFIG_H_FILE "${BRLCAD_BINARY_DIR}/include/brlcad_config.h.in")
@@ -357,24 +346,96 @@ IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 	FILE(APPEND ${CONFIG_H_FILE} "#define DEBUG 1\n")
 ENDIF()
 
-# CMake can detect flex and bison, but apparently not generic lex/yacc.
-# Solution is to make our own generic lex/yacc Find routines that look
-# first for flex/bison, but will take whatever's available.  Since the
-# BRL-CAD project isn't supposed to rely on flex/bison specific features
-# anyway, there shouldn't be a problem.
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
+# *******************************************************************
+# ***               Top Level Configure Options                   ***
+# *******************************************************************
+#
+# Now we define the various options for BRL-CAD - ways to enable and
+# disable features, select which parts of the system to build, etc.  
+# As much as possible, sane default options are either selected or
+# detected.
 
-#--------------------------------------------------------------------------------
-# Now we define the various options for BRL-CAD things the user can enable and
-# disable.  As much as possible, autodetect sane default options.
+# Build shared libs by default.  Mark this as advanced - turning off
+# ALL shared library building is unlikely to result in a working build
+# and is not a typical configuration.  Note that turning this option off
+# will not disable libraries specifically added as SHARED.
+OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+MARK_AS_ADVANCED(BUILD_SHARED_LIBS)
 
-OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings" OFF)
+# Build static libs by default.  Standard practice is to build and
+# install both dynamic and static versions of libraries.  This option
+# is off by default in Debug configuration.  Note that turning this
+# option off will not disable libraries specifically added as STATIC
+OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+
+# Turn on just the benchmark build.  This is not an exclusive flag -
+# enabling this does not force off other explicitly enabled targets.
+OPTION(BRLCAD-ENABLE_BENCHMARK_ONLY "Enable just the benchmark target and its requirements." OFF)
+#MARK_AS_ADVANCED(BRLCAD-ENABLE_BENCHMARK_ONLY)
+
+# Turn on just the benchmark build.  This is not an exclusive flag -
+# enabling this does not force off other explicitly enabled targets.
+OPTION(BRLCAD-ENABLE_RTSERVER_ONLY "Enable just the rtserver target and its requirements." OFF)
+#MARK_AS_ADVANCED(BRLCAD-ENABLE_RTSERVER_ONLY)
+
+# Enable/disable runtime debugging - these are protections for
+# minimizing the possibility of corrupted data files.  Generally
+# speaking these should be left on.
+OPTION(BRLCAD-ENABLE_RUNTIME_DEBUG "Enable run-time debug checking." ON)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_RUNTIME_DEBUG)
+IF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
+	MESSAGE("}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+	MESSAGE("While disabling run-time debugging should increase")
+	MESSAGE("performance, it will likewise remove several")
+	MESSAGE("data-protection safeguards that are in place to")
+	MESSAGE("minimize the possibility of corrupted data files")
+	MESSAGE("in the inevitable event of a user encountering a bug.")
+	MESSAGE("You have been warned.  Proceed at your own risk.")
+	MESSAGE("{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{")
+	FILE(APPEND  ${CONFIG_H_FILE} "/*Define to not do anything for macros that only bomb on a fatal error. */\n")
+	FILE(APPEND  ${CONFIG_H_FILE} "#define NO_BOMBING_MACROS 1\n")
+	FILE(APPEND  ${CONFIG_H_FILE} "/*Define to not perform magic number checking */\n")
+	FILE(APPEND  ${CONFIG_H_FILE} "#define NO_MAGIC_CHECKING 1\n")
+	FILE(APPEND  ${CONFIG_H_FILE} "/*Define to not check for divide by zero during ray shots */\n")
+	FILE(APPEND  ${CONFIG_H_FILE} "#define NO_BADRAY_CHECKING 1\n")
+	FILE(APPEND  ${CONFIG_H_FILE} "/*Define to not provide run-time debug facilities via rt_g.debug */\n")
+	FILE(APPEND  ${CONFIG_H_FILE} "#define NO_DEBUG_CHECKING 1\n")
+ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
+
+# Enable/disable strict compiler settings
+OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings" ON)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
 if (BRLCAD-ENABLE_STRICT)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
 	SET(CMAKE_C_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
 endif (BRLCAD-ENABLE_STRICT)
+
+# Enable/disable 64-bit build settings. This should be 
+# autodetected - turning this option off basically means not to try
+# building 64 bit even if the platform supports it.  Unless you
+# need a 32 bit build on a 64 bit system you shouldn't need to
+# pay attention to this flag.
+OPTION(BRLCAD-ENABLE_64BIT "Test for working 64 bit build settings" ON)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_64BIT)
+
+# Global third party controls - these options enable and disable ALL
+# local copies of libraries in src/other.  For finer grain control,
+# leave both of these options off and options defined by the
+# src/other CMakeLists.txt file will come into play.  The default
+# action is to test system libs and enable local copies of any
+# either not found or not meeting requirements.  Forcing all
+# libraries off is not usually recommended unless attempting to
+# build packages for a distribution.  If both of these options are
+# on the enabling of local packages is the "senior" option and will
+# force the system libs option to off.
+OPTION(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY "Use only the system's libraries." OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY)
+OPTION(BRLCAD-ENABLE_ALL_LOCAL_LIBS "Build all the local copies of libraries." OFF)
+IF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+	SET(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY OFF CACHE BOOL "Use only the system's libraries." FORCE)
+ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+
 
 OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_SMP)
@@ -392,10 +453,14 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Dependent_Options.cmake)
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
 
 
-OPTION(BRLCAD-BUILD_BENCHMARK_ONLY "Only build benchmark." OFF)
-MARK_AS_ADVANCED(BRLCAD-BUILD_BENCHMARK_ONLY)
-OPTION(BRLCAD-BUILD_RTSERVER_ONLY "Only build rtserver." OFF)
-MARK_AS_ADVANCED(BRLCAD-BUILD_RTSERVER_ONLY)
+#---------------------------------------------------------------------
+# CMake can detect flex and bison, but apparently not generic lex/yacc.
+# Solution is to make our own generic lex/yacc Find routines that look
+# first for flex/bison, but will take whatever's available.  Since the
+# BRL-CAD project isn't supposed to rely on flex/bison specific features
+# anyway, there shouldn't be a problem.
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 
 
 # Use CMake techniques for finding libraries that BRL-CAD
