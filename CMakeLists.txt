@@ -90,7 +90,6 @@ PROJECT(BRLCAD)
 # previous runs
 SET(CMAKE_INSTALL_PREFIX "")
 
-
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to 
 # global lists of executable and library targets.  This is useful
@@ -236,8 +235,7 @@ IF(NOT BRLCAD_PREFIX)
 		SET(BRLCAD_PREFIX "C:/Program Files/BRL-CAD")
 	ENDIF(NOT WIN32)
 ENDIF(NOT BRLCAD_PREFIX)
-
-SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}" CACHE STRING "prefix" FORCE)
+SET(CMAKE_INSTALL_PREFIX "${BRLCAD_PREFIX}")
 
 
 #---------------------------------------------------------------------
@@ -278,7 +276,7 @@ ENDIF(NOT EXECUTABLE_OUTPUT_PATH)
 # for more flexibility in using individual libraries in other projects.
 MACRO(INSTALL_DIR upper suffix)
 	IF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
-		SET(${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR ${suffix})
+		SET(${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR ${CMAKE_INSTALL_PREFIX}/${suffix})
 		SET(${upper}_DIR ${suffix})
 	ENDIF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
 ENDMACRO(INSTALL_DIR upper suffix)
@@ -378,6 +376,72 @@ OPTION(BRLCAD-ENABLE_BENCHMARK_ONLY "Enable just the benchmark target and its re
 OPTION(BRLCAD-ENABLE_RTSERVER_ONLY "Enable just the rtserver target and its requirements." OFF)
 #MARK_AS_ADVANCED(BRLCAD-ENABLE_RTSERVER_ONLY)
 
+# Global third party controls - these options enable and disable ALL
+# local copies of libraries in src/other.  For finer grain control,
+# leave both of these options off and options defined by the
+# src/other CMakeLists.txt file will come into play.  The default
+# action is to test system libs and enable local copies of any
+# either not found or not meeting requirements.  Forcing all
+# libraries off is not usually recommended unless attempting to
+# build packages for a distribution.  If both of these options are
+# on the enabling of local packages is the "senior" option and will
+# force the system libs option to off.
+OPTION(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY "Use only the system's libraries." OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY)
+OPTION(BRLCAD-ENABLE_ALL_LOCAL_LIBS "Build all the local copies of libraries." OFF)
+IF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+	SET(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY OFF CACHE BOOL "Use only the system's libraries." FORCE)
+ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
+
+# Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
+# building.
+# OPTION(BRLCAD-BUILD_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
+
+# Install example BRL-CAD Geometry Files
+OPTION(BRLCAD-INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
+
+# Enable features requiring X11
+if(WIN32)
+	OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
+else()
+	OPTION(BRLCAD-ENABLE_X11 "Use X11." ON)
+endif(WIN32)
+if (BRLCAD-ENABLE_X11)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
+	SET(BRLCAD-BUILD_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
+endif (BRLCAD-ENABLE_X11)
+
+# Enable features requring OPENGL
+OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
+if (BRLCAD-ENABLE_OPENGL)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+endif (BRLCAD-ENABLE_OPENGL)
+if (OPENGL_INCLUDE_DIR_GL)
+	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GL_H 1\n")
+endif (OPENGL_INCLUDE_DIR_GL)
+if (OPENGL_INCLUDE_DIR_GLX)
+	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GLX_H 1\n")
+endif (OPENGL_INCLUDE_DIR_GLX)
+
+# Enable RTGL.  Requires an enabled OpenGL.
+# IF(BRLCAD-ENABLE_OPENGL)
+#    OPTION(BRLCAD-ENABLE_RTGL "Use Aqua instead of X11 whenever possible on OSX." ON)
+# ENDIF(BRLCAD-ENABLE_OPENGL)
+
+# There are extra documentation files available requiring Docbook
+# They are quite useful in graphical interfaces, but also add considerably
+# to the overall build time.  By default, PDF generation is off, and html/man
+# generation (which produces files used in the GUIs) is on.
+OPTION(BRLCAD-BUILD_EXTRADOCS "Build Docbook documentation" ON)
+OPTION(BRLCAD-BUILD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF)
+OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ${BRLCAD-BUILD_EXTRADOCS_PDF})
+
+#----------------------------------------------------------------------
+# The following are fine-grained options for enabling/disabling compiler
+# settings.  Typically these are set to various configurations by the
+# toplevel CMAKE_BUILD_TYPE setting, but can also be individually
+# set.
+
 # Enable/disable runtime debugging - these are protections for
 # minimizing the possibility of corrupted data files.  Generally
 # speaking these should be left on.
@@ -411,6 +475,28 @@ if (BRLCAD-ENABLE_STRICT)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
 endif (BRLCAD-ENABLE_STRICT)
 
+# Build with O3 compiler optimization
+OPTION(BRLCAD-ENABLE_OPTIMIZED_BUILD "Use optimized compiler settings" OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_OPTIMIZED_BUILD)
+
+# Build with compiler warning flags 
+OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
+
+# Build with debug symbols
+OPTION(BRLCAD-ENABLE_DEBUG_SYMBOLS "Use debugging compiler settings" ON)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_DEBUG_SYMBOLS)
+
+# Build with profiling support
+OPTION(BRLCAD-ENABLE_PROFILING "Build with profiling support" OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_PROFILING)
+
+# Build with dtrace support
+OPTION(BRLCAD-ENABLE_DTRACE "Build with dtrace support" OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_DTRACE)
+
+
+
 # Enable/disable 64-bit build settings. This should be 
 # autodetected - turning this option off basically means not to try
 # building 64 bit even if the platform supports it.  Unless you
@@ -419,24 +505,7 @@ endif (BRLCAD-ENABLE_STRICT)
 OPTION(BRLCAD-ENABLE_64BIT "Test for working 64 bit build settings" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_64BIT)
 
-# Global third party controls - these options enable and disable ALL
-# local copies of libraries in src/other.  For finer grain control,
-# leave both of these options off and options defined by the
-# src/other CMakeLists.txt file will come into play.  The default
-# action is to test system libs and enable local copies of any
-# either not found or not meeting requirements.  Forcing all
-# libraries off is not usually recommended unless attempting to
-# build packages for a distribution.  If both of these options are
-# on the enabling of local packages is the "senior" option and will
-# force the system libs option to off.
-OPTION(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY "Use only the system's libraries." OFF)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY)
-OPTION(BRLCAD-ENABLE_ALL_LOCAL_LIBS "Build all the local copies of libraries." OFF)
-IF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
-	SET(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY OFF CACHE BOOL "Use only the system's libraries." FORCE)
-ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
-
-
+# Take advantage of parallel processors if available - highly recommended
 OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_SMP)
 if (BRLCAD-ENABLE_SMP)
@@ -472,35 +541,6 @@ find_package(Curses)
 if (CURSES_HAVE_CURSES_H)
 	FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_CURSES_H 1\n")
 endif()
-
-if(WIN32)
-	OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
-else()
-	OPTION(BRLCAD-ENABLE_X11 "Use X11." ON)
-endif(WIN32)
-if (BRLCAD-ENABLE_X11)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
-endif (BRLCAD-ENABLE_X11)
-
-OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
-if(APPLE)
-	if(BRLCAD-ENABLE_X11)
-		SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua OpenGL if we're doing X11")
-	endif(BRLCAD-ENABLE_X11)
-endif(APPLE)
-if (BRLCAD-ENABLE_OPENGL)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-endif (BRLCAD-ENABLE_OPENGL)
-if (OPENGL_INCLUDE_DIR_GL)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GL_H 1\n")
-endif (OPENGL_INCLUDE_DIR_GL)
-if (OPENGL_INCLUDE_DIR_GLX)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GLX_H 1\n")
-endif (OPENGL_INCLUDE_DIR_GLX)
-
-OPTION(BRLCAD-BUILD_EXTRADOCS "Build Docbook documentation" ON)
-OPTION(BRLCAD-BUILD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF)
-OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ${BRLCAD-BUILD_EXTRADOCS_PDF})
 
 INCLUDE (CheckLibraryExists)
 
