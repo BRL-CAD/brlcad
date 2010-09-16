@@ -5,9 +5,9 @@ include_directories(
   ${TK_INCLUDE_PATH}
 )
 
-IF(TK_LIBRARY)
+IF(BRLCAD-ENABLE_TK)
    BRLCAD_ADDEXEC(bwish "cmd.c input.c main.c tcl.c" "libtclcad libdm libtermio")
    SET_TARGET_PROPERTIES(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
-ENDIF(TK_LIBRARY)
+ENDIF(BRLCAD-ENABLE_TK)
 
 BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio ${X11_LIBRARIES} ${X11_Xi_LIB} libdm")

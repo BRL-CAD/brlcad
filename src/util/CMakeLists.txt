@@ -8,11 +8,11 @@ include_directories(
 )
 
 IF(BRLCAD-ENABLE_X11)
-  BRLCAD_ADDEXEC(pl-X pl-X.c "libbu libdm")
-  IF(TK_LIBRARY)
-    BRLCAD_ADDEXEC(pl-dm pl-dm.c "libbu libdm")
-    BRLCAD_ADDEXEC(bombardier bombardier.c "libbu libtclcad")
-  ENDIF(TK_LIBRARY)
+	BRLCAD_ADDEXEC(pl-X pl-X.c "libbu libdm")
+	IF(BRLCAD-ENABLE_TK)
+		BRLCAD_ADDEXEC(pl-dm pl-dm.c "libbu libdm")
+		BRLCAD_ADDEXEC(bombardier bombardier.c "libbu libtclcad")
+	ENDIF(BRLCAD-ENABLE_TK)
 ENDIF(BRLCAD-ENABLE_X11)
 
 INSTALL(FILES pl-dm.c DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/sample_applications)

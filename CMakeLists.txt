@@ -414,6 +414,11 @@ if (BRLCAD-ENABLE_X11)
 	SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 endif (BRLCAD-ENABLE_X11)
 
+# Enable/disable features requiring the Tk toolkit - usually this should
+# be on, as a lot of functionality in BRL-CAD depends on Tk
+OPTION(BRLCAD-ENABLE_TK "Enable features requiring the Tk toolkit" ON)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_TK)
+
 # Enable features requring OPENGL
 OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
 if (BRLCAD-ENABLE_OPENGL)

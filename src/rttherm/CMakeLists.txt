@@ -4,12 +4,12 @@ include_directories(
   ${TK_INCLUDE_PATH}
 )
 
-IF(BRLCAD-ENABLE_X11)
+IF(BRLCAD-ENABLE_X11 and BRLCAD-ENABLE_TK)
 	FOREACH(xlib ${X11_LIBRARIES})
 		SET(RTTHERM_XLIBS "${RTTHERM_XLIBS} ${xlib}")
 	ENDFOREACH(xlib ${X11_LIBRARIES})
 	BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "liboptical libfb ${TK_LIBRARY} ${RTTHERM_XLIBS}")
-ENDIF(BRLCAD-ENABLE_X11)
+ENDIF(BRLCAD-ENABLE_X11 BRLCAD-ENABLE_TK)
 
 BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "librttherm liboptical libfb libmultispectral libged")
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
