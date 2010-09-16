@@ -85,10 +85,12 @@ PROJECT(BRLCAD)
 
 # Repeated runs of cmake wil result in this variable being set during
 # the Find* routines, which will return libraries from previous
-# installs.  Re-set this at the beginning of the file - this ensures
-# that Find* results are consistent between the first run and
-# previous runs
-SET(CMAKE_INSTALL_PREFIX "")
+# installs. Even if never set using CACHE by the CMakeLists.txt file,
+# /usr/local gets written to the CACHE file.  If BRL-CAD happened to
+# be installed there, this would very probably cause the same trouble
+# being seen with detected CMAKE_INSTALL_PREFIX libs in other directories.
+# Hard erase this variable's setting in the cache.
+SET(CMAKE_INSTALL_PREFIX "" CACHE INTERNAL "Keep CMAKE_INSTALL_PREFIX unset in CACHE so repeated Find* operations return consistent results")
 
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to 
