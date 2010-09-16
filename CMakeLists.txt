@@ -470,7 +470,7 @@ IF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 
 # Enable/disable strict compiler settings
-OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings" OFF)
+OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings on libraries that support them" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
 
 # Build with O3 compiler optimization
@@ -777,8 +777,7 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindSH.cmake)
 # Now that we're done running tests, we can enable strict flags if turned on
 if (BRLCAD-ENABLE_STRICT)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
-	SET(CMAKE_C_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+	SET(STRICT_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long" CACHE STRING "strict compiler flags")
 endif (BRLCAD-ENABLE_STRICT)
 
 
