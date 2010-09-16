@@ -491,8 +491,6 @@ OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings on libraries that supp
 MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
 if (BRLCAD-ENABLE_STRICT)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
-	# TODO move this to CompilerFlags.cmake
-	SET(STRICT_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long" CACHE STRING "strict compiler flags")
 endif (BRLCAD-ENABLE_STRICT)
 
 # Build with O3 compiler optimization
