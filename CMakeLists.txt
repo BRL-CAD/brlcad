@@ -409,6 +409,7 @@ endif(WIN32)
 if (BRLCAD-ENABLE_X11)
 	INCLUDE(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
 	SET(BRLCAD-BUILD_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
+	SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 endif (BRLCAD-ENABLE_X11)
 
 # Enable features requring OPENGL
@@ -467,13 +468,8 @@ IF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 
 # Enable/disable strict compiler settings
-OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings" ON)
+OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
-if (BRLCAD-ENABLE_STRICT)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
-	SET(CMAKE_C_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-endif (BRLCAD-ENABLE_STRICT)
 
 # Build with O3 compiler optimization
 OPTION(BRLCAD-ENABLE_OPTIMIZED_BUILD "Use optimized compiler settings" OFF)
@@ -775,6 +771,14 @@ endif (BRLCAD-BUILD_EXTRADOCS)
 # A variety of tools, such as the benchmark utilities, need
 # a Bourne shell or something compatible.
 INCLUDE(${BRLCAD_CMAKE_DIR}/FindSH.cmake)
+
+# Now that we're done running tests, we can enable strict flags if turned on
+if (BRLCAD-ENABLE_STRICT)
+	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
+	SET(CMAKE_C_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+endif (BRLCAD-ENABLE_STRICT)
+
 
 # Virtually all of the BRL-CAD code needs the BRL-CAD include directories
 # and a couple of standard defines - set those up in variables now - the
