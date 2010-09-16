@@ -418,6 +418,17 @@ endif (BRLCAD-ENABLE_X11)
 # be on, as a lot of functionality in BRL-CAD depends on Tk
 OPTION(BRLCAD-ENABLE_TK "Enable features requiring the Tk toolkit" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_TK)
+IF(NOT WIN32)
+	IF (APPLE)
+		IF(NOT BRLCAD-ENABLE_X11 AND NOT BRLCAD-ENABLE_AQUA)
+			SET(BRLCAD-ENABLE_TK OFF)
+		ENDIF(NOT BRLCAD-ENABLE_X11 AND NOT BRLCAD-ENABLE_AQUA)
+	ELSE (APPLE)
+		IF(NOT BRLCAD-ENABLE_X11)
+			SET(BRLCAD-ENABLE_TK OFF)
+		ENDIF(NOT BRLCAD-ENABLE_X11)
+	ENDIF(APPLE)
+ENDIF(NOT WIN32)
 
 # Enable features requring OPENGL
 OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
@@ -480,16 +491,13 @@ OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings on libraries that supp
 MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
 if (BRLCAD-ENABLE_STRICT)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
+	# TODO move this to CompilerFlags.cmake
 	SET(STRICT_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long" CACHE STRING "strict compiler flags")
 endif (BRLCAD-ENABLE_STRICT)
 
 # Build with O3 compiler optimization
 OPTION(BRLCAD-ENABLE_OPTIMIZED_BUILD "Use optimized compiler settings" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_OPTIMIZED_BUILD)
-IF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
-   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-ENDIF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
 
 # Build with compiler warning flags 
 OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" OFF)
@@ -509,12 +517,15 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_DTRACE)
 
 
 
-# Enable/disable 64-bit build settings. This should be 
-# autodetected - turning this option off basically means not to try
-# building 64 bit even if the platform supports it.  Unless you
-# need a 32 bit build on a 64 bit system you shouldn't need to
-# pay attention to this flag.
-OPTION(BRLCAD-ENABLE_64BIT "Test for working 64 bit build settings" ON)
+# Enable/disable 64-bit build settings. This is autodetcted based on
+# the size of the void pointer - don't override this setting unless
+# you know what you are doing.
+IF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
+	OPTION(BRLCAD-ENABLE_64BIT "64 bit void pointer" ON)
+ELSE(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
+	math(EXPR platform_bit_type "${CMAKE_SIZEOF_VOID_P} * 8")
+	OPTION(BRLCAD-ENABLE_64BIT "${platform_bit_type} bit void pointer" OFF)
+ENDIF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
 MARK_AS_ADVANCED(BRLCAD-ENABLE_64BIT)
 
 # Take advantage of parallel processors if available - highly recommended
@@ -748,7 +759,7 @@ if (HAVE_DIRNAME)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_DIRNAME 1\n")
 endif()
 
-
+INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
 # Only look for frameworks if we're on an Apple machine - start
 # with the example from the cmake wiki, but will very likely need
@@ -914,7 +925,8 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 	if (BRLCAD-ENABLE_64BIT)
 		set(BRLCAD_ARCH_BITSETTING "ON")
 	else (BRLCAD-ENABLE_64BIT)
-		set(BRLCAD_ARCH_BITSETTING "OFF (32 bit)")
+		math(EXPR platform_bit_type "${CMAKE_SIZEOF_VOID_P} * 8")
+		set(BRLCAD_ARCH_BITSETTING "OFF (${platform_bit_type} bit)")
 	endif (BRLCAD-ENABLE_64BIT)
 	SET(BRLCAD_ARCH_BITSETTING_LABEL "Build 64-bit release ")
 	SET(BRLCAD-ENABLE_OPTIMIZED_LABEL "Build optimized release ")
