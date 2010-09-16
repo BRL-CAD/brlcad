@@ -433,7 +433,7 @@ endif (OPENGL_INCLUDE_DIR_GLX)
 
 # Enable RTGL.  Requires an enabled OpenGL.
 # IF(BRLCAD-ENABLE_OPENGL)
-#    OPTION(BRLCAD-ENABLE_RTGL "Use Aqua instead of X11 whenever possible on OSX." ON)
+#    OPTION(BRLCAD-ENABLE_RTGL "Enable experimental RTGL code." ON)
 # ENDIF(BRLCAD-ENABLE_OPENGL)
 
 # There are extra documentation files available requiring Docbook
@@ -446,9 +446,9 @@ OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentati
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
-# settings.  Typically these are set to various configurations by the
-# toplevel CMAKE_BUILD_TYPE setting, but can also be individually
-# set.
+# and source code definition settings.  Typically these are set to 
+# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but 
+# can also be individually set.
 
 # Enable/disable runtime debugging - these are protections for
 # minimizing the possibility of corrupted data files.  Generally
@@ -474,13 +474,22 @@ IF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define NO_DEBUG_CHECKING 1\n")
 ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 
-# Enable/disable strict compiler settings
+# Enable/disable strict compiler settings - these are limited to libraries that
+# specifically inform the BRLCAD_ADDLIB macro they can be built with STRICT flags.
 OPTION(BRLCAD-ENABLE_STRICT "Use strict compiler settings on libraries that support them" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_STRICT)
+if (BRLCAD-ENABLE_STRICT)
+	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
+	SET(STRICT_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long" CACHE STRING "strict compiler flags")
+endif (BRLCAD-ENABLE_STRICT)
 
 # Build with O3 compiler optimization
 OPTION(BRLCAD-ENABLE_OPTIMIZED_BUILD "Use optimized compiler settings" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_OPTIMIZED_BUILD)
+IF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+ENDIF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
 
 # Build with compiler warning flags 
 OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" OFF)
@@ -778,13 +787,6 @@ endif (BRLCAD-BUILD_EXTRADOCS)
 # A variety of tools, such as the benchmark utilities, need
 # a Bourne shell or something compatible.
 INCLUDE(${BRLCAD_CMAKE_DIR}/FindSH.cmake)
-
-# Now that we're done running tests, we can enable strict flags if turned on
-if (BRLCAD-ENABLE_STRICT)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define STRICT_FLAGS 1\n")
-	SET(STRICT_FLAGS "-pedantic -W -Wall -Werror -Wno-long-long" CACHE STRING "strict compiler flags")
-endif (BRLCAD-ENABLE_STRICT)
-
 
 # Virtually all of the BRL-CAD code needs the BRL-CAD include directories
 # and a couple of standard defines - set those up in variables now - the
