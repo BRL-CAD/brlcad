@@ -7,7 +7,6 @@ MACRO(CHECK_C_FLAG flag)
 		CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG)
 	ELSE(${ARGC} LESS 2)
 		IF(NOT ${ARGV1})
-			MESSAGE("argv1: ${${ARGV1}}")
 			CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG)
 			IF(${UPPER_FLAG}_COMPILER_FLAG)
 				MESSAGE("Found - setting ${ARGV1} to -${flag}")
@@ -82,42 +81,72 @@ IF(BRLCAD-ENABLE_PROFILING)
 	IF(NOT PROFILE_FLAG)
 		MESSAGE("Warning - profiling requested, but don't know how to profile with this compiler - disabling.")
 		SET(BRLCAD-ENABLE_PROFILING OFF)
+	ELSE(NOT PROFILE_FLAG)
+		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${PROFILE_FLAG}")
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PROFILE_FLAG}")
 	ENDIF(NOT PROFILE_FLAG)
 ENDIF(BRLCAD-ENABLE_PROFILING)
 
+# Debugging flags
 CHECK_C_FLAG(ggdb3 DEBUG_FLAG)
 CHECK_C_FLAG(g DEBUG_FLAG)
 CHECK_C_FLAG(debug DEBUG_FLAG)
+# add -D_FORTIFY_SOURCE=2 to flags. provides compile-time
+# best-practice error checking on certain libc functions
+# (e.g., memcpy), and provides run-time checks on buffer
+# lengths and memory regions.
+CHECK_C_FLAG_GATHER("D_FORTIFY_SOURCE=2" DEBUG_FLAG)
 SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${DEBUG_FLAG}")
 SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEBUG_FLAG}")
+IF(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$")
+	IF(BRLCAD-ENABLE_DEBUG)
+		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DEBUG_FLAG}")
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEBUG_FLAG}")
+	ENDIF(BRLCAD-ENABLE_DEBUG)
+ENDIF(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$")
 
+# -fast provokes a stack corruption in the shadow computations because
+# of strict aliasing getting enabled.  we _require_
+# -fno-strict-aliasing until someone changes how lists are managed.
 IF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
-	CHECK_C_FLAG(O3)
-	CHECK_C_FLAG(ffast-math)
-	CHECK_C_FLAG(fstrength-reduce)
-	CHECK_C_FLAG(fexpensive-optimizations)
-	CHECK_C_FLAG(finline-functions)
-	#Think about how these are to be set
+	CHECK_C_FLAG_GATHER(O3 OPTIMIZE_FLAGS)
+	CHECK_C_FLAG_GATHER(ffast-math OPTIMIZE_FLAGS)
+	CHECK_C_FLAG_GATHER(fstrength-reduce OPTIMIZE_FLAGS)
+	CHECK_C_FLAG_GATHER(fexpensive-optimizations OPTIMIZE_FLAGS)
+	CHECK_C_FLAG_GATHER(finline-functions OPTIMIZE_FLAGS)
+	IF(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$" AND NOT BRLCAD-ENABLE_DEBUG)
+		CHECK_C_FLAG_GATHER(fomit-frame-pointer OPTIMIZE_FLAGS)
+	ELSE(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$" AND NOT BRLCAD-ENABLE_DEBUG)
+		CHECK_C_FLAG_GATHER(fno-omit-frame-pointer OPTIMIZE_FLAGS)
+	ENDIF(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$" AND NOT BRLCAD-ENABLE_DEBUG)
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPTIMIZE_FLAGS}")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTIMIZE_FLAGS}")
 ENDIF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
 
+# verbose warning flags
 IF(BRLCAD-ENABLE_COMPILER_WARNINGS)
 	# also of interest:
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
-	CHECK_C_FLAG(w)
-	CHECK_C_FLAG(W)
-	CHECK_C_FLAG(Wall)
-	CHECK_C_FLAG(Wundef)
-	CHECK_C_FLAG(Wfloat-equal)
-	CHECK_C_FLAG(Wshadow)
-	CHECK_C_FLAG(Winline)
+	CHECK_C_FLAG_GATHER(w WARNING_FLAGS)
+	CHECK_C_FLAG_GATHER(W WARNING_FLAGS)
+	CHECK_C_FLAG_GATHER(Wall WARNING_FLAGS)
+	CHECK_C_FLAG_GATHER(Wundef WARNING_FLAGS)
+	CHECK_C_FLAG_GATHER(Wfloat-equal WARNING_FLAGS)
+	CHECK_C_FLAG_GATHER(Wshadow WARNING_FLAGS)
+	CHECK_C_FLAG_GATHER(Winline WARNING_FLAGS)
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_FLAGS}")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNING_FLAGS}")
 ENDIF(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
+# Unlike other flags, the STRICT flags are managed on a per-library
+# basis and do not need to be added to any CMAKE_*_FLAGS variable
 IF(BRLCAD-ENABLE_STRICT)
 	CHECK_C_FLAG_GATHER(pedantic STRICT_FLAGS)
 	CHECK_C_FLAG_GATHER(W STRICT_FLAGS)
 	CHECK_C_FLAG_GATHER(Wall STRICT_FLAGS)
 	CHECK_C_FLAG_GATHER(Werror STRICT_FLAGS) 
 	CHECK_C_FLAG_GATHER(Wno-long-long STRICT_FLAGS) 
-	MESSAGE("STRICT FLAGS: ${STRICT_FLAGS}")
 ENDIF(BRLCAD-ENABLE_STRICT)
+
+
