@@ -42,4 +42,5 @@ make_library_set(Carbon_LIBRARY)
 
 findpkg_finish(Carbon)
 add_parent_dir(Carbon_INCLUDE_DIRS Carbon_INCLUDE_DIR)
-
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Carbon DEFAULT_MSG Carbon_LIBRARIES Carbon_INCLUDE_DIRS)

@@ -347,7 +347,7 @@ IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 ENDIF()
 
 # *******************************************************************
-# ***               Top Level Configure Options                   ***
+# ***        Top Level Configure Options - Stage 1 of 9           ***
 # *******************************************************************
 #
 # Now we define the various options for BRL-CAD - ways to enable and
@@ -409,7 +409,6 @@ else()
 	OPTION(BRLCAD-ENABLE_X11 "Use X11." ON)
 endif(WIN32)
 if (BRLCAD-ENABLE_X11)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
 	SET(BRLCAD-BUILD_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 	SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 endif (BRLCAD-ENABLE_X11)
@@ -432,9 +431,6 @@ ENDIF(NOT WIN32)
 
 # Enable features requring OPENGL
 OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
-if (BRLCAD-ENABLE_OPENGL)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-endif (BRLCAD-ENABLE_OPENGL)
 if (OPENGL_INCLUDE_DIR_GL)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GL_H 1\n")
 endif (OPENGL_INCLUDE_DIR_GL)
@@ -502,8 +498,8 @@ OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
 # Build with debug symbols
-OPTION(BRLCAD-ENABLE_DEBUG_SYMBOLS "Use debugging compiler settings" ON)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_DEBUG_SYMBOLS)
+OPTION(BRLCAD-ENABLE_DEBUG "Use debugging compiler settings" ON)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_DEBUG)
 
 # Build with profiling support
 OPTION(BRLCAD-ENABLE_PROFILING "Build with profiling support" OFF)
@@ -512,8 +508,6 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_PROFILING)
 # Build with dtrace support
 OPTION(BRLCAD-ENABLE_DTRACE "Build with dtrace support" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_DTRACE)
-
-
 
 # Enable/disable 64-bit build settings. This is autodetcted based on
 # the size of the void pointer - don't override this setting unless
@@ -533,17 +527,14 @@ if (BRLCAD-ENABLE_SMP)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define PARALLEL 1\n")
 endif (BRLCAD-ENABLE_SMP)
 
+# *******************************************************************
+# ***            Check for Programs - Stage 2 of 9                ***
+# *******************************************************************
 
+# A variety of tools, such as the benchmark utilities, need
+# a Bourne shell and other commands - check for them.
+INCLUDE(${BRLCAD_CMAKE_DIR}/FindShellDeps.cmake)
 
-# Sometimes an option no longer makes sense in light of other options,
-# or a new option becomes available when others are enabled - load a
-# macro to help with those cases.
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Dependent_Options.cmake)
-
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
-
-
-#---------------------------------------------------------------------
 # CMake can detect flex and bison, but apparently not generic lex/yacc.
 # Solution is to make our own generic lex/yacc Find routines that look
 # first for flex/bison, but will take whatever's available.  Since the
@@ -552,75 +543,185 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_ConfigFile.cmake)
 INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
 INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 
+# If building extra docs, need to look for XSLTPROC and possibly
+# Apache FOP.  Based on what is found, turn on/off Docbook settings
+if (BRLCAD-BUILD_EXTRADOCS)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindXSLT.cmake)
+	IF(NOT XSLTPROC_EXEC)
+		MESSAGE("Extra doc build requested, but xsltproc not found - disabling.")
+		SET(BRLCAD-BUILD_EXTRADOCS OFF)
+	ENDIF(NOT XSLTPROC_EXEC)
+	IF(BRLCAD-BUILD_EXTRADOCS_PDF)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindFOP.cmake)
+	IF(NOT APACHE_FOP)
+		MESSAGE("Extra doc PDF build requested, but Apache FOP not found - disabling.")
+		SET(BRLCAD-BUILD_EXTRADOCS_PDF OFF)
+		SET(BRLCAD-BUILD_EXTRADOCS_PDF_MAN OFF)
+	ENDIF(NOT APACHE_FOP)
 
-# Use CMake techniques for finding libraries that BRL-CAD
-# doesn't supply locally, but pay attention to which options
-# are enabled
+	ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
+endif (BRLCAD-BUILD_EXTRADOCS)
 
+# If using dtrace, we will need to find it
+IF(BRLCAD-ENABLE_DTRACE)
+	FIND_PROGRAM(DTRACE_EXEC NAMES dtrace DOC "path to dtrace executable")
+ENDIF(BRLCAD-ENABLE_DTRACE)
+
+# *******************************************************************
+# ***            Check for Libraries - Stage 3 of 9               ***
+# *******************************************************************
+
+# While the primary purpose of this section is to identify libraries,
+# some of the headers we are looking for are associated with the
+# libraries checked here.  In those cases, we will hand the header 
+# logic here as opposed to separating the header logic from the 
+# find_package call.
+
+# TODO - need to make LINKOPT vars for anything here that will
+# be referenced in a pkgconfig file
+
+# Load various wrapper macros for checking libraries, headers and 
+# functions
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
+
+# Look for threads (doesn't check for headers)
+# The variable CMAKE_THREAD_LIBS_INIT is the one of interest
+# when writing target_link_libraries lists.
 find_package(Threads)
+BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
+
+# Check for the daemon function in -lbsd and/or -lc for adrt
+BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
+BRLCAD_CHECK_LIBRARY(BSD c daemon)
+
+# Check for CoreFoundation, Carbon and Cocoa on Apple
+IF(APPLE)
+	find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCarbon.cmake)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCocoa.cmake)
+ENDIF(APPLE)
+
+# crypt library (needed on some platforms for enigma)
+find_library(CRYPT_LIBRARY NAMES crypt)
+
+# Find Java and JNI - conditionalize the include settings on 
+# the success of the find_package calls.
+find_package(Java)
+find_package(JNI)
+IF(JNI_FOUND AND JAVA_FOUND)
+	BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
+	BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H)
+ENDIF(JNI_FOUND AND JAVA_FOUND)
+
+# Find X11 if it is enabled
+IF(BRLCAD-ENABLE_X11)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
+ENDIF(BRLCAD-ENABLE_X11)
+
+# Locate a curses package, and set the CONFIG_H header var if
+# the Find package reports the header present
 find_package(Curses)
 if (CURSES_HAVE_CURSES_H)
 	FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_CURSES_H 1\n")
 endif()
 
-INCLUDE (CheckLibraryExists)
+# m library is not needed on Windows
+IF(NOT WIN32)
+	BRLCAD_CHECK_LIBRARY(M m cos)
+ENDIF(NOT WIN32)
 
-# This may be overkill - does CHECK_LIBRARY_EXISTS usably set
-# anything for us?  May want to wrap some combination of
-# CHECK_LIBRARY_EXISTS and FIND_LIBRARY into a macro...
-SET(BSD_LIST "bsd;c")
-FOREACH(bsdcandidate ${BSD_LIST})
-   IF(NOT BSD_LIBRARY)
-     CHECK_LIBRARY_EXISTS(${bsdcandidate} daemon "" HAVE_BSDDAEMON)
-     if (HAVE_BSDDAEMON)
-	find_library(BSD_LIBRARY NAMES ${bsdcandidate})
-     endif (HAVE_BSDDAEMON)
-   ENDIF(NOT BSD_LIBRARY)
-ENDFOREACH(bsdcandidate ${BSD_LIST})
+# socket library
+BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
 
-# rework this - check maybe should come after library
-# is successfully found? Also, need to make sure 
-# paths used by CHECK_LIBRARY_EXISTS are reflected in
-# find_library's PATHS list - see above macro comments...
-if(NOT WIN32)
-	CHECK_LIBRARY_EXISTS(m cos "" HAVE_MLIBRARY)
-	if(HAVE_MLIBRARY)
-		find_library(M_LIBRARY
-			NAMES m
-			PATHS /usr/lib /usr/local/lib
-			)
-	endif()
-else()
-	# not needed on windows
-	set(M_LIBRARY "")
-endif()
+# network socket library 
+BRLCAD_CHECK_LIBRARY(NS nsl gethostbyaddr)
 
-find_library(CRYPT_LIBRARY NAMES crypt)
+# network library
+BRLCAD_CHECK_LIBRARY(NETWORK_SOCKET network socket)
 
-# once we decide how to handle the bsd daemon example, do the
-# same thing for all of these:
-CHECK_LIBRARY_EXISTS(socket socket "" HAVE_SOCKETLIB)
-CHECK_LIBRARY_EXISTS(nsl gethostbyaddr "" HAVE_NSLIB)
-CHECK_LIBRARY_EXISTS(network socket "" HAVE_NETWORKSOCKETLIB)
-CHECK_LIBRARY_EXISTS(c mallopt "" HAVE_CMALLOC_LIB)
-if (NOT HAVE_CMALLOC_LIB)
-	CHECK_LIBRARY_EXISTS(malloc mallopt "" HAVE_MALLOC_LIB)
-endif (NOT HAVE_CMALLOC_LIB)
-CHECK_LIBRARY_EXISTS(mx matherr "" HAVE_LIBMX)
-CHECK_LIBRARY_EXISTS(dl dlopen "" HAVE_DLOPEN)
-CHECK_LIBRARY_EXISTS(l yyless "" HAVE_SOLARISLEXERLIB)
-CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCCXX)
+# malloc library
+BRLCAD_CHECK_LIBRARY(MALLOC c mallopt)
+BRLCAD_CHECK_LIBRARY(MALLOC malloc mallopt)
+
+# mx library
+BRLCAD_CHECK_LIBRARY(MX mx matherr)
+
+# dynamic link library
+BRLCAD_CHECK_LIBRARY(DLOPEN dl dlopen)
+
+# SGI generic SCI library
+BRLCAD_CHECK_LIBRARY(DS ds dsopen)
+
+# OpenGL graphics
+if(BRLCAD-ENABLE_OPENGL)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+endif (BRLCAD-ENABLE_OPENGL)
+
+# SGI graphics library
+BRLCAD_CHECK_LIBRARY(SGIGL gl gconfig)
+
+# Solaris lexer library
+BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
+
+# IRIX libgen library
+BRLCAD_CHECK_LIBRARY(GEN gen basename)
+
+# check if the standard c++ library links without checking for any particular symbol
+# library is needed when linking c++ code against c code (e.g. openNURBS)  TODO Not sure
+# this is set up correctly.
+CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCXX)
+IF(HAVE_STDCXX)
+	RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++")
+   SET(STDCXX_LINKOPT "-lstdc++")
+ELSE(HAVE_STDCXX)
+	CHECK_LIBRARY_EXISTS(stdc++ main "${M_LINNKOPT}" HAVE_STDCXX_M)
+	IF(HAVE_STDCXX_M)
+		RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++ ${M_LINNKOPT}")
+		SET(STDCXX_LINKOPT "-lstdc++ ${M_LINNKOPT}")
+	ENDIF(HAVE_STDCXX_M)
+ENDIF(HAVE_STDCXX)
+
+# *******************************************************************
+# ***             Check for Headers - Stage 4 of 9                ***
+# *******************************************************************
+
+# make our minimum compliance goal explicit (needs to be tested here
+# so header files and types are tested properly)
+# CHECK_C_FLAG("std=c99")
+# IF(STD_C99_COMPILER_FLAG)
+#   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${STD_C99_COMPILER_FLAG}")
+#   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${STD_C99_COMPILER_FLAG}")
+# ENDIF(STD_C99_COMPILER_FLAG)
+
+# C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
+# math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
+# string.h, time.h
+
+# C95 headers: wchar.h, wctype.h, iso646.h
+
+# C99 headers: complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h,
+# tgmath.h
+
+# POSIX.1 headers includes C89, C95, and C99 plus the following:
+# aio.h, arpa/inet.h, cpio.h, dirent.h, dlfcn.h, fcntl.h, fmtmsg.h,
+# fnmatch.h, ftw.h, glob.h, grp.h, iconv.h, langinfo.h, libgen.h,
+# monetary.h, mqueue.h, ndbm.h, net/if.h, netdb.h, netinet/in.h,
+# netinet/tcp.h, nl_types.h, poll.h, pthread.h, pwd.h, regex.h,
+# sched.h, search.h, semaphore.h, spawn.h, strings.h, stropts.h,
+# sys/ipc.h, sys/mman.h, sys/msg.h, sys/resource.h, sys/select.h,
+# sys/stat.h, sys/statvfs.h, sys/time.h, sys/timeb.h, sys/times.h,
+# sys/types.h, sys/uio.h, sys/un.h, sys/utsname.h, sys/wait.h,
+# syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
+# utime.h, utmpx.h, wordexp.h
 
 
-
-# Not sure if this is correct or not!
+# Not sure if this is correct or not - need to read the AC_ macros
+# being called for these
 BRLCAD_INCLUDE_FILE(stddef.h STDC_HEADERS)
+#DIRENT
+#SYS_WAIT
 
-# Some of these include should probably be handled by the Find*
-# routines - currently this isn't quite a 1/1 match to the list
-# in configure.ac and will probably change more - will also need to
-# make sure local variations of the Find* routines do what is needed
-# if CMake default Modules don't.
+# Need to compare this with the configure.ac list 
 BRLCAD_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
@@ -634,7 +735,6 @@ BRLCAD_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 BRLCAD_INCLUDE_FILE(ncurses.h HAVE_NCURSES_H)
 BRLCAD_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 BRLCAD_INCLUDE_FILE(poll.h HAVE_POLL_H)
-BRLCAD_INCLUDE_FILE(pthread.h HAVE_PTHREAD_H)
 BRLCAD_INCLUDE_FILE(pwd.h HAVE_PWD_H)
 BRLCAD_INCLUDE_FILE(rle.h HAVE_RLE_H)
 BRLCAD_INCLUDE_FILE(sched.h HAVE_SCHED_H)
@@ -670,9 +770,6 @@ BRLCAD_INCLUDE_FILE(ulocks.h HAVE_ULOCKS_H)
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 BRLCAD_INCLUDE_FILE(winsock.h HAVE_WINSOCK_H)
 BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
-BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
-BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H)
-
 # C++
 BRLCAD_INCLUDE_FILE_CXX(limits HAVE_LIMITS)
 BRLCAD_INCLUDE_FILE_CXX(istream HAVE_ISTREAM)
@@ -757,15 +854,28 @@ if (HAVE_DIRNAME)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_DIRNAME 1\n")
 endif()
 
+# *******************************************************************
+# ***         Check for Types/Structures - Stage 5 of 9           ***
+# *******************************************************************
+
+
+
+
+# *******************************************************************
+# ***       Check for Compile Characteristics - Stage 6 of 9      ***
+# *******************************************************************
+
 INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
-# Only look for frameworks if we're on an Apple machine - start
-# with the example from the cmake wiki, but will very likely need
-# fleshing out
-if (APPLE)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCarbon.cmake)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCocoa.cmake)
-endif (APPLE)
+# *******************************************************************
+# ***             Check for Functions - Stage 7 of 9              ***
+# *******************************************************************
+
+# *******************************************************************
+# ***          Check for System Services - Stage 8 of 9           ***
+# *******************************************************************
+
+
 
 # This is the top level control property for handling library building 
 set(BRLCAD-BUILD_SRC_OTHER "Auto" CACHE STRING
@@ -774,28 +884,6 @@ set_property(CACHE BRLCAD-BUILD_SRC_OTHER PROPERTY STRINGS
 	"Yes" "No" "Auto")
 
 
-
-# If building extra docs, need to look for XSLTPROC
-if (BRLCAD-BUILD_EXTRADOCS)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindXSLT.cmake)
-	IF(NOT XSLTPROC_EXEC)
-		MESSAGE("Extra doc build requested, but xsltproc not found - disabling.")
-		SET(BRLCAD-BUILD_EXTRADOCS OFF)
-	ENDIF(NOT XSLTPROC_EXEC)
-	IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindFOP.cmake)
-	IF(NOT APACHE_FOP)
-		MESSAGE("Extra doc PDF build requested, but Apache FOP not found - disabling.")
-		SET(BRLCAD-BUILD_EXTRADOCS_PDF OFF)
-		SET(BRLCAD-BUILD_EXTRADOCS_PDF_MAN OFF)
-	ENDIF(NOT APACHE_FOP)
-
-	ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
-endif (BRLCAD-BUILD_EXTRADOCS)
-
-# A variety of tools, such as the benchmark utilities, need
-# a Bourne shell or something compatible.
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindSH.cmake)
 
 # Virtually all of the BRL-CAD code needs the BRL-CAD include directories
 # and a couple of standard defines - set those up in variables now - the
@@ -820,6 +908,11 @@ FILE(APPEND  ${CONFIG_H_FILE} "#define BUILD_SOURCE_DIR \"${CMAKE_SOURCE_DIR}\"\
 
 # Now that all the tests are done, configure the brlcad_config.h file:
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
+
+
+# *******************************************************************
+# ***              Summarize Results - Stage 9 of 9               ***
+# *******************************************************************
 
 # Now that everything is configured, print a summary of the build settings.  This is a bit complicated, but
 # the basic idea is to print labels, "smart" spacers around those labels to line everything up, and the

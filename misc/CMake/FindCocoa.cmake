@@ -43,3 +43,5 @@ make_library_set(Cocoa_LIBRARY)
 findpkg_finish(Cocoa)
 add_parent_dir(Cocoa_INCLUDE_DIRS Cocoa_INCLUDE_DIR)
 
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Cocoa DEFAULT_MSG Cocoa_LIBRARIES Cocoa_INCLUDE_DIRS)

@@ -1,9 +1,12 @@
-# Automate putting variables from tests into a config.h.in file
+# Automate putting variables from tests into a config.h.in file,
+# and otherwise wrap check macros in extra logic as needed
 
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckIncludeFileCXX)
 INCLUDE(CheckTypeSize)
+INCLUDE(CheckLibraryExists)
+INCLUDE(ResolveCompilerPaths)
 
 MACRO(BRLCAD_FUNCTION_EXISTS function var)
   CHECK_FUNCTION_EXISTS(${function} ${var})
@@ -33,3 +36,12 @@ MACRO(BRLCAD_TYPE_SIZE typename var)
   endif(CONFIG_H_FILE)
 ENDMACRO(BRLCAD_TYPE_SIZE)
 
+MACRO(BRLCAD_CHECK_LIBRARY targetname lname func)
+	IF(NOT ${targetname}_LIBRARY)
+		CHECK_LIBRARY_EXISTS(${lname} ${func} "" HAVE_${targetname}_${lname})
+		IF(HAVE_${targetname}_${lname})
+			RESOLVE_LIBRARIES (${targetname}_LIBRARY "-l${lname}")
+			SET(${targetname}_LINKOPT "-l${lname}")
+		ENDIF(HAVE_${targetname}_${lname})
+	ENDIF(NOT ${targetname}_LIBRARY)
+ENDMACRO(BRLCAD_CHECK_LIBRARY lname func)
