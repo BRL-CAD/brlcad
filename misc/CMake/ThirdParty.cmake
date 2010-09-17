@@ -21,6 +21,23 @@ MACRO(THIRD_PARTY_OPTION upper lower)
 				SET(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} ON CACHE BOOL "Build the local ${upper} library." FORCE)
 				SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 			ENDIF(NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY) 
+      ELSE(NOT ${upper}_FOUND)
+		# We have to remove any previously built output from enabled local copies of the
+		# library in question, or the linker will get confused - a system lib was found and
+		# system libraries are to be preferred with current options.  This is unfortunate in
+		# that it may introduce extra build work just from trying configure options, but appears
+		# to be essential to ensuring that the build "just works" each time.
+		STRING(REGEX REPLACE "lib" "" rootname "${lower}")
+		FILE(GLOB STALE_FILES "${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rootname}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+		MESSAGE("STALE_FILES: ${STALE_FILES}")
+		FOREACH(stale_file ${STALE_FILES})
+		   EXEC_PROGRAM(
+			   ${CMAKE_COMMAND} ARGS -E remove ${stale_file}
+					 OUTPUT_VARIABLE rm_out
+					 RETURN_VALUE rm_retval
+				 )
+		ENDFOREACH(stale_file ${STALE_FILES})
+
 		ENDIF(NOT ${upper}_FOUND)
 	ELSE(NOT ${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} OR ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
 		SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
