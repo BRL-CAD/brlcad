@@ -789,6 +789,27 @@ BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
 BRLCAD_INCLUDE_FILE_CXX(limits HAVE_LIMITS)
 BRLCAD_INCLUDE_FILE_CXX(istream HAVE_ISTREAM)
 
+# Other special-case tests that need custom macros
+CHECK_BASENAME()
+CHECK_DIRNAME()
+
+# *******************************************************************
+# ***         Check for Types/Structures - Stage 5 of 9           ***
+# *******************************************************************
+
+BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
+
+
+
+# *******************************************************************
+# ***       Check for Compile Characteristics - Stage 6 of 9      ***
+# *******************************************************************
+
+INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
+
+# *******************************************************************
+# ***             Check for Functions - Stage 7 of 9              ***
+# *******************************************************************
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
 BRLCAD_FUNCTION_EXISTS(alloca HAVE_ALLOCA)
@@ -827,64 +848,6 @@ BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
 BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
-
-BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
-
-INCLUDE(CheckCSourceRuns)
-
-# Check for basename and dirname
-CHECK_LIBRARY_EXISTS(gen basename "" HAVE_LIBGEN)
-if(HAVE_LIBGEN)
-	SET(basename_SRC "
-	#include <libgen.h>
-	int main(int argc, char *argv[]) {
-	(void)basename(argv[0]);
-	return 0;
-	}")
-	SET(dirname_SRC "
-	#include <libgen.h>
-	int main(int argc, char *argv[]) {
-	(void)dirname(argv[0]);
-	return 0;
-	}")
-ELSE(HAVE_LIBGEN_H)
-	SET(basename_SRC "
-	int main(int argc, char *argv[]) {
-	(void)basename(argv[0]);
-	return 0;
-	}")
-	SET(dirname_SRC "
-	int main(int argc, char *argv[]) {
-	(void)dirname(argv[0]);
-	return 0;
-	}")
-ENDIF(HAVE_LIBGEN)
-
-CHECK_C_SOURCE_RUNS("${basename_SRC}" HAVE_BASENAME)
-CHECK_C_SOURCE_RUNS("${dirname_SRC}" HAVE_DIRNAME)
-if (HAVE_BASENAME)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_BASENAME 1\n")
-endif()
-if (HAVE_DIRNAME)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_DIRNAME 1\n")
-endif()
-
-# *******************************************************************
-# ***         Check for Types/Structures - Stage 5 of 9           ***
-# *******************************************************************
-
-
-
-
-# *******************************************************************
-# ***       Check for Compile Characteristics - Stage 6 of 9      ***
-# *******************************************************************
-
-INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
-
-# *******************************************************************
-# ***             Check for Functions - Stage 7 of 9              ***
-# *******************************************************************
 
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***

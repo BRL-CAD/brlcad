@@ -45,3 +45,34 @@ MACRO(BRLCAD_CHECK_LIBRARY targetname lname func)
 		ENDIF(HAVE_${targetname}_${lname})
 	ENDIF(NOT ${targetname}_LIBRARY)
 ENDMACRO(BRLCAD_CHECK_LIBRARY lname func)
+
+# Special purpose macros
+
+INCLUDE(CheckCSourceRuns)
+
+MACRO(CHECK_BASENAME)
+SET(BASENAME_SRC "
+#include <libgen.h>
+int main(int argc, char *argv[]) {
+(void)basename(argv[0]);
+return 0;
+}")
+CHECK_C_SOURCE_RUNS("${BASENAME_SRC}" HAVE_BASENAME)
+IF(HAVE_BASENAME)
+   FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_BASENAME 1\n")
+ENDIF(HAVE_BASENAME)
+ENDMACRO(CHECK_BASENAME var)
+
+MACRO(CHECK_DIRNAME)
+SET(DIRNAME_SRC "
+#include <libgen.h>
+int main(int argc, char *argv[]) {
+(void)dirname(argv[0]);
+return 0;
+}")
+CHECK_C_SOURCE_RUNS("${DIRNAME_SRC}" HAVE_DIRNAME)
+IF(HAVE_DIRNAME)
+   FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_DIRNAME 1\n")
+ENDIF(HAVE_DIRNAME)
+ENDMACRO(CHECK_DIRNAME var)
+
