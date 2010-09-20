@@ -1620,8 +1620,8 @@ package provide Archer 1.0
 
 ::itcl::body Archer::saveDb {} {
     ArcherCore::saveDb
-    clearTargetLedger
-#    createTargetLedger
+#    clearTargetLedger
+    createTargetLedger
 
     set mNeedCheckpoint 0
     updateCheckpointMode
