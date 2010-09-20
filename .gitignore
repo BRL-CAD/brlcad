@@ -11,3 +11,10 @@
 /Makefile.in
 /.deps
 /.libs
+/cssprop.c
+/cssprop.h
+/htmldefaultstyle.c
+/htmltokens.c
+/htmltokens.h
+/cssprop.tcl
+/tokenlist.txt
