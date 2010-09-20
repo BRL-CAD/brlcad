@@ -804,6 +804,7 @@ Popup Menu    Right or Ctrl-Left
 	method buildInfoDialog {_name _title _info _size _wrapOption _modality}
 	method buildSaveDialog {}
 	method buildViewCenterDialog {}
+	method centerDialogOverPane {_dialog}
 
 	# Helper Section
 	method buildComboBox {_parent _name1 _name2 _varName _text _listOfChoices}
@@ -1801,7 +1802,7 @@ Popup Menu    Right or Ctrl-Left
 #                 INTERFACE OPERATIONS
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::closeDb {} {
-    pack forget $itk_component(ged)
+    grid forget $itk_component(ged)
     closeMged
 
     grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
@@ -3194,12 +3195,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::doViewCenter {} {
-    if {$mCurrentPaneName == ""} {
-	set pane $mActivePaneName
-    } else {
-	set pane $mCurrentPaneName
-    }
-    set mCurrentPaneName ""
+    set pane [centerDialogOverPane $itk_component(centerDialog)]
 
     set center [$itk_component(ged) pane_center $pane]
     set mCenterX [lindex $center 0]
@@ -3207,7 +3203,6 @@ Popup Menu    Right or Ctrl-Left
     set mCenterZ [lindex $center 2]
 
     set mDbUnits [gedCmd units -s]
-    $itk_component(centerDialog) center [namespace tail $this]
     ::update
     if {[$itk_component(centerDialog) activate]} {
 	$itk_component(ged) pane_center $pane $mCenterX $mCenterY $mCenterZ
@@ -3341,10 +3336,14 @@ Popup Menu    Right or Ctrl-Left
 	set vals {}
 	set anames {}
 	set avals {}
-	foreach {aname aval} [gedCmd attr get $_ctext] {
-	    lappend anames $aname
-	    lappend avals $aval
+
+	if {![catch {gedCmd attr get $_ctext} alist]} {
+	    foreach {aname aval} $alist {
+		lappend anames $aname
+		lappend avals $aval
+	    }
 	}
+
 	foreach attr $mTreeAttrColumns {
 	    set ai [lsearch $anames $attr]
 	    if {$ai != -1} {
@@ -5629,8 +5628,6 @@ Popup Menu    Right or Ctrl-Left
 	    -textvariable [::itcl::scope mDbUnits]
     } {}
 
-    after idle "$itk_component(centerDialog) center"
-
     $itk_component(centerDialog) configure -background $LABEL_BACKGROUND_COLOR
 
     set col 0
@@ -5661,6 +5658,19 @@ Popup Menu    Right or Ctrl-Left
     grid $itk_component(centerDialogZUL) -row $row -column $col
 
     wm geometry $itk_component(centerDialog) "275x125"
+}
+
+::itcl::body ArcherCore::centerDialogOverPane {_dialog} {
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
+    } else {
+	set pane $mCurrentPaneName
+    }
+
+    set mCurrentPaneName ""
+    $_dialog center [$itk_component(ged) pane_win_name $pane]
+
+    return $pane
 }
 
 
