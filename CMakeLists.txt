@@ -726,8 +726,7 @@ ENDIF(HAVE_STDCXX)
 
 # Need to define CMake functionality that does the same thing
 # as these AC macros:
-# AC_HEADER_STDC (following line is insufficient)
-BRLCAD_INCLUDE_FILE(stddef.h STDC_HEADERS)
+CMAKE_HEADER_STDC()
 #
 # also:
 # AC_HEADER_DIRENT
