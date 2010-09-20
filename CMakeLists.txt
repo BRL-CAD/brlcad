@@ -724,21 +724,18 @@ ENDIF(HAVE_STDCXX)
 # syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
 # utime.h, utmpx.h, wordexp.h
 
-# Need to define CMake functionality that does the same thing
-# as these AC macros:
+# Tests for standard functionality based on AC_HEADER_* macros  (see
+# http://www.gnu.org/software/hello/manual/autoconf/Particular-Headers.html)
+# AC_HEADER_STDC
 CMAKE_HEADER_STDC()
-#
-# also:
-# AC_HEADER_DIRENT
+# AC_HEADER_DIRENT - not yet fully at parity with its autotools counterpart
+CMAKE_HEADER_DIRENT()
 # AC_HEADER_SYS_WAIT
-#
-# see
-# http://www.gnu.org/software/hello/manual/autoconf/Particular-Headers.html
+CMAKE_HEADER_SYS_WAIT()
 
 # Need to compare this with the configure.ac list 
 BRLCAD_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
-BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 BRLCAD_INCLUDE_FILE(getopt.h HAVE_GETOPT_H)
 BRLCAD_INCLUDE_FILE(gl/device.h HAVE_GL_DEVICE_H)
 BRLCAD_INCLUDE_FILE(grp.h HAVE_GRP_H)
