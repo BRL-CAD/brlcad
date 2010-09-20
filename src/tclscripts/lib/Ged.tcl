@@ -369,6 +369,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_zbuffer {_pane args}
 	method pane_zclip {_pane args}
 	method pane_zoom {_pane args}
+	method pane_win_name {_pane}
 	method pane_win_size {_pane args}
 	method pathlist {args}
 	method paths {args}
@@ -1999,6 +2000,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_zoom {_pane args} {
     eval $mGed zoom $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_win_name {_pane} {
+    return $itk_component($_pane)
 }
 
 ::itcl::body cadwidgets::Ged::pane_win_size {_pane args} {
