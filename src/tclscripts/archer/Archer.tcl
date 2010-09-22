@@ -532,7 +532,7 @@ package provide Archer 1.0
 	updateSaveMode
 	updateUndoMode
     } else {
-	eval backgroundColor $mBackground
+	backgroundColor $mBackgroundColor
     }
 
     set mInstanceInit 0
@@ -4182,19 +4182,22 @@ proc title_node_handler {node} {
     }
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Black" \
-	-command [::itcl::code $this backgroundColor 0 0 0]
+	-command [::itcl::code $this backgroundColor black]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Grey" \
-	-command [::itcl::code $this backgroundColor 100 100 100]
+	-command [::itcl::code $this backgroundColor grey]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "White" \
-	-command [::itcl::code $this backgroundColor 255 255 255]
+	-command [::itcl::code $this backgroundColor white]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Cyan" \
-	-command [::itcl::code $this backgroundColor 0 200 200]
+	-command [::itcl::code $this backgroundColor cyan]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Blue" \
-	-command [::itcl::code $this backgroundColor 0 0 160]
+	-command [::itcl::code $this backgroundColor blue]
+    $itk_component(${_prefix}backgroundmenu) add command \
+	-label "Navy" \
+	-command [::itcl::code $this backgroundColor navy]
     $itk_component(${_prefix}displaymenu) add cascade \
 	-label "Background Color" \
 	-menu $itk_component(${_prefix}backgroundmenu) \
@@ -5456,6 +5459,8 @@ proc title_node_handler {node} {
 		    -helpstr "Set display background to cyan"
 		command blue -label "Blue" \
 		    -helpstr "Set display background to blue"
+		command navy -label "Navy" \
+		    -helpstr "Set display background to navy"
 	    }
 
 	    cascade standard -label "Standard Views" -menu {
@@ -5496,15 +5501,17 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this doViewCenter] \
 	-state disabled
     $itk_component(menubar) menuconfigure .display.background.black \
-	-command [::itcl::code $this backgroundColor 0 0 0]
+	-command [::itcl::code $this backgroundColor black]
     $itk_component(menubar) menuconfigure .display.background.grey \
-	-command [::itcl::code $this backgroundColor 100 100 100]
+	-command [::itcl::code $this backgroundColor grey]
     $itk_component(menubar) menuconfigure .display.background.white \
-	-command [::itcl::code $this backgroundColor 255 255 255]
+	-command [::itcl::code $this backgroundColor white]
     $itk_component(menubar) menuconfigure .display.background.cyan \
-	-command [::itcl::code $this backgroundColor 0 200 200]
+	-command [::itcl::code $this backgroundColor cyan]
     $itk_component(menubar) menuconfigure .display.background.blue \
-	-command [::itcl::code $this backgroundColor 0 0 160]
+	-command [::itcl::code $this backgroundColor blue]
+    $itk_component(menubar) menuconfigure .display.background.navy \
+	-command [::itcl::code $this backgroundColor navy]
     $itk_component(menubar) menuconfigure .display.standard.front \
 	-command [::itcl::code $this doAe 0 0]
     $itk_component(menubar) menuconfigure .display.standard.rear \
@@ -7726,7 +7733,7 @@ proc title_node_handler {node} {
 	}
     }
 
-    eval backgroundColor $mBackground
+    backgroundColor $mBackgroundColor
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
@@ -7754,8 +7761,10 @@ proc title_node_handler {node} {
 
     if {$mBackgroundColor != $mBackgroundColorPref} {
 	set mBackgroundColor $mBackgroundColorPref
-	set mBackground [getRgbColor $mBackgroundColor]
-	eval backgroundColor $mBackground
+	backgroundColor $mBackgroundColor
+#	set mBackground [getRgbColor $mBackgroundColor]
+#	eval backgroundColor $mBackground
+#	eval backgroundColor [getRgbColor $mBackgroundColor]
     }
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
@@ -8330,7 +8339,7 @@ proc title_node_handler {node} {
 	}
     }
 
-    eval backgroundColor $mBackground
+    backgroundColor $mBackgroundColor
 
     if {!$mDelayCommandViewBuild} {
 	::update

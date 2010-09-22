@@ -471,8 +471,8 @@ Center        Shift-Ctrl-Right
 Popup Menu    Right or Ctrl-Left
 "
 
-	variable mColorList {Grey Black Blue Cyan Green Magenta Red White Yellow Triple}
-	variable mColorListNoTriple {Grey Black Blue Cyan Green Magenta Red White Yellow}
+	variable mColorList {Grey Black Navy Blue Cyan Green Magenta Red White Yellow Triple}
+	variable mColorListNoTriple {Grey Black Navy Blue Cyan Green Magenta Red White Yellow}
 	variable mDefaultNodeColor {150 150 150}
 
 	variable mDoStatus 1
@@ -791,7 +791,7 @@ Popup Menu    Right or Ctrl-Left
 	method validateTickInterval {_ti}
 	method validateColorComp {_c}
 
-	method backgroundColor {_r _g _b}
+	method backgroundColor {_color}
 
 	method updateHPaneFractions {}
 	method updateVPaneFractions {}
@@ -1051,10 +1051,6 @@ Popup Menu    Right or Ctrl-Left
 	updateSaveMode
     }
 
-    backgroundColor [lindex $mBackground 0] \
-	[lindex $mBackground 1] \
-	[lindex $mBackground 2]
-
     initImages
     initTreeImages
     if {!$mDelayCommandViewBuild} {
@@ -1236,27 +1232,31 @@ Popup Menu    Right or Ctrl-Left
 		options -tearoff 0
 
 		command black -label "Black" \
-		    -helpstr "Set background color black"
+		    -helpstr "Set background color to black"
 		command grey -label "Grey" \
-		    -helpstr "Set background color grey"
+		    -helpstr "Set background color to grey"
 		command white -label "White" \
-		    -helpstr "Set background color white"
-		command lblue -label "Light Blue" \
-		    -helpstr "Set background color light blue"
-		command dblue -label "Dark Blue" \
-		    -helpstr "Set background color dark blue"
+		    -helpstr "Set background color to white"
+		command cyan -label "Cyan" \
+		    -helpstr "Set background color to cyan"
+		command blue -label "Light Blue" \
+		    -helpstr "Set background color to blue"
+		command navy -label "Navy" \
+		    -helpstr "Set background color to navy"
 	    }
 
 	$itk_component(canvas_menu) menuconfigure .background.black \
-	    -command [::itcl::code $this backgroundColor 0 0 0]
+	    -command [::itcl::code $this backgroundColor black]
 	$itk_component(canvas_menu) menuconfigure .background.grey \
-	    -command [::itcl::code $this backgroundColor 100 100 100]
+	    -command [::itcl::code $this backgroundColor grey]
 	$itk_component(canvas_menu) menuconfigure .background.white \
-	    -command [::itcl::code $this backgroundColor 255 255 255]
-	$itk_component(canvas_menu) menuconfigure .background.lblue \
-	    -command [::itcl::code $this backgroundColor 0 198 255]
-	$itk_component(canvas_menu) menuconfigure .background.dblue \
-	    -command [::itcl::code $this backgroundColor 0 0 160]
+	    -command [::itcl::code $this backgroundColor white]
+	$itk_component(canvas_menu) menuconfigure .background.cyan \
+	    -command [::itcl::code $this backgroundColor cyan]
+	$itk_component(canvas_menu) menuconfigure .background.blue \
+	    -command [::itcl::code $this backgroundColor blue]
+	$itk_component(canvas_menu) menuconfigure .background.navy \
+	    -command [::itcl::code $this backgroundColor navy]
 
     # Raytrace Menu
 	$itk_component(canvas_menu) add menubutton raytrace \
@@ -2701,10 +2701,18 @@ Popup Menu    Right or Ctrl-Left
 }
 
 
-::itcl::body ArcherCore::backgroundColor {r g b} {
+::itcl::body ArcherCore::backgroundColor {_color} {
     set mCurrentPaneName ""
-    set mBackground [list $r $g $b]
+    set mBackgroundColor $_color
 
+    if {[catch {getRgbColor $mBackgroundColor} mBackground]} {
+	set mBackgroundColor black
+	set mBackground {0 0 0}
+    }
+
+    if {[info exists itk_component(ged)]} {
+	eval $itk_component(ged) bg_all $mBackground
+    }
 }
 
 
@@ -3334,20 +3342,16 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::fillTreeColumns {_cnode _ctext} {
     if {$mTreeAttrColumns != {}} {
 	set vals {}
-	set anames {}
-	set avals {}
 
-	if {![catch {gedCmd attr get $_ctext} alist]} {
-	    foreach {aname aval} $alist {
-		lappend anames $aname
-		lappend avals $aval
-	    }
+	if {[catch {gedCmd attr get $_ctext} alist]} {
+	    set alist {}
 	}
 
 	foreach attr $mTreeAttrColumns {
-	    set ai [lsearch $anames $attr]
+	    set ai [lsearch -index 0 $alist $attr]
 	    if {$ai != -1} {
-		lappend vals [lindex $avals $ai]
+		incr ai
+		lappend vals [lindex $alist $ai]
 	    } else {
 		lappend vals {}
 	    }
