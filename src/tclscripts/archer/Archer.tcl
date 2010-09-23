@@ -297,6 +297,7 @@ package provide Archer 1.0
 	method buildModelAxesPosition {_parent}
 	method buildModelAxesPreferences {}
 	method buildMouseOverridesDialog {}
+	method buildOtherGeneralPreferences {_i}
 	method buildPreferencesDialog {}
 	method buildRevertDialog {}
 	method buildToplevelMenubar {_parent {_prefix ""}}
@@ -3398,6 +3399,7 @@ proc title_node_handler {node} {
     grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
     grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
     incr i
+    set i [buildOtherGeneralPreferences $i]
     grid $itk_component(affectedTreeNodesModeCB) \
 	-columnspan 2 \
 	-column 0 \
@@ -4038,6 +4040,10 @@ proc title_node_handler {node} {
     wm geometry $itk_component(mouseOverridesDialog) "370x190"
 }
 
+::itcl::body Archer::buildOtherGeneralPreferences {_i} {
+    return $_i
+}
+
 ::itcl::body Archer::buildPreferencesDialog {} {
     itk_component add preferencesDialog {
 	::iwidgets::dialog $itk_interior.preferencesDialog \
@@ -4182,22 +4188,22 @@ proc title_node_handler {node} {
     }
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Black" \
-	-command [::itcl::code $this backgroundColor black]
+	-command [::itcl::code $this backgroundColor Black]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Grey" \
-	-command [::itcl::code $this backgroundColor grey]
+	-command [::itcl::code $this backgroundColor Grey]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "White" \
-	-command [::itcl::code $this backgroundColor white]
+	-command [::itcl::code $this backgroundColor White]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Cyan" \
-	-command [::itcl::code $this backgroundColor cyan]
+	-command [::itcl::code $this backgroundColor Cyan]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Blue" \
-	-command [::itcl::code $this backgroundColor blue]
+	-command [::itcl::code $this backgroundColor Blue]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Navy" \
-	-command [::itcl::code $this backgroundColor navy]
+	-command [::itcl::code $this backgroundColor Navy]
     $itk_component(${_prefix}displaymenu) add cascade \
 	-label "Background Color" \
 	-menu $itk_component(${_prefix}backgroundmenu) \
@@ -5450,17 +5456,17 @@ proc title_node_handler {node} {
 
 	    cascade background -label "Background Color" -menu {
 		command black -label "Black" \
-		    -helpstr "Set display background to black"
+		    -helpstr "Set display background to Black"
 		command grey -label "Grey" \
-		    -helpstr "Set display background to grey"
+		    -helpstr "Set display background to Grey"
 		command white -label "White" \
-		    -helpstr "Set display background to white"
+		    -helpstr "Set display background to White"
 		command cyan -label "Cyan" \
-		    -helpstr "Set display background to cyan"
+		    -helpstr "Set display background to Cyan"
 		command blue -label "Blue" \
-		    -helpstr "Set display background to blue"
+		    -helpstr "Set display background to Blue"
 		command navy -label "Navy" \
-		    -helpstr "Set display background to navy"
+		    -helpstr "Set display background to Navy"
 	    }
 
 	    cascade standard -label "Standard Views" -menu {
@@ -7762,9 +7768,6 @@ proc title_node_handler {node} {
     if {$mBackgroundColor != $mBackgroundColorPref} {
 	set mBackgroundColor $mBackgroundColorPref
 	backgroundColor $mBackgroundColor
-#	set mBackground [getRgbColor $mBackgroundColor]
-#	eval backgroundColor $mBackground
-#	eval backgroundColor [getRgbColor $mBackgroundColor]
     }
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
