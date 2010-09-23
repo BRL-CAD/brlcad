@@ -287,7 +287,7 @@ namespace eval ArcherCore {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLighting 1
+	variable mLighting 2
 	variable mRenderMode -1
 	variable mActivePane
 	variable mActivePaneName
@@ -1246,17 +1246,17 @@ Popup Menu    Right or Ctrl-Left
 	    }
 
 	$itk_component(canvas_menu) menuconfigure .background.black \
-	    -command [::itcl::code $this backgroundColor black]
+	    -command [::itcl::code $this backgroundColor Black]
 	$itk_component(canvas_menu) menuconfigure .background.grey \
-	    -command [::itcl::code $this backgroundColor grey]
+	    -command [::itcl::code $this backgroundColor Grey]
 	$itk_component(canvas_menu) menuconfigure .background.white \
-	    -command [::itcl::code $this backgroundColor white]
+	    -command [::itcl::code $this backgroundColor White]
 	$itk_component(canvas_menu) menuconfigure .background.cyan \
-	    -command [::itcl::code $this backgroundColor cyan]
+	    -command [::itcl::code $this backgroundColor Cyan]
 	$itk_component(canvas_menu) menuconfigure .background.blue \
-	    -command [::itcl::code $this backgroundColor blue]
+	    -command [::itcl::code $this backgroundColor Blue]
 	$itk_component(canvas_menu) menuconfigure .background.navy \
-	    -command [::itcl::code $this backgroundColor navy]
+	    -command [::itcl::code $this backgroundColor Navy]
 
     # Raytrace Menu
 	$itk_component(canvas_menu) add menubutton raytrace \
@@ -2762,6 +2762,9 @@ Popup Menu    Right or Ctrl-Left
 	}
 	"Black" {
 	    $cmd configure $colorOption {0 0 0}
+	}
+	"Navy" {
+	    $cmd configure $colorOption {0 0 50}
 	}
 	"Blue" {
 	    $cmd configure $colorOption {100 100 255}
@@ -4550,6 +4553,9 @@ Popup Menu    Right or Ctrl-Left
 	}
 	"Black" {
 	    return "000000"
+	}
+	"Navy" {
+	    return "000032"
 	}
 	"Blue" {
 	    return "0000ff"
