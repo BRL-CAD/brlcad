@@ -3854,7 +3854,7 @@ go_faceplate(struct ged *gedp,
 
 	if (strcmp(argv[3], "color") == 0) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_line_color));
+		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_text_color));
 		return BRLCAD_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -3864,7 +3864,7 @@ go_faceplate(struct ged *gedp,
 		    sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
-		VSET(gdvp->gdv_view->gv_prim_labels.gos_line_color, r, g, b);
+		VSET(gdvp->gdv_view->gv_prim_labels.gos_text_color, r, g, b);
 		go_refresh_view(gdvp);
 		return BRLCAD_OK;
 	    }
