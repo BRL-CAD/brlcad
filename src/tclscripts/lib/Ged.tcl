@@ -194,6 +194,7 @@ package provide cadwidgets::Ged 1.0
 	method glob {args}
 	method gqa {args}
 	method grid {args}
+	method handle_expose {args}
 	method hide {args}
 	method how {args}
 	method human {args}
@@ -1294,6 +1295,10 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	eval $mGed grid $itk_component($dm) $args
     }
+}
+
+::itcl::body cadwidgets::Ged::handle_expose {args} {
+    eval $mGed handle_expose $args
 }
 
 ::itcl::body cadwidgets::Ged::hide {args} {
@@ -3706,6 +3711,9 @@ package provide cadwidgets::Ged 1.0
 	}
 	"Black" {
 	    return "0 0 0"
+	}
+	"Navy" {
+	    return "0 0 50"
 	}
 	"Blue" {
 	    return "0 0 255"
