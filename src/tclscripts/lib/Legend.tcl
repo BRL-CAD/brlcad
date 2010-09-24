@@ -174,6 +174,14 @@ option add *Legend.height 30 widgetDefault
     cadwidgets::Legend::update
 }
 
+::itcl::configbody cadwidgets::Legend::textColor {
+    if {[catch {winfo rgb $itk_interior $itk_option(-textColor)} msg]} {
+	error $msg
+    }
+
+    cadwidgets::Legend::update
+}
+
 ::itcl::body cadwidgets::Legend::constructor {args} {
     itk_component add canvas {
 	::canvas $itk_interior.canvas
