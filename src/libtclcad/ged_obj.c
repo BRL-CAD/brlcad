@@ -207,6 +207,14 @@ HIDDEN int go_faceplate(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int go_handle_expose(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
+HIDDEN int go_handle_refresh(struct ged *gedp,
+			     const char *name);
 HIDDEN int go_idle_mode(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -742,6 +750,7 @@ static struct go_cmdtab go_cmds[] = {
     {"glob",	(char *)0, MAXARGS, go_pass_through_func, ged_glob},
     {"gqa",	(char *)0, MAXARGS, go_pass_through_func, ged_gqa},
     {"grid",	"args", 6, go_view_func, ged_grid},
+    {"handle_expose",	"vname count", MAXARGS, go_handle_expose, GED_FUNC_PTR_NULL},
     {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
     {"how",	(char *)0, MAXARGS, go_pass_through_func, ged_how},
     {"human",	(char *)0, MAXARGS, go_pass_through_func, ged_human},
@@ -3489,7 +3498,7 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
     bu_vls_printf(&bindings, "bind %V <Enter> {focus %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &gdvp->gdv_dmp->dm_pathName);
-    bu_vls_printf(&bindings, "bind %V <Expose> {%V refresh %V; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Expose> {%V handle_expose %V %%c; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
@@ -3956,6 +3965,59 @@ go_faceplate(struct ged *gedp,
  bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return BRLCAD_ERROR;
+}
+
+HIDDEN int
+go_handle_expose(struct ged *gedp,
+		 int argc,
+		 const char *argv[],
+		 ged_func_ptr func,
+		 const char *usage,
+		 int maxargs)
+{
+    int count;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3 ||
+	sscanf(argv[2], "%d", &count) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s, argv[2] - %s", argv[0], usage, argv[2]);
+	return BRLCAD_ERROR;
+    }
+
+    /* There are more expose events to come so ignore this one */
+    if (count)
+	return BRLCAD_OK;
+
+    return go_handle_refresh(gedp, argv[1]);
+}
+
+HIDDEN int
+go_handle_refresh(struct ged *gedp,
+		  const char *name)
+{
+    struct ged_dm_view *gdvp;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), name))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", name);
+	return BRLCAD_ERROR;
+    }
+
+    go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -6601,8 +6663,6 @@ go_refresh(struct ged *gedp,
 	   const char *usage,
 	   int maxargs)
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -6617,19 +6677,7 @@ go_refresh(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    go_refresh_view(gdvp);
-
-    return BRLCAD_OK;
+    return go_handle_refresh(gedp, argv[1]);
 }
 
 HIDDEN int
