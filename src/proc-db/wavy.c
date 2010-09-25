@@ -1,4 +1,4 @@
-/*                       T E R R A I N . C
+/*                          W A V Y . C
  * BRL-CAD
  *
  * Copyright (c) 1991-2010 United States Government as represented by
@@ -17,11 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file terrain.c
+/** @file wavy.c
  *
- * Create a random terrain spline model database.  Future additions to
- * this program would be to include random trees and objects to be
- * inserted into the database.
+ * Create a random wavy surface spline model database.
  *
  */
 
@@ -63,15 +61,15 @@ interpolate_data(fastf_t *grid)
 int
 main(int argc, char **argv)
 {
-    char *id_name = "terrain database";
-    char *nurb_name = "terrain";
+    char *id_name = "wavy database";
+    char *nurb_name = "wavy";
     int i, j;
     fastf_t hscale;
     struct rt_wdb *outfp;
     fastf_t grid[10][10][3];
     struct face_g_snurb **surfaces;
 
-    outfp = wdb_fopen("terrain.g");
+    outfp = wdb_fopen("wavy.g");
 
     hscale = 2.5;
 
@@ -112,7 +110,7 @@ main(int argc, char **argv)
     mk_bspline(outfp, nurb_name, surfaces);
 
     wdb_close(outfp);
-    bu_log("Terrain saved to 'terrain.g'\n");
+    bu_log("Geometry saved to 'wavy.g'\n");
 
     return 0;
 }
