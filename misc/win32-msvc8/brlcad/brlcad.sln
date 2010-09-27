@@ -1658,7 +1658,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tea_nmg", "..\tea_nmg\tea_n
 		{333C38B9-BD2E-4D34-98DD-69E9B5E56ECB} = {333C38B9-BD2E-4D34-98DD-69E9B5E56ECB}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "terrain", "..\terrain\terrain.vcproj", "{9DF3EA82-FE68-44E7-9B35-F89979B5A243}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wavy", "..\wavy\wavy.vcproj", "{9DF3EA82-FE68-44E7-9B35-F89979B5A243}"
 	ProjectSection(WebsiteProperties) = preProject
 		Debug.AspNetCompiler.Debug = "True"
 		Release.AspNetCompiler.Debug = "False"
