@@ -617,6 +617,7 @@ package provide cadwidgets::Ged 1.0
 	variable mLastDataType ""
 	variable mLastDataIndex ""
 	variable mLastMouseRayPos ""
+	variable mLastMouseRayTarget ""
 	variable mLastMousePos ""
 	variable mBegin3DPoint ""
 	variable mMiddle3DPoint ""
@@ -2777,6 +2778,7 @@ package provide cadwidgets::Ged 1.0
 	return
     }
 
+    set mLastMouseRayTarget ""
     refresh_off
     $mGed $mLastDataType $itk_component($_pane) draw 0
     set point [eval pane_mouse_3dpoint $_pane $mLastMousePos 0]
@@ -3175,18 +3177,13 @@ package provide cadwidgets::Ged 1.0
 	set partitions [pane_mouse_ray $_pane $_x $_y 1]
 
 	if {$partitions == ""} {
+	    set point $mLastMouseRayTarget
+
 	    if {!$_vflag} {
-		return
+		return $point
 	    }
 
 	    set mMeasuringStick3DCurrent 0
-
-	    refresh_off
-	    set saved_center [$mGed center $itk_component($_pane)]
-	    eval $mGed vslew $itk_component($_pane) $mLastMouseRayPos
-	    set point [vscale [$mGed center $itk_component($_pane)] [$mGed local2base $itk_component($_pane)]]
-	    $mGed center $itk_component($_pane) $saved_center
-	    refresh_on
 	} else {
 	    set partition [lindex $partitions 0]
 
@@ -3252,15 +3249,15 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0}} {
     set mLastMouseRayPos "$_x $_y"
 
-    set target [$mGed screen2model $itk_component($_pane) $_x $_y]
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
+    set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 
     set bounds [$mGed bounds $itk_component($_pane)]
     set vZ [expr {[lindex $bounds 4] / -2048.0}]
     set start [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
+    set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
-
-    if {[catch {shoot_ray $start "at" $target 1 1 0} partitions]} {
+    if {[catch {shoot_ray $start "at" $mLastMouseRayTarget 1 1 0} partitions]} {
 	return $partitions
     }
 
@@ -3280,7 +3277,7 @@ package provide cadwidgets::Ged 1.0
 	}
     } else {
 	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $start $target $partitions}
+	    catch {$callback $start $mLastMouseRayTarget $partitions}
 	}
     }
 }
