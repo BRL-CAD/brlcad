@@ -2117,6 +2117,8 @@ if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
+	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
+	# -Wmissing-noreturn -Wredundant-decls
 	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
