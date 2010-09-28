@@ -2854,7 +2854,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
 	    /* init to zero for sanity */
 	    for (j=bin_todonext[slot]+1; j<bin_capacity[slot]; j++) {
-		bin[slot][j] = (long *)NULL;
+		bin[slot][j] = 0;
 	    }
 	}
 
@@ -3947,8 +3947,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     int face_count;
     int actual_count;
     int deleted;
-    int v1, v2;
-    int i, j;
+    int i;
     int done;
 
     RT_BOT_CK_MAGIC(bot);
