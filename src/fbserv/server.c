@@ -51,18 +51,31 @@
  * Package Handlers defined in this file.
  */
 void fb_server_got_unknown(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
-void fb_server_fb_open(struct pkg_conn *pcp, char *buf), fb_server_fb_close(struct pkg_conn *pcp, char *buf), fb_server_fb_clear(struct pkg_conn *pcp, char *buf), fb_server_fb_read(struct pkg_conn *pcp, char *buf), fb_server_fb_write(struct pkg_conn *pcp,
-																													     char *buf);
-void fb_server_fb_cursor(struct pkg_conn *pcp, char *buf), fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf);
-void fb_server_fb_rmap(struct pkg_conn *pcp, char *buf), fb_server_fb_wmap(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_open(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_close(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_clear(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_read(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_write(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_cursor(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_getcursor(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_rmap(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_wmap(struct pkg_conn *pcp, char *buf);
 void fb_server_fb_help(struct pkg_conn *pcp, char *buf);
-void fb_server_fb_readrect(struct pkg_conn *pcp, char *buf), fb_server_fb_writerect(struct pkg_conn *pcp, char *buf);
-void fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf), fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf);
-void fb_server_fb_poll(struct pkg_conn *pcp, char *buf), fb_server_fb_flush(struct pkg_conn *pcp, char *buf), fb_server_fb_free(struct pkg_conn *pcp, char *buf);
-void fb_server_fb_view(struct pkg_conn *pcp, char *buf), fb_server_fb_getview(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_readrect(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_writerect(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_poll(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_flush(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_free(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_view(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_getview(struct pkg_conn *pcp, char *buf);
 void fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf);
+
 /* Old Routines */
-void fb_server_fb_scursor(struct pkg_conn *pcp, char *buf), fb_server_fb_window(struct pkg_conn *pcp, char *buf), fb_server_fb_zoom(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_scursor(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_window(struct pkg_conn *pcp, char *buf);
+void fb_server_fb_zoom(struct pkg_conn *pcp, char *buf);
 
 /*
  * These are the only symbols intended for export to LIBFB users.
@@ -276,10 +289,11 @@ fb_server_fb_clear(struct pkg_conn *pcp, char *buf)
 void
 fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 {
-    int x, y, num;
+    int x, y;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -343,10 +357,10 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 {
     int xmin, ymin;
     int width, height;
-    int num;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -415,10 +429,10 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 {
     int xmin, ymin;
     int width, height;
-    int num;
+    size_t num;
     int ret;
     static unsigned char *scanbuf = NULL;
-    static int buflen = 0;
+    static size_t buflen = 0;
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
     ymin = pkg_glong(&buf[1*NET_LONG_LEN]);
@@ -741,6 +755,9 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 void
 fb_server_fb_poll(struct pkg_conn *pcp, char *buf)
 {
+    if (pcp == PKC_NULL)
+	return;
+
     (void)fb_poll(fb_server_fbp);
     if (buf) (void)free(buf);
 }
