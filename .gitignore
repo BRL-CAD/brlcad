@@ -1,5 +1,3 @@
-/Makefile
-/Makefile.in
 /*.g
 /.deps
 /.libs
@@ -39,11 +37,9 @@
 /surfaceintersect
 /tea
 /tea_nmg
-/terrain
 /tire
 /torii
 /tube
-/vegitation
-/wdb_example
 /vegetation
 /wavy
+/wdb_example
