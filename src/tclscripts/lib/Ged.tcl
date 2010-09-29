@@ -3676,6 +3676,9 @@ package provide cadwidgets::Ged 1.0
 	"Black" {
 	    return "0/0/0"
 	}
+	"Navy" {
+	    return "0/0/50"
+	}
 	"Blue" {
 	    return "0/0/255"
 	}
@@ -3744,6 +3747,9 @@ package provide cadwidgets::Ged 1.0
 	}
 	"Black" {
 	    return "000000"
+	}
+	"Navy" {
+	    return "000032"
 	}
 	"Blue" {
 	    return "0000ff"
