@@ -143,13 +143,20 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     vect_t b_dir;
 
     fastf_t a = MAGNITUDE(avec);
+    fastf_t b = MAGNITUDE(bvec);
+    fastf_t x,y;
+
+    int numrays = ((int)((2.0 *  a) / gridsize) + 1)*((int)((2.0 *  b) / gridsize) + 1);
+
+    int first = 1;
+    int acpr = a / gridsize;
+    int bcpr = b / gridsize;
+
     VMOVE(a_dir,avec);
     VUNITIZE(a_dir);
 
-    fastf_t b = MAGNITUDE(bvec);
     VMOVE(b_dir,bvec);
     VUNITIZE(b_dir);
-    fastf_t x,y;
 
     VMOVE(C,center_ray->r_pt);
     VMOVE(dir,center_ray->r_dir);
@@ -157,11 +164,6 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     BU_ASSERT(NEAR_ZERO(VDOT(avec,bvec), VUNITIZE_TOL));
     BU_ASSERT(NEAR_ZERO(VDOT(avec,dir), VUNITIZE_TOL));
 
-    int numrays = ((int)((2.0 *  a) / gridsize) + 1)*((int)((2.0 *  b) / gridsize) + 1);
-
-    int first = 1;
-    int acpr = a / gridsize;
-    int bcpr = b / gridsize;
     for ( y=gridsize * (-bcpr); y <= b; y=y+gridsize ) {
 	for ( x= gridsize * (-acpr); x <= a; x=x+gridsize ) {
 	    if (((x*x)/(a*a) + (y*y)/(b*b)) < 1) {

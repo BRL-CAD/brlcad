@@ -584,6 +584,15 @@ int rt_shootrays(struct application_bundle *bundle)
     struct xray a_ray;
     int (*a_hit)BU_ARGS((struct application *, struct partition *, struct seg *));
     int	(*a_miss)BU_ARGS((struct application *));
+
+    struct application *ray_ap = NULL;
+    int ray_index;
+    int hit;
+    struct rt_i	*	rt_i = bundle->b_ap.a_rt_i;		/**< @brief  this librt instance */
+    struct resource *	resource = bundle->b_ap.a_resource;	/**< @brief  dynamic memory resources */
+    struct xrays *r;
+    struct partition_list *pl;
+
     /*
      * temporarily hijack ap->a_uptr,ap->a_ray,ap->a_hit(),ap->a_miss()
      */
@@ -606,12 +615,6 @@ int rt_shootrays(struct application_bundle *bundle)
 
     bundle->b_uptr = (genptr_t)pb;
 
-    struct application *ray_ap = NULL;
-    int ray_index;
-    int hit;
-    struct rt_i	*	rt_i = bundle->b_ap.a_rt_i;		/**< @brief  this librt instance */
-    struct resource *	resource = bundle->b_ap.a_resource;	/**< @brief  dynamic memory resources */
-	struct xrays *r;
 	for (BU_LIST_FOR (r,xrays,&bundle->b_rays.l)) {
 		ray_ap = (struct application *)bu_calloc( 1, sizeof( struct application), "ray application structure" );
 		*ray_ap = bundle->b_ap; /* structure copy */
@@ -642,7 +645,6 @@ int rt_shootrays(struct application_bundle *bundle)
 	status = "MISS (unexpected)";
     }
 
-	 struct partition_list *pl;
 	 if (pb->list != NULL) {
 		 while (BU_LIST_WHILE(pl, partition_list, &(pb->list->l))) {
 			BU_LIST_DEQUEUE(&(pl->l));
@@ -677,6 +679,7 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
 {
     register struct partition *pp;
     struct partition_bundle *bundle = (struct partition_bundle *)ap->a_uptr;
+    struct partition_list *new_shotline;
 
     if ( (pp=PartHeadp->pt_forw) == PartHeadp ) {
 	bundle->misses++;
@@ -694,7 +697,6 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
     }
 
     /* add a new partition to list */
-    struct partition_list *new_shotline;
     BU_GETSTRUCT(new_shotline, partition_list);
 
     /* steal partition list */
