@@ -508,8 +508,6 @@ uninstall-doc:
 	done
 
 EXTRA_DIST = \
-	$(BUILT_EXTRA) \
-	$(BUILT_SOURCES) \
 	doc/html.man \
 	doc/macros.tcl \
 	doc/tkhtml_requirements.tcl \
