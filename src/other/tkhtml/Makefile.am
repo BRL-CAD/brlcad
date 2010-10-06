@@ -513,11 +513,13 @@ EXTRA_DIST = \
 	doc/tkhtml_requirements.tcl \
 	doc/tree.fig \
 	doc/tree.gif \
+	src/cssprop.tcl \
 	src/html.css \
 	src/htmltcl.c \
 	src/main.c \
 	src/mkdefaultstyle.tcl \
 	src/quirks.css \
+	src/tokenlist.txt
 	src/tkhtml.tcl \
 	tclconfig/README.txt \
 	tclconfig/tcl.m4
