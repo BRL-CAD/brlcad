@@ -2279,6 +2279,7 @@ int main(int argc, char *argv[]) {
 [ AC_MSG_RESULT(yes)
   AC_DEFINE([HAVE_BASENAME], [1], [Define to 1 if you have the `basename' function.])
 ],
+[ AC_MSG_RESULT(no) ],
 [ AC_MSG_RESULT(no) ])
 LIBS="$PRELIBS"
 
@@ -2297,6 +2298,7 @@ int main(int argc, char *argv[]) {
 [ AC_MSG_RESULT(yes)
   AC_DEFINE([HAVE_DIRNAME], [1], [Define to 1 if you have the `dirname' function.])
 ],
+[ AC_MSG_RESULT(no) ],
 [ AC_MSG_RESULT(no) ])
 LIBS="$PRELIBS"
 
@@ -2380,7 +2382,7 @@ main() {
     int i = png_access_version_number();
     return 0;
 }
-], [png_works=yes])
+], [png_works=yes], [png_works=no], [png_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($png_works)
 
@@ -2436,7 +2438,7 @@ int main() {
     regexec(&re, "", 0, 0, 0);
     return 0;
 }
-], [regex_works=yes])
+], [regex_works=yes], [regex_works=no], [regex_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($regex_works)
 
@@ -2486,7 +2488,7 @@ int main () {
     char *zlibver = ZLIB_VERSION;
     return 0;
 }
-], [zlib_works=yes])
+], [zlib_works=yes], [zlib_works=no], [zlib_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($zlib_works)
 
@@ -2539,7 +2541,7 @@ main() {
     pt.x = pt.y = 0;
     return pt.x;
 }
-    ],[x11_works=yes])
+    ], [x11_works=yes], [x11_works=no], [x11_works=yes])
     AC_MSG_RESULT($x11_works)
     if test "x$x11_works" = "xyes" ; then
 	LIBS="$LIBS $X_LIBS"
@@ -2551,7 +2553,7 @@ main() {
     xmkm=XNewModifiermap(1);
     return xmkm==NULL;
 }
-	],,x11_works=no)
+	], [x11_works=yes], [x11_works=no], [x11_works=yes])
 	AC_MSG_RESULT($x11_works)
     fi
     LIBS="$PRELIBS"
@@ -2605,7 +2607,7 @@ int main () {
     rle_hdr header = *rle_hdr_init( NULL );
     return 0;
 }
-], [urt_works=yes])
+], [urt_works=yes], [urt_works=no], [urt_works=no])
 if test "x$utahrle_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -2660,7 +2662,7 @@ int main () {
     int version = ON::Version();
     return 0;
 }
-], [opennurbs_works=yes])
+], [opennurbs_works=yes], [opennurbs_works=no], [opennurbs_works=no])
 AC_LANG_POP
 LIBS="$PRELIBS"
 AC_MSG_RESULT($opennurbs_works)
@@ -2754,7 +2756,7 @@ int main() {
 #endif
     return 0;
 }
-], [tcl_works=yes])
+], [tcl_works=yes], [tcl_works=no], [tcl_works=no])
 if test "x$tcl_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -2878,7 +2880,7 @@ int main() {
 #endif
     return 0;
 }
-], [tk_works=yes])
+], [tk_works=yes], [tk_works=no], [tk_works=no])
 if test "x$tk_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -3001,7 +3003,7 @@ int main() {
 #endif
     return 0;
 }
-], [itcl_works=yes])
+], [itcl_works=yes], [itcl_works=no], [itcl_works=no])
 if test "x$itcl_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -3129,7 +3131,7 @@ int main() {
     }
     return 0;
 }
-], [iwidgets_works=yes])
+], [iwidgets_works=yes], [iwidgets_works=no], [iwidgets_works=no])
 if test "x$tcl_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -3246,7 +3248,7 @@ int main () {
     }
     return 0;
 }
-], [tnt_works=yes])
+], [tnt_works=yes], [tnt_works=no], [tnt_works=no])
 AC_LANG_POP(C++)
 AC_MSG_RESULT($tnt_works)
 
@@ -3300,7 +3302,7 @@ main () {
     pthread_join(thread, NULL);
     return 0;
 }
-], [thread_works=yes])
+], [thread_works=yes], [thread_works=no], [thread_works=no])
 AC_MSG_RESULT($thread_works)
 
 
@@ -3342,7 +3344,7 @@ int main () {
     int result = tgetent(buffer, "vt100");
     return 0;
 }
-], [termlib_works=yes])
+], [termlib_works=yes], [termlib_works=no], [termlib_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($termlib_works)
 
@@ -3631,7 +3633,7 @@ main(int argc, char *argv[]) {
     }
     return 0;
 }
-    ], [opengl_works=yes])
+    ], [opengl_works=yes], [opengl_works=no], [opengl_works=no])
     LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
     LDFLAGS="$PRELDFLAGS"
@@ -3677,7 +3679,7 @@ main(int argc, char *argv[]) {
     }
     return 0;
 }
-    ], [agl_works=yes])
+    ], [agl_works=yes], [agl_works=no], [agl_works=no])
     LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
     LDFLAGS="$PRELDFLAGS"
@@ -3722,7 +3724,7 @@ main(int argc, char *argv[]) {
     }
     return 0;
 }
-    ], [wgl_works=yes])
+    ], [wgl_works=yes], [wgl_works=no], [wgl_works=no])
     LIBS="$PRELIBS"
     AC_MSG_RESULT($wgl_works)
 
@@ -3772,7 +3774,7 @@ main () {
     }
     return 1;
 }
-], [dials_and_buttons=yes])
+], [dials_and_buttons=yes], [dials_and_buttons=no], [dials_and_buttons=no])
 if test "x$dials_and_buttons" = "xyes" ; then
     AC_DEFINE(IR_KNOBS, 8, [Turn on SGI knobs])
     AC_DEFINE(IR_BUTTONS, 32, [Turn on SGI buttons])
