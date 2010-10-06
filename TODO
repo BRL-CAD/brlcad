@@ -42,6 +42,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* render annotated images to the OpenDocument format.  this is
+  particularly useful for rtedge-style renderings with object
+  annotations where we can leverage layout components and scalable
+  vector graphics.
+
 * Cache objects.  These are proper non-geometric geometry database
   objects intended to store binary results that have a dependency on
   other object(s).  A named hash (e.g. md5) is recorded for each
