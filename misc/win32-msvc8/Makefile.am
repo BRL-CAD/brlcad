@@ -174,6 +174,7 @@ EXTRA_DIST= \
 	tclstub/tclstub.vcproj \
 	tea/tea.vcproj \
 	tea_nmg/tea_nmg.vcproj \
+	tktable/tktable.vcproj \
 	wavy/wavy.vcproj \
 	tire/tire.vcproj \
 	tkhtml/tkhtml.vcproj \
