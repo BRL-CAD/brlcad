@@ -508,13 +508,8 @@ Popup Menu    Right or Ctrl-Left
 	method showViewParams {}
 	method showScale {}
 
-	# pane commands
-	method updateToggleMode {}
-
 	method launchNirt {}
 	method launchRtApp {_app _size}
-	#method refreshDisplay {}
-	#method mouseRay {_dm _x _y}
 
 	method updateDisplaySettings {}
 
@@ -4672,14 +4667,6 @@ Popup Menu    Right or Ctrl-Left
     refreshDisplay
 }
 
-::itcl::body ArcherCore::updateToggleMode {} {
-    set toggle3 $mVPaneToggle3
-    set toggle5 $mVPaneToggle5
-    set mVPaneToggle3 $toggle3
-    set mVPaneToggle5 $toggle5
-}
-
-
 ::itcl::body ArcherCore::launchNirt {} {
     putString "nirt -b"
     putString [$itk_component(ged) nirt -b]
@@ -4707,7 +4694,8 @@ Popup Menu    Right or Ctrl-Left
     }
     set mCurrentPaneName ""
 
-    $itk_component(ged) pane_refresh $pane
+#    $itk_component(ged) pane_refresh $pane
+    $itk_component(ged) refresh_all
 }
 
 ::itcl::body ArcherCore::putString {_str} {

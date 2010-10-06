@@ -524,7 +524,6 @@ package provide Archer 1.0
 	pack $itk_component(advancedTabs) -fill both -expand yes
 	::update
 	initMode
-	updateToggleMode
 
 	setTreeView
 	updateCreationButtons 0
@@ -548,7 +547,8 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure new -state normal
     $itk_component(primaryToolbar) itemconfigure preferences -state normal
 
-    after idle [::itcl::code $this Load ""]
+    ::update
+    Load ""
 }
 
 
@@ -1549,6 +1549,7 @@ package provide Archer 1.0
     }
 
     $itk_component(ged) refresh_off
+
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
 
@@ -1588,7 +1589,7 @@ package provide Archer 1.0
 	beginViewRotate
     }
     $itk_component(ged) refresh_on
-    $itk_component(ged) refresh
+    $itk_component(ged) refresh_all
     SetNormalCursor $this
 }
 
@@ -5995,11 +5996,6 @@ proc title_node_handler {node} {
     $itk_component(hpane) fraction $mHPaneFraction1 $mHPaneFraction2
     $itk_component(vpane) show attrView
 
-    set toggle3 $mVPaneToggle3
-    set toggle5 $mVPaneToggle5
-    set mVPaneToggle3 $toggle3
-    set mVPaneToggle5 $toggle5
-
     # How screwed up is this?
     $itk_component(vpane) fraction $mVPaneFraction3 $mVPaneFraction4 $mVPaneFraction5
     update
@@ -8347,7 +8343,6 @@ proc title_node_handler {node} {
     if {!$mDelayCommandViewBuild} {
 	::update
 	initMode
-	updateToggleMode
     }
 }
 
