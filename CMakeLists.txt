@@ -676,21 +676,6 @@ BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 # IRIX libgen library
 BRLCAD_CHECK_LIBRARY(GEN gen basename)
 
-# check if the standard c++ library links without checking for any particular symbol
-# library is needed when linking c++ code against c code (e.g. openNURBS)  
-#CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCXX)
-#IF(HAVE_STDCXX)
-#	RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++")
-#   SET(STDCXX_LINKOPT "-lstdc++")
-#ELSE(HAVE_STDCXX)
-#	CHECK_LIBRARY_EXISTS(stdc++ main "${M_LINNKOPT}" HAVE_STDCXX_M)
-#	IF(HAVE_STDCXX_M)
-#		RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++ ${M_LINNKOPT}")
-#		SET(STDCXX_LINKOPT "-lstdc++ ${M_LINNKOPT}")
-#	ENDIF(HAVE_STDCXX_M)
-#ENDIF(HAVE_STDCXX)
-FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_STDCXX 1\n")
-
 # *******************************************************************
 # ***             Check for Headers - Stage 4 of 9                ***
 # *******************************************************************
@@ -723,15 +708,6 @@ FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_STDCXX 1\n")
 # sys/types.h, sys/uio.h, sys/un.h, sys/utsname.h, sys/wait.h,
 # syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
 # utime.h, utmpx.h, wordexp.h
-
-# Tests for standard functionality based on AC_HEADER_* macros  (see
-# http://www.gnu.org/software/hello/manual/autoconf/Particular-Headers.html)
-# AC_HEADER_STDC
-CMAKE_HEADER_STDC()
-# AC_HEADER_DIRENT - not yet fully at parity with its autotools counterpart
-CMAKE_HEADER_DIRENT()
-# AC_HEADER_SYS_WAIT
-CMAKE_HEADER_SYS_WAIT()
 
 # Need to compare this with the configure.ac list 
 BRLCAD_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
