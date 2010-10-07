@@ -789,10 +789,16 @@ CHECK_DIRNAME()
 # ***         Check for Types/Structures - Stage 5 of 9           ***
 # *******************************************************************
 
-BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
-BRLCAD_TYPE_SIZE("uint64_t" UINT64_T)
-BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR_T)
-BRLCAD_TYPE_SIZE("sig_t" SIG_T)
+# socklen_t
+BRLCAD_TYPE_SIZE("socklen_t" SOCKLEN_T "sys/types.h")
+IF(NOT SOCKLEN_T)
+	BRLCAD_TYPE_SIZE("socklen_t" SOCKLEN_T "sys/socket.h")
+ENDIF(NOT SOCKLEN_T)
+
+BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T "")
+BRLCAD_TYPE_SIZE("uint64_t" UINT64_T "")
+BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR_T "")
+BRLCAD_TYPE_SIZE("sig_t" SIG_T "signal.h")
 
 
 
@@ -806,7 +812,7 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 # ***             Check for Functions - Stage 7 of 9              ***
 # *******************************************************************
 
-# ALLOCA
+# ALLOCA test - based on AC_FUNC_ALLOCA
 CMAKE_ALLOCA()
 
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
