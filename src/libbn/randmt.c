@@ -136,7 +136,7 @@ bn_randmt_state_serialize(struct _internal_state_s *UNUSED(is), struct bu_vls *U
 }
 
 void
-bn_randmt_state_deserialize(struct _internal_state_s UNUSED(*is), struct bu_vls UNUSED(*s))
+bn_randmt_state_deserialize(struct _internal_state_s *UNUSED(is), struct bu_vls *UNUSED(s))
 {
     bu_bomb("Not implemented yet.\n");
 }
