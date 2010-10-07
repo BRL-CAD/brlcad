@@ -1158,6 +1158,7 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp
 	${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST "\n") 
 
 # USER
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
@@ -1165,9 +1166,11 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp
 	${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER "\n") 
 
 # PATH
 FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${BRLCAD_PREFIX}\"") 
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/PATH "\n") 
 
 # COUNT - force CMake to look every time in case of manual removal of COUNT file
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
@@ -1179,11 +1182,13 @@ else()
 	math(EXPR buildCounter "${buildCounter} + 1")
 endif()
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/COUNT "\n") 
 
 # DATE
 file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
 STRING(STRIP ${DATESTAMP} DATESTAMP)
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/DATE "\n") 
 
 # Rules for the toplevel documentation files
 SET(toplevel_DOCFILES
