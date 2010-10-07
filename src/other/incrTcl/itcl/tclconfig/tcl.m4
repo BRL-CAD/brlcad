@@ -3377,6 +3377,7 @@ AC_DEFUN([TEA_LIB_SPEC], [
 #------------------------------------------------------------------------
 
 AC_DEFUN([TEA_PRIVATE_TCL_HEADERS], [
+    AC_ARG_WITH(tcl-private, [--with-tcl-private directory containing private Tcl headers], TCL_SRC_DIR=${withval})
     AC_MSG_CHECKING([for Tcl private include files])
 
     TCL_SRC_DIR_NATIVE=`${CYGPATH} ${TCL_SRC_DIR}`

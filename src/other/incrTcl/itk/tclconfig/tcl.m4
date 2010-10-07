@@ -3199,6 +3199,7 @@ AC_DEFUN(TEA_LIB_SPEC, [
 #------------------------------------------------------------------------
 
 AC_DEFUN(TEA_PRIVATE_TCL_HEADERS, [
+    AC_ARG_WITH(tcl-private, [--with-tcl-private directory containing private Tcl headers], TCL_SRC_DIR=${withval})
     AC_MSG_CHECKING([for Tcl private include files])
 
     if test "${TEA_PLATFORM}" = "windows"; then
@@ -3330,6 +3331,7 @@ AC_DEFUN(TEA_PUBLIC_TCL_HEADERS, [
 #------------------------------------------------------------------------
 
 AC_DEFUN(TEA_PRIVATE_TK_HEADERS, [
+    AC_ARG_WITH(tk-private, [--with-tk-private directory containing private Tk headers], TK_SRC_DIR=${withval})
     AC_MSG_CHECKING([for Tk private include files])
 
     if test "${TEA_PLATFORM}" = "windows"; then
