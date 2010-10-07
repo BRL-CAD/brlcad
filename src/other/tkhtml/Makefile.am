@@ -336,14 +336,14 @@ src/swproc.c: cssprop.h
 # here:
 
 htmldefaultstyle.c: $(top_srcdir)/src/mkdefaultstyle.tcl
-	$(TCLSH) $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
+	$(TCLSH) $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c || tclsh $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
 
 
 tokenlist.txt:
 	test -f tokenlist.txt || cp $(top_srcdir)/src/tokenlist.txt .
 
 htmltokens.h: tokenlist.txt
-	$(TCLSH) tokenlist.txt
+	$(TCLSH) tokenlist.txt || tclsh tokenlist.txt
 
 htmltokens.c: htmltokens.h
 
@@ -352,7 +352,7 @@ cssprop.tcl:
 	cp $(top_srcdir)/src/cssprop.tcl .
 
 cssprop.h: cssprop.tcl
-	test -f cssprop.h || $(TCLSH) cssprop.tcl
+	test -f cssprop.h || $(TCLSH) cssprop.tcl || tclsh cssprop.tcl
 
 cssprop.c: cssprop.h
 
