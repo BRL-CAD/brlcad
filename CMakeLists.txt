@@ -728,6 +728,7 @@ CMAKE_HEADER_SYS_WAIT()
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 
 # Need to compare this with the configure.ac list 
+BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
 BRLCAD_INCLUDE_FILE(getopt.h HAVE_GETOPT_H)
 BRLCAD_INCLUDE_FILE(gl/device.h HAVE_GL_DEVICE_H)
@@ -788,6 +789,9 @@ CHECK_DIRNAME()
 # *******************************************************************
 # ***         Check for Types/Structures - Stage 5 of 9           ***
 # *******************************************************************
+
+BRLCAD_STRUCT_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
+BRLCAD_STRUCT_MEMBER("struct stat" st_blocks sys/stat.h STRUCT_STAT_ST_BLOCKS)
 
 # socklen_t
 BRLCAD_TYPE_SIZE("socklen_t" SOCKLEN_T "sys/types.h")
