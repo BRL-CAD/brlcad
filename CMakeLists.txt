@@ -524,6 +524,7 @@ ELSE(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
 	math(EXPR platform_bit_type "${CMAKE_SIZEOF_VOID_P} * 8")
 	OPTION(BRLCAD-ENABLE_64BIT "${platform_bit_type} bit void pointer" OFF)
 ENDIF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
+FILE(APPEND  ${CONFIG_H_FILE} "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 MARK_AS_ADVANCED(BRLCAD-ENABLE_64BIT)
 
 # Take advantage of parallel processors if available - highly recommended
@@ -792,6 +793,7 @@ CHECK_DIRNAME()
 
 BRLCAD_STRUCT_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
 BRLCAD_STRUCT_MEMBER("struct stat" st_blocks sys/stat.h STRUCT_STAT_ST_BLOCKS)
+BRLCAD_STRUCT_MEMBER("struct stat" st_rdev sys/stat.h STRUCT_STAT_ST_RDEV)
 
 # socklen_t
 BRLCAD_TYPE_SIZE("socklen_t" SOCKLEN_T "sys/types.h")
@@ -799,10 +801,14 @@ IF(NOT SOCKLEN_T)
 	BRLCAD_TYPE_SIZE("socklen_t" SOCKLEN_T "sys/socket.h")
 ENDIF(NOT SOCKLEN_T)
 
-BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T "")
-BRLCAD_TYPE_SIZE("uint64_t" UINT64_T "")
-BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR_T "")
-BRLCAD_TYPE_SIZE("sig_t" SIG_T "signal.h")
+BRLCAD_TYPE_SIZE("int" INT "")
+BRLCAD_TYPE_SIZE("long" LONG "")
+BRLCAD_TYPE_SIZE("long long" LONG_LONG "")
+BRLCAD_TYPE_SIZE("ssize_t" SSIZE "")
+BRLCAD_TYPE_SIZE("ssize_t" SSIZE "")
+BRLCAD_TYPE_SIZE("uint64_t" UINT64 "")
+BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR "")
+BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
 
 
 

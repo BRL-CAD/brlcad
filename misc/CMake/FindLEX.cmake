@@ -144,6 +144,16 @@ IF(LEX_EXECUTABLE)
   ENDMACRO(ADD_LEX_YACC_DEPENDENCY)
   #============================================================
 
+  #Need to run a test lex file to determine if YYTEXT_POINTER needs
+  #to be defined
+  EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS ${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l -o ${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
+  INCLUDE (CheckCFileRuns)
+  SET(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
+  CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c YYTEXT_POINTER)
+  SET(FILE_RUN_DEFINITIONS)
+  FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine YYTEXT_POINTER 1\n")
+  
+
 ENDIF(LEX_EXECUTABLE)
 
 INCLUDE(FindPackageHandleStandardArgs)
