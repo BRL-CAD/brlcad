@@ -130,13 +130,13 @@ bn_randmt_state(struct _internal_state_s *is)
 /* straight binhex would result in a 8+4992 character encoding. We should be able
  * to compress it quite a bit with better encoding? maybe uuencode? */
 void
-bn_randmt_state_serialize(struct _internal_state_s *is, struct bu_vls *s)
+bn_randmt_state_serialize(/*struct _internal_state_s *is, struct bu_vls *s*/)
 {
     bu_bomb("Not implemented yet.\n");
 }
 
 void
-bn_randmt_state_deserialize(struct _internal_state_s *is, struct bu_vls *s)
+bn_randmt_state_deserialize(/*struct _internal_state_s *is, struct bu_vls *s*/)
 {
     bu_bomb("Not implemented yet.\n");
 }
