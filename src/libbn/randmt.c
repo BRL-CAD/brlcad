@@ -50,7 +50,7 @@
 #define TEMPERING_SHIFT_T(y)  (y << 15)
 #define TEMPERING_SHIFT_L(y)  (y >> 18)
 
-#define MERSENNE_MAGIC 0x4D54524E0A
+#define MERSENNE_MAGIC 0x4D54524E
 
 static struct _internal_state_s {
     uint32_t magic;
