@@ -38,7 +38,7 @@ BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "libwdb ${OPENNURBS_LIBRARY
 set_target_properties(surfaceintersect PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
 BRLCAD_ADDEXEC(tea tea.c libwdb)
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c libwdb)
-BRLCAD_ADDEXEC(terraingen terrain.c libwdb)
+BRLCAD_ADDEXEC(wavy wavy.c libwdb)
 BRLCAD_ADDEXEC(torii torii.c libwdb)
 BRLCAD_ADDEXEC(tube tube.c libwdb)
 BRLCAD_ADDEXEC(vegetation vegetation.c libwdb)
