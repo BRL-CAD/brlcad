@@ -677,19 +677,19 @@ BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 BRLCAD_CHECK_LIBRARY(GEN gen basename)
 
 # check if the standard c++ library links without checking for any particular symbol
-# library is needed when linking c++ code against c code (e.g. openNURBS)  TODO Not sure
-# this is set up correctly.
-CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCXX)
-IF(HAVE_STDCXX)
-	RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++")
-   SET(STDCXX_LINKOPT "-lstdc++")
-ELSE(HAVE_STDCXX)
-	CHECK_LIBRARY_EXISTS(stdc++ main "${M_LINNKOPT}" HAVE_STDCXX_M)
-	IF(HAVE_STDCXX_M)
-		RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++ ${M_LINNKOPT}")
-		SET(STDCXX_LINKOPT "-lstdc++ ${M_LINNKOPT}")
-	ENDIF(HAVE_STDCXX_M)
-ENDIF(HAVE_STDCXX)
+# library is needed when linking c++ code against c code (e.g. openNURBS)  
+#CHECK_LIBRARY_EXISTS(stdc++ main "" HAVE_STDCXX)
+#IF(HAVE_STDCXX)
+#	RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++")
+#   SET(STDCXX_LINKOPT "-lstdc++")
+#ELSE(HAVE_STDCXX)
+#	CHECK_LIBRARY_EXISTS(stdc++ main "${M_LINNKOPT}" HAVE_STDCXX_M)
+#	IF(HAVE_STDCXX_M)
+#		RESOLVE_LIBRARIES(STDCXX_LIBRARY "-lstdc++ ${M_LINNKOPT}")
+#		SET(STDCXX_LINKOPT "-lstdc++ ${M_LINNKOPT}")
+#	ENDIF(HAVE_STDCXX_M)
+#ENDIF(HAVE_STDCXX)
+FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_STDCXX 1\n")
 
 # *******************************************************************
 # ***             Check for Headers - Stage 4 of 9                ***
