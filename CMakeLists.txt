@@ -599,6 +599,7 @@ IF(APPLE)
 	find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
 	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCarbon.cmake)
 	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCocoa.cmake)
+	BRLCAD_INCLUDE_FILE(Carbon/Carbon.h HAVE_CARBON_CARBON_H) 
 ENDIF(APPLE)
 
 # crypt library (needed on some platforms for enigma)
@@ -709,9 +710,17 @@ BRLCAD_CHECK_LIBRARY(GEN gen basename)
 # syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
 # utime.h, utmpx.h, wordexp.h
 
+# Tests for standard functionality based on AC_HEADER_* macros  (see
+# http://www.gnu.org/software/hello/manual/autoconf/Particular-Headers.html)
+# AC_HEADER_STDC
+CMAKE_HEADER_STDC()
+# AC_HEADER_SYS_WAIT
+CMAKE_HEADER_SYS_WAIT()
+
 # Need to compare this with the configure.ac list 
 BRLCAD_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
+BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 BRLCAD_INCLUDE_FILE(getopt.h HAVE_GETOPT_H)
 BRLCAD_INCLUDE_FILE(gl/device.h HAVE_GL_DEVICE_H)
 BRLCAD_INCLUDE_FILE(grp.h HAVE_GRP_H)
