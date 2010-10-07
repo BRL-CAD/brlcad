@@ -1,3 +1,7 @@
+include_directories(
+	${TCL_INCLUDE_PATH}
+)
+
 add_definitions(
     -DRT_MULTISPECTRAL
 )
