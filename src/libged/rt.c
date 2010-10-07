@@ -506,11 +506,7 @@ ged_build_tops(struct ged *gedp,
 	    continue;
 
 	if (vp < end)
-#if 1
 	    *vp++ = gdlp->gdl_dp->d_namep;
-#else
-	    *vp++ = bu_vls_addr(&gdlp->gdl_path);
-#endif
 	else {
 	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;
