@@ -210,6 +210,11 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 #---------------------------------------------------------------------
+# We want to check /usr/local by default, so add it 
+SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH};/usr/local)
+SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES};/usr/local/include)
+
+#---------------------------------------------------------------------
 # Set build type here. Doing this wrong, see http://www.cmake.org/Wiki/CMake_Useful_Variables
 # for a more complete list of types and the mechanism to define new ones - dunno if 
 # set_property can be made to work here or not.  Reason to do this is in CMake gui it gives

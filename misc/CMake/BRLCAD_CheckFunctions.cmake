@@ -2,6 +2,7 @@
 # and otherwise wrap check macros in extra logic as needed
 
 INCLUDE(CheckFunctionExists)
+INCLUDE(CheckIncludeFile)
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckIncludeFileCXX)
 INCLUDE(CheckTypeSize)
