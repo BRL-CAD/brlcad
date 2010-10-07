@@ -519,8 +519,8 @@ EXTRA_DIST = \
 	src/main.c \
 	src/mkdefaultstyle.tcl \
 	src/quirks.css \
-	src/tokenlist.txt
 	src/tkhtml.tcl \
+	src/tokenlist.txt \
 	tclconfig/README.txt \
 	tclconfig/tcl.m4
 
