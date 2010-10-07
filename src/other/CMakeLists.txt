@@ -50,6 +50,7 @@ ENDIF(BRLCAD_BUILD_LOCAL_PNG)
 # libregex Library
 THIRD_PARTY_OPTION(REGEX regex)
 THIRD_PARTY_SUBDIR(REGEX libregex)
+BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on and the
 # include directory for utahrle are different, so override the macro's setting

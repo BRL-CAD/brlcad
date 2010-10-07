@@ -508,6 +508,12 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_PROFILING)
 # Build with dtrace support
 OPTION(BRLCAD-ENABLE_DTRACE "Build with dtrace support" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_DTRACE)
+IF(BRLCAD-ENABLE_DTRACE)
+	BRLCAD_INCLUDE_FILE(sys/sdt.h HAVE_SYS_SDT_H)
+	IF(NOT HAVE_SYS_SDT_H)
+		SET(BRLCAD-ENABLE_DTRACE OFF)
+	ENDIF(NOT HAVE_SYS_SDT_H)
+ENDIF(BRLCAD-ENABLE_DTRACE)
 
 # Enable/disable 64-bit build settings. This is autodetcted based on
 # the size of the void pointer - don't override this setting unless
@@ -660,13 +666,13 @@ BRLCAD_CHECK_LIBRARY(DS ds dsopen)
 
 # OpenGL graphics
 if(BRLCAD-ENABLE_OPENGL)
-   INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
-     if (OPENGL_INCLUDE_DIR_GL)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GL_H 1\n")
+	INCLUDE(${BRLCAD_CMAKE_DIR}/FindGL.cmake)
+	if (OPENGL_INCLUDE_DIR_GL)
+		FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GL_H 1\n")
 	endif (OPENGL_INCLUDE_DIR_GL)
-     if (OPENGL_INCLUDE_DIR_GLX)
-	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GLX_H 1\n")
-     endif (OPENGL_INCLUDE_DIR_GLX)
+	if (OPENGL_INCLUDE_DIR_GLX)
+		FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_GL_GLX_H 1\n")
+	endif (OPENGL_INCLUDE_DIR_GLX)
 endif (BRLCAD-ENABLE_OPENGL)
 
 # SGI graphics library
@@ -722,7 +728,6 @@ CMAKE_HEADER_SYS_WAIT()
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 
 # Need to compare this with the configure.ac list 
-BRLCAD_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
 BRLCAD_INCLUDE_FILE(getopt.h HAVE_GETOPT_H)
 BRLCAD_INCLUDE_FILE(gl/device.h HAVE_GL_DEVICE_H)
@@ -785,6 +790,9 @@ CHECK_DIRNAME()
 # *******************************************************************
 
 BRLCAD_TYPE_SIZE("ssize_t" SSIZE_T)
+BRLCAD_TYPE_SIZE("uint64_t" UINT64_T)
+BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR_T)
+BRLCAD_TYPE_SIZE("sig_t" SIG_T)
 
 
 
@@ -797,10 +805,12 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 # *******************************************************************
 # ***             Check for Functions - Stage 7 of 9              ***
 # *******************************************************************
+
+# ALLOCA
+CMAKE_ALLOCA()
+
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
-# TODO - this test isn't working and it should - look into AC macro for ALLOCA
-BRLCAD_FUNCTION_EXISTS(alloca HAVE_ALLOCA)
 BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
 BRLCAD_FUNCTION_EXISTS(fchmod HAVE_FCHMOD)
