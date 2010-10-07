@@ -693,27 +693,27 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
 
 	    for(i=0;i<4;i++)
 		for(j=0;j<MAX_INTERSECTS-1;j++) {
-		    prim[i][j].in = 0; 
+		    prim[i][j].in = 0;
 		    VSETALL(prim[i][j].hit, VOODOO);
 		}
 
 	    z = bin(a.a_rt_i->mdl_min[Z] - tol->dist - step, step);
 
 	    VSET(a.a_ray.r_dir, 0, 0, 1);
-	    a.a_uptr = primp[0]; 
-	    VSET(a.a_ray.r_pt, x, y, z); 
+	    a.a_uptr = primp[0];
+	    VSET(a.a_ray.r_pt, x, y, z);
 	    rt_shootray(&a);
 
-	    a.a_uptr = primp[1]; 
-	    VSET(a.a_ray.r_pt, x+step, y, z); 
+	    a.a_uptr = primp[1];
+	    VSET(a.a_ray.r_pt, x+step, y, z);
 	    rt_shootray(&a);
 
-	    a.a_uptr = primp[2]; 
-	    VSET(a.a_ray.r_pt, x, y+step, z); 
+	    a.a_uptr = primp[2];
+	    VSET(a.a_ray.r_pt, x, y+step, z);
 	    rt_shootray(&a);
 
-	    a.a_uptr = primp[3]; 
-	    VSET(a.a_ray.r_pt, x+step, y+step, z); 
+	    a.a_uptr = primp[3];
+	    VSET(a.a_ray.r_pt, x+step, y+step, z);
 	    rt_shootray(&a);
 
 	    z = +INFINITY;

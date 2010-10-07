@@ -717,10 +717,10 @@ ph_lines(struct pkg_conn *pc, char *buf)
     }
     if ( pkg_2send( MSG_PIXELS, ext.ext_buf, ext.ext_nbytes, scanbuf, (b-a+1)*3, pcsrv ) < 0 )  {
 	fprintf(stderr, "MSG_PIXELS send error\n");
-	db_free_external(&ext);
+	bu_free_external(&ext);
     }
 
-    db_free_external(&ext);
+    bu_free_external(&ext);
 }
 
 int print_on = 1;

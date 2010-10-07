@@ -46,7 +46,7 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
 		bu_vls_printf(vls, "%c", c);
 	} else
 	    for (; *bits > 32; bits++)
-				   ;
+		;
 	i = *bits++;
     }
     bu_vls_strcat(vls, ">");

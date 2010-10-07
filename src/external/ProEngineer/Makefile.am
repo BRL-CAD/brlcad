@@ -107,7 +107,7 @@ tmsgdir = $(BRLCAD_DATA)/pro-engineer/text/usascii/
 rsrcdir = $(BRLCAD_DATA)/pro-engineer/text/usascii/resource/
 
 proe_DATA = \
-	install.doc \
+	INSTALL.txt \
 	protk.dat
 
 tmsg_DATA = usermsg.txt

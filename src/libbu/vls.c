@@ -703,7 +703,7 @@ bu_vls_trimspace(struct bu_vls *vp)
     BU_CK_VLS(vp);
 
     /* Remove trailing white space */
-    while ((vp->vls_len > 0) && 
+    while ((vp->vls_len > 0) &&
 	   isspace(bu_vls_addr(vp)[bu_vls_strlen(vp)-1]))
 	bu_vls_trunc(vp, -1);
 
@@ -1030,14 +1030,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'n':
 	    case 'p':
 		/* all pointer == "void *" */
-	        {
+		{
 		    void *vp;
 		    vp = (void *)va_arg(ap, void *);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, vp);
 		    else
 			snprintf(buf, BUFSIZ, fbuf, vp);
-	        }
+		}
 		bu_vls_strcat(vls, buf);
 		break;
 	    case '%':

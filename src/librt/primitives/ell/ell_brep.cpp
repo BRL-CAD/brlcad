@@ -45,9 +45,9 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     point_t origin;
     VSET(origin, 0, 0, 0);
-   
+
     ON_Sphere sph(origin, MAGNITUDE(eip->a));
-   
+
     // Get the NURBS form of the surface
     ON_NurbsSurface *ellcurvedsurf = ON_NurbsSurface::New();
     sph.GetNurbForm(*ellcurvedsurf);
@@ -66,13 +66,13 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     ellcurvedsurf->SetDomain(0, 0.0, 1.0);
     ellcurvedsurf->SetDomain(1, 0.0, 1.0);
-   
+
 
     // Rotate and Translate
-  
 
-    // Make final BREP structure   
-    (*b)->m_S.Append(ellcurvedsurf);   
+
+    // Make final BREP structure
+    (*b)->m_S.Append(ellcurvedsurf);
     int surfindex = (*b)->m_S.Count();
     (*b)->NewFace(surfindex - 1);
     int faceindex = (*b)->m_F.Count();
@@ -88,4 +88,3 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

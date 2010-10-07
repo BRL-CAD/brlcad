@@ -21,8 +21,8 @@
 /** @{ */
 /** @file nurb_poly.c
  *
- *     Returns two polygons from a NURB surface.
- *     Asumes that the surface is flat.
+ * Returns two polygons from a NURB surface.
+ * Asumes that the surface is flat.
  *
  */
 /** @} */
@@ -36,18 +36,20 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-/* Algorithm -
- * From the four corners of the surface, return the two parts split by the
- * diagonal from the first and third corner point making sure Homogeneous
- * points are divided.
- */
 
+/**
+ * Algorithm -
+ *
+ * From the four corners of the surface, return the two parts split by
+ * the diagonal from the first and third corner point making sure
+ * Homogeneous points are divided.
+ */
 struct rt_nurb_poly *
 rt_nurb_to_poly(struct face_g_snurb *srf)
 {
-    int	coords = srf->pt_type;
-    fastf_t 	 * p1, *p2, *p3, *p4;
-    fastf_t 	uv1[2], uv2[2], uv3[2], uv4[2];
+    int coords = srf->pt_type;
+    fastf_t * p1, *p2, *p3, *p4;
+    fastf_t uv1[2], uv2[2], uv3[2], uv4[2];
     struct rt_nurb_poly *p, *p_head;
 
     /* Extract the four corners from the mesh */
@@ -61,14 +63,14 @@ rt_nurb_to_poly(struct face_g_snurb *srf)
 			    (srf->s_size[0] - 1));
 
     /* If the point is rational then divide out the w component */
-    if ( RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
-	int	w_index;
+    if (RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
+	int w_index;
 
-	if ( RT_NURB_EXTRACT_PT_TYPE( srf->pt_type) == RT_NURB_PT_XY)
+	if (RT_NURB_EXTRACT_PT_TYPE(srf->pt_type) == RT_NURB_PT_XY)
 	    w_index = 2;
-	else if ( RT_NURB_EXTRACT_PT_TYPE( srf->pt_type) == RT_NURB_PT_UV)
+	else if (RT_NURB_EXTRACT_PT_TYPE(srf->pt_type) == RT_NURB_PT_UV)
 	    w_index = 2;
-	else if ( RT_NURB_EXTRACT_PT_TYPE( srf->pt_type) == RT_NURB_PT_XYZ)
+	else if (RT_NURB_EXTRACT_PT_TYPE(srf->pt_type) == RT_NURB_PT_XYZ)
 	    w_index = 3;
 	else /* assume the forth coordinate */
 	    w_index = 3;
@@ -91,9 +93,9 @@ rt_nurb_to_poly(struct face_g_snurb *srf)
     uv4[0] = srf->u.knots[0];
     uv4[1] = srf->v.knots[srf->v.k_size -1];
 
-    p = rt_nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3 );
+    p = rt_nurb_mk_poly(p1, p2, p3, uv1, uv2, uv3);
     p_head = p;
-    p = rt_nurb_mk_poly(p3, p4, p1, uv3, uv4, uv1 );
+    p = rt_nurb_mk_poly(p3, p4, p1, uv3, uv4, uv1);
     p->next = p_head;
     p_head = p;
 
@@ -106,14 +108,14 @@ rt_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *uv
 {
     struct rt_nurb_poly *p;
 
-    p = (struct rt_nurb_poly *) bu_malloc( sizeof( struct rt_nurb_poly ),
-					   "rt_nurb_mk_poly: rt_nurb_poly struct" );
+    p = (struct rt_nurb_poly *) bu_malloc(sizeof(struct rt_nurb_poly),
+					  "rt_nurb_mk_poly: rt_nurb_poly struct");
 
     p->next = (struct rt_nurb_poly *) 0;
 
-    VMOVE( p->ply[0], v1);
-    VMOVE( p->ply[1], v2);
-    VMOVE( p->ply[2], v3);
+    VMOVE(p->ply[0], v1);
+    VMOVE(p->ply[1], v2);
+    VMOVE(p->ply[2], v3);
 
     p->uv[0][0] = uv1[0];
     p->uv[0][1] = uv1[1];
@@ -124,6 +126,7 @@ rt_nurb_mk_poly(fastf_t *v1, fastf_t *v2, fastf_t *v3, fastf_t *uv1, fastf_t *uv
 
     return p;
 }
+
 
 /*
  * Local Variables:

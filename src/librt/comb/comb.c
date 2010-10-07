@@ -496,7 +496,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     leafp_end = exprp;
 
     if (rpn_len == 0) {
-    	ssize_t is;
+	ssize_t is;
 
 	/* This tree is all union operators, import it as a balanced tree */
 	struct bu_ptbl *tbl1, *tbl2;

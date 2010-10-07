@@ -47,8 +47,7 @@ AM_CFLAGS = ${STRICT_FLAGS}
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	CMakeLists.txt \
-	plot3.doc
+	CMakeLists.txt
 
 DEPENDS = src/libbu
 

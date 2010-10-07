@@ -69,7 +69,8 @@ Usage:  rtshot [options] model.g objects...\n\
  -r #		Set ray length\n\
  -n #		Set number of rings for ray bundle\n\
  -c #		Set number of rays per ring for ray bundle\n\
- -R #		Set radius for ray bundle\n\
+ -R #		Set radius for ray bundle in mm\n\
+ -g #		Set ray bundle grid size in mm(default 1mm)\n\
  -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n";
 
 static FILE	*plotfp;		/* For plotting into */
@@ -82,6 +83,7 @@ int		set_air = 1;
 fastf_t		set_ray_length = 0.0;
 vect_t		at_vect;
 int		overlap_claimant_handling = 0;
+fastf_t	grid_size = -1.0; /* gridsize in mm */
 int		rays_per_ring = 0;
 int		num_rings = 0;
 fastf_t		bundle_radius = 0.0;
@@ -91,6 +93,9 @@ extern int miss(register struct application *ap);
 extern int rt_bot_tri_per_piece;
 extern int rt_bot_minpieces;
 
+int bundle_hit(register struct application_bundle *bundle, struct partition_bundle *PartBundlep);
+int bundle_miss(register struct application_bundle *bundle);
+
 /*
  *			M A I N
  */
@@ -98,7 +103,6 @@ int
 main(int argc, char **argv)
 {
     struct application	ap;
-
     static struct rt_i *rtip;
     char *title_file;
     char idbuf[RT_BUFSIZE] = {0};		/* First ID record info */
@@ -122,6 +126,11 @@ main(int argc, char **argv)
 	    break;
 	case 'n':
 	    num_rings = atoi( argv[1] );
+	    argc -= 2;
+	    argv += 2;
+	    break;
+	case 'g':
+	    grid_size = atof( argv[1] );
 	    argc -= 2;
 	    argv += 2;
 	    break;
@@ -280,7 +289,7 @@ main(int argc, char **argv)
 
     if ( set_dir + set_pt + set_at != 2 )  goto err;
 
-    if ( num_rings != 0 || rays_per_ring != 0 || bundle_radius != 0.0 ) {
+    if ( num_rings != 0 || rays_per_ring != 0 ) {
 	if ( num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0 ) {
 	    fprintf( stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n" );
 	    goto err;
@@ -356,22 +365,63 @@ main(int argc, char **argv)
     ap.a_miss = miss;
 
     if ( rays_per_ring ) {
-	vect_t avec, bvec;
-	struct xray *rp;
+		vect_t avec, bvec;
+		struct xray *rp;
 
-	/* create orthogonal rays for basis of bundle */
-	bn_vec_ortho( avec, ap.a_ray.r_dir );
-	VCROSS( bvec, ap.a_ray.r_dir, avec );
-	VUNITIZE( bvec );
+		/* create orthogonal rays for basis of bundle */
+		bn_vec_ortho( avec, ap.a_ray.r_dir );
+		VCROSS( bvec, ap.a_ray.r_dir, avec );
+		VUNITIZE( bvec );
 
-	rp = (struct xray *)bu_calloc( sizeof( struct xray ),
-				       (rays_per_ring * num_rings) + 1,
-				       "ray bundle" );
-	rp[0] = ap.a_ray;	/* struct copy */
-	rp[0].magic = RT_RAY_MAGIC;
-	rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, num_rings );
-	(void)rt_shootray_bundle( &ap, rp, (rays_per_ring * num_rings) + 1 );
-    } else {
+		rp = (struct xray *)bu_calloc( sizeof( struct xray ),
+						   (rays_per_ring * num_rings) + 1,
+						   "ray bundle" );
+		rp[0] = ap.a_ray;	/* struct copy */
+		rp[0].magic = RT_RAY_MAGIC;
+		rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, num_rings );
+		(void)rt_shootray_bundle( &ap, rp, (rays_per_ring * num_rings) + 1 );
+    } else if (bundle_radius > 0.0 ) {
+		vect_t avec, bvec;
+		struct xray center_ray;
+		struct xray *rp;
+		struct xray *rays=NULL;
+		struct xrays *ray_bundle;
+		struct application_bundle b;
+		int numrays;
+
+		b.b_ap = ap;
+
+		/* to use default bundling routines set b.b_ap.a_hit
+		 * and b.b_ap.a_miss to NULL */
+		b.b_ap.a_hit = NULL;
+		b.b_ap.a_miss = NULL;
+
+		BU_LIST_INIT(&b.b_rays.l);
+		b.b_hit = bundle_hit;
+		b.b_miss = bundle_miss;
+
+		if (grid_size <= 0.0)
+			grid_size = 1.0;
+
+		/* create orthogonal rays for basis of bundle */
+		bn_vec_ortho( avec, ap.a_ray.r_dir );
+		VCROSS( bvec, ap.a_ray.r_dir, avec );
+		VUNITIZE( bvec );
+
+		center_ray = ap.a_ray;	/* struct copy */
+		numrays = rt_gen_circular_grid(&b.b_rays, &center_ray, bundle_radius, avec, grid_size);
+
+	    int testres = rt_shootrays(&b);
+
+		 struct xrays *xr;
+		 while (BU_LIST_WHILE(xr, xrays, &(b.b_rays.l))) {
+			BU_LIST_DEQUEUE(&(xr->l));
+			bu_free(xr,"bundled ray" );
+		 }
+
+	    rt_clean(rtip);
+    }
+    else {
 	(void)rt_shootray( &ap );
     }
 
@@ -525,6 +575,160 @@ int miss(register struct application *ap)
     return 0;
 }
 
+int bundle_hit(register struct application_bundle *bundle, struct partition_bundle *PartBundlep)
+{
+    register struct partition *pp;
+    register struct soltab *stp;
+    struct curvature cur;
+    fastf_t out;
+    point_t inpt, outpt;
+    vect_t	inormal, onormal;
+    int raycnt=1;
+
+    bu_log("------------------- bundle hit -------------------\n");
+
+    /* First, plot bundle's application ray */
+	if (R_DEBUG & RDEBUG_RAYPLOT) {
+		vect_t out;
+
+		VJOIN1(out, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */
+		pl_color(plotfp, 0, 0, 255);
+		pdv_3line(plotfp, bundle->b_ap.a_ray.r_pt, out);
+	}
+
+	struct partition_list *pl;
+	for (BU_LIST_FOR(pl, partition_list, &(PartBundlep->list->l))) {
+	    bu_log("------------------- partition %d -------------------\n",raycnt++);
+		/* First, plot ray start to inhit */
+		pp = pl->PartHeadp.pt_forw;
+		if (R_DEBUG & RDEBUG_RAYPLOT) {
+			if (pp->pt_inhit->hit_dist > 0.0001) {
+				VJOIN1(inpt, pl->ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+						pl->ap->a_ray.r_dir);
+				pl_color(plotfp, 0, 0, 255);
+				pdv_3line(plotfp, pl->ap->a_ray.r_pt, inpt);
+			}
+		}
+		for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
+			matp_t inv_mat;
+			Tcl_HashEntry *entry;
+
+			bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
+					pp->pt_regionp->reg_name, pp->pt_inseg->seg_stp->st_name,
+					pp->pt_outseg->seg_stp->st_name, pp->pt_regionp->reg_bit);
+
+			entry = Tcl_FindHashEntry(
+					(Tcl_HashTable *) pl->ap->a_rt_i->Orca_hash_tbl,
+					(const char *) (size_t) pp->pt_regionp->reg_bit);
+			if (!entry) {
+				inv_mat = (matp_t) NULL;
+			} else {
+				inv_mat = (matp_t) Tcl_GetHashValue(entry);
+				bn_mat_print("inv_mat", inv_mat);
+			}
+
+			if (pp->pt_overlap_reg) {
+				struct region *pp_reg;
+				int j = -1;
+
+				bu_log("    Claiming regions:\n");
+				while ((pp_reg = pp->pt_overlap_reg[++j]))
+					bu_log("        %s\n", pp_reg->reg_name);
+			}
+
+			/* inhit info */
+			stp = pp->pt_inseg->seg_stp;
+			VJOIN1(inpt, pl->ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+					pl->ap->a_ray.r_dir);
+			RT_HIT_NORMAL(inormal, pp->pt_inhit, stp, &(pl->ap->a_ray),
+					pp->pt_inflip);
+			RT_CURVATURE(&cur, pp->pt_inhit, pp->pt_inflip, stp);
+
+			rt_pr_hit("  In", pp->pt_inhit);
+			VPRINT("  Ipoint", inpt);
+			VPRINT("  Inormal", inormal);
+			bu_log("   PDir (%g, %g, %g) c1=%g, c2=%g\n", V3ARGS(cur.crv_pdir),
+					cur.crv_c1, cur.crv_c2);
+
+			if (inv_mat) {
+				point_t in_trans;
+
+				MAT4X3PNT(in_trans, inv_mat, inpt);
+				bu_log("\ttransformed ORCA inhit = (%g %g %g)\n", V3ARGS(
+						in_trans));
+			}
+
+			/* outhit info */
+			stp = pp->pt_outseg->seg_stp;
+			VJOIN1(outpt, pl->ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+					pl->ap->a_ray.r_dir);
+			RT_HIT_NORMAL(onormal, pp->pt_outhit, stp, &(pl->ap->a_ray),
+					pp->pt_outflip);
+			RT_CURVATURE(&cur, pp->pt_outhit, pp->pt_outflip, stp);
+
+			rt_pr_hit("  Out", pp->pt_outhit);
+			VPRINT("  Opoint", outpt);
+			VPRINT("  Onormal", onormal);
+			bu_log("   PDir (%g, %g, %g) c1=%g, c2=%g\n", V3ARGS(cur.crv_pdir),
+					cur.crv_c1, cur.crv_c2);
+
+			if (inv_mat) {
+				point_t out_trans;
+				vect_t dir_trans;
+
+				MAT4X3PNT(out_trans, inv_mat, outpt);
+				MAT4X3VEC(dir_trans, inv_mat, pl->ap->a_ray.r_dir);
+				VUNITIZE(dir_trans);
+				bu_log("\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS(
+						out_trans));
+				bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n",
+						V3ARGS(dir_trans));
+			}
+
+			/* Plot inhit to outhit */
+			if (R_DEBUG & RDEBUG_RAYPLOT) {
+				if ((out = pp->pt_outhit->hit_dist) >= INFINITY)
+					out = 10000; /* to imply the direction */
+
+				VJOIN1(outpt, pl->ap->a_ray.r_pt, out, pl->ap->a_ray.r_dir);
+				pl_color(plotfp, 0, 255, 255);
+				pdv_3line(plotfp, inpt, outpt);
+			}
+
+			{
+				struct region *regp = pp->pt_regionp;
+				int i;
+
+				if (pl->ap->attrs) {
+					bu_log("\tattribute values:\n");
+					i = 0;
+					while (pl->ap->attrs[i] && regp->attr_values[i]) {
+						bu_log("\t\t%s:\n", pl->ap->attrs[i]);
+						bu_log("\t\t\tstring rep = %s\n", BU_MRO_GETSTRING(
+								regp->attr_values[i]));
+						bu_log("\t\t\tlong rep = %d\n", BU_MRO_GETLONG(
+								regp->attr_values[i]));
+						bu_log("\t\t\tdouble rep = %f\n", BU_MRO_GETDOUBLE(
+								regp->attr_values[i]));
+						i++;
+					}
+				}
+			}
+		}
+	}
+	return 1;
+}
+int bundle_miss(register struct application_bundle *bundle) {
+	bu_log("bundle missed\n");
+	if (R_DEBUG & RDEBUG_RAYPLOT) {
+		vect_t out;
+
+		VJOIN1(out, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */
+		pl_color(plotfp, 190, 0, 0);
+		pdv_3line(plotfp, bundle->b_ap.a_ray.r_pt, out);
+	}
+	return 0;
+}
 /*
  * Local Variables:
  * mode: C

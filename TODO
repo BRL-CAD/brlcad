@@ -17,7 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* ALL CLEAR!
+* verify that optimized bot_vertex_fuse still works
+
+* verify rt/benchmark on windows doesn't crash
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -39,6 +41,25 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* render annotated images to the OpenDocument format.  this is
+  particularly useful for rtedge-style renderings with object
+  annotations where we can leverage layout components and scalable
+  vector graphics.
+
+* Cache objects.  These are proper non-geometric geometry database
+  objects intended to store binary results that have a dependency on
+  other object(s).  A named hash (e.g. md5) is recorded for each
+  dependent object along with the computed results.
+
+  Three potential candidates for leveraging cache objects are 1) prep
+  objects containing the final prepped state of a given object
+  hierarchy (particularly useful for BoT and BREP geometry), 2)
+  raytrace objects containing the intersection results for a given
+  view (i.e., a grid of primary rays), and 3) rtgl point samples
+  (which is a variant of 2 but potentially view independent).
+
+* investigate OpenEXR (BSD licensed HDE image format)
 
 * the 'cp' command no longer draws the object that was copied --
   undoubtedly a libged change -- so restore previous functionality.
@@ -833,6 +854,8 @@ ODDITIES
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
+
+* remove the hf primitive (fully)
 
 * support for features either as primitives or operations or both
   e.g. chamfer, fillet, round, cut, etc

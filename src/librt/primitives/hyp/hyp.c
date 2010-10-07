@@ -24,7 +24,7 @@
  * Intersect a ray with an elliptical hyperboloid of one sheet.
  *
  * [ (x*x) / (r1*r1) ] + [ (y*y) / (r2*r2) ] - [ (z*z) * (c*c) / (r1*r1) ] = 1
- *  
+ *
  * r1:	semi-major axis, along Au
  * r2:	semi-minor axis, along Au x H
  * c:	slope of asymptotic cone in the Au-H plane
@@ -56,7 +56,7 @@ struct hyp_specific {
     fastf_t hyp_r1;	/* scalar semi-major axis length */
     fastf_t hyp_r2;     /* scalar semi-minor axis length */
     fastf_t hyp_c;	/* slope of asymptote cone */
-    
+
     vect_t hyp_Hunit;	/* unit H vector */
     vect_t hyp_Aunit;	/* unit vector along semi-major axis */
     vect_t hyp_Bunit;	/* unit vector, H x A, semi-minor axis */
@@ -70,11 +70,11 @@ struct hyp_specific {
 };
 
 
-struct hyp_specific * 
+struct hyp_specific *
 hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
     struct hyp_specific *hyp;
     BU_GETSTRUCT(hyp, hyp_specific);
-    
+
     hyp->hyp_r1 = hyp_in->hyp_bnr * MAGNITUDE(hyp_in->hyp_A);
     hyp->hyp_r2 = hyp_in->hyp_bnr * hyp_in->hyp_b;
     hyp->hyp_c = sqrt(4 * MAGSQ(hyp_in->hyp_A) / MAGSQ(hyp_in->hyp_Hi) * (1 - hyp_in->hyp_bnr * hyp_in->hyp_bnr));
@@ -101,7 +101,7 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
     VUNITIZE(hyp->hyp_Bunit);
     VUNITIZE(hyp->hyp_Hunit);
 
-    return hyp; 
+    return hyp;
 }
 
 
@@ -157,7 +157,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* calculate bounding sphere */
     VMOVE(stp->st_center, hyp->hyp_V);
-    stp->st_aradius = sqrt((hyp->hyp_c*hyp->hyp_c + 1)*MAGSQ(hyp->hyp_H) 
+    stp->st_aradius = sqrt((hyp->hyp_c*hyp->hyp_c + 1)*MAGSQ(hyp->hyp_H)
 			   + (hyp->hyp_r1*hyp->hyp_r1));
     stp->st_bradius = stp->st_aradius;
 
@@ -259,7 +259,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 		hitp->hit_surfno = HYP_NORM_BODY;
 		hitp++;
 	    }
-	
+
 	    VJOIN1(hitp->hit_vpriv, pp, k2, dp);
 	    height = hitp->hit_vpriv[Z];
 	    if (fabs(height) <= hyp->hyp_Hmag) {
@@ -349,7 +349,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    sorted[3] = hits[3];
 	}
 
-	if (sorted[0].hit_dist > sorted[1].hit_dist 
+	if (sorted[0].hit_dist > sorted[1].hit_dist
 	    || sorted[1].hit_dist > sorted[2].hit_dist
 	    || sorted[2].hit_dist > sorted[3].hit_dist) {
 	    bu_log("sorting error\n");
@@ -399,7 +399,7 @@ rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    /* normal vector is VUNITIZE(z * dz/dx, z * dz/dy, -z) */
 	    /* z = +- (c/a) * sqrt(x^2/a^2 + y^2/b^2 -1) */
 	    VSET(n, hyp->hyp_rx * hitp->hit_vpriv[X],
-		 hyp->hyp_ry * hitp->hit_vpriv[Y], 
+		 hyp->hyp_ry * hitp->hit_vpriv[Y],
 		 -hyp->hyp_rz * hitp->hit_vpriv[Z]);
 
 	    nT[X] = (hyp->hyp_Aunit[X] * n[X])
@@ -514,7 +514,7 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
     if (ap) RT_CK_APPLICATION(ap);
 
     /* u = (angle from semi-major axis on basic hyperboloid) / (2*pi) */
-    uvp->uv_u = M_1_PI * 0.5 
+    uvp->uv_u = M_1_PI * 0.5
 	* (atan2(-hitp->hit_vpriv[X] * hyp->hyp_r2, hitp->hit_vpriv[Y] * hyp->hyp_r1) + M_PI);
 
     /* v ranges (0, 1) on each plate */
@@ -525,14 +525,14 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 	    break;
 	case HYP_NORM_TOP:
 	    uvp->uv_v = 1.0 - sqrt(
-		((hitp->hit_vpriv[X]*hitp->hit_vpriv[X])*hyp->hyp_rx 
-		 + (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y])*hyp->hyp_ry) 
+		((hitp->hit_vpriv[X]*hitp->hit_vpriv[X])*hyp->hyp_rx
+		 + (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y])*hyp->hyp_ry)
 		/ (1 + (hitp->hit_vpriv[Z]*hitp->hit_vpriv[Z])*hyp->hyp_rz));
 	    break;
 	case HYP_NORM_BOTTOM:
 	    uvp->uv_v = sqrt(
-		((hitp->hit_vpriv[X]*hitp->hit_vpriv[X])*hyp->hyp_rx 
-		 + (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y])*hyp->hyp_ry) 
+		((hitp->hit_vpriv[X]*hitp->hit_vpriv[X])*hyp->hyp_rx
+		 + (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y])*hyp->hyp_ry)
 		/ (1 + (hitp->hit_vpriv[Z]*hitp->hit_vpriv[Z])*hyp->hyp_rz));
 	    break;
     }
@@ -822,7 +822,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		VSET(nHyp, p0[X] / (r1*r1), p0[Y] / (r2*r2), p0[Z] / (r3*r3));
 		VUNITIZE(nHyp);
-		ang0 = fabs(acos(VDOT(nLine, nHyp)));	
+		ang0 = fabs(acos(VDOT(nLine, nHyp)));
 		VSET(nHyp, p2[X] / (r1*r1), p2[Y] / (r2*r2), p2[Z] / (r3*r3));
 		VUNITIZE(nHyp);
 		ang2 = fabs(acos(VDOT(nLine, nHyp)));
@@ -959,7 +959,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* connect ellipses with triangles */
 
     for (i = nell-2; i >= 0; i--) {
- 	/* skip top ellipse */
+	/* skip top ellipse */
 	int bottom, top;
 
 	top = i + 1;

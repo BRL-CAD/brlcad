@@ -41,7 +41,7 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
     int				i;
     int				ident, air;
     char			oper;
-    static const char *usage = "object(s)";
+    static const char *usage = "reg_name <op obj ...>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

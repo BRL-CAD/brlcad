@@ -180,6 +180,11 @@ For each source file in BRL-CAD, the following checklist applies:
   scope and passing as parameters or embedding them in structures as
   data.
 
+In addtion, don't be afraid to rewrite code or throw away code that
+"smells bad".  No code is sacred.  Perfection is achieved not when
+there is nothing more to add but, rather, when there is nothing more
+to take away.
+
 
 SYSTEM ARCHITECTURE
 -------------------
@@ -1187,6 +1192,18 @@ Source or binary release:
 
       OpenSUSE package maintainer
       https://build.opensuse.org/package/users?package=brlcad&project=Education
+
+      FreeBSD ports maintainer
+      http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
+
+      Gentoo portage maintainer
+      http://packages.gentoo.org/package/sci-misc/brlcad
+
+      Debian apt package maintainer
+      http://git.debian.org/?p=debian-science/packages/brlcad.git
+
+      Slackware maintainer
+      http://slackbuilds.org/result/?search=brlcad
 
 Linux binary release:
 

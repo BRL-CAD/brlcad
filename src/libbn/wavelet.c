@@ -163,137 +163,137 @@
  * unsigned long dimen;	   // # of samples in data buffer
  * unsigned long channels; // # of data values per sample
  * unsigned long limit;	   // extent of decomposition
-*/
+ */
 
-#define make_wlt_haar_1d_decompose(DATATYPE)  \
-void \
-decompose_1d(DATATYPE) \
-( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit ) \
-{ \
-	register DATATYPE *detail; \
-	register DATATYPE *avg; \
-	unsigned long img_size; \
-	unsigned long half_size; \
-	int do_free = 0; \
-	unsigned long x, x_tmp, d, i, j_idx; \
-	register fastf_t onehalf = (fastf_t)0.5; \
-\
-	CK_POW_2( dimen ); \
-\
-	if ( ! tbuffer ) { \
-		tbuffer = (DATATYPE *)bu_malloc( \
-				(dimen/2) * channels * sizeof( *buffer ), \
-				"1d wavelet buffer"); \
-		do_free = 1; \
-	} \
-\
+#define make_wlt_haar_1d_decompose(DATATYPE)				\
+    void								\
+    decompose_1d(DATATYPE)						\
+	( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit ) \
+    {									\
+	register DATATYPE *detail;					\
+	register DATATYPE *avg;						\
+	unsigned long img_size;						\
+	unsigned long half_size;					\
+	int do_free = 0;						\
+	unsigned long x, x_tmp, d, i, j_idx;				\
+	register fastf_t onehalf = (fastf_t)0.5;			\
+									\
+	CK_POW_2( dimen );						\
+									\
+	if ( ! tbuffer ) {						\
+	    tbuffer = (DATATYPE *)bu_malloc(				\
+		(dimen/2) * channels * sizeof( *buffer ),		\
+		"1d wavelet buffer");					\
+	    do_free = 1;						\
+	}								\
+									\
 	/* each iteration of this loop decomposes the data into 2 halves: \
-	 * the "average image" and the "image detail" \
-	 */ \
+	 * the "average image" and the "image detail"			\
+	 */								\
 	for (img_size = dimen; img_size > limit; img_size = half_size ) { \
-\
-		half_size = img_size/2; \
-		 \
-		detail = tbuffer; \
-		avg = buffer; \
-\
-		for ( x=0; x < img_size; x += 2 ) { \
-			x_tmp = x*channels; \
-\
-			for (d=0; d < channels; d++, avg++, detail++) { \
-				i = x_tmp + d; \
-				j_idx = i + channels; \
-				*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
-				*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
-			} \
-		} \
-\
-		/* "avg" now points to the first element AFTER the "average \
-		 * image" section, and hence is the START of the "image  \
-		 * detail" portion.  Convenient, since we now want to copy \
-		 * the contents of "tbuffer" (which holds the image detail) into \
-		 * place. \
-		 */ \
-		memcpy(avg, tbuffer, sizeof(*buffer) * channels * half_size); \
-	} \
-	 \
-	if (do_free) \
-		bu_free( (genptr_t)tbuffer, "1d wavelet buffer"); \
-}
+									\
+	    half_size = img_size/2;					\
+									\
+	    detail = tbuffer;						\
+	    avg = buffer;						\
+									\
+	    for ( x=0; x < img_size; x += 2 ) {				\
+		x_tmp = x*channels;					\
+									\
+		for (d=0; d < channels; d++, avg++, detail++) {		\
+		    i = x_tmp + d;					\
+		    j_idx = i + channels;				\
+		    *detail = (buffer[i] - buffer[j_idx]) * onehalf;	\
+		    *avg    = (buffer[i] + buffer[j_idx]) * onehalf;	\
+		}							\
+	    }								\
+									\
+	    /* "avg" now points to the first element AFTER the "average \
+	     * image" section, and hence is the START of the "image	\
+	     * detail" portion.  Convenient, since we now want to copy	\
+	     * the contents of "tbuffer" (which holds the image detail) into \
+	     * place.							\
+	     */								\
+	    memcpy(avg, tbuffer, sizeof(*buffer) * channels * half_size); \
+	}								\
+									\
+	if (do_free)							\
+	    bu_free( (genptr_t)tbuffer, "1d wavelet buffer");		\
+    }
 
 
 #define reconstruct(DATATYPE ) bn_wlt_haar_1d_ ## DATATYPE ## _reconstruct
 
-#define make_wlt_haar_1d_reconstruct( DATATYPE ) \
-void \
-reconstruct(DATATYPE) \
-( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long subimage_size, unsigned long limit )\
-{ \
-	register DATATYPE *detail; \
-	register DATATYPE *avg; \
-	unsigned long img_size; \
-	unsigned long dbl_size; \
-	int do_free = 0; \
-	unsigned long x_tmp, d, x, i, j_idx; \
-\
-	CK_POW_2( subimage_size ); \
-	CK_POW_2( dimen ); \
-	CK_POW_2( limit ); \
-\
-	if ( ! (subimage_size < dimen) ) { \
-		bu_log("%s:%d Dimension %lu should be greater than subimage size (%lu)\n", \
-			__FILE__, __LINE__, dimen, subimage_size); \
-		bu_bomb("reconstruct"); \
-	} \
-\
-	if ( ! (subimage_size < limit) ) { \
-		bu_log("%s:%d Channels limit %lu should be greater than subimage size (%lu)\n", \
-			__FILE__, __LINE__, limit, subimage_size); \
-		bu_bomb("reconstruct"); \
-	} \
-\
-	if ( ! (limit <= dimen) ) { \
-		bu_log("%s:%d Dimension %lu should be greater than or equal to the channels limit (%lu)\n", \
-			__FILE__, __LINE__, dimen, limit); \
-		bu_bomb("reconstruct"); \
-	} \
-\
-\
-	if ( ! tbuffer ) { \
-		tbuffer = ( DATATYPE *)bu_malloc((dimen/2) * channels * sizeof( *buffer ), \
-				"1d wavelet reconstruct tmp buffer"); \
-		do_free = 1; \
-	} \
-\
-	/* Each iteration of this loop reconstructs an image twice as \
-	 * large as the original using a "detail image". \
-	 */ \
+#define make_wlt_haar_1d_reconstruct( DATATYPE )			\
+    void								\
+    reconstruct(DATATYPE)						\
+	( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long subimage_size, unsigned long limit ) \
+    {									\
+	register DATATYPE *detail;					\
+	register DATATYPE *avg;						\
+	unsigned long img_size;						\
+	unsigned long dbl_size;						\
+	int do_free = 0;						\
+	unsigned long x_tmp, d, x, i, j_idx;				\
+									\
+	CK_POW_2( subimage_size );					\
+	CK_POW_2( dimen );						\
+	CK_POW_2( limit );						\
+									\
+	if ( ! (subimage_size < dimen) ) {				\
+	    bu_log("%s:%d Dimension %lu should be greater than subimage size (%lu)\n", \
+		   __FILE__, __LINE__, dimen, subimage_size);		\
+	    bu_bomb("reconstruct");					\
+	}								\
+									\
+	if ( ! (subimage_size < limit) ) {				\
+	    bu_log("%s:%d Channels limit %lu should be greater than subimage size (%lu)\n", \
+		   __FILE__, __LINE__, limit, subimage_size);		\
+	    bu_bomb("reconstruct");					\
+	}								\
+									\
+	if ( ! (limit <= dimen) ) {					\
+	    bu_log("%s:%d Dimension %lu should be greater than or equal to the channels limit (%lu)\n", \
+		   __FILE__, __LINE__, dimen, limit);			\
+	    bu_bomb("reconstruct");					\
+	}								\
+									\
+									\
+	if ( ! tbuffer ) {						\
+	    tbuffer = ( DATATYPE *)bu_malloc((dimen/2) * channels * sizeof( *buffer ), \
+					     "1d wavelet reconstruct tmp buffer"); \
+	    do_free = 1;						\
+	}								\
+									\
+	/* Each iteration of this loop reconstructs an image twice as	\
+	 * large as the original using a "detail image".		\
+	 */								\
 	for (img_size=subimage_size; img_size < limit; img_size=dbl_size) { \
-		dbl_size = img_size * 2; \
-\
-		d = img_size * channels; \
-		detail = &buffer[ d ]; \
-\
-		/* copy the original or "average" data to temporary buffer */ \
-		avg = tbuffer; \
-		memcpy(avg, buffer, sizeof(*buffer) * d); \
-\
-\
-		for (x=0; x < dbl_size; x += 2 ) { \
-			x_tmp = x * channels; \
-			for (d=0; d < channels; d++, avg++, detail++ ) { \
-				i = x_tmp + d; \
-				j_idx = i + channels; \
-				buffer[i] = *avg + *detail; \
-				buffer[j_idx] = *avg - *detail; \
-			} \
-		} \
-	} \
-\
-	if (do_free) \
-		bu_free( (genptr_t)tbuffer, \
-			"1d wavelet reconstruct tmp buffer"); \
-}
+	    dbl_size = img_size * 2;					\
+									\
+	    d = img_size * channels;					\
+	    detail = &buffer[ d ];					\
+									\
+	    /* copy the original or "average" data to temporary buffer */ \
+	    avg = tbuffer;						\
+	    memcpy(avg, buffer, sizeof(*buffer) * d);			\
+									\
+									\
+	    for (x=0; x < dbl_size; x += 2 ) {				\
+		x_tmp = x * channels;					\
+		for (d=0; d < channels; d++, avg++, detail++ ) {	\
+		    i = x_tmp + d;					\
+		    j_idx = i + channels;				\
+		    buffer[i] = *avg + *detail;				\
+		    buffer[j_idx] = *avg - *detail;			\
+		}							\
+	    }								\
+	}								\
+									\
+	if (do_free)							\
+	    bu_free( (genptr_t)tbuffer,					\
+		     "1d wavelet reconstruct tmp buffer");		\
+    }
 
 /* Believe it or not, this is where the actual code is generated */
 
@@ -318,197 +318,197 @@ make_wlt_haar_1d_reconstruct(long)
 
 #define decompose_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose
 
-#define make_wlt_haar_2d_decompose(DATATYPE) \
-void \
-decompose_2d(DATATYPE) \
-(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit) \
-{ \
-	register DATATYPE *detail; \
-	register DATATYPE *avg; \
-	unsigned long img_size; \
-	unsigned long half_size; \
-	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx; \
-	register fastf_t onehalf = (fastf_t)0.5; \
-\
-	CK_POW_2( dimen ); \
-\
-	if ( ! tbuffer ) { \
-		tbuffer = (DATATYPE *)bu_malloc( \
-				(dimen/2) * channels * sizeof( *buffer ), \
-				"1d wavelet buffer"); \
-	} \
-\
+#define make_wlt_haar_2d_decompose(DATATYPE)				\
+    void								\
+    decompose_2d(DATATYPE)						\
+	(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit) \
+    {									\
+	register DATATYPE *detail;					\
+	register DATATYPE *avg;						\
+	unsigned long img_size;						\
+	unsigned long half_size;					\
+	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx;			\
+	register fastf_t onehalf = (fastf_t)0.5;			\
+									\
+	CK_POW_2( dimen );						\
+									\
+	if ( ! tbuffer ) {						\
+	    tbuffer = (DATATYPE *)bu_malloc(				\
+		(dimen/2) * channels * sizeof( *buffer ),		\
+		"1d wavelet buffer");					\
+	}								\
+									\
 	/* each iteration of this loop decomposes the data into 4 quarters: \
 	 * the "average image", the horizontal detail, the vertical detail \
-	 * and the horizontal-vertical detail \
-	 */ \
+	 * and the horizontal-vertical detail				\
+	 */								\
 	for (img_size = dimen; img_size > limit; img_size = half_size ) { \
-		half_size = img_size/2; \
-\
-		/* do a horizontal detail decomposition first */ \
-		for (y=0; y < img_size; y++ ) { \
-			y_tmp = y * dimen * channels; \
-\
-			detail = tbuffer; \
-			avg = &buffer[y_tmp]; \
-\
-			for (x=0; x < img_size; x += 2 ) { \
-				x_tmp = x*channels + y_tmp; \
-\
-				for (d=0; d < channels; d++, avg++, detail++) { \
-					i = x_tmp + d; \
-					j_idx = i + channels; \
-					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
-				} \
-			} \
-			/* "avg" now points to the first element AFTER the \
-			 * "average image" section, and hence is the START \
-			 * of the "image detail" portion.  Convenient, since \
-			 * we now want to copy the contents of "tbuffer" (which \
-			 * holds the image detail) into place. \
-			 */ \
-			memcpy(avg, tbuffer, sizeof(*buffer) * channels * half_size); \
-		} \
-\
-		/* Now do the vertical decomposition */ \
-		for (x=0; x < img_size; x ++ ) { \
-			x_tmp = x*channels; \
-\
-			detail = tbuffer; \
-			avg = &buffer[x_tmp]; \
-\
-			for (y=0; y < img_size; y += 2) { \
-				y_tmp =y*dimen*channels + x_tmp; \
-\
-				for (d=0; d < channels; d++, avg++, detail++) { \
-					i = y_tmp + d; \
-					j_idx = i + dimen*channels; \
-					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
-				} \
-				avg += (dimen-1)*channels; \
-			} \
-\
-			/* "avg" now points to the element ABOVE the \
-			 * last "average image" pixel or the first "detail" \
-			 * location in the user buffer. \
-			 * \
-			 * There is no memcpy for the columns, so we have to \
-			 * copy the data back to the user buffer ourselves. \
-			 */ \
-			detail = tbuffer; \
-			for (y=half_size; y < img_size; y++) { \
-				for (d=0; d < channels; d++) { \
-					*avg++ = *detail++; \
-				} \
-				avg += (dimen-1)*channels; \
-			} \
-		} \
-	} \
-}
+	    half_size = img_size/2;					\
+									\
+	    /* do a horizontal detail decomposition first */		\
+	    for (y=0; y < img_size; y++ ) {				\
+		y_tmp = y * dimen * channels;				\
+									\
+		detail = tbuffer;					\
+		avg = &buffer[y_tmp];					\
+									\
+		for (x=0; x < img_size; x += 2 ) {			\
+		    x_tmp = x*channels + y_tmp;				\
+									\
+		    for (d=0; d < channels; d++, avg++, detail++) {	\
+			i = x_tmp + d;					\
+			j_idx = i + channels;				\
+			*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+			*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
+		    }							\
+		}							\
+		/* "avg" now points to the first element AFTER the	\
+		 * "average image" section, and hence is the START	\
+		 * of the "image detail" portion.  Convenient, since	\
+		 * we now want to copy the contents of "tbuffer" (which \
+		 * holds the image detail) into place.			\
+		 */							\
+		memcpy(avg, tbuffer, sizeof(*buffer) * channels * half_size); \
+	    }								\
+									\
+	    /* Now do the vertical decomposition */			\
+	    for (x=0; x < img_size; x ++ ) {				\
+		x_tmp = x*channels;					\
+									\
+		detail = tbuffer;					\
+		avg = &buffer[x_tmp];					\
+									\
+		for (y=0; y < img_size; y += 2) {			\
+		    y_tmp =y*dimen*channels + x_tmp;			\
+									\
+		    for (d=0; d < channels; d++, avg++, detail++) {	\
+			i = y_tmp + d;					\
+			j_idx = i + dimen*channels;			\
+			*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+			*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
+		    }							\
+		    avg += (dimen-1)*channels;				\
+		}							\
+									\
+		/* "avg" now points to the element ABOVE the		\
+		 * last "average image" pixel or the first "detail"	\
+		 * location in the user buffer.				\
+		 *							\
+		 * There is no memcpy for the columns, so we have to	\
+		 * copy the data back to the user buffer ourselves.	\
+		 */							\
+		detail = tbuffer;					\
+		for (y=half_size; y < img_size; y++) {			\
+		    for (d=0; d < channels; d++) {			\
+			*avg++ = *detail++;				\
+		    }							\
+		    avg += (dimen-1)*channels;				\
+		}							\
+	    }								\
+	}								\
+    }
 
 
 #define reconstruct_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _reconstruct
 
-#define make_wlt_haar_2d_reconstruct(DATATYPE) \
-void \
-reconstruct_2d(DATATYPE) \
-(DATATYPE *tbuf, DATATYPE *buf, unsigned long width, unsigned long channels, unsigned long avg_size, unsigned long limit) \
-{ \
-	register DATATYPE *detail; \
-	register DATATYPE *avg; \
-	unsigned long img_size; \
-	unsigned long dbl_size; \
-	unsigned long x_tmp, d, x, i, j_idx; \
-	unsigned long y, row_len, row_start; \
- \
-	CK_POW_2( avg_size ); \
-	CK_POW_2( width ); \
-	CK_POW_2( limit ); \
- \
-	/* XXX check for: \
-	 * subimage_size < dimen && subimage_size < limit \
-	 * limit <= dimen \
-	 */ \
- \
- \
-	if ( ! tbuf ) { \
-		tbuf = ( DATATYPE *)bu_malloc((width/2) * channels * sizeof( *buf ), \
-				"1d wavelet reconstruct tmp buffer"); \
-	} \
- \
-	row_len = width * channels; \
- \
-	/* Each iteration of this loop reconstructs an image twice as \
-	 * large as the original using a "detail image". \
-	 */ \
- \
+#define make_wlt_haar_2d_reconstruct(DATATYPE)				\
+    void								\
+    reconstruct_2d(DATATYPE)						\
+	(DATATYPE *tbuf, DATATYPE *buf, unsigned long width, unsigned long channels, unsigned long avg_size, unsigned long limit) \
+    {									\
+	register DATATYPE *detail;					\
+	register DATATYPE *avg;						\
+	unsigned long img_size;						\
+	unsigned long dbl_size;						\
+	unsigned long x_tmp, d, x, i, j_idx;				\
+	unsigned long y, row_len, row_start;				\
+									\
+	CK_POW_2( avg_size );						\
+	CK_POW_2( width );						\
+	CK_POW_2( limit );						\
+									\
+	/* XXX check for:						\
+	 * subimage_size < dimen && subimage_size < limit		\
+	 * limit <= dimen						\
+	 */								\
+									\
+									\
+	if ( ! tbuf ) {							\
+	    tbuf = ( DATATYPE *)bu_malloc((width/2) * channels * sizeof( *buf ), \
+					  "1d wavelet reconstruct tmp buffer"); \
+	}								\
+									\
+	row_len = width * channels;					\
+									\
+	/* Each iteration of this loop reconstructs an image twice as	\
+	 * large as the original using a "detail image".		\
+	 */								\
+									\
 	for (img_size = avg_size; img_size < limit; img_size = dbl_size) { \
-		dbl_size = img_size * 2; \
-		 \
-		 \
-		/* first is a vertical reconstruction */ \
-		for (x=0; x < dbl_size; x++ ) { \
-			/* reconstruct column x */ \
- \
-			/* copy column of "average" data to tbuf */ \
-			x_tmp = x*channels; \
-			for (y=0; y < img_size; y++) { \
-				i = x_tmp + y*row_len; \
-				j_idx = y * channels; \
-				for (d=0; d < channels; d++) { \
-					tbuf[j_idx++] = buf[i++]; \
-				} \
-			} \
-			avg = tbuf; \
-			detail = &buf[x_tmp + img_size*row_len]; \
- \
-			/* reconstruct column */ \
-			for (y=0; y < dbl_size; y += 2) { \
- \
-				i = x_tmp + y*row_len; \
-				j_idx = i + row_len; \
- \
-				for (d=0; d < channels; d++, avg++, detail++) { \
-					buf[i++] = *avg + *detail; \
-					buf[j_idx++] = *avg - *detail; \
-				} \
-				detail += row_len - channels; \
-			} \
-		} \
- \
-		/* now a horizontal reconstruction */ \
-		for (y=0; y < dbl_size; y++ ) { \
-			/* reconstruct row y */ \
- \
-			/* copy "average" row to tbuf and set pointer to \
-			 * begining of "detail" \
-			 */ \
-			d = img_size * channels; \
-			row_start = y*row_len; \
- \
- \
-			avg = &buf[ row_start ]; \
-			detail = &buf[ row_start + d]; \
- \
-			memcpy(tbuf, avg, sizeof(*buf) * d); \
-			avg = tbuf; \
- \
-			/* reconstruct row */ \
-			for (x=0; x < dbl_size; x += 2 ) { \
-				x_tmp = x * channels; \
-				i = row_start + x * channels; \
-				j_idx = i + channels; \
- \
-				for (d=0; d < channels; d++, avg++, detail++) { \
-					buf[i++] = *avg + *detail; \
-					buf[j_idx++] = *avg - *detail; \
-				} \
-			} \
-		} \
-	} \
-}
+	    dbl_size = img_size * 2;					\
+									\
+									\
+	    /* first is a vertical reconstruction */			\
+	    for (x=0; x < dbl_size; x++ ) {				\
+		/* reconstruct column x */				\
+									\
+		/* copy column of "average" data to tbuf */		\
+		x_tmp = x*channels;					\
+		for (y=0; y < img_size; y++) {				\
+		    i = x_tmp + y*row_len;				\
+		    j_idx = y * channels;				\
+		    for (d=0; d < channels; d++) {			\
+			tbuf[j_idx++] = buf[i++];			\
+		    }							\
+		}							\
+		avg = tbuf;						\
+		detail = &buf[x_tmp + img_size*row_len];		\
+									\
+		/* reconstruct column */				\
+		for (y=0; y < dbl_size; y += 2) {			\
+									\
+		    i = x_tmp + y*row_len;				\
+		    j_idx = i + row_len;				\
+									\
+		    for (d=0; d < channels; d++, avg++, detail++) {	\
+			buf[i++] = *avg + *detail;			\
+			buf[j_idx++] = *avg - *detail;			\
+		    }							\
+		    detail += row_len - channels;			\
+		}							\
+	    }								\
+									\
+	    /* now a horizontal reconstruction */			\
+	    for (y=0; y < dbl_size; y++ ) {				\
+		/* reconstruct row y */					\
+									\
+		/* copy "average" row to tbuf and set pointer to	\
+		 * begining of "detail"					\
+		 */							\
+		d = img_size * channels;				\
+		row_start = y*row_len;					\
+									\
+									\
+		avg = &buf[ row_start ];				\
+		detail = &buf[ row_start + d];				\
+									\
+		memcpy(tbuf, avg, sizeof(*buf) * d);			\
+		avg = tbuf;						\
+									\
+		/* reconstruct row */					\
+		for (x=0; x < dbl_size; x += 2 ) {			\
+		    x_tmp = x * channels;				\
+		    i = row_start + x * channels;			\
+		    j_idx = i + channels;				\
+									\
+		    for (d=0; d < channels; d++, avg++, detail++) {	\
+			buf[i++] = *avg + *detail;			\
+			buf[j_idx++] = *avg - *detail;			\
+		    }							\
+		}							\
+	    }								\
+	}								\
+    }
 
 make_wlt_haar_2d_decompose(double)
 make_wlt_haar_2d_decompose(float)
@@ -527,101 +527,101 @@ make_wlt_haar_2d_reconstruct(long)
 
 #define decompose_2d_2( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose2
 
-#define make_wlt_haar_2d_decompose2(DATATYPE) \
-void \
-decompose_2d_2(DATATYPE) \
-(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long width, unsigned long height, unsigned long channels, unsigned long limit) \
-{ \
-	register DATATYPE *detail; \
-	register DATATYPE *avg; \
-	unsigned long img_wsize; \
-	unsigned long img_hsize; \
-	unsigned long half_wsize; \
-	unsigned long half_hsize; \
-	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx; \
-	register fastf_t onehalf = (fastf_t)0.5; \
-\
-	CK_POW_2( width ); \
-	CK_POW_2( height ); \
-\
+#define make_wlt_haar_2d_decompose2(DATATYPE)				\
+    void								\
+    decompose_2d_2(DATATYPE)						\
+	(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long width, unsigned long height, unsigned long channels, unsigned long limit) \
+    {									\
+	register DATATYPE *detail;					\
+	register DATATYPE *avg;						\
+	unsigned long img_wsize;					\
+	unsigned long img_hsize;					\
+	unsigned long half_wsize;					\
+	unsigned long half_hsize;					\
+	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx;			\
+	register fastf_t onehalf = (fastf_t)0.5;			\
+									\
+	CK_POW_2( width );						\
+	CK_POW_2( height );						\
+									\
 	/* create a temp buffer the half the size of the larger dimension \
-	 */ \
-	if ( ! tbuffer ) { \
-		tbuffer = (DATATYPE *)bu_malloc( \
-				(((width>height)?width:height)/2) * channels * sizeof( *buffer ), \
-				"1d wavelet buffer"); \
-	} \
-\
+	 */								\
+	if ( ! tbuffer ) {						\
+	    tbuffer = (DATATYPE *)bu_malloc(				\
+		(((width>height)?width:height)/2) * channels * sizeof( *buffer ), \
+		"1d wavelet buffer");					\
+	}								\
+									\
 	/* each iteration of this loop decomposes the data into 4 quarters: \
 	 * the "average image", the horizontal detail, the vertical detail \
-	 * and the horizontal-vertical detail \
-	 */ \
+	 * and the horizontal-vertical detail				\
+	 */								\
 	for (img_wsize = width, img_hsize = height; (img_wsize > limit) && (img_hsize > limit); img_wsize = half_wsize, img_hsize = half_hsize ) { \
-		half_wsize = img_wsize/2; \
-		half_hsize = img_hsize/2; \
-\
-		/* do a horizontal detail decomposition first */ \
-		for (y=0; y < img_hsize; y++ ) { \
-			y_tmp = y * width * channels; \
-\
-			detail = tbuffer; \
-			avg = &buffer[y_tmp]; \
-\
-			for (x=0; x < img_wsize; x += 2 ) { \
-				x_tmp = x*channels + y_tmp; \
-\
-				for (d=0; d < channels; d++, avg++, detail++) { \
-					i = x_tmp + d; \
-					j_idx = i + channels; \
-					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
-				} \
-			} \
-			/* "avg" now points to the first element AFTER the \
-			 * "average image" section, and hence is the START \
-			 * of the "image detail" portion.  Convenient, since \
-			 * we now want to copy the contents of "tbuffer" (which \
-			 * holds the image detail) into place. \
-			 */ \
-			memcpy(avg, tbuffer, sizeof(*buffer) * channels * half_wsize); \
-		} \
-\
-		/* Now do the vertical decomposition */ \
-		for (x=0; x < img_wsize; x ++ ) { \
-			x_tmp = x*channels; \
-\
-			detail = tbuffer; \
-			avg = &buffer[x_tmp]; \
-\
-			for (y=0; y < img_hsize; y += 2) { \
-				y_tmp =y*width*channels + x_tmp; \
-\
-				for (d=0; d < channels; d++, avg++, detail++) { \
-					i = y_tmp + d; \
-					j_idx = i + width*channels; \
-					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
-				} \
-				avg += (width-1)*channels; \
-			} \
-\
-			/* "avg" now points to the element ABOVE the \
-			 * last "average image" pixel or the first "detail" \
-			 * location in the user buffer. \
-			 * \
-			 * There is no memcpy for the columns, so we have to \
-			 * copy the data back to the user buffer ourselves. \
-			 */ \
-			detail = tbuffer; \
-			for (y=half_hsize; y < img_hsize; y++) { \
-				for (d=0; d < channels; d++) { \
-					*avg++ = *detail++; \
-				} \
-				avg += (width-1)*channels; \
-			} \
-		} \
-	} \
-}
+	    half_wsize = img_wsize/2;					\
+	    half_hsize = img_hsize/2;					\
+									\
+	    /* do a horizontal detail decomposition first */		\
+	    for (y=0; y < img_hsize; y++ ) {				\
+		y_tmp = y * width * channels;				\
+									\
+		detail = tbuffer;					\
+		avg = &buffer[y_tmp];					\
+									\
+		for (x=0; x < img_wsize; x += 2 ) {			\
+		    x_tmp = x*channels + y_tmp;				\
+									\
+		    for (d=0; d < channels; d++, avg++, detail++) {	\
+			i = x_tmp + d;					\
+			j_idx = i + channels;				\
+			*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+			*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
+		    }							\
+		}							\
+		/* "avg" now points to the first element AFTER the	\
+		 * "average image" section, and hence is the START	\
+		 * of the "image detail" portion.  Convenient, since	\
+		 * we now want to copy the contents of "tbuffer" (which \
+		 * holds the image detail) into place.			\
+		 */							\
+		memcpy(avg, tbuffer, sizeof(*buffer) * channels * half_wsize); \
+	    }								\
+									\
+	    /* Now do the vertical decomposition */			\
+	    for (x=0; x < img_wsize; x ++ ) {				\
+		x_tmp = x*channels;					\
+									\
+		detail = tbuffer;					\
+		avg = &buffer[x_tmp];					\
+									\
+		for (y=0; y < img_hsize; y += 2) {			\
+		    y_tmp =y*width*channels + x_tmp;			\
+									\
+		    for (d=0; d < channels; d++, avg++, detail++) {	\
+			i = y_tmp + d;					\
+			j_idx = i + width*channels;			\
+			*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+			*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
+		    }							\
+		    avg += (width-1)*channels;				\
+		}							\
+									\
+		/* "avg" now points to the element ABOVE the		\
+		 * last "average image" pixel or the first "detail"	\
+		 * location in the user buffer.				\
+		 *							\
+		 * There is no memcpy for the columns, so we have to	\
+		 * copy the data back to the user buffer ourselves.	\
+		 */							\
+		detail = tbuffer;					\
+		for (y=half_hsize; y < img_hsize; y++) {		\
+		    for (d=0; d < channels; d++) {			\
+			*avg++ = *detail++;				\
+		    }							\
+		    avg += (width-1)*channels;				\
+		}							\
+	    }								\
+	}								\
+    }
 
 make_wlt_haar_2d_decompose2(double)
 make_wlt_haar_2d_decompose2(float)

@@ -38,77 +38,77 @@
  */
 #define COMMA ','
 
-#define CKMEM(_len) {  \
-	register ssize_t offset; \
-	if ((offset = (ep - cp) - (_len)) < 0) { \
-		do { \
-			offset += ext->ext_nbytes;	/* decr by new growth */ \
-			ext->ext_nbytes <<= 1; \
-		} while (offset < 0); \
-		offset = cp - (char *)ext->ext_buf; \
-		ext->ext_buf = (genptr_t)bu_realloc((char *) ext->ext_buf, \
-		     ext->ext_nbytes, "bu_struct_export"); \
-		ep = (char *) ext->ext_buf + ext->ext_nbytes; \
-		cp = (char *) ext->ext_buf + offset; \
-	} \
-}
+#define CKMEM(_len) {							\
+	register ssize_t offset;					\
+	if ((offset = (ep - cp) - (_len)) < 0) {			\
+	    do {							\
+		offset += ext->ext_nbytes;	/* decr by new growth */ \
+		ext->ext_nbytes <<= 1;					\
+	    } while (offset < 0);					\
+	    offset = cp - (char *)ext->ext_buf;				\
+	    ext->ext_buf = (genptr_t)bu_realloc((char *) ext->ext_buf,	\
+						ext->ext_nbytes, "bu_struct_export"); \
+	    ep = (char *) ext->ext_buf + ext->ext_nbytes;		\
+	    cp = (char *) ext->ext_buf + offset;			\
+	}								\
+    }
 
 
 #define BU_GETPUT_MAGIC_1 0x15cb
 #define BU_GETPUT_MAGIC_2 0xbc51
-#define BU_INIT_GETPUT_1(_p) { \
-	BU_CK_EXTERNAL(_p); \
+#define BU_INIT_GETPUT_1(_p) {						\
+	BU_CK_EXTERNAL(_p);						\
 	((unsigned char *) _p->ext_buf)[1] = (BU_GETPUT_MAGIC_1 & 0xFF); \
 	((unsigned char *) _p->ext_buf)[0] = (BU_GETPUT_MAGIC_1 >> 8) & 0xFF; \
-}
-#define BU_INIT_GETPUT_2(_p, _l) {\
-	BU_CK_EXTERNAL(_p); \
+    }
+#define BU_INIT_GETPUT_2(_p, _l) {					\
+	BU_CK_EXTERNAL(_p);						\
 	((unsigned char *) _p->ext_buf)[_l-1] = (BU_GETPUT_MAGIC_2 & 0xFF); \
 	((unsigned char *) _p->ext_buf)[_l-2] = (BU_GETPUT_MAGIC_2 >> 8) & 0xFF; \
-}
+    }
 
 
-#define BU_CK_GETPUT(_p) {\
-	register unsigned long _i; \
-	register size_t _len; \
-	BU_CK_EXTERNAL(_p); \
-	if (!(_p->ext_buf)) { \
-		bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
-		    __FILE__, __LINE__); \
-		bu_bomb("NULL pointer"); \
-	} \
-	if (_p->ext_nbytes < 6) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
-		    _p->ext_nbytes, __FILE__, __LINE__); \
-		bu_bomb("getput buffer too small"); \
-	} \
-	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) | \
-	      ((unsigned char *)(_p->ext_buf))[1]; \
-	if (_i != BU_GETPUT_MAGIC_1) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
-		    (void *)_p->ext_buf, BU_GETPUT_MAGIC_1, \
-		    bu_identify_magic(_i), _i, __FILE__, __LINE__); \
-		bu_bomb("Bad getput buffer"); \
-	} \
-	_len = (((unsigned char *)(_p->ext_buf))[2] << 24) | \
-	       (((unsigned char *)(_p->ext_buf))[3] << 16) | \
-	       (((unsigned char *)(_p->ext_buf))[4] <<  8) | \
-		((unsigned char *)(_p->ext_buf))[5]; \
-	if (_len > _p->ext_nbytes) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
-		       (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes, \
-		    __FILE__, __LINE__); \
-		bu_bomb("Bad getput buffer"); \
-	} \
-	_i = (((unsigned char *)(_p->ext_buf))[_len-2] << 8) | \
-	      ((unsigned char *)(_p->ext_buf))[_len-1]; \
-	if (_i != BU_GETPUT_MAGIC_2) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
-		    (void *)_p->ext_buf, BU_GETPUT_MAGIC_2, \
-		    bu_identify_magic(_i), _i, __FILE__, __LINE__); \
-		bu_bomb("Bad getput buffer"); \
-	} \
-}
+#define BU_CK_GETPUT(_p) {						\
+	register unsigned long _i;					\
+	register size_t _len;						\
+	BU_CK_EXTERNAL(_p);						\
+	if (!(_p->ext_buf)) {						\
+	    bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
+		   __FILE__, __LINE__);					\
+	    bu_bomb("NULL pointer");					\
+	}								\
+	if (_p->ext_nbytes < 6) {					\
+	    bu_log("ERROR: BU_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
+		   _p->ext_nbytes, __FILE__, __LINE__);			\
+	    bu_bomb("getput buffer too small");				\
+	}								\
+	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) |		\
+	    ((unsigned char *)(_p->ext_buf))[1];			\
+	if (_i != BU_GETPUT_MAGIC_1) {					\
+	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_1,		\
+		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
+	    bu_bomb("Bad getput buffer");				\
+	}								\
+	_len = (((unsigned char *)(_p->ext_buf))[2] << 24) |		\
+	    (((unsigned char *)(_p->ext_buf))[3] << 16) |		\
+	    (((unsigned char *)(_p->ext_buf))[4] <<  8) |		\
+	    ((unsigned char *)(_p->ext_buf))[5];			\
+	if (_len > _p->ext_nbytes) {					\
+	    bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
+		   (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes,	\
+		   __FILE__, __LINE__);					\
+	    bu_bomb("Bad getput buffer");				\
+	}								\
+	_i = (((unsigned char *)(_p->ext_buf))[_len-2] << 8) |		\
+	    ((unsigned char *)(_p->ext_buf))[_len-1];			\
+	if (_i != BU_GETPUT_MAGIC_2) {					\
+	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
+		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_2,		\
+		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
+	    bu_bomb("Bad getput buffer");				\
+	}								\
+    }
 
 
 int
@@ -594,10 +594,10 @@ _bu_parse_double(const char *str, size_t count, double *loc)
  */
 HIDDEN int
 _bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     register char *loc;
     size_t i;
@@ -789,9 +789,9 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 
 int
 bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, const char *base)
-    /* string to parse through */
-    /* structure description */
-    /* base addr of users struct */
+/* string to parse through */
+/* structure description */
+/* base addr of users struct */
 {
     struct bu_vls vls;
     register char *cp;
@@ -939,9 +939,9 @@ _bu_vls_matprint(struct bu_vls *vls,
 void
 bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, int sep_char)
 
-    /* item description */
-    /* base address of users structure */
-    /* value separator */
+/* item description */
+/* base address of users structure */
+/* value separator */
 {
     register char *loc;
 
@@ -1050,8 +1050,8 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
 void
 bu_struct_print(const char *title, const struct bu_structparse *parsetab, const char *base)
 
-    /* structure description */
-    /* base address of users structure */
+/* structure description */
+/* base address of users structure */
 {
     register const struct bu_structparse *sdp;
     register char *loc;
@@ -1220,9 +1220,9 @@ _bu_vls_print_double(struct bu_vls *vls, const char *name, register size_t count
 
 void
 bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sdp, const char *base)
-    /* vls to print into */
-    /* structure description */
-    /* structure ponter */
+/* vls to print into */
+/* structure description */
+/* structure ponter */
 {
     register char *loc;
     register int lastoff = -1;
@@ -1573,10 +1573,10 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 
 void
 bu_parse_mm(const struct bu_structparse *sdp, const char *name, char *base, const char *value)
-    /* structure description */
-    /* struct member name */
-    /* begining of structure */
-    /* string containing value */
+/* structure description */
+/* struct member name */
+/* begining of structure */
+/* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
 
@@ -2535,8 +2535,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr, "%s ", argv[0]);
 		    break;
 		}
-		case 'p':
-		{
+		case 'p': {
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
 		}

@@ -18,9 +18,9 @@
  * information.
  */
 /** @file tor_brep.cpp
- * 
+ *
  * Description - Convert torus to brep
- * 
+ *
  */
 
 #include "common.h"
@@ -38,11 +38,11 @@ rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
-    
+
     ON_3dPoint origin(tip->v);
     ON_3dVector normal(tip->h);
     ON_Plane p(origin, normal);
-    ON_Torus tor(p, tip->r_a, tip->r_h);  
+    ON_Torus tor(p, tip->r_a, tip->r_h);
     *b = ON_BrepTorus(tor);
 }
 

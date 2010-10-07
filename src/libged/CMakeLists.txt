@@ -16,6 +16,7 @@ set(LIBGED_SOURCES
     bigE.c
     blast.c
     bo.c
+    bot.c
     bot_condense.c
     bot_decimate.c
     bot_dump.c

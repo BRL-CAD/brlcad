@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged 'cd' on Windows results in the rt* commands failing.
+
+* menu invocation seems to be broken again (ArchLinux)
+
 * Report of copy/paste not working with Tk on Windows Vista - does
   work on Windows XP.
 

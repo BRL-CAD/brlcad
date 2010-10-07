@@ -420,10 +420,6 @@ mk_region1(
     const char *shaderargs,
     const unsigned char *rgb );
 
-/* DEPRECATED, use mk_comb instead */
-#define mk_fastgen_region(fp, name, headp, mode, shadername, shaderargs, rgb, id, air, material, los, inherit)	\
-	mk_comb(fp, name, headp, mode, shadername, shaderargs, rgb, id, air, material, los, inherit, 0, 0)
-
 /* Values for wm_op.  These must track db.h */
 #define WMOP_INTERSECT	'+'
 #define WMOP_SUBTRACT	'-'

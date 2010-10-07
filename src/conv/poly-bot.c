@@ -256,7 +256,7 @@ main(int argc, char **argv)
 		if ( db_fwrite_external( ofp, poly[0].p.p_name, &ext2 ) < 0 )  {
 		    bu_exit(1, "Unable to fwrite v4 BoT %s\n", poly[0].p.p_name );
 		}
-		db_free_external( &ext2 );
+		bu_free_external( &ext2 );
 
 		if ( feof( ifp ) )
 		    break;

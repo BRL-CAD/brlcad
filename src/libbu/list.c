@@ -171,7 +171,7 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	    void *formagic = (void *)(ptrdiff_t)cur->forw->magic;
 	    void *hdmagic = (void *)(ptrdiff_t)hd->magic;
 	    bu_log("bu_ck_list(%s) cur magic=(%s)%p, cur->forw magic=(%s)%p, hd magic=(%s)%p, item=%d\n",
-		   str, 
+		   str,
 		   bu_identify_magic(cur->magic), curmagic,
 		   bu_identify_magic(cur->forw->magic), formagic,
 		   bu_identify_magic(hd->magic), hdmagic,

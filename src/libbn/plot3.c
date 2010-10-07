@@ -37,6 +37,30 @@
  * The 3-D extensions are those of Doug Gwyn, from his System V
  * extensions.
  *
+ * These are the ascii command letters allocated to various actions.
+ * Care has been taken to consistently match lowercase and uppercase
+ * letters.
+ *
+ * @code
+		2d	3d	2df	3df
+space		s	S	w	W
+move		m	M	o	O
+cont		n	N	q	Q
+point		p	P	x	X
+line		l	L	v	V
+circle		c		i
+arc		a		r
+linmod		f
+label		t
+erase		e
+color		C
+flush		F
+
+ bd gh jk  uyz
+ABDEGHIJKRTUYZ
+
+@endcode
+ *
  */
 
 #include "common.h"
