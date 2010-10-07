@@ -56,7 +56,7 @@ static struct _internal_state_s {
     uint32_t magic;
     int mti;		/* state index */
     uint32_t mt[N];	/* state vector */
-} global_state_static = { MERSENNE_MAGIC, N+1 };
+} global_state_static = { MERSENNE_MAGIC, N+1, {0} };
 
 static struct _internal_state_s *global_state = &global_state_static;
 
