@@ -4,10 +4,12 @@ include_directories(
   ${TCL_INCLUDE_PATH}
 )
 
-LEX_TARGET(SS_Scanner script.l
-    ${CMAKE_CURRENT_BINARY_DIR}/script.c COMPILE_FLAGS "-l")
+IF(LEX_EXECUTABLE)
+	LEX_TARGET(SS_Scanner script.l
+		${CMAKE_CURRENT_BINARY_DIR}/script.c COMPILE_FLAGS "-l")
+	BRLCAD_ADDEXEC(scriptsort "scriptsort.c ${LEX_SS_Scanner_OUTPUTS}" librt)
+ENDIF(LEX_EXECUTABLE)
 
-BRLCAD_ADDEXEC(scriptsort "scriptsort.c ${LEX_SS_Scanner_OUTPUTS}" librt)
 BRLCAD_ADDEXEC(script-tab script-tab.c "libbu libbn librt")
 BRLCAD_ADDEXEC(tabinterp tabinterp.c "libbu librt")
 BRLCAD_ADDEXEC(tabsub tabsub.c "libbu libbn")
