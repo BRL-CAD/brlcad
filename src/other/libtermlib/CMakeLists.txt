@@ -23,7 +23,7 @@ add_definitions(
 )
 
 add_library(termlib SHARED ${LIBTERM_SOURCES})
-INSTALL(TARGETS termlib LIBRARY DESTINATION lib)
+INSTALL(TARGETS termlib DESTINATION lib)
 
 add_library(termlib-static STATIC ${LIBTERM_SOURCES})
 INSTALL(TARGETS termlib-static ARCHIVE DESTINATION lib)

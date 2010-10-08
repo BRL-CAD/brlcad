@@ -48,7 +48,7 @@ SET(LIBUTAHRLE_SOURCES
 
 add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle ${M_LIBRARY})
-INSTALL(TARGETS utahrle LIBRARY DESTINATION lib)
+INSTALL(TARGETS utahrle DESTINATION lib)
 
 add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle-static ${M_LIBRARY})
