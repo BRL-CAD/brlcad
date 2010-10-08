@@ -897,6 +897,7 @@ ADD_SUBDIRECTORY(sh)
 ADD_SUBDIRECTORY(misc)
 ADD_SUBDIRECTORY(pix)
 ADD_SUBDIRECTORY(bench)
+ADD_SUBDIRECTORY(regress)
 
 # Define the source and build directories in the config header for tcl auto_path setting
 # The install directory is already avaiable in C using bu_brlcad_root
