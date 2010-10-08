@@ -1,4 +1,7 @@
-ADD_SUBDIRECTORY(points)
+IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+	ADD_SUBDIRECTORY(points)
+	SET(pointstarget libpoints)
+ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -100,7 +103,7 @@ SET(MGED_SOURCES
   vrlink.c
 )
 
-BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libpoints libtermio libwdb libged libdm libtclcad")
+BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${pointstarget} libtermio libwdb libged libdm libtclcad")
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c libbu)
 
