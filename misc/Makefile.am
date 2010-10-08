@@ -42,7 +42,7 @@ EXTRA_DIST = \
 	debian/copyright \
 	debian/rules \
 	debian/source/format \
-	debian/watch
+	debian/watch \
 	doxygen_structure \
 	flawfinder \
 	libtool.m4 \
