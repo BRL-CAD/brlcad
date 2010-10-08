@@ -4208,15 +4208,12 @@ AC_CONFIG_FILES([
 	include/conf/Makefile
 	m4/Makefile
 	misc/Makefile
-	misc/archlinux/Makefile
 	misc/brlcad-config
 	misc/brlcad.spec
-	misc/debian/Makefile
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
-	misc/nsis/Makefile
 	misc/pkgconfig/Makefile
 	misc/pkgconfig/libanalyze.pc
 	misc/pkgconfig/libbn.pc
@@ -4234,8 +4231,6 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libpkg.pc
 	misc/pkgconfig/librt.pc
 	misc/pkgconfig/libwdb.pc
-	misc/win32-msvc/Dll/Makefile
-	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile
 	pix/Makefile
 	sh/Makefile
