@@ -29,5 +29,11 @@ SET(SAVEVIEWS
   cube.rt
 )
 
+# Benchmark scripts don't know where the source directory is, so copy
+# to the binary directory
+FOREACH(pixfile ${BENCHMARK_PIX})
+	configure_file(${pixfile} ${CMAKE_BINARY_DIR}/pix/${pixfile} COPYONLY)
+ENDFOREACH(pixfile ${BENCHMARK_PIX})
+
 INSTALL(FILES ${BENCHMARK_PIX} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/pix)
 INSTALL(FILES ${PIX_LOG} DESTINATION ${BRLCAD_INSTALL_DATA_DIR}/pix)
