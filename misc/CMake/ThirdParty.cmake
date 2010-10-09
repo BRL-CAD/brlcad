@@ -57,6 +57,22 @@ ENDMACRO(THIRD_PARTY_SUBDIR)
 
 include(ExternalProject)
 
+MACRO(THIRD_PARTY_NMAKE_EXTERNAL_PROJECT upper projname projpath srcpath extraopts)
+	IF(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
+		ExternalProject_Add(
+			${projname}
+			DOWNLOAD_COMMAND ""
+			PREFIX ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/${projpath}/${srcpath}
+			SOURCE_DIR ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/${projpath}/${srcpath}
+			CONFIGURE_COMMAND C:\Program Files\Microsoft Visual Studio\VC98\Bin\vcvars32.bat
+			BUILD_COMMAND cd <SOURCE_DIR> && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} ${extraopts}
+			INSTALL_COMMAND  cd <SOURCE_DIR> && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} ${extraopts} install
+			)
+		SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};${projname}" CACHE STRING "external target list" FORCE)
+	ENDIF(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
+ENDMACRO(THIRD_PARTY_CONFIGURE_EXTERNAL_PROJECT)
+
+
 MACRO(THIRD_PARTY_CONFIGURE_EXTERNAL_PROJECT upper projname projpath srcpath extraopts)
 	IF(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
 		ExternalProject_Add(
