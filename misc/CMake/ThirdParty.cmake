@@ -65,7 +65,7 @@ MACRO(THIRD_PARTY_NMAKE_EXTERNAL_PROJECT upper projname projpath srcpath extraop
 			PREFIX ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/${projpath}/${srcpath}
 			SOURCE_DIR ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/${projpath}/${srcpath}
 			CONFIGURE_COMMAND ""
-			BUILD_COMMAND C:\\Program\ Files\ \(x86\)\\Microsoft\ Visual\ Studio\ 9.0\\VC\\bin\\vcvars32.bat && cd <SOURCE_DIR> && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} ${extraopts}
+			BUILD_COMMAND cd <SOURCE_DIR> && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} ${extraopts}
 			INSTALL_COMMAND  cd <SOURCE_DIR> && nmake -f makefile.vc INSTALLDIR=${CMAKE_INSTALL_PREFIX} ${extraopts} install
 			)
 		SET(CMAKE_EXTERNAL_TARGET_LIST "${CMAKE_EXTERNAL_TARGET_LIST};${projname}" CACHE STRING "external target list" FORCE)
