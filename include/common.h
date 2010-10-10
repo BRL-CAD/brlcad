@@ -112,12 +112,16 @@ typedef ptrdiff_t ssize_t;
  * optional uintptr_t type.
  */
 #if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
-#  if defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
-#    define __STDC_LIMIT_MACROS 1
-#    define __STDC_CONSTANT_MACROS 1
-#    include <stdint.h>
-#  else
+#  if defined(_WIN32) && !defined(__CYGWIN__)
 #    include "pstdint.h"
+#  else
+#    if defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
+#      define __STDC_LIMIT_MACROS 1
+#      define __STDC_CONSTANT_MACROS 1
+#      include <stdint.h>
+#    else
+#      include "pstdint.h"
+#    endif
 #  endif
 #endif
 
