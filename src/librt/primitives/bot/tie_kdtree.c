@@ -203,6 +203,12 @@ static void tie_kdtree_prep_head(tie_t *tie, tie_tri_t *tri_list, unsigned int t
     if (!tie->kdtree) {
 	tie->kdtree = (tie_kdtree_t *)bu_malloc(sizeof(tie_kdtree_t), __FUNCTION__);
 	tie->kdtree->data = (void *)bu_malloc(sizeof(tie_geom_t), __FUNCTION__);
+
+
+	if(tie->kdtree->data == NULL) {
+		bu_log("bad (null) data element: %s:%s:%d\n", __FILE__,__FUNCTION__,__LINE__);
+	}
+
 	g = ((tie_geom_t *)(tie->kdtree->data));
 	g->tri_num = 0;
 
