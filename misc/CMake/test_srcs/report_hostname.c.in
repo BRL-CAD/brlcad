@@ -4,7 +4,6 @@
 int main(void) {
   int i;
   char hostname[chararraysize];
-  char username[chararraysize];
   FILE *outfp = NULL;
 
   hostname[chararraysize - 1] = "\0";
