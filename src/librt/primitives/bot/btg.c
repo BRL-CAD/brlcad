@@ -43,7 +43,7 @@ bottie_allocn_double(unsigned long long ntri)
     if(tie == NULL)
 	return NULL;
 
-    tie_init(tie, ntri, TIE_KDTREE_FAST);
+    tie_init1(tie, ntri, TIE_KDTREE_FAST);
 }
 
 void
@@ -51,7 +51,7 @@ bottie_push_double(void *vtie, double **tri, unsigned int ntri, void *u, unsigne
 {
     struct tie_s *tie = (struct tie_s *)vtie;
 
-    tie_push(tie, tri, ntri, u, pstride);
+    tie_push1(tie, tri, ntri, u, pstride);
 }
 
 int
@@ -71,7 +71,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     bot->tie = bot_ip->tie;
     tie = bot_ip->tie;
 
-    tie_prep((struct tie_s *)bot_ip->tie);
+    tie_prep1((struct tie_s *)bot_ip->tie);
 
     VMOVE(stp->st_min, tie->min.v);
     VMOVE(stp->st_max, tie->max.v);
@@ -130,8 +130,6 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     VMOVE(ray.pos.v, rp->r_pt);
     VMOVE(ray.dir.v, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
-
-    bu_log("Shooting [%d] %g,%g,%g -> %g,%g,%g\n", tie->tri_num, V3ARGS(ray.pos.v), V3ARGS(ray.dir.v));
 
     tie_work1(tie, &ray, &id, hitfunc, &hitdata);
 
