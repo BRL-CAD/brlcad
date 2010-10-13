@@ -9242,7 +9242,7 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::global_undo_callback {_gname} {
-    gedCmd refresh
+    gedCmd refresh_all
 }
 
 ::itcl::body Archer::ledger_cleanup {} {
