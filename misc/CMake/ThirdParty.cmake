@@ -28,7 +28,7 @@ MACRO(THIRD_PARTY_OPTION upper lower)
 		# that it may introduce extra build work just from trying configure options, but appears
 		# to be essential to ensuring that the build "just works" each time.
 		STRING(REGEX REPLACE "lib" "" rootname "${lower}")
-		FILE(GLOB STALE_FILES "${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rootname}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
+		FILE(GLOB STALE_FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}${rootname}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 		MESSAGE("STALE_FILES: ${STALE_FILES}")
 		FOREACH(stale_file ${STALE_FILES})
 		   EXEC_PROGRAM(
