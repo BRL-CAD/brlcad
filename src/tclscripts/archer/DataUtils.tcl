@@ -29,15 +29,51 @@
     destructor {}
 
     public {
+	proc appendGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd _data _pindex_begin _pindex_end}
 	proc dataPick {_ged _archer _group
 		       _pdata _data_arrows_name _sdata_arrows_name
 		       _data_axes_name _sdata_axes_name
 		       _data_labels_name _sdata_labels_name
 		       _data_lines_name _sdata_lines_name}
+	proc updateGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd}
     }
 }
 
 ################################### Public Section ###################################
+
+::itcl::body DataUtils::appendGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd _data _pindex_begin _pindex_end} {
+    if {$_group == ""} {
+	$_archer putString "Please select a group before creating $_attr_name."
+	return
+    }
+
+    if {[catch {$_ged attr get _GLOBAL $_attr_name} dataList]} {
+	set dataList {}
+    }
+
+    set i [lsearch -index 0 $dataList $_group]
+
+    if {$i != -1} {
+	set subDataList [lindex $dataList $i]
+	eval lappend subDataList $_data
+	set dataList [lreplace $dataList $i $i $subDataList]
+    } else {
+	lappend dataList [eval list $_group $_data]
+	set subDataList [lindex $dataList end]
+    }
+
+    set dataList [lsort -index 0 -dictionary $dataList]
+    $_archer attr set _GLOBAL $_attr_name $dataList
+
+    $_ged refresh_off
+    set plist {}
+    foreach item [lrange $subDataList 1 end] {
+	lappend plist [lrange $item $_pindex_begin $_pindex_end]
+    }
+    catch {$_ged $_data_cmd $_data_subcmd $plist} msg
+    $_ged refresh_on
+    $_ged refresh_all
+}
 
 ::itcl::body DataUtils::dataPick {_ged _archer _group
     _pdata _data_arrows_name _sdata_arrows_name
@@ -445,6 +481,25 @@
 	    return
 	}
     }
+}
+
+::itcl::body DataUtils::updateGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd} {
+    if {[catch {$_ged attr get _GLOBAL $_attr_name} gdl]} {
+	set gdl {}
+    }
+
+    # Get the list for the current group
+    set i [lsearch -index 0 $gdl $_group]
+    if {$i == -1} {
+	# This should never happen
+	return
+    }
+
+    set data [$_ged $_data_cmd $_data_subcmd]
+    set gdl [lreplace $gdl $i $i [eval list $_group $data]]
+    $_ged refresh_off
+    catch {$_archer attr set _GLOBAL $_attr_name $gdl}
+    $_ged refresh_on
 }
 
 ################################### End Public Section ###################################
