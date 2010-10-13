@@ -29,19 +29,25 @@
     destructor {}
 
     public {
-	proc appendGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd _data _pindex_begin _pindex_end}
+	proc appendGlobalData {_ged _archer _group
+			       _attr_name _data_cmd _data_subcmd
+			       _data _index_begin _index_end}
 	proc dataPick {_ged _archer _group
 		       _pdata _data_arrows_name _sdata_arrows_name
 		       _data_axes_name _sdata_axes_name
 		       _data_labels_name _sdata_labels_name
 		       _data_lines_name _sdata_lines_name}
+	proc updateData {_ged _archer _group
+			 _attr_name _data_cmd _data_subcmd}
 	proc updateGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd}
     }
 }
 
 ################################### Public Section ###################################
 
-::itcl::body DataUtils::appendGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd _data _pindex_begin _pindex_end} {
+::itcl::body DataUtils::appendGlobalData {_ged _archer _group
+                                          _attr_name _data_cmd _data_subcmd
+                                          _data _index_begin _index_end} {
     if {$_group == ""} {
 	$_archer putString "Please select a group before creating $_attr_name."
 	return
@@ -68,7 +74,7 @@
     $_ged refresh_off
     set plist {}
     foreach item [lrange $subDataList 1 end] {
-	lappend plist [lrange $item $_pindex_begin $_pindex_end]
+	lappend plist [lrange $item $_index_begin $_index_end]
     }
     catch {$_ged $_data_cmd $_data_subcmd $plist} msg
     $_ged refresh_on
@@ -76,10 +82,10 @@
 }
 
 ::itcl::body DataUtils::dataPick {_ged _archer _group
-    _pdata _data_arrows_name _sdata_arrows_name
-    _data_axes_name _sdata_axes_name
-    _data_labels_name _sdata_labels_name
-    _data_lines_name _sdata_lines_name} {
+                                  _pdata _data_arrows_name _sdata_arrows_name
+                                  _data_axes_name _sdata_axes_name
+                                  _data_labels_name _sdata_labels_name
+                                  _data_lines_name _sdata_lines_name} {
 
     if {$_pdata == ""} {
 	return
@@ -481,6 +487,24 @@
 	    return
 	}
     }
+}
+
+::itcl::body DataUtils::updateData {_ged _archer _group
+                                    _attr_name _data_cmd _data_subcmd} {
+    if {[catch {$_ged attr get _GLOBAL $_attr_name} dal]} {
+	set dal {}
+    }
+
+    set i [lsearch -index 0 $dal $_group]
+    if {$i != -1} {
+	set da [lindex $dal $i]
+    } else {
+	set da {}
+    }
+
+    $_ged refresh_off
+    $_ged $_data_cmd $_data_subcmd [lrange $da 1 end]
+    $_ged refresh_on
 }
 
 ::itcl::body DataUtils::updateGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd} {
