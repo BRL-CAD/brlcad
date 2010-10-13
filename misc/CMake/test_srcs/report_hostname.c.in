@@ -1,5 +1,9 @@
 #include <stdio.h>
-#include <unistd.h>
+#ifdef _WIN32
+  #include <WinSock2.h>
+#else
+  #include <unistd.h>
+#endif
 #define chararraysize 2048
 int main(void) {
   int i;
