@@ -315,6 +315,7 @@ proc gets {channelId args} {
     # the line that was input.  total hack.  total fugly hack.
 
     proc execute_cmd_save {} {}
+    rename execute_cmd_save ""
     rename execute_cmd execute_cmd_save
     rename gets_execute_cmd execute_cmd
 
