@@ -1,4 +1,6 @@
-include_directories(${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include)
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include)
 
 set(LIBREGEX_PUBLIC_HDRS
     regex.h
@@ -10,6 +12,13 @@ set(LIBREGEX_SOURCES
     regexec.c
     regfree.c
 )
+
+IF(MSVC)
+	add_definitions(
+		-DREGEX_EXPORT_DLL
+		-DBRLCAD_DLL
+	)
+ENDIF(MSVC)
 
 add_library(regex SHARED ${LIBREGEX_SOURCES})
 INSTALL(TARGETS regex DESTINATION lib)

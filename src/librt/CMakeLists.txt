@@ -225,6 +225,9 @@ if(MSVC)
 	${LIBRT_SOURCES}
 	timer-nt.c
     )
+    add_definitions(
+       -DRT_EXPORT_DLL
+    )
 else(MSVC)
     set(LIBRT_SOURCES
 	${LIBRT_SOURCES}
