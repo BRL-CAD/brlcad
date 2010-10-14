@@ -49,6 +49,11 @@ add_definitions(
 	-DBRLCADBUILD=1
 	)
 
+IF(MSVC)
+   add_definitions(
+	   -DBRLCAD_DLL
+   )
+ENDIF(MSVC)
 
 # We will always need the required directories,
 # so go ahead and add them
