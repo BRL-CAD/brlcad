@@ -292,7 +292,7 @@ proc transpose { w } {
 
 
 # hack to hide the standard tcl gets implementation so we can wrap it.
-if {[catch {info body gets}] == 1} {
+if {[catch {info body gets}] == 1 && [catch {info body tcl_gets}] == 1} {
     rename gets tcl_gets
 }
 
