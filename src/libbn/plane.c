@@ -2191,33 +2191,30 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
     register fastf_t f;
     register fastf_t dot;
-
+    vect_t pt_a, pt_b;
+    
     BN_CK_TOL(tol);
 
-    /* Check to see if the planes are parallel */
     dot = VDOT(a, b);
-    if (dot >= 0) {
-	/* Normals head in generally the same directions */
-	if (dot < tol->para)
-	    return 0;	/* Planes intersect */
+    VSCALE(pt_a, a, a[3]);
+    VSCALE(pt_b, b, b[3]);
 
-	/* Planes have "exactly" the same normal vector */
-	f = a[3] - b[3];
-	if (NEAR_ZERO(f, tol->dist)) {
-	    return 1;	/* Coplanar, same direction */
+    if (NEAR_ZERO(MAGSQ(pt_a), SQRT_SMALL_FASTF) || NEAR_ZERO(MAGSQ(pt_b), SQRT_SMALL_FASTF)) {
+	bu_bomb("bn_coplanar(): zero magnitude input vector\n");
+    }
+
+    if ((dot < 0) ? (-dot >= (1 - SMALL_FASTF)) : (dot >= (1 - SMALL_FASTF))) { /* test for parallel */
+	if (bn_pt3_pt3_equal(pt_a, pt_b, tol)) { /* test for coplanar */
+	    if ( dot > 0 ) { /* test normals in same direction */
+		return 1;
+            } else {
+		return 2;
+	    }
+	} else {
+	    return -1;
 	}
-	return -1;	/* Parallel but distinct */
     }
-    /* Normals head in generally opposite directions */
-    if (-dot < tol->para)
-	return 0;	/* Planes intersect */
-
-    /* Planes have "exactly" opposite normal vectors */
-    f = a[3] + b[3];
-    if (NEAR_ZERO(f, tol->dist)) {
-	return 2;	/* Coplanar, opposite directions */
-    }
-    return -1;		/* Parallel but distinct */
+    return 0;
 }
 
 /**
