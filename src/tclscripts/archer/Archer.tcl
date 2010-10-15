@@ -36,10 +36,8 @@ namespace eval Archer {
     set methodImpls ""
     set extraMgedCommands ""
     set corePluginInit ""
-    set pluginsdir [file join $env(ARCHER_HOME) plugins archer]
-    if {![file exists $pluginsdir]} {
-	set pluginsdir [file join [bu_brlcad_data "plugins"] archer]
-    }
+
+    set pluginsdir [file join [bu_brlcad_data "plugins"] archer]
     if {![file exists $pluginsdir]} {
 	set pluginsdir [file join [bu_brlcad_data "src"] archer plugins]
     }

@@ -23,16 +23,6 @@
 #    This is a BRL-CAD Application Core mega-widget.
 #
 
-if {![info exists env(ARCHER_HOME)]} {
-    if {[info exists argv0]} {
-	if [catch { set env(ARCHER_HOME) [file normalize [file join [file dir $argv0] ..]] }] {
-	    set env(ARCHER_HOME) .
-	}
-    } else {
-	set env(ARCHER_HOME) .
-    }
-}
-
 LoadArcherCoreLibs
 package provide ArcherCore 1.0
 
