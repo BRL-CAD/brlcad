@@ -1,10 +1,12 @@
 set(RT_COMMON_SRCS
         do.c 
-        heatgraph.c 
         main.c 
         opt.c 
         worker.c
 )
+IF(NOT MSVC)
+	SET(RT_COMMON_SRCS ${RT_COMMON_SRCS} heatgraph.c)
+ENDIF(NOT MSVC)
 
 set(rtexample_SRCS rtexample.c)
 INSTALL(FILES rtexample.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
