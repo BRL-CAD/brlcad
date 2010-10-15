@@ -54,6 +54,7 @@ SET(TKHTML_SRCS
 )
 
 add_library(Tkhtml SHARED ${TKHTML_SRCS})
+target_link_libraries(Tkhtml ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
 install(TARGETS Tkhtml DESTINATION lib)
 
 # Create the pkgIndex.tcl file.
