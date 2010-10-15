@@ -1064,13 +1064,10 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register fastf_t f;
     register int i;
 
-    if (NEAR_ZERO(in[X], 0.0001)
-	&& NEAR_ZERO(in[Y], 0.0001)
-	&& NEAR_ZERO(in[Z], 0.0001))
-    {
+    if (NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF)) {
 	VSETALL(out, 0);
-	VPRINT("bn_vec_ortho: zero-length input", in);
-	return;
+	bu_log("bn_vec_ortho(): zero magnitude input vector %lf %lf %lf\n", in[0],in[1],in[2]);
+	bu_bomb("bn_vec_ortho(): zero magnitude input vector\n");
     }
 
     /* Find component closest to zero */
@@ -1090,8 +1087,8 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	k = Y;
     }
     f = hypot(in[j], in[k]);
-    if (NEAR_ZERO(f, SMALL)) {
-	VPRINT("bn_vec_ortho: zero hypot on", in);
+    if (NEAR_ZERO(f, SMALL_FASTF)) {
+	bu_log("bn_vec_ortho(): zero hypot on %lf %lf %lf\n", in[0],in[1],in[2]);
 	VSETALL(out, 0);
 	return;
     }
@@ -1099,6 +1096,8 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     out[i] = 0.0;
     out[j] = -in[k]*f;
     out[k] =  in[j]*f;
+
+    return;
 }
 
 

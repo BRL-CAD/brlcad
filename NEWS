@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2010-09-XX  Release 7.18.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash when raytracing multiple frames - Keith Bowman
+* fixed mged zap crash while using preview - Keith Bowman, Bob Parker
 * added ability to toggle mged status bar via .mgedrc - Rob Shinn
 * new mged 'bot' command for accessing BoT properties - Nicholas Reed
 
