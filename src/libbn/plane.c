@@ -2189,7 +2189,6 @@ bn_rotate_plane(fastf_t *oplane, const fastf_t *mat, const fastf_t *iplane)
 int
 bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-    register fastf_t f;
     register fastf_t dot;
     vect_t pt_a, pt_b;
     BN_CK_TOL(tol);
