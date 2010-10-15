@@ -1,4 +1,5 @@
 INSTALL(PROGRAMS archer DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+INSTALL(FILES itk_redefines.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/tclscripts)
 
 set(archer_plugins
   plugins/utility.tcl

@@ -58,6 +58,9 @@ done
 #\
 exec $WISH $0 $@
 
+# Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
+source [file join [bu_brlcad_data "tclscripts"] itk_redefines.tcl]
+
 # Set ttk theme
 if {[tk windowingsystem] eq "aqua"} {
    ::ttk::style theme use aqua
