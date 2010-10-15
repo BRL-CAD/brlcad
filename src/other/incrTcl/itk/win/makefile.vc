@@ -87,7 +87,7 @@ WISH		= "$(TCLDIR)\bin\wish$(TCL_VERSION)$(DBGX).exe"
 TCL_LIBRARY	= 
 TK_LIBRARY	= 
 !else
-TKSTUBLIB	= "$(TKDIR)\win\Release\tkstub$(TCL_VERSION).lib"
+TKSTUBLIB	= "$(TKDIR)\win\Release_VC9\tkstub$(TCL_VERSION).lib"
 TKIMPLIB	= "$(TKDIR)\win\$(OUT_DIR)\tk$(TCL_VERSION)$(DBGX).lib"
 WISH		= "$(TKDIR)\win\$(OUT_DIR)\wish$(TCL_VERSION)$(DBGX).exe"
 TCL_LIBRARY	= "$(TCLDIR)\library"
@@ -97,7 +97,7 @@ ITCL_LIBRARY	= "$(ITCLDIR:\=/)/library"
 ITK_LIBRARY	= "$(ROOT)/library
 
 ITCLSTUBLIBNAME	= itclstub$(ITCL_VERSION).lib
-ITCLSTUBLIB	= "$(ITCLDIR)\win\Release\$(ITCLSTUBLIBNAME)"
+ITCLSTUBLIB	= "$(ITCLDIR)\win\Release_VC9\$(ITCLSTUBLIBNAME)"
 
 ### For Tcl 8.0
 !if !$(TCL_DOES_STUBS)
