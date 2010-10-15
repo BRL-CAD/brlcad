@@ -221,18 +221,9 @@ INSTALL(FILES nurb_example.c DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DI
 INSTALL(FILES raydebug.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/sample_applications)
 
 if(MSVC)
-    set(LIBRT_SOURCES
-	${LIBRT_SOURCES}
-	timer-nt.c
-    )
-    add_definitions(
-       -DRT_EXPORT_DLL
-    )
+    set(LIBRT_SOURCES ${LIBRT_SOURCES}	timer-nt.c)
 else(MSVC)
-    set(LIBRT_SOURCES
-	${LIBRT_SOURCES}
-	timer42.c
-    )
+    set(LIBRT_SOURCES ${LIBRT_SOURCES}	timer42.c)
 endif(MSVC)
 
 include_directories(

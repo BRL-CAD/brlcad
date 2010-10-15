@@ -12,6 +12,19 @@ MACRO(BOX_PRINT input_string border_string)
 	MESSAGE("${SEPARATOR_STRING}")
 ENDMACRO()
 
+# Windows builds need a DLL variable defined per-library, and BRL-CAD
+# uses a fairly standard convention - try and automate the addition of
+# the definition.
+MACRO(DLL_DEFINE libname)
+		  IF(MSVC)
+					 STRING(REGEX REPLACE "lib" "" LOWERCORE "${libname}")
+					 STRING(TOUPPER ${LOWERCORE} UPPER_CORE)
+					 add_definitions(
+								-D${UPPER_CORE}_EXPORT_DLL
+								)
+		  ENDIF(MSVC)
+ENDMACRO()
+
 # Core routines for adding executables and libraries to the build and
 # install lists of CMake
 MACRO(BRLCAD_ADDEXEC execname srcs libs)
@@ -27,6 +40,7 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
   STRING(REGEX REPLACE " " ";" srcslist "${srcs}")
   STRING(REGEX REPLACE " " ";" libslist1 "${libs}")
   STRING(REGEX REPLACE "-framework;" "-framework " libslist "${libslist1}")
+  DLL_DEFINE(${libname})
   IF(BUILD_SHARED_LIBS)
 	  add_library(${libname} SHARED ${srcslist})
 	  if(NOT ${libs} MATCHES "NONE")
