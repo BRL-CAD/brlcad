@@ -261,6 +261,7 @@ set(LIBGED_SOURCES
 include_directories(
     ${PNG_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
+    ${REGEX_INCLUDE_DIR}
     ${TCL_INCLUDE_PATH}
 )
 
