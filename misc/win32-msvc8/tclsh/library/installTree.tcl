@@ -155,9 +155,9 @@ puts "\[02 of 15] CREATING INSTALL DIRECTORIES"
 catch {
   # stub_dir [file join $shareDir pix]
   stub_dir [file join $installDir bin]
-  stub_dir [file join $installDir bin Tkhtml3.0]
-  stub_dir [file join $installDir bin Tktable2.10]
-  stub_dir [file join $installDir bin Tktable2.10 html]
+  stub_dir [file join $installDir lib Tkhtml3.0]
+  stub_dir [file join $installDir lib Tktable2.10]
+  stub_dir [file join $installDir lib Tktable2.10 html]
   stub_dir [file join $installDir lib iwidgets$iwidgetsVersion]
   stub_dir [file join $installDir lib]
   stub_dir [file join $installDir share brlcad]
@@ -323,7 +323,7 @@ catch {
   puts $fd {package ifneeded Tkhtml 3.0 [list load [file join $dir tkhtml.dll]]}
   close $fd
   cd $savepwd
-  copy_stuff [file join $rootDir src other tkhtml src pkgIndex.tcl] [file join $installDir bin Tkhtml3.0]
+  copy_stuff [file join $rootDir src other tkhtml src pkgIndex.tcl] [file join $installDir lib Tkhtml3.0]
 }
 
 
@@ -350,10 +350,10 @@ catch {
     puts $fd {package ifneeded Tktable 2.10 [list load [file join $dir tktable.dll] Tktable]}
     close $fd
 
-    copy_stuff [file join $tktabledir pkgIndex.tcl] [file join $installDir bin Tktable2.10]
-    copy_stuff [file join $tktabledir library tkTable.tcl] [file join $installDir bin Tktable2.10]
-    copy_stuff [file join $tktabledir doc tkTable.html] [file join $installDir bin Tktable2.10 html]
-    copy_stuff [file join $tktabledir license.txt] [file join $installDir bin Tktable2.10]
+    copy_stuff [file join $tktabledir pkgIndex.tcl] [file join $installDir lib Tktable2.10]
+    copy_stuff [file join $tktabledir library tkTable.tcl] [file join $installDir lib Tktable2.10]
+    copy_stuff [file join $tktabledir doc tkTable.html] [file join $installDir lib Tktable2.10 html]
+    copy_stuff [file join $tktabledir license.txt] [file join $installDir lib Tktable2.10]
 }
 
 
