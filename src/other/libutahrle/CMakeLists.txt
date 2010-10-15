@@ -46,6 +46,16 @@ SET(LIBUTAHRLE_SOURCES
         vaxshort.c
 )
 
+IF(MSVC)
+	add_definitions(
+		-DRLE_EXPORT_DLL
+		-DBRLCAD_DLL
+		-DNO_DECLARE_MALLOC
+		-DNEED_BSTRING
+		-DNO_OPEN_PIPES
+		)
+ENDIF(MSVC)
+
 add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle ${M_LIBRARY})
 INSTALL(TARGETS utahrle DESTINATION lib)
