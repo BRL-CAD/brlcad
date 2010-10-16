@@ -357,6 +357,11 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 {
     struct memdebug *mp=NULL;
     genptr_t original_ptr;
+    const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
+
+    if (cnt < MINSIZE) {
+        cnt = MINSIZE;
+    }
 
     if (!ptr) {
 	/* This is so we are compatible with system realloc.  It seems
