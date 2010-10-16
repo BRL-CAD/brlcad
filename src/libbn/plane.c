@@ -1222,8 +1222,15 @@ bn_isect_line3_line3(fastf_t *t,
     register fastf_t det;
     register fastf_t det1;
     register short int q, r, s;
+    int parallel = 0;
+    int colinear = 0;
+
 
     BN_CK_TOL(tol);
+
+    if (NEAR_ZERO(MAGSQ(c), VUNITIZE_TOL) || NEAR_ZERO(MAGSQ(d), VUNITIZE_TOL)) {
+        bu_bomb("bn_isect_line3_line3(): input vector(s) 'c' and/or 'd' is zero magnitude.\n");
+    }
 
     /* Any intersection will occur in the plane with surface normal D
      * cross C, which may not have unit length.  The plane containing
@@ -1234,24 +1241,31 @@ bn_isect_line3_line3(fastf_t *t,
      * no intersection, because P and A must lie on parallel planes
      * that are different distances from the origin.
      */
+
     VCROSS(n, d, c);
     det = VDOT(n, p) - VDOT(n, a);
-    if (!NEAR_ZERO(det, tol->dist)) {
-	return -1;		/* No intersection */
+    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+	return -1; /* no intersection, lines not in same plane */
     }
 
-    if (NEAR_ZERO(MAGSQ(n), SMALL_FASTF))
-    {
+    if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+	/* lines are parallel, must find another way to get normal vector */
 	vect_t a_to_p;
 
-	/* lines are parallel, must find another way to get normal
-	 * vector.
-	 */
+	parallel = 1;
 	VSUB2(a_to_p, p, a);
 	VCROSS(n, a_to_p, d);
 
-	if (NEAR_ZERO(MAGSQ(n), SMALL_FASTF))
+	if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+	    /* lines are parallel and colinear */
+
+            colinear = 1;
 	    bn_vec_ortho(n, d);
+	}
+    }
+
+    if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+	bu_bomb("bn_isect_line3_line3(): ortho vector zero magnitude\n"); 
     }
 
     /* Solve for t and u in the system:
@@ -1274,9 +1288,19 @@ bn_isect_line3_line3(fastf_t *t,
      * than x, y, z.  Subscript s is the smallest component, used for
      * checking later.
      */
+    if (NEAR_ZERO(n[X], SMALL_FASTF)) {
+        n[X] = 0.0;
+    }
+    if (NEAR_ZERO(n[Y], SMALL_FASTF)) {
+        n[Y] = 0.0;
+    }
+    if (NEAR_ZERO(n[Z], SMALL_FASTF)) {
+        n[Z] = 0.0;
+    }
     abs_n[X] = (n[X] >= 0) ? n[X] : (-n[X]);
     abs_n[Y] = (n[Y] >= 0) ? n[Y] : (-n[Y]);
     abs_n[Z] = (n[Z] >= 0) ? n[Z] : (-n[Z]);
+
     if (abs_n[X] >= abs_n[Y]) {
 	if (abs_n[X] >= abs_n[Z]) {
 	    /* X is largest in magnitude */
@@ -1342,9 +1366,8 @@ bn_isect_line3_line3(fastf_t *t,
      */
     if (NEAR_ZERO(det, DETERMINANT_TOL)) {
 	/* Lines are parallel */
-	if (!NEAR_ZERO(det1, DETERMINANT_TOL)) {
-	    /* Lines are NOT co-linear, just parallel */
-	    return -2;	/* parallel, no intersection */
+	if (!colinear || !NEAR_ZERO(det1, DETERMINANT_TOL)) {
+	    return -2;	/* parallel, not colinear, no intersection */
 	}
 
 	/* Lines are co-linear */
@@ -1392,7 +1415,7 @@ bn_isect_line3_line3(fastf_t *t,
      * distance.
      */
     det = *t * d[s] - *u * c[s] - h[s];
-    if (!NEAR_ZERO(det, tol->dist)) {
+    if (!NEAR_ZERO(det, SMALL_FASTF)) {
 	/* XXX This tolerance needs to be much less loose than
 	 * SQRT_SMALL_FASTF.  What about DETERMINANT_TOL?
 	 */
