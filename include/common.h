@@ -283,6 +283,15 @@ typedef ptrdiff_t ssize_t;
 #  warning "DEPRECATED was previously defined.  Disabling the declaration."
 #endif
 
+/* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
+ * have to add it for them
+ */
+#if defined(_MSC_VER) && defined(__STDC__)
+   #include <tchar.h>
+   /* MSVC++ misses this. */
+   typedef _TCHAR TCHAR;
+#endif
+
 
 #endif  /* __COMMON_H__ */
 /** @} */
