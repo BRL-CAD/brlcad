@@ -14,6 +14,7 @@ include_directories(
 IF(MSVC)
 add_definitions(
     -DON_DLL_IMPORTS
+	 -D_CONSOLE
 )
 ENDIF(MSVC)
 

@@ -7,6 +7,14 @@ include_directories(
   ${TK_INCLUDE_PATH}
 )
 
+IF(MSVC)
+	add_definitions(
+	-D_CONSOLE
+	-D_IFWGL
+	)
+ENDIF(MSVC)
+
+
 IF(BRLCAD-ENABLE_X11)
 	BRLCAD_ADDEXEC(pl-X pl-X.c "libbu libdm")
 	IF(BRLCAD-ENABLE_TK)
