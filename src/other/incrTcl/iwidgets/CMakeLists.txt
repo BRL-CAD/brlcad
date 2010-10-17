@@ -1,5 +1,6 @@
 SET(IWIDGETS_PKGNAME Iwidgets)
 SET(IWIDGETS_PKGVERSION "4.0.1")
+SET(VERSION ${IWIDGETS_PKGVERSION})
 
 SET(IWIDGETS_SCRIPTS
 		  generic/buttonbox.itk
@@ -68,7 +69,7 @@ FOREACH(script ${IWIDGETS_SCRIPTS})
 ENDFOREACH(script ${IWIDGETS_SCRIPTS})
 
 # Create the pkgIndex.tcl file.
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${IWIDGETS_PKGNAME} ${IWIDGETS_PKGVERSION} [list load [file join $dir iwidgets.tcl]]")
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${IWIDGETS_PKGNAME} ${IWIDGETS_PKGVERSION} [list source [file join $dir iwidgets.tcl]]")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.tcl.in ${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl)
