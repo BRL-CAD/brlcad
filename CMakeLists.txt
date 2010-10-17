@@ -119,6 +119,14 @@ function(add_executable name)
    SET(CMAKE_EXEC_TARGET_FILE_LIST "${CMAKE_EXEC_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of exec target files" FORCE)
 endfunction(add_executable)
 
+function(add_custom_target name)
+   SET(CMAKE_CUSTOM_TARGET_LIST "${CMAKE_CUSTOM_TARGET_LIST};${name}" CACHE STRING "list of custom targets" FORCE)
+   _add_custom_target(${name} ${ARGN})
+   get_target_property(targetfile ${name} LOCATION)
+	SET(CMAKE_CUSTOM_TARGET_FILE_LIST "${CMAKE_CUSTOM_TARGET_FILE_LIST};${targetfile}" CACHE STRING "list of custom target files" FORCE)
+endfunction(add_custom_target)
+
+
 
 #---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
@@ -1075,35 +1083,6 @@ endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 ADD_EXECUTABLE(printtimestamp ${BRLCAD_CMAKE_DIR}/test_srcs/print_timestamp.c)
 ADD_CUSTOM_TARGET(timestamp ALL	COMMAND printtimestamp)
 
-# We want the timestamp to come first, so make ALL library,
-# exec and external targets depend on timestamp (except for
-# the exec target printtimestamp, which is needed by timestamp)
-LIST(REMOVE_DUPLICATES CMAKE_LIBRARY_TARGET_LIST)
-LIST(REMOVE_DUPLICATES CMAKE_EXEC_TARGET_LIST)
-IF(CMAKE_EXTERNAL_TARGET_LIST)
-   LIST(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
-ENDIF(CMAKE_EXTERNAL_TARGET_LIST)
-FOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-	get_target_property(target_location ${libtarget} LOCATION)
-	if(target_location)
-		ADD_DEPENDENCIES(${libtarget} timestamp)
-	endif(target_location)
-ENDFOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-FOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
-	get_target_property(target_location ${exectarget} LOCATION)
-	if(target_location)
-		IF(NOT ${exectarget} MATCHES "printtimestamp")
-			ADD_DEPENDENCIES(${exectarget} timestamp)
-		ENDIF(NOT ${exectarget} MATCHES "printtimestamp")
-	endif(target_location)
-ENDFOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
-FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
-	get_target_property(target_confcmd ${externaltarget} _EP_CONFIGURE_COMMAND)
-	if(target_confcmd)
-		ADD_DEPENDENCIES(${externaltarget} timestamp)
-	endif(target_confcmd)
-ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
-
 # Some of the BRL-CAD targets need to depend on the local
 # tcl/tk targets if they are present
 SET(TCL_DEPLIBS "libbu;libsysv;librt")
@@ -1159,6 +1138,42 @@ FILE(WRITE ${CMAKE_BINARY_DIR}/cmake_noprod.cmake ${noprod_file})
 ADD_CUSTOM_TARGET(noprod
   "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_noprod.cmake")
 
+
+# We want the timestamp to come first, so make ALL library,
+# exec and external targets depend on timestamp (except for
+# the exec target printtimestamp, which is needed by timestamp)
+LIST(REMOVE_DUPLICATES CMAKE_LIBRARY_TARGET_LIST)
+LIST(REMOVE_DUPLICATES CMAKE_EXEC_TARGET_LIST)
+LIST(REMOVE_DUPLICATES CMAKE_CUSTOM_TARGET_LIST)
+MESSAGE("Custom target list: ${CMAKE_CUSTOM_TARGET_LIST}")
+IF(CMAKE_EXTERNAL_TARGET_LIST)
+   LIST(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
+ENDIF(CMAKE_EXTERNAL_TARGET_LIST)
+FOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
+	get_target_property(target_location ${libtarget} LOCATION)
+	if(target_location)
+		ADD_DEPENDENCIES(${libtarget} timestamp)
+	endif(target_location)
+ENDFOREACH(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
+FOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
+	get_target_property(target_location ${exectarget} LOCATION)
+	if(target_location)
+		IF(NOT ${exectarget} MATCHES "printtimestamp")
+			ADD_DEPENDENCIES(${exectarget} timestamp)
+		ENDIF(NOT ${exectarget} MATCHES "printtimestamp")
+	endif(target_location)
+ENDFOREACH(exectarget ${CMAKE_EXEC_TARGET_LIST})
+FOREACH(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
+		IF(NOT ${custtarget} MATCHES "timestamp")
+			ADD_DEPENDENCIES(${custtarget} timestamp)
+		ENDIF(NOT ${custtarget} MATCHES "timestamp")
+ENDFOREACH(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
+FOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
+	get_target_property(target_confcmd ${externaltarget} _EP_CONFIGURE_COMMAND)
+	if(target_confcmd)
+		ADD_DEPENDENCIES(${externaltarget} timestamp)
+	endif(target_confcmd)
+ENDFOREACH(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
 
 
 # Generate the include/conf files
