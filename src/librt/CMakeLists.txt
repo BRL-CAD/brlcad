@@ -237,6 +237,8 @@ include_directories(
 if(MSVC)
    add_definitions(
        -DON_DLL_IMPORTS
+		 -DDB5_EXPORT_DLL
+		 -DOBJ_BREP=1
    )
 endif(MSVC)
 
