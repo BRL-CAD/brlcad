@@ -5,7 +5,11 @@ include_directories(
   ${TK_INCLUDE_PATH}
   ${UTAHRLE_INCLUDE_DIR}
 )
-
+IF(MSVC)
+		  add_definitions(
+					 -DIF_WGL
+					 )
+ENDIF(MSVC)
 BRLCAD_ADDEXEC(bw-fb bw-fb.c libfb)
 BRLCAD_ADDEXEC(cat-fb cat-fb.c libfb)
 BRLCAD_ADDEXEC(cell-fb cell-fb.c "libbn libfb")
