@@ -87,7 +87,7 @@ int
 main(int argc, char *argv[])
 {
     int count;
-    fastf_t val, time, roll_ang, yaw, sign;
+    fastf_t val, t /* time */, roll_ang, yaw, sign;
     vect_t v, point, front, back, zero, temp1, temp2;
     mat_t m_from_world, m_to_world;
 
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
     count = 0;
     while (1) {
 	/* read one line of table */
-	val = scanf("%lf%*[^-0123456789]", &time); /*read time, ignore garbage*/
+	val = scanf("%lf%*[^-0123456789]", &t); /*read time, ignore garbage*/
 	val = scanf("%lf %lf %lf", point, point+1, point +2);
 	if (val < 3) {
 	    break;
@@ -170,12 +170,12 @@ main(int argc, char *argv[])
 		roll_ang -= sign * MAGNITUDE(v) / radius;
 
 	    if (!(count%print_int))
-		printf("%.10g %.10g %.10g 0.0\n", time, factor*RAD2DEG*yaw, RAD2DEG*roll_ang);
+		printf("%.10g %.10g %.10g 0.0\n", t, factor*RAD2DEG*yaw, RAD2DEG*roll_ang);
 	}
 	else {
 	    /* print position and orientation of vehicle */
 	    if (!(count%print_int))
-		printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n", time, front[0], front[1], front[2], RAD2DEG * angle);
+		printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n", t, front[0], front[1], front[2], RAD2DEG * angle);
 	}
 	count++;
     }

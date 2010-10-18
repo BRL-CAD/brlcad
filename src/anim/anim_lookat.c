@@ -79,7 +79,7 @@ int get_args(int argc, char **argv)
 int
 main(int argc, char *argv[])
 {
-    fastf_t time, vsize=0.0;
+    fastf_t t /* time */, vsize=0.0;
     vect_t eye, look, dir, angles, norm, temp;
     quat_t quat;
     mat_t mat;
@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 
     VSET(norm, 0.0, 1.0, 0.0);
     while (!feof(stdin)) {
-	val=scanf("%lf %lf %lf %lf %lf %lf %lf", &time, eye, eye+1, eye+2, look, look+1, look+2);
+	val=scanf("%lf %lf %lf %lf %lf %lf %lf", &t, eye, eye+1, eye+2, look, look+1, look+2);
 	if (val < 7) {
 	    break;
 	}
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 		angles[0] *= RAD2DEG;
 		angles[1] *= RAD2DEG;
 		angles[2] *= RAD2DEG;
-		printf("%.10g", time);
+		printf("%.10g", t);
 		if (print_viewsize)
 		    printf("\t%.10g", vsize);
 		printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 		break;
 	    case LOOKAT_QUAT:
 		anim_mat2quat(quat, mat);
-		printf("%.10g", time);
+		printf("%.10g", t);
 		if (print_viewsize)
 		    printf("\t%.10g", vsize);
 		printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);

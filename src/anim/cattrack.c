@@ -51,9 +51,7 @@
 
 
 fastf_t
-hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
-    /* curve parameters */
-    /* arclength value  */
+hyper_get_x(fastf_t a, fastf_t c, fastf_t s)
 {
     fastf_t arg, asinh_arg;
 

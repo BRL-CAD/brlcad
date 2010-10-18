@@ -336,7 +336,7 @@ main(int argc, char *argv[])
 	return 0;
     }
     num_wheels = -1;
-    if (radius) {
+    if (!NEAR_ZERO(radius, SMALL_FASTF)) {
 	while (!feof(stream)) {
 	    fscanf(stream, "%*f %*f %*f");
 	    num_wheels++;
@@ -354,7 +354,7 @@ main(int argc, char *argv[])
     /*read rest of track info */
     for (i=0;i<NW;i++) {
 	fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
-	if (radius)
+	if (!NEAR_ZERO(radius, SMALL_FASTF))
 	    x[i].w.rad = radius;
 	else
 	    fscanf(stream, "%lf", & x[i].w.rad);

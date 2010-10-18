@@ -403,7 +403,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 
     /* caternary section */
     if ( curve_a > VDIVIDE_TOL) {
-	pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist, 0, 0, 0);
+	pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist);
 	pos[Y] = x[0].w.pos[Y];
 	pos[Z] = hyper_get_z(curve_a, curve_b, 0.0, pos[X]);
 	pos[X] += curve_c;

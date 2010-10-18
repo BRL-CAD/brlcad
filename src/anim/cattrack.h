@@ -34,7 +34,7 @@
  *
  * Left to calling routine to avoid dividing by zero.
  */
-fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang);
+fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s);
 
 
 /**

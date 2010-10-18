@@ -161,7 +161,7 @@ int
 main (int argc, char *argv[])
 {
     int val;
-    fastf_t time, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
+    fastf_t elapsed, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
     vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated;
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
@@ -233,12 +233,12 @@ main (int argc, char *argv[])
 
     one_time = (!(read_cen1||read_cen2||read_rot1||read_rot2));
     read_time = one_time ? 0 : print_time;
-    time = 0.0;
+    elapsed = 0.0;
 
     val = 3;
     while (1) {
 	if (read_time) {
-	    val=scanf("%lf", &time);
+	    val=scanf("%lf", &elapsed);
 	    if (val < 1) break;
 	}
 	if (read_cen1)
@@ -275,7 +275,7 @@ main (int argc, char *argv[])
 	VSCALE(ang_ans, rad_ang_ans, RAD2DEG);
 
 	if (print_time) {
-	    printf("%g", time);
+	    printf("%g", elapsed);
 	}
 	printf("\t%.12g\t%.12g\t%.12g", cen_ans[0], cen_ans[1], cen_ans[2]);
 	printf("\t%.12g\t%.12g\t%.12g", ang_ans[0], ang_ans[1], ang_ans[2]);
