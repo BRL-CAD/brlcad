@@ -21,7 +21,7 @@ ENDIF(MSVC)
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb ${OPENNURBS_LIBRARY}")
 set_target_properties(3dm-g PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
 
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged librt libwdb libbu") 
+BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged libwdb librt libbu") 
 
 BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu) 
 
@@ -48,21 +48,21 @@ SET(comgeom-g_SRCS
 )
 BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb libbn libbu")
 
-BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libsysv libbu")
+BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu libsysv")
 
 BRLCAD_ADDEXEC(cy-g cy-g.c libwdb)
 
-BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb librt libbu")
 
 BRLCAD_ADDEXEC(dem-g dem-g.c libwdb)
 
-BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "librt libwdb libbn libbu")
+BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb librt libbn libbu")
 
 BRLCAD_ADDEXEC(enf-g enf-g.c libwdb)
 
 BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 
-BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn libsysv libbu")
+BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn libbu libsysv")
 
 BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 
@@ -78,17 +78,17 @@ BRLCAD_ADDEXEC(g-nff g-nff.c libwdb)
 
 BRLCAD_ADDEXEC(g-nmg nmg/g-nmg.c libwdb)
 
-BRLCAD_ADDEXEC(fast4-g fast4-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(fast4-g fast4-g.c "libwdb librt libbu")
 
-BRLCAD_ADDEXEC(jack-g jack/jack-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(jack-g jack/jack-g.c "libwdb librt libbu")
 
 BRLCAD_ADDEXEC(g-jack jack/g-jack.c "librt libbu")
 
 BRLCAD_ADDEXEC(g-off off/g-off.c "librt libbu")
 
-BRLCAD_ADDEXEC(off-g off/off-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(off-g off/off-g.c "libwdb librt libbu")
 
-BRLCAD_ADDEXEC(stl-g stl/stl-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(stl-g stl/stl-g.c "libwdb librt libbu")
 
 BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt libgcv libbu")
 
@@ -96,7 +96,7 @@ add_executable(g4-g5 g4-g5.c)
 target_link_libraries(g4-g5 librt libbu)
 
 add_executable(g5-g4 g5-g4.c)
-target_link_libraries(g5-g4 librt libwdb libbu)
+target_link_libraries(g5-g4 libwdb librt libbu)
 
 BRLCAD_ADDEXEC(g-acad g-acad.c "librt libbu")
 
@@ -104,13 +104,13 @@ BRLCAD_ADDEXEC(g-obj g-obj.c "librt libbu")
 
 BRLCAD_ADDEXEC(obj-g obj-g.c "librt libbu")
 
-BRLCAD_ADDEXEC(patch-g patch/patch-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb librt libbu")
 
 BRLCAD_ADDEXEC(rpatch patch/rpatch.c "librt libbu")
 
 BRLCAD_ADDEXEC(g-tankill tankill/g-tankill.c "librt libbu")
 
-BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "libwdb librt libbu")
 
 BRLCAD_ADDEXEC(g-var g-var.c "librt libbu")
 
@@ -118,7 +118,7 @@ BRLCAD_ADDEXEC(g-vrml g-vrml.c "librt libbu")
 
 BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt libbu")
 
-BRLCAD_ADDEXEC(nastran-g nastran-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb librt libbu")
 
 BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c libwdb)
 
@@ -130,14 +130,14 @@ BRLCAD_ADDEXEC(ply-g ply-g.c "librt libbu")
 
 BRLCAD_ADDEXEC(poly-bot poly-bot.c libwdb) 
 
-BRLCAD_ADDEXEC(proe-g proe-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb librt libbu")
 
-BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb librt libbu")
 
 add_executable(g-xxx_facets g-xxx_facets.c)
 target_link_libraries(g-xxx_facets librt libbu)
 
-BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "librt libwdb libbu")
+BRLCAD_ADDEXEC(g-shell.rect g-shell.rect.c "libwdb librt libbu")
 
 install(PROGRAMS intaval-g.py DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 

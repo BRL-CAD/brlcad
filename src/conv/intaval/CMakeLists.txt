@@ -17,5 +17,5 @@ add_executable(tgf-g
     tgf-g.cpp
     write_brl.cpp
 )
-target_link_libraries(tgf-g librt libwdb libbu)
+target_link_libraries(tgf-g libwdb librt libbu)
 INSTALL(TARGETS tgf-g RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
