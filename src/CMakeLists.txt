@@ -51,6 +51,7 @@ add_definitions(
 
 IF(MSVC)
    add_definitions(
+		-D_WIN32
 	   -DBRLCAD_DLL
    )
 ENDIF(MSVC)
