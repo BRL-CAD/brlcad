@@ -49,8 +49,6 @@
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, bu_getopt(int, char *const *, const char *);
 
 int do_convert = 1;
 char *progname = "(noname)";
