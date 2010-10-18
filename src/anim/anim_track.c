@@ -36,6 +36,8 @@
 #include "anim.h"
 #include "vmath.h"
 
+#include "./cattrack.h"
+
 
 #define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"
 
@@ -263,8 +265,6 @@ track_prep(void)
     fastf_t phi, costheta, arc_angle;
     fastf_t linearlen, hyperlen;
     vect_t difference;
-    int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one);
-    fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x);
 
     /* first loop - get inter axle slopes and start/end angles */
     for (i=0;i<NW;i++) {
@@ -375,7 +375,6 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 {
     int i;
     vect_t temp;
-    fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang), hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x), hyper_get_ang(fastf_t a, fastf_t c, fastf_t x);
 
     while (dist >= tracklen) /*periodicize*/
 	dist -= tracklen;

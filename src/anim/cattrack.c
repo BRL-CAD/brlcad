@@ -49,12 +49,9 @@
 #define G_TOL		1.0e-12
 #define F_TOL		1.0e-12
 
-/* HYPER_GET_X - get x value of a point which is a given distance along
- * caternary curve.
- * x(s) = arcsinh(a*s-sinh(a*c))/a + c
- * Left to calling routine to avoid dividing by zero.
- */
-fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
+
+fastf_t
+hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
     /* curve parameters */
     /* arclength value  */
 {
@@ -66,21 +63,16 @@ fastf_t hyper_get_x(fastf_t a, fastf_t c, fastf_t s, int d, int x, int cos_ang)
     return asinh_arg/a + c;
 }
 
-/* HYPER_GET_S - calculate the arclength parameter of a caternary
- * curve corresponding to the given value of x.
- * s(x) = (sinh(a(x-c))+sinh(ac))/a
- * Left to calling routime to avoid dividing by zero.
- */
-fastf_t hyper_get_s(fastf_t a, fastf_t c, fastf_t x)
+
+fastf_t
+hyper_get_s(fastf_t a, fastf_t c, fastf_t x)
 {
     return((sinh(a*(x-c))+sinh(a*c))/a);
 }
 
-/* HYPER_GET_Z - calculate point on the caternary curve:
- * z(x) = cosh(a*(x-c))/a + b
- * Left to calling routine to avoid dividing by zero.
- */
-fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
+
+fastf_t
+hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
 {
     fastf_t z;
 
@@ -92,11 +84,9 @@ fastf_t hyper_get_z(fastf_t a, fastf_t b, fastf_t c, fastf_t x)
     return z;
 }
 
-/* HYPER_GET_ANG - calculate angle corresponding to the slope of
- * caternary curve.
- * z'(x) = sinh(a*(x-c))
- */
-fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
+
+fastf_t
+hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
 {
     fastf_t slope;
 
@@ -104,24 +94,107 @@ fastf_t hyper_get_ang(fastf_t a, fastf_t c, fastf_t x)
     return atan2(slope, 1.0);
 }
 
-/* GET_CURVE - Find the constants a, b, and c such that the curve
- *  z = cosh(a*(x-c))/a + b
- * is tangent to circles of radii r0 and r1 located at
- * (x0, z0) and (x1, z1) and such that the curve has
- * arclength delta_s between circles. Also find the angle where
- * the curve touches each circle. When called successively,
- * It uses the values of a, b, and c from the last call as a start.
+
+/* find Newtonian adjustment for 'a', assuming 'c' fixed*/
+HIDDEN fastf_t
+eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s)
+{
+    double f, fprime;
+    double arg0, arg1, sarg0, sarg1;
+
+    arg0 = a*(x0-c);
+    arg1 = a*(x1-c);
+
+    sarg0 = sinh(arg0);
+    sarg1 = sinh(arg1);
+
+    f = a*(sarg1-sarg0 - a*delta_s);
+    fprime = sarg0 - sarg1 - arg0*cosh(arg0) + arg1*cosh(arg1);
+
+    if (fabs(fprime) > VDIVIDE_TOL)
+	return f/fprime;
+    else if ((a*a) > VDIVIDE_TOL)
+	return(f/(a*a));
+    else if (fabs(a) > VDIVIDE_TOL)
+	return f/a;
+    else
+	return f;
+}
+
+
+/* find Newtonian adjustment for c, assuming 'a' fixed*/
+HIDDEN fastf_t
+gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z)
+{
+    double g, gprime, arg0, arg1;
+
+    arg0 = a*(x0-c);
+    arg1 = a*(x1-c);
+
+    g = cosh(arg1)-cosh(arg0) - a*delta_z;
+    gprime = a*(sinh(arg0) - sinh(arg1));
+
+    if (fabs(gprime) > VDIVIDE_TOL)
+	return g/gprime;
+    else if (fabs(a) > VDIVIDE_TOL)
+	return g/a;
+    else
+	return g;
+}
+
+
+/* INGETCURVE - find constants a, b, and c, such that the curve
+ * z = cosh(a*(x-c))/a + b
+ * passes through (x0, z0) and (x1, z1) and has arclength delta_s
+ * Appropriate first guesses for a, b, and c should be given.
  */
-int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one)
-    /* curve parameters */
-    /* angle where curve contacts circle0, circle1 */
-    /* desired arclength */
-    /* radii of circle0 and circle1 */
-    /* center of circle0 and circle1 */
+HIDDEN int
+ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one)
+{
+    int status, i, j, k;
+    fastf_t adjust;
+
+    status = MAX_REACHED;
+    i=0;
+    while (i++<MAX_OUT_ITS) {
+	for (j=0;j<MAX_ITS;j++) {
+	    adjust = eff(*pa, *pc, p_zero[X], p_one[X], delta_s);
+	    if ((*pa-adjust)<=0.0) {
+		*pa *= 0.5;
+	    }
+	    else {
+		*pa -= adjust;
+	    }
+	    if (adjust<F_TOL) {
+		break;
+	    }
+	}
+
+	for (k=0;k<MAX_ITS;k++) {
+	    adjust = gee(*pa, *pc, p_zero[X], p_one[X], (p_one[Z]-p_zero[Z]));
+	    *pc -= adjust;
+	    if (adjust<G_TOL) {
+		break;
+	    }
+	}
+
+	if ((j==0)&&(k==0)) {
+	    status = SOLVED;
+	    break;
+	}
+    }
+    *pb = p_zero[Z] - cosh( (*pa)*(p_zero[X]-(*pc)) )/(*pa);
+
+    return status;
+
+}
+
+
+int
+getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one, fastf_t r_zero, fastf_t r_one)
 {
 
     int status, i, solved;
-    int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one);
     fastf_t theta_one, theta_zero, new_theta_zero, new_theta_one;
     fastf_t avg_theta_zero, avg_theta_one, arc_dist;
     fastf_t tang_ang, costheta;
@@ -130,7 +203,9 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
     static fastf_t last_a, last_c, last_theta_one, last_theta_zero;
     static int called_before = 0;
 
-    /*first calculate angle at which tangent line would contact circles*/
+    /* first calculate angle at which tangent line would contact
+     * circles.
+     */
     VSUB2(diff, p_one, p_zero);
     tang_ang = atan2(diff[Z], diff[X]);
     costheta = (r_zero-r_one)/MAGNITUDE(diff);
@@ -196,96 +271,6 @@ int getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1
     *pth1 = theta_one;
     return status;
 
-}
-
-/* INGETCURVE - find constants a, b, and c, such that the curve
- *  z = cosh(a*(x-c))/a + b
- * passes through (x0, z0) and (x1, z1) and has arclength delta_s
- * Appropriate first guesses for a, b, and c should be given.
- */
-int ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_zero, fastf_t *p_one)
-{
-    int status, i, j, k;
-    fastf_t adjust;
-    fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s), gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z);
-
-    status = MAX_REACHED;
-    i=0;
-    while (i++<MAX_OUT_ITS) {
-	for (j=0;j<MAX_ITS;j++) {
-	    adjust = eff(*pa, *pc, p_zero[X], p_one[X], delta_s);
-	    if ((*pa-adjust)<=0.0) {
-		*pa *= 0.5;
-	    }
-	    else {
-		*pa -= adjust;
-	    }
-	    if (adjust<F_TOL) {
-		break;
-	    }
-	}
-
-	for (k=0;k<MAX_ITS;k++) {
-	    adjust = gee(*pa, *pc, p_zero[X], p_one[X], (p_one[Z]-p_zero[Z]));
-	    *pc -= adjust;
-	    if (adjust<G_TOL) {
-		break;
-	    }
-	}
-
-	if ((j==0)&&(k==0)) {
-	    status = SOLVED;
-	    break;
-	}
-    }
-    *pb = p_zero[Z] - cosh( (*pa)*(p_zero[X]-(*pc)) )/(*pa);
-
-    return status;
-
-}
-
-/* find Newtonian adjustment for 'a', assuming 'c' fixed*/
-fastf_t eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s)
-{
-    double f, fprime;
-    double arg0, arg1, sarg0, sarg1;
-
-    arg0 = a*(x0-c);
-    arg1 = a*(x1-c);
-
-    sarg0 = sinh(arg0);
-    sarg1 = sinh(arg1);
-
-    f = a*(sarg1-sarg0 - a*delta_s);
-    fprime = sarg0 - sarg1 - arg0*cosh(arg0) + arg1*cosh(arg1);
-
-    if (fabs(fprime) > VDIVIDE_TOL)
-	return f/fprime;
-    else if ((a*a) > VDIVIDE_TOL)
-	return(f/(a*a));
-    else if (fabs(a) > VDIVIDE_TOL)
-	return f/a;
-    else
-	return f;
-}
-
-/* find Newtonian adjustment for c, assuming 'a' fixed*/
-fastf_t gee(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_z)
-{
-    double g, gprime, arg0, arg1;
-
-    arg0 = a*(x0-c);
-    arg1 = a*(x1-c);
-
-    g = cosh(arg1)-cosh(arg0) - a*delta_z;
-    gprime = a*(sinh(arg0) - sinh(arg1));
-
-    if (fabs(gprime) > VDIVIDE_TOL)
-	return g/gprime;
-    else if (fabs(a) > VDIVIDE_TOL)
-	return g/a;
-    else
-	return g;
 }
 
 
