@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	    else if (c==ERROR2)
 		fprintf(stderr, "Keyread: can't interpret matrix at time = %f.\n", time);
 	    if (units == DEGREES)
-		VSCALE(angle, angle, RTOD);
+		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[0], angle[1], angle[2]);
 	}
 	else if (mode==XYZ) {
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 	    else if (c==ERROR2)
 		fprintf(stderr, "Keyread: can't interpret matrix at time = %f\n.", time);
 	    if (units == DEGREES)
-		VSCALE(angle, angle, RTOD);
+		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[X], angle[Y], angle[Z]);
 	}
 	else if (mode==QUATERNION) {

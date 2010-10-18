@@ -272,7 +272,7 @@ main (int argc, char *argv[])
 	    bn_mat_mul(m_ans, m_rot1, m_rot2);
 	}
 	anim_mat2ypr(rad_ang_ans, m_ans);
-	VSCALE(ang_ans, rad_ang_ans, RTOD);
+	VSCALE(ang_ans, rad_ang_ans, RAD2DEG);
 
 	if (print_time) {
 	    printf("%g", time);

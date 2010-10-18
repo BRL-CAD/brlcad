@@ -209,7 +209,7 @@ get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ?
 fastf_t	xyz2yaw(fastf_t *d)
 {
     fastf_t yaw;
-    yaw = RTOD*atan2(d[1], d[0]);
+    yaw = RAD2DEG*atan2(d[1], d[0]);
     if (yaw < 0.0) yaw += 360.0;
     return yaw;
 }
@@ -219,7 +219,7 @@ fastf_t	xyz2pch(fastf_t *d)
 {
     fastf_t x;
     x = sqrt(d[0]*d[0] + d[1]*d[1]);
-    return (RTOD*atan2(d[2], x));
+    return (RAD2DEG*atan2(d[2], x));
 
 }
 

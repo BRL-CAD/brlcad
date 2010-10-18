@@ -186,7 +186,7 @@ main(int argc, char *argv[])
 		num_read = scanf("%lf %lf %lf", angle, angle+1, angle+2);
 		/* convert to radians if in degrees */
 		if (input_units==DEGREES)  {
-		    VSCALE(angle, angle, DTOR);
+		    VSCALE(angle, angle, DEG2RAD);
 		}
 		break;
 	    case QUAT:
@@ -246,7 +246,7 @@ main(int argc, char *argv[])
 	    case YPR:
 		anim_mat2ypr(angle, matrix);
 		if (output_units==DEGREES)
-		    VSCALE(angle, angle, RTOD);
+		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case AET:
@@ -259,13 +259,13 @@ main(int argc, char *argv[])
 		angle[1] = -angle[1];
 		angle[2] = -angle[2];
 		if (output_units==DEGREES)
-		    VSCALE(angle, angle, RTOD);
+		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case XYZ:
 		anim_mat2zyx(angle, matrix);
 		if (output_units==DEGREES)
-		    VSCALE(angle, angle, RTOD);
+		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case QUAT:

@@ -122,9 +122,9 @@ main(int argc, char *argv[])
 		break;
 	    case LOOKAT_YPR:
 		anim_mat2ypr(angles, mat);
-		angles[0] *= RTOD;
-		angles[1] *= RTOD;
-		angles[2] *= RTOD;
+		angles[0] *= RAD2DEG;
+		angles[1] *= RAD2DEG;
+		angles[2] *= RAD2DEG;
 		printf("%.10g", time);
 		if (print_viewsize)
 		    printf("\t%.10g", vsize);

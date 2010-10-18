@@ -60,7 +60,7 @@ int get_args(int argc, char **argv)
 		break;
 	    case 'a':
 		sscanf(bu_optarg, "%lf", &angle);
-		angle *= DTOR; /* degrees to radians */
+		angle *= DEG2RAD; /* degrees to radians */
 		angle_set = 1;
 		break;
 	    case 'r':
@@ -170,12 +170,12 @@ main(int argc, char *argv[])
 		roll_ang -= sign * MAGNITUDE(v) / radius;
 
 	    if (!(count%print_int))
-		printf("%.10g %.10g %.10g 0.0\n", time, factor*RTOD*yaw, RTOD*roll_ang);
+		printf("%.10g %.10g %.10g 0.0\n", time, factor*RAD2DEG*yaw, RAD2DEG*roll_ang);
 	}
 	else {
 	    /* print position and orientation of vehicle */
 	    if (!(count%print_int))
-		printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n", time, front[0], front[1], front[2], RTOD * angle);
+		printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n", time, front[0], front[1], front[2], RAD2DEG * angle);
 	}
 	count++;
     }
