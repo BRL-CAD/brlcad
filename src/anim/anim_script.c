@@ -31,8 +31,8 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
 #include <string.h>
+#include <bio.h>
 
 #include "vmath.h"
 #include "bu.h"
@@ -40,18 +40,8 @@
 #include "anim.h"
 
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
+#define OPT_STR	"a:b:c:d:f:m:pqrstv:"
 
-int		get_args(int argc, char **argv);
-extern int	anim_steer_mat(fastf_t *, fastf_t *, int);
-extern void	anim_quat2mat(fastf_t *, const fastf_t *);
-extern void	anim_v_unpermute(fastf_t *);
-extern void	anim_mat_print(FILE *, const fastf_t *, int);
-
-extern int bu_optind;
-extern char *bu_optarg;
 
 /* info from command line args */
 int relative_a, relative_c, axes, translate, quaternion, rotate;/*flags*/
@@ -62,10 +52,104 @@ vect_t centroid, rcentroid, front;
 mat_t m_axes, m_rev_axes; /* rotational analogue of centroid */
 char mat_cmd[10];   /* default is lmul */
 
-int
-main(int argc, char **argv)
+
+int get_args(int argc, char **argv)
 {
-    void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *);
+
+    int c, i, yes;
+    double yaw, pch, rll;
+    void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
+    rotate = translate = 1; /* defaults */
+    quaternion = permute = 0;
+    bu_strlcpy(mat_cmd, "lmul", sizeof(mat_cmd));
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	i=0;
+	switch (c) {
+	    case 'a':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		bu_optind += 3;
+		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+		axes = 1;
+		relative_a = 1;
+		break;
+	    case 'b':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		bu_optind += 3;
+		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+		axes = 1;
+		relative_a = 0;
+		break;
+	    case 'c':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		bu_optind += 3;
+		VREVERSE(rcentroid, centroid);
+		relative_c = 1;
+		break;
+	    case 'd':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		bu_optind += 3;
+		VREVERSE(rcentroid, centroid);
+		relative_c = 0;
+		break;
+	    case 'f':
+		sscanf(bu_optarg, "%d", &first_frame);
+		break;
+	    case 'm':
+		bu_strlcpy(mat_cmd, bu_optarg, sizeof(mat_cmd));
+		break;
+	    case 'p':
+		permute = 1;
+		break;
+	    case 'q':
+		quaternion = 1;
+		break;
+	    case 'r':
+		rotate = 1;
+		translate = 0;
+		break;
+	    case 's':
+		steer = 1;
+		relative_a = 0;
+		rotate = 0;
+		translate = 1;
+		break;
+	    case 't':
+		translate = 1;
+		rotate = 0;
+		break;
+	    case 'v':
+		yes = sscanf(bu_optarg, "%lf", &viewsize);
+		if (!yes) viewsize = 0.0;
+		if (viewsize < 0.0)
+		    readview = 1;
+		view = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
+int
+main(int argc, char *argv[])
+{
     fastf_t yaw, pitch, roll;
     vect_t point, zero;
     quat_t quat;
@@ -172,101 +256,6 @@ main(int argc, char **argv)
 	frame++;
     }
     return 0;
-}
-
-#define OPT_STR	"a:b:c:d:f:m:pqrstv:"
-
-int get_args(int argc, char **argv)
-{
-
-    int c, i, yes;
-    double yaw, pch, rll;
-    void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
-    rotate = translate = 1; /* defaults */
-    quaternion = permute = 0;
-    bu_strlcpy(mat_cmd, "lmul", sizeof(mat_cmd));
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	i=0;
-	switch (c) {
-	    case 'a':
-		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
-		bu_optind += 3;
-		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
-		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
-		axes = 1;
-		relative_a = 1;
-		break;
-	    case 'b':
-		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
-		bu_optind += 3;
-		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
-		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
-		axes = 1;
-		relative_a = 0;
-		break;
-	    case 'c':
-		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
-		bu_optind += 3;
-		VREVERSE(rcentroid, centroid);
-		relative_c = 1;
-		break;
-	    case 'd':
-		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
-		bu_optind += 3;
-		VREVERSE(rcentroid, centroid);
-		relative_c = 0;
-		break;
-	    case 'f':
-		sscanf(bu_optarg, "%d", &first_frame);
-		break;
-	    case 'm':
-		bu_strlcpy(mat_cmd, bu_optarg, sizeof(mat_cmd));
-		break;
-	    case 'p':
-		permute = 1;
-		break;
-	    case 'q':
-		quaternion = 1;
-		break;
-	    case 'r':
-		rotate = 1;
-		translate = 0;
-		break;
-	    case 's':
-		steer = 1;
-		relative_a = 0;
-		rotate = 0;
-		translate = 1;
-		break;
-	    case 't':
-		translate = 1;
-		rotate = 0;
-		break;
-	    case 'v':
-		yes = sscanf(bu_optarg, "%lf", &viewsize);
-		if (!yes) viewsize = 0.0;
-		if (viewsize < 0.0)
-		    readview = 1;
-		view = 1;
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
 }
 
 

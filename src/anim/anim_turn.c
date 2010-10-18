@@ -32,23 +32,16 @@
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
+#include "bio.h"
 
-#include "vmath.h"
 #include "bu.h"
+#include "bn.h"
 #include "anim.h"
+#include "vmath.h"
 
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
+#define OPT_STR "r:l:a:f:p:"
 
-int		get_args(int argc, char **argv);
-extern void	anim_y_p_r2mat(fastf_t *, double, double, double);
-extern void	anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *);
-
-extern int bu_optind;
-extern char *bu_optarg;
 
 int print_int = 1;
 int angle_set = 0;
@@ -56,14 +49,47 @@ int turn_wheels = 0;
 fastf_t length, angle, radius;
 fastf_t factor = 1.0;
 
+
+int get_args(int argc, char **argv)
+{
+    int c;
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'l':
+		sscanf(bu_optarg, "%lf", &length);
+		break;
+	    case 'a':
+		sscanf(bu_optarg, "%lf", &angle);
+		angle *= DTOR; /* degrees to radians */
+		angle_set = 1;
+		break;
+	    case 'r':
+		sscanf(bu_optarg, "%lf", &radius);
+		turn_wheels = 1;
+		break;
+	    case 'f':
+		turn_wheels = 1;
+		sscanf(bu_optarg, "%lf", &factor);
+		break;
+	    case 'p':
+		sscanf(bu_optarg, "%d", &print_int);
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int count;
     fastf_t val, time, roll_ang, yaw, sign;
     vect_t v, point, front, back, zero, temp1, temp2;
     mat_t m_from_world, m_to_world;
-    double bn_atan2(double, double);
 
     /* initialize variables */
     VSETALL(zero, 0.0);
@@ -154,40 +180,6 @@ main(int argc, char **argv)
 	count++;
     }
     return 0;
-}
-
-#define OPT_STR "r:l:a:f:p:"
-
-int get_args(int argc, char **argv)
-{
-    int c;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 'l':
-		sscanf(bu_optarg, "%lf", &length);
-		break;
-	    case 'a':
-		sscanf(bu_optarg, "%lf", &angle);
-		angle *= DTOR; /* degrees to radians */
-		angle_set = 1;
-		break;
-	    case 'r':
-		sscanf(bu_optarg, "%lf", &radius);
-		turn_wheels = 1;
-		break;
-	    case 'f':
-		turn_wheels = 1;
-		sscanf(bu_optarg, "%lf", &factor);
-		break;
-	    case 'p':
-		sscanf(bu_optarg, "%d", &print_int);
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
 }
 
 

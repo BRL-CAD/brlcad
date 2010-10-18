@@ -41,13 +41,13 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "vmath.h"
 #include "bu.h"
+#include "bn.h"
+#include "vmath.h"
+#include "anim.h"
 
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
+#define OPT_STR "yzqr"
 
 #define YPR		0
 #define XYZ		1
@@ -60,26 +60,49 @@
 #define ERROR1		1
 #define ERROR2		2
 
-#define DTOR    M_PI/180.0
-#define RTOD    180.0/M_PI
 
 int mode;
 int units;
 
-extern int bu_optind;
-extern char *bu_optarg;
 
-int get_args(int argc, char **argv);
-extern void anim_v_unpermute(fastf_t *);
+int get_args(int argc, char **argv)
+{
+
+    int c;
+
+    mode = QUATERNION; /* default */
+    units = DEGREES;
+
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'y':
+		mode = YPR;
+		break;
+	    case 'z':
+		mode = XYZ;
+		break;
+	    case 'q':
+		mode = QUATERNION;
+		break;
+	    case 'r':
+		units = RADIANS;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int c;
     fastf_t time, viewsize;
 
     fastf_t eyept[3], viewrot[16], angle[3], quat[4];
-    int anim_mat2ypr(fastf_t *, fastf_t *), anim_mat2zyx(const fastf_t *, fastf_t *), anim_mat2quat(fastf_t *, const fastf_t *);
 
     if (!get_args(argc, argv))
 	fprintf(stderr, "anim_keyread: get_args error");
@@ -128,39 +151,6 @@ main(int argc, char **argv)
 	}
     }
     return 0;
-}
-
-
-#define OPT_STR "yzqr"
-
-int get_args(int argc, char **argv)
-{
-
-    int c;
-
-    mode = QUATERNION; /* default */
-    units = DEGREES;
-
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 'y':
-		mode = YPR;
-		break;
-	    case 'z':
-		mode = XYZ;
-		break;
-	    case 'q':
-		mode = QUATERNION;
-		break;
-	    case 'r':
-		units = RADIANS;
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
 }
 
 

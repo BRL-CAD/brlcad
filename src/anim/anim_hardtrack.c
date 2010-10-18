@@ -27,17 +27,18 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
 #include "bio.h"
+
 #include "vmath.h"
 #include "bu.h"
 #include "bn.h"
 #include "anim.h"
 
+
+#define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
 
 #define NW	num_wheels
 #define NEXT(i)	(i+1)%NW
@@ -45,6 +46,7 @@
 
 #define TRACK_ANIM	0
 #define TRACK_ARCED	1
+
 
 typedef double *pdouble;
 
@@ -79,9 +81,6 @@ struct rlink {
     fastf_t		ang;	/* initial angle */
 };
 
-/* external variables */
-extern int bu_optind;
-extern char *bu_optarg;
 
 /* variables describing track geometry - used by main, trackprep, get_link */
 struct all *x;
@@ -108,13 +107,197 @@ char link_cmd[10];		/* default is "rarc" */
 char wheel_cmd[10];		/* default is "lmul" */
 int get_circumf;	/* flag: just return circumference of track */
 
-int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist);
+
+int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
+{
+    int i;
+    vect_t temp;
+    while (dist >= tracklen) /*periodicize*/
+	dist -= tracklen;
+    while (dist < 0.0)
+	dist += tracklen;
+    for (i=0;i<NW;i++) {
+	if ( (dist  -= x[i].t.len) < 0 ) {
+	    VSCALE(temp, (x[i].t.dir), dist);
+	    VADD2(pos, x[i].t.pos1, temp);
+	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
+	    return 2*i;
+	}
+	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
+	    *angle_p = dist/x[i].w.rad;
+	    *angle_p = x[i].w.ang1 - *angle_p; /*from x-axis to link*/
+	    pos[0] = x[i].w.pos[0] + x[i].w.rad*cos(*angle_p);
+	    pos[1] = x[i].w.pos[1];
+	    pos[2] = x[i].w.pos[2] + x[i].w.rad*sin(*angle_p);
+	    *angle_p -= M_PI_2; /*angle of clockwise tangent to circle*/
+	    return 2*i+1;
+	}
+    }
+    return -1;
+}
+
+
+int get_args(int argc, char **argv)
+{
+    fastf_t yaw, pch, rll;
+    void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
+    int c, i;
+    axes = cent = links_placed = print_wheel = print_link = 0;
+    get_circumf = 0;
+    print_mode = TRACK_ANIM;
+    bu_strlcpy(link_cmd, "rarc", sizeof(link_cmd));
+    bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	i=0;
+	switch (c) {
+	    case 'b':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		bu_optind += 3;
+		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+		axes = 1;
+		break;
+	    case 'd':
+		bu_optind -= 1;
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
+		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		bu_optind += 3;
+		VREVERSE(rcentroid, centroid);
+		cent = 1;
+		break;
+	    case 'f':
+		sscanf(bu_optarg, "%d", &first_frame);
+		break;
+	    case 'i':
+		sscanf(bu_optarg, "%lf", &init_dist);
+		break;
+	    case 'p':
+		links_placed = 1;
+		break;
+	    case 'r':
+		sscanf(bu_optarg, "%lf", &radius);
+		break;
+	    case 'w':
+		wheel_nindex = bu_optind - 1;
+		/*sscanf(bu_optarg, "%s", wheel_name);*/
+		print_wheel = 1;
+		break;
+	    case 'l':
+		sscanf(bu_optarg, "%d", &num_links);
+		link_nindex = bu_optind;
+		bu_optind += 1;
+		print_link = 1;
+		break;
+	    case 's':
+		steer = 1;
+		break;
+	    case 'g':
+		sscanf(bu_optarg, "%d", &arced_frame);
+		print_mode = TRACK_ARCED;
+		break;
+	    case 'm':
+		switch (*bu_optarg) {
+		    case 'l':
+			bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
+			break;
+		    case 'w':
+			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
+			break;
+		    default:
+			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
+			return 0;
+		}
+		bu_optind += 1;
+		break;
+	    case 'c':
+		get_circumf = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
+int track_prep(void)/*run once at the beginning to establish important track info*/
+{
+    int i;
+    fastf_t phi, costheta, link_angle, arc_angle;
+    vect_t difference, link_cent;
+
+    /* first loop - get inter axle slopes and start/end angles */
+    for (i=0;i<NW;i++) {
+	/*calculate current slope vector*/
+	VSUB2(x[i].s.dir, x[i].w.pos, x[PREV(i)].w.pos);
+	x[i].s.len = MAGNITUDE(x[i].s.dir);
+	/*calculate end angle of previous wheel - atan2(y, x)*/
+	phi = atan2(x[i].s.dir[2], x[i].s.dir[0]);/*absolute angle of slope*/
+	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
+	x[PREV(i)].w.ang1 = phi +  acos(costheta);
+	while (x[PREV(i)].w.ang1 < 0.0)
+	    x[PREV(i)].w.ang1 += 2.0*M_PI;
+	x[i].w.ang0 = x[PREV(i)].w.ang1;
+    }
+
+    /* second loop - handle concavities */
+    for (i=0;i<NW;i++) {
+	arc_angle = x[i].w.ang0 - x[i].w.ang1;
+	while (arc_angle < 0.0)
+	    arc_angle += 2.0*M_PI;
+	if (arc_angle > M_PI) {
+	    /* concave */
+	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
+	    x[i].w.ang1 = x[i].w.ang0;
+	    x[i].w.arc = 0.0;
+	}
+	else {
+	    /* convex - angles are already correct */
+	    x[i].w.arc = arc_angle;
+	}
+    }
+
+    /* third loop - calculate geometry of track segments */
+    tracklen = 0.0;
+    for (i=0;i<NW;i++) {
+	/*calculate endpoints of track segment*/
+	x[i].t.pos1[0] = x[i].w.pos[0] + x[i].w.rad*cos(x[i].w.ang0);
+	x[i].t.pos1[1] = x[i].w.pos[1];
+	x[i].t.pos1[2] = x[i].w.pos[2] + x[i].w.rad*sin(x[i].w.ang0);
+	x[i].t.pos0[0] = x[PREV(i)].w.pos[0] + x[PREV(i)].w.rad*cos(x[PREV(i)].w.ang1);
+	x[i].t.pos0[1] = x[PREV(i)].w.pos[1];
+	x[i].t.pos0[2] = x[PREV(i)].w.pos[2] + x[PREV(i)].w.rad*sin(x[PREV(i)].w.ang1);
+	/*calculate length and direction*/
+	VSUB2(difference, x[i].t.pos1, x[i].t.pos0);
+	x[i].t.len = MAGNITUDE(difference);
+	VSCALE((x[i].t.dir), difference, (1.0/x[i].t.len));
+
+	/*calculate arclength and total track length*/
+	tracklen += x[i].t.len;
+	tracklen += x[i].w.arc*x[i].w.rad;
+    }
+
+    /* for a track with links already placed, get initial positions*/
+    r = (struct rlink *) bu_calloc(num_links, sizeof(struct rlink), "struct rlink");
+    if (links_placed)
+	for (i=0;i<num_links;i++) {
+	    get_link(link_cent, &link_angle, init_dist + tracklen*i/num_links);
+	    VREVERSE(r[i].pos, link_cent);
+	    r[i].ang = -link_angle;
+	}
+    return 0;
+}
+
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
-    void anim_dir2mat(fastf_t *, const fastf_t *, const fastf_t *), anim_y_p_r2mat(fastf_t *, double, double, double), anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *), anim_mat_print(FILE *, const fastf_t *, int);
-    int get_args(int argc, char **argv), track_prep(void), val, frame, go, i, count;
+    int val, frame, go, i, count;
     fastf_t y_rot, distance, yaw, pitch, roll;
     vect_t p1, p2, p3, dir, dir2, wheel_now, wheel_prev;
     vect_t zero, position, vdelta, temp, to_track, to_front;
@@ -313,210 +496,6 @@ main(int argc, char **argv)
 	bu_free(r, "struct rlink");
     }
     return 0;
-}
-
-
-int track_prep(void)/*run once at the beginning to establish important track info*/
-{
-    int i;
-    fastf_t phi, costheta, link_angle, arc_angle;
-    vect_t difference, link_cent;
-
-    /* first loop - get inter axle slopes and start/end angles */
-    for (i=0;i<NW;i++) {
-	/*calculate current slope vector*/
-	VSUB2(x[i].s.dir, x[i].w.pos, x[PREV(i)].w.pos);
-	x[i].s.len = MAGNITUDE(x[i].s.dir);
-	/*calculate end angle of previous wheel - atan2(y, x)*/
-	phi = atan2(x[i].s.dir[2], x[i].s.dir[0]);/*absolute angle of slope*/
-	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
-	x[PREV(i)].w.ang1 = phi +  acos(costheta);
-	while (x[PREV(i)].w.ang1 < 0.0)
-	    x[PREV(i)].w.ang1 += 2.0*M_PI;
-	x[i].w.ang0 = x[PREV(i)].w.ang1;
-    }
-
-    /* second loop - handle concavities */
-    for (i=0;i<NW;i++) {
-	arc_angle = x[i].w.ang0 - x[i].w.ang1;
-	while (arc_angle < 0.0)
-	    arc_angle += 2.0*M_PI;
-	if (arc_angle > M_PI) {
-	    /* concave */
-	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
-	    x[i].w.ang1 = x[i].w.ang0;
-	    x[i].w.arc = 0.0;
-	}
-	else {
-	    /* convex - angles are already correct */
-	    x[i].w.arc = arc_angle;
-	}
-    }
-
-    /* third loop - calculate geometry of track segments */
-    tracklen = 0.0;
-    for (i=0;i<NW;i++) {
-	/*calculate endpoints of track segment*/
-	x[i].t.pos1[0] = x[i].w.pos[0] + x[i].w.rad*cos(x[i].w.ang0);
-	x[i].t.pos1[1] = x[i].w.pos[1];
-	x[i].t.pos1[2] = x[i].w.pos[2] + x[i].w.rad*sin(x[i].w.ang0);
-	x[i].t.pos0[0] = x[PREV(i)].w.pos[0] + x[PREV(i)].w.rad*cos(x[PREV(i)].w.ang1);
-	x[i].t.pos0[1] = x[PREV(i)].w.pos[1];
-	x[i].t.pos0[2] = x[PREV(i)].w.pos[2] + x[PREV(i)].w.rad*sin(x[PREV(i)].w.ang1);
-	/*calculate length and direction*/
-	VSUB2(difference, x[i].t.pos1, x[i].t.pos0);
-	x[i].t.len = MAGNITUDE(difference);
-	VSCALE((x[i].t.dir), difference, (1.0/x[i].t.len));
-
-	/*calculate arclength and total track length*/
-	tracklen += x[i].t.len;
-	tracklen += x[i].w.arc*x[i].w.rad;
-    }
-
-    /* for a track with links already placed, get initial positions*/
-    r = (struct rlink *) bu_calloc(num_links, sizeof(struct rlink), "struct rlink");
-    if (links_placed)
-	for (i=0;i<num_links;i++) {
-	    get_link(link_cent, &link_angle, init_dist + tracklen*i/num_links);
-	    VREVERSE(r[i].pos, link_cent);
-	    r[i].ang = -link_angle;
-	}
-    return 0;
-}
-
-
-int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
-{
-    int i;
-    vect_t temp;
-    while (dist >= tracklen) /*periodicize*/
-	dist -= tracklen;
-    while (dist < 0.0)
-	dist += tracklen;
-    for (i=0;i<NW;i++) {
-	if ( (dist  -= x[i].t.len) < 0 ) {
-	    VSCALE(temp, (x[i].t.dir), dist);
-	    VADD2(pos, x[i].t.pos1, temp);
-	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
-	    return 2*i;
-	}
-	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
-	    *angle_p = dist/x[i].w.rad;
-	    *angle_p = x[i].w.ang1 - *angle_p; /*from x-axis to link*/
-	    pos[0] = x[i].w.pos[0] + x[i].w.rad*cos(*angle_p);
-	    pos[1] = x[i].w.pos[1];
-	    pos[2] = x[i].w.pos[2] + x[i].w.rad*sin(*angle_p);
-	    *angle_p -= M_PI_2; /*angle of clockwise tangent to circle*/
-	    return 2*i+1;
-	}
-    }
-    return -1;
-}
-
-#define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
-int get_args(int argc, char **argv)
-{
-    fastf_t yaw, pch, rll;
-    void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
-    int c, i;
-    axes = cent = links_placed = print_wheel = print_link = 0;
-    get_circumf = 0;
-    print_mode = TRACK_ANIM;
-    bu_strlcpy(link_cmd, "rarc", sizeof(link_cmd));
-    bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	i=0;
-	switch (c) {
-	    case 'b':
-		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
-		bu_optind += 3;
-		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
-		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
-		axes = 1;
-		break;
-	    case 'd':
-		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
-		bu_optind += 3;
-		VREVERSE(rcentroid, centroid);
-		cent = 1;
-		break;
-	    case 'f':
-		sscanf(bu_optarg, "%d", &first_frame);
-		break;
-	    case 'i':
-		sscanf(bu_optarg, "%lf", &init_dist);
-		break;
-	    case 'p':
-		links_placed = 1;
-		break;
-	    case 'r':
-		sscanf(bu_optarg, "%lf", &radius);
-		break;
-	    case 'w':
-		wheel_nindex = bu_optind - 1;
-		/*sscanf(bu_optarg, "%s", wheel_name);*/
-		print_wheel = 1;
-		break;
-	    case 'l':
-		sscanf(bu_optarg, "%d", &num_links);
-		link_nindex = bu_optind;
-		bu_optind += 1;
-		print_link = 1;
-		break;
-	    case 's':
-		steer = 1;
-		break;
-	    case 'g':
-		sscanf(bu_optarg, "%d", &arced_frame);
-		print_mode = TRACK_ARCED;
-		break;
-	    case 'm':
-		switch (*bu_optarg) {
-		    case 'l':
-			bu_strlcpy(link_cmd, argv[bu_optind], sizeof(link_cmd));
-			break;
-		    case 'w':
-			bu_strlcpy(wheel_cmd, argv[bu_optind], sizeof(wheel_cmd));
-			break;
-		    default:
-			fprintf(stderr, "Unknown option: -m%c\n", *bu_optarg);
-			return 0;
-		}
-		bu_optind += 1;
-		break;
-	    case 'c':
-		get_circumf = 1;
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
-}
-
-void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
-
-{
-    int i;
-    if (which <=0) {
-	fprintf(stderr, "track length: %f\n", tracklen);
-	fprintf(stderr, "link length: %f\n", tracklen/num_links);
-	for (i=0;i<NW;i++) {
-	    fprintf(stderr, "wheel %d: %f %f %f %f %f %f\n", i, x[i].w.pos[0], x[i].w.pos[1], x[i].w.pos[2], x[i].w.rad, x[i].w.ang1, x[i].w.arc);
-	    fprintf(stderr, "track %d: %f %f %f %f %f %f %f\n", i, x[i].t.pos1[0], x[i].t.pos1[1], x[i].t.pos1[2], x[i].t.dir[0], x[i].t.dir[1], x[i].t.dir[2], x[i].t.len);
-	    fprintf(stderr, "slope %d: %f %f %f %f\n", i, x[i].s.dir[0], x[i].s.dir[1], x[i].s.dir[2], x[i].s.len);
-	}
-    }
-    /*	if (which >= 0) {
-	fprintf(stderr, "%d %f %f %f %f\n", count, position[0], position[1], position[2], y_rot);
-	}*/
 }
 
 
