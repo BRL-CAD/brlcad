@@ -1,5 +1,6 @@
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${ZLIB_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
