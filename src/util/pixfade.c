@@ -56,7 +56,7 @@
 
 
 int
-get_args(int argc, char **argv, FILE **inp, int *max, double *multiplier)
+get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
 {
     int c;
 
@@ -94,9 +94,10 @@ get_args(int argc, char **argv, FILE **inp, int *max, double *multiplier)
 	    fprintf(stderr, "pixfade: stdin is a tty\n");
 	    return 0;
 	}
-	*inp = stdin;
+	*inpp = stdin;
     } else {
-	if ((*inp = fopen(argv[bu_optind], "r")) == NULL) {
+	*inpp = fopen(argv[bu_optind], "r");
+	if (*inpp == NULL) {
 	    (void)fprintf(stderr,
 			  "pixfade: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
