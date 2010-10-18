@@ -31,5 +31,5 @@ add_definitions(
 FOREACH(xlib ${X11_LIBRARIES})
 	SET(TCLCAD_XLIBS "${TCLCAD_XLIBS} ${xlib}")
 ENDFOREACH(xlib ${X11_LIBRARIES})
-BRLCAD_ADDLIB(libtclcad "tclcad.c tclcadAutoPath.c tkImgFmtPIX.c ged_obj.c" "libdm libged ${TCLCAD_XLIBS} ${X11_Xi_LIB}")
+BRLCAD_ADDLIB(libtclcad "tclcad.c tclcadAutoPath.c tkImgFmtPIX.c ged_obj.c" "libged libdm ${TCLCAD_XLIBS} ${X11_Xi_LIB}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 19.0.1 SOVERSION 19)

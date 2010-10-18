@@ -8,10 +8,10 @@ IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_TK)
 	FOREACH(xlib ${X11_LIBRARIES})
 		SET(RTTHERM_XLIBS "${RTTHERM_XLIBS} ${xlib}")
 	ENDFOREACH(xlib ${X11_LIBRARIES})
-	BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "liboptical libfb ${TK_LIBRARY} ${RTTHERM_XLIBS}")
+	BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "libfb liboptical ${TK_LIBRARY} ${RTTHERM_XLIBS}")
 ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_TK)
 
-BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "librttherm liboptical libfb libmultispectral libged")
+BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "libged libfb librttherm libmultispectral liboptical")
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
 INSTALL(PROGRAMS ssampview.tcl DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 

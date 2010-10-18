@@ -103,7 +103,7 @@ SET(MGED_SOURCES
   vrlink.c
 )
 
-BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${pointstarget} libtermio libwdb libged libdm libtclcad")
+BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget}")
 
 BRLCAD_ADDEXEC(cad_boundp cad_boundp.c libbu)
 

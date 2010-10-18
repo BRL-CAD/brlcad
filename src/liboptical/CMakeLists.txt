@@ -44,5 +44,5 @@ include_directories(
     ${TCL_INCLUDE_PATH}
 )
 
-BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "libbu libbn librt")
+BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 19.0.1 SOVERSION 19)
