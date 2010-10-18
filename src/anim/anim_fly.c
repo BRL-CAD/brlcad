@@ -19,13 +19,14 @@
  *
  */
 /** @file anim_fly.c
- *	Simulate flying motion, for an airplane or virtual camera.
  *
- *  This filter operates on animation tables. Given the desired position
- *  of the airplane in each frame, anim_fly produces a table including the
- *  plane's position and orientation. A "magic factor" should be supplied
- *  to control the severity of banking. Looping behavior can be toggled
- *  with another option.
+ * Simulate flying motion, for an airplane or virtual camera.
+ *
+ * This filter operates on animation tables. Given the desired
+ * position of the airplane in each frame, anim_fly produces a table
+ * including the plane's position and orientation. A "magic factor"
+ * should be supplied to control the severity of banking. Looping
+ * behavior can be toggled with another option.
  *
  */
 
@@ -40,7 +41,16 @@
 #include "anim.h"
 
 
-#define MAXN	100
+#define MAXN 100
+#define OPT_STR "b:f:p:s:r"
+
+#define PREP -1
+#define START 0
+#define MIDDLE 1
+#define WANE 2
+#define END 3
+#define STOP 4
+
 
 int estimate_f = 0;
 fastf_t max_bank = 0;
@@ -50,17 +60,10 @@ int print_int = 1;
 fastf_t magic_factor = 1.0;
 fastf_t desired_step = 0.1;
 
-int get_args(int argc, char **argv);
-
-#define PREP	-1
-#define START	0
-#define MIDDLE	1
-#define WANE	2
-#define	END	3
-#define STOP	4
 
 /* determine the yaw of the given direction vector */
-fastf_t	xyz2yaw(fastf_t *d)
+fastf_t
+xyz2yaw(fastf_t *d)
 {
     fastf_t yaw;
     yaw = RAD2DEG*atan2(d[1], d[0]);
@@ -68,8 +71,10 @@ fastf_t	xyz2yaw(fastf_t *d)
     return yaw;
 }
 
+
 /* determine the pitch of the given direction vector */
-fastf_t	xyz2pch(fastf_t *d)
+fastf_t
+xyz2pch(fastf_t *d)
 {
     fastf_t x;
     x = sqrt(d[0]*d[0] + d[1]*d[1]);
@@ -77,19 +82,22 @@ fastf_t	xyz2pch(fastf_t *d)
 
 }
 
+
 /* given the 3-d velocity and acceleration of an imaginary aircraft,
-   find the amount of bank the aircraft would need to undergo.
-   Algorithm: the bank angle is proportional to the cross product
-   of the horizontal velocity and horizontal acceleration, up to a
-   maximum bank of 90 degrees in either direction. */
-fastf_t bank(fastf_t *acc, fastf_t *vel)
+ * find the amount of bank the aircraft would need to undergo.
+ * Algorithm: the bank angle is proportional to the cross product of
+ * the horizontal velocity and horizontal acceleration, up to a
+ * maximum bank of 90 degrees in either direction.
+ */
+fastf_t
+bank(fastf_t *acc, fastf_t *vel)
 {
     fastf_t cross;
 
     cross = vel[1]*acc[0] - vel[0]*acc[1];
 
     if (estimate_f) {
-	max_cross = ( fabs(cross) > max_cross) ? fabs(cross) : max_cross;
+	max_cross = (fabs(cross) > max_cross) ? fabs(cross) : max_cross;
     }
 
     cross *= magic_factor;
@@ -101,7 +109,8 @@ fastf_t bank(fastf_t *acc, fastf_t *vel)
 
 
 /* given f(t), f(t+h), f(t+2*h),  and h, calculate f'' */
-fastf_t f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
+fastf_t
+f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
 {
     return (x0 - 2.0*x1 + x2)/(h*h);
 }
@@ -142,34 +151,37 @@ get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ?
 
 
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t) */
-fastf_t f_prm_0(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
+fastf_t
+f_prm_0(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
 {
     return -(3.0*x0 - 4.0*x1 + x2)/(2*h);
 }
 
 
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t+h) */
-fastf_t f_prm_1(fastf_t x0, fastf_t UNUSED(x1), fastf_t x2, fastf_t h)
+fastf_t
+f_prm_1(fastf_t x0, fastf_t UNUSED(x1), fastf_t x2, fastf_t h)
 {
     return (x2 - x0)/(2*h);
 }
 
 
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t+2h) */
-fastf_t f_prm_2(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
+fastf_t
+f_prm_2(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
 {
     return (x0 - 4.0*x1 + 3.0*x2)/(2*h);
 }
 
 
 /* code to read command line arguments*/
-#define OPT_STR "b:f:p:s:r"
-int get_args(int argc, char **argv)
+int
+get_args(int argc, char **argv)
 {
     int c;
 
     estimate_f = 0;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
 	    case 'b':
 		sscanf(bu_optarg, "%lf", &max_bank);
@@ -198,7 +210,7 @@ int get_args(int argc, char **argv)
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int count, status, num_read, enn, i, pp;
     fastf_t *points, *cur;
@@ -215,8 +227,9 @@ main(int argc, char **argv)
     scanf("%lf %lf %lf %lf", second, second+1, second+2, second+3);
     stepsize = second[0]-first[0];
 
-    /* determine n, the number of points to store ahead and behind
-     * the current point. 2n points are stored, minimum enn=2 */
+    /* determine n, the number of points to store ahead and behind the
+     * current point. 2n points are stored, minimum enn=2
+     */
     enn = (int) (desired_step/stepsize);
     if (enn>MAXN) enn=MAXN;
     if (enn<1) enn=1;

@@ -19,7 +19,8 @@
  *
  */
 /** @file cattrack.c
- *  Caternary curve routines used by anim_track.c
+ *
+ * Caternary curve routines used by anim_track.c
  *
  */
 
@@ -32,22 +33,22 @@
 #include "anim.h"
 
 
-#define MAX_REACHED	0
-#define SOLVED		1
+#define MAX_REACHED 0
+#define SOLVED 1
 
 /* the total maximum number of lowest level iterations possible is
- *     T_MAX_ITS*MAX_OUT_ITS*2*MAX_ITS
+ * T_MAX_ITS*MAX_OUT_ITS*2*MAX_ITS
  */
-#define MAX_ITS		25
-#define MAX_OUT_ITS	25
-#define T_MAX_ITS	50
+#define MAX_ITS 25
+#define MAX_OUT_ITS 25
+#define T_MAX_ITS 50
 
 /* these tolerances are guessed at, except that it seems to be important
  * in elastic situations that T_TOL be significantly smaller than the others
  */
-#define T_TOL		1.0e-14
-#define G_TOL		1.0e-12
-#define F_TOL		1.0e-12
+#define T_TOL 1.0e-14
+#define G_TOL 1.0e-12
+#define F_TOL 1.0e-12
 
 
 fastf_t
@@ -159,8 +160,7 @@ ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_ze
 	    adjust = eff(*pa, *pc, p_zero[X], p_one[X], delta_s);
 	    if ((*pa-adjust)<=0.0) {
 		*pa *= 0.5;
-	    }
-	    else {
+	    } else {
 		*pa -= adjust;
 	    }
 	    if (adjust<F_TOL) {
@@ -215,8 +215,7 @@ getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fa
 	(*pa) = 1.0;
 	*pc = 0.5*(p_one[X]+p_zero[X]);
 	called_before = 1;
-    }
-    else {
+    } else {
 	theta_zero = last_theta_zero;
 	theta_one = last_theta_one;
 	*pa = last_a;

@@ -20,11 +20,11 @@
  */
 /** @file anim_script.c
  *
- *	Turn an animation table into an animation script suitable for
- *  use by rt. Anim_script.c makes a script for one object at a time (or the
- *  virtual camera). Some of the available options include rotation
- *  only, translation only, automatic steering, and specifying reference
- *  coordinates.
+ * Turn an animation table into an animation script suitable for
+ * use by rt. Anim_script.c makes a script for one object at a time (or the
+ * virtual camera). Some of the available options include rotation
+ * only, translation only, automatic steering, and specifying reference
+ * coordinates.
  *
  */
 
@@ -40,20 +40,21 @@
 #include "anim.h"
 
 
-#define OPT_STR	"a:b:c:d:f:m:pqrstv:"
+#define OPT_STR "a:b:c:d:f:m:pqrstv:"
 
 
 /* info from command line args */
 int relative_a, relative_c, axes, translate, quaternion, rotate;/*flags*/
 int steer, view, readview, permute; /* flags*/
 int first_frame;
-fastf_t  viewsize;
+fastf_t viewsize;
 vect_t centroid, rcentroid, front;
 mat_t m_axes, m_rev_axes; /* rotational analogue of centroid */
 char mat_cmd[10];   /* default is lmul */
 
 
-int get_args(int argc, char **argv)
+int
+get_args(int argc, char **argv)
 {
 
     int c, i, yes;
@@ -62,14 +63,14 @@ int get_args(int argc, char **argv)
     rotate = translate = 1; /* defaults */
     quaternion = permute = 0;
     bu_strlcpy(mat_cmd, "lmul", sizeof(mat_cmd));
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch (c) {
 	    case 'a':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw);
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch);
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll);
 		bu_optind += 3;
 		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
@@ -78,9 +79,9 @@ int get_args(int argc, char **argv)
 		break;
 	    case 'b':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw);
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch);
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll);
 		bu_optind += 3;
 		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
@@ -245,8 +246,7 @@ main(int argc, char *argv[])
 	    printf("%.10g %.10g %.10g 0\n", -a[0], -a[4], -a[8]);
 	    printf("0 0 0 1;\n");
 	    printf("end;\n");
-	}
-	else if (go) {
+	} else if (go) {
 	    printf("start %d;\n", frame);
 	    printf("clean;\n");
 	    printf("anim %s matrix %s\n", *(argv+bu_optind), mat_cmd);

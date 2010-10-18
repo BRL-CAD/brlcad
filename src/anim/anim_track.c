@@ -20,8 +20,8 @@
  */
 /** @file anim_track.c
  *
- *  Animate the links and wheels of a tracked vehicle. Handles tracks that
- *  change in shape during the animation.
+ * Animate the links and wheels of a tracked vehicle. Handles tracks that
+ * change in shape during the animation.
  *
  */
 
@@ -41,19 +41,19 @@
 
 #define OPT_STR "sycuvb:d:f:i:r:p:w:g:m:l:a"
 
-#define GIVEN		0
-#define CALCULATED	1
-#define STEERED		2
+#define GIVEN 0
+#define CALCULATED 1
+#define STEERED 2
 
-#define PRINT_ANIM	0
-#define PRINT_ARCED	1
+#define PRINT_ANIM 0
+#define PRINT_ARCED 1
 
-#define TRACK_MIN	0
-#define TRACK_FIXED	1
-#define TRACK_STRETCH	2
-#define TRACK_ELASTIC	3
+#define TRACK_MIN 0
+#define TRACK_FIXED 1
+#define TRACK_STRETCH 2
+#define TRACK_ELASTIC 3
 
-#define NW	num_wheels
+#define NW num_wheels
 #define NEXT(i)	(i+1)%NW
 #define PREV(i)	(i+NW-1)%NW
 
@@ -61,29 +61,32 @@
 typedef double *pdouble;
 
 struct wheel {
-    vect_t		pos;	/* displacement of wheel from vehicle origin */
-    fastf_t		rad;	/* radius of wheel */
-    fastf_t		ang0;	/* angle where track meets wheel 0<a<2pi*/
-    fastf_t		ang1;	/* angle where track leaves wheel 0<a<p2i */
-    fastf_t		arc;	/* radian length of contact between wheel and track 0<a<pi*/
+    vect_t pos;		/* displacement of wheel from vehicle origin */
+    fastf_t rad;	/* radius of wheel */
+    fastf_t ang0;	/* angle where track meets wheel 0<a<2pi*/
+    fastf_t ang1;	/* angle where track leaves wheel 0<a<p2i */
+    fastf_t arc;	/* radian length of contact between wheel and track 0<a<pi*/
 };
+
 
 struct track {
-    vect_t		pos0;	/* beginning point of track section */
-    vect_t		pos1;	/* end of track section */
-    vect_t		dir;	/* unit vector:direction of track section ending here*/
-    fastf_t		len;	/* length of track section ending here*/
+    vect_t pos0;	/* beginning point of track section */
+    vect_t pos1;	/* end of track section */
+    vect_t dir;		/* unit vector:direction of track section ending here*/
+    fastf_t len;	/* length of track section ending here*/
 };
+
 
 struct slope {
-    vect_t		dir;	/* vector from previous to current axle*/
-    fastf_t		len;	/* length of vector above*/
+    vect_t dir;		/* vector from previous to current axle*/
+    fastf_t len;	/* length of vector above*/
 };
 
+
 struct all {
-    struct wheel 	w;	/* parameters describing the track around a wheel */
-    struct track	t;	/* track between this wheel and the previous wheel */
-    struct slope	s;	/* vector between this axle and the previous axle */
+    struct wheel w;	/* parameters describing the track around a wheel */
+    struct track t;	/* track between this wheel and the previous wheel */
+    struct slope s;	/* vector between this axle and the previous axle */
 };
 
 
@@ -99,25 +102,26 @@ int wheel_nindex;	/* argv[wheel_nindex] = wheelname*/
 int link_nindex;	/* argv[link_nindex] = linkname*/
 int print_wheel;	/* flag: do wheel animation */
 int print_link;		/* flag: do link animation */
-int print_mode;		/*  anim for rt or arced for mged */
+int print_mode;		/* anim for rt or arced for mged */
 int arced_frame;	/* which frame to arced */
-int  axes, cent;	/* flags: alternate axes, centroid specified */
-int dist_mode;		/* given, steered, or calculated  */
-int  first_frame;	/* integer to begin numbering frames */
+int axes, cent;		/* flags: alternate axes, centroid specified */
+int dist_mode;		/* given, steered, or calculated */
+int first_frame;	/* integer to begin numbering frames */
 fastf_t init_dist;	/* initial distance of first link along track */
 int one_radius;		/* flag: common radius specified */
 fastf_t radius;		/* common radius of all wheels */
-vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
-mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
-char link_cmd[10];		/* default is "rarc" */
-char wheel_cmd[10];		/* default is "lmul" */
+char link_cmd[10];	/* default is "rarc" */
+char wheel_cmd[10];	/* default is "lmul" */
 int get_circumf;	/* flag: just return circumference of track */
-int read_wheels;		/* flag: read new wheel positions each frame */
+int read_wheels;	/* flag: read new wheel positions each frame */
 int len_mode;		/* mode for track_len */
 int anti_strobe;	/* flag: take measures against strobing effect */
+vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
+mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 
 
-int get_args(int argc, char **argv)
+int
+get_args(int argc, char **argv)
 {
     int c, i;
     fastf_t yaw, pch, rll;
@@ -135,7 +139,7 @@ int get_args(int argc, char **argv)
     len_mode = TRACK_MIN;
     anti_strobe = 0;
 
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch (c) {
 	    case 's':
@@ -155,9 +159,9 @@ int get_args(int argc, char **argv)
 		break;
 	    case 'b':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw);
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch);
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll);
 		bu_optind += 3;
 		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
@@ -256,7 +260,7 @@ int get_args(int argc, char **argv)
  * rest of the x[i] structs and also calculates values for curve_a, curve_b,
  * curve_c, and s_start, which describe the caternary segment
  * return values: 0 = GOOD
- * 		 -1 = BAD. Track too short to fit around wheels
+ * -1 = BAD. Track too short to fit around wheels
  */
 int
 track_prep(void)
@@ -274,7 +278,7 @@ track_prep(void)
 	/*calculate end angle of previous wheel assuming all convex*/
 	phi = atan2(x[i].s.dir[2], x[i].s.dir[0]);/*absolute angle of slope*/
 	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
-	x[PREV(i)].w.ang1 = phi +  acos(costheta);
+	x[PREV(i)].w.ang1 = phi + acos(costheta);
 	while (x[PREV(i)].w.ang1 < 0.0)
 	    x[PREV(i)].w.ang1 += 2.0*M_PI;
 	x[i].w.ang0 = x[PREV(i)].w.ang1;
@@ -289,8 +293,7 @@ track_prep(void)
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
 	    x[i].w.ang1 = x[i].w.ang0;
 	    x[i].w.arc = 0.0;
-	}
-	else {
+	} else {
 	    /* convex - angles are already correct */
 	    x[i].w.arc = arc_angle;
 	}
@@ -335,8 +338,7 @@ track_prep(void)
 	if ((len_mode==TRACK_ELASTIC)||(len_mode==TRACK_STRETCH)) {
 	    tracklen += (x[0].t.len-hyperlen);
 	    hyperlen = tracklen - linearlen;
-	}
-	else {
+	} else {
 	    return -1;/*bad, track is too short*/
 	}
     }
@@ -384,7 +386,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
     /* we want it to ignore the distance between wheel(n-1) and wheel(0)*/
     dist += x[0].t.len;
     for (i=0;i<NW;i++) {
-	if ( (dist  -= x[i].t.len) < 0 ) {
+	if ((dist -= x[i].t.len) < 0) {
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
@@ -402,14 +404,13 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
     }
 
     /* caternary section */
-    if ( curve_a > VDIVIDE_TOL) {
+    if (curve_a > VDIVIDE_TOL) {
 	pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist);
 	pos[Y] = x[0].w.pos[Y];
 	pos[Z] = hyper_get_z(curve_a, curve_b, 0.0, pos[X]);
 	pos[X] += curve_c;
 	*angle_p = hyper_get_ang(curve_a, curve_c, pos[X]);
-    }
-    else {
+    } else {
 	/* practically linear */
 	VSCALE(temp, (x[0].t.dir), dist);
 	VADD2(pos, x[0].t.pos0, temp);
@@ -451,7 +452,7 @@ main(int argc, char *argv[])
     if (!get_args(argc, argv))
 	fprintf(stderr, "Anim_track: Argument error.\n");
 
-    if (axes || cent ) {
+    if (axes || cent) {
 	/* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
@@ -542,8 +543,7 @@ main(int argc, char *argv[])
 	    if (val < 1) {
 		break;
 	    }
-	}
-	else if (dist_mode==CALCULATED) {
+	} else if (dist_mode==CALCULATED) {
 	    scanf("%*f");/*time*/
 	    scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos+2);
 	    val = scanf("%lf %lf %lf", &yaw, &pch, &roll);

@@ -20,12 +20,12 @@
  */
 /** @file anim_turn.c
  *
- *	Animate front-wheel steered vehicles.
+ * Animate front-wheel steered vehicles.
  *
- *  This is a filter which operates on animation tables. Given an
- *  animation table for the position of the front axle, anim_turn produces
- *  an animation table for position and orientation. Options provide for
- *  animating the wheels and/or steering wheel.
+ * This is a filter which operates on animation tables. Given an
+ * animation table for the position of the front axle, anim_turn produces
+ * an animation table for position and orientation. Options provide for
+ * animating the wheels and/or steering wheel.
  *
  */
 
@@ -50,10 +50,11 @@ fastf_t length, angle, radius;
 fastf_t factor = 1.0;
 
 
-int get_args(int argc, char **argv)
+int
+get_args(int argc, char **argv)
 {
     int c;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
 	    case 'l':
 		sscanf(bu_optarg, "%lf", &length);
@@ -93,13 +94,13 @@ main(int argc, char *argv[])
 
     /* initialize variables */
     VSETALL(zero, 0.0);
-    VSETALL( v, 0.0 );
-    VSETALL( point, 0.0 );
-    VSETALL( front, 0.0 );
-    VSETALL( back, 0.0 );
-    VSETALL( temp1, 0.0 );
-    VSETALL( temp2, 0.0 );
-    for ( count=0; count<ELEMENTS_PER_MAT; count++ )
+    VSETALL(v, 0.0);
+    VSETALL(point, 0.0);
+    VSETALL(front, 0.0);
+    VSETALL(back, 0.0);
+    VSETALL(temp1, 0.0);
+    VSETALL(temp2, 0.0);
+    for (count=0; count<ELEMENTS_PER_MAT; count++)
 	m_from_world[count]=m_to_world[count]=0.0;
     length = angle = radius = roll_ang = 0.0;
 
@@ -112,7 +113,7 @@ main(int argc, char *argv[])
 	VSCAN(temp1);
 	scanf("%*f%*[^-0123456789]");
 	VSCAN(temp2);
-	angle = bn_atan2( (temp2[1]-temp1[1]), (temp2[0]-temp1[0]) );
+	angle = bn_atan2((temp2[1]-temp1[1]), (temp2[0]-temp1[0]));
 	rewind(stdin);
     }
     count = 0;
@@ -151,8 +152,7 @@ main(int argc, char *argv[])
 	    /*calculate new angle of vehicle*/
 	    VSUB2(temp1, front, back);
 	    angle = bn_atan2(temp1[1], temp1[0]);
-	}
-	else {
+	} else {
 	    /*first time through */
 	    /*angle is already determined*/
 	    VMOVE(front, point);
@@ -171,8 +171,7 @@ main(int argc, char *argv[])
 
 	    if (!(count%print_int))
 		printf("%.10g %.10g %.10g 0.0\n", t, factor*RAD2DEG*yaw, RAD2DEG*roll_ang);
-	}
-	else {
+	} else {
 	    /* print position and orientation of vehicle */
 	    if (!(count%print_int))
 		printf("%.10g %.10g %.10g %.10g %.10g 0.0 0.0\n", t, front[0], front[1], front[2], RAD2DEG * angle);

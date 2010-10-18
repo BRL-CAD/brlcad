@@ -17,7 +17,7 @@ bin_PROGRAMS = \
 	chan_permute
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
-# AM_CFLAGS = ${STRICT_FLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 anim_cascade_SOURCES = anim_cascade.c
 anim_cascade_LDADD = ${BN}

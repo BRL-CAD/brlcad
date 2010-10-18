@@ -19,20 +19,21 @@
  *
  */
 /** @file anim_keyread.c
- *	Convert an list of mged-style 'savekey' keyframes into an
- *  animation table
  *
- *  The output table specifies the orientation in one of three ways:
+ * Convert an list of mged-style 'savekey' keyframes into an animation
+ * table
  *
- *	default	 - quaternions in the order x, y, z, w.
+ * The output table specifies the orientation in one of three ways:
  *
- *	-z option - Eulers angles, in the order xyz. The model axes are
- *		considered to be rotated about the camera's z, y, and
- *		x axes (in that order).
+ * default - quaternions in the order x, y, z, w.
  *
- *	-y option - Eulers angles in the form yaw, pitch, roll.
+ * -z option - Eulers angles, in the order xyz. The model axes are
+ * considered to be rotated about the camera's z, y, and x axes (in
+ * that order).
  *
- *  This is more or less a special case of anim_orient.c
+ * -y option - Eulers angles in the form yaw, pitch, roll.
+ *
+ * This is more or less a special case of anim_orient.c
  *
  */
 
@@ -49,23 +50,24 @@
 
 #define OPT_STR "yzqr"
 
-#define YPR		0
-#define XYZ		1
-#define QUATERNION	2
+#define YPR 0
+#define XYZ 1
+#define QUATERNION 2
 
-#define DEGREES		0
-#define RADIANS		1
+#define DEGREES 0
+#define RADIANS 1
 
-#define NORMAL		0
-#define ERROR1		1
-#define ERROR2		2
+#define NORMAL 0
+#define ERROR1 1
+#define ERROR2 2
 
 
 int mode;
 int units;
 
 
-int get_args(int argc, char **argv)
+int
+get_args(int argc, char **argv)
 {
 
     int c;
@@ -73,7 +75,7 @@ int get_args(int argc, char **argv)
     mode = QUATERNION; /* default */
     units = DEGREES;
 
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
 	    case 'y':
 		mode = YPR;
@@ -134,8 +136,7 @@ main(int argc, char *argv[])
 	    if (units == DEGREES)
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[0], angle[1], angle[2]);
-	}
-	else if (mode==XYZ) {
+	} else if (mode==XYZ) {
 	    c = anim_mat2zyx(angle, viewrot);
 	    if (c==ERROR1)
 		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", time);
@@ -144,8 +145,7 @@ main(int argc, char *argv[])
 	    if (units == DEGREES)
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[X], angle[Y], angle[Z]);
-	}
-	else if (mode==QUATERNION) {
+	} else if (mode==QUATERNION) {
 	    anim_mat2quat(quat, viewrot);
 	    printf("%.10g\t%.10g\t%.10g\t%.10g\n", quat[X], quat[Y], quat[Z], quat[W]);
 	}

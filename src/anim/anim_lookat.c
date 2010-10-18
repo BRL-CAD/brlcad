@@ -19,7 +19,8 @@
  *
  */
 /** @file anim_lookat.c
- *	Given animation tables for the position of the virtual camera
+ *
+ * Given animation tables for the position of the virtual camera
  * and a point to look at at each time, this program produces an animation
  * script to control the camera. The view is kept rightside up, whenever
  * possible. When looking vertically up or down, the exact orientation
@@ -40,9 +41,9 @@
 
 #define OPT_STR "f:yqv"
 
-#define LOOKAT_SCRIPT	0
-#define	LOOKAT_YPR	1
-#define LOOKAT_QUAT	2
+#define LOOKAT_SCRIPT 0
+#define LOOKAT_YPR 1
+#define LOOKAT_QUAT 2
 
 
 int frame = 0;
@@ -50,10 +51,11 @@ int print_mode = LOOKAT_SCRIPT;
 int print_viewsize = 0;
 
 
-int get_args(int argc, char **argv)
+int
+get_args(int argc, char **argv)
 {
     int c;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
 	    case 'f':
 		sscanf(bu_optarg, "%d", &frame);
@@ -145,6 +147,7 @@ main(int argc, char *argv[])
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

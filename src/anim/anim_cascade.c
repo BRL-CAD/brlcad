@@ -19,24 +19,26 @@
  *
  */
 /** @file anim_cascade.c
- *  Purpose: Given position and orientation of main frame of reference,
+ *
+ * Purpose: Given position and orientation of main frame of reference,
  * along with the position and orientation of another frame with respect
  * to the main frame, give the absolute orientation and position of the
  * second frame.
- *	For example, given the position and orientation of a tank, and of the
- * turret relative to the tank, you can get the absolute position and
- * orientation of the turret at each time.
- * 	Or, optionally, given position and orientation of main frame of
- * reference, and the absolute position and orientation of another frame,
- * find the position and orientation of the second frame in terms of the main
+ *
+ * For example, given the position and orientation of a tank, and of
+ * the turret relative to the tank, you can get the absolute position
+ * and orientation of the turret at each time.  Or, optionally, given
+ * position and orientation of main frame of reference, and the
+ * absolute position and orientation of another frame, find the
+ * position and orientation of the second frame in terms of the main
  * frame of reference. (-i option).
  *
- * Usage:
- *	anim_cascade main.table < relative.table > absolute.table
+ * Usage: anim_cascade main.table < relative.table > absolute.table
  *
- * The format of the tables is:
- *  time x y z yaw pitch roll
- * unless specified otherwise by options.
+ * Unless specified otherwise by options, the format of the table file
+ * is in the space-delimited form:
+ *
+ * time x y z yaw pitch roll
  *
  */
 
@@ -53,9 +55,9 @@
 
 #define OPT_STR "so:f:r:a:"
 
-#define	CASCADE_A	0
-#define CASCADE_R	1
-#define CASCADE_F	2
+#define CASCADE_A 0
+#define CASCADE_R 1
+#define CASCADE_F 2
 
 
 vect_t fcenter, fypr, rcenter, rypr, acenter, aypr;
@@ -70,7 +72,7 @@ int get_args(int argc, char **argv)
     output_mode = CASCADE_A;
     cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
     print_time = 1;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	switch (c) {
 	    case 'f':
 		d = *(bu_optarg);
@@ -81,7 +83,7 @@ int get_args(int argc, char **argv)
 		    bu_optind += 3;
 		    cmd_fcen = 1;
 		    break;
-		} else if ( d =='y') {
+		} else if (d =='y') {
 		    sscanf(argv[bu_optind], "%lf", fypr+0);
 		    sscanf(argv[bu_optind+1], "%lf", fypr+1);
 		    sscanf(argv[bu_optind+2], "%lf", fypr+2);
@@ -101,7 +103,7 @@ int get_args(int argc, char **argv)
 		    bu_optind += 3;
 		    cmd_rcen = 1;
 		    break;
-		} else if ( d =='y') {
+		} else if (d =='y') {
 		    sscanf(argv[bu_optind], "%lf", rypr+0);
 		    sscanf(argv[bu_optind+1], "%lf", rypr+1);
 		    sscanf(argv[bu_optind+2], "%lf", rypr+2);
@@ -121,7 +123,7 @@ int get_args(int argc, char **argv)
 		    bu_optind += 3;
 		    cmd_acen = 1;
 		    break;
-		} else if ( d =='y') {
+		} else if (d =='y') {
 		    sscanf(argv[bu_optind], "%lf", aypr+0);
 		    sscanf(argv[bu_optind+1], "%lf", aypr+1);
 		    sscanf(argv[bu_optind+2], "%lf", aypr+2);

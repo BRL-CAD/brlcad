@@ -20,8 +20,8 @@
  */
 /** @file anim_hardtrack.c
  *
- *  Animate the links and wheels of a tracked vehicle. It is assumed
- *  that the wheels do not translate with respect to the vehicle.
+ * Animate the links and wheels of a tracked vehicle. It is assumed
+ * that the wheels do not translate with respect to the vehicle.
  *
  */
 
@@ -40,51 +40,55 @@
 
 #define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
 
-#define NW	num_wheels
+#define NW num_wheels
 #define NEXT(i)	(i+1)%NW
 #define PREV(i)	(i+NW-1)%NW
 
-#define TRACK_ANIM	0
-#define TRACK_ARCED	1
+#define TRACK_ANIM 0
+#define TRACK_ARCED 1
 
 
 typedef double *pdouble;
 
 struct wheel {
-    vect_t		pos;	/* displacement of wheel from vehicle origin */
-    fastf_t		rad;	/* radius of wheel */
-    fastf_t		ang0;	/* angle where track meets wheel; 0 < a < 2pi */
-    fastf_t		ang1;	/* angle where track leaves wheel; 0 < a < 2pi */
-    fastf_t		arc;	/* arclength of contact between wheel and track */
+    vect_t pos;		/* displacement of wheel from vehicle origin */
+    fastf_t rad;	/* radius of wheel */
+    fastf_t ang0;	/* angle where track meets wheel; 0 < a < 2pi */
+    fastf_t ang1;	/* angle where track leaves wheel; 0 < a < 2pi */
+    fastf_t arc;	/* arclength of contact between wheel and track */
 };
+
 
 struct track {
-    vect_t		pos0;	/* beginning point of track section */
-    vect_t		pos1;	/* end point of track section */
-    vect_t		dir;	/* unit vector: direction of track section */
-    fastf_t		len;	/* length of track section */
+    vect_t pos0;	/* beginning point of track section */
+    vect_t pos1;	/* end point of track section */
+    vect_t dir;		/* unit vector: direction of track section */
+    fastf_t len;	/* length of track section */
 };
+
 
 struct slope {
-    vect_t		dir;	/* vector from previous to current axle */
-    fastf_t		len;	/* length of vector described above */
+    vect_t dir;		/* vector from previous to current axle */
+    fastf_t len;	/* length of vector described above */
 };
+
 
 struct all {
-    struct wheel 	w;	/* parameters describing the track around a wheel */
-    struct track	t;	/* track between this wheel and the previous wheel */
-    struct slope	s;	/* vector between this axle and the previous axle */
+    struct wheel w;	/* parameters describing the track around a wheel */
+    struct track t;	/* track between this wheel and the previous wheel */
+    struct slope s;	/* vector between this axle and the previous axle */
 };
 
+
 struct rlink {
-    vect_t		pos;	/* reverse of initial position */
-    fastf_t		ang;	/* initial angle */
+    vect_t pos;		/* reverse of initial position */
+    fastf_t ang;	/* initial angle */
 };
 
 
 /* variables describing track geometry - used by main, trackprep, get_link */
 struct all *x;
-struct rlink *r;		/* reverse of initial locations of links */
+struct rlink *r;	/* reverse of initial locations of links */
 int num_links, num_wheels;
 fastf_t track_y, tracklen;
 
@@ -93,7 +97,7 @@ int wheel_nindex;	/* argv[wheel_nindex] = wheelname*/
 int link_nindex;	/* argv[link_nindex] = linkname*/
 int print_wheel;	/* flag: do wheel animation */
 int print_link;		/* flag: do link animation */
-int print_mode;		/*  anim for rt or arced for mged */
+int print_mode;		/* anim for rt or arced for mged */
 int arced_frame;	/* which frame to arced */
 int links_placed;	/* flag: links are initially on the track */
 int axes, cent;		/* flags: alternate axes, centroid specified */
@@ -101,14 +105,15 @@ int steer;		/* flag: vehicle automatically steered */
 int first_frame;	/* integer with which to begin numbering frames */
 fastf_t radius;		/* common radius of all wheels */
 fastf_t init_dist; 	/* initial distance of first link along track */
+char link_cmd[10];	/* default is "rarc" */
+char wheel_cmd[10];	/* default is "lmul" */
+int get_circumf;	/* flag: just return circumference of track */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
-char link_cmd[10];		/* default is "rarc" */
-char wheel_cmd[10];		/* default is "lmul" */
-int get_circumf;	/* flag: just return circumference of track */
 
 
-int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
+int
+get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 {
     int i;
     vect_t temp;
@@ -117,7 +122,7 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
     while (dist < 0.0)
 	dist += tracklen;
     for (i=0;i<NW;i++) {
-	if ( (dist  -= x[i].t.len) < 0 ) {
+	if ((dist -= x[i].t.len) < 0) {
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
@@ -137,24 +142,24 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 }
 
 
-int get_args(int argc, char **argv)
+int
+get_args(int argc, char **argv)
 {
     fastf_t yaw, pch, rll;
-    void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
     int c, i;
     axes = cent = links_placed = print_wheel = print_link = 0;
     get_circumf = 0;
     print_mode = TRACK_ANIM;
     bu_strlcpy(link_cmd, "rarc", sizeof(link_cmd));
     bu_strlcpy(wheel_cmd, "lmul", sizeof(wheel_cmd));
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
 	i=0;
 	switch (c) {
 	    case 'b':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw );
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch );
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll );
+		sscanf(argv[bu_optind+(i++)], "%lf", &yaw);
+		sscanf(argv[bu_optind+(i++)], "%lf", &pch);
+		sscanf(argv[bu_optind+(i++)], "%lf", &rll);
 		bu_optind += 3;
 		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
@@ -225,7 +230,9 @@ int get_args(int argc, char **argv)
 }
 
 
-int track_prep(void)/*run once at the beginning to establish important track info*/
+/* run once at the beginning to establish important track info */
+int
+track_prep(void)
 {
     int i;
     fastf_t phi, costheta, link_angle, arc_angle;
@@ -239,7 +246,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 	/*calculate end angle of previous wheel - atan2(y, x)*/
 	phi = atan2(x[i].s.dir[2], x[i].s.dir[0]);/*absolute angle of slope*/
 	costheta = (x[PREV(i)].w.rad - x[i].w.rad)/x[i].s.len;/*cosine of special angle*/
-	x[PREV(i)].w.ang1 = phi +  acos(costheta);
+	x[PREV(i)].w.ang1 = phi + acos(costheta);
 	while (x[PREV(i)].w.ang1 < 0.0)
 	    x[PREV(i)].w.ang1 += 2.0*M_PI;
 	x[i].w.ang0 = x[PREV(i)].w.ang1;
@@ -255,8 +262,7 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 	    x[i].w.ang0 = 0.5*(x[i].w.ang0 + x[i].w.ang1);
 	    x[i].w.ang1 = x[i].w.ang0;
 	    x[i].w.arc = 0.0;
-	}
-	else {
+	} else {
 	    /* convex - angles are already correct */
 	    x[i].w.arc = arc_angle;
 	}
@@ -323,7 +329,7 @@ main(int argc, char *argv[])
 	return -1;
     }
 
-    if (axes || cent ) {
+    if (axes || cent) {
 	/* vehicle has own reference frame */
 	anim_add_trans(m_axes, centroid, zero);
 	anim_add_trans(m_rev_axes, zero, rcentroid);
@@ -398,28 +404,24 @@ main(int argc, char *argv[])
 	    scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
-	}
-	else {
+	} else {
 	    /* analyze positions for steering */
 	    /*get useful direction unit vectors*/
 	    if (frame == first_frame) {
 		/* first frame*/
 		VSUBUNIT(dir, p3, p2);
 		VMOVE(dir2, dir);
-	    }
-	    else if (val < 3) {
+	    } else if (val < 3) {
 		/*last frame*/
 		VSUBUNIT(dir, p2, p1);
 		VMOVE(dir2, dir);
-	    }
-	    else if (frame > first_frame) {
+	    } else if (frame > first_frame) {
 		/*normal*/
 		VSUBUNIT(dir, p3, p1);
 		VSUBUNIT(dir2, p2, p1);/*needed for vertical case*/
-	    }
-	    else go = 0;/*first time through loop;no p2*/
+	    } else go = 0;/*first time through loop;no p2*/
 
-			/*create matrix which would move vehicle*/
+	    /*create matrix which would move vehicle*/
 	    anim_dir2mat(mat_v, dir, dir2);
 	    anim_add_trans(mat_v, p2, rcentroid);
 	}
@@ -450,8 +452,7 @@ main(int argc, char *argv[])
 			/* link moved from vehicle coords */
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);
-		    }
-		    else if (axes || cent) {
+		    } else if (axes || cent) {
 			/* link moved to vehicle coords */
 			MAT_MOVE(mat_x, wmat);
 			bn_mat_mul(wmat, m_axes, mat_x);

@@ -20,17 +20,22 @@
  */
 /** @file anim_orient.c
  *
- *	Convert between different orientation formats. The formats are:
- *  quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles,
- *  pre-multiplication rotation matrices, and transposed matrices (inverses).
- * 	By default, the information is assumed to represent a transformation
- *  which should be an object which initially faces the x-axis, with the
- *  z-axis going up. Alternatively, the information can be interpreted as
- *  transformations which should be applied to an object initially facing the
- *  negative z-axis, with the y-axis going up.
- *  	The conversion is done by converting each input form to a matrix,
- *  and then converting that matrix to the desired output form.
- *	Angles may be specified in radians or degrees.
+ * Convert between different orientation formats. The formats are:
+ * quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles,
+ * pre-multiplication rotation matrices, and transposed matrices
+ * (inverses).
+ *
+ * By default, the information is assumed to represent a
+ * transformation which should be an object which initially faces the
+ * x-axis, with the z-axis going up. Alternatively, the information
+ * can be interpreted as transformations which should be applied to an
+ * object initially facing the negative z-axis, with the y-axis going
+ * up.
+ *
+ * The conversion is done by converting each input form to a matrix,
+ * and then converting that matrix to the desired output form.
+ *
+ * Angles may be specified in radians or degrees.
  *
  */
 
@@ -46,18 +51,18 @@
 #include "vmath.h"
 
 
-#define YPR		0
-#define XYZ		1
-#define AET		2
-#define QUAT		3
-#define MAT		4
+#define YPR 0
+#define XYZ 1
+#define AET 2
+#define QUAT 3
+#define MAT 4
 
-#define DEGREES		0
-#define RADIANS		1
+#define DEGREES 0
+#define RADIANS 1
 
-#define ANIM_NORMAL          0
-#define ANIM_ERROR1          1
-#define ANIM_ERROR2          2
+#define ANIM_NORMAL 0
+#define ANIM_ERROR1 1
+#define ANIM_ERROR2 2
 
 
 int upright;
@@ -65,7 +70,8 @@ int input_mode, output_mode, length, input_units, output_units;
 int input_perm, output_perm, input_inv, output_inv;
 
 
-int parse_args(int argc, char **argv)
+int
+parse_args(int argc, char **argv)
 {
     int c;
     char *cp;
@@ -85,7 +91,7 @@ int parse_args(int argc, char **argv)
     if (argc > 2) {
 	/*read output mode */
 	cp = argv[2];
-	while ( (c=*cp++) ) {
+	while ((c=*cp++)) {
 	    switch (c) {
 		case 'q':
 		    output_mode = QUAT;
@@ -123,7 +129,7 @@ int parse_args(int argc, char **argv)
     if (argc > 1) {
 	/*read input mode */
 	cp = argv[1];
-	while ( (c=*cp++) ) {
+	while ((c=*cp++)) {
 	    switch (c) {
 		case 'q':
 		    input_mode = QUAT;
@@ -185,7 +191,7 @@ main(int argc, char *argv[])
 	    case AET:
 		num_read = scanf("%lf %lf %lf", angle, angle+1, angle+2);
 		/* convert to radians if in degrees */
-		if (input_units==DEGREES)  {
+		if (input_units==DEGREES) {
 		    VSCALE(angle, angle, DEG2RAD);
 		}
 		break;
