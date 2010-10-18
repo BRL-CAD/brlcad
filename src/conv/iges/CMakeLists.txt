@@ -6,9 +6,10 @@ include_directories(
 )
 
 IF(MSVC)
-add_definitions(
-    -DON_DLL_IMPORTS
-)
+	SET(WIN32LIBS ws2_32.lib Rpcrt4.lib)
+	add_definitions(
+		-DON_DLL_IMPORTS
+		)
 ENDIF(MSVC)
 
 add_executable(iges
@@ -17,7 +18,7 @@ add_executable(iges
     n_iges.cpp
     n_main.cpp
 )
-target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY})
+target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS})
 #INSTALL(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(iges-g

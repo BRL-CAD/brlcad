@@ -235,6 +235,7 @@ include_directories(
 )
 
 if(MSVC)
+	SET(WIN32LIBS ws2_32.lib Rpcrt4.lib)
    add_definitions(
        -DON_DLL_IMPORTS
 		 -DDB5_EXPORT_DLL
@@ -242,7 +243,7 @@ if(MSVC)
    )
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn libbu ${OPENNURBS_LIBRARY} ${REGEX_LIBRARY} ${ZLIB_LIBRARY}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn libbu ${OPENNURBS_LIBRARY} ${REGEX_LIBRARY} ${ZLIB_LIBRARY} ${WIN32LIBS}")
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
