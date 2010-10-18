@@ -11,7 +11,7 @@ include_directories(
 IF(MSVC)
 	add_definitions(
 	-D_CONSOLE
-	-D_IFWGL
+	-DIF_WGL
 	)
 ENDIF(MSVC)
 
