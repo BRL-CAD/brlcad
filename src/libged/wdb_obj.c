@@ -5905,8 +5905,6 @@ wdb_push_cmd(struct rt_wdb *wdbp,
     int c;
     int old_debug;
     int push_error;
-    extern int bu_optind;
-    extern char *bu_optarg;
 
     WDB_TCL_CHECK_READ_ONLY;
 

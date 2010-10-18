@@ -71,9 +71,6 @@ struct chan {
     int c_offset;	/* source offset (NEXT) */
 };
 
-extern int bu_optind;
-extern char *bu_optarg;
-
 int verbose = 1;
 
 int o_len;		/* length of all output arrays */
@@ -1225,7 +1222,7 @@ main(int argc, char *argv[])
     if (verbose) bu_log("writing output\n");
     output();
 
-    bu_exit(0, NULL);
+    return 0;
 }
 
 

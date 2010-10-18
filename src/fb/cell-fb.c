@@ -27,10 +27,10 @@
 #include <time.h>
 #include <math.h>
 
-#include "vmath.h"
-#include "raytrace.h"
 #include "bu.h"
 #include "fb.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 
 /* Macros without arguments */
@@ -697,8 +697,6 @@ static struct locrec *mk_locrec (fastf_t h, fastf_t v)
 static bool pars_Argv (int argc, char **argv)
 {
     int	c;
-    extern int		bu_optind;
-    extern char		*bu_optarg;
 
     /* Parse options. */
     while ((c = bu_getopt(argc, argv, OPT_STRING)) != EOF)

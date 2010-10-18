@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "fb.h"
 
 /* FIXME */
@@ -1940,7 +1941,6 @@ HIDDEN int
 pars_Argv(int argc, char **argv)
 {
     int c;
-    extern int bu_optind;
 
     /* Parse options. */
     while ( (c = bu_getopt( argc, argv, "hp" )) != EOF )

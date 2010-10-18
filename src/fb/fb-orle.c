@@ -158,8 +158,6 @@ static int
 parsArgv(int argc, char **argv)
 {
     int	c;
-    extern int	bu_optind;
-    extern char	*bu_optarg;
 
     /* Parse options.						*/
     while ( (c = bu_getopt( argc, argv, "CF:Scdhl:p:vw" )) != EOF )

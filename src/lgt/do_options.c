@@ -31,9 +31,10 @@
 #include <math.h>
 #include <signal.h>
 
+#include "bu.h"
+#include "fb.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
 
 #include "./hmenu.h"
 #include "./lgt.h"
@@ -3648,8 +3649,6 @@ int
 pars_Argv(int argc, char **argv)
 {
     int	c;
-    extern int	bu_optind;
-    extern char	*bu_optarg;
     prog_id = argv[0];
 
     /* Initialize terminal I/O. */
