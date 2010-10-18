@@ -387,5 +387,5 @@ include_directories(
 )
 
 add_executable(step-g ${stepg_SOURCES})
-target_link_libraries(step-g libbu libwdb librt steputils stepcore stepdai stepeditor ${OPENNURBS_LIBRARY})
+target_link_libraries(step-g librt libwdb steputils stepcore stepdai stepeditor libbu ${OPENNURBS_LIBRARY})
 INSTALL(TARGETS step-g RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

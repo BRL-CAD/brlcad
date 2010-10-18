@@ -17,7 +17,7 @@ add_executable(iges
     n_iges.cpp
     n_main.cpp
 )
-target_link_libraries(iges libbu librt libwdb ${OPENNURBS_LIBRARY})
+target_link_libraries(iges librt libwdb libbu ${OPENNURBS_LIBRARY})
 #INSTALL(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(iges-g
@@ -93,14 +93,14 @@ add_executable(iges-g
     usage.c
     wedge.c
 )
-target_link_libraries(iges-g libbu libbn librt libwdb)
+target_link_libraries(iges-g librt libwdb libbn libbu)
 INSTALL(TARGETS iges-g RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 add_executable(g-iges
     g-iges.c
     iges.c
 )
-target_link_libraries(g-iges libbu librt)
+target_link_libraries(g-iges librt libbu)
 INSTALL(TARGETS g-iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 SET(iges_MANS
