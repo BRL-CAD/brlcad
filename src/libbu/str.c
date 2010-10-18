@@ -59,7 +59,7 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%lu > %lu)\n", label, (unsigned long)dstsize, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (srcsize >= size - dstsize) {
-	if (bu_debug) {
+	if (UNLIKELY(bu_debug)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max concatenating %lu chars (started with %lu)\n", label, (unsigned long)size-1, (unsigned long)srcsize, (unsigned long)dstsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -104,7 +104,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 
     srcsize = strlen(src);
 
-    if (bu_debug) {
+    if (UNLIKELY(bu_debug)) {
 	if (srcsize >= size) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max copying %lu chars\n", label, (unsigned long)size-1, (unsigned long)srcsize);
@@ -148,7 +148,7 @@ bu_strdupm(register const char *cp, const char *label)
     len = strlen(cp)+1;
     base = bu_malloc(len, label);
 
-    if (bu_debug&BU_DEBUG_MEM_LOG) {
+    if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "%p strdup%llu \"%s\"\n", (void *)base, (unsigned long long)len, cp);
 	bu_semaphore_release(BU_SEM_SYSCALL);

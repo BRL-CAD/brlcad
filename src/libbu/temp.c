@@ -206,7 +206,7 @@ bu_temp_file(char *filepath, size_t len)
 	}
     }
 
-    if (!dir) {
+    if (UNLIKELY(!dir)) {
 	/* give up */
 	bu_log("Unable to find a suitable temp directory\n");
 	bu_log(_TF_FAIL);
@@ -217,24 +217,22 @@ bu_temp_file(char *filepath, size_t len)
 
     fd = mkstemp(tempfile);
 
-    if (fd == -1) {
+    if (UNLIKELY(fd == -1)) {
 	perror("mkstemp");
 	bu_log(_TF_FAIL);
 	return NULL;
     }
 
     if (filepath) {
-	if (len < strlen(tempfile)) {
-#if 0
+	if (UNLIKELY(len < strlen(tempfile))) {
 	    bu_log("WARNING: bu_temp_file filepath buffer size is insufficient (%d < %d)\n", len, strlen(tempfile));
-#endif
 	} else {
 	    snprintf(filepath, len, "%s", tempfile);
 	}
     }
 
     fp = fdopen(fd, "wb+");
-    if (fp == NULL) {
+    if (UNLIKELY(fp == NULL)) {
 	perror("fdopen");
 	bu_log(_TF_FAIL);
 	close(fd);

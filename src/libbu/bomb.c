@@ -106,7 +106,7 @@ bu_bomb(const char *str)
      */
     {
 	fd = open("/dev/tty", 1);
-	if (fd > 0) {
+	if (LIKELY(fd > 0)) {
 	    if (str && (strlen(str) > 0)) {
 		int ret;
 		ret = write(fd, str, strlen(str));
@@ -127,7 +127,7 @@ bu_bomb(const char *str)
 	 */
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	snprintf(tracefile, 512, "%s-%d-bomb.log", bu_getprogname(), bu_process_id());
-	if (!bu_file_exists(tracefile)) {
+	if (LIKELY(!bu_file_exists(tracefile))) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fputs("Saving stack trace to ", stderr);
 	    fputs(tracefile, stderr);
@@ -145,7 +145,7 @@ bu_bomb(const char *str)
     bu_kill_parallel();
 
     /* try to save a core dump */
-    if (bu_debug & BU_DEBUG_COREDUMP) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_COREDUMP)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fputs("Causing intentional core dump due to debug flag\n", stdout);
 	fputs("Causing intentional core dump due to debug flag\n", stderr);
@@ -154,7 +154,7 @@ bu_bomb(const char *str)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	fd = open("/dev/tty", 1);
-	if (fd > 0) {
+	if (LIKELY(fd > 0)) {
 	    int ret;
 	    ret = write(fd, "Causing intentional core dump due to debug flag\n", 48);
 	    close(fd);
@@ -169,7 +169,7 @@ bu_bomb(const char *str)
 void
 bu_exit(int status, const char *fmt, ...)
 {
-    if (fmt && strlen(fmt) > 0) {
+    if (LIKELY(fmt && strlen(fmt) > 0)) {
 	va_list ap;
 	struct bu_vls message;
 

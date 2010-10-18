@@ -59,9 +59,9 @@ image_flip(unsigned char *buf, int width, int height)
 
     buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
     for (i=0 ; i<height ; i++)
-	memcpy (buf2+i*pitch, buf+(height-i)*pitch, pitch);
-    memcpy (buf, buf2, height * pitch);
-    bu_free (buf2, "image flip");
+	memcpy(buf2+i*pitch, buf+(height-i)*pitch, pitch);
+    memcpy(buf, buf2, height * pitch);
+    bu_free(buf2, "image flip");
     return 0;
 }
 
@@ -118,31 +118,31 @@ png_save(int fd, unsigned char *rgb, int width, int height)
     FILE *fh;
 
     fh = fdopen(fd, "wb");
-    if (fh==NULL) {
+    if (UNLIKELY(fh==NULL)) {
 	perror("fdopen");
 	bu_log("ERROR: png_save failed to get a FILE pointer\n");
 	return 0;
     }
 
-    png_ptr = png_create_write_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (png_ptr == NULL)
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (UNLIKELY(png_ptr == NULL))
 	return 0;
 
-    info_ptr = png_create_info_struct (png_ptr);
-    if (info_ptr == NULL || setjmp (png_jmpbuf (png_ptr))) {
-	png_destroy_read_struct (&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
+    info_ptr = png_create_info_struct(png_ptr);
+    if (info_ptr == NULL || setjmp(png_jmpbuf(png_ptr))) {
+	png_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
 	bu_log("ERROR: Unable to create png header\n");
 	return 0;
     }
 
-    png_init_io (png_ptr, fh);
-    png_set_IHDR (png_ptr, info_ptr, (unsigned)width, (unsigned)height, 8, PNG_COLOR_TYPE_RGB,
+    png_init_io(png_ptr, fh);
+    png_set_IHDR(png_ptr, info_ptr, (unsigned)width, (unsigned)height, 8, PNG_COLOR_TYPE_RGB,
 		  PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
 		  PNG_FILTER_TYPE_BASE);
-    png_write_info (png_ptr, info_ptr);
+    png_write_info(png_ptr, info_ptr);
     for (i = height-1; i >= 0; --i)
-	png_write_row (png_ptr, (png_bytep) (rgb + width*3*i));
-    png_write_end (png_ptr, info_ptr);
+	png_write_row(png_ptr, (png_bytep) (rgb + width*3*i));
+    png_write_end(png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fh);
@@ -155,13 +155,13 @@ bmp_save(int fd, unsigned char *rgb, int width, int height)
     FILE *fh;
 
     fh = fdopen(fd, "wb");
-    if (fh==NULL) {
+    if (UNLIKELY(fh==NULL)) {
 	perror("fdopen");
 	bu_log("ERROR: bmp_save failed to get a FILE pointer\n");
 	return 0;
     }
 
-    if (!rgb || width<0 || height<0) {
+    if (UNLIKELY(!rgb || width<0 || height<0)) {
 	bu_log("ERROR: invalid image specification\n");
 	return 0;
     }
@@ -245,7 +245,8 @@ bu_image_save(unsigned char *data, int width, int height, int depth, char *filen
 	return -1;
 
     for (i=0;i<height;++i) {
-	if (bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth)) == -1) {
+	int ret = bu_image_save_writeline(bif, i, (unsigned char*)(data+i*width*depth));
+	if (UNLIKELY(ret == -1)) {
 	    bu_log("Unexpected error saving image scanline\n");
 	}
     }
@@ -272,7 +273,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     /* if we want the ability to "continue" a stopped output, this would be
      * where to check for an existing "partial" file. */
     bif->fd = open(bif->filename, O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
-    if (bif->fd < 0) {
+    if (UNLIKELY(bif->fd < 0)) {
 	perror("open");
 	free(bif);
 	bu_log("ERROR: opening output file \"%s\" for writing\n", bif->filename);
@@ -288,7 +289,7 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
 int
 bu_image_save_writeline(struct bu_image_file *bif, int y, unsigned char *data)
 {
-    if (bif==NULL) {
+    if (UNLIKELY(bif==NULL)) {
 	bu_log("ERROR: trying to write a line with a null bif\n");
 	return -1;
     }

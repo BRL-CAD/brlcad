@@ -34,7 +34,7 @@ bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv, s
     struct bu_cmdtab *ctp = NULL;
 
     /* sanity */
-    if (cmd_index >= argc) {
+    if (UNLIKELY(cmd_index >= argc)) {
 	Tcl_AppendResult(interp, "missing command; must be one of:", (char *)NULL);
 	goto missing_cmd;
     }
