@@ -12,10 +12,10 @@ SET(beset_SRCS
 add_executable(beset ${beset_SRCS})
 target_link_libraries(beset libwdb)
 
-BRLCAD_ADDEXEC(g_diff g_diff.c "librt libged libtclcad")
+BRLCAD_ADDEXEC(g_diff g_diff.c "libtclcad libged librt")
 BRLCAD_ADDEXEC(g_lint g_lint.c librt)
-BRLCAD_ADDEXEC(g_qa g_qa.c "librt libged")
-BRLCAD_ADDEXEC(remapid remapid.c "libbu librt")
+BRLCAD_ADDEXEC(g_qa g_qa.c "libged librt")
+BRLCAD_ADDEXEC(remapid remapid.c "librt libbu")
 
 add_executable(g_transfer g_transfer.c)
 target_link_libraries(g_transfer librt libpkg)

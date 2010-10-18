@@ -7,5 +7,5 @@ include_directories(
     ${TCL_INCLUDE_PATH}
 )
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "libbu librt")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt libbu")
 SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 19.0.1 SOVERSION 19)

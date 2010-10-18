@@ -19,6 +19,6 @@ SET(fbed_SOURCES
   try.c
 )
 
-BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libvfont libfb libtermio libcursor ${TERMLIB_LIBRARY}")
+BRLCAD_ADDEXEC(fbed "${fbed_SOURCES}" "libfb libvfont libtermio libcursor ${TERMLIB_LIBRARY}")
 
 install(FILES fbed.1 DESTINATION ${MAN_DIR}/man1)
