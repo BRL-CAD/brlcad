@@ -118,13 +118,15 @@ set(rtxray_SRCS
 
 set(LIBREMRT_SOURCES
         do.c 
-        heatgraph.c 
         opt.c 
         scanline.c 
         sh_tcl.c 
         view.c 
         worker.c
 )
+IF(NOT MSVC)
+    SET(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
+ENDIF(NOT MSVC)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
