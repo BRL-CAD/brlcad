@@ -134,7 +134,6 @@ BRLCAD_ADDEXEC(plstat plstat.c libbu)
 BRLCAD_ADDEXEC(png-bw png-bw.c "libbn libbu")
 BRLCAD_ADDEXEC(png-pix png-pix.c "libbn libbu")
 BRLCAD_ADDEXEC(png_info png_info.c "libbn libbu")
-BRLCAD_ADDEXEC(query query.c libbu)
 BRLCAD_ADDEXEC(rle-pix rle-pix.c "libbu libsysv ${UTAHRLE_LIBRARY}")
 BRLCAD_ADDEXEC(sun-pix sun-pix.c libbu)
 BRLCAD_ADDEXEC(terrain terrain.c "libbn libbu")
@@ -240,7 +239,6 @@ set(util_MANS
   png-bw.1 
   png-pix.1 
   png_info.1 
-  query.1 
   random.1 
   rle-pix.1 
   sun-pix.1 
