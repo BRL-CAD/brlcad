@@ -113,9 +113,6 @@ handle_i_opt(const char *arg, long *skip1, long *skip2)
 int
 main(int argc, char *argv[])
 {
-    extern char *optarg;
-    extern int optind;
-
     FILE *f1 = NULL;
     FILE *f2 = NULL;
 
