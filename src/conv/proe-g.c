@@ -37,14 +37,13 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, optopt;
 
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */

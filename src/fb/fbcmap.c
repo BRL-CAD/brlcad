@@ -234,7 +234,6 @@ int
 pars_Argv(int argc, char **argv)
 {
     int	c;
-    extern int	bu_optind;
 
     while ( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {
 	switch ( c ) {

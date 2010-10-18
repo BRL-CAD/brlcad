@@ -39,217 +39,222 @@
 #include "raytrace.h"
 
 
-point_t	eye_model;		/* model-space location of eye */
-mat_t	Viewrotscale;
-fastf_t	viewsize;
-int	curframe;		/* current frame number */
+point_t eye_model;		/* model-space location of eye */
+mat_t Viewrotscale;
+fastf_t viewsize;
+int curframe;		/* current frame number */
 
 /*
- *			C M _ S T A R T
+ * C M _ S T A R T
  *
- *  Process "start" command in new format input stream
+ * Process "start" command in new format input stream
  */
 int
-cm_start( argc, argv )
-    int	argc;
-    char	**argv;
+cm_start(int argc, char **argv)
 {
+    if (argc < 2)
+	return -1;
+
     curframe = atoi(argv[1]);
     return 0;
 }
 
+
 int
-cm_vsize( argc, argv )
-    int	argc;
-    char	**argv;
+cm_vsize(int argc, char **argv)
 {
-    viewsize = atof( argv[1] );
+    if (argc < 2)
+	return -1;
+
+    viewsize = atof(argv[1]);
     return 0;
 }
 
+
 int
-cm_eyept( argc, argv )
-    int	argc;
-    char	**argv;
+cm_eyept(int argc, char **argv)
 {
     int i;
 
-    for ( i=0; i<3; i++ )
-	eye_model[i] = atof( argv[i+1] );
+    if (argc < 3)
+	return -1;
+
+    for (i=0; i<3; i++) {
+	eye_model[i] = atof(argv[i+1]);
+    }
     return 0;
 }
 
-int
-cm_lookat_pt( argc, argv )
-    int	argc;
-    char	**argv;
-{
-    point_t	pt;
-    vect_t	dir;
-    int	yflip = 0;
 
-    if ( argc < 4 )
+int
+cm_lookat_pt(int argc, char **argv)
+{
+    point_t pt;
+    vect_t dir;
+    int yflip = 0;
+
+    if (argc < 4)
 	return -1;
+
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
-    if ( argc > 4 )
+    if (argc > 4)
 	yflip = atoi(argv[4]);
 
     /*
-     *  eye_pt must have been specified before here (for now)
+     * eye_pt must have been specified before here (for now)
      */
-    VSUB2( dir, pt, eye_model );
-    VUNITIZE( dir );
-    bn_mat_lookat( Viewrotscale, dir, yflip );
+    VSUB2(dir, pt, eye_model);
+    VUNITIZE(dir);
+    bn_mat_lookat(Viewrotscale, dir, yflip);
     return 0;
 }
 
+
 int
-cm_vrot( argc, argv )
-    int	argc;
-    char	**argv;
+cm_vrot(int argc, char **argv)
 {
     int i;
 
-    for ( i=0; i<16; i++ )
-	Viewrotscale[i] = atof( argv[i+1] );
+    if (argc < 17) {
+	return -1;
+    }
+
+    for (i=0; i<16; i++) {
+	Viewrotscale[i] = atof(argv[i+1]);
+    }
     return 0;
 }
+
 
 int
-cm_orientation( argc, argv )
-    int	argc;
-    char	**argv;
+cm_orientation(int argc, char **argv)
 {
-    int	i;
-    quat_t		quat;
+    int i;
+    quat_t quat;
 
-    for ( i=0; i<4; i++ )
-	quat[i] = atof( argv[i+1] );
-    quat_quat2mat( Viewrotscale, quat );
+    if (argc < 4)
+	return -1;
+
+    for (i=0; i<4; i++)
+	quat[i] = atof(argv[i+1]);
+    quat_quat2mat(Viewrotscale, quat);
     return 0;
 }
+
 
 /*
- *			C M _ E N D
+ * C M _ E N D
  *
- *  The output occurs here.
+ * The output occurs here.
  *
- *  framenumber, viewsize, eye x y z, orientation x y z w
+ * framenumber, viewsize, eye x y z, orientation x y z w
  */
 int
-cm_end( argc, argv )
-    int	argc;
-    char	**argv;
+cm_end(int UNUSED(argc), char **UNUSED(argv))
 {
-    quat_t	orient;
+    quat_t orient;
 
     /* If no matrix or az/el specified yet, use params from cmd line */
-    if ( Viewrotscale[15] <= 0.0 )
+    if (Viewrotscale[15] <= 0.0)
 	bu_exit(EXIT_FAILURE, "cm_end:  matrix not specified\n");
 
-    quat_mat2quat( orient, Viewrotscale );
+    quat_mat2quat(orient, Viewrotscale);
 
     /* Output information about this frame */
     printf("%d %.15e %.15e %.15e %.15e %.15e %.15e %.15e %.15e\n",
 	   curframe,
 	   viewsize,
 	   V3ARGS(eye_model),
-	   V4ARGS(orient) );
+	   V4ARGS(orient));
 
     return 0;
 }
 
+
 int
-cm_tree( argc, argv )
-    int		argc;
-    const char	**argv;
+cm_tree(int UNUSED(argc), const char **UNUSED(argv))
 {
     /* No-op */
     return 0;
 }
 
+
 int
-cm_multiview( argc, argv )
-    int	argc;
-    char	**argv;
+cm_multiview(int UNUSED(argc), char **UNUSED(argv))
 {
     bu_exit(EXIT_FAILURE, "cm_multiview: not supported\n");
     return 0;	/* for the compilers */
 }
 
+
 /*
- *			C M _ A N I M
+ * C M _ A N I M
  *
- *  Experimental animation code
+ * Experimental animation code
  *
- *  Usage:  anim <path> <type> args
+ * Usage:  anim <path> <type> args
  */
 int
-cm_anim( argc, argv )
-    int	argc;
-    char	**argv;
+cm_anim(int UNUSED(argc), char **UNUSED(argv))
 {
     /* No-op */
     return 0;
 }
 
+
 /*
- *			C M _ C L E A N
+ * C M _ C L E A N
  *
- *  Clean out results of last rt_prep(), and start anew.
+ * Clean out results of last rt_prep(), and start anew.
  */
 int
-cm_clean( argc, argv )
-    int	argc;
-    char	**argv;
+cm_clean(int UNUSED(argc), char **UNUSED(argv))
 {
     /* No-op */
     return 0;
 }
 
+
 /*
- *			C M _ S E T
+ * C M _ S E T
  *
- *  Allow variable values to be set or examined.
+ * Allow variable values to be set or examined.
  */
 int
-cm_set( argc, argv )
-    int	argc;
-    char	**argv;
+cm_set(int UNUSED(argc), char **UNUSED(argv))
 {
     /* No-op */
     return 0;
 }
 
+
 /*
- *			C M _ A E
+ * C M _ A E
  */
 int
-cm_ae( argc, argv )
-    int	argc;
-    char	**argv;
+cm_ae(int UNUSED(argc), char **UNUSED(argv))
 {
     bu_exit(EXIT_FAILURE, "cm_ae: Unable to compute model min/max RPP\n");
     return 0;
 }
 
+
 /*
- *			C M _ O P T
+ * C M _ O P T
  */
 int
-cm_opt( argc, argv )
-    int	argc;
-    char	**argv;
+cm_opt(int UNUSED(argc), char **UNUSED(argv))
 {
     /* No-op */
     return 0;
 }
 
+
 /*
- *  Command table for RT control script language
- *  Copied verbatim from ../rt/do.c
+ * Command table for RT control script language
+ * Copied verbatim from ../rt/do.c
  */
 
 struct command_tab rt_cmdtab[] = {
@@ -285,19 +290,18 @@ struct command_tab rt_cmdtab[] = {
      0,		0, 0}	/* END */
 };
 
+
 /*
- *			M A I N
+ * M A I N
  */
 int
-main( argc, argv )
-    int	argc;
-    char	**argv;
+main(int argc, char **argv)
 {
-    char	*buf;
-    int	ret;
+    char *buf;
+    int ret;
 
-    if ( argc != 1 || isatty(fileno(stdin)) )  {
-	fprintf(stderr, "Usage: script-tab < script > table\n");
+    if (argc != 1 || isatty(fileno(stdin))) {
+	fprintf(stderr, "Usage: %s < script > table\n", argv[0]);
 	return 1;
     }
 
@@ -307,20 +311,21 @@ main( argc, argv )
      * All the work happens in the functions
      * called by rt_do_cmd().
      */
-    while ( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
-#if		0
-	fprintf(stderr, "cmd: %s\n", buf );
+    while ((buf = rt_read_cmd(stdin)) != (char *)0) {
+#if 0
+	fprintf(stderr, "cmd: %s\n", buf);
 #endif
-	ret = rt_do_cmd( NULL, buf, rt_cmdtab );
-	if ( ret < 0 )  {
+	ret = rt_do_cmd(NULL, buf, rt_cmdtab);
+	if (ret < 0) {
 	    bu_log("Command failure on '%s'\n", buf);
-	    bu_free( buf, "cmd buf" );
+	    bu_free(buf, "cmd buf");
 	    break;
 	}
-	bu_free( buf, "cmd buf" );
+	bu_free(buf, "cmd buf");
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

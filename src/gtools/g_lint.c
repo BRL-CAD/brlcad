@@ -828,9 +828,6 @@ main (int argc, char **argv)
     vect_t unit_H;
     vect_t unit_V;
 
-    extern int bu_optind;	/* For use with getopt */
-    extern char *bu_optarg;
-
     bu_log("%s\n", rt_version());
 
     control.glc_magic = G_LINT_CTRL_MAGIC;

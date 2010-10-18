@@ -1151,7 +1151,6 @@ ipu_set_palette(dsp, cmap)
 #endif /* __sgi__ */
 
 char *options = "P:p:Q:q:acd:g:hmn:s:t:vw:zAC:M:R:D:N:S:W:X:Y:U:V#:";
-extern char *bu_optarg;
 
 char *progname = "(noname)";
 char scsi_device[1024] = "/dev/scsi/sc0d6l3";

@@ -30,6 +30,7 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "bu.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -131,8 +132,6 @@ main( int argc, char *argv[] )
     struct application *ap;
     int ret;
     int c;
-    extern char *bu_optarg;
-    extern int bu_optind, bu_opterr, optopt;
     struct xray aray;
     int verbose = 0;
     char *name;
@@ -154,8 +153,6 @@ main( int argc, char *argv[] )
     point_t mdl_max;
     struct bu_vlb *vlb;
     
-//    bu_debug = BU_DEBUG_MEM_CHECK;
-
     /* Things like bu_malloc() must have these initialized for use with parallel processing */
     bu_semaphore_init( RT_SEM_LAST );
 

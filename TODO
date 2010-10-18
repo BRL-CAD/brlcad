@@ -40,6 +40,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* bu_cv_optimize() should be using bu_byteorder().
+
 * render annotated images to the OpenDocument format.  this is
   particularly useful for rtedge-style renderings with object
   annotations where we can leverage layout components and scalable
