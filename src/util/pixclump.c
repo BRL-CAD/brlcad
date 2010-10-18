@@ -174,9 +174,6 @@ main (int argc, char **argv)
     int best_diff;	/* error in best match */
     int this_diff;	/* pixel-color_tbl difference */
 
-    extern int bu_optind;			/* index from bu_getopt(3C) */
-    extern char *bu_optarg;		/* argument from bu_getopt(3C) */
-
     /*
      * Initialize the color table
      */

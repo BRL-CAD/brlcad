@@ -179,13 +179,13 @@ bu_nice_set(int newnice)
     setpriority(PRIO_PROCESS, 0, newnice);
     npri = getpriority(PRIO_PROCESS, 0);
 
-    if (bu_debug) {
+    if (UNLIKELY(bu_debug)) {
 	bu_log("bu_nice_set() Priority changed from %d to %d\n", opri, npri);
     }
 
 #else /* !HAVE_SETPRIORITY */
     /* no known means to change the nice value */
-    if (bu_debug) {
+    if (UNLIKELY(bu_debug)) {
 	bu_log("bu_nice_set(%d) Priority NOT changed\n", newnice);
     }
 #endif  /* _WIN32 */
@@ -199,11 +199,12 @@ bu_cpulimit_get(void)
     long old;			/* 64-bit clock counts */
     extern long limit();
 
-    if ((old = limit(C_PROC, 0, L_CPU, -1)) < 0) {
+    old = limit(C_PROC, 0, L_CPU, -1);
+    if (UNLIKELY(old < 0)) {
 	perror("bu_cpulimit_get(): CPU limit(get)");
     }
     if (old <= 0)
-	return 999999;		/* virtually unlimited */
+	return INT_MAX;		/* virtually unlimited */
     return ((old + HZ - 1) / HZ);
 #else
     return -1;
@@ -222,8 +223,8 @@ bu_cpulimit_set(int sec)
 
     old = bu_cpulimit_get();
     new = old + sec;
-    if (new <= 0 || new > 999999)
-	new = 999999;	/* no limit, for practical purposes */
+    if (new <= 0 || new >= INT_MAX)
+	new = INT_MAX;	/* no limit, for practical purposes */
     newtick = new * HZ;
     if (limit(C_PROC, 0, L_CPU, newtick) < 0) {
 	perror("bu_cpulimit_set: CPU limit(set)");
@@ -434,12 +435,12 @@ bu_avail_cpus(void)
 
 #endif /* PARALLEL */
 
-    if (bu_debug & BU_DEBUG_PARALLEL) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	/* do not use bu_log() here, this can get called before semaphores are initialized */
 	fprintf(stderr, "bu_avail_cpus: counted %d cpus.\n", ncpu);
     }
 
-    if (ncpu > 0) {
+    if (LIKELY(ncpu > 0)) {
 	return ncpu;
     }
 
@@ -697,10 +698,10 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     memset(worker_pid_tbl, 0, MAX_PSW * sizeof(int));
 #  endif
 
-    if (bu_debug & BU_DEBUG_PARALLEL)
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
 
-    if (bu_pid_of_initiating_thread)
+    if (UNLIKELY(bu_pid_of_initiating_thread))
 	bu_bomb("bu_parallel() called from within parallel section\n");
 
     bu_pid_of_initiating_thread = bu_process_id();
@@ -895,7 +896,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    }
 	}
     }
-    if (ftell(stdin) != stdin_pos) {
+    if (UNLIKELY(ftell(stdin) != stdin_pos)) {
 	/*
 	 * Gross SGI bug: when a thread is finished, it returns to the
 	 * stack frame created by sproc(), which just calls exit(0),
@@ -906,13 +907,13 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	 * should be fixed in a later release.  Maybe.
 	 */
 	bu_log("\nWarning:  stdin file pointer has been corrupted by SGI multi-processor bug!\n");
-	if (bu_debug & BU_DEBUG_PARALLEL) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	    bu_log("Original position was x%x, now position is x%x!\n", stdin_pos, ftell(stdin));
 	    bu_pr_FILE("saved stdin", &stdin_save);
 	    bu_pr_FILE("current stdin", stdin);
 	}
 	fseek(stdin, stdin_pos, SEEK_SET);
-	if (ftell(stdin) != stdin_pos) {
+	if (UNLIKELY(ftell(stdin) != stdin_pos)) {
 	    bu_log("WARNING: fseek() did not recover proper position.\n");
 	} else {
 	    bu_log("It was fixed by fseek()\n");
@@ -958,7 +959,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 		   _bu_parallel_interface, &thread, x);
 	    /* Not much to do, lump it */
 	} else {
-	    if (bu_debug & BU_DEBUG_PARALLEL)
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 		bu_log("bu_parallel(): created thread: (thread: 0x%x) (loop:%d) (nthreadc:%d)\n",
 		       thread, x, nthreadc);
 
@@ -967,7 +968,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	}
     }
 
-    if (bu_debug & BU_DEBUG_PARALLEL)
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	for (i = 0; i < nthreadc; i++)
 	    bu_log("bu_parallel(): thread_tbl[%d] = 0x%x\n",
 		   i, thread_tbl[i]);
@@ -980,7 +981,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     thread = 0;
     nthreade = 0;
     for (x = 0; x < nthreadc; x++) {
-	if (bu_debug & BU_DEBUG_PARALLEL)
+	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	    bu_log("bu_parallel(): waiting for thread to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   x, nthreadc, nthreade);
 
@@ -1003,12 +1004,12 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 		   thread);
 	}
 
-	if (bu_debug & BU_DEBUG_PARALLEL)
+	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	    bu_log("bu_parallel(): thread completed: (thread: %d)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   thread, x, nthreadc, nthreade);
     }
 
-    if (bu_debug & BU_DEBUG_PARALLEL)
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
 	       nthreadc, nthreade);
 #  endif	/* SUNOS */
@@ -1034,7 +1035,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 		   (unsigned long int)_bu_parallel_interface, (void *)&thread, x);
 	    /* Not much to do, lump it */
 	} else {
-	    if (bu_debug & BU_DEBUG_PARALLEL) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 		bu_log("bu_parallel(): created thread: (thread: %p) (loop:%d) (nthreadc:%d)\n",
 		       (void*)thread, x, nthreadc);
 	    }
@@ -1045,7 +1046,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     }
 
 
-    if (bu_debug & BU_DEBUG_PARALLEL) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	for (i = 0; i < nthreadc; i++) {
 	    bu_log("bu_parallel(): thread_tbl[%d] = %p\n",
 		   i, (void *)thread_tbl[i]);
@@ -1065,7 +1066,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     for (x = 0; x < nthreadc; x++) {
 	int ret;
 
-	if (bu_debug & BU_DEBUG_PARALLEL)
+	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   (void *)thread_tbl[x], x, nthreadc, nthreade);
 
@@ -1076,12 +1077,12 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;
 
-	if (bu_debug & BU_DEBUG_PARALLEL)
+	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	    bu_log("bu_parallel(): thread completed: (thread: %p)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 		   (void *)thread, x, nthreadc, nthreade);
     }
 
-    if (bu_debug & BU_DEBUG_PARALLEL)
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
 	       nthreadc, nthreade);
 
@@ -1092,16 +1093,16 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
      * systems, if threads core dump, the rest of the gang keeps
      * going, so this can actually happen (sigh).
      */
-    if (_bu_nthreads_finished != _bu_nthreads_started) {
+    if (UNLIKELY(_bu_nthreads_finished != _bu_nthreads_started)) {
 	bu_log("*** ERROR bu_parallel(%d): %d workers did not finish!\n\n",
 	       ncpu, ncpu - _bu_nthreads_finished);
     }
-    if (_bu_nthreads_started != ncpu) {
+    if (UNLIKELY(_bu_nthreads_started != ncpu)) {
 	bu_log("bu_parallel() NOTICE:  only %d workers started, expected %d\n",
 	       _bu_nthreads_started, ncpu);
     }
 
-    if (bu_debug & BU_DEBUG_PARALLEL)
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
 	bu_log("bu_parallel(%d) complete, now serial\n", ncpu);
 
 #  ifdef CHECK_PIDS
@@ -1112,7 +1113,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
      * output may be written into the wrong file.
      */
     x = bu_process_id();
-    if (bu_pid_of_initiating_thread != x) {
+    if (UNLIKELY(bu_pid_of_initiating_thread != x)) {
 	bu_log("WARNING: bu_parallel():  PID of initiating thread changed from %d to %d, open file table may be botched!\n",
 	       bu_pid_of_initiating_thread, x);
     }

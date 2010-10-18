@@ -67,7 +67,7 @@ bu_call_hook(struct bu_hook_list *hlp, genptr_t buf)
     struct bu_hook_list *call_hook;
 
     for (BU_LIST_FOR(call_hook, bu_hook_list, &hlp->l)) {
-	if (!(call_hook->hookfunc)) {
+	if (UNLIKELY(!(call_hook->hookfunc))) {
 	    exit(EXIT_FAILURE);	/* don't call through 0! */
 	}
 	call_hook->hookfunc(call_hook->clientdata, buf);

@@ -248,7 +248,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT(_equation)
 #else
 #  define BU_ASSERT(_equation)	\
-	if (!(_equation)) { \
+	if (UNLIKELY(!(_equation))) { \
 		bu_log("BU_ASSERT(" #_equation ") failed, file %s, line %d\n", \
 			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT failure\n"); \
@@ -259,7 +259,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=%p, rhs=%p, file %s, line %d\n", \
 			(void *)(_lhs), (void *)(_rhs), \
 			__FILE__, __LINE__); \
@@ -272,7 +272,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_LONG(" #_lhs #_relation #_rhs ") failed, lhs=%ld, rhs=%ld, file %s, line %d\n", \
 			(long)(_lhs), (long)(_rhs), \
 			__FILE__, __LINE__); \
@@ -285,7 +285,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
 			(size_t)(_lhs), (size_t)(_rhs), \
 			__FILE__, __LINE__); \
@@ -298,7 +298,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
-	if (!((_lhs) _relation (_rhs))) { \
+	if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
 		bu_log("BU_ASSERT_DOUBLE(" #_lhs #_relation #_rhs ") failed, lhs=%lf, rhs=%lf, file %s, line %d\n", \
 			(double)(_lhs), (double)(_rhs), \
 			__FILE__, __LINE__); \
@@ -804,16 +804,15 @@ typedef struct bu_list bu_list_t;
 
 #define BU_LIST_POP(structure, hp, p)				\
 	{							\
-		if (BU_LIST_NON_EMPTY(hp))				\
-		{							\
-		    (p) = ((struct structure *)((hp)->forw));		\
-		    BU_LIST_DEQUEUE((struct bu_list *)(p));		\
-		}							\
-		else							\
-		     (p) = (struct structure *) 0;			\
+		if (BU_LIST_NON_EMPTY(hp)) {			\
+		    (p) = ((struct structure *)((hp)->forw));	\
+		    BU_LIST_DEQUEUE((struct bu_list *)(p));	\
+		} else {					\
+		     (p) = (struct structure *) 0;		\
+		}						\
 	}
 
-#define BU_LIST_POP_T(hp, type)				\
+#define BU_LIST_POP_T(hp, type)					\
 	(type *)bu_list_pop(hp)
 
 /**
@@ -825,7 +824,7 @@ typedef struct bu_list bu_list_t;
  * BU_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
  */
 #define BU_LIST_INSERT_LIST(dest_hp, src_hp) \
-	if (BU_LIST_NON_EMPTY(src_hp)) { \
+	if (LIKELY(BU_LIST_NON_EMPTY(src_hp))) { \
 		struct bu_list *_first = (src_hp)->forw; \
 		struct bu_list *_last = (src_hp)->back; \
 		(dest_hp)->forw->back = _last; \
@@ -836,7 +835,7 @@ typedef struct bu_list bu_list_t;
 	}
 
 #define BU_LIST_APPEND_LIST(dest_hp, src_hp) \
-	if (BU_LIST_NON_EMPTY(src_hp)) {\
+	if (LIKELY(BU_LIST_NON_EMPTY(src_hp))) {\
 		struct bu_list *_first = (src_hp)->forw; \
 		struct bu_list *_last = (src_hp)->back; \
 		_first->back = (dest_hp)->back; \
@@ -858,8 +857,8 @@ typedef struct bu_list bu_list_t;
 			(hp)->back == BU_LIST_NULL)
 
 /* Handle list initialization */
-#define BU_LIST_UNINITIALIZED(hp)	((hp)->forw == BU_LIST_NULL)
-#define BU_LIST_IS_INITIALIZED(hp)	((hp)->forw != BU_LIST_NULL)
+#define BU_LIST_UNINITIALIZED(hp)	(UNLIKELY((hp)->forw == BU_LIST_NULL))
+#define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
 #define BU_LIST_INIT(hp) { \
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
@@ -1234,7 +1233,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 #define BU_BITV_ZEROALL(_bv)	\
 { \
-	if ((_bv) && (_bv)->nbits != 0) { \
+	if (LIKELY((_bv) && (_bv)->nbits != 0)) { \
 		unsigned char *bvp = (unsigned char *)(_bv)->bits; \
 		size_t nbytes = BU_BITS2BYTES((_bv)->nbits); \
 		do { \
@@ -1249,7 +1248,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
-	if (((unsigned)(_bit)) >= (_bv)->nbits) {\
+	if (UNLIKELY(((unsigned)(_bit)) >= (_bv)->nbits)) {\
 		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n", \
 			((unsigned)(_bit)), (_bv)->nbits); \
 		bu_bomb("process self-terminating\n");\
@@ -1260,7 +1259,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
-	if (((unsigned)(_nbits)) > (_bv)->nbits) {\
+	if (UNLIKELY(((unsigned)(_nbits)) > (_bv)->nbits)) {\
 		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
 			((unsigned)(_nbits)), (_bv)->nbits); \
 		bu_bomb("process self-terminating"); \

@@ -42,7 +42,7 @@ static const char *path = NULL;
 int
 bu_crashreport(const char *filename)
 {
-    if (!filename || strlen(filename) == 0) {
+    if (UNLIKELY(!filename || strlen(filename) == 0)) {
 	return 0;
     }
 
@@ -65,7 +65,7 @@ bu_crashreport(const char *filename)
 	     ctime(&now));
 
     fp = fopen(filename, "ab");
-    if (!fp || ferror(fp)) {
+    if (UNLIKELY(!fp || ferror(fp))) {
 	perror("unable to open crash report file");
 	bu_log("ERROR: Unable to open crash report file [%s]\n", filename);
 	return 0;

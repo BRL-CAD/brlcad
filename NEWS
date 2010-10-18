@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2010-09-XX  Release 7.18.0                                     ---
 ----------------------------------------------------------------------
 
+* removed 'query' command line prompting tool - Sean Morrison
+* increased optimized package run-time performance - Sean Morrison
 * fixed crash when raytracing multiple frames - Keith Bowman
 * fixed mged zap crash while using preview - Keith Bowman, Bob Parker
 * added ability to toggle mged status bar via .mgedrc - Rob Shinn

@@ -214,7 +214,7 @@ bu_units_string(register const double mm)
 {
     register const struct cvt_tab *tp;
 
-    if (mm <= 0)
+    if (UNLIKELY(mm <= 0))
 	return (char *)NULL;
 
     /* Search for this string in the table */
@@ -276,7 +276,7 @@ bu_nearest_units_string(register const double mm)
     const char *nearest = NULL;
     double nearer = DBL_MAX;
 
-    if (mm <= 0)
+    if (UNLIKELY(mm <= 0))
 	return (char *)NULL;
 
     /* Search for this unit in the table */
@@ -349,7 +349,7 @@ bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, 
 {
     register double *p = (double *)(base+sdp->sp_offset);
 
-    if (!name) {
+    if (UNLIKELY(!name)) {
 	bu_log("bu_mm_cvt: NULL name encountered\n");
     }
 

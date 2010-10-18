@@ -55,11 +55,11 @@ bu_whereis(const char *cmd)
     char *directory = NULL;
     char *position = NULL;
 
-    if (bu_debug & BU_DEBUG_PATHS) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_whereis: [%s]\n", cmd);
     }
 
-    if (!cmd) {
+    if (UNLIKELY(!cmd)) {
 	return NULL;
     }
 
@@ -70,7 +70,7 @@ bu_whereis(const char *cmd)
     /* check for full/relative path match */
     bu_strlcpy(bu_whereis_result, cmd, MAXPATHLEN);
     if (strcmp(bu_whereis_result, cmd) != 0) {
-	if (bu_debug & BU_DEBUG_PATHS) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("command [%s] is too long\n", cmd);
 	}
 	return NULL;
@@ -86,14 +86,14 @@ bu_whereis(const char *cmd)
 
 	/* use sysctl() to get the PATH */
 	if (sysctl(mib, 2, PATH, &len, NULL, 0) != 0) {
-	    if (bu_debug & BU_DEBUG_PATHS) {
+	    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 		perror("sysctl of user.cs_path");
 		bu_log("user.cs_path is unusable\n");
 	    }
 	    return NULL;
 	}
 
-	if (bu_debug & BU_DEBUG_PATHS) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("PATH is %s\n", PATH);
 	}
     }
@@ -125,7 +125,7 @@ bu_whereis(const char *cmd)
     } while (directory); /* iterate over PATH directories */
 
     /* no path or no match */
-    if (bu_debug & BU_DEBUG_PATHS) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("no %s in %s\n", cmd, gotpath ? gotpath : "(no path)");
     }
 
