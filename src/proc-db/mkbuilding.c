@@ -31,12 +31,11 @@ void mkbdlg_usage(void)
     fprintf(stderr, "Usage: mkbuilding db_file.g\n");
 }
 
+
 int
 main(int ac, char *av[])
 {
     struct rt_wdb *db_filepointer;
-
-    
 
     if (ac < 2) {
 	mkbdlg_usage();
@@ -51,13 +50,14 @@ main(int ac, char *av[])
 
     point_t p1, p2;
     VSET(p1, 0.0, 0.0, 0.0);
-    VSET(p2, (25.4*6), (25.4*12*10), (25.4*12*8) );
+    VSET(p2, (25.4*6), (25.4*12*10), (25.4*12*8));
 
-    mkbldg_makeWallSegment("TestWall",db_filepointer, p1, p2);
+    mkbldg_makeWallSegment("TestWall", db_filepointer, p1, p2);
 
     wdb_close(db_filepointer);
     return 0;
 }
+
 
 /*
  * Local Variables:
