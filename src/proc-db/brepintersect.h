@@ -21,16 +21,16 @@
  *
  */
 
-#include <stdint.h>
-#include "../../include/common.h"  /* someone tell me how to get rid of these stupid absolute paths, I'm sick of looking */
+#include "common.h"
 
-#include "../../include/raytrace.h"
-#include "../../include/rtgeom.h"
-#include "../../include/wdb.h"
-#include "../../include/bn.h"
-#include "../../include/bu.h"
-#include "../../include/vmath.h"
-#include "../src/other/openNURBS/opennurbs_array.h"
+#include "raytrace.h"
+#include "rtgeom.h"
+#include "wdb.h"
+#include "bn.h"
+#include "bu.h"
+#include "vmath.h"
+#include "opennurbs_array.h"
+
 
 bool PointInTriangle(
     const ON_3dPoint& a,
