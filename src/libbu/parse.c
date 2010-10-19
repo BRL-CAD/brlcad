@@ -2151,7 +2151,7 @@ void
 bu_free_external(register struct bu_external *ep)
 {
     BU_CK_EXTERNAL(ep);
-    if (LIKELY(ep->ext_buf)) {
+    if (LIKELY(ep->ext_buf != NULL)) {
 	bu_free(ep->ext_buf, "bu_external ext_buf");
 	ep->ext_buf = GENPTR_NULL;
     }

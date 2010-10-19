@@ -111,7 +111,7 @@ bu_putchar(int c)
 
     if (BU_LIST_IS_EMPTY(&(bu_log_hook_list.l))) {
 
-	if (LIKELY(stderr)) {
+	if (LIKELY(stderr != NULL)) {
 	    ret = fputc(c, stderr);
 	}
 
@@ -185,7 +185,7 @@ bu_log(const char *fmt, ...)
 	    return;
 	}
 
-	if (LIKELY(stderr)) {
+	if (LIKELY(stderr != NULL)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = fwrite(bu_vls_addr(&output), len, 1, stderr);
 	    fflush(stderr);

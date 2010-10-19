@@ -82,7 +82,7 @@ _bu_memdebug_add(genptr_t ptr, size_t cnt, const char *str)
 top:
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    if (LIKELY(bu_memdebug)) {
+    if (LIKELY(bu_memdebug != NULL)) {
 	mp = &bu_memdebug[bu_memdebug_len-1];
 	if (bu_memdebug_lowat > bu_memdebug
 	    && bu_memdebug_lowat < mp)
@@ -94,7 +94,7 @@ top:
     }
 
 again:
-    if (LIKELY(bu_memdebug)) {
+    if (LIKELY(bu_memdebug != NULL)) {
 	for (; mp >= bu_memdebug; mp--) {
 	    /* Search for an empty slot */
 	    if (mp->mdb_len > 0)  continue;
