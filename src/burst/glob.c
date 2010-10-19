@@ -57,18 +57,18 @@ unsigned char pixmiss[3]  = { 200, 200, 200 }; /* shot missed target */
 unsigned char pixtarg[3]  = { 255, 255, 255 }; /* shot hit target */
 Trie *cmdtrie = NULL;
 
-boolean batchmode = 0;		/* are we processing batch input now */
-boolean cantwarhead = 0;	/* pitch or yaw will be applied to warhead */
-boolean deflectcone = DFL_DEFLECT;	/* cone axis deflects towards normal */
-boolean dithercells = DFL_DITHER;	/* if true, randomize shot within cell */
-boolean fatalerror;		/* must abort ray tracing */
-boolean groundburst = 0;	/* if true, burst on imaginary ground */
-boolean reportoverlaps = DFL_OVERLAPS;
+int batchmode = 0;		/* are we processing batch input now */
+int cantwarhead = 0;	/* pitch or yaw will be applied to warhead */
+int deflectcone = DFL_DEFLECT;	/* cone axis deflects towards normal */
+int dithercells = DFL_DITHER;	/* if true, randomize shot within cell */
+int fatalerror;		/* must abort ray tracing */
+int groundburst = 0;	/* if true, burst on imaginary ground */
+int reportoverlaps = DFL_OVERLAPS;
 /* if true, overlaps are reported */
-boolean reqburstair = 1;	/* if true, burst air required for shotburst */
-boolean shotburst = 0;		/* if true, burst along shotline */
-boolean tty = 1;		/* if true, full screen display is used */
-boolean userinterrupt;		/* has the ray trace been interrupted */
+int reqburstair = 1;	/* if true, burst air required for shotburst */
+int shotburst = 0;		/* if true, burst along shotline */
+int tty = 1;		/* if true, full screen display is used */
+int userinterrupt;		/* has the ray trace been interrupted */
 
 char airfile[LNBUFSZ]={0};	/* input file name for burst air ids */
 char armorfile[LNBUFSZ]={0};	/* input file name for burst armor ids */

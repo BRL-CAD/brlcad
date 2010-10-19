@@ -383,7 +383,7 @@ addMenu( tp )
     HmItem *itemp;
     Ftable	*ftp = tp;
     int cnt;
-    boolean done = 0;
+    int done = 0;
     if ( ftp == NULL )
 	return	NULL;
     for ( cnt = 0; ftp->name != NULL; ftp++ )
@@ -498,7 +498,7 @@ initMenus( tp )
     return;
 }
 
-boolean
+int
 initUi()
 {
     if ( tty )
@@ -552,14 +552,14 @@ MattackDir( itemp )
 	    { "Attack elevation", "", "%lf", "degrees" },
 	};
     Input *ip = input;
-    GetVar( viewazim, ip, DEGRAD );
-    GetVar( viewelev, ip, DEGRAD );
+    GetVar( viewazim, ip, RAD2DEG );
+    GetVar( viewelev, ip, RAD2DEG );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t%g %g",
 		     itemp != NULL ? itemp->text : cmdname,
 		     viewazim, viewelev );
     logCmd( scrbuf );
-    viewazim /= DEGRAD;
-    viewelev /= DEGRAD;
+    viewazim /= RAD2DEG;
+    viewelev /= RAD2DEG;
     return;
 }
 
@@ -798,12 +798,12 @@ MconeHalfAngle( itemp )
 	    { "Cone angle", "", "%lf", "degrees" },
 	};
     Input *ip = input;
-    GetVar( conehfangle, ip, DEGRAD );
+    GetVar( conehfangle, ip, RAD2DEG );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%g",
 		     itemp != NULL ? itemp->text : cmdname,
 		     conehfangle );
     logCmd( scrbuf );
-    conehfangle /= DEGRAD;
+    conehfangle /= RAD2DEG;
     return;
 }
 
@@ -960,8 +960,8 @@ static void
 Mexecute( itemp )
     HmItem *itemp;
 {
-    static boolean	gottree = 0;
-    boolean		loaderror = 0;
+    static int	gottree = 0;
+    int		loaderror = 0;
     (void) snprintf( scrbuf, LNBUFSZ, 
 		     "%s",
 		     itemp != NULL ? itemp->text : cmdname );
@@ -982,7 +982,7 @@ Mexecute( itemp )
     }
     prntTimer( "dir" );
     notify( NULL, NOTIFY_DELETE );
-    /* Add air into boolean trees, must be set after rt_dirbuild() and
+    /* Add air into int trees, must be set after rt_dirbuild() and
        before rt_gettree().
     */
     rtip->useair = 1;

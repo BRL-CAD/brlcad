@@ -161,7 +161,7 @@ PutChr( char c ) {
   prints appropriate diagnostics on STDERR if $TERM is not set or
   there is a problem in retrieving the corresponding termcap entry.
 */
-boolean
+int
 ScInit( FILE *fp ) {
     char	*term; /* Name of terminal from environment. */
     out_fp = fp;
@@ -197,7 +197,7 @@ ScInit( FILE *fp ) {
 /*
   Clear from the cursor to the end of that line.
 */
-boolean
+int
 ScClrEOL( void ) {
     if ( ScCE == NULL )
 	return	0;
@@ -208,7 +208,7 @@ ScClrEOL( void ) {
 /*
   Reset the scrolling region to the entire screen.
 */
-boolean
+int
 ScClrScrlReg( void ) {
     if ( ScCS == NULL )
 	return	0;
@@ -219,7 +219,7 @@ ScClrScrlReg( void ) {
 /*
   End standout mode.
 */
-boolean
+int
 ScClrStandout( void ) {
     if ( ScSE == NULL )
 	return	0;
@@ -230,7 +230,7 @@ ScClrStandout( void ) {
 /*
   Clear the screen and "home" the cursor.
 */
-boolean
+int
 ScClrText( void ) {
     if ( ScCL == NULL )
 	return	0;
@@ -241,7 +241,7 @@ ScClrText( void ) {
 /*
   Insert a the line under the cursor.
 */
-boolean
+int
 ScInsertLn( void ) {
     if ( ScAL == NULL )
 	return	0;
@@ -252,7 +252,7 @@ ScInsertLn( void ) {
 /*
   Delete the line under the cursor.
 */
-boolean
+int
 ScDeleteLn( void ) {
     if ( ScDL == NULL )
 	return	0;
@@ -263,7 +263,7 @@ ScDeleteLn( void ) {
 /*
   Scroll backward 1 line.
 */
-boolean
+int
 ScDnScroll( void ) {
     if ( ScSR == NULL )
 	return	0;
@@ -274,7 +274,7 @@ ScDnScroll( void ) {
 /*
   Move the cursor to the top-left corner of the screen.
 */
-boolean
+int
 ScHmCursor( void ) {
     if ( ScHO == NULL )
 	return	0;
@@ -286,7 +286,7 @@ ScHmCursor( void ) {
   Move the cursor to screen coordinates x, y (for column and row,
   respectively).
 */
-boolean
+int
 ScMvCursor( int x, int y ) {
     if ( ScCM == NULL )
 	return	0;
@@ -300,7 +300,7 @@ ScMvCursor( int x, int y ) {
   Set the scrolling region to be from "top" line to "btm" line,
   inclusive.
 */
-boolean
+int
 ScSetScrlReg( int top, int btm ) {
     if ( ScCS == NULL )
 	return	0;
@@ -311,7 +311,7 @@ ScSetScrlReg( int top, int btm ) {
 /*
   Begin standout mode.
 */
-boolean
+int
 ScSetStandout( void ) {
     if ( ScSO == NULL )
 	return	0;
@@ -322,7 +322,7 @@ ScSetStandout( void ) {
 /*
   Scroll text forward 1 line.
 */
-boolean
+int
 ScUpScroll( void ) {
     if ( ScSF == NULL )
 	return	0;
