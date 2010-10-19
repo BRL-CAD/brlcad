@@ -102,8 +102,6 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 int
 rt_gen_circular_grid(struct xrays *rays, const struct xray *center_ray, fastf_t radius, const fastf_t *up_vector, fastf_t gridsize)
 {
-    int count = 0;
-    point_t C;
     vect_t dir;
     vect_t avec;
     vect_t bvec;
@@ -146,9 +144,6 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
     fastf_t b = MAGNITUDE(bvec);
     fastf_t x,y;
 
-    int numrays = ((int)((2.0 *  a) / gridsize) + 1)*((int)((2.0 *  b) / gridsize) + 1);
-
-    int first = 1;
     int acpr = a / gridsize;
     int bcpr = b / gridsize;
 
