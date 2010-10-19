@@ -288,9 +288,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.
 
-* MINOR: rename bu_ptbl(), nmg_struct_counts()
-  (c++ portability, hides struct constructor)
-
 * MINOR: add tolerance parameters to the bn_*() functions that have
   near-zero tests.
 
