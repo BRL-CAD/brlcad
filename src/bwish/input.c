@@ -34,7 +34,9 @@
 #if defined(IRIX) && IRIX == 5
 #  define _BSD_COMPAT
 #endif
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 
 #include "bio.h"
 
