@@ -44,8 +44,10 @@
 #  include <sys/time.h>
 #endif
 #include <time.h>
+#include "bio.h" /* for timeval via windows.h */
 
 #include "bu.h"
+
 
 #define MAXARGS 9000
 #define CMD_NULL (int (*)(ClientData, Tcl_Interp *, int, const char **))NULL
