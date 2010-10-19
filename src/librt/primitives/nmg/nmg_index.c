@@ -735,7 +735,7 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
  * Count 'em up, and print 'em out.
  */
 void
-nmg_struct_counts(const struct model *m, const char *str)
+nmg_pr_m_struct_counts(const struct model *m, const char *str)
 {
     struct nmg_struct_counts cnts;
     unsigned long **tab;

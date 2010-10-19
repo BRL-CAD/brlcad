@@ -88,9 +88,9 @@
 		(_co)++;\
 	}
 
-static boolean	HmDirty = 0;
-static boolean	HmMyxflag = 0;
-static boolean	HmPkgInit = 0;
+static int	HmDirty = 0;
+static int	HmMyxflag = 0;
+static int	HmPkgInit = 0;
 
 static HmWindow	*windows = NULL;
 
@@ -732,10 +732,10 @@ HmTtyReset( void )
   Initialize position of top-level menu.  Specify maximum
   number of menu items visable at once.  Place these values
   in global variables.  Determine as best we can whether MYX
-  is available and place boolean result in HmMyxflag.  Return
+  is available and place int result in HmMyxflag.  Return
   true for success and false for failure to open "/dev/tty".
 */
-boolean
+int
 HmInit( int x, int y, int maxvis )
 {
     if (	(HmTtyFd = open( "/dev/tty", O_RDONLY )) == (-1)
@@ -779,12 +779,12 @@ HmWidHgtMenu( HmWindow *win )
 }
 
 /*
-  boolean HmFitMenu( HmWindow *nwin, HmWindow *cwin )
+  int HmFitMenu( HmWindow *nwin, HmWindow *cwin )
 
   If nwin->menup will fit below cwin->menup on screen, store
   position in nwin, and return 1.  Otherwise, return 0.
 */
-static boolean
+static int
 HmFitMenu( HmWindow *nwin, HmWindow *cwin  )
 {
     if ( cwin == (HmWindow *) NULL )

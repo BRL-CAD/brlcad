@@ -171,9 +171,6 @@ prntTrie( triep, level )
 {
     Trie	*tp = triep;
     static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
-#if DEBUG_TRIE
-    brst_log( "prntTrie(triep=0x%x, level=%d)\n", triep, level );
-#endif
     if ( tp == TRIE_NULL )
 	return;
     if ( tp->n.t_altr != TRIE_NULL )
@@ -272,7 +269,7 @@ char_To_String( i )
     return	buf;
 }
 
-#if false
+#if 0
 /*
   Func *getFuncNm( char *inbuf, int bufsz, char *msg, Trie **triepp )
   TENEX-style name completion.

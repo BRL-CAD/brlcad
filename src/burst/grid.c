@@ -65,10 +65,10 @@ static fastf_t cantdelta[3];	/* delta ray specified by yaw and pitch */
 static struct application ag;	/* global application structure (zeroed out) */
 
 /* functions local to this module */
-static boolean doBursts();
-static boolean burstPoint();
-static boolean burstRay();
-static boolean gridShot();
+static int doBursts();
+static int burstPoint();
+static int burstRay();
+static int gridShot();
 static fastf_t	max();
 static fastf_t	min();
 static int f_BurstHit();
@@ -146,7 +146,7 @@ colorPartition(regp, type)
 }
 
 /*
-  boolean doBursts(void)
+  int doBursts(void)
 
   This routine gets called when explicit burst points are being
   input.  Crank through all burst points.  Return code of 0
@@ -154,10 +154,10 @@ colorPartition(regp, type)
   rt_shootray() or an error or EOF in getting the next set of
   burst point coordinates.
 */
-static boolean
+static int
 doBursts()
 {
-    boolean			status = 1;
+    int			status = 1;
     noverlaps = 0;
     VMOVE(ag.a_ray.r_dir, viewdir);
 
@@ -584,12 +584,12 @@ f_ShotHit(ap, pt_headp, segp)
 		fastf_t exitnorm[3];	/* normal at exit */
 		/* Get entry normal. */
 		getRtHitNorm(pp->pt_inhit, pp->pt_inseg->seg_stp,
-			     &ap->a_ray, (boolean) pp->pt_inflip, entrynorm);
+			     &ap->a_ray, (int) pp->pt_inflip, entrynorm);
 		(void) chkEntryNorm(pp, &ap->a_ray, entrynorm,
 				    "shotline entry normal");
 		/* Get exit normal. */
 		getRtHitNorm(pp->pt_outhit, pp->pt_outseg->seg_stp,
-			     &ap->a_ray, (boolean) pp->pt_outflip, exitnorm);
+			     &ap->a_ray, (int) pp->pt_outflip, exitnorm);
 		(void) chkExitNorm(pp, &ap->a_ray, exitnorm,
 				   "shotline exit normal");
 
@@ -771,7 +771,7 @@ f_ShotHit(ap, pt_headp, segp)
 
 /*
   void getRtHitNorm(struct hit *hitp, struct soltab *stp,
-  struct xray *rayp, boolean flipped, fastf_t normvec[3])
+  struct xray *rayp, int flipped, fastf_t normvec[3])
 
   Fill normal and hit point into hit struct and if the flipped
   flag is set, reverse the normal.  Return a private copy of the
@@ -784,13 +784,13 @@ getRtHitNorm(hitp, stp, rayp, flipped, normvec)
     struct hit *hitp;
     struct soltab *stp;
     struct xray *rayp;
-    boolean flipped;
+    int flipped;
     fastf_t normvec[3];
 {
     RT_HIT_NORMAL(normvec, hitp, stp, rayp, flipped);
 }
 
-boolean
+int
 chkEntryNorm(pp, rayp, normvec, purpose)
     struct partition *pp;
     struct xray *rayp;
@@ -801,7 +801,7 @@ chkEntryNorm(pp, rayp, normvec, purpose)
     static int flipct = 0;
     static int totalct = 0;
     struct soltab *stp = pp->pt_inseg->seg_stp;
-    boolean ret = 1;
+    int ret = 1;
     totalct++;
     /* Dot product of ray direction with normal *should* be negative. */
     f = VDOT(rayp->r_dir, normvec);
@@ -841,7 +841,7 @@ chkEntryNorm(pp, rayp, normvec, purpose)
     return ret;
 }
 
-boolean
+int
 chkExitNorm(pp, rayp, normvec, purpose)
     struct partition *pp;
     struct xray *rayp;
@@ -852,7 +852,7 @@ chkExitNorm(pp, rayp, normvec, purpose)
     static int flipct = 0;
     static int totalct = 0;
     struct soltab *stp = pp->pt_outseg->seg_stp;
-    boolean ret = 1;
+    int ret = 1;
     totalct++;
     /* Dot product of ray direction with normal *should* be positive. */
     f = VDOT(rayp->r_dir, normvec);
@@ -1339,17 +1339,17 @@ gridModel()
 }
 
 /*
-  boolean gridShot(void)
+  int gridShot(void)
 
   This routine is the grid-level raytracing task; suitable for a
   multi-tasking process.  Return code of 0 would indicate a
   failure in the application routine given to rt_shootray() or an
   error or EOF in getting the next set of firing coordinates.
 */
-static boolean
+static int
 gridShot()
 {
-    boolean status = 1;
+    int status = 1;
     struct application a;
     a = ag;
     a.a_resource = RESOURCE_NULL;
@@ -1647,7 +1647,7 @@ static struct application	a_burst; /* prototype spall ray */
   This routine dispatches the burst point ray tracing task burstRay().
   RETURN CODES:	0 for fatal ray tracing error, 1 otherwise.
 */
-static boolean
+static int
 burstPoint(ap, normal, bpt)
     struct application *ap;
     fastf_t *normal;
@@ -1685,14 +1685,14 @@ burstPoint(ap, normal, bpt)
     return	burstRay();
 }
 
-static boolean
+static int
 burstRay()
 {
     /* Need local copy of all but readonly variables for concurrent
        threads of execution. */
     struct application	a_spall;
     fastf_t			phi;
-    boolean			hitcrit = 0;
+    int			hitcrit = 0;
     a_spall = a_burst;
     a_spall.a_resource = RESOURCE_NULL;
     for (; ! userinterrupt;)

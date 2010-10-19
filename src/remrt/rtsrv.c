@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdarg.h>
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#  include <sys/time.h>
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>

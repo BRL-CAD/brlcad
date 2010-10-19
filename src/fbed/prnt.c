@@ -61,7 +61,7 @@ void init_Status(void);
 void prnt_Status(void), prnt_Usage(void);
 void prnt_Prompt(const char *msg);
 void prnt_Macro(char *bufp);
-void prnt_Rectangle(const char *str, Rectangle *rectp);
+void prnt_Rect2D(const char *str, Rect2D *rectp);
 /**void prnt_FBC();**/
 
 /*	p r n t _ S t a t u s ( ) */
@@ -363,7 +363,7 @@ prnt_Macro(char *bufp)
 }
 
 void
-prnt_Rectangle(const char *str, Rectangle *rectp)
+prnt_Rect2D(const char *str, Rect2D *rectp)
 {
     prnt_Scroll(	"%s {<%d,%d>,<%d,%d>}\n",
 			str,

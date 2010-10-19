@@ -586,7 +586,6 @@ int rt_shootrays(struct application_bundle *bundle)
     int	(*a_miss)BU_ARGS((struct application *));
 
     struct application *ray_ap = NULL;
-    int ray_index;
     int hit;
     struct rt_i	*	rt_i = bundle->b_ap.a_rt_i;		/**< @brief  this librt instance */
     struct resource *	resource = bundle->b_ap.a_resource;	/**< @brief  dynamic memory resources */

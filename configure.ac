@@ -1566,6 +1566,7 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
 	Carbon/Carbon.h \
+	arpa/inet.h \
 	curses.h \
 	dslib.h \
 	getopt.h \
@@ -1576,6 +1577,7 @@ AC_CHECK_HEADERS( \
 	libgen.h \
 	memory.h \
 	ncurses.h \
+	netdb.h \
 	netinet/in.h \
 	poll.h \
 	pthread.h \

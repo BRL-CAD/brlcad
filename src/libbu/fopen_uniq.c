@@ -50,7 +50,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
     int fd;
     FILE *fp;
 
-    if (UNLIKELY(! namefmt || ! *namefmt))
+    if (UNLIKELY(!namefmt || !*namefmt))
 	bu_bomb("bu_uniq_file called with null string\n");
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -70,7 +70,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 	fprintf(stderr, "%s", strerror(errno));
     }
 
-    if (LIKELY(outfmt))
+    if (LIKELY(outfmt != NULL))
 	fprintf(stderr, outfmt, filename);
 
     bu_semaphore_release(BU_SEM_SYSCALL);

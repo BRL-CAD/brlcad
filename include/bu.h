@@ -1394,15 +1394,6 @@ struct bu_ptbl {
 };
 #define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
 
-#define BU_PTBL_INIT	0	/**< @brief initialize table pointer struct & get storage */
-#define BU_PTBL_INS	1	/**< @brief insert an item (long *) into a table */
-#define BU_PTBL_LOC 	2	/**< @brief locate a (long *) in an existing table */
-#define BU_PTBL_FREE	3	/**< @brief deallocate buffer associated with a table */
-#define BU_PTBL_RST	4	/**< @brief empty a table, but keep storage on hand */
-#define BU_PTBL_CAT	5	/**< @brief catenate one table onto another */
-#define BU_PTBL_RM	6	/**< @brief remove all occurrences of an item from a table */
-#define BU_PTBL_INS_UNIQUE 7	/**< @brief insert item into table, if not present */
-#define BU_PTBL_ZERO	8	/**< @brief replace all occurrences of an item by 0 */
 /*
  * For those routines that have to "peek" into the ptbl a little bit.
  */
@@ -4026,16 +4017,6 @@ BU_EXPORT BU_EXTERN(void bu_ptbl_cat_uniq,
  */
 BU_EXPORT BU_EXTERN(void bu_ptbl_free,
 		    (struct bu_ptbl *b));
-
-/**
- * B U _ P T B L
- *
- * This version maintained for source compatibility with existing NMG
- * code.
- */
-BU_EXPORT BU_EXTERN(int bu_ptbl,
-		    (struct bu_ptbl *b,
-		     int func, long *p));
 
 /**
  * B U _ P R _ P T B L

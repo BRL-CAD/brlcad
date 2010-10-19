@@ -69,7 +69,6 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdbool.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -134,14 +133,14 @@ double conversion_factor_to_milimeters[4];
 typedef struct {
     char *in_buffer;
     logical_record_type in_record_type;
-    bool in_is_b_header;
+    int in_is_b_header;
     int in_element_number;
     int in_sub_element_number;
     sub_element_datatype out_datatype;
     char out_alpha[MAX_STRING_LENGTH];
     long int out_integer;
     double out_double;
-    bool out_undefined;
+    int out_undefined;
 } ResultStruct;
 
 
@@ -219,8 +218,8 @@ void remove_whitespace(char *input_string)
     int input_string_length = 0;
     char *firstp = '\0';
     char *lastp = '\0';
-    bool found_start = false;
-    bool found_end = false; 
+    int found_start = 0;
+    int found_end = 0; 
     int cleaned_string_length = 0;
 
     input_string_length = strlen(input_string);
@@ -233,36 +232,36 @@ void remove_whitespace(char *input_string)
     }
 
     /* find start character and set pointer firstp to this character */
-    found_start = false;
+    found_start = 0;
     idx = firstp;
-    while ((found_start == false) && (idx < lastp)) {
+    while ((found_start == 0) && (idx < lastp)) {
 	if (isspace(idx[0]) == 0) {
 	    /* execute if non-space found */
-	    found_start = true;
+	    found_start = 1;
 	    firstp = idx;
 	}
 	idx++;
     }
-    /* if found_start is false then string must be all whitespace */
-    if (found_start == false) {
+    /* if found_start is 0 then string must be all whitespace */
+    if (found_start == 0) {
 	/* set null to first character a do nothing more */
 	input_string[0] = '\0';
 	return;
     }
 
-    /* If found_start is true, check for trailing whitespace.  Find
+    /* If found_start is 1, check for trailing whitespace.  Find
      * last character and set pointer lastp to next character after,
      * i.e. where null would be.  There as at least one non-space
      * character in this string therefore will not need to deal with
      * an empty string condition in the loop looking for the string
      * end.
      */
-    found_end = false;
+    found_end = 0;
     idx = lastp - 1;
-    while ((found_end == false) && (idx >= firstp)) {
+    while ((found_end == 0) && (idx >= firstp)) {
 	if (isspace(idx[0]) == 0) {
 	    /* execute if non-space found */
-	    found_end = true;
+	    found_end = 1;
 	    lastp = idx + 1;
 	}
 	idx--;
@@ -307,7 +306,7 @@ int read_element(ResultStruct *io_struct)
     int start_character = 0;
     int field_width = 0;
     sub_element_datatype datatype;
-    bool is_b_header = false;
+    int is_b_header = 0;
 
     /* assign input structure values to local variables */ 
     buf = (*io_struct).in_buffer;
@@ -321,7 +320,7 @@ int read_element(ResultStruct *io_struct)
     (*io_struct).out_alpha[0] = '\0';
     (*io_struct).out_integer = 0;
     (*io_struct).out_double = 0;
-    (*io_struct).out_undefined = false;
+    (*io_struct).out_undefined = 0;
 
     if (!((record_type == type_b) && (element == 6))) {
         /* when the value to be read is not an elevation */
@@ -336,7 +335,7 @@ int read_element(ResultStruct *io_struct)
         field_width = 6;
         datatype = type_integer;    /* sets datatype to integer */
         (*io_struct).out_datatype = datatype;
-        if (is_b_header == true) {
+        if (is_b_header == 1) {
             /* the buffer contains a B record header and elevation data */
             start_character = 145 + ((sub_element - 1) * field_width); 
         } else {
@@ -362,7 +361,7 @@ int read_element(ResultStruct *io_struct)
 
     if (strlen(tmp_str) == 0) { 
         /* data was all whitespace */ 
-        (*io_struct).out_undefined = true;
+        (*io_struct).out_undefined = 1;
 	return BRLCAD_OK;
     }
 
@@ -441,7 +440,7 @@ int read_element(ResultStruct *io_struct)
 
 
 int
-validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
+validate_dem_record(char *buf, int create_log, logical_record_type record_type)
 {
     /* uses global arrays 'sub_element_counts', 'element_counts',
      * 'record_type_names' and 'sub_elements_required_list_counts'
@@ -465,7 +464,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
             (*my_out_ptr2).in_element_number = element_number;
             (*my_out_ptr2).in_sub_element_number = sub_element_number;
             if (read_element(my_out_ptr2) == BRLCAD_ERROR) {
-                if (create_log == true) {
+                if (create_log == 1) {
                     bu_log("Failed validation of %s element %i sub_element %i, error reading value.\n",
 			   record_type_names[record_type], (*my_out_ptr2).in_element_number,
 			   (*my_out_ptr2).in_sub_element_number); 
@@ -485,8 +484,8 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_element_number = sub_elements_required_list[record_type][idx][1];
         (*my_out_ptr2).in_sub_element_number = sub_elements_required_list[record_type][idx][2];
         status = read_element(my_out_ptr2);
-        if ((*my_out_ptr2).out_undefined == true) {
-            if (create_log == true) {
+        if ((*my_out_ptr2).out_undefined == 1) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, value undefined.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number); 
@@ -505,7 +504,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if (!(((*my_out_ptr2).out_integer >= 0) && ((*my_out_ptr2).out_integer <= 3))) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '0, 1, 2, 3'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -522,7 +521,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if (!(((*my_out_ptr2).out_integer == 1) || ((*my_out_ptr2).out_integer == 2))) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1, 2'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -540,7 +539,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 4) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '4'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -557,7 +556,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double < 0) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
@@ -574,7 +573,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double <= 0) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
@@ -591,7 +590,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double <= 0) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
@@ -608,7 +607,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 3;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double <= 0) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected > '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
@@ -627,7 +626,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 1) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -644,7 +643,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer < 1) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -664,7 +663,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 1) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -681,7 +680,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer < 1) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -698,7 +697,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer < 1) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected >= '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -716,7 +715,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_integer != 1) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%ld', expected '1'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_integer); 
@@ -733,7 +732,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 1;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double < 0) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
@@ -750,7 +749,7 @@ validate_dem_record(char *buf, bool create_log, logical_record_type record_type)
         (*my_out_ptr2).in_sub_element_number = 2;
         status = read_element(my_out_ptr2);
         if ((*my_out_ptr2).out_double < 0) {
-            if (create_log == true) {
+            if (create_log == 1) {
                 bu_log("Failed validation of %s element %i sub_element %i, unexpected value, found '%g', expected >= '0'.\n",
 		       record_type_names[record_type], (*my_out_ptr2).in_element_number,
 		       (*my_out_ptr2).in_sub_element_number, (*my_out_ptr2).out_double); 
@@ -1089,7 +1088,7 @@ read_dem(
     /* Validates all 'A' record sub_elements can be read and that all
      * required sub_elements contain values.
      */
-    if (validate_dem_record(buf, true, type_a) == BRLCAD_ERROR) {
+    if (validate_dem_record(buf, 1, type_a) == BRLCAD_ERROR) {
         bu_log("The DEM file did not validate, failed on logical record type 'A'.\n");
         fclose(fp);
         fclose(fp2);
@@ -1196,7 +1195,7 @@ read_dem(
         /* Validates all 'B' record header sub_elements can be read
          * and all required sub_elements contain values.
 	 */
-        if (validate_dem_record(buf, true, type_b) == BRLCAD_ERROR) {
+        if (validate_dem_record(buf, 1, type_b) == BRLCAD_ERROR) {
             bu_log("The DEM file did not validate, failed on logical record type 'B' number '%ld'.\n", curr_b_record);
             fclose(fp);
             fclose(fp2);
@@ -1423,7 +1422,7 @@ read_dem(
                 (*my_out_ptr).in_record_type = type_b;
                 (*my_out_ptr).in_element_number = 6;
                 (*my_out_ptr).in_sub_element_number = indx3;
-                (*my_out_ptr).in_is_b_header = true;
+                (*my_out_ptr).in_is_b_header = 1;
                 status = read_element(my_out_ptr);
                 curr_elevation = (*my_out_ptr).out_integer;
 
@@ -1459,7 +1458,7 @@ read_dem(
                         (*my_out_ptr).in_record_type = type_b;
                         (*my_out_ptr).in_element_number = 6;
                         (*my_out_ptr).in_sub_element_number = indx5;
-                        (*my_out_ptr).in_is_b_header = false;
+                        (*my_out_ptr).in_is_b_header = 0;
                         status = read_element(my_out_ptr);
                         curr_elevation = (*my_out_ptr).out_integer;
 
@@ -1493,7 +1492,7 @@ read_dem(
                     (*my_out_ptr).in_record_type = type_b;
                     (*my_out_ptr).in_element_number = 6;
                     (*my_out_ptr).in_sub_element_number = indx6;
-                    (*my_out_ptr).in_is_b_header = false;
+                    (*my_out_ptr).in_is_b_header = 0;
                     status = read_element(my_out_ptr);
                     curr_elevation = (*my_out_ptr).out_integer;
 
@@ -1522,7 +1521,7 @@ read_dem(
                 (*my_out_ptr).in_record_type = type_b;
                 (*my_out_ptr).in_element_number = 6;
                 (*my_out_ptr).in_sub_element_number = indx4;
-                (*my_out_ptr).in_is_b_header = true;
+                (*my_out_ptr).in_is_b_header = 1;
                 status = read_element(my_out_ptr);
                 curr_elevation = (*my_out_ptr).out_integer;
 

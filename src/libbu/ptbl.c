@@ -223,42 +223,6 @@ bu_ptbl_free(struct bu_ptbl *b)
 }
 
 
-int
-bu_ptbl(struct bu_ptbl *b, int func, long int *p)
-{
-    if (func == BU_PTBL_INIT) {
-	bu_ptbl_init(b, 64, "bu_ptbl() buffer[]");
-	return 0;
-    } else if (func == BU_PTBL_RST) {
-	bu_ptbl_reset(b);
-	return 0;
-    } else if (func == BU_PTBL_INS) {
-	return bu_ptbl_ins(b, p);
-    } else if (func == BU_PTBL_LOC) {
-	return bu_ptbl_locate(b, p);
-    } else if (func == BU_PTBL_ZERO) {
-	bu_ptbl_zero(b, p);
-	return 0;
-    } else if (func == BU_PTBL_INS_UNIQUE) {
-	return bu_ptbl_ins_unique(b, p);
-    } else if (func == BU_PTBL_RM) {
-	return bu_ptbl_rm(b, p);
-    } else if (func == BU_PTBL_CAT) {
-	bu_ptbl_cat(b, (const struct bu_ptbl *)p);
-	return 0;
-    } else if (func == BU_PTBL_FREE) {
-	bu_ptbl_free(b);
-	return 0;
-    }
-
-    bu_log("bu_ptbl(%p) Unknown table function %d\n", (void *)b, func);
-    BU_CK_PTBL(b);
-
-    /* this is here to keep lint happy */
-    return -1;
-}
-
-
 void
 bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 {

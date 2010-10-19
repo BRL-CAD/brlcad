@@ -238,7 +238,7 @@ bu_avs_free(struct bu_attribute_value_set *avsp)
 	}
 	avsp->count = 0;
     }
-    if (LIKELY(avsp->avp)) {
+    if (LIKELY(avsp->avp != NULL)) {
 	bu_free((genptr_t)avsp->avp, "bu_avs_free avsp->avp");
 	avsp->avp = NULL; /* sanity */
 	avsp->max = 0;
@@ -274,9 +274,9 @@ bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, cons
 
     BU_CK_AVS(avsp);
 
-    /* don't even try */
-    if (!name) {
-	if (UNLIKELY(value)) {
+    /* nothing to do */
+    if (UNLIKELY(name == NULL)) {
+	if (UNLIKELY(value != NULL)) {
 	    bu_log("WARNING: bu_avs_add_nonunique given NULL name and non-null value\n");
 	}
 	return;
