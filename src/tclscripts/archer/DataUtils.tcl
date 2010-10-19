@@ -37,6 +37,7 @@
 		       _data_axes_name _sdata_axes_name
 		       _data_labels_name _sdata_labels_name
 		       _data_lines_name _sdata_lines_name}
+	proc measureLastDataPoints {_ged _archer _group _attr_name _pindex {_sindex -1}}
 	proc updateData {_ged _archer _group
 			 _attr_name _data_cmd _data_subcmd}
 	proc updateGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd}
@@ -487,6 +488,68 @@
 	    return
 	}
     }
+}
+
+::itcl::body DataUtils::measureLastDataPoints {_ged _archer _group _attr_name _pindex {_sindex -1}} {
+    if {[catch {$_ged attr get _GLOBAL $_attr_name} dl]} {
+	return
+    }
+
+    # Get the data list for the specified group
+    set i [lsearch -index 0 $dl $_group]
+    if {$i != -1} {
+	set gd [lindex $dl $i]
+    } else {
+	return
+    }
+
+    # Strip off the group name
+    set data [lrange $gd 1 end]
+
+    # If a valid index is specified for indicating selection
+    # of data then collect the selected data.
+    if {[string is digit $_sindex]} {
+	set all_data $data
+	set data {}
+	foreach item $all_data {
+	    if {[lindex $item $_sindex]} {
+		lappend data $item
+	    }
+	}
+    }
+
+    set last_index [expr {[llength $data] - 1}]
+    if {$last_index < 1} {
+	return
+    }
+
+    set pindex_end [expr {$_pindex + 2}]
+
+    # Make sure dataA has enough values
+    set dataA [lindex $data end-1]
+    set last_index [expr {[llength $dataA] - 1}]
+    if {$last_index < $pindex_end} {
+	return
+    }
+
+    # Make sure dataB has enough values
+    set dataB [lindex $data end]
+    set last_index [expr {[llength $dataB] - 1}]
+    if {$last_index < $pindex_end} {
+	return
+    }
+
+    if {[catch {
+	set ptA [lrange $dataA $_pindex $pindex_end]
+	set ptB [lrange $dataB $_pindex $pindex_end]
+	set dist [vmagnitude [vsub2 $ptB $ptA]]
+	set dist [expr {$dist * [$_ged base2local]}]
+        } msg]} {
+	return
+    }
+    
+    $_archer putString "Measured distance between data points: $dist [$_ged units -s]."
+    $_archer setStatusString "Measured distance between data points: $dist [$_ged units -s]."
 }
 
 ::itcl::body DataUtils::updateData {_ged _archer _group
