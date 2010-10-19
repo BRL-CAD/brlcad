@@ -53,7 +53,9 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
 	  if(NOT ${libs} MATCHES "NONE")
 		  target_link_libraries(${libname}-static ${libslist})
 	  endif(NOT ${libs} MATCHES "NONE")
-	  SET_TARGET_PROPERTIES(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
+	  IF(NOT WIN32)
+		  SET_TARGET_PROPERTIES(${libname}-static PROPERTIES OUTPUT_NAME "${libname}")
+	  ENDIF(NOT WIN32)
 	  IF(WIN32)
 		  # We need the lib prefix on win32, so add it even if our add_library
 		  # wrapper function has removed it due to the target name - see
