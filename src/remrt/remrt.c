@@ -37,7 +37,6 @@
 #include <signal.h>
 #include <errno.h>
 #include <math.h>
-#include <netdb.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
