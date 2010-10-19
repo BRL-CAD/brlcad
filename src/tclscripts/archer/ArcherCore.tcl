@@ -4103,8 +4103,7 @@ Popup Menu    Right or Ctrl-Left
     # Possibly add a toplevel node to the tree
     if {$i != -1} {
 	# Add _name if not already there.
-	set j [lsearch -index 0 $mPNode2CList() $_name]
-	if {$j == -1} {
+	if {[catch {lsearch -index 0 $mPNode2CList() $_name} j] || $j == -1} {
 	    fillTree {} $_name $mEnableListView
 	}
     } else {
