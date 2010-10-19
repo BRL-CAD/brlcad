@@ -22,12 +22,14 @@
  */
 
 #include "master.h"
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 
+#ifdef HAVE_PTHREAD_H
+#  include <pthread.h>
+#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
