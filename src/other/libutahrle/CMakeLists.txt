@@ -59,11 +59,12 @@ ENDIF(MSVC)
 add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle ${M_LIBRARY})
 INSTALL(TARGETS utahrle DESTINATION lib)
-
+IF(NOT MSVC)
 add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
 target_link_libraries(utahrle-static ${M_LIBRARY})
 INSTALL(TARGETS utahrle-static ARCHIVE DESTINATION lib)
 SET_TARGET_PROPERTIES(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
+ENDIF(NOT MSVC)
 
 SET(LIBUTAHRLE_MAN3
 	buildmap.3 
