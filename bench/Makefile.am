@@ -3,6 +3,7 @@
 
 bin_PROGRAMS = pixcmp
 pixcmp_SOURCES = pixcmp.c
+pixcmp_LDADD = ${BU}
 
 dist_bin_SCRIPTS = \
 	benchmark
