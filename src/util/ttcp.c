@@ -52,9 +52,12 @@
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/time.h>		/* struct timeval */
-
-#include <netdb.h>
+#ifndef _WIN32
+#  include <sys/time.h>		/* struct timeval */
+#  include <netdb.h>
+#else
+#  include <windows.h>
+#endif
 
 #if defined(SYSV) || defined(__HAIKU__)
 #  include <sys/times.h>

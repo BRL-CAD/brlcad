@@ -43,7 +43,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
-#include <sys/time.h>		/* sometimes includes <time.h> */
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>		/* sometimes includes <time.h> */
+#endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
