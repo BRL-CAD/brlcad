@@ -5582,7 +5582,7 @@ RT_EXPORT BU_EXTERN(void nmg_pr_struct_counts,
 RT_EXPORT BU_EXTERN(unsigned long **nmg_m_struct_count,
 		    (struct nmg_struct_counts *ctr,
 		     const struct model *m));
-RT_EXPORT BU_EXTERN(void nmg_struct_counts,
+RT_EXPORT BU_EXTERN(void nmg_pr_m_struct_counts,
 		    (const struct model	*m,
 		     const char		*str));
 RT_EXPORT BU_EXTERN(void nmg_merge_models,
