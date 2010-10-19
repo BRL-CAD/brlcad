@@ -114,10 +114,10 @@
 int
 bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_structparse *imp)
 {
-    register char *cp;		/* current possition in buffer */
-    char *ep;		/* &ext->ext_buf[ext->ext_nbytes] */
+    register char *cp;			/* current possition in buffer */
+    char *ep;				/* &ext->ext_buf[ext->ext_nbytes] */
     const struct bu_structparse *ip;	/* current imexport structure */
-    char *loc;		/* where host-format data is */
+    char *loc;				/* where host-format data is */
     size_t len;
     register size_t i;
 
@@ -140,9 +140,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		    /* DEPRECATED: use %p instead. */
 		    static int warned = 0;
 		    if (!warned) {
-#ifdef NOTYET
-			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 			warned++;
 		    }
 		}
@@ -246,6 +244,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		{
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
+		    bu_log("INTERNAL ERROR: attempt to indirectly export bu_structparse table, unimplemented\n");
 		}
 		continue;
 	    default:
@@ -292,9 +291,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		    /* DEPRECATED: use %p instead. */
 		    static int warned = 0;
 		    if (!warned) {
-#ifdef NOTYET
-			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 			warned++;
 		    }
 		}
@@ -394,6 +391,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		{
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
+		    bu_log("INTERNAL ERROR: attempt to indirectly import bu_structparse table, unimplemented\n");
 		}
 		break;
 	    default:
@@ -619,9 +617,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	if (sdp->sp_fmt[0] == 'i') {
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 	    /* Indirect to another structure */
@@ -1021,9 +1017,9 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    break;
 	case 'p':
 	    {
-		bu_log("Cannot print type '%%p' yet!\n");
 		/* Indirect to another structure */
 		/* FIXME: unimplemented */
+		bu_log("INTERNAL ERROR: Cannot print type '%%p' yet!\n");
 	    }
 	    break;
 	default:
@@ -1075,9 +1071,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    /* DEPRECATED: use %p instead. */
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 	    bu_struct_print(sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
@@ -1251,17 +1245,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	    /* DEPRECATED: use %p instead. */
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 
 	    bu_vls_init(&sub_str);
-	    bu_vls_struct_print(&sub_str,
-				(struct bu_structparse *)sdp->sp_count,
-				base);
-
+	    bu_vls_struct_print(&sub_str, (struct bu_structparse *)sdp->sp_count, base);
 	    bu_vls_vlscat(vls, &sub_str);
 	    bu_vls_free(&sub_str);
 	    continue;
@@ -1444,9 +1433,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 	    /* DEPRECATED: use %p instead. */
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 	    bu_vls_struct_print2(vls_out, sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
@@ -2542,6 +2529,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		case 'p': {
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
+		    bu_log("INTERNAL ERROR: referencing indirect bu_structparse table, unimplemented\n");
 		}
 
 		default: {
