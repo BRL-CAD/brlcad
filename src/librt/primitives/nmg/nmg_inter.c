@@ -2214,10 +2214,10 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	goto do_ret;
     }
 
-    (void)bu_ptbl(&vert_list1, BU_PTBL_INIT, (long *)NULL);
-    (void)bu_ptbl(&vert_list2, BU_PTBL_INIT, (long *)NULL);
-    (void)bu_ptbl(&eu1_list, BU_PTBL_INIT, (long *)NULL);
-    (void)bu_ptbl(&eu2_list, BU_PTBL_INIT, (long *)NULL);
+    bu_ptbl_init(&vert_list1, 64, "vert_list1 buffer");
+    bu_ptbl_init(&vert_list2, 64, "vert_list1 buffer");
+    bu_ptbl_init(&eu1_list, 64, "eu1_list1 buffer");
+    bu_ptbl_init(&eu2_list, 64, "eu2_list1 buffer");
 
     NMG_CK_EDGE_G_LSEG(eu1->g.lseg_p);
     is->on_eg = eu1->g.lseg_p;
@@ -5241,8 +5241,8 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
 	}
     }
 #endif
-    (void)bu_ptbl(&vert_list1, BU_PTBL_INIT, (long *)NULL);
-    (void)bu_ptbl(&vert_list2, BU_PTBL_INIT, (long *)NULL);
+    bu_ptbl_init(&vert_list1, 64, "vert_list1 buffer");
+    bu_ptbl_init(&vert_list2, 64, "vert_list2 buffer");
 
     /* Build list of all edgeuses in fu1 and fu2 */
     nmg_edgeuse_tabulate(&eu1_list, &fu1->l.magic);
@@ -6502,7 +6502,7 @@ nmg_isect_nearly_coplanar_faces(struct nmg_inter_struct *is, struct faceuse *fu1
     /* get a list of all the loops in this faceuse */
     bu_ptbl_init(&loops, 64, " &loops");
     for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd))
-	bu_ptbl(&loops,  BU_PTBL_INS, (long *)lu);
+	bu_ptbl_ins(&loops, (long *)lu);
 
     /* cut each loop so that every loop ends up either entirely on the other
      * face, or with only a "line of intersection" in common
@@ -6597,7 +6597,7 @@ nmg_isect_nearly_coplanar_faces(struct nmg_inter_struct *is, struct faceuse *fu1
     /* get a list of all the loops in this faceuse */
     bu_ptbl_reset(&loops);
     for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd))
-	bu_ptbl(&loops,  BU_PTBL_INS, (long *)lu);
+	bu_ptbl_ins(&loops, (long *)lu);
 
     /* cut each loop so that every loop ends up either entirely on the other
      * face, or with only a "line of intersection" in common

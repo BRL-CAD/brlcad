@@ -1010,7 +1010,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     os = s;
 
     /* initialize the list of faces, for later use by nmg_gluefaces */
-    bu_ptbl(&faces, BU_PTBL_INIT, NULL);
+    bu_ptbl_init(&faces, 64, "faces");
 
     /* make an array of patch_faces to hold faceuses and the desired
      * thickness of each face.
@@ -1104,7 +1104,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		bu_log("\tMade faceuse 0x%p\n", fu);
 
 	    /* add it to the list */
-	    bu_ptbl(&faces, BU_PTBL_INS, (long *)fu);
+	    bu_ptbl_ins(&faces, (long *)fu);
 
 	    /* remember this face and its thickness */
 	    p_faces[face_count].fu = fu;
@@ -1174,7 +1174,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    nmg_close_shell(s, tol);
 
 	/* free the memory for the face list */
-	bu_ptbl(&faces, BU_PTBL_FREE, NULL);
+	bu_ptbl_free(&faces);
 
 	/* don't need the p_faces array any more */
 	bu_free((char *)p_faces, "build_solid: p_faces");
@@ -1249,7 +1249,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     NMG_CK_FACEUSE(fu);
 
     /* free the memory for the face list */
-    bu_ptbl(&faces, BU_PTBL_RST, NULL);
+    bu_ptbl_reset(&faces);
 
     /* Create a flags array for the model to make sure each face gets
      * its orientation set.
@@ -1374,10 +1374,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     /* glue all the faces of the new shell together */
     for (BU_LIST_FOR (fu, faceuse, &is->fu_hd)) {
 	if (fu->orientation == OT_SAME)
-	    bu_ptbl(&faces, BU_PTBL_INS, (long *)fu);
+	    bu_ptbl_ins(&faces, (long *)fu);
     }
     nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
-    bu_ptbl(&faces, BU_PTBL_RST, NULL);
+    bu_ptbl_reset(&faces);
 
     nmg_shell_coplanar_face_merge(is, tol, 0);
     nmg_shell_a(is, tol);
@@ -1387,7 +1387,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     flags = (long *)bu_calloc(m->maxindex, sizeof(long), "patch-g: flags");
 
     /* make a list of the vertices to be moved */
-    bu_ptbl(&verts_to_move, BU_PTBL_INIT, (long *)NULL);
+    bu_ptbl_init(&verts_to_move, 64, "verts_to_move");
     for (BU_LIST_FOR (fu, faceuse, &is->fu_hd)) {
 	if (fu->orientation != OT_SAME)
 	    continue;
@@ -1410,7 +1410,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		NMG_CK_VERTEX(vu->v_p)
 		    if (NMG_INDEX_TEST_AND_SET(flags, vu->v_p)) {
 			/* move this vertex */
-			bu_ptbl(&verts_to_move, BU_PTBL_INS, (long *)vu->v_p);
+			bu_ptbl_ins(&verts_to_move, (long *)vu->v_p);
 		    }
 	    }
 	}
@@ -1441,7 +1441,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    nmg_km(m);
 	    bu_free((char *)flags, "build_solid: flags");
 	    bu_free((char *)copy_tbl, "build_solid: copy_tbl");
-	    bu_ptbl(&verts_to_move, BU_PTBL_FREE, (long *)NULL);
+	    bu_ptbl_free(&verts_to_move);
 	    return 1;
 	}
 	if (debug > 2)
@@ -1449,7 +1449,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     }
 
     /* done moving, get rid of table */
-    bu_ptbl(&verts_to_move, BU_PTBL_FREE, (long *)NULL);
+    bu_ptbl_free(&verts_to_move);
 
     if (debug > 4) {
 	char tmp_name[NAMESIZE+6];
@@ -1508,7 +1508,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     }
 #endif
 
-    bu_ptbl(&faces, BU_PTBL_RST, NULL);
+    bu_ptbl_reset(&faces);
 
     /* glue all the faces of the new shell together */
     s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -1517,12 +1517,12 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    continue;
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_SAME)
-	    bu_ptbl(&faces, BU_PTBL_INS, (long *)fu);
+	    bu_ptbl_ins(&faces, (long *)fu);
     }
     if (debug)
 	bu_log("Re-glue faces\n");
     nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
-    bu_ptbl(&faces, BU_PTBL_FREE, NULL);
+    bu_ptbl_free(&faces);
 
     /* Calculate bounding boxes */
     if (debug)

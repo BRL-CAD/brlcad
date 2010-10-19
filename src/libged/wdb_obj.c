@@ -6584,7 +6584,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
 		continue;
 
 	    if (dp->d_nref == 0)
-		bu_ptbl(&tops, BU_PTBL_INS, (long *)dp);
+		bu_ptbl_ins(&tops, (long *)dp);
 	}
     }
 
@@ -6609,7 +6609,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     }
 
     /* Free list of tree-tops */
-    bu_ptbl(&tops, BU_PTBL_FREE, (long *)NULL);
+    bu_ptbl_free(&tops);
 
     /* Make new names */
     db_functree(wdbp->dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, NULL);
