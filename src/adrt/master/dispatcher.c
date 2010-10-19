@@ -21,10 +21,14 @@
  *
  */
 
-#include <stdio.h>
+#include "common.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
+#ifdef HAVE_PTHREAD_H
+#  include <pthread.h>
+#endif
+#include "bio.h"
 
 #include "libtie/tie.h"
 #include "adrt.h"
@@ -34,10 +38,12 @@
 #include "camera.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
-#include <sys/sysinfo.h>
+#  include <sys/sysinfo.h>
 #elif defined(HAVE_SYS_SYSCTL_H)
-#include <sys/types.h>
-#include <sys/sysctl.h>
+#  ifdef HAVE_SYS_TYPES_H
+#    include <sys/types.h>
+#  endif
+#  include <sys/sysctl.h>
 #endif
 
 uint16_t dispatcher_frame;
