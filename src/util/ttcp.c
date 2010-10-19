@@ -47,7 +47,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+#ifndef _WIN32
+#  include <sys/socket.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>		/* struct timeval */
