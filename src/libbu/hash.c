@@ -57,7 +57,7 @@ bu_create_hash_tbl(unsigned long tbl_size)
      * may be used for MEM_DEBUG).
      */
     hsh_tbl = (struct bu_hash_tbl *)malloc(sizeof(struct bu_hash_tbl));
-    if (!hsh_tbl) {
+    if (UNLIKELY(!hsh_tbl)) {
 	fprintf(stderr, "Failed to allocate hash table\n");
 	return (struct bu_hash_tbl *)NULL;
     }

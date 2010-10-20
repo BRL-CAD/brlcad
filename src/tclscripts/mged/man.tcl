@@ -83,7 +83,7 @@ proc man {cmdname} {
     	frame .man.bot -relief raised -bd 1
     	pack .man.bot -side bottom -fill both
 
-    	# Use tkhtml3 to dispay the data
+    	# Use tkhtml to dispay the data
     	frame .man.top.msgF
     	html .man.top.msgT -yscrollcommand ".man.top.msgS set"
     	.man.top.msgT configure -parsemode html

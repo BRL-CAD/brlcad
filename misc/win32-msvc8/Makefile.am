@@ -1,9 +1,11 @@
 
 EXTRA_DIST= \
+	3dm2g/3dm2g.vcproj \
 	adrt/adrt.vcproj \
 	asc2g/asc2g.vcproj \
 	asc2nmg/asc2nmg.vcproj \
 	asc2pix/asc2pix.vcproj \
+	bolt/bolt.vcproj \
 	bot2bldxf/bot2bldxf.vcproj \
 	bot_dump/bot_dump.vcproj \
 	bot_shell2vtk/bot_shell2vtk.vcproj \
@@ -22,6 +24,7 @@ EXTRA_DIST= \
 	cell2fb/cell2fb.vcproj \
 	clutter/clutter.vcproj \
 	cmap2fb/cmap2fb.vcproj \
+	coil/coil.vcproj \
 	contours/contours.vcproj \
 	cy2g/cy2g.vcproj \
 	dbupgrade/dbupgrade.vcproj \
@@ -76,12 +79,15 @@ EXTRA_DIST= \
 	g2x3d/g2x3d.vcproj \
 	g42g5/g42g5.vcproj \
 	g52g4/g52g4.vcproj \
-	gif2fb/gif2fb.vcproj \
-	globe/globe.vcproj \
 	g_diff/g_diff.vcproj \
 	g_lint/g_lint.vcproj \
 	g_qa/g_qa.vcproj \
 	g_transfer/g_transfer.vcproj \
+	gastank/gastank.vcproj \
+	gif2fb/gif2fb.vcproj \
+	globe/globe.vcproj \
+	handle/handle.vcproj \
+	human/human.vcproj \
 	iges2g/iges2g.vcproj \
 	itclstub/itclstub.vcproj \
 	itkstub/itkstub.vcproj \
@@ -168,17 +174,21 @@ EXTRA_DIST= \
 	tclstub/tclstub.vcproj \
 	tea/tea.vcproj \
 	tea_nmg/tea_nmg.vcproj \
-	terrain/terrain.vcproj \
+	tktable/tktable.vcproj \
+	wavy/wavy.vcproj \
 	tire/tire.vcproj \
-	tkimg/tkimg.vcproj \
-	tkimgpng/tkimgpng.vcproj \
+	tkhtml/tkhtml.vcproj \
+	tkpng/tkpng.vcproj \
 	tkstub/tkstub.vcproj \
 	torii/torii.vcproj \
 	tube/tube.vcproj \
-	vegitation/vegitation.vcproj \
+	vegetation/vegetation.vcproj \
 	vg2g/vg2g.vcproj \
 	viewpoint2g/viewpoint2g.vcproj \
 	wdb_example/wdb_example.vcproj \
+	window/window.vcproj \
+	window_frame/window_frame.vcproj \
+	wire/wire.vcproj \
 	wish/wish.vcproj
 
 include $(top_srcdir)/misc/Makefile.defs

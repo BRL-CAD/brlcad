@@ -27,6 +27,14 @@
 #include "./tokens.h"
 
 
+#define OPT_STR "qb:fso:"
+
+#define FLAG_CLEAN	0x1
+#define FLAG_SCRIPT	0x2
+
+#define MAGIC	0x0deadbefL
+
+
 struct  frame {
     struct bu_list	l;
 
@@ -38,9 +46,7 @@ struct  frame {
     int	tp;
     int	tl;
 };
-#define MAGIC	0x0deadbefL
-#define FLAG_CLEAN	0x1
-#define FLAG_SCRIPT	0x2
+
 
 struct bu_list head = {MAGIC, &head, &head};
 struct frame globals;
@@ -48,9 +54,7 @@ struct frame globals;
 extern FILE *yyin;
 extern int yylex(void);
 
-extern int bu_optind;
-extern char *bu_optarg;
-int get_args(int argc, char **argv);
+
 int verbose;		/* print status on stderr */
 int specify_base;	/* user specified a base */
 int user_base;		/* value of user-specified base */
@@ -58,8 +62,63 @@ int force_shell;	/* force shell script for each frame */
 int suppress_shell;	/* suppress shell script for each frame */
 int frame_offset;	/* offset added to frame numbers */
 
-void squirtframes(int base);
-static void sf(int start, int skip);
+
+static void
+printframe(struct frame *fp)
+{
+    fprintf(stdout, "start %d;%s\n", fp->number,
+	    (fp->flags & FLAG_CLEAN) ? "clean ;" : "");
+    if (fp->text) {
+	fprintf(stdout, "%s", fp->text);
+    }
+    fprintf(stdout, "end;\n");
+    if ((force_shell || (fp->flags & FLAG_SCRIPT)) && !suppress_shell) {
+	fprintf(stdout, "!end_of_frame.sh %d\n", fp->number);
+    }
+}
+
+
+static void
+sf(int start, int skip)
+{
+    int i;
+    struct frame *runner;
+
+/*
+ * skip to staring point.
+ */
+    i = 0;
+    runner = (struct frame *)head.forw;
+    while (&runner->l != &head && i<start) {
+	runner = (struct frame *)runner->l.forw;
+	i++;
+    }
+    if (&runner->l == &head) return;
+/*
+ * now start the main loop.
+ */
+    while (&runner->l != &head) {
+	printframe(runner);
+	for (i=0; i<skip; i++) {
+	    runner = (struct frame *)runner->l.forw;
+	    if (&runner->l == &head) return;
+	}
+    }
+}
+
+
+void
+squirtframes(int base)
+{
+
+    sf(0, base);	/* start by outputing every base entries at one */
+
+    while (base > 1 ) {
+	sf(base/2, base);
+	base /= 2;
+    }
+}
+
 
 void addtext(struct frame *fp, char *tp)
 {
@@ -174,34 +233,7 @@ struct frame *getframe(FILE *in)
     return new;
 }
 
-#ifdef never
-void
-bubblesort()
-{
-    struct frame *a, *b, *hold;
 
-    for (a = head.forw; a->forw != &head; a = a->forw) {
-	for (b= a->forw; b != &head; b = b->forw) {
-	    if (a->number > b->number) {
-		hold = b->back;
-		REMOVE(b);
-		INSERT(a, b)	/* put b after a */
-		    if (a != hold) {
-			REMOVE(a);
-			APPEND(hold, a);	/* but a where b was */
-		    }
-#if 0
-		a=b;
-		b=hold->forw;
-#else
-		a=&head;
-		break;
-#endif
-	    }
-	}
-    }
-}
-#else /* never */
 void
 bubblesort(void)
 {
@@ -221,21 +253,10 @@ bubblesort(void)
 	}
     }
 }
-#endif /* never */
+
+
 void
-printframe(struct frame *fp)
-{
-    fprintf(stdout, "start %d;%s\n", fp->number,
-	    (fp->flags & FLAG_CLEAN) ? "clean ;" : "");
-    if (fp->text) {
-	fprintf(stdout, "%s", fp->text);
-    }
-    fprintf(stdout, "end;\n");
-    if ((force_shell || (fp->flags & FLAG_SCRIPT)) && !suppress_shell) {
-	fprintf(stdout, "!end_of_frame.sh %d\n", fp->number);
-    }
-}
-void merge(void)
+merge(void)
 {
     struct frame *cur, *next;
 
@@ -255,11 +276,48 @@ void merge(void)
     }
 }
 
+
+int
+get_args(int argc, char **argv)
+{
+    int c;
+    verbose = 1;
+    specify_base = force_shell = suppress_shell = 0;
+    frame_offset = 0;
+    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'q':
+		verbose = 0;
+		break;
+	    case 'b':
+		specify_base = 1;
+		user_base = atoi(bu_optarg);
+		break;
+	    case 'f':
+		force_shell = 1;
+		suppress_shell = 0;
+		break;
+	    case 's':
+		suppress_shell = 1;
+		force_shell = 0;
+		break;
+	    case 'o':
+		frame_offset = atoi(bu_optarg);
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
 /*
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     struct frame *new, *lp;
 
@@ -339,80 +397,6 @@ yywrap(void) {
     return 1;
 }
 
-void
-squirtframes(int base)
-{
-
-    sf(0, base);	/* start by outputing every base entries at one */
-
-    while (base > 1 ) {
-	sf(base/2, base);
-	base /= 2;
-    }
-}
-
-static void
-sf(int start, int skip)
-{
-    int i;
-    struct frame *runner;
-
-/*
- * skip to staring point.
- */
-    i = 0;
-    runner = (struct frame *)head.forw;
-    while (&runner->l != &head && i<start) {
-	runner = (struct frame *)runner->l.forw;
-	i++;
-    }
-    if (&runner->l == &head) return;
-/*
- * now start the main loop.
- */
-    while (&runner->l != &head) {
-	printframe(runner);
-	for (i=0; i<skip; i++) {
-	    runner = (struct frame *)runner->l.forw;
-	    if (&runner->l == &head) return;
-	}
-    }
-}
-
-#define OPT_STR "qb:fso:"
-int get_args (int argc, char **argv)
-{
-    int c;
-    verbose = 1;
-    specify_base = force_shell = suppress_shell = 0;
-    frame_offset = 0;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 'q':
-		verbose = 0;
-		break;
-	    case 'b':
-		specify_base = 1;
-		user_base = atoi(bu_optarg);
-		break;
-	    case 'f':
-		force_shell = 1;
-		suppress_shell = 0;
-		break;
-	    case 's':
-		suppress_shell = 1;
-		force_shell = 0;
-		break;
-	    case 'o':
-		frame_offset = atoi(bu_optarg);
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
-}
 
 /*
  * Local Variables:

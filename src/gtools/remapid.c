@@ -37,9 +37,9 @@
 #include "bio.h"
 
 #include "bu.h"
-#include "vmath.h"
 #include "bn.h"
 #include "db.h"
+#include "vmath.h"
 #include "raytrace.h"
 
 
@@ -858,8 +858,6 @@ main(int argc, char **argv)
     REMAPID_FILE *sfp = NULL;	/* Spec file */
     int ch;		/* Command-line character */
     int tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
-
-    extern int bu_optind;			/* index from bu_getopt(3C) */
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 

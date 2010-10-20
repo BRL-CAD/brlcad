@@ -370,11 +370,9 @@ VPATH = $(srcdir)
 # You may need to tweak this target to make it work correctly.
 #========================================================================
 
-COMPRESS	= tar zcvf $(PKG_DIR)-src.tar.gz $(PKG_DIR)
-DIST_ROOT	= /tmp/togl-dist
-DIST_DIR	= $(DIST_ROOT)/$(PKG_DIR)
+DIST_DIR	= $(distdir)
 BINPKG_DIR	= $(PKG_DIR)-@TCL_VERSION@-$(subst Darwin,MacOSX,$(subst CYGWIN,Windows,$(shell uname -s | sed -e 's/[-_].*//')))
-BINDIST_DIR	= $(DIST_ROOT)/$(BINPKG_DIR)
+BINDIST_DIR	= $(DIST_DIR)/$(BINPKG_DIR)
 
 dist-clean:
 	rm -rf $(DIST_DIR) $(DIST_ROOT)/$(PKG_DIR)*
@@ -410,7 +408,7 @@ dist: dist-clean
 	    fi; \
 	done
 
-	(cd $(DIST_ROOT); $(COMPRESS);)
+distdir: dist
 
 bindist-clean:
 	rm -rf $(BINDIST_DIR) $(DIST_ROOT)/$(PKG_DIR)*

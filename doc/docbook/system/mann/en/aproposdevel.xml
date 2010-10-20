@@ -81,7 +81,7 @@
     </para>
       
     <example>
-      <title>Using <commmand>aproposdevel</commmand> to search for specified developer commands containing "region."</title>
+      <title>Using aproposdevel to search for specified developer commands containing "region."</title>
       <para>
 	<prompt>mged> </prompt><userinput>aproposdevel region</userinput>
       </para>

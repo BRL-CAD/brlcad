@@ -140,10 +140,10 @@ $(PACKAGE_NAME)_$(BRLCAD_VERSION).pkg:
 	@$(ECHO) "         does not contain extra files and comprises a full clean install."
 	@$(ECHO)
 	@if test -f "$(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf" ; then \
-	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(BRLCAD_VERSION)/g" $(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf ; \
+	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]*/BRL-CAD $(BRLCAD_VERSION)/g" $(top_srcdir)/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf ; \
 	fi
 	@if test -f "$(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf" ; then \
-	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]/BRL-CAD $(BRLCAD_VERSION)/g" $(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf ; \
+	  perl -pi -e "s/BRL-CAD [0-9]*\.[0-9]*\.[0-9]*/BRL-CAD $(BRLCAD_VERSION)/g" $(top_srcdir)/misc/macosx/Resources/Welcome.rtfd/TXT.rtf ; \
 	fi
 	@${SH} $(top_srcdir)/sh/make_pkg.sh "$(PACKAGE_NAME)" "$(BRLCAD_VERSION)" "$(DESTDIR)$(prefix)" "$(top_srcdir)/misc/macosx/Resources"
 

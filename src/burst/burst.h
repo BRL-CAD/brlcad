@@ -36,12 +36,6 @@
 #  define NSIG 64
 #endif
 
-/* ANSI C definitions */
-typedef int boolean;
-typedef genptr_t pointer;			/* generic pointer */
-
-
-#define DEGRAD	57.2957795130823208767981548141051703324054724665642
 
 /* menu configuration */
 #define MENU_LFT	1
@@ -80,7 +74,7 @@ typedef genptr_t pointer;			/* generic pointer */
 #define DFL_BARRIERS	100
 #define DFL_BDIST	0.0
 #define DFL_CELLSIZE	101.6
-#define DFL_CONEANGLE	(45.0/DEGRAD)
+#define DFL_CONEANGLE	(45.0/RAD2DEG)
 #define DFL_DEFLECT	0
 #define DFL_DITHER	0
 #define DFL_ELEVATION	0.0

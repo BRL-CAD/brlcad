@@ -717,7 +717,7 @@ LOADED:
 
     bu_log("Could not find shader \"%s\"\n", name);
 #else
-	bu_log("No plugin support.\n");
+    bu_log("No plugin support.\n");
 #endif
     return -1;
 }

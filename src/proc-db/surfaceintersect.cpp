@@ -20,15 +20,14 @@
 /** @{ */
 /** @file surfaceintersect.cpp
  *
- * Until further notice this code is in a state of heavy flux as part
- * of GSoC 2009 as such it would be very foolish to write anything
- * that depends on it right now
- *
- * This code is written and maintained by Joe Doliner: jdoliner@gmail.com
+ * This code was originally written by Joe Doliner: jdoliner@gmail.com
  */
 
-#include "assert.h"
 #include "surfaceintersect.h"
+
+/* implementation system headers */
+#include <assert.h>
+
 
 #define SI_MIN(a, b) (((a) > (b)) ? (a) : (b))
 

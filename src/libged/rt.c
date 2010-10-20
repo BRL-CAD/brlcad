@@ -28,11 +28,11 @@
 #include <stdlib.h>
 
 #ifdef HAVE_SYS_TYPES_H
-#   include <sys/types.h>
+#  include <sys/types.h>
 #endif
 
 #ifdef HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
+#  include <sys/wait.h>
 #endif
 
 #include "bio.h"
@@ -506,7 +506,7 @@ ged_build_tops(struct ged *gedp,
 	    continue;
 
 	if (vp < end)
-	    *vp++ = bu_vls_addr(&gdlp->gdl_path);
+	    *vp++ = gdlp->gdl_dp->d_namep;
 	else {
 	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;

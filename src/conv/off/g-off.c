@@ -414,7 +414,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 
     jack_faces(r, fp_psurf, map);
 
-    bu_ptbl( &vtab, BU_PTBL_FREE, 0 );
+    bu_ptbl_free(&vtab);
     bu_free( (char *)map, "Jack vert map" );
 }
 

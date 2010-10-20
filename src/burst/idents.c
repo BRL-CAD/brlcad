@@ -38,7 +38,7 @@
 
 #define DEBUG_IDENTS	0
 
-boolean
+int
 findIdents( ident, idp )
     int		ident;
     Ids	*idp;
@@ -93,7 +93,7 @@ freeIdents( idp )
     free( (char *) idp->i_next );
 }
 
-boolean
+int
 readIdents( idlist, fp )
     Ids *idlist;
     FILE *fp;
@@ -126,7 +126,7 @@ readIdents( idlist, fp )
     return	1;
 }
 
-boolean
+int
 readColors( colorlist, fp )
     Colors	*colorlist;
     FILE	*fp;

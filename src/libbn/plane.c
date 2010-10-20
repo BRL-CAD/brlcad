@@ -393,7 +393,7 @@ bn_2line3_colinear(const fastf_t *p1,
 	bu_log("bn_2line3colinear(range=%g) ret=1\n", range);
     }
     return 1;
- fail:
+fail:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_2line3colinear(range=%g) ret=0\n", range);
     }
@@ -598,7 +598,7 @@ bn_isect_2planes(fastf_t *pt,
  */
 int
 bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *c, const struct bn_tol *tol)
-    /* dist[2] */
+/* dist[2] */
 
 
 {
@@ -950,7 +950,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	goto out;
     }
     ret = 3;			/* Intersection between A and B */
- out:
+out:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_isect_line2_lseg2() dist[0]=%g, dist[1]=%g, ret=%d\n",
 	       dist[0], dist[1], ret);
@@ -1222,8 +1222,15 @@ bn_isect_line3_line3(fastf_t *t,
     register fastf_t det;
     register fastf_t det1;
     register short int q, r, s;
+    int parallel = 0;
+    int colinear = 0;
+
 
     BN_CK_TOL(tol);
+
+    if (NEAR_ZERO(MAGSQ(c), VUNITIZE_TOL) || NEAR_ZERO(MAGSQ(d), VUNITIZE_TOL)) {
+        bu_bomb("bn_isect_line3_line3(): input vector(s) 'c' and/or 'd' is zero magnitude.\n");
+    }
 
     /* Any intersection will occur in the plane with surface normal D
      * cross C, which may not have unit length.  The plane containing
@@ -1234,24 +1241,31 @@ bn_isect_line3_line3(fastf_t *t,
      * no intersection, because P and A must lie on parallel planes
      * that are different distances from the origin.
      */
+
     VCROSS(n, d, c);
     det = VDOT(n, p) - VDOT(n, a);
-    if (!NEAR_ZERO(det, tol->dist)) {
-	return -1;		/* No intersection */
+    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+	return -1; /* no intersection, lines not in same plane */
     }
 
-    if (NEAR_ZERO(MAGSQ(n), SMALL_FASTF))
-    {
+    if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+	/* lines are parallel, must find another way to get normal vector */
 	vect_t a_to_p;
 
-	/* lines are parallel, must find another way to get normal
-	 * vector.
-	 */
+	parallel = 1;
 	VSUB2(a_to_p, p, a);
 	VCROSS(n, a_to_p, d);
 
-	if (NEAR_ZERO(MAGSQ(n), SMALL_FASTF))
+	if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+	    /* lines are parallel and colinear */
+
+            colinear = 1;
 	    bn_vec_ortho(n, d);
+	}
+    }
+
+    if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+	bu_bomb("bn_isect_line3_line3(): ortho vector zero magnitude\n"); 
     }
 
     /* Solve for t and u in the system:
@@ -1274,9 +1288,19 @@ bn_isect_line3_line3(fastf_t *t,
      * than x, y, z.  Subscript s is the smallest component, used for
      * checking later.
      */
+    if (NEAR_ZERO(n[X], SMALL_FASTF)) {
+        n[X] = 0.0;
+    }
+    if (NEAR_ZERO(n[Y], SMALL_FASTF)) {
+        n[Y] = 0.0;
+    }
+    if (NEAR_ZERO(n[Z], SMALL_FASTF)) {
+        n[Z] = 0.0;
+    }
     abs_n[X] = (n[X] >= 0) ? n[X] : (-n[X]);
     abs_n[Y] = (n[Y] >= 0) ? n[Y] : (-n[Y]);
     abs_n[Z] = (n[Z] >= 0) ? n[Z] : (-n[Z]);
+
     if (abs_n[X] >= abs_n[Y]) {
 	if (abs_n[X] >= abs_n[Z]) {
 	    /* X is largest in magnitude */
@@ -1342,9 +1366,8 @@ bn_isect_line3_line3(fastf_t *t,
      */
     if (NEAR_ZERO(det, DETERMINANT_TOL)) {
 	/* Lines are parallel */
-	if (!NEAR_ZERO(det1, DETERMINANT_TOL)) {
-	    /* Lines are NOT co-linear, just parallel */
-	    return -2;	/* parallel, no intersection */
+	if (!colinear || !NEAR_ZERO(det1, DETERMINANT_TOL)) {
+	    return -2;	/* parallel, not colinear, no intersection */
 	}
 
 	/* Lines are co-linear */
@@ -1392,7 +1415,7 @@ bn_isect_line3_line3(fastf_t *t,
      * distance.
      */
     det = *t * d[s] - *u * c[s] - h[s];
-    if (!NEAR_ZERO(det, tol->dist)) {
+    if (!NEAR_ZERO(det, SMALL_FASTF)) {
 	/* XXX This tolerance needs to be much less loose than
 	 * SQRT_SMALL_FASTF.  What about DETERMINANT_TOL?
 	 */
@@ -1551,7 +1574,7 @@ bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 	goto out;
     }
     FdotD = sqrt(FdotD);
- out:
+out:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_dist_line3_pt3() ret=%g\n", FdotD);
     }
@@ -1585,7 +1608,7 @@ bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
     if ((FdotD = VDOT(f, f) - FdotD * FdotD) <= SMALL_FASTF) {
 	FdotD = 0.0;
     }
- out:
+out:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_distsq_line3_pt3() ret=%g\n", FdotD);
     }
@@ -1733,8 +1756,8 @@ int bn_isect_pt_lseg(fastf_t *dist,
 		     const fastf_t *b,
 		     const fastf_t *p,
 		     const struct bn_tol *tol)
-    /* distance along line from A to P */
-    /* points for line and intersect */
+/* distance along line from A to P */
+/* points for line and intersect */
 
 {
     vect_t AtoP,
@@ -1814,8 +1837,8 @@ int bn_isect_pt_lseg(fastf_t *dist,
 */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
-    /* distance along line from A to P */
-    /* points for line and intersect */
+/* distance along line from A to P */
+/* points for line and intersect */
 
 {
     vect_t AtoP,
@@ -2130,10 +2153,11 @@ bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *
     point_t local;		/* vertex point in local coordinates */
     point_t model;		/* vertex point in model coordinates */
 
-#define ROT_VERT(a, b, c)  \
-	VSET(local, a[X], b[Y], c[Z]); \
-	MAT4X3PNT(model, mat, local); \
-	VMINMAX(omin, omax, model) \
+#define ROT_VERT(a, b, c) {			\
+	VSET(local, a[X], b[Y], c[Z]);		\
+	MAT4X3PNT(model, mat, local);		\
+	VMINMAX(omin, omax, model);		\
+    }
 
     ROT_VERT(imin, imin, imin);
     ROT_VERT(imin, imin, imax);
@@ -2188,35 +2212,35 @@ bn_rotate_plane(fastf_t *oplane, const fastf_t *mat, const fastf_t *iplane)
 int
 bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
-    register fastf_t f;
     register fastf_t dot;
-
+    vect_t pt_a, pt_b;
     BN_CK_TOL(tol);
 
-    /* Check to see if the planes are parallel */
+    if (!NEAR_ZERO(MAGSQ(a) - 1.0, VUNITIZE_TOL) || !NEAR_ZERO(MAGSQ(b) - 1.0, VUNITIZE_TOL)) {
+	bu_bomb("bn_coplanar(): input vector(s) 'a' and/or 'b' is not a unit vector.\n");
+    }
+
     dot = VDOT(a, b);
-    if (dot >= 0) {
-	/* Normals head in generally the same directions */
-	if (dot < tol->para)
-	    return 0;	/* Planes intersect */
+    VSCALE(pt_a, a, a[3]);
+    VSCALE(pt_b, b, b[3]);
 
-	/* Planes have "exactly" the same normal vector */
-	f = a[3] - b[3];
-	if (NEAR_ZERO(f, tol->dist)) {
-	    return 1;	/* Coplanar, same direction */
+    if (NEAR_ZERO(dot, SMALL_FASTF)) {
+	return 0; /* planes are perpendicular */
+    }
+
+    /* parallel is when dot is within SMALL_FASTF of either -1 or 1 */
+    if ((dot <= -SMALL_FASTF) ? (NEAR_ZERO(dot + 1.0, SMALL_FASTF)) : (NEAR_ZERO(dot - 1.0, SMALL_FASTF))) {
+	if (bn_pt3_pt3_equal(pt_a, pt_b, tol)) { /* test for coplanar */
+	    if ( dot >= SMALL_FASTF) { /* test normals in same direction */
+		return 1;
+            } else {
+		return 2;
+	    }
+	} else {
+	    return -1;
 	}
-	return -1;	/* Parallel but distinct */
     }
-    /* Normals head in generally opposite directions */
-    if (-dot < tol->para)
-	return 0;	/* Planes intersect */
-
-    /* Planes have "exactly" opposite normal vectors */
-    f = a[3] + b[3];
-    if (NEAR_ZERO(f, tol->dist)) {
-	return 2;	/* Coplanar, opposite directions */
-    }
-    return -1;		/* Parallel but distinct */
+    return 0;
 }
 
 /**
@@ -2344,7 +2368,7 @@ bn_between(double left, double mid, double right, const struct bn_tol *tol)
     }
     if (mid < right || mid > left)  goto fail;
     return 1;
- fail:
+fail:
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_between(%.17e, %.17e, %.17e) ret=0 FAIL\n",
 	       left, mid, right);
@@ -2531,17 +2555,17 @@ bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, co
     int class;	/* current classification */
     fastf_t d;
 
-#define CHECK_PT(x, y, z) \
-	d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3];\
-	if (d < -tol->dist) { \
-		if (class == BN_CLASSIFY_OUTSIDE) \
-			return BN_CLASSIFY_OVERLAPPING; \
-		else class = BN_CLASSIFY_INSIDE; \
-	} else if (d > tol->dist) { \
-		if (class == BN_CLASSIFY_INSIDE) \
-			return BN_CLASSIFY_OVERLAPPING; \
-		else class = BN_CLASSIFY_OUTSIDE; \
-	} else return BN_CLASSIFY_OVERLAPPING
+#define CHECK_PT(x, y, z)						\
+    d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3]; \
+    if (d < -tol->dist) {						\
+	if (class == BN_CLASSIFY_OUTSIDE)				\
+	    return BN_CLASSIFY_OVERLAPPING;				\
+	else class = BN_CLASSIFY_INSIDE;				\
+    } else if (d > tol->dist) {						\
+	if (class == BN_CLASSIFY_INSIDE)				\
+	    return BN_CLASSIFY_OVERLAPPING;				\
+	else class = BN_CLASSIFY_OUTSIDE;				\
+    } else return BN_CLASSIFY_OVERLAPPING
 
     class = BN_CLASSIFY_UNIMPLEMENTED;
     CHECK_PT(min[X], min[Y], min[Z]);

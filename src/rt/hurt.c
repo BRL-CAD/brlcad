@@ -174,7 +174,7 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL, "height", &height },
     {"%f",	1, "perspective", bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "perspective", &rt_perspective },
     {"%f",	1, "angle",	bu_byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL, "angle", &rt_perspective },
-    {"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL, "params", NULL },
+    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL, "params", NULL },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

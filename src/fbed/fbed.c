@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "fb.h"
 
 /* FIXME */
@@ -94,7 +95,7 @@ bool AproxPixel(RGBpixel a, RGBpixel b, int t)
 
 static Panel panel;	      /* Current panel. */
 static Point bitpad;
-static Rectangle current;     /* Current saved rectangle. */
+static Rect2D current;     /* Current saved rectangle. */
 static int step;	      /* Current step size. */
 static int size_viewport;
 static int last_key;
@@ -102,7 +103,7 @@ static int pointpicked;
 static int tolerance = 0;
 
 HIDDEN RGBpixel *pixel_Avg();
-HIDDEN bool drawRectangle(Rectangle *rectp, unsigned char *pixelp);
+HIDDEN bool drawRect2D(Rect2D *rectp, unsigned char *pixelp);
 HIDDEN bool getColor(unsigned char *pixelp, char *prompt, char *buffer);
 HIDDEN bool paintNonBorder(unsigned char *borderpix, Point *pt);
 HIDDEN bool paintSolidRegion(unsigned char *regionpix, Point *pt);
@@ -116,12 +117,12 @@ HIDDEN void init_Try(void);
 HIDDEN void fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color));
 HIDDEN void fb_Wind(void);
 HIDDEN void get_Point(char *msg, Point *pointp);
-HIDDEN void clip_Rectangle(Rectangle *rectp);
-HIDDEN void get_Rectangle(char *name, Rectangle *rectp);
-HIDDEN void fillRectangle(Rectangle *rectp, RGBpixel (*pixelp));
-HIDDEN void fix_Rectangle(Rectangle *rectp);
+HIDDEN void clip_Rect2D(Rect2D *rectp);
+HIDDEN void get_Rect2D(char *name, Rect2D *rectp);
+HIDDEN void fillRect2D(Rect2D *rectp, RGBpixel (*pixelp));
+HIDDEN void fix_Rect2D(Rect2D *rectp);
 HIDDEN void pushPoint(Point *pt, PtStack **spp);
-HIDDEN void put_Fb_Panel(Rectangle *, RGBpixel *);
+HIDDEN void put_Fb_Panel(Rect2D *, RGBpixel *);
 
 HIDDEN int 
     /* ^X  */ f_Exec_Function(),
@@ -163,7 +164,7 @@ HIDDEN int
     /* Y   */ f_Bind_Name_To_Key(),
     /* Z   */ f_Stop_Macro(),
     /* a   */ f_Enter_Macro_Definition(),
-    /* b   */ f_Set_Rectangle(),
+    /* b   */ f_Set_Rect2D(),
     /* c   */ f_Center_Window(),
     /* d   */ f_DrawLine(),
     /* f   */ f_Rd_Font(),
@@ -182,7 +183,7 @@ HIDDEN int
     /* s   */ f_String(),
     /* t   */ f_ChngRegionColor(),
     /* u   */ f_Rd_Macros_From_File(char *),
-    /* v   */ f_DrawRectangle(),
+    /* v   */ f_DrawRect2D(),
     /* w   */ f_Put_Pixel(),
     /* x   */ f_Set_X_Pos(),
     /* y   */ f_Set_Y_Pos(),
@@ -288,7 +289,7 @@ Func_Tab func_tab[] =
     {/* _   */ f_Nop,			NULL,	"nop"},
     {/* `   */ f_Nop,			NULL,	"nop"},
     {/* a   */ f_Enter_Macro_Definition,NULL,	"enter-macro-definition"},
-    {/* b   */ f_Set_Rectangle,		NULL,	"set-current-rectangle"},
+    {/* b   */ f_Set_Rect2D,		NULL,	"set-current-rectangle"},
     {/* c   */ f_Center_Window,		NULL,	"window-center"},
     {/* d   */ f_DrawLine,		NULL,	"draw-line"},
     {/* e   */ f_Nop,			NULL,	"nop"},
@@ -308,7 +309,7 @@ Func_Tab func_tab[] =
     {/* s   */ f_String,		NULL,	"put-string"},
     {/* t   */ f_ChngRegionColor,	NULL,	"change-region-color"},
     {/* u   */ f_Rd_Macros_From_File,	NULL,	"read-macros-from-file"},
-    {/* v   */ f_DrawRectangle,		NULL,	"draw-rectangle"},
+    {/* v   */ f_DrawRect2D,		NULL,	"draw-rectangle"},
     {/* w   */ f_Put_Pixel,		NULL,	"put-pixel"},
     {/* x   */ f_Set_X_Pos,		NULL,	"set-cursor-x-pos"},
     {/* y   */ f_Set_Y_Pos,		NULL,	"set-cursor-y-pos"},
@@ -428,7 +429,7 @@ main(int argc, char **argv)
 }
 
 HIDDEN bool
-drawRectangle(Rectangle *rectp, unsigned char *pixelp)
+drawRect2D(Rect2D *rectp, unsigned char *pixelp)
 {	
     int x, y;
     y = rectp->r_origin.p_y;
@@ -449,7 +450,7 @@ drawRectangle(Rectangle *rectp, unsigned char *pixelp)
 }
 
 HIDDEN void
-fillRectangle(Rectangle *rectp, RGBpixel (*pixelp))
+fillRect2D(Rect2D *rectp, RGBpixel (*pixelp))
 {
     int btm = rectp->r_origin.p_y;
     int top = rectp->r_corner.p_y;
@@ -1210,7 +1211,7 @@ HIDDEN int
 /*ARGSUSED*/
 f_DrawLine()
 {
-    Rectangle lineseg;
+    Rect2D lineseg;
     int majdelta;
     int mindelta;
     int xsign;
@@ -1280,16 +1281,16 @@ f_DrawLine()
 
 HIDDEN int
 /*ARGSUSED*/
-f_DrawRectangle() /* Draw current rectangle with "paint" color. */
+f_DrawRect2D() /* Draw current rectangle with "paint" color. */
 {
-    return drawRectangle( &current, (unsigned char *) paint ) ? 1 : 0;
+    return drawRect2D( &current, (unsigned char *) paint ) ? 1 : 0;
 }
 
 HIDDEN int
 /*ARGSUSED*/
 f_Fill_Panel() /* Fill current rectangle with "paint" color. */
 {
-    fillRectangle( &current, (RGBpixel *) paint );
+    fillRect2D( &current, (RGBpixel *) paint );
     return 1;
 }
 
@@ -1395,11 +1396,11 @@ f_Get_Panel() /* Grab panel from framebuffer. */
 {
     if ( panel.n_buf != (RGBpixel *) NULL )
 	free( (char *) panel.n_buf );
-    prnt_Rectangle(	"Storing rectangle", &current );
+    prnt_Rect2D(	"Storing rectangle", &current );
     panel.n_buf = get_Fb_Panel( &current );
     panel.n_wid  = current.r_corner.p_x - current.r_origin.p_x;
     panel.n_hgt = current.r_corner.p_y - current.r_origin.p_y;
-    fb_log( "Rectangle saved.\n" );
+    fb_log( "Rect2D saved.\n" );
     return 1;
 }
 
@@ -1659,9 +1660,9 @@ f_Enter_Macro_Definition()
 
 HIDDEN int
 /*ARGSUSED*/
-f_Set_Rectangle() /* Set current rectangle. */
+f_Set_Rect2D() /* Set current rectangle. */
 {
-    get_Rectangle( "rectangle", &current );
+    get_Rect2D( "rectangle", &current );
     return 1;
 }
 
@@ -1940,7 +1941,6 @@ HIDDEN int
 pars_Argv(int argc, char **argv)
 {
     int c;
-    extern int bu_optind;
 
     /* Parse options. */
     while ( (c = bu_getopt( argc, argv, "hp" )) != EOF )
@@ -2007,13 +2007,13 @@ fb_Wind(void)
 HIDDEN void
 fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color))
 {
-    Rectangle clipped_rect;
+    Rect2D clipped_rect;
     clipped_rect.r_origin.p_x = x0;
     clipped_rect.r_corner.p_x = x1;
     clipped_rect.r_origin.p_y = y0;
     clipped_rect.r_corner.p_y = y1;
-    clip_Rectangle( &clipped_rect );
-    fillRectangle( &clipped_rect, color );
+    clip_Rect2D( &clipped_rect );
+    fillRect2D( &clipped_rect, color );
     return;
 }
 
@@ -2149,7 +2149,7 @@ fb_Get_Pixel(unsigned char *pixel)
 /*	g e t _ F b _ P a n e l ( ) */
 RGBpixel *
 get_Fb_Panel( rectp )
-    Rectangle *rectp;
+    Rect2D *rectp;
 {
     int top;
     int rectwid;
@@ -2194,12 +2194,12 @@ get_Fb_Panel( rectp )
 
 /*	p u t _ F b _ P a n e l ( ) */
 HIDDEN void
-put_Fb_Panel(Rectangle *rectp, RGBpixel *rgbpanel)
+put_Fb_Panel(Rect2D *rectp, RGBpixel *rgbpanel)
 {
     int top, rectwid, y;
     int lft, rgt, btm;
     rectwid = rectp->r_corner.p_x - rectp->r_origin.p_x + 1;
-    clip_Rectangle( rectp );
+    clip_Rect2D( rectp );
     lft = rectp->r_origin.p_x;
     rgt = rectp->r_corner.p_x;
     btm = rectp->r_origin.p_y;
@@ -2269,19 +2269,19 @@ get_Point(char *msg, Point *pointp)
 
 /*	g e t _ R e c t a n g l e ( ) */
 HIDDEN void
-get_Rectangle(char *name, Rectangle *rectp)
+get_Rect2D(char *name, Rect2D *rectp)
 {
     char buf[MAX_LN];
     (void) snprintf( buf, MAX_LN, "Pick lower-left corner of %s.", name );
     get_Point( buf, &rectp->r_origin );
     (void) snprintf( buf, MAX_LN, "Pick upper-right corner of %s.", name );
     get_Point( buf, &rectp->r_corner );
-    fix_Rectangle( rectp );
+    fix_Rect2D( rectp );
     return;
 }
 
 HIDDEN void
-fix_Rectangle(Rectangle *rectp)
+fix_Rect2D(Rect2D *rectp)
 {
     int i;
     if ( rectp->r_origin.p_x > rectp->r_corner.p_x ) {
@@ -2298,7 +2298,7 @@ fix_Rectangle(Rectangle *rectp)
 }
 
 HIDDEN void
-clip_Rectangle(Rectangle *rectp)
+clip_Rect2D(Rect2D *rectp)
 {
     rectp->r_origin.p_x = rectp->r_origin.p_x < 0 ? 0 : rectp->r_origin.p_x;
     rectp->r_corner.p_x = rectp->r_corner.p_x >= fb_getwidth(fbp) ? fb_getwidth(fbp) - 1 : rectp->r_corner.p_x;

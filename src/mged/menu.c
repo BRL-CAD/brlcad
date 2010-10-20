@@ -221,45 +221,35 @@ mmenu_display(int y_top)
 		   color_scheme->cs_menu_line[0],
 		   color_scheme->cs_menu_line[1],
 		   color_scheme->cs_menu_line[2], 1, 1.0);
-#if 1
+
     DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
-#else
-    DM_SET_LINE_ATTR(dmp, 1, 0);
-#endif
+
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
 		    GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
     for (menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
 	if (*m == MENU_NULL) continue;
-	for (item=0, mptr = *m;
-	     mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
-	     mptr++, y += MENU_DY, item++) {
-#if 0
-	    if ((*m == (struct menu_item *)second_menu && (mptr->menu_arg == BV_RATE_TOGGLE ||
-							   mptr->menu_arg == BV_EDIT_TOGGLE))
-		|| (*m == (struct menu_item *)sed_menu && mptr->menu_arg == BE_S_CONTEXT))
-#else
-		if ((*m == (struct menu_item *)second_menu &&
-		     (mptr->menu_arg == BV_RATE_TOGGLE ||
-		      mptr->menu_arg == BV_EDIT_TOGGLE ||
-		      mptr->menu_arg == BV_EYEROT_TOGGLE)))
-#endif
-		    mged_highlight_menu_item(mptr, y);
-		else {
-		    if (mptr == *m)
-			DM_SET_FGCOLOR(dmp,
-				       color_scheme->cs_menu_title[0],
-				       color_scheme->cs_menu_title[1],
-				       color_scheme->cs_menu_title[2], 1, 1.0);
-		    else
-			DM_SET_FGCOLOR(dmp,
-				       color_scheme->cs_menu_text2[0],
-				       color_scheme->cs_menu_text2[1],
-				       color_scheme->cs_menu_text2[2], 1, 1.0);
-		    DM_DRAW_STRING_2D(dmp, mptr->menu_string,
-				      GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-		}
+	for (item=0, mptr = *m; mptr->menu_string[0] != '\0' && y > TITLE_YBASE; mptr++, y += MENU_DY, item++) {
+	    if ((*m == (struct menu_item *)second_menu
+		 && (mptr->menu_arg == BV_RATE_TOGGLE
+		     || mptr->menu_arg == BV_EDIT_TOGGLE
+		     || mptr->menu_arg == BV_EYEROT_TOGGLE)))
+		mged_highlight_menu_item(mptr, y);
+	    else {
+		if (mptr == *m)
+		    DM_SET_FGCOLOR(dmp,
+				   color_scheme->cs_menu_title[0],
+				   color_scheme->cs_menu_title[1],
+				   color_scheme->cs_menu_title[2], 1, 1.0);
+		else
+		    DM_SET_FGCOLOR(dmp,
+				   color_scheme->cs_menu_text2[0],
+				   color_scheme->cs_menu_text2[1],
+				   color_scheme->cs_menu_text2[2], 1, 1.0);
+		DM_DRAW_STRING_2D(dmp, mptr->menu_string,
+				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
+	    }
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_menu_line[0],
 			   color_scheme->cs_menu_line[1],
@@ -286,11 +276,9 @@ mmenu_display(int y_top)
 		   color_scheme->cs_menu_line[0],
 		   color_scheme->cs_menu_line[1],
 		   color_scheme->cs_menu_line[2], 1, 1.0);
-#if 1
+
     DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
-#else
-    DM_SET_LINE_ATTR(dmp, 1, 0);
-#endif
+
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top-1),
 		    GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)));

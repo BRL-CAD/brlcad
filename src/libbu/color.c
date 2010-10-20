@@ -175,7 +175,7 @@ int bu_str_to_rgb(char *str, unsigned char *rgb)
     int num;
     int r, g, b;
 
-    if (!str || !rgb) {
+    if (UNLIKELY(!str || !rgb)) {
 	return 0;
     }
 
@@ -210,7 +210,7 @@ int bu_str_to_rgb(char *str, unsigned char *rgb)
 int
 bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 {
-    if (!cp || !rgb) {
+    if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
 
@@ -225,7 +225,7 @@ bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 int
 bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 {
-    if (!cp || !rgb) {
+    if (UNLIKELY(!cp || !rgb)) {
 	return 0;
     }
 

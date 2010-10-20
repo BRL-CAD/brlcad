@@ -613,7 +613,7 @@ cline_dump(void)
     (void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
     rt_db_free_internal(&intern);
-    db_free_external( &ext );
+    bu_free_external( &ext );
 }
 
 void
@@ -670,7 +670,7 @@ bot_dump(void)
     }
 
     rt_db_free_internal(&intern);
-    db_free_external( &ext );
+    bu_free_external( &ext );
 }
 
 void
@@ -705,7 +705,7 @@ pipe_dump(void)	/* Print out Pipe record information */
     dump_pipe_segs(name, &pipe->pipe_segs_head);
 
     rt_db_free_internal(&intern);
-    db_free_external( &ext );
+    bu_free_external( &ext );
 }
 
 void
@@ -814,7 +814,7 @@ arbn_dump(void)
     }
 
     rt_db_free_internal(&intern);
-    db_free_external( &ext );
+    bu_free_external( &ext );
 }
 
 

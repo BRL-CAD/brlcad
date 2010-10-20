@@ -37,10 +37,10 @@ bu_mread(int fd, void *bufp, long int n)
 
     while (count < n) {
 	nread = read(fd, cbufp, (size_t)n-count);
-	if (nread < 0) {
+	if (UNLIKELY(nread < 0)) {
 	    return nread;
 	}
-	if (nread == 0) {
+	if (UNLIKELY(nread == 0)) {
 	    return count;
 	}
 	count += nread;

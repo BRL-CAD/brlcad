@@ -28,20 +28,24 @@
 #include "common.h"
 
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "rtprivate.h"
-#include "./ext.h"
 #include "plot3.h"
 #include "scanline.h"
+
+#include "./ext.h"
+
 
 static struct timeval timeStart;	/* These are pulled directly from timer42 */
 static struct rusage ruA;		/*  Resource utilization at the start */

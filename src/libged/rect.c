@@ -141,7 +141,7 @@ ged_rect(struct ged	*gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s pos' command requires 0 or 2 arguments\n", command);
+	bu_vls_printf(&gedp->ged_result_str, "The '%s cdim' command requires 0 or 2 arguments\n", command);
 	return GED_ERROR;
     }
 
@@ -213,7 +213,7 @@ ged_rect(struct ged	*gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
+	bu_vls_printf(&gedp->ged_result_str, "The '%s bg' command requires 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
@@ -261,7 +261,7 @@ ged_rect(struct ged	*gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s lw' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(&gedp->ged_result_str, "The '%s lstyle' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -285,7 +285,7 @@ ged_rect(struct ged	*gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s lw' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(&gedp->ged_result_str, "The '%s lwidth' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -301,7 +301,7 @@ ged_rect(struct ged	*gedp,
 	if (argc == 0)
 	    return ged_rect_zoom(gedp);
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s ZOOM' command accepts no arguments\n", command);
+	bu_vls_printf(&gedp->ged_result_str, "The '%s zoom' command accepts no arguments\n", command);
 	return GED_ERROR;
     }
 

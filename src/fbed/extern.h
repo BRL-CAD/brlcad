@@ -51,7 +51,7 @@ typedef struct
     Point r_origin;
     Point r_corner;
 }
-Rectangle;
+Rect2D;
 
 typedef struct
 {
@@ -102,7 +102,7 @@ extern void prnt_Usage(void);
 extern void prnt_Scroll( const char * fmt, ... );
 extern void prnt_Debug( const char *fmt, ... );
 extern void prnt_Event( const char *fmt, ... );
-extern void prnt_Rectangle(const char *str, Rectangle *rectp);
+extern void prnt_Rect2D(const char *str, Rect2D *rectp);
 extern void do_Key_Cmd(int key, int n);
 extern int InitTermCap();
 extern void prnt_Prompt(const char *msg);

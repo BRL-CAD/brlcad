@@ -30,7 +30,6 @@
 #define BREP_H
 
 #include "common.h"
-#include "bio.h"
 
 #ifdef __cplusplus
 extern "C++" {

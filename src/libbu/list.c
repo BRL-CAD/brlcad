@@ -124,23 +124,25 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 
     cur = hd;
     do  {
-	if (cur->magic == BU_LIST_HEAD_MAGIC)  head_count++;
-	if (!cur->forw) {
+	if (cur->magic == BU_LIST_HEAD_MAGIC)
+	    head_count++;
+
+	if (UNLIKELY(!cur->forw)) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->forw=%p, hd=%p\n",
 		   str, (void *)cur, (void *)cur->forw, (void *)hd);
 	    bu_bomb("bu_ck_list() forw\n");
 	}
-	if (cur->forw->back != cur) {
+	if (UNLIKELY(cur->forw->back != cur)) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->forw=%p, cur->forw->back=%p, hd=%p\n",
 		   str, (void *)cur, (void *)cur->forw, (void *)cur->forw->back, (void *)hd);
 	    bu_bomb("bu_ck_list() forw->back\n");
 	}
-	if (!cur->back) {
+	if (UNLIKELY(!cur->back)) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->back=%p, hd=%p\n",
 		   str, (void *)cur, (void *)cur->back, (void *)hd);
 	    bu_bomb("bu_ck_list() back\n");
 	}
-	if (cur->back->forw != cur) {
+	if (UNLIKELY(cur->back->forw != cur)) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->back=%p, cur->back->forw=%p, hd=%p\n",
 		   str, (void *)cur, (void *)cur->back, (void *)cur->back->forw, (void *)hd);
 	    bu_bomb("bu_ck_list() back->forw\n");
@@ -148,7 +150,7 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 	cur = cur->forw;
     } while (cur != hd);
 
-    if (head_count != 1) {
+    if (UNLIKELY(head_count != 1)) {
 	bu_log("bu_ck_list(%s) head_count = %d, hd=%p\n",
 	       str, head_count, (void *)hd);
 	bu_bomb("bu_ck_list() headless!\n");
@@ -166,12 +168,12 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
     do  {
 	if (cur->magic == BU_LIST_HEAD_MAGIC) {
 	    head_count++;
-	} else if (cur->magic != magic) {
+	} else if (UNLIKELY(cur->magic != magic)) {
 	    void *curmagic = (void *)(ptrdiff_t)cur->magic;
 	    void *formagic = (void *)(ptrdiff_t)cur->forw->magic;
 	    void *hdmagic = (void *)(ptrdiff_t)hd->magic;
 	    bu_log("bu_ck_list(%s) cur magic=(%s)%p, cur->forw magic=(%s)%p, hd magic=(%s)%p, item=%d\n",
-		   str, 
+		   str,
 		   bu_identify_magic(cur->magic), curmagic,
 		   bu_identify_magic(cur->forw->magic), formagic,
 		   bu_identify_magic(hd->magic), hdmagic,
@@ -179,12 +181,12 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	    bu_bomb("bu_ck_list_magic() cur->magic\n");
 	}
 
-	if (!cur->forw) {
+	if (UNLIKELY(!cur->forw)) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->forw=%p, hd=%p, item=%d\n",
 		   str, (void *)cur, (void *)cur->forw, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() forw NULL\n");
 	}
-	if (cur->forw->back != cur) {
+	if (UNLIKELY(cur->forw->back != cur)) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->forw=%p, cur->forw->back=%p, hd=%p, item=%d\n",
 		   str,
 		   (void *)cur, (void *)cur->forw, (void *)cur->forw->back, (void *)hd, item);
@@ -194,12 +196,12 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 		   bu_identify_magic(cur->forw->back->magic));
 	    bu_bomb("bu_ck_list_magic() cur->forw->back != cur\n");
 	}
-	if (!cur->back) {
+	if (UNLIKELY(!cur->back)) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->back=%p, hd=%p, item=%d\n",
 		   str, (void *)cur, (void *)cur->back, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() back NULL\n");
 	}
-	if (cur->back->forw != cur) {
+	if (UNLIKELY(cur->back->forw != cur)) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->back=%p, cur->back->forw=%p, hd=%p, item=%d\n",
 		   str, (void *)cur, (void *)cur->back, (void *)cur->back->forw, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() cur->back->forw != cur\n");
@@ -208,7 +210,7 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	item++;
     } while (cur != hd);
 
-    if (head_count != 1) {
+    if (UNLIKELY(head_count != 1)) {
 	bu_log("bu_ck_list_magic(%s) head_count = %d, hd=%p, items=%d\n",
 	       str, head_count, (void *)hd, item);
 	bu_bomb("bu_ck_list_magic() headless!\n");

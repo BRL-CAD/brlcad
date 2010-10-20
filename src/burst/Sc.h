@@ -41,7 +41,7 @@ in the terminal handler.
 #include "./burst.h"
 
 /**
-   boolean	ScInit( FILE *fp )
+   int	ScInit( FILE *fp )
 
    ScInit() must be invoked before any other function in the Sc
    package.  Stream fp must be open for writing and all terminal
@@ -75,7 +75,7 @@ in the terminal handler.
    there is a problem in retrieving the corresponding termcap
    entry.
 **/
-    extern boolean	ScInit( FILE *fp );
+    extern int	ScInit( FILE *fp );
 
 /**
 
@@ -90,40 +90,40 @@ return "true" (assuming that it worked).  There is no way to
 be sure of this.
 
 char	*ScCE 	(clear from under the cursor to end of line)
-boolean	ScClrEOL( void )
+int	ScClrEOL( void )
 
 char	*ScCS	(change scrolling region)
-boolean	ScClrScrlReg( void )
+int	ScClrScrlReg( void )
 
 char	*ScSE	(end standout mode)
-boolean	ScClrStandout( void )
+int	ScClrStandout( void )
 
 char	*ScCL	(clear screen, and home cursor)
-boolean	ScClrText( void )
+int	ScClrText( void )
 
 char	*ScAL	(insert a line under the cursor)
-boolean	ScInsertLn( void )
+int	ScInsertLn( void )
 
 char	*ScDL	(delete the line under the cursor)
-boolean	ScDeleteLn( void )
+int	ScDeleteLn( void )
 
 char	*ScSR	(scroll text backwards 1 line)
-boolean	ScDnScroll( void )
+int	ScDnScroll( void )
 
 char	*ScHO	(move cursor to top-left corner of screen)
-boolean	ScHmCursor( void )
+int	ScHmCursor( void )
 
 char	*ScCM	(move cursor to column and row <x, y>)
-boolean	ScMvCursor( x, y )
+int	ScMvCursor( x, y )
 
 char	*ScCS	(set scrolling region from top to btm incl.)
-boolean	ScSetScrlReg( top, btm )
+int	ScSetScrlReg( top, btm )
 
 char	*ScSO	(begin standout mode)
-boolean	ScSetStandout( void )
+int	ScSetStandout( void )
 
 char	*ScSF	(scroll text forwards 1 line)
-boolean	ScUpScroll( void )
+int	ScUpScroll( void )
 
 **/
 extern char	*ScBC;
@@ -144,18 +144,18 @@ extern char	*ScSF;
 extern int	ScLI;
 extern int	ScCO;
 
-extern boolean	ScClrEOL( void );
-extern boolean	ScClrScrlReg( void );
-extern boolean	ScClrStandout( void );
-extern boolean	ScClrText( void );
-extern boolean	ScDeleteLn( void );
-extern boolean	ScDnScroll( void );
-extern boolean	ScHmCursor( void );
-extern boolean	ScInsertLn( void );
-extern boolean	ScMvCursor( int x, int y );
-extern boolean	ScSetScrlReg( int top, int btm );
-extern boolean	ScSetStandout( void );
-extern boolean	ScUpScroll( void );
+extern int	ScClrEOL( void );
+extern int	ScClrScrlReg( void );
+extern int	ScClrStandout( void );
+extern int	ScClrText( void );
+extern int	ScDeleteLn( void );
+extern int	ScDnScroll( void );
+extern int	ScHmCursor( void );
+extern int	ScInsertLn( void );
+extern int	ScMvCursor( int x, int y );
+extern int	ScSetScrlReg( int top, int btm );
+extern int	ScSetStandout( void );
+extern int	ScUpScroll( void );
 
 #define ScTCAPSIZ	1024
 #define ScTERMSIZ	80

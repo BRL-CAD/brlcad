@@ -70,13 +70,13 @@ bu_badmagic_tcl(Tcl_Interp *interp,
 {
     char buf[SMALLBUFSIZ];
 
-    if (!(ptr)) {
+    if (UNLIKELY(!(ptr))) {
 	snprintf(buf, SMALLBUFSIZ, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n",
 		 str, file, line);
 	Tcl_AppendResult(interp, buf, NULL);
 	return;
     }
-    if (*((unsigned long *)(ptr)) != (magic)) {
+    if (UNLIKELY(*((unsigned long *)(ptr)) != (magic))) {
 	snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 		 (void *)ptr,
 		 str, magic,
@@ -175,7 +175,7 @@ bu_tcl_mem_barriercheck(ClientData clientData,
     }
 
     ret = bu_mem_barriercheck();
-    if (ret < 0) {
+    if (UNLIKELY(ret < 0)) {
 	Tcl_AppendResult(interp, "bu_mem_barriercheck() failed\n", NULL);
 	return TCL_ERROR;
     }

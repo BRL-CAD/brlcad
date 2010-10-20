@@ -42,11 +42,11 @@ bu_avs_init_empty(struct bu_attribute_value_set *avsp)
 void
 bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 {
-    if (bu_debug & BU_DEBUG_AVS)
+    if (UNLIKELY(bu_debug & BU_DEBUG_AVS))
 	bu_log("bu_avs_init(%p, len=%d, %s)\n", (void *)avsp, len, str);
 
     avsp->magic = BU_AVS_MAGIC;
-    if (len <= 0)
+    if (UNLIKELY(len <= 0))
 	len = AVS_ALLOCATION_INCREMENT + AVS_ALLOCATION_INCREMENT;
     avsp->count = 0;
     avsp->max = len;
@@ -63,7 +63,7 @@ bu_avs_new(int len, const char *str)
     BU_GETSTRUCT(avsp, bu_attribute_value_set);
     bu_avs_init(avsp, len, "bu_avs_new");
 
-    if (bu_debug & BU_DEBUG_AVS)
+    if (UNLIKELY(bu_debug & BU_DEBUG_AVS))
 	bu_log("bu_avs_new(len=%d, %s) = %p\n", len, str, (void *)avsp);
 
     return avsp;
@@ -77,8 +77,13 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
     BU_CK_AVS(avsp);
 
-    if (!name) {
+    if (UNLIKELY(!name)) {
 	bu_log("WARNING: bu_avs_add() received a null attribute name\n");
+	return 0;
+    }
+
+    if (UNLIKELY(strlen(name) == 0)) {
+	bu_log("WARNING: bu_avs_add() received an attribute name with zero length\n");
 	return 0;
     }
 
@@ -182,7 +187,7 @@ bu_avs_remove(struct bu_attribute_value_set *avsp, const char *name)
 
     BU_CK_AVS(avsp);
 
-    if (!name) {
+    if (UNLIKELY(!name)) {
 	return -1;
     }
 
@@ -217,7 +222,7 @@ bu_avs_free(struct bu_attribute_value_set *avsp)
 
     BU_CK_AVS(avsp);
 
-    if (avsp->max < 1)
+    if (UNLIKELY(avsp->max < 1))
 	return;
 
     if (avsp->count) {
@@ -233,7 +238,7 @@ bu_avs_free(struct bu_attribute_value_set *avsp)
 	}
 	avsp->count = 0;
     }
-    if (avsp->avp) {
+    if (LIKELY(avsp->avp != NULL)) {
 	bu_free((genptr_t)avsp->avp, "bu_avs_free avsp->avp");
 	avsp->avp = NULL; /* sanity */
 	avsp->max = 0;
@@ -269,9 +274,9 @@ bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, cons
 
     BU_CK_AVS(avsp);
 
-    /* don't even try */
-    if (!name) {
-	if (value) {
+    /* nothing to do */
+    if (UNLIKELY(name == NULL)) {
+	if (UNLIKELY(value != NULL)) {
 	    bu_log("WARNING: bu_avs_add_nonunique given NULL name and non-null value\n");
 	}
 	return;

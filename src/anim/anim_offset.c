@@ -19,11 +19,12 @@
  *
  */
 /** @file anim_offset.c
- *	Animate an object which is rigidly attached to another.
  *
- *  Given an animation table specifying the position and orientation of
- *  one object, anim_offset produces a similar table specifying the
- *  position of an object rigidly attached to it.
+ * Animate an object which is rigidly attached to another.
+ *
+ * Given an animation table specifying the position and orientation of
+ * one object, anim_offset produces a similar table specifying the
+ * position of an object rigidly attached to it.
  *
  */
 
@@ -32,29 +33,54 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "vmath.h"
 #include "bu.h"
+#include "bn.h"
 #include "anim.h"
+#include "vmath.h"
+
+
+#define OPT_STR "ro:"
 
 
 int full_print = 0;
 vect_t offset;
 
-int get_args(int argc, char **argv);
-extern void anim_dy_p_r2mat(fastf_t *, double, double, double);
-extern void anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *);
 
 int
-main(int argc, char **argv)
+get_args(int argc, char **argv)
+{
+    int c;
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'r':
+		full_print = 1;
+		break;
+	    case 'o':
+		sscanf(argv[bu_optind-1], "%lf", offset+0);
+		sscanf(argv[bu_optind], "%lf", offset+1);
+		sscanf(argv[bu_optind+1], "%lf", offset+2);
+		bu_optind += 2;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
+int
+main(int argc, char *argv[])
 {
     int val;
     fastf_t yaw, pitch, roll, time;
     vect_t temp, point, zero;
     mat_t mat;
 
-    VSETALL( temp, 0.0 );
-    VSETALL( point, 0.0 );
-    VSETALL( zero, 0.0 );
+    VSETALL(temp, 0.0);
+    VSETALL(point, 0.0);
+    VSETALL(zero, 0.0);
 
     (void) get_args(argc, argv);
 
@@ -78,30 +104,6 @@ main(int argc, char **argv)
 	printf("\n");
     }
     return 0;
-}
-
-#define OPT_STR "ro:"
-
-int get_args(int argc, char **argv)
-{
-    int c;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 'r':
-		full_print = 1;
-		break;
-	    case 'o':
-		sscanf(argv[bu_optind-1], "%lf", offset+0);
-		sscanf(argv[bu_optind], "%lf", offset+1);
-		sscanf(argv[bu_optind+1], "%lf", offset+2);
-		bu_optind += 2;
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
 }
 
 

@@ -1014,10 +1014,8 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 	}
     }
 
-    (void)rt_bot_vertex_fuse(ip_bot);
-    (void)rt_bot_condense(ip_bot);
-
-    ip_bot->faces = (int *)bu_realloc(ip_bot->faces, ip_bot->num_faces * 3 * sizeof(int), "BOT faces");
+    rt_bot_vertex_fuse(ip_bot);
+    rt_bot_face_fuse(ip_bot);
 
     rt_db_free_internal(ip);
 

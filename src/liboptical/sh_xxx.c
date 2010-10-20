@@ -123,7 +123,7 @@ struct bu_structparse xxx_print_tab[] = {
 
 };
 struct bu_structparse xxx_parse_tab[] = {
-    {"i",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "dist",	SHDR_O(xxx_dist),	bu_mm_cvt },
     {"%f",  3, "d",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL },

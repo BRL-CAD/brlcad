@@ -83,7 +83,7 @@ vfont_get(char *font)
     magic = _vax_gshort(&header[0*2]) & 0xFFFF;
     size = _vax_gshort(&header[1*2]) & 0xFFFF;	/* unsigned short */
 
-    if (magic != 0436) {
+    if (UNLIKELY(magic != 0436)) {
 	fprintf(stderr, "vfont_get(%s):  bad magic number 0%o\n",
 		fname, magic);
 	fclose(fp);

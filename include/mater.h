@@ -56,7 +56,7 @@ struct mater {
     struct mater	*mt_forw;	/**< @brief next in chain */
 };
 #define MATER_NULL	((struct mater *)0)
-#define MATER_NO_ADDR	((size_t)-1)		/**< @brief invalid mt_daddr */
+#define MATER_NO_ADDR	((off_t)0)		/**< @brief invalid mt_daddr */
 
 
 RT_EXPORT BU_EXTERN(void rt_region_color_map,
@@ -69,7 +69,7 @@ RT_EXPORT BU_EXTERN(void rt_color_addrec,
 		     int r,
 		     int g,
 		     int b,
-		     size_t addr));
+		     off_t addr));
 RT_EXPORT BU_EXTERN(void rt_insert_color,
 		    (struct mater *newp));
 RT_EXPORT BU_EXTERN(void rt_vls_color_map,

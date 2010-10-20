@@ -49,7 +49,7 @@ emulator, the menus can be controlled with the mouse.
    HmItem	*(*generator)();
    short	prevtop;
    short	prevhit;
-   boolean	sticky;
+   int	sticky;
    }
    HmMenu;
 
@@ -129,7 +129,7 @@ typedef struct HmMenu
     HmItem	*(*generator)();/* If item == 0, generates items.	*/
     short	prevtop;	/* Top entry currently visable		*/
     short	prevhit;	/* Offset from top of last select	*/
-    boolean	sticky;		/* If true, menu stays around after SELECT,
+    int	sticky;		/* If true, menu stays around after SELECT,
 				   and until QUIT. */
 }
 HmMenu;
@@ -154,7 +154,7 @@ HmWindow;
 
 /**
 
-boolean	HmInit( int x, int y, int maxvis )
+int	HmInit( int x, int y, int maxvis )
 
 HmInit() must be called before any other routines in the
 Hm package to initialize the screen position of the top-left
@@ -179,7 +179,7 @@ FILE	*HmTtyFp
 This routine returns true or false on success or failure to open
 "/dev/tty".
 **/
-extern boolean	HmInit( int x, int y, int maxvis );
+extern int	HmInit( int x, int y, int maxvis );
 extern FILE	*HmTtyFp;
 extern int	HmLftMenu;
 extern int	HmTopMenu;

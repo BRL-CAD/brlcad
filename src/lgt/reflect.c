@@ -409,14 +409,12 @@ render_Model(int frame)
 }
 
 void
-render_Scan(int cpu, void *data)
+render_Scan(int cpu, void *UNUSED(data))
 {
     fastf_t grid_y_inc[3], grid_x_inc[3];
     RGBpixel scanbuf[MAX_SCANSIZE];	/* private to CPU */
     vect_t aliasbuf[MAX_SCANSIZE];	/* private to CPU */
     int com;
-
-    data = data; /* quell warning */
 
     /* Must have local copy of application structure for parallel
        threads of execution, so make copy. */

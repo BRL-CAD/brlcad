@@ -60,26 +60,26 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
     const ON_Plane* hyp_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
- 
+
     VSET(p2_origin, 0, 0, 0.5*MAGNITUDE(eip->hyp_Hi));
     plane2_origin = ON_3dPoint(p2_origin);
     const ON_Plane* hyp_top_plane = new ON_Plane(plane2_origin, plane_x_dir, plane_y_dir);
 
     // Next, create ellipses in the planes corresponding to the edges of the hyp
-    
+
     ON_Ellipse* b_ell = new ON_Ellipse(*hyp_bottom_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
     ON_NurbsCurve* bcurve = ON_NurbsCurve::New();
     b_ell->GetNurbForm((*bcurve));
     bcurve->SetDomain(0.0, 1.0);
- 
+
     ON_Ellipse* t_ell = new ON_Ellipse(*hyp_top_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
     ON_NurbsCurve* tcurve = ON_NurbsCurve::New();
     t_ell->GetNurbForm((*tcurve));
     tcurve->SetDomain(0.0, 1.0);
 
-    // Generate the bottom cap 
+    // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(bcurve)); 
+    boundary.Append(ON_Curve::Cast(bcurve));
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*hyp_bottom_plane);
     bp->SetDomain(0, -100.0, 100.0);
@@ -89,7 +89,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->m_S.Append(bp);
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
-    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true); 
+    (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true);
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
     bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
     bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
@@ -99,8 +99,8 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->SetTrimIsoFlags(bface);
     boundary.Empty();
 
-    // Generate the top cap 
-    boundary.Append(ON_Curve::Cast(tcurve)); 
+    // Generate the top cap
+    boundary.Append(ON_Curve::Cast(tcurve));
     ON_PlaneSurface* tp = new ON_PlaneSurface();
     tp->m_plane = (*hyp_top_plane);
     tp->SetDomain(0, -100.0, 100.0);
@@ -110,7 +110,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->m_S.Append(tp);
     int tsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& tface = (*b)->NewFace(tsi);
-    (*b)->NewPlanarFaceLoop(tface.m_face_index, ON_BrepLoop::outer, boundary, true); 
+    (*b)->NewPlanarFaceLoop(tface.m_face_index, ON_BrepLoop::outer, boundary, true);
     ON_BrepLoop* tloop = (*b)->m_L.Last();
     tp->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x);
     tp->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y);
@@ -142,18 +142,18 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);
-  
+
     ON_3dPointArray cpts(3);
     cpts.Append(onp1);
     cpts.Append(onp2);
     cpts.Append(onp3);
     ON_BezierCurve *bezcurve = new ON_BezierCurve(cpts);
-    bezcurve->MakeRational(); 
+    bezcurve->MakeRational();
     bezcurve->SetWeight(1, w);
 
     ON_NurbsCurve* tnurbscurve = ON_NurbsCurve::New();
     bezcurve->GetNurbForm(*tnurbscurve);
-    
+
     ON_3dPoint revpnt1 = ON_3dPoint(p1_origin);
     ON_3dPoint revpnt2 = ON_3dPoint(p2_origin);
 
@@ -177,14 +177,14 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    hypcurvedsurf->SetCV(i, j, newpt);
 	}
     }
-    
+
     (*b)->m_S.Append(hypcurvedsurf);
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
     (*b)->FlipFace(face);
     int faceindex = (*b)->m_F.Count();
     (*b)->NewOuterLoop(faceindex-1);
-    
+
 }
 
 
@@ -196,4 +196,3 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

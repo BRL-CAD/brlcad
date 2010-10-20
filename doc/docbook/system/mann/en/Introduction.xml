@@ -6,13 +6,13 @@
   </articleinfo>
 
    <para>
-      This is MGED's help system for commands available at the MGED prompt.
-      To bring up the manual page for a specific command select it from the
-      list to the left of this welcome message.
+      This is MGED's help system for commands available at the MGED
+      prompt.  To bring up the manual page for a specific command
+      select it from the list to the left of this welcome message.
     </para>
    <para>
-      These manual pages are written in Docbook format and displayed as HTML
-      using the tkhtml3 Tk widget.
+      These manual pages are written in Docbook format and displayed
+      as HTML.
     </para>
 
 </article>

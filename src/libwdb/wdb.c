@@ -19,19 +19,19 @@
  */
 /** @file wdb.c
  *
- *  Library for writing MGED databases from arbitrary procedures.
- *  Assumes that some of the structure of such databases are known
- *  by the calling routines.
+ * Library for writing MGED databases from arbitrary procedures.
+ * Assumes that some of the structure of such databases are known by
+ * the calling routines.
  *
- *  It is expected that this library will grow as experience is gained.
- *  Routines for writing every permissible solid do not yet exist.
+ * It is expected that this library will grow as experience is gained.
+ * Routines for writing every permissible solid do not yet exist.
  *
- *  Note that routines which are passed point_t or vect_t or mat_t
- *  parameters (which are call-by-address) must be VERY careful to
- *  leave those parameters unmodified (eg, by scaling), so that the
- *  calling routine is not surprised.
+ * Note that routines which are passed point_t or vect_t or mat_t
+ * parameters (which are call-by-address) must be VERY careful to
+ * leave those parameters unmodified (eg, by scaling), so that the
+ * calling routine is not surprised.
  *
- *  Return codes of 0 are OK, -1 signal an error.
+ * Return codes of 0 are OK, -1 signal an error.
  *
  */
 
@@ -50,30 +50,31 @@
 #include "wdb.h"
 
 
-/*
- *			M K _ H A L F
+/**
+ * M K _ H A L F
  *
- *  Make a halfspace.  Specified by distance from origin, and
- *  outward pointing normal vector.
+ * Make a halfspace.  Specified by distance from origin, and outward
+ * pointing normal vector.
  */
 int
 mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, double d)
 {
-    struct rt_half_internal		*half;
+    struct rt_half_internal *half;
 
-    BU_GETSTRUCT( half, rt_half_internal );
+    BU_GETSTRUCT(half, rt_half_internal);
     half->magic = RT_HALF_INTERNAL_MAGIC;
-    VMOVE( half->eqn, norm );
+    VMOVE(half->eqn, norm);
     half->eqn[3] = d;
 
-    return wdb_export( wdbp, name, (genptr_t)half, ID_HALF, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)half, ID_HALF, mk_conv2mm);
 }
 
-/*
- *			M K _ G R I P
+
+/**
+ * M K _ G R I P
  *
- *  Make a grip psuedo solid.  Specified by a center, normal vector, and
- *  magnitude.
+ * Make a grip psuedo solid.  Specified by a center, normal vector,
+ * and magnitude.
  */
 int
 mk_grip(
@@ -81,64 +82,67 @@ mk_grip(
     const char *name,
     const point_t center,
     const vect_t normal,
-    const fastf_t magnitude )
+    const fastf_t magnitude)
 {
-    struct rt_grip_internal		*grip;
+    struct rt_grip_internal *grip;
 
-    BU_GETSTRUCT( grip, rt_grip_internal );
+    BU_GETSTRUCT(grip, rt_grip_internal);
     grip->magic = RT_GRIP_INTERNAL_MAGIC;
-    VMOVE( grip->center, center );
-    VMOVE( grip->normal, normal );
+    VMOVE(grip->center, center);
+    VMOVE(grip->normal, normal);
     grip->mag = magnitude;
 
-    return wdb_export( wdbp, name, (genptr_t)grip, ID_GRIP, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)grip, ID_GRIP, mk_conv2mm);
 }
 
-/*
- *			M K _ R P P
+
+/**
+ * M K _ R P P
  *
- *  Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
+ * Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
  */
 int
 mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t *max)
 {
-    point_t	pt8[8];
+    point_t pt8[8];
 
-    VSET( pt8[0], max[X], min[Y], min[Z] );
-    VSET( pt8[1], max[X], max[Y], min[Z] );
-    VSET( pt8[2], max[X], max[Y], max[Z] );
-    VSET( pt8[3], max[X], min[Y], max[Z] );
+    VSET(pt8[0], max[X], min[Y], min[Z]);
+    VSET(pt8[1], max[X], max[Y], min[Z]);
+    VSET(pt8[2], max[X], max[Y], max[Z]);
+    VSET(pt8[3], max[X], min[Y], max[Z]);
 
-    VSET( pt8[4], min[X], min[Y], min[Z] );
-    VSET( pt8[5], min[X], max[Y], min[Z] );
-    VSET( pt8[6], min[X], max[Y], max[Z] );
-    VSET( pt8[7], min[X], min[Y], max[Z] );
+    VSET(pt8[4], min[X], min[Y], min[Z]);
+    VSET(pt8[5], min[X], max[Y], min[Z]);
+    VSET(pt8[6], min[X], max[Y], max[Z]);
+    VSET(pt8[7], min[X], min[Y], max[Z]);
 
-    return mk_arb8( wdbp, name, &pt8[0][X] );
+    return mk_arb8(wdbp, name, &pt8[0][X]);
 }
 
 
-/*			M K _ W E D G E
+/**
+ * M K _ W E D G E
  *
- *  Makes a right angular wedge given a starting vertex located in the, lower
- *  left corner, an x and a z direction vector, x, y, and z lengths, and an
- *  x length for the top.  The y direcion vector is x cross z.
+ * Makes a right angular wedge given a starting vertex located in the,
+ * lower left corner, an x and a z direction vector, x, y, and z
+ * lengths, and an x length for the top.  The y direcion vector is x
+ * cross z.
  */
 int
 mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf_t *xdirv, const fastf_t *zdirv, fastf_t xlen, fastf_t ylen, fastf_t zlen, fastf_t x_top_len)
 {
-    point_t		pts[8];		/* vertices for the wedge */
-    vect_t		xvec;		/* x_axis vector */
-    vect_t		txvec;		/* top x_axis vector */
-    vect_t		yvec;		/* y-axis vector */
-    vect_t		zvec;		/* z-axix vector */
-    vect_t		x_unitv;	/* x-axis unit vector*/
-    vect_t		z_unitv;	/* z-axis unit vector */
-    vect_t		y_unitv;
+    point_t pts[8];	/* vertices for the wedge */
+    vect_t xvec;	/* x_axis vector */
+    vect_t txvec;	/* top x_axis vector */
+    vect_t yvec;	/* y-axis vector */
+    vect_t zvec;	/* z-axix vector */
+    vect_t x_unitv;	/* x-axis unit vector*/
+    vect_t z_unitv;	/* z-axis unit vector */
+    vect_t y_unitv;
 
-    VMOVE( x_unitv, xdirv);
+    VMOVE(x_unitv, xdirv);
     VUNITIZE(x_unitv);
-    VMOVE( z_unitv, zdirv );
+    VMOVE(z_unitv, zdirv);
     VUNITIZE(z_unitv);
 
     /* Make y_unitv */
@@ -168,110 +172,98 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
 }
 
 
-/*
- *			M K _ A R B 4
- */
 int
 mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
 
     /* [4*3] */
 {
-    point_t	pt8[8];
+    point_t pt8[8];
 
-    VMOVE( pt8[0], &pts[0*3] );
-    VMOVE( pt8[1], &pts[1*3] );
-    VMOVE( pt8[2], &pts[2*3] );
-    VMOVE( pt8[3], &pts[2*3] );	/* shared point for base */
+    VMOVE(pt8[0], &pts[0*3]);
+    VMOVE(pt8[1], &pts[1*3]);
+    VMOVE(pt8[2], &pts[2*3]);
+    VMOVE(pt8[3], &pts[2*3]);	/* shared point for base */
 
-    VMOVE( pt8[4], &pts[3*3] );	/* top point */
-    VMOVE( pt8[5], &pts[3*3] );
-    VMOVE( pt8[6], &pts[3*3] );
-    VMOVE( pt8[7], &pts[3*3] );
+    VMOVE(pt8[4], &pts[3*3]);	/* top point */
+    VMOVE(pt8[5], &pts[3*3]);
+    VMOVE(pt8[6], &pts[3*3]);
+    VMOVE(pt8[7], &pts[3*3]);
 
-    return mk_arb8( wdbp, name, &pt8[0][X] );
+    return mk_arb8(wdbp, name, &pt8[0][X]);
 }
 
-/*
- *                      M K _ A R B 5
- */
+
 int
 mk_arb5(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
 
     /* [5*3] */
 {
-    point_t     pt8[8];
+    point_t pt8[8];
 
-    VMOVE( pt8[0], &pts[0*3] );
-    VMOVE( pt8[1], &pts[1*3] );
-    VMOVE( pt8[2], &pts[2*3] );
-    VMOVE( pt8[3], &pts[3*3] );
-    VMOVE( pt8[4], &pts[4*3] ); 
-    VMOVE( pt8[5], &pts[4*3] );
-    VMOVE( pt8[6], &pts[4*3] );
-    VMOVE( pt8[7], &pts[4*3] );
+    VMOVE(pt8[0], &pts[0*3]);
+    VMOVE(pt8[1], &pts[1*3]);
+    VMOVE(pt8[2], &pts[2*3]);
+    VMOVE(pt8[3], &pts[3*3]);
+    VMOVE(pt8[4], &pts[4*3]);
+    VMOVE(pt8[5], &pts[4*3]);
+    VMOVE(pt8[6], &pts[4*3]);
+    VMOVE(pt8[7], &pts[4*3]);
 
-    return mk_arb8( wdbp, name, &pt8[0][X] );
+    return mk_arb8(wdbp, name, &pt8[0][X]);
 }
 
-
-
-/*
- *                      M K _ A R B 6
- */
 
 int
 mk_arb6(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
     /* [6*3] */
 {
-    point_t      pt8[8];
+    point_t pt8[8];
 
-    VMOVE( pt8[0], &pts[0*3] );
-    VMOVE( pt8[1], &pts[1*3] );
-    VMOVE( pt8[2], &pts[2*3] );
-    VMOVE( pt8[3], &pts[3*3] );
-    VMOVE( pt8[4], &pts[4*3] );
-    VMOVE( pt8[5], &pts[4*3] );
-    VMOVE( pt8[6], &pts[5*3] );
-    VMOVE( pt8[7], &pts[5*3] );
+    VMOVE(pt8[0], &pts[0*3]);
+    VMOVE(pt8[1], &pts[1*3]);
+    VMOVE(pt8[2], &pts[2*3]);
+    VMOVE(pt8[3], &pts[3*3]);
+    VMOVE(pt8[4], &pts[4*3]);
+    VMOVE(pt8[5], &pts[4*3]);
+    VMOVE(pt8[6], &pts[5*3]);
+    VMOVE(pt8[7], &pts[5*3]);
 
-    return mk_arb8( wdbp, name, &pt8[0][X] );
+    return mk_arb8(wdbp, name, &pt8[0][X]);
 }
 
-/*
- *                      M K _ A R B 7
- */
 
 int
 mk_arb7(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
     /* [7*3] */
 {
-    point_t      pt8[8];
-    
-    VMOVE( pt8[0], &pts[0*3] );
-    VMOVE( pt8[1], &pts[1*3] );
-    VMOVE( pt8[2], &pts[2*3] );
-    VMOVE( pt8[3], &pts[3*3] );
-    VMOVE( pt8[4], &pts[4*3] );
-    VMOVE( pt8[5], &pts[5*3] );
-    VMOVE( pt8[6], &pts[6*3] );
-    VMOVE( pt8[7], &pts[4*3] ); /* Shared with point 5, per g_arb.c*/
+    point_t pt8[8];
 
-    return mk_arb8( wdbp, name, &pt8[0][X] );
+    VMOVE(pt8[0], &pts[0*3]);
+    VMOVE(pt8[1], &pts[1*3]);
+    VMOVE(pt8[2], &pts[2*3]);
+    VMOVE(pt8[3], &pts[3*3]);
+    VMOVE(pt8[4], &pts[4*3]);
+    VMOVE(pt8[5], &pts[5*3]);
+    VMOVE(pt8[6], &pts[6*3]);
+    VMOVE(pt8[7], &pts[4*3]); /* Shared with point 5, per g_arb.c*/
+
+    return mk_arb8(wdbp, name, &pt8[0][X]);
 }
 
-/*
- *			M K _ A R B 8
+
+/**
+ * M K _ A R B 8
  *
- *  All plates with 4 points must be co-planar.
- *  If there are degeneracies (i.e., all 8 vertices are not distinct),
- *  then certain requirements must be met.
- *  If we think of the ARB8 as having a top and a bottom plate,
- *  the first four points listed must lie on one plate, and
- *  the second four points listed must lie on the other plate.
+ * All plates with 4 points must be co-planar.  If there are
+ * degeneracies (i.e., all 8 vertices are not distinct), then certain
+ * requirements must be met.  If we think of the ARB8 as having a top
+ * and a bottom plate, the first four points listed must lie on one
+ * plate, and the second four points listed must lie on the other
+ * plate.
  */
 int
 mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
@@ -280,78 +272,81 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
     /* [24] */
 {
     int i;
-    struct rt_arb_internal	*arb;
+    struct rt_arb_internal *arb;
 
-    BU_GETSTRUCT( arb, rt_arb_internal );
+    BU_GETSTRUCT(arb, rt_arb_internal);
     arb->magic = RT_ARB_INTERNAL_MAGIC;
-    for ( i=0; i < 8; i++ )  {
-	VMOVE( arb->pt[i], &pts[i*3] );
+    for (i=0; i < 8; i++) {
+	VMOVE(arb->pt[i], &pts[i*3]);
     }
 
-    return wdb_export( wdbp, name, (genptr_t)arb, ID_ARB8, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)arb, ID_ARB8, mk_conv2mm);
 }
 
-/*
- *			M K _ S P H
+
+/**
+ * M K _ S P H
  *
- *  Make a sphere with the given center point and radius.
+ * Make a sphere with the given center point and radius.
  */
 int
 mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t radius)
 {
-    struct rt_ell_internal	*ell;
+    struct rt_ell_internal *ell;
 
-    BU_GETSTRUCT( ell, rt_ell_internal );
+    BU_GETSTRUCT(ell, rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
-    VMOVE( ell->v, center );
-    VSET( ell->a, radius, 0, 0 );
-    VSET( ell->b, 0, radius, 0 );
-    VSET( ell->c, 0, 0, radius );
+    VMOVE(ell->v, center);
+    VSET(ell->a, radius, 0, 0);
+    VSET(ell->b, 0, radius, 0);
+    VSET(ell->c, 0, 0, radius);
 
-    return wdb_export( wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm);
 }
 
-/*
- *			M K _ E L L
+
+/**
+ * M K _ E L L
  *
- *  Make an ellipsoid at the given center point with 3 perp. radius vectors.
- *  The eccentricity of the ellipsoid is controlled by the relative
- *  lengths of the three radius vectors.
+ * Make an ellipsoid at the given center point with 3 perp. radius
+ * vectors.  The eccentricity of the ellipsoid is controlled by the
+ * relative lengths of the three radius vectors.
  */
 int
 mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
-    struct rt_ell_internal	*ell;
+    struct rt_ell_internal *ell;
 
-    BU_GETSTRUCT( ell, rt_ell_internal );
+    BU_GETSTRUCT(ell, rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
-    VMOVE( ell->v, center );
-    VMOVE( ell->a, a );
-    VMOVE( ell->b, b );
-    VMOVE( ell->c, c );
+    VMOVE(ell->v, center);
+    VMOVE(ell->a, a);
+    VMOVE(ell->b, b);
+    VMOVE(ell->c, c);
 
-    return wdb_export( wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm);
 }
 
 
-/*
- *			M K _ H Y P
+/**
+ * M K _ H Y P
  *
- *  Make a hyperbolid at the given center point with a vertex, height vector,
- *  A vector, magnitude of the B vector, and neck to base ratio.
+ * Make a hyperbolid at the given center point with a vertex, height
+ * vector, A vector, magnitude of the B vector, and neck to base
+ * ratio.
  */
 int
 mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t height_vector, const vect_t vectA, fastf_t magB, fastf_t base_neck_ratio)
 {
-    struct rt_hyp_internal	*hyp;
-    
-    BU_GETSTRUCT( hyp, rt_hyp_internal );
-    hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;
- 
+    struct rt_hyp_internal *hyp;
 
-    if (( MAGNITUDE(vectA) <= SQRT_SMALL_FASTF ) || (magB <= SQRT_SMALL_FASTF))
+    BU_GETSTRUCT(hyp, rt_hyp_internal);
+    hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;
+
+
+    if ((MAGNITUDE(vectA) <= SQRT_SMALL_FASTF) || (magB <= SQRT_SMALL_FASTF))
 	return -2;
-    
+
     hyp->hyp_bnr = base_neck_ratio;
     hyp->hyp_b = magB;
     VMOVE(hyp->hyp_Hi, height_vector);
@@ -359,129 +354,130 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
     VMOVE(hyp->hyp_A, vectA);
 
     if (MAGNITUDE(hyp->hyp_Hi) < RT_LEN_TOL
-	|| MAGNITUDE( hyp->hyp_A ) < RT_LEN_TOL
-        || hyp->hyp_b < RT_LEN_TOL
-        || hyp->hyp_bnr < RT_LEN_TOL) {
+	|| MAGNITUDE(hyp->hyp_A) < RT_LEN_TOL
+	|| hyp->hyp_b < RT_LEN_TOL
+	|| hyp->hyp_bnr < RT_LEN_TOL) {
 	bu_log("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
-	return  -1;
-    }
-	
-    if (!NEAR_ZERO (VDOT(hyp->hyp_Hi, hyp->hyp_A), RT_DOT_TOL )) {
-    	bu_log("ERROR, major axis must be perpendicular to height vector!\n");
 	return -1;
     }
 
-    if ( base_neck_ratio >= 1 || base_neck_ratio <= 0 ) {
-    	bu_log("ERROR, neck to base ratio must be between 0 and 1!\n");
-    	return -1;
+    if (!NEAR_ZERO (VDOT(hyp->hyp_Hi, hyp->hyp_A), RT_DOT_TOL)) {
+	bu_log("ERROR, major axis must be perpendicular to height vector!\n");
+	return -1;
     }
 
-    if (hyp->hyp_b > MAGNITUDE( hyp->hyp_A )) {
-	vect_t	majorAxis;
-	fastf_t	minorLen;
+    if (base_neck_ratio >= 1 || base_neck_ratio <= 0) {
+	bu_log("ERROR, neck to base ratio must be between 0 and 1!\n");
+	return -1;
+    }
+
+    if (hyp->hyp_b > MAGNITUDE(hyp->hyp_A)) {
+	vect_t majorAxis;
+	fastf_t minorLen;
 
 	minorLen = MAGNITUDE(hyp->hyp_A);
-	VCROSS( majorAxis, hyp->hyp_Hi, hyp->hyp_A );
-	VSCALE( hyp->hyp_A, majorAxis, hyp->hyp_b );
+	VCROSS(majorAxis, hyp->hyp_Hi, hyp->hyp_A);
+	VSCALE(hyp->hyp_A, majorAxis, hyp->hyp_b);
 	hyp->hyp_b = minorLen;
     }
 
-    return wdb_export( wdbp, name, (genptr_t)hyp, ID_HYP, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)hyp, ID_HYP, mk_conv2mm);
 }
 
 
-
-/*
- *			M K _ T O R
+/**
+ * M K _ T O R
  *
- *  Make a torus.  Specify center, normal,
- *  r1: distance from center point to center of solid part,
- *  r2: radius of solid part.
+ * Make a torus.  Specify center, normal, r1: distance from center
+ * point to center of solid part, r2: radius of solid part.
  */
 int
 mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *inorm, double r1, double r2)
 {
-    struct rt_tor_internal	*tor;
+    struct rt_tor_internal *tor;
 
-    BU_GETSTRUCT( tor, rt_tor_internal );
+    BU_GETSTRUCT(tor, rt_tor_internal);
     tor->magic = RT_TOR_INTERNAL_MAGIC;
-    VMOVE( tor->v, center );
-    VMOVE( tor->h, inorm );
+    VMOVE(tor->v, center);
+    VMOVE(tor->h, inorm);
     tor->r_a = r1;
     tor->r_h = r2;
 
-    return wdb_export( wdbp, name, (genptr_t)tor, ID_TOR, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)tor, ID_TOR, mk_conv2mm);
 }
 
-/*
- *			M K _ R C C
+
+/**
+ * M K _ R C C
  *
- *  Make a Right Circular Cylinder (special case of the TGC).
+ * Make a Right Circular Cylinder (special case of the TGC).
  */
 int
 mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radius)
 {
-    vect_t	cross1, cross2;
-    vect_t	a, b;
+    vect_t cross1, cross2;
+    vect_t a, b;
 
-    if ( MAGSQ(height) <= SQRT_SMALL_FASTF )
+    if (MAGSQ(height) <= SQRT_SMALL_FASTF)
 	return -2;
 
     /* Create two mutually perpendicular vectors, perpendicular to H */
-    bn_vec_ortho( cross1, height );
-    VCROSS( cross2, cross1, height );
-    VUNITIZE( cross2 );
+    bn_vec_ortho(cross1, height);
+    VCROSS(cross2, cross1, height);
+    VUNITIZE(cross2);
 
-    VSCALE( a, cross1, radius );
-    VSCALE( b, cross2, radius );
+    VSCALE(a, cross1, radius);
+    VSCALE(b, cross2, radius);
 
-    return mk_tgc( wdbp, name, base, height, a, b, a, b );
+    return mk_tgc(wdbp, name, base, height, a, b, a, b);
 }
 
-/*
- *			M K _ T G C
+
+/**
+ * M K _ T G C
  *
- *  Make a Truncated General Cylinder.
+ * Make a Truncated General Cylinder.
  */
 int
 mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, const fastf_t *a, const fastf_t *b, const fastf_t *c, const fastf_t *d)
 {
-    struct rt_tgc_internal	*tgc;
+    struct rt_tgc_internal *tgc;
 
-    BU_GETSTRUCT( tgc, rt_tgc_internal );
+    BU_GETSTRUCT(tgc, rt_tgc_internal);
     tgc->magic = RT_TGC_INTERNAL_MAGIC;
-    VMOVE( tgc->v, base );
-    VMOVE( tgc->h, height );
-    VMOVE( tgc->a, a );
-    VMOVE( tgc->b, b );
-    VMOVE( tgc->c, c );
-    VMOVE( tgc->d, d );
+    VMOVE(tgc->v, base);
+    VMOVE(tgc->h, height);
+    VMOVE(tgc->a, a);
+    VMOVE(tgc->b, b);
+    VMOVE(tgc->c, c);
+    VMOVE(tgc->d, d);
 
-    return wdb_export( wdbp, name, (genptr_t)tgc, ID_TGC, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)tgc, ID_TGC, mk_conv2mm);
 }
 
 
-/*			M K _ C O N E
+/**
+ * M K _ C O N E
  *
- *  Makes a right circular cone given the center point of the base circle,
- *  a direction vector, a scalar height, and the radii at each end of the
- *  cone.
+ * Makes a right circular cone given the center point of the base
+ * circle, a direction vector, a scalar height, and the radii at each
+ * end of the cone.
  */
 int
 mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t rad1, fastf_t rad2)
 {
-    vect_t		a, avec;	/* one base radius vector */
-    vect_t		b, bvec;	/* another base radius vector */
-    vect_t		cvec;		/* nose radius vector */
-    vect_t		dvec;		/* another nose radius vector */
-    vect_t		h_unitv;	/* local copy of dirv */
-    vect_t		hgtv;		/* height vector */
-    fastf_t		f;
+    vect_t a, avec;	/* one base radius vector */
+    vect_t b, bvec;	/* another base radius vector */
+    vect_t cvec;	/* nose radius vector */
+    vect_t dvec;	/* another nose radius vector */
+    vect_t h_unitv;	/* local copy of dirv */
+    vect_t hgtv;	/* height vector */
+    fastf_t f;
 
-    if ( (f = MAGNITUDE(dirv)) <= SQRT_SMALL_FASTF )
+    if ((f = MAGNITUDE(dirv)) <= SQRT_SMALL_FASTF)
 	return -2;
     f = 1/f;
-    VSCALE( h_unitv, dirv, f );
+    VSCALE(h_unitv, dirv, f);
     VSCALE(hgtv, h_unitv, height);
 
     /* Now make a, b, c, and d vectors. */
@@ -498,56 +494,58 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
 }
 
 
-/*
- *		M K _ T R C _ H
+/**
+ * M K _ T R C _ H
  *
- *  Make a truncated right cylinder, with base and height.
- *  Not just called mk_trc() to avoid conflict with a previous routine
- *  of that name with different calling sequence.
+ * Make a truncated right cylinder, with base and height.  Not just
+ * called mk_trc() to avoid conflict with a previous routine of that
+ * name with different calling sequence.
  */
 int
 mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radbase, fastf_t radtop)
 {
-    vect_t	cross1, cross2;
-    vect_t	a, b, c, d;
+    vect_t cross1, cross2;
+    vect_t a, b, c, d;
 
-    if ( MAGSQ(height) <= SQRT_SMALL_FASTF )
+    if (MAGSQ(height) <= SQRT_SMALL_FASTF)
 	return -2;
 
     /* Create two mutually perpendicular vectors, perpendicular to H */
-    bn_vec_ortho( cross1, height );
-    VCROSS( cross2, cross1, height );
-    VUNITIZE( cross2 );
+    bn_vec_ortho(cross1, height);
+    VCROSS(cross2, cross1, height);
+    VUNITIZE(cross2);
 
-    VSCALE( a, cross1, radbase );
-    VSCALE( b, cross2, radbase );
+    VSCALE(a, cross1, radbase);
+    VSCALE(b, cross2, radbase);
 
-    VSCALE( c, cross1, radtop );
-    VSCALE( d, cross2, radtop );
+    VSCALE(c, cross1, radtop);
+    VSCALE(d, cross2, radtop);
 
-    return mk_tgc( wdbp, name, base, height, a, b, c, d );
+    return mk_tgc(wdbp, name, base, height, a, b, c, d);
 }
 
-/*
- *			M K _ T R C _ T O P
+
+/**
+ * M K _ T R C _ T O P
  *
- *  Convenience wrapper for mk_trc_h().
+ * Convenience wrapper for mk_trc_h().
  */
 int
 mk_trc_top(struct rt_wdb *wdbp, const char *name, const fastf_t *ibase, const fastf_t *itop, fastf_t radbase, fastf_t radtop)
 {
-    vect_t	height;
+    vect_t height;
 
-    VSUB2( height, itop, ibase );
-    return mk_trc_h( wdbp, name, ibase, height, radbase, radtop );
+    VSUB2(height, itop, ibase);
+    return mk_trc_h(wdbp, name, ibase, height, radbase, radtop);
 }
 
-/*
- *			M K _ R P C
+
+/**
+ * M K _ R P C
  *
- *  Makes a right parabolic cylinder given the origin, or main vertex,
- *  a height vector, a breadth vector (B . H must be 0), and a scalar
- *  rectangular half-width (for the top of the rpc).
+ * Makes a right parabolic cylinder given the origin, or main vertex,
+ * a height vector, a breadth vector (B . H must be 0), and a scalar
+ * rectangular half-width (for the top of the rpc).
  */
 int
 mk_rpc(
@@ -556,29 +554,30 @@ mk_rpc(
     const point_t vert,
     const vect_t height,
     const vect_t breadth,
-    double half_w )
+    double half_w)
 {
-    struct rt_rpc_internal	*rpc;
+    struct rt_rpc_internal *rpc;
 
-    BU_GETSTRUCT( rpc, rt_rpc_internal );
+    BU_GETSTRUCT(rpc, rt_rpc_internal);
     rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
-    VMOVE( rpc->rpc_V, vert );
-    VMOVE( rpc->rpc_H, height );
-    VMOVE( rpc->rpc_B, breadth );
+    VMOVE(rpc->rpc_V, vert);
+    VMOVE(rpc->rpc_H, height);
+    VMOVE(rpc->rpc_B, breadth);
     rpc->rpc_r = half_w;
 
-    return wdb_export( wdbp, name, (genptr_t)rpc, ID_RPC, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)rpc, ID_RPC, mk_conv2mm);
 }
 
-/*
- *			M K _ R H C
+
+/**
+ * M K _ R H C
  *
- *  Makes a right hyperbolic cylinder given the origin, or main vertex,
- *  a height vector, a breadth vector (B . H must be 0), a scalar
- *  rectangular half-width (for the top of the rpc), and the scalar
- *  distance from the tip of the hyperbola to the intersection of the
- *  asymptotes.
+ * Makes a right hyperbolic cylinder given the origin, or main vertex,
+ * a height vector, a breadth vector (B . H must be 0), a scalar
+ * rectangular half-width (for the top of the rpc), and the scalar
+ * distance from the tip of the hyperbola to the intersection of the
+ * asymptotes.
  */
 int
 mk_rhc(
@@ -587,29 +586,30 @@ mk_rhc(
     const point_t vert,
     const vect_t height,
     const vect_t breadth,
-    fastf_t	half_w,
-    fastf_t asymp )
+    fastf_t half_w,
+    fastf_t asymp)
 {
-    struct rt_rhc_internal	*rhc;
+    struct rt_rhc_internal *rhc;
 
-    BU_GETSTRUCT( rhc, rt_rhc_internal );
+    BU_GETSTRUCT(rhc, rt_rhc_internal);
     rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
-    VMOVE( rhc->rhc_V, vert );
-    VMOVE( rhc->rhc_H, height );
-    VMOVE( rhc->rhc_B, breadth );
+    VMOVE(rhc->rhc_V, vert);
+    VMOVE(rhc->rhc_H, height);
+    VMOVE(rhc->rhc_B, breadth);
     rhc->rhc_r = half_w;
     rhc->rhc_c = asymp;
 
-    return wdb_export( wdbp, name, (genptr_t)rhc, ID_RHC, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)rhc, ID_RHC, mk_conv2mm);
 }
 
-/*
- *			M K _ E P A
+
+/**
+ * M K _ E P A
  *
- *  Makes an elliptical paraboloid given the origin, a height vector H,
- *  a unit vector A along the semi-major axis (A . H must equal 0), and
- *  the scalar lengths, r1 and r2, of the semi-major and -minor axes.
+ * Makes an elliptical paraboloid given the origin, a height vector H,
+ * a unit vector A along the semi-major axis (A . H must equal 0), and
+ * the scalar lengths, r1 and r2, of the semi-major and -minor axes.
  */
 int
 mk_epa(
@@ -619,30 +619,31 @@ mk_epa(
     const vect_t height,
     const vect_t breadth,
     fastf_t r1,
-    fastf_t r2 )
+    fastf_t r2)
 {
-    struct rt_epa_internal	*epa;
+    struct rt_epa_internal *epa;
 
-    BU_GETSTRUCT( epa, rt_epa_internal );
+    BU_GETSTRUCT(epa, rt_epa_internal);
     epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
-    VMOVE( epa->epa_V, vert );
-    VMOVE( epa->epa_H, height );
-    VMOVE( epa->epa_Au, breadth );
+    VMOVE(epa->epa_V, vert);
+    VMOVE(epa->epa_H, height);
+    VMOVE(epa->epa_Au, breadth);
     epa->epa_r1 = r1;
     epa->epa_r2 = r2;
 
-    return wdb_export( wdbp, name, (genptr_t)epa, ID_EPA, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)epa, ID_EPA, mk_conv2mm);
 }
 
-/*
- *			M K _ E H Y
+
+/**
+ * M K _ E H Y
  *
- *  Makes an elliptical hyperboloid given the origin, a height vector H,
- *  a unit vector A along the semi-major axis (A . H must equal 0),
- *  the scalar lengths, r1 and r2, of the semi-major and -minor axes,
- *  and the distance c between the tip of the hyperboloid and the vertex
- *  of the asymptotic cone.
+ * Makes an elliptical hyperboloid given the origin, a height vector
+ * H, a unit vector A along the semi-major axis (A . H must equal 0),
+ * the scalar lengths, r1 and r2, of the semi-major and -minor axes,
+ * and the distance c between the tip of the hyperboloid and the
+ * vertex of the asymptotic cone.
  */
 int
 mk_ehy(
@@ -653,30 +654,32 @@ mk_ehy(
     const vect_t breadth,
     fastf_t r1,
     fastf_t r2,
-    fastf_t c )
+    fastf_t c)
 {
-    struct rt_ehy_internal	*ehy;
+    struct rt_ehy_internal *ehy;
 
-    BU_GETSTRUCT( ehy, rt_ehy_internal );
+    BU_GETSTRUCT(ehy, rt_ehy_internal);
     ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
-    VMOVE( ehy->ehy_V, vert );
-    VMOVE( ehy->ehy_H, height );
-    VMOVE( ehy->ehy_Au, breadth );
+    VMOVE(ehy->ehy_V, vert);
+    VMOVE(ehy->ehy_H, height);
+    VMOVE(ehy->ehy_Au, breadth);
     ehy->ehy_r1 = r1;
     ehy->ehy_r2 = r2;
     ehy->ehy_c = c;
 
-    return wdb_export( wdbp, name, (genptr_t)ehy, ID_EHY, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)ehy, ID_EHY, mk_conv2mm);
 }
 
-/*
- *			M K _ E T O
+
+/**
+ * M K _ E T O
  *
- *  Makes an elliptical torus given the origin, a plane normal vector N,
- *  a vector C along the semi-major axis of the elliptical cross-section,
- *  the scalar lengths r and rd, of the radius of revolution and length
- *  of semi-minor axis of the elliptical cross section.
+ * Makes an elliptical torus given the origin, a plane normal vector
+ * N, a vector C along the semi-major axis of the elliptical
+ * cross-section, the scalar lengths r and rd, of the radius of
+ * revolution and length of semi-minor axis of the elliptical cross
+ * section.
  */
 int
 mk_eto(
@@ -686,21 +689,22 @@ mk_eto(
     const vect_t norm,
     const vect_t smajor,
     fastf_t rrot,
-    fastf_t sminor )
+    fastf_t sminor)
 {
-    struct rt_eto_internal	*eto;
+    struct rt_eto_internal *eto;
 
-    BU_GETSTRUCT( eto, rt_eto_internal );
+    BU_GETSTRUCT(eto, rt_eto_internal);
     eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
-    VMOVE( eto->eto_V, vert );
-    VMOVE( eto->eto_N, norm );
-    VMOVE( eto->eto_C, smajor );
+    VMOVE(eto->eto_V, vert);
+    VMOVE(eto->eto_N, norm);
+    VMOVE(eto->eto_C, smajor);
     eto->eto_r = rrot;
     eto->eto_rd = sminor;
 
-    return wdb_export( wdbp, name, (genptr_t)eto, ID_ETO, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)eto, ID_ETO, mk_conv2mm);
 }
+
 
 int
 mk_metaball(
@@ -709,29 +713,30 @@ mk_metaball(
     const int nctlpt, /* number of control points */
     const int method,
     const fastf_t threshold,
-    const fastf_t *verts[5] )
+    const fastf_t *verts[5])
 {
     struct rt_metaball_internal *mb;
     int i;
 
-    BU_GETSTRUCT( mb, rt_metaball_internal );
+    BU_GETSTRUCT(mb, rt_metaball_internal);
     mb->magic = RT_METABALL_INTERNAL_MAGIC;
     mb->threshold = threshold > 0 ? threshold : 1.0;
     mb->method = method >= 0 ? method : 2;	/* default to Blinn blob */
     BU_LIST_INIT(&mb->metaball_ctrl_head);
 
     for (i = 0; i < nctlpt; i++) {
-	if( rt_metaball_add_point (mb, (const point_t *)verts[i], verts[i][3], verts[i][4]) != 0 ) {
+	if (rt_metaball_add_point (mb, (const point_t *)verts[i], verts[i][3], verts[i][4]) != 0) {
 	    bu_log("something is fishy here in mk_metaball");
 	    bu_bomb("AIIEEEEEEE");
 	}
     }
 
-    return wdb_export( wdbp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm);
 }
 
-/*
- *			M K _ B I N U N I F
+
+/**
+ * M K _ B I N U N I F
  *
  * Make a uniform binary data object from an array or a data file.
  * Read 'count' values from 'data'.  If 'data_type' is a file, 'count'
@@ -744,7 +749,7 @@ mk_metaball(
  * an embty binunif will be created.
  */
 int
-mk_binunif(
+mk_binunif (
     struct rt_wdb *wdbp,
     const char *name,
     const genptr_t data,
@@ -935,7 +940,7 @@ mk_binunif(
 
     /* use the librt load-from-file routine? */
     if (from_file) {
-	return rt_mk_binunif( wdbp, name, (char *)data, minor_type, count );
+	return rt_mk_binunif (wdbp, name, (char *)data, minor_type, count);
     }
 
     /* count must be non-negative */
@@ -944,13 +949,14 @@ mk_binunif(
     }
 
     /* loading from data already in memory */
-    BU_GETSTRUCT( binunif, rt_binunif_internal );
+    BU_GETSTRUCT(binunif, rt_binunif_internal);
     binunif->magic = RT_BINUNIF_INTERNAL_MAGIC;
     binunif->type = minor_type;
     binunif->count = count;
     memcpy(binunif->u.int8, data, count * bytes);
-    return wdb_export( wdbp, name, (genptr_t)binunif, ID_BINUNIF, mk_conv2mm );
+    return wdb_export(wdbp, name, (genptr_t)binunif, ID_BINUNIF, mk_conv2mm);
 }
+
 
 /*
  * Local Variables:

@@ -17,6 +17,7 @@ bin_PROGRAMS = \
 	chan_permute
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 anim_cascade_SOURCES = anim_cascade.c
 anim_cascade_LDADD = ${BN}
@@ -62,6 +63,8 @@ chan_mult_LDADD = ${BU}
 
 chan_permute_SOURCES = chan_permute.c
 chan_permute_LDADD = ${BU}
+
+noinst_HEADERS = cattrack.h
 
 man_MANS = \
 	anim_script.1 \

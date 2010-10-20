@@ -5,7 +5,9 @@
 // regenerate it.
 /* $Id$ */
 #ifdef SCL_LOGGING
-#include <sys/time.h>
+#  ifdef HAVE_SYS_TIME_H
+#    include <sys/time.h>
+#  endif
 #endif
 
 #ifdef __OSTORE__

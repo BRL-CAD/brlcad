@@ -50,62 +50,112 @@
 #define TEMPERING_SHIFT_T(y)  (y << 15)
 #define TEMPERING_SHIFT_L(y)  (y >> 18)
 
+#define MERSENNE_MAGIC 0x4D54524E
 
-/* the array for the state vector  */
-static unsigned long mt[N];
-/* mti==N+1 means mt[N] is not initialized */
-static int mti=N+1;
+static struct _internal_state_s {
+    uint32_t magic;
+    int mti;		/* state index */
+    uint32_t mt[N];	/* state vector */
+} global_state_static = { MERSENNE_MAGIC, N+1, {0} };
 
+static struct _internal_state_s *global_state = &global_state_static;
+
+void *
+bn_randmt_state_create()
+{
+    struct _internal_state_s *is;
+
+    is = bu_malloc(sizeof(struct _internal_state_s), "Mersenne Twister state");
+    if(is == NULL)
+	return NULL;
+    is->magic = MERSENNE_MAGIC;
+    is->mti = N+1;
+    return (void *)is;
+}
 
 /* initializing the array with a NONZERO seed */
-void bn_randmt_seed(unsigned long seed) {
+void
+bn_randmt_state_seed(struct _internal_state_s *is, uint32_t seed)
+{
     /*
      * setting initial seeds to mt[N] using
      * the generator Line 25 of Table 1 in
      * [KNUTH 1981, The Art of Computer Programming
      *    Vol. 2 (2nd Ed.), pp102]
      */
-    mt[0] = seed & 0xffffffff;
-    for (mti = 1; mti<N; mti++)
-	mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
+    is->mt[0] = seed & 0xffffffff;
+    for (is->mti = 1; is->mti<N; is->mti++)
+	is->mt[is->mti] = (69069 * is->mt[is->mti-1]) & 0xffffffff;
 }
 
-
-double bn_randmt() {
-    unsigned long y;
-    static unsigned long mag01[2]={0x0, MATRIX_A};
+double
+bn_randmt_state(struct _internal_state_s *is)
+{
+    uint32_t y;
+    static uint32_t mag01[2]={0x0, MATRIX_A};
 
     /* generate N words at one time */
-    if (mti >= N) {
+    if (is->mti >= N) {
 	int kk;
 
 	/* if sgenrand() has not been called, a default initial seed is used */
-	if (mti == N+1)
+	if (is->mti == N+1)
 	    bn_randmt_seed(4357);
 
 	for (kk = 0; kk < N-M; kk++) {
-	    y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);
-	    mt[kk] = mt[kk+M] ^ (y >> 1) ^ mag01[y & 0x1];
+	    y = (is->mt[kk]&UPPER_MASK)|(is->mt[kk+1]&LOWER_MASK);
+	    is->mt[kk] = is->mt[kk+M] ^ (y >> 1) ^ mag01[y & 0x1];
 	}
 
 	for (; kk < N-1; kk++) {
-	    y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);
-	    mt[kk] = mt[kk+(M-N)] ^ (y >> 1) ^ mag01[y & 0x1];
+	    y = (is->mt[kk]&UPPER_MASK)|(is->mt[kk+1]&LOWER_MASK);
+	    is->mt[kk] = is->mt[kk+(M-N)] ^ (y >> 1) ^ mag01[y & 0x1];
 	}
 
-	y = (mt[N-1]&UPPER_MASK)|(mt[0]&LOWER_MASK);
-	mt[N-1] = mt[M-1] ^ (y >> 1) ^ mag01[y & 0x1];
+	y = (is->mt[N-1]&UPPER_MASK)|(is->mt[0]&LOWER_MASK);
+	is->mt[N-1] = is->mt[M-1] ^ (y >> 1) ^ mag01[y & 0x1];
 
-	mti = 0;
+	is->mti = 0;
     }
 
-    y = mt[mti++];
+    y = is->mt[is->mti++];
     y ^= TEMPERING_SHIFT_U(y);
     y ^= TEMPERING_SHIFT_S(y) & TEMPERING_MASK_B;
     y ^= TEMPERING_SHIFT_T(y) & TEMPERING_MASK_C;
     y ^= TEMPERING_SHIFT_L(y);
 
-    return (double)y / (unsigned long)0xffffffff;
+    return (double)y / (uint32_t)0xffffffff;
+}
+
+/* straight binhex would result in a 8+4992 character encoding. We should be able
+ * to compress it quite a bit with better encoding? maybe uuencode? */
+void
+bn_randmt_state_serialize(struct _internal_state_s *UNUSED(is), struct bu_vls *UNUSED(s))
+{
+    bu_bomb("Not implemented yet.\n");
+}
+
+void
+bn_randmt_state_deserialize(struct _internal_state_s *UNUSED(is), struct bu_vls *UNUSED(s))
+{
+    bu_bomb("Not implemented yet.\n");
+}
+
+void
+bn_rand_mt_state_set_global(struct _internal_state_s *is)
+{
+    global_state = is;
+}
+
+void
+bn_randmt_seed(unsigned long seed)
+{
+    bn_randmt_state_seed(global_state, (uint32_t)seed);
+}
+
+double bn_randmt()
+{
+    return bn_randmt_state(global_state);
 }
 
 /*

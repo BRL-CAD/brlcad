@@ -43,12 +43,12 @@ future release of BRL-CAD.  Use bu_setlinebuf instead.\n");
 void
 bu_setlinebuf(FILE *fp)
 {
-    if (!fp) {
+    if (UNLIKELY(!fp)) {
 	return;
     }
 
     /* prefer this one */
-    if (setvbuf(fp, (char *)NULL, _IOLBF, BUFSIZE) != 0) {
+    if (UNLIKELY(setvbuf(fp, (char *)NULL, _IOLBF, BUFSIZE) != 0)) {
 	perror("bu_setlinebuf");
     }
 }

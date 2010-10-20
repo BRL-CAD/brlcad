@@ -142,7 +142,6 @@ bin_PROGRAMS = \
 	png-bw \
 	png-pix \
 	png_info \
-	query \
 	rle-pix \
 	sun-pix \
 	terrain \
@@ -509,9 +508,6 @@ png_pix_SOURCES = png-pix.c
 png_pix_CFLAGS = ${PNG_CPPFLAGS}
 png_pix_LDADD = ${BN} ${BU}
 
-query_SOURCES = query.c
-query_LDADD = ${BU}
-
 rle_pix_SOURCES = rle-pix.c
 rle_pix_LDADD = ${RLE} ${BU} ${SYSV}
 rle_pix_CFLAGS = ${RLE_CPPFLAGS}
@@ -636,7 +632,6 @@ man_MANS = \
 	png-bw.1 \
 	png-pix.1 \
 	png_info.1 \
-	query.1 \
 	random.1 \
 	rle-pix.1 \
 	sun-pix.1 \
@@ -765,7 +760,6 @@ FAST_OBJECTS = \
 	$(png_bw_OBJECTS) \
 	$(png_pix_OBJECTS) \
 	$(png_info_OBJECTS) \
-	$(query_OBJECTS) \
 	$(random_OBJECTS) \
 	$(rle_pix_OBJECTS) \
 	$(sgi_pix_OBJECTS) \

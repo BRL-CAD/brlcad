@@ -32,9 +32,6 @@
 #define ANIM_STEER_NEW	0
 #define ANIM_STEER_END	1
 
-#define DTOR    M_PI/180.0
-#define RTOD	180.0/M_PI
-
 #define VSUBUNIT(a, b, c) {VSUB2(a, b, c);\
 			VUNITIZE(a);}
 #define FVSCAN(f, a)	fscanf(f, "%lf %lf %lf", (a), (a)+1, (a)+2)

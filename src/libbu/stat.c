@@ -55,12 +55,12 @@ bu_file_exists(const char *path)
 {
     struct stat sbuf;
 
-    if (bu_debug & BU_DEBUG_PATHS) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("Does [%s] exist? ", path);
     }
 
     if (!path) {
-	if (bu_debug & BU_DEBUG_PATHS) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("NO\n");
 	}
 	/* FAIL */
@@ -69,14 +69,14 @@ bu_file_exists(const char *path)
 
     /* does it exist as a filesystem entity? */
     if (stat(path, &sbuf) == 0) {
-	if (bu_debug & BU_DEBUG_PATHS) {
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	    bu_log("YES\n");
 	}
 	/* OK */
 	return 1;
     }
 
-    if (bu_debug & BU_DEBUG_PATHS) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("NO\n");
     }
     /* FAIL */
@@ -89,7 +89,7 @@ bu_same_file(const char *fn1, const char *fn2)
 {
     struct stat sb1, sb2;
 
-    if (!fn1 || !fn2) {
+    if (UNLIKELY(!fn1 || !fn2)) {
 	return 0;
     }
 
@@ -113,7 +113,7 @@ bu_same_fd(int fd1, int fd2)
 {
     struct stat sb1, sb2;
 
-    if (fd1<0 || fd2<0) {
+    if (UNLIKELY(fd1<0 || fd2<0)) {
 	return 0;
     }
 
@@ -149,7 +149,7 @@ _bu_file_access(const char *path, int access_level)
     int grp_mask = S_IRGRP | S_IWGRP | S_IXGRP;
     int oth_mask = S_IROTH | S_IWOTH | S_IXOTH;
 
-    if (!path || (path[0] == '\0')) {
+    if (UNLIKELY(!path || (path[0] == '\0'))) {
 	return 0;
     }
 

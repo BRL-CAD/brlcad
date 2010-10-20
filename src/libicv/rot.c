@@ -291,6 +291,7 @@ icv_rot(int argc, char **argv)
     unsigned char *obuf;
     unsigned char *buffer;
     double angle = 0.0;
+    size_t wrote = 0;
 
     ifp = stdin;
     ofp = stdout;
@@ -354,7 +355,13 @@ icv_rot(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, pixbytes, buflines, ofp);
+		wrote = fwrite(obuf, pixbytes, buflines, ofp);
+		if (wrote != buflines) {
+		    ret = 4;
+		    perror("fwrite");
+		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, buflines);
+		    goto done;
+		}
 		outplace += buflines*pixbytes;
 	    }
 	} else if (minus90) {
@@ -378,7 +385,13 @@ icv_rot(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(obuf, pixbytes, buflines, ofp);
+		wrote = fwrite(obuf, pixbytes, buflines, ofp);
+		if (wrote != buflines) {
+		    ret = 4;
+		    perror("fwrite");
+		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, buflines);
+		    goto done;
+		}
 		outplace += buflines*pixbytes;
 	    }
 	} else if (invert) {
@@ -394,13 +407,25 @@ icv_rot(int argc, char **argv)
 		    }
 		    outplace = outbyte;
 		}
-		fwrite(&buffer[(y-firsty-1)*scanbytes], 1, scanbytes, ofp);
+		wrote = fwrite(&buffer[(y-firsty-1)*scanbytes], 1, scanbytes, ofp);
+		if (wrote != scanbytes) {
+		    ret = 4;
+		    perror("fwrite");
+		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, scanbytes);
+		    goto done;
+		}
 		outplace += scanbytes;
 	    }
 	} else {
 	    /* Reverse only */
 	    for (y = 0; y < buflines; y++) {
-		fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
+		wrote = fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
+		if (wrote != scanbytes) {
+		    ret = 4;
+		    perror("fwrite");
+		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, scanbytes);
+		    goto done;
+		}
 	    }
 	}
 

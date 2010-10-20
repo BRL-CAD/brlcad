@@ -37,10 +37,10 @@
 #include "./extern.h"
 
 
-boolean
+int
 imageInit()
 {
-    boolean needopen = 0;
+    int needopen = 0;
     static char lastfbfile[LNBUFSZ]={0}; /* last fbfile */
     devwid = 512;
     devhgt = 512;
@@ -82,11 +82,11 @@ imageInit()
 
 Must be called after gridInit() so that gridsz is setup.
 */
-boolean
+int
 openFbDevice( devname )
     char	*devname;
 {
-    boolean	ret = 1;
+    int	ret = 1;
     notify( "Opening frame buffer", NOTIFY_APPEND );
     if ( zoom < 1 )
     {
@@ -133,7 +133,7 @@ openFbDevice( devname )
     return	ret;
 }
 
-boolean
+int
 closFbDevice()
 {
     int	ret;
