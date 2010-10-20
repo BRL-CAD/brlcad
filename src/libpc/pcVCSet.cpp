@@ -168,16 +168,18 @@ Parameter * VCSet::getParameter(std::string pname)
 /** @todo remove std::list passing */
 std::list<std::string> VCSet::getParamVariables(const char * pname)
 {
-    Parameter * p = getParameter(pname);
-    if (p) {
-	std::list<std::string> V;
-	Parameter::iterator i = p->begin();
-	Parameter::iterator end = p->end();
-	for (; i !=end; i++) {
-	    V.push_back(i->getID());
-	}
+    std::list<std::string> V;
+    Parameter *p = getParameter(pname);
+    if (!p) {
 	return V;
     }
+
+    Parameter::iterator i = p->begin();
+    Parameter::iterator end = p->end();
+    for (; i !=end; i++) {
+	V.push_back(i->getID());
+    }
+    return V;
 }
 
 void VCSet::display()

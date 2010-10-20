@@ -31,12 +31,15 @@
 #include <cassert>
 #include <map>
 
+#include "vmath.h"
+
+
 void copyStack(Stack::container_t & lhs, Stack::container_t const & rhs)
 {
     lhs.clear();
     Stack::container_t::const_iterator i = rhs.begin();
-    Stack::container_t::const_iterator const end = rhs.end();
-    for(;i !=end; ++i)
+    Stack::container_t::const_iterator const rhsend = rhs.end();
+    for(; i != rhsend; ++i)
 	lhs.push_back((*i)->clone());
 }
 
@@ -55,8 +58,8 @@ void Stack::copy(Stack::container_t const & a)
 {
     data.clear();
     Stack::container_t::const_iterator i = a.begin();
-    Stack::container_t::const_iterator const end = a.end();
-    for (; i != end; ++i)
+    Stack::container_t::const_iterator const aend = a.end();
+    for (; i != aend; ++i)
 	data.push_back((*i)->clone());
 }
 
@@ -149,9 +152,9 @@ Stack::iterator Stack::erase(iterator location)
     return makeIterator(data.erase(location.base()));
 }
 
-Stack::iterator Stack::erase(iterator begin, iterator end)
+Stack::iterator Stack::erase(iterator begin_range, iterator end_range)
 {
-    return makeIterator(data.erase(begin.base(), end.base()));
+    return makeIterator(data.erase(begin_range.base(), end_range.base()));
 }
 
 Stack::iterator Stack::insert(iterator location, Node * n)
@@ -274,8 +277,8 @@ UserFunction::UserFunction()
     : arity_(0)
 {}
 
-UserFunction::UserFunction(std::string const & name, std::size_t const farity)
-    : MathFunction(name),
+UserFunction::UserFunction(std::string const & function_name, std::size_t const farity)
+    : MathFunction(function_name),
       arity_(farity)
 {}
 
@@ -432,7 +435,7 @@ std::size_t OrNode::OrFunc::arity() const
 
 double OrNode::OrFunc::evalp(std::vector<double> const & params) const
 {
-    return bool (params[0]) ? true : bool(evaluate(rhs_stack_));
+    return (!NEAR_ZERO(params[0], SMALL_FASTF)) ? 1.0 : evaluate(rhs_stack_);
 }
 
 /** FuncDefNode methods */
@@ -506,7 +509,7 @@ std::size_t BranchNode::BranchFunc::arity() const
 
 double BranchNode::BranchFunc::evalp(std::vector<double> const & params) const
 {
-    return evaluate(params[0] ? stack1_ : stack2_);
+    return evaluate(!NEAR_ZERO(params[0], SMALL_FASTF) ? stack1_ : stack2_);
 }
 
 /** Functions assisting evaluation */

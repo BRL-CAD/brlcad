@@ -54,8 +54,8 @@ protected:
 Solver::Solver()
     : num_checks_(0),
       num_solutions_(0),
-      solved_(false),
-      initiated_(false)
+      initiated_(false),
+      solved_(false)
 {}
 
 /* Generic solver for VCSet */
@@ -92,7 +92,7 @@ void PCSolver<T>::initiate() {
 template <typename T>
 bool PCSolver<T>::generator() {
     std::list<VariableAbstract *>::iterator i, j, k;
-    bool atend = true;
+    //    bool atend = true;
     i = vars_.begin();
     j = vars_.end();
     typedef Variable<T> * Vp;
@@ -253,7 +253,7 @@ private:
     std::list<VariableAbstract *> vars_;
     VCSet * vcs;
 
-    int labelsize();
+    size_t labelsize();
     bool backtrack();
     bool check();
 };
@@ -264,7 +264,7 @@ BackTrackSolver<T>::BackTrackSolver()
 {}
 
 template <typename T>
-int BackTrackSolver<T>::labelsize() {
+size_t BackTrackSolver<T>::labelsize() {
     int sum = 0;
     Varlist::iterator i = vars_.begin();
     Varlist::iterator end = vars_.end();
@@ -387,7 +387,7 @@ private:
     class BinaryNetwork<T>* N;
     std::list<VariableAbstract *> vars_;
 
-    int labelsize();
+    size_t labelsize();
     bool backtrack();
     bool check();
 };
@@ -398,7 +398,7 @@ BTSolver<T>::BTSolver()
 {}
 
 template <typename T>
-int BTSolver<T>::labelsize() {
+size_t BTSolver<T>::labelsize() {
     int i=0;
     for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	if (labels[*v_i] == true) i++;

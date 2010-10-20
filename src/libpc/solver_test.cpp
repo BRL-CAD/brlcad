@@ -41,7 +41,7 @@ typedef Variable<int> * Vip;
 /* Constraint functions */
 struct f1 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
     typedef Variable<int> * Vi ;
     int A = ((Variable<int>*) vcset.getVariablebyID("A"))->getValue();
     int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
@@ -50,7 +50,7 @@ public:
 } f1;
 struct f2 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
     typedef Variable<int> * Vi ;
     int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
     int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
@@ -60,7 +60,7 @@ public:
 
 struct f3 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
     typedef Variable<int> * Vi ;
     int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
     int D = ((Vi) vcset.getVariablebyID("D"))->getValue();
@@ -70,7 +70,7 @@ public:
 
 struct f4 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
     typedef Variable<int> * Vi ;
     int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
     int A = ((Vi) vcset.getVariablebyID("A"))->getValue();

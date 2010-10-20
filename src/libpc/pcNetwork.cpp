@@ -30,7 +30,7 @@
 template<class T>
 BinaryNetwork<T>::BinaryNetwork()
 {
-};
+}
 
 template<class T>
 BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constraint *> C) {
@@ -81,7 +81,7 @@ void BinaryNetwork<T>::add_edge(Constraint * C)
 }
 
 template<class T>
-void BinaryNetwork<T>::setVariable(Vertex v, Variable<T>* var)
+void BinaryNetwork<T>::setVariable(Vertex vertex, Variable<T>* var)
 {
     G[v] = var;
 }
@@ -89,9 +89,9 @@ void BinaryNetwork<T>::setVariable(Vertex v, Variable<T>* var)
 template<class T>
 bool BinaryNetwork<T>::check()
 {
-    typename GraphTraits::edge_iterator e_i, e_end;
-    for (tie(e_i, e_end) = edges(G); e_i != e_end; ++e_i) {
-	e = *e_i;
+    typename GraphTraits::edge_iterator edge_i, edge_end;
+    for (tie(edge_i, edge_end) = edges(G); edge_i != edge_end; ++edge_i) {
+	e = *edge_i;
 	if (! G[e]->check()) {
 	    return false;
 	}
@@ -110,19 +110,17 @@ void BinaryNetwork<T>::display()
 
     Vertexwriter<T> vw(G);
     Edgewriter<T> ew(G);
-    boost::default_writer dw;
-    boost::default_writer gw;
     boost::write_graphviz(std::cout, G, vw, ew,
 			  boost::make_graph_attributes_writer(graph_attr, vertex_attr, edge_attr));
 
 }
 
 template<class T>
-void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& v)
+void BinaryNetwork<T>::getVertexbyID(std::string Vid, Vertex& vertex)
 {
     for (tie(v_i, v_end) = vertices(G); v_i != v_end; ++v_i) {
 	if ( G[*v_i]->getID() == Vid ) {
-	    v = *v_i;
+	    vertex = *v_i;
 	    return ;
 	}
     }

@@ -52,8 +52,10 @@ ConstraintInterface::~ConstraintInterface()
     }
 }
 
-bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid) const {
+bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid) const
+{
     typedef Variable<double> * Vi;
+
     for (int i =0; i < nargs_; i++) {
         for (int j = 0; j < dimension_; j++) {
 	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
@@ -61,42 +63,43 @@ bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid)
 	}
     }
 
-    if (fp_) {
-        if ( fp_(a) == 0) {
-	    return true;
-	} else {
-	    return false;
-	}
-    } else {
+    if (!fp_) {
 	std::cout << "!!! Constraint evaluation pointer NULL\n";
+	return false;
     }
+
+    if ( fp_(a) == 0) {
+	return true;
+    }
+
+    return false;
 }
 
 Constraint::Constraint(VCSet &vcs) :
-    vcset(vcs),
     status(0),
-    cif(NULL)
+    cif(NULL),
+    vcset(vcs)
 {
 }
 
 Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf) :
-    vcset(vcs),
     status(0),
+    cif(NULL),
+    vcset(vcs),
     id(Cid),
     expression(Cexpression),
-    cif(NULL),
     eval(pf)
 {
 }
 
 Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, std::list<std::string> Vid) :
-    vcset(vcs),
     status(0),
+    cif(NULL),
+    vcset(vcs),
     id(Cid),
     expression(Cexpression),
-    cif(NULL),
-    eval(pf),
-    Variables(Vid)
+    Variables(Vid),
+    eval(pf)
 { 
     std::list<std::string>::iterator i = Variables.begin();
     std::list<std::string>::iterator end = Variables.end();
@@ -105,11 +108,11 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
 }
 
 Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list * args) :
-    vcset(vcs),
     status(0),
+    cif(NULL),
+    vcset(vcs),
     id(Cid),
     expression(Cexpression),
-    cif(NULL),
     eval(pf)
 {
     for (int i=0; i<count; i++) {
@@ -119,12 +122,12 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
     }
 }
 
-Constraint::Constraint(VCSet &vcs, pc_constrnt * c)
-    : vcset(vcs),
-      status(0),
-      id(bu_vls_addr(&(c->name))),
-      expression(""),
-      cif(c)
+Constraint::Constraint(VCSet &vcs, pc_constrnt * c) :
+    status(0),
+    cif(c),
+    vcset(vcs),
+    id(bu_vls_addr(&(c->name))),
+    expression("")
 {
     eval = boost::ref(cif);
     std::list<std::string> t;

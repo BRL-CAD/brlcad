@@ -146,8 +146,8 @@ struct MathF1 : public MathFunction
     /* function pointer to a function taking a unary argument */
     typedef T (* function_ptr) (T);
 
-    MathF1(std::string const & name, function_ptr fp)
-	: MathFunction(name),
+    MathF1(std::string const & function_name, function_ptr fp)
+	: MathFunction(function_name),
 	  funct(fp)
     {}
     
@@ -169,11 +169,11 @@ struct MathF2 : public MathFunction
 {
     /* function pointer to a function taking two arguments */
     typedef T (* function_ptr) (T, T);
-    MathF2(std::string const & name, function_ptr fp)
-	: MathFunction(name),
+    MathF2(std::string const & function_name, function_ptr fp)
+	: MathFunction(function_name),
 	  funct(fp)
     {
-	std::cout << "Constructed " << name << std::endl;
+	std::cout << "Constructed " << function_name << std::endl;
     }
     /** arity return method */
     std::size_t arity() const { return 2; }

@@ -36,6 +36,10 @@ VariableAbstract::VariableAbstract(std::string vid) :
 {
 }
 
+VariableAbstract::~VariableAbstract()
+{
+}
+
 void VariableAbstract::display()
 {
 }

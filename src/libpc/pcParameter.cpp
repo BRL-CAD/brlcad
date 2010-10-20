@@ -72,9 +72,9 @@ Parameter::iterator Parameter::erase(iterator location)
     return makeIterator(Variables.erase(location.base()));
 }
 
-Parameter::iterator Parameter::erase(iterator begin, iterator end)
+Parameter::iterator Parameter::erase(iterator beginning, iterator ending)
 {
-    return makeIterator(Variables.erase(begin.base(), end.base()));
+    return makeIterator(Variables.erase(beginning.base(), ending.base()));
 }
 
 std::string Parameter::getName() const
