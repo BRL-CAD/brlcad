@@ -37,6 +37,7 @@
 		       _data_axes_name _sdata_axes_name
 		       _data_labels_name _sdata_labels_name
 		       _data_lines_name _sdata_lines_name}
+	proc deleteGlobalData {_ged _archer _group _attr_name}
 	proc measureLastDataPoints {_ged _archer _group _attr_name _pindex {_sindex -1}}
 	proc updateData {_ged _archer _group
 			 _attr_name _data_cmd _data_subcmd}
@@ -50,7 +51,7 @@
                                           _attr_name _data_cmd _data_subcmd
                                           _data _index_begin _index_end} {
     if {$_group == ""} {
-	$_archer putString "Please select a group before creating $_attr_name."
+	$_archer putString "Please select a group before appending to $_attr_name."
 	return
     }
 
@@ -488,6 +489,26 @@
 	    return
 	}
     }
+}
+
+::itcl::body DataUtils::deleteGlobalData {_ged _archer _group _attr_name} {
+    if {$_group == ""} {
+	$_archer putString "Please select a group before deleting from $_attr_name."
+	return
+    }
+
+    if {[catch {$_ged attr get _GLOBAL $_attr_name} dl]} {
+	return
+    }
+
+    # Delete the data list for the specified group
+    set i [lsearch -index 0 $dl $_group]
+    if {$i == -1} {
+	return
+    }
+
+    set dl [lreplace $dl $i $i]
+    $_archer attr set _GLOBAL $_attr_name $dl
 }
 
 ::itcl::body DataUtils::measureLastDataPoints {_ged _archer _group _attr_name _pindex {_sindex -1}} {
