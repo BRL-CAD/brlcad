@@ -28,7 +28,7 @@
 #include "pcVCSet.h"
 #include "pc.h"
 
-ConstraintInterface::ConstraintInterface(pc_constrnt * c)
+ConstraintInterface::ConstraintInterface(pc_constrnt *c)
 {
     if (c) {
 	nargs_ = c->data.cf.nargs;
@@ -37,10 +37,11 @@ ConstraintInterface::ConstraintInterface(pc_constrnt * c)
         a = new double*[nargs_];
 	
 	for (int i =0; i< nargs_; i++) {
-        a[i] = new double[dimension_];
+	    a[i] = new double[dimension_];
 	}
     }
 }
+
 
 ConstraintInterface::~ConstraintInterface()
 {
@@ -52,9 +53,10 @@ ConstraintInterface::~ConstraintInterface()
     }
 }
 
+
 bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid) const
 {
-    typedef Variable<double> * Vi;
+    typedef Variable<double> *Vi;
 
     for (int i =0; i < nargs_; i++) {
         for (int j = 0; j < dimension_; j++) {
@@ -68,23 +70,25 @@ bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid)
 	return false;
     }
 
-    if ( fp_(a) == 0) {
+    if (fp_(a) == 0) {
 	return true;
     }
 
     return false;
 }
 
+
 Constraint::Constraint(VCSet &vcs) :
     status(0),
-    cif(NULL),
+    cif (NULL),
     vcset(vcs)
 {
 }
 
+
 Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf) :
     status(0),
-    cif(NULL),
+    cif (NULL),
     vcset(vcs),
     id(Cid),
     expression(Cexpression),
@@ -92,9 +96,10 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
 {
 }
 
+
 Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, std::list<std::string> Vid) :
     status(0),
-    cif(NULL),
+    cif (NULL),
     vcset(vcs),
     id(Cid),
     expression(Cexpression),
@@ -107,24 +112,26 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
 	vcset.getVariablebyID(*i)->setConstrained(1);
 }
 
-Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list * args) :
+
+Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, functor pf, int count, va_list *args) :
     status(0),
-    cif(NULL),
+    cif (NULL),
     vcset(vcs),
     id(Cid),
     expression(Cexpression),
     eval(pf)
 {
     for (int i=0; i<count; i++) {
-	std::string tmp = va_arg(*args,char *);
+	std::string tmp = va_arg(*args, char *);
 	Variables.push_back(tmp);
 	vcset.getVariablebyID(tmp)->setConstrained(1);
     }
 }
 
-Constraint::Constraint(VCSet &vcs, pc_constrnt * c) :
+
+Constraint::Constraint(VCSet &vcs, pc_constrnt *c) :
     status(0),
-    cif(c),
+    cif (c),
     vcset(vcs),
     id(bu_vls_addr(&(c->name))),
     expression("")
@@ -141,6 +148,7 @@ Constraint::Constraint(VCSet &vcs, pc_constrnt * c) :
 	vcset.getVariablebyID(*i)->setConstrained(1);
 }
 
+
 bool Constraint::solved()
 {
     if (status == 0)
@@ -148,6 +156,7 @@ bool Constraint::solved()
     else
         return true;
 }
+
 
 bool Constraint::check()
 {
@@ -160,15 +169,17 @@ bool Constraint::check()
     }
 }
 
+
 void Constraint::display()
 {
     std::list<std::string>::iterator i;
     std::list<std::string>::iterator end = Variables.end();
     std::cout<< "Constraint id = " << id << "\t Expression = " << expression \
-	    << "\tSolved status = " << status << std::endl;
-    for ( i = Variables.begin(); i != end; i++)
+	     << "\tSolved status = " << status << std::endl;
+    for (i = Variables.begin(); i != end; i++)
 	std::cout << "--| " << *i << std::endl;
 }
+
 
 /** @} */
 /*

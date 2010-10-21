@@ -97,9 +97,9 @@ public:
     void getVertexbyID(std::string, Vertex&);
 
     /** Data addition/modification methods */
-    void add_vertex(Variable<T>* V);
-    void add_edge(Constraint * C);
-    void setVariable(Vertex v, Variable<T>* var);
+    void add_vertex(Variable<T> *V);
+    void add_edge(Constraint *C);
+    void setVariable(Vertex v, Variable<T> *var);
 
     /** Solution support functions */
     bool check();
@@ -112,9 +112,10 @@ private:
     Vertex v;
     Edge e;
 
-friend class GTSolver<T>;
-friend class BTSolver<T>;
+    friend class GTSolver<T>;
+    friend class BTSolver<T>;
 };
+
 
 #endif
 /** @} */

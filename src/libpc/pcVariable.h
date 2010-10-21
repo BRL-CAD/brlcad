@@ -90,7 +90,7 @@ public:
     iterator erase(iterator location);
     iterator erase(iterator begin, iterator end);
 
-    iterator insert(iterator location, Interval<T> * I);
+    iterator insert(iterator location, Interval<T> *I);
     
     /** Emptiness check */
     bool isEmpty();
@@ -134,7 +134,7 @@ protected:
     int type;
     bool const_;
 private:
-    std::string  id;
+    std::string id;
     int constrained_;
 };
 
@@ -193,7 +193,7 @@ public:
     typedef std::list<Domain<T> > Domains;
     typedef std::list<Domains> DomSet;
 
-    void insert(VariableAbstract * v);
+    void insert(VariableAbstract *v);
     void display();
     void cdisplay();
     void clear();
@@ -299,7 +299,7 @@ Domain<T>::erase(iterator begini, iterator endi)
 
 template<typename T>
 typename Domain<T>::iterator
-Domain<T>::insert(iterator location, Interval<T> * I)
+Domain<T>::insert(iterator location, Interval<T> *I)
 {
     assert(I);
     return makeIterator(Interv.insert(location.base(), I));
@@ -449,7 +449,7 @@ int Domain<T>::mergeIntervals (typename std::list<Interval<T> >::iterator i)
 
 
 template<class T>
-void  Domain<T>::packIntervals ()
+void Domain<T>::packIntervals ()
 {
     if (Interv.size()>1) {
 	typename std::list<Interval<T> >::iterator i, j, temp;
@@ -581,9 +581,9 @@ bool Variable<T>::atCriticalAbove()
 /* Solution Class Functions */
 
 template<typename T>
-void Solution<T>::insert(VariableAbstract * v)
+void Solution<T>::insert(VariableAbstract *v)
 {
-    Variable<T> * vt = (Variable<T> *) v;
+    Variable<T> *vt = (Variable<T> *) v;
     Domain<T> dom(vt->getValue(), vt->getValue(), vt->getStep());
     Varset_.push_back(v);
     //Domset_.back().push_back(dom);
@@ -606,7 +606,7 @@ bool Solution<T>::addSolution(VarSet & V)
     Domains D;
 
     for (; i != Varset_.end(); ++i) {
-	Variable<T> * vt = (Variable<T> *) *i;
+	Variable<T> *vt = (Variable<T> *) *i;
 	Domain<T> dom(vt->getValue(), vt->getValue(), vt->getStep());
 	D.push_back(dom);
     }

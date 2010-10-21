@@ -43,27 +43,28 @@ class VCSet;
 struct ConstraintInterface
 {
 public:
-    ConstraintInterface(struct pc_constrnt * c);
+    ConstraintInterface(struct pc_constrnt *c);
     ~ConstraintInterface();
     bool operator() (VCSet & vcset, std::list<std::string> Vid) const;
-    double ** a;
+    double **a;
 private:
     int (*fp_) (double **);
     int nargs_;
     int dimension_;
 };
 
+
 class Constraint {
-    typedef boost::function2< bool, VCSet &,std::list<std::string> > functor;
+    typedef boost::function2< bool, VCSet &, std::list<std::string> > functor;
 public:
 
     /** constructors & Destructors */
     Constraint(VCSet &vcs);
     Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor);
-    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor,\
-					    std::list<std::string> Vid);
-    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor,\
-					    int count,va_list * args);
+    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor, \
+	       std::list<std::string> Vid);
+    Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor, \
+	       int count, va_list *args);
     Constraint(VCSet &vcs, pc_constrnt *);
     
     bool solved();
