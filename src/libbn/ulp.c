@@ -30,6 +30,9 @@
  *
  * This file is completely in flux, incomplete, limited, and subject
  * to drastic changes.  Do NOT use it for anything.
+ *
+ * It also assumes an IEEE 754 compliant floating point
+ * representation.
  */
 
 
