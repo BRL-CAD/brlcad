@@ -161,10 +161,10 @@ FIND_PACKAGE(Freetype)
 FIND_PACKAGE(X11)
 
 TK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
-TK_INCLUDE_FILE(sys/statfs.h HAVE_SYS_STAT_H)
-IF(NOT HAVE_SYS_STAT_H)
+TK_INCLUDE_FILE(sys/statfs.h HAVE_SYS_STATFS_H)
+IF(NOT HAVE_SYS_STATFS_H)
 	FILE(APPEND ${CONFIG_H_FILE} "#define NO_FSTATFS 1\n")
-ENDIF(NOT HAVE_SYS_STAT_H)
+ENDIF(NOT HAVE_SYS_STATFS_H)
 TK_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
 TK_INCLUDE_FILE(string.h HAVE_STRING_H)
 TK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
@@ -458,15 +458,59 @@ SET(TK_AQUA_SRCS
 SET(TK_WIN_SRCS
 )
 
-SET(TK_SRCS ${TK_GENERIC_SRCS} ${TK_X11_SRCS} ${TTK_SRCS} ${TTK_STUB_SRCS})
+SET(TK_SRCS ${TK_GENERIC_SRCS} ${TTK_SRCS} ${TTK_STUB_SRCS})
+
+IF(WIN32)
+	SET(TK_SRCS ${TK_SRCS} ${TK_WIN_SRCS})
+ELSE(WIN32)
+	IF(ENABLE_AQUA)
+		SET(TK_SRCS ${TK_SRCS} ${TK_AQUA_SRCS})
+	ELSE(ENABLE_AQUA)
+		SET(TK_SRCS ${TK_SRCS} ${TK_X11_SRCS})
+	ENDIF(ENABLE_AQUA)
+ENDIF(WIN32)
+
+# When it comes to identification of the location of the Tcl
+# sources, the convention is as follows:
+#
+# 1.  If TCL_INCLUDE_PATH is defined, use it
+# 2.  Else, if TCL_PREFIX is defined build include paths from it
+# 3.  If TCL_INCLUDE_PATH is not defined and TCL_BIN_PREFIX is,
+#     add include directories based on the presumption of the
+#     binary build dir (and hence tclConfig.h) being in a non-src
+#     location.
+#
+# It's still possible, depending on how Tcl was built, to 
+# have a situation where TCL_INCLUDE_PATH has to be augmented
+# manually.  However, the logic below should cover the most common cases.
+
+IF(NOT TCL_INCLUDE_PATH)
+	IF(TCL_PREFIX)
+		SET(TCL_INCLUDE_PATH ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
+		IF(WIN32)
+			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/win)
+		ELSE(WIN32)
+			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/unix)
+		ENDIF(WIN32)
+	ENDIF(TCL_PREFIX)
+	IF(TCL_BIN_PREFIX)
+		SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_BIN_PREFIX}/include)
+	ENDIF(TCL_BIN_PREFIX)
+ENDIF(NOT TCL_INCLUDE_PATH)
+
+SET(TK_INCLUDE_PATH ${TK_SOURCE_DIR}/generic ${TK_SOURCE_DIR}/bitmaps ${TK_BINARY_DIR}/include)
+IF(WIN32)
+	SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_SOURCE_DIR}/win)
+ELSE(WIN32)
+	SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_SOURCE_DIR}/unix)
+	IF(APPLE)
+		SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_SOURCE_DIR}/macosx)
+	ENDIF(APPLE)
+ENDIF(WIN32)
+
 include_directories(
-	${TK_SOURCE_DIR}/../tcl/generic
-	${TK_SOURCE_DIR}/../tcl/unix
-	${TK_SOURCE_DIR}/generic
-	${TK_SOURCE_DIR}/unix
-	${TK_SOURCE_DIR}/macosx
-	${TK_SOURCE_DIR}/bitmaps
-	${TK_BINARY_DIR}/include
+   ${TCL_INCLUDE_PATH}	
+   ${TK_INCLUDE_PATH}	
 	${FREETYPE_INCLUDE_DIRS}
 )
 
