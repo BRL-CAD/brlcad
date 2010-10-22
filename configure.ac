@@ -1584,7 +1584,6 @@ AC_CHECK_HEADERS( \
 	pwd.h \
 	rle.h \
 	sched.h \
-	sgtty.h \
 	stdint.h \
 	sys/file.h \
 	sys/_ioctl.h \
@@ -1624,6 +1623,7 @@ AC_CHECK_HEADERS( \
 	ieeefp.h \
 )
 
+# these are needed to test for boost (used by BUILD_BOOST test)
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS( \
 	limits \
