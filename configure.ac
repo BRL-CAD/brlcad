@@ -2246,7 +2246,6 @@ AC_CHECK_FUNCS(\
 	mkstemp \
 	pipe \
 	popen \
-	random \
 	sbrk \
 	setenv \
 	setpgid \
@@ -3869,7 +3868,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
-AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limit" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
+AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limits" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
