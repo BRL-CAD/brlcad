@@ -77,12 +77,12 @@ MACRO(CHECK_TYPE_SIZE_H typename var)
 	endif(CONFIG_H_FILE AND HAVE_${var}_T)
 ENDMACRO(CHECK_TYPE_SIZE_H)
 
-MACRO(CHECK_STRUCT_MEMBER_H structname member header var)
+MACRO(CHECK_STRUCT_HAS_MEMBER_H structname member header var)
 	CHECK_STRUCT_HAS_MEMBER(${structname} ${member} ${header} HAVE_${var})
 	if(CONFIG_H_FILE AND HAVE_${var})
 		FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_${var} 1\n")
 	endif(CONFIG_H_FILE AND HAVE_${var})
-ENDMACRO(CHECK_STRUCT_MEMBER_H)
+ENDMACRO(CHECK_STRUCT_HAS_MEMBER_H)
 
 MACRO(CHECK_LIBRARY targetname lname func)
 	IF(NOT ${targetname}_LIBRARY)
@@ -203,5 +203,80 @@ MACRO(CHECK_GETADDERINFO_WORKING)
 	IF(WORKING_GETADDERINFO)
 		FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_GETADDERINFO 1\n")
 	ENDIF(WORKING_GETADDERINFO)
-
 ENDMACRO(CHECK_GETADDERINFO_WORKING)
+
+
+MACRO(TERMIOS_TERMIO_SGTTY)
+	SET(TERMIOS_SRC "
+	#include <termios.h>
+	int main() {
+	struct termios t;
+	if (tcgetattr(0, &t) == 0) {
+		cfsetospeed(&t, 0);
+		t.c_cflag |= PARENB | PARODD | CSIZE | CSTOPB;
+		return 0;
+	}
+		return 1;
+	}
+	")
+	SET(TERMIO_SRC "
+	#include <termio.h>
+	int main() {
+	struct termio t;
+	if (ioctl(0, TCGETA, &t) == 0) {
+		t.c_cflag |= CBAUD | PARENB | PARODD | CSIZE | CSTOPB;
+		return 0;
+	}
+		return 1;
+	}
+   ")
+	SET(SGTTY_SRC "
+	#include <sgtty.h>
+	int main() {
+	struct sgttyb t;
+	if (ioctl(0, TIOCGETP, &t) == 0) {
+		t.sg_ospeed = 0;
+		t.sg_flags |= ODDP | EVENP | RAW;
+		return 0;
+	}
+		return 1;
+	}
+	")
+	CHECK_C_SOURCE_RUNS("${TERMIOS_SRC}" HAVE_TERMIOS)
+	IF(NOT HAVE_TERMIOS)
+		CHECK_C_SOURCE_RUNS("${TERMIO_SRC}" HAVE_TERMIO)
+	ENDIF(NOT HAVE_TERMIOS)
+	IF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS)
+		CHECK_C_SOURCE_RUNS("${SGTTY_SRC}" HAVE_SGTTY)
+	ENDIF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS)
+ENDMACRO(TERMIOS_TERMIO_SGTTY)
+
+MACRO(CHECK_FD_SET_IN_TYPES_H)
+	SET(TEST_SRC "
+	#include <sys/types.h>
+	int main ()
+	{
+	fd_set readMask, writeMask;
+	return 0;
+	}
+	")
+	CHECK_C_SOURCE_COMPILES("${TEST_SRC}" FD_SET_IN_TYPES_H)
+ENDMACRO(CHECK_FD_SET_IN_TYPES_H)
+
+MACRO(CHECK_TIME_AND_SYS_TIME)
+	SET(TEST_SRC "
+	#include <sys/types.h>
+	#include <sys/time.h>
+	#include <time.h>
+
+	int
+	main ()
+	{
+	if ((struct tm *) 0)
+		return 0;
+	return 0;
+	}
+	")
+	CHECK_C_SOURCE_COMPILES("${TEST_SRC}" TIME_AND_SYS_TIME)
+ENDMACRO(CHECK_TIME_AND_SYS_TIME)
+
