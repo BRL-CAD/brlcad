@@ -268,10 +268,7 @@ MACRO(CHECK_TIME_AND_SYS_TIME)
 	#include <sys/types.h>
 	#include <sys/time.h>
 	#include <time.h>
-
-	int
-	main ()
-	{
+	int main()	{
 	if ((struct tm *) 0)
 		return 0;
 	return 0;
