@@ -522,6 +522,8 @@ ENDIF(WIN32)
 
 add_library(tk ${TK_SRCS})
 target_link_libraries(tk tcl ${COREFOUNDATION_FRAMEWORK} ${FONTCONFIG_LIBRARY} ${X11_LIBRARIES} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES})
+install(TARGETS tk DESTINATION lib)
 
 add_executable(wish ${WISH_SRCS})
 target_link_libraries(wish tcl tk)
+install(TARGETS wish DESTINATION bin)
