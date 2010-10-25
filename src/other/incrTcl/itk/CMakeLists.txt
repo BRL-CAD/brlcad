@@ -43,7 +43,7 @@ IF(COMMAND CMAKE_POLICY)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # set CMake project name
-PROJECT(TCL)
+PROJECT(ITK)
 
 # build shared libs by default
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -52,11 +52,11 @@ OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 
 # version numbers
-SET(TCL_MAJOR_VERSION 8)
-SET(TCL_MINOR_VERSION 5)
-SET(TCL_PATCH_LEVEL 9)
+SET(ITK_MAJOR_VERSION 8)
+SET(ITK_MINOR_VERSION 5)
+SET(ITK_PATCH_LEVEL 9)
 
-SET(TCL_VERSION "${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}.${TCL_PATCH_LEVEL}")
+SET(ITK_VERSION "${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}.${ITK_PATCH_LEVEL}")
 
 #-----------------------------------------------------------------------------
 # Output directories.
@@ -92,60 +92,35 @@ ENDIF(PIPE_COMPILER_FLAG)
 SET(CMAKE_MODULE_PATH "${TCL_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
 
 #-----------------------------------------------------------------------------
-# Unlike the autotools based builds, CMake will always use tclConfig.h - define
-# this at the toplevel so tclPort.h includes it.
+# Unlike the autotools based builds, CMake will always use itkConfig.h
 
 add_definitions(
-	-DHAVE_TCL_CONFIG_H
+	-DHAVE_ITK_CONFIG_H
 )
 
 # We will need a tclConfig.h.in file to hold all the #cmakedefine statements,
 # which will in turn be used to generate a tclConfig.h file.  To succeed, the 
 # file must first be present, which we take care of here:
 
-SET(CONFIG_H_FILE "${CMAKE_BINARY_DIR}/include/tclConfig.h.in")
-FILE(WRITE ${CONFIG_H_FILE} "/**** Tcl define statements from CMake ****/\n")
-FILE(APPEND ${CONFIG_H_FILE} "#ifndef _TCLCONFIG\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define _TCLCONFIG\n")
+SET(CONFIG_H_FILE "${CMAKE_BINARY_DIR}/include/itkConfig.h.in")
+FILE(WRITE ${CONFIG_H_FILE} "/**** itk define statements from CMake ****/\n")
+FILE(APPEND ${CONFIG_H_FILE} "#ifndef _ITKCONFIG\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define _ITKCONFIG\n")
 
-INCLUDE(${TCL_SOURCE_DIR}/CMake/CheckSystemFunctionality.cmake)
+INCLUDE(${ITK_SOURCE_DIR}/CMake/CheckSystemFunctionality.cmake)
 
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
-FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"tcl\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"tcl\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"tcl ${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"Itk\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"Itk\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"Itk ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_BUGREPORT \"\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define STDC_HEADERS 1\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SHLIB_EXT \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_INSTALL_LIBDIR \"${CMAKE_INSTALL_PREFIX}/lib\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_INSTALL_BINDIR \"${CMAKE_INSTALL_PREFIX}/bin\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_INSTALL_SCRDIR \"${CMAKE_INSTALL_PREFIX}/scripts\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_INSTALL_INCDIR \"${CMAKE_INSTALL_PREFIX}/include\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_INSTALL_DOCDIR \"${CMAKE_INSTALL_PREFIX}/share/man\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_RUNTIME_LIBDIR \"${CMAKE_INSTALL_PREFIX}/lib\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_RUNTIME_BINDIR \"${CMAKE_INSTALL_PREFIX}/bin\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_RUNTIME_SCRDIR \"${CMAKE_INSTALL_PREFIX}/scripts\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_RUNTIME_INCDIR \"${CMAKE_INSTALL_PREFIX}/include\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define CFG_RUNTIME_DOCDIR \"${CMAKE_INSTALL_PREFIX}/share/man\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define TCL_LIBRARY \"${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define TCL_PACKAGE_PATH \"${CMAKE_INSTALL_PREFIX}/lib\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define ITK_LIBRARY \"${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}itk${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define USE_TCL_STUBS 1\n")
 
-IF(NOT TCL_CFGVAL_ENCODING)
-	SET(TCL_CFGVAL_ENCODING "iso8859-1")
-ENDIF(NOT TCL_CFGVAL_ENCODING)
-FILE(APPEND ${CONFIG_H_FILE} "#define TCL_CFGVAL_ENCODING \"${TCL_CFGVAL_ENCODING}\"\n")
-
-
-IF(APPLE)
-	FILE(APPEND ${CONFIG_H_FILE} "#define MAC_OSX_TCL 1\n")
-	find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
-	IF(COREFOUNDATION_FRAMEWORK)
-		FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_COREFOUNDATION 1\n")
-	ENDIF(COREFOUNDATION_FRAMEWORK)
-ENDIF(APPLE)
 #----------------------------------------------------------------------------
 # Define a number of variables to be controlled by options
 OPTION(TCL_THREADS "Enable Tcl Thread support" ON)
@@ -158,11 +133,6 @@ IF(TCL_THREADS)
 		FILE(APPEND ${CONFIG_H_FILE} "#define _POSIX_PTHREAD_SEMANTICS 1\n")
 	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
 ENDIF(TCL_THREADS)
-
-
-# Tom's math library
-OPTION(TCL_TOMMATH "Enable Tcl Tom's Math Library" ON)
-FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine TCL_TOMMATH 1\n")
 
 #----------------------------------------------------------------------------
 # Run tests for system headers and functionality
@@ -209,9 +179,6 @@ ENDIF(NOT HAVE_GETHOSTBYNAME)
 CHECK_COMPILER_SUPPORTS_HIDDEN()
 
 CHECK_LIBRARY(DL dl dlopen)
-
-INCLUDE(TestBigEndian)
-TEST_BIG_ENDIAN(IS_BIGENDIAN)
 
 CHECK_FUNCTION_EXISTS_H(getcwd HAVE_GETCWD)
 CHECK_FUNCTION_EXISTS_H(opendir HAVE_OPENDIR)
@@ -295,248 +262,101 @@ FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine USE_DTRACE 1\n")
 
 FIND_PACKAGE(Threads)
 
-# Now that all the tests are done, configure the tclConfig.h file:
-FILE(APPEND ${CONFIG_H_FILE} "#endif /*_TCLCONFIG*/\n")
-configure_file(${CONFIG_H_FILE} ${TCL_BINARY_DIR}/include/tclConfig.h)
+# Now that all the tests are done, configure the itkConfig.h file:
+FILE(APPEND ${CONFIG_H_FILE} "#endif /*_ITKCONFIG*/\n")
+configure_file(${CONFIG_H_FILE} ${ITK_BINARY_DIR}/include/itkConfig.h)
 
-SET(TCL_GENERIC_SRCS
-	generic/regcomp.c
-	generic/regexec.c
-	generic/regfree.c
-	generic/regerror.c
-	generic/tclAlloc.c
-	generic/tclAsync.c
-	generic/tclBasic.c
-	generic/tclBinary.c
-	generic/tclCkalloc.c
-	generic/tclClock.c
-	generic/tclCmdAH.c
-	generic/tclCmdIL.c
-	generic/tclCmdMZ.c
-	generic/tclCompCmds.c
-	generic/tclCompExpr.c
-	generic/tclCompile.c
-	generic/tclConfig.c
-	generic/tclDate.c
-	generic/tclDictObj.c
-	generic/tclEncoding.c
-	generic/tclEnv.c
-	generic/tclEvent.c
-	generic/tclExecute.c
-	generic/tclFCmd.c
-	generic/tclFileName.c
-	generic/tclGet.c
-	generic/tclHash.c
-	generic/tclHistory.c
-	generic/tclIO.c
-	generic/tclIOCmd.c
-	generic/tclIOGT.c
-	generic/tclIORChan.c
-	generic/tclIOSock.c
-	generic/tclIOUtil.c
-	generic/tclIndexObj.c
-	generic/tclInterp.c
-	generic/tclLink.c
-	generic/tclListObj.c
-	generic/tclLiteral.c
-	generic/tclLoad.c
-	generic/tclMain.c
-	generic/tclNamesp.c
-	generic/tclNotify.c
-	generic/tclObj.c
-	generic/tclPanic.c
-	generic/tclParse.c
-	generic/tclPathObj.c
-	generic/tclPipe.c
-	generic/tclPkg.c
-	generic/tclPkgConfig.c
-	generic/tclPosixStr.c
-	generic/tclPreserve.c
-	generic/tclProc.c
-	generic/tclRegexp.c
-	generic/tclResolve.c
-	generic/tclResult.c
-	generic/tclScan.c
-	generic/tclStrToD.c
-	generic/tclStringObj.c
-	generic/tclStubInit.c
-	generic/tclThread.c
-	generic/tclThreadAlloc.c
-	generic/tclThreadJoin.c
-	generic/tclThreadStorage.c
-	generic/tclTimer.c
-	generic/tclTomMathInterface.c
-	generic/tclTrace.c
-	generic/tclUniData.c
-	generic/tclUtf.c
-	generic/tclUtil.c
-	generic/tclVar.c
+SET(ITK_GENERIC_SRCS
+	generic/itkStubInit.c
+	generic/itkStubLib.c
+	generic/itk_archetype.c
+	generic/itk_cmds.c
+	generic/itk_option.c
+	generic/itk_util.c
 )
 
-SET(TCL_STUB_SRCS
-	generic/tclStubLib.c
+SET(ITK_STUB_SRCS
+	generic/itkStubLib.c
 )
 
-SET(TCL_TOMMATH_SRCS
-	libtommath/bn_fast_s_mp_mul_digs.c
-	libtommath/bn_fast_s_mp_sqr.c
-	libtommath/bn_mp_add.c
-	libtommath/bn_mp_add_d.c
-	libtommath/bn_mp_and.c
-	libtommath/bn_mp_clamp.c
-	libtommath/bn_mp_clear.c
-	libtommath/bn_mp_clear_multi.c
-	libtommath/bn_mp_cmp.c
-	libtommath/bn_mp_cmp_d.c
-	libtommath/bn_mp_cmp_mag.c
-	libtommath/bn_mp_copy.c
-	libtommath/bn_mp_count_bits.c
-	libtommath/bn_mp_div.c
-	libtommath/bn_mp_div_2.c
-	libtommath/bn_mp_div_2d.c
-	libtommath/bn_mp_div_3.c
-	libtommath/bn_mp_div_d.c
-	libtommath/bn_mp_exch.c
-	libtommath/bn_mp_expt_d.c
-	libtommath/bn_mp_grow.c
-	libtommath/bn_mp_init.c
-	libtommath/bn_mp_init_copy.c
-	libtommath/bn_mp_init_multi.c
-	libtommath/bn_mp_init_set.c
-	libtommath/bn_mp_init_size.c
-	libtommath/bn_mp_karatsuba_mul.c
-	libtommath/bn_mp_karatsuba_sqr.c
-	libtommath/bn_mp_lshd.c
-	libtommath/bn_mp_mod.c
-	libtommath/bn_mp_mod_2d.c
-	libtommath/bn_mp_mul.c
-	libtommath/bn_mp_mul_2.c
-	libtommath/bn_mp_mul_2d.c
-	libtommath/bn_mp_mul_d.c
-	libtommath/bn_mp_neg.c
-	libtommath/bn_mp_or.c
-	libtommath/bn_mp_radix_size.c
-	libtommath/bn_mp_radix_smap.c
-	libtommath/bn_mp_read_radix.c
-	libtommath/bn_mp_rshd.c
-	libtommath/bn_mp_set.c
-	libtommath/bn_mp_shrink.c
-	libtommath/bn_mp_sqr.c
-	libtommath/bn_mp_sqrt.c
-	libtommath/bn_mp_sub.c
-	libtommath/bn_mp_sub_d.c
-	libtommath/bn_mp_to_unsigned_bin.c
-	libtommath/bn_mp_to_unsigned_bin_n.c
-	libtommath/bn_mp_toom_mul.c
-	libtommath/bn_mp_toom_sqr.c
-	libtommath/bn_mp_toradix_n.c
-	libtommath/bn_mp_unsigned_bin_size.c
-	libtommath/bn_mp_xor.c
-	libtommath/bn_mp_zero.c
-	libtommath/bn_reverse.c
-	libtommath/bn_s_mp_add.c
-	libtommath/bn_s_mp_mul_digs.c
-	libtommath/bn_s_mp_sqr.c
-	libtommath/bn_s_mp_sub.c
-	libtommath/bncore.c
-)
+# When it comes to identification of the location of the Tcl
+# sources, the convention is as follows:
+#
+# 1.  If TCL_INCLUDE_PATH is defined, use it
+# 2.  Else, if TCL_PREFIX is defined build include paths from it
+# 3.  If TCL_INCLUDE_PATH is not defined and TCL_BIN_PREFIX is,
+#     add include directories based on the presumption of the
+#     binary build dir (and hence tclConfig.h) being in a non-src
+#     location.
+#
+# It's still possible, depending on how Tcl was built, to 
+# have a situation where TCL_INCLUDE_PATH has to be augmented
+# manually.  However, the logic below should cover the most common cases.
 
-SET(TCL_OSX_SRCS
-	macosx/tclMacOSXBundle.c
-	macosx/tclMacOSXFCmd.c
-	macosx/tclMacOSXNotify.c
-)
+IF(NOT TCL_INCLUDE_PATH)
+	IF(TCL_PREFIX)
+		SET(TCL_INCLUDE_PATH ${TCL_PREFIX}/generic ${TCL_PREFIX}/libtommath)
+		IF(WIN32)
+			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/win)
+		ELSE(WIN32)
+			SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_PREFIX}/unix)
+		ENDIF(WIN32)
+	ENDIF(TCL_PREFIX)
+	IF(TCL_BIN_PREFIX)
+		SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_BIN_PREFIX}/include)
+	ENDIF(TCL_BIN_PREFIX)
+ENDIF(NOT TCL_INCLUDE_PATH)
 
-SET(TCL_WIN_SRCS
-	win/cat.c
-	win/nmakehlp.c
-	win/stub16.c
-	win/tclAppInit.c
-	win/tclWin32Dll.c
-	win/tclWinChan.c
-	win/tclWinConsole.c
-	win/tclWinDde.c
-	win/tclWinError.c
-	win/tclWinFCmd.c
-	win/tclWinFile.c
-	win/tclWinInit.c
-	win/tclWinLoad.c
-	win/tclWinNotify.c
-	win/tclWinPipe.c
-	win/tclWinReg.c
-	win/tclWinSerial.c
-	win/tclWinSock.c
-	win/tclWinTest.c
-	win/tclWinThrd.c
-	win/tclWinTime.c
-)
+IF(NOT ITCL_INCLUDE_PATH)
+	IF(ITCL_PREFIX)
+		SET(ITCL_INCLUDE_PATH ${ITCL_PREFIX}/generic ${ITCL_PREFIX}/libtommath)
+		IF(WIN32)
+			SET(ITCL_INCLUDE_PATH ${ITCL_INCLUDE_PATH} ${ITCL_PREFIX}/win)
+		ELSE(WIN32)
+			SET(ITCL_INCLUDE_PATH ${ITCL_INCLUDE_PATH} ${ITCL_PREFIX}/unix)
+		ENDIF(WIN32)
+	ENDIF(ITCL_PREFIX)
+	IF(ITCL_BIN_PREFIX)
+		SET(ITCL_INCLUDE_PATH ${ITCL_INCLUDE_PATH} ${ITCL_BIN_PREFIX}/include)
+	ENDIF(ITCL_BIN_PREFIX)
+ENDIF(NOT ITCL_INCLUDE_PATH)
 
-SET(TCL_UNIX_SRCS
-	unix/tclAppInit.c
-	unix/tclUnixChan.c
-	unix/tclUnixCompat.c
-	unix/tclUnixEvent.c
-	unix/tclUnixFCmd.c
-	unix/tclUnixFile.c
-	unix/tclUnixInit.c
-	unix/tclUnixPipe.c
-	unix/tclUnixSock.c
-	unix/tclUnixTest.c
-	unix/tclUnixThrd.c
-	unix/tclUnixTime.c
-)
+IF(NOT TK_INCLUDE_PATH)
+	IF(TK_PREFIX)
+		SET(TK_INCLUDE_PATH ${TK_PREFIX}/generic ${TK_PREFIX}/libtommath)
+		IF(WIN32)
+			SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_PREFIX}/win)
+		ELSE(WIN32)
+			SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_PREFIX}/unix)
+		ENDIF(WIN32)
+	ENDIF(TK_PREFIX)
+	IF(TK_BIN_PREFIX)
+		SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_BIN_PREFIX}/include)
+	ENDIF(TK_BIN_PREFIX)
+ENDIF(NOT TK_INCLUDE_PATH)
 
-SET(TCL_NOTIFY_SRCS
-	unix/tclUnixNotfy.c
-)
 
-SET(TCL_DL_SRCS
-	unix/tclLoadAix.c
-	unix/tclLoadDl.c
-	unix/tclLoadDyld.c
-   generic/tclLoadNone.c
-  	unix/tclLoadOSF.c
-	unix/tclLoadShl.c
-)
-
-SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_NOTIFY_SRCS} ${TCL_STUB_SRCS}) 
-IF(WIN32)
-	SET(TCL_SRCS ${TCL_SRCS} ${TCL_WIN_SRCS})
-ELSE(WIN32)
-	SET(TCL_SRCS ${TCL_SRCS} ${TCL_UNIX_SRCS})
-	IF(APPLE)
-		SET(TCL_SRCS ${TCL_SRCS} ${TCL_OSX_SRCS} unix/tclLoadDyld.c)
-	ENDIF(APPLE)
-	IF(NOT APPLE)
-		SET(TCL_SRCS ${TCL_SRCS} unix/tclLoadDl.c)
-	ENDIF(NOT APPLE)
-ENDIF(WIN32)
-
-SET(TCL_INCLUDE_PATH ${TCL_SOURCE_DIR}/generic ${TCL_SOURCE_DIR}/libtommath ${TCL_BINARY_DIR}/include)
-IF(WIN32)
-	SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_SOURCE_DIR}/win)
-ELSE(WIN32)
-	SET(TCL_INCLUDE_PATH ${TCL_INCLUDE_PATH} ${TCL_SOURCE_DIR}/unix)
-ENDIF(WIN32)
+SET(ITK_INCLUDE_PATH ${ITK_SOURCE_DIR}/generic ${ITK_BINARY_DIR}/include)
 
 include_directories(
 	${TCL_INCLUDE_PATH}
+	${TK_INCLUDE_PATH}
+	${ITCL_INCLUDE_PATH}
+	${ITK_INCLUDE_PATH}
 )
 
-IF(WIN32)
-	SET(TCLSH_SRCS win/tclAppInit.c)
-ELSE(WIN32)
-	SET(TCLSH_SRCS unix/tclAppInit.c)
-ENDIF(WIN32)
+add_library(itk ${ITK_GENERIC_SRCS})
+target_link_libraries(itk ${M_LIBRARY} ${TCL_LIBRARY} ${TK_LIBRARY} ${ITCL_LIBRARY})
+install(TARGETS itk DESTINATION lib/Itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 
-add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CMAKE_THREAD_LIBS_INIT} ${COREFOUNDATION_FRAMEWORK} ${M_LIBRARY} ${DL_LIBRARY})
-install(TARGETS tcl DESTINATION lib)
-SET(TCL_LIBRARY tcl)
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itk ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION} [list load [file join $dir libitk${CMAKE_SHARED_LIBRARY_SUFFIX}] Itk]")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/Itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
 
-add_executable(tclsh ${TCLSH_SRCS})
-target_link_libraries(tclsh tcl)
-install(TARGETS tclsh DESTINATION bin)
-SET(TCL_TCLSH tclsh)
-
-install(FILES library/init.tcl DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+SET(ITK_LIBRARY_FILES
+	library/Archetype.itk
+	library/Toplevel.itk
+	library/Widget.itk
+	library/itk.tcl
+	library/tclIndex
+)
+install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/Itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
