@@ -51,6 +51,8 @@
 
 #include "tcl.h"
 
+#include "itclConfig.h"
+
 #ifndef TCL_ALPHA_RELEASE
 #   define TCL_ALPHA_RELEASE	0
 #endif
