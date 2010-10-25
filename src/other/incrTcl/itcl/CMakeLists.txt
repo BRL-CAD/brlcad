@@ -112,10 +112,10 @@ INCLUDE(${ITCL_SOURCE_DIR}/CMake/CheckSystemFunctionality.cmake)
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
-FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"itcl\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"itcl\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"Itcl\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"Itcl\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_BUGREPORT \"\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define STDC_HEADERS 1\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define ITCL_LIBRARY \"${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}itcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}\"\n")
@@ -323,5 +323,7 @@ include_directories(
 
 add_library(itcl ${ITCL_GENERIC_SRCS})
 target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY})
-install(TARGETS itcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
+install(TARGETS itcl DESTINATION lib/Itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} [list load [file join $dir libitcl${CMAKE_SHARED_LIBRARY_SUFFIX}] Itcl]")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/Itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
