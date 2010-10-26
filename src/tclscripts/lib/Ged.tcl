@@ -2625,6 +2625,10 @@ package provide cadwidgets::Ged 1.0
     set dindex [llength $points]
     incr dindex -1
 
+    if {$dindex < 0} {
+	return
+    }
+
     # start receiving motion events
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane data_arrows $dindex %x %y]; break"
 }
@@ -2645,6 +2649,10 @@ package provide cadwidgets::Ged 1.0
     set points [$mGed data_lines $itk_component($_pane) points]
     set dindex [llength $points]
     incr dindex -1
+
+    if {$dindex < 0} {
+	return
+    }
 
     # start receiving motion events
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane data_lines $dindex %x %y]; break"
