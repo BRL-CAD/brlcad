@@ -54,7 +54,6 @@
 	$_archer putString "Please select a group before appending to $_attr_name."
 	return
     }
-
     if {[catch {$_ged attr get _GLOBAL $_attr_name} dataList]} {
 	set dataList {}
     }
@@ -66,7 +65,7 @@
 	eval lappend subDataList $_data
 	set dataList [lreplace $dataList $i $i $subDataList]
     } else {
-	lappend dataList [eval list $_group $_data]
+	lappend dataList [eval list [list $_group] $_data]
 	set subDataList [lindex $dataList end]
     }
 
@@ -604,7 +603,7 @@
     }
 
     set data [$_ged $_data_cmd $_data_subcmd]
-    set gdl [lreplace $gdl $i $i [eval list $_group $data]]
+    set gdl [lreplace $gdl $i $i [eval list [list $_group] $data]]
     $_ged refresh_off
     catch {$_archer attr set _GLOBAL $_attr_name $gdl}
     $_ged refresh_on
