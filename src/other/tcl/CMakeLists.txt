@@ -530,13 +530,15 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CMAKE_THREAD_LIBS_INIT} ${COREFOUNDATION_FRAMEWORK} ${M_LIBRARY} ${DL_LIBRARY})
+target_link_libraries(tcl ${COREFOUNDATION_FRAMEWORK} ${M_LIBRARY} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 install(TARGETS tcl DESTINATION lib)
-SET(TCL_LIBRARY tcl)
+
+add_library(tclstub STATIC ${TCL_STUB_SRCS})
+target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${COREFOUNDATION_FRAMEWORK} ${M_LIBRARY} ${DL_LIBRARY})
+install(TARGETS tclstub DESTINATION lib)
 
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl)
 install(TARGETS tclsh DESTINATION bin)
-SET(TCL_TCLSH tclsh)
 
 install(FILES library/init.tcl DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})

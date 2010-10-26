@@ -54,7 +54,7 @@ OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 # version numbers
 SET(TK_MAJOR_VERSION 8)
 SET(TK_MINOR_VERSION 5)
-SET(TK_PATCH_LEVEL 9)
+SET(TK_PATCH_LEVEL 8)
 
 SET(TK_VERSION "${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}.${TK_PATCH_LEVEL}")
 
@@ -380,6 +380,11 @@ SET(TTK_SRCS
 	generic/ttk/ttkWidget.c
 )
 
+SET(TK_STUB_SRCS
+	generic/tkStubInit.c
+	generic/tkStubLib.c
+)
+
 SET(TTK_STUB_SRCS
 	generic/ttk/ttkStubInit.c
 	generic/ttk/ttkStubLib.c
@@ -521,9 +526,105 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 add_library(tk ${TK_SRCS})
-target_link_libraries(tk tcl ${COREFOUNDATION_FRAMEWORK} ${FONTCONFIG_LIBRARY} ${X11_LIBRARIES} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES})
+target_link_libraries(tk tclstub ${COREFOUNDATION_FRAMEWORK} ${X11_X11_LIB} ${X11_Xscreensaver_LIB} ${X11_Xext_LIB} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARY} ${X11_Xrender_LIB})
 install(TARGETS tk DESTINATION lib)
 
+add_library(tkstub STATIC ${TK_STUB_SRCS})
+install(TARGETS tkstub DESTINATION lib)
+
+
 add_executable(wish ${WISH_SRCS})
-target_link_libraries(wish tcl tk)
+target_link_libraries(wish tcl tk ${COREFOUNDATION_FRAMEWORK} ${X11_X11_LIB} ${X11_Xscreensaver_LIB} ${X11_Xext_LIB} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARY} ${X11_Xrender_LIB})
 install(TARGETS wish DESTINATION bin)
+
+SET(TK_LIBRARY_FILES
+	library/bgerror.tcl
+	library/button.tcl
+	library/choosedir.tcl
+	library/clrpick.tcl
+	library/comdlg.tcl
+	library/console.tcl
+	library/dialog.tcl
+	library/entry.tcl
+	library/focus.tcl
+	library/listbox.tcl
+	library/menu.tcl
+	library/mkpsenc.tcl
+	library/msgbox.tcl
+	library/obsolete.tcl
+	library/optMenu.tcl
+	library/palette.tcl
+	library/panedwindow.tcl
+	library/safetk.tcl
+	library/scale.tcl
+	library/scrlbar.tcl
+	library/spinbox.tcl
+	library/tearoff.tcl
+	library/text.tcl
+	library/tk.tcl
+	library/tkfbox.tcl
+	library/unsupported.tcl
+	library/xmfbox.tcl
+	)
+install(FILES ${TK_LIBRARY_FILES} DESTINATION lib/tk${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
+SET(TK_LIBRARY_IMAGE_FILES
+	library/images/README
+	library/images/logo.eps
+	library/images/logo100.gif
+	library/images/logo64.gif
+	library/images/logoLarge.gif
+	library/images/logoMed.gif
+	library/images/pwrdLogo.eps
+	library/images/pwrdLogo100.gif
+	library/images/pwrdLogo150.gif
+	library/images/pwrdLogo175.gif
+	library/images/pwrdLogo200.gif
+	library/images/pwrdLogo75.gif
+	library/images/tai-ku.gif
+	)
+install(FILES ${TK_LIBRARY_IMAGE_FILES} DESTINATION lib/tk${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}/images)
+SET(TK_LIBRARY_MSG_FILES
+	library/msgs/cs.msg
+	library/msgs/da.msg
+	library/msgs/de.msg
+	library/msgs/el.msg
+	library/msgs/en.msg
+	library/msgs/en_gb.msg
+	library/msgs/eo.msg
+	library/msgs/es.msg
+	library/msgs/fr.msg
+	library/msgs/hu.msg
+	library/msgs/it.msg
+	library/msgs/nl.msg
+	library/msgs/pl.msg
+	library/msgs/pt.msg
+	library/msgs/ru.msg
+	library/msgs/sv.msg
+	)
+install(FILES ${TK_LIBRARY_MSG_FILES} DESTINATION lib/tk${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}/msgs)
+SET(TTK_LIBRARY_FILES
+	library/ttk/altTheme.tcl
+	library/ttk/aquaTheme.tcl
+	library/ttk/button.tcl
+	library/ttk/clamTheme.tcl
+	library/ttk/classicTheme.tcl
+	library/ttk/combobox.tcl
+	library/ttk/cursors.tcl
+	library/ttk/defaults.tcl
+	library/ttk/entry.tcl
+	library/ttk/fonts.tcl
+	library/ttk/menubutton.tcl
+	library/ttk/notebook.tcl
+	library/ttk/panedwindow.tcl
+	library/ttk/progress.tcl
+	library/ttk/scale.tcl
+	library/ttk/scrollbar.tcl
+	library/ttk/sizegrip.tcl
+	library/ttk/treeview.tcl
+	library/ttk/ttk.tcl
+	library/ttk/utils.tcl
+	library/ttk/vistaTheme.tcl
+	library/ttk/winTheme.tcl
+	library/ttk/xpTheme.tcl
+)
+install(FILES ${TTK_LIBRARY_FILES} DESTINATION lib/tk${TK_MAJOR_VERSION}.${TK_MINOR_VERSION}/ttk)
