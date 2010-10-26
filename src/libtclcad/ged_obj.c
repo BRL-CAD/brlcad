@@ -2742,6 +2742,13 @@ go_data_labels(struct ged *gedp,
 		const char **sub_av;
 
 		if (Tcl_SplitList(go_current_gop->go_interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
+		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_labels = (char **)0;
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_labels = 0;
+
 		    bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
 		    Tcl_Free((char *)av);
 		    go_refresh_view(gdvp);
@@ -2749,6 +2756,13 @@ go_data_labels(struct ged *gedp,
 		}
 
 		if (sub_ac != 2) {
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
+		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_labels = (char **)0;
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_labels = 0;
+
 		    bu_vls_printf(&gedp->ged_result_str, "Each list element must contain a label and a point (i.e. {{some label} {0 0 0}})");
 		    Tcl_Free((char *)sub_av);
 		    Tcl_Free((char *)av);
@@ -2762,6 +2776,7 @@ go_data_labels(struct ged *gedp,
 			   &gdlsp->gdls_points[i][Z]) != 3) {
 		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
 
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
 		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
 		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_labels = (char **)0;
@@ -3039,7 +3054,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%d", &dindex) != 1)
+    if (sscanf(argv[3], "%d", &dindex) != 1 || dindex < 0)
 	goto bad;
 
     if (argc == 5) {
