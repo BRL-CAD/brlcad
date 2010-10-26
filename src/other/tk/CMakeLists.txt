@@ -92,18 +92,18 @@ ENDIF(PIPE_COMPILER_FLAG)
 SET(CMAKE_MODULE_PATH "${TK_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
 
 #-----------------------------------------------------------------------------
-# Unlike the autotools based builds, CMake will always use tclConfig.h - define
+# Unlike the autotools based builds, CMake will always use tkConfig.h - define
 # this at the toplevel so tclPort.h includes it.
 
 add_definitions(
-	-DHAVE_TCL_CONFIG_H
 	-DHAVE_TK_CONFIG_H
 	-DTCL_NO_DEPRECATED 
 	-DUSE_TCL_STUBS
+	-DHAVE_UNISTD_H=1
 )
 
-# We will need a tclConfig.h.in file to hold all the #cmakedefine statements,
-# which will in turn be used to generate a tclConfig.h file.  To succeed, the 
+# We will need a tkConfig.h.in file to hold all the #cmakedefine statements,
+# which will in turn be used to generate a tkConfig.h file.  To succeed, the 
 # file must first be present, which we take care of here:
 
 SET(CONFIG_H_FILE "${CMAKE_BINARY_DIR}/include/tkConfig.h.in")
@@ -270,7 +270,6 @@ FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine USE_DTRACE 1\n")
 # Now that all the tests are done, configure the tkConfig.h file:
 FILE(APPEND ${CONFIG_H_FILE} "#endif /*_TKCONFIG*/\n")
 configure_file(${CONFIG_H_FILE} ${TK_BINARY_DIR}/include/tkConfig.h)
-configure_file(${CONFIG_H_FILE} ${TK_BINARY_DIR}/include/tclConfig.h)
 
 SET(TK_GENERIC_SRCS
 	generic/tk3d.c
@@ -480,7 +479,7 @@ ENDIF(WIN32)
 # 2.  Else, if TCL_PREFIX is defined build include paths from it
 # 3.  If TCL_INCLUDE_PATH is not defined and TCL_BIN_PREFIX is,
 #     add include directories based on the presumption of the
-#     binary build dir (and hence tclConfig.h) being in a non-src
+#     binary build dir (and hence tkConfig.h) being in a non-src
 #     location.
 #
 # It's still possible, depending on how Tcl was built, to 
