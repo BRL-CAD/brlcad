@@ -278,44 +278,7 @@ SET(TK_GENERIC_SRCS
 	generic/tkAtom.c
 	generic/tkBind.c
 	generic/tkBitmap.c
-	generic/tkClipboard.c
-	generic/tkCmds.c
-	generic/tkColor.c
-	generic/tkConfig.c
-	generic/tkCursor.c
-	generic/tkError.c
-	generic/tkEvent.c
-	generic/tkFocus.c
-	generic/tkFont.c
-	generic/tkGet.c
-	generic/tkGC.c
-	generic/tkGeometry.c
-	generic/tkGrab.c
-	generic/tkGrid.c
-	generic/tkConsole.c
-	generic/tkMain.c
-	generic/tkOption.c
-	generic/tkPack.c
-	generic/tkPlace.c
-	generic/tkSelect.c
-	generic/tkStyle.c
-	generic/tkUndo.c
-	generic/tkUtil.c
-	generic/tkVisual.c
-	generic/tkWindow.c
 	generic/tkButton.c
-	generic/tkObj.c
-	generic/tkEntry.c
-	generic/tkFrame.c
-	generic/tkListbox.c
-	generic/tkMenu.c
-	generic/tkMenubutton.c
-	generic/tkMenuDraw.c
-	generic/tkMessage.c
-	generic/tkPanedWindow.c
-	generic/tkScale.c
-	generic/tkScrollbar.c
-	generic/tkCanvas.c
 	generic/tkCanvArc.c
 	generic/tkCanvBmap.c
 	generic/tkCanvImg.c
@@ -325,13 +288,48 @@ SET(TK_GENERIC_SRCS
 	generic/tkCanvText.c
 	generic/tkCanvUtil.c
 	generic/tkCanvWind.c
-	generic/tkRectOval.c
-	generic/tkTrig.c
+	generic/tkCanvas.c
+	generic/tkClipboard.c
+	generic/tkCmds.c
+	generic/tkColor.c
+	generic/tkConfig.c
+	generic/tkConsole.c
+	generic/tkCursor.c
+	generic/tkEntry.c
+	generic/tkError.c
+	generic/tkEvent.c
+	generic/tkFocus.c
+	generic/tkFont.c
+	generic/tkFrame.c
+	generic/tkGC.c
+	generic/tkGeometry.c
+	generic/tkGet.c
+	generic/tkGrab.c
+	generic/tkGrid.c
 	generic/tkImage.c
 	generic/tkImgBmap.c
 	generic/tkImgGIF.c
 	generic/tkImgPPM.c
 	generic/tkImgPhoto.c
+	generic/tkListbox.c
+	generic/tkMain.c
+	generic/tkMenu.c
+	generic/tkMenuDraw.c
+	generic/tkMenubutton.c
+	generic/tkMessage.c
+	generic/tkObj.c
+	generic/tkOldConfig.c
+	generic/tkOption.c
+	generic/tkPack.c
+	generic/tkPanedWindow.c
+	generic/tkPlace.c
+	generic/tkRectOval.c
+	generic/tkScale.c
+	generic/tkScrollbar.c
+	generic/tkSelect.c
+	generic/tkStubInit.c
+	generic/tkStubLib.c
+	generic/tkStyle.c
 	generic/tkText.c
 	generic/tkTextBTree.c
 	generic/tkTextDisp.c
@@ -340,12 +338,11 @@ SET(TK_GENERIC_SRCS
 	generic/tkTextMark.c
 	generic/tkTextTag.c
 	generic/tkTextWind.c
-	generic/tkOldConfig.c
-	generic/tkOldTest.c
-	generic/tkSquare.c
-	generic/tkTest.c
-	generic/tkStubInit.c
-	generic/tkStubLib.c
+	generic/tkTrig.c
+	generic/tkUndo.c
+	generic/tkUtil.c
+	generic/tkVisual.c
+	generic/tkWindow.c
 )
 
 SET(TTK_SRCS
@@ -372,6 +369,8 @@ SET(TTK_SRCS
 	generic/ttk/ttkSeparator.c
 	generic/ttk/ttkSquare.c
 	generic/ttk/ttkState.c
+	generic/ttk/ttkStubInit.c
+	generic/ttk/ttkStubLib.c
 	generic/ttk/ttkTagSet.c
 	generic/ttk/ttkTheme.c
 	generic/ttk/ttkTrace.c
@@ -391,7 +390,6 @@ SET(TTK_STUB_SRCS
 )
 
 SET(TK_X11_SRCS
-	unix/tkAppInit.c
 	unix/tkUnix.c
 	unix/tkUnix3d.c
 	unix/tkUnixButton.c
@@ -402,11 +400,11 @@ SET(TK_X11_SRCS
 	unix/tkUnixEmbed.c
 	unix/tkUnixEvent.c
 	unix/tkUnixFocus.c
-	unix/tkUnixRFont.c
 	unix/tkUnixInit.c
 	unix/tkUnixKey.c
 	unix/tkUnixMenu.c
 	unix/tkUnixMenubu.c
+	unix/tkUnixRFont.c
 	unix/tkUnixScale.c
 	unix/tkUnixScrlbr.c
 	unix/tkUnixSelect.c
@@ -463,7 +461,7 @@ SET(TK_AQUA_SRCS
 SET(TK_WIN_SRCS
 )
 
-SET(TK_SRCS ${TK_GENERIC_SRCS} ${TTK_SRCS} ${TTK_STUB_SRCS})
+SET(TK_SRCS ${TK_GENERIC_SRCS} ${TTK_SRCS})
 
 IF(WIN32)
 	SET(TK_SRCS ${TK_SRCS} ${TK_WIN_SRCS})
@@ -528,6 +526,7 @@ ENDIF(WIN32)
 add_library(tk ${TK_SRCS})
 target_link_libraries(tk tclstub ${COREFOUNDATION_FRAMEWORK} ${X11_X11_LIB} ${X11_Xscreensaver_LIB} ${X11_Xext_LIB} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARY} ${X11_Xrender_LIB})
 install(TARGETS tk DESTINATION lib)
+SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
 
 add_library(tkstub STATIC ${TK_STUB_SRCS})
 install(TARGETS tkstub DESTINATION lib)
