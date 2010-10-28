@@ -153,6 +153,8 @@ IF(TCL_TOMMMATH)
    SET(TCL_CFLAGS "${TCL_CFLAGS} -DMP_PREC=4")
 ENDIF(TCL_TOMMMATH)
 
+# Will need to replace SC_CONFIG_MANPAGES with appropriate custom commands
+
 #----------------------------------------------------------------------------
 # Run tests for system headers and functionality.  Start with the tests
 # corresponding to SC_MISSING_POSIX_HEADERS
@@ -220,12 +222,37 @@ IF(NOT HAVE_GETHOSTBYNAME)
 	SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${NLS_LIBRARY})
 ENDIF(NOT HAVE_GETHOSTBYNAME)
 
-# Need to detect and set up 64 bit here
+# TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
+# need to decide how much of that logic is needed
+
+# Detect and set up 64 bit compiling here.  This is not as
+# comprehensive as tcl.m4 yet - lots of linker flags and
+# other specialized platform-specific stuff there.
+OPTION(ENABLE_64_BIT "64 bit void pointer" ON)
+IF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" AND ENABLE_64_BIT)
+	IF(ENABLE_64_BIT)
+		IF(NOT 64BIT_FLAG)
+			MESSAGE("Checking for 64-bit support:")
+			CHECK_C_FLAG("arch x86_64" 64BIT_FLAG)
+			CHECK_C_FLAG(64 64BIT_FLAG)
+			CHECK_C_FLAG("mabi=64" 64BIT_FLAG)
+			CHECK_C_FLAG(m64 64BIT_FLAG)
+			CHECK_C_FLAG(q64 64BIT_FLAG)
+		ENDIF(NOT 64BIT_FLAG)
+		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${64BIT_FLAG}")
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${64BIT_FLAG}")
+	ENDIF(ENABLE_64_BIT)
+ELSE(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" AND ENABLE_64_BIT)
+	SET(ENABLE_64_BIT OFF)
+ENDIF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" AND ENABLE_64_BIT)
 
 
 # Test endianness
 INCLUDE(TestBigEndian)
-TEST_BIG_ENDIAN(IS_BIGENDIAN)
+TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+IF(WORDS_BIGENDIAN)
+	SET(TCL_CFLAGS "${TCL_CFLAGS} -DWORDS_BIGENDIAN=1")
+ENDIF(WORDS_BIGENDIAN)
 
 # POSIX substitutes
 CHECK_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
@@ -283,16 +310,245 @@ ENDIF(HAVE_GETADDRINFO)
 # Thread safe tests - need to go over macros and
 # get the right logic going here
 IF(TCL_THREADS)
-CHECK_FUNCTION_EXISTS_D(getpwuid HAVE_GETPWUID_R)
-CHECK_FUNCTION_EXISTS_D(getpwnam HAVE_GETPWNAM_R)
-CHECK_FUNCTION_EXISTS_D(getgrgid HAVE_GETGRGID_R)
-CHECK_FUNCTION_EXISTS_D(getgrnam HAVE_GETGRNAM_R)
-IF(NOT HAVE_GETHOSTBYNAME)
-	CHECK_LIBRARY(GHBN lnsl gethostbyname)
-	SET(HAVE_GETHOSTBYNAME ${GHBN})
-ENDIF(NOT HAVE_GETHOSTBYNAME)
-#CHECK_FUNCTION_EXISTS_D( HAVE_MTSAFE_GETHOSTBYNAME)
-#CHECK_FUNCTION_EXISTS_D( HAVE_MTSAFE_GETHOSTBYADDR)
+	CHECK_FUNCTION_EXISTS_D(getpwuid HAVE_GETPWUID_R)
+	IF(HAVE_GETPWUID_R)
+		SET(HAVE_GETPWUID_R_5_SRC "
+		#include <sys/types.h>
+		#include <pwd.h>
+		uid_t uid;
+		struct passwd pw, *pwp;
+		char buf[512];
+		int buflen = 512;
+
+		(void) getpwuid_r(uid, &pw, buf, buflen, &pwp);
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETPWUID_R_5_SRC}"  HAVE_GETPWUID_R_5)
+		IF(HAVE_GETPWUID_R_5)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETPWUID_R_5=1")
+		ELSE(HAVE_GETPWUID_R_5)
+			SET(HAVE_GETPWUID_R_4_SRC "
+			#include <sys/types.h>
+			#include <pwd.h>
+			uid_t uid;
+			struct passwd pw;
+			char buf[512];
+			int buflen = 512;
+
+			(void) getpwuid_r(uid, &pw, buf, buflen);
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETPWUID_R_4_SRC}" HAVE_GETPWUID_R_4)
+			IF(HAVE_GETPWUID_R_4)
+				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETPWUID_R_4=1")
+			ENDIF(HAVE_GETPWUID_R_4)
+		ENDIF(HAVE_GETPWUID_R_5)
+	ENDIF(HAVE_GETPWUID_R)
+
+	CHECK_FUNCTION_EXISTS_D(getpwnam HAVE_GETPWNAM_R)
+	IF(HAVE_GETPWNAM_R)
+		SET(HAVE_GETPWNAM_R_5_SRC "
+		#include <sys/types.h>
+		#include <pwd.h>
+		char *name;
+		struct passwd pw, *pwp;
+		char buf[512];
+		int buflen = 512;
+
+		(void) getpwnam_r(name, &pw, buf, buflen, &pwp);
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETPWNAM_R_5_SRC}"  HAVE_GETPWNAM_R_5)
+		IF(HAVE_GETPWNAM_R_5)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETPWNAM_R_5=1")
+		ELSE(HAVE_GETPWNAM_R_5)
+			SET(HAVE_GETPWNAM_R_4_SRC "
+			#include <sys/types.h>
+			#include <pwd.h>
+			char *name;
+			struct passwd pw;
+			char buf[512];
+			int buflen = 512;
+
+			(void)getpwnam_r(name, &pw, buf, buflen);
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETPWNAM_R_4_SRC}" HAVE_GETPWNAM_R_4)
+			IF(HAVE_GETPWNAM_R_4)
+				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETPWNAM_R_4=1")
+			ENDIF(HAVE_GETPWNAM_R_4)
+		ENDIF(HAVE_GETPWNAM_R_5)
+	ENDIF(HAVE_GETPWNAM_R)
+
+	CHECK_FUNCTION_EXISTS_D(getgrgid HAVE_GETGRGID_R)
+	IF(HAVE_GETGRGID_R)
+		SET(HAVE_GETGRGID_R_5_SRC "
+		#include <sys/types.h>
+		#include <grp.h>
+		gid_t gid;
+		struct group gr, *grp;
+		char buf[512];
+		int buflen = 512;
+
+		(void) getgrgid_r(gid, &gr, buf, buflen, &grp);
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETGRGID_R_5_SRC}"  HAVE_GETGRGID_R_5)
+		IF(HAVE_GETGRGID_R_5)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETGRGID_R_5=1")
+		ELSE(HAVE_GETGRGID_R_5)
+			SET(HAVE_GETGRGID_R_4_SRC "
+			#include <sys/types.h>
+			#include <grp.h>
+			gid_t gid;
+			struct group gr;
+			char buf[512];
+			int buflen = 512;
+
+			(void)getgrgid_r(gid, &gr, buf, buflen);
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETGRGID_R_4_SRC}" HAVE_GETGRGID_R_4)
+			IF(HAVE_GETGRGID_R_4)
+				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETGRGID_R_4=1")
+			ENDIF(HAVE_GETGRGID_R_4)
+		ENDIF(HAVE_GETGRGID_R_5)
+	ENDIF(HAVE_GETGRGID_R)
+
+
+	CHECK_FUNCTION_EXISTS_D(getgrnam HAVE_GETGRNAM_R)
+	IF(HAVE_GETGRNAMM_R)
+		SET(HAVE_GETGRNAMM_R_5_SRC "
+		#include <sys/types.h>
+		#include <grp.h>
+		char *name;
+		struct group gr, *grp;
+		char buf[512];
+		int buflen = 512;
+
+		(void) getgrnam_r(name, &gr, buf, buflen, &grp);
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETGRNAMM_R_5_SRC}"  HAVE_GETGRNAMM_R_5)
+		IF(HAVE_GETGRNAMM_R_5)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETGRNAMM_R_5=1")
+		ELSE(HAVE_GETGRNAMM_R_5)
+			SET(HAVE_GETGRNAMM_R_4_SRC "
+			#include <sys/types.h>
+			#include <grp.h>
+			char *name;
+			struct group gr;
+			char buf[512];
+			int buflen = 512;
+
+			(void)getgrnam_r(name, &gr, buf, buflen);
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETGRNAMM_R_4_SRC}" HAVE_GETGRNAMM_R_4)
+			IF(HAVE_GETGRNAMM_R_4)
+				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETGRNAMM_R_4=1")
+			ENDIF(HAVE_GETGRNAMM_R_4)
+		ENDIF(HAVE_GETGRNAMM_R_5)
+	ENDIF(HAVE_GETGRNAMM_R)
+
+	IF(NOT HAVE_GETHOSTBYNAME)
+		CHECK_LIBRARY(GHBN lnsl gethostbyname)
+		SET(HAVE_GETHOSTBYNAME ${GHBN})
+	ENDIF(NOT HAVE_GETHOSTBYNAME)
+
+	CHECK_FUNCTION_EXISTS_D(gethostbyname HAVE_GETHOSTBYNAME_R)
+	IF(HAVE_GETHOSTBYNAME_R)
+		SET(HAVE_GETHOSTBYNAME_R_6_SRC "
+		#include <netdb.h>
+		char *name;
+		struct hostent *he, *res;
+		char buffer[2048];
+		int buflen = 2048;
+		int h_errnop;
+
+		(void) gethostbyname_r(name, he, buffer, buflen, &res, &h_errnop);
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_6_SRC}"  HAVE_GETHOSTBYNAME_R_5)
+		IF(HAVE_GETHOSTBYNAME_R_6)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYNAME_R_6=1")
+		ELSE(HAVE_GETHOSTBYNAME_R_6)
+			SET(HAVE_GETHOSTBYNAME_R_5_SRC "
+			#include <netdb.h>
+			char *name;
+			struct hostent *he;
+			char buffer[2048];
+			int buflen = 2048;
+			int h_errnop;
+
+			(void) gethostbyname_r(name, he, buffer, buflen, &h_errnop);
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_5_SRC}"  HAVE_GETHOSTBYNAME_R_5)
+
+			IF(HAVE_GETHOSTBYNAME_R_5)
+				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYNAME_R_5=1")
+			ELSE(HAVE_GETHOSTBYNAME_R_5)
+				SET(HAVE_GETHOSTBYNAME_R_3_SRC "
+				#include <netdb.h>
+				char *name;
+				struct hostent *he;
+				struct hostent_data data;
+
+				(void) gethostbyname_r(name, he, &data);
+				")
+				CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_3_SRC}" HAVE_GETHOSTBYNAME_R_3)
+				IF(HAVE_GETHOSTBYNAME_R_3)
+					SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYNAME_R_3=1")
+				ENDIF(HAVE_GETHOSTBYNAME_R_3)
+			ENDIF(HAVE_GETHOSTBYNAME_R_5)
+		ENDIF(HAVE_GETHOSTBYNAME_R_6)
+	ENDIF(HAVE_GETHOSTBYNAME_R)
+
+
+	CHECK_FUNCTION_EXISTS_D(gethostbyaddr HAVE_GETHOSTBYADDR_R)
+	IF(HAVE_GETHOSTBYADDR_R)
+		SET(HAVE_GETHOSTBYADDR_R_7_SRC "
+		#include <netdb.h>
+		char *addr;
+		int length;
+		int type;
+		struct hostent *result;
+		char buffer[2048];
+		int buflen = 2048;
+		int h_errnop;
+
+		(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &h_errnop);
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  HAVE_GETHOSTBYADDR_R_7)
+		IF(HAVE_GETHOSTBYADDR_R_7)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYADDR_R_7=1")
+		ELSE(HAVE_GETHOSTBYADDR_R_7)
+			SET(HAVE_GETHOSTBYADDR_R_8_SRC "
+			#include <netdb.h>
+			char *addr;
+			int length;
+			int type;
+			struct hostent *result, *resultp;
+			char buffer[2048];
+			int buflen = 2048;
+			int h_errnop;
+
+			(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &resultp, &h_errnop);
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" HAVE_GETHOSTBYADDR_R_8)
+			IF(HAVE_GETHOSTBYADDR_R_8)
+				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYADDR_R_8=1")
+			ENDIF(HAVE_GETHOSTBYADDR_R_8)
+		ENDIF(HAVE_GETHOSTBYADDR_R_7)
+	ENDIF(HAVE_GETHOSTBYADDR_R)
+
+
+	IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+		STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
+		IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYNAME=1")
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYADDR=1")
+		ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
+	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+
+	IF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
+		STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
+		IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYNAME=1")
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYADDR=1")
+		ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
+	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
 
 ENDIF(TCL_THREADS)
 

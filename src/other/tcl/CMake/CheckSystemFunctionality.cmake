@@ -1,3 +1,36 @@
+# Checking compiler flags benefits from some macro logic
+
+INCLUDE(CheckCCompilerFlag)
+
+MACRO(CHECK_C_FLAG flag)
+	STRING(TOUPPER ${flag} UPPER_FLAG)
+	STRING(REGEX REPLACE " " "_" UPPER_FLAG ${UPPER_FLAG})
+	STRING(REGEX REPLACE "=" "_" UPPER_FLAG ${UPPER_FLAG})
+	IF(${ARGC} LESS 2)
+		CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG)
+	ELSE(${ARGC} LESS 2)
+		IF(NOT ${ARGV1})
+			CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG)
+			IF(${UPPER_FLAG}_COMPILER_FLAG)
+				MESSAGE("Found ${ARGV1} - setting to -${flag}")
+				SET(${ARGV1} "-${flag}" CACHE STRING "${ARGV1}" FORCE)
+			ENDIF(${UPPER_FLAG}_COMPILER_FLAG)
+		ENDIF(NOT ${ARGV1})
+	ENDIF(${ARGC} LESS 2)
+	IF(${UPPER_FLAG}_COMPILER_FLAG)
+		SET(${UPPER_FLAG}_COMPILER_FLAG "-${flag}")
+	ENDIF(${UPPER_FLAG}_COMPILER_FLAG)
+ENDMACRO()
+
+MACRO(CHECK_C_FLAG_GATHER flag FLAGS)
+	STRING(TOUPPER ${flag} UPPER_FLAG)
+	STRING(REGEX REPLACE " " "_" UPPER_FLAG ${UPPER_FLAG})
+	CHECK_C_COMPILER_FLAG(-${flag} ${UPPER_FLAG}_COMPILER_FLAG)
+	IF(${UPPER_FLAG}_COMPILER_FLAG)
+		SET(${FLAGS} "${${FLAGS}} -${flag}")
+	ENDIF(${UPPER_FLAG}_COMPILER_FLAG)
+ENDMACRO()
+
 # CMake does not by default include functionality similar to autoheader in 
 # GNU Autotools, but is it not difficult to reproduce.  There are two aspects
 # to these tests - the first being the generation of a header file defining
