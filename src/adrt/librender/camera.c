@@ -25,11 +25,6 @@
 
 #include "common.h"
 
-#ifdef HAVE_PTHREAD_H
-# include <pthread.h>
-pthread_t *render_tlist;
-#endif
-
 #ifdef HAVE_DLFCN_H
 # include <dlfcn.h>
 #endif
@@ -43,6 +38,9 @@ pthread_t *render_tlist;
 #include "bu.h"
 
 #include "camera.h"
+
+#define TIE_SEM_WORKER (BU_SEM_LAST)
+#define TIE_SEM_LAST (TIE_SEM_WORKER+1)
 
 struct render_shader_s {
 	char *name;
@@ -71,29 +69,13 @@ render_camera_init(render_camera_t *camera, int threads)
     camera->tilt = 0;
 
     /* The camera will use a thread for every cpu the machine has. */
-    camera->thread_num =
-#ifdef HAVE_PTHREAD_H
-	threads ? threads : bu_avail_cpus();
-#else
-    1;
-#endif
-    /* printf("threads: %d\n", camera->thread_num); */
+    camera->thread_num = threads ? threads : bu_avail_cpus();
+
+    bu_semaphore_init(TIE_SEM_LAST);
 
     /* Initialize camera to rendering surface normals */
     render_normal_init(&camera->render, NULL);
     camera->rm = RENDER_METHOD_PHONG;
-
-#ifdef HAVE_PTHREAD_H
-    render_tlist = NULL;
-    if (camera->thread_num > 1) {
-	bu_log("Allocating thread memory\n");
-	render_tlist = (pthread_t *)bu_malloc(sizeof(pthread_t) * camera->thread_num, "render_tlist");
-	if(render_tlist == NULL) {
-	    bu_log("Failed to allocate threads. Running single threaded\n");
-	    camera->thread_num = 1;
-	}
-    }
-#endif
 
     if(shaders == NULL) {
 #define REGISTER(x) render_shader_register(#x, render_##x##_init);
@@ -116,10 +98,6 @@ render_camera_init(render_camera_t *camera, int threads)
 void
 render_camera_free(render_camera_t *camera)
 {
-#ifdef HAVE_PTHREAD_H
-    if (camera->thread_num > 1)
-	bu_free(render_tlist, "render_tlist");
-#endif
 }
 
 
@@ -453,14 +431,10 @@ void
     while (1)
     {
 	/* Determine if this scanline should be computed by this thread */
-#ifdef HAVE_PTHREAD_H
-	pthread_mutex_lock(&td->mut);
-#endif
+	bu_semaphore_acquire(TIE_SEM_WORKER);
 	if (*td->scanline == td->tile->size_y)
 	{
-#ifdef HAVE_PTHREAD_H
-	    pthread_mutex_unlock(&td->mut);
-#endif
+	    bu_semaphore_release(TIE_SEM_WORKER);
 	    return 0;
 	}
 	else
@@ -468,9 +442,7 @@ void
 	    scanline = *td->scanline;
 	    (*td->scanline)++;
 	}
-#ifdef HAVE_PTHREAD_H
-	pthread_mutex_unlock(&td->mut);
-#endif
+	bu_semaphore_release(TIE_SEM_WORKER);
 
 	v_scanline = scanline + td->tile->orig_y;
 	if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24)
@@ -616,24 +588,9 @@ render_camera_render(render_camera_t *camera, tie_t *tie, camera_tile_t *tile, t
     scanline = 0;
     td.scanline = &scanline;
 
-#ifdef HAVE_PTHREAD_H
-    pthread_mutex_init(&td.mut, 0);
-
-    /* Launch Render threads */
-    if (camera->thread_num > 1 && render_tlist)
-    {
-	for (i = 0; i < camera->thread_num; i++)
-	    pthread_create(&render_tlist[i], NULL, render_camera_render_thread, &td);
-	for (i = 0; i < camera->thread_num; i++)
-	    pthread_join(render_tlist[i], NULL);
-    } else
-#endif
-	render_camera_render_thread(&td);
+    bu_parallel(render_camera_render_thread, camera->thread_num, &td);
 
     result->ind = ind;
-#ifdef HAVE_PTHREAD_H
-    pthread_mutex_destroy(&td.mut);
-#endif
 
     return;
 }
