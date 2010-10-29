@@ -111,7 +111,7 @@ brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVe
 
 
 void
-brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
+brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
     mat2d_t jacob = { VDOT(pr.n1, ((fastf_t*)su)), VDOT(pr.n1, ((fastf_t*)sv)),
 		      VDOT(pr.n2, ((fastf_t*)su)), VDOT(pr.n2, ((fastf_t*)sv)) };
@@ -748,8 +748,8 @@ IsAtSingularity(const ON_Surface *surf, double u, double v)
 ON_Curve*
 test1_pullback_curve(const brlcad::SurfaceTree* surfacetree,
 		     const ON_Curve* curve,
-		     double tolerance,
-		     double flatness)
+		     double UNUSED(tolerance),
+		     double UNUSED(flatness))
 {
     ON_NurbsCurve* orig = curve->NurbsCurve();
     bool isRational = false;
@@ -1009,7 +1009,7 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
 
 
 ON_Curve*
-refit_edge(const ON_BrepEdge* edge, double tolerance)
+refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
 {
     double edge_tolerance = 0.01;
     ON_Brep *brep = edge->Brep();
@@ -1971,8 +1971,6 @@ remove_consecutive_intersegment_duplicates(std::list<PBCData*> &pbcs)
 bool
 check_pullback_data(std::list<PBCData*> &pbcs)
 {
-    bool resolvable = true;
-    bool resolved = false;
     std::list<PBCData*>::iterator d = pbcs.begin();
 
     //TODO: remove debugging code
