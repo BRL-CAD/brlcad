@@ -49,7 +49,6 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "./ged_types.h"
 #include "vmath.h"
 
 
