@@ -103,13 +103,12 @@ ENDIF(PIPE_COMPILER_FLAG)
 SET(CMAKE_MODULE_PATH "${TCL_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
 
 #-----------------------------------------------------------------------------
-# The header structure of Tcl/Tk ends up requiring compile-line definitions of
-# many variables to ensure the various headers get the correct values.  Due
-# to the number of these flags, we build up a TCL_CFLAGS list to be passed
-# to the final build.  Unlike Tk, Tcl also has a pre-defined tclConfig.h.in
-# file that needs to be configured - handle both.
-
+# Tcl/Tk's normal build system uses autotools macros, referred to as the
+# TEA system.  An attempt to duplicate the required functionality from
+# TEA is found in tcl.cmake
 INCLUDE(${TCL_SOURCE_DIR}/CMake/CheckSystemFunctionality.cmake)
+INCLUDE(${TCL_SOURCE_DIR}/CMake/ac_std_funcs.cmake)
+INCLUDE(${TCL_SOURCE_DIR}/CMake/tcl.cmake)
 
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
@@ -143,9 +142,6 @@ IF(APPLE)
 	ENDIF(COREFOUNDATION_FRAMEWORK)
 ENDIF(APPLE)
 #----------------------------------------------------------------------------
-# Define a number of variables to be controlled by options
-OPTION(TCL_THREADS "Enable Tcl Thread support" ON)
-
 # Tom's math library - should MP_PREC be an option?
 OPTION(TCL_TOMMATH "Enable Tcl Tom's Math Library" ON)
 IF(TCL_TOMMMATH)
@@ -153,48 +149,11 @@ IF(TCL_TOMMMATH)
    SET(TCL_CFLAGS "${TCL_CFLAGS} -DMP_PREC=4")
 ENDIF(TCL_TOMMMATH)
 
-# Will need to replace SC_CONFIG_MANPAGES with appropriate custom commands
-
 #----------------------------------------------------------------------------
-# Run tests for system headers and functionality.  Start with the tests
-# corresponding to SC_MISSING_POSIX_HEADERS
+SC_MISSING_POSIX_HEADERS()
 
-CHECK_INCLUDE_FILE_D(dirent.h HAVE_DIRENT_H)
-IF(NOT HAVE_DIRENT_H)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_DIRENT_H=1")
-ENDIF(NOT HAVE_DIRENT_H)
-CHECK_INCLUDE_FILE_USABILITY_D(float.h FLOAT_H)
-CHECK_INCLUDE_FILE_USABILITY_D(values.h VALUES_H)
-CHECK_INCLUDE_FILE_USABILITY_D(limits.h LIMITS_H)
-CHECK_INCLUDE_FILE_D(stdlib.h HAVE_STDLIB_H)
-CHECK_INCLUDE_FILE_D(string.h HAVE_STRING_H)
-IF(NOT HAVE_STRING_H)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_STRING_H=1")
-ENDIF(NOT HAVE_STRING_H)
-CHECK_INCLUDE_FILE_USABILITY_D(sys/wait.h SYS_WAIT_H)
-CHECK_INCLUDE_FILE_USABILITY_D(dlfcn.h DLFCN_H)
-CHECK_INCLUDE_FILE_USABILITY_D(sys/param.h SYS_PARAM_H)
+SC_ENABLE_THREADS()
 
-# Next comes the thread check
-IF(TCL_THREADS)
-   SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_THREADS=1")
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DUSE_THREAD_ALLOC=1")
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -D_REENTRANT=1")
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -D_THREAD_SAFE=1")
-	IF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -D_POSIX_PTHREAD_SEMANTICS=1")
-	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
-   FIND_PACKAGE(Threads)
-	CHECK_FUNCTION_EXISTS_D(pthread_attr_setstacksize HAVE_PTHREAD_ATTR_SETSTACKSIZE)
-	CHECK_FUNCTION_EXISTS(pthread_attr_get_np HAVE_PTHREAD_ATTR_GET_NP)
-	CHECK_FUNCTION_EXISTS(pthread_getattr_np HAVE_PTHREAD_GETATTR_NP)
-	IF(HAVE_PTHREAD_ATTR_GET_NP)
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_PTHREAD_ATTR_GET_NP=1")
-	ELSEIF(HAVE_PTHREAD_GETATTR_NP)
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_PTHREAD_GETATTR_NP=1")
-	ENDIF(HAVE_PTHREAD_ATTR_GET_NP)
-	CHECK_FUNCTION_EXISTS(pthread_get_stacksize_np HAVE_PTHREAD_GET_STACKSIZE_NP)
-ENDIF(TCL_THREADS)
 
 # SC_TCL_CFG_ENCODING
 IF(NOT TCL_CFGVAL_ENCODING)
@@ -598,7 +557,13 @@ IF(TCL_THREADS)
 ENDIF(TCL_THREADS)
 
 # Determine which interface to use to talk to the serial port.
-TERMIOS_TERMIO_SGTTY()
+SC_SERIAL_PORT()
+
+# Do we need the sys/select.h check these days?
+
+
+# Handle time
+SC_TIME_HANDLER()
 
 CHECK_INCLUDE_FILE_D(sys/types.h HAVE_SYS_TYPES_H)
 CHECK_INCLUDE_FILE_D(sys/stat.h HAVE_SYS_STAT_H)
@@ -626,16 +591,6 @@ CHECK_INCLUDE_FILE_USABILITY_D(sys/modem.h SYS_MODEM_H)
 
 
 CHECK_FD_SET_IN_TYPES_D()
-
-CHECK_INCLUDE_FILE_USABILITY_D(sys/time.h HAVE_SYS_TIME_H)
-CHECK_TIME_AND_SYS_TIME()
-
-CHECK_FUNCTION_EXISTS_D(gmtime_r HAVE_GMTIME_R)
-CHECK_FUNCTION_EXISTS_D(localtime_r HAVE_LOCALTIME_R)
-CHECK_FUNCTION_EXISTS_D(mktime HAVE_MKTIME)
-
-CHECK_STRUCT_HAS_MEMBER_D("struct tm" tm_tzadj time.h HAVE_TM_TZADJ)
-CHECK_STRUCT_HAS_MEMBER_D("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
 
 CHECK_INCLUDE_FILE_D(copyfile.h HAVE_COPYFILE_H)
 CHECK_FUNCTION_EXISTS_D(copyfile HAVE_COPYFILE)
