@@ -244,83 +244,83 @@ ENDMACRO(CHECK_GETADDERINFO_WORKING_D)
 
 MACRO(TERMIOS_TERMIO_SGTTY)
 	SET(TERMIOS_SRC_1 "
-	#include <termios.h>
-	int main() {
-	struct termios t;
-	if (tcgetattr(0, &t) == 0) {
-		cfsetospeed(&t, 0);
-		t.c_cflag |= PARENB | PARODD | CSIZE | CSTOPB;
-		return 0;
-	}
-		return 1;
-	}
+#include <termios.h>
+int main() {
+struct termios t;
+if (tcgetattr(0, &t) == 0) {
+	cfsetospeed(&t, 0);
+	t.c_cflag |= PARENB | PARODD | CSIZE | CSTOPB;
+	return 0;
+}
+	return 1;
+}
 	")
 	SET(TERMIOS_SRC_2 "
-	#include <termios.h>
-	#include <errno.h>
+#include <termios.h>
+#include <errno.h>
 
-	int main() {
-	struct termios t;
-	if (tcgetattr(0, &t) == 0
-		|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
-		cfsetospeed(&t, 0);
-		t.c_cflag |= PARENB | PARODD | CSIZE | CSTOPB;
-		return 0;
-		}
-		return 1;
-		}
+int main() {
+struct termios t;
+if (tcgetattr(0, &t) == 0
+	|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
+	cfsetospeed(&t, 0);
+	t.c_cflag |= PARENB | PARODD | CSIZE | CSTOPB;
+	return 0;
+	}
+	return 1;
+}
 	")
 	SET(TERMIO_SRC_1 "
-	#include <termio.h>
-	int main() {
-	struct termio t;
-	if (ioctl(0, TCGETA, &t) == 0) {
-		t.c_cflag |= CBAUD | PARENB | PARODD | CSIZE | CSTOPB;
-		return 0;
-	}
-		return 1;
-	}
+#include <termio.h>
+int main() {
+struct termio t;
+if (ioctl(0, TCGETA, &t) == 0) {
+	t.c_cflag |= CBAUD | PARENB | PARODD | CSIZE | CSTOPB;
+	return 0;
+}
+	return 1;
+}
    ")
 	SET(TERMIO_SRC_2 "
-	#include <termio.h>
-	#include <errno.h>
+#include <termio.h>
+#include <errno.h>
 
-	int main() {
-	struct termio t;
-	if (ioctl(0, TCGETA, &t) == 0
-		|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
-		t.c_cflag |= CBAUD | PARENB | PARODD | CSIZE | CSTOPB;
-		return 0;
-		}
-		return 1;
-		}
+int main() {
+struct termio t;
+if (ioctl(0, TCGETA, &t) == 0
+	|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
+	t.c_cflag |= CBAUD | PARENB | PARODD | CSIZE | CSTOPB;
+	return 0;
+	}
+	return 1;
+}
 	")
 	SET(SGTTY_SRC_1 "
-	#include <sgtty.h>
-	int main() {
-	struct sgttyb t;
-	if (ioctl(0, TIOCGETP, &t) == 0) {
-		t.sg_ospeed = 0;
-		t.sg_flags |= ODDP | EVENP | RAW;
-		return 0;
-	}
-		return 1;
-	}
-	")
+#include <sgtty.h>
+int main() {
+struct sgttyb t;
+if (ioctl(0, TIOCGETP, &t) == 0) {
+	t.sg_ospeed = 0;
+	t.sg_flags |= ODDP | EVENP | RAW;
+	return 0;
+}
+	return 1;
+}
+   ")
 	SET(SGTTY_SRC_2 "
-	#include <sgtty.h>
-	#include <errno.h>
+#include <sgtty.h>
+#include <errno.h>
 
-	int main() {
-	struct sgttyb t;
-	if (ioctl(0, TIOCGETP, &t) == 0
-		|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
-		t.sg_ospeed = 0;
-		t.sg_flags |= ODDP | EVENP | RAW;
-		return 0;
-		}
-		return 1;
-		}
+int main() {
+struct sgttyb t;
+if (ioctl(0, TIOCGETP, &t) == 0
+	|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
+	t.sg_ospeed = 0;
+	t.sg_flags |= ODDP | EVENP | RAW;
+	return 0;
+	}
+	return 1;
+}
 	")
 	CHECK_C_SOURCE_RUNS("${TERMIOS_SRC_1}" HAVE_TERMIOS)
 	IF(NOT HAVE_TERMIOS)
