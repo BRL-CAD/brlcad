@@ -479,7 +479,7 @@ ENDMACRO(SC_TCL_CFG_ENCODING)
 # SC_TCL_GETHOSTBYADDR_R
 #--------------------------------------------------------------------
 MACRO(SC_TCL_GETHOSTBYADDR_R)
-	CHECK_FUNCTION_EXISTS_D(gethostbyaddr HAVE_GETHOSTBYADDR_R)
+	CHECK_FUNCTION_EXISTS_D(gethostbyaddr_r HAVE_GETHOSTBYADDR_R)
 	IF(HAVE_GETHOSTBYADDR_R)
 		SET(HAVE_GETHOSTBYADDR_R_7_SRC "
 #include <netdb.h>
@@ -602,6 +602,176 @@ return 0;
 	ENDIF(HAVE_GETADDRINFO)
 ENDMACRO(SC_TCL_GETADDRINFO)
 
+#--------------------------------------------------------------------
+# SC_TCL_GETPWUID_R
+#--------------------------------------------------------------------
+MACRO(SC_TCL_GETPWUID_R)
+	CHECK_FUNCTION_EXISTS_D(getpwuid_r HAVE_GETPWUID_R)
+	IF(HAVE_GETPWUID_R)
+		SET(HAVE_GETPWUID_R_5_SRC "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+uid_t uid;
+struct passwd pw, *pwp;
+char buf[512];
+int buflen = 512;
+
+(void) getpwuid_r(uid, &pw, buf, buflen, &pwp);
+return 0;}
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETPWUID_R_5_SRC}"  HAVE_GETPWUID_R_5)
+		IF(HAVE_GETPWUID_R_5)
+			ADD_TCL_CFLAG(HAVE_GETPWUID_R_5)
+		ELSE(HAVE_GETPWUID_R_5)
+			SET(HAVE_GETPWUID_R_4_SRC "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+uid_t uid;
+struct passwd pw;
+char buf[512];
+int buflen = 512;
+
+(void) getpwuid_r(uid, &pw, buf, buflen);
+return 0;}
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETPWUID_R_4_SRC}" HAVE_GETPWUID_R_4)
+			IF(HAVE_GETPWUID_R_4)
+				ADD_TCL_CFLAG(HAVE_GETPWUID_R_4)
+			ENDIF(HAVE_GETPWUID_R_4)
+		ENDIF(HAVE_GETPWUID_R_5)
+	ENDIF(HAVE_GETPWUID_R)
+ENDMACRO(SC_TCL_GETPWUID_R)
+
+#--------------------------------------------------------------------
+# SC_TCL_GETPWNAM_R
+#--------------------------------------------------------------------
+MACRO(SC_TCL_GETPWNAM_R)
+	CHECK_FUNCTION_EXISTS_D(getpwnam_r HAVE_GETPWNAM_R)
+	IF(HAVE_GETPWNAM_R)
+		SET(HAVE_GETPWNAM_R_5_SRC "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+char *name;
+struct passwd pw, *pwp;
+char buf[512];
+int buflen = 512;
+
+(void) getpwnam_r(name, &pw, buf, buflen, &pwp);
+return 0;}
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETPWNAM_R_5_SRC}"  HAVE_GETPWNAM_R_5)
+		IF(HAVE_GETPWNAM_R_5)
+			ADD_TCL_CFLAG(HAVE_GETPWNAM_R_5)
+		ELSE(HAVE_GETPWNAM_R_5)
+			SET(HAVE_GETPWNAM_R_4_SRC "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+char *name;
+struct passwd pw;
+char buf[512];
+int buflen = 512;
+
+(void)getpwnam_r(name, &pw, buf, buflen);
+return 0;}
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETPWNAM_R_4_SRC}" HAVE_GETPWNAM_R_4)
+			IF(HAVE_GETPWNAM_R_4)
+			   ADD_TCL_CFLAG(HAVE_GETPWNAM_R_4)
+			ENDIF(HAVE_GETPWNAM_R_4)
+		ENDIF(HAVE_GETPWNAM_R_5)
+	ENDIF(HAVE_GETPWNAM_R)
+ENDMACRO(SC_TCL_GETPWNAM_R)
+
+#--------------------------------------------------------------------
+# SC_TCL_GETGRGID_R
+#--------------------------------------------------------------------
+MACRO(SC_TCL_GETGRGID_R)
+	CHECK_FUNCTION_EXISTS_D(getgrgid_r HAVE_GETGRGID_R)
+	IF(HAVE_GETGRGID_R)
+		SET(HAVE_GETGRGID_R_5_SRC "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+gid_t gid;
+struct group gr, *grp;
+char buf[512];
+int buflen = 512;
+
+(void) getgrgid_r(gid, &gr, buf, buflen, &grp);
+return 0;}
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETGRGID_R_5_SRC}"  HAVE_GETGRGID_R_5)
+		IF(HAVE_GETGRGID_R_5)
+			ADD_TCL_CFLAG(HAVE_GETGRGID_R_5)
+		ELSE(HAVE_GETGRGID_R_5)
+			SET(HAVE_GETGRGID_R_4_SRC "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+gid_t gid;
+struct group gr;
+char buf[512];
+int buflen = 512;
+
+(void)getgrgid_r(gid, &gr, buf, buflen);
+return 0;}
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETGRGID_R_4_SRC}" HAVE_GETGRGID_R_4)
+			IF(HAVE_GETGRGID_R_4)
+				ADD_TCL_CFLAG(HAVE_GETGRGID_R_4)
+			ENDIF(HAVE_GETGRGID_R_4)
+		ENDIF(HAVE_GETGRGID_R_5)
+	ENDIF(HAVE_GETGRGID_R)
+ENDMACRO(SC_TCL_GETGRGID_R)
+
+#--------------------------------------------------------------------
+# SC_TCL_GETGRNAM_R
+#--------------------------------------------------------------------
+MACRO(SC_TCL_GETGRNAM_R)
+	CHECK_FUNCTION_EXISTS_D(getgrnam_r HAVE_GETGRNAM_R)
+	IF(HAVE_GETGRNAMM_R)
+		SET(HAVE_GETGRNAMM_R_5_SRC "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+char *name;
+struct group gr, *grp;
+char buf[512];
+int buflen = 512;
+
+(void) getgrnam_r(name, &gr, buf, buflen, &grp);
+return 0;}
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETGRNAMM_R_5_SRC}"  HAVE_GETGRNAMM_R_5)
+		IF(HAVE_GETGRNAMM_R_5)
+			ADD_TCL_CFLAG(HAVE_GETGRNAMM_R_5)
+			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETGRNAMM_R_5=1")
+		ELSE(HAVE_GETGRNAMM_R_5)
+			SET(HAVE_GETGRNAMM_R_4_SRC "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+char *name;
+struct group gr;
+char buf[512];
+int buflen = 512;
+
+(void)getgrnam_r(name, &gr, buf, buflen);
+return 0;}
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETGRNAMM_R_4_SRC}" HAVE_GETGRNAMM_R_4)
+			IF(HAVE_GETGRNAMM_R_4)
+			   ADD_TCL_CFLAG(HAVE_GETGRNAMM_R_4)
+			ENDIF(HAVE_GETGRNAMM_R_4)
+		ENDIF(HAVE_GETGRNAMM_R_5)
+	ENDIF(HAVE_GETGRNAMM_R)
+ENDMACRO(SC_TCL_GETGRNAM_R)
+
+
 
 
 MACRO(CHECK_FD_SET_IN_TYPES_D)
@@ -624,7 +794,5 @@ MACRO(CHECK_COMPILER_SUPPORTS_HIDDEN_D)
 	CHECK_C_SOURCE_COMPILES("${TEST_SRC}" COMPILER_SUPPORTS_HIDDEN)
 ENDMACRO(CHECK_COMPILER_SUPPORTS_HIDDEN_D)
 
-MACRO(CHECK_GETADDERINFO_WORKING_D)
-ENDMACRO(CHECK_GETADDERINFO_WORKING_D)
 
 
