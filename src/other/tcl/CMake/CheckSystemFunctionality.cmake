@@ -243,7 +243,7 @@ ENDMACRO(CHECK_GETADDERINFO_WORKING_D)
 
 
 MACRO(TERMIOS_TERMIO_SGTTY)
-	SET(TERMIOS_SRC "
+	SET(TERMIOS_SRC_1 "
 	#include <termios.h>
 	int main() {
 	struct termios t;
@@ -255,7 +255,22 @@ MACRO(TERMIOS_TERMIO_SGTTY)
 		return 1;
 	}
 	")
-	SET(TERMIO_SRC "
+	SET(TERMIOS_SRC_2 "
+	#include <termios.h>
+	#include <errno.h>
+
+	int main() {
+	struct termios t;
+	if (tcgetattr(0, &t) == 0
+		|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
+		cfsetospeed(&t, 0);
+		t.c_cflag |= PARENB | PARODD | CSIZE | CSTOPB;
+		return 0;
+		}
+		return 1;
+		}
+	")
+	SET(TERMIO_SRC_1 "
 	#include <termio.h>
 	int main() {
 	struct termio t;
@@ -266,7 +281,21 @@ MACRO(TERMIOS_TERMIO_SGTTY)
 		return 1;
 	}
    ")
-	SET(SGTTY_SRC "
+	SET(TERMIO_SRC_2 "
+	#include <termio.h>
+	#include <errno.h>
+
+	int main() {
+	struct termio t;
+	if (ioctl(0, TCGETA, &t) == 0
+		|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
+		t.c_cflag |= CBAUD | PARENB | PARODD | CSIZE | CSTOPB;
+		return 0;
+		}
+		return 1;
+		}
+	")
+	SET(SGTTY_SRC_1 "
 	#include <sgtty.h>
 	int main() {
 	struct sgttyb t;
@@ -278,13 +307,51 @@ MACRO(TERMIOS_TERMIO_SGTTY)
 		return 1;
 	}
 	")
-	CHECK_C_SOURCE_RUNS("${TERMIOS_SRC}" HAVE_TERMIOS)
+	SET(SGTTY_SRC_2 "
+	#include <sgtty.h>
+	#include <errno.h>
+
+	int main() {
+	struct sgttyb t;
+	if (ioctl(0, TIOCGETP, &t) == 0
+		|| errno == ENOTTY || errno == ENXIO || errno == EINVAL) {
+		t.sg_ospeed = 0;
+		t.sg_flags |= ODDP | EVENP | RAW;
+		return 0;
+		}
+		return 1;
+		}
+	")
+	CHECK_C_SOURCE_RUNS("${TERMIOS_SRC_1}" HAVE_TERMIOS)
 	IF(NOT HAVE_TERMIOS)
-		CHECK_C_SOURCE_RUNS("${TERMIO_SRC}" HAVE_TERMIO)
+		CHECK_C_SOURCE_RUNS("${TERMIO_SRC_1}" HAVE_TERMIO)
 	ENDIF(NOT HAVE_TERMIOS)
 	IF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS)
-		CHECK_C_SOURCE_RUNS("${SGTTY_SRC}" HAVE_SGTTY)
+		CHECK_C_SOURCE_RUNS("${SGTTY_SRC_1}" HAVE_SGTTY)
 	ENDIF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS)
+	IF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS AND NOT HAVE_SGTTY)
+		CHECK_C_SOURCE_RUNS("${TERMIOS_SRC_2}" HAVE_TERMIOS)
+		IF(NOT HAVE_TERMIOS)
+			CHECK_C_SOURCE_RUNS("${TERMIO_SRC_2}" HAVE_TERMIO)
+		ENDIF(NOT HAVE_TERMIOS)
+		IF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS)
+			CHECK_C_SOURCE_RUNS("${SGTTY_SRC_2}" HAVE_SGTTY)
+		ENDIF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS)
+	ENDIF(NOT HAVE_TERMIO AND NOT HAVE_TERMIOS AND NOT HAVE_SGTTY)
+
+	IF(HAVE_TERMIOS)
+		SET(${CFLAGS_NAME}_CFLAGS "${${CFLAGS_NAME}_CFLAGS} -DUSE_TERMIOS=1" CACHE STRING "TCL CFLAGS" FORCE)
+	ELSE(HAVE_TERMIOS)
+		IF(HAVE_TERMIO)
+			SET(${CFLAGS_NAME}_CFLAGS "${${CFLAGS_NAME}_CFLAGS} -DUSE_TERMIO=1" CACHE STRING "TCL CFLAGS" FORCE)
+		ELSE(HAVE_TERMIO)
+			IF(HAVE_SGTTY)
+				SET(${CFLAGS_NAME}_CFLAGS "${${CFLAGS_NAME}_CFLAGS} -DUSE_SGTTY=1" CACHE STRING "TCL CFLAGS" FORCE)
+			ENDIF(HAVE_SGTTY)
+		ENDIF(HAVE_TERMIO)
+	ENDIF(HAVE_TERMIOS)
+
+
 ENDMACRO(TERMIOS_TERMIO_SGTTY)
 
 MACRO(CHECK_FD_SET_IN_TYPES_D)
