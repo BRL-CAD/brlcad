@@ -305,8 +305,17 @@ ENDMACRO(SC_MISSING_POSIX_HEADERS)
 #--------------------------------------------------------------------
 # SC_BLOCKING_STYLE
 #--------------------------------------------------------------------
-
-# TODO
+CHECK_INCLUDE_FILE_D(sys/ioctl.h HAVE_SYS_IOCTL_H) 
+CHECK_INCLUDE_FILE_D(sys/filio.h HAVE_SYS_FILIO_H)
+IF(${CMAKE_SYSTEM_NAME} MATCHES "^OSF.*")
+	ADD_TCL_CFLAG(USE_FIONBIO)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^OSF.*")
+IF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
+	STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
+	IF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 5)
+		ADD_TCL_CFLAG(USE_FIONBIO)
+	ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 5)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
 
 #--------------------------------------------------------------------
 # SC_TIME_HANLDER
@@ -314,7 +323,7 @@ ENDMACRO(SC_MISSING_POSIX_HEADERS)
 # The TEA version of this macro calls AC_HEADER_TIME, but Autotools
 # docs list it as obsolete.
 #
-# TODO - tzname testing is incomplete
+# TODO - tzname testing from AC_STRUCT_TIMEZONE is incomplete
 #
 #--------------------------------------------------------------------
 MACRO(SC_TIME_HANDLER)
@@ -341,9 +350,130 @@ return 0;
 	CHECK_FUNCTION_EXISTS_D(mktime HAVE_MKTIME)
 	CHECK_STRUCT_HAS_MEMBER_D("struct tm" tm_tzadj time.h HAVE_TM_TZADJ)
 	CHECK_STRUCT_HAS_MEMBER_D("struct tm" tm_gmtoff time.h HAVE_TM_GMTOFF)
+	SET(TZONE_SRC_1 "
+#include <time.h>
+int main () {
+extern long timezone;
+timezone += 1;
+exit (0);
+return 0;
+}
+   ")
+	CHECK_C_SOURCE_COMPILES("${TZONE_SRC_1}" HAVE_TIMEZONE_VAR)
+   IF(HAVE_TIMEZONE_VAR)
+		ADD_TCL_CFLAG(HAVE_TIMEZONE_VAR)
+	ELSE(HAVE_TIMEZONE_VAR)
+		SET(TZONE_SRC_2 "
+#include <time.h>
+int main() {
+extern time_t timezone;
+timezone += 1;
+exit (0);
+return 0;
+}
+      ")
+		CHECK_C_SOURCE_COMPILES("${TZONE_SRC_2}" HAVE_TIMEZONE_VAR)
+		IF(HAVE_TIMEZONE_VAR)
+			ADD_TCL_CFLAG(HAVE_TIMEZONE_VAR)
+		ENDIF(HAVE_TIMEZONE_VAR)
+	ENDIF(HAVE_TIMEZONE_VAR)
 ENDMACRO(SC_TIME_HANDLER)
 
+#--------------------------------------------------------------------
+# SC_BUGGY_STRTOD
+#--------------------------------------------------------------------
 
+# TODO
+
+
+#--------------------------------------------------------------------
+# SC_TCL_LINK_LIBS
+#--------------------------------------------------------------------
+MACRO(SC_TCL_LINK_LIBS)
+	CHECK_FUNCTION_EXISTS(sin, HAVE_MATHLIB)
+	IF(NOT HAVE_MATHLIB)
+		CHECK_LIBRARY(M m sin)
+	ENDIF(NOT HAVE_MATHLIB)
+	IF(NOT IEEE_LIBRARY AND NOT IEEE_QUIET)
+		MESSAGE("-- Looking for IEEE library")
+		RESOLVE_LIBRARIES(IEEE_LIBRARY "-lieee")
+		IF(IEEE_LIBRARY)
+			MESSAGE("-- Found IEEE library: ${IEEE_LIBRARY}")
+		ELSE(IEEE_LIBRARY)
+			MESSAGE("-- Looking for IEEE library - not found")
+		ENDIF(IEEE_LIBRARY)
+		SET(IEEE_QUIET 1 CACHE STRING "IEEE quiet")
+	ENDIF(NOT IEEE_LIBRARY AND NOT IEEE_QUIET)
+	IF(NOT INET_LIBRARY AND NOT INET_QUIET)
+		MESSAGE("-- Looking for INET library")
+		RESOLVE_LIBRARIES(INET_LIBRARY "-linet")
+		IF(INET_LIBRARY)
+			MESSAGE("-- Found INET library: ${INET_LIBRARY}")
+		ELSE(INET_LIBRARY)
+			MESSAGE("-- Looking for INET library - not found")
+		ENDIF(INET_LIBRARY)
+		SET(INET_QUIET 1 CACHE STRING "INET quiet")
+	ENDIF(NOT INET_LIBRARY AND NOT INET_QUIET)
+
+	SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${IEEE_LIBRARY} ${M_LIBRARY} ${INET_LIBRARY} CACHE STRING "TCL CFLAGS" FORCE)
+
+	CHECK_INCLUDE_FILE_USABILITY_D(net/errno.h NET_ERRNO_H)
+	CHECK_FUNCTION_EXISTS(connect HAVE_CONNECT)
+	IF(NOT HAVE_CONNECT)
+		CHECK_FUNCTION_EXISTS(setsockopt HAVE_SETSOCKOPT)
+		IF(NOT HAVE_SETSOCKOPT)
+			CHECK_LIBRARY(SOCKET socket setsocket)
+			SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${SOCKET_LIBRARY} CACHE STRING "TCL CFLAGS" FORCE)
+		ENDIF(NOT HAVE_SETSOCKOPT)
+	ENDIF(NOT HAVE_CONNECT)
+	CHECK_FUNCTION_EXISTS(gethostbyname HAVE_GETHOSTBYNAME)
+	IF(NOT HAVE_GETHOSTBYNAME)
+		CHECK_LIBRARY(NLS nls gethostbyname)
+		SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${NLS_LIBRARY} CACHE STRING "TCL CFLAGS" FORCE)
+	ENDIF(NOT HAVE_GETHOSTBYNAME)
+
+ENDMACRO(SC_TCL_LINK_LIBS)
+
+#--------------------------------------------------------------------
+# SC_TCL_EARLY_FLAGS
+#--------------------------------------------------------------------
+
+# TODO - needed at all for CMake?
+
+#--------------------------------------------------------------------
+# SC_TCL_64BIT_FLAGS
+#
+# Detect and set up 64 bit compiling here.  LOTS of TODO here
+#--------------------------------------------------------------------
+MACRO(SC_TCL_64BIT_FLAGS)
+	OPTION(ENABLE_64_BIT "64 bit void pointer" ON)
+	IF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" AND ENABLE_64_BIT)
+		IF(ENABLE_64_BIT)
+			IF(NOT 64BIT_FLAG)
+				MESSAGE("Checking for 64-bit support:")
+				CHECK_C_FLAG("arch x86_64" 64BIT_FLAG)
+				CHECK_C_FLAG(64 64BIT_FLAG)
+				CHECK_C_FLAG("mabi=64" 64BIT_FLAG)
+				CHECK_C_FLAG(m64 64BIT_FLAG)
+				CHECK_C_FLAG(q64 64BIT_FLAG)
+			ENDIF(NOT 64BIT_FLAG)
+			SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${64BIT_FLAG}" CACHE STRING "CMake CFLAGS" FORCE)
+			SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${64BIT_FLAG}" CACHE STRING "CMake CXXFLAGS" FORCE)
+		ENDIF(ENABLE_64_BIT)
+	ELSE(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" AND ENABLE_64_BIT)
+		SET(ENABLE_64_BIT OFF)
+	ENDIF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" AND ENABLE_64_BIT)
+ENDMACRO(SC_TCL_64BIT_FLAGS)
+
+#--------------------------------------------------------------------
+# SC_TCL_CFG_ENCODING   TIP #59
+#--------------------------------------------------------------------
+MACRO(SC_TCL_CFG_ENCODING)
+	IF(NOT TCL_CFGVAL_ENCODING)
+		SET(TCL_CFGVAL_ENCODING "iso8859-1")
+	ENDIF(NOT TCL_CFGVAL_ENCODING)
+	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_CFGVAL_ENCODING=\"${TCL_CFGVAL_ENCODING}\"" CACHE STRING "TCL CFLAGS" FORCE)
+ENDMACRO(SC_TCL_CFG_ENCODING)
 
 MACRO(CHECK_FD_SET_IN_TYPES_D)
 	SET(TEST_SRC "
