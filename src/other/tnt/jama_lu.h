@@ -6,7 +6,7 @@
 #include <float.h>
 //for min(), max() below
 
-#define NEAR_ZERO(val, epsilon)(((val) > -epsilon) && ((val) < epsilon))
+#define JAMA_NEAR_ZERO(val, epsilon)(((val) > -epsilon) && ((val) < epsilon))
 
 
 namespace JAMA
@@ -139,7 +139,7 @@ class LU
 
          // Compute multipliers.
 
-         if ((j < m) && (NEAR_ZERO(LU_[j][j], DBL_MIN))) {
+         if ((j < m) && (JAMA_NEAR_ZERO(LU_[j][j], DBL_MIN))) {
             for (int i = j+1; i < m; i++) {
                LU_[i][j] /= LU_[j][j];
             }
@@ -155,7 +155,7 @@ class LU
 
    int isNonsingular () {
       for (int j = 0; j < n; j++) {
-        if (NEAR_ZERO(LU_[j][j], DBL_MIN))
+        if (JAMA_NEAR_ZERO(LU_[j][j], DBL_MIN))
             return 0;
       }
       return 1;
