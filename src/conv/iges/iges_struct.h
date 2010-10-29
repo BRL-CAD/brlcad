@@ -36,10 +36,6 @@
 #include "wdb.h"
 
 
-extern char	version[];
-
-extern fastf_t brlabs();
-
 #define	NAMESIZE	16	/* from db.h */
 
 #define	TOL		0.0005
@@ -238,8 +234,8 @@ BU_EXTERN( struct iges_vertex *Get_iges_vertex, (struct vertex *v ) );
 BU_EXTERN( struct iges_vertex_list *Get_vertex_list, (int vert_de ) );
 BU_EXTERN( struct iges_vertex_list *Read_vertex_list, ( int vert_de ) );
 BU_EXTERN( struct loopuse *Make_loop, (int entity_no, int orientation, int on_surf_de, struct face_g_snurb *surf, struct faceuse *fu ) );
-BU_EXTERN( struct shell *Add_inner_shell, ( struct nmgregion *r, int entityno, int shell_orient ) );
-BU_EXTERN( struct shell *Get_outer_shell, ( struct nmgregion *r, int entityno, int shell_orient ) );
+BU_EXTERN( struct shell *Add_inner_shell, ( struct nmgregion *r, int entityno) );
+BU_EXTERN( struct shell *Get_outer_shell, ( struct nmgregion *r, int entityno) );
 BU_EXTERN( struct face_g_snurb *Get_nurb_surf, (int entity_no, struct model *m ) );
 BU_EXTERN( struct vertex **Get_vertex, (struct iges_edge_use *edge ) );
 BU_EXTERN( union tree *do_nmg_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree));
@@ -248,7 +244,7 @@ BU_EXTERN( void csg_comb_func, ( struct db_i *dbip, struct directory *dp ) );
 BU_EXTERN( void csg_leaf_func, ( struct db_i *dbip, struct directory *dp ) );
 BU_EXTERN( void nmg_region_edge_list, ( struct bu_ptbl *tab, struct nmgregion *r ) );
 BU_EXTERN( void set_iges_tolerances, ( struct bn_tol *set_tol, struct rt_tess_tol *set_ttol ) );
-BU_EXTERN( void w_start_global, (FILE *fp_dir, FILE *fp_param, char *db_name, char *prog_name, char *output_file, char *id, char *version ));
+BU_EXTERN( void w_start_global, (FILE *fp_dir, FILE *fp_param, char *db_name, char *prog_name, char *output_file, char *id, char *version));
 BU_EXTERN( void w_terminate, (FILE *fp) );
 BU_EXTERN( void write_edge_list, (struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param ) );
 BU_EXTERN( void write_vertex_list, ( struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param ) );

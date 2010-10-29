@@ -606,7 +606,7 @@ main(int argc, char *argv[])
 		break;
 	    case 'c':	/* convert from units */
 		conv_factor = bu_units_conversion(bu_optarg);
-		if (conv_factor == 0.0) {
+		if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
 		    bu_log("Illegal units: (%s)\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE, "Illegal units!\n");
 		}

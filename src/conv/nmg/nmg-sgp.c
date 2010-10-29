@@ -44,18 +44,10 @@ static int debug=0;
 static int verbose=0;
 static FILE *fp_out;
 static char *out_file;
-static FILE *fd_in;
-static struct db_i *dbip;
 static struct bn_tol tol;
 static const char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_debug_flag] [-o output_file] brlcad_model.g object1 [object2 object3...]\n";
 static long polygons=0;
 static int stats=0;
-static int triangles=0;
-static fastf_t min_edge_len=MAX_FASTF;
-static fastf_t max_edge_len=0.0;
-static int *edge_count;
-static fastf_t *edge_len_limits;
-static point_t min_pt, max_pt;
 
 static void
 write_fu_as_sgp( fu )
@@ -116,18 +108,13 @@ write_model_as_sgp( m )
  *			M A I N
  */
 int
-main(argc, argv)
-    int	argc;
-    char	*argv[];
+main(int argc, char *argv[])
 {
     int	c;
     struct db_i	*dbip;
 
     bu_setlinebuf( stderr );
 
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
     BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
     /* FIXME: These need to be improved */

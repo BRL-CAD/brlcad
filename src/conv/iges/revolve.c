@@ -333,7 +333,7 @@ revolve( entityno )
 	/* Calculate direction from axis to curve */
 	len = 0.0;
 	ptr = curv_pts;
-	while ( len == 0.0 )
+	while ( NEAR_ZERO(len, SMALL_FASTF) )
 	{
 	    VSUB2( pdir, ptr->pt, pt );
 	    VJOIN1( startdir, pdir, -VDOT( pdir, adir ), adir );
@@ -371,7 +371,7 @@ revolve( entityno )
 		VJOIN1( pts[i+4], pts[i], (hmax-hmin), adir );
 	    }
 	}
-	if ( fract != 0.5 )
+	if ( !NEAR_ZERO(fract - 0.5, SMALL_FASTF) )
 	{
 	    /* Calculate direction to end of revolve */
 	    VSCALE( enddir, startdir, cos( theta ) );

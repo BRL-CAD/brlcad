@@ -38,8 +38,8 @@ Extrudcirc( entityno, curve, evect )
 {
     point_t		base;		/* center of cylinder base */
     fastf_t		radius;		/* radius of cylinder */
-    fastf_t		x1, y1;		/* Start point */
-    fastf_t		x2, y2;		/* Terminate point */
+    fastf_t		x_1, y_1;		/* Start point */
+    fastf_t		x_2, y_2;		/* Terminate point */
     int		sol_num;	/* Solid number */
 
     /* Acquiring Data */
@@ -55,14 +55,14 @@ Extrudcirc( entityno, curve, evect )
     Readcnv( &base[Z], "" );
     Readcnv( &base[X], "" );
     Readcnv( &base[Y], "" );
-    Readcnv( &x1, "" );
-    Readcnv( &y1, "" );
-    Readcnv( &x2, "" );
-    Readcnv( &y2, "" );
+    Readcnv( &x_1, "" );
+    Readcnv( &y_1, "" );
+    Readcnv( &x_2, "" );
+    Readcnv( &y_2, "" );
 
     /* Check for closure */
 
-    if ( x1 != x2 || y1 != y2 )
+    if ( !NEAR_ZERO(x_1 - x_2, SMALL_FASTF) || !NEAR_ZERO(y_1 - y_2, SMALL_FASTF) )
     {
 	bu_log( "Circular arc for extrusion is not closed:\n" );
 	bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
@@ -71,7 +71,7 @@ Extrudcirc( entityno, curve, evect )
 	return 0;
     }
 
-    radius = sqrt( (x1 - base[X])*(x1 - base[X]) + (y1 - base[Y])*(y1 - base[Y]) );
+    radius = sqrt( (x_1 - base[X])*(x_1 - base[X]) + (y_1 - base[Y])*(y_1 - base[Y]) );
 
 
     /* Make an rcc */

@@ -88,10 +88,10 @@ Basis(int i /* interval number (0 through k) */, int k /* degree of basis functi
 	denom1 = knots[i+k-1] - knots[i];
 	denom2 = knots[i+k] - knots[i+1];
 
-	if (denom1 != 0.0)
+	if (!NEAR_ZERO(denom1, SMALL_FASTF))
 	    retval += (t - knots[i])*Basis(i, k-1, t)/denom1;
 
-	if (denom2 != 0.0)
+	if (!NEAR_ZERO(denom2, SMALL_FASTF))
 	    retval += (knots[i+k] - t)*Basis(i+1, k-1, t)/denom2;
 
 	return retval;
@@ -105,7 +105,7 @@ B_spline(fastf_t t /* parameter value */,
 	 int m /* upper limit of sum (number of control points - 1) */,
 	 int k /* order */,
 	 point_t P[] /* Control Points (x, y, z) */,
-	 fastf_t W[] /* Weights for Control Points */,
+	 fastf_t weights[] /* Weights for Control Points */,
 	 point_t pt /* Evaluated point on spline */)
 {
 
@@ -116,7 +116,7 @@ B_spline(fastf_t t /* parameter value */,
 	numer[j] = 0.0;
 
     for (i=0; i<=m; i++) {
-	tmp = W[i]*Basis(i, k, t);
+	tmp = weights[i]*Basis(i, k, t);
 	denom += tmp;
 	for (j=0; j<3; j++)
 	    numer[j] += P[i][j]*tmp;

@@ -141,7 +141,7 @@ Readglobal( file_count )
 	    case 12:	Readstrg( "Product ID: ");
 		break;
 	    case 13:	Readflt( &scale, "Scale: " );
-		if ( scale == 0.0 )
+		if ( NEAR_ZERO(scale, SMALL_FASTF) )
 		    scale = 1.0;
 		inv_scale = 1.0/scale;
 		break;

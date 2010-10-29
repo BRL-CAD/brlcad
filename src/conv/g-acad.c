@@ -84,9 +84,6 @@ main(int argc, char **argv)
 
     bu_setlinebuf( stderr );
 
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
@@ -267,15 +264,11 @@ main(int argc, char **argv)
     rt_vlist_cleanup();
     db_close(dbip);
 
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-ACAD conversion");
-#endif
-
     return 0;
 }
 
 static void
-nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id)
+nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id)
 {
     struct model *m;
     struct shell *s;
@@ -452,7 +445,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
 		/* Output other info. for triangle ICOAT, component#, facet# */
 		/* Map Icoat from material table later */
-		/* fprintf( fp, "%s icomp=%d material=%d:\n", (region_name+1), region_id, material_id );*/
+		/* fprintf( fp, "%s icomp=%d material=%d:\n", (region_name+1), region_id );*/
 
 		fprintf( fp, " %d    %d    %d\n", 0, region_id, ++tricount);
 
@@ -486,7 +479,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     union tree		*ret_tree;
     struct bu_list		vhead;
@@ -640,7 +633,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 		goto out;
 	    }
 	    /* Write the region to the TANKILL file */
-	    nmg_to_acad( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
+	    nmg_to_acad( r, pathp, tsp->ts_regionid );
 
 	    regions_written++;
 
