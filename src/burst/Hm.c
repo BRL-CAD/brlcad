@@ -112,7 +112,7 @@ struct nmllist
 void
 HmBanner( const char *pgmname, int borderchr )
 {
-    int    co;
+    int    column;
     char   *p;
 #define HmBUFLEN	81
     static char     HmPgmName[HmBUFLEN] = "No name";
@@ -122,11 +122,11 @@ HmBanner( const char *pgmname, int borderchr )
 	HmBorderChr = borderchr;
     }
     (void) ScMvCursor( HmLftMenu, HmYBORDER );
-    for ( co = 1; co <= 3; co++ )
+    for ( column = 1; column <= 3; column++ )
 	(void) putc( HmBorderChr, stdout );
-    for ( p = HmPgmName; co <= ScCO && *p != '\0'; co++, p++ )
+    for ( p = HmPgmName; column <= ScCO && *p != '\0'; column++, p++ )
 	(void) putc( (int)(*p), stdout );
-    for (; co <= ScCO; co++ )
+    for (; column <= ScCO; column++ )
 	(void) putc( HmBorderChr, stdout );
     return;
 }

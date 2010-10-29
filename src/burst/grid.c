@@ -94,9 +94,7 @@ static void spallVec();
   by regp.
 */
 void
-colorPartition(regp, type)
-    struct region *regp;
-    int type;
+colorPartition(struct region *regp, int type)
 {
     Colors	*colorp;
     if (plotfile[0] == NUL)
@@ -194,9 +192,7 @@ doBursts()
   too thin.
 */
 static void
-enforceLOS(ap, pt_headp)
-    struct application	*ap;
-    struct partition	*pt_headp;
+enforceLOS(struct application *ap, struct partition *pt_headp)
 {
     struct partition	*pp;
     for (pp = pt_headp->pt_forw; pp != pt_headp;)
@@ -224,10 +220,7 @@ enforceLOS(ap, pt_headp)
   critical components were encountered.
 */
 static int
-f_BurstHit(ap, pt_headp, segp)
-    struct application *ap;
-    struct partition *pt_headp;
-    struct seg *segp;
+f_BurstHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(segp))
 {
     Pt_Queue *qshield = PT_Q_NULL;
     struct partition *cpp, *spp;
@@ -312,11 +305,7 @@ f_BurstHit(ap, pt_headp, segp)
 */
 /*ARGSUSED*/
 static int
-f_HushOverlap(ap, pp, reg1, reg2, pheadp)
-    struct application *ap;
-    struct partition *pp;
-    struct region *reg1, *reg2;
-    struct partition *pheadp;
+f_HushOverlap(struct application *UNUSED(ap), struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
     fastf_t depth;
     depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -358,11 +347,7 @@ f_HushOverlap(ap, pp, reg1, reg2, pheadp)
 */
 /*ARGSUSED*/
 static int
-f_Overlap(ap, pp, reg1, reg2, pheadp)
-    struct application *ap;
-    struct partition *pp;
-    struct region *reg1, *reg2;
-    struct partition *pheadp;
+f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
     fastf_t depth;
     point_t pt;
@@ -418,10 +403,7 @@ f_Overlap(ap, pp, reg1, reg2, pheadp)
   handed to rt_shootray() by burstRay().  Otherwise, 1 is returned.
 */
 static int
-f_ShotHit(ap, pt_headp, segp)
-    struct application *ap;
-    struct partition *pt_headp;
-    struct seg *segp;
+f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     struct partition *bp = PT_NULL;
@@ -698,9 +680,6 @@ f_ShotHit(ap, pt_headp, segp)
 	    /* See if inside air follows impl. outside air. */
 	    if (voidflag && InsideAir(nregp))
 	    {
-		fastf_t	slos =
-		    np->pt_outhit->hit_dist -
-		    np->pt_inhit->hit_dist;
 #if DEBUG_GRID
 		brst_log("\t\tinside air follows impl. outside air\n");
 #endif
@@ -714,8 +693,6 @@ f_ShotHit(ap, pt_headp, segp)
 		     &&	DiffAir(nregp, regp)
 		    )
 		{
-		    fastf_t slos = np->pt_outhit->hit_dist -
-			np->pt_inhit->hit_dist;
 #if DEBUG_GRID
 		    brst_log("\t\tdiffering airs are adjacent\n");
 #endif
@@ -780,22 +757,13 @@ f_ShotHit(ap, pt_headp, segp)
   because it can be instanced by other solids.
 */
 void
-getRtHitNorm(hitp, stp, rayp, flipped, normvec)
-    struct hit *hitp;
-    struct soltab *stp;
-    struct xray *rayp;
-    int flipped;
-    fastf_t normvec[3];
+getRtHitNorm(struct hit *hitp, struct soltab *stp, struct xray *UNUSED(rayp), int flipped, fastf_t normvec[3])
 {
     RT_HIT_NORMAL(normvec, hitp, stp, rayp, flipped);
 }
 
 int
-chkEntryNorm(pp, rayp, normvec, purpose)
-    struct partition *pp;
-    struct xray *rayp;
-    fastf_t normvec[3];
-    char *purpose;
+chkEntryNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], char *purpose)
 {
     fastf_t f;
     static int flipct = 0;
@@ -842,11 +810,7 @@ chkEntryNorm(pp, rayp, normvec, purpose)
 }
 
 int
-chkExitNorm(pp, rayp, normvec, purpose)
-    struct partition *pp;
-    struct xray *rayp;
-    fastf_t normvec[3];
-    char *purpose;
+chkExitNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], char *purpose)
 {
     fastf_t f;
     static int flipct = 0;
@@ -900,8 +864,7 @@ chkExitNorm(pp, rayp, normvec, purpose)
   debugging.
 */
 static int
-f_ShotMiss(ap)
-    struct application *ap;
+f_ShotMiss(struct application *ap)
 {
     if (groundburst)
     {
@@ -971,8 +934,7 @@ f_ShotMiss(ap)
   Burst ray missed the model, so do nothing.
 */
 static int
-f_BurstMiss(ap)
-    struct application *ap;
+f_BurstMiss(struct application *ap)
 {
     VSETALL(ap->a_color, 0.0); /* All misses black. */
     return	0;
@@ -990,8 +952,7 @@ f_BurstMiss(ap)
   1 for success.
 */
 static int
-getRayOrigin(ap)
-    struct application	*ap;
+getRayOrigin(struct application *ap)
 {
     fastf_t	*vec = ap->a_uvec;
     fastf_t			gridyinc[3], gridxinc[3];
@@ -1402,12 +1363,7 @@ gridShot()
   space.
 */
 static void
-lgtModel(ap, pp, hitp, rayp, surfnorm)
-    struct application *ap;
-    struct partition *pp;
-    struct hit *hitp;
-    struct xray *rayp;
-    fastf_t surfnorm[3];
+lgtModel(struct application *ap, struct partition *pp, struct hit *hitp, struct xray *UNUSED(rayp), fastf_t surfnorm[3])
 {
     Colors  *colorp;
     fastf_t intensity = -VDOT(viewdir, surfnorm);
@@ -1438,8 +1394,7 @@ lgtModel(ap, pp, hitp, rayp, surfnorm)
   cause side-effects or redundant computation.
 */
 static fastf_t
-max(a, b)
-    fastf_t	a, b;
+max(fastf_t a, fastf_t b)
 {
     return	FMAX(a, b);
 }
@@ -1451,8 +1406,7 @@ max(a, b)
   cause side-effects or redundant computation.
 */
 static fastf_t
-min(a, b)
-    fastf_t	a, b;
+min(fastf_t a, fastf_t b)
 {
     return	FMIN(a, b);
 }
@@ -1502,8 +1456,7 @@ readBurst(fastf_t *vec)
   set to 1.
 */
 static int
-readShot(vec)
-    fastf_t	*vec;
+readShot(fastf_t *vec)
 {
     assert(shotfp != (FILE *) NULL);
     if (! TSTBIT(firemode, FM_3DIM)) /* absence of 3D flag means 2D */
@@ -1641,17 +1594,13 @@ spallInit()
 static struct application	a_burst; /* prototype spall ray */
 
 /*
-  int burstPoint(struct application *ap,
-  fastf_t *normal, fastf_t *bpt)
-
-  This routine dispatches the burst point ray tracing task burstRay().
-  RETURN CODES:	0 for fatal ray tracing error, 1 otherwise.
-*/
+ * This routine dispatches the burst point ray tracing task burstRay().
+ * RETURN CODES:	0 for fatal ray tracing error, 1 otherwise.
+ *
+ * bpt is burst point coordinates.
+ */
 static int
-burstPoint(ap, normal, bpt)
-    struct application *ap;
-    fastf_t *normal;
-    fastf_t *bpt; /* burst point coordinates */
+burstPoint(struct application *ap, fastf_t *normal, fastf_t *bpt)
 {
     a_burst = *ap;
     a_burst.a_miss = f_BurstMiss;
@@ -1753,9 +1702,7 @@ burstRay()
 }
 
 static void
-spallVec(dvec, s_rdir, phi, gammaval)
-    fastf_t	*dvec, *s_rdir;
-    fastf_t			phi, gammaval;
+spallVec(fastf_t *dvec, fastf_t *s_rdir, fastf_t phi, fastf_t gammaval)
 {
     fastf_t			cosphi = cos(phi);
     fastf_t			singamma = sin(gammaval);
@@ -1790,9 +1737,7 @@ spallVec(dvec, s_rdir, phi, gammaval)
 	in radians, allocating storage for it and returning its address.
 */
 static void
-consVector(vec, azim, elev)
-    fastf_t	*vec;
-    fastf_t	azim, elev;
+consVector(fastf_t *vec, fastf_t azim, fastf_t elev)
 {
     /* Store cosine of the elevation to save calculating twice. */
     fastf_t	cosE;
@@ -1804,36 +1749,17 @@ consVector(vec, azim, elev)
 }
 
 void
-abort_RT(int sig)
+abort_RT(int UNUSED(sig))
 {
     (void) signal(SIGINT, abort_RT);
     userinterrupt = 1;
     return;
 }
 
-#if 0
-/*	i p o w ()
-	Integer exponent pow() function.
-	Returns d to the nth power.
-*/
-static fastf_t
-ipow(d, n)
-    fastf_t	d;
-    int	n;
-{
-    fastf_t	result = 1.0;
-    if (d == 0.0)
-	return	0.0;
-    while (n-- > 0)
-	result *= d;
-    return	result;
-}
-#endif
 
 /*	v i e w _ p i x () */
 static void
-view_pix(ap)
-    struct application	*ap;
+view_pix(struct application *ap)
 {
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (! TSTBIT(firemode, FM_BURST))

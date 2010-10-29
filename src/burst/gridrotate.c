@@ -59,7 +59,7 @@ gridRotate( fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *d
     des_V[1] = -sn_elv*sn_azm;
     des_V[2] =  cos( elev );
     
-    if ( roll != 0.0 ) {
+    if (!NEAR_ZERO(roll, SMALL_FASTF)) {
 	fastf_t tmp_V[3], tmp_H[3], prime_V[3];
 	fastf_t sn_roll = sin( roll );
 	fastf_t cs_roll = cos( roll );

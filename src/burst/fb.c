@@ -78,13 +78,11 @@ imageInit()
     return	1;
 }
 
-/*	openFbDevice( char *devname )
-
+/*
 Must be called after gridInit() so that gridsz is setup.
 */
 int
-openFbDevice( devname )
-    char	*devname;
+openFbDevice( char *fbdev )
 {
     int	ret = 1;
     notify( "Opening frame buffer", NOTIFY_APPEND );
@@ -113,7 +111,7 @@ openFbDevice( devname )
 	    goto	safe_exit;
 	}
     }
-    fbiop = fb_open( devname, devwid, devhgt );
+    fbiop = fb_open( fbdev, devwid, devhgt );
     if ( fbiop == NULL )
     {
 	ret = 0;

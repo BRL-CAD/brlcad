@@ -169,7 +169,7 @@ Ftable	shot2dmenu[] =
       "type in shotline coordinates",
       0, Minput2dShot },
     { "execute", "begin ray tracing", 0, Mexecute },
-    { 0 },
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	shot3dmenu[] =
@@ -181,7 +181,7 @@ Ftable	shot3dmenu[] =
       "type in shotline coordinates",
       0, Minput3dShot },
     { "execute", "begin ray tracing", 0, Mexecute },
-    { 0 },
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	shotcoordmenu[] =
@@ -192,7 +192,7 @@ Ftable	shotcoordmenu[] =
     { "shotline coordinate system",
       "specify shotline location in attack coordinates (2-d)",
       shot2dmenu, 0 },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	gridmenu[] =
@@ -204,7 +204,7 @@ Ftable	gridmenu[] =
       "generate a grid which covers a portion of the target",
       0, MenclosePortion },
     { "execute", "begin ray tracing", 0, Mexecute },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	locoptmenu[] =
@@ -213,7 +213,7 @@ Ftable	locoptmenu[] =
       "generate a grid of shotlines", gridmenu, 0 },
     { "discrete shots",
       "specify each shotline by coordinates", shotcoordmenu, 0 },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	burstcoordmenu[] =
@@ -225,7 +225,7 @@ Ftable	burstcoordmenu[] =
       "specify each burst point in target coordinates (3-d)",
       0, MinputBurst },
     { "execute", "begin ray tracing", 0, Mexecute },
-    { 0 },
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	burstoptmenu[] =
@@ -245,7 +245,7 @@ Ftable	burstoptmenu[] =
     { "max-barriers",
       "maximum number of shielding components along spall ray",
       0, MmaxBarriers },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	burstlocmenu[] =
@@ -259,7 +259,7 @@ Ftable	burstlocmenu[] =
     { "shotline-burst",
       "burst along shotline on impact with critical components",
       0, MautoBurst },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	burstmenu[] =
@@ -270,7 +270,7 @@ Ftable	burstmenu[] =
     { "bursting parameters",
       "configure spall cone generation options",
       burstoptmenu, 0 },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	shotlnmenu[] =
@@ -284,7 +284,7 @@ Ftable	shotlnmenu[] =
       0, Mdither },
     { "shotline location",
       "positioning of shotlines", locoptmenu, 0 },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	targetmenu[] =
@@ -303,7 +303,7 @@ Ftable	targetmenu[] =
       0, McritComp },
     { "color-file", "file containing component ident to color mappings",
       0, McolorFile },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	prefmenu[] =
@@ -311,7 +311,7 @@ Ftable	prefmenu[] =
     { "report-overlaps",
       "enable or disable the reporting of overlaps",
       0, Moverlaps },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	filemenu[] =
@@ -337,7 +337,7 @@ Ftable	filemenu[] =
     { "write-input-file",
       "save input up to this point in a session file",
       0, MwriteCmdFile },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 Ftable	mainmenu[] =
@@ -358,13 +358,11 @@ Ftable	mainmenu[] =
     { "preferences",
       "options for tailoring behavior of user interface",
       prefmenu, 0 },
-    { 0 }
+    { NULL, NULL, 0, NULL },
 };
 
 static void
-addItem( tp, itemp )
-    Ftable *tp;
-    HmItem *itemp;
+addItem(Ftable *tp, HmItem *itemp)
 {
     itemp->text = tp->name;
     itemp->help = tp->help;
@@ -376,8 +374,7 @@ addItem( tp, itemp )
 }
 
 static HmMenu *
-addMenu( tp )
-    Ftable *tp;
+addMenu(Ftable *tp)
 {
     HmMenu	*menup;
     HmItem *itemp;
@@ -430,8 +427,7 @@ closeUi()
 }
 
 static int
-getInput( ip )
-    Input *ip;
+getInput(Input *ip)
 {
     if ( ! batchmode )
     {
@@ -472,8 +468,7 @@ getInput( ip )
   Initialize the keyword commands.
 */
 static void
-initCmds( tp )
-    Ftable *tp;
+initCmds(Ftable *tp)
 {
     for (; tp->name != NULL; tp++ )
     {
@@ -491,8 +486,7 @@ initCmds( tp )
   Initialize the hierarchical menus.
 */
 static void
-initMenus( tp )
-    Ftable	*tp;
+initMenus(Ftable *tp)
 {
     mainhmenu = addMenu( tp );
     return;
@@ -525,8 +519,7 @@ initUi()
 }
 
 static int
-unitStrToInt( str )
-    char *str;
+unitStrToInt(char *str)
 {
     if ( strcmp( str, UNITS_INCHES ) == 0 )
 	return	U_INCHES;
@@ -543,8 +536,7 @@ unitStrToInt( str )
 
 /*ARGSUSED*/
 static void
-MattackDir( itemp )
-    HmItem *itemp;
+MattackDir(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -565,8 +557,7 @@ MattackDir( itemp )
 
 /*ARGSUSED*/
 static void
-MautoBurst( itemp )
-    HmItem *itemp;
+MautoBurst(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -596,8 +587,7 @@ MautoBurst( itemp )
 
 /*ARGSUSED*/
 static void
-MburstAir( itemp )
-    HmItem *itemp;
+MburstAir(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -630,8 +620,7 @@ MburstAir( itemp )
 
 /*ARGSUSED*/
 static void
-MburstArmor( itemp )
-    HmItem *itemp;
+MburstArmor(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -664,8 +653,7 @@ MburstArmor( itemp )
 
 /*ARGSUSED*/
 static void
-MburstDist( itemp )
-    HmItem *itemp;
+MburstDist(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -683,8 +671,7 @@ MburstDist( itemp )
 
 /*ARGSUSED*/
 static void
-MburstFile( itemp )
-    HmItem *itemp;
+MburstFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -712,8 +699,7 @@ MburstFile( itemp )
 
 /*ARGSUSED*/
 static void
-McellSize( itemp )
-    HmItem *itemp;
+McellSize(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -731,8 +717,7 @@ McellSize( itemp )
 
 /*ARGSUSED*/
 static void
-McolorFile( itemp )
-    HmItem *itemp;
+McolorFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -765,8 +750,7 @@ McolorFile( itemp )
 
 /*ARGSUSED*/
 static void
-Mcomment( itemp )
-    HmItem *itemp;
+Mcomment(HmItem *UNUSED(itemp))
 {
     static Input input[] =
 	{
@@ -790,8 +774,7 @@ Mcomment( itemp )
 
 /*ARGSUSED*/
 static void
-MconeHalfAngle( itemp )
-    HmItem *itemp;
+MconeHalfAngle(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -809,8 +792,7 @@ MconeHalfAngle( itemp )
 
 /*ARGSUSED*/
 static void
-McritComp( itemp )
-    HmItem *itemp;
+McritComp(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -844,8 +826,7 @@ McritComp( itemp )
 
 /*ARGSUSED*/
 static void
-MdeflectSpallCone( itemp )
-    HmItem *itemp;
+MdeflectSpallCone(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -862,8 +843,7 @@ MdeflectSpallCone( itemp )
 
 /*ARGSUSED*/
 static void
-Mdither( itemp )
-    HmItem *itemp;
+Mdither(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -880,8 +860,7 @@ Mdither( itemp )
 
 /*ARGSUSED*/
 static void
-MenclosePortion( itemp )
-    HmItem *itemp;
+MenclosePortion(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -910,8 +889,7 @@ MenclosePortion( itemp )
 
 /*ARGSUSED*/
 static void
-MencloseTarget( itemp )
-    HmItem *itemp;
+MencloseTarget(HmItem *itemp)
 {
     (void) snprintf( scrbuf, LNBUFSZ, 
 		     "%s",
@@ -922,8 +900,7 @@ MencloseTarget( itemp )
 }
 
 static void
-MerrorFile( itemp )
-    HmItem *itemp;
+MerrorFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -957,8 +934,7 @@ MerrorFile( itemp )
 
 /*ARGSUSED*/
 static void
-Mexecute( itemp )
-    HmItem *itemp;
+Mexecute(HmItem *itemp)
 {
     static int	gottree = 0;
     int		loaderror = 0;
@@ -1031,8 +1007,7 @@ Mexecute( itemp )
 
 /*ARGSUSED*/
 static void
-MfbFile( itemp )
-    HmItem *itemp;
+MfbFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1052,10 +1027,8 @@ MfbFile( itemp )
 
 /*ARGSUSED*/
 static void
-MgedFile( itemp )
-    HmItem *itemp;
+MgedFile(HmItem *itemp)
 {
-    struct stat sb;
     static Input input[] = {
 	{ "Name of target (MGED) file", "", "%s", 0 },
     };
@@ -1080,8 +1053,7 @@ MgedFile( itemp )
 
 /*ARGSUSED*/
 static void
-MgridFile( itemp )
-    HmItem *itemp;
+MgridFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1109,8 +1081,7 @@ MgridFile( itemp )
 
 /*ARGSUSED*/
 static void
-MgroundPlane( itemp )
-    HmItem *itemp;
+MgroundPlane(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1155,8 +1126,7 @@ MgroundPlane( itemp )
 
 /*ARGSUSED*/
 static void
-MhistFile( itemp )
-    HmItem *itemp;
+MhistFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1183,8 +1153,7 @@ MhistFile( itemp )
 }
 
 static void
-MinputBurst( itemp )
-    HmItem *itemp;
+MinputBurst(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1209,8 +1178,7 @@ MinputBurst( itemp )
 
 /*ARGSUSED*/
 static void
-Minput2dShot( itemp )
-    HmItem *itemp;
+Minput2dShot(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1232,8 +1200,7 @@ Minput2dShot( itemp )
 
 /*ARGSUSED*/
 static void
-Minput3dShot( itemp )
-    HmItem *itemp;
+Minput3dShot(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1258,16 +1225,14 @@ Minput3dShot( itemp )
 
 /*ARGSUSED*/
 static void
-Mnop( itemp )
-    HmItem *itemp;
+Mnop(HmItem *UNUSED(itemp))
 {
     return;
 }
 
 /*ARGSUSED*/
 static void
-Mobjects( itemp )
-    HmItem *itemp;
+Mobjects(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1285,8 +1250,7 @@ Mobjects( itemp )
 
 /*ARGSUSED*/
 static void
-Moverlaps( itemp )
-    HmItem *itemp;
+Moverlaps(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1303,8 +1267,7 @@ Moverlaps( itemp )
 
 /*ARGSUSED*/
 static void
-MmaxBarriers( itemp )
-    HmItem *itemp;
+MmaxBarriers(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1321,8 +1284,7 @@ MmaxBarriers( itemp )
 
 /*ARGSUSED*/
 static void
-MmaxSpallRays( itemp )
-    HmItem *itemp;
+MmaxSpallRays(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1339,8 +1301,7 @@ MmaxSpallRays( itemp )
 
 /*ARGSUSED*/
 static void
-MplotFile( itemp )
-    HmItem *itemp;
+MplotFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1368,8 +1329,7 @@ MplotFile( itemp )
 
 /*ARGSUSED*/
 static void
-Mread2dShotFile( itemp )
-    HmItem *itemp;
+Mread2dShotFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1396,8 +1356,7 @@ Mread2dShotFile( itemp )
 
 /*ARGSUSED*/
 static void
-Mread3dShotFile( itemp )
-    HmItem *itemp;
+Mread3dShotFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1424,8 +1383,7 @@ Mread3dShotFile( itemp )
 
 /*ARGSUSED*/
 static void
-MreadBurstFile( itemp )
-    HmItem *itemp;
+MreadBurstFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1452,8 +1410,7 @@ MreadBurstFile( itemp )
 
 /*ARGSUSED*/
 static void
-MreadCmdFile( itemp )
-    HmItem *itemp;
+MreadCmdFile(HmItem *UNUSED(itemp))
 {
     static Input input[] =
 	{
@@ -1479,8 +1436,7 @@ MreadCmdFile( itemp )
 
 /*ARGSUSED*/
 static void
-MshotlineFile( itemp )
-    HmItem *itemp;
+MshotlineFile(HmItem *itemp)
 {
     static Input input[] =
 	{
@@ -1511,31 +1467,30 @@ HmItem units_items[] =
     {
 	UNITS_MILLIMETERS,
 	"interpret inputs and convert outputs to millimeters",
-	0, 0, 0, Mnop },
+	NULL, NULL, NULL, Mnop, 0 },
     {
 	UNITS_CENTIMETERS,
 	"interpret inputs and convert outputs to centimeters",
-	0, 0, 0, Mnop },
+	NULL, NULL, NULL, Mnop, 0 },
     {
 	UNITS_METERS,
 	"interpret inputs and convert outputs to meters",
-	0, 0, 0, Mnop },
+	NULL, NULL, NULL, Mnop, 0 },
     {
 	UNITS_INCHES,
 	"interpret inputs and convert outputs to inches",
-	0, 0, 0, Mnop },
+	NULL, NULL, NULL, Mnop, 0 },
     {
 	UNITS_FEET,
 	"interpret inputs and convert outputs to feet",
-	0, 0, 0, Mnop },
-    { 0 }
+	NULL, NULL, NULL, Mnop, 0 },
+    { NULL, NULL, NULL, NULL, NULL, NULL, 0 },
 };
 HmMenu	units_hmenu = { units_items, 0, 0, 0, 0 };
 
 /*ARGSUSED*/
 static void
-Munits( itemp )
-    HmItem *itemp;
+Munits(HmItem *itemp)
 {
     char *unitstr;
     HmItem *itemptr;
@@ -1581,8 +1536,7 @@ Munits( itemp )
 
 /*ARGSUSED*/
 static void
-MwriteCmdFile( itemp )
-    HmItem *itemp;
+MwriteCmdFile(HmItem *UNUSED(itemp))
 {
     static Input input[] =
 	{
@@ -1619,7 +1573,7 @@ MwriteCmdFile( itemp )
 }
 
 void
-intr_sig( int sig )
+intr_sig( int UNUSED(sig) )
 {
     static Input input[] =
 	{
@@ -1645,8 +1599,7 @@ intr_sig( int sig )
 }
 
 void
-logCmd( cmd )
-    char *cmd;
+logCmd(char *cmd)
 {
     prntScr( "%s", cmd ); /* avoid possible problems with '%' in string */
     if ( fprintf( tmpfp, "%s\n", cmd ) < 0 )
