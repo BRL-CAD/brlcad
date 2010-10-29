@@ -315,12 +315,14 @@ IF(TCL_THREADS)
 		SET(HAVE_GETPWUID_R_5_SRC "
 		#include <sys/types.h>
 		#include <pwd.h>
+		int main(){
 		uid_t uid;
 		struct passwd pw, *pwp;
 		char buf[512];
 		int buflen = 512;
 
 		(void) getpwuid_r(uid, &pw, buf, buflen, &pwp);
+		return 0;}
 		")
 		CHECK_C_SOURCE_COMPILES("${HAVE_GETPWUID_R_5_SRC}"  HAVE_GETPWUID_R_5)
 		IF(HAVE_GETPWUID_R_5)
@@ -329,12 +331,14 @@ IF(TCL_THREADS)
 			SET(HAVE_GETPWUID_R_4_SRC "
 			#include <sys/types.h>
 			#include <pwd.h>
+		   int main(){
 			uid_t uid;
 			struct passwd pw;
 			char buf[512];
 			int buflen = 512;
 
 			(void) getpwuid_r(uid, &pw, buf, buflen);
+		   return 0;}
 			")
 			CHECK_C_SOURCE_COMPILES("${HAVE_GETPWUID_R_4_SRC}" HAVE_GETPWUID_R_4)
 			IF(HAVE_GETPWUID_R_4)
@@ -348,12 +352,14 @@ IF(TCL_THREADS)
 		SET(HAVE_GETPWNAM_R_5_SRC "
 		#include <sys/types.h>
 		#include <pwd.h>
+		int main(){
 		char *name;
 		struct passwd pw, *pwp;
 		char buf[512];
 		int buflen = 512;
 
 		(void) getpwnam_r(name, &pw, buf, buflen, &pwp);
+		return 0;}
 		")
 		CHECK_C_SOURCE_COMPILES("${HAVE_GETPWNAM_R_5_SRC}"  HAVE_GETPWNAM_R_5)
 		IF(HAVE_GETPWNAM_R_5)
@@ -362,12 +368,14 @@ IF(TCL_THREADS)
 			SET(HAVE_GETPWNAM_R_4_SRC "
 			#include <sys/types.h>
 			#include <pwd.h>
+		   int main(){
 			char *name;
 			struct passwd pw;
 			char buf[512];
 			int buflen = 512;
 
 			(void)getpwnam_r(name, &pw, buf, buflen);
+		   return 0;}
 			")
 			CHECK_C_SOURCE_COMPILES("${HAVE_GETPWNAM_R_4_SRC}" HAVE_GETPWNAM_R_4)
 			IF(HAVE_GETPWNAM_R_4)
@@ -381,12 +389,14 @@ IF(TCL_THREADS)
 		SET(HAVE_GETGRGID_R_5_SRC "
 		#include <sys/types.h>
 		#include <grp.h>
+		int main(){
 		gid_t gid;
 		struct group gr, *grp;
 		char buf[512];
 		int buflen = 512;
 
 		(void) getgrgid_r(gid, &gr, buf, buflen, &grp);
+		return 0;}
 		")
 		CHECK_C_SOURCE_COMPILES("${HAVE_GETGRGID_R_5_SRC}"  HAVE_GETGRGID_R_5)
 		IF(HAVE_GETGRGID_R_5)
@@ -395,12 +405,14 @@ IF(TCL_THREADS)
 			SET(HAVE_GETGRGID_R_4_SRC "
 			#include <sys/types.h>
 			#include <grp.h>
+		   int main(){
 			gid_t gid;
 			struct group gr;
 			char buf[512];
 			int buflen = 512;
 
 			(void)getgrgid_r(gid, &gr, buf, buflen);
+		   return 0;}
 			")
 			CHECK_C_SOURCE_COMPILES("${HAVE_GETGRGID_R_4_SRC}" HAVE_GETGRGID_R_4)
 			IF(HAVE_GETGRGID_R_4)
@@ -415,12 +427,14 @@ IF(TCL_THREADS)
 		SET(HAVE_GETGRNAMM_R_5_SRC "
 		#include <sys/types.h>
 		#include <grp.h>
+		int main(){
 		char *name;
 		struct group gr, *grp;
 		char buf[512];
 		int buflen = 512;
 
 		(void) getgrnam_r(name, &gr, buf, buflen, &grp);
+		return 0;}
 		")
 		CHECK_C_SOURCE_COMPILES("${HAVE_GETGRNAMM_R_5_SRC}"  HAVE_GETGRNAMM_R_5)
 		IF(HAVE_GETGRNAMM_R_5)
@@ -429,12 +443,14 @@ IF(TCL_THREADS)
 			SET(HAVE_GETGRNAMM_R_4_SRC "
 			#include <sys/types.h>
 			#include <grp.h>
+		   int main(){
 			char *name;
 			struct group gr;
 			char buf[512];
 			int buflen = 512;
 
 			(void)getgrnam_r(name, &gr, buf, buflen);
+		   return 0;}
 			")
 			CHECK_C_SOURCE_COMPILES("${HAVE_GETGRNAMM_R_4_SRC}" HAVE_GETGRNAMM_R_4)
 			IF(HAVE_GETGRNAMM_R_4)
@@ -452,6 +468,7 @@ IF(TCL_THREADS)
 	IF(HAVE_GETHOSTBYNAME_R)
 		SET(HAVE_GETHOSTBYNAME_R_6_SRC "
 		#include <netdb.h>
+		int main(){
 		char *name;
 		struct hostent *he, *res;
 		char buffer[2048];
@@ -459,6 +476,7 @@ IF(TCL_THREADS)
 		int h_errnop;
 
 		(void) gethostbyname_r(name, he, buffer, buflen, &res, &h_errnop);
+		return 0;}
 		")
 		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_6_SRC}"  HAVE_GETHOSTBYNAME_R_5)
 		IF(HAVE_GETHOSTBYNAME_R_6)
@@ -466,6 +484,7 @@ IF(TCL_THREADS)
 		ELSE(HAVE_GETHOSTBYNAME_R_6)
 			SET(HAVE_GETHOSTBYNAME_R_5_SRC "
 			#include <netdb.h>
+		   int main(){
 			char *name;
 			struct hostent *he;
 			char buffer[2048];
@@ -473,6 +492,7 @@ IF(TCL_THREADS)
 			int h_errnop;
 
 			(void) gethostbyname_r(name, he, buffer, buflen, &h_errnop);
+		   return 0;}
 			")
 			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_5_SRC}"  HAVE_GETHOSTBYNAME_R_5)
 
@@ -481,11 +501,13 @@ IF(TCL_THREADS)
 			ELSE(HAVE_GETHOSTBYNAME_R_5)
 				SET(HAVE_GETHOSTBYNAME_R_3_SRC "
 				#include <netdb.h>
+		      int main(){
 				char *name;
 				struct hostent *he;
 				struct hostent_data data;
 
 				(void) gethostbyname_r(name, he, &data);
+		      return 0;}
 				")
 				CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_3_SRC}" HAVE_GETHOSTBYNAME_R_3)
 				IF(HAVE_GETHOSTBYNAME_R_3)
@@ -500,6 +522,7 @@ IF(TCL_THREADS)
 	IF(HAVE_GETHOSTBYADDR_R)
 		SET(HAVE_GETHOSTBYADDR_R_7_SRC "
 		#include <netdb.h>
+		int main(){
 		char *addr;
 		int length;
 		int type;
@@ -509,6 +532,7 @@ IF(TCL_THREADS)
 		int h_errnop;
 
 		(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &h_errnop);
+		return 0;}
 		")
 		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  HAVE_GETHOSTBYADDR_R_7)
 		IF(HAVE_GETHOSTBYADDR_R_7)
@@ -516,6 +540,7 @@ IF(TCL_THREADS)
 		ELSE(HAVE_GETHOSTBYADDR_R_7)
 			SET(HAVE_GETHOSTBYADDR_R_8_SRC "
 			#include <netdb.h>
+		   int main(){
 			char *addr;
 			int length;
 			int type;
@@ -525,6 +550,7 @@ IF(TCL_THREADS)
 			int h_errnop;
 
 			(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &resultp, &h_errnop);
+		   return 0;}
 			")
 			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" HAVE_GETHOSTBYADDR_R_8)
 			IF(HAVE_GETHOSTBYADDR_R_8)
