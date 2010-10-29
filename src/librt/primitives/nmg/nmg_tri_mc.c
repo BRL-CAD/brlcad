@@ -656,7 +656,7 @@ struct mci_s {
     struct shell *s;	/* where to put it. */
     double step;
     struct rt_i *rtip;
-    struct bn_tol *tol;
+    const struct bn_tol *tol;
     struct resource *resources;
     fastf_t endx, endy;
     unsigned long count;
@@ -731,11 +731,7 @@ int
 nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct mci_s m;
-    struct application a;
-    fastf_t step = 0.0;
     int i;
-    int count = 0;
-    struct resource *res;
 
     m.s = s;
     m.rtip = rtip;
