@@ -51,7 +51,7 @@ struct render_shader_s {
 
 static struct render_shader_s *shaders = NULL;
 
-void* render_camera_render_thread(void *ptr);
+void* render_camera_render_thread(int cpu, void *ptr);	/* for bu_parallel */
 static void render_camera_prep_ortho(render_camera_t *camera);
 static void render_camera_prep_persp(render_camera_t *camera);
 static void render_camera_prep_persp_dof(render_camera_t *camera);
@@ -407,7 +407,7 @@ render_camera_prep(render_camera_t *camera)
 
 
 void
-*render_camera_render_thread(void *ptr)
+*render_camera_render_thread(int cpu, void *ptr)
 {
     render_camera_thread_data_t *td;
     int d, n, res_ind, scanline, v_scanline;
