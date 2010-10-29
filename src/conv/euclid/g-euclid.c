@@ -101,7 +101,7 @@ fastf_print(FILE *out, size_t length, fastf_t f)
     }
 
     ptr = strchr( buffer, '.' );
-    if ( (ptr - buffer) > length )
+    if ( (size_t)(ptr - buffer) > length )
     {
 	bu_exit(1, "ERROR: Value (%f) too large for format length (%d)\n", f, length );
     }
