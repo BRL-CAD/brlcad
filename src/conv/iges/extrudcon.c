@@ -107,7 +107,7 @@ Extrudcon( entityno, curve, evect )
 
     /* Check for closure */
 
-    if ( !NEAR_ZERO(start[X] - stop[X], SMALL-FASTF) || !NEAR_ZERO(start[Y] - stop[Y], SMALL_FASTF) )
+    if ( !NEAR_ZERO(start[X] - stop[X], SMALL_FASTF) || !NEAR_ZERO(start[Y] - stop[Y], SMALL_FASTF) )
     {
 	bu_log( "Conic arc for extrusion is not closed:\n" );
 	bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
