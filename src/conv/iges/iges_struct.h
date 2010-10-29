@@ -212,7 +212,7 @@ struct iges_edge_list
 BU_EXTERN( char *iges_type, (int type_no ) );
 BU_EXTERN( char *Make_unique_brl_name, (char *name ) );
 BU_EXTERN( int Add_loop_to_face, (struct shell *s, struct faceuse *fu, int entityno, int face_orient ));
-BU_EXTERN( int Add_nurb_loop_to_face, ( struct shell *s, struct faceuse *fu, int loop_entityno, int face_orient ) );
+BU_EXTERN( int Add_nurb_loop_to_face, ( struct shell *s, struct faceuse *fu, int loop_entityno) );
 BU_EXTERN( int arb_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
 BU_EXTERN( int ell_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));
 BU_EXTERN( int nmg_to_iges, ( struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param ));

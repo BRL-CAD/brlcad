@@ -25,11 +25,7 @@
 #include "./iges_extern.h"
 
 int
-Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
-    struct shell *s;
-    struct faceuse *fu;
-    int loop_entityno;
-    int face_orient;
+Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 {
     int i, j, k;
     int entity_type;
@@ -254,7 +250,6 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 		/* this edge runs to/from one vertex, need to split */
 		struct bu_list split_hd;
 		struct edge_g_cnurb *crv1, *crv2;
-		point_t start_uv;
 
 		BU_LIST_INIT( &split_hd );
 
