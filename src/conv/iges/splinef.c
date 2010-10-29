@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "bu.h"
+#include "vmath.h"
 
 
 /* spline functionality */
