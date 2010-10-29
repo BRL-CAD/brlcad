@@ -475,6 +475,135 @@ MACRO(SC_TCL_CFG_ENCODING)
 	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_CFGVAL_ENCODING=\"${TCL_CFGVAL_ENCODING}\"" CACHE STRING "TCL CFLAGS" FORCE)
 ENDMACRO(SC_TCL_CFG_ENCODING)
 
+#--------------------------------------------------------------------
+# SC_TCL_GETHOSTBYADDR_R
+#--------------------------------------------------------------------
+MACRO(SC_TCL_GETHOSTBYADDR_R)
+	CHECK_FUNCTION_EXISTS_D(gethostbyaddr HAVE_GETHOSTBYADDR_R)
+	IF(HAVE_GETHOSTBYADDR_R)
+		SET(HAVE_GETHOSTBYADDR_R_7_SRC "
+#include <netdb.h>
+int main(){
+char *addr;
+int length;
+int type;
+struct hostent *result;
+char buffer[2048];
+int buflen = 2048;
+int h_errnop;
+
+(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &h_errnop);
+return 0;}
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  HAVE_GETHOSTBYADDR_R_7)
+		IF(HAVE_GETHOSTBYADDR_R_7)
+			ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_7)
+		ELSE(HAVE_GETHOSTBYADDR_R_7)
+			SET(HAVE_GETHOSTBYADDR_R_8_SRC "
+#include <netdb.h>
+int main(){
+char *addr;
+int length;
+int type;
+struct hostent *result, *resultp;
+char buffer[2048];
+int buflen = 2048;
+int h_errnop;
+
+(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &resultp, &h_errnop);
+return 0;}
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" HAVE_GETHOSTBYADDR_R_8)
+			IF(HAVE_GETHOSTBYADDR_R_8)
+			   ADD_TCL_CFLAG(HAVE_GETHOSTBYADDR_R_8)
+			ENDIF(HAVE_GETHOSTBYADDR_R_8)
+		ENDIF(HAVE_GETHOSTBYADDR_R_7)
+	ENDIF(HAVE_GETHOSTBYADDR_R)
+ENDMACRO(SC_TCL_GETHOSTBYADDR_R)
+
+#--------------------------------------------------------------------
+# SC_TCL_GETHOSTBYNAME_R
+#--------------------------------------------------------------------
+MACRO(SC_TCL_GETHOSTBYNAME_R)
+	CHECK_FUNCTION_EXISTS_D(gethostbyname_r HAVE_GETHOSTBYNAME_R)
+	IF(HAVE_GETHOSTBYNAME_R)
+		SET(HAVE_GETHOSTBYNAME_R_6_SRC "
+#include <netdb.h>
+int main(){
+char *name;
+struct hostent *he, *res;
+char buffer[2048];
+int buflen = 2048;
+int h_errnop;
+
+(void) gethostbyname_r(name, he, buffer, buflen, &res, &h_errnop);
+return 0;}
+		")
+		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_6_SRC}"  HAVE_GETHOSTBYNAME_R_5)
+		IF(HAVE_GETHOSTBYNAME_R_6)
+			ADD_TCL_CFLAG(HAVE_GETHOSTBYNAME_R_6)
+		ELSE(HAVE_GETHOSTBYNAME_R_6)
+			SET(HAVE_GETHOSTBYNAME_R_5_SRC "
+#include <netdb.h>
+int main(){
+char *name;
+struct hostent *he;
+char buffer[2048];
+int buflen = 2048;
+int h_errnop;
+
+(void) gethostbyname_r(name, he, buffer, buflen, &h_errnop);
+return 0;}
+			")
+			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_5_SRC}"  HAVE_GETHOSTBYNAME_R_5)
+
+			IF(HAVE_GETHOSTBYNAME_R_5)
+				ADD_TCL_CFLAG(HAVE_GETHOSTBYNAME_R_5)
+			ELSE(HAVE_GETHOSTBYNAME_R_5)
+				SET(HAVE_GETHOSTBYNAME_R_3_SRC "
+#include <netdb.h>
+int main(){
+char *name;
+struct hostent *he;
+struct hostent_data data;
+
+(void) gethostbyname_r(name, he, &data);
+return 0;}
+				")
+				CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_3_SRC}" HAVE_GETHOSTBYNAME_R_3)
+				IF(HAVE_GETHOSTBYNAME_R_3)
+					ADD_TCL_CFLAG(HAVE_GETHOSTBYNAME_R_3)
+				ENDIF(HAVE_GETHOSTBYNAME_R_3)
+			ENDIF(HAVE_GETHOSTBYNAME_R_5)
+		ENDIF(HAVE_GETHOSTBYNAME_R_6)
+	ENDIF(HAVE_GETHOSTBYNAME_R)
+ENDMACRO(SC_TCL_GETHOSTBYNAME_R)
+
+#--------------------------------------------------------------------
+# SC_TCL_GETADDRINFO
+#--------------------------------------------------------------------
+MACRO(SC_TCL_GETADDRINFO)
+	CHECK_FUNCTION_EXISTS(getaddrinfo HAVE_GETADDRINFO)
+	IF(HAVE_GETADDRINFO)
+		SET(GETADDERINFO_SRC "
+#include <netdb.h>
+int main () {
+const char *name, *port;
+struct addrinfo *aiPtr, hints;
+(void)getaddrinfo(name,port, &hints, &aiPtr);
+(void)freeaddrinfo(aiPtr);
+return 0;
+}
+		")
+		CHECK_C_SOURCE_COMPILES("${GETADDERINFO_SRC}" WORKING_GETADDERINFO)
+		IF(WORKING_GETADDERINFO)
+			ADD_TCL_CFLAG(HAVE_GETADDERINFO)
+		ENDIF(WORKING_GETADDERINFO)
+	ENDIF(HAVE_GETADDRINFO)
+ENDMACRO(SC_TCL_GETADDRINFO)
+
+
+
 MACRO(CHECK_FD_SET_IN_TYPES_D)
 	SET(TEST_SRC "
 	#include <sys/types.h>
@@ -496,19 +625,6 @@ MACRO(CHECK_COMPILER_SUPPORTS_HIDDEN_D)
 ENDMACRO(CHECK_COMPILER_SUPPORTS_HIDDEN_D)
 
 MACRO(CHECK_GETADDERINFO_WORKING_D)
-	SET(GETADDERINFO_SRC "
-	#include <netdb.h>
-	int main () {
-	const char *name, *port;
-	struct addrinfo *aiPtr, hints;
-	(void)getaddrinfo(name,port, &hints, &aiPtr);
-	(void)freeaddrinfo(aiPtr);
-	return 0;
-	}")
-	CHECK_C_SOURCE_COMPILES("${GETADDERINFO_SRC}" WORKING_GETADDERINFO)
-	IF(WORKING_GETADDERINFO)
-		SET(${CFLAGS_NAME}_CFLAGS "${${CFLAGS_NAME}_CFLAGS} -DHAVE_GETADDERINFO=1" CACHE STRING "TCL CFLAGS" FORCE)
-	ENDIF(WORKING_GETADDERINFO)
 ENDMACRO(CHECK_GETADDERINFO_WORKING_D)
 
 

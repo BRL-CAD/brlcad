@@ -218,11 +218,7 @@ IF(NOT HAVE_REALPATH)
 	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_REALPATH=1") 
 ENDIF(NOT HAVE_REALPATH)
 
-CHECK_FUNCTION_EXISTS(getaddrinfo HAVE_GETADDRINFO)
-IF(HAVE_GETADDRINFO)
-		  CHECK_GETADDERINFO_WORKING_D()
-ENDIF(HAVE_GETADDRINFO)
-
+SC_TCL_GETADDRINFO()
 
 # Thread safe tests - need to go over macros and
 # get the right logic going here
@@ -381,101 +377,8 @@ IF(TCL_THREADS)
 		SET(HAVE_GETHOSTBYNAME ${GHBN})
 	ENDIF(NOT HAVE_GETHOSTBYNAME)
 
-	CHECK_FUNCTION_EXISTS_D(gethostbyname HAVE_GETHOSTBYNAME_R)
-	IF(HAVE_GETHOSTBYNAME_R)
-		SET(HAVE_GETHOSTBYNAME_R_6_SRC "
-		#include <netdb.h>
-		int main(){
-		char *name;
-		struct hostent *he, *res;
-		char buffer[2048];
-		int buflen = 2048;
-		int h_errnop;
-
-		(void) gethostbyname_r(name, he, buffer, buflen, &res, &h_errnop);
-		return 0;}
-		")
-		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_6_SRC}"  HAVE_GETHOSTBYNAME_R_5)
-		IF(HAVE_GETHOSTBYNAME_R_6)
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYNAME_R_6=1")
-		ELSE(HAVE_GETHOSTBYNAME_R_6)
-			SET(HAVE_GETHOSTBYNAME_R_5_SRC "
-			#include <netdb.h>
-		   int main(){
-			char *name;
-			struct hostent *he;
-			char buffer[2048];
-			int buflen = 2048;
-			int h_errnop;
-
-			(void) gethostbyname_r(name, he, buffer, buflen, &h_errnop);
-		   return 0;}
-			")
-			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_5_SRC}"  HAVE_GETHOSTBYNAME_R_5)
-
-			IF(HAVE_GETHOSTBYNAME_R_5)
-				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYNAME_R_5=1")
-			ELSE(HAVE_GETHOSTBYNAME_R_5)
-				SET(HAVE_GETHOSTBYNAME_R_3_SRC "
-				#include <netdb.h>
-		      int main(){
-				char *name;
-				struct hostent *he;
-				struct hostent_data data;
-
-				(void) gethostbyname_r(name, he, &data);
-		      return 0;}
-				")
-				CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYNAME_R_3_SRC}" HAVE_GETHOSTBYNAME_R_3)
-				IF(HAVE_GETHOSTBYNAME_R_3)
-					SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYNAME_R_3=1")
-				ENDIF(HAVE_GETHOSTBYNAME_R_3)
-			ENDIF(HAVE_GETHOSTBYNAME_R_5)
-		ENDIF(HAVE_GETHOSTBYNAME_R_6)
-	ENDIF(HAVE_GETHOSTBYNAME_R)
-
-
-	CHECK_FUNCTION_EXISTS_D(gethostbyaddr HAVE_GETHOSTBYADDR_R)
-	IF(HAVE_GETHOSTBYADDR_R)
-		SET(HAVE_GETHOSTBYADDR_R_7_SRC "
-		#include <netdb.h>
-		int main(){
-		char *addr;
-		int length;
-		int type;
-		struct hostent *result;
-		char buffer[2048];
-		int buflen = 2048;
-		int h_errnop;
-
-		(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &h_errnop);
-		return 0;}
-		")
-		CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_7_SRC}"  HAVE_GETHOSTBYADDR_R_7)
-		IF(HAVE_GETHOSTBYADDR_R_7)
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYADDR_R_7=1")
-		ELSE(HAVE_GETHOSTBYADDR_R_7)
-			SET(HAVE_GETHOSTBYADDR_R_8_SRC "
-			#include <netdb.h>
-		   int main(){
-			char *addr;
-			int length;
-			int type;
-			struct hostent *result, *resultp;
-			char buffer[2048];
-			int buflen = 2048;
-			int h_errnop;
-
-			(void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &resultp, &h_errnop);
-		   return 0;}
-			")
-			CHECK_C_SOURCE_COMPILES("${HAVE_GETHOSTBYADDR_R_8_SRC}" HAVE_GETHOSTBYADDR_R_8)
-			IF(HAVE_GETHOSTBYADDR_R_8)
-				SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_GETHOSTBYADDR_R_8=1")
-			ENDIF(HAVE_GETHOSTBYADDR_R_8)
-		ENDIF(HAVE_GETHOSTBYADDR_R_7)
-	ENDIF(HAVE_GETHOSTBYADDR_R)
-
+	SC_TCL_GETHOSTBYADDR_R()
+	SC_TCL_GETHOSTBYNAME_R()
 
 	IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 		STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
