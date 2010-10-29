@@ -619,9 +619,9 @@ render_shader_load_plugin(const char *filename) {
     char *name;
     struct render_shader_s *s;
 
+    lh = dlopen(filename, RTLD_LOCAL|RTLD_LAZY);
 
-    lh = dlopen(filename, RTLD_LOCAL);
-    if(lh == NULL) { bu_log("Faulty plugin %s: file not found\n", filename); perror(""); return NULL; }
+    if(lh == NULL) { bu_log("Faulty plugin %s: %s\n", filename, dlerror()); return NULL; }
     name = dlsym(lh, "name");
     if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return NULL; }
     init = dlsym(lh, "init");
