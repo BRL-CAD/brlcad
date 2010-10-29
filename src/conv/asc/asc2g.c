@@ -55,7 +55,7 @@ static union record record;
 
 /* Record input buffer */
 char *buf = NULL;
-char name[NAME_LEN + 2] = {0};
+char NAME[NAME_LEN + 2] = {0};
 
 FILE *ifp = NULL;
 struct rt_wdb *ofp = NULL;
@@ -545,7 +545,7 @@ solbld(void)
 
     cp = nxt_spc(cp);
 
-    np = name;
+    np = NAME;
     while (*cp != ' ') {
 	*np++ = *cp++;
     }
@@ -566,7 +566,7 @@ solbld(void)
 	case GRP:
 	    VSET(center, val[0], val[1], val[2]);
 	    VSET(n, val[3], val[4], val[5]);
-	    (void)mk_grip(ofp, name, center, n, val[6]);
+	    (void)mk_grip(ofp, NAME, center, n, val[6]);
 	    break;
 
 	case TOR:
@@ -579,7 +579,7 @@ solbld(void)
 	    /* Prevent illegal torii from floating point fuzz */
 	    if (rad2 > rad1)  rad2 = rad1;
 
-	    mk_tor(ofp, name, center, n, rad1, rad2);
+	    mk_tor(ofp, NAME, center, n, rad1, rad2);
 	    break;
 
 	case GENTGC:
@@ -590,7 +590,7 @@ solbld(void)
 	    VSET(c, val[12], val[13], val[14]);
 	    VSET(d, val[15], val[16], val[17]);
 
-	    mk_tgc(ofp, name, center, height, a, b, c, d);
+	    mk_tgc(ofp, NAME, center, height, a, b, c, d);
 	    break;
 
 	case GENELL:
@@ -599,7 +599,7 @@ solbld(void)
 	    VSET(b, val[6], val[7], val[8]);
 	    VSET(c, val[9], val[10], val[11]);
 
-	    mk_ell(ofp, name, center, a, b, c);
+	    mk_ell(ofp, NAME, center, a, b, c);
 	    break;
 
 	case GENARB8:
@@ -617,14 +617,14 @@ solbld(void)
 		VADD2(pnts[i], pnts[i], pnts[0]);
 	    }
 
-	    mk_arb8(ofp, name, &pnts[0][X]);
+	    mk_arb8(ofp, NAME, &pnts[0][X]);
 	    break;
 
 	case HALFSPACE:
 	    VSET(norm, val[0], val[1], val[2]);
 	    dd = val[3];
 
-	    mk_half(ofp, name, norm, dd);
+	    mk_half(ofp, NAME, norm, dd);
 	    break;
 
 	case RPC:
@@ -633,7 +633,7 @@ solbld(void)
 	    VSET(breadth, val[6], val[7], val[8]);
 	    dd = val[9];
 
-	    mk_rpc(ofp, name, center, height, breadth, dd);
+	    mk_rpc(ofp, NAME, center, height, breadth, dd);
 	    break;
 
 	case RHC:
@@ -643,7 +643,7 @@ solbld(void)
 	    rad1 = val[9];
 	    dd = val[10];
 
-	    mk_rhc(ofp, name, center, height, breadth, rad1, dd);
+	    mk_rhc(ofp, NAME, center, height, breadth, rad1, dd);
 	    break;
 
 	case EPA:
@@ -654,7 +654,7 @@ solbld(void)
 	    rad1 = val[9];
 	    rad2 = val[10];
 
-	    mk_epa(ofp, name, center, height, a, rad1, rad2);
+	    mk_epa(ofp, NAME, center, height, a, rad1, rad2);
 	    break;
 
 	case EHY:
@@ -666,7 +666,7 @@ solbld(void)
 	    rad2 = val[10];
 	    dd = val[11];
 
-	    mk_ehy(ofp, name, center, height, a, rad1, rad2, dd);
+	    mk_ehy(ofp, NAME, center, height, a, rad1, rad2, dd);
 	    break;
 
 	case HYP:
@@ -676,7 +676,7 @@ solbld(void)
 	    rad1 = val[9];
 	    rad2 = val[10];
 
-	    mk_hyp(ofp, name, center, height, a, rad1, rad2);
+	    mk_hyp(ofp, NAME, center, height, a, rad1, rad2);
 
 	case ETO:
 	    VSET(center, val[0], val[1], val[2]);
@@ -685,12 +685,12 @@ solbld(void)
 	    rad1 = val[9];
 	    rad2 = val[10];
 
-	    mk_eto(ofp, name, center, norm, c, rad1, rad2);
+	    mk_eto(ofp, NAME, center, norm, c, rad1, rad2);
 	    break;
 
 	default:
 	    bu_log("asc2g: bad solid %s s_type= %d, skipping\n",
-		   name, s_type);
+		   NAME, s_type);
     }
 
 }
@@ -782,7 +782,7 @@ combbld(void)
     reg_flags = *cp++;		/* Y, N, or new P, F */
     cp = nxt_spc(cp);
 
-    np = name;
+    np = NAME;
     while (*cp != ' ') {
 	*np++ = *cp++;
     }
@@ -861,7 +861,7 @@ combbld(void)
     }
 
     /* Spit them out, all at once.  Use GIFT semantics. */
-    if (mk_comb(ofp, name, &head, is_reg,
+    if (mk_comb(ofp, NAME, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
 		override ? (unsigned char *)rgb : (unsigned char *)0,

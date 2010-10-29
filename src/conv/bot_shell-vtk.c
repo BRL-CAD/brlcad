@@ -129,14 +129,14 @@ Add_face( int face[3] )
 }
 
 HIDDEN int
-hit( struct application *ap, struct partition *part, struct seg *seg )
+hit( struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 {
     struct partition *p;
     int surfno;
     struct soltab *stp;
     double x, y, z, nx, ny, nz;
     int face[3];
-    int i;
+    size_t i;
     struct tri_specific *tri;
     struct bot_specific *bot;
 
@@ -163,7 +163,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 	} else {
 	    i = bot->bot_ntri - 1;
 	    tri = bot->bot_facelist;
-	    while ( i != surfno ) {
+	    while ( i != (size_t)surfno ) {
 		i--;
 		tri = tri->tri_forw;
 	    }
@@ -277,7 +277,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
     } else {
 	i = bot->bot_ntri - 1;
 	tri = bot->bot_facelist;
-	while ( i != surfno ) {
+	while ( i != (size_t)surfno ) {
 	    i--;
 	    tri = tri->tri_forw;
 	}
@@ -375,7 +375,7 @@ main(int argc, char *argv[])
     struct application ap;
     int dir;
     int c;
-    long i;
+    size_t i;
     int database_index;
 
     if ( debug ) {
@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 	verts = create_vert_tree();
     }
 
-    if ( cell_size != 0.0 ) {
+    if (!NEAR_ZERO(cell_size, SMALL_FASTF)) {
 	/* do a grid of shots */
 
 	ap.a_onehit = 0;
@@ -516,7 +516,7 @@ main(int argc, char *argv[])
 	vect_t inv_dir;
 
 	/* shoot at every triangle */
-	for ( i=0; i<rtip->nsolids; i++ ) {
+	for ( i=0; i<(size_t)rtip->nsolids; i++ ) {
 	    stp = rtip->rti_Solids[i];
 	    if ( stp->st_id != ID_BOT ) {
 		continue;
@@ -572,7 +572,7 @@ main(int argc, char *argv[])
     }
     fprintf( fd_out, "\nASCII\n\nDATASET POLYDATA\n" );
     fprintf( fd_out, "POINTS %ld float\n", verts->curr_vert );
-    for ( i=0; i<verts->curr_vert; i++ ) {
+    for ( i=0; i<(size_t)verts->curr_vert; i++ ) {
 	if ( use_normals ) {
 	    fprintf( fd_out, "%g %g %g\n", V3ARGS( &verts->the_array[i*6] ) );
 	} else {
@@ -580,13 +580,13 @@ main(int argc, char *argv[])
 	}
     }
     fprintf( fd_out, "POLYGONS %ld %ld\n", num_faces, num_faces*4 );
-    for ( i=0; i<num_faces; i++ ) {
+    for ( i=0; i<(size_t)num_faces; i++ ) {
 	fprintf( fd_out, "3 %ld %ld %ld\n", V3ARGS( &faces[i*3] ) );
     }
     if ( use_normals ) {
 	fprintf( fd_out, "POINT_DATA %ld\n", verts->curr_vert );
 	fprintf( fd_out, "NORMALS default float\n" );
-	for ( i=0; i<verts->curr_vert; i++ ) {
+	for ( i=0; i<(size_t)verts->curr_vert; i++ ) {
 	    fprintf( fd_out, "%g %g %g\n", V3ARGS( &verts->the_array[i*6+3] ) );
 	}
     }
