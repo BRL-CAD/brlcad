@@ -78,7 +78,7 @@ extern struct bu_vls *history_next(void);
 extern void history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status);
 
 /* defined in main.c */
-extern Tcl_Interp *interp;
+extern Tcl_Interp *INTERP;
 
 HIDDEN void inputHandler(ClientData clientData, int mask);
 HIDDEN void processChar(char ch);
@@ -112,13 +112,13 @@ initInput(void)
 }
 
 HIDDEN void
-inputHandler(ClientData clientData, int mask)
+inputHandler(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char ch;
     long fd;
     char buf[4096];
-    int index;
+    int i;
 
     fd = (long)clientData;
 
@@ -132,7 +132,7 @@ inputHandler(ClientData clientData, int mask)
     }
 
     /* Process everything in buf */
-    for (index = 0, ch = buf[index]; index < count; ch = buf[++index])
+    for (i = 0, ch = buf[i]; i < count; ch = buf[++i])
 	processChar(ch);
 }
 
@@ -176,9 +176,9 @@ processChar(char ch)
 
 		reset_Tty(fileno(stdin));
 		gettimeofday(&start, (struct timezone *)NULL);
-		status = Tcl_Eval(interp, bu_vls_addr(&input_str_prefix));
+		status = Tcl_Eval(INTERP, bu_vls_addr(&input_str_prefix));
 		gettimeofday(&finish, (struct timezone *)NULL);
-		result = Tcl_GetStringResult(interp);
+		result = Tcl_GetStringResult(INTERP);
 		if (strlen(result))
 		    bu_log("%s\n", result);
 

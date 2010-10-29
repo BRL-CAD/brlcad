@@ -51,8 +51,8 @@ HIDDEN struct bu_cmdhist *currHist;
 /***************************** BWISH/BTCLSH COMMANDS *****************************/
 
 HIDDEN int
-cmd_quit(ClientData clientData,
-	 Tcl_Interp *interp,
+cmd_quit(ClientData UNUSED(clientData),
+	 Tcl_Interp *UNUSED(interp),
 	 int argc,
 	 char **argv)
 {
@@ -150,7 +150,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
  * Prints out the command history, either to bu_log or to a file.
  */
 int
-cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     FILE *fp;
     int with_delays = 0;
@@ -275,7 +275,7 @@ history_next(void)
 
 
 int
-cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls *vp;
     struct bu_vls vls;
