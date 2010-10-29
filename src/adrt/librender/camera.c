@@ -36,10 +36,11 @@
 
 #include "bio.h"
 #include "bu.h"
+#include "raytrace.h" /* for last RT_SEM_LAST */
 
 #include "camera.h"
 
-#define TIE_SEM_WORKER (BU_SEM_LAST)
+#define TIE_SEM_WORKER (RT_SEM_LAST)
 #define TIE_SEM_LAST (TIE_SEM_WORKER+1)
 
 struct render_shader_s {
