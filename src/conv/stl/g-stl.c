@@ -89,7 +89,7 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color)[3])
+nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
     struct model *m;
     struct shell *s;

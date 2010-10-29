@@ -67,7 +67,7 @@ static unsigned int tot_polygons = 0;
 
 
 static void
-nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color)[3])
+nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
     struct model *m;
     struct shell *s;
