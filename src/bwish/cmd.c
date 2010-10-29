@@ -69,6 +69,7 @@ cmd_quit(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
+
 /***************************** BWISH/BTCLSH COMMAND HISTORY *****************************/
 
 HIDDEN int historyInitialized=0;
@@ -83,6 +84,7 @@ historyInit(void)
     currHist = &histHead;
     historyInitialized=1;
 }
+
 
 /*
  * H I S T O R Y _ R E C O R D
@@ -352,6 +354,7 @@ HIDDEN struct bu_cmdtab bwish_cmds[] =
     {"q",		cmd_quit},
     {(char *)NULL,	CMD_NULL}
 };
+
 
 #ifdef BWISH
 /* structure provided in libtclcad. provides -format pix-n-w support.

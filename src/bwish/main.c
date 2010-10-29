@@ -20,9 +20,9 @@
  */
 /** @file main.c
  *
- *  This file provides the main() function for both BWISH and BTCLSH.
- *  While initializing Tcl, Itcl and various BRL-CAD libraries it sets
- *  things up to provide command history and command line editing.
+ * This file provides the main() function for both BWISH and BTCLSH.
+ * While initializing Tcl, Itcl and various BRL-CAD libraries it sets
+ * things up to provide command history and command line editing.
  *
  */
 
@@ -273,6 +273,7 @@ Cad_AppInit(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
 
 int
 main(int argc, char **argv)
