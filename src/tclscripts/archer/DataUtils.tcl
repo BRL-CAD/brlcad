@@ -137,7 +137,7 @@
 		eval lappend sda $points
 		set sdal [lreplace $sdal $i $i $sda]
 	    } else {
-		lappend sdal [eval list $_group $points]
+		lappend sdal [eval list [list $_group] $points]
 		set sda [lindex $sdal end]
 	    }
 
@@ -279,7 +279,7 @@
 		eval lappend sdl $points
 		set sdll [lreplace $sdll $i $i $sdl]
 	    } else {
-		lappend sdll [eval list $_group $points]
+		lappend sdll [eval list [list $_group] $points]
 		set sdl [lindex $sdll end]
 	    }
 
@@ -329,7 +329,7 @@
 		eval lappend da $points
 		set dal [lreplace $dal $i $i $da]
 	    } else {
-		lappend dal [eval list $_group $points]
+		lappend dal [eval list [list $_group] $points]
 		set da [lindex $dal end]
 	    }
 
@@ -471,7 +471,7 @@
 		eval lappend dl $points
 		set dll [lreplace $dll $i $i $dl]
 	    } else {
-		lappend dll [eval list $_group $points]
+		lappend dll [eval list [list $_group] $points]
 		set dl [lindex $dll end]
 	    }
 
