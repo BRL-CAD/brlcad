@@ -1003,11 +1003,11 @@ dnl Determine whether we are using the MIPSpro compiler on SGI systems
 if test "x$build_vendor" = "xsgi" ; then
     AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
     using_mipspro=no
-    AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
 If we get here, we are using the MIPSPro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-    ], [using_mipspro=no], [using_mipspro=yes])
+    ])], [using_mipspro=no], [using_mipspro=yes])
     AC_MSG_RESULT($using_mipspro)
     if test "x$using_mipspro" = "xyes" ; then
 	compiler=sgi
@@ -1018,11 +1018,11 @@ dnl Determine whether we are using the SUNWspro Sun Workshop compiler
 if test "x$build_vendor" = "xsun" ; then
     AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
     using_sunpro=no
-    AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
 If we get here, we are using the SUNWspro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-    ], [using_sunpro=no], [using_sunpro=yes])
+    ], [using_sunpro=no], [using_sunpro=yes])])
     AC_MSG_RESULT($using_sunpro)
     if test "x$using_sunpro" = "xyes" ; then
 	AR="CC -xar"
