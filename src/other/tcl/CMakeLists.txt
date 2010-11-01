@@ -144,10 +144,10 @@ ENDIF(APPLE)
 #----------------------------------------------------------------------------
 # Tom's math library - should MP_PREC be an option?
 OPTION(TCL_TOMMATH "Enable Tcl Tom's Math Library" ON)
-IF(TCL_TOMMMATH)
+IF(TCL_TOMMATH)
 	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_TOMMATH=1")
    SET(TCL_CFLAGS "${TCL_CFLAGS} -DMP_PREC=4")
-ENDIF(TCL_TOMMMATH)
+ENDIF(TCL_TOMMATH)
 
 #----------------------------------------------------------------------------
 SC_MISSING_POSIX_HEADERS()
