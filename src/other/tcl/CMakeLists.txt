@@ -267,6 +267,30 @@ SC_SERIAL_PORT()
 # Handle time
 SC_TIME_HANDLER()
 
+# memove check
+CHECK_FUNCTION_EXISTS(memmove, HAVE_MEMMOVE)
+IF(NOT HAVE_MEMMOVE)
+	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_MEMMOVE=1") 
+	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_STRING_H=1") 
+ENDIF(NOT HAVE_MEMMOVE)
+
+
+# Test for bad functions
+SC_TCL_CHECK_BROKEN_FUNC(
+	strstr "
+	extern int strstr();
+	exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
+)
+
+
+SC_TCL_CHECK_BROKEN_FUNC(
+	strtoul "
+	extern int strtoul();
+	char *term, *string = \"0\";
+	exit(strtoul(string,&term,0) != 0 || term != string+1);"
+)
+
+
 CHECK_INCLUDE_FILE_D(sys/types.h HAVE_SYS_TYPES_H)
 CHECK_INCLUDE_FILE_D(sys/stat.h HAVE_SYS_STAT_H)
 CHECK_INCLUDE_FILE_D(sys/fstatfs.h HAVE_SYS_FSTATFS_H)
@@ -306,6 +330,10 @@ CHECK_FUNCTION_EXISTS_D(getattrlist HAVE_GETATTRLIST)
 CHECK_INCLUDE_FILE_D(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
 CHECK_FUNCTION_EXISTS_D(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
 CHECK_FUNCTION_EXISTS_D(pthread_atfork HAVE_PTHREAD_ATFORK)
+
+IF(COMPAT_SRCS)
+	ADD_TCL_CFLAG(USE_COMPAT)
+ENDIF(COMPAT_SRCS)
 
 IF(APPLE)
 	# Now that all the tests are done, configure the tclConfig.h file:

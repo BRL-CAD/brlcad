@@ -475,6 +475,26 @@ MACRO(SC_TCL_CFG_ENCODING)
 	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_CFGVAL_ENCODING=\"${TCL_CFGVAL_ENCODING}\"" CACHE STRING "TCL CFLAGS" FORCE)
 ENDMACRO(SC_TCL_CFG_ENCODING)
 
+
+#--------------------------------------------------------------------
+# SC_TCL_CHECK_BROKEN_FUNC
+#--------------------------------------------------------------------
+MACRO(SC_TCL_CHECK_BROKEN_FUNC)
+	CHECK_FUNCTION_EXISTS(${ARGV0} HAVE_${ARGV0})
+	IF(HAVE_${ARGV0})
+		SET(COMPILE_SRC "
+		int main() {
+		${ARGV1}
+		}")
+		CHECK_C_SOURCE_RUNS("${COMPILE_SRC}"  WORKING_${ARGV0})
+		IF(NOT WORKING_${ARGV0})
+			SET(COMPAT_SRCS ${COMPAT_SRCS} compat/${ARGV0}.c CACHE STRING "Compatibility srcs" FORCE)
+		ENDIF(NOT WORKING_${ARGV0})
+	ELSE(HAVE_${ARGV0})
+		SET(COMPAT_SRCS ${COMPAT_SRCS} compat/${ARGV0}.c CACHE STRING "Compatibility srcs" FORCE)
+	ENDIF(HAVE_${ARGV0})
+ENDMACRO(SC_TCL_CHECK_BROKEN_FUNC)
+
 #--------------------------------------------------------------------
 # SC_TCL_GETHOSTBYADDR_R
 #--------------------------------------------------------------------
