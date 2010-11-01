@@ -327,7 +327,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
 #
 #--------------------------------------------------------------------
 MACRO(SC_TIME_HANDLER)
-	CHECK_INCLUDE_FILE_USABILITY_D(sys/time.h HAVE_SYS_TIME_H)
+	CHECK_INCLUDE_FILE_USABILITY_D(sys/time.h SYS_TIME_H)
 	CHECK_STRUCT_HAS_MEMBER_D("struct tm" tm_zone time.h STRUCT_TM_TM_ZONE)
 	IF(HAVE_STRUCT_TM_TM_ZONE)
 		ADD_TCL_CFLAG(HAVE_TM_ZONE)
