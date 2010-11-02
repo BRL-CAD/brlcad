@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		continue;
 	    }
 	}
-	rt_db_free_internal(intern);
+	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 	  wdb_close(fdout);
     return 0;
