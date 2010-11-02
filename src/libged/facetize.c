@@ -201,8 +201,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(&gedp->ged_result_str, "WARNING: facetization failed!!!\n");
-	    if (facetize_tree)
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
 	    nmg_model = (struct model *)NULL;
@@ -214,8 +213,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     if (failed) {
 	bu_vls_printf(&gedp->ged_result_str, "facetize:  no resulting region, aborting\n");
-	if (facetize_tree)
-	    db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree, &rt_uniresource);
 	facetize_tree = (union tree *)NULL;
 	nmg_km(nmg_model);
 	nmg_model = (struct model *)NULL;
@@ -238,8 +236,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(&gedp->ged_result_str, "WARNING: triangulation failed!!!\n");
-	    if (facetize_tree)
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
 	    nmg_model = (struct model *)NULL;
@@ -271,8 +268,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    /* catch */
 	    BU_UNSETJUMP;
 	    bu_vls_printf(&gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
-	    if (facetize_tree)
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
 	    nmg_model = (struct model *)NULL;
