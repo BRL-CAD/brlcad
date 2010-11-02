@@ -308,6 +308,105 @@ CHECK_TYPE_SIZE_D(uintptr_t UINTPTR)
 
 SC_ENABLE_LANGINFO()
 
+IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+	CHECK_FUNCTION_EXISTS_D(getattrlist HAVE_GETATTRLIST)
+	CHECK_INCLUDE_FILE_D(copyfile.h HAVE_COPYFILE_H)
+	CHECK_FUNCTION_EXISTS_D(copyfile HAVE_COPYFILE)
+	IF(${COREFOUNDATION_FRAMEWORK})
+		CHECK_INCLUDE_FILE_D(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
+		CHECK_FUNCTION_EXISTS_D(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
+		CHECK_FUNCTION_EXISTS_D(pthread_atfork HAVE_PTHREAD_ATFORK)
+	ENDIF(${COREFOUNDATION_FRAMEWORK})
+	ADD_TCL_CFLAG(USE_VFORK)
+	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_DEFAULT_ENCODING=\\\"utf-8\\\"")
+	ADD_TCL_CFLAG(TCL_LOAD_FROM_MEMORY)
+	ADD_TCL_CFLAG(TCL_WIDE_CLICKS)
+	CHECK_INCLUDE_FILE_USABILITY_D(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
+	IF(HAVE_AVAILABILITYMACROS_H)
+		SET(WEAK_IMPORT_SRCS "
+#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+#endif
+#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+#error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+#endif
+int rand(void) __attribute__((weak_import));
+int main() {
+rand();
+return 0;
+}
+		")
+		CHECK_C_SOURCE_COMPILES("${WEAK_IMPORT_SRCS}" WEAK_IMPORT_WORKING)
+		IF(WEAK_IMPORT_WORKING)
+			ADD_TCL_CFLAG(HAVE_WEAK_IMPORT)
+		ENDIF(WEAK_IMPORT_WORKING)
+		SET(SUSV3_SRCS "
+#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+#endif
+#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+#error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+#endif
+#define _DARWIN_C_SOURCE 1
+#include <sys/cdefs.h>
+
+int main ()	{return 0;}
+		")
+		CHECK_C_SOURCE_COMPILES("${SUSV3_SRCS}" SUSV3_WORKING)
+		IF(SUSV3_WORKING)
+			ADD_TCL_CFLAG(_DARWIN_C_SOURCE)
+		ENDIF(SUSV3_WORKING)
+
+	ENDIF(HAVE_AVAILABILITYMACROS_H)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+
+# Check for support of fts functions (readdir replacement)
+SET(FTS_SRCS "
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <fts.h>
+
+int main () {
+char*const p[2] = {\"/\", NULL};
+FTS *f = fts_open(p, FTS_PHYSICAL|FTS_NOCHDIR|FTS_NOSTAT, NULL);
+FTSENT *e = fts_read(f); fts_close(f);
+return 0;
+}
+")
+CHECK_C_SOURCE_COMPILES("${FTS_SRCS}" FTS_WORKING)
+IF(FTS_WORKING)
+	ADD_TCL_CFLAG(HAVE_FTS)
+ENDIF(FTS_WORKING)
+
+OPTION(TCL_UNLOAD_DLLS "Allow unloading of shared libraries?" ON)
+IF(TCL_UNLOAD_DLLS)
+	ADD_TCL_CFLAG(TCL_UNLOAD_DLLS)
+ENDIF(TCL_UNLOAD_DLLS)
+
+# TODO - Need to set up check for timezone info
+
+# TODO - Dtrace
+
+#--------------------------------------------------------------------
+#  Does the C stack grow upwards or downwards? Or cross-compiling?
+#--------------------------------------------------------------------
+SET(C_STACK_SRC "
+int StackGrowsUp(int *parent) {
+int here;
+return (&here < parent);
+}
+int main (int argc, char *argv[]) {
+int foo;
+return StackGrowsUp(&foo);
+}
+")
+CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
+IF(STACK_GROWS_UP)
+	ADD_TCL_CFLAG(TCL_STACK_GROWS_UP)
+ENDIF(STACK_GROWS_UP)
+
 CHECK_INCLUDE_FILE_D(sys/types.h HAVE_SYS_TYPES_H)
 CHECK_INCLUDE_FILE_D(sys/stat.h HAVE_SYS_STAT_H)
 CHECK_INCLUDE_FILE_D(sys/fstatfs.h HAVE_SYS_FSTATFS_H)
@@ -320,7 +419,6 @@ CHECK_INCLUDE_FILE_D(inttypes.h HAVE_INTTYPES_H)
 CHECK_INCLUDE_FILE_D(stdint.h HAVE_STDINT_H)
 CHECK_INCLUDE_FILE_D(unistd.h HAVE_UNISTD_H)
 
-CHECK_INCLUDE_FILE_D(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
 
 
 
@@ -335,16 +433,7 @@ CHECK_INCLUDE_FILE_USABILITY_D(sys/modem.h SYS_MODEM_H)
 
 CHECK_FD_SET_IN_TYPES_D()
 
-CHECK_INCLUDE_FILE_D(copyfile.h HAVE_COPYFILE_H)
-CHECK_FUNCTION_EXISTS_D(copyfile HAVE_COPYFILE)
-
 CHECK_FUNCTION_EXISTS_D(chflags HAVE_CHFLAGS)
-CHECK_FUNCTION_EXISTS_D(fts_open HAVE_FTS)
-
-CHECK_FUNCTION_EXISTS_D(getattrlist HAVE_GETATTRLIST)
-CHECK_INCLUDE_FILE_D(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-CHECK_FUNCTION_EXISTS_D(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
-CHECK_FUNCTION_EXISTS_D(pthread_atfork HAVE_PTHREAD_ATFORK)
 
 IF(COMPAT_SRCS)
 	ADD_TCL_CFLAG(USE_COMPAT)
@@ -589,16 +678,24 @@ MESSAGE("TCL_CFLAGS: ${TCL_CFLAGS}")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TCL_CFLAGS}")
 
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${COREFOUNDATION_FRAMEWORK} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 install(TARGETS tcl DESTINATION lib)
+target_link_libraries(tcl ${COREFOUNDATION_FRAMEWORK} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+GET_TARGET_PROPERTY(TCL_INSTALL_LIBNAME tcl LOCATION)
 SET_TARGET_PROPERTIES(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+	SET_TARGET_PROPERTIES(tcl PROPERTIES LINK_FLAGS "-compatibility_version ${TCL_VERSION} -current_version ${TCL_VERSION}`echo ${TCL_PATCH_LEVEL} | awk ['{match($0, \"\\\\\\.[0-9]+\"); print substr($0,RSTART,RLENGTH)}']` -install_name ${TCL_INSTALL_LIBNAME} ' -seg1addr 0xa000000' -sectcreate __TEXT __info_plist Tcl-Info.plist")
+	SET(EXTRA_TCLSH_LIBS "-sectcreate __TEXT __info_plist Tclsh-Info.plist")
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tcl-Info.plist.in ${TCL_BINARY_DIR}/Tcl-Info.plist)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tclsh-Info.plist.in ${TCL_BINARY_DIR}/Tclsh-Info.plist)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
 target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${COREFOUNDATION_FRAMEWORK} ${M_LIBRARY} ${DL_LIBRARY})
 install(TARGETS tclstub DESTINATION lib)
 
 add_executable(tclsh ${TCLSH_SRCS})
-target_link_libraries(tclsh tcl)
+target_link_libraries(tclsh tcl ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
 
 install(FILES library/init.tcl DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
