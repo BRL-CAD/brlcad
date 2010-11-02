@@ -2485,9 +2485,7 @@ db_walk_tree(struct db_i *dbip,
 
     /* Clean up any remaining sub-trees still in reg_trees[] */
     for (i=0; i < new_reg_count; i++) {
-	if (reg_trees[i] != TREE_NULL) {
-	    db_free_tree(reg_trees[i], resp);
-	}
+	db_free_tree(reg_trees[i], resp);
     }
     bu_free((char *)reg_trees, "*reg_trees[]");
 
@@ -3052,8 +3050,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 		goto out;
 	    }
 	    tp->tr_b.tb_right = db_tree_parse(vls, argv[2], resp);
-	    if (tp->tr_b.tb_left == TREE_NULL) {
-		db_free_tree(tp->tr_b.tb_left, resp);
+	    if (tp->tr_b.tb_right == TREE_NULL) {
 		RT_FREE_TREE(tp, resp);
 		tp = TREE_NULL;
 		goto out;
