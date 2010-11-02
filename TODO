@@ -798,6 +798,21 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   NURBS format, trims surfaces, evaluates boolean expressions, and
   then generates tool paths on resulting surfaces and interior paths.
 
+* identify useful concepts implemented in the old NURBS code that are not
+  present in openNURBS, and port that code to openNURBS data structures
+  and routines.  This will eventually allow us to remove the old NURBS code.
+
+NMG Concepts to Explore
+-----------------------
+Ensure robust and fast nmg->bot conversion, and enhance the bot data structure
+to contain a generic pointer that could be used to point back to the NMG it was 
+generated from.  This could all ALL raytracing of polygonal models to use 
+libtie/BoT raytracing routines, speeding up NMG raytracing and simplifying the
+raytracing code.
+
+Break NMG out into its own libnmg library.  Over time, consider moving other polygonal
+specific logic to libnmg, eventually moving all polygonal logic out of librt/libtie/etc
+and into libnmg.  Would involve code and API cleanup.
 
 RTGL ITEMS
 __________
