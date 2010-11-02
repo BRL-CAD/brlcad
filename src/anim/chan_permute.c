@@ -66,7 +66,7 @@ int
 main(int argc, char *argv[])
 {
     int i, j, maxlength, num_done;
-    int icount, ocount;
+    int count, icount, ocount;
     struct unit *x, *y;
     Word *arrayd;
 
@@ -122,11 +122,13 @@ main(int argc, char *argv[])
 	    if (num_done >= icount)
 		;/*chill - all in files done */
 	    else if (x->i_o == 1) {
-		if (feof(x->file))
+		if (feof(x->file)) {
 		    num_done += 1;
-		else
-		    for (j=0;j<x->channels;j++)
-			fscanf(x->file, "%40s ", arrayd[x->list[j]]);
+		} else {
+		    for (j=0;j<x->channels;j++) {
+			count = fscanf(x->file, "%40s ", arrayd[x->list[j]]);
+		    }
+		}
 	    } else if (x->i_o == 0) {
 		for (j=0;j<x->channels;j++)
 		    fprintf(x->file, "%s\t", arrayd[x->list[j]]);

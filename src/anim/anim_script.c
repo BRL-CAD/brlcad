@@ -182,17 +182,17 @@ main(int argc, char *argv[])
 	/* read one line of table */
 	val = scanf("%*f"); /*ignore time */
 	if (readview)
-	    scanf("%lf", &viewsize);
+	    val = scanf("%lf", &viewsize);
 	if (translate)
-	    val=scanf("%lf %lf %lf", point, point+1, point+2);
+	    val = scanf("%lf %lf %lf", point, point+1, point+2);
 	if (rotate&&quaternion) {
 	    val = scanf("%lf %lf %lf %lf", quat, quat+1, quat+2, quat+3);
 	    val -= 1;
 	} else if (rotate) {
-	    val=scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    val = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
 	}
 
-	if (val < 3) {
+	if (val < 3 && !readview) {
 	    /* ie. scanf not completely successful */
 	    /* with steering option, must go extra loop after end of file */
 	    if (steer && !last_steer)
