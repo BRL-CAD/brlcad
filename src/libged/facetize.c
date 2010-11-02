@@ -255,8 +255,14 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "facetize:  converting to BOT format\n");
 
 	/* WTF, FIXME: this is only dumping the first shell of the first region */
+
 	r = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
+	if (r && BU_LIST_NEXT(nmgregion, &r->l) !=  (struct nmgregion *)&m->r_hd)
+	    bu_vls_printf(&gedp->ged_result_str, "WARNING: model has more than one region, only facetizing the first\n");
+
 	s = BU_LIST_FIRST(shell, &r->s_hd);
+	if (s && BU_LIST_NEXT(shell, &s->l) != (struct shell *)&r->s_hd)
+	    bu_vls_printf(&gedp->ged_result_str, "WARNING: model has more than one shell, only facetizing the first\n");
 
 	if (!BU_SETJUMP) {
 	    /* try */
