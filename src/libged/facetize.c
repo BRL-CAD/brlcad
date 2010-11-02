@@ -254,7 +254,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	/* WTF, FIXME: this is only dumping the first shell of the first region */
 
 	r = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
-	if (r && BU_LIST_NEXT(nmgregion, &r->l) !=  (struct nmgregion *)&m->r_hd)
+	if (r && BU_LIST_NEXT(nmgregion, &r->l) !=  (struct nmgregion *)&nmg_model->r_hd)
 	    bu_vls_printf(&gedp->ged_result_str, "WARNING: model has more than one region, only facetizing the first\n");
 
 	s = BU_LIST_FIRST(shell, &r->s_hd);
