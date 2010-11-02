@@ -250,9 +250,23 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "facetize:  converting to BOT format\n");
 
+	/* WTF, FIXME: this is only dumping the first shell of the first region */
 	r = BU_LIST_FIRST(nmgregion, &nmg_model->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+	if (BU_SETJUMP) {
+	    BU_UNSETJUMP;
+	    bu_vls_printf(&gedp->ged_result_str, "WARNING: conversion to BOT failed!\n");
+	    if (facetize_tree)
+		db_free_tree(facetize_tree, &rt_uniresource);
+	    facetize_tree = (union tree *)NULL;
+	    nmg_km(nmg_model);
+	    nmg_model = (struct model *)NULL;
+	    return GED_ERROR;
+	    
+	} else {
+	    bot = (struct rt_bot_internal *)nmg_bot(s, &gedp->ged_wdbp->wdb_tol);
+	} BU_UNSETJUMP;
+
 	nmg_km(nmg_model);
 	nmg_model = (struct model *)NULL;
 
