@@ -40,6 +40,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* facetize creates BoTs crappily by only looking at first region,
+  first shell, instead of the whole nmg model.
+
+* nmg_bot() and nmg_from_bot() only work with shells.  verify that all
+  callers iterate over all shells or write a model version that does a
+  complete conversion correctly.
+
 * bu_cv_optimize() should be using bu_byteorder().
 
 * render annotated images to the OpenDocument format.  this is
