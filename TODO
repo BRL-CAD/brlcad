@@ -806,7 +806,7 @@ NMG Concepts to Explore
 -----------------------
 Ensure robust and fast nmg->bot conversion, and enhance the bot data structure
 to contain a generic pointer that could be used to point back to the NMG it was 
-generated from.  This could all ALL raytracing of polygonal models to use 
+generated from.  This could allow ALL raytracing of polygonal models to use 
 libtie/BoT raytracing routines, speeding up NMG raytracing and simplifying the
 raytracing code.
 
