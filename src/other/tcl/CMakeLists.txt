@@ -683,7 +683,7 @@ target_link_libraries(tcl ${COREFOUNDATION_FRAMEWORK} ${TCL_LINK_LIBS} ${DL_LIBR
 GET_TARGET_PROPERTY(TCL_INSTALL_LIBNAME tcl LOCATION)
 SET_TARGET_PROPERTIES(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-	SET_TARGET_PROPERTIES(tcl PROPERTIES LINK_FLAGS "-compatibility_version ${TCL_VERSION} -current_version ${TCL_VERSION}`echo ${TCL_PATCH_LEVEL} | awk ['{match($0, \"\\\\\\.[0-9]+\"); print substr($0,RSTART,RLENGTH)}']` -install_name ${TCL_INSTALL_LIBNAME} ' -seg1addr 0xa000000' -sectcreate __TEXT __info_plist Tcl-Info.plist")
+	SET_TARGET_PROPERTIES(tcl PROPERTIES LINK_FLAGS "-compatibility_version ${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION} -current_version ${TCL_VERSION} -install_name ${TCL_INSTALL_LIBNAME} -seg1addr 0xa000000 -sectcreate __TEXT __info_plist Tcl-Info.plist")
 	SET(EXTRA_TCLSH_LIBS "-sectcreate __TEXT __info_plist Tclsh-Info.plist")
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tcl-Info.plist.in ${TCL_BINARY_DIR}/Tcl-Info.plist)
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tclsh-Info.plist.in ${TCL_BINARY_DIR}/Tclsh-Info.plist)
