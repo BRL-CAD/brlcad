@@ -40,6 +40,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
+  logic layout using if/else.
+
 * facetize creates BoTs crappily by only looking at first region,
   first shell, instead of the whole nmg model.
 
