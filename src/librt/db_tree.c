@@ -3051,6 +3051,8 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	    }
 	    tp->tr_b.tb_right = db_tree_parse(vls, argv[2], resp);
 	    if (tp->tr_b.tb_right == TREE_NULL) {
+		/* free the left we just tree parsed */
+		db_free_tree(tp->tr_b.tb_left, resp);
 		RT_FREE_TREE(tp, resp);
 		tp = TREE_NULL;
 		goto out;
