@@ -221,5 +221,5 @@ SET(tcl_MANN
 	vwait.n
 	while.n
 )
-install(FILES ${tcl_MAN5} DESTINATION ${MAN_DIR}/man5)
+install(FILES ${tcl_MANN} DESTINATION ${MAN_DIR}/mann)
 

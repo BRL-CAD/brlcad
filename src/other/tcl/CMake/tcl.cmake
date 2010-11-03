@@ -390,6 +390,7 @@ ENDMACRO(SC_TIME_HANDLER)
 # SC_TCL_LINK_LIBS
 #--------------------------------------------------------------------
 MACRO(SC_TCL_LINK_LIBS)
+	SET(TCL_LINK_LIBS "")
 	CHECK_FUNCTION_EXISTS(sin, HAVE_MATHLIB)
 	IF(NOT HAVE_MATHLIB)
 		CHECK_LIBRARY(M m sin)
