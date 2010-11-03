@@ -157,6 +157,7 @@ SC_ENABLE_THREADS()
 
 SC_TCL_CFG_ENCODING()
 
+SET(TCL_LINK_LIBS "")
 SC_TCL_LINK_LIBS()
 
 # TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
@@ -700,7 +701,8 @@ install(TARGETS tclstub DESTINATION lib)
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
-install(TARGETS tclsh DESTINATION bin RENAME tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-
-install(FILES library/init.tcl DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
-install(FILES library/auto.tcl DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+# Regrettably, setting the VERSION variable on the tclsh target produces a symlink with a dash (which is a sensible default but
+# inconsistent with standard tcl practice) and I don't see how to alter that.  This is the workaround.
+GET_FILENAME_COMPONENT(TCLSH_INSTALL_NAME ${CMAKE_INSTALL_PREFIX}/bin/tclsh ABSOLUTE)
+FILE(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/tclsh_make_symlink.cmake "exec_program(${CMAKE_COMMAND} ARGS -E create_symlink ${TCLSH_INSTALL_NAME} ${TCLSH_INSTALL_NAME}${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})")
+set_target_properties(tclsh PROPERTIES POST_INSTALL_SCRIPT ${CMAKE_BINARY_DIR}/CMakeTmp/tclsh_make_symlink.cmake) 
