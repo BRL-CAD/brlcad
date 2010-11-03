@@ -32,6 +32,12 @@ INSTALL(FILES platform/shell.tcl DESTINATION lib/tcl8/8.4/platform RENAME shell-
 INSTALL(FILES msgcat/msgcat.tcl DESTINATION lib/tcl8/8.5 RENAME msgcat-1.4.2.tm)
 INSTALL(FILES tcltest/tcltest.tcl DESTINATION lib/tcl8/8.5 RENAME tcltest-2.3.0.tm)
 
+IF(NOT WIN32)
+	INSTALL(FILES ../unix/tclAppInit.c DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+ELSE(NOT WIN32)
+	INSTALL(FILES ../win/tclAppInit.c DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+ENDIF(NOT WIN32)
+
 SET(tcl_msgs
 	msgs/af.msg
 	msgs/af_za.msg
