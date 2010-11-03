@@ -444,6 +444,9 @@ IF(APPLE)
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unix/tclConfig.h.in ${TCL_BINARY_DIR}/include/tclConfig.h)
 ENDIF(APPLE)
 
+ADD_SUBDIRECTORY(doc)
+ADD_SUBDIRECTORY(library)
+
 SET(TCL_GENERIC_SRCS
 	generic/regcomp.c
 	generic/regexec.c
@@ -697,5 +700,7 @@ install(TARGETS tclstub DESTINATION lib)
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
+install(TARGETS tclsh DESTINATION bin RENAME tclsh${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 
 install(FILES library/init.tcl DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+install(FILES library/auto.tcl DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
