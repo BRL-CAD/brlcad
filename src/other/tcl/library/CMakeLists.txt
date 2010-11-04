@@ -1,5 +1,12 @@
 #ADD_SUBDIRECTORY(tzdata)
 
+MACRO(TCL_SCRIPTS_BUILD files destination)
+	FOREACH(file ${${files}})
+		get_filename_component(filename ${file} NAME)
+		configure_file(${file} ${CMAKE_BINARY_DIR}/${destination}/${filename} COPYONLY)
+	ENDFOREACH(file ${${files}})
+ENDMACRO(TCL_SCRIPTS_BUILD)
+
 SET(tcl_library_toplevel
 	auto.tcl
 	clock.tcl
@@ -13,24 +20,33 @@ SET(tcl_library_toplevel
 	tclIndex
 )
 INSTALL(FILES ${tcl_library_toplevel} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
+TCL_SCRIPTS_BUILD(tcl_library_toplevel lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
 
 SET(tcl_library_http1
 	http1.0/http.tcl
 	http1.0/pkgIndex.tcl
 )
 INSTALL(FILES ${tcl_library_http1} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/http1.0)
+TCL_SCRIPTS_BUILD(tcl_library_http1 lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/http1.0)
 
 SET(tcl_library_opt04
 	opt/optparse.tcl
 	opt/pkgIndex.tcl
 )
 INSTALL(FILES ${tcl_library_opt04} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/opt0.4)
+TCL_SCRIPTS_BUILD(tcl_library_opt04 lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/opt0.4)
 
 INSTALL(FILES http/http.tcl DESTINATION lib/tcl8/8.4 RENAME http-2.7.2.tm)
 INSTALL(FILES platform/platform.tcl DESTINATION lib/tcl8/8.4 RENAME platform-1.0.3.tm)
 INSTALL(FILES platform/shell.tcl DESTINATION lib/tcl8/8.4/platform RENAME shell-1.1.4.tm)
 INSTALL(FILES msgcat/msgcat.tcl DESTINATION lib/tcl8/8.5 RENAME msgcat-1.4.2.tm)
 INSTALL(FILES tcltest/tcltest.tcl DESTINATION lib/tcl8/8.5 RENAME tcltest-2.3.0.tm)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/http.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/http-2.7.2.tm COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/platform.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/platform-1.0.3.tm COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/shell.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/platform/shell-1.1.4.tm COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msgcat/msgcat.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.5/msgcat-1.4.2.tm COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcltest/tcltest.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.5/tcltest-2.3.0.tm COPYONLY)
 
 IF(NOT WIN32)
 	INSTALL(FILES ../unix/tclAppInit.c DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION})
@@ -169,6 +185,7 @@ SET(tcl_msgs
 )
 
 INSTALL(FILES ${tcl_msgs} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/msgs)
+TCL_SCRIPTS_BUILD(tcl_msgs lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/msgs)
 
 SET(tcl_encoding
 	encoding/ascii.enc
@@ -251,3 +268,4 @@ SET(tcl_encoding
 	encoding/tis-620.enc
 )
 INSTALL(FILES ${tcl_encoding} DESTINATION lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/encoding)
+TCL_SCRIPTS_BUILD(tcl_encoding lib/tcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}/encoding)
