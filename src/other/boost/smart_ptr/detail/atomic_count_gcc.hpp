@@ -40,21 +40,21 @@ class atomic_count
 {
 public:
 
-    explicit atomic_count(long v) : value_(v) {}
+    explicit atomic_count( long v ) : value_( v ) {}
 
-    void operator++()
+    long operator++()
     {
-        __atomic_add(&value_, 1);
+        return __exchange_and_add( &value_, +1 ) + 1;
     }
 
     long operator--()
     {
-        return __exchange_and_add(&value_, -1) - 1;
+        return __exchange_and_add( &value_, -1 ) - 1;
     }
 
     operator long() const
     {
-        return __exchange_and_add(&value_, 0);
+        return __exchange_and_add( &value_, 0 );
     }
 
 private:

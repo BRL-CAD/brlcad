@@ -333,6 +333,20 @@ public:
         if(pi_ != 0) pi_->weak_add_ref();
     }
 
+// Move support
+
+#if defined( BOOST_HAS_RVALUE_REFS )
+
+    weak_count(weak_count && r): pi_(r.pi_) // nothrow
+#if defined(BOOST_SP_ENABLE_DEBUG_HOOKS)
+        , id_(weak_count_id)
+#endif
+    {
+        r.pi_ = 0;
+    }
+
+#endif
+
     ~weak_count() // nothrow
     {
         if(pi_ != 0) pi_->weak_release();

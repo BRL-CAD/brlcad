@@ -61,6 +61,7 @@ namespace boost
 template<class T> class shared_ptr;
 template<class T> class weak_ptr;
 template<class T> class enable_shared_from_this;
+template<class T> class enable_shared_from_this2;
 
 namespace detail
 {
@@ -102,6 +103,14 @@ template<> struct shared_ptr_traits<void const volatile>
 // enable_shared_from_this support
 
 template< class X, class Y, class T > inline void sp_enable_shared_from_this( boost::shared_ptr<X> const * ppx, Y const * py, boost::enable_shared_from_this< T > const * pe )
+{
+    if( pe != 0 )
+    {
+        pe->_internal_accept_owner( ppx, const_cast< Y* >( py ) );
+    }
+}
+
+template< class X, class Y, class T > inline void sp_enable_shared_from_this( boost::shared_ptr<X> * ppx, Y const * py, boost::enable_shared_from_this2< T > const * pe )
 {
     if( pe != 0 )
     {
@@ -219,7 +228,7 @@ public:
     template<class Y>
 #if !defined( BOOST_SP_NO_SP_CONVERTIBLE )
 
-    shared_ptr( shared_ptr<Y> const & r, typename detail::sp_enable_if_convertible<Y,T>::type = detail::sp_empty() )
+    shared_ptr( shared_ptr<Y> const & r, typename boost::detail::sp_enable_if_convertible<Y,T>::type = boost::detail::sp_empty() )
 
 #else
 
@@ -277,7 +286,7 @@ public:
 #if !defined( BOOST_NO_SFINAE ) && !defined( BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION )
 
     template<class Ap>
-    shared_ptr( Ap r, typename boost::detail::sp_enable_if_auto_ptr<Ap, int>::type = 0 ): px( r.get() ), pn()
+    explicit shared_ptr( Ap r, typename boost::detail::sp_enable_if_auto_ptr<Ap, int>::type = 0 ): px( r.get() ), pn()
     {
         typename Ap::element_type * tmp = r.get();
         pn = boost::detail::shared_count( r );
@@ -344,7 +353,7 @@ public:
     template<class Y>
 #if !defined( BOOST_SP_NO_SP_CONVERTIBLE )
 
-    shared_ptr( shared_ptr<Y> && r, typename detail::sp_enable_if_convertible<Y,T>::type = detail::sp_empty() )
+    shared_ptr( shared_ptr<Y> && r, typename boost::detail::sp_enable_if_convertible<Y,T>::type = boost::detail::sp_empty() )
 
 #else
 
@@ -439,7 +448,7 @@ public:
         return pn < rhs.pn;
     }
 
-    void * _internal_get_deleter( detail::sp_typeinfo const & ti ) const
+    void * _internal_get_deleter( boost::detail::sp_typeinfo const & ti ) const
     {
         return pn.get_deleter( ti );
     }

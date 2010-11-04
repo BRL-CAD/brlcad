@@ -35,7 +35,7 @@
 #   elif BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x610))
 #       if !defined(BOOST_MPL_CFG_NO_DEFAULT_PARAMETERS_IN_NESTED_TEMPLATES)
 #           define BOOST_MPL_CFG_COMPILER_DIR bcc551
-#       elseif BOOST_WORKAROUND(__BORLANDC__, >= 0x590)
+#       elif BOOST_WORKAROUND(__BORLANDC__, >= 0x590)
 #           define BOOST_MPL_CFG_COMPILER_DIR bcc
 #       else
 #           define BOOST_MPL_CFG_COMPILER_DIR bcc_pre590

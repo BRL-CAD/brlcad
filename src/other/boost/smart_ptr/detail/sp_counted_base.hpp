@@ -47,6 +47,9 @@
 #elif defined( __GNUC__ ) && ( defined( __powerpc__ ) || defined( __ppc__ ) || defined( __ppc ) )
 # include <boost/smart_ptr/detail/sp_counted_base_gcc_ppc.hpp>
 
+#elif defined( __GNUC__ ) && ( defined( __mips__ ) || defined( _mips ) )
+# include <boost/smart_ptr/detail/sp_counted_base_gcc_mips.hpp>
+
 #elif defined( BOOST_SP_HAS_SYNC )
 # include <boost/smart_ptr/detail/sp_counted_base_sync.hpp>
 

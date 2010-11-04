@@ -31,9 +31,9 @@ public:
 
     explicit atomic_count( long v ) : value_( v ) {}
 
-    void operator++()
+    long operator++()
     {
-        __sync_add_and_fetch( &value_, 1 );
+        return __sync_add_and_fetch( &value_, 1 );
     }
 
     long operator--()

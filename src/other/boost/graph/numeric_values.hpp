@@ -37,7 +37,7 @@ namespace boost
         { return T(); }
 
         static T infinity()
-        { return std::numeric_limits<T>::max(); }
+        { return (std::numeric_limits<T>::max)(); }
     };
 
     // Specializations for floating point types refer to 0.0 and their infinity

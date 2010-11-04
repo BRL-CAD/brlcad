@@ -8,7 +8,7 @@
 #define PHOENIX_CORE_ARGUMENT_HPP
 
 #include <boost/preprocessor/repetition/repeat_from_to.hpp>
-#include <boost/preprocessor/arithmetic/inc.hpp>
+#include <boost/preprocessor/inc.hpp>
 #include <boost/spirit/home/phoenix/core/actor.hpp>
 #include <boost/fusion/include/at.hpp>
 #include <boost/mpl/if.hpp>
@@ -20,10 +20,6 @@
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/size.hpp>
 #include <boost/type_traits/add_reference.hpp>
-
-#if !defined(PHOENIX_ARG_LIMIT)
-# define PHOENIX_ARG_LIMIT PHOENIX_LIMIT
-#endif
 
 #define PHOENIX_DECLARE_ARG(z, n, data)                                         \
     actor<argument<n> > const                                                   \

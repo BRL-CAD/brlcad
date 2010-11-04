@@ -82,7 +82,7 @@
 #   define BOOST_HAS_TYPE_TRAITS_INTRINSICS
 #endif
 
-#if defined(BOOST_MSVC) && defined(_MSC_FULL_VER) && (_MSC_FULL_VER >=140050215)
+#if defined(BOOST_MSVC) && defined(BOOST_MSVC_FULL_VER) && (BOOST_MSVC_FULL_VER >=140050215)
 #   include <boost/type_traits/is_same.hpp>
 
 #   define BOOST_IS_UNION(T) __is_union(T)
@@ -149,7 +149,7 @@
 #   define BOOST_IS_CLASS(T) __is_class(T)
 #   define BOOST_IS_ENUM(T) __is_enum(T)
 #   define BOOST_IS_POLYMORPHIC(T) __is_polymorphic(T)
-#   if !defined(unix) || defined(__LP64__)
+#   if (!defined(unix) && !defined(__unix__)) || defined(__LP64__)
       // GCC sometimes lies about alignment requirements
       // of type double on 32-bit unix platforms, use the
       // old implementation instead in that case:

@@ -27,6 +27,7 @@
         )
 
 #   define BOOST_MPL_CFG_NO_HAS_XXX
+#   define BOOST_MPL_CFG_NO_HAS_XXX_TEMPLATE
 
 #endif
 

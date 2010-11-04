@@ -29,6 +29,7 @@
 #include <boost/type_traits/is_pointer.hpp>
 #include <boost/serialization/level.hpp>
 #include <boost/serialization/tracking_enum.hpp>
+#include <boost/serialization/type_info_implementation.hpp>
 
 namespace boost {
 namespace serialization {
@@ -37,7 +38,7 @@ struct basic_traits;
 
 // default tracking level
 template<class T>
-struct tracking_level {
+struct tracking_level_impl {
     template<class U>
     struct traits_class_tracking {
         typedef BOOST_DEDUCED_TYPENAME U::tracking type;
@@ -66,9 +67,14 @@ struct tracking_level {
             // otherwise its selective
             mpl::int_<track_selectively>
     >  > >::type type;
-    BOOST_STATIC_CONSTANT(int, value = tracking_level::type::value);
+    BOOST_STATIC_CONSTANT(int, value = type::value);
 };
 
+template<class T>
+struct tracking_level : 
+    public tracking_level_impl<const T>
+{
+};
 
 template<class T, enum tracking_type L>
 inline bool operator>=(tracking_level<T> t, enum tracking_type l)

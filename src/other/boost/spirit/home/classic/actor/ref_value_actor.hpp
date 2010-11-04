@@ -14,6 +14,11 @@ namespace boost { namespace spirit {
 
 BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
 
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
+#pragma warning(push)
+#pragma warning(disable:4512) //assignment operator could not be generated
+#endif
+
     ///////////////////////////////////////////////////////////////////////////
     //  Summary:
     //  A semantic action policy holder. This holder stores a reference to ref.
@@ -64,6 +69,10 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
     };
 
 BOOST_SPIRIT_CLASSIC_NAMESPACE_END
+
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
+#pragma warning(pop)
+#endif
 
 }}
 

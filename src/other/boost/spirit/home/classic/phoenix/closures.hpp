@@ -6,8 +6,8 @@
   Distributed under the Boost Software License, Version 1.0. (See accompanying
   file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 ==============================================================================*/
-#ifndef PHOENIX_CLOSURES_HPP
-#define PHOENIX_CLOSURES_HPP
+#ifndef CLASSIC_PHOENIX_CLOSURES_HPP
+#define CLASSIC_PHOENIX_CLOSURES_HPP
 
 ///////////////////////////////////////////////////////////////////////////////
 #include <boost/spirit/home/classic/phoenix/actor.hpp>
@@ -20,6 +20,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace phoenix {
+
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
+#pragma warning(push)
+#pragma warning(disable:4512) //assignment operator could not be generated
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -430,6 +435,10 @@ private:
 
     mutable holder_t frame;
 };
+
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
+#pragma warning(pop)
+#endif
 
 }
    //  namespace phoenix

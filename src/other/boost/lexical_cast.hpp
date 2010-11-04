@@ -41,10 +41,15 @@
 #include <sstream>
 #endif
 
-#if defined(BOOST_NO_STRINGSTREAM) || \
-    defined(BOOST_NO_STD_WSTRING) || \
-    defined(BOOST_NO_STD_LOCALE) 
+#if defined(BOOST_NO_STRINGSTREAM) || defined(BOOST_NO_STD_WSTRING)
 #define BOOST_LCAST_NO_WCHAR_T
+#endif
+
+#ifdef BOOST_NO_TYPEID
+#define BOOST_LCAST_THROW_BAD_CAST(S, T) throw_exception(bad_lexical_cast())
+#else
+#define BOOST_LCAST_THROW_BAD_CAST(Source, Target) \
+    throw_exception(bad_lexical_cast(typeid(Source), typeid(Target)))
 #endif
 
 namespace boost
@@ -577,7 +582,7 @@ namespace boost
             lexical_stream(char_type* = 0, char_type* = 0)
             {
                 stream.unsetf(std::ios::skipws);
-                lcast_set_precision(stream, (Source*)0, (Target*)0);
+                lcast_set_precision(stream, static_cast<Source*>(0), static_cast<Target*>(0) );
             }
             ~lexical_stream()
             {
@@ -694,7 +699,7 @@ namespace boost
             {
                 this->setp(start, finish);
                 std::basic_ostream<CharT> stream(static_cast<Base*>(this));
-                lcast_set_precision(stream, (OutputStreamable*)0);
+                lcast_set_precision(stream, static_cast<OutputStreamable*>(0));
                 bool const result = !(stream << input).fail();
                 finish = this->pptr();
                 return result;
@@ -764,7 +769,7 @@ namespace boost
                 this->setg(start, start, finish);
                 std::basic_istream<CharT> stream(static_cast<Base*>(this));
                 stream.unsetf(std::ios::skipws);
-                lcast_set_precision(stream, (InputStreamable*)0);
+                lcast_set_precision(stream, static_cast<InputStreamable*>(0));
 #if (defined _MSC_VER)
 # pragma warning( pop )
 #endif
@@ -1111,6 +1116,12 @@ namespace boost
             typedef const T * type;
         };
 
+#if (defined _MSC_VER)
+# pragma warning( push )
+# pragma warning( disable : 4701 ) // possible use of ... before initialization
+# pragma warning( disable : 4702 ) // unreachable code
+#endif
+
         template< typename Target
                 , typename Source
                 , bool Unlimited // string representation of Source is unlimited
@@ -1136,28 +1147,14 @@ namespace boost
               , detail::lexical_stream_limited_src<CharT,base,traits>
               >::type interpreter(buf, buf + src_len);
 
-            // The original form, reproduced below, is more elegant
-            // but yields a spurious C4701 warning ("possible use of
-            // "result" before initialization") with VC7.1 (/W4).
-//
-//            Target result;
-//
-//            if(!(interpreter << arg && interpreter >> result))
-//                throw_exception(bad_lexical_cast(typeid(Source), typeid(Target)));
-//            return result;
-
-            if(interpreter << arg) {
-                Target result;
-                if (interpreter >> result)
-                    return result;
-            }
-#ifndef BOOST_NO_TYPEID
-            throw_exception(bad_lexical_cast(typeid(Source), typeid(Target)));
-#else
-            throw_exception(bad_lexical_cast());
-#endif
-            return Target(); // normally never reached (throw_exception)
+            Target result;
+            if(!(interpreter << arg && interpreter >> result))
+                BOOST_LCAST_THROW_BAD_CAST(Source, Target);
+            return result;
         }
+#if (defined _MSC_VER)
+# pragma warning( pop )
+#endif
     }
 
     template<typename Target, typename Source>

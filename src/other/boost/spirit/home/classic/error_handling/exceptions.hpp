@@ -126,8 +126,8 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
         typedef unary<ParserT, parser<self_t> >         base_t;
         typedef unary_parser_category                   parser_category_t;
 
-        assertive_parser(ParserT const& parser, ErrorDescrT descriptor)
-        : base_t(parser), descriptor(descriptor) {}
+        assertive_parser(ParserT const& parser, ErrorDescrT descriptor_)
+        : base_t(parser), descriptor(descriptor_) {}
 
         template <typename ScannerT>
         struct result

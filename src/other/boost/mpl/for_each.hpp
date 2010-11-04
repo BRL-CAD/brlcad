@@ -10,7 +10,7 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source$
+// $Id$
 // $Date$
 // $Revision$
 
@@ -76,7 +76,7 @@ struct for_each_impl<false>
         
         typedef typename mpl::next<Iterator>::type iter;
         for_each_impl<boost::is_same<iter,LastIterator>::value>
-            ::execute((iter*)0, (LastIterator*)0, (TransformFunc*)0, f);
+            ::execute( static_cast<iter*>(0), static_cast<LastIterator*>(0), static_cast<TransformFunc*>(0), f);
     }
 };
 
@@ -98,7 +98,7 @@ void for_each(F f, Sequence* = 0, TransformOp* = 0)
     typedef typename end<Sequence>::type last;
 
     aux::for_each_impl< boost::is_same<first,last>::value >
-        ::execute((first*)0, (last*)0, (TransformOp*)0, f);
+        ::execute(static_cast<first*>(0), static_cast<last*>(0), static_cast<TransformOp*>(0), f);
 }
 
 template<
