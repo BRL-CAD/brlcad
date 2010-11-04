@@ -122,6 +122,8 @@ EXTRA_DIST = \
 	$(rsrc_DATA) \
 	$(tmsg_DATA) \
 	mk.in \
+	proe-brl-notes.txt \
+	proe-brl.dll.config \
 	protk.dat.in \
 	win32-msvc8/proe \
 	win32-msvc8/proe-brl-3.0/proe-brl-3.0.vcproj \

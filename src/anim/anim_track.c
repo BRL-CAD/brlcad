@@ -441,6 +441,8 @@ main(int argc, char *argv[])
     VSETALL(to_track, 0.0);
     VSETALL(centroid, 0.0);
     VSETALL(rcentroid, 0.0);
+    VSETALL(wheel_now, 0.0);
+    VSETALL(wheel_prev, 0.0);
     y_rot = 0.0;
     num_wheels = 0;
     last_steer = last_frame = 0;
@@ -467,12 +469,16 @@ main(int argc, char *argv[])
     num_wheels = -1;
     if (one_radius) {
 	while (!feof(stream)) {
-	    fscanf(stream, "%*f %*f %*f");
+	    count = fscanf(stream, "%*f %*f %*f");
+	    if (count != 3)
+		break;
 	    num_wheels++;
 	}
     } else {
 	while (!feof(stream)) {
-	    fscanf(stream, "%*f %*f %*f %*f");
+	    count = fscanf(stream, "%*f %*f %*f %*f");
+	    if (count != 3)
+		break;
 	    num_wheels++;
 	}
     }
@@ -487,11 +493,14 @@ main(int argc, char *argv[])
 
     /*read original wheel positions*/
     for (i=0;i<NW;i++) {
-	fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
+	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
+	if (count != 3)
+	    break;
+
 	if (one_radius)
 	    x[i].w.rad = radius;
 	else
-	    fscanf(stream, "%lf", & x[i].w.rad);
+	    count = fscanf(stream, "%lf", & x[i].w.rad);
 	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
@@ -519,7 +528,7 @@ main(int argc, char *argv[])
 
     if (dist_mode==STEERED) {
 	/* prime the pumps */
-	scanf("%*f");/*time*/
+	val = scanf("%*f");/*time*/
 	val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos + 2);
 	if (val < 3)
 	    return 0;
@@ -538,14 +547,14 @@ main(int argc, char *argv[])
     frame = first_frame;
     for (; ; frame++) {
 	if (dist_mode==GIVEN) {
-	    scanf("%*f");/*time*/
+	    val = scanf("%*f");/*time*/
 	    val = scanf("%lf", &distance);
 	    if (val < 1) {
 		break;
 	    }
 	} else if (dist_mode==CALCULATED) {
-	    scanf("%*f");/*time*/
-	    scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos+2);
+	    val = scanf("%*f");/*time*/
+	    val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos+2);
 	    val = scanf("%lf %lf %lf", &yaw, &pch, &roll);
 	    if (val < 3)
 		break;
@@ -557,7 +566,7 @@ main(int argc, char *argv[])
 	if (read_wheels) {
 	    /* read in all wheel positions */
 	    for (i=0;i<NW;i++) {
-		val=scanf("%lf %lf", x[i].w.pos, x[i].w.pos + 2);
+		val = scanf("%lf %lf", x[i].w.pos, x[i].w.pos + 2);
 		if (val < 2) {
 		    break;
 		}
@@ -565,7 +574,7 @@ main(int argc, char *argv[])
 	}
 
 	if (dist_mode==STEERED) {
-	    scanf("%*f");/*time*/
+	    val = scanf("%*f");/*time*/
 	    val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos + 2);
 	    if (val < 3) {
 		if (last_steer)

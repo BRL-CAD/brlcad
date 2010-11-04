@@ -880,7 +880,7 @@ rt_comb_ifree(struct rt_db_internal *ip)
 
     if (comb) {
 	/* If tree hasn't been stolen, release it */
-	if (comb->tree) db_free_tree(comb->tree, &rt_uniresource);
+	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
 
 	bu_vls_free(&comb->shader);

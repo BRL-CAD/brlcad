@@ -146,25 +146,25 @@ Do_subfigs()
 	BU_LIST_INIT( &head2.l );
 	for ( j=0; j<no_of_members; j++ )
 	{
-	    int index;
+	    int idx;
 
-	    index = (members[j] - 1)/2;
+	    idx = (members[j] - 1)/2;
 
-	    if ( index >= totentities )
+	    if ( idx >= totentities )
 	    {
 		bu_log( "Subfigure Definition Entity gives Member Entity" );
 		bu_log( "\tDE of %d, largest DE in file is %d\n",
 			members[j], (totentities * 2) - 1 );
 		continue;
 	    }
-	    if ( dir[index]->param <= pstart )
+	    if ( dir[idx]->param <= pstart )
 	    {
 		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-			dir[index]->direct, dir[index]->name );
+			dir[idx]->direct, dir[idx]->name );
 		continue;
 	    }
 
-	    if ( dir[index]->type == 416 )
+	    if ( dir[idx]->type == 416 )
 	    {
 		struct file_list *list_ptr;
 		char *file_name;
@@ -172,7 +172,7 @@ Do_subfigs()
 
 		/* external reference */
 
-		Readrec( dir[index]->param );
+		Readrec( dir[idx]->param );
 		Readint( &entity_type, "" );
 
 		if ( entity_type != 416 )
@@ -182,10 +182,10 @@ Do_subfigs()
 		    continue;
 		}
 
-		if ( dir[index]->form != 1 )
+		if ( dir[idx]->form != 1 )
 		{
 		    bu_log( "External Reference Entity of form #%d found\n",
-			    dir[index]->form );
+			    dir[idx]->form );
 		    bu_log( "\tOnly form #1 is currnetly handled\n" );
 		    continue;
 		}
@@ -228,12 +228,12 @@ Do_subfigs()
 
 	    }
 	    else
-		name = dir[index]->name;
+		name = dir[idx]->name;
 
 	    if ( no_of_members > 1 )
 	    {
 		wmem = mk_addmember( name, &head2.l, NULL, WMOP_UNION );
-		memcpy(wmem->wm_mat, dir[index]->rot, sizeof( mat_t ));
+		memcpy(wmem->wm_mat, dir[idx]->rot, sizeof( mat_t ));
 	    }
 	}
 

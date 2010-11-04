@@ -65,25 +65,27 @@ VCSet::~VCSet()
     }
 }
 
+
 #if 0
 void VCSet::pushVar()
 {
-    Variable<double> *v = new Variable<double>(name,value);
-    v->addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0.00001));
+    Variable<double> *v = new Variable<double>(name, value);
+    v->addInterval(Interval<double>(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0.00001));
     Vars.push_back(v);
     /*addVariable<double>(name, value);*/
     name.clear();
 } 
 #endif
 
-void VCSet::addConstraint(std::string cid, std::string cexpr, functor f,int count,...)
+void VCSet::addConstraint(std::string cid, std::string cexpr, functor f, int count, ...)
 {
     va_list args;
-    va_start(args,count);
+    va_start(args, count);
     Constraint *c = new Constraint(*this, cid, cexpr, f, count, &args);
     va_end(args);
     Constraints.push_back(c);
 }
+
 
 void VCSet::addConstraint(std::string cid, functor f, std::list<std::string> Vid)
 {
@@ -91,41 +93,41 @@ void VCSet::addConstraint(std::string cid, functor f, std::list<std::string> Vid
     Constraints.push_back(c);
 }
 
-void VCSet::addConstraint(pc_constrnt * con)
+
+void VCSet::addConstraint(pc_constrnt *con)
 {
     Constraint *c = new Constraint(*this, con);
     Constraints.push_back(c);
 }
 
-void VCSet::addParameter(std::string pname, int type, void * ptr)
+
+void VCSet::addParameter(std::string pname, int type, void *ptr)
 {
     switch (type) {
-	case PC_DB_VECTOR_T:
-	    {
-		Vector * v = new Vector(*this,pname,ptr); 
-		ParTable.push_back(v);
-		//std::cout << "!-- Pushed " << pname << std::endl;
-		break;
-	    }
-	case PC_DB_FASTF_T:
-	    {
-		FastF * f = new FastF(*this,pname,ptr); 
-		ParTable.push_back(f);
-		break;
-	    }
-	case PC_DB_POINT_T:
-	    {
-		Point * p = new Point(*this,pname,ptr); 
-		ParTable.push_back(p);
-		break;
-	    }
+	case PC_DB_VECTOR_T: {
+	    Vector *v = new Vector(*this, pname, ptr); 
+	    ParTable.push_back(v);
+	    //std::cout << "!-- Pushed " << pname << std::endl;
+	    break;
+	}
+	case PC_DB_FASTF_T: {
+	    FastF *f = new FastF(*this, pname, ptr); 
+	    ParTable.push_back(f);
+	    break;
+	}
+	case PC_DB_POINT_T: {
+	    Point *p = new Point(*this, pname, ptr); 
+	    ParTable.push_back(p);
+	    break;
+	}
 	default:
 	    std::cerr << " Invalid parameter type detected"
 		      << pname << std::endl;
     }
 }
 
-VariableAbstract * VCSet::getVariablebyID(std::string vid)
+
+VariableAbstract *VCSet::getVariablebyID(std::string vid)
 {
     std::list<VariableAbstract *>::iterator i;
     for (i = Vars.begin(); i != Vars.end(); i++) {
@@ -134,6 +136,7 @@ VariableAbstract * VCSet::getVariablebyID(std::string vid)
     }
     return NULL;
 }
+
 
 void VCSet::store()
 {
@@ -145,6 +148,7 @@ void VCSet::store()
     }
 }
 
+
 void VCSet::restore()
 {
     std::list<VariableAbstract *>::iterator i = Vars.begin();
@@ -155,7 +159,8 @@ void VCSet::restore()
     }
 }
 
-Parameter * VCSet::getParameter(std::string pname)
+
+Parameter *VCSet::getParameter(std::string pname)
 {
     std::list<Parameter *>::iterator i;
     for (i = ParTable.begin(); i != ParTable.end(); i++) {
@@ -165,20 +170,24 @@ Parameter * VCSet::getParameter(std::string pname)
     return NULL;
 }
 
+
 /** @todo remove std::list passing */
-std::list<std::string> VCSet::getParamVariables(const char * pname)
+std::list<std::string> VCSet::getParamVariables(const char *pname)
 {
-    Parameter * p = getParameter(pname);
-    if (p) {
-	std::list<std::string> V;
-	Parameter::iterator i = p->begin();
-	Parameter::iterator end = p->end();
-	for (; i !=end; i++) {
-	    V.push_back(i->getID());
-	}
+    std::list<std::string> V;
+    Parameter *p = getParameter(pname);
+    if (!p) {
 	return V;
     }
+
+    Parameter::iterator i = p->begin();
+    Parameter::iterator end = p->end();
+    for (; i !=end; i++) {
+	V.push_back(i->getID());
+    }
+    return V;
 }
+
 
 void VCSet::display()
 {
@@ -205,6 +214,7 @@ void VCSet::display()
     }
 }
 
+
 bool VCSet::check()
 {
     std::list<Constraint *>::iterator i;
@@ -215,6 +225,7 @@ bool VCSet::check()
     }
     return true;
 }
+
 
 /** @} */
 /*

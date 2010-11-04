@@ -40,29 +40,29 @@
  * Lazy function wrapper for boost::spirit::symbols::add()
  */
 struct addsymbol_impl {
-	typedef boost::shared_ptr<MathFunction> FunctionPtr;
-	typedef boost::spirit::symbols<FunctionPtr> FunctionTable;
+    typedef boost::shared_ptr<MathFunction> FunctionPtr;
+    typedef boost::spirit::symbols<FunctionPtr> FunctionTable;
 
-	template<typename T, typename Arg1, typename Arg2 = boost::spirit::nil_t>
-	struct result
-	{
-	    typedef void type;
-	};
-	template <typename SymbolT>
-	void operator()(SymbolT & symbols, std::string const & name) const
-	{
-	    symbols.add(name.c_str());
-	}
+    template<typename T, typename Arg1, typename Arg2 = boost::spirit::nil_t>
+    struct result
+    {
+	typedef void type;
+    };
+    template <typename SymbolT>
+    void operator()(SymbolT & symbols, std::string const & name) const
+    {
+	symbols.add(name.c_str());
+    }
 
-	void operator()(FunctionTable & symbols, std::string const & name,
-			UserFunction const & func) const
-	{
-	    FunctionPtr * fp = find(symbols, name.c_str());
-	    if(fp)
-		fp->reset(new UserFunction(func));
-	    else
-		symbols.add(name.c_str(), FunctionPtr(new UserFunction(func)));
-	}
+    void operator()(FunctionTable & symbols, std::string const & name,
+		    UserFunction const & func) const
+    {
+	FunctionPtr *fp = find(symbols, name.c_str());
+	if (fp)
+	    fp->reset(new UserFunction(func));
+	else
+	    symbols.add(name.c_str(), FunctionPtr(new UserFunction(func)));
+    }
 
 };
 phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
@@ -74,7 +74,7 @@ struct findsymbol_impl {
     template <typename T, typename Arg>
     struct result
     {
-	typedef typename T::symbol_data_t * type;
+	typedef typename T::symbol_data_t *type;
     };
 
     template <typename SymbolT>
@@ -95,7 +95,7 @@ struct push_back_impl {
     {
 	typedef void type;
     };
-    void operator()(Stack & stack, Node * n) const
+    void operator()(Stack & stack, Node *n) const
     {
 	BOOST_ASSERT(n);
 	stack.push_back(n);
@@ -133,7 +133,7 @@ struct reset_impl {
 	typedef void type;
     };
     template <typename T>
-    void operator()(boost::shared_ptr<T> * shptr, T * ptr = 0) const
+    void operator()(boost::shared_ptr<T> *shptr, T *ptr = 0) const
     {
 	shptr.reset(ptr);
     }
@@ -147,9 +147,9 @@ phoenix::function<reset_impl> const reset = reset_impl();
 struct address_of_impl {
     template <typename T>
     struct result {
-	typedef double * type;
+	typedef double *type;
     };
-    double * const operator()(boost::reference_wrapper<double> const & ref) const
+    double *const operator()(boost::reference_wrapper<double> const & ref) const
     {
 	return ref.get_pointer();
     }

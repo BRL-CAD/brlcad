@@ -4535,8 +4535,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	if (BU_SETJUMP) {
 	    BU_UNSETJUMP;
 	    Tcl_AppendResult(interp, "WARNING: facetization failed!!!\n", (char *)NULL);
-	    if (facetize_tree)
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
 	    nmg_model = (struct model *)NULL;
@@ -4550,8 +4549,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 
     if (failed) {
 	Tcl_AppendResult(interp, "facetize:  no resulting region, aborting\n", (char *)NULL);
-	if (facetize_tree)
-	    db_free_tree(facetize_tree, &rt_uniresource);
+	db_free_tree(facetize_tree, &rt_uniresource);
 	facetize_tree = (union tree *)NULL;
 	nmg_km(nmg_model);
 	nmg_model = (struct model *)NULL;
@@ -4568,8 +4566,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	if (BU_SETJUMP) {
 	    BU_UNSETJUMP;
 	    Tcl_AppendResult(interp, "WARNING: triangulation failed!!!\n", (char *)NULL);
-	    if (facetize_tree)
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    db_free_tree(facetize_tree, &rt_uniresource);
 	    facetize_tree = (union tree *)NULL;
 	    nmg_km(nmg_model);
 	    nmg_model = (struct model *)NULL;

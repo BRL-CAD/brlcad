@@ -40,6 +40,16 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
+  logic layout using if/else.
+
+* facetize creates BoTs crappily by only looking at first region,
+  first shell, instead of the whole nmg model.
+
+* nmg_bot() and nmg_from_bot() only work with shells.  verify that all
+  callers iterate over all shells or write a model version that does a
+  complete conversion correctly.
+
 * bu_cv_optimize() should be using bu_byteorder().
 
 * render annotated images to the OpenDocument format.  this is
@@ -788,6 +798,29 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   NURBS format, trims surfaces, evaluates boolean expressions, and
   then generates tool paths on resulting surfaces and interior paths.
 
+* identify useful concepts implemented in the old NURBS code that are not
+  present in openNURBS, and port that code to openNURBS data structures
+  and routines.  This will eventually allow us to remove the old NURBS code.
+
+* incorporate some variety of spatial partitioning into the facetize command
+  (may involve just rewriting it) to try and realize MUCH faster tessellation
+  of CSG geometry.  Current routines are doing a lot of unnecessary work that
+  tends to result in explosive completion times for worst-case scenarios - 
+  try to get closer to the "only do the work we need to" ideal.  Once a new
+  idea is proven in that command, it should be made into a libgcv routine
+  and convertors/other commands retargted to use it.
+
+NMG Concepts to Explore
+-----------------------
+Ensure robust and fast nmg->bot conversion, and enhance the bot data structure
+to contain a generic pointer that could be used to point back to the NMG it was 
+generated from.  This could allow ALL raytracing of polygonal models to use 
+libtie/BoT raytracing routines, speeding up NMG raytracing and simplifying the
+raytracing code.
+
+Break NMG out into its own libnmg library.  Over time, consider moving other polygonal
+specific logic to libnmg, eventually moving all polygonal logic out of librt/libtie/etc
+and into libnmg.  Would involve code and API cleanup.
 
 RTGL ITEMS
 __________

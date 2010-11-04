@@ -36,21 +36,21 @@ torus( entityno )
     fastf_t		rad2=0.0;	/* radius of disc */
     point_t		center;		/* center point of torus */
     vect_t		hdir;		/* direction in which to grow height */
-    fastf_t		x1;
-    fastf_t		y1;
-    fastf_t		z1;
-    fastf_t		x2;
-    fastf_t		y2;
-    fastf_t		z2;
+    fastf_t		x_1;
+    fastf_t		y_1;
+    fastf_t		z_1;
+    fastf_t		x_2;
+    fastf_t		y_2;
+    fastf_t		z_2;
     int		sol_num;		/* IGES solid type number */
 
     /* Default values */
-    x1 = 0.0;
-    y1 = 0.0;
-    z1 = 0.0;
-    x2 = 0.0;
-    y2 = 0.0;
-    z2 = 1.0;
+    x_1 = 0.0;
+    y_1 = 0.0;
+    z_1 = 0.0;
+    x_2 = 0.0;
+    y_2 = 0.0;
+    z_2 = 1.0;
 
     /* Acquiring Data */
 
@@ -64,12 +64,12 @@ torus( entityno )
     Readint( &sol_num, "" );
     Readcnv( &rad, "" );
     Readcnv( &rad2, "" );
-    Readcnv( &x1, "" );
-    Readcnv( &y1, "" );
-    Readcnv( &z1, "" );
-    Readcnv( &x2, "" );
-    Readcnv( &y2, "" );
-    Readcnv( &z2, "" );
+    Readcnv( &x_1, "" );
+    Readcnv( &y_1, "" );
+    Readcnv( &z_1, "" );
+    Readcnv( &x_2, "" );
+    Readcnv( &y_2, "" );
+    Readcnv( &z_2, "" );
 
     if ( rad <= 0.0 || rad2 <= 0.0 )
     {
@@ -86,8 +86,8 @@ torus( entityno )
      * solid is called.
      */
 
-    VSET(center, x1, y1, z1);
-    VSET(hdir, x2, y2, z2);
+    VSET(center, x_1, y_1, z_1);
+    VSET(hdir, x_2, y_2, z_2);
     VUNITIZE(hdir);
 
     mk_tor(fdout, dir[entityno]->name, center, hdir, rad, rad2);

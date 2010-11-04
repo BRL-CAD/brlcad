@@ -76,11 +76,11 @@ struct facets
 };
 
 void
-fastf_print(FILE *fp_out, int length, fastf_t f)
+fastf_print(FILE *out, size_t length, fastf_t f)
 {
     char buffer[128];
     char *ptr;
-    int i;
+    size_t i;
     size_t buf_len;
 
     sprintf( &buffer[1], "%f", f );
@@ -92,22 +92,22 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 	for ( i=0; i<length; i++ )
 	{
 	    if ( i < buf_len )
-		fputc( buffer[i], fp_out );
+		fputc( buffer[i], out );
 	    else
-		fputc( ' ', fp_out );
+		fputc( ' ', out );
 	}
 
 	return;
     }
 
     ptr = strchr( buffer, '.' );
-    if ( (ptr - buffer) > length )
+    if ( (size_t)(ptr - buffer) > length )
     {
 	bu_exit(1, "ERROR: Value (%f) too large for format length (%d)\n", f, length );
     }
 
     for ( i=0; i<length; i++ )
-	fputc( buffer[i], fp_out );
+	fputc( buffer[i], out );
 }
 
 void
@@ -132,7 +132,7 @@ insert_id(int id)
 }
 
 static int
-select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     if (verbose )
 	bu_log( "select_region: curr_id = %d, tsp->ts_regionid = %d\n", curr_id, tsp->ts_regionid);
@@ -144,7 +144,7 @@ select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const
 }
 
 static int
-get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
 {
     if ( verbose )
 	bu_log( "get_reg_id: Adding id %d to list\n", tsp->ts_regionid );
@@ -153,14 +153,14 @@ get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const st
 }
 
 static union tree *
-region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
 {
     bu_exit(1, "ERROR; region stub called, this shouldn't happen\n" );
     return (union tree *)NULL; /* just to keep the compilers happy */
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), struct rt_db_internal *UNUSED(ip), genptr_t UNUSED(client_data))
 {
     bu_exit(1, "ERROR: leaf stub called, this shouldn't happen\n" );
     return (union tree *)NULL; /* just to keep the compilers happy */
@@ -479,9 +479,6 @@ main(int argc, char **argv)
     bu_setlinebuf( stderr );
 
     rt_g.debug = 0;
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
 
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
@@ -624,10 +621,6 @@ main(int argc, char **argv)
 			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
 
 	nmg_km( the_model );
-
-#if MEMORY_LEAK_CHECKING
-	bu_prmem("After conversion of id");
-#endif
     }
 
     percent = 0;
@@ -645,10 +638,6 @@ main(int argc, char **argv)
     rt_vlist_cleanup();
     db_close(dbip);
 
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-EUCLID conversion");
-#endif
-
     return 0;
 }
 
@@ -660,7 +649,7 @@ main(int argc, char **argv)
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

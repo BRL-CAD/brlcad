@@ -26,12 +26,12 @@
 
 #include <stdio.h>
 
-FILE	*HmTtyFp = NULL;   /* read keyboard, not stdin */
-int	HmLftMenu = 1;	   /* default top-level menu position */
-int	HmTopMenu = 1;
-int	HmMaxVis = 10;	   /* default maximum menu items displayed */
-int	HmLastMaxVis = 10; /* track changes in above parameter */
-int	HmTtyFd; 	   /* read keyboard, not stdin */
+FILE *HmTtyFp = NULL;   /* read keyboard, not stdin */
+int HmLftMenu = 1;	/* default top-level menu position */
+int HmTopMenu = 1;
+int HmMaxVis = 10;	/* default maximum menu items displayed */
+int HmLastMaxVis = 10;	/* track changes in above parameter */
+int HmTtyFd;		/* read keyboard, not stdin */
 
 /*
  * Local Variables:

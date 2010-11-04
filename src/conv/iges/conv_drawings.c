@@ -408,14 +408,7 @@ Leader_to_vlist( entno, vhead )
 }
 
 void
-Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, local_scale, clip, xform )
-    struct model *m;
-    int view_number;
-    int de_list[];
-    int no_of_des;
-    fastf_t x, y, local_scale, ang;
-    plane_t clip[6];
-    mat_t *xform;
+Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform)
 {
     struct bu_list vhead;
     struct bn_vlist *vp;
@@ -515,7 +508,7 @@ Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, local_scale, clip,
 		    vp->pt[i][Z] = 0.0;
 
 		/* scale, rotate, and translate */
-		if ( ang == 0.0 )
+		if ( NEAR_ZERO(ang, SMALL_FASTF) )
 		{
 		    vp->pt[i][X] = local_scale * tmp_pt[X] + x;
 		    vp->pt[i][Y] = local_scale * tmp_pt[Y] + y;
@@ -692,7 +685,7 @@ Do_view( m, view_vis_list, entno, x, y, ang )
 	}
     }
 
-    Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, clip, xform );
+    Draw_entities( m, de_list, no_of_des, x, y, ang, (fastf_t)local_scale, xform );
 
     bu_free( (char *)de_list, "Do_view: de_list" );
 }
@@ -890,7 +883,7 @@ Conv_drawings()
     /* no drawings or views, just convert all independent lines, arcs, etc */
     m = nmg_mm();
 
-    Draw_entities( m, 0, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (plane_t *)NULL, (mat_t *)NULL );
+    Draw_entities( m, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (mat_t *)NULL );
 
     /* write the drawing to the BRL-CAD file if the model is not empty */
     r = BU_LIST_FIRST( nmgregion, &m->r_hd );

@@ -505,6 +505,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    comb = (struct rt_comb_internal *)NULL;
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
@@ -520,12 +521,10 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	saved_name = _ged_save_comb(gedp, dp); /* Save combination to a temp name */
 	save_comb_flag = 1;
-    } else {
-	comb = (struct rt_comb_internal *)NULL;
     }
 
     /* empty the existing combination */
-    if (comb && comb->tree) {
+    if (comb) {
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
     } else {

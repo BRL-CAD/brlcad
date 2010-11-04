@@ -32,9 +32,11 @@ void Generators::varname::operator () (char c) const {
     vcset.pushChar(c);
 }
 
+
 void Generators::varvalue::operator () (double v) const {
     vcset.setValue(v);
 }
+
 
 /** @} */
 /*

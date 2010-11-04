@@ -181,7 +181,7 @@ ingetcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t delta_s, fastf_t *p_ze
 	    break;
 	}
     }
-    *pb = p_zero[Z] - cosh( (*pa)*(p_zero[X]-(*pc)) )/(*pa);
+    *pb = p_zero[Z] - cosh((*pa)*(p_zero[X]-(*pc)))/(*pa);
 
     return status;
 
@@ -237,7 +237,7 @@ getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fa
 
 	solved = 0;
 	/* refine theta_one */
-	stmp = sinh( (*pa)*(q_zero[X]-(*pc)) );
+	stmp = sinh((*pa)*(q_zero[X]-(*pc)));
 	new_theta_zero = atan2(1.0, -stmp);
 	avg_theta_zero = 0.5 * (theta_zero + new_theta_zero);
 	if (fabs(theta_zero-avg_theta_zero)<T_TOL) {
@@ -246,7 +246,7 @@ getcurve(fastf_t *pa, fastf_t *pb, fastf_t *pc, fastf_t *pth0, fastf_t *pth1, fa
 	theta_zero = avg_theta_zero;
 
 	/* refine theta_two */
-	stmp = sinh( (*pa)*(q_one[X]-(*pc)) );
+	stmp = sinh((*pa)*(q_one[X]-(*pc)));
 	new_theta_one = atan2(1.0, -stmp);
 	avg_theta_one = 0.5 * (theta_one + new_theta_one);
 	if (fabs(theta_one-avg_theta_one)<T_TOL) {

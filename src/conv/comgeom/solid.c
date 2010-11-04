@@ -534,7 +534,6 @@ getsolid(void)
     if ( strncmp( solid_type, "wir", 3 ) == 0 )  {
 	int			numpts;		/* points per wire */
 	int			num;
-	int			i;
 	double			dia;
 	double			*pts;		/* 3 entries per pt */
 	struct	wdb_pipept	*ps;

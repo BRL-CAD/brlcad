@@ -37,6 +37,8 @@
 		       _data_axes_name _sdata_axes_name
 		       _data_labels_name _sdata_labels_name
 		       _data_lines_name _sdata_lines_name}
+	proc deleteGlobalData {_ged _archer _group _attr_name}
+	proc measureLastDataPoints {_ged _archer _group _attr_name _pindex {_sindex -1}}
 	proc updateData {_ged _archer _group
 			 _attr_name _data_cmd _data_subcmd}
 	proc updateGlobalData {_ged _archer _group _attr_name _data_cmd _data_subcmd}
@@ -49,10 +51,9 @@
                                           _attr_name _data_cmd _data_subcmd
                                           _data _index_begin _index_end} {
     if {$_group == ""} {
-	$_archer putString "Please select a group before creating $_attr_name."
+	$_archer putString "Please select a group before appending to $_attr_name."
 	return
     }
-
     if {[catch {$_ged attr get _GLOBAL $_attr_name} dataList]} {
 	set dataList {}
     }
@@ -64,7 +65,7 @@
 	eval lappend subDataList $_data
 	set dataList [lreplace $dataList $i $i $subDataList]
     } else {
-	lappend dataList [eval list $_group $_data]
+	lappend dataList [eval list [list $_group] $_data]
 	set subDataList [lindex $dataList end]
     }
 
@@ -136,7 +137,7 @@
 		eval lappend sda $points
 		set sdal [lreplace $sdal $i $i $sda]
 	    } else {
-		lappend sdal [eval list $_group $points]
+		lappend sdal [eval list [list $_group] $points]
 		set sda [lindex $sdal end]
 	    }
 
@@ -278,7 +279,7 @@
 		eval lappend sdl $points
 		set sdll [lreplace $sdll $i $i $sdl]
 	    } else {
-		lappend sdll [eval list $_group $points]
+		lappend sdll [eval list [list $_group] $points]
 		set sdl [lindex $sdll end]
 	    }
 
@@ -328,7 +329,7 @@
 		eval lappend da $points
 		set dal [lreplace $dal $i $i $da]
 	    } else {
-		lappend dal [eval list $_group $points]
+		lappend dal [eval list [list $_group] $points]
 		set da [lindex $dal end]
 	    }
 
@@ -470,7 +471,7 @@
 		eval lappend dl $points
 		set dll [lreplace $dll $i $i $dl]
 	    } else {
-		lappend dll [eval list $_group $points]
+		lappend dll [eval list [list $_group] $points]
 		set dl [lindex $dll end]
 	    }
 
@@ -487,6 +488,88 @@
 	    return
 	}
     }
+}
+
+::itcl::body DataUtils::deleteGlobalData {_ged _archer _group _attr_name} {
+    if {$_group == ""} {
+	$_archer putString "Please select a group before deleting from $_attr_name."
+	return
+    }
+
+    if {[catch {$_ged attr get _GLOBAL $_attr_name} dl]} {
+	return
+    }
+
+    # Delete the data list for the specified group
+    set i [lsearch -index 0 $dl $_group]
+    if {$i == -1} {
+	return
+    }
+
+    set dl [lreplace $dl $i $i]
+    $_archer attr set _GLOBAL $_attr_name $dl
+}
+
+::itcl::body DataUtils::measureLastDataPoints {_ged _archer _group _attr_name _pindex {_sindex -1}} {
+    if {[catch {$_ged attr get _GLOBAL $_attr_name} dl]} {
+	return
+    }
+
+    # Get the data list for the specified group
+    set i [lsearch -index 0 $dl $_group]
+    if {$i != -1} {
+	set gd [lindex $dl $i]
+    } else {
+	return
+    }
+
+    # Strip off the group name
+    set data [lrange $gd 1 end]
+
+    # If a valid index is specified for indicating selection
+    # of data then collect the selected data.
+    if {[string is digit $_sindex]} {
+	set all_data $data
+	set data {}
+	foreach item $all_data {
+	    if {[lindex $item $_sindex]} {
+		lappend data $item
+	    }
+	}
+    }
+
+    set last_index [expr {[llength $data] - 1}]
+    if {$last_index < 1} {
+	return
+    }
+
+    set pindex_end [expr {$_pindex + 2}]
+
+    # Make sure dataA has enough values
+    set dataA [lindex $data end-1]
+    set last_index [expr {[llength $dataA] - 1}]
+    if {$last_index < $pindex_end} {
+	return
+    }
+
+    # Make sure dataB has enough values
+    set dataB [lindex $data end]
+    set last_index [expr {[llength $dataB] - 1}]
+    if {$last_index < $pindex_end} {
+	return
+    }
+
+    if {[catch {
+	set ptA [lrange $dataA $_pindex $pindex_end]
+	set ptB [lrange $dataB $_pindex $pindex_end]
+	set dist [vmagnitude [vsub2 $ptB $ptA]]
+	set dist [expr {$dist * [$_ged base2local]}]
+        } msg]} {
+	return
+    }
+    
+    $_archer putString "Measured distance between data points: $dist [$_ged units -s]."
+    $_archer setStatusString "Measured distance between data points: $dist [$_ged units -s]."
 }
 
 ::itcl::body DataUtils::updateData {_ged _archer _group
@@ -520,7 +603,7 @@
     }
 
     set data [$_ged $_data_cmd $_data_subcmd]
-    set gdl [lreplace $gdl $i $i [eval list $_group $data]]
+    set gdl [lreplace $gdl $i $i [eval list [list $_group] $data]]
     $_ged refresh_off
     catch {$_archer attr set _GLOBAL $_attr_name $gdl}
     $_ged refresh_on

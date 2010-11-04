@@ -594,6 +594,8 @@ package provide cadwidgets::Ged 1.0
 	method add_view_rect_callback {_callback}
 	method clear_view_rect_callback_list {}
 	method delete_view_rect_callback {_callback}
+
+	method set_data_point_callback {_callback}
  
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
@@ -617,6 +619,7 @@ package provide cadwidgets::Ged 1.0
 	variable mLastDataType ""
 	variable mLastDataIndex ""
 	variable mLastMouseRayPos ""
+	variable mLastMouseRayStart ""
 	variable mLastMouseRayTarget ""
 	variable mLastMousePos ""
 	variable mBegin3DPoint ""
@@ -629,6 +632,7 @@ package provide cadwidgets::Ged 1.0
 	variable mBeginDataMoveCallbacks ""
 	variable mDataLabelCallbacks ""
 	variable mDataMoveCallbacks ""
+	variable mDataPointCallback ""
 	variable mEndDataArrowCallbacks ""
 	variable mEndDataLineCallbacks ""
 	variable mEndDataMoveCallbacks ""
@@ -2625,6 +2629,10 @@ package provide cadwidgets::Ged 1.0
     set dindex [llength $points]
     incr dindex -1
 
+    if {$dindex < 0} {
+	return
+    }
+
     # start receiving motion events
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane data_arrows $dindex %x %y]; break"
 }
@@ -2645,6 +2653,10 @@ package provide cadwidgets::Ged 1.0
     set points [$mGed data_lines $itk_component($_pane) points]
     set dindex [llength $points]
     incr dindex -1
+
+    if {$dindex < 0} {
+	return
+    }
 
     # start receiving motion events
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane data_lines $dindex %x %y]; break"
@@ -2781,9 +2793,39 @@ package provide cadwidgets::Ged 1.0
     set mLastMouseRayTarget ""
     refresh_off
     $mGed $mLastDataType $itk_component($_pane) draw 0
+
+    # This call returns a point that is either a hit point
+    # on some geometry object or a "Data" point (i.e. an axes,
+    # line, arrow or label). Points on the view plane are NOT
+    # returned.
     set point [eval pane_mouse_3dpoint $_pane $mLastMousePos 0]
+
     $mGed $mLastDataType $itk_component($_pane) draw 1
     set mLastMousePos ""
+
+    # If a point has not been selected via the pane_mouse_3dpoint call
+    # above and gridSnap is active, apply snap to grid to the data point
+    # currently being moved.
+    if {$point == "" && $itk_option(-gridSnap)} {
+	# First, get the data point being moved.
+	if {$mLastDataType == "data_labels"} {
+	    set labels [$mGed data_labels $itk_component($_pane) labels]
+	    set label [lindex $labels $mLastDataIndex]
+	    set point [lindex $label 1]
+	} else {
+	    set points [$mGed $mLastDataType $itk_component($_pane) points]
+	    set point [lindex $points $mLastDataIndex]
+	}
+
+	# Convert point to view coordinates and call snap_view. Then convert
+	# back to model coordinates. Note - vZ is saved so that the movement
+	# stays in a plane parallel to the view plane.
+	set view [m2v_point $point]
+	set vZ [lindex $view 2]
+	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
+	lappend view $vZ
+	set point [v2m_point $view]
+    }
 
     # Replace the mLastDataIndex point with this point
     if {$point != ""} {
@@ -3177,28 +3219,33 @@ package provide cadwidgets::Ged 1.0
 	set partitions [pane_mouse_ray $_pane $_x $_y 1]
 
 	if {$partitions == ""} {
-	    set point $mLastMouseRayTarget
-
 	    if {!$_vflag} {
-		return $point
+		return
 	    }
 
 	    set mMeasuringStick3DCurrent 0
+	    set point $mLastMouseRayTarget
 	} else {
+	    if {$mDataPointCallback != ""} {
+		if {![catch {$mDataPointCallback $mLastMouseRayStart $mLastMouseRayTarget $partitions} point]} {
+		    return $point
+		}
+	    }
+
 	    set partition [lindex $partitions 0]
 
 	    if {[catch {bu_get_value_by_keyword in $partition} in]} {
 		set mMeasuringStick3DCurrent 0
-#		putString "Partition does not contain an \"in\""
-#		putString "$in"
-		return
+		#		putString "Partition does not contain an \"in\""
+		#		putString "$in"
+		return $mLastMouseRayTarget
 	    }
 
 	    if {[catch {bu_get_value_by_keyword point $in} point]} {
 		set mMeasuringStick3DCurrent 0
-#		putString "Partition does not contain an \"in\" point"
-#		putString "$point"
-		return
+		#		putString "Partition does not contain an \"in\" point"
+		#		putString "$point"
+		return $mLastMouseRayTarget
 	    }
 	}
     } else {
@@ -3206,7 +3253,7 @@ package provide cadwidgets::Ged 1.0
 	set dindex [lindex $pdata 1]
 
 	if {$dtype == "data_labels"} {
-	    set labels [$mGed $dtype $itk_component($_pane) labels]
+	    set labels [$mGed data_labels $itk_component($_pane) labels]
 	    set label [lindex $labels $dindex]
 	    set point [lindex $label 1]
 	} else {
@@ -3254,10 +3301,10 @@ package provide cadwidgets::Ged 1.0
 
     set bounds [$mGed bounds $itk_component($_pane)]
     set vZ [expr {[lindex $bounds 4] / -2048.0}]
-    set start [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
+    set mLastMouseRayStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
     set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
-    if {[catch {shoot_ray $start "at" $mLastMouseRayTarget 1 1 0} partitions]} {
+    if {[catch {shoot_ray $mLastMouseRayStart "at" $mLastMouseRayTarget 1 1 0} partitions]} {
 	return $partitions
     }
 
@@ -3277,7 +3324,7 @@ package provide cadwidgets::Ged 1.0
 	}
     } else {
 	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $start $mLastMouseRayTarget $partitions}
+	    catch {$callback $mLastMouseRayStart $mLastMouseRayTarget $partitions}
 	}
     }
 }
@@ -3666,6 +3713,10 @@ package provide cadwidgets::Ged 1.0
     if {$i != -1} {
 	set mViewRectCallbacks [lreplace $mViewRectCallbacks $i $i]
     }
+}
+
+::itcl::body cadwidgets::Ged::set_data_point_callback {_callback} {
+    set mDataPointCallback $_callback
 }
 
 ::itcl::body cadwidgets::Ged::get_ged_color {_color} {

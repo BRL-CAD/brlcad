@@ -25,11 +25,7 @@
 #include "./iges_extern.h"
 
 int
-Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
-    struct shell *s;
-    struct faceuse *fu;
-    int loop_entityno;
-    int face_orient;
+Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 {
     int i, j, k;
     int entity_type;
@@ -216,11 +212,9 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 	    crv = Get_cnurb_curve( param->curve_de, &linear );
 
 	    coords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
-	    VMOVE( start_uv, crv->ctl_points );
 	    VMOVE( end_uv, &crv->ctl_points[(crv->c_size-1)*coords] );
 	    if ( coords == 2 )
 	    {
-		start_uv[2] = 1.0;
 		end_uv[2] = 1.0;
 	    }
 
@@ -241,10 +235,10 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 
 		if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
 		{
-		    fastf_t scale;
+		    fastf_t sca;
 
-		    scale = 1.0/pt_on_srf[3];
-		    VSCALE( pt_on_srf, pt_on_srf, scale );
+		    sca = 1.0/pt_on_srf[3];
+		    VSCALE( pt_on_srf, pt_on_srf, sca );
 		}
 		nmg_vertex_gv( v2, pt_on_srf );
 	    }
@@ -256,8 +250,6 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 		/* this edge runs to/from one vertex, need to split */
 		struct bu_list split_hd;
 		struct edge_g_cnurb *crv1, *crv2;
-		point_t start_uv, end_uv;
-		hpoint_t pt_on_srf;
 
 		BU_LIST_INIT( &split_hd );
 
@@ -289,10 +281,10 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 
 		if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
 		{
-		    fastf_t scale;
+		    fastf_t sca;
 
-		    scale = 1.0/pt_on_srf[3];
-		    VSCALE( pt_on_srf, pt_on_srf, scale );
+		    sca = 1.0/pt_on_srf[3];
+		    VSCALE( pt_on_srf, pt_on_srf, sca );
 		}
 
 		/* assign geometry */
@@ -323,10 +315,10 @@ Add_nurb_loop_to_face( s, fu, loop_entityno, face_orient )
 
 		if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
 		{
-		    fastf_t scale;
+		    fastf_t sca;
 
-		    scale = 1.0/pt_on_srf[3];
-		    VSCALE( pt_on_srf, pt_on_srf, scale );
+		    sca = 1.0/pt_on_srf[3];
+		    VSCALE( pt_on_srf, pt_on_srf, sca );
 		}
 
 		/* assign geometry */

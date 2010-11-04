@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "bu.h"
+#include "vmath.h"
 
 
 /* spline functionality */
@@ -36,7 +37,7 @@ splinef(fastf_t c[4], fastf_t s)
     retval = c[0];
     for (i=1; i<4; i++) {
 	stopow *= s;
-	if (c[i] != 0.0)
+	if (!NEAR_ZERO(c[i], SMALL_FASTF))
 	    retval += c[i]*stopow;
     }
 

@@ -58,7 +58,7 @@ extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_
 Tk_Window tkwin;
 #endif
 
-Tcl_Interp *interp;
+Tcl_Interp *INTERP;
 
 
 static int
@@ -67,9 +67,11 @@ Cad_AppInit(Tcl_Interp *interp)
     int try_auto_path = 0;
 
     int init_tcl = 1;
-    int init_tk = 1;
     int init_itcl = 1;
+#ifdef BWISH
+    int init_tk = 1;
     int init_itk = 1;
+#endif
     if (Tcl_Init(interp) == TCL_ERROR) {
       return TCL_ERROR;
     }
@@ -214,12 +216,13 @@ Cad_AppInit(Tcl_Interp *interp)
     return TCL_OK;
 }
 
+
 int
 main(int argc, char **argv)
 {
     /* Create the interpreter */
-    interp = Tcl_CreateInterp();
-    Cad_Main(argc, argv, Cad_AppInit, interp);
+    INTERP = Tcl_CreateInterp();
+    Cad_Main(argc, argv, Cad_AppInit, INTERP);
 
     return 0;
 }

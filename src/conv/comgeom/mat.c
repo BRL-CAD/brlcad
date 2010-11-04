@@ -49,7 +49,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "./ged_types.h"
+#include "vmath.h"
 
 
 /*
@@ -57,6 +57,7 @@
  *
  * Fill in the matrix "m" with zeros.
  */
+void
 mat_zero(matp_t m)
 {
     int i = 0;
@@ -72,6 +73,7 @@ mat_zero(matp_t m)
  *
  * Fill in the matrix "m" with an identity matrix.
  */
+void
 mat_idn(matp_t m)
 {
     /* Clear everything first */
@@ -87,6 +89,7 @@ mat_idn(matp_t m)
  *
  * Copy the matrix "im" into the matrix "om".
  */
+void
 mat_copy(matp_t om, matp_t im)
 {
     int i = 0;
@@ -104,6 +107,7 @@ mat_copy(matp_t om, matp_t im)
  * NOTE:  This is different from multiplying "im2" by "im1" (most
  * of the time!)
  */
+void
 mat_mul(matp_t om, matp_t im1, matp_t im2)
 {
     int em1;		/* Element subscript for im1 */
@@ -134,6 +138,7 @@ mat_mul(matp_t om, matp_t im1, matp_t im2)
  * Multiply the vector "iv" by the matrix "im" and store the result
  * in the vector "ov".  Note this is pre-multiply.
  */
+void
 vecXmat(vectp_t ov, vectp_t iv, matp_t im)
 {
     int el = 0;		/* Position in output vector */
@@ -160,6 +165,7 @@ vecXmat(vectp_t ov, vectp_t iv, matp_t im)
  * Multiply the matrix "im" by the vector "iv" and store the result
  * in the vector "ov".  Note this is post-multiply.
  */
+void
 matXvec(vectp_t ov, matp_t im, vectp_t iv)
 {
     int eo = 0;		/* Position in output vector */
@@ -182,6 +188,7 @@ matXvec(vectp_t ov, matp_t im, vectp_t iv)
  *
  * Print out the 4x4 matrix addressed by "m".
  */
+void
 mat_print(matp_t m)
 {
     int i;
@@ -199,6 +206,7 @@ mat_print(matp_t m)
  * variable "hscale".  NOTE that the input matrix is ALSO the output
  * matrix.
  */
+void
 mat_hscale(matp_t m, float hscale)
 {
     m[0] *= hscale;
@@ -309,6 +317,7 @@ mat_inv(matp_t output, matp_t input)
  * to space for a homogeneous vector [x, y, z, w],
  * and builds [x, y, z, 1].
  */
+void
 vtoh_move(float *h, float *v)
 {
     *h++ = *v++;
@@ -324,11 +333,12 @@ vtoh_move(float *h, float *v)
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.
  */
+void
 htov_move(float *v, float *h)
 {
     static float inv;
 
-    if ( h[3] == 1 )  {
+    if ( NEAR_ZERO(h[3] - 1.0, SMALL_FASTF) )  {
 	*v++ = *h++;
 	*v++ = *h++;
 	*v   = *h;

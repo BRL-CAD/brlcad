@@ -66,21 +66,21 @@ public:
     /** Element addition methods */
     void pushVar();
     template<typename T>
-    VariableAbstract * addVariable(std::string vid, T vvalue);
+    VariableAbstract *addVariable(std::string vid, T vvalue);
     template<typename T>
-    VariableAbstract * addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
-    void addConstraint(std::string cid, std::string cexpr, functor f,int count,...);
+    VariableAbstract *addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep);
+    void addConstraint(std::string cid, std::string cexpr, functor f, int count, ...);
     void addConstraint(std::string cid, functor f, std::list<std::string> Vid);
-    void addConstraint(pc_constrnt * c);
-    void addParameter(std::string pname, int type, void * ptr);
+    void addConstraint(pc_constrnt *c);
+    void addParameter(std::string pname, int type, void *ptr);
     
     /** Variable access method */
-    VariableAbstract * getVariablebyID(std::string vid);
+    VariableAbstract *getVariablebyID(std::string vid);
     void store();
     void restore();
     
     /** Parameter table data access */
-    Parameter * getParameter(std::string pid);
+    Parameter *getParameter(std::string pid);
     std::list<std::string> getParamVariables(const char *);
 
     /** Constraint status check method */
@@ -94,22 +94,25 @@ private:
     double value;
 };
 
+
 template<typename T>
-VariableAbstract * VCSet::addVariable(std::string vid, T vvalue)
+VariableAbstract *VCSet::addVariable(std::string vid, T vvalue)
 {
-    Variable<T> *v = new Variable<T>(vid,vvalue);
+    Variable<T> *v = new Variable<T>(vid, vvalue);
     Vars.push_back(v);
     return v;
 }
 
+
 template<typename T>
-VariableAbstract * VCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
+VariableAbstract *VCSet::addVariable(std::string vid, T vvalue, T vlow, T vhigh, T vstep)
 {
-    Variable<T> *v = new Variable<T>(vid,vvalue);
-    v->intersectInterval(Interval<T>(vlow,vhigh,vstep));
+    Variable<T> *v = new Variable<T>(vid, vvalue);
+    v->intersectInterval(Interval<T>(vlow, vhigh, vstep));
     Vars.push_back(v);
     return v;
 }
+
 
 #endif
 /** @} */

@@ -1565,6 +1565,7 @@ convert_load_order(
     long int column = 0;
     unsigned short int buf4 = 0;
 
+    /* FIXME: C90 forbids variable size array declarations.  use bu_malloc/bu_free instead. */
     /* size of buf3 determined at run time */
     unsigned short int buf3[*in_ydim];
 
@@ -1651,6 +1652,18 @@ create_model(
 int
 main(int ac, char *av[])
 {
+    double raw_dem_2_raw_dsp_manual_scale_factor = 0;  /* user specified raw dem-to-dsp scale factor */
+    long int manual_dem_max_raw_elevation = 0;         /* user specified max raw elevation */
+    double manual_dem_max_real_elevation = 0;          /* user specified max real elevation in meters */
+    long int xdim = 0;                                 /* x dimension of dem (w cells) */
+    long int ydim = 0;                                 /* y dimension of dem (n cells) */
+    double dsp_elevation = 0;                          /* datum elevation in milimeters (dsp V z coordinate) */
+    double x_cell_size = 0;                            /* x scaling factor in milimeters */
+    double y_cell_size = 0;                            /* y scaling factor in milimeters */
+    double unit_elevation = 0;                         /* z scaling factor in milimeters */
+    char *tmp_ptr = '\0';
+    int string_length = 0;
+
     /*
      * element_counts[]
      * element_counts[record_type] = number of elements in each record type
@@ -2058,18 +2071,6 @@ main(int ac, char *av[])
 
     progname = *av;
 
-    double raw_dem_2_raw_dsp_manual_scale_factor = 0;  /* user specified raw dem-to-dsp scale factor */
-    long int manual_dem_max_raw_elevation = 0;         /* user specified max raw elevation */
-    double manual_dem_max_real_elevation = 0;          /* user specified max real elevation in meters */
-    long int xdim = 0;                                 /* x dimension of dem (w cells) */
-    long int ydim = 0;                                 /* y dimension of dem (n cells) */
-    double dsp_elevation = 0;                          /* datum elevation in milimeters (dsp V z coordinate) */
-    double x_cell_size = 0;                            /* x scaling factor in milimeters */
-    double y_cell_size = 0;                            /* y scaling factor in milimeters */
-    double unit_elevation = 0;                         /* z scaling factor in milimeters */
-    char *tmp_ptr = '\0';
-    int string_length = 0;
-
     if (ac < 2) {
         usage();
         bu_exit(BRLCAD_ERROR, "Exiting.\n");
@@ -2077,6 +2078,8 @@ main(int ac, char *av[])
 
     remove_whitespace(av[1]);
     string_length = strlen(av[1]) + 5;
+
+    /* FIXME: C90 forbids variable size array declarations.  use bu_malloc/bu_free instead. */
     char input_filename[string_length];          /* dem input file path and file name */
     char temp_filename[string_length];           /* temp file path and file name */
     char dsp_output_filename[string_length];     /* dsp output file path and file name */

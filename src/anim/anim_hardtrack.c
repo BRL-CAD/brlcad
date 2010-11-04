@@ -315,6 +315,8 @@ main(int argc, char *argv[])
     VSETALL(to_track, 0.0);
     VSETALL(centroid, 0.0);
     VSETALL(rcentroid, 0.0);
+    VSETALL(wheel_now, 0.0);
+    VSETALL(wheel_prev, 0.0);
     init_dist = y_rot = radius= 0.0;
     first_frame = num_wheels = steer = axes = cent = links_placed=0;
     num_wheels = num_links = last_frame = 0;
@@ -344,12 +346,16 @@ main(int argc, char *argv[])
     num_wheels = -1;
     if (!NEAR_ZERO(radius, SMALL_FASTF)) {
 	while (!feof(stream)) {
-	    fscanf(stream, "%*f %*f %*f");
+	    count = fscanf(stream, "%*f %*f %*f");
+	    if (count != 3)
+		break;
 	    num_wheels++;
 	}
     } else {
 	while (!feof(stream)) {
-	    fscanf(stream, "%*f %*f %*f %*f");
+	    count = fscanf(stream, "%*f %*f %*f %*f");
+	    if (count != 4)
+		break;
 	    num_wheels++;
 	}
     }
@@ -359,11 +365,16 @@ main(int argc, char *argv[])
     x = (struct all *) bu_calloc(num_wheels, sizeof(struct all), "struct all");
     /*read rest of track info */
     for (i=0;i<NW;i++) {
-	fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
+	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
+	if (count != 3)
+	    break;
 	if (!NEAR_ZERO(radius, SMALL_FASTF))
 	    x[i].w.rad = radius;
-	else
-	    fscanf(stream, "%lf", & x[i].w.rad);
+	else {
+	    count = fscanf(stream, "%lf", & x[i].w.rad);
+	    if (count != 1)
+		break;
+	}
 	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
@@ -398,10 +409,13 @@ main(int argc, char *argv[])
 	/*p2 is current position. p3 is next;p1 is previous*/
 	VMOVE(p1, p2);
 	VMOVE(p2, p3);
-	scanf("%*f");/*time stamp*/
+	count = scanf("%*f");/*time stamp*/
 	val = scanf("%lf %lf %lf", p3, p3+1, p3 + 2);
 	if (!steer) {
-	    scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    count = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    if (count != 3) {
+		bu_exit(2, "Unexpected/Missing raw, pitch, roll value(s)!  Read %d values.\n", count);
+	    }
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
 	} else {

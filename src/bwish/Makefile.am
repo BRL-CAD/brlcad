@@ -29,6 +29,7 @@ bwish_LDFLAGS = -static
 endif
 
 bwish_CFLAGS = \
+	${STRICT_FLAGS} \
 	-DBWISH=1 \
 	${X_CFLAGS} \
 	${ITCL_CPPFLAGS} \
@@ -54,6 +55,7 @@ btclsh_LDFLAGS = -static
 endif
 
 btclsh_CFLAGS = \
+	${STRICT_FLAGS} \
 	${ITCL_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 

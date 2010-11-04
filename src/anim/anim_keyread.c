@@ -103,6 +103,7 @@ main(int argc, char *argv[])
 {
     int c;
     fastf_t time, viewsize;
+    int count;
 
     fastf_t eyept[3], viewrot[16], angle[3], quat[4];
 
@@ -111,20 +112,21 @@ main(int argc, char *argv[])
 
     while (!feof(stdin)) {
 	/* read one keyframe */
-	scanf("%lf", &time);
-	scanf("%lf", &viewsize);
-	scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
+	count = 0;
+
+	count += scanf("%lf", &time);
+	count += scanf("%lf", &viewsize);
+	count += scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
 	/* read in transposed matrix */
-	scanf("%lf %lf %lf %lf", viewrot+0, viewrot+4, viewrot+8, viewrot+12);
-	scanf("%lf %lf %lf %lf", viewrot+1, viewrot+5, viewrot+9, viewrot+13);
-	scanf("%lf %lf %lf %lf", viewrot+2, viewrot+6, viewrot+10, viewrot+14);
-	scanf("%lf %lf %lf %lf", viewrot+3, viewrot+7, viewrot+11, viewrot+15);
+	count += scanf("%lf %lf %lf %lf", viewrot+0, viewrot+4, viewrot+8, viewrot+12);
+	count += scanf("%lf %lf %lf %lf", viewrot+1, viewrot+5, viewrot+9, viewrot+13);
+	count += scanf("%lf %lf %lf %lf", viewrot+2, viewrot+6, viewrot+10, viewrot+14);
+	count += scanf("%lf %lf %lf %lf", viewrot+3, viewrot+7, viewrot+11, viewrot+15);
 
-	if (feof(stdin)) break;
+	if (feof(stdin) || count != 21)
+	    break;
 
-	printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", time, viewsize,
-	       eyept[0], eyept[1], eyept[2]);
-
+	printf("%.10g\t%.10g\t%.10g\t%.10g\t%.10g\t", time, viewsize, eyept[0], eyept[1], eyept[2]);
 
 	if (mode==YPR) {
 	    anim_v_unpermute(viewrot);
