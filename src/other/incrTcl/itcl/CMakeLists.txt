@@ -57,11 +57,10 @@ OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 
 # version numbers
-SET(ITCL_MAJOR_VERSION 8)
-SET(ITCL_MINOR_VERSION 5)
-SET(ITCL_PATCH_LEVEL 9)
+SET(ITCL_MAJOR_VERSION 3)
+SET(ITCL_MINOR_VERSION 4)
 
-SET(ITCL_VERSION "${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}.${ITCL_PATCH_LEVEL}")
+SET(ITCL_VERSION "${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}")
 
 #-----------------------------------------------------------------------------
 # Output directories.
@@ -106,14 +105,12 @@ INCLUDE(${ITCL_SOURCE_DIR}/CMake/tcl.cmake)
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
-SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_NAME=\\\"Itcl\\\"")
-SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_TARNAME=\\\"Itcl\\\"")
+SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_NAME=\\\"itcl\\\"")
+SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_TARNAME=\\\"itcl\\\"")
 SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_VERSION=\\\"${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}\\\"")
-SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_STRING=\\\"Itcl\\ ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}\\\"")
+SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_STRING=\\\"itcl\\\ ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}\\\"")
 SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DPACKAGE_BUGREPORT=\\\"\\\"")
 SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DSTDC_HEADERS=1")
-SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DITCL_LIBRARY=\\\"${CMAKE_INSTALL_PREFIX}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}itcl${TCL_MAJOR_VERSION}.${TCL_MINOR_VERSION}\\\"")
-SET(ITCL_CFLAGS "${ITCL_CFLAGS} -DUSE_TCL_STUBS=1")
 
 #----------------------------------------------------------------------------
 
@@ -467,9 +464,12 @@ include_directories(
 
 add_library(itcl ${ITCL_GENERIC_SRCS})
 target_link_libraries(itcl ${M_LIBRARY} ${TCL_LIBRARY})
-install(TARGETS itcl DESTINATION lib/Itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
+install(TARGETS itcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
 
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} [list load [file join $dir libitcl${CMAKE_SHARED_LIBRARY_SUFFIX}] Itcl]")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/Itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
-install(FILES library/itcl.tcl DESTINATION lib/Itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/itcl.tcl ${CMAKE_BINARY_DIR}/lib/Itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} COPYONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
+
+FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}/pkgIndex.tcl "package ifneeded Itcl ${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION} [list load [file join $dir .. libitcl${CMAKE_SHARED_LIBRARY_SUFFIX}] Itcl]")
+
+install(FILES library/itcl.tcl DESTINATION lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/itcl.tcl ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_MAJOR_VERSION}.${ITCL_MINOR_VERSION}/itcl.tcl COPYONLY)
