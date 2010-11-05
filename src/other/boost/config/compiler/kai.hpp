@@ -17,9 +17,11 @@
 #   endif
 
 // see also common_edg.hpp which needs a special check for __KCC
-# if !defined(_EXCEPTIONS) && !defined(BOOST_NO_EXCEPTIONS)
+# if !defined(_EXCEPTIONS)
 #     define BOOST_NO_EXCEPTIONS
 # endif
+
+#define BOOST_COMPILER "Kai C++ version " BOOST_STRINGIZE(__KCC_VERSION)
 
 //
 // last known and checked version is 4001:

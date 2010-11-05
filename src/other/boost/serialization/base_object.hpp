@@ -34,7 +34,6 @@
 #include <boost/type_traits/is_polymorphic.hpp>
 
 #include <boost/static_assert.hpp>
-#include <boost/serialization/access.hpp>
 #include <boost/serialization/force_include.hpp>
 #include <boost/serialization/void_cast_fwd.hpp>
 
@@ -63,9 +62,7 @@ namespace detail
     {
         struct polymorphic {
             static void const * invoke(){
-                Base const * const b = 0;
-                Derived const * const d = 0;
-                return & void_cast_register(d, b);
+                return &void_cast_register((Derived const*)0, (Base const*)0);
             }
         };
         struct non_polymorphic {
@@ -84,14 +81,15 @@ namespace detail
     };
 
 } // namespace detail
-#if defined(__BORLANDC__) && __BORLANDC__ < 0x610
+
+#if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x560))
 template<class Base, class Derived>
 const Base & 
 base_object(const Derived & d)
 {
     BOOST_STATIC_ASSERT(! is_pointer<Derived>::value);
     detail::base_register<Base, Derived>::invoke();
-    return access::cast_reference<const Base, Derived>(d);
+    return static_cast<const Base &>(d);
 }
 #else
 template<class Base, class Derived>
@@ -102,7 +100,7 @@ base_object(Derived &d)
     BOOST_STATIC_ASSERT(! is_pointer<Derived>::value);
     typedef BOOST_DEDUCED_TYPENAME detail::base_cast<Base, Derived>::type type;
     detail::base_register<type, Derived>::invoke();
-    return access::cast_reference<type, Derived>(d);
+    return static_cast<type &>(d);
 }
 #endif
 

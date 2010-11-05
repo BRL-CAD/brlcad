@@ -31,14 +31,14 @@ namespace boost { namespace fusion { namespace detail
         template <typename Iterator>
         struct apply
         {
-            typedef vector0<> type;
+            typedef vector0 type;
         };
 
         template <typename Iterator>
         static typename apply<Iterator>::type
         call(Iterator)
         {
-            return vector0<>();
+            return vector0();
         }
     };
 

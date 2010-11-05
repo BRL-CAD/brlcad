@@ -19,11 +19,7 @@
 
 #include "boost/variant/detail/apply_visitor_unary.hpp"
 
-#if BOOST_WORKAROUND(__EDG__, BOOST_TESTED_AT(302))
 #include "boost/utility/enable_if.hpp"
-#include "boost/mpl/not.hpp"
-#include "boost/type_traits/is_const.hpp"
-#endif
 
 namespace boost {
 
@@ -67,9 +63,6 @@ public: // visitor interfaces
         return visitor_(value1_, value2);
     }
 
-private:
-    apply_visitor_binary_invoke& operator=(const apply_visitor_binary_invoke&);
-
 };
 
 template <typename Visitor, typename Visitable2>
@@ -106,9 +99,6 @@ public: // visitor interfaces
 
         return boost::apply_visitor(invoker, visitable2_);
     }
-
-private:
-    apply_visitor_binary_unwrap& operator=(const apply_visitor_binary_unwrap&);
 
 };
 

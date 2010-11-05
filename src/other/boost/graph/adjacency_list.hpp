@@ -1,7 +1,6 @@
 //=======================================================================
 // Copyright 1997, 1998, 1999, 2000 University of Notre Dame.
-// Copyright 2010 Thomas Claveirole
-// Authors: Andrew Lumsdaine, Lie-Quan Lee, Jeremy G. Siek, Thomas Claveirole
+// Authors: Andrew Lumsdaine, Lie-Quan Lee, Jeremy G. Siek
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
@@ -18,7 +17,16 @@
 #include <list>
 #include <set>
 
-#include <boost/unordered_set.hpp>
+// TODO: Deprecating this requires some cooperation from Boost.Config. It's not
+// a good idea to just refuse the inclusion because it could break otherwise
+// functioning code.
+#if !defined BOOST_NO_HASH
+#  ifdef BOOST_HASH_SET_HEADER
+#    include BOOST_HASH_SET_HEADER
+#  else
+#    include <hash_set>
+#  endif
+#endif
 
 #if !defined BOOST_NO_SLIST
 #  ifdef BOOST_SLIST_HEADER
@@ -29,9 +37,8 @@
 #endif
 
 #include <boost/graph/graph_traits.hpp>
-#include <boost/graph/graph_mutability_traits.hpp>
 #include <boost/graph/graph_selectors.hpp>
-#include <boost/property_map/property_map.hpp>
+#include <boost/property_map.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/not.hpp>
@@ -56,19 +63,18 @@ namespace boost {
 #if !defined BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
 
 #if !defined BOOST_NO_SLIST
-  struct slistS {};
+  struct slistS {};  
 #endif
 
   struct vecS  { };
   struct listS { };
   struct setS { };
-  struct mapS  { };
   struct multisetS { };
-  struct multimapS { };
-  struct hash_setS { };
+  struct mapS  { };
+#if !defined BOOST_NO_HASH
   struct hash_mapS { };
-  struct hash_multisetS { };
-  struct hash_multimapS { };
+  struct hash_setS { };
+#endif
 
   template <class Selector, class ValueType>
   struct container_gen { };
@@ -103,30 +109,17 @@ namespace boost {
     typedef std::multiset<ValueType> type;
   };
 
+#if !defined BOOST_NO_HASH
   template <class ValueType>
-  struct container_gen<multimapS, ValueType> {
-    typedef std::multiset<ValueType> type;
+  struct container_gen<hash_mapS, ValueType> {
+    typedef BOOST_STD_EXTENSION_NAMESPACE::hash_set<ValueType> type;
   };
 
   template <class ValueType>
   struct container_gen<hash_setS, ValueType> {
-    typedef boost::unordered_set<ValueType> type;
+    typedef BOOST_STD_EXTENSION_NAMESPACE::hash_set<ValueType> type;
   };
-
-  template <class ValueType>
-  struct container_gen<hash_mapS, ValueType> {
-    typedef boost::unordered_set<ValueType> type;
-  };
-
-  template <class ValueType>
-  struct container_gen<hash_multisetS, ValueType> {
-    typedef boost::unordered_multiset<ValueType> type;
-  };
-
-  template <class ValueType>
-  struct container_gen<hash_multimapS, ValueType> {
-    typedef boost::unordered_multiset<ValueType> type;
-  };
+#endif
 
 #else // !defined BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
 
@@ -142,51 +135,39 @@ namespace boost {
     struct bind_ { typedef std::vector<T> type; };
   };
 
-  struct listS {
+  struct listS { 
     template <class T>
     struct bind_ { typedef std::list<T> type; };
   };
 
-  struct setS  {
+  struct setS  { 
     template <class T>
     struct bind_ { typedef std::set<T, std::less<T> > type; };
   };
 
+  struct multisetS  { 
+    template <class T>
+    struct bind_ { typedef std::multiset<T, std::less<T> > type; };
+  };
 
-  struct mapS  {
+#if !defined BOOST_NO_HASH
+  struct hash_setS { 
+    template <class T>
+    struct bind_ { typedef BOOST_STD_EXTENSION_NAMESPACE::hash_set<T, std::less<T> > type; };
+  };
+#endif
+
+  struct mapS  { 
     template <class T>
     struct bind_ { typedef std::set<T, std::less<T> > type; };
   };
 
-  struct multisetS  {
+#if !defined BOOST_NO_HASH
+  struct hash_mapS { 
     template <class T>
-    struct bind_ { typedef std::multiset<T, std::less<T> > type; };
+    struct bind_ { typedef BOOST_STD_EXTENSION_NAMESPACE::hash_set<T, std::less<T> > type; };
   };
-
-  struct multimapS  {
-    template <class T>
-    struct bind_ { typedef std::multiset<T, std::less<T> > type; };
-  };
-
-  struct hash_setS {
-    template <class T>
-    struct bind_ { typedef boost::unordered_set<T> type; };
-  };
-
-  struct hash_mapS {
-    template <class T>
-    struct bind_ { typedef boost::unordered_set<T> type; };
-  };
-
-  struct hash_multisetS {
-    template <class T>
-    struct bind_ { typedef boost::unordered_multiset<T> type; };
-  };
-
-  struct hash_multimapS {
-    template <class T>
-    struct bind_ { typedef boost::unordered_multiset<T> type; };
-  };
+#endif
 
   template <class Selector> struct container_selector {
     typedef vecS type;
@@ -202,7 +183,9 @@ namespace boost {
   BOOST_CONTAINER_SELECTOR(mapS);
   BOOST_CONTAINER_SELECTOR(setS);
   BOOST_CONTAINER_SELECTOR(multisetS);
+#if !defined BOOST_NO_HASH
   BOOST_CONTAINER_SELECTOR(hash_mapS);
+#endif
 #if !defined BOOST_NO_SLIST
   BOOST_CONTAINER_SELECTOR(slistS);
 #endif
@@ -219,60 +202,54 @@ namespace boost {
   struct parallel_edge_traits { };
 
   template <>
-  struct parallel_edge_traits<vecS> {
+  struct parallel_edge_traits<vecS> { 
     typedef allow_parallel_edge_tag type; };
 
   template <>
-  struct parallel_edge_traits<listS> {
+  struct parallel_edge_traits<listS> { 
     typedef allow_parallel_edge_tag type; };
 
 #if !defined BOOST_NO_SLIST
   template <>
-  struct parallel_edge_traits<slistS> {
+  struct parallel_edge_traits<slistS> { 
     typedef allow_parallel_edge_tag type; };
 #endif
 
   template <>
-  struct parallel_edge_traits<setS> {
+  struct parallel_edge_traits<setS> { 
     typedef disallow_parallel_edge_tag type; };
 
   template <>
-  struct parallel_edge_traits<multisetS> {
+  struct parallel_edge_traits<multisetS> { 
     typedef allow_parallel_edge_tag type; };
 
+#if !defined BOOST_NO_HASH
   template <>
   struct parallel_edge_traits<hash_setS> {
-    typedef disallow_parallel_edge_tag type;
+    typedef disallow_parallel_edge_tag type; 
   };
+#endif
 
   // mapS is obsolete, replaced with setS
   template <>
-  struct parallel_edge_traits<mapS> {
+  struct parallel_edge_traits<mapS> { 
     typedef disallow_parallel_edge_tag type; };
 
+#if !defined BOOST_NO_HASH
   template <>
   struct parallel_edge_traits<hash_mapS> {
-    typedef disallow_parallel_edge_tag type;
+    typedef disallow_parallel_edge_tag type; 
   };
-
-  template <>
-  struct parallel_edge_traits<hash_multisetS> {
-    typedef allow_parallel_edge_tag type;
-  };
-
-  template <>
-  struct parallel_edge_traits<hash_multimapS> {
-    typedef allow_parallel_edge_tag type;
-  };
+#endif
 
   namespace detail {
-    template <class Directed> struct is_random_access {
+    template <class Directed> struct is_random_access { 
       enum { value = false};
       typedef mpl::false_ type;
     };
     template <>
-    struct is_random_access<vecS> {
-      enum { value = true };
+    struct is_random_access<vecS> { 
+      enum { value = true }; 
       typedef mpl::true_ type;
     };
 
@@ -308,12 +285,13 @@ namespace boost {
     typedef typename parallel_edge_traits<OutEdgeListS>::type
       edge_parallel_category;
 
-    typedef std::size_t vertices_size_type;
     typedef void* vertex_ptr;
     typedef typename mpl::if_<is_rand_access,
-      vertices_size_type, vertex_ptr>::type vertex_descriptor;
+      std::size_t, vertex_ptr>::type vertex_descriptor;
     typedef detail::edge_desc_impl<directed_category, vertex_descriptor>
       edge_descriptor;
+
+    typedef std::size_t vertices_size_type;
 
   private:
     // Logic to figure out the edges_size_type
@@ -321,7 +299,7 @@ namespace boost {
     typedef typename container_gen<EdgeListS, dummy>::type EdgeContainer;
     typedef typename DirectedS::is_bidir_t BidirectionalT;
     typedef typename DirectedS::is_directed_t DirectedT;
-    typedef typename mpl::and_<DirectedT,
+    typedef typename mpl::and_<DirectedT, 
       typename mpl::not_<BidirectionalT>::type >::type on_edge_storage;
   public:
     typedef typename mpl::if_<on_edge_storage,
@@ -351,7 +329,7 @@ namespace boost {
     : public detail::adj_list_gen<
       adjacency_list<OutEdgeListS,VertexListS,DirectedS,
                      VertexProperty,EdgeProperty,GraphProperty,EdgeListS>,
-      VertexListS, OutEdgeListS, DirectedS,
+      VertexListS, OutEdgeListS, DirectedS, 
 #if !defined(BOOST_GRAPH_NO_BUNDLED_PROPERTIES)
       typename detail::retag_property_list<vertex_bundle_t,
                                            VertexProperty>::type,
@@ -368,7 +346,6 @@ namespace boost {
                                        EdgeListS>::vertex_descriptor,
         VertexProperty>
   {
-      public: // TODO Remove me
 #if !defined(BOOST_GRAPH_NO_BUNDLED_PROPERTIES)
     typedef typename detail::retag_property_list<vertex_bundle_t,
                                                  VertexProperty>::retagged
@@ -405,7 +382,7 @@ namespace boost {
   private:
     typedef adjacency_list self;
     typedef typename detail::adj_list_gen<
-      self, VertexListS, OutEdgeListS, DirectedS,
+      self, VertexListS, OutEdgeListS, DirectedS, 
       vertex_property_type, edge_property_type, GraphProperty, EdgeListS
     >::type Base;
 
@@ -423,7 +400,7 @@ namespace boost {
 
     typedef GraphProperty graph_property_type;
 
-    inline adjacency_list(const GraphProperty& p = GraphProperty())
+    inline adjacency_list(const GraphProperty& p = GraphProperty()) 
       : m_property(p) { }
 
     inline adjacency_list(const adjacency_list& x)
@@ -439,7 +416,7 @@ namespace boost {
     }
 
     // Required by Mutable Graph
-    inline adjacency_list(vertices_size_type num_vertices,
+    inline adjacency_list(vertices_size_type num_vertices, 
                           const GraphProperty& p = GraphProperty())
       : Base(num_vertices), m_property(p) { }
 
@@ -555,12 +532,12 @@ namespace boost {
   get(T Bundle::* p, adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
                                     GraphProperty, EdgeListS>& g)
   {
-    typedef typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty,
+    typedef typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, 
                                                  EdgeProperty, GraphProperty, EdgeListS>, T Bundle::*>::type
       result_type;
     return result_type(&g, p);
   }
-
+  
   template<typename OutEdgeListS, typename VertexListS, typename DirectedS, typename VertexProperty,
            typename EdgeProperty, typename GraphProperty, typename EdgeListS, typename T, typename Bundle>
   inline
@@ -569,7 +546,7 @@ namespace boost {
   get(T Bundle::* p, adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, EdgeProperty,
                                     GraphProperty, EdgeListS> const & g)
   {
-    typedef typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty,
+    typedef typename property_map<adjacency_list<OutEdgeListS, VertexListS, DirectedS, VertexProperty, 
                                                  EdgeProperty, GraphProperty, EdgeListS>, T Bundle::*>::const_type
       result_type;
     return result_type(&g, p);
@@ -596,24 +573,6 @@ namespace boost {
   }
 
 #endif
-
-// Mutability Traits
-#define ADJLIST_PARAMS \
-    typename OEL, typename VL, typename D, typename VP, typename EP, \
-    typename GP, typename EL
-#define ADJLIST adjacency_list<OEL,VL,D,VP,EP,GP,EL>
-template <ADJLIST_PARAMS>
-struct graph_mutability_traits<ADJLIST> {
-    typedef mutable_property_graph_tag category;
-};
-
-// Can't remove vertices from adjacency lists with VL==vecS
-template <typename OEL, typename D, typename VP, typename EP, typename GP, typename EL>
-struct graph_mutability_traits< adjacency_list<OEL,vecS,D,VP,EP,GP,EL> > {
-    typedef add_only_property_graph_tag category;
-};
-#undef ADJLIST_PARAMS
-#undef ADJLIST
 
 
 } // namespace boost

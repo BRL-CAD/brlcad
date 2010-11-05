@@ -17,6 +17,10 @@
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/or.hpp>
 
+#if !defined(PHOENIX_COMPOSITE_LIMIT)
+# define PHOENIX_COMPOSITE_LIMIT PHOENIX_LIMIT
+#endif
+
 namespace boost { namespace phoenix
 {
     namespace detail

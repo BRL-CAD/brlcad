@@ -49,7 +49,7 @@ template< \
       BOOST_MPL_PP_PARAMS(BOOST_PP_DEC(arity), typename P) \
     > \
 struct name< BOOST_MPL_PP_PARAMS(BOOST_PP_DEC(arity), P),na > \
-    : if_< has_push_back< typename clear<P1>::type> \
+    : if_< has_push_back<P1> \
         , aux::name##_impl< \
               BOOST_MPL_PP_PARAMS(BOOST_PP_DEC(arity), P) \
             , back_inserter< typename clear<P1>::type > \

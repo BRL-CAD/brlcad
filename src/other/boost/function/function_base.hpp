@@ -15,12 +15,9 @@
 #include <string>
 #include <memory>
 #include <new>
+#include <typeinfo>
 #include <boost/config.hpp>
-#include <boost/detail/sp_typeinfo.hpp>
 #include <boost/assert.hpp>
-#include <boost/integer.hpp>
-#include <boost/type_traits/has_trivial_copy.hpp>
-#include <boost/type_traits/has_trivial_destructor.hpp>
 #include <boost/type_traits/is_const.hpp>
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/type_traits/is_volatile.hpp>
@@ -54,9 +51,7 @@
 
 // Borrowed from Boost.Python library: determines the cases where we
 // need to use std::type_info::name to compare instead of operator==.
-#if defined( BOOST_NO_TYPEID )
-#  define BOOST_FUNCTION_COMPARE_TYPE_ID(X,Y) ((X)==(Y))
-#elif (defined(__GNUC__) && __GNUC__ >= 3) \
+# if (defined(__GNUC__) && __GNUC__ >= 3) \
  || defined(_AIX) \
  || (   defined(__sgi) && defined(__host_mips))
 #  include <cstring>
@@ -105,7 +100,7 @@ namespace boost {
         // For pointers to std::type_info objects
         struct type_t {
           // (get_functor_type_tag, check_functor_type_tag).
-          const detail::sp_typeinfo* type;
+          const BOOST_FUNCTION_STD_NS::type_info* type;
 
           // Whether the type is const-qualified.
           bool const_qualified;
@@ -217,12 +212,12 @@ namespace boost {
 
           case check_functor_type_tag:
             {
-              const detail::sp_typeinfo& check_type 
+              const BOOST_FUNCTION_STD_NS::type_info& check_type 
                 = *out_buffer.type.type;
 
               // Check whether we have the same type. We can add
               // cv-qualifiers, but we can't take them away.
-              if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, BOOST_SP_TYPEID(F))
+              if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, typeid(F))
                   && (!in_buffer.obj_ref.is_const_qualified 
                       || out_buffer.type.const_qualified)
                   && (!in_buffer.obj_ref.is_volatile_qualified
@@ -234,7 +229,7 @@ namespace boost {
             return;
 
           case get_functor_type_tag:
-            out_buffer.type.type = &BOOST_SP_TYPEID(F);
+            out_buffer.type.type = &typeid(F);
             out_buffer.type.const_qualified = in_buffer.obj_ref.is_const_qualified;
             out_buffer.type.volatile_qualified = in_buffer.obj_ref.is_volatile_qualified;
             return;
@@ -264,12 +259,6 @@ namespace boost {
           A(a)
         {
         }
-        
-        functor_wrapper(const functor_wrapper& f) :
-          F(static_cast<const F&>(f)),
-          A(static_cast<const A&>(f))
-        {
-        }
       };
 
       /**
@@ -294,14 +283,14 @@ namespace boost {
           } else if (op == destroy_functor_tag)
             out_buffer.func_ptr = 0;
           else if (op == check_functor_type_tag) {
-            const detail::sp_typeinfo& check_type 
+            const BOOST_FUNCTION_STD_NS::type_info& check_type 
               = *out_buffer.type.type;
-            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, BOOST_SP_TYPEID(Functor)))
+            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, typeid(Functor)))
               out_buffer.obj_ptr = &in_buffer.func_ptr;
             else
               out_buffer.obj_ptr = 0;
           } else /* op == get_functor_type_tag */ {
-            out_buffer.type.type = &BOOST_SP_TYPEID(Functor);
+            out_buffer.type.type = &typeid(Functor);
             out_buffer.type.const_qualified = false;
             out_buffer.type.volatile_qualified = false;
           }
@@ -324,14 +313,14 @@ namespace boost {
             // Some compilers (Borland, vc6, ...) are unhappy with ~functor_type.
             reinterpret_cast<functor_type*>(&out_buffer.data)->~Functor();
           } else if (op == check_functor_type_tag) {
-            const detail::sp_typeinfo& check_type 
+            const BOOST_FUNCTION_STD_NS::type_info& check_type 
               = *out_buffer.type.type;
-            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, BOOST_SP_TYPEID(Functor)))
+            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, typeid(Functor)))
               out_buffer.obj_ptr = &in_buffer.data;
             else
               out_buffer.obj_ptr = 0;
           } else /* op == get_functor_type_tag */ {
-            out_buffer.type.type = &BOOST_SP_TYPEID(Functor);
+            out_buffer.type.type = &typeid(Functor);
             out_buffer.type.const_qualified = false;
             out_buffer.type.volatile_qualified = false;            
           }
@@ -383,14 +372,14 @@ namespace boost {
             delete f;
             out_buffer.obj_ptr = 0;
           } else if (op == check_functor_type_tag) {
-            const detail::sp_typeinfo& check_type
+            const BOOST_FUNCTION_STD_NS::type_info& check_type
               = *out_buffer.type.type;
-            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, BOOST_SP_TYPEID(Functor)))
+            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, typeid(Functor)))
               out_buffer.obj_ptr = in_buffer.obj_ptr;
             else
               out_buffer.obj_ptr = 0;
           } else /* op == get_functor_type_tag */ {
-            out_buffer.type.type = &BOOST_SP_TYPEID(Functor);
+            out_buffer.type.type = &typeid(Functor);
             out_buffer.type.const_qualified = false;
             out_buffer.type.volatile_qualified = false;
           }
@@ -425,7 +414,7 @@ namespace boost {
           typedef typename get_function_tag<functor_type>::type tag_type;
           switch (op) {
           case get_functor_type_tag:
-            out_buffer.type.type = &BOOST_SP_TYPEID(functor_type);
+            out_buffer.type.type = &typeid(functor_type);
             out_buffer.type.const_qualified = false;
             out_buffer.type.volatile_qualified = false;
             return;
@@ -494,14 +483,14 @@ namespace boost {
             wrapper_allocator.deallocate(victim,1);
             out_buffer.obj_ptr = 0;
           } else if (op == check_functor_type_tag) {
-            const detail::sp_typeinfo& check_type 
+            const BOOST_FUNCTION_STD_NS::type_info& check_type 
               = *out_buffer.type.type;
-            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, BOOST_SP_TYPEID(Functor)))
+            if (BOOST_FUNCTION_COMPARE_TYPE_ID(check_type, typeid(Functor)))
               out_buffer.obj_ptr = in_buffer.obj_ptr;
             else
               out_buffer.obj_ptr = 0;
           } else /* op == get_functor_type_tag */ {
-            out_buffer.type.type = &BOOST_SP_TYPEID(Functor);
+            out_buffer.type.type = &typeid(Functor);
             out_buffer.type.const_qualified = false;
             out_buffer.type.volatile_qualified = false;
           }
@@ -528,7 +517,7 @@ namespace boost {
           typedef typename get_function_tag<functor_type>::type tag_type;
           switch (op) {
           case get_functor_type_tag:
-            out_buffer.type.type = &BOOST_SP_TYPEID(functor_type);
+            out_buffer.type.type = &typeid(functor_type);
             out_buffer.type.const_qualified = false;
             out_buffer.type.volatile_qualified = false;
             return;
@@ -629,14 +618,14 @@ public:
   /** Determine if the function is empty (i.e., has no target). */
   bool empty() const { return !vtable; }
 
-  /** Retrieve the type of the stored function object, or BOOST_SP_TYPEID(void)
+  /** Retrieve the type of the stored function object, or typeid(void)
       if this is empty. */
-  const detail::sp_typeinfo& target_type() const
+  const BOOST_FUNCTION_STD_NS::type_info& target_type() const
   {
-    if (!vtable) return BOOST_SP_TYPEID(void);
+    if (!vtable) return typeid(void);
 
     detail::function::function_buffer type;
-    get_vtable()->manager(functor, type, detail::function::get_functor_type_tag);
+    vtable->manager(functor, type, detail::function::get_functor_type_tag);
     return *type.type.type;
   }
 
@@ -646,10 +635,10 @@ public:
       if (!vtable) return 0;
 
       detail::function::function_buffer type_result;
-      type_result.type.type = &BOOST_SP_TYPEID(Functor);
+      type_result.type.type = &typeid(Functor);
       type_result.type.const_qualified = is_const<Functor>::value;
       type_result.type.volatile_qualified = is_volatile<Functor>::value;
-      get_vtable()->manager(functor, type_result, 
+      vtable->manager(functor, type_result, 
                       detail::function::check_functor_type_tag);
       return static_cast<Functor*>(type_result.obj_ptr);
     }
@@ -664,10 +653,10 @@ public:
       if (!vtable) return 0;
 
       detail::function::function_buffer type_result;
-      type_result.type.type = &BOOST_SP_TYPEID(Functor);
+      type_result.type.type = &typeid(Functor);
       type_result.type.const_qualified = true;
       type_result.type.volatile_qualified = is_volatile<Functor>::value;
-      get_vtable()->manager(functor, type_result, 
+      vtable->manager(functor, type_result, 
                       detail::function::check_functor_type_tag);
       // GCC 2.95.3 gets the CV qualifiers wrong here, so we
       // can't do the static_cast that we should do.
@@ -713,15 +702,6 @@ public:
 #endif
 
 public: // should be protected, but GCC 2.95.3 will fail to allow access
-  detail::function::vtable_base* get_vtable() const {
-    return reinterpret_cast<detail::function::vtable_base*>(
-             reinterpret_cast<std::size_t>(vtable) & ~(std::size_t)0x01);
-  }
-
-  bool has_trivial_copy_and_destroy() const {
-    return reinterpret_cast<std::size_t>(vtable) & 0x01;
-  }
-
   detail::function::vtable_base* vtable;
   mutable detail::function::function_buffer functor;
 };
@@ -896,9 +876,5 @@ namespace detail {
 
 #undef BOOST_FUNCTION_ENABLE_IF_NOT_INTEGRAL
 #undef BOOST_FUNCTION_COMPARE_TYPE_ID
-
-#if defined(BOOST_MSVC)
-#   pragma warning( pop )
-#endif       
 
 #endif // BOOST_FUNCTION_BASE_HEADER

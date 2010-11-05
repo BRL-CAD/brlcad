@@ -6,9 +6,7 @@
 
 # include <boost/mpl/bool.hpp>
 # include <boost/detail/workaround.hpp>
-# include <boost/concept/detail/backward_compatibility.hpp>
-
-namespace boost { namespace concepts {
+namespace boost { namespace concept {
 
 namespace detail
 { 
@@ -21,7 +19,7 @@ namespace detail
   template <class Model, void (Model::*)()>
   struct wrap_constraints {};
     
-#if BOOST_WORKAROUND(__SUNPRO_CC, <= 0x580) || defined(__CUDACC__)
+#if BOOST_WORKAROUND(__SUNPRO_CC, <= 0x580)
   // Work around the following bogus error in Sun Studio 11, by
   // turning off the has_constraints function entirely:
   //    Error: complex expression not allowed in dependent template
@@ -45,6 +43,6 @@ struct not_satisfied
     typedef mpl::bool_<value> type;
 };
 
-}} // namespace boost::concepts::detail
+}} // namespace boost::concept::detail
 
 #endif // BOOST_CONCEPT_DETAIL_HAS_CONSTRAINTS_DWA2006429_HPP

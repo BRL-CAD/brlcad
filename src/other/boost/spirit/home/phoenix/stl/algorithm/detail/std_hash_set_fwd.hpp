@@ -19,32 +19,7 @@
 #ifndef STD_HASH_SET_FWD_EN_16_12_2004
 #define STD_HASH_SET_FWD_EN_16_12_2004
 
-#include <boost/config.hpp>
-
-#if defined(BOOST_HAS_HASH)
-
-namespace BOOST_STD_EXTENSION_NAMESPACE
-{
-    template<
-        class Kty
-      , class Hash
-      , class Cmp
-      , class Alloc
-    >
-    class hash_set;
-
-    template<
-        class Kty
-      , class Hash
-      , class Cmp
-      , class Alloc
-    >
-    class hash_multiset;
-}
-
-#elif defined(BOOST_DINKUMWARE_STDLIB)
-
-namespace BOOST_STD_EXTENSION_NAMESPACE
+namespace stdext
 {
     template<
         class Kty
@@ -60,7 +35,5 @@ namespace BOOST_STD_EXTENSION_NAMESPACE
     >
     class hash_multiset;
 }
-
-#endif
 
 #endif

@@ -13,7 +13,6 @@
 #include <boost/optional.hpp>
 #include <pthread.h>
 #include "condition_variable_fwd.hpp"
-#include <map>
 
 #include <boost/config/abi_prefix.hpp>
 
@@ -23,18 +22,8 @@ namespace boost
     
     namespace detail
     {
-        struct tss_cleanup_function;
         struct thread_exit_callback_node;
-        struct tss_data_node
-        {
-            boost::shared_ptr<boost::detail::tss_cleanup_function> func;
-            void* value;
-
-            tss_data_node(boost::shared_ptr<boost::detail::tss_cleanup_function> func_,
-                          void* value_):
-                func(func_),value(value_)
-            {}
-        };
+        struct tss_data_node;
 
         struct thread_data_base;
         typedef boost::shared_ptr<thread_data_base> thread_data_ptr;
@@ -52,14 +41,14 @@ namespace boost
             bool join_started;
             bool joined;
             boost::detail::thread_exit_callback_node* thread_exit_callbacks;
-            std::map<void const*,boost::detail::tss_data_node> tss_data;
+            boost::detail::tss_data_node* tss_data;
             bool interrupt_enabled;
             bool interrupt_requested;
             pthread_cond_t* current_cond;
 
             thread_data_base():
                 done(false),join_started(false),joined(false),
-                thread_exit_callbacks(0),
+                thread_exit_callbacks(0),tss_data(0),
                 interrupt_enabled(true),
                 interrupt_requested(false),
                 current_cond(0)

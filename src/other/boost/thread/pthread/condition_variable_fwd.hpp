@@ -6,7 +6,6 @@
 // (C) Copyright 2007-8 Anthony Williams
 
 #include <boost/assert.hpp>
-#include <boost/throw_exception.hpp>
 #include <pthread.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
@@ -31,7 +30,7 @@ namespace boost
             int const res=pthread_cond_init(&cond,NULL);
             if(res)
             {
-                boost::throw_exception(thread_resource_error());
+                throw thread_resource_error();
             }
         }
         ~condition_variable()
@@ -47,8 +46,7 @@ namespace boost
             while(!pred()) wait(m);
         }
 
-        inline bool timed_wait(unique_lock<mutex>& m,
-                               boost::system_time const& wait_until);
+        bool timed_wait(unique_lock<mutex>& m,boost::system_time const& wait_until);
         bool timed_wait(unique_lock<mutex>& m,xtime const& wait_until)
         {
             return timed_wait(m,system_time(wait_until));

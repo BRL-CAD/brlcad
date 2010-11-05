@@ -62,8 +62,6 @@ namespace boost
         boost::shared_ptr<detail::tss_cleanup_function> cleanup;
         
     public:
-        typedef T element_type;
-        
         thread_specific_ptr():
             cleanup(detail::heap_new<delete_data>(),detail::do_heap_delete<delete_data>())
         {}
@@ -76,7 +74,7 @@ namespace boost
         }
         ~thread_specific_ptr()
         {
-            detail::set_tss_data(this,boost::shared_ptr<detail::tss_cleanup_function>(),0,true);
+            reset();
         }
 
         T* get() const

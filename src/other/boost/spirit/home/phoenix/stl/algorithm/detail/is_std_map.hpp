@@ -20,7 +20,7 @@
 #define IS_STD_MAP_EN_16_12_2004
 
 #include <boost/mpl/bool.hpp>
-#include <boost/detail/container_fwd.hpp>
+#include "./std_map_fwd.hpp"
 
 namespace boost
 {

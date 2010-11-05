@@ -42,8 +42,8 @@ namespace boost { namespace fusion
             template<typename Sig>
             struct result;
 
-            template<typename StrictestSoFar, typename Next>
-            struct result<strictest_traversal_impl(StrictestSoFar, Next)>
+            template<typename Next, typename StrictestSoFar>
+            struct result<strictest_traversal_impl(Next, StrictestSoFar)>
             {
                 typedef typename remove_reference<Next>::type next_value;
                 typedef typename remove_reference<StrictestSoFar>::type strictest_so_far;

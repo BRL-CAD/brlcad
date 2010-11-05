@@ -31,12 +31,13 @@
 //  ++a;
 //
 //    Effects: Atomically increments the value of a
-//    Returns: (long) the new value of a
+//    Returns: nothing
 //
 //  --a;
 //
 //    Effects: Atomically decrements the value of a
-//    Returns: (long) the new value of a
+//    Returns: (long) zero if the new value of a is zero,
+//      unspecified non-zero value otherwise (usually the new value)
 //
 //    Important note: when --a returns zero, it must act as a
 //      read memory barrier (RMB); i.e. the calling thread must

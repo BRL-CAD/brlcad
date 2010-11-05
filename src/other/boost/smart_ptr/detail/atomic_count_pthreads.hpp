@@ -62,10 +62,10 @@ public:
         pthread_mutex_destroy(&mutex_);
     }
 
-    long operator++()
+    void operator++()
     {
         scoped_lock lock(mutex_);
-        return ++value_;
+        ++value_;
     }
 
     long operator--()

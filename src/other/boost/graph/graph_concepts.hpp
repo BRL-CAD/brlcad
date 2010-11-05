@@ -14,7 +14,7 @@
 #define BOOST_GRAPH_CONCEPTS_HPP
 
 #include <boost/config.hpp>
-#include <boost/property_map/property_map.hpp>
+#include <boost/property_map.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/graph/numeric_values.hpp>
@@ -448,7 +448,6 @@ typename T::ThereReallyIsNoMemberByThisNameInT vertices(T const&);
             typedef unsigned Index; // This could be Graph::vertex_index_type
             Map m = get(vertex_index, g);
             Index x = get(vertex_index, g, Vertex());
-            ignore_unused_variable_warning(m);
             ignore_unused_variable_warning(x);
 
             // This is relaxed
@@ -475,7 +474,6 @@ typename T::ThereReallyIsNoMemberByThisNameInT vertices(T const&);
             typedef unsigned Index; // This could be Graph::vertex_index_type
             Map m = get(edge_index, g);
             Index x = get(edge_index, g, Edge());
-            ignore_unused_variable_warning(m);
             ignore_unused_variable_warning(x);
 
             // This is relaxed

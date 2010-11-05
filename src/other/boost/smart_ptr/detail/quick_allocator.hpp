@@ -74,9 +74,8 @@ template<unsigned size, unsigned align_> struct allocator_impl
 
     static lightweight_mutex & mutex()
     {
-        static freeblock< sizeof( lightweight_mutex ), boost::alignment_of< lightweight_mutex >::value > fbm;
-        static lightweight_mutex * pm = new( &fbm ) lightweight_mutex;
-        return *pm;
+        static lightweight_mutex m;
+        return m;
     }
 
     static lightweight_mutex * mutex_init;

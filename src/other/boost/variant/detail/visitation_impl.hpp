@@ -35,10 +35,6 @@
 #include "boost/type_traits/has_nothrow_copy.hpp"
 #include "boost/variant/detail/has_nothrow_move.hpp"
 
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400) 
-# pragma warning (push) 
-# pragma warning (disable : 4702) //unreachable code 
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // BOOST_VARIANT_VISITATION_UNROLLING_LIMIT
@@ -286,9 +282,5 @@ visitation_impl(
 
 }} // namespace detail::variant
 } // namespace boost
-
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)  
-# pragma warning(pop)  
-#endif 
 
 #endif // BOOST_VARIANT_DETAIL_VISITATION_IMPL_HPP

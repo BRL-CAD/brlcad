@@ -6,10 +6,11 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 
-// *Preprocessed* version of the main "template_arity.hpp" header
+// Preprocessed version of "boost/mpl/aux_/template_arity.hpp" header
 // -- DO NOT modify by hand!
 
 namespace boost { namespace mpl { namespace aux {
+
 template< int N > struct arity_tag
 {
     typedef char (&type)[N + 1];
@@ -22,6 +23,7 @@ struct max_arity
 {
     BOOST_STATIC_CONSTANT(int, value =
           ( C6 > 0 ? C6 : ( C5 > 0 ? C5 : ( C4 > 0 ? C4 : ( C3 > 0 ? C3 : ( C2 > 0 ? C2 : ( C1 > 0 ? C1 : -1 ) ) ) ) ) )
+
         );
 };
 
@@ -81,7 +83,7 @@ template< typename F, int N >
 struct template_arity_impl
 {
     BOOST_STATIC_CONSTANT(int, value =
-          sizeof(::boost::mpl::aux::arity_helper(type_wrapper<F>(), arity_tag<N>())) - 1
+          sizeof(arity_helper(type_wrapper<F>(), arity_tag<N>())) - 1
         );
 };
 
@@ -90,7 +92,9 @@ struct template_arity
 {
     BOOST_STATIC_CONSTANT(int, value  = (
           max_arity< template_arity_impl< F,1 >::value, template_arity_impl< F,2 >::value, template_arity_impl< F,3 >::value, template_arity_impl< F,4 >::value, template_arity_impl< F,5 >::value, template_arity_impl< F,6 >::value >::value
+
         ));
+
     typedef mpl::int_<value> type;
 };
 

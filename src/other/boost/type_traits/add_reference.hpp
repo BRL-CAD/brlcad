@@ -51,29 +51,11 @@ struct add_reference_impl
 };
 
 #else
-//
-// We can't filter out rvalue_references at the same level as
-// references or we get ambiguities from msvc:
-//
-
-template <typename T>
-struct add_reference_rvalue_layer
-{
-    typedef T& type;
-};
-
-#ifndef BOOST_NO_RVALUE_REFERENCES
-template <typename T>
-struct add_reference_rvalue_layer<T&&>
-{
-    typedef T&& type;
-};
-#endif
 
 template <typename T>
 struct add_reference_impl
 {
-    typedef typename add_reference_rvalue_layer<T>::type type;
+    typedef T& type;
 };
 
 #ifndef BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION

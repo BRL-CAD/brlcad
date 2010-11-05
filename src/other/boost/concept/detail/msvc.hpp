@@ -5,7 +5,6 @@
 # define BOOST_CONCEPT_CHECK_MSVC_DWA2006429_HPP
 
 # include <boost/preprocessor/cat.hpp>
-# include <boost/concept/detail/backward_compatibility.hpp>
 
 # ifdef BOOST_OLD_CONCEPT_SUPPORT
 #  include <boost/concept/detail/has_constraints.hpp>
@@ -13,7 +12,7 @@
 # endif
 
 
-namespace boost { namespace concepts {
+namespace boost { namespace concept {
 
 
 template <class Model>
@@ -92,7 +91,7 @@ struct require<void(*)(Model)>
 enum                                                \
 {                                                   \
     BOOST_PP_CAT(boost_concept_check,__LINE__) =    \
-    sizeof(::boost::concepts::require<ModelFnPtr>)    \
+    sizeof(::boost::concept::require<ModelFnPtr>)    \
 }
   
 # else // Not vc-7.1
@@ -105,7 +104,7 @@ require_(void(*)(Model));
 enum                                                    \
 {                                                       \
     BOOST_PP_CAT(boost_concept_check,__LINE__) =        \
-      sizeof(::boost::concepts::require_((ModelFnPtr)0)) \
+      sizeof(::boost::concept::require_((ModelFnPtr)0)) \
 }
   
 # endif

@@ -148,7 +148,7 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
             subrule_list<
                 subrule_parser<ID, DefT, ContextT>,
                 RestT> >
-        operator,(subrule_parser<ID, DefT, ContextT> const& rhs_)
+        operator,(subrule_parser<ID, DefT, ContextT> const& rhs)
         {
             return subrule_list<
                 FirstT,
@@ -158,7 +158,7 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
                         first,
                         subrule_list<
                             subrule_parser<ID, DefT, ContextT>,
-                            RestT>(rhs_, rest));
+                            RestT>(rhs, rest));
         }
 
         FirstT first;
@@ -258,10 +258,10 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
         parse_main(ScannerT const& scan) const
         {
             typedef typename parser_result<self_t, ScannerT>::type result_t;
-            result_t result_;
+            result_t result;
             impl::parse_subrule<result_t, ScannerT, ID>::
-                do_(result_, scan);
-            return result_;
+                do_(result, scan);
+            return result;
         }
 
         template <typename ScannerT>

@@ -100,19 +100,19 @@ template<typename int_type, typename charT>
 inline
 int_type
 var_string_to_int(std::istreambuf_iterator<charT>& itr,
-                  const std::istreambuf_iterator<charT>& stream_end,
+                  std::istreambuf_iterator<charT>& /* stream_end */,
                   unsigned int max_length)
 {
   typedef std::basic_string<charT>  string_type;
   unsigned int j = 0;
   string_type s;
-  while (itr != stream_end && (j < max_length) && std::isdigit(*itr)) {
+  while ((j < max_length) && std::isdigit(*itr)) {
     s += (*itr);
-    ++itr;
-    ++j;
+    itr++;
+    j++;
   }
   int_type i = -1;
-  if(!s.empty()) {
+  if(s.length() != 0) {
     i = boost::lexical_cast<int_type>(s);
   }
   return i;

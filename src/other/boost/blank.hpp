@@ -15,11 +15,9 @@
 
 #include "boost/blank_fwd.hpp"
 
-#if !defined(BOOST_NO_IOSTREAM)
 #include <iosfwd> // for std::basic_ostream forward declare
-#include "boost/detail/templated_streams.hpp"
-#endif // BOOST_NO_IOSTREAM
 
+#include "boost/detail/templated_streams.hpp"
 #include "boost/mpl/bool.hpp"
 #include "boost/type_traits/is_empty.hpp"
 #include "boost/type_traits/is_pod.hpp"
@@ -87,8 +85,6 @@ inline bool operator>(const blank&, const blank&)
 
 // streaming support
 //
-#if !defined(BOOST_NO_IOSTREAM)
-
 BOOST_TEMPLATED_STREAM_TEMPLATE(E,T)
 inline BOOST_TEMPLATED_STREAM(ostream, E,T)& operator<<(
       BOOST_TEMPLATED_STREAM(ostream, E,T)& out
@@ -98,8 +94,6 @@ inline BOOST_TEMPLATED_STREAM(ostream, E,T)& operator<<(
     // (output nothing)
     return out;
 }
-
-#endif // BOOST_NO_IOSTREAM
 
 } // namespace boost
 

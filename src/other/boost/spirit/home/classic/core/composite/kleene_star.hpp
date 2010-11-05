@@ -34,11 +34,6 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
     ///////////////////////////////////////////////////////////////////////////
     struct kleene_star_parser_gen;
     
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
-#pragma warning(push)
-#pragma warning(disable:4512) //assignment operator could not be generated
-#endif
-
     template <typename S>
     struct kleene_star
     :   public unary<S, parser<kleene_star<S> > >
@@ -75,10 +70,6 @@ BOOST_SPIRIT_CLASSIC_NAMESPACE_BEGIN
         }
     };
     
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
-#pragma warning(pop)
-#endif
-
     struct kleene_star_parser_gen
     {
         template <typename S>

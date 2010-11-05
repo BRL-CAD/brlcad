@@ -10,7 +10,6 @@
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/thread/detail/config.hpp>
-#include <boost/config.hpp>
 
 #include <pthread.h>
 #include <boost/assert.hpp>
@@ -59,13 +58,10 @@ namespace boost
                 if(flag.epoch==uninitialized_flag)
                 {
                     flag.epoch=being_initialized;
-#ifndef BOOST_NO_EXCEPTIONS
                     try
                     {
-#endif
                         pthread::pthread_mutex_scoped_unlock relocker(&detail::once_epoch_mutex);
                         f();
-#ifndef BOOST_NO_EXCEPTIONS
                     }
                     catch(...)
                     {
@@ -73,7 +69,6 @@ namespace boost
                         BOOST_VERIFY(!pthread_cond_broadcast(&detail::once_epoch_cv));
                         throw;
                     }
-#endif
                     flag.epoch=--detail::once_global_epoch;
                     BOOST_VERIFY(!pthread_cond_broadcast(&detail::once_epoch_cv));
                 }

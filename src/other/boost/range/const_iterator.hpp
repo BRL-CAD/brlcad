@@ -21,7 +21,6 @@
 #include <boost/range/detail/const_iterator.hpp>
 #else
 
-#include <boost/range/detail/extract_optional_type.hpp>
 #include <boost/type_traits/remove_const.hpp>
 #include <cstddef>
 #include <utility>
@@ -32,13 +31,11 @@ namespace boost
     // default
     //////////////////////////////////////////////////////////////////////////
     
-    namespace range_detail {
-        BOOST_RANGE_EXTRACT_OPTIONAL_TYPE( const_iterator )
-    }
-
     template< typename C >
-    struct range_const_iterator : range_detail::extract_const_iterator<C>
-    {};
+    struct range_const_iterator
+    {
+        typedef BOOST_DEDUCED_TYPENAME C::const_iterator type;
+    };
     
     //////////////////////////////////////////////////////////////////////////
     // pair

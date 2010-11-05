@@ -8,7 +8,6 @@
 #include "thread_primitives.hpp"
 #include <stdexcept>
 #include <boost/assert.hpp>
-#include <boost/throw_exception.hpp>
 
 #if defined( BOOST_USE_WINDOWS_H )
 # include <windows.h>
@@ -61,7 +60,7 @@ namespace boost
             void* const heap_memory=detail::win32::HeapAlloc(detail::win32::GetProcessHeap(),0,size);
             if(!heap_memory)
             {
-                boost::throw_exception(std::bad_alloc());
+                throw std::bad_alloc();
             }
             return heap_memory;
         }
@@ -87,7 +86,7 @@ namespace boost
             }
         }
 
-#ifndef BOOST_NO_RVALUE_REFERENCES
+#ifdef BOOST_HAS_RVALUE_REFS
         template<typename T,typename A1>
         inline T* heap_new(A1&& a1)
         {

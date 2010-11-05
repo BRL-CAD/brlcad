@@ -144,11 +144,6 @@ namespace boost
                 start(0),milliseconds(~uintmax_t(0)),relative(true)
             {}
         };
-
-        inline unsigned long pin_to_zero(long value)
-        {
-            return (value<0)?0u:(unsigned long)value;
-        }
     }
 
     namespace this_thread
@@ -168,7 +163,7 @@ namespace boost
         template<typename TimeDuration>
         inline void sleep(TimeDuration const& rel_time)
         {
-            interruptible_wait(detail::pin_to_zero(rel_time.total_milliseconds()));
+            interruptible_wait(static_cast<unsigned long>(rel_time.total_milliseconds()));
         }
         inline void sleep(system_time const& abs_time)
         {

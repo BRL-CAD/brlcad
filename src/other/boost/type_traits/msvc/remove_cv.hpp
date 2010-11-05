@@ -171,7 +171,7 @@ namespace boost {
 
     template<typename T>
     struct remove_cv {
-        typedef boost::detail::remove_cv_impl_typeof<
+        typedef detail::remove_cv_impl_typeof<
             boost::is_pointer<T>::value,
             boost::is_array<T>::value,
             boost::is_const<T>::value,

@@ -196,11 +196,6 @@ struct as_actor<T[N]> {
 //      a variable<T const&> object using a constant reference.
 //
 ///////////////////////////////////////////////////////////////////////////////
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
-#pragma warning(push)
-#pragma warning(disable:4512) //assignment operator could not be generated
-#endif
-
 template <typename T>
 struct variable {
 
@@ -219,10 +214,6 @@ struct variable {
 
     T& var;
 };
-
-#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400)
-#pragma warning(pop)
-#endif
 
 //////////////////////////////////
 template <typename T>

@@ -3,12 +3,10 @@
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
-// (C) Copyright 2007-10 Anthony Williams
+// (C) Copyright 2007-8 Anthony Williams
  
 #include <boost/thread/exceptions.hpp>
-#ifndef BOOST_NO_IOSTREAM
 #include <ostream>
-#endif
 #include <boost/thread/detail/move.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
@@ -41,12 +39,9 @@ namespace boost
             public detail::thread_data_base
         {
         public:
-#ifndef BOOST_NO_RVALUE_REFERENCES
+#ifdef BOOST_HAS_RVALUE_REFS
             thread_data(F&& f_):
                 f(static_cast<F&&>(f_))
-            {}
-            thread_data(F& f_):
-                f(f_)
             {}
 #else
             thread_data(F f_):
@@ -115,15 +110,16 @@ namespace boost
 
         void release_handle();
         
+        mutable boost::mutex thread_info_mutex;
         detail::thread_data_ptr thread_info;
 
         void start_thread();
         
         explicit thread(detail::thread_data_ptr data);
 
-        detail::thread_data_ptr get_thread_info BOOST_PREVENT_MACRO_SUBSTITUTION () const;
+        detail::thread_data_ptr get_thread_info() const;
 
-#ifndef BOOST_NO_RVALUE_REFERENCES
+#ifdef BOOST_HAS_RVALUE_REFS
         template<typename F>
         static inline detail::thread_data_ptr make_thread_info(F&& f)
         {
@@ -131,7 +127,7 @@ namespace boost
         }
         static inline detail::thread_data_ptr make_thread_info(void (*f)())
         {
-            return detail::thread_data_ptr(detail::heap_new<detail::thread_data<void(*)()> >(static_cast<void(*&&)()>(f)));
+            return detail::thread_data_ptr(detail::heap_new<detail::thread_data<void(*)()> >(f));
         }
 #else
         template<typename F>
@@ -145,31 +141,19 @@ namespace boost
             return detail::thread_data_ptr(detail::heap_new<detail::thread_data<F> >(f));
         }
 
-#endif
         struct dummy;
+#endif
     public:
-#if BOOST_WORKAROUND(__SUNPRO_CC, < 0x5100)
-        thread(const volatile thread&); 
-#endif 
         thread();
         ~thread();
 
-#ifndef BOOST_NO_RVALUE_REFERENCES
-#ifdef BOOST_MSVC
-        template <class F>
-        explicit thread(F f,typename disable_if<boost::is_convertible<F&,detail::thread_move_t<F> >, dummy* >::type=0):
-            thread_info(make_thread_info(static_cast<F&&>(f)))
-        {
-            start_thread();
-        }
-#else
+#ifdef BOOST_HAS_RVALUE_REFS
         template <class F>
         thread(F&& f):
             thread_info(make_thread_info(static_cast<F&&>(f)))
         {
             start_thread();
         }
-#endif
 
         thread(thread&& other)
         {
@@ -217,21 +201,14 @@ namespace boost
             thread_info=x->thread_info;
             x->thread_info.reset();
         }
-       
-#if BOOST_WORKAROUND(__SUNPRO_CC, < 0x5100)
-        thread& operator=(thread x) 
-        { 
-            swap(x); 
-            return *this; 
-        } 
-#else
+        
         thread& operator=(detail::thread_move_t<thread> x)
         {
             thread new_thread(x);
             swap(new_thread);
             return *this;
         }
-#endif   
+        
         operator detail::thread_move_t<thread>()
         {
             return move();
@@ -356,14 +333,10 @@ namespace boost
         return lhs.swap(rhs);
     }
     
-#ifndef BOOST_NO_RVALUE_REFERENCES
-    inline thread&& move(thread& t)
-    {
-        return static_cast<thread&&>(t);
-    }
+#ifdef BOOST_HAS_RVALUE_REFS
     inline thread&& move(thread&& t)
     {
-        return static_cast<thread&&>(t);
+        return t;
     }
 #else
     inline detail::thread_move_t<thread> move(detail::thread_move_t<thread> t)
@@ -374,6 +347,27 @@ namespace boost
 
     namespace this_thread
     {
+        class BOOST_THREAD_DECL disable_interruption
+        {
+            disable_interruption(const disable_interruption&);
+            disable_interruption& operator=(const disable_interruption&);
+            
+            bool interruption_was_enabled;
+            friend class restore_interruption;
+        public:
+            disable_interruption();
+            ~disable_interruption();
+        };
+
+        class BOOST_THREAD_DECL restore_interruption
+        {
+            restore_interruption(const restore_interruption&);
+            restore_interruption& operator=(const restore_interruption&);
+        public:
+            explicit restore_interruption(disable_interruption& d);
+            ~restore_interruption();
+        };
+
         thread::id BOOST_THREAD_DECL get_id();
 
         void BOOST_THREAD_DECL interruption_point();
@@ -395,7 +389,7 @@ namespace boost
             thread_data(thread_data_)
         {}
         friend class thread;
-        friend id BOOST_THREAD_DECL this_thread::get_id();
+        friend id this_thread::get_id();
     public:
         id():
             thread_data()
@@ -431,8 +425,6 @@ namespace boost
             return !(thread_data<y.thread_data);
         }
 
-#ifndef BOOST_NO_IOSTREAM
-#ifndef BOOST_NO_MEMBER_TEMPLATE_FRIENDS
         template<class charT, class traits>
         friend std::basic_ostream<charT, traits>& 
         operator<<(std::basic_ostream<charT, traits>& os, const id& x)
@@ -446,33 +438,7 @@ namespace boost
                 return os<<"{Not-any-thread}";
             }
         }
-#else
-        template<class charT, class traits>
-        std::basic_ostream<charT, traits>& 
-        print(std::basic_ostream<charT, traits>& os)
-        {
-            if(thread_data)
-            {
-                return os<<thread_data;
-            }
-            else
-            {
-                return os<<"{Not-any-thread}";
-            }
-        }
-
-#endif
-#endif
     };
-
-#if !defined(BOOST_NO_IOSTREAM) && defined(BOOST_NO_MEMBER_TEMPLATE_FRIENDS)
-    template<class charT, class traits>
-    std::basic_ostream<charT, traits>& 
-    operator<<(std::basic_ostream<charT, traits>& os, const thread::id& x)
-    {
-        return x.print(os);
-    }
-#endif
 
     inline bool thread::operator==(const thread& other) const
     {
@@ -490,7 +456,7 @@ namespace boost
         {
             virtual ~thread_exit_function_base()
             {}
-            virtual void operator()()=0;
+            virtual void operator()() const=0;
         };
         
         template<typename F>
@@ -503,13 +469,13 @@ namespace boost
                 f(f_)
             {}
             
-            void operator()()
+            void operator()() const
             {
                 f();
             }
         };
         
-        void BOOST_THREAD_DECL add_thread_exit_function(thread_exit_function_base*);
+        void add_thread_exit_function(thread_exit_function_base*);
     }
     
     namespace this_thread
@@ -521,6 +487,83 @@ namespace boost
             detail::add_thread_exit_function(thread_exit_func);
         }
     }
+
+    class thread_group:
+        private noncopyable
+    {
+    public:
+        ~thread_group()
+        {
+            for(std::list<thread*>::iterator it=threads.begin(),end=threads.end();
+                it!=end;
+                ++it)
+            {
+                delete *it;
+            }
+        }
+
+        template<typename F>
+        thread* create_thread(F threadfunc)
+        {
+            boost::lock_guard<mutex> guard(m);
+            std::auto_ptr<thread> new_thread(new thread(threadfunc));
+            threads.push_back(new_thread.get());
+            return new_thread.release();
+        }
+        
+        void add_thread(thread* thrd)
+        {
+            if(thrd)
+            {
+                boost::lock_guard<mutex> guard(m);
+                threads.push_back(thrd);
+            }
+        }
+            
+        void remove_thread(thread* thrd)
+        {
+            boost::lock_guard<mutex> guard(m);
+            std::list<thread*>::iterator const it=std::find(threads.begin(),threads.end(),thrd);
+            if(it!=threads.end())
+            {
+                threads.erase(it);
+            }
+        }
+        
+        void join_all()
+        {
+            boost::lock_guard<mutex> guard(m);
+            
+            for(std::list<thread*>::iterator it=threads.begin(),end=threads.end();
+                it!=end;
+                ++it)
+            {
+                (*it)->join();
+            }
+        }
+        
+        void interrupt_all()
+        {
+            boost::lock_guard<mutex> guard(m);
+            
+            for(std::list<thread*>::iterator it=threads.begin(),end=threads.end();
+                it!=end;
+                ++it)
+            {
+                (*it)->interrupt();
+            }
+        }
+        
+        size_t size() const
+        {
+            boost::lock_guard<mutex> guard(m);
+            return threads.size();
+        }
+        
+    private:
+        std::list<thread*> threads;
+        mutable mutex m;
+    };
 }
 
 #ifdef BOOST_MSVC

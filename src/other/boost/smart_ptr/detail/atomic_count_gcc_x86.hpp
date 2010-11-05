@@ -25,9 +25,16 @@ public:
 
     explicit atomic_count( long v ) : value_( static_cast< int >( v ) ) {}
 
-    long operator++()
+    void operator++()
     {
-        return atomic_exchange_and_add( &value_, +1 ) + 1;
+        __asm__
+        (
+            "lock\n\t"
+            "incl %0":
+            "+m"( value_ ): // output (%0)
+            : // inputs
+            "cc" // clobbers
+        );
     }
 
     long operator--()

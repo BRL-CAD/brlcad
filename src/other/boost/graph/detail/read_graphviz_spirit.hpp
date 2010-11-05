@@ -43,7 +43,7 @@
 #include <boost/ref.hpp>
 #include <boost/function/function2.hpp>
 #include <boost/type_traits/is_same.hpp>
-#include <boost/property_map/dynamic_property_map.hpp>
+#include <boost/dynamic_property_map.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/detail/workaround.hpp>
 #include <algorithm>
@@ -581,9 +581,9 @@ struct dot_skipper : public boost::spirit::classic::grammar<dot_skipper>
 } // namespace detail
 
 template <typename MultiPassIterator, typename MutableGraph>
-bool read_graphviz_spirit(MultiPassIterator begin, MultiPassIterator end,
-                          MutableGraph& graph, dynamic_properties& dp,
-                          std::string const& node_id = "node_id") {
+bool read_graphviz(MultiPassIterator begin, MultiPassIterator end,
+                   MutableGraph& graph, dynamic_properties& dp,
+                   std::string const& node_id = "node_id") {
   using namespace boost;
   using namespace boost::spirit::classic;
 

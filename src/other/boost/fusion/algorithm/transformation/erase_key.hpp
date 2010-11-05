@@ -7,7 +7,7 @@
 #if !defined(FUSION_ERASE_KEY_10022005_1851)
 #define FUSION_ERASE_KEY_10022005_1851
 
-#include <boost/fusion/algorithm/query/find.hpp>
+#include <boost/fusion/algorithm/query/detail/assoc_find.hpp>
 #include <boost/fusion/algorithm/transformation/erase.hpp>
 #include <boost/mpl/not.hpp>
 #include <boost/type_traits/is_same.hpp>
@@ -18,15 +18,18 @@ namespace boost { namespace fusion
     {
         template <typename Sequence, typename Key>
         struct erase_key
-          : erase<Sequence, typename find<Sequence, Key>::type>
-        {};
+        {
+            typedef detail::assoc_find<Sequence, Key> filter;
+            typedef typename erase<Sequence, typename filter::type>::type type;
+        };
     }
 
     template <typename Key, typename Sequence>
     inline typename result_of::erase_key<Sequence const, Key>::type
     erase_key(Sequence const& seq)
     {
-        return erase(seq, find<Key>(seq));
+        typedef typename result_of::erase_key<Sequence const, Key>::filter filter;
+        return erase(seq, filter::call(seq));
     }
 }}
 

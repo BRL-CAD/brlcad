@@ -19,17 +19,6 @@
 #include <boost/throw_exception.hpp>
 #include <boost/static_assert.hpp>
 
-// See boost/python/type_id.hpp
-// TODO: add BOOST_TYPEID_COMPARE_BY_NAME to config.hpp
-# if (defined(__GNUC__) && __GNUC__ >= 3) \
- || defined(_AIX) \
- || (   defined(__sgi) && defined(__host_mips)) \
- || (defined(__hpux) && defined(__HP_aCC)) \
- || (defined(linux) && defined(__INTEL_COMPILER) && defined(__ICC))
-#  define BOOST_AUX_ANY_TYPE_ID_NAME
-#include <cstring>
-# endif 
-
 namespace boost
 {
     class any
@@ -175,14 +164,9 @@ namespace boost
     template<typename ValueType>
     ValueType * any_cast(any * operand)
     {
-        return operand && 
-#ifdef BOOST_AUX_ANY_TYPE_ID_NAME
-            std::strcmp(operand->type().name(), typeid(ValueType).name()) == 0
-#else
-            operand->type() == typeid(ValueType)
-#endif
-            ? &static_cast<any::holder<ValueType> *>(operand->content)->held
-            : 0;
+        return operand && operand->type() == typeid(ValueType)
+                    ? &static_cast<any::holder<ValueType> *>(operand->content)->held
+                    : 0;
     }
 
     template<typename ValueType>

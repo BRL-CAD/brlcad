@@ -30,15 +30,14 @@
 namespace boost {
 
 template<typename F> struct result_of;
-template<typename F> struct tr1_result_of; // a TR1-style implementation of result_of
 
 #if !defined(BOOST_NO_SFINAE) && !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
 namespace detail {
 
 BOOST_MPL_HAS_XXX_TRAIT_DEF(result_type)
 
-template<typename F, typename FArgs, bool HasResultType> struct tr1_result_of_impl;
-template<typename F> struct cpp0x_result_of_impl;
+template<typename F, typename FArgs, bool HasResultType> struct result_of_impl;
+template<typename F> struct result_of_decltype_impl;
 
 template<typename F>
 struct result_of_void_impl
@@ -61,10 +60,10 @@ struct result_of_void_impl<R (&)(void)>
 // Determine the return type of a function pointer or pointer to member.
 template<typename F, typename FArgs>
 struct result_of_pointer
-  : tr1_result_of_impl<typename remove_cv<F>::type, FArgs, false> { };
+  : result_of_impl<typename remove_cv<F>::type, FArgs, false> { };
 
 template<typename F, typename FArgs>
-struct tr1_result_of_impl<F, FArgs, true>
+struct result_of_impl<F, FArgs, true>
 {
   typedef typename F::result_type type;
 };
@@ -80,10 +79,10 @@ struct result_of_nested_result : F::template result<FArgs>
 {};
 
 template<typename F, typename FArgs>
-struct tr1_result_of_impl<F, FArgs, false>
+struct result_of_impl<F, FArgs, false>
   : mpl::if_<is_function_with_no_args<FArgs>,
-             result_of_void_impl<F>,
-             result_of_nested_result<F, FArgs> >::type
+	     result_of_void_impl<F>,
+	     result_of_nested_result<F, FArgs> >::type
 {};
 
 } // end namespace detail

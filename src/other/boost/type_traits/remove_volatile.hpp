@@ -53,17 +53,6 @@ struct remove_volatile_impl
         >::type type;
 };
 
-//
-// We can't filter out rvalue_references at the same level as
-// references or we get ambiguities from msvc:
-//
-#ifndef BOOST_NO_RVALUE_REFERENCES
-template <typename T>
-struct remove_volatile_impl<T&&>
-{
-    typedef T&& type;
-};
-#endif
 } // namespace detail
 
 // * convert a type T to a non-volatile type - remove_volatile<T>

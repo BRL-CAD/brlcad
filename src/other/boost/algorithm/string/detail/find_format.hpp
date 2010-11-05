@@ -24,7 +24,26 @@ namespace boost {
 
 // find_format_copy (iterator variant) implementation -------------------------------//
 
-           template< 
+            template< 
+                typename OutputIteratorT,
+                typename InputT,
+                typename FormatterT,
+                typename FindResultT >
+            inline OutputIteratorT find_format_copy_impl(
+                OutputIteratorT Output,
+                const InputT& Input,
+                FormatterT Formatter,
+                const FindResultT& FindResult )
+            {       
+                return find_format_copy_impl2( 
+                    Output,
+                    Input,
+                    Formatter,
+                    FindResult,
+                    Formatter(FindResult) );
+            }
+
+            template< 
                 typename OutputIteratorT,
                 typename InputT,
                 typename FormatterT,
@@ -49,48 +68,40 @@ namespace boost {
                 if ( !M )
                 {
                     // Match not found - return original sequence
-                    Output = std::copy( ::boost::begin(Input), ::boost::end(Input), Output );
+                    std::copy( ::boost::begin(Input), ::boost::end(Input), Output );
                     return Output;
                 }
 
                 // Copy the beginning of the sequence
-                Output = std::copy( ::boost::begin(Input), ::boost::begin(M), Output );
+                std::copy( ::boost::begin(Input), ::boost::begin(M), Output );
                 // Format find result
                 // Copy formated result
-                Output = std::copy( ::boost::begin(M.format_result()), ::boost::end(M.format_result()), Output );
+                std::copy( ::boost::begin(M.format_result()), ::boost::end(M.format_result()), Output );
                 // Copy the rest of the sequence
-                Output = std::copy( M.end(), ::boost::end(Input), Output );
+                std::copy( M.end(), ::boost::end(Input), Output );
 
                 return Output;
             }
 
+// find_format_copy implementation --------------------------------------------------//
+
             template< 
-                typename OutputIteratorT,
-                typename InputT,
+                typename InputT, 
                 typename FormatterT,
                 typename FindResultT >
-            inline OutputIteratorT find_format_copy_impl(
-                OutputIteratorT Output,
+            inline InputT find_format_copy_impl(
                 const InputT& Input,
                 FormatterT Formatter,
-                const FindResultT& FindResult )
-            {       
-                if( ::boost::algorithm::detail::check_find_result(Input, FindResult) ) {
-                return ::boost::algorithm::detail::find_format_copy_impl2( 
-                    Output,
+                const FindResultT& FindResult)
+            {
+                return find_format_copy_impl2(
                     Input,
                     Formatter,
                     FindResult,
                     Formatter(FindResult) );
-                } else {
-                    return std::copy( ::boost::begin(Input), ::boost::end(Input), Output );
-            }
             }
 
- 
-// find_format_copy implementation --------------------------------------------------//
-
-           template< 
+            template< 
                 typename InputT, 
                 typename FormatterT,
                 typename FindResultT,
@@ -127,28 +138,24 @@ namespace boost {
                 return Output;
             }
 
-            template< 
-                typename InputT, 
+// replace implementation ----------------------------------------------------//
+        
+            template<
+                typename InputT,
                 typename FormatterT,
                 typename FindResultT >
-            inline InputT find_format_copy_impl(
-                const InputT& Input,
+            inline void find_format_impl( 
+                InputT& Input,
                 FormatterT Formatter,
                 const FindResultT& FindResult)
             {
-                if( ::boost::algorithm::detail::check_find_result(Input, FindResult) ) {
-                return ::boost::algorithm::detail::find_format_copy_impl2(
+                find_format_impl2(
                     Input,
                     Formatter,
                     FindResult,
                     Formatter(FindResult) );
-                } else {
-                    return Input;
-            }
             }
 
- // replace implementation ----------------------------------------------------//
-        
             template<
                 typename InputT,
                 typename FormatterT,
@@ -176,25 +183,7 @@ namespace boost {
                 }
 
                 // Replace match
-                ::boost::algorithm::detail::replace( Input, M.begin(), M.end(), M.format_result() );
-            }
-
-            template<
-                typename InputT,
-                typename FormatterT,
-                typename FindResultT >
-            inline void find_format_impl( 
-                InputT& Input,
-                FormatterT Formatter,
-                const FindResultT& FindResult)
-            {
-                if( ::boost::algorithm::detail::check_find_result(Input, FindResult) ) {
-                ::boost::algorithm::detail::find_format_impl2(
-                    Input,
-                    Formatter,
-                    FindResult,
-                    Formatter(FindResult) );
-            }
+                replace( Input, M.begin(), M.end(), M.format_result() );
             }
 
         } // namespace detail

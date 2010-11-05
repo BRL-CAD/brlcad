@@ -65,11 +65,6 @@
 #else
 #define BOOST_MSVC_WORKAROUND_GUARD 0
 #endif
-#ifndef BOOST_MSVC_FULL_VER
-#define BOOST_MSVC_FULL_VER_WORKAROUND_GUARD 1
-#else
-#define BOOST_MSVC_FULL_VER_WORKAROUND_GUARD 0
-#endif
 #ifndef __GNUC__
 #define __GNUC___WORKAROUND_GUARD 1
 #else

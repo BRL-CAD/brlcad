@@ -11,7 +11,6 @@
 // Note: this header is a header template and must NOT have multiple-inclusion
 // protection.
 #include <boost/function/detail/prologue.hpp>
-#include <boost/detail/no_exceptions_support.hpp>
 
 #if defined(BOOST_MSVC)
 #   pragma warning( push )
@@ -625,10 +624,14 @@ namespace boost {
         assign_to(const reference_wrapper<FunctionObj>& f, 
                   function_buffer& functor, function_obj_ref_tag)
         {
-          functor.obj_ref.obj_ptr = (void *)f.get_pointer();
-          functor.obj_ref.is_const_qualified = is_const<FunctionObj>::value;
-          functor.obj_ref.is_volatile_qualified = is_volatile<FunctionObj>::value;
-          return true;
+          if (!boost::detail::function::has_empty_target(f.get_pointer())) {
+            functor.obj_ref.obj_ptr = (void *)f.get_pointer();
+            functor.obj_ref.is_const_qualified = is_const<FunctionObj>::value;
+            functor.obj_ref.is_volatile_qualified = is_volatile<FunctionObj>::value;
+            return true;
+          } else {
+            return false;
+          }
         }
         template<typename FunctionObj,typename Allocator>
         bool 
@@ -674,11 +677,6 @@ namespace boost {
     typedef boost::detail::function::BOOST_FUNCTION_VTABLE<
               R BOOST_FUNCTION_COMMA BOOST_FUNCTION_TEMPLATE_ARGS>
       vtable_type;
-
-    vtable_type* get_vtable() const {
-      return reinterpret_cast<vtable_type*>(
-               reinterpret_cast<std::size_t>(vtable) & ~(std::size_t)0x01);
-    }
 
     struct clear_type {};
 
@@ -759,7 +757,7 @@ namespace boost {
       if (this->empty())
         boost::throw_exception(bad_function_call());
 
-      return get_vtable()->invoker
+      return static_cast<vtable_type*>(vtable)->invoker
                (this->functor BOOST_FUNCTION_COMMA BOOST_FUNCTION_ARGS);
     }
 #else
@@ -783,26 +781,24 @@ namespace boost {
     operator=(Functor BOOST_FUNCTION_TARGET_FIX(const &) f)
     {
       this->clear();
-      BOOST_TRY  {
+      try {
         this->assign_to(f);
-      } BOOST_CATCH (...) {
+      } catch (...) {
         vtable = 0;
-        BOOST_RETHROW;
+        throw;
       }
-      BOOST_CATCH_END
       return *this;
     }
     template<typename Functor,typename Allocator>
     void assign(Functor BOOST_FUNCTION_TARGET_FIX(const &) f, Allocator a)
     {
       this->clear();
-      BOOST_TRY{
+      try {
         this->assign_to_a(f,a);
-      } BOOST_CATCH (...) {
+      } catch (...) {
         vtable = 0;
-        BOOST_RETHROW;
+        throw;
       }
-      BOOST_CATCH_END
     }
 
 #ifndef BOOST_NO_SFINAE
@@ -827,13 +823,12 @@ namespace boost {
         return *this;
 
       this->clear();
-      BOOST_TRY {
+      try {
         this->assign_to_own(f);
-      } BOOST_CATCH (...) {
+      } catch (...) {
         vtable = 0;
-        BOOST_RETHROW;
+        throw;
       }
-      BOOST_CATCH_END
       return *this;
     }
 
@@ -852,8 +847,7 @@ namespace boost {
     void clear()
     {
       if (vtable) {
-        if (!this->has_trivial_copy_and_destroy())
-          get_vtable()->clear(this->functor);
+        reinterpret_cast<vtable_type*>(vtable)->clear(this->functor);
         vtable = 0;
       }
     }
@@ -882,11 +876,8 @@ namespace boost {
     {
       if (!f.empty()) {
         this->vtable = f.vtable;
-        if (this->has_trivial_copy_and_destroy())
-          this->functor = f.functor;
-        else
-          get_vtable()->base.manager(f.functor, this->functor,
-                                     boost::detail::function::clone_functor_tag);
+        f.vtable->manager(f.functor, this->functor,
+                          boost::detail::function::clone_functor_tag);
       }
     }
 
@@ -912,15 +903,8 @@ namespace boost {
       static vtable_type stored_vtable = 
         { { &manager_type::manage }, &invoker_type::invoke };
 
-      if (stored_vtable.assign_to(f, functor)) {
-        std::size_t value = reinterpret_cast<std::size_t>(&stored_vtable.base);
-        if (boost::has_trivial_copy_constructor<Functor>::value &&
-            boost::has_trivial_destructor<Functor>::value &&
-            detail::function::function_allows_small_object_optimization<Functor>::value)
-          value |= (std::size_t)0x01;
-        vtable = reinterpret_cast<detail::function::vtable_base *>(value);
-      } else 
-        vtable = 0;
+      if (stored_vtable.assign_to(f, functor)) vtable = &stored_vtable.base;
+      else vtable = 0;
     }
 
     template<typename Functor,typename Allocator>
@@ -946,15 +930,8 @@ namespace boost {
       static vtable_type stored_vtable =
         { { &manager_type::manage }, &invoker_type::invoke };
 
-      if (stored_vtable.assign_to_a(f, functor, a)) { 
-        std::size_t value = reinterpret_cast<std::size_t>(&stored_vtable.base);
-        if (boost::has_trivial_copy_constructor<Functor>::value &&
-            boost::has_trivial_destructor<Functor>::value &&
-            detail::function::function_allows_small_object_optimization<Functor>::value)
-          value |= (std::size_t)0x01;
-        vtable = reinterpret_cast<detail::function::vtable_base *>(value);
-      } else 
-        vtable = 0;
+      if (stored_vtable.assign_to_a(f, functor, a)) vtable = &stored_vtable.base;
+      else vtable = 0;
     }
 
     // Moves the value from the specified argument to *this. If the argument 
@@ -965,23 +942,23 @@ namespace boost {
       if (&f == this)
         return;
 
-      BOOST_TRY {
+#if !defined(BOOST_NO_EXCEPTIONS)      
+      try {
+#endif
         if (!f.empty()) {
           this->vtable = f.vtable;
-          if (this->has_trivial_copy_and_destroy())
-            this->functor = f.functor;
-          else
-            get_vtable()->base.manager(f.functor, this->functor,
-                                     boost::detail::function::move_functor_tag);
-          f.vtable = 0;
+          f.vtable->manager(f.functor, this->functor,
+                            boost::detail::function::move_functor_tag);
+		  f.vtable = 0;
+#if !defined(BOOST_NO_EXCEPTIONS)      
         } else {
           clear();
         }
-      } BOOST_CATCH (...) {
+      } catch (...) {
         vtable = 0;
-        BOOST_RETHROW;
+        throw;
       }
-      BOOST_CATCH_END
+#endif
     }
   };
 
@@ -1002,14 +979,13 @@ namespace boost {
   template<typename R BOOST_FUNCTION_COMMA BOOST_FUNCTION_TEMPLATE_PARMS>
   typename BOOST_FUNCTION_FUNCTION<
       R BOOST_FUNCTION_COMMA BOOST_FUNCTION_TEMPLATE_ARGS>::result_type
-  inline 
-  BOOST_FUNCTION_FUNCTION<R BOOST_FUNCTION_COMMA BOOST_FUNCTION_TEMPLATE_ARGS>
+   BOOST_FUNCTION_FUNCTION<R BOOST_FUNCTION_COMMA BOOST_FUNCTION_TEMPLATE_ARGS>
   ::operator()(BOOST_FUNCTION_PARMS) const
   {
     if (this->empty())
       boost::throw_exception(bad_function_call());
 
-    return get_vtable()->invoker
+    return reinterpret_cast<const vtable_type*>(vtable)->invoker
              (this->functor BOOST_FUNCTION_COMMA BOOST_FUNCTION_ARGS);
   }
 #endif

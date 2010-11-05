@@ -21,16 +21,9 @@
 #  define BOOST_NO_SWPRINTF
 #endif
 
-//  Default defines for BOOST_SYMBOL_EXPORT and BOOST_SYMBOL_IMPORT
-//  If a compiler doesn't support __declspec(dllexport)/__declspec(dllimport),
-//  its boost/config/compiler/ file must define BOOST_SYMBOL_EXPORT and
-//  BOOST_SYMBOL_IMPORT
-#ifndef BOOST_SYMBOL_EXPORT
+#if !defined(__GNUC__) && !defined(BOOST_HAS_DECLSPEC)
 #  define BOOST_HAS_DECLSPEC
-#  define BOOST_SYMBOL_EXPORT __declspec(dllexport)
-#  define BOOST_SYMBOL_IMPORT __declspec(dllimport)
 #endif
-
 
 #if defined(__MINGW32__) && ((__MINGW32_MAJOR_VERSION > 2) || ((__MINGW32_MAJOR_VERSION == 2) && (__MINGW32_MINOR_VERSION >= 0)))
 #  define BOOST_HAS_STDINT_H

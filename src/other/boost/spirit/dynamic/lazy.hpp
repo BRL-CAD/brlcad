@@ -1,27 +1,62 @@
 /*=============================================================================
-  Copyright (c) 2001-2008 Joel de Guzman
-  Copyright (c) 2001-2008 Hartmut Kaiser
-  http://spirit.sourceforge.net/
+    Copyright (c) 2003 Joel de Guzman
+    Copyright (c) 2003 Vaclav Vesely
+    http://spirit.sourceforge.net/
 
-  Distributed under the Boost Software License, Version 1.0. (See accompanying
-  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+    Use, modification and distribution is subject to the Boost Software
+    License, Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
+    http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
-#ifndef BOOST_SPIRIT_DEPRECATED_INCLUDE_LAZY
-#define BOOST_SPIRIT_DEPRECATED_INCLUDE_LAZY
+#ifndef BOOST_SPIRIT_LAZY_HPP
+#define BOOST_SPIRIT_LAZY_HPP
 
-#include <boost/version.hpp>
+////////////////////////////////////////////////////////////////////////////////
+#include <boost/spirit/core/parser.hpp>
+#include <boost/spirit/phoenix/actor.hpp>
 
-#if BOOST_VERSION >= 103800
-#if defined(_MSC_VER) || defined(__BORLANDC__) || defined(__DMC__)
-#  pragma message ("Warning: This header is deprecated. Please use: boost/spirit/include/classic_lazy.hpp")
-#elif defined(__GNUC__) || defined(__HP_aCC) || defined(__SUNPRO_CC) || defined(__IBMCPP__)
-#  warning "This header is deprecated. Please use: boost/spirit/include/classic_lazy.hpp"
-#endif
-#endif
+////////////////////////////////////////////////////////////////////////////////
 
-#if !defined(BOOST_SPIRIT_USE_OLD_NAMESPACE)
-#define BOOST_SPIRIT_USE_OLD_NAMESPACE
-#endif
-#include <boost/spirit/include/classic_lazy.hpp>
+namespace boost { namespace spirit
+{
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // lazy_parser, holds phoenix actor which returns a spirit parser.
+    //
+    ////////////////////////////////////////////////////////////////////////////
 
-#endif
+    template<class ActorT>
+    struct lazy_parser : parser<lazy_parser<ActorT> >
+    {
+        typedef lazy_parser<ActorT> self_t;
+        typedef typename phoenix::actor_result<
+            ActorT, phoenix::tuple<> >::plain_type actor_result_t;
+
+        template<typename ScannerT>
+        struct result
+        {
+            typedef typename
+                parser_result<actor_result_t, ScannerT>::type
+            type;
+        };
+
+        lazy_parser(ActorT const& actor_)
+        : actor(actor_) {}
+
+        template<typename ScannerT>
+        typename parser_result<self_t, ScannerT>::type
+        parse(ScannerT const& scan) const
+        { return actor().parse(scan); }
+
+        ActorT actor;
+    };
+
+    //////////////////////////////
+    // lazy_p, returns lazy_parser
+    // Usage: lazy_p(actor)
+    template<class ActorT>
+    lazy_parser<ActorT> lazy_p(ActorT const& actor)
+    { return lazy_parser<ActorT>(actor); }
+
+}} // namespace boost::spirit
+
+#endif // BOOST_SPIRIT_LAZY_HPP
