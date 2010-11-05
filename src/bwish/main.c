@@ -48,8 +48,11 @@
  * the global namespace..  allow for easy means to disable the import.
  */
 #define IMPORT_ITCL	1
+
+#ifdef BWISH
 #define IMPORT_ITK	1
 #define IMPORT_IWIDGETS	1
+#endif
 
 extern int cmdInit(Tcl_Interp *interp);
 extern void Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp);
@@ -76,7 +79,7 @@ Cad_AppInit(Tcl_Interp *interp)
       return TCL_ERROR;
     }
 
-#ifdef HAVE_TK
+#ifdef BWISH
     if (Tk_Init(interp) == TCL_ERROR) {
       return TCL_ERROR;
     }
