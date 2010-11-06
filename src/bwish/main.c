@@ -71,6 +71,8 @@ Cad_AppInit(Tcl_Interp *interp)
 
     int init_tcl = 1;
     int init_itcl = 1;
+    /* Go ahead and add the BRL-CAD paths */
+    tclcad_auto_path(interp);
 #ifdef BWISH
     int init_tk = 1;
     int init_itk = 1;
@@ -86,23 +88,14 @@ Cad_AppInit(Tcl_Interp *interp)
 #endif
 
 
-    /* Go ahead and add the BRL-CAD paths - if there is anything
-     * installed there we want to use it in preference to anything
-     * in system path */
-   /* if (Tcl_Eval(interp, "set auto_path [linsert $auto_path 0 /usr/brlcad/lib]") != TCL_OK) {
-	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	return TCL_ERROR;
-    }*/
-    tclcad_auto_path(interp);
-
-    /* Initialize Tcl */
+    /* Initialize Itcl */
     if (Tcl_Eval(interp, "package require Itcl") != TCL_OK) {
 	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 
 #ifdef BWISH
-    /* Initialize Tk */
+    /* Initialize Itk */
     if (Tcl_Eval(interp, "package require Itk") != TCL_OK) {
 	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;

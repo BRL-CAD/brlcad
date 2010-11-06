@@ -213,6 +213,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     /* if uninstalled, add search paths for source invocation */
     if (from_built) {
+        bu_vls_printf(&auto_path, "%c%s%clib%ctcl8.5",BU_PATH_SEPARATOR, BUILD_BINARY_DIR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
+        bu_vls_printf(&auto_path, "%c%s%clib",BU_PATH_SEPARATOR, BUILD_BINARY_DIR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%cunix",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%cother%ctcl%clibrary",
