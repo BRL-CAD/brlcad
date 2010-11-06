@@ -93,7 +93,7 @@ ENDIF(PIPE_COMPILER_FLAG)
 
 #-----------------------------------------------------------------------------
 # Set CMake module path
-SET(CMAKE_MODULE_PATH "${TCL_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
+SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
 
 #-----------------------------------------------------------------------------
 # Tcl/Tk's normal build system uses autotools macros, referred to as the
