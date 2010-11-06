@@ -68,11 +68,18 @@ FOREACH(script ${IWIDGETS_SCRIPTS})
 		  install(FILES ${script} DESTINATION lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/scripts)
 ENDFOREACH(script ${IWIDGETS_SCRIPTS})
 
+FOREACH(file ${IWIDGETS_SCRIPTS})
+		  get_filename_component(filename ${file} NAME)
+		  configure_file(${file}
+					 ${CMAKE_BINARY_DIR}/lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/scripts/${filename} COPYONLY)
+ENDFOREACH(file ${ITK_LIBRARY_FILES})
+
 # Create the pkgIndex.tcl file.
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${IWIDGETS_PKGNAME} ${IWIDGETS_PKGVERSION} [list source [file join $dir iwidgets.tcl]]")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
+configure_file(${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl ${CMAKE_BINARY_DIR}/lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/pkgIndex.tcl COPYONLY)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.tcl.in ${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl DESTINATION lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
-install(FILES license.terms DESTINATION lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
+configure_file(${CMAKE_CURRENT_BINARY_DIR}/iwidgets.tcl ${CMAKE_BINARY_DIR}/lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION}/iwidgets.tcl COPYONLY)
 install(FILES license.terms DESTINATION lib/${IWIDGETS_PKGNAME}${IWIDGETS_PKGVERSION})
