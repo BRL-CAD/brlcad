@@ -78,7 +78,7 @@ ENDMACRO(ADD_TCL_CFLAG)
 # SC_ENABLE_THREADS
 #------------------------------------------------------------------------
 MACRO(SC_ENABLE_THREADS)
-	OPTION(TCL_THREADS "Enable Tcl Thread support" ON)
+	OPTION(TCL_THREADS "Enable Tcl Thread support" OFF)
 	IF(TCL_THREADS)
 		ADD_TCL_CFLAG(TCL_THREADS)
 		ADD_TCL_CFLAG(USE_THREAD_ALLOC)
