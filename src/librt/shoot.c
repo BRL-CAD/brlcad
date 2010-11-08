@@ -110,7 +110,7 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	RT_CK_RTI(rtip);
     }
     if (BU_PTBL_TEST(&resp->re_pieces_pending)) {
-        bu_ptbl_free(&resp->re_pieces_pending);
+	bu_ptbl_free(&resp->re_pieces_pending);
     }
 
     if (!resp->re_pieces) {
@@ -126,7 +126,7 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	for (i = rtip->rti_nsolids_with_pieces-1; i >= 0; i--) {
 	    psp = &resp->re_pieces[i];
 
-	    /* 
+	    /*
 	     * Skip uninitialized structures.
 	     * Doing this until we figure out why all "struct rt_piecestate" array
 	     * members are NOT getting initialized in rt_res_pieces_init() above.

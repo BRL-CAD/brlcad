@@ -2704,7 +2704,9 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    NMG_CK_SHELL(s);
+#if 0
 	    nmg_s_split_touchingloops(s, tol);
+#endif
 
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);

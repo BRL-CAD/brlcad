@@ -1226,7 +1226,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		bu_vls_printf(logstr, " }");
 	    }
 	} else if (!isdigit(attr[1])) {
-	    bu_vls_printf(logstr, 
+	    bu_vls_printf(logstr,
 			  "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n");
 	    return BRLCAD_ERROR;
 	}
@@ -1235,7 +1235,7 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	if (ptr) {
 	    /* a specific point on a specific curve */
 	    if (!isdigit(*(ptr+1))) {
-		bu_vls_printf(logstr, 
+		bu_vls_printf(logstr,
 			      "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n");
 		return BRLCAD_ERROR;
 	    }

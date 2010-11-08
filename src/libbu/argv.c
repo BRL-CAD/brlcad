@@ -47,7 +47,7 @@ bu_free_array(int argc, char *argv[], const char *str)
 {
     int count = 0;
 
-    if (!argv || argc <= 0) {
+    if (UNLIKELY(!argv || argc <= 0)) {
 	return;
     }
 
@@ -69,7 +69,7 @@ bu_dup_argv(int argc, const char *argv[])
     register int i;
     char **av;
 
-    if (argc < 1)
+    if (UNLIKELY(argc < 1))
 	return (char **)0;
 
     av = (char **)bu_calloc((unsigned int)argc+1, sizeof(char *), "bu_copy_argv");
@@ -133,7 +133,7 @@ bu_argv_from_path(const char *path, int *ac)
     char *headpath;
     register int i;
 
-    if (path == (char *)0 || path[0] == '\0')
+    if (UNLIKELY(path == (char *)0 || path[0] == '\0'))
 	return (char **)0;
 
     newstr = bu_strdup(path);
@@ -143,7 +143,7 @@ bu_argv_from_path(const char *path, int *ac)
     while (newstr[i] == '/')
 	++i;
 
-    if (newstr[i] == '\0') {
+    if (UNLIKELY(newstr[i] == '\0')) {
 	bu_free((genptr_t)newstr, "bu_argv_from_path");
 	return (char **)0;
     }

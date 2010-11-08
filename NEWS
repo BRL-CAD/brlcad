@@ -10,7 +10,24 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2010-06-30  Release 7.16.10                                    ---
+--- 2010-09-XX  Release 7.18.0                                     ---
+----------------------------------------------------------------------
+
+* improved robustness of CSG boolean tree processing - Sean Morrison
+* improved loading of Pro/E export plugin on Windows - Bob Parker
+* added ray bundle shooting capability to rtshot - Keith Bowman
+* improved robustness of facetization and export - Richard Weiss
+* cleaner logging of facetize command BoT failures - Sean Morrison
+* removed 'query' command line prompting tool - Sean Morrison
+* increased optimized package run-time performance - Sean Morrison
+* fixed crash when raytracing multiple frames - Keith Bowman
+* fixed mged zap crash while using preview - Keith Bowman, Bob Parker
+* added ability to toggle mged status bar via .mgedrc - Rob Shinn
+* new mged 'bot' command for accessing BoT properties - Nicholas Reed
+
+
+----------------------------------------------------------------------
+--- 2010-08-04  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
 The release concludes a phenomenal effort by Jesica Guidice who
@@ -101,7 +118,7 @@ alpha release status as BRL-CAD's next generation geometry editor.
 * fixed mged units bug supporting decameter (Dm) units - Bob Parker
 * improved robustness of NURBS trimming during raytrace - Keith Bowman
 * Improved put_comb command usage and added documentation - Cliff Yapp
-# mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
+* mged finds g/pl asc tools, dbupgrade, and rt on Windows - Bob Parker
 * Improve behavior of editor invocation in classic mode - Cliff Yapp
 * reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker

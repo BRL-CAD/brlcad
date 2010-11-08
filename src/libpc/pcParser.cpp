@@ -30,21 +30,24 @@
 /* Grammar Classes */
 
 Variable_grammar::Variable_grammar(VCSet &vcs) :
-vcset(vcs)
+    vcset(vcs)
 {
 }
+
 
 Variable_grammar::~Variable_grammar()
 {
 }
 
+
 Constraint_grammar::Constraint_grammar(VCSet &vcs) :
-vcset(vcs)
+    vcset(vcs)
 {
 }
 Constraint_grammar::~Constraint_grammar()
 {
 }
+
 
 /* Parser Class */
 
@@ -54,6 +57,7 @@ Parser::Parser(VCSet &vcs): vcset(vcs), var_gram(NULL), con_gram(NULL)
     con_gram = new Constraint_grammar(vcset);
 }
 
+
 Parser::~Parser()
 {
     if (var_gram)
@@ -62,19 +66,20 @@ Parser::~Parser()
         delete con_gram;
 }
 
-void Parser::parse(struct pc_pc_set * pcs)
+
+void Parser::parse(struct pc_pc_set *pcs)
 {
     /*Iterate through the parameter set first*/
-    struct pc_param * par;
-    struct pc_constrnt * con;
+    struct pc_param *par;
+    struct pc_constrnt *con;
     while (BU_LIST_WHILE(par, pc_param, &(pcs->ps->l))) {
 	name.clear();
 	//std::cout<<"Parameter expression Input: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
 	if (par->ctype == PC_DB_BYEXPR) {
 	    boost::spirit::parse_info<> p_info = \
-	    boost::spirit::parse(\
-			    (char *) bu_vls_addr(&(par->data.expression)),\
-			    *var_gram, boost::spirit::space_p);
+		boost::spirit::parse(\
+				     (char *) bu_vls_addr(&(par->data.expression)), \
+				     *var_gram, boost::spirit::space_p);
 	    if (p_info.full) {
 		//vcset.pushVar();
 	    } else {
@@ -82,8 +87,8 @@ void Parser::parse(struct pc_pc_set * pcs)
 	    }
 	    bu_vls_free(&(par->data.expression));
 	} else {
-	    vcset.addParameter((char *) bu_vls_addr(&(par->name)),\
-					par->dtype,par->data.ptr);
+	    vcset.addParameter((char *) bu_vls_addr(&(par->name)), \
+			       par->dtype, par->data.ptr);
 	}
 	bu_vls_free(&(par->name));
 	BU_LIST_DEQUEUE(&(par->l));
@@ -95,7 +100,7 @@ void Parser::parse(struct pc_pc_set * pcs)
 	} else if (con->ctype == PC_DB_BYSTRUCT) {
 	    //std::cout << "Constraint by Struct -> \n";
 	    vcset.addConstraint(con);
-	    bu_free(con->args,"free argument array");
+	    bu_free(con->args, "free argument array");
 	}
 	/*boost::spirit::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
         bu_vls_free(&(con->name));
@@ -103,6 +108,7 @@ void Parser::parse(struct pc_pc_set * pcs)
 	bu_free(con, "free constraint");
     }
 }
+
 
 /** @} */
 /*

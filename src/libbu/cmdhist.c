@@ -43,7 +43,7 @@ _bu_history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct time
     struct bu_cmdhist *new_hist;
     const char *eol = "\n";
 
-    if (strcmp(bu_vls_addr(cmdp), eol) == 0)
+    if (UNLIKELY(strcmp(bu_vls_addr(cmdp), eol) == 0))
 	return;
 
     new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
@@ -62,9 +62,9 @@ _bu_history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct time
 HIDDEN int
 _bu_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
-    if (finish->tv_sec == 0 && finish->tv_usec == 0)
+    if (UNLIKELY(finish->tv_sec == 0 && finish->tv_usec == 0))
 	return -1;
-    if (start->tv_sec == 0 && start->tv_usec == 0)
+    if (UNLIKELY(start->tv_sec == 0 && start->tv_usec == 0))
 	return -1;
 
     tvdiff->tv_sec = finish->tv_sec - start->tv_sec;
@@ -116,7 +116,7 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 		return TCL_ERROR;
 	    } else {
 		fp = fopen(argv[3], "ab+");
-		if (fp == NULL) {
+		if (UNLIKELY(fp == NULL)) {
 		    Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -173,7 +173,7 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (argv[2][0] == '\n' || argv[2][0] == '\0')
+    if (UNLIKELY(argv[2][0] == '\n' || argv[2][0] == '\0'))
 	return TCL_OK;
 
     bu_vls_init(&vls);

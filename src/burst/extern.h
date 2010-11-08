@@ -19,7 +19,7 @@
  *
  */
 /** @file extern.h
- * Author:		Gary S. Moss
+ *
  */
 
 #ifndef __EXTERN_H__
@@ -47,15 +47,15 @@ extern int CO, LI;
 extern Colors *findColors();
 extern Func *getTrie();
 extern Trie *addTrie();
-extern boolean chkEntryNorm();
-extern boolean chkExitNorm();
-extern boolean closFbDevice();
-extern boolean imageInit();
-extern boolean initUi();
-extern boolean openFbDevice();
-extern boolean findIdents();
-extern boolean readColors();
-extern boolean readIdents();
+extern int chkEntryNorm();
+extern int chkExitNorm();
+extern int closFbDevice();
+extern int imageInit();
+extern int initUi();
+extern int openFbDevice();
+extern int findIdents();
+extern int readColors();
+extern int readIdents();
 extern int notify();
 extern int roundToInt();
 extern void closeUi();
@@ -90,7 +90,7 @@ extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
 extern void prntScr(const char *, ...);
-extern void brst_log(const char *, ... );
+extern void brst_log(const char *, ...);
 extern void warning();
 extern void prntUsage();
 extern void clr_Tabs();
@@ -138,17 +138,17 @@ extern unsigned char pixmiss[3];
 extern unsigned char pixtarg[3];
 extern Trie *cmdtrie;
 
-extern boolean batchmode;
-extern boolean cantwarhead;
-extern boolean deflectcone;
-extern boolean dithercells;
-extern boolean fatalerror;
-extern boolean groundburst;
-extern boolean reportoverlaps;
-extern boolean reqburstair;
-extern boolean shotburst;
-extern boolean tty;
-extern boolean userinterrupt;
+extern int batchmode;
+extern int cantwarhead;
+extern int deflectcone;
+extern int dithercells;
+extern int fatalerror;
+extern int groundburst;
+extern int reportoverlaps;
+extern int reqburstair;
+extern int shotburst;
+extern int tty;
+extern int userinterrupt;
 
 extern char airfile[];
 extern char armorfile[];

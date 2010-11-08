@@ -10,16 +10,6 @@ CUBIT_FILES = \
 	Cubit/g-sat.cpp
 endif
 
-if BUILD_EF
-EF_DIR = EndgameFramework
-EF_FILES =
-else !BUILD_EF
-EF_DIR =
-EF_FILES = \
-	EndgameFramework/Makefile.am \
-	EndgameFramework/Makefile.in
-endif
-
 if WITH_PROE
 PROE_DIR = ProEngineer
 PROE_FILES =
@@ -28,7 +18,7 @@ PROE_DIR =
 PROE_FILES = \
 	ProEngineer/Makefile.am \
 	ProEngineer/Makefile.in \
-	ProEngineer/install.doc \
+	ProEngineer/INSTALL.txt \
 	ProEngineer/mk.in \
 	ProEngineer/proe-brl.c \
 	ProEngineer/proe_brl.res \
@@ -56,20 +46,17 @@ endif
 
 SUBDIRS = \
 	$(CUBIT_DIR) \
-	$(EF_DIR) \
 	$(PROE_DIR) \
 	$(UG_DIR)
 
 EXTRA_DIST = \
 	README \
 	$(CUBIT_FILES) \
-	$(EF_FILES) \
 	$(PROE_FILES) \
 	$(UG_FILES)
 
 DIST_SUBDIRS = \
 	Cubit \
-	EndgameFramework \
 	ProEngineer \
 	Unigraphics
 

@@ -450,21 +450,6 @@ db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 }
 
 
-/**
- * D B _ F R E E _ E X T E R N A L
- *
- * XXX DEPRECATED XXX
- *
- * This is a leftover.  You should call bu_free_external() instead.
- */
-void
-db_free_external(register struct bu_external *ep)
-{
-    BU_CK_EXTERNAL(ep);
-    bu_free_external(ep);
-}
-
-
 /** @} */
 /*
  * Local Variables:

@@ -238,7 +238,7 @@ void
 rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct half_specific *halfp;
-    
+
     if (!hitp || !rp)
 	return;
 

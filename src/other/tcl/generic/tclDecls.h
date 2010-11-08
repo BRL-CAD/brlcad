@@ -736,7 +736,7 @@ EXTERN void		Tcl_DeleteTimerHandler (Tcl_TimerToken token);
 #define Tcl_DeleteTrace_TCL_DECLARED
 /* 113 */
 EXTERN void		Tcl_DeleteTrace (Tcl_Interp * interp, 
-				Tcl_Trace trace);
+				Tcl_Trace tracer);
 #endif
 #ifndef Tcl_DontCallWhenDeleted_TCL_DECLARED
 #define Tcl_DontCallWhenDeleted_TCL_DECLARED
@@ -3649,7 +3649,7 @@ typedef struct TclStubs {
     void (*tcl_DetachPids) (int numPids, Tcl_Pid * pidPtr); /* 111 */
 #endif /* MACOSX */
     void (*tcl_DeleteTimerHandler) (Tcl_TimerToken token); /* 112 */
-    void (*tcl_DeleteTrace) (Tcl_Interp * interp, Tcl_Trace trace); /* 113 */
+    void (*tcl_DeleteTrace) (Tcl_Interp * interp, Tcl_Trace tracer); /* 113 */
     void (*tcl_DontCallWhenDeleted) (Tcl_Interp * interp, Tcl_InterpDeleteProc * proc, ClientData clientData); /* 114 */
     int (*tcl_DoOneEvent) (int flags); /* 115 */
     void (*tcl_DoWhenIdle) (Tcl_IdleProc * proc, ClientData clientData); /* 116 */

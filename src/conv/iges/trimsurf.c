@@ -378,10 +378,10 @@ Assign_vu_geom( vu, u, v, srf )
     rt_nurb_s_eval( srf, u, v, pt_on_srf );
     if ( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
     {
-	fastf_t scale;
+	fastf_t sca;
 
-	scale = 1.0/pt_on_srf[3];
-	VSCALE( pt_on_srf, pt_on_srf, scale );
+	sca = 1.0/pt_on_srf[3];
+	VSCALE( pt_on_srf, pt_on_srf, sca );
     }
     if ( moved )
     {
@@ -481,7 +481,6 @@ Add_trim_curve( entity_no, lu, srf )
 	    break;
 	case 100:	/* circular arc */
 	{
-	    struct edge_g_cnurb *crv;
 	    point_t center, start, end;
 
 	    /* read Arc center start and end points */
@@ -1235,6 +1234,7 @@ find_intersections( fu, mid_pt, ray_dir, hit_list )
 	    }
 
 	    myhit = (struct snurb_hit *)bu_malloc( sizeof( struct snurb_hit ), "myhit" );
+	    BU_LIST_INIT( &myhit->l );
 	    myhit->f = f;
 
 	    /* calculate actual hit point (x y z) */
@@ -1433,11 +1433,7 @@ Find_uv_in_fu( u_in, v_in, fu )
  * and the surface normal at that point
  */
 int
-Find_pt_in_fu( fu, pt, norm, hit_list )
-    struct faceuse *fu;
-    point_t pt;
-    vect_t norm;
-    struct bu_list *hit_list;
+Find_pt_in_fu(struct faceuse *fu, point_t pt, vect_t norm)
 {
     struct face *f;
     struct face_g_snurb *fg;
@@ -1533,7 +1529,7 @@ Convtrimsurfs()
 	    continue;
 
 	BU_LIST_INIT( &hit_list );
-	if ( Find_pt_in_fu( fu, mid_pt, ray_dir/* !!! fourth param missing */ ) )
+	if ( Find_pt_in_fu( fu, mid_pt, ray_dir ) )
 	{
 	    bu_log( "Convtrimsurfs: Cannot find a point in fu (x%x)\n", fu );
 	    nmg_pr_fu( fu, " " );

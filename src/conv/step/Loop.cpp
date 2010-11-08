@@ -89,7 +89,7 @@ Loop::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 }
 
 ON_BoundingBox *
-Loop::GetEdgeBounds(ON_Brep *brep) {
+Loop::GetEdgeBounds(ON_Brep *UNUSED(brep)) {
 	return NULL;
 }
 

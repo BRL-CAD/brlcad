@@ -3948,8 +3948,6 @@ MODULE_SCOPE void	TclBNInitBignumFromWideUInt(mp_int *bignum,
 #include "tclIntPlatDecls.h"
 #include "tclTomMathDecls.h"
 
-#include "../../../../include/common.h"
-
 #endif /* _TCLINT */
 
 /*

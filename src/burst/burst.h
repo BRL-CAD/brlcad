@@ -36,12 +36,6 @@
 #  define NSIG 64
 #endif
 
-/* ANSI C definitions */
-typedef int boolean;
-typedef genptr_t pointer;			/* generic pointer */
-
-
-#define DEGRAD	57.2957795130823208767981548141051703324054724665642
 
 /* menu configuration */
 #define MENU_LFT	1
@@ -80,7 +74,7 @@ typedef genptr_t pointer;			/* generic pointer */
 #define DFL_BARRIERS	100
 #define DFL_BDIST	0.0
 #define DFL_CELLSIZE	101.6
-#define DFL_CONEANGLE	(45.0/DEGRAD)
+#define DFL_CONEANGLE	(45.0/RAD2DEG)
 #define DFL_DEFLECT	0
 #define DFL_DITHER	0
 #define DFL_ELEVATION	0.0
@@ -103,7 +97,7 @@ typedef genptr_t pointer;			/* generic pointer */
 #define FM_BURST (1<<4) /* bit 4: ON = discrete burst points, OFF = shots */
 
 /* flags for notify() */
-#define	NOTIFY_APPEND	1
+#define NOTIFY_APPEND	1
 #define NOTIFY_DELETE	2
 #define NOTIFY_ERASE	4
 
@@ -182,44 +176,45 @@ typedef genptr_t pointer;			/* generic pointer */
 #define OutsideAir(rp)	((rp)->reg_aircode == OUTSIDE_AIR)
 #define InsideAir(rp)	(Air(rp)&& !OutsideAir(rp))
 
-#define Malloc_Bomb( _bytes_ ) \
-		brst_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
-				__FILE__, __LINE__, _bytes_ )
+#define Malloc_Bomb(_bytes_) \
+		brst_log("\"%s\"(%d) : allocation of %d bytes failed.\n", \
+				__FILE__, __LINE__, _bytes_)
 
-#define Swap_Doubles( a_, b_ ) \
-		{	fastf_t	f_ = a_; \
+#define Swap_Doubles(a_, b_) \
+		{	fastf_t f_ = a_; \
 		a_ = b_; \
 		b_ = f_; \
 		}
 #define Toggle(f)	(f) = !(f)
 
-typedef struct ids	Ids;
+typedef struct ids Ids;
 struct ids
 {
-    short	i_lower;
-    short	i_upper;
-    Ids	*i_next;
+    short i_lower;
+    short i_upper;
+    Ids *i_next;
 };
-#define IDS_NULL	(Ids *) 0
+#define IDS_NULL (Ids *) 0
 
-typedef struct colors	Colors;
+typedef struct colors Colors;
 struct colors
 {
-    short	c_lower;
-    short	c_upper;
-    unsigned char	c_rgb[3];
-    Colors	*c_next;
+    short c_lower;
+    short c_upper;
+    unsigned char c_rgb[3];
+    Colors *c_next;
 };
-#define COLORS_NULL	(Colors *) 0
+#define COLORS_NULL (Colors *) 0
 
-typedef struct pt_queue	Pt_Queue;
+typedef struct pt_queue Pt_Queue;
 struct pt_queue
 {
-    struct partition	*q_part;
-    Pt_Queue		*q_next;
+    struct partition *q_part;
+    Pt_Queue *q_next;
 };
 
-#define PT_Q_NULL	(Pt_Queue *) 0
+
+#define PT_Q_NULL (Pt_Queue *) 0
 
 #endif  /* __BURST_H__ */
 

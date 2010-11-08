@@ -687,12 +687,12 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		  circle: (x-cx)^2 + (y-cy)^2 = cr^2
 		  x = (1/2cx)y^2 + (-cy/cx)y + (1/2cx)(cy^2 + cx^2 - cr^2) + (1/2cx)(x^2)
 		  x = f(y) + (1/2cx)x^2
-		
+
 		  hyperbola:
 		  [(x-hx)/a]^2 - [(y-hy)/b]^2 = 1
 		  x^2 = (a^2/b^2)y^2 + (-2*hy*a^2/b^2)y + (hy^2 * a^2/b^2) + a^2
 		  x^2 = g(y)
-			
+
 		  plug the second equation into the first to get:
 		  x = f(y) + (1/2cx)g(y)
 		  then square that to get:
@@ -709,13 +709,13 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    bn_poly_t sum_sq;		/* {f(y) + g(y)/(2cx)}^2 */
 		    bn_poly_t answer;		/* {f(y) + g(y)/(2cx)}^2 - g(y) */
 		    bn_complex_t roots[4];
-		
+
 		    fastf_t cx, cy, crsq = 0;	/* carc's (x, y) coords and radius^2 */
 		    point2d_t center, radius;
-		
+
 		    /* calculate circle parameters */
 		    csg = (struct carc_seg *)lng;
-		
+
 		    if (csg->radius <= 0.0) {
 			/* full circle, "end" is center and "start" is on the circle */
 			V2MOVE(center, rev->sk->verts[csg->end]);
@@ -728,13 +728,13 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			vect_t vertical;
 			fastf_t distance;
 			fastf_t magsq_s2m;
-		    
+
 			VSET(vertical, 0, 0, 1);
 			VMOVE(startpt, rev->sk->verts[csg->start]);
 			startpt[Z] = 0.0;
 			VMOVE(endpt, rev->sk->verts[csg->end]);
 			endpt[Z] = 0.0;
-		    
+
 			VBLEND2(midpt, 0.5, startpt, 0.5, endpt);
 			VSUB2(s_to_m, midpt, startpt);
 			VCROSS(bisector, vertical, s_to_m);
@@ -742,7 +742,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			magsq_s2m = MAGSQ(s_to_m);
 			if (magsq_s2m > csg->radius*csg->radius) {
 			    fastf_t max_radius;
-			
+
 			    max_radius = sqrt(magsq_s2m);
 			    if (NEAR_ZERO(max_radius - csg->radius, RT_LEN_TOL)) {
 				csg->radius = max_radius;
@@ -754,7 +754,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    }
 			}
 			distance = sqrt(csg->radius*csg->radius - magsq_s2m);
-		    
+
 			/* save arc center */
 			if (csg->center_is_left) {
 			    VJOIN1(center, midpt, distance, bisector);
@@ -762,30 +762,30 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    VJOIN1(center, midpt, -distance, bisector);
 			}
 		    }
-		
+
 		    cx = center[X];
 		    cy = center[Y];
-		
+
 		    circleX.dgr = 2;
 		    hypXsq.dgr = 2;
 		    hypXsq_scaled.dgr = 2;
 		    sum.dgr = 2;
 		    sum_sq.dgr = 4;
 		    answer.dgr = 4;
-		
+
 		    circleX.cf[0] = (cy*cy + cx*cx - crsq)/(2.0*cx);
 		    circleX.cf[1] = -cy/cx;
 		    circleX.cf[2] = 1/(2.0*cx);
-		
+
 		    hypXsq_scaled.cf[0] = hypXsq.cf[0] = aa*aa + h*h*aa*aa/(bb*bb);
 		    hypXsq_scaled.cf[1] = hypXsq.cf[1] = -2.0*h*aa*aa/(bb*bb);
 		    hypXsq_scaled.cf[2] = hypXsq.cf[2] = (aa*aa)/(bb*bb);
-		
+
 		    bn_poly_scale(&hypXsq_scaled, 1.0 / (2.0 * cx));
 		    bn_poly_add(&sum, &hypXsq_scaled, &circleX);
 		    bn_poly_mul(&sum_sq, &sum, &sum);
 		    bn_poly_sub(&answer, &sum_sq, &hypXsq);
-		
+
 		    /* It is known that the equation is 4th order.  Therefore, if the
 		     * root finder returns other than 4 roots, error.
 		     */
@@ -804,7 +804,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    }
 			}
 		    }
-		
+
 		    break;
 		}
 	    case CURVE_BEZIER_MAGIC:

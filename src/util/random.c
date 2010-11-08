@@ -39,9 +39,6 @@
 int
 main(int argc, char *argv[])
 {
-    extern int bu_optind;
-    extern char *bu_optarg;
-
     struct bn_gauss *gp;
     struct bn_unif *up;
 

@@ -884,7 +884,7 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size, i
 	if (ret)
 	    return ret;
     }
-    
+
     return 0;
 }
 

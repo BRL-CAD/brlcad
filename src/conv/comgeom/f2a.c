@@ -32,6 +32,7 @@
 
 
 /** F 2 A () ====  convert float to ascii  w.df format.	No leading blanks */
+void
 f2a(float f, char *s, int w, int d)
     /* INPUT	===*/
     /* OUTPUT	===*/
@@ -43,7 +44,7 @@ f2a(float f, char *s, int w, int d)
     {
 	printf( "ftoascii: incorrect format  need w.df\n");
 	printf( "w must be at least 2 bigger then d.\n" );
-	printf( "w= %f\t d= %f\n", w, d );
+	printf( "w= %d\t d= %d\n", w, d );
 	printf( "STOP\n");
 	bu_exit( 10, NULL );
     }

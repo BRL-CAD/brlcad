@@ -35,7 +35,7 @@ typedef struct
     Point r_origin;
     Point r_corner;
 }
-Rectangle;
+Rect2D;
 
 typedef struct
 {
@@ -51,7 +51,7 @@ typedef struct
     int max_chars, char_base;
     int on_flag, cmap_base;
     int last_pick;
-    Rectangle rect;
+    Rect2D rect;
     RGBpixel *outlines, *touching, *selected;
     RGBpixel *under, *image;
     char *title, *font;

@@ -125,7 +125,9 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t *in;
     register int words;
 
-    if (ov->nbits != iv->nbits) bu_bomb("bu_bitv_or: length mis-match");
+    if (UNLIKELY(ov->nbits != iv->nbits))
+	bu_bomb("bu_bitv_or: length mis-match");
+
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
@@ -146,7 +148,9 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
     register const bitv_t *in;
     register int words;
 
-    if (ov->nbits != iv->nbits) bu_bomb("bu_bitv_and: length mis-match");
+    if (UNLIKELY(ov->nbits != iv->nbits))
+	bu_bomb("bu_bitv_and: length mis-match");
+
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
@@ -176,8 +180,10 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 
     /* Visit all the bits in ascending order */
     for (i=0; i<len; i++) {
-	if (BU_BITTEST(bv, i) == 0) continue;
-	if (seen) bu_vls_strcat(v, ", ");
+	if (BU_BITTEST(bv, i) == 0)
+	    continue;
+	if (seen)
+	    bu_vls_strcat(v, ", ");
 	bu_vls_printf(v, "%d", i);
 	seen = 1;
     }
@@ -190,8 +196,8 @@ bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 {
     struct bu_vls v;
 
-    BU_CK_BITV(bv)
-	bu_vls_init(&v);
+    BU_CK_BITV(bv);
+    bu_vls_init(&v);
     bu_vls_strcat(&v, str);
     bu_vls_strcat(&v, ": ");
     bu_bitv_vls(&v, bv);

@@ -79,7 +79,7 @@ brep_plot_file(const char *pname)
     VSET(min, -2048, -2048, -2048);
     VSET(max, 2048, 2048, 2048);
     pdv_3space(plot, min, max);
-    
+
     return plot;
 }
 
@@ -116,19 +116,19 @@ plotsurfaceleafs(SurfaceTree* surf) {
 	if (bb->m_trimmed) {
 	    COLOR_PLOT(255, 0, 0);
 	} else if (bb->m_checkTrim) {
-	    COLOR_PLOT(0, 0, 255); 
+	    COLOR_PLOT(0, 0, 255);
 	} else {
-	    COLOR_PLOT(255, 0, 255); 
+	    COLOR_PLOT(255, 0, 255);
 	}
 	/*
 	  if (bb->m_xgrow) {
-	  M_COLOR_PLOT(RED); 
+	  M_COLOR_PLOT(RED);
 	  } else if (bb->m_ygrow) {
-	  M_COLOR_PLOT(GREEN); 
+	  M_COLOR_PLOT(GREEN);
 	  } else if (bb->m_zgrow) {
-	  M_COLOR_PLOT(BLUE); 
+	  M_COLOR_PLOT(BLUE);
 	  } else {
-	  COLOR_PLOT(100, 100, 100); 
+	  COLOR_PLOT(100, 100, 100);
 	  }
 	*/
 	//if ((!bb->m_trimmed) && (!bb->m_checkTrim)) {
@@ -240,11 +240,11 @@ plotleaf3d(BBNode* bb)
     if (bb->m_trimmed) {
 	COLOR_PLOT(255, 0, 0);
     } else if (bb->m_checkTrim) {
-	COLOR_PLOT(0, 0, 255); 
+	COLOR_PLOT(0, 0, 255);
     } else {
-	COLOR_PLOT(255, 0, 255); 
+	COLOR_PLOT(255, 0, 255);
     }
-	
+
     if (true) {
 	bb->GetBBox(min, max);
     } else {
@@ -252,7 +252,7 @@ plotleaf3d(BBNode* bb)
 	// VSET(max, bb->m_u[1]-0.001, bb->m_v[1]-0.001, 0.0);
     }
     BB_PLOT(min, max);
-	
+
     M_COLOR_PLOT(YELLOW);
     point_t a, b;
     ON_3dPoint p;
@@ -269,7 +269,7 @@ plotleaf3d(BBNode* bb)
 	    uv[1].y = v+vinc;
 	    trim1_status = bb->isTrimmed(uv[0], trimBR, closesttrim1);
 	    trim2_status = bb->isTrimmed(uv[1], trimBR, closesttrim2);
-			
+
 	    if (((trim1_status != 1) || (fabs(closesttrim1) < BREP_EDGE_MISS_TOLERANCE)) &&
 		((trim2_status != 1) || (fabs(closesttrim2) < BREP_EDGE_MISS_TOLERANCE))) {
 		p = surf->PointAt(uv[0].x, uv[0].y);
@@ -280,7 +280,7 @@ plotleaf3d(BBNode* bb)
 	    }
 	}
     }
-	
+
     return;
 }
 
@@ -293,11 +293,11 @@ plotleafuv(BBNode* bb)
     if (bb->m_trimmed) {
 	COLOR_PLOT(255, 0, 0);
     } else if (bb->m_checkTrim) {
-	COLOR_PLOT(0, 0, 255); 
+	COLOR_PLOT(0, 0, 255);
     } else {
-	COLOR_PLOT(255, 0, 255); 
+	COLOR_PLOT(255, 0, 255);
     }
-	
+
     if (false) {
 	// bb->GetBBox(min, max);
     } else {
@@ -305,7 +305,7 @@ plotleafuv(BBNode* bb)
 	VSET(max, bb->m_u[1]-0.001, bb->m_v[1]-0.001, 0.0);
     }
     BB_PLOT(min, max);
-	
+
     return;
 }
 
@@ -540,9 +540,9 @@ plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridr
     register struct bu_list *vhead;
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
-	
+
     vhead = rt_vlblock_find(vbp, PEACH);
-	
+
     ON_Interval udom = surf.Domain(0);
     ON_Interval vdom = surf.Domain(1);
 
@@ -657,7 +657,7 @@ plottrim(const ON_Curve &curve, double from, double to)
 	VMOVE(pt2, p);
 	if (i != 0) {
 	    LINE_PLOT(pt1, pt2);
-	} 
+	}
 	VMOVE(pt1, p);
     }
 }
@@ -674,7 +674,7 @@ plottrim(ON_Curve &curve)
 	VMOVE(pt2, p);
 	if (i != 0) {
 	    LINE_PLOT(pt1, pt2);
-	} 
+	}
 	VMOVE(pt1, p);
     }
 }
@@ -692,7 +692,7 @@ brep_info(struct brep_specific* bs, struct bu_vls *vls)
     bu_vls_printf(vls, "trims:     %d\n", brep->m_T.Count());
     bu_vls_printf(vls, "loops:     %d\n", brep->m_L.Count());
     bu_vls_printf(vls, "faces:     %d\n", brep->m_F.Count());
-	
+
     return 0;
 }
 
@@ -713,8 +713,8 @@ brep_surface_info(struct brep_specific* bs, struct bu_vls *vls, int si)
 	    if (!s)
 		s = "";
 	    bu_vls_printf(vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-			  si, s, 
-			  udom[0], udom[1], 
+			  si, s,
+			  udom[0], udom[1],
 			  vdom[0], vdom[1]
 		);
 	    bu_vls_printf(vls, "NURBS form of Surface:\n");
@@ -872,8 +872,8 @@ brep_facetrim_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_int
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
-        bu_log("brep is NOT valid");
-        //return -1;
+	bu_log("brep is NOT valid");
+	//return -1;
     }
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
@@ -902,8 +902,8 @@ brep_trim_direction_plot(struct bu_vls *, struct brep_specific* bs, struct rt_br
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
-        bu_log("brep is NOT valid");
-        //return -1;
+	bu_log("brep is NOT valid");
+	//return -1;
     }
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
@@ -928,8 +928,8 @@ brep_surface_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_inte
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
-        bu_log("brep is NOT valid");
-        //return -1;
+	bu_log("brep is NOT valid");
+	//return -1;
     }
     if (index == -1) {
 	for (index = 0; index < brep->m_S.Count(); index++) {
@@ -941,7 +941,7 @@ brep_surface_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_inte
 	surf->Dump(tl);
 	plotsurface(*surf, vbp, plotres, 10);
     }
-	
+
     return 0;
 }
 
@@ -1192,7 +1192,7 @@ drawisoUCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp,fastf_t from, fastf
 	pt.y = v;
 
     if (ctree != NULL) {
-    	m_trims_right.clear();
+	m_trims_right.clear();
 		ctree->getLeavesRight(m_trims_right, pt, tol);
 	}
 
@@ -1319,7 +1319,7 @@ drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp,fastf_t from, fastf
 	pt.y = vmin;
 
     if (ctree != NULL) {
-    	m_trims_above.clear();
+	m_trims_above.clear();
 		ctree->getLeavesAbove(m_trims_above, pt, tol);
 	}
 
@@ -1566,8 +1566,8 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
-        bu_log("brep is NOT valid");
-        //return -1;
+	bu_log("brep is NOT valid");
+	//return -1;
     }
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
@@ -1593,8 +1593,8 @@ brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
-        bu_log("brep is NOT valid");
-        //return -1;
+	bu_log("brep is NOT valid");
+	//return -1;
     }
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
@@ -1688,8 +1688,8 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 		}
 	    }
 	    if (strcmp(part, "S") == 0) {
-	    	snprintf(commtag, 64, "_BC_S_");
-	    	ret = brep_surface_plot(vls, bs, bi, vbp, index, plotres);
+		snprintf(commtag, 64, "_BC_S_");
+		ret = brep_surface_plot(vls, bs, bi, vbp, index, plotres);
 	    } else if (strcmp(part, "E") == 0) {
 			snprintf(commtag, 64, "_BC_EE_");
 			int index1 = index;
@@ -1703,11 +1703,11 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 				ret = brep_isosurface_plot(vls, bs, bi, vbp, i, 3);
 			}
 	    } else if (strcmp(part, "SN") == 0) {
-	    	snprintf(commtag, 64, "_BC_SN_");
-	    	ret = brep_surface_normal_plot(vls, bs, bi, vbp, index, plotres);
+		snprintf(commtag, 64, "_BC_SN_");
+		ret = brep_surface_normal_plot(vls, bs, bi, vbp, index, plotres);
 	    } else if (strcmp(part, "F") == 0) {
-	    	snprintf(commtag, 64, "_BC_F_");
-	    	ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, true);
+		snprintf(commtag, 64, "_BC_F_");
+		ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, true);
 	    } else if (strcmp(part, "F2d") == 0) {
 			snprintf(commtag, 64, "_BC_F2d_");
 			ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, false);

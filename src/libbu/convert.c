@@ -36,8 +36,8 @@ bu_cv_cookie(const char *in)			/* input format */
     int collector;
     int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
 
-    if (!in) return 0;
-    if (!*in) return 0;
+    if (UNLIKELY(!in)) return 0;
+    if (UNLIKELY(!*in)) return 0;
 
 
     collector = 0;
@@ -126,12 +126,12 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
     register char *cp = buf;
     size_t len;
 
-    if (buflen == 0) {
+    if (UNLIKELY(buflen == 0)) {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
     buflen--;
-    if (cookie == 0) {
+    if (UNLIKELY(cookie == 0)) {
 	bu_strlcpy(cp, "bogus!", buflen);
 	return;
     }
@@ -139,14 +139,14 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
     snprintf(cp, buflen, "%d", cookie & CV_CHANNEL_MASK);
     len = strlen(cp);
     cp += len;
-    if (buflen < len)
+    if (UNLIKELY(buflen < len))
     {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
     buflen -= len;
 
-    if (buflen == 0) {
+    if (UNLIKELY(buflen == 0)) {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
@@ -158,7 +158,7 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 	buflen--;
     }
 
-    if (buflen == 0) {
+    if (UNLIKELY(buflen == 0)) {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
@@ -170,7 +170,7 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 	buflen--;
     }
 
-    if (buflen == 0) {
+    if (UNLIKELY(buflen == 0)) {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }
@@ -204,7 +204,7 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 	    break;
     }
 
-    if (buflen == 0) {
+    if (UNLIKELY(buflen == 0)) {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
 	return;
     }

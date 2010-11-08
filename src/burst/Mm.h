@@ -19,8 +19,9 @@
  *
  */
 /** @file Mm.h
- *	Author:	Gary S. Moss
+ *
  */
+
 #ifndef __MM_H__
 #define __MM_H__
 
@@ -33,12 +34,12 @@
 
 #include "bu.h"
 
-#define MmAllo( typ )		(typ *) bu_malloc( sizeof(typ), BU_FLSTR )
-#define MmFree( typ, ptr )	bu_free( (char *) ptr, BU_FLSTR )
-#define MmVAllo( ct, typ )	(typ *) bu_malloc( (ct)*sizeof(typ), BU_FLSTR )
-#define MmVFree( ct, typ, ptr )	bu_free( (char *) ptr, BU_FLSTR )
-#define MmStrDup( str )		bu_strdup(str)
-#define MmStrFree( str )	bu_free( str, BU_FLSTR )
+#define MmAllo(typ)		(typ *) bu_malloc(sizeof(typ), BU_FLSTR)
+#define MmFree(typ, ptr) bu_free((char *) ptr, BU_FLSTR)
+#define MmVAllo(ct, typ)	(typ *) bu_malloc((ct)*sizeof(typ), BU_FLSTR)
+#define MmVFree(ct, typ, ptr) bu_free((char *) ptr, BU_FLSTR)
+#define MmStrDup(str) bu_strdup(str)
+#define MmStrFree(str) bu_free(str, BU_FLSTR)
 
 #endif  /* __MM_H__ */
 

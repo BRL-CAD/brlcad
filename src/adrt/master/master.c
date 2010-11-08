@@ -22,12 +22,17 @@
  */
 
 #include "master.h"
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include <sys/time.h>
+
+#ifdef HAVE_PTHREAD_H
+#  include <pthread.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 
 #include "bu.h"
 
@@ -40,11 +45,21 @@
 #include "tienet_master.h"
 
 /* Networking Includes */
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#  include <sys/select.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#  include <arpa/inet.h>
+#endif
 
 #if ADRT_USE_COMPRESSION
 #  include <zlib.h>

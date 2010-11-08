@@ -58,14 +58,14 @@ public:
     typedef typename IntervalList::size_type size_type;
     typedef typename IntervalList::difference_type difference_type;
     typedef typename boost::indirect_iterator
-			<typename IntervalList::iterator> iterator;
+    <typename IntervalList::iterator> iterator;
     typedef typename boost::indirect_iterator
-			<typename IntervalList::const_iterator> const_iterator;
+    <typename IntervalList::const_iterator> const_iterator;
 
     /** Constructors and Destructor */
     Domain() {}
     ~Domain() {}
-    Domain(T low,T high,T step);
+    Domain(T low, T high, T step);
     
     /** Data access methods */
     int size() { return Interv.size(); }
@@ -90,7 +90,7 @@ public:
     iterator erase(iterator location);
     iterator erase(iterator begin, iterator end);
 
-    iterator insert(iterator location, Interval<T> * I);
+    iterator insert(iterator location, Interval<T> *I);
     
     /** Emptiness check */
     bool isEmpty();
@@ -103,8 +103,8 @@ public:
 
     /** Comparison */
     bool operator==(Domain<T> & d) {
-			if (Interv == d.Interv) return true;
-			else return false; } 
+	if (Interv == d.Interv) return true;
+	else return false; } 
     /** Display method */
     void display();
 private:
@@ -112,6 +112,7 @@ private:
     int mergeIntervals (typename std::list<Interval<T> >::iterator);
     void packIntervals ();
 };
+
 
 class VariableAbstract {
 public:
@@ -133,9 +134,10 @@ protected:
     int type;
     bool const_;
 private:
-    std::string  id;
+    std::string id;
     int constrained_;
 };
+
 
 template<class T>
 class Variable : public VariableAbstract {
@@ -183,6 +185,7 @@ private:
     Domain<T> D;
 };
 
+
 template<class T>
 class Solution {
 public:
@@ -190,7 +193,7 @@ public:
     typedef std::list<Domain<T> > Domains;
     typedef std::list<Domains> DomSet;
 
-    void insert(VariableAbstract * v);
+    void insert(VariableAbstract *v);
     void display();
     void cdisplay();
     void clear();
@@ -200,16 +203,19 @@ private:
     DomSet Domset_;
 };
 
+
 template<class T>
 class SearchStructure {
 
 };
 
+
 /* Domain Class Functions */
 template<class T>
-Domain<T>::Domain(T low,T high,T step) {
-    addInterval(Interval<T>(low, high, step) );
+Domain<T>::Domain(T low, T high, T step) {
+    addInterval(Interval<T>(low, high, step));
 }
+
 
 template<class T>
 void Domain<T>::addInterval(const Interval<T> t)
@@ -222,9 +228,10 @@ void Domain<T>::addInterval(const Interval<T> t)
   this->Interv.push_back(t);
   else
 */
-    this->Interv.insert(i,t);
+    this->Interv.insert(i, t);
     packIntervals();
 }
+
 
 template<typename T>
 typename Domain<T>::iterator
@@ -233,12 +240,14 @@ makeIterator(typename Domain<T>::IntervalList::iterator i)
     return boost::make_indirect_iterator(i);
 }
 
+
 template<typename T>
 typename Domain<T>::const_iterator
 makeIterator(typename Domain<T>::IntervalList::const_iterator i)
 {
     return boost::make_indirect_iterator(i);
 }
+
 
 template<typename T>
 typename Domain<T>::iterator
@@ -247,12 +256,14 @@ Domain<T>::begin()
     return makeIterator(Interv.begin());
 }
 
+
 template<typename T>
 typename Domain<T>::iterator
 Domain<T>::end()
 {
     return makeIterator(Interv.end());
 }
+
 
 template<typename T>
 typename Domain<T>::const_iterator
@@ -261,12 +272,14 @@ Domain<T>::begin() const
     return makeIterator(Interv.begin());
 }
 
+
 template<typename T>
 typename Domain<T>::const_iterator
 Domain<T>::end() const
 {
     return makeIterator(Interv.end());
 }
+
 
 template<typename T>
 typename Domain<T>::iterator
@@ -275,6 +288,7 @@ Domain<T>::erase(iterator location)
     return makeIterator(Interv.erase(location.base()));
 }
 
+
 template<typename T>
 typename Domain<T>::iterator
 Domain<T>::erase(iterator begini, iterator endi)
@@ -282,18 +296,21 @@ Domain<T>::erase(iterator begini, iterator endi)
     return makeIterator(Interv.erase(begini.base(), endi.base()));
 }
 
+
 template<typename T>
 typename Domain<T>::iterator
-Domain<T>::insert(iterator location, Interval<T> * I)
+Domain<T>::insert(iterator location, Interval<T> *I)
 {
     assert(I);
     return makeIterator(Interv.insert(location.base(), I));
 }
 
+
 template<class T>
 void Domain<T>::addInterval(T low, T high, T step) {
-    addInterval(Interval<T>(low,high,step));
+    addInterval(Interval<T>(low, high, step));
 }
+
 
 template<class T>
 void Domain<T>::intersectInterval(Interval<T> t)
@@ -302,12 +319,12 @@ void Domain<T>::intersectInterval(Interval<T> t)
 	addInterval(t);
     } else {
 	typename std::list<Interval<T> >::iterator i = this->Interv.begin();
-	while (i != Interv.end() && i->getHigh() < t.getLow() )
+	while (i != Interv.end() && i->getHigh() < t.getLow())
 	    Interv.erase(i++);
 	i->setLow(t.getLow());
 	i = Interv.end();
 	i--;
-	while (i != Interv.begin() && i->getLow() > t.getHigh() )
+	while (i != Interv.begin() && i->getLow() > t.getHigh())
 	    Interv.erase(i--);
 	i->setHigh(t.getHigh());
 	i->setStep(t.getStep());
@@ -323,59 +340,62 @@ Interval<T> & Domain<T>::getInterval(T t) throw(pcException)
     throw new pcException("Variable not in domain");
 }
 /*
-template<class T>
-Interval<T> & Domain<T>::getPreviousInterval(T t) throw(pcException)
-{
-    typename std::list<Interval<T> >::iterator i;
-    for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
-	if (i->inInterval(t))
-	    break;
-    }
-    if (*i == Interv.front())
-	return Interv.back();
-    else {
-	i--;
-	return *i;
-    }
-    throw new pcException("Variable not in domain");
-}
+  template<class T>
+  Interval<T> & Domain<T>::getPreviousInterval(T t) throw(pcException)
+  {
+  typename std::list<Interval<T> >::iterator i;
+  for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
+  if (i->inInterval(t))
+  break;
+  }
+  if (*i == Interv.front())
+  return Interv.back();
+  else {
+  i--;
+  return *i;
+  }
+  throw new pcException("Variable not in domain");
+  }
 
-template<class T>
-Interval<T> & Domain<T>::getNextInterval(T t) throw(pcException)
-{
-    typename std::list<Interval<T> >::iterator i;
-    for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
-	if (i->inInterval(t))
-	    break;
-    }
-    if (*i == Interv.back())
-	return Interv.front();
-    else {
-	i++;
-        return *i;
-    }
-    throw new pcException("Variable not in domain");    
-}
+
+  template<class T>
+  Interval<T> & Domain<T>::getNextInterval(T t) throw(pcException)
+  {
+  typename std::list<Interval<T> >::iterator i;
+  for (i = this->Interv.begin(); i != this->Interv.end(); i++) {
+  if (i->inInterval(t))
+  break;
+  }
+  if (*i == Interv.back())
+  return Interv.front();
+  else {
+  i++;
+  return *i;
+  }
+  throw new pcException("Variable not in domain");    
+  }
 */
 template<class T>
 T Domain<T>::getNextLow (T value)
 {
     typename std::list<Interval<T> >::iterator i = this->Interv.begin();
     while (i!=Interv.end() && i->getLow() < value) i++;
-    if(  i == Interv.end() )
+    if (i == Interv.end())
 	return Interv.begin()->getLow();
     else
 	return i->getLow();
 }
 
+
 template<class T>
 bool Domain<T>::isEmpty()
 {
-    if ( Interv.empty() )
+    if (Interv.empty())
 	return true;
     else
 	return false;
 }
+
 
 template<class T>
 bool Domain<T>::isDisjoint()
@@ -386,14 +406,16 @@ bool Domain<T>::isDisjoint()
 	return true;
 }
 
+
 template<class T>
 bool Domain<T>::isUnique()
 {
-    if ( Interv.size() == 1 && Interv.front().isUnique() )
+    if (Interv.size() == 1 && Interv.front().isUnique())
 	return true;
     else
 	return false;
 }
+
 
 template<class T>
 void Domain<T>::display()
@@ -425,15 +447,16 @@ int Domain<T>::mergeIntervals (typename std::list<Interval<T> >::iterator i)
     }
 }
 
+
 template<class T>
-void  Domain<T>::packIntervals ()
+void Domain<T>::packIntervals ()
 {
     if (Interv.size()>1) {
-	typename std::list<Interval<T> >::iterator i,j,temp;
+	typename std::list<Interval<T> >::iterator i, j, temp;
 	i=j=Interv.begin();j++;
 
 	do {
-	    if (i->getHigh() > j->getLow() ) {
+	    if (i->getHigh() > j->getLow()) {
 		if (mergeIntervals(i) !=0) {
 		    std::cout << "Error: Incompatible stepsizes" << std::endl;
 		    std::exit(-1);
@@ -442,12 +465,13 @@ void  Domain<T>::packIntervals ()
 		    break;
 		}
 	    } else {
-		i++,j++;
+		i++, j++;
 		continue;
 	    }
 	} while (j != Interv.end());
     }
 }
+
 
 /**
  * Variable Class methods
@@ -461,10 +485,12 @@ Variable<T>::Variable(std::string vid, T vvalue)
 {
 }
 
+
 template<class T>
 Variable<T>::~Variable()
 {
 }
+
 
 template<class T>
 Variable<T>& Variable<T>::operator++()
@@ -482,17 +508,20 @@ Variable<T>& Variable<T>::operator++()
     }
 }
 
+
 template<class T>
 void Variable<T>::addInterval(const Interval<T> t)
 {
     D.addInterval(t);
 }
 
+
 template<class T>
 void Variable<T>::addInterval(T low, T high, T step)
 {
     D.addInterval(low, high, step);
 }
+
 
 template<class T>
 void Variable<T>::display()
@@ -504,6 +533,7 @@ void Variable<T>::display()
     D.display();
 }
 
+
 template<class T>
 bool Variable<T>::atUpperBoundary()
 {
@@ -513,6 +543,7 @@ bool Variable<T>::atUpperBoundary()
     else
 	return false;
 }
+
 
 template<class T>
 bool Variable<T>::atLowerBoundary()
@@ -524,6 +555,7 @@ bool Variable<T>::atLowerBoundary()
 	return false;
 }
 
+
 template<class T>
 bool Variable<T>::atCriticalBelow()
 {
@@ -533,6 +565,7 @@ bool Variable<T>::atCriticalBelow()
     else
 	return false;
 }
+
 
 template<class T>
 bool Variable<T>::atCriticalAbove()
@@ -544,16 +577,18 @@ bool Variable<T>::atCriticalAbove()
 	return false;
 }
 
+
 /* Solution Class Functions */
 
 template<typename T>
-void Solution<T>::insert(VariableAbstract * v)
+void Solution<T>::insert(VariableAbstract *v)
 {
-    Variable<T> * vt = (Variable<T> *) v;
-    Domain<T> dom(vt->getValue(),vt->getValue(),vt->getStep());
+    Variable<T> *vt = (Variable<T> *) v;
+    Domain<T> dom(vt->getValue(), vt->getValue(), vt->getStep());
     Varset_.push_back(v);
     //Domset_.back().push_back(dom);
 }
+
 
 template<class T>
 bool Solution<T>::addSolution(VarSet & V)
@@ -569,11 +604,10 @@ bool Solution<T>::addSolution(VarSet & V)
     typename DomSet::iterator j = Domset_.begin();
 
     Domains D;
-    bool validnew = true;
 
     for (; i != Varset_.end(); ++i) {
-	Variable<T> * vt = (Variable<T> *) *i;
-	Domain<T> dom(vt->getValue(),vt->getValue(),vt->getStep());
+	Variable<T> *vt = (Variable<T> *) *i;
+	Domain<T> dom(vt->getValue(), vt->getValue(), vt->getStep());
 	D.push_back(dom);
     }
 
@@ -594,7 +628,7 @@ void Solution<T>::display()
     std::cout << std::endl;
     if (!Domset_.empty()) {
 	for (j = Domset_.begin(); j != Domset_.end(); ++j) {
-	    for ( k = j->begin(); k != j->end(); ++k) {
+	    for (k = j->begin(); k != j->end(); ++k) {
 		std::cout << k->getFirst() << "\t";
 	    }
 	    std::cout << std::endl;
@@ -604,13 +638,14 @@ void Solution<T>::display()
     std::cout << "Number of Solutions: " << Domset_.size() << std::endl;
 }
 
+
 template<class T>
 void Solution<T>::cdisplay()
 {
     if (Domset_.size() < 2)
 	display();
     else {
-	int l;
+	size_t l;
 	VarSet::iterator i;
 	typename DomSet::iterator j;
         typename Domains::iterator k;
@@ -624,38 +659,39 @@ void Solution<T>::cdisplay()
 	
 	if (!Domset_.empty()) {
 	    j = Domset_.begin();
-	    for ( k = j->begin(), l=0; k != j->end(); ++k,++l) {
+	    for (k = j->begin(), l=0; k != j->end(); ++k, ++l) {
 	        minmax.push_back(k->getFirst());
 	        minmax.push_back(k->getFirst());
 	    }
 	    
 	    for (j = Domset_.begin(); j != Domset_.end(); ++j) {
-		for ( k = j->begin(), l = 0; k != j->end(); ++k,++l) {
+		for (k = j->begin(), l = 0; k != j->end(); ++k, ++l) {
 		    T value = k->getFirst();
 		    minmax[2*l] = (value < minmax[2*l])?value:minmax[2*l];
 		    minmax[2*l+1] = (value > minmax[2*l])?value:minmax[2*l+1];
 		}
 	    }
 	}
-    for (l = 0; l < minmax.size()/2; ++l) {
-   	std::cout << minmax[2*l] << "\t";
-    }
-    std::cout << std::endl;
+	for (l = 0; l < minmax.size()/2; ++l) {
+	    std::cout << minmax[2*l] << "\t";
+	}
+	std::cout << std::endl;
 
-    for (l = 0; l < minmax.size()/2; ++l) {
-	if ( !NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF) ) /* TODO: needs proper tolerancing */
-	    std::cout << "to" << "\t";
-    }
-    std::cout << std::endl;
+	for (l = 0; l < minmax.size()/2; ++l) {
+	    if (!NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF)) /* TODO: needs proper tolerancing */
+		std::cout << "to" << "\t";
+	}
+	std::cout << std::endl;
     
-    for (l = 0; l < minmax.size()/2; ++l) {
-	if ( !NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF) ) /* TODO: needs proper tolerancing */
-	    std::cout << minmax[2*l+1] << "\t";
-    }
+	for (l = 0; l < minmax.size()/2; ++l) {
+	    if (!NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF)) /* TODO: needs proper tolerancing */
+		std::cout << minmax[2*l+1] << "\t";
+	}
     
-    std::cout << std::endl << "Number of Solutions: " << Domset_.size() << std::endl;
+	std::cout << std::endl << "Number of Solutions: " << Domset_.size() << std::endl;
     }
 }
+
 
 template<typename T>
 void Solution<T>::clear()
@@ -663,6 +699,7 @@ void Solution<T>::clear()
     Varset_.clear();
     Domset_.clear();
 }
+
 
 #endif
 /** @} */

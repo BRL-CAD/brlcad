@@ -117,7 +117,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\bin\Tkhtml3.0&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkhtml.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall\lib\Tkhtml3.0&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkhtml.lib ..\..\..\brlcadInstall\lib&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -221,7 +221,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\bin\Tkhtml3.0&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkhtml.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\brlcadInstall$(PlatformName)\lib\Tkhtml3.0&#x0D;&#x0A;copy &quot;$(TargetDir)&quot;tkhtml.lib ..\..\..\brlcadInstall$(PlatformName)\lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -233,95 +233,95 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\css.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\css.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\cssdynamic.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\cssdynamic.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\cssparser.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\cssparser.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\cssprop.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\cssprop.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\csssearch.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\csssearch.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmldecode.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmldecode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmldraw.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmldraw.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlfloat.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlfloat.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlhash.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlhash.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlimage.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlimage.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlinline.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlinline.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmllayout.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmllayout.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlparse.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlparse.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlprop.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlprop.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlstyle.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlstyle.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmltable.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmltable.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmltagdb.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmltagdb.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmltcl.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmltcl.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmltext.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmltext.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmltree.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmltree.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\htmlutil.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\htmlutil.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\restrack.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\restrack.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\other\tkhtml3\src\swproc.c"
+				RelativePath="..\..\..\src\other\tkhtml\src\swproc.c"
 				>
 			</File>
 		</Filter>

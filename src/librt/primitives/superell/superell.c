@@ -203,18 +203,18 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     magsq_b = MAGSQ(eip->b);
     magsq_c = MAGSQ(eip->c);
 
-    if (magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist) {
-	bu_log("superell(%s):  near-zero length A(%g), B(%g), or C(%g) vector\n",
+    if (magsq_a < rtip->rti_tol.dist_sq || magsq_b < rtip->rti_tol.dist_sq || magsq_c < rtip->rti_tol.dist_sq) {
+	bu_log("rt_superell_prep():  superell(%s) near-zero length A(%g), B(%g), or C(%g) vector\n",
 	       stp->st_name, magsq_a, magsq_b, magsq_c);
 	return 1;		/* BAD */
     }
     if (eip->n < rtip->rti_tol.dist || eip->e < rtip->rti_tol.dist) {
-	bu_log("superell(%s):  near-zero length <n, e> curvature (%g, %g) causes problems\n",
+	bu_log("rt_superell_prep():  superell(%s) near-zero length <n, e> curvature (%g, %g) causes problems\n",
 	       stp->st_name, eip->n, eip->e);
 	/* BAD */
     }
     if (eip->n > 10000.0 || eip->e > 10000.0) {
-	bu_log("superell(%s):  very large <n, e> curvature (%g, %g) causes problems\n",
+	bu_log("rt_superell_prep():  superell(%s) very large <n, e> curvature (%g, %g) causes problems\n",
 	       stp->st_name, eip->n, eip->e);
 	/* BAD */
     }
@@ -230,17 +230,17 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
     f = VDOT(Au, Bu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
-	bu_log("superell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
+	bu_log("rt_superell_prep():  superell(%s) A not perpendicular to B, f=%f\n", stp->st_name, f);
 	return 1;		/* BAD */
     }
     f = VDOT(Bu, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
-	bu_log("superell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
+	bu_log("rt_superell_prep():  superell(%s) B not perpendicular to C, f=%f\n", stp->st_name, f);
 	return 1;		/* BAD */
     }
     f = VDOT(Au, Cu);
     if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
-	bu_log("superell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
+	bu_log("rt_superell_prep():  superell(%s) A not perpendicular to C, f=%f\n", stp->st_name, f);
 	return 1;		/* BAD */
     }
 
@@ -414,15 +414,15 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 
     if ((i = rt_poly_roots(&equation, complexRoot, stp->st_dp->d_namep)) != 2) {
 	if (i > 0) {
-	    bu_log("superell: rt_poly_roots() 2 != %d\n", i);
+	    bu_log("rt_superell_shot():  poly roots %d != 2\n", i);
 	    bn_pr_roots(stp->st_name, complexRoot, i);
 	} else if (i < 0) {
 	    static int reported=0;
-	    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+	    bu_log("rt_superell_shot():  The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
 	    if (!reported) {
 		VPRINT("while shooting from:\t", rp->r_pt);
 		VPRINT("while shooting at:\t", rp->r_dir);
-		bu_log("Additional superellipsoid convergence failure details will be suppressed.\n");
+		bu_log("rt_superell_shot():  Additional superellipsoid convergence failure details will be suppressed.\n");
 		reported=1;
 	    }
 	}
@@ -452,7 +452,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 	    return 0;		/* No hit */
 
 	default:
-	    bu_log("rt_superell_shot: reduced 4 to %d roots\n", i);
+	    bu_log("rt_superell_shot():  reduced 4 to %d roots\n", i);
 	    bn_pr_roots(stp->st_name, complexRoot, 4);
 	    return 0;		/* No hit */
 
@@ -488,7 +488,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     }
 
     if (counter > 0) {
-	bu_log("realroot: in %d  out %d\n", realRoot[1], realRoot[0]);
+	bu_log("rt_superell_shot():  realroot in %d out %d\n", realRoot[1], realRoot[0]);
 	counter--;
     }
 
@@ -562,7 +562,7 @@ rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     RT_CK_HIT(hitp);
     RT_CK_SOLTAB(stp);
 
-    bu_log("called rt_superell_curve!\n");
+    bu_log("called rt_superell_curve()\n");
     return;
 }
 
@@ -584,7 +584,7 @@ rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
     RT_CK_SOLTAB(stp);
     RT_CK_HIT(hitp);
 
-    bu_log("called rt_superell_uv!\n");
+    bu_log("called rt_superell_uv()\n");
     return;
 }
 
@@ -750,7 +750,7 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     if (m) NMG_CK_MODEL(m);
     if (ip) RT_CK_DB_INTERNAL(ip);
 
-    bu_log("rt_superell_tess called!\n");
+    bu_log("called rt_superell_tess()\n");
     return -1;
 }
 
@@ -774,7 +774,7 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
-	bu_log("rt_superell_import4: defective record\n");
+	bu_log("rt_superell_import4():  defective record\n");
 	return -1;
     }
 

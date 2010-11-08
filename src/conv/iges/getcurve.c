@@ -27,7 +27,7 @@
 
 extern fastf_t splinef(fastf_t c[4], fastf_t s);
 extern void Knot(int n, fastf_t values[]);
-extern void B_spline(fastf_t t, int m, int k, point_t P[], fastf_t W[], point_t pt);
+extern void B_spline(fastf_t t, int m, int k, point_t P[], fastf_t weights[], point_t pt);
 
 mat_t idn={
     1.0, 0.0, 0.0, 0.0 ,
@@ -416,7 +416,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    if (fabs(D) < SMALL)
 			D = 0.0;
 
-		    if (B == 0.0 && D == 0.0 && E == 0.0)
+		    if (NEAR_ZERO(B, SMALL_FASTF) && NEAR_ZERO(D, SMALL_FASTF) && NEAR_ZERO(E, SMALL_FASTF))
 			type = 1;
 		    else
 			bu_log("Entity #%d is an incorrectly formatted ellipse\n", curve);

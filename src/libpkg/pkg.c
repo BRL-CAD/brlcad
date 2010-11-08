@@ -1525,8 +1525,15 @@ _pkg_dispatch(struct pkg_conn *pc)
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
 	pc->pkc_left = -1;		/* safety */
+
+	/* copy the user_data from the current pkg_switch into the pkg_conn */
+	pc->pkc_user_data = pc->pkc_switch[i].pks_user_data;
+
 	/* pc->pkc_type, pc->pkc_len are preserved for handler */
 	pc->pkc_switch[i].pks_handler(pc, tempbuf);
+
+	/* sanity */
+	pc->pkc_user_data = (void *)NULL;
 	return 1;
     }
     snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_dispatch: no handler for message type %d, len %ld\n",
@@ -1536,6 +1543,7 @@ _pkg_dispatch(struct pkg_conn *pc)
     pc->pkc_buf = (char *)0;
     pc->pkc_curpos = (char *)0;
     pc->pkc_left = -1;		/* safety */
+    pc->pkc_user_data = (void *)NULL;
     return 0;
 }
 

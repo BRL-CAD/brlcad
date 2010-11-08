@@ -496,7 +496,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     leafp_end = exprp;
 
     if (rpn_len == 0) {
-    	ssize_t is;
+	ssize_t is;
 
 	/* This tree is all union operators, import it as a balanced tree */
 	struct bu_ptbl *tbl1, *tbl2;
@@ -1032,9 +1032,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    union tree *new;
 
 	    if (*argv[1] == '\0' || strcmp(argv[1], "none") == 0) {
-		if (comb->tree) {
-		    db_free_tree(comb->tree, &rt_uniresource);
-		}
+		db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = TREE_NULL;
 	    } else {
 		new = db_tree_parse(logstr, argv[1], &rt_uniresource);
@@ -1042,8 +1040,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
-		if (comb->tree)
-		    db_free_tree(comb->tree, &rt_uniresource);
+		db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = new;
 	    }
 	} else {

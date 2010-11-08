@@ -94,7 +94,7 @@ Extrudcon( entityno, curve, evect )
     /* set "a" to 1.0 */
 
     tmp = fabs( a );
-    if ( fabs( b ) < tmp && b != 0.0 )
+    if ( fabs( b ) < tmp && !NEAR_ZERO(b, SMALL_FASTF))
 	tmp = fabs( b );
     if ( fabs( c ) < tmp )
 	tmp = fabs( c );
@@ -107,7 +107,7 @@ Extrudcon( entityno, curve, evect )
 
     /* Check for closure */
 
-    if ( start[X] != stop[X] || start[Y] != stop[Y] )
+    if ( !NEAR_ZERO(start[X] - stop[X], SMALL_FASTF) || !NEAR_ZERO(start[Y] - stop[Y], SMALL_FASTF) )
     {
 	bu_log( "Conic arc for extrusion is not closed:\n" );
 	bu_log( "\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
@@ -146,7 +146,7 @@ Extrudcon( entityno, curve, evect )
     center[Z] = start[Z];
 
     /* calculate rotation about z-axis */
-    if ( b == 0.0 )
+    if ( NEAR_ZERO(b, SMALL_FASTF) )
 	theta = 0.0;
     else
 	theta = 0.5*atan2( b, a-c );

@@ -86,7 +86,6 @@ kitchensink_dirs = \
 	tab \
 	tclscripts \
 	util \
-	vas4 \
 	vdeck
 
 #######################

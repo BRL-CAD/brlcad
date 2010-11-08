@@ -48,8 +48,8 @@ static struct bu_list bu_mapped_file_list = {
 
 struct bu_mapped_file *
 bu_open_mapped_file(const char *name, const char *appl)
-    /* file name */
-    /* non-null only when app. will use 'apbuf' */
+/* file name */
+/* non-null only when app. will use 'apbuf' */
 {
     struct bu_mapped_file *mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_SYS_STAT_H
@@ -60,12 +60,12 @@ bu_open_mapped_file(const char *name, const char *appl)
 #endif
     int ret;
 
-    if (bu_debug&BU_DEBUG_MAPPED_FILE)
+    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_open_mapped_file(%s, %s)\n", name, appl?appl:"(NIL)");
 
     /* See if file has already been mapped, and can be shared */
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    if (BU_LIST_UNINITIALIZED(&bu_mapped_file_list)) {
+    if (UNLIKELY(BU_LIST_UNINITIALIZED(&bu_mapped_file_list))) {
 	BU_LIST_INIT(&bu_mapped_file_list);
     }
     for (BU_LIST_FOR(mp, bu_mapped_file, &bu_mapped_file_list)) {
@@ -97,7 +97,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	/* It is safe to reuse mp */
 	mp->uses++;
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
-	if (bu_debug&BU_DEBUG_MAPPED_FILE)
+	if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	    bu_pr_mapped_file("open_reused", mp);
 	return mp;
     dont_reuse:
@@ -115,8 +115,8 @@ bu_open_mapped_file(const char *name, const char *appl)
     fd = open(name, O_RDONLY | O_BINARY);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (fd < 0) {
-	if (bu_debug&BU_DEBUG_DB)
+    if (UNLIKELY(fd < 0)) {
+	if (UNLIKELY(bu_debug&BU_DEBUG_DB))
 	    perror(name);
 	goto fail;
     }
@@ -125,12 +125,12 @@ bu_open_mapped_file(const char *name, const char *appl)
     ret = fstat(fd, &sb);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (ret < 0) {
+    if (UNLIKELY(ret < 0)) {
 	perror(name);
 	goto fail;
     }
 
-    if (sb.st_size == 0) {
+    if (UNLIKELY(sb.st_size == 0)) {
 	bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
 	goto fail;
     }
@@ -152,7 +152,9 @@ bu_open_mapped_file(const char *name, const char *appl)
     mp->buf = mmap(NULL, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (mp->buf == MAP_FAILED)  perror(name);
+    if (UNLIKELY(mp->buf == MAP_FAILED))
+	perror(name);
+
     if (mp->buf != MAP_FAILED) {
 	/* OK, it's memory mapped in! */
 	mp->is_mapped = 1;
@@ -167,7 +169,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	ret = read(fd, mp->buf, (size_t)sb.st_size);
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if (ret != sb.st_size) {
+	if (UNLIKELY(ret != sb.st_size)) {
 	    perror(name);
 	    bu_free(mp->buf, name);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -188,7 +190,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     fp = fopen(name, "rb");
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (fp == NULL) {
+    if (UNLIKELY(fp == NULL)) {
 	perror(name);
 	goto fail;
     }
@@ -213,7 +215,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     ret = fread(mp->buf, mp->buflen, 1, fp);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (ret != 1) {
+    if (UNLIKELY(ret != 1)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	perror("fread");
 	fclose(fp);
@@ -236,12 +238,12 @@ bu_open_mapped_file(const char *name, const char *appl)
     BU_LIST_APPEND(&bu_mapped_file_list, &mp->l);
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
-    if (bu_debug&BU_DEBUG_MAPPED_FILE) {
+    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE)) {
 	bu_pr_mapped_file("1st_open", mp);
     }
     return mp;
 
- fail:
+fail:
     if (mp) {
 	bu_free(mp->name, "mp->name");
 	if (mp->appl) bu_free(mp->appl, "mp->appl");
@@ -249,7 +251,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	bu_free(mp, "mp from bu_open_mapped_file fail");
     }
 
-    if (bu_debug&BU_DEBUG_DB)
+    if (UNLIKELY(bu_debug&BU_DEBUG_DB))
 	bu_log("bu_open_mapped_file(%s, %s) can't open file\n",
 	       name, appl?appl:"(NIL)");
 
@@ -262,10 +264,10 @@ bu_close_mapped_file(struct bu_mapped_file *mp)
 {
     BU_CK_MAPPED_FILE(mp);
 
-    if (bu_debug&BU_DEBUG_MAPPED_FILE)
+    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_pr_mapped_file("close:uses--", mp);
 
-    if (! mp) {
+    if (UNLIKELY(!mp)) {
 	bu_log("bu_close_mapped_file() called with null pointer\n");
 	return;
     }
@@ -293,7 +295,7 @@ bu_free_mapped_files(int verbose)
 {
     struct bu_mapped_file *mp, *next;
 
-    if (bu_debug&BU_DEBUG_MAPPED_FILE)
+    if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_free_mapped_files(verbose=%d)\n", verbose);
 
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
@@ -307,7 +309,7 @@ bu_free_mapped_files(int verbose)
 	if (mp->uses > 0)  continue;
 
 	/* Found one that needs to have storage released */
-	if (verbose || (bu_debug&BU_DEBUG_MAPPED_FILE))
+	if (UNLIKELY(verbose || (bu_debug&BU_DEBUG_MAPPED_FILE)))
 	    bu_pr_mapped_file("freeing", mp);
 
 	BU_LIST_DEQUEUE(&mp->l);
@@ -323,7 +325,10 @@ bu_free_mapped_files(int verbose)
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = munmap(mp->buf, (size_t)mp->buflen);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    if (ret < 0)  perror("munmap");
+
+	    if (UNLIKELY(ret < 0))
+		perror("munmap");
+
 	    /* XXX How to get this chunk of address space back to malloc()? */
 	} else
 #endif
@@ -332,7 +337,10 @@ bu_free_mapped_files(int verbose)
 	}
 	mp->buf = (genptr_t)NULL;		/* sanity */
 	bu_free((genptr_t)mp->name, "bu_mapped_file.name");
-	if (mp->appl)  bu_free((genptr_t)mp->appl, "bu_mapped_file.appl");
+
+	if (mp->appl)
+	    bu_free((genptr_t)mp->appl, "bu_mapped_file.appl");
+
 	bu_free((genptr_t)mp, "struct bu_mapped_file");
     }
     bu_semaphore_release(BU_SEM_MAPPEDFILE);
@@ -342,8 +350,8 @@ bu_free_mapped_files(int verbose)
 struct bu_mapped_file *
 bu_open_mapped_file_with_path(char *const *path, const char *name, const char *appl)
 
-    /* file name */
-    /* non-null only when app. will use 'apbuf' */
+/* file name */
+/* non-null only when app. will use 'apbuf' */
 {
     char * const *pathp = path;
     struct bu_vls str;

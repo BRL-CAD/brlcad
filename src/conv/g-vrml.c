@@ -522,9 +522,6 @@ main(int argc, char **argv)
 
     bu_setlinebuf( stderr );
 
-#if MEMORY_LEAK_CHECKING
-    bu_debug |= BU_DEBUG_MEM_CHECK;
-#endif
     the_model = nmg_mm();
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;

@@ -585,10 +585,10 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 
 	/* Now write the data out */
 	if ( fp_id )	/* Use id count instead of actual id */
-	    fprintf( fp_out, "%d %d %d           " ,
+	    fprintf( fp_out, "%ul %d %d           " ,
 		     BU_PTBL_END( &vertices ), id_counter, surr_code );
 	else
-	    fprintf( fp_out, "%d %d %d           " ,
+	    fprintf( fp_out, "%ul %d %d           " ,
 		     BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
 	for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
 	{
@@ -634,9 +634,6 @@ main(int argc, char **argv)
 
     bu_setlinebuf( stderr );
 
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
     the_model = nmg_mm();
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
@@ -804,15 +801,6 @@ main(int argc, char **argv)
 	percent = ((double)regions_written * 100) / regions_tried;
     printf( "                  %d triangulated successfully. %g%%\n",
 	    regions_written, percent );
-#if 0
-    /* Release dynamic storage */
-    nmg_km(the_model);
-    bn_vlist_cleanup();
-    db_close(dbip);
-#endif
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-TANKILL conversion");
-#endif
 
     return 0;
 }
@@ -824,7 +812,7 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

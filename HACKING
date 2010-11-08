@@ -180,6 +180,11 @@ For each source file in BRL-CAD, the following checklist applies:
   scope and passing as parameters or embedding them in structures as
   data.
 
+In addtion, don't be afraid to rewrite code or throw away code that
+"smells bad".  No code is sacred.  Perfection is achieved not when
+there is nothing more to add but, rather, when there is nothing more
+to take away.
+
 
 SYSTEM ARCHITECTURE
 -------------------
@@ -1060,7 +1065,7 @@ major or minor version of BRL-CAD is going to be updated, it is very
 important to follow and ensure that the following steps have been
 successfully performed:
 
-0) All code is committed to SVN.
+0) All code is committed to SVN.  Notify developer mailing list.
 
 1) Verify that the NEWS file includes a comment for all relevant and
 significant items added since the previous release.
@@ -1139,10 +1144,15 @@ bench
 12) Post the source and platform-specific binary distributions to
 SourceForge and then select them on the sf.net File Release System:
 
-ssh -v SFUSERNAME,brlcad@shell.sourceforge.net create
-ssh -v SFUSERNAME,brlcad@shell.sourceforge.net mkdir /home/frs/project/b/br/brlcad/BRL-CAD\ Source/MAJOR.MINOR.PATCH
-scp brlcad-MAJOR.MINOR.PATCH* "SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/MAJOR.MINOR.PATCH/."
-ssh -v SFUSERNAME,brlcad@shell.sourceforge.net shutdown
+SFUSERNAME=`ls ~/.subversion/auth/svn.simple/* | xargs -n 1 grep -A4 sourceforge | tail -1`
+MAJOR=`cat include/conf/MAJOR`
+MINOR=`cat include/conf/MINOR`
+PATCH=`cat include/conf/PATCH`
+echo "SFUSERNAME=$SFUSERNAME MAJOR=$MAJOR MINOR=$MINOR PATCH=$PATCH"
+ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net create
+ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net mkdir "/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH"
+scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
+ssh -v $SFUSERNAME,brlcad@shell.sourceforge.net shutdown
 
 This can all be done through the sf.net project web interface too.
 
@@ -1182,6 +1192,18 @@ Source or binary release:
 
       OpenSUSE package maintainer
       https://build.opensuse.org/package/users?package=brlcad&project=Education
+
+      FreeBSD ports maintainer
+      http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
+
+      Gentoo portage maintainer
+      http://packages.gentoo.org/package/sci-misc/brlcad
+
+      Debian apt package maintainer
+      http://git.debian.org/?p=debian-science/packages/brlcad.git
+
+      Slackware maintainer
+      http://slackbuilds.org/result/?search=brlcad
 
 Linux binary release:
 

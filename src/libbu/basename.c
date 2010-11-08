@@ -28,7 +28,7 @@ bu_basename(const char *str)
 {
     register const char	*p = str;
 
-    if (!str) {
+    if (UNLIKELY(!str)) {
 	return NULL;
     }
 

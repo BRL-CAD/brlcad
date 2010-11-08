@@ -968,7 +968,7 @@ rt_num_circular_segments(double maxerr, double radius)
 	/* Return a default number of segments */
 	return 6;
     }
-    
+
     half_theta = acos(cos_half_theta);
 
     if (half_theta <= SMALL_FASTF) {

@@ -207,6 +207,14 @@ HIDDEN int go_faceplate(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int go_handle_expose(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
+HIDDEN int go_handle_refresh(struct ged *gedp,
+			     const char *name);
 HIDDEN int go_idle_mode(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -667,6 +675,7 @@ static struct go_cmdtab go_cmds[] = {
     {"bg",	"[r g b]", MAXARGS, go_bg, GED_FUNC_PTR_NULL},
     {"blast",	(char *)0, MAXARGS, go_blast, GED_FUNC_PTR_NULL},
     {"bo",	(char *)0, MAXARGS, go_pass_through_func, ged_bo},
+    {"bot",	(char *)0, MAXARGS, go_pass_through_func, ged_bot},
     {"bot_condense",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_condense},
     {"bot_decimate",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_decimate},
     {"bot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_bot_dump},
@@ -741,6 +750,7 @@ static struct go_cmdtab go_cmds[] = {
     {"glob",	(char *)0, MAXARGS, go_pass_through_func, ged_glob},
     {"gqa",	(char *)0, MAXARGS, go_pass_through_func, ged_gqa},
     {"grid",	"args", 6, go_view_func, ged_grid},
+    {"handle_expose",	"vname count", MAXARGS, go_handle_expose, GED_FUNC_PTR_NULL},
     {"hide",	(char *)0, MAXARGS, go_pass_through_func, ged_hide},
     {"how",	(char *)0, MAXARGS, go_pass_through_func, ged_how},
     {"human",	(char *)0, MAXARGS, go_pass_through_func, ged_human},
@@ -860,7 +870,7 @@ static struct go_cmdtab go_cmds[] = {
     {"regions",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"report",	(char *)0, MAXARGS, go_pass_through_func, ged_report},
     {"rfarb",	(char *)0, MAXARGS, go_pass_through_func, ged_rfarb},
-    {"rm",	(char *)0, MAXARGS, go_pass_through_func, ged_remove},
+    {"rm",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_remove},
     {"rmap",	(char *)0, MAXARGS, go_pass_through_func, ged_rmap},
     {"rmat",	"[mat]", 3, go_view_func, ged_rmat},
     {"rmater",	(char *)0, MAXARGS, go_pass_through_func, ged_rmater},
@@ -2732,6 +2742,13 @@ go_data_labels(struct ged *gedp,
 		const char **sub_av;
 
 		if (Tcl_SplitList(go_current_gop->go_interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
+		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_labels = (char **)0;
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_labels = 0;
+
 		    bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
 		    Tcl_Free((char *)av);
 		    go_refresh_view(gdvp);
@@ -2739,6 +2756,13 @@ go_data_labels(struct ged *gedp,
 		}
 
 		if (sub_ac != 2) {
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
+		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_labels = (char **)0;
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_labels = 0;
+
 		    bu_vls_printf(&gedp->ged_result_str, "Each list element must contain a label and a point (i.e. {{some label} {0 0 0}})");
 		    Tcl_Free((char *)sub_av);
 		    Tcl_Free((char *)av);
@@ -2752,6 +2776,7 @@ go_data_labels(struct ged *gedp,
 			   &gdlsp->gdls_points[i][Z]) != 3) {
 		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
 
+		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
 		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
 		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_labels = (char **)0;
@@ -3029,7 +3054,7 @@ go_data_move(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[3], "%d", &dindex) != 1)
+    if (sscanf(argv[3], "%d", &dindex) != 1 || dindex < 0)
 	goto bad;
 
     if (argc == 5) {
@@ -3488,7 +3513,7 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
     bu_vls_printf(&bindings, "bind %V <Enter> {focus %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &gdvp->gdv_dmp->dm_pathName);
-    bu_vls_printf(&bindings, "bind %V <Expose> {%V refresh %V; break}; ",
+    bu_vls_printf(&bindings, "bind %V <Expose> {%V handle_expose %V %%c; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &go_current_gop->go_name,
 		  &gdvp->gdv_name);
@@ -3853,7 +3878,7 @@ go_faceplate(struct ged *gedp,
 
 	if (strcmp(argv[3], "color") == 0) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_line_color));
+		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_text_color));
 		return BRLCAD_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -3863,7 +3888,7 @@ go_faceplate(struct ged *gedp,
 		    sscanf(argv[6], "%d", &b) != 1)
 		    goto bad;
 
-		VSET(gdvp->gdv_view->gv_prim_labels.gos_line_color, r, g, b);
+		VSET(gdvp->gdv_view->gv_prim_labels.gos_text_color, r, g, b);
 		go_refresh_view(gdvp);
 		return BRLCAD_OK;
 	    }
@@ -3955,6 +3980,59 @@ go_faceplate(struct ged *gedp,
  bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return BRLCAD_ERROR;
+}
+
+HIDDEN int
+go_handle_expose(struct ged *gedp,
+		 int argc,
+		 const char *argv[],
+		 ged_func_ptr func,
+		 const char *usage,
+		 int maxargs)
+{
+    int count;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3 ||
+	sscanf(argv[2], "%d", &count) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s, argv[2] - %s", argv[0], usage, argv[2]);
+	return BRLCAD_ERROR;
+    }
+
+    /* There are more expose events to come so ignore this one */
+    if (count)
+	return BRLCAD_OK;
+
+    return go_handle_refresh(gedp, argv[1]);
+}
+
+HIDDEN int
+go_handle_refresh(struct ged *gedp,
+		  const char *name)
+{
+    struct ged_dm_view *gdvp;
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), name))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", name);
+	return BRLCAD_ERROR;
+    }
+
+    go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -6600,8 +6678,6 @@ go_refresh(struct ged *gedp,
 	   const char *usage,
 	   int maxargs)
 {
-    struct ged_dm_view *gdvp;
-
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -6616,19 +6692,7 @@ go_refresh(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
-	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
-	return BRLCAD_ERROR;
-    }
-
-    go_refresh_view(gdvp);
-
-    return BRLCAD_OK;
+    return go_handle_refresh(gedp, argv[1]);
 }
 
 HIDDEN int

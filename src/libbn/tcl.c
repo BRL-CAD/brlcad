@@ -666,7 +666,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&result);
     return TCL_OK;
 
- error:
+error:
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
     return TCL_ERROR;

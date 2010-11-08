@@ -77,7 +77,7 @@ get_line(char *cp, int buflen, char *title)
  *			G E T I N T
  */
 int
-getint(char *cp, int start, int len)
+getint(char *cp, int start, size_t len)
 {
     char	buf[128];
 
@@ -92,7 +92,7 @@ getint(char *cp, int start, int len)
  *			G E T D O U B L E
  */
 double
-getdouble(char *cp, int start, int len)
+getdouble(char *cp, int start, size_t len)
 {
     char	buf[128];
 

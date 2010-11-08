@@ -178,7 +178,7 @@ struct bu_structparse grass_print_tab[] = {
 
 };
 struct bu_structparse grass_parse_tab[] = {
-    {"i",	bu_byteoffset(grass_print_tab[0]), "grass_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(grass_print_tab[0]), "grass_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  2, "c",			SHDR_AO(cell),		BU_STRUCTPARSE_FUNC_NULL },
     {"%f",	1, "p",			SHDR_O(ppc),		BU_STRUCTPARSE_FUNC_NULL },
     {"%f",	1, "pd",		SHDR_O(ppcd),		BU_STRUCTPARSE_FUNC_NULL },

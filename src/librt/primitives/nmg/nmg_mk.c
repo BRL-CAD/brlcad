@@ -2876,8 +2876,13 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 	eusrc->radial_p->radial_p = eusrc_mate->radial_p;
 	eusrc_mate->radial_p->radial_p = eusrc->radial_p;
     } else {
-	/* this is the only use of the eusrc edge.  Kill edge. */
-	FREE_EDGE(e);
+	/* this is the only use of the eusrc edge. kill/free edge but not
+         * here. the edge should be freed by the calling function which can
+         * determine this edge should be freed by its edgeuse pointer
+         * pointing to itself and the magic number set to zero.
+         */
+        e->eu_p = (struct edgeuse *)e;
+        e->magic = 0;
     }
 
     eusrc->radial_p = eudst;

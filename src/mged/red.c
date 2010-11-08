@@ -1048,7 +1048,7 @@ build_comb(struct rt_comb_internal *comb, struct directory *dp, size_t node_coun
     }
 
     /* empty the existing combination */
-    if (comb && comb->tree) {
+    if (comb) {
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
     } else {
@@ -1453,7 +1453,7 @@ cmd_put_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* empty the existing combination */
-    if (comb && comb->tree) {
+    if (comb) {
 	db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
     } else {

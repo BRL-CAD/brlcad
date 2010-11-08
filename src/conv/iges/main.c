@@ -92,7 +92,7 @@ Suggestions()
 {
     int i;
     int csg=0;
-    int brep=0;
+    int b_rep=0;
     int splines=0;
     int tsurfs=0;
     int drawing=0;
@@ -107,7 +107,7 @@ Suggestions()
 	    csg += typecount[i].count;
 	else if ( typecount[i].type == 186 ||
 		  (typecount[i].type >= 502 && typecount[i].type <=514) )
-	    brep += typecount[i].count;
+	    b_rep += typecount[i].count;
 	else if ( typecount[i].type == 128 )
 	    splines += typecount[i].count;
 	else if ( typecount[i].type == 144 )
@@ -119,16 +119,16 @@ Suggestions()
 	    drawing += typecount[i].count;
     }
 
-    if ( (csg || brep) && (do_splines || do_drawings || trimmed_surf ) )
+    if ( (csg || b_rep) && (do_splines || do_drawings || trimmed_surf ) )
 	bu_log( msg1, iges_file );
 
-    if ( drawing && csg == 0 && brep == 0 && !do_drawings )
+    if ( drawing && csg == 0 && b_rep == 0 && !do_drawings )
 	bu_log( msg2, iges_file );
 
-    if ( splines && csg == 0 && brep == 0 && !do_splines )
+    if ( splines && csg == 0 && b_rep == 0 && !do_splines )
 	bu_log( msg3, iges_file );
 
-    if ( tsurfs && csg == 0 && brep == 0 && !trimmed_surf )
+    if ( tsurfs && csg == 0 && b_rep == 0 && !trimmed_surf )
 	bu_log( msg4, iges_file );
 }
 

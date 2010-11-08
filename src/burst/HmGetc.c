@@ -31,21 +31,23 @@
 #include "./Hm.h"
 
 int
-HmGetchar( void )
+HmGetchar(void)
 {
-    int	c;
+    int c;
 
-    while ( (c = getc( HmTtyFp )) == EOF )
+    while ((c = getc(HmTtyFp)) == EOF)
 	;
 
     return c;
 }
 
+
 int
-HmUngetchar( int c )
+HmUngetchar(int c)
 {
-    return	ungetc( c, HmTtyFp );
+    return ungetc(c, HmTtyFp);
 }
+
 
 /*
  * Local Variables:

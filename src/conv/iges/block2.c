@@ -37,9 +37,9 @@ block( entityno )
     fastf_t		xscale=0.0;
     fastf_t		yscale=0.0;
     fastf_t		zscale=0.0;
-    fastf_t		x1, y1, z1;		/* First vertex components */
-    fastf_t		x2, y2, z2;		/* xdir vector components */
-    fastf_t		x3, y3, z3;		/* zdir vector components */
+    fastf_t		x_1, y_1, z_1;		/* First vertex components */
+    fastf_t		x_2, y_2, z_2;		/* xdir vector components */
+    fastf_t		x_3, y_3, z_3;		/* zdir vector components */
     point_t		v;			/* the first vertex */
     vect_t		xdir;			/* a unit vector */
     vect_t		xvec;			/* vector along x-axis */
@@ -51,15 +51,15 @@ block( entityno )
     int		sol_num;		/* IGES solid type number */
 
     /* Default values */
-    x1 = 0.0;
-    y1 = 0.0;
-    z1 = 0.0;
-    x2 = 1.0;
-    y2 = 0.0;
-    z2 = 0.0;
-    x3 = 0.0;
-    y3 = 0.0;
-    z3 = 1.0;
+    x_1 = 0.0;
+    y_1 = 0.0;
+    z_1 = 0.0;
+    x_2 = 1.0;
+    y_2 = 0.0;
+    z_2 = 0.0;
+    x_3 = 0.0;
+    y_3 = 0.0;
+    z_3 = 1.0;
 
 
     /* Acquiring Data */
@@ -76,15 +76,15 @@ block( entityno )
     Readcnv( &xscale, "" );
     Readcnv( &yscale, "" );
     Readcnv( &zscale, "" );
-    Readcnv( &x1, "" );
-    Readcnv( &y1, "" );
-    Readcnv( &z1, "" );
-    Readflt( &x2, "" );
-    Readflt( &y2, "" );
-    Readflt( &z2, "" );
-    Readflt( &x3, "" );
-    Readflt( &y3, "" );
-    Readflt( &z3, "" );
+    Readcnv( &x_1, "" );
+    Readcnv( &y_1, "" );
+    Readcnv( &z_1, "" );
+    Readflt( &x_2, "" );
+    Readflt( &y_2, "" );
+    Readflt( &z_2, "" );
+    Readflt( &x_3, "" );
+    Readflt( &y_3, "" );
+    Readflt( &z_3, "" );
 
     if ( xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0 )
     {
@@ -103,9 +103,9 @@ block( entityno )
      * Make and unitize necessary vectors.
      */
 
-    VSET(xdir, x2, y2, z2);			/* Makes x-dir vector */
+    VSET(xdir, x_2, y_2, z_2);			/* Makes x-dir vector */
     VUNITIZE(xdir);
-    VSET(zdir, x3, y3, z3);			/* Make z-dir vector */
+    VSET(zdir, x_3, y_3, z_3);			/* Make z-dir vector */
     VUNITIZE(zdir);
     VCROSS(ydir, zdir, xdir);		/* Make y-dir vector */
 
@@ -117,7 +117,7 @@ block( entityno )
 
     /* Make the bottom face. */
 
-    VSET(v, x1, y1, z1);			/* Yields first vertex */
+    VSET(v, x_1, y_1, z_1);			/* Yields first vertex */
     VMOVE(pts[0], v);			/* put first vertex into array */
     VADD2(pts[1], v, xvec);			/* Finds second vertex */
     VADD3(pts[2], v, xvec, yvec);		/* Finds third vertex  */

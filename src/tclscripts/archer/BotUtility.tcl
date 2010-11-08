@@ -48,7 +48,7 @@ if {[catch {
 
 	method editSelected {}
 	method selectBot {bots}
-	proc editBot {bot}
+	method editBot {bot}
     }
 
     protected {
@@ -85,9 +85,9 @@ if {[catch {
 	# no bots - show notice
 	itk_component add noBots {
 
-	    label $itk_interior.noticeLbl \
+	    ttk::label $itk_interior.noticeLbl \
 		-text {There are no bots to edit.}
-	}
+	} {}
 	
 	grid $itk_component(noBots)
 
@@ -101,7 +101,12 @@ if {[catch {
     set mToplevel [winfo toplevel $itk_interior]
 
     if {$mHandleToplevel} {
-	wm geometry $mToplevel "400x200"
+
+	# center and auto focus window
+	BotEditor::localizeDialog $mToplevel
+	BotEditor::focusOnEnter $mToplevel
+
+	wm geometry $mToplevel "400x100"
     }
 }
 
@@ -163,11 +168,17 @@ if {[catch {
 #
 ::itcl::body BotUtility::editBot {bot} {
 
+    set top [winfo toplevel $itk_interior]
+    set last [expr "[string last "." $top] - 1"]
+    set root [string range $top 0 $last]
+
     # create new editor instance
-    set editor [BotEditor .editor$instances]
+    set editor [BotEditor $root.editor$instances $bot -prefix $root -title {Bot Utility}]
     incr instances
 
-    $editor load $bot
+    # center and auto focus editor dialog
+    BotEditor::localizeDialog $editor
+    BotEditor::focusOnEnter $editor
 }
 
 # editSelected
@@ -179,9 +190,10 @@ if {[catch {
 
     BotUtility::editBot $itk_option(-selectedbot)
 
-    # close the plugin selection window
-    set mToplevel [winfo toplevel $itk_interior]
-    namespace eval :: "$mToplevel deactivate; ::itcl::delete object $mToplevel"
+    # close original plugin window
+    set top [winfo toplevel $itk_interior]
+    destroy $top
+    
 }
 	
 # Local Variables:

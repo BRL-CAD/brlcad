@@ -19,7 +19,8 @@
  *
  */
 /** @file anim_lookat.c
- *	Given animation tables for the position of the virtual camera
+ *
+ * Given animation tables for the position of the virtual camera
  * and a point to look at at each time, this program produces an animation
  * script to control the camera. The view is kept rightside up, whenever
  * possible. When looking vertically up or down, the exact orientation
@@ -29,43 +30,58 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
+#include "bio.h"
 
-#include "vmath.h"
-#include "anim.h"
 #include "bu.h"
+#include "bn.h"
+#include "anim.h"
+#include "vmath.h"
 
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
-#ifndef RTOD
-#define RTOD	(180/M_PI)
-#endif
+#define OPT_STR "f:yqv"
 
+#define LOOKAT_SCRIPT 0
+#define LOOKAT_YPR 1
+#define LOOKAT_QUAT 2
 
-#define LOOKAT_SCRIPT	0
-#define	LOOKAT_YPR	1
-#define LOOKAT_QUAT	2
-
-
-extern int bu_optind;
-extern char *bu_optarg;
 
 int frame = 0;
 int print_mode = LOOKAT_SCRIPT;
 int print_viewsize = 0;
 
-int get_args(int argc, char **argv);
-extern void anim_dirn2mat(fastf_t *, const fastf_t *, const fastf_t *);
-extern int anim_mat2ypr(fastf_t *, fastf_t *);
-extern int anim_mat2quat(fastf_t *, const fastf_t *);
 
 int
-main(int argc, char **argv)
+get_args(int argc, char **argv)
 {
-    fastf_t time, vsize=0.0;
+    int c;
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'f':
+		sscanf(bu_optarg, "%d", &frame);
+		break;
+	    case 'y':
+		print_mode = LOOKAT_YPR;
+		break;
+	    case 'q':
+		print_mode = LOOKAT_QUAT;
+		break;
+	    case 'v':
+		print_viewsize = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
+int
+main(int argc, char *argv[])
+{
+    fastf_t t /* time */, vsize=0.0;
     vect_t eye, look, dir, angles, norm, temp;
     quat_t quat;
     mat_t mat;
@@ -79,7 +95,7 @@ main(int argc, char **argv)
 
     VSET(norm, 0.0, 1.0, 0.0);
     while (!feof(stdin)) {
-	val=scanf("%lf %lf %lf %lf %lf %lf %lf", &time, eye, eye+1, eye+2, look, look+1, look+2);
+	val=scanf("%lf %lf %lf %lf %lf %lf %lf", &t, eye, eye+1, eye+2, look, look+1, look+2);
 	if (val < 7) {
 	    break;
 	}
@@ -108,10 +124,10 @@ main(int argc, char **argv)
 		break;
 	    case LOOKAT_YPR:
 		anim_mat2ypr(angles, mat);
-		angles[0] *= RTOD;
-		angles[1] *= RTOD;
-		angles[2] *= RTOD;
-		printf("%.10g", time);
+		angles[0] *= RAD2DEG;
+		angles[1] *= RAD2DEG;
+		angles[2] *= RAD2DEG;
+		printf("%.10g", t);
 		if (print_viewsize)
 		    printf("\t%.10g", vsize);
 		printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);
@@ -119,7 +135,7 @@ main(int argc, char **argv)
 		break;
 	    case LOOKAT_QUAT:
 		anim_mat2quat(quat, mat);
-		printf("%.10g", time);
+		printf("%.10g", t);
 		if (print_viewsize)
 		    printf("\t%.10g", vsize);
 		printf("\t%.10g\t%.10g\t%.10g", eye[0], eye[1], eye[2]);
@@ -130,33 +146,6 @@ main(int argc, char **argv)
 
     }
     return 0;
-}
-
-#define OPT_STR "f:yqv"
-
-int get_args(int argc, char **argv)
-{
-    int c;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 'f':
-		sscanf(bu_optarg, "%d", &frame);
-		break;
-	    case 'y':
-		print_mode = LOOKAT_YPR;
-		break;
-	    case 'q':
-		print_mode = LOOKAT_QUAT;
-		break;
-	    case 'v':
-		print_viewsize = 1;
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
 }
 
 

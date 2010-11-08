@@ -155,15 +155,53 @@ db_open(const char *name, const char *mode)
     dbip->dbi_title = (char *)0;
     dbip->dbi_uses = 1;
 
-    /* Record the filename and file path */
-    dbip->dbi_filename = bu_strdup(name);
-
     /* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
     argv = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
     argv[0] = bu_strdup(".");
     argv[1] = bu_dirname(name);
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
+
+#if !defined(_WIN32) || defined(__CYGWIN__)
+    /* If not a full path */
+    if (argv[1][0] != '/') {
+	struct bu_vls fullpath;
+
+	bu_free((genptr_t)argv[1], "db_open: argv[1]");
+	argv[1] = getcwd((char *)NULL, (size_t)MAXPATHLEN);
+
+	/* Something went wrong and we didn't get the CWD. So,
+	 * free up any memory allocated here and return DBI_NULL */
+	if (argv[1] == NULL) {
+	    if (dbip->dbi_mf) {
+		bu_close_mapped_file(dbip->dbi_mf);
+		bu_free_mapped_files(0);
+		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
+	    }
+
+	    if (dbip->dbi_fp) {
+		fclose(dbip->dbi_fp);
+	    }
+
+	    bu_free((genptr_t)argv[0], "db_open: argv[0]");
+	    bu_free((genptr_t)argv, "db_open: argv");
+	    bu_free((char *)dbip, "struct db_i");
+
+	    return DBI_NULL;
+	}
+
+	bu_vls_init(&fullpath);
+	bu_vls_printf(&fullpath, "%s/%s", argv[1], name);
+	dbip->dbi_filename = bu_strdup(bu_vls_addr(&fullpath));
+	bu_vls_free(&fullpath);
+    } else {
+	/* Record the filename and file path */
+	dbip->dbi_filename = bu_strdup(name);
+    }
+#else
+    /* Record the filename and file path */
+    dbip->dbi_filename = bu_strdup(name);
+#endif
 
     bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */

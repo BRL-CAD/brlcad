@@ -55,11 +55,14 @@ Emacs. For example, invoke:
 	(error "`batch-indent-region' is to be used only with -batch"))
 
     (while command-line-args-left
+	(setq c-label-minimum-indentation 0)
 	(setq file (car command-line-args-left))
 	(print file)
 	(find-file file)
 	(c-set-offset 'case-label '+)
 	(c-set-offset 'statement-case-open '+)
+	(c-set-offset 'innamespace 0)
+	(c-set-offset 'inline-open 0)
 	(indent-region (point-min) (point-max) nil)
 	(save-buffer)
 	(setq command-line-args-left (cdr command-line-args-left))))

@@ -20,71 +20,161 @@
  */
 /** @file anim_orient.c
  *
- *	Convert between different orientation formats. The formats are:
- *  quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles,
- *  pre-multiplication rotation matrices, and transposed matrices (inverses).
- * 	By default, the information is assumed to represent a transformation
- *  which should be an object which initially faces the x-axis, with the
- *  z-axis going up. Alternatively, the information can be interpreted as
- *  transformations which should be applied to an object initially facing the
- *  negative z-axis, with the y-axis going up.
- *  	The conversion is done by converting each input form to a matrix,
- *  and then converting that matrix to the desired output form.
- *	Angles may be specified in radians or degrees.
+ * Convert between different orientation formats. The formats are:
+ * quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles,
+ * pre-multiplication rotation matrices, and transposed matrices
+ * (inverses).
+ *
+ * By default, the information is assumed to represent a
+ * transformation which should be an object which initially faces the
+ * x-axis, with the z-axis going up. Alternatively, the information
+ * can be interpreted as transformations which should be applied to an
+ * object initially facing the negative z-axis, with the y-axis going
+ * up.
+ *
+ * The conversion is done by converting each input form to a matrix,
+ * and then converting that matrix to the desired output form.
+ *
+ * Angles may be specified in radians or degrees.
  *
  */
 
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-
 #include "bio.h"
+
+#include "bu.h"
+#include "bn.h"
+#include "anim.h"
 #include "vmath.h"
 
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
+#define YPR 0
+#define XYZ 1
+#define AET 2
+#define QUAT 3
+#define MAT 4
 
-#define YPR		0
-#define XYZ		1
-#define AET		2
-#define QUAT		3
-#define MAT		4
+#define DEGREES 0
+#define RADIANS 1
 
-#define DEGREES		0
-#define RADIANS		1
+#define ANIM_NORMAL 0
+#define ANIM_ERROR1 1
+#define ANIM_ERROR2 2
 
-#define ANIM_NORMAL          0
-#define ANIM_ERROR1          1
-#define ANIM_ERROR2          2
-
-#define DTOR    M_PI/180.0
-#define RTOD    180.0/M_PI
-
-int		parse_args(int argc, char **argv);
-extern void	anim_y_p_r2mat(fastf_t *, double, double, double);
-extern void	anim_tran(fastf_t *);
-extern void	anim_v_unpermute(fastf_t *);
-extern void	anim_dirn2mat(fastf_t *, const fastf_t *, const fastf_t *);
-extern void	anim_v_permute(fastf_t *);
-
-extern int bu_optind;
-extern char *bu_optarg;
 
 int upright;
 int input_mode, output_mode, length, input_units, output_units;
 int input_perm, output_perm, input_inv, output_inv;
 
+
 int
-main(int argc, char **argv)
+parse_args(int argc, char **argv)
+{
+    int c;
+    char *cp;
+
+    /* defaults */
+    upright = 0;
+    input_mode = QUAT;
+    output_mode = QUAT;
+    input_units = DEGREES;
+    output_units = DEGREES;
+    input_perm = 0;
+    output_perm = 0;
+    input_inv = 0;
+    output_inv = 0;
+    length = 4;
+
+    if (argc > 2) {
+	/*read output mode */
+	cp = argv[2];
+	while ((c=*cp++)) {
+	    switch (c) {
+		case 'q':
+		    output_mode = QUAT;
+		    break;
+		case 'y':
+		    output_mode = YPR;
+		    break;
+		case 'a':
+		    output_mode = AET;
+		    break;
+		case 'z':
+		    output_mode = XYZ;
+		    break;
+		case 'm':
+		    output_mode = MAT;
+		    break;
+		case 'i':
+		    output_inv = 1;
+		    break;
+		case 'r':
+		    output_units = RADIANS;
+		    break;
+		case 'v':
+		    output_perm = 1;
+		    break;
+		case 'u':
+		    upright = 1;
+		    break;
+		default:
+		    fprintf(stderr, "anim_orient: unknown output option: %c\n", c);
+		    return 0;
+	    }
+	}
+    }
+    if (argc > 1) {
+	/*read input mode */
+	cp = argv[1];
+	while ((c=*cp++)) {
+	    switch (c) {
+		case 'q':
+		    input_mode = QUAT;
+		    length = 4;
+		    break;
+		case 'y':
+		    input_mode = YPR;
+		    length = 3;
+		    break;
+		case 'a':
+		    input_mode = AET;
+		    length = 3;
+		    break;
+		case 'z':
+		    input_mode = XYZ;
+		    length = 3;
+		    break;
+		case 'm':
+		    input_mode = MAT;
+		    length = 16;
+		    break;
+		case 'i':
+		    input_inv = 1;
+		    break;
+		case 'r':
+		    input_units = RADIANS;
+		    break;
+		case 'v':
+		    input_perm = 1;
+		    break;
+		default:
+		    fprintf(stderr, "anim_orient: unknown input option: %c\n", c);
+		    return 0;
+	    }
+	}
+    }
+    return 1;
+}
+
+
+int
+main(int argc, char *argv[])
 {
     int num_read;
-    fastf_t	temp[3], temp2[3], angle[3], quat[4], matrix[16];
-    void anim_zyx2mat(fastf_t *, const fastf_t *), anim_ypr2mat(fastf_t *, const fastf_t *), anim_quat2mat(fastf_t *, const fastf_t *), anim_mat_print(FILE *, const fastf_t *, int);
-    int anim_mat2ypr(fastf_t *, fastf_t *), anim_mat2zyx(const fastf_t *, fastf_t *), anim_mat2quat(fastf_t *, const fastf_t *);
+    fastf_t temp[3], temp2[3], angle[3], quat[4], matrix[16];
 
     if (!parse_args(argc, argv)) {
 	fprintf(stderr, "Get_args error.\n");
@@ -101,8 +191,8 @@ main(int argc, char **argv)
 	    case AET:
 		num_read = scanf("%lf %lf %lf", angle, angle+1, angle+2);
 		/* convert to radians if in degrees */
-		if (input_units==DEGREES)  {
-		    VSCALE(angle, angle, DTOR);
+		if (input_units==DEGREES) {
+		    VSCALE(angle, angle, DEG2RAD);
 		}
 		break;
 	    case QUAT:
@@ -162,7 +252,7 @@ main(int argc, char **argv)
 	    case YPR:
 		anim_mat2ypr(angle, matrix);
 		if (output_units==DEGREES)
-		    VSCALE(angle, angle, RTOD);
+		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case AET:
@@ -175,13 +265,13 @@ main(int argc, char **argv)
 		angle[1] = -angle[1];
 		angle[2] = -angle[2];
 		if (output_units==DEGREES)
-		    VSCALE(angle, angle, RTOD);
+		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case XYZ:
 		anim_mat2zyx(angle, matrix);
 		if (output_units==DEGREES)
-		    VSCALE(angle, angle, RTOD);
+		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case QUAT:
@@ -197,103 +287,6 @@ main(int argc, char **argv)
     return 0;
 }
 
-int parse_args(int argc, char **argv)
-{
-    int c;
-    char *cp;
-
-    /* defaults */
-    upright = 0;
-    input_mode = QUAT;
-    output_mode = QUAT;
-    input_units = DEGREES;
-    output_units = DEGREES;
-    input_perm = 0;
-    output_perm = 0;
-    input_inv = 0;
-    output_inv = 0;
-    length = 4;
-
-    if (argc > 2) {
-	/*read output mode */
-	cp = argv[2];
-	while ( (c=*cp++) ) {
-	    switch (c) {
-		case 'q':
-		    output_mode = QUAT;
-		    break;
-		case 'y':
-		    output_mode = YPR;
-		    break;
-		case 'a':
-		    output_mode = AET;
-		    break;
-		case 'z':
-		    output_mode = XYZ;
-		    break;
-		case 'm':
-		    output_mode = MAT;
-		    break;
-		case 'i':
-		    output_inv = 1;
-		    break;
-		case 'r':
-		    output_units = RADIANS;
-		    break;
-		case 'v':
-		    output_perm = 1;
-		    break;
-		case 'u':
-		    upright = 1;
-		    break;
-		default:
-		    fprintf(stderr, "anim_orient: unknown output option: %c\n", c);
-		    return 0;
-	    }
-	}
-    }
-    if (argc > 1) {
-	/*read input mode */
-	cp = argv[1];
-	while ( (c=*cp++) ) {
-	    switch (c) {
-		case 'q':
-		    input_mode = QUAT;
-		    length = 4;
-		    break;
-		case 'y':
-		    input_mode = YPR;
-		    length = 3;
-		    break;
-		case 'a':
-		    input_mode = AET;
-		    length = 3;
-		    break;
-		case 'z':
-		    input_mode = XYZ;
-		    length = 3;
-		    break;
-		case 'm':
-		    input_mode = MAT;
-		    length = 16;
-		    break;
-		case 'i':
-		    input_inv = 1;
-		    break;
-		case 'r':
-		    input_units = RADIANS;
-		    break;
-		case 'v':
-		    input_perm = 1;
-		    break;
-		default:
-		    fprintf(stderr, "anim_orient: unknown input option: %c\n", c);
-		    return 0;
-	    }
-	}
-    }
-    return 1;
-}
 
 /*
  * Local Variables:

@@ -82,7 +82,7 @@ struct bu_structparse tcl_print_tab[] = {
 
 };
 struct bu_structparse tcl_parse_tab[] = {
-    {"i",	bu_byteoffset(tcl_print_tab[0]), "tcl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(tcl_print_tab[0]), "tcl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"%V",  1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };

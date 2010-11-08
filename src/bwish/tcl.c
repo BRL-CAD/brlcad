@@ -20,12 +20,12 @@
  */
 /** @file tcl.c
  *
- *  The supporting Tcl routines for BWISH and BTCLSH.
+ * The supporting Tcl routines for BWISH and BTCLSH.
  *
- *  Cad_Main --
- *	     Main program for wish-like applications that desire command
- *	     line editing when in interactive mode. Much of this code was
- *	     borrowed from libtk/generic/tkMain.c.
+ * Cad_Main --
+ * Main program for wish-like applications that desire command
+ * line editing when in interactive mode. Much of this code was
+ * borrowed from libtk/generic/tkMain.c.
  *
  */
 
@@ -54,9 +54,9 @@ void Cad_MainLoop(void);
 void Cad_Exit(int status);
 
 #ifdef BWISH
-#	define CAD_RCFILENAME "~/.bwishrc"
+#  define CAD_RCFILENAME "~/.bwishrc"
 #else
-#	define CAD_RCFILENAME "~/.btclshrc"
+#  define CAD_RCFILENAME "~/.btclshrc"
 #endif
 
 /*
@@ -65,13 +65,13 @@ void Cad_Exit(int status);
  * borrowed from libtk/generic/tkMain.c.
  *
  * Results:
- *	None. This procedure never returns (it exits the process when
- *	it's done.
+ * None. This procedure never returns (it exits the process when
+ * it's done.
  *
  * Side effects:
- *	This procedure initializes the Tk world and then starts
- *      interpreting commands;  almost anything could happen,
- *      depending on the script being interpreted.
+ * This procedure initializes the Tk world and then starts
+ * interpreting commands;  almost anything could happen,
+ * depending on the script being interpreted.
  */
 void
 Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp)
@@ -159,6 +159,7 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     Cad_Exit(TCL_OK);
 }
 
+
 void
 Cad_MainLoop(void)
 {
@@ -172,12 +173,14 @@ Cad_MainLoop(void)
 	}
 }
 
+
 void
 Cad_Exit(int status)
 {
     reset_Tty(fileno(stdin));
     Tcl_Exit(status);
 }
+
 
 /*
  * Local Variables:

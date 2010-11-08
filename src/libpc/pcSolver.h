@@ -51,11 +51,12 @@ protected:
     bool solved_;
 };
 
+
 Solver::Solver()
     : num_checks_(0),
       num_solutions_(0),
-      solved_(false),
-      initiated_(false)
+      initiated_(false),
+      solved_(false)
 {}
 
 /* Generic solver for VCSet */
@@ -64,12 +65,13 @@ class PCSolver : public Solver
 {
 public:
     PCSolver();
-    bool solve(VCSet &, Solution<T> & );
+    bool solve(VCSet &, Solution<T> &);
 private:
     std::list<VariableAbstract *> vars_;
     bool generator();
     void initiate();
 };
+
 
 template <typename T>
 PCSolver<T>::PCSolver()
@@ -81,31 +83,32 @@ void PCSolver<T>::initiate() {
     if (!initiated_) {
 	std::list<VariableAbstract *>::iterator i;
         for (i = vars_.begin(); i != vars_.end(); ++i) {
-		typedef Variable<T> * Vp;
-		(Vp (*i))->store();
-		//(Vp (*i))->setValue((Vp (*i))->getFirst());
+	    typedef Variable<T> *Vp;
+	    (Vp (*i))->store();
+	    //(Vp (*i))->setValue((Vp (*i))->getFirst());
         }
 	initiated_ = true;
     }
 }
 
+
 template <typename T>
 bool PCSolver<T>::generator() {
     std::list<VariableAbstract *>::iterator i, j, k;
-    bool atend = true;
+    //    bool atend = true;
     i = vars_.begin();
     j = vars_.end();
-    typedef Variable<T> * Vp;
+    typedef Variable<T> *Vp;
     j--;
     //while (--j != i && (Vp (*j))->atUpperBoundary());
-    while ((Vp (*j))->atCriticalBelow() && j != i ) j--;
+    while ((Vp (*j))->atCriticalBelow() && j != i) j--;
     
     /*k = j;
-    for (; i != ++k; ++i)
-        //if (! (Vp (*i))->atUpperBoundary())
-        if (! (Vp (*i))->atCriticalBelow())
-		atend = false;
-    if (atend)*/
+      for (; i != ++k; ++i)
+      //if (! (Vp (*i))->atUpperBoundary())
+      if (! (Vp (*i))->atCriticalBelow())
+      atend = false;
+      if (atend)*/
     if (i == j && (Vp (*i))->atCriticalBelow())
         return false;
     /* Increment one variable , set other variables to the first value */
@@ -115,6 +118,7 @@ bool PCSolver<T>::generator() {
 	(Vp (*j))->restore();
     return true;
 }
+
 
 template <typename T>
 bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
@@ -129,7 +133,7 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     std::string ov = ""; /* Constant or non constrained variables */
 
     for (; i != end; ++i)
-	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
+	if ((*i)->isConstrained() == 1 && ! (*i)->isConst()) {
 	    av += (*i)->getID() + " ";
 	    vars_.push_back(*i);
 	    ((Variable<T> *) *i)->store();
@@ -145,11 +149,11 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     while (generator()) {
 	++num_checks_;
 	/*std::cout << "Checking ";
-	std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
-	typedef Variable<T> * Vi;
-	for (; i != vcset.Vars.end(); ++i)
-	    std::cout <<  (Vi (*i))->diff() << "\t";
-	std::cout << std::endl;*/
+	  std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
+	  typedef Variable<T> *Vi;
+	  for (; i != vcset.Vars.end(); ++i)
+	  std::cout << (Vi (*i))->diff() << "\t";
+	  std::cout << std::endl;*/
 
 	if (vcset.check()) {
 	    S.addSolution(vcset.Vars);
@@ -160,12 +164,13 @@ bool PCSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     return solved_;
 }
 
+
 /* Generate Test based Solver Technique */
 template <typename T>
 class GTSolver : public Solver
 {
-    typedef typename boost::adjacency_list<boost::vecS, boost::vecS,\
-	    	    boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
+    typedef typename boost::adjacency_list<boost::vecS, boost::vecS, \
+					   boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -173,13 +178,14 @@ class GTSolver : public Solver
 
 public:
     GTSolver();
-    bool solve(BinaryNetwork<T>&, Solution<T>& );
+    bool solve(BinaryNetwork<T>&, Solution<T>&);
 private:
     std::list<VariableAbstract *> vars_;
-    BinaryNetwork<T>* N;
+    BinaryNetwork<T> *N;
     bool generator();
     void initiate();
 };
+
 
 template <typename T>
 GTSolver<T>::GTSolver()
@@ -188,18 +194,19 @@ GTSolver<T>::GTSolver()
 
 template <typename T>
 void GTSolver<T>::initiate() {
-    if ( !initiated_) {
+    if (!initiated_) {
         typename GraphTraits::vertex_iterator v_i, v_end;
-	for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+	for (tie(v_i, v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	    N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
 	initiated_ = true;
     }
 }
 
+
 template <typename T>
 bool GTSolver<T>::generator() {
-    VertexIterator vertex_v, vertex_u,vertex_end;
-    tie(vertex_u,vertex_v) = vertices(N->G);
+    VertexIterator vertex_v, vertex_u, vertex_end;
+    tie(vertex_u, vertex_v) = vertices(N->G);
     vertex_end = vertex_v;
     while (--vertex_v != vertex_u && N->G[*vertex_v]->atUpperBoundary());
     
@@ -217,6 +224,7 @@ bool GTSolver<T>::generator() {
     return true;
 }
 
+
 template <typename T>
 bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
     typename GraphTraits::vertex_iterator v_i, v_end;
@@ -225,7 +233,7 @@ bool GTSolver<T>::solve(BinaryNetwork<T>& BN, Solution<T>& S) {
     num_solutions_ = 0;
     solved_ = true;
 
-    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+    for (tie(v_i, v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	vars_.push_back(N->G[*v_i]);
 
     initiate();
@@ -245,18 +253,19 @@ template <typename T>
 class BackTrackSolver : public Solver
 {
 public:
-    typedef Variable<T>  * Vp;
+    typedef Variable<T> *Vp;
     BackTrackSolver();
     bool solve(VCSet&, Solution<T>&);
 private:
     std::map<VariableAbstract *, bool> labels;
     std::list<VariableAbstract *> vars_;
-    VCSet * vcs;
+    VCSet *vcs;
 
-    int labelsize();
+    size_t labelsize();
     bool backtrack();
     bool check();
 };
+
 
 template <typename T>
 BackTrackSolver<T>::BackTrackSolver()
@@ -264,7 +273,7 @@ BackTrackSolver<T>::BackTrackSolver()
 {}
 
 template <typename T>
-int BackTrackSolver<T>::labelsize() {
+size_t BackTrackSolver<T>::labelsize() {
     int sum = 0;
     Varlist::iterator i = vars_.begin();
     Varlist::iterator end = vars_.end();
@@ -273,6 +282,7 @@ int BackTrackSolver<T>::labelsize() {
     }
     return sum;
 }
+
 
 template <typename T>
 bool BackTrackSolver<T>::check()
@@ -305,6 +315,7 @@ bool BackTrackSolver<T>::check()
     return true;
 }
 
+
 template <typename T>
 bool BackTrackSolver<T>::backtrack()
 {
@@ -329,6 +340,7 @@ bool BackTrackSolver<T>::backtrack()
     return false;
 }
 
+
 template <typename T>
 bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     std::list<VariableAbstract *>::iterator i = vcset.Vars.begin();
@@ -343,7 +355,7 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     vcset.store();
 
     for (; i != end; ++i)
-	if ( (*i)->isConstrained() == 1 && ! (*i)->isConst()) {
+	if ((*i)->isConstrained() == 1 && ! (*i)->isConst()) {
 	    av += (*i)->getID() + " ";
 	    vars_.push_back(*i);
 	    labels[*i] = false;
@@ -366,12 +378,13 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     return false;
 }
 
+
 /* BackTracking Solver Technique */
 template <typename T>
 class BTSolver : public Solver
 {
     typedef typename boost::adjacency_list<boost::vecS, boost::vecS,
-		    boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
+					   boost::bidirectionalS, Variable<T>*, Constraint *> Graph;
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
     typedef typename GraphTraits::edge_descriptor Edge;
@@ -380,17 +393,18 @@ class BTSolver : public Solver
 
 public:
     BTSolver();
-    bool solve(class BinaryNetwork<T>& , Solution<T>& );
+    bool solve(class BinaryNetwork<T>& , Solution<T>&);
 private:
-    Vertex v,u;
+    Vertex v, u;
     std::vector<bool> labels;
-    class BinaryNetwork<T>* N;
+    class BinaryNetwork<T> *N;
     std::list<VariableAbstract *> vars_;
 
-    int labelsize();
+    size_t labelsize();
     bool backtrack();
     bool check();
 };
+
 
 template <typename T>
 BTSolver<T>::BTSolver()
@@ -398,12 +412,13 @@ BTSolver<T>::BTSolver()
 {}
 
 template <typename T>
-int BTSolver<T>::labelsize() {
+size_t BTSolver<T>::labelsize() {
     int i=0;
-    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+    for (tie(v_i, v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	if (labels[*v_i] == true) i++;
     return i;
 }
+
 
 template <typename T>
 bool BTSolver<T>::backtrack()
@@ -413,12 +428,12 @@ bool BTSolver<T>::backtrack()
     if (labelsize() == num_vertices(N->G)) {
 	return true;
     }
-    tie(ver_i,ver_end) = vertices(N->G);
+    tie(ver_i, ver_end) = vertices(N->G);
     while (labels[*ver_i] && ver_i!= ver_end)
 	++ver_i;
     labels[*ver_i] = true;
     for (N->G[*ver_i]->minimize(); ! N->G[*ver_i]->atUpperBoundary(); \
-	++*(N->G[*ver_i])) {
+	     ++*(N->G[*ver_i])) {
 	if (check()) {
 	    if (backtrack()) {
 		return true;
@@ -429,13 +444,14 @@ bool BTSolver<T>::backtrack()
     return false;
 }
 
+
 template <typename T>
 bool BTSolver<T>::check()
 {
-    for (tie(e_i,e_end) = edges(N->G); e_i != e_end; ++e_i) {
-	v = source(*e_i,N->G);
-	u = target(*e_i,N->G);
-	if (labels[v] && labels[u] ) {
+    for (tie(e_i, e_end) = edges(N->G); e_i != e_end; ++e_i) {
+	v = source(*e_i, N->G);
+	u = target(*e_i, N->G);
+	if (labels[v] && labels[u]) {
 	    ++num_checks_;
 	    if (!N->G[*e_i]->check()) {
 		return false;
@@ -445,14 +461,15 @@ bool BTSolver<T>::check()
     return true;
 }
 
+
 template <typename T>
-bool BTSolver<T>::solve(class BinaryNetwork<T>& BN,Solution<T>& S) {
+bool BTSolver<T>::solve(class BinaryNetwork<T>& BN, Solution<T>& S) {
     N = &BN;
     num_checks_ = 0;
-    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i)
+    for (tie(v_i, v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	vars_.push_back(N->G[*v_i]);
 
-    for (tie(v_i,v_end) = vertices(N->G); v_i != v_end; ++v_i) {
+    for (tie(v_i, v_end) = vertices(N->G); v_i != v_end; ++v_i) {
 	labels.push_back(false);
 	N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
     }

@@ -20,7 +20,7 @@
  */
 /** @file chan_mult.c
  *
- *  Multiply specified columns of data by a given factor.
+ * Multiply specified columns of data by a given factor.
  *
  */
 
@@ -66,7 +66,7 @@ main(int argc, char **argv)
 	    else
 		printf("%.10g\t", temp);
 	}
-	if ( count == (of-1))
+	if (count == (of-1))
 	    printf("\n");
 	count = (count+1)%of;
     }
@@ -74,6 +74,7 @@ main(int argc, char **argv)
     bu_free(col_list, "int array");
     return 0;
 }
+
 
 /*
  * Local Variables:

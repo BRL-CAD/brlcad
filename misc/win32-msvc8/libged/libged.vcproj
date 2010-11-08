@@ -294,6 +294,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\bot.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\bot_condense.c"
 				>
 			</File>

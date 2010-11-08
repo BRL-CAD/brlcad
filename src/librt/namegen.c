@@ -598,7 +598,6 @@ main()
     db_dirbuild(dbip);
 
 
-
     /*	av = (char **)bu_malloc(sizeof(char *) * num_of_copies, "array to hold answers from get_next_name");
      */
     bu_vls_trunc(&temp,0);
