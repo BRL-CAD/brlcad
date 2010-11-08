@@ -19,6 +19,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * verify rt/benchmark on windows doesn't crash
 
+* change bu_realloc so that a zero size will perform a free instead
+  of allocating the minimum size to store a pointer.
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
