@@ -40,6 +40,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make sure mged/archer behave properly with relative paths to dbopen.
+  Windows in particular is doing something different in
+  src/librt/db_open.c that should be a problem as it only records the
+  file name (so gui will work, but dbopen + cd + rt will not).
+
 * convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
   logic layout using if/else.
 
