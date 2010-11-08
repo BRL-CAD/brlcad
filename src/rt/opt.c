@@ -258,9 +258,7 @@ int get_args( int argc, register char **argv )
 		break;
 	    case 'C':
 	    {
-#ifndef _WIN32
-		char		buf[128] = {0};
-#endif
+		char		buf[128];
 		int		r, g, b;
 		register char	*cp = bu_optarg;
 
@@ -276,6 +274,7 @@ int get_args( int argc, register char **argv )
 		if ( g < 0 || g > 255 )  g = 255;
 		if ( b < 0 || b > 255 )  b = 255;
 
+#if defined(_WIN32)
 		if (r == 0)
 		    background[0] = 0.0;
 		else
@@ -288,8 +287,12 @@ int get_args( int argc, register char **argv )
 		    background[2] = 0.0;
 		else
 		    background[2] = b / 255.0;
-
-		default_background = 0;
+#else
+		sprintf(buf, "set background=%f/%f/%f",
+			r/255., g/255., b/255. );
+		(void)rt_do_cmd( (struct rt_i *)0, buf,
+				 rt_cmdtab );
+#endif
 	    }
 	    break;
 	    case 'T':
@@ -376,13 +379,8 @@ int get_args( int argc, register char **argv )
 		    height = i;
 		break;
 	    case 'W':
-		background[0] = 1.0;
-		background[1] = 1.0;
-		background[2] = 1.0;
-		default_background = 0;
-#if 0
 		(void)rt_do_cmd( (struct rt_i *)0, "set background=1.0/1.0/1.0", rt_cmdtab );
-#endif
+		default_background = 0;
 		break;
 	    case 'w':
 		i = atoi( bu_optarg );
