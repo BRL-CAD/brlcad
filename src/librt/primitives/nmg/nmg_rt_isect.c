@@ -930,9 +930,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
     myhit->outbound_use = (long *)South_vu;
 
     switch (myhit->in_out) {
-#if 1
 	case HMG_HIT_ON_ON:	/* fallthrough???  -MJM??? */
-#endif
 	case HMG_HIT_IN_IN:	/* fallthrough */
 	case HMG_HIT_OUT_OUT:	/* fallthrough */
 	case HMG_HIT_IN_ON:	/* fallthrough */

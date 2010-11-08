@@ -1293,12 +1293,9 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
     eu_orig = eu;
     eu1 = eu;
 
-    /* If this eu is a wire, advance to first non-wire (skipping dangling faces). */
+    /* If this eu is a wire, advance to first non-wire. */
     while ((fu = nmg_find_fu_of_eu(eu)) == (struct faceuse *)NULL ||
 	   nmg_find_s_of_eu((struct edgeuse *)eu) != s
-#if BO_DANGLE
-	   || nmg_dangling_face(fu, (char *)NULL)
-#endif
 	) {
 	eu = eu->radial_p->eumate_p;
 	if (eu == eu1) return 0;	/* wires all around */
@@ -1313,14 +1310,10 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
     do {
 	/*
 	 * Search until another edgeuse in this shell is found.
-	 * Continue search if it is a wire edge or dangling face.
+	 * Continue search if it is a wire edge.
 	 */
-	while (nmg_find_s_of_eu((struct edgeuse *)eur) != s  ||
-	       (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL
-#if BO_DANGLE
-	       || nmg_dangling_face(fu, (char *)NULL)
-#endif
-	    ) {
+	while (nmg_find_s_of_eu((struct edgeuse *)eur) != s
+	       || (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL) {
 	    /* Advance to next eur */
 	    NMG_CK_EDGEUSE(eur->eumate_p);
 	    if (eur->eumate_p->eumate_p != eur) {
