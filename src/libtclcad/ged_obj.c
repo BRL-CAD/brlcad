@@ -8265,7 +8265,7 @@ go_view_func(struct ged *gedp,
 	return GED_HELP;
     }
 
-    if (MAXARGS < maxargs || maxargs < argc) {
+    if (maxargs < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }

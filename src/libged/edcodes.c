@@ -99,10 +99,6 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    if (pathpos >= RT_MAXARGS) {
-	return EDCODES_HALT;
-    }
-
     if (!(dp->d_flags & RT_DIR_COMB))
 	return EDCODES_OK;
 
