@@ -218,6 +218,7 @@ main(int argc, char **argv)
 {
     /* Create the interpreter */
     INTERP = Tcl_CreateInterp();
+    Tcl_FindExecutable(argv[0]);
     Cad_Main(argc, argv, Cad_AppInit, INTERP);
 
     return 0;
