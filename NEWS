@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-09-XX  Release 7.18.0                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash during BoT decimation - Nicholas Reed
 * improved robustness of CSG boolean tree processing - Sean Morrison
 * improved loading of Pro/E export plugin on Windows - Bob Parker
 * added ray bundle shooting capability to rtshot - Keith Bowman
