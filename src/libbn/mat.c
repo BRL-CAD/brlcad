@@ -31,7 +31,7 @@
  *			|  8  9 10 11 |		| 2 |
  *			| 12 13 14 15 |		| 3 |
  *
- * preVector (vect_t)	Matrix (mat_t)		postVector (vect_t)
+ * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
  @endcode
  *
  * TODO: need a better way to control tolerancing, either via
@@ -958,11 +958,11 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
  * This is done in several steps.
  *
  @code
- 1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
- 2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
- 3)  Rotate D about Z to make projection of X axis again point
+ 1) Rotate D about Z to match +X axis.  Azimuth adjustment.
+ 2) Rotate D about Y to match -Y axis.  Elevation adjustment.
+ 3) Rotate D about Z to make projection of X axis again point
  in the +X direction.  Twist adjustment.
- 4)  Optionally, flip sign on Y axis if original Z becomes inverted.
+ 4) Optionally, flip sign on Y axis if original Z becomes inverted.
  This can be nice for static frames, but is astonishing when
  used in animation.
  @endcode
