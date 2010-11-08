@@ -1910,6 +1910,11 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 
     .$id.menubar.tools add separator
 
+    .$id.menubar.tools add command -label "BoT Edit Tool" -underline 0\
+	-command "bot_askforname .$id $screen"
+    hoc_register_menu_data "Tools" "BoT Edit Tool" "BoT Edit Tool"\
+	{ { summary "A tool for performing various editing operations on BoTs." } }
+
     .$id.menubar.tools add command -label "Build Pattern Tool" -underline 0\
 	-command "pattern_control .\#auto"
     hoc_register_menu_data "Tools" "Build Pattern Tool" "Build Pattern Tool"\

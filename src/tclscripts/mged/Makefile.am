@@ -19,6 +19,7 @@ scripties = \
 	attr_edit.tcl \
 	bindings.tcl \
 	bot_face_select.tcl \
+	botedit.tcl \
 	bots.tcl \
 	build_region.tcl \
 	calipers.tcl \
