@@ -76,6 +76,15 @@ this just might work for you:
 
 ./configure CFLAGS=-m64 CXXFLAGS=-m64 LDFLAGS=-m64 --enable-64bit
 
+Tips
+----
+
+If you need to get information about your machine and OSX version, try
+these commands:
+
+sw_vers -productVersion
+uname -a
+
 Bugs
 ----
 The only known bugs specific to Mac OS X are limitations of Tk or the
