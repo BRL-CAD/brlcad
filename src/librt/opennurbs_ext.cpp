@@ -169,7 +169,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		    }
 		    min = xmax;
 		}
-		delete knots;
+		delete [] knots;
 	    } else {
 		int knotcnt = trimCurve->SpanCount();
 		double *knots = new double[knotcnt + 1];
@@ -182,7 +182,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		    }
 		    min = xmax;
 		}
-		delete knots;
+		delete [] knots;
 	    }
 
 	    if (!NEAR_ZERO(max-min, TOL)) {
