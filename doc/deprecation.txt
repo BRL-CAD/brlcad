@@ -45,6 +45,33 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+7.18
+----
+mged
+        ?(*) -> ? -(*)
+        dbconcat -> db concat
+        dbupgrade -> db upgrade
+        dbversion -> db version
+        dbfind -> search
+        debug* -> debug
+        comb_std -> comb
+        comb_color -> comb
+        combmem -> comb
+        kill(*) -> kill
+        rotobj -> rot
+        ([amov])rot -> rot -([amov])
+        ([op])scale -> sca -([op])
+        ([op])translate -> tra -([op])
+        nmg_(*) -> nmg (*)
+        bot_(*) -> bot (*)
+        ls -oA -> ls -O
+        draw -oA -> draw -O
+        erase -oA -> erase -O
+        erase_all -> erase -r
+        move_all -> move -r
+        query_ray -> nirt
+        xpush -> push -x
+
 7.16
 ----
 struct bu_structparse 'i' format
