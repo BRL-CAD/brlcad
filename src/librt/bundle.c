@@ -578,7 +578,6 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 int rt_shootrays(struct application_bundle *bundle)
 {
 	char *status;
-    static int callcnt=0;
     struct partition_bundle *pb = NULL;
     genptr_t a_uptr_backup = NULL;
     struct xray a_ray;
@@ -607,7 +606,6 @@ int rt_shootrays(struct application_bundle *bundle)
     if (!bundle->b_ap.a_miss)
 	bundle->b_ap.a_miss = bundle_miss;
 
-    callcnt++;
     pb = (struct partition_bundle *)bu_calloc( 1, sizeof( struct partition_bundle), "partition bundle" );
     pb->ap = &bundle->b_ap;
     pb->hits = pb->misses = 0;
