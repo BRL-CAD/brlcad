@@ -49,6 +49,7 @@ new names should be listed for reference.
 ----
 mged
         ?(*) -> ? -(*)
+        apropos(*) -> apropos -(*)
         dbconcat -> db concat
         dbupgrade -> db upgrade
         dbversion -> db version
@@ -59,17 +60,24 @@ mged
         combmem -> comb
         kill(*) -> kill
         rotobj -> rot
-        ([amov])rot -> rot -([amov])
-        ([op])scale -> sca -([op])
-        ([op])translate -> tra -([op])
+        qvrot -> rot -q -v
+        qorot -> rot -q
+        ([amov])rot -> rot -([amv])
+        ([op])scale -> sca -(p)
+        ([op])translate -> tra -(p)
         nmg_(*) -> nmg (*)
         bot_(*) -> bot (*)
+        [so]ed -> edit
+        [tr]ed -> edit -t
         ls -oA -> ls -O
         draw -oA -> draw -O
         erase -oA -> erase -O
         erase_all -> erase -r
         move_all -> move -r
         query_ray -> nirt
+        vdraw -> draw -v
+        vnirt -> nirt -v
+        vquery_ray -> nirt -v
         xpush -> push -x
 
 7.16
