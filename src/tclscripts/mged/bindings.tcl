@@ -273,6 +273,7 @@ proc forward_key_bindings { w } {
 }
 
 proc default_mouse_bindings { w } {
+    global no_focus_hack
     global transform
     global tcl_platform
 
@@ -281,7 +282,7 @@ proc default_mouse_bindings { w } {
 	set osMajorVersion 0
     }
 
-    if {$::tcl_platform(os) == "Darwin" && $osMajorVersion == 9} {
+    if {[info exists no_focus_hack] && $no_focus_hack} {
 	bind $w <1> "winset $w; zoom 0.5; break"
 	bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; zoom 2.0; break"
