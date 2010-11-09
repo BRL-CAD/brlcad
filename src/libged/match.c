@@ -50,11 +50,6 @@ ged_match(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     for (++argv; *argv != NULL; ++argv) {
 	if (db_regexp_match_all(&gedp->ged_result_str, gedp->ged_wdbp->dbip, *argv) > 0)
 	    bu_vls_strcat(&gedp->ged_result_str, " ");

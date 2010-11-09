@@ -31,7 +31,7 @@
  *			|  8  9 10 11 |		| 2 |
  *			| 12 13 14 15 |		| 3 |
  *
- * preVector (vect_t)	Matrix (mat_t)		postVector (vect_t)
+ * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
  @endcode
  *
  * TODO: need a better way to control tolerancing, either via
@@ -381,9 +381,7 @@ bn_mat_inverse(register mat_t output, const mat_t input)
 void
 bn_vtoh_move(register vect_t h, register const vect_t v)
 {
-    h[X] = v[X];
-    h[Y] = v[Y];
-    h[Z] = v[Z];
+    VMOVE(h, v);
     h[W] = 1.0;
 }
 
@@ -403,18 +401,14 @@ bn_htov_move(register vect_t v, register const vect_t h)
     register fastf_t inv;
 
     if (NEAR_ZERO(h[3] - 1.0, SMALL_FASTF)) {
-	v[X] = h[X];
-	v[Y] = h[Y];
-	v[Z] = h[Z];
+	VMOVE(v, h);
     } else {
 	if (NEAR_ZERO(h[W], SMALL_FASTF)) {
 	    bu_log("bn_htov_move: divide by %f!\n", h[W]);
 	    return;
 	}
 	inv = 1.0 / h[W];
-	v[X] = h[X] * inv;
-	v[Y] = h[Y] * inv;
-	v[Z] = h[Z] * inv;
+	VSCALE(v, h, inv);
     }
 }
 
@@ -425,27 +419,7 @@ bn_htov_move(register vect_t v, register const vect_t h)
 void
 bn_mat_trn(mat_t om, register const mat_t im)
 {
-    register matp_t op = om;
-
-    *op++ = im[0];
-    *op++ = im[4];
-    *op++ = im[8];
-    *op++ = im[12];
-
-    *op++ = im[1];
-    *op++ = im[5];
-    *op++ = im[9];
-    *op++ = im[13];
-
-    *op++ = im[2];
-    *op++ = im[6];
-    *op++ = im[10];
-    *op++ = im[14];
-
-    *op++ = im[3];
-    *op++ = im[7];
-    *op++ = im[11];
-    *op++ = im[15];
+    MAT_TRANSPOSE(om, im);
 }
 
 
@@ -984,11 +958,11 @@ bn_mat_zrot(fastf_t *m, double sinz, double cosz)
  * This is done in several steps.
  *
  @code
- 1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
- 2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
- 3)  Rotate D about Z to make projection of X axis again point
+ 1) Rotate D about Z to match +X axis.  Azimuth adjustment.
+ 2) Rotate D about Y to match -Y axis.  Elevation adjustment.
+ 3) Rotate D about Z to make projection of X axis again point
  in the +X direction.  Twist adjustment.
- 4)  Optionally, flip sign on Y axis if original Z becomes inverted.
+ 4) Optionally, flip sign on Y axis if original Z becomes inverted.
  This can be nice for static frames, but is astonishing when
  used in animation.
  @endcode
@@ -1043,7 +1017,7 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
     /* Check the final results */
     MAT4X3VEC(t1, rot, dir);
     if (t1[Z] > -0.98) {
-	bu_log("Error:  bn_mat_lookat final= (%g, %g, %g)\n", t1[X], t1[Y], t1[Z]);
+	bu_log("Error:  bn_mat_lookat final= (%g, %g, %g)\n", V3ARGS(t1));
     }
 }
 
@@ -1065,9 +1039,9 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register int i;
 
     if (NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF)) {
+	bu_log("bn_vec_ortho(): zero magnitude input vector %lf %lf %lf\n", V3ARGS(in));
 	VSETALL(out, 0);
-	bu_log("bn_vec_ortho(): zero magnitude input vector %lf %lf %lf\n", in[0],in[1],in[2]);
-	bu_bomb("bn_vec_ortho(): zero magnitude input vector\n");
+	return;
     }
 
     /* Find component closest to zero */
@@ -1088,7 +1062,7 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     }
     f = hypot(in[j], in[k]);
     if (NEAR_ZERO(f, SMALL_FASTF)) {
-	bu_log("bn_vec_ortho(): zero hypot on %lf %lf %lf\n", in[0],in[1],in[2]);
+	bu_log("bn_vec_ortho(): zero hypot on %lf %lf %lf\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
     }

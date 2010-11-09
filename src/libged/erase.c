@@ -33,13 +33,11 @@
 
 #include "./ged_private.h"
 
+
 void ged_splitGDL(struct ged *gedp, struct ged_display_list *gdlp, struct db_full_path *path);
 
 /*
  * Erase objects from the display.
- *
- * Usage:
- * erase object(s)
  *
  */
 int
@@ -50,7 +48,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     int flag_o_nonunique=1;
     int last_opt=0;
     struct bu_vls vls;
-    static const char *usage = "<objects(s)> | <-o -A attribute name/value pairs>";
+    static const char *usage = "[[-o] -A attribute=value] [object(s)]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -89,15 +87,8 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	last_opt = i;
 
 	if (!ptr_A && !ptr_o) {
-#if 1
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
-#else
-	    /*XXX Use this section when we have more options (i.e. ones other than -A or -o) */
-	    bu_vls_putc(&vls, ' ');
-	    bu_vls_strcat(&vls, argv[i]);
- 	    continue;
-#endif
 	}
 
 	if (strlen(argv[i]) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
@@ -105,22 +96,8 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-#if 1
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
-#else
-	/*XXX Use this section when we have more options (i.e. ones other than -A or -o) */
-
-	/* copy args other than "-A" or "-o" */
-	bu_vls_putc(&vls, ' ');
-	c = (char *)argv[i];
-	while (*c != '\0') {
-	    if (*c != 'A' && *c != 'o') {
-		bu_vls_putc(&vls, *c);
-	    }
-	    c++;
-	}
-#endif
     }
 
     if (flag_A_attr) {

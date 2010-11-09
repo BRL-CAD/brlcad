@@ -58,11 +58,6 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     nummatch = 0;
     backslashed = 0;
     for (whicharg = 1; whicharg < argc; whicharg++) {

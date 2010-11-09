@@ -45,7 +45,7 @@ main(int argc, char *argv[])
     int i, j;
     int db_index;
     char c;
-    const char *av[MAXARGS];
+    const char **av;
     struct ged *gedp;
 
     bu_opterr = 0;
@@ -86,6 +86,8 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
+    av = (const char **)bu_calloc(argc, sizeof(char *), "av");
+
     db_index = bu_optind;
     for (i = j = 0; i < argc; ++i) {
 	if (i == db_index)
@@ -97,6 +99,7 @@ main(int argc, char *argv[])
     av[j] = (char *)0;
 
     if ((gedp = ged_open("db", argv[db_index], 1)) == GED_NULL) {
+	bu_free(av, "av");
 	bu_exit(1, usage, argv[0]);
     }
 
@@ -106,6 +109,8 @@ main(int argc, char *argv[])
     if (bu_vls_strlen(&gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(&gedp->ged_result_str));
     ged_close(gedp);
+
+    bu_free(av, "av");
 
     return 0;
 }

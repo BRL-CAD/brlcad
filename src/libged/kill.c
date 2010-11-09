@@ -59,11 +59,6 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != EOF) {
 	switch( c ) {

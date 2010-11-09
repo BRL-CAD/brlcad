@@ -53,11 +53,6 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     /* set title */
     bu_vls_init(&title);
     bu_vls_from_argv(&title, argc-1, (const char **)argv+1);

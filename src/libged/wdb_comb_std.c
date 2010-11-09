@@ -471,7 +471,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (argc < 3 || RT_MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

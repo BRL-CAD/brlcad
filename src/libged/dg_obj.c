@@ -1327,7 +1327,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
     int i;
     char	pstring[32];
 
-    if (argc < 1 || MAXARGS < argc) {
+    if (argc < 1) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1402,7 +1402,7 @@ dgo_rt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     struct dg_obj	*dgop = (struct dg_obj *)clientData;
     struct view_obj	*vop;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2055,7 +2055,7 @@ dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 
     DGO_CHECK_WDBP_NULL(dgop, interp);
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2269,7 +2269,7 @@ dgo_nirt_tcl(ClientData	clientData,
     struct dg_obj	*dgop = (struct dg_obj *)clientData;
     struct view_obj	*vop;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2305,7 +2305,7 @@ dgo_vnirt_tcl(ClientData	clientData,
     struct dg_obj	*dgop = (struct dg_obj *)clientData;
     struct view_obj	*vop;
 
-    if (argc < 5 || MAXARGS < argc) {
+    if (argc < 5) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -4664,7 +4664,7 @@ dgo_tree_cmd(struct dg_obj	*dgop,
     if (!dgop || !dgop->dgo_wdbp || dgop->dgo_wdbp->dbip == DBI_NULL)
 	return TCL_ERROR;
 
-    if (argc < 1 || MAXARGS < argc) {
+    if (argc < 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));

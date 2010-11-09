@@ -115,7 +115,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

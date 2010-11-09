@@ -523,7 +523,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     struct bu_vls z_vls;
     char **av;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

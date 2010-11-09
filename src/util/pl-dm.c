@@ -680,7 +680,7 @@ cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 static int
 cmd_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

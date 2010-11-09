@@ -68,11 +68,6 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     gktd.gedp = gedp;
     gktd.ac = 1;
     gktd.av[0] = "killrefs";
