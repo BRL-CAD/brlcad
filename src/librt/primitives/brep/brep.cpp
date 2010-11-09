@@ -1121,13 +1121,13 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face) {
     return false;
 }
 
-
+#define MAX_BREP_SUBDIVISION_INTERSECTS 5
 int
-utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
+utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, ON_Ray& ray, HitList& hits)
 {
-    ON_3dVector N[2];
-    double t[2];
-    ON_2dPoint ouv[2];
+    ON_3dVector N[MAX_BREP_SUBDIVISION_INTERSECTS];
+    double t[MAX_BREP_SUBDIVISION_INTERSECTS];
+    ON_2dPoint ouv[MAX_BREP_SUBDIVISION_INTERSECTS];
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
     int numhits;
