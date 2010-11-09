@@ -20,6 +20,7 @@ numerous BoT editing commands and processing steps into one unified
 easy-to-use interface.  The new GUI grealy simplifies BoT processing
 steps and can save modelers considerable time.
 
+* fixed infinite loop bug converting to NMG and BoT - Sean Morrison
 * improved Windows installer desktop shortcut creation - Bob Parker
 * fixed running mged external tools (e.g., rt) after 'cd' - Bob Parker
 * fixed 'pnts' point cloud primitive memory access bug - Richard Weiss

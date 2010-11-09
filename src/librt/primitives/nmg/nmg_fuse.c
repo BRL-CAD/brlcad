@@ -190,14 +190,15 @@ nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
 	    register struct vertex *vj;
 	    vj = (struct vertex *)BU_PTBL_GET(t, j);
 	    NMG_CK_VERTEX(vj);
-	    if (!vj->vg_p) continue;
-	    if (!bn_pt3_pt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
-		continue;
-	    /* They are the same, fuse vi into vj */
-	    nmg_jv(vj, vi);
-	    bu_ptbl_rm(t, (long *)vi);
-	    count++;
-	    break;
+	    if ( !vj->vg_p) continue;
+
+	    if (vi->vg_p==vj->vg_p || bn_pt3_pt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol)) {
+		/* They are the same, fuse vi into vj */
+		nmg_jv(vj, vi);
+		bu_ptbl_rm(t, (long *)vi);
+		count++;
+		break;
+	    }
 	}
     }
     return count;
