@@ -20,6 +20,7 @@ numerous BoT editing commands and processing steps into one unified
 easy-to-use interface.  The new GUI grealy simplifies BoT processing
 steps and can save modelers considerable time.
 
+* fixed idents, solids, and regions output - Bob Parker
 * increased performance of facetization and export - Sean Morrison
 * fixed NURBS raytrace bug grazing nearly flat surfaces - Keith Bowman
 * fixed infinite loop bug converting to NMG and BoT - Sean Morrison
