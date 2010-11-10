@@ -61,14 +61,14 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
-#define VIEWFACTOR      (1.0/(*dmp->dm_vp))
-#define VIEWSIZE        (2.0*(*dmp->dm_vp))
+#define VIEWFACTOR (1.0/(*dmp->dm_vp))
+#define VIEWSIZE (2.0*(*dmp->dm_vp))
 
 /* these are from /usr/include/gl.h could be device dependent */
-#define XMAXSCREEN	1279
-#define YMAXSCREEN	1023
-#define YSTEREO		491	/* subfield height, in scanlines */
-#define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
+#define XMAXSCREEN 1279
+#define YMAXSCREEN 1023
+#define YSTEREO 491	/* subfield height, in scanlines */
+#define YOFFSET_LEFT 532	/* YSTEREO + YBLANK ? */
 
 #define USE_VECTOR_THRESHHOLD 0
 #if USE_VECTOR_THRESHHOLD
@@ -87,7 +87,7 @@ struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
 
-struct dm dm_rtgl = {
+    struct dm dm_rtgl = {
     rtgl_close,
     rtgl_drawBegin,
     rtgl_drawEnd,
@@ -149,6 +149,7 @@ struct dm dm_rtgl = {
     0				/* Tcl interpreter */
 };
 
+
 static fastf_t default_viewscale = 1000.0;
 static double xlim_view = 1.0;	/* args for glOrtho*/
 static double ylim_view = 1.0;
@@ -178,6 +179,7 @@ struct rtglJobs rtgljob = {
     0
 };
 
+
 /* ray trace vars */
 struct application app;
 struct rt_i *rtip;
@@ -198,12 +200,14 @@ void freeJobList(struct jobList *jobs) {
     }
 }
 
+
 void
 rtgl_fogHint(struct dm *dmp, int fastfog)
 {
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
+
 
 /*
  * R T G L _ O P E N
@@ -467,7 +471,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* IRIX 4.0.5 bug workaround */
     if (list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1)  goto Done;
+	list == (XDeviceInfoPtr)1) goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
@@ -572,6 +576,7 @@ Done:
 
     return dmp;
 }
+
 
 /*
  */
@@ -740,6 +745,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     return TCL_OK;
 }
 
+
 /*
  * O G L _ C L O S E
  *
@@ -878,6 +884,7 @@ rtgl_drawBegin(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
  * O G L _ D R A W E N D
  */
@@ -931,6 +938,7 @@ rtgl_drawEnd(struct dm *dmp)
     rtgl_actively_drawing = 0;
     return TCL_OK;
 }
+
 
 double startScale = 1;
 
@@ -1087,6 +1095,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     return TCL_OK;
 }
 
+
 /* convert color vector to unsigned char array */
 unsigned char* getColorKey(float *color) {
     int i, value;
@@ -1099,6 +1108,7 @@ unsigned char* getColorKey(float *color) {
 
     return key;
 }
+
 
 /* calculate and add hit-point info to info list */
 void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char flip, float *partColor) {
@@ -1194,6 +1204,7 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
     rtgljob.currItem->used += 3;
 }
 
+
 /* add all hit point info to info list */
 int recordHit(struct application *app, struct partition *partH, struct seg *segs)
 {
@@ -1222,10 +1233,12 @@ int recordHit(struct application *app, struct partition *partH, struct seg *segs
     return 1;
 }
 
+
 /* don't care about misses */
 int ignoreMiss(struct application *app) {
     return 0;
 }
+
 
 double jitter(double range) {
     if (rand() % 2)
@@ -1233,6 +1246,7 @@ double jitter(double range) {
 
     return (-1 *(fmod(rand(), range)));
 }
+
 
 void randShots(fastf_t *center, fastf_t radius, int flag) {
     int i, j;
@@ -1263,8 +1277,8 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 	    VADD2(pt, pt, jit);
 #endif
 	    VMOVE(app.a_ray.r_dir, pt);
-	    
-	    
+
+
 	    if (RT_BADVEC(app.a_ray.r_dir)) {
 		VPRINT("bad dir:", app.a_ray.r_dir);
 	    }
@@ -1298,6 +1312,7 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 
     glEnable(GL_LIGHTING);
 }
+
 
 void swapItems(struct bu_list *a, struct bu_list *b) {
     struct bu_list temp;
@@ -1378,6 +1393,7 @@ struct job* getJob(int n) {
     return &(rtgljob.currJob->jobs[index]);
 }
 
+
 /* Fisher-Yates shuffle */
 void shuffleJobs(void) {
     int i;
@@ -1394,6 +1410,7 @@ void shuffleJobs(void) {
 	COPY_JOB(*b, temp);
     }
 }
+
 
 /* add jobs for an even grid of parallel rays in a principle direction */
 void shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
@@ -1459,6 +1476,7 @@ void shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int
     }
 }
 
+
 int numShot = 0;
 
 /* return 1 if all jobs done, 0 if not */
@@ -1512,6 +1530,7 @@ int shootJobs(struct jobList *jobs) {
 
     return 1;
 }
+
 
 void drawPoints(float *view, int pointSize) {
     int i, used;
@@ -1733,8 +1752,8 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	maxSpan = 0.0;
 	numShot = rtgljob.numJobs = 0;
     }
- 
-    
+
+
     for (i = 0; i < numVisible; i++) {
         currTree = visibleTrees[i];
         new = 1;
@@ -1920,7 +1939,6 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-
 /*
  * R T G L _ D R A W
  *
@@ -1930,20 +1948,20 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *))
 {
     struct bn_vlist *vp;
     if (!callback_function) {
-         if (data) {
-             vp = (struct bn_vlist *)data;
-	     rtgl_drawVList(dmp,vp);
-         }
-     } else {
-         if (!data) {
-             return TCL_ERROR;
-         } else {    
-             vp = callback_function(data);
-         }
-     }
-     return TCL_OK;
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    rtgl_drawVList(dmp, vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {    
+	    vp = callback_function(data);
+	}
+    }
+    return TCL_OK;
 }
-	
+
 
 /*
  * O G L _ N O R M A L
@@ -1974,6 +1992,7 @@ rtgl_normal(struct dm *dmp)
 
     return TCL_OK;
 }
+
 
 /*
  * O G L _ D R A W S T R I N G 2 D
@@ -2035,6 +2054,7 @@ rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
+
 /*
  * O G L _ D R A W L I N E 3 D
  *
@@ -2045,6 +2065,7 @@ rtgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
     return TCL_OK;
 }
 
+
 /*
  * O G L _ D R A W L I N E S 3 D
  *
@@ -2054,6 +2075,7 @@ rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 {
     return TCL_OK;
 }
+
 
 HIDDEN int
 rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
@@ -2121,6 +2143,7 @@ rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
     return TCL_OK;
 }
 
+
 HIDDEN int
 rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
@@ -2155,6 +2178,7 @@ rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
     return TCL_OK;
 }
 
+
 HIDDEN int
 rtgl_setLineAttr(struct dm *dmp, int width, int style)
 {
@@ -2174,6 +2198,7 @@ rtgl_setLineAttr(struct dm *dmp, int width, int style)
     return TCL_OK;
 }
 
+
 /* ARGSUSED */
 HIDDEN int
 rtgl_debug(struct dm *dmp, int lvl)
@@ -2182,6 +2207,7 @@ rtgl_debug(struct dm *dmp, int lvl)
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 rtgl_setWinBounds(struct dm *dmp, int *w)
@@ -2203,6 +2229,7 @@ rtgl_setWinBounds(struct dm *dmp, int *w)
 
     return TCL_OK;
 }
+
 
 #define RTGL_DO_STEREO 1
 /* currently, get a double buffered rgba visual that works with Tk and
@@ -2496,11 +2523,13 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
     return TCL_OK;
 }
 
+
 HIDDEN int
 rtgl_configureWin(struct dm *dmp)
 {
     return rtgl_configureWin_guts(dmp, 0);
 }
+
 
 HIDDEN int
 rtgl_setLight(struct dm *dmp, int lighting_on)
@@ -2538,6 +2567,7 @@ rtgl_setLight(struct dm *dmp, int lighting_on)
     return TCL_OK;
 }
 
+
 HIDDEN int
 rtgl_setTransparency(struct dm *dmp,
 		     int transparency_on)
@@ -2567,6 +2597,7 @@ rtgl_setTransparency(struct dm *dmp,
     return TCL_OK;
 }
 
+
 HIDDEN int
 rtgl_setDepthMask(struct dm *dmp,
 		  int enable) {
@@ -2589,6 +2620,7 @@ rtgl_setDepthMask(struct dm *dmp,
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
@@ -2621,6 +2653,7 @@ rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
+
 int
 rtgl_beginDList(struct dm *dmp, unsigned int list)
 {
@@ -2638,6 +2671,7 @@ rtgl_beginDList(struct dm *dmp, unsigned int list)
     return TCL_OK;
 }
 
+
 int
 rtgl_endDList(struct dm *dmp)
 {
@@ -2648,6 +2682,7 @@ rtgl_endDList(struct dm *dmp)
     return TCL_OK;
 }
 
+
 int
 rtgl_drawDList(struct dm *dmp, unsigned int list)
 {
@@ -2657,6 +2692,7 @@ rtgl_drawDList(struct dm *dmp, unsigned int list)
     glCallList(dmp->dm_displaylist + list);
     return TCL_OK;
 }
+
 
 int
 rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
@@ -2674,6 +2710,7 @@ rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
     glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
     return TCL_OK;
 }
+
 
 #endif /* DM_RTGL */
 
