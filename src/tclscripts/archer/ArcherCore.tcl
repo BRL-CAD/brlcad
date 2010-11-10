@@ -3287,6 +3287,8 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
+    global no_tree_decorate
+
     set cnodes [getCNodesFromCText $_pnode $_ctext]
 
     # Atleast one node for _pnode/_ctext already exists
@@ -3303,12 +3305,18 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set ptext $mNode2Text($_pnode)
-    set op [getTreeOp $ptext $_ctext]
-    set img [getTreeImage $_ctext $ctype $op $isregion]
-    set cnode [$itk_component(newtree) insert $_pnode end \
-		   -tags $TREE_POPUP_TAG \
-		   -text $_ctext \
-		   -image $img]
+    if {[info exists no_tree_decorate] && $no_tree_decorate} {
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext]
+    } else {
+	set op [getTreeOp $ptext $_ctext]
+	set img [getTreeImage $_ctext $ctype $op $isregion]
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext \
+		       -image $img]
+    }
     fillTreeColumns $cnode $_ctext
 
     if {!$_flat && $ctype == "comb"} {

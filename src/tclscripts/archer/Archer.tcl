@@ -8313,6 +8313,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::readPreferences {} {
     global env
+    global no_tree_decorate
 
     if {$mViewOnly} {
 	return
@@ -8385,6 +8386,12 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::writePreferencesBody {_pfile} {
+    global no_tree_decorate
+
+    if {[info exists no_tree_decorate]} {
+	puts $_pfile "set no_tree_decorate $no_tree_decorate"
+    }
+
     puts $_pfile "set mBackgroundColor \"$mBackgroundColor\""
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
