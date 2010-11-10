@@ -5,6 +5,7 @@ don't have Visual Studio or an older version. The only symptom is
 that the plugin will fail to load and there will be no indication
 in the Proe trail file of why it failed to load.
 
+Digging in a bit turns up a side by side configuration error.
 It turns out that Proe's static libs are compiled with an old version
 of the C-runtime. So when the proe-brl.dll gets compiled it depends
 on both the C-runtime of Proe's static libs and the C-runtime of the
