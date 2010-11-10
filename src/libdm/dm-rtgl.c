@@ -170,6 +170,7 @@ struct rtglJobs rtgljob = {
     0,
     NULL,
     0,
+    0,
     NULL,
     NULL,
     NULL,
@@ -773,9 +774,15 @@ rtgl_close(struct dm *dmp)
     rtgljob.controlClip = 1;
     rtgljob.calls = 0;
     rtgljob.jobsDone = 0;
-    rtgljob.oldNumTrees = 0;
+    rtgljob.numTrees = 0;
     rtgljob.numJobs = 0;
     rtgljob.rtglWasClosed = 1;
+
+    /* release trees */
+    if (rtgljob.oldTrees != NULL)
+	bu_free(rtgljob.oldTrees, "free oldTrees");
+    rtgljob.oldTrees = (char **)NULL;
+    rtgljob.treeCapacity = 0;
     
     /* free draw list */
     if (rtgljob.colorTable != NULL) {
@@ -786,10 +793,30 @@ rtgl_close(struct dm *dmp)
     rtgljob.currItem = NULL;
     rtgljob.currJob = NULL;
 
-    
-
     return TCL_OK;
 }
+
+
+/* stash a new job into a dynamically allocated container */
+HIDDEN void
+rtgl_stashTree(struct rtglJobs *job, char *tree)
+{
+    static const size_t STEP = 1024;
+
+    /* make sure there is enough room */
+    if (job->treeCapacity == 0) {
+	job->oldTrees = (char **)bu_calloc(STEP, sizeof(char *), "called oldTrees");
+	job->treeCapacity = STEP;
+    } else if (job->numTrees + 1 >= job->treeCapacity) {
+	job->oldTrees = (char **)bu_realloc(job->oldTrees, (sizeof(char *) * job->treeCapacity) + STEP, "realloc oldTrees");
+	job->treeCapacity += STEP;
+    }
+
+    /* add it */
+    job->oldTrees[job->numTrees] = tree;
+    job->numTrees++;
+}
+
 
 /*
  * O G L _ D R A W B E G I N
@@ -1611,7 +1638,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     int foundalloldtrees = 1;
     int foundthistree = 0;
-    for (i = 0; i < rtgljob.oldNumTrees; i++) {
+    for (i = 0; i < rtgljob.numTrees; i++) {
 	currTree = rtgljob.oldTrees[i];
 	foundthistree = 0;
  	for (j = 0; j < numVisible; j++) {
@@ -1627,7 +1654,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     	foundalloldtrees = 1;
 	
 	/* drop previous work */
-	rtgljob.oldNumTrees = 0;
+	rtgljob.numTrees = 0;
 	freeJobList(&jobs);
 
 	if (rtgljob.colorTable != NULL) {
@@ -1651,7 +1678,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     if (numVisible == 0) {
 
 	/* drop previous work */
-	rtgljob.oldNumTrees = 0;
+	rtgljob.numTrees = 0;
 	freeJobList(&jobs);
 
 	if (rtgljob.colorTable != NULL) {
@@ -1682,7 +1709,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     
     if (rtgljob.rtglWasClosed == 1) {
 	rtgljob.rtglWasClosed = 0;
-	rtgljob.oldNumTrees = 0;
+	rtgljob.numTrees = 0;
     	/* drop previous work */
 	freeJobList(&jobs);
 	
@@ -1717,7 +1744,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	 * but that's not set up yet without clearing everything
 	 * first and starting over.
 	 */
-        for (j = 0; j < rtgljob.oldNumTrees; j++) {
+        for (j = 0; j < rtgljob.numTrees; j++) {
             if (strcmp(currTree, rtgljob.oldTrees[j]) == 0)
                 new = 0;
         }
@@ -1729,7 +1756,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 	    /* add new tree to list of displayed */
             numNew++;
-	    rtgljob.oldTrees[rtgljob.oldNumTrees++] = currTree;
+	    rtgl_stashTree(&rtgljob, currTree);
         }
     }
 
@@ -1750,7 +1777,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		jobsArray = NULL;
 	    }
 	    maxSpan = 0.0;
-	    rtgljob.oldNumTrees = 0;
+	    rtgljob.numTrees = 0;
     	    numShot = rtgljob.numJobs = 0;
 	    rtgljob.currJob = NULL;
 	    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[RT_MAXARGS]);
@@ -1763,7 +1790,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		 * but that's not set up yet without clearing everything
 		 * first and starting over.
 		 **/
-		for (j = 0; j < rtgljob.oldNumTrees; j++) {
+		for (j = 0; j < rtgljob.numTrees; j++) {
 		    if (strcmp(currTree, rtgljob.oldTrees[j]) == 0)
 			new = 0;
 		}
@@ -1775,7 +1802,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    
 		    /* add new tree to list of displayed */
 		    numNew++;
-		    rtgljob.oldTrees[rtgljob.oldNumTrees++] = currTree;
+		    rtgl_stashTree(&rtgljob, currTree);
 		}
 	    }
 	    
