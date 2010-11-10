@@ -1355,7 +1355,6 @@ dgo_rt_command(struct dg_obj	*dgop,
 
     args = argc + 2 + dgo_count_tops((struct solid *)&dgop->dgo_headSolid);
     dgop->dgo_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc dgo_rt_cmd");
-    dgop->dgo_rt_cmd_cap = args;
 
     vp = &dgop->dgo_rt_cmd[0];
     *vp++ = argv[0];
@@ -1815,7 +1814,6 @@ dgo_rtcheck_command(struct dg_obj	*dgop,
 
     args = argc + 2 + dgo_count_tops((struct solid *)&dgop->dgo_headSolid);
     dgop->dgo_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc dgo_rt_cmd");
-    dgop->dgo_rt_cmd_cap = args;
 
 #ifndef _WIN32
     vp = &dgop->dgo_rt_cmd[0];
