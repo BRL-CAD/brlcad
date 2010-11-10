@@ -1623,11 +1623,15 @@ time_t start = 0;
 HIDDEN int
 rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 {
-    size_t i, j, new, numVisible, numNew, maxPixels, viewSize;
+    size_t i, j, new, numNew, maxPixels, viewSize;
     vect_t span;
-    char *currTree, *visibleTrees[RT_MAXARGS];
+    char *currTree;
     struct db_i *dbip;
     struct jobList jobs;
+
+    size_t numVisible = 0;
+    size_t visibleCount = 0;
+    char **visibleTrees = NULL;
     
     int foundalloldtrees = 1;
     int foundthistree = 0;
@@ -1666,8 +1670,18 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	rtgljob.colorTable = bu_create_hash_tbl(START_TABLE_SIZE);
     }
 
+    /* allocate our visible trees */
+    {
+	struct ged_display_list *gdlp;
+	visibleCount = 0;
+	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	    visibleCount++;
+	}
+	visibleTrees = (char **)bu_calloc(visibleCount, sizeof(char *), "alloc visibleTrees");
+    }
+
     /* get number and names of visible tree tops */
-    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[RT_MAXARGS]);
+    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[visibleCount]);
 
     for (i = 0; i < rtgljob.numTrees; i++) {
 	currTree = rtgljob.oldTrees[i];
@@ -1811,7 +1825,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	    rtgljob.numTrees = 0;
     	    numShot = rtgljob.numJobs = 0;
 	    rtgljob.currJob = NULL;
-	    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[RT_MAXARGS]);
+	    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[visibleCount]);
 	    for (i = 0; i < numVisible; i++) {
 		currTree = visibleTrees[i];
 		new = 1;
@@ -1892,6 +1906,12 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	rtgljob.jobsDone = 0;
 
     } /* numNew > 0 */
+
+    /* done with visibleTrees */
+    if (visibleTrees != NULL) {
+	bu_free(visibleTrees, "free visibleTrees");
+	visibleTrees = NULL;
+    }
 
     /* get view vector */
     bn_vec_aed(view, gedp->ged_gvp->gv_aet[0]*DEG2RAD, gedp->ged_gvp->gv_aet[1]*DEG2RAD, 1);
