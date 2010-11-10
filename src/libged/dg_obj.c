@@ -205,6 +205,21 @@ static struct bu_cmdtab dgo_cmds[] = {
     {(char *)0,			(int (*)())0}
 };
 
+/**
+ * count the total number of solids, phony or otherwise
+ */
+HIDDEN size_t
+dgo_count_tops(const struct solid *headsp)
+{
+    struct solid *sp;
+    size_t count = 0;
+    FOR_ALL_SOLIDS(sp, &headsp->l) {
+	count++;
+    }
+    return count;
+}
+
+
 /*
  *			D G O _ C M D
  *
@@ -1317,7 +1332,7 @@ dgo_get_eyemodel_tcl(ClientData	clientData,
 }
 
 int
-dgo_rt_cmd(struct dg_obj	*dgop,
+dgo_rt_command(struct dg_obj	*dgop,
 	   struct view_obj	*vop,
 	   Tcl_Interp		*interp,
 	   int			argc,
@@ -1326,6 +1341,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
     char **vp;
     int i;
     char	pstring[32];
+    size_t args;
 
     if (argc < 1) {
 	struct bu_vls vls;
@@ -1336,6 +1352,10 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
+
+    args = argc + 2 + dgo_count_tops((struct solid *)&dgop->dgo_headSolid);
+    dgop->dgo_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc dgo_rt_cmd");
+    dgop->dgo_rt_cmd_cap = args;
 
     vp = &dgop->dgo_rt_cmd[0];
     *vp++ = argv[0];
@@ -1376,7 +1396,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
 					       (struct solid *)&dgop->dgo_headSolid,
 					       vp,
-					       &dgop->dgo_rt_cmd[MAXARGS]);
+					       &dgop->dgo_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = argv[i++];
@@ -1388,6 +1408,8 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	Tcl_AppendResult(interp, "\n", (char *)NULL);
     }
     (void)dgo_run_rt(dgop, vop);
+
+    bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
 
     return TCL_OK;
 }
@@ -1428,7 +1450,7 @@ dgo_rt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 
     /* copy command name into argv[2], could be rt or some other rt-style command  */
     argv[2] = argv[1];
-    return dgo_rt_cmd(dgop, vop, interp, argc-2, argv+2);
+    return dgo_rt_command(dgop, vop, interp, argc-2, argv+2);
 }
 
 
@@ -1760,7 +1782,7 @@ dgo_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 #endif
 
 int
-dgo_rtcheck_cmd(struct dg_obj	*dgop,
+dgo_rtcheck_command(struct dg_obj	*dgop,
 		struct view_obj	*vop,
 		Tcl_Interp	*interp,
 		int		argc,
@@ -1768,6 +1790,8 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 {
     char **vp;
     int i;
+    size_t args;
+
 #ifndef _WIN32
     int	pid;
     int	i_pipe[2];	/* object reads results for building vectors */
@@ -1789,6 +1813,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     vect_t temp;
     vect_t eye_model;
 
+    args = argc + 2 + dgo_count_tops((struct solid *)&dgop->dgo_headSolid);
+    dgop->dgo_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc dgo_rt_cmd");
+    dgop->dgo_rt_cmd_cap = args;
+
 #ifndef _WIN32
     vp = &dgop->dgo_rt_cmd[0];
     *vp++ = argv[0];
@@ -1807,7 +1835,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
 					       (struct solid *)&dgop->dgo_headSolid,
 					       vp,
-					       &dgop->dgo_rt_cmd[MAXARGS]);
+					       &dgop->dgo_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = argv[i++];
@@ -1890,9 +1918,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 			  dgo_rtcheck_output_handler,
 			  (ClientData)rtcop);
 
-    return TCL_OK;
 #else
+
     /* _WIN32 */
+
     vp = &dgop->dgo_rt_cmd[0];
     *vp++ = "rtcheck";
     *vp++ = "-M";
@@ -1916,7 +1945,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
 					       (struct solid *)&dgop->dgo_headSolid,
 					       vp,
-					       &dgop->dgo_rt_cmd[MAXARGS]);
+					       &dgop->dgo_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = argv[i++];
@@ -2037,10 +2066,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 			     TCL_READABLE,
 			     dgo_rtcheck_output_handler,
 			     (ClientData)rtcop);
-    return TCL_OK;
-
-
 #endif
+
+    bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
+    return TCL_OK;
 }
 
 /*
@@ -2078,7 +2107,7 @@ dgo_rtcheck_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	return TCL_ERROR;
     }
 
-    return dgo_rtcheck_cmd(dgop, vop, interp, argc-2, argv+2);
+    return dgo_rtcheck_command(dgop, vop, interp, argc-2, argv+2);
 }
 
 /*
@@ -3801,6 +3830,7 @@ dgo_color_soltab(struct solid *hsp)
     done: ;
     }
 }
+
 
 /*
  *                    D G O _ B U I L D _ T O P S
