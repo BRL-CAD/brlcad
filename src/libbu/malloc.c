@@ -352,7 +352,13 @@ bu_free(genptr_t ptr, const char *str)
     bu_n_free++;
 }
 
-
+/**
+ * B U _ R E A L L O C
+ *
+ * This routine is to mimic the behavior of the standard
+ * function realloc. If this function frees memory then
+ * a NULL pointer is returned.
+ */
 genptr_t
 bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 {
@@ -360,16 +366,36 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
     genptr_t original_ptr;
     const size_t MINSIZE = sizeof(uint32_t) > sizeof(intptr_t) ? sizeof(uint32_t) : sizeof(intptr_t);
 
-    if (UNLIKELY(cnt < MINSIZE)) {
-        cnt = MINSIZE;
+    /* If bu_realloc receives a NULL pointer and zero size then bomb
+     * because the behavior of realloc is undefined for these inputs.
+     */
+    if (UNLIKELY(!cnt && !ptr)) {
+	bu_bomb("bu_realloc(): invalid input, NULL pointer and zero size\n");
     }
 
+    /* If bu_realloc receives a NULL pointer and non-zero size then
+     * allocate the memory.
+     */
     if (UNLIKELY(!ptr)) {
-	/* This is so we are compatible with system realloc.  It seems
-	 * like an odd behaviour, but some non-BRL-CAD code relies on
-	 * this.
-	 */
 	return bu_malloc(cnt, str);
+    }
+
+    /* If bu_realloc receives a non-NULL pointer and zero size then
+     * free the memory.
+     */
+    if (UNLIKELY(!cnt)) {
+	bu_free(ptr, str);
+	return (genptr_t)NULL;
+    }
+
+    /* If the new allocation size is smaller than the minimum size
+     * to store a pointer then set the size to this minimum size.
+     * This is necessary so that the function bu_free can place a
+     * value in the memory before it is freed. The size allocated
+     * needs to be large enough to hold this value.
+     */
+    if (UNLIKELY(cnt < MINSIZE)) {
+        cnt = MINSIZE;
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK)) {
@@ -400,11 +426,6 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	BU_LIST_DEQUEUE(&(mqp->q));
     }
 
-    if (UNLIKELY(cnt == 0)) {
-	fprintf(stderr, "ERROR: bu_realloc cnt=0 (ptr=%p) %s\n", ptr, str);
-	bu_bomb("ERROR: bu_realloc(0)\n");
-    }
-
     original_ptr = ptr;
 
 #if defined(MALLOC_NOT_MP_SAFE)
@@ -414,6 +435,14 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
+
+    /* If realloc returns NULL then it failed to allocate the
+     * requested memory and we need to bomb.
+     */
+    if (UNLIKELY(!ptr)) {
+	fprintf(stderr, "bu_realloc(): unable to allocate requested memory of size %d, %s\n", cnt, str);
+	bu_bomb("bu_realloc(): unable to allocate requested memory.\n");
+    }
 
     if (UNLIKELY(ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -427,10 +456,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (UNLIKELY(ptr==(char *)0 && cnt > 0)) {
-	fprintf(stderr, "bu_realloc: Insufficient memory available\n");
-	bu_bomb("bu_realloc: malloc failure");
-    }
+
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK && ptr)) {
 	/* Even if ptr didn't change, need to update cnt & barrier */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
