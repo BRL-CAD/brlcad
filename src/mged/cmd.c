@@ -1219,7 +1219,7 @@ mged_cmd(
 	if (strcmp(ftp->ft_name, argv[0]) != 0)
 	    continue;
 	/* We have a match */
-	if ((ftp->ft_min <= argc) && (argc <= ftp->ft_max)) {
+	if ((ftp->ft_min <= argc) && (ftp->ft_max < 0 || argc <= ftp->ft_max)) {
 	    /* Input has the right number of args.  Call function
 	     * listed in table, with main(argc, argv) style args
 	     */
