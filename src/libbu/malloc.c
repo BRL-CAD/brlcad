@@ -363,23 +363,26 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
     /* If bu_realloc receives a NULL pointer and zero size then bomb
      * because the behavior of realloc is undefined for these inputs.
      */
-    if (UNLIKELY(!siz && !ptr)) {
+    if (UNLIKELY(ptr == NULL && siz == 0)) {
 	bu_bomb("bu_realloc(): invalid input, NULL pointer and zero size\n");
     }
 
     /* If bu_realloc receives a NULL pointer and non-zero size then
-     * allocate the memory.
+     * allocate new memory.
      */
-    if (UNLIKELY(!ptr)) {
+    if (UNLIKELY(ptr == NULL && siz > 0)) {
 	return bu_malloc(siz, str);
     }
 
     /* If bu_realloc receives a non-NULL pointer and zero size then
-     * free the memory.
+     * free the memory.  Instead of returning NULL, though, the
+     * standard says we can return a small allocation suitable for
+     * passing to bu_free().  Do that so we can maintain are LIBBU
+     * guarantee of worry-free memory management.
      */
-    if (UNLIKELY(!siz)) {
+    if (UNLIKELY(ptr != NULL && siz == 0)) {
 	bu_free(ptr, str);
-	return (genptr_t)NULL;
+	return bu_malloc(MINSIZE, str);
     }
 
     /* If the new allocation size is smaller than the minimum size
@@ -411,8 +414,12 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 		    "or not allocated with bu_malloc!  Ignored.\n",
 		    ptr, str);
 	    /*
-	     * Since we're ignoring this, atleast return the pointer
-	     * that was passed in. We should probably return NULL.
+	     * Since we're ignoring this, at least return the pointer
+	     * that was passed in.  Standard says behavior is
+	     * undefined when reallocating memory not allocated with
+	     * the matching allocation routines (i.e., bu_malloc() or
+	     * bu_calloc() in our situation), so we are fair game to
+	     * just return the pointer we were given.
 	     */
 	    return ptr;
 	}
