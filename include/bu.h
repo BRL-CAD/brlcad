@@ -3234,13 +3234,18 @@ BU_EXPORT BU_EXTERN(void bu_free,
  *
  * bu_malloc()/bu_free() compatible wrapper for realloc().
  *
+ * this routine mimics the C99 standard behavior of realloc() except
+ * that NULL will never be returned.  it will bomb if siz is zero and
+ * ptr is NULL.  it will return a minimum allocation suitable for
+ * bu_free() if siz is zero and ptr is non-NULL.
+ *
  * While the string 'str' is provided for the log messages, don't
- * disturb the mdb_str value, so that this storage allocation can be
+ * disturb the str value, so that this storage allocation can be
  * tracked back to it's original creator.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_realloc,
 		    (genptr_t ptr,
-		     size_t cnt,
+		     size_t siz,
 		     const char *str));
 
 /**
