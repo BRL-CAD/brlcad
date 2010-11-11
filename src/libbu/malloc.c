@@ -352,15 +352,9 @@ bu_free(genptr_t ptr, const char *str)
     bu_n_free++;
 }
 
-/**
- * B U _ R E A L L O C
- *
- * This routine is to mimic the behavior of the standard
- * function realloc. If this function frees memory then
- * a NULL pointer is returned.
- */
+
 genptr_t
-bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
+bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 {
     struct memdebug *mp=NULL;
     genptr_t original_ptr;
@@ -369,7 +363,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
     /* If bu_realloc receives a NULL pointer and zero size then bomb
      * because the behavior of realloc is undefined for these inputs.
      */
-    if (UNLIKELY(!cnt && !ptr)) {
+    if (UNLIKELY(!siz && !ptr)) {
 	bu_bomb("bu_realloc(): invalid input, NULL pointer and zero size\n");
     }
 
@@ -377,13 +371,13 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
      * allocate the memory.
      */
     if (UNLIKELY(!ptr)) {
-	return bu_malloc(cnt, str);
+	return bu_malloc(siz, str);
     }
 
     /* If bu_realloc receives a non-NULL pointer and zero size then
      * free the memory.
      */
-    if (UNLIKELY(!cnt)) {
+    if (UNLIKELY(!siz)) {
 	bu_free(ptr, str);
 	return (genptr_t)NULL;
     }
@@ -394,22 +388,22 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
      * value in the memory before it is freed. The size allocated
      * needs to be large enough to hold this value.
      */
-    if (UNLIKELY(cnt < MINSIZE)) {
-        cnt = MINSIZE;
+    if (UNLIKELY(siz < MINSIZE)) {
+        siz = MINSIZE;
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK)) {
 	mp = _bu_memdebug_check(ptr, str);
 	if (UNLIKELY(mp == MEMDEBUG_NULL)) {
 	    fprintf(stderr, "%p realloc%6d %s ** barrier check failure\n",
-		    ptr, (int)cnt, str);
+		    ptr, (int)siz, str);
 	}
 	/* Pad, plus full long for magic number */
-	cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
+	siz = (siz+2*sizeof(long)-1)&(~(sizeof(long)-1));
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK)) {
 	struct memqdebug *mqp = ((struct memqdebug *)ptr)-1;
 
-	cnt = (cnt + 2*sizeof(struct memqdebug) - 1)
+	siz = (siz + 2*sizeof(struct memqdebug) - 1)
 	    &(~(sizeof(struct memqdebug)-1));
 
 	if (UNLIKELY(BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC))) {
@@ -431,7 +425,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
-    ptr = realloc(ptr, cnt);
+    ptr = realloc(ptr, siz);
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
@@ -440,7 +434,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
      * requested memory and we need to bomb.
      */
     if (UNLIKELY(!ptr)) {
-	fprintf(stderr, "bu_realloc(): unable to allocate requested memory of size %d, %s\n", cnt, str);
+	fprintf(stderr, "bu_realloc(): unable to allocate requested memory of size %d, %s\n", siz, str);
 	bu_bomb("bu_realloc(): unable to allocate requested memory.\n");
     }
 
@@ -448,26 +442,26 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	if (ptr == original_ptr) {
 	    fprintf(stderr, "%p realloc%6d %s [grew in place]\n",
-		    ptr, (int)cnt, str);
+		    ptr, (int)siz, str);
 	} else {
 	    fprintf(stderr, "%p realloc%6d %s [moved from %p]\n",
-		    ptr, (int)cnt, str, original_ptr);
+		    ptr, (int)siz, str, original_ptr);
 	}
 
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK && ptr)) {
-	/* Even if ptr didn't change, need to update cnt & barrier */
+	/* Even if ptr didn't change, need to update siz & barrier */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	mp->mdb_addr = ptr;
-	mp->mdb_len = cnt;
+	mp->mdb_len = siz;
 
 	/* Install a barrier word at the new end of the dynamic
-	 * arena. Correct location depends on 'cnt' being rounded up,
+	 * arena. Correct location depends on 'siz' being rounded up,
 	 * above.
 	 */
-	*((long *)(((char *)ptr)+cnt-sizeof(long))) = MDB_MAGIC;
+	*((long *)(((char *)ptr)+siz-sizeof(long))) = MDB_MAGIC;
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK && ptr)) {
 	struct memqdebug *mqp;
@@ -476,7 +470,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
 	mqp->m.magic = MDB_MAGIC;
 	mqp->m.mdb_addr = ptr;
-	mqp->m.mdb_len = cnt;
+	mqp->m.mdb_len = siz;
 	mqp->m.mdb_str = str;
 	BU_ASSERT(bu_memq != BU_LIST_NULL);
 	BU_LIST_APPEND(bu_memq, &(mqp->q));
