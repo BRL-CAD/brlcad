@@ -25,14 +25,14 @@
 #include "bu.h"
 
 
-#define BU_VLB_BLOCK_SIZE 512
+#define VLB_BLOCK_SIZE 512
 
 
 void
 bu_vlb_init(struct bu_vlb *vlb)
 {
-    vlb->buf = bu_calloc(1, BU_VLB_BLOCK_SIZE, "bu_vlb");
-    vlb->bufCapacity = BU_VLB_BLOCK_SIZE;
+    vlb->buf = bu_calloc(1, VLB_BLOCK_SIZE, "bu_vlb");
+    vlb->bufCapacity = VLB_BLOCK_SIZE;
     vlb->nextByte = 0;
     vlb->magic = BU_VLB_MAGIC;
 }
@@ -63,7 +63,7 @@ bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, size_t len)
     currCapacity = vlb->bufCapacity;
     while (currCapacity <= (vlb->nextByte + len)) {
 	addBlocks++;
-	currCapacity += BU_VLB_BLOCK_SIZE;
+	currCapacity += VLB_BLOCK_SIZE;
     }
 
     if (addBlocks) {
@@ -121,6 +121,7 @@ bu_vlb_print(struct bu_vlb *vlb, FILE *fd)
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     ret = fwrite(vlb->buf, 1, vlb->nextByte, fd);
 }
+
 
 /*
  * Local Variables:
