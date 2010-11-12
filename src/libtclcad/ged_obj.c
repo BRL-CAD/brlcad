@@ -4273,7 +4273,7 @@ go_make(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-2];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, GO_UNLIMITED);
     }
 
     return ret;
@@ -4296,7 +4296,7 @@ go_mirror(struct ged *gedp,
 	av[0] = "draw";
 	av[1] = (char *)argv[argc-1];
 	av[2] = (char *)0;
-	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, GO_UNLIMITED);
     }
 
     return ret;
@@ -7801,7 +7801,7 @@ go_vmake(struct ged *gedp,
 	    av[0] = "draw";
 	    av[1] = (char *)argv[2];
 	    av[2] = (char *)0;
-	    go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, MAXARGS);
+	    go_autoview_func(gedp, 2, (const char **)av, ged_draw, (char *)0, GO_UNLIMITED);
 	}
 
 	return ret;
@@ -8250,14 +8250,12 @@ go_view_func(struct ged *gedp,
     register int i;
     int ret;
     int ac;
-    char *av[MAXARGS];
+    char **av;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    if (maxargs == GO_UNLIMITED)
-	maxargs = MAXARGS-1;
+    av = bu_calloc(argc+1, sizeof(char *));
 
     /* must be wanting help */
     if (argc == 1) {
@@ -8265,7 +8263,7 @@ go_view_func(struct ged *gedp,
 	return GED_HELP;
     }
 
-    if (maxargs < argc) {
+    if (maxargs != GO_UNLIMITED && maxargs < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
