@@ -320,6 +320,13 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+
+s/bu_vlb_getBufferLength(/bu_vlb_buflen(/g
+        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
+
+s/bu_vlb_getBuffer(/bu_vlb_addr(/g
+        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
+
 s/nmg_struct_counts(/nmg_pr_m_struct_counts(/g
         nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
 
