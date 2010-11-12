@@ -317,7 +317,7 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
 	snprintf(buf, TINYBUFSIZ, "%d", listc);
 	Tcl_AppendResult(interp, "bu_get_value_by_keyword: odd # of items in list (", buf, ").\n", (char *)NULL);
 	if (tofree)
-	    Tcl_Free(tofree); /* not bu_free() */
+	    Tcl_Free((char *)tofree); /* not bu_free() */
 	return TCL_ERROR;
     }
 
@@ -337,7 +337,7 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
 		Tcl_AppendResult(interp, listv[i+1], (char *)NULL);
 	    }
 	    if (tofree)
-		Tcl_Free(tofree); /* not bu_free() */
+		Tcl_Free((char *)tofree); /* not bu_free() */
 	    return TCL_OK;
 	}
     }
@@ -345,7 +345,7 @@ bu_tcl_get_value_by_keyword(ClientData clientData,
     /* Not found */
     Tcl_AppendResult(interp, "bu_get_value_by_keyword: keyword '", iwant, "' not found in list\n", (char *)NULL);
     if (tofree)
-	Tcl_Free(tofree); /* not bu_free() */
+	Tcl_Free((char *)tofree); /* not bu_free() */
     return TCL_ERROR;
 }
 
