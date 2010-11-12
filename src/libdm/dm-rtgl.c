@@ -1671,14 +1671,8 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
     }
 
     /* allocate our visible trees */
-    {
-	struct ged_display_list *gdlp;
-	visibleCount = 0;
-	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
-	    visibleCount++;
-	}
-	visibleTrees = (char **)bu_calloc(visibleCount, sizeof(char *), "alloc visibleTrees");
-    }
+    visibleCount = ged_count_tops(gedp);
+    visibleTrees = (char **)bu_calloc(visibleCount, sizeof(char *), "alloc visibleTrees");
 
     /* get number and names of visible tree tops */
     numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[visibleCount]);
