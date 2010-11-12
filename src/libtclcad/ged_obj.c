@@ -8255,7 +8255,7 @@ go_view_func(struct ged *gedp,
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    av = bu_calloc(argc+1, sizeof(char *));
+    av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
 
     /* must be wanting help */
     if (argc == 1) {
@@ -8287,6 +8287,8 @@ go_view_func(struct ged *gedp,
 	av[i-1] = (char *)argv[i];
     av[i-1] = (char *)0;
     ret = (*func)(gedp, ac, (const char **)av);
+
+    bu_free(av, "free av copy");
 
     /* Keep the view's perspective in sync with its corresponding display manager */
     gdvp->gdv_dmp->dm_perspective = gdvp->gdv_view->gv_perspective;
