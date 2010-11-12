@@ -52,7 +52,6 @@ struct cmdtab {
 };
 
 
-#define MAXARGS 9000
 #define MOUSE_MODE_IDLE 0
 #define MOUSE_MODE_ROTATE 1
 #define MOUSE_MODE_TRANSLATE 3

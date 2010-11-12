@@ -162,7 +162,6 @@ static int dgo_run_rt(struct dg_obj *dgop, struct view_obj *vop);
 static void dgo_rt_write(struct dg_obj *dgop, struct view_obj *vop, FILE *fp, fastf_t *eye_model);
 static void dgo_rt_set_eye_model(struct dg_obj *dgop, struct view_obj *vop, fastf_t *eye_model);
 void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy);
-int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, char **end);
 void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 
 static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
@@ -204,20 +203,6 @@ static struct bu_cmdtab dgo_cmds[] = {
     {"zap",			dgo_zap_tcl},
     {(char *)0,			(int (*)())0}
 };
-
-/**
- * count the total number of solids, phony or otherwise
- */
-HIDDEN size_t
-dgo_count_tops(const struct solid *headsp)
-{
-    struct solid *sp;
-    size_t count = 0;
-    FOR_ALL_SOLIDS(sp, &headsp->l) {
-	count++;
-    }
-    return count;
-}
 
 
 /*
@@ -269,6 +254,67 @@ dgo_deleteProc(ClientData clientData)
 
     BU_LIST_DEQUEUE(&dgop->l);
     bu_free((genptr_t)dgop, "dgo_deleteProc: dgop");
+}
+
+
+/**
+ * count the total number of solids, phony or otherwise
+ */
+size_t
+dgo_count_tops(const struct solid *headsp)
+{
+    struct solid *sp;
+    size_t count = 0;
+    FOR_ALL_SOLIDS(sp, &headsp->l) {
+	count++;
+    }
+    return count;
+}
+
+
+/*
+ *                    D G O _ B U I L D _ T O P S
+ *
+ *  Build a command line vector of the tops of all objects in view.
+ */
+int
+dgo_build_tops(Tcl_Interp	*interp,
+	       struct solid	*hsp,
+	       char		**start,
+	       char	**end)
+{
+    char **vp = start;
+    struct solid *sp;
+
+    /*
+     * Find all unique top-level entries.
+     *  Mark ones already done with s_flag == UP
+     */
+    FOR_ALL_SOLIDS(sp, &hsp->l)
+	sp->s_flag = DOWN;
+    FOR_ALL_SOLIDS(sp, &hsp->l) {
+	struct solid *forw;
+	struct directory *dp = FIRST_SOLID(sp);
+
+	if (sp->s_flag == UP)
+	    continue;
+	if (dp->d_addr == RT_DIR_PHONY_ADDR)
+	    continue;	/* Ignore overlays, predictor, etc */
+	if (vp < end)
+	    *vp++ = dp->d_namep;
+	else  {
+	    Tcl_AppendResult(interp, "INTERNAL ERROR: ran out of command vector space at ",
+			     dp->d_namep, "\n", (char *)NULL);
+	    break;
+	}
+	sp->s_flag = UP;
+	for (BU_LIST_PFOR (forw, sp, solid, &hsp->l)) {
+	    if (FIRST_SOLID(forw) == dp)
+		forw->s_flag = UP;
+	}
+    }
+    *vp = (char *) 0;
+    return vp-start;
 }
 
 
@@ -3827,52 +3873,6 @@ dgo_color_soltab(struct solid *hsp)
 	sp->s_color[2] = sp->s_basecolor[2];
     done: ;
     }
-}
-
-
-/*
- *                    D G O _ B U I L D _ T O P S
- *
- *  Build a command line vector of the tops of all objects in view.
- */
-int
-dgo_build_tops(Tcl_Interp	*interp,
-	       struct solid	*hsp,
-	       char		**start,
-	       char	**end)
-{
-    char **vp = start;
-    struct solid *sp;
-
-    /*
-     * Find all unique top-level entries.
-     *  Mark ones already done with s_flag == UP
-     */
-    FOR_ALL_SOLIDS(sp, &hsp->l)
-	sp->s_flag = DOWN;
-    FOR_ALL_SOLIDS(sp, &hsp->l) {
-	struct solid *forw;
-	struct directory *dp = FIRST_SOLID(sp);
-
-	if (sp->s_flag == UP)
-	    continue;
-	if (dp->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;	/* Ignore overlays, predictor, etc */
-	if (vp < end)
-	    *vp++ = dp->d_namep;
-	else  {
-	    Tcl_AppendResult(interp, "INTERNAL ERROR: ran out of command vector space at ",
-			     dp->d_namep, "\n", (char *)NULL);
-	    break;
-	}
-	sp->s_flag = UP;
-	for (BU_LIST_PFOR (forw, sp, solid, &hsp->l)) {
-	    if (FIRST_SOLID(forw) == dp)
-		forw->s_flag = UP;
-	}
-    }
-    *vp = (char *) 0;
-    return vp-start;
 }
 
 

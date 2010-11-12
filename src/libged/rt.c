@@ -58,6 +58,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int i;
     int units_supplied = 0;
     char pstring[32];
+    int args;
 
     const char *bin;
     char rt[256] = {0};
@@ -69,6 +70,9 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    args = argc + 7 + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -127,7 +131,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						       vp,
-						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+						       &gedp->ged_gdp->gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
@@ -139,6 +143,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     }
     (void)_ged_run_rt(gedp);
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }
