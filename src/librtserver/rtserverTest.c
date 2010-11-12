@@ -80,7 +80,7 @@ countHits(struct bu_vlb *vlb)
     int rayNum;
     int hitCount = 0;
     
-    c = bu_vlb_getBuffer(vlb);
+    c = bu_vlb_addr(vlb);
     numRays = BU_GLONG(c);
     
     c += SIZEOF_NETWORK_LONG;
