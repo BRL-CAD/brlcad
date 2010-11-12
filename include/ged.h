@@ -407,7 +407,7 @@ struct ged_drawable {
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
 
-    char			*gd_rt_cmd[RT_MAXARGS];
+    char			**gd_rt_cmd;
     int				gd_rt_cmd_len;
     struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
 
