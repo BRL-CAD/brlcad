@@ -1613,7 +1613,6 @@ struct bu_vlb {
     size_t bufCapacity;     /**< @brief Current capacity of the buffer */
     size_t nextByte;        /**< @brief Number of bytes currently used in the buffer */
 };
-#define BU_VLB_BLOCK_SIZE 512
 #define BU_CK_VLB(_vp)		BU_CKMAG(_vp, BU_VLB_MAGIC, "bu_vlb")
 #define BU_VLB_IS_INITIALIZED(_vp)	\
 	((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
