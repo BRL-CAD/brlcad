@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -57,7 +58,6 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int i;
     int units_supplied = 0;
     char pstring[32];
-    static const char *usage = "options";
 
     const char *bin;
     char rt[256] = {0};
