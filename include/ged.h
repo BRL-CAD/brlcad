@@ -616,6 +616,7 @@ GED_EXPORT BU_EXTERN(int ged_build_tops,
 		     (struct ged	*gedp,
 		      char		**start,
 		      char		**end));
+GED_EXPORT BU_EXTERN(size_t ged_count_tops, (struct ged *gedp));
 
 
 /* FIXME: wdb routines do not belong in libged.  need to be

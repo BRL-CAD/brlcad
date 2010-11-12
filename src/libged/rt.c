@@ -484,6 +484,21 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 
 /**
+ *
+ */
+size_t
+ged_count_tops(struct ged *gedp)
+{
+    struct ged_display_list *gdlp = NULL;
+    size_t visibleCount = 0;
+    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	visibleCount++;
+    }
+    return visibleCount;
+}
+
+
+/**
  * G E D _ B U I L D _ T O P S
  *
  * Build a command line vector of the tops of all objects in view.
