@@ -362,7 +362,6 @@ SET(TK_X11_SRCS
 	unix/tkUnixKey.c
 	unix/tkUnixMenu.c
 	unix/tkUnixMenubu.c
-	unix/tkUnixRFont.c
 	unix/tkUnixScale.c
 	unix/tkUnixScrlbr.c
 	unix/tkUnixSelect.c
@@ -370,6 +369,12 @@ SET(TK_X11_SRCS
 	unix/tkUnixWm.c
 	unix/tkUnixXId.c
 )
+
+IF(TK-ENABLE_FREETYPE)
+   SET(TK_X11_SRCS ${TK_X11_SRCS} unix/tkUnixRFont.c)
+ELSE(TK-ENABLE_FREETYPE)
+   SET(TK_X11_SRCS ${TK_X11_SRCS} unix/tkUnixFont.c)
+ENDIF(TK-ENABLE_FREETYPE)
 
 SET(TK_AQUA_SRCS
 	macosx/tkMacOSXBitmap.c
@@ -481,11 +486,27 @@ include_directories(
    ${TCL_INCLUDE_PATH}	
    ${TK_INCLUDE_PATH}
    ${X11_INCLUDE_DIR}	
-	${FREETYPE_INCLUDE_DIRS}
 )
 
+IF(TK-ENABLE_FREETYPE)
+  include_directories(
+        ${FREETYPE_INCLUDE_DIRS}
+  )
+ENDIF(TK-ENABLE_FREETYPE)
+
+SET(X11_TK_LIBS ${X11_X11_LIB} ${X11_Xext_LIB} ${X11_Xft_LIB} ${X11_Xrender_LIB})
+
+IF(X11_Xscreensaver_LIB)
+SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
+ENDIF(X11_Xscreensaver_LIB)
+
+IF(TK-ENABLE_FREETYPE)
+  SET(TK_FREETYPE_LIBRARIES ${FREETYPE_LIBRARIES})
+  SET(TK_FONTCONFIG_LIBRARY ${FONTCONFIG_LIBRARY})
+ENDIF(TK-ENABLE_FREETYPE)
+
 add_library(tk ${TK_SRCS})
-target_link_libraries(tk tcl ${COREFOUNDATION_FRAMEWORK} ${X11_X11_LIB} ${X11_Xscreensaver_LIB} ${X11_Xext_LIB} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARY} ${X11_Xrender_LIB})
+target_link_libraries(tk tcl ${COREFOUNDATION_FRAMEWORK} ${X11_TK_LIBS} ${TK_FREETYPE_LIBRARIES} ${TK_FONTCONFIG_LIBRARY})
 install(TARGETS tk DESTINATION lib)
 SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_MAJOR_VERSION}.${TK_MINOR_VERSION})
 
@@ -495,6 +516,6 @@ install(TARGETS tkstub DESTINATION lib)
 install(FILES ${TK_HDRS} DESTINATION include)
 
 add_executable(wish ${WISH_SRCS})
-target_link_libraries(wish tcl tk ${COREFOUNDATION_FRAMEWORK} ${X11_X11_LIB} ${X11_Xscreensaver_LIB} ${X11_Xext_LIB} ${X11_Xft_LIB} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARY} ${X11_Xrender_LIB})
+target_link_libraries(wish tcl tk ${COREFOUNDATION_FRAMEWORK} ${X11_TK_LIBS} ${TK_FREETYPE_LIBRARIES} ${TK_FONTCONFIG_LIBRARY})
 install(TARGETS wish DESTINATION bin)
 
