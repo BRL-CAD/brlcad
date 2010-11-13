@@ -295,6 +295,26 @@ SC_TCL_CHECK_BROKEN_FUNC(
 	exit(strtoul(string,&term,0) != 0 || term != string+1);"
 )
 
+# Check for union wait
+
+SET(UNION_WAIT_SRC "
+#include <sys/types.h>
+#include <sys/wait.h>
+int
+main ()
+{
+
+union wait x;
+WIFEXITED(x);           /* Generates compiler error if WIFEXITED
+                         * uses an int. */
+return 0;
+}
+")
+CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
+IF(NOT HAVE_UNION_WAIT)
+	ADD_TCL_CFLAG(NO_UNION_WAIT)
+ENDIF(NOT HAVE_UNION_WAIT)
+
 
 # Check for types - TODO: still need to define substitutes if these
 # are not found
