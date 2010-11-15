@@ -40,23 +40,23 @@
 
 static char **ged_skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path);
 
-static char	**solids_on_ray_cmd_vec;
-static int	solids_on_ray_cmd_vec_len;
+static char **solids_on_ray_cmd_vec;
+static int solids_on_ray_cmd_vec_len;
 
 int
 ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 {
     size_t args;
-    char			**snames;
-    int				h = 0;
-    int				v = 0;
-    int				i;		/* Dummy loop index */
-    double			t;
-    double			t_in;
-    point_t			ray_orig;
-    vect_t			ray_dir;
-    point_t			extremum[2];
-    vect_t			unit_H, unit_V;
+    char **snames;
+    int h = 0;
+    int v = 0;
+    int i;		/* Dummy loop index */
+    double t;
+    double t_in;
+    point_t ray_orig;
+    vect_t ray_dir;
+    point_t extremum[2];
+    vect_t unit_H, unit_V;
     static const char *usage = "[h v]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -97,8 +97,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
      * Compute bounding box of all objects displayed.
      * Borrowed from size_reset() in chgview.c
      */
-    for (i = 0; i < 3; ++i)
-    {
+    for (i = 0; i < 3; ++i) {
 	extremum[0][i] = INFINITY;
 	extremum[1][i] = -INFINITY;
     }
@@ -108,12 +107,12 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < 3; ++i)
 	if (NEAR_ZERO(ray_dir[i], 1e-10))
 	    ray_dir[i] = 0.0;
-    if ((ray_orig[X] >= extremum[0][X]) &&
-	(ray_orig[X] <= extremum[1][X]) &&
-	(ray_orig[Y] >= extremum[0][Y]) &&
-	(ray_orig[Y] <= extremum[1][Y]) &&
-	(ray_orig[Z] >= extremum[0][Z]) &&
-	(ray_orig[Z] <= extremum[1][Z]))
+    if ((ray_orig[X] >= extremum[0][X])
+	&& (ray_orig[X] <= extremum[1][X])
+	&& (ray_orig[Y] >= extremum[0][Y])
+	&& (ray_orig[Y] <= extremum[1][Y])
+	&& (ray_orig[Z] >= extremum[0][Z])
+	&& (ray_orig[Z] <= extremum[1][Z]))
     {
 	t_in = -INFINITY;
 	for (i = 0; i < 6; ++i) {
@@ -137,7 +136,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     solids_on_ray_cmd_vec = bu_calloc(1, sizeof(char *) * args, "alloca solids_on_ray_cmd_vec");
 
     /*
-     *	Build a list of all the top-level objects currently displayed
+     * Build a list of all the top-level objects currently displayed
      */
     solids_on_ray_cmd_vec_len = ged_build_tops(gedp, &solids_on_ray_cmd_vec[0], &solids_on_ray_cmd_vec[args]);
 
@@ -160,11 +159,11 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 
 
 /*
- *			    G E D _ N O _ O P
+ * G E D _ N O _ O P
  *
- *	    Null event handler for use by rt_shootray().
+ * Null event handler for use by rt_shootray().
  *
- *	Does nothing.  Returns 1.
+ * Does nothing.  Returns 1.
  */
 static int
 ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
@@ -172,14 +171,17 @@ ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struc
     return 1;
 }
 
+
 /*
- *			R P T _ H I T S _ M I K E
+ * R P T _ H I T S _ M I K E
  *
- *  Each partition represents a segment, i.e. a single solid.
- *  Boolean operations have not been performed.
- *  The partition list is sorted by ascending inhit distance.
- *  This code does not attempt to eliminate duplicate segs,
- *  e.g. from piercing the torus twice.
+ * Each partition represents a segment, i.e. a single solid.
+ *
+ * Boolean operations have not been performed.
+ *
+ * The partition list is sorted by ascending inhit distance.  This
+ * code does not attempt to eliminate duplicate segs, e.g. from
+ * piercing the torus twice.
  */
 static int
 ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *segp)
@@ -190,7 +192,7 @@ ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct se
     int i;
 
     len = rt_partition_len(PartHeadp) + 2;
-    list = (char **)bu_calloc( len, sizeof(char *), "hit list[]");
+    list = (char **)bu_calloc(len, sizeof(char *), "hit list[]");
 
     i = 0;
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
@@ -198,18 +200,19 @@ ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct se
 	list[i++] = db_path_to_string(&(pp->pt_inseg->seg_stp->st_path));
     }
     list[i++] = NULL;
-    if (i > len)  bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
+    if (i > len) bu_exit(EXIT_FAILURE, "rpt_hits_mike: array overflow\n");
 
     ap->a_uptr = (genptr_t)list;
     return len;
 }
 
+
 /*
- *			R P T _ M I S S
+ * R P T _ M I S S
  *
- *		Miss handler for use by rt_shootray().
+ * Miss handler for use by rt_shootray().
  *
- *	Stuffs the address of a null string in ap->a_uptr and returns 0.
+ * Stuffs the address of a null string in ap->a_uptr and returns 0.
  */
 
 static int
@@ -220,29 +223,30 @@ ged_rpt_miss(struct application *ap)
     return 0;
 }
 
+
 /*
- *		    G E D _ S K E W E R _ S O L I D S
+ * G E D _ S K E W E R _ S O L I D S
  *
- *	Fire a ray at some geometry and obtain a list of
- *	the solids encountered, sorted by first intersection.
+ * Fire a ray at some geometry and obtain a list of the solids
+ * encountered, sorted by first intersection.
  *
- *	The function has five parameters: the model and objects at which
- *	to fire (in an argc/argv pair) the origination point and direction
- *	for the ray, and a result-format specifier.  So long as it could
- *	find the objects in the model, skewer_solids() returns a null-
- *	terminated array of solid names.  Otherwise, it returns 0.  If
- *	full_path is nonzero, then the entire path for each solid is
- *	recorded.  Otherwise, only the basename is recorded.
+ * The function has five parameters: the model and objects at which to
+ * fire (in an argc/argv pair) the origination point and direction for
+ * the ray, and a result-format specifier.  So long as it could find
+ * the objects in the model, skewer_solids() returns a null-
+ * terminated array of solid names.  Otherwise, it returns 0.  If
+ * full_path is nonzero, then the entire path for each solid is
+ * recorded.  Otherwise, only the basename is recorded.
  *
- *	N.B. - It is the caller's responsibility to free the array
- *	of solid names.
+ * N.B. - It is the caller's responsibility to free the array
+ * of solid names.
  */
 static char **
 ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path)
 {
-    struct application	ap;
-    struct rt_i		*rtip;
-    struct bu_list	sol_list;
+    struct application ap;
+    struct rt_i *rtip;
+    struct bu_list sol_list;
 
     if (argc <= 0) {
 	bu_vls_printf(&gedp->ged_result_str, "skewer_solids argc<=0\n");
@@ -250,7 +254,7 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
     }
 
     /* .inmem rt_gettrees .rt -i -u [who] */
-    rtip = rt_new_rti( gedp->ged_wdbp->dbip );
+    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
     rtip->useair = 1;
     rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
@@ -267,7 +271,7 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
     BU_LIST_INIT(&sol_list);
 
     /*
-     *	Initialize the application
+     * Initialize the application
      */
     RT_APPLICATION_INIT(&ap);
     ap.a_magic = RT_AP_MAGIC;
