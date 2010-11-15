@@ -48,6 +48,12 @@
 static int
 ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (ph) RT_CK_PARTITION(ph);
+    if (r1) RT_CK_REGION(r1);
+    if (r2) RT_CK_REGION(r2);
+    if (hp) RT_CK_PARTITION(hp);
+
     return 1;
 }
 
@@ -70,6 +76,8 @@ ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct se
     int len;
     char **list;
     int i;
+
+    if (segp) RT_CK_SEG(segp);
 
     len = rt_partition_len(PartHeadp) + 2;
     list = (char **)bu_calloc(len, sizeof(char *), "hit list[]");
@@ -122,7 +130,7 @@ ged_rpt_miss(struct application *ap)
  * of solid names.
  */
 static char **
-ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path)
+ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int UNUSED(full_path))
 {
     struct application ap;
     struct rt_i *rtip;
@@ -254,7 +262,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     {
 	t_in = -INFINITY;
 	for (i = 0; i < 6; ++i) {
-	    if (ray_dir[i%3] == 0)
+	    if (NEAR_ZERO(ray_dir[i%3], SMALL_FASTF))
 		continue;
 	    t = (extremum[i/3][i%3] - ray_orig[i%3]) /
 		ray_dir[i%3];
