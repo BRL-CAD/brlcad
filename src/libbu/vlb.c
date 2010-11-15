@@ -19,22 +19,27 @@
  */
 
 #include "common.h"
-#include "bu.h"
+
 #include <string.h>
+
+#include "bu.h"
+
+
+#define VLB_BLOCK_SIZE 512
 
 
 void
 bu_vlb_init(struct bu_vlb *vlb)
 {
-    vlb->buf = bu_calloc(1, BU_VLB_BLOCK_SIZE, "bu_vlb");
-    vlb->bufCapacity = BU_VLB_BLOCK_SIZE;
+    vlb->buf = bu_calloc(1, VLB_BLOCK_SIZE, "bu_vlb");
+    vlb->bufCapacity = VLB_BLOCK_SIZE;
     vlb->nextByte = 0;
     vlb->magic = BU_VLB_MAGIC;
 }
 
 
 void
-bu_vlb_initialize(struct bu_vlb *vlb, int initialSize)
+bu_vlb_initialize(struct bu_vlb *vlb, size_t initialSize)
 {
     if (UNLIKELY(initialSize <= 0)) {
 	bu_log("bu_vlb_initialize: WARNING - illegal initial size (%d), ignored\n", initialSize);
@@ -49,16 +54,16 @@ bu_vlb_initialize(struct bu_vlb *vlb, int initialSize)
 
 
 void
-bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, int len)
+bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, size_t len)
 {
-    int addBlocks = 0;
-    int currCapacity;
+    size_t addBlocks = 0;
+    size_t currCapacity;
 
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     currCapacity = vlb->bufCapacity;
     while (currCapacity <= (vlb->nextByte + len)) {
 	addBlocks++;
-	currCapacity += BU_VLB_BLOCK_SIZE;
+	currCapacity += VLB_BLOCK_SIZE;
     }
 
     if (addBlocks) {
@@ -80,15 +85,15 @@ bu_vlb_reset(struct bu_vlb *vlb)
 
 
 unsigned char *
-bu_vlb_getBuffer(struct bu_vlb *vlb)
+bu_vlb_addr(struct bu_vlb *vlb)
 {
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     return vlb->buf;
 }
 
 
-int
-bu_vlb_getBufferLength(struct bu_vlb *vlb)
+size_t
+bu_vlb_buflen(struct bu_vlb *vlb)
 {
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     return vlb->nextByte;
@@ -116,6 +121,7 @@ bu_vlb_print(struct bu_vlb *vlb, FILE *fd)
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     ret = fwrite(vlb->buf, 1, vlb->nextByte, fd);
 }
+
 
 /*
  * Local Variables:

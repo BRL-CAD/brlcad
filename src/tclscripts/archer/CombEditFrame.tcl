@@ -99,6 +99,7 @@
 	method deleteRow  {_type _row}
 	method setKeypoint  {args}
 	method setKeypointVC  {_tname _row _col}
+	method validateTableEntry {_row _col _newval _tname}
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -565,7 +566,9 @@
 		-cols $cols \
 		-titlerows 1 \
 		-colstretchmode all \
-		-variable [::itcl::scope mMemberData$tname]
+		-variable [::itcl::scope mMemberData$tname] \
+		-validate 1 \
+		-validatecommand [::itcl::code $this validateTableEntry %r %c %S $tname]
 	} {}
 
 	# Create scrollbars
@@ -932,6 +935,26 @@
 	set mMemberData$_tname\($_row,$j) $n
 	incr j
     }
+}
+
+::itcl::body CombEditFrame::validateTableEntry {_row _col _newval _tname} {
+    if {$_col == 0 || ![info exists mMemberData$_tname\($_row,0)]} {
+	return 0
+    }
+
+    if {$_col == 1} {
+	if {[regexp {[/\?\*\n]} $_newval]} {
+	    return 0
+	}
+
+	return 1
+    }
+
+    if {[string is double $_newval]} {
+	return 1
+    }
+
+    return 0
 }
 
 ::itcl::body CombEditFrame::updateGeometryIfMod {} {

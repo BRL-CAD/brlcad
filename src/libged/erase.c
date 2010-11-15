@@ -401,6 +401,50 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
     }
 }
 
+int
+_ged_eraseFirstSubpath(struct ged *gedp,
+		       struct ged_display_list *gdlp,
+		       struct db_full_path *subpath,
+		       const int skip_first)
+{
+    struct solid *sp;
+    struct solid *nsp;
+    struct db_full_path dup_path;
+
+    db_full_path_init(&dup_path);
+
+    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
+    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
+	nsp = BU_LIST_PNEXT(solid, sp);
+	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
+	    int ret;
+
+	    db_dup_full_path(&dup_path, &sp->s_fullpath);
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_SOLID(sp, &_FreeSolid.l);
+
+	    BU_LIST_DEQUEUE(&gdlp->l);
+
+	    if (!BU_LIST_IS_EMPTY(&gdlp->gdl_headSolid)) {
+		ged_splitGDL(gedp, gdlp, &dup_path);
+		ret = 1;
+	    } else {
+		ret = 0;
+	    }
+
+	    db_free_full_path(&dup_path);
+
+	    /* Free up the display list */
+	    bu_vls_free(&gdlp->gdl_path);
+	    free((void *)gdlp);
+
+	    return ret;
+	}
+	sp = nsp;
+    }
+
+    return 0;
+}
 
 /*
  * Erase/remove display list item from headDisplay if path is a subset of item's path.
@@ -417,13 +461,30 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
     if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, path) == 0) {
 	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
+	    gdlp->gdl_wflag = 0;
+	    gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	}
+
+	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    /* This display list has already been visited. */
+	    if (gdlp->gdl_wflag) {
+		gdlp = next_gdlp;
+		continue;
+	    }
+
+	    /* Mark as being visited. */
+	    gdlp->gdl_wflag = 1;
 
 	    if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
 		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
 		    _ged_freeDisplayListItem(gedp, gdlp);
-		} else {
-		    eraseAllSubpathsFromSolidList(gdlp, &subpath, skip_first);
+		} else if (_ged_eraseFirstSubpath(gedp, gdlp, &subpath, skip_first)) {
+		    gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+		    db_free_full_path(&fullpath);
+		    continue;
 		}
 
 		db_free_full_path(&fullpath);

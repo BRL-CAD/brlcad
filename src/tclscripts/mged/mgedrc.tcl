@@ -232,7 +232,7 @@ proc dump_mged_state {fd} {
     puts $fd "set mged_default(perspective_mode) $mged_gui($id,perspective_mode)"
     puts $fd ""
     puts $fd "# Activate/Deactivate status bar"
-    puts $fd "set mged_default(status_bar) $mged_gui($id,status_bar)"
+    puts $fd "set mged_default(status_bar) $mged_gui($id,show_status)"
     puts $fd ""
     puts $fd "# Activate/deactivate old mged faceplate, F7"
     puts $fd "set mged_default(faceplate) $mged_gui($id,faceplate)"

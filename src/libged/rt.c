@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -57,7 +58,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int i;
     int units_supplied = 0;
     char pstring[32];
-    static const char *usage = "options";
+    int args;
 
     const char *bin;
     char rt[256] = {0};
@@ -69,6 +70,9 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    args = argc + 7 + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -127,7 +131,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						       vp,
-						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+						       &gedp->ged_gdp->gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
@@ -139,6 +143,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     }
     (void)_ged_run_rt(gedp);
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }
@@ -484,6 +489,21 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 
 /**
+ *
+ */
+size_t
+ged_count_tops(struct ged *gedp)
+{
+    struct ged_display_list *gdlp = NULL;
+    size_t visibleCount = 0;
+    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	visibleCount++;
+    }
+    return visibleCount;
+}
+
+
+/**
  * G E D _ B U I L D _ T O P S
  *
  * Build a command line vector of the tops of all objects in view.
@@ -501,7 +521,7 @@ ged_build_tops(struct ged *gedp,
 	    continue;
 
 	if (vp < end)
-	    *vp++ = gdlp->gdl_dp->d_namep;
+	    *vp++ = bu_vls_addr(&gdlp->gdl_path);
 	else {
 	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;

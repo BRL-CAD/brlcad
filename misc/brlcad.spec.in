@@ -23,7 +23,7 @@ Summary: @PACKAGE_NAME@
 Name: @PACKAGE_NAME@
 Version: @MAJOR_VERSION@.@MINOR_VERSION@
 Release: @PATCH_VERSION@
-Copyright: LGPL, BSD
+License: LGPL, BSD
 Vendor: BRL-CAD Open Source
 Url: http://brlcad.org
 Group: Productivity/Graphics/CAD

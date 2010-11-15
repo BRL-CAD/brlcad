@@ -111,6 +111,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin = NULL;
     char nirt[256] = {0};
+    int args;
 
     /* for bu_fgets space trimming */
     struct bu_vls v;
@@ -122,6 +123,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    args = argc + 20 + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -264,7 +268,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     /* Note - ged_build_tops sets the last vp to (char *)0 */
     gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						   vp,
-						   &gedp->ged_gdp->gd_rt_cmd[RT_MAXARGS]);
+						   &gedp->ged_gdp->gd_rt_cmd[args]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
@@ -398,6 +402,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    snprintf(name, 1024, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
 	    if (rem - strlen(name) < 1) {
 		bu_log("Ran out of buffer space!");
+		bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 		return TCL_ERROR;
 	    }
 	    bu_strlcat(line1, name, sizeof(line1));
@@ -546,6 +551,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 	gdlp = next_gdlp;
     }
+
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }

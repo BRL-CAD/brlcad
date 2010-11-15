@@ -341,7 +341,6 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
     /* add myhit to the list of misses */
     BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
     BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
-    NMG_CK_HITMISS_LISTS(rd);
 
     return myhit;
 }
@@ -1126,7 +1125,6 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 
     BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC);
     BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
-    NMG_CK_HITMISS_LISTS(rd); /* sanity check */
 
     return;
 }
@@ -1151,7 +1149,6 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
 	\
 	BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
 	BU_LIST_INSERT(&rd->rd_miss, &myhit->l); \
-	NMG_CK_HITMISS_LISTS(rd); \
     }
 
 
@@ -1177,8 +1174,6 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     vect_t eu_vec;
     vect_t norm;
     int faces_found;
-
-    NMG_CK_HITMISS_LISTS(rd);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 	eu_p = BU_LIST_PNEXT_CIRC(edgeuse, eu);
@@ -1375,9 +1370,6 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	    bu_bomb("edge_hit_ray_state() bad edge in_out state\n");
 	    break;
     }
-
-    /* sanity check */
-    NMG_CK_HITMISS_LISTS(rd);
 }
 
 
@@ -1390,8 +1382,6 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
     struct hitmiss *myhit;
     ray_miss_vertex(rd, eu_p->vu_p);
     ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
-
-    NMG_CK_HITMISS_LISTS(rd);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) bu_log("\t - HIT edge 0x%08x (edgeuse=x%x)\n", eu_p->e_p, eu_p);
 
@@ -1429,6 +1419,7 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
     myhit->hit.hit_private = (genptr_t) eu_p->e_p;
 
     edge_hit_ray_state(rd, eu_p, myhit);
+
     hit_ins(rd, myhit);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
@@ -1650,8 +1641,7 @@ isect_ray_loopuse(struct ray_data *rd, struct loopuse *lu_p)
 
     /* loopuse child is vertexuse */
 
-    (void) isect_ray_vertexuse(rd,
-			       BU_LIST_FIRST(vertexuse, &lu_p->down_hd));
+    (void) isect_ray_vertexuse(rd, BU_LIST_FIRST(vertexuse, &lu_p->down_hd));
 }
 
 
@@ -1682,7 +1672,6 @@ eu_touch_func(struct edgeuse *eu, fastf_t *pt, char *priv)
 
     rd = (struct ray_data *)priv;
     rd->face_subhit = 1;
-    NMG_CK_HITMISS_LISTS(rd);
 
     ray_hit_edge(rd, eu, rd->ray_dist_to_plane, pt);
 }
@@ -2204,7 +2193,6 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
     /* intersect the ray with the edges/verticies of the face */
     for (BU_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd))
 	isect_ray_loopuse(rd, lu_p);
-
 }
 
 
@@ -2312,7 +2300,6 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) bu_log(" hit bounding box \n");
 
-
     switch (*fu_p->f_p->g.magic_p) {
 	case NMG_FACE_G_PLANE_MAGIC:
 	    isect_ray_planar_face(rd, fu_p);
@@ -2380,7 +2367,6 @@ nmg_isect_ray_model(struct ray_data *rd)
     struct nmgregion *r_p;
     struct shell *s_p;
 
-
     if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 	bu_log("isect_ray_nmg: Pnt(%g %g %g) Dir(%g %g %g)\n",
 	       rd->rp->r_pt[0],
@@ -2391,6 +2377,7 @@ nmg_isect_ray_model(struct ray_data *rd)
 	       rd->rp->r_dir[2]);
 
     NMG_CK_MODEL(rd->rd_m);
+    NMG_CK_HITMISS_LISTS(rd);
 
     /* Caller has assured us that the ray intersects the nmg model,
      * check ray for intersecion with rpp's of nmgregion's
