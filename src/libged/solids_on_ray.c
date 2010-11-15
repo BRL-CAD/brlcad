@@ -40,12 +40,13 @@
 
 static char **ged_skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path);
 
-static char	*rt_cmd_vec[MAXARGS];
-static int	rt_cmd_vec_len;
+static char	**solids_on_ray_cmd_vec;
+static int	solids_on_ray_cmd_vec_len;
 
 int
 ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 {
+    size_t args;
     char			**snames;
     int				h = 0;
     int				v = 0;
@@ -131,18 +132,18 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     VJOIN1(ray_orig, ray_orig, h * gedp->ged_gvp->gv_scale * INV_GED_V, unit_H);
     VJOIN1(ray_orig, ray_orig, v * gedp->ged_gvp->gv_scale * INV_GED_V, unit_V);
 
+    /* allocate space for display top-levels */
+    args = 2 + ged_count_tops(gedp);
+    solids_on_ray_cmd_vec = bu_calloc(1, sizeof(char *) * args, "alloca solids_on_ray_cmd_vec");
+
     /*
      *	Build a list of all the top-level objects currently displayed
      */
-    rt_cmd_vec_len = ged_build_tops(gedp, &rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
+    solids_on_ray_cmd_vec_len = ged_build_tops(gedp, &solids_on_ray_cmd_vec[0], &solids_on_ray_cmd_vec[args]);
 
-#if 0
-    start_catching_output(&gedp->ged_result_str);
-#endif
-    snames = ged_skewer_solids(gedp, rt_cmd_vec_len, (const char **)rt_cmd_vec, ray_orig, ray_dir, 1);
-#if 0
-    stop_catching_output(&gedp->ged_result_str);
-#endif
+    snames = ged_skewer_solids(gedp, solids_on_ray_cmd_vec_len, (const char **)solids_on_ray_cmd_vec, ray_orig, ray_dir, 1);
+
+    bu_free(solids_on_ray_cmd_vec, "free solids_on_ray_cmd_vec");
 
     if (snames == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Error executing ged_skewer_solids: ");
