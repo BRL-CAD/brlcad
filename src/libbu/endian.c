@@ -35,17 +35,17 @@ bu_byteorder()
  * faster than stashing in a static.
  */
 #ifdef WORDS_BIGENDIAN
-    if (b.c[sizeof(unsigned long)-1])
+    if (LIKELY(b.c[sizeof(unsigned long)-1]))
 	return BU_BIG_ENDIAN;
-    if (b.c[0])
+    if (UNLIKELY(b.c[0]))
 	return BU_LITTLE_ENDIAN;
 #else
-    if (b.c[0])
+    if (LIKELY(b.c[0]))
 	return BU_LITTLE_ENDIAN;
-    if (b.c[sizeof(unsigned long)-1])
+    if (UNLIKELY(b.c[sizeof(unsigned long)-1]))
 	return BU_BIG_ENDIAN;
 #endif
-    if (b.c[1])
+    if (UNLIKELY(b.c[1]))
 	return BU_PDP_ENDIAN;
 
     return (bu_endian_t)0;

@@ -136,12 +136,13 @@ struct rtglJobs {
     int controlClip;
     int calls;
     int jobsDone;
-    char *oldTrees[RT_MAXARGS];
-    int oldNumTrees;
+    char **oldTrees;
+    size_t numTrees;
+    size_t treeCapacity;
     struct bu_hash_tbl *colorTable;
     struct ptInfoList *currItem;
     struct jobList *currJob;
-    int numJobs;
+    size_t numJobs;
     int rtglWasClosed;
 };
 

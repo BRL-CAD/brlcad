@@ -41,7 +41,7 @@
  * It ensures that the order number is valid for the tree.
  */
 #define RB_CKORDER(t, o)						\
-    if (((o) < 0) || ((o) >= (t)->rbt_nm_orders)) {			\
+    if (UNLIKELY(((o) < 0) || ((o) >= (t)->rbt_nm_orders))) {		\
 	char buf[128] = {0};						\
 	snprintf(buf, 128, "ERROR: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
 		 (o), (t)->rbt_nm_orders - 1, __FILE__, __LINE__);	\

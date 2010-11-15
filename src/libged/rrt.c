@@ -49,11 +49,6 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     for ( i=1; i < argc; i++ )
 	*vp++ = (char *)argv[i];

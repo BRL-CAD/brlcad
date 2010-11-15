@@ -1151,14 +1151,13 @@ ipu_set_palette(dsp, cmap)
 #endif /* __sgi__ */
 
 char *options = "P:p:Q:q:acd:g:hmn:s:t:vw:zAC:M:R:D:N:S:W:X:Y:U:V#:";
-extern char *bu_optarg;
 
 char *progname = "(noname)";
 char scsi_device[1024] = "/dev/scsi/sc0d6l3";
 char ipu_gamma = IPU_GAMMA_CG;
 int  ipu_filetype = IPU_RGB_FILE;
 int  ipu_bytes_per_pixel = 3;
-char tray = IPU_UPPER_CASSETTE;
+int tray = IPU_UPPER_CASSETTE;
 char conv = IPU_AUTOSCALE;
 char clear = 0;
 unsigned long width = 512;

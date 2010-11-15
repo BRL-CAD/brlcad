@@ -36,6 +36,8 @@
 #endif
 #include "bio.h"
 
+#include "bu.h"
+
 
 /* exit codes for argument processing errors */
 #define OPTS_ERROR 127
@@ -54,18 +56,18 @@ usage(const char *name)
     if (!name) {
 	name = unknown;
     }
-    fprintf(stderr, "Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n%s", name,
-	    "Compare two PIX image files pixel by pixel.\n\n"
-	    "  -l   List pixel numbers and values for all pixels that differ.\n"
-	    "  -b   Output and process by bytes instead of pixels.\n"
-	    "  -i SKIP\n"
-	    "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n"
-	    "  -i SKIP1:SKIP2\n"
-	    "       Skip the first SKIP1 pixels in FILE1 and SKIP2 pixels in FILE2.\n"
-	    "  -s   Silent output.  Only return an exit status.\n\n"
-	    "If FILE is `-' or is missing, then input is read from standard input.\n"
-	    "If the `-b' option is used, SKIP values are bytes instead of pixels.\n"
-	    "Pixel numbers and bytes are indexed linearly from one.\n");
+    bu_log("Usage: %s [OPTIONS] FILE1 [FILE2 [SKIP1 [SKIP2]]]\n%s", name,
+	   "Compare two PIX image files pixel by pixel.\n\n"
+	   "  -l   List pixel numbers and values for all pixels that differ.\n"
+	   "  -b   Output and process by bytes instead of pixels.\n"
+	   "  -i SKIP\n"
+	   "       Skip the first SKIP pixels of input (for FILE1 and FILE2)\n"
+	   "  -i SKIP1:SKIP2\n"
+	   "       Skip the first SKIP1 pixels in FILE1 and SKIP2 pixels in FILE2.\n"
+	   "  -s   Silent output.  Only return an exit status.\n\n"
+	   "If FILE is `-' or is missing, then input is read from standard input.\n"
+	   "If the `-b' option is used, SKIP values are bytes instead of pixels.\n"
+	   "Pixel numbers and bytes are indexed linearly from one.\n");
     return;
 }
 
@@ -105,17 +107,14 @@ handle_i_opt(const char *arg, long *skip1, long *skip2)
 	    *skip2 = strtol(endptr, NULL, 10);
 	}
     } else {
-	fprintf(stderr, "Unexpected input processing [%s]\n", arg);
-	exit(OPTS_ERROR);
+	bu_exit(OPTS_ERROR, "Unexpected input processing [%s]\n", arg);
     }
 }
+
 
 int
 main(int argc, char *argv[])
 {
-    extern char *optarg;
-    extern int optind;
-
     FILE *f1 = NULL;
     FILE *f2 = NULL;
 
@@ -133,7 +132,7 @@ main(int argc, char *argv[])
     long int bytes = 0;
 
     /* process opts */
-    while ((c = getopt(argc, argv, "lbi:s")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "lbi:s")) != EOF) {
 	switch (c) {
 	    case 'l':
 		list_pixel_values = 1;
@@ -142,13 +141,13 @@ main(int argc, char *argv[])
 		print_bytes = 1;
 		break;
 	    case 'i':
-		handle_i_opt(optarg, &f1_skip, &f2_skip);
+		handle_i_opt(bu_optarg, &f1_skip, &f2_skip);
 		break;
 	    case 's':
 		silent = 1;
 		break;
 	    default:
-		fprintf(stderr, "\n");
+		bu_log("\n");
 		usage(argv[0]);
 		exit(OPTS_ERROR);
 	}
@@ -158,17 +157,17 @@ main(int argc, char *argv[])
 
     /* validate what is left over */
     if (argc < 1 || argc > 4) {
-	fprintf(stderr, "ERROR: incorrect number of arguments provided\n\n");
+	bu_log("ERROR: incorrect number of arguments provided\n\n");
 	usage(argv[0]);
 	exit(OPTS_ERROR);
     }
     if ((argc > 0 && !argv[0]) || (argc > 1 && !argv[1])) {
-	fprintf(stderr, "ERROR: bad filename\n\n");
+	bu_log("ERROR: bad filename\n\n");
 	usage(argv[0]);
 	exit(OPTS_ERROR);
     }
     if ((argc > 2 && !argv[2]) || (argc > 3 && !argv[3])) {
-	fprintf(stderr, "ERROR: bad skip value\n\n");
+	bu_log("ERROR: bad skip value\n\n");
 	usage(argv[0]);
 	exit(OPTS_ERROR);
     }
@@ -206,22 +205,20 @@ main(int argc, char *argv[])
 
     /* skip requested pixels/bytes in FILE1 */
     if (f1_skip && fseek(f1, f1_skip, SEEK_SET)) {
-	fprintf(stderr,
-		"ERROR: Unable to seek %ld %s%s in FILE1\n",
-		f1_skip,
-		print_bytes?"byte":"pixel",
-		f1_skip==1?"":"s");
+	bu_log("ERROR: Unable to seek %ld %s%s in FILE1\n",
+	       f1_skip,
+	       print_bytes?"byte":"pixel",
+	       f1_skip==1?"":"s");
 	perror("FILE1 fseek failure");
 	exit(FILE_ERROR);
     }
 
     /* skip requested pixels in FILE2 */
     if (f2_skip && fseek(f2, f2_skip, SEEK_SET)) {
-	fprintf(stderr,
-		"ERROR: Unable to seek %ld %s%s in FILE2\n",
-		f1_skip,
-		print_bytes?"byte":"pixel",
-		f1_skip==1?"":"s");
+	bu_log("ERROR: Unable to seek %ld %s%s in FILE2\n",
+	       f1_skip,
+	       print_bytes?"byte":"pixel",
+	       f1_skip==1?"":"s");
 	perror("FILE2 fseek failure");
 	exit(FILE_ERROR);
     }
@@ -293,10 +290,9 @@ main(int argc, char *argv[])
 
     /* print summary */
     if (!silent) {
-	fprintf(stdout,
-		"pixcmp %s: %8ld matching, %8ld off by 1, %8ld off by many\n",
-		print_bytes?"bytes":"pixels",
-		matching, off1, offmany);
+	printf("pixcmp %s: %8ld matching, %8ld off by 1, %8ld off by many\n",
+	       print_bytes?"bytes":"pixels",
+	       matching, off1, offmany);
     }
 
     /* check for errors */
@@ -321,6 +317,7 @@ main(int argc, char *argv[])
     /* Success! */
     return OFF_BY_NONE;
 }
+
 
 /*
  * Local Variables:

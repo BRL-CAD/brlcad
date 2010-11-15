@@ -117,7 +117,6 @@ extern int aperture_sz;
 extern int background[];
 extern int co;
 extern int debug;
-extern int errno;
 extern int fatal_error;
 extern int fb_size;
 extern int force_cellsz;

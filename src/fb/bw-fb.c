@@ -45,33 +45,33 @@
 
 int skipbytes(int fd, off_t num);
 
-#define	MAX_LINE	(16*1024)	/* Largest output scan line length */
+#define MAX_LINE (16*1024)	/* Largest output scan line length */
 
-static char	ibuf[MAX_LINE];
+static char ibuf[MAX_LINE];
 static RGBpixel obuf[MAX_LINE];
 
-static int	fileinput = 0;		/* file of pipe on input? */
-static int	autosize = 0;		/* !0 to autosize input */
+static int fileinput = 0;		/* file of pipe on input? */
+static int autosize = 0;		/* !0 to autosize input */
 
-static unsigned long int	file_width = 512;	/* default input width */
-static unsigned long int	file_height = 512;	/* default input height */
-static int	scr_width = 0;		/* screen tracks file if not given */
-static int	scr_height = 0;
-static int	file_xoff, file_yoff;
-static int	scr_xoff, scr_yoff;
-static int	clear = 0;
-static int	zoom = 0;
-static int	inverse = 0;
-static int	redflag   = 0;
-static int	greenflag = 0;
-static int	blueflag  = 0;
+static unsigned long int file_width = 512;	/* default input width */
+static unsigned long int file_height = 512;	/* default input height */
+static int scr_width = 0;		/* screen tracks file if not given */
+static int scr_height = 0;
+static int file_xoff, file_yoff;
+static int scr_xoff, scr_yoff;
+static int clear = 0;
+static int zoom = 0;
+static int inverse = 0;
+static int redflag   = 0;
+static int greenflag = 0;
+static int blueflag  = 0;
 
-static char	*framebuffer = NULL;
-static char	*file_name;
-static int	infd;
-static FBIO	*fbp;
+static char *framebuffer = NULL;
+static char *file_name;
+static int infd;
+static FBIO *fbp;
 
-static char	usage[] = "\
+static char usage[] = "\
 Usage: bw-fb [-a -h -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
@@ -175,10 +175,11 @@ get_args(int argc, char **argv)
     return 1;		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	x, y, n;
+    int x, y, n;
     long xout, yout;		/* number of sceen output lines */
     long xstart, xskip;
 
@@ -189,7 +190,7 @@ main(int argc, char **argv)
 
     /* autosize input? */
     if (fileinput && autosize) {
-	unsigned long int	w, h;
+	unsigned long int w, h;
 	if (fb_common_file_size(&w, &h, file_name, 1)) {
 	    file_width = w;
 	    file_height = h;
@@ -219,14 +220,11 @@ main(int argc, char **argv)
     scr_height = fb_getheight(fbp);
 
     /* compute pixels output to screen */
-    if (scr_xoff < 0)
-    {
+    if (scr_xoff < 0) {
 	xout = scr_width + scr_xoff;
 	xskip = (-scr_xoff);
 	xstart = 0;
-    }
-    else
-    {
+    } else {
 	xout = scr_width - scr_xoff;
 	xskip = 0;
 	xstart = scr_xoff;
@@ -244,7 +242,7 @@ main(int argc, char **argv)
 	yout = (file_height-file_yoff);
     if (xout > MAX_LINE) {
 	fprintf(stderr, "bw-fb: can't output %ld pixel lines.\n", xout);
-	bu_exit(2, NULL);
+	return 2;
     }
 
     if (clear) {
@@ -261,8 +259,8 @@ main(int argc, char **argv)
 
     /* Test for simplest case */
     if (inverse == 0 && file_xoff == 0 && file_yoff == 0 && scr_xoff+file_width <= (unsigned)fb_getwidth(fbp)) {
-	unsigned char	*buf;
-	int		npix = file_width * yout;
+	unsigned char *buf;
+	int npix = file_width * yout;
 
 	if ((buf = malloc(npix)) == NULL) {
 	    perror("bw-fb malloc");
@@ -271,7 +269,8 @@ main(int argc, char **argv)
 	n = bu_mread(infd, (char *)buf, npix);
 	if (n != npix) {
 	    fprintf(stderr, "bw-fb: read got %d, s/b %d\n", n, npix);
-	    if (n <= 0)  bu_exit(7, NULL);
+	    if (n <= 0)
+		return 7;
 	    npix = n;	/* show what we got */
 	}
 	n = (npix+file_width-1)/file_width;	/* num lines got */
@@ -281,16 +280,15 @@ main(int argc, char **argv)
 	    bu_exit(8, NULL);
 	}
 	fb_close(fbp);
-	bu_exit(0, NULL);
+	return 0;
     }
 
     /* Begin general case */
- general:
+general:
     if (file_yoff != 0) skipbytes(infd, file_yoff*file_width);
 
     for (y = scr_yoff; y < scr_yoff + yout; y++) {
-	if (y < 0 || y >= scr_height)
-	{
+	if (y < 0 || y >= scr_height) {
 	    skipbytes(infd, file_width);
 	    continue;
 	}
@@ -309,7 +307,7 @@ main(int argc, char **argv)
 	    else
 		n = fb_read(fbp, scr_xoff, y,
 			    (unsigned char *)obuf, xout);
-	    if (n < 0)  break;
+	    if (n < 0) break;
 	}
 	for (x = 0; x < xout; x++) {
 	    if (redflag)
@@ -330,8 +328,9 @@ main(int argc, char **argv)
     }
 
     fb_close(fbp);
-    bu_exit(0, NULL);
+    return 0;
 }
+
 
 /*
  * Throw bytes away.  Use reads into ibuf buffer if a pipe, else seek.
@@ -339,7 +338,7 @@ main(int argc, char **argv)
 int
 skipbytes(int fd, off_t num)
 {
-    int	n, try;
+    int n, try;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -354,8 +353,9 @@ skipbytes(int fd, off_t num)
 	}
 	num -= n;
     }
-    return	0;
+    return 0;
 }
+
 
 /*
  * Local Variables:

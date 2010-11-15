@@ -125,9 +125,6 @@ char strarg[512];		/* string buffer */
 
 #define DEFAULT_SIZE 6.75	/* default output size in inches */
 
-extern char *bu_optarg;
-extern int bu_optind;
-
 int encapsulated = 0;	/* encapsulated postscript */
 int center = 0;		/* center output on 8.5 x 11 page */
 int width = 4096;		/* Our integer plotting space */

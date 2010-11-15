@@ -1003,11 +1003,11 @@ dnl Determine whether we are using the MIPSpro compiler on SGI systems
 if test "x$build_vendor" = "xsgi" ; then
     AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
     using_mipspro=no
-    AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
 If we get here, we are using the MIPSPro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-    ], [using_mipspro=no], [using_mipspro=yes])
+    ])], [using_mipspro=no], [using_mipspro=yes])
     AC_MSG_RESULT($using_mipspro)
     if test "x$using_mipspro" = "xyes" ; then
 	compiler=sgi
@@ -1018,11 +1018,11 @@ dnl Determine whether we are using the SUNWspro Sun Workshop compiler
 if test "x$build_vendor" = "xsun" ; then
     AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
     using_sunpro=no
-    AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
+    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
 If we get here, we are using the SUNWspro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-    ], [using_sunpro=no], [using_sunpro=yes])
+    ], [using_sunpro=no], [using_sunpro=yes])])
     AC_MSG_RESULT($using_sunpro)
     if test "x$using_sunpro" = "xyes" ; then
 	AR="CC -xar"
@@ -1566,6 +1566,7 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
 	Carbon/Carbon.h \
+	arpa/inet.h \
 	curses.h \
 	dslib.h \
 	getopt.h \
@@ -1576,13 +1577,13 @@ AC_CHECK_HEADERS( \
 	libgen.h \
 	memory.h \
 	ncurses.h \
+	netdb.h \
 	netinet/in.h \
 	poll.h \
 	pthread.h \
 	pwd.h \
 	rle.h \
 	sched.h \
-	sgtty.h \
 	stdint.h \
 	sys/file.h \
 	sys/_ioctl.h \
@@ -1622,6 +1623,7 @@ AC_CHECK_HEADERS( \
 	ieeefp.h \
 )
 
+# these are needed to test for boost (used by BUILD_BOOST test)
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS( \
 	limits \
@@ -2117,7 +2119,10 @@ if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
+	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
+	# -Wmissing-noreturn -Wredundant-decls
 	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
+	# -Wparentheses -Wswitch-default -Wswitch-enum
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
@@ -2242,7 +2247,6 @@ AC_CHECK_FUNCS(\
 	mkstemp \
 	pipe \
 	popen \
-	random \
 	sbrk \
 	setenv \
 	setpgid \
@@ -2277,6 +2281,7 @@ int main(int argc, char *argv[]) {
 [ AC_MSG_RESULT(yes)
   AC_DEFINE([HAVE_BASENAME], [1], [Define to 1 if you have the `basename' function.])
 ],
+[ AC_MSG_RESULT(no) ],
 [ AC_MSG_RESULT(no) ])
 LIBS="$PRELIBS"
 
@@ -2295,6 +2300,7 @@ int main(int argc, char *argv[]) {
 [ AC_MSG_RESULT(yes)
   AC_DEFINE([HAVE_DIRNAME], [1], [Define to 1 if you have the `dirname' function.])
 ],
+[ AC_MSG_RESULT(no) ],
 [ AC_MSG_RESULT(no) ])
 LIBS="$PRELIBS"
 
@@ -2378,7 +2384,7 @@ main() {
     int i = png_access_version_number();
     return 0;
 }
-], [png_works=yes])
+], [png_works=yes], [png_works=no], [png_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($png_works)
 
@@ -2434,7 +2440,7 @@ int main() {
     regexec(&re, "", 0, 0, 0);
     return 0;
 }
-], [regex_works=yes])
+], [regex_works=yes], [regex_works=no], [regex_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($regex_works)
 
@@ -2484,7 +2490,7 @@ int main () {
     char *zlibver = ZLIB_VERSION;
     return 0;
 }
-], [zlib_works=yes])
+], [zlib_works=yes], [zlib_works=no], [zlib_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($zlib_works)
 
@@ -2537,7 +2543,7 @@ main() {
     pt.x = pt.y = 0;
     return pt.x;
 }
-    ],[x11_works=yes])
+    ], [x11_works=yes], [x11_works=no], [x11_works=yes])
     AC_MSG_RESULT($x11_works)
     if test "x$x11_works" = "xyes" ; then
 	LIBS="$LIBS $X_LIBS"
@@ -2549,7 +2555,7 @@ main() {
     xmkm=XNewModifiermap(1);
     return xmkm==NULL;
 }
-	],,x11_works=no)
+	], [x11_works=yes], [x11_works=no], [x11_works=yes])
 	AC_MSG_RESULT($x11_works)
     fi
     LIBS="$PRELIBS"
@@ -2603,7 +2609,7 @@ int main () {
     rle_hdr header = *rle_hdr_init( NULL );
     return 0;
 }
-], [urt_works=yes])
+], [urt_works=yes], [urt_works=no], [urt_works=no])
 if test "x$utahrle_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -2658,7 +2664,7 @@ int main () {
     int version = ON::Version();
     return 0;
 }
-], [opennurbs_works=yes])
+], [opennurbs_works=yes], [opennurbs_works=no], [opennurbs_works=no])
 AC_LANG_POP
 LIBS="$PRELIBS"
 AC_MSG_RESULT($opennurbs_works)
@@ -2752,7 +2758,7 @@ int main() {
 #endif
     return 0;
 }
-], [tcl_works=yes])
+], [tcl_works=yes], [tcl_works=no], [tcl_works=no])
 if test "x$tcl_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -2876,7 +2882,7 @@ int main() {
 #endif
     return 0;
 }
-], [tk_works=yes])
+], [tk_works=yes], [tk_works=no], [tk_works=no])
 if test "x$tk_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -2999,7 +3005,7 @@ int main() {
 #endif
     return 0;
 }
-], [itcl_works=yes])
+], [itcl_works=yes], [itcl_works=no], [itcl_works=no])
 if test "x$itcl_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -3127,7 +3133,7 @@ int main() {
     }
     return 0;
 }
-], [iwidgets_works=yes])
+], [iwidgets_works=yes], [iwidgets_works=no], [iwidgets_works=no])
 if test "x$tcl_link_works" = "xyes" ; then
     LIBS="$PRELIBS"
 fi
@@ -3244,7 +3250,7 @@ int main () {
     }
     return 0;
 }
-], [tnt_works=yes])
+], [tnt_works=yes], [tnt_works=no], [tnt_works=no])
 AC_LANG_POP(C++)
 AC_MSG_RESULT($tnt_works)
 
@@ -3298,7 +3304,7 @@ main () {
     pthread_join(thread, NULL);
     return 0;
 }
-], [thread_works=yes])
+], [thread_works=yes], [thread_works=no], [thread_works=no])
 AC_MSG_RESULT($thread_works)
 
 
@@ -3340,7 +3346,7 @@ int main () {
     int result = tgetent(buffer, "vt100");
     return 0;
 }
-], [termlib_works=yes])
+], [termlib_works=yes], [termlib_works=no], [termlib_works=no])
 LIBS="$PRELIBS"
 AC_MSG_RESULT($termlib_works)
 
@@ -3629,7 +3635,7 @@ main(int argc, char *argv[]) {
     }
     return 0;
 }
-    ], [opengl_works=yes])
+    ], [opengl_works=yes], [opengl_works=no], [opengl_works=no])
     LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
     LDFLAGS="$PRELDFLAGS"
@@ -3675,7 +3681,7 @@ main(int argc, char *argv[]) {
     }
     return 0;
 }
-    ], [agl_works=yes])
+    ], [agl_works=yes], [agl_works=no], [agl_works=no])
     LIBS="$PRELIBS"
     CPPFLAGS="$PRECPPFLAGS"
     LDFLAGS="$PRELDFLAGS"
@@ -3720,7 +3726,7 @@ main(int argc, char *argv[]) {
     }
     return 0;
 }
-    ], [wgl_works=yes])
+    ], [wgl_works=yes], [wgl_works=no], [wgl_works=no])
     LIBS="$PRELIBS"
     AC_MSG_RESULT($wgl_works)
 
@@ -3770,7 +3776,7 @@ main () {
     }
     return 1;
 }
-], [dials_and_buttons=yes])
+], [dials_and_buttons=yes], [dials_and_buttons=no], [dials_and_buttons=no])
 if test "x$dials_and_buttons" = "xyes" ; then
     AC_DEFINE(IR_KNOBS, 8, [Turn on SGI knobs])
     AC_DEFINE(IR_BUTTONS, 32, [Turn on SGI buttons])
@@ -3863,7 +3869,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
-AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limit" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
+AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limits" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
@@ -4204,15 +4210,12 @@ AC_CONFIG_FILES([
 	include/conf/Makefile
 	m4/Makefile
 	misc/Makefile
-	misc/archlinux/Makefile
 	misc/brlcad-config
 	misc/brlcad.spec
-	misc/debian/Makefile
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
-	misc/nsis/Makefile
 	misc/pkgconfig/Makefile
 	misc/pkgconfig/libanalyze.pc
 	misc/pkgconfig/libbn.pc
@@ -4230,8 +4233,6 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libpkg.pc
 	misc/pkgconfig/librt.pc
 	misc/pkgconfig/libwdb.pc
-	misc/win32-msvc/Dll/Makefile
-	misc/win32-msvc/Makefile
 	misc/win32-msvc8/Makefile
 	pix/Makefile
 	sh/Makefile

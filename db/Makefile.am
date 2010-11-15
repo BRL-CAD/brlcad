@@ -27,9 +27,9 @@ operators.asc2g: operators.asc $(top_builddir)/src/conv/asc2g
 		DYLD_LIBRARY_PATH=$(top_builddir)/src/other/tcl/unix:$(top_buildir)/src/other/tk/unix:$$DYLD_LIBRARY_PATH \
 		$(A2G) `if test -e operators.asc ; then echo operators.asc ; else echo $(top_srcdir)/db/operators.asc ; fi` $@ ; \
 	else \
-		$(ECHO) "ls -lad $(A2G)" ; \
-		$(ECHO) "`ls -lad $(A2G)`" ; \
-		$(ECHO) "$(A2G) does not exist" ; \
+		echo "ls -lad $(A2G)" ; \
+		echo "`ls -lad $(A2G)`" ; \
+		echo "$(A2G) does not exist" ; \
 	fi
 	@touch lockfile
 

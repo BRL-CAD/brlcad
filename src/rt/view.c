@@ -572,7 +572,10 @@ view_end(struct application *ap)
 	}
     }
 
-    if (scanline) free_scanlines(height, scanline);
+    if (scanline) {
+    	free_scanlines(height, scanline);
+    	scanline = NULL;
+    }
 }
 
 

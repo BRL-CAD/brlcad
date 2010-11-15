@@ -26,13 +26,14 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_TYPES_H
-#   include <sys/types.h>
+#  include <sys/types.h>
 #endif
 
 #ifdef HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
+#  include <sys/wait.h>
 #endif
 
 #include "bio.h"
@@ -57,7 +58,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int i;
     int units_supplied = 0;
     char pstring[32];
-    static const char *usage = "options";
+    int args;
 
     const char *bin;
     char rt[256] = {0};
@@ -70,10 +71,8 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
+    args = argc + 7 + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -132,7 +131,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						       vp,
-						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+						       &gedp->ged_gdp->gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
@@ -144,6 +143,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     }
     (void)_ged_run_rt(gedp);
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }
@@ -485,6 +485,21 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
     else
 	bu_vls_printf(&drcdp->gedp->ged_result_str, "%s", line);
+}
+
+
+/**
+ *
+ */
+size_t
+ged_count_tops(struct ged *gedp)
+{
+    struct ged_display_list *gdlp = NULL;
+    size_t visibleCount = 0;
+    for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
+	visibleCount++;
+    }
+    return visibleCount;
 }
 
 

@@ -68,21 +68,38 @@
 	variable mMemberHeadings {Op Name Az El Tw Tx Ty Tz Sa Sx Sy Sz Kx Ky Kz}
 	variable mMemberHeadingsRotAet {Op Name Az El Tw Kx Ky Kz}
 	variable mMemberHeadingsRotXyz {Op Name Rx Ry Rz Kx Ky Kz}
-	variable mMemberHeadingsRotArb {Op Name Px Py Pz Dx Dy Dz Ang}
+	variable mMemberHeadingsRotArb {Op Name Kx Ky Kz Dx Dy Dz Ang}
 	variable mMemberHeadingsTra {Op Name Tx Ty Tz}
 	variable mMemberHeadingsSca {Op Name Sa Sx Sy Sz Kx Ky Kz}
 	variable mMemberDataOrder {RotAet RotXyz RotArb Tra Sca}
 	variable mLastTabIndex -1
+	variable mTableData {RotAet 8 "Rot (AET)" RotXyz 8 "Rot (XYZ)" RotArb 9 "Rot (Arbitrary)" Tra 5 Translation Sca 9 Scale}
 
 	method buildGeneralGUI {}
 	method buildShaderGUI {}
 	method buildTreeGUI {}
 	method buildMembersGUI {}
 	method clearMemberData {}
+	method clearMemberDataTable {_tname}
 	method applyData {}
 	method applyMemberData {}
+	method getCurrentMemberDataType {}
 	method initMemberData {}
+	method initMemberDataTable {_tname _mdata}
+	method packMemberDataIntoString {_tname}
 	method resetData {}
+
+	method handleTablePopup {_win _x _y _X _Y}
+	method populateMembersMenu {_type _index _X _Y}
+	method addMemberCreationMenuEntries {_type _row}
+	method setOperator {_op _tname _index}
+	method selectName  {args}
+	method appendRow  {_tname}
+	method insertRow  {_type _row}
+	method deleteRow  {_type _row}
+	method setKeypoint  {args}
+	method setKeypointVC  {_tname _row _col}
+	method validateTableEntry {_row _col _newval _tname}
 
 	# Override what's in GeometryEditFrame
 	method updateGeometryIfMod {}
@@ -525,11 +542,20 @@
 	::ttk::notebook $itk_component(tabs).memberstabs
     } {}
 
-    set tlist {RotAet 8 "Rot (AET)" RotXyz 8 "Rot (XYZ)" RotArb 9 "Rot (Arbitrary)" Tra 5 Translation Sca 9 Scale}
-    foreach {tname cols text} $tlist {
+    itk_component add combMembersMenu {
+	    ::menu $itk_component(tabs).membersmenu \
+		-tearoff 0
+    } {}
+
+    itk_component add combMembersOpMenu {
+	    ::menu $itk_component(combMembersMenu).membersopmenu \
+		-tearoff 0
+    } {}
+
+    foreach {tname cols text} $mTableData {
 	# Create table
 	itk_component add combMembers$tname\F {
-	    ::ttk::notebook $itk_component(tabs).members$tname\F
+	    ::ttk::frame $itk_component(tabs).members$tname\F
 	} {}
 	itk_component add combMembers$tname {
 	    ::table $itk_component(combMembers$tname\F).members$tname \
@@ -539,7 +565,10 @@
 		-rows 100000 \
 		-cols $cols \
 		-titlerows 1 \
-		-variable [::itcl::scope mMemberData$tname]
+		-colstretchmode all \
+		-variable [::itcl::scope mMemberData$tname] \
+		-validate 1 \
+		-validatecommand [::itcl::code $this validateTableEntry %r %c %S $tname]
 	} {}
 
 	# Create scrollbars
@@ -566,6 +595,9 @@
 	grid rowconfigure $itk_component(combMembers$tname\F) 0 -weight 1
 
 	$itk_component(combMembersTabs) add $itk_component(combMembers$tname\F) -text $text
+
+	bind $itk_component(combMembers$tname) <Button-3> [::itcl::code $this handleTablePopup %W %x %y %X %Y]
+	bind $itk_component(combMembers$tname) <B3-Motion> {break}
     }
 
     grid columnconfigure $itk_component(combMembersTabs) 0 -weight 1
@@ -631,6 +663,15 @@
 #    }
 }
 
+::itcl::body CombEditFrame::clearMemberDataTable {_tname} {
+    unset mMemberData$_tname
+    set col 0
+    foreach heading [subst $[subst mMemberHeadings$_tname]] {
+	set mMemberData$_tname\(0,$col) $heading
+	incr col
+    }
+}
+
 ::itcl::body CombEditFrame::applyData {} {
     set tindex [$itk_component(tabs) index current]
     if {$tindex != $mLastTabIndex} {
@@ -642,13 +683,50 @@
 }
 
 ::itcl::body CombEditFrame::applyMemberData {} {
-    set dtype [$itk_component(combMembersTabs) index current]
-    set dname [lindex $mMemberDataOrder $dtype]
-    incr dtype 2
+    set dtype [getCurrentMemberDataType]
+    set tname [lindex $mMemberDataOrder $dtype]
+    set mdata [packMemberDataIntoString $tname]
 
-    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
+    incr dtype 2
+    catch {eval $itk_option(-mged) combmem -r $dtype $itk_option(-geometryObject) [regsub -all {\n} $mdata " "]}
+    GeometryEditFrame::updateGeometry
+}
+
+::itcl::body CombEditFrame::getCurrentMemberDataType {} {
+    set dtype [$itk_component(combMembersTabs) index current]
+    return $dtype
+}
+
+::itcl::body CombEditFrame::initMemberData {} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
+    clearMemberData
+
+    foreach {tname ttype} {RotAet 2 RotXyz 3 RotArb 4 Tra 5 Sca 6} {
+	set mdata [$itk_option(-mged) combmem -i $ttype $itk_option(-geometryObject)]
+	initMemberDataTable $tname $mdata
+    }
+}
+
+::itcl::body CombEditFrame::initMemberDataTable {_tname _mdata} {
+    set i 1
+    foreach row [split $_mdata "\n"] {
+	set j 0
+	foreach col $row {
+	    set mMemberData$_tname\($i,$j) $col
+	    incr j
+	}
+
+	incr i
+    }
+}
+
+::itcl::body CombEditFrame::packMemberDataIntoString {_tname} {
     set row ""
-    foreach index [lsort -dictionary [array names mMemberData$dname]] {
+    foreach index [lsort -dictionary [array names mMemberData$_tname]] {
 	if {$index == "active"} {
 	    continue
 	}
@@ -663,59 +741,220 @@
 
 	# Skip headings
 	if {$row} {
-	    lappend curr_mdata($row) [subst $[subst mMemberData$dname\($index)]]
+	    lappend curr_mdata($row) [subst $[subst mMemberData$_tname\($index)]]
 	}
     }
 
-    set _mdata ""
+    set mdata ""
     foreach index [lsort -dictionary [array names curr_mdata]] {
-	append _mdata $curr_mdata($index)
-	append _mdata "\n"
+	append mdata $curr_mdata($index) "\n"
     }
 
-    catch {eval $itk_option(-mged) combmem -r $dtype $itk_option(-geometryObject) [regsub -all {\n} $_mdata " "]}
-    GeometryEditFrame::updateGeometry
-}
-
-::itcl::body CombEditFrame::initMemberData {} {
-    if {$itk_option(-mged) == "" ||
-	$itk_option(-geometryObject) == ""} {
-	return
-    }
-
-    clearMemberData
-
-    foreach {dname dtype} {RotAet 2 RotXyz 3 RotArb 4 Tra 5 Sca 6} {
-	set mdata [$itk_option(-mged) combmem -i $dtype $itk_option(-geometryObject)]
-
-	set i 1
-	foreach row [split $mdata "\n"] {
-	    set j 0
-	    foreach col $row {
-		set mMemberData$dname\($i,$j) $col
-		incr j
-	    }
-
-	    incr i
-	}
-    }
-
-#    set mdata [$itk_option(-mged) combmem $itk_option(-geometryObject)]
-#    set i 1
-#    foreach row [split $mdata "\n"] {
-#	set j 0
-#	foreach col $row {
-#	    set mMemberData($i,$j) $col
-#	    incr j
-#	}
-#
-#	incr i
-#    }
+    return $mdata
 }
 
 ::itcl::body CombEditFrame::resetData {} {
     set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
     initGeometry $gdata
+}
+
+::itcl::body CombEditFrame::handleTablePopup {_win _x _y _X _Y} {
+    set index [$_win index @$_x,$_y]
+    set type [getCurrentMemberDataType]
+    populateMembersMenu $type $index $_X $_Y
+}
+
+::itcl::body CombEditFrame::populateMembersMenu {_type _index _X _Y} {
+    $itk_component(combMembersMenu) delete 0 end
+    $itk_component(combMembersOpMenu) delete 0 end
+
+    set ilist [split $_index ,]
+    set row [lindex $ilist 0] 
+    if {$row == 0} {
+	# Ignore if in header
+	return
+    }
+
+    set col [lindex $ilist 1]
+
+    # Is the cell indicated by _index empty?
+    set tname [lindex $mMemberDataOrder $_type]
+    set anames [lsort -dictionary [array names mMemberData$tname]]
+    set i [lsearch $anames $_index]
+    if {$i == -1} {
+	set cellEmpty 1
+    } else {
+	set cellEmpty 0
+    }
+
+    if {$cellEmpty} {
+	$itk_component(combMembersMenu) add command \
+	    -label "Append Row" \
+	    -command [::itcl::code $this appendRow $_type]
+    } else {
+	if {$col == 0} {
+	    $itk_component(combMembersMenu) add cascade \
+		-label "Select Op" \
+		-menu $itk_component(combMembersOpMenu)
+	    
+	    $itk_component(combMembersOpMenu) add command \
+		-label "Union" \
+		-command [::itcl::code $this setOperator u $tname $_index]
+	    $itk_component(combMembersOpMenu) add command \
+		-label "Intersection" \
+		-command [::itcl::code $this setOperator + $tname $_index]
+	    $itk_component(combMembersOpMenu) add command \
+		-label "Subtraction" \
+		-command [::itcl::code $this setOperator - $tname $_index]
+	} elseif {$col == 1} {
+#	    $itk_component(combMembersMenu) add command \
+		-label "Select Name" \
+		-command [::itcl::code $this selectName $_type]
+	} elseif {($_type == 0 && 5 <= $col && $col <= 7) ||
+		  ($_type == 1 && 5 <= $col && $col <= 7)} {
+	    $itk_component(combMembersMenu) add command \
+		-label "Set Keypoint (View Center)" \
+		-command [::itcl::code $this setKeypointVC $tname $row 5]
+	} elseif {$_type == 2 && 2 <= $col && $col <= 4} {
+	    $itk_component(combMembersMenu) add command \
+		-label "Set Keypoint (View Center)" \
+		-command [::itcl::code $this setKeypointVC $tname $row 2]
+	} elseif {$_type == 4 && 6 <= $col && $col <= 8} {
+	    $itk_component(combMembersMenu) add command \
+		-label "Set Keypoint (View Center)" \
+		-command [::itcl::code $this setKeypointVC $tname $row 6]
+	}
+
+	addMemberCreationMenuEntries $_type $row
+    }
+
+    tk_popup $itk_component(combMembersMenu) $_X $_Y
+}
+
+::itcl::body CombEditFrame::addMemberCreationMenuEntries {_type _row} {
+    $itk_component(combMembersMenu) add command \
+	-label "Append Row" \
+	-command [::itcl::code $this appendRow $_type]
+    $itk_component(combMembersMenu) add command \
+	-label "Insert Row" \
+	-command [::itcl::code $this insertRow $_type $_row]
+    $itk_component(combMembersMenu) add command \
+	-label "Delete Row" \
+	-command [::itcl::code $this deleteRow $_type $_row]
+}
+
+::itcl::body CombEditFrame::setOperator {_op _tname _index} {
+    set mMemberData$_tname\($_index) $_op
+}
+
+::itcl::body CombEditFrame::selectName {args} {
+    puts "CombEditFrame::selectName: implement me"
+}
+
+::itcl::body CombEditFrame::appendRow {_type} {
+    set tname [lindex $mMemberDataOrder $_type]
+    set anames [lsort -dictionary [array names mMemberData$tname]]
+    set lastIndex [lindex $anames end]
+
+    if {$lastIndex == "active"} {
+	# Use next-to-last
+	set lastIndex [lindex $anames end-1]
+    }
+
+    set ilist [split $lastIndex ,]
+    set lastRow [lindex $ilist 0]
+    set lastCol [lindex $ilist 1]
+
+    set type [expr {$_type + 2}]
+    set mdata [$itk_option(-mged) combmem -i $type $itk_option(-geometryObject)]
+    set dlist [split $mdata "\n"]
+    set row [lindex $dlist 0]
+
+    incr lastRow
+    set mMemberData$tname\($lastRow,0) u
+    set mMemberData$tname\($lastRow,1) edit_me
+    set j 2
+    foreach col [lrange $row 2 end] {
+	set mMemberData$tname\($lastRow,$j) $col
+	incr j
+    }
+}
+
+::itcl::body CombEditFrame::insertRow {_type _row} {
+    set tname [lindex $mMemberDataOrder $_type]
+    set mdata [packMemberDataIntoString $tname]
+
+    # Get a sample data row for this table type
+    set type [expr {$_type + 2}]
+    set tmpdata [$itk_option(-mged) combmem -i $type $itk_option(-geometryObject)]
+    set tmplist [split $tmpdata "\n"]
+    set rowData [lindex $tmplist 0]
+    set rowData [lreplace $rowData 0 1 u edit_me]
+
+    incr _row -1
+    set mlist [split $mdata "\n"]
+    set mlist [linsert $mlist $_row $rowData]
+    set mdata ""
+    foreach item $mlist {
+	append mdata $item "\n"
+    }
+
+    clearMemberDataTable $tname
+    initMemberDataTable $tname $mdata
+}
+
+::itcl::body CombEditFrame::deleteRow {_type _row} {
+    set tname [lindex $mMemberDataOrder $_type]
+    set mdata [packMemberDataIntoString $tname]
+
+    incr _row -1
+    set mlist [split $mdata "\n"]
+    set mlist [lreplace $mlist $_row $_row]
+    set mdata ""
+    foreach item $mlist {
+	append mdata $item "\n"
+    }
+
+    clearMemberDataTable $tname
+    initMemberDataTable $tname $mdata
+}
+
+::itcl::body CombEditFrame::setKeypoint {args} {
+    puts "CombEditFrame::setKeypoint: implement me"
+}
+
+::itcl::body CombEditFrame::setKeypointVC {_tname _row _col} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    set center [$itk_option(-mged) center]
+
+    set j $_col
+    foreach n $center {
+	set mMemberData$_tname\($_row,$j) $n
+	incr j
+    }
+}
+
+::itcl::body CombEditFrame::validateTableEntry {_row _col _newval _tname} {
+    if {$_col == 0 || ![info exists mMemberData$_tname\($_row,0)]} {
+	return 0
+    }
+
+    if {$_col == 1} {
+	if {[regexp {[/\?\*\n]} $_newval]} {
+	    return 0
+	}
+
+	return 1
+    }
+
+    if {[string is double $_newval])} {
+	return 1
+    }
+
+    return 0
 }
 
 ::itcl::body CombEditFrame::updateGeometryIfMod {} {

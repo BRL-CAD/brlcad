@@ -67,8 +67,8 @@
 /* Package Handlers. */
 static void pkgerror(struct pkg_conn *pcpp, char *buf);	/* error message handler */
 static struct pkg_switch pkgswitch[] = {
-    { MSG_ERROR, pkgerror, "Error Message" },
-    { 0, NULL, NULL }
+    { MSG_ERROR, pkgerror, "Error Message", NULL },
+    { 0, NULL, NULL, NULL }
 };
 
 

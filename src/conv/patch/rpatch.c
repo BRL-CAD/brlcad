@@ -34,6 +34,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
+
 
 #define	MAXLINELEN	256
 

@@ -571,8 +571,7 @@ mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    Tcl_AppendResult(interp, "WARNING: Boolean evaluation of ", sofar,
 			     " failed!!!\n", (char *)NULL);
 	    bu_free((genptr_t)sofar, "path string");
-	    if (curtree)
-		db_free_tree(curtree, &rt_uniresource);
+	    db_free_tree(curtree, &rt_uniresource);
 	    return (union tree *)NULL;
 	}
 	failed = nmg_boolean(curtree, *tsp->ts_m, tsp->ts_tol, &rt_uniresource);
@@ -603,8 +602,7 @@ mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    Tcl_AppendResult(interp, "WARNING: Triangulation of ", sofar,
 			     " failed!!!\n", (char *)NULL);
 	    bu_free((genptr_t)sofar, "path string");
-	    if (curtree)
-		db_free_tree(curtree, &rt_uniresource);
+	    db_free_tree(curtree, &rt_uniresource);
 	    return (union tree *)NULL;
 	}
 	nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
@@ -1324,8 +1322,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (BU_SETJUMP) {
 	    BU_UNSETJUMP;
 	    Tcl_AppendResult(interp, "WARNING: facetization failed!!!\n", (char *)NULL);
-	    if (mged_facetize_tree)
-		db_free_tree(mged_facetize_tree, &rt_uniresource);
+	    db_free_tree(mged_facetize_tree, &rt_uniresource);
 	    mged_facetize_tree = (union tree *)NULL;
 	    nmg_km(mged_nmg_model);
 	    mged_nmg_model = (struct model *)NULL;
@@ -1339,8 +1336,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (failed) {
 	Tcl_AppendResult(interp, "facetize:  no resulting region, aborting\n", (char *)NULL);
-	if (mged_facetize_tree)
-	    db_free_tree(mged_facetize_tree, &rt_uniresource);
+	db_free_tree(mged_facetize_tree, &rt_uniresource);
 	mged_facetize_tree = (union tree *)NULL;
 	nmg_km(mged_nmg_model);
 	mged_nmg_model = (struct model *)NULL;
@@ -1357,8 +1353,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (BU_SETJUMP) {
 	    BU_UNSETJUMP;
 	    Tcl_AppendResult(interp, "WARNING: triangulation failed!!!\n", (char *)NULL);
-	    if (mged_facetize_tree)
-		db_free_tree(mged_facetize_tree, &rt_uniresource);
+	    db_free_tree(mged_facetize_tree, &rt_uniresource);
 	    mged_facetize_tree = (union tree *)NULL;
 	    nmg_km(mged_nmg_model);
 	    mged_nmg_model = (struct model *)NULL;
@@ -1605,8 +1600,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    BU_UNSETJUMP;
 
 	    Tcl_AppendResult(interp, "WARNING: Boolean evaluation failed!!!\n", (char *)NULL);
-	    if (tmp_tree)
-		db_free_tree(tmp_tree, &rt_uniresource);
+	    db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
 	    nmg_km(mged_nmg_model);
 	    mged_nmg_model = (struct model *)NULL;
@@ -1620,8 +1614,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (failed) {
 	Tcl_AppendResult(interp, "bev:  no resulting region, aborting\n", (char *)NULL);
-	if (tmp_tree)
-	    db_free_tree(tmp_tree, &rt_uniresource);
+	db_free_tree(tmp_tree, &rt_uniresource);
 	tmp_tree = (union tree *)NULL;
 	nmg_km(mged_nmg_model);
 	mged_nmg_model = (struct model *)NULL;
@@ -1639,8 +1632,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	if (BU_SETJUMP) {
 	    BU_UNSETJUMP;
 	    Tcl_AppendResult(interp, "WARNING: Triangulation failed!!!\n", (char *)NULL);
-	    if (tmp_tree)
-		db_free_tree(tmp_tree, &rt_uniresource);
+	    db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
 	    nmg_km(mged_nmg_model);
 	    mged_nmg_model = (struct model *)NULL;

@@ -37,44 +37,44 @@
 #include "pcMathVM.h"
 #include "pc.h"
 
-typedef Variable<int> * Vip;
+typedef Variable<int> *Vip;
 /* Constraint functions */
 struct f1 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
-    typedef Variable<int> * Vi ;
-    int A = ((Variable<int>*) vcset.getVariablebyID("A"))->getValue();
-    int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
-    return (A * B == 12);
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
+	typedef Variable<int> *Vi ;
+	int A = ((Variable<int>*) vcset.getVariablebyID("A"))->getValue();
+	int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
+	return (A * B == 12);
     }
 } f1;
 struct f2 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
-    typedef Variable<int> * Vi ;
-    int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
-    int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
-    return (B + C < 5);
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
+	typedef Variable<int> *Vi ;
+	int B = ((Vi) vcset.getVariablebyID("B"))->getValue();
+	int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
+	return (B + C < 5);
     }
 } f2;
 
 struct f3 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
-    typedef Variable<int> * Vi ;
-    int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
-    int D = ((Vi) vcset.getVariablebyID("D"))->getValue();
-    return (A - D == 2);
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
+	typedef Variable<int> *Vi ;
+	int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
+	int D = ((Vi) vcset.getVariablebyID("D"))->getValue();
+	return (A - D == 2);
     }
 } f3;
 
 struct f4 {
 public:
-    bool operator() (VCSet & vcset, std::list<std::string> Vid) const {
-    typedef Variable<int> * Vi ;
-    int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
-    int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
-    return (A * C == 4);
+    bool operator() (VCSet & vcset, std::list<std::string> UNUSED(Vid)) const {
+	typedef Variable<int> *Vi ;
+	int C = ((Vi) vcset.getVariablebyID("C"))->getValue();
+	int A = ((Vi) vcset.getVariablebyID("A"))->getValue();
+	return (A * C == 4);
     }
 } f4;
 
@@ -88,17 +88,17 @@ int main()
 
     pc_init_pcset(&pcs);
     fastf_t D = 8.04;
-    point_t E = {8.04,3.2,0.0};
-    vect_t F = {5.4,3.6,4.4};
-    pc_pushparam_struct(&pcs,"D", PC_DB_FASTF_T, &D);
-    pc_pushparam_struct(&pcs,"E", PC_DB_POINT_T, &E);
-    pc_pushparam_struct(&pcs,"G", PC_DB_VECTOR_T, &F);
-    const char * args[] = { "F", "G" };
-    pc_pushconstraint_expr(&pcs, "Constraint-test","A + B < 0");
-    pc_pushparam_struct(&pcs,"F", PC_DB_VECTOR_T, &F);
+    point_t E = {8.04, 3.2, 0.0};
+    vect_t F = {5.4, 3.6, 4.4};
+    pc_pushparam_struct(&pcs, "D", PC_DB_FASTF_T, &D);
+    pc_pushparam_struct(&pcs, "E", PC_DB_POINT_T, &E);
+    pc_pushparam_struct(&pcs, "G", PC_DB_VECTOR_T, &F);
+    const char *args[] = { "F", "G" };
+    pc_pushconstraint_expr(&pcs, "Constraint-test", "A + B < 0");
+    pc_pushparam_struct(&pcs, "F", PC_DB_VECTOR_T, &F);
     pc_constrnt *con;
-    pc_mk_isperpendicular(&con,"G _|_ F", args);
-    pc_pushconstraint_struct(&pcs, "Struct-test",2,3,&pc_isperpendicular,args);
+    pc_mk_isperpendicular(&con, "G _|_ F", args);
+    pc_pushconstraint_struct(&pcs, "Struct-test", 2, 3, &pc_isperpendicular, args);
     pc_free_constraint(con);
 
     Parser myparser(vc_set); /* generate vc_set from pcs using parser */
@@ -109,14 +109,14 @@ int main()
 
     /* Two solution methods*/
     vc_set.display();
-    GBTS.solve(vc_set,S1);
+    GBTS.solve(vc_set, S1);
     std::cout << "\nSolution using Generic BackTracking Solver "
               << GBTS.numChecks() << "\t" << GBTS.numSolutions() << std::endl;
     S1.display();
     S1.clear();
 
     vc_set.display();
-    GPCS.solve(vc_set,S1);
+    GPCS.solve(vc_set, S1);
     std::cout << "\nSolution using Generic Solver "
               << GPCS.numChecks() << "\t" << GPCS.numSolutions() << std::endl;
     S1.cdisplay();
@@ -149,17 +149,17 @@ int main()
     PCSolver<int> PCS;
 
     std::cout << "-----------------------------" << std::endl;
-    GTS.solve(N,S);
+    GTS.solve(N, S);
     std::cout << "Solution using Generate-Test" << std::endl;
     S.display();
     S.clear();
     std::cout << "-----------------------------" << std::endl;
-    BTS.solve(myvcset,S);
+    BTS.solve(myvcset, S);
     std::cout << "Solution using BackTracking" << std::endl;
     S.display();
     S.clear();
     std::cout << "-----------------------------" << std::endl;
-    PCS.solve(myvcset,S);
+    PCS.solve(myvcset, S);
     std::cout << "Solution using Generic GT Solver" << std::endl;
     S.display();    
     std::cout << "-----------------------------" << std::endl;

@@ -40,14 +40,14 @@ extern int Cad_AppInit(Tcl_Interp *interp);
  *
  * main --
  *
- *	This is the main program for the application.
+ * This is the main program for the application.
  *
  * Results:
- *	None: Tcl_Main never returns here, so this function never returns
- *	either.
+ * None: Tcl_Main never returns here, so this function never returns
+ * either.
  *
  * Side effects:
- *	Whatever the application does.
+ * Whatever the application does.
  *
  *----------------------------------------------------------------------
  */
@@ -85,21 +85,22 @@ main(
     return 0;			/* Needed only to prevent compiler warning. */
 }
 
+
 /*
  *----------------------------------------------------------------------
  *
  * Tcl_AppInit --
  *
- *	This function performs application-specific initialization. Most
- *	applications, especially those that incorporate additional packages,
- *	will have their own version of this function.
+ * This function performs application-specific initialization. Most
+ * applications, especially those that incorporate additional packages,
+ * will have their own version of this function.
  *
  * Results:
- *	Returns a standard Tcl completion code, and leaves an error message in
- *	the interp's result if an error occurs.
+ * Returns a standard Tcl completion code, and leaves an error message in
+ * the interp's result if an error occurs.
  *
  * Side effects:
- *	Depends on the startup script.
+ * Depends on the startup script.
  *
  *----------------------------------------------------------------------
  */
@@ -117,6 +118,7 @@ Tcl_AppInit(
     Tcl_SetVar(interp, "tcl_rcFileName", "~/tclshrc.tcl", TCL_GLOBAL_ONLY);
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

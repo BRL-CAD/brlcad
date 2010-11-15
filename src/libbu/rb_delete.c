@@ -111,7 +111,7 @@ _rb_delete(bu_rb_tree *tree, struct bu_rb_node *node, int order)
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(tree, order);
 
-    if (tree->rbt_debug & BU_RB_DEBUG_DELETE)
+    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_DELETE))
 	bu_log("_rb_delete(%p, %p, %d): data=%p\n",
 	       tree, node, order, rb_data(node, order));
 
@@ -160,12 +160,12 @@ bu_rb_delete(bu_rb_tree *tree, int order)
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
-    if (tree->rbt_nm_nodes <= 0) {
+    if (UNLIKELY(tree->rbt_nm_nodes <= 0)) {
 	bu_log("ERROR: Attempt to delete from tree with %d nodes\n",
 	       tree->rbt_nm_nodes);
 	bu_bomb("");
     }
-    if (rb_current(tree) == rb_null(tree)) {
+    if (UNLIKELY(rb_current(tree) == rb_null(tree))) {
 	bu_log("Warning: bu_rb_delete(): current node is undefined\n");
 	return;
     }

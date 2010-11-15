@@ -19,68 +19,151 @@
  *
  */
 /** @file anim_cascade.c
- *  Purpose: Given position and orientation of main frame of reference,
+ *
+ * Purpose: Given position and orientation of main frame of reference,
  * along with the position and orientation of another frame with respect
  * to the main frame, give the absolute orientation and position of the
  * second frame.
- *	For example, given the position and orientation of a tank, and of the
- * turret relative to the tank, you can get the absolute position and
- * orientation of the turret at each time.
- * 	Or, optionally, given position and orientation of main frame of
- * reference, and the absolute position and orientation of another frame,
- * find the position and orientation of the second frame in terms of the main
+ *
+ * For example, given the position and orientation of a tank, and of
+ * the turret relative to the tank, you can get the absolute position
+ * and orientation of the turret at each time.  Or, optionally, given
+ * position and orientation of main frame of reference, and the
+ * absolute position and orientation of another frame, find the
+ * position and orientation of the second frame in terms of the main
  * frame of reference. (-i option).
  *
- * Usage:
- *	anim_cascade main.table < relative.table > absolute.table
+ * Usage: anim_cascade main.table < relative.table > absolute.table
  *
- * The format of the tables is:
- *  time x y z yaw pitch roll
- * unless specified otherwise by options.
+ * Unless specified otherwise by options, the format of the table file
+ * is in the space-delimited form:
+ *
+ * time x y z yaw pitch roll
  *
  */
 
 #include "common.h"
 
 #include <math.h>
-#include <stdio.h>
+#include "bio.h"
 
-#include "vmath.h"
 #include "bu.h"
 #include "bn.h"
 #include "anim.h"
+#include "vmath.h"
 
 
-#ifndef M_PI
-#define M_PI	3.14159265358979323846
-#endif
+#define OPT_STR "so:f:r:a:"
 
-#ifndef M_PI
-#define RTOD	180.000/M_PI
-#endif
+#define CASCADE_A 0
+#define CASCADE_R 1
+#define CASCADE_F 2
 
-#define	CASCADE_A	0
-#define CASCADE_R	1
-#define CASCADE_F	2
-
-int get_args(int argc, char **argv);
-
-extern void	anim_dy_p_r2mat(fastf_t *, double, double, double);
-extern void	anim_tran(fastf_t *);
-extern int	anim_mat2ypr(fastf_t *, fastf_t *);
-
-extern int bu_optind;
-extern char *bu_optarg;
 
 vect_t fcenter, fypr, rcenter, rypr, acenter, aypr;
 int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
+
+int get_args(int argc, char **argv)
+{
+    int c, d;
+
+    output_mode = CASCADE_A;
+    cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
+    print_time = 1;
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 'f':
+		d = *(bu_optarg);
+		if (d == 'c') {
+		    sscanf(argv[bu_optind], "%lf", fcenter+0);
+		    sscanf(argv[bu_optind+1], "%lf", fcenter+1);
+		    sscanf(argv[bu_optind+2], "%lf", fcenter+2);
+		    bu_optind += 3;
+		    cmd_fcen = 1;
+		    break;
+		} else if (d =='y') {
+		    sscanf(argv[bu_optind], "%lf", fypr+0);
+		    sscanf(argv[bu_optind+1], "%lf", fypr+1);
+		    sscanf(argv[bu_optind+2], "%lf", fypr+2);
+		    bu_optind += 3;
+		    cmd_fypr = 1;
+		    break;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -f%c\n", d);
+		}
+		break;
+	    case 'r':
+		d = *(bu_optarg);
+		if (d == 'c') {
+		    sscanf(argv[bu_optind], "%lf", rcenter+0);
+		    sscanf(argv[bu_optind+1], "%lf", rcenter+1);
+		    sscanf(argv[bu_optind+2], "%lf", rcenter+2);
+		    bu_optind += 3;
+		    cmd_rcen = 1;
+		    break;
+		} else if (d =='y') {
+		    sscanf(argv[bu_optind], "%lf", rypr+0);
+		    sscanf(argv[bu_optind+1], "%lf", rypr+1);
+		    sscanf(argv[bu_optind+2], "%lf", rypr+2);
+		    bu_optind += 3;
+		    cmd_rypr = 1;
+		    break;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -r%c\n", d);
+		}
+		break;
+	    case 'a':
+		d = *(bu_optarg);
+		if (d == 'c') {
+		    sscanf(argv[bu_optind], "%lf", acenter+0);
+		    sscanf(argv[bu_optind+1], "%lf", acenter+1);
+		    sscanf(argv[bu_optind+2], "%lf", acenter+2);
+		    bu_optind += 3;
+		    cmd_acen = 1;
+		    break;
+		} else if (d =='y') {
+		    sscanf(argv[bu_optind], "%lf", aypr+0);
+		    sscanf(argv[bu_optind+1], "%lf", aypr+1);
+		    sscanf(argv[bu_optind+2], "%lf", aypr+2);
+		    bu_optind += 3;
+		    cmd_aypr = 1;
+		    break;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -a%c\n", d);
+		}
+		break;
+	    case 'o':
+		d = *(bu_optarg);
+		if (d == 'r') {
+		    output_mode = CASCADE_R;
+		} else if (d == 'f') {
+		    output_mode = CASCADE_F;
+		} else if (d == 'a') {
+		    /* default */
+		    output_mode = CASCADE_A;
+		} else {
+		    fprintf(stderr, "anim_cascade: unknown option -i%c\n", d);
+		}
+		break;
+	    case 's':
+		print_time = 0;
+		break;
+	    default:
+		fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
 int
-main (int argc, char **argv)
+main (int argc, char *argv[])
 {
     int val;
-    fastf_t time, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
+    fastf_t elapsed, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
     vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated;
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
@@ -152,12 +235,12 @@ main (int argc, char **argv)
 
     one_time = (!(read_cen1||read_cen2||read_rot1||read_rot2));
     read_time = one_time ? 0 : print_time;
-    time = 0.0;
+    elapsed = 0.0;
 
     val = 3;
     while (1) {
 	if (read_time) {
-	    val=scanf("%lf", &time);
+	    val=scanf("%lf", &elapsed);
 	    if (val < 1) break;
 	}
 	if (read_cen1)
@@ -191,10 +274,10 @@ main (int argc, char **argv)
 	    bn_mat_mul(m_ans, m_rot1, m_rot2);
 	}
 	anim_mat2ypr(rad_ang_ans, m_ans);
-	VSCALE(ang_ans, rad_ang_ans, RTOD);
+	VSCALE(ang_ans, rad_ang_ans, RAD2DEG);
 
 	if (print_time) {
-	    printf("%g", time);
+	    printf("%g", elapsed);
 	}
 	printf("\t%.12g\t%.12g\t%.12g", cen_ans[0], cen_ans[1], cen_ans[2]);
 	printf("\t%.12g\t%.12g\t%.12g", ang_ans[0], ang_ans[1], ang_ans[2]);
@@ -205,100 +288,6 @@ main (int argc, char **argv)
     return 0;
 }
 
-#define OPT_STR "so:f:r:a:"
-
-int get_args(int argc, char **argv)
-{
-    int c, d;
-
-    output_mode = CASCADE_A;
-    cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
-    print_time = 1;
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 'f':
-		d = *(bu_optarg);
-		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", fcenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", fcenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", fcenter+2);
-		    bu_optind += 3;
-		    cmd_fcen = 1;
-		    break;
-		} else if ( d =='y') {
-		    sscanf(argv[bu_optind], "%lf", fypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", fypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", fypr+2);
-		    bu_optind += 3;
-		    cmd_fypr = 1;
-		    break;
-		} else {
-		    fprintf(stderr, "anim_cascade: unknown option -f%c\n", d);
-		}
-		break;
-	    case 'r':
-		d = *(bu_optarg);
-		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", rcenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", rcenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", rcenter+2);
-		    bu_optind += 3;
-		    cmd_rcen = 1;
-		    break;
-		} else if ( d =='y') {
-		    sscanf(argv[bu_optind], "%lf", rypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", rypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", rypr+2);
-		    bu_optind += 3;
-		    cmd_rypr = 1;
-		    break;
-		} else {
-		    fprintf(stderr, "anim_cascade: unknown option -r%c\n", d);
-		}
-		break;
-	    case 'a':
-		d = *(bu_optarg);
-		if (d == 'c') {
-		    sscanf(argv[bu_optind], "%lf", acenter+0);
-		    sscanf(argv[bu_optind+1], "%lf", acenter+1);
-		    sscanf(argv[bu_optind+2], "%lf", acenter+2);
-		    bu_optind += 3;
-		    cmd_acen = 1;
-		    break;
-		} else if ( d =='y') {
-		    sscanf(argv[bu_optind], "%lf", aypr+0);
-		    sscanf(argv[bu_optind+1], "%lf", aypr+1);
-		    sscanf(argv[bu_optind+2], "%lf", aypr+2);
-		    bu_optind += 3;
-		    cmd_aypr = 1;
-		    break;
-		} else {
-		    fprintf(stderr, "anim_cascade: unknown option -a%c\n", d);
-		}
-		break;
-	    case 'o':
-		d = *(bu_optarg);
-		if (d == 'r') {
-		    output_mode = CASCADE_R;
-		} else if (d == 'f') {
-		    output_mode = CASCADE_F;
-		} else if (d == 'a') {
-		    /* default */
-		    output_mode = CASCADE_A;
-		} else {
-		    fprintf(stderr, "anim_cascade: unknown option -i%c\n", d);
-		}
-		break;
-	    case 's':
-		print_time = 0;
-		break;
-	    default:
-		fprintf(stderr, "anim_cascade: unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
-}
 
 /*
  * Local Variables:

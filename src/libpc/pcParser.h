@@ -59,18 +59,19 @@ public:
 	/*boost::spirit::rule<ScannerT> expression;*/
 	definition(Variable_grammar const &self) {
 	    /*expression
-	        =    boost::spirit::real_p[varvalue(self.pcparser)]
-		;*/
+	      =    boost::spirit::real_p[varvalue(self.pcparser)]
+	      ;*/
 	    variable
 	        =    *(boost::spirit::alnum_p)[Generators::varname(self.vcset)]
-		     >> '='
-	             >>boost::spirit::real_p[Generators::varvalue(self.vcset)]
-		     /* expression*/
+		    >> '='
+		    >>boost::spirit::real_p[Generators::varvalue(self.vcset)]
+		/* expression*/
 		;
 	}
 	boost::spirit::rule<ScannerT> const& start() { return variable;}
     };
 };
+
 
 class Constraint_grammar : public boost::spirit::grammar<Constraint_grammar>
 {
@@ -103,19 +104,20 @@ public:
 		;
             expression
 	        =    term
-		     >> *(operat >> term )
+		    >> *(operat >> term)
 		;
 	    constraint
 	        =    '('
-		     >> expression
-		     >> eq
-		     >> expression
-		     >> ')'
+		    >> expression
+		    >> eq
+		    >> expression
+		    >> ')'
 		;
 	}
 	boost::spirit::rule<ScannerT> const& start() { return constraint;}
     };
 };
+
 
 /**
  *
@@ -136,11 +138,12 @@ private:
 public:
     Parser(VCSet &vcs);
     virtual ~Parser();
-    void parse(struct pc_pc_set * pcs);
+    void parse(struct pc_pc_set *pcs);
     //void pushChar(char c) { name.push_back(c); }
     //void setValue(double v) { value = v; } 
-    void display() { std::cout<< "Result of Parsing:" << name << " = " <<  value << std::endl; }
+    void display() { std::cout<< "Result of Parsing:" << name << " = " << value << std::endl; }
 };
+
 
 #endif
 /** @} */

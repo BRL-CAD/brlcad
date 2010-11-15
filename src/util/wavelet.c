@@ -63,8 +63,6 @@
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "W:S:s:w:n:t:#:D:12drR:";
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, bu_getopt(int, char *const *, const char *);
 
 char *progname = "(noname)";
 int img_space=1;

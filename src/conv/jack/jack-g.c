@@ -54,7 +54,7 @@ BU_EXTERN( fastf_t nmg_loop_plane_area, (const struct loopuse *lu, plane_t pl ) 
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
-void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile);
+void	jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile);
 
 
 int
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 	    reg_name[doti] = '\0';
     }
 
-    jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, bfile);
+    jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile);
     fclose(fpin);
     wdb_close(fpout);
     return 0;
@@ -141,7 +141,7 @@ main(int argc, char **argv)
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
 void
-jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile)
+jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name, char *jfile)
 {
     struct model	*m;
 

@@ -79,15 +79,15 @@ static Region *getRegion(int compnr)
    if (regionTable.find(key) == regionTable.end()) {
       std::cout << "WARNING: region " << key
                 << " not in material list" << std::endl;
-      char name[] = "UNKNOWN";
-      if (regionTable.find(name) == regionTable.end()) {
-	regionp = new Region(atoi(name), name);
+      char unknown[] = "UNKNOWN";
+      if (regionTable.find(unknown) == regionTable.end()) {
+	regionp = new Region(atoi(unknown), unknown);
 	regionp->addMaterial(0);
-	std::string key = name;
+	key = unknown;
 	regionTable[key] = regionp;
       }
       else
-	regionp = regionTable[name];
+	regionp = regionTable[unknown];
    }
    else
       regionp = regionTable[key];

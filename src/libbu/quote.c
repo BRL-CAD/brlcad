@@ -33,7 +33,7 @@ static const char ESCAPE = '\\';
 void
 bu_vls_encode(struct bu_vls *vp, const char *str)
 {
-    if (!str)
+    if (UNLIKELY(!str))
 	return;
 
     BU_CK_VLS(vp);
@@ -68,7 +68,7 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
 
     struct bu_vls quotebuf;
 
-    if (!str)
+    if (UNLIKELY(!str))
 	return;
 
     BU_CK_VLS(vp);

@@ -374,12 +374,12 @@ EXTERN unsigned long	TclpGetSeconds (void);
 #ifndef TclpGetTime_TCL_DECLARED
 #define TclpGetTime_TCL_DECLARED
 /* 77 */
-EXTERN void		TclpGetTime (Tcl_Time * time);
+EXTERN void		TclpGetTime (Tcl_Time * t);
 #endif
 #ifndef TclpGetTimeZone_TCL_DECLARED
 #define TclpGetTimeZone_TCL_DECLARED
 /* 78 */
-EXTERN int		TclpGetTimeZone (unsigned long time);
+EXTERN int		TclpGetTimeZone (unsigned long t);
 #endif
 /* Slot 79 is reserved */
 /* Slot 80 is reserved */
@@ -644,7 +644,7 @@ EXTERN int		TclpHasSockets (Tcl_Interp * interp);
 #ifndef TclpGetDate_TCL_DECLARED
 #define TclpGetDate_TCL_DECLARED
 /* 133 */
-EXTERN struct tm *	TclpGetDate (CONST time_t * time, int useGMT);
+EXTERN struct tm *	TclpGetDate (CONST time_t * t, int useGMT);
 #endif
 /* Slot 134 is reserved */
 /* Slot 135 is reserved */
@@ -869,12 +869,12 @@ EXTERN Tcl_Obj *	Tcl_GetStartupScript (CONST char ** encodingNamePtr);
 #ifndef TclpLocaltime_TCL_DECLARED
 #define TclpLocaltime_TCL_DECLARED
 /* 182 */
-EXTERN struct tm *	TclpLocaltime (CONST time_t * clock);
+EXTERN struct tm *	TclpLocaltime (CONST time_t * t);
 #endif
 #ifndef TclpGmtime_TCL_DECLARED
 #define TclpGmtime_TCL_DECLARED
 /* 183 */
-EXTERN struct tm *	TclpGmtime (CONST time_t * clock);
+EXTERN struct tm *	TclpGmtime (CONST time_t * t);
 #endif
 /* Slot 184 is reserved */
 /* Slot 185 is reserved */
@@ -1185,8 +1185,8 @@ typedef struct TclIntStubs {
     void (*tclpFree) (char * ptr); /* 74 */
     unsigned long (*tclpGetClicks) (void); /* 75 */
     unsigned long (*tclpGetSeconds) (void); /* 76 */
-    void (*tclpGetTime) (Tcl_Time * time); /* 77 */
-    int (*tclpGetTimeZone) (unsigned long time); /* 78 */
+    void (*tclpGetTime) (Tcl_Time * t); /* 77 */
+    int (*tclpGetTimeZone) (unsigned long t); /* 78 */
     void *reserved79;
     void *reserved80;
     char * (*tclpRealloc) (char * ptr, unsigned int size); /* 81 */
@@ -1249,7 +1249,7 @@ typedef struct TclIntStubs {
     int (*tcl_RemoveInterpResolvers) (Tcl_Interp * interp, CONST char * name); /* 130 */
     void (*tcl_SetNamespaceResolvers) (Tcl_Namespace * namespacePtr, Tcl_ResolveCmdProc * cmdProc, Tcl_ResolveVarProc * varProc, Tcl_ResolveCompiledVarProc * compiledVarProc); /* 131 */
     int (*tclpHasSockets) (Tcl_Interp * interp); /* 132 */
-    struct tm * (*tclpGetDate) (CONST time_t * time, int useGMT); /* 133 */
+    struct tm * (*tclpGetDate) (CONST time_t * t, int useGMT); /* 133 */
     void *reserved134;
     void *reserved135;
     void *reserved136;
@@ -1298,8 +1298,8 @@ typedef struct TclIntStubs {
     Tcl_Obj * (*tcl_GetStartupScript) (CONST char ** encodingNamePtr); /* 179 */
     void *reserved180;
     void *reserved181;
-    struct tm * (*tclpLocaltime) (CONST time_t * clock); /* 182 */
-    struct tm * (*tclpGmtime) (CONST time_t * clock); /* 183 */
+    struct tm * (*tclpLocaltime) (CONST time_t * t); /* 182 */
+    struct tm * (*tclpGmtime) (CONST time_t * t); /* 183 */
     void *reserved184;
     void *reserved185;
     void *reserved186;

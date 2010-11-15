@@ -441,7 +441,7 @@ struct bu_structparse set_parse[] = {
     {"%f",  1, "rt_cline_radius", bu_byteoffset(rt_cline_radius), BU_STRUCTPARSE_FUNC_NULL },
 #endif
     {"%V",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
-    {"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 

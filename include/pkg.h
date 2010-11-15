@@ -67,6 +67,7 @@ struct pkg_switch {
     unsigned short pks_type;	/**< @brief Type code */
     pkg_callback pks_handler;	/**< @brief Message Handler */
     char *pks_title;		/**< @brief Description of message type */
+    void *pks_user_data;        /**< @brief User defined pointer to data */
 };
 
 /**
@@ -91,6 +92,7 @@ struct pkg_conn {
     struct pkg_header pkc_hdr;			/**< @brief hdr of cur msg */
     size_t pkc_len;				/**< @brief pkg_len, in host order */
     unsigned short pkc_type;			/**< @brief pkg_type, in host order */
+    void *pkc_user_data;                        /**< @brief User defined pointer to data for the current pkg_type */
     /* OUTPUT BUFFER */
     char pkc_stream[PKG_STREAMLEN];		/**< @brief output stream */
     unsigned int pkc_magic;			/**< @brief for validating pointers */

@@ -37,14 +37,13 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-extern char *bu_optarg;
-extern int bu_optind, bu_opterr, optopt;
 
 static struct wmember all_head;
 static char *input_file;	/* name of the input file */
@@ -399,7 +398,7 @@ Convert_assy(char *line)
 		bu_log("\tmember (%s)\n", brlcad_name);
 	    wmem = mk_addmember(brlcad_name, &head.l, NULL, WMOP_UNION);
 	} else if (!strncmp(&line1[start], "matrix", 6) || !strncmp(&line1[start], "MATRIX", 6)) {
-	    int i, j;
+	    size_t j;
 	    double scale, inv_scale;
 
 	    for (j=0; j<4; j++) {
@@ -416,7 +415,7 @@ Convert_assy(char *line)
 		bn_mat_print(brlcad_name, wmem->wm_mat);
 		bu_log("\tscale = %g, conv_factor = %g\n", scale, conv_factor);
 	    }
-	    if (scale != 1.0) {
+	    if (!NEAR_ZERO(scale - 1.0, SMALL_FASTF)) {
 		inv_scale = 1.0/scale;
 		for (j=0; j<3; j++)
 		    HSCALE(&wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale)
@@ -935,7 +934,7 @@ static void
 Rm_nulls(void)
 {
     struct db_i *dbip;
-    int i;
+    size_t i;
     struct directory *dp;
 
     dbip = fd_out->dbip;
@@ -954,7 +953,7 @@ Rm_nulls(void)
 	struct rt_tree_array *tree_list;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	int j;
+	size_t j;
 	size_t node_count;
 	size_t actual_count;
 	int changed=0;
@@ -992,7 +991,7 @@ Rm_nulls(void)
 	}
 
 	for (j=0; j<actual_count; j++) {
-	    int k;
+	    size_t k;
 	    int found=0;
 
 	    for (k=0; k<BU_PTBL_END(&null_parts); k++) {
@@ -1094,7 +1093,7 @@ main(int argc, char **argv)
 		break;
 	    case 'c':	/* convert from units */
 		conv_factor = bu_units_conversion(bu_optarg);
-		if (conv_factor == 0.0) {
+		if (NEAR_ZERO(conv_factor, SMALL_FASTF)) {
 		    bu_log("Illegal units: (%s)\n", bu_optarg);
 		    bu_exit(EXIT_FAILURE,  "Illegal units!!\n");
 		} else {

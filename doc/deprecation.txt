@@ -9,8 +9,8 @@ interface (API) calls as well as user application command-line
 interface (CLI) and graphical user interface (GUI) behaviors.
 
 The general practice is that public interface changes may go from
-deprecated to obsolete, whereby previous published behavior is removed
-or changed, during one of the following events:
+deprecated to obsolete, whereby previous behavior is removed or
+changed, during one of the following events:
 
 a) during a major release (e.g. going from 7.*.* to 8.*.*)
 
@@ -21,7 +21,7 @@ b) during a minor release provided the change was publicly announced
 
 c) during a minor release provided there still exists an equivalent
    alternative interface that will not impose an undue burden on users
-   or developers (see "Minimally Impacting")
+   or developers (see "MINIMALLY IMPACTING API CHANGES" below)
 
 d) during a patch release provided you can correctly prove P = NP
 
@@ -30,15 +30,6 @@ they should be then marked as deprecated first.  Otherwise, changes to
 interfaces that are never publicly announced, not installed, or are
 not part of publicly available documentation are fair game to change
 as needed.
-
-Minimally Impacting: If a change to an interface has a suitable and
-completely equivalent alternative, the change is deemed to be
-"minimally impacting" and can be made during any minor release.
-Examples of such changes include renaming an interface, reordering
-parameters, adding new parameters to an interface for previously
-implicit or restricted behavior, and removing unused parameters.
-Basically, the impact can usually be considered minor if a simple
-regular expression search-and-replace is all that is needed.
 
 Where feasible, interfaces should be visibly marked as deprecated
 either during compile-time with #warning pre-processor declarations or
@@ -54,8 +45,45 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+7.18
+----
+mged
+        ?(*) -> ? -(*)
+        apropos(*) -> apropos -(*)
+        dbconcat -> db concat
+        dbupgrade -> db upgrade
+        dbversion -> db version
+        dbfind -> search
+        debug* -> debug
+        comb_std -> comb
+        comb_color -> comb
+        combmem -> comb
+        kill(*) -> kill
+        rotobj -> rot
+        qvrot -> rot -q -v
+        qorot -> rot -q
+        ([amov])rot -> rot -([amv])
+        ([op])scale -> sca -(p)
+        ([op])translate -> tra -(p)
+        nmg_(*) -> nmg (*)
+        bot_(*) -> bot (*)
+        [so]ed -> edit
+        [tr]ed -> edit -t
+        ls -oA -> ls -O
+        draw -oA -> draw -O
+        erase -oA -> erase -O
+        erase_all -> erase -r
+        move_all -> move -r
+        query_ray -> nirt
+        vdraw -> draw -v
+        vnirt -> nirt -v
+        vquery_ray -> nirt -v
+        xpush -> push -x
+
 7.16
 ----
+struct bu_structparse 'i' format
+       'i' -> '%p' [deprecated 7.16]
 SGI-specific tools
 	pl-sgi -> pl-fb [ deprecated 7.16 ]
 Dunn camera and Canon printer tools
@@ -278,7 +306,43 @@ include/[library].h (several)
 ***********************************
 * MINIMALLY IMPACTING API CHANGES *
 ***********************************
+
+If a change to an interface has a suitable and completely equivalent
+alternative, the change is deemed to be "minimally impacting" and can
+be made during any minor release.  Examples of such changes include
+renaming an interface, reordering parameters, adding new parameters to
+an interface for previously implicit or restricted behavior, and
+removing unused parameters.
+
+Basically, the impact can usually be considered minor if a static
+regular expression search-and-replace is all that is needed to update.
+Included in following are various minimally impacting API changes that
+have been identified in reverse chronological order.  As expressions
+are not extensively tested, use with caution.
+
+
+s/bu_vlb_getBufferLength(/bu_vlb_buflen(/g
+        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
+
+s/bu_vlb_getBuffer(/bu_vlb_addr(/g
+        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
+
+s/nmg_struct_counts(/nmg_pr_m_struct_counts(/g
+        nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
+
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_INIT\([^)]*\))/bu_ptbl_init(\1, 64, "init")/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_RST\([^)]*\))/bu_ptbl_reset(\1)/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_INS\([^)]*\))/bu_ptbl_ins(\1\2)/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_LOC\([^)]*\))/bu_ptbl_locate(\1\2)/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_ZERO\([^)]*\))/bu_ptbl_zero(\1\2/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_INS_UNIQUE\([^)]*\))/bu_ptbl_ins_unique(\1\2)/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_RM\([^)]*\))/bu_ptbl_rm(\1\2)/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_CAT\([^)]*\))/bu_ptbl_cat(\1\2)/g
+s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_FREE\([^)]*\))/bu_ptbl_free(\1)/g
+        bu_ptbl() removed [7.18]
+
 s/rt_ptalloc();/(struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");/g
-        rt_ptalloc_removed [7.16]
+        rt_ptalloc() removed [7.16]
+
 s/rt_db_free_internal(\([^,]+\),[^)]*)/rt_db_free_internal(\1)/g
 	struct resource pointer parameter removed [7.14]

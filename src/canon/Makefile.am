@@ -3,6 +3,7 @@ bin_PROGRAMS = \
 	canonize
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_HEADERS = \
 	canon.h \

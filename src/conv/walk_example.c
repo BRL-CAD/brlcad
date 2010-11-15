@@ -123,10 +123,10 @@ int parse_args(int ac, char *av[])
  *
  */
 int
-region_start(struct db_tree_state * tsp,
-	     const struct db_full_path * pathp,
-	     const struct rt_comb_internal * combp,
-	     genptr_t client_data)
+region_start(struct db_tree_state *UNUSED(tsp),
+	     const struct db_full_path *pathp,
+	     const struct rt_comb_internal *UNUSED(combp),
+	     genptr_t UNUSED(client_data))
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -156,10 +156,10 @@ region_start(struct db_tree_state * tsp,
  *
  */
 union tree *
-region_end(struct db_tree_state * tsp,
+region_end(struct db_tree_state *UNUSED(tsp),
 	   const struct db_full_path * pathp,
 	   union tree *curtree,
-	   genptr_t client_data)
+	   genptr_t UNUSED(client_data))
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -182,10 +182,10 @@ region_end(struct db_tree_state * tsp,
  *	TREE_NULL if leaf does not exist or has an error.
  */
 union tree *
-leaf_func (struct db_tree_state * tsp,
-	   const struct db_full_path * pathp,
-	   struct rt_db_internal * internp,
-	   genptr_t client_data)
+leaf_func (struct db_tree_state *UNUSED(tsp),
+	   const struct db_full_path *pathp,
+	   struct rt_db_internal *internp,
+	   genptr_t UNUSED(client_data))
 {
     /* the rt_db_internal structure is used to manage the payload of
      * "internal" or "in memory" representation of geometry as opposed

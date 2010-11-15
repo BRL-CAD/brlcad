@@ -88,9 +88,6 @@ main(int argc, char **argv)
 
     bu_setlinebuf( stderr );
 
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
@@ -250,15 +247,11 @@ main(int argc, char **argv)
     rt_vlist_cleanup();
     db_close(dbip);
 
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-ACAD conversion");
-#endif
-
     return 0;
 }
 
 static void
-nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
+nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int aircode, int los, int material_id)
 {
     struct model *m;
     struct shell *s;
@@ -514,7 +507,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     union tree		*ret_tree;
     struct bu_list		vhead;

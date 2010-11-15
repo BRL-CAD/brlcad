@@ -105,9 +105,6 @@ main (int argc, char **argv)
     unsigned long int height;
     struct stat stat_buf;
 
-    extern int bu_optind;			/* index from bu_getopt(3C) */
-    extern char *bu_optarg;		/* argument from bu_getopt(3C) */
-
     /*
      * Process the command line
      */

@@ -2747,8 +2747,8 @@ rt_bot_propget(struct rt_bot_internal *bot, char *property)
 /**
  * This routine adjusts the vertex pointers in each face so that
  * pointers to duplicate vertices end up pointing to the same vertex.
- * The unused vertices are removed.  Returns the number of vertices
- * fused.
+ * The unused vertices are removed and the resulting bot is condensed.
+ * Returns the number of vertices fused.
  */
 int
 rt_bot_vertex_fuse(struct rt_bot_internal *bot)
@@ -2765,8 +2765,8 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     fastf_t max_xval = (fastf_t)LONG_MIN;
     fastf_t delta = (fastf_t)0.0;
 
-    vect_t infinity;
-    VSETALL(infinity, INFINITY);
+    vect_t deleted;
+    VSETALL(deleted, INFINITY);
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -2817,6 +2817,12 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 	    min_xval = (&bot->vertices[i*3])[X];
 	if ((&bot->vertices[i*3])[X] > max_xval)
 	    max_xval = (&bot->vertices[i*3])[X];
+
+	/* sanity to make sure our book-keeping doesn't go haywire */
+	if (NEAR_ZERO((&bot->vertices[i*3])[X] - deleted[X], SMALL_FASTF)) {
+	    bu_log("WARNING: Unable to fuse due to vertex with infinite value (idx=%ld)\n", i);
+	    return 0;
+	}
     }
     /* sanity swap */
     if (min_xval > max_xval) {
@@ -2876,7 +2882,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
 	    /* init to zero for sanity */
 	    for (j=bin_todonext[slot]+1; j<bin_capacity[slot]; j++) {
-		bin[slot][j] = (long *)NULL;
+		bin[slot][j] = 0;
 	    }
 	}
 
@@ -2906,31 +2912,22 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 		    }
 
 		    /* wipe out the vertex marking it for cleanup later */
-		    VMOVE(&bot->vertices[bin[slot][j]*3], infinity);
+		    VMOVE(&bot->vertices[bin[slot][j]*3], deleted);
 		}
 	    }
 	}
     }
 
     /* clean up and compress */
-    for (i=bot->num_vertices-1; i>=0; i--) {
+    k = rt_bot_condense(bot);
+    if (k < count) {
+	bu_log("WARNING: Condensed fewer vertices than expected (%ld < %ld)\n", k, count);
+    }
 
-	/* look for the wiped out vertices */
-	if (VEQUAL(&bot->vertices[i*3], infinity)) {
-
-	    /* shift vertices down */
-	    for (j=i; j<bot->num_vertices-1; j++) {
-		VMOVE(&bot->vertices[j*3], &bot->vertices[(j+1)*3]);
-	    }
-
-	    /* update face references */
-	    for (k=0; k<bot->num_faces*3; k++) {
-		if (bot->faces[k] > i)
-		    bot->faces[k]--;
-	    }
-	    
-	    /* update vertex count */
-	    bot->num_vertices--;
+    /* sanity check, there should be no deleted vertices */
+    for (i=0; i < bot->num_vertices; i++) {
+	if (VEQUAL(&bot->vertices[i*3], deleted)) {
+	    bu_bomb("INTERNAL ERROR: encountered unexpected state during vertex fusing\n");
 	}
     }
 
@@ -3978,8 +3975,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     int face_count;
     int actual_count;
     int deleted;
-    int v1, v2;
-    int i, j;
+    int i;
     int done;
 
     RT_BOT_CK_MAGIC(bot);

@@ -89,7 +89,7 @@ lswap(unsigned int *v)
 
 
 static void
-nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3])
+nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id), float UNUSED(color[3]))
 {
     struct model *m;
     struct shell *s;
@@ -303,9 +303,6 @@ main(int argc, char *argv[])
 
     bu_setlinebuf(stderr);
 
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
     tree_state = rt_initial_tree_state;	/* struct copy */
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
@@ -510,10 +507,6 @@ main(int argc, char *argv[])
     nmg_km(the_model);
     rt_vlist_cleanup();
     db_close(dbip);
-
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-STL conversion");
-#endif
 
     return 0;
 }

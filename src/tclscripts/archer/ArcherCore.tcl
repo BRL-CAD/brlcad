@@ -23,16 +23,6 @@
 #    This is a BRL-CAD Application Core mega-widget.
 #
 
-if {![info exists env(ARCHER_HOME)]} {
-    if {[info exists argv0]} {
-	if [catch { set env(ARCHER_HOME) [file normalize [file join [file dir $argv0] ..]] }] {
-	    set env(ARCHER_HOME) .
-	}
-    } else {
-	set env(ARCHER_HOME) .
-    }
-}
-
 LoadArcherCoreLibs
 package provide ArcherCore 1.0
 
@@ -287,7 +277,7 @@ namespace eval ArcherCore {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLighting 1
+	variable mLighting 2
 	variable mRenderMode -1
 	variable mActivePane
 	variable mActivePaneName
@@ -471,8 +461,8 @@ Center        Shift-Ctrl-Right
 Popup Menu    Right or Ctrl-Left
 "
 
-	variable mColorList {Grey Black Blue Cyan Green Magenta Red White Yellow Triple}
-	variable mColorListNoTriple {Grey Black Blue Cyan Green Magenta Red White Yellow}
+	variable mColorList {Grey Black Navy Blue Cyan Green Magenta Red White Yellow Triple}
+	variable mColorListNoTriple {Grey Black Navy Blue Cyan Green Magenta Red White Yellow}
 	variable mDefaultNodeColor {150 150 150}
 
 	variable mDoStatus 1
@@ -508,13 +498,8 @@ Popup Menu    Right or Ctrl-Left
 	method showViewParams {}
 	method showScale {}
 
-	# pane commands
-	method updateToggleMode {}
-
 	method launchNirt {}
 	method launchRtApp {_app _size}
-	#method refreshDisplay {}
-	#method mouseRay {_dm _x _y}
 
 	method updateDisplaySettings {}
 
@@ -697,13 +682,13 @@ Popup Menu    Right or Ctrl-Left
 
 	# tree commands
 	method updateTreeDrawLists        {{_cflag 0}}
-	method fillTree          {_pnode _ctext {_flat 0}}
+	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
 	method loadMenu          {_menu _node _nodeType}
 	method findTreeChildNodes {_pnode}
 	method findTreeParentNodes {_cnode}
-	method getCNodeFromCText {_pnode _text}
+	method getCNodesFromCText {_pnode _text}
 	method getTreeImage {_obj _type {_op ""} {_isregion 0}}
 	method getTreeNode {_path {_cflag 0}}
 	method getTreeNodes {_path {_cflag 0}}
@@ -726,7 +711,7 @@ Popup Menu    Right or Ctrl-Left
 	# db/display commands
 	method getNodeChildren  {_node}
 	method getTreeFromGData  {_gdata}
-	method getTreeMembers  {_tlist}
+	method getTreeMembers  {_tlist {_mlist {}}}
 	method getTreeOp {_parent _child}
 	method renderComp        {_node}
 	method render             {_node _state _trans _updateTree {_wflag 1}}
@@ -791,7 +776,7 @@ Popup Menu    Right or Ctrl-Left
 	method validateTickInterval {_ti}
 	method validateColorComp {_c}
 
-	method backgroundColor {_r _g _b}
+	method backgroundColor {_color}
 
 	method updateHPaneFractions {}
 	method updateVPaneFractions {}
@@ -804,6 +789,7 @@ Popup Menu    Right or Ctrl-Left
 	method buildInfoDialog {_name _title _info _size _wrapOption _modality}
 	method buildSaveDialog {}
 	method buildViewCenterDialog {}
+	method centerDialogOverPane {_dialog}
 
 	# Helper Section
 	method buildComboBox {_parent _name1 _name2 _varName _text _listOfChoices}
@@ -1050,10 +1036,6 @@ Popup Menu    Right or Ctrl-Left
 	updateSaveMode
     }
 
-    backgroundColor [lindex $mBackground 0] \
-	[lindex $mBackground 1] \
-	[lindex $mBackground 2]
-
     initImages
     initTreeImages
     if {!$mDelayCommandViewBuild} {
@@ -1235,27 +1217,31 @@ Popup Menu    Right or Ctrl-Left
 		options -tearoff 0
 
 		command black -label "Black" \
-		    -helpstr "Set background color black"
+		    -helpstr "Set background color to black"
 		command grey -label "Grey" \
-		    -helpstr "Set background color grey"
+		    -helpstr "Set background color to grey"
 		command white -label "White" \
-		    -helpstr "Set background color white"
-		command lblue -label "Light Blue" \
-		    -helpstr "Set background color light blue"
-		command dblue -label "Dark Blue" \
-		    -helpstr "Set background color dark blue"
+		    -helpstr "Set background color to white"
+		command cyan -label "Cyan" \
+		    -helpstr "Set background color to cyan"
+		command blue -label "Light Blue" \
+		    -helpstr "Set background color to blue"
+		command navy -label "Navy" \
+		    -helpstr "Set background color to navy"
 	    }
 
 	$itk_component(canvas_menu) menuconfigure .background.black \
-	    -command [::itcl::code $this backgroundColor 0 0 0]
+	    -command [::itcl::code $this backgroundColor Black]
 	$itk_component(canvas_menu) menuconfigure .background.grey \
-	    -command [::itcl::code $this backgroundColor 100 100 100]
+	    -command [::itcl::code $this backgroundColor Grey]
 	$itk_component(canvas_menu) menuconfigure .background.white \
-	    -command [::itcl::code $this backgroundColor 255 255 255]
-	$itk_component(canvas_menu) menuconfigure .background.lblue \
-	    -command [::itcl::code $this backgroundColor 0 198 255]
-	$itk_component(canvas_menu) menuconfigure .background.dblue \
-	    -command [::itcl::code $this backgroundColor 0 0 160]
+	    -command [::itcl::code $this backgroundColor White]
+	$itk_component(canvas_menu) menuconfigure .background.cyan \
+	    -command [::itcl::code $this backgroundColor Cyan]
+	$itk_component(canvas_menu) menuconfigure .background.blue \
+	    -command [::itcl::code $this backgroundColor Blue]
+	$itk_component(canvas_menu) menuconfigure .background.navy \
+	    -command [::itcl::code $this backgroundColor Navy]
 
     # Raytrace Menu
 	$itk_component(canvas_menu) add menubutton raytrace \
@@ -1801,7 +1787,7 @@ Popup Menu    Right or Ctrl-Left
 #                 INTERFACE OPERATIONS
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::closeDb {} {
-    pack forget $itk_component(ged)
+    grid forget $itk_component(ged)
     closeMged
 
     grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
@@ -2108,7 +2094,7 @@ Popup Menu    Right or Ctrl-Left
 
 	# Anything leftover in mlist needs to be added
 	foreach member $mlist {
-	    fillTree $_pnode $member $mEnableListView
+	    fillTree $_pnode $member $mEnableListView 1
 	}
     } else {
 	set pgdata [$itk_component(ged) get $ptext]
@@ -2170,12 +2156,14 @@ Popup Menu    Right or Ctrl-Left
 
     # Make sure each item has a tree node
     foreach item $scrubbed_items {
-	set cnode [getCNodeFromCText {} $item]
+	set cnodes [getCNodesFromCText {} $item]
 
-	if {$cnode == ""} {
+	if {$cnodes == {}} {
 	    fillTree {} $item $mEnableListView
 	} elseif {!$mEnableListView} {
-	    rsyncTree $cnode
+	    foreach item $cnodes {
+		rsyncTree $item
+	    }
 	}
     }
 
@@ -2698,10 +2686,18 @@ Popup Menu    Right or Ctrl-Left
 }
 
 
-::itcl::body ArcherCore::backgroundColor {r g b} {
+::itcl::body ArcherCore::backgroundColor {_color} {
     set mCurrentPaneName ""
-    set mBackground [list $r $g $b]
+    set mBackgroundColor $_color
 
+    if {[catch {getRgbColor $mBackgroundColor} mBackground]} {
+	set mBackgroundColor black
+	set mBackground {0 0 0}
+    }
+
+    if {[info exists itk_component(ged)]} {
+	eval $itk_component(ged) bg_all $mBackground
+    }
 }
 
 
@@ -2751,6 +2747,9 @@ Popup Menu    Right or Ctrl-Left
 	}
 	"Black" {
 	    $cmd configure $colorOption {0 0 0}
+	}
+	"Navy" {
+	    $cmd configure $colorOption {0 0 50}
 	}
 	"Blue" {
 	    $cmd configure $colorOption {100 100 255}
@@ -2885,22 +2884,23 @@ Popup Menu    Right or Ctrl-Left
     return {}
 }
 
-::itcl::body ArcherCore::getTreeMembers {_tlist} {
-    # first remove any matrices
-    regsub -all -- {\{-?[0-9]+[^\}]+-?[0-9]+\}} $_tlist "" _tlist
-
-    # remove all other unwanted stuff
-    regsub -all {^[lun!GXN^-] |\{[lun!GXN^-]|\}} $_tlist "" _tlist
-
-    # finally, remove any duplicates
-    set ntlist {}
-    foreach item $_tlist {
-	if {[lsearch $ntlist $item] == -1} {
-	    lappend ntlist $item
-	}
+::itcl::body ArcherCore::getTreeMembers {_tlist {_mlist {}}} {
+    set len [llength $_tlist]
+    set op [lindex $_tlist 0]
+    if {$op == "l"} {
+	set name [lindex $_tlist 1]
+	lappend _mlist $name
+	return $_mlist
     }
 
-    return $ntlist
+    if {$len == 3} {
+	set _mlist [getTreeMembers [lindex $_tlist 1] $_mlist]
+	set _mlist [getTreeMembers [lindex $_tlist 2] $_mlist]
+	return $_mlist
+    }
+
+    puts "ArcherCore::getTreeMembers: faulty tree - $_tlist"
+    return $_mlist
 }
 
 
@@ -3190,12 +3190,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::doViewCenter {} {
-    if {$mCurrentPaneName == ""} {
-	set pane $mActivePaneName
-    } else {
-	set pane $mCurrentPaneName
-    }
-    set mCurrentPaneName ""
+    set pane [centerDialogOverPane $itk_component(centerDialog)]
 
     set center [$itk_component(ged) pane_center $pane]
     set mCenterX [lindex $center 0]
@@ -3203,7 +3198,6 @@ Popup Menu    Right or Ctrl-Left
     set mCenterZ [lindex $center 2]
 
     set mDbUnits [gedCmd units -s]
-    $itk_component(centerDialog) center [namespace tail $this]
     ::update
     if {[$itk_component(centerDialog) activate]} {
 	$itk_component(ged) pane_center $pane $mCenterX $mCenterY $mCenterZ
@@ -3272,16 +3266,6 @@ Popup Menu    Right or Ctrl-Left
 		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
 	    } else {
 		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
-#		incr dlen -1
-#		for {set i 0} {$i < $dlen} {incr i} {
-#		    foreach ilist $mText2Node([lindex $dlist $i]) {
-#			eval lappend mNodePDrawList [lindex $ilist 0]
-#		    }
-#		}
-#
-#		foreach ilist $mText2Node([lindex $dlist end]) {
-#		    eval lappend mNodeDrawList [lindex $ilist 0]
-#		}
 	    }
 	} else {
 	    set nodesList [getTreeNodes $ditem $_cflag]
@@ -3301,33 +3285,40 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::fillTree {_pnode _ctext {_flat 0}} {
-    set cnode [getCNodeFromCText $_pnode $_ctext]
+::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
+    global no_tree_decorate
 
-    # A node for _pnode/_ctext already exists
-    if {$cnode != ""} {
+    set cnodes [getCNodesFromCText $_pnode $_ctext]
+
+    # Atleast one node for _pnode/_ctext already exists
+    if {!$_allow_multiple && $cnodes != {}} {
 	return
     }
 
     if {[catch {$itk_component(ged) get $_ctext} cgdata]} {
-	return
+	set ctype invalid
+	set isregion 0
+    } else {
+	set ctype [lindex $cgdata 0]
+	set isregion [isRegion $cgdata]
     }
 
-    set ctype [lindex $cgdata 0]
     set ptext $mNode2Text($_pnode)
-
-    if {!$_flat && $ctype == "comb"} {
-	set isregion [isRegion $cgdata]
-
+    if {[info exists no_tree_decorate] && $no_tree_decorate} {
+	set cnode [$itk_component(newtree) insert $_pnode end \
+		       -tags $TREE_POPUP_TAG \
+		       -text $_ctext]
+    } else {
 	set op [getTreeOp $ptext $_ctext]
 	set img [getTreeImage $_ctext $ctype $op $isregion]
 	set cnode [$itk_component(newtree) insert $_pnode end \
 		       -tags $TREE_POPUP_TAG \
 		       -text $_ctext \
 		       -image $img]
+    }
+    fillTreeColumns $cnode $_ctext
 
-	fillTreeColumns $cnode $_ctext
-
+    if {!$_flat && $ctype == "comb"} {
 	set tree [getTreeFromGData $cgdata]
 	set mlist [getTreeMembers $tree]
 	if {$mlist != ""} {
@@ -3335,16 +3326,6 @@ Popup Menu    Right or Ctrl-Left
 	    $itk_component(newtree) item $cnode -open false
 	    addTreePlaceholder $cnode
 	}
-    } else {
-	set isregion [isRegion $cgdata]
-	set op [getTreeOp $ptext $_ctext]
-	set img [getTreeImage $_ctext $ctype $op $isregion]
-	set cnode [$itk_component(newtree) insert $_pnode end \
-		       -tags $TREE_POPUP_TAG \
-		       -text $_ctext \
-		       -image $img]
-
-	fillTreeColumns $cnode $_ctext
     }
 
     lappend mText2Node($_ctext) [list $cnode $_pnode]
@@ -3356,16 +3337,16 @@ Popup Menu    Right or Ctrl-Left
 ::itcl::body ArcherCore::fillTreeColumns {_cnode _ctext} {
     if {$mTreeAttrColumns != {}} {
 	set vals {}
-	set anames {}
-	set avals {}
-	foreach {aname aval} [gedCmd attr get $_ctext] {
-	    lappend anames $aname
-	    lappend avals $aval
+
+	if {[catch {gedCmd attr get $_ctext} alist]} {
+	    set alist {}
 	}
+
 	foreach attr $mTreeAttrColumns {
-	    set ai [lsearch $anames $attr]
+	    set ai [lsearch -index 0 $alist $attr]
 	    if {$ai != -1} {
-		lappend vals [lindex $avals $ai]
+		incr ai
+		lappend vals [lindex $alist $ai]
 	    } else {
 		lappend vals {}
 	    }
@@ -3609,17 +3590,21 @@ Popup Menu    Right or Ctrl-Left
     return $pnode
 }
 
-::itcl::body ArcherCore::getCNodeFromCText {_pnode _text} {
+::itcl::body ArcherCore::getCNodesFromCText {_pnode _text} {
     if {[catch {set clists $mPNode2CList($_pnode)}]} {
 	return ""
     }
 
-    set i [lsearch -index 0 $clists $_text]
-    if {$i != -1} {
-	return [lindex [lindex $clists $i] 1]
+    set cnodes {}
+
+    set ilist [lsearch -all -index 0 $clists $_text]
+    if {$ilist != {}} {
+	foreach i $ilist {
+	    lappend cnodes [lindex [lindex $clists $i] 1]
+	}
     }
 
-    return ""
+    return $cnodes
 }
 
 ::itcl::body ArcherCore::getTreeImage {_obj _type {_op ""} {_isregion 0}} {
@@ -3815,29 +3800,26 @@ Popup Menu    Right or Ctrl-Left
 	    set tree [getTreeFromGData $cgdata]
 	    foreach gctext [getTreeMembers $tree] {
 		if {[catch {$itk_component(ged) get $gctext} gcgdata]} {
-		    set gcnode [getCNodeFromCText $cnode $gctext]
-		    if {$gcnode == ""} {
-			set op [getTreeOp $ctext $gctext]
-			set img [getTreeImage $gctext "invalid" $op]
+		    set op [getTreeOp $ctext $gctext]
+		    set img [getTreeImage $gctext "invalid" $op]
 
-			set gcnode [$itk_component(newtree) insert $cnode end \
-					-tags $TREE_POPUP_TAG \
-					-text $gctext \
-					-image $img]
+		    set gcnode [$itk_component(newtree) insert $cnode end \
+				    -tags $TREE_POPUP_TAG \
+				    -text $gctext \
+				    -image $img]
 
-			fillTreeColumns $gcnode $gctext
+		    fillTreeColumns $gcnode $gctext
 
-			lappend mText2Node($gctext) [list $gcnode $cnode]
-			set mNode2Text($gcnode) $gctext
-			lappend mPNode2CList($cnode) [list $gctext $gcnode]
-			set mCNode2PList($gcnode) [list $ctext $cnode]
-		    }
+		    lappend mText2Node($gctext) [list $gcnode $cnode]
+		    set mNode2Text($gcnode) $gctext
+		    lappend mPNode2CList($cnode) [list $gctext $gcnode]
+		    set mCNode2PList($gcnode) [list $ctext $cnode]
 
 		    continue
 		}
 
 		# Add gchild members
-		fillTree $cnode $gctext
+		fillTree $cnode $gctext $mEnableListView 1
 	    }
 	}
     }
@@ -4128,8 +4110,7 @@ Popup Menu    Right or Ctrl-Left
     # Possibly add a toplevel node to the tree
     if {$i != -1} {
 	# Add _name if not already there.
-	set j [lsearch -index 0 $mPNode2CList() $_name]
-	if {$j == -1} {
+	if {[catch {lsearch -index 0 $mPNode2CList() $_name} j] || $j == -1} {
 	    fillTree {} $_name $mEnableListView
 	}
     } else {
@@ -4564,6 +4545,9 @@ Popup Menu    Right or Ctrl-Left
 	"Black" {
 	    return "000000"
 	}
+	"Navy" {
+	    return "000032"
+	}
 	"Blue" {
 	    return "0000ff"
 	}
@@ -4679,14 +4663,6 @@ Popup Menu    Right or Ctrl-Left
     refreshDisplay
 }
 
-::itcl::body ArcherCore::updateToggleMode {} {
-    set toggle3 $mVPaneToggle3
-    set toggle5 $mVPaneToggle5
-    set mVPaneToggle3 $toggle3
-    set mVPaneToggle5 $toggle5
-}
-
-
 ::itcl::body ArcherCore::launchNirt {} {
     putString "nirt -b"
     putString [$itk_component(ged) nirt -b]
@@ -4714,7 +4690,8 @@ Popup Menu    Right or Ctrl-Left
     }
     set mCurrentPaneName ""
 
-    $itk_component(ged) pane_refresh $pane
+#    $itk_component(ged) pane_refresh $pane
+    $itk_component(ged) refresh_all
 }
 
 ::itcl::body ArcherCore::putString {_str} {
@@ -5645,8 +5622,6 @@ Popup Menu    Right or Ctrl-Left
 	    -textvariable [::itcl::scope mDbUnits]
     } {}
 
-    after idle "$itk_component(centerDialog) center"
-
     $itk_component(centerDialog) configure -background $LABEL_BACKGROUND_COLOR
 
     set col 0
@@ -5677,6 +5652,19 @@ Popup Menu    Right or Ctrl-Left
     grid $itk_component(centerDialogZUL) -row $row -column $col
 
     wm geometry $itk_component(centerDialog) "275x125"
+}
+
+::itcl::body ArcherCore::centerDialogOverPane {_dialog} {
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
+    } else {
+	set pane $mCurrentPaneName
+    }
+
+    set mCurrentPaneName ""
+    $_dialog center [$itk_component(ged) pane_win_name $pane]
+
+    return $pane
 }
 
 

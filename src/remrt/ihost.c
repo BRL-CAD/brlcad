@@ -32,13 +32,27 @@
 #include <math.h>
 #include <string.h>
 
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
+#ifdef HAVE_WINSOCK2_H
+#  include <winsock2.h>
+#endif
+#ifdef HAVE_NETDB_H
+#  include <netdb.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
+#ifndef HAVE_ARPA_INET_H
+#  include <arpa/inet.h>
+#endif
 #include "bio.h"
 
 #include "vmath.h"

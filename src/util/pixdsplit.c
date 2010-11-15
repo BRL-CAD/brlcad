@@ -76,9 +76,6 @@ main (int argc, char *argv[])
     int cfd = -1;	/*   "       "     */
     int dfd = -1;	/*   "       "     */
 
-    extern int bu_optind;	/* index from bu_getopt(3C) */
-    extern char *bu_optarg;	/* argument from bu_getopt(3C) */
-
     c_per_p = 3; cf_name = "-";
     d_per_p = 1; df_name = "";
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)

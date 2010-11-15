@@ -216,7 +216,7 @@ main(argc, argv)
 
 /* routine to output the facetted NMG representation of a BRL-CAD region */
 static void
-output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id)
+output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))
 {
     struct model *m;
     struct shell *s;
@@ -299,7 +299,7 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     union tree		*ret_tree;
     struct bu_list		vhead;

@@ -86,9 +86,6 @@ typedef struct render_camera_thread_data_s
     camera_tile_t *tile;
     void *res_buf;
     unsigned int *scanline;
-#ifdef HAVE_PTHREAD_H
-    pthread_mutex_t mut;
-#endif
 } render_camera_thread_data_t;
 
 

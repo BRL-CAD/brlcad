@@ -24,9 +24,6 @@
 
 #include "common.h"  
 
-/* system headers */
-#include <stdint.h>
-
 /* common interface headers */
 #include "raytrace.h"
 #include "rtgeom.h"

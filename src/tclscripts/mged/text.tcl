@@ -292,7 +292,7 @@ proc transpose { w } {
 
 
 # hack to hide the standard tcl gets implementation so we can wrap it.
-if {[catch {info body gets}] == 1} {
+if {[catch {info body gets}] == 1 && [catch {info body tcl_gets}] == 1} {
     rename gets tcl_gets
 }
 
@@ -315,6 +315,7 @@ proc gets {channelId args} {
     # the line that was input.  total hack.  total fugly hack.
 
     proc execute_cmd_save {} {}
+    rename execute_cmd_save ""
     rename execute_cmd execute_cmd_save
     rename gets_execute_cmd execute_cmd
 

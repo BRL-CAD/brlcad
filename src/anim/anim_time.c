@@ -20,10 +20,10 @@
  */
 /** @file anim_time.c
  *
- *  Given an animation path consiting of time stamps and 3-d points,
- *  estimate new time stamps based on the distances between points, the
- *  given starting and ending times, and optionally specified starting
- *  and ending velocities.
+ * Given an animation path consiting of time stamps and 3-d points,
+ * estimate new time stamps based on the distances between points, the
+ * given starting and ending times, and optionally specified starting
+ * and ending velocities.
  *
  */
 
@@ -33,18 +33,19 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "vmath.h"
 #include "bu.h"
-#include "raytrace.h"
+#include "vmath.h"
 
 
-#define MAXLEN		64
-#define DIVIDE_TOL	(1.0e-10)
-#define MAXITS		100
-#define DELTA		(1.0e-6)
-#define TIME_NONE	0
-#define TIME_ABSOLUTE	1
-#define TIME_RELATIVE	2
+#define OPT_STR "ds:e:i:f:qm:v"
+
+#define MAXLEN 64
+#define MAXITS 100
+#define DELTA (1.0e-6)
+#define TIME_NONE 0
+#define TIME_ABSOLUTE 1
+#define TIME_RELATIVE 2
+
 
 /* command line variables */
 fastf_t inv0, inv1;
@@ -56,7 +57,6 @@ int maxlines = 	 0;
 int domem = 	 0;
 int debug = 	 0;
 
-int get_args(int argc, char **argv);
 
 fastf_t
 gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
@@ -70,7 +70,7 @@ gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
     success = 0;
     while (countdown-->0) {
 	temp = (3.0*a*old+2.0*b)*old+c;
-	if (temp<DIVIDE_TOL) {
+	if (temp<VDIVIDE_TOL) {
 	    new = 0.75*old;
 	} else {
 	    new = old - (((a*old+b)*old+c)*old-dist)/temp;
@@ -87,6 +87,59 @@ gettime(fastf_t dist, fastf_t a, fastf_t b, fastf_t c, fastf_t init)
     return new;
 
 }
+
+
+int get_args(int argc, char **argv)
+{
+    int c;
+
+    while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
+	switch (c) {
+	    case 's':
+		sscanf(bu_optarg, "%lf", &inv0);
+		v0_set = TIME_ABSOLUTE;
+		break;
+	    case 'e':
+		sscanf(bu_optarg, "%lf", &inv1);
+		v1_set = TIME_ABSOLUTE;
+		break;
+	    case 'i':
+		sscanf(bu_optarg, "%lf", &inv0);
+		v0_set = TIME_RELATIVE;
+		if ((inv0>3.0)||(inv0<0.0)) {
+		    fprintf(stderr, "anim_time: -i argument must lie between 0.0 and 3.0\n");
+		    return 0;
+		}
+		break;
+	    case 'f':
+		sscanf(bu_optarg, "%lf", &inv1);
+		v1_set = TIME_RELATIVE;
+		if ((inv1>3.0)||(inv1<0.0)) {
+		    fprintf(stderr, "anim_time: -f argument must lie between 0.0 and 3.0\n");
+		    return 0;
+		}
+		break;
+	    case 'q':
+		query = 1;
+		break;
+	    case 'm':
+		sscanf(bu_optarg, "%d", &maxlines);
+		domem = 1;
+		break;
+	    case 'v':
+		verbose = 1;
+		break;
+	    case 'd':
+		debug = 1;
+		break;
+	    default:
+		fprintf(stderr, "Unknown option: -%c\n", c);
+		return 0;
+	}
+    }
+    return 1;
+}
+
 
 int
 main(int argc, char **argv)
@@ -149,11 +202,11 @@ main(int argc, char **argv)
 	return 0;
     }
 
-    if (time < DIVIDE_TOL) {
+    if (time < VDIVIDE_TOL) {
 	fprintf(stderr, "anim_time: time too small. Only %f s.\n", time);
 	return 10;
     }
-    if (dist < DIVIDE_TOL) {
+    if (dist < VDIVIDE_TOL) {
 	fprintf(stderr, "anim_time: pathlength too small. Only %f\n", dist);
 	return 10;
     }
@@ -229,58 +282,6 @@ main(int argc, char **argv)
     return 0;
 }
 
-/* code to read command line arguments*/
-#define OPT_STR "ds:e:i:f:qm:v"
-int get_args(int argc, char **argv)
-{
-    int c;
-
-    while ( (c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
-	switch (c) {
-	    case 's':
-		sscanf(bu_optarg, "%lf", &inv0);
-		v0_set = TIME_ABSOLUTE;
-		break;
-	    case 'e':
-		sscanf(bu_optarg, "%lf", &inv1);
-		v1_set = TIME_ABSOLUTE;
-		break;
-	    case 'i':
-		sscanf(bu_optarg, "%lf", &inv0);
-		v0_set = TIME_RELATIVE;
-		if ((inv0>3.0)||(inv0<0.0)) {
-		    fprintf(stderr, "anim_time: -i argument must lie between 0.0 and 3.0\n");
-		    return 0;
-		}
-		break;
-	    case 'f':
-		sscanf(bu_optarg, "%lf", &inv1);
-		v1_set = TIME_RELATIVE;
-		if ((inv1>3.0)||(inv1<0.0)) {
-		    fprintf(stderr, "anim_time: -f argument must lie between 0.0 and 3.0\n");
-		    return 0;
-		}
-		break;
-	    case 'q':
-		query = 1;
-		break;
-	    case 'm':
-		sscanf(bu_optarg, "%d", &maxlines);
-		domem = 1;
-		break;
-	    case 'v':
-		verbose = 1;
-		break;
-	    case 'd':
-		debug = 1;
-		break;
-	    default:
-		fprintf(stderr, "Unknown option: -%c\n", c);
-		return 0;
-	}
-    }
-    return 1;
-}
 
 /*
  * Local Variables:

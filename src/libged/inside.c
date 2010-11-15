@@ -326,7 +326,7 @@ arbin(struct ged *gedp,
 	/* solve for new vertex geometry
 	 * This does all the vertices
 	 */
-	bu_ptbl(&vert_tab, BU_PTBL_INIT, (long *)NULL);
+	bu_ptbl_init(&vert_tab, 64, "vert_tab");
 	nmg_vertex_tabulate(&vert_tab, &m->magic);
 	for (i=0; i<BU_PTBL_END(&vert_tab); i++) {
 	    struct vertex *v;
@@ -337,11 +337,11 @@ arbin(struct ged *gedp,
 	    if (nmg_in_vert(v, 0, &gedp->ged_wdbp->wdb_tol)) {
 		bu_vls_printf(&gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
 		nmg_km(m);
-		bu_ptbl(&vert_tab, BU_PTBL_FREE, (long *)NULL);
+		bu_ptbl_free(&vert_tab);
 		return GED_ERROR;
 	    }
 	}
-	bu_ptbl(&vert_tab, BU_PTBL_FREE, (long *)NULL);
+	bu_ptbl_free(&vert_tab);
 
 	/* rebound model */
 	nmg_rebound(m, &gedp->ged_wdbp->wdb_tol);

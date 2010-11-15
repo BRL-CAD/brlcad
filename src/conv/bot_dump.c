@@ -42,7 +42,7 @@ main(int argc, char *argv[])
     int i, j;
     int db_index;
     char c;
-    const char *av[MAXARGS];
+    const char **av;
     struct ged *gedp;
 
     bu_optind = 1;
@@ -67,6 +67,8 @@ main(int argc, char *argv[])
 	bu_exit(1, usage, argv[0]);
     }
 
+    av = bu_calloc(argc, sizeof(char *), "alloc argv copy");
+
     db_index = bu_optind;
     for (i = j = 0; i < argc; ++i) {
 	if (i == db_index)
@@ -85,6 +87,7 @@ main(int argc, char *argv[])
     if (bu_vls_strlen(&gedp->ged_result_str) > 0)
 	bu_log("%s", bu_vls_addr(&gedp->ged_result_str));
     ged_close(gedp);
+    bu_free(av, "free argv copy");
 
     return 0;
 }

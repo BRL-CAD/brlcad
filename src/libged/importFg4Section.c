@@ -492,9 +492,6 @@ make_bot_object(const char	*name,
     bot_ip.bot_flags = 0;
 
     count = rt_bot_vertex_fuse( &bot_ip );
-    if ( count )
-	(void)rt_bot_condense( &bot_ip );
-
     count = rt_bot_face_fuse( &bot_ip );
     if ( count )
 	bu_log( "WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id );

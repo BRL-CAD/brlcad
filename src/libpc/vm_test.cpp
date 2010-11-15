@@ -47,32 +47,35 @@ typedef double (* function2_ptr) (double, double);
 typedef double (* function1_ptr) (double);
 
 /* Binary function maker */
-boost::shared_ptr<MathFunction> make_function(char const * name, function2_ptr f2_p)
+boost::shared_ptr<MathFunction> make_function(char const *name, function2_ptr f2_p)
 {
     return boost::shared_ptr<MathFunction>(new MathF2<double>(name, f2_p));
 }
 
+
 /* Unary function maker */
-boost::shared_ptr<MathFunction> make_function(char const * name, function1_ptr f1_p)
+boost::shared_ptr<MathFunction> make_function(char const *name, function1_ptr f1_p)
 {
     return boost::shared_ptr<MathFunction>(new MathF1<double>(name, f1_p));
 }
 
+
 /* Arity based function maker 
-boost::shared_ptr<MathFunction> make_function(char const * name, int arity)
-{
-    return boost::shared_ptr<MathFunction>(new UserFunction(name, arity));
-}
+   boost::shared_ptr<MathFunction> make_function(char const *name, int arity)
+   {
+   return boost::shared_ptr<MathFunction>(new UserFunction(name, arity));
+   }
 */
-void findfunction(ct ** ap, const char * s,MathVM & vm) {
-   *ap = find<ct>(vm.functions,s);
-   if (! *ap) {
+void findfunction(ct **ap, const char *s, MathVM & vm) {
+    *ap = find<ct>(vm.functions, s);
+    if (! *ap) {
 	std::cout << "Function not found" << std::endl;
-   } else {
+    } else {
 	std::cout << "Function found " << (**ap)->arity() << std::endl;
 	(**ap)->display();
-   }
+    }
 }
+
 
 void eval()
 {
@@ -80,20 +83,20 @@ void eval()
     ct * a;
     std::vector<double> args;
     std::cout << "MathVM evaluation" <<std::endl;
-    vm.functions.add("sin", make_function("sin",&sin))
-		    ("sqrt", make_function("sqrt",&sqrt))
-		    ("add", make_function("add", &add))
-		    ("multiply", make_function("multiply", &multiply))
-		    ("divide", make_function("div", &div))
-		    ("avg", make_function("avg", &avg));
-    findfunction(&a,"sqrt",vm);
-    if(a) {
+    vm.functions.add("sin", make_function("sin", &sin))
+	("sqrt", make_function("sqrt", &sqrt))
+	("add", make_function("add", &add))
+	("multiply", make_function("multiply", &multiply))
+	("divide", make_function("div", &div))
+	("avg", make_function("avg", &avg));
+    findfunction(&a, "sqrt", vm);
+    if (a) {
 	args.push_back(3);
 	std::cout << (*a)->eval(args) <<std::endl;
 	args.clear();
     }
-    findfunction(&a,"avg",vm);
-    if(a) {
+    findfunction(&a, "avg", vm);
+    if (a) {
 	args.push_back(24.3);
 	args.push_back(42.3);
 	std::cout << (*a)->eval(args) <<std::endl;
@@ -104,9 +107,9 @@ void eval()
     
     vm.stack.push_back(new ConstantNode(100));
     vm.stack.push_back(new ConstantNode(2));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sqrt")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"add")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "add")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sqrt")));
 
     std::cout << " sqrt(100 + sqrt(2)) = " << evaluate(vm.stack) << std::endl;
     vm.stack.clear();
@@ -115,29 +118,31 @@ void eval()
     vm.stack.push_back(new ConstantNode(2));
     vm.stack.push_back(new ConstantNode(4));
     vm.stack.push_back(new ConstantNode(4));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"multiply")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sqrt")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"add")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "multiply")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sqrt")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "add")));
     vm.stack.push_back(new ConstantNode(12));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"divide")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"multiply")));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"sin")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "divide")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "multiply")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "sin")));
 
-    std::cout << " sin( pi * (2 + sqrt(4*4)) / 12) = " << evaluate(vm.stack) << std::endl;
+    std::cout << " sin(pi * (2 + sqrt(4*4)) / 12) = " << evaluate(vm.stack) << std::endl;
     vm.stack.clear();
     
     vm.stack.push_back(new ConstantNode(3.14));
     vm.stack.push_back(new ConstantNode(2));
-    vm.stack.push_back(new sysFunctionNode(*find(vm.functions,"divide")));
+    vm.stack.push_back(new sysFunctionNode(*find(vm.functions, "divide")));
 
     std::cout << "  pi / 2 = " << evaluate(vm.stack) << std::endl;
 }
+
 
 int main()
 {
     eval();
     return 0;
 }
+
 
 /*
  * Local Variables:

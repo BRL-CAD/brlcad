@@ -48,7 +48,7 @@ queue(fp)
     FILE *fp;
 {
     char img_buffer[8 * 1024];
-    int img_bytes, i, args, bytes_read;
+    int img_bytes, i, args, bytes_read, bytes_written;
     FILE *pfp;
 
     img_bytes = width * height * 3;
@@ -85,15 +85,12 @@ queue(fp)
 	fprintf(stderr, "args written\n");
 
     /* write the image down the pipe */
-    for (bytes_read = 0;
-	 bytes_read < img_bytes &&
-	     (i = fread(img_buffer, 1, sizeof(img_buffer), fp));
-	 bytes_read += i) {
-	fwrite(img_buffer, 1, i, pfp);
+    for (bytes_read = 0, bytes_written=0; bytes_read < img_bytes && (i = fread(img_buffer, 1, sizeof(img_buffer), fp)); bytes_read += i) {
+	bytes_written += fwrite(img_buffer, 1, i, pfp);
     }
 
     if (ipu_debug)
-	fprintf(stderr, "image written\n");
+	fprintf(stderr, "image written (%d bytes)\n", bytes_written);
 
     pclose(pfp);
 

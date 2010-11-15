@@ -80,7 +80,7 @@ int entityno;
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 
 	/* Put outer shell in region */
-	if( (s_outer=Get_outer_shell( r , (shell_de - 1)/2 , orient )) == (struct shell *)NULL )
+	if( (s_outer=Get_outer_shell( r , (shell_de - 1)/2 )) == (struct shell *)NULL )
 		goto err;
 
 	ON_Brep* outer = ON_Brep::New();
@@ -91,7 +91,7 @@ int entityno;
 	/* Put voids in */
 	for( i=0 ; i<num_of_voids ; i++ )
 	{
-		if( (void_shells[i]=Add_inner_shell( r, (void_shell_de[i] - 1)/2, void_orient[i] ))
+		if( (void_shells[i]=Add_inner_shell( r, (void_shell_de[i] - 1)/2))
 			== (struct shell *)NULL )
 				goto err;
 	}

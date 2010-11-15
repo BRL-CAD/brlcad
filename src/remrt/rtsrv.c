@@ -28,8 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
+#  include <sys/time.h>
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
@@ -433,26 +434,35 @@ ph_restart(struct pkg_conn *pc, char *buf)
 void
 ph_dirbuild(struct pkg_conn *pc, char *buf)
 {
-#define MAXARGS 1024
-    char	*argv[MAXARGS+1];
-    struct rt_i *rtip;
-    int	n;
+    long max_argc = 0;
+    char **argv = NULL;
+    struct rt_i *rtip = NULL;
+    int	n = 0;
 
     if ( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
 
-    if ( (bu_argv_from_string( argv, MAXARGS, buf )) <= 0 )  {
+    for (n = 0; n < strlen(buf); n++) {
+	if (isspace(buf[n]))
+	    max_argc++;
+    }
+    argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
+
+    if ( (bu_argv_from_string( argv, max_argc, buf )) <= 0 )  {
 	/* No words in input */
 	(void)free(buf);
+	bu_free(argv, "free argv");
 	return;
     }
 
     if ( seen_dirbuild )  {
 	bu_log("ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
 	(void)free(buf);
+	bu_free(argv, "free argv");
 	return;
     }
 
     title_file = bu_strdup(argv[0]);
+    bu_free(argv, "free argv");
 
     /* Build directory of GED database */
     if ( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )
@@ -482,9 +492,10 @@ ph_dirbuild(struct pkg_conn *pc, char *buf)
 void
 ph_gettrees(struct pkg_conn *pc, char *buf)
 {
-#define MAXARGS 1024
-    char	*argv[MAXARGS+1];
-    int	argc;
+    int n = 0;
+    long max_argc = 0;
+    char **argv = NULL;
+    int	argc = 0;
     struct rt_i *rtip = ap.a_rt_i;
 
     RT_CK_RTI(rtip);
@@ -502,9 +513,16 @@ ph_gettrees(struct pkg_conn *pc, char *buf)
 	rtip->rti_tol.para = 1 - rt_perp_tol;
     }
 
-    if ( (argc = bu_argv_from_string( argv, MAXARGS, buf )) <= 0 )  {
+    for (n = 0; n < strlen(buf); n++) {
+	if (isspace(buf[n]))
+	    max_argc++;
+    }
+    argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
+
+    if ( (argc = bu_argv_from_string( argv, max_argc, buf )) <= 0 )  {
 	/* No words in input */
 	(void)free(buf);
+	bu_free(argv, "free argv");
 	return;
     }
     title_obj = bu_strdup(argv[0]);
@@ -522,6 +540,7 @@ ph_gettrees(struct pkg_conn *pc, char *buf)
     /* Load the desired portion of the model */
     if ( rt_gettrees(rtip, argc, (const char **)argv, npsw) < 0 )
 	fprintf(stderr, "rt_gettrees(%s) FAILED\n", argv[0]);
+    bu_free(argv, "free argv");
 
     /* In case it changed from startup time via an OPT command */
     if ( npsw > 1 )  {

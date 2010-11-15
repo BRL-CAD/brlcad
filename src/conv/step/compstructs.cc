@@ -21,9 +21,7 @@ ComplexCollect *gencomplex()
     EntList *node, *child, *next1, *next2, *next3, *next4,
             *next5, *next6, *next7, *next8, *next9, *next10,
             *next11, *next12, *next13, *next14, *next15,
-            *next16, *next17, *next18, *next19, *next20,
-            *next21, *next22, *next23, *next24, *next25,
-            *next26, *next27, *next28, *next29, *next30;
+            *next16, *next17, *next18;
 
     cc = new ComplexCollect;
 

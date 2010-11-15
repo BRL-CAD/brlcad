@@ -69,7 +69,7 @@ struct bu_structparse toon_print_tab[] = {
 
 };
 struct bu_structparse toon_parse_tab[] = {
-    {"i",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 

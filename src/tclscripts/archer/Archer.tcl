@@ -36,10 +36,8 @@ namespace eval Archer {
     set methodImpls ""
     set extraMgedCommands ""
     set corePluginInit ""
-    set pluginsdir [file join $env(ARCHER_HOME) plugins archer]
-    if {![file exists $pluginsdir]} {
-	set pluginsdir [file join [bu_brlcad_data "plugins"] archer]
-    }
+
+    set pluginsdir [file join [bu_brlcad_data "plugins"] archer]
     if {![file exists $pluginsdir]} {
 	set pluginsdir [file join [bu_brlcad_data "src"] archer plugins]
     }
@@ -297,6 +295,7 @@ package provide Archer 1.0
 	method buildModelAxesPosition {_parent}
 	method buildModelAxesPreferences {}
 	method buildMouseOverridesDialog {}
+	method buildOtherGeneralPreferences {_i}
 	method buildPreferencesDialog {}
 	method buildRevertDialog {}
 	method buildToplevelMenubar {_parent {_prefix ""}}
@@ -523,7 +522,6 @@ package provide Archer 1.0
 	pack $itk_component(advancedTabs) -fill both -expand yes
 	::update
 	initMode
-	updateToggleMode
 
 	setTreeView
 	updateCreationButtons 0
@@ -532,7 +530,7 @@ package provide Archer 1.0
 	updateSaveMode
 	updateUndoMode
     } else {
-	eval backgroundColor $mBackground
+	backgroundColor $mBackgroundColor
     }
 
     set mInstanceInit 0
@@ -547,7 +545,8 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure new -state normal
     $itk_component(primaryToolbar) itemconfigure preferences -state normal
 
-    after idle [::itcl::code $this Load ""]
+    ::update
+    Load ""
 }
 
 
@@ -1548,6 +1547,7 @@ package provide Archer 1.0
     }
 
     $itk_component(ged) refresh_off
+
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
 
@@ -1587,7 +1587,7 @@ package provide Archer 1.0
 	beginViewRotate
     }
     $itk_component(ged) refresh_on
-    $itk_component(ged) refresh
+    $itk_component(ged) refresh_all
     SetNormalCursor $this
 }
 
@@ -1620,8 +1620,8 @@ package provide Archer 1.0
 
 ::itcl::body Archer::saveDb {} {
     ArcherCore::saveDb
-    clearTargetLedger
-#    createTargetLedger
+#    clearTargetLedger
+    createTargetLedger
 
     set mNeedCheckpoint 0
     updateCheckpointMode
@@ -3398,6 +3398,7 @@ proc title_node_handler {node} {
     grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
     grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
     incr i
+    set i [buildOtherGeneralPreferences $i]
     grid $itk_component(affectedTreeNodesModeCB) \
 	-columnspan 2 \
 	-column 0 \
@@ -4038,6 +4039,10 @@ proc title_node_handler {node} {
     wm geometry $itk_component(mouseOverridesDialog) "370x190"
 }
 
+::itcl::body Archer::buildOtherGeneralPreferences {_i} {
+    return $_i
+}
+
 ::itcl::body Archer::buildPreferencesDialog {} {
     itk_component add preferencesDialog {
 	::iwidgets::dialog $itk_interior.preferencesDialog \
@@ -4182,19 +4187,22 @@ proc title_node_handler {node} {
     }
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Black" \
-	-command [::itcl::code $this backgroundColor 0 0 0]
+	-command [::itcl::code $this backgroundColor Black]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Grey" \
-	-command [::itcl::code $this backgroundColor 100 100 100]
+	-command [::itcl::code $this backgroundColor Grey]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "White" \
-	-command [::itcl::code $this backgroundColor 255 255 255]
+	-command [::itcl::code $this backgroundColor White]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Cyan" \
-	-command [::itcl::code $this backgroundColor 0 200 200]
+	-command [::itcl::code $this backgroundColor Cyan]
     $itk_component(${_prefix}backgroundmenu) add command \
 	-label "Blue" \
-	-command [::itcl::code $this backgroundColor 0 0 160]
+	-command [::itcl::code $this backgroundColor Blue]
+    $itk_component(${_prefix}backgroundmenu) add command \
+	-label "Navy" \
+	-command [::itcl::code $this backgroundColor Navy]
     $itk_component(${_prefix}displaymenu) add cascade \
 	-label "Background Color" \
 	-menu $itk_component(${_prefix}backgroundmenu) \
@@ -5447,15 +5455,17 @@ proc title_node_handler {node} {
 
 	    cascade background -label "Background Color" -menu {
 		command black -label "Black" \
-		    -helpstr "Set display background to black"
+		    -helpstr "Set display background to Black"
 		command grey -label "Grey" \
-		    -helpstr "Set display background to grey"
+		    -helpstr "Set display background to Grey"
 		command white -label "White" \
-		    -helpstr "Set display background to white"
+		    -helpstr "Set display background to White"
 		command cyan -label "Cyan" \
-		    -helpstr "Set display background to cyan"
+		    -helpstr "Set display background to Cyan"
 		command blue -label "Blue" \
-		    -helpstr "Set display background to blue"
+		    -helpstr "Set display background to Blue"
+		command navy -label "Navy" \
+		    -helpstr "Set display background to Navy"
 	    }
 
 	    cascade standard -label "Standard Views" -menu {
@@ -5496,15 +5506,17 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this doViewCenter] \
 	-state disabled
     $itk_component(menubar) menuconfigure .display.background.black \
-	-command [::itcl::code $this backgroundColor 0 0 0]
+	-command [::itcl::code $this backgroundColor black]
     $itk_component(menubar) menuconfigure .display.background.grey \
-	-command [::itcl::code $this backgroundColor 100 100 100]
+	-command [::itcl::code $this backgroundColor grey]
     $itk_component(menubar) menuconfigure .display.background.white \
-	-command [::itcl::code $this backgroundColor 255 255 255]
+	-command [::itcl::code $this backgroundColor white]
     $itk_component(menubar) menuconfigure .display.background.cyan \
-	-command [::itcl::code $this backgroundColor 0 200 200]
+	-command [::itcl::code $this backgroundColor cyan]
     $itk_component(menubar) menuconfigure .display.background.blue \
-	-command [::itcl::code $this backgroundColor 0 0 160]
+	-command [::itcl::code $this backgroundColor blue]
+    $itk_component(menubar) menuconfigure .display.background.navy \
+	-command [::itcl::code $this backgroundColor navy]
     $itk_component(menubar) menuconfigure .display.standard.front \
 	-command [::itcl::code $this doAe 0 0]
     $itk_component(menubar) menuconfigure .display.standard.rear \
@@ -5981,11 +5993,6 @@ proc title_node_handler {node} {
     $itk_component(hpane) show bottomView
     $itk_component(hpane) fraction $mHPaneFraction1 $mHPaneFraction2
     $itk_component(vpane) show attrView
-
-    set toggle3 $mVPaneToggle3
-    set toggle5 $mVPaneToggle5
-    set mVPaneToggle3 $toggle3
-    set mVPaneToggle5 $toggle5
 
     # How screwed up is this?
     $itk_component(vpane) fraction $mVPaneFraction3 $mVPaneFraction4 $mVPaneFraction5
@@ -7726,7 +7733,7 @@ proc title_node_handler {node} {
 	}
     }
 
-    eval backgroundColor $mBackground
+    backgroundColor $mBackgroundColor
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
@@ -7754,8 +7761,7 @@ proc title_node_handler {node} {
 
     if {$mBackgroundColor != $mBackgroundColorPref} {
 	set mBackgroundColor $mBackgroundColorPref
-	set mBackground [getRgbColor $mBackgroundColor]
-	eval backgroundColor $mBackground
+	backgroundColor $mBackgroundColor
     }
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
@@ -8307,6 +8313,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::readPreferences {} {
     global env
+    global no_tree_decorate
 
     if {$mViewOnly} {
 	return
@@ -8330,12 +8337,11 @@ proc title_node_handler {node} {
 	}
     }
 
-    eval backgroundColor $mBackground
+    backgroundColor $mBackgroundColor
 
     if {!$mDelayCommandViewBuild} {
 	::update
 	initMode
-	updateToggleMode
     }
 }
 
@@ -8380,6 +8386,12 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::writePreferencesBody {_pfile} {
+    global no_tree_decorate
+
+    if {[info exists no_tree_decorate]} {
+	puts $_pfile "set no_tree_decorate $no_tree_decorate"
+    }
+
     puts $_pfile "set mBackgroundColor \"$mBackgroundColor\""
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
@@ -9235,7 +9247,7 @@ proc title_node_handler {node} {
 }
 
 ::itcl::body Archer::global_undo_callback {_gname} {
-    gedCmd refresh
+    gedCmd refresh_all
 }
 
 ::itcl::body Archer::ledger_cleanup {} {

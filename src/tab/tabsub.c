@@ -270,14 +270,14 @@ do_lines(FILE *fp, char *buffer)
  *	 0	OK
  */
 int
-multi_words( char *words[], int	nwords )
+multi_words( char *words[], int	word_count )
 {
 
     if ( strcmp( words[0], "rot" ) == 0 )  {
 	mat_t	mat;
 
 	/* Expects rotations rx, ry, rz, in degrees */
-	if ( nwords < 4 )  return -1;
+	if ( word_count < 4 )  return -1;
 	MAT_IDN( mat );
 	bn_mat_angles( mat,
 		       atof( words[1] ),
@@ -289,7 +289,7 @@ multi_words( char *words[], int	nwords )
     if ( strcmp( words[0], "xlate" ) == 0 )  {
 	mat_t	mat;
 
-	if ( nwords < 4 )  return -1;
+	if ( word_count < 4 )  return -1;
 	/* Expects translations tx, ty, tz */
 	MAT_IDN( mat );
 	MAT_DELTAS( mat,
@@ -310,7 +310,7 @@ multi_words( char *words[], int	nwords )
 	/* is done first, then the rotation, and finally  */
 	/* back into the original position by (+x, +y, +z). */
 
-	if ( nwords < 7 )  return -1;
+	if ( word_count < 7 )  return -1;
 
 	MAT_IDN( mat1 );
 	MAT_IDN( mat2 );
@@ -345,11 +345,11 @@ multi_words( char *words[], int	nwords )
 	/* Expects tx, ty, tz, rx, ry, rz, [scale]. */
 	/* All rotation is done first, then translation */
 	/* Note: word[0] and args[0] are the keyword */
-	if ( nwords < 6+1 )  return -1;
+	if ( word_count < 6+1 )  return -1;
 	for ( i=1; i<6+1; i++ )
 	    args[i] = 0;
 	args[7] = 1.0;	/* optional arg, default to 1 */
-	for ( i=1; i<nwords; i++ )
+	for ( i=1; i<word_count; i++ )
 	    args[i] = atof( words[i] );
 	MAT_IDN( mat );
 	bn_mat_angles( mat, args[4], args[5], args[6] );
@@ -369,12 +369,12 @@ multi_words( char *words[], int	nwords )
 	mat_t	mat;
 	fastf_t	az, el;
 
-	if ( nwords < 3 )  return -1;
+	if ( word_count < 3 )  return -1;
 	/* Expects azimuth, elev, optional twist */
 	az = atof(words[1]);
 	el = atof(words[2]);
 #if 0
-	if ( nwords == 3 )
+	if ( word_count == 3 )
 	    twist = 0.0;
 	else
 	    twist = atof(words[3]);
@@ -391,7 +391,7 @@ multi_words( char *words[], int	nwords )
 	vect_t	dir;
 	fastf_t	ang;
 
-	if ( nwords < 1+3+3+1 )  return -1;
+	if ( word_count < 1+3+3+1 )  return -1;
 	/* Expects point1, point2, angle */
 	VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
 	VSET( pt2, atof(words[4]), atof(words[5]), atof(words[6]) );
@@ -409,7 +409,7 @@ multi_words( char *words[], int	nwords )
 	vect_t	dir;
 	fastf_t	ang;
 
-	if ( nwords < 1+3+3+1 )  return -1;
+	if ( word_count < 1+3+3+1 )  return -1;
 	/* Expects point1, dir, angle */
 	VSET( pt1, atof(words[1]), atof(words[2]), atof(words[3]) );
 	VSET( dir, atof(words[4]), atof(words[5]), atof(words[6]) );
@@ -425,7 +425,7 @@ multi_words( char *words[], int	nwords )
 	quat_t	quat;
 
 	/* Usage: quat x, y, z, w */
-	if ( nwords < 5 ) return -1;
+	if ( word_count < 5 ) return -1;
 	QSET( quat, atof(words[1]), atof(words[2]),
 	      atof(words[3]), atof(words[4]) );
 
@@ -441,7 +441,7 @@ multi_words( char *words[], int	nwords )
 	vect_t	to;
 
 	/* Usage: fromto +Z cur_xyz next_xyz */
-	if ( nwords < 8 )  return -1;
+	if ( word_count < 8 )  return -1;
 	if ( strcmp( words[1], "+X" ) == 0 )  {
 	    VSET( from, 1, 0, 0 );
 	} else if ( strcmp( words[1], "-X" ) == 0 )  {

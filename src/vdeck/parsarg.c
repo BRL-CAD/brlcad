@@ -27,18 +27,20 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+
 #include "./vextern.h"
 
-/*	p a r s A r g ( )
-	Parse the command line arguments.
-*/
+
+/*
+ * Parse the command line arguments.
+ */
 int
 parsArg(int argc, char **argv)
 {
     int	i, c, arg_cnt;
-    extern int	bu_optind;
 
     while ( (c = bu_getopt( argc, argv, "d" )) != EOF )
     {

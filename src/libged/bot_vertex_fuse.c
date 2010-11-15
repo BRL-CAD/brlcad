@@ -41,7 +41,7 @@ ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
     struct directory *old_dp, *new_dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
-    int count1=0;
+    int count=0;
     static const char *usage = "new_bot old_bot";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -73,9 +73,8 @@ ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC( bot );
 
-    count1 = rt_bot_vertex_fuse( bot );
-    if ( count1 )
-	(void)rt_bot_condense( bot );
+    count = rt_bot_vertex_fuse( bot );
+    bu_log("Fused %d vertices\n", count);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);

@@ -69,7 +69,7 @@ rm -f conftest.err
 AC_TRY_RUN( [
 #include <stdlib.h>
 int main(){exit(0);}
-], [], [bc_[$2]_works=no])
+], [], [bc_[$2]_works=no], [bc_[$2]_works=maybe])
 AC_MSG_RESULT($bc_[$2]_works)
 if test "x$bc_[$2]_works" = "xno" -o "x$__keep" != "x" ; then
 	CFLAGS="$PRECFLAGS"
@@ -173,7 +173,8 @@ int main(){exit(0);}
 		AC_MSG_RESULT(no)
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_ERROR([*** compiler cannot create working executables, check config.log ***])
-	]
+	],
+	[	AC_MSG_RESULT(dunno, cross-compiling)]
 )
 ])
 

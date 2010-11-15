@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 	}
     }
 
-    bu_ptbl(&faces, BU_PTBL_INIT, (long *)NULL);
+    bu_ptbl_init(&faces, 64, "faces");
     m = nmg_mmr();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
     while (1) {
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 	    case ID_P_HEAD:
 		bu_log("Polysolid (%s)\n", rec.p.p_name);
 		s = nmg_msv(r);
-		bu_ptbl(&faces, BU_PTBL_RST, (long *)NULL);
+		bu_ptbl_reset(&faces);
 		while (!done) {
 		    struct faceuse *fu;
 		    struct loopuse *lu;
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 			bu_log("\tEliminating degenerate face\n");
 			nmg_kfu(fu);
 		    } else {
-			bu_ptbl(&faces, BU_PTBL_INS, (long *)fu);
+			bu_ptbl_ins(&faces, (long *)fu);
 		    }
 		}
 		nmg_rebound(m, &tol);
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 		break;
 	}
     }
-    bu_ptbl(&faces, BU_PTBL_FREE, (long *)NULL);
+    bu_ptbl_free(&faces);
 }
 
 

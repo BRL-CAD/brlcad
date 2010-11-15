@@ -407,7 +407,7 @@ struct bu_structparse img_parse_tab[] = {
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 struct bu_structparse img_print_tab[] = {
-    {"i",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL},
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL}
 };

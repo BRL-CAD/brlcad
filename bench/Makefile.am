@@ -3,6 +3,8 @@
 
 bin_PROGRAMS = pixcmp
 pixcmp_SOURCES = pixcmp.c
+pixcmp_CFLAGS = ${TCL_CPPFLAGS}
+pixcmp_LDADD = ${BU}
 
 dist_bin_SCRIPTS = \
 	benchmark
@@ -33,10 +35,10 @@ run: all
 			exit 1 ; \
 		fi ; \
 	fi
-	@$(ECHO) "---"
-	@$(ECHO) "Run 'make clean' in the bench directory to delete the log"
-	@$(ECHO) "and image files generated during the benchmark analysis."
-	@$(ECHO)
+	@echo "---"
+	@echo "Run 'make clean' in the bench directory to delete the log"
+	@echo "and image files generated during the benchmark analysis."
+	@echo
 
 bench: run
 

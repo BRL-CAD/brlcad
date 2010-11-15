@@ -29,6 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
 #include "cmd.h"
 
 #include "./ged_private.h"
@@ -165,8 +166,6 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     int			c;
     int			old_debug;
     int			push_error;
-    extern 	int		bu_optind;
-    extern	char		*bu_optarg;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -180,11 +179,6 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
-    }
-
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
     }
 
     BU_GETSTRUCT(gpdp, ged_push_data);

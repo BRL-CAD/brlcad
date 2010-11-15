@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged/tcl "gets" command doesn't work if you run the "source" command
+  to read in a script that uses gets on stdin.  it just hangs until
+  muliple sigint's are received.
+
+* mged 'cd' on Windows results in the rt* commands failing.
+
+* menu invocation seems to be broken again (ArchLinux)
+
 * Report of copy/paste not working with Tk on Windows Vista - does
   work on Windows XP.
 

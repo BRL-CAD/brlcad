@@ -35,6 +35,7 @@ option add *Legend.height 30 widgetDefault
     itk_option define -rgbRange rgbRange RgbRange {{255 255 255} {255 0 0}}
     itk_option define -slots slots Slots 10
     itk_option define -colorFunc colorFunc ColorFunc ""
+    itk_option define -textColor textColor TextColor black
 
     public method drawToCanvas {c x y w h tags}
     public method update {}
@@ -173,6 +174,14 @@ option add *Legend.height 30 widgetDefault
     cadwidgets::Legend::update
 }
 
+::itcl::configbody cadwidgets::Legend::textColor {
+    if {[catch {winfo rgb $itk_interior $itk_option(-textColor)} msg]} {
+	error $msg
+    }
+
+    cadwidgets::Legend::update
+}
+
 ::itcl::body cadwidgets::Legend::constructor {args} {
     itk_component add canvas {
 	::canvas $itk_interior.canvas
@@ -210,8 +219,8 @@ option add *Legend.height 30 widgetDefault
 	$c create rectangle $x1 $y1 $x2 $y2 \
 	    -outline "" -fill $rgb -tags $tags
     }
-    $c create text $x $y -text $low -anchor s -tags $tags
-    $c create text [expr {$w + $x}] $y -text $high -anchor s -tags $tags
+    $c create text $x $y -text $low -anchor s -tags $tags -fill $itk_option(-textColor)
+    $c create text [expr {$w + $x}] $y -text $high -anchor s -tags $tags -fill $itk_option(-textColor)
 
     return
 }

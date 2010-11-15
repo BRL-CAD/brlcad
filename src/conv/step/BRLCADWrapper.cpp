@@ -78,7 +78,7 @@ BRLCADWrapper::WriteSphere(double *center, double radius) {
     center[X] = 0.0;
     center[Y] = 0.0;
     center[Z] = 0.0;
-    mk_sph(outfp, "s1", center, 10.0);
+    mk_sph(outfp, "s1", center, radius);
     return true;
 }
 

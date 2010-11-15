@@ -250,6 +250,20 @@ struct xray {
 #define RT_CK_RAY(_p)	BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 
 /**
+ * X R A Y S
+ *
+ * This plural xrays structure is a bu_list based container designed
+ * to hold a list or bundle of xray(s). This bundle is utilized by
+ * rt_shootrays() through its application bundle input.
+ *
+ */
+struct xrays
+{
+    struct bu_list l;
+    struct xray ray;
+};
+
+/**
  * H I T
  *
  * Information about where a ray hits the surface
@@ -678,6 +692,35 @@ struct partition {
 
 /** Dequeue "cur" partition from doubly-linked list */
 #define DEQUEUE_PT(_cur)	BU_LIST_DEQUEUE((struct bu_list *)_cur)
+
+/**
+ * P A R T I T I O N _ L I S T
+ *
+ * The partition_list structure - bu_list based structure for
+ * holding ray bundles.
+ *
+ */
+struct partition_list {
+    struct bu_list l;
+    struct application	*ap;
+    struct partition PartHeadp;
+    struct seg segHeadp;
+    genptr_t		userptr;
+};
+
+/**
+ * P A R T I T I O N _ B U N D L E
+ *
+ * Partition bundle.  Passed from rt_shootrays() into user's bundle_hit()
+ * function.
+ *
+ */
+struct partition_bundle {
+    int hits;
+    int misses;
+    struct partition_list *list;
+    struct application	*ap;
+};
 
 /**
  * C U T
@@ -1560,6 +1603,48 @@ struct application  {
     int			a_flag;		/**< @brief  application-specific flag */
     int			a_zero2;	/**< @brief  must be zero (sanity check) */
 };
+
+/**
+ * A P P L I C A T I O N _ B U N D L E
+ *
+ * This structure is the only parameter to rt_shootrays().  The entire
+ * structure should be zeroed (e.g. by memset) before it is used the
+ * first time.
+ *
+ * When calling rt_shootrays(), these fields are mandatory:
+ *
+ *	- b_ap		Members in this single ray application structure should be set
+ *	 		in a similar fashion as when used with rt_shootray() with the
+ *	 		exception of a_hit() and a_miss(). Default implementaions of
+ *	 		these routines are provided that simple update hit/miss counters
+ *	 		and attach the hit partitions and segments to the
+ *	 		partition_bundle structure. Users can still override this default
+ *	 		functionality but have to make sure to move the partition and
+ *	 		segment list to the new partition_bundle structure.
+ *	- b_hit()	Routine to call when something is hit by the ray bundle.
+ *	- b_miss()	Routine to call when ray bundle misses everything.
+ *
+ *  Note that rt_shootrays() returns the (int) return of the
+ *  b_hit()/b_miss() function called, as well as placing it in
+ *  b_return.
+ *
+ *  An integer field b_user and a genptr_t field b_uptr are
+ *  provided in the structure for custome user data.
+ *
+ */
+struct application_bundle
+{
+    unsigned long b_magic;
+    /* THESE ELEMENTS ARE MANDATORY */
+    struct xrays b_rays; /**< @brief  Actual bundle of rays to be shot */
+    struct application b_ap; /**< @brief  application setting to be applied to each ray */
+    int (*b_hit)BU_ARGS((struct application_bundle *, struct partition_bundle *)); /**< @brief  called when bundle hits model */
+    int (*b_miss)BU_ARGS((struct application_bundle *)); /**< @brief  called when entire bundle misses */
+    int b_user; /**< @brief  application_bundle-specific value */
+    genptr_t b_uptr; /**< @brief  application_bundle-specific pointer */
+    int b_return;
+};
+
 #define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
@@ -2287,9 +2372,30 @@ RT_EXPORT BU_EXTERN(void rt_default_logoverlap,
 		     const struct partition *pp,
 		     const struct bu_ptbl *regiontable,
 		     const struct partition *InputHdp));
+
+/**
+ * Initial set of 'xrays' pattern generators that can
+ * used to feed a bundle set of rays to rt_shootrays()
+ */
+RT_EXPORT BU_EXTERN(int rt_gen_elliptical_grid,
+		    (struct xrays *rays,
+		     const struct xray *center_ray,
+		     const fastf_t *avec,
+		     const fastf_t *bvec,
+		     fastf_t gridsize));
+RT_EXPORT BU_EXTERN(int rt_gen_circular_grid,
+		    (struct xrays *ray_bundle,
+		     const struct xray *center_ray,
+		     fastf_t radius,
+		     const fastf_t *up_vector,
+		     fastf_t gridsize));
+
 /* Shoot a ray */
 RT_EXPORT BU_EXTERN(int rt_shootray,
 		    (struct application *ap));
+/* Shoot a bundle of rays */
+RT_EXPORT BU_EXTERN(int rt_shootrays,
+		    (struct application_bundle *bundle));
 /* Get expr tree for object */
 RT_EXPORT BU_EXTERN(void rt_free_soltab,
 		    (struct soltab   *stp));
@@ -5476,7 +5582,7 @@ RT_EXPORT BU_EXTERN(void nmg_pr_struct_counts,
 RT_EXPORT BU_EXTERN(unsigned long **nmg_m_struct_count,
 		    (struct nmg_struct_counts *ctr,
 		     const struct model *m));
-RT_EXPORT BU_EXTERN(void nmg_struct_counts,
+RT_EXPORT BU_EXTERN(void nmg_pr_m_struct_counts,
 		    (const struct model	*m,
 		     const char		*str));
 RT_EXPORT BU_EXTERN(void nmg_merge_models,

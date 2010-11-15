@@ -64,7 +64,7 @@ Axis1Placement::BuildAxis() {
 }
 
 const double *
-Axis1Placement::GetAxis(int i) {
+Axis1Placement::GetAxis() {
 	return z;
 }
 

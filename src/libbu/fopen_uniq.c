@@ -50,7 +50,7 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
     int fd;
     FILE *fp;
 
-    if (! namefmt || ! *namefmt)
+    if (UNLIKELY(!namefmt || !*namefmt))
 	bu_bomb("bu_uniq_file called with null string\n");
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -60,15 +60,17 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
     /* NOTE: can't call bu_log because of the semaphore */
 
     snprintf(filename, MAXPATHLEN, namefmt, n);
-    if ((fd = open(filename, O_RDWR|O_CREAT|O_EXCL, 0600)) < 0) {
+    fd = open(filename, O_RDWR|O_CREAT|O_EXCL, 0600);
+    if (UNLIKELY(fd < 0)) {
 	fprintf(stderr, "Cannot open %s, %s\n", filename, strerror(errno));
 	return NULL;
     }
-    if ((fp=fdopen(fd, "w")) == (FILE *)NULL) {
+    fp=fdopen(fd, "w");
+    if (UNLIKELY(fp == (FILE *)NULL)) {
 	fprintf(stderr, "%s", strerror(errno));
     }
 
-    if (outfmt)
+    if (LIKELY(outfmt != NULL))
 	fprintf(stderr, outfmt, filename);
 
     bu_semaphore_release(BU_SEM_SYSCALL);

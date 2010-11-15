@@ -71,8 +71,19 @@ specifying the --enable-64-bit configure flag.  You must specify
 additional CFLAGS/CXXFLAGS/CPPFLAGS/LDFLAGS to get a 64-bit
 compilation.  The exact values for these flags depends on environment
 and is beyond the scope of this document -- if you don't know what
-settings you need, you probably shouldn't be compiling.
+settings you need, you probably shouldn't be compiling.  That said,
+this just might work for you:
 
+./configure CFLAGS=-m64 CXXFLAGS=-m64 LDFLAGS=-m64 --enable-64bit
+
+Tips
+----
+
+If you need to get information about your machine and OSX version, try
+these commands:
+
+sw_vers -productVersion
+uname -a
 
 Bugs
 ----

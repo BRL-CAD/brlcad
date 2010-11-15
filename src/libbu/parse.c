@@ -72,19 +72,19 @@
 	register unsigned long _i;					\
 	register size_t _len;						\
 	BU_CK_EXTERNAL(_p);						\
-	if (!(_p->ext_buf)) {						\
+	if (UNLIKELY(!(_p->ext_buf))) {					\
 	    bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
 		   __FILE__, __LINE__);					\
 	    bu_bomb("NULL pointer");					\
 	}								\
-	if (_p->ext_nbytes < 6) {					\
+	if (UNLIKELY(_p->ext_nbytes < 6)) {				\
 	    bu_log("ERROR: BU_CK_GETPUT buffer only %zu bytes, file %s, line %d\n", \
 		   _p->ext_nbytes, __FILE__, __LINE__);			\
 	    bu_bomb("getput buffer too small");				\
 	}								\
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) |		\
 	    ((unsigned char *)(_p->ext_buf))[1];			\
-	if (_i != BU_GETPUT_MAGIC_1) {					\
+	if (UNLIKELY(_i != BU_GETPUT_MAGIC_1)) {			\
 	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic1 s/b %x, was %s(0x%lx), file %s, line %d\n", \
 		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_1,		\
 		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
@@ -94,7 +94,7 @@
 	    (((unsigned char *)(_p->ext_buf))[3] << 16) |		\
 	    (((unsigned char *)(_p->ext_buf))[4] <<  8) |		\
 	    ((unsigned char *)(_p->ext_buf))[5];			\
-	if (_len > _p->ext_nbytes) {					\
+	if (UNLIKELY(_len > _p->ext_nbytes)) {				\
 	    bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%zu, ext_nbytes=%zu, file %s, line %d\n", \
 		   (void *)_p->ext_buf, (size_t)_len, _p->ext_nbytes,	\
 		   __FILE__, __LINE__);					\
@@ -102,7 +102,7 @@
 	}								\
 	_i = (((unsigned char *)(_p->ext_buf))[_len-2] << 8) |		\
 	    ((unsigned char *)(_p->ext_buf))[_len-1];			\
-	if (_i != BU_GETPUT_MAGIC_2) {					\
+	if (UNLIKELY(_i != BU_GETPUT_MAGIC_2)) {			\
 	    bu_log("ERROR: BU_CK_GETPUT buffer %p, magic2 s/b %x, was %s(0x%lx), file %s, line %d\n", \
 		   (void *)_p->ext_buf, BU_GETPUT_MAGIC_2,		\
 		   bu_identify_magic(_i), _i, __FILE__, __LINE__);	\
@@ -114,10 +114,10 @@
 int
 bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_structparse *imp)
 {
-    register char *cp;		/* current possition in buffer */
-    char *ep;		/* &ext->ext_buf[ext->ext_nbytes] */
+    register char *cp;			/* current possition in buffer */
+    char *ep;				/* &ext->ext_buf[ext->ext_nbytes] */
     const struct bu_structparse *ip;	/* current imexport structure */
-    char *loc;		/* where host-format data is */
+    char *loc;				/* where host-format data is */
     size_t len;
     register size_t i;
 
@@ -140,9 +140,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		    /* DEPRECATED: use %p instead. */
 		    static int warned = 0;
 		    if (!warned) {
-#ifdef NOTYET
-			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 			warned++;
 		    }
 		}
@@ -246,6 +244,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		{
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
+		    bu_log("INTERNAL ERROR: attempt to indirectly export bu_structparse table, unimplemented\n");
 		}
 		continue;
 	    default:
@@ -292,9 +291,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		    /* DEPRECATED: use %p instead. */
 		    static int warned = 0;
 		    if (!warned) {
-#ifdef NOTYET
-			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+			bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 			warned++;
 		    }
 		}
@@ -394,6 +391,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		{
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
+		    bu_log("INTERNAL ERROR: attempt to indirectly import bu_structparse table, unimplemented\n");
 		}
 		break;
 	    default:
@@ -449,7 +447,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	| (((unsigned char *)(ext->ext_buf))[4] <<  8)
 	| ((unsigned char *)(ext->ext_buf))[5];
 
-    if (i != BU_GETPUT_MAGIC_1) {
+    if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
@@ -461,14 +459,14 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     i=(long)fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-    if (i != len-6) {
+    if (UNLIKELY(i != len-6)) {
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
 	       i, __FILE__, __LINE__);
 	bu_bomb("Bad fread");
     }
     i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	((unsigned char *)(ext->ext_buf))[len-1];
-    if (i != BU_GETPUT_MAGIC_2) {
+    if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
@@ -491,7 +489,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 	(((unsigned char *)(ext->ext_buf))[3] << 16) |
 	(((unsigned char *)(ext->ext_buf))[4] <<  8) |
 	((unsigned char *)(ext->ext_buf))[5];
-    if (i != BU_GETPUT_MAGIC_1) {
+    if (UNLIKELY(i != BU_GETPUT_MAGIC_1)) {
 	bu_log("ERROR: bad getput buffer header %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_1,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
@@ -500,7 +498,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
     ext->ext_nbytes = len;
     i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) |
 	((unsigned char *)(ext->ext_buf))[len-1];
-    if (i != BU_GETPUT_MAGIC_2) {
+    if (UNLIKELY(i != BU_GETPUT_MAGIC_2)) {
 	bu_log("ERROR: bad getput buffer %p, s/b %x, was %s(0x%lx), file %s, line %d\n",
 	       (void *)ext->ext_buf, BU_GETPUT_MAGIC_2,
 	       bu_identify_magic(i), i, __FILE__, __LINE__);
@@ -564,7 +562,7 @@ _bu_parse_double(const char *str, size_t count, double *loc)
 	strncpy(buf, numstart, len);
 	buf[len] = '\0';
 
-	if (sscanf(buf, "%lf", &tmp_double) != 1)
+	if (UNLIKELY(sscanf(buf, "%lf", &tmp_double) != 1))
 	    return -1;
 
 	*loc++ = tmp_double;
@@ -606,7 +604,8 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
     for (; sdp->sp_name != (char *)0; sdp++) {
 
 	if (strcmp(sdp->sp_name, name) != 0	/* no name match */
-	    && sdp->sp_fmt[0] != 'i')		/* no include desc */
+	    && sdp->sp_fmt[0] != 'i'
+	    && sdp->sp_fmt[1] != 'p')		/* no include desc */
 
 	    continue;
 
@@ -619,9 +618,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	if (sdp->sp_fmt[0] == 'i') {
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 	    /* Indirect to another structure */
@@ -800,8 +797,8 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
     int retval;
 
     BU_CK_VLS(in_vls);
-    if (desc == (struct bu_structparse *)NULL) {
-	bu_log("Null \"struct bu_structparse\" pointer\n");
+    if (UNLIKELY(desc == (struct bu_structparse *)NULL)) {
+	bu_log("NULL \"struct bu_structparse\" pointer\n");
 	return -1;
     }
 
@@ -945,8 +942,8 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 {
     register char *loc;
 
-    if (sdp == (struct bu_structparse *)NULL) {
-	bu_log("Null \"struct bu_structparse\" pointer\n");
+    if (UNLIKELY(sdp == (struct bu_structparse *)NULL)) {
+	bu_log("NULL \"struct bu_structparse\" pointer\n");
 	return;
     }
 
@@ -1021,9 +1018,9 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    break;
 	case 'p':
 	    {
-		bu_log("Cannot print type '%%p' yet!\n");
 		/* Indirect to another structure */
 		/* FIXME: unimplemented */
+		bu_log("INTERNAL ERROR: Cannot print type '%%p' yet!\n");
 	    }
 	    break;
 	default:
@@ -1058,8 +1055,8 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
     register int lastoff = -1;
 
     bu_log("%s\n", title);
-    if (parsetab == (struct bu_structparse *)NULL) {
-	bu_log("Null \"struct bu_structparse\" pointer\n");
+    if (UNLIKELY(parsetab == (struct bu_structparse *)NULL)) {
+	bu_log("NULL \"struct bu_structparse\" pointer\n");
 	return;
     }
     for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
@@ -1075,9 +1072,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    /* DEPRECATED: use %p instead. */
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 	    bu_struct_print(sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
@@ -1231,8 +1226,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
     BU_CK_VLS(vls);
 
-    if (sdp == (struct bu_structparse *)NULL) {
-	bu_log("Null \"struct bu_structparse\" pointer\n");
+    if (UNLIKELY(sdp == (struct bu_structparse *)NULL)) {
+	bu_log("NULL \"struct bu_structparse\" pointer\n");
 	return;
     }
 
@@ -1251,17 +1246,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	    /* DEPRECATED: use %p instead. */
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 
 	    bu_vls_init(&sub_str);
-	    bu_vls_struct_print(&sub_str,
-				(struct bu_structparse *)sdp->sp_count,
-				base);
-
+	    bu_vls_struct_print(&sub_str, (struct bu_structparse *)sdp->sp_count, base);
 	    bu_vls_vlscat(vls, &sub_str);
 	    bu_vls_free(&sub_str);
 	    continue;
@@ -1426,8 +1416,8 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
     register int lastoff = -1;
 
     bu_vls_printf(vls_out, "%s\n", title);
-    if (parsetab == (struct bu_structparse *)NULL) {
-	bu_vls_printf(vls_out, "Null \"struct bu_structparse\" pointer\n");
+    if (UNLIKELY(parsetab == (struct bu_structparse *)NULL)) {
+	bu_vls_printf(vls_out, "NULL \"struct bu_structparse\" pointer\n");
 	return;
     }
 
@@ -1444,9 +1434,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 	    /* DEPRECATED: use %p instead. */
 	    static int warned = 0;
 	    if (!warned) {
-#ifdef NOTYET
-		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%p\" for chained bu_structparse tables.\n");
-#endif
+		bu_log("DEVELOPER DEPRECATION NOTICE: Use of \"i\" is replaced by \"%%p\" for chained bu_structparse tables.\n");
 		warned++;
 	    }
 	    bu_vls_struct_print2(vls_out, sdp->sp_name, (struct bu_structparse *)sdp->sp_count, base);
@@ -2094,7 +2082,8 @@ bu_fwrite_external(FILE *fp, const struct bu_external *ep)
 
     BU_CK_EXTERNAL(ep);
 
-    if ((got = fwrite(ep->ext_buf, 1, ep->ext_nbytes, fp)) != (size_t)ep->ext_nbytes) {
+    got = fwrite(ep->ext_buf, 1, ep->ext_nbytes, fp);
+    if (UNLIKELY(got != (size_t)ep->ext_nbytes)) {
 	perror("fwrite");
 	bu_log("bu_fwrite_external() attempted to write %ld, got %ld\n", (long)ep->ext_nbytes, (long)got);
 	return -1;
@@ -2113,7 +2102,9 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
     BU_CK_EXTERNAL(ep);
 
     fprintf(fp, "%s:\n", str);
-    if (ep->ext_nbytes <= 0) fprintf(fp, "\tWarning: 0 length external buffer\n");
+
+    if (UNLIKELY(ep->ext_nbytes <= 0))
+	fprintf(fp, "\tWarning: 0 length external buffer\n");
 
     cp = (const unsigned char *)ep->ext_buf;
     endp = cp + ep->ext_nbytes;
@@ -2148,7 +2139,7 @@ void
 bu_free_external(register struct bu_external *ep)
 {
     BU_CK_EXTERNAL(ep);
-    if (ep->ext_buf) {
+    if (LIKELY(ep->ext_buf != NULL)) {
 	bu_free(ep->ext_buf, "bu_external ext_buf");
 	ep->ext_buf = GENPTR_NULL;
     }
@@ -2161,7 +2152,8 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
     BU_CK_EXTERNAL(ip);
     BU_INIT_EXTERNAL(op);
 
-    if (op == ip) return;
+    if (UNLIKELY(op == ip))
+	return;
 
     op->ext_nbytes = ip->ext_nbytes;
     op->ext_buf = bu_malloc(ip->ext_nbytes, "bu_copy_external");
@@ -2236,7 +2228,7 @@ bu_structparse_argv(struct bu_vls *logstr,
     register size_t ii;
     struct bu_vls str;
 
-    if (desc == (struct bu_structparse *)NULL) {
+    if (UNLIKELY(desc == (struct bu_structparse *)NULL)) {
 	bu_vls_printf(logstr, "bu_structparse_argv: NULL desc pointer\n");
 	return BRLCAD_ERROR;
     }
@@ -2538,6 +2530,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		case 'p': {
 		    /* Indirect to another structure */
 		    /* FIXME: unimplemented */
+		    bu_log("INTERNAL ERROR: referencing indirect bu_structparse table, unimplemented\n");
 		}
 
 		default: {

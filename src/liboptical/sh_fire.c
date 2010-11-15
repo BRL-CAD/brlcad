@@ -156,7 +156,7 @@ struct bu_structparse fire_print_tab[] = {
 
 };
 struct bu_structparse fire_parse_tab[] = {
-    {"i",	bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
+    {"%p",	bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "f",		SHDR_O(fire_flicker),		BU_STRUCTPARSE_FUNC_NULL },
     {"%f",  1, "st",	SHDR_O(fire_stretch),		BU_STRUCTPARSE_FUNC_NULL },
     {"%f",	1, "l",		SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL },

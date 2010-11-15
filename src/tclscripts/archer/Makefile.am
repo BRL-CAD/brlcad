@@ -13,10 +13,9 @@ scripts = \
 	Archer.tcl \
 	ArcherCore.tcl \
 	AttrGroupsDisplayUtility.tcl \
-	bgerror.tcl \
 	BotUtility.tcl \
 	CombEditFrame.tcl \
-	cursor.tcl \
+	DataUtils.tcl \
 	EhyEditFrame.tcl \
 	EllEditFrame.tcl \
 	EpaEditFrame.tcl \
@@ -34,11 +33,13 @@ scripts = \
 	ShaderEdit.tcl \
 	SphereEditFrame.tcl \
 	SuperellEditFrame.tcl \
-	tabwindow.itk \
 	TgcEditFrame.tcl \
 	TorusEditFrame.tcl \
 	Utility.tcl \
-	Wizard.tcl
+	Wizard.tcl \
+	bgerror.tcl \
+	cursor.tcl \
+	tabwindow.itk
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \

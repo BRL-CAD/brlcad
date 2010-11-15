@@ -34,10 +34,10 @@ bin_PROGRAMS = \
 	surfaceintersect \
 	tea \
 	tea_nmg \
-	terrain \
 	torii \
 	tube \
 	vegetation \
+	wavy \
 	wdb_example
 
 bottest_SOURCES = bottest.c
@@ -98,10 +98,10 @@ sphflake_SOURCES = sphflake.c
 spltest_SOURCES = spltest.c
 tea_SOURCES = tea.c
 tea_nmg_SOURCES = tea_nmg.c
-terrain_SOURCES = terrain.c
 torii_SOURCES = torii.c
 tube_SOURCES = tube.c
 vegetation_SOURCES = vegetation.c
+wavy_SOURCES = wavy.c
 wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
@@ -148,7 +148,7 @@ FAST_OBJECTS = \
 	$(surfaceintersect_OBJECTS) \
 	$(tea_OBJECTS) \
 	$(tea_nmg_OBJECTS) \
-	$(terrain_OBJECTS) \
+	$(wavy_OBJECTS) \
 	$(torii_OBJECTS) \
 	$(tube_OBJECTS) \
 	$(vegetation_OBJECTS) \

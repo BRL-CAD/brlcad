@@ -34,7 +34,9 @@
 #if defined(IRIX) && IRIX == 5
 #  define _BSD_COMPAT
 #endif
-#include <sys/time.h>
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
 
 #include "bio.h"
 
@@ -76,7 +78,7 @@ extern struct bu_vls *history_next(void);
 extern void history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status);
 
 /* defined in main.c */
-extern Tcl_Interp *interp;
+extern Tcl_Interp *INTERP;
 
 HIDDEN void inputHandler(ClientData clientData, int mask);
 HIDDEN void processChar(char ch);
@@ -109,14 +111,15 @@ initInput(void)
     insert_prompt();
 }
 
+
 HIDDEN void
-inputHandler(ClientData clientData, int mask)
+inputHandler(ClientData clientData, int UNUSED(mask))
 {
     int count;
     char ch;
     long fd;
     char buf[4096];
-    int index;
+    int i;
 
     fd = (long)clientData;
 
@@ -130,9 +133,10 @@ inputHandler(ClientData clientData, int mask)
     }
 
     /* Process everything in buf */
-    for (index = 0, ch = buf[index]; index < count; ch = buf[++index])
+    for (i = 0, ch = buf[i]; i < count; ch = buf[++i])
 	processChar(ch);
 }
+
 
 /* Process character */
 HIDDEN void
@@ -174,9 +178,9 @@ processChar(char ch)
 
 		reset_Tty(fileno(stdin));
 		gettimeofday(&start, (struct timezone *)NULL);
-		status = Tcl_Eval(interp, bu_vls_addr(&input_str_prefix));
+		status = Tcl_Eval(INTERP, bu_vls_addr(&input_str_prefix));
 		gettimeofday(&finish, (struct timezone *)NULL);
-		result = Tcl_GetStringResult(interp);
+		result = Tcl_GetStringResult(INTERP);
 		if (strlen(result))
 		    bu_log("%s\n", result);
 
@@ -355,42 +359,42 @@ processChar(char ch)
 #endif
 	    break;
 	case CTRL_W:                   /* backward-delete-word */
-	{
-	    char *start;
-	    char *curr;
-	    int len;
+	    {
+		char *start;
+		char *curr;
+		int len;
 
-	    start = bu_vls_addr(&input_str);
-	    curr = start + input_str_index - 1;
+		start = bu_vls_addr(&input_str);
+		curr = start + input_str_index - 1;
 
-	    /* skip spaces */
-	    while (curr > start && *curr == ' ')
-		--curr;
+		/* skip spaces */
+		while (curr > start && *curr == ' ')
+		    --curr;
 
-	    /* find next space */
-	    while (curr > start && *curr != ' ')
-		--curr;
+		/* find next space */
+		while (curr > start && *curr != ' ')
+		    --curr;
 
-	    bu_vls_init(&temp);
-	    bu_vls_strcat(&temp, start+input_str_index);
+		bu_vls_init(&temp);
+		bu_vls_strcat(&temp, start+input_str_index);
 
-	    if (curr == start)
-		input_str_index = 0;
-	    else
-		input_str_index = curr - start + 1;
+		if (curr == start)
+		    input_str_index = 0;
+		else
+		    input_str_index = curr - start + 1;
 
-	    len = bu_vls_strlen(&input_str);
-	    bu_vls_trunc(&input_str, input_str_index);
-	    insert_prompt();
-	    bu_log("%V%V%*s", &input_str, &temp, len - input_str_index, SPACES);
-	    insert_prompt();
-	    bu_log("%V", &input_str);
-	    bu_vls_vlscat(&input_str, &temp);
-	    bu_vls_free(&temp);
-	}
+		len = bu_vls_strlen(&input_str);
+		bu_vls_trunc(&input_str, input_str_index);
+		insert_prompt();
+		bu_log("%V%V%*s", &input_str, &temp, len - input_str_index, SPACES);
+		insert_prompt();
+		bu_log("%V", &input_str);
+		bu_vls_vlscat(&input_str, &temp);
+		bu_vls_free(&temp);
+	    }
 
-	escaped = bracketed = 0;
-	break;
+	    escaped = bracketed = 0;
+	    break;
 	case 'd':
 	    if (escaped) {
 		/* delete-word */
@@ -504,11 +508,13 @@ processChar(char ch)
     }
 }
 
+
 HIDDEN void
 insert_prompt(void)
 {
     bu_log("%V", &prompt);
 }
+
 
 HIDDEN void
 insert_char(char ch)
@@ -533,11 +539,13 @@ insert_char(char ch)
     }
 }
 
+
 HIDDEN void
 insert_beep(void)
 {
     bu_log("%c", 7);
 }
+
 
 /*
  * Local Variables:

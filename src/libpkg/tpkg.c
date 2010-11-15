@@ -144,10 +144,10 @@ run_server(int port) {
 
     /** our server callbacks for each message type */
     struct pkg_switch callbacks[] = {
-	{MSG_HELO, server_helo, "HELO"},
-	{MSG_DATA, server_data, "DATA"},
-	{MSG_CIAO, server_ciao, "CIAO"},
-	{0, 0, (char *)0}
+	{MSG_HELO, server_helo, "HELO", NULL},
+	{MSG_DATA, server_data, "DATA", NULL},
+	{MSG_CIAO, server_ciao, "CIAO", NULL},
+	{0, 0, (char *)0, (void*)0}
     };
 
     validate_port(port);

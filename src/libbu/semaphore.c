@@ -164,7 +164,7 @@ _bu_semaphore_sgi_init()
     /* Now, set up the lock arena */
     fp = bu_temp_file(bu_lockfile, MAXPATHLEN);
 
-    if (bu_debug & BU_DEBUG_PARALLEL) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	if (usconfig(CONF_LOCKTYPE, _USDEBUGPLUS) == -1)
 	    perror("usconfig CONF_LOCKTYPE");
     }
@@ -179,7 +179,7 @@ _bu_semaphore_sgi_init()
     /* Set maximum number of procs that can share this arena */
     usconfig(CONF_INITUSERS, bu_avail_cpus()+1);
 
-    if (bu_debug & BU_DEBUG_PARALLEL) {
+    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
 	/* This is a big performance hit, but may find bugs */
 	usconfig(CONF_LOCKTYPE, US_DEBUG);
     } else {
@@ -227,7 +227,7 @@ bu_semaphore_init(unsigned int nsemaphores)
 
     if (bu_nsemaphores != 0)  return;	/* Already called */
     bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores));
-    if (!bu_semaphores) {
+    if (UNLIKELY(!bu_semaphores)) {
 	fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
 		nsemaphores, (long)sizeof(struct bu_semaphores));
 	exit(2); /* cannot call bu_exit() here */

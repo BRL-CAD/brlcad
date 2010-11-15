@@ -27,10 +27,10 @@
 #include <time.h>
 #include <math.h>
 
-#include "vmath.h"
-#include "raytrace.h"
 #include "bu.h"
 #include "fb.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 
 /* Macros without arguments */
@@ -448,7 +448,7 @@ static bool display_Cells (long int ncells)
     static RGBpixel	pixel;
     double		lasty = NEG_INFINITY;
     double		dx, dy;
-    int	y0 = 0, y1;
+    int	y_0 = 0, y_1;
 
     if (compute_fb_height)
     {
@@ -506,12 +506,12 @@ static bool display_Cells (long int ncells)
 	    {
 		if (debug_flag & CFB_DBG_GRID)
 		    bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
-		y0 = V2SCRY(lasty);
-		if ( y0 >= 0 && y0 < fb_height )  {
-		    for (y1 = y0 + hgt; y0 < y1; y0++)
-			if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
+		y_0 = V2SCRY(lasty);
+		if ( y_0 >= 0 && y_0 < fb_height )  {
+		    for (y_1 = y_0 + hgt; y_0 < y_1; y_0++)
+			if (fb_write(fbiop, 0, y_0, buf, fb_width) == -1)
 			{
-			    bu_log("Couldn't write to <%d,%d>\n", 0, y0);
+			    bu_log("Couldn't write to <%d,%d>\n", 0, y_0);
 			    (void) fb_close(fbiop);
 			    return false;
 			}
@@ -526,14 +526,14 @@ static bool display_Cells (long int ncells)
 	    /* Draw grid line between rows of cells. */
 	    if (grid_flag && (lasty != NEG_INFINITY))
 	    {
-		if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
+		if (fb_write(fbiop, 0, y_0, buf, fb_width) == -1)
 		{
-		    bu_log("Couldn't write to <%d,%d>\n", 0, y0);
+		    bu_log("Couldn't write to <%d,%d>\n", 0, y_0);
 		    (void) fb_close(fbiop);
 		    return false;
 		}
 		if (debug_flag & CFB_DBG_GRID)
-		    bu_log("Writing grid row at %d\n", y0);
+		    bu_log("Writing grid row at %d\n", y_0);
 	    }
 	    lasty = gp->c_y;
 	}
@@ -551,10 +551,10 @@ static bool display_Cells (long int ncells)
     /* Write out last row of cells. */
     if (debug_flag & CFB_DBG_GRID)
 	bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
-    for (y0 = V2SCRY(lasty), y1 = y0 + hgt; y0 < y1;  y0++)
-	if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
+    for (y_0 = V2SCRY(lasty), y_1 = y_0 + hgt; y_0 < y_1;  y_0++)
+	if (fb_write(fbiop, 0, y_0, buf, fb_width) == -1)
 	{
-	    bu_log("Couldn't write to <%d,%d>\n", 0, y0);
+	    bu_log("Couldn't write to <%d,%d>\n", 0, y_0);
 	    (void) fb_close(fbiop);
 	    return false;
 	}
@@ -697,8 +697,6 @@ static struct locrec *mk_locrec (fastf_t h, fastf_t v)
 static bool pars_Argv (int argc, char **argv)
 {
     int	c;
-    extern int		bu_optind;
-    extern char		*bu_optarg;
 
     /* Parse options. */
     while ((c = bu_getopt(argc, argv, OPT_STRING)) != EOF)

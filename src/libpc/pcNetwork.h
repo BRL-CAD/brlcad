@@ -52,7 +52,7 @@ class Vertexwriter {
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::vertex_descriptor Vertex;
 public:
-    Vertexwriter(const Graph& g):g(g) {};
+    Vertexwriter(const Graph& graph) : g(graph) {};
     void operator() (std::ostream& output, const Vertex& v) const {
 	output << "[label=\"" << g[v]->getID() << "\"]";
     }
@@ -67,7 +67,7 @@ class Edgewriter {
     typedef boost::graph_traits<Graph> GraphTraits;
     typedef typename GraphTraits::edge_descriptor Edge;
 public:
-    Edgewriter(const Graph& g):g(g) {};
+    Edgewriter(const Graph& graph) : g(graph) {};
     void operator() (std::ostream& output, const Edge& e) const {
 	output << "[label=\"" << g[e]->getExp() << "\"]";
     }
@@ -97,9 +97,9 @@ public:
     void getVertexbyID(std::string, Vertex&);
 
     /** Data addition/modification methods */
-    void add_vertex(Variable<T>* V);
-    void add_edge(Constraint * C);
-    void setVariable(Vertex v, Variable<T>* var);
+    void add_vertex(Variable<T> *V);
+    void add_edge(Constraint *C);
+    void setVariable(Vertex v, Variable<T> *var);
 
     /** Solution support functions */
     bool check();
@@ -112,9 +112,10 @@ private:
     Vertex v;
     Edge e;
 
-friend class GTSolver<T>;
-friend class BTSolver<T>;
+    friend class GTSolver<T>;
+    friend class BTSolver<T>;
 };
+
 
 #endif
 /** @} */

@@ -165,7 +165,9 @@ libraries:
 doc:
 	$(TCLSH) $(srcdir)/doc/macros.tcl -nroff $(srcdir)/doc/html.man>tkhtml.n
 
-install: all install-binaries install-libraries install-doc
+# feed extra stuff to libtool
+install-data-local: all install-binaries install-libraries install-doc
+# install: all install-binaries install-libraries install-doc
 
 install-binaries: binaries install-lib-binaries install-bin-binaries
 
@@ -334,14 +336,14 @@ src/swproc.c: cssprop.h
 # here:
 
 htmldefaultstyle.c: $(top_srcdir)/src/mkdefaultstyle.tcl
-	$(TCLSH) $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
+	$(TCLSH) $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c || tclsh $(top_srcdir)/src/mkdefaultstyle.tcl > htmldefaultstyle.c
 
 
 tokenlist.txt:
 	test -f tokenlist.txt || cp $(top_srcdir)/src/tokenlist.txt .
 
 htmltokens.h: tokenlist.txt
-	$(TCLSH) tokenlist.txt
+	$(TCLSH) tokenlist.txt || tclsh tokenlist.txt
 
 htmltokens.c: htmltokens.h
 
@@ -350,7 +352,7 @@ cssprop.tcl:
 	cp $(top_srcdir)/src/cssprop.tcl .
 
 cssprop.h: cssprop.tcl
-	test -f cssprop.h || $(TCLSH) cssprop.tcl
+	test -f cssprop.h || $(TCLSH) cssprop.tcl || tclsh cssprop.tcl
 
 cssprop.c: cssprop.h
 
@@ -367,7 +369,7 @@ cssprop.c: cssprop.h
 # 	( echo pkg_mkIndex -load Tk . \; exit; ) | $(WISH)
 
 pkgIndex.tcl:
-	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir libTkhtml.so]]' > pkgIndex.tcl
+	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir .. libTkhtml.so]]' > pkgIndex.tcl
 #	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir $(PKG_LIB_FILE)]]' > pkgIndex.tcl
 
 
@@ -456,7 +458,7 @@ check:
 
 installcheck:
 
-uninstall: uninstall-binaries uninstall-doc
+uninstall: uninstall-am uninstall-binaries uninstall-doc
 	rm -f $(DESTDIR)$(pkglibdir)/pkgIndex.tcl; 
 
 distuninstallcheck: 
@@ -506,19 +508,19 @@ uninstall-doc:
 	done
 
 EXTRA_DIST = \
-	$(BUILT_EXTRA) \
-	$(BUILT_SOURCES) \
 	doc/html.man \
 	doc/macros.tcl \
 	doc/tkhtml_requirements.tcl \
 	doc/tree.fig \
 	doc/tree.gif \
+	src/cssprop.tcl \
 	src/html.css \
 	src/htmltcl.c \
 	src/main.c \
 	src/mkdefaultstyle.tcl \
 	src/quirks.css \
 	src/tkhtml.tcl \
+	src/tokenlist.txt \
 	tclconfig/README.txt \
 	tclconfig/tcl.m4
 

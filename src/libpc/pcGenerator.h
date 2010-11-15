@@ -47,6 +47,7 @@ private:
     VCSet &vcset;
 };
 
+
 struct varvalue
 {
 public:
@@ -56,9 +57,10 @@ private:
     VCSet &vcset;
 };
 
+
 /**
- *  Various precompiled functors which are called during parsing depending
- *  on the constraint represented in the expression
+ * Various precompiled functors which are called during parsing depending
+ * on the constraint represented in the expression
  */
 
 struct is_equal

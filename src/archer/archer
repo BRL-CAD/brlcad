@@ -65,31 +65,16 @@ if {[tk windowingsystem] eq "aqua"} {
    ::ttk::style theme use clam
 }
 
-# normalize ARCHER_HOME
-if {[info exists env(ARCHER_HOME)]} {
-    set dir [file normalize $env(ARCHER_HOME)]
+# normalize dir
+if {[info exists argv0]} {
+    set dir [file normalize [file join [file dir $argv0] ..]]
 } else {
-    if {[info exists argv0]} {
-	set dir [file normalize [file join [file dir $argv0] ..]]
-    } else {
-	set dir [file normalize [pwd]]
-    }
+    set dir [file normalize [pwd]]
 }
-set env(ARCHER_HOME) $dir
-
-# Decide on a parent class for ArcherCore
-#namespace eval ArcherCore {
-#    if {0} {
-#	set parentClass itk::Toplevel
-#	set inheritFromToplevel 1
-#    } else {
-#	set parentClass itk::Widget
-#	set inheritFromToplevel 0
-#    }
-#}
 
 if {$tcl_platform(platform) == "windows"} {
-    lappend auto_path ${env(ARCHER_HOME)}/bin/Tkhtml3.0
+    lappend auto_path ${dir}/lib/Tkhtml3.0
+    lappend auto_path ${dir}/lib/Tktable2.10
 }
 
 # load archer guts
@@ -102,7 +87,6 @@ if { [catch {package require Archer 1.0} _initialized] } {
 
 set Archer::debug 0
 if { [info exists env(DEBUG)] } {
-    puts "Using ARCHER_HOME of $env(ARCHER_HOME)"
     set Archer::debug $env(DEBUG)
 }
 

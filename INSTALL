@@ -15,6 +15,7 @@ presently includes the following:
   doc/README.MacOSX	-- Apple Mac OS X
   doc/README.IRIX	-- SGI IRIX and IRIX64
   doc/README.Linux	-- Various Linux distributions
+  doc/README.Windows    -- Microsoft Windows
 
 
 TABLE OF CONTENTS

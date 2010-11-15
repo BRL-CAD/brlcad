@@ -75,7 +75,7 @@ static int	regions_converted = 0;
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -265,7 +265,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 }
 
 void
-csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -277,7 +277,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     struct wmember *wm;
     unsigned char *color;
     char *endp;
-    int len;
+    size_t len;
     char matname[32];
     char matparm[60];
 
@@ -299,7 +299,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
 	name = (&(dp->d_namep));
 
-	(void) db_walk_tree( dbip, 1, (const char **)name,
+	(void) db_walk_tree( db, 1, (const char **)name,
 			     1,
 			     &tree_state,
 			     0,
@@ -315,7 +315,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
     /* have a combination that is not a region */
 
-    if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 ) {
+    if ( rt_db_get_internal( &intern, dp, db, (fastf_t *)NULL, &rt_uniresource ) < 0 ) {
 	bu_log( "Cannot get internal form of combination (%s)\n", dp->d_namep );
 	return;
     }
@@ -416,9 +416,6 @@ main(int argc, char **argv)
 
     bu_setlinebuf( stderr );
 
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
     BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
     ttol.magic = RT_TESS_TOL_MAGIC;
@@ -520,10 +517,6 @@ main(int argc, char **argv)
 
     rt_vlist_cleanup();
     db_close(dbip);
-
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-NMG conversion");
-#endif
 
     percent = 100;
     if ( regions_tried > 0 )

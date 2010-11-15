@@ -54,37 +54,31 @@
 #include "bu.h"
 #include "bn.h"
 
-int max = 255;
-double multiplier = 1.0;
-FILE *inp;
-
-static char usage[] = "\
-Usage: pixfade [-m max] [-p percent] [-f fraction] [pix-file]\n";
 
 int
-get_args(int argc, char **argv)
+get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
 {
     int c;
 
     while ((c = bu_getopt(argc, argv, "m:p:f:")) != EOF) {
 	switch (c) {
 	    case 'm':
-		max = atoi(bu_optarg);
-		if ((max < 0) || (max > 255)) {
+		*max = atoi(bu_optarg);
+		if ((*max < 0) || (*max > 255)) {
 		    fprintf(stderr, "pixfade: max out of range");
 		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'p':
-		multiplier = atof(bu_optarg) / 100.0;
-		if (multiplier < 0.0) {
+		*multiplier = atof(bu_optarg) / 100.0;
+		if (*multiplier < 0.0) {
 		    fprintf(stderr, "pixfade: percent is negitive");
 		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'f':
-		multiplier = atof(bu_optarg);
-		if (multiplier < 0.0) {
+		*multiplier = atof(bu_optarg);
+		if (*multiplier < 0.0) {
 		    fprintf(stderr, "pixfade: fraction is negitive");
 		    bu_exit (1, NULL);
 		}
@@ -100,9 +94,10 @@ get_args(int argc, char **argv)
 	    fprintf(stderr, "pixfade: stdin is a tty\n");
 	    return 0;
 	}
-	inp = stdin;
+	*inpp = stdin;
     } else {
-	if ((inp = fopen(argv[bu_optind], "r")) == NULL) {
+	*inpp = fopen(argv[bu_optind], "r");
+	if (*inpp == NULL) {
 	    (void)fprintf(stderr,
 			  "pixfade: cannot open \"%s\" for reading\n",
 			  argv[bu_optind]);
@@ -125,6 +120,13 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    static char usage[] = "\
+Usage: pixfade [-m max] [-p percent] [-f fraction] [pix-file]\n";
+
+    FILE *inp = NULL;
+    int max = 255;
+    double multiplier = 1.0;
+
     float *randp;
     struct color_rec {
 	unsigned char red, green, blue;
@@ -132,18 +134,19 @@ main(int argc, char **argv)
 
     bn_rand_init(randp, 0);
 
-    if (!get_args(argc, argv)) {
+    if (!get_args(argc, argv, &inp, &max, &multiplier)) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
 
-/* fprintf(stderr, "pixfade: max = %d, multiplier = %f\n", max, multiplier); */
-
+    /* fprintf(stderr, "pixfade: max = %d, multiplier = %f\n", max, multiplier); */
 
     for (;;) {
 	double t;
+	size_t ret;
 
-	if (fread(&cur_color, 1, 3, inp) != 3) break;
+	ret = fread(&cur_color, 1, 3, inp);
+	if (ret != 3) break;
 	if (feof(inp)) break;
 
 	t = cur_color.red * multiplier + bn_rand_half(randp);
