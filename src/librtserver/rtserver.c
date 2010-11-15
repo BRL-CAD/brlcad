@@ -1810,7 +1810,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
     }
     
     /* create the java byte array to be returned */
-    len = bu_vlb_getBufferLength(vlb);
+    len = bu_vlb_buflen(vlb);
     array = (*env)->NewByteArray( env, len );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while creating byte array\n" );
@@ -1818,7 +1818,7 @@ JNIEXPORT jbyteArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWra
         FINISH_APPLICATION(ap);
 	return (jobject)NULL;
     }
-    (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_getBuffer(vlb) );
+    (*env)->SetByteArrayRegion(env, array, 0, len, (jbyte *)bu_vlb_addr(vlb) );
     if ( (*env)->ExceptionOccurred(env) ) {
 	fprintf( stderr, "Exception thrown while setting byte array contents\n" );
 	(*env)->ExceptionDescribe(env);
