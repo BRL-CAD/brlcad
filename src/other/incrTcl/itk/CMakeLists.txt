@@ -488,6 +488,7 @@ include_directories(
 	${TK_INCLUDE_PATH}
 	${ITCL_INCLUDE_PATH}
 	${ITK_INCLUDE_PATH}
+	${X11_INCLUDE_DIR}
 )
 
 add_library(itk ${ITK_GENERIC_SRCS})
