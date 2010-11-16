@@ -608,7 +608,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     view_ray_orig[Z] = DG_GED_MAX;
     argc -= 2;
 
-    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
+    av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, view_ray_orig, sf);
@@ -639,6 +639,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
     bu_free((genptr_t)av, "ged_vnirt: av");
+    av = NULL;
 
     return status;
 }
