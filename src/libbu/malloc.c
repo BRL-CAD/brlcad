@@ -441,7 +441,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
      * requested memory and we need to bomb.
      */
     if (UNLIKELY(!ptr)) {
-	fprintf(stderr, "bu_realloc(): unable to allocate requested memory of size %ld, %s\n", siz, str);
+	fprintf(stderr, "bu_realloc(): unable to allocate requested memory of size %ld, %s\n", (long int)siz, str);
 	bu_bomb("bu_realloc(): unable to allocate requested memory.\n");
     }
 

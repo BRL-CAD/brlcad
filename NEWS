@@ -20,6 +20,7 @@ numerous BoT editing commands and processing steps into one unified
 easy-to-use interface.  The new GUI grealy simplifies BoT processing
 steps and can save modelers considerable time.
 
+* improved support for unlimited object counts in mged - Sean Morrison
 * fixed 'erase_all' behavior so 'who' gives correct lists - Bob Parker
 * fixed idents, solids, and regions output - Bob Parker
 * increased performance of facetization and export - Sean Morrison

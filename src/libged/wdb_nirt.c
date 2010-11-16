@@ -385,6 +385,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	    if (rem - strlen(name) < 1) {
 		bu_log("Ran out of buffer space!");
 		bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
+		dgop->dgo_rt_cmd = NULL;
 		return TCL_ERROR;
 	    }
 	    bu_strlcat(line1, name, sizeof(line1));
@@ -511,6 +512,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	sp->s_wflag = DOWN;
 
     bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
+    dgop->dgo_rt_cmd = NULL;
 
     return TCL_OK;
 }
@@ -556,7 +558,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     view_ray_orig[Z] = DG_GED_MAX;
     argc -= 2;
 
-    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "dgo_vnirt_cmd: av");
+    av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "dgo_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, view_ray_orig, sf);
@@ -587,6 +589,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
     bu_free((genptr_t)av, "dgo_vnirt_cmd: av");
+    av = NULL;
 
     return status;
 }

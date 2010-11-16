@@ -17,10 +17,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify rt/benchmark on windows doesn't crash
+* make sure 'preview' works, particularly the 'tree' subcommand.
 
-* change bu_realloc so that a zero size will perform a free instead
-  of allocating the minimum size to store a pointer.
+* verify 'solids_on_ray' command works ('Ray Pick' menu option)
+
+* verify rt/benchmark on windows doesn't crash
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
