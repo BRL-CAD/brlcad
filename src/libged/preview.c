@@ -249,6 +249,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     vect_t temp;
     const char *argv0 = NULL;
     size_t args = 0;
+    char **vp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -313,10 +314,11 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 
     args = argc + 2 + ged_count_tops(gedp);
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd[0] = bu_strdup(argv0);
+    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    *vp++ = bu_strdup(argv0);
 
     /* Build list of top-level objects in view, in _ged_current_gedp->ged_gdp->gd_rt_cmd[] */
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd++, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
 
     preview_vbp = rt_vlblock_init();
 
