@@ -70,14 +70,12 @@ ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struc
  * piercing the torus twice.
  */
 static int
-ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *segp)
+ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     int len;
     char **list;
     int i;
-
-    if (segp) RT_CK_SEG(segp);
 
     len = rt_partition_len(PartHeadp) + 2;
     list = (char **)bu_calloc(len, sizeof(char *), "hit list[]");
