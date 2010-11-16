@@ -57,8 +57,6 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
-    bu_log("vp[0]=%s vp[1]=%s\n", gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd[1]);
-
     _ged_current_gedp = gedp;
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
 
