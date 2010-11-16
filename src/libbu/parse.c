@@ -604,7 +604,8 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
     for (; sdp->sp_name != (char *)0; sdp++) {
 
 	if (strcmp(sdp->sp_name, name) != 0	/* no name match */
-	    && sdp->sp_fmt[0] != 'i')		/* no include desc */
+	    && sdp->sp_fmt[0] != 'i'
+	    && sdp->sp_fmt[1] != 'p')		/* no include desc */
 
 	    continue;
 

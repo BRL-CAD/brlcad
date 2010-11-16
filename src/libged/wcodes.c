@@ -54,10 +54,6 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
     struct rt_comb_internal *comb;
     int id;
 
-    if (pathpos >= RT_MAXARGS) {
-	return GED_ERROR;
-    }
-
     if (!(dp->d_flags & DIR_COMB))
 	return GED_OK;
 

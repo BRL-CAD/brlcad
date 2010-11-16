@@ -2122,6 +2122,7 @@ if test "x$bc_build_warnings" != "xno" ; then
 	# -Wstrict-prototypes -Wold-style-definition -Wshorten-64-to-32 -Wmissing-field-initializers
 	# -Wmissing-noreturn -Wredundant-decls
 	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
+	# -Wparentheses -Wswitch-default -Wswitch-enum
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])

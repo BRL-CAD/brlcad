@@ -83,8 +83,6 @@ extern int	hm_getchar(void);	/* Can be supplied by application.	*/
 extern int	hm_ungetchar(int c);	/* Can be supplied by application.	*/
 extern void	hmredraw(void);	/* Application signals need for redraw.	*/
 
-#define MAXARGS		100
-#define MAXLINE 	132
 #define MAXVISABLE	10
 #endif
 

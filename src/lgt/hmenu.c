@@ -144,8 +144,8 @@ static void
 hm_Put_Item(HWindow *win, HMitem *itemp, int flag)
 {
     int	label_len = strlen( itemp->text );
-    static char	buf[MAXLINE];
-    char	*p = buf;
+    static char	*buf;
+    char *p;
     int	col = win->menux;
     int	row = win->menuy+(ENTRY-win->menup->prevtop)+1;
     int	width = win->width;
@@ -153,6 +153,10 @@ hm_Put_Item(HWindow *win, HMitem *itemp, int flag)
 	~0 : win->dirty[ENTRY+1];
     int	bit = 1;
     int	writemask = 0;
+
+    buf = bu_calloc(1, sizeof(char) * width, "alloc buf");
+    p = buf;
+
     if ( bitmap == 0 )
 	return;
 
@@ -221,6 +225,7 @@ hm_Put_Item(HWindow *win, HMitem *itemp, int flag)
 	    }
 	}
     }
+    bu_free(buf, "free buf");
 
     if ( flag & P_ON )
 	(void) ClrStandout();
@@ -235,8 +240,11 @@ hm_Put_Border(HWindow *win, int row, int mark)
     int	bit = 1;
     int	col = win->menux;
     int	bitmap = win->dirty[row - win->menuy];
-    static char	buf[MAXLINE];
-    char	*p = buf;
+    static char	*buf;
+    char	*p;
+
+    buf = bu_calloc(1, sizeof(char) * win->width, "alloc buf");
+    p = buf;
     *p++ = (char)mark;
     for ( i = 0; i < win->width; i++ )
 	*p++ = '-';
@@ -250,6 +258,8 @@ hm_Put_Border(HWindow *win, int row, int mark)
     else
 	for ( i = 0; i < p - buf; i++ )
 	    PutMenuChar( buf[i], col, row, bitmap, bit );
+
+    bu_free(buf, "free buf");
     return;
 }
 

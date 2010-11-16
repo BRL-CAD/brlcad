@@ -52,7 +52,6 @@ struct cmdtab {
 };
 
 
-#define MAXARGS 9000
 #define MOUSE_MODE_IDLE 0
 #define MOUSE_MODE_ROTATE 1
 #define MOUSE_MODE_TRANSLATE 3
@@ -680,7 +679,7 @@ cmd_vrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 static int
 cmd_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);

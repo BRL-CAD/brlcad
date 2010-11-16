@@ -52,11 +52,6 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     /*
      *	paths are matched up to last input member
      *      ANY path the same up to this point is considered as matching

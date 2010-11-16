@@ -398,6 +398,9 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 		return TCL_ERROR; \
 	}
 
+
+#define FUNTAB_UNLIMITED -1
+
 struct funtab {
     char *ft_name;
     char *ft_parms;
@@ -441,8 +444,6 @@ extern Tk_Window tkwin; /* in cmd.c */
 
 /* defined in rtif.c */
 extern struct run_rt head_run_rt;
-
-#define MAXARGS 9000	/* Maximum number of args per line */
 
 #define MGED_PROMPT "\rmged> "
 

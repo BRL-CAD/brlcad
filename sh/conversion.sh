@@ -65,25 +65,25 @@ while test $# -gt 0 ; do
     WORK="${FILE}.conversion"
     cp "$FILE" "$WORK"
 
-    $MGED -c "$WORK" search . 2>&1 | while read object ; do
+    $MGED -c "$WORK" search . 2>&1 | grep -v Using | while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$MGED -c "$WORK" search . -name \"${obj}\" 2>&1`
+	found=`$MGED -c "$WORK" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    echo "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    exit 3
 	fi
 
 	nmg=fail
-	$MGED -c "$WORK" facetize -n \"${obj}.nmg\" \"${obj}\" >/dev/null 2>&1
-	found=`$MGED -c "$WORK" search . -name \"${obj}.nmg\" 2>&1`	
+	$MGED -c "$WORK" facetize -n \"${obj}.nmg\" \"${obj}\"
+	found=`$MGED -c "$WORK" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
 	    nmg=pass
 	fi
 	
 	bot=fail
-	$MGED -c "$WORK" facetize \"${obj}.bot\" \"${obj}\" >/dev/null 2>&1
-	found=`$MGED -c "$WORK" search . -name \"${obj}.bot\" 2>&1`	
+	$MGED -c "$WORK" facetize \"${obj}.bot\" \"${obj}\"
+	found=`$MGED -c "$WORK" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
 	    bot=pass
 	fi

@@ -1881,16 +1881,10 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     }
     /* check to see if we're joining two loops that share a vertex */
     if (p1->vu_p->v_p == p2->vu_p->v_p) {
-#if 1
 	if (rt_g.NMG_debug & DEBUG_TRI)
 	    bu_log("Joining two loops that share a vertex at (%g %g %g)\n",
 		   V3ARGS(p1->vu_p->v_p->vg_p->coord));
 	(void)nmg_join_2loops(p1->vu_p,  p2->vu_p);
-#else
-	if (rt_g.NMG_debug & DEBUG_TRI)
-	    bu_log("NOT Joining two loops that share a vertex at (%g %g %g)\n",
-		   V3ARGS(p1->vu_p->v_p->vg_p->coord));
-#endif
 	return;
     }
 
@@ -2188,37 +2182,6 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
 
 	    }
 
-#if 0
-	    /* if the bottom vertexuse is on a rising edge and
-	     * is a top vertex of another trapezoid then
-	     * replace the occurrance of the old bottom
-	     * vertexuse with the new one in trapezoid "top"
-	     * locations.
-	     */
-	    bot_next = PT2D_NEXT(tbl2d, tp->bot);
-
-	    if (P_LT_V(tp->bot, bot_next)) {
-		register struct pt2d *new_pt;
-		struct trap *trp;
-
-		/* find the new vertexuse of this vertex */
-		new_pt = PT2D_PREV(tbl2d, tp->top);
-
-		/* replace all "top" uses of tp->bot with
-		 * new_pt
-		 */
-		for (BU_LIST_FOR(trp, trap, tlist)) {
-		    if (trp->top == tp->bot) {
-			trp->top = new_pt;
-		    }
-		}
-
-		/* clean up old trapezoid so that top/bot
-		 * are in same loop
-		 */
-		tp->top = PT2D_PREV(tbl2d, tp->bot);
-	    }
-#endif
 	} else {
 
 	    /* points are in different loops, join the
@@ -2704,9 +2667,6 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    NMG_CK_SHELL(s);
-#if 0
-	    nmg_s_split_touchingloops(s, tol);
-#endif
 
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);

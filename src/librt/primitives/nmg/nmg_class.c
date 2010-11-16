@@ -585,7 +585,7 @@ static const point_t nmg_good_dirs[10] = {
 #if 1
     {3, 2, 1},	/* Normally the first dir */
 #else
-    {1, 0, 0},	/* Make this first dir to wring out ray-tracer XXX */
+    {1, 0, 0},	/* DEBUG: Make this first dir to wring out ray-tracer */
 #endif
     {1, 0, 0},
     {0, 1, 0},

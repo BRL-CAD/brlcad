@@ -260,9 +260,13 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     int i;
     int ret;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
+    size_t args;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
+
+    args = argc + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
 
@@ -300,11 +304,13 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
 						       vp,
-						       &gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
+						       &gedp->ged_gdp->gd_rt_cmd[args]);
     }
 
     ret = (*ctp->ged_func)(gedp, gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd);
     Tcl_AppendResult(interpreter, bu_vls_addr(&gedp->ged_result_str), NULL);
+
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
 
     if (ret & GED_HELP)
 	return TCL_OK;
@@ -1217,7 +1223,7 @@ mged_cmd(
 	if (strcmp(ftp->ft_name, argv[0]) != 0)
 	    continue;
 	/* We have a match */
-	if ((ftp->ft_min <= argc) && (argc <= ftp->ft_max)) {
+	if ((ftp->ft_min <= argc) && (ftp->ft_max < 0 || argc <= ftp->ft_max)) {
 	    /* Input has the right number of args.  Call function
 	     * listed in table, with main(argc, argv) style args
 	     */

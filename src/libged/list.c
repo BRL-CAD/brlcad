@@ -59,11 +59,6 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (MAXARGS < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     if (argc > 1 && strcmp(argv[1], "-r") == 0) {
 	recurse = 1;
 

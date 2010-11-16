@@ -1065,7 +1065,7 @@ major or minor version of BRL-CAD is going to be updated, it is very
 important to follow and ensure that the following steps have been
 successfully performed:
 
-0) All code is committed to SVN.
+0) All code is committed to SVN.  Notify developer mailing list.
 
 1) Verify that the NEWS file includes a comment for all relevant and
 significant items added since the previous release.

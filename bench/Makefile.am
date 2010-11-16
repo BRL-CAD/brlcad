@@ -35,10 +35,10 @@ run: all
 			exit 1 ; \
 		fi ; \
 	fi
-	@$(ECHO) "---"
-	@$(ECHO) "Run 'make clean' in the bench directory to delete the log"
-	@$(ECHO) "and image files generated during the benchmark analysis."
-	@$(ECHO)
+	@echo "---"
+	@echo "Run 'make clean' in the bench directory to delete the log"
+	@echo "and image files generated during the benchmark analysis."
+	@echo
 
 bench: run
 

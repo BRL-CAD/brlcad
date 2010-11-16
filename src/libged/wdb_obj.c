@@ -2037,7 +2037,7 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 
     bu_vls_init(&vls);
 
-    if (argc < 1 || MAXARGS < argc) {
+    if (argc < 1) {
 	bu_vls_printf(&vls, "helplib_alias wdb_ls %s", cmdname);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -2211,7 +2211,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
     char *listeval = "listeval";
     struct rt_db_internal intern;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2319,7 +2319,7 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
     struct _ged_trace_data gtd;
     struct ged ged;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2459,7 +2459,7 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
     int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
-    if (argc < 1 || MAXARGS < argc) {
+    if (argc < 1) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2563,7 +2563,7 @@ wdb_kill_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2642,7 +2642,7 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -2748,7 +2748,7 @@ wdb_killtree_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -3999,7 +3999,7 @@ wdb_group_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -4057,7 +4057,7 @@ wdb_remove_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -4143,7 +4143,7 @@ wdb_region_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 4 || MAXARGS < argc) {
+    if (argc < 4) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -4254,7 +4254,7 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 4 || MAXARGS < argc) {
+    if (argc < 4) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -4648,7 +4648,7 @@ wdb_find_cmd(struct rt_wdb *wdbp,
     int c;
     int aflag = 0;		/* look at all objects */
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias wdb_find %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -4909,7 +4909,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
     int sflag;
 
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -5086,7 +5086,7 @@ wdb_title_cmd(struct rt_wdb *wdbp,
     RT_CK_WDB(wdbp);
     RT_CK_DBI(wdbp->dbip);
 
-    if (argc < 1 || MAXARGS < argc) {
+    if (argc < 1) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -5905,7 +5905,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -6801,7 +6801,7 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
     int i;
     struct db_i *new_dbip;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -6910,7 +6910,7 @@ wdb_cat_cmd(struct rt_wdb *wdbp,
     int arg;
     struct bu_vls str;
 
-    if (argc < 2 || MAXARGS < argc) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -7087,7 +7087,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 
     WDB_TCL_CHECK_READ_ONLY;
 
-    if (argc < 3 || MAXARGS < argc) {
+    if (argc < 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
