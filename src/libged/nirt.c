@@ -266,9 +266,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-						   vp,
-						   &gedp->ged_gdp->gd_rt_cmd[args]);
+    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
