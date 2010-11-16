@@ -149,6 +149,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
+		gktd.av = NULL;
 		return GED_ERROR;
 	}
     }
@@ -188,6 +189,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	    if (!gktd.nflag)
 		bu_vls_printf(&gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
 	    bu_free((genptr_t)gktd.av[i], "ged_killtree_data");
+	    gktd.av[i] = NULL;
 	}
     }
 
@@ -195,6 +197,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "}");
 
     bu_free(gktd.av, "free av");
+    gktd.av = NULL;
 
     return GED_OK;
 }

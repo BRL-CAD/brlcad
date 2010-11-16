@@ -173,6 +173,8 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
     bu_free(path, "dealloc path");
+    path = NULL;
+    path_capacity = 0;
 
     return GED_OK;
 }

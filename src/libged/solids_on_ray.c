@@ -189,8 +189,8 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
 int
 ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
 {
-    static char **solids_on_ray_cmd_vec = NULL;
-    static int solids_on_ray_cmd_vec_len = 0;
+    char **solids_on_ray_cmd_vec = NULL;
+    int solids_on_ray_cmd_vec_len = 0;
 
     size_t args;
     char **snames;
@@ -289,6 +289,7 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     snames = ged_skewer_solids(gedp, solids_on_ray_cmd_vec_len, (const char **)solids_on_ray_cmd_vec, ray_orig, ray_dir, 1);
 
     bu_free(solids_on_ray_cmd_vec, "free solids_on_ray_cmd_vec");
+    solids_on_ray_cmd_vec = NULL;
 
     if (snames == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Error executing ged_skewer_solids: ");
