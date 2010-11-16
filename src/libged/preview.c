@@ -44,8 +44,6 @@ static int preview_finalframe;
 static int preview_currentframe;
 static int preview_tree_walk_needed;
 
-static char cmd_storage[MAXARGS*9];
-
 
 int
 ged_cm_anim(int argc, char **argv)
@@ -66,7 +64,7 @@ ged_cm_anim(int argc, char **argv)
 
 
 int
-ged_cm_clean(int argc, char **argv)
+ged_cm_clean(int UNUSED(argc), char **UNUSED(argv))
 {
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
@@ -82,7 +80,7 @@ ged_cm_clean(int argc, char **argv)
 
 
 int
-ged_cm_end(int argc, char **argv)
+ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
 {
     vect_t xlate;
     vect_t new_cent;
@@ -158,7 +156,7 @@ ged_cm_end(int argc, char **argv)
 
 
 int
-ged_cm_multiview(int argc, char **argv)
+ged_cm_multiview(int UNUSED(argc), char **UNUSED(argv))
 {
     return -1;
 }
@@ -179,13 +177,11 @@ ged_cm_start(int argc, char **argv)
 int
 ged_cm_tree(int argc, char **argv)
 {
-    int i = 1;
-    char *cp = cmd_storage;
 
-    for (i = 1;  i < argc && i < MAXARGS; i++) {
-	bu_strlcpy(cp, argv[i], MAXARGS*9);
-	_ged_current_gedp->ged_gdp->gd_rt_cmd[i] = cp;
-	cp += strlen(cp) + 1;
+    int i = 1;
+
+    for (i = 1;  i < argc; i++) {
+	_ged_current_gedp->ged_gdp->gd_rt_cmd[i] = bu_strdup(argv[i]);
     }
     _ged_current_gedp->ged_gdp->gd_rt_cmd[i] = (char *)0;
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len = i;
@@ -193,24 +189,6 @@ ged_cm_tree(int argc, char **argv)
     preview_tree_walk_needed = 1;
 
     return 0;
-}
-
-
-void
-_ged_setup_rt(struct ged *gedp, char **vp, int printcmd)
-{
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - _ged_current_gedp->ged_gdp->gd_rt_cmd;
-    _ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 
-								vp, &_ged_current_gedp->ged_gdp->gd_rt_cmd[MAXARGS]);
-
-    if (printcmd) {
-	/* Print out the command we are about to run */
-	vp = &_ged_current_gedp->ged_gdp->gd_rt_cmd[0];
-	while (*vp)
-	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
-
-	bu_vls_printf(&gedp->ged_result_str, "\n");
-    }
 }
 
 
@@ -232,17 +210,17 @@ struct command_tab ged_preview_cmdtab[] = {
     {"multiview", "", "produce stock set of views",
      ged_cm_multiview,	1, 1},
     {"anim", 	"path type args", "specify articulation animation",
-     ged_cm_anim,	4, 999},
+     ged_cm_anim,	4, 99999},
     {"tree", 	"treetop(s)", "specify alternate list of tree tops",
-     ged_cm_tree,	1, 999},
+     ged_cm_tree,	1, 99999},
     {"clean", "", "clean articulation from previous frame",
      ged_cm_clean,	1, 1},
     {"set", 	"", "show or set parameters",
-     _ged_cm_set,		1, 999},
+     _ged_cm_set,		1, 99999},
     {"ae", "azim elev", "specify view as azim and elev, in degrees",
      _ged_cm_null,		3, 3},
     {"opt", "-flags", "set flags, like on command line",
-     _ged_cm_null,		2, 999},
+     _ged_cm_null,		2, 99999},
     {(char *)0, (char *)0, (char *)0,
      0,		0, 0}	/* END */
 };
@@ -262,11 +240,15 @@ struct command_tab ged_preview_cmdtab[] = {
 int
 ged_preview(struct ged *gedp, int argc, const char *argv[])
 {
+    static const char *usage = "[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
+
+    size_t i;
     FILE *fp;
     char *cmd;
     int c;
     vect_t temp;
-    static const char *usage = "[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file";
+    const char *argv0 = NULL;
+    size_t args = 0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -320,6 +302,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 		break;
 	}
     }
+    argv0 = argv[0]; /* temp stash */
     argc -= bu_optind-1;
     argv += bu_optind-1;
 
@@ -328,8 +311,12 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    args = argc + 2 + ged_count_tops(gedp);
+    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd[0] = bu_strdup(argv0);
+
     /* Build list of top-level objects in view, in _ged_current_gedp->ged_gdp->gd_rt_cmd[] */
-    _ged_setup_rt(gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd, 1);
+    _ged_current_gedp->ged_gdp->gd_rt_cmd_len = ged_build_tops(gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd, &_ged_current_gedp->ged_gdp->gd_rt_cmd[args]);
 
     preview_vbp = rt_vlblock_init();
 
@@ -358,6 +345,18 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     }
     fclose(fp);
     fp = NULL;
+
+    /* free any strings stashed */
+    for (i = 0; i < args; i++) {
+	if (gedp->ged_gdp->gd_rt_cmd[i] != NULL) {
+	    bu_free(gedp->ged_gdp->gd_rt_cmd[i], "free gd_rt_cmd[i]");
+	    gedp->ged_gdp->gd_rt_cmd[i] = NULL;
+	}
+    }
+
+    /* free the array */
+    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;;
 
     _ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
     if (preview_vbp) {
