@@ -144,6 +144,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
     (void)_ged_run_rt(gedp);
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }

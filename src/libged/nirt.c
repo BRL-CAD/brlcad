@@ -403,6 +403,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    if (rem - strlen(name) < 1) {
 		bu_log("Ran out of buffer space!");
 		bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+		gedp->ged_gdp->gd_rt_cmd = NULL;
 		return TCL_ERROR;
 	    }
 	    bu_strlcat(line1, name, sizeof(line1));
@@ -553,6 +554,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }
