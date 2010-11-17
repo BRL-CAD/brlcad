@@ -285,13 +285,13 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
     switch (etype) {
        case ETYPES_ABS:
 	   if (!itp->tr_l.tl_mat) {
-	       bu_vls_printf(&gedp->ged_result_str, "%c %s 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
+	       bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
 			     op, itp->tr_l.tl_name);
 	   } else {
 	       if (combmem_disassemble_mat(itp->tr_l.tl_mat, &az, &el, &tw, &tx, &ty, &tz, &sa, &sx, &sy, &sz))
 		   bu_log("Found bad matrix for %s\n", itp->tr_l.tl_name);
 
-	       bu_vls_printf(&gedp->ged_result_str, "%c %s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf 0.0 0.0 0.0",
+	       bu_vls_printf(&gedp->ged_result_str, "%c {%s} %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf 0.0 0.0 0.0",
 			     op, itp->tr_l.tl_name,
 			     az * bn_radtodeg,
 			     el * bn_radtodeg,
@@ -302,27 +302,27 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 
 	   break;
        case ETYPES_REL:
-	   bu_vls_printf(&gedp->ged_result_str, "%c %s 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
+	   bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
 			 op, itp->tr_l.tl_name);
 	   break;
        case ETYPES_ROT_AET:
-	   bu_vls_printf(&gedp->ged_result_str, "%c %s 0.0 0.0 0.0 0.0 0.0 0.0",
+	   bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0",
 			 op, itp->tr_l.tl_name);
 	   break;
        case ETYPES_ROT_XYZ:
-	   bu_vls_printf(&gedp->ged_result_str, "%c %s 0.0 0.0 0.0 0.0 0.0 0.0",
+	   bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0",
 			 op, itp->tr_l.tl_name);
 	   break;
        case ETYPES_ROT_ARBITRARY_AXIS:
-	   bu_vls_printf(&gedp->ged_result_str, "%c %s 0.0 0.0 0.0 0.0 0.0 0.0 0.0",
+	   bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 0.0",
 			 op, itp->tr_l.tl_name);
 	   break;
        case ETYPES_TRA:
-	   bu_vls_printf(&gedp->ged_result_str, "%c %s 0.0 0.0 0.0",
+	   bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0",
 			 op, itp->tr_l.tl_name);
 	   break;
        case ETYPES_SCA:
-	   bu_vls_printf(&gedp->ged_result_str, "%c %s 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
+	   bu_vls_printf(&gedp->ged_result_str, "%c {%s} 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
 			 op, itp->tr_l.tl_name);
        default:
 	   break;

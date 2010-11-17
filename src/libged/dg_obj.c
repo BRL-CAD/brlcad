@@ -1455,6 +1455,7 @@ dgo_rt_command(struct dg_obj	*dgop,
     (void)dgo_run_rt(dgop, vop);
 
     bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
+    dgop->dgo_rt_cmd = NULL;
 
     return TCL_OK;
 }
@@ -2113,6 +2114,8 @@ dgo_rtcheck_command(struct dg_obj	*dgop,
 #endif
 
     bu_free(dgop->dgo_rt_cmd, "free dgo_rt_cmd");
+    dgop->dgo_rt_cmd = NULL;
+
     return TCL_OK;
 }
 

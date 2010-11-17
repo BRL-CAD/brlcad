@@ -950,7 +950,7 @@
 	return 1
     }
 
-    if {[string is double $_newval])} {
+    if {[string is double $_newval]} {
 	return 1
     }
 

@@ -43,6 +43,7 @@ bottie_allocn_double(unsigned long long ntri)
     if(tie == NULL)
 	return NULL;
 
+    bu_log("Init bottie: %p\n", tie);
     tie_init1(tie, ntri, TIE_KDTREE_FAST);
 }
 

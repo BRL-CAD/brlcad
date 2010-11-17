@@ -266,9 +266,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
 
     /* Note - ged_build_tops sets the last vp to (char *)0 */
-    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-						   vp,
-						   &gedp->ged_gdp->gd_rt_cmd[args]);
+    gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
@@ -403,6 +401,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    if (rem - strlen(name) < 1) {
 		bu_log("Ran out of buffer space!");
 		bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+		gedp->ged_gdp->gd_rt_cmd = NULL;
 		return TCL_ERROR;
 	    }
 	    bu_strlcat(line1, name, sizeof(line1));
@@ -553,6 +552,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }
@@ -606,7 +606,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     view_ray_orig[Z] = DG_GED_MAX;
     argc -= 2;
 
-    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
+    av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
     VSCALE(view_ray_orig, view_ray_orig, sf);
@@ -637,6 +637,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&y_vls);
     bu_vls_free(&z_vls);
     bu_free((genptr_t)av, "ged_vnirt: av");
+    av = NULL;
 
     return status;
 }

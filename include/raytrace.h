@@ -1195,8 +1195,7 @@ struct rt_tree_array
 
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
-/* Some dubious defines, to support the wdb_obj.c evolution */
-#define RT_MAXARGS		9000
+/* FIXME: this is a dubious define that should be removed */
 #define RT_MAXLINE		10240
 
 /**

@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* compilation reportedly fails when building Tcl if the path to the
+  source directory includes a space.
+
 * mged/tcl "gets" command doesn't work if you run the "source" command
   to read in a script that uses gets on stdin.  it just hangs until
   muliple sigint's are received.
