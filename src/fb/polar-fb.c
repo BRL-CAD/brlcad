@@ -36,19 +36,11 @@
 #include "bu.h"
 #include "fb.h"
 
-void PrintUsage(int ShoOpts);
-void ArgCompat(int Interior);
-int LoadNPF(char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max);
-int OnGrid(double theta, double rho);
 
 /* Program constants */
 #define		High_Size	1024
 #define		GRID_RHO_EPS	0.005
 #define		GRID_THETA_EPS	0.2
-#ifndef M_PI
-#define		M_PI		3.14159265358979323846
-#define		M_PI_2		1.57079632679489661923
-#endif
 
 /* Color[] indices */
 #define		C_BKGRND	   0
@@ -128,6 +120,264 @@ RGBpixel	Color[] = {
     {   0,   0, 255 }		/* Blue */
 };
 
+
+bool
+LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
+
+    /* Name of input file */
+    /* Location for storing function */
+    /* Angular resolution of Table (in degrees) */
+    /* Factor to convert input units to radians */
+    /* First angle of interest */
+    /* Last    "    "     "    */
+
+{
+    bool	Warnings = 0;	/* Have any warning messages been printed? */
+    int		angle;
+    int		gap_min;	/* Used in composing warnings */
+    int		gap_max;	/*   "   "     "         "    */
+    double	theta, rho;
+    FILE	*fPtr;
+
+    /* N.B. -	The possible values of Warnings and their meanings are:
+     *
+     *		Value		Meaning
+     *		------------------------------------------------------
+     *		  0     All is OK
+     *		  1	Let the calling routine worry about it.
+     *		  2	Fatal... bomb as soon as all input is checked.
+     */
+
+    /* Open the file, if necessary */
+    if (*FileName == '\0')
+	fPtr = stdin;
+    else if ((fPtr = fopen(FileName, "rb")) == NULL)
+    {
+	(void) fprintf(stderr, "%s:  Cannot open input file '%s'\n",
+		       ProgName, FileName);
+	(void) bu_exit (1, NULL);
+    }
+
+    /* Initialize the table */
+    for (angle = 0; angle < 360; angle += Quantum)
+	*(Table + npf_index(angle)) = -1.0;
+
+    /* Fill the table */
+    while ((fscanf(fPtr, "%lf", &theta) == 1) &&
+	   (fscanf(fPtr, "%lf", &rho) == 1))
+    {
+	theta *= convert;
+	if ((theta < 0.0) || (npf_index(theta / Deg2Rad) * Quantum > 360))
+	{
+	    (void) fprintf(stderr,
+			   "Fatal:  Theta out of range: %g %s\n",
+			   theta / convert, (convert == 1.0) ? "radians" : "degrees");
+	    Warnings = 2;
+	}
+	if ((rho < 0.0) || (rho > 1.0))
+	{
+	    (void) fprintf(stderr, "Fatal:  Rho out of range: %g\n", rho);
+	    Warnings = 2;
+	}
+	if (Warnings != 2)
+	    *(Table + npf_index(theta / Deg2Rad)) = rho;
+    }
+
+    if (Warnings == 2)
+	(void) bu_exit (1, NULL);
+
+    /* Check the table for completeness */
+    gap_min = gap_max = -1;
+    for (angle = floor(arc_min); angle < ceil(arc_max); angle+=Quantum)
+    {
+	if (*(Table + npf_index(angle)) == -1.0)
+	{
+	    *(Table + npf_index(angle)) = 0.0;
+	    if (gap_min == -1)
+		gap_min = angle;
+	    gap_max = angle;
+	    Warnings = 1;
+	} else
+	{
+	    if (gap_min > -1)
+	    {
+		(void) fprintf(stderr, "Warning:  No entry in input for ");
+		if (gap_max > gap_min)
+		    (void) fprintf(stderr, "%d <= theta <= %d degrees\n",
+				   gap_min, gap_max);
+		else
+		    (void) fprintf(stderr, "theta == %d degrees\n", gap_min);
+	    }
+	    gap_min = gap_max = -1;
+	}
+    }
+
+    if (gap_min > -1)
+    {
+	(void) fprintf(stderr, "Warning:  No entry in input for ");
+	if (gap_max > gap_min)
+	    (void) fprintf(stderr, "%d <= theta <= %d degrees\n",
+			   gap_min, gap_max);
+	else
+	    (void) fprintf(stderr, "theta == %d degrees\n", gap_min);
+    }
+
+    if (fPtr != stdin)
+	(void) fclose(fPtr);
+    return Warnings;
+}
+
+
+int
+OnGrid (double theta, double rho)
+{
+    int		t;
+    double	squeeze;	/* factor to squeeze the radii */
+
+    theta /= Deg2Rad;
+    squeeze = 1.0 / rho * GRID_THETA_EPS;
+
+    /* Determine whether the point is on a radius */
+    for (t = 0; t < 360; t += 30)
+    {
+	if (fabs(theta - t) < squeeze)
+	    return 1;
+    }
+
+    /* Determine whether the point is on a circle */
+    if ((((1.0 - rho) > 0) && ((1.0 - rho) < GRID_RHO_EPS)) ||
+	(((0.8 - rho) > 0) && ((0.8 - rho) < GRID_RHO_EPS)) ||
+	(((0.6 - rho) > 0) && ((0.6 - rho) < GRID_RHO_EPS)) ||
+	(((0.4 - rho) > 0) && ((0.4 - rho) < GRID_RHO_EPS)) ||
+	(((0.2 - rho) > 0) && ((0.2 - rho) < GRID_RHO_EPS)))
+	return 1;
+
+    return 0;
+}
+
+
+void
+ArgCompat (int Interior)
+{
+    if (Interior != BI_RINGS)
+    {
+	(void) fputs("Only one of -e, -i, -l, and -w may be specified\n",
+		     stderr);
+	(void) bu_exit (1, NULL);
+    }
+}
+
+
+void
+Fill_Empty (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
+
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
+
+{
+    if (! merge) {
+	COPYRGB(fbbPtr, Color[C_BKGRND]);
+    }
+	    }
+
+void
+Fill_Constant (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
+
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
+
+{
+    COPYRGB(fbbPtr, Color[C_INTERIOR]);
+	}
+
+void
+Fill_Ramp (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
+
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
+
+{
+    RGBpixel	ThisPix;	/* Ramped color for current pixel */
+
+    ThisPix[RED] = ((double)Color[C_RAMP][RED]) * rho / unit_r +
+	255 * (1 - rho / unit_r);
+    ThisPix[GRN] = ((double)Color[C_RAMP][GRN]) * rho / unit_r +
+	255 * (1 - rho / unit_r);
+    ThisPix[BLU] = ((double)Color[C_RAMP][BLU]) * rho / unit_r +
+	255 * (1 - rho / unit_r);
+    COPYRGB(fbbPtr, ThisPix);
+	}
+
+void
+Fill_Wedges (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
+
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
+
+{
+    if (npf_rho > .8)
+	COPYRGB(fbbPtr, Color[C_RED]);
+    else if (npf_rho > .6)
+	COPYRGB(fbbPtr, Color[C_ORANGE]);
+    else if (npf_rho > .4)
+	COPYRGB(fbbPtr, Color[C_YELLOW]);
+    else if (npf_rho > .2)
+	COPYRGB(fbbPtr, Color[C_GREEN]);
+    else
+	COPYRGB(fbbPtr, Color[C_BLUE]);
+}
+
+void
+Fill_Rings (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
+
+    /* Pointer to within fbb */
+    /* Radius of current pixel */
+    /* Value of function at this theta */
+    /* Unit radius (in pixels) */
+    /* Overlay onto current FB contents? */
+
+{
+    if (rho / unit_r > .8)
+	COPYRGB(fbbPtr, Color[C_RED]);
+    else if (rho / unit_r > .6)
+	COPYRGB(fbbPtr, Color[C_ORANGE]);
+    else if (rho / unit_r > .4)
+	COPYRGB(fbbPtr, Color[C_YELLOW]);
+    else if (rho / unit_r > .2)
+	COPYRGB(fbbPtr, Color[C_GREEN]);
+    else
+	COPYRGB(fbbPtr, Color[C_BLUE]);
+}
+
+
+void
+PrintUsage (int ShoOpts)
+{
+    char	**oPtr;		/* Pointer to option string */
+
+    (void) fprintf(stderr, "Usage: '%s [options] [file]'\n", ProgName);
+    if (ShoOpts)
+    {
+	(void) fputs("Options:\n", stderr);
+	for (oPtr = ExplainOpts; **oPtr != '\0'; oPtr++)
+	    (void) fputs(*oPtr, stderr);
+    } else
+	(void) fputs(" -? option for help\n", stderr);
+}
+
+
 int
 main (int argc, char **argv)
 {
@@ -166,11 +416,6 @@ main (int argc, char **argv)
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
     void		(*Fill_Func)();
-    void		Fill_Empty(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
-    void		Fill_Constant(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
-    void		Fill_Ramp(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
-    void		Fill_Wedges(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
-    void		Fill_Rings(unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge);
 
 /* Initialize things */
     ProgName = *argv;
@@ -637,8 +882,9 @@ main (int argc, char **argv)
 	    /* If this point is beyond the unit circle, then skip it */
 	    if ((rho = sqrt((double) (X * X) + (double) (Y * Y))) >  unit_r)
 	    {
-		if (! merge)
-		    COPYRGB(fbbPtr, Color[C_BKGRND])
+		if (! merge) {
+		    COPYRGB(fbbPtr, Color[C_BKGRND]);
+		}
 			continue;
 	    }
 
@@ -662,8 +908,9 @@ main (int argc, char **argv)
 	    /* If this point is outside the arc of interest, skip it */
 	    if ((theta < arc_min) || (theta > arc_max))
 	    {
-		if (! merge)
-		    COPYRGB(fbbPtr, Color[C_BKGRND])
+		if (! merge) {
+		    COPYRGB(fbbPtr, Color[C_BKGRND]);
+		}
 			continue;
 	    }
 
@@ -678,19 +925,22 @@ main (int argc, char **argv)
 	    /* If this point is outside the function, color it BKGRND */
 	    if (rho > npf_rho * unit_r)
 	    {
-		if (! merge)
-		    COPYRGB(fbbPtr, Color[C_BKGRND])
+		if (! merge) {
+		    COPYRGB(fbbPtr, Color[C_BKGRND]);
+		}
 			}
 	    else
 	    {
 		(*Fill_Func)(fbbPtr, rho, npf_rho, unit_r, merge);
 
-		if (perimeter && (npf_rho - rho / unit_r < .02))
-		    COPYRGB(fbbPtr, Color[C_PERIM])
+		if (perimeter && (npf_rho - rho / unit_r < .02)) {
+		    COPYRGB(fbbPtr, Color[C_PERIM]);
+		}
 			}
 
-	    if (draw_grid && OnGrid(theta, rho/unit_r))
-		COPYRGB(fbbPtr, Color[C_BLACK])
+	    if (draw_grid && OnGrid(theta, rho/unit_r)) {
+		COPYRGB(fbbPtr, Color[C_BLACK]);
+	    }
 		    }
 	fb_write(fbPtr, fb_x_loc, fb_y_loc + y, fbb, LineLength);
     }
@@ -700,258 +950,6 @@ main (int argc, char **argv)
     return 0;
 }
 
-void
-PrintUsage (int ShoOpts)
-{
-    char	**oPtr;		/* Pointer to option string */
-
-    (void) fprintf(stderr, "Usage: '%s [options] [file]'\n", ProgName);
-    if (ShoOpts)
-    {
-	(void) fputs("Options:\n", stderr);
-	for (oPtr = ExplainOpts; **oPtr != '\0'; oPtr++)
-	    (void) fputs(*oPtr, stderr);
-    }
-    else
-	(void) fputs(" -? option for help\n", stderr);
-}
-
-bool
-LoadNPF (char *FileName, double *Table, int Quantum, double convert, double arc_min, double arc_max)
-
-    /* Name of input file */
-    /* Location for storing function */
-    /* Angular resolution of Table (in degrees) */
-    /* Factor to convert input units to radians */
-    /* First angle of interest */
-    /* Last    "    "     "    */
-
-{
-    bool	Warnings = 0;	/* Have any warning messages been printed? */
-    int		angle;
-    int		gap_min;	/* Used in composing warnings */
-    int		gap_max;	/*   "   "     "         "    */
-    double	theta, rho;
-    FILE	*fPtr;
-
-    /* N.B. -	The possible values of Warnings and their meanings are:
-     *
-     *		Value		Meaning
-     *		------------------------------------------------------
-     *		  0     All is OK
-     *		  1	Let the calling routine worry about it.
-     *		  2	Fatal... bomb as soon as all input is checked.
-     */
-
-    /* Open the file, if necessary */
-    if (*FileName == '\0')
-	fPtr = stdin;
-    else if ((fPtr = fopen(FileName, "rb")) == NULL)
-    {
-	(void) fprintf(stderr, "%s:  Cannot open input file '%s'\n",
-		       ProgName, FileName);
-	(void) bu_exit (1, NULL);
-    }
-
-    /* Initialize the table */
-    for (angle = 0; angle < 360; angle += Quantum)
-	*(Table + npf_index(angle)) = -1.0;
-
-    /* Fill the table */
-    while ((fscanf(fPtr, "%lf", &theta) == 1) &&
-	   (fscanf(fPtr, "%lf", &rho) == 1))
-    {
-	theta *= convert;
-	if ((theta < 0.0) || (npf_index(theta / Deg2Rad) * Quantum > 360))
-	{
-	    (void) fprintf(stderr,
-			   "Fatal:  Theta out of range: %g %s\n",
-			   theta / convert, (convert == 1.0) ? "radians" : "degrees");
-	    Warnings = 2;
-	}
-	if ((rho < 0.0) || (rho > 1.0))
-	{
-	    (void) fprintf(stderr, "Fatal:  Rho out of range: %g\n", rho);
-	    Warnings = 2;
-	}
-	if (Warnings != 2)
-	    *(Table + npf_index(theta / Deg2Rad)) = rho;
-    }
-
-    if (Warnings == 2)
-	(void) bu_exit (1, NULL);
-
-    /* Check the table for completeness */
-    gap_min = gap_max = -1;
-    for (angle = floor(arc_min); angle < ceil(arc_max); angle+=Quantum)
-    {
-	if (*(Table + npf_index(angle)) == -1.0)
-	{
-	    *(Table + npf_index(angle)) = 0.0;
-	    if (gap_min == -1)
-		gap_min = angle;
-	    gap_max = angle;
-	    Warnings = 1;
-	}
-	else
-	{
-	    if (gap_min > -1)
-	    {
-		(void) fprintf(stderr, "Warning:  No entry in input for ");
-		if (gap_max > gap_min)
-		    (void) fprintf(stderr, "%d <= theta <= %d degrees\n",
-				   gap_min, gap_max);
-		else
-		    (void) fprintf(stderr, "theta == %d degrees\n", gap_min);
-	    }
-	    gap_min = gap_max = -1;
-	}
-    }
-
-    if (gap_min > -1)
-    {
-	(void) fprintf(stderr, "Warning:  No entry in input for ");
-	if (gap_max > gap_min)
-	    (void) fprintf(stderr, "%d <= theta <= %d degrees\n",
-			   gap_min, gap_max);
-	else
-	    (void) fprintf(stderr, "theta == %d degrees\n", gap_min);
-    }
-
-    if (fPtr != stdin)
-	(void) fclose(fPtr);
-    return Warnings;
-}
-
-int
-OnGrid (double theta, double rho)
-{
-    int		t;
-    double	squeeze;	/* factor to squeeze the radii */
-
-    theta /= Deg2Rad;
-    squeeze = 1.0 / rho * GRID_THETA_EPS;
-
-    /* Determine whether the point is on a radius */
-    for (t = 0; t < 360; t += 30)
-    {
-	if (fabs(theta - t) < squeeze)
-	    return 1;
-    }
-
-    /* Determine whether the point is on a circle */
-    if ((((1.0 - rho) > 0) && ((1.0 - rho) < GRID_RHO_EPS)) ||
-	(((0.8 - rho) > 0) && ((0.8 - rho) < GRID_RHO_EPS)) ||
-	(((0.6 - rho) > 0) && ((0.6 - rho) < GRID_RHO_EPS)) ||
-	(((0.4 - rho) > 0) && ((0.4 - rho) < GRID_RHO_EPS)) ||
-	(((0.2 - rho) > 0) && ((0.2 - rho) < GRID_RHO_EPS)))
-	return 1;
-
-    return 0;
-}
-
-void
-ArgCompat (int Interior)
-{
-    if (Interior != BI_RINGS)
-    {
-	(void) fputs("Only one of -e, -i, -l, and -w may be specified\n",
-		     stderr);
-	(void) bu_exit (1, NULL);
-    }
-}
-
-void
-Fill_Empty (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
-{
-    if (! merge)
-	COPYRGB(fbbPtr, Color[C_BKGRND])
-	    }
-
-void
-Fill_Constant (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
-{
-    COPYRGB(fbbPtr, Color[C_INTERIOR])
-	}
-
-void
-Fill_Ramp (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
-{
-    RGBpixel	ThisPix;	/* Ramped color for current pixel */
-
-    ThisPix[RED] = ((double)Color[C_RAMP][RED]) * rho / unit_r +
-	255 * (1 - rho / unit_r);
-    ThisPix[GRN] = ((double)Color[C_RAMP][GRN]) * rho / unit_r +
-	255 * (1 - rho / unit_r);
-    ThisPix[BLU] = ((double)Color[C_RAMP][BLU]) * rho / unit_r +
-	255 * (1 - rho / unit_r);
-    COPYRGB(fbbPtr, ThisPix)
-	}
-
-void
-Fill_Wedges (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
-{
-    if (npf_rho > .8)
-	COPYRGB(fbbPtr, Color[C_RED])
-	    else if (npf_rho > .6)
-		COPYRGB(fbbPtr, Color[C_ORANGE])
-		    else if (npf_rho > .4)
-			COPYRGB(fbbPtr, Color[C_YELLOW])
-			    else if (npf_rho > .2)
-				COPYRGB(fbbPtr, Color[C_GREEN])
-				    else
-					COPYRGB(fbbPtr, Color[C_BLUE])
-					    }
-
-void
-Fill_Rings (unsigned char *fbbPtr, double rho, double npf_rho, int unit_r, int merge)
-
-    /* Pointer to within fbb */
-    /* Radius of current pixel */
-    /* Value of function at this theta */
-    /* Unit radius (in pixels) */
-    /* Overlay onto current FB contents? */
-
-{
-    if (rho / unit_r > .8)
-	COPYRGB(fbbPtr, Color[C_RED])
-	    else if (rho / unit_r > .6)
-		COPYRGB(fbbPtr, Color[C_ORANGE])
-		    else if (rho / unit_r > .4)
-			COPYRGB(fbbPtr, Color[C_YELLOW])
-			    else if (rho / unit_r > .2)
-				COPYRGB(fbbPtr, Color[C_GREEN])
-				    else
-					COPYRGB(fbbPtr, Color[C_BLUE])
-					    }
 
 /*
  * Local Variables:
