@@ -35,19 +35,10 @@
 #include "fb.h"
 
 
-const char *
-Simple(const char *path)
-{
-    const char *s;		/* -> past last '/' in path */
-    
-    return (s = strrchr( path, '/' )) == NULL || *++s == '\0' ? path : s;
-}
-
-
 void
 VMessage(const char *format, va_list ap)
 {
-    fprintf( stderr, "%s: ", Simple(bu_getprogname()) );
+    fprintf( stderr, "%s: ", bu_basename(bu_getprogname()));
     vfprintf( stderr, format, ap );
     putc( '\n', stderr );
     fflush( stderr );
