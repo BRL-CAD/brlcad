@@ -21,8 +21,6 @@
  *
  * Helper I/O routines for a few functions common to some commands
  *
- * Author -
- *   Doug A Gwyn
  */
 
 #include "common.h"
@@ -38,39 +36,43 @@
 void
 VMessage(const char *format, va_list ap)
 {
-    fprintf( stderr, "%s: ", bu_basename(bu_getprogname()));
-    vfprintf( stderr, format, ap );
-    putc( '\n', stderr );
-    fflush( stderr );
+    struct bu_vls str;
+
+    bu_vls_init(&str);
+
+    bu_vls_printf(&str, format, ap);
+    bu_log("%s: %V\n", bu_basename(bu_getprogname()), &str);
+
+    bu_vls_free(&str);
 }
 
 
 void
-Message( const char *format, ... )
+Message(const char *format, ...)
 {
     va_list ap;
-    
-    va_start( ap, format );
-    VMessage( format, ap );
-    va_end( ap );
+
+    va_start(ap, format);
+    VMessage(format, ap);
+    va_end(ap);
 }
 
 
 void
-Fatal( FBIO *fbp, const char *format, ... )
+Fatal(FBIO *fbp, const char *format, ...)
 {
     va_list ap;
 
-    va_start( ap, format );
-    VMessage( format, ap );
-    va_end( ap );
+    va_start(ap, format);
+    VMessage(format, ap);
+    va_end(ap);
     
-    if ( fbp != FBIO_NULL && fb_close( fbp ) == -1 ) {
-	Message( "Error closing frame buffer" );
+    if (fbp != FBIO_NULL && fb_close(fbp) == -1) {
+	Message("Error closing frame buffer");
 	fbp = FBIO_NULL;
     }
     
-    bu_exit( EXIT_FAILURE, NULL );
+    bu_exit(EXIT_FAILURE, NULL);
     /* NOT REACHED */
 }
 
