@@ -117,18 +117,12 @@ static unsigned char	*dst_buf;		/* calloc()ed output scan line buffer */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void VMessage(const char *format, va_list ap);
+extern void Fatal( FBIO *fbiop, const char *format, ... );
 
 
 static void
-Stretch_Fatal(const char *format, ...)
+Stretch_Fatal(const char *str)
 {
-    va_list		ap;
-    
-    va_start(ap, format);
-    VMessage(format, ap);
-    va_end(ap);
-    
     if (src_fbp != FBIO_NULL && fb_close(src_fbp) == -1) {
 	Message("Error closing input frame buffer");
 	src_fbp = FBIO_NULL;
@@ -139,7 +133,7 @@ Stretch_Fatal(const char *format, ...)
 	src_fbp = FBIO_NULL;
     }
 
-    bu_exit(EXIT_FAILURE, NULL);
+    Fatal(FBIO_NULL, "%s", str);
     /* NOT REACHED */
 }
 
@@ -149,8 +143,7 @@ Sig_Catcher(int sig)
 {
     (void)signal(sig, SIG_DFL);
 
-    /* The following is not guaranteed to work, but it's worth a try. */
-    Stretch_Fatal("Interrupted by signal %d", sig);
+    bu_exit(EXIT_FAILURE, "Interrupted by signal %d\n", sig);
 }
 
 
@@ -277,14 +270,14 @@ main(int argc, char **argv)
 	    }
 
 	if (errors)
-	    Stretch_Fatal("Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3);
+	    bu_exit(1, "Usage: %s\n%s\n%s\n", USAGE1, USAGE2, USAGE3);
     }
 
     if (bu_optind < argc)		/* dst_file */
     {
 	if (bu_optind < argc - 1 || dst_file != NULL)
 	{
-	    Message("Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3);
+	    bu_log("Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3);
 	    Stretch_Fatal("Can't handle multiple output frame buffers!");
 	}
 
@@ -850,7 +843,7 @@ main(int argc, char **argv)
     if (dst_fbp != src_fbp && fb_close(dst_fbp) == -1)
 	Message("Error closing output frame buffer");
 
-    bu_exit(EXIT_SUCCESS, NULL);
+    return 0;
 }
 
 /*
