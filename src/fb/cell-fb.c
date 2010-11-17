@@ -33,24 +33,11 @@
 #include "raytrace.h"
 
 
-/* Macros without arguments */
-
-#ifndef true
-#define false	0
-#define true	1
-#endif
-
 #define LORES		512
 #define HIRES		1024
 #define	SNUG_FIT	1
 #define	LOOSE_FIT	2
-#define MAX_LINE	1025
-#if !defined(PI)	/* sometimes found in math.h */
-# define PI		3.14159265358979323846264338327950288419716939937511
-#endif
-#define HFPI		(PI/2.0)
-#define NEG_INFINITY	-10000000.0
-#define POS_INFINITY	10000000.0
+#define MAX_LINE	32768
 #define MAX_COLORTBL	11
 #define WHITE		colortbl[0]
 #define BACKGROUND	colortbl[MAX_COLORTBL]
@@ -103,8 +90,6 @@
 #define SCRX2H(_s_x)	CX2H( VPX2CX( SCRX2VPX(_s_x) ) )
 #define SCRY2V(_s_y)	CY2V( VPY2CY( SCRY2VPY(_s_y) ) )
 
-/* Absolute value */
-#define Abs(_a)	((_a) < 0.0 ? -(_a) : (_a))
 
 /* Debug flags */
 #define		CFB_DBG_MINMAX		0x01
@@ -112,7 +97,7 @@
 #define		CFB_DBG_MEM		0x010000	/* a la librt(3) */
 
 /* Data structure definitions */
-typedef int		bool;
+typedef int		bool_t;
 typedef union
 {
     double		v_scalar;
@@ -182,13 +167,13 @@ static double	dom_min = 0.0;		/* Extrema of data to plot	*/
 static double	dom_max = 1.0;		/*				*/
 static double	dom_cvt = 10.0;		/* To convert domain to [0, 10] */
 
-static bool	boolean_flag = false;	/* Show only one value? */
-static bool	color_flag = false;	/* Interpret fields as R, G, B? */
-static bool	erase_flag = false;	/* Erase frame buffer first? */
-static bool	grid_flag = false;	/* Leave space between cells? */
-static bool	interp_flag = true;	/* Ramp between colortbl entries? */
-static bool	key_flag = false;	/* Display color-mapping key? */
-static bool	log_flag = false;	/* Make a log file? */
+static bool_t	boolean_flag = 0;	/* Show only one value? */
+static bool_t	color_flag = 0;	/* Interpret fields as R, G, B? */
+static bool_t	erase_flag = 0;	/* Erase frame buffer first? */
+static bool_t	grid_flag = 0;	/* Leave space between cells? */
+static bool_t	interp_flag = 1;	/* Ramp between colortbl entries? */
+static bool_t	key_flag = 0;	/* Display color-mapping key? */
+static bool_t	log_flag = 0;	/* Make a log file? */
 
 static int	compute_fb_height;	/* User supplied height?  Else what? */
 static int	compute_fb_width;	/* User supplied width?  Else what? */
@@ -230,14 +215,14 @@ static const char   *mon_nam[] =
 
 static struct locrec	gp_locs;
 
-static bool	get_OK(void);
-static bool	pars_Argv(int argc, char **argv);
+static bool_t	get_OK(void);
+static bool_t	pars_Argv(int argc, char **argv);
 static long	read_Cell_Data(void);
 static void	init_Globs(void);
 static void	prnt_Usage(void);
 static void	val_To_RGB(cell_val cv, unsigned char *rgb);
 static void	log_Run(void);
-static bool	display_Cells(long int ncells);
+static bool_t	display_Cells(long int ncells);
 static void	fill_colortbl(unsigned char *lo_rgb, unsigned char *hi_rgb);
 
 int
@@ -406,7 +391,7 @@ static long read_Cell_Data(void)
     return gp - grid;
 }
 
-static bool get_OK(void)
+static bool_t get_OK(void)
 {
     int		c;
     FILE	*infp;
@@ -414,7 +399,7 @@ static bool get_OK(void)
     if ((infp = fopen("/dev/tty", "rb")) == NULL)
     {
 	bu_log("Cannot open /dev/tty for reading\n");
-	return false;
+	return 0;
     }
     bu_log("Another view follows.  Display ? [y/n](y) ");
     switch ((c = getc(infp)))
@@ -428,25 +413,25 @@ static bool get_OK(void)
     }
     (void) fclose(infp);
     if (c == 'n')
-	return false;
-    return true;
+	return 0;
+    return 1;
 }
 static void init_Globs(void)
 {
-    xmin = POS_INFINITY;
-    ymin = POS_INFINITY;
-    xmax = NEG_INFINITY;
-    ymax = NEG_INFINITY;
+    xmin = INFINITY;
+    ymin = INFINITY;
+    xmax = -INFINITY;
+    ymax = -INFINITY;
     return;
 }
 
-static bool display_Cells (long int ncells)
+static bool_t display_Cells (long int ncells)
 {
     Cell	*gp, *ep = &grid[ncells];
     static int		zoom;
     unsigned char	*buf;
     static RGBpixel	pixel;
-    double		lasty = NEG_INFINITY;
+    double		lasty = -INFINITY;
     double		dx, dy;
     int	y_0 = 0, y_1;
 
@@ -474,7 +459,7 @@ static bool display_Cells (long int ncells)
     zoom = 1;
     if ((fbiop = fb_open((fbfile[0] != '\0') ? fbfile : NULL, fb_width, fb_height))
 	== FBIO_NULL)
-	return false;
+	return 0;
     if (compute_fb_height || compute_fb_width)  {
 	bu_log("fb_size requested: %d %d\n", fb_width, fb_height);
 	fb_width = fb_getwidth(fbiop);
@@ -499,10 +484,10 @@ static bool display_Cells (long int ncells)
 	int	x0, x1;
 
 	/* Whenever Y changes, write out row of cells. */
-	if (lasty != gp->c_y)
+	if (!NEAR_ZERO(lasty - gp->c_y, SMALL_FASTF))
 	{
 	    /* If first time, nothing to write out. */
-	    if (lasty != NEG_INFINITY)
+	    if (!NEAR_ZERO(lasty - INFINITY, SMALL_FASTF))
 	    {
 		if (debug_flag & CFB_DBG_GRID)
 		    bu_log("%g = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
@@ -513,7 +498,7 @@ static bool display_Cells (long int ncells)
 			{
 			    bu_log("Couldn't write to <%d,%d>\n", 0, y_0);
 			    (void) fb_close(fbiop);
-			    return false;
+			    return 0;
 			}
 		}
 	    }
@@ -524,13 +509,13 @@ static bool display_Cells (long int ncells)
 	    }
 
 	    /* Draw grid line between rows of cells. */
-	    if (grid_flag && (lasty != NEG_INFINITY))
+	    if (grid_flag && !NEAR_ZERO(lasty - INFINITY, SMALL_FASTF))
 	    {
 		if (fb_write(fbiop, 0, y_0, buf, fb_width) == -1)
 		{
 		    bu_log("Couldn't write to <%d,%d>\n", 0, y_0);
 		    (void) fb_close(fbiop);
-		    return false;
+		    return 0;
 		}
 		if (debug_flag & CFB_DBG_GRID)
 		    bu_log("Writing grid row at %d\n", y_0);
@@ -556,7 +541,7 @@ static bool display_Cells (long int ncells)
 	{
 	    bu_log("Couldn't write to <%d,%d>\n", 0, y_0);
 	    (void) fb_close(fbiop);
-	    return false;
+	    return 0;
 	}
     /* Draw color key. */
     if (key_flag && (fb_width < (10 + 1) * wid))
@@ -607,8 +592,8 @@ static bool display_Cells (long int ncells)
 	    val_To_RGB(cv, pixel);
 	    for (j = 0; j < wid; j++)
 	    {
-		int index = base + j;
-		COPYRGB(&buf[3*index], pixel);
+		int idx = base + j;
+		COPYRGB(&buf[3*idx], pixel);
 	    }
 	}
 	dom_cvt = 10.0 / (dom_max - dom_min);
@@ -618,7 +603,7 @@ static bool display_Cells (long int ncells)
 	    {
 		bu_log("Couldn't write to <%d,%d>\n", 0, i);
 		(void) fb_close(fbiop);
-		return false;
+		return 0;
 	    }
     }
     (void) fb_close(fbiop);
@@ -626,7 +611,7 @@ static bool display_Cells (long int ncells)
     bu_free((char *) buf, "line of frame buffer");
     if (debug_flag & CFB_DBG_MEM)
 	bu_log("freed buf, which is now 0x%x\n", buf);
-    return true;
+    return 1;
 }
 
 static void val_To_RGB (cell_val cv, unsigned char *rgb)
@@ -639,18 +624,18 @@ static void val_To_RGB (cell_val cv, unsigned char *rgb)
 	return;
     }
     val = (cv.v_scalar - dom_min) * dom_cvt;
-    if ((boolean_flag && (cv.v_scalar != bool_val))
-	|| (val < 0.0) || (val > 10.0))
+    if ((boolean_flag && !NEAR_ZERO(cv.v_scalar - bool_val, SMALL_FASTF))
+	|| (val < SMALL_FASTF) || (val > 10.0))
     {
 	COPYRGB(rgb, BACKGROUND);
     }
-    else if (val == 0.0)
+    else if (NEAR_ZERO(val, SMALL_FASTF))
     {
 	COPYRGB(rgb, WHITE);
     }
     else
     {
-	int		index;
+	int		idx;
 	double		rem;
 	double		res;
 
@@ -660,23 +645,23 @@ static void val_To_RGB (cell_val cv, unsigned char *rgb)
 	    double	hsv[3];
 	    double	next_hsv[3];
 
-	    index = val + 0.01; /* convert to range [0 to 10] */
-	    if ((rem = val - (double) index) < 0.0) /* remainder */
+	    idx = val + 0.01; /* convert to range [0 to 10] */
+	    if ((rem = val - (double) idx) < 0.0) /* remainder */
 		rem = 0.0;
 	    res = 1.0 - rem;
 #if BLEND_USING_HSV
-	    bu_rgb_to_hsv(colortbl[index], prev_hsv);
-	    bu_rgb_to_hsv(colortbl[index+1], next_hsv);
+	    bu_rgb_to_hsv(colortbl[idx], prev_hsv);
+	    bu_rgb_to_hsv(colortbl[idx+1], next_hsv);
 	    VBLEND2(hsv, res, prev_hsv, rem, next_hsv);
 	    bu_hsv_to_rgb(hsv, rgb);
 #else
-	    VBLEND2(rgb, res, colortbl[index], rem, colortbl[index+1]);
+	    VBLEND2(rgb, res, colortbl[idx], rem, colortbl[idx+1]);
 #endif
 	}
 	else
 	{
-	    index = val + 0.51;
-	    COPYRGB(rgb, colortbl[index]);
+	    idx = val + 0.51;
+	    COPYRGB(rgb, colortbl[idx]);
 	}
     }
     return;
@@ -694,7 +679,7 @@ static struct locrec *mk_locrec (fastf_t h, fastf_t v)
     return lrp;
 }
 
-static bool pars_Argv (int argc, char **argv)
+static bool_t pars_Argv (int argc, char **argv)
 {
     int	c;
 
@@ -704,7 +689,7 @@ static bool pars_Argv (int argc, char **argv)
 	switch (c)
 	{
 	    case 'C':
-		color_flag = true;
+		color_flag = 1;
 		break;
 	    case 'M':
 	    {
@@ -719,7 +704,7 @@ static bool pars_Argv (int argc, char **argv)
 		{
 		    bu_log("Invalid color-mapping: '%s'\n",
 			   bu_optarg);
-		    return false;
+		    return 0;
 		}
 		lo_rgb[RED] = lo_red;
 		lo_rgb[GRN] = lo_grn;
@@ -737,37 +722,37 @@ static bool pars_Argv (int argc, char **argv)
 		if (sscanf(bu_optarg, "%d", &fb_height) < 1)
 		{
 		    bu_log("Invalid frame-buffer height: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		if (fb_height < -1)
 		{
 		    bu_log("Frame-buffer height out of range: %d\n", fb_height);
-		    return false;
+		    return 0;
 		}
 		break;
 	    case 'W':
 		if (sscanf(bu_optarg, "%d", &fb_width) < 1)
 		{
 		    bu_log("Invalid frame-buffer width: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		if (fb_width < -1)
 		{
 		    bu_log("Frame-buffer width out of range: %d\n", fb_width);
-		    return false;
+		    return 0;
 		}
 		break;
 	    case 'S':
 		if (sscanf(bu_optarg, "%d", &fb_height) < 1)
 		{
 		    bu_log("Invalid frame-buffer dimension: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		if (fb_height < -1)
 		{
 		    bu_log("Frame-buffer dimensions out of range: %d\n",
 			   fb_height);
-		    return false;
+		    return 0;
 		}
 		fb_width = fb_height;
 		break;
@@ -775,7 +760,7 @@ static bool pars_Argv (int argc, char **argv)
 		if (sscanf(bu_optarg, "%x", &debug_flag) < 1)
 		{
 		    bu_log("Invalid debug flag: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		break;
 	    case 'a':
@@ -787,7 +772,7 @@ static bool pars_Argv (int argc, char **argv)
 		if (sscanf(bu_optarg, "%lf %lf", &h, &v) != 2)
 		{
 		    bu_log("Invalid grid-plane location: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		lrp = mk_locrec(h, v);
 		BU_LIST_INSERT(&(gp_locs.l), &(lrp->l));
@@ -797,66 +782,66 @@ static bool pars_Argv (int argc, char **argv)
 		if (sscanf(bu_optarg, "%lf", &bool_val) != 1)
 		{
 		    bu_log("Invalid boolean value: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
-		boolean_flag = true;
+		boolean_flag = 1;
 		break;
 	    case 'c':
 		if (sscanf(bu_optarg, "%lf", &cell_size) != 1)
 		{
 		    bu_log("Invalid cell size: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		if (cell_size <= 0)
 		{
 		    bu_log("Cell size out of range: %d\n", cell_size);
-		    return false;
+		    return 0;
 		}
 		break;
 	    case 'd':
 		if (sscanf(bu_optarg, "%lf %lf", &dom_min, &dom_max) < 2)
 		{
 		    bu_log("Invalid domain for input: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		if (dom_min >= dom_max)
 		{
 		    bu_log("Bad domain for input: [%lf, %lf]\n",
 			   dom_min, dom_max);
-		    return false;
+		    return 0;
 		}
 		dom_cvt = 10.0 / (dom_max - dom_min);
 		break;
 	    case 'e':
-		erase_flag = true;
+		erase_flag = 1;
 		break;
 	    case 'f':
 		if (sscanf(bu_optarg, "%d", &field) != 1)
 		{
 		    bu_log("Invalid field: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		break;
 	    case 'g':
-		grid_flag = true;
+		grid_flag = 1;
 		break;
 	    case 'h':
 		fb_height = fb_width = HIRES;
 		break;
 	    case 'i':
-		interp_flag = false;
+		interp_flag = 0;
 		break;
 	    case 'k':
-		key_flag = true;
+		key_flag = 1;
 		key_height = 2.5;
 		break;
 	    case 'l':
 		if (sscanf(bu_optarg, "%lf%lf", &az, &el) != 2)
 		{
 		    bu_log("Invalid view: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
-		log_flag = true;
+		log_flag = 1;
 		if (view_flag == 0)
 		    view_flag = 1;
 		break;
@@ -865,26 +850,26 @@ static bool pars_Argv (int argc, char **argv)
 		double	value;
 		RGBpixel	rgb;
 		int		red, grn, blu;
-		int		index;
+		int		idx;
 
 		if (sscanf(bu_optarg, "%lf %d %d %d", &value, &red, &grn, &blu)
 		    < 4)
 		{
 		    bu_log("Invalid color-mapping: '%s'\n",
 			   bu_optarg);
-		    return false;
+		    return 0;
 		}
 		value *= 10.0;
-		index = value + 0.01;
-		if (index < 0 || index > MAX_COLORTBL)
+		idx = value + 0.01;
+		if (idx < 0 || idx > MAX_COLORTBL)
 		{
 		    bu_log("Value out of range (%s)\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		rgb[RED] = red;
 		rgb[GRN] = grn;
 		rgb[BLU] = blu;
-		COPYRGB(colortbl[index], rgb);
+		COPYRGB(colortbl[idx], rgb);
 		break;
 	    }
 	    case 'p':
@@ -894,7 +879,7 @@ static bool pars_Argv (int argc, char **argv)
 		    case 1: yorigin = xorigin; break;
 		    default:
 			bu_log("Invalid offset: '%s'\n", bu_optarg);
-			return false;
+			return 0;
 		}
 		break;
 	    case 's':
@@ -904,27 +889,27 @@ static bool pars_Argv (int argc, char **argv)
 		    case 1: hgt = wid; break;
 		    default:
 			bu_log("Invalid cell scale: '%s'\n", bu_optarg);
-			return false;
+			return 0;
 		}
 		break;
 	    case 'v':
 		if (sscanf(bu_optarg, "%d", &view_flag) < 1)
 		{
 		    bu_log("Invalid view number: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		if (view_flag == 0)
-		    log_flag = false;
+		    log_flag = 0;
 		break;
 	    case 'x':
 		if (sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug) < 1)
 		{
 		    bu_log("Invalid debug flag: '%s'\n", bu_optarg);
-		    return false;
+		    return 0;
 		}
 		break;
 	    case '?':
-		return false;
+		return 0;
 	}
     }
 
@@ -933,13 +918,13 @@ static bool pars_Argv (int argc, char **argv)
 	if ((filep = fopen(argv[bu_optind], "rb")) == NULL)
 	{
 	    bu_log("Cannot open file '%s'\n", argv[bu_optind]);
-	    return false;
+	    return 0;
 	}
     }
     else if (argc != bu_optind)
     {
 	bu_log("Too many arguments!\n");
-	return false;
+	return 0;
     }
     else
 	filep = stdin;
@@ -949,10 +934,10 @@ static bool pars_Argv (int argc, char **argv)
      * else take user specified dimensions
      */
     compute_fb_height = (fb_height == -1) ? SNUG_FIT :
-	(fb_height == 0) ? LOOSE_FIT : false;
+	(fb_height == 0) ? LOOSE_FIT : 0;
     compute_fb_width = (fb_width == -1) ? SNUG_FIT :
-	(fb_width == 0) ? LOOSE_FIT : false;
-    return true;
+	(fb_width == 0) ? LOOSE_FIT : 0;
+    return 1;
 }
 /*	prnt_Usage() --	Print usage message. */
 static void prnt_Usage(void)
@@ -966,7 +951,7 @@ static void prnt_Usage(void)
 
 static void log_Run(void)
 {
-    time_t              clock;
+    time_t              clock_time;
     mat_t		model2hv;		/* model to h, v matrix */
     mat_t		hv2model;		/* h, v tp model matrix */
     quat_t		orient;			/* orientation */
@@ -976,10 +961,10 @@ static void log_Run(void)
     fastf_t		m_viewsize;		/* size of view in model coords. */
 
     /* Current date and time get printed in header comment */
-    (void) time(&clock);
+    (void) time(&clock_time);
 
     (void) printf("# Log information produced by cell-fb %s\n",
-		  ctime(&clock) );
+		  ctime(&clock_time) );
     (void) printf("az_el: %f %f\n", az, el);
     (void) printf("view_extrema: %f %f %f %f\n",
 		  SCRX2H(0), SCRX2H(fb_width), SCRY2V(0), SCRY2V(fb_height));
