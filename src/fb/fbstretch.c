@@ -19,62 +19,57 @@
  *
  */
 /** @file fbstretch.c
-    fbstretch -- stretch a frame buffer image
+ *
+ * fbstretch -- stretch a frame buffer image
 
-    created:	89/04/29	D A Gwyn
-
-    Typical compilation:	cc -O -I/usr/include/brlcad -o fbstretch \
-    fbstretch.c /usr/brlcad/lib/libfb.a
-    Add -DNO_VFPRINTF or -DNO_STRRCHR if vfprintf() or strrchr()
-    are not present in your C library (e.g. on 4BSD-based systems).
-
-    This program converts a frame buffer image so that it is stretched or
-    compressed in the horizontal and/or vertical directions.  The image
-    scaling origin is taken to be the lower left-hand corner of the
-    display.  When compressing, pixel averaging is used by default;
-    when expanding, pixel replication is used.  Pixel averaging may be
-    meaningless for some color maps, so there is an option to use
-    sampling instead.
-
-    The main use of this utility is to compensate for differences in
-    pixel aspect ratios among different display devices.
-
-    Options:
-
-    -a		"no averaging": samples for compression instead of
-    averaging pixels
-
-    -v		"verbose": prints information about sizes and scaling
-    on the standard error output
-
-    -x x_scale	horizontal scaling factor (default: out width/in width)
-
-    -y y_scale	vertical scaling factor (default: out height/in height)
-
-    -f in_fb	reads from the specified frame buffer file instead
-    of modifying the one specified by the -f option "in
-    place"
-
-    -F out_fb	writes to the specified frame buffer file instead
-    of the one specified by the FB_FILE environment
-    variable (the default frame buffer, if no FB_FILE)
-
-    -h		assumes 1024x1024 default input size instead of 512x512
-
-    -s size		input size (width & height)
-
-    -w width	input width
-
-    -n height	input height
-
-    -S size		output size (width & height)
-
-    -W width	output width
-
-    -N height	output height
-
-    out_fb		same as -F out_fb, for convenience
-*/
+ * This program converts a frame buffer image so that it is stretched or
+ * compressed in the horizontal and/or vertical directions.  The image
+ * scaling origin is taken to be the lower left-hand corner of the
+ * display.  When compressing, pixel averaging is used by default;
+ * when expanding, pixel replication is used.  Pixel averaging may be
+ * meaningless for some color maps, so there is an option to use
+ * sampling instead.
+ *
+ * The main use of this utility is to compensate for differences in
+ * pixel aspect ratios among different display devices.
+ *
+ * Options:
+ *
+ * -a		"no averaging": samples for compression instead of
+ * averaging pixels
+ *
+ * -v		"verbose": prints information about sizes and scaling
+ * on the standard error output
+ *
+ * -x x_scale	horizontal scaling factor (default: out width/in width)
+ *
+ * -y y_scale	vertical scaling factor (default: out height/in height)
+ *
+ * -f in_fb	reads from the specified frame buffer file instead
+ * of modifying the one specified by the -f option "in
+ * place"
+ *
+ * -F out_fb	writes to the specified frame buffer file instead
+ * of the one specified by the FB_FILE environment
+ * variable (the default frame buffer, if no FB_FILE)
+ *
+ * -h		assumes 1024x1024 default input size instead of 512x512
+ *
+ * -s size		input size (width & height)
+ *
+ * -w width	input width
+ *
+ * -n height	input height
+ *
+ * -S size		output size (width & height)
+ *
+ * -W width	output width
+ *
+ * -N height	output height
+ *
+ * out_fb		same as -F out_fb, for convenience
+ *
+ */
 
 #include "common.h"
 
@@ -89,35 +84,35 @@
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 
 
-#define	USAGE1	"fbstretch [ -h ] [ -s size ] [ -w width ] [ -n height ]"
-#define	USAGE2	"\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
-#define	USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
-#define	OPTSTR	"af:F:hn:N:s:S:vw:W:x:y:"
-#define	EPSILON	0.0001			/* fudge for converting float to int */
+#define USAGE1 "fbstretch [ -h ] [ -s size ] [ -w width ] [ -n height ]"
+#define USAGE2 "\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
+#define USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
+#define OPTSTR "af:F:hn:N:s:S:vw:W:x:y:"
+#define EPSILON 0.0001			/* fudge for converting float to int */
 
 typedef int bool_t;
 
-static bool_t	hires = 0;		/* set for 1Kx1K; clear for 512x512 */
-static bool_t	sample = 0;		/* set: sampling; clear: averaging */
-static bool_t	verbose = 0;	/* set for size info printout */
-static float	x_scale = -1.0;		/* horizontal scaling factor */
-static float	y_scale = -1.0;		/* vertical scaling factor */
-static bool_t	x_compress;		/* set iff compressing horizontally */
-static bool_t	y_compress;		/* set iff compressing vertically */
-static char	*src_file = NULL;	/* source frame buffer name */
-static FBIO	*src_fbp = FBIO_NULL;	/* source frame buffer handle */
-static char	*dst_file = NULL;	/* destination frame buffer name */
-static FBIO	*dst_fbp = FBIO_NULL;	/* destination frame buffer handle */
-static int	src_width = 0,
-    src_height = 0;		/* source image size */
-static int	dst_width = 0,
-    dst_height = 0;		/* destination image size */
-static unsigned char	*src_buf;		/* calloc()ed input scan line buffer */
-static unsigned char	*dst_buf;		/* calloc()ed output scan line buffer */
+static bool_t hires = 0;		/* set for 1Kx1K; clear for 512x512 */
+static bool_t sample = 0;		/* set: sampling; clear: averaging */
+static bool_t verbose = 0;		/* set for size info printout */
+static float x_scale = -1.0;		/* horizontal scaling factor */
+static float y_scale = -1.0;		/* vertical scaling factor */
+static bool_t x_compress;		/* set iff compressing horizontally */
+static bool_t y_compress;		/* set iff compressing vertically */
+static char *src_file = NULL;		/* source frame buffer name */
+static FBIO *src_fbp = FBIO_NULL;	/* source frame buffer handle */
+static char *dst_file = NULL;		/* destination frame buffer name */
+static FBIO *dst_fbp = FBIO_NULL;	/* destination frame buffer handle */
+static int src_width = 0;
+static int src_height = 0;		/* source image size */
+static int dst_width = 0;
+static int dst_height = 0;		/* destination image size */
+static unsigned char *src_buf;		/* calloc()ed input scan line buffer */
+static unsigned char *dst_buf;		/* calloc()ed output scan line buffer */
 
 /* in ioutil.c */
 extern void Message(const char *format, ...);
-extern void Fatal( FBIO *fbiop, const char *format, ... );
+extern void Fatal(FBIO *fbiop, const char *format, ...);
 
 
 static void
@@ -152,26 +147,26 @@ main(int argc, char **argv)
 {
     /* Plant signal catcher. */
     {
-	static int	getsigs[] =	/* signals to catch */
-	    {
+	static int getsigs[] = {
+	    /* signals to catch */
 #ifdef SIGHUP
-		SIGHUP,			/* hangup */
+	    SIGHUP,			/* hangup */
 #endif
 #ifdef SIGINT
-		SIGINT,			/* interrupt */
+	    SIGINT,			/* interrupt */
 #endif
 #ifdef SIGQUIT
-		SIGQUIT,		/* quit */
+	    SIGQUIT,		/* quit */
 #endif
 #ifdef SIGPIPE
-		SIGPIPE,		/* write on a broken pipe */
+	    SIGPIPE,		/* write on a broken pipe */
 #endif
 #ifdef SIGTERM
-		SIGTERM,		/* software termination signal */
+	    SIGTERM,		/* software termination signal */
 #endif
-		0
-	    };
-	int	i;
+	    0
+	};
+	int i;
 
 	for (i = 0; getsigs[i] != 0; ++i)
 	    if (signal(getsigs[i], SIG_IGN) != SIG_IGN)
@@ -180,12 +175,11 @@ main(int argc, char **argv)
 
     /* Process arguments. */
     {
-	int	c;
-	bool_t	errors = 0;
+	int c;
+	bool_t errors = 0;
 
 	while ((c = bu_getopt(argc, argv, OPTSTR)) != EOF)
-	    switch (c)
-	    {
+	    switch (c) {
 		default:	/* '?': invalid option */
 		    errors = 1;
 		    break;
@@ -251,8 +245,7 @@ main(int argc, char **argv)
 		    break;
 
 		case 'x':	/* -x x_scale */
-		    if ((x_scale = atof(bu_optarg)) <= 0)
-		    {
+		    if ((x_scale = atof(bu_optarg)) <= 0) {
 			Message("Nonpositive x scale factor");
 			errors = 1;
 		    }
@@ -260,8 +253,7 @@ main(int argc, char **argv)
 		    break;
 
 		case 'y':	/* -y y_scale */
-		    if ((y_scale = atof(bu_optarg)) <= 0)
-		    {
+		    if ((y_scale = atof(bu_optarg)) <= 0) {
 			Message("Nonpositive y scale factor");
 			errors = 1;
 		    }
@@ -273,10 +265,9 @@ main(int argc, char **argv)
 	    bu_exit(1, "Usage: %s\n%s\n%s\n", USAGE1, USAGE2, USAGE3);
     }
 
-    if (bu_optind < argc)		/* dst_file */
-    {
-	if (bu_optind < argc - 1 || dst_file != NULL)
-	{
+    if (bu_optind < argc) {
+	/* dst_file */
+	if (bu_optind < argc - 1 || dst_file != NULL) {
 	    bu_log("Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3);
 	    Stretch_Fatal("Can't handle multiple output frame buffers!");
 	}
@@ -320,8 +311,8 @@ main(int argc, char **argv)
 	    ) == FBIO_NULL
 	)
 	Stretch_Fatal("Couldn't open input image");
-    else	{
-	int	wt, ht;	/* actual frame buffer size */
+    else {
+	int wt, ht;	/* actual frame buffer size */
 
 	/* Use smaller input size in preference to requested size. */
 
@@ -394,18 +385,17 @@ main(int argc, char **argv)
 	)
 	Stretch_Fatal("Insufficient memory for scan line buffers.");
 
-#define	Src(x, y)	(&src_buf[(x) + src_width * (y) * sizeof(RGBpixel)])
-#define	Dst(x, y)	(&dst_buf[(x) + dst_width * (y) * sizeof(RGBpixel)])
+#define Src(x, y)	(&src_buf[(x) + src_width * (y) * sizeof(RGBpixel)])
+#define Dst(x, y)	(&dst_buf[(x) + dst_width * (y) * sizeof(RGBpixel)])
 
     /* Do the horizontal/vertical expansion/compression.  I wanted to merge
        these but didn't like the extra bookkeeping overhead in the loops. */
 
-    if (x_compress && y_compress)
-    {
-	int	src_x, src_y;	/* source rect. pixel coords. */
-	int	dst_x, dst_y;	/* destination pixel coords. */
-	int	top_x, top_y;	/* source rect. upper bounds */
-	int	bot_x, bot_y;	/* source rect. lower bounds */
+    if (x_compress && y_compress) {
+	int src_x, src_y;	/* source rect. pixel coords. */
+	int dst_x, dst_y;	/* destination pixel coords. */
+	int top_x, top_y;	/* source rect. upper bounds */
+	int bot_x, bot_y;	/* source rect. lower bounds */
 
 	/* Compute coords. of source rectangle and destination pixel. */
 
@@ -419,8 +409,7 @@ main(int argc, char **argv)
 	if ((top_y = (dst_y + 1) / y_scale + EPSILON) > src_height)
 	    top_y = src_height;
 
-	if (top_y <= bot_y)
-	{
+	if (top_y <= bot_y) {
 	    /* End of image. */
 
 	    /* Clear beginning of output scan line buffer. */
@@ -430,8 +419,7 @@ main(int argc, char **argv)
 	    if (dst_x < dst_width)
 		++dst_x;	/* sometimes needed */
 
-	    while (--dst_x >= 0)
-	    {
+	    while (--dst_x >= 0) {
 		assert(dst_x < dst_width);
 		Dst(dst_x, 0)[RED] = 0;
 		Dst(dst_x, 0)[GRN] = 0;
@@ -475,8 +463,7 @@ main(int argc, char **argv)
 	if ((top_x = (dst_x + 1) / x_scale + EPSILON) > src_width)
 	    top_x = src_width;
 
-	if (top_x <= bot_x)
-	{
+	if (top_x <= bot_x) {
 	ccflush:		/* End of band; flush buffer. */
 
 	    if (fb_write(dst_fbp, 0, dst_y,
@@ -496,23 +483,20 @@ main(int argc, char **argv)
 
 	/* Copy sample or averaged source pixel(s) to destination. */
 
-	if (sample)
-	{
+	if (sample) {
 	    Dst(dst_x, 0)[RED] = Src(bot_x, 0)[RED];
 	    Dst(dst_x, 0)[GRN] = Src(bot_x, 0)[GRN];
 	    Dst(dst_x, 0)[BLU] = Src(bot_x, 0)[BLU];
-	}
-	else	{
-	    int		sum[3];	/* pixel value accumulator */
-	    float	tally;	/* # of pixels accumulated */
+	} else {
+	    int sum[3];	/* pixel value accumulator */
+	    float tally;	/* # of pixels accumulated */
 
 	    /* "Read in" source rectangle and average pixels. */
 
 	    sum[RED] = sum[GRN] = sum[BLU] = 0;
 
 	    for (src_y = top_y - bot_y; --src_y >= 0;)
-		for (src_x = bot_x; src_x < top_x; ++src_x)
-		{
+		for (src_x = bot_x; src_x < top_x; ++src_x) {
 		    sum[RED] += Src(src_x, src_y)[RED];
 		    sum[GRN] += Src(src_x, src_y)[GRN];
 		    sum[BLU] += Src(src_x, src_y)[BLU];
@@ -527,13 +511,11 @@ main(int argc, char **argv)
 
 	++dst_x;
 	goto ccxloop;
-    }
-    else if (x_compress && !y_compress)
-    {
-	int	src_x, src_y;	/* source rect. pixel coords. */
-	int	dst_x, dst_y;	/* dest. rect. pixel coords. */
-	int	bot_x, top_x;	/* source rectangle bounds */
-	int	bot_y, top_y;	/* destination rect. bounds */
+    } else if (x_compress && !y_compress) {
+	int src_x, src_y;	/* source rect. pixel coords. */
+	int dst_x, dst_y;	/* dest. rect. pixel coords. */
+	int bot_x, top_x;	/* source rectangle bounds */
+	int bot_y, top_y;	/* destination rect. bounds */
 
 	/* Compute coords. of source and destination rectangles. */
 
@@ -569,8 +551,7 @@ main(int argc, char **argv)
 	if ((top_x = (dst_x + 1) / x_scale + EPSILON) > src_width)
 	    top_x = src_width;
 
-	if (top_x <= bot_x)
-	{
+	if (top_x <= bot_x) {
 	ceflush:		/* End of band; flush buffer. */
 
 	    for (dst_y = top_y; --dst_y >= bot_y;)
@@ -592,23 +573,21 @@ main(int argc, char **argv)
 
 	/* Replicate sample or averaged source pixel(s) to dest. */
 
-	if (sample)
-	    for (dst_y = top_y - bot_y; --dst_y >= 0;)
-	    {
+	if (sample) {
+	    for (dst_y = top_y - bot_y; --dst_y >= 0;) {
 		Dst(dst_x, dst_y)[RED] = Src(bot_x, 0)[RED];
 		Dst(dst_x, dst_y)[GRN] = Src(bot_x, 0)[GRN];
 		Dst(dst_x, dst_y)[BLU] = Src(bot_x, 0)[BLU];
 	    }
-	else	{
-	    int		sum[3];	/* pixel value accumulator */
-	    float	tally;	/* # of pixels accumulated */
+	} else {
+	    int sum[3];	/* pixel value accumulator */
+	    float tally;	/* # of pixels accumulated */
 
 	    /* "Read in" source rectangle and average pixels. */
 
 	    sum[RED] = sum[GRN] = sum[BLU] = 0;
 
-	    for (src_x = bot_x; src_x < top_x; ++src_x)
-	    {
+	    for (src_x = bot_x; src_x < top_x; ++src_x) {
 		sum[RED] += Src(src_x, 0)[RED];
 		sum[GRN] += Src(src_x, 0)[GRN];
 		sum[BLU] += Src(src_x, 0)[BLU];
@@ -620,8 +599,7 @@ main(int argc, char **argv)
 	    sum[GRN] = sum[GRN] / tally + 0.5;
 	    sum[BLU] = sum[BLU] / tally + 0.5;
 
-	    for (dst_y = top_y - bot_y; --dst_y >= 0;)
-	    {
+	    for (dst_y = top_y - bot_y; --dst_y >= 0;) {
 		Dst(dst_x, dst_y)[RED] = sum[RED];
 		Dst(dst_x, dst_y)[GRN] = sum[GRN];
 		Dst(dst_x, dst_y)[BLU] = sum[BLU];
@@ -630,13 +608,11 @@ main(int argc, char **argv)
 
 	++dst_x;
 	goto cexloop;
-    }
-    else if (!x_compress && y_compress)
-    {
-	int	src_x, src_y;	/* source rect. pixel coords. */
-	int	dst_x, dst_y;	/* dest. rect. pixel coords. */
-	int	bot_x, top_x;	/* destination rect. bounds */
-	int	bot_y, top_y;	/* source rectangle bounds */
+    } else if (!x_compress && y_compress) {
+	int src_x, src_y;	/* source rect. pixel coords. */
+	int dst_x, dst_y;	/* dest. rect. pixel coords. */
+	int bot_x, top_x;	/* destination rect. bounds */
+	int bot_y, top_y;	/* source rectangle bounds */
 
 	assert(dst_width >= src_width);	/* (thus no right margin) */
 
@@ -652,14 +628,12 @@ main(int argc, char **argv)
 	if ((top_y = (dst_y + 1) / y_scale + EPSILON) > src_height)
 	    top_y = src_height;
 
-	if (top_y <= bot_y)
-	{
+	if (top_y <= bot_y) {
 	    /* End of image. */
 
 	    /* Clear output scan line buffer. */
 
-	    for (dst_x = dst_width; --dst_x >= 0;)
-	    {
+	    for (dst_x = dst_width; --dst_x >= 0;) {
 		Dst(dst_x, 0)[RED] = 0;
 		Dst(dst_x, 0)[GRN] = 0;
 		Dst(dst_x, 0)[BLU] = 0;
@@ -694,8 +668,7 @@ main(int argc, char **argv)
 
 	src_x = (dst_width - 1) / x_scale + EPSILON;
     ecxloop:
-	if (src_x < 0)
-	{
+	if (src_x < 0) {
 	    /* End of band; flush buffer. */
 	    if (fb_write(dst_fbp, 0, dst_y,
 			 (unsigned char *)Dst(0, 0),
@@ -719,23 +692,21 @@ main(int argc, char **argv)
 
 	/* Replicate sample or averaged source pixel(s) to dest. */
 
-	if (sample)
-	    for (dst_x = top_x; --dst_x >= bot_x;)
-	    {
+	if (sample) {
+	    for (dst_x = top_x; --dst_x >= bot_x;) {
 		Dst(dst_x, 0)[RED] = Src(src_x, 0)[RED];
 		Dst(dst_x, 0)[GRN] = Src(src_x, 0)[GRN];
 		Dst(dst_x, 0)[BLU] = Src(src_x, 0)[BLU];
 	    }
-	else	{
-	    int		sum[3];	/* pixel value accumulator */
-	    float	tally;	/* # of pixels accumulated */
+	} else {
+	    int sum[3];	/* pixel value accumulator */
+	    float tally;	/* # of pixels accumulated */
 
 	    /* "Read in" source rectangle and average pixels. */
 
 	    sum[RED] = sum[GRN] = sum[BLU] = 0;
 
-	    for (src_y = top_y - bot_y; --src_y >= 0;)
-	    {
+	    for (src_y = top_y - bot_y; --src_y >= 0;) {
 		sum[RED] += Src(src_x, src_y)[RED];
 		sum[GRN] += Src(src_x, src_y)[GRN];
 		sum[BLU] += Src(src_x, src_y)[BLU];
@@ -747,8 +718,7 @@ main(int argc, char **argv)
 	    sum[GRN] = sum[GRN] / tally + 0.5;
 	    sum[BLU] = sum[BLU] / tally + 0.5;
 
-	    for (dst_x = top_x; --dst_x >= bot_x;)
-	    {
+	    for (dst_x = top_x; --dst_x >= bot_x;) {
 		Dst(dst_x, 0)[RED] = sum[RED];
 		Dst(dst_x, 0)[GRN] = sum[GRN];
 		Dst(dst_x, 0)[BLU] = sum[BLU];
@@ -757,13 +727,11 @@ main(int argc, char **argv)
 
 	--src_x;
 	goto ecxloop;
-    }
-    else if (!x_compress && !y_compress)
-    {
-	int	src_x, src_y;	/* source pixel coords. */
-	int	dst_x, dst_y;	/* dest. rect. pixel coords. */
-	int	bot_x, bot_y;	/* dest. rect. lower bounds */
-	int	top_x, top_y;	/* dest. rect. upper bounds */
+    } else if (!x_compress && !y_compress) {
+	int src_x, src_y;	/* source pixel coords. */
+	int dst_x, dst_y;	/* dest. rect. pixel coords. */
+	int bot_x, bot_y;	/* dest. rect. lower bounds */
+	int top_x, top_y;	/* dest. rect. upper bounds */
 
 	assert(dst_width >= src_width);	/* (thus no right margin) */
 
@@ -792,8 +760,7 @@ main(int argc, char **argv)
 
 	src_x = (dst_width - 1) / x_scale + EPSILON;
     eexloop:
-	if (src_x < 0)
-	{
+	if (src_x < 0) {
 	    /* End of band; flush buffer. */
 
 	    for (dst_y = top_y; --dst_y >= bot_y;)
@@ -821,8 +788,7 @@ main(int argc, char **argv)
 	/* Replicate sample source pixel to destination. */
 
 	for (dst_y = top_y - bot_y; --dst_y >= 0;)
-	    for (dst_x = top_x; --dst_x >= bot_x;)
-	    {
+	    for (dst_x = top_x; --dst_x >= bot_x;) {
 		Dst(dst_x, dst_y)[RED] = Src(src_x, 0)[RED];
 		Dst(dst_x, dst_y)[GRN] = Src(src_x, 0)[GRN];
 		Dst(dst_x, dst_y)[BLU] = Src(src_x, 0)[BLU];
@@ -832,7 +798,7 @@ main(int argc, char **argv)
 	goto eexloop;
     }
 
- done:
+done:
     /* Close the frame buffers. */
 
     assert(src_fbp != FBIO_NULL && dst_fbp != FBIO_NULL);
@@ -845,6 +811,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:
