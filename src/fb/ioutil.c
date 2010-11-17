@@ -33,7 +33,7 @@
 #include "fb.h"
 
 
-void
+HIDDEN void
 VMessage(const char *format, va_list ap)
 {
     struct bu_vls str;
