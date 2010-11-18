@@ -3324,7 +3324,7 @@ package provide cadwidgets::Ged 1.0
 	}
     } else {
 	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $mLastMouseRayStart $mLastMouseRayTarget $partitions}
+	    catch {$callback $_pane $mLastMouseRayStart $mLastMouseRayTarget $partitions}
 	}
     }
 }
