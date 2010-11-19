@@ -452,7 +452,6 @@ SET(TK_WIN_SRCS
 	win/ttkWinMonitor.c
 	win/ttkWinTheme.c
 	win/ttkWinXPTheme.c
-	win/winMain.c
 )
 
 SET(TK_SRCS ${TK_GENERIC_SRCS} ${TTK_SRCS})
@@ -507,6 +506,8 @@ ENDIF(WIN32)
 
 IF(NOT WIN32)
 	SET(WISH_SRCS unix/tkAppInit.c)
+ELSE(NOT WIN32)
+        SET(WISH_SRCS win/winMain.c)
 ENDIF(NOT WIN32)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TK_CFLAGS}") 
