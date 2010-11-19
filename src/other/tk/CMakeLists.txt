@@ -162,10 +162,12 @@ IF(APPLE)
 	find_library(FONTCONFIG_LIBRARY fontconfig)	 
 ENDIF(APPLE)
 
-find_package(X11)
-find_package(Freetype)
+IF(NOT WIN32)
+	find_package(X11)
+	find_package(Freetype)
 
-SET(TK_WINDOWINGSYSTEM X11)
+	SET(TK_WINDOWINGSYSTEM X11)
+ENDIF(NOT WIN32)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 	CHECK_FUNCTION_EXISTS_D(getattrlist HAVE_GETATTRLIST)
@@ -422,6 +424,35 @@ SET(TK_AQUA_SRCS
 )
 
 SET(TK_WIN_SRCS
+	tkWin32Dll.c
+	tkWin3d.c
+	tkWinButton.c
+	tkWinClipboard.c
+	tkWinColor.c
+	tkWinConfig.c
+	tkWinCursor.c
+	tkWinDialog.c
+	tkWinDraw.c
+	tkWinEmbed.c
+	tkWinFont.c
+	tkWinImage.c
+	tkWinInit.c
+	tkWinKey.c
+	tkWinMenu.c
+	tkWinPixmap.c
+	tkWinPointer.c
+	tkWinRegion.c
+	tkWinScrlbr.c
+	tkWinSend.c
+	tkWinSendCom.c
+	tkWinTest.c
+	tkWinWindow.c
+	tkWinWm.c
+	tkWinX.c
+	ttkWinMonitor.c
+	ttkWinTheme.c
+	ttkWinXPTheme.c
+	winMain.c
 )
 
 SET(TK_SRCS ${TK_GENERIC_SRCS} ${TTK_SRCS})
