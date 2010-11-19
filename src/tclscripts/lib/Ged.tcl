@@ -2804,7 +2804,8 @@ package provide cadwidgets::Ged 1.0
     set mLastMousePos ""
 
     # If a point has not been selected via the pane_mouse_3dpoint call
-    # above and gridSnap is active, apply snap to grid to the data point
+    # above (i.e. neither a geometry object nor a data point was hit)
+    # and gridSnap is active, apply snap to grid to the data point
     # currently being moved.
     if {$point == "" && $itk_option(-gridSnap)} {
 	# First, get the data point being moved.
@@ -2820,11 +2821,11 @@ package provide cadwidgets::Ged 1.0
 	# Convert point to view coordinates and call snap_view. Then convert
 	# back to model coordinates. Note - vZ is saved so that the movement
 	# stays in a plane parallel to the view plane.
-	set view [m2v_point $point]
+	set view [pane_m2v_point $_pane $point]
 	set vZ [lindex $view 2]
 	set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 	lappend view $vZ
-	set point [v2m_point $view]
+	set point [pane_v2m_point $_pane $view]
     }
 
     # Replace the mLastDataIndex point with this point
@@ -2834,12 +2835,11 @@ package provide cadwidgets::Ged 1.0
 	    set label [lindex $labels $mLastDataIndex]
 	    set label [lreplace $label 1 1 $point]
 	    set labels [lreplace $labels $mLastDataIndex $mLastDataIndex $label]
-	    $mGed $mLastDataType $itk_component($_pane) labels $labels
+	    $mLastDataType labels $labels
 	} else {
-
 	    set points [$mGed $mLastDataType $itk_component($_pane) points]
 	    set points [lreplace $points $mLastDataIndex $mLastDataIndex $point]
-	    $mGed $mLastDataType $itk_component($_pane) points $points
+	    $mLastDataType points $points
 	}
     }
 
