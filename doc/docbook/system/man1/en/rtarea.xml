@@ -143,20 +143,7 @@
               |
       </screen>
 
-      An object that combines both of these sheets reports as its presented area the
-      sum of the full presented areas of the individual sheets:
-
-      <screen>
-*******************************  Sheet 2
-     *******************         Sheet 1
-
-              ^
-              |                  Ray Direction
-              |
-      </screen>
-    
-    Thus, presented area will always be greater than or equal to exposed area.    
-      
+            
     </para>
 
     <para>
