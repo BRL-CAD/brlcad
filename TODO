@@ -44,6 +44,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
+
 * make sure mged/archer behave properly with relative paths to dbopen.
   Windows in particular is doing something different in
   src/librt/db_open.c that should be a problem as it only records the
