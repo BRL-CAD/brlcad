@@ -19,8 +19,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
-* verify 'solids_on_ray' command works ('Ray Pick' menu option)
-
 * verify rt/benchmark on windows doesn't crash
 
 
