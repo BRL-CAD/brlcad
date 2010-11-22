@@ -66,12 +66,6 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
-if test $# -eq 0 ; then
-    echo "No geometry files specified."
-    echo "Usage: $0 file1.g [file2.g ...]"
-    exit 2
-fi
-
 #######################
 # log to tty and file #
 #######################
@@ -168,6 +162,12 @@ done
 
 # validate and clean up options (all default to 0)
 booleanize HELP INSTRUCTIONS VERBOSE
+
+if test $# -eq 0 ; then
+    echo "No geometry files specified."
+    echo ""
+    HELP=1
+fi
 
 ###
 # handle help before main processing
