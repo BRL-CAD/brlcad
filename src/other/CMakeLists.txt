@@ -118,7 +118,8 @@ exit
    SET(autopath_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath.tcl")
 	FILE(WRITE ${autopath_scriptfile} ${autopath_script})
 	EXEC_PROGRAM(${TCL_TCLSH} ARGS ${autopath_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-   FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath tcl_autopath)
+   FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath tcl_autopath_raw)
+   STRING(REGEX REPLACE "\n" "" tcl_autopath ${tcl_autopath_raw})
 	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_AUTO_PATH \"${tcl_autopath}\"\n")
 ENDIF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
