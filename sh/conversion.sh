@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 #                   C O N V E R S I O N . S H
 # BRL-CAD
 #
@@ -59,6 +59,9 @@ fi
 
 # force locale setting to C so things like date output as expected
 LC_ALL=C
+
+# force posix behavior
+set -o posix >/dev/null 2>&1
 
 
 #######################
@@ -304,7 +307,7 @@ set_if_unset ( ) {
 set_if_unset GED mged
 set_if_unset MAXTIME 30
 
-# commands that this script expects
+# commands that this script expects, make sure we can find MGED
 MGED="`which $GED`"
 if test ! -f "$MGED" ; then
     echo "ERROR: Unable to find $GED"
@@ -317,6 +320,10 @@ if test ! -f "$MGED" ; then
 fi
 
 
+################
+# start output #
+################
+
 $ECHO "B R L - C A D   C O N V E R S I O N"
 $ECHO "==================================="
 $ECHO "Running $THIS on `date`"
@@ -326,6 +333,8 @@ $ECHO "Using [${MGED}] for GED"
 $ECHO "Using [${MAXTIME}] for MAXTIME"
 $ECHO
 
+# iterate over every specified geometry file
+files=0
 count=0
 nmg_count=0
 bot_count=0
@@ -376,7 +385,7 @@ EOF
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
-        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid
+        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid >/dev/null 2>&1
         wait $spid >/dev/null 2>&1
 	$VERBOSE_ECHO "$output"
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
@@ -397,7 +406,7 @@ EOF
 	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
-        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid
+        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid >/dev/null 2>&1
         wait $spid >/dev/null 2>&1
 	$VERBOSE_ECHO "$output"
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
@@ -408,7 +417,8 @@ EOF
 	    bot=pass
 	    bot_count=`expr $bot_count + 1`
 	fi
-	
+
+	# print summary
 	status=FAIL
 	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
 	    status=OK
@@ -421,6 +431,7 @@ EOF
     # restore stdin
     exec 0<&3
 
+    files=`expr $files + 1`
     rm -f "$work"
     shift
 done
@@ -431,19 +442,25 @@ if test $count -eq 0 ; then
     nmg_percent=0
     bot_percent=0
     rate=0
+    avg=0
 else
     nmg_percent=`echo $nmg_count $count | awk '{print ($1/$2)*100.0}'`
     bot_percent=`echo $bot_count $count | awk '{print ($1/$2)*100.0}'`
     rate=`echo $nmg_count $bot_count $count | awk '{print ($1+$2)/($3+$3)*100.0}'`
+    avg=`echo $elp $count | awk '{print $1/$2}'`
 fi
 elp=`echo $begin $end | awk '{print $2-$1}'`
-avg=`echo $elp $count | awk '{print $1/$2}'`
+nmg_fail=`echo $nmg_count $count | awk '{print $2-$1}'`
+bot_fail=`echo $bot_count $count | awk '{print $2-$1}'`
 
 $ECHO
 $ECHO "... Done."
 $ECHO
 $ECHO "Summary:"
 $ECHO
+$ECHO "   Files:  %ld" $files
+$ECHO " Objects:  %ld" $count
+$ECHO "Failures:  %ld NMG, %ld BoT" $nmg_fail $bot_fail
 $ECHO "NMG conversion:  %.1f%%  (%ld of %ld objects)" $nmg_percent $nmg_count $count
 $ECHO "BoT conversion:  %.1f%%  (%ld of %ld objects)" $bot_percent $bot_count $count
 $ECHO "  Success rate:  %.1f%%" $rate
