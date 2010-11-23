@@ -107,20 +107,22 @@ IF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_AUTO_PATH \"\"\n")
 ELSE(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 	BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
-	# We're going to need the auto_path info from the system tcl for btclsh and bwish
-	SET(autopath_script "
-set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath\"
+	# We're going to need the path to the system init.tcl for btclsh and bwish
+	SET(inittcl_script "
+set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
 set fileID [open $filename \"w\"]
 puts $fileID $auto_path
 close $fileID
 exit
 ")
-   SET(autopath_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath.tcl")
-	FILE(WRITE ${autopath_scriptfile} ${autopath_script})
-	EXEC_PROGRAM(${TCL_TCLSH} ARGS ${autopath_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-   FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath tcl_autopath_raw)
-   STRING(REGEX REPLACE "\n" "" tcl_autopath ${tcl_autopath_raw})
-	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_AUTO_PATH \"${tcl_autopath}\"\n")
+   SET(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
+	FILE(WRITE ${inittcl_scriptfile} ${inittcl_script})
+	EXEC_PROGRAM(${TCL_TCLSH} ARGS ${inittcl_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+   FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl tcl_inittcl_raw)
+   STRING(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
+   STRING(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
+	FIND_FILE(tcl_inittcl PATHS ${tcl_inittcl_paths})
+	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL \"${tcl_inittcl}\"\n")
 ENDIF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
 IF(BRLCAD_BUILD_LOCAL_TK OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
