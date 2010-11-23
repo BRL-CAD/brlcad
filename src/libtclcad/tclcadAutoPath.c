@@ -81,6 +81,8 @@ void
 tclcad_auto_path(Tcl_Interp *interp)
 {
     struct bu_vls auto_path;
+    struct bu_vls tcl_library;
+    struct bu_vls system_tcl_library;
     struct bu_vls lappend;
     struct bu_vls tclcmd;
     struct bu_vls invocation_full_path;
@@ -121,11 +123,21 @@ tclcad_auto_path(Tcl_Interp *interp)
     data = bu_brlcad_data("", 1);
 
     bu_vls_init(&auto_path);
+    bu_vls_init(&tcl_library);
+    bu_vls_init(&system_tcl_library);
     bu_vls_init(&lappend);
     bu_vls_init(&tclcmd);
     bu_vls_init(&invocation_full_path);
     bu_vls_init(&root_full_path);
     bu_vls_init(&build_full_path);
+
+    /* If we have a system init.tcl path passed in, put it in tcl_library */
+    bu_vls_sprintf(&system_tcl_library, "%s", TCL_SYSTEM_INITTCL_PATH);
+    if(bu_vls_strlen(&system_tcl_library) > 0) {
+      bu_vls_sprintf(&tcl_library, "set tcl_library %s", bu_vls_addr(&system_tcl_library));
+      Tcl_Eval(interp, bu_vls_addr(&tcl_library));
+      found_init_tcl = 1;
+    }
  
     /* determine if TCLCAD_LIBRARY_PATH is set */
     library_path = getenv("TCLCAD_LIBRARY_PATH");
@@ -421,6 +433,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     which_argv = NULL;
     bu_vls_free(&auto_path);
+    bu_vls_free(&system_tcl_library);
+    bu_vls_free(&tcl_library);
     bu_vls_free(&lappend);
 
     return;
