@@ -348,6 +348,15 @@ while test $# -gt 0 ; do
     cmd="$GED -c \"$work\" search ."
     objects=`eval $cmd 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
+    $VERBOSE_ECHO "$objects"
+
+    # stash stdin on fd3 and set stdin to our object list.  this is
+    # necessary because if a kill timer is called, input being read on
+    # the while loop will be terminated early.
+    exec 3<&0
+    exec 0<<EOF
+$objects
+EOF
 
     while read object ; do
 
@@ -358,11 +367,17 @@ while test $# -gt 0 ; do
 	    continue
 	fi
 
+	# start the limit timer
+	sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && $ECHO "\tNMG conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` >/dev/null 2>&1 &
+        spid=$!
+
 	# convert NMG
 	nmg=FAIL
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
+        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid
+        wait $spid >/dev/null 2>&1
 	$VERBOSE_ECHO "$output"
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
@@ -373,11 +388,17 @@ while test $# -gt 0 ; do
 	    nmg_count=`expr $nmg_count + 1`
 	fi
 	
+	# start the limit timer
+	sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && $ECHO "\tBoT conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` >/dev/null 2>&1 &
+	spid=$!
+
 	# convert BoT
 	bot=FAIL
 	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
+        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid
+        wait $spid >/dev/null 2>&1
 	$VERBOSE_ECHO "$output"
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
@@ -395,9 +416,10 @@ while test $# -gt 0 ; do
 	$ECHO "%s\tnmg: %s %s\tbot %s %s\t%s:%s" $status $nmg $real_nmg $bot $real_bot "$file" "$object"
 	count=`expr $count + 1`
 
-    done <<EOF
-$objects
-EOF
+    done
+
+    # restore stdin
+    exec 0<&3
 
     rm -f "$work"
     shift
