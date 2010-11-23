@@ -1,3 +1,4 @@
+#!/bin/ksh
 #                   C O N V E R S I O N . S H
 # BRL-CAD
 #
@@ -59,12 +60,6 @@ fi
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
-# commands that this script expects
-MGED="`which mged`"
-if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
-    exit 1
-fi
 
 #######################
 # log to tty and file #
@@ -74,8 +69,12 @@ log ( ) {
     # this routine writes the provided argument(s) to a log file as
     # well as echoing them to stdout if we're not in quiet mode.
 
-    format="$1"
-    shift
+    if test $# -lt 1 ; then
+	format=""
+    else
+	format="$1"
+	shift
+    fi
 
     if test ! "x$LOGFILE" = "x" ; then
 	action="printf \"$format\n\" $* >> \"$LOGFILE\""
@@ -182,6 +181,7 @@ if test "x$HELP" = "x1" ; then
     echo "  verbose"
     echo ""
     echo "Available options:"
+    echo "  GED=/path/to/geometry/editor (default mged)"
     echo "  MAXTIME=#seconds (default 30)"
     echo ""
     echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
@@ -213,10 +213,14 @@ will convert, what percentage, and how long the conversion will take.
 There are several environment variables that will modify how this
 script behaves:
 
+  GED - pathname to the BRL-CAD geometry editor (i.e., mged)
   MAXTIME - maximum number of seconds allowed for each conversion
   VERBOSE - turn on extra debug output for testing/development
   QUIET - turn off all printing output (writes results to log file)
   INSTRUCTIONS - display these more detailed instructions
+
+The GED option allows you to specify a specific pathname for MGED.
+The default is to search the system path for 'mged'.
 
 The MAXTIME option specifies how many seconds are allowed to elapse
 before the conversion is aborted.  Some conversions can take days or
@@ -249,7 +253,7 @@ if test "x$QUIET" = "x1" ; then
     fi
 else
     if test "x$VERBOSE" = "x1" ; then
-	VERBOSE_ECHO=printf
+	VERBOSE_ECHO=echo
 	echo "Verbose output enabled"
     fi
 fi
@@ -271,8 +275,18 @@ set_if_unset ( ) {
 
     set_if_unset_var="echo \"\$$set_if_unset_name\""
     set_if_unset_val="`eval ${set_if_unset_var}`"
-    $ECHO "Using [${set_if_unset_val}] for $set_if_unset_name"
 }
+
+# approximate maximum time in seconds that a given conversion is allowed to take
+set_if_unset GED mged
+set_if_unset MAXTIME 30
+
+# commands that this script expects
+MGED="`which $GED`"
+if test ! -f "$MGED" ; then
+    $ECHO "Unable to find $GED, aborting"
+    exit 1
+fi
 
 
 $ECHO "B R L - C A D   C O N V E R S I O N"
@@ -280,53 +294,106 @@ $ECHO "==================================="
 $ECHO "Running $THIS on `date`"
 $ECHO "Logging output to $LOGFILE"
 $ECHO "`uname -a 2>&1`"
-
-# approximate maximum time in seconds that a given conversion is allowed to take
-set_if_unset MAXTIME 30
-
+$ECHO "Using [${MGED}] for GED"
+$ECHO "Using [${MAXTIME}] for MAXTIME"
 $ECHO
-FILES=""
+
+count=0
+nmg_count=0
+bot_count=0
+$ECHO "%s" "-=-"
 while test $# -gt 0 ; do
-    FILE="$1"
-    if ! test -f "$FILE" ; then
-	echo "Unable to read file [$FILE]"
+    file="$1"
+    if ! test -f "$file" ; then
+	echo "Unable to read file [$file]"
 	shift
 	continue
     fi
 
-    WORK="${FILE}.conversion"
-    cp "$FILE" "$WORK"
+    work="${file}.conversion"
+    cmd="cp \"$file\" \"$work\""
+    $VERBOSE_ECHO "\$ $cmd"
+    eval $cmd
 
-    $MGED -c "$WORK" search . 2>&1 | grep -v Using | while read object ; do
+    # execute in a coprocess
+    cmd="$GED -c \"$work\" search ."
+    objects=`eval $cmd 2>&1 | grep -v Using`
+    $VERBOSE_ECHO "\$ $cmd"
+
+    while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$MGED -c "$WORK" search . -name \"${obj}\" 2>&1 | grep -v Using`
+	found=`$GED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    echo "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    exit 3
 	fi
 
-	nmg=fail
-	$MGED -c "$WORK" facetize -n \"${obj}.nmg\" \"${obj}\" >/dev/null 2>&1 | grep -v Using
-	found=`$MGED -c "$WORK" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+	# convert NMG
+	nmg=FAIL
+	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
+	$VERBOSE_ECHO "\$ $cmd"
+	output=`eval $cmd 2>&1 | grep -v Using`
+	$VERBOSE_ECHO "$output"
+
+	# verify NMG
+	found=`$GED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
 	    nmg=pass
+	    nmg_count=`expr $nmg_count + 1`
 	fi
 	
-	bot=fail
-	$MGED -c "$WORK" facetize \"${obj}.bot\" \"${obj}\" >/dev/null 2>&1 | grep -v Using
-	found=`$MGED -c "$WORK" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+	# convert BoT
+	bot=FAIL
+	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
+	$VERBOSE_ECHO "\$ $cmd"
+	output=`eval $cmd 2>&1 | grep -v Using`
+	$VERBOSE_ECHO "$output"
+
+	# verify BoT
+	found=`$GED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
 	    bot=pass
+	    bot_count=`expr $bot_count + 1`
 	fi
 	
-	$ECHO "nmg:%s bot:%s %s:%s" $nmg $bot "$FILE" "$object"
-    done
+	$ECHO "nmg:%s bot:%s %s:%s" $nmg $bot "$file" "$object"
+	count=`expr $count + 1`
 
-    rm -f "$WORK"
+    done <<EOF
+$objects
+EOF
 
+    rm -f "$work"
     shift
 done
+$ECHO "%s" "-=-"
+
+if test $count -eq 0 ; then
+    nmg_percent=0
+    bot_percent=0
+    rate=0
+else
+    nmg_percent=`echo $nmg_count $count | awk '{print ($1/$2)*100.0}'`
+    bot_percent=`echo $bot_count $count | awk '{print ($1/$2)*100.0}'`
+    rate=`echo $nmg_count $bot_count $count | awk '{print ($1+$2)/($3+$3)*100.0}'`
+fi
+
+$ECHO
+$ECHO "... Done."
+$ECHO
+$ECHO "Summary:"
+$ECHO
+$ECHO "NMG conversion:  %.1f%%  (%ld of %ld objects)" $nmg_percent $nmg_count $count
+$ECHO "BoT conversion:  %.1f%%  (%ld of %ld objects)" $bot_percent $bot_count $count
+$ECHO "Overall conversion rate:  %.1f%%" $rate
+$ECHO
+$ECHO "Elapsed conversion time: %lf" 0.0
+$ECHO "Average conversion time: %lf" 0.0
+$ECHO
+$ECHO "Output was saved to $LOGFILE from `pwd`"
+$ECHO "Conversion testing complete."
+
 
 # Local Variables:
 # tab-width: 8
