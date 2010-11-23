@@ -216,17 +216,9 @@ Cad_AppInit(Tcl_Interp *interp)
 int
 main(int argc, char **argv)
 {
-    struct bu_vls str;
-    bu_vls_init(&str);
-    bu_vls_printf(&str, "lappend auto_path {%s}", TCL_SYSTEM_AUTO_PATH);
     /* Create the interpreter */
     INTERP = Tcl_CreateInterp();
     Tcl_FindExecutable(argv[0]);
-    if(bu_vls_strlen(&str) > 20) {
-	    Tcl_Eval(INTERP, bu_vls_addr(&str));
-	    bu_log("Tcl_Eval Result:\n%s\n", Tcl_GetStringResult(INTERP));
-    }
-    bu_vls_free(&str);
     Cad_Main(argc, argv, Cad_AppInit, INTERP);
 
     return 0;
