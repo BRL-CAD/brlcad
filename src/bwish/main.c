@@ -222,9 +222,9 @@ main(int argc, char **argv)
     /* Create the interpreter */
     INTERP = Tcl_CreateInterp();
     Tcl_FindExecutable(argv[0]);
-    if(bu_vls_strlen(&str) > 0) {
-	    Tcl_Eval(interp, bu_vls_addr(&str));
-	    bu_log("Tcl_Eval Result:\n%s\n", Tcl_GetStringResult(interp));
+    if(bu_vls_strlen(&str) > 20) {
+	    Tcl_Eval(INTERP, bu_vls_addr(&str));
+	    bu_log("Tcl_Eval Result:\n%s\n", Tcl_GetStringResult(INTERP));
     }
     bu_vls_free(&str);
     Cad_Main(argc, argv, Cad_AppInit, INTERP);
