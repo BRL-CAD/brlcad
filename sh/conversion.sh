@@ -185,36 +185,6 @@ done
 # validate and clean up options (all default to 0)
 booleanize HELP INSTRUCTIONS VERBOSE
 
-if test $# -eq 0 ; then
-    echo "No geometry files specified."
-    echo ""
-    HELP=1
-fi
-
-###
-# handle help before main processing
-###
-if test "x$HELP" = "x1" ; then
-    echo "Usage: $0 [command(s)] [OPTION=value] file1.g [file2.g ...]"
-    echo ""
-    echo "Available commands:"
-    echo "  help          (this is what you are reading right now)"
-    echo "  instructions"
-    echo "  quiet"
-    echo "  verbose"
-    echo ""
-    echo "Available options:"
-    echo "  GED=/path/to/geometry/editor (default mged)"
-    echo "  MAXTIME=#seconds (default 30)"
-    echo ""
-    echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
-    echo "For more information about BRL-CAD, see http://brlcad.org"
-    echo ""
-    echo "Run '$0 instructions' for additional information."
-    exit 1
-fi
-
-
 ###
 # handle instructions before main processing
 ###
@@ -251,6 +221,36 @@ months (or infinite in the case of a bug), so this places an upper
 bound on the per-object conversion time.
 EOF
     exit 0
+fi
+
+
+if test $# -eq 0 ; then
+    echo "No geometry files specified."
+    echo ""
+    HELP=1
+fi
+
+###
+# handle help before main processing
+###
+if test "x$HELP" = "x1" ; then
+    echo "Usage: $0 [command(s)] [OPTION=value] file1.g [file2.g ...]"
+    echo ""
+    echo "Available commands:"
+    echo "  help          (this is what you are reading right now)"
+    echo "  instructions"
+    echo "  quiet"
+    echo "  verbose"
+    echo ""
+    echo "Available options:"
+    echo "  GED=/path/to/geometry/editor (default mged)"
+    echo "  MAXTIME=#seconds (default 30)"
+    echo ""
+    echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
+    echo "For more information about BRL-CAD, see http://brlcad.org"
+    echo ""
+    echo "Run '$0 instructions' for additional information."
+    exit 1
 fi
 
 
