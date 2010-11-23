@@ -121,7 +121,7 @@ exit
    FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl tcl_inittcl_raw)
    STRING(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
    STRING(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
-	FIND_FILE(tcl_inittcl PATHS ${tcl_inittcl_paths})
+	FIND_FILE(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
 	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL \"${tcl_inittcl}\"\n")
 ENDIF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
