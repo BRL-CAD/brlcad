@@ -104,7 +104,7 @@ IF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 	SET(TCL_INCLUDE_PATH "${TCL_INCLUDE_PATH}" CACHE STRING "Tcl include paths" FORCE)
 	SET(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_TCL_H 1\n")
-	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_AUTO_PATH \"\"\n")
+	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
 ELSE(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 	BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
 	# We're going to need the path to the system init.tcl for btclsh and bwish
@@ -122,7 +122,7 @@ exit
    STRING(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
    STRING(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
 	FIND_PATH(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
-	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL \"${tcl_inittcl}\"\n")
+	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
 ENDIF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
 IF(BRLCAD_BUILD_LOCAL_TK OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
