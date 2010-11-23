@@ -247,7 +247,7 @@ if test "x$HELP" = "x1" ; then
     echo ""
     echo "Available options:"
     echo "  GED=/path/to/geometry/editor (default mged)"
-    echo "  MAXTIME=#seconds (default 30)"
+    echo "  MAXTIME=#seconds (default 300)"
     echo ""
     echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
     echo "For more information about BRL-CAD, see http://brlcad.org"
@@ -305,7 +305,7 @@ set_if_unset ( ) {
 
 # approximate maximum time in seconds that a given conversion is allowed to take
 set_if_unset GED mged
-set_if_unset MAXTIME 30
+set_if_unset MAXTIME 300
 
 # commands that this script expects, make sure we can find MGED
 MGED="`which $GED`"
