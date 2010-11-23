@@ -5,6 +5,7 @@ include_directories(
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
   ${UTAHRLE_INCLUDE_DIR}
+  ${X11_INCLUDE_DIR}
 )
 IF(MSVC)
 		  add_definitions(
