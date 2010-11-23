@@ -154,6 +154,16 @@ for arg in $ARGS ; do
 	    VERBOSE=1
 	    shift
 	    ;;
+	x*=*)
+	    VAR=`echo $arg | sed 's/=.*//g'`
+	    if test ! "x$VAR" = "x" ; then
+		VAL=`echo $arg | sed 's/.*=//g'`
+		CMD="$VAR=$VAL"
+		eval $CMD
+		export $VAR
+	    fi
+	    shift
+	    ;;
 	x*)
 	    ;;
     esac
@@ -284,7 +294,12 @@ set_if_unset MAXTIME 30
 # commands that this script expects
 MGED="`which $GED`"
 if test ! -f "$MGED" ; then
-    $ECHO "Unable to find $GED, aborting"
+    echo "ERROR: Unable to find $GED"
+    echo ""
+    echo "Configure the GED variable or check your PATH."
+    echo "Run '$0 instructions' for additional information."
+    echo ""
+    echo "Aborting."
     exit 1
 fi
 
