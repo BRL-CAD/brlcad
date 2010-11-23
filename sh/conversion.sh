@@ -127,6 +127,19 @@ booleanize ( ) {
 }
 
 
+################
+# elapsed time #
+################
+elapsed ( ) {
+
+    # this routine either reports the current time (in seconds)
+
+    elp=`date '+%Y %m %d %H %M %S' | awk '{print ($1*31622400) + (($2-1)*2678400) + (($3-1)*86400) + ($4*360) + ($5*60) + ($6)}'`
+    echo $elp
+    return
+}
+
+
 ####################
 # handle arguments #
 ####################
@@ -317,6 +330,7 @@ count=0
 nmg_count=0
 bot_count=0
 $ECHO "%s" "-=-"
+begin=`elapsed`
 while test $# -gt 0 ; do
     file="$1"
     if ! test -f "$file" ; then
@@ -340,16 +354,17 @@ while test $# -gt 0 ; do
 	obj="`basename \"$object\"`"
 	found=`$GED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
-	    echo "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
-	    exit 3
+	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
+	    continue
 	fi
 
 	# convert NMG
 	nmg=FAIL
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval $cmd 2>&1 | grep -v Using`
+	output=`eval time $cmd 2>&1 | grep -v Using`
 	$VERBOSE_ECHO "$output"
+	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify NMG
 	found=`$GED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
@@ -362,8 +377,9 @@ while test $# -gt 0 ; do
 	bot=FAIL
 	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
-	output=`eval $cmd 2>&1 | grep -v Using`
+	output=`eval time $cmd 2>&1 | grep -v Using`
 	$VERBOSE_ECHO "$output"
+	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify BoT
 	found=`$GED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
@@ -372,7 +388,11 @@ while test $# -gt 0 ; do
 	    bot_count=`expr $bot_count + 1`
 	fi
 	
-	$ECHO "nmg:%s bot:%s %s:%s" $nmg $bot "$file" "$object"
+	status=FAIL
+	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
+	    status=OK
+	fi
+	$ECHO "%s\tnmg: %s %s\tbot %s %s\t%s:%s" $status $nmg $real_nmg $bot $real_bot "$file" "$object"
 	count=`expr $count + 1`
 
     done <<EOF
@@ -382,6 +402,7 @@ EOF
     rm -f "$work"
     shift
 done
+end=`elapsed`
 $ECHO "%s" "-=-"
 
 if test $count -eq 0 ; then
@@ -393,6 +414,8 @@ else
     bot_percent=`echo $bot_count $count | awk '{print ($1/$2)*100.0}'`
     rate=`echo $nmg_count $bot_count $count | awk '{print ($1+$2)/($3+$3)*100.0}'`
 fi
+elp=`echo $begin $end | awk '{print $2-$1}'`
+avg=`echo $elp $count | awk '{print $1/$2}'`
 
 $ECHO
 $ECHO "... Done."
@@ -401,10 +424,10 @@ $ECHO "Summary:"
 $ECHO
 $ECHO "NMG conversion:  %.1f%%  (%ld of %ld objects)" $nmg_percent $nmg_count $count
 $ECHO "BoT conversion:  %.1f%%  (%ld of %ld objects)" $bot_percent $bot_count $count
-$ECHO "Overall conversion rate:  %.1f%%" $rate
+$ECHO "  Success rate:  %.1f%%" $rate
 $ECHO
-$ECHO "Elapsed conversion time: %lf" 0.0
-$ECHO "Average conversion time: %lf" 0.0
+$ECHO "Elapsed:  %d seconds" $elp
+$ECHO "Average:  %.1f seconds per object" $avg
 $ECHO
 $ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Conversion testing complete."
