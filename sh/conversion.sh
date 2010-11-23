@@ -339,7 +339,7 @@ count=0
 nmg_count=0
 bot_count=0
 $ECHO "%s" "-=-"
-begin=`elapsed`
+begin=`elapsed` # start elapsed runtime timer
 while test $# -gt 0 ; do
     file="$1"
     if ! test -f "$file" ; then
@@ -367,6 +367,7 @@ while test $# -gt 0 ; do
 $objects
 EOF
 
+    # iterate over every geometry object in the current file
     while read object ; do
 
 	obj="`basename \"$object\"`"
@@ -418,7 +419,7 @@ EOF
 	    bot_count=`expr $bot_count + 1`
 	fi
 
-	# print summary
+	# print result for this object
 	status=FAIL
 	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
 	    status=OK
@@ -435,9 +436,13 @@ EOF
     rm -f "$work"
     shift
 done
-end=`elapsed`
+end=`elapsed` # stop elapsed runtime timer
 $ECHO "%s" "-=-"
 
+# calculate summary statistics
+elp=`echo $begin $end | awk '{print $2-$1}'`
+nmg_fail=`echo $nmg_count $count | awk '{print $2-$1}'`
+bot_fail=`echo $bot_count $count | awk '{print $2-$1}'`
 if test $count -eq 0 ; then
     nmg_percent=0
     bot_percent=0
@@ -449,10 +454,8 @@ else
     rate=`echo $nmg_count $bot_count $count | awk '{print ($1+$2)/($3+$3)*100.0}'`
     avg=`echo $elp $count | awk '{print $1/$2}'`
 fi
-elp=`echo $begin $end | awk '{print $2-$1}'`
-nmg_fail=`echo $nmg_count $count | awk '{print $2-$1}'`
-bot_fail=`echo $bot_count $count | awk '{print $2-$1}'`
 
+# print summary
 $ECHO
 $ECHO "... Done."
 $ECHO
