@@ -104,8 +104,10 @@ IF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 	SET(TCL_INCLUDE_PATH "${TCL_INCLUDE_PATH}" CACHE STRING "Tcl include paths" FORCE)
 	SET(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define HAVE_TCL_H 1\n")
+	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_AUTO_PATH \"\"\n")
 ELSE(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 	BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
+	# We're going to need the auto_path info from the system tcl for btclsh and bwish
 	SET(autopath_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath\"
 set fileID [open $filename \"w\"]
@@ -115,7 +117,7 @@ exit
 ")
    SET(autopath_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath.tcl")
 	FILE(WRITE ${autopath_scriptfile} ${autopath_script})
-	EXEC_PROGRAM(${TCL_TCLSH} ARGS ${packagefind_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+	EXEC_PROGRAM(${TCL_TCLSH} ARGS ${autopath_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
    FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/tcl_autopath tcl_autopath)
 	FILE(APPEND ${CONFIG_H_FILE} "#define TCL_SYSTEM_AUTO_PATH \"${tcl_autopath}\"\n")
 ENDIF(BRLCAD_BUILD_LOCAL_TCL OR BRLCAD-ENABLE_ALL_LOCAL_LIBS)
