@@ -2931,8 +2931,17 @@ ON_BOOL32 ON_NurbsCurve::Split(
   if ( left_crv && !ON_NurbsCurve::Cast(left_crv) )
     return false;
   if ( right_crv && !ON_NurbsCurve::Cast(right_crv) )
-    return false;
-  if ( IsValid() && t > m_knot[m_order-2] && t < m_knot[m_cv_count-1] ) 
+    return false;    
+// 
+// the IsValid() check in the following condition causes surface splitting 
+// routines to fail on surface containing singularities. This problem has
+// been reported to the opennurbs folks who have identified this as a bug and 
+// have a fix that should be in the next release (Rhino 5.0).See thread at:
+//
+// http://news2.mcneel.com/scripts/dnewsweb.exe?utag=&group=opennurbs&xrelated=2342&cmd_related=View+thread
+// 
+// was:  if ( IsValid() && t > m_knot[m_order-2] && t < m_knot[m_cv_count-1] )
+  if ( t > m_knot[m_order-2] && t < m_knot[m_cv_count-1] )
   {
     ON_NurbsCurve* left = (ON_NurbsCurve*)left_crv;
     ON_NurbsCurve* right = (ON_NurbsCurve*)right_crv;
