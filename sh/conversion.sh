@@ -247,7 +247,7 @@ if test "x$HELP" = "x1" ; then
     echo ""
     echo "Available options:"
     echo "  GED=/path/to/geometry/editor (default mged)"
-    echo "  MAXTIME=#seconds (default 30)"
+    echo "  MAXTIME=#seconds (default 300)"
     echo ""
     echo "BRL-CAD is a powerful cross-platform open source solid modeling system."
     echo "For more information about BRL-CAD, see http://brlcad.org"
@@ -285,7 +285,7 @@ else
 fi
 
 ###
-# ensure variable is set to something #
+# ensure variable is set to something
 ###
 set_if_unset ( ) {
     set_if_unset_name="$1" ; shift
@@ -305,7 +305,7 @@ set_if_unset ( ) {
 
 # approximate maximum time in seconds that a given conversion is allowed to take
 set_if_unset GED mged
-set_if_unset MAXTIME 30
+set_if_unset MAXTIME 300
 
 # commands that this script expects, make sure we can find MGED
 MGED="`which $GED`"
@@ -318,6 +318,39 @@ if test ! -f "$MGED" ; then
     echo "Aborting."
     exit 1
 fi
+
+
+###
+# start a process clock
+###
+start_timer ( ) {
+    if test $# -ne 5 ; then
+	echo "INTERNAL ERROR: incorrect arugments to start_timer [$# != 5]"
+	exit
+    fi
+
+    sleep $MAXTIME && test "x`ps auxwww | grep "$3" | grep facetize | grep "${4}.${1}" | awk '{print $2}'`" != "x" && $ECHO "\t$2 conversion time limit exceeded: $5" && kill -9 `ps auxwww | grep "$3" | grep facetize | grep "${4}.${1}" | awk '{print $2}'`
+}
+
+
+###
+# stop the clock by killing the sleep process
+###
+stop_timer ( ) {
+
+    if test $# -lt 1 ; then
+	return
+    fi
+
+    for ppid in $* ; do
+	for pid in `ps xj | grep $ppid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+	    # must kill sleep children first or they can continue running orphaned
+	    kill $pid >/dev/null 2>&1
+	done
+	kill $ppid >/dev/null 2>&1
+    done
+    wait >/dev/null 2>&1
+}
 
 
 ################
@@ -378,7 +411,7 @@ EOF
 	fi
 
 	# start the limit timer
-	sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && $ECHO "\tNMG conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` >/dev/null 2>&1 &
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && $ECHO "\tNMG conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
         spid=$!
 
 	# convert NMG
@@ -386,8 +419,16 @@ EOF
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
-        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid >/dev/null 2>&1
-        wait $spid >/dev/null 2>&1
+
+	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+	    # must kill sleep children first or they can continue running orphaned
+	    kill $pid >/dev/null 2>&1
+	    wait $pid >/dev/null 2>&1
+	done
+	# must wait in order to suppress kill messages
+	kill -9 $spid >/dev/null 2>&1
+	wait $spid >/dev/null 2>&1
+
 	$VERBOSE_ECHO "$output"
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
@@ -397,18 +438,26 @@ EOF
 	    nmg=pass
 	    nmg_count=`expr $nmg_count + 1`
 	fi
-	
+
 	# start the limit timer
-	sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && $ECHO "\tBoT conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` >/dev/null 2>&1 &
-	spid=$!
+	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && $ECHO "\tBoT conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
+        spid=$!
 
 	# convert BoT
 	bot=FAIL
 	cmd="$GED -c "$work" facetize \"${obj}.bot\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
-        test "x`ps auxwww | grep $spid | grep -v grep`" != "x" && kill $spid >/dev/null 2>&1
-        wait $spid >/dev/null 2>&1
+
+	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
+	    # must kill sleep children first or they can continue running orphaned
+	    kill $pid >/dev/null 2>&1
+	    wait $pid >/dev/null 2>&1
+	done
+	# must wait in order to suppress kill messages
+	kill -9 $spid >/dev/null 2>&1
+	wait $spid >/dev/null 2>&1
+
 	$VERBOSE_ECHO "$output"
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
