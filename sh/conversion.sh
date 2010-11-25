@@ -377,7 +377,12 @@ EOF
 	    continue
 	fi
 
-	# start the limit timer
+	# start the limit timer.  this will kill the upcoming facetize
+	# job if more than MAXTIME seconds have elapsed.  in order for
+	# this to work while still ECHO'ing a message and without
+	# leaving orphaned 'sleep' processes that accumualte, this
+	# method had to be executed in the current shell environment.
+
 	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && $ECHO "\tNMG conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
         spid=$!
 
@@ -386,6 +391,12 @@ EOF
 	cmd="$GED -c "$work" facetize -n \"${obj}.nmg\" \"${obj}\""
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
+
+	# stop the limit timer.  when we get here, see if there is a
+	# sleep process still running.  if any found, the sleep
+	# proceses are killed and waited for so that we successfully
+	# avoid the parent shell reporting a "Terminated" process kill
+	# message.
 
 	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
 	    # must kill sleep children first or they can continue running orphaned
@@ -406,7 +417,7 @@ EOF
 	    nmg_count=`expr $nmg_count + 1`
 	fi
 
-	# start the limit timer
+	# start the limit timer, same as above.
 	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && $ECHO "\tBoT conversion time limit exceeded: $file:$object" && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
         spid=$!
 
@@ -416,6 +427,7 @@ EOF
 	$VERBOSE_ECHO "\$ $cmd"
 	output=`eval time $cmd 2>&1 | grep -v Using`
 
+	# stop the limit timer, same as above.
 	for pid in `ps xj | grep $spid | grep sleep | grep -v grep | awk '{print $2}'` ; do
 	    # must kill sleep children first or they can continue running orphaned
 	    kill $pid >/dev/null 2>&1
