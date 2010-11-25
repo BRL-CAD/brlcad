@@ -320,39 +320,6 @@ if test ! -f "$MGED" ; then
 fi
 
 
-###
-# start a process clock
-###
-start_timer ( ) {
-    if test $# -ne 5 ; then
-	echo "INTERNAL ERROR: incorrect arugments to start_timer [$# != 5]"
-	exit
-    fi
-
-    sleep $MAXTIME && test "x`ps auxwww | grep "$3" | grep facetize | grep "${4}.${1}" | awk '{print $2}'`" != "x" && $ECHO "\t$2 conversion time limit exceeded: $5" && kill -9 `ps auxwww | grep "$3" | grep facetize | grep "${4}.${1}" | awk '{print $2}'`
-}
-
-
-###
-# stop the clock by killing the sleep process
-###
-stop_timer ( ) {
-
-    if test $# -lt 1 ; then
-	return
-    fi
-
-    for ppid in $* ; do
-	for pid in `ps xj | grep $ppid | grep sleep | grep -v grep | awk '{print $2}'` ; do
-	    # must kill sleep children first or they can continue running orphaned
-	    kill $pid >/dev/null 2>&1
-	done
-	kill $ppid >/dev/null 2>&1
-    done
-    wait >/dev/null 2>&1
-}
-
-
 ################
 # start output #
 ################
