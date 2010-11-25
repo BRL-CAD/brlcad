@@ -1235,7 +1235,6 @@ bn_isect_line3_line3(fastf_t *t,
     int parallel = 0;
     int colinear = 0;
 
-
     BN_CK_TOL(tol);
 
     if (NEAR_ZERO(MAGSQ(c), VUNITIZE_TOL) || NEAR_ZERO(MAGSQ(d), VUNITIZE_TOL)) {
@@ -1254,11 +1253,12 @@ bn_isect_line3_line3(fastf_t *t,
 
     VCROSS(n, d, c);
     det = VDOT(n, p) - VDOT(n, a);
-    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+
+    if (!NEAR_ZERO(det, 1.0e-10)) {
 	return -1; /* no intersection, lines not in same plane */
     }
 
-    if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+    if (NEAR_ZERO(MAGSQ(n), 1.0e-19)) {
 	/* lines are parallel, must find another way to get normal vector */
 	vect_t a_to_p;
 
@@ -1266,7 +1266,7 @@ bn_isect_line3_line3(fastf_t *t,
 	VSUB2(a_to_p, p, a);
 	VCROSS(n, a_to_p, d);
 
-	if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+	if (NEAR_ZERO(MAGSQ(n), 1.0e-19)) {
 	    /* lines are parallel and colinear */
 
             colinear = 1;
@@ -1274,7 +1274,7 @@ bn_isect_line3_line3(fastf_t *t,
 	}
     }
 
-    if (NEAR_ZERO(MAGSQ(n), VUNITIZE_TOL)) {
+    if (NEAR_ZERO(MAGSQ(n), 1.0e-19)) {
 	bu_bomb("bn_isect_line3_line3(): ortho vector zero magnitude\n"); 
     }
 
@@ -1370,11 +1370,9 @@ bn_isect_line3_line3(fastf_t *t,
      */
     VSUB2(h, a, p);
     det = c[q] * d[r] - d[q] * c[r];
-    det1 = (c[q] * h[r] - h[q] * c[r]);		/* see below */
-    /* XXX This should be no smaller than 1e-16.  See
-     * bn_isect_line2_line2 for details.
-     */
-    if (NEAR_ZERO(det, DETERMINANT_TOL)) {
+    det1 = (c[q] * h[r] - h[q] * c[r]);
+
+    if (NEAR_ZERO(det, 1.0e-10)) {
 	/* Lines are parallel */
 	if (!colinear || !NEAR_ZERO(det1, DETERMINANT_TOL)) {
 	    return -2;	/* parallel, not colinear, no intersection */
@@ -1420,15 +1418,9 @@ bn_isect_line3_line3(fastf_t *t,
 
     /* Check that these values of t and u satisfy the 3rd equation as
      * well!
-     *
-     * XXX It isn't clear that "det" is exactly a model-space
-     * distance.
      */
     det = *t * d[s] - *u * c[s] - h[s];
-    if (!NEAR_ZERO(det, SMALL_FASTF)) {
-	/* XXX This tolerance needs to be much less loose than
-	 * SQRT_SMALL_FASTF.  What about DETERMINANT_TOL?
-	 */
+    if (!NEAR_ZERO(det, 1.0e-23)) {
 	/* Inconsistent solution, lines miss each other */
 	return -1;
     }
@@ -2244,15 +2236,16 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
     }
 
     dot = VDOT(a, b);
+
     VSCALE(pt_a, a, a[3]);
     VSCALE(pt_b, b, b[3]);
 
-    if (NEAR_ZERO(dot, SMALL_FASTF)) {
+    if (NEAR_ZERO(dot, 1.0e-8)) {
 	return 0; /* planes are perpendicular */
     }
 
-    /* parallel is when dot is within SMALL_FASTF of either -1 or 1 */
-    if ((dot <= -SMALL_FASTF) ? (NEAR_ZERO(dot + 1.0, SMALL_FASTF)) : (NEAR_ZERO(dot - 1.0, SMALL_FASTF))) {
+    /* parallel is when dot is within 4.5e-16 of either -1 or 1 */
+    if ((dot <= -SMALL_FASTF) ? (NEAR_ZERO(dot + 1.0, 4.5e-16)) : (NEAR_ZERO(dot - 1.0, 4.5e-16))) {
 	if (bn_pt3_pt3_equal(pt_a, pt_b, tol)) {
 	    /* test for coplanar */
 	    if (dot >= SMALL_FASTF) {
