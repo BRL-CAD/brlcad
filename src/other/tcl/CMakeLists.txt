@@ -617,9 +617,6 @@ SET(TCL_OSX_SRCS
 )
 
 SET(TCL_WIN_SRCS
-	win/cat.c
-	win/nmakehlp.c
-	win/stub16.c
 	win/tclAppInit.c
 	win/tclWin32Dll.c
 	win/tclWinChan.c
@@ -635,7 +632,6 @@ SET(TCL_WIN_SRCS
 	win/tclWinReg.c
 	win/tclWinSerial.c
 	win/tclWinSock.c
-	win/tclWinTest.c
 	win/tclWinThrd.c
 	win/tclWinTime.c
 )
