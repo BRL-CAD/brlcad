@@ -499,6 +499,7 @@ $ECHO
 $ECHO "Elapsed:  %d seconds" $elp
 $ECHO "Average:  %.1f seconds per object" $avg
 $ECHO
+$ECHO "Finished running $THIS on `date`"
 $ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Conversion testing complete."
 
