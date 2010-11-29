@@ -424,9 +424,10 @@ rt_bot_free(register struct soltab *stp)
     register struct bot_specific *bot =
 	(struct bot_specific *)stp->st_specific;
 
-    if (bot->tie != NULL)
+    if (bot->tie != NULL) {
 	bottie_free_double(bot->tie);
-    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
+	bot->tie = NULL;
+    } if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	rt_bot_free_float(bot);
     } else {
 	rt_bot_free_double(bot);
