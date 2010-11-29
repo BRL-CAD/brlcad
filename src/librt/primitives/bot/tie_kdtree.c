@@ -927,6 +927,8 @@ void TIE_VAL(tie_kdtree_prep)(tie_t *tie)
 	    bu_free (((tie_geom_t *)(tie->kdtree->data))->tri_list, "freeing tri list");
     }
 
+    VMOVE(tie->amin, tie->min.v);
+    VMOVE(tie->amax, tie->max.v);
 /*
  * Compute Floating Fuzz Precision Value
  * For now, take largest dimension as basis for TIE_PREC

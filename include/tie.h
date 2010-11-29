@@ -139,7 +139,7 @@ typedef struct tie_s {
     unsigned int kdmethod;		/* Optimal or Fast */
     /* all tfloat altered stuff should be at the end. */
     TIE_3 min, max;
-    vect_t mid;
+    vect_t amin, amax, mid;
     fastf_t radius;
 #if TIE_PRECISION == 0
     tfloat _pad[6];	/* so both float and double variants are the same size. */
