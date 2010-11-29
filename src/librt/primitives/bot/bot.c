@@ -204,7 +204,7 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
-    if (bot_ip->tie != NULL)
+    if ( bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED )
 	return bottie_prep_double(stp, bot_ip, rtip);
     else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS)
 	return rt_bot_prep_float(stp, bot_ip, rtip);
@@ -427,7 +427,9 @@ rt_bot_free(register struct soltab *stp)
     if (bot->tie != NULL) {
 	bottie_free_double(bot->tie);
 	bot->tie = NULL;
-    } if (bot->bot_flags & RT_BOT_USE_FLOATS) {
+    }
+
+    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
 	rt_bot_free_float(bot);
     } else {
 	rt_bot_free_double(bot);
@@ -984,27 +986,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	bip->num_face_normals = 0;
     }
 
-    /* alloc bip->tie and fill it in if reasonabe.
-     * do not ignore original, need it for plot 'n stuff. */
     bip->tie = NULL;
-    /* without known winding or normals, we cannot use tie. */
-    if ( bip->face_normals == NULL && bip->orientation == RT_BOT_UNORIENTED )
-	return 0;
-    {
-	int i;
-
-	bip->tie = bottie_allocn_double(bip->num_faces);
-
-	for(i=0;i< bip->num_faces; i++) {
-	    fastf_t *v[3];
-
-	    v[0] = &bip->vertices[bip->faces[i*3+0]*3];
-	    v[1] = &bip->vertices[bip->faces[i*3+1]*3];
-	    v[2] = &bip->vertices[bip->faces[i*3+2]*3];
-	    bottie_push_double((struct tie_s *)bip->tie, v, 1, i, 0);
-	}
-    }
-    /* prep will wire the engine to bot_specific */
 
     return 0;			/* OK */
 }
@@ -1288,6 +1270,9 @@ rt_bot_ifree2(struct rt_bot_internal *bot_ip)
 {
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
+
+    if (bot_ip->tie)
+	bot_ip->tie = NULL;
 
     if (bot_ip->vertices) {
 	bu_free(bot_ip->vertices, "BOT vertices");

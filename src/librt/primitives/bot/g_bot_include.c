@@ -379,8 +379,6 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
      * -c "set rt_bot_minpieces=0"
      */
 
-    bot->tie = bot_ip->tie;
-
     return 0;
 }
 

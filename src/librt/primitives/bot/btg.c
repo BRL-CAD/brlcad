@@ -61,6 +61,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     struct tie_s *tie;
     struct bot_specific *bot;
     point_t p;
+    int i;
 
     RT_BOT_CK_MAGIC(bot_ip);
 
@@ -69,10 +70,19 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     bot->bot_mode = bot_ip->mode;
     bot->bot_orientation = bot_ip->orientation;
     bot->bot_flags = bot_ip->bot_flags;
-    bot->tie = bot_ip->tie;
-    tie = bot_ip->tie;
 
-    tie_prep1((struct tie_s *)bot_ip->tie);
+    tie = bot_ip->tie = bot->tie = bottie_allocn_double(bot_ip->num_faces);
+
+    for(i=0;i< bot_ip->num_faces; i++) {
+	fastf_t *v[3];
+
+	v[0] = &bot_ip->vertices[bot_ip->faces[i*3+0]*3];
+	v[1] = &bot_ip->vertices[bot_ip->faces[i*3+1]*3];
+	v[2] = &bot_ip->vertices[bot_ip->faces[i*3+2]*3];
+	bottie_push_double((struct tie_s *)tie, v, 1, i, 0);
+    }
+
+    tie_prep1((struct tie_s *)bot->tie);
 
     VMOVE(stp->st_min, tie->min.v);
     VMOVE(stp->st_max, tie->max.v);
