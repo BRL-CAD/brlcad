@@ -590,10 +590,10 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 
 	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
 	    TRACE1("R:"<<ON_PRINT2(Rcurr));
-	    found = true; break;
-	} else if (d > Dlast) {
-	    found = false;
+	    found = true;
 	    break;
+	} else if (d < BREP_INTERSECTION_ROOT_SETTLE) {
+	    found = true;
 	}
 	brep_newton_iterate(pr, Rcurr, su, sv, nuv, new_uv);
 
@@ -636,8 +636,10 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 	ray.m_dir.Reverse();
 	brep_get_plane_ray(ray, pr);
 
+	if (d <  Dlast) {
 	move(nuv, new_uv);
 	Dlast = d;
+	}
     }
     if (found) {
 	uv.x = nuv[0];
