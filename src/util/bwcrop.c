@@ -43,11 +43,11 @@
 #define MAXBUFBYTES 1024*1024	/* max bytes to malloc in buffer space */
 
 unsigned char *buffer;
-int scanlen;			/* length of infile scanlines */
-int buflines;			/* Number of lines held in buffer */
+size_t scanlen;			/* length of infile scanlines */
+size_t buflines;		/* Number of lines held in buffer */
 int buf_start = -1000;		/* First line in buffer */
 
-float xnum, ynum;			/* Number of pixels in new file */
+float xnum, ynum;		/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
 
 FILE *ifp, *ofp;
@@ -63,12 +63,12 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int scanlen)
+init_buffer(int len)
 {
     int max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / scanlen;
+    max = MAXBUFBYTES / len;
 
     /*
      * Do a max of 512.  We really should see how big
@@ -78,7 +78,7 @@ init_buffer(int scanlen)
     if (max > 512) max = 512;
 
     buflines = max;
-    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
 }
 
 
@@ -101,7 +101,7 @@ int
 main(int argc, char **argv)
 {
     float row, col, x1, y1, x2, y2, x, y;
-    int yindex;
+    size_t yindex;
     char value;
 
     if (argc < 3) {
@@ -127,9 +127,11 @@ main(int argc, char **argv)
 	llx = atoi(argv[12]);
 	lly = atoi(argv[13]);
     } else {
+	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");
-	scanf("%d", &scanlen);
+	scanf("%lu", &len);
+	scanlen = len;
 	if (scanlen <= 0) {
 	    bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen);
 	}
@@ -172,7 +174,7 @@ main(int argc, char **argv)
 
 	    /* Make sure we are in the buffer */
 	    yindex = round(y) - buf_start;
-	    if (yindex < 0 || yindex >= buflines) {
+	    if (yindex >= buflines) {
 		fill_buffer(round(y));
 		yindex = round(y) - buf_start;
 	    }

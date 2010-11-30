@@ -39,19 +39,19 @@ static int encapsulated = 0;	/* encapsulated postscript */
 static int center = 0;		/* center output on 8.5 x 11 page */
 static int landscape = 0;		/* landscape mode */
 
-static int width = 512;		/* input size in pixels */
-static int height = 512;
+static size_t width = 512;		/* input size in pixels */
+static size_t height = 512;
 static double outwidth;		/* output image size in inches */
 static double outheight;
-static int xpoints;		/* output image size in points */
-static int ypoints;
-static int pagewidth = 612;	/* page size in points - 8.5 inches */
-static int pageheight = 792;	/* 11 inches */
+static size_t xpoints;		/* output image size in points */
+static size_t ypoints;
+static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
+static size_t pageheight = 792;	/* 11 inches */
 
 static char *file_name;
 static FILE *infp;
 
-void prolog(FILE *fp, char *name, int width, int height);
+void prolog(FILE *fp, char *name, int w, int h);
 void postlog(FILE *fp);
 
 static char usage[] = "\
@@ -133,9 +133,9 @@ int
 main(int argc, char **argv)
 {
     FILE *ofp = stdout;
-    int num = 0;
-    int scans_per_patch, bytes_per_patch;
-    int y;
+    size_t num = 0;
+    size_t scans_per_patch, bytes_per_patch;
+    size_t y;
 
     outwidth = outheight = DEFAULT_SIZE;
 
@@ -161,7 +161,7 @@ main(int argc, char **argv)
     for (y = 0; y < height; y += scans_per_patch) {
 	/* start a patch */
 	fprintf(ofp, "save\n");
-	fprintf(ofp, "%d %d 8 [%d 0 0 %d 0 %d] {<\n ",
+	fprintf(ofp, "%ld %ld 8 [%ld 0 0 %ld 0 %ld] {<\n ",
 		width, scans_per_patch,		/* patch size */
 		width, height,			/* total size = 1.0 */
 		-y);				/* patch y origin */
@@ -185,7 +185,7 @@ main(int argc, char **argv)
 
 
 void
-prolog(FILE *fp, char *name, int width, int height)
+prolog(FILE *fp, char *name, int w, int h)
 
 
     /* in points */
@@ -207,7 +207,7 @@ prolog(FILE *fp, char *name, int width, int height)
 	fputs("%%Creator: BRL-CAD bw-ps\n", fp);
 	fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime));
     }
-    fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", width, height);
+    fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", w, h);
     fputs("%%EndComments\n\n", fp);
 
     if (!encapsulated && landscape) {
@@ -216,15 +216,15 @@ prolog(FILE *fp, char *name, int width, int height)
 	pagewidth = pageheight;
 	pageheight = tmp;
 	fprintf(fp, "90 rotate\n");
-	fprintf(fp, "0 -%d translate\n", pageheight);
+	fprintf(fp, "0 -%ld translate\n", pageheight);
     }
     if (!encapsulated && center) {
 	int xtrans, ytrans;
-	xtrans = (pagewidth - width)/2.0;
-	ytrans = (pageheight - height)/2.0;
+	xtrans = (pagewidth - w)/2.0;
+	ytrans = (pageheight - h)/2.0;
 	fprintf(fp, "%d %d translate\n", xtrans, ytrans);
     }
-    fprintf(fp, "%d %d scale\n\n", width, height);
+    fprintf(fp, "%d %d scale\n\n", w, h);
 }
 
 

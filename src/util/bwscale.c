@@ -177,12 +177,12 @@ fill_buffer(int y)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int scanlen)
+init_buffer(int len)
 {
     int max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / scanlen;
+    max = MAXBUFBYTES / len;
 
     /*
      * XXX We really should see how big
@@ -193,7 +193,7 @@ init_buffer(int scanlen)
 
     buflines = max;
     buf_start = (-buflines);
-    buffer = (unsigned char *)bu_calloc(buflines, scanlen, "buffer");
+    buffer = (unsigned char *)bu_calloc(buflines, len, "buffer");
 }
 
 

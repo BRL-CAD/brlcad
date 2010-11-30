@@ -325,7 +325,8 @@ main(int argc, char **argv)
 	for (y = 0; y < y3; y++)
 	    fwrite(black, scr_width, 3, stdout);
     }
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 
