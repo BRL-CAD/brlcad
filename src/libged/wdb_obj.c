@@ -1037,6 +1037,9 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    Tcl_AppendResult(interp, "comb", (char *)NULL);
 	    break;
+	case DB5_MINORTYPE_BRLCAD_BREP:
+	    Tcl_AppendResult(interp, "brep", (char *)NULL);
+	    break;
 	default:
 	    Tcl_AppendResult(interp, "other", (char *)NULL);
 	    break;
