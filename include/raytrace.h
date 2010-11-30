@@ -1669,11 +1669,11 @@ struct application_bundle
  * of how many different models are being worked on
  */
 struct rt_g {
-    int			debug;		/**< @brief  !0 for debug, see librt/debug.h */
+    uint32_t		debug;		/**< @brief  !0 for debug, see librt/debug.h */
     /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
-    int			rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
+    int8_t		rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
     struct bu_list	rtg_vlfree;	/**< @brief  head of bn_vlist freelist */
-    int			NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
+    uint32_t		NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
     struct rt_wdb	rtg_headwdb;	/**< @brief  head of database object list */
 };
 RT_EXPORT extern struct rt_g rt_g;
