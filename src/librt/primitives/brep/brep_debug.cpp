@@ -158,6 +158,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
     VSETALL(min, 0.0);
 
     ON_TextLog tl(stderr);
+
     vhead = rt_vlblock_find(vbp, RED);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
     vhead = rt_vlblock_find(vbp, BLUE);
@@ -182,6 +183,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 	}
 	BB_PLOT_VLIST(min, max);
     }
+
     return;
 }
 
@@ -197,6 +199,7 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
     VSETALL(min, 0.0);
 
     ON_TextLog tl(stderr);
+
     vhead = rt_vlblock_find(vbp, RED);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
     vhead = rt_vlblock_find(vbp, BLUE);
@@ -222,6 +225,7 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 	}
 	BB_PLOT_VLIST(min, max);
     }
+
     return;
 }
 
@@ -320,6 +324,7 @@ plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d)
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
+
     vhead = rt_vlblock_find(vbp, YELLOW);
 
     surf->GetDomain(0, &umin, &umax);
@@ -347,6 +352,7 @@ plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d)
 	    }
 	}
     }
+
     return;
 }
 
@@ -361,6 +367,7 @@ plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
+
     vhead = rt_vlblock_find(vbp, YELLOW);
 
     surf->GetDomain(0, &umin, &umax);
@@ -386,6 +393,7 @@ plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 	    }
 	}
     }
+
     return;
 }
 
@@ -401,6 +409,7 @@ plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp)
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
+
     vhead = rt_vlblock_find(vbp, RED);
 
     surf->GetDomain(0, &umin, &umax);
@@ -449,6 +458,7 @@ plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
+
     vhead = rt_vlblock_find(vbp, YELLOW);
 
     surf->GetDomain(0, &umin, &umax);
@@ -475,6 +485,7 @@ plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
 }
 
 
+
 void
 plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 {
@@ -485,6 +496,7 @@ plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
+
     vhead = rt_vlblock_find(vbp, GREEN);
 
     surf->GetDomain(0, &umin, &umax);
@@ -530,6 +542,7 @@ plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 	    }
 	}
     }
+
     return;
 }
 
@@ -598,6 +611,40 @@ plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
     return;
 }
 
+void
+plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp)
+{
+    register struct bu_list *vhead;
+    double pt1[3], pt2[3];
+    ON_2dPoint from, to;
+	int spanu_cnt = surf.SpanCount(0);
+	int spanv_cnt = surf.SpanCount(1);
+	double *spanu = NULL;
+	double *spanv = NULL;
+	spanu = new double[spanu_cnt+1];
+	spanv = new double[spanv_cnt+1];
+	surf.GetSpanVector(0,spanu);
+	surf.GetSpanVector(1,spanv);
+
+    vhead = rt_vlblock_find(vbp, YELLOW);
+
+    ON_Interval udom = surf.Domain(0);
+    ON_Interval vdom = surf.Domain(1);
+
+    for (int u = 0; u <= spanu_cnt; u++) {
+	for (int v = 0; v <= spanv_cnt; v++) {
+	    ON_3dPoint p = surf.PointAt(spanu[u], spanv[v]);
+	    ON_3dVector n = surf.NormalAt(spanu[u], spanv[v]);
+	    n.Unitize();
+	    VMOVE(pt1, p);
+	    VSCALE(pt2, n, 3.0);
+	    VADD2(pt2, pt1, pt2);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+    }
+    return;
+}
 
 void
 plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres)
@@ -867,9 +914,11 @@ brep_face_info(struct brep_specific* bs, struct bu_vls *vls, int fi)
 
 
 int
-brep_facetrim_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -892,14 +941,18 @@ brep_facetrim_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_int
 	    plottrim(face, vbp, plotres, dim3d);
 	}
     }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
 }
 
 
 int
-brep_trim_direction_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
+brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -918,14 +971,18 @@ brep_trim_direction_plot(struct bu_vls *, struct brep_specific* bs, struct rt_br
 	    plottrimdirection(face, vbp, plotres);
 	}
     }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
 }
 
 
 int
-brep_surface_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
+brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -942,14 +999,18 @@ brep_surface_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_inte
 	plotsurface(*surf, vbp, plotres, 10);
     }
 
+    bu_vls_printf(vls, ON_String(wstr).Array());
+
     return 0;
 }
 
 
 int
-brep_surface_normal_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int)
+brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -958,22 +1019,53 @@ brep_surface_normal_plot(struct bu_vls *, struct brep_specific* bs, struct rt_br
     if (index == -1) {
 	for (index = 0; index < brep->m_S.Count(); index++) {
 	    ON_Surface *surf = brep->m_S[index];
-	    plotsurfacenormals(*surf, vbp, 10);
+	    plotsurfaceknots(*surf, vbp);
+	    plotsurfacenormals(*surf, vbp, plotres);
 	}
     } else if (index < brep->m_S.Count()) {
 	ON_Surface *surf = brep->m_S[index];
 	surf->Dump(tl);
-	plotsurfacenormals(*surf, vbp, 10);
+    plotsurfaceknots(*surf, vbp);
+	plotsurfacenormals(*surf, vbp, plotres);
     }
 
+    bu_vls_printf(vls, ON_String(wstr).Array());
+    return 0;
+}
+
+int
+brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index)
+{
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    ON_Brep* brep = bs->brep;
+    if (brep == NULL || !brep->IsValid(&tl)) {
+	bu_log("brep is NOT valid");
+	//return -1;
+    }
+    if (index == -1) {
+	for (index = 0; index < brep->m_S.Count(); index++) {
+	    ON_Surface *surf = brep->m_S[index];
+	    plotsurfaceknots(*surf, vbp);
+	}
+    } else if (index < brep->m_S.Count()) {
+	ON_Surface *surf = brep->m_S[index];
+	surf->Dump(tl);
+    plotsurfaceknots(*surf, vbp);
+    }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
 }
 
 
 int
-brep_edge3d_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
+brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -991,14 +1083,17 @@ brep_edge3d_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_inter
 	plotcurve(*curve, vbp, plotres);
     }
 
+    bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
 }
 
 
 int
-brep_trim_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1015,6 +1110,7 @@ brep_trim_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_interna
 	plottrim(trim, vbp, plotres, dim3d);
     }
 
+    bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
 }
 
@@ -1527,7 +1623,9 @@ plotFaceFromSurfaceTree(SurfaceTree* st, struct bn_vlblock *vbp, int isocurveres
 
 int brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-	ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
 	ON_Brep* brep = bs->brep;
 	if (brep == NULL || !brep->IsValid(&tl)) {
 		bu_log("brep is NOT valid");
@@ -1557,13 +1655,17 @@ int brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 			delete st;
 		}
 	}
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
 	return 0;
 }
 
 int
 brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, bool dim3d, int index, int)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1583,6 +1685,8 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 	    plotsurfaceleafs(st, vbp, dim3d);
 	}
     }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
 }
 
@@ -1590,7 +1694,9 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 int
 brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, bool dim3d, int index, int)
 {
-    ON_TextLog tl(stderr);
+	ON_wString wstr;
+    ON_TextLog tl(wstr);
+
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
@@ -1610,6 +1716,8 @@ brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep
 	    plottrimleafs(st, vbp, dim3d);
 	}
     }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
     return 0;
 }
 
@@ -1705,6 +1813,9 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	    } else if (strcmp(part, "SN") == 0) {
 		snprintf(commtag, 64, "_BC_SN_");
 		ret = brep_surface_normal_plot(vls, bs, bi, vbp, index, plotres);
+	    } else if (strcmp(part, "KN") == 0) {
+		snprintf(commtag, 64, "_BC_KN_");
+		ret = brep_surface_knot_plot(vls, bs, bi, vbp, index);
 	    } else if (strcmp(part, "F") == 0) {
 		snprintf(commtag, 64, "_BC_F_");
 		ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, true);
