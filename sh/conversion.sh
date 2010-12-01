@@ -137,7 +137,7 @@ elapsed ( ) {
 
     # this routine either reports the current time (in seconds)
 
-    elp=`date '+%Y %m %d %H %M %S' | awk '{print ($1*31622400) + (($2-1)*2678400) + (($3-1)*86400) + ($4*360) + ($5*60) + ($6)}'`
+    elp=`date '+%s'`
     echo $elp
     return
 }
@@ -452,7 +452,7 @@ EOF
 	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
 	    status=OK
 	fi
-	$ECHO "%s\tnmg: %s %s\tbot %s %s\t%s:%s" $status $nmg $real_nmg $bot $real_bot "$file" "$object"
+	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6ds %s:%s" $status $nmg $real_nmg $bot $real_bot $SECONDS "$file" "$object"
 	count=`expr $count + 1`
 
     done
