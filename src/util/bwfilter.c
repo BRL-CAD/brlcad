@@ -141,6 +141,7 @@ main(int argc, char **argv)
     int x, y;
     int value, r1, r2, r3;
     int max, min;
+    size_t ret;
 
     /* Select Default Filter (low pass) */
     select_filter("low");
@@ -162,9 +163,17 @@ main(int argc, char **argv)
     bottom = &line1[0];
     middle = &line2[0];
     top    = &line3[0];
-    fread(bottom, sizeof(char), width, infp);
-    fread(middle, sizeof(char), width, infp);
-    fwrite(bottom, sizeof(char), width, stdout);
+    ret = fread(bottom, sizeof(char), width, infp);
+    if (ret == 0)
+	perror("fread");
+
+    ret = fread(middle, sizeof(char), width, infp);
+    if (ret == 0)
+	perror("fread");
+
+    ret = fwrite(bottom, sizeof(char), width, stdout);
+    if (ret == 0)
+	perror("fwrite");
 
     if (verbose) {
 	for (x = 0; x < 11; x++)
@@ -176,7 +185,10 @@ main(int argc, char **argv)
 
     for (y = 1; y < height-1; y++) {
 	/* read in top line */
-	fread(top, sizeof(char), width, infp);
+	ret = fread(top, sizeof(char), width, infp);
+	if (ret == 0)
+	    perror("fread");
+
 	obuf[0] = middle[0];
 	/* Filter a line */
 	for (x = 1; x < width-1; x++) {
@@ -198,7 +210,10 @@ main(int argc, char **argv)
 		obuf[x] = value;
 	}
 	obuf[width-1] = middle[width-1];
-	fwrite(obuf, sizeof(char), width, stdout);
+	ret = fwrite(obuf, sizeof(char), width, stdout);
+	if (ret == 0)
+	    perror("fwrite");
+
 	/* Adjust row pointers */
 	temp = bottom;
 	bottom = middle;
@@ -206,7 +221,9 @@ main(int argc, char **argv)
 	top = temp;
     }
     /* write out last line untouched */
-    fwrite(top, sizeof(char), width, stdout);
+    ret = fwrite(top, sizeof(char), width, stdout);
+    if (ret == 0)
+	perror("fwrite");
 
     /* Give advise on scaling factors */
     if (verbose)

@@ -89,11 +89,15 @@ init_buffer(int len)
 void
 fill_buffer(int y)
 {
+    size_t ret;
+
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
     fseek(ifp, buf_start * scanlen, 0);
-    fread(buffer, scanlen, buflines, ifp);
+    ret = fread(buffer, scanlen, buflines, ifp);
+    if (ret == 0)
+	perror("fread");
 }
 
 
@@ -103,6 +107,7 @@ main(int argc, char **argv)
     float row, col, x1, y1, x2, y2, x, y;
     size_t yindex;
     char value;
+    size_t ret;
 
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
@@ -130,21 +135,37 @@ main(int argc, char **argv)
 	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");
-	scanf("%lu", &len);
+	ret = scanf("%lu", &len);
+	if (ret != 1)
+	    perror("scanf");
 	scanlen = len;
 	if (scanlen <= 0) {
 	    bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
-	scanf("%f%f", &xnum, &ynum);
+	ret = scanf("%f%f", &xnum, &ynum);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Upper left corner in input file (x, y)?: ");
-	scanf("%f%f", &ulx, &uly);
+	ret = scanf("%f%f", &ulx, &uly);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Upper right corner (x, y)?: ");
-	scanf("%f%f", &urx, &ury);
+	ret = scanf("%f%f", &urx, &ury);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Lower right (x, y)?: ");
-	scanf("%f%f", &lrx, &lry);
+	ret = scanf("%f%f", &lrx, &lry);
+	if (ret != 1)
+	    perror("scanf");
+
 	printf("Lower left (x, y)?: ");
-	scanf("%f%f", &llx, &lly);
+	ret = scanf("%f%f", &llx, &lly);
+	if (ret != 1)
+	    perror("scanf");
     }
 
     /* See how many lines we can buffer */
@@ -180,7 +201,9 @@ main(int argc, char **argv)
 	    }
 
 	    value = buffer[ yindex * scanlen + round(x) ];
-	    fwrite(&value, sizeof(value), 1, ofp);
+	    ret = fwrite(&value, sizeof(value), 1, ofp);
+	    if (ret == 0)
+		perror("fwrite");
 	}
     }
 

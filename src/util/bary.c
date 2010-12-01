@@ -143,7 +143,7 @@ main (int argc, char **argv)
     int normalize = 0;	/* Make all weights sum to one? */
     fastf_t *coeff;
     fastf_t x, y, z;
-    FILE *infp;
+    FILE *infp = NULL;
     struct bu_list site_list;
     struct bu_vls *tail_buf = 0;
     struct site *sp;

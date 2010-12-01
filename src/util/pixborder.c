@@ -564,7 +564,7 @@ main (int argc, char **argv)
 	|| (! read_row(inrow[next_row], file_width, infp)))
     {
 	perror(file_name);
-	(void) fprintf(stderr, "pixborder:  fread() error\n");
+	fprintf(stderr, "pixborder:  fread() error\n");
 	bu_exit (1, NULL);
     }
 

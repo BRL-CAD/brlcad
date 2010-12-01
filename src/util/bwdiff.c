@@ -71,6 +71,7 @@ main(int argc, char **argv)
 {
     unsigned char *p1, *p2, *op;
     int i, n, m;
+    size_t ret;
 
     while (argc > 3) {
 	if (strcmp(argv[1], "-m") == 0) {
@@ -180,7 +181,11 @@ main(int argc, char **argv)
 		}
 		break;
 	}
-	fwrite(&obuf[0], 1, n, stdout);
+	ret = fwrite(&obuf[0], 1, n, stdout);
+	if (ret == 0) {
+	    perror("fwrite");
+	    break;
+	}
     }
     return 0;
 }

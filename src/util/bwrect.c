@@ -43,6 +43,7 @@ main(int argc, char **argv)
     FILE *ifp, *ofp;
     int row;
     long offset;
+    size_t ret;
 
     if (argc < 3) {
 	bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
@@ -56,11 +57,19 @@ main(int argc, char **argv)
 
     /* Get info */
     printf("Area to extract (x, y) in pixels ");
-    scanf("%d%d", &xnum, &ynum);
+    ret = scanf("%d%d", &xnum, &ynum);
+    if (ret != 2)
+	perror("scanf");
+
     printf("Origin to extract from (0, 0 is lower left) ");
-    scanf("%d%d", &xorig, &yorig);
+    ret = scanf("%d%d", &xorig, &yorig);
+    if (ret != 2)
+	perror("scanf");
+
     printf("Scan line length of input file ");
-    scanf("%d", &linelen);
+    ret = scanf("%d", &linelen);
+    if (ret != 1) {
+	perror("scanf");
 
     buf = (char *)bu_malloc(xnum, "buffer");
 
@@ -68,8 +77,17 @@ main(int argc, char **argv)
     for (row = 0+yorig; row < ynum+yorig; row++) {
 	offset = row * linelen + xorig;
 	fseek(ifp, offset, 0);
-	fread(buf, sizeof(*buf), xnum, ifp);
-	fwrite(buf, sizeof(*buf), xnum, ofp);
+	ret = fread(buf, sizeof(*buf), xnum, ifp);
+	if (ret == 0) {
+	    perror("fread");
+	    break;
+	}
+
+	ret = fwrite(buf, sizeof(*buf), xnum, ofp);
+	if (ret == 0) {
+	    perror("fwrite");
+	    break;
+	}
     }
 
     bu_free(buf, "buffer");
