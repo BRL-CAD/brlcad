@@ -44,11 +44,10 @@
 int
 main(int argc, char **argv)
 {
-    int i, ret;
+    int ret;
     struct rt_wdb *fp;
     struct directory *dp;
     struct rt_db_internal ip;
-    struct rt_ell_internal *eip;
     struct pc_pc_set pcs;
 
     point_t cent;

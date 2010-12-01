@@ -37,6 +37,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 
 unsigned char ibuf[3*1024], obuf[1024];
@@ -118,17 +119,17 @@ main(int argc, char **argv)
     }
 
     /* Hack for multiple color planes */
-    if (red + green + blue > 1 || rweight != 0.0 || gweight != 0.0 || bweight != 0.0)
+    if (red + green + blue > 1 || !NEAR_ZERO(rweight, SMALL_FASTF) || !NEAR_ZERO(gweight, SMALL_FASTF) || !NEAR_ZERO(bweight, SMALL_FASTF))
 	multiple_colors = 1;
     else
 	multiple_colors = 0;
 
     num_color_planes = red + green + blue;
-    if (red != 0 && rweight == 0.0)
+    if (red != 0 && NEAR_ZERO(rweight, SMALL_FASTF))
 	rweight = 1.0 / (double)num_color_planes;
-    if (green != 0 && gweight == 0.0)
+    if (green != 0 && NEAR_ZERO(gweight, SMALL_FASTF))
 	gweight = 1.0 / (double)num_color_planes;
-    if (blue != 0 && bweight == 0.0)
+    if (blue != 0 && NEAR_ZERO(bweight, SMALL_FASTF))
 	bweight = 1.0 / (double)num_color_planes;
 
     clip_high = clip_low = 0;

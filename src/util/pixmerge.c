@@ -93,7 +93,7 @@ get_args(int argc, char **argv)
 		break;
 	    case 'w':
 		c = atoi(bu_optarg);
-		if (c > 1 && c < sizeof(pconst))
+		if (c > 1 && c < (int)sizeof(pconst))
 		    width = c;
 		break;
 	    case 'C':
@@ -258,7 +258,8 @@ main(int argc, char **argv)
     }
     fprintf(stderr, "pixmerge: %ld foreground, %ld background\n",
 	    fg_cnt, bg_cnt);
-    bu_exit (0, NULL);
+
+    return 0;
 }
 
 

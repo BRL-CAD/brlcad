@@ -39,6 +39,9 @@ main(int argc, char *argv[])
     bn_complex_t roots[4]; /* stash up to four roots */
     int num_roots;
 
+    if (argc > 1)
+	bu_exit(1, "%s: unexpected argument(s)\n", argv[0]);
+
     /*********************************************
      * Linear polynomial (1st degree equation):
      *  A*X + B = 0

@@ -66,8 +66,9 @@ main(int argc, char **argv)
     int rwgt, gwgt, bwgt;
     int rt, gt, bt;
     int n;
-    int nby;
+    size_t nby;
     unsigned char *cp;
+    size_t ret;
 
     if (argc != 2) {
 	bu_exit(1, "Usage: pixsaturate saturation\n");
@@ -80,7 +81,7 @@ main(int argc, char **argv)
 
     while ((nby = fread(buf, 1, sizeof(buf), stdin)) > 0) {
 	cp = (unsigned char *)buf;
-	for (n = nby; n > 0; n -= 3) {
+	for (n = (int)nby; n > 0; n -= 3) {
 	    rt = cp[0];
 	    gt = cp[1];
 	    bt = cp[2];
@@ -95,7 +96,8 @@ main(int argc, char **argv)
 	    *cp++ = gt;
 	    *cp++ = bt;
 	}
-	if (fwrite(buf, 1, nby, stdout) != nby) {
+	ret = fwrite(buf, 1, nby, stdout);
+	if (ret != nby) {
 	    perror("fwrite");
 	    return 1;
 	}
