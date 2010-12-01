@@ -68,7 +68,7 @@ main(int argc, char **argv)
 
     printf("Scan line length of input file ");
     ret = scanf("%d", &linelen);
-    if (ret != 1) {
+    if (ret != 1)
 	perror("scanf");
 
     buf = (char *)bu_malloc(xnum, "buffer");

@@ -235,7 +235,7 @@ main(int argc, char **argv)
     ret = fread((char *)&hdr, sizeof(hdr), 1, infp);
     if (ret == 0) {
 	perror("fread");
-	break;
+	bu_exit (1, NULL);
     }
 
     /* x and y are in terms of 1st quadrant coordinates */

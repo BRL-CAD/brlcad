@@ -119,6 +119,7 @@ main(int argc, char **argv)
     struct uplot *up;
     int desired_frame = 0;
     int current_frame = 0;
+    size_t ret;
 
     while (argc > 1) {
 	if (strcmp(argv[1], "-v") == 0) {
