@@ -452,9 +452,9 @@ EOF
 	if test "x$nmg" = "xpass" && test "x$bot" = "xpass" ; then
 	    status=OK
 	fi
-	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6ds %s:%s" $status $nmg $real_nmg $bot $real_bot $SECONDS "$file" "$object"
-	count=`expr $count + 1`
 
+	count=`expr $count + 1`
+	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6lds %*s%ld %s:%s" $status $nmg $real_nmg $bot $real_bot $SECONDS \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
     done
 
     # restore stdin
