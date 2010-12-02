@@ -1434,7 +1434,7 @@ struct resource {
     struct directory *	re_directory_hd;
     struct bu_ptbl	re_directory_blocks;	/**< @brief  Table of malloc'ed blocks */
 };
-RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/shoot.c */
+RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
