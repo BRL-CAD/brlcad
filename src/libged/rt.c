@@ -129,9 +129,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp,
-						       vp,
-						       &gedp->ged_gdp->gd_rt_cmd[args]);
+	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
@@ -144,6 +142,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
     (void)_ged_run_rt(gedp);
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
+    gedp->ged_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
 }
@@ -509,9 +508,7 @@ ged_count_tops(struct ged *gedp)
  * Build a command line vector of the tops of all objects in view.
  */
 int
-ged_build_tops(struct ged *gedp,
-	       char **start,
-	       char **end)
+ged_build_tops(struct ged *gedp, char **start, char **end)
 {
     struct ged_display_list *gdlp;
     char **vp = start;

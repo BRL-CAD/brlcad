@@ -95,7 +95,7 @@ fd_set readfds;
 int polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 
 void
-unsnooze(int x)
+unsnooze(int UNUSED(x))
 {
     bu_exit(1, "\007dunnsnap: request timed out, aborting\n");
 }

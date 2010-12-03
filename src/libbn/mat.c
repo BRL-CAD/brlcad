@@ -266,8 +266,11 @@ void
 bn_mat_inv(register mat_t output, const mat_t input)
 {
     if (bn_mat_inverse(output, input) == 0) {
-	bu_log("bn_mat_inv:  error!");
-	bn_mat_print("singular matrix", input);
+
+	if (bu_debug & BU_DEBUG_MATH) {
+	    bu_log("bn_mat_inv:  error!");
+	    bn_mat_print("singular matrix", input);
+	}
 	bu_bomb("bn_mat_inv: singular matrix\n");
 	/* NOTREACHED */
     }
@@ -1325,9 +1328,10 @@ bn_mat_ck(const char *title, const mat_t m)
 	|| !NEAR_ZERO(fz, 0.00001)
 	|| NEAR_ZERO(m[15], VDIVIDE_TOL))
     {
-	bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n",
-	       title, fx, fy, fz, m[15]);
-	bn_mat_print("bn_mat_ck() bad matrix", m);
+	if (bu_debug & BU_DEBUG_MATH) {
+	    bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n", title, fx, fy, fz, m[15]);
+	    bn_mat_print("bn_mat_ck() bad matrix", m);
+	}
 
 	if (bu_debug & (BU_DEBUG_MATH | BU_DEBUG_COREDUMP)) {
 	    bu_debug |= BU_DEBUG_COREDUMP;

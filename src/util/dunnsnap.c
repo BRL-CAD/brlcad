@@ -156,12 +156,14 @@ main(int argc, char **argv)
     }
     if (fbp != FBIO_NULL)
 	fb_close(fbp);
-    bu_exit (0, NULL);
+
+    return 0;
 
  bad:
     if (fbp != FBIO_NULL)
 	fb_close(fbp);
-    bu_exit (1, NULL);
+
+    return 1;
 }
 
 

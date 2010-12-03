@@ -52,8 +52,8 @@ char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
 
 int do_convert = 1;
 char *progname = "(noname)";
-unsigned xdim = 256;
-unsigned ydim = 256;
+size_t xdim = 256;
+size_t ydim = 256;
 
 double fbm_lacunarity = 2.1753974;		/* noise_lacunarity */
 double fbm_h = 1.0;
@@ -112,7 +112,7 @@ void
 func_fbm(unsigned short *buf)
 {
     point_t pt;
-    int x, y;
+    size_t x, y;
     vect_t t;
     double v;
 
@@ -145,7 +145,7 @@ void
 func_turb(unsigned short *buf)
 {
     point_t pt;
-    int x, y;
+    size_t x, y;
     vect_t t;
     double v;
 
@@ -181,7 +181,7 @@ void
 func_turb_up(short *buf)
 {
     point_t pt;
-    int x, y;
+    size_t x, y;
     vect_t t;
     double v;
 
@@ -218,7 +218,7 @@ void
 func_multi(short *buf)
 {
     point_t pt;
-    int x, y;
+    size_t x, y;
     vect_t t;
     double v;
     double min_V, max_V;
@@ -265,7 +265,7 @@ void
 func_ridged(unsigned short *buf)
 {
     point_t pt;
-    int x, y;
+    size_t x, y;
     vect_t t;
     double v;
     double lo, hi;
@@ -302,11 +302,11 @@ func_ridged(unsigned short *buf)
 #define PSCALE(_p, _s) _p[0] *= _s; _p[1] *= _s; _p[2] *= _s
 #define PCOPY(_d, _s) _d[0] = _s[0]; _d[1] = _s[1]; _d[2] = _s[2]
 double
-fiord(point_t point, double h, double lacunarity, double octaves, double offset)
+fiord(point_t point, double h, double lacunarity, double octaves)
 {
     int i = 0;
     point_t pt;
-    double weight, signal, freq, result;
+    double weight, sig, freq, result;
 
     if (debug) bu_log("fiord\n");
 
@@ -315,8 +315,8 @@ fiord(point_t point, double h, double lacunarity, double octaves, double offset)
     result = 0.0;
 
     do {
-	signal = fabs(bn_noise_perlin(pt)) * pow(freq, -h);
-	result += signal * weight;
+	sig = fabs(bn_noise_perlin(pt)) * pow(freq, -h);
+	result += sig * weight;
 	weight = result;
 	freq *= lacunarity;
 	PSCALE(pt, lacunarity);
@@ -327,11 +327,11 @@ fiord(point_t point, double h, double lacunarity, double octaves, double offset)
 
 
 double
-ice(point_t point, double h, double lacunarity, double octaves, double offset)
+ice(point_t point, double h, double lacunarity, double octaves)
 {
     int i = 0;
     point_t pt;
-    double weight, signal, freq, result;
+    double weight, sig, freq, result;
     static double lo = 10.0;
     static double hi = -10.0;
 
@@ -343,18 +343,18 @@ ice(point_t point, double h, double lacunarity, double octaves, double offset)
     result = 0.0;
 
     do {
-	signal = fabs(bn_noise_perlin(pt)) * pow(freq, -h);
+	sig = fabs(bn_noise_perlin(pt)) * pow(freq, -h);
 
-	if (signal < lo) {
-	    lo = signal;
+	if (sig < lo) {
+	    lo = sig;
 	    if (debug) bu_log("new low %g\n", lo);
 	}
-	if (signal > hi) {
-	    hi = signal;
+	if (sig > hi) {
+	    hi = sig;
 	    if (debug) bu_log("new high %g\n", hi);
 	}
 
-	result += signal * weight;
+	result += sig * weight;
 	weight -= result;
 	freq *= lacunarity;
 	PSCALE(pt, lacunarity);
@@ -365,11 +365,11 @@ ice(point_t point, double h, double lacunarity, double octaves, double offset)
 
 
 double
-lunar2(point_t point, double h, double lacunarity, double octaves, double offset)
+lunar2(point_t point, double h, double lacunarity, double octaves)
 {
     int i = 0;
     point_t pt;
-    double weight, signal, freq, result;
+    double weight, sig, freq, result;
     static double lo = 10.0;
     static double hi = -10.0;
 
@@ -381,20 +381,20 @@ lunar2(point_t point, double h, double lacunarity, double octaves, double offset
     result = 0.0;
 
     do {
-	signal = fabs(bn_noise_perlin(pt));
-	signal *= signal;
+	sig = fabs(bn_noise_perlin(pt));
+	sig *= sig;
 
-	if (signal < lo) {
-	    lo = signal;
+	if (sig < lo) {
+	    lo = sig;
 	    if (debug) bu_log("new low %g\n", lo);
 	}
-	if (signal > hi) {
-	    hi = signal;
+	if (sig > hi) {
+	    hi = sig;
 	    if (debug) bu_log("new high %g\n", hi);
 	}
 
-	result += signal * pow(freq, -h);
-	weight -= signal;
+	result += sig * pow(freq, -h);
+	weight -= sig;
 	freq *= lacunarity;
 	PSCALE(pt, lacunarity);
     } while (++i < octaves);
@@ -405,11 +405,11 @@ lunar2(point_t point, double h, double lacunarity, double octaves, double offset
  * This one's got detail on the peaks
  */
 double
-land(point_t point, double h, double lacunarity, double octaves, double offset)
+land(point_t point, double h, double lacunarity, double octaves)
 {
     int i = 0;
     point_t pt;
-    double weight, signal, freq, result;
+    double weight, sig, freq, result;
 
     if (debug) bu_log("land\n");
 
@@ -419,10 +419,10 @@ land(point_t point, double h, double lacunarity, double octaves, double offset)
     result = 0.0;
 
     do {
-	signal = fabs(bn_noise_perlin(pt));
-	signal *= weight;
+	sig = fabs(bn_noise_perlin(pt));
+	sig *= weight;
 
-	result += signal * pow(freq, -h);
+	result += sig * pow(freq, -h);
 	weight = 0.5 - result;
 	CLAMP(weight, 0.0, 1.0);
 	freq *= lacunarity;
@@ -438,11 +438,11 @@ land(point_t point, double h, double lacunarity, double octaves, double offset)
  *
  */
 double
-lee(point_t point, double h, double lacunarity, double octaves, double offset)
+lee(point_t point, double h, double lacunarity, double octaves)
 {
     int i = 0;
     point_t pt;
-    double weight, signal, freq, result;
+    double weight, sig, freq, result;
 
     if (debug) bu_log("lee\n");
 
@@ -452,11 +452,11 @@ lee(point_t point, double h, double lacunarity, double octaves, double offset)
     result = 0.0;
 
     do {
-	signal = fabs(bn_noise_perlin(pt));
-	signal *=  1.5 * weight;
+	sig = fabs(bn_noise_perlin(pt));
+	sig *=  1.5 * weight;
 
 
-	result += signal * pow(freq, -h);
+	result += sig * pow(freq, -h);
 	weight = .6 - result;
 	freq *= lacunarity;
 	PSCALE(pt, lacunarity);
@@ -477,7 +477,7 @@ void
 func_lee(unsigned short *buf)
 {
     point_t pt;
-    int x, y;
+    size_t x, y;
     vect_t t;
     double v;
     double lo, hi;
@@ -495,9 +495,7 @@ func_lee(unsigned short *buf)
 
 	    xform(t, pt);
 
-	    v = lee(t, fbm_h,
-		    fbm_lacunarity, fbm_octaves,
-		    fbm_offset);
+	    v = lee(t, fbm_h, fbm_lacunarity, fbm_octaves);
 	    if (v < lo) lo = v;
 	    if (v > hi) hi = v;
 	    v *= 0.5;
@@ -522,7 +520,7 @@ void
 func_lunar(unsigned short *buf)
 {
     point_t pt;
-    int x, y;
+    size_t x, y;
     vect_t t;
     double v;
     double lo, hi;
@@ -548,9 +546,7 @@ func_lunar(unsigned short *buf)
 	      5 lee
 
 	    */
-	    v = fiord(t, fbm_h,
-		      fbm_lacunarity, fbm_octaves,
-		      fbm_offset);
+	    v = fiord(t, fbm_h, fbm_lacunarity, fbm_octaves);
 	    if (v < lo) lo = v;
 	    if (v > hi) hi = v;
 

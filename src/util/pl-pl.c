@@ -56,7 +56,7 @@ void doscale(void);
 #define TCHAR	4	/* unsigned chars */
 #define TSTRING	5	/* linefeed terminated string */
 
-struct uplot uerror = { 0, 0, 0 };
+struct uplot uerror = { 0, 0, NULL, 0 };
 struct uplot letters[] = {
     /*A*/	{ 0, 0, 0, 0 },
     /*B*/	{ 0, 0, 0, 0 },
@@ -125,7 +125,7 @@ double arg[6];			/* parsed plot command arguments */
 double sp[6];			/* space command */
 char strarg[512];		/* string buffer */
 double cx, cy, cz;		/* center */
-double scale = 0;
+double scale = 0.0;
 int seenscale = 0;
 
 int nofloat = 1;
@@ -160,7 +160,7 @@ main(int argc, char **argv)
     /* Assume default space, in case one is not provided */
     sp[0] = sp[1] = sp[2] = -32767;
     sp[3] = sp[4] = sp[5] = 32767;
-    if (scale)
+    if (scale > 0.0)
 	doscale();
 
     while ((c = getchar()) != EOF) {
@@ -189,7 +189,7 @@ main(int argc, char **argv)
 		sp[3] = arg[2];
 		sp[4] = arg[3];
 		sp[5] = 0;
-		if (scale)
+		if (scale > 0.0)
 		    doscale();
 		seenscale++;
 		break;
@@ -201,7 +201,7 @@ main(int argc, char **argv)
 		sp[3] = arg[3];
 		sp[4] = arg[4];
 		sp[5] = arg[5];
-		if (scale)
+		if (scale > 0.0)
 		    doscale();
 		seenscale++;
 		break;
@@ -333,9 +333,9 @@ main(int argc, char **argv)
 	    printf("%s\n", up->desc);
     }
 
-    if (scale && !seenscale) {
+    if (scale > 0.0 && !seenscale) {
 	fprintf(stderr, "pl-pl: WARNING no space command in file, defaulting to +/-32k\n");
-    } else if (!scale && seenscale) {
+    } else if (!(scale > 0.0) && seenscale) {
 	fprintf(stderr, "pl-pl: WARNING space command(s) ignored, use -S to apply them.\n");
     }
 
@@ -423,7 +423,7 @@ putargs(struct uplot *up)
 	if (no3d && ((i % 3) == 2) && up->t3d)
 	    continue;	/* skip z coordinate */
 	/* gag me with a spoon... */
-	if (scale && (up->targ == TSHORT || up->targ == TIEEE)) {
+	if (scale > 0.0 && (up->targ == TSHORT || up->targ == TIEEE)) {
 	    if (up->t3d) {
 		if (i % 3 == 0)
 		    arg[i] = (arg[i] - cx) * scale;

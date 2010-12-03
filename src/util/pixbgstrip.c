@@ -35,7 +35,7 @@
 
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
-static long int scanbytes;		/* # of bytes of scanline */
+static size_t scanbytes;		/* # of bytes of scanline */
 
 static char *file_name;
 static FILE *infp;
@@ -43,7 +43,7 @@ static int fileinput = 0;		/* file of pipe on input? */
 
 static int autosize = 0;		/* !0 to autosize input */
 
-static long int file_width = 512L;	/* default input width */
+static size_t file_width = 512L;	/* default input width */
 
 static int thresh = 1;
 static int bg_x_offset = 0;
@@ -120,7 +120,7 @@ int
 main(int argc, char **argv)
 {
     int r, g, b;
-    long int i;
+    size_t i;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -147,7 +147,8 @@ main(int argc, char **argv)
     scanline = (unsigned char *)bu_malloc(scanbytes, "scanline");
 
     while (!feof(infp)) {
-	if (fread(scanline, 1, scanbytes, infp) != scanbytes)
+	size_t ret = fread(scanline, 1, scanbytes, infp);
+	if (ret != scanbytes)
 	    break;
 	r = scanline[bg_x_offset*3+0];
 	g = scanline[bg_x_offset*3+1];

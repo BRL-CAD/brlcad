@@ -45,6 +45,7 @@ bin_PROGRAMS = \
 	spm-fb
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 bw_fb_LDADD = ${FB}
 bw_fb_SOURCES = bw-fb.c

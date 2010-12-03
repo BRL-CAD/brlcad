@@ -17,14 +17,17 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify rt/benchmark on windows doesn't crash
+* undo changes that made NMG conversion worse
 
-* change bu_realloc so that a zero size will perform a free instead
-  of allocating the minimum size to store a pointer.
+* make sure 'preview' works, particularly the 'tree' subcommand.
+
+* verify rt/benchmark on windows doesn't crash
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* update g-xxx_facets to use libgcv
 
 * rename all the g_* tools sans "_"
 
@@ -44,6 +47,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
 
 * make sure mged/archer behave properly with relative paths to dbopen.
   Windows in particular is doing something different in

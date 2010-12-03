@@ -35,22 +35,46 @@
  * representation.
  */
 
+#include "common.h"
+
+#include <float.h>
+
 
 double
 bn_epsilon()
 {
+#if defined(DBL_EPSILON)
+    return DBL_EPSILON;
+#elif defined(HAVE_IEEE754)
     static const double val = 1.0;
     register long long next = *(long long*)&val + 1;
     return val - *(double *)&next;
+#else
+    /* must be volatile to avoid long registers */
+    volatile double tol = 1.0;
+    while (1.0 + (tol * 0.5) != 1.0) {
+	tol *= 0.5;
+    }
+#endif
 }
 
 
-double
+float
 bn_epsilonf()
 {
+#if defined(FLT_EPSILON)
+    return FLT_EPSILON;
+#elif defined(HAVE_IEEE754)
     static const float val = 1.0;
     register long next = *(long*)&val + 1;
     return val - *(float *)&next;
+#else
+    /* must be volatile to avoid long registers */
+    volatile float tol = 1.0f;
+    while (1.0f + (tol * 0.5f) != 1.0f) {
+	tol *= 0.5f;
+    }
+#endif
 }
 
 

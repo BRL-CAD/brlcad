@@ -61,7 +61,7 @@ struct uplot {
 #define TCHAR 4 /* unsigned chars */
 #define TSTRING 5 /* linefeed terminated string */
 
-struct uplot uerror = { 0, 0, 0 };
+struct uplot uerror = { 0, 0, NULL, 0 };
 struct uplot letters[] = {
     /*A*/	{ 0, 0, 0, 0 },
     /*B*/	{ 0, 0, 0, 0 },

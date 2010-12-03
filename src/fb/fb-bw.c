@@ -20,8 +20,8 @@
 /** @file fb-bw.c
  *
  * Read a Black and White image from the framebuffer and output
- *  it in 8-bit black and white form in pix order,
- *  i.e. Bottom UP, left to right.
+ * it in 8-bit black and white form in pix order,
+ * i.e. Bottom UP, left to right.
  *
  */
 
@@ -38,35 +38,28 @@
 #include "fb.h"
 
 
-FBIO	*fbp;
+#define LINELEN 8192
 
-#define LINELEN		8192
+static unsigned char inbuf[LINELEN*3];
+static unsigned char obuf[LINELEN];
 
-static unsigned char	inbuf[LINELEN*3];
-static unsigned char	obuf[LINELEN];
-
-int	height;
-int	width;
-int	inverse;
-int	scr_xoff, scr_yoff;
+int height;
+int width;
+int inverse;
+int scr_xoff, scr_yoff;
 
 char *framebuffer = NULL;
 char *file_name;
 FILE *outfp;
 
-/* XXX -R -G -B */
-char	usage[] = "\
-Usage: fb-bw [-h -i] [-F framebuffer]\n\
-	[-X scr_xoff] [-Y scr_yoff]\n\
-	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "hiF:X:Y:s:w:n:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "hiF:X:Y:s:w:n:")) != EOF) {
+	switch (c) {
 	    case 'h':
 		/* high-res */
 		height = width = 1024;
@@ -99,70 +92,79 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind >= argc ) {
-	if ( isatty(fileno(stdout)) )
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdout)))
 	    return 0;
 	file_name = "-";
 	outfp = stdout;
     } else {
 	file_name = argv[bu_optind];
-	if ( (outfp = fopen(file_name, "wb")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "fb-bw: cannot open \"%s\" for writing\n",
-			   file_name );
+	if ((outfp = fopen(file_name, "wb")) == NULL) {
+	    (void)fprintf(stderr,
+			  "fb-bw: cannot open \"%s\" for writing\n",
+			  file_name);
 	    return 0;
 	}
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "fb-bw: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "fb-bw: excess argument(s) ignored\n");
 
     return 1;		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	x, y;
-    int	xin, yin;		/* number of sceen output lines */
+    FBIO *fbp;
+
+    int x, y;
+    int xin, yin;		/* number of sceen output lines */
+
+    char usage[] = "\
+Usage: fb-bw [-h -i] [-F framebuffer]\n\
+	[-X scr_xoff] [-Y scr_yoff]\n\
+	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
     height = width = 512;		/* Defaults */
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit( 1, NULL );
+	bu_exit(1, NULL);
     }
 
     /* Open Display Device */
-    if ((fbp = fb_open(framebuffer, width, height )) == NULL ) {
-	fprintf( stderr, "fb_open failed\n");
-	bu_exit( 1, NULL );
+    if ((fbp = fb_open(framebuffer, width, height)) == NULL) {
+	fprintf(stderr, "fb_open failed\n");
+	bu_exit(1, NULL);
     }
 
     /* determine "reasonable" behavior */
     xin = fb_getwidth(fbp) - scr_xoff;
-    if ( xin < 0 ) xin = 0;
-    if ( xin > width ) xin = width;
+    if (xin < 0) xin = 0;
+    if (xin > width) xin = width;
     yin = fb_getheight(fbp) - scr_yoff;
-    if ( yin < 0 ) yin = 0;
-    if ( yin > height ) yin = height;
+    if (yin < 0) yin = 0;
+    if (yin > height) yin = height;
 
-    for ( y = scr_yoff; y < scr_yoff + yin; y++ )  {
-	if ( inverse ) {
-	    (void)fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin );
+    for (y = scr_yoff; y < scr_yoff + yin; y++) {
+	if (inverse) {
+	    (void)fb_read(fbp, scr_xoff, fb_getheight(fbp)-1-y, inbuf, xin);
 	} else {
-	    (void)fb_read( fbp, scr_xoff, y, inbuf, xin );
+	    (void)fb_read(fbp, scr_xoff, y, inbuf, xin);
 	}
-	for ( x = 0; x < xin; x++ ) {
+	for (x = 0; x < xin; x++) {
 	    obuf[x] = (((int)inbuf[3*x+RED]) + ((int)inbuf[3*x+GRN])
 		       + ((int)inbuf[3*x+BLU])) / 3;
 	}
-	fwrite( &obuf[0], sizeof( char ), xin, outfp );
+	fwrite(&obuf[0], sizeof(char), xin, outfp);
     }
 
-    fb_close( fbp );
-    bu_exit( 0, NULL );
+    fb_close(fbp);
+    return 0;
 }
+
 
 /*
  * Local Variables:

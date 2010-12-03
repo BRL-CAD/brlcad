@@ -44,8 +44,8 @@ static FILE *infp;
 static int fileinput = 0;	/* Is input a file (not stdin)? */
 static int autosize = 0;	/* Try to guess input dimensions? */
 
-static long int file_width = 512L;
-static long int file_height = 512L;
+static size_t file_width = 512L;
+static size_t file_height = 512L;
 
 static int solid_type = SPHERE;
 static fastf_t r1, r2;		/* radii */
@@ -82,9 +82,10 @@ static int read_radii (fastf_t *r1p, fastf_t *r2p, char *buf)
 /*
  * R E A D _ R O W ()
  */
-static int read_row (char *rp, long int width, FILE *infp)
+static int read_row(char *rp, size_t width, FILE *fp)
 {
-    if (fread(rp + 3, 3, width, infp) != width)
+    size_t ret = fread(rp + 3, 3, width, fp);
+    if (ret != width)
 	return 0;
     *(rp + RED) = *(rp + GRN) = *(rp + BLU) = 0;
     *(rp + 3 * (width + 1) + RED) =
@@ -172,6 +173,7 @@ get_args (int argc, char **argv)
 int
 main (int argc, char **argv)
 {
+    size_t ret;
     char *inbuf;	/* The input scanline */
     char *outbuf;	/* The output scanline */
     char *in, *out;	/* Pointers into inbuf and outbuf */
@@ -180,10 +182,10 @@ main (int argc, char **argv)
     fastf_t scale_fac;
     fastf_t theta;
     fastf_t x;		/* Scale factor for pixel blending */
-    int i;		/* Pixel index in inbuf */
-    int j;		/* Pixel index in outbuf */
-    long int row;
-    long int row_width;
+    size_t i;		/* Pixel index in inbuf */
+    size_t j;		/* Pixel index in outbuf */
+    size_t row;
+    size_t row_width;
 
     if (!get_args(argc, argv)) {
 	(void) fputs(usage, stderr);
@@ -202,7 +204,7 @@ main (int argc, char **argv)
      * Autosize the input if appropriate
      */
     if (fileinput && autosize) {
-	unsigned long int w, h;
+	size_t w, h;
 
 	if (fb_common_file_size(&w, &h, file_name, 3)) {
 	    file_width = (long)w;
@@ -262,13 +264,14 @@ main (int argc, char **argv)
 	/*
 	 * Write the output scanline
 	 */
-	if (fwrite(outbuf, 3, file_width, stdout) != file_width) {
+	ret = fwrite(outbuf, 3, file_width, stdout);
+	if (ret != file_width) {
 	    perror("stdout");
 	    bu_exit (2, NULL);
 	}
     }
 
-    bu_exit (1, NULL);
+    return 0;
 }
 
 

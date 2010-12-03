@@ -1254,7 +1254,7 @@ bn_isect_line3_line3(fastf_t *t,
 
     VCROSS(n, d, c);
     det = VDOT(n, p) - VDOT(n, a);
-    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+    if (!NEAR_ZERO(det, tol->perp)) {
 	return -1; /* no intersection, lines not in same plane */
     }
 
@@ -1374,9 +1374,9 @@ bn_isect_line3_line3(fastf_t *t,
     /* XXX This should be no smaller than 1e-16.  See
      * bn_isect_line2_line2 for details.
      */
-    if (NEAR_ZERO(det, DETERMINANT_TOL)) {
+    if (NEAR_ZERO(det, VUNITIZE_TOL)) {
 	/* Lines are parallel */
-	if (!colinear || !NEAR_ZERO(det1, DETERMINANT_TOL)) {
+	if (!colinear || !NEAR_ZERO(det1, VUNITIZE_TOL)) {
 	    return -2;	/* parallel, not colinear, no intersection */
 	}
 
@@ -1425,7 +1425,7 @@ bn_isect_line3_line3(fastf_t *t,
      * distance.
      */
     det = *t * d[s] - *u * c[s] - h[s];
-    if (!NEAR_ZERO(det, SMALL_FASTF)) {
+    if (!NEAR_ZERO(det, VUNITIZE_TOL)) {
 	/* XXX This tolerance needs to be much less loose than
 	 * SQRT_SMALL_FASTF.  What about DETERMINANT_TOL?
 	 */
@@ -2247,12 +2247,12 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
     VSCALE(pt_a, a, a[3]);
     VSCALE(pt_b, b, b[3]);
 
-    if (NEAR_ZERO(dot, SMALL_FASTF)) {
+    if (NEAR_ZERO(dot, tol->perp)) {
 	return 0; /* planes are perpendicular */
     }
 
-    /* parallel is when dot is within SMALL_FASTF of either -1 or 1 */
-    if ((dot <= -SMALL_FASTF) ? (NEAR_ZERO(dot + 1.0, SMALL_FASTF)) : (NEAR_ZERO(dot - 1.0, SMALL_FASTF))) {
+    /* parallel is when dot is within tol->perp of either -1 or 1 */
+    if ((dot <= -SMALL_FASTF) ? (NEAR_ZERO(dot + 1.0, tol->perp)) : (NEAR_ZERO(dot - 1.0, tol->perp))) {
 	if (bn_pt3_pt3_equal(pt_a, pt_b, tol)) {
 	    /* test for coplanar */
 	    if (dot >= SMALL_FASTF) {

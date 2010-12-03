@@ -355,14 +355,14 @@ if test "x$CLEAN" = "x1" ; then
     done
     if test "x$CLOBBER" = "x1" ; then
 	# NEVER automatically delete the summary file, but go ahead with the rest
-	for i in run-[0-9]*-benchmark.log ; do
+	for i in benchmark-[0-9]*-run.log ; do
 	    $ECHO rm -f $i
 	    rm -f $i
 	done
     fi
 
     printed=no
-    for i in summary run-[0-9]*-benchmark.log ; do
+    for i in summary benchmark-[0-9]*-run.log ; do
 	if test -f "$i" ; then
 	    if test "x$printed" = "xno" ; then
 		$ECHO

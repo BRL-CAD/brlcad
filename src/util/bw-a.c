@@ -42,6 +42,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+#include "fb.h"
 
 
 static long int file_width = 512L;

@@ -98,6 +98,7 @@ static const struct db5_type type_table[] = {
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_CLINE, 1, "cline", "cline" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_BOT, 1, "bot", "bag of triangles" },
     { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_COMBINATION, 1, "combination", "combination" },
+    { DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_BREP, 1, "brep", "Boundary Representation" },
     { DB5_MAJORTYPE_BRLCAD, 0, 0, "brlcad", "BRL-CAD geometry" },
     { DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0, 0, "attribonly", "attribute only" },
     { DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_FLOAT, 1, "float", "array of floats" },

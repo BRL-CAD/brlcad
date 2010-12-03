@@ -762,9 +762,9 @@ Popup Menu    Right or Ctrl-Left
 	method initCompSelect {}
 	method compSelectCallback {_mstring}
 
-	method mrayCallback_cvo {_start _target _partitions}
-	method mrayCallback_erase {_start _target _partitions}
-	method mrayCallback_pick {_start _target _partitions}
+	method mrayCallback_cvo {_pane _start _target _partitions}
+	method mrayCallback_erase {_pane _start _target _partitions}
+	method mrayCallback_pick {_pane _start _target _partitions}
 
 	method initViewMeasure {}
 	method endViewMeasure {_mstring}
@@ -2528,7 +2528,7 @@ Popup Menu    Right or Ctrl-Left
     putString $_mstring
 }
 
-::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
+::itcl::body ArcherCore::mrayCallback_cvo {_pane _start _target _partitions} {
     if {$_partitions == ""} {
 	set rpos [$itk_component(ged) lastMouseRayPos]
 	eval $itk_component(ged) vslew $rpos
@@ -2550,10 +2550,10 @@ Popup Menu    Right or Ctrl-Left
     }
 
     set point [vscale $point [$itk_component(ged) base2local]]
-    $itk_component(ged) center $point
+    $itk_component(ged) pane_center $_pane $point
 }
 
-::itcl::body ArcherCore::mrayCallback_erase {_start _target _partitions} {
+::itcl::body ArcherCore::mrayCallback_erase {_pane _start _target _partitions} {
     if {$_partitions == ""} {
 	return
     }
@@ -2581,7 +2581,7 @@ Popup Menu    Right or Ctrl-Left
     set mStatusStr "erase $path"
 }
 
-::itcl::body ArcherCore::mrayCallback_pick {_start _target _partitions} {
+::itcl::body ArcherCore::mrayCallback_pick {_pane _start _target _partitions} {
     set partition [lindex $_partitions 0]
     if {$partition == {}} {
 	putString "Missed!"
