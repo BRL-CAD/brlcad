@@ -17,8 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* undo changes that made NMG conversion worse
-
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
 * verify rt/benchmark on windows doesn't crash
